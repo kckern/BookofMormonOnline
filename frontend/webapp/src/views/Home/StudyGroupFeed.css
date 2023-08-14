@@ -1,0 +1,32 @@
+
+
+.loading img
+{
+    
+}
+
+.homeFeedHeader .blankWord
+{ 
+    color: #DDD;
+    background-color: #DDD;
+}
+.groupName .blankWord{
+
+    color: #999;
+    background-color: #999;
+}
+
+.home textarea[disabled].join_to_comment
+{
+    overflow: hidden;
+}
+@media screen and (max-width: 992px)
+{
+    .home textarea[disabled].join_to_comment
+    {
+
+        font-size: .7rem;
+        height: 2.15rem;
+        padding-top: 0.1rem;
+    }
+}

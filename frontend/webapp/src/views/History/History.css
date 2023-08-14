@@ -1,0 +1,137 @@
+.history 
+{
+    text-align: center;
+    padding: 0 1em 0 1em;
+}
+
+.history .btn-group
+{
+    width: 100%;
+}
+
+.history .btn
+{
+    padding: 1em 0 1em 0; 
+}
+
+.historicaldocs .sourcebox
+{
+    display: flex;
+    align-content: center;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: -1ex;
+    margin-bottom: 1ex;
+}
+.historicaldocs .sourcebox div{
+    display:flex;
+    line-height: 1em;
+    height: 2em;
+    align-items: center;
+}
+.historicaldocs .sourcebox .pub
+{
+    text-transform: none;
+    color: #000A;
+    font-weight: 600;
+    justify-content: left;
+    text-align: left;
+}
+
+.historicaldocs .sourcebox .date
+{
+   letter-spacing: -.5px;
+   font-size: smaller;
+   color: #0008;
+   min-width: 3rem;
+   justify-content: right;
+}
+
+.historicaldocs h5
+{
+    font-size: large;
+    font-weight: 800;
+    line-height: 1em;
+    padding: .25em;
+    padding-top:1ex;
+    margin:0;
+    margin-bottom: 0;
+    letter-spacing: -.5px;
+    orphans: 3; 
+    widows: 3; 
+}
+
+.historicaldocs .citation
+{
+    letter-spacing: -.5px;
+    padding: 1ex;
+    font-size: smaller;
+    color: #AAA;
+    line-height: 1em;
+
+}
+
+.historicaldocs .card{
+    margin-bottom: 1em;
+    cursor: pointer;
+    border: 2px solid #0001;
+    background-color: #EEE;
+ }
+
+ .historicaldocs .card:hover{
+    border: 2px solid #000;
+    background-color: #FFF;
+    position: relative;
+    bottom: 2px;
+ }
+  
+
+.historicaldocs .my-masonry-grid_column:not(:first-child)
+{
+    padding-left: 1em;
+}
+
+.historicaldocs .card-body
+{
+    text-align: justify;
+    line-height: 1em;
+}
+
+
+.historicaldocs .card img
+{
+    object-fit: cover;
+    width: 100%;
+    object-position: top center;
+    min-height: 6em;
+
+}
+
+.archive_intro{
+    display: flex;
+    padding: 0 10vw 0 10vw;
+    justify-content: center;
+    margin-top: -1.5em;
+}
+
+.archive_intro p{
+    text-align: center;
+    max-width: 45em;
+    
+}
+
+.archive_intro a{
+    font-weight: bold;
+    
+    
+}
+.archive_intro a:hover{
+    text-decoration: underline;
+}
+
+.transcript > p:first-child{
+    border-bottom: 1px dashed #DDD;
+    padding-bottom: 1ex;
+    font-size: smaller;
+    color: #888;
+}

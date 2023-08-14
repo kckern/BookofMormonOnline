@@ -1,0 +1,77 @@
+/* greek */
+
+@font-face {
+    font-family: 'EB Garamond';
+    font-style: normal;
+    font-weight: 400;
+    src: local('EB Garamond Regular'), /* local('EBGaramond-Regular'), */
+    url('../../fonts/SlGUmQSNjdsmc35JDF1K5GR2SDktYw.woff2') format('woff2');
+    unicode-range: U+0370-03FF;
+}
+
+/* vietnamese */
+
+@font-face {
+    font-family: 'EB Garamond';
+    font-style: normal;
+    font-weight: 400;
+    src: local('EB Garamond Regular'), /* local('EBGaramond-Regular'), */
+    url('../../fonts/SlGUmQSNjdsmc35JDF1K5GR6SDktYw.woff2') format('woff2');
+    unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+
+.center-to-left {
+    animation: centerToLeft 1s;
+    animation-timing-function: ease;
+}
+
+@keyframes centerToLeft {
+    from {
+        left: 50%;
+    }
+    to {
+        left: -50%;
+    }
+}
+
+.left-to-center {
+    animation: leftToCenter 1s;
+    animation-timing-function: ease-out;
+}
+
+@keyframes leftToCenter {
+    from {
+        left: -50%;
+    }
+    to {
+        left: 50%;
+    }
+}
+
+.center-to-right {
+    animation: centerToRight 1s;
+    animation-timing-function: ease;
+}
+
+@keyframes centerToRight {
+    from {
+        left: 50%;
+    }
+    to {
+        left: 150%;
+    }
+}
+
+.right-to-center {
+    animation: rightToCenter 1s;
+    animation-timing-function: ease-out;
+}
+
+@keyframes rightToCenter {
+    from {
+        left: 150%;
+    }
+    to {
+        left: 50%;
+    }
+}

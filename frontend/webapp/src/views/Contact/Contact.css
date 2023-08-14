@@ -1,0 +1,97 @@
+.contact h5 {
+  font-weight: 800;
+  line-height: 1em;
+  padding: 0.25em;
+  margin: 0;
+  margin-bottom: 0.5em;
+}
+
+.contact {
+  padding-left: 4em;
+}
+
+.contact .btn {
+  width: 100%;
+  background-color: #ddd;
+  color: #323b4d;
+  line-height: 1em;
+  font-size: large;
+}
+.contact .btn:hover {
+  background-color: #323b4d;
+}
+.contact .btn img {
+  width: 2em;
+  height: 2em;
+  margin-right: 1em;
+}
+
+.overlay {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  -ms-transform: translate(-50%, -50%);
+  text-align: center;
+  display: none;
+}
+.show {
+  display: block;
+}
+
+.dragField {
+  border: 1px solid black;
+  border-radius: 25px;
+  text-align: center;
+  margin: 0 auto 20px;
+  padding: 20px;
+  cursor: pointer;
+}
+
+.imageUploaderOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.imageUploaderWrapper {
+  background: white;
+  max-width: 50%;
+  border-radius: 10px;
+  margin: 7% auto;
+  padding: 10px;
+  position: relative;
+  text-align: center;
+}
+
+.imageWrapperHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.imageWrapperHeaderButton {
+  outline: none;
+  background: transparent;
+  border: none;
+  color: grey;
+  margin-bottom: 1rem;
+}
+
+.cropButton {
+  outline: none;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  color: white;
+}
+
+.saveCrop {
+  background: rgb(8, 167, 40);
+}
+
+.cancelCrop {
+  background: rgb(211, 52, 52);
+}

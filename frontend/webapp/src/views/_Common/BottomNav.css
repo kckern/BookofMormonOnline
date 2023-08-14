@@ -1,0 +1,87 @@
+
+.bottom-nav
+{
+    display: none;
+    -webkit-box-shadow: 0px 0px 28px 3px rgba(0,0,0,0.77); 
+    box-shadow: 0px 0px 28px 3px rgba(0,0,0,0.77);
+    margin-top: -2px;
+    z-index: 400;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: #fff;
+    color: white;
+    font-size: 1.2em;
+    font-weight: 800;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.bottom-nav-item
+{
+    flex-grow: 1;
+    width: 20vw;
+    /* flex:1; */
+    color: #FFF7;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px 1rem;
+}
+
+.bottom-nav-item p {
+    margin: 0;
+    font-size: 14px;
+    font-weight: normal;
+    color: #7F7F7F;
+}
+
+.bottom-nav-item.active
+{
+    background-color: #323b4d;
+    color: #FFFF;
+}
+
+.bottom-nav-item.active p {
+    color: #FFFF;
+}
+
+.bottom-nav-item img, .bottom-nav-item .img
+{
+    max-width: 1.65rem;
+    border-radius: 20%;
+    flex-shrink: 0;
+}
+
+
+.bottom-nav-item:not(.active) img.activeGroup
+{
+    filter:none;
+    opacity: 1;
+}
+
+
+.bottom-nav-item .totalUnreadCount{
+    position: absolute;
+    top:-.7rem;
+    left:1rem
+}
+
+
+@media only screen and (max-width: 900px) {
+
+
+    #userback_button_container
+    {
+        display: none!important;
+    }
+
+    .bottom-nav
+    {
+        display: flex;
+    }
+
+}

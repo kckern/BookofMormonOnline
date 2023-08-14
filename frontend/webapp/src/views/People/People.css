@@ -1,0 +1,378 @@
+.peopleList
+{
+
+    display: grid;
+    margin-left: 2em;
+}
+
+.peopleList .IdBadge
+{
+    border:1px solid #999;
+    color:#999;
+    font-size: .7em;
+    letter-spacing: -.5px;
+    padding: 0 .5em 0 .5em;
+    border-radius: .5em;
+    margin-left: 0.5em;
+
+    white-space: nowrap;
+}
+.peopleList .IdBadge:first-child
+{
+    margin-left: 0;
+}
+
+
+.peopleList .IdBadge.N
+{
+    background-color:#b9e2cf;
+    color:#198754;
+    border-color:#198754;
+}
+
+.peopleList .IdBadge.L
+{
+    background-color:#c3dbff;
+    color:#0d6efd;
+    border-color:#0d6efd;
+}
+.peopleList .IdBadge.M
+{
+    background-color:rgb(255, 208, 177);
+    color:rgb(104, 55, 0);
+    border-color:rgb(104, 55, 0);
+}
+
+.peopleList .IdBadge.J
+{
+    background-color:#fef1ca;
+    color:#906c00;
+    border-color:#906c00;
+}
+
+.peopleList .IdBadge.B
+{
+    background-color:#DDD;
+    color:#555;
+    border-color:rgb(152, 152, 152);
+}
+
+.peopleList .IdBadge.G
+{
+    background-color:#f3d1d4;
+    color:#dc3545;
+    border-color:#dc3545;
+}
+
+.peopleList .my-masonry-grid_column
+{
+    padding-left:1em;
+}
+.peopleList .card-body.personInfo div
+{
+    background-color: rgb(0,0,0,.5);
+    position: absolute;
+    bottom:0;
+    left:0;
+    color:white;
+    padding:.5em;
+    width:100%;
+}
+
+
+.peopleList .card-body.personInfo .date
+{
+    border: 1px solid #000;
+    border-radius: 1ex;
+    background-color: rgba(255,255,255, .5);
+    color:#000;
+    white-space: nowrap;
+    font-size: 0.7em;
+    margin-left: 1ex;
+    padding-left: 1ex;
+    padding-right: 1ex;
+    position: absolute;
+    top:.25em;
+    right:.25em;
+
+}
+
+.peopleList .personInfoBadges
+{
+    margin-left:.5em;
+    opacity:1;
+    margin-top: -1px;
+}
+
+h5.ppFiltersHeading{
+    text-align: center;
+    margin:0;
+    color: #AAA;
+    margin-top:-1em;
+
+}
+
+.ppFilters
+{
+    margin-left: 10vw;
+    margin-right: 10vw;
+    margin-bottom: 2em;
+    border-radius: 1em;
+    padding:1em;
+    background-color:#DDD;
+    position: relative;
+    border-top-right-radius: 0;
+}
+
+.ppColumns
+{
+
+    display: flex;
+}
+
+input.ppSearch 
+{
+    width: 18.5em;
+    position: absolute;
+    right: 0em;
+    top:-2em;
+    opacity: 0.5;
+
+}
+input.ppSearch::placeholder
+{
+    text-align: center;
+    letter-spacing: 1ex;
+}
+
+.ppFilters ul{
+    list-style: none;
+    width: 33%;
+}
+
+.ppFilters li{
+}
+
+.lihead{
+    font-weight: 800;
+    text-align: center;
+    font-size: 1.2em;
+}
+li.item .bootstrap-switch
+{
+    margin-right: 1ex;
+    flex-shrink: 0;
+}
+
+li.item 
+{
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+li.item span
+{
+    white-space: nowrap
+}
+li.item:hover
+{
+    font-weight: bold;
+}
+
+.lifoot 
+{
+    display: flex;
+}
+.lifoot .btn
+{
+    flex:1;
+    padding:0;
+    background-color: #AAA;
+}
+
+
+
+.ppFilters li span img{
+    height: 1.5em;
+    width: 1.5em;
+    margin-right: 1ex;
+    margin-bottom: .5ex;
+    opacity: .5;
+}
+
+
+.ppFilters li span img.dot{
+    opacity: 1;
+}
+
+
+
+
+.switch-handle:hover
+{
+    background-color: white!important;
+}
+
+.ppColumns .item > .btn
+{
+    margin:0;
+    margin-right: 1ex;
+
+}
+.item > .switch.btn-xs{
+
+    min-width: 4rem;
+}
+.switch-on.btn-xs,
+.switch-off.btn-xs{
+    line-height: .7rem;
+    font-weight: 400;
+    text-transform: none;
+    font-size: .8rem;
+    color: #EEE;
+}
+
+.ppColumns .switch-handle
+{
+    background-color: #EEE;
+}
+
+.ppColumns .item .btn.switch-off
+{
+    background-color: #AAA;
+    padding-left: 1rem;
+
+}
+
+
+.personIcons img{
+    height: 1em;
+    opacity: 0.5;
+    margin-right: 1ex;
+}
+
+
+.personCard 
+{
+    height: 18em;
+    display: flex;
+    flex-direction: column;
+}
+
+
+.peopleList .card-footer
+{
+   background-color: #CCC;
+   padding: 0;
+   display: flex;
+   justify-content: space-between;
+   border-bottom: 1px solid #AAA;
+
+
+}
+
+.personInfo
+{
+    flex-shrink: 1;
+    flex-grow: 0;
+}
+.peopleList .card
+{
+    margin-bottom:1em;
+}
+.peopleList h5
+{
+    font-weight: 800;
+    line-height: 1em;
+    padding: .25em;
+    margin:0;
+}
+
+.personInfo img
+{
+    margin: 0;
+    width: 5em;
+    height: 6em;
+    object-fit: cover;
+    margin:.25em;
+}
+
+
+.peopleList .card-footer,
+.peopleList .card-header
+{
+
+    flex-shrink: 0;
+    flex-grow: 1;
+}
+
+.peopleList .card-body.personInfo 
+{
+    flex-shrink: 1;
+    flex-grow: 0;
+    padding: .5em;
+    color: #666;
+    line-height: 1em;
+    background-position: center center;
+    background-repeat: no-repeat;
+    height: 15em;
+    background-size: cover;
+    position: relative;
+}
+
+.peopleList .card-header,
+.peopleList .card-body
+{
+    padding: 0;
+    text-align: center;
+    position: relative;
+}
+
+
+.peopleList .card-header
+{
+    line-height: 1.5em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.peopleList .card-header h5{
+    display: flex;
+    justify-content: left;
+    width: 100%;
+    align-items: center;
+    line-height: 1em;
+    font-size: 1.3em;
+    margin-top: 0 .5ex;
+    padding-right: 1ex;
+
+}
+
+.peopleList .card-header h5 img
+{
+    height: 1em;
+    width: 1em;
+    margin-left: 0.5ex;
+    margin-right: 1ex;
+    opacity: 0.5;
+    flex-shrink: 0;
+}
+
+.peopleList .card-header h5 a{
+    width: 100%;
+}
+
+
+.peopleList .card:hover
+{
+    outline: 2px solid #0006;
+}
+
+.filterDrawerButton
+{
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2em;
+    margin-top: -1em;
+}

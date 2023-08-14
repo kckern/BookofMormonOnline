@@ -1,0 +1,37 @@
+
+.ppToolTip
+{
+    display: flex;
+    padding: 0;
+}
+
+
+.ppToolTip > span
+{
+    display: block;
+}
+
+.ppToolTip img
+{
+    height: 6em;
+    width: 5em;
+    object-fit: cover;
+    margin-right: 1em;
+    margin-left: -1em;
+    border: 1px solid #FFF6;
+}
+.ppToolTipName
+{
+    font-weight: bold;
+    white-space: nowrap;
+    font-size: 1.2em;
+
+}
+
+.ppToolTipInfo
+{
+    font-size: .8em;
+    line-height: 1.2em;
+    display: block;
+    max-width: 10em;
+}

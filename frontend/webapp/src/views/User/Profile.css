@@ -1,0 +1,200 @@
+.imgWrapper {
+  position: relative;
+  flex: 1 1 30%;
+  margin-right: 10%;
+}
+
+.profileImage {
+  border-radius: 50%;
+  border: 1px solid rgb(243, 243, 243); 
+  min-height: 6em;
+  min-width: 6em;
+  background-color: #EEE;
+}
+
+.overlay {
+  background-color: rgba(151, 150, 150, 0.5);
+  box-shadow: 0px 0px 9px 9px rgba(151, 150, 150, 0.5);
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  -ms-transform: translate(-50%, -50%);
+  text-align: center;
+  display: none;
+  position: absolute;
+  color: white;
+}
+
+.overlayImage {
+  width: 32px;
+  height: 32px;
+  transition: 0.3 all ease;
+  cursor: pointer;
+}
+
+.show {
+  display: block;
+}
+
+.dragField {
+  border: 1px solid black;
+  border-radius: 25px;
+  text-align: center;
+  margin: 0 auto 20px;
+  padding: 20px;
+  cursor: pointer;
+}
+
+.imageUploaderOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 1000;
+}
+
+.imageUploaderWrapper {
+  background: white;
+  max-width: 700px;
+  border-radius: 10px;
+  padding: 10px;
+  text-align: center;
+  margin-top: 10vh;
+}
+
+.imageWrapperHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.imageWrapperHeaderButton {
+  outline: none;
+  background: transparent;
+  border: none;
+  color: grey;
+  margin-bottom: 1rem;
+}
+
+.cropButton {
+  outline: none;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  color: white;
+}
+
+.saveCrop {
+  background: rgb(8, 167, 40);
+}
+
+.cancelCrop {
+  background: rgb(211, 52, 52);
+}
+
+.uploadingSpinner {
+  margin: 0 auto;
+}
+
+.studyYear img,
+h5.title > img {
+  height: 1.5em;
+  width: 1.5em;
+  margin-right: 1ex;
+}
+.trophyCase li > img,
+.profileCard button > img {
+  height: 1.5em;
+  margin-right: 1ex;
+  position: relative;
+  top: -0.25ex;
+}
+.quickstats img {
+  height: 2em;
+  opacity: 0.5;
+}
+.profileCard code {
+  font-size: smaller;
+  white-space: nowrap;
+  overflow: hidden;
+  width: 100%;
+}
+
+.quickstats {
+  cursor: pointer;
+  border-radius: 1em;
+  flex-wrap: nowrap;
+}
+
+.quickstats h5
+{
+
+
+}
+
+.quickstats:hover
+{
+  background-color: #FAFAFA;
+}
+
+.profileDropdown
+{
+  float: right;
+}
+
+.quickstats .col .stat_label
+{
+  height: 2em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1em;
+}
+
+
+.profileCard .threedots
+{
+  cursor: pointer;
+  font-weight: 800;
+  font-size: 2ex;
+  color: #999;
+  height: 2.5ex;
+  width: 2.5ex;
+  text-align: center;
+  border-radius: 50%;
+}
+
+
+.profileCard  .threedots:hover
+{
+  background-color: #EEE;
+}
+
+.profileCard button > img
+{
+  opacity: .5;
+}
+
+
+.profileDropdown .dropdown-menu .dropdown-item
+{
+  padding: 1ex;
+  font-weight: 500;
+}
+
+.profileDropdown .dropdown-menu.show
+{
+  border: 1px solid #AAA;
+
+}
+
+
+.loginGroup .alert
+{
+  text-align: center;
+  padding-right: 2em;
+  margin-left: 3em;
+}

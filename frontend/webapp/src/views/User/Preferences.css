@@ -1,0 +1,97 @@
+.publicationCards
+{
+  display: flex;  flex-wrap: wrap;
+  justify-content: space-between;;
+}
+.publicationCards label
+{
+  width: 49%;
+  cursor: pointer;
+
+}
+.publicationCards label input{
+
+  pointer-events: none;
+}
+
+.faxCard input,
+.publicationCard input{
+
+  width: 3em;
+  height: 3em;
+  float: left;
+  margin-right: 1ex;
+  margin-bottom: 1ex;
+  color: darkcyan;
+}
+
+.publicationCardBody
+{
+
+}
+
+.publicationCard img
+{
+  float:right;
+  height: 10em;
+  margin-left: 1ex
+}
+.publicationCardBody>div
+{
+  flex: 2 0 0%;
+}
+
+.publicationCard .card-header
+{
+  display:flex;
+  padding-bottom:1ex;
+}
+.publicationCard .card-header input{
+  flex-shrink:0;
+  width:5em;
+}
+
+.publicationCard .card-header .source_title
+{
+  font-weight:bold;
+}
+.publicationCard .card-header .source_publisher
+{
+  font-style:italic;
+  color:#0007;
+}
+
+.faxCards
+{
+  display: flex;  flex-wrap: wrap;
+  justify-content: space-between;;
+}
+
+.faxCards label
+{
+  width: 48%;
+  cursor: pointer;
+
+}
+
+.faxCardHead b
+{
+  font-size: 3ex;
+}
+
+.faxCardBody img{
+  float: right;
+  width: 40%;
+  margin-left: 1em;
+  filter: sepia(.5);
+  border: 1px solid tan;
+}
+
+
+.userPrefs h5 img,
+.userPrefs label > img{
+  height: 2em;
+  width: 2em;
+  margin-right: 1ex;
+  opacity: 0.5;
+}

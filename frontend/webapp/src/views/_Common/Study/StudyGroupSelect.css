@@ -1,0 +1,633 @@
+.groupList {
+  position: absolute;
+  width: 25vw;
+  min-width: 400px;
+  background-color: white;
+  color: black;
+  top: 70px;
+  left: 1em;
+  border-radius: 1em;
+
+
+
+  -moz-box-shadow: 0 0 3em #000;
+  -webkit-box-shadow: 0 0 3em #000;
+  box-shadow: 0 0 3em #000;
+}
+@media screen and (max-height: 650px)
+{
+
+  .groupList
+  {
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+  }
+}
+
+.groupList.disabled ul {
+  background-color: #ccc;
+  color: #999;
+}
+.groupList.disabled ul img {
+  filter: grayscale(1);
+}
+
+.groupList.disabled ul,
+.groupList.disabled li,
+.groupList.disabled img,
+.groupList.disabled button {
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+.groupList.disabled button {
+  opacity: 0;
+}
+
+.groupList .arrow {
+  position: absolute;
+  font-size: 2em;
+  left: 0.4em;
+  top: -1em;
+  color: white;
+}
+.groupList .close {
+  position: absolute;
+  right: 0.4em;
+  font-family: monospace;
+  color: #aaa;
+  cursor: pointer;
+  font-weight: 800;
+  font-size: 2.5em;
+}
+
+.groupList .close:hover {
+  color: black;
+}
+
+.groupList h5 {
+  text-align: center;
+  padding-top: 0.5em;
+  margin-bottom: 0;
+}
+.groupList ul {
+  padding-left: 0;
+  list-style: none;
+  border-bottom: 1px solid #ddd;
+  cursor: pointer;
+}
+
+.groupList li {
+}
+
+.noGroups,
+.groupListItem {
+  font-weight: 400;
+  cursor: pointer;
+
+  border: 1px solid top;
+  padding: 1ex;
+  border-top: 1px solid #ddd;
+
+  display: flex;
+  justify-content: space-between;
+}
+
+.groupListItem .dropdown {
+  font-size: 3em;
+  font-weight: 800;
+  float: right;
+  text-align: right;
+  color: #aaa;
+  width: 1ex;
+  float: right;
+}
+
+.groupListItemContent .lastMessage {
+  font-size: small;
+  color: #ccc;
+  height: 1.6em;
+  overflow: hidden;
+  letter-spacing: -0.5px;
+  font-weight: 400;
+}
+
+.groupListItemContent .lastMessage img {
+  height: 1.5em;
+  width: 1.5em;
+  margin-right: 1ex;
+  border-radius: 30%;
+  margin-left: 1em;
+}
+
+.groupListItemContent .lastMessage span.speaker {
+  font-weight: bold;
+  max-width: 5em;
+  overflow: hidden;
+}
+
+.groupListItemContent .lastMessage .fromNow {
+  text-transform: lowercase;
+  font-size: xx-small;
+  float: right;
+  line-height: 1.5rem;
+  padding-right: 1px;
+  position: relative;
+  bottom: 0.6ex;
+  margin-left: 1ex;
+}
+
+.groupListItemContent .groupName img.grouptype {
+  height: 1.5em;
+  width: 1.5em;
+  margin-left: -1ex;
+  position: relative;
+  bottom: 2px;
+  opacity: 0.5;
+  margin-right: 1ex;
+}
+
+.groupListItemContent .groupName {
+  display: flex;
+  justify-content: left;
+}
+
+.noGroups {
+  justify-content: center;
+}
+
+.groupListItem.active {
+  font-weight: 800;
+  outline: 3px solid #3a7253;
+  background-color: rgb(107, 208, 152, 0.1);
+}
+.groupListItemImg {
+  width: 4.5em;
+  height: 4.5em;
+  border: 1px solid #aaa;
+  border-radius: 0.3em;
+  margin-right: 1.5ex;
+  object-fit: cover;
+}
+
+.active .groupListItemImg {
+  border-width: 3px;
+  border-color: black;
+}
+
+.groupListItemContent {
+  cursor: pointer;
+  flex-grow: 1;
+  flex-shrink: 1;
+}
+.groupListItemMembers span {
+  display: inline-block;
+  width: 0.6em;
+  height: 0.6em;
+  border-radius: 1em;
+  margin-left: 0.5em;
+}
+
+.groupListItemMembers span.present {
+  background-color: #6bd098;
+}
+.groupListItemMembers span.member {
+  background-color: #aaa;
+}
+.groupListItemMembers span.inCall {
+  background-color: #6ba8d0;
+}
+.groupListItemMembers span.onSite {
+  background-color: #fbc658;
+}
+
+.groupListItemMembers {
+  font-size: small;
+  color: #aaa;
+  margin-left: 1em;
+}
+.groupListItemBadge {
+  position: absolute;
+  align-self: center;
+  left: -5px;
+  bottom: -5px;
+  width: 1.2rem;
+  height: 1.2rem;
+  line-height: 1.1rem;
+  font-size: 0.8rem;
+  text-align: center;
+  background-color: rgb(250, 69, 84);
+  color: white;
+  font-weight: bold;
+  border-radius: 2em;
+  border: 1px solid #0006;
+}
+.callerCount,
+.memberCount {
+  background-color: #eee;
+  margin-left: 1ex;
+  display: inline-block;
+  padding-left: 1.5ex;
+  padding-right: 1ex;
+  border-radius: 1ex;
+  font-size: x-small;
+  color: #aaa;
+  position: relative;
+  bottom: 0.3ex;
+  margin-right: 1em;
+  margin-top: 0.75ex;
+  margin-bottom: -0.75ex;
+  display: flex;
+  height: 2em;
+  align-items: center;
+  font-weight: bold;
+  margin-left: 2em;
+  border: 1px solid #ddd;
+}
+
+.callerCount {
+  float: right;
+  margin: 0;
+  padding: 0 1ex 0 1ex;
+  margin-left: 1ex;
+  border: 1px solid #6ba8d0;
+  background-color: #e7f5ff;
+  color: #6ba8d0;
+  position: relative;
+  bottom: 0px;
+}
+
+.groupListItemContent .memberCount img,
+.groupListItemContent .callerCount img {
+  height: 1.5em;
+  width: 1.5em;
+  opacity: 0.5;
+  margin-right: 0.2ex;
+  margin-bottom: 0px;
+  margin-left: -1ex;
+}
+.groupListItemContent .callerCount img {
+  opacity: 1;
+  margin-left: -0.5ex;
+}
+
+.groupItem:hover .memberCount {
+  border-color: #000;
+}
+
+.groupCallContainer {
+  display: inline-block;
+}
+
+.groupCallContainer,
+.groupMembersContainer {
+  display: flex;
+}
+
+.groupList .groupMembers {
+  position: relative;
+  bottom: 3pt;
+  height: 2em;
+  display: flex;
+}
+
+
+
+.groupMembers span {
+  background-color: #eee;
+  padding-left: 1ex;
+  padding-right: 1ex;
+  border-radius: 0.5ex;
+  margin-right: 1ex;
+  color: #aaa;
+  font-weight: 400;
+  font-size: smaller;
+}
+
+.groupMembers {
+  position: relative;
+  bottom: 0ex;
+  position: relative;
+}
+.groupMembers > div {
+  display: inline-block;
+  margin-left: -1ex;
+  position: relative;
+  flex-shrink: 0;
+}
+.groupMembers > div .dot {
+  background-color: #6bd098;
+  border: 0.3px solid #0003;
+  border-radius: 50%;
+  position: absolute;
+  bottom: -0.5ex;
+  right: 0.5ex;
+  width: 1ex;
+  height: 1ex;
+}
+.groupMembers > div.yellow .dot {
+  background-color: #fbc658;
+}
+
+.disabled .groupMembers > div.green .dot,
+.disabled .groupMembers > div.yellow .dot,
+.groupMembers > div.grey .dot {
+  display: none;
+}
+.groupMembers > div.offline {
+  filter: saturate(0) opacity(0.5);
+}
+.groupMembers img {
+  height: 1.6rem;
+  width: 1.6rem;
+  position: relative;
+  bottom: 0.5ex;
+  width: 1.6rem;
+  margin-right: 0.5ex;
+  border: 1px solid #ccc;
+  line-height: 1em;
+  border-radius: 50%;
+  margin-bottom: -1ex;
+}
+
+.totalUnreadCount {
+  position: absolute;
+  margin-top: 2.2rem;
+  margin-left: -0.5rem;
+  align-self: center;
+  width: 1.2rem;
+  height: 1.2rem;
+  line-height: 1.2rem;
+  font-size: 0.8rem;
+  text-align: center;
+  background-color: rgb(250, 69, 84);
+  color: white;
+  font-weight: bold;
+  border-radius: 2em;
+  transition: margin-top 200ms linear;
+}
+
+.drawerOpen .totalUnreadCount {
+  margin-top: 3.8rem;
+  transition: margin-top 200ms linear;
+}
+.groupListItemImgContainer div.presentHere {
+  background-color: #6bd098;
+  width: 1.5em;
+  height: 1.5em;
+  border-radius: 50%;
+  position: absolute;
+  left: -1ex;
+  top: -1ex;
+  border: 1px solid #0006;
+}
+.groupListItemImgContainer {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.groupItem.show,
+.groupItem:hover {
+  color: #000;
+}
+
+.groupItem .dropdown-menu .dropdown-item 
+{
+  display: flex!important;
+  justify-content: left;
+}
+.groupItem .dropdown-menu .dropdown-item  img
+{
+  flex-shrink: 0;
+  width: 2em;
+  height: 2em;
+  margin-right: 1ex;
+  opacity: 0.5;
+}
+
+.groupListItemMembers small {
+  color: #555;
+  background-color: rgb(0, 0, 0, 0.1);
+  font-size: xx-small;
+  font-weight: 400;
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+  border-radius: 0.5em;
+  margin-left: 0.2em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-transform: uppercase;
+}
+
+.goToStudyHall {
+  background-color: #aaa;
+  line-height: 2em;
+  height: 2em;
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+  align-self: center;
+  margin-left: auto;
+  border-radius: 0.5em;
+  letter-spacing: -0.5px;
+  font-weight: 400;
+  width: 5em;
+  white-space: nowrap;
+  display: none;
+}
+
+.goToStudyHall:hover {
+  background-color: #444;
+  color: #fff;
+}
+
+.groupList li:hover .goToStudyHall {
+  display: block;
+}
+
+.groupList li:hover {
+  background-color: #ddd;
+}
+.groupListItem {
+  left: 1em;
+}
+
+.StudyGroupBar .userStatus {
+  display: flex;
+  justify-content: space-evenly;
+  height: 60px;
+  padding-top: 5px;
+  margin-right: 1em;
+
+  margin-top: 0;
+
+  background-color: #555;
+  border-top-left-radius: 1em;
+  border-top-right-radius: 1em;
+  z-index: 99;
+}
+
+.CreateGroupInput {
+  width: 100%;
+  margin-bottom: 0px !important;
+}
+
+.CreateGroupInput h5 {
+  color: #666;
+  text-align: left;
+  font-weight: 800;
+  font-size: 1em;
+  margin-bottom: 0;
+  margin-top: 0;
+}
+
+.CreateGroupInput .optional {
+  font-weight: 400;
+  color: #aaa;
+  font-style: italic;
+}
+.CreateGroupInput .icon {
+  max-height: 5em;
+  text-align: center;
+  position: relative;
+}
+.CreateGroupInput .icon img {
+  height: 5em;
+  width: 5em;
+}
+
+.CreateGroupInput .groupdesc {
+  line-height: 1em;
+  height: 5em;
+}
+
+button.create {
+  margin-left: calc(50% - 7.5em);
+  width: 15em;
+  margin-bottom: 2em;
+}
+
+.StudyGroupSelect .generic {
+  filter: invert();
+  opacity: 0.5;
+}
+
+.CreateGroupInput .groupPrivacy
+{
+  margin-top: 1em;
+}
+
+.CreateGroupInput .groupPrivacy label
+{
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding-left: 1ex;
+  border-radius: 1ex;
+}
+
+.CreateGroupInput .groupPrivacy label:hover
+{
+  background-color: rgb(244, 244, 244);
+}
+
+.CreateGroupInput .groupPrivacy label img
+{
+  height: 2em;
+  width: 2em;
+  flex-grow: 0;
+  margin-left: 1em;
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+.CreateGroupInput .groupPrivacy label input{
+  flex-shrink: 0;
+}
+
+.CreateGroupInput .card label .form-check-input{
+  width: 2em;
+}
+
+.CreateGroupInput .card label {
+  line-height: 1.5em;
+  font-weight: 800;
+  color: black;
+  cursor: pointer;
+  padding-left: 1em;
+  padding-right: 1em;
+  height: 2em;
+  line-height: 2em;
+  margin-bottom: -1em;
+}
+
+
+
+.CreateGroupInput .card label:hover {
+  background-color: #EEE;
+
+}
+.CreateGroupInput label span {
+  font-weight: 400;
+  color: #aaa;
+  font-style: italic;
+  margin-left: 1em;
+}
+
+.CreateGroupInput label span.iconLabel {
+  color: #666;
+  font-style: normal;
+  width: 3.5em;
+  font-weight: 800;
+  display: inline-block;
+  flex-grow: 0;
+  flex-shrink: 0;
+}
+
+
+.groupList .topButtons
+{
+  display: flex;
+  justify-content: space-between;
+  padding: 1ex 1em 0 1em;
+}
+
+
+.groupList .newgroupbutton {
+  z-index: 1000;
+  background-color: #ddd;
+  height: 2em;
+  line-height: 0.5ex;
+  color: #777;
+  margin-top: 0;
+}
+
+.groupList .studymode  {
+  top: 3.5em;
+  left: 1em;
+  color: #666;
+  font-weight: bold;
+}
+
+
+.groupList .topButtons
+{
+  display: flex;
+  justify-content: space-between;
+  padding: 1ex 1em 0 1em;
+}
+
+
+.groupList .newgroupbutton {
+  z-index: 1000;
+  background-color: #ddd;
+  height: 2em;
+  line-height: 0.5ex;
+  color: #777;
+  margin-top: 0;
+}
+
+.groupList .studymode  {
+  top: 3.5em;
+  left: 1em;
+  color: #666;
+  font-weight: bold;
+}

@@ -1,0 +1,14 @@
+/.serverless
+/.build
+/.vscode
+/.webpack
+/logs
+**/node_modules
+**/build
+/tmp
+.DS_Store
+.env*
+npm-debug.log
+Thumbs.db
+key
+.dockerenv

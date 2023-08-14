@@ -1,0 +1,20 @@
+@import "./scss/_variables.scss";
+
+// @import "./_mixins.scss";
+@import "./mixins/_transparency.scss";
+@import "./mixins/_vendor-prefixes.scss";
+@import "./mixins/_vendor-prefixes-extend.scss";
+@import "./mixins/_buttons.scss";
+@import "./mixins/_inputs.scss";
+@import "./mixins/_dropdown.scss";
+@import "./mixins/_page-header.scss";
+@import "./mixins/_cards.scss";
+@import "./mixins/_social-buttons.scss";
+@import "./mixins/_wizard.scss";
+@import "./mixins/_tags.scss";
+@import "./mixins/_badges.scss";
+@import "./mixins/_popovers.scss";
+@import "./mixins/_modals.scss";
+@import "./mixins/_chartist.scss";
+
+@import "./scss/_sidebar-and-main-panel.scss";

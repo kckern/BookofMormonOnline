@@ -1,0 +1,484 @@
+
+
+.card-invite
+{
+    margin: 0 10vw 0 10vw;
+}
+
+.card-invite img.icon
+{
+    height:3em;
+    margin-left:1em;
+    float:right;
+    opacity: 0.3;
+}
+
+
+
+.card-invite .accept_decline
+{
+    padding-top: -1em;
+    display: flex;
+    justify-content: space-evenly;
+    margin-bottom: 1em;
+}
+
+
+.members_messages
+{
+    display: flex;
+}
+
+.card-invite h3{
+    margin-bottom: 0;
+}
+
+.members_messages > div
+{
+    outline: 1x solid pink;
+    width: 50%;
+    margin-right: 2em;
+}
+
+
+
+.header_icon
+{
+  height: 2em;
+  margin-right: 1ex;
+  opacity: 0.4;
+}
+
+.memberList
+{
+    display: flex;
+    list-style: none;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+
+.memberItem
+{
+    width: calc(33% - 1em);
+    margin-right: 1em;
+    position: relative;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+
+.memberItem img
+{
+    border-radius: 50%;
+    border: 4px solid #AAA;
+    min-height: 5em;
+    min-width: 5em;
+    flex-shrink: 0;
+}
+
+.completedLabel{
+    background-color: #6bd098;
+    border-radius: 1ex;
+    font-size: .8rem;
+    line-height: 1rem;
+    width: 50%;
+    text-align: center;
+    color: white;
+    position: absolute;
+    top:0;
+    right:-1ex;
+    overflow: hidden;
+    white-space: nowrap;
+    min-width: 3em;
+}
+
+.nicknameLabel{
+    text-align: center;
+    font-weight: 800;
+    line-height: 1em;
+    word-break: keep-all;;
+}
+
+.memberItem.online img
+{
+
+    border: 4px solid #6bd098;
+}
+
+.messageItem
+{
+    display: flex;
+    margin-bottom: 1em;
+    line-height: 1em;
+}
+.messageItem div{
+    flex-grow: 1;
+}
+.messageItem img{
+    width: 3em;
+    height: 3em;
+    margin-right: 1ex;
+    border: 1px solid #AAA;
+    flex-shrink: 0;
+}
+
+.messageItem .nickname{
+    font-weight: bold;
+}
+.messageItem .nickname span{
+    font-weight: 400;
+    color: #AAA;
+    margin-left: 1em;
+    float: right;
+    white-space: nowrap;
+    max-width: 50%;
+}
+
+
+.messageList
+{
+    height: calc(100vh - 40em);
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column-reverse;
+}
+
+.memberListCard
+{
+    height: calc(100vh - 40em);
+    overflow-y: auto;
+    overflow-x: hidden;
+
+}
+
+.inviteHeader
+{
+    display: flex;
+    margin-top: 5em;
+}
+
+.coverBox
+{
+    width: 15em;
+    position: relative;
+    margin-bottom: 1em;
+    margin-right: 4em;
+}
+.coverBox>img{
+    width: 15em;
+    height: 15em;
+    object-fit:contain;
+}
+
+.groupType
+{
+    text-align: center;
+    margin-bottom: 2em;
+    text-transform: uppercase;
+    margin-top: 1em;
+    position: absolute;
+    top:-2ex;
+    right: -1ex;
+    
+}
+
+
+.groupType img
+{
+    height: 1.5em;
+    position: relative;
+    bottom: 2px;
+    width: 1.8em;
+    filter: invert();
+    line-height: 2em;
+}
+
+
+.groupType span
+{
+    background-color: #666;
+    padding: 1ex;
+    border-radius: 1ex;
+    color: white;
+    padding-right: 2ex;
+    border: 1px solid #DDD;
+}
+
+.invitation h3{
+    text-align: left;
+}
+
+.invitation h3 + div{
+    margin-bottom: 2em;
+}
+
+.contentBox
+{
+    width: calc(100% - 20em);
+}
+
+.contentBox > div{
+    text-align: left;
+    margin-top: 1em;
+    font-style: italic;
+    color: #999;
+}
+
+h3.you_are
+{
+    color: #AAA;
+    font-size: x-large;
+}
+
+
+.card-invite .signUpIn
+{
+    display: flex;
+}
+
+.card-invite .signUpIn
+{
+    flex-direction: row;
+}
+
+
+.card-invite .signUpIn > div
+{
+    width: calc(50% - 1em);
+    margin-right: 1em;
+    text-align: center;
+}
+
+
+.card-invite .signUpIn .card-body
+{
+    display: flex;
+    flex-direction: column;
+
+}
+
+.guestAccept .alert 
+{
+   color: #6e380c;
+}
+
+.guestAccept .alert img
+{
+   height: 2em;
+   opacity: 0.2;
+}
+
+
+
+.card-invite .signUpIn > div img
+{
+    height: 5em;
+    opacity: 0.5;
+}
+.card-invite .signUpIn > div .btn
+{
+    width: 10em;
+}
+
+.invitation .card-login
+{
+    max-width: 30em;
+}
+
+.card-invite .signUpWrapper,
+.card-invite .signInWrapper{
+    width: 100%;
+    text-align: center;
+    display: flex;
+    justify-content: space-between;
+    padding: 2em;
+    position: relative;
+    margin-top: 1em;
+}
+.card-invite .signInWrapper
+{
+    justify-content: space-around;
+}
+
+.card-invite .signInWrapper .loginGroup
+{
+    width: 45%;
+}
+
+
+.card-invite .signInWrapper h5,
+.card-invite .signUpWrapper h5{
+    font-weight: 800;
+}
+.invitation .signUpWrapper
+{
+    flex-direction: column;
+    align-items: center;
+}
+
+.card-invite .signUpWrapper > div{
+    max-width: 50%;
+}
+
+.card-invite .signUpWrapper .loginGroup
+{
+    width: 30em;
+}
+
+
+.card-invite .signInWrapper .card,
+.card-invite .signUpWrapper .card
+{
+    width: 49%;
+}
+.card-invite .signInWrapper .card-body
+{
+    border-top: 1px solid #FAFAFA;
+}
+
+
+.card-invite .signInWrapper > a,
+.card-invite .signUpWrapper > a{
+    position: absolute;
+    top:-.3ex;
+    left:1em;
+    color: #DDD;
+    opacity: 0.2;
+    font-size: 2em;
+
+}
+
+.noInvite
+{
+    margin-top: 10vh;
+    padding: 5em;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+}
+.alert-warning
+{
+    color: #fd7e14;
+}
+
+.noInvite img
+{
+    height: 10em;
+    opacity: 0.2;
+}
+
+
+.noInvite .alert
+{
+    width: 10em;
+}
+
+.card-invite .SignUpIn
+{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+}
+
+.selectUpIn
+{
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+}
+.selectUpIn img
+{
+    height: 5em;
+    opacity: .5;
+}
+
+
+@media only screen and (max-width: 900px) {
+   
+    .card-invite{
+        margin: 0;
+    }
+    .inviteHeader
+    {
+        flex-direction: column;
+    }
+
+    .contentBox,
+    .coverBox
+    {
+        width: 100%;
+        text-align: center;
+    }
+    .coverBox
+    {
+
+        align-items: center;
+        justify-content: center;
+        display: flex;
+    }
+    .alert-warning
+    {
+        font-size: 0.8rem;
+    }
+    .coverBox img{
+
+        max-height: 15vh;
+    }
+    .card-invite .SignUpIn
+    {
+        flex-direction: column;
+        margin-bottom: 10vh;
+    }
+    .card-invite .signUpWrapper, .signInWrapper
+    {
+
+        margin-bottom: 15vh;
+    }
+    .card-invite .SignUpIn > div,
+    .card-invite .signInWrapper .loginGroup
+    {
+        width: 100%;
+    }
+    .card-invite .signInWrapper
+    {
+        flex-direction: column;
+    }
+    .helpmsg
+    {
+        font-size: .8rem;
+    }
+
+    .card-invite .signUpWrapper > div
+    {
+        max-width: 100%;
+    }
+
+    .invitation h3
+    {
+        text-align: center;
+        font-size: 1.3rem;
+    }
+
+    .invitation ul{
+        padding-left: 0;
+    }
+
+    .members_messages
+    {
+        flex-direction: column;
+    }
+    .members_messages .card
+    {
+        width: 100%;
+    }
+
+    .memberListCard, .messageList
+    {
+        height: auto;
+    }
+
+  }

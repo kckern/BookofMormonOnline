@@ -1,0 +1,150 @@
+@media only screen and (max-width: 900px) {
+  .leftPanelScroll {
+    width: 100vw;
+    position: inherit;
+    padding: 0;
+    height: auto;
+    margin-top: -2em;
+    margin-bottom: -1em;
+  }
+  .rightPanelScroll {
+    width: 100vw;
+    padding-right: 0;
+    position: inherit;
+    padding: 0;
+    height: auto;
+  }
+
+  .home.container {
+    display: flex;
+    flex-direction: column;
+    padding-left: 0;
+    margin: 0 -1em;
+  }
+
+  /* style={{ display: "block", marginTop: "50px" }} */
+
+  .container.home .Community .card-body {
+    flex-direction: row;
+    min-height: auto;
+    overflow-y: scroll;
+  }
+
+  .container.home .Community.card {
+    border-radius: 0!important;
+    background: none;
+    box-shadow: none;
+  }
+  .Community .card-header {
+    display: none;
+  }
+
+  .Community .card-body h3,
+  .Community  .seeMore,
+  .Community .card-body .groupCTA,
+  .Community
+    .card-body
+    .groupCard
+    .groupContent
+    .groupMessage
+    .groupMessageContent {
+    display: none;
+  }
+
+  .rightPanelScroll .loadBar
+  {
+      top: calc(60px + 18em)!important;
+  }
+
+  .Community .card-body .groupCard .groupContent {
+    flex-direction: column;
+    background-color: white;
+    position: relative;
+  }
+  .Community .card-body .groupCard .groupContent > div {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .Community .card-body .groupCard .groupContent .groupImage
+  {
+    width: 100%;
+  }
+
+  .Community .card-body .groupCard .groupContent .groupText
+  {
+    width: 100%;
+  }
+  .Community .card-body .groupCard .groupContent .groupTitle
+  {
+      overflow: hidden;
+      height: 3rem;
+      line-height: .9rem;
+      display: flex;
+      align-items: center;
+      text-align: center;
+      margin: 0;
+      letter-spacing: -.5px;
+      font-weight: 400;
+      margin-top: .7rem;
+      color: #666;
+      font-size: .8rem;
+  }
+
+
+  .Community .card-body .groupCard .groupContent .groupMessage
+  {
+      position: absolute;
+      width: 100%;
+      top:3em;
+      display: flex;
+      justify-content: center;
+  }
+  .Community .card-body .groupCard .groupContent .groupMessage img
+  {
+     margin:0;
+     border-radius: 50%;
+     border: 3px solid #444;
+     background-color: #fff;
+     box-shadow:
+       0 0 1em 1ex #fffa;
+  }
+  .Community .card-body > div.groupCard {
+    margin-right: 1ex;
+    min-width: 5.5em;
+  }
+
+  .Community .card-body .groupCard .groupContent .groupCTA
+  {
+
+  }
+  
+}
+
+.comingSoon {
+  display: flex;
+  justify-content: center;
+  margin-top: 30vh;
+}
+
+.comingSoon div {
+  width: 40vw;
+  height: 10vh;
+  background-color: #ddd;
+  border-radius: 2em;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #666;
+  font-size: 1.5em;
+  padding-left: 2em;
+  padding-right: 2em;
+}
+
+.comingSoon div img {
+  opacity: 0.5;
+  height: 1.5em;
+  margin-right: 1em;
+}

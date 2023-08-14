@@ -1,0 +1,303 @@
+.mobilestudy .groupList
+{
+    position: inherit;
+    margin: 0;
+    box-shadow: none;
+    width: 100%;
+    min-width: auto;
+    background-color: #FFFFFF00;
+    padding-bottom: 50vh;
+}
+
+
+.mobilestudy .groupList .arrow,
+.mobilestudy .groupList .close
+{
+   display: none;
+}
+
+.mobilestudy .StudyGroupChatInput
+{
+    position: fixed;
+    bottom: 63px;
+    width: 100%;
+    border-bottom: 10px solid #DDD;
+}
+
+.mobilestudy
+{
+    margin-left: -1rem;
+    margin-right: -1rem;
+}
+
+
+.mobilestudy .groupList
+{
+    margin-left: 1rem;
+    width: calc(100vw - 2rem);
+}
+
+.mobilestudy .carret.dropdown-toggle 
+{
+    display: none;
+}
+.mobilestudy .btn-secondary
+{
+    border-radius: 1ex!important;
+}
+
+.mobilestudy .StudyGroupChat
+{
+    margin-bottom: 140px;
+}
+
+.mobilestudy .itemInFeedContainer
+{
+    margin-right: -1em;
+    margin-left: -3em;
+    margin-top: 1ex;
+}
+.mobilestudy .itemInFeedContainer .notch
+{
+    margin-left: 1em;
+}
+
+.mobilestudy .MobileChatHeader
+{
+    position: fixed;
+    top:60px;
+    left:0;
+    padding: 1ex;
+    z-index: 99;
+    background: white;
+    width: 100%;
+    display: flex;
+    height: 4em;
+    box-shadow: 0px 0px 28px 3px rgb(0 0 0 / 77%);
+}
+
+#main-panel  div.content.mobilestudy  .commentaryInFeed h3
+{
+    font-size:1rem; 
+    line-height: 1rem;
+}
+#main-panel  div.content.mobilestudy  .commentaryInFeed .commentaryContent
+{
+    max-height: 60vh;
+}
+
+
+.MobileChatHeaderTitle
+{
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1rem;
+    font-weight: 800;
+    padding-right: 1rem;
+}
+
+.MobileChatHeaderTitle img
+{
+    height: 2rem;
+    width: 2rem;
+    margin-right: 1ex;
+}
+.MobileChatHeaderMembers
+{
+    flex-grow: 0;
+    flex-shrink: 0;
+    width: 2rem;
+    font-size: .8rem;
+    font-weight: 800;
+    color: #0005;
+    margin-right: 1ex;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.MobileChatHeaderMembers img{
+    opacity: 0.5;
+}
+
+
+.MobileChatHeaderBack
+{
+    flex-grow: 0;
+    flex-shrink: 0;
+    width: 2rem;
+    font-size: 2rem;
+    margin-left: 1ex;
+    line-height: 1.4em;
+}
+.MobileChatHeaderBack img{
+    opacity: .5;
+}
+
+.LeaderBoardDrawer .GroupLeaderBoard .leaderBoardItem .rank
+{
+    font-size: 1rem;
+}
+
+.LeaderBoardDrawer
+{
+    margin-left: -2rem;
+    margin-right: -2rem;
+}
+
+
+.LeaderBoardDrawer .GroupLeaderBoard .leaderBoardItem 
+{
+    border-bottom: 1px solid #0002;
+    margin-bottom: 1ex;
+    padding-bottom: 1ex;
+}
+
+.LeaderBoardDrawer .GroupLeaderBoard .leaderBoardItem img
+{
+    height: 3rem;
+    width: 3rem;
+}
+.LeaderBoardDrawer .GroupLeaderBoard .leaderBoardItem .nickname
+{
+    font-size: 1rem;
+    line-height: 1.5rem;
+    font-weight: bold;
+    margin-bottom: .5ex;
+}
+
+.LeaderBoardDrawer div.GroupLeaderBoard > .leaderBoardItem:last-child
+{
+    border-bottom: none;
+}
+
+
+.LeaderBoardDrawer .LeaderBoardDrawerHeader
+{
+    display: flex;
+    margin-left: 1em;
+    border-bottom: 1px solid #AAA;
+    margin-bottom: 1ex;
+    width: 75vw;
+    font-size: 1rem;
+}
+
+.LeaderBoardDrawer .LeaderBoardDrawerHeader .memberCountH
+{
+    flex-grow: 1;
+    display: flex;
+    line-height: 2em;
+    margin-bottom: 1ex;
+    font-size: .8em;
+}
+
+
+.LeaderBoardDrawer .LeaderBoardDrawerHeader .memberCountH img
+{
+    flex-shrink: 0;
+    height: 2rem;
+    width: 2rem;
+    opacity: .5;
+    margin-right: .5ex;
+}
+
+
+.LeaderBoardDrawer .LeaderBoardGroupName 
+{
+    font-size: 1.3rem;
+    display: flex;
+    margin: 0 1.5em;
+    margin-bottom: 1ex;
+    font-weight: bold;
+    text-align: left;
+
+}
+.LeaderBoardDrawer .LeaderBoardGroupName > div{
+    flex-grow: 1;
+    margin-left: -.8ex;
+}
+
+.LeaderBoardDrawer .LeaderBoardGroupName img{
+    flex-shrink: 0;
+    height: 2rem;
+    width: 2rem;
+    margin-right: .5ex;
+}
+
+ .btn.invite
+{
+    padding: 1ex;
+    margin-top: .5ex;
+    font-size: .7rem;
+    line-height: .5rem;
+    height: 1.7rem;
+}
+ .btn.invite img
+{
+    height: 1rem;
+    filter: invert();
+}
+
+.DrawerStudyGroupThread .threadHeader
+{
+    display: none;
+}
+
+.DrawerStudyGroupThread
+{
+    font-size: .8rem;
+}
+
+.DrawerStudyGroupThread .timeStamp
+{
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.DrawerStudyGroupThread .threadCommentInput
+{
+    padding-left: 3rem;
+}
+
+.DrawerStudyGroupThread .threadCommentInput textarea
+{
+    padding: .5ex;
+    height: 1em!important;
+    font-size: .8rem;
+    line-height: 1.5rem;
+}
+
+.DrawerStudyGroupThread .itemInFeedContainer
+{
+    display: none;
+}
+
+
+.DrawerStudyGroupThread .likeCount,
+.DrawerStudyGroupThread .replyBubble, 
+.mobilestudy .likeCount,
+.mobilestudy .replyBubble {
+  background-color: #eee;
+  color: #666;
+  border-radius: 1rem;
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+  font-weight: bold;
+  border: 1px solid #aaa;
+  font-weight: 400;
+  font-size: 0.9em;
+  white-space: nowrap;
+  margin-right: 0.25em;
+  opacity: 1;
+  font-weight: bold;
+}
+
+
+.DrawerStudyGroupThread .likeCount:hover,
+.DrawerStudyGroupThread .replyBubble:hover {
+  background-color: #666;
+  color: #fff;
+  opacity: 1;
+}
+

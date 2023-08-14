@@ -1,0 +1,803 @@
+
+$antlength: 5px;
+$antwidth: 2px;
+$antcolor: #6bd0a9;
+
+
+.StudyGroupBar {
+  position: absolute;
+  top: 0;
+  left: 250px;
+  right: 60px;
+  height: 60px;
+  cursor: pointer;
+}
+
+.StudyGroupBar .StudyGroupSelect {
+  float: left;
+  height: 50px;
+  width: 50px;
+  border-radius: 5px;
+  background-color: #393f46;
+  text-align: center;
+  line-height: 50px;
+  font-size: 30px;
+  margin-left: 0.3em;
+  margin-right: 0.5em;
+  margin-top: 5px;
+  cursor: pointer;
+  background-size: cover;
+  position: relative;
+  left: 0;
+  border: 0 solid #555;
+  transition: margin-top 200ms ease-in, height 200ms ease-in,
+    width 200ms ease-in, left 200ms ease-in, border 200ms ease-in;
+}
+
+.StudyGroupBar.drawerOpen .StudyGroupSelect {
+  margin-top: 33px;
+  height: 110px;
+  width: 90px;
+  left: -15px;
+  border: 20px solid #555;
+  border-right: 0;
+
+  transition: margin-top 200ms ease-in, height 200ms ease-in,
+    width 200ms ease-in, left 200ms ease-in, border 200ms ease-in;
+}
+
+.StudyGroupBar .userStatus .userCircle,
+.StudyHall .userCircle {
+  transition: margin-top 200ms ease-in;
+  height: 50px;
+  width: 50px;
+  border-radius: 50px;
+  border: 4px solid #888;
+  background-position: center center;
+  background-size: cover;
+  filter: saturate(0);
+  opacity: 0.5;
+  cursor: pointer;
+  position: relative;
+}
+.StudyGroupBar .userStatus .userCircle .progressBadge,
+.StudyHall .userCircle .progressBadge {
+  position: absolute;
+  bottom: -0.7em;
+  right: -1.5em;
+  background-color: #55a579;
+  font-size: x-small;
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+  border-radius: 0.5em;
+  font-weight: 800;
+  color:#FFF;
+}
+
+.unreadDMCount
+{
+  display: inline-block;
+  align-self: center;
+  width: 1.2rem;
+  height: 1.2rem;
+  margin-right: -2.5em;
+  line-height: 1.2rem;
+  font-size: 0.8rem;
+  text-align: center;
+  background-color: rgb(250, 69, 84);
+  color: white;
+  font-weight: bold;
+  border-radius: 2em;
+  transition: margin-top 200ms linear;
+  filter: saturate(1)!important;
+
+}
+.StudyGroupSideBar li{
+  display: relative;
+}
+
+.StudyGroupBar .userCircle + .unreadDMCount
+{
+  position: absolute;
+  left:calc(50% + 1.2em);
+  margin-top: -4em;
+
+}
+.StudyGroupSideBar .userCircle + .unreadDMCount
+{
+  left:0;
+  margin-top: -3em;
+}
+
+.StudyGroupSideBar .userCircle.discussion
+{
+  filter: saturate(1);
+  opacity: 1;
+  border-color: #000;
+}
+
+.StudyGroupSideBar .discussion .unreadDMCount
+{
+  position: absolute;
+  left:0;
+  margin-top: -3em;
+}
+
+.StudyGroupSideBar .discussion 
+{
+
+  background-repeat: no-repeat;
+}
+
+.StudyGroupSideBar li.active  .unreadDMCount
+{
+  display: none;
+}
+
+
+
+.StudyGroupBar .userStatus .userCircle.inCall .progressBadge
+{
+  background-color: #6ba8d0;
+}
+
+.StudyGroupBar .userStatus .userCircle.inGroup.isTyping
+{
+  filter: brightness(1.2);
+} 
+
+.StudyGroupBar .userStatus .userCircle
+{
+  position: relative;
+}
+
+
+
+.StudyGroupBar .userStatus .userCircle:hover,
+.StudyHall .userCircle:hover {
+  filter: saturate(1);
+  opacity: 1;
+}
+
+.StudyGroupBar .userStatus .userCircle.onsite,
+.StudyGroupBar .userStatus .userCircle.onSite,
+.StudyHall .userCircle.onSite
+{
+  filter: sepia(.9);
+  opacity: 1;
+  border-color: #fbc658;
+}
+
+.StudyGroupBar .userStatus .userCircle.inGroup,
+.StudyHall .userCircle.inGroup {
+  border-color: #6bd098;
+  filter: saturate(1);
+  opacity: 1;
+}
+
+.StudyGroupBar .userStatus .userCircleOutline
+{
+  position: absolute;
+  left: -6.5px;
+  top: -7px;
+  height: 55px;
+  width: 55px;
+  border-radius: 50px;
+  border: 3px #6ba8d0;
+  border-style:dashed;
+  filter: saturate(1);
+  opacity: 1;
+}
+
+.StudyGroupBar .userStatus .phoneCall
+{
+  font-size: 1.5rem;
+  position: absolute;
+  left:-5px;
+  bottom: 5px;
+  transform: rotate(20deg);
+}
+
+
+.inCall .phoneCall{
+
+  animation: sway 10s infinite ease-in-out;
+}
+
+@keyframes rotate {
+  from {
+    -webkit-transform: rotate(0deg);
+  }
+  to {
+    -webkit-transform: rotate(360deg);
+  }
+}
+
+.studyGroupSelectContainer {
+  float: right;
+  width: 12vw;
+  position: relative;
+  min-width: 150px;
+  margin-right: 1em;
+}
+
+.studyGroupSelectLabel {
+  position: absolute;
+  color: white;
+  font-size: 11px;
+  text-align: center;
+  width: 100%;
+}
+
+.studyGroupSelect {
+  width: 100%;
+  margin-top: 15px;
+  background-color: #ddd;
+  border: none;
+  border-radius: 1em;
+  background-size: contain;
+}
+
+.studyGroupSelect > div.react-select__control {
+  border: none !important;
+  border-radius: 1em;
+}
+
+.studyGroupTicker {
+  width: 50vw;
+  transition: left 300ms ease-out;
+  transition: top 300ms ease-out;
+  position: absolute;
+  left: 300px;
+  top: 0;
+}
+
+.studyGroupTicker.collapsed {
+  transition: top 300ms ease-in;
+  top: -50px;
+}
+.studyGroupTicker.collapsed-keep {
+  left: 10vw;
+  transition: left 300ms ease-out;
+  left: 100%;
+}
+
+.studyGroupTickerItem {
+  height: 50px;
+  line-height: 15px;
+  margin-top: 5px;
+  overflow: hidden;
+}
+
+.studyGroupTickerItem img {
+  height: 45px;
+  width: 45px;
+  border-radius: 50px;
+  margin-right: 1em;
+  float: left;
+}
+
+.studyGroupTickerItem .username {
+  font-weight: 800;
+  display: block;
+}
+.studyGroupTickerItem .message {
+  display: block;
+  color: #aaa;
+  height: 30px;
+  overflow: hidden;
+}
+
+.StudyGroupBar .StudyGroupDrawer {
+  position: absolute;
+  top: 0;
+  left: calc(60px + 1em);
+  right: 1em;
+  height: 60px;
+  transition: height 300ms ease-in;
+  text-align: center;
+  background-color: #555;
+  border-top-left-radius: 1em;
+  border-top-right-radius: 1em;
+}
+
+.StudyGroupBar h1 {
+  font-family: "Roboto Condensed", "Arial Narrow", sans-serif;
+  color: black;
+  color: #aaa;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+}
+
+.StudyGroupBar .StudyGroupDrawer.open {
+  display: block;
+  height: 97vh;
+  transition: height 300ms ease-in;
+  -moz-box-shadow: 0 0 3em #000;
+  -webkit-box-shadow: 0 0 3em #000;
+  box-shadow: 0 0 3em #000;
+  padding: 2em;
+  border-radius: 1em;
+  padding-top: 0;
+}
+
+.StudyGroupBar .userStatus.hidden div {
+  margin-top: -60px;
+  transition: margin-top 300ms;
+  pointer-events: none;
+}
+
+.StudyGroupBar .StudyGroupDrawer .StudyGroupContents {
+  background-color: #ddd;
+  border-radius: 1em;
+  height: calc(100% - 4em);
+}
+
+/* CIRCLE */
+
+.userStatus .callCircle {
+  height: 50px;
+  width: 50px;
+  border-radius: 50px;
+  border: 4px solid #888;
+  background-position: center center;
+  background-size: cover;
+  cursor: pointer;
+  position: relative;
+  text-align: center;
+  line-height: 45px;
+  background-color: white;
+  font-size: 1.5rem;
+}
+
+.userStatus .callCircle.loading {
+  opacity: 0.5;
+}
+.userStatus .callCircle.limbo {
+  border-color: #6bd0a9;
+  font-weight: 800;
+  animation: spin 1s infinite ease-in-out;
+}
+
+.userStatus .callCircle.coolDown {
+  color: rgb(145, 67, 14);
+  font-weight: 800;
+  animation: spin 1s infinite ease-in-out;
+  cursor: none;
+  opacity: 0.2;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0);
+  }
+  100% {
+    transform: rotate(180deg);
+  }
+}
+.callCircle.noCall {
+  opacity: 0.5;
+}
+
+.userStatus .callCircle.noCall:hover {
+  opacity: 1;
+  border-color: #6bd0a9;
+  font-size: 200%;
+}
+
+.userStatus .callCircle.isCall,
+.userStatus .callCircle.wasCall {
+  animation: bounce 1s infinite ease-in-out;
+  border-color: #6ba8d0;
+  background-color: #ffffff;
+  opacity: 1;
+}
+.userStatus .callCircle.wasCall {
+  animation: sway 10s infinite ease-in-out;
+}
+.userStatus .callCircle.wasCall:hover {
+  animation: bounce 1s infinite ease-in-out;
+}
+
+@keyframes sway {
+  0% {
+    transform: rotate(50deg);
+  }
+  25% {
+    transform: rotate(-25deg);
+  }
+  50% {
+    transform: rotate(50deg);
+  }
+  75% {
+    transform: rotate(-25deg);
+  }
+  100% {
+    transform: rotate(50deg);
+  }
+}
+
+@keyframes bounce {
+  0% {
+    transform: rotate(0);
+  }
+  10% {
+    transform: rotate(-25deg);
+  }
+  20% {
+    transform: rotate(25deg);
+  }
+  30% {
+    transform: rotate(-25deg);
+  }
+  40% {
+    transform: rotate(25deg);
+  }
+  50% {
+    transform: rotate(0);
+  }
+  100% {
+    transform: rotate(0);
+  }
+}
+
+.callCircle.inCall,
+.callCircle.warmUp {
+  border-color: #6ba8d0;
+}
+
+.callCircle.inCall:hover svg {
+  display: none;
+}
+.callCircle.inCall #hangup {
+  display: none;
+}
+.callCircle.inCall:hover {
+  border-color: #f44336;
+}
+
+.callCircle.inCall:hover .hangUp {
+  display: block;
+}
+.callCircle.inCall:hover .timer {
+  bottom: -1.5em;
+  background-color: #f44336;
+}
+.callCircle .timer {
+  position: absolute;
+  bottom: -0.5em;
+  left:-.6ex;
+  min-width: 5em;
+  height: 1.5em;
+  line-height: 1.5em;
+  background-color: #6ba8d0;
+  font-size: x-small;
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+  border-radius: 0.5em;
+  font-weight: 800;
+}
+
+.hangUp {
+  display: none;
+}
+
+#wave {
+  height: 100%;
+  width: 100%;
+  position: relative;
+  top: -4px;
+  fill: #6ba8d0;
+}
+
+@for $i from 1 through 9 {
+  #Line_#{$i} {
+    animation: pulse 0.5s infinite;
+    animation-delay: $i * 0.2s;
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scaleY(1);
+    transform-origin: 50% 50%;
+  }
+
+  50% {
+    transform: scaleY(0.7);
+    transform-origin: 50% 50%;
+  }
+
+  100% {
+    transform: scaleY(1);
+    transform-origin: 50% 50%;
+  }
+}
+
+.divider
+{
+
+  flex-grow: 1;
+}
+
+
+.divider.inCall
+{
+  position: relative;
+  top:18px;
+  margin-left: -1px;
+  height:1em;
+  background-color: #6ba8d0;
+  background-image: linear-gradient(90deg, $antcolor 50%, transparent 50%),
+      linear-gradient(90deg, $antcolor 50%, transparent 50%),
+      linear-gradient(0, $antcolor 50%, transparent 50%),
+      linear-gradient(0, $antcolor 50%, transparent 50%);
+  background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+  background-size: $antlength $antwidth, $antlength $antwidth, 0 0, 0 0;
+  animation: marching-ants 1s infinite linear;
+}
+
+
+@keyframes marching-ants {
+    0%   {background-position: 0 0, $antlength 100%, 0 $antlength, 100% 0;}
+    100% {background-position: $antlength 0, 0 100%, 0 0, 100% $antlength;}
+}
+
+.userCircle .typing
+{
+  text-align: center;
+  width: 100%;
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 1em;
+  margin-top: 25px;
+}
+
+
+.userCircle + .btn
+{
+display: none;
+}
+
+.userStatus .dropdown-menu {
+  right:-7.5em!important;
+  left: auto!important;
+  transition: none!important;
+  max-width: 15em!important;
+  min-width: 15em;
+}
+.userStatus .dropdown .dropdown-menu[x-placement="bottom-start"]:before,
+.userStatus .dropdown .dropdown-menu[x-placement="bottom-start"]:after
+{
+  right: calc(50% - .8ex);
+}
+
+.userStatus .dropdown-menu img{
+  height: 1.5em;
+  width: 1.5em;
+  margin-right: 1ex;
+  line-height: 1em;
+}
+.dropdown-menu .statRow img
+{
+  opacity: 0.5;
+  position: relative;
+  bottom: -2pt;
+}
+
+
+.dropdown-menu .statRow.group img
+{
+  opacity: 1;
+}
+
+.dropdown-menu .statRow
+{
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+}
+.dropdown-menu  .statRow div
+{
+  text-align: left;
+  flex: 1;
+  color: #888;
+}
+.dropdown-menu .dropdown-item:hover .statRow div
+{
+  color: #FFF;
+}
+.dropdown-menu .statRow div:last-child
+{
+  text-align: right;
+  flex-shrink: 0
+}
+.dropdown-menu .statBox
+{
+  padding-right: 15px!important;
+}
+
+
+.dropdown-menu .statRow.link
+{
+  justify-content: center;
+  min-width: 15em;
+}
+.dropdown-menu .statRow.link div:last-child
+{
+  text-align: center;
+  font-size: smaller;
+  margin-top: 1ex;
+}
+
+
+.dropdown-menu .statRow.link span
+{
+  white-space: normal;
+}
+
+.dropdown-menu .statRow.link span.heading
+{
+  white-space: nowrap;
+}
+
+
+
+.dropdown-menu  h6 .progress_text_item
+{
+  text-transform: lowercase;
+  display: flex;
+  justify-content: space-between;
+  font-size: smaller;
+  font-weight: 400;
+}
+.dropdown-menu  .disabled .statBox
+{
+  cursor:auto!important;
+}
+
+.userStatus .dropdown-menu.liveMessage img.chatIcon
+{
+  float:right;
+  opacity: 0.5;
+  height: 2em;
+  width: 2em;
+  margin-right: -1ex;
+  margin-top: -.5ex;
+
+}
+.dropdown-menu .dropdown-item:hover .statRow div,
+.userStatus .dropdown-menu.liveMessage  .dropdown-item:hover
+{
+  background-color: inherit;
+  color: inherit!important;
+}
+
+.drawerOpen .userStatus .dropdown
+{
+  display: none;
+}
+
+
+.userStatus .dropdown-item:hover a
+{
+  color: white;
+}
+
+.userStatus .dropdown-item:hover img
+{
+  filter: invert(1);
+}
+
+.messageBox
+{
+  white-space:normal;
+  text-align: left;
+  font-size: smaller;
+  margin-right: -30px;
+  line-height: 2ex;
+  color:#000;
+  padding: 1ex;
+  border-radius: .5ex;
+  max-height: 12em;
+  overflow: hidden;
+  margin-top: -1em;
+  /*border: 1px solid #DDD;
+  background-color: rgb(248, 248, 248); */
+
+}
+
+.DMLabel
+{
+  font-weight: bold;
+  color: #f44336;
+  margin-bottom: 1ex;
+  margin-top: -1ex;
+}
+
+
+.userCircle .trophyIcons img
+{
+  background-color: #FFFA;
+  border-radius: 50%;
+  position: absolute;
+  height: 1.5em;
+  width: 1.5em;
+  bottom:-1ex;
+  left:-1.5ex;
+  padding:1px;
+}
+
+
+
+.Toastify__toast-container--bottom-left
+{
+  display: flex;
+  flex-direction: column-reverse;
+  width: calc(250px - 5ex);
+}
+
+.Toastify__toast--info
+{
+  background-color: #323b4d;
+  font-size: smaller;
+
+}
+
+.Toastify__progress-bar--info {
+  background-color: #626e85;
+
+}
+
+.toastBox
+{
+  display: flex;
+}
+
+
+.toastBox img
+{
+  flex-shrink: 0;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  margin-left: -1ex;
+  margin-right: 1ex;
+  border: 4px solid #AAA;
+}
+
+.toastBox.green img
+{
+  border-color: #6bd098;
+}
+
+.toastBox.yellow img
+{
+  border-color: #fbc658;
+}
+.toastBox.grey img
+{
+  border-color: #888;
+}
+
+
+.toastBox > div
+{
+  display: flex;
+  align-items: center;
+  font-family: 'Roboto Condensed', 'Arial Narrow', 'sans-serif';
+}
+
+
+
+@media only screen and (max-width: 991px) {
+  .header-logo-image, .headerTitle
+  {
+      display:none;
+  }
+  .StudyGroupBar
+  {
+      left: 1em;
+  }
+}

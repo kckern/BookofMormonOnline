@@ -1,0 +1,82 @@
+
+.topTabs{
+
+  display:flex;
+  flex-wrap: wrap;
+  justify-content: space-evenly
+}
+
+.topTabs div{
+
+
+
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #AAA;
+    color:white;
+    padding:.5em;
+    flex-grow: 1;
+    font-weight: bold;
+    text-align: center;
+    font-size: 1.2em;
+    border: 1px solid #555;
+    border-top: 0;
+    border-left: 0;
+
+}
+
+
+.noteList
+{
+    max-height: 50vh;
+    overflow-y: auto;
+    width: 35%;
+    border:1px solid black;
+    float: left;
+}
+
+
+.noteList .note
+{
+    border:1px solid #AAA;
+    padding: 1ex;
+    margin-bottom: 1em;
+    margin:1em;
+    border-radius: 1ex;
+}
+
+.noteList .note i{
+    float: right;
+    color: #AAA;
+}
+.noteList .note h4{
+    border:1px solid #AAA;
+    padding:.5ex;
+    margin:0rem;
+    margin-bottom: 1ex;
+    background-color: #CCC;
+    border-radius: 1ex;
+    font-size: 1.2rem;
+    font-weight: 800;
+
+}
+
+
+.noteList .note blockquote{
+    line-height: .8rem;
+    color: #444;
+}
+
+
+.noteList .note blockquote .badge{
+    height: 2em;
+    width: 3em;
+    line-height: 1em;
+    text-align: center;
+    display: inline-block;
+    background-color: #555;
+    color: white;
+    margin-left: 1em;
+}

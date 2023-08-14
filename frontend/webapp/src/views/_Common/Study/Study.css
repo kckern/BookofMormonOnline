@@ -1,0 +1,268 @@
+.card .scripture .study {
+  border-top: 4px solid #999;
+  padding-top: 0.5em;
+}
+
+.study .comment {
+  margin-bottom: 1em;
+}
+
+.study .commentcontainer {
+  margin-left: 35px;
+  line-height: 1em;
+  border-radius: 0.5em;
+}
+
+.study .contenttext {
+  background-color: #f8f8f8;
+  border-radius: 0.5em;
+  padding: 0.6em;
+  margin-top: 0.3em;
+}
+
+.textblock .study .contenttext {
+  padding: 0 0 0.6em 0.6em;
+}
+
+.study .commentcontent .name {
+  font-weight: bold;
+  position: relative;
+  top: 0em;
+  left: 0.25em;
+}
+
+.study .mycomment textarea {
+  padding: 0.5em;
+  height: 2.25em;
+  line-height: 1.2em;
+  text-align: left;
+  margin-left: 35px;
+  width: calc(100% - 35px);
+  color: #666;
+}
+
+.edit-commment .mycomment textarea {
+  margin-left: 3em;
+  width: calc(100% - 3em);
+  margin-top: -1ex;
+}
+
+.card .scripture .edit-commment {
+  border-top: 0;
+}
+
+.pagesection > .study {
+  padding: 1em;
+  background-color: #eee;
+  border-bottom-left-radius: 1em;
+  border-bottom-right-radius: 1em;
+}
+
+.pagesection > .study .contenttext {
+  margin-bottom: 0.5em;
+}
+
+.study .comment .commentfooter {
+  margin-left: calc(35px + 0.5em);
+  font-size: smaller;
+  color: #aaa;
+  -webkit-touch-callout: none;
+  /* iOS Safari */
+  -webkit-user-select: none;
+  /* Safari */
+  -khtml-user-select: none;
+  /* Konqueror HTML */
+  -moz-user-select: none;
+  /* Old versions of Firefox */
+  -ms-user-select: none;
+  /* Internet Explorer/Edge */
+  user-select: none;
+  /* Non-prefixed version, currently */
+}
+
+.study .comment .commentfooter div {
+  display: inline-block;
+  margin-right: 0.5em;
+}
+
+.study .comment .commentfooter div.response,
+.study .comment .commentfooter div.reply,
+.study .comment .commentfooter div.edit,
+.study .comment .commentfooter div.delete {
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.study .comment .commentfooter div.response:hover,
+.study .comment .commentfooter div.reply:hover,
+.study .comment .commentfooter div.edit:hover,
+.study .comment .commentfooter div.delete:hover {
+  color: black;
+  position: relative;
+  bottom: 2px;
+}
+
+.study .comment .commentfooter div.response:active,
+.study .comment .commentfooter div.reply:hover:active {
+  color: rgb(83, 20, 20);
+}
+
+.study .comment .commentreactions {
+  margin-left: 2.7rem;
+  margin-bottom: 0.5em;
+  font-size: 0.8em;
+  color: #999;
+}
+
+.study .comment .timestamp a {
+  font-weight: 400;
+  color: #aaa;
+}
+
+.study .comment .timestamp a:hover {
+  text-decoration: underline;
+}
+
+#popUp .study {
+  padding: 1em;
+  background-color: #eee;
+  border-bottom-right-radius: 1em;
+  border-bottom-left-radius: 1em;
+  border-top: 1px solid #ccc;
+}
+
+.study .HighlightTags {
+  margin-bottom: 0.5em;
+}
+
+.study .HighlightLabel {
+  color: #aaa;
+  margin-left: 0.5em;
+  margin-right: 0.5em;
+}
+
+.study .commentHighlightTag,
+.StudyHall .commentHighlightTag {
+  color: #666;
+  padding: 0.25em;
+  font-style: italic;
+  margin-bottom: 1em;
+}
+
+.study .commentHighlightTags,
+.StudyHall .commentHighlightTags {
+  border-left: 3px solid #ddd;
+  margin-left: 0.5em;
+  padding-left: 0.5em;
+  margin-bottom: 0.6em;
+  line-height: 1.3em;
+  margin-top: 0.2em;
+  cursor: grab;
+}
+
+.study .commentDescription {
+  border-left: 3px solid #ddd;
+  margin-left: 0.5em;
+  padding-left: 0.5em;
+  margin-bottom: 0.6em;
+  line-height: 1.3em;
+  margin-top: 0.2em;
+  font-style: italic;
+  color: #666;
+}
+
+div.study > div.mycomment.form-group > textarea {
+  border-radius: 6px;
+  border-color: #e3e3e3;
+}
+
+.highlightTags {
+  padding: 0.5em;
+  margin-left: 2.8em;
+  padding-bottom: 0;
+}
+
+.highlightTag {
+  display: inline-block;
+  background-color: rgb(255, 249, 170);
+  margin-right: 0.5em;
+  margin-bottom: 0.5em;
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+  border-radius: 0.5em;
+  border: 1px solid rgb(100, 50, 0, 0.5);
+  color: rgb(100, 50, 0, 0.5);
+}
+
+.highlightTag > .remove {
+  margin-left: 0.5em;
+  cursor: pointer;
+  float: right;
+  color: rgb(100, 50, 0, 0.5);
+  font-family: monospace;
+}
+
+.highlightTag .remove:hover {
+  font-weight: 800;
+  position: relative;
+  bottom: 1px;
+  color: black;
+}
+
+.study .highlightButtons {
+  margin-left: 3.5em;
+  margin-top: -0.5em;
+}
+
+.study .highlightButtons button {
+  height: 1em;
+  line-height: 0em;
+  width: 47.5%;
+  background-color: #999;
+}
+
+.study .highlightButtons button:hover {
+  background-color: #000;
+}
+
+.study .viewMoreComments {
+  margin-left: 2.7em;
+  margin-bottom: 1em;
+  color: #aaa;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.study .viewMoreComments div {
+  margin-left: 0.5em;
+}
+
+.study .viewMoreComments:hover div {
+  font-weight: 800;
+  color: black !important;
+}
+
+.study .viewMoreComments:hover {
+  position: relative;
+  top: -2px;
+}
+
+.study .viewMoreComments img {
+  height: 1.5em;
+  width: 1.5em;
+  border: 0.2px solid #ddd;
+}
+
+.study .viewMoreComments:hover img {
+  border-color: #aaa;
+}
+
+.study .viewMoreComments + .mycomment {
+  display: none;
+}
+
+.tagUser {
+  background-color: rgb(186, 184, 184);
+  border-radius: 5px;
+  padding: 2px;
+}

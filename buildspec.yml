@@ -1,0 +1,40 @@
+
+version: 0.2
+
+env:
+  variables:
+    AWS_ACCOUNT_ID: "983925251193"
+    CLUSTER: "BoMOnline"
+    REGION: "us-west-2" 
+    TAG: "latest"
+    # Environemnt-specific Values Provided by CodeBuild /codesuite/codebuild/projects/ProjectName/edit/environment
+    #REPOSITORY: 
+    #SERVICE_NAME: 
+    #DOCKER_USERNAME: Need this to pull from docker without hitting rate limits
+    #DOCKER_PASSWORD:
+phases:
+  pre_build:
+    commands:
+      ## Check if docker is installed
+      - echo Checking if Docker is installed...
+      - docker --version
+      - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+      - echo Logging into AWS ECR...
+      - echo "Target repository:"
+      - echo $REPOSITORY
+      - aws --region $REGION ecr get-login-password | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com
+  build:
+    commands:
+      - echo Build started on `date`
+      - echo Building the Docker image and adding tag - $AWS_ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$REPOSITORY:$TAG
+      - docker build -t $AWS_ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$REPOSITORY:$TAG . --build-arg COMMIT_ID=$CODEBUILD_RESOLVED_SOURCE_VERSION
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - echo Pushing the Docker image $AWS_ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$REPOSITORY:$TAG
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$REPOSITORY:$TAG
+      # Update task definition with new image
+
+      ## Deploy to ECS
+     # - echo Deploying the Docker image to ECS...
+      - aws ecs update-service --cluster $CLUSTER --service $SERVICE_NAME --force-new-deployment

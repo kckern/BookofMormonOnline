@@ -1,0 +1,38 @@
+.bibleContainer{
+    margin-top: 5em;
+    margin-left: 2em;
+    height: calc(100vh - 5em - 2em);
+    outline: 1px solid black;
+
+}
+
+.bibleContainer > div{
+    outline: 1px solid black;
+}
+.bibleContainer .bibleDetail{
+    height: 40%;
+}
+.bibleContainer .bibleOTgrid{
+    height: 20%;
+}
+.bibleContainer .bibleNTgrid{
+    height: 20%;
+}
+.bibleContainer .bibleBOMgrid {
+    display: flex;
+    flex-wrap: wrap;
+    height: 20%;
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+}
+
+.verse {
+    background-color: blue;
+}
+
+.bomverse
+{
+
+    background-color: yellow;
+}

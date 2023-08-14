@@ -1,0 +1,136 @@
+.sidebar .nav li > a {
+  font-weight: 400;
+  line-height: 1em;
+  font-family: "Roboto Condensed", "Arial Narrow", sans-serif;
+  cursor: pointer;
+  text-transform:none;
+  font-size: 1.38rem;
+  letter-spacing: 0px;
+  margin-top: 0;
+}
+@media (max-height: 750px){
+
+  .sidebar .nav li a{
+    margin-bottom:-1.2ex; 
+ }
+
+}
+
+.sidebar .nav li.active > a {
+  box-shadow: none;
+  background-color: #323b4d;
+}
+
+.sidebar .nav li.menuitem img {
+  height: 1.2em;
+  position: relative;
+  bottom: 2px;
+  margin-right: 1ex;
+}
+
+.sidebar .searchbox input {
+  width: calc(100%);
+  padding: 0.25em;
+  padding-left: 1em;
+  font-size: 0.7em;
+}
+
+.sidebar .searchbox input:focus {
+  outline: none;
+}
+
+.sidebar .searchbox input::placeholder {
+  letter-spacing: 0.5em;
+  text-align: center;
+}
+
+.sidebar .searchbox input:focus::placeholder {
+  color: transparent;
+}
+
+.sidebar .nameContainer {
+  display: flex;
+  line-height: 100%;
+  text-align: right;
+}
+
+.sidebar .nameContainer .name{
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: calc(100% - 1.8em - 2ex);
+  text-align: center;
+
+}
+.sidebar .nameContainer img {
+  height: 1.8em;
+  width: 1.8em;
+  border-radius: 1.5em;
+  margin-right: 1ex;
+  border: 2px solid #6bd098;
+  margin-left: 1ex;
+}
+
+.sidebar .userNav {
+  padding-bottom: 1em;
+  border-bottom: 1px dotted #666;
+}
+
+.sidebar .nav {
+  margin-top: 0;
+  margin-bottom: 1em;
+}
+.progress {
+  height: 2em;
+  text-align: center;
+}
+.progresslist {
+  position: relative;
+  width: 100%;
+  margin-top: 0.5em;
+}
+
+.progress_text {
+  position: absolute;
+  top: 0;
+  color: #444;
+  width: 100%;
+  font-size: 0.8rem;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 250ms;
+}
+.userNav:hover .progress_text {
+  opacity: 1;
+  transition: opacity 250ms;
+}
+.active .progress_text {
+  opacity: 1;
+}
+.sidebar .nav.userNav li a,
+.sidebar .nav li.searchbox a {
+  opacity: 1;
+}
+
+.sidebar .settings img {
+  height: 1em;
+  opacity: 0.7;
+}
+.sidebar .settings img:hover {
+  opacity: 1;
+}
+
+.sidebar .settings {
+  display: flex;
+  justify-content: space-evenly;
+  margin-top: 1ex;
+}
+
+.userPrefs label {
+  width: 100%;
+}
+
+.userPrefs .bootstrap-switch {
+  float: right;
+}

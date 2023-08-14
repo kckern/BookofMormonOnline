@@ -1,0 +1,77 @@
+
+
+.StudyGroupBar .userStatus .userCircle .actionBubble::before
+{
+  content: "▲";
+  position: absolute;
+  top:-1.2rem;
+  left: calc(50% - .5rem);
+  width: 1rem;
+  font-weight: 800;
+  font-size: 2rem;
+  height: 1.2em;
+  color: #6bd098;
+
+}
+
+.StudyGroupBar .userStatus .userCircle .actionBubble
+{
+  background-color: white;
+  border: 4px solid #6bd098;
+  color:black;
+  position: absolute;
+  top:calc(100% + 2em);
+  left: 50%;
+  width: 15em;
+  text-align: center;
+  padding:1ex;
+  margin-left: -7.5em;
+  border-radius: 1em;
+  font-weight: bold;
+  cursor: pointer;
+  line-height: .8em;
+  box-shadow: 0.2em 0.2em 1em 0 rgb(0, 0, 0, 0.3);
+}
+
+
+.StudyGroupBar .userStatus .userCircle .actionBubble:hover::before,
+.StudyGroupBar .userStatus .userCircle .actionBubble:hover{
+  border-color: teal;
+  color:teal;
+  
+}
+
+
+.StudyHall .userCircle .actionBubble
+{
+  display: none;
+}
+
+
+
+.actionBubble .messageBody
+{
+    font-weight: 400;
+    width: 100%;
+}
+.actionBubble .messageText
+{
+    text-align: left;
+    padding-left: 1ex;
+    width: 100%;
+    color:#666;
+    max-height: 5.5em;
+    overflow: hidden;
+}
+.actionBubble .messageText:hover
+{
+
+    max-height:none;
+}
+
+.actionBubble  .messageIcon
+{
+    font-size: 2em;
+    height: 1em;
+    line-height: 1em;
+}
