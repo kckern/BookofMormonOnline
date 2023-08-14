@@ -1,0 +1,234 @@
+.ProgressBox {
+  height: calc(100vh - 6em - 2em);
+}
+
+.ProgressBox .card-header {
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+.ProgressBox .row,
+.ProgressBox .nav-tabs-navigation,
+.ProgressBox .nav-tabs-wrapper,
+.ProgressBox .ProgressBoxPaneCol,
+.ProgressBox .flex-column {
+  height: 100%;
+}
+
+.ProgressBox .card-body {
+  overflow-y: hidden;
+}
+.ProgressBox h5 {
+  font-weight: 800;
+  text-align: center;
+}
+.ProgressBox h5 span {
+  font-weight: 400;
+}
+
+.ProgressBox .progress > div {
+  cursor: pointer;
+}
+
+.ProgressBox .nav-tabs {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  cursor: pointer;
+}
+.ProgressBox .nav-tabs .nav-item {
+  cursor: pointer;
+  height: 8%;
+}
+.ProgressBox .nav-tabs .nav-item a.nav-link {
+  font-weight: 800;
+  text-align: left;
+  color: #666;
+  padding: 0.5em;
+  line-height: 1em;
+  border-radius: 0.5em;
+  margin-right: 0.5em;
+  height: 100%;
+}
+
+.verical-navs {
+  position: relative;
+}
+
+.ProgressBox .nav-tabs .nav-item a.nav-link .title {
+  padding-left: 1em;
+  font-size: 1em;
+  cursor: pointer;
+}
+.ProgressBox .nav-tabs .nav-item a.nav-link .itemContents {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-25%);
+
+  cursor: pointer;
+}
+
+.ProgressBox .progress {
+  height: 1.8vh;
+  margin-left: 0;
+  margin-right: 2em;
+  margin-top: 0.2em;
+  cursor: pointer;
+}
+
+.ProgressBox .card-header .progress {
+  height: 2.3vh;
+  margin-left: -15px;
+  margin-right: -15px;
+  border-bottom: 2px;
+}
+
+.ProgressBox .nav-tabs .nav-item:hover a,
+.ProgressBox .nav-tabs .nav-item a.active,
+.ProgressBox .nav-tabs .nav-item:hover a.active {
+  color: #000;
+  background-color: #f5f5f5;
+}
+
+.nav-tabs-navigation.verical-navs {
+  border-right: 1px solid #ccc;
+}
+.tab-content {
+  height: 100%;
+}
+
+.ProgressBoxPane {
+  max-height: calc(100vh - 120px - 6em);
+  overflow-y: auto;
+}
+.ProgressBoxPaneCol .ProgressBoxPane {
+  height: 100%;
+}
+
+.ProgressBoxPane h2,
+.ProgressBoxPane h4 {
+  font-family: "Roboto Condensed", "Arial Narrow", sans-serif;
+  font-weight: 800;
+  margin-bottom: 1ex;
+  text-align: center;
+  font-size: 1.8em;
+}
+
+.ProgressBoxPane h4 {
+  text-align: left;
+  padding: 0;
+  margin: 0;
+  font-size: 1.2em;
+}
+
+.ProgressBoxPane .progress {
+  margin-top: 0;
+  margin-right: 0;
+  height: 3em;
+}
+
+.ProgressBoxPane > img {
+  border: 1px solid rgb(110, 110, 110);
+  height: 15em;
+  width: 100%;
+  object-fit: cover;
+  object-position: top center;
+}
+
+.ProgressBoxPane .textProgress {
+  text-align: center;
+  font-weight: bold;
+  position: relative;
+  top: -2em;
+}
+
+.ProgressBoxPane .sectionBox {
+  background-color: #eee;
+  margin-top: 1em;
+  padding: 0.5em;
+  border-radius: 0.5em;
+  color: #888;
+}
+
+
+.ProgressBoxPane .pagePerc {
+
+  color: #40805e;;
+  float: right;
+  background-color: rgb(107, 208, 152,0.5);
+  font-weight: bold;
+  padding-left: 2ex;
+  padding-right: 1ex;
+  border-radius: 1ex;
+  font-size: 1.5ex;
+  min-width: 4.5em;
+  margin-top: .5ex;
+  text-align: center;
+}
+.ProgressBoxPane .pagePerc.hide {
+  opacity: 0;
+}
+
+.ProgressBoxPane .sectionDots {
+  padding-right: 0.3em;
+  margin-right: 0.3em;
+  letter-spacing: -0.3em;
+  border-right: 3px solid #CACACA;
+  word-break: break-all;
+}
+
+
+.ProgressBoxPane .sectionDots span img {
+  border:0;
+  height: 1.2rem;
+  width: 1.2rem;
+  margin-right: -.4ex;
+}
+.ProgressBoxPane .sectionDots a:last-child span img 
+{
+  margin-right: 0;
+}
+
+
+.ProgressBoxPane .sectionDots span img:hover {
+  filter: brightness(110%)
+}
+
+
+.ProgressBox .divProgress {
+  margin-bottom: 2em;
+}
+
+.ProgressBoxPane .sectionDots:last-child {
+  border: none;
+}
+
+.ProgressBox h1 {
+  font-family: "Sorts Mill Goudy", serif;
+  /* letter-spacing: -0.5em;  */
+}
+
+.ProgressBox h2 {
+  font-size: 1.5em;
+  font-family: "Sorts Mill Goudy", serif;
+  letter-spacing: 0;
+}
+
+.react-tooltip {
+  overflow: visible;	
+}
+
+img.loading
+{
+  line-height: 1em;
+  display: inline;
+  width: 1em;
+  height: 1em;
+}
+
+.noclick
+{
+  cursor:progress;
+}

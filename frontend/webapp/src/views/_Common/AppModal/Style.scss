@@ -1,0 +1,85 @@
+.sweet-alert-modal {
+    position: absolute !important;
+    width: 50em !important;
+    top: 15vh;
+    left: calc(50vw - 25em + 125px);
+    display: none;
+}
+
+.sweet-alert-modal code {
+    color: #999;
+    padding: 1em;
+    display: inline-block;
+    border-radius: 1rem;
+    margin-bottom: 1em;
+}
+
+.sweet-alert-modal code:hover {
+    color: #222;
+    background-color: #eee;
+}
+
+.sweet-alert-modal em {
+    color: #000;
+    font-weight: 800;
+}
+
+.sweet-alert-modal .text-highlight code,
+.sweet-alert-modal code:active {
+    background-color: #6bd09880;
+    color: black;
+}
+
+.coverUrl {
+    text-align: center;
+    margin-top: 2em;
+}
+
+.coverUrl img {
+    height: 5em;
+    width: 5em;
+}
+
+.linkContainer {
+    position: relative;
+}
+
+.copy-modal {
+    position: absolute;
+    width: 15em;
+    top: 0em;
+    left: calc(50% - 7.5em);
+    padding: 0.25em 1em;
+    color: #666;
+    background: #ddd;
+    border-radius: 1rem;
+    font-size: 12px;
+    letter-spacing: 1px;
+    font-weight: 500;
+    box-shadow: 0.2em 0.2em 1em 0 #0000004d;
+    opacity: 0;
+    pointer-events: none;
+}
+.linkContainer svg{
+    margin-bottom: 1em;
+}
+.text-highlight .copy-modal {
+    opacity: 1;
+    top: -2em;
+    transition: opacity 300ms ease-out, top 300ms ease-out;
+}
+
+.custom-alert {
+    width: 24em !important;
+}
+
+.custom-alert h2 {
+    display: none;
+}
+
+.custom-alert {
+}
+
+.custom-alert-container {
+    font-size: 20px;
+}

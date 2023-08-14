@@ -1,0 +1,1114 @@
+
+.leftPanelScroll,
+.rightPanelScroll
+{
+    height: 100vh;
+    overflow-y: auto;
+    position: absolute;
+    top:0;
+    padding-top: 6em;
+
+}
+
+.rightPanelScroll
+{
+    right:0;
+    width: 60%;
+    padding-right:1em; 
+}
+.leftPanelScroll
+{
+    left:0;
+    padding-left:1em; 
+    width: calc(40% - 1em);
+    display: flex;
+    flex-direction: column;
+}
+
+.homeFeed .card-body 
+{
+    padding:0;
+}
+
+.homeFeed .textInFeed
+{
+    padding:1em;
+}
+
+.homeFeed .itemMsg
+{
+    margin: 1em;
+}
+
+.container h2,
+.container.home .card-body > h5,
+.container.home .card-header h3{
+    font-size: 1.57em;
+    font-weight: 800;
+    margin-bottom:1ex;
+    line-height: 1em;
+}
+.container.home .card-header h6{
+font-weight: 400;
+color: #AAA;
+margin: 0;
+}
+
+.container.home  .card-header
+{
+    background-color: #f7f7f7;
+    margin-bottom: 1px solid #AAA;
+}
+
+
+.container.home .Community
+{
+    flex-grow: 1;
+    display: flex;
+
+}
+
+.container.home .Community .card-body{
+    min-height: 25em;
+}
+
+.ProgressBoxPane .card-body
+{
+    background-color: #fff;
+}
+
+.ProgressBoxPane
+{
+    flex-shrink: 0;
+}
+
+.Community .card-body
+{
+    display: flex;
+    flex-direction: column;
+}
+
+.Community  .card-body > div.groupCard,
+.Community  .card-body > h3{
+    margin: 0;
+    width: calc(100% - 1px);
+}
+
+.Community  .groupCard{
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+}
+
+
+.Community  .groupCard.active .groupContent{
+    outline:3px solid black;
+}
+.Community  .groupCard.inactive .groupContent{
+   opacity: 0.5;
+}
+.Community  .groupCard.inactive:hover .groupContent{
+    opacity: 0.8;
+ }
+
+
+.Community  .groupCard .groupContent
+{
+    width: 100%;
+    border: 1px solid blue;
+    display: flex;
+    background-color: #EEE;
+    border-color: #DDD;
+    border-radius: 1em;
+    padding: 1ex;
+    cursor: pointer;
+    align-items: center;
+}
+
+
+.Community  .groupCard .groupContent:hover{
+    background-color: #f5f5f5;
+    border-color: #888;
+}
+
+.Community  .groupCard .groupImage
+{
+
+    border-radius: 1ex;
+    margin-right: 1em;
+    height: 4em;
+    width: 4em;
+    flex-shrink: 0;
+
+}
+
+.Community  .groupCard .groupImage img{
+
+    height: 4em;
+    width: 4em;
+}
+
+
+
+.Community  .groupCard .groupMessage
+{
+    display: flex;
+}
+
+.Community  .groupCard .groupMessage .groupMessageAvatar{
+    flex-shrink: 0;
+    width: 2.5em;
+}
+.Community  .groupCard .groupMessage .groupMessageAvatar img{
+   border:1px solid #AAA;
+   margin-left: -.5em;
+   width: 2.5em;
+   height: 2.5em;
+   background-color: #AAA;
+
+}
+
+.Community  .groupCard .groupMessage .groupMessageContent{
+
+    font-size: .7rem;
+    line-height: .7rem;
+    word-break: break-all;
+    height: calc(.7rem * 3);
+    overflow: hidden;
+    color: #888;
+}
+
+.Community  .groupCard .groupText
+{
+    flex-grow: 1;
+    margin-right: 1em;
+}
+
+.Community  .groupCard .groupMembership{
+    display: flex;
+    flex-direction: column ;
+    position: relative;
+    height: 3em;
+    width: 3em;
+}
+
+.Community  .groupCard .groupMembershipCount
+{
+    width: 1rem;
+    height: 1rem;
+    line-height: 1rem;
+    background-color: #0008;
+    color: white;
+    font-weight: 800;
+    z-index: 99;
+    border-radius: 50%;
+    position: absolute;
+    top:calc(50% - .5rem);
+    left:calc(50% - .5rem);
+    text-align: center;
+
+
+}
+.cardTip{
+    width: 20rem;
+    display: flex;
+    flex-direction: column;
+    color: #666;
+    height: auto;
+}
+
+.card-tip
+{
+    -moz-box-shadow: 0 0 3em #000;
+    -webkit-box-shadow: 0 0 3em #000;
+    box-shadow: 0 0 3em #000;
+    border: 2px solid #666!important;
+}
+
+.groupCard > a{
+    width: 100%;
+}
+
+.cardTip > div{
+
+    display: flex;
+    
+}
+.cardTip .groupimg{
+    width: 4rem;
+    flex-shrink: 0;
+    margin-right: 1ex;
+    display: flex;
+    align-items: top;
+}
+
+.cardTip .groupimg img{
+    width: 4rem;
+    height: 4rem;
+    border: 2px solid #666;
+}
+
+.cardTip .titledesc{
+    margin-top: -.5ex;
+    width: calc(100% - 4rem);
+    max-height: 4.2rem;
+    overflow: hidden;
+}
+
+.cardTip .titledesc p{
+    font-size: .7rem;
+    line-height: .7rem;
+}
+
+.cardTip ul{
+    display: flex;
+    flex-wrap: wrap;
+    margin-top: 1em;
+    padding-left: 0;
+    width: 100%;
+}
+
+.cardTip li
+{
+    width: 50%;
+    display: flex;
+    flex-direction: row;
+    height: 2.2em;
+}
+
+.cardTip li img{
+    flex-shrink: 0;
+    bottom: 0;
+    background-color: white;
+}
+
+
+.cardTip li  div
+{
+    white-space: nowrap;
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+}
+
+.cardTip li div.tip-progress
+{
+    flex-shrink: 0;
+    flex-grow: 0;
+}
+.cardTip li div.tip-progress div
+{
+    color: #40805e;
+    background-color: rgb(107, 208, 152,0.5);
+    font-weight: bold;
+    text-align: center;
+    width: 2rem;
+    height: 1.5em;
+    padding-left: 1ex;
+    padding-right: 1ex;
+    margin-right: 1ex;
+    font-size: 1.5ex;
+    line-height: 2ex;
+    justify-content: center;
+    border-radius: 1ex;
+}
+
+.Community .groupCard .groupCTA
+{
+    height: calc(100% - 3em);
+    display: flex;
+    justify-content: center;
+}
+
+.Community  .groupCard .groupMembers
+{
+    width: 3em;
+    height: 3em;
+    flex-grow: 1;
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: row wrap;
+    justify-content:center;
+    align-content: center;
+    max-height: 3em;
+    background-color: #CCC;
+    border-radius: 50%;
+}
+.Community  .groupCard .groupMembers div{
+    margin: 0;
+    flex-shrink: 0;
+    height: 2rem;
+    width: 2rem;
+    display: flex;
+    bottom:-.5ex;
+    left:.2ex;
+    
+}
+.Community  .groupCard .groupMembers div
+{
+    width: 50%;
+    height: 50%;
+    position: relative;
+    top: 0;
+    left:0;
+}
+.Community  .groupCard .groupMembers div img{
+
+    background-color: white;
+    border: 1px solid #666;
+    width: 100%;
+    height: 100%;
+    bottom: 0;
+    margin: 0;
+}
+
+
+.Community .groupCard .groupCTA .btn
+{
+
+    padding:0 1ex 0 1ex;
+    margin:.5ex 0 0 0;
+    text-transform: none;
+    font-weight: 400;
+    text-align: center;
+    display: flex;
+    justify-items: center;
+    overflow: hidden;
+    max-width: calc(3rem - 1ex);
+    font-size: .7rem;
+}
+
+.Community .groupCard .groupCTA.applied .btn
+{
+    font-size: .5rem;
+}
+.groupCTA.applied .btn
+{
+    background-color: #40805e
+}
+
+
+.Community  .groupCard .groupTitle
+{
+
+    font-weight: 800;
+    font-size: 1em;
+    padding: 0;
+    margin-left: -1ex;
+    height: 1.5em;
+    overflow: hidden;
+    word-break: break-all;
+
+}
+
+
+
+.Community .card-body h3{
+    font-size: 1.3em;
+    font-weight: 800;
+    border-bottom: 1px solid #DDD;
+}
+.Community  .seeMore{
+
+    text-align: right;
+    cursor: pointer;
+    color:#AAA;
+}
+
+.Community  .seeMore:hover{
+
+    font-weight: bold;
+    color:black;
+}
+
+.Community  h3,
+.Community  .seeMore{
+    flex-grow: 0;
+}
+
+
+.Community h4{
+    margin:0;
+    padding: 0;
+    font-size: 1.2em;
+    font-weight: 800;
+}
+
+
+
+.loginGroup  .btn > img
+{
+    height: 1rem;
+    width: 1rem;
+    position: relative;
+    bottom: 0.2ex;
+    margin-right: 1ex;
+    
+}
+
+.progressPanel .ProgressBoxPane
+{
+    background-color: #FFF7;
+    border-radius: 1em;
+    margin-bottom:1em
+}
+
+.toc
+{
+
+  display: grid;
+}
+
+.toc h5
+{
+
+  font-weight: bold;
+}
+.my-masonry-grid {
+    display: -webkit-box; /* Not needed if autoprefixing */
+    display: -ms-flexbox; /* Not needed if autoprefixing */
+    display: flex;
+    margin-left: -30px; /* gutter size offset */
+    width: auto;
+  }
+  .my-masonry-grid_column {
+    padding-left: 30px; /* gutter size */
+    background-clip: padding-box;
+  }
+  
+  /* Style your items */
+  .my-masonry-grid_column > div { /* change div to reference your elements you put in <Masonry> */
+
+    margin-bottom: 30px;
+  }
+
+  .divImg
+  {
+      background-size: cover;
+      background-position: center center;
+      background-repeat: no-repeat;
+      margin-bottom: 1em;
+      margin-top: -.5em;
+      border-radius: 1em;
+      border:1px solid #AAA;
+  }
+
+  .divImg div{
+      background-color: rgba(100, 100, 100, .7);
+      padding:1em;
+      border-radius: 1em;
+      border:1px solid #AAA;
+      text-align: justify;
+      color:white;
+      line-height: 1.2em;
+      font-family: 'Sorts Mill Goudy', serif; 
+      font-weight: 800;
+      height: 100%;
+      opacity: 0;
+      font-size: 1em;
+      transition: opacity .5s ease-out;
+      -moz-transition: opacity .5s ease-out;
+      -webkit-transition: opacity .5s ease-out;
+      -o-transition: opacity .5s ease-out;
+      cursor: pointer;
+  }
+
+
+  .divImg div:hover{
+      
+    opacity: 1;
+}
+
+
+
+
+/* Home Feed */
+
+
+.homeFeedHeader.card-header
+{
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.homeFeedHeader h5
+{
+    font-weight: 800;
+    flex-grow: 1;
+    margin-left: 1ex;
+    line-height: 1.2rem;
+    display: flex;
+    align-items: center;
+    padding-right: 2em;
+    padding-left: 1ex;
+    padding-top: .5ex;
+    padding-bottom: -.5ex;
+}
+
+
+.homeFeedHeader > img
+{
+    margin-right: 1em;
+    border-radius: 50%;
+    height: 3rem;
+    width: 3rem;
+    border: 1px solid #AAA;
+    float: left;
+}
+img.groupAvatar
+{
+    border-radius: 3px;
+    margin-right: 0em;
+    float: right;
+    flex-shrink: 0;
+}
+
+.homeFeedHeader.group
+{
+    display: flex;
+    justify-content: space-between;
+    align-content: center;
+    margin-bottom: -.5ex;
+}
+
+.homeFeedHeader.group + .homeFeedHeader
+{
+    padding-top: 0em;
+}
+
+.homeFeedHeader div.topLine
+{
+    font-size: small;
+    line-height: 1.2em;
+    font-weight: 400;
+    color: #666;
+    height: 2rem;
+}
+.homeFeedHeader div.topLine .groupName
+{
+    background-color: #999;
+    color:#FFF;
+    padding-left: .5em;
+    padding-right: .5em;
+    border-radius: .25em;
+    padding: 1ex .8em 1ex .5em;
+    margin-right:.5ex;
+}
+.homeFeedHeader div.topLine .groupName img
+{
+    height: 1.2rem;
+    margin-right: 1ex;
+    width: 1.2rem;
+    filter: invert();
+    margin-top: -.5ex;
+    opacity: 0.5;
+}
+
+.homeFeedHeader .timestamp,
+.homeFeedHeader .timestamp a{
+    color: #AAA;
+    white-space: nowrap;
+    font-weight: 400;
+    font-size: .8rem;
+    position: relative;
+    bottom:.3ex;
+}
+
+.homeFeedHeader .timestamp a:hover{
+    text-decoration: underline;
+    color: #000;
+}
+.homeFeedHeader div.topLine .groupName.public
+{
+    background-color: #0d6efd99
+}
+.homeFeedHeader div.topLine .groupName.private
+{
+    background-color: #dc354599
+}
+.homeFeedHeader div.topLine .groupName.open
+{
+    background-color: #19875499
+}
+
+.homeFeedHeader span.feedAction
+{
+    font-weight: 400;
+    color: #666;
+    font-size: smaller;
+}
+
+.home.study{
+    padding:1em;
+    border-top: 1px solid #DDD;
+}
+
+.homeFeed .itemInFeedContainer
+{
+       margin:0;
+       display: flex;
+       justify-content: center;
+}
+
+.homeFeed .itemInFeedContainer .notch
+{
+ display: none;
+}
+
+
+.study .countRow
+{
+    display: flex;
+    padding-bottom: 1em;
+    color:#888;
+    border-bottom: 1px solid #EEE;
+
+}
+.study .commentCount 
+{
+    text-align: right;
+}
+.study .commentCount img{
+    height: 1em;
+    opacity: 0.5;
+    margin-right: 1ex;
+}
+
+.study .countRow div
+{
+     border-radius:1em;
+}
+
+
+.study .countRow > div
+{
+    width: 66%;
+     cursor: pointer;
+}
+
+.study .countRow img.like{
+    height: 1em;
+    position: relative;
+    top: -.2ex;
+    opacity: .5;
+    margin-right: .5ex;
+}
+
+.study .countRow .button
+{
+    width: 33%;
+     font-weight: 800;
+     font-size: 1em;
+     text-align: center;
+     color:#888;
+}
+.study .countRow .button:hover
+{
+     font-weight: 800;
+     font-size: 1em;
+     background-color: #F8F8F8;
+     color:#323b4d;
+}
+
+.study .buttonRow:first-of-type{
+    margin-top: -1em;
+}
+
+.study .buttonRow{
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    border-bottom: 1px solid #EEE;
+    margin-bottom: 1ex;
+}
+
+
+.study .buttonRow .btn{
+    width: 50%;
+    background-color: #FFF;
+    color: #666;
+}
+
+.study .buttonRow.disabledrow,
+.study .buttonRow .btn.disabled
+{
+    cursor: not-allowed!important;
+}
+
+.study .buttonRow .btn:hover,
+.study .buttonRow .btn:focus{
+    background-color: #F6F6F6!important;
+    color: #666!important;
+}
+
+.study .buttonRow .btn img{
+
+    height: 2em;
+    opacity: 0.5;
+    margin-right: 1ex;
+
+}
+
+.textbox.notmember
+{
+    display: flex;
+}
+
+.notmember .btn
+{
+    margin: 0;
+    height: 2.8em;
+    padding: 0;
+    min-width: 12em;
+    margin-left: 1ex;
+}
+
+.study .buttonRow .btn img.like{
+
+    position: relative;
+    top: -.5ex;
+
+}
+
+
+
+
+.homeBanner{
+    display: flex;
+}
+.homeBanner .homeBannerImg{
+    width: 8rem;
+    margin-right: 1em;
+    flex-shrink: 0;
+}
+.homeBanner .homeBannerImg img{
+    width: 8rem;
+    height: 8rem;
+    border: 2px solid #AAA;
+}
+.homeBanner .homeBannerImg .btn{
+    width: 8rem;
+}
+
+.homeBanner .homeBannerText{
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    max-height: 30vh;
+    overflow: hidden;
+}
+
+.homeBanner .homeBannerText h3{
+    font-weight: 800;
+    font-size: 1.7rem;
+    margin: 0;
+    padding: 0;
+    flex-grow: 0;
+}
+.homeBanner .homeBannerText h3 a{
+    float: right;
+    font-family: monospace;
+    position: relative;
+    top: -1ex;
+    cursor: pointer;
+    color:#AAA;
+}
+.homeBanner .homeBannerText h3 span:hover{
+
+    color:#000;
+}
+.homeBanner .homeBannerText div.description{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-grow: 1;
+    font-weight: 400;
+    padding: 2em;
+    padding-top: 0;
+}
+
+
+.commentThreadItem
+{
+    display: flex;
+    width: 100%;
+    color: #666;
+}
+
+.commentThreadItem.selected
+{
+    outline: 3px solid #dc354599;
+    background-color: #ffc10710;
+}
+
+.commentThreadItem .imagebox
+{
+    flex-shrink: 0;
+    width: 3rem;
+    height: 3rem;
+    margin-right: 1em;
+ 
+}
+
+.homeFeedHeader .imagebox 
+{
+    max-width: 3rem;
+}
+
+.homeFeedHeader .imagebox img,
+.commentThreadItem .imagebox img{
+    border-radius: 50%;
+    outline: 1px solid #DDD;
+    background-color: #FFF;
+    width: 3rem;
+    height: 3rem;
+}
+
+.home textarea.form-control
+{
+    height: 2em;
+    padding:1ex;
+    line-height: 1.3em;
+}
+
+
+.homeFeedHeader .progress,
+.commentThreadItem .progress{
+    
+    color: #40805e;
+    border: 1px solid #40805e;
+    background-color: #b9e7cb;
+
+    display: flex;
+    justify-content: center;
+    font-weight: 80%;
+    align-items: center;
+
+    height: 1.5em;
+    font-size: .8em;
+    max-width: 3em;
+    padding: 1ex 1ex 1ex 1ex;
+    float: right;
+    position: relative;
+    top: -.5em;
+    right: -1ex;
+
+    line-height: .5em;
+}
+
+.commentThreadItem .textbox
+{
+    flex-grow: 1;
+}
+.commentThreadItem .textbox .namerow
+{
+    font-weight: 800;
+    color: #555;
+}
+.commentThreadItem .textbox .namerow span a
+{
+    font-weight: 300;
+    font-size: 1.5ex;
+    color: #AAA;
+}
+
+.commentThreadItem .textbox .mesg
+{
+    line-height: 1.2em;
+}
+
+
+.mesg .Container h3{
+    font-size: 1.2rem;
+    font-weight: 800;
+    line-height: 1rem;
+}
+.mesg .Container {
+    line-height: 1rem;
+    margin-top: 1ex;
+    max-width: 40em;
+    max-height: 25em;
+}
+.commentThreadItem
+{
+    border-bottom: 1px solid #EEE;
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
+}
+
+span.groupName,
+.groupAvatar
+{
+    cursor: pointer;
+}
+.privacyTip_private
+{
+    background-color: #ea878e!important;
+}
+.privacyTip_private::after
+{
+    border-right-color: #ea878e!important; 
+}
+.privacyTip_public
+{
+    background-color: #78a5fb!important;
+}
+.privacyTip_public::after
+{
+    border-right-color: #78a5fb!important; 
+}
+.privacyTip_open
+{
+    background-color: #7db596!important;
+}
+.privacyTip_open::after
+{
+    border-right-color: #7db596!important; 
+}
+
+
+.likeTip img{
+    height: 2rem;
+    margin-right: 1ex;
+    border: 1px solid #AAA;
+    border-radius: 50%;
+}
+
+.likeTip ul{
+    padding: 0;
+    margin: 0;
+}
+
+.likeTip li{
+    display: flex;
+    margin-bottom: 1ex;
+    line-height: 1em;
+    align-items: center;
+    font-weight: 800;
+}
+
+
+.likeTip .progress{
+    border: 1px solid #40805e;
+    color: #40805e;
+    background-color: #b9e7cb;
+    padding: 0 1em;
+    margin-right: 1ex;
+    line-height: 2em;
+    font-weight: 400;
+}
+.imagebox
+{
+    position: relative;
+}
+.home img.trophy
+{
+    position: absolute;
+    height: 1.5rem;
+    width: 1.5rem;
+    left:-1ex;
+    background-color: #0000;
+    border: none;
+    border-radius: 0;
+    outline: none;
+    bottom: 1ex;
+}
+
+.home .commentThreadItem img.trophy
+{
+
+    bottom: -1ex;
+}
+
+.home h3 span{
+    float: right;
+    font-family: monospace;
+    color: #AAA;
+    cursor: pointer;
+}
+.home h3 span:hover{
+    color: #000;
+}
+
+
+.Community .loadBar
+{
+    max-height: 6em;
+}
+
+
+.GroupLeaderBoard {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+}
+.GroupLeaderBoard .leaderBoardItem{
+    width: 10em;
+    display: flex;
+    margin-bottom: .5ex;
+}
+
+.GroupLeaderBoard .leaderBoardItem img{
+    height: 2.5rem;
+    width: 2.5rem;
+    flex-shrink: 0;
+}
+
+
+.GroupLeaderBoard .leaderBoardItem .rank{
+
+    background-color: #AAA;
+    height: 1.2em;
+    width: 1.2em;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 1em;
+    font-weight: 800;
+    color: #FFF;
+    font-size: 1em;
+    padding: .1em;
+    margin-right: -.5em;
+    margin-top: .7em;
+    z-index: 99;
+    flex-shrink: 0;
+    letter-spacing: -1px;
+}
+
+.GroupLeaderBoard .leaderBoardItem .namenum
+{
+    flex-grow: 1;
+    margin: 0 1ex;
+}
+.GroupLeaderBoard .leaderBoardItem .nickname
+{
+    height: 1.2em;
+    overflow: hidden;
+    width: 100%;
+    flex-grow: 1;
+    letter-spacing: -.5px; 
+    word-break: break-all;
+}
+
+
+.GroupLeaderBoard .leaderBoardItem .progress
+{
+    height: 1.5em;
+    display: flex;
+    justify-content: center;
+    font-weight: 800;
+    position: relative;
+}
+
+.GroupLeaderBoard .leaderBoardItem .progress .progressbar
+{
+    background-color: #6bd098;
+    position: absolute;
+    left: 0;
+}
+
+
+.GroupLeaderBoard .leaderBoardItem .progress span{
+    z-index: 99;
+}

@@ -1,0 +1,121 @@
+.krsebiframe
+{
+    width: 100%;
+    height: calc(100vw - 550px);
+    margin-bottom: 30vh;
+    max-height: 980px;
+}
+.krseb .banner
+{
+    display: none;
+}
+.KRSEBDesc
+{
+    display: flex;
+}
+
+.KRSEBDesc .product
+{
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+}
+
+.KRSEBDesc .product img
+{
+    max-width: 20em;
+}
+
+
+.KRSEBDesc .product
+{
+    display: flex;
+    flex-direction: column;
+    margin-right: 2em;
+}
+.KRSEBDesc .product > label
+{
+    flex-grow: 1;
+    display: flex;
+    align-items: center
+}
+
+.KRSEBDesc .product  label
+{
+    font-weight: 800;
+    text-align: center;
+    font-size: 2em;
+    margin: 2px 0;
+}
+.KRSEBDesc .product  label span{
+    font-size: smaller;
+    opacity: 0.5;
+    font-weight: 400;
+}
+
+.KRSEBDesc .product  .btn
+{
+    margin: 0;
+    font-size: 1.5em;
+    width: 10em;
+    margin-bottom: 1ex;
+}
+
+.KRSEBDesc .description
+{
+    margin: 1em;
+    font-weight: 400;
+    padding-right: 3em;
+    align-items: stretch;
+    display: flex;
+    flex-direction: column;
+}
+.KRSEBDesc .description p{
+    flex-grow: 1;
+}
+.KRSEBDesc .description h2
+{
+    font-weight: 800;
+    color: #000;
+    margin-bottom: 1ex;
+}
+
+
+@media screen and (max-width: 768px)
+{
+    .KRSEBDesc
+    {
+    flex-direction: column;
+    }
+
+    .krseb 
+    {
+        margin: 0 0 0 -2em;
+        width: calc(100vw + 2em);
+    }
+
+    .krseb h2
+    {
+        text-align: center;
+    }
+.KRSEBDesc .description
+{
+    padding: 0;
+}
+
+.KRSEBDesc .product
+{
+    margin: 0;
+    margin-bottom: 2em;
+}
+.krsebiframe
+{
+    height: calc(100vh );
+}
+.krseb .banner
+{
+    display: block;
+    margin-top: -2em;
+}
+}
+

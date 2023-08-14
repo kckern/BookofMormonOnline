@@ -1,0 +1,323 @@
+.thumb_tabs li img {
+    width: 24px;
+    height: 24px;
+    margin: 3px;
+    object-fit: cover;
+    object-position: center;
+    /* Center the image within the element */
+  }
+  
+  .thumb_tabs li.active {
+    opacity: 1;
+  }
+  
+  .narration .images .star {
+    float: right;
+    opacity: 0.25;
+    font-weight: normal;
+    font-size: 1em;
+    cursor: pointer;
+  }
+  
+  .narration .images .close {
+    float: right;
+    position: relative;
+    top: -5px;
+    cursor: pointer;
+    font-size: 2em;
+    font-family: "Courier New", monospace;
+    margin-top: 0.25em;
+  }
+  
+  .narration .images .close:hover {
+    color: black;
+  }
+  
+  .narration .images .imgWCredit {
+    position: relative;
+  }
+  
+  .narration .fullscreen-image {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    right: 3%;
+    top: 2%;
+    opacity: 0.7;
+    cursor: pointer;
+    transition: all 0.4s ease;
+  }
+  
+  .narration .fullscreen-image:hover {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  
+  .narration .images .credit {
+    background-color: rgb(0, 0, 0, 0.3);
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+    color: white;
+    font-size: small;
+    border-top-left-radius: 1ex;
+  
+    position: absolute;
+    bottom: 0;
+    right: 0;
+  
+    opacity: 0.5;
+  }
+  .narration .images .credit:hover {
+    opacity: 1;
+  }
+  
+  .narration .images img.panel {
+    border: 1px solid #aaa;
+    outline: none;
+  }
+  
+  .narration .images .star:hover {
+    opacity: 0.75;
+  }
+  
+  .narration .images {
+    margin-left: 2.5em;
+    background-color: #ddd;
+    padding: 0.5em;
+    border-radius: 1em;
+    margin-bottom: 1em;
+    margin-right: 1em;
+    position: relative;
+  }
+  
+  .narration .images button {
+    background-color: #323b4d;
+    height: 1em;
+    line-height: 0em;
+    width: 13em;
+    border: 3px solid #aaa;
+    opacity: 0.3;
+    text-align: left;
+    margin: 0;
+  
+    position: absolute;
+    top: calc(-3em);
+  }
+  .narration .images button:hover {
+    opacity: 0.7;
+  }
+  .narration .images.faxbox button {
+    width: 14.5em;
+  }
+  
+  .narration .images button:hover {
+    opacity: 1;
+    border-color: rgb(214, 191, 127);
+    color: rgb(233, 219, 182) !important;
+  }
+  
+  .narration .images .arrow {
+    float: right;
+    position: relative;
+    right: -2em;
+  }
+  
+  .narration .images .heading {
+    color: #555;
+    font-weight: bold;
+    text-align: center;
+    line-height: 1em;
+    /* margin-top: */
+    padding-left: 0.5em;
+    padding-bottom: 0.2em;
+    line-height: 1.2em;
+  }
+  
+  .narration .images .study {
+    margin-top: 1ex;
+    margin-right: 0.5em;
+    position: relative;
+  }
+  
+  .narration .images img.panel {
+    border: 2px solid black;
+    width: 100%;
+    background-color: #999;
+    min-height: 10vh;
+  }
+  
+  .narration .images img.panel.highlighted {
+    outline: 5px solid rgb(255, 255, 0, 0.5);
+  }
+  
+  .thumb_tabs {
+    float: left;
+    position: absolute;
+    width: 30px;
+    margin-top: 2em;
+    left: -30px;
+  }
+  
+  .thumb_tabs ul {
+    list-style-type: none;
+    padding: 0;
+  }
+  
+  .thumb_tabs li {
+    width: 30px;
+    height: 30px;
+    margin-bottom: 10px;
+    border-top-left-radius: 0.25em;
+    border-bottom-left-radius: 0.25em;
+    background-color: #ddd;
+    text-align: center;
+    cursor: pointer;
+    opacity: 0.6;
+    position: relative;
+  }
+  
+  .thumb_tabs li span.comment {
+    position: absolute;
+    bottom: -0.5em;
+    left: -0.3em;
+  }
+  
+  .faxbox.images {
+    margin-left: 5vw;
+  }
+  
+  .faxbox .thumb_tabs {
+    left: -5vw;
+  }
+  
+  .faxbox .thumb_tabs li {
+    height: auto;
+    width: 5vw;
+  }
+  
+  .faxbox .thumb_tabs li img {
+    width: 100px;
+    height: auto;
+  }
+  
+  .narration .images.faxbox .panel {
+    min-height: 600px;
+    background-size: contain; /* <------ */
+    background-repeat: no-repeat;
+    background-color: #000;
+    cursor: crosshair;
+  }
+  
+  .narration .images.faxbox .panel:hover {
+    background-size: auto;
+  }
+  
+  .narration p {
+    margin-left: 1em;
+    list-style-position: outside;
+    padding-left: 2em;
+    text-align: left;
+    background-repeat: no-repeat;
+    background-position: left top;
+    background-size: 1.5em;
+    background-image: url("../User/svg/empty.svg");
+  }
+  
+  .narration p.not_started {
+    background-image: url("../User/svg/blank.svg");
+  }
+  .narration p.started {
+    background-image: url("../User/svg/yellow.svg");
+  }
+  .narration p.completed {
+    background-image: url("../User/svg/green.svg");
+  }
+  .narration p.active {
+    background-image: url("../User/svg/blue.svg");
+  }
+  
+  .narration .images {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .narration p a {
+    font-weight: bold;
+  }
+  
+  .narration p a:hover {
+    font-weight: bold;
+    border-bottom: 4px double #aaa;
+    position: relative;
+    bottom: 2px;
+  }
+  
+  .narration {
+    position: relative;
+  }
+  
+  .fax {
+    position: absolute;
+    left: -1.65em;
+    top: 0em;
+    width: 1.8em;
+    height: calc(1.5rem + 0px);
+    border-radius: 1em;
+    border-top-right-radius: 0em;
+    border-bottom-right-radius: 0em;
+    background-color: #999;
+    color: white;
+    text-align: center;
+    line-height: 1.6rem;
+    cursor: pointer;
+    opacity: 0;
+    padding-left: 8px;
+    transition: opacity 500ms;
+    border-bottom: 2px solid #999;
+  }
+  
+  .fax .comment {
+    position: absolute;
+    top: 0.9em;
+    left: 0.5em;
+  }
+  
+  .fax.visible {
+    opacity: 1;
+    transition: opacity 500ms;
+  }
+  .fax:hover {
+    opacity: 1;
+  }
+  
+  .fax.visible img {
+    filter: invert();
+    position: absolute;
+    top: 0.5ex;
+    left: 1ex;
+    height: 1.2em;
+    width: 1.3em;
+  }
+  
+  /* .image-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    background: black;
+    opacity: 0.4;
+    width: 100%;
+    height: 100%;
+    z-index: 12000;
+    overflow: hidden;
+  }
+  
+  .images {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    overflow: hidden;
+    transform: translate(-50%, -50%);
+    z-index: 12001;
+    width: 100%;
+    height: 100%;
+  } */

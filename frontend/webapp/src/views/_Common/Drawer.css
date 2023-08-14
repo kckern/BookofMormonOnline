@@ -1,0 +1,265 @@
+
+
+.popupDrawer   {
+    outline: none;
+    background: white;
+    font-size: 1.6rem;
+    z-index: 15;
+    height: calc(100vh - 60px);
+    will-change: transform;
+    transform: translate3d(0, 0, 0);
+    overflow-y: auto;
+
+    width: 90%;
+    height: 100vh;
+    padding: 1em;
+    padding-top: calc(60px + 1ex);
+    padding-bottom: 30vh;
+  }
+   
+
+  .popupDrawer h3,
+  .popupDrawer h4{
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin: 0;
+    padding-top: 1ex;
+}
+.popupDrawer h3
+{
+
+    border-top: 1px solid #AAA;
+    margin-bottom: 1ex;
+    line-height: 1em;
+}
+
+.popupDrawer #bodytext{
+
+    font-size: .9rem;
+}
+.popupDrawer .source
+{
+    width: 100%;
+    display: flex;
+    margin-bottom: 1em;
+}
+
+.popupDrawer .source > img{
+    width: 35%;
+    object-fit: cover;
+    margin-right: 1ex;
+    border: 2px solid #666;
+    flex-shrink: 0; 
+    align-self: flex-start;  
+}
+.popupDrawer .source > div{
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+}
+.popupDrawer .source > div > div{
+    font-size: .8rem;
+}
+.popupDrawer .source h5{
+    font-weight: bold;
+    font-size: 1rem;
+}
+
+.popupDrawer .topTabs
+{
+    flex-basis: content;
+    flex-wrap: nowrap;
+    border-bottom: 1px solid #AAA;
+    margin-bottom: 1em;
+}
+
+.popupDrawer .topTabs img
+{
+    max-height: 10vh;
+    margin-bottom: 1ex;
+    outline: 2px solid #666;
+    opacity: .5;
+    margin-right: 6px;
+    filter: saturate(.3);
+}
+
+
+
+.popupDrawer .topTabs img.active
+{
+    filter: saturate(1);
+    opacity: 1;
+}
+
+
+
+.userback-button-container
+{
+    display: none;
+}
+
+.sectionBox h4{
+    padding: 0;
+    line-height: 1.5rem;
+}
+
+.popupDrawer .pagePerc {
+
+    color: #40805e;
+    float: right;
+    background-color: rgb(107, 208, 152,0.5);
+    font-weight: bold;
+    padding-left: 2ex;
+    padding-right: 1ex;
+    border-radius: 1ex;
+    font-size: 1rem;
+    min-width: 4rem;
+    margin-top: .5ex;
+    text-align: center;
+    margin-left: 1em;
+  }
+  .popupDrawer .pagePerc.hide {
+    opacity: 0;
+  }
+  
+  .popupDrawer .sectionBox
+  {
+    line-height: 1.5rem;
+    margin-bottom: 1em;
+  }
+  .popupDrawer .sectionDots {
+    padding-right: 0.3em;
+    margin-right: 0.3em;
+    letter-spacing: -0.3em;
+    word-break: break-all;
+    line-height: 1rem;
+  }
+  
+  
+  .popupDrawer .sectionDots span img {
+    border:0;
+    height: 1.5rem;
+    width: 1.5rem;
+    margin-right: -.3rem;
+  }
+  .popupDrawer .sectionDots a:last-child span img 
+  {
+    margin-right: 0;
+  }
+  
+  
+  
+  .ProgressBox .divProgress {
+    margin-bottom: 2em;
+  }
+  
+  .popupDrawer .sectionDots:last-child {
+    border: none;
+  }
+  .popupDrawer .divdesc
+  {
+    font-family: 'Sorts Mill Goudy';
+    font-size: 1rem;
+    font-weight: 800;
+    text-align: justify;
+    margin: 1ex;
+    line-height: 1.15em;
+    letter-spacing: -.6px;
+  }
+
+  .popupDrawer .transcript,
+  .popupDrawer .description
+  {
+    font-size: 1rem;
+    line-height: 1rem;
+    padding-right: 1em;
+    text-align: justify;
+    font-weight: 400;
+    color: #333;
+  }
+
+  .popupDrawer .pDrawerHeaderBox
+  {
+    display: flex;
+  }
+
+  .pDrawerHeaderBox img{
+    flex-shrink: 0;align-self: center;
+    flex: 0 0 auto;
+    margin: 1ex;
+    border: 1px solid #000A;
+    max-width: 30vw;
+  } 
+  .popupDrawer h4{
+    font-size: 1rem;
+    line-height: 1em;
+    color: #777;
+    font-weight: 400;
+    margin-bottom: 1em;
+    padding-top: 0;
+  }
+  .pDrawerHeaderBox > div{
+    flex-grow: 1;
+  }
+
+  .drawerScroller
+  {
+      height: calc(100vh - 180px);
+      overflow: auto;
+
+      padding-bottom: 30vh;
+
+  }
+
+  .popupDrawer blockquote
+  {
+    font-size: small;
+  }
+
+  .popupDrawer .ppFiltersHeading
+  {
+    margin-top: 0rem;
+    font-weight: 800;
+    font-size: 1.5rem;
+  }
+
+  .popupDrawer .ppFilters
+  {
+    margin: 0;
+    margin-top: 3em;
+    font-size: .8rem;
+    background-color: white;
+    padding: 0;
+    margin-top: 0;
+  }
+  .popupDrawer .ppFilters ul{
+    padding-left: 0;
+    width: 100%;
+  }
+ 
+  .popupDrawer .ppFilters  input{
+    display: none;
+  }
+  .popupDrawer .lifoot
+  {
+    display: none;
+  }
+
+
+  .popupDrawer .setLegal
+  {
+      text-align: center;
+      font-size: .7rem;
+      margin-top: 3rem;
+  }
+
+  .popupDrawer .notice
+  {
+      margin: 0;
+      width: 100%;
+      font-size: small;
+  }
+  .popupDrawer .notice h3
+  {
+     border: none;
+  }

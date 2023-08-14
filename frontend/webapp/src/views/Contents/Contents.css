@@ -1,0 +1,98 @@
+
+.table-of-content h3{
+    margin-top: 0em;
+}
+
+div.toc div.card-body{
+    line-height: 1.2em;
+}
+
+div.toc div.card-body > ul:nth-child(1) > a {
+
+    display:none;
+}
+div.toc div.card-body > ul:nth-child(1)
+{
+    padding-left: 0;
+}
+
+div.toc div.card-body  ul
+{
+
+    list-style-type: square;
+}
+
+div.toc ul:not(:first-of-type) {
+
+    border:1px solid #DDD;
+    border-radius: 1em;
+    margin-left: 2.5em;
+    margin-right: 2em;
+    padding: 1em;
+    background-color: rgba(0, 0, 0, 0.03);
+    font-size: .8em;
+    color:#666;
+    line-height: 1.1em;
+    list-style-type: square;
+
+}
+div.toc ul:not(:first-of-type) a{
+    color:#666;
+}
+
+div.toc div.card-body > ul:not(:first-child) > a{
+
+    font-weight: 800;
+    padding-bottom: 1em;
+    display: inline-block;
+}
+
+
+.toc
+{
+
+  display: grid;
+}
+
+.toc h5
+{
+
+  font-weight: bold;
+}
+
+  .divImg
+  {
+      background-size: cover;
+      background-position: center center;
+      background-repeat: no-repeat;
+      margin-bottom: 1em;
+      margin-top: .5em;
+      border-radius: 1em;
+      border:1px solid #AAA;
+  }
+
+  .divImg div{
+      background-color: rgba(100, 100, 100, .7);
+      padding:1em;
+      border-radius: 1em;
+      border:1px solid #AAA;
+      text-align: justify;
+      color:white;
+      line-height: 1.2em;
+      font-family: 'Sorts Mill Goudy', serif; 
+      font-weight: 800;
+      height: 100%;
+      opacity: 0;
+      font-size: 1em;
+      transition: opacity .5s ease-out;
+      -moz-transition: opacity .5s ease-out;
+      -webkit-transition: opacity .5s ease-out;
+      -o-transition: opacity .5s ease-out;
+      cursor: pointer;
+  }
+
+
+  .divImg div:hover{
+      
+    opacity: 1;
+}

@@ -1,0 +1,188 @@
+
+.headerButton
+{
+    float:right;
+    height: 50px;
+    width: 50px;
+    border-radius: 50px;
+    background-color: #393f46;
+    text-align: center;
+    line-height: 50px;
+    font-size: 30px;
+    margin-right: .2em;
+    margin-top: 5px;
+    cursor: pointer;
+    
+}
+
+.headerButton img{
+    height: 60%;
+    filter: invert();
+    opacity: 0.4;
+    margin-top: -.3ex;
+}
+
+
+.headerTitle
+{
+    color:#DDD;
+    font-weight: 800;
+    font-size: 1.38em;
+    letter-spacing: -1.2px;
+    font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
+    cursor: pointer;
+    height: 2em; 
+    text-align: center;
+    width: 250px;
+    line-height: 1em;
+    margin-top: 1ex;
+}
+.headerTitle small
+{
+    letter-spacing: .5ex;
+    opacity: .5;
+    text-transform: uppercase;
+}
+
+.headerTitle:hover{
+    color:white;
+}
+
+
+
+
+.NotificationList
+{
+    position: absolute;
+    width: 25vw;
+    min-width: 250px;
+    background-color: white;
+    color: black;
+    top:70px;
+    right:1em;
+    border-radius: 1em;
+   
+
+  -moz-box-shadow: 0 0 3em #000;
+  -webkit-box-shadow: 0 0 3em #000;
+  box-shadow: 0 0 3em #000;
+}
+
+.NotificationList h5{
+    text-align: center;
+    padding: .5em;
+
+}
+.NotificationList ul{
+    padding-left: 0;
+    list-style: none;
+    border-bottom: 1px solid #DDD;
+    cursor: pointer;
+}
+
+.NotificationList li
+{
+    display: block;
+    border:1px solid top;
+    padding: 1em;
+    border-top: 1px solid #DDD;
+}
+
+.NotificationList li img
+{
+    height: 1em;
+    margin-right: 1ex;
+    opacity: 0.5;
+}
+
+.NotificationList li:hover{
+    background-color: #DDD;
+}
+
+
+.heading-bar.mobile 
+{
+    display: flex;
+}
+
+
+.heading-bar.mobile > div
+{
+    width: 50%;
+    max-height: 60px;
+}
+.heading-bar.mobile > div img
+{
+    height: calc(100% - 2ex);
+}
+
+.logoheader
+{
+    display: flex;
+}
+
+.logoheader > img{
+    flex-shrink: 0;
+    margin: 1ex;
+}
+.logoheader > div{
+    display: flex;
+    text-align: left;
+    align-items: center;
+    padding: 0 1ex;
+    font-weight: 800;
+}
+
+.userheader
+{
+    display: flex;
+}
+.userheader > img{
+    background-color: white;
+    border-radius: 50%;
+    margin: 1ex;
+    flex-shrink: 0;
+}
+.userheader > div{
+
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    overflow: hidden;
+    line-height: 2em;
+    color: #AAA;
+
+}
+
+.userheader .progress_text
+{
+    opacity: 1;
+    line-height: 1.8em;
+}
+.userheader .progress_text
+{
+    overflow: hidden;
+    height: 2em;
+}
+
+.userheader .headername
+{
+    width: 100%;
+    text-align: right;
+    padding-right: .5ex;
+}
+
+
+
+.userheader .progress_text img{
+
+    outline: 2px solid #FFFA;
+    border-radius: 50%;
+    line-height: 2em;
+    margin-right: .5ex;
+    position: relative;
+    bottom: .2ex;
+    margin-left: 1ex;
+}

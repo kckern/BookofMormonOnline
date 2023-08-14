@@ -1,0 +1,416 @@
+.loginGroup .Social,
+.loginGroup .Social2 {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.Social .btn {
+  width: calc(100% - 1ex);
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.Social2 .btn {
+  width: calc(100% - 1ex);
+  padding-left: 0;
+  padding-right: 0;
+}
+
+
+.loginGroup .Social2
+{
+  display: none;
+}
+
+.body.ko .loginGroup .Social2
+{
+  display: flex;
+}
+
+
+.card-login .card-body h5 {
+  font-size: 1.5em;
+  font-weight: bold;
+  text-align: center;
+}
+
+.home .Login,
+.user .Login {
+  display: flex;
+  justify-content: center;
+  margin-left: 3em;
+}
+
+.loginGroup input.form-control {
+  border-left: 1px solid #ddd!important;
+}
+.loginGroup input.form-control:focus {
+  border-left: 1px solid #aaa!important;
+}
+
+.home .Login .btn,
+.user .Login .btn {
+  width: 50%;
+}
+.input-group-prepend {
+  background-color: #eee;
+  padding-right: 0.5em;
+}
+.loginGroup {
+  background-color: #f5f5f5;
+  padding: 1em;
+  margin-bottom: 1em;
+  border-radius: 1em;
+}
+
+.loginGroup .btn > img {
+  height: 1rem;
+  width: 1rem;
+  position: relative;
+  bottom: 0.2ex;
+  margin-right: 1ex;
+}
+
+.btn.facebook {
+  background-color: #4267b2;
+}
+.btn.facebook:hover,
+.btn.facebook:focus {
+  background-color: #4267b2 !important;
+  filter: brightness(1.2) !important;
+}
+.btn.google {
+  background-color: #dd4b39;
+}
+.btn.google:hover,
+.btn.google:focus {
+  background-color: #dd4b39 !important;
+  filter: brightness(1.2);
+}
+.btn.twitter {
+  background-color: #00acee;
+}
+.btn.twitter:hover,
+.btn.twitter:focus {
+  background-color: #00acee !important;
+  filter: brightness(1.2);
+}
+
+.btn.kakao {
+  background-color: rgb(255, 235, 0);
+  color: #4b1802 !important;
+}
+.btn.kakao:hover,
+.btn.kakao:focus {
+  background-color: rgb(255, 235, 0) !important;
+  filter: brightness(1.2);
+}
+
+.btn.naver {
+  background-color: #00c73c;
+  color: #ffffff !important;
+}
+.btn.naver:hover,
+.btn.naver:focus {
+  background-color: #00c73c !important;
+  filter: brightness(1.2);
+}
+
+.helpmsg {
+  color: #999;
+  text-align: center;
+}
+
+.user {
+  margin-left: 1em;
+}
+
+.user .ProgressBox {
+  height: calc(100vh - 8em - 2em);
+}
+
+.user .card-user .card-footer h5 {
+  font-size: 1.1em;
+  letter-spacing: -1px;
+}
+
+.user .card-user .card-body {
+  min-height: 0;
+}
+
+.user .profileCard {
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+}
+
+.user .profileCard .profileText {
+  width: 60%;
+}
+.user .profileCard .profileText > div{
+  overflow: hidden;
+}
+
+.user .profileCard h5 {
+  margin-bottom: 0;
+}
+
+.user .profileCard h5 span {
+  float: right;
+  font-weight: bold;
+  color: #999;
+  cursor: pointer;
+}
+.user .profileCard h5 span:hover {
+  color: #323b4d;
+}
+
+.user code {
+  margin-left: 1em;
+  color: #999;
+  font-size: 1em;
+  letter-spacing: -1px;
+}
+
+.profileText ul {
+  position: absolute;
+  right: 1em;
+  list-style: none;
+  text-align: left;
+  padding-left: 0;
+  border: 1px solid #aaa;
+  cursor: pointer;
+  font-weight: 800;
+}
+.profileText ul li {
+  padding: 0.5em;
+  border-top: 1px solid #aaa;
+  background-color: white;
+  padding-left: 1em;
+  color: #666;
+  text-transform: uppercase;
+}
+.profileText ul li:hover {
+  background-color: #eee;
+}
+
+.req {
+  outline: 3px solid red;
+}
+
+.btn.disabled {
+  cursor: not-allowed;
+}
+
+.alert-warning {
+  color: rgb(105, 7, 7);
+}
+
+.user .divImg {
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-color: #000;
+  background-size: cover;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user .divImg div {
+  color: white;
+  background-color: rgb(0, 0, 0, 0.6);
+  padding: 1em;
+  font-size: 0.8rem;
+  font-family: "Sorts Mill Goudy";
+  font-weight: 800;
+  text-align: justify;
+  line-height: 2.5ex;
+  opacity: 0;
+  transition: opacity 250ms;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 15rem;
+}
+
+.user .divImg div:hover {
+  opacity: 1;
+  transition: opacity 250ms;
+}
+
+.react-calendar-heatmap .color-scale-0 {
+  fill: rgb(107, 208, 152, 0.4);
+}
+.react-calendar-heatmap .color-scale-1 {
+  fill: rgb(107, 208, 152, 0.5);
+}
+.react-calendar-heatmap .color-scale-2 {
+  fill: rgb(107, 208, 152, 0.55);
+}
+.react-calendar-heatmap .color-scale-3 {
+  fill: rgb(107, 208, 152, 0.6);
+}
+.react-calendar-heatmap .color-scale-4 {
+  fill: rgb(107, 208, 152, 0.65);
+}
+.react-calendar-heatmap .color-scale-5 {
+  fill: rgb(107, 208, 152, 0.7);
+}
+.react-calendar-heatmap .color-scale-6 {
+  fill: rgb(107, 208, 152, 0.75);
+}
+.react-calendar-heatmap .color-scale-7 {
+  fill: rgb(107, 208, 152, 0.8);
+}
+.react-calendar-heatmap .color-scale-8 {
+  fill: rgb(107, 208, 152, 0.85);
+}
+.react-calendar-heatmap .color-scale-9 {
+  fill: rgb(107, 208, 152, 0.9);
+}
+.react-calendar-heatmap .color-scale-10 {
+  fill: rgb(107, 208, 152, 1);
+}
+.react-calendar-heatmap .color-scale-null {
+  fill: #eee
+}
+
+
+.tab-pane .react-calendar-heatmap rect.color-empty {
+  cursor: crosshair;
+  fill: #ffffff;
+  pointer-events: none;
+}
+
+.react-calendar-heatmap {
+  cursor: pointer;
+}
+
+.yeartab {
+  padding: 0.8ex;
+  max-width: 3em;
+  overflow: hidden;
+}
+
+.studyYear {
+  margin-left: 2em;
+  color: #666;
+  padding-right: 1ex;
+}
+
+h2 > span {
+  float: right;
+  font-size: smaller;
+  opacity: 0.5;
+  line-height: 150%;
+}
+.studyYear > h2 {
+  margin: 1em -1em 1em -1.8em;
+  padding-left: 1em;
+  padding-right: 1em;
+  background-color: #ddd;
+  font-size: 2em;
+  font-weight: bold;
+}
+.studyMonth > h2 {
+  font-size: 1.5em;
+  font-weight: 800;
+  border-bottom: 2px solid #ddd;
+  margin: 1ex;
+  color: #666;
+  margin-right: -1ex;
+  margin-top: 1em;
+}
+.studyDay > h2 {
+  font-size: 1em;
+  font-weight: 800;
+}
+
+.studySession {
+  margin-left: 2em;
+  display: flex;
+}
+
+.descField {
+  width: 100%;
+  line-height: 1em;
+}
+.durationField {
+  float: right;
+  text-align: right;
+  white-space: nowrap;
+  font-size: small;
+  margin-left: 1em;
+}
+
+.studyList {
+  height: calc(100vh - 250px);
+  overflow: auto;
+}
+.descField a {
+}
+.descField a:hover {
+  text-decoration: underline;
+}
+
+div[data-highcharts-chart] {
+  display: flex;
+  justify-content: center;
+}
+.progressField {
+  min-width: 4em;
+  font-size: small;
+  overflow: hidden;
+  white-space: nowrap;
+
+text-align: right;
+}
+
+.progressField span {
+  background-color: rgb(107, 208, 152, 0.3);
+  color: rgba(46, 90, 66, 0.514);
+  padding: 0 1ex 0 1ex;
+  border-radius: 1ex;
+}
+
+.studySession:hover,
+.studySession.active {
+  background-color: #fbc55821;
+}
+
+.studySession
+{
+  margin-bottom: 1ex;
+}
+.trophyCase,
+.historySide
+{
+  cursor: pointer;
+}
+
+.trophyCase ul
+{
+  list-style: none;
+  font-size: 1.0em;
+  padding-left: 1em;
+  color: #666;;
+}
+.trophyCase ul img
+{
+  font-size: 1.3em;
+}
+
+
+.trophyCase ul li:hover
+{
+  color: #000;;
+}
+
+h5 span.closeme{
+  float: right;
+  color: #888;
+  cursor: pointer;
+}
+

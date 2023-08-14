@@ -1,0 +1,46 @@
+
+.about h5
+{
+    font-weight: 800;
+    line-height: 1em;
+    padding: .25em;
+    margin:0;
+    margin-bottom: .5em;
+}
+
+
+.about .my-masonry-grid_column
+{
+    padding-left:4em;
+}
+
+.about .card-body h1,
+.about .card-body h2,
+.about .card-body h3{
+    font-weight: 800;
+    font-size: 2em;
+    margin-bottom: 1ex;
+}
+
+.about .card-body h3
+{
+    font-size: 1.5em;
+}
+
+.about li p{
+    margin: 0;
+}
+.about .card-body a{
+    color:#345496;
+    text-decoration: underline;
+    
+}
+
+.about .card-body img{
+    height: 1.5em;
+    width: 1.5em;
+    float: left;
+    margin: .7ex;
+    opacity: 0.5;
+    margin-right: 1em;
+}

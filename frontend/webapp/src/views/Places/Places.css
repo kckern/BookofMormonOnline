@@ -1,0 +1,205 @@
+.PlaceList
+{
+
+    display: grid;
+    margin-left: 2em;
+}
+
+.PlaceList .IdBadge
+{
+    border:1px solid #999;
+    color:#999;
+    font-size: .7em;
+    letter-spacing: -.5px;
+    padding: 0 .5em 0 .5em;
+    border-radius: .5em;
+    margin-left: 0.5em;
+    white-space: nowrap;
+}
+.PlaceList h7
+{
+    color: #AAA;
+    font-style: italic;
+    margin-bottom: .5em;
+    margin-top:-1em;
+}
+.PlaceList .IdBadge.N
+{
+    background-color:#b9e2cf;
+    color:#198754;
+    border-color:#198754;
+}
+
+.PlaceList .IdBadge.L
+{
+    background-color:#c3dbff;
+    color:#0d6efd;
+    border-color:#0d6efd;
+}
+.PlaceList .IdBadge.M
+{
+    background-color:rgb(255, 208, 177);
+    color:rgb(104, 55, 0);
+    border-color:rgb(104, 55, 0);
+}
+
+.PlaceList .IdBadge.J
+{
+    background-color:#fef1ca;
+    color:#906c00;
+    border-color:#906c00;
+}
+
+.PlaceList .IdBadge.B
+{
+    background-color:#DDD;
+    color:#555;
+    border-color:rgb(152, 152, 152);
+}
+
+.PlaceList .IdBadge.G
+{
+    background-color:rgb(143, 158, 168);
+    color:rgb(41, 44, 48);
+    border-color:rgb(76, 81, 88);
+}
+
+.PlaceList .my-masonry-grid_column
+{
+    padding-left:1em;
+}
+
+.PlaceList .card-header,
+.PlaceList .card-body
+{
+    padding: 0;
+    text-align: center;
+    position: relative;
+}
+
+.card-body.placeInfo 
+{
+    padding: .5em;
+    color: #666;
+    line-height: 1em;
+    background-position: top center;
+    background-repeat: no-repeat;
+    height: 15em;
+    background-size: cover;
+    position: relative;
+    flex-shrink: 1;
+}
+
+.PlaceList .card-body.placeInfo div
+{
+    
+    position: absolute;
+    left:0;
+    padding:.5em;
+    width:100%;
+}
+.PlaceList .card-body.placeInfo div.location
+{
+
+    background-color: rgb(255,255,255,0.6);
+    color:#000;
+    font-style: italic;
+    top:0;
+}
+
+.PlaceList .card-body.placeInfo div.info
+{
+    background-color: rgb(0,0,0,.5);
+    color:white;
+    bottom:0;
+}
+
+
+
+.PlaceList .card-footer
+{
+   background-color: #CCC;
+   padding: 0;
+   display: flex;
+   justify-content: space-between;
+   border-bottom: 1px solid #AAA;
+   align-items: center;
+}
+
+
+
+
+.PlaceList .card-footer div.icons
+{
+    flex-shrink: -1;;
+}
+.PlaceList .card-footer div.labels
+{
+    max-width: calc(100% - 3em);
+    line-height: 1em;
+}
+
+.PlaceList .card-footer img
+{
+    height: 1.2em;
+    width: 1.2em;
+    margin:.3em;
+    margin-right: .5ex;
+    opacity: 0.5;
+}
+
+.PlaceList h5
+{
+    font-weight: 800;
+    line-height: 1em;
+    padding: .25em;
+    margin:0;
+}
+
+.PlaceList .card-body.placeInfo 
+{
+    padding: .5em;
+    color: #666;
+    line-height: 1em;
+}
+.PlaceList .placeInfoBadges
+{
+    margin-left:.5em;
+    opacity:0.5;
+    margin-top: -1px;
+}
+
+.PlaceList .card-header
+{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.PlaceList .card-header h5{
+    line-height: 1.2em;
+    font-size: 1.2rem;
+}
+
+
+
+.PlaceList .card
+{
+    margin-bottom:2em;
+    display: flex;
+    flex-direction: column;
+    height: 19em;
+}
+
+
+.PlaceList .card-footer,
+.PlaceList .card-header
+{
+
+    flex-shrink: 0;
+    flex-grow: 1;
+}
+
+.PlaceList .card:hover
+{
+    outline: 2px solid #0006;
+}

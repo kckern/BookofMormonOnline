@@ -1,0 +1,87 @@
+.caractors .grid {
+  display: flex;
+  width: 100%;
+  flex-wrap: wrap;
+  background-color: #fde4b8;
+  justify-content: space-between;
+}
+
+.caractors .grid .tile {
+  height: 3em;
+  width: 3em;
+  margin: 0;
+  border-collapse: collapse;
+  background-position: center center;
+  background-size: contain;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-color: #fde4b8;
+  cursor: crosshair;
+  outline: 1px solid #aa997a;
+}
+
+.caractors .tile.active {
+  outline: 2px solid black;
+  opacity: 1;
+}
+.caractors .grid.active .tile.similar {
+  outline: 5px solid rgb(0, 0, 255, 0.5);
+  opacity: 1;
+  opacity: 1;
+}
+.caractors .grid.active .tile.active {
+  outline: 5px solid rgb(255, 0, 0, 0.5);
+  opacity: 1;
+}
+.caractors .grid.active .tile.active:hover {
+  outline: 5px solid rgb(255, 255, 0, 0.5);
+  opacity: 1;
+  z-index: 99999;
+}
+
+.caractors .grid.active {
+  background-color: black;
+}
+
+.caractors .grid.active .tile {
+  opacity: 0.4;
+}
+
+.flex-row-container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: top center;
+  justify-content: top center;
+  margin-bottom: 1em;
+}
+.flex-row-container > .flex-row-item {
+  flex: 1 1 33%; /*grow | shrink | basis */
+}
+
+.flex-row-container h6 {
+  font-weight: 3em;
+  text-align: center;
+  display: block;
+  margin-top: 1ex;
+}
+
+.flex-row-item div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  height: 15em; overflow: hidden;
+}
+
+.flex-row-item.active img {
+  width: 14em;
+  height: 14em;
+}
+
+.flex-row-item img {
+  width: 4em;
+  height: 4em;
+  margin: 1ex;
+  -webkit-box-shadow: 1pt 1pt 1ex 1ex rgb(0, 0, 0, 0.2);
+  box-shadow: 1pt 1pt 1ex 1ex rgb(0, 0, 0, 0.2);
+}

@@ -1,0 +1,362 @@
+
+.itemInFeed 
+{
+    margin-bottom: 0;
+    cursor: pointer;
+
+    max-width: 40em;
+    color:#777;
+}
+ .itemInFeed:hover
+{
+
+    color: #000;
+}
+
+
+ .itemInFeed .imageContainer
+{
+    position: relative;
+    height: 30vh;
+    background-color: black;
+    cursor: pointer;
+}
+.itemInFeed .coverImage
+{
+    position: absolute;
+    top:0;
+    left:0;
+    right:0;
+    height: 100%;
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: cover;
+    opacity: .3;
+    cursor: pointer;
+    
+
+    backdrop-filter: blur(8px);
+}
+.itemInFeed .coverImage.full
+{
+    opacity: 1;
+}
+.itemInFeed .containImage
+{
+    position: absolute;
+    top:0;
+    left:0;
+    right:0;
+    height: 100%;
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: contain;
+    cursor: pointer;
+}
+.itemInFeed h5{
+    margin-bottom: 0;
+    text-align: center;
+    font-size: 1.2em;
+    font-weight: 800;
+    cursor: pointer;
+    border: 1px solid #AAA;
+    border-top-left-radius: 1em;
+    border-top-right-radius: 1em;
+    background-color: #DDD;
+}
+.itemInFeed .imageSource{
+    background-color: rgba(0, 0, 0, .5);
+    color: #FFF;
+    position: absolute;
+    padding-left: 1em;
+    padding-right: 1em;
+    bottom:0;
+    right:0;
+    border-top-left-radius: .5em;
+    backdrop-filter: blur(5px);
+    cursor: pointer;
+}
+.itemInFeed .imageStar{
+    position: absolute;
+    padding: .2em;
+    padding-top: 0em;
+    top:0;
+    right:0;
+    font-size: 4em;
+    cursor: pointer;
+}
+
+.itemInFeed .pageSection
+{
+    font-weight: 800;
+    text-align: left;
+    cursor: pointer;
+    margin-bottom: .2em;
+}
+
+.itemInFeed .narration
+{
+    font-style: italic;
+    margin-left: 2em;
+    cursor: pointer;
+}
+
+.itemInFeed .caption
+{
+    padding:0.5em;
+    cursor: pointer;
+    border: 1px solid #AAA;
+    background-color: #DDD;
+    border-bottom-left-radius: 1em;
+    border-bottom-right-radius: 1em;
+    line-height: 1em;
+    min-height: 4.5em;
+}
+
+
+.itemInFeed .reference
+{
+    padding-left: .5em;
+    padding-right: .5em;
+    color:white;
+    border-radius: .2em;
+    white-space: nowrap;
+    float:right;
+    margin-left: 1em;
+    margin-top: -.5em;
+    margin-right: -.5em;
+    background-color: #999;
+}
+
+.itemInFeedContainer
+{
+    justify-content: center;
+    margin-left: 0em;
+    margin-top: 1.2em;
+    position: relative;
+}
+
+.home .itemInFeedContainer
+{
+    display: flex;
+    background-color: #EFEFEF;
+    border: 1px solid #DDD;
+    padding: 1ex;
+}
+
+.itemInFeedContainer.hidden
+{
+    display:none;
+}
+
+.itemInFeedContainer .notch
+{
+    color: #DDD;
+    position: absolute;
+    font-size: 1.5rem;
+    top:calc(-1.5rem - 1px);
+    left:1rem;
+}
+
+.textInFeed  span.indent{
+    width: 1.2em;
+    display: inline-block;
+}
+
+.textInFeed  blockquote{
+   margin-bottom: 1ex;
+}
+
+
+.textInFeed .scripture
+{
+
+    font-family: 'Sorts Mill Goudy', serif;
+    font-size: 1.1em;
+    text-align: justify;
+    line-height: 1.0em;
+    letter-spacing: -0.5px;
+    font-weight: bold;
+    color: #666;
+    padding: .5em .5em 0em .5em;
+    border-left: 1px solid #AAA;
+    border-right: 1px solid #AAA;
+    border-bottom: 1px solid rgb(0,0,0,0);
+    background-color: #FFF;
+}
+
+.textInFeed .scripture p{
+    margin-bottom: 0.5em;
+}
+
+
+.itemInFeed
+{
+}
+
+.sectionInFeed
+{
+
+}
+
+.sectionItems
+{
+    background-color: white;
+    background-color: #FFF;
+}
+
+
+.sectionItems ul
+{
+    padding: 1em;
+    padding-left: 3em;
+    list-style: square;
+    margin-bottom: 0em;
+    border-left: 1px solid #AAA;
+    border-right: 1px solid #AAA;
+    line-height: 1em;
+}
+
+
+.faxInFeed .containImage {
+    background-size:contain;                 /* <------ */
+    background-repeat:   no-repeat;
+    background-color: rgba(0,0,0,0);     
+    cursor:crosshair; 
+}
+
+.faxInFeed .containImage:hover {
+    background-size:auto;       
+}
+
+
+
+.imageContainer,
+.faxContainer
+{
+    overflow-y: hidden;
+    min-height: auto;
+}
+
+.messageContainer .messageBody
+{
+    padding-right: 2em;
+}
+
+.commentaryContent
+{
+    border: 1px solid #AAA;
+    border-top:0;
+    border-bottom:0;
+    background-color: white;
+    padding: 1em;
+    max-height: 20vh;
+    overflow-y: auto;
+    position: relative;
+    cursor: text;
+}
+
+
+.commentaryContent.expanded
+{
+    max-height: auto;
+}
+.commentaryContent img
+{
+    float: right;
+    width: 100px;
+    height: 150px;
+    margin: 0 0 1ex 1ex; 
+}
+.commentaryContentText
+{
+    line-height: 1em;
+}
+.commentaryContentText p
+{
+    margin-bottom: .5em;
+}
+.commentaryContentText blockquote
+{
+    font-size: small;
+    margin: 1rem;
+    margin-left: 2rem;
+    line-height: .75rem;
+}
+
+.commentaryContent h3{
+    font-weight: 800;
+    font-size: 1rem;
+    line-height: 1rem;
+    margin-bottom: .5em;
+}
+
+.itemInFeed .imgBox
+{
+    float: right;
+    height: 3em;
+    width: 3em;
+    border: 1px solid #666;
+    background-size: cover;
+    background-position: center center;
+    border-radius: .3em;
+    background-repeat: no-repeat;
+    background-color: #888;
+    margin-left: 1em;
+}
+.itemInFeed .imgBox:hover
+{
+    background-size: contain;
+}
+
+.highlightInFeed
+{
+    background-color: #f2f20059;
+    border-radius: .5em;
+    color:black;
+    margin-right: 1ex;
+}
+
+
+.contentPaceholder
+{
+    height: 10em;
+    background-color: #CCC;
+    border-left:1px solid #AAA;
+    border-right:1px solid #AAA;
+}
+.itemPlaceholder .blankWord
+{
+    line-height: 2em;
+}
+.itemPlaceholder h5 .blankWord
+{
+    height: 1.3em;
+    margin-bottom: .25em;
+    margin-bottom: 1em;
+    
+} 
+
+.itemPlaceholder .blankP
+{
+    position: relative;
+    top:.5em;
+}
+
+.blankP
+{
+    text-align: justify;
+    display: inline-block;
+
+  
+}
+.blankWord{
+    background-color: #CCC;
+    color: #CCC;
+    display: inline-block;
+    height: 1em;
+    display: inline-block;
+    border-radius: .2em;
+
+
+}
