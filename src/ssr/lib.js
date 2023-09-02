@@ -1,5 +1,5 @@
 
-const botPattern = new RegExp("(bot|Bot|facebookexternalhit|Twitterbot|BingPreview|ImgProxy|naver|Seo|Yeti|github|_escaped_fragment_)", "i");
+const botPattern = new RegExp("(bot|Bot|facebook|googlebot|Twitterbot|BingPreview|ImgProxy|naver|Seo|Yeti|github|_escaped_fragment_)", "i");
 
 const requireSSR = (req) => {
     const domain = req.headers.host;

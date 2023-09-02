@@ -25,7 +25,7 @@ const ping = async (req, res) => {
     // console.log(req.query);
     try{
     const url = `https://in.getclicky.com/in.php?sitekey_admin=${process.env.clickySiteAdmin}&` +  jsonToQuery(req.query);
-    console.log({url});
+    //console.log({url});
     const response = await axios.get(url);
     res.set("content-type", "text/plain");
   
