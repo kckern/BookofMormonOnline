@@ -489,7 +489,7 @@ async function getFeaturedGroups(lang) {
     limit: 20
   });
   return await sendbird.getOthersGroups(
-    recentUsers.map(u => u.user),
+    recentUsers.map(u => md5(u.user)),
     lang
   );
 }
