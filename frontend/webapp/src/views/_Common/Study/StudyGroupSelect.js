@@ -447,7 +447,7 @@ function StudyGroupListItem({ group, appController }) {
   };
 
   //exclude self
-  let members = group.members.filter((m) => m.userId !== appController.states.user.social.userId);
+  let members = group.members.filter((m) => m.userId !== appController.states.user.social.user_id);
   let url = group.url;
 
   const sortByLastStudied = (a, b) => {
