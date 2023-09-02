@@ -261,7 +261,7 @@ export const appFunctions = {
           appController
         );
 
-        clickyUser({ username: appController.states.user.social?.user_id, name: appController.states.user.social?.nickname })
+        clickyUser({ username: appController.states.user.user, name: appController.states.user.social?.nickname })
 
         appController.sendbird?.getStudyGroups()
           .then((list) => appController.functions.setStudyGroups(list));
@@ -577,7 +577,7 @@ export const appFunctions = {
     appController.states.user.user = user.user.user;
     appController.states.user.progress = user.progress || {};
     appController.states.user.social = user.social;
-    clickyUser({ username: user.social?.user_id, name: user.social?.nickname });
+    clickyUser({ username: user.user, name: user.social?.nickname });
 
 
     return appController;
