@@ -577,7 +577,7 @@ export const appFunctions = {
     appController.states.user.user = user.user.user;
     appController.states.user.progress = user.progress || {};
     appController.states.user.social = user.social;
-    clickyUser({ username: user.user, name: user.social?.nickname });
+    clickyUser({ username: user.user.user, name: user.social?.nickname });
 
 
     return appController;
