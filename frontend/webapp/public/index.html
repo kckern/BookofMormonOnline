@@ -24,8 +24,6 @@
       crossorigin=""
     />
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-    <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC7Nf04vsZ0z1slG2GYO5htYJhe_txOm8E"></script>
-    <script id="xero-domain-name" xero-data-name="5303801632374677-915" type="text/javascript" src="https://seo.kamu.world/js_controller/client"></script>
     <script type="text/javascript">
       function PopupCenter(e,n,t,i){var o=void 0!=window.screenLeft?window.screenLeft:screen.left,d=void 0!=window.screenTop?window.screenTop:screen.top,c=window.innerWidth?window.innerWidth:document.documentElement.clientWidth?document.documentElement.clientWidth:screen.width,w=window.innerHeight?window.innerHeight:document.documentElement.clientHeight?document.documentElement.clientHeight:screen.height,r=c/2-t/2+o,h=w/2-i/2+d,s=window.open(e,n,"scrollbars=yes, width="+t+", height="+i+", top="+h+", left="+r);return window.focus&&s.focus(),!1} 
       function sgshow(el) { PopupCenter(el.href, "Scripture Guide", 1000, 750);}
@@ -34,36 +32,22 @@
       clicky_custom.pageview_disable = true;
       clicky_custom.history_disable = true;
 
-
+      const defaultTitle = "Book of Mormon Online";
       window.titleObserver = new MutationObserver(function(mutations) {
         const newTitle = mutations[0].target.outerText.replace(/\s*[\|][^\|]+$/,'');
         if(window.lastTitle === newTitle) return false; 
+        if(window.lastpath === window.location.pathname) return false;
+        if(defaultTitle === newTitle) return false;
+        if(/^http/.test(newTitle)) return false;
         const path = window.location.pathname;
         const logger = window.clicky?.log || function(){};
         if(newTitle) logger(path,newTitle,"pageview");
         window.lastTitle = newTitle;
+        window.listPath = path;
       }).observe( document.querySelector('title'), { subtree: true, characterData: true, childList: true });
 
     </script>
-    <script async src="//static.getclicky.com/66488278.js"></script>
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XT02BMW93E"></script>
-      <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-
-        gtag('config', 'G-XT02BMW93E');
-      </script>
-      <!-- Twitter universal website tag code -->
-    <script>
-      !function(e,t,n,s,u,a){e.twq||(s=e.twq=function(){s.exe?s.exe.apply(s,arguments):s.queue.push(arguments);
-      },s.version='1.1',s.queue=[],u=t.createElement(n),u.async=!0,u.src='//static.ads-twitter.com/uwt.js',
-      a=t.getElementsByTagName(n)[0],a.parentNode.insertBefore(u,a))}(window,document,'script');
-      // Insert Twitter Pixel ID and Standard Event data below
-      twq('init','o8alk');
-      twq('track','PageView');
-      </script>
-      <!-- End Twitter universal website tag code -->
+    <script async src="/stats.js"></script>
 
   </head>
 
@@ -71,7 +55,7 @@
     <div id="root"></div>
     <noscript>Please wait or refresh the page</noscript>
     <script>
-    let accessToken = window.location.href.match(/access_token=([^&]+)/)[1];
+    let accessToken = window.location.href.match(/access_token=([^&]+)/)?.[1] || false;
     if(accessToken){ opener.window.responseNaver({accessToken});  self.close(); }
       document.title = window.location.href;
     </script>

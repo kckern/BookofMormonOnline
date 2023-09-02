@@ -9,6 +9,21 @@ const createConnection = () => {
     });
 };
 
+
+export const sphinxQuery = async (sql) => {
+    const connection = createConnection();
+    console.log(`Connecting to Sphinx on ${process.env.SPHINX_HOST}:${process.env.SPHINX_PORT}`);
+    connection.connect();
+    console.log(`Running Sphinx query: ${sql}`);
+    return new Promise((resolve, reject) => {
+        connection.query(sql, (error, results) => {
+            if(error) reject(error);
+            resolve(results);
+        });
+    });
+}
+
+
 const getResults = (connection, keyword, version, min, max) => {
     let sphinx_sql = `SELECT verse_id, version FROM sgindex 
                       WHERE MATCH('@(text) ${keyword}') AND version IN ('${version.join("','")}') 
