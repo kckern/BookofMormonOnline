@@ -42,7 +42,7 @@ export default {
 
       const searchPromise = new Promise((resolve, reject) => {
         var mysql = require('mysql');
-        var connection = mysql.createConnection({ port: '9306' });
+        var connection = mysql.createConnection({ port:  process.env.SPHINX_PORT , host: process.env.SPHINX_HOST });
         connection.connect();
         connection.query(sphinxSql, (error, results) => {
           if (error) throw error;

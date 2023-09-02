@@ -7,13 +7,13 @@
 }
 
 .Social .btn {
-  width: calc(100% - 1ex);
+  width: calc(100%);
   padding-left: 0;
   padding-right: 0;
 }
 
 .Social2 .btn {
-  width: calc(100% - 1ex);
+  width: calc(100%);
   padding-left: 0;
   padding-right: 0;
 }
@@ -52,7 +52,7 @@
 
 .home .Login .btn,
 .user .Login .btn {
-  width: 50%;
+  width: 100%;
 }
 .input-group-prepend {
   background-color: #eee;
