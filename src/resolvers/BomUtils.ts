@@ -12,6 +12,7 @@ import {
   getSlugTip,
   getUserForLog
 } from './_common';
+import { sphinxQuery } from '../search/sphinx';
 const axios = require('axios');
 export default {
   Query: {
@@ -31,58 +32,49 @@ export default {
     },
     search: async (root: any, args: any, context: any, info: any) => {
       const lang = context.lang ? context.lang : null;
-      //SHPINX CODE
-      const versions = ['LDS']; // TODO, multilang
-      const query = args.query; // TODO, multilang
-      const sphinxSql = `SELECT verse_id,version 
-			FROM sgindex 
-			WHERE MATCH('@(text) ${query}') 
-			AND version IN ('${versions.join(`','`)}')
-			LIMIT 99999999 ;`;
 
-      const searchPromise = new Promise((resolve, reject) => {
-        var mysql = require('mysql');
-        var connection = mysql.createConnection({ port:  process.env.SPHINX_PORT , host: process.env.SPHINX_HOST });
-        connection.connect();
-        connection.query(sphinxSql, (error, results) => {
-          if (error) throw error;
-          results = JSON.parse(JSON.stringify(results));
-          let verseIds = results.map(item => item.verse_id);
-          connection.end();
-          resolve(
-            Models.BomLookup.findAll({
-              where: { verse_id: verseIds },
-              raw: true,
-              include: [
-                includeModel(  true, Models.LdsScripturesVerses, 'verse'),
-                includeModel(  true, Models.BomText, 'text',
-                  [
+
+      //SHPINX CODE
+      const versions = ['LDS'];
+      const query = args.query;
+      const sphinxSql = `SELECT verse_id,version 
+        FROM sgindex 
+        WHERE MATCH('@(text) ${query}') 
+        AND version IN ('${versions.join(`','`)}')
+        LIMIT 99999999 ;`;
+
+      return sphinxQuery(sphinxSql).then((results: any) => {
+
+        let verseIds = results.map((item: any) => item.verse_id);
+        return  Models.BomLookup.findAll({    
+            where: { verse_id: verseIds },
+            raw: true,
+            include: [
+                includeModel(true, Models.LdsScripturesVerses, 'verse'),
+                includeModel(true, Models.BomText, 'text', [
                     includeTranslation('content', lang),
                     includeModel(true, Models.BomNarration, 'narration', [includeTranslation('description', lang)]),
                     includeModel(true, Models.BomSection, 'parent_section', [includeTranslation('title', lang)]),
-                    includeModel(true, Models.BomPage, 'parent_page', [includeTranslation('title', lang)])
-                  ].filter(x => !!x)
-                )
-              ].filter(x => !!x)
-            }).then(r => {
-              return r.map(item => {
+                    includeModel(true, Models.BomPage, 'parent_page', [includeTranslation('title', lang)])  
+                ].filter(x => !!x))
+            ].filter(x => !!x)
+        }).then(r => {
+            return (r.map(item => {
                 return {
-                  pageguid: item['text.parent_page.guid'],
-                  link: item['text.link'],
-                  reference: item['verse.verse_title'],
-                  text: item['verse.verse_scripture'],
-                  section: item['text.parent_section.title'],
-                  page: item['text.parent_page.title'] ,
-                  narration: item['text.narration.description'],
-                  content: item['text.content']
+                pageguid:item['text.parent_page.guid'],
+                link: item['text.link'],
+                reference: item['verse.verse_title'],
+                text: item['verse.verse_scripture'],
+                section: item['text.parent_section.title'],
+                page: item['text.parent_page.title'] ,
+                narration: item['text.narration.description'],
+                content: item['text.content']
                 };
-              });
-            })
-          );
-        });
+            }));
+        })
       });
-      return searchPromise;
     },
+    
     shortlink: async (input: any, args: any, context: any, info: any) => {
       if (args.hash !== null) {
         return Models.BomShortlinks.findOne({

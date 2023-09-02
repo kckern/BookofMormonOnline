@@ -14,6 +14,7 @@ import net from 'net';
 import axios from 'axios';
 import bodyParser from 'body-parser';
 import { processSphinx } from './search/sphinx';
+import {ping} from "../src/library/ping.js"
 
 const langs = process.env.LANGS?.split(',') || ['', 'en', 'ko', 'dev'];
 
@@ -29,6 +30,8 @@ apiProxy.on('error', (err, req, res:any) => {
   console.error(`[Proxy Communication Error] ${err.message}, ${req.method} ${req.url}`);
   res.status(500).json(err);
 });
+
+
 
 const findTarget = (req:any): string | boolean  => {
 
@@ -51,6 +54,10 @@ const findTarget = (req:any): string | boolean  => {
 const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+
+app.all("/ping", ping);
+
 
 app.use( (req, res, next) => {
   const target = String(findTarget(req));
