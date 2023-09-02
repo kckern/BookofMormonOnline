@@ -64,7 +64,7 @@ app.use( (req, res, next) => {
   const host = req.headers.host;
   if(target) {
 
-    console.log(`[Proxy target found] ${req.url} -> ${target}`);
+    //console.log(`[Proxy target found] ${req.url} -> ${target}`);
 
     apiProxy.web(req, res, {target,
       autoRewrite: true,
@@ -78,7 +78,7 @@ app.use( (req, res, next) => {
     const host = String(query.host || "google.com");
     const port = Number(query.port || 80);
 
-    console.log(host, port);
+   // console.log(host, port);
 
     dns.lookup(host, (err, address, family) => {
       if(err) return res.json({err, host, port, msg:`${host} is not discovered on the network`});
