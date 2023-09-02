@@ -199,6 +199,9 @@ function StudyGroupStatus({ appController }) {
 
       if (!!appController.states.studyGroup.studyModeOn && !isMe) {
 
+        let notificationHistory = JSON.parse(localStorage.getItem("notificationHistory")) || [];
+        const time = moment().unix();
+
         if (newColor === "blue") {
           if (sounds) playSound(enteredCall)
           toaster(user.profileUrl, newColor, label("x_joined_a_call", [user.nickname]));
@@ -208,14 +211,24 @@ function StudyGroupStatus({ appController }) {
         }
 
         if (newColor === "green") {
+          if (notificationHistory.find(x => x.userId === user.userId && x.type === "online")) return newColors; // prevent notification flood
           if (sounds) playSound(cameOnline)
-          toaster(user.profileUrl , newColor, label("x_came_online", [user.nickname]));
+          toaster(user.profileUrl , newColor, label("x_came_online", [user.nickname]));  // prevent notification flood
+          notificationHistory.push({ userId: user.userId, time, type: "online" });
+          
         }
 
         if (["blue", "green"].includes(oldColor) && ["yellow", "grey"].includes(newColor)) {
+          if (notificationHistory.find(x => x.userId === user.userId && x.type === "offline")) return newColors; // prevent notification flood
           if (sounds) playSound(wentOffline)
           toaster(user.profileUrl, newColor, label(newColor === "yellow" ? "x_switched_groups" : "x_went_offline", [user.nickname]));
+          notificationHistory.push({ userId: user.userId, time , type: "offline"});
         }
+
+        const deadline = moment().subtract(5, "minutes").unix();
+        notificationHistory = notificationHistory.filter(x => x.time > deadline);
+        localStorage.setItem("notificationHistory", JSON.stringify(notificationHistory));
+
       }
       return newColors;
     })

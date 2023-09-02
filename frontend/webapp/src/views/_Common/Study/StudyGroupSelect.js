@@ -446,7 +446,8 @@ function StudyGroupListItem({ group, appController }) {
     window.dispatchEvent(event);
   };
 
-  let members = group.members;
+  //exclude self
+  let members = group.members.filter((m) => m.userId !== appController.states.user.social.userId);
   let url = group.url;
 
   const sortByLastStudied = (a, b) => {
@@ -580,9 +581,9 @@ export function GroupMemberCircles({ circles, greenCount }) {
       <div className="memberCount">
         <img src={usericon} />
         {greenCount ? greenCount+"/" : null}
-        {circles.length - 1}
+        {circles.length + 1}
       </div>
-      <div className="groupMembers">{circles.slice(0,11).map((c) => c?.components)}</div>
+      <div className="groupMembers">{circles.slice(0,10).map((c) => c?.components)}</div>
     </div>
   );
 }

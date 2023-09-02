@@ -5,6 +5,7 @@
     position: absolute;
     min-height: 30em;
     max-height: 60em;
+    max-width: 50em;
 }
 
 .popupwindow,
