@@ -13,8 +13,7 @@ export default gql`
     generateToken(seed: Int): String
     signin(token: String, username: String, password: String): SignIn
     tokensignin(token: String): SignIn
-    socialsignin(network: String, token: String, social_token: String): SignIn
-    leaderboard(type: String, group: String): [User]
+    socialsignin(network: String, token: String, social_token: String): SignIn\
     users(user_ids: [String]): [User]
     sourceUsage(token: String, source: String): Float
     studylog(token: String): StudyLog
