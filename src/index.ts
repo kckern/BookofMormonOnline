@@ -19,11 +19,15 @@ import {ping} from "../src/library/ping.js"
 const langs = process.env.LANGS?.split(',') || ['', 'en', 'ko', 'dev'];
 
 var apiProxy = httpProxy.createProxyServer();
-apiProxy.on('proxyRes', (proxyRes, req, res:any) => {
+apiProxy.on('proxyRes', (proxyRes, req:any, res:any) => {
   if(proxyRes.statusCode > 200) {
+    const reqheaders = req.headers;
+
+    const curl = `curl -X ${req.method} "${req.url}" -H "Host: ${req.headers.host}" ${Object.keys(reqheaders).map(i=>`-H "${i}: ${reqheaders[i]}"`).join(" ")} ${req.body ? `-d '${JSON.stringify(req.body)}'` : ""}`;
+
     console.error(`[Proxy Error] ${proxyRes.statusCode}, ${req.method} ${req.url}`);
-    const {statusCode, statusMessage, headers} = proxyRes;
-    res.status(500).json({statusCode, statusMessage, headers, req: {method: req.method, url: req.url}});
+    const {statusCode, statusMessage,headers: proxiedHeaders} = proxyRes;
+    res.status(500).send({proxy:"error",reqheaders,curl, statusCode, statusMessage, proxiedHeaders, req: {method: req.method, url: req.url}});
   }
 });
 apiProxy.on('error', (err, req, res:any) => {
@@ -35,8 +39,6 @@ apiProxy.on('error', (err, req, res:any) => {
 
 const findTarget = (req:any): string | boolean  => {
 
-  const isSSR = requireSSR(req);
-  if(isSSR) return process.env.PROXY_BOM_SSR;
 
   const host = req.headers.host;
   let fwdTarget = "";
@@ -47,6 +49,12 @@ const findTarget = (req:any): string | boolean  => {
     ["scripture.guide", process.env.PROXY_SCRIPTURE_GUIDE]
     ];
   fwdTarget = fwds.find(([sub, target]) => (new RegExp(`^${sub}`,"i")).test(host))?.pop() || "";
+
+
+  const isSSR = requireSSR(req);
+  if(isSSR && !fwdTarget) return process.env.PROXY_BOM_SSR;
+
+
   return fwdTarget;
 };
 
@@ -64,7 +72,8 @@ app.use( (req, res, next) => {
   const host = req.headers.host;
   if(target) {
 
-    //console.log(`[Proxy target found] ${req.url} -> ${target}`);
+    //remove these headers:
+    delete req.headers["range"];
 
     apiProxy.web(req, res, {target,
       autoRewrite: true,
