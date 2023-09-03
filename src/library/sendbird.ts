@@ -463,6 +463,39 @@ class Sendbird {
     });
     return response?.data?.members || [];
   }
+
+  async getMembersofPublicGroups(){
+
+    let channels = await axios({
+      method: 'GET',
+      url: `https://api-${this.app_id}.sendbird.com/v3/group_channels?custom_types=public,open&limit=100`,
+      headers: {
+        'Api-Token': this.access,
+        'Content-Type': 'application/json'
+      },
+      json: true
+    });
+
+    let members:any = await Promise.all(channels.data.channels.map(async (channel)=>{
+      let members = await axios({
+        method: 'GET',
+        url: `https://api-${this.app_id}.sendbird.com/v3/group_channels/${channel.channel_url}/members?limit=100`,
+        headers: {
+          'Api-Token': this.access,
+          'Content-Type': 'application/json'
+        },
+        json: true
+      });
+      return members.data.members.map((m:any)=>{return {...m,channel_name:channel.name}});
+    }));
+
+    let combined =  members.flat();
+    let unique = combined.filter((v,i,a)=>a.findIndex(t=>(t.user_id === v.user_id))===i);
+    return unique.map(i=>i.user_id);
+
+  }
+
+
   async getGroup(channelUrl) {
     let response = await axios({
       method: 'GET',

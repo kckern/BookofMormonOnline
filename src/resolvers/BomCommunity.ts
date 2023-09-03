@@ -15,6 +15,40 @@ const md5 = (value: string)=>{
 
 export default {
   Query: {
+    leaderboard: async (item: any, args: any, context: any, info: any) => {
+      const lang = context.lang ? context.lang : null;
+      const rankedUsers :any = await Models.BomUser.findAll({
+        raw: true,
+        attributes: ['user','name','last_active', 'complete'],
+        where: { last_active: { [Op.gt]: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000) }},
+        order: [['complete', 'DESC']],
+      });
+
+      console.log(rankedUsers.map((u:any)=>`${u.name || u.user} ${u.complete}% ${u.last_active}`));
+      const topUsers = rankedUsers.slice(0,100);
+      const sendbirdUserObjects = await sendbird.listUsers(topUsers.map((u:any)=>md5(u.user)));
+
+      const publicUsers = await sendbird.getMembersofPublicGroups();
+
+
+
+
+      return topUsers.map((u:any)=>{
+        const sendbirdUser = sendbirdUserObjects.find((sbu:any)=>sbu.user_id===md5(u.user));
+        if(!sendbirdUser) return null;
+        return {
+          user_id: u.user,
+          nickname: sendbirdUser?.nickname,
+          picture: sendbirdUser?.profile_url,
+          progress: parseFloat(u.complete),
+          finished: [],
+          bookmark: sendbirdUser?.metadata?.bookmark,
+          public: publicUsers.includes(md5(u.user))
+        }
+      }).filter((u:any)=>!!u).slice(0,50);
+
+
+    },
     loadGroupsFromHash: async (item: any, args: any, context: any, info: any) => {
       console.log("a")
       if (args.hash === undefined) return false;
