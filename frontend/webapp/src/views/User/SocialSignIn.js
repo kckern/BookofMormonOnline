@@ -10,7 +10,7 @@ import {
     InputGroupText,
     InputGroup,
 } from "reactstrap";
-import FacebookLogin from '@greatsumini/react-facebook-login';
+import FacebookLogin from 'react-fb-login-component/dist/facebook-login-render-props';
 import { GoogleLogin, useGoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
 import NaverLogin from "react-login-by-naver"
 import KakaoLogin from "react-kakao-login";
@@ -108,8 +108,8 @@ export default function SocialSignIn({appController, setLoading}) {
                     </GoogleLogin>
                 <FacebookLogin
                     appId={"806253479718989"}
-                    // autoLoad={false}
-                    // callback={responseFacebook}
+                    autoLoad={false}
+                    callback={responseFacebook}
                     disableMobileRedirect={true}
                     render={renderProps => (
                         <Button onClick={renderProps.onClick} className={"facebook"}><img src={facebook} /> {label("facebook")}</Button>
