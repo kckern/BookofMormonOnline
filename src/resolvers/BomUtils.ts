@@ -1,5 +1,7 @@
 import { sendbird } from '../library/sendbird';
 import { models as Models } from '../config/database';
+import dotenv from 'dotenv';
+dotenv.config();
 
 import {
   getSlug,
@@ -21,6 +23,8 @@ export default {
       return Models.BomLabel.findAll({
         include: [includeTranslation('label_text', lang)].filter(x => !!x)
       }).then((labels: any) => {
+       // console.log('labels', labels);
+        labels.push({gmaps: process.env.GMAPS_API_KEY});
         return labels;
       });
     },
@@ -142,9 +146,11 @@ export default {
   },
   Label: {
     val: async (item: any, args: any, context: any, info: any) => {
+      if(!item.getDataValue) return Object.values(item).pop();
       return translatedValue(item, 'label_text');
     },
     key: async (item: any, args: any, context: any, info: any) => {
+      if(!item.getDataValue) return Object.keys(item).pop();
       return item.getDataValue('label_id');
     }
   },
