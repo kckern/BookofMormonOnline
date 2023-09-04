@@ -101,6 +101,17 @@ function Main(props) {
       r = makeLabelDictionary(r);
       appController.functions.setPreLoadData(r);
       document.title = label("home_title");
+
+      const gmapskey = r.labels?.find((x) => x.key === "gmapskey")?.value;
+      //add google maps script with api
+      if (gmapskey) {
+        const script = document.createElement("script");
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${gmapskey}`;
+        script.async = true;
+        document.body.appendChild(script);
+      }
+
+
     });
   }, [appController.functions]);
 
