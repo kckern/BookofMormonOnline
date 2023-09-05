@@ -272,6 +272,8 @@ export default {
           });
           let score = scoreTextItems(textItems, summary);
 
+          const {completed,started} = score;
+          Models.BomUser.update({ complete: completed, started }, { where: { user: userInfo.queryBy } });
 
           if (score.completed >= 100) {
             let now = Math.round(Date.now() / 1000);

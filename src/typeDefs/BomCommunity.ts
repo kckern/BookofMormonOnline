@@ -18,6 +18,7 @@ extend type Query {
   postcomments(token:String,message: Int): [HomeFeedItem] 
   moregroups(token:String, grouping:String): [HomeGroup]
   requestedUsers(token:String, channel:String): [HomeUser]
+  leaderboard(token:String): [HomeUser]
 }
 
 
@@ -137,6 +138,9 @@ extend type Mutation {
     picture: String
     progress: Float
     finished: [Float]
+    lastseen: Float
+    bookmark: String
+    public: Boolean
   }
 
   type ContentLink
