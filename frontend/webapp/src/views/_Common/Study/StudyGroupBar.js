@@ -92,7 +92,7 @@ export function getFreshUsers(appController) {
   if (!group) return null;
   let call = appController.states.studyGroup.activeCall;
   let callers = call?._participantCollection?._remoteParticipants?.map(p => p.user?.userId) || [];
-  let users = group?.members.filter(u => u.userId !== mySocialId);
+  let users = group?.members?.filter(u => u.userId !== mySocialId) || [];
 
   for (let i in users) {
     let userGroup = users[i].metaData.activeGroup;
