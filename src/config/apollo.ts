@@ -4,6 +4,8 @@ import resolvers from '../resolvers';
 import { isArray } from 'util';
 import { sequelize } from './database';
 
+const langs = ["en","fr","de","nl","pt","ko","jpn","zh","ru","hi","eo","es","vn","tgl","th"];
+
 
 
 export const apollo_config = {
@@ -13,8 +15,15 @@ export const apollo_config = {
     introspection: true,
     context: ({ req }) => {
       const headers = req.headers || {};
+
+      //check if language subdomain
+      const subdomain = req.headers.host.split('.')[0];
+      const pathlang = req.url.split('/').reverse().shift() || 'en';
+
+      const lang = langs.includes(subdomain) ? subdomain : pathlang;
+
       return {
-        lang: req.url.split('/').reverse().shift() || 'en',
+        lang,
         ip: maybeGetuserIpAddress(headers),
         db: sequelize
       };
