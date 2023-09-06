@@ -102,7 +102,7 @@ function Main(props) {
       appController.functions.setPreLoadData(r);
       document.title = label("home_title");
 
-      const gmapskey = r.labels?.find((x) => x.key === "gmapskey")?.value;
+      const gmapskey = r?.labels?.gmaps || null;
       //add google maps script with api
       if (gmapskey) {
         const script = document.createElement("script");
