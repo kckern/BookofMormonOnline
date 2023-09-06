@@ -1,7 +1,6 @@
 import Sendbird from "sendbird";
 import SendBirdCall from 'sendbird-calls';
 import { error } from "src/models/alertMessageService";
-import Cohere from "cohere-js";
 import { determineLanguage, refreshChannel, tokenImage } from "./Utils";
 import crypto from 'crypto-browserify';
 
@@ -40,7 +39,7 @@ export default class SendbirdController {
 
     this.connect(userId, token);
 
-    console.log("SendbirdController", { appId, userId, token, appController });
+    //console.log("SendbirdController", { appId, userId, token, appController });
 
 
     const handler = new this.sb.ChannelHandler();
