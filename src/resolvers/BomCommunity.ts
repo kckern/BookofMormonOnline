@@ -91,7 +91,7 @@ export default {
 
     homegroups: async (item: any, args: any, context: any, info: any) => {
       const lang = context.lang ? context.lang : null;
-      console.log("homegroups")
+      
       let user: any = await Models.BomUser.findOne({
         raw: true,
         include: [
@@ -513,19 +513,23 @@ function reflect(promise) {
   );
 }
 
-async function getFeaturedGroups(lang) {
+async function getFeaturedGroups(lang, limit = 20) {
   if (lang === 'dev' || !lang) lang = 'en';
   let recentUsers: any = await Models.BomUser.findAll({
     raw: true,
     attributes: ['user'],
     where: { lang: lang },
     order: [['last_active', 'desc']],
-    limit: 20
+    limit
   });
-  return await sendbird.getOthersGroups(
+  const groups =  await sendbird.getOthersGroups(
     recentUsers.map(u => md5(u.user)),
     lang
   );
+
+  if(!groups || !groups?.length && !["en","dev"].includes(lang)) return await getFeaturedGroups("en", 50);
+  return groups;
+
 }
 
 function feedAlgorithm(messagesArray,user_id) {
