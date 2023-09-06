@@ -9,7 +9,7 @@ const currentPort = window.location.port;
 const nonDefaultPort = currentPort !== "80" && currentPort !== "443" && currentPort;
 const containedAPI = currentProtocol + "//" + currentDomain + (nonDefaultPort ? ":" + currentPort : "");
 const isProduction = /(prod|docker)/ig.test(process.env.NODE_ENV);
-console.log({ currentDomain, currentProtocol, currentPort, nonDefaultPort, containedAPI, isProduction, env:process.env });
+//console.log({ currentDomain, currentProtocol, currentPort, nonDefaultPort, containedAPI, isProduction, env:process.env });
 
 export const assetUrl = "https://assets.bookofmormon.online";
 export const ApiBaseUrl = isProduction ? containedAPI || "https://bookofmormon.online" : "https://bookofmormon.online";
