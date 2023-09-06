@@ -650,7 +650,7 @@ async function scoreRecentItems(userInfo: any) {
     where: {
       user: userInfo.queryBy,
       type: {
-        [Op.notIn]: ['referral', 'image']
+        [Op.in]: ["block"]
       }
     },
     limit: 5,
