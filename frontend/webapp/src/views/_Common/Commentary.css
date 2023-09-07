@@ -1,0 +1,38 @@
+.atv
+{
+    border: 1px solid #AAA;
+    margin: 1rem;
+    padding: 1ex;
+    width: calc(100% - 9rem);
+    border-radius: 1ex;
+    background-color: #DDD;
+    color: #888;
+    font-family: monospace;
+    line-height: 1.2em;
+    font-size: small;
+
+
+}
+
+.atv .source
+{
+    /* undo inherited float */
+    float: none;
+    width: 100%;
+    overflow:unset;
+    margin:0;
+}
+
+.atv-string
+{
+    background-color: white;
+    padding: 0 1ex 0 1ex;
+    border-radius: 1ex;
+    font-weight: bold;
+    font-family: "Roboto Condensed", sans-serif;
+    color: #000;
+}
+.atv-string b
+{
+    color: #FF000066
+}

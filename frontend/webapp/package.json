@@ -41,6 +41,7 @@
     "leaflet": "^1.7.1",
     "moment": "^2.29.1",
     "moment-duration-format": "^2.3.2",
+    "node-html-parser": "^6.1.6",
     "perfect-scrollbar": "^1.5.1",
     "rc-mentions": "^1.6.1",
     "rctx-contextmenu": "^1.4.1",
