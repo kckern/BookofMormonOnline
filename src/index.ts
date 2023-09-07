@@ -148,7 +148,7 @@ frontends.forEach(i=>{
 const server = new ApolloServer(apollo_config);
 const { sequelize } = apollo_config;
 server.start().then(() => {
-  langs.map(i => server.applyMiddleware({ app, path: `/${i}` }));
+  ["",...langs].map(i => server.applyMiddleware({ app, path: `/${i}` }));
   app.listen(process.env.PORT, async () => {
     try {
       await sequelize.authenticate();
