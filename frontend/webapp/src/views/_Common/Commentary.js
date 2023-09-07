@@ -95,7 +95,6 @@ export default function Commentary({ appController }) {
     let randomKey = allKeys[Math.floor(Math.random() * allKeys.length)];
     commentaryData = appController.popUpData[appController.states.popUp.activeId] || appController.popUpData[randomKey];
 
-    console.log({commentaryData});
   
     if (!text || text !== commentaryData.text) { setText(commentaryData.text); setLegal(false); }
     let num = commentaryData?.location?.slug.replace(/\D+/, "") || 0;
