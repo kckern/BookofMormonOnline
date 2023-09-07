@@ -219,9 +219,9 @@ export default function Commentary({ appController }) {
                   </div>
                   
                   <div id="bodytext" onMouseUp={handleSelection}>
-                    <ATVHeader atvHTML={atvHTML} />
                   <LegalNotice appController={appController} commentaryData={commentaryData} showLegal={showLegal} />
              
+                  <ATVHeader atvHTML={atvHTML} />
                     {Parser(htmlObject)}
                   </div>
                   <div className="attribution"> —
@@ -266,6 +266,7 @@ function ATVHeader({ atvHTML }) {
 
 function ATVBrackets(a,string) {
 
+    string = string.replace("NULL","<b>∅</b>");
     const parts = string.split("|").map(i=>{
         let indexes = i.match(/[A-Z01]+$/)[0];
         let content = i.replace(indexes,"").trim();
