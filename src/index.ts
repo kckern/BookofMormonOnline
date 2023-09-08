@@ -46,6 +46,7 @@ const findTarget = (req:any): string | boolean  => {
     ["ssr", process.env.PROXY_BOM_SSR],
     ["preview", process.env.PROXY_BOM_IMG],
     ["sg", process.env.PROXY_SCRIPTURE_GUIDE],
+    ["translate", process.env.PROXY_TRANSLATE],
     ["scripture.guide", process.env.PROXY_SCRIPTURE_GUIDE]
     ];
   fwdTarget = fwds.find(([sub, target]) => (new RegExp(`^${sub}`,"i")).test(host))?.pop() || "";
