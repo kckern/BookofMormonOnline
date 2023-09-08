@@ -73,11 +73,13 @@ app.use( (req, res, next) => {
   const host = req.headers.host;
   if(target) {
 
+    const targetDomain = target.split("://").pop();
     //remove these headers:
     delete req.headers["range"];
 
     apiProxy.web(req, res, {target,
       autoRewrite: true,
+      cookieDomainRewrite: targetDomain,
       changeOrigin: false});
   }
   else if(/\/sphinx/.test(req.url) || /^sphinx.*/.test(host)) {
