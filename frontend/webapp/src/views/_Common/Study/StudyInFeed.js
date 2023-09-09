@@ -111,6 +111,8 @@ export function CommentaryInFeed({ appController, comData, highlights }) {
 
  // return <pre>{JSON.stringify({comData,highlights},0,2)}</pre>
  // if(!comData.location) return null;
+
+
   return (
     <div className="itemInFeedContainer">
       <span className={"notch"}>▲</span>

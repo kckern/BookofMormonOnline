@@ -532,6 +532,7 @@ function ThreadedMessages({
 
   const addMessageToThread = (e) => {
     !expanded && expand(true);
+    if (threadedMessages.find((x) => x.messageId === e.message.messageId)) return false;
     setThreadMessages((messages) => [...messages, e.message]);
   };
   const updateMessageInThread = (e) => {
@@ -731,9 +732,11 @@ function SingleComment({
     setCommentHighlights([]);
   };
 
+  const {isBot} = message._sender?.metaData;
+
   return (
     <div
-      className="comment"
+      className={"comment" + (isBot ? " botComment" : "")}
       key={message.messageId}
       threadHash={threadHash}
       author={message?._sender?.nickname}
@@ -761,7 +764,8 @@ function SingleComment({
         appController={appController}
       /> : <div className="commentcontainer">
         <div className="commentcontent">
-          <div className="name">{message?._sender?.nickname}</div>
+          <div className="name">{message?._sender?.nickname} {isBot && <span>BOT</span>}</div>
+          
           {highlightTags}
           {content}
         </div>

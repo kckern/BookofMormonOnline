@@ -5,5 +5,16 @@
         "test",
         "dist",
         "**/*spec.ts"
+    ],
+    "compilerOptions": {
+        "allowJs": true,
+        "lib": [
+            "es2019",
+            "dom"
+        ]
+    },
+    "include": [
+        "./src/**/*.ts",
+        "./src/**/*.js"
     ]
 }

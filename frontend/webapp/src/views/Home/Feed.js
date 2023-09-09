@@ -409,17 +409,21 @@ function Comment({ comment }) {
   const urlMatch = parseInt((match.params?.messageId || 0)) || 0;
   if (!comment) return null;
   let finished = comment.user.finished;
+  const isBot = comment.user.nickname === "StudyBuddy"; //TODO get from api
+  const botBadge = (isBot) ? <span className="botBadge">BOT</span> : null;
   const trophyImg = (finished) ? <img className="trophy" src={trophy} /> : null;
   let timeAgo = timeAgoString(comment.timestamp / 1000);
+  let hasNoContent = !!comment.msg.replace(/[•\s]+/g, "");
+  if(!hasNoContent) return null;
   return <div className={"commentThreadItem " + ((urlMatch === comment.id) ? "selected" : "")}>
     <div className="imagebox noselect">
       {trophyImg}
       <img src={comment.user.picture} onError={breakCache} />
-      <div className="progress">{comment.user.progress || 0}%</div>
+      {!isBot && <div className="progress">{comment.user.progress || 0}%</div>}
 
     </div>
     <div className="textbox">
-      <div className="namerow noselect">{comment.user.nickname} <span>• <Link to={`/home/${comment.channel_url}/${comment.id}`}>{timeAgo}</Link></span></div>
+      <div className="namerow noselect">{comment.user.nickname} {botBadge} <span>• <Link to={`/home/${comment.channel_url}/${comment.id}`}>{timeAgo}</Link></span></div>
       <div className="mesg">{ParseMessage(comment.msg)}</div>
     </div>
   </div>

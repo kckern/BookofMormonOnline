@@ -446,8 +446,13 @@ function StudyGroupListItem({ group, appController }) {
     window.dispatchEvent(event);
   };
 
-  //exclude self
-  let members = group.members.filter((m) => m.userId !== appController.states.user.social.user_id);
+  //exclude self and bots
+  let members = group.members.filter((m) => {
+    const isSelf = m.userId === appController.states.user.social.user_id 
+    const isBot = !!m.metaData?.isBot
+    if(isSelf || isBot) return false;
+    return true;
+  });
   let url = group.url;
 
   const sortByLastStudied = (a, b) => {
@@ -484,7 +489,7 @@ function StudyGroupListItem({ group, appController }) {
   });
 
   let greenCount = circles.filter((a) => a?.color === "green").length;
-  if (circles.length === 0) return null;
+  //if (circles.length === 0) return null;
 
   return (
     <li
