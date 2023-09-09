@@ -130,6 +130,8 @@ function GroupBrowser({ appController, activeGroup, setActiveGroup }) {
 
 function GroupCard({ groupData, appController, activeGroup, setActiveGroup }) {
 
+  groupData.members = groupData.members.filter(m => m.nickname !== "StudyBuddy"); //TODO get metadata variables
+
   const [visibleMembers] = useState(groupData.members.sort(() => (Math.random() > .5) ? 1 : -1).slice(0, 4));
 
   useEffect(() => {
@@ -287,6 +289,9 @@ export function GroupCallToAction({ appController, groupData, joinlabel }) {
 
 export function groupToolTipHtml(groupData) {
 
+
+  groupData.members = groupData.members.filter(m => m.nickname !== "StudyBuddy"); //TODO get metadata variables
+
   const sortedMembers = groupData.members.sort((a, b) => b.progress - a.progress);
 
   return `<div class='cardTip'>
@@ -305,13 +310,16 @@ export function groupToolTipHtml(groupData) {
       <div class='tip-progress'>
         <div>${m.progress}%</div>
       </div>
-      <div>${m.nickname}</div>
+      <div class='toolTipNickname'>${m.nickname}</div>
     </li>`
   ).join('')}</ul>
 </div>`;
 }
 
 export function GroupLeaderBoard({groupData}) {
+
+  groupData.members = groupData.members.filter(m => m.nickname !== "StudyBuddy"); //TODO get metadata variables
+  
 
   const sortedMembers = groupData.members.sort((a, b) => b.progress - a.progress);
   return  <div class='GroupLeaderBoard'>

@@ -1,6 +1,6 @@
 import { models, models as Models } from '../config/database';
 import Sequelize, { Model } from 'sequelize';
-import { sendbird } from '../library/sendbird';
+import { sendbird } from '../library/sendbird.js';
 import crypto from 'crypto';
 import {
   Op,

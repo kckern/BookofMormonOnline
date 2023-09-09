@@ -192,6 +192,17 @@ margin: 0;
     width: 3em;
 }
 
+div.toolTipNickname
+{
+    width: 7em;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    word-wrap: break-word; 
+    display: inline-block;
+
+}
+
 .Community  .groupCard .groupMembershipCount
 {
     width: 1rem;
@@ -912,6 +923,20 @@ img.groupAvatar
     font-weight: 300;
     font-size: 1.5ex;
     color: #AAA;
+}
+
+.commentThreadItem .textbox .namerow .botBadge
+{
+    
+  background-color: #d3e1ea;
+  color: #0006;
+  padding: 0 1ex;
+  border-radius: 0.5ex;
+  font-weight: 400;
+  font-size: xx-small;
+  border: 1px solid #0006;
+  position: relative;
+  bottom: 2px;
 }
 
 .commentThreadItem .textbox .mesg

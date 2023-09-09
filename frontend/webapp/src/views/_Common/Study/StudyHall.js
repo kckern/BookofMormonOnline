@@ -369,7 +369,8 @@ function UserSideBarItem({
           </div>
         </Link>
       );
-
+  const isBot = !!u?.metaData?.isBot;
+  if(isBot) return null;
   return (
     <li
       onClick={() => setPanel({ key: "message", val: u.userId })}
