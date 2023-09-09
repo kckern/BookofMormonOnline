@@ -92,8 +92,12 @@ export function getFreshUsers(appController) {
   if (!group) return null;
   let call = appController.states.studyGroup.activeCall;
   let callers = call?._participantCollection?._remoteParticipants?.map(p => p.user?.userId) || [];
-  let users = group?.members?.filter(u => u.userId !== mySocialId) || [];
-
+  let users =  group.members.filter((m) => {
+    const isSelf = m.userId === appController.states.user.social.user_id 
+    const isBot = !!m.metaData?.isBot
+    if(isSelf || isBot) return false;
+    return true;
+  });
   for (let i in users) {
     let userGroup = users[i].metaData.activeGroup;
     let thisGroup = group?.url;
@@ -254,7 +258,7 @@ function StudyGroupStatus({ appController }) {
     >
 
       <div class="divider"></div>
-      <CallCircle appController={appController} />
+      {users?.length >=1 ? <CallCircle appController={appController} /> : null}
       <audio id="call_audio" autoPlay={"true"} />
       {users?.slice(0,11).map((user) => (
         <>

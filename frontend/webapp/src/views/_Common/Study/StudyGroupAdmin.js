@@ -210,6 +210,7 @@ export default function StudyGroupAdmin({ appController }) {
                 let isAdmin = member.role === "operator";
                 let isMuted = member.isMuted;
                 let mutedIcon = isMuted ? <img src={mute} /> : "NOMUTE";
+                let isBot = !!member?.metaData?.isBot;
 
                 return (
                   <Card className={"userAdminBox"}>
@@ -226,7 +227,6 @@ export default function StudyGroupAdmin({ appController }) {
                       </ContextMenuTrigger>
                     </CardHeader>
                     <CardBody>
-                      <div className="userId">{member.userId}</div>
                       <img src={member.plainProfileUrl} />
                       {isAdmin ? (
                         <div className="statusline">
