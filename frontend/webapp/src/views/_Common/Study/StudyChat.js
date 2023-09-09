@@ -1207,6 +1207,11 @@ function BaseMessage({
       </>
     );
   }
+
+  const isBot = !!message?._sender?.metaData?.isBot;
+
+  const botBadge = isBot ? <span className="botBadge">BOT</span> : null;
+
   return (
     <div
       className={
@@ -1217,7 +1222,7 @@ function BaseMessage({
     >
       {image}
       <div className={"messageContent"}>
-        <span className="senderName">{message?._sender?.nickname}</span>
+        <span className="senderName">{message?._sender?.nickname} {botBadge}</span>
         <span className="timeStamp">
           {" "}
           •{" "}

@@ -440,6 +440,19 @@
   font-weight: 800;
 }
 
+.messageContainer .senderName .botBadge
+{
+  background-color: #d3e1ea;
+  color: #0006;
+  padding: 0 1ex;
+  border-radius: 0.5ex;
+  font-weight: 400;
+  font-size: xx-small;
+  border: 1px solid #0006;
+  position: relative;
+  bottom: 2px;
+}
+
 .messageContainer .timeStamp a,
 .messageContainer .edit,
 .messageContainer .delete,

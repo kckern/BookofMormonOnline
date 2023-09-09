@@ -15,6 +15,8 @@ import axios from 'axios';
 import bodyParser from 'body-parser';
 import { processSphinx } from './search/sphinx';
 import {ping} from "../src/library/ping.js"
+import {apis} from "../src/api/index.js"
+
 
 const langs = process.env.LANGS?.split(',') || ['', 'en', 'ko', 'dev'];
 
@@ -145,6 +147,10 @@ frontends.forEach(i=>{
 
 //BACKEND (POST) JSON APIS
 //Object.keys(json_apis).forEach(i=>app.post(`/${i}`, json_apis[i]));
+
+const apiPaths = Object.keys(apis);
+apiPaths.forEach((i:any)=>app.post(`/${i}`, apis[i]));
+
 
 
 //BACKEND (POST): APOLLO SERVER
