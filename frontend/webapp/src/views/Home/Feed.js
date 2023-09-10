@@ -319,7 +319,8 @@ function Comments({ appController, comments, count, item, group, memberMap, sbCh
       </div>
     </div>
   } else {
-    for (let i in newMessages) if (!comments.filter(c => c.id === newMessages[i].id).length) comments.push(newMessages[i]);
+    comments = Array.isArray(comments) ? comments : [];
+    comments = [...comments.filter(m=>m.id!==itemId),...newMessages];
     thread = comments.map(comment => <Comment comment={comment} />)
 
   }
