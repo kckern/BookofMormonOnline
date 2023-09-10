@@ -5,17 +5,18 @@ const webhook = async (req, res) => {
 
     const studyBuddyIds = ["ddc26a0e41b6daffff542e9fe8d9171d","d9b0b9b0a4b6daffff542e9fe8d9171d"];
     const {channel, members, sender, payload, parent_message_id, category, type} = req.body;
-    const {message_id} = payload;
-    const studyBuddyIsMember = members.find(({user_id})=>studyBuddyIds.includes(user_id));
+    const {message_id} = payload || {};
+    const studyBuddyIsMember = !!members.find(({user_id})=>studyBuddyIds.includes(user_id));
     const studyBuddyIsSender = sender?.user_id && studyBuddyIds.includes(sender?.user_id);
+    const messageId = parent_message_id || message_id;
+    const channelUrl = channel?.channel_url;
 
-    if(studyBuddyIsMember && !studyBuddyIsSender)
+    console.log({studyBuddyIsMember, studyBuddyIsSender});
+
+    console.log(`WH-DEBUG:" ${channelUrl} ${message_id} ${JSON.stringify({studyBuddyIsMember, studyBuddyIsSender})}`);
+
+    if((studyBuddyIsMember && !studyBuddyIsSender))
     {
-        const messageId = parent_message_id || message_id;
-        const channelUrl = channel?.channel_url;
-        console.log("[STUDYBUDDY]");
-        console.log({category, type, messageId,channelUrl});
-
         res.json({success:true, message: "StudyBuddy webhook received.  Processing..."});
         await studyBuddy(channelUrl, messageId); // dont await
         return 

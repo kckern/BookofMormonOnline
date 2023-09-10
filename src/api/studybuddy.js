@@ -59,6 +59,7 @@ const editContent = string=>{
 
     string = string.replace(/^\[.*?!\]:*/g,"").trim();
     string = string.replace(/\[Text Highlights\].*/g,"").trim();
+<<<<<<< Updated upstream
     const sentences = string.split(/([.?!])/);
     //merge evens ands odds to rejoin sentences with their delimiters
     sentences = sentences.reduce((acc,curr,i) => {
@@ -71,6 +72,18 @@ const editContent = string=>{
     },[]);
 
 
+=======
+    string = string.replace(/^[^\S+]*:\s*/g,"").trim();
+    let sentences = string.split(/([.?!])/);
+    // join the sentences with the delimiters again
+    sentences = sentences.reduce((acc, val, i) => {
+        if (i%2) 
+        acc[acc.length - 1] = acc[acc.length - 1]+val;
+        else acc.push(val);
+        return acc;
+    }, []);
+    
+>>>>>>> Stashed changes
 
     const lazyRhetoric = [
         "importance of",
@@ -107,6 +120,9 @@ const editContent = string=>{
     let newSentences = sentences.filter((sentence) => !lazyRhetoric.some((phrase) => sentence.toLowerCase().includes(phrase)));
     newSentences =  newSentences.join(" ");
     newSentences = newSentences.replace(/^[\.\s]+/g,"").trim();
+    newSentences = newSentences.replace(/^\[.*?\]:*/g,"").trim();
+
+
     return newSentences;
 
 }
