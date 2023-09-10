@@ -3,7 +3,7 @@ const webhook = async (req, res) => {
 
 
 
-    const studyBuddyIds = ["ddc26a0e41b6daffff542e9fe8d9171d","d9b0b9b0a4b6daffff542e9fe8d9171d"];
+    const studyBuddyIds = ["ddc26a0e41b6daffff542e9fe8d9171d","938e2c5ac2c938b8156a7faf9ef9465f"];
     const {channel, members, sender, payload, parent_message_id} = req.body;
     const {message_id} = payload || {};
     const studyBuddyIsMember = members?.some(member=>studyBuddyIds.includes(member?.user_id));
@@ -11,8 +11,6 @@ const webhook = async (req, res) => {
     const messageId = parent_message_id || message_id;
     const channelUrl = channel?.channel_url;
 
-
-    console.log(`WH-DEBUG:" ${channelUrl} ${message_id} ${JSON.stringify({studyBuddyIsMember, studyBuddyIsSender, members})}`);
 
     if((studyBuddyIsMember && !studyBuddyIsSender))
     {

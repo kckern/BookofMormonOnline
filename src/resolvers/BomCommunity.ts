@@ -24,7 +24,7 @@ export default {
         order: [['complete', 'DESC']],
       });
 
-      console.log(rankedUsers.map((u:any)=>`${u.name || u.user} ${u.complete}% ${u.last_active}`));
+      //console.log(rankedUsers.map((u:any)=>`${u.name || u.user} ${u.complete}% ${u.last_active}`));
       const topUsers = rankedUsers.slice(0,100);
       const sendbirdUserObjects = await sendbird.listUsers(topUsers.map((u:any)=>md5(u.user)));
 
@@ -50,7 +50,7 @@ export default {
 
     },
     loadGroupsFromHash: async (item: any, args: any, context: any, info: any) => {
-      console.log("a")
+      //console.log("a")
       if (args.hash === undefined) return false;
       let shortLinks = await Models.BomShortlinks.findAll({ where: { hash: args.hash } });
       if (!shortLinks) return [];
@@ -108,7 +108,7 @@ export default {
 
       let myHomeGroups = [];
       if (user) {
-        console.log(user);
+        //console.log(user);
         const bom_username = user.user;
         const my_sb_user_id = md5(bom_username);
 
