@@ -504,6 +504,7 @@ async function processSocialUser(args, incr: number) {
   let myUserEmail: any = email ? await Models.BomUser.findOne({ where: { email } }) : null;
   let myUserSocial: any = await Models.BomUserSocial.findOne({ where: { network, social_id } });
 
+  //CREATE USER
   if (!myUserSocial && !myUserEmail) {
     var user = cleanUsername(name, email);
     if (incr > 0) user = user + "." + incr;
@@ -521,6 +522,7 @@ async function processSocialUser(args, incr: number) {
     await Models.BomUserSocial.create({ user, network, social_id });
     const hashed_id = md5(user)
     let social = await sendbird.loadUser(hashed_id, name, profile_url);
+    await sendbird.updateUserNickname(hashed_id, name);
     return {
       isSuccess: true,
       msg: `${network} create + login Success`,
