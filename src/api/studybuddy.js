@@ -63,6 +63,7 @@ const editContent = string=>{
     const lazyRhetoric = [
         "importance of",
         "important to",
+        "for us",
         "critical",
         "crucial",
         "i hope",
