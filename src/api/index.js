@@ -3,11 +3,11 @@ const webhook = async (req, res) => {
 
 
 
-    const studyBuddyId = "ddc26a0e41b6daffff542e9fe8d9171d";
+    const studyBuddyIds = ["ddc26a0e41b6daffff542e9fe8d9171d","d9b0b9b0a4b6daffff542e9fe8d9171d"];
     const {channel, members, sender, payload, parent_message_id, category, type} = req.body;
     const {message_id} = payload;
-    const studyBuddyIsMember = members.find(({user_id})=>user_id===studyBuddyId);
-    const studyBuddyIsSender = sender?.user_id===studyBuddyId;
+    const studyBuddyIsMember = members.find(({user_id})=>studyBuddyIds.includes(user_id));
+    const studyBuddyIsSender = sender?.user_id && studyBuddyIds.includes(sender?.user_id);
 
     if(studyBuddyIsMember && !studyBuddyIsSender)
     {
