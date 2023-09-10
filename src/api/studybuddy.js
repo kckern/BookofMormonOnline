@@ -57,7 +57,7 @@ const prepareThread = async (thread)=>
 
 const editContent = string=>{
 
-    string = string.replace(/^\[.*?\]:*/g,"").trim();
+    string = string.replace(/^\[.*?!\]:*/g,"").trim();
     string = string.replace(/\[Text Highlights\].*/g,"").trim();
     const sentences = string.split(/([.?!])/);
     const lazyRhetoric = [
@@ -65,6 +65,8 @@ const editContent = string=>{
         "important to",
         "critical",
         "crucial",
+        "i hope",
+        "let me know",
         "we must",
         "personal",
         "teaches us",
@@ -73,15 +75,26 @@ const editContent = string=>{
         "we should",
         "we can",
         "we may",
-        "Ultimately,",
+        "matters most",
+        "ultimately,",
+        "our own",
         "apply this",
         "great example",
+        "teach us",
+        "important lesson",
+        "valuable lesson",
         "but rather",
         "our own lives",
+        "overcome",
+        "help us",
+        "our lives",
+        "feel free",
         "should remember",
     ];
-    const newSentences = sentences.filter((sentence) => !lazyRhetoric.some((phrase) => sentence.toLowerCase().includes(phrase)));
-    return newSentences.join("").replace(/[.]+/g,".").trim();
+    let newSentences = sentences.filter((sentence) => !lazyRhetoric.some((phrase) => sentence.toLowerCase().includes(phrase)));
+    newSentences =  newSentences.join(" ").replace(/[.]+/g,".").replace(/[\s]+/g," ").trim();
+    newSentences = newSentences.replace(/^[\.\s]+/g,"").trim();
+    return newSentences;
 
 }
 
