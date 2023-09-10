@@ -60,6 +60,18 @@ const editContent = string=>{
     string = string.replace(/^\[.*?!\]:*/g,"").trim();
     string = string.replace(/\[Text Highlights\].*/g,"").trim();
     const sentences = string.split(/([.?!])/);
+    //merge evens ands odds to rejoin sentences with their delimiters
+    sentences = sentences.reduce((acc,curr,i) => {
+        if(i%2) {
+            acc[acc.length-1] = acc[acc.length-1]+curr;
+        } else {
+            acc.push(curr);
+        }
+        return acc;
+    },[]);
+
+
+
     const lazyRhetoric = [
         "importance of",
         "important to",
@@ -93,7 +105,7 @@ const editContent = string=>{
         "should remember",
     ];
     let newSentences = sentences.filter((sentence) => !lazyRhetoric.some((phrase) => sentence.toLowerCase().includes(phrase)));
-    newSentences =  newSentences.join(" ").replace(/[.]+/g,".").replace(/[\s]+/g," ").trim();
+    newSentences =  newSentences.join(" ");
     newSentences = newSentences.replace(/^[\.\s]+/g,"").trim();
     return newSentences;
 
