@@ -320,7 +320,7 @@ function Comments({ appController, comments, count, item, group, memberMap, sbCh
     </div>
   } else {
     comments = Array.isArray(comments) ? comments : [];
-    comments = [...comments.filter(m=>m.id!==itemId),...newMessages];
+    comments = [...comments.filter(m=>m.id!==itemId && !/^[\s•]+$/.test(m.msg)),...newMessages];
     thread = comments.map(comment => <Comment comment={comment} />)
 
   }
@@ -414,8 +414,6 @@ function Comment({ comment }) {
   const botBadge = (isBot) ? <span className="botBadge">BOT</span> : null;
   const trophyImg = (finished) ? <img className="trophy" src={trophy} /> : null;
   let timeAgo = timeAgoString(comment.timestamp / 1000);
-  let hasNoContent = !!comment.msg.replace(/[•\s]+/g, "");
-  if(!hasNoContent) return null;
   return <div className={"commentThreadItem " + ((urlMatch === comment.id) ? "selected" : "")}>
     <div className="imagebox noselect">
       {trophyImg}
