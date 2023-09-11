@@ -155,7 +155,7 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId}) => {
 
     //console.log(sectionContext.people);
 
-    let instructions = `You are Book of Mormon Study-Buddy GPT.  
+    let instructions =translateReferences(lang,`You are Book of Mormon Study-Buddy GPT.  
     You help students get the most of their studies.   
     Write at a 6th grade reading level.  
     Anytime you make a text-based point, back it up with a scripture reference in parentheses.
@@ -165,47 +165,66 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId}) => {
     Assume the student already has a basic understanding of what the Book of Mormon is.
     Be respectful of beliefs and opinions do not encourage any particular belief system, rather focus on understanding the text.
     Do not sermonize, proselytize, or preach.
-    ${lang !== "en" ? "" : "Write your response in text into the student's language: ("+lang+")"}
+    ${lang === "en" ? "" : "Write your response in text into the student's language: ("+lang+")"}
+    `);
+    //+ `## Commentaries to keep in mind the knowledge bank:${fittedCommentary.map(({name, title, year, text}) => `### ${name} (${title}, ${year} \n ${text}\n\n\n`).join("\n")}`);
+
     
-    ## Scripture references that may be related to the topic:
-    ${crossReferences.map(({ref,text}) => `**${ref}**: ${text}`).join("\n")}
-
-    ## People and places that are mentioned:
-    ${sectionContext.people.map(({name, title, description}) => `**${name}** (${title}): ${description}`).join("\n")}
-    ${sectionContext.places.map(({name, info, description}) => `**${name}** (${info}): ${description}`).join("\n")}
-
-    ## Commentaries others have written about this passage:
-    ${fittedCommentary.map(({name, title, year, text}) => `### ${name} (${title}, ${year} \n ${text}\n\n\n`).join("\n")}
-    `
-
     const highlightMessages = firstHighlights ? firstHighlights.map((highlight) => ([
         {role: "assistant", content: `Any specific phrases catch your attention?`},
         {role: "user", content: `Yes: ${JSON.stringify(highlight)}`}
     ])) : []
-
+    const lang_in = lang === "en" ? "" : ` in ${lang}`;
     const firstMessage = thread[0].message.replace(/^[• ]+$/g,"").trim();
+    const langugageInstructions = lang === "en" ? [] : [
+        {role: "assistant", content: `Should I respond in English?`},
+        {role: "user", content: `No, respond in ${lang}.`}
+    ];
     const firstMessages = firstMessage ? [
-        {role: "assistant", content: `Got it.  So what do you have to say about ${ref}?`},
-        {role: "user", content: firstMessage}
-    ] : [];
+        {role: "assistant", content: `Got it.  Now give me the comment to reply to.`},
+        {role: "user", content: `[${name}]: “${firstMessage}”`},
+        {role: "assistant", content: `I've got a response in mind.  Ready for me to give it to you?`},
+        {role: "user", content: `Go for it. No preliminary comment, just give me the reply${lang_in}.`}
+    ] : [
+        {role: "assistant", content: `Got it.  I've got a reply in mind that relates to this passage.  Ready for me to give it to you?`},
+        {role: "user", content: `Go for it. No preliminary comment, just give me the reply${lang_in}.`}
+    ];
+
 
     const messages = [...[
         {role: "user", content: `Hello, my name is ${name}. I am studying the Book of Mormon`},
         {role: "assistant", content: `Nice to meet you, ${name}!  What are you studying today?`},
-        {role: "user", content: `I am studying ${ref}. It says: ${scripture_text}`},
+        {role: "user", content: `I am studying ${ref}.`},
+        {role: "assistant", content: `What does it say?`},
+        {role: "user", content: scripture_text},
+        {role: "assistant", content: `What people and places are mentioned in this passage?`},
+        {role: "user", content: `People: ${sectionContext.people.map(({name, title}) => `${name.replace(/\d+/g,"")} (${title})`).join(", ")},
+        Places: ${sectionContext.places.map(({name, info}) => `${name.replace(/\d+/g,"")} (${info})`).join(", ")}`},
+        {role: "user", content: `In a moment, I will ask you respond to a comment about this passage.  But first, ask about how you should respond?`},
+        {role: "assistant", content: `Okay.  How long should my response be? Long, medium, or short?`},
+        {role: "user", content: `Shortish-Medium.  Multiple sentences, but single paragraphs.`},
+        {role: "assistant", content: `Okay.  What should respond with?`},
+        {role: "user", content: `Insights about the passage, especially how it relates to other scriptures.`},
+       // {role: "assistant", content: `Okay.  What about background and context for the passage?`},
+       // {role: "user", content: `Yes, refer to the commentaries to give context and insight.`},
+        {role: "assistant", content: `Okay.  What about personal application and life lessons?`},
+        {role: "user", content: `No, stick to the text: exegete, not eisegete.`},
+        {role: "assistant", content: `Are there any scriptures that you think are related to this passage?`},
+        {role: "user", content: `${crossReferences.map(({ref,text}) => `[${translateReferences(lang,ref)}]: ${text}`).join(" • ")}`},
+        {role: "assistant", content: `Should I mentioned these scriptures in my response?`},
+        {role: "user", content: `Yes, if makes sense to do so.`},
+        {role: "assistant", content: `Should I stack the scripture references at the end of my response?, or intersperse them throughout?`},
+        {role: "user", content: [
+            `Interperse them throughout, in parentheses.`,
+            `Do not add a list of references at the end`,
+            `I repeat, no parenthetical references at the end.`,
+        ].join(" ")},
+        ...langugageInstructions,
         ...highlightMessages,
         ...firstMessages
     ],...thread_messages.slice(1).map((message) => (
         {role: "user", content: message}
     ))].flat()
-
-    const prompt = {
-        "ko":`진지하게 답변해 주세요. ${ref}빼고 헤당 경전 구절까지 언급하세요. 간단하고 짧게 쓰세요.`,
-    }[lang] || `Please respond insightfuly. Cite relevant scriptures if appropriate, except for ${ref}, which is already cited. Keep it short.`;
-
-    messages.push(
-        {role: "system", content: prompt}
-    )
 
 
     instructions = instructions.split(" ").slice(0,1800).join(" ");
@@ -223,7 +242,6 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId}) => {
     let response =  (await askGPT(instructions, messages, "gpt-3.5-turbo-16k")).split(/[\n\r]+/). join(" ");
     response = editContent(response);
     response = translateReferences(lang, response);
-
 
     return ({
         channelUrl, 
@@ -355,7 +373,7 @@ const loadCrossReferences = async (verse_ids, lang) => {
     
     if(lang && lang !== 'en') {
 
-        sql = `SELECT v.verse_title_short as ref, t.text as text 
+        sql = `SELECT v.verse_title as ref, t.text as text 
         FROM lds_scriptures_verses v JOIN lds_scriptures_translations t
                 ON v.verse_id = t.verse_id
                 WHERE v.verse_id IN 
@@ -367,7 +385,7 @@ const loadCrossReferences = async (verse_ids, lang) => {
                 ORDER BY v.verse_id;`
 
     } else {
-        sql = `SELECT verse_title_short ref, verse_scripture text 
+        sql = `SELECT verse_title ref, verse_scripture text 
         FROM lds_scriptures_verses 
         WHERE verse_id IN 
         (SELECT distinct dst_verse_id FROM lds_scriptures_crossref
