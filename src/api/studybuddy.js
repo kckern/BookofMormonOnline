@@ -4,6 +4,7 @@ const {generateReference} =  require('scripture-guide');
 const openaiTokenCounter = require('openai-gpt-token-counter');
 const {sendbird} = require("../library/sendbird.js");
 const isJSON = require("is-json");
+const { loadTranslations, translateReferences } = require("./translate");
 
 
 const stripHTMLTags = (text) => text.replace(/<[^>]*>?/gm, '').replace(/\s+/g," ").trim();
@@ -20,8 +21,9 @@ const trimDownCommentary = (commentary, tokenLimit=0) => {
 
 const studyBuddy = async (channelUrl,messageId) => {
 
-
-    return studyBuddyTextBlock({channelUrl, messageId});
+    const { user_id, response} = await studyBuddyTextBlock({channelUrl, messageId});
+    return await studyBuddySend({channelUrl, messageId, message:response, user_id});
+    
 }
 
 const prepareThread = async (thread)=>
@@ -60,6 +62,7 @@ const prepareThread = async (thread)=>
     }
 
 }
+
 
 const editContent = string=>{
 
@@ -204,15 +207,12 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId}) => {
         {role: "system", content: prompt}
     )
 
-    console.log({messages});
-
 
     instructions = instructions.split(" ").slice(0,1800).join(" ");
     let tokenLimit = 3200;
     const model = "gpt-3.5-turbo"; // Replace with your desired OpenAI chat model
     let messagestocount = [{"role":"system","content":instructions},...messages];
     let tokenCount = openaiTokenCounter.chat(messagestocount, model);
-    console.log("Token count is "+tokenCount);
     while(tokenCount > tokenLimit) {
         instructions = instructions.split(" ").slice(0,-10).join(" ");
         tokenCount = openaiTokenCounter.chat([{"role":"system","content":instructions},...messages], model);
@@ -220,36 +220,40 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId}) => {
         console.log({tokenCount, instructionWordCount},"Token count is too high.  Reducing instructions to "+instructions.length+" characters.");
     }
 
-    let gptString =  (await askGPT(instructions, messages, "gpt-3.5-turbo-16k")).split(/[\n\r]+/). join(" ");
-    gptString = editContent(gptString);
+    let response =  (await askGPT(instructions, messages, "gpt-3.5-turbo-16k")).split(/[\n\r]+/). join(" ");
+    response = editContent(response);
+    response = translateReferences(lang, response);
 
-    console.log({gptString});
-   
-    const channel_members = await sendbird.getMembers(channelUrl);
-    const studyBuddyAdded = channel_members.some(({user_id}) => user_id === studyBuddyId);
-    if(!studyBuddyAdded) {
-        await sendbird.addUserToChannel(channelUrl, studyBuddyId);
-        await new Promise((resolve) => setTimeout(resolve, 10000));
-    }
-
-
-
-    await sendbird.replyToMessage({ channelUrl, messageId, user_id:studyBuddyId, message: gptString });
-
-
-
-    //get commentary
 
     return ({
-        ref,
-        scripture_text,
-        thread_messages,
-        gptString,
-        instructions
+        channelUrl, 
+        messageId,
+        user_id:studyBuddyId,
+        instructions:instructions.split(/\s*[\n\r]+\s*/).map(i=>i.trim()),
+        messages,
+        tokenCount,
+        response,
+        debug:{
+            people:sectionContext.people,
+        }
     });
 
 
 };
+
+const studyBuddySend = async ({ channelUrl, messageId, message, user_id}) => {
+
+
+    const channel_members = await sendbird.getMembers(channelUrl);
+    const studyBuddyAdded = channel_members.some(({user_id:u}) => u === user_id);
+    if(!studyBuddyAdded) {
+        console.log(`Adding studyBuddy ${user_id} to channel ${channelUrl}...`);
+        await sendbird.addUserToChannel(channelUrl, user_id);
+        await new Promise((resolve) => setTimeout(resolve, 10000));
+    }
+    return await sendbird.replyToMessage({ channelUrl, messageId, user_id, message });
+}
+
 
 const stripPeoplePlaces = (text) => {
     text = text.replace(/{(.*?)\|.*?}/g,"$1");
@@ -279,20 +283,11 @@ const loadPeople = async (people_slugs,lang="en") => {
     people_slugs = people_slugs.filter((slug) => !["god","jesus-christ"].includes(slug));
   
     let sql = `SELECT * FROM bom_people WHERE slug IN (${people_slugs.map((slug) => `"${slug}"`).join(",")})`;
+    let people = await queryDB(sql);
 
-    if (lang!=="en"){
-        sql = `SELECT p.slug, 
-        IFNULL(tn.value, p.name) as name, 
-        IFNULL(tt.value, p.title) as title, 
-        IFNULL(td.value, p.description) as description 
-        FROM bom_people p 
-        LEFT JOIN bom_translation tn ON p.slug = tn.guid AND tn.refkey = 'name' AND tn.lang = '${lang}' 
-        LEFT JOIN bom_translation tt ON p.slug = tt.guid AND tt.refkey = 'title' AND tt.lang = '${lang}' 
-        LEFT JOIN bom_translation td ON p.slug = td.guid AND td.refkey = 'description' AND td.lang = '${lang}' 
-        WHERE p.slug IN (${people_slugs.map((slug) => `"${slug}"`).join(",")})`;
-    }
+    if(lang!=="en") people = await loadTranslations(lang, people, "slug");
 
-    const people = await queryDB(sql);
+
     return people.map(({name, title, description}) => {
         description = stripPeoplePlaces(stripHTMLTags(description || "")).split(".").slice(0,max_sentences).join(".");
         return {name, title, description};
@@ -425,4 +420,4 @@ const loadVerses = async (guid, lang) => {
 
 
 
-module.exports = studyBuddy
+module.exports = {studyBuddy, studyBuddyTextBlock}
