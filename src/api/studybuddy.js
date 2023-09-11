@@ -5,6 +5,8 @@ const openaiTokenCounter = require('openai-gpt-token-counter');
 const {sendbird} = require("../library/sendbird.js");
 const isJSON = require("is-json");
 const { loadTranslations, translateReferences } = require("./translate");
+const smartquotes = require('smartquotes');
+
 
 
 const stripHTMLTags = (text) => text.replace(/<[^>]*>?/gm, '').replace(/\s+/g," ").trim();
@@ -40,14 +42,14 @@ const prepareThread = async (thread)=>
     AND s.slug = '${lastSlug}'`;
     const [item] = await queryDB(sql)
     const text_guid = item?.guid || null;
-    const firstHighlights = firstMessage.data.highlights || [];
+    const firstHighlights = firstMessage.data.highlights || null;
 
     const thread_messages = thread.map(({user, message, data}, i) => {
         message = message.replace(/^[• ]+$/g,"").trim();
         const dataIsString = typeof data === "string";
         data = dataIsString && isJSON(data) ? JSON.parse(data) : !dataIsString ? data : {};
         const {highlights} = data;
-        const highLightString = (!highlights || i === 1) ? "" : ` [Text Highlights]: ${highlights.map(i=>'"'+i+'"').join(", ")}`;
+        const highLightString = (!highlights?.length || i === 1) ? "" : ` [Text Highlights]: ${highlights.map(i=>'"'+i+'"').join(", ")}`;
         const message_string =  `[${user.nickname}]: ${message} ${highLightString}`;
         return message_string;
     });
@@ -56,6 +58,7 @@ const prepareThread = async (thread)=>
     return {
         text_guid,
         thread_messages,
+        firstMessage : firstMessage?.message.replace(/^[• ]+$/g,"").trim(),
         name: firstMessage?.user?.nickname || "Anonymous",
         firstHighlights
 
@@ -64,7 +67,16 @@ const prepareThread = async (thread)=>
 }
 
 
-const editContent = string=>{
+const editContent = (string,ref)=>{
+
+    //remove ref
+    string = string.replace(ref,"");
+    //remove empty parentheses
+    string = string.replace(/\s*\(\s*\)\s*/g," ");
+
+    //smart quotes
+    string = smartquotes(string);
+
 
     string = string.replace(/^\[.*?!\]:*/g,"").trim();
     string = string.replace(/\[Text Highlights\].*/g,"").trim();
@@ -96,6 +108,7 @@ const editContent = string=>{
         "when we",
         "we should",
         "we can",
+        "individuals can",
         "we may",
         "matters most",
         "ultimately,",
@@ -117,9 +130,173 @@ const editContent = string=>{
     newSentences =  newSentences.join(" ");
     newSentences = newSentences.replace(/^[\.\s]+/g,"").trim();
     newSentences = newSentences.replace(/^\[.*?\]:*/g,"").trim();
+    newSentences = newSentences.replace(/^[ ,.?!;]+/g,"").trim();
 
+    const badStarts = [
+        "In this passage,",
+        "In this verse,",
+        "In (.{1,15}?)\\d+,",
+    ]
+    //remove the bad starts, trim, and capitalize first letter
+    newSentences = newSentences.replace(new RegExp("^("+badStarts.join("|")+")","g"),"").trim().replace(/^\w/, c => c.toUpperCase());
+    
 
     return newSentences;
+
+}
+
+const langNames = {
+    "ko": "한국어",
+}
+
+
+const prepareMessages = ({
+    lang,
+     ref,
+     scripture_text,
+     firstMessage,
+     firstHighlights, 
+     thread_messages, 
+     name, 
+     crossReferences,
+     commentary,
+     people,
+     places,
+     division,
+     page,
+     sections,
+     sectionTitle,
+     sectionNarration,
+     textBlockNarration,
+    }, tokenLimit, attempt) => {
+    attempt = attempt || 1;
+
+    //console.log("prepareMessages",{attempt, comcount: commentary.length, refcount: crossReferences.length, tokenLimit});
+
+    const lang_in = lang === "en" ? "" : ` in ${langNames[lang] || lang}`;
+    
+    let instructions =translateReferences(lang,`You are Book of Mormon Study-Buddy GPT.  
+    You help students get the most of their studies.   
+    Write at a 6th grade reading level.  
+    Anytime you make a text-based point, back it up with a scripture reference in parentheses.
+    Stick interpreting the text, not the student's life.
+    Never make controversial or political statements.
+    De-escalate and disengage if the discussion becomes argumentative.
+    Assume the student already has a basic understanding of what the Book of Mormon is.
+    Be respectful of beliefs and opinions do not encourage any particular belief system, rather focus on understanding the text.
+    Do not sermonize, proselytize, or preach.
+    ${lang === "en" ? "" : "Write your response in text into the student's language: ("+(langNames[lang] || lang)+")"}
+    `);
+
+    let messages = [];
+    messages.push({role: "user",        content: `Hello, my name is ${name}. I am studying the Book of Mormon`});
+    messages.push({role: "assistant",   content: `Nice to meet you, ${name}!  What are you studying today?`});
+    messages.push({role: "user",        content: `I am studying ${translateReferences(lang,ref)}.`});
+    messages.push({role: "assistant",   content: `What does it say?`});
+    messages.push({role: "user",        content: scripture_text});
+    messages.push({role: "user",        content: `In a moment, I will ask you respond to a comment about this passage.  But first, ask me about how you should respond`});
+    messages.push({role: "assistant",   content: `Okay.  How long should my response be? Long, medium, or short?`});
+    messages.push({role: "user",        content: `Shortish-Medium.  Multiple sentences, but single paragraphs.`});
+    messages.push({role: "assistant",   content: `Okay.  What should respond with?`});
+    messages.push({role: "user",        content: `Insights about the passage, especially how it relates to other scriptures.`});
+    messages.push({role: "assistant",   content: `Okay. Tell me more about this passage.  What is going on here?`});
+    messages.push({role: "user",        content: `${textBlockNarration}`});
+    messages.push({role: "assistant",   content: `Okay.  What is the context of this passage?`});
+    messages.push({role: "user",        content: `It is from the section called "${sectionTitle}" of this page: ${page}.`});
+    messages.push({role: "assistant",   content: `Okay.  And what happens in this section?`});
+    messages.push({role: "user",        content: `${sectionNarration}`});
+    messages.push({role: "assistant",   content: `And what other sections are on this page?`});
+    messages.push({role: "user",        content: `There are ${sections.length} sections: ${sections.join(" • ")}`});
+    if(division)
+    {
+    messages.push({role: "assistant",   content: `Got it.  And the broader context of the page?`});
+    messages.push({role: "user",        content: `${division}`});
+    }
+    if(people.length) {
+    messages.push({role: "assistant",   content: `Okay.  Are there any people (and name spellings) I should know about?`});
+    messages.push({role: "user",        content: `Yes, here they are: ${people.map(({name, title}) => `${name} (${title})`).join(" • ")}`});
+    }
+    if(places.length) {
+    messages.push({role: "assistant",   content: `Okay.  Are there any places (and name spellings) I should know about?`});
+    messages.push({role: "user",        content: `Yes, here they are: ${places.map(({name, info}) => `${name} (${info})`).join(" • ")}`});
+    }
+
+
+    messages.push({role: "assistant",   content: `I think I understand the passage now.  When I reply, should I bring in personal application and life lessons?`});
+    messages.push({role: "user",        content: `No, stick to the text: exegete, not eisegete.`});
+    if(lang !== "en") {
+    messages.push({role: "assistant",   content: `Okay.  Should I respond in English?`});
+    messages.push({role: "user",        content: `No, respond in ${langNames[lang] || lang}.`});
+    }
+    if(firstHighlights) {
+    messages.push({role: "assistant",   content: `So, back to what I should reply about. Any specific phrases catch your attention?`});
+    messages.push({role: "user",        content: `Yes: ${JSON.stringify(firstHighlights)}`});
+    }
+    if(firstMessage) {
+    messages.push({role: "assistant",   content: `Got it.  Now give me the comment to reply to.`});
+    messages.push({role: "user",        content: `[${name}]: “${firstMessage}”`});
+    }
+    messages.push({role: "assistant",   content: `I've got a response in mind.  Ready for me to give it to you?`});
+    messages.push({role: "user",        content: `Wait.  Review these cross references.  Any that would help inform a response?   ${crossReferences.map(({ref,text}) => `${translateReferences(lang,ref)}: ${text}`).join(" • ")}`});
+    messages.push({role: "assistant",   content: `Maybe.  Some might be relevant.`});
+    messages.push({role: "user",        content: `Which ones?`});
+    messages.push({role: "assistant",   content: `Wait for my response.  I'll mention and cite the key ones, if there are any.`});
+
+    if(commentary.length)
+    {
+    messages.push({role: "assistant",   content: `Oh by the way, are there any published commentaries that would be relevant to this passage?`});
+    messages.push({role: "user",        content: `Yes, here they are: ${commentary.map(({name, title, year, text}) => `[${title}] ${text}`).join(" • ")}`});
+    messages.push({role: "assistant",   content: `Thanks for the background info.  I'll refer to this as needed`});
+    }
+    messages.push({role: "assistant",    content: `Should I start with “In this passage,” or “In ${ref}”?`});
+    messages.push({role: "user",        content: `No, the context is already established.  Just start with the main point.`});
+    messages.push({role: "assistant",    content: `Understood.`});
+    messages.push({role: "user",        content: `Okay get ready to give your reply${lang_in}.`});
+    messages.push({role: "assistant",    content: `Give the word.`});
+    messages.push({role: "user",        content: `Lights, camera...`});
+    messages.push({role: "assistant",    content: `[Gets into character as Study-Buddy GPT]`});
+    messages.push({role: "user",        content: `...Action!`});
+    messages.push({role: "user",        content: `[${name}]: “${firstMessage}”`});
+
+    if(thread_messages.length > 1) {
+        messages.push(...thread_messages.slice(1).map((message) => (
+            {role: "user", content: message}
+        )));
+    }
+
+
+
+    let messagestocount = [{"role":"system","content":instructions},...messages];
+
+    const model = "gpt-3.5-turbo"; // Replace with your desired OpenAI chat model
+    let tokenCount = openaiTokenCounter.chat(messagestocount, model);
+    if(tokenCount>tokenLimit) {
+        //remove longest  reference
+        if(commentary.length) commentary = commentary.sort((a,b) => b.text.length - a.text.length).slice(1);
+        else if(crossReferences.length) crossReferences = crossReferences.sort((a,b) => b.text.length - a.text.length).slice(1);
+        else return false;
+        return prepareMessages({
+            lang,
+             ref,
+             scripture_text,
+             firstMessage,
+             firstHighlights, 
+             thread_messages, 
+             name, 
+             crossReferences,
+             commentary,
+             people,
+             places,
+             division,
+             page,
+             sections,
+             sectionTitle,
+             sectionNarration,
+             textBlockNarration,
+            }, tokenLimit, attempt+1);
+    }
+    return {instructions,messages}
+
 
 }
 
@@ -140,7 +317,7 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId}) => {
 
     const thread = await sendbird.getThread({ channelUrl, messageId }) ;
 
-    const {text_guid, thread_messages, name, firstHighlights} = await prepareThread(thread);
+    const {text_guid, thread_messages, name, firstMessage, firstHighlights} = await prepareThread(thread);
 
     if(!text_guid) return  false;
 
@@ -149,111 +326,49 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId}) => {
     const {verse_ids,ref,scripture_text} = await loadVerses(text_guid,lang);
 
     const commentary = await loadCommentary(verse_ids,lang);
-    const fittedCommentary = trimDownCommentary(commentary);
     const crossReferences = await loadCrossReferences(verse_ids,lang);
     const sectionContext = await loadSectionContext(text_guid,lang);
-
-    //console.log(sectionContext.people);
-
-    let instructions =translateReferences(lang,`You are Book of Mormon Study-Buddy GPT.  
-    You help students get the most of their studies.   
-    Write at a 6th grade reading level.  
-    Anytime you make a text-based point, back it up with a scripture reference in parentheses.
-    Stick interpreting the text, not the student's life.
-    Never make controversial or political statements.
-    De-escalate and disengage if the discussion becomes argumentative.
-    Assume the student already has a basic understanding of what the Book of Mormon is.
-    Be respectful of beliefs and opinions do not encourage any particular belief system, rather focus on understanding the text.
-    Do not sermonize, proselytize, or preach.
-    ${lang === "en" ? "" : "Write your response in text into the student's language: ("+lang+")"}
-    `);
-    //+ `## Commentaries to keep in mind the knowledge bank:${fittedCommentary.map(({name, title, year, text}) => `### ${name} (${title}, ${year} \n ${text}\n\n\n`).join("\n")}`);
-
-    
-    const highlightMessages = firstHighlights ? firstHighlights.map((highlight) => ([
-        {role: "assistant", content: `Any specific phrases catch your attention?`},
-        {role: "user", content: `Yes: ${JSON.stringify(highlight)}`}
-    ])) : []
-    const lang_in = lang === "en" ? "" : ` in ${lang}`;
-    const firstMessage = thread[0].message.replace(/^[• ]+$/g,"").trim();
-    const langugageInstructions = lang === "en" ? [] : [
-        {role: "assistant", content: `Should I respond in English?`},
-        {role: "user", content: `No, respond in ${lang}.`}
-    ];
-    const firstMessages = firstMessage ? [
-        {role: "assistant", content: `Got it.  Now give me the comment to reply to.`},
-        {role: "user", content: `[${name}]: “${firstMessage}”`},
-        {role: "assistant", content: `I've got a response in mind.  Ready for me to give it to you?`},
-        {role: "user", content: `Go for it. No preliminary comment, just give me the reply${lang_in}.`}
-    ] : [
-        {role: "assistant", content: `Got it.  I've got a reply in mind that relates to this passage.  Ready for me to give it to you?`},
-        {role: "user", content: `Go for it. No preliminary comment, just give me the reply${lang_in}.`}
-    ];
+    const division = await loadDivision(text_guid,lang);
+    const {guid:page_guid, title:page} = await loadPage(text_guid,lang);
+    const sections = await loadPageSections(page_guid,lang);
+    const sectionNarration = sectionContext.narration;
+    const sectionTitle = sectionContext.title;
+    const textBlockNarration = await loadTextBlockNarration(text_guid,lang);
+    const {people,places} = sectionContext;
 
 
-    const messages = [...[
-        {role: "user", content: `Hello, my name is ${name}. I am studying the Book of Mormon`},
-        {role: "assistant", content: `Nice to meet you, ${name}!  What are you studying today?`},
-        {role: "user", content: `I am studying ${ref}.`},
-        {role: "assistant", content: `What does it say?`},
-        {role: "user", content: scripture_text},
-        {role: "assistant", content: `What people and places are mentioned in this passage?`},
-        {role: "user", content: `People: ${sectionContext.people.map(({name, title}) => `${name.replace(/\d+/g,"")} (${title})`).join(", ")},
-        Places: ${sectionContext.places.map(({name, info}) => `${name.replace(/\d+/g,"")} (${info})`).join(", ")}`},
-        {role: "user", content: `In a moment, I will ask you respond to a comment about this passage.  But first, ask about how you should respond?`},
-        {role: "assistant", content: `Okay.  How long should my response be? Long, medium, or short?`},
-        {role: "user", content: `Shortish-Medium.  Multiple sentences, but single paragraphs.`},
-        {role: "assistant", content: `Okay.  What should respond with?`},
-        {role: "user", content: `Insights about the passage, especially how it relates to other scriptures.`},
-       // {role: "assistant", content: `Okay.  What about background and context for the passage?`},
-       // {role: "user", content: `Yes, refer to the commentaries to give context and insight.`},
-        {role: "assistant", content: `Okay.  What about personal application and life lessons?`},
-        {role: "user", content: `No, stick to the text: exegete, not eisegete.`},
-        {role: "assistant", content: `Are there any scriptures that you think are related to this passage?`},
-        {role: "user", content: `${crossReferences.map(({ref,text}) => `[${translateReferences(lang,ref)}]: ${text}`).join(" • ")}`},
-        {role: "assistant", content: `Should I mentioned these scriptures in my response?`},
-        {role: "user", content: `Yes, if makes sense to do so.`},
-        {role: "assistant", content: `Should I stack the scripture references at the end of my response?, or intersperse them throughout?`},
-        {role: "user", content: [
-            `Interperse them throughout, in parentheses.`,
-            `Do not add a list of references at the end`,
-            `I repeat, no parenthetical references at the end.`,
-        ].join(" ")},
-        ...langugageInstructions,
-        ...highlightMessages,
-        ...firstMessages
-    ],...thread_messages.slice(1).map((message) => (
-        {role: "user", content: message}
-    ))].flat()
-
-
-    instructions = instructions.split(" ").slice(0,1800).join(" ");
     let tokenLimit = 3200;
-    const model = "gpt-3.5-turbo"; // Replace with your desired OpenAI chat model
-    let messagestocount = [{"role":"system","content":instructions},...messages];
-    let tokenCount = openaiTokenCounter.chat(messagestocount, model);
-    while(tokenCount > tokenLimit) {
-        instructions = instructions.split(" ").slice(0,-10).join(" ");
-        tokenCount = openaiTokenCounter.chat([{"role":"system","content":instructions},...messages], model);
-        const instructionWordCount = instructions.split(" ").length;
-        console.log({tokenCount, instructionWordCount},"Token count is too high.  Reducing instructions to "+instructions.length+" characters.");
-    }
+    const {instructions, messages} = prepareMessages({
+        lang,
+         ref,
+         scripture_text,
+         firstMessage,
+         firstHighlights, 
+         thread_messages, 
+         name, 
+         crossReferences,
+         commentary,
+         people,
+         places,
+         division,
+         page,
+         sections,
+         sectionTitle,
+         sectionNarration,
+         textBlockNarration,
+        }, tokenLimit);
 
     let response =  (await askGPT(instructions, messages, "gpt-3.5-turbo-16k")).split(/[\n\r]+/). join(" ");
-    response = editContent(response);
-    response = translateReferences(lang, response);
+    response = editContent(response, ref);
+    response = translateReferences(lang,response);
 
     return ({
         channelUrl, 
         messageId,
         user_id:studyBuddyId,
-        instructions:instructions.split(/\s*[\n\r]+\s*/).map(i=>i.trim()),
+        instructions:instructions.split(/\s*[\n\r]+\s*/).map(i=>i.trim()).filter(x=>!!x),
         messages,
-        tokenCount,
-        response,
-        debug:{
-            people:sectionContext.people,
-        }
+        response
     });
 
 
@@ -308,6 +423,8 @@ const loadPeople = async (people_slugs,lang="en") => {
 
     return people.map(({name, title, description}) => {
         description = stripPeoplePlaces(stripHTMLTags(description || "")).split(".").slice(0,max_sentences).join(".");
+        name = name.replace(/\d+/g,"").trim();
+        title = title.replace(/\d+/g,"").trim();
         return {name, title, description};
     });
 
@@ -320,6 +437,8 @@ const loadPlaces = async (place_slugs) => {
         const places = await queryDB(sql);
         return places.map(({name, info, description}) => {
             description = stripPeoplePlaces(stripHTMLTags(description)).split(".").slice(0,max_sentences).join(".");
+            name = name.replace(/\d+/g,"").trim();
+            info = info.replace(/\d+/g,"").trim();
             return {name, info, description};
         });
 
@@ -327,23 +446,94 @@ const loadPlaces = async (place_slugs) => {
 }
 
 
-const loadSectionContext = async (text_guid,lang) => {
+const loadDivision = async (text_guid, lang) => {
 
-const sql= `SELECT title, description
-FROM bom_narration bn
-JOIN bom_sectionrow bsr ON bn.parent = bsr.guid
-JOIN bom_section bs ON bsr.parent = bs.guid
-JOIN bom_text bt ON bs.guid = bt.section
-WHERE bsr.type = "N" AND bt.guid = "${text_guid}";`;
+    const sql = `SELECT d.guid, description from bom_division d
+    JOIN bom_page p ON p.guid = d.page
+    JOIN bom_text t ON t.page = p.guid
+    WHERE t.guid = "${text_guid}";`
+    const items = await queryDB(sql);
+    if(!items.length) return null;
+    const division = await loadTranslations(lang, items);
+    return division[0].description
 
-    const sectionContext = await queryDB(sql);
+}
+
+const loadPage = async (text_guid, lang) => {
+
+    const sql = `SELECT p.guid, title from bom_page p
+    JOIN bom_text t ON t.page = p.guid
+    WHERE t.guid = "${text_guid}";`
+    const items = await queryDB(sql);
+    const page = await loadTranslations(lang, items);
+    if(!page.length) return null;
+    const {guid, title} = page[0];
+    return {guid, title};
+
+}
+
+
+const loadPageSections = async (page_guid, lang) => {
+    const sql = `SELECT guid, title from bom_section
+    WHERE parent = "${page_guid}";`
+    const sections = await loadTranslations(lang, await queryDB(sql));
+    return sections.map(({title}) => title);
+}
+
+const loadSectionNarration = async (text_guid, lang) => {
+    //bom-text.section -> bom_section -> bom_sectionrow -> bom_narration
+    const sql = `SELECT bn.guid, bn.description
+    FROM bom_section bs
+    JOIN bom_sectionrow bsr ON bs.guid = bsr.parent
+    JOIN bom_narration bn ON bsr.guid = bn.parent
+    JOIN bom_text bt ON bs.guid = bt.section
+    WHERE bt.guid = "${text_guid}";`;
+    const narration = await loadTranslations(lang, await queryDB(sql));
+
+
+    return narration.map(({description}) => stripPeoplePlaces(description)).join("");
+}
+
+const loadTextBlockNarration = async (text_guid, lang) => {
+    // bom_text -> bom_sectionrow -> bom_narration
+    const sql = `SELECT bn.guid, description
+    FROM bom_narration bn
+    JOIN bom_text bt ON bt.parent = bn.guid
+    WHERE bt.guid = "${text_guid}";`;
+
+
+    const narration = await loadTranslations(lang, await queryDB(sql));
+    return narration.map(({description}) => stripPeoplePlaces(description)).join(" • ");
+}
+
+
     
 
-    const {people, places} = extractPeoplePlaceIds(sectionContext.map(({description}) => description).join(" "));
+
+const loadSectionContext = async (text_guid,lang) => {
+
+    const sectionTitleSQL = `SELECT bs.guid, title
+    FROM bom_section bs
+    JOIN bom_text bt ON bs.guid = bt.section
+    WHERE bt.guid = "${text_guid}";`;
+    const sectionTitle = await loadTranslations(lang, await queryDB(sectionTitleSQL));
+
+    const sectionNarrationSQL = `SELECT bn.guid, description
+    FROM bom_section bs
+    JOIN bom_sectionrow bsr ON bs.guid = bsr.parent
+    JOIN bom_narration bn ON bsr.guid = bn.parent
+    JOIN bom_text bt ON bs.guid = bt.section
+    WHERE bt.guid = "${text_guid}";`;
+    const sectionNarration = await queryDB(sectionNarrationSQL);
+
+
+    const {people, places} = extractPeoplePlaceIds(sectionNarration.map(({description}) => description).join(" "));
+
+    const translatedNarration = await loadTranslations(lang, sectionNarration, "guid");
 
     return {
-        title: sectionContext[0].title,
-        narration: sectionContext.map(({description}) => stripPeoplePlaces(description)).join(" "),
+        title: sectionTitle?.[0]?.title,
+        narration: translatedNarration.map(({description}) => stripPeoplePlaces(description)).join(" "),
         people: await loadPeople(people,lang),
         places: await loadPlaces(places,lang)
     }
@@ -357,7 +547,7 @@ const loadCommentary = async (verse_ids) => {
 
     // anything in c.verse_id + c.verse_range should be in verse_ids
     const sql = `
-    SELECT  s.source_name name, s.source_title title, s.source_year year, c.text
+    SELECT  s.source_name name, s.source_title book, c.title title, s.source_year year, c.text
     FROM bom_xtras_commentary c
     JOIN bom_xtras_source s ON c.source = s.source_id
     WHERE s.source_lang = "en" AND (${verse_ids.map(verse_id => `(${verse_id} BETWEEN c.verse_id AND c.verse_id + c.verse_range - 1)`).join(' OR ')})
