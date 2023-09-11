@@ -68,7 +68,6 @@ function translateReferences(lang, text)
         return match.replace(p1, dictionary[p1][lang]);
     });
 
-    console.log({text});
 
     return text;
 }

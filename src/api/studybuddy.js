@@ -174,7 +174,7 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId}) => {
         {role: "assistant", content: `Any specific phrases catch your attention?`},
         {role: "user", content: `Yes: ${JSON.stringify(highlight)}`}
     ])) : []
-
+    const lang_in = lang === "en" ? "" : ` in ${lang}`;
     const firstMessage = thread[0].message.replace(/^[• ]+$/g,"").trim();
     const langugageInstructions = lang === "en" ? [] : [
         {role: "assistant", content: `Should I respond in English?`},
@@ -184,10 +184,10 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId}) => {
         {role: "assistant", content: `Got it.  Now give me the comment to reply to.`},
         {role: "user", content: `[${name}]: “${firstMessage}”`},
         {role: "assistant", content: `I've got a response in mind.  Ready for me to give it to you?`},
-        {role: "user", content: `Go for it.`}
+        {role: "user", content: `Go for it. No preliminary comment, just give me the reply${lang_in}.`}
     ] : [
         {role: "assistant", content: `Got it.  I've got a reply in mind that relates to this passage.  Ready for me to give it to you?`},
-        {role: "user", content: `Go for it.`}
+        {role: "user", content: `Go for it. No preliminary comment, just give me the reply${lang_in}.`}
     ];
 
 
@@ -197,16 +197,6 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId}) => {
         {role: "user", content: `I am studying ${ref}.`},
         {role: "assistant", content: `What does it say?`},
         {role: "user", content: scripture_text},
-        {role: "assistant", content: `Are there any scriptures that you think are related to this passage?`},
-        {role: "user", content: `${crossReferences.map(({ref,text}) => `[${translateReferences(lang,ref)}]: ${text}`).join(" • ")}`},
-        {role: "assistant", content: `Should I mentioned these scriptures in my response?`},
-        {role: "user", content: `Yes, if makes sense to do so.`},
-        {role: "assistant", content: `Should I stack the scripture references at the end of my response?, or intersperse them throughout?`},
-        {role: "user", content: [
-            `Interperse them throughout, in parentheses.`,
-            `Do not add a list of references at the end`,
-            `I repeat, no parenthetical references at the end.`,
-        ].join(" ")},
         {role: "assistant", content: `What people and places are mentioned in this passage?`},
         {role: "user", content: `People: ${sectionContext.people.map(({name, title}) => `${name.replace(/\d+/g,"")} (${title})`).join(", ")},
         Places: ${sectionContext.places.map(({name, info}) => `${name.replace(/\d+/g,"")} (${info})`).join(", ")}`},
@@ -219,6 +209,16 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId}) => {
        // {role: "user", content: `Yes, refer to the commentaries to give context and insight.`},
         {role: "assistant", content: `Okay.  What about personal application and life lessons?`},
         {role: "user", content: `No, stick to the text: exegete, not eisegete.`},
+        {role: "assistant", content: `Are there any scriptures that you think are related to this passage?`},
+        {role: "user", content: `${crossReferences.map(({ref,text}) => `[${translateReferences(lang,ref)}]: ${text}`).join(" • ")}`},
+        {role: "assistant", content: `Should I mentioned these scriptures in my response?`},
+        {role: "user", content: `Yes, if makes sense to do so.`},
+        {role: "assistant", content: `Should I stack the scripture references at the end of my response?, or intersperse them throughout?`},
+        {role: "user", content: [
+            `Interperse them throughout, in parentheses.`,
+            `Do not add a list of references at the end`,
+            `I repeat, no parenthetical references at the end.`,
+        ].join(" ")},
         ...langugageInstructions,
         ...highlightMessages,
         ...firstMessages
