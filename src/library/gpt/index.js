@@ -44,7 +44,7 @@ async function GPT4(messages) {
 
 async function GPT35Turbo(messages) {
   messages = messages.map((message) => {
-    return { ...message, content: message.content.substring(0, 2048) };
+    return { ...message, content: message.content?.substring(0, 2048) };
   });
   try {
     const data = {
