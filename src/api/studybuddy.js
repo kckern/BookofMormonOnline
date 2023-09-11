@@ -38,19 +38,25 @@ const prepareThread = async (thread)=>
     AND s.slug = '${lastSlug}'`;
     const [item] = await queryDB(sql)
     const text_guid = item?.guid || null;
+    const firstHighlights = firstMessage.data.highlights || [];
 
-    const thread_messages = thread.map(({user, message, data}) => {
+    const thread_messages = thread.map(({user, message, data}, i) => {
+        message = message.replace(/^[• ]+$/g,"").trim();
         const dataIsString = typeof data === "string";
         data = dataIsString && isJSON(data) ? JSON.parse(data) : !dataIsString ? data : {};
         const {highlights} = data;
-        const highLightString = !highlights ? "" : ` [Text Highlights]: ${highlights.map(i=>'"'+i+'"').join(", ")}`;
+        const highLightString = (!highlights || i === 1) ? "" : ` [Text Highlights]: ${highlights.map(i=>'"'+i+'"').join(", ")}`;
         const message_string =  `[${user.nickname}]: ${message} ${highLightString}`;
         return message_string;
     });
 
+
     return {
         text_guid,
-        thread_messages
+        thread_messages,
+        name: firstMessage?.user?.nickname || "Anonymous",
+        firstHighlights
+
     }
 
 }
@@ -60,7 +66,7 @@ const editContent = string=>{
     string = string.replace(/^\[.*?!\]:*/g,"").trim();
     string = string.replace(/\[Text Highlights\].*/g,"").trim();
     string = string.replace(/^[^\S+]*:\s*/g,"").trim();
-    let sentences = string.split(/([.?!])/);
+    let sentences = string.split(/([.?!]["”“]*)/);
     // join the sentences with the delimiters again
     sentences = sentences.reduce((acc, val, i) => {
         if (i%2) 
@@ -76,6 +82,8 @@ const editContent = string=>{
         "for us",
         "critical",
         "crucial",
+        "we too",
+        "let us",
         "i hope",
         "let me know",
         "we must",
@@ -121,6 +129,7 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId}) => {
     const channel = await sendbird.loadChannel(channelUrl);
     const lang = channel.metadata.lang || "en";
 
+
     const studyBuddyId = {
         "ko":"938e2c5ac2c938b8156a7faf9ef9465f"
     }[lang] || "ddc26a0e41b6daffff542e9fe8d9171d"
@@ -128,7 +137,7 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId}) => {
 
     const thread = await sendbird.getThread({ channelUrl, messageId }) ;
 
-    const {text_guid, thread_messages} = await prepareThread(thread);
+    const {text_guid, thread_messages, name, firstHighlights} = await prepareThread(thread);
 
     if(!text_guid) return  false;
 
@@ -155,13 +164,10 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId}) => {
     Do not sermonize, proselytize, or preach.
     ${lang !== "en" ? "" : "Write your response in text into the student's language: ("+lang+")"}
     
-    # This is the passage you are helping the student study:
-    **${ref}**: ${scripture_text}
-
-    ## Scripture references that are often cross-referenced with this passage:
+    ## Scripture references that may be related to the topic:
     ${crossReferences.map(({ref,text}) => `**${ref}**: ${text}`).join("\n")}
 
-    ## People and places that are mentioned in this passage:
+    ## People and places that are mentioned:
     ${sectionContext.people.map(({name, title, description}) => `**${name}** (${title}): ${description}`).join("\n")}
     ${sectionContext.places.map(({name, info, description}) => `**${name}** (${info}): ${description}`).join("\n")}
 
@@ -169,9 +175,33 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId}) => {
     ${fittedCommentary.map(({name, title, year, text}) => `### ${name} (${title}, ${year} \n ${text}\n\n\n`).join("\n")}
     `
 
-    const messages = thread_messages.map((message) => (
+    const highlightMessages = firstHighlights ? firstHighlights.map((highlight) => ([
+        {role: "assistant", content: `Any specific phrases catch your attention?`},
+        {role: "user", content: `Yes: ${JSON.stringify(highlight)}`}
+    ])) : []
+
+    const firstMessage = thread[0].message.replace(/^[• ]+$/g,"").trim();
+    const firstMessages = firstMessage ? [
+        {role: "assistant", content: `Got it.  So what do you have to say about ${ref}?`},
+        {role: "user", content: firstMessage}
+    ] : [];
+
+    const prompt = {
+        "ko":`진지하게 답변해 주세요. ${ref}빼고 헤당 경전 구절까지 언급하세요. 간단하고 짧게 쓰세요.`,
+    }[lang] || `Please respond insightfuly. Cite relevant scriptures if appropriate, except for ${ref}, which is already cited. Keep it short.`;
+
+    const messages = [...[
+        {role: "user", content: `Hello, my name is ${name}. I am studying the Book of Mormon`},
+        {role: "assistant", content: `Nice to meet you, ${name}!  What are you studying today?`},
+        {role: "user", content: `I am studying ${ref}. It says: ${scripture_text}`},
+        ...highlightMessages,
+        ...firstMessages,
+        {role: "user", content: prompt}
+    ],...thread_messages.slice(1).map((message) => (
         {role: "user", content: message}
-    ));
+    ))].flat();
+
+
 
     instructions = instructions.split(" ").slice(0,1800).join(" ");
     let tokenLimit = 3200;
@@ -186,7 +216,7 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId}) => {
         console.log({tokenCount, instructionWordCount},"Token count is too high.  Reducing instructions to "+instructions.length+" characters.");
     }
 
-    
+    console.log(messages);
     let gptString =  (await askGPT(instructions, messages, "gpt-3.5-turbo-16k")).split(/[\n\r]+/). join(" ");
     gptString = editContent(gptString);
 
