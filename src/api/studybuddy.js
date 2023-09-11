@@ -96,6 +96,7 @@ const editContent = string=>{
         "when we",
         "we should",
         "we can",
+        "individuals can",
         "we may",
         "matters most",
         "ultimately,",
@@ -117,7 +118,7 @@ const editContent = string=>{
     newSentences =  newSentences.join(" ");
     newSentences = newSentences.replace(/^[\.\s]+/g,"").trim();
     newSentences = newSentences.replace(/^\[.*?\]:*/g,"").trim();
-
+    newSentences = newSentences.replace(/^[ ,.?!;]+/g,"").trim();
 
     return newSentences;
 
@@ -152,7 +153,12 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId}) => {
     const fittedCommentary = trimDownCommentary(commentary);
     const crossReferences = await loadCrossReferences(verse_ids,lang);
     const sectionContext = await loadSectionContext(text_guid,lang);
-
+   /* const division = await loadDivision(text_guid,lang);
+    const page = await loadPage(text_guid,lang);
+    const sections = await loadPageSections(page.guid,lang);
+    const narration = await loadSectionNarration(sections[0].guid,lang);
+    const textBlockNarration = await loadTextBlockNarration(text_guid,lang);
+    */
     //console.log(sectionContext.people);
 
     let instructions =translateReferences(lang,`You are Book of Mormon Study-Buddy GPT.  
@@ -184,23 +190,31 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId}) => {
         {role: "assistant", content: `Got it.  Now give me the comment to reply to.`},
         {role: "user", content: `[${name}]: “${firstMessage}”`},
         {role: "assistant", content: `I've got a response in mind.  Ready for me to give it to you?`},
-        {role: "user", content: `Go for it. No preliminary comment, just give me the reply${lang_in}.`}
+        {role: "user", content: `Wait.  Review these cross references.  Any that would help inform a response?   ${crossReferences.map(({ref,text}) => `[${translateReferences(lang,ref)}]: ${text}`).join(" • ")}`},
+        {role: "assistant", content: `Maybe.  Some might be relevant.`},
+        {role: "user", content: `Which ones?`},
+        {role: "assistant", content: `Wait for my response.  I'll mention and cite the key ones, if there are any.`},
+        {role: "user", content: `Okay let's have your response now. No preliminary comment, just give me the reply${lang_in}.`}
     ] : [
-        {role: "assistant", content: `Got it.  I've got a reply in mind that relates to this passage.  Ready for me to give it to you?`},
-        {role: "user", content: `Go for it. No preliminary comment, just give me the reply${lang_in}.`}
+        {role: "assistant", content: `Got it.  I've got a response in mind.  Ready for me to give it to you?`},
+        {role: "user", content: `Wait.  Review these cross references.  Any that would help inform a response?   ${crossReferences.map(({ref,text}) => `[${translateReferences(lang,ref)}]: ${text}`).join(" • ")}`},
+        {role: "assistant", content: `Maybe.  Some might be relevant.`},
+        {role: "user", content: `Which ones?`},
+        {role: "assistant", content: `Wait for my response.  I'll mention and cite the key ones, if there are any.`},
+        {role: "user", content: `Okay let's have your response now. No preliminary comment, just give me the reply${lang_in}.`}
     ];
 
 
     const messages = [...[
         {role: "user", content: `Hello, my name is ${name}. I am studying the Book of Mormon`},
         {role: "assistant", content: `Nice to meet you, ${name}!  What are you studying today?`},
-        {role: "user", content: `I am studying ${ref}.`},
+        {role: "user", content: `I am studying ${translateReferences(lang,ref)}.`},
         {role: "assistant", content: `What does it say?`},
         {role: "user", content: scripture_text},
-        {role: "assistant", content: `What people and places are mentioned in this passage?`},
-        {role: "user", content: `People: ${sectionContext.people.map(({name, title}) => `${name.replace(/\d+/g,"")} (${title})`).join(", ")},
-        Places: ${sectionContext.places.map(({name, info}) => `${name.replace(/\d+/g,"")} (${info})`).join(", ")}`},
-        {role: "user", content: `In a moment, I will ask you respond to a comment about this passage.  But first, ask about how you should respond?`},
+        //{role: "assistant", content: `What people and places are mentioned in this passage?`},
+       // {role: "user", content: `People: ${sectionContext.people.map(({name, title}) => `${name.replace(/\d+/g,"")} (${title})`).join(", ")},
+        //Places: ${sectionContext.places.map(({name, info}) => `${name.replace(/\d+/g,"")} (${info})`).join(", ")}`},
+        {role: "user", content: `In a moment, I will ask you respond to a comment about this passage.  But first, ask me about how you should respond`},
         {role: "assistant", content: `Okay.  How long should my response be? Long, medium, or short?`},
         {role: "user", content: `Shortish-Medium.  Multiple sentences, but single paragraphs.`},
         {role: "assistant", content: `Okay.  What should respond with?`},
@@ -209,19 +223,10 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId}) => {
        // {role: "user", content: `Yes, refer to the commentaries to give context and insight.`},
         {role: "assistant", content: `Okay.  What about personal application and life lessons?`},
         {role: "user", content: `No, stick to the text: exegete, not eisegete.`},
-        {role: "assistant", content: `Are there any scriptures that you think are related to this passage?`},
-        {role: "user", content: `${crossReferences.map(({ref,text}) => `[${translateReferences(lang,ref)}]: ${text}`).join(" • ")}`},
-        {role: "assistant", content: `Should I mentioned these scriptures in my response?`},
-        {role: "user", content: `Yes, if makes sense to do so.`},
-        {role: "assistant", content: `Should I stack the scripture references at the end of my response?, or intersperse them throughout?`},
-        {role: "user", content: [
-            `Interperse them throughout, in parentheses.`,
-            `Do not add a list of references at the end`,
-            `I repeat, no parenthetical references at the end.`,
-        ].join(" ")},
         ...langugageInstructions,
         ...highlightMessages,
-        ...firstMessages
+        ...firstMessages,
+        {role: "assistant", content: `You got it.  Here is my response${lang_in}:`}
     ],...thread_messages.slice(1).map((message) => (
         {role: "user", content: message}
     ))].flat()
@@ -327,6 +332,60 @@ const loadPlaces = async (place_slugs) => {
 }
 
 
+const loadDivision = async (text_guid, lang) => {
+
+    const sql = `SELECT description from bom_division d
+    JOIN bom_page p ON p.guid = d.page
+    JOIN bom_text t ON t.page = p.guid
+    WHERE t.guid = "${text_guid}";`
+    const division = await loadTranslations(lang, await queryDB(sql));
+    return division;
+
+}
+
+const loadPage = async (text_guid, lang) => {
+
+    const sql = `SELECT guid, title from bom_page p
+    JOIN bom_text t ON t.page = p.guid
+    WHERE t.guid = "${text_guid}";`
+    const page = await loadTranslations(lang, await queryDB(sql));
+    return page;
+
+}
+
+
+const loadPageSections = async (page_guid, lang) => {
+    const sql = `SELECT guid, title from bom_section
+    WHERE parent = "${page_guid}";`
+    const sections = await loadTranslations(lang, await queryDB(sql));
+    return sections;
+}
+
+const loadSectionNarration = async (section_guid, lang) => {
+    //bom_section -> bom_sectionrow -> bom_narration
+    const sql = `SELECT title, description
+    FROM bom_narration bn
+    JOIN bom_sectionrow bsr ON bn.parent = bsr.guid
+    JOIN bom_section bs ON bsr.parent = bs.guid
+    WHERE bsr.type = "N" AND bs.guid = "${section_guid}";`;
+    const narration = await loadTranslations(lang, await queryDB(sql));
+    return narration;
+}
+
+const loadTextBlockNarration = async (text_guid, lang) => {
+    // bom_narration -> bom_text
+    const sql = `SELECT title, description
+    FROM bom_narration bn
+    JOIN bom_text bt ON bn.parent = bt.guid
+    WHERE bt.guid = "${text_guid}";`;
+    const narration = await loadTranslations(lang, await queryDB(sql));
+    return narration;
+}
+
+
+    
+
+
 const loadSectionContext = async (text_guid,lang) => {
 
 const sql= `SELECT title, description
@@ -336,13 +395,13 @@ JOIN bom_section bs ON bsr.parent = bs.guid
 JOIN bom_text bt ON bs.guid = bt.section
 WHERE bsr.type = "N" AND bt.guid = "${text_guid}";`;
 
-    const sectionContext = await queryDB(sql);
+    const sectionContext = await loadTranslations(await queryDB(sql));
     
 
     const {people, places} = extractPeoplePlaceIds(sectionContext.map(({description}) => description).join(" "));
 
     return {
-        title: sectionContext[0].title,
+        title: sectionContext?.[0]?.title,
         narration: sectionContext.map(({description}) => stripPeoplePlaces(description)).join(" "),
         people: await loadPeople(people,lang),
         places: await loadPlaces(places,lang)

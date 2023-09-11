@@ -4,8 +4,9 @@ const { queryDB } = require("../library/db");
 
 const loadTranslations = async (lang, items, guidkey = "guid") => {
 
+    if(!items) return [];
     if(!Array.isArray(items)) items = [items];
-    const guids = items.map(item => item[guidkey]);
+    const guids = items.map(item => item?.[guidkey]);
     const refKeys = [...new Set(items.flatMap(item => Object.keys(item)))].filter(key => ["guid",guidkey].indexOf(key) === -1);
     const sql = `SELECT refkey, value, guid FROM bom_translation 
         WHERE lang = ? AND guid IN (${guids.map((guid) => "?").join(",")}) 
@@ -68,6 +69,7 @@ function translateReferences(lang, text)
         return match.replace(p1, dictionary[p1][lang]);
     });
 
+    text = text.replace(/성경 *구절/g, "경전 구절");
 
     return text;
 }
