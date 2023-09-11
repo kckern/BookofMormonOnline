@@ -186,21 +186,25 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId}) => {
         {role: "user", content: firstMessage}
     ] : [];
 
-    const prompt = {
-        "ko":`진지하게 답변해 주세요. ${ref}빼고 헤당 경전 구절까지 언급하세요. 간단하고 짧게 쓰세요.`,
-    }[lang] || `Please respond insightfuly. Cite relevant scriptures if appropriate, except for ${ref}, which is already cited. Keep it short.`;
-
     const messages = [...[
         {role: "user", content: `Hello, my name is ${name}. I am studying the Book of Mormon`},
         {role: "assistant", content: `Nice to meet you, ${name}!  What are you studying today?`},
         {role: "user", content: `I am studying ${ref}. It says: ${scripture_text}`},
         ...highlightMessages,
-        ...firstMessages,
-        {role: "user", content: prompt}
+        ...firstMessages
     ],...thread_messages.slice(1).map((message) => (
         {role: "user", content: message}
-    ))].flat();
+    ))].flat()
 
+    const prompt = {
+        "ko":`진지하게 답변해 주세요. ${ref}빼고 헤당 경전 구절까지 언급하세요. 간단하고 짧게 쓰세요.`,
+    }[lang] || `Please respond insightfuly. Cite relevant scriptures if appropriate, except for ${ref}, which is already cited. Keep it short.`;
+
+    messages.push(
+        {role: "system", content: prompt}
+    )
+
+    console.log({messages});
 
 
     instructions = instructions.split(" ").slice(0,1800).join(" ");
@@ -216,7 +220,6 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId}) => {
         console.log({tokenCount, instructionWordCount},"Token count is too high.  Reducing instructions to "+instructions.length+" characters.");
     }
 
-    console.log(messages);
     let gptString =  (await askGPT(instructions, messages, "gpt-3.5-turbo-16k")).split(/[\n\r]+/). join(" ");
     gptString = editContent(gptString);
 
