@@ -198,7 +198,7 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId}) => {
         {role: "assistant", content: `What does it say?`},
         {role: "user", content: scripture_text},
         {role: "assistant", content: `Are there any scriptures that you think are related to this passage?`},
-        {role: "user", content: `${crossReferences.map(({ref,text}) => `[${ref}]: ${text}`).join(" • ")}`},
+        {role: "user", content: `${crossReferences.map(({ref,text}) => `[${translateReferences(ref)}]: ${text}`).join(" • ")}`},
         {role: "assistant", content: `Should I mentioned these scriptures in my response?`},
         {role: "user", content: `Yes, if makes sense to do so.`},
         {role: "assistant", content: `Should I stack the scripture references at the end of my response?, or intersperse them throughout?`},
