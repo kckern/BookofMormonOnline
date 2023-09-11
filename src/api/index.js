@@ -1,4 +1,4 @@
-const studyBuddy = require("./studybuddy");
+const {studyBuddy, studyBuddyTextBlock} = require("./studybuddy");
 const webhook = async (req, res) => {
 
 
@@ -18,14 +18,11 @@ const webhook = async (req, res) => {
         await studyBuddy(channelUrl, messageId); // dont await
         return 
     }
-    
-
 
 }
 
-
 const apis = {
     "webhook":webhook,
-    "studybuddy":studyBuddy
+    "studybuddy": async (req,res) => res.json(await studyBuddyTextBlock({...req.body}))
 }
 module.exports = {apis};

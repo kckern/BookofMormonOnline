@@ -420,7 +420,7 @@ class Sendbird {
         return { isSuccess: false, msg: 'Failed to join' };
       })
       .catch((error) => {
-        console.error(error);
+        //console.error(error);
         return { isSuccess: false, msg: 'Error accepting' + JSON.stringify(error) };
       });
   }
@@ -474,7 +474,12 @@ class Sendbird {
   async addUserToChannel(channelUrl, user_id) {
     
     await this.invite(channelUrl, user_id);
-    await this.accept(channelUrl, user_id);
+    try{
+      await this.accept(channelUrl, user_id);
+    }
+    catch(e){
+      console.log(`Error accepting invite for ${user_id} to ${channelUrl}`)
+    }
     return true;
 
   }

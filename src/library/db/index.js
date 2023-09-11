@@ -19,8 +19,9 @@ const connectToDB = async () => {
 }
 
 
-const queryDB = async (sql) => {
+const queryDB = async (sql, params) => {
 
+    if(params) sql = mysql.format(sql, params);
     const connection = await connectToDB();
     const results = (await connection.query(sql))[0];
     connection.end();
