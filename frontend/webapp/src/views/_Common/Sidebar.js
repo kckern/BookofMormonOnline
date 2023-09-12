@@ -119,18 +119,6 @@ function Sidebar(props) {
             }
             key={"search"}
           >
-            <a href={"/search"} onClick={(e) => e.preventDefault()}>
-              <input
-                defaultValue={
-                  URLsearchTerm && activePath.match(new RegExp("^/search"))
-                    ? window.location.pathname.split('/')[2]
-                    : null
-                }
-                placeholder={"🔎" + label("menu_search")}
-                onKeyDown={handleKeyDown}
-                onBlur={(e) => (e.target.value = "")}
-              />
-            </a>
           </li>
           {menu.map((r,index) => {
             let isActive = activePath.match(new RegExp("^/" + r.slug));
@@ -256,6 +244,7 @@ function UserInfo({ appController, setActivePath, activePath }) {
               ></div>
             </div>
           </div>
+        </NavLink>
           <div className="settings">
 
             <ReactTooltip
@@ -264,13 +253,12 @@ function UserInfo({ appController, setActivePath, activePath }) {
               className="react-component-tooltip"
               backgroundColor="#666"
               //textColor="#000"
-              border="true"
+              border={true}
               opacity="0.5"
             />
             <img onClick={toggleSound} data-tip={(appController.states?.preferences.audio ? label("audio_on") : label("audio_off"))} src={appController.states?.preferences.audio ? soundOn : soundOff} />
             <Link to={"/user/preferences"}><img data-tip={label("user_prefs")} src={settings} /></Link>
           </div>
-        </NavLink>
       </li>
     </Nav>
   );

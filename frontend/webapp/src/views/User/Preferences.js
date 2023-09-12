@@ -82,7 +82,7 @@ export default function User({ appController }) {
     }
 
 
-    let pubs = publications?.map(publication => <Label rating={publication.source_rating} onClick={(e) => toggleCommentarySource(e, parseInt(publication.source_id))}><Card className={"publicationCard"} >
+    let pubs = publications?.map((publication,i) => <Label key={i} rating={publication.source_rating} onClick={(e) => toggleCommentarySource(e, parseInt(publication.source_id))}><Card className={"publicationCard"} >
         <CardHeader>
             <input
                 type="checkbox"
@@ -103,7 +103,7 @@ export default function User({ appController }) {
         </CardBody>
     </Card></Label>)
 
-    let faxs = Object.values(appController.preLoad.fax).map(fax => <Label onClick={(e) => toggleFaxVersion(e, fax.slug)}><Card className={"faxCard"} >
+    let faxs = Object.values(appController.preLoad.fax).map((fax,i) => <Label key={i} onClick={(e) => toggleFaxVersion(e, fax.slug)}><Card className={"faxCard"} >
         <CardHeader className={"faxCardHead"}>
             <input
                 type="checkbox"

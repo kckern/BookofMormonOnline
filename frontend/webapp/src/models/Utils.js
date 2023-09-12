@@ -203,14 +203,14 @@ export function BlankWord() {
 }
 
 export function BlankParagraph({ min, max }) {
-  const words = useState(
+  const [words] = useState(
     new Array(Math.round(min + Math.random() * (max - min))).fill(<BlankWord />)
   );
 
   return (
     <div className="blankP">
       {words.map((w, i) => (
-        <React.Fragment key={i}>{w} </React.Fragment>
+        <React.Fragment key={i}>{w}</React.Fragment>
       ))}
     </div>
   );

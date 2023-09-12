@@ -114,8 +114,14 @@
 }
 
 .sidebar .settings img {
-  height: 1em;
+  height: 1.7rem;
   opacity: 0.7;
+  cursor: pointer ;
+}
+.sidebar .settings a > img {
+  height: 1.5rem;
+  position: relative;
+  top: .3ex;
 }
 .sidebar .settings img:hover {
   opacity: 1;
