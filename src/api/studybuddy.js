@@ -69,10 +69,6 @@ const prepareThread = async (thread)=>
 
 const editContent = (string,ref)=>{
 
-    //remove ref
-    string = string.replace(ref,"");
-    //remove empty parentheses
-    string = string.replace(/\s*\(\s*\)\s*/g,"");
 
     //smart quotes
     string = smartquotes(string);
@@ -105,6 +101,7 @@ const editContent = (string,ref)=>{
         "personal",
         "teaches us",
         "in conclusion",
+        "anything else",
         "when we",
         "we should",
         "we can",
@@ -140,6 +137,10 @@ const editContent = (string,ref)=>{
     //remove the bad starts, trim, and capitalize first letter
     newSentences = newSentences.replace(new RegExp("^("+badStarts.join("|")+")","g"),"").trim().replace(/^\w/, c => c.toUpperCase());
     
+    //remove ref
+    string = string.replace(ref,"");
+    //remove empty parentheses
+    string = string.replace(/\s*\(\s*\)\s*/g,"");
 
     return newSentences;
 
