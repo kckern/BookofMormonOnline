@@ -432,7 +432,7 @@ const linkScriptureRefs = (content) => {
             }
 
 
-            return ' <a class="scripture_link" onclick="sgshow(this); return false;" sg-flag="true" href="https://scripture.guide/' + link + '" target="_blank">' + contents + '</a> ';
+            return ' <a class="scripture_link" onClick="sgshow(this); return false;" sg-flag="true" href="https://scripture.guide/' + link + '" target="_blank">' + contents + '</a> ';
         });
 
 

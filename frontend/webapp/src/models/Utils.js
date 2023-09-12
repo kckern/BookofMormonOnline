@@ -486,14 +486,32 @@ export function truncate(text, startChars, endChars, maxLength) {
 }
 
 export function refreshChannel(channel, appController) {
+  console.log("refreshChannel", channel)
+  //print stack trace
+  console.log(new Error().stack);
+
+  const channelRoom = channel.room;
+
   return channel.refresh().then((fresh) => {
     try {
-      appController.sendbird?.fetchRoomFromGroup(fresh, "refreshChannel")
+
+      if(fresh && channelRoom)
+      {
+        fresh.room = channelRoom;
+        appController.functions.updateListedStudyGroup(fresh);
+        return fresh;
+
+      }else{
+        appController.sendbird?.fetchRoomFromGroup(fresh, "refreshChannel")
         .then((room) => {
           fresh.room = room;
           appController.functions.updateListedStudyGroup(fresh);
           return fresh;
         });
+      }
+
+
+
     } catch (e) {
       console.log("refreshChannel", e)
     }
