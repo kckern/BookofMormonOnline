@@ -486,10 +486,6 @@ export function truncate(text, startChars, endChars, maxLength) {
 }
 
 export function refreshChannel(channel, appController) {
-  console.log("refreshChannel", channel)
-  //print stack trace
-  console.log(new Error().stack);
-
   const channelRoom = channel.room;
 
   return channel.refresh().then((fresh) => {
