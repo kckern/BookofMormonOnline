@@ -284,6 +284,7 @@ export const appFunctions = {
       let pubs = input.val.publications || [];
       if (!Array.isArray(pubs)) pubs = [];
       let rids = pubs?.filter(p => p?.source_rating === "R").map(i => parseInt(i.source_id)) || [];
+      rids.push(41); //TODO, flag superceded publications
       let prefs = appController.states.preferences;
       prefs.commentary.filter.sources = rids;
       appController.functions.updatePrefs(prefs);

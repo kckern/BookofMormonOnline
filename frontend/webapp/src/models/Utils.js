@@ -203,14 +203,14 @@ export function BlankWord() {
 }
 
 export function BlankParagraph({ min, max }) {
-  const words = useState(
+  const [words] = useState(
     new Array(Math.round(min + Math.random() * (max - min))).fill(<BlankWord />)
   );
 
   return (
     <div className="blankP">
       {words.map((w, i) => (
-        <React.Fragment key={i}>{w} </React.Fragment>
+        <React.Fragment key={i}>{w}</React.Fragment>
       ))}
     </div>
   );
@@ -486,26 +486,16 @@ export function truncate(text, startChars, endChars, maxLength) {
 }
 
 export function refreshChannel(channel, appController) {
-  const channelRoom = channel.room;
 
   return channel.refresh().then((fresh) => {
     try {
 
-      if(fresh && channelRoom)
-      {
-        fresh.room = channelRoom;
+      appController.sendbird?.fetchRoomFromGroup(fresh, "refreshChannel")
+      .then((room) => {
+        fresh.room = room;
         appController.functions.updateListedStudyGroup(fresh);
         return fresh;
-
-      }else{
-        appController.sendbird?.fetchRoomFromGroup(fresh, "refreshChannel")
-        .then((room) => {
-          fresh.room = room;
-          appController.functions.updateListedStudyGroup(fresh);
-          return fresh;
-        });
-      }
-
+      });
 
 
     } catch (e) {

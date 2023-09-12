@@ -60,8 +60,8 @@ function SearchComponent({ appController }) {
             const { reference, text, slug, page, section, narration } = item;
             return <Link to={"/" + slug}>
               <div className="resultItem">
-                <div class="reference">{reference}</div>
-                <div class="text">
+                <div className="reference">{reference}</div>
+                <div className="text">
                   <h5>{section} <span>{page}</span></h5>
                   <p>{highlight(keyword, text)}</p>
                 </div>

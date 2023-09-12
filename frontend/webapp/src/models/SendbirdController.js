@@ -138,29 +138,37 @@ export default class SendbirdController {
       .catch(e => null);
   }
 
-  fetchRoomFromGroup = async (group, src) => {
 
-    if (!group) return null;
-    //if (this.groupCallMap[group.url]) return this.groupCallMap[group.url];
-    let metaData = (typeof group.getCachedMetadata === "function") ? group.getCachedMetadata() : null;
 
-    if (metaData?.roomId) {
-      return this.fetchRoom(metaData.roomId).then(async (room) => {
-        if (!room) return await this.resetRoom(group);
-        this.groupCallMap[group.url] = room;
-        return room;
-      });
-    }
-    if (!group.getMetaData) return null;
-    return group.getMetaData(["roomId"]).then(res => {
-      if (!res.roomId) return this.resetRoom(group)
-      return this.fetchRoom(res.roomId).then(async (room) => {
-        if (!room) return await this.resetRoom(group);
-        this.groupCallMap[group.url] = room;
-        return room;
-      })
-    })
+fetchRoomFromGroup = async (group, src) => {
+  if (!group) return null;
+  
+// Create a global cache if not already present
+if(!window.roomCache) window.roomCache = {};
+  if(window.roomCache[group.url]){
+    return window.roomCache[group.url];
   }
+  
+  let metaData = (typeof group.getCachedMetadata === "function") ? group.getCachedMetadata() : null;
+  if (metaData?.roomId) {
+    return this.fetchRoom(metaData.roomId).then(async (room) => {
+      if (!room) return await this.resetRoom(group);
+      this.groupCallMap[group.url] = room;
+      window.roomCache[group.url] = room;
+      return room;
+    });
+  }
+  if (!group.getMetaData) return null;
+  return group.getMetaData(["roomId"]).then(res => {
+    if (!res.roomId) return this.resetRoom(group)
+    return this.fetchRoom(res.roomId).then(async (room) => {
+      if (!room) return await this.resetRoom(group);
+      this.groupCallMap[group.url] = room;
+      window.roomCache[group.url] = room;
+      return room;
+    })
+  })
+}
 
   fetchGroupOperators = async (groupChannel) => {
     if (!groupChannel) return [];

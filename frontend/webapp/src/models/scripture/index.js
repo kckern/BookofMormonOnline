@@ -432,14 +432,20 @@ const linkScriptureRefs = (content) => {
             }
 
 
-            return ' <a class="scripture_link" onClick="sgshow(this); return false;" sg-flag="true" href="https://scripture.guide/' + link + '" target="_blank">' + contents + '</a> ';
+            return ' <a className="scripture_link" onClick="sgshow(this); return false;" sg-flag="true" href="https://scripture.guide/' + link + '" target="_blank">' + contents + '</a> ';
         });
-
-
 
 
         highlighted = highlighted.replace(/([;, ]+(?:and)*)\s*<\/a>/gi, "</a>$1 ");
         highlighted = highlighted.replace(/[;, ]+(?:and)*\s*\"/gi, "\"");
+
+        //remove surrounding parenthses
+        highlighted = highlighted.replace(/\(\s*<a className="scripture_link"(.*?)<\/a>\s*\)/ig, function (match, contents, punct, s) {
+            match = match.replace(/^\(/, "").trim();
+            match = match.replace(/\)$/, "").trim();
+            return match;
+        }); 
+
         return highlighted
 
     }
