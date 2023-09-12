@@ -196,9 +196,11 @@ const prepareMessages = ({
     messages.push({role: "user",        content: `${sectionNarration}`});
     messages.push({role: "assistant",   content: `And what other sections are on this page?`});
     messages.push({role: "user",        content: `There are ${sections.length} sections: ${sections.join(" • ")}`});
+    if(division)
+    {
     messages.push({role: "assistant",   content: `Got it.  And the broader context of the page?`});
     messages.push({role: "user",        content: `${division}`});
-
+    }
     if(people.length) {
     messages.push({role: "assistant",   content: `Okay.  Are there any people (and name spellings) I should know about?`});
     messages.push({role: "user",        content: `Yes, here they are: ${people.map(({name, title}) => `${name} (${title})`).join(" • ")}`});
@@ -439,7 +441,9 @@ const loadDivision = async (text_guid, lang) => {
     JOIN bom_page p ON p.guid = d.page
     JOIN bom_text t ON t.page = p.guid
     WHERE t.guid = "${text_guid}";`
-    const division = await loadTranslations(lang, await queryDB(sql));
+    const items = await queryDB(sql);
+    if(!items.length) return null;
+    const division = await loadTranslations(lang, items);
     return division[0].description
 
 }
@@ -449,7 +453,9 @@ const loadPage = async (text_guid, lang) => {
     const sql = `SELECT p.guid, title from bom_page p
     JOIN bom_text t ON t.page = p.guid
     WHERE t.guid = "${text_guid}";`
-    const page = await loadTranslations(lang, await queryDB(sql));
+    const items = await queryDB(sql);
+    const page = await loadTranslations(lang, items);
+    if(!page.length) return null;
     const {guid, title} = page[0];
     return {guid, title};
 

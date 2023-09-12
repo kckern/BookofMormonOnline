@@ -4,7 +4,7 @@ const { queryDB } = require("../library/db");
 
 const loadTranslations = async (lang, items, guidkey = "guid") => {
 
-    if(!items) return [];
+    if(!items || !items.length) return [];
     if(!Array.isArray(items)) items = [items];
     const guids = items.map(item => item?.[guidkey]);
     const refKeys = [...new Set(items.flatMap(item => Object.keys(item)))].filter(key => ["guid",guidkey].indexOf(key) === -1);
