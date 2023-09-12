@@ -142,6 +142,8 @@ const editContent = (string,ref)=>{
     //remove empty parentheses
     string = string.replace(/\s*\(\s*\)\s*/g,"");
 
+    //remove final bracketed content
+    string = string.replace(/\s*\[.*?\]\s*$/g,"").trim();
     return newSentences;
 
 }
@@ -237,19 +239,21 @@ const prepareMessages = ({
     messages.push({role: "assistant",   content: `Got it.  Now give me the comment to reply to.`});
     messages.push({role: "user",        content: `[${name}]: “${firstMessage}”`});
     }
-    messages.push({role: "assistant",   content: `I've got a response in mind.  Ready for me to give it to you?`});
-    messages.push({role: "user",        content: `Wait.  Review these cross references.  Any that would help inform a response?   ${crossReferences.map(({ref,text}) => `${translateReferences(lang,ref)}: ${text}`).join(" • ")}`});
-    messages.push({role: "assistant",   content: `Maybe.  Some might be relevant.`});
-    messages.push({role: "user",        content: `Which ones?`});
-    messages.push({role: "assistant",   content: `Wait for my response.  I'll mention and cite the key ones, if there are any.`});
-
+    if(crossReferences.length) {
+        messages.push({role: "assistant",   content: `I've got a response in mind.  Ready for me to give it to you?`});
+        messages.push({role: "user",        content: `Wait.  Review these cross references.  Any that would help inform a response?   ${crossReferences.map(({ref,text}) => `${translateReferences(lang,ref)}: ${text}`).join(" • ")}`});
+        messages.push({role: "assistant",   content: `Maybe.  Some might be relevant.`});
+        messages.push({role: "user",        content: `Which ones?`});
+        messages.push({role: "assistant",   content: `Wait for my response.  I'll mention and cite the key ones, if there are any.`});
+    
+    }
     if(commentary.length)
     {
     messages.push({role: "assistant",   content: `Oh by the way, are there any published commentaries that would be relevant to this passage?`});
     messages.push({role: "user",        content: `Yes, here they are: ${commentary.map(({name, title, year, text}) => `[${title}] ${text}`).join(" • ")}`});
     messages.push({role: "assistant",   content: `Thanks for the background info.  I'll refer to this as needed`});
     }
-    messages.push({role: "assistant",    content: `Should I start with “In this passage,” or “In ${ref}”?`});
+    messages.push({role: "assistant",    content: `Should I start with “In this passage,” or “In ${translateReferences(lang,ref)}”?`});
     messages.push({role: "user",        content: `No, the context is already established.  Just start with the main point.`});
     messages.push({role: "assistant",    content: `Understood.`});
     messages.push({role: "user",        content: `Okay get ready to give your reply${lang_in}.`});
@@ -431,11 +435,14 @@ const loadPeople = async (people_slugs,lang="en") => {
 
 }
 
-const loadPlaces = async (place_slugs) => {
+const loadPlaces = async (place_slugs,lang="en") => {
         if(!place_slugs?.length) return [];
         const max_sentences = 5;
         const sql = `SELECT * FROM bom_places WHERE slug IN (${place_slugs.map((slug) => `"${slug}"`).join(",")})`;
-        const places = await queryDB(sql);
+        let places = await queryDB(sql);
+
+        if(lang!=="en") places = await loadTranslations(lang, places);
+
         return places.map(({name, info, description}) => {
             description = stripPeoplePlaces(stripHTMLTags(description)).split(".").slice(0,max_sentences).join(".");
             name = name.replace(/\d+/g,"").trim();

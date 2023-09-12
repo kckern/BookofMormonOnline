@@ -656,6 +656,7 @@ function SingleComment({
   threadHash,
   pageController,
   isQuote,
+  key,
   appController,
 }) {
   let data = useMemo(() => {
@@ -737,7 +738,7 @@ function SingleComment({
   return (
     <div
       className={"comment" + (isBot ? " botComment" : "")}
-      key={message.messageId}
+      key={key || message.messageId}
       threadHash={threadHash}
       author={message?._sender?.nickname}
       id={message.messageId}

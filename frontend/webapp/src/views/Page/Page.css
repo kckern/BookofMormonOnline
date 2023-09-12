@@ -45,6 +45,9 @@
   cursor: wait !important;
 }
 
+/* for mobile */
+
+
 .alert.pageInfo {
   position: fixed;
   left: calc(50% + 125px);
@@ -54,6 +57,17 @@
   z-index: 99999;
   text-align: center;
 }
+
+
+@media only screen and (max-width: 900px) {
+  .alert.pageInfo {
+    left: calc(50%);
+    width: 60vw;
+    margin-left: -30vw;
+  }
+}
+
+
 .alert.pageInfo img {
   height: 2em;
   width: 2em;

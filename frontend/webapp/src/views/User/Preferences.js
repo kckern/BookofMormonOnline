@@ -1,5 +1,5 @@
 
-import { Card, CardBody, CardFooter, CardHeader, Label } from "reactstrap"
+import { Alert, Button, Card, CardBody, CardFooter, CardHeader, Label } from "reactstrap"
 import { label } from "src/models/Utils"
 import Switch from "react-bootstrap-switch";
 import { useEffect, useState } from "react";
@@ -82,7 +82,7 @@ export default function User({ appController }) {
     }
 
 
-    let pubs = publications?.map(publication => <Label rating={publication.source_rating} onClick={(e) => toggleCommentarySource(e, parseInt(publication.source_id))}><Card className={"publicationCard"} >
+    let pubs = publications?.map((publication,i) => <Label key={i} rating={publication.source_rating} onClick={(e) => toggleCommentarySource(e, parseInt(publication.source_id))}><Card className={"publicationCard"} >
         <CardHeader>
             <input
                 type="checkbox"
@@ -103,7 +103,7 @@ export default function User({ appController }) {
         </CardBody>
     </Card></Label>)
 
-    let faxs = Object.values(appController.preLoad.fax).map(fax => <Label onClick={(e) => toggleFaxVersion(e, fax.slug)}><Card className={"faxCard"} >
+    let faxs = Object.values(appController.preLoad.fax).map((fax,i) => <Label key={i} onClick={(e) => toggleFaxVersion(e, fax.slug)}><Card className={"faxCard"} >
         <CardHeader className={"faxCardHead"}>
             <input
                 type="checkbox"
@@ -227,15 +227,42 @@ export default function User({ appController }) {
 
 function Publications({appController,pubs}){
 
+
+    const [showControversial, setShowControversial] = useState(false);
+
     if(!appController.states.preferences.commentary.on) return false;
     if(!pubs) return false;
 
     let gpubs = pubs.filter(p=>p.props.rating!=="R");
     let rpubs = pubs.filter(p=>p.props.rating==="R");
 
-    let controversial = (rpubs && rpubs.length > 0) ? <><h4>{label("controversial_commentaries")}</h4><div className={"publicationCards"}>{rpubs}</div></> : null;
+    let controversial = (rpubs && rpubs.length > 0) ? <>
+    <Alert color="warning">{label("controversial_commentaries_warning")}</Alert>
+    <div className={"publicationCards"}>{rpubs}</div></> : null;
 
-    return   <><div className={"publicationCards"}>{gpubs}</div>{controversial}</>
+    return   <><div className={"publicationCards"}>{gpubs}</div>
+
+<h5 className="title">
+                    <Label className="fax_select"><img src={commentary} />
+                        {label("controversial_commentaries")}
+                        <Switch
+                            onText={label("Hide")}
+                            offText={label("Show")}
+                            onChange={()=>setShowControversial(!showControversial)}
+                            value={showControversial}
+                            onColor="default"
+                            offColor="default"
+                        />
+                    </Label>
+                </h5>
+    
+    {showControversial ? controversial : <>
+    
+    
+    </> }
+
+    
+    </>
 
 
 }

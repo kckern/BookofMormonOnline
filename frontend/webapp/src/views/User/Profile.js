@@ -76,6 +76,15 @@ export function Profile({
         <img src={edit} />
         {label("edit_profile")}
       </li>
+      {/localhost/.test(window.location.hostname) ? (
+        <li
+          onClick={() => {
+            appController.functions.setPopUp({ type: "victory" })
+          }}
+        >
+          <img src={trophy} />
+          {label("debug")}
+        </li>) : null}
       <li onClick={() => setProfileState("password")}>
         <img src={padlock} />
         {label("change_password")}{" "}
@@ -131,6 +140,15 @@ export function Profile({
                     <img src={exit} />
                     {label(loggingOut ? "logging_out" : "log_out")}
                   </DropdownItem>
+                  {/localhost/.test(window.location.hostname) ? (
+                    <DropdownItem
+                      onClick={() => {
+                        appController.functions.setPopUp({ type: "victory" })
+                    }}
+                    >
+                      <img src={trophy} /> Trophy
+                    </DropdownItem>
+                  ) : null}
                 </DropdownMenu>
               </Dropdown>
             </h5>

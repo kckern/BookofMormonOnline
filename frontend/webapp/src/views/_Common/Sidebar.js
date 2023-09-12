@@ -51,8 +51,35 @@ export function loadMenu(){
   return list;
 }
 
-function Sidebar(props) {
+
+function SearchBox({appController,setActivePath}) {
+
   const history = useHistory();
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      appController.activePageController?.states?.activeAudio?.pause();
+      appController.functions.closePopUp(); 
+      setActivePath("/search");
+      let searchSlug = e.target.value
+        .toLowerCase()
+        .replace(/[^a-z0-9:–—~-]+/gi, ".")
+        .replace(/(^\.|\.$)/g, "");
+      history.push("/search/" + searchSlug);
+      e.preventDefault();
+    }
+  };
+
+  return <li className={"searchbox"}>
+    <input
+      type="text" 
+      placeholder={label("search")}
+      onKeyDown={handleKeyDown}
+     />
+     </li>
+}
+
+function Sidebar(props) {
   const match = useRouteMatch();
 
   const menu = loadMenu();
@@ -74,19 +101,6 @@ function Sidebar(props) {
     setActivePath(determinePath);
   }, [window.location.pathname, match.params])
 
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
-      props.appController.activePageController?.states?.activeAudio?.pause();
-      props.appController.functions.closePopUp(); 
-      setActivePath("/search");
-      let searchSlug = e.target.value
-        .toLowerCase()
-        .replace(/[^a-z0-9:–—~-]+/gi, ".")
-        .replace(/(^\.|\.$)/g, "");
-      history.push("/search/" + searchSlug);
-      e.preventDefault();
-    }
-  };
 
   let URLsearchTerm = window.location.pathname.split("/").reverse()[0];
   if (window.location.pathname === activePath) URLsearchTerm = null;
@@ -112,31 +126,12 @@ function Sidebar(props) {
           activePath={activePath}
         />
         <Nav>
-          <li
-            className={
-              "searchbox " +
-              (activePath.match(new RegExp("^/search")) ? "active" : "")
-            }
-            key={"search"}
-          >
-            <a href={"/search"} onClick={(e) => e.preventDefault()}>
-              <input
-                defaultValue={
-                  URLsearchTerm && activePath.match(new RegExp("^/search"))
-                    ? window.location.pathname.split('/')[2]
-                    : null
-                }
-                placeholder={"🔎" + label("menu_search")}
-                onKeyDown={handleKeyDown}
-                onBlur={(e) => (e.target.value = "")}
-              />
-            </a>
-          </li>
+          <SearchBox appController={props.appController} setActivePath={setActivePath} />
           {menu.map((r,index) => {
             let isActive = activePath.match(new RegExp("^/" + r.slug));
             let activeClass = isActive ? "active" : "";
             return (
-              <li className={r.slug + "_link  menuitem " + activeClass} key={r.slug} key={index}>
+              <li className={r.slug + "_link  menuitem " + activeClass} key={r.slug} >
                 <NavLink
                   to={"/" + r.slug}
                   activeClassName=""
@@ -256,6 +251,7 @@ function UserInfo({ appController, setActivePath, activePath }) {
               ></div>
             </div>
           </div>
+        </NavLink>
           <div className="settings">
 
             <ReactTooltip
@@ -264,13 +260,12 @@ function UserInfo({ appController, setActivePath, activePath }) {
               className="react-component-tooltip"
               backgroundColor="#666"
               //textColor="#000"
-              border="true"
+              border={true}
               opacity="0.5"
             />
             <img onClick={toggleSound} data-tip={(appController.states?.preferences.audio ? label("audio_on") : label("audio_off"))} src={appController.states?.preferences.audio ? soundOn : soundOff} />
             <Link to={"/user/preferences"}><img data-tip={label("user_prefs")} src={settings} /></Link>
           </div>
-        </NavLink>
       </li>
     </Nav>
   );

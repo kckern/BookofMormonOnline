@@ -132,7 +132,7 @@ function StudyGroupSideBar({
           >
             <img className="icon" src={admin} />
             {requests ? <span className="requestCount">{requests}</span> : null}
-            <div class="label">{label("admin")}</div>
+            <div className="label">{label("admin")}</div>
           </li>
         ) : null}
         <li
@@ -152,7 +152,7 @@ function StudyGroupSideBar({
             />
           </>
           <img className="icon" src={discussion} />
-          <div class="label">{label("discussion")}</div>
+          <div className="label">{label("discussion")}</div>
           <UnreadDMCount count={unread} />
         </li>
         {false ? (
@@ -164,7 +164,7 @@ function StudyGroupSideBar({
               data-for={tooltip_id}
             >
               <img className="icon" src={notebook} />
-              <div class="label">{label("notebook")}</div>
+              <div className="label">{label("notebook")}</div>
             </li>
             <li
               className={isActive("progress")}
@@ -173,7 +173,7 @@ function StudyGroupSideBar({
               data-for={tooltip_id}
             >
               <img className="icon" src={progress} />
-              <div class="label">{label("progress")}</div>
+              <div className="label">{label("progress")}</div>
             </li>
           </>
         ) : null}

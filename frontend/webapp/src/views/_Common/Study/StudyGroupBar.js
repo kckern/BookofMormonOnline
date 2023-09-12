@@ -264,21 +264,19 @@ function StudyGroupStatus({ appController }) {
       }
     >
 
-      <div class="divider"></div>
+      <div className="divider"></div>
       {users?.length >=1 ? <CallCircle appController={appController} /> : null}
-      <audio id="call_audio" autoPlay={"true"} />
+      <audio id="call_audio" autoPlay={true} />
       {users?.slice(0,11).map((user) => (
-        <>
           <StudyGroupUser
-            key={user?.userId}
             color={userColors[user?.userId]}
+            key={user?.userId}
             userObject={user}
             appController={appController}
             liveMessage={user?.userId === activeLiveMessageSender ? liveMessageQueue[activeLiveMessageId] : null}
           />
-        </>
       ))}
-      <div class="divider"></div>
+      <div className="divider"></div>
 
     </div>
   );
@@ -318,7 +316,8 @@ export function StudyGroupUserCircle({ userObject, appController }) {
     <div className={"userCircleOutline"} style={{ animation: `rotate ${num}s linear infinite` }}></div>
     <div className={"phoneCall"}></div></> : null;
 
-  return <><div
+  return <React.Fragment key={userObject.userId}><div
+    key={userObject.userId}
     className={classes.join(" ")}
     style={{ backgroundImage: `url(${userObject.profileUrl})` }}
     onClick={() => appController.functions.openDrawer({ key: "message", val: userObject.userId })}
@@ -329,7 +328,7 @@ export function StudyGroupUserCircle({ userObject, appController }) {
     {trophyIcons}
   </div>
     <UnreadDMCount appController={appController} userId={userObject.userId} />
-  </>
+  </React.Fragment >
 
 }
 
@@ -421,7 +420,7 @@ export function StudyGroupUser({ userObject, appController, liveMessage }) {
     <DropdownItem divider />
     <DropdownItem disabled className="statBox">
       {summary.finished.map(t =>
-        <div className="statRow">
+        <div className="statRow" key={t}>
           <img src={trophy} />
           <div>{label("completed_on_x", [moment.unix(t).format(label("history_date_format_full"))])}</div>
           <div></div>
@@ -547,22 +546,21 @@ export function StudyGroupUser({ userObject, appController, liveMessage }) {
       </DropdownItem>
     </DropdownMenu>;
   }
-
-
+  const userId = userObject.userId;
   return (
-    <>
-      <div className={"noselect divider " + ((userObject.inCall) ? "inCall" : "")}></div>
+    <React.Fragment key={userId}>
+      <div className={"noselect divider " + ((userObject.inCall) ? "inCall" : "")} key={userId}></div>
       <Dropdown isOpen={isDroppedDown || !!liveMessage}
         onMouseEnter={() => { if (!appController.states.studyGroup.isDrawerOpen) setDroppedDown(true) }}
         onMouseLeave={() => setDroppedDown(false)}
         toggle={() => { }}
       >
-        <DropdownToggle tag="div" className="DropdownToggleContainer" onClick={handleClick} >
-          <StudyGroupUserCircle userObject={userObject} appController={appController} summary={summary} />
+        <DropdownToggle tag="div" className="DropdownToggleContainer" onClick={handleClick} key={userId}>
+          <StudyGroupUserCircle userObject={userObject} appController={appController} summary={summary} key={userId} />
         </DropdownToggle>
         {dropDownContent}
       </Dropdown>
-    </>
+    </React.Fragment>
   );
 }
 

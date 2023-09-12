@@ -76,7 +76,7 @@ export function HomeFeed({ appController, activeGroup, messageId, setActiveGroup
 
   if (loader) return loader;
   let bannerGroup = (activeGroup) ? homeGroups?.filter(g => g.url === activeGroup).shift() : null;
-  let items = homeItems.map(item => <HomeFeedItem appController={appController} item={item} homeGroups={homeGroups} setActiveGroup={setActiveGroup} linkedContent={linkedContent} />)
+  let items = homeItems.map(item => <HomeFeedItem appController={appController} item={item} homeGroups={homeGroups} setActiveGroup={setActiveGroup} linkedContent={linkedContent}  key={item.id} />);
   return <>
     <HomeFeedBanner appController={appController} bannerGroup={bannerGroup} setActiveGroup={setActiveGroup} />
     <ReactTooltip
@@ -172,9 +172,9 @@ function HomeFeedItem({ appController, item, homeGroups, linkedContent, setActiv
   let finished = item.user.finished;
   const trophyImg = (finished) ? <img className="trophy" src={trophy} /> : null;
   return (
-    <VisibilitySensor key={item.id} onChange={handleVisibilityChange}><Card className="homeFeed">
-      <CardHeader className="homeFeedHeader group noselect">
-        <div className="topLine">
+    <VisibilitySensor key={item.id} onChange={handleVisibilityChange}><Card className="homeFeed" key={item.id}>
+      <CardHeader className="homeFeedHeader group noselect" key={item.id}>
+        <div className="topLine" key={item.id}>
           <span
             onClick={() => setActiveGroup(group.url)}
             data-tip={`${label(group.privacy + "_group")}`}
@@ -188,7 +188,7 @@ function HomeFeedItem({ appController, item, homeGroups, linkedContent, setActiv
         <div className="timestamp"><Link to={`/home/${group.url}/${item.id}`}>{timeAgo}</Link></div>
       </CardHeader>
       <CardHeader className="homeFeedHeader noselect">
-        <div class="imagebox">{trophyImg}<img src={item.user.picture} onError={breakCache} /><div class="progress">{item.user.progress}%</div></div>
+        <div className="imagebox">{trophyImg}<img src={item.user.picture} onError={breakCache} /><div className="progress">{item.user.progress}%</div></div>
         <h5>
           <div>
             {item.user.nickname}<span className="feedAction">{label("honorific", -1) + label("honorific_subject", -1) + " "}{label(determinAction(item))}</span>
@@ -321,7 +321,7 @@ function Comments({ appController, comments, count, item, group, memberMap, sbCh
   } else {
     comments = Array.isArray(comments) ? comments : [];
     comments = [...comments.filter(m=>m.id!==itemId && !/^[\s•]+$/.test(m.msg)),...newMessages];
-    thread = comments.map(comment => <Comment comment={comment} />)
+    thread = comments.map(comment => <Comment comment={comment} key={comment.id} />);
 
   }
   count = thread.length
@@ -380,7 +380,7 @@ function Comments({ appController, comments, count, item, group, memberMap, sbCh
   const mycomment = (!comments !== -1) ? <MyComment setNewMessages={setNewMessages} appController={appController} sbChannel={sbChannel} group={group} itemId={itemId} trophy={trophy} /> : null;
 
   return (
-    <div className="study home">
+    <div className="study home" key={itemId}>
       {countRow}
       {buttonRow}
       {thread}
@@ -414,7 +414,7 @@ function Comment({ comment }) {
   const botBadge = (isBot) ? <span className="botBadge">BOT</span> : null;
   const trophyImg = (finished) ? <img className="trophy" src={trophy} /> : null;
   let timeAgo = timeAgoString(comment.timestamp / 1000);
-  return <div className={"commentThreadItem " + ((urlMatch === comment.id) ? "selected" : "")}>
+  return <div className={"commentThreadItem " + ((urlMatch === comment.id) ? "selected" : "")} key={comment.id}>
     <div className="imagebox noselect">
       {trophyImg}
       <img src={comment.user.picture} onError={breakCache} />
@@ -441,13 +441,13 @@ function MyComment({ appController, group, itemId, setNewMessages, sbChannel, tr
   let finished = appController.states.user.finished;
   let trophyComp = (finished) ? <img className="trophy" src={trophy} /> : null;
 
-  if (!sbChannel) return <div class="commentThreadItem">
-    <div class="imagebox noselect">
+  if (!sbChannel) return <div className="commentThreadItem">
+    <div className="imagebox noselect">
       {trophyComp}
       <img src={img} onError={breakCache} />
-      <div class="progress">{appController.states.user.progress.completed || 0}%</div>
+      <div className="progress">{appController.states.user.progress.completed || 0}%</div>
     </div>
-    <div class="textbox notmember">
+    <div className="textbox notmember">
       <textarea
         className="form-control textarea join_to_comment"
         disabled
@@ -500,12 +500,12 @@ function MyComment({ appController, group, itemId, setNewMessages, sbChannel, tr
   }
 
 
-  return <div class="commentThreadItem">
-    <div class="imagebox noselect">
+  return <div className="commentThreadItem">
+    <div className="imagebox noselect">
       <img src={img} onError={breakCache} />
-      <div class="progress">{appController.states.user.progress.completed || 0}%</div>
+      <div className="progress">{appController.states.user.progress.completed || 0}%</div>
     </div>
-    <div class="textbox">
+    <div className="textbox">
       <textarea
         id={"feedItem" + itemId}
         className="form-control textarea"

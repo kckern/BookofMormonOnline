@@ -34,7 +34,16 @@
 }
 
 .textblock .study .contenttext {
+  padding:  0 0.6em 0.6em 0.6em;
+}
+
+
+@media screen and (max-width: 900px)
+{
+
+  .textblock .study .contenttext {
   padding:  0.6em;
+  }
 }
 
 .study .commentcontent .name {

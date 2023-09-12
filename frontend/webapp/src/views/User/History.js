@@ -77,7 +77,7 @@ export function StudyHistory({ setHistoryView, appController, setStudyLog, setSt
       <div className="nav-tabs-navigation">
         <div className="nav-tabs-wrapper">
           <Nav id="tabs" role="tablist" tabs>
-            {(years || [(new Date()).getFullYear().toString()]).map(y => <NavItem>
+            {(years || [(new Date()).getFullYear().toString()]).map((y,i) => <NavItem key={i}>
               <NavLink
                 aria-expanded={horizontalTabs === y}
                 data-toggle="tab"
@@ -94,13 +94,13 @@ export function StudyHistory({ setHistoryView, appController, setStudyLog, setSt
         </div>
       </div>
 
-      <ReactTooltip effect="solid" id="calendarToolTip" type="dark" offset="{'top': -8}" />
+      <ReactTooltip effect="solid" id="calendarToolTip" type="dark" offset={{'top': -8}} />
       <TabContent
         className="text-center"
         id="my-tab-content"
         activeTab={horizontalTabs}
       >
-        {(years || [(new Date()).getFullYear().toString()]).map(y => {
+        {(years || [(new Date()).getFullYear().toString()]).map((y,k) => {
 
           const getDecile = (value, sample) => {
             if (!value) return null;
@@ -158,11 +158,12 @@ export function StudyHistory({ setHistoryView, appController, setStudyLog, setSt
             return `${date}<br/>${desc}<br/>${time}`;
           }
 
-          return <TabPane tabId={y} role="tabpanel">{
+          return <TabPane key={k} tabId={y} role="tabpanel">{
             [
               { range: ['-01-01', '-06-30'], vals: hVals[0] },
               { range: ['-07-01', '-12-31'], vals: hVals[1] }
-            ].map(i => <CalendarHeatmap
+            ].map((i,j) => <CalendarHeatmap
+              key={j}
               onClick={() => setHistoryView(y)}
               tooltipDataAttrs={customTooltipDataAttrs.bind(this)}
               startDate={new Date(y + i.range[0])}

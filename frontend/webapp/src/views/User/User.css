@@ -12,16 +12,19 @@
 .body.ko .user .Social2
 {
   display: block;
+  
 }
 
 .user .Social .btn {
-  width: calc(50% - 1ex);
+  width: 100%;
+  margin: 1ex 0;
   padding-left: 0;
   padding-right: 0;
 }
 
 .user .Social2 .btn {
-  width: calc(50% - 1ex);
+  width: 100%;
+  margin: 1ex 0;
   padding-left: 0;
   padding-right: 0;
 }

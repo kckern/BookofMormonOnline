@@ -29,10 +29,11 @@
 }
 
 .sidebar .searchbox input {
-  width: calc(100%);
+  width: calc(100% - 2em);
   padding: 0.25em;
   padding-left: 1em;
-  font-size: 0.7em;
+  font-size: 1em;
+  margin:0 1em;
 }
 
 .sidebar .searchbox input:focus {
@@ -114,8 +115,14 @@
 }
 
 .sidebar .settings img {
-  height: 1em;
+  height: 1.7rem;
   opacity: 0.7;
+  cursor: pointer ;
+}
+.sidebar .settings a > img {
+  height: 1.5rem;
+  position: relative;
+  top: .3ex;
 }
 .sidebar .settings img:hover {
   opacity: 1;
