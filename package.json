@@ -39,6 +39,7 @@
     "sequelize-auto": "^0.8.4",
     "sequelize-hierarchy": "^2.0.4",
     "serverless-http": "^2.7.0",
+    "smartquotes": "^2.3.2",
     "util": "^0.11.1",
     "utility-types": "^3.10.0"
   },
