@@ -38,10 +38,10 @@ function translateReferences(lang, text)
 {
     if(lang !== "ko") return text;
     const dictionary = {
-        "1 Nephi":{  "ko": "나파이전서" },
-        "1 Ne\\.":{  "ko": "나파이전서" },
-        "2 Nephi":{  "ko": "나파이후서" },
-        "2 Ne\\.":{  "ko": "나파이후서" },
+        "1 Nephi":{  "ko": "니파이전서" },
+        "1 Ne\\.":{  "ko": "니파이전서" },
+        "2 Nephi":{  "ko": "니파이후서" },
+        "2 Ne\\.":{  "ko": "니파이후서" },
         "Jacob":{  "ko": "야곱서" },
         "Enos":{  "ko": "이노스서" },
         "Jarom":{  "ko": "예이롬서" },
@@ -69,7 +69,7 @@ function translateReferences(lang, text)
         return match.replace(p1, dictionary[p1][lang]);
     });
 
-    text = text.replace(/성경 *구절/g, "경전 구절");
+    text = text.replace(/성경 *(구절|말씀)/g, "경전 구절");
 
     return text;
 }
