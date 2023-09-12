@@ -72,7 +72,7 @@ const editContent = (string,ref)=>{
     //remove ref
     string = string.replace(ref,"");
     //remove empty parentheses
-    string = string.replace(/\s*\(\s*\)\s*/g," ");
+    string = string.replace(/\s*\(\s*\)\s*/g,"");
 
     //smart quotes
     string = smartquotes(string);
