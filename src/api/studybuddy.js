@@ -5,6 +5,8 @@ const openaiTokenCounter = require('openai-gpt-token-counter');
 const {sendbird} = require("../library/sendbird.js");
 const isJSON = require("is-json");
 const { loadTranslations, translateReferences } = require("./translate");
+const smartquotes = require('smartquotes');
+
 
 
 const stripHTMLTags = (text) => text.replace(/<[^>]*>?/gm, '').replace(/\s+/g," ").trim();
@@ -65,7 +67,16 @@ const prepareThread = async (thread)=>
 }
 
 
-const editContent = string=>{
+const editContent = (string,ref)=>{
+
+    //remove ref
+    string = string.replace(ref,"");
+    //remove empty parentheses
+    string = string.replace(/\s*\(\s*\)\s*/g," ");
+
+    //smart quotes
+    string = smartquotes(string);
+
 
     string = string.replace(/^\[.*?!\]:*/g,"").trim();
     string = string.replace(/\[Text Highlights\].*/g,"").trim();
@@ -348,7 +359,7 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId}) => {
         }, tokenLimit);
 
     let response =  (await askGPT(instructions, messages, "gpt-3.5-turbo-16k")).split(/[\n\r]+/). join(" ");
-    response = editContent(response);
+    response = editContent(response, ref);
     response = translateReferences(lang,response);
 
     return ({
