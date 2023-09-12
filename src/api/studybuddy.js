@@ -121,6 +121,15 @@ const editContent = string=>{
     newSentences = newSentences.replace(/^\[.*?\]:*/g,"").trim();
     newSentences = newSentences.replace(/^[ ,.?!;]+/g,"").trim();
 
+    const badStarts = [
+        "In this passage,",
+        "In this verse,",
+        "In (.{1,15}?)\\d+,",
+    ]
+    //remove the bad starts, trim, and capitalize first letter
+    newSentences = newSentences.replace(new RegExp("^("+badStarts.join("|")+")","g"),"").trim().replace(/^\w/, c => c.toUpperCase());
+    
+
     return newSentences;
 
 }
@@ -224,11 +233,17 @@ const prepareMessages = ({
     {
     messages.push({role: "assistant",   content: `Oh by the way, are there any published commentaries that would be relevant to this passage?`});
     messages.push({role: "user",        content: `Yes, here they are: ${commentary.map(({name, title, year, text}) => `[${title}] ${text}`).join(" • ")}`});
-    messages.push({role: "assistant",   content: `Thanks for the backgroud info.  I'll refer to this as needed`});
+    messages.push({role: "assistant",   content: `Thanks for the background info.  I'll refer to this as needed`});
     }
-
-    messages.push({role: "user",        content: `Okay let's have your response now. No preliminary comment, just give me the reply${lang_in}.`});
-    messages.push({role: "assistant",   content: `You got it.  Here is my response${lang_in}:`});
+    messages.push({role: "assistant",    content: `Should I start with “In this passage,” or “In ${ref}”?`});
+    messages.push({role: "user",        content: `No, the context is already established.  Just start with the main point.`});
+    messages.push({role: "assistant",    content: `Understood.`});
+    messages.push({role: "user",        content: `Okay get ready to give your reply${lang_in}.`});
+    messages.push({role: "assistant",    content: `Give the word.`});
+    messages.push({role: "user",        content: `Lights, camera...`});
+    messages.push({role: "assistant",    content: `[Gets into character as Study-Buddy GPT]`});
+    messages.push({role: "user",        content: `...Action!`});
+    messages.push({role: "user",        content: `[${name}]: “${firstMessage}”`});
 
     if(thread_messages.length > 1) {
         messages.push(...thread_messages.slice(1).map((message) => (
@@ -515,7 +530,7 @@ const loadCommentary = async (verse_ids) => {
 
     // anything in c.verse_id + c.verse_range should be in verse_ids
     const sql = `
-    SELECT  s.source_name name, s.source_title title, s.source_year year, c.text
+    SELECT  s.source_name name, s.source_title book, c.title title, s.source_year year, c.text
     FROM bom_xtras_commentary c
     JOIN bom_xtras_source s ON c.source = s.source_id
     WHERE s.source_lang = "en" AND (${verse_ids.map(verse_id => `(${verse_id} BETWEEN c.verse_id AND c.verse_id + c.verse_range - 1)`).join(' OR ')})
