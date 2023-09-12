@@ -77,8 +77,8 @@ function Caractors() {
             ))}
           </div>
 
-          { (activeGrid) ? <div class="flex-row-container ">
-            <div class="flex-row-item active">
+          { (activeGrid) ? <div className="flex-row-container ">
+            <div className="flex-row-item active">
               <h6>Active Glyph</h6> <div>
               <img
                   src={`${assetUrl}/caractors/row${activeItem?.id.replace(
@@ -89,7 +89,7 @@ function Caractors() {
               
             </div>
             </div>
-            <div class="flex-row-item match">
+            <div className="flex-row-item match">
               <h6>{matchedItems.length} Closely matched Glyphs</h6>
             <div>
               {matchedItems.map((m) => (
@@ -102,7 +102,7 @@ function Caractors() {
               ))}</div>
             
             </div>
-            <div class="flex-row-item similar">
+            <div className="flex-row-item similar">
               
               <h6>{similarItems.length} Similar Glyphs</h6>
               <div>
