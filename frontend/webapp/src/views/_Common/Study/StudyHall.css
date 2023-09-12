@@ -438,6 +438,7 @@
 
 .messageContainer .senderName {
   font-weight: 800;
+  margin-right: 1ex;
 }
 
 .messageContainer .senderName .botBadge

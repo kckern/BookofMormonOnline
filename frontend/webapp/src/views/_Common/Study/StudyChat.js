@@ -492,7 +492,7 @@ export function StudyGroupChat({
   let isSameSender = false;
   let max_i = messages.length - 1;
   return (
-    <div className={"StudyGroupChat"}>
+    <div className={"StudyGroupChat"} key={channel.url}>
       <TypingIndicators appController={appController} channel={channel} />
       {loading ? (
         <Loader />
@@ -1237,7 +1237,7 @@ function BaseMessage({
           </a>
         </span>
         {messageActions}
-        <div className={`messageBody ${isEdit && "edit"}`}>
+        <div className={`messageBody ${isEdit ? "edit" : ""}`}>
           <MessageTypes
             appController={appController}
             index={index}
@@ -1658,6 +1658,7 @@ function Message({
       );
   }
 
+  message.message = message.message.replace(/^[•\s]+$/, "");
   let messageText = formatText(message, setPanel);
 
   if (message.customType === "formatted_comment") {
@@ -1665,7 +1666,6 @@ function Message({
       messageText = ParseMessage(messageText);
     }
   }
-  if (messageText === "•" && highlightTags) messageText = "";
   return !isEdit ? (
     <div
       className="Message"

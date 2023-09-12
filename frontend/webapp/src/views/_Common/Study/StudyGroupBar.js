@@ -180,14 +180,21 @@ function StudyGroupStatus({ appController }) {
     </div>, { position: toast.POSITION.BOTTOM_LEFT, autoClose: 6000 });
   }
 
+
   useEffect(() => {
-
-    setUserColors(oldColors => {
-
+    setUserColors((oldColors) => {
       let newColors = getColorMap(users);
+      
+      // Check if new colors and old colors are the same
+      if (JSON.stringify(newColors) === JSON.stringify(oldColors)) {
+        return oldColors;
+      }
+  
       const sounds = appController.states.preferences.sound;
       let diff = diffMap(oldColors, newColors);
+      
       if (diff[appController.states.user.user]) return newColors;
+      
       let diffCounts = Object.keys(diff).length;
       if (diffCounts !== 1) return newColors;
 
