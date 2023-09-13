@@ -142,6 +142,8 @@ const editContent = (string,ref)=>{
     //remove empty parentheses
     string = string.replace(/\s*\(\s*\)\s*/g,"");
 
+    //remove final bracketed content
+    string = string.replace(/\s*\[.*?\]\s*$/g,"").trim();
     return newSentences;
 
 }
