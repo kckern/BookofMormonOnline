@@ -51,8 +51,35 @@ export function loadMenu(){
   return list;
 }
 
-function Sidebar(props) {
+
+function SearchBox({appController,setActivePath}) {
+
   const history = useHistory();
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      appController.activePageController?.states?.activeAudio?.pause();
+      appController.functions.closePopUp(); 
+      setActivePath("/search");
+      let searchSlug = e.target.value
+        .toLowerCase()
+        .replace(/[^a-z0-9:–—~-]+/gi, ".")
+        .replace(/(^\.|\.$)/g, "");
+      history.push("/search/" + searchSlug);
+      e.preventDefault();
+    }
+  };
+
+  return <li className={"searchbox"}>
+    <input
+      type="text" 
+      placeholder={label("search")}
+      onKeyDown={handleKeyDown}
+     />
+     </li>
+}
+
+function Sidebar(props) {
   const match = useRouteMatch();
 
   const menu = loadMenu();
@@ -74,19 +101,6 @@ function Sidebar(props) {
     setActivePath(determinePath);
   }, [window.location.pathname, match.params])
 
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
-      props.appController.activePageController?.states?.activeAudio?.pause();
-      props.appController.functions.closePopUp(); 
-      setActivePath("/search");
-      let searchSlug = e.target.value
-        .toLowerCase()
-        .replace(/[^a-z0-9:–—~-]+/gi, ".")
-        .replace(/(^\.|\.$)/g, "");
-      history.push("/search/" + searchSlug);
-      e.preventDefault();
-    }
-  };
 
   let URLsearchTerm = window.location.pathname.split("/").reverse()[0];
   if (window.location.pathname === activePath) URLsearchTerm = null;
@@ -112,19 +126,12 @@ function Sidebar(props) {
           activePath={activePath}
         />
         <Nav>
-          <li
-            className={
-              "searchbox " +
-              (activePath.match(new RegExp("^/search")) ? "active" : "")
-            }
-            key={"search"}
-          >
-          </li>
+          <SearchBox appController={props.appController} setActivePath={setActivePath} />
           {menu.map((r,index) => {
             let isActive = activePath.match(new RegExp("^/" + r.slug));
             let activeClass = isActive ? "active" : "";
             return (
-              <li className={r.slug + "_link  menuitem " + activeClass} key={r.slug} key={index}>
+              <li className={r.slug + "_link  menuitem " + activeClass} key={r.slug} >
                 <NavLink
                   to={"/" + r.slug}
                   activeClassName=""
