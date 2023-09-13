@@ -137,17 +137,29 @@ export default class SendbirdController {
       .then(room => room)
       .catch(e => null);
   }
+  
 
   fetchRoomFromGroup = async (group, src) => {
 
     if (!group) return null;
-    //if (this.groupCallMap[group.url]) return this.groupCallMap[group.url];
+    
+    let roomCache = localStorage.getItem('roomCache');
+    if(roomCache){
+       roomCache = JSON.parse(roomCache);
+       if(roomCache[group.url]){
+          return roomCache[group.url];
+       }
+    }else{
+       roomCache = {};
+    }
+    
     let metaData = (typeof group.getCachedMetadata === "function") ? group.getCachedMetadata() : null;
-
     if (metaData?.roomId) {
       return this.fetchRoom(metaData.roomId).then(async (room) => {
         if (!room) return await this.resetRoom(group);
         this.groupCallMap[group.url] = room;
+        roomCache[group.url] = room;
+        localStorage.setItem('roomCache', JSON.stringify(roomCache));
         return room;
       });
     }
@@ -157,10 +169,12 @@ export default class SendbirdController {
       return this.fetchRoom(res.roomId).then(async (room) => {
         if (!room) return await this.resetRoom(group);
         this.groupCallMap[group.url] = room;
+        roomCache[group.url] = room;
+        localStorage.setItem('roomCache', JSON.stringify(roomCache));
         return room;
       })
     })
-  }
+  } 
 
   fetchGroupOperators = async (groupChannel) => {
     if (!groupChannel) return [];
