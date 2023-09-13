@@ -1,5 +1,5 @@
 
-import { Card, CardBody, CardFooter, CardHeader, Label } from "reactstrap"
+import { Alert, Button, Card, CardBody, CardFooter, CardHeader, Label } from "reactstrap"
 import { label } from "src/models/Utils"
 import Switch from "react-bootstrap-switch";
 import { useEffect, useState } from "react";
@@ -227,15 +227,42 @@ export default function User({ appController }) {
 
 function Publications({appController,pubs}){
 
+
+    const [showControversial, setShowControversial] = useState(false);
+
     if(!appController.states.preferences.commentary.on) return false;
     if(!pubs) return false;
 
     let gpubs = pubs.filter(p=>p.props.rating!=="R");
     let rpubs = pubs.filter(p=>p.props.rating==="R");
 
-    let controversial = (rpubs && rpubs.length > 0) ? <><h4>{label("controversial_commentaries")}</h4><div className={"publicationCards"}>{rpubs}</div></> : null;
+    let controversial = (rpubs && rpubs.length > 0) ? <>
+    <Alert color="warning">{label("controversial_commentaries_warning")}</Alert>
+    <div className={"publicationCards"}>{rpubs}</div></> : null;
 
-    return   <><div className={"publicationCards"}>{gpubs}</div>{controversial}</>
+    return   <><div className={"publicationCards"}>{gpubs}</div>
+
+<h5 className="title">
+                    <Label className="fax_select"><img src={commentary} />
+                        {label("controversial_commentaries")}
+                        <Switch
+                            onText={label("Hide")}
+                            offText={label("Show")}
+                            onChange={()=>setShowControversial(!showControversial)}
+                            value={showControversial}
+                            onColor="default"
+                            offColor="default"
+                        />
+                    </Label>
+                </h5>
+    
+    {showControversial ? controversial : <>
+    
+    
+    </> }
+
+    
+    </>
 
 
 }
