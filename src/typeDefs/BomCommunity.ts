@@ -139,6 +139,7 @@ extend type Mutation {
     progress: Float
     finished: [Float]
     lastseen: Float
+    laststudied: String
     bookmark: String
     public: Boolean
   }
