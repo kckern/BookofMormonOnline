@@ -17,25 +17,57 @@ export default {
   Query: {
     leaderboard: async (item: any, args: any, context: any, info: any) => {
       const lang = context.lang ? context.lang : null;
+
+      let user: any = await Models.BomUser.findOne({
+        raw: true,
+        include: [
+          {
+            model: Models.BomUserToken,
+            where: {
+              token: args.token
+            }
+          }
+        ]
+      });
+
+      const my_sb_user_id = md5(user?.user);
+
+      const activeTimeFrame = Math.floor(Date.now() / 1000) - (90 * 24 * 60 * 60);
       const rankedUsers :any = await Models.BomUser.findAll({
         raw: true,
         attributes: ['user','name','last_active', 'complete'],
-        where: { last_active: { [Op.gt]: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000) }},
+        where: { last_active: { [Op.gt]: activeTimeFrame}},
         order: [['complete', 'DESC']],
       });
 
-      //console.log(rankedUsers.map((u:any)=>`${u.name || u.user} ${u.complete}% ${u.last_active}`));
-      const topUsers = rankedUsers.slice(0,100);
-      const sendbirdUserObjects = await sendbird.listUsers(topUsers.map((u:any)=>md5(u.user)));
+      const topUsers = rankedUsers.slice(0,100).map(i=>{
+        i.sbuser = md5(i.user);
+        return i;
+      });
+      const sendbirdUserObjects = await sendbird.listUsers(topUsers.map(i=>i.sbuser));
+      console.log(sendbirdUserObjects.length,topUsers.length);
 
       const publicUsers = await sendbird.getMembersofPublicGroups();
-
+      const privateUsersVisibleToMe = my_sb_user_id ? await sendbird.getMembersofPrivateGroups(my_sb_user_id) : [];
+      const visibleUsers = [...publicUsers,...privateUsersVisibleToMe];
 
       return topUsers.map((u:any)=>{
-        const sendbirdUser = sendbirdUserObjects.find((sbu:any)=>sbu.user_id===md5(u.user));
-        if(!sendbirdUser) return null;
-        return loadHomeUser(sendbirdUser,publicUsers);
-      }).filter((u:any)=>!!u).slice(0,50);
+        const sendbirdUserObject = sendbirdUserObjects.find((sbu:any)=>sbu.user_id===u.sbuser);
+        //if(!sendbirdUser) return null;
+        return loadHomeUser(sendbirdUserObject,u,visibleUsers);
+      }).filter((u:any)=>!!u).slice(0,50).map(i=>{
+       delete i.user_id;
+       if(i.nonSocial){
+        i.nickname = i.nickname.replace(/^(.{2}).*(.{2})$/,"$1****$2");
+        i.nickname = i.nickname.charAt(0).toUpperCase() + i.nickname.slice(1);
+        return i;
+       }
+        if(i.public) return i;
+        i.nickname = i.nickname.replace(/^(.{2}).*(.{2})$/,"$1****$2");
+        i.nickname = i.nickname.charAt(0).toUpperCase() + i.nickname.slice(1);
+        i.picture = "https://www.gravatar.com/avatar/"+md5(i.user)+".jpg?s=200&d=identicon";
+        return i;
+      }).sort((a:any,b:any)=>b.progress-a.progress);
 
 
     },
@@ -383,13 +415,28 @@ async function loadGroupFromChannelId(channelId: string) {
   return group || {};
 }
 
-function loadHomeUser(sbuser, publicUsers = []) {
+function loadHomeUser(sbuser, user:any={}, publicUsers = []) {
+
+
+  if(!sbuser?.metadata) return {
+    user_id: md5(user?.user),
+    nickname: user?.name || user?.user || "User",
+    picture: `https://www.gravatar.com/avatar/${md5(user?.user)}?d=identicon`,
+    progress: parseFloat(user?.complete) || 0,
+    finished: [],
+    lastseen: user.last_active,
+    nonSocial:true
+  }
+
+
   let summary = { completed: 0, finished: [] };
   let bookmark = { latest:0, slug: null, pagetitle: null, heading: null };
   try {
     summary = JSON.parse(sbuser?.metadata?.summary);
     bookmark = JSON.parse(sbuser?.metadata?.bookmark);
   } catch (e) {}
+
+
   return {
     user_id: sbuser?.user_id,
     nickname: sbuser?.nickname,
