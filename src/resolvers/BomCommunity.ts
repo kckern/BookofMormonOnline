@@ -31,20 +31,10 @@ export default {
       const publicUsers = await sendbird.getMembersofPublicGroups();
 
 
-
-
       return topUsers.map((u:any)=>{
         const sendbirdUser = sendbirdUserObjects.find((sbu:any)=>sbu.user_id===md5(u.user));
         if(!sendbirdUser) return null;
-        return {
-          user_id: u.user,
-          nickname: sendbirdUser?.nickname,
-          picture: sendbirdUser?.profile_url,
-          progress: parseFloat(u.complete),
-          finished: [],
-          bookmark: sendbirdUser?.metadata?.bookmark,
-          public: publicUsers.includes(md5(u.user))
-        }
+        return loadHomeUser(sendbirdUser,publicUsers);
       }).filter((u:any)=>!!u).slice(0,50);
 
 
@@ -266,13 +256,7 @@ export default {
       if (!me.length) return [];
       group = await loadGroup(group, 'admin');
       let userIds = group.requests;
-      return sendbird.listUsers(userIds).then(data=>data.map(sbUser => {
-        return {
-          user_id: sbUser.user_id,
-          nickname: sbUser.nickname,
-          picture: sbUser.profile_url
-        };
-      }))
+      return sendbird.listUsers(userIds).then(data=>data.map(sbUser => loadHomeUser(sbUser)));
     }
   },
   Mutation: {
@@ -463,13 +447,7 @@ function loadHomeItem(sbMsg) {
   let repliers = sbMsg.thread_info?.most_replies || [];
   let replycount = sbMsg.thread_info?.reply_count || 0;
 
-  repliers.map(r => {
-    return {
-      user_id: r.guest_id,
-      nickname: r.nickname,
-      picture: r.picture
-    };
-  });
+  repliers.map(r => loadHomeUser(r));
 
   let likes = sbMsg.reactions?.shift()?.user_ids || [];
   
