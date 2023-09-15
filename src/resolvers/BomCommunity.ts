@@ -399,17 +399,24 @@ async function loadGroupFromChannelId(channelId: string) {
   return group || {};
 }
 
-function loadHomeUser(sbuser) {
+function loadHomeUser(sbuser, publicUsers = []) {
   let summary = { completed: 0, finished: [] };
+  let bookmark = { latest:0, slug: null, pagetitle: null, heading: null };
   try {
     summary = JSON.parse(sbuser?.metadata?.summary);
+    bookmark = JSON.parse(sbuser?.metadata?.bookmark);
   } catch (e) {}
   return {
     user_id: sbuser?.user_id,
     nickname: sbuser?.nickname,
     picture: sbuser?.profile_url,
     progress: summary?.completed || 0,
-    finished: summary?.finished || []
+    finished: summary?.finished || [],
+    lastseen: bookmark?.latest || 0,
+    laststudied: bookmark?.heading  ? `${bookmark?.heading} (${bookmark?.pagetitle})` : null,
+    bookmark: bookmark?.slug || null,
+    public: !!publicUsers.includes(sbuser?.user_id) || null
+
   };
 }
 

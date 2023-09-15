@@ -1165,6 +1165,10 @@ const queries = {
               picture
               progress
               finished
+              lastseen
+              laststudied
+              bookmark
+              public
             }
           }
           requests
@@ -1174,6 +1178,10 @@ const queries = {
             picture
             progress
             finished
+            lastseen
+            laststudied
+            bookmark
+            public
           }
         }`,
     }
@@ -1201,6 +1209,10 @@ const queries = {
               picture
               progress
               finished
+              lastseen
+              laststudied
+              bookmark
+              public
           }
         }
         feed {
@@ -1214,6 +1226,10 @@ const queries = {
             picture
             progress
             finished
+            lastseen
+            laststudied
+            bookmark
+            public
           }
           mentioned_users {
             user_id
@@ -1221,6 +1237,10 @@ const queries = {
             picture
             progress
             finished
+            lastseen
+            laststudied
+            bookmark
+            public
           }
           likes
           replycount
@@ -1228,6 +1248,12 @@ const queries = {
             user_id
             nickname
             picture
+            progress
+            finished
+            lastseen
+            laststudied
+            bookmark
+            public
           }
           link {
             key
@@ -1256,6 +1282,10 @@ const queries = {
             picture
             progress
             finished
+            lastseen
+            laststudied
+            bookmark
+            public
           }
           mentioned_users {
             user_id
@@ -1263,6 +1293,10 @@ const queries = {
             picture
             progress
             finished
+            lastseen
+            laststudied
+            bookmark
+            public
           }
           likes 
           highlights
@@ -1282,6 +1316,12 @@ const queries = {
           user_id
           nickname
           picture
+          progress
+          finished
+          lastseen
+          laststudied
+          bookmark
+          public
       }`,
     }
   },
