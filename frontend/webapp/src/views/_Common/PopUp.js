@@ -406,7 +406,7 @@ function History({ appController }) {
   let slug = appController.states.popUp.ids;
 
   useEffect(()=>{
-    document.title  = doc?.document + " (" + doc?.source + ") | " + label("home_title");
+    document.title = doc?.document + " (" + doc?.source + ") | " + label("home_title");
   },doc)
 
   useEffect(() => {
