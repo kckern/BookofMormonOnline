@@ -138,12 +138,12 @@ const editContent = (string,ref)=>{
     newSentences = newSentences.replace(new RegExp("^("+badStarts.join("|")+")","g"),"").trim().replace(/^\w/, c => c.toUpperCase());
     
     //remove ref
-    string = string.replace(ref,"");
+    newSentences = newSentences.replace(ref,"");
     //remove empty parentheses
-    string = string.replace(/\s*\(\s*\)\s*/g,"");
+    newSentences = newSentences.replace(/\s*\(\s*\)\s*/g,"");
 
     //remove final bracketed content
-    string = string.replace(/\s*\[.*?\]\s*$/g,"").trim();
+    newSentences = newSentences.replace(/\s*\[.*?\]\s*$/g,"").trim();
     return newSentences;
 
 }
