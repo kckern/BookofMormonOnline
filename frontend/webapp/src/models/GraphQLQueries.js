@@ -1141,6 +1141,28 @@ const queries = {
     }
   },
 
+  leaderboard: (input) => {
+    input = input.shift();
+    return {
+      type: "leaderboard",
+      key: "token",
+      val: false,
+      query:  `leaderboard(token:"${input.token}")`  +
+        `  {
+          user_id
+          nickname
+          picture
+          progress
+          finished
+          lastseen
+          laststudied
+          bookmark
+      }`,
+    }
+  },
+
+
+
 
   homegroups: (input) => {
     input = input.shift();

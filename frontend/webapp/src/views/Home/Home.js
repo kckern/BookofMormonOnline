@@ -72,6 +72,7 @@ function Home({ appController }) {
 function GroupBrowser({ appController, activeGroup, setActiveGroup }) {
 
   const [groupListData, setData] = useState([]);
+  const [leaders, setLeaders] = useState([]);
   const [queryFilter, setQueryFilter] = useState({ token: appController.states.user.token });
   const [seeMoreLabel, setSeeMoreLabel] = useState(label("see_more"));
   const isFiltered = !!queryFilter.grouping;
@@ -79,9 +80,11 @@ function GroupBrowser({ appController, activeGroup, setActiveGroup }) {
   useEffect(() => {
     setData([]);
     BoMOnlineAPI({
-      homegroups: queryFilter
+      homegroups: queryFilter,
+      leaderboard: queryFilter
     }, { useCache: false }).then(r => {
       setData(r.homegroups)
+      setLeaders(r.leaderboard)
       setSeeMoreLabel(label("see_more"));
     }
     )
@@ -109,24 +112,63 @@ function GroupBrowser({ appController, activeGroup, setActiveGroup }) {
     />
     <CardBody>
 
-      {!groupListData.length ? <Spinner /> : groupListData.map((item, i) => {
-
-        if (!item) return null;
-
-        const grouping = item.grouping;
-        const prev = groupListData[i - 1] || null;
-        const next = groupListData[i + 1] || null;
-
-        return <React.Fragment key={i}>
-          {(grouping !== prev?.grouping && groupcount > 1) ? <h3>{label(item.grouping)}</h3> : null}
-          <GroupCard appController={appController} groupData={item} activeGroup={activeGroup} setActiveGroup={setActiveGroup} />
-          {(grouping !== next?.grouping && !queryFilter.grouping) ? <div className="seeMore" onClick={() => setQueryFilter(q => { q.grouping = grouping; setSeeMoreLabel(label("loading")); console.log(q); return q; })}>{seeMoreLabel}</div> : null}
-        </React.Fragment>
-      })}
+      {!groupListData.length || !leaders.length ? <Spinner /> : <>
+          <h3>{label("leader_board")}</h3>
+          <LeaderBoard leaders={leaders} />
+          {groupListData.map((item, i) => {
+                if (!item) return null;
+                const grouping = item.grouping;
+                const prev = groupListData[i - 1] || null;
+                const next = groupListData[i + 1] || null;
+                return <React.Fragment key={i}>
+                  {(grouping !== prev?.grouping && groupcount > 1) ? <h3>{label(item.grouping)}</h3> : null}
+                  <GroupCard appController={appController} groupData={item} activeGroup={activeGroup} setActiveGroup={setActiveGroup} />
+                  {(grouping !== next?.grouping && !queryFilter.grouping) ? <div className="seeMore" onClick={() => setQueryFilter(q => { q.grouping = grouping; setSeeMoreLabel(label("loading")); console.log(q); return q; })}>{seeMoreLabel}</div> : null}
+                </React.Fragment>
+                })}
+          </>}
     </CardBody>
   </Card>
 }
 
+
+function LeaderBoard({leaders}){
+  /*
+
+          user_id
+          nickname
+          picture
+          progress
+          finished
+          lastseen
+          laststudied
+          bookmark*/
+
+return <div className="leaderboard">
+  {leaders.map((m, i) =>  <div className="leaderBoardItem" key={i}>
+      <div className="rank">{i+1}</div>
+      <div class="img-container">
+        <img src={m.picture} alt={m.nickname} />
+        <span class="trophies">{m.finished?.map(i=>"🏆")}</span>
+      </div>
+      <div className="namenum" >
+        <div className="nickname">{m.nickname}</div>
+        <div className="progress">
+          <div  className="progressbar" style={{width:`${m.progress}%`}}>{" "}</div>
+          <span>{m.progress}%</span>
+        </div>
+
+        <div className="lastseen"><span>{label("last_studied")}</span> {(()=>{
+          const d = new Date(m.lastseen);
+          const daysAgo = Math.floor((new Date() - d*1000) / (1000 * 60 * 60 * 24));
+          if(daysAgo <= 1) return label("today");
+          if(daysAgo <= 2) return label("yesterday");
+          return `${daysAgo} ${label("days_ago")}`;
+        })()}</div>
+      </div>
+  </div>)}
+</div>
+}
 
 function GroupCard({ groupData, appController, activeGroup, setActiveGroup }) {
 
@@ -317,16 +359,15 @@ export function groupToolTipHtml(groupData) {
 }
 
 export function GroupLeaderBoard({groupData}) {
-
   groupData.members = groupData.members.filter(m => m.nickname !== "StudyBuddy"); //TODO get metadata variables
-  
-
   const sortedMembers = groupData.members.sort((a, b) => b.progress - a.progress);
   return  <div class='GroupLeaderBoard'>
-
     {sortedMembers.map((m, i) =>  <><div className="leaderBoardItem" key={i}>
       <div className="rank">{i+1}</div>
+      <div class="img-container">
       <img src={m.picture} />
+            <span class="trophies">{m.finished?.map(i=>"🏆")}</span>
+      </div>
       <div className="namenum" >
         <div className="nickname">{m.nickname}</div>
         <div className="progress">
@@ -337,7 +378,6 @@ export function GroupLeaderBoard({groupData}) {
     </div></>
   )}
 </div> 
-
 }
 
 export default Home;

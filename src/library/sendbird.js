@@ -244,7 +244,7 @@ class Sendbird {
     if (!user_ids.length) return [];
     var authOptions = {
       method: 'GET',
-      url: 'https://api-' + SENDBIRD_APPID + '.sendbird.com/v3/users' + `?user_ids=${encodeURI(user_ids.join(','))}`,
+      url: 'https://api-' + SENDBIRD_APPID + '.sendbird.com/v3/users' + `?limit=100&user_ids=${encodeURI(user_ids.join(','))}`,
       headers: {
         'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
@@ -484,7 +484,41 @@ class Sendbird {
 
   }
 
+  async getMembersofPrivateGroups(user_id){
 
+    /*
+      1. Load the custom_type=private study groups this user_id is in
+      2. Load the members of each of those groups
+      3. Return a unique list of user_ids
+    */
+   let channels = await axios({
+    method: 'GET',
+     url: `https://api-${SENDBIRD_APPID}.sendbird.com/v3/users/${user_id}/my_group_channels?custom_types=private&limit=100`,
+      headers: {
+        'Api-Token': SENDBIRD_TOKEN,
+        'Content-Type': 'application/json'
+      },
+      json: true
+    });
+
+
+   let members = await Promise.all(channels.data.channels.map(async (channel)=>{
+      let members = await axios({
+        method: 'GET',
+        url: `https://api-${SENDBIRD_APPID}.sendbird.com/v3/group_channels/${channel.channel_url}/members?limit=100`,
+        headers: {
+          'Api-Token': SENDBIRD_TOKEN,
+          'Content-Type': 'application/json'
+        },
+        json: true
+      });
+      return members.data.members.map((m)=>{return {...m,channel_name:channel.name}});
+    }));
+
+    return members.flat().map(i=>i.user_id).filter(x=>!!x); 
+
+
+  }
 
   async getMembersofPublicGroups(){
 
