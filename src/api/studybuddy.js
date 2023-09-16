@@ -398,7 +398,7 @@ const studyBuddySend = async ({ channelUrl, messageId, message, user_id, metadat
         await new Promise((resolve) => setTimeout(resolve, 10000));
     }
     await sendbird.replyToMessage({ channelUrl, messageId, user_id, message });
-    const bookmarkJSON = JSON.stringify(metadata);
+    const bookmarkJSON = JSON.stringify(metadata.bookmark);
     await sendbird.updateUserMetadatum(user_id, "bookmark", bookmarkJSON);
     return true;
 }
