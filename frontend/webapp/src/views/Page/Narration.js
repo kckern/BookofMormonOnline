@@ -411,7 +411,7 @@ function LightBox({ narrationController, setOpenLightBox,imgClicker }) {
 
   if (narrationController.states.panelImageIds.length > 1) {
     panelImages = narrationController.states.panelImageIds.map((id) => {
-      const caption = narrationController.supplement.image[id]?.title || "Artwork";
+      const caption = narrationController.supplement.image?.[id]?.title || "Artwork";
       return (
         <img
           className={`img-${id}`}
@@ -422,7 +422,7 @@ function LightBox({ narrationController, setOpenLightBox,imgClicker }) {
     });
   }
 
-  const caption = narrationController.supplement.image[activeImageId]?.title || "Artwork";
+  const caption = narrationController.supplement.image?.[activeImageId]?.title || "Artwork";
 
   return (
     <SRLWrapper options={options} callbacks={callbacks}>
@@ -464,7 +464,7 @@ function ImagePanel({ narrationController }) {
     }
     
     const activeId = narrationController.states.activeImageId;
-    const caption = narrationController.supplement.image[activeId]?.title || "Artwork";
+    const caption = narrationController.supplement.image?.[activeId]?.title || "Artwork";
     if(caption) document.title = "Art: " + caption + " | " + label("home_title");
 
   }, [marginTop, narrationController.states.activeImageId]);
