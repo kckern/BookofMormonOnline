@@ -9,13 +9,17 @@ const {SENDBIRD_APPID, SENDBIRD_TOKEN} = process.env;
 
 class Sendbird {
 
-  async createUser(user_id, nickname="", profile_url="", email="") {
-   // console.log(`createUser ${user_id}`)
-    if (user_id === '' || user_id === undefined) return false;
-    if (nickname === '' || nickname === undefined) nickname = user_id;
- //   console.log(`createUser ${user_id} ${nickname} ${email}`);
+  
+
+  async createUser(user_id, nickname="", profile_url="", email="", attempt=0) {
+
+    if(attempt>5) return false;
+    if (!user_id) return false;
+    if (!nickname) return false;
+
+    //mkdir -p ./tmp
+    if (!fs.existsSync('./tmp')) fs.mkdirSync('./tmp');
     const profile_path = `./tmp/${Math.random() * 1000}.jpg`;
-  //  console.log({profile_path});
     if (!profile_url) profile_url = '';
 
     var data = new FormData();
@@ -60,17 +64,17 @@ class Sendbird {
       .then(function(response) {
         fs.unlink(profile_path, () => {});
         const newProfileUrl = response.data.profile_url;
-        if (!newProfileUrl) return  sendbird.loadUser(user_id);
+        if (!newProfileUrl) return  sendbird.loadUser(user_id,nickname,profile_url,email,attempt+1);
         return getFwdUrl(newProfileUrl).then(S3Url => {
        //   console.log({ newProfileUrl, S3Url });
           return sendbird.updateUserProfileUrl(user_id, S3Url).then(r=>{
-              return sendbird.loadUser(user_id);
+              return sendbird.loadUser(user_id,nickname,S3Url,email,attempt+1);
           })
         });
       })
       .catch(function(error) {
     //    console.log("LINE 71 ERROR - ",error.response.data.message);
-       return sendbird.loadUser(user_id)
+       return sendbird.loadUser(user_id,nickname,profile_url,email,attempt+1);
       });
   }
 
@@ -210,9 +214,11 @@ class Sendbird {
       });
   }
 
-  loadUser(user_id, nickname="", profile_url="", email="") {
+  loadUser(user_id, nickname="", profile_url="", email="", attempt=0) {
+    attempt = attempt || 1;
    // console.log(`LOAD ${user_id}`)
-    if (user_id === '' || !user_id) return false;
+    if (!user_id) return false;
+
 
     var authOptions = {
       method: 'GET',
@@ -232,11 +238,11 @@ class Sendbird {
         } 
 
        // console.log(`${user_id} Not Active, Creating`);
-        return this.createUser(user_id, nickname, profile_url, email);
+        return this.createUser(user_id, nickname, profile_url, email, attempt);
       })
       .catch((error) => {
       //  console.log(`${user_id} Not Found, Creating`);
-        return this.createUser(user_id, nickname, profile_url, email);
+        return this.createUser(user_id, nickname, profile_url, email, attempt);
       });
   }
 
