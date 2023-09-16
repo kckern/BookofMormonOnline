@@ -44,9 +44,6 @@ export default {
 
       const lang = context.lang ? context.lang : null;
       const botUsers = await sendbird.listBotUsers(lang);
-
-      console.log(botUsers);
-
       return botUsers.map(u => {
         if(!u.user_id) return null;
         return {
@@ -54,6 +51,7 @@ export default {
           name: u.nickname || "Bot",
           description: u.metadata?.description || "A helpful bot",
           picture: u.profile_url || "https://i.imgur.com/IwVZGhY.png",
+          enabled: !!u.metadata?.welcome
         }
 
 

@@ -1286,20 +1286,20 @@ const queries = {
     }
   },  
 
-  botlist: (input) => {
+  botlist: () => {
     return {
       type: "botlist",
       key: "botlist",
       val: false,
       query:
-        q("botlist", "botlist", [null]) +
-        `  {  
-        id  
-        name
-        description
-        picture
-        }
-      }`,
+        ` botlist {
+              name
+              description
+              picture
+              id
+              enabled
+          }
+        `,
     }
   },
   addBot: (input) => {

@@ -866,6 +866,14 @@ h6.botHeader.dropdown-header
   padding: 0;
 }
 
+.dropdown-menu .dropdown-item.botItem:hover h6{
+  color:white;
+}
+
+.dropdown-menu .dropdown-item.botItem:hover img{
+  outline: 1px solid #FFFFFF55;
+}
+
 .botInfo
 {
 
@@ -886,6 +894,7 @@ h6.botHeader.dropdown-header
   width: 50px;
   border-radius: 1ex;
   background-color: #EEE;
+  filter: invert(0)!important;
 }
 
 .userStatus .dropdown-menu .botItem.disabled
