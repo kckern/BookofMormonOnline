@@ -177,7 +177,7 @@ function StudyGroupSideBar({
             </li>
           </>
         ) : null}
-        {getFreshUsers(appController).map((u) => (
+        {((getFreshUsers(appController)||{})?.users || [])?.map((u) => (
           <UserSideBarItem
             key={u.userId}
             appController={appController}
