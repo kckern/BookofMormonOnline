@@ -1374,8 +1374,6 @@ function TextComment({
     if (isEdit) {
       let textbox = document.querySelector(".edit .StudyGroupChatInput input");
       if (textbox === null) return null;
-      textbox.value =
-        message.message === "•" ? data.description : message.message;
     }
   }, [isEdit]);
 
@@ -1387,10 +1385,9 @@ function TextComment({
       ? chatLinkedContent.textInFeed[message.customType + "/" + data.links.text]
       : false;
 
-  let messageText = formatText(message, setPanel);
-
-  if (message.message === "•" && data.description)
-    message.message = <span className={"desc"}>⭐ {data.description}</span>;
+      let messageText = formatText(message, setPanel);
+      messageText = !/[•]/.test(messageText?.props?.children?.[0]) ? messageText : <span className={"desc"}>⭐ {data.description}</span>;
+    
 
   const updateMessage = () => {
     let event = new CustomEvent("handleUpdateMessage");
@@ -1542,9 +1539,7 @@ function ImageComment({
       : false;
 
   let messageText = formatText(message, setPanel);
-  if (message.message === "•")
-    message.message = <span className={"desc"}>⭐ {data.description}</span>;
-
+  messageText = !/[•]/.test(messageText?.props?.children?.[0]) ? messageText : <span className={"desc"}>⭐ {data.description}</span>;
   return (
     <div>
       {messageText} {likes}
@@ -1576,8 +1571,9 @@ function FaxComment({
       : false;
 
   let messageText = formatText(message, setPanel);
-  if (message.message === "•")
-    message.message = <span className={"desc"}>⭐ {data.description}</span>;
+
+  messageText = !/[•]/.test(messageText?.props?.children?.[0]) ? messageText : <span className={"desc"}>⭐ {data.description}</span>;
+
 
   return (
     <div>
