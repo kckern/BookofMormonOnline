@@ -230,7 +230,7 @@ const prepareMessages = ({
     messages.push({role: "assistant",   content: `Okay.  Should I respond in English?`});
     messages.push({role: "user",        content: `No, respond in ${langNames[lang] || lang}.`});
     }
-    if(firstHighlights) {
+    if(firstHighlights.length) {
     messages.push({role: "assistant",   content: `So, back to what I should reply about. Any specific phrases catch your attention?`});
     messages.push({role: "user",        content: `Yes: ${JSON.stringify(firstHighlights)}`});
     }
