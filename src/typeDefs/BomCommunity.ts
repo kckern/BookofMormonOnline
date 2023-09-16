@@ -160,6 +160,7 @@ extend type Mutation {
     name: String
     description: String
     picture: String
+    enabled: Boolean
   }
 
 

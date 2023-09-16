@@ -303,40 +303,56 @@ function StudyGroupStatus({ appController }) {
 
 function BotPlugin({ appController }) {
 
+  const iAmOperator = appController.states.studyGroup.activeGroup?.myRole === "operator";
   const [isDroppedDown, setDroppedDown] = useState(false);
   const userId = "bot";
   const channel = appController.states.studyGroup.activeGroup?.url;
   const [addingBot, setAddingBot] = useState(false);
+  const [bots, setBots] = useState([]);
+
+  const [buttonPush] = useState(() => {
+    let sound = new Audio(`${assetUrl}/interface/audio/drop`)
+    sound.preload = "auto";
+    return sound;
+  });
   
-  const addBot = async (botId) => {
+  const [cameOnline] = useState(() => {
+    let sound = new Audio(`${assetUrl}/interface/audio/contacts-online`)
+    sound.preload = "auto";
+    return sound;
+  });
+  
+  const addBot = async (bot) => {
+    const {id, name, picture} = bot;
+    let token = appController.states.user.token;
     setAddingBot(true);
-    await BoMOnlineAPI({ addBot: { channel, botId } });
-    toaster(appController,socket, "green", label("bot_added"));
+    //play wentOffline
+    if (buttonPush) playSound(buttonPush);
+    let r = await BoMOnlineAPI({ addBot: { token, channel, bot: id } });
+    if (cameOnline) playSound(cameOnline);
+    setAddingBot(false);
+    toaster(appController, picture, "green", label("bot_added", [name]));
+    const activeGroup = appController.states.studyGroup.activeGroup;
+    const freshGroup = await activeGroup.refresh();
+    appController.functions.setActiveStudyGroup(freshGroup);
+
+
   }
 
-  const bots = [
-    {
-    id: "bot1", 
-    name: "StudyBuddy",
-    picture: "https://freesvg.org/img/1538298822.png",
-    description: "Helps you study",
-    enabled: true
-    },
-    {
-    id: "bot2",
-    name: "UserManual",
-    picture: "https://freesvg.org/img/1538298822.png",
-    description: "Helps you learn how to use the site",
-    enabled: false
-    },
-    {
-    id: "bot2",
-    name: "CrossReferencer",
-    picture: "https://freesvg.org/img/1538298822.png",
-    description: "Finds cross references for you",
-    enabled: false
+  useEffect(() => {
+
+    const getBots = async () => {
+      let r = await BoMOnlineAPI({ botlist: null , useCache:false});
+      setBots(r?.botlist.sort(((a,b)=>{
+        return a.enabled !== b.enabled ? a.enabled ? -1 : 1 : 0;
+      })) || []);
     }
-  ]
+    getBots();
+
+  }, []);
+
+  if(!iAmOperator) return null;
+
 
   return  <React.Fragment key={userId}>
     <div className={"noselect divider"} key={userId}></div>
@@ -362,12 +378,12 @@ function BotPlugin({ appController }) {
         
         {bots.map(bot => <><DropdownItem divider/><DropdownItem className={`botItem ${bot.enabled ? "enabled" : "disabled"}`}
         key={bot.id} onClick={()=>{
-          if(bot.enabled) addBot(bot.id);
+          if(bot.enabled) addBot(bot);
         }}>
           <div className={`botInfo`} key={bot.id} >
             <img src={bot.picture} />
             <div className="botInfoText">
-              <h6 className="botName">{bot.name}<Button>{label("bot_select")}</Button></h6>
+              <h6 className="botName">{bot.name}<Button>{addingBot? label("bot_plugging", [bot.name]) : label("bot_select")}</Button></h6>
               <div className="botDescription">{bot.description}</div>
             </div>
           </div>
@@ -404,6 +420,7 @@ export function getClassesFromUserObj(userObject, appController) {
 }
 
 export function StudyGroupUserCircle({ userObject, appController, isBot }) {
+
 
   let classes = getClassesFromUserObj(userObject, appController);
 
@@ -456,8 +473,23 @@ export function StudyGroupUser({ userObject, appController, liveMessage, isBot }
   const activeChannel = appController.states?.studyGroup?.activeGroup?.url;
 
 
+
+  const [buttonPush] = useState(() => {
+    let sound = new Audio(`${assetUrl}/interface/audio/drop`)
+    sound.preload = "auto";
+    return sound;
+  });
+  
+  const [wentOffline] = useState(() => {
+    let sound = new Audio(`${assetUrl}/interface/audio/contacts-offline`)
+    sound.preload = "auto";
+    return sound;
+  });
+  
+  
   const [isDroppedDown, setDroppedDown] = useState(false);
   const [speechBubbleOpen, setSpeechBubbleOpen] = useState(true);
+  const [unplugging, setUnplugging] = useState(false);
 
   if (!userObject) return null;
 
@@ -543,10 +575,13 @@ export function StudyGroupUser({ userObject, appController, liveMessage, isBot }
 
 
   const unplugBot = async (botObject) => {
-
     const {nickname, profileUrl, userId} = botObject;
-
-    toaster(appController,profileUrl, "yellow", label("bot_unplugged"));
+    setUnplugging(true);
+    let token = appController.states.user.token;
+    if(buttonPush) playSound(buttonPush);
+    await BoMOnlineAPI({ removeBot: { token, channel: activeChannel, bot: userId } });
+    if(wentOffline) playSound(wentOffline);
+    toaster(appController,profileUrl, "yellow", label("bot_unplugged", [nickname]));
   }
 
 
@@ -627,14 +662,15 @@ export function StudyGroupUser({ userObject, appController, liveMessage, isBot }
         </div></DropdownItem>
     </DropdownMenu>;
 
+  const iAmOperator = appController.states.studyGroup.activeGroup.myRole==="operator";
   if(isBot) dropDownContent = <DropdownMenu>
     <DropdownItem header className="botHeader">
       <img src={green} />
       <div className="botNickname">{userObject.nickname}</div>
-      <Button color="danger" onClick={()=>unplugBot(userObject)}>{label("bot_unplug")}</Button>
+      {iAmOperator && <Button disabled={unplugging} color="danger" onClick={()=>unplugBot(userObject)}>{unplugging ? label("bot_unplugging") : label("bot_unplug")}</Button>}
     </DropdownItem>
     <DropdownItem divider />
-    <LiveMessageStudy liveMessage={label("bot_intro_x", userObject.nickname)} bookmark={bookmark} appController={appController} />
+    <LiveMessageStudy liveMessage={userObject?.metaData?.welcome || label("bot_intro_x", userObject.nickname)} bookmark={bookmark} appController={appController} />
 
     {bookmark.slug && bookmark.channel=== activeChannel? <><DropdownItem divider />
       <DropdownItem >
