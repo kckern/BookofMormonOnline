@@ -70,6 +70,7 @@ function translateReferences(lang, text)
     });
 
     text = text.replace(/성경 *(구절|말씀)/g, "경전 구절");
+    text = text.replace(/이 문장/g, "이 구절");
 
     return text;
 }

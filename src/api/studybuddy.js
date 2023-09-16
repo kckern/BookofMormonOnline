@@ -261,7 +261,7 @@ const prepareMessages = ({
     messages.push({role: "user",        content: `Lights, camera...`});
     messages.push({role: "assistant",    content: `[Gets into character as Study-Buddy GPT]`});
     messages.push({role: "user",        content: `...Action!`});
-    messages.push({role: "user",        content: `[${name}]: “${firstMessage}”`});
+    messages.push({role: "user",        content: `[${name}]: “${firstMessage || firstHighlights.join("; ")}”`});
 
     if(thread_messages.length > 1) {
         messages.push(...thread_messages.slice(1).map((message) => (
