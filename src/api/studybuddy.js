@@ -22,9 +22,8 @@ const trimDownCommentary = (commentary, tokenLimit=0) => {
 }
 
 const studyBuddy = async (channelUrl,messageId) => {
-
-    const { user_id, response} = await studyBuddyTextBlock({channelUrl, messageId});
-    return await studyBuddySend({channelUrl, messageId, message:response, user_id});
+    const { user_id, response, metadata} = await studyBuddyTextBlock({channelUrl, messageId});
+    return await studyBuddySend({channelUrl, messageId, message:response, user_id, metadata});
     
 }
 
@@ -259,7 +258,7 @@ const prepareMessages = ({
     messages.push({role: "user",        content: `Okay get ready to give your reply${lang_in}.`});
     messages.push({role: "assistant",    content: `Give the word.`});
     messages.push({role: "user",        content: `Lights, camera...`});
-    messages.push({role: "assistant",    content: `[Gets into character as Study-Buddy GPT]`});
+    messages.push({role: "system",    content: `Study-Buddy GPT now gets into character and will never output any meta-text. `});
     messages.push({role: "user",        content: `...Action!`});
     messages.push({role: "user",        content: `[${name}]: “${firstMessage || firstHighlights.join("; ")}”`});
 
@@ -308,6 +307,7 @@ const prepareMessages = ({
 
 const studyBuddyTextBlock = async ({ channelUrl, messageId}) => {
 
+    //console.log("studyBuddyTextBlock", {channelUrl,messageId});
     // await set studyBuddy Metadata to text_guid slug.
 
     //get channel metadata lang key
@@ -334,13 +334,12 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId}) => {
     const crossReferences = await loadCrossReferences(verse_ids,lang);
     const sectionContext = await loadSectionContext(text_guid,lang);
     const division = await loadDivision(text_guid,lang);
-    const {guid:page_guid, title:page} = await loadPage(text_guid,lang);
+    const {guid:page_guid, title:page, slug:page_slug, page_link} = await loadPage(text_guid,lang);
     const sections = await loadPageSections(page_guid,lang);
     const sectionNarration = sectionContext.narration;
     const sectionTitle = sectionContext.title;
     const textBlockNarration = await loadTextBlockNarration(text_guid,lang);
     const {people,places} = sectionContext;
-
 
     let tokenLimit = 3200;
     const {instructions, messages} = prepareMessages({
@@ -366,6 +365,14 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId}) => {
     let response =  (await askGPT(instructions, messages, "gpt-3.5-turbo-16k")).split(/[\n\r]+/). join(" ");
     response = editContent(response, ref);
     response = translateReferences(lang,response);
+    
+    const bookmark = {
+        latest:Math.floor(Date.now()/1000),
+        channel:channelUrl,
+        slug:`${page_slug}/${page_link}`,
+        pagetitle:page,
+        heading:sectionTitle
+    }
 
     return ({
         channelUrl, 
@@ -373,13 +380,14 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId}) => {
         user_id:studyBuddyId,
         instructions:instructions.split(/\s*[\n\r]+\s*/).map(i=>i.trim()).filter(x=>!!x),
         messages,
-        response
+        response,
+        metadata: {bookmark}
     });
 
 
 };
 
-const studyBuddySend = async ({ channelUrl, messageId, message, user_id}) => {
+const studyBuddySend = async ({ channelUrl, messageId, message, user_id, metadata}) => {
 
 
     const channel_members = await sendbird.getMembers(channelUrl);
@@ -389,7 +397,10 @@ const studyBuddySend = async ({ channelUrl, messageId, message, user_id}) => {
         await sendbird.addUserToChannel(channelUrl, user_id);
         await new Promise((resolve) => setTimeout(resolve, 10000));
     }
-    return await sendbird.replyToMessage({ channelUrl, messageId, user_id, message });
+    await sendbird.replyToMessage({ channelUrl, messageId, user_id, message });
+    const bookmarkJSON = JSON.stringify(metadata);
+    await sendbird.updateUserMetadatum(user_id, "bookmark", bookmarkJSON);
+    return true;
 }
 
 
@@ -469,14 +480,16 @@ const loadDivision = async (text_guid, lang) => {
 
 const loadPage = async (text_guid, lang) => {
 
-    const sql = `SELECT p.guid, title from bom_page p
+    const sql = `SELECT DISTINCT p.guid, title, t.link page_link, s.slug
+    from bom_page p 
     JOIN bom_text t ON t.page = p.guid
+    JOIN bom_slug s on p.guid = s.link
     WHERE t.guid = "${text_guid}";`
     const items = await queryDB(sql);
     const page = await loadTranslations(lang, items);
     if(!page.length) return null;
-    const {guid, title} = page[0];
-    return {guid, title};
+    const {guid, title, slug, page_link} = page[0];
+    return {guid, title, slug, page_link};
 
 }
 
