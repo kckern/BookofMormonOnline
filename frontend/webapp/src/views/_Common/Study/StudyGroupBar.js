@@ -4,7 +4,9 @@ import { CallCircle } from "./StudyGroupCall";
 import { toast } from "react-toastify"
 import "react-toastify/dist/ReactToastify.css"
 
-import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem, Label, Button } from 'reactstrap';
+import { error } from "src/models/alertMessageService";
+
+import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem, Label, Button, Toast } from 'reactstrap';
 // import { groups } from "src/models/dummyData/dummydata";
 
 import { StudyHall } from "src/views/_Common/Study/StudyHall.js";
@@ -18,7 +20,7 @@ import green from "src/views/User/svg/green.svg";
 import yellow from "src/views/User/svg/yellow.svg";
 import grey from "src/views/User/svg/blank.svg";
 import blue from "src/views/User/svg/blue.svg";
-import botBlue from "src/views/User/svg/blue.svg";
+import socket from "src/views/User/svg/socket.svg";
 import count from "src/views/User/svg/count.svg";
 import cake from "src/views/User/svg/cake.svg";
 import parkingmeter from "src/views/User/svg/parkingmeter.svg";
@@ -43,11 +45,24 @@ import momentDurationFormatSetup from "moment-duration-format";
 import { Link } from "react-router-dom";
 import { history } from "src/models/routeHistory";
 import { Switch } from "react-router-dom/cjs/react-router-dom.min";
+import BoMOnlineAPI from "../../../models/BoMOnlineAPI";
 momentDurationFormatSetup(moment);
 
 toast.configure({
   limit: 4,
 });
+
+
+const toaster = (appController, src, color, val) => {
+  if (!appController.states.studyGroup.studyModeOn) return false;
+  toast.clearWaitingQueue();
+  toast.dismiss();
+  toast.info(<div className={"toastBox " + color}>
+    <img src={src} onError={breakCache} />
+    <div>{val}</div>
+  </div>, { position: toast.POSITION.BOTTOM_LEFT, autoClose: 6000 });
+}
+
 
 export function StudyGroupBar({ appController }) {
 
@@ -183,16 +198,6 @@ function StudyGroupStatus({ appController }) {
   let { users, bots } = (getFreshUsers(appController) || { users: [], bots: [] });
   const [userColors, setUserColors] = useState(getColorMap(users));
 
-  const toaster = (src, color, val) => {
-    if (!appController.states.studyGroup.studyModeOn) return false;
-    toast.clearWaitingQueue();
-    toast.dismiss();
-    toast.info(<div className={"toastBox " + color}>
-      <img src={src} onError={breakCache} />
-      <div>{val}</div>
-    </div>, { position: toast.POSITION.BOTTOM_LEFT, autoClose: 6000 });
-  }
-
 
   useEffect(() => {
     setUserColors((oldColors) => {
@@ -228,7 +233,7 @@ function StudyGroupStatus({ appController }) {
 
         if (newColor === "blue") {
           if (sounds) playSound(enteredCall)
-          toaster(user.profileUrl, newColor, label("x_joined_a_call", [user.nickname]));
+          toaster(appController,user.profileUrl, newColor, label("x_joined_a_call", [user.nickname]));
         }
         if (["blue"].includes(oldColor) && ["green"].includes(newColor)) {
           if (sounds) playSound(exitedCall);
@@ -237,7 +242,7 @@ function StudyGroupStatus({ appController }) {
         if (newColor === "green") {
           if (notificationHistory.find(x => x.userId === user.userId && x.type === "online")) return newColors; // prevent notification flood
           if (sounds) playSound(cameOnline)
-          toaster(user.profileUrl, newColor, label("x_came_online", [user.nickname]));  // prevent notification flood
+          toaster(appController,user.profileUrl, newColor, label("x_came_online", [user.nickname]));  // prevent notification flood
           notificationHistory.push({ userId: user.userId, time, type: "online" });
 
         }
@@ -245,7 +250,7 @@ function StudyGroupStatus({ appController }) {
         if (["blue", "green"].includes(oldColor) && ["yellow", "grey"].includes(newColor)) {
           if (notificationHistory.find(x => x.userId === user.userId && x.type === "offline")) return newColors; // prevent notification flood
           if (sounds) playSound(wentOffline)
-          toaster(user.profileUrl, newColor, label(newColor === "yellow" ? "x_switched_groups" : "x_went_offline", [user.nickname]));
+          toaster(appController,user.profileUrl, newColor, label(newColor === "yellow" ? "x_switched_groups" : "x_went_offline", [user.nickname]));
           notificationHistory.push({ userId: user.userId, time, type: "offline" });
         }
 
@@ -296,16 +301,92 @@ function StudyGroupStatus({ appController }) {
   );
 }
 
+function BotPlugin({ appController }) {
+
+  const [isDroppedDown, setDroppedDown] = useState(false);
+  const userId = "bot";
+  const channel = appController.states.studyGroup.activeGroup?.url;
+  const [addingBot, setAddingBot] = useState(false);
+  
+  const addBot = async (botId) => {
+    setAddingBot(true);
+    await BoMOnlineAPI({ addBot: { channel, botId } });
+    toaster(appController,socket, "green", label("bot_added"));
+  }
+
+  const bots = [
+    {
+    id: "bot1", 
+    name: "StudyBuddy",
+    picture: "https://freesvg.org/img/1538298822.png",
+    description: "Helps you study",
+    enabled: true
+    },
+    {
+    id: "bot2",
+    name: "UserManual",
+    picture: "https://freesvg.org/img/1538298822.png",
+    description: "Helps you learn how to use the site",
+    enabled: false
+    },
+    {
+    id: "bot2",
+    name: "CrossReferencer",
+    picture: "https://freesvg.org/img/1538298822.png",
+    description: "Finds cross references for you",
+    enabled: false
+    }
+  ]
+
+  return  <React.Fragment key={userId}>
+    <div className={"noselect divider"} key={userId}></div>
+    <Dropdown isOpen={isDroppedDown}
+      onMouseEnter={() => { if (!appController.states.studyGroup.isDrawerOpen) setDroppedDown(true) }}
+      onMouseLeave={() => setDroppedDown(false)}
+      toggle={() => { }}
+      className="botPluginDropdown"
+    >
+      <DropdownToggle tag="div" className="DropdownToggleContainer" onClick={()=>{}} key={userId}>
+        <div className="botPlugin">
+        <img src={socket}/>
+        </div>
+      </DropdownToggle>
+      <DropdownMenu className="dropdownMenu" key={userId}>
+        <DropdownItem header>
+          {label("plugin_bot")}
+        </DropdownItem>
+        <DropdownItem divider />
+        <DropdownItem className="dropdownInfoBox disabled">
+          <p>{label("bot_info")}</p>
+        </DropdownItem>
+        
+        {bots.map(bot => <><DropdownItem divider/><DropdownItem className={`botItem ${bot.enabled ? "enabled" : "disabled"}`}
+        key={bot.id} onClick={()=>{
+          if(bot.enabled) addBot(bot.id);
+        }}>
+          <div className={`botInfo`} key={bot.id} >
+            <img src={bot.picture} />
+            <div className="botInfoText">
+              <h6 className="botName">{bot.name}<Button>{label("bot_select")}</Button></h6>
+              <div className="botDescription">{bot.description}</div>
+            </div>
+          </div>
+        </DropdownItem></>)}
+      </DropdownMenu>
+    </Dropdown>
+  </React.Fragment>
+
+}
+
+
 function BotCircles({ bots, appController }) {
 
   bots = bots?.length ? bots : [];
 
-  if (!bots.length) return null;
+  if (!bots.length) return <BotPlugin appController={appController} />;
 
 
   return bots.map((bot) => <StudyGroupUser key={bot.userId} userObject={bot} appController={appController} isBot={true} />)
-
-
 
 
 }
@@ -461,7 +542,12 @@ export function StudyGroupUser({ userObject, appController, liveMessage, isBot }
 
 
 
+  const unplugBot = async (botObject) => {
 
+    const {nickname, profileUrl, userId} = botObject;
+
+    toaster(appController,profileUrl, "yellow", label("bot_unplugged"));
+  }
 
 
   let completedPerc = parseFloat(summary.completed) || 0;
@@ -545,7 +631,7 @@ export function StudyGroupUser({ userObject, appController, liveMessage, isBot }
     <DropdownItem header className="botHeader">
       <img src={green} />
       <div className="botNickname">{userObject.nickname}</div>
-      <Button color="danger">Remove</Button>
+      <Button color="danger" onClick={()=>unplugBot(userObject)}>{label("bot_unplug")}</Button>
     </DropdownItem>
     <DropdownItem divider />
     <LiveMessageStudy liveMessage={label("bot_intro_x", userObject.nickname)} bookmark={bookmark} appController={appController} />

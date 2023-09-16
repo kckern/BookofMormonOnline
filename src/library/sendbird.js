@@ -490,6 +490,46 @@ class Sendbird {
 
   }
 
+  async removeUserFromChannel(channelUrl, user_id) {
+    let response = await axios({
+      method: 'PUT',
+      url: `https://api-${SENDBIRD_APPID}.sendbird.com/v3/group_channels/${channelUrl}/leave`,
+      data: JSON.stringify({ user_id: user_id }),
+      headers: {
+        'Api-Token': SENDBIRD_TOKEN,
+        'Content-Type': 'application/json'
+      },
+      json: true
+    });
+    return response?.data || {};
+  }
+
+  async listBotUsers(lang) {
+    lang  = lang || "en"; 
+    if(lang==="dev") lang = "en";
+    let response = await axios({
+      method: 'GET',
+      url: `https://api-${SENDBIRD_APPID}.sendbird.com/v3/users?limit=100&metadatakey=isBot&metadatavalues_in=true`,
+      headers: {
+        'Api-Token': SENDBIRD_TOKEN,
+        'Content-Type': 'application/json'
+      },
+      json: true
+    });
+    //todo lang filter
+
+    return response?.data?.users.filter(u=>{
+      console.log({u,lang});
+      let metadata = u.metadata || {};
+      metadata.lang = metadata.lang || "en";
+      let langMatch = metadata.lang === lang;
+      return langMatch;
+    }) || [];
+  }
+
+
+
+
   async getMembersofPrivateGroups(user_id){
 
     /*

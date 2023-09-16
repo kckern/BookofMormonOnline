@@ -1285,6 +1285,43 @@ const queries = {
         }}`,
     }
   },  
+
+  botlist: (input) => {
+    return {
+      type: "botlist",
+      key: "botlist",
+      val: false,
+      query:
+        q("botlist", "botlist", [null]) +
+        `  {  
+        id  
+        name
+        description
+        picture
+        }
+      }`,
+    }
+  },
+  addBot: (input) => {
+    input = input.shift();
+    return {
+      type: "addBot",
+      key: "token",
+      val: false,
+      query: `mutation {addBot(token:"${input.token}" , channel: "${input.channel}", bot:"${input.bot}")}`,
+    }
+  },
+  removeBot: (input) => {
+    input = input.shift();
+    return {
+      type: "removeBot",
+      key: "token",
+      val: false,
+      query: `mutation {removeBot(token:"${input.token}" , channel: "${input.channel}", bot:"${input.bot}")}`,
+    }
+
+  },
+
   homethread: (input) => {
     input = input.shift();
     return {

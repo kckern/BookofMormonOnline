@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg viewBox="18.384 21.199 213.506 209.038" width="213.506" height="209.038" xmlns="http://www.w3.org/2000/svg">
+  <g transform="matrix(1, 0, 0, 1, 0, -802.359985)">
+    <rect x="31.591" y="833.95" width="186.82" height="186.82" ry="30.79" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="10"/>
+    <path transform="matrix(1.1942 0 0 1.4679 -17.045 745)" d="m163.64 124.24a44.699 36.365 0 1 1-89.398 0 44.699 36.365 0 1 1 89.398 0z" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="7.5529"/>
+    <path transform="matrix(2.4749 0 0 3.2998 -148.75 511.57)" d="m105.56 126a3.0305 2.2728 0 1 1-6.0609 0 3.0305 2.2728 0 1 1 6.0609 0z"/>
+    <path transform="matrix(2.4749 0 0 3.2998 -108.75 511.57)" d="m105.56 126a3.0305 2.2728 0 1 1-6.0609 0 3.0305 2.2728 0 1 1 6.0609 0z"/>
+    <rect x="121" y="872.36" width="8" height="18" ry="3"/>
+    <rect x="121" y="964.36" width="8" height="18" ry="3"/>
+  </g>
+</svg>
