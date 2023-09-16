@@ -4,7 +4,7 @@ import { CallCircle } from "./StudyGroupCall";
 import { toast } from "react-toastify"
 import "react-toastify/dist/ReactToastify.css"
 
-import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
+import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem, Label, Button } from 'reactstrap';
 // import { groups } from "src/models/dummyData/dummydata";
 
 import { StudyHall } from "src/views/_Common/Study/StudyHall.js";
@@ -18,6 +18,7 @@ import green from "src/views/User/svg/green.svg";
 import yellow from "src/views/User/svg/yellow.svg";
 import grey from "src/views/User/svg/blank.svg";
 import blue from "src/views/User/svg/blue.svg";
+import botBlue from "src/views/User/svg/blue.svg";
 import count from "src/views/User/svg/count.svg";
 import cake from "src/views/User/svg/cake.svg";
 import parkingmeter from "src/views/User/svg/parkingmeter.svg";
@@ -41,6 +42,7 @@ import moment from "moment";
 import momentDurationFormatSetup from "moment-duration-format";
 import { Link } from "react-router-dom";
 import { history } from "src/models/routeHistory";
+import { Switch } from "react-router-dom/cjs/react-router-dom.min";
 momentDurationFormatSetup(moment);
 
 toast.configure({
@@ -86,18 +88,26 @@ export function StudyGroupBar({ appController }) {
 
 export function getFreshUsers(appController) {
 
-  const mySocialId  = appController.states.user.social.user_id;
   const determineColor = userObject => userObject.inCall ? "blue" : userObject.isInGroup ? "green" : userObject.isOnSite ? "yellow" : "grey";
   let group = appController.states.studyGroup.activeGroup;
   if (!group) return null;
   let call = appController.states.studyGroup.activeCall;
   let callers = call?._participantCollection?._remoteParticipants?.map(p => p.user?.userId) || [];
-  let users =  group.members?.filter((m) => {
-    const isSelf = m.userId === appController.states.user.social.user_id 
+
+  let users = group.members?.filter((m) => {
+    const isSelf = m.userId === appController.states.user.social.user_id
     const isBot = !!m.metaData?.isBot
-    if(isSelf || isBot) return false;
+    if (isSelf || isBot) return false;
     return true;
   }) || [];
+
+  let bots = group.members?.filter((m) => {
+    const isSelf = m.userId === appController.states.user.social.user_id
+    const isBot = !!m.metaData?.isBot
+    if (isSelf || !isBot) return false;
+    return true;
+  }) || [];
+
   for (let i in users) {
     let userGroup = users[i].metaData.activeGroup;
     let thisGroup = group?.url;
@@ -106,8 +116,8 @@ export function getFreshUsers(appController) {
     users[i].isOnSite = users[i].connectionStatus === "online" && userGroup !== ""; //TODO and study Mode On
     users[i].color = determineColor(users[i]);
   }
-  if (!users) return [];
-  return users.sort((a, b) => {
+  if (!users && !bots && !users?.length && !bots?.length) return { users: [], bots: [] }
+  const userlist = users.sort((a, b) => {
 
 
     let asummary = {};
@@ -133,6 +143,9 @@ export function getFreshUsers(appController) {
       return 1;
     return diff;
   });
+
+  return { users: userlist, bots };
+
 }
 
 
@@ -167,7 +180,7 @@ function StudyGroupStatus({ appController }) {
     return map;
   }
 
-  let users = getFreshUsers(appController);
+  let { users, bots } = (getFreshUsers(appController) || { users: [], bots: [] });
   const [userColors, setUserColors] = useState(getColorMap(users));
 
   const toaster = (src, color, val) => {
@@ -175,7 +188,7 @@ function StudyGroupStatus({ appController }) {
     toast.clearWaitingQueue();
     toast.dismiss();
     toast.info(<div className={"toastBox " + color}>
-      <img src={src}  onError={breakCache}/>
+      <img src={src} onError={breakCache} />
       <div>{val}</div>
     </div>, { position: toast.POSITION.BOTTOM_LEFT, autoClose: 6000 });
   }
@@ -184,17 +197,17 @@ function StudyGroupStatus({ appController }) {
   useEffect(() => {
     setUserColors((oldColors) => {
       let newColors = getColorMap(users);
-      
+
       // Check if new colors and old colors are the same
       if (JSON.stringify(newColors) === JSON.stringify(oldColors)) {
         return oldColors;
       }
-  
+
       const sounds = appController.states.preferences.sound;
       let diff = diffMap(oldColors, newColors);
-      
+
       if (diff[appController.states.user.user]) return newColors;
-      
+
       let diffCounts = Object.keys(diff).length;
       if (diffCounts !== 1) return newColors;
 
@@ -202,9 +215,9 @@ function StudyGroupStatus({ appController }) {
       let mysocialId = appController.states.user.social.user_id;
       let user = appController.states.studyGroup.activeGroup?.memberMap[username] || {};
       let { oldVal: oldColor, newVal: newColor } = Object.values(diff)[0];
-      const isMe = mysocialId ===  username;
+      const isMe = mysocialId === username;
 
-      
+
 
       //debugger;
 
@@ -224,16 +237,16 @@ function StudyGroupStatus({ appController }) {
         if (newColor === "green") {
           if (notificationHistory.find(x => x.userId === user.userId && x.type === "online")) return newColors; // prevent notification flood
           if (sounds) playSound(cameOnline)
-          toaster(user.profileUrl , newColor, label("x_came_online", [user.nickname]));  // prevent notification flood
+          toaster(user.profileUrl, newColor, label("x_came_online", [user.nickname]));  // prevent notification flood
           notificationHistory.push({ userId: user.userId, time, type: "online" });
-          
+
         }
 
         if (["blue", "green"].includes(oldColor) && ["yellow", "grey"].includes(newColor)) {
           if (notificationHistory.find(x => x.userId === user.userId && x.type === "offline")) return newColors; // prevent notification flood
           if (sounds) playSound(wentOffline)
           toaster(user.profileUrl, newColor, label(newColor === "yellow" ? "x_switched_groups" : "x_went_offline", [user.nickname]));
-          notificationHistory.push({ userId: user.userId, time , type: "offline"});
+          notificationHistory.push({ userId: user.userId, time, type: "offline" });
         }
 
         const deadline = moment().subtract(5, "minutes").unix();
@@ -246,7 +259,6 @@ function StudyGroupStatus({ appController }) {
 
   }, [users]);
 
-  if (users?.length === 1) { return null; }
 
   if (appController.states.studyGroup.activeGroup === -1) return null;
   if (!appController.states.studyGroup.activeGroup) return null;
@@ -256,6 +268,8 @@ function StudyGroupStatus({ appController }) {
   let activeLiveMessageId = Object.keys(liveMessageQueue).shift();
   let activeLiveMessageSender = liveMessageQueue[activeLiveMessageId]?._sender?.userId;
 
+  let greenUsers = users?.filter(u => u.color === "green") || [];
+
   return (
     <div
       className={
@@ -264,22 +278,36 @@ function StudyGroupStatus({ appController }) {
       }
     >
 
-      <div className="divider"></div>
-      {users?.length >=1 ? <CallCircle appController={appController} /> : null}
+      <BotCircles bots={bots} appController={appController} />
+      {greenUsers?.length >= 1 ? <><div className="divider"></div><CallCircle appController={appController} /></> : null}
       <audio id="call_audio" autoPlay={true} />
-      {users?.slice(0,11).map((user) => (
-          <StudyGroupUser
-            color={userColors[user?.userId]}
-            key={user?.userId}
-            userObject={user}
-            appController={appController}
-            liveMessage={user?.userId === activeLiveMessageSender ? liveMessageQueue[activeLiveMessageId] : null}
-          />
+      {users?.slice(0, 11).map((user) => (
+        <StudyGroupUser
+          color={userColors[user?.userId]}
+          key={user?.userId}
+          userObject={user}
+          appController={appController}
+          liveMessage={user?.userId === activeLiveMessageSender ? liveMessageQueue[activeLiveMessageId] : null}
+        />
       ))}
       <div className="divider"></div>
 
     </div>
   );
+}
+
+function BotCircles({ bots, appController }) {
+
+  bots = bots?.length ? bots : [];
+
+  if (!bots.length) return null;
+
+
+  return bots.map((bot) => <StudyGroupUser key={bot.userId} userObject={bot} appController={appController} isBot={true} />)
+
+
+
+
 }
 
 export function getClassesFromUserObj(userObject, appController) {
@@ -294,7 +322,7 @@ export function getClassesFromUserObj(userObject, appController) {
   return classes;
 }
 
-export function StudyGroupUserCircle({ userObject, appController }) {
+export function StudyGroupUserCircle({ userObject, appController, isBot }) {
 
   let classes = getClassesFromUserObj(userObject, appController);
 
@@ -310,6 +338,9 @@ export function StudyGroupUserCircle({ userObject, appController }) {
   let badgeVal = (completedPerc) + "%"
   if (userObject.inCall) badgeVal = "📞  " + badgeVal;
 
+  if (isBot) badgeVal = label("bot");
+  if (isBot) classes.push("bot");
+
 
   let num = (md5(userObject.userId) + "4").match(/[3-9]/)[0];
   let inCallElements = (userObject.inCall) ? <>
@@ -320,7 +351,7 @@ export function StudyGroupUserCircle({ userObject, appController }) {
     key={userObject.userId}
     className={classes.join(" ")}
     style={{ backgroundImage: `url(${userObject.profileUrl})` }}
-    onClick={() => appController.functions.openDrawer({ key: "message", val: userObject.userId })}
+    onClick={() => !isBot && appController.functions.openDrawer({ key: "message", val: userObject.userId })}
   >
     {inCallElements}
     {typingIndicator}
@@ -333,13 +364,16 @@ export function StudyGroupUserCircle({ userObject, appController }) {
 }
 
 
-export function StudyGroupUser({ userObject, appController, liveMessage }) {
+export function StudyGroupUser({ userObject, appController, liveMessage, isBot }) {
 
   const [switchSound] = useState(() => {
     let sound = new Audio(`${assetUrl}/interface/audio/switch`)
     sound.preload = "auto";
     return sound;
   });
+
+  const activeChannel = appController.states?.studyGroup?.activeGroup?.url;
+
 
   const [isDroppedDown, setDroppedDown] = useState(false);
   const [speechBubbleOpen, setSpeechBubbleOpen] = useState(true);
@@ -358,7 +392,6 @@ export function StudyGroupUser({ userObject, appController, liveMessage }) {
     return null;
   }
 
-  if (userObject?.userId === appController.states.user.user) return null;
 
   let classes = getClassesFromUserObj(userObject, appController);
 
@@ -371,7 +404,6 @@ export function StudyGroupUser({ userObject, appController, liveMessage }) {
   if (classes.includes("onSite")) statusCircle = yellow;
   if (classes.includes("inGroup")) statusCircle = green;
   if (classes.includes("inCall")) statusCircle = blue;
-
 
 
   if (bookmark.slug) linkToItems = (classes.includes("inGroup") || classes.includes("onSite")) ?
@@ -426,6 +458,9 @@ export function StudyGroupUser({ userObject, appController, liveMessage }) {
           <div></div>
         </div>)}
     </DropdownItem></> : null;
+
+
+
 
 
 
@@ -506,7 +541,29 @@ export function StudyGroupUser({ userObject, appController, liveMessage }) {
         </div></DropdownItem>
     </DropdownMenu>;
 
+  if(isBot) dropDownContent = <DropdownMenu>
+    <DropdownItem header className="botHeader">
+      <img src={green} />
+      <div className="botNickname">{userObject.nickname}</div>
+      <Button color="danger">Remove</Button>
+    </DropdownItem>
+    <DropdownItem divider />
+    <LiveMessageStudy liveMessage={label("bot_intro_x", userObject.nickname)} bookmark={bookmark} appController={appController} />
 
+    {bookmark.slug && bookmark.channel=== activeChannel? <><DropdownItem divider />
+      <DropdownItem >
+        <Link to={"/" + bookmark.slug} >
+          <div className="statRow">
+            <img src={crosshairs} />
+            <div>{label("recently_commented")}</div>
+            <div></div>
+          </div>
+          <div className="statRow link">
+            <div>{bookmark.slug ? <span>{bookmark.pagetitle}—{bookmark.heading}</span> : null}</div>
+          </div></Link>
+      </DropdownItem></>: null}
+
+  </DropdownMenu>;
 
 
   if (liveMessage && !appController.states.studyGroup.isDrawerOpen) {
@@ -520,7 +577,7 @@ export function StudyGroupUser({ userObject, appController, liveMessage }) {
 
 
 
-    dropDownContent = <DropdownMenu className="liveMessage">
+    dropDownContent = isBot ? null :<DropdownMenu className="liveMessage">
       <DropdownItem header >
         <img src={statusCircle} />
         {userObject.nickname}
@@ -547,6 +604,8 @@ export function StudyGroupUser({ userObject, appController, liveMessage }) {
     </DropdownMenu>;
   }
   const userId = userObject.userId;
+
+
   return (
     <React.Fragment key={userId}>
       <div className={"noselect divider " + ((userObject.inCall) ? "inCall" : "")} key={userId}></div>
@@ -556,7 +615,7 @@ export function StudyGroupUser({ userObject, appController, liveMessage }) {
         toggle={() => { }}
       >
         <DropdownToggle tag="div" className="DropdownToggleContainer" onClick={handleClick} key={userId}>
-          <StudyGroupUserCircle userObject={userObject} appController={appController} summary={summary} key={userId} />
+          <StudyGroupUserCircle isBot={isBot} userObject={userObject} appController={appController} summary={summary} key={userId} />
         </DropdownToggle>
         {dropDownContent}
       </Dropdown>
@@ -589,12 +648,15 @@ function LiveMessageDM({ liveMessage, userObject, appController }) {
 }
 function LiveMessageStudy({ liveMessage, clickHandler, bookmark, appController }) {
 
+
+  if(typeof liveMessage === "string") liveMessage = {message: liveMessage};
+
   const [soundEffect] = useState(() => {
     let sound = new Audio(`${assetUrl}/interface/audio/chat-inbound`)
     sound.preload = "auto";
     return sound;
   });
-  useEffect(() => playSound(soundEffect), [])
+  useEffect(() => liveMessage.messageId && playSound(soundEffect), [])
 
 
   const handleClick = (e) => {
@@ -604,13 +666,19 @@ function LiveMessageStudy({ liveMessage, clickHandler, bookmark, appController }
     appController.functions.openDrawer(true);
   }
 
-  return <DropdownItem >
+  if(bookmark.slug) return <DropdownItem >
     <Link to={(bookmark.slug) ? "/" + bookmark.slug : null} onClick={handleClick} >
       <div className="messageBox">
         <div>{liveMessage.message}</div>
       </div>
     </Link>
   </DropdownItem>
+  else return <DropdownItem >
+    <div className="messageBox">
+      <div>{liveMessage.message}</div>
+    </div>
+  </DropdownItem>
+
 }
 
 export function UnreadDMCount({ userId, appController, count }) {
