@@ -65,7 +65,7 @@ export default {
         if(i.public) return i;
         i.nickname = i.nickname.replace(/^(.{2}).*(.{2})$/,"$1****$2");
         i.nickname = i.nickname.charAt(0).toUpperCase() + i.nickname.slice(1);
-        i.picture = "https://www.gravatar.com/avatar/"+md5(i.user)+".jpg?s=200&d=identicon";
+        i.picture = "https://i.imgur.com/IwVZGhY.png";
         return i;
       }).sort((a:any,b:any)=>b.progress-a.progress);
 
@@ -421,7 +421,7 @@ function loadHomeUser(sbuser, user:any={}, publicUsers = []) {
   if(!sbuser?.metadata) return {
     user_id: md5(user?.user),
     nickname: user?.name || user?.user || "User",
-    picture: `https://www.gravatar.com/avatar/${md5(user?.user)}?d=identicon`,
+    picture: `https://i.imgur.com/IwVZGhY.png`,
     progress: parseFloat(user?.complete) || 0,
     finished: [],
     lastseen: user.last_active,
