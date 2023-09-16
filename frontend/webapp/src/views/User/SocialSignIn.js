@@ -112,7 +112,7 @@ export default function SocialSignIn({appController, setLoading}) {
                 />
                 <GoogleLogin
                     onSuccess={responseGoogle}
-                    
+                    text="signin_with"
                 >
                     <Button onClick={login} className={"google"}><img src={google} /> {label("google")}</Button>
                 </GoogleLogin>
