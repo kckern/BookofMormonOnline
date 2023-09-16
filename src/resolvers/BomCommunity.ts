@@ -10,11 +10,60 @@ const md5 = (value: string)=>{
   if(!value) return "";
   if(/$[0-9a-f]{32}$/.test(value)) return value;
   return crypto.createHash('md5').update(value,'utf8').digest("hex");
-
 }
+
+const userIsChannelAdmin = async (user_id: string, channel_url: string) => {
+  let group = await sendbird.loadChannel(channel_url);
+  let matches = group.members.filter(u => u.user_id === user_id && u.role === 'operator');
+  if (!matches.length) return false;
+  return true;
+}
+
+const loadUserFromToken = async (token: string) => {
+  let user: any = await Models.BomUser.findOne({
+    raw: true,
+    include: [
+      {
+        model: Models.BomUserToken,
+        where: {
+          token: token
+        }
+      }
+    ]
+  });
+  return user;
+}
+
+
+
 
 export default {
   Query: {
+
+    botlist: async (item: any, args: any, context: any, info: any) => {
+
+      const lang = context.lang ? context.lang : null;
+      const botUsers = await sendbird.listBotUsers(lang);
+
+      console.log(botUsers);
+
+      return botUsers.map(u => {
+        if(!u.user_id) return null;
+        return {
+          id: u.user_id,
+          name: u.nickname || "Bot",
+          description: u.metadata?.description || "A helpful bot",
+          picture: u.profile_url || "https://i.imgur.com/IwVZGhY.png",
+        }
+
+
+      }).filter(u=>!!u);
+
+
+    },
+
+
+
     leaderboard: async (item: any, args: any, context: any, info: any) => {
       const lang = context.lang ? context.lang : null;
 
@@ -292,6 +341,31 @@ export default {
     }
   },
   Mutation: {
+
+    addBot: async (item: any, args: any, context: any, info: any) => {
+      const {token,channel,bot} = args;
+      const user = await loadUserFromToken(token);
+      if(!user) return false;
+      const sbid = md5(user.user);
+      const isChannelAdmin = await userIsChannelAdmin(sbid,channel);
+      if(!isChannelAdmin) return false;
+      const success = await sendbird.addUserToChannel(channel,bot);
+      console.log({success});
+      if(!success) return false;
+      return true;
+
+    },
+    removeBot: async (item: any, args: any, context: any, info: any) => {
+      const {token,channel,bot} = args;
+      const user = await loadUserFromToken(token);
+      if(!user) return false;
+      const sbid = md5(user.user);
+      const isChannelAdmin = await userIsChannelAdmin(sbid,channel);
+      if(!isChannelAdmin) return false;
+      const success = await sendbird.removeUserFromChannel(channel,bot);
+      if(!success) return false;
+      return true;
+    },
     joinGroup: async (item: any, args: any, context: any, info: any) => {
       if (args.hash === undefined) return false;
       if (args.token === undefined) return false;

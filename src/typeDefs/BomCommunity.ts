@@ -19,6 +19,7 @@ extend type Query {
   moregroups(token:String, grouping:String): [HomeGroup]
   requestedUsers(token:String, channel:String): [HomeUser]
   leaderboard(token:String): [HomeUser]
+  botlist: [Bot]
 }
 
 
@@ -28,6 +29,8 @@ extend type Mutation {
   requestToJoinGroup(token:String,url:String): JoinedGroup
   withdrawRequest(token:String,url:String): JoinedGroup
   processRequest(token:String,channel:String,user_id:String,grant:Boolean): Boolean
+  addBot(token:String,channel:String,bot:String): Boolean
+  removeBot(token:String,channel:String,bot:String): Boolean
 }
 
 
@@ -150,6 +153,14 @@ extend type Mutation {
     val: String
   }
 
+
+  type Bot
+  {
+    id: String
+    name: String
+    description: String
+    picture: String
+  }
 
 
   type HomeGroup
