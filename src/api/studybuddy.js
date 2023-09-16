@@ -91,6 +91,8 @@ const editContent = (string,ref)=>{
         "important to",
         "for us",
         "critical",
+        "a reminder",
+        "we make",
         "crucial",
         "we too",
         "let us",
