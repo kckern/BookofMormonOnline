@@ -22,9 +22,25 @@ const trimDownCommentary = (commentary, tokenLimit=0) => {
 }
 
 const studyBuddy = async (channelUrl,messageId) => {
-    const { user_id, response, metadata} = await studyBuddyTextBlock({channelUrl, messageId});
-    return await studyBuddySend({channelUrl, messageId, message:response, user_id, metadata});
-    
+
+    //Determine if studyBuddy is a member of the channel
+    const channel = await sendbird.loadChannel(channelUrl);
+    const lang = channel.metadata.lang || "en";
+    const studyBuddyId = {
+        "ko":"938e2c5ac2c938b8156a7faf9ef9465f"
+    }[lang] || "ddc26a0e41b6daffff542e9fe8d9171d";
+
+    const channel_members = await sendbird.getMembers(channelUrl);
+    const studyBuddyAdded = channel_members.some(({user_id:u}) => u === studyBuddyId);
+    if(!studyBuddyAdded) return console.log("StudyBuddy not added to channel");
+
+    //start typing indicator
+    sendbird.startStopTypingIndicator(channelUrl, [studyBuddyId], true);
+    const { response, metadata, page_slug} = await studyBuddyTextBlock({channelUrl, messageId, lang});
+    console.log("UPDATING", {channelUrl,replyMessageId});
+    await studyBuddySend({channelUrl, threadId:messageId, message:response, user_id:studyBuddyId, metadata, custom_type: page_slug});
+    sendbird.startStopTypingIndicator(channelUrl, [studyBuddyId], false);
+
 }
 
 const prepareThread = async (thread)=>
@@ -200,7 +216,7 @@ const prepareMessages = ({
     messages.push({role: "user",        content: scripture_text});
     messages.push({role: "user",        content: `In a moment, I will ask you respond to a comment about this passage.  But first, ask me about how you should respond`});
     messages.push({role: "assistant",   content: `Okay.  How long should my response be? Long, medium, or short?`});
-    messages.push({role: "user",        content: `Shortish-Medium.  Multiple sentences, but single paragraphs.`});
+    messages.push({role: "user",        content: `Shortish-Medium.  6-8 sentences in a single paragraph.`});
     messages.push({role: "assistant",   content: `Okay.  What should respond with?`});
     messages.push({role: "user",        content: `Insights about the passage, especially how it relates to other scriptures.`});
     messages.push({role: "assistant",   content: `Okay. Tell me more about this passage.  What is going on here?`});
@@ -307,19 +323,17 @@ const prepareMessages = ({
 }
 
 
-const studyBuddyTextBlock = async ({ channelUrl, messageId}) => {
+const studyBuddyTextBlock = async ({ channelUrl, messageId, lang}) => {
 
     //console.log("studyBuddyTextBlock", {channelUrl,messageId});
     // await set studyBuddy Metadata to text_guid slug.
 
     //get channel metadata lang key
-    const channel = await sendbird.loadChannel(channelUrl);
-    const lang = channel.metadata.lang || "en";
+    if(!lang) {
+            const channel = await sendbird.loadChannel(channelUrl);
+            lang = channel.metadata.lang || "en";
+    }
 
-
-    const studyBuddyId = {
-        "ko":"938e2c5ac2c938b8156a7faf9ef9465f"
-    }[lang] || "ddc26a0e41b6daffff542e9fe8d9171d"
 
 
     const thread = await sendbird.getThread({ channelUrl, messageId }) ;
@@ -364,6 +378,8 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId}) => {
          textBlockNarration,
         }, tokenLimit);
 
+    console.log({instructions, messages});
+
     let response =  (await askGPT(instructions, messages, "gpt-3.5-turbo-16k")).split(/[\n\r]+/). join(" ");
     response = editContent(response, ref);
     response = translateReferences(lang,response);
@@ -379,30 +395,32 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId}) => {
     return ({
         channelUrl, 
         messageId,
-        user_id:studyBuddyId,
         instructions:instructions.split(/\s*[\n\r]+\s*/).map(i=>i.trim()).filter(x=>!!x),
         messages,
         response,
+        page_slug,
         metadata: {bookmark}
     });
 
 
 };
 
-const studyBuddySend = async ({ channelUrl, messageId, message, user_id, metadata}) => {
+const studyBuddySend = async ({ channelUrl, threadId, message, user_id, metadata, messageIdToUpdate, custom_type}) => {
 
-
-    const channel_members = await sendbird.getMembers(channelUrl);
-    const studyBuddyAdded = channel_members.some(({user_id:u}) => u === user_id);
-    if(!studyBuddyAdded) {
-        console.log(`Adding studyBuddy ${user_id} to channel ${channelUrl}...`);
-        await sendbird.addUserToChannel(channelUrl, user_id);
-        await new Promise((resolve) => setTimeout(resolve, 10000));
+    let new_message_id = null;
+    if(!messageIdToUpdate) {
+        const r = await sendbird.replyToMessage({ channelUrl, messageId:threadId, user_id, message });
+        new_message_id = r.message_id;
     }
-    await sendbird.replyToMessage({ channelUrl, messageId, user_id, message });
-    const bookmarkJSON = JSON.stringify(metadata.bookmark);
-    await sendbird.updateUserMetadatum(user_id, "bookmark", bookmarkJSON);
-    return true;
+    else {
+        await sendbird.updateMessage({ channelUrl, messageId:messageIdToUpdate, message, custom_type });
+    }
+    if(metadata)
+    {
+        const bookmarkJSON = JSON.stringify(metadata.bookmark);
+        await sendbird.updateUserMetadatum(user_id, "bookmark", bookmarkJSON);
+    }
+    return new_message_id || messageIdToUpdate;
 }
 
 

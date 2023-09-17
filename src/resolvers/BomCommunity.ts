@@ -380,9 +380,10 @@ export default {
       });
       if (!user) return { isSuccess: false, msg: 'User not found' };
       let username = user.getDataValue('user');
+      let sb_user_id = md5(username);
       let groupId: any = await ((await Models.BomShortlinks.findByPk(args.hash)) as any).getDataValue('string');
       if (!groupId) return { isSuccess: false, msg: 'Group not found' };
-      return sendbird.invite(groupId, username);
+      return sendbird.addUserToChannel(groupId, sb_user_id)
     },
     joinOpenGroup: async (item: any, args: any, context: any, info: any) => {
       if (args.url === undefined) return { isSuccess: false, msg: 'Group not found' };
