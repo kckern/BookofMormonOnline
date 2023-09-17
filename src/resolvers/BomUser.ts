@@ -34,9 +34,12 @@ const md5 = (value: string) => {
 
 const cleanUsername = (username: string, email: string) => {
 
+  const emailPrefix = email ? email.split("@")[0] : "";
+  if(emailPrefix) return emailPrefix;
   username = username.toLowerCase().replace(/[^A-z0-9.-]/ig, ".").replace(/[.]+/, ".");
   username = username.replace(/[\(\[].*[\)\]]/, "").trim();  //remove parenthesis
   username = username.replace(/[.]+/, "."); //remove double dots
+  username = username.replace(/^\.+/, "").replace(/\.+$/, "");
   username = username.replace(/[^\x00-\x7F]/g, ""); //remove non-ascii
   if (!username) username = md5(email);   //if no username, use email hash
   return username;
@@ -608,6 +611,10 @@ async function naversignin(args: any) {
   };
   let string = await request(options);
   var data = JSON.parse(string).response;
+  const nicknameHasAsterisk = /[*]/.test(data.nickname);
+  const nameHasAsterisk = /[*]/.test(data.name);
+  let nickname = !nicknameHasAsterisk ? data.nickname : !nameHasAsterisk ? data.name : data.nickname.replace(/[*]/g, "") || data.name.replace(/[*]/g, "") || data.email.split("@")[0];
+  nickname = nickname.replace(/\w\S*/g, (w: string) => (w.replace(/^\w/, (c: string) => c.toUpperCase())));
   return processSocialUser(
     {
       network: 'naver',

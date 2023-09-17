@@ -649,6 +649,25 @@ class Sendbird {
     return response?.data || {};
 
   }
+
+  async updateMessage({ channelUrl, messageId, message, data = {}, custom_type = "" }) {
+    let response = await axios({
+      method: 'PUT',
+      url: `https://api-${SENDBIRD_APPID}.sendbird.com/v3/group_channels/${channelUrl}/messages/${messageId}`,
+      data: JSON.stringify({
+        message_type: 'MESG',
+        custom_type,
+        message: message,
+        data: JSON.stringify(data)
+      }),
+      headers: {
+        'Api-Token': SENDBIRD_TOKEN,
+        'Content-Type': 'application/json'
+      },
+      json: true
+    });
+    return response?.data || {};
+  }
   
   async startStopTypingIndicator(channelUrl, user_ids, typing) {
 
