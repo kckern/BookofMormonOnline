@@ -378,8 +378,6 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId, lang}) => {
          textBlockNarration,
         }, tokenLimit);
 
-    console.log({instructions, messages});
-
     let response =  (await askGPT(instructions, messages, "gpt-3.5-turbo-16k")).split(/[\n\r]+/). join(" ");
     response = editContent(response, ref);
     response = translateReferences(lang,response);
