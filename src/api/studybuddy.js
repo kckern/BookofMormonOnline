@@ -37,7 +37,6 @@ const studyBuddy = async (channelUrl,messageId) => {
     //start typing indicator
     sendbird.startStopTypingIndicator(channelUrl, [studyBuddyId], true);
     const { response, metadata, page_slug} = await studyBuddyTextBlock({channelUrl, messageId, lang});
-    console.log("UPDATING", {channelUrl,replyMessageId});
     await studyBuddySend({channelUrl, threadId:messageId, message:response, user_id:studyBuddyId, metadata, custom_type: page_slug});
     sendbird.startStopTypingIndicator(channelUrl, [studyBuddyId], false);
 

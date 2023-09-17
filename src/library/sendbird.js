@@ -669,13 +669,13 @@ class Sendbird {
     return response?.data || {};
   }
   
-  async startStopTypingIndicator(channelUrl, user_ids, typing) {
+  async startStopTypingIndicator(channelUrl, user_id_array, typing) {
 
     let response = await axios({
       method: typing ? 'POST' : 'DELETE',
       url: `https://api-${SENDBIRD_APPID}.sendbird.com/v3/group_channels/${channelUrl}/typing`,
       data: JSON.stringify({
-        user_ids: [user_ids]
+        user_ids: user_id_array
       }),
       headers: {
         'Api-Token': SENDBIRD_TOKEN,
