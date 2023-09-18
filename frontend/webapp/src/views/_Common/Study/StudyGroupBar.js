@@ -376,9 +376,9 @@ function BotPlugin({ appController }) {
           <p>{label("bot_info")}</p>
         </DropdownItem>
         
-        {bots.map(bot => <><DropdownItem divider/><DropdownItem className={`botItem ${bot.enabled ? "enabled" : "disabled"}`}
-        key={bot.id} onClick={()=>{
-          if(bot.enabled) addBot(bot);
+        {bots.map(bot => <><DropdownItem divider/><DropdownItem className={`botItem ${bot?.enabled ? "enabled" : "disabled"}`}
+        key={bot?.id} onClick={()=>{
+          if(bot?.enabled) addBot(bot);
         }}>
           <div className={`botInfo`} key={bot.id} >
             <img src={bot.picture} />
