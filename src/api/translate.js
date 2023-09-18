@@ -37,4 +37,4 @@ const loadTranslations = async (lang, items, guidkey = "guid") => {
 
 
 
-module.exports = {loadTranslations, translateReferences};
+module.exports = {loadTranslations};

@@ -518,13 +518,19 @@ class Sendbird {
     });
     //todo lang filter
 
-    return response?.data?.users.filter(u=>{
+    let bots = response?.data?.users.filter(u=>{
       console.log({u,lang});
       let metadata = u.metadata || {};
       metadata.lang = metadata.lang || "en";
       let langMatch = metadata.lang === lang;
       return langMatch;
     }) || [];
+
+    if(!lang==="en" && !bots.length){
+      return this.listBotUsers("en");
+    }
+    return bots;
+
   }
 
 
