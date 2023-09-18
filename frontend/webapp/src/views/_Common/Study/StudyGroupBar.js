@@ -376,18 +376,18 @@ function BotPlugin({ appController }) {
           <p>{label("bot_info")}</p>
         </DropdownItem>
         
-        {bots.map(bot => <><DropdownItem divider/><DropdownItem className={`botItem ${bot?.enabled ? "enabled" : "disabled"}`}
+        {bots.map(bot => {bot?.id ? <><DropdownItem divider/><DropdownItem className={`botItem ${bot?.enabled ? "enabled" : "disabled"}`}
         key={bot?.id} onClick={()=>{
           if(bot?.enabled) addBot(bot);
         }}>
-          <div className={`botInfo`} key={bot.id} >
-            <img src={bot.picture} />
+          <div className={`botInfo`} key={bot?.id} >
+            <img src={bot?.picture} />
             <div className="botInfoText">
-              <h6 className="botName">{bot.name}<Button>{addingBot? label("bot_plugging", [bot.name]) : label("bot_select")}</Button></h6>
-              <div className="botDescription">{bot.description}</div>
+              <h6 className="botName">{bot?.name}<Button>{addingBot? label("bot_plugging", [bot?.name]) : label("bot_select")}</Button></h6>
+              <div className="botDescription">{bot?.description}</div>
             </div>
           </div>
-        </DropdownItem></>)}
+        </DropdownItem></> : null})}
       </DropdownMenu>
     </Dropdown>
   </React.Fragment>
