@@ -48,7 +48,6 @@ export function HomeFeed({ appController, activeGroup, messageId, setActiveGroup
     let token = appController.states.user.token;
     setLoader(<Loader />);
     let r = await BoMOnlineAPI({ homefeed: { token, channel: activeGroup, message: messageId } }, { useCache: false });
-
     let items = r.homefeed[0]?.feed || [];
     let q = prepareQuery(items);
     let linkedContent = await BoMOnlineAPI(q);
@@ -206,7 +205,7 @@ function HomeFeedItem({ appController, item, homeGroups, linkedContent, setActiv
         {(item.msg === "•") ? null : <div className="itemMsg">{ParseMessage(item.msg || "")}</div>}
         <ContentInFeed item={item} linkedContent={linkedContent} appController={appController} />
       </CardBody>
-      <Comments appController={appController} comments={comments} item={item} group={group} sbChannel={sbChannel} count={item.replycount} memberMap={memberMap} />
+      <Comments fetchComments={fetchComments} appController={appController} comments={comments} item={item} group={group} sbChannel={sbChannel} count={item.replycount} memberMap={memberMap} />
     </Card></VisibilitySensor>
   );
 
@@ -285,7 +284,7 @@ function LikeUI({  likes, memberMap }) {
     }</b> {otherstring} {likelabel}</span>
 }
 
-function Comments({ appController, comments, count, item, group, memberMap, sbChannel }) {
+function Comments({ appController, comments, count, item, group, memberMap, sbChannel, fetchComments}) {
 
 
   const [alertOn, setAlert] = useState(false);
@@ -321,6 +320,11 @@ function Comments({ appController, comments, count, item, group, memberMap, sbCh
   } else {
     comments = Array.isArray(comments) ? comments : [];
     comments = [...comments.filter(m=>m.id!==itemId && !/^[\s•]+$/.test(m.msg)),...newMessages];
+    //dedupe comments based on id
+    let seen = {};
+    comments = comments.filter(function (item) {
+      return seen.hasOwnProperty(item.id) ? false : (seen[item.id] = true);
+    });
     thread = comments.map(comment => <Comment comment={comment} key={comment.id} />);
 
   }
@@ -376,8 +380,7 @@ function Comments({ appController, comments, count, item, group, memberMap, sbCh
     <Button disabled={!sbChannel} onClick={handleComment}><img src={comment} className="commentimg" /> {label("comment")}</Button>
   </div>
   //likes = null;
-
-  const mycomment = (!comments !== -1) ? <MyComment setNewMessages={setNewMessages} appController={appController} sbChannel={sbChannel} group={group} itemId={itemId} trophy={trophy} /> : null;
+  const mycomment = (!comments !== -1) ? <MyComment fetchComments={fetchComments} setNewMessages={setNewMessages} appController={appController} sbChannel={sbChannel} group={group} itemId={itemId} trophy={trophy} /> : null;
 
   return (
     <div className="study home" key={itemId}>
@@ -432,7 +435,7 @@ function Comment({ comment }) {
 
 
 
-function MyComment({ appController, group, itemId, setNewMessages, sbChannel, trophy }) {
+function MyComment({ appController, group, itemId, setNewMessages, sbChannel, trophy, fetchComments }) {
   let tokenImg = tokenImage();
 
   let img = appController.states.user.social?.profile_url || tokenImg;
@@ -499,6 +502,18 @@ function MyComment({ appController, group, itemId, setNewMessages, sbChannel, tr
 
   }
 
+  const pollForComments = async () => {
+
+    let message = itemId;
+    let channel = sbChannel.url;
+    let token = appController.states.user.token;
+    let comments = await BoMOnlineAPI({ homethread: { token, channel, message } }, { useCache: false })
+    fetchComments(comments.homethread);
+    //sleep 5
+    setTimeout(pollForComments, 5000);
+
+  }
+
 
   return <div className="commentThreadItem">
     <div className="imagebox noselect">
@@ -513,6 +528,9 @@ function MyComment({ appController, group, itemId, setNewMessages, sbChannel, tr
         onKeyPress={(e) => {
           if (e.key === "Enter" && !e.shiftKey) {
             sendMessage(e.target, itemId);
+            //fetchcomments messages every 5 seconds
+            pollForComments();
+            
             e.preventDefault();
           }
         }}
