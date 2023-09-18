@@ -375,8 +375,9 @@ function BotPlugin({ appController }) {
         <DropdownItem className="dropdownInfoBox disabled">
           <p>{label("bot_info")}</p>
         </DropdownItem>
-        
-        {bots.map(bot => {bot?.id ? <><DropdownItem divider/><DropdownItem className={`botItem ${bot?.enabled ? "enabled" : "disabled"}`}
+        {bots.map(bot => {
+          if(bot?.id) return null
+          else return <><DropdownItem divider/><DropdownItem className={`botItem ${bot?.enabled ? "enabled" : "disabled"}`}
         key={bot?.id} onClick={()=>{
           if(bot?.enabled) addBot(bot);
         }}>
@@ -387,7 +388,7 @@ function BotPlugin({ appController }) {
               <div className="botDescription">{bot?.description}</div>
             </div>
           </div>
-        </DropdownItem></> : null})}
+        </DropdownItem></>})}
       </DropdownMenu>
     </Dropdown>
   </React.Fragment>
