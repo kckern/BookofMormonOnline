@@ -81,13 +81,11 @@ const prepareThread = async (thread)=>
 }
 
 
-const editContent = (string,ref)=>{
+const postProcessResponse = (string,ref)=>{
 
 
     //smart quotes
     string = smartquotes(string);
-
-
     string = string.replace(/^\[.*?!\]:*/g,"").trim();
     string = string.replace(/\[Text Highlights\].*/g,"").trim();
     string = string.replace(/^[^\S+]*:\s*/g,"").trim();
@@ -100,13 +98,13 @@ const editContent = (string,ref)=>{
         return acc;
     }, []);
     
-
     const lazyRhetoric = [
         "importance of",
         "important to",
         "for us",
         "critical",
         "a reminder",
+        "remind us",
         "we make",
         "crucial",
         "we too",
@@ -139,29 +137,26 @@ const editContent = (string,ref)=>{
         "feel free",
         "should remember",
     ];
-    let newSentences = sentences.filter((sentence) => !lazyRhetoric.some((phrase) => sentence.toLowerCase().includes(phrase)));
-    newSentences =  newSentences.join(" ");
-    newSentences = newSentences.replace(/^[\.\s]+/g,"").trim();
-    newSentences = newSentences.replace(/^\[.*?\]:*/g,"").trim();
-    newSentences = newSentences.replace(/^[ ,.?!;]+/g,"").trim();
 
-    const badStarts = [
-        "In this passage,",
-        "In this verse,",
-        "In (.{1,15}?)\\d+,",
-    ]
-    //remove the bad starts, trim, and capitalize first letter
-    newSentences = newSentences.replace(new RegExp("^("+badStarts.join("|")+")","g"),"").trim().replace(/^\w/, c => c.toUpperCase());
-    
-    //remove ref from beginning, example:  In this passage from ${ref}, we learn...
-    newSentences = newSentences.replace( new RegExp(`^.{0,30}${ref}[,]\s*`,"g"),"").trim().replace(/^\w/, c => c.toUpperCase());
+    let text = sentences.filter((sentence) => !lazyRhetoric.some((phrase) => sentence.toLowerCase().includes(phrase))).join(" ");
+    text = text.replace(/^[\.\s]+/g,"").trim();
+    text = text.replace(/^\[.*?\]:*/g,"").trim();
+    text = text.replace(/^[ ,.?!;]+/g,"").trim();
+
+    //remove unnessary reference context from the start of replies (eg "In this passage from 1 Nephi 1:1-2,")
+    text = text.replace( new RegExp(`^.{0,30}${ref}[,]\s*`,"g"),"").trim().replace(/^\w/, c => c.toUpperCase());
     //remove ref when in parentheses
-    newSentences = newSentences.replace( new RegExp(`\\(${ref}\\)`,"g"),"").trim();
-
-
+    text = text.replace( new RegExp(`\\(${ref}\\)`,"g"),"").trim();
     //remove final bracketed content
-    newSentences = newSentences.replace(/\s*\[.*?\]\s*$/g,"").trim();
-    return newSentences;
+    text = text.replace(/\s*\[.*?\]\s*$/g,"").trim();
+
+
+    //Language-specific post-processing
+    //TODO: Modularize this
+    text = text.replace(/성경 *(구절|말씀)/g, "경전 구절");
+    text = text.replace(/이 문장/g, "이 구절");
+
+    return text;
 
 }
 
@@ -379,8 +374,7 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId, lang}) => {
         }, tokenLimit);
 
     let response =  (await askGPT(instructions, messages, "gpt-3.5-turbo-16k")).split(/[\n\r]+/). join(" ");
-    response = editContent(response, ref);
-    response = translateReferences(lang,response);
+    response = postProcessResponse(response, ref);
     
     const bookmark = {
         latest:Math.floor(Date.now()/1000),
