@@ -153,10 +153,11 @@ const editContent = (string,ref)=>{
     //remove the bad starts, trim, and capitalize first letter
     newSentences = newSentences.replace(new RegExp("^("+badStarts.join("|")+")","g"),"").trim().replace(/^\w/, c => c.toUpperCase());
     
-    //remove ref
-    newSentences = newSentences.replace(ref,"");
-    //remove empty parentheses
-    newSentences = newSentences.replace(/\s*\(\s*\)\s*/g,"");
+    //remove ref from beginning, example:  In this passage from ${ref}, we learn...
+    newSentences = newSentences.replace( new RegExp(`^.{0,30}${ref}[,]\s*`,"g"),"").trim().replace(/^\w/, c => c.toUpperCase());
+    //remove ref when in parentheses
+    newSentences = newSentences.replace( new RegExp(`\\(${ref}\\)`,"g"),"").trim();
+
 
     //remove final bracketed content
     newSentences = newSentences.replace(/\s*\[.*?\]\s*$/g,"").trim();
