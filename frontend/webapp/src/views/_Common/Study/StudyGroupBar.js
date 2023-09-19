@@ -342,14 +342,14 @@ function BotPlugin({ appController }) {
   useEffect(() => {
 
     const getBots = async () => {
-      let r = await BoMOnlineAPI({ botlist: null , useCache:false});
-      setBots(r?.botlist.sort(((a,b)=>{
-        return a.enabled !== b.enabled ? a.enabled ? -1 : 1 : 0;
-      })) || []);
+      let r = await BoMOnlineAPI({ botlist: null },{ useCache:false});
+      let botlist = r?.botlist || [];
+      botlist = botlist.sort((a,b)=>a.enabled? -1 : 1);
+      setBots(botlist);
     }
     getBots();
 
-  }, []);
+  }, [appController.states.studyGroup.activeGroup?.url]);
 
   if(!iAmOperator) return null;
 
@@ -376,7 +376,7 @@ function BotPlugin({ appController }) {
           <p>{label("bot_info")}</p>
         </DropdownItem>
         {bots.map(bot => {
-          if(bot?.id) return null
+          if(!bot?.id) return null
           else return <><DropdownItem divider/><DropdownItem className={`botItem ${bot?.enabled ? "enabled" : "disabled"}`}
         key={bot?.id} onClick={()=>{
           if(bot?.enabled) addBot(bot);
