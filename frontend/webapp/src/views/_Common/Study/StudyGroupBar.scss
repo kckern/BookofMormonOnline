@@ -185,6 +185,10 @@ $antcolor: #6bd0a9;
   border-radius:1rem;
 }
 
+.StudyGroupBar .userStatus .userCircle.bot.isTyping{
+  border-color: #6bd0a9;
+}
+
 .StudyGroupBar .userStatus .userCircle.bot .progressBadge{
   background-color: #637289;
   /*all caps*/
