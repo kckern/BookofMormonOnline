@@ -39,6 +39,7 @@ const loadTranslations = async (lang, items, guidkey = "guid") => {
     i = i.replace(/[–-]+/g,"~");
     i = i.replace(/\s*:\s*([0-9~]+)/g, "$1절");
     i = i.replace(/;/g, "; ").replace(/\s+/g, " ").trim();
+    i = i.replace(/제\s*([3-4])장\s*니파이/g, "제$1니파이");
     return i;
     }}
 

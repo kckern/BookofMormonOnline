@@ -25,7 +25,7 @@ const studyBuddy = async (channelUrl,messageId) => {
 
     //Determine if studyBuddy is a member of the channel
     const channel = await sendbird.loadChannel(channelUrl);
-    const lang = "ko";//channel.metadata.lang || "en";
+    const lang = channel.metadata.lang || "en";
     const studyBuddyId = {
         "ko":"938e2c5ac2c938b8156a7faf9ef9465f"
     }[lang] || "ddc26a0e41b6daffff542e9fe8d9171d";
@@ -329,8 +329,6 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId, lang}) => {
             const channel = await sendbird.loadChannel(channelUrl);
             lang = channel.metadata.lang || "en";
     }
-
-    lang = "ko";
 
     const thread = await sendbird.getThread({ channelUrl, messageId }) ;
 
