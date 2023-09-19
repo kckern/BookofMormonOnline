@@ -517,16 +517,16 @@ class Sendbird {
       json: true
     });
     //todo lang filter
-
+    
     let bots = response?.data?.users.filter(u=>{
-      console.log({u,lang});
       let metadata = u.metadata || {};
       metadata.lang = metadata.lang || "en";
       let langMatch = metadata.lang === lang;
       return langMatch;
     }) || [];
 
-    if(!lang==="en" && !bots.length){
+
+    if(lang!=="en" && !bots.length){
       return this.listBotUsers("en");
     }
     return bots;
