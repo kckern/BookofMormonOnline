@@ -423,10 +423,11 @@ export function getClassesFromUserObj(userObject, appController) {
 export function StudyGroupUserCircle({ userObject, appController, isBot }) {
 
 
+
   let classes = getClassesFromUserObj(userObject, appController);
+  const isTyping = classes.includes("isTyping");
 
-
-  let typingIndicator = (classes.includes("isTyping")) ? <div className={"typing"}><img src={typing} /></div> : null;
+  let typingIndicator = isTyping ? <div className={"typing"}><img src={typing} /></div> : null;
   let summary = {}; try { summary = JSON.parse(userObject?.metaData?.summary) } catch (e) { }
   let trophyIcons = (summary.finished) ? <div className="trophyIcons"><img src={trophy} /></div> : null;
 
@@ -437,7 +438,7 @@ export function StudyGroupUserCircle({ userObject, appController, isBot }) {
   let badgeVal = (completedPerc) + "%"
   if (userObject.inCall) badgeVal = "📞  " + badgeVal;
 
-  if (isBot) badgeVal = label("bot");
+  if (isBot) badgeVal = isTyping ? "..." : label("bot");
   if (isBot) classes.push("bot");
 
 
