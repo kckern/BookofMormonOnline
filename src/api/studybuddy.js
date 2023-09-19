@@ -25,7 +25,7 @@ const studyBuddy = async (channelUrl,messageId) => {
 
     //Determine if studyBuddy is a member of the channel
     const channel = await sendbird.loadChannel(channelUrl);
-    const lang = channel.metadata.lang || "en";
+    const lang = "ko";//channel.metadata.lang || "en";
     const studyBuddyId = {
         "ko":"938e2c5ac2c938b8156a7faf9ef9465f"
     }[lang] || "ddc26a0e41b6daffff542e9fe8d9171d";
@@ -36,7 +36,7 @@ const studyBuddy = async (channelUrl,messageId) => {
 
     //start typing indicator
     sendbird.startStopTypingIndicator(channelUrl, [studyBuddyId], true);
-    const { response, metadata, page_slug} = await studyBuddyTextBlock({channelUrl, messageId, lang});
+    const { response, metadata, page_slug} = await studyBuddyTextBlock({channelUrl, messageId, lang:"ko"});
     await studyBuddySend({channelUrl, threadId:messageId, message:response, user_id:studyBuddyId, metadata, custom_type: page_slug});
     sendbird.startStopTypingIndicator(channelUrl, [studyBuddyId], false);
 
@@ -145,6 +145,7 @@ const postProcessResponse = (string,ref)=>{
 
     //remove unnessary reference context from the start of replies (eg "In this passage from 1 Nephi 1:1-2,")
     text = text.replace( new RegExp(`^.{0,30}${ref}[,]\s*`,"g"),"").trim().replace(/^\w/, c => c.toUpperCase());
+    text = text.replace(/^(Here in|In) (this|these) .{5,30}[,]\s*/g,"").trim().replace(/^\w/, c => c.toUpperCase());
     //remove ref when in parentheses
     text = text.replace( new RegExp(`\\(${ref}\\)`,"g"),"").trim();
     //remove final bracketed content
@@ -190,7 +191,7 @@ const prepareMessages = ({
 
     const lang_in = lang === "en" ? "" : ` in ${langNames[lang] || lang}`;
     
-    let instructions =translateReferences(lang,`You are Book of Mormon Study-Buddy GPT.  
+    let instructions =`You are Book of Mormon Study-Buddy GPT.  
     You help students get the most of their studies.   
     Write at a 6th grade reading level.  
     Anytime you make a text-based point, back it up with a scripture reference in parentheses.
@@ -201,12 +202,12 @@ const prepareMessages = ({
     Be respectful of beliefs and opinions do not encourage any particular belief system, rather focus on understanding the text.
     Do not sermonize, proselytize, or preach.
     ${lang === "en" ? "" : "Write your response in text into the student's language: ("+(langNames[lang] || lang)+")"}
-    `);
+    `;
 
     let messages = [];
     messages.push({role: "user",        content: `Hello, my name is ${name}. I am studying the Book of Mormon`});
     messages.push({role: "assistant",   content: `Nice to meet you, ${name}!  What are you studying today?`});
-    messages.push({role: "user",        content: `I am studying ${translateReferences(lang,ref)}.`});
+    messages.push({role: "user",        content: `I am studying ${ref}.`});
     messages.push({role: "assistant",   content: `What does it say?`});
     messages.push({role: "user",        content: scripture_text});
     messages.push({role: "user",        content: `In a moment, I will ask you respond to a comment about this passage.  But first, ask me about how you should respond`});
@@ -253,7 +254,7 @@ const prepareMessages = ({
     }
     if(crossReferences.length) {
         messages.push({role: "assistant",   content: `I've got a response in mind.  Ready for me to give it to you?`});
-        messages.push({role: "user",        content: `Wait.  Review these cross references.  Any that would help inform a response?   ${crossReferences.map(({ref,text}) => `${translateReferences(lang,ref)}: ${text}`).join(" • ")}`});
+        messages.push({role: "user",        content: `Wait.  Review these cross references.  Any that would help inform a response?   ${crossReferences.map(({ref,text}) => `${ref}: ${text}`).join(" • ")}`});
         messages.push({role: "assistant",   content: `Maybe.  Some might be relevant.`});
         messages.push({role: "user",        content: `Which ones?`});
         messages.push({role: "assistant",   content: `Wait for my response.  I'll mention and cite the key ones, if there are any.`});
@@ -265,7 +266,7 @@ const prepareMessages = ({
     messages.push({role: "user",        content: `Yes, here they are: ${commentary.map(({name, title, year, text}) => `[${title}] ${text}`).join(" • ")}`});
     messages.push({role: "assistant",   content: `Thanks for the background info.  I'll refer to this as needed`});
     }
-    messages.push({role: "assistant",    content: `Should I start with “In this passage,” or “In ${translateReferences(lang,ref)}”?`});
+    messages.push({role: "assistant",    content: `Should I start with “In this passage,” or “In ${ref}”?`});
     messages.push({role: "user",        content: `No, the context is already established.  Just start with the main point.`});
     messages.push({role: "assistant",    content: `Understood.`});
     messages.push({role: "user",        content: `Okay get ready to give your reply${lang_in}.`});
@@ -329,7 +330,7 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId, lang}) => {
             lang = channel.metadata.lang || "en";
     }
 
-
+    lang = "ko";
 
     const thread = await sendbird.getThread({ channelUrl, messageId }) ;
 
@@ -397,22 +398,11 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId, lang}) => {
 
 };
 
-const studyBuddySend = async ({ channelUrl, threadId, message, user_id, metadata, messageIdToUpdate, custom_type}) => {
+const studyBuddySend = async ({ channelUrl, threadId, message, user_id, metadata, custom_type}) => {
 
-    let new_message_id = null;
-    if(!messageIdToUpdate) {
-        const r = await sendbird.replyToMessage({ channelUrl, messageId:threadId, user_id, message });
-        new_message_id = r.message_id;
-    }
-    else {
-        await sendbird.updateMessage({ channelUrl, messageId:messageIdToUpdate, message, custom_type });
-    }
-    if(metadata)
-    {
-        const bookmarkJSON = JSON.stringify(metadata.bookmark);
-        await sendbird.updateUserMetadatum(user_id, "bookmark", bookmarkJSON);
-    }
-    return new_message_id || messageIdToUpdate;
+    const r = await sendbird.replyToMessage({ channelUrl, messageId:threadId, user_id, message });
+
+    return threadId;
 }
 
 
@@ -620,7 +610,7 @@ const loadCrossReferences = async (verse_ids, lang) => {
     
     
     const crossReferences = await queryDB(sql);
-    return crossReferences.map(({ref,text}) => ({ref, text}));
+    return crossReferences.map(({ref,text}) => ({ref:translateReferences(lang,ref), text}));
 
 }
 
@@ -653,7 +643,9 @@ const loadVerses = async (guid, lang) => {
     const verses = await queryDB(sql);
     const verse_ids = verses.map((verse) => verse.verse_id);
     const scripture_text = verses.map((verse) => verse.verse_scripture).join(" ");
-    const ref = generateReference(verse_ids)
+    const ref = translateReferences(lang,generateReference(verse_ids));
+
+    
 
     return {verse_ids, scripture_text, ref};
 
