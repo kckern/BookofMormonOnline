@@ -36,9 +36,13 @@ const studyBuddy = async (channelUrl,messageId) => {
 
     //start typing indicator
     sendbird.startStopTypingIndicator(channelUrl, [studyBuddyId], true);
-    const { response, metadata, page_slug} = await studyBuddyTextBlock({channelUrl, messageId, lang});
-    await studyBuddySend({channelUrl, threadId:messageId, message:response, user_id:studyBuddyId, metadata, custom_type: page_slug});
+    const { response, metadata, page_slug} = await studyBuddyTextBlock({channelUrl, messageId, lang, studyBuddyId});
     sendbird.startStopTypingIndicator(channelUrl, [studyBuddyId], false);
+    if(!response) {
+        console.log("No response generated");
+        return false;
+    }
+    await studyBuddySend({channelUrl, threadId:messageId, message:response, user_id:studyBuddyId, metadata, custom_type: page_slug});
 
 }
 
@@ -319,7 +323,7 @@ const prepareMessages = ({
 }
 
 
-const studyBuddyTextBlock = async ({ channelUrl, messageId, lang}) => {
+const studyBuddyTextBlock = async ({ channelUrl, messageId, lang, studyBuddyId}) => {
 
     //console.log("studyBuddyTextBlock", {channelUrl,messageId});
     // await set studyBuddy Metadata to text_guid slug.
@@ -332,9 +336,15 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId, lang}) => {
 
     const thread = await sendbird.getThread({ channelUrl, messageId }) ;
 
+    const nonBotIds = thread
+            .filter(({user}) => user.user_id !== studyBuddyId && user.metadata?.isBot !== "true")
+            .map(({user}) => user.user_id)
+            .filter((id, i, arr) => arr.indexOf(id) === i);
+    if(nonBotIds.length > 1) return {};
+
     const {text_guid, thread_messages, name, firstMessage, firstHighlights} = await prepareThread(thread);
 
-    if(!text_guid) return  false;
+    if(!text_guid) return  {};
 
 
     //get block content
