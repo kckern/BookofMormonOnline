@@ -19,6 +19,25 @@ const userIsChannelAdmin = async (user_id: string, channel_url: string) => {
   return true;
 }
 
+const maskUserPrivacy = (i: any) => {
+    delete i.user_id;
+
+    if(i.nonSocial){
+     i.nickname = i.nickname.replace(/^(.{2}).*(.{2})$/,"$1****$2");
+     i.nickname = i.nickname.charAt(0).toUpperCase() + i.nickname.slice(1);
+     return i;
+    }
+     if(i.public) return i;
+
+     i.nickname = i.nickname.replace(/^(.{2}).*(.{2})$/,"$1****$2");
+     i.nickname = i.nickname.charAt(0).toUpperCase() + i.nickname.slice(1);
+     i.picture = "https://i.imgur.com/IwVZGhY.png";
+     return i;
+  }
+
+
+
+
 const loadUserFromToken = async (token: string) => {
   let user: any = await Models.BomUser.findOne({
     raw: true,
@@ -82,39 +101,44 @@ export default {
       const activeTimeFrame = Math.floor(Date.now() / 1000) - (90 * 24 * 60 * 60);
       const rankedUsers :any = await Models.BomUser.findAll({
         raw: true,
-        attributes: ['user','name','last_active', 'complete'],
+        attributes: ['user',[Sequelize.literal(`MD5(user)`), 'sbuser'],'name','last_active', 'complete'],
         where: { last_active: { [Op.gt]: activeTimeFrame}},
         order: [['complete', 'DESC']],
       });
+      const topUsers = rankedUsers.slice(0,100);
 
-      const topUsers = rankedUsers.slice(0,100).map(i=>{
-        i.sbuser = md5(i.user);
-        return i;
-      });
-      const sendbirdUserObjects = await sendbird.listUsers(topUsers.map(i=>i.sbuser));
+      const recentFinishersUsers :any = (await Models.BomUser.findAll({
+        raw: true,
+        attributes: ['user',[Sequelize.literal(`MD5(user)`), 'sbuser'],'name','finished'],
+        where: { finished : { [Op.gt]: 0}},
+        order: [['finished', 'DESC']],
+        limit: 10
+      })).map((u:any)=>({...u,finished:[u.finished]}));
+
+      const sbIds = [...topUsers,...recentFinishersUsers].map((u:any)=>u.sbuser);
+
+      const sendbirdUserObjects = await sendbird.listUsers(sbIds);
       console.log(sendbirdUserObjects.length,topUsers.length);
 
       const publicUsers = await sendbird.getMembersofPublicGroups();
       const privateUsersVisibleToMe = my_sb_user_id ? await sendbird.getMembersofPrivateGroups(my_sb_user_id) : [];
       const visibleUsers = [...publicUsers,...privateUsersVisibleToMe];
 
-      return topUsers.map((u:any)=>{
+      const currentProgress =  topUsers.map((u:any)=>{
         const sendbirdUserObject = sendbirdUserObjects.find((sbu:any)=>sbu.user_id===u.sbuser);
-        //if(!sendbirdUser) return null;
         return loadHomeUser(sendbirdUserObject,u,visibleUsers);
-      }).filter((u:any)=>!!u).slice(0,50).map(i=>{
-       delete i.user_id;
-       if(i.nonSocial){
-        i.nickname = i.nickname.replace(/^(.{2}).*(.{2})$/,"$1****$2");
-        i.nickname = i.nickname.charAt(0).toUpperCase() + i.nickname.slice(1);
-        return i;
-       }
-        if(i.public) return i;
-        i.nickname = i.nickname.replace(/^(.{2}).*(.{2})$/,"$1****$2");
-        i.nickname = i.nickname.charAt(0).toUpperCase() + i.nickname.slice(1);
-        i.picture = "https://i.imgur.com/IwVZGhY.png";
-        return i;
-      }).sort((a:any,b:any)=>b.progress-a.progress);
+      }).filter((u:any)=>!!u).slice(0,50).map(maskUserPrivacy).sort((a:any,b:any)=>b.progress-a.progress);
+
+      const recentFinishers = recentFinishersUsers.map((u:any)=>{
+        const sendbirdUserObject = sendbirdUserObjects.find((sbu:any)=>sbu.user_id===u.sbuser);
+        return loadHomeUser(sendbirdUserObject,u,visibleUsers);
+      }).map(maskUserPrivacy);
+
+
+      return {
+        recentFinishers,
+        currentProgress,
+      }
 
 
     },
@@ -496,7 +520,7 @@ function loadHomeUser(sbuser, user:any={}, publicUsers = []) {
     nickname: user?.name || user?.user || "User",
     picture: `https://i.imgur.com/IwVZGhY.png`,
     progress: parseFloat(user?.complete) || 0,
-    finished: [],
+    finished: user.finished || [],
     lastseen: user.last_active,
     nonSocial:true
   }

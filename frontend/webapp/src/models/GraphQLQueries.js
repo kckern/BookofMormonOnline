@@ -1149,14 +1149,23 @@ const queries = {
       val: false,
       query:  `leaderboard(token:"${input.token}")`  +
         `  {
-          user_id
-          nickname
-          picture
-          progress
-          finished
-          lastseen
-          laststudied
-          bookmark
+            recentFinishers{
+                nickname
+                picture
+                finished
+                lastseen
+                laststudied
+                bookmark
+            }
+            currentProgress{
+                nickname
+                picture
+                progress
+                finished
+                lastseen
+                laststudied
+                bookmark
+            }
       }`,
     }
   },

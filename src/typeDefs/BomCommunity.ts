@@ -18,7 +18,7 @@ extend type Query {
   postcomments(token:String,message: Int): [HomeFeedItem] 
   moregroups(token:String, grouping:String): [HomeGroup]
   requestedUsers(token:String, channel:String): [HomeUser]
-  leaderboard(token:String): [HomeUser]
+  leaderboard(token:String): LeaderBoard
   botlist: [Bot]
 }
 
@@ -46,6 +46,12 @@ extend type Mutation {
     studyGroupName: String
     dates: [String]
     userHistories: [UserHistory]
+  }
+
+  type LeaderBoard
+  {
+    recentFinishers: [HomeUser],
+    currentProgress: [HomeUser]
   }
   
   
