@@ -95,7 +95,7 @@ export default function ProgressBox({ appController }) {
             {numericLoad(completed)}% {label("completed")} • {numericLoad(started)}% {label("started")}
           </span>
         </h5>
-        <ProgressBar completed={completed} started={started} />
+        <ProgressBar complete={completed} started={started} />
       </CardHeader>
       <CardBody>
         <ProgressDetails progressData={ProgressBoxData.progressData} appController={appController} />
