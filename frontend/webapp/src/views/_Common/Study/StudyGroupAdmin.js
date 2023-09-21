@@ -228,6 +228,8 @@ export default function StudyGroupAdmin({ appController }) {
                     </CardHeader>
                     <CardBody>
                       <img src={member.plainProfileUrl} />
+                      </CardBody>
+                      <CardFooter>
                       {isAdmin ? (
                         <div className="statusline">
                           <img src={admin} />{" "}
@@ -239,7 +241,7 @@ export default function StudyGroupAdmin({ appController }) {
                           <img src={mute} /> <div>{label("muted")}</div>
                         </div>
                       ) : null}
-                    </CardBody>
+                    </CardFooter>
 
                     <ContextMenu id={`${member.userId}_contextmenu`}>
                       <ContextMenuItem
@@ -339,8 +341,11 @@ function Requester({ appController, userObj }) {
         {nickname}
       </h5></CardHeader>
 
-    <CardBody>
-      <div className="userId">{user_id}</div>
+    <CardBody style={{
+      display: "flex",
+      width: "100%",
+      justifyContent: "center",
+    }}>
       <img src={picture} />
     </CardBody>
     <CardFooter>
