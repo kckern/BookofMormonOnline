@@ -359,10 +359,13 @@ class Sendbird {
 
   withdraw(channelObj, username) {
     let data = JSON.parse(channelObj.data);
+   // console.log(data);
+   // console.log(`Withdraw ${username} from ${channelObj.channel_url} ${JSON.stringify(data.requests)}`);
     if (!data.requests) data.requests = [];
     let index = data.requests.indexOf(username);
     if (index === -1) return { isSuccess: true, msg: 'No request found' };
     data.requests.splice(index, 1);
+
     var authOptions = {
       method: 'PUT',
       url: 'https://api-' + SENDBIRD_APPID + '.sendbird.com/v3/group_channels/' + channelObj.channel_url,
@@ -485,6 +488,7 @@ class Sendbird {
     }
     catch(e){
       console.log(`Error accepting invite for ${user_id} to ${channelUrl}`)
+      return false;
     }
     return true;
 

@@ -454,7 +454,6 @@ export default {
 
     processRequest: async (item: any, args: any, context: any, info: any) => {
       let {token,channel,user_id,grant} = args;
-      user_id = md5(user_id);
       if(!token || !channel || !user_id) return false;
       let user: any = await Models.BomUser.findOne({
         include: [
@@ -473,7 +472,8 @@ export default {
       let me = group.members.filter(u => u.user_id === my_sb_user_id && u.role === 'operator');
       if (!me.length) return false;
       let i = null;
-      if(grant) i = await sendbird.invite(channel,my_sb_user_id);
+      if(grant) i = await sendbird.addUserToChannel(channel,user_id);
+      if(!i) return false;
       await sendbird.withdraw(group,my_sb_user_id);
       return true;
 
