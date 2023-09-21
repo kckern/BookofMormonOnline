@@ -7,7 +7,11 @@ import {ref2VerseId, generateReference} from "scripture-guide";
 const shaveDownQuery = function(query: any) {
 
     const lastCharIsDigit = query.match(/\d$/);
-    if(!lastCharIsDigit) return query.replace(/[^0-9]+$/, '');
+    if(!lastCharIsDigit) {
+        //try assuming it is a book (add chapter 1)
+        if(ref2VerseId(query + " 1:1").verse_ids.length > 0) return query + " 1:1";
+        return query.replace(/[^0-9]+$/, '');
+    }
 
     //remove first word
     return query.split(/\s+/).slice(1).join(' ').trim();

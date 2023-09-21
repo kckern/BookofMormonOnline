@@ -167,6 +167,7 @@ export default {
 
       const lang = context.lang ? context.lang : null;
       let verseIds = args.ref.map((r:any)=>scripture.lookupReference(r).verse_ids);
+      if(!verseIds.length) return [];
       return Models.BomLookup.findAll({
         where:{verse_id:verseIds},
         raw:true
