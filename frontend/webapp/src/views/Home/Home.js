@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useHistory, useRouteMatch, Link } from "react-router-dom";
-
+import moment from "moment";
 import ProgressBox from "../User/ProgressBox.js";
 import SignIn from "../User/SignIn.js"
 import "../User/SignIn.css"
@@ -73,6 +73,7 @@ function GroupBrowser({ appController, activeGroup, setActiveGroup }) {
 
   const [groupListData, setData] = useState([]);
   const [leaders, setLeaders] = useState([]);
+  const [finishers, setFinishers] = useState([]);
   const [queryFilter, setQueryFilter] = useState({ token: appController.states.user.token });
   const [seeMoreLabel, setSeeMoreLabel] = useState(label("see_more"));
   const isFiltered = !!queryFilter.grouping;
@@ -84,7 +85,8 @@ function GroupBrowser({ appController, activeGroup, setActiveGroup }) {
       leaderboard: queryFilter
     }, { useCache: false }).then(r => {
       setData(r.homegroups)
-      setLeaders(r.leaderboard)
+      setLeaders(r.leaderboard[0].currentProgress)
+      setFinishers(r.leaderboard[0].recentFinishers || [])
       setSeeMoreLabel(label("see_more"));
     }
     )
@@ -113,6 +115,8 @@ function GroupBrowser({ appController, activeGroup, setActiveGroup }) {
     <CardBody>
 
       {!groupListData.length || !leaders.length ? <Spinner /> : <>
+          <h3>{label("recent_finishers")}</h3>
+          <RecentFinishers finishers={finishers} />
           <h3>{label("leader_board")}</h3>
           <LeaderBoard leaders={leaders} />
           {groupListData.map((item, i) => {
@@ -131,6 +135,27 @@ function GroupBrowser({ appController, activeGroup, setActiveGroup }) {
   </Card>
 }
 
+function RecentFinishers({finishers}){
+
+  return <div className="leaderboard">
+  {finishers.slice(0,5).map((m, i) =>  <div className="leaderBoardItem" key={i}>
+      <div className="rank">{i+1}</div>
+      <div class="img-container">
+        <img src={m.picture} alt={m.nickname} />
+        <span class="trophies">{m.finished?.map(i=>"🏆")}</span>
+      </div>
+      <div className="namenum" style={{marginTop:"1ex"}}>
+        <div className="nickname">{m.nickname}</div>
+
+        <div className="lastseen"><span>{label("last_studied")}</span> {(()=>{
+          const d = Math.max(...m.finished);
+          const dateYYMMDD = moment.unix(d).format("ddd, DD MMM YYYY");
+          return dateYYMMDD;
+        })()}</div>
+      </div>
+  </div>)}
+</div>
+}
 
 function LeaderBoard({leaders}){
   /*
