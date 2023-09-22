@@ -428,7 +428,7 @@ export function StudyGroupUserCircle({ userObject, appController, isBot }) {
   let classes = getClassesFromUserObj(userObject, appController);
   const isTyping = classes.includes("isTyping");
 
-  let typingIndicator = isTyping ? <div className={"typing"}><img src={typing} /></div> : null;
+  let typingIndicator = isTyping ? <div className={"typing"}><img src={typing}  onError={(event) => event.target.src = ''} /></div> : null;
   let summary = {}; try { summary = JSON.parse(userObject?.metaData?.summary) } catch (e) { }
   let trophyIcons = (summary.finished) ? <div className="trophyIcons"><img src={trophy} /></div> : null;
 
