@@ -23,6 +23,10 @@ There are four types of study groups:
 
 * **Open**: Joining open groups has the same effect on privacy as joining a public group.  However, joining an open group does not require an invitation.
 
+# Leaderboard
+
+*Book of Mormon Online* features a **leaderboard** in which a user's progress is made visible to other users. Users appear on leaderboard if their progress in within the top 10 users or they are recent finishers.  By default profile images are be hidden and  names are be partially redacted (First and last 2 characters of the username will be visible) to protect leaderboard user privacy. However, joining an open or public study group implicitly grants consent to have your profile image and name displayed on the leaderboard. Users may opt out of the leaderboard by leaving all open and public study groups. The privacy of users in private groups will be maintained on the leaderdboard except for other members of the same private group, who will be able to see the username and profile image of other members of the same private group on the leaderboard.
+
 # Interpretation and Definitions
 
 ## Interpretation
