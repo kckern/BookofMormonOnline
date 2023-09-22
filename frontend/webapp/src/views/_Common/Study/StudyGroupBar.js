@@ -410,8 +410,9 @@ function BotCircles({ bots, appController }) {
 
 export function getClassesFromUserObj(userObject, appController) {
 
-  let activeGroupUrl = appController.states.studyGroup.activeGroup.url;
-  let isTyping = appController.states.studyGroup?.[activeGroupUrl]?.includes(userObject.userId);
+  let activeGroup = appController.states.studyGroup.activeGroup;
+  
+  let isTyping = appController.states.studyGroup?.typers[activeGroup.url]?.includes(userObject.userId);
   let classes = ["userCircle", userObject.userId];
   if (userObject.inCall) classes.push("inCall");
   if (userObject.isInGroup) classes.push("inGroup");

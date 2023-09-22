@@ -143,8 +143,14 @@ $antcolor: #6bd0a9;
 
 .StudyGroupBar .userStatus .userCircle.inGroup.isTyping
 {
-  filter: brightness(1.2);
+  border-color: #FFFFFF;
+  filter: brightness(1.1);
 } 
+
+.StudyGroupBar .userStatus .userCircle.inGroup.isTyping .progressBadge
+{
+  display: none;
+}
 
 .StudyGroupBar .userStatus .userCircle
 {
