@@ -1075,34 +1075,71 @@ span.groupName,
     display: flex;
     margin-bottom: .5ex;
     position: relative;
+
+}
+.img-container > img:after{
+        content: '';
+        display: block;
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 100%;
+        background: rgba(0, 128, 0, 0.5);
+        mix-blend-mode: multiply;
 }
 
-
+.leaderboard > .leaderBoardItem .img-container,
 .GroupLeaderBoard .leaderBoardItem .img-container {
     position: relative;
-    display: inline-block;
+    display: flex;
     height: 2.5rem;
-    width: 2.5rem;
     flex-shrink: 0;
+    overflow: hidden    ;
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: -0.5rem;
+}
+.GroupLeaderBoard .leaderBoardItem .img-container{
+
+    width: 2.5rem;
+    margin-bottom: 0rem;
 }
 
 .GroupLeaderBoard .leaderBoardItem img {
     height: 2.5rem;
     width: 2.5rem;
 }
-
+.leaderboard > .leaderBoardItem .img-container .trophies,
 .GroupLeaderBoard .leaderBoardItem .trophies {
-    position: absolute;
-    bottom: -1ex;
-    left: 0;
-    right: 0;
     width: 100%;
-    overflow: hidden;
-    white-space: nowrap;
-    text-align: center;
-    background-color: #FFF9;
-    font-size: x-small;
+    height: 1rem;
+    margin-top: -0.75rem;  
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    gap: 1px;
+    max-width: 3rem;
 }
+
+.GroupLeaderBoard .leaderBoardItem .trophies
+{
+
+    margin-top: -1rem;  
+}
+
+.leaderBoardItem .trophies img{
+    max-height: 1rem;
+    max-width: 1rem;
+    border: 0;
+    background-color: #FFFFFFCC;
+    flex-shrink: 1;
+    border-bottom-left-radius: 3px;
+    border-bottom-right-radius: 3px;
+}
+
+
 
 .GroupLeaderBoard .leaderBoardItem .rank{
 
@@ -1168,7 +1205,7 @@ span.groupName,
     flex-wrap: wrap;
     gap: 2px;
     margin: 1ex 0;
-    max-height: calc(10rem + 2ex);
+    max-height: calc(10rem + 3px);
     overflow: hidden;
     align-items: center;
     justify-content: space-between;
@@ -1185,7 +1222,7 @@ span.groupName,
 .leaderboard > .leaderBoardItem
 {
     width: calc(20% - 8px);
-    height: 5rem;
+    height: 4.5rem;
     overflow: hidden;
     position: relative;
     text-align: center;
@@ -1193,7 +1230,9 @@ span.groupName,
     border-radius: 1rem;
     border-top-left-radius: 3px;
     cursor: pointer;
+    margin: 3px;
     margin-bottom: 1ex;
+
 
 }
 

@@ -4,7 +4,7 @@ import moment from "moment";
 import ProgressBox from "../User/ProgressBox.js";
 import SignIn from "../User/SignIn.js"
 import "../User/SignIn.css"
-
+import trophy from "../User/svg/trophy.svg";
 
 import { loadHomeFeed } from "src/models/dummyData/study";
 import { ImageInFeed } from "src/views/_Common/Study/StudyInFeed";
@@ -142,7 +142,7 @@ function RecentFinishers({finishers}){
       <div className="rank">{i+1}</div>
       <div class="img-container">
         <img src={m.picture} alt={m.nickname} />
-        <span class="trophies">{m.finished?.map(i=>"🏆")}</span>
+        <span class="trophies">{m.finished?.map(i=><img src={trophy}/>)}</span>
       </div>
       <div className="namenum" style={{marginTop:"1ex"}}>
         <div className="nickname">{m.nickname}</div>
@@ -174,7 +174,7 @@ return <div className="leaderboard">
       <div className="rank">{i+1}</div>
       <div class="img-container">
         <img src={m.picture} alt={m.nickname} />
-        <span class="trophies">{m.finished?.map(i=>"🏆")}</span>
+        <span class="trophies">{m.finished?.map(i=><img src={trophy}/>)}</span>
       </div>
       <div className="namenum" >
         <div className="nickname">{m.nickname}</div>
@@ -183,13 +183,13 @@ return <div className="leaderboard">
           <span>{m.progress}%</span>
         </div>
 
-        <div className="lastseen"><span>{label("last_studied")}</span> {(()=>{
+        {false && <div className="lastseen"><span>{label("last_studied")}</span> {(()=>{
           const d = new Date(m.lastseen);
           const daysAgo = Math.floor((new Date() - d*1000) / (1000 * 60 * 60 * 24));
           if(daysAgo <= 1) return label("today");
           if(daysAgo <= 2) return label("yesterday");
           return `${daysAgo} ${label("days_ago")}`;
-        })()}</div>
+        })()}</div>}
       </div>
   </div>)}
 </div>
@@ -391,7 +391,7 @@ export function GroupLeaderBoard({groupData}) {
       <div className="rank">{i+1}</div>
       <div class="img-container">
       <img src={m.picture} />
-            <span class="trophies">{m.finished?.map(i=>"🏆")}</span>
+            <span class="trophies">{m.finished?.map(i=><img src={trophy}/>)}</span>
       </div>
       <div className="namenum" >
         <div className="nickname">{m.nickname}</div>
