@@ -312,7 +312,7 @@ if(!window.roomCache) window.roomCache = {};
     if (typeof valuesToUpdate.activeCall !== "string") delete valuesToUpdate.activeCall;
     if (Object.values(valuesToUpdate).length === 0) return false;
     return user?.updateMetaData(valuesToUpdate, true, function (metadata, error) {
-      if (error) { console.log({ error }); debugger; return false }
+      if (error) return false;
       let promises = channels.map(channel => {
         SBController.fireStudyGroupAction(
           {
