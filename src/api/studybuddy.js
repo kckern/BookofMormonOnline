@@ -110,6 +110,8 @@ const postProcessResponse = (string,ref)=>{
         "for us",
         "critical",
         "a reminder",
+        "all of us",
+        "inviting us",
         "remind us",
         "we make",
         "crucial",
