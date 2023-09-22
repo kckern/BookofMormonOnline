@@ -44,6 +44,7 @@ const studyBuddy = async (channelUrl,messageId) => {
         return false;
     }
     await studyBuddySend({channelUrl, threadId:messageId, message:response, user_id:studyBuddyId, metadata, custom_type: page_slug});
+    await new Promise(resolve => setTimeout(resolve, 3000));
     sendbird.startStopTypingIndicator(channelUrl, [studyBuddyId], false);
 }
 
