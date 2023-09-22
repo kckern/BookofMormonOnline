@@ -37,13 +37,14 @@ const studyBuddy = async (channelUrl,messageId) => {
     //start typing indicator
     sendbird.startStopTypingIndicator(channelUrl, [studyBuddyId], true);
     const { response, metadata, page_slug} = await studyBuddyTextBlock({channelUrl, messageId, lang, studyBuddyId});
-    sendbird.startStopTypingIndicator(channelUrl, [studyBuddyId], false);
+    
     if(!response) {
+        sendbird.startStopTypingIndicator(channelUrl, [studyBuddyId], false);
         console.log("No response generated");
         return false;
     }
     await studyBuddySend({channelUrl, threadId:messageId, message:response, user_id:studyBuddyId, metadata, custom_type: page_slug});
-
+    sendbird.startStopTypingIndicator(channelUrl, [studyBuddyId], false);
 }
 
 const prepareThread = async (thread)=>
