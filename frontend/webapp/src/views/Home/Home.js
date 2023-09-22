@@ -31,7 +31,7 @@ import { md5 } from "../../models/SendbirdController.js";
 
 const privateStyle = (nickname) => {
 
-  if(!/[^█]/.test(nickname)) return {};
+  if(!/[█]/gu.test(nickname)) return {};
   nickname = nickname.replace(/[^A-z0-9]/g, '');
 
   let decHash = (md5(md5(nickname))+"6").replace(/[^0123456789]/g, '');
@@ -166,7 +166,7 @@ function RecentFinishers({finishers}){
 
         <div className="lastseen"><span>{label("last_studied")}</span> {(()=>{
           const d = Math.max(...m.finished);
-          const dateYYMMDD = moment.unix(d).format("ddd, DD MMM YYYY");
+          const dateYYMMDD = moment.unix(d).format(label("history_date_format_full"));
           return dateYYMMDD;
         })()}</div>
       </div>
