@@ -1126,6 +1126,7 @@ span.groupName,
     flex-shrink: 1;
     border-bottom-left-radius: 3px;
     border-bottom-right-radius: 3px;
+    filter: sepia(0);
 }
 
 
