@@ -4,7 +4,7 @@ import { error } from "src/models/alertMessageService";
 import { determineLanguage, refreshChannel, tokenImage } from "./Utils";
 import crypto from 'crypto-browserify';
 
-const md5 = (string) => {
+export const md5 = (string) => {
   const isMD5 = string.match(/^[a-f0-9]{32}$/i);
   if(isMD5) return string;
   return crypto.createHash('md5').update(string).digest('hex');

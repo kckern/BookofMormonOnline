@@ -27,7 +27,24 @@ import BoMOnlineAPI from "src/models/BoMOnlineAPI.js";
 import { TabContent, TabPane, Nav, NavItem, NavLink, Card, Button, CardTitle, CardText, Row, Col, CardHeader, CardBody } from 'reactstrap';
 import { toast } from "react-toastify";
 import Loader, { Spinner } from "../_Common/Loader/index.js";
+import { md5 } from "../../models/SendbirdController.js";
 
+const privateStyle = (nickname) => {
+
+  if(!/[*]/.test(nickname)) return {};
+  nickname = nickname.replace(/[*]/g, '');
+
+  let decHash = (md5(md5(nickname))+"6").replace(/[^0123456789]/g, '');
+  let first = parseInt(decHash.slice(0,1));
+  let last = parseInt(decHash.slice(-1));
+  const deg = Math.round(((first) * 360 / 10)+(last * 50));
+
+  return {
+    filter: `sepia(1) hue-rotate(${deg}deg)`,
+  }
+
+
+}
 
 
 
@@ -118,7 +135,7 @@ function GroupBrowser({ appController, activeGroup, setActiveGroup }) {
           <h3>{label("recent_finishers")}</h3>
           <RecentFinishers finishers={finishers} />
           <h3>{label("leader_board")}</h3>
-          <LeaderBoard leaders={leaders} />
+          <LeaderBoard leaders={leaders.slice(0,10)} />
           {groupListData.map((item, i) => {
                 if (!item) return null;
                 const grouping = item.grouping;
@@ -141,7 +158,7 @@ function RecentFinishers({finishers}){
   {finishers.slice(0,5).map((m, i) =>  <div className="leaderBoardItem" key={i}>
       <div className="rank">{i+1}</div>
       <div class="img-container">
-        <img src={m.picture} alt={m.nickname} />
+        <img src={m.picture} alt={m.nickname}   style={privateStyle(m.nickname)}/>
         <span class="trophies">{m.finished?.map(i=><img src={trophy}/>)}</span>
       </div>
       <div className="namenum" style={{marginTop:"1ex"}}>
@@ -173,7 +190,7 @@ return <div className="leaderboard">
   {leaders.map((m, i) =>  <div className="leaderBoardItem" key={i}>
       <div className="rank">{i+1}</div>
       <div class="img-container">
-        <img src={m.picture} alt={m.nickname} />
+        <img   style={privateStyle(m.nickname)} src={m.picture} alt={m.nickname} />
         <span class="trophies">{m.finished?.map(i=><img src={trophy}/>)}</span>
       </div>
       <div className="namenum" >
@@ -390,7 +407,7 @@ export function GroupLeaderBoard({groupData}) {
     {sortedMembers.map((m, i) =>  <><div className="leaderBoardItem" key={i}>
       <div className="rank">{i+1}</div>
       <div class="img-container">
-      <img src={m.picture} />
+      <img  style={privateStyle(m.nickname)} src={m.picture} alt={m.nickname}/>
             <span class="trophies">{m.finished?.map(i=><img src={trophy}/>)}</span>
       </div>
       <div className="namenum" >
