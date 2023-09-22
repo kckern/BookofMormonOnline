@@ -23,13 +23,13 @@ const maskUserPrivacy = (i: any) => {
     delete i.user_id;
 
     if(i.nonSocial){
-     i.nickname = i.nickname.replace(/^(.{2}).*(.{2})$/,"$1****$2");
+     i.nickname = i.nickname.replace(/^(.{2}).*(.{2})$/,"$1████$2");
      i.nickname = i.nickname.charAt(0).toUpperCase() + i.nickname.slice(1);
      return i;
     }
      if(i.public) return i;
 
-     i.nickname = i.nickname.replace(/^(.{2}).*(.{2})$/,"$1****$2");
+     i.nickname = i.nickname.replace(/^(.{2}).*(.{2})$/,"$1████$2");
      i.nickname = i.nickname.charAt(0).toUpperCase() + i.nickname.slice(1);
      i.picture = "https://i.imgur.com/IwVZGhY.png";
      return i;
