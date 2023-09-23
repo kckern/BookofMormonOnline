@@ -18,9 +18,9 @@ const studyBuddy = async (channelUrl,messageId) => {
     //Determine if studyBuddy is a member of the channel
     const channel = await sendbird.loadChannel(channelUrl);
     const lang = channel.metadata.lang || "en";
-    const bot = sendbird.getBotByLang(lang);
+    const bot = await sendbird.getBotByLang(lang);
     const studyBuddyId = bot.user_id;
-    console.log("studyBuddy", {channelUrl, messageId, bot});
+    //console.log("studyBuddy", {channelUrl, messageId, bot});
     const channel_members = await sendbird.getMembers(channelUrl);
     const studyBuddyAdded = channel_members.some(({user_id:u}) => u === studyBuddyId);
     if(!studyBuddyAdded) return console.log("StudyBuddy not added to channel");
