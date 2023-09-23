@@ -564,6 +564,20 @@ function AppHandlers(appController) {
       refreshChannel(channel, appController);
     },
     onMetaDataUpdated: (channel, metaData) => {
+
+      //use localstorage to prevent too frequent updates.  user channel.url as key
+      const secondsToWait = 15;
+      let now = new Date();
+      let lastUpdate = localStorage.getItem(`lastUpdate-${channel.url}`) || null;
+      if (lastUpdate) {
+        let last = new Date(lastUpdate);
+        let elapsed = (now - last) / 1000;
+        if (elapsed < secondsToWait) return false;
+      }
+      localStorage.setItem(`lastUpdate-${channel.url}`, now);
+
+
+
       refreshChannel(channel, appController);
       if (metaData.action) {
         var event = new CustomEvent("fireStudyGroupAction");

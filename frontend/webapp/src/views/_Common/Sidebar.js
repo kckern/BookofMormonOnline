@@ -262,6 +262,7 @@ function UserInfo({ appController, setActivePath, activePath }) {
               //textColor="#000"
               border={true}
               opacity="0.5"
+              id="text-only-tooltip"
             />
             <img onClick={toggleSound} data-tip={(appController.states?.preferences.audio ? label("audio_on") : label("audio_off"))} src={appController.states?.preferences.audio ? soundOn : soundOff} />
             <Link to={"/user/preferences"}><img data-tip={label("user_prefs")} src={settings} /></Link>
