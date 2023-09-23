@@ -747,6 +747,25 @@ class Sendbird {
     return response?.data?.messages || [];
   }
 
+  async getBotByLang(lang) {
+    //query users where metadata isBot=true and metadata.lang=lang
+    // if none found return english bot lang=en
+    let response = await axios({
+      method: 'GET',
+      url: `https://api-${SENDBIRD_APPID}.sendbird.com/v3/users?limit=100&metadatakey=isBot&metadatavalues_in=true`,
+      headers: {
+        'Api-Token': SENDBIRD_TOKEN,
+        'Content-Type': 'application/json'
+      },
+      json: true
+    });
+    const allBots = response?.data?.users || [];
+    const langBots = allBots.filter(bot=>bot.metadata.lang===lang);
+    if(langBots.length) return langBots[0];
+    return allBots[0];
+  }
+
+
   async getGroupMessageById(channelUrl, message_id) {
     const url =
       `https://api-${SENDBIRD_APPID}.sendbird.com/v3/group_channels/${channelUrl}/messages/${message_id}` +
