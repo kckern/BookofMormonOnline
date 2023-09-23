@@ -10,7 +10,7 @@ const nonDefaultPort = currentPort !== "80" && currentPort !== "443" && currentP
 const containedAPI = currentProtocol + "//" + currentDomain + (nonDefaultPort ? ":" + currentPort : "");
 const isWebappOnly = parseInt(currentPort) === 3000;
 
-export const assetUrl = "https://assets.bookofmormon.online";
+export const assetUrl = "https://media.bookofmormon.online";
 export const ApiBaseUrl = isWebappOnly? "https://dev.bookofmormon.online" : containedAPI ;
 export const fbPixel = "4544125442358924";
 
