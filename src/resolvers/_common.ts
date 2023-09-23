@@ -229,6 +229,9 @@ export const queryWhere = (key: string, filter: any) => {
 };
 
 export const scoreTextItems = (textItems: Array<any>, summary: any) => {
+
+  const percentToCountAsComplete = parseInt(process.env.PERCENT_TO_COUNT_AS_COMPLETE) || 80;
+
   //console.log("scoreTextItems",{textItems})
   let started = [];
   let completed = [];
@@ -239,10 +242,9 @@ export const scoreTextItems = (textItems: Array<any>, summary: any) => {
     if (!scores) continue;
     let num = item.getDataValue('link');
     let credit = Math.max(...scores);
-    //console.log({num,credit,scores});
 
     if (scores.includes(-1)) active.push(num);
-    else if (credit >= 80 || credit === -1) completed.push(num);
+    else if (credit >= percentToCountAsComplete || credit === -1) completed.push(num);
     else if (credit >= 0) started.push(num);
   }
   let count = textItems?.length;

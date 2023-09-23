@@ -11,25 +11,16 @@ const smartquotes = require('smartquotes');
 
 const stripHTMLTags = (text) => text.replace(/<[^>]*>?/gm, '').replace(/\s+/g," ").trim();
 
-const trimDownCommentary = (commentary, tokenLimit=0) => {
 
-    return commentary.map(({name, title, year, text}) => {
-        text = stripHTMLTags(text);
-        text = text.split(".").slice(0,20).join(".");
-        return {name, title, year, text}
-    });
-
-}
 
 const studyBuddy = async (channelUrl,messageId) => {
 
     //Determine if studyBuddy is a member of the channel
     const channel = await sendbird.loadChannel(channelUrl);
     const lang = channel.metadata.lang || "en";
-    const studyBuddyId = {
-        "ko":"938e2c5ac2c938b8156a7faf9ef9465f"
-    }[lang] || "ddc26a0e41b6daffff542e9fe8d9171d";
-
+    const bot = sendbird.getBotByLang(lang);
+    const studyBuddyId = bot.user_id;
+    console.log("studyBuddy", {channelUrl, messageId, bot});
     const channel_members = await sendbird.getMembers(channelUrl);
     const studyBuddyAdded = channel_members.some(({user_id:u}) => u === studyBuddyId);
     if(!studyBuddyAdded) return console.log("StudyBuddy not added to channel");
@@ -329,13 +320,15 @@ const prepareMessages = ({
 
 const studyBuddyTextBlock = async ({ channelUrl, messageId, lang, studyBuddyId}) => {
 
-    //console.log("studyBuddyTextBlock", {channelUrl,messageId});
-    // await set studyBuddy Metadata to text_guid slug.
 
-    //get channel metadata lang key
     if(!lang) {
             const channel = await sendbird.loadChannel(channelUrl);
             lang = channel.metadata.lang || "en";
+    }
+    if(!studyBuddyId) {
+
+        const bot = await sendbird.getBotByLang(lang);
+        studyBuddyId = bot.user_id;
     }
 
     const thread = await sendbird.getThread({ channelUrl, messageId }) ;
@@ -344,6 +337,7 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId, lang, studyBuddyId})
             .filter(({user}) => user.user_id !== studyBuddyId && user.metadata?.isBot !== "true")
             .map(({user}) => user.user_id)
             .filter((id, i, arr) => arr.indexOf(id) === i);
+
     if(nonBotIds.length > 1) return {};
 
     const {text_guid, thread_messages, name, firstMessage, firstHighlights} = await prepareThread(thread);
