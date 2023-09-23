@@ -4,7 +4,9 @@ const webhook = async (req, res) => {
 
 
 
-    const {category, channel, members, sender, payload, parent_message_id} = req.body;
+    const {category, channel, members, sender, payload, parent_message_id,type} = req.body;
+    //ignore admin  message
+    if(type!=="MESG") return res.json({success:true, message: "Not a normal message event"});
     if(category!=="group_channel:message_send") return res.json({success:true, message: "Not a message send event"});
     const {message_id, message} = payload || {};
     if(!message && !parent_message_id) return res.json({success:true, message: "No message found in payload"});
