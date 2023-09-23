@@ -482,9 +482,11 @@ class Sendbird {
 
   async addUserToChannel(channelUrl, user_id) {
     
-    await this.invite(channelUrl, user_id);
+    const invite_results = await this.invite(channelUrl, user_id);
+    if(invite_results?.msg==='Auto-added to group') return true;
     try{
-      await this.accept(channelUrl, user_id);
+      const accept_results = await this.accept(channelUrl, user_id);
+      console.log({accept_results});
     }
     catch(e){
       console.log(`Error accepting invite for ${user_id} to ${channelUrl}`)
