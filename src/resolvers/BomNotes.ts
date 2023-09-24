@@ -58,6 +58,7 @@ export default {
         return Models.BomXtrasImage.findAll({
           where: queryWhere('id', args.id),
           include: [
+            includeTranslation({ [Op.or]: ['title'] }, lang),
             includeModel(
               info,
               Models.BomText,
@@ -74,6 +75,11 @@ export default {
     }
   },
   Mutation: {},
+  Image: {
+    title: (item: any, args: any, { db, res }: any, info: any) => {
+      return translatedValue(item,"title");
+    }
+  },
   HistoricalDocument:{
     source: (item: any, args: any, { db, res }: any, info: any) => {
       return translatedValue(item,"source");

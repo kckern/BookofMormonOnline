@@ -370,6 +370,15 @@ models.BomXtrasFax.hasMany(models.BomTranslation, {
   as: 'translation'
 });
 
+//for image
+models.BomXtrasImage.hasMany(models.BomTranslation, {
+  foreignKey: {
+    name: 'guid'
+  },
+  sourceKey: 'id',
+  as: 'translation'
+});
+
 
 models.BomXtrasHistory.hasMany(models.BomTranslation, {
   foreignKey: {
