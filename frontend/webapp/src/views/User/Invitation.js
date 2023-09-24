@@ -70,43 +70,63 @@ export default function Invitation({ appController }) {
 
     if (!appController.states.user.user) return setContentState("guestAccept");
     setAccepting(true);
-    joinGroupFromHash(hash, userToken).then((group) => {
-      console.log({group});
+    const {channel_url, group, results} = await joinGroupFromHash(hash, userToken); //.then((group) => {
+      console.log({channel_url,group, results});
+      if(!channel_url || !group) return;
       appController.sendbird.getStudyGroups().then((list) =>{
         appController.functions.setStudyGroups(list);
         appController.functions.setStudyMode(true);
         appController.functions.setActiveStudyGroup(group);
         if(isMobile()) history.push(`/group/${group.url}/leaderboard`) 
         else appController.functions.openDrawer(true);
-      } 
-      )});
-  }
 
+        //check if active study group is the new group, if not, set it every 5 seconds until it is, max 10 times
+        let tries = 0;
+        let interval = setInterval(()=>{
+          if(appController.states.studyGroup.activeGroup?.url===channel_url || tries>10) {
+            clearInterval(interval);
+            return;
+          }
+          appController.functions.setActiveStudyGroup(group);
+          tries++;
+        },5000);
+
+
+      } 
+     );
+  }
 
 
   const joinGroupFromHash = async (hash, userToken) => {
 
-    return BoMOnlineAPI({ joinGroup: { hash, userToken } }).then(results=>{
-
+    try {
+      const results = await BoMOnlineAPI({ joinGroup: { hash, userToken } });
+  
       if (results?.joinGroup?.isSuccess) {
         let channel_url = results.joinGroup.channel;
-        return appController.sendbird.sb.GroupChannel.getChannel(channel_url, function (groupChannel, error) {
-          if (error) {
-            // Handle error.
-            console.log({ error })
-          }
-          
-          history.push("/user");
-          return groupChannel;
-        });
   
-      } else { //fail
-        console.log({ results, hash, userToken })
+        const groupChannel = await new Promise((resolve, reject) =>
+          appController.sendbird.sb.GroupChannel.getChannel(channel_url, (groupChannel, error) =>
+            error ? reject(error) : resolve(groupChannel)
+          )
+        );
+        
+        if (groupChannel) {
+          history.push("/user");
+          return {channel_url, group: groupChannel, results};
+        } else {
+          throw new Error("Group channel not found");
+        }
+      } else {
         history.push("/home");
-        return null;
+        return {channel_url: null, group: null, results:{}}
       }
-    })
-
+    } catch (error) {
+      console.log({error});
+      // Handle error appropriately
+      history.push("/home");
+      return {channel_url: null, group: null, results:false}
+    }
   }
 
   
@@ -154,7 +174,7 @@ export default function Invitation({ appController }) {
               {group.members?.map(member => {
                 let summary = testJSON(member.metadata.summary) || {};
                 let completed = isNaN(0 + parseInt(summary.completed)) ? 0 : summary.completed;
-                return <li className={"memberItem " + (member.is_online ? "online" : "")}>
+                return <li className={"memberItem " + (member.is_online ? "online" : "")} key={member.user_id}>
                   <img src={member.profile_url} />
                   <div className={"completedLabel"}>{completed}%</div>
                   <div className={"nicknameLabel"}>{member.nickname}</div>
