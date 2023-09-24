@@ -17,7 +17,7 @@ export default {
           args.slug?.map((s: any) => s.replace(/^.*?\//, ''))
         ),
         include: [
-          includeTranslation({ [Op.or]: ['name', 'title'] }, lang),
+          includeTranslation({ [Op.or]: ['name', 'title',"description"] }, lang),
           includeModel(info, Models.BomIndex, 'index', [
             includeModel(true, Models.BomLookup, 'text_guid', [includeModel(true, Models.BomText, 'text')])
           ]),
@@ -122,6 +122,9 @@ export default {
     },
     title: async (item: any, args: any, { db, res }: any, info: any) => {
       return translatedValue(item, 'title');
+    },
+    description: async (item: any, args: any, { db, res }: any, info: any) => {
+      return translatedValue(item, 'description');
     },
     relations(item: any) {
       // console.log(item)
