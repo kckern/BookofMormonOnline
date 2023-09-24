@@ -31,6 +31,7 @@ const checkQuota =  () => {
   // Check for quota exceeding 80%
   if ((parseInt(localStorage.getItem('callCount')) / 100) >= 0.8) {
     // Return false due to exceeded quota
+    console.log('Supress call due to quota');
     return false;
   } else {
     // Increase 'callCount' by one
