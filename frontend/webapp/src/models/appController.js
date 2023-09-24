@@ -21,8 +21,8 @@ const checkQuota =  () => {
   // Calculate time elapsed since 'timestamp'
   let timeElapsed = Math.floor(Date.now() / 1000) - parseInt(localStorage.getItem('timestamp'));
 
-  // Now check if more than 60 seconds have passed since 'timestamp'
-  if (timeElapsed >= 60) {
+  // Now check if more than 10 seconds have passed since 'timestamp'
+  if (timeElapsed >= 10) {
     // Reset 'timestamp' and 'callCount'
     localStorage.setItem('timestamp', Math.floor(Date.now() / 1000).toString());
     localStorage.setItem('callCount', '0');
