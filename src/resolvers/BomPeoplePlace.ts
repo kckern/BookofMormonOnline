@@ -25,9 +25,11 @@ export default {
             model: Models.BomPeopleRels.unscoped(),
             as: 'relationDst',
             include: [
+              includeTranslation({ [Op.or]: ["srcrel", "dstrel"] }, lang),
               {
                 model: Models.BomPeople,
-                as: 'personSrc'
+                as: 'personSrc',
+                include: [includeTranslation({ [Op.or]: ['name', 'title', "description"] }, lang)]
               }
             ]
           },
@@ -35,9 +37,11 @@ export default {
             model: Models.BomPeopleRels.unscoped(),
             as: 'relationSrc',
             include: [
+              includeTranslation({ [Op.or]: ["srcrel", "dstrel"] }, lang),
               {
                 model: Models.BomPeople,
-                as: 'personDst'
+                as: 'personDst',
+                include: [includeTranslation({ [Op.or]: ['name', 'title', "description"] }, lang)]
               }
             ]
           }
@@ -134,14 +138,14 @@ export default {
       for (var rel of relationSrc) {
         if (rel.getDataValue('srcrel'))
           relations.push({
-            relation: rel.getDataValue('srcrel'),
+            relation: translatedValue(rel, 'srcrel'),
             person: rel.getDataValue('personDst')
           });
       }
       for (var rel of relationDst) {
         if (rel.getDataValue('dstrel'))
           relations.push({
-            relation: rel.getDataValue('dstrel'),
+            relation: translatedValue(rel, 'dstrel'),
             person: rel.getDataValue('personSrc')
           });
       }
