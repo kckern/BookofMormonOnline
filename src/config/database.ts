@@ -418,6 +418,15 @@ models.BomPeople.hasMany(models.BomIndex, {
   as: 'index'
 });
 
+
+models.BomPeopleRels.hasMany(models.BomTranslation, {
+  foreignKey: {
+    name: 'guid'
+  },
+  sourceKey: 'uid',
+  as: 'translation'
+});
+
 models.BomIndex.hasOne(models.BomLookup, {
   sourceKey: 'verse_id',
   foreignKey: 'verse_id',
