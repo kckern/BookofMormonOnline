@@ -25,7 +25,7 @@ export default {
             model: Models.BomPeopleRels.unscoped(),
             as: 'relationDst',
             include: [
-              includeTranslation({ [Op.or]: ["srcrel", "dstrel"] }, lang),
+              //includeTranslation({ [Op.or]: ["srcrel", "dstrel"] }, lang),
               {
                 model: Models.BomPeople,
                 as: 'personSrc',
@@ -37,7 +37,7 @@ export default {
             model: Models.BomPeopleRels.unscoped(),
             as: 'relationSrc',
             include: [
-              includeTranslation({ [Op.or]: ["srcrel", "dstrel"] }, lang),
+             // includeTranslation({ [Op.or]: ["srcrel", "dstrel"] }, lang),
               {
                 model: Models.BomPeople,
                 as: 'personDst',
