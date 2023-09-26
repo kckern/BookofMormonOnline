@@ -17,7 +17,7 @@ export default {
           args.slug?.map((s: any) => s.replace(/^.*?\//, ''))
         ),
         include: [
-          includeTranslation({ [Op.or]: ['name', 'title',"description"] }, lang),
+          //includeTranslation({ [Op.or]: ['name', 'title',"description"] }, lang),
           includeModel(info, Models.BomIndex, 'index', [
             includeModel(true, Models.BomLookup, 'text_guid', [includeModel(true, Models.BomText, 'text')])
           ]),
@@ -29,7 +29,7 @@ export default {
               {
                 model: Models.BomPeople,
                 as: 'personSrc',
-                include: [includeTranslation({ [Op.or]: ['name', 'title', "description"] }, lang)]
+               // include: [includeTranslation({ [Op.or]: ['name', 'title', "description"] }, lang)]
               }
             ]
           },
@@ -41,7 +41,7 @@ export default {
               {
                 model: Models.BomPeople,
                 as: 'personDst',
-                include: [includeTranslation({ [Op.or]: ['name', 'title', "description"] }, lang)]
+               // include: [includeTranslation({ [Op.or]: ['name', 'title', "description"] }, lang)]
               }
             ]
           }
