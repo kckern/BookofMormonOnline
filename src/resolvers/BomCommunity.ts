@@ -31,10 +31,10 @@ const maskNickname = (nickname: String) => {
 }
 
 const maskUserPrivacy = (i: any) => {
-    const pack = "thumbs";
+    const pack = "personas";
     const user_id = i.user_id || md5(i.user);
     delete i.user_id;
-    const maked_picture =  `https://api.dicebear.com/7.x/${pack}/svg?seed=${user_id}`;
+    const maked_picture =  `https://api.dicebear.com/7.x/${pack}/svg?seed=${user_id}&eyes=open,sunglasses,wink,happy&facialHair=beardMustache,goatee&facialHairProbability=20&hair=bobCut,curly,long,pigtails,shortCombover,buzzcut,beanie&mouth=smile,smirk,bigSmile&nose=smallRound,mediumRound&skinColor=d78774,b16a5b,eeb4a4,92594b`
     const masked_nickname = maskNickname(i.nickname);
 
     if(i.public) return i;
@@ -527,11 +527,12 @@ async function loadGroupFromChannelId(channelId: string) {
   return group || {};
 }
 
+
+
 function loadHomeUser(sbuser, user:any={}, publicUsers = []) {
 
   const user_id = sbuser?.user_id || md5(user?.user);
-  const pack = "thumbs";
-  const picture =  `https://api.dicebear.com/7.x/${pack}/svg?seed=${user_id}`;
+  const picture =  sbuser?.profile_url ||  `https://api.dicebear.com/7.x/personas/svg?seed=${user_id}&eyes=open,sunglasses,wink,happy&facialHair=beardMustache,goatee&facialHairProbability=20&hair=bobCut,curly,long,pigtails,shortCombover,buzzcut,beanie&mouth=smile,smirk,bigSmile&nose=smallRound,mediumRound&skinColor=d78774,b16a5b,eeb4a4,92594b`;
 
   if(!sbuser?.metadata) return {
     user_id,
