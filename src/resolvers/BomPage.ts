@@ -209,6 +209,9 @@ export default {
     title: async (item: any, args: any, context: any, info: any) => {
       return translatedValue(item, 'title');
     },
+    ref: async (item: any, args: any, { db, res }: any, info: any) => {
+      return translatedValue(item, 'ref');
+    },
     slug: async (item: any, args: any, { db, res }: any, info: any) => {
       return getSlug('link', item.getDataValue('guid'));
     },
@@ -239,6 +242,12 @@ export default {
     },
     title: async (item: any, args: any, { db, res }: any, info: any) => {
       return translatedValue(item, 'title');
+    },
+    badge: async (item: any, args: any, { db, res }: any, info: any) => {
+      return translatedValue(item, 'badge');
+    },
+    ref: async (item: any, args: any, { db, res }: any, info: any) => {
+      return translatedValue(item, 'ref');
     },
     rows: async (item: any, args: any, { db, res }: any, info: any) => {
       return item.getDataValue('rows');
