@@ -32,6 +32,7 @@ export default gql`
   type Page {
     guid: String
     title: String
+    ref: String
     counts: [Int]
     weight: Int
     parent: String
@@ -47,6 +48,8 @@ export default gql`
     parent: String
     slug: String
     page: Page
+    ref: String
+    badge: String
     rows: [Row]
     sectionText: [TextBlock]
   }
