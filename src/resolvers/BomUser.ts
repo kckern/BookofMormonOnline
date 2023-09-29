@@ -312,21 +312,11 @@ export default {
 
       args.username = cleanUsername(args.username, args.email);
       const socialUserId = md5(args.username);
+      const emailHash = md5(args.email);
 
-      let profile_url =
-        'https://avatars.dicebear.com/api/jdenticon/' +
-        crypto
-          .createHash('md5')
-          .update(args.username + new Date().getTime())
-          .digest('hex') +
-        '.svg';
+      let profile_url = `https://api.dicebear.com/7.x/thumbs/svg?seed=${socialUserId}`;
       if (args.email) {
-        let gravatarUrl =
-          'https://www.gravatar.com/avatar/' +
-          crypto
-            .createHash('md5')
-            .update(args.email)
-            .digest('hex');
+        let gravatarUrl = `https://www.gravatar.com/avatar/${emailHash}`;
         try {
           await axios.get(gravatarUrl + '?d=404');
           profile_url = gravatarUrl;
