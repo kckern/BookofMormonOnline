@@ -77,6 +77,8 @@ async function GPT35Turbo(messages) {
 
 
 const askGPT = async (instructions, input, model, attempt) => {
+
+  if(!input) return false;
     
     model = model || "gpt-4";
     attempt = attempt || 1;

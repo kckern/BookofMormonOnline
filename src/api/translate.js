@@ -34,7 +34,7 @@ const loadTranslations = async (lang, items, guidkey = "guid") => {
 
 
   const postProcessFns= {"ko": (i)=>{
-    console.log("postProcessFn", i)
+    //console.log("postProcessFn", i)
     i = i.replace(/([\u3131-\uD79D]) *([0-9]+)/ig, "$1 $2장 ");
     i = i.replace(/[–-]+/g,"~");
     i = i.replace(/\s*:\s*([0-9~]+)/g, "$1절");
