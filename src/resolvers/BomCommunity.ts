@@ -19,20 +19,29 @@ const userIsChannelAdmin = async (user_id: string, channel_url: string) => {
   return true;
 }
 
+const maskNickname = (nickname: String) => {
+
+  //return first letter only
+  if(nickname.length < 4) return nickname.charAt(0).toUpperCase()+"██";
+
+  nickname = nickname.replace(/^(.{2}).*(.{2})$/,"$1████$2");
+  nickname = nickname.charAt(0).toUpperCase() + nickname.slice(1);
+  return nickname;
+
+}
+
 const maskUserPrivacy = (i: any) => {
+    const pack = "thumbs";
+    const user_id = i.user_id || md5(i.user);
     delete i.user_id;
+    const maked_picture =  `https://api.dicebear.com/7.x/${pack}/svg?seed=${user_id}`;
+    const masked_nickname = maskNickname(i.nickname);
 
-    if(i.nonSocial){
-     i.nickname = i.nickname.replace(/^(.{2}).*(.{2})$/,"$1████$2");
-     i.nickname = i.nickname.charAt(0).toUpperCase() + i.nickname.slice(1);
-     return i;
-    }
-     if(i.public) return i;
+    if(i.public) return i;
 
-     i.nickname = i.nickname.replace(/^(.{2}).*(.{2})$/,"$1████$2");
-     i.nickname = i.nickname.charAt(0).toUpperCase() + i.nickname.slice(1);
-     i.picture = "https://i.imgur.com/IwVZGhY.png";
-     return i;
+    i.nickname = masked_nickname;
+    i.picture = maked_picture;
+    return i;
   }
 
 
@@ -520,11 +529,14 @@ async function loadGroupFromChannelId(channelId: string) {
 
 function loadHomeUser(sbuser, user:any={}, publicUsers = []) {
 
+  const user_id = sbuser?.user_id || md5(user?.user);
+  const pack = "thumbs";
+  const picture =  `https://api.dicebear.com/7.x/${pack}/svg?seed=${user_id}`;
 
   if(!sbuser?.metadata) return {
-    user_id: md5(user?.user),
+    user_id,
     nickname: user?.name || user?.user || "User",
-    picture: `https://i.imgur.com/IwVZGhY.png`,
+    picture,
     progress: parseFloat(user?.complete) || 0,
     finished: user.finished || [],
     lastseen: user.last_active,
