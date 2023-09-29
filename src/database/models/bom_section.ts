@@ -17,6 +17,15 @@ export default class _bom_section extends ModelBase {
           type: DataTypes.STRING(200),
           allowNull: false
         },
+        badge: {
+          type: DataTypes.STRING(200),
+          allowNull: false
+        },
+        ref: {
+          type: DataTypes.STRING(200),
+          allowNull: false
+        },
+
         weight: {
           type: DataTypes.INTEGER,
           allowNull: false
