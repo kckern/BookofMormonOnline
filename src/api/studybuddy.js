@@ -200,8 +200,13 @@ const prepareMessages = ({
     Assume the student already has a basic understanding of what the Book of Mormon is.
     Be respectful of beliefs and opinions do not encourage any particular belief system, rather focus on understanding the text.
     Do not sermonize, proselytize, or preach.
+    If you are asked a specific question and cannot answer it, decline to answer.
     ${lang === "en" ? "" : "Write your response in text into the student's language: ("+(langNames[lang] || lang)+")"}
     `;
+
+    const threadItemCount = thread_messages.length;
+
+
 
     let messages = [];
     messages.push({role: "user",        content: `Hello, my name is ${name}. I am studying the Book of Mormon`});
@@ -275,7 +280,7 @@ const prepareMessages = ({
     messages.push({role: "user",        content: `...Action!`});
     messages.push({role: "user",        content: `[${name}]: “${firstMessage || firstHighlights.join("; ")}”`});
 
-    if(thread_messages.length > 1) {
+    if(threadItemCount > 1) {
         messages.push(...thread_messages.slice(1).map((message) => (
             {role: "user", content: message}
         )));
@@ -287,11 +292,24 @@ const prepareMessages = ({
 
     const model = "gpt-3.5-turbo"; // Replace with your desired OpenAI chat model
     let tokenCount = openaiTokenCounter.chat(messagestocount, model);
+    console.log({tokenCount,tokenLimit})
     if(tokenCount>tokenLimit) {
         //remove longest  reference
         if(commentary.length) commentary = commentary.sort((a,b) => b.text.length - a.text.length).slice(1);
         else if(crossReferences.length) crossReferences = crossReferences.sort((a,b) => b.text.length - a.text.length).slice(1);
-        else return false;
+        else {
+            let i = 1;
+            while(tokenCount > tokenLimit)
+            {
+                messages = messages.slice(i);
+                messagestocount = [{"role":"system","content":instructions},...messages];
+                tokenCount = openaiTokenCounter.chat(messagestocount, model);
+                i++;
+                console.log({i,tokenCount,tokenLimit})
+                if(i>200) break;
+            }
+            return {instructions,messages}
+        }
         return prepareMessages({
             lang,
              ref,
@@ -323,6 +341,7 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId, lang, studyBuddyId})
 
     if(!lang) {
             const channel = await sendbird.loadChannel(channelUrl);
+            if(!channel) return console.log("No Channel");
             lang = channel.metadata.lang || "en";
     }
     if(!studyBuddyId) {
@@ -332,13 +351,13 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId, lang, studyBuddyId})
     }
 
     const thread = await sendbird.getThread({ channelUrl, messageId }) ;
-
+    
     const nonBotIds = thread
             .filter(({user}) => user.user_id !== studyBuddyId && user.metadata?.isBot !== "true")
             .map(({user}) => user.user_id)
             .filter((id, i, arr) => arr.indexOf(id) === i);
-
-    if(nonBotIds.length > 1) return {};
+    
+    if(nonBotIds.length > 1) return {"mesg":"More than one non-bot user in this thread",nonBotIds};
 
     const {text_guid, thread_messages, name, firstMessage, firstHighlights} = await prepareThread(thread);
 
@@ -380,7 +399,7 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId, lang, studyBuddyId})
          textBlockNarration,
         }, tokenLimit);
 
-    let response =  (await askGPT(instructions, messages, "gpt-3.5-turbo-16k")).split(/[\n\r]+/). join(" ");
+    let response =  (await askGPT(instructions, messages, "gpt-3.5-turbo-16k"))?.split(/[\n\r]+/). join(" ");
     response = postProcessResponse(response, ref);
     
     const bookmark = {
