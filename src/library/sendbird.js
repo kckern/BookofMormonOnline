@@ -733,6 +733,19 @@ class Sendbird {
     return response?.data?.messages?.shift() || [];
   }
 
+  async loadSingleMessage(channelUrl, messageId) {
+    const options = {
+      method: 'GET',
+      url: `https://api-${SENDBIRD_APPID}.sendbird.com/v3/group_channels/${channelUrl}/messages/${messageId}`,
+      headers: {
+        'Api-Token': SENDBIRD_TOKEN,
+        'Content-Type': 'application/json'
+      }
+    };
+    let response = await axios(options);
+    return response?.data || {};
+  }
+
   async getGroupMessages(channelUrl) {
     let now = Math.round(Date.now() / 1);
     let response = await axios({
@@ -790,6 +803,7 @@ var sendbird = new Sendbird();
 async function getFwdUrl(url) {
   return axios.get(url).then(r => r.request.res.responseUrl.replace(/\?.*?$/, ''));
 }
+
 
 
 function checkExistsWithTimeout(path, timeout) {
