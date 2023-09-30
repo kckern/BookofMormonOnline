@@ -38,7 +38,9 @@ const privateStyle = (nickname) => {
   let first = parseInt(decHash.slice(0,1));
   let last = parseInt(decHash.slice(-1));
   const deg = Math.round(((first) * 360 / 10)+(last * 50));
-
+  return {
+    backgroundColor: `hsl(${deg}, 30%, 30%)`
+  }
   return {
     filter: `sepia(1) hue-rotate(${deg}deg)`,
   }

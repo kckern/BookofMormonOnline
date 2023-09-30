@@ -606,6 +606,12 @@ export function generateGroupHash(group, callback) {
   });
 }
 
+const groupCoverUrl = (group_name) => {
+    const encodedName = encodeURI(group_name);
+    const newURL = `https://api.dicebear.com/7.x/initials/svg?seed=${encodedName}&rotate=340&fontFamily=Trebuchet%20MS&fontWeight=800&backgroundColor=323b4d,fbc658,dddddd,666666`;
+    return newURL;
+}
+
 function NewStudyGroup({ appController }) {
   const [openModal, setOpenModal] = useState(false);
   const [name, setName] = useState("");
@@ -613,8 +619,7 @@ function NewStudyGroup({ appController }) {
     label("create_new_study_group")
   );
   const [groupImage, setGroupImage] = useState({
-    img:
-      "https://avatars.dicebear.com/api/initials/" + encodeURI(name) + ".svg",
+    img: groupCoverUrl(name),
     file: null,
   });
   const urlToObject = async () => {
@@ -637,8 +642,7 @@ function NewStudyGroup({ appController }) {
     ).value;
     setName(name);
     setGroupImage({
-      img:
-        "https://avatars.dicebear.com/api/initials/" + encodeURI(name) + ".svg",
+      img: groupCoverUrl(name),
       file: groupImage.file,
     });
   };

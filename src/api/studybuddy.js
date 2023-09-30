@@ -12,8 +12,60 @@ const smartquotes = require('smartquotes');
 const stripHTMLTags = (text) => text.replace(/<[^>]*>?/gm, '').replace(/\s+/g," ").trim();
 
 
+const messagePreScreen = async (message,lang) => {
 
-const studyBuddy = async (channelUrl,messageId) => {
+    /* ask gpt how likely the message is to be
+     1. Tech support
+     2. Trivia
+     3. Off-topic
+     4. Trolling
+     5. Personal advice solicitation
+     */
+
+    const instructions = `You are message pre-screener for Book of Mormon Study-Buddy GPT, 
+    which helps students get the most of their studies.
+    For the given message,  determine if the message demonstrates good faith and is on-topic.
+    Questions should screen for the following:
+    1. Tech support (questions about how to use the website, etc.)
+    2. Trivia (asking for facts, stats, lists of names, dates, etc.)
+    3. Off-topic (questions about topics not related to the Book of Mormon)
+    4. Trolling (questions that are intended to provoke an argument or stir up controversy)
+    5. Personal advice solicitation (questions that are seeking personal advice or application)
+
+    Trolling behavior includes:
+    1. Making controversial or political statements
+    2. Sermonizing, proselytizing, or preaching
+    3. Trying to get a response about church history, polygamy, seer stones, book of mormon evidence, etc.
+
+    return a JSON object in this format, with probability scores for each category:
+    {
+        "isBadFaith": 0.2, //probability that the message is in bad faith
+        "isTrolling": 0.4, //probability that the message is trolling
+        "isTrivia": 0.1, //probability that the message is trivia
+        "isTechSupport": 0.3, //probability that the message is tech support
+        "isPersonalAdvice": 0.1 //probability that the message is personal advice solicitation
+    }
+    `;
+    const results = await askGPT(instructions, [{role:"user",content:message}], "gpt-3.5-turbo");
+    let JSONString = results.replace(/[\n\r]+/g,"").replace(/^[^\{]+/,"").replace(/[^\}]+$/,"").trim();
+    if(!JSONString.startsWith("{")) JSONString = "{"+JSONString;
+    if(!JSONString.endsWith("}")) JSONString = JSONString+"}";
+    const valid = isJSON(JSONString);
+    console.log({results,valid,JSONString});
+    if(!valid) return false;
+    const scores = JSON.parse(JSONString);
+    const vals = Object.values(scores);
+    const max = Math.max(...vals);
+    const maxKey = Object.keys(scores).find(key => scores[key] === max);
+    console.log({message,scores,max,maxKey});
+    return true;
+    if(max < 0.5) return scores.message;
+    return false;
+}
+
+
+const studyBuddy = async (channelUrl,messageId, messageContent) => {
+
 
     //Determine if studyBuddy is a member of the channel
     const channel = await sendbird.loadChannel(channelUrl);
@@ -25,8 +77,14 @@ const studyBuddy = async (channelUrl,messageId) => {
     const studyBuddyAdded = channel_members.some(({user_id:u}) => u === studyBuddyId);
     if(!studyBuddyAdded) return console.log("StudyBuddy not added to channel");
 
-    //start typing indicator
+
     sendbird.startStopTypingIndicator(channelUrl, [studyBuddyId], true);
+
+
+    const screen = await messagePreScreen(messageContent, lang);
+    if(screen) return false;
+
+    //start typing indicator
     const { response, metadata, page_slug} = await studyBuddyTextBlock({channelUrl, messageId, lang, studyBuddyId});
     
     if(!response) {
