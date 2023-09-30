@@ -108,6 +108,20 @@ export default {
         .fill(0)
         .map((_, idx) => start + idx);
       return scripture.generateReference(range);
+    },
+    preview: (item: any, args: any, { db, res }: any, info: any) => {
+      let text = item.getDataValue('text');
+      //remove html tags
+      text = text.replace(/(<([^>]+)>)/gi, '').replace(/&#(\d+);/g, function(match, dec) {
+        return String.fromCharCode(dec);
+      }).replace(/\s+/g, ' ').trim();
+      const sentences = text.split('. ').filter(x => !/[()]/.test(x)).join('. ');
+      const words = sentences.split(' ')
+      let preview = words.slice(0, 50).join(' ');
+      if (words.length > 50) {
+        preview += '...';
+      }
+      return preview;
     }
   },
   Fax: {

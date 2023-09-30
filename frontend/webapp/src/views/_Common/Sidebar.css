@@ -15,6 +15,36 @@
  }
 
 }
+.sidebar div.sidebar-wrapper
+{
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 0;
+}
+.sidebar-wrapper ul.nav.sidebar-menu
+{
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+.sidebar .nav.sidebar-menu>li
+{
+  height: 6%;
+  position: relative;
+  max-height: 2.5rem;
+}
+.sidebar .nav.sidebar-menu>li>a
+{
+  height: 100%;
+  line-height: inherit;
+  margin-left: 0;
+  display: flex;
+  align-items: center;
+  
+}
+
 
 .sidebar .nav li.active > a {
   box-shadow: none;
@@ -27,7 +57,10 @@
   bottom: 2px;
   margin-right: 1ex;
 }
-
+.sidebar .searchbox
+{
+  margin-bottom: 1rem;
+}
 .sidebar .searchbox input {
   width: calc(100% - 2em);
   padding: 0.25em;

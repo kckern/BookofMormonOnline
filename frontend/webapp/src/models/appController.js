@@ -250,6 +250,13 @@ export const appFunctions = {
     appController.states.popUp.ids = [];
     appController.states.popUp.activeId = 1;
     appController.functions.setSlug(appController.states.popUp.underSlug);
+
+    //id = "theater-audio-player"
+    const theaterPlayer = document.getElementById("theater-audio-player");
+    if(theaterPlayer) {
+      if(theaterPlayer.paused && theaterPlayer.currentTime) theaterPlayer.play();
+    }
+
     return appController;
   },
 

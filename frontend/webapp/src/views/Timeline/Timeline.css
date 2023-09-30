@@ -586,11 +586,8 @@ margin-bottom: 1ex;
   border-radius: 2px;
 }
 
- .sidebar-wrapper li.active.timeline_link > a:not([data-toggle="collapse"]):before 
-{
-  border-right-color: #3d3d3d!important;
-}
 
+.sidebar-wrapper li.active.timeline_link > a:not([data-toggle="collapse"]):before ,
 .sidebar-wrapper li.active.timeline_link > a:not([data-toggle="collapse"]):after 
 {
   border-right-color: #2b2b2b!important;

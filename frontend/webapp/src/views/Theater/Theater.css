@@ -1,0 +1,736 @@
+
+.sidebar-wrapper li.active.theater_link > a:not([data-toggle="collapse"]):before ,
+.sidebar-wrapper li.active.theater_link > a:not([data-toggle="collapse"]):after 
+{
+  border-right-color: #000000!important;
+  display: none;
+}
+
+
+.theater-wrapper
+{
+    display: flex;
+    flex-direction: row;
+    position: absolute;
+    top:60px;
+    left: 0px;
+    bottom: 0;
+    right:0;
+    background-color: #000;
+    color: #AAA;
+
+    text-align: center;
+}
+
+/* if screen width is under 1200, make column */
+@media (max-width: 1200px){
+    .theater-wrapper
+    {
+        flex-direction: column;
+    }
+    .theater-wrapper .theater-main-panel
+    {
+        width: 100%;
+        min-width: 100%;
+        height: 60%;
+    }
+    .theater-wrapper .theater-side-panel
+    {
+        width: 100%!important;
+        min-width: 100%;
+        height: 40%;
+        flex-direction: row!important;
+    }
+
+    .theater-wrapper .theater-side-panel >div
+    {
+        width: 33%!important;
+    }
+    .theater-wrapper .theater-side-panel .theater-comment-panel
+    {
+        flex-grow: 1;
+    }
+}
+
+
+.theater-wrapper span.spacer{
+    display: inline-block;
+    width: 3rem;
+}
+.theater-main-panel
+{
+    display: flex;
+    flex-grow: 1;
+    flex-direction: column;
+    justify-items: space-between;
+    position: relative;
+
+}
+
+.theater-main-panel .theater-header
+{
+    display: flex;
+    flex-direction: column;
+    flex-grow: 0;
+
+    background-color: #222;
+}
+.theater-header,
+.theater-controls
+{
+    opacity: 0;
+    height: 0;
+    transition: all 2s ease-in-out;
+}
+.theater-header.visible,
+.theater-controls.visible
+{
+    opacity: 1;
+    height: auto;
+    transition: all 2s ease-in-out;
+}
+
+
+.theater-super-title-heading
+{
+    background-color: #333;
+    font-weight: 0;
+    height: 2rem;
+    line-height: 2rem;
+    font-size: 1.1rem;
+    letter-spacing: 0.2ex;
+    font-variant: small-caps;
+}
+
+.theater-super-titles
+{
+    display: flex;
+    flex-direction: row;
+    position: relative;
+    max-height: 9rem;
+}
+.theater-super-title-left
+{
+    width: 40%;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.theater-super-title-right
+{
+    flex-grow: 1;
+    display: flex;
+    display: relative;
+    height: 100%;
+    /* add #444 linear gradient to bottom 3rem */
+    background-image: linear-gradient(to bottom, #000000, #00000000);
+}
+
+.theater-super-title-narration
+{
+    font-size: min(2.5vh, 1rem);
+    background-color: #444;
+    padding: 3rem 0;
+    width: 100%;
+    height: 100%;
+    overflow: scroll;
+    text-align: justify;
+}
+.theater-super-title-narration ul{
+    list-style: none;
+    padding: 0 1rem;
+}
+
+.theater-super-title-narration li.active{
+    background-color: #AAA;
+    transition: background-color 1s ease-in-out;
+    color: black;
+}
+.theater-super-title-narration li.active:hover{
+    color: black;
+    background-color: white;
+    transition: none;
+}
+.theater-super-title-narration li:hover:not(.active){
+    color: white;
+    transition: none;
+}
+.theater-super-title-narration li{
+    background-color: auto;
+    transition: background-color 1s ease-in-out;
+    border-radius: 1ex;
+    padding: 5px 1ex;
+    line-height: 1rem;
+    color: #666;
+    cursor: pointer;
+}
+
+.theater-main-panel .theater-content-frame
+{
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    text-align: justify;
+    padding: 2rem;
+    font-family: 'Sorts Mill Goudy', serif; 
+    font-weight: 800;
+    font-size: max(2vw, 1.5vh);
+    color: #FFFFFFCC;
+    align-items: center;
+    overflow: hidden;
+    position: relative;
+    background-image: url('https://i.imgur.com/uqjhnKX.jpg');
+    /* make background image opacity 0.3 */
+    background-blend-mode: multiply;
+    background-color: #000000AA;
+
+
+
+}
+
+.ko .theater-main-panel .theater-content-frame,
+.ko .theater-super-title,
+.ko .theater-super-title-section
+{
+    font-family: 'Nanum Myeongjo';
+}
+
+.theater-main-panel .theater-content-frame blockquote{
+
+    line-height: 2.5vw;
+    font-size: 1.9vw;
+}
+
+.theater-main-panel .theater-content-slider {
+    width: 80%;
+    position: absolute;
+    top: 30%; 
+}
+
+.theater-main-panel .theater-content-slider.playing{
+    display: block;
+}
+
+.theater-main-panel .theater-controls-buttons
+{
+    display: flex;
+    flex-direction: row;
+    flex-grow: 1;
+    width: 100%;
+    justify-content: space-around;
+
+    background-color: #222;
+    padding-bottom: 3rem;
+}
+.theater-main-panel .theater-controls-buttons
+{
+    display: flex;
+    flex-grow: 1;
+}
+.theater-main-panel .theater-progress-bar-buttons.right
+{
+    display: flex;
+    align-items: center;
+    gap: 1ex;
+}
+
+.theater-main-panel .theater-progress-bar-buttons .playbackRateIcon
+{
+    width: 3rem;
+    background-color: #AAA;
+    height: 100%;
+    font-size: 1rem;
+    color: black;
+    border-radius: 1ex;
+    cursor: pointer;
+    /* no select */
+    user-select: none;
+}
+.theater-main-panel .theater-progress-bar-buttons .playbackRateIcon:hover
+{
+    background-color: white;
+}
+
+
+.theater-content-top-visor{
+    /* 3rem high, top 0, black backgounrd */
+    position: absolute;
+    top: 0;
+    height: 3rem;
+    width: 100%;
+    /* background linear gradient top black, top transparent */
+    background-image: linear-gradient(to bottom, #000000, #00000000);
+}
+.theater-content-bottom-visor{
+    /* 3rem high, top 0, black backgounrd */
+    position: absolute;
+    bottom: 0;
+    height: 3rem;
+    width: 100%;
+    /* background linear gradient bottom black, top transparent */
+    background-image: linear-gradient(to top, #000000, #00000000);
+}
+
+.theater-content-next,
+.theater-content-prev
+{
+    position: absolute;
+    height:2rem;
+    width: 2rem;
+    top: calc(50% - 1rem);
+    left:1ex;
+    transition: opacity 0.5s ease-in-out;
+    
+}
+.theater-content-next.hidden,
+.theater-content-prev.hidden
+{
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+    
+}
+
+
+
+.theater-content-next{
+    right: 1ex;
+    left: auto;
+}
+
+img.player-ui{
+    height: 2rem;
+    opacity: 0.6;
+    cursor: pointer;
+}
+
+img.player-ui:hover{
+    opacity: 1
+}
+.theater-intro-slide,
+.theater-section-intro
+{
+    position: absolute;
+    top:0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+    padding:min(5vh,10%);
+    padding-bottom: min(20vh,30%);
+    font-family: 'Roboto Condensed', 'Arial Narrow', 'sans-serif';
+}
+
+.theater-intro-slide em{
+    font-family: 'Sorts Mill Goudy', serif;
+}
+
+.theater-intro-slide p{
+    text-align: center;
+    padding: 0 10%;
+    line-height: 100%;
+}
+
+.theater-intro-slide.off
+{
+    opacity: 0;
+    transition: opacity 3s ease-in-out;
+}
+.theater-intro-slide.on
+{
+    opacity: 1;
+    transition: opacity 3s ease-in-out;
+}
+.theater-intro-slide p.presents
+{
+    opacity: 0.5;
+}
+
+.theater-intro-slide.section-intro{
+    font-size: 2rem;
+    line-height: 100%;
+}
+.theater-intro-slide.section-intro p{
+    font-family: "Sorts Mill Goudy", serif;
+    font-size: 2.5rem;
+    
+}
+.theater-intro-slide.section-intro .upnext
+{
+    font-size: 2rem;
+    opacity: 0.4;
+    font-style: italic;
+}
+.theater-intro-slide.section-intro small{
+    padding: 10%;
+    font-weight: 400;
+    text-align: center;
+    opacity: 0.8;
+    font-size: 1.4rem;
+    line-height: 120%;
+    /* overflow ellipsis overflow */
+
+    text-overflow: ellipsis;
+    /* max 20 lines height */
+    flex-grow: 0;
+    max-height: 80%;
+    
+    
+}
+
+span.pageTitle
+{
+    font-size: 1.5rem;
+    opacity: 0.7;
+}
+
+.theater-intro-slide img.logo
+{
+    margin-bottom: 5%;
+    flex-shrink: 0;
+    height: 30%;
+}
+
+.theater-queue-indicator
+{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    gap: 1ex;
+    padding: 1rem 1ex 0 1ex;
+    margin-bottom: 1rem;
+}
+.theater-super-title
+{
+    font-family: 'Sorts Mill Goudy', serif; 
+    font-weight: 800;
+    font-size: 2vh;
+    flex-grow: 1;
+    padding-top: 1ex;
+    margin-bottom: 1ex;
+}
+.theater-super-title-section
+{
+    color: white;
+    font-family: 'Sorts Mill Goudy', serif; 
+    font-weight: 800;
+    font-size: min(3vh, 2.5rem);
+    line-height: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 1ex;
+    padding: 0 1rem;
+
+}
+
+.theater-queue-indicator .theater-queue-indicator-item
+{
+    height: 1rem;
+    width: 100%;
+    background-color: #333;
+    border-radius: 1ex;
+    cursor: pointer;
+}
+
+.theater-queue-indicator .theater-queue-indicator-item:hover
+{
+    background-color: #555;
+}
+
+.theater-queue-indicator .theater-queue-indicator-item.completed
+{
+    background-color: #6bd098;
+}
+.theater-queue-indicator .theater-queue-indicator-item.prestarted
+{
+    background-color: #fbc65866;
+}
+.theater-queue-indicator .theater-queue-indicator-item.started
+{
+    background-color: #fbc658;
+}
+.theater-queue-indicator .theater-queue-indicator-item.active
+{
+    background-color: #FFF;
+}
+#theater-audio-player
+{
+    display: none;
+}
+
+.theater-side-panel
+{
+    width: 30%;
+    min-width: 30%;
+    display: flex;
+    flex-direction: column;
+}
+
+.theater-side-panel .theater-image-panel {
+    flex-shrink: 0;
+    max-height: 500px;
+    transition:  max-height 0.5s ease-in-out;
+
+}
+
+.theater-side-panel .theater-image-panel.hidden {
+    max-height: 0;
+    transition:  max-height 0.5s ease-in-out;
+}
+
+
+  .theater-side-panel .theater-image-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    height: 30vh;
+    flex-shrink: 0;
+
+}
+
+.theater-side-panel .theater-image-panel img {
+    height: 30vh;
+    width: 100%;
+    object-fit: contain;
+    z-index: 99;
+    background:url('https://i.imgur.com/uqjhnKX.jpg');
+
+}
+
+  
+  .imageCaption
+  {
+    z-index: 2;
+    position: absolute;
+    bottom: 0;
+    height: 2rem;
+    background-color: #00000099;
+    left: 0;
+    right: 0;
+    line-height: 2rem;
+    color:white;
+    font-weight: bold;
+
+  }
+.theater-progress-bar-container{
+    display: flex;
+    flex-direction: row;
+    padding:1rem
+}
+
+.theater-progress-bar
+{
+    flex-grow: 1;
+    padding: 0 1rem;
+}
+
+.theater-controls .progress-bar
+{
+    width: 100%;
+    height: 2rem;
+    background-color: #333;
+    cursor:pointer;
+    flex-grow: 1;
+    border-radius: 1ex;
+}
+.theater-controls .progress-bar-inner
+{
+    height: 100%;
+    background-color: #6bd09866;
+    pointer-events: none;
+    border-right:1px solid #6bd098;
+
+}
+
+.theater-side-panel .theater-comment-panel
+{
+    background-color: #444;
+    flex-grow: 1;
+    position: relative;
+}
+
+.theater-side-panel .theater-comment-feed
+{
+    overflow: scroll;
+    position: absolute;
+    top:2rem;
+    bottom: 0;
+    padding: 0 1rem 1rem 1rem;
+}
+
+
+.theater-comment-feed .comment {
+    display: flex;
+    flex-direction: row;
+    padding: 1ex;
+    transition: color 0.5s ease-in-out;
+    overflow: hidden;
+    cursor: pointer;
+
+
+  }
+  .theater-comment-feed .comment.preloaded {
+    color: black;
+  }
+
+  .theater-comment-feed .comment-text{
+
+    background-color: #DDD;
+    color: #000;
+    text-align: left;
+    padding: 1ex;
+    overflow: hidden;
+    position: relative;
+    opacity: 1;
+    line-height: 2ex;
+    transition: opacity 0.5s ease-in-out;
+    border-radius: 1ex;
+    color: #666;
+  }
+
+  .theater-comment-feed .comment:hover .comment-text{
+    background-color: #FFF;
+  }
+
+  .theater-comment-feed .comment img.avatar {
+    
+    width: 4rem;
+    height: 4rem;
+    flex-grow: 0;
+    flex-shrink: 0;
+    margin-right: 1rem;
+    border-radius: 50%;
+    border: 2px solid white;
+    margin-right:1ex;
+    position: relative;
+    top: -1ex;
+    /* drop shadow */
+    /* shift the shadow down and right 1rem */
+    box-shadow: 1ex 1ex 1rem #00000099; 
+
+  }
+
+  .theater-comment-feed .comment .triangle{
+    margin-top: 0;
+    margin-left: -0.5ex;
+    margin-right: -0.5ex;
+    font-size: 2rem;
+    color: #DDD;
+  }
+
+
+  .theater-wrapper h4{
+    font-size: 1.2rem;
+    height: 2rem;
+    line-height: 1.5;
+    padding:0;
+    margin:0;
+    background: #333;
+    font-weight: bold;
+  }
+
+
+.theater-people-place-items
+{
+    display:flex;
+    overflow:scroll;
+    justify-content: flex-start;
+
+
+    height: 15rem;
+    background: url('https://i.imgur.com/uqjhnKX.jpg');
+    background-blend-mode: multiply;
+    background-color: #000000AA;
+}
+
+.theater-people-place-panel{
+    max-height: 100vh;
+    transition: max-height 0.5s ease-in-out;
+}
+.theater-people-place-panel.hidden{
+    max-height: 0;
+    transition: max-height 0.5s ease-in-out;
+}
+
+.theater-people-place-panel.hidden .theater-people-place-items{
+    background-color: #000;
+}
+
+
+.item-count-1 .theater-people-place-items,
+.item-count-2 .theater-people-place-items
+{
+    justify-content: center;
+}
+
+
+  .theater-people-place-item
+  {
+    position: relative;
+    width: 5rem;
+    flex-shrink: 0;
+    width: 9rem;
+    height: 14rem;
+    opacity: 1;
+    filter: blur(0);
+    transition: all 0.5s ease-in-out;
+    margin: 0.5ex;
+    border-radius: 1ex;
+    cursor: pointer;
+    margin: 1ex;
+  }
+
+  .theater-people-place-item:hover{
+    outline: 2px solid white;
+    filter: brightness(1.2) saturate(1.2);
+  }
+
+  .theater-people-place-item.hidden
+  {
+    width: 0;
+    opacity: 0;
+    overflow: hidden;
+    outline: 3px solid red;
+    filter: blur(10px);
+    margin: 0;
+  }
+
+
+  .theater-people-place-item img
+  {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 1ex;
+  }
+  .theater-people-place-item-caption,
+  .theater-people-place-item-name
+  {
+    border-radius: 0 0 0.5rem 0.5rem;
+    color:white;
+    background-color: #00000099;
+    position: absolute;
+    height: auto;
+    left:0;
+    right:0;
+    bottom:0;
+    padding:1ex;
+    font-size: 0.7rem;
+  }
+  .theater-people-place-item-name
+  {
+    border-radius: 0.5rem 0.5rem 0 0;
+    top:0;
+    font-weight: 800;
+    bottom: auto;
+    font-size: 1.2rem;
+    line-height: 1rem;
+  }

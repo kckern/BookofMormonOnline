@@ -1218,6 +1218,75 @@ const queries = {
     }
   },  
 
+  queuestatus: (input) => {
+    input = input.shift();
+    let itemQuery = input.items ? JSON.stringify(input.items, null, 2).replace(/\"([^(\")"]+)\":/g,"$1:") : null;
+    return {
+      type: "queuestatus",
+      key: "token",
+      val: false,
+      query:  `queue(token:"${input.token}" `+((input.items) ? `, items: ${itemQuery} )` : ')')  +
+        `  {
+          slug
+          status(token:"${input.token}")
+      }`,
+    }
+  },
+
+  queue: (input) => {
+    input = input.shift();
+    let itemQuery = input.items ? JSON.stringify(input.items, null, 2).replace(/\"([^(\")"]+)\":/g,"$1:") : null;
+    return {
+      type: "queue",
+      key: "token",
+      val: false,
+      query:  `queue(token:"${input.token}" `+((input.items) ? `, items: ${itemQuery} )` : ')')  +
+        `  {
+          status(token:"${input.token}")
+          content
+          parent_page{
+            title
+          }
+          parent_section{
+            title
+            ambient
+          }
+          narration{
+            description
+          }
+          heading
+          slug
+          duration
+          people{
+            slug
+            name
+            title
+          }
+          places{
+            slug
+            name
+            info
+          }
+          imgs{
+            id
+            title
+          }
+          coms{
+            id
+            title
+            preview
+          }
+					next{
+							class
+							slug
+						  text
+					}
+        }`
+      }
+
+
+  },
+
   homefeed: (input) => {
     input = input.shift();
     return {

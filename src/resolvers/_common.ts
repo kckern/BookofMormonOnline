@@ -45,8 +45,8 @@ export const getSlug = (key: any, val: any, suffix?: string) => {
 export const Op = Sequelize.Op;
 
 export const translatedValue = (item: any, field: string) => {
-  var translations = item.getDataValue('translation');
-  if (!translations) return item.getDataValue(field);
+  var translations = item?.getDataValue ? item?.getDataValue('translation') : item?.translation || null;
+  if (!translations) return item.getDataValue ? item.getDataValue(field) : item[field];
   for (var t of translations) {
     const refkey = t.getDataValue('refkey');
     if (refkey === field || !refkey) {
@@ -230,7 +230,7 @@ export const queryWhere = (key: string, filter: any) => {
 
 export const scoreTextItems = (textItems: Array<any>, summary: any) => {
 
-  const percentToCountAsComplete = parseInt(process.env.PERCENT_TO_COUNT_AS_COMPLETE) || 80;
+  const percentToCountAsComplete = parseInt(process.env.PERCENT_TO_COUNT_AS_COMPLETE) || 40;
 
   //console.log("scoreTextItems",{textItems})
   let started = [];
@@ -344,6 +344,7 @@ export const updateActiveItems = async (userInfo: any) => {
     let duration = (thisAction as any)?.getDataValue('logText')?.getDataValue('duration');
     let score = duration > 0 ? Math.round((elapsedtime * 100) / duration) : 100;
     if (score > 10000) score = 10000;
+    if (duration < 10) score = 100;
     let r = await Models.BomLog.update(
       {
         credit: score

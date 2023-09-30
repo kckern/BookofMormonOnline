@@ -276,7 +276,11 @@ models.BomText.belongsToMany(models.BomText, {
   as: 'quotes'
 });
 
-
+models.BomQuote.belongsTo(models.BomText, {
+  foreignKey: 'parent',
+  targetKey: 'guid',
+  as: 'textParent'
+});
 
 
 models.BomText.belongsTo(models.BomPage, {
@@ -431,6 +435,12 @@ models.BomIndex.hasOne(models.BomLookup, {
   sourceKey: 'verse_id',
   foreignKey: 'verse_id',
   as: 'text_guid',
+});
+
+models.BomLookup.belongsTo(models.BomIndex, {
+  foreignKey: 'verse_id',
+  targetKey: 'verse_id',
+  as: 'bomIndexReference'
 });
 
 models.BomPeople.hasMany(models.BomPeopleRels, {
