@@ -14,6 +14,8 @@ const stripHTMLTags = (text) => text.replace(/<[^>]*>?/gm, '').replace(/\s+/g," 
 
 const messagePreScreen = async (message,lang) => {
 
+    return false;
+
     /* ask gpt how likely the message is to be
      1. Tech support
      2. Trivia
@@ -85,6 +87,7 @@ const studyBuddy = async (channelUrl,messageId, messageContent) => {
     if(screen) return false;
 
     //start typing indicator
+    sendbird.startStopTypingIndicator(channelUrl, [studyBuddyId], true);
     const { response, metadata, page_slug} = await studyBuddyTextBlock({channelUrl, messageId, lang, studyBuddyId});
     
     if(!response) {
@@ -92,8 +95,13 @@ const studyBuddy = async (channelUrl,messageId, messageContent) => {
         console.log("No response generated");
         return false;
     }
-    await studyBuddySend({channelUrl, threadId:messageId, message:response, user_id:studyBuddyId, metadata, custom_type: page_slug});
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    sendbird.startStopTypingIndicator(channelUrl, [studyBuddyId], true);
+    const bot_message_id = await studyBuddySend({channelUrl, threadId:messageId, message:response, user_id:studyBuddyId, metadata, custom_type: page_slug});
+
+    //verify message id exits in channel
+    const message = await sendbird.loadSingleMessage(channelUrl, bot_message_id);
+
+    console.log(`Bot replied to ${messageId} with ${message.message_id} in ${channelUrl}`);
     sendbird.startStopTypingIndicator(channelUrl, [studyBuddyId], false);
 }
 
@@ -396,6 +404,7 @@ const prepareMessages = ({
 
 const studyBuddyTextBlock = async ({ channelUrl, messageId, lang, studyBuddyId}) => {
 
+    const startTyping = ()=>sendbird.startStopTypingIndicator(channelUrl, [studyBuddyId], true);
 
     if(!lang) {
             const channel = await sendbird.loadChannel(channelUrl);
@@ -437,6 +446,7 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId, lang, studyBuddyId})
     const {people,places} = sectionContext;
 
     let tokenLimit = 3200;
+    startTyping();
     const {instructions, messages} = prepareMessages({
         lang,
          ref,
@@ -455,8 +465,9 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId, lang, studyBuddyId})
          sectionTitle,
          sectionNarration,
          textBlockNarration,
-        }, tokenLimit);
-
+         }, tokenLimit);
+    
+    startTyping();
     let response =  (await askGPT(instructions, messages, "gpt-3.5-turbo-16k"))?.split(/[\n\r]+/). join(" ");
     response = postProcessResponse(response, ref);
     
@@ -483,9 +494,11 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId, lang, studyBuddyId})
 
 const studyBuddySend = async ({ channelUrl, threadId, message, user_id, metadata, custom_type}) => {
 
-    const r = await sendbird.replyToMessage({ channelUrl, messageId:threadId, user_id, message });
+    const response = await sendbird.replyToMessage({ channelUrl, messageId:threadId, user_id, message });
 
-    return threadId;
+    const {message_id} = response;
+
+    return message_id || threadId;
 }
 
 
