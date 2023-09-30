@@ -3,8 +3,10 @@ const {studyBuddy, studyBuddyTextBlock} = require("./studybuddy");
 const webhook = async (req, res) => {
 
 
-
     const {category, channel, members, sender, payload, parent_message_id,type} = req.body;
+    const messageContent = payload?.message;
+
+
     //ignore admin  message
     if(type!=="MESG") return res.json({success:true, message: "Not a normal message event"});
     if(category!=="group_channel:message_send") return res.json({success:true, message: "Not a message send event"});
@@ -18,14 +20,19 @@ const webhook = async (req, res) => {
     const messageId = parent_message_id || message_id;
     const channelUrl = channel?.channel_url;
 
-
+    if(!studyBuddyIsMember) return res.json({success:true, message: "StudyBuddy webhook received.  Not a member of studybuddy"});
     if((studyBuddyIsMember && !studyBuddyIsSender))
     {
         res.json({success:true, message: "StudyBuddy webhook received.  Processing..."});
-        await studyBuddy(channelUrl, messageId); // dont await
+        await studyBuddy(channelUrl, messageId, messageContent); // dont await
         return 
     }
-
+    return res.json({success:true, message: "StudyBuddy webhook received.  Ignoring.",debug:{
+        studyBuddyIsMember,
+        studyBuddyIsSender,
+        messageId,
+        channelUrl
+    }});
 }
 
 const apis = {

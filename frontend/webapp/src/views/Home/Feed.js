@@ -75,7 +75,7 @@ export function HomeFeed({ appController, activeGroup, messageId, setActiveGroup
 
   if (loader) return loader;
   let bannerGroup = (activeGroup) ? homeGroups?.filter(g => g.url === activeGroup).shift() : null;
-  let items = homeItems.map(item => <HomeFeedItem appController={appController} item={item} homeGroups={homeGroups} setActiveGroup={setActiveGroup} linkedContent={linkedContent}  key={item.id} />);
+  let items = homeItems.map((item,seq) => <HomeFeedItem appController={appController} seq={seq} item={item} homeGroups={homeGroups} setActiveGroup={setActiveGroup} linkedContent={linkedContent}  key={item.id} />);
   return <>
     <HomeFeedBanner appController={appController} bannerGroup={bannerGroup} setActiveGroup={setActiveGroup} />
     <ReactTooltip
@@ -127,7 +127,7 @@ function HomeFeedBanner({ appController, bannerGroup, setActiveGroup }) {
   </Card>
 }
 
-function HomeFeedItem({ appController, item, homeGroups, linkedContent, setActiveGroup }) {
+function HomeFeedItem({ appController,seq, item, homeGroups, linkedContent, setActiveGroup }) {
 
 
 
@@ -140,6 +140,22 @@ function HomeFeedItem({ appController, item, homeGroups, linkedContent, setActiv
 
   const myGroups = appController.states.studyGroup?.groupList.map(g => g.url) || [];
   const [comments, fetchComments] = useState([]);
+  const [fetching, setFetching] = useState(false);
+
+  //load comments from api immediate if seq==1
+  useEffect(async () => {
+    setFetching(true);
+    if (seq === 1) {
+      fetchComments(-1);
+      let message = item.id;
+      let channel = item.channel_url;
+      let token = appController.states.user.token;
+      let comments = await BoMOnlineAPI({ homethread: { token, channel, message } }, { useCache: false })
+      fetchComments(comments.homethread);
+      setFetching(false);
+    }
+  }, [seq]);
+
 
   const iAmInGroup = myGroups.includes(item.channel_url);
 
@@ -159,6 +175,7 @@ function HomeFeedItem({ appController, item, homeGroups, linkedContent, setActiv
   }
 
   const handleVisibilityChange = async (visible) => {
+    if(fetching) return;
     if (visible && !comments.length && item.replycount) {
       fetchComments(-1);
       let message = item.id;
