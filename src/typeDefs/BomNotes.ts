@@ -49,6 +49,7 @@ extend type Query {
     publication: Source
     title: String
     text: String
+    preview: String
     slug: String
 }
   

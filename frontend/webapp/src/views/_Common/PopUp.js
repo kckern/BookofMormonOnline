@@ -59,6 +59,22 @@ function CommentsPlaceholder() {
 function PopUp({ appController }) {
   // if (appController.states.popUp.open !== true) return (<></>);
   const [currentKeyVal,setCurrentKeyVal] = useState(null);
+
+
+  //listen for escape key and close popup if pressed
+  useEffect(() => {
+    const handleEsc = (event) => {
+      if (event.keyCode === 27) {
+        appController.functions.closePopUp();
+      }
+    };
+    window.addEventListener("keydown", handleEsc);
+    return () => {
+      window.removeEventListener("keydown", handleEsc);
+    };
+  }, []);
+
+  
   useEffect(()=>{
     const key = appController.states.popUp.type;
     const val = Array.isArray(appController.states.popUp.activeId) ? appController.states.popUp.activeId.shift() : appController.states.popUp.activeId;
@@ -275,8 +291,11 @@ function Place({ appController }) {
     push(`/map/${map}/place/${place}`)
   };
 
+
+
   let place = appController.popUpData[appController.states.popUp.activeId];
   if (place === undefined) return <pre>{appController.popUp}</pre>;
+
 
   return (
     <Draggable handle=".place_head">

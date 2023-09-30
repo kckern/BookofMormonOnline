@@ -12,7 +12,6 @@ import { linkScriptureRefs } from "src/models/scripture";
 
 
 export function determineLanguage() {
-
   let subdomain = window.location.host.split(".").shift();
   let tld = window.location.host.split(".").pop();
   let aliases = {
@@ -68,14 +67,20 @@ export function getUsersFromTextInput(appController, text) {
   return findedUsers;
 }
 
-export function makeLabelDictionary(r) {
+export function makeLabelDictionary(r,fromCache=false) {
   if (!r.labels || r.labels?.length === 0) return r;
-  let labelArray = r.labels;
-  let dictionary = {};
-  for (let i in labelArray) {
-    dictionary[labelArray[i].key] = labelArray[i].val;
-  }
+  let labelData = r.labels;
+  const isKeyVal = labelData?.[0]?.key && labelData?.[0]?.val;
+  let dictionary = !isKeyVal ? labelData : Object.values(labelData).reduce((obj, item) => {
+    obj[item.key] = item.val;
+    return obj;
+  }, {});
+
   r.labels = dictionary;
+  //save dictionary to indexedDB as json array, key label.dictionary
+  if(!fromCache) setCache({ "label.dictionary": dictionary });
+  console.log("makeLabelDictionary", {fromCache},dictionary);
+  console.log(dictionary);
   global.dictionary = dictionary;
   return r;
 }

@@ -20,6 +20,7 @@ const Invitation = lazy(() => import("../views/User/Invitation.js"));
 const MobileGroups = lazy(() => import("../views/_Common/Study/Mobile/MobileStudy.js"));
 const MobileMenu = lazy(() => import("../views/_Common/MobileMenu.js"));
 const Group = lazy(() => import("../views/_Common/Group.js"));
+const Theater = lazy(() => import("../views/Theater/Theater.js"));
 
 
 const routes = [
@@ -82,6 +83,10 @@ const routes = [
     component: About,
   },
   {
+    path: "/theater",
+    component: Theater,
+  },
+  {
     path: "/studyedition",
     component: KRSEB,
   },
@@ -134,7 +139,7 @@ const routes = [
     component: Invitation,
   },
   {
-    path: "/people/network",
+    path: "/relationships",
     component: PeopleNetWork,
   },
   {

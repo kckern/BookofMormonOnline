@@ -214,3 +214,68 @@ export default {
     },
   }
 };
+
+export  const loadPeopleFromTextGuid = async (guid: string, slugs: string[],lang) => {
+  slugs = Array.isArray(slugs) ? slugs : slugs ? [slugs] : [];
+//use Models.BoMLookup and Models.BomIndex to get the people slugs from the text_guid
+const peopleSlugs = (await Models.BomLookup.findAll({
+  attributes: ['text_guid'],
+  where: {
+    text_guid: guid
+  },
+  include: [
+    {
+      model: Models.BomIndex,
+      as: 'bomIndexReference',
+      attributes: ['slug'],
+      where: {
+        type: 'people' // retrieved slugs for 'people' type
+      }
+    }
+  ]
+}))?.map((item: any) => item.getDataValue('bomIndexReference').getDataValue('slug')).filter(x=>!!x);
+
+const uniqueSlugs = [...new Set([...peopleSlugs, ...slugs])];
+
+//load people using query function above
+const people = await Models.BomPeople.findAll({
+  where: {
+    slug: uniqueSlugs
+  },
+  include: [includeTranslation({ [Op.or]: ['name', 'title', "description"] }, lang)].filter(x => !!x),
+});
+
+
+return people;
+
+
+}
+
+export const loadPlacesFromTextGuid = async (guid: string, slugs: string[], lang) => {
+  slugs = Array.isArray(slugs) ? slugs : slugs ? [slugs] : [];
+//use Models.BoMLookup and Models.BomIndex to get the people slugs from the text_guid
+const placeSlugs = (await Models.BomLookup.findAll({
+  attributes: ['text_guid'],
+  where: {
+    text_guid: guid
+  },
+  include: [
+    {
+      model: Models.BomIndex,
+      as: 'bomIndexReference',
+      attributes: ['slug'],
+      where: {
+        type: 'places'
+      }
+    }
+  ]
+}))?.map((item: any) => item.getDataValue('bomIndexReference').getDataValue('slug')).filter(x=>!!x);
+const uniqueSlugs = [...new Set([...placeSlugs, ...slugs])];
+const places = await Models.BomPlaces.findAll({
+  where: {
+    slug: uniqueSlugs
+  },
+  include: [includeTranslation({ [Op.or]: ['name', 'info'] }, lang)].filter(x => !!x),
+});
+return places;
+}

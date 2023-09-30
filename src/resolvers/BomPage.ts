@@ -3,6 +3,8 @@ import Sequelize from 'sequelize';
 import { models as Models, sequelize, SQLQueryTypes } from '../config/database';
 import { getSlug, Op, includeTranslation, translatedValue, includeModel, includeWhere, scoreSlugsfromUserInfo, getSlugTip, getUserForLog} from './_common';
 import scripture from "../library/scripture"
+import { loadPeopleFromTextGuid, loadPlacesFromTextGuid } from './BomPeoplePlace';
+const { loadTheaterQueue } = require('./lib')
 
 export default {
   Query: {
@@ -142,7 +144,6 @@ export default {
         order: ['weight']
         }).then(r=>{
           let results:any = {};
-
           for(let i in r)
           {
             let item:any = r[i];
@@ -162,6 +163,67 @@ export default {
         order: ['weight']
       });
     },
+
+ 
+queue: async (root: any, args: any, context: any, info: any) => {
+  const lang = context.lang ? context.lang : null;
+  const {token,items} = args;
+  let inputs = null
+  if(!items || !items?.length)
+  {
+    inputs = await loadTheaterQueue(token, info);
+  }
+  else{
+    inputs = items.map((item:any)=>({slug:item.slug,blocks:item.blocks}));
+  }
+
+  const textBlocks = inputs.map(async ({ slug, blocks }) => {
+
+
+    const r = await Models.BomText.findAll({
+      where: {
+        link: blocks
+      },
+      include: [
+        {
+          model: Models.BomSlug,
+          as: "textSlug",
+          where: {
+            slug: slug
+          },
+          attributes: ["slug", "link"]
+        },
+        includeTranslation({ [Op.or]: ["heading", "content"] }, lang),
+        includeModel(info, Models.BomNarration, "narration", [
+          includeTranslation("description", lang)
+        ]),
+        includeModel(info, Models.BomPage, "parent_page", [
+          includeTranslation("title", lang)
+        ]),
+        includeModel(info, Models.BomSection, "parent_section", [
+          includeTranslation("title", lang)
+        ]),
+
+        includeModel(info, Models.BomText, "quotes")
+      ].filter(x => !!x),
+      order: ["weight"]
+    });
+
+    let results: any = {};
+    for (let i in r) {
+      let item: any = r[i];
+      let slug_1 = item?.dataValues?.textSlug?.dataValues.slug;
+      let link = item?.getDataValue("link");
+      results[slug_1 + "/" + link] = r[i];
+    }
+    return blocks.map((block: string) => {
+      return results[slug + "/" + block];
+    }).filter((x_1: any) => !!x_1);
+  });
+
+  const resolvedItems = await Promise.all(textBlocks);
+  return resolvedItems.flat();
+},
 
     lookup: async (root: any, args: any, context: any, info: any) => {
 
@@ -185,6 +247,7 @@ export default {
       });
     }
   },
+
 
   Division: {
     description: (item: any, args: any, { db, res }: any, info: any) => {
@@ -315,9 +378,62 @@ export default {
     }
   },
   TextBlock: {
-    heading: (item: any, args: any, { db, res }: any, info: any) => {
+    status: async (item: any, args: any, { db, res }: any, x: any) => {
+
+      const percentToCountAsComplete = parseInt(process.env.PERCENT_TO_COUNT_AS_COMPLETE) || 40;
+
+      const {token} = args;
+      const textGuid = item.getDataValue('guid');
+
+      //load username from token 
+      const {queryBy,userObj} = await getUserForLog(token);
+      const finished = userObj?.finished || 0;
+
+      const {credit}:any = (await Models.BomLog.findAll({
+        where: {
+          user: queryBy,
+          value: textGuid,
+          timestamp: { [Op.gt]: finished }
+        }
+      })).sort((b:any,a:any)=>a.credit-b.credit)?.[0] || {credit:0};
+
+      const status = !credit ? "incomplete" : parseInt(credit) >= percentToCountAsComplete ? "completed" : "started"
+
+      return status
+    },
+    heading: async (item: any, args: any, { db, res, lang }: any, info: any) => {
+
       // console.log(item)
-      return translatedValue(item, 'heading');
+      const heading = translatedValue(item, 'heading');
+      if(/[0-9]/.test(heading)) return heading;
+
+      //load parent Heading
+      const parentGuid = item.getDataValue('parent');
+      const parentHeading = await Models.BomQuote.findOne({
+        raw: true,
+        where: {
+          guid: parentGuid
+        },
+        include: [{
+          model: Models.BomText,
+          as: 'textParent'
+        }]
+      });
+      if(lang && lang!== "en"){
+        const headingGuid = parentHeading['textParent.guid'];
+        const LangHeading = await Models.BomText.findOne({
+          where: {
+            guid: headingGuid
+          },
+          include: [includeTranslation('heading', lang)]
+        });
+        const translation = LangHeading['translation'][0]?.value;
+        if(translation) return `[${translation}] ${heading}`;
+      }
+      const parentHeadingText = parentHeading['textParent.heading'];
+      return `[${parentHeadingText}] ${heading}`
+
+
     },
     content: (item: any, args: any, { db, res }: any, info: any) => {
       return translatedValue(item, 'content');
@@ -329,7 +445,7 @@ export default {
     imgIds: (item: any, args: any, { db, res }: any, info: any) => 
     {
       let imageIds = item.dataValues.content.match(/\[i\](\d+)\[\/i\]/ig);
-      imageIds = imageIds && imageIds.map((i:string) => parseInt(i.replace(/\D+/g, '')));
+      imageIds = imageIds && imageIds.map((i:string) => parseInt(i.replace(/\D+/g, ''))) || [];
      return imageIds;
     },
     comIds: (item: any, args: any, { db, res }: any, info: any) => 
@@ -338,9 +454,136 @@ export default {
       comIds = comIds && comIds.map((i:string) => parseInt(i.replace(/\D+/g, '')));
      return comIds;
     },
-    narration: (item: any, args: any, context: any, info: any) => 
+    next: async (item: any, args: any, { db, res, lang }: any, info: any) =>{
+
+      //get this  narration id
+      const rowGuid = item.getDataValue('narration')?.getDataValue('parent');
+      if(!rowGuid) return [];
+
+      console.log(rowGuid);
+
+      //get page guid
+      const pageGuid = item.getDataValue('page');
+      
+      //get all page sections, then get section rows from all the sections 
+      const sections = await Models.BomSection.findAll({
+        raw: true,
+        where: {
+          parent: pageGuid
+        }
+      });
+
+      const pageRows = await Models.BomSectionrow.findAll({
+        raw: true,
+        where: {
+          parent: sections.map((s:any)=>s.guid)
+        }
+      });
+      //find index of this narration
+      const narrationIndex = pageRows.findIndex((r:any)=>r.guid == rowGuid);
+      //loop through rows after this one, and determine if the next row(s) is/are non-N types
+      const nextRows = pageRows.slice(narrationIndex+1);
+      const nexts = [];
+      for(let i in nextRows){
+        const row = nextRows[i];
+        const rowtype = row['type'];
+        if(rowtype === 'N') break;
+        nexts.push(row);
+      }
+
+
+      return nexts.map((r:any)=>{
+
+        return {
+          class: r['type'],
+          slug: r['guid'],
+          text: "Connection"
+         }
+      });
+    },
+    narration: async (item: any, args: any, context: any, info: any) => 
     {
-      return translatedValue(item, 'narration');
-    }
+      const lang = context.lang ? context.lang : null;
+      const narration = translatedValue(item, 'narration');
+      if(narration) return narration;
+
+      const parentGuid = item.getDataValue('parent');
+      const parentNarration = await Models.BomQuote.findOne({
+        raw: true,
+        where: {
+          guid: parentGuid
+        },
+        include: [{
+          model: Models.BomText,
+          as: 'textParent',
+          include: [{
+            model: Models.BomNarration,
+            as: 'narration'
+          }]
+        }]
+      });
+
+      if(lang && lang!=="en"){
+        const narrationGuid = parentNarration['textParent.narration.guid'];
+        const narration = await Models.BomNarration.findOne({
+          where: {
+            guid: narrationGuid
+          },
+          include: [includeTranslation('description', lang)]
+        });
+        const translation = narration['translation'][0]?.value;
+        if(translation) return {description:translation}
+      }
+      
+      const description = parentNarration['textParent.narration.description'];
+
+      return {description};
+
+
+    },
+    people: async (item: any, args: any, context: any, info: any) =>{
+      const lang = context.lang ? context.lang : null;
+      const textBlockGuid = item.getDataValue('guid');
+      const narrationDescription = item.getDataValue('narration')?.getDataValue('description');
+      const peopleSlugs = narrationDescription?.match(/\{([^}]+)\}/g)?.map((s:string)=>s.replace(/[{}]/g, '').split("|")[1]);
+      return await loadPeopleFromTextGuid(textBlockGuid,peopleSlugs,lang);
+    },
+    places: async (item: any, args: any, context: any, info: any) =>{
+      const lang = context.lang ? context.lang : null;
+      const textBlockGuid = item.getDataValue('guid');
+      const narrationDescription = item.getDataValue('narration')?.getDataValue('description');
+      const placeSlugs = narrationDescription?.match(/\[([^\]]+)\]/g)?.map((s:string)=>s.replace(/[\[\]]/g, '').split("|")[1]);
+      return await loadPlacesFromTextGuid(textBlockGuid,placeSlugs,lang);
+    },
+    coms: async (item: any, args: any, context: any, info: any) =>{
+      const lang = context.lang ? context.lang : "en";
+      const text_guid = item.getDataValue('guid');
+      //const comIds = content?.match(/\[c\](\d+)\[\/c\]/ig)?.map((s:string)=>s.replace(/\D+/g, '')) || [];
+      return Models.BomXtrasCommentary.findAll({
+        where: {
+          location_guid: text_guid
+        },
+        include: [{
+          model: Models.BomXtrasSource,
+          as: 'publication',
+          where:{
+            source_lang :lang
+          }
+        }]
+      });
+    },
+    imgs: async (item: any, args: any, context: any, info: any) =>{
+      const content = item.getDataValue('content');
+      const imgIds = content?.match(/\[i\](\d+)\[\/i\]/ig)?.map((s:string)=>s.replace(/\D+/g, '')) || [];
+      return Models.BomXtrasImage.findAll({
+        where: {
+          id: imgIds
+        },
+        include: [includeTranslation('title', context.lang)].filter(x => !!x)
+      });
+    },
+
+
+
   }
 };

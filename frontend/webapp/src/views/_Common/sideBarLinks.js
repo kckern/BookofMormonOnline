@@ -25,7 +25,7 @@ const links = [
             {
                 mini: "PN",
                 name: "People Network",
-                path: "/people/network",
+                path: "/relationships",
                 linkedPaths: []
             },
             {

@@ -20,6 +20,7 @@ import nowifi from "./svg/no-wifi.svg";
 //
 import "./BottomNav.css";
 import { BottomMenu } from "./BottomNav";
+import { getCache, getSingleCache, getSingleCacheFromKey, setCache } from "../../models/Cache";
 
 
 
@@ -81,6 +82,14 @@ function Main(props) {
   useEffect(() => {
     if (!appController) return setApiFailed({ appController });
     let localToken = localStorage.getItem("token") || Cookies.get("u") ;
+
+
+    getSingleCacheFromKey("label.dictionary").then((labels) => {
+      let r = { labels };
+      r = makeLabelDictionary(r);
+      appController.functions.setPreLoadData(r);
+
+  });
 
     BoMOnlineAPI(
       {

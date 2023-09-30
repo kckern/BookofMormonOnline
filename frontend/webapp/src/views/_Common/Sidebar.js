@@ -23,6 +23,7 @@ import fax from "./svg/facsimiles.svg";
 import historyicon from "./svg/history.svg";
 import analysis from "./svg/analysis.svg";
 import about from "./svg/about.svg";
+import theater from "./svg/theater.svg";
 import contact from "./svg/contact.svg";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 
@@ -30,17 +31,17 @@ import { assetUrl } from "src/models/BoMOnlineAPI";
 export function loadMenu(){
   var list = [
     { slug: "home", title: <span><img src={home} /> {label("menu_home")}</span> },
-    { slug: "study", title: <span><img src={study} /> {label("menu_study")}</span> },
     { slug: "contents", title: <span><img src={contents} /> {label("menu_contents")}</span> },
+    { slug: "study", title: <span><img src={study} /> {label("menu_study")}</span> },
+    { slug: "theater", title: <span><img src={theater} /> {label("menu_theater")}</span>, dev:true },
     { slug: "timeline", title: <span><img src={timeline} /> {label("menu_timeline")}</span> },
     { slug: "people", title: <span><img src={people} /> {label("menu_people")}</span> },
-    //{ slug: "relationships", title: <span><img src={relationships} /> RELATIONSHIPS</span> },
+    { slug: "relationships", title: <span><img src={relationships} /> {label("menu_network")}</span>, dev:true },
     { slug: "places", title: <span><img src={places} /> {label("menu_places")}</span> },
     { slug: "map", title: <span><img src={maps} /> {label("menu_map")}</span> },
-    //{ slug: "map", title: <span><img src={roadmap} /> TRAVELS</span> },
     { slug: "fax", title: <span><img src={fax} /> {label("menu_fax")}</span> },
     { slug: "history", title: <span><img src={historyicon} /> {label("menu_history")}</span> },
-    //{ slug: "analysis", title: <span><img src={analysis} /> {label("menu_analysis")}</span> },
+    { slug: "analysis", title: <span><img src={analysis} /> {label("menu_analysis")}</span>, dev:true },
     { slug: "about", title: <span><img src={about} /> {label("menu_about")}</span> },
   ];
 
@@ -48,7 +49,10 @@ export function loadMenu(){
   {
     list.splice(3,0, { slug: "특별반", title: <span><img src={book} />특별반</span> });
   }
-  return list;
+  return list.filter(i=>{
+    const isDev = /localhost|^dev/.test(window.location.hostname);
+    return !i.dev || isDev;
+  });
 }
 
 
@@ -125,7 +129,7 @@ function Sidebar(props) {
           setActivePath={setActivePath}
           activePath={activePath}
         />
-        <Nav>
+        <Nav className="sidebar-menu">
           <SearchBox appController={props.appController} setActivePath={setActivePath} />
           {menu.map((r,index) => {
             let isActive = activePath.match(new RegExp("^/" + r.slug));
