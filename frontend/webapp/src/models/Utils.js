@@ -79,8 +79,6 @@ export function makeLabelDictionary(r,fromCache=false) {
   r.labels = dictionary;
   //save dictionary to indexedDB as json array, key label.dictionary
   if(!fromCache) setCache({ "label.dictionary": dictionary });
-  console.log("makeLabelDictionary", {fromCache},dictionary);
-  console.log(dictionary);
   global.dictionary = dictionary;
   return r;
 }

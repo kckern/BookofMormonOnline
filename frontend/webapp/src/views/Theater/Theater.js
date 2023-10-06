@@ -335,7 +335,7 @@ function TheaterQueueIntro({ theaterController }) {
   const [countdown, setCountdown] = useState(secondsToShow);
 
   useEffect(() => {
-    if(cursorIndex===1) playSound(initSFX);
+    if(!cursorIndex) playSound(initSFX);
     setTimeout(()=>setPart(1),200);
     setTimeout(()=>setPart(2),6000);
     setTimeout(()=>setPart(3),12000);
@@ -519,13 +519,29 @@ function TheaterControls({ theaterController }) {
     setSubCursorIndex,
     currentDuration
   } = theaterController;
+
+
+
+  const [playerCanPlay, setPlayerCanPlay] = useState(false);
+
+
+
   const currentItem = queue[cursorIndex] || null;
-  const { currentState } = theaterController;
   const [isVisible, setIsVisible] = useState(false);
   useEffect(() => {
     if(!currentItem) return;
     setTimeout(() => setIsVisible(true), 100);
+
+    setPlayerCanPlay(false);
   }, [currentItem]);
+
+
+  useEffect(() => {
+    const player = document.getElementById("theater-audio-player");
+    if (!player) return;
+    player.playbackRate = theaterController.playbackRate;
+    player.play();
+  }, [playerCanPlay]);
 
   if (!currentItem) return <Loader />;
   const [num, pageslug] = currentItem?.slug.split("/").reverse();
@@ -536,12 +552,9 @@ function TheaterControls({ theaterController }) {
 
   const onCanPlay = e => {
     setDuration(e.target.duration);
-    //play
-    const player = document.getElementById("theater-audio-player");
-    if(!player) return;
-    player.playbackRate = theaterController.playbackRate;
-    player.play();
+    setPlayerCanPlay(true);
   };
+
 
   const onListen = e => {
     const progress = (e / currentDuration) * 100;
@@ -707,11 +720,25 @@ function TheatherMusicPlayer({ theaterController }) {
       id="theater-music-player-a"
       src={`${assetUrl}/audio/music/${trackA}`}
       volume={0.1}
+      onCanPlay={()=>{
+        const isPLaying = document.getElementById(`theater-music-player-a`)?.paused;
+        if(isPLaying) return;
+        const isActive = activeSide==="a";
+        if(isActive) return;
+        document.getElementById(`theater-music-player-a`)?.play();
+      }}
     />
     <ReactAudioPlayer
       id="theater-music-player-b"
       src={`${assetUrl}/audio/music/${trackB}`}
       volume={0.1}
+      onCanPlay={()=>{
+        const isPLaying = document.getElementById(`theater-music-player-a`)?.paused;
+        if(isPLaying) return;
+        const isActive = activeSide==="a";
+        if(isActive) return;
+        document.getElementById(`theater-music-player-a`)?.play();
+      }}
     />
     </>
   );
@@ -772,7 +799,6 @@ function TheaterContent({ theaterController }) {
     currentProgress,
     currentDuration
   } = theaterController;
-
   const playerPosition = document.getElementById("theater-audio-player")
     ?.currentTime;
   const playerIsPaused = document.getElementById("theater-audio-player")
@@ -805,10 +831,6 @@ function TheaterContent({ theaterController }) {
   if (timeElapsed > currentDuration - secondsBuffer)
     opacity = (currentDuration - timeElapsed) / secondsBuffer;
 
-  //play audio on mount
-  useEffect(() => {
-    document.getElementById("theater-audio-player")?.play();
-  }, []);
 
   const isFirst = cursorIndex === 0;
   const isLast = cursorIndex === queue.length - 1;
