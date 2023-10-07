@@ -542,8 +542,10 @@ function TheaterCrossRoads({ theaterController }) {
 function TheaterSidePanel({ theaterController }) {
   return (
     <div className="theater-side-panel">
+      <div className="theater-people-image-panel">
       <TheaterPeoplePlacePanel theaterController={theaterController} />
       <TheaterImagePanel theaterController={theaterController} />
+      </div>
       <TheaterCommentFeed theaterController={theaterController} />
     </div>
   );
