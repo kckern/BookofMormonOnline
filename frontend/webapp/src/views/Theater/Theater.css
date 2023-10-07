@@ -100,6 +100,7 @@
     font-size: 1.1rem;
     letter-spacing: 0.2ex;
     font-variant: small-caps;
+    position: relative;
 }
 
 .theater-super-titles
@@ -350,6 +351,31 @@ img.player-ui:hover{
 .theater-intro-slide p.presents
 {
     color:#999
+}
+.theater-wrapper .studylink
+{
+    position: absolute;
+    right:0;
+    color: white;
+    text-transform: initial;
+    background-color: #FFF3;
+    top:0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    padding: 0 0.5ex 0 1ex;
+    opacity: 0.5;
+    border-radius: 1ex;
+    margin: 0.2ex;
+}
+.theater-wrapper .studylink:hover
+{
+    opacity: 1;
+    background-color: #FFF3;
+}
+.theater-wrapper .studylink img{
+    height: 1.5rem;
+    margin-right: 0.5ex;
 }
 
 .theater-intro-slide .playbutton

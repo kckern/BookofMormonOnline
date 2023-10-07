@@ -12,7 +12,7 @@ import canAutoplay from 'can-autoplay';
 import logo from "src/views/_Common/svg/logo.svg";
 import menu from "src/views/User/svg/settings.svg";
 import mute from "./svg/mute.svg";
-import music from "./svg/music.svg";
+import studyimg from "src/views/_Common/svg/study.svg";
 import next from "./svg/next.svg";
 import pause from "./svg/pause.svg";
 import play from "./svg/play.svg";
@@ -936,10 +936,13 @@ function TheaterSuperTitles({ theaterController }) {
     heading
   } = currentItem;
   const narration = currentItem?.narration?.description || "Sub Item...";
+
+  const StudyButton = <Link className="studylink" to={`/${currentItem?.slug}`}><img src={studyimg} />Study</Link>
+
   return (
     <div className="theater-super-titles">
       <div className="theater-super-title-left">
-        <div className="theater-super-title-heading">{heading}</div>
+        <div className="theater-super-title-heading">{heading}{StudyButton}</div>
         <div className="theater-super-title-section">{section}</div>
         <div className="theater-super-title">{page}</div>
       </div>
