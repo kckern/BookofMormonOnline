@@ -573,7 +573,7 @@ span.pageTitle
     transition:  max-height 0.5s ease-in-out;
     display: flex;
     flex-direction: column;
-    height: calc(100% - 17rem);
+    height: 20rem;
 
 }
 
@@ -588,7 +588,6 @@ span.pageTitle
     display: flex;
     justify-content: center;
     overflow: hidden;
-    background: url('https://i.imgur.com/uqjhnKX.jpg');
     position: relative;
 
 }
