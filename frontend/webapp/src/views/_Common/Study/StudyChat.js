@@ -492,7 +492,7 @@ export function StudyGroupChat({
   let isSameSender = false;
   let max_i = messages.length - 1;
   return (
-    <div className={"StudyGroupChat"}>
+    <div className={"StudyGroupChat"} key={channel.url}>
       <TypingIndicators appController={appController} channel={channel} />
       {loading ? (
         <Loader />
@@ -1207,6 +1207,11 @@ function BaseMessage({
       </>
     );
   }
+
+  const isBot = !!message?._sender?.metaData?.isBot;
+
+  const botBadge = isBot ? <span className="botBadge">BOT</span> : null;
+
   return (
     <div
       className={
@@ -1217,7 +1222,7 @@ function BaseMessage({
     >
       {image}
       <div className={"messageContent"}>
-        <span className="senderName">{message?._sender?.nickname}</span>
+        <span className="senderName">{message?._sender?.nickname} {botBadge}</span>
         <span className="timeStamp">
           {" "}
           •{" "}
@@ -1232,7 +1237,7 @@ function BaseMessage({
           </a>
         </span>
         {messageActions}
-        <div className={`messageBody ${isEdit && "edit"}`}>
+        <div className={`messageBody ${isEdit ? "edit" : ""}`}>
           <MessageTypes
             appController={appController}
             index={index}
@@ -1369,8 +1374,6 @@ function TextComment({
     if (isEdit) {
       let textbox = document.querySelector(".edit .StudyGroupChatInput input");
       if (textbox === null) return null;
-      textbox.value =
-        message.message === "•" ? data.description : message.message;
     }
   }, [isEdit]);
 
@@ -1382,10 +1385,9 @@ function TextComment({
       ? chatLinkedContent.textInFeed[message.customType + "/" + data.links.text]
       : false;
 
-  let messageText = formatText(message, setPanel);
-
-  if (message.message === "•" && data.description)
-    message.message = <span className={"desc"}>⭐ {data.description}</span>;
+      let messageText = formatText(message, setPanel);
+      messageText = !/[•]/.test(messageText?.props?.children?.[0]) ? messageText : <span className={"desc"}>⭐ {data.description}</span>;
+    
 
   const updateMessage = () => {
     let event = new CustomEvent("handleUpdateMessage");
@@ -1537,9 +1539,7 @@ function ImageComment({
       : false;
 
   let messageText = formatText(message, setPanel);
-  if (message.message === "•")
-    message.message = <span className={"desc"}>⭐ {data.description}</span>;
-
+  messageText = !/[•]/.test(messageText?.props?.children?.[0]) ? messageText : <span className={"desc"}>⭐ {data.description}</span>;
   return (
     <div>
       {messageText} {likes}
@@ -1571,8 +1571,9 @@ function FaxComment({
       : false;
 
   let messageText = formatText(message, setPanel);
-  if (message.message === "•")
-    message.message = <span className={"desc"}>⭐ {data.description}</span>;
+
+  messageText = !/[•]/.test(messageText?.props?.children?.[0]) ? messageText : <span className={"desc"}>⭐ {data.description}</span>;
+
 
   return (
     <div>
@@ -1653,6 +1654,7 @@ function Message({
       );
   }
 
+  message.message = message.message.replace(/^[•\s]+$/, "");
   let messageText = formatText(message, setPanel);
 
   if (message.customType === "formatted_comment") {
@@ -1660,7 +1662,6 @@ function Message({
       messageText = ParseMessage(messageText);
     }
   }
-  if (messageText === "•" && highlightTags) messageText = "";
   return !isEdit ? (
     <div
       className="Message"

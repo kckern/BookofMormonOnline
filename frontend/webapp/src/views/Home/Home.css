@@ -192,6 +192,17 @@ margin: 0;
     width: 3em;
 }
 
+div.toolTipNickname
+{
+    width: 7em;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    word-wrap: break-word; 
+    display: inline-block;
+
+}
+
 .Community  .groupCard .groupMembershipCount
 {
     width: 1rem;
@@ -333,6 +344,7 @@ margin: 0;
     max-height: 3em;
     background-color: #CCC;
     border-radius: 50%;
+    flex-shrink: 0;
 }
 .Community  .groupCard .groupMembers div{
     margin: 0;
@@ -914,6 +926,20 @@ img.groupAvatar
     color: #AAA;
 }
 
+.commentThreadItem .textbox .namerow .botBadge
+{
+    
+  background-color: #d3e1ea;
+  color: #0006;
+  padding: 0 1ex;
+  border-radius: 0.5ex;
+  font-weight: 400;
+  font-size: xx-small;
+  border: 1px solid #0006;
+  position: relative;
+  bottom: 2px;
+}
+
 .commentThreadItem .textbox .mesg
 {
     line-height: 1.2em;
@@ -1048,13 +1074,61 @@ span.groupName,
     width: 10em;
     display: flex;
     margin-bottom: .5ex;
+    position: relative;
+
 }
 
-.GroupLeaderBoard .leaderBoardItem img{
+.leaderboard > .leaderBoardItem .img-container,
+.GroupLeaderBoard .leaderBoardItem .img-container {
+    position: relative;
+    display: flex;
+    height: 2.5rem;
+    flex-shrink: 0;
+    overflow: hidden    ;
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: -0.5rem;
+}
+.GroupLeaderBoard .leaderBoardItem .img-container{
+
+    width: 2.5rem;
+    margin-bottom: 0rem;
+}
+
+.GroupLeaderBoard .leaderBoardItem img {
     height: 2.5rem;
     width: 2.5rem;
-    flex-shrink: 0;
 }
+.leaderboard > .leaderBoardItem .img-container .trophies,
+.GroupLeaderBoard .leaderBoardItem .trophies {
+    width: 100%;
+    height: 1rem;
+    margin-top: -0.75rem;  
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    gap: 1px;
+    max-width: 3rem;
+}
+
+.GroupLeaderBoard .leaderBoardItem .trophies
+{
+
+    margin-top: -1rem;  
+}
+
+.leaderBoardItem .trophies img{
+    max-height: 1rem;
+    max-width: 1rem;
+    border: 0;
+    background-color: #FFFFFFCC;
+    flex-shrink: 1;
+    border-bottom-left-radius: 3px;
+    border-bottom-right-radius: 3px;
+    filter: sepia(0);
+}
+
 
 
 .GroupLeaderBoard .leaderBoardItem .rank{
@@ -1111,4 +1185,122 @@ span.groupName,
 
 .GroupLeaderBoard .leaderBoardItem .progress span{
     z-index: 99;
+}
+
+.leaderboard
+{
+    display: flex;
+    flex-direction: row;
+
+    flex-wrap: wrap;
+    gap: 2px;
+    margin: 1ex 0;
+    max-height: calc(10rem + 3px);
+    overflow: hidden;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* hide .leaderboard if under 900px wide */
+@media (max-width: 900px) {
+    .leaderboard {
+        display: none;
+    }
+}
+
+
+.leaderboard > .leaderBoardItem
+{
+    width: calc(20% - 8px);
+    height: 4.5rem;
+    overflow: hidden;
+    position: relative;
+    text-align: center;
+    background-color: #00000009;
+    border-radius: 1rem;
+    border-top-left-radius: 3px;
+    cursor: pointer;
+    margin: 3px;
+    margin-bottom: 1ex;
+
+
+}
+
+.leaderboard > .leaderBoardItem:hover
+{
+    background-color: #00000020;
+    outline: 2px solid rgb(185, 231, 203);
+
+}
+
+.leaderboard .leaderBoardItem .rank
+{
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 1rem;
+    width: 1rem;
+    background-color: rgb(185, 231, 203);
+    overflow: hidden;
+    line-height: 1rem;
+    border-radius: 5px;
+    border-color: rgb(64, 128, 94);
+    color: rgb(64, 128, 94);;
+}
+
+.leaderBoardItem img{
+    height: 2rem;
+    width: 2rem;
+    border-radius: 50%;
+    border: 1px solid #AAA;
+    flex-shrink: 0;
+}
+
+.leaderboard .namenum
+{
+    font-size: x-small;
+    overflow: hidden;
+    white-space: nowrap;
+    font-weight: bold;
+}
+.leaderboard .progress
+{
+    margin: 0 1ex;
+}
+
+.leaderboard .progress{
+    height: 1rem;
+    font-size: xx-small;
+    line-height: 1rem;
+    position: relative;
+}
+
+.leaderboard > .leaderBoardItem:hover .progress{
+    background-color: #EEE;
+}
+
+.leaderboard .progressbar
+{
+    background-color: #6bd098;
+}
+.leaderboard .progress span{
+    position: absolute;
+    top:0;
+    left:0;
+    right:0;
+    font-weight: 400;
+}
+.leaderboard .lastseen
+{
+    font-size: xx-small;
+    color: #888;
+    font-weight: 400;
+    margin-top: .5ex;
+}
+
+
+@media (max-width: 2000px) {
+    .leaderboard .lastseen>span {
+        display: none;
+    }
 }

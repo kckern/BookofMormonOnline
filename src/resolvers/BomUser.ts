@@ -1,6 +1,6 @@
 import { models, models as Models } from '../config/database';
 import Sequelize, { Model } from 'sequelize';
-import { sendbird } from '../library/sendbird';
+import { sendbird } from '../library/sendbird.js';
 import crypto from 'crypto';
 import {
   Op,
@@ -34,9 +34,12 @@ const md5 = (value: string) => {
 
 const cleanUsername = (username: string, email: string) => {
 
+  const emailPrefix = email ? email.split("@")[0] : "";
+  if(emailPrefix) return emailPrefix;
   username = username.toLowerCase().replace(/[^A-z0-9.-]/ig, ".").replace(/[.]+/, ".");
   username = username.replace(/[\(\[].*[\)\]]/, "").trim();  //remove parenthesis
   username = username.replace(/[.]+/, "."); //remove double dots
+  username = username.replace(/^\.+/, "").replace(/\.+$/, "");
   username = username.replace(/[^\x00-\x7F]/g, ""); //remove non-ascii
   if (!username) username = md5(email);   //if no username, use email hash
   return username;
@@ -309,21 +312,11 @@ export default {
 
       args.username = cleanUsername(args.username, args.email);
       const socialUserId = md5(args.username);
+      const emailHash = md5(args.email);
 
-      let profile_url =
-        'https://avatars.dicebear.com/api/jdenticon/' +
-        crypto
-          .createHash('md5')
-          .update(args.username + new Date().getTime())
-          .digest('hex') +
-        '.svg';
+      let profile_url = `https://api.dicebear.com/7.x/thumbs/svg?seed=${socialUserId}`;
       if (args.email) {
-        let gravatarUrl =
-          'https://www.gravatar.com/avatar/' +
-          crypto
-            .createHash('md5')
-            .update(args.email)
-            .digest('hex');
+        let gravatarUrl = `https://www.gravatar.com/avatar/${emailHash}`;
         try {
           await axios.get(gravatarUrl + '?d=404');
           profile_url = gravatarUrl;
@@ -504,6 +497,7 @@ async function processSocialUser(args, incr: number) {
   let myUserEmail: any = email ? await Models.BomUser.findOne({ where: { email } }) : null;
   let myUserSocial: any = await Models.BomUserSocial.findOne({ where: { network, social_id } });
 
+  //CREATE USER
   if (!myUserSocial && !myUserEmail) {
     var user = cleanUsername(name, email);
     if (incr > 0) user = user + "." + incr;
@@ -521,6 +515,7 @@ async function processSocialUser(args, incr: number) {
     await Models.BomUserSocial.create({ user, network, social_id });
     const hashed_id = md5(user)
     let social = await sendbird.loadUser(hashed_id, name, profile_url);
+    await sendbird.updateUserNickname(hashed_id, name);
     return {
       isSuccess: true,
       msg: `${network} create + login Success`,
@@ -606,6 +601,10 @@ async function naversignin(args: any) {
   };
   let string = await request(options);
   var data = JSON.parse(string).response;
+  const nicknameHasAsterisk = /[*]/.test(data.nickname);
+  const nameHasAsterisk = /[*]/.test(data.name);
+  let nickname = !nicknameHasAsterisk ? data.nickname : !nameHasAsterisk ? data.name : data.nickname.replace(/[*]/g, "") || data.name.replace(/[*]/g, "") || data.email.split("@")[0];
+  nickname = nickname.replace(/\w\S*/g, (w: string) => (w.replace(/^\w/, (c: string) => c.toUpperCase())));
   return processSocialUser(
     {
       network: 'naver',

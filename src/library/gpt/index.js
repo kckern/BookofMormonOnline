@@ -29,6 +29,7 @@ async function GPT4(messages) {
         })
         .catch(function (error) {
           console.error(error.message);
+          console.error(error.response?.data?.error);
           //  console.log(error, 'error in calling chat completion');
           return false;
         });
@@ -43,14 +44,14 @@ async function GPT4(messages) {
 
 async function GPT35Turbo(messages) {
   messages = messages.map((message) => {
-    return { ...message, content: message.content.substring(0, 2048) };
+    return { ...message, content: message.content?.substring(0, 2048) };
   });
   try {
     const data = {
       model: 'gpt-3.5-turbo',
       messages,
       temperature: 0.7,
-      max_tokens: 2048,
+      max_tokens: 896,
       n: 1
     };
 
@@ -76,6 +77,8 @@ async function GPT35Turbo(messages) {
 
 
 const askGPT = async (instructions, input, model, attempt) => {
+
+  if(!input) return false;
     
     model = model || "gpt-4";
     attempt = attempt || 1;
@@ -87,9 +90,11 @@ const askGPT = async (instructions, input, model, attempt) => {
     }
   
     let messages = [
-      { role: "system", content: instructions },
-      { role: "user", content: input },
+      { role: "system", content: instructions }
     ];
+
+    if(Array.isArray(input)) messages = [...messages, ...input];
+    else messages.push({role: "user", content: input});
   
 
     const gptPromise = (model==="gpt-4") ? GPT4(messages) : GPT35Turbo(messages);

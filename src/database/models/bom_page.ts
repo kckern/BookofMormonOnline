@@ -17,6 +17,10 @@ export default class _bom_page extends ModelBase {
           type: DataTypes.STRING(100),
           allowNull: false
         },
+        ref: {
+          type: DataTypes.STRING(100),
+          allowNull: false
+        },
         weight: {
           type: DataTypes.INTEGER,
           allowNull: false
@@ -24,10 +28,6 @@ export default class _bom_page extends ModelBase {
         parent: {
           type: DataTypes.STRING(50),
           allowNull: false
-        },
-        section: {
-          type: DataTypes.STRING(50),
-          allowNull: true
         }
       }, {
       sequelize,

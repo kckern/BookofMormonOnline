@@ -104,19 +104,13 @@ function NarrationToolTip({ type, id, appController }) {
   if (!appController.preLoad) return null;
   if (appController.preLoad[type] === undefined) return null;
 
-  let list = appController.preLoad[type];
-  let ttData = false;
-  for (let x in list) {
-    if (list[x].slug === id) {
-      ttData = list[x];
-      break;
-    }
-  }
+  let list = Object.values(appController.preLoad[type]);
+  let ttData = list.find(x => x.slug === id);
   if (!ttData) return null;
-
-  let info = (type === "personList") ? ttData.title : ttData.info;
+  let info =  ttData.title || ttData.info;
   let name = ttData.name.replace(/(.*?), (.*)/, "$2 $1")
   let linkType = (type === "personList") ? "people" : "places";
+  if(!info) return null;
   return (
     <div className="ppToolTip">
       <img src={`${assetUrl}/${linkType}/${id}`} alt={linkType} />
@@ -129,6 +123,7 @@ function NarrationToolTip({ type, id, appController }) {
 }
 
 function numberFormat(string) {
+  if(!string) return null;
   string = string.replace("1", "₁");
   string = string.replace("2", "₂");
   string = string.replace("3", "₃");

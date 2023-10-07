@@ -10,47 +10,149 @@ const md5 = (value: string)=>{
   if(!value) return "";
   if(/$[0-9a-f]{32}$/.test(value)) return value;
   return crypto.createHash('md5').update(value,'utf8').digest("hex");
+}
+
+const userIsChannelAdmin = async (user_id: string, channel_url: string) => {
+  let group = await sendbird.loadChannel(channel_url);
+  let matches = group.members.filter(u => u.user_id === user_id && u.role === 'operator');
+  if (!matches.length) return false;
+  return true;
+}
+
+const maskNickname = (nickname: String) => {
+
+  //return first letter only
+  if(nickname.length < 4) return nickname.charAt(0).toUpperCase()+"██";
+
+  nickname = nickname.replace(/^(.{2}).*(.{2})$/,"$1████$2");
+  nickname = nickname.charAt(0).toUpperCase() + nickname.slice(1);
+  return nickname;
 
 }
 
+const maskUserPrivacy = (i: any) => {
+    const pack = "personas";
+    const user_id = i.user_id || md5(i.user);
+    delete i.user_id;
+    const maked_picture =  `https://api.dicebear.com/7.x/${pack}/svg?seed=${user_id}&eyes=open,sunglasses,wink,happy&facialHair=beardMustache,goatee&facialHairProbability=20&hair=bobCut,curly,long,pigtails,shortCombover,buzzcut,beanie&mouth=smile,smirk,bigSmile&nose=smallRound,mediumRound&skinColor=d78774,b16a5b,eeb4a4,92594b`
+    const masked_nickname = maskNickname(i.nickname);
+
+    if(i.public) return i;
+
+    i.nickname = masked_nickname;
+    i.picture = maked_picture;
+    return i;
+  }
+
+
+
+
+const loadUserFromToken = async (token: string) => {
+  let user: any = await Models.BomUser.findOne({
+    raw: true,
+    include: [
+      {
+        model: Models.BomUserToken,
+        where: {
+          token: token
+        }
+      }
+    ]
+  });
+  return user;
+}
+
+
+
+
 export default {
   Query: {
+
+    botlist: async (item: any, args: any, context: any, info: any) => {
+
+      const lang = context.lang ? context.lang : null;
+      const botUsers = await sendbird.listBotUsers(lang);
+      return botUsers.map(u => {
+        if(!u.user_id) return null;
+        return {
+          id: u.user_id,
+          name: u.nickname || "Bot",
+          description: u.metadata?.description || "A helpful bot",
+          picture: u.profile_url || "https://i.imgur.com/IwVZGhY.png",
+          enabled: !!u.metadata?.welcome
+        }
+
+
+      }).filter(u=>!!u);
+
+
+    },
+
+
+
     leaderboard: async (item: any, args: any, context: any, info: any) => {
       const lang = context.lang ? context.lang : null;
-      const rankedUsers :any = await Models.BomUser.findAll({
+
+      let user: any = await Models.BomUser.findOne({
         raw: true,
-        attributes: ['user','name','last_active', 'complete'],
-        where: { last_active: { [Op.gt]: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000) }},
-        order: [['complete', 'DESC']],
+        include: [
+          {
+            model: Models.BomUserToken,
+            where: {
+              token: args.token
+            }
+          }
+        ]
       });
 
-      console.log(rankedUsers.map((u:any)=>`${u.name || u.user} ${u.complete}% ${u.last_active}`));
+      const my_sb_user_id = md5(user?.user);
+
+      const activeTimeFrame = Math.floor(Date.now() / 1000) - (90 * 24 * 60 * 60);
+      const rankedUsers :any = await Models.BomUser.findAll({
+        raw: true,
+        attributes: ['user',[Sequelize.literal(`MD5(user)`), 'sbuser'],'name','last_active', 'complete'],
+        where: { last_active: { [Op.gt]: activeTimeFrame}},
+        order: [['complete', 'DESC']],
+      });
       const topUsers = rankedUsers.slice(0,100);
-      const sendbirdUserObjects = await sendbird.listUsers(topUsers.map((u:any)=>md5(u.user)));
+
+      const recentFinishersUsers :any = (await Models.BomUser.findAll({
+        raw: true,
+        attributes: ['user',[Sequelize.literal(`MD5(user)`), 'sbuser'],'name','finished'],
+        where: { finished : { [Op.gt]: 0}},
+        order: [['finished', 'DESC']],
+        limit: 10
+      })).map((u:any)=>({...u,finished:[u.finished]}));
+
+      const sbIds = [...topUsers,...recentFinishersUsers].map((u:any)=>u.sbuser);
+
+      const sendbirdUserObjects = await sendbird.listUsers(sbIds);
+      console.log(sendbirdUserObjects.length,topUsers.length);
 
       const publicUsers = await sendbird.getMembersofPublicGroups();
+      const privateUsersVisibleToMe = my_sb_user_id ? await sendbird.getMembersofPrivateGroups(my_sb_user_id) : [];
+      const visibleUsers = [...publicUsers,...privateUsersVisibleToMe];
+
+      const currentProgress =  topUsers.map((u:any)=>{
+        const sendbirdUserObject = sendbirdUserObjects.find((sbu:any)=>sbu.user_id===u.sbuser);
+        return loadHomeUser(sendbirdUserObject,u,visibleUsers);
+      }).filter((u:any)=>!!u).slice(0,50).map(maskUserPrivacy).sort((a:any,b:any)=>b.progress-a.progress);
+
+      const recentFinishers = recentFinishersUsers.map((u:any)=>{
+        const sendbirdUserObject = sendbirdUserObjects.find((sbu:any)=>sbu.user_id===u.sbuser);
+        return loadHomeUser(sendbirdUserObject,u,visibleUsers);
+      }).map(maskUserPrivacy);
 
 
-
-
-      return topUsers.map((u:any)=>{
-        const sendbirdUser = sendbirdUserObjects.find((sbu:any)=>sbu.user_id===md5(u.user));
-        if(!sendbirdUser) return null;
-        return {
-          user_id: u.user,
-          nickname: sendbirdUser?.nickname,
-          picture: sendbirdUser?.profile_url,
-          progress: parseFloat(u.complete),
-          finished: [],
-          bookmark: sendbirdUser?.metadata?.bookmark,
-          public: publicUsers.includes(md5(u.user))
-        }
-      }).filter((u:any)=>!!u).slice(0,50);
+      return {
+        recentFinishers,
+        currentProgress,
+      }
 
 
     },
     loadGroupsFromHash: async (item: any, args: any, context: any, info: any) => {
-      console.log("a")
+      //console.log("a")
       if (args.hash === undefined) return false;
       let shortLinks = await Models.BomShortlinks.findAll({ where: { hash: args.hash } });
       if (!shortLinks) return [];
@@ -108,7 +210,7 @@ export default {
 
       let myHomeGroups = [];
       if (user) {
-        console.log(user);
+        //console.log(user);
         const bom_username = user.user;
         const my_sb_user_id = md5(bom_username);
 
@@ -266,16 +368,35 @@ export default {
       if (!me.length) return [];
       group = await loadGroup(group, 'admin');
       let userIds = group.requests;
-      return sendbird.listUsers(userIds).then(data=>data.map(sbUser => {
-        return {
-          user_id: sbUser.user_id,
-          nickname: sbUser.nickname,
-          picture: sbUser.profile_url
-        };
-      }))
+      return sendbird.listUsers(userIds).then(data=>data.map(sbUser => loadHomeUser(sbUser)));
     }
   },
   Mutation: {
+
+    addBot: async (item: any, args: any, context: any, info: any) => {
+      const {token,channel,bot} = args;
+      const user = await loadUserFromToken(token);
+      if(!user) return false;
+      const sbid = md5(user.user);
+      const isChannelAdmin = await userIsChannelAdmin(sbid,channel);
+      if(!isChannelAdmin) return false;
+      const success = await sendbird.addUserToChannel(channel,bot);
+      console.log({success});
+      if(!success) return false;
+      return true;
+
+    },
+    removeBot: async (item: any, args: any, context: any, info: any) => {
+      const {token,channel,bot} = args;
+      const user = await loadUserFromToken(token);
+      if(!user) return false;
+      const sbid = md5(user.user);
+      const isChannelAdmin = await userIsChannelAdmin(sbid,channel);
+      if(!isChannelAdmin) return false;
+      const success = await sendbird.removeUserFromChannel(channel,bot);
+      if(!success) return false;
+      return true;
+    },
     joinGroup: async (item: any, args: any, context: any, info: any) => {
       if (args.hash === undefined) return false;
       if (args.token === undefined) return false;
@@ -290,11 +411,18 @@ export default {
           }
         ]
       });
+
       if (!user) return { isSuccess: false, msg: 'User not found' };
       let username = user.getDataValue('user');
+      let sb_user_id = md5(username);
       let groupId: any = await ((await Models.BomShortlinks.findByPk(args.hash)) as any).getDataValue('string');
+
       if (!groupId) return { isSuccess: false, msg: 'Group not found' };
-      return sendbird.invite(groupId, username);
+      let success = sendbird.addUserToChannel(groupId, sb_user_id)
+
+      if (!success) return { isSuccess: false, msg: 'Failed to join group', channel: groupId, user: sb_user_id };
+      return { isSuccess: true, msg: 'Joined group', channel: groupId, user: sb_user_id };
+
     },
     joinOpenGroup: async (item: any, args: any, context: any, info: any) => {
       if (args.url === undefined) return { isSuccess: false, msg: 'Group not found' };
@@ -365,7 +493,6 @@ export default {
 
     processRequest: async (item: any, args: any, context: any, info: any) => {
       let {token,channel,user_id,grant} = args;
-      user_id = md5(user_id);
       if(!token || !channel || !user_id) return false;
       let user: any = await Models.BomUser.findOne({
         include: [
@@ -384,7 +511,8 @@ export default {
       let me = group.members.filter(u => u.user_id === my_sb_user_id && u.role === 'operator');
       if (!me.length) return false;
       let i = null;
-      if(grant) i = await sendbird.invite(channel,my_sb_user_id);
+      if(grant) i = await sendbird.addUserToChannel(channel,user_id);
+      if(!i) return false;
       await sendbird.withdraw(group,my_sb_user_id);
       return true;
 
@@ -399,17 +527,43 @@ async function loadGroupFromChannelId(channelId: string) {
   return group || {};
 }
 
-function loadHomeUser(sbuser) {
+
+
+function loadHomeUser(sbuser, user:any={}, publicUsers = []) {
+
+  const user_id = sbuser?.user_id || md5(user?.user);
+  const picture =  sbuser?.profile_url ||  `https://api.dicebear.com/7.x/personas/svg?seed=${user_id}&eyes=open,sunglasses,wink,happy&facialHair=beardMustache,goatee&facialHairProbability=20&hair=bobCut,curly,long,pigtails,shortCombover,buzzcut,beanie&mouth=smile,smirk,bigSmile&nose=smallRound,mediumRound&skinColor=d78774,b16a5b,eeb4a4,92594b`;
+
+  if(!sbuser?.metadata) return {
+    user_id,
+    nickname: user?.name || user?.user || "User",
+    picture,
+    progress: parseFloat(user?.complete) || 0,
+    finished: user.finished || [],
+    lastseen: user.last_active,
+    nonSocial:true
+  }
+
+
   let summary = { completed: 0, finished: [] };
+  let bookmark = { latest:0, slug: null, pagetitle: null, heading: null };
   try {
     summary = JSON.parse(sbuser?.metadata?.summary);
+    bookmark = JSON.parse(sbuser?.metadata?.bookmark);
   } catch (e) {}
+
+
   return {
     user_id: sbuser?.user_id,
     nickname: sbuser?.nickname,
     picture: sbuser?.profile_url,
     progress: summary?.completed || 0,
-    finished: summary?.finished || []
+    finished: summary?.finished || [],
+    lastseen: bookmark?.latest || 0,
+    laststudied: bookmark?.heading  ? `${bookmark?.heading} (${bookmark?.pagetitle})` : null,
+    bookmark: bookmark?.slug || null,
+    public: !!publicUsers.includes(sbuser?.user_id) || null
+
   };
 }
 
@@ -456,13 +610,7 @@ function loadHomeItem(sbMsg) {
   let repliers = sbMsg.thread_info?.most_replies || [];
   let replycount = sbMsg.thread_info?.reply_count || 0;
 
-  repliers.map(r => {
-    return {
-      user_id: r.guest_id,
-      nickname: r.nickname,
-      picture: r.picture
-    };
-  });
+  repliers.map(r => loadHomeUser(r));
 
   let likes = sbMsg.reactions?.shift()?.user_ids || [];
   

@@ -10,11 +10,7 @@ import "./Narration.css";
 import "./TextContent.css";
 import { snapSelectionToWord } from "src/models/Utils";
 import { SRLWrapper } from "simple-react-lightbox";
-import blue from "src/views/User/svg/blue.svg";
-import green from "src/views/User/svg/green.svg";
-import yellow from "src/views/User/svg/yellow.svg";
-import blank from "src/views/User/svg/blank.svg";
-import empty from "src/views/User/svg/empty.svg";
+import {  label} from "src/models/Utils";
 import fullscreen from "src/views/Page/svg/fullscreen.png";
 
 function reducer(narrationController, input) {
@@ -415,7 +411,7 @@ function LightBox({ narrationController, setOpenLightBox,imgClicker }) {
 
   if (narrationController.states.panelImageIds.length > 1) {
     panelImages = narrationController.states.panelImageIds.map((id) => {
-      const caption = narrationController.supplement.image[id].title;
+      const caption = narrationController.supplement.image?.[id]?.title || "Artwork";
       return (
         <img
           className={`img-${id}`}
@@ -426,7 +422,7 @@ function LightBox({ narrationController, setOpenLightBox,imgClicker }) {
     });
   }
 
-  const caption = narrationController.supplement.image[activeImageId].title;
+  const caption = narrationController.supplement.image?.[activeImageId]?.title || "Artwork";
 
   return (
     <SRLWrapper options={options} callbacks={callbacks}>
@@ -466,6 +462,11 @@ function ImagePanel({ narrationController }) {
     } else {
       setMarginTop(0);
     }
+    
+    const activeId = narrationController.states.activeImageId;
+    const caption = narrationController.supplement.image?.[activeId]?.title || "Artwork";
+    if(caption) document.title = "Art: " + caption + " | " + label("home_title");
+
   }, [marginTop, narrationController.states.activeImageId]);
 
   if (narrationController.states.showFax) return null;
@@ -598,7 +599,17 @@ function FacsimilePanel({ narrationController }) {
       narrationController.functions.setActiveFax(initOpenVersion);
       //narrationController.pageController.functions.markAsInitiated()
     }
+
+
   }, [narrationController.states]);
+
+
+  useEffect(() => {
+
+    const version = narrationController.states.activeFax;
+    document.title = "Facsimile: " + version + "—" + narrationController.data.text.heading + " | " + label("home_title");
+
+  }, [narrationController.states.activeFax]);
 
   let appController = narrationController.appController;
   let ref = narrationController.data.text.heading;

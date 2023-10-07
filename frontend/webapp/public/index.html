@@ -36,14 +36,14 @@
       window.titleObserver = new MutationObserver(function(mutations) {
         const newTitle = mutations[0].target.outerText.replace(/\s*[\|][^\|]+$/,'');
         if(window.lastTitle === newTitle) return false; 
-        if(window.lastpath === window.location.pathname) return false;
+        if(window.lastPath === window.location.pathname) return false;
         if(defaultTitle === newTitle) return false;
         if(/^http/.test(newTitle)) return false;
         const path = window.location.pathname;
         const logger = window.clicky?.log || function(){};
         if(newTitle) logger(path,newTitle,"pageview");
         window.lastTitle = newTitle;
-        window.listPath = path;
+        window.lastPath = path;
       }).observe( document.querySelector('title'), { subtree: true, characterData: true, childList: true });
 
     </script>

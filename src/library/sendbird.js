@@ -1,30 +1,25 @@
 const axios = require('axios');
 const FormData = require('form-data');
 const fs = require('fs');
-import crypto from 'crypto';
+const crypto = require('crypto');
+const isJSON = require("is-json");
 
 
-
-const md5 = (string) => {
-  return crypto.createHash('md5').update(string).digest('hex');
-};
-
-
+const {SENDBIRD_APPID, SENDBIRD_TOKEN} = process.env;
 
 class Sendbird {
-  app_id: string = process.env.SENDBIRD_APPID;
-  access: string = process.env.SENDBIRD_TOKEN;
-  axios_instance: any = axios.create({
-    timeout: 10000
-  });
 
-  async createUser(user_id: string, nickname: string, profile_url?: string, email?: string) {
-   // console.log(`createUser ${user_id}`)
-    if (user_id === '' || user_id === undefined) return false;
-    if (nickname === '' || nickname === undefined) nickname = user_id;
- //   console.log(`createUser ${user_id} ${nickname} ${email}`);
+  
+
+  async createUser(user_id, nickname="", profile_url="", email="", attempt=0) {
+
+    if(attempt>5) return false;
+    if (!user_id) return false;
+    if (!nickname) return false;
+
+    //mkdir -p ./tmp
+    if (!fs.existsSync('./tmp')) fs.mkdirSync('./tmp');
     const profile_path = `./tmp/${Math.random() * 1000}.jpg`;
-  //  console.log({profile_path});
     if (!profile_url) profile_url = '';
 
     var data = new FormData();
@@ -57,9 +52,9 @@ class Sendbird {
     data.append('profile_url', profile_url);
     var config = {
       method: 'POST',
-      url: 'https://api-' + this.app_id + '.sendbird.com/v3/users',
+      url: 'https://api-' + SENDBIRD_APPID + '.sendbird.com/v3/users',
       headers: {
-        'Api-Token': this.access,
+        'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json',
         ...data.getHeaders()
       },
@@ -69,76 +64,76 @@ class Sendbird {
       .then(function(response) {
         fs.unlink(profile_path, () => {});
         const newProfileUrl = response.data.profile_url;
-        if (!newProfileUrl) return  sendbird.loadUser(user_id);
+        if (!newProfileUrl) return  sendbird.loadUser(user_id,nickname,profile_url,email,attempt+1);
         return getFwdUrl(newProfileUrl).then(S3Url => {
        //   console.log({ newProfileUrl, S3Url });
           return sendbird.updateUserProfileUrl(user_id, S3Url).then(r=>{
-              return sendbird.loadUser(user_id);
+              return sendbird.loadUser(user_id,nickname,S3Url,email,attempt+1);
           })
         });
       })
       .catch(function(error) {
     //    console.log("LINE 71 ERROR - ",error.response.data.message);
-       return sendbird.loadUser(user_id)
+       return sendbird.loadUser(user_id,nickname,profile_url,email,attempt+1);
       });
   }
 
-  async updateUserNickname(user_id: string, nickname: string) {
+  async updateUserNickname(user_id, nickname) {
     if (!user_id) return false;
     if (!nickname) nickname = user_id;
 
     var authOptions = {
       method: 'PUT',
-      url: 'https://api-' + this.app_id + `.sendbird.com/v3/users/${encodeURI(user_id)}`,
+      url: 'https://api-' + SENDBIRD_APPID + `.sendbird.com/v3/users/${encodeURI(user_id)}`,
       data: JSON.stringify({ nickname: nickname }),
       headers: {
-        'Api-Token': this.access,
+        'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
       json: true
     };
-    return this.axios_instance(authOptions)
-      .then((res: any) => {
+    return axios(authOptions)
+      .then((res) => {
         //console.error({ res });
         if (res.data.nickname) return res.data.nickname;
         return false;
       })
-      .catch((error: any) => {
+      .catch((error) => {
         console.log({ authOptions });
         console.error({ error });
         return false;
       });
   }
-  async updateUserProfileUrl(user_id: string, profile_url: string) {
+  async updateUserProfileUrl(user_id, profile_url) {
     if (!profile_url) return false;
 
     var authOptions = {
       method: 'PUT',
-      url: 'https://api-' + this.app_id + `.sendbird.com/v3/users/${encodeURI(user_id)}`,
+      url: 'https://api-' + SENDBIRD_APPID + `.sendbird.com/v3/users/${encodeURI(user_id)}`,
       data: JSON.stringify({ profile_url: profile_url }),
       headers: {
-        'Api-Token': this.access,
+        'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
       json: true
     };
-    return this.axios_instance(authOptions)
-      .then((res: any) => {
+    return axios(authOptions)
+      .then((res) => {
         //console.error({ res });
         if (res.data.profile_url) return res.data.profile_url;
         return false;
       })
-      .catch((error: any) => {
+      .catch((error) => {
         console.log({ authOptions });
         console.error({ error });
         return false;
       });
   }
-  async closeTab(user_id: string) {
+  async closeTab(user_id) {
     if (!user_id) return false;
     return this.updateUserMetadatum(user_id, 'activeGroup', '').then(r =>
       this.getStudyGroupChannels(user_id).then(channels => {
-        let items = channels.map((channel: any, i: number) => {
+        let items = channels.map((channel) => {
           return this.updateChannelMetadatum(
             channel.channel_url,
             'action',
@@ -149,91 +144,93 @@ class Sendbird {
       })
     );
   }
-  async updateUserMetadatum(user_id: string, key: string, val: string) {
+  async updateUserMetadatum(user_id, key, val) {
     if (!user_id) return false;
 
     var authOptions = {
       method: 'PUT',
-      url: 'https://api-' + this.app_id + `.sendbird.com/v3/users/${encodeURI(user_id)}/metadata/${key}`,
+      url: 'https://api-' + SENDBIRD_APPID + `.sendbird.com/v3/users/${encodeURI(user_id)}/metadata/${key}`,
       data: JSON.stringify({ upsert: true, value: val }),
       headers: {
-        'Api-Token': this.access,
-        'Content-Type': 'application/json'
-      },
-      json: true
-    };
-    return this.axios_instance(authOptions)
-      .then((res: any) => {
-        return res.data;
-      })
-      .catch((error: any) => {
-        console.log({ authOptions });
-        console.error({ error });
-        return false;
-      });
-  }
-  async updateChannelMetadatum(channel_id: string, key: string, val: string) {
-    if (!channel_id) return false;
-    // console.log('update', { channel_id, key, val });
-    var authOptions = {
-      method: 'PUT',
-      url: 'https://api-' + this.app_id + `.sendbird.com/v3/group_channels/${channel_id}/metadata/${key}`,
-      data: JSON.stringify({ upsert: true, value: JSON.stringify(val) }),
-      headers: {
-        'Api-Token': this.access,
-        'Content-Type': 'application/json'
-      },
-      json: true
-    };
-    return this.axios_instance(authOptions)
-      .then((res: any) => {
-        return res.data;
-      })
-      .catch((error: any) => {
-        console.log({ authOptions });
-        console.error({ error });
-        return false;
-      });
-  }
-  async getStudyGroupChannels(user_id: string) {
-    if (!user_id) return false;
-
-    var authOptions = {
-      method: 'GET',
-      url: 'https://api-' + this.app_id + `.sendbird.com/v3/group_channels?members_include_in=${encodeURI(user_id)}&custom_types=private,public,open`,
-      headers: {
-        'Api-Token': this.access,
-        Authorization: 'Basic Og==',
-        'Content-Type': 'application/json'
-      }
-    };
-
-    return this.axios_instance(authOptions)
-      .then(function(res: any) {
-        return res.data.channels || false;
-      })
-      .catch((error: any) => {
-        console.log({ authOptions });
-        console.error({ error });
-        return false;
-      });
-  }
-
-  loadUser(user_id: string, nickname?: string, profile_url?: string, email?: string) {
-   // console.log(`LOAD ${user_id}`)
-    if (user_id === '' || !user_id) return false;
-
-    var authOptions = {
-      method: 'GET',
-      url: 'https://api-' + this.app_id + '.sendbird.com/v3/users/' + encodeURI(user_id),
-      headers: {
-        'Api-Token': this.access,
+        'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
       json: true
     };
     return axios(authOptions)
-      .then((res: any) => {
+      .then((res) => {
+        return res.data;
+      })
+      .catch((error) => {
+        console.log({ authOptions });
+        console.error({ error });
+        return false;
+      });
+  }
+  async updateChannelMetadatum(channel_id, key, val) {
+    if (!channel_id) return false;
+    // console.log('update', { channel_id, key, val });
+    var authOptions = {
+      method: 'PUT',
+      url: 'https://api-' + SENDBIRD_APPID + `.sendbird.com/v3/group_channels/${channel_id}/metadata/${key}`,
+      data: JSON.stringify({ upsert: true, value: JSON.stringify(val) }),
+      headers: {
+        'Api-Token': SENDBIRD_TOKEN,
+        'Content-Type': 'application/json'
+      },
+      json: true
+    };
+    return axios(authOptions)
+      .then((res) => {
+        return res.data;
+      })
+      .catch((error) => {
+        console.log({ authOptions });
+        console.error({ error });
+        return false;
+      });
+  }
+  async getStudyGroupChannels(user_id) {
+    if (!user_id) return false;
+
+    var authOptions = {
+      method: 'GET',
+      url: 'https://api-' + SENDBIRD_APPID + `.sendbird.com/v3/group_channels?members_include_in=${encodeURI(user_id)}&custom_types=private,public,open`,
+      headers: {
+        'Api-Token': SENDBIRD_TOKEN,
+        Authorization: 'Basic Og==',
+        'Content-Type': 'application/json'
+      }
+    };
+
+    return axios(authOptions)
+      .then(function(res) {
+        return res.data.channels || false;
+      })
+      .catch((error) => {
+        console.log({ authOptions });
+        console.error({ error });
+        return false;
+      });
+  }
+
+  loadUser(user_id, nickname="", profile_url="", email="", attempt=0) {
+    attempt = attempt || 1;
+   // console.log(`LOAD ${user_id}`)
+    if (!user_id) return false;
+
+
+    var authOptions = {
+      method: 'GET',
+      url: 'https://api-' + SENDBIRD_APPID + '.sendbird.com/v3/users/' + encodeURI(user_id),
+      headers: {
+        'Api-Token': SENDBIRD_TOKEN,
+        'Content-Type': 'application/json'
+      },
+      json: true
+    };
+    return axios(authOptions)
+      .then((res) => {
         // console.log("loadUserHTTPResponse",{res});
         if (res.data.is_active === true){
           const {user_id,nickname,profile_url,access_token} = res.data;
@@ -241,68 +238,68 @@ class Sendbird {
         } 
 
        // console.log(`${user_id} Not Active, Creating`);
-        return this.createUser(user_id, nickname, profile_url, email);
+        return this.createUser(user_id, nickname, profile_url, email, attempt);
       })
-      .catch((error: any) => {
+      .catch((error) => {
       //  console.log(`${user_id} Not Found, Creating`);
-        return this.createUser(user_id, nickname, profile_url, email);
+        return this.createUser(user_id, nickname, profile_url, email, attempt);
       });
   }
 
-  listUsers(user_ids: Array<string>) {
+  listUsers(user_ids) {
     if (!user_ids.length) return [];
     var authOptions = {
       method: 'GET',
-      url: 'https://api-' + this.app_id + '.sendbird.com/v3/users' + `?user_ids=${encodeURI(user_ids.join(','))}`,
+      url: 'https://api-' + SENDBIRD_APPID + '.sendbird.com/v3/users' + `?limit=100&user_ids=${encodeURI(user_ids.join(','))}`,
       headers: {
-        'Api-Token': this.access,
+        'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
       json: true
     };
     return axios(authOptions)
-      .then((res: any) => {
+      .then((res) => {
         return res.data.users || [];
       })
-      .catch((error: any) => {
+      .catch((error) => {
         console.log('loadUserHTTPError', { error });
       });
   }
 
-  isUser(user_id: string) {
+  isUser(user_id) {
     if (user_id === '' || user_id === undefined) return false;
     var authOptions = {
       method: 'GET',
-      url: 'https://api-' + this.app_id + '.sendbird.com/v3/users/' + user_id,
+      url: 'https://api-' + SENDBIRD_APPID + '.sendbird.com/v3/users/' + user_id,
       headers: {
-        'Api-Token': this.access,
+        'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
       json: true
     };
     // console.log(authOptions);
     return axios(authOptions)
-      .then((res: any) => {
+      .then((res) => {
         if (res.data.is_active === true) return true;
         return false;
       })
-      .catch((error: any) => {
+      .catch((error) => {
         return false;
       });
   }
 
-  async loadChannel(channelUrl: string) {
-    let baseUrl = 'https://api-' + this.app_id + '.sendbird.com/v3/group_channels/' + channelUrl;
+  async loadChannel(channelUrl) {
+    let baseUrl = 'https://api-' + SENDBIRD_APPID + '.sendbird.com/v3/group_channels/' + channelUrl;
     var authOptions = {
       method: 'GET',
       url: baseUrl,
       headers: {
-        'Api-Token': this.access,
+        'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
       json: true
     };
-    let response: any = { data: null };
+    let response = { data: null };
     try {
       response = await axios(authOptions);
     } catch (e) {
@@ -311,21 +308,34 @@ class Sendbird {
 
     let channel = response?.data?.channel;
 
+    //get messages
     authOptions.url = baseUrl + '/messages?message_type=MESG&message_ts=' + Date.now();
     response = await axios(authOptions);
     let messages = response?.data?.messages;
 
+    //get members
     authOptions.url = baseUrl + '/members?limit=100';
     response = await axios(authOptions);
     let members = response?.data?.members;
 
+    //get metdata
+    authOptions.url = baseUrl + '/metadata';
+    response = await axios(authOptions);
+    let metadata = response?.data || {}
+
+    for(let i in Object.keys(metadata)){
+      let key = Object.keys(metadata)[i];
+      metadata[key] = isJSON(metadata[key]) ? JSON.parse(metadata[key]) : metadata[key];
+    }
+
     let returnData = channel;
     returnData.messages = messages;
     returnData.members = members;
+    returnData.metadata = metadata;
     return returnData;
   }
 
-  request(channelObj, username: string) {
+  request(channelObj, username) {
     let data = JSON.parse(channelObj.data);
 
     if (!data.requests) data.requests = [];
@@ -333,55 +343,58 @@ class Sendbird {
     data.requests.push(username);
     var authOptions = {
       method: 'PUT',
-      url: 'https://api-' + this.app_id + '.sendbird.com/v3/group_channels/' + channelObj.channel_url,
+      url: 'https://api-' + SENDBIRD_APPID + '.sendbird.com/v3/group_channels/' + channelObj.channel_url,
       data: JSON.stringify({ data: JSON.stringify(data) }),
       headers: {
-        'Api-Token': this.access,
+        'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
       json: true
     };
-    return axios(authOptions).then((res: any, error: any) => {
+    return axios(authOptions).then((res, error) => {
       if (error) return { isSuccess: false, msg: 'Request Failed' };
       return { isSuccess: true, msg: 'Request Sent' };
     });
   }
 
-  withdraw(channelObj, username: string) {
+  withdraw(channelObj, username) {
     let data = JSON.parse(channelObj.data);
+   // console.log(data);
+   // console.log(`Withdraw ${username} from ${channelObj.channel_url} ${JSON.stringify(data.requests)}`);
     if (!data.requests) data.requests = [];
     let index = data.requests.indexOf(username);
     if (index === -1) return { isSuccess: true, msg: 'No request found' };
     data.requests.splice(index, 1);
+
     var authOptions = {
       method: 'PUT',
-      url: 'https://api-' + this.app_id + '.sendbird.com/v3/group_channels/' + channelObj.channel_url,
+      url: 'https://api-' + SENDBIRD_APPID + '.sendbird.com/v3/group_channels/' + channelObj.channel_url,
       data: JSON.stringify({ data: JSON.stringify(data) }),
       headers: {
-        'Api-Token': this.access,
+        'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
       json: true
     };
-    return axios(authOptions).then((res: any, error: any) => {
+    return axios(authOptions).then((res, error) => {
       if (error) return { isSuccess: false, msg: 'Withdraw request failed' };
       return { isSuccess: true, msg: 'Request withdrawn' };
     });
   }
 
-  invite(channel: string, username: string) {
+  invite(channel, username) {
     var authOptions = {
       method: 'POST',
-      url: 'https://api-' + this.app_id + '.sendbird.com/v3/group_channels/' + channel + '/invite',
+      url: 'https://api-' + SENDBIRD_APPID + '.sendbird.com/v3/group_channels/' + channel + '/invite',
       data: JSON.stringify({ user_ids: [username] }),
       headers: {
-        'Api-Token': this.access,
+        'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
       json: true
     };
     return axios(authOptions)
-      .then((res: any) => {
+      .then((res) => {
         for (var i in res.data.members) {
           var member = res.data.members[i];
           if (member.user_id === username && member.state === 'invited') return this.accept(channel, username);
@@ -389,25 +402,25 @@ class Sendbird {
         }
         return { isSuccess: false, msg: 'Failed to invite' };
       })
-      .catch((error: any) => {
+      .catch((error) => {
         console.error(error);
         return { isSuccess: false, msg: 'Error to inviting' };
       });
   }
 
-  accept(channel: string, username: string) {
+  accept(channel, username) {
     var authOptions = {
       method: 'PUT',
-      url: 'https://api-' + this.app_id + '.sendbird.com/v3/group_channels/' + channel + '/accept',
+      url: 'https://api-' + SENDBIRD_APPID + '.sendbird.com/v3/group_channels/' + channel + '/accept',
       data: JSON.stringify({ user_id: username }),
       headers: {
-        'Api-Token': this.access,
+        'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
       json: true
     };
     return axios(authOptions)
-      .then((res: any) => {
+      .then((res) => {
         //  console.log({ channel });
         for (var i in res.data.members) {
           var member = res.data.members[i];
@@ -415,8 +428,8 @@ class Sendbird {
         }
         return { isSuccess: false, msg: 'Failed to join' };
       })
-      .catch((error: any) => {
-        console.error(error);
+      .catch((error) => {
+        //console.error(error);
         return { isSuccess: false, msg: 'Error accepting' + JSON.stringify(error) };
       });
   }
@@ -425,10 +438,10 @@ class Sendbird {
     let response = await axios({
       method: 'GET',
       url:
-        `https://api-${this.app_id}.sendbird.com/v3/users/${encodeURI(user_id)}/my_group_channels` +
+        `https://api-${SENDBIRD_APPID}.sendbird.com/v3/users/${encodeURI(user_id)}/my_group_channels` +
         '?custom_types=private,public,open&order=latest_last_message&show_empty=true',
       headers: {
-        'Api-Token': this.access,
+        'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
       json: true
@@ -440,10 +453,10 @@ class Sendbird {
     let response = await axios({
       method: 'GET',
       url:
-        `https://api-${this.app_id}.sendbird.com/v3/group_channels` +
+        `https://api-${SENDBIRD_APPID}.sendbird.com/v3/group_channels` +
         `?members_include_in=${encodeURI(user_ids.join(','))}&custom_types=public,open&query_type=OR&metadata_key=lang&metadata_values=${lang}`,
       headers: {
-        'Api-Token': this.access,
+        'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
       json: true
@@ -454,9 +467,9 @@ class Sendbird {
   async getMembers(channelUrl) {
     let response = await axios({
       method: 'GET',
-      url: `https://api-${this.app_id}.sendbird.com/v3/group_channels/${channelUrl}/members?limit=100`,
+      url: `https://api-${SENDBIRD_APPID}.sendbird.com/v3/group_channels/${channelUrl}/members?limit=100`,
       headers: {
-        'Api-Token': this.access,
+        'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
       json: true
@@ -464,31 +477,133 @@ class Sendbird {
     return response?.data?.members || [];
   }
 
-  async getMembersofPublicGroups(){
 
-    let channels = await axios({
-      method: 'GET',
-      url: `https://api-${this.app_id}.sendbird.com/v3/group_channels?custom_types=public,open&limit=100`,
+  
+
+  async addUserToChannel(channelUrl, user_id) {
+    
+    const invite_results = await this.invite(channelUrl, user_id);
+    if(invite_results?.msg==='Auto-added to group') return true;
+    try{
+      const accept_results = await this.accept(channelUrl, user_id);
+      console.log({accept_results});
+    }
+    catch(e){
+      console.log(`Error accepting invite for ${user_id} to ${channelUrl}`)
+      return false;
+    }
+    return true;
+
+  }
+
+  async removeUserFromChannel(channelUrl, user_id) {
+    let response = await axios({
+      method: 'PUT',
+      url: `https://api-${SENDBIRD_APPID}.sendbird.com/v3/group_channels/${channelUrl}/leave`,
+      data: JSON.stringify({ user_id: user_id }),
       headers: {
-        'Api-Token': this.access,
+        'Api-Token': SENDBIRD_TOKEN,
+        'Content-Type': 'application/json'
+      },
+      json: true
+    });
+    return response?.data || {};
+  }
+
+  async listBotUsers(lang) {
+    lang  = lang || "en"; 
+    if(lang==="dev") lang = "en";
+    let response = await axios({
+      method: 'GET',
+      url: `https://api-${SENDBIRD_APPID}.sendbird.com/v3/users?limit=100&metadatakey=isBot&metadatavalues_in=true`,
+      headers: {
+        'Api-Token': SENDBIRD_TOKEN,
+        'Content-Type': 'application/json'
+      },
+      json: true
+    });
+    //todo lang filter
+    
+    let bots = response?.data?.users.filter(u=>{
+      let metadata = u.metadata || {};
+      metadata.lang = metadata.lang || "en";
+      let langMatch = metadata.lang === lang;
+      return langMatch;
+    }) || [];
+
+
+    if(lang!=="en" && !bots.length){
+      return this.listBotUsers("en");
+    }
+    return bots;
+
+  }
+
+
+
+
+  async getMembersofPrivateGroups(user_id){
+
+    /*
+      1. Load the custom_type=private study groups this user_id is in
+      2. Load the members of each of those groups
+      3. Return a unique list of user_ids
+    */
+   let channels = await axios({
+    method: 'GET',
+     url: `https://api-${SENDBIRD_APPID}.sendbird.com/v3/users/${user_id}/my_group_channels?custom_types=private&limit=100`,
+      headers: {
+        'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
       json: true
     });
 
-    let members:any = await Promise.all(channels.data.channels.map(async (channel)=>{
+
+   let members = await Promise.all(channels.data.channels.map(async (channel)=>{
       let members = await axios({
         method: 'GET',
-        url: `https://api-${this.app_id}.sendbird.com/v3/group_channels/${channel.channel_url}/members?limit=100`,
+        url: `https://api-${SENDBIRD_APPID}.sendbird.com/v3/group_channels/${channel.channel_url}/members?limit=100`,
         headers: {
-          'Api-Token': this.access,
+          'Api-Token': SENDBIRD_TOKEN,
           'Content-Type': 'application/json'
         },
         json: true
       });
-      return members.data.members.map((m:any)=>{return {...m,channel_name:channel.name}});
+      return members.data.members.map((m)=>{return {...m,channel_name:channel.name}});
     }));
 
+    return members.flat().map(i=>i.user_id).filter(x=>!!x); 
+
+
+  }
+
+  async getMembersofPublicGroups(){
+
+    let channels = await axios({
+      method: 'GET',
+      url: `https://api-${SENDBIRD_APPID}.sendbird.com/v3/group_channels?custom_types=public,open&limit=100`,
+      headers: {
+        'Api-Token': SENDBIRD_TOKEN,
+        'Content-Type': 'application/json'
+      },
+      json: true
+    });
+
+    let members = await Promise.all(channels.data.channels.map(async (channel)=>{
+      let members = await axios({
+        method: 'GET',
+        url: `https://api-${SENDBIRD_APPID}.sendbird.com/v3/group_channels/${channel.channel_url}/members?limit=100`,
+        headers: {
+          'Api-Token': SENDBIRD_TOKEN,
+          'Content-Type': 'application/json'
+        },
+        json: true
+      });
+      return members.data.members.map((m)=>{return {...m,channel_name:channel.name}});
+    }));
+
+    
     let combined =  members.flat();
     let unique = combined.filter((v,i,a)=>a.findIndex(t=>(t.user_id === v.user_id))===i);
     return unique.map(i=>i.user_id);
@@ -499,9 +614,9 @@ class Sendbird {
   async getGroup(channelUrl) {
     let response = await axios({
       method: 'GET',
-      url: `https://api-${this.app_id}.sendbird.com/v3/group_channels/${channelUrl}`,
+      url: `https://api-${SENDBIRD_APPID}.sendbird.com/v3/group_channels/${channelUrl}`,
       headers: {
-        'Api-Token': this.access,
+        'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
       json: true
@@ -513,25 +628,104 @@ class Sendbird {
     let response = await axios({
       method: 'GET',
       url:
-        `https://api-${this.app_id}.sendbird.com/v3/group_channels/${channelUrl}/messages` +
+        `https://api-${SENDBIRD_APPID}.sendbird.com/v3/group_channels/${channelUrl}/messages` +
         `?message_ts=${now}&include_reply_type=ALL&parent_message_id=${messageId}`,
       headers: {
-        'Api-Token': this.access,
+        'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
       json: true
     });
-    return response?.data?.messages?.slice(1) || [];
+
+    return response?.data?.messages;
   }
+
+  async replyToMessage({ channelUrl, messageId, user_id, message }) {
+    let response = await axios({
+      method: 'POST',
+      url: `https://api-${SENDBIRD_APPID}.sendbird.com/v3/group_channels/${channelUrl}/messages`,
+      data: JSON.stringify({
+        message_type: 'MESG',
+        user_id: user_id,
+        message: message,
+        parent_message_id: messageId
+      }),
+      headers: {
+        'Api-Token': SENDBIRD_TOKEN,
+        'Content-Type': 'application/json'
+      },
+      json: true
+    });
+    //log curl
+   //console.log(`curl -X POST "https://api-${SENDBIRD_APPID}.sendbird.com/v3/group_channels/${channelUrl}/messages" -H "accept: application/json" -H "Api-Token: ${SENDBIRD_TOKEN}" -H "Content-Type: application/json" -d "{\\"message_type\\":\\"MESG\\",\\"user_id\\":\\"${user_id}\\",\\"message\\":\\"${message}\\",\\"parent_message_id\\":\\"${messageId}\\"}"`)
+    return response?.data || {};
+
+  }
+
+  async updateMessage({ channelUrl, messageId, message, data = {}, custom_type = "" }) {
+    let response = await axios({
+      method: 'PUT',
+      url: `https://api-${SENDBIRD_APPID}.sendbird.com/v3/group_channels/${channelUrl}/messages/${messageId}`,
+      data: JSON.stringify({
+        message_type: 'MESG',
+        custom_type,
+        message: message,
+        data: JSON.stringify(data)
+      }),
+      headers: {
+        'Api-Token': SENDBIRD_TOKEN,
+        'Content-Type': 'application/json'
+      },
+      json: true
+    });
+    return response?.data || {};
+  }
+  
+  async startStopTypingIndicator(channelUrl, user_id_array, typing) {
+
+    let response = await axios({
+      method: typing ? 'POST' : 'DELETE',
+      url: `https://api-${SENDBIRD_APPID}.sendbird.com/v3/group_channels/${channelUrl}/typing`,
+      data: JSON.stringify({
+        user_ids: user_id_array
+      }),
+      headers: {
+        'Api-Token': SENDBIRD_TOKEN,
+        'Content-Type': 'application/json'
+      },
+      json: true
+    });
+    return response?.data || {};
+
+  }
+
+  async updateUserMetadata(user_id, metadata) {
+    let response = await axios({
+      method: 'PUT',
+      url: `https://api-${SENDBIRD_APPID}.sendbird.com/v3/users/${user_id}/metadata`,
+      data: JSON.stringify({
+        metadata: metadata,
+        upsert: true
+      }),
+      headers: {
+        'Api-Token': SENDBIRD_TOKEN,
+        'Content-Type': 'application/json'
+      },
+      json: true
+    });
+    return response?.data || {};
+  }
+
+
   async getLatestMessage(channelUrl) {
     let now = Math.round(Date.now() / 1);
     let response = await axios({
       method: 'GET',
       url:
-        `https://api-${this.app_id}.sendbird.com/v3/group_channels/${channelUrl}/messages` +
+        `https://api-${SENDBIRD_APPID}.sendbird.com/v3/group_channels/${channelUrl}/messages` +
         `?message_ts=${now}&reverse=true&include_thread_info=true&include_reactions=true&message_type=MESG&limit=1`,
       headers: {
-        'Api-Token': this.access,
+        'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
       json: true
@@ -539,15 +733,28 @@ class Sendbird {
     return response?.data?.messages?.shift() || [];
   }
 
+  async loadSingleMessage(channelUrl, messageId) {
+    const options = {
+      method: 'GET',
+      url: `https://api-${SENDBIRD_APPID}.sendbird.com/v3/group_channels/${channelUrl}/messages/${messageId}`,
+      headers: {
+        'Api-Token': SENDBIRD_TOKEN,
+        'Content-Type': 'application/json'
+      }
+    };
+    let response = await axios(options);
+    return response?.data || {};
+  }
+
   async getGroupMessages(channelUrl) {
     let now = Math.round(Date.now() / 1);
     let response = await axios({
       method: 'GET',
       url:
-        `https://api-${this.app_id}.sendbird.com/v3/group_channels/${channelUrl}/messages` +
+        `https://api-${SENDBIRD_APPID}.sendbird.com/v3/group_channels/${channelUrl}/messages` +
         `?message_ts=${now}&reverse=true&include_thread_info=true&include_reactions=true&message_type=MESG&limit=100`,
       headers: {
-        'Api-Token': this.access,
+        'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
       json: true
@@ -555,15 +762,34 @@ class Sendbird {
     return response?.data?.messages || [];
   }
 
+  async getBotByLang(lang) {
+    //query users where metadata isBot=true and metadata.lang=lang
+    // if none found return english bot lang=en
+    let response = await axios({
+      method: 'GET',
+      url: `https://api-${SENDBIRD_APPID}.sendbird.com/v3/users?limit=100&metadatakey=isBot&metadatavalues_in=true`,
+      headers: {
+        'Api-Token': SENDBIRD_TOKEN,
+        'Content-Type': 'application/json'
+      },
+      json: true
+    });
+    const allBots = response?.data?.users || [];
+    const langBots = allBots.filter(bot=>bot.metadata.lang===lang);
+    if(langBots.length) return langBots[0];
+    return allBots[0];
+  }
+
+
   async getGroupMessageById(channelUrl, message_id) {
     const url =
-      `https://api-${this.app_id}.sendbird.com/v3/group_channels/${channelUrl}/messages/${message_id}` +
+      `https://api-${SENDBIRD_APPID}.sendbird.com/v3/group_channels/${channelUrl}/messages/${message_id}` +
       `?include_thread_info=true&include_reactions=true&message_type=MESG&limit=1`;
     let response = await axios({
       method: 'GET',
       url: url,
       headers: {
-        'Api-Token': this.access,
+        'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
       json: true
@@ -574,9 +800,10 @@ class Sendbird {
 
 var sendbird = new Sendbird();
 
-export async function getFwdUrl(url) {
+async function getFwdUrl(url) {
   return axios.get(url).then(r => r.request.res.responseUrl.replace(/\?.*?$/, ''));
 }
+
 
 
 function checkExistsWithTimeout(path, timeout) {
@@ -608,4 +835,4 @@ function checkExistsWithTimeout(path, timeout) {
   })
 }
 
-export { sendbird };
+module.exports = { sendbird, getFwdUrl };

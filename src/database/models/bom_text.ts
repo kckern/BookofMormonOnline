@@ -58,6 +58,10 @@ export default class _bom_text extends ModelBase {
           type: DataTypes.STRING(50),
           allowNull: false
         },
+        queue_weight: {
+          type: DataTypes.STRING(50),
+          allowNull: false
+        },
         index_code: {
           type: DataTypes.STRING(2),
           allowNull: false
@@ -94,6 +98,13 @@ export default class _bom_text extends ModelBase {
           using: "BTREE",
           fields: [
             { name: "page" },
+          ]
+        },
+        {
+          name: "queue_weight",
+          using: "BTREE",
+          fields: [
+            { name: "queue_weight" },
           ]
         },
         {

@@ -4,7 +4,7 @@ import { error } from "src/models/alertMessageService";
 import { determineLanguage, refreshChannel, tokenImage } from "./Utils";
 import crypto from 'crypto-browserify';
 
-const md5 = (string) => {
+export const md5 = (string) => {
   const isMD5 = string.match(/^[a-f0-9]{32}$/i);
   if(isMD5) return string;
   return crypto.createHash('md5').update(string).digest('hex');
@@ -138,29 +138,37 @@ export default class SendbirdController {
       .catch(e => null);
   }
 
-  fetchRoomFromGroup = async (group, src) => {
 
-    if (!group) return null;
-    //if (this.groupCallMap[group.url]) return this.groupCallMap[group.url];
-    let metaData = (typeof group.getCachedMetadata === "function") ? group.getCachedMetadata() : null;
 
-    if (metaData?.roomId) {
-      return this.fetchRoom(metaData.roomId).then(async (room) => {
-        if (!room) return await this.resetRoom(group);
-        this.groupCallMap[group.url] = room;
-        return room;
-      });
-    }
-    if (!group.getMetaData) return null;
-    return group.getMetaData(["roomId"]).then(res => {
-      if (!res.roomId) return this.resetRoom(group)
-      return this.fetchRoom(res.roomId).then(async (room) => {
-        if (!room) return await this.resetRoom(group);
-        this.groupCallMap[group.url] = room;
-        return room;
-      })
-    })
+fetchRoomFromGroup = async (group, src) => {
+  if (!group) return null;
+  
+// Create a global cache if not already present
+if(!window.roomCache) window.roomCache = {};
+  if(window.roomCache[group.url]){
+    return window.roomCache[group.url];
   }
+  
+  let metaData = (typeof group.getCachedMetadata === "function") ? group.getCachedMetadata() : null;
+  if (metaData?.roomId) {
+    return this.fetchRoom(metaData.roomId).then(async (room) => {
+      if (!room) return await this.resetRoom(group);
+      this.groupCallMap[group.url] = room;
+      window.roomCache[group.url] = room;
+      return room;
+    });
+  }
+  if (!group.getMetaData) return null;
+  return group.getMetaData(["roomId"]).then(res => {
+    if (!res.roomId) return this.resetRoom(group)
+    return this.fetchRoom(res.roomId).then(async (room) => {
+      if (!room) return await this.resetRoom(group);
+      this.groupCallMap[group.url] = room;
+      window.roomCache[group.url] = room;
+      return room;
+    })
+  })
+}
 
   fetchGroupOperators = async (groupChannel) => {
     if (!groupChannel) return [];
@@ -304,7 +312,7 @@ export default class SendbirdController {
     if (typeof valuesToUpdate.activeCall !== "string") delete valuesToUpdate.activeCall;
     if (Object.values(valuesToUpdate).length === 0) return false;
     return user?.updateMetaData(valuesToUpdate, true, function (metadata, error) {
-      if (error) { console.log({ error }); debugger; return false }
+      if (error) return false;
       let promises = channels.map(channel => {
         SBController.fireStudyGroupAction(
           {
@@ -556,6 +564,20 @@ function AppHandlers(appController) {
       refreshChannel(channel, appController);
     },
     onMetaDataUpdated: (channel, metaData) => {
+
+      //use localstorage to prevent too frequent updates.  user channel.url as key
+      const secondsToWait = 15;
+      let now = new Date();
+      let lastUpdate = localStorage.getItem(`lastUpdate-${channel.url}`) || null;
+      if (lastUpdate) {
+        let last = new Date(lastUpdate);
+        let elapsed = (now - last) / 1000;
+        if (elapsed < secondsToWait) return false;
+      }
+      localStorage.setItem(`lastUpdate-${channel.url}`, now);
+
+
+
       refreshChannel(channel, appController);
       if (metaData.action) {
         var event = new CustomEvent("fireStudyGroupAction");

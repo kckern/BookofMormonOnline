@@ -11,6 +11,7 @@ export default gql`
     section(slug: [String]): [Section]
     text(slug: [String]): [TextBlock]
     lookup(ref: [String]): [TextBlock]
+    queue(token: String, items: [QueueInput]): [TextBlock]
   }
 
   # -----------------------------------------------
@@ -32,6 +33,7 @@ export default gql`
   type Page {
     guid: String
     title: String
+    ref: String
     counts: [Int]
     weight: Int
     parent: String
@@ -47,8 +49,11 @@ export default gql`
     parent: String
     slug: String
     page: Page
+    ref: String
+    badge: String
     rows: [Row]
     sectionText: [TextBlock]
+    ambient: String
   }
   type Row {
     guid: String
@@ -89,6 +94,12 @@ export default gql`
     heading: String
 }
 
+
+input QueueInput {
+  slug: String
+  blocks: [Int]
+}
+
   type Conn {
     guid: String
     text: String
@@ -123,7 +134,18 @@ export default gql`
     narration: Narration
     imgIds: [String]
     comIds: [String]
+    imgs: [Image]
+    coms: [Commentary]
+    people: [People]
+    places: [Place]
     link: Int
+    next: [NarrativePath]
+  }
+
+  type NarrativePath {
+    class: String
+    slug: String
+    text: String
   }
 
 `;

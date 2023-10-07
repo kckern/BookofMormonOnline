@@ -172,7 +172,7 @@ export function HistoryList({ studyLog, progressList, setHistoryView }) {
                               )}
                             </div>
                             <div className={"descField"}>
-                              <Link to={session.slug}>
+                              <Link to={"/"+session.slug}>
                                 {session.description ||
                                   label("extracurricular_activities")}
                               </Link>
