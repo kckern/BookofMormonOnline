@@ -66,7 +66,7 @@
         position: absolute;
         top:0;
         opacity: 0.5;
-        position: relative;
+        position: absolute;
         max-height: none;
     }
 
@@ -570,47 +570,55 @@ span.pageTitle
 
 .theater-side-panel .theater-image-panel {
     flex-shrink: 0;
-    max-height: 500px;
     transition:  max-height 0.5s ease-in-out;
     display: flex;
     flex-direction: column;
+    height: calc(100% - 17rem);
 
 }
 
 .theater-side-panel .theater-image-panel.hidden {
-    max-height: 0;
-    transition:  max-height 0.5s ease-in-out;
+    height: 0;
+    transition:  height 0.5s ease-in-out;
     opacity: 0;
 }
 
 
   .theater-side-panel .theater-image-container {
     display: flex;
-    align-items: center;
     justify-content: center;
-    position: relative;
     overflow: hidden;
-    flex-shrink: 0;
-    height: calc(100% - 15rem);
-    flex-grow: 1;
     background: url('https://i.imgur.com/uqjhnKX.jpg');
-    
+    position: relative;
 
 }
 
-.theater-side-panel .theater-image-panel img {
+.theater-side-panel .img-element-container {    
+    display: flex;
+    /* transform-origin: top + 10%; */
+    transform-origin: top center;
     width: 100%;
-    object-fit: contain;
+
+}
+.theater-people-image-panel
+{
+    max-height: 66%;
+    position: relative;
+}
+
+
+.theater-side-panel .theater-image-panel img {
     z-index: 99;
     background:url('https://i.imgur.com/uqjhnKX.jpg');
-    height: 100%;
-
+    transform-origin: "top center";
+    object-fit: contain;
+    width: 100%;
 }
 
   
   .imageCaption
   {
-    z-index: 2;
+    z-index: 99;
     position: absolute;
     bottom: 0;
     height: 2rem;
