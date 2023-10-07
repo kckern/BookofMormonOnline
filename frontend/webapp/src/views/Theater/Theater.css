@@ -203,8 +203,8 @@
 
 .theater-main-panel .theater-content-frame blockquote{
 
-    line-height: 2.5vw;
-    font-size: 1.9vw;
+    line-height: 100%;
+    font-size: 90%;
 }
 
 .theater-main-panel .theater-content-slider {
@@ -372,6 +372,8 @@ img.player-ui:hover{
     margin: 0.5ex;
     height: calc(100% - 1ex);
     user-select: none;
+    font-variant: normal;
+    font-size: 80%;
 }
 .theater-wrapper .studylink:hover
 {
