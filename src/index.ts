@@ -15,6 +15,8 @@ import axios from 'axios';
 import bodyParser from 'body-parser';
 import { processSphinx } from './search/sphinx';
 import {ping} from "../src/library/ping.js"
+import {apis} from "../src/api/index.js"
+
 
 const langs = process.env.LANGS?.split(',') || ['', 'en', 'ko', 'dev'];
 
@@ -46,6 +48,7 @@ const findTarget = (req:any): string | boolean  => {
     ["ssr", process.env.PROXY_BOM_SSR],
     ["preview", process.env.PROXY_BOM_IMG],
     ["sg", process.env.PROXY_SCRIPTURE_GUIDE],
+    ["translate", process.env.PROXY_TRANSLATE],
     ["scripture.guide", process.env.PROXY_SCRIPTURE_GUIDE]
     ];
   fwdTarget = fwds.find(([sub, target]) => (new RegExp(`^${sub}`,"i")).test(host))?.pop() || "";
@@ -72,11 +75,13 @@ app.use( (req, res, next) => {
   const host = req.headers.host;
   if(target) {
 
+    const targetDomain = target.split("://").pop();
     //remove these headers:
     delete req.headers["range"];
 
     apiProxy.web(req, res, {target,
       autoRewrite: true,
+      cookieDomainRewrite: targetDomain,
       changeOrigin: false});
   }
   else if(/\/sphinx/.test(req.url) || /^sphinx.*/.test(host)) {
@@ -143,12 +148,16 @@ frontends.forEach(i=>{
 //BACKEND (POST) JSON APIS
 //Object.keys(json_apis).forEach(i=>app.post(`/${i}`, json_apis[i]));
 
+const apiPaths = Object.keys(apis);
+apiPaths.forEach((i:any)=>app.post(`/${i}`, apis[i]));
+
+
 
 //BACKEND (POST): APOLLO SERVER
 const server = new ApolloServer(apollo_config);
 const { sequelize } = apollo_config;
 server.start().then(() => {
-  langs.map(i => server.applyMiddleware({ app, path: `/${i}` }));
+  ["",...langs].map(i => server.applyMiddleware({ app, path: `/${i}` }));
   app.listen(process.env.PORT, async () => {
     try {
       await sequelize.authenticate();

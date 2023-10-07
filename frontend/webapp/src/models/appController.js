@@ -5,6 +5,43 @@ import crypto from "crypto-browserify";
 import { history } from "./routeHistory.js";
 import { setPopDocTitle } from "src/views/_Common/PopUp.js";
 
+const checkQuota =  () => {
+  // Check if 'timestamp' exists in localStorage
+  if (!localStorage.getItem('timestamp')) {
+    // Assign 'timestamp' to current time, converted to seconds
+    localStorage.setItem('timestamp', Math.floor(Date.now() / 1000).toString());
+  }
+
+  // Check if 'callCount' exists in localStorage
+  if (!localStorage.getItem('callCount')) {
+    // Initialize callCount to '0'
+    localStorage.setItem('callCount', '0');
+  }
+
+  // Calculate time elapsed since 'timestamp'
+  let timeElapsed = Math.floor(Date.now() / 1000) - parseInt(localStorage.getItem('timestamp'));
+
+  // Now check if more than 10 seconds have passed since 'timestamp'
+  if (timeElapsed >= 10) {
+    // Reset 'timestamp' and 'callCount'
+    localStorage.setItem('timestamp', Math.floor(Date.now() / 1000).toString());
+    localStorage.setItem('callCount', '0');
+  }
+
+  // Check for quota exceeding 80%
+  if ((parseInt(localStorage.getItem('callCount')) / 100) >= 0.8) {
+    // Return false due to exceeded quota
+    console.log('Supress call due to quota');
+    return false;
+  } else {
+    // Increase 'callCount' by one
+    localStorage.setItem('callCount', (parseInt(localStorage.getItem('callCount')) + 1).toString());
+
+    // Return true (quota has not been exceeded)
+    return true;
+  }
+}
+
 export const appInit = () => {
   let studyMode = localStorage.getItem("studyModeOn") !== "false";
   const lang = determineLanguage();
@@ -213,6 +250,13 @@ export const appFunctions = {
     appController.states.popUp.ids = [];
     appController.states.popUp.activeId = 1;
     appController.functions.setSlug(appController.states.popUp.underSlug);
+
+    //id = "theater-audio-player"
+    const theaterPlayer = document.getElementById("theater-audio-player");
+    if(theaterPlayer) {
+      if(theaterPlayer.paused && theaterPlayer.currentTime) theaterPlayer.play();
+    }
+
     return appController;
   },
 
@@ -284,6 +328,7 @@ export const appFunctions = {
       let pubs = input.val.publications || [];
       if (!Array.isArray(pubs)) pubs = [];
       let rids = pubs?.filter(p => p?.source_rating === "R").map(i => parseInt(i.source_id)) || [];
+      rids.push(41); //TODO, flag superceded publications
       let prefs = appController.states.preferences;
       prefs.commentary.filter.sources = rids;
       appController.functions.updatePrefs(prefs);
@@ -498,7 +543,13 @@ export const appFunctions = {
     return appController;
   },
 
+
   processStudyGroupEvent: (appController, input) => {
+
+    //check quota
+    if(!checkQuota()) return appController;
+
+
     let action = {};
     try {
       action = JSON.parse(input.val.action);

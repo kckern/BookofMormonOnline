@@ -11,4 +11,4 @@
 npm-debug.log
 Thumbs.db
 key
-.dockerenv
+*.env

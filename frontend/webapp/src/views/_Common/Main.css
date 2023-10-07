@@ -4807,13 +4807,16 @@ a.linkPreviewA
 
 div a.scripture_link
 {
-  color: #323b4dAA;
   background-color: #323b4d22;
-  padding: 0 1ex;
   border: 1px solid #323b4d55;
-  border-radius: 0.5ex;
-  font-family: 'Sorts Mill Goudy', serif;
+  border-radius: .5ex;
+  color: #323b4daa;
+  font-family: 'Sorts Mill Goudy',serif;
   font-weight: 800;
+  padding: 0 1ex;
+  font-size: 0.65rem;
+  position: relative;
+  bottom: 1px;
 }
 
 
@@ -4822,6 +4825,5 @@ div a.scripture_link:hover
 
   color: #323b4dFF;
   border-bottom: 1px solid #323b4d;
-  position: relative;
-  bottom: 1px;
+  bottom: 2px;
 }

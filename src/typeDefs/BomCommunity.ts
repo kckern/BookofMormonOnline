@@ -18,7 +18,8 @@ extend type Query {
   postcomments(token:String,message: Int): [HomeFeedItem] 
   moregroups(token:String, grouping:String): [HomeGroup]
   requestedUsers(token:String, channel:String): [HomeUser]
-  leaderboard(token:String): [HomeUser]
+  leaderboard(token:String): LeaderBoard
+  botlist: [Bot]
 }
 
 
@@ -28,6 +29,8 @@ extend type Mutation {
   requestToJoinGroup(token:String,url:String): JoinedGroup
   withdrawRequest(token:String,url:String): JoinedGroup
   processRequest(token:String,channel:String,user_id:String,grant:Boolean): Boolean
+  addBot(token:String,channel:String,bot:String): Boolean
+  removeBot(token:String,channel:String,bot:String): Boolean
 }
 
 
@@ -43,6 +46,12 @@ extend type Mutation {
     studyGroupName: String
     dates: [String]
     userHistories: [UserHistory]
+  }
+
+  type LeaderBoard
+  {
+    recentFinishers: [HomeUser],
+    currentProgress: [HomeUser]
   }
   
   
@@ -139,6 +148,7 @@ extend type Mutation {
     progress: Float
     finished: [Float]
     lastseen: Float
+    laststudied: String
     bookmark: String
     public: Boolean
   }
@@ -149,6 +159,15 @@ extend type Mutation {
     val: String
   }
 
+
+  type Bot
+  {
+    id: String
+    name: String
+    description: String
+    picture: String
+    enabled: Boolean
+  }
 
 
   type HomeGroup

@@ -268,7 +268,7 @@ export default function Page({ appController }) {
 
     //Update Page via Controller
     let index = pageSlug;
-    let keys = Object.keys(response.page);
+    let keys = Object.keys(response?.page || {});
 
     if (!response.page[index]) {
       if (keys.includes(pageSlug))

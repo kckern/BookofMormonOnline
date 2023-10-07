@@ -8,11 +8,11 @@ const currentProtocol = window.location.protocol;
 const currentPort = window.location.port;
 const nonDefaultPort = currentPort !== "80" && currentPort !== "443" && currentPort;
 const containedAPI = currentProtocol + "//" + currentDomain + (nonDefaultPort ? ":" + currentPort : "");
-const isProduction = /(prod|docker)/ig.test(process.env.NODE_ENV);
-//console.log({ currentDomain, currentProtocol, currentPort, nonDefaultPort, containedAPI, isProduction, env:process.env });
+const isWebappOnly = parseInt(currentPort) === 3000;
+const localTest = /localhost/.test(currentDomain) && false;
 
-export const assetUrl = "https://assets.bookofmormon.online";
-export const ApiBaseUrl = isProduction ? containedAPI || "https://bookofmormon.online" : "https://bookofmormon.online";
+export const assetUrl = "https://media.bookofmormon.online";
+export const ApiBaseUrl = localTest ?   "http://localhost:5005" : isWebappOnly? "https://dev.bookofmormon.online" : containedAPI ;
 export const fbPixel = "4544125442358924";
 
 export function exitBeacon(appController){

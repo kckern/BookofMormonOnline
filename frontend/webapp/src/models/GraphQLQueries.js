@@ -1141,6 +1141,37 @@ const queries = {
     }
   },
 
+  leaderboard: (input) => {
+    input = input.shift();
+    return {
+      type: "leaderboard",
+      key: "token",
+      val: false,
+      query:  `leaderboard(token:"${input.token}")`  +
+        `  {
+            recentFinishers{
+                nickname
+                picture
+                finished
+                lastseen
+                laststudied
+                bookmark
+            }
+            currentProgress{
+                nickname
+                picture
+                progress
+                finished
+                lastseen
+                laststudied
+                bookmark
+            }
+      }`,
+    }
+  },
+
+
+
 
   homegroups: (input) => {
     input = input.shift();
@@ -1165,6 +1196,10 @@ const queries = {
               picture
               progress
               finished
+              lastseen
+              laststudied
+              bookmark
+              public
             }
           }
           requests
@@ -1174,10 +1209,83 @@ const queries = {
             picture
             progress
             finished
+            lastseen
+            laststudied
+            bookmark
+            public
           }
         }`,
     }
   },  
+
+  queuestatus: (input) => {
+    input = input.shift();
+    let itemQuery = input.items ? JSON.stringify(input.items, null, 2).replace(/\"([^(\")"]+)\":/g,"$1:") : null;
+    return {
+      type: "queuestatus",
+      key: "token",
+      val: false,
+      query:  `queue(token:"${input.token}" `+((input.items) ? `, items: ${itemQuery} )` : ')')  +
+        `  {
+          slug
+          status(token:"${input.token}")
+      }`,
+    }
+  },
+
+  queue: (input) => {
+    input = input.shift();
+    let itemQuery = input.items ? JSON.stringify(input.items, null, 2).replace(/\"([^(\")"]+)\":/g,"$1:") : null;
+    return {
+      type: "queue",
+      key: "token",
+      val: false,
+      query:  `queue(token:"${input.token}" `+((input.items) ? `, items: ${itemQuery} )` : ')')  +
+        `  {
+          status(token:"${input.token}")
+          content
+          parent_page{
+            title
+          }
+          parent_section{
+            title
+            ambient
+          }
+          narration{
+            description
+          }
+          heading
+          slug
+          duration
+          people{
+            slug
+            name
+            title
+          }
+          places{
+            slug
+            name
+            info
+          }
+          imgs{
+            id
+            title
+          }
+          coms{
+            id
+            title
+            preview
+          }
+					next{
+							class
+							slug
+						  text
+					}
+        }`
+      }
+
+
+  },
 
   homefeed: (input) => {
     input = input.shift();
@@ -1201,6 +1309,10 @@ const queries = {
               picture
               progress
               finished
+              lastseen
+              laststudied
+              bookmark
+              public
           }
         }
         feed {
@@ -1214,6 +1326,10 @@ const queries = {
             picture
             progress
             finished
+            lastseen
+            laststudied
+            bookmark
+            public
           }
           mentioned_users {
             user_id
@@ -1221,6 +1337,10 @@ const queries = {
             picture
             progress
             finished
+            lastseen
+            laststudied
+            bookmark
+            public
           }
           likes
           replycount
@@ -1228,6 +1348,12 @@ const queries = {
             user_id
             nickname
             picture
+            progress
+            finished
+            lastseen
+            laststudied
+            bookmark
+            public
           }
           link {
             key
@@ -1237,6 +1363,43 @@ const queries = {
         }}`,
     }
   },  
+
+  botlist: () => {
+    return {
+      type: "botlist",
+      key: "botlist",
+      val: false,
+      query:
+        ` botlist {
+              name
+              description
+              picture
+              id
+              enabled
+          }
+        `,
+    }
+  },
+  addBot: (input) => {
+    input = input.shift();
+    return {
+      type: "addBot",
+      key: "token",
+      val: false,
+      query: `mutation {addBot(token:"${input.token}" , channel: "${input.channel}", bot:"${input.bot}")}`,
+    }
+  },
+  removeBot: (input) => {
+    input = input.shift();
+    return {
+      type: "removeBot",
+      key: "token",
+      val: false,
+      query: `mutation {removeBot(token:"${input.token}" , channel: "${input.channel}", bot:"${input.bot}")}`,
+    }
+
+  },
+
   homethread: (input) => {
     input = input.shift();
     return {
@@ -1256,6 +1419,10 @@ const queries = {
             picture
             progress
             finished
+            lastseen
+            laststudied
+            bookmark
+            public
           }
           mentioned_users {
             user_id
@@ -1263,6 +1430,10 @@ const queries = {
             picture
             progress
             finished
+            lastseen
+            laststudied
+            bookmark
+            public
           }
           likes 
           highlights
@@ -1282,6 +1453,12 @@ const queries = {
           user_id
           nickname
           picture
+          progress
+          finished
+          lastseen
+          laststudied
+          bookmark
+          public
       }`,
     }
   },

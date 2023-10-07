@@ -40,7 +40,7 @@
 .user .Login {
   display: flex;
   justify-content: center;
-  margin-left: 3em;
+  margin: 0 auto;
 }
 
 .loginGroup input.form-control {

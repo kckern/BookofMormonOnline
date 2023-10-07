@@ -143,8 +143,14 @@ $antcolor: #6bd0a9;
 
 .StudyGroupBar .userStatus .userCircle.inGroup.isTyping
 {
-  filter: brightness(1.2);
+  border-color: #FFFFFF;
+  filter: brightness(1.1);
 } 
+
+.StudyGroupBar .userStatus .userCircle.inGroup.isTyping .progressBadge
+{
+  display: none;
+}
 
 .StudyGroupBar .userStatus .userCircle
 {
@@ -174,6 +180,27 @@ $antcolor: #6bd0a9;
   filter: saturate(1);
   opacity: 1;
 }
+
+
+
+
+.StudyGroupBar .userStatus .userCircle.bot {
+  border-color: #637289;
+  filter: saturate(1);
+  opacity: 1;
+  border-radius:1rem;
+}
+
+.StudyGroupBar .userStatus .userCircle.bot.isTyping{
+  border-color: #6bd0a9;
+}
+
+.StudyGroupBar .userStatus .userCircle.bot .progressBadge{
+  background-color: #637289;
+  /*all caps*/
+  text-transform: uppercase;
+}
+
 
 .StudyGroupBar .userStatus .userCircleOutline
 {
@@ -617,7 +644,15 @@ display: none;
 {
   padding-right: 15px!important;
 }
+.dropdown-menu .botintro p
+{
+  font-size: smaller;
+  color: #888;
+  white-space:wrap;
 
+  overflow-wrap: break-word;
+  outline: 1px solid #888;
+}
 
 .dropdown-menu .statRow.link
 {
@@ -708,6 +743,29 @@ display: none;
 
 }
 
+.messageBox div{
+  margin-top: 1ex;
+}
+
+h6.botHeader.dropdown-header
+{
+  display: flex;
+  flex-direction: row;
+}
+
+.botNickname
+{
+  flex-grow: 1;
+  position: relative;
+  bottom: -0.5ex;
+}
+
+.botHeader button{
+  margin: 0;
+  padding: 0 1ex;
+  cursor: pointer;
+}
+
 .DMLabel
 {
   font-weight: bold;
@@ -791,7 +849,7 @@ display: none;
 
 
 
-@media only screen and (max-width: 991px) {
+@media only screen and (max-width: 900px) {
   .header-logo-image, .headerTitle
   {
       display:none;
@@ -800,4 +858,110 @@ display: none;
   {
       left: 1em;
   }
+}
+
+.dropdownInfoBox p
+{
+  white-space: normal ;
+  padding: 1ex;
+  line-height: 1rem;
+  color: #888;
+  margin-bottom: 0;
+  font-size: smaller;
+}
+
+
+.dropdown-menu .dropdown-item.botItem
+{
+  padding: 0;
+}
+
+.dropdown-menu .dropdown-item.botItem:hover h6{
+  color:white;
+}
+
+.dropdown-menu .dropdown-item.botItem:hover img{
+  outline: 1px solid #FFFFFF55;
+}
+
+.botInfo
+{
+
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 1ex;
+}
+
+
+.botItem{
+  padding: 0;
+}
+
+.userStatus .dropdown-menu .botInfo img{
+  flex-shrink: 0;
+  height: 50px;
+  width: 50px;
+  border-radius: 1ex;
+  background-color: #EEE;
+  filter: invert(0)!important;
+}
+
+.userStatus .dropdown-menu .botItem.disabled
+{
+  opacity: 0.5;
+  background-color: #EEE;
+}
+
+.userStatus .dropdown-menu .botItem.disabled button
+{
+  display: none;
+}
+
+.userStatus .dropdown-menu .botInfo .botInfoText
+{
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.userStatus .dropdown-menu .botInfo .botName
+{
+  color: #333;
+  margin-bottom: 0;
+  width: 100%;
+}
+
+
+.userStatus .dropdown-menu .botInfo .botName button
+{
+  margin: 0;
+  padding: 0 1ex;
+  float: right;
+  background-color: #55a579;
+}
+
+.userStatus .dropdown-menu .botInfo .botDescription
+{
+  color: #AAA;
+  font-size: smaller;
+}
+
+
+
+
+.dropdown-menu .dropdown-item.dropdownInfoBox
+{
+  padding: 0;
+}
+
+.botPlugin
+{
+  height: 50px;
+  width: 50px;
+  opacity: 0.3;
+}
+.botPlugin:hover
+{
+  opacity: 0.8;
 }

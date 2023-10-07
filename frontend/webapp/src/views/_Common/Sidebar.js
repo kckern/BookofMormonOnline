@@ -23,6 +23,7 @@ import fax from "./svg/facsimiles.svg";
 import historyicon from "./svg/history.svg";
 import analysis from "./svg/analysis.svg";
 import about from "./svg/about.svg";
+import theater from "./svg/theater.svg";
 import contact from "./svg/contact.svg";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 
@@ -30,17 +31,17 @@ import { assetUrl } from "src/models/BoMOnlineAPI";
 export function loadMenu(){
   var list = [
     { slug: "home", title: <span><img src={home} /> {label("menu_home")}</span> },
-    { slug: "study", title: <span><img src={study} /> {label("menu_study")}</span> },
     { slug: "contents", title: <span><img src={contents} /> {label("menu_contents")}</span> },
+    { slug: "study", title: <span><img src={study} /> {label("menu_study")}</span> },
+    { slug: "theater", title: <span><img src={theater} /> {label("menu_theater")}</span>, dev:true },
     { slug: "timeline", title: <span><img src={timeline} /> {label("menu_timeline")}</span> },
     { slug: "people", title: <span><img src={people} /> {label("menu_people")}</span> },
-    //{ slug: "relationships", title: <span><img src={relationships} /> RELATIONSHIPS</span> },
+    { slug: "relationships", title: <span><img src={relationships} /> {label("menu_network")}</span>, dev:true },
     { slug: "places", title: <span><img src={places} /> {label("menu_places")}</span> },
     { slug: "map", title: <span><img src={maps} /> {label("menu_map")}</span> },
-    //{ slug: "map", title: <span><img src={roadmap} /> TRAVELS</span> },
     { slug: "fax", title: <span><img src={fax} /> {label("menu_fax")}</span> },
     { slug: "history", title: <span><img src={historyicon} /> {label("menu_history")}</span> },
-    //{ slug: "analysis", title: <span><img src={analysis} /> {label("menu_analysis")}</span> },
+    { slug: "analysis", title: <span><img src={analysis} /> {label("menu_analysis")}</span>, dev:true },
     { slug: "about", title: <span><img src={about} /> {label("menu_about")}</span> },
   ];
 
@@ -48,11 +49,41 @@ export function loadMenu(){
   {
     list.splice(3,0, { slug: "특별반", title: <span><img src={book} />특별반</span> });
   }
-  return list;
+  return list.filter(i=>{
+    const isDev = /localhost|^dev/.test(window.location.hostname);
+    return !i.dev || isDev;
+  });
+}
+
+
+function SearchBox({appController,setActivePath}) {
+
+  const history = useHistory();
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      appController.activePageController?.states?.activeAudio?.pause();
+      appController.functions.closePopUp(); 
+      setActivePath("/search");
+      let searchSlug = e.target.value
+        .toLowerCase()
+        .replace(/[^a-z0-9:–—~-]+/gi, ".")
+        .replace(/(^\.|\.$)/g, "");
+      history.push("/search/" + searchSlug);
+      e.preventDefault();
+    }
+  };
+
+  return <li className={"searchbox"}>
+    <input
+      type="text" 
+      placeholder={label("search")}
+      onKeyDown={handleKeyDown}
+     />
+     </li>
 }
 
 function Sidebar(props) {
-  const history = useHistory();
   const match = useRouteMatch();
 
   const menu = loadMenu();
@@ -74,19 +105,6 @@ function Sidebar(props) {
     setActivePath(determinePath);
   }, [window.location.pathname, match.params])
 
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
-      props.appController.activePageController?.states?.activeAudio?.pause();
-      props.appController.functions.closePopUp(); 
-      setActivePath("/search");
-      let searchSlug = e.target.value
-        .toLowerCase()
-        .replace(/[^a-z0-9:–—~-]+/gi, ".")
-        .replace(/(^\.|\.$)/g, "");
-      history.push("/search/" + searchSlug);
-      e.preventDefault();
-    }
-  };
 
   let URLsearchTerm = window.location.pathname.split("/").reverse()[0];
   if (window.location.pathname === activePath) URLsearchTerm = null;
@@ -111,32 +129,13 @@ function Sidebar(props) {
           setActivePath={setActivePath}
           activePath={activePath}
         />
-        <Nav>
-          <li
-            className={
-              "searchbox " +
-              (activePath.match(new RegExp("^/search")) ? "active" : "")
-            }
-            key={"search"}
-          >
-            <a href={"/search"} onClick={(e) => e.preventDefault()}>
-              <input
-                defaultValue={
-                  URLsearchTerm && activePath.match(new RegExp("^/search"))
-                    ? window.location.pathname.split('/')[2]
-                    : null
-                }
-                placeholder={"🔎" + label("menu_search")}
-                onKeyDown={handleKeyDown}
-                onBlur={(e) => (e.target.value = "")}
-              />
-            </a>
-          </li>
+        <Nav className="sidebar-menu">
+          <SearchBox appController={props.appController} setActivePath={setActivePath} />
           {menu.map((r,index) => {
             let isActive = activePath.match(new RegExp("^/" + r.slug));
             let activeClass = isActive ? "active" : "";
             return (
-              <li className={r.slug + "_link  menuitem " + activeClass} key={r.slug} key={index}>
+              <li className={r.slug + "_link  menuitem " + activeClass} key={r.slug} >
                 <NavLink
                   to={"/" + r.slug}
                   activeClassName=""
@@ -256,6 +255,7 @@ function UserInfo({ appController, setActivePath, activePath }) {
               ></div>
             </div>
           </div>
+        </NavLink>
           <div className="settings">
 
             <ReactTooltip
@@ -264,13 +264,13 @@ function UserInfo({ appController, setActivePath, activePath }) {
               className="react-component-tooltip"
               backgroundColor="#666"
               //textColor="#000"
-              border="true"
+              border={true}
               opacity="0.5"
+              id="text-only-tooltip"
             />
             <img onClick={toggleSound} data-tip={(appController.states?.preferences.audio ? label("audio_on") : label("audio_off"))} src={appController.states?.preferences.audio ? soundOn : soundOff} />
             <Link to={"/user/preferences"}><img data-tip={label("user_prefs")} src={settings} /></Link>
           </div>
-        </NavLink>
       </li>
     </Nav>
   );

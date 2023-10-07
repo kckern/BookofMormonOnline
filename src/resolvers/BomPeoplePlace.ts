@@ -17,7 +17,7 @@ export default {
           args.slug?.map((s: any) => s.replace(/^.*?\//, ''))
         ),
         include: [
-          includeTranslation({ [Op.or]: ['name', 'title'] }, lang),
+          //includeTranslation({ [Op.or]: ['name', 'title',"description"] }, lang),
           includeModel(info, Models.BomIndex, 'index', [
             includeModel(true, Models.BomLookup, 'text_guid', [includeModel(true, Models.BomText, 'text')])
           ]),
@@ -25,9 +25,11 @@ export default {
             model: Models.BomPeopleRels.unscoped(),
             as: 'relationDst',
             include: [
+              //includeTranslation({ [Op.or]: ["srcrel", "dstrel"] }, lang),
               {
                 model: Models.BomPeople,
-                as: 'personSrc'
+                as: 'personSrc',
+               // include: [includeTranslation({ [Op.or]: ['name', 'title', "description"] }, lang)]
               }
             ]
           },
@@ -35,9 +37,11 @@ export default {
             model: Models.BomPeopleRels.unscoped(),
             as: 'relationSrc',
             include: [
+             // includeTranslation({ [Op.or]: ["srcrel", "dstrel"] }, lang),
               {
                 model: Models.BomPeople,
-                as: 'personDst'
+                as: 'personDst',
+               // include: [includeTranslation({ [Op.or]: ['name', 'title', "description"] }, lang)]
               }
             ]
           }
@@ -123,6 +127,9 @@ export default {
     title: async (item: any, args: any, { db, res }: any, info: any) => {
       return translatedValue(item, 'title');
     },
+    description: async (item: any, args: any, { db, res }: any, info: any) => {
+      return translatedValue(item, 'description');
+    },
     relations(item: any) {
       // console.log(item)
       var relationSrc: [any] = item?.getDataValue('relationSrc');
@@ -131,14 +138,14 @@ export default {
       for (var rel of relationSrc) {
         if (rel.getDataValue('srcrel'))
           relations.push({
-            relation: rel.getDataValue('srcrel'),
+            relation: translatedValue(rel, 'srcrel'),
             person: rel.getDataValue('personDst')
           });
       }
       for (var rel of relationDst) {
         if (rel.getDataValue('dstrel'))
           relations.push({
-            relation: rel.getDataValue('dstrel'),
+            relation: translatedValue(rel, 'dstrel'),
             person: rel.getDataValue('personSrc')
           });
       }
@@ -207,3 +214,68 @@ export default {
     },
   }
 };
+
+export  const loadPeopleFromTextGuid = async (guid: string, slugs: string[],lang) => {
+  slugs = Array.isArray(slugs) ? slugs : slugs ? [slugs] : [];
+//use Models.BoMLookup and Models.BomIndex to get the people slugs from the text_guid
+const peopleSlugs = (await Models.BomLookup.findAll({
+  attributes: ['text_guid'],
+  where: {
+    text_guid: guid
+  },
+  include: [
+    {
+      model: Models.BomIndex,
+      as: 'bomIndexReference',
+      attributes: ['slug'],
+      where: {
+        type: 'people' // retrieved slugs for 'people' type
+      }
+    }
+  ]
+}))?.map((item: any) => item.getDataValue('bomIndexReference').getDataValue('slug')).filter(x=>!!x);
+
+const uniqueSlugs = [...new Set([...peopleSlugs, ...slugs])];
+
+//load people using query function above
+const people = await Models.BomPeople.findAll({
+  where: {
+    slug: uniqueSlugs
+  },
+  include: [includeTranslation({ [Op.or]: ['name', 'title', "description"] }, lang)].filter(x => !!x),
+});
+
+
+return people;
+
+
+}
+
+export const loadPlacesFromTextGuid = async (guid: string, slugs: string[], lang) => {
+  slugs = Array.isArray(slugs) ? slugs : slugs ? [slugs] : [];
+//use Models.BoMLookup and Models.BomIndex to get the people slugs from the text_guid
+const placeSlugs = (await Models.BomLookup.findAll({
+  attributes: ['text_guid'],
+  where: {
+    text_guid: guid
+  },
+  include: [
+    {
+      model: Models.BomIndex,
+      as: 'bomIndexReference',
+      attributes: ['slug'],
+      where: {
+        type: 'places'
+      }
+    }
+  ]
+}))?.map((item: any) => item.getDataValue('bomIndexReference').getDataValue('slug')).filter(x=>!!x);
+const uniqueSlugs = [...new Set([...placeSlugs, ...slugs])];
+const places = await Models.BomPlaces.findAll({
+  where: {
+    slug: uniqueSlugs
+  },
+  include: [includeTranslation({ [Op.or]: ['name', 'info'] }, lang)].filter(x => !!x),
+});
+return places;
+}

@@ -69,8 +69,12 @@ export function prepareCacheObject(queries, apiResults, useCache) {
     return cacheObj;
 }
 
+export async function getSingleCacheFromKey(key) {
+    const itemObjectStore = (await loadDBRequest()).transaction("items", "readwrite").objectStore("items");
+    return await getSingleCache(key, itemObjectStore);
+}
 
-async function getSingleCache(key, itemObjectStore) {
+ async function getSingleCache(key, itemObjectStore) {
     return new Promise(function (resolve, reject) {
         var req = itemObjectStore.openCursor(key);
         req.onsuccess = function (e) {

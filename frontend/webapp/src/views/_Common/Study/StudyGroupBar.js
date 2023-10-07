@@ -4,7 +4,9 @@ import { CallCircle } from "./StudyGroupCall";
 import { toast } from "react-toastify"
 import "react-toastify/dist/ReactToastify.css"
 
-import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
+import { error } from "src/models/alertMessageService";
+
+import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem, Label, Button, Toast } from 'reactstrap';
 // import { groups } from "src/models/dummyData/dummydata";
 
 import { StudyHall } from "src/views/_Common/Study/StudyHall.js";
@@ -18,6 +20,7 @@ import green from "src/views/User/svg/green.svg";
 import yellow from "src/views/User/svg/yellow.svg";
 import grey from "src/views/User/svg/blank.svg";
 import blue from "src/views/User/svg/blue.svg";
+import socket from "src/views/User/svg/socket.svg";
 import count from "src/views/User/svg/count.svg";
 import cake from "src/views/User/svg/cake.svg";
 import parkingmeter from "src/views/User/svg/parkingmeter.svg";
@@ -41,11 +44,25 @@ import moment from "moment";
 import momentDurationFormatSetup from "moment-duration-format";
 import { Link } from "react-router-dom";
 import { history } from "src/models/routeHistory";
+import { Switch } from "react-router-dom/cjs/react-router-dom.min";
+import BoMOnlineAPI from "../../../models/BoMOnlineAPI";
 momentDurationFormatSetup(moment);
 
 toast.configure({
   limit: 4,
 });
+
+
+const toaster = (appController, src, color, val) => {
+  if (!appController.states.studyGroup.studyModeOn) return false;
+  toast.clearWaitingQueue();
+  toast.dismiss();
+  toast.info(<div className={"toastBox " + color}>
+    <img src={src} onError={breakCache} />
+    <div>{val}</div>
+  </div>, { position: toast.POSITION.BOTTOM_LEFT, autoClose: 6000 });
+}
+
 
 export function StudyGroupBar({ appController }) {
 
@@ -86,13 +103,25 @@ export function StudyGroupBar({ appController }) {
 
 export function getFreshUsers(appController) {
 
-  const mySocialId  = appController.states.user.social.user_id;
   const determineColor = userObject => userObject.inCall ? "blue" : userObject.isInGroup ? "green" : userObject.isOnSite ? "yellow" : "grey";
   let group = appController.states.studyGroup.activeGroup;
   if (!group) return null;
   let call = appController.states.studyGroup.activeCall;
   let callers = call?._participantCollection?._remoteParticipants?.map(p => p.user?.userId) || [];
-  let users = group?.members?.filter(u => u.userId !== mySocialId) || [];
+
+  let users = group.members?.filter((m) => {
+    const isSelf = m.userId === appController.states.user.social.user_id
+    const isBot = !!m.metaData?.isBot
+    if (isSelf || isBot) return false;
+    return true;
+  }) || [];
+
+  let bots = group.members?.filter((m) => {
+    const isSelf = m.userId === appController.states.user.social.user_id
+    const isBot = !!m.metaData?.isBot
+    if (isSelf || !isBot) return false;
+    return true;
+  }) || [];
 
   for (let i in users) {
     let userGroup = users[i].metaData.activeGroup;
@@ -102,8 +131,8 @@ export function getFreshUsers(appController) {
     users[i].isOnSite = users[i].connectionStatus === "online" && userGroup !== ""; //TODO and study Mode On
     users[i].color = determineColor(users[i]);
   }
-  if (!users) return [];
-  return users.sort((a, b) => {
+  if (!users && !bots && !users?.length && !bots?.length) return { users: [], bots: [] }
+  const userlist = users.sort((a, b) => {
 
 
     let asummary = {};
@@ -129,6 +158,9 @@ export function getFreshUsers(appController) {
       return 1;
     return diff;
   });
+
+  return { users: userlist, bots };
+
 }
 
 
@@ -163,27 +195,24 @@ function StudyGroupStatus({ appController }) {
     return map;
   }
 
-  let users = getFreshUsers(appController);
+  let { users, bots } = (getFreshUsers(appController) || { users: [], bots: [] });
   const [userColors, setUserColors] = useState(getColorMap(users));
 
-  const toaster = (src, color, val) => {
-    if (!appController.states.studyGroup.studyModeOn) return false;
-    toast.clearWaitingQueue();
-    toast.dismiss();
-    toast.info(<div className={"toastBox " + color}>
-      <img src={src}  onError={breakCache}/>
-      <div>{val}</div>
-    </div>, { position: toast.POSITION.BOTTOM_LEFT, autoClose: 6000 });
-  }
 
   useEffect(() => {
-
-    setUserColors(oldColors => {
-
+    setUserColors((oldColors) => {
       let newColors = getColorMap(users);
+
+      // Check if new colors and old colors are the same
+      if (JSON.stringify(newColors) === JSON.stringify(oldColors)) {
+        return oldColors;
+      }
+
       const sounds = appController.states.preferences.sound;
       let diff = diffMap(oldColors, newColors);
+
       if (diff[appController.states.user.user]) return newColors;
+
       let diffCounts = Object.keys(diff).length;
       if (diffCounts !== 1) return newColors;
 
@@ -191,9 +220,9 @@ function StudyGroupStatus({ appController }) {
       let mysocialId = appController.states.user.social.user_id;
       let user = appController.states.studyGroup.activeGroup?.memberMap[username] || {};
       let { oldVal: oldColor, newVal: newColor } = Object.values(diff)[0];
-      const isMe = mysocialId ===  username;
+      const isMe = mysocialId === username;
 
-      
+
 
       //debugger;
 
@@ -204,7 +233,7 @@ function StudyGroupStatus({ appController }) {
 
         if (newColor === "blue") {
           if (sounds) playSound(enteredCall)
-          toaster(user.profileUrl, newColor, label("x_joined_a_call", [user.nickname]));
+          toaster(appController,user.profileUrl, newColor, label("x_joined_a_call", [user.nickname]));
         }
         if (["blue"].includes(oldColor) && ["green"].includes(newColor)) {
           if (sounds) playSound(exitedCall);
@@ -213,16 +242,16 @@ function StudyGroupStatus({ appController }) {
         if (newColor === "green") {
           if (notificationHistory.find(x => x.userId === user.userId && x.type === "online")) return newColors; // prevent notification flood
           if (sounds) playSound(cameOnline)
-          toaster(user.profileUrl , newColor, label("x_came_online", [user.nickname]));  // prevent notification flood
+          toaster(appController,user.profileUrl, newColor, label("x_came_online", [user.nickname]));  // prevent notification flood
           notificationHistory.push({ userId: user.userId, time, type: "online" });
-          
+
         }
 
         if (["blue", "green"].includes(oldColor) && ["yellow", "grey"].includes(newColor)) {
           if (notificationHistory.find(x => x.userId === user.userId && x.type === "offline")) return newColors; // prevent notification flood
           if (sounds) playSound(wentOffline)
-          toaster(user.profileUrl, newColor, label(newColor === "yellow" ? "x_switched_groups" : "x_went_offline", [user.nickname]));
-          notificationHistory.push({ userId: user.userId, time , type: "offline"});
+          toaster(appController,user.profileUrl, newColor, label(newColor === "yellow" ? "x_switched_groups" : "x_went_offline", [user.nickname]));
+          notificationHistory.push({ userId: user.userId, time, type: "offline" });
         }
 
         const deadline = moment().subtract(5, "minutes").unix();
@@ -235,7 +264,6 @@ function StudyGroupStatus({ appController }) {
 
   }, [users]);
 
-  if (users?.length === 1) { return null; }
 
   if (appController.states.studyGroup.activeGroup === -1) return null;
   if (!appController.states.studyGroup.activeGroup) return null;
@@ -245,6 +273,8 @@ function StudyGroupStatus({ appController }) {
   let activeLiveMessageId = Object.keys(liveMessageQueue).shift();
   let activeLiveMessageSender = liveMessageQueue[activeLiveMessageId]?._sender?.userId;
 
+  let greenUsers = users?.filter(u => u.color === "green") || [];
+
   return (
     <div
       className={
@@ -253,30 +283,136 @@ function StudyGroupStatus({ appController }) {
       }
     >
 
-      <div class="divider"></div>
-      <CallCircle appController={appController} />
-      <audio id="call_audio" autoPlay={"true"} />
-      {users?.slice(0,11).map((user) => (
-        <>
-          <StudyGroupUser
-            key={user?.userId}
-            color={userColors[user?.userId]}
-            userObject={user}
-            appController={appController}
-            liveMessage={user?.userId === activeLiveMessageSender ? liveMessageQueue[activeLiveMessageId] : null}
-          />
-        </>
+      <BotCircles bots={bots} appController={appController} />
+      {greenUsers?.length >= 1 ? <><div className="divider"></div><CallCircle appController={appController} /></> : null}
+      <audio id="call_audio" autoPlay={true} />
+      {users?.slice(0, 11).map((user) => (
+        <StudyGroupUser
+          color={userColors[user?.userId]}
+          key={user?.userId}
+          userObject={user}
+          appController={appController}
+          liveMessage={user?.userId === activeLiveMessageSender ? liveMessageQueue[activeLiveMessageId] : null}
+        />
       ))}
-      <div class="divider"></div>
+      <div className="divider"></div>
 
     </div>
   );
 }
 
+function BotPlugin({ appController }) {
+
+  const iAmOperator = appController.states.studyGroup.activeGroup?.myRole === "operator";
+  const [isDroppedDown, setDroppedDown] = useState(false);
+  const userId = "bot";
+  const channel = appController.states.studyGroup.activeGroup?.url;
+  const [addingBot, setAddingBot] = useState(false);
+  const [bots, setBots] = useState([]);
+
+  const [buttonPush] = useState(() => {
+    let sound = new Audio(`${assetUrl}/interface/audio/drop`)
+    sound.preload = "auto";
+    return sound;
+  });
+  
+  const [cameOnline] = useState(() => {
+    let sound = new Audio(`${assetUrl}/interface/audio/contacts-online`)
+    sound.preload = "auto";
+    return sound;
+  });
+  
+  const addBot = async (bot) => {
+    const {id, name, picture} = bot;
+    let token = appController.states.user.token;
+    setAddingBot(true);
+    //play wentOffline
+    if (buttonPush) playSound(buttonPush);
+    let r = await BoMOnlineAPI({ addBot: { token, channel, bot: id } });
+    if (cameOnline) playSound(cameOnline);
+    setAddingBot(false);
+    toaster(appController, picture, "green", label("bot_added", [name]));
+    const activeGroup = appController.states.studyGroup.activeGroup;
+    const freshGroup = await activeGroup.refresh();
+    appController.functions.setActiveStudyGroup(freshGroup);
+
+
+  }
+
+  useEffect(() => {
+
+    const getBots = async () => {
+      let r = await BoMOnlineAPI({ botlist: null },{ useCache:false});
+      let botlist = r?.botlist || [];
+      botlist = botlist.sort((a,b)=>a.enabled? -1 : 1);
+      setBots(botlist);
+    }
+    getBots();
+
+  }, [appController.states.studyGroup.activeGroup?.url]);
+
+  if(!iAmOperator) return null;
+
+
+  return  <React.Fragment key={userId}>
+    <div className={"noselect divider"} key={userId}></div>
+    <Dropdown isOpen={isDroppedDown}
+      onMouseEnter={() => { if (!appController.states.studyGroup.isDrawerOpen) setDroppedDown(true) }}
+      onMouseLeave={() => setDroppedDown(false)}
+      toggle={() => { }}
+      className="botPluginDropdown"
+    >
+      <DropdownToggle tag="div" className="DropdownToggleContainer" onClick={()=>{}} key={userId}>
+        <div className="botPlugin">
+        <img src={socket}/>
+        </div>
+      </DropdownToggle>
+      <DropdownMenu className="dropdownMenu" key={userId}>
+        <DropdownItem header>
+          {label("plugin_bot")}
+        </DropdownItem>
+        <DropdownItem divider />
+        <DropdownItem className="dropdownInfoBox disabled">
+          <p>{label("bot_info")}</p>
+        </DropdownItem>
+        {bots.map(bot => {
+          if(!bot?.id) return null
+          else return <><DropdownItem divider/><DropdownItem className={`botItem ${bot?.enabled ? "enabled" : "disabled"}`}
+        key={bot?.id} onClick={()=>{
+          if(bot?.enabled) addBot(bot);
+        }}>
+          <div className={`botInfo`} key={bot?.id} >
+            <img src={bot?.picture} />
+            <div className="botInfoText">
+              <h6 className="botName">{bot?.name}<Button>{addingBot? label("bot_plugging", [bot?.name]) : label("bot_select")}</Button></h6>
+              <div className="botDescription">{bot?.description}</div>
+            </div>
+          </div>
+        </DropdownItem></>})}
+      </DropdownMenu>
+    </Dropdown>
+  </React.Fragment>
+
+}
+
+
+function BotCircles({ bots, appController }) {
+
+  bots = bots?.length ? bots : [];
+
+  if (!bots.length) return <BotPlugin appController={appController} />;
+
+
+  return bots.map((bot) => <StudyGroupUser key={bot.userId} userObject={bot} appController={appController} isBot={true} />)
+
+
+}
+
 export function getClassesFromUserObj(userObject, appController) {
 
-  let activeGroupUrl = appController.states.studyGroup.activeGroup.url;
-  let isTyping = appController.states.studyGroup?.[activeGroupUrl]?.includes(userObject.userId);
+  let activeGroup = appController.states.studyGroup.activeGroup;
+  appController.states.studyGroup.typers = appController.states.studyGroup?.typers || {};
+  let isTyping = appController.states.studyGroup?.typers[activeGroup.url]?.includes(userObject.userId);
   let classes = ["userCircle", userObject.userId];
   if (userObject.inCall) classes.push("inCall");
   if (userObject.isInGroup) classes.push("inGroup");
@@ -285,12 +421,14 @@ export function getClassesFromUserObj(userObject, appController) {
   return classes;
 }
 
-export function StudyGroupUserCircle({ userObject, appController }) {
+export function StudyGroupUserCircle({ userObject, appController, isBot }) {
+
+
 
   let classes = getClassesFromUserObj(userObject, appController);
+  const isTyping = classes.includes("isTyping");
 
-
-  let typingIndicator = (classes.includes("isTyping")) ? <div className={"typing"}><img src={typing} /></div> : null;
+  let typingIndicator = isTyping ? <div className={"typing"}><img src={typing}  onError={(event) => event.target.src = ''} /></div> : null;
   let summary = {}; try { summary = JSON.parse(userObject?.metaData?.summary) } catch (e) { }
   let trophyIcons = (summary.finished) ? <div className="trophyIcons"><img src={trophy} /></div> : null;
 
@@ -301,16 +439,20 @@ export function StudyGroupUserCircle({ userObject, appController }) {
   let badgeVal = (completedPerc) + "%"
   if (userObject.inCall) badgeVal = "📞  " + badgeVal;
 
+  if (isBot) badgeVal = isTyping ? "..." : label("bot");
+  if (isBot) classes.push("bot");
+
 
   let num = (md5(userObject.userId) + "4").match(/[3-9]/)[0];
   let inCallElements = (userObject.inCall) ? <>
     <div className={"userCircleOutline"} style={{ animation: `rotate ${num}s linear infinite` }}></div>
     <div className={"phoneCall"}></div></> : null;
 
-  return <><div
+  return <React.Fragment key={userObject.userId}><div
+    key={userObject.userId}
     className={classes.join(" ")}
     style={{ backgroundImage: `url(${userObject.profileUrl})` }}
-    onClick={() => appController.functions.openDrawer({ key: "message", val: userObject.userId })}
+    onClick={() => !isBot && appController.functions.openDrawer({ key: "message", val: userObject.userId })}
   >
     {inCallElements}
     {typingIndicator}
@@ -318,12 +460,12 @@ export function StudyGroupUserCircle({ userObject, appController }) {
     {trophyIcons}
   </div>
     <UnreadDMCount appController={appController} userId={userObject.userId} />
-  </>
+  </React.Fragment >
 
 }
 
 
-export function StudyGroupUser({ userObject, appController, liveMessage }) {
+export function StudyGroupUser({ userObject, appController, liveMessage, isBot }) {
 
   const [switchSound] = useState(() => {
     let sound = new Audio(`${assetUrl}/interface/audio/switch`)
@@ -331,8 +473,26 @@ export function StudyGroupUser({ userObject, appController, liveMessage }) {
     return sound;
   });
 
+  const activeChannel = appController.states?.studyGroup?.activeGroup?.url;
+
+
+
+  const [buttonPush] = useState(() => {
+    let sound = new Audio(`${assetUrl}/interface/audio/drop`)
+    sound.preload = "auto";
+    return sound;
+  });
+  
+  const [wentOffline] = useState(() => {
+    let sound = new Audio(`${assetUrl}/interface/audio/contacts-offline`)
+    sound.preload = "auto";
+    return sound;
+  });
+  
+  
   const [isDroppedDown, setDroppedDown] = useState(false);
   const [speechBubbleOpen, setSpeechBubbleOpen] = useState(true);
+  const [unplugging, setUnplugging] = useState(false);
 
   if (!userObject) return null;
 
@@ -348,7 +508,6 @@ export function StudyGroupUser({ userObject, appController, liveMessage }) {
     return null;
   }
 
-  if (userObject?.userId === appController.states.user.user) return null;
 
   let classes = getClassesFromUserObj(userObject, appController);
 
@@ -361,7 +520,6 @@ export function StudyGroupUser({ userObject, appController, liveMessage }) {
   if (classes.includes("onSite")) statusCircle = yellow;
   if (classes.includes("inGroup")) statusCircle = green;
   if (classes.includes("inCall")) statusCircle = blue;
-
 
 
   if (bookmark.slug) linkToItems = (classes.includes("inGroup") || classes.includes("onSite")) ?
@@ -410,13 +568,24 @@ export function StudyGroupUser({ userObject, appController, liveMessage }) {
     <DropdownItem divider />
     <DropdownItem disabled className="statBox">
       {summary.finished.map(t =>
-        <div className="statRow">
+        <div className="statRow" key={t}>
           <img src={trophy} />
           <div>{label("completed_on_x", [moment.unix(t).format(label("history_date_format_full"))])}</div>
           <div></div>
         </div>)}
     </DropdownItem></> : null;
 
+
+
+  const unplugBot = async (botObject) => {
+    const {nickname, profileUrl, userId} = botObject;
+    setUnplugging(true);
+    let token = appController.states.user.token;
+    if(buttonPush) playSound(buttonPush);
+    await BoMOnlineAPI({ removeBot: { token, channel: activeChannel, bot: userId } });
+    if(wentOffline) playSound(wentOffline);
+    toaster(appController,profileUrl, "yellow", label("bot_unplugged", [nickname]));
+  }
 
 
   let completedPerc = parseFloat(summary.completed) || 0;
@@ -496,7 +665,30 @@ export function StudyGroupUser({ userObject, appController, liveMessage }) {
         </div></DropdownItem>
     </DropdownMenu>;
 
+  const iAmOperator = appController.states.studyGroup.activeGroup.myRole==="operator";
+  if(isBot) dropDownContent = <DropdownMenu>
+    <DropdownItem header className="botHeader">
+      <img src={green} />
+      <div className="botNickname">{userObject.nickname}</div>
+      {iAmOperator && <Button disabled={unplugging} color="danger" onClick={()=>unplugBot(userObject)}>{unplugging ? label("bot_unplugging") : label("bot_unplug")}</Button>}
+    </DropdownItem>
+    <DropdownItem divider />
+    <LiveMessageStudy liveMessage={userObject?.metaData?.welcome || label("bot_intro_x", userObject.nickname)} bookmark={bookmark} appController={appController} />
 
+    {bookmark.slug && bookmark.channel=== activeChannel? <><DropdownItem divider />
+      <DropdownItem >
+        <Link to={"/" + bookmark.slug} >
+          <div className="statRow">
+            <img src={crosshairs} />
+            <div>{label("recently_commented")}</div>
+            <div></div>
+          </div>
+          <div className="statRow link">
+            <div>{bookmark.slug ? <span>{bookmark.pagetitle}—{bookmark.heading}</span> : null}</div>
+          </div></Link>
+      </DropdownItem></>: null}
+
+  </DropdownMenu>;
 
 
   if (liveMessage && !appController.states.studyGroup.isDrawerOpen) {
@@ -510,7 +702,7 @@ export function StudyGroupUser({ userObject, appController, liveMessage }) {
 
 
 
-    dropDownContent = <DropdownMenu className="liveMessage">
+    dropDownContent = isBot ? null :<DropdownMenu className="liveMessage">
       <DropdownItem header >
         <img src={statusCircle} />
         {userObject.nickname}
@@ -536,22 +728,23 @@ export function StudyGroupUser({ userObject, appController, liveMessage }) {
       </DropdownItem>
     </DropdownMenu>;
   }
+  const userId = userObject.userId;
 
 
   return (
-    <>
-      <div className={"noselect divider " + ((userObject.inCall) ? "inCall" : "")}></div>
+    <React.Fragment key={userId}>
+      <div className={"noselect divider " + ((userObject.inCall) ? "inCall" : "")} key={userId}></div>
       <Dropdown isOpen={isDroppedDown || !!liveMessage}
         onMouseEnter={() => { if (!appController.states.studyGroup.isDrawerOpen) setDroppedDown(true) }}
         onMouseLeave={() => setDroppedDown(false)}
         toggle={() => { }}
       >
-        <DropdownToggle tag="div" className="DropdownToggleContainer" onClick={handleClick} >
-          <StudyGroupUserCircle userObject={userObject} appController={appController} summary={summary} />
+        <DropdownToggle tag="div" className="DropdownToggleContainer" onClick={handleClick} key={userId}>
+          <StudyGroupUserCircle isBot={isBot} userObject={userObject} appController={appController} summary={summary} key={userId} />
         </DropdownToggle>
         {dropDownContent}
       </Dropdown>
-    </>
+    </React.Fragment>
   );
 }
 
@@ -580,12 +773,15 @@ function LiveMessageDM({ liveMessage, userObject, appController }) {
 }
 function LiveMessageStudy({ liveMessage, clickHandler, bookmark, appController }) {
 
+
+  if(typeof liveMessage === "string") liveMessage = {message: liveMessage};
+
   const [soundEffect] = useState(() => {
     let sound = new Audio(`${assetUrl}/interface/audio/chat-inbound`)
     sound.preload = "auto";
     return sound;
   });
-  useEffect(() => playSound(soundEffect), [])
+  useEffect(() => liveMessage.messageId && playSound(soundEffect), [])
 
 
   const handleClick = (e) => {
@@ -595,13 +791,19 @@ function LiveMessageStudy({ liveMessage, clickHandler, bookmark, appController }
     appController.functions.openDrawer(true);
   }
 
-  return <DropdownItem >
+  if(bookmark.slug) return <DropdownItem >
     <Link to={(bookmark.slug) ? "/" + bookmark.slug : null} onClick={handleClick} >
       <div className="messageBox">
         <div>{liveMessage.message}</div>
       </div>
     </Link>
   </DropdownItem>
+  else return <DropdownItem >
+    <div className="messageBox">
+      <div>{liveMessage.message}</div>
+    </div>
+  </DropdownItem>
+
 }
 
 export function UnreadDMCount({ userId, appController, count }) {

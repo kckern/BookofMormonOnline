@@ -48,7 +48,6 @@ export function HomeFeed({ appController, activeGroup, messageId, setActiveGroup
     let token = appController.states.user.token;
     setLoader(<Loader />);
     let r = await BoMOnlineAPI({ homefeed: { token, channel: activeGroup, message: messageId } }, { useCache: false });
-
     let items = r.homefeed[0]?.feed || [];
     let q = prepareQuery(items);
     let linkedContent = await BoMOnlineAPI(q);
@@ -76,7 +75,7 @@ export function HomeFeed({ appController, activeGroup, messageId, setActiveGroup
 
   if (loader) return loader;
   let bannerGroup = (activeGroup) ? homeGroups?.filter(g => g.url === activeGroup).shift() : null;
-  let items = homeItems.map(item => <HomeFeedItem appController={appController} item={item} homeGroups={homeGroups} setActiveGroup={setActiveGroup} linkedContent={linkedContent} />)
+  let items = homeItems.map((item,seq) => <HomeFeedItem appController={appController} seq={seq} item={item} homeGroups={homeGroups} setActiveGroup={setActiveGroup} linkedContent={linkedContent}  key={item.id} />);
   return <>
     <HomeFeedBanner appController={appController} bannerGroup={bannerGroup} setActiveGroup={setActiveGroup} />
     <ReactTooltip
@@ -128,7 +127,7 @@ function HomeFeedBanner({ appController, bannerGroup, setActiveGroup }) {
   </Card>
 }
 
-function HomeFeedItem({ appController, item, homeGroups, linkedContent, setActiveGroup }) {
+function HomeFeedItem({ appController,seq, item, homeGroups, linkedContent, setActiveGroup }) {
 
 
 
@@ -141,6 +140,22 @@ function HomeFeedItem({ appController, item, homeGroups, linkedContent, setActiv
 
   const myGroups = appController.states.studyGroup?.groupList.map(g => g.url) || [];
   const [comments, fetchComments] = useState([]);
+  const [fetching, setFetching] = useState(false);
+
+  //load comments from api immediate if seq==1
+  useEffect(async () => {
+    setFetching(true);
+    if (seq === 1) {
+      fetchComments(-1);
+      let message = item.id;
+      let channel = item.channel_url;
+      let token = appController.states.user.token;
+      let comments = await BoMOnlineAPI({ homethread: { token, channel, message } }, { useCache: false })
+      fetchComments(comments.homethread);
+      setFetching(false);
+    }
+  }, [seq]);
+
 
   const iAmInGroup = myGroups.includes(item.channel_url);
 
@@ -160,6 +175,7 @@ function HomeFeedItem({ appController, item, homeGroups, linkedContent, setActiv
   }
 
   const handleVisibilityChange = async (visible) => {
+    if(fetching) return;
     if (visible && !comments.length && item.replycount) {
       fetchComments(-1);
       let message = item.id;
@@ -172,9 +188,9 @@ function HomeFeedItem({ appController, item, homeGroups, linkedContent, setActiv
   let finished = item.user.finished;
   const trophyImg = (finished) ? <img className="trophy" src={trophy} /> : null;
   return (
-    <VisibilitySensor key={item.id} onChange={handleVisibilityChange}><Card className="homeFeed">
-      <CardHeader className="homeFeedHeader group noselect">
-        <div className="topLine">
+    <VisibilitySensor key={item.id} onChange={handleVisibilityChange}><Card className="homeFeed" key={item.id}>
+      <CardHeader className="homeFeedHeader group noselect" key={item.id}>
+        <div className="topLine" key={item.id}>
           <span
             onClick={() => setActiveGroup(group.url)}
             data-tip={`${label(group.privacy + "_group")}`}
@@ -188,7 +204,7 @@ function HomeFeedItem({ appController, item, homeGroups, linkedContent, setActiv
         <div className="timestamp"><Link to={`/home/${group.url}/${item.id}`}>{timeAgo}</Link></div>
       </CardHeader>
       <CardHeader className="homeFeedHeader noselect">
-        <div class="imagebox">{trophyImg}<img src={item.user.picture} onError={breakCache} /><div class="progress">{item.user.progress}%</div></div>
+        <div className="imagebox">{trophyImg}<img src={item.user.picture} onError={breakCache} /><div className="progress">{item.user.progress}%</div></div>
         <h5>
           <div>
             {item.user.nickname}<span className="feedAction">{label("honorific", -1) + label("honorific_subject", -1) + " "}{label(determinAction(item))}</span>
@@ -206,7 +222,7 @@ function HomeFeedItem({ appController, item, homeGroups, linkedContent, setActiv
         {(item.msg === "•") ? null : <div className="itemMsg">{ParseMessage(item.msg || "")}</div>}
         <ContentInFeed item={item} linkedContent={linkedContent} appController={appController} />
       </CardBody>
-      <Comments appController={appController} comments={comments} item={item} group={group} sbChannel={sbChannel} count={item.replycount} memberMap={memberMap} />
+      <Comments fetchComments={fetchComments} appController={appController} comments={comments} item={item} group={group} sbChannel={sbChannel} count={item.replycount} memberMap={memberMap} />
     </Card></VisibilitySensor>
   );
 
@@ -285,7 +301,7 @@ function LikeUI({  likes, memberMap }) {
     }</b> {otherstring} {likelabel}</span>
 }
 
-function Comments({ appController, comments, count, item, group, memberMap, sbChannel }) {
+function Comments({ appController, comments, count, item, group, memberMap, sbChannel, fetchComments}) {
 
 
   const [alertOn, setAlert] = useState(false);
@@ -319,8 +335,14 @@ function Comments({ appController, comments, count, item, group, memberMap, sbCh
       </div>
     </div>
   } else {
-    for (let i in newMessages) if (!comments.filter(c => c.id === newMessages[i].id).length) comments.push(newMessages[i]);
-    thread = comments.map(comment => <Comment comment={comment} />)
+    comments = Array.isArray(comments) ? comments : [];
+    comments = [...comments.filter(m=>m.id!==itemId && !/^[\s•]+$/.test(m.msg)),...newMessages];
+    //dedupe comments based on id
+    let seen = {};
+    comments = comments.filter(function (item) {
+      return seen.hasOwnProperty(item.id) ? false : (seen[item.id] = true);
+    });
+    thread = comments.map(comment => <Comment comment={comment} key={comment.id} />);
 
   }
   count = thread.length
@@ -375,11 +397,10 @@ function Comments({ appController, comments, count, item, group, memberMap, sbCh
     <Button disabled={!sbChannel} onClick={handleComment}><img src={comment} className="commentimg" /> {label("comment")}</Button>
   </div>
   //likes = null;
-
-  const mycomment = (!comments !== -1) ? <MyComment setNewMessages={setNewMessages} appController={appController} sbChannel={sbChannel} group={group} itemId={itemId} trophy={trophy} /> : null;
+  const mycomment = (!comments !== -1) ? <MyComment fetchComments={fetchComments} setNewMessages={setNewMessages} appController={appController} sbChannel={sbChannel} group={group} itemId={itemId} trophy={trophy} /> : null;
 
   return (
-    <div className="study home">
+    <div className="study home" key={itemId}>
       {countRow}
       {buttonRow}
       {thread}
@@ -409,17 +430,19 @@ function Comment({ comment }) {
   const urlMatch = parseInt((match.params?.messageId || 0)) || 0;
   if (!comment) return null;
   let finished = comment.user.finished;
+  const isBot = comment.user.nickname === "StudyBuddy"; //TODO get from api
+  const botBadge = (isBot) ? <span className="botBadge">BOT</span> : null;
   const trophyImg = (finished) ? <img className="trophy" src={trophy} /> : null;
   let timeAgo = timeAgoString(comment.timestamp / 1000);
-  return <div className={"commentThreadItem " + ((urlMatch === comment.id) ? "selected" : "")}>
+  return <div className={"commentThreadItem " + ((urlMatch === comment.id) ? "selected" : "")} key={comment.id}>
     <div className="imagebox noselect">
       {trophyImg}
       <img src={comment.user.picture} onError={breakCache} />
-      <div className="progress">{comment.user.progress || 0}%</div>
+      {!isBot && <div className="progress">{comment.user.progress || 0}%</div>}
 
     </div>
     <div className="textbox">
-      <div className="namerow noselect">{comment.user.nickname} <span>• <Link to={`/home/${comment.channel_url}/${comment.id}`}>{timeAgo}</Link></span></div>
+      <div className="namerow noselect">{comment.user.nickname} {botBadge} <span>• <Link to={`/home/${comment.channel_url}/${comment.id}`}>{timeAgo}</Link></span></div>
       <div className="mesg">{ParseMessage(comment.msg)}</div>
     </div>
   </div>
@@ -429,7 +452,7 @@ function Comment({ comment }) {
 
 
 
-function MyComment({ appController, group, itemId, setNewMessages, sbChannel, trophy }) {
+function MyComment({ appController, group, itemId, setNewMessages, sbChannel, trophy, fetchComments }) {
   let tokenImg = tokenImage();
 
   let img = appController.states.user.social?.profile_url || tokenImg;
@@ -438,13 +461,13 @@ function MyComment({ appController, group, itemId, setNewMessages, sbChannel, tr
   let finished = appController.states.user.finished;
   let trophyComp = (finished) ? <img className="trophy" src={trophy} /> : null;
 
-  if (!sbChannel) return <div class="commentThreadItem">
-    <div class="imagebox noselect">
+  if (!sbChannel) return <div className="commentThreadItem">
+    <div className="imagebox noselect">
       {trophyComp}
       <img src={img} onError={breakCache} />
-      <div class="progress">{appController.states.user.progress.completed || 0}%</div>
+      <div className="progress">{appController.states.user.progress.completed || 0}%</div>
     </div>
-    <div class="textbox notmember">
+    <div className="textbox notmember">
       <textarea
         className="form-control textarea join_to_comment"
         disabled
@@ -496,13 +519,25 @@ function MyComment({ appController, group, itemId, setNewMessages, sbChannel, tr
 
   }
 
+  const pollForComments = async () => {
 
-  return <div class="commentThreadItem">
-    <div class="imagebox noselect">
+    let message = itemId;
+    let channel = sbChannel.url;
+    let token = appController.states.user.token;
+    let comments = await BoMOnlineAPI({ homethread: { token, channel, message } }, { useCache: false })
+    fetchComments(comments.homethread);
+    //sleep 5
+    setTimeout(pollForComments, 5000);
+
+  }
+
+
+  return <div className="commentThreadItem">
+    <div className="imagebox noselect">
       <img src={img} onError={breakCache} />
-      <div class="progress">{appController.states.user.progress.completed || 0}%</div>
+      <div className="progress">{appController.states.user.progress.completed || 0}%</div>
     </div>
-    <div class="textbox">
+    <div className="textbox">
       <textarea
         id={"feedItem" + itemId}
         className="form-control textarea"
@@ -510,6 +545,9 @@ function MyComment({ appController, group, itemId, setNewMessages, sbChannel, tr
         onKeyPress={(e) => {
           if (e.key === "Enter" && !e.shiftKey) {
             sendMessage(e.target, itemId);
+            //fetchcomments messages every 5 seconds
+            pollForComments();
+            
             e.preventDefault();
           }
         }}

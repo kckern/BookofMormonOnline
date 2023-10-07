@@ -1,24 +1,37 @@
 
 import * as raw_index from './data/scriptdata.json';
 import * as raw_regex from './data/scriptregex.json';
+import {ref2VerseId, generateReference} from "scripture-guide";
 
+
+const shaveDownQuery = function(query: any) {
+
+    const lastCharIsDigit = query.match(/\d$/);
+    if(!lastCharIsDigit) {
+        //try assuming it is a book (add chapter 1)
+        if(ref2VerseId(query + " 1:1").verse_ids.length > 0) return query + " 1:1";
+        return query.replace(/[^0-9]+$/, '');
+    }
+
+    //remove first word
+    return query.split(/\s+/).slice(1).join(' ').trim();
+}
 
 
 const lookupReference = function(query: any) {
-    //Cleanup
-    let ref = cleanReference(query);
-    //Break compound reference into array of single references
-    let refs = splitReferences(ref);
 
-    //Lookup each single reference individually, return the set
-    let verse_ids = [];
-    for (let i in refs) {
-        verse_ids = verse_ids.concat(lookupSingleRef(refs[i]));
+    let scriptureData = ref2VerseId(query);
+    let attempts = 0;
+    while(scriptureData.verse_ids.length === 0 && attempts < 100) {
+        query = shaveDownQuery(query);
+        scriptureData = ref2VerseId(query);
+        attempts++;
     }
+
     return {
         "query": query,
-        "ref": ref,
-        "verse_ids": verse_ids
+        "ref": scriptureData.ref,
+        "verse_ids": scriptureData.verse_ids
     };
 }
 
