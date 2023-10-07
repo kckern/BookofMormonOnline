@@ -27,7 +27,7 @@ const getBlocksFromToken = async (token) => {
     const {queryBy,userObj} = await getUserForLog(token);
     const finished = userObj?.finished || 0;
   //find the most recent textblock for this user
-  logEntry = logEntry || await Models.BomLog.findOne({
+  let logEntry = await Models.BomLog.findOne({
       raw:true,
       where:{
           user:queryBy,
@@ -36,8 +36,10 @@ const getBlocksFromToken = async (token) => {
       },
       order:[['timestamp','DESC']],
   })
-
-  return await getBlocksFromTextBlock(logEntry.value,token,false);
+  const textBlockData = await Models.BomText.findOne({raw:true,where:{guid:logEntry.value}});
+  const link = textBlockData.link;
+  const pageSlug = await Models.BomSlug.findOne({raw:true,where:{link:textBlockData.page}});
+  return await getBlocksFromTextBlock(`${pageSlug.slug}/${link}`,token,false);
 }
 
 
