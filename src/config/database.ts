@@ -224,6 +224,14 @@ models.BomPage.hasMany(models.BomSection, {
   as: 'sections'
 });
 
+//inverse
+models.BomSection.belongsTo(models.BomPage, {
+  foreignKey: 'parent',
+  targetKey: 'guid',
+  as: 'page'
+});
+
+
 models.BomSection.hasMany(models.BomSectionrow, {
   foreignKey: {
     name: 'parent'

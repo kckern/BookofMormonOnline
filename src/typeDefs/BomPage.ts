@@ -97,7 +97,7 @@ export default gql`
 
 input QueueInput {
   slug: String
-  blocks: [Int]
+  blocks: [Int!]
 }
 
   type Conn {
