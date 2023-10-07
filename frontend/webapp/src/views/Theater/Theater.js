@@ -1148,18 +1148,15 @@ function TheaterImagePanel({ theaterController }) {
     opacity = (currentDuration - currentTime) / secondsBuffer;
 
   const imgEl = image ? (
-    <div>
+    <div className="img-element-container" 
+    style={{
+      transform: `scale(${scale}) `,
+      opacity
+    }}>
       <img
         src={`${assetUrl}/art/${image.id}`}
-        style={{
-          transform: `scale(${scale})`,
-          opacity
-        }}
       />
 
-      <div className="imageCaption" style={{ opacity }}>
-        {image.title}
-      </div>
     </div>
   ) : null;
 
@@ -1167,6 +1164,9 @@ function TheaterImagePanel({ theaterController }) {
     <div className={"theater-image-panel " + classHide}>
       <h4>{label("art")}</h4>
       <div className="theater-image-container">{imgEl}</div>
+      <div className="imageCaption" style={{ opacity }}>
+        {(image|| {}).title}
+      </div>
     </div>
   );
 }
