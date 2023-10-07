@@ -43,6 +43,10 @@ const loadQueueItemsFromQueue = items => {
 
 
 function TheaterWrapper({ appController }) {
+
+  let match = useRouteMatch();
+  let slug = match?.params?.slug || null;
+
   const [queue, setQueue] = useState([]);
   const [queueStatus, setQueueStatus] = useState([]);
   const [cursorIndexArray, setCursorIndexArray] = useState((prev, current) => {
@@ -146,7 +150,7 @@ function TheaterWrapper({ appController }) {
   };
 
   useEffect(async () => {
-    const items = null//[{slug:"ammon",blocks:[9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25]}];
+    const items = slug ? [{slug}] : null; //todo: handle reading plan id / index input;
     const token = localStorage.getItem("token");
     let { queue } = await BoMOnlineAPI(
       { queue: { token, items } },
@@ -580,6 +584,7 @@ function TheaterControls({ theaterController }) {
   } = theaterController;
 
 
+  const history = useHistory();
 
   const [playerCanPlay, setPlayerCanPlay] = useState(false);
 
@@ -590,8 +595,12 @@ function TheaterControls({ theaterController }) {
   useEffect(() => {
     if(!currentItem) return;
     setTimeout(() => setIsVisible(true), 100);
-
     setPlayerCanPlay(false);
+    const slug = currentItem?.slug || null;
+    //update react router to /theater/${slug}
+    history.push(`/theater/${slug}`);
+
+
   }, [currentItem]);
 
 
