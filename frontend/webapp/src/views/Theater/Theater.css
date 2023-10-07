@@ -40,12 +40,42 @@
         min-width: 100%;
         height: 40%;
         flex-direction: row!important;
+        position: relative;
+    }
+    .imageCaption
+    {
+        bottom: auto;
+        top:0;
     }
 
-    .theater-wrapper .theater-side-panel >div
+    .theater-wrapper .theater-side-panel .theater-people-image-panel
     {
-        width: 33%!important;
+        display: flex;
+        flex-direction: column-reverse;
+        width: 50%;
+        height: 100%;
+        flex-grow: 0;
+        position: relative;
     }
+
+    .theater-image-panel 
+    {
+        flex-grow: 1;
+        margin:0;
+        height: 50%;
+        position: absolute;
+        top:0;
+        opacity: 0.5;
+        position: relative;
+        max-height: none;
+    }
+
+    .theater-people-place-panel
+    {
+        flex-shrink: 0;
+
+    }
+
     .theater-wrapper .theater-side-panel .theater-comment-panel
     {
         flex-grow: 1;
@@ -203,7 +233,7 @@
 
 .theater-main-panel .theater-content-frame blockquote{
 
-    line-height: 100%;
+    line-height: 110%;
     font-size: 90%;
 }
 
@@ -490,7 +520,7 @@ span.pageTitle
     height: 45%;
     top:25%;
     width: 100%;
-    font-size: 2rem;
+    font-size: min(2rem,1.5vw);
     overflow: hidden;
     line-height: 2rem;
 }
@@ -542,12 +572,15 @@ span.pageTitle
     flex-shrink: 0;
     max-height: 500px;
     transition:  max-height 0.5s ease-in-out;
+    display: flex;
+    flex-direction: column;
 
 }
 
 .theater-side-panel .theater-image-panel.hidden {
     max-height: 0;
     transition:  max-height 0.5s ease-in-out;
+    opacity: 0;
 }
 
 
@@ -557,17 +590,20 @@ span.pageTitle
     justify-content: center;
     position: relative;
     overflow: hidden;
-    height: 30vh;
     flex-shrink: 0;
+    height: calc(100% - 15rem);
+    flex-grow: 1;
+    background: url('https://i.imgur.com/uqjhnKX.jpg');
+    
 
 }
 
 .theater-side-panel .theater-image-panel img {
-    height: 30vh;
     width: 100%;
     object-fit: contain;
     z-index: 99;
     background:url('https://i.imgur.com/uqjhnKX.jpg');
+    height: 100%;
 
 }
 
@@ -709,7 +745,6 @@ span.pageTitle
     display:flex;
     overflow:scroll;
     justify-content: flex-start;
-
 
     height: 15rem;
     background: url('https://i.imgur.com/uqjhnKX.jpg');
