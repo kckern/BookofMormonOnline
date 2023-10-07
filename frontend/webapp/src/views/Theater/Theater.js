@@ -7,7 +7,7 @@ import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
 import { toast } from "react-toastify";
 import "./Theater.css";
 import ReactAudioPlayer from "react-audio-player";
-import moment from "moment";
+import canAutoplay from 'can-autoplay';
 
 import logo from "src/views/_Common/svg/logo.svg";
 import menu from "src/views/User/svg/settings.svg";
@@ -246,6 +246,8 @@ function TheaterMainPanel({ theaterController }) {
   const { queue, cursorIndex,cursorChangeWasManual } = theaterController;
   const currentItem = queue[cursorIndex] || null;
 
+  const [canAutoPlayState, setCanAutoPlay] = useState(false);
+
   const thisSection = currentItem?.parent_section?.title || null;
   const prevSection = queue[cursorIndex - 1]?.parent_section?.title || null;
   const isNewSection =  thisSection !== prevSection;
@@ -263,22 +265,30 @@ function TheaterMainPanel({ theaterController }) {
   const [subCursorIndex, setSubCursorIndex] = useState(initSubCursorIndex);
   useEffect(()=>{
       setSubCursorIndex(initSubCursorIndex);
+      canAutoplay.audio().then(({result}) => {result ? setCanAutoPlay(true) : setCanAutoPlay(false);} );
   },[cursorIndex])
 
   theaterController = {
     ...theaterController,
     subCursorIndex,
     setSubCursorIndex,
-    hasNextContent
+    hasNextContent,
+    canAutoPlayState,
+    setCanAutoPlay
   };
 
   const showStatic = subCursorIndex !== 0;
+  
+  if(!canAutoPlayState) return <div className="theater-main-panel">
+    <TheaterQueueIndicator theaterController={theaterController} />
+    <TheaterStaticContent theaterController={theaterController} type="idle" />
+  </div>
 
   return (
     <div className="theater-main-panel">
     <TheatherMusicPlayer theaterController={theaterController} />
     <TheaterQueueIndicator theaterController={theaterController} />
-      {showStatic ? (
+      {canAutoPlayState && showStatic ? (
         <TheaterStaticContent
           theaterController={theaterController}
           type={subCursorIndex < 0 ? pretype : posttype}
@@ -305,9 +315,58 @@ function TheaterStaticContent({ theaterController, type }) {
       return <TheaterCrossRoads theaterController={theaterController} />;
     case "outro":
       return <TheaterQueueOutro theaterController={theaterController} />;
+    case "idle":
+      return <TheaterIdle theaterController={theaterController} />;
     default:
       return <pre>NO TYPE</pre>;
   }
+}
+function TheaterIdle({ theaterController }) {
+  const {setCanAutoPlay } = theaterController;
+
+  //listen for enter or space keys
+  useEffect(() => {
+    const handleKeyDown = e => {
+      switch (e.code) {
+        case "Space":
+        case "Enter":
+          setCanAutoPlay(true);
+          break;
+        default:
+          break;
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
+  let currentItemText = theaterController.queue[theaterController.cursorIndex]?.content || null;
+  currentItemText = prepareContent(currentItemText);
+  //remove html
+  currentItemText = currentItemText.replace(/(<([^>]+)>)/gi, "");
+
+  return <div className="theater-content-frame theater-queue-intro">
+
+<p style={{
+  opacity:0.2,
+  /* vertical center */
+  position: "absolute",
+  top: "50%",
+  transform: "translateY(-50%)",
+  padding: "10%",
+  fontStyle: "italic",
+  
+  }}>{currentItemText}</p>
+    <div className={"theater-intro-slide"}>
+    <button className="playbutton" onClick={()=>setCanAutoPlay(true)}>
+      <img src={play} />
+    </button>
+      <p>Play</p>
+    </div>
+  </div>;
+
 }
 
 function TheaterQueueOutro({ theaterController }) {
@@ -323,7 +382,6 @@ function TheaterQueueOutro({ theaterController }) {
 function TheaterQueueIntro({ theaterController }) {
   const { queue, cursorIndex } = theaterController;
   const currentItem = queue[cursorIndex] || null;
-
 
   const [initSFX] = useState(
     new Audio(`${assetUrl}/interface/audio/theater`)
@@ -355,7 +413,6 @@ function TheaterQueueIntro({ theaterController }) {
 
   const pageTitle = currentItem?.parent_page?.title || null;
   const sectionTitle = currentItem?.parent_section?.title || null;
-  console.log(queue)
   const queueItemsInSameSection = queue.filter( item => item?.parent_section?.title === currentItem?.parent_section?.title);
   const narrations = queueItemsInSameSection
     .map(item => item?.narration?.description || null)
@@ -792,6 +849,15 @@ function TheaterNarration({ theaterController }) {
   );
 }
 
+const prepareContent = (content)=>{
+
+ return  content
+  ?.replace(/\[[civaquote]+\][0-9a-z]+\[\/[civaquote]+\]/g, "")
+  .replace(/[_]/g, "<span class='spacer'></span>")
+  .replace(/\s+/g, " ") || "";
+
+}
+
 function TheaterContent({ theaterController }) {
   const {
     queue,
@@ -809,11 +875,7 @@ function TheaterContent({ theaterController }) {
   const currentItem = queue[cursorIndex] || null;
   let { content } = currentItem || {};
   //stip comment and image blocks: [c]1234[/c] and [i]1234[/i]
-  content =
-    content
-      ?.replace(/\[[civaquote]+\][0-9a-z]+\[\/[civaquote]+\]/g, "")
-      .replace(/[_]/g, "<span class='spacer'></span>")
-      .replace(/\s+/g, " ") || "";
+  content = prepareContent(content);
 
   const computePosition = progress => {
     return progress;

@@ -21,6 +21,7 @@
     "axios": "^0.21.1",
     "bootstrap": "^5.0.1",
     "bootstrap-switch-button-react": "^1.2.0",
+    "can-autoplay": "^3.0.2",
     "caniuse-lite": "^1.0.30001319",
     "canvasjs": "^1.8.3",
     "canvasjs-react-charts": "^1.0.5",

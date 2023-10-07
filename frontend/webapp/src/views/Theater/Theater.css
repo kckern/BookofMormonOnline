@@ -185,6 +185,8 @@
     /* make background image opacity 0.3 */
     background-blend-mode: multiply;
     background-color: #000000AA;
+    /* stretch background image to fill */
+    background-size: cover;
 
 
 
@@ -347,7 +349,26 @@ img.player-ui:hover{
 }
 .theater-intro-slide p.presents
 {
-    opacity: 0.5;
+    color:#999
+}
+
+.theater-intro-slide .playbutton
+{
+    width: 7rem;
+    height: 7rem;
+    background-color: #6bd098;
+    color:white;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    cursor: pointer;
+    flex-direction: column;
+    font-size: 1rem;
+}
+.theater-intro-slide .playbutton img{
+    height: 50%;
 }
 
 .theater-intro-slide.section-intro{
