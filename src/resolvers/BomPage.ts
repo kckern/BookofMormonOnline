@@ -4,7 +4,7 @@ import { models as Models, sequelize, SQLQueryTypes } from '../config/database';
 import { getSlug, Op, includeTranslation, translatedValue, includeModel, includeWhere, scoreSlugsfromUserInfo, getSlugTip, getUserForLog} from './_common';
 import scripture from "../library/scripture"
 import { loadPeopleFromTextGuid, loadPlacesFromTextGuid } from './BomPeoplePlace';
-const { loadTheaterQueue } = require('./lib')
+const { getBlocksToQueue } = require('./lib')
 
 export default {
   Query: {
@@ -168,17 +168,10 @@ export default {
 queue: async (root: any, args: any, context: any, info: any) => {
   const lang = context.lang ? context.lang : null;
   const {token,items} = args;
-  let inputs = null
-  if(!items || !items?.length)
-  {
-    inputs = await loadTheaterQueue(token, info);
-  }
-  else{
-    inputs = items.map((item:any)=>({slug:item.slug,blocks:item.blocks}));
-  }
+
+  const inputs = await getBlocksToQueue(token, items, info);
 
   const textBlocks = inputs.map(async ({ slug, blocks }) => {
-
 
     const r = await Models.BomText.findAll({
       where: {
@@ -459,9 +452,6 @@ queue: async (root: any, args: any, context: any, info: any) => {
       //get this  narration id
       const rowGuid = item.getDataValue('narration')?.getDataValue('parent');
       if(!rowGuid) return [];
-
-      console.log(rowGuid);
-
       //get page guid
       const pageGuid = item.getDataValue('page');
       
