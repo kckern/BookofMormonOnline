@@ -577,6 +577,24 @@ span.pageTitle
 
 }
 
+.failed-to-load
+{
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding-bottom: 30%;
+    font-size: 2rem;
+}
+
+.failed-to-load img{
+    height: 20rem;
+    width: 10rem;
+    opacity: 0.5;
+}
+
 .theater-side-panel .theater-image-panel.hidden {
     height: 0;
     transition:  height 0.5s ease-in-out;
