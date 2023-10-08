@@ -35,7 +35,10 @@ const getBlocksFromToken = async (token) => {
           type:"block"
       },
       order:[['timestamp','DESC']],
-  })
+  });
+
+  if(!logEntry) return await getBlocksByDefault();
+
   const textBlockData = await Models.BomText.findOne({raw:true,where:{guid:logEntry.value}});
   const link = textBlockData.link;
   const pageSlug = await Models.BomSlug.findOne({raw:true,where:{link:textBlockData.page}});
@@ -52,7 +55,7 @@ const getBlocksFromReadingPlan = async (plan) => {
 
 const getBlocksByDefault = async () => {
 
-    return {slug:"lehites",blocks:Array(20).map((_,i)=>(i+1))};
+    return getBlocksFromPage("lehites");
 
 }
 

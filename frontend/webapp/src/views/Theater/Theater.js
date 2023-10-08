@@ -156,7 +156,7 @@ function TheaterWrapper({ appController }) {
       { queue: { token, items } },
       { useCache: false }
     );
-    queue = (queue||[]).map(item => {
+    queue = (queue||[{}]).map(item => {
       item.coms = (item?.coms || []).sort((a, b) => {
         //random
         return Math.random() - 0.5;
@@ -597,8 +597,18 @@ function TheaterControls({ theaterController }) {
     setTimeout(() => setIsVisible(true), 100);
     setPlayerCanPlay(false);
     const slug = currentItem?.slug || null;
-    //update react router to /theater/${slug}
+
+    /*
+
+    TODO: get the URL to update without triggering a route rerender
+
+    document.location =`/theater/${slug}`
+    
+    OR
+
     history.push(`/theater/${slug}`);
+
+    */
 
 
   }, [currentItem]);
