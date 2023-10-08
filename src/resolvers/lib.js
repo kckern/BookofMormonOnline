@@ -115,28 +115,52 @@ const buildQueueFromSection = async ({sectionGuid,token,forceSection}) => {
     let queueIsReady = false;
     let queue = [];
     const max = 50;
+    const completedBlocks = await loadCompletedBlocks({queryBy, finished});
     while(!queueIsReady){
+        //console.log(`Section index: ${sectionIndex}`);
         const sectionGuid = unqueSectionGuids[sectionIndex];
+        sectionIndex++;
+        if(sectionIndex >= unqueSectionGuids.length) sectionIndex = 0;
+        if(!sectionGuid) break;
         const text_guids = allBlocks.filter(b=>b.section === sectionGuid).map(b=>b.guid);
-        const sectionIsDone = await checkCompletion({queryBy, finished, text_guids});
+        const sectionIsDone = text_guids.every(t=>completedBlocks.includes(t));
         if(sectionIsDone && !forceSection){
             console.log(`Section ${sectionGuid} is done. ${text_guids.length} blocks completed.`);
-            sectionIndex++;
             continue;
         }
         const tmpQueue = [...queue, ...text_guids];
+       // console.log(`Current queue size: ${queue.length}. Attempting to add ${text_guids.length} blocks from section ${sectionGuid}.`);
         if(tmpQueue.length > max) break;
+       // console.log(`Section ${sectionGuid} added to queue. ${text_guids.length} blocks added.`);
         queue = tmpQueue;
-        sectionIndex++;
     }
+    //console.log({queue});
     return await resolveQueueFromTextBlocks(allBlocks.filter(b=>queue.includes(b.guid)));
 
 
 }
 
+const loadCompletedBlocks = async ({queryBy, finished}) => {
+
+        const results = await Models.BomLog.findAll({
+            attributes: [[sequelize.fn('DISTINCT', sequelize.col('value')), 'value']],
+            raw:true,
+            where:{
+                user:queryBy,
+                timestamp: {[Op.gt]: finished},
+                type:"block",
+                credit: {[Op.gt]: process.env.PERCENT_TO_COUNT_AS_COMPLETE || 40}
+            },
+            order:[['timestamp','DESC']],
+        });
+
+        return  results.map(r=>r.value);
+
+}
+
 
 const checkCompletion = async ({queryBy, finished, text_guids}) => {
-
+    //todo PRELOAD log
     const results = await Models.BomLog.findAll({
         attributes: [[sequelize.fn('DISTINCT', sequelize.col('value')), 'value']],
         where:{
