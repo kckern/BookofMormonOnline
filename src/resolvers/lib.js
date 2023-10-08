@@ -55,7 +55,7 @@ const getBlocksFromReadingPlan = async (plan) => {
 
 const getBlocksByDefault = async () => {
 
-    return getBlocksFromPage("lehites");
+    return getBlocksFromPage("4becc77f2d75f");
 
 }
 
@@ -90,7 +90,7 @@ const getBlocksFromTextBlock = async (slug,token,force) => {
 
 };
 
-const getBlocksFromPage = async (pageGuid,token) => {
+const getBlocksFromPage = async (pageGuid,token=null) => {
     //first 3 sections with incomplete blocks
     const sectionsOnPage = await Models.BomSection.findAll({
         raw:true,
@@ -104,8 +104,9 @@ const getBlocksFromPage = async (pageGuid,token) => {
 
 
 const buildQueueFromSection = async ({sectionGuid,token,forceSection}) => {
+    if(!sectionGuid) return [];
     forceSection = forceSection || false;
-    const {queryBy,userObj} = await getUserForLog(token);
+    const {queryBy,userObj} = token ? await getUserForLog(token) : {queryBy:null,userObj:{finised:0}};
     const finished = userObj?.finished || 0;
 
     const allBlocks = await Models.BomText.findAll({
@@ -117,8 +118,9 @@ const buildQueueFromSection = async ({sectionGuid,token,forceSection}) => {
     let sectionIndex = unqueSectionGuids.findIndex(s=>s === sectionGuid);
     let queueIsReady = false;
     let queue = [];
-    const max = 50;
-    const completedBlocks = await loadCompletedBlocks({queryBy, finished});
+    const max = 40;
+    const completedBlocks = queryBy ? await loadCompletedBlocks({queryBy, finished}) : [];
+    //console.log({completedBlocks,unqueSectionGuids,sectionIndex});
     while(!queueIsReady){
         //console.log(`Section index: ${sectionIndex}`);
         const sectionGuid = unqueSectionGuids[sectionIndex];
@@ -131,13 +133,13 @@ const buildQueueFromSection = async ({sectionGuid,token,forceSection}) => {
             console.log(`Section ${sectionGuid} is done. ${text_guids.length} blocks completed.`);
             continue;
         }
+        //console.log({text_guids});
         const tmpQueue = [...queue, ...text_guids];
-       // console.log(`Current queue size: ${queue.length}. Attempting to add ${text_guids.length} blocks from section ${sectionGuid}.`);
+        //console.log(`Current queue size: ${queue.length}. Attempting to add ${text_guids.length} blocks from section ${sectionGuid}.`);
         if(tmpQueue.length > max) break;
-       // console.log(`Section ${sectionGuid} added to queue. ${text_guids.length} blocks added.`);
+        //console.log(`Section ${sectionGuid} added to queue. ${text_guids.length} blocks added.`);
         queue = tmpQueue;
     }
-    //console.log({queue});
     return await resolveQueueFromTextBlocks(allBlocks.filter(b=>queue.includes(b.guid)));
 
 
