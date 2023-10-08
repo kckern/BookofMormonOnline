@@ -9,6 +9,7 @@ import "./Theater.css";
 import ReactAudioPlayer from "react-audio-player";
 import canAutoplay from 'can-autoplay';
 
+import nowifi from "src/views/_Common/svg/no-wifi.svg";
 import logo from "src/views/_Common/svg/logo.svg";
 import menu from "src/views/User/svg/settings.svg";
 import mute from "./svg/mute.svg";
@@ -48,6 +49,7 @@ function TheaterWrapper({ appController }) {
   let slug = match?.params?.slug || null;
 
   const [queue, setQueue] = useState([]);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [queueStatus, setQueueStatus] = useState([]);
   const [cursorIndexArray, setCursorIndexArray] = useState((prev, current) => {
     const [index] = Array.isArray(current) ? current : [0];
@@ -152,19 +154,21 @@ function TheaterWrapper({ appController }) {
   useEffect(async () => {
     const items = slug ? [{slug}] : null; //todo: handle reading plan id / index input;
     const token = localStorage.getItem("token");
-    let { queue } = await BoMOnlineAPI(
+    let { queue:loadedQueue } = await BoMOnlineAPI(
       { queue: { token, items } },
       { useCache: false }
     );
-    queue = (queue||[{}]).map(item => {
+    if(!loadedQueue || !loadedQueue?.length || !loadedQueue?.[0]) return setLoadFailed(true);
+    loadedQueue = loadedQueue.map(item => {
+      if(!item?.coms) return item;
       item.coms = (item?.coms || []).sort((a, b) => {
         //random
         return Math.random() - 0.5;
       });
       return item;
     });
-    setQueue(queue);
-    setQueueStatus((queue||[]).map(item => item?.status));
+    setQueue(loadedQueue);
+    setQueueStatus((loadedQueue||[]).map(item => item?.status));
   }, []);
 
   useEffect(() => {
@@ -236,7 +240,16 @@ function TheaterWrapper({ appController }) {
     };
   }, [isPlaying, cursorIndex]);
 
-  if (!queue.length) return <Loader />;
+  if(loadFailed) return (
+                   <div className="theater-wrapper">
+                     <div className="failed-to-load">
+                       <img src={nowifi} />
+                       <p>Failed to load theater</p>
+                     </div>
+                   </div>
+                 );
+
+  if (!queue.length) return <div className="theater-wrapper"><Loader /></div>;
 
   return (
     <div className="theater-wrapper">
