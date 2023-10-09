@@ -551,10 +551,30 @@ span.pageTitle
 {
     background-color: #fbc658;
 }
-.theater-queue-indicator .theater-queue-indicator-item.active
-{
-    background-color: #FFF;
+
+
+@keyframes blinking-outline {
+    0% {outline-color: #6bd098FF;}
+    50% {outline-color: #FFFFFFFF;}
+    100% {outline-offset: #6bd098FF;}
 }
+
+.theater-queue-indicator .theater-queue-indicator-item.active {
+    outline: 3px solid #6bd098FF;
+    animation: blinking-outline 1s infinite ease-in-out;
+}
+
+
+.theater-queue-indicator .theater-queue-indicator-item.last-in-section
+{
+    margin-right: 1.5ex;
+}
+.theater-queue-indicator .theater-queue-indicator-item.last-in-section:last-child
+{
+    margin-right: 0;
+}
+
+
 #theater-audio-player
 {
     display: none;

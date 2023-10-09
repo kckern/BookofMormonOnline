@@ -41,7 +41,18 @@ const loadQueueItemsFromQueue = items => {
   return output;
 };
 
+const playAudioElement = (id) => {
 
+  const player = document.getElementById(id);
+  if(!player) return;
+  try{
+    player.play();
+  }
+  catch(e){
+    console.log(e);
+  }
+
+}
 
 function TheaterWrapper({ appController }) {
 
@@ -70,7 +81,7 @@ function TheaterWrapper({ appController }) {
       document.getElementById("theater-audio-player")?.pause();
     },
     play: () => {
-      document.getElementById("theater-audio-player")?.play();
+      playAudioElement("theater-audio-player");
     },
     stop: () => {
       document.getElementById("theater-audio-player").pause();
@@ -631,7 +642,7 @@ function TheaterControls({ theaterController }) {
     const player = document.getElementById("theater-audio-player");
     if (!player) return;
     player.playbackRate = theaterController.playbackRate;
-    player.play();
+    playAudioElement("theater-audio-player");
   }, [playerCanPlay]);
 
   if (!currentItem) return <Loader />;
@@ -655,11 +666,29 @@ function TheaterControls({ theaterController }) {
     player.playbackRate = theaterController.playbackRate;
 
     //if progress is 60%  log item, but only once!
-    if (progress > 85 && !currentItem?.logged) {
-      currentItem.logged = true;
-      logItem();
+    if (progress > 85 && !currentItem?.updated) {
+      currentItem.updated = true;
+      updateQueueStatus();
     }
   };
+
+  const updateQueueStatus = async () => {
+
+    //get updated status
+    const token = theaterController.appController.states.user.token;
+    const queueitems = loadQueueItemsFromQueue(queue);
+    const { queuestatus } = await BoMOnlineAPI(
+      { queuestatus: { token, items: queueitems } },
+      { useCache: false }
+    );
+    if (!queuestatus?.map) return false;
+    const newStatus = queuestatus?.map(item => item?.status) || null;
+    if(!newStatus) return;
+
+    setQueueStatus(newStatus);
+
+
+  }
 
   const logItem = async () => {
     const [number, slugEnd] = currentItem?.slug.split("/").reverse();
@@ -675,18 +704,8 @@ function TheaterControls({ theaterController }) {
       },
       { useCache: false }
     );
+    updateQueueStatus();
 
-    //get updated status
-    const queueitems = loadQueueItemsFromQueue(queue);
-    const { queuestatus } = await BoMOnlineAPI(
-      { queuestatus: { token, items: queueitems } },
-      { useCache: false }
-    );
-    if (!queuestatus?.map) return false;
-    const newStatus = queuestatus?.map(item => item?.status) || null;
-    if(!newStatus) return;
-
-    setQueueStatus(newStatus);
   };
 
   const isLastItem = cursorIndex === queue.length - 1;
@@ -737,7 +756,7 @@ function TheatherMusicPlayer({ theaterController }) {
   // Init Player A on load
   const initPlayerA = () => {
     const player = document.getElementById(`theater-music-player-a`);
-    player.play();
+    playAudioElement("theater-music-player-a");
     player.removeEventListener("canplay",initPlayerA);
   }
   useEffect(()=>{
@@ -778,7 +797,7 @@ function TheatherMusicPlayer({ theaterController }) {
   // Fade duration = 3 seconds
   const crossfade = () => {
     const playerToFadeIn = document.getElementById(`theater-music-player-${activeSide}`);
-    playerToFadeIn.play();
+    playAudioElement(`theater-music-player-${activeSide}`);
     const playerToFadeOut = document.getElementById(`theater-music-player-${activeSide==="a" ? "b" : "a"}`);
     const targetVolume = Math.max(playerToFadeIn.volume,playerToFadeOut.volume);
     const fadeDuration = 3;
@@ -816,7 +835,7 @@ function TheatherMusicPlayer({ theaterController }) {
         if(isPLaying) return;
         const isActive = activeSide==="a";
         if(isActive) return;
-        document.getElementById(`theater-music-player-a`)?.play();
+        playAudioElement("theater-music-player-a");
       }}
     />
     <ReactAudioPlayer
@@ -828,7 +847,7 @@ function TheatherMusicPlayer({ theaterController }) {
         if(isPLaying) return;
         const isActive = activeSide==="a";
         if(isActive) return;
-        document.getElementById(`theater-music-player-a`)?.play();
+        playAudioElement("theater-music-player-a");
       }}
     />
     </>
@@ -994,11 +1013,17 @@ function TheaterQueueIndicator({ theaterController }) {
     <div className="theater-queue-indicator">
       {(queue||[]).map((_, index) => {
         const status = queueStatus[index] || queue[index]?.status || null;
+
+        const nextSection = queue[index + 1]?.parent_section?.title || null;
+        const thisSection = queue[index]?.parent_section?.title || null;
+        const isLastInSection = nextSection !== thisSection;
+
         return (
           <div
             onClick={() => theaterController.goto(index, "manual")}
             className={`theater-queue-indicator-item ${status || ""} ${
               index === cursorIndex ? "active" : ""
+            } ${isLastInSection ? "last-in-section" : ""
             }`}
             key={index}
           ></div>
