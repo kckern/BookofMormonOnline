@@ -80,6 +80,43 @@
     {
         flex-grow: 1;
     }
+
+
+    @media (max-height: 1000px){
+        
+        .theater-side-panel{
+            display: none!important;
+        }
+
+    }
+    
+}
+
+@media (max-width: 900px){
+
+    .theater-side-panel{
+        display: none!important;
+    }
+    .theater-super-titles
+    {
+        flex-direction: column!important;
+    }
+    .theater-super-title-left
+    {
+        width:100%!important;
+        height:auto!important;
+    }
+    .theater-super-title-section,
+    .theater-super-title
+    {
+        display: none!important;
+    }
+
+    .theater-content-frame
+    {
+        font-size: min(1.5rem, 3vh)!important;
+    }
+
 }
 
 
@@ -387,15 +424,15 @@ img.player-ui:hover{
 {
     position: absolute;
     right:0;
-    color: white;
+    color: #999;
     text-transform: initial;
-    background-color: #FFF3;
+    background-color: #444;
     top:0;
     bottom: 0;
     display: flex;
     align-items: center;
     padding: 0 0.5ex 0 1ex;
-    opacity: 0.5;
+    opacity: 1;
     border-radius: 0.5ex;
     font-size: 1rem;
     letter-spacing: -0.05ex;
@@ -404,11 +441,13 @@ img.player-ui:hover{
     user-select: none;
     font-variant: normal;
     font-size: 80%;
+    z-index: 999;
 }
 .theater-wrapper .studylink:hover
 {
     opacity: 1;
-    background-color: #FFF3;
+    color: white;
+    background-color: #666;
 }
 .theater-wrapper .studylink img{
     height: 1rem;

@@ -445,7 +445,8 @@ function TheaterQueueIntro({ theaterController }) {
   const narrations = queueItemsInSameSection
     .map(item => item?.narration?.description || null)
     .filter(item => item);
-  const narrationString = flattenDescription(narrations.join(" • "));
+  const uniqueNarrations = [...new Set(narrations)];
+  const narrationString = flattenDescription(uniqueNarrations.join(" • "));
 
   const [part,setPart] = useState(0);
 
@@ -704,7 +705,34 @@ function TheaterControls({ theaterController }) {
       },
       { useCache: false }
     );
-    updateQueueStatus();
+    await updateQueueStatus();
+    BoMOnlineAPI( {  userprogress: token, }, { useCache: false } ).then((r) => {
+      let saveMe = r.userprogress?.[token];
+      let summary = saveMe.summary;
+      const pagetitle = currentItem?.parent_page?.title || null;
+      const heading = currentItem?.heading || null;
+      const slug = currentItem?.slug || null;
+      if (saveMe)
+        theaterController.appController.functions.updateUserSummary({
+          ...saveMe,
+          ...{ slug, pagetitle, heading },
+        });
+        window.clicky?.goal("watch");
+      // if 100% then show confetti
+      if(summary?.completed >= 100)
+      {
+        //pause theater
+        theaterController.controls.pause();
+        document.getElementById(`theater-music-player-a`)?.pause();
+        document.getElementById(`theater-music-player-b`)?.pause();
+        theaterController.appController.functions.setPopUp({
+          type: "victory",
+          popupData: summary,
+          vhtop: 10
+        });
+      }
+    });
+    
 
   };
 
@@ -1017,6 +1045,7 @@ function TheaterQueueIndicator({ theaterController }) {
         const nextSection = queue[index + 1]?.parent_section?.title || null;
         const thisSection = queue[index]?.parent_section?.title || null;
         const isLastInSection = nextSection !== thisSection;
+        const heading = queue[index]?.heading || null;
 
         return (
           <div
