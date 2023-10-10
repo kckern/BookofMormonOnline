@@ -65,7 +65,7 @@ function TheaterWrapper({ appController }) {
   const [queueStatus, setQueueStatus] = useState([]);
   const [cursorIndexArray, setCursorIndexArray] = useState((prev, current) => {
     const [index] = Array.isArray(current) ? current : [0];
-    if (!queue.length) return [0, false];
+    if (!queue?.length) return [0, false];
     if (!queue[index]) return prev;
   });
   const [cursorIndex, cursorChangeWasManual] = cursorIndexArray;
@@ -149,6 +149,7 @@ function TheaterWrapper({ appController }) {
     appController,
     ...controls,
     queue,
+    setQueue,
     setQueueStatus,
     queueStatus,
     cursorIndex,
@@ -262,7 +263,7 @@ function TheaterWrapper({ appController }) {
                    </div>
                  );
 
-  if (!queue.length) return <div className="theater-wrapper"><Loader /></div>;
+  if (!queue?.length) return <div className="theater-wrapper"><Loader /></div>;
 
   return (
     <div className="theater-wrapper">
@@ -530,6 +531,47 @@ function TheaterSectionIntro({ theaterController }) {
   );
 }
 
+
+
+
+function TheaterCrossRoadsButton({theaterController,page,section,narration,slug,onClick}) {
+  narration = flattenDescription(narration);
+  const [newQueue,setNewQueue] = useState([]);
+  const [loadingQueue, setLoadingQueue] = useState(null);
+
+  useEffect(() => {
+    if(onClick) return;
+    const items = [{ slug }];
+    const token = theaterController.appController.states.user.token;
+    const queueLoading = BoMOnlineAPI({ queue: { token, items } }, { useCache: false }).then(({ queue }) => {
+        setNewQueue(queue);
+    });
+
+    setLoadingQueue(queueLoading);
+  }, []); // Only run this once, when the component first renders
+
+  const handleClick = onClick || (async () => {
+    if(newQueue.length) return theaterController.setQueue(newQueue);
+
+    if (loadingQueue) {
+      loadingQueue.then((r) =>{
+        const queue = r?.queue || [];
+        //TODO r is undefined here, why???
+        theaterController.setQueue(queue);
+      });
+    }
+
+  });
+
+  return (
+    <div className={"theater-crossroads-box-button"} onClick={handleClick}>
+      <h5>{page}—{section}</h5>
+      <p>{narration}</p>
+    </div>
+  );
+}
+
+
 function TheaterCrossRoads({ theaterController }) {
   const { queue, cursorIndex } = theaterController;
   const currentItem = queue[cursorIndex] || null;
@@ -569,38 +611,25 @@ function TheaterCrossRoads({ theaterController }) {
   const [{text}] = next || {};
 
 
-  const pathButton = ({page,section,narration,slug}) => {
-
-    page = page || nextItem?.parent_page?.title || null;
-    section = section || nextItem?.parent_section?.title || null;
-    narration = narration || nextItem?.narration?.description || null;
-
-    narration = flattenDescription(narration);
-
-    return <div className={"theater-crossroads-box-button"}>
-      <h5>{page}—{section}</h5>
-      <p>{narration}</p>
-      </div>
-
-  }
 
 
-  const detour = ``
+  const detour = `${next.text}`.toLowerCase() === `${next.page}`.toLowerCase() ? "" : next.text;
 
   return (  <div className="theater-crossroads">
       <h1>{label("continue_or_detour")} {countdown}</h1>
       <div className="theater-crossroads-box">
         <div className="theater-crossroads-box-top">
         <div>Continue:</div>
-          {pathButton({page:nextItem?.parent_page?.title,section:nextItem?.parent_section?.title,narration})}
+          {TheaterCrossRoadsButton({theaterController,page:nextItem?.parent_page?.title,section:nextItem?.parent_section?.title,narration,onClick:theaterController.next})}
         <div className="theater-crossroads-box-bottom">
           <img src={crossroads} />
           <div className="theater-crossroads-box-offramp">
           <div>Detour: {detour}</div>
-            {pathButton({text})}</div>
+            {next.map(n=>TheaterCrossRoadsButton({...n,theaterController}))}
         </div>
       </div>
     </div>
+  </div>
   </div>);
 }
 

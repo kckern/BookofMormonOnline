@@ -513,8 +513,8 @@ img.player-ui:hover{
 .theater-crossroads-box-button:hover
 {
     border-color: #AAA;
-    color: white;
-    background-color: #111;
+    color: #444;
+    background-color: #EEE;
 }
 
 .theater-crossroads-box-button h5{
