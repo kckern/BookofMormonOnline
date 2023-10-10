@@ -205,8 +205,35 @@ const resolveQueueFromTextBlocks = async (textBlocks) => {
 }
 
 
+async function getFirstTextBlockGuidFromSlug(type,link)
+{
+    if(type === "PG") return await getFirstTextBlockGuidFromPage(link);
+    if(type === "SC") return await getFirstTextBlockGuidFromSection(link);
+    return null;
+}
+
+async function getFirstTextBlockGuidFromPage(pageGuid)
+{
+    const textBlock = await Models.BomText.findOne({
+        raw:true,
+        where:{page:pageGuid},
+        order:[['queue_weight','ASC']]
+    });
+    return textBlock?.guid;
+
+}
+
+async function getFirstTextBlockGuidFromSection(sectionGuid)
+{
+    const textBlock = await Models.BomText.findOne({
+        raw:true,
+        where:{section:sectionGuid},
+        order:[['queue_weight','ASC']]
+    });
+    return textBlock?.guid;
+}
 
 
 
 //export
-module.exports = {getBlocksToQueue}
+module.exports = {getBlocksToQueue,getFirstTextBlockGuidFromSlug}

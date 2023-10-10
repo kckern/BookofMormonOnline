@@ -18,6 +18,7 @@ import next from "./svg/next.svg";
 import pause from "./svg/pause.svg";
 import play from "./svg/play.svg";
 import prev from "./svg/prev.svg";
+import crossroads from "./svg/crossroads.svg";
 import vol_hi from "./svg/vol_hi.svg";
 import vol_lo from "./svg/vol_lo.svg";
 import fast from "./svg/fast.svg";
@@ -163,7 +164,8 @@ function TheaterWrapper({ appController }) {
   };
 
   useEffect(async () => {
-    const items = slug ? [{slug}] : null; //todo: handle reading plan id / index input;
+    let items = slug ? [{slug}] : null; //todo: handle reading plan id / index input;
+    items = [{slug:"ammon",blocks:[4,5,6,7,8]}];
     const token = localStorage.getItem("token");
     let { queue:loadedQueue } = await BoMOnlineAPI(
       { queue: { token, items } },
@@ -533,8 +535,14 @@ function TheaterCrossRoads({ theaterController }) {
   const currentItem = queue[cursorIndex] || null;
   const { next } = currentItem || {};
 
+  const thisItem = queue[cursorIndex] || null;
+  const nextItem = queue[cursorIndex + 1] || null;
+
+  const narration = nextItem?.narration?.description || null;
+
+
   //add countdown from 10 sec
-  const secondsToShow = 4;
+  const secondsToShow = 4000;
   const [countdown, setCountdown] = useState(secondsToShow);
   const [startTimestamp] = useState(Date.now());
 
@@ -558,14 +566,42 @@ function TheaterCrossRoads({ theaterController }) {
 
   }, [startTimestamp, cursorIndex, theaterController]);
 
+  const [{text}] = next || {};
 
-  return (
-    <div className="theater-crossroads">
-      <h1>Crossroads</h1>
-      {countdown}
-      <pre>{JSON.stringify(next)}</pre>
+
+  const pathButton = ({page,section,narration,slug}) => {
+
+    page = page || nextItem?.parent_page?.title || null;
+    section = section || nextItem?.parent_section?.title || null;
+    narration = narration || nextItem?.narration?.description || null;
+
+    narration = flattenDescription(narration);
+
+    return <div className={"theater-crossroads-box-button"}>
+      <h5>{page}—{section}</h5>
+      <p>{narration}</p>
+      </div>
+
+  }
+
+
+  const detour = ``
+
+  return (  <div className="theater-crossroads">
+      <h1>{label("continue_or_detour")} {countdown}</h1>
+      <div className="theater-crossroads-box">
+        <div className="theater-crossroads-box-top">
+        <div>Continue:</div>
+          {pathButton({page:nextItem?.parent_page?.title,section:nextItem?.parent_section?.title,narration})}
+        <div className="theater-crossroads-box-bottom">
+          <img src={crossroads} />
+          <div className="theater-crossroads-box-offramp">
+          <div>Detour: {detour}</div>
+            {pathButton({text})}</div>
+        </div>
+      </div>
     </div>
-  );
+  </div>);
 }
 
 function TheaterSidePanel({ theaterController }) {
@@ -1018,7 +1054,7 @@ function TheaterSuperTitles({ theaterController }) {
   } = currentItem;
   const narration = currentItem?.narration?.description || "Sub Item...";
 
-  const StudyButton = <Link className="studylink" to={`/${currentItem?.slug}`}><img src={studyimg} />Study</Link>
+  const StudyButton = <Link className="studylink" to={`/${currentItem?.slug}`}><img src={studyimg} />{label("menu_study")}</Link>
 
   return (
     <div className="theater-super-titles">
@@ -1038,7 +1074,11 @@ function TheaterQueueIndicator({ theaterController }) {
   let { queue, cursorIndex, queueStatus } = theaterController;
   queue = Array.isArray(queue) ? queue : [];
   return (
-    <div className="theater-queue-indicator">
+    <div className="theater-queue-indicator"
+      style={{
+        gap: `min(1ex,${30/queue.length}vw)`,
+      }}
+    >
       {(queue||[]).map((_, index) => {
         const status = queueStatus[index] || queue[index]?.status || null;
 

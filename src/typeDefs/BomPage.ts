@@ -146,6 +146,9 @@ input QueueInput {
     class: String
     slug: String
     text: String
+    page: String
+    section: String
+    narration: String
   }
 
 `;

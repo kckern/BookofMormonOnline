@@ -4,7 +4,7 @@ import { models as Models, sequelize, SQLQueryTypes } from '../config/database';
 import { getSlug, Op, includeTranslation, translatedValue, includeModel, includeWhere, scoreSlugsfromUserInfo, getSlugTip, getUserForLog} from './_common';
 import scripture from "../library/scripture"
 import { loadPeopleFromTextGuid, loadPlacesFromTextGuid } from './BomPeoplePlace';
-const { getBlocksToQueue } = require('./lib')
+const { getBlocksToQueue ,getFirstTextBlockGuidFromSlug} = require('./lib')
 
 export default {
   Query: {
@@ -482,14 +482,48 @@ queue: async (root: any, args: any, context: any, info: any) => {
       }
 
 
-      return nexts.map((r:any)=>{
+      return nexts.map(async (r:any)=>{
+        const rowGuid = r['guid'];
+        const nextClass = r['type'];
+        const nextObject = nextClass === 'C' ? 
+          await Models.BomConnection.findOne({raw:true,where:{parent:rowGuid,type:"right"},include:[includeTranslation('text', lang,false)].filter(x => !!x)})
+        : await Models.BomCapsulation.findOne({raw:true, where:{parent:rowGuid},include:[includeTranslation('description', lang,false)].filter(x => !!x)})
+        nextObject['text'] = nextObject['translation.value'] || nextObject['text'] || nextObject['description'];
+        if(!nextObject) return;
+
+        const {slug,type,link}:any = (await Models.BomSlug.findOne({raw:true,where:{guid:nextObject['link']}}));
+
+        const textGuid = await getFirstTextBlockGuidFromSlug(type,link);
+        console.log({textGuid})
+        const textBlock = await Models.BomText.findOne({
+          raw: true,
+          where: {
+            guid: textGuid
+          },
+          include: [
+            {  model: Models.BomPage,  as: 'parent_page', include: [includeTranslation('title', lang,false)].filter(x => !!x)},
+            {  model: Models.BomSection,  as: 'parent_section', include: [includeTranslation('title', lang,false)].filter(x => !!x)},
+            {  model: Models.BomNarration,  as: 'narration', include: [includeTranslation('description', lang,false)].filter(x => !!x)},
+          ].filter(x => !!x),
+        });
+
+        const nextMeta = {
+          page: textBlock['parent_page.translation.value'] || textBlock['parent_page.title'],
+          section: textBlock['parent_section.translation.value'] || textBlock['parent_section.title'],
+          narration: textBlock['narration.translation.value'] || textBlock['narration.description']
+        }
+
+
 
         return {
           class: r['type'],
-          slug: r['guid'],
-          text: "Connection"
+          slug,
+          text:  nextObject['text'],
+          page: nextMeta.page,
+          section: nextMeta.section,
+          narration: nextMeta.narration,
          }
-      });
+      }).filter(x=>!!x);
     },
     narration: async (item: any, args: any, context: any, info: any) => 
     {
