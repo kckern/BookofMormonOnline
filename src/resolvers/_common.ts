@@ -56,11 +56,11 @@ export const translatedValue = (item: any, field: string) => {
   return  item.getDataValue(field);
 };
 
-export const includeTranslation = (refkey: any, lang: string): object => {
+export const includeTranslation = (refkey: any, lang: string, separate:Boolean=true): object => {
   if (!lang || lang === 'en') return null;
   return {
     model: Models.BomTranslation,
-    separate: true,
+    separate,
     as: 'translation',
     where: {
       lang: lang,

@@ -454,6 +454,74 @@ img.player-ui:hover{
     margin-right: 0.5ex;
 }
 
+.theater-crossroads
+{
+
+    background:url('https://i.imgur.com/uqjhnKX.jpg');
+    height: 100%;
+    background-size: cover;
+    background-blend-mode: multiply;
+    background-color: #000000AA;
+}
+
+.theater-crossroads-box
+{
+    display: flex;
+    flex-direction: column;
+    padding: 5% 20%;
+}
+
+.theater-crossroads-box-top
+{
+    text-align: left;
+}
+.theater-crossroads-box-bottom
+{
+    display: flex;
+    text-align: left;
+    
+}
+
+.theater-crossroads-box-bottom img
+{
+    width: 15rem;
+    object-position: top;
+    object-fit: contain;
+    
+}
+.theater-crossroads-box-offramp
+{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    justify-items: center;
+
+}
+.theater-crossroads-box-button
+{
+    font-size: 1rem;
+    line-height: 1rem;
+    background-color: #333;
+    border-radius: 1ex;
+    padding: 1ex;
+    border: 3px solid #666;
+    width: auto;
+    flex-grow: 0;
+    cursor: pointer;
+}
+
+.theater-crossroads-box-button:hover
+{
+    border-color: #AAA;
+    color: white;
+    background-color: #111;
+}
+
+.theater-crossroads-box-button h5{
+    line-height: 100%;
+}
+
+
 .theater-intro-slide .playbutton
 {
     width: 7rem;
@@ -523,7 +591,7 @@ span.pageTitle
     display: flex;
     flex-direction: row;
     justify-content: space-around;
-    gap: 1ex;
+    
     padding: 1rem 1ex 0 1ex;
     margin-bottom: 1rem;
 }
