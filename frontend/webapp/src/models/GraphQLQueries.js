@@ -1277,9 +1277,12 @@ const queries = {
             preview
           }
 					next{
-							class
-							slug
-						  text
+              slug
+              text
+              class
+              page
+              section
+              narration
 					}
         }`
       }

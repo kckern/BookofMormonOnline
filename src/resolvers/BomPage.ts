@@ -488,7 +488,8 @@ queue: async (root: any, args: any, context: any, info: any) => {
         const nextObject = nextClass === 'C' ? 
           await Models.BomConnection.findOne({raw:true,where:{parent:rowGuid,type:"right"},include:[includeTranslation('text', lang,false)].filter(x => !!x)})
         : await Models.BomCapsulation.findOne({raw:true, where:{parent:rowGuid},include:[includeTranslation('description', lang,false)].filter(x => !!x)})
-        nextObject['text'] = nextObject['translation.value'] || nextObject['text'] || nextObject['description'];
+        if(!nextObject) return;
+        nextObject['text'] = nextObject?.['translation.value'] || nextObject?.['text'] || nextObject?.['description'];
         if(!nextObject) return;
 
         const {slug,type,link}:any = (await Models.BomSlug.findOne({raw:true,where:{guid:nextObject['link']}}));
