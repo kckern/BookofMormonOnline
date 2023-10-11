@@ -1279,7 +1279,7 @@ const queries = {
 					next{
               slug
               text
-              class
+              nextclass
               page
               section
               narration

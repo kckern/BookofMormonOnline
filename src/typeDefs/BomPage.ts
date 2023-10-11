@@ -143,7 +143,7 @@ input QueueInput {
   }
 
   type NarrativePath {
-    class: String
+    nextclass: String
     slug: String
     text: String
     page: String

@@ -519,6 +519,26 @@ img.player-ui:hover{
 
 .theater-crossroads-box-button h5{
     line-height: 100%;
+    margin: 0;
+    font-size: 1.6rem;
+    font-weight: bold;
+}
+
+.theater-crossroads-box-button h6{
+    text-transform: none;
+    font-size: 1.2rem;
+    margin-left: 1rem;
+    font-weight: 400;
+}
+.theater-crossroads-box-button p{
+    opacity: 0.6;
+}
+
+.theater-crossroads-box .buttonheader
+{
+    font-weight: 800;
+    margin-top: 1ex;
+    font-size: 1rem;
 }
 
 

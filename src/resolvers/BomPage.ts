@@ -517,7 +517,7 @@ queue: async (root: any, args: any, context: any, info: any) => {
 
 
         return {
-          class: r['type'],
+          nextclass: r['type'],
           slug,
           text:  nextObject['text'],
           page: nextMeta.page,
