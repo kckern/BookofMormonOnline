@@ -464,11 +464,24 @@ img.player-ui:hover{
     background-color: #000000AA;
 }
 
+.theater-crossroads h2{
+    margin: 5% 0 0 0;
+    font-weight: 800;
+    font-size: 2rem;
+}
+.theater-crossroads h3{
+    
+    font-size: 3rem;
+    margin: 0;
+    padding-bottom: 1rem;
+}
+
+
 .theater-crossroads-box
 {
     display: flex;
     flex-direction: column;
-    padding: 5% 20%;
+    padding: 0 20%;
 }
 
 .theater-crossroads-box-top
@@ -510,11 +523,9 @@ img.player-ui:hover{
     cursor: pointer;
 }
 
-.theater-crossroads-box-button:hover
+.theater-crossroads-box-button.active
 {
     border-color: #AAA;
-    color: #444;
-    background-color: #EEE;
 }
 
 .theater-crossroads-box-button h5{
@@ -1006,4 +1017,30 @@ span.pageTitle
     bottom: auto;
     font-size: 1.2rem;
     line-height: 1rem;
+  }
+
+
+  .theater-crossroads-box-button .timerContainer{
+    height: 1.5rem;
+    display: flex;
+    align-items: center;
+    padding: 0 1ex;
+    background-color: #555;
+    border-radius: 1ex;
+    margin-bottom: 1rem;
+  }
+
+
+  .theater-crossroads-box-button .timerBand{
+    height: 1ex;
+    width: 100%;
+    border-radius: 1ex;
+    background-color: #00000055;
+  }
+
+  .theater-crossroads-box-button .timerProgress{
+    height: 1ex;
+    background-color: #6bd098;
+    border-bottom-left-radius: 1ex;
+    border-top-left-radius: 1ex;
   }

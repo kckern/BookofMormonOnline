@@ -298,6 +298,7 @@ function TheaterMainPanel({ theaterController }) {
   const [subCursorIndex, setSubCursorIndex] = useState(initSubCursorIndex);
   useEffect(()=>{
       setSubCursorIndex(initSubCursorIndex);
+      if(cursorIndex) return;
       canAutoplay.audio().then(({result}) => {result ? setCanAutoPlay(true) : setCanAutoPlay(false);} );
   },[cursorIndex])
 
@@ -536,7 +537,7 @@ function TheaterSectionIntro({ theaterController }) {
 
 
 
-function TheaterCrossRoadsButton({theaterController,page,section,narration,slug,onClick,nextclass}) {
+function TheaterCrossRoadsButton({theaterController,page,defaultState,section,narration,slug,onClick,index,setSelectedIndex,selectedIndex,timerprogress}) {
   narration = flattenDescription(narration);
   const [newQueue,setNewQueue] = useState([]);
   const [resetQueueAfterLoad,setResetQueueAfterLoad] = useState(false);
@@ -552,28 +553,36 @@ function TheaterCrossRoadsButton({theaterController,page,section,narration,slug,
   }, []); 
 
 
+  const timer = !timerprogress ? null : <div className="timerContainer">
+  <div className="timerBand">
+    <div className="timerProgress" style={{width:timerprogress+"%"}}></div>
+  </div>
+  </div>;
+
   const handleClick = onClick || (async () => {
     if(newQueue.length) return theaterController.setQueue(newQueue);
     theaterController.setQueue([]);
     setResetQueueAfterLoad(true);
     }
   );
-
+  const isActive = selectedIndex === index;
   return (
-    <div className={"theater-crossroads-box-button"} onClick={handleClick}>
+    <div className={"theater-crossroads-box-button" + (isActive ? " active" : "") } onClick={handleClick} onMouseEnter={()=>setSelectedIndex(index)} >
     <h5>{page}</h5>
     <h6>{section}</h6>
+    {timer}
     <p>{narration}</p>
     </div>
   );
 }
 
 
+
 function TheaterCrossRoads({ theaterController }) {
   const { queue, cursorIndex } = theaterController;
   const currentItem = queue[cursorIndex] || null;
   const { next } = currentItem || {};
-
+  
   const thisItem = queue[cursorIndex] || null;
   const nextItem = queue[cursorIndex + 1] || null;
 
@@ -583,9 +592,11 @@ function TheaterCrossRoads({ theaterController }) {
 
 
   //add countdown from 10 sec
-  const secondsToShow = 4000;
+  const secondsToShow = 10;
   const [countdown, setCountdown] = useState(secondsToShow);
   const [startTimestamp] = useState(Date.now());
+  const defaultState = useRef(true);
+  const [showProgress, setShowProgress] = useState(true);
 
   useEffect(() => {
 
@@ -593,15 +604,17 @@ function TheaterCrossRoads({ theaterController }) {
     const timer = setInterval(() => {
       const now = Date.now();
       const timePassed = now - startTimestamp;
-      const timeLeft = secondsToShow - timePassed/1000;
+      const timeLeft = defaultState.current ? secondsToShow - timePassed/1000 : secondsToShow;
 
-      setCountdown(Math.round(timeLeft));  // Update countdown
+      if(!defaultState.current) return clearInterval(timer);  // Stop interval
 
-      if(timeLeft <= 0){
+      setCountdown(timeLeft);  // Update countdown
+
+      if(timeLeft <= 0 && defaultState.current){
         theaterController.goto(cursorIndex + 1,"auto");
         clearInterval(timer);  // Stop interval
       }
-    }, 200);
+    }, 50);
 
     return () => clearInterval(timer);   // Clean up on unmount
 
@@ -613,26 +626,42 @@ function TheaterCrossRoads({ theaterController }) {
 
   const img = nextclass==="C" ? crossroads : detour;
 
-  const detour = `${next.text}`.toLowerCase() === `${next.page}`.toLowerCase() ? "" : next.text;
+  const detourText = `${next.text}`.toLowerCase() === `${next.page}`.toLowerCase() ? "" : next.text;
+  const continueLabel = nextclass==="C" ? label("continue") : label("step_over");
+  const detourLabel = nextclass==="C" ? label("detour") : label("step_into");
+  const headingLabel = nextclass==="C" ? label("continue_or_detour") : label("step_over_or_into");
+  const titleLabel = nextclass==="C" ? label("crossroads") : label("embedded");
+
+  const [selectedIndex,setSelectedIndex] = useState(0);
+
+  const timerprogress = showProgress ? 100-(countdown/secondsToShow)*100 : null
+
+  useEffect(() => {
+
+    if(!selectedIndex) return;
+    defaultState.current =false;
+    setShowProgress(false);
+
+  }, [selectedIndex]);
 
   return (  <div className="theater-crossroads">
-      <h1>{label("continue_or_detour")} {countdown}</h1>
+  <h2>{titleLabel}</h2>
+      <h3>{headingLabel}</h3>
       <div className="theater-crossroads-box">
         <div className="theater-crossroads-box-top">
-        <div className="buttonheader">Continue:</div>
-          {TheaterCrossRoadsButton({theaterController,page:nextItem?.parent_page?.title,section:nextItem?.parent_section?.title,narration,onClick:theaterController.next})}
+        <div className="buttonheader">{continueLabel}:</div>
+          {TheaterCrossRoadsButton({index:0,defaultState,timerprogress,selectedIndex,setSelectedIndex,theaterController,page:nextItem?.parent_page?.title,section:nextItem?.parent_section?.title,narration,onClick:theaterController.next})}
         <div className="theater-crossroads-box-bottom">
           <img src={img} />
           <div className="theater-crossroads-box-offramp">
-          <div className="buttonheader">Detour: {detour}</div>
-            {next.map(n=>TheaterCrossRoadsButton({...n,theaterController}))}
+          <div className="buttonheader">{detourLabel}: {detourText}</div>
+            {next.map((n,i)=>TheaterCrossRoadsButton({...n,index:i+1,selectedIndex,setSelectedIndex,theaterController}))}
         </div>
       </div>
     </div>
   </div>
   </div>);
 }
-
 function TheaterSidePanel({ theaterController }) {
   return (
     <div className="theater-side-panel">
