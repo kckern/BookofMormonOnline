@@ -19,6 +19,7 @@ import pause from "./svg/pause.svg";
 import play from "./svg/play.svg";
 import prev from "./svg/prev.svg";
 import crossroads from "./svg/crossroads.svg";
+import detour from "./svg/detour.svg";
 import vol_hi from "./svg/vol_hi.svg";
 import vol_lo from "./svg/vol_lo.svg";
 import fast from "./svg/fast.svg";
@@ -166,7 +167,7 @@ function TheaterWrapper({ appController }) {
 
   useEffect(async () => {
     let items = slug ? [{slug}] : null; //todo: handle reading plan id / index input;
-    items = [{slug:"ammon",blocks:[4,5,6,7,8]}];
+    //items = [{slug:"ammon",blocks:[4,5,6,7,8]}];
     const token = localStorage.getItem("token");
     let { queue:loadedQueue } = await BoMOnlineAPI(
       { queue: { token, items } },
@@ -190,7 +191,8 @@ function TheaterWrapper({ appController }) {
     const firstIncompleteItem = queue.findIndex(
       item => item?.status !== "completed"
     );
-    theaterController.goto(firstIncompleteItem || 0, "auto");
+    theaterController.goto(0, "auto");
+    //TODO: are there cases when this is needed?
   }, [queue]);
 
   //Keyboard
@@ -534,39 +536,34 @@ function TheaterSectionIntro({ theaterController }) {
 
 
 
-function TheaterCrossRoadsButton({theaterController,page,section,narration,slug,onClick}) {
+function TheaterCrossRoadsButton({theaterController,page,section,narration,slug,onClick,nextclass}) {
   narration = flattenDescription(narration);
   const [newQueue,setNewQueue] = useState([]);
-  const [loadingQueue, setLoadingQueue] = useState(null);
+  const [resetQueueAfterLoad,setResetQueueAfterLoad] = useState(false);
 
   useEffect(() => {
     if(onClick) return;
     const items = [{ slug }];
     const token = theaterController.appController.states.user.token;
-    const queueLoading = BoMOnlineAPI({ queue: { token, items } }, { useCache: false }).then(({ queue }) => {
+    BoMOnlineAPI({ queue: { token, items } }, { useCache: false }).then(({ queue }) => {
         setNewQueue(queue);
+        if(resetQueueAfterLoad) theaterController.setQueue(queue); //TODO: Why doesn't this work?
     });
+  }, []); 
 
-    setLoadingQueue(queueLoading);
-  }, []); // Only run this once, when the component first renders
 
   const handleClick = onClick || (async () => {
     if(newQueue.length) return theaterController.setQueue(newQueue);
-
-    if (loadingQueue) {
-      loadingQueue.then((r) =>{
-        const queue = r?.queue || [];
-        //TODO r is undefined here, why???
-        theaterController.setQueue(queue);
-      });
+    theaterController.setQueue([]);
+    setResetQueueAfterLoad(true);
     }
-
-  });
+  );
 
   return (
     <div className={"theater-crossroads-box-button"} onClick={handleClick}>
-      <h5>{page}—{section}</h5>
-      <p>{narration}</p>
+    <h5>{page}</h5>
+    <h6>{section}</h6>
+    <p>{narration}</p>
     </div>
   );
 }
@@ -579,6 +576,8 @@ function TheaterCrossRoads({ theaterController }) {
 
   const thisItem = queue[cursorIndex] || null;
   const nextItem = queue[cursorIndex + 1] || null;
+
+  const classofCross = next.class;
 
   const narration = nextItem?.narration?.description || null;
 
@@ -610,8 +609,9 @@ function TheaterCrossRoads({ theaterController }) {
 
   const [{text}] = next || {};
 
+  const nextclass = next[0]?.nextclass || null;
 
-
+  const img = nextclass==="C" ? crossroads : detour;
 
   const detour = `${next.text}`.toLowerCase() === `${next.page}`.toLowerCase() ? "" : next.text;
 
@@ -619,12 +619,12 @@ function TheaterCrossRoads({ theaterController }) {
       <h1>{label("continue_or_detour")} {countdown}</h1>
       <div className="theater-crossroads-box">
         <div className="theater-crossroads-box-top">
-        <div>Continue:</div>
+        <div className="buttonheader">Continue:</div>
           {TheaterCrossRoadsButton({theaterController,page:nextItem?.parent_page?.title,section:nextItem?.parent_section?.title,narration,onClick:theaterController.next})}
         <div className="theater-crossroads-box-bottom">
-          <img src={crossroads} />
+          <img src={img} />
           <div className="theater-crossroads-box-offramp">
-          <div>Detour: {detour}</div>
+          <div className="buttonheader">Detour: {detour}</div>
             {next.map(n=>TheaterCrossRoadsButton({...n,theaterController}))}
         </div>
       </div>
