@@ -195,6 +195,25 @@ function TheaterWrapper({ appController }) {
     //TODO: are there cases when this is needed?
   }, [queue]);
 
+  const [isOutroActive, setIsOutroActive] = useState(false);
+  theaterController.setIsOutroActive = setIsOutroActive;
+  useEffect(() => {
+    if (isOutroActive) {
+      const playerA = document.getElementById("theater-music-player-a");
+      const playerB = document.getElementById("theater-music-player-b");
+      const player = playerA.volume > 0 ? playerA : playerB;
+      if (player && player.volume > 0) {
+        const fadeOutInterval = setInterval(() => {
+          player.volume -= 0.05;
+          if (player.volume <= 0) {
+            player.pause();
+            clearInterval(fadeOutInterval);
+          }
+        }, 200);
+      }
+    }
+  }, [isOutroActive]);
+
   //Keyboard
   useEffect(() => {
     const handleKeyDown = e => {
@@ -404,12 +423,54 @@ function TheaterIdle({ theaterController }) {
 }
 
 function TheaterQueueOutro({ theaterController }) {
-  const { queue, cursorIndex } = theaterController;
+  const { queue, cursorIndex,setIsOutroActive } = theaterController;
   const currentItem = queue[cursorIndex] || null;
+
+  const [nextQueue, setNextQueue] = useState([]);
+  const [queueOnLoad, setQueueOnLoad] = useState([]);
+  useEffect(() => {
+    //log item
+    setIsOutroActive(true);
+    BoMOnlineAPI(
+      {
+        log: {
+          token: theaterController.appController.states.user.token,
+          key: "block",
+          val: currentItem?.slug
+        }
+      },
+      { useCache: false }
+    ).then(() => {
+
+      BoMOnlineAPI({ queue: { token } }, { useCache: false }).then(({ queue }) => {
+        setNextQueue(queue);
+        if(queueOnLoad){
+          clearTimeout(timer);
+          theaterController.setQueue(queue);
+        } 
+      });
+
+    });
+    const token = theaterController.appController.states.user.token;
+
+    const timer = setTimeout(() => {
+     document.location = "/contents";
+    }, 5000);
+
+
+
+
+
+  }, []);
 
 
   return <div className="theater-content-frame theater-queue-intro">
-    <p>Thanks for studying the Book of Mormon with us!</p>
+    <h2>{label("session_complete")}</h2>
+    <button onClick={()=>{
+      if(nextQueue.length) return theaterController.setQueue(nextQueue);
+      setQueueOnLoad(true);
+      theaterController.setQueue([]);
+    }}>{label("continue")}</button>
   </div>;
 
 }
@@ -829,7 +890,6 @@ function TheaterControls({ theaterController }) {
     
 
   };
-
   const isLastItem = cursorIndex === queue.length - 1;
 
   return (
