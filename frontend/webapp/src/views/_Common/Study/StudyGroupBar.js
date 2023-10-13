@@ -328,7 +328,7 @@ function BotPlugin({ appController }) {
     setAddingBot(true);
     //play wentOffline
     if (buttonPush) playSound(buttonPush);
-    let r = await BoMOnlineAPI({ addBot: { token, channel, bot: id } });
+    await BoMOnlineAPI({ addBot: { token, channel, bot: id } });
     if (cameOnline) playSound(cameOnline);
     setAddingBot(false);
     toaster(appController, picture, "green", label("bot_added", [name]));
