@@ -404,7 +404,7 @@ export const appFunctions = {
     let oldGroup = appController.states.studyGroup.activeGroup;
     let newGroup = input.val;
     if (!newGroup) return appController;
-    if (oldGroup && oldGroup.url === newGroup.url) return appController;
+    if (oldGroup && oldGroup.url === newGroup.url && oldGroup.members.length === newGroup.members.length) return appController;
 
     appController.states.studyGroup.activeGroup = newGroup;
     appController.states.studyGroup.action = {};
