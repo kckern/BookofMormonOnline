@@ -140,6 +140,15 @@ export default function StudyGroupAdmin({ appController }) {
     return m.role === "operator" ? 1 : m.userId;
   };
 
+	const handleLeftMouseClick = (e) => {
+		let evt = new MouseEvent('contextmenu',{
+			bubbles:true,
+      clientX: e.clientX, 
+      clientY: e.clientY
+	});
+		e.target.dispatchEvent(evt);
+  }
+
   let description = null;
   try {
     description = JSON.parse(group.data)?.description;
@@ -220,7 +229,7 @@ export default function StudyGroupAdmin({ appController }) {
                         holdToDisplay={0}
                       >
                         <h5 className={"title"}>
-                          <span className="actions">⋮</span>
+                          <span className="actions" onClick={handleLeftMouseClick}>⋮</span>
                           <img src={membericon} />
                           {member.nickname}
                         </h5>
