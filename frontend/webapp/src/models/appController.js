@@ -459,7 +459,9 @@ export const appFunctions = {
       "studyModeOn",
       appController.states.studyGroup.studyModeOn
     );
-    //console.log({activeGroup:appController.states.studyGroup.activeGroup})
+		
+    if(appController.states.studyGroup.groupList.length === 0) return appController;
+		
     appController.functions.setActiveStudyGroup(appController.states.studyGroup.activeGroup)
 
     appController.sendbird?.updateUserState({

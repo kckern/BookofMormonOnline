@@ -109,10 +109,7 @@ export default class SendbirdController {
 
   getStudyGroups = async () => {
 
-    await this.connect(this?.userId, this.token);
-
-
-
+    // await this.connect(this?.userId, this.token);
     var listQuery = await this.sb.GroupChannel.createMyGroupChannelListQuery();
     listQuery.includeEmpty = true;
     listQuery.memberStateFilter = "all";
