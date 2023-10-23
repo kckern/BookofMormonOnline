@@ -189,10 +189,9 @@ function TileMap({ mapData, placeName, updateUrl, appController }) {
     infoWindow.setContent(`<div id="infow-window"><img class='loader' src='${loading}'/></div>`);
     infoWindow.open(map, marker);
     let placeInfo = null;
-    
+    infoWindow.setContent(`<div id="infow-window"><img class='loader' src='${loading}'/></div>`);
     BoMOnlineAPI({ places: [placeSlug] }).then(({ places }) => {
       placeInfo = places[placeSlug];
-      console.log({placeInfo})
 
       //console.log(places);
       setPlaceSlug(placeSlug)
