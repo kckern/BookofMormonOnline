@@ -8,6 +8,7 @@ const { loadTranslations, translateReferences } = require("./translate");
 const smartquotes = require('smartquotes');
 const logger = require("../library/utils/logger.cjs");
 const log = (msg,obj) => obj ? logger.info(`studdybuddy ${msg} ${JSON.stringify(obj)}`) : logger.info(`studdybuddy ${msg}`);
+const error = (msg,obj) => obj ? logger.error(`studdybuddy ${msg} ${JSON.stringify(obj)}`) : logger.error(`studdybuddy ${msg}`);
 
 
 const stripHTMLTags = (text) => text.replace(/<[^>]*>?/gm, '').replace(/\s+/g," ").trim();
@@ -71,14 +72,14 @@ const studyBuddy = async (channelUrl,messageId, messageContent) => {
     log("studyBuddyFn", {channelUrl, messageId, messageContent});
     //Determine if studyBuddy is a member of the channel
     const channel = await sendbird.loadChannel(channelUrl);
-    if(!channel) return log("No Channel: ", {channelUrl});
+    if(!channel) return error("No Channel: ", {channelUrl});
     const lang = channel.metadata?.lang || "en";
     const bot = await sendbird.getBotByLang(lang);
     const studyBuddyId = bot.user_id;
     //console.log("studyBuddy", {channelUrl, messageId, bot});
     const channel_members = await sendbird.getMembers(channelUrl);
     const studyBuddyAdded = channel_members.some(({user_id:u}) => u === studyBuddyId);
-    if(!studyBuddyAdded) return log("studyBuddy not added to channel", {channelUrl,studyBuddyId});
+    if(!studyBuddyAdded) return error("studyBuddy not added to channel", {channelUrl,studyBuddyId});
     log("studyBuddy added to channel", {channelUrl,studyBuddyId});
 
     sendbird.startStopTypingIndicator(channelUrl, [studyBuddyId], true);
@@ -86,7 +87,7 @@ const studyBuddy = async (channelUrl,messageId, messageContent) => {
 
     const screen = await messagePreScreen(messageContent, lang);
     log("studyBuddy pre-screened", {screen});
-    if(screen) return log("studyBuddy pre-screened as bad faith");
+    if(screen) return error("studyBuddy pre-screened as bad faith");
 
     //start typing indicator
     sendbird.startStopTypingIndicator(channelUrl, [studyBuddyId], true);
@@ -95,7 +96,7 @@ const studyBuddy = async (channelUrl,messageId, messageContent) => {
     const { response, metadata, page_slug} = await studyBuddyTextBlock({channelUrl, messageId, lang, studyBuddyId});
     if(!response) {
         sendbird.startStopTypingIndicator(channelUrl, [studyBuddyId], false);
-        console.log("No response generated");
+        console.error("No response generated");
         return false;
     }
     sendbird.startStopTypingIndicator(channelUrl, [studyBuddyId], true);
