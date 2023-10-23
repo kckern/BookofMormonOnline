@@ -370,20 +370,28 @@ ul.source_tabs li:hover
 {
     margin: 1ex!important;
 }
+.ppbody .refbox button{
+    width: 100%;
+    margin-right: 2rem;
+}
 
 .ppbody .refbox
 {
     border-left:1px dotted #AAA;
     width: 40%;
-    float:right;
     margin-left: 1em;
     padding-left: 1em;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: left;
 }
 .ppbody .ppimg
 {
 
-    float:right;
-    margin: 0 0 1em 1em;
+    margin: 0;
+    margin-bottom: 1rem;
 }
 
 .ppbody-title {
@@ -397,13 +405,13 @@ ul.source_tabs li:hover
 #popUp .ppbody
 {
     margin-bottom: 50em;
+    display: flex;
 }
 
 .ppbody .ppimg img
 {
-    border: 1px solid #0006;
-    border-radius: 1ex;
-    width: 6em;
+    border: 2px solid #00000099;
+    border-radius: 1rem;
 
 
 }
