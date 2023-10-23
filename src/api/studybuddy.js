@@ -6,7 +6,8 @@ const {sendbird} = require("../library/sendbird.js");
 const isJSON = require("is-json");
 const { loadTranslations, translateReferences } = require("./translate");
 const smartquotes = require('smartquotes');
-
+const logger = require("../library/utils/logger.cjs");
+const log = (msg) => logger.info("studybuddy",msg);
 
 
 const stripHTMLTags = (text) => text.replace(/<[^>]*>?/gm, '').replace(/\s+/g," ").trim();
@@ -67,8 +68,7 @@ const messagePreScreen = async (message,lang) => {
 
 
 const studyBuddy = async (channelUrl,messageId, messageContent) => {
-
-
+    log("studyBuddy", {channelUrl, messageId, messageContent});
     //Determine if studyBuddy is a member of the channel
     const channel = await sendbird.loadChannel(channelUrl);
     const lang = channel.metadata.lang || "en";
@@ -77,17 +77,22 @@ const studyBuddy = async (channelUrl,messageId, messageContent) => {
     //console.log("studyBuddy", {channelUrl, messageId, bot});
     const channel_members = await sendbird.getMembers(channelUrl);
     const studyBuddyAdded = channel_members.some(({user_id:u}) => u === studyBuddyId);
-    if(!studyBuddyAdded) return console.log("StudyBuddy not added to channel");
+    if(!studyBuddyAdded) return log("studyBuddy not added to channel");
+    log("studyBuddy added to channel");
 
 
     sendbird.startStopTypingIndicator(channelUrl, [studyBuddyId], true);
+    log("studyBuddy started typing");
 
 
     const screen = await messagePreScreen(messageContent, lang);
-    if(screen) return false;
+    log("studyBuddy pre-screened", {screen});
+    if(screen) return log("studyBuddy pre-screened as bad faith");
 
     //start typing indicator
     sendbird.startStopTypingIndicator(channelUrl, [studyBuddyId], true);
+    log("studyBuddy started typing");
+
     const { response, metadata, page_slug} = await studyBuddyTextBlock({channelUrl, messageId, lang, studyBuddyId});
     
     if(!response) {
@@ -403,8 +408,11 @@ const prepareMessages = ({
 
 
 const studyBuddyTextBlock = async ({ channelUrl, messageId, lang, studyBuddyId}) => {
+    log("studyBuddyTextBlock", {channelUrl, messageId, lang, studyBuddyId});
 
     const startTyping = ()=>sendbird.startStopTypingIndicator(channelUrl, [studyBuddyId], true);
+    log("studyBuddyTextBlock started typing");
+    
 
     if(!lang) {
             const channel = await sendbird.loadChannel(channelUrl);
@@ -444,6 +452,7 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId, lang, studyBuddyId})
     const sectionTitle = sectionContext.title;
     const textBlockNarration = await loadTextBlockNarration(text_guid,lang);
     const {people,places} = sectionContext;
+    log("studyBuddyTextBlock loaded context");
 
     let tokenLimit = 3200;
     startTyping();
@@ -468,8 +477,10 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId, lang, studyBuddyId})
          }, tokenLimit);
     
     startTyping();
+    log("studyBuddyTextBlock prepared messages",{messages});
     let response =  (await askGPT(instructions, messages, "gpt-3.5-turbo-16k"))?.split(/[\n\r]+/). join(" ");
     response = postProcessResponse(response, ref);
+    log("studyBuddyTextBlock generated response",{response});
     
     const bookmark = {
         latest:Math.floor(Date.now()/1000),
@@ -494,9 +505,12 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId, lang, studyBuddyId})
 
 const studyBuddySend = async ({ channelUrl, threadId, message, user_id, metadata, custom_type}) => {
 
-    const response = await sendbird.replyToMessage({ channelUrl, messageId:threadId, user_id, message });
+    log("studyBuddySend", {channelUrl, threadId, message, user_id, metadata, custom_type});
 
+    const response = await sendbird.replyToMessage({ channelUrl, messageId:threadId, user_id, message });
+    
     const {message_id} = response;
+    log("studyBuddySend posted", {message_id});
 
     return message_id || threadId;
 }
