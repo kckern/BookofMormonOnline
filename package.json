@@ -41,7 +41,9 @@
     "serverless-http": "^2.7.0",
     "smartquotes": "^2.3.2",
     "util": "^0.11.1",
-    "utility-types": "^3.10.0"
+    "utility-types": "^3.10.0",
+    "winston": "^3.11.0",
+    "winston-syslog": "^2.7.0"
   },
   "devDependencies": {
     "@types/aws-lambda": "8.10.1",
