@@ -155,7 +155,7 @@ function Person({ appController }) {
           popUpData: response.person,
         });
         const person = response.person[appController.states.popUp.ids[0]];
-        const slugs = person.relations?.map(i=>i.person.slug) || [];
+        const slugs = person.relations?.filter(i=>i.person?.slug).map(i=>i.person.slug) || [];
        BoMOnlineAPI({ people: slugs }, { useCache: ["people"] });
       }
     );

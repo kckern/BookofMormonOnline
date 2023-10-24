@@ -196,7 +196,7 @@
 .map-infowindow {
   display: inline-block;
   overflow: auto;
-  max-height: 80vh;
+  max-height: 50vh;
   max-width: 60vw;
 }
 
@@ -238,7 +238,7 @@
 
 .placebox .refbox{
 
-  max-height: 60vh;
+  max-height: 40vh;
 }
 
 .map-place-info {
@@ -340,6 +340,8 @@
 .map .gm-style .ppimg  img {
   border-radius: 1ex;
   width: 100%;
+  min-height: 10rem;
+  
   margin-top: 1rem;
 }
 
