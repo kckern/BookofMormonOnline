@@ -1407,7 +1407,7 @@ function TheaterImagePanel({ theaterController }) {
 }
 
 function TheaterCommentFeed({ theaterController }) {
-  const [comments, setComments] = useState([]);
+  const [comments, setComments] = useState(new Set());
   const secondsBetweenComments = 5;
   const {
     queue,
@@ -1438,14 +1438,14 @@ function TheaterCommentFeed({ theaterController }) {
     );
     if (!queuedMessages.length) return;
     if (!queuedMessages[commentCursor]) return;
-    const onDeckComment = queuedMessages[commentCursor];
-    setComments([...comments, onDeckComment]);
+    const onDeckComment = queuedMessages.filter((_,index)=>index <= commentCursor);
+    setComments(prev=>new Set([...prev, ...onDeckComment]));
   }, [commentCursor]);
 
   return (
     <div className="theater-comment-panel">
       <h4>{label("commentary")}</h4>
-      <CommentFeed comments={comments} theaterController={theaterController} />
+      <CommentFeed comments={[...comments]} theaterController={theaterController} />
     </div>
   );
 }
