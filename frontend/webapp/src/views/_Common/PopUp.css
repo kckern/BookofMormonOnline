@@ -384,7 +384,7 @@ ul.source_tabs li:hover
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: left;
 }
 .ppbody .ppimg
