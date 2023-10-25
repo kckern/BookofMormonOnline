@@ -94,6 +94,12 @@
 
 @media (max-width: 900px){
 
+
+    .theater-wrapper
+    {
+        position: absolute;
+        bottom: 4rem;
+    }
     .theater-side-panel{
         display: none!important;
     }
@@ -101,6 +107,11 @@
     {
         flex-direction: column!important;
     }
+    .theater-controls
+    {
+        display: none!important;
+    }
+
     .theater-super-title-left
     {
         width:100%!important;
@@ -115,6 +126,12 @@
     .theater-content-frame
     {
         font-size: min(1.5rem, 3vh)!important;
+    }
+    .theater-content-next,
+    .theater-content-prev
+    {
+        height: 1.5rem!important;
+        width: 1.5rem!important;
     }
 
 }
@@ -141,6 +158,7 @@
     flex-grow: 0;
 
     background-color: #222;
+    position: relative;
 }
 .theater-header,
 .theater-controls
@@ -168,6 +186,7 @@
     letter-spacing: 0.2ex;
     font-variant: small-caps;
     position: relative;
+    white-space: nowrap;
 }
 
 .theater-super-titles
