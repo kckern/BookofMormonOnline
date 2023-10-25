@@ -8,10 +8,22 @@ import { renderPersonPlaceHTML } from "./PersonPlace";
 import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
 import "./Narration.css";
 import "./TextContent.css";
-import { snapSelectionToWord } from "src/models/Utils";
+import { snapSelectionToWord,chronoLabel } from "src/models/Utils";
 import { SRLWrapper } from "simple-react-lightbox";
 import {  label} from "src/models/Utils";
 import fullscreen from "src/views/Page/svg/fullscreen.png";
+
+
+function ChronoRow ({chrono}) {
+
+  chrono = chronoLabel(chrono);
+
+  if(!chrono) return null;
+
+  return <div className="row chronoRow"><div className="chronoText">{chrono}</div></div>
+
+
+}
 
 function reducer(narrationController, input) {
   switch (input.fn) {
@@ -325,9 +337,12 @@ function Narration({ rowData, pageController, addHighlight }) {
     : "not_started";
   if (!pageController?.states?.progress?.count) progress = "unknown";
 
+
+
   return (
     <div className="card-body">
       {/* CONTENT ROW */}
+      <ChronoRow chrono={narrationController.data.text.chrono} />
       <div className="row" onMouseEnter={handleLocationChange}>
         <div className="col-sm-6 narration">
           <p onMouseUp={handleSelection} className={progress}>

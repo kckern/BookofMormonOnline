@@ -20,6 +20,7 @@ import play from "./svg/play.svg";
 import prev from "./svg/prev.svg";
 import crossroads from "./svg/crossroads.svg";
 import detour from "./svg/detour.svg";
+import again from "./svg/again.svg";
 import vol_hi from "./svg/vol_hi.svg";
 import vol_lo from "./svg/vol_lo.svg";
 import fast from "./svg/fast.svg";
@@ -667,7 +668,7 @@ function TheaterCrossRoads({ theaterController }) {
   }, [startTimestamp, cursorIndex, theaterController]);
 
   const nextclass = next?.[0]?.nextclass || null;
-  const img = nextclass==="C" ? crossroads : detour;
+  const img = isLast ? again : nextclass==="C" ? crossroads : detour;
   const {optionalText,defaultLabel,optionalLabel,headingLabel,titleLabel} = (()=>{
     if(isLast) return{
       titleLabel:label("section_complete"),
