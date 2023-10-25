@@ -929,6 +929,7 @@ function TheaterControls({ theaterController }) {
         onPause={() => theaterController.setIsPlaying(false)}
         onPlay={() => {
           theaterController.setIsPlaying(true);
+          theaterController.setIsScrollingPanel(true);
           logItem();
         }}
         listenInterval={50}
