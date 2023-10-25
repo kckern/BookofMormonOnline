@@ -1278,6 +1278,7 @@ function TheaterPeoplePlacePanel({ theaterController }) {
     queue,
     cursorIndex,
     currentProgress,
+		currentDuration,
     appController
   } = theaterController;
   const people =
@@ -1331,14 +1332,22 @@ function TheaterPeoplePlacePanel({ theaterController }) {
     item.props.className.includes("visible")
   ).length;
 
+	let opacity = 1;
+  const currentTime = (currentProgress / 100) * currentDuration;
+  //fade in and out in first and last 3 seconds
+  const secondsBuffer = 2;
+  if (currentTime < secondsBuffer) opacity = currentTime / secondsBuffer;
+  if (currentTime > currentDuration - secondsBuffer)
+    opacity = (currentDuration - currentTime) / secondsBuffer;
+
   return (
     <div
       className={
-        `theater-people-place-panel ${classHide} item-count-` + visibleItemCount
+        `theater-people-place-panel ${classHide}`
       }
     >
       <h4>{label("people_and_places")}</h4>
-      <div className="theater-people-place-items">{peoplePlaceEl}</div>
+      <div className="theater-people-place-items" style={{opacity,justifyContent:visibleItemCount>2?"flex-start":"center"}}>{peoplePlaceEl}</div>
     </div>
   );
 }
