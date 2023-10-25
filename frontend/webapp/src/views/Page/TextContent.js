@@ -307,9 +307,7 @@ export default function TextContent({ content, narrationController, isQuote }) {
                   <span className="triangle"><img src={triangle}/></span>
                   {textContentController.data &&
                     textContentController.data.heading}
-                  <span className="chrono">
-                    {textContentController.data.chrono}
-                  </span>
+                  
                 </>
               ) : (
                 <>
