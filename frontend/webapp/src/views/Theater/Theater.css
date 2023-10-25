@@ -255,9 +255,7 @@
     background-blend-mode: multiply;
     background-color: #000000AA;
     /* stretch background image to fill */
-    background-size: cover;
-
-
+    background-size: cover
 
 }
 
@@ -382,6 +380,7 @@ img.player-ui:hover{
 .theater-intro-slide,
 .theater-section-intro
 {
+    background-image: url('https://i.imgur.com/zKrxLkR.jpg');
     position: absolute;
     top:0;
     left: 0;
@@ -457,7 +456,7 @@ img.player-ui:hover{
 .theater-crossroads
 {
 
-    background:url('https://i.imgur.com/uqjhnKX.jpg');
+    background:url('https://i.imgur.com/zKrxLkR.jpg');
     height: 100%;
     background-size: cover;
     background-blend-mode: multiply;
@@ -793,7 +792,7 @@ span.pageTitle
   
   .imageCaption
   {
-    z-index: 99;
+    z-index: 10;
     position: absolute;
     bottom: 0;
     height: 2rem;
