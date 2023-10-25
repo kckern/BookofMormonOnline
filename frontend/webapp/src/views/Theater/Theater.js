@@ -146,6 +146,8 @@ function TheaterWrapper({ appController }) {
     }
   };
 
+  const [isScrollingPanel, setIsScrollingPanel] = useState(false);
+
   const theaterController = {
     appController,
     ...controls,
@@ -162,7 +164,9 @@ function TheaterWrapper({ appController }) {
     isPlaying,
     playbackRate,
     cursorChangeWasManual,
-    setPlaybackRate
+    setPlaybackRate,
+    isScrollingPanel,
+    setIsScrollingPanel
   };
 
   useEffect(async () => {
@@ -275,6 +279,7 @@ function TheaterWrapper({ appController }) {
     };
   }, [isPlaying, cursorIndex]);
 
+
   if(loadFailed) return (
                    <div className="theater-wrapper">
                      <div className="failed-to-load">
@@ -303,20 +308,23 @@ function TheaterMainPanel({ theaterController }) {
   const thisSection = currentItem?.parent_section?.title || null;
   const prevSection = queue[cursorIndex - 1]?.parent_section?.title || null;
   const isNewSection =  thisSection !== prevSection;
-  const isFirstItem = cursorIndex === 0;
   const isLastItem = cursorIndex === queue.length - 1;
   const hasNextContent = !!currentItem?.next;
+  const posttype = isLastItem ? "outro" : hasNextContent ? "crossroads" : null;
+
+  const isFirstItem = cursorIndex === 0;
+  const initSubCursorIndex = cursorChangeWasManual ? 0 : isNewSection || isFirstItem ? -1 : 0;
+  const [subCursorIndex, setSubCursorIndex] = useState(initSubCursorIndex);
+
   const pretype = isFirstItem
     ? "intro"
     : isNewSection
     ? "section"
     : null;
-  const posttype = isLastItem ? "outro" : hasNextContent ? "crossroads" : null;
 
-  const initSubCursorIndex = cursorChangeWasManual ? 0 : isNewSection || isFirstItem ? -1 : 0;
-  const [subCursorIndex, setSubCursorIndex] = useState(initSubCursorIndex);
   useEffect(()=>{
       setSubCursorIndex(initSubCursorIndex);
+      theaterController.setIsScrollingPanel(!initSubCursorIndex);
       if(cursorIndex) return;
       canAutoplay.audio().then(({result}) => {result ? setCanAutoPlay(true) : setCanAutoPlay(false);} );
   },[cursorIndex])
@@ -497,6 +505,7 @@ function TheaterQueueIntro({ theaterController }) {
         if (previousCountdown === 1) {
           // TODO: call setSubCursorIndex when countdown reaches 0
           theaterController.setSubCursorIndex(0);
+          theaterController.setIsScrollingPanel(true);
           clearInterval(timer);
         } else {
           return previousCountdown - 1;
@@ -1277,6 +1286,7 @@ function TheaterPeoplePlacePanel({ theaterController }) {
   const {
     queue,
     cursorIndex,
+    isScrollingPanel,
     currentProgress,
 		currentDuration,
     appController
@@ -1333,13 +1343,15 @@ function TheaterPeoplePlacePanel({ theaterController }) {
   ).length;
 
 	let opacity = 1;
-  const currentTime = (currentProgress / 100) * currentDuration;
+  const currentTime = -0.5 +( (currentProgress / 100) *( currentDuration +1));
   //fade in and out in first and last 3 seconds
-  const secondsBuffer = 2;
+  const secondsBuffer = 1.5;
   if (currentTime < secondsBuffer) opacity = currentTime / secondsBuffer;
   if (currentTime > currentDuration - secondsBuffer)
     opacity = (currentDuration - currentTime) / secondsBuffer;
 
+  if(!currentTime || !isScrollingPanel) opacity = 0;
+    console.log(theaterController);
   return (
     <div
       className={
