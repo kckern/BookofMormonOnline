@@ -940,14 +940,11 @@ span.pageTitle
     font-weight: bold;
   }
 
-
 .theater-people-place-items
 {
-    display:flex;
-    overflow:scroll;
-    justify-content: flex-start;
-
-    height: 15rem;
+		display:flex;
+    overflow-x:auto;
+    min-height: 15rem;
     background: url('https://i.imgur.com/uqjhnKX.jpg');
     background-blend-mode: multiply;
     background-color: #000000AA;
@@ -966,18 +963,9 @@ span.pageTitle
     background-color: #000;
 }
 
-
-.item-count-1 .theater-people-place-items,
-.item-count-2 .theater-people-place-items
+.theater-people-place-item
 {
-    justify-content: center;
-}
-
-
-  .theater-people-place-item
-  {
     position: relative;
-    width: 5rem;
     flex-shrink: 0;
     width: 9rem;
     height: 14rem;
@@ -988,7 +976,7 @@ span.pageTitle
     border-radius: 1ex;
     cursor: pointer;
     margin: 1ex;
-  }
+}
 
   .theater-people-place-item:hover{
     outline: 2px solid white;
