@@ -1147,7 +1147,6 @@ function TheaterContent({ theaterController }) {
 
   content = prepareContent(content);
 
-  const [transitioning, setTransitioning] = useState(true);
   
   useLayoutEffect(() => {
     setTransitioning(true);
@@ -1161,6 +1160,7 @@ function TheaterContent({ theaterController }) {
 
   const yPosition = computePosition(currentProgress);
 
+  const [transitioning, setTransitioning] = useState(true);
   useEffect(() => {
     if(transitioning && currentProgress>0) setTransitioning(false);
   },[currentProgress])
@@ -1177,8 +1177,7 @@ function TheaterContent({ theaterController }) {
   if (timeElapsed > currentDuration - secondsBuffer)
     opacity = (currentDuration - timeElapsed) / secondsBuffer;
 
-    const isPlaying = !document.getElementById(`theater-audio-player`)?.paused 
-    && !document.getElementById(`theater-audio-player`)?.ended
+    const isPlaying = !document.getElementById(`theater-audio-player`)?.ended
     && !document.getElementById(`theater-audio-player`)?.seeking
     && document.getElementById(`theater-audio-player`)?.currentTime > 0;
   
@@ -1399,8 +1398,17 @@ function TheaterPeoplePlacePanel({ theaterController }) {
   if (currentTime > currentDuration - secondsBuffer)
     opacity = (currentDuration - currentTime) / secondsBuffer;
 
-  const isPlaying = !document.getElementById(`theater-audio-player`)?.paused 
-  && !document.getElementById(`theater-audio-player`)?.ended
+    useLayoutEffect(() => {
+      setTransitioning(true);
+    },[cursorIndex]);
+
+  const [transitioning, setTransitioning] = useState(true);
+  useEffect(() => {
+    if(transitioning && currentProgress>0) setTransitioning(false);
+  },[currentProgress])
+
+
+  const isPlaying = !document.getElementById(`theater-audio-player`)?.ended
   && !document.getElementById(`theater-audio-player`)?.seeking
   && document.getElementById(`theater-audio-player`)?.currentTime > 0;
 
