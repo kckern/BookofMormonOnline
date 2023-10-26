@@ -434,7 +434,8 @@ function TheaterIdle({ theaterController }) {
   //remove html
   currentItemText = currentItemText.replace(/(<([^>]+)>)/gi, "");
 
-  return <div className="theater-content-frame theater-queue-intro">
+  return <div className="theater-content-frame theater-queue-intro"
+  >
 
 <p style={{
   opacity:0.2,
@@ -508,10 +509,16 @@ function TheaterQueueIntro({ theaterController }) {
 
   const pages = [...new Set(queue.map(item => item?.parent_page?.title || null))];
   const lastPage = pages.pop();
-  const pageString = pages.length > 1 ? pages.join(", ") + "</em> and <em>" + lastPage : lastPage;
+  const pageString = pages.length > 1 ? pages.join(", ") + "</em> "+label("theater_list_and")+" <em>" + lastPage : lastPage;
 
-  const sections = [...new Set(queue.map(item => item?.parent_section?.title || null))];
-  const sectionString = sections.length > 1 ? sections.slice(0,-1).join(", ") + "</em> and <em>" + sections.reverse()[0] : sections.reverse()[0];
+  let sections = [...new Set(queue.map(item => item?.parent_section?.title || null))];
+
+  const maxCharCount = 5000;
+  while(sections.join("").length + pageString.length > maxCharCount){
+    sections.pop();
+  }
+
+  const sectionString = sections.length > 1 ? sections.slice(0,-1).join(", ") + "</em> "+label("theater_list_and")+" <em>" + sections.reverse()[0] : sections.reverse()[0];
 
 
   const passageCount = queue.length;
@@ -519,10 +526,10 @@ function TheaterQueueIntro({ theaterController }) {
   return (
     <div className="theater-content-frame theater-queue-intro">
       <div className={"theater-intro-slide " + (part===1 ? "on" : "off") }>
-      <p className="presents">Book of Mormon Online <small><em>presents</em></small></p>
+      <p className="presents">{Parser(label("bom_presents"))}</p>
       <img src={logo} className="logo" />
-      <p>{passageCount} passages from {Parser(`<em>${pageString}</em>`)}</p>
-      <p>covering {Parser(`<em>${sectionString}</em>`)}</p>
+      <p>{Parser(label("theater_x_passages_from_y",[`${passageCount}`,`<em>${pageString}</em>`])|| "x")}</p>
+      <p>{Parser(label("theater_covering_x",[`<em>${sectionString}</em>`])||"x")}</p>
       </div>
       <div className={"theater-intro-slide section-intro " + (part===2 ? "on" : "off") }>
       <p><span className="pageTitle">{pageTitle}:</span><br/>{sectionTitle}</p>
@@ -547,13 +554,18 @@ function TheaterSectionIntro({ theaterController }) {
     setTimeout(()=>setVisible(true),100);
   }, []);
 
-  const sectionNarrations = queue
+  let sectionNarrations = queue
     .filter(
       item => item?.parent_section?.title === currentItem?.parent_section?.title
     )
     .map(item => item?.narration?.description || null)
     .filter(item => item)
     .map(item => flattenDescription(item));
+
+    const maxCharCount = 5000;
+  while(sectionNarrations.join("").length > maxCharCount){
+    sectionNarrations.pop();
+  }
 
   useEffect(() => {
     setTimeout(() => {
@@ -576,7 +588,7 @@ function TheaterSectionIntro({ theaterController }) {
     <div className="theater-content-frame theater-section-intro">
       
       <div className={"theater-intro-slide section-intro " + (visible ? "on" : "off") }>
-        <p className="upnext">up next...</p>
+        <p className="upnext">{label("theater_up_next")}</p>
       <p><span className="pageTitle">{pageTitle}:</span><br/>{sectionTitle}</p>
       <small>{narrationString}</small>
       </div>
@@ -1185,9 +1197,11 @@ function TheaterContent({ theaterController }) {
 
   const isFirst = cursorIndex === 0;
   const isLast = cursorIndex === queue.length - 1;
+  const backgroundImage = `theater/gold-1`;
 
   return (
-    <div className={`theater-content-frame ${state}`}>
+    <div className={`theater-content-frame ${state}`} 
+    style={{backgroundImage:`url(${assetUrl}/${backgroundImage})`}}>
       <TheaterMobileControls theaterController={theaterController} />
       <div
         className={`theater-content-slider ${state}`}
@@ -1412,12 +1426,15 @@ function TheaterPeoplePlacePanel({ theaterController }) {
   && !document.getElementById(`theater-audio-player`)?.seeking
   && document.getElementById(`theater-audio-player`)?.currentTime > 0;
 
+  const backgroundImage = `${assetUrl}/theater/people-1`;
+
   if(!isPlaying || !isScrollingPanel) opacity = 0;
   return (
     <div
       className={
         `theater-people-place-panel ${classHide}`
       }
+      style={{backgroundImage:`url(${backgroundImage})`}}
     >
       <h4>{label("people_and_places")}</h4>
       <div className="theater-people-place-items" style={{opacity,justifyContent:visibleItemCount>2?"flex-start":"center"}}>{peoplePlaceEl}</div>
@@ -1472,6 +1489,7 @@ function TheaterImagePanel({ theaterController }) {
     }}>
       <img
         src={`${assetUrl}/art/${image.id}`}
+        style={{backgroundImage:`url(${assetUrl}/theater/canvas-1)`}}
       />
 
     </div>
