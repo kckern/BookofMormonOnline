@@ -117,7 +117,8 @@ export default {
       }).replace(/\s+/g, ' ').trim();
 
       const sentences = split(text).map(x=>x.raw).filter(x=>{
-        if(!/[()]/.test(x)) return false;
+        if(/[()]/.test(x)) return false;
+        if(/[\[\]]/.test(x)) return false;
         if(/p\.\s*\d+/.test(x)) return false;
         if(x.split(';').length > 2) return false;
         return true;
