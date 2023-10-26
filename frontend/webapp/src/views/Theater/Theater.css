@@ -336,6 +336,14 @@
 	font-weight:800;
 }
 
+.playbackRateSpan
+{
+    width: 3rem;
+    background-color: #DDD;
+    display: inline-block;
+    border-radius: 1ex;
+}
+
 input[type=range] {
   -webkit-appearance: none;
   margin: 10px 0;
