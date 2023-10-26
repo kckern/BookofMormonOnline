@@ -123,17 +123,6 @@ function TheaterWrapper({ appController }) {
         return parseFloat((newRate||1).toFixed(1)); // keeping it in float with one decimal point
       });
     },
-
-		customIncrementPlaybackSpeed:newRate=>{
-			setPlaybackRate(prevRate => {
-        //set local storage
-        localStorage.setItem("playbackRate", newRate);
-        if(!document.getElementById("theater-audio-player")) return;
-        document.getElementById("theater-audio-player").playbackRate = newRate;
-        return parseFloat((newRate||1).toFixed(1)); // keeping it in float with one decimal point
-      });
-		},
-
     cyclePlaybackSpeed: () => {
       setPlaybackRate(prevRate => {
         let newRate = prevRate + 0.25;
@@ -1252,7 +1241,6 @@ function TheaterProgressBar({ theaterController }) {
     isPlaying,
     playbackRate,
     cyclePlaybackSpeed,
-		customIncrementPlaybackSpeed
   } = theaterController;
   const seekTo = e => {
     const barElement = document.querySelector(".theater-progress-bar");
@@ -1276,7 +1264,7 @@ function TheaterProgressBar({ theaterController }) {
         <ProgressBar percent={currentProgress} />
       </div>
       <div className="theater-progress-bar-buttons right">
-				{showPlayBackSpeed && <PlaybackSpeed playbackRate={playbackRate.toFixed(1)} setShowPlaybackSpeed={setShowPlaybackSpeed} customIncrementPlaybackSpeed={customIncrementPlaybackSpeed}/>}
+				{showPlayBackSpeed && <PlaybackSpeed setShowPlaybackSpeed={setShowPlaybackSpeed} theaterController={theaterController}/>}
         <div>
           <div className="playbackRateIcon" onClick={cyclePlaybackSpeed}>
             {rateString}
@@ -1288,37 +1276,56 @@ function TheaterProgressBar({ theaterController }) {
   );
 }
 
-function PlaybackSpeed({playbackRate,setShowPlaybackSpeed,customIncrementPlaybackSpeed}){
-	const [playbackSpeed,setPlaybackSpeed] = useState(playbackRate || 0.5)
+function PlaybackSpeed({setShowPlaybackSpeed,theaterController}){
+	const {playbackRate,setPlaybackRate}=theaterController;
+	// const [playbackSpeed,setPlaybackSpeed] = useState(playbackRate || 0.5)
 	const inputRef = useRef(null);
 	const handleInput = (e)=>{
-		setPlaybackSpeed(e.target.value)
+		// setPlaybackRate(e.target.value)
+			setPlaybackRate(prevRate => {
+			localStorage.setItem("playbackRate", +e.target.value);
+			if(!document.getElementById("theater-audio-player")) return;
+			document.getElementById("theater-audio-player").playbackRate = +e.target.value;
+			return parseFloat((+e.target.value||1).toFixed(1)); // keeping it in float with one decimal point
+		});
 	}
+	// const handleKeyInput = (e)=>{
+	// 	if(e.code === 'Escape'){
+	// 		setShowPlaybackSpeed(false);
+	// 	}else if(e.code === 'Enter'){
+	// 		handleClick();
+	// 	}
+	// }
+
 	const handleKeyInput = (e)=>{
-		if(e.code === 'Escape'){
-			setShowPlaybackSpeed(false);
-		}else if(e.code === 'Enter'){
-			handleClick();
-		}
+		if(e.code === 'Escape' || e.code === 'Enter') setShowPlaybackSpeed(false);
 	}
-	const handleClick = ()=>{
-		customIncrementPlaybackSpeed(Number(playbackSpeed));
-		setShowPlaybackSpeed(false);
-	}
+
+
+	// const handleClick = ()=>{
+		// setPlaybackRate(prevRate => {
+		// 	localStorage.setItem("playbackRate", +playbackRate);
+		// 	if(!document.getElementById("theater-audio-player")) return;
+		// 	document.getElementById("theater-audio-player").playbackRate = +playbackRate;
+		// 	return parseFloat((+playbackRate||1).toFixed(1)); // keeping it in float with one decimal point
+		// });
+	// 	setShowPlaybackSpeed(false);
+	// }
 
 	useEffect(()=>{
 		inputRef.current.focus();
 	},[])
+
 	return(
 	<div className="theater-progress-bar-buttons-playback-range">
-		<span>Playback Speed : {playbackSpeed}X</span>
+		<span>Playback Speed : {playbackRate}X</span>
 		<div>
-		<input ref={inputRef} type="range" min="0.5" max="2.0" value={playbackSpeed} step="0.5" onChange={handleInput} onKeyDown={handleKeyInput}/>
+		<input ref={inputRef} type="range" min="0.5" max="2.0" value={playbackRate} step="0.5" onChange={handleInput} onKeyDown={handleKeyInput}/>
 		</div>
-		<div className="theater-progress-bar-buttons-playback-range-controls">
+		{/* <div className="theater-progress-bar-buttons-playback-range-controls">
 			<button onClick={handleClick}>✔</button>
 			<button onClick={()=>setShowPlaybackSpeed(false)}>✖</button>
-		</div>
+		</div> */}
 	</div>
 	)
 }
