@@ -626,6 +626,11 @@ span.pageTitle
     padding: 1rem 1ex 0 1ex;
     margin-bottom: 1rem;
 }
+
+.theater-queue-indicator-tooltip{
+	z-index:6000;
+}
+
 .theater-super-title
 {
     font-family: 'Sorts Mill Goudy', serif; 
