@@ -1368,7 +1368,12 @@ function TheaterPeoplePlacePanel({ theaterController }) {
   if (currentTime > currentDuration - secondsBuffer)
     opacity = (currentDuration - currentTime) / secondsBuffer;
 
-  if(!currentTime || !isScrollingPanel) opacity = 0;
+  const isPlaying = !document.getElementById(`theater-audio-player`)?.paused 
+  && !document.getElementById(`theater-audio-player`)?.ended
+  && !document.getElementById(`theater-audio-player`)?.seeking
+  && document.getElementById(`theater-audio-player`)?.currentTime > 0;
+
+  if(!isPlaying || !isScrollingPanel) opacity = 0;
     console.log(theaterController);
   return (
     <div
