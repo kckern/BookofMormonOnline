@@ -8,7 +8,7 @@ import { toast } from "react-toastify";
 import "./Theater.css";
 import ReactAudioPlayer from "react-audio-player";
 import canAutoplay from 'can-autoplay';
-
+import ReactTooltip from "react-tooltip";
 import nowifi from "src/views/_Common/svg/no-wifi.svg";
 import logo from "src/views/_Common/svg/logo.svg";
 import menu from "src/views/User/svg/settings.svg";
@@ -1266,6 +1266,9 @@ function TheaterQueueIndicator({ theaterController }) {
         gap: `min(1ex,${30/queue.length}vw)`,
       }}
     >
+
+      <ReactTooltip effect="solid" id="dotToolTip" type="dark" place="bottom"  offset="{'top':-10}" className="theater-queue-indicator-tooltip" />
+
       {(queue||[]).map((_, index) => {
         const status = queueStatus[index] || queue[index]?.status || null;
 
@@ -1273,18 +1276,20 @@ function TheaterQueueIndicator({ theaterController }) {
         const thisSection = queue[index]?.parent_section?.title || null;
         const isLastInSection = nextSection !== thisSection;
         const heading = queue[index]?.heading || null;
-
-        //TODO: Tooltip with heading
-
         return (
-          <div
+					<>
+					<div
             onClick={() => theaterController.goto(index, "manual")}
             className={`theater-queue-indicator-item ${status || ""} ${
               index === cursorIndex ? "active" : ""
             } ${isLastInSection ? "last-in-section" : ""
             }`}
             key={index}
+						data-html={true}
+						data-tip={"<b>" + thisSection + "</b> <br/>" + heading + "<br/>" + status}
+            data-for="dotToolTip"
           ></div>
+					</>
         );
       })}
     </div>
