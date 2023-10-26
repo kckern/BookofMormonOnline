@@ -121,6 +121,9 @@ function TheaterWrapper({ appController }) {
     incrementPlaybackSpeed: neg => {
       setPlaybackRate(prevRate => {
         let newRate = prevRate;
+        const isNum = typeof neg === "number";
+        const isNan = isNaN(neg);
+        if(!isNum || isNan) return prevRate;
         if (neg) {
           newRate -= 0.1;
           if (newRate < 0.75) newRate = 0.75; // limiting the minimum speed to 0.5
@@ -370,11 +373,11 @@ function TheaterMainPanel({ theaterController }) {
       ) : (
         <>
           <TheaterContent theaterController={theaterController} />
-          <TheaterHeader theaterController={theaterController} />
-          <TheaterControls theaterController={theaterController} />
         </>
       )}
 
+          <TheaterMeta theaterController={theaterController} visible={!showStatic}/>
+          <TheaterControls theaterController={theaterController} visible={!showStatic} />
     </div>
   );
 }
@@ -761,22 +764,18 @@ function TheaterSidePanel({ theaterController }) {
   );
 }
 
-function TheaterHeader({ theaterController }) {
+function TheaterMeta({ theaterController, visible }) {
 
-  const [visible, setVisible] = useState(false);
 
-  useEffect(() => {
-    setTimeout(()=>setVisible(true),100);
-  }, []);
 
   return (
-    <div className={"theater-header" + (visible ? " visible" : "")}>
-      <TheaterSuperTitles theaterController={theaterController} />
+    <div className={"theater-meta" + (visible ? " visible" : "")}>
+      <TheaterMetaContent theaterController={theaterController} />
     </div>
   );
 }
 
-function TheaterControls({ theaterController }) {
+function TheaterControls({ theaterController, visible }) {
 
   const {
     queue,
@@ -797,10 +796,8 @@ function TheaterControls({ theaterController }) {
 
 
   const currentItem = queue[cursorIndex] || null;
-  const [isVisible, setIsVisible] = useState(false);
   useEffect(() => {
     if(!currentItem) return;
-    setTimeout(() => setIsVisible(true), 100);
     setPlayerCanPlay(false);
     const slug = currentItem?.slug || null;
 
@@ -822,10 +819,10 @@ function TheaterControls({ theaterController }) {
 
   useEffect(() => {
     const player = document.getElementById("theater-audio-player");
-    if (!player) return;
+    if (!player || !visible) return;
     player.playbackRate = theaterController.playbackRate;
     playAudioElement("theater-audio-player");
-  }, [playerCanPlay]);
+  }, [playerCanPlay,visible]);
 
   if (!currentItem) return <Loader />;
   const [num, pageslug] = currentItem?.slug.split("/").reverse();
@@ -919,7 +916,7 @@ function TheaterControls({ theaterController }) {
   const isLastItem = cursorIndex === queue.length - 1;
 
   return (
-    <div className={"theater-controls"+(isVisible ? " visible" : "")}>
+    <div className={"theater-controls"+(visible ? " visible" : "")}>
       <TheaterProgressBar theaterController={theaterController} />
       <ReactAudioPlayer
         id="theater-audio-player"
@@ -1094,7 +1091,7 @@ function TheaterNarration({ theaterController }) {
 
     useEffect(()=>{
       //scrollto smooth
-      const narrationEl = document.querySelector(".theater-super-title-narration");
+      const narrationEl = document.querySelector(".theater-meta-content-narration");
       const activeEl = narrationEl.querySelector(".active");
       if(!activeEl) return;
       const top = activeEl.offsetTop;
@@ -1107,7 +1104,7 @@ function TheaterNarration({ theaterController }) {
 
     if (!currentItem) return null;
   return (
-    <div className="theater-super-title-narration">{narrationUL}</div>
+    <div className="theater-meta-content-narration">{narrationUL}</div>
   );
 }
 
@@ -1187,7 +1184,7 @@ function TheaterContent({ theaterController }) {
   );
 }
 
-function TheaterSuperTitles({ theaterController }) {
+function TheaterMetaContent({ theaterController }) {
   const { queue, cursorIndex, queueStatus } = theaterController;
   const currentItem = queue[cursorIndex] || null;
   if (!currentItem) return null;
@@ -1202,13 +1199,13 @@ function TheaterSuperTitles({ theaterController }) {
   const StudyButton = <Link className="studylink" to={`/${currentItem?.slug}`}><img src={studyimg} />{label("menu_study")}</Link>
 
   return (
-    <div className="theater-super-titles">
-      <div className="theater-super-title-left">
-        <div className="theater-super-title-heading">{heading}{StudyButton}</div>
-        <div className="theater-super-title-section">{section}</div>
-        <div className="theater-super-title">{page}</div>
+    <div className="theater-meta-contents">
+      <div className="theater-meta-content-left">
+        <div className="theater-meta-content-heading">{heading}{StudyButton}</div>
+        <div className="theater-meta-content-section">{section}</div>
+        <div className="theater-meta-content">{page}</div>
       </div>
-      <div className="theater-super-title-right">
+      <div className="theater-meta-content-right">
         <TheaterNarration theaterController={theaterController} />
       </div>
     </div>
@@ -1374,7 +1371,6 @@ function TheaterPeoplePlacePanel({ theaterController }) {
   && document.getElementById(`theater-audio-player`)?.currentTime > 0;
 
   if(!isPlaying || !isScrollingPanel) opacity = 0;
-    console.log(theaterController);
   return (
     <div
       className={
