@@ -1206,6 +1206,9 @@ function TheaterQueueIndicator({ theaterController }) {
         gap: `min(1ex,${30/queue.length}vw)`,
       }}
     >
+
+      <ReactTooltip effect="solid" id="dotToolTip" type="dark" place="bottom"  offset="{'top':-10}" className="theater-queue-indicator-tooltip" />
+
       {(queue||[]).map((_, index) => {
         const status = queueStatus[index] || queue[index]?.status || null;
 
@@ -1215,7 +1218,6 @@ function TheaterQueueIndicator({ theaterController }) {
         const heading = queue[index]?.heading || null;
         return (
 					<>
-					<ReactTooltip effect="solid" id="dotToolTip" type="dark" place="top"  offset="{'top':-10}" className="theater-queue-indicator-tooltip" />
 					<div
             onClick={() => theaterController.goto(index, "manual")}
             className={`theater-queue-indicator-item ${status || ""} ${
