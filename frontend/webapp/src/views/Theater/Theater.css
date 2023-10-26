@@ -323,6 +323,109 @@
 {
     background-color: white;
 }
+.theater-main-panel .theater-progress-bar-buttons-playback-range
+{
+	background-color: white;
+	padding: 10px;
+	border-radius: 20px;
+	position: absolute;
+	bottom: 2rem;
+	right: 3.5rem;
+	border: 5px solid grey;
+	color:#6d6d6d;
+	font-weight:800;
+}
+
+input[type=range] {
+  -webkit-appearance: none;
+  margin: 10px 0;
+  width: 100%;
+}
+input[type=range]:focus {
+  outline: none;
+}
+input[type=range]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 13px;
+  cursor: pointer;
+  animate: 0.2s;
+  box-shadow: 0px 0px 0px #000000;
+  background: #6d6d6d;
+  border-radius: 8px;
+  border: 0px solid #000000;
+}
+input[type=range]::-webkit-slider-thumb {
+  box-shadow: 1px 1px 1px #bdbdbd;
+  border: 1px solid #979797;
+  height: 19px;
+  width: 17px;
+  border-radius: 14px;
+  background: #FFFFFF;
+  cursor: pointer;
+  -webkit-appearance: none;
+  margin-top: -3.5px;
+}
+input[type=range]:focus::-webkit-slider-runnable-track {
+  background: #6d6d6d;
+}
+input[type=range]::-moz-range-track {
+  width: 100%;
+  height: 13px;
+  cursor: pointer;
+  animate: 0.2s;
+  box-shadow: 0px 0px 0px #000000;
+  background: #6d6d6d;
+  border-radius: 8px;
+  border: 0px solid #000000;
+}
+input[type=range]::-moz-range-thumb {
+  box-shadow: 1px 1px 1px #bdbdbd;
+  border: 1px solid #979797;
+  height: 19px;
+  width: 17px;
+  border-radius: 14px;
+  background: #FFFFFF;
+  cursor: pointer;
+}
+input[type=range]::-ms-track {
+  width: 100%;
+  height: 13px;
+  cursor: pointer;
+  animate: 0.2s;
+  background: #6d6d6d;
+  border-color: transparent;
+  color: transparent;
+}
+input[type=range]::-ms-thumb {
+  box-shadow: 1px 1px 1px #bdbdbd;
+  border: 1px solid #979797;
+  height: 19px;
+  width: 17px;
+  border-radius: 14px;
+  background: #FFFFFF;
+  cursor: pointer;
+}
+
+.theater-progress-bar-buttons-playback-range-controls{
+	display:flex;
+	justify-content:space-around;
+	height:1.5rem;
+}
+
+.theater-progress-bar-buttons-playback-range-controls button{
+	border:none;
+	cursor:pointer;
+	transition:border 0.5 ease-in-out;
+	color:#6d6d6d;
+}
+
+.theater-progress-bar-buttons-playback-range-controls button:hover{
+	border:1px solid #6d6d6d;
+	color:black;
+	border-radius:5px;
+	background:rgb(210, 210, 210);
+}
+
 
 
 .theater-content-top-visor{
