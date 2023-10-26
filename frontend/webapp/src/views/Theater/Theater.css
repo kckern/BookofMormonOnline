@@ -417,12 +417,13 @@ input[type=range]::-ms-thumb {
 	cursor:pointer;
 	transition:border 0.5 ease-in-out;
 	color:#6d6d6d;
+	border-radius:5px;
+	background:transparent;
 }
 
 .theater-progress-bar-buttons-playback-range-controls button:hover{
 	border:1px solid #6d6d6d;
 	color:black;
-	border-radius:5px;
 	background:rgb(210, 210, 210);
 }
 
