@@ -1261,6 +1261,8 @@ function TheaterQueueIndicator({ theaterController }) {
         const isLastInSection = nextSection !== thisSection;
         const heading = queue[index]?.heading || null;
 
+        //TODO: Tooltip with heading
+
         return (
           <div
             onClick={() => theaterController.goto(index, "manual")}
