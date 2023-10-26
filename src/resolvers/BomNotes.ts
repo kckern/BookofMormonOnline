@@ -1,6 +1,6 @@
 import { models as Models } from '../config/database';
 import { getSlug, Op, includeTranslation, translatedValue, includeModel, queryWhere } from './_common';
-import Sequelize from 'sequelize';
+import { split, SentenceSplitterSyntax } from 'sentence-splitter';
 import scripture from '../library/scripture';
 
 export default {
@@ -115,13 +115,21 @@ export default {
       text = text.replace(/(<([^>]+)>)/gi, '').replace(/&#(\d+);/g, function(match, dec) {
         return String.fromCharCode(dec);
       }).replace(/\s+/g, ' ').trim();
-      const sentences = text.split('. ').filter(x => !/[()]/.test(x)).join('. ');
+
+      const sentences = split(text).map(x=>x.raw).filter(x=>{
+        if(!/[()]/.test(x)) return false;
+        if(/p\.\s*\d+/.test(x)) return false;
+        if(x.split(';').length > 2) return false;
+        return true;
+      }).join('').replace(/\s+/g, ' ').trim();
+
+
       const words = sentences.split(' ')
       let preview = words.slice(0, 50).join(' ');
       if (words.length > 50) {
-        preview += '...';
+        preview = preview.trim() + '...';
       }
-      return preview;
+      return preview.replace(/\s+/g, ' ').trim();
     }
   },
   Fax: {
