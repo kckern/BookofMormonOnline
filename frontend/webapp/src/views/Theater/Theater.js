@@ -121,9 +121,9 @@ function TheaterWrapper({ appController }) {
     incrementPlaybackSpeed: neg => {
       setPlaybackRate(prevRate => {
         let newRate = prevRate;
-        const isNum = typeof neg === "number";
-        const isNan = isNaN(neg);
-        if(!isNum || isNan) return prevRate;
+        const isNum = typeof prevRate === "number";
+        const isNan = isNaN(prevRate);
+        if(!isNum || isNan) return;
         if (neg) {
           newRate -= 0.1;
           if (newRate < 0.75) newRate = 0.75; // limiting the minimum speed to 0.5
@@ -1378,7 +1378,7 @@ function TheaterPeoplePlacePanel({ theaterController }) {
 
       const { type } = item;
 
-      const name = item?.name.replace(/[0-9]/g, "<sup>$&</sup>");
+      const name = item?.name.replace(/[0-9]/g, "<sup>$&</sup>").split(",").reverse().join(" ").replace(/\s+/g, " ");
       let caption = item?.title || item.info || null;
       caption = caption?.replace(/[0-9]/g, "<sup>$&</sup>");
       const slug = item?.slug || null;
