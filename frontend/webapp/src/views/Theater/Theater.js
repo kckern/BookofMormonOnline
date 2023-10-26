@@ -1282,7 +1282,7 @@ function PlaybackSpeed({setShowPlaybackSpeed,theaterController}){
 	const inputRef = useRef(null);
 	const handleInput = (e)=>{
 		// setPlaybackRate(e.target.value)
-			setPlaybackRate(prevRate => {
+			setPlaybackRate(() => {
 			localStorage.setItem("playbackRate", +e.target.value);
 			if(!document.getElementById("theater-audio-player")) return;
 			document.getElementById("theater-audio-player").playbackRate = +e.target.value;
@@ -1315,12 +1315,14 @@ function PlaybackSpeed({setShowPlaybackSpeed,theaterController}){
 	useEffect(()=>{
 		inputRef.current.focus();
 	},[])
+  
+  const decimalPaddedRate = (playbackRate||1).toFixed(1);
 
 	return(
 	<div className="theater-progress-bar-buttons-playback-range">
-		<span>Playback Speed : {playbackRate}X</span>
+		<span>{label("playback_rate")}:</span> <span className="playbackRateSpan">{decimalPaddedRate} ×</span>
 		<div>
-		<input ref={inputRef} type="range" min="0.5" max="2.0" value={playbackRate} step="0.5" onChange={handleInput} onKeyDown={handleKeyInput}/>
+		<input ref={inputRef} type="range" min="0.8" max="2.0" value={playbackRate} step="0.2" onChange={handleInput} onKeyDown={handleKeyInput}/>
 		</div>
 		{/* <div className="theater-progress-bar-buttons-playback-range-controls">
 			<button onClick={handleClick}>✔</button>
