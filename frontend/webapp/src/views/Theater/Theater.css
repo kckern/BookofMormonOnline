@@ -976,7 +976,6 @@ span.pageTitle
     flex-shrink: 0;
     width: 9rem;
     height: 14rem;
-    opacity: 1;
     filter: blur(0);
     transition: all 0.5s ease-in-out;
     margin: 0.5ex;
