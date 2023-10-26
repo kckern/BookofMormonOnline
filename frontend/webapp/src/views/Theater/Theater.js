@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
 import Parser from "html-react-parser";
 import Loader from "../_Common/Loader";
 import { useRouteMatch, useHistory, Link } from "react-router-dom";
@@ -315,6 +315,17 @@ function TheaterWrapper({ appController }) {
   );
 }
 
+function TheaterMobileControls({ theaterController }) {
+
+  const isPlaying = theaterController.isPlaying;
+  const img = isPlaying ? pause : play;
+  const onClickFn = isPlaying ? theaterController.pause : theaterController.play;
+
+  return <div className="theater-mobile-controls" onClick={onClickFn}>
+   <img src={img} />
+  </div>
+
+}
 function TheaterMainPanel({ theaterController }) {
   const { queue, cursorIndex,cursorChangeWasManual } = theaterController;
   const currentItem = queue[cursorIndex] || null;
@@ -375,7 +386,6 @@ function TheaterMainPanel({ theaterController }) {
           <TheaterContent theaterController={theaterController} />
         </>
       )}
-
           <TheaterMeta theaterController={theaterController} visible={!showStatic}/>
           <TheaterControls theaterController={theaterController} visible={!showStatic} />
     </div>
@@ -445,6 +455,7 @@ function TheaterIdle({ theaterController }) {
   </div>;
 
 }
+
 
 function TheaterQueueOutro({ theaterController }) {
 
@@ -1133,8 +1144,16 @@ function TheaterContent({ theaterController }) {
 
   const currentItem = queue[cursorIndex] || null;
   let { content } = currentItem || {};
-  //stip comment and image blocks: [c]1234[/c] and [i]1234[/i]
+
   content = prepareContent(content);
+
+  const [transitioning, setTransitioning] = useState(true);
+  
+  useLayoutEffect(() => {
+    setTransitioning(true);
+  },[cursorIndex]);
+
+  //stip comment and image blocks: [c]1234[/c] and [i]1234[/i]
 
   const computePosition = progress => {
     return progress;
@@ -1142,8 +1161,14 @@ function TheaterContent({ theaterController }) {
 
   const yPosition = computePosition(currentProgress);
 
-  let opacity = 1;
+  useEffect(() => {
+    if(transitioning && currentProgress>0) setTransitioning(false);
+  },[currentProgress])
 
+
+  
+
+  let opacity = 1;
   const timeElapsed = (currentProgress / 100) * currentDuration;
 
   //fade in and out in first and last 3 seconds
@@ -1152,12 +1177,19 @@ function TheaterContent({ theaterController }) {
   if (timeElapsed > currentDuration - secondsBuffer)
     opacity = (currentDuration - timeElapsed) / secondsBuffer;
 
+    const isPlaying = !document.getElementById(`theater-audio-player`)?.paused 
+    && !document.getElementById(`theater-audio-player`)?.ended
+    && !document.getElementById(`theater-audio-player`)?.seeking
+    && document.getElementById(`theater-audio-player`)?.currentTime > 0;
+  
+    if(!isPlaying || transitioning) opacity = 0;
 
   const isFirst = cursorIndex === 0;
   const isLast = cursorIndex === queue.length - 1;
 
   return (
     <div className={`theater-content-frame ${state}`}>
+      <TheaterMobileControls theaterController={theaterController} />
       <div
         className={`theater-content-slider ${state}`}
         style={{ transform: `translateY(-${yPosition}%)`, opacity }}
