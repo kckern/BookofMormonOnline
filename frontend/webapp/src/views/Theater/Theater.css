@@ -20,6 +20,7 @@
     color: #AAA;
 
     text-align: center;
+    overflow: hidden;
 }
 
 /* if screen width is under 1200, make column */
@@ -415,6 +416,8 @@ img.player-ui:hover{
 .theater-section-intro
 {
     background-image: url('https://media.bookofmormon.online/theater/entrance-1');
+    background-size: cover;
+    background-position: center;
     position: absolute;
     top:0;
     left: 0;
@@ -424,7 +427,7 @@ img.player-ui:hover{
     justify-content: center;
     flex-direction: column;
     align-items: center;
-    padding:min(5vh,10%);
+    padding:min(2vh,10%);
     padding-bottom: min(20vh,30%);
     font-family: 'Roboto Condensed', 'Arial Narrow', 'sans-serif';
 }
@@ -611,7 +614,7 @@ img.player-ui:hover{
 }
 .theater-intro-slide.section-intro p{
     font-family: "Sorts Mill Goudy", serif;
-    font-size: 2.5rem;
+    font-size: min(2.5rem, 5vh);
     
 }
 .theater-intro-slide.section-intro .upnext
@@ -625,7 +628,7 @@ img.player-ui:hover{
     font-weight: 400;
     text-align: center;
     opacity: 0.8;
-    font-size: 1.4rem;
+    font-size: min(1.5rem, 2.5vw)!important;
     line-height: 120%;
     /* overflow ellipsis overflow */
 
@@ -633,6 +636,7 @@ img.player-ui:hover{
     /* max 20 lines height */
     flex-grow: 0;
     max-height: 80%;
+    font-size: min(1.5rem, 3vh);
     
     
 }
