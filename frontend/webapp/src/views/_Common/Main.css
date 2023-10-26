@@ -4613,6 +4613,10 @@ button:focus {
   #main-panel
   {
     padding: 0 1em;
+    position: absolute;
+    top:0;
+    bottom: 4rem;
+    min-height: calc(100vh - 4rem);
   }
 
   .content.ready .pagesection

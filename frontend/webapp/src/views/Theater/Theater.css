@@ -31,8 +31,6 @@
     .theater-wrapper .theater-main-panel
     {
         width: 100%;
-        min-width: 100%;
-        height: 60%;
     }
     .theater-wrapper .theater-side-panel
     {
@@ -95,11 +93,6 @@
 @media (max-width: 900px){
 
 
-    .theater-wrapper
-    {
-        position: absolute;
-        bottom: 4rem;
-    }
     .theater-side-panel{
         display: none!important;
     }
@@ -196,6 +189,7 @@
     font-variant: small-caps;
     position: relative;
     white-space: nowrap;
+    overflow: hidden;
 }
 
 .theater-meta-contents
