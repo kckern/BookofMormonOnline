@@ -437,22 +437,14 @@ function TheaterIdle({ theaterController }) {
   return <div className="theater-content-frame theater-queue-intro"
   >
 
-<p style={{
-  opacity:0.2,
-  /* vertical center */
-  position: "absolute",
-  top: "50%",
-  transform: "translateY(-50%)",
-  padding: "10%",
-  fontStyle: "italic",
-  
-  }}>{currentItemText}</p>
     <div className={"theater-intro-slide"}>
+    <p className="idleText">{currentItemText}</p>
     <button className="playbutton" onClick={()=>setCanAutoPlay(true)}>
       <img src={play} />
     </button>
-      <p>Play</p>
+      <p>{label("theater_press_play")}</p>
     </div>
+    
   </div>;
 
 }
@@ -479,7 +471,7 @@ function TheaterQueueIntro({ theaterController }) {
   useEffect(() => {
     if(!cursorIndex) playSound(initSFX);
     setTimeout(()=>setPart(1),200);
-    setTimeout(()=>setPart(2),6000);
+    setTimeout(()=>setPart(2),60000000);
     setTimeout(()=>setPart(3),12000);
     const timer = setInterval(() => {
       setCountdown(previousCountdown => {
@@ -513,7 +505,7 @@ function TheaterQueueIntro({ theaterController }) {
 
   let sections = [...new Set(queue.map(item => item?.parent_section?.title || null))];
 
-  const maxCharCount = 5000;
+  const maxCharCount = 400;
   while(sections.join("").length + pageString.length > maxCharCount){
     sections.pop();
   }
@@ -562,7 +554,7 @@ function TheaterSectionIntro({ theaterController }) {
     .filter(item => item)
     .map(item => flattenDescription(item));
 
-    const maxCharCount = 5000;
+    const maxCharCount = 400;
   while(sectionNarrations.join("").length > maxCharCount){
     sectionNarrations.pop();
   }
@@ -1248,7 +1240,7 @@ function TheaterMetaContent({ theaterController }) {
       <div className="theater-meta-content-left">
         <div className="theater-meta-content-heading">{heading}{StudyButton}</div>
         <div className="theater-meta-content-section">{section}</div>
-        <div className="theater-meta-content">{page}</div>
+        <div className="theater-super-title">{page}</div>
       </div>
       <div className="theater-meta-content-right">
         <TheaterNarration theaterController={theaterController} />
