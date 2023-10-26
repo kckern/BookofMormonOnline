@@ -25,6 +25,7 @@ import vol_hi from "./svg/vol_hi.svg";
 import vol_lo from "./svg/vol_lo.svg";
 import fast from "./svg/fast.svg";
 import { determineLanguage, flattenDescription, playSound } from "../../models/Utils";
+import { set } from "lodash";
 
 const loadQueueItemsFromQueue = items => {
   const pages = {};
@@ -138,7 +139,6 @@ function TheaterWrapper({ appController }) {
         return parseFloat((newRate||1).toFixed(1)); // keeping it in float with one decimal point
       });
     },
-
     cyclePlaybackSpeed: () => {
       setPlaybackRate(prevRate => {
         let newRate = prevRate + 0.25;
@@ -1294,7 +1294,7 @@ function TheaterProgressBar({ theaterController }) {
     currentDuration,
     isPlaying,
     playbackRate,
-    cyclePlaybackSpeed
+    cyclePlaybackSpeed,
   } = theaterController;
   const seekTo = e => {
     const barElement = document.querySelector(".theater-progress-bar");
@@ -1308,6 +1308,7 @@ function TheaterProgressBar({ theaterController }) {
     ? theaterController.play
     : theaterController.pause;
   const rateString = (playbackRate||1).toFixed(1) + " ×";
+	const [showPlayBackSpeed,setShowPlaybackSpeed] = useState(false);
   return (
     <div className="theater-progress-bar-container">
       <div className="theater-progress-bar-buttons left">
@@ -1317,15 +1318,72 @@ function TheaterProgressBar({ theaterController }) {
         <ProgressBar percent={currentProgress} />
       </div>
       <div className="theater-progress-bar-buttons right">
+				{showPlayBackSpeed && <PlaybackSpeed setShowPlaybackSpeed={setShowPlaybackSpeed} theaterController={theaterController}/>}
         <div>
           <div className="playbackRateIcon" onClick={cyclePlaybackSpeed}>
             {rateString}
           </div>
         </div>
-        <img src={menu} className="player-ui" onClick={() => {}} />
+        <img src={menu} className="player-ui" onClick={()=>setShowPlaybackSpeed(prev=>!prev)} />
       </div>
     </div>
   );
+}
+
+function PlaybackSpeed({setShowPlaybackSpeed,theaterController}){
+	const {playbackRate,setPlaybackRate}=theaterController;
+	// const [playbackSpeed,setPlaybackSpeed] = useState(playbackRate || 0.5)
+	const inputRef = useRef(null);
+	const handleInput = (e)=>{
+		// setPlaybackRate(e.target.value)
+			setPlaybackRate(() => {
+			localStorage.setItem("playbackRate", +e.target.value);
+			if(!document.getElementById("theater-audio-player")) return;
+			document.getElementById("theater-audio-player").playbackRate = +e.target.value;
+			return parseFloat((+e.target.value||1).toFixed(1)); // keeping it in float with one decimal point
+		});
+	}
+	// const handleKeyInput = (e)=>{
+	// 	if(e.code === 'Escape'){
+	// 		setShowPlaybackSpeed(false);
+	// 	}else if(e.code === 'Enter'){
+	// 		handleClick();
+	// 	}
+	// }
+
+	const handleKeyInput = (e)=>{
+		if(e.code === 'Escape' || e.code === 'Enter') setShowPlaybackSpeed(false);
+	}
+
+
+	// const handleClick = ()=>{
+		// setPlaybackRate(prevRate => {
+		// 	localStorage.setItem("playbackRate", +playbackRate);
+		// 	if(!document.getElementById("theater-audio-player")) return;
+		// 	document.getElementById("theater-audio-player").playbackRate = +playbackRate;
+		// 	return parseFloat((+playbackRate||1).toFixed(1)); // keeping it in float with one decimal point
+		// });
+	// 	setShowPlaybackSpeed(false);
+	// }
+
+	useEffect(()=>{
+		inputRef.current.focus();
+	},[])
+  
+  const decimalPaddedRate = (playbackRate||1).toFixed(1);
+
+	return(
+	<div className="theater-progress-bar-buttons-playback-range">
+		<span>{label("playback_rate")}:</span> <span className="playbackRateSpan">{decimalPaddedRate} ×</span>
+		<div>
+		<input ref={inputRef} type="range" min="0.8" max="2.0" value={playbackRate} step="0.2" onChange={handleInput} onKeyDown={handleKeyInput}/>
+		</div>
+		{/* <div className="theater-progress-bar-buttons-playback-range-controls">
+			<button onClick={handleClick}>✔</button>
+			<button onClick={()=>setShowPlaybackSpeed(false)}>✖</button>
+		</div> */}
+	</div>
+	)
 }
 
 function ProgressBar({ percent }) {
