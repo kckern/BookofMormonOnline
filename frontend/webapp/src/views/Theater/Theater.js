@@ -19,6 +19,8 @@ import pause from "./svg/pause.svg";
 import play from "./svg/play.svg";
 import prev from "./svg/prev.svg";
 import crossroads from "./svg/crossroads.svg";
+import soundOn from "src/views/User/svg/sound-on.svg"
+import soundOff from "src/views/User/svg/sound-off.svg"
 import detour from "./svg/detour.svg";
 import vol_hi from "./svg/vol_hi.svg";
 import vol_lo from "./svg/vol_lo.svg";
@@ -78,7 +80,10 @@ function TheaterWrapper({ appController }) {
   const [playbackRate, setPlaybackRate] = useState(
     parseFloat(localStorage.getItem("playbackRate")) || 1
   );
-
+	const [playbackVolume, setPlaybackVolume] = useState(
+    parseFloat(localStorage.getItem("playbackVolume")) || 0.1
+  );
+	const [isMuted,setIsMuted] = useState((localStorage.getItem("playbackMuted")==='true'?true:false) || false);
   const controls = {
     pause: () => {
       document.getElementById("theater-audio-player")?.pause();
@@ -162,11 +167,15 @@ function TheaterWrapper({ appController }) {
     setDuration,
     setIsPlaying,
     isPlaying,
+		playbackVolume,
+		setPlaybackVolume,
     playbackRate,
     cursorChangeWasManual,
     setPlaybackRate,
     isScrollingPanel,
-    setIsScrollingPanel
+    setIsScrollingPanel,
+		isMuted,
+		setIsMuted
   };
 
   useEffect(async () => {
@@ -769,7 +778,9 @@ function TheaterControls({ theaterController }) {
     setDuration,
     hasNextContent,
     setSubCursorIndex,
-    currentDuration
+		playbackVolume,
+    currentDuration,
+		isMuted
   } = theaterController;
 
 
@@ -907,7 +918,9 @@ function TheaterControls({ theaterController }) {
       <ReactAudioPlayer
         id="theater-audio-player"
         src={url}
+				volume={playbackVolume}
         controls
+				muted={isMuted}
         playbackRate={theaterController.playbackRate}
         onPause={() => theaterController.setIsPlaying(false)}
         onPlay={() => {
@@ -925,7 +938,7 @@ function TheaterControls({ theaterController }) {
 
 function TheatherMusicPlayer({ theaterController }) {
 
-  const { queue, cursorIndex } = theaterController;
+  const { queue, cursorIndex,playbackVolume,isMuted } = theaterController;
   const currentItem = queue[cursorIndex] || null;
   const nextItem = queue[cursorIndex + 1] || null;
   const currentSection = currentItem?.parent_section?.title || null;
@@ -1021,6 +1034,7 @@ function TheatherMusicPlayer({ theaterController }) {
       id="theater-music-player-a"
       src={`${assetUrl}/audio/music/${trackA}`}
       volume={0.1}
+			muted={isMuted}
       onCanPlay={()=>{
         const isPLaying = document.getElementById(`theater-music-player-a`)?.paused;
         if(isPLaying) return;
@@ -1033,6 +1047,7 @@ function TheatherMusicPlayer({ theaterController }) {
       id="theater-music-player-b"
       src={`${assetUrl}/audio/music/${trackB}`}
       volume={0.1}
+			muted={isMuted}
       onCanPlay={()=>{
         const isPLaying = document.getElementById(`theater-music-player-a`)?.paused;
         if(isPLaying) return;
@@ -1241,6 +1256,8 @@ function TheaterProgressBar({ theaterController }) {
     isPlaying,
     playbackRate,
     cyclePlaybackSpeed,
+		isMuted,
+		setIsMuted
   } = theaterController;
   const seekTo = e => {
     const barElement = document.querySelector(".theater-progress-bar");
@@ -1254,7 +1271,15 @@ function TheaterProgressBar({ theaterController }) {
     ? theaterController.play
     : theaterController.pause;
   const rateString = (playbackRate||1).toFixed(1) + " ×";
-	const [showPlayBackSpeed,setShowPlaybackSpeed] = useState(false);
+	const [showPlaybackSettings,setShowPlaybackSettings] = useState(false);
+	const toggleSound = ()=>{
+		setIsMuted(prev=>{
+				localStorage.setItem("playbackMuted", !prev);
+				if(!document.getElementById("theater-audio-player")) return;
+				document.getElementById("theater-audio-player").muted = !prev;
+				return !prev;
+			});
+	}
   return (
     <div className="theater-progress-bar-container">
       <div className="theater-progress-bar-buttons left">
@@ -1264,53 +1289,42 @@ function TheaterProgressBar({ theaterController }) {
         <ProgressBar percent={currentProgress} />
       </div>
       <div className="theater-progress-bar-buttons right">
-				{showPlayBackSpeed && <PlaybackSpeed setShowPlaybackSpeed={setShowPlaybackSpeed} theaterController={theaterController}/>}
+				{showPlaybackSettings && <PlaybackSettings setShowPlaybackSettings={setShowPlaybackSettings} theaterController={theaterController}/>}
         <div>
           <div className="playbackRateIcon" onClick={cyclePlaybackSpeed}>
             {rateString}
           </div>
         </div>
-        <img src={menu} className="player-ui" onClick={()=>setShowPlaybackSpeed(prev=>!prev)} />
+				<img onClick={toggleSound} className="player-ui" src={isMuted ? soundOff : soundOn} />
+        <img src={menu} className="player-ui" onClick={()=>setShowPlaybackSettings(prev=>!prev)} />
       </div>
     </div>
   );
 }
 
-function PlaybackSpeed({setShowPlaybackSpeed,theaterController}){
-	const {playbackRate,setPlaybackRate}=theaterController;
-	// const [playbackSpeed,setPlaybackSpeed] = useState(playbackRate || 0.5)
+function PlaybackSettings({setShowPlaybackSettings,theaterController}){
+	const {playbackRate,setPlaybackRate,playbackVolume,setPlaybackVolume}=theaterController;
 	const inputRef = useRef(null);
 	const handleInput = (e)=>{
-		// setPlaybackRate(e.target.value)
-			setPlaybackRate(() => {
-			localStorage.setItem("playbackRate", +e.target.value);
-			if(!document.getElementById("theater-audio-player")) return;
-			document.getElementById("theater-audio-player").playbackRate = +e.target.value;
-			return parseFloat((+e.target.value||1).toFixed(1)); // keeping it in float with one decimal point
-		});
+			if(e.target.id === 'speedInput'){
+				setPlaybackRate(() => {
+					localStorage.setItem("playbackRate", +e.target.value);
+					if(!document.getElementById("theater-audio-player")) return;
+					document.getElementById("theater-audio-player").playbackRate = +e.target.value;
+					return parseFloat((+e.target.value||1).toFixed(1)); // keeping it in float with one decimal point
+				});
+			}else{
+				setPlaybackVolume(() => {
+					localStorage.setItem("playbackVolume", +e.target.value);
+					if(!document.getElementById("theater-audio-player")) return;
+					document.getElementById("theater-audio-player").volume = +e.target.value;
+					return parseFloat((+e.target.value||1).toFixed(1)); // keeping it in float with one decimal point
+				});
+			}
 	}
-	// const handleKeyInput = (e)=>{
-	// 	if(e.code === 'Escape'){
-	// 		setShowPlaybackSpeed(false);
-	// 	}else if(e.code === 'Enter'){
-	// 		handleClick();
-	// 	}
-	// }
-
 	const handleKeyInput = (e)=>{
-		if(e.code === 'Escape' || e.code === 'Enter') setShowPlaybackSpeed(false);
+		if(e.code === 'Escape' || e.code === 'Enter') setShowPlaybackSettings(false);
 	}
-
-
-	// const handleClick = ()=>{
-		// setPlaybackRate(prevRate => {
-		// 	localStorage.setItem("playbackRate", +playbackRate);
-		// 	if(!document.getElementById("theater-audio-player")) return;
-		// 	document.getElementById("theater-audio-player").playbackRate = +playbackRate;
-		// 	return parseFloat((+playbackRate||1).toFixed(1)); // keeping it in float with one decimal point
-		// });
-	// 	setShowPlaybackSpeed(false);
-	// }
 
 	useEffect(()=>{
 		inputRef.current.focus();
@@ -1322,12 +1336,12 @@ function PlaybackSpeed({setShowPlaybackSpeed,theaterController}){
 	<div className="theater-progress-bar-buttons-playback-range">
 		<span>{label("playback_rate")}:</span> <span className="playbackRateSpan">{decimalPaddedRate} ×</span>
 		<div>
-		<input ref={inputRef} type="range" min="0.8" max="2.0" value={playbackRate} step="0.2" onChange={handleInput} onKeyDown={handleKeyInput}/>
+		<input ref={inputRef} type="range" id="speedInput" min="0.8" max="2.0" value={playbackRate} step="0.2" onChange={handleInput} onKeyDown={handleKeyInput}/>
 		</div>
-		{/* <div className="theater-progress-bar-buttons-playback-range-controls">
-			<button onClick={handleClick}>✔</button>
-			<button onClick={()=>setShowPlaybackSpeed(false)}>✖</button>
-		</div> */}
+		<span>{label("playback_volume")}:</span> <span className="playbackRateSpan">{playbackVolume} ×</span>
+		<div>
+		<input ref={inputRef} type="range" id="volumeInput" min="0.2" max="1.0" value={playbackVolume} step="0.2" onChange={handleInput} onKeyDown={handleKeyInput}/>
+		</div>
 	</div>
 	)
 }
@@ -1414,7 +1428,6 @@ function TheaterPeoplePlacePanel({ theaterController }) {
     opacity = (currentDuration - currentTime) / secondsBuffer;
 
   if(!currentTime || !isScrollingPanel) opacity = 0;
-    console.log(theaterController);
   return (
     <div
       className={
