@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useReducer, useEffect, useState } from "react";
+import ReactTooltip from "react-tooltip";
 // BROWSER HISTORY
 // API ACTIONS
 // COMPONENTS
@@ -460,6 +461,13 @@ export default function Page({ appController }) {
   if (pageController.states.loading !== false) return <Loader />;
   return (
     <>
+
+          <ReactTooltip
+              effect="solid"
+              place="top"
+              backgroundColor="#666"
+              id="page-info-tooltip"
+            />
       {!readyToScroll && needToLoadComments ? (
         <LoadingPageCommentsNotice
           commentState={commentState}
