@@ -77,10 +77,9 @@ const allowedOrigins = [
 app.use((req, res, next) => {
   const origin = Array.isArray(req.headers.origin) ? req.headers.origin[0] : req.headers.origin;
   const isValidRegex = allowedOrigins.some((allowedOrigin) => {
-    const regex = new RegExp(`^https?://(*\.)*${allowedOrigin}(:[0-9]+)*?$`);
+    const regex = new RegExp(`^https?:\\/\\/(.*\\.)?${allowedOrigin}(:[0-9]+)?\/?$`);
     return regex.test(origin);
-  });
-
+});
   if (isValidRegex) {
     res.setHeader('Access-Control-Allow-Origin', origin);
   }
