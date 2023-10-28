@@ -471,7 +471,7 @@ function TheaterQueueIntro({ theaterController }) {
   useEffect(() => {
     if(!cursorIndex) playSound(initSFX);
     setTimeout(()=>setPart(1),200);
-    setTimeout(()=>setPart(2),60000000);
+    setTimeout(()=>setPart(2),6000);
     setTimeout(()=>setPart(3),12000);
     const timer = setInterval(() => {
       setCountdown(previousCountdown => {
