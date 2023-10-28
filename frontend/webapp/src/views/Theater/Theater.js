@@ -1492,7 +1492,7 @@ function TheaterPeoplePlacePanel({ theaterController }) {
       style={{backgroundImage:`url(${backgroundImage})`}}
     >
       <h4>{label("people_and_places")}</h4>
-      <div className="theater-people-place-items">
+      <div className="theater-people-place-items" style={{ opacity }}>
         <div className={"spacer itemCount" + visibleItemCount}/>
         {peoplePlaceEl}</div>
     </div>
