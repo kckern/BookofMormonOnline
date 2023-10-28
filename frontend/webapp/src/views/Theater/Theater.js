@@ -525,7 +525,7 @@ function TheaterQueueIntro({ theaterController }) {
       </div>
       <div className={"theater-intro-slide section-intro " + (part===2 ? "on" : "off") }>
       <p><span className="pageTitle">{pageTitle}:</span><br/>{sectionTitle}</p>
-      <small>{narrationString}</small>
+      <small>{Parser(narrationString)}</small>
       </div>
     </div>
   );
