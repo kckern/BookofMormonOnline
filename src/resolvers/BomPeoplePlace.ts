@@ -17,18 +17,19 @@ export default {
           args.slug?.map((s: any) => s.replace(/^.*?\//, ''))
         ),
         include: [
-          includeTranslation({ [Op.or]: ['name', 'title',"description"] }, lang),
+          //includeTranslation({ [Op.or]: ['name', 'title',"description"] }, lang),
           includeModel(info, Models.BomIndex, 'index', [
-            {where: {type: "people"}},
-            includeModel(true, Models.BomLookup, 'text_guid', [includeModel(true, Models.BomText, 'text')]),
+            includeModel(true, Models.BomLookup, 'text_guid', [includeModel(true, Models.BomText, 'text')])
           ]),
           {
             model: Models.BomPeopleRels.unscoped(),
             as: 'relationDst',
             include: [
+              //includeTranslation({ [Op.or]: ["srcrel", "dstrel"] }, lang),
               {
                 model: Models.BomPeople,
                 as: 'personSrc',
+               // include: [includeTranslation({ [Op.or]: ['name', 'title', "description"] }, lang)]
               }
             ]
           },
@@ -36,12 +37,15 @@ export default {
             model: Models.BomPeopleRels.unscoped(),
             as: 'relationSrc',
             include: [
+             // includeTranslation({ [Op.or]: ["srcrel", "dstrel"] }, lang),
               {
                 model: Models.BomPeople,
                 as: 'personDst',
+               // include: [includeTranslation({ [Op.or]: ['name', 'title', "description"] }, lang)]
               }
             ]
           }
+          // includeModel(info, Models.BomPeopleRels, 'r'),
         ].filter(x => !!x),
         order: ['weight', indexSort].filter(x => !!x)
       });
@@ -49,44 +53,21 @@ export default {
     place: async (root: any, args: any, context: any, info: any) => {
       const lang = context.lang ? context.lang : null;
       let indexSort = null;
-    
       if (info !== true) {
         let requestQuery = JSON.stringify(info.fieldNodes);
-        if (new RegExp(`{"kind":"Name","value":"index"`).test(requestQuery)) 
-          indexSort = ['index', 'verse_id'];
+        if (new RegExp(`{"kind":"Name","value":"index"`).test(requestQuery)) indexSort = ['index', 'verse_id'];
       }
-          
       return Models.BomPlaces.findAll({
         where: queryWhere(
           'slug',
           args.slug?.map((s: any) => s.replace(/^.*?\//, ''))
         ),
         include: [
-          {
-            model: Models.BomMap, 
-            as: 'maps', 
-            include: [
-              includeTranslation({ [Op.or]: ['name', 'desc'] }, lang)
-            ].filter(x => !!x)
-          },
+          includeModel(info, Models.BomMap, 'maps',[includeTranslation({ [Op.or]: ['name', 'desc'] }, lang)]),
           includeTranslation({ [Op.or]: ['name', 'info'] }, lang),
-          {
-            model: Models.BomIndex,
-            as: 'index',
-            where: {type: "place"},
-            include: [
-              {
-                model: Models.BomLookup, 
-                as: 'text_guid', 
-                include: [
-                  {
-                    model: Models.BomText,
-                    as: 'text'
-                  }
-                ]
-              }
-            ]
-          }
+          includeModel(info, Models.BomIndex, 'index', [
+            includeModel(true, Models.BomLookup, 'text_guid', [includeModel(true, Models.BomText, 'text')])
+          ])
         ].filter(x => !!x),
         order: ['weight', indexSort].filter(x => !!x)
       });
@@ -169,6 +150,12 @@ export default {
           });
       }
       return relations;
+    },
+    index: async (item: any, args: any, { db, res }: any, info: any) => {
+      return item.getDataValue('index').map((i: any) => {
+        if(i.getDataValue('type') == 'people') return i;
+        return null;
+      }).filter((x:any)=>!!x);
     }
   },
 
@@ -207,6 +194,12 @@ export default {
     },
     maxZoom: async (item: any, args: any, { db, res }: any, info: any) => {
       return item.dataValues?._bom_places_coords?.max || null;
+    },
+    index: async (item: any, args: any, { db, res }: any, info: any) => {
+      return item.getDataValue('index').map((i: any) => {
+        if(i.getDataValue('type') == 'place') return i;
+        return null;
+      }).filter((x:any)=>!!x);
     }
   },
   Index: {
