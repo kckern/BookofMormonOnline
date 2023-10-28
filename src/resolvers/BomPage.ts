@@ -174,7 +174,7 @@ queue: async (root: any, args: any, context: any, info: any) => {
 
   const textBlocks = inputs.map(async ({ slug, blocks }) => {
 
-    const slugNumber = slug.match(/\d+$/).pop() || null;
+    const slugNumber = slug.match(/\d+$/)?.pop() || null;
     const slugArray = slug.replace(/\/\d+$/,'').split("/").filter(x=>!!x);
     //const slugVerseIds = lookupReference(slug)?.verse_ids?.[0] || null;
 
