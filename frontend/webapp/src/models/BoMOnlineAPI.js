@@ -69,23 +69,25 @@ export default async function BoMOnlineAPI(input, options) {
     return results;
 }
 
-function serverGQLCall(graphQL) {
+async function serverGQLCall(graphQL) {
     const lang = determineLanguage();
     let config = {
         method: "post",
         url: ApiBaseUrl + (lang ? "/"+lang : ""),
-        timeout: 1000 * 15, // Wait for 15 seconds
+        timeout: 1000 * 45, // Wait for 15 seconds
         headers: {
           "Content-Type": "application/json"
         },
         data: { query: graphQL }
       }
-    return axios(config).then((response) => response.data)
-        .catch(error => { 
-            if(error.code==="ECONNABORTED") return {data:null};
-            console.log({config,error});
-            return Promise.reject(error)
-        })
+    try {
+        const response = await axios(config);
+        return response.data;
+    } catch (error) {
+        if (error.code === "ECONNABORTED") return { data: null };
+        console.log({ config, error });
+        return Promise.reject(error);
+    }
 }
 
 
