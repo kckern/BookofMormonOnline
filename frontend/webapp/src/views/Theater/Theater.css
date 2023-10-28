@@ -1194,6 +1194,7 @@ span.pageTitle
     bottom:0;
     padding:1ex;
     font-size: 0.7rem;
+    line-height: 100%;
   }
   .theater-people-place-item-name
   {
