@@ -1107,9 +1107,26 @@ span.pageTitle
 
 .theater-people-place-items
 {
-		display:flex;
+    display:flex;
     overflow-x:auto;
     min-height: 13rem;
+    justify-content: flex-start;
+    position: relative;
+}
+
+.theater-people-place-items .spacer.itemCount{
+    transition: width 0.5s ease-in-out;
+    width: 0;
+}
+
+.theater-people-place-items .spacer.itemCount1{
+    width: calc(50% - 4.5rem);
+    transition: width 0.5s ease-in-out;
+    
+}
+.theater-people-place-items .spacer.itemCount2{
+    width: calc(50% - 9.5rem);
+    transition: width 0.5s ease-in-out;
 }
 
 .theater-people-place-panel{
