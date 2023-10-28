@@ -10,6 +10,7 @@ import { addHighlightTagSelectively } from "./TextContent";
 //import theater svg
 import theater from "../_Common/svg/theater.svg";
 import { Link } from "react-router-dom/cjs/react-router-dom.min";
+import { label } from "../../models/Utils";
 
 function Section({ sectionData, pageController, setPageSlug }) {
   let preConnection = null;
@@ -39,7 +40,7 @@ function Section({ sectionData, pageController, setPageSlug }) {
     setSectionHighlights([...sectionHighlights]);
   };
   const slugTip = sectionData.slug.split("/").pop();
-  const theaterLink = <Link to={`/theater/${slugTip}`} className="theater-link">
+  const theaterLink = <Link to={`/theater/${slugTip}`} className="theater-link" data-tip={label("view_in_theater")} data-for="page-info-tooltip">
     <img src={theater} alt="theater" />
   </Link>
 
