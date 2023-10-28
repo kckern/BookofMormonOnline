@@ -159,7 +159,7 @@ function PlacesComponent({ appController }) {
             columnClassName='my-masonry-grid_column'
           >
             {PlaceList ? (
-              PlaceList.filter(filters).map((place, i) => (
+              PlaceList.filter(filters).filter(p=>p.slug).map((place, i) => (
 
                 <Link
                 to={"/places/" + place.slug}
