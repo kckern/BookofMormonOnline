@@ -67,7 +67,7 @@ export default {
             as: 'maps', 
             include: [
               includeTranslation({ [Op.or]: ['name', 'desc'] }, lang)
-            ]
+            ].filter(x => !!x)
           },
           includeTranslation({ [Op.or]: ['name', 'info'] }, lang),
           {
