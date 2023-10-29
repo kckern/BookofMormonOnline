@@ -1027,6 +1027,13 @@ span.pageTitle
     padding: 0 1rem 1rem 1rem;
 }
 
+.theater-comment-panel
+{
+    background-image: url('https://media.bookofmormon.online/theater/coms-1');
+    background-position: center;
+    background-size: cover;
+
+}
 
 .theater-comment-feed .comment {
     display: flex;
