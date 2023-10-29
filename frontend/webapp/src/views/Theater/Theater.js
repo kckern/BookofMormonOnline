@@ -1564,6 +1564,9 @@ function TheaterImagePanel({ theaterController }) {
 }
 
 function TheaterCommentFeed({ theaterController }) {
+
+  const filter = theaterController.appController.states.preferences.commentary.filter;
+  const blacklist = (filter.type==="blacklist" ? filter?.sources : []) || [];
   const [comments, setComments] = useState(new Set());
   const secondsBetweenComments = 5;
   const {
@@ -1578,7 +1581,9 @@ function TheaterCommentFeed({ theaterController }) {
   const filteredcoms = coms.filter(com => {
     const sourceId = com.id.toString().substr(5, 3);
     if (!com.preview?.trim()) return false;
-    if ([41, 161, 162, 163, 164, 165, 166].includes(parseInt(sourceId)))
+
+    //todo: account for offsets and false positives.
+    if ([...blacklist, 41, 161, 162, 163, 164, 165, 166].includes(parseInt(sourceId)))
       return false;
     return true;
   });
