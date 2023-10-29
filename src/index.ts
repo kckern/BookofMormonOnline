@@ -101,6 +101,7 @@ app.use( (req, res, next) => {
     delete req.headers["range"];
 
     apiProxy.web(req, res, {target,
+      setTimeout: 500000,
       autoRewrite: true,
       cookieDomainRewrite: targetDomain,
       changeOrigin: false});
