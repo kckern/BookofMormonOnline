@@ -1566,7 +1566,7 @@ function TheaterImagePanel({ theaterController }) {
 function TheaterCommentFeed({ theaterController }) {
 
   const filter = theaterController.appController.states.preferences.commentary.filter;
-  const blacklist = (filter.type==="blacklist" ? filter?.sources : []) || [];
+  const blacklist = (filter.type==="blacklist" ? filter?.sources : []).map(parseInt) || [];
   const [comments, setComments] = useState(new Set());
   const secondsBetweenComments = 5;
   const {
@@ -1582,17 +1582,14 @@ function TheaterCommentFeed({ theaterController }) {
     const sourceId = com.id.toString().substr(5, 3);
     if (!com.preview?.trim()) return false;
 
-    //todo: account for offsets and false positives.
     if ([...blacklist, 41, 161, 162, 163, 164, 165, 166].includes(parseInt(sourceId)))
       return false;
     return true;
   });
   const allowedMessageCount = currentDuration / secondsBetweenComments;
   const queuedMessages = filteredcoms.slice(0, allowedMessageCount); //randomized earlier
-  const commentCursor = Math.floor(
-    (queuedMessages.length * currentProgress) / 100
-  );
-
+  const division = queuedMessages.length > 5 ? queuedMessages.length : 5; // this is for items with low comment count, so its coms dont'get skipped.
+  const commentCursor = Math.floor(  (division * (currentProgress * 0.7)) / 100 );
   useEffect(async () => {
     //wait 1-3 seconds
     await new Promise(resolve =>
