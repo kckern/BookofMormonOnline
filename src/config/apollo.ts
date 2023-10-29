@@ -4,7 +4,7 @@ import resolvers from '../resolvers';
 import { isArray } from 'util';
 import { sequelize } from './database';
 
-const langs = ["en","fr","de","nl","pt","ko","jpn","zh","ru","hi","eo","es","vn","tgl","th","ukr","tam"];
+const langs = ["en","fr","de","nl","pt","ko","jpn","zh","ru","hi","eo","es","vn","tgl","th","ukr","tam","swe"];
 
 
 
