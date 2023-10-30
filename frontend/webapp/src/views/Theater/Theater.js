@@ -1321,7 +1321,6 @@ function PlaybackSettings({setShowPlaybackSettings,theaterController}){
 	}
 	const handleKeyInput = (e)=>{
 		if(e.code === 'Escape' || e.code === 'Enter' || e.code === "NumpadEnter") setShowPlaybackSettings(false);
-		if(e.code === 'KeyM') toggleMusic();
 	}
 
 	useEffect(()=>{
