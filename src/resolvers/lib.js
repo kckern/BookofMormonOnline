@@ -120,7 +120,6 @@ const buildQueueFromSection = async ({sectionGuid,token,forceSection}) => {
     let queue = [];
     const max = 40;
     const completedBlocks = queryBy ? await loadCompletedBlocks({queryBy, finished}) : [];
-    //console.log({completedBlocks,unqueSectionGuids,sectionIndex});
     while(!queueIsReady){
         //console.log(`Section index: ${sectionIndex}`);
         const sectionGuid = unqueSectionGuids[sectionIndex];
@@ -133,13 +132,13 @@ const buildQueueFromSection = async ({sectionGuid,token,forceSection}) => {
             console.log(`Section ${sectionGuid} is done. ${text_guids.length} blocks completed.`);
             continue;
         }
-        //console.log({text_guids});
         const tmpQueue = [...queue, ...text_guids];
         //console.log(`Current queue size: ${queue.length}. Attempting to add ${text_guids.length} blocks from section ${sectionGuid}.`);
-        if(tmpQueue.length > max) break;
+        if(tmpQueue.length > max && queue.length>1) break;
         //console.log(`Section ${sectionGuid} added to queue. ${text_guids.length} blocks added.`);
         queue = tmpQueue;
     }
+
     return await resolveQueueFromTextBlocks(allBlocks.filter(b=>queue.includes(b.guid)));
 
 
