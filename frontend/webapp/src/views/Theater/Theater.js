@@ -148,7 +148,14 @@ function TheaterWrapper({ appController }) {
       if (volume === 0.6) player.volume = 0.8;
       if (volume === 0.8) player.volume = 1;
       if (volume === 1) player.volume = 0.2;
-    }
+    },
+		toggleMusic : ()=>{
+			setIsMuted(prev=>{
+					localStorage.setItem("playbackMuted", !prev);
+					if(!document.getElementById("theater-audio-player")) return;
+					return !prev;
+				});
+		}
   };
 
   const [isScrollingPanel, setIsScrollingPanel] = useState(false);
@@ -175,7 +182,7 @@ function TheaterWrapper({ appController }) {
     isScrollingPanel,
     setIsScrollingPanel,
 		isMuted,
-		setIsMuted
+		setIsMuted,
   };
 
   useEffect(async () => {
@@ -254,7 +261,6 @@ function TheaterWrapper({ appController }) {
           controls.incrementPlaybackSpeed(-1);
           break;
         // tab key clicks the most recent commentary
-
         //zero should reset speed to 1
         case "Digit0":
           setPlaybackRate(1);
@@ -270,7 +276,10 @@ function TheaterWrapper({ appController }) {
           if (!lastComment) return false;
           lastComment.click();
           break;
-
+				case "KeyM":
+					// toggle background music from on to off
+					controls.toggleMusic();
+					break;
         default:
           break;
       }
@@ -780,7 +789,6 @@ function TheaterControls({ theaterController }) {
     setSubCursorIndex,
 		playbackVolume,
     currentDuration,
-		isMuted
   } = theaterController;
 
 
@@ -920,7 +928,6 @@ function TheaterControls({ theaterController }) {
         src={url}
 				volume={playbackVolume}
         controls
-				muted={isMuted}
         playbackRate={theaterController.playbackRate}
         onPause={() => theaterController.setIsPlaying(false)}
         onPlay={() => {
@@ -1000,6 +1007,7 @@ function TheatherMusicPlayer({ theaterController }) {
   // And the previously active side needs to be faded out
   // Fade duration = 3 seconds
   const crossfade = () => {
+		if(isMuted) return;
     const playerToFadeIn = document.getElementById(`theater-music-player-${activeSide}`);
     playAudioElement(`theater-music-player-${activeSide}`);
     const playerToFadeOut = document.getElementById(`theater-music-player-${activeSide==="a" ? "b" : "a"}`);
@@ -1255,9 +1263,7 @@ function TheaterProgressBar({ theaterController }) {
     currentDuration,
     isPlaying,
     playbackRate,
-    cyclePlaybackSpeed,
-		isMuted,
-		setIsMuted
+    cyclePlaybackSpeed
   } = theaterController;
   const seekTo = e => {
     const barElement = document.querySelector(".theater-progress-bar");
@@ -1272,14 +1278,6 @@ function TheaterProgressBar({ theaterController }) {
     : theaterController.pause;
   const rateString = (playbackRate||1).toFixed(1) + " ×";
 	const [showPlaybackSettings,setShowPlaybackSettings] = useState(false);
-	const toggleSound = ()=>{
-		setIsMuted(prev=>{
-				localStorage.setItem("playbackMuted", !prev);
-				if(!document.getElementById("theater-audio-player")) return;
-				document.getElementById("theater-audio-player").muted = !prev;
-				return !prev;
-			});
-	}
   return (
     <div className="theater-progress-bar-container">
       <div className="theater-progress-bar-buttons left">
@@ -1295,7 +1293,6 @@ function TheaterProgressBar({ theaterController }) {
             {rateString}
           </div>
         </div>
-				<img onClick={toggleSound} className="player-ui" src={isMuted ? soundOff : soundOn} />
         <img src={menu} className="player-ui" onClick={()=>setShowPlaybackSettings(prev=>!prev)} />
       </div>
     </div>
@@ -1303,7 +1300,7 @@ function TheaterProgressBar({ theaterController }) {
 }
 
 function PlaybackSettings({setShowPlaybackSettings,theaterController}){
-	const {playbackRate,setPlaybackRate,playbackVolume,setPlaybackVolume}=theaterController;
+	const {playbackRate,setPlaybackRate,playbackVolume,setPlaybackVolume,toggleMusic,isMuted}=theaterController;
 	const inputRef = useRef(null);
 	const handleInput = (e)=>{
 			if(e.target.id === 'speedInput'){
@@ -1323,7 +1320,8 @@ function PlaybackSettings({setShowPlaybackSettings,theaterController}){
 			}
 	}
 	const handleKeyInput = (e)=>{
-		if(e.code === 'Escape' || e.code === 'Enter') setShowPlaybackSettings(false);
+		if(e.code === 'Escape' || e.code === 'Enter' || e.code === "NumpadEnter") setShowPlaybackSettings(false);
+		if(e.code === 'KeyM') toggleMusic();
 	}
 
 	useEffect(()=>{
@@ -1333,14 +1331,18 @@ function PlaybackSettings({setShowPlaybackSettings,theaterController}){
   const decimalPaddedRate = (playbackRate||1).toFixed(1);
 
 	return(
-	<div className="theater-progress-bar-buttons-playback-range">
+	<div className="theater-progress-bar-buttons-playback-range" onKeyDown={handleKeyInput}>
 		<span>{label("playback_rate")}:</span> <span className="playbackRateSpan">{decimalPaddedRate} ×</span>
 		<div>
-		<input ref={inputRef} type="range" id="speedInput" min="0.8" max="2.0" value={playbackRate} step="0.2" onChange={handleInput} onKeyDown={handleKeyInput}/>
+		<input ref={inputRef} type="range" id="speedInput" min="0.8" max="2.0" value={playbackRate} step="0.2" onChange={handleInput}/>
 		</div>
 		<span>{label("playback_volume")}:</span> <span className="playbackRateSpan">{playbackVolume} ×</span>
 		<div>
-		<input ref={inputRef} type="range" id="volumeInput" min="0.2" max="1.0" value={playbackVolume} step="0.2" onChange={handleInput} onKeyDown={handleKeyInput}/>
+		<input type="range" id="volumeInput" min="0.2" max="1.0" value={playbackVolume} step="0.2" onChange={handleInput}/>
+		</div>
+		<div>
+		<span>{label("background_music")}: </span>
+		<img onClick={toggleMusic} className="player-ui playbackMute" alt="toogleImg" src={isMuted ? soundOff : soundOn} />
 		</div>
 	</div>
 	)
@@ -1488,7 +1490,6 @@ function TheaterImagePanel({ theaterController }) {
       <img
         src={`${assetUrl}/art/${image.id}`}
       />
-
     </div>
   ) : null;
 
