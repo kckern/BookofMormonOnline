@@ -344,6 +344,11 @@
     border-radius: 1ex;
 }
 
+.playbackMute{
+	background: #6d6d6d;
+  border-radius: 8px;
+}
+
 input[type=range] {
   -webkit-appearance: none;
   margin: 10px 0;
