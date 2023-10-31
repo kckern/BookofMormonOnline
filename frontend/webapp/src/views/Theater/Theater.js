@@ -23,6 +23,8 @@ import soundOn from "src/views/User/svg/sound-on.svg"
 import soundOff from "src/views/User/svg/sound-off.svg"
 import detour from "./svg/detour.svg";
 import again from "./svg/again.svg";
+import Switch from "react-bootstrap-switch";
+
 import vol_hi from "./svg/vol_hi.svg";
 import vol_lo from "./svg/vol_lo.svg";
 import fast from "./svg/fast.svg";
@@ -82,7 +84,7 @@ function TheaterWrapper({ appController }) {
     parseFloat(localStorage.getItem("playbackRate")) || 1
   );
 	const [playbackVolume, setPlaybackVolume] = useState(
-    parseFloat(localStorage.getItem("playbackVolume")) || 0.1
+    parseFloat(localStorage.getItem("playbackVolume")) || 1
   );
 	const [isMuted,setIsMuted] = useState((localStorage.getItem("playbackMuted")==='true'?true:false) || false);
   const token = appController.states.user.token;
@@ -1395,6 +1397,7 @@ function PlaybackSettings({setShowPlaybackSettings,theaterController}){
             <input ref={inputRef} type="range" id="speedInput" min="0.8" max="2.0" value={playbackRate} step="0.2" onChange={handleInput}/>
         </div>
 
+        <hr/>
     <div className="theater-config-container">
         <div className="playback-volume-label">{label("playback_volume")}:</div>
         <div className="theater-config-value">{playbackVolume*100}%</div>
@@ -1403,14 +1406,19 @@ function PlaybackSettings({setShowPlaybackSettings,theaterController}){
     <div className="playback-volume-input">
             <input type="range" id="volumeInput" min="0" max="1.0" value={playbackVolume} step="0.2" onChange={handleInput}/>
         </div>
-
+    <hr/>
     <div className="theater-config-container">
         <div className="background-music-label">{label("background_music")}:</div>
+        <div><Switch 
+                            id="audioSwitch"
+                            onText={label("on")}
+                            offText={label("off")}
+                            onChange={toggleMusic}
+                            value={!isMuted}
+                            onColor="default"
+                            offColor="default" /></div>
     </div>
 
-    <div className="background-music-toggle">
-            <img onClick={toggleMusic} className="player-ui playbackMute" alt="toogleImg" src={isMuted ? soundOff : soundOn} />
-        </div>
 </div>
 	)
 }
