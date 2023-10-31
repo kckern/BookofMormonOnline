@@ -7,7 +7,7 @@ ARG COMMIT_ID
 ENV MY_COMMIT_ID=$COMMIT_ID 
 WORKDIR /usr/src/app
 COPY . .
-EXPOSE 5000
+EXPOSE 5005
 
 RUN cd frontend/webapp/public && echo $(date) > build.txt && echo $MY_COMMIT_ID >> build.txt
 RUN npm install -g typescript forever && \

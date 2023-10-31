@@ -37,6 +37,16 @@ export function tokenImage() {
 
 }
 
+export function chronoLabel(string)
+{
+  if(!string) return null;
+  //split the tailing digits
+  let [label_id,num,info] = string.split("|");
+  if(!label_id) return null;
+  if(info) return label(label_id,[num,info]);
+  if(num) return label(label_id,[num]);
+}
+
 export function label(key, inserts) {
   if (inserts && !Array.isArray(inserts)) inserts = [inserts];
   if (!inserts) inserts = [];

@@ -5,6 +5,7 @@ import { getSlug, Op, includeTranslation, translatedValue, includeModel, include
 import scripture from "../library/scripture"
 import { loadPeopleFromTextGuid, loadPlacesFromTextGuid } from './BomPeoplePlace';
 const { getBlocksToQueue ,getFirstTextBlockGuidFromSlug} = require('./lib')
+import { lookupReference } from 'scripture-guide';
 
 export default {
   Query: {
@@ -172,6 +173,12 @@ queue: async (root: any, args: any, context: any, info: any) => {
   const inputs = await getBlocksToQueue(token, items, info);
 
   const textBlocks = inputs.map(async ({ slug, blocks }) => {
+
+    const slugNumber = slug.match(/\d+$/)?.pop() || null;
+    const slugArray = slug.replace(/\/\d+$/,'').split("/").filter(x=>!!x);
+    //const slugVerseIds = lookupReference(slug)?.verse_ids?.[0] || null;
+
+    slug = slugArray[slugArray.length - 1] + (slugNumber ? "/" + slugNumber : "");
 
     const r = await Models.BomText.findAll({
       where: {

@@ -263,6 +263,9 @@ export default function TextContent({ content, narrationController, isQuote }) {
     }
   }
 
+  if(textContentController.data?.heading)
+  textContentController.data.heading = textContentController.data.heading.replace(/^\[.*?\]/, "").trim();
+
   let openClass =  (textContentController.states.isOpen || textContentController.states.isHeaderOpen) ? " open" : "";
   return (
     <Col
@@ -307,9 +310,7 @@ export default function TextContent({ content, narrationController, isQuote }) {
                   <span className="triangle"><img src={triangle}/></span>
                   {textContentController.data &&
                     textContentController.data.heading}
-                  <span className="chrono">
-                    {textContentController.data.chrono}
-                  </span>
+                  
                 </>
               ) : (
                 <>

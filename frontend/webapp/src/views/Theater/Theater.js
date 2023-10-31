@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
 import Parser from "html-react-parser";
 import Loader from "../_Common/Loader";
 import { useRouteMatch, useHistory, Link } from "react-router-dom";
@@ -22,6 +22,7 @@ import crossroads from "./svg/crossroads.svg";
 import soundOn from "src/views/User/svg/sound-on.svg"
 import soundOff from "src/views/User/svg/sound-off.svg"
 import detour from "./svg/detour.svg";
+import again from "./svg/again.svg";
 import vol_hi from "./svg/vol_hi.svg";
 import vol_lo from "./svg/vol_lo.svg";
 import fast from "./svg/fast.svg";
@@ -84,7 +85,20 @@ function TheaterWrapper({ appController }) {
     parseFloat(localStorage.getItem("playbackVolume")) || 0.1
   );
 	const [isMuted,setIsMuted] = useState((localStorage.getItem("playbackMuted")==='true'?true:false) || false);
+  const token = appController.states.user.token;
   const controls = {
+    log: () => {
+      BoMOnlineAPI(
+        {
+          log: {
+            token,
+            key: "block",
+            val: queue[cursorIndex]?.slug,
+          }
+        },
+        { useCache: false }
+      );
+    },
     pause: () => {
       document.getElementById("theater-audio-player")?.pause();
     },
@@ -114,6 +128,9 @@ function TheaterWrapper({ appController }) {
     incrementPlaybackSpeed: neg => {
       setPlaybackRate(prevRate => {
         let newRate = prevRate;
+        const isNum = typeof prevRate === "number";
+        const isNan = isNaN(prevRate);
+        if(!isNum || isNan) return;
         if (neg) {
           newRate -= 0.1;
           if (newRate < 0.75) newRate = 0.75; // limiting the minimum speed to 0.5
@@ -317,6 +334,17 @@ function TheaterWrapper({ appController }) {
   );
 }
 
+function TheaterMobileControls({ theaterController }) {
+
+  const isPlaying = theaterController.isPlaying;
+  const img = isPlaying ? pause : play;
+  const onClickFn = isPlaying ? theaterController.pause : theaterController.play;
+
+  return <div className="theater-mobile-controls" onClick={onClickFn}>
+   <img src={img} />
+  </div>
+
+}
 function TheaterMainPanel({ theaterController }) {
   const { queue, cursorIndex,cursorChangeWasManual } = theaterController;
   const currentItem = queue[cursorIndex] || null;
@@ -375,11 +403,10 @@ function TheaterMainPanel({ theaterController }) {
       ) : (
         <>
           <TheaterContent theaterController={theaterController} />
-          <TheaterHeader theaterController={theaterController} />
-          <TheaterControls theaterController={theaterController} />
         </>
       )}
-
+          <TheaterMeta theaterController={theaterController} visible={!showStatic}/>
+          <TheaterControls theaterController={theaterController} visible={!showStatic} />
     </div>
   );
 }
@@ -426,78 +453,25 @@ function TheaterIdle({ theaterController }) {
   //remove html
   currentItemText = currentItemText.replace(/(<([^>]+)>)/gi, "");
 
-  return <div className="theater-content-frame theater-queue-intro">
+  return <div className="theater-content-frame theater-queue-intro"
+  >
 
-<p style={{
-  opacity:0.2,
-  /* vertical center */
-  position: "absolute",
-  top: "50%",
-  transform: "translateY(-50%)",
-  padding: "10%",
-  fontStyle: "italic",
-  
-  }}>{currentItemText}</p>
     <div className={"theater-intro-slide"}>
+    <p className="idleText">{currentItemText}</p>
     <button className="playbutton" onClick={()=>setCanAutoPlay(true)}>
       <img src={play} />
     </button>
-      <p>Play</p>
+      <p>{label("theater_press_play")}</p>
     </div>
+    
   </div>;
 
 }
 
+
 function TheaterQueueOutro({ theaterController }) {
-  const { queue, cursorIndex,setIsOutroActive } = theaterController;
-  const currentItem = queue[cursorIndex] || null;
 
-  const [nextQueue, setNextQueue] = useState([]);
-  const [queueOnLoad, setQueueOnLoad] = useState([]);
-  useEffect(() => {
-    //log item
-    setIsOutroActive(true);
-    BoMOnlineAPI(
-      {
-        log: {
-          token: theaterController.appController.states.user.token,
-          key: "block",
-          val: currentItem?.slug
-        }
-      },
-      { useCache: false }
-    ).then(() => {
-
-      BoMOnlineAPI({ queue: { token } }, { useCache: false }).then(({ queue }) => {
-        setNextQueue(queue);
-        if(queueOnLoad){
-          clearTimeout(timer);
-          theaterController.setQueue(queue);
-        } 
-      });
-
-    });
-    const token = theaterController.appController.states.user.token;
-
-    const timer = setTimeout(() => {
-     document.location = "/contents";
-    }, 5000);
-
-
-
-
-
-  }, []);
-
-
-  return <div className="theater-content-frame theater-queue-intro">
-    <h2>{label("session_complete")}</h2>
-    <button onClick={()=>{
-      if(nextQueue.length) return theaterController.setQueue(nextQueue);
-      setQueueOnLoad(true);
-      theaterController.setQueue([]);
-    }}>{label("continue")}</button>
-  </div>;
+  return <TheaterCrossRoads theaterController={theaterController} />;
 
 }
 function TheaterQueueIntro({ theaterController }) {
@@ -546,10 +520,16 @@ function TheaterQueueIntro({ theaterController }) {
 
   const pages = [...new Set(queue.map(item => item?.parent_page?.title || null))];
   const lastPage = pages.pop();
-  const pageString = pages.length > 1 ? pages.join(", ") + "</em> and <em>" + lastPage : lastPage;
+  const pageString = pages.length > 1 ? pages.join(", ") + "</em> "+label("theater_list_and")+" <em>" + lastPage : lastPage;
 
-  const sections = [...new Set(queue.map(item => item?.parent_section?.title || null))];
-  const sectionString = sections.length > 1 ? sections.slice(0,-1).join(", ") + "</em> and <em>" + sections.reverse()[0] : sections.reverse()[0];
+  let sections = [...new Set(queue.map(item => item?.parent_section?.title || null))];
+
+  const maxCharCount = 400;
+  while(sections.join("").length + pageString.length > maxCharCount){
+    sections.pop();
+  }
+
+  const sectionString = sections.length > 1 ? sections.slice(0,-1).join(", ") + "</em> "+label("theater_list_and")+" <em>" + sections.reverse()[0] : sections.reverse()[0];
 
 
   const passageCount = queue.length;
@@ -557,14 +537,14 @@ function TheaterQueueIntro({ theaterController }) {
   return (
     <div className="theater-content-frame theater-queue-intro">
       <div className={"theater-intro-slide " + (part===1 ? "on" : "off") }>
-      <p className="presents">Book of Mormon Online <small><em>presents</em></small></p>
+      <p className="presents">{Parser(label("bom_presents"))}</p>
       <img src={logo} className="logo" />
-      <p>{passageCount} passages from {Parser(`<em>${pageString}</em>`)}</p>
-      <p>covering {Parser(`<em>${sectionString}</em>`)}</p>
+      <p>{Parser(label("theater_x_passages_from_y",[`${passageCount}`,`<em>${pageString}</em>`])|| "x")}</p>
+      <p>{Parser(label("theater_covering_x",[`<em>${sectionString}</em>`])||"x")}</p>
       </div>
       <div className={"theater-intro-slide section-intro " + (part===2 ? "on" : "off") }>
       <p><span className="pageTitle">{pageTitle}:</span><br/>{sectionTitle}</p>
-      <small>{narrationString}</small>
+      <small>{Parser(narrationString)}</small>
       </div>
     </div>
   );
@@ -585,13 +565,18 @@ function TheaterSectionIntro({ theaterController }) {
     setTimeout(()=>setVisible(true),100);
   }, []);
 
-  const sectionNarrations = queue
+  let sectionNarrations = queue
     .filter(
       item => item?.parent_section?.title === currentItem?.parent_section?.title
     )
     .map(item => item?.narration?.description || null)
     .filter(item => item)
     .map(item => flattenDescription(item));
+
+    const maxCharCount = 400;
+  while(sectionNarrations.join("").length > maxCharCount){
+    sectionNarrations.pop();
+  }
 
   useEffect(() => {
     setTimeout(() => {
@@ -614,7 +599,7 @@ function TheaterSectionIntro({ theaterController }) {
     <div className="theater-content-frame theater-section-intro">
       
       <div className={"theater-intro-slide section-intro " + (visible ? "on" : "off") }>
-        <p className="upnext">up next...</p>
+        <p className="upnext">{label("theater_up_next")}</p>
       <p><span className="pageTitle">{pageTitle}:</span><br/>{sectionTitle}</p>
       <small>{narrationString}</small>
       </div>
@@ -622,44 +607,57 @@ function TheaterSectionIntro({ theaterController }) {
   );
 }
 
+function ButtonTimer({timerprogress}){
 
-
-
-function TheaterCrossRoadsButton({theaterController,page,defaultState,section,narration,slug,onClick,index,setSelectedIndex,selectedIndex,timerprogress}) {
-  narration = flattenDescription(narration);
-  const [newQueue,setNewQueue] = useState([]);
-  const [resetQueueAfterLoad,setResetQueueAfterLoad] = useState(false);
-
-  useEffect(() => {
-    if(onClick) return;
-    const items = [{ slug }];
-    const token = theaterController.appController.states.user.token;
-    BoMOnlineAPI({ queue: { token, items } }, { useCache: false }).then(({ queue }) => {
-        setNewQueue(queue);
-        if(resetQueueAfterLoad) theaterController.setQueue(queue); //TODO: Why doesn't this work?
-    });
-  }, []); 
-
-
-  const timer = !timerprogress ? null : <div className="timerContainer">
+  if(!timerprogress) return null;
+  return <div className="timerContainer">
   <div className="timerBand">
     <div className="timerProgress" style={{width:timerprogress+"%"}}></div>
   </div>
-  </div>;
+  </div>
+
+}
+
+
+function TheaterCrossRoadsButton({theaterController,config,page,narration,slug,onClick,index,setSelectedIndex,selectedIndex,timerprogress}) {
+  narration = flattenDescription(narration);
+
+  const {finish,more} = config || {};  
+  const isContinue = !finish && !more && !slug;
+  const loadItem = more ? null : (slug||null);
+  const items = loadItem ? [{slug:loadItem}] : null;
+
+  const [mainLabel, setMainLabel] = useState(page || (finish ? label("finish") : more ? label("more") : null));
+  const [subLabel, setSubLabel] = useState(narration || (finish ? label("finish_narration") : more ? label("more_narration") : null));
+
+  const nextQueuePromiseRef = useRef(null);
+
+
+  useEffect(() => {
+    const token = theaterController.appController.states.user.token;
+    nextQueuePromiseRef.current = BoMOnlineAPI({ queue: { token, items } }, { useCache: false }).then(({ queue }) => queue)
+  }, []);
 
   const handleClick = onClick || (async () => {
-    if(newQueue.length) return theaterController.setQueue(newQueue);
-    theaterController.setQueue([]);
-    setResetQueueAfterLoad(true);
+    setMainLabel(label("loading"));
+    setSubLabel(label("loading_narration"));
+    if (finish) {  document.location = "/user";  return; }
+    if(isContinue) return theaterController.next("manual");
+
+    const nextQueue = await nextQueuePromiseRef.current;
+    if (nextQueue) {
+      theaterController.setQueue(nextQueue);
+    }
+
     }
   );
   const isActive = selectedIndex === index;
-  return (
+
+return (
     <div className={"theater-crossroads-box-button" + (isActive ? " active" : "") } onClick={handleClick} onMouseEnter={()=>setSelectedIndex(index)} >
-    <h5>{page}</h5>
-    <h6>{section}</h6>
-    {timer}
-    <p>{narration}</p>
+    <h5>{mainLabel}</h5>
+    <h6>{subLabel}</h6>
+    <ButtonTimer timerprogress={timerprogress} />
     </div>
   );
 }
@@ -670,13 +668,14 @@ function TheaterCrossRoads({ theaterController }) {
   const { queue, cursorIndex } = theaterController;
   const currentItem = queue[cursorIndex] || null;
   const { next } = currentItem || {};
+  const isLast = cursorIndex === queue.length - 1;
   
   const thisItem = queue[cursorIndex] || null;
-  const nextItem = queue[cursorIndex + 1] || null;
 
-  const classofCross = next.class;
 
-  const narration = nextItem?.narration?.description || null;
+  const narration = thisItem?.narration?.description || null;
+  const page = thisItem?.parent_page?.title || null;
+  const slug = thisItem?.slug || null;
 
 
   //add countdown from 10 sec
@@ -685,6 +684,8 @@ function TheaterCrossRoads({ theaterController }) {
   const [startTimestamp] = useState(Date.now());
   const defaultState = useRef(true);
   const [showProgress, setShowProgress] = useState(true);
+
+  useEffect(theaterController.log, [cursorIndex]);
 
   useEffect(() => {
 
@@ -699,7 +700,11 @@ function TheaterCrossRoads({ theaterController }) {
       setCountdown(timeLeft);  // Update countdown
 
       if(timeLeft <= 0 && defaultState.current){
-        theaterController.goto(cursorIndex + 1,"auto");
+        
+        //click default button
+        const defaultButton = document.querySelector(".theater-crossroads-box-button");
+        if(defaultButton) defaultButton.click();
+
         clearInterval(timer);  // Stop interval
       }
     }, 50);
@@ -708,17 +713,31 @@ function TheaterCrossRoads({ theaterController }) {
 
   }, [startTimestamp, cursorIndex, theaterController]);
 
-  const [{text}] = next || {};
-
-  const nextclass = next[0]?.nextclass || null;
-
-  const img = nextclass==="C" ? crossroads : detour;
-
-  const detourText = `${next.text}`.toLowerCase() === `${next.page}`.toLowerCase() ? "" : next.text;
-  const continueLabel = nextclass==="C" ? label("continue") : label("step_over");
-  const detourLabel = nextclass==="C" ? label("detour") : label("step_into");
-  const headingLabel = nextclass==="C" ? label("continue_or_detour") : label("step_over_or_into");
-  const titleLabel = nextclass==="C" ? label("crossroads") : label("embedded");
+  const nextclass = next?.[0]?.nextclass || null;
+  const img = isLast ? again : nextclass==="C" ? crossroads : detour;
+  const {optionalText,defaultLabel,optionalLabel,headingLabel,titleLabel} = (()=>{
+    if(isLast) return{
+      titleLabel:label("section_complete"),
+      headingLabel:label("finish_or_more"),
+      defaultLabel:label("finish"),
+      optionalLabel:label("more"),
+      optionalText:null
+    }
+    if(nextclass==="C") return{
+      titleLabel:label("crossroads"),
+      headingLabel:label("continue_or_detour"),
+      defaultLabel:label("continue"),
+      optionalLabel:label("detour"),
+      optionalText:next?.[0]?.text || null
+    }
+    return {
+      titleLabel:label("embedded"),
+      headingLabel:label("step_over_or_into"),
+      defaultLabel:label("step_over"),
+      optionalLabel:label("step_into"),
+      optionalText:next?.[0]?.text || null
+    }
+  })();
 
   const [selectedIndex,setSelectedIndex] = useState(0);
 
@@ -732,24 +751,41 @@ function TheaterCrossRoads({ theaterController }) {
 
   }, [selectedIndex]);
 
+
+  
+
+
+  const finishButton = <TheaterCrossRoadsButton config={{finish:true}} timerprogress={timerprogress} selectedIndex={selectedIndex} setSelectedIndex={setSelectedIndex} theaterController={theaterController} index={0} />;
+  const moreButton = <TheaterCrossRoadsButton config={{more:true}}  isLast={true} isMore={true} selectedIndex={selectedIndex} setSelectedIndex={setSelectedIndex} theaterController={theaterController} index={1} />;
+  const nextButton = <TheaterCrossRoadsButton timerprogress={timerprogress}  selectedIndex={selectedIndex} setSelectedIndex={setSelectedIndex} theaterController={theaterController} page={page} narration={narration} />;
+  const divergeButtons = !next?.length ? null : <>{next.map((n,i) => <TheaterCrossRoadsButton  selectedIndex={selectedIndex} setSelectedIndex={setSelectedIndex} theaterController={theaterController} {...n} index={i+1} />)}</>;
+
+  const defaultButton = isLast ? finishButton : nextButton;
+  const optionalButtons = isLast ? moreButton : divergeButtons;
+
+
   return (  <div className="theater-crossroads">
   <h2>{titleLabel}</h2>
-      <h3>{headingLabel}</h3>
-      <div className="theater-crossroads-box">
-        <div className="theater-crossroads-box-top">
-        <div className="buttonheader">{continueLabel}:</div>
-          {TheaterCrossRoadsButton({index:0,defaultState,timerprogress,selectedIndex,setSelectedIndex,theaterController,page:nextItem?.parent_page?.title,section:nextItem?.parent_section?.title,narration,onClick:theaterController.next})}
-        <div className="theater-crossroads-box-bottom">
-          <img src={img} />
-          <div className="theater-crossroads-box-offramp">
-          <div className="buttonheader">{detourLabel}: {detourText}</div>
-            {next.map((n,i)=>TheaterCrossRoadsButton({...n,index:i+1,selectedIndex,setSelectedIndex,theaterController}))}
+  <h3>{headingLabel}</h3>
+  <div className="theater-crossroads-box">
+    <div className="theater-crossroads-box-top">
+      <div className="buttonheader">{defaultLabel}:</div>
+      {defaultButton}
+      <div className="theater-crossroads-box-bottom">
+        <img src={img} />
+        <div className="theater-crossroads-box-offramp">
+          <div className="buttonheader">{optionalLabel}: {optionalText}</div>
+          {optionalButtons}
         </div>
       </div>
     </div>
   </div>
-  </div>);
+</div>);
 }
+
+
+
+
 function TheaterSidePanel({ theaterController }) {
   return (
     <div className="theater-side-panel">
@@ -762,22 +798,18 @@ function TheaterSidePanel({ theaterController }) {
   );
 }
 
-function TheaterHeader({ theaterController }) {
+function TheaterMeta({ theaterController, visible }) {
 
-  const [visible, setVisible] = useState(false);
 
-  useEffect(() => {
-    setTimeout(()=>setVisible(true),100);
-  }, []);
 
   return (
-    <div className={"theater-header" + (visible ? " visible" : "")}>
-      <TheaterSuperTitles theaterController={theaterController} />
+    <div className={"theater-meta" + (visible ? " visible" : "")}>
+      <TheaterMetaContent theaterController={theaterController} />
     </div>
   );
 }
 
-function TheaterControls({ theaterController }) {
+function TheaterControls({ theaterController, visible }) {
 
   const {
     queue,
@@ -799,10 +831,8 @@ function TheaterControls({ theaterController }) {
 
 
   const currentItem = queue[cursorIndex] || null;
-  const [isVisible, setIsVisible] = useState(false);
   useEffect(() => {
     if(!currentItem) return;
-    setTimeout(() => setIsVisible(true), 100);
     setPlayerCanPlay(false);
     const slug = currentItem?.slug || null;
 
@@ -824,10 +854,10 @@ function TheaterControls({ theaterController }) {
 
   useEffect(() => {
     const player = document.getElementById("theater-audio-player");
-    if (!player) return;
+    if (!player || !visible) return;
     player.playbackRate = theaterController.playbackRate;
     playAudioElement("theater-audio-player");
-  }, [playerCanPlay]);
+  }, [playerCanPlay,visible]);
 
   if (!currentItem) return <Loader />;
   const [num, pageslug] = currentItem?.slug.split("/").reverse();
@@ -921,7 +951,7 @@ function TheaterControls({ theaterController }) {
   const isLastItem = cursorIndex === queue.length - 1;
 
   return (
-    <div className={"theater-controls"+(isVisible ? " visible" : "")}>
+    <div className={"theater-controls"+(visible ? " visible" : "")}>
       <TheaterProgressBar theaterController={theaterController} />
       <ReactAudioPlayer
         id="theater-audio-player"
@@ -932,6 +962,7 @@ function TheaterControls({ theaterController }) {
         onPause={() => theaterController.setIsPlaying(false)}
         onPlay={() => {
           theaterController.setIsPlaying(true);
+          theaterController.setIsScrollingPanel(true);
           logItem();
         }}
         listenInterval={50}
@@ -1099,7 +1130,7 @@ function TheaterNarration({ theaterController }) {
 
     useEffect(()=>{
       //scrollto smooth
-      const narrationEl = document.querySelector(".theater-super-title-narration");
+      const narrationEl = document.querySelector(".theater-meta-content-narration");
       const activeEl = narrationEl.querySelector(".active");
       if(!activeEl) return;
       const top = activeEl.offsetTop;
@@ -1112,7 +1143,7 @@ function TheaterNarration({ theaterController }) {
 
     if (!currentItem) return null;
   return (
-    <div className="theater-super-title-narration">{narrationUL}</div>
+    <div className="theater-meta-content-narration">{narrationUL}</div>
   );
 }
 
@@ -1141,8 +1172,15 @@ function TheaterContent({ theaterController }) {
 
   const currentItem = queue[cursorIndex] || null;
   let { content } = currentItem || {};
-  //stip comment and image blocks: [c]1234[/c] and [i]1234[/i]
+
   content = prepareContent(content);
+
+  
+  useLayoutEffect(() => {
+    setTransitioning(true);
+  },[cursorIndex]);
+
+  //stip comment and image blocks: [c]1234[/c] and [i]1234[/i]
 
   const computePosition = progress => {
     return progress;
@@ -1150,8 +1188,15 @@ function TheaterContent({ theaterController }) {
 
   const yPosition = computePosition(currentProgress);
 
-  let opacity = 1;
+  const [transitioning, setTransitioning] = useState(true);
+  useEffect(() => {
+    if(transitioning && currentProgress>0) setTransitioning(false);
+  },[currentProgress])
 
+
+  
+
+  let opacity = 1;
   const timeElapsed = (currentProgress / 100) * currentDuration;
 
   //fade in and out in first and last 3 seconds
@@ -1160,12 +1205,20 @@ function TheaterContent({ theaterController }) {
   if (timeElapsed > currentDuration - secondsBuffer)
     opacity = (currentDuration - timeElapsed) / secondsBuffer;
 
+    const isPlaying = !document.getElementById(`theater-audio-player`)?.ended
+    && !document.getElementById(`theater-audio-player`)?.seeking
+    && document.getElementById(`theater-audio-player`)?.currentTime > 0;
+  
+    if(!isPlaying || transitioning) opacity = 0;
 
   const isFirst = cursorIndex === 0;
   const isLast = cursorIndex === queue.length - 1;
+  const backgroundImage = `theater/gold-1`;
 
   return (
-    <div className={`theater-content-frame ${state}`}>
+    <div className={`theater-content-frame ${state}`} 
+    style={{backgroundImage:`url(${assetUrl}/${backgroundImage})`}}>
+      <TheaterMobileControls theaterController={theaterController} />
       <div
         className={`theater-content-slider ${state}`}
         style={{ transform: `translateY(-${yPosition}%)`, opacity }}
@@ -1192,7 +1245,7 @@ function TheaterContent({ theaterController }) {
   );
 }
 
-function TheaterSuperTitles({ theaterController }) {
+function TheaterMetaContent({ theaterController }) {
   const { queue, cursorIndex, queueStatus } = theaterController;
   const currentItem = queue[cursorIndex] || null;
   if (!currentItem) return null;
@@ -1207,13 +1260,13 @@ function TheaterSuperTitles({ theaterController }) {
   const StudyButton = <Link className="studylink" to={`/${currentItem?.slug}`}><img src={studyimg} />{label("menu_study")}</Link>
 
   return (
-    <div className="theater-super-titles">
-      <div className="theater-super-title-left">
-        <div className="theater-super-title-heading">{heading}{StudyButton}</div>
-        <div className="theater-super-title-section">{section}</div>
+    <div className="theater-meta-contents">
+      <div className="theater-meta-content-left">
+        <div className="theater-meta-content-heading">{heading}{StudyButton}</div>
+        <div className="theater-meta-content-section">{section}</div>
         <div className="theater-super-title">{page}</div>
       </div>
-      <div className="theater-super-title-right">
+      <div className="theater-meta-content-right">
         <TheaterNarration theaterController={theaterController} />
       </div>
     </div>
@@ -1229,6 +1282,9 @@ function TheaterQueueIndicator({ theaterController }) {
         gap: `min(1ex,${30/queue.length}vw)`,
       }}
     >
+
+      <ReactTooltip effect="solid" id="dotToolTip" type="dark" place="bottom"  offset="{'top':-10}" className="theater-queue-indicator-tooltip" />
+
       {(queue||[]).map((_, index) => {
         const status = queueStatus[index] || queue[index]?.status || null;
 
@@ -1238,7 +1294,6 @@ function TheaterQueueIndicator({ theaterController }) {
         const heading = queue[index]?.heading || null;
         return (
 					<>
-					<ReactTooltip effect="solid" id="dotToolTip" type="dark" place="top"  offset="{'top':-10}" className="theater-queue-indicator-tooltip" />
 					<div
             onClick={() => theaterController.goto(index, "manual")}
             className={`theater-queue-indicator-item ${status || ""} ${
@@ -1407,7 +1462,7 @@ function TheaterPeoplePlacePanel({ theaterController }) {
 
       const { type } = item;
 
-      const name = item?.name.replace(/[0-9]/g, "<sup>$&</sup>");
+      const name = item?.name.replace(/[0-9]/g, "<sup>$&</sup>").split(",").reverse().join(" ").replace(/\s+/g, " ");
       let caption = item?.title || item.info || null;
       caption = caption?.replace(/[0-9]/g, "<sup>$&</sup>");
       const slug = item?.slug || null;
@@ -1442,14 +1497,34 @@ function TheaterPeoplePlacePanel({ theaterController }) {
     opacity = (currentDuration - currentTime) / secondsBuffer;
 
   if(!currentTime || !isScrollingPanel) opacity = 0;
+    useLayoutEffect(() => {
+      setTransitioning(true);
+    },[cursorIndex]);
+
+  const [transitioning, setTransitioning] = useState(true);
+  useEffect(() => {
+    if(transitioning && currentProgress>0) setTransitioning(false);
+  },[currentProgress])
+
+
+  const isPlaying = !document.getElementById(`theater-audio-player`)?.ended
+  && !document.getElementById(`theater-audio-player`)?.seeking
+  && document.getElementById(`theater-audio-player`)?.currentTime > 0;
+
+  const backgroundImage = `${assetUrl}/theater/people-1`;
+
+  if(!isPlaying || !isScrollingPanel) opacity = 0;
   return (
     <div
       className={
         `theater-people-place-panel ${classHide}`
       }
+      style={{backgroundImage:`url(${backgroundImage})`}}
     >
       <h4>{label("people_and_places")}</h4>
-      <div className="theater-people-place-items" style={{opacity,justifyContent:visibleItemCount>2?"flex-start":"center"}}>{peoplePlaceEl}</div>
+      <div className="theater-people-place-items" style={{ opacity }}>
+        <div className={"spacer itemCount" + visibleItemCount}/>
+        {peoplePlaceEl}</div>
     </div>
   );
 }
@@ -1501,6 +1576,7 @@ function TheaterImagePanel({ theaterController }) {
     }}>
       <img
         src={`${assetUrl}/art/${image.id}`}
+        style={{backgroundImage:`url(${assetUrl}/theater/canvas-1)`}}
       />
     </div>
   ) : null;
@@ -1517,6 +1593,9 @@ function TheaterImagePanel({ theaterController }) {
 }
 
 function TheaterCommentFeed({ theaterController }) {
+
+  const filter = theaterController.appController.states.preferences.commentary.filter;
+  const blacklist = (filter.type==="blacklist" ? filter?.sources : []).map(parseInt) || [];
   const [comments, setComments] = useState(new Set());
   const secondsBetweenComments = 5;
   const {
@@ -1531,16 +1610,15 @@ function TheaterCommentFeed({ theaterController }) {
   const filteredcoms = coms.filter(com => {
     const sourceId = com.id.toString().substr(5, 3);
     if (!com.preview?.trim()) return false;
-    if ([41, 161, 162, 163, 164, 165, 166].includes(parseInt(sourceId)))
+
+    if ([...blacklist, 41, 161, 162, 163, 164, 165, 166].includes(parseInt(sourceId)))
       return false;
     return true;
   });
   const allowedMessageCount = currentDuration / secondsBetweenComments;
   const queuedMessages = filteredcoms.slice(0, allowedMessageCount); //randomized earlier
-  const commentCursor = Math.floor(
-    (queuedMessages.length * currentProgress) / 100
-  );
-
+  const division = queuedMessages.length > 5 ? queuedMessages.length : 5; // this is for items with low comment count, so its coms dont'get skipped.
+  const commentCursor = Math.floor(  (division * (currentProgress * 0.7)) / 100 );
   useEffect(async () => {
     //wait 1-3 seconds
     await new Promise(resolve =>
