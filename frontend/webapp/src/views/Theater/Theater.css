@@ -367,6 +367,8 @@
 	border: 5px solid grey;
 	color:#6d6d6d;
 	font-weight:800;
+    /* no select */
+    user-select: none;
 }
 
 .theater-config-value
