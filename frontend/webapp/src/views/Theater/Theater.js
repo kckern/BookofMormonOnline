@@ -63,6 +63,8 @@ function TheaterWrapper({ appController }) {
   let match = useRouteMatch();
   let slug = match?.params?.slug || null;
 
+  console.log("slug",slug);
+
   const [queue, setQueue] = useState([]);
   const [loadFailed, setLoadFailed] = useState(false);
   const [queueStatus, setQueueStatus] = useState([]);
@@ -815,19 +817,7 @@ function TheaterControls({ theaterController, visible }) {
     if(!currentItem) return;
     setPlayerCanPlay(false);
     const slug = currentItem?.slug || null;
-
-    /*
-
-    TODO: get the URL to update without triggering a route rerender
-
-    document.location =`/theater/${slug}`
-    
-    OR
-
     history.push(`/theater/${slug}`);
-
-    */
-
 
   }, [currentItem]);
 

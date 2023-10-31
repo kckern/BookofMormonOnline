@@ -83,7 +83,7 @@ const routes = [
     component: About,
   },
   {
-    path: "/theater/:slug?",
+    path: "/theater/:slug*",
     component: Theater,
   },
   {
