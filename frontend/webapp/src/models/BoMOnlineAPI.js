@@ -12,7 +12,7 @@ const isWebappOnly = parseInt(currentPort) === 3000;
 const localTest = /localhost/.test(currentDomain) && false;
 
 export const assetUrl = "https://media.bookofmormon.online";
-export const ApiBaseUrl = localTest ?   "http://localhost:5005" : isWebappOnly? "https://dev.bookofmormon.online" : containedAPI ;
+export const ApiBaseUrl = localTest ?   "http://localhost:5005" : isWebappOnly? "https://bookofmormon.online" : containedAPI ;
 export const fbPixel = "4544125442358924";
 
 export function exitBeacon(appController){

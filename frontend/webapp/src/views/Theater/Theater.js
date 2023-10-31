@@ -1330,20 +1330,33 @@ function PlaybackSettings({setShowPlaybackSettings,theaterController}){
   const decimalPaddedRate = (playbackRate||1).toFixed(1);
 
 	return(
-	<div className="theater-progress-bar-buttons-playback-range" onKeyDown={handleKeyInput}>
-		<span>{label("playback_rate")}:</span> <span className="playbackRateSpan">{decimalPaddedRate} ×</span>
-		<div>
-		<input ref={inputRef} type="range" id="speedInput" min="0.8" max="2.0" value={playbackRate} step="0.2" onChange={handleInput}/>
-		</div>
-		<span>{label("playback_volume")}:</span> <span className="playbackRateSpan">{playbackVolume} ×</span>
-		<div>
-		<input type="range" id="volumeInput" min="0.2" max="1.0" value={playbackVolume} step="0.2" onChange={handleInput}/>
-		</div>
-		<div>
-		<span>{label("background_music")}: </span>
-		<img onClick={toggleMusic} className="player-ui playbackMute" alt="toogleImg" src={isMuted ? soundOff : soundOn} />
-		</div>
-	</div>
+    <div className="theater-config" onKeyDown={handleKeyInput}>
+    <div className="theater-config-container">
+        <div className="playback-rate-label">{label("playback_rate")}:</div>
+        <div className="theater-config-value">{decimalPaddedRate} ×</div>
+    </div>
+
+    <div className="playback-rate-input">
+            <input ref={inputRef} type="range" id="speedInput" min="0.8" max="2.0" value={playbackRate} step="0.2" onChange={handleInput}/>
+        </div>
+
+    <div className="theater-config-container">
+        <div className="playback-volume-label">{label("playback_volume")}:</div>
+        <div className="theater-config-value">{playbackVolume*100}%</div>
+    </div>
+
+    <div className="playback-volume-input">
+            <input type="range" id="volumeInput" min="0" max="1.0" value={playbackVolume} step="0.2" onChange={handleInput}/>
+        </div>
+
+    <div className="theater-config-container">
+        <div className="background-music-label">{label("background_music")}:</div>
+    </div>
+
+    <div className="background-music-toggle">
+            <img onClick={toggleMusic} className="player-ui playbackMute" alt="toogleImg" src={isMuted ? soundOff : soundOn} />
+        </div>
+</div>
 	)
 }
 
