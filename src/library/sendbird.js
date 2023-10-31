@@ -289,6 +289,7 @@ class Sendbird {
   }
 
   async loadChannel(channelUrl) {
+    try {
     let baseUrl = 'https://api-' + SENDBIRD_APPID + '.sendbird.com/v3/group_channels/' + channelUrl;
     var authOptions = {
       method: 'GET',
@@ -300,11 +301,7 @@ class Sendbird {
       json: true
     };
     let response = { data: null };
-    try {
       response = await axios(authOptions);
-    } catch (e) {
-      return {};
-    }
 
     let channel = response?.data?.channel;
 
@@ -333,6 +330,10 @@ class Sendbird {
     returnData.members = members;
     returnData.metadata = metadata;
     return returnData;
+
+  } catch (e) {
+    return false;
+  }
   }
 
   request(channelObj, username) {

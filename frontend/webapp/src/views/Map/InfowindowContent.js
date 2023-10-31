@@ -7,19 +7,33 @@ import { renderPersonPlaceHTML } from "../Page/PersonPlace";
 import ReactTooltip from "react-tooltip";
 
 export default function InfowindowContent({ placeInfo, push, appController }) {
+
+    if (!placeInfo) return <div>Loading...</div>;
+
     return (
         <BrowserRouter>
             <div className="map-info">
                 <div style={{ overflow: "auto" }}>
                     <div className="placebox">
                         <div className="ppbody">
+                            
+                            <div className="bodytext map-place-info">
                             <h3>
                                 {processName(placeInfo.name)}<br />
                                 <small className="map-place-brief-info">
                                     {replaceNumbers(placeInfo.info)}
                                 </small>
                             </h3>
+                                {renderPersonPlaceHTML(placeInfo.description, appController)}
+                            </div>
+
+
                             <div className="refbox">
+
+                            <div className="ppimg map-place-image">
+                                    <img src={`${assetUrl}/places/${placeInfo.slug}`} />
+                                </div>
+                                
                                 <h4>{label("references")}</h4>
                                 <ol className="sd">{
                                     placeInfo.index &&
@@ -41,12 +55,7 @@ export default function InfowindowContent({ placeInfo, push, appController }) {
                                     id='info-place-person'
                                 />
                             </div>
-                            <div className="bodytext map-place-info">
-                                <div className="ppimg map-place-image">
-                                    <img src={`${assetUrl}/places/${placeInfo.slug}`} />
-                                </div>
-                                {renderPersonPlaceHTML(placeInfo.description, appController)}
-                            </div>
+
                         </div>
                     </div>
                 </div>

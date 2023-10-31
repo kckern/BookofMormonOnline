@@ -138,7 +138,8 @@ export const summaryFromSessions = (sessions: Array<any>, finished: Array<number
   };
 };
 
-export const logFromSessions = (sessions: Array<any>, lang: string) => {
+export const logFromSessions =  async (sessions: Array<any>, lang: string) => {
+  //console.log({lang});
   let returnData: any = [];
   let rep_guids: Array<string> = [];
   for (let i in sessions) {
@@ -162,7 +163,7 @@ export const logFromSessions = (sessions: Array<any>, lang: string) => {
       slug: null
     });
   }
-  return Models.BomText.findAll({
+  const metadata:any = await Models.BomText.findAll({
     where: { guid: rep_guids },
     attributes: ['guid', 'page', 'link'],
     include: [
@@ -176,34 +177,51 @@ export const logFromSessions = (sessions: Array<any>, lang: string) => {
             as: 'pageSlug',
             attributes: ['slug']
           },
-          includeTranslation('title', lang)
-        ].filter(x => !!x)
+          {
+            model: Models.BomTranslation,
+            as: 'translation',
+            attributes: ['value', 'refkey'],
+            where: {
+              lang: lang
+            },
+            required: false
+          }
+        ].filter(x_1 => !!x_1)
       },
       {
         model: Models.BomSection,
         attributes: ['title'],
         as: 'parent_section',
-        include: [includeTranslation('title', lang)].filter(x => !!x)
+        include: [{
+          model: Models.BomTranslation,
+          as: 'translation',
+          attributes: ['value', 'refkey'],
+          where: {
+            lang: lang
+          },
+          required: false
+        }]
       }
     ]
-  }).then((metadata: any) => {
-    let guidmap: any = {};
-    for (let i in metadata) {
-      guidmap[metadata[i].getDataValue('guid')] = {
-        page: translatedValue(metadata[i].getDataValue('parent_page'), 'title'),
-        section: translatedValue(metadata[i].getDataValue('parent_section'), 'title'),
-        slug: metadata[i]?.getDataValue('parent_page')?.pageSlug?.getDataValue('slug') + '/' + metadata[i]?.getDataValue('link')
-      };
-    }
-    returnData = returnData.map((data: any) => {
-      let repguid = data.description;
-      data.description = repguid ? guidmap[repguid]?.page + '—' + guidmap[repguid]?.section : null;
-      data.slug = repguid ? guidmap[repguid]?.slug : 'home';
-      data.pagelink = repguid ? guidmap[repguid]?.pagelink : null;
-      return data;
-    });
-    return { sessions: returnData };
   });
+
+
+  let guidmap: any = {};
+  for (let datum of metadata) {
+    guidmap[datum.getDataValue('guid')] = {
+      page: translatedValue(datum.getDataValue('parent_page'), 'title'),
+      section: translatedValue(datum.getDataValue('parent_section'), 'title'),
+      slug: datum?.getDataValue('parent_page')?.pageSlug?.getDataValue('slug') + '/' + datum?.getDataValue('link')
+    };
+  }
+  returnData = returnData.map((data: any) => {
+    let repguid_1 = data.description;
+    data.description = repguid_1 ? guidmap[repguid_1]?.page + '—' + guidmap[repguid_1]?.section : null;
+    data.slug = repguid_1 ? guidmap[repguid_1]?.slug : 'home';
+    data.pagelink = repguid_1 ? guidmap[repguid_1]?.pagelink : null;
+    return data;
+  });
+  return { sessions: returnData };
 };
 
 export const includeModel = (requestInfo: any, model: any, as: any, include?: Array<any>) => {

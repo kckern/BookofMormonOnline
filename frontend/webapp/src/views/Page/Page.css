@@ -215,6 +215,18 @@ div.row-r div.rightconnection:hover {
   background-position: right;
 }
 
+a.theater-link img
+{
+  height: 2rem;
+  width: 2rem;
+  filter: invert();
+  float: right;
+  opacity: 0.1;
+}
+a.theater-link img:hover
+{
+  opacity: 0.3;
+}
 .sectionfooter {
   padding: 2em;
   border-top: 4px double #ccc;

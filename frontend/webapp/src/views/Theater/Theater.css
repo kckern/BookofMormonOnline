@@ -20,6 +20,7 @@
     color: #AAA;
 
     text-align: center;
+    overflow: hidden;
 }
 
 /* if screen width is under 1200, make column */
@@ -31,8 +32,6 @@
     .theater-wrapper .theater-main-panel
     {
         width: 100%;
-        min-width: 100%;
-        height: 60%;
     }
     .theater-wrapper .theater-side-panel
     {
@@ -94,20 +93,26 @@
 
 @media (max-width: 900px){
 
+
     .theater-side-panel{
         display: none!important;
     }
-    .theater-super-titles
+    .theater-meta-contents
     {
         flex-direction: column!important;
     }
-    .theater-super-title-left
+    .theater-controls
+    {
+        display: none!important;
+    }
+
+    .theater-meta-content-left
     {
         width:100%!important;
         height:auto!important;
     }
-    .theater-super-title-section,
-    .theater-super-title
+    .theater-meta-content-section,
+    .theater-meta-content
     {
         display: none!important;
     }
@@ -116,6 +121,17 @@
     {
         font-size: min(1.5rem, 3vh)!important;
     }
+    .theater-content-next,
+    .theater-content-prev
+    {
+        height: 1.5rem!important;
+        width: 1.5rem!important;
+    }
+
+.theater-meta.visible{
+    height: 13rem!important;
+}
+
 
 }
 
@@ -134,31 +150,41 @@
 
 }
 
-.theater-main-panel .theater-header
+.theater-main-panel .theater-meta
 {
     display: flex;
     flex-direction: column;
     flex-grow: 0;
 
     background-color: #222;
+    position: relative;
+    height: 0;
+    transition: all 1s ease-in-out;
 }
-.theater-header,
+.theater-meta,
 .theater-controls
 {
     opacity: 0;
     height: 0;
-    transition: all 2s ease-in-out;
+    transition: all 1s ease-in-out;
 }
-.theater-header.visible,
+.theater-meta.visible,
 .theater-controls.visible
 {
     opacity: 1;
-    height: auto;
-    transition: all 2s ease-in-out;
+    transition: all 1s ease-in-out;
+}
+.theater-meta.visible{
+    height: 11rem;
+}
+.theater-controls.visible{
+    height: 4rem;
 }
 
 
-.theater-super-title-heading
+
+
+.theater-meta-content-heading
 {
     background-color: #333;
     font-weight: 0;
@@ -168,16 +194,18 @@
     letter-spacing: 0.2ex;
     font-variant: small-caps;
     position: relative;
+    white-space: nowrap;
+    overflow: hidden;
 }
 
-.theater-super-titles
+.theater-meta-contents
 {
     display: flex;
     flex-direction: row;
     position: relative;
-    max-height: 9rem;
+    max-height: 11rem;
 }
-.theater-super-title-left
+.theater-meta-content-left
 {
     width: 40%;
     flex-shrink: 0;
@@ -187,7 +215,7 @@
     position: relative;
 }
 
-.theater-super-title-right
+.theater-meta-content-right
 {
     flex-grow: 1;
     display: flex;
@@ -197,7 +225,7 @@
     background-image: linear-gradient(to bottom, #000000, #00000000);
 }
 
-.theater-super-title-narration
+.theater-meta-content-narration
 {
     font-size: min(2.5vh, 1rem);
     background-color: #444;
@@ -207,26 +235,26 @@
     overflow: scroll;
     text-align: justify;
 }
-.theater-super-title-narration ul{
+.theater-meta-content-narration ul{
     list-style: none;
     padding: 0 1rem;
 }
 
-.theater-super-title-narration li.active{
+.theater-meta-content-narration li.active{
     background-color: #AAA;
     transition: background-color 1s ease-in-out;
     color: black;
 }
-.theater-super-title-narration li.active:hover{
+.theater-meta-content-narration li.active:hover{
     color: black;
     background-color: white;
     transition: none;
 }
-.theater-super-title-narration li:hover:not(.active){
+.theater-meta-content-narration li:hover:not(.active){
     color: white;
     transition: none;
 }
-.theater-super-title-narration li{
+.theater-meta-content-narration li{
     background-color: auto;
     transition: background-color 1s ease-in-out;
     border-radius: 1ex;
@@ -250,20 +278,25 @@
     align-items: center;
     overflow: hidden;
     position: relative;
-    background-image: url('https://i.imgur.com/uqjhnKX.jpg');
-    /* make background image opacity 0.3 */
-    background-blend-mode: multiply;
-    background-color: #000000AA;
-    /* stretch background image to fill */
-    background-size: cover;
 
 
+        /* make background image opacity 0.3 */
+        background-blend-mode: multiply;
+        background-color: #000000AA;
+        /* stretch background image to fill */
+        background-size: cover;
+        background-position: center;
 
 }
 
+.theater-main-panel .theater-queue-intro
+{
+    background-image: none;
+}
+
 .ko .theater-main-panel .theater-content-frame,
-.ko .theater-super-title,
-.ko .theater-super-title-section
+.ko .theater-meta-content,
+.ko .theater-meta-content-section
 {
     font-family: 'Nanum Myeongjo';
 }
@@ -497,9 +530,22 @@ img.player-ui{
 img.player-ui:hover{
     opacity: 1
 }
+.ko .theater-intro-slide,
+.ko .theater-section-intro,
+.ko .idleText,
+.ko .theater-super-title,
+.ko em
+{
+    font-family: 'Nanum Myeongjo'!important
+}
+
+
 .theater-intro-slide,
 .theater-section-intro
 {
+    background-image: url('https://media.bookofmormon.online/theater/entrance-1');
+    background-size: cover;
+    background-position: center;
     position: absolute;
     top:0;
     left: 0;
@@ -509,7 +555,7 @@ img.player-ui:hover{
     justify-content: center;
     flex-direction: column;
     align-items: center;
-    padding:min(5vh,10%);
+    padding:min(2vh,10%);
     padding-bottom: min(20vh,30%);
     font-family: 'Roboto Condensed', 'Arial Narrow', 'sans-serif';
 }
@@ -575,7 +621,7 @@ img.player-ui:hover{
 .theater-crossroads
 {
 
-    background:url('https://i.imgur.com/uqjhnKX.jpg');
+    background:url('https://media.bookofmormon.online/theater/entrance-1');
     height: 100%;
     background-size: cover;
     background-blend-mode: multiply;
@@ -696,7 +742,7 @@ img.player-ui:hover{
 }
 .theater-intro-slide.section-intro p{
     font-family: "Sorts Mill Goudy", serif;
-    font-size: 2.5rem;
+    font-size: min(2.5rem, 5vh);
     
 }
 .theater-intro-slide.section-intro .upnext
@@ -710,7 +756,7 @@ img.player-ui:hover{
     font-weight: 400;
     text-align: center;
     opacity: 0.8;
-    font-size: 1.4rem;
+    font-size: min(1.5rem, 2.5vw)!important;
     line-height: 120%;
     /* overflow ellipsis overflow */
 
@@ -718,6 +764,7 @@ img.player-ui:hover{
     /* max 20 lines height */
     flex-grow: 0;
     max-height: 80%;
+    font-size: min(1.5rem, 3vh);
     
     
 }
@@ -749,11 +796,23 @@ span.pageTitle
 	z-index:6000;
 }
 
+.idleText
+{
+    opacity: 0.2;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 10%;
+    font-style: italic;
+    font-family: "Sorts Mill Goudy", serif;
+    pointer-events: none;
+}
+
 .theater-super-title
 {
     font-family: 'Sorts Mill Goudy', serif; 
     font-weight: 800;
-    font-size: 2vh;
+    font-size: 2vw;
     flex-grow: 1;
     padding-top: 1ex;
     margin-bottom: 1ex;
@@ -769,7 +828,7 @@ span.pageTitle
     word-break: break-word;
 
 }
-.theater-super-title-section
+.theater-meta-content-section
 {
     color: white;
     font-family: 'Sorts Mill Goudy', serif; 
@@ -907,7 +966,7 @@ span.pageTitle
 
 .theater-side-panel .theater-image-panel img {
     z-index: 99;
-    background:url('https://i.imgur.com/uqjhnKX.jpg');
+
     transform-origin: "top center";
     object-fit: contain;
     width: 100%;
@@ -916,7 +975,7 @@ span.pageTitle
   
   .imageCaption
   {
-    z-index: 99;
+    z-index: 10;
     position: absolute;
     bottom: 0;
     height: 2rem;
@@ -974,6 +1033,13 @@ span.pageTitle
     padding: 0 1rem 1rem 1rem;
 }
 
+.theater-comment-panel
+{
+    background-image: url('https://media.bookofmormon.online/theater/coms-1');
+    background-position: center;
+    background-size: cover;
+
+}
 
 .theater-comment-feed .comment {
     display: flex;
@@ -1051,15 +1117,37 @@ span.pageTitle
     font-weight: bold;
   }
 
+.theater-people-place-panel 
+{
+    background-size: cover;
+    background-position: center;
+    background-blend-mode: multiply;
+}
+
 .theater-people-place-items
 {
-		display:flex;
+    display:flex;
     overflow-x:auto;
-    min-height: 15rem;
-    background: url('https://i.imgur.com/uqjhnKX.jpg');
-    background-blend-mode: multiply;
-    background-color: #000000AA;
+    min-height: 13rem;
+    justify-content: flex-start;
+    position: relative;
 }
+
+.theater-people-place-items .spacer{
+    transition: width 0.5s ease-in-out;
+    width: 0;
+}
+
+.theater-people-place-items .spacer.itemCount1{
+    width: calc(50% - 4.5rem);
+    transition: width 0.5s ease-in-out;
+    
+}
+.theater-people-place-items .spacer.itemCount2{
+    width: calc(50% - 9.5rem);
+    transition: width 0.5s ease-in-out;
+}
+
 
 .theater-people-place-panel{
     max-height: 100vh;
@@ -1079,7 +1167,7 @@ span.pageTitle
     position: relative;
     flex-shrink: 0;
     width: 9rem;
-    height: 14rem;
+    height: 12rem;
     filter: blur(0);
     transition: all 0.5s ease-in-out;
     margin: 0.5ex;
@@ -1107,9 +1195,10 @@ span.pageTitle
   .theater-people-place-item img
   {
     width: 100%;
-    height: 100%;
+    height: calc(100% - 1.5rem);
     object-fit: cover;
     border-radius: 1ex;
+    margin-top: 1.5rem;
   }
   .theater-people-place-item-caption,
   .theater-people-place-item-name
@@ -1124,6 +1213,7 @@ span.pageTitle
     bottom:0;
     padding:1ex;
     font-size: 0.7rem;
+    line-height: 100%;
   }
   .theater-people-place-item-name
   {

@@ -141,16 +141,23 @@ export function LegalNotice({ appController, commentaryData, showLegal }) {
 
 
 function Person({ appController }) {
+
+
+
   if (
     appController.popUpData[appController.states.popUp.activeId] === undefined
   ) {
-    BoMOnlineAPI({ person: appController.states.popUp.ids }).then(
+    BoMOnlineAPI({ person: appController.states.popUp.ids },{useCache:["people"]}).then(
       (response) => {
         appController.functions.setPopUp({
           type: "people",
           ids: appController.states.popUp.ids,
           popUpData: response.person,
         });
+        if(!response.person) return false;
+        const person = response.person[appController.states.popUp.ids[0]];
+        const slugs = person.relations?.filter(i=>i.person?.slug).map(i=>i.person.slug) || [];
+       BoMOnlineAPI({ people: slugs }, { useCache: ["people"] });
       }
     );
     return <Loading type="Person" appController={appController} />;
@@ -170,6 +177,7 @@ function Person({ appController }) {
     Mentioned: "by",
   };
 
+  
   return (
     <>
       <Draggable handle=".person_head">
@@ -199,6 +207,7 @@ function Person({ appController }) {
           </div>
           <div className="card-body">
             <div className="ppbody">
+              <div className="bodytext">
               <h3>
                 {processName(person.name)}
                 <br />
@@ -206,7 +215,16 @@ function Person({ appController }) {
                   {replaceNumbers(person.title)}
                 </small>
               </h3>
+                {renderPersonPlaceHTML(person.description, appController)}
+              </div>
+
               <div className="refbox">
+
+              <div className="ppimg">
+                <img alt="reload" src={`${assetUrl}/people/${person.slug}`} />
+                <br />
+              </div>
+              
                 <h4>{label("relationships")}</h4>
                 <table className="refbox-tabel">
                   <tbody>
@@ -244,13 +262,6 @@ function Person({ appController }) {
                   index={person.index}
                   appController={appController}
                 />
-              </div>
-              <div className="ppimg">
-                <img alt="reload" src={`${assetUrl}/people/${person.slug}`} />
-                <br />
-              </div>
-              <div className="bodytext">
-                {renderPersonPlaceHTML(person.description, appController)}
               </div>
             </div>
           </div>
@@ -325,6 +336,8 @@ function Place({ appController }) {
         </div>
         <div className="card-body">
           <div className="ppbody">
+
+            <div className="bodytext">
             <h3>
               <span>
                 {Parser(
@@ -336,17 +349,15 @@ function Place({ appController }) {
               <br />
               <small className="ppbody-title">{place.info}</small>
             </h3>
-            <div className="refbox">
-              <ReferenceList
-                index={place.index}
-                appController={appController}
-              />
+              {renderPersonPlaceHTML(place.description, appController)}
             </div>
+
+
+            <div className="refbox">
+
             <div className="ppimg">
-              <img alt="reload" src={`${assetUrl}/places/${place.slug}`} />
-              <br />
-              <br />
-              {place?.maps?.length > 1 ? (
+
+            {place?.maps?.length > 1 ? (
                 <Dropdown isOpen={showMapsDropDown} toggle={() => showMapsDropDownSet(!showMapsDropDown)} direction="right">
                   <DropdownToggle>
                     {label("view_on_map")}
@@ -367,11 +378,17 @@ function Place({ appController }) {
                     </Button></Link>
                 )
               )}
+              
+              <img alt="reload" src={`${assetUrl}/places/${place.slug}`} />
+            </div>
+            
+              <ReferenceList
+                index={place.index}
+                appController={appController}
+              />
             </div>
 
-            <div className="bodytext">
-              {renderPersonPlaceHTML(place.description, appController)}
-            </div>
+
           </div>
         </div>
         <Comments />
@@ -381,6 +398,9 @@ function Place({ appController }) {
 }
 
 function ReferenceList({ index, appController }) {
+
+
+
   return (
     <>
       <h4>{label("references")}</h4>

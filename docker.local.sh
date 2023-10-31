@@ -1,6 +1,7 @@
 #LOAD VARS FROM .ENV FILE
 export $(egrep -v '^#' .env | xargs)
 CONTAINER=BookofMormonOnline
+REGISTRY_ID=bookofmormononline
 echo $REGISTRY_ID
 docker builder prune -f
 docker build -t $REGISTRY_ID .

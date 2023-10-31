@@ -150,6 +150,12 @@ export default {
           });
       }
       return relations;
+    },
+    index: async (item: any, args: any, { db, res }: any, info: any) => {
+      return item.getDataValue('index').map((i: any) => {
+        if(i.getDataValue('type') == 'people') return i;
+        return null;
+      }).filter((x:any)=>!!x);
     }
   },
 
@@ -188,6 +194,12 @@ export default {
     },
     maxZoom: async (item: any, args: any, { db, res }: any, info: any) => {
       return item.dataValues?._bom_places_coords?.max || null;
+    },
+    index: async (item: any, args: any, { db, res }: any, info: any) => {
+      return item.getDataValue('index').map((i: any) => {
+        if(i.getDataValue('type') == 'place') return i;
+        return null;
+      }).filter((x:any)=>!!x);
     }
   },
   Index: {

@@ -101,7 +101,7 @@ export default function SocialSignIn({appController, setLoading}) {
                     //onFailure={(result) => console.error(result)}
                 />
             </div><div className="Social">
-                <FacebookLogin
+                {false && <FacebookLogin
                     appId={"806253479718989"}
                     autoLoad={false}
                     callback={responseFacebook}
@@ -109,7 +109,7 @@ export default function SocialSignIn({appController, setLoading}) {
                     render={renderProps => (
                         <Button onClick={renderProps.onClick} className={"facebook"}><img src={facebook} /> {label("facebook")}</Button>
                     )}
-                />
+                />}
                 <GoogleLogin
                     onSuccess={responseGoogle}
                     text="signin_with"

@@ -7,6 +7,10 @@ import PageLink from "./PageLink";
 import Connection from "./Connection";
 import Comments from "../_Common/Study/Study";
 import { addHighlightTagSelectively } from "./TextContent";
+//import theater svg
+import theater from "../_Common/svg/theater.svg";
+import { Link } from "react-router-dom/cjs/react-router-dom.min";
+import { label } from "../../models/Utils";
 
 function Section({ sectionData, pageController, setPageSlug }) {
   let preConnection = null;
@@ -35,6 +39,11 @@ function Section({ sectionData, pageController, setPageSlug }) {
     sectionHighlights.splice(i, 1);
     setSectionHighlights([...sectionHighlights]);
   };
+  const slugTip = sectionData.slug.split("/").pop();
+  const theaterLink = <Link to={`/theater/${slugTip}`} className="theater-link" data-tip={label("view_in_theater")} data-for="page-info-tooltip">
+    <img src={theater} alt="theater" />
+  </Link>
+
   return (
     <>
       {preConnection}
@@ -47,6 +56,7 @@ function Section({ sectionData, pageController, setPageSlug }) {
         <div className="card-header" style={{ margin: 0 }}>
           <h4 id={"h2/" + sectionData.slug} className="title lg-4 text-left">
             {sectionData.title}
+            {theaterLink}
           </h4>
           {sectionData.rows.map((rowData, rowIndex) => {
             if (rowData.type === "N") {

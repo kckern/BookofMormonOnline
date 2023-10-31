@@ -54,9 +54,11 @@ function TileMap({ mapData, placeName, updateUrl, appController }) {
 
   // uI of setilite map and timeline map
   const initMap = (mapData) => {
+    const maps = google.maps || null
+    if (!maps) return
     var map = {},
       imageMapType = {},
-      infoWindow = new google.maps.InfoWindow(),
+      infoWindow = new maps.InfoWindow(),
       defaultMarker = null;
     //get place info if Url has place info slug
     let placeInfo = mapData?.places?.find((x) => x.slug === placeSlug)
@@ -135,6 +137,16 @@ function TileMap({ mapData, placeName, updateUrl, appController }) {
           updateUrl(`/map/${mapData.slug}`) // update URL
           setActiveInfoWindow(null)
         });
+
+        //add listener to close info window on click away
+        google.maps.event.addListener(map, 'click', () => {
+          infoWindow.close();
+        });
+
+
+
+
+
         return marker
       })
       // check map is assigne
@@ -181,18 +193,17 @@ function TileMap({ mapData, placeName, updateUrl, appController }) {
         underSlug: `/map/${mapSlug}`
        });
 
+       
     }
 
     setActiveInfoWindow(infoWindow) // set active infow to close while change mapType
     updateUrl(`/map/${mapSlug}/place/${placeSlug}`) // update URL
 
-    infoWindow.setContent(`<div id="infow-window"><img class='loader' src='${loading}'/></div>`);
     infoWindow.open(map, marker);
     let placeInfo = null;
-    
+    infoWindow.setContent(`<div id="infow-window"><img class='loader' src='${loading}'/></div>`);
     BoMOnlineAPI({ places: [placeSlug] }).then(({ places }) => {
       placeInfo = places[placeSlug];
-      console.log({placeInfo})
 
       //console.log(places);
       setPlaceSlug(placeSlug)
@@ -206,6 +217,15 @@ function TileMap({ mapData, placeName, updateUrl, appController }) {
           () => {
             placeInfo && onInfowindowDomReady(placeInfo)
           });
+      
+        //add listener for on infowindow close
+        google.maps.event.addListener(infoWindow, 'closeclick', () => {
+          updateUrl(`/map/${mapSlug}`) // update URL
+          setActiveInfoWindow(null)
+        });
+
+
+
       } else {
         infoWindow.setContent(`<img class="map-place-no-info" src="${loading}" />`)
         infoWindow.open(map, marker)

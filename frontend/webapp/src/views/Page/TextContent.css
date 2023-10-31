@@ -6,6 +6,29 @@
     border-bottom: 1px solid #CCC;
 }
 
+.row.chronoRow
+{
+    align-items: center;
+    
+    text-align: left;
+    font-family: 'Roboto Condensed', 'Arial Narrow', 'sans-serif';
+    font-size: x-small;
+    font-style: italic;
+    margin-bottom: 1rem;
+    flex-direction: row;
+
+}
+
+.row.chronoRow div.chronoText{
+    width: auto!important;
+    background-color: #e7e5e5;
+    border-radius: 1ex;
+    border-color: #888;
+    color: #888;
+    margin-left: 1rem;
+
+}
+
 .card .scripture .content {
 
     padding: 1em 0 0 1em;
