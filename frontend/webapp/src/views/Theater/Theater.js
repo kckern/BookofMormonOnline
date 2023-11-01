@@ -338,7 +338,7 @@ function TheaterMainPanel({ theaterController }) {
   const prevSection = queue[cursorIndex - 1]?.parent_section?.title || null;
   const isNewSection =  thisSection !== prevSection;
   const isLastItem = cursorIndex === queue.length - 1;
-  const hasNextContent = !!currentItem?.next;
+  const hasNextContent = !!currentItem?.next && !!currentItem?.next?.[0]
   const posttype = isLastItem ? "outro" : hasNextContent ? "crossroads" : null;
 
   const isFirstItem = cursorIndex === 0;
