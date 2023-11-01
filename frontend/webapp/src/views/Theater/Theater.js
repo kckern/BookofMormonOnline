@@ -673,7 +673,7 @@ function TheaterCrossRoads({ theaterController }) {
 
 
   //add countdown from 10 sec
-  const secondsToShow = 10000;
+  const secondsToShow = 10;
   const [countdown, setCountdown] = useState(secondsToShow);
   const [startTimestamp] = useState(Date.now());
   const defaultState = useRef(true);
