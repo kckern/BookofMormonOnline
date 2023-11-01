@@ -595,10 +595,10 @@ function ButtonTimer({timerprogress}){
   const [isHidden, setIsHidden] = useState(false);
 
   useEffect(() => { 
-    if(timerprogress===null) setTimeout(()=>setIsHidden(true),5000);
+    if(timerprogress===null) setTimeout(()=>setIsHidden(true),2500);
   },[timerprogress]);
 
-  return <div className={"buttonTimer" + (isHidden ? " hidden" : "")}>
+  return <div className={"timerContainer" + (isHidden ? " hidden" : "")}>
   {timerprogress && <div className="timerBand">
     <div className="timerProgress" style={{width:timerprogress+"%"}}></div>
   </div>}
@@ -607,7 +607,7 @@ function ButtonTimer({timerprogress}){
 }
 
 
-function TheaterCrossRoadsButton({theaterController,config,page,narration,slug,onClick,index,setSelectedIndex,selectedIndex,timerprogress}) {
+function TheaterCrossRoadsButton({theaterController,config,optionalOverride,page,narration,slug,onClick,index,setSelectedIndex,selectedIndex,timerprogress}) {
   narration = flattenDescription(narration);
 
   const setQueueStatus = theaterController.setQueueStatus;
@@ -618,7 +618,7 @@ function TheaterCrossRoadsButton({theaterController,config,page,narration,slug,o
   const items = loadItem ? [{slug:loadItem}] : null;
 
   const [mainLabel, setMainLabel] = useState(page || (finish ? label("finish") : more ? label("more") : null));
-  const [subLabel, setSubLabel] = useState(narration || (finish ? label("finish_narration") : more ? label("more_narration") : null));
+  const [subLabel, setSubLabel] = useState(optionalOverride || narration || (finish ? label("finish_narration") : more ? label("more_narration") : null));
 
   const nextQueuePromiseRef = useRef(null);
 
@@ -673,7 +673,7 @@ function TheaterCrossRoads({ theaterController }) {
 
 
   //add countdown from 10 sec
-  const secondsToShow = 10;
+  const secondsToShow = 10000;
   const [countdown, setCountdown] = useState(secondsToShow);
   const [startTimestamp] = useState(Date.now());
   const defaultState = useRef(true);
@@ -709,7 +709,7 @@ function TheaterCrossRoads({ theaterController }) {
 
   const nextclass = next?.[0]?.nextclass || null;
   const img = isLast ? again : nextclass==="C" ? crossroads : detour;
-  const {optionalText,defaultLabel,optionalLabel,headingLabel,titleLabel,helperText} = (()=>{
+  const {optionalText,defaultLabel,optionalLabel,headingLabel,titleLabel,helperText,optionalOverride} = (()=>{
     if(isLast) return{
       titleLabel:label("section_complete"),
       headingLabel:label("finish_or_more"),
@@ -724,7 +724,7 @@ function TheaterCrossRoads({ theaterController }) {
       defaultLabel:label("continue"),
       optionalLabel:label("detour"),
       helperText:label("theater_crossroads_help"),
-      optionalText:next?.[0]?.text || null
+      optionalText:flattenDescription(next?.[0]?.text || null)
     }
     return {
       titleLabel:label("embedded"),
@@ -732,7 +732,8 @@ function TheaterCrossRoads({ theaterController }) {
       defaultLabel:label("step_over"),
       helperText:label("theater_contained_help"),
       optionalLabel:label("step_into"),
-      optionalText:next?.[0]?.text || null
+      optionalText:null,
+      optionalOverride:flattenDescription(next?.[0]?.text || null)
     }
   })();
 
@@ -755,7 +756,7 @@ function TheaterCrossRoads({ theaterController }) {
   const finishButton = <TheaterCrossRoadsButton config={{finish:true}} timerprogress={timerprogress} selectedIndex={selectedIndex} setSelectedIndex={setSelectedIndex} theaterController={theaterController} index={0} />;
   const moreButton = <TheaterCrossRoadsButton config={{more:true}}  isLast={true} isMore={true} selectedIndex={selectedIndex} setSelectedIndex={setSelectedIndex} theaterController={theaterController} index={1} />;
   const nextButton = <TheaterCrossRoadsButton timerprogress={timerprogress}  selectedIndex={selectedIndex} setSelectedIndex={setSelectedIndex} theaterController={theaterController} page={page} narration={narration} />;
-  const divergeButtons = !next?.length ? null : <>{next.map((n,i) => <TheaterCrossRoadsButton  selectedIndex={selectedIndex} setSelectedIndex={setSelectedIndex} theaterController={theaterController} {...n} index={i+1} />)}</>;
+  const divergeButtons = !next?.length ? null : <>{next.map((n,i) => <TheaterCrossRoadsButton optionalOverride={optionalOverride}  selectedIndex={selectedIndex} setSelectedIndex={setSelectedIndex} theaterController={theaterController} {...n} index={i+1} />)}</>;
 
   const defaultButton = isLast ? finishButton : nextButton;
   const optionalButtons = isLast ? moreButton : divergeButtons;

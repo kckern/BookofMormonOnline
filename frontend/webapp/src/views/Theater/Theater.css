@@ -1249,6 +1249,16 @@ span.pageTitle
     padding: 0 1ex;
     background-color: #555;
     border-radius: 1ex;
+    opacity: 1;
+    transition: all 0.5s ease-in-out;
+    margin-bottom: 1ex;
+  }
+
+  .theater-crossroads-box-button .timerContainer.hidden{
+    height: 0;
+    opacity: 0;
+
+    transition: all 0.5s ease-in-out;
   }
 
 
