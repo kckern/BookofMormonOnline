@@ -63,7 +63,6 @@ function TheaterWrapper({ appController }) {
   let match = useRouteMatch();
   let slug = match?.params?.slug || null;
 
-  console.log("slug",slug);
 
   const [queue, setQueue] = useState([]);
   const [loadFailed, setLoadFailed] = useState(false);
@@ -495,9 +494,10 @@ function TheaterQueueIntro({ theaterController }) {
   const queueItemsInSameSection = queue.filter( item => item?.parent_section?.title === currentItem?.parent_section?.title);
   const narrations = queueItemsInSameSection
     .map(item => item?.narration?.description || null)
-    .filter(item => item);
+    .filter(item => item)
+    .map(item => item.replace(/(<([^>]+)>)/gi, ""));
   const uniqueNarrations = [...new Set(narrations)];
-  const narrationString = flattenDescription(uniqueNarrations.join(" • "));
+  let narrationString = flattenDescription(uniqueNarrations.join(" • ")) || "";
 
   const [part,setPart] = useState(0);
 
@@ -516,7 +516,6 @@ function TheaterQueueIntro({ theaterController }) {
 
 
   const passageCount = queue.length;
-
   return (
     <div className="theater-content-frame theater-queue-intro">
       <div className={"theater-intro-slide " + (part===1 ? "on" : "off") }>

@@ -70,6 +70,8 @@ p::selection,
 a::selection,
 blockquote::selection,
 strong::selection,
+b::selection,
+i::selection,
 span::selection,
 em::selection {
     color: #000;
