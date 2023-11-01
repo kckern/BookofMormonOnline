@@ -833,6 +833,8 @@ function TheaterControls({ theaterController, visible }) {
     if(!currentItem) return;
     setPlayerCanPlay(false);
     const slug = currentItem?.slug || null;
+    const title = currentItem?.parent_page?.title || label("theater");
+    document.title = `${title}`;
     history.push(`/theater/${slug}`);
 
   }, [currentItem]);
