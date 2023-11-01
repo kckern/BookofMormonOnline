@@ -6,6 +6,7 @@ import { label } from "src/models/Utils";
 import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
 import { toast } from "react-toastify";
 import "./Theater.css";
+import {Alert} from "reactstrap";
 import ReactAudioPlayer from "react-audio-player";
 import canAutoplay from 'can-autoplay';
 import ReactTooltip from "react-tooltip";
@@ -591,11 +592,16 @@ function TheaterSectionIntro({ theaterController }) {
 
 function ButtonTimer({timerprogress}){
 
-  if(!timerprogress) return null;
-  return <div className="timerContainer">
-  <div className="timerBand">
+  const [isHidden, setIsHidden] = useState(false);
+
+  useEffect(() => { 
+    if(timerprogress===null) setTimeout(()=>setIsHidden(true),5000);
+  },[timerprogress]);
+
+  return <div className={"buttonTimer" + (isHidden ? " hidden" : "")}>
+  {timerprogress && <div className="timerBand">
     <div className="timerProgress" style={{width:timerprogress+"%"}}></div>
-  </div>
+  </div>}
   </div>
 
 }
@@ -603,6 +609,8 @@ function ButtonTimer({timerprogress}){
 
 function TheaterCrossRoadsButton({theaterController,config,page,narration,slug,onClick,index,setSelectedIndex,selectedIndex,timerprogress}) {
   narration = flattenDescription(narration);
+
+  const setQueueStatus = theaterController.setQueueStatus;
 
   const {finish,more} = config || {};  
   const isContinue = !finish && !more && !slug;
@@ -626,6 +634,9 @@ function TheaterCrossRoadsButton({theaterController,config,page,narration,slug,o
     if (finish) {  document.location = "/user";  return; }
     if(isContinue) return theaterController.next("manual");
 
+    //clear theater progres
+    //clear queue status
+    setQueueStatus([]);
     const nextQueue = await nextQueuePromiseRef.current;
     if (nextQueue) {
       theaterController.setQueue(nextQueue);
@@ -637,9 +648,10 @@ function TheaterCrossRoadsButton({theaterController,config,page,narration,slug,o
 
 return (
     <div className={"theater-crossroads-box-button" + (isActive ? " active" : "") } onClick={handleClick} onMouseEnter={()=>setSelectedIndex(index)} >
-    <h5>{mainLabel}</h5>
+
+    {!index && <ButtonTimer timerprogress={timerprogress} />}
+    {!finish && !more && <h5>{mainLabel}</h5>}
     <h6>{subLabel}</h6>
-    <ButtonTimer timerprogress={timerprogress} />
     </div>
   );
 }
@@ -697,12 +709,13 @@ function TheaterCrossRoads({ theaterController }) {
 
   const nextclass = next?.[0]?.nextclass || null;
   const img = isLast ? again : nextclass==="C" ? crossroads : detour;
-  const {optionalText,defaultLabel,optionalLabel,headingLabel,titleLabel} = (()=>{
+  const {optionalText,defaultLabel,optionalLabel,headingLabel,titleLabel,helperText} = (()=>{
     if(isLast) return{
       titleLabel:label("section_complete"),
       headingLabel:label("finish_or_more"),
       defaultLabel:label("finish"),
       optionalLabel:label("more"),
+      helperText:label("theater_finish_help"),
       optionalText:null
     }
     if(nextclass==="C") return{
@@ -710,12 +723,14 @@ function TheaterCrossRoads({ theaterController }) {
       headingLabel:label("continue_or_detour"),
       defaultLabel:label("continue"),
       optionalLabel:label("detour"),
+      helperText:label("theater_crossroads_help"),
       optionalText:next?.[0]?.text || null
     }
     return {
       titleLabel:label("embedded"),
       headingLabel:label("step_over_or_into"),
       defaultLabel:label("step_over"),
+      helperText:label("theater_contained_help"),
       optionalLabel:label("step_into"),
       optionalText:next?.[0]?.text || null
     }
@@ -749,7 +764,8 @@ function TheaterCrossRoads({ theaterController }) {
   return (  <div className="theater-crossroads">
   <h2>{titleLabel}</h2>
   <h3>{headingLabel}</h3>
-  <div className="theater-crossroads-box">
+  <div className="crossroads-helper">{helperText}</div>
+    <div className="theater-crossroads-box">
     <div className="theater-crossroads-box-top">
       <div className="buttonheader">{defaultLabel}:</div>
       {defaultButton}
@@ -1652,3 +1668,4 @@ const CommentFeed = ({ comments, theaterController }) => {
 };
 
 export default TheaterWrapper;
+

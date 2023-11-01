@@ -618,8 +618,6 @@ img.player-ui:hover{
     background:url('https://media.bookofmormon.online/theater/entrance-1');
     height: 100%;
     background-size: cover;
-    background-blend-mode: multiply;
-    background-color: #000000AA;
 }
 
 .theater-crossroads h2{
@@ -629,9 +627,11 @@ img.player-ui:hover{
 }
 .theater-crossroads h3{
     
-    font-size: 3rem;
+    font-size: 2rem;
     margin: 0;
     padding-bottom: 1rem;
+    padding: 0;
+    font-style: italic;
 }
 
 
@@ -655,9 +655,10 @@ img.player-ui:hover{
 
 .theater-crossroads-box-bottom img
 {
-    width: 15rem;
-    object-position: top;
+    width: 10rem;
+    object-position: center;
     object-fit: contain;
+    min-width: 6rem;
     
 }
 .theater-crossroads-box-offramp
@@ -679,6 +680,8 @@ img.player-ui:hover{
     width: auto;
     flex-grow: 0;
     cursor: pointer;
+    min-width: 10rem;
+    margin-bottom: 1ex;
 }
 
 .theater-crossroads-box-button.active
@@ -691,13 +694,23 @@ img.player-ui:hover{
     margin: 0;
     font-size: 1.6rem;
     font-weight: bold;
+    text-align: center;
 }
 
 .theater-crossroads-box-button h6{
     text-transform: none;
-    font-size: 1.2rem;
+    font-size: 1rem;
     margin-left: 1rem;
     font-weight: 400;
+    max-height: 2.5rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0.5ex;
+    margin:0;
+    text-align: center  ;
 }
 .theater-crossroads-box-button p{
     opacity: 0.6;
@@ -708,8 +721,22 @@ img.player-ui:hover{
     font-weight: 800;
     margin-top: 1ex;
     font-size: 1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
+
+.theater-crossroads .crossroads-helper
+{
+    margin: 0 max(15vw, 5rem);
+    font-size: 0.8rem;
+    line-height: 0.8rem;
+    background-color: #FFFFFF11;
+    padding: 0.5ex;
+    border-radius: 1ex;
+    font-style: italic;
+}
 
 .theater-intro-slide .playbutton
 {
@@ -1222,7 +1249,6 @@ span.pageTitle
     padding: 0 1ex;
     background-color: #555;
     border-radius: 1ex;
-    margin-bottom: 1rem;
   }
 
 
