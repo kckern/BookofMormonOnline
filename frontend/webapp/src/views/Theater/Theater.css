@@ -356,7 +356,7 @@
 {
     background-color: white;
 }
-.theater-main-panel .theater-progress-bar-buttons-playback-range
+.theater-main-panel .theater-config
 {
 	background-color: white;
 	padding: 10px;
@@ -367,14 +367,22 @@
 	border: 5px solid grey;
 	color:#6d6d6d;
 	font-weight:800;
+    /* no select */
+    user-select: none;
 }
 
-.playbackRateSpan
+.theater-config-value
 {
     width: 3rem;
     background-color: #DDD;
     display: inline-block;
     border-radius: 1ex;
+    flex-grow: 0;
+}
+
+.playbackMute{
+	background: #6d6d6d;
+  border-radius: 8px;
 }
 
 input[type=range] {
@@ -1121,8 +1129,14 @@ span.pageTitle
     font-size: 2rem;
     color: #DDD;
   }
-
-
+  .theater-config-container {
+    display: flex;
+    flex-direction: row;
+}
+.theater-config-container>div:first-child{
+   flex-grow: 1;
+   text-align: left;
+}
   .theater-wrapper h4{
     font-size: 1.2rem;
     height: 2rem;
