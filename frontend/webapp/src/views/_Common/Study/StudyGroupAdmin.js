@@ -135,9 +135,14 @@ export default function StudyGroupAdmin({ appController }) {
     setGroup(freshGroup);
   };
 
-  const sortFn = (m) => {
-    return 1;
-    return m.role === "operator" ? 1 : m.userId;
+  const sortFn = (a,b) => {
+    const summaryA = JSON.parse(a?.metaData?.summary || "{}");
+    const summaryB = JSON.parse(b?.metaData?.summary || "{}");
+    const completedA = summaryA?.completed || 0;
+    const completedB = summaryB?.completed || 0;
+    if (completedA > completedB) return -1;
+    if (completedA < completedB) return 1;
+    return 0;
   };
 
 	const handleLeftMouseClick = (e) => {
@@ -221,6 +226,14 @@ export default function StudyGroupAdmin({ appController }) {
                 let mutedIcon = isMuted ? <img src={mute} /> : "NOMUTE";
                 let isBot = !!member?.metaData?.isBot;
 
+                if(isBot) return null;
+
+                let summary = {};
+                try{
+                  summary = JSON.parse(member?.metaData?.summary || "{}");
+                }catch(e){}
+                const {completed} = summary;
+
                 return (
                   <Card className={"userAdminBox"}>
                     <CardHeader>
@@ -232,6 +245,7 @@ export default function StudyGroupAdmin({ appController }) {
                           <span className="actions" onClick={handleLeftMouseClick}>⋮</span>
                           <img src={membericon} />
                           {member.nickname}
+                          <span className="completed">{completed || 0}%</span>
                         </h5>
                       </ContextMenuTrigger>
                     </CardHeader>
@@ -241,43 +255,43 @@ export default function StudyGroupAdmin({ appController }) {
                       <CardFooter>
                       {isAdmin ? (
                         <div className="statusline">
-                          <img src={admin} />{" "}
+                          <img src={admin} className="menuimg" />{" "}
                           <div>{label("administrator")}</div>{" "}
                         </div>
                       ) : null}
                       {isMuted ? (
                         <div className="statusline">
-                          <img src={mute} /> <div>{label("muted")}</div>
+                          <img src={mute} className="menuimg"/> <div>{label("muted")}</div>
                         </div>
                       ) : null}
                     </CardFooter>
 
                     <ContextMenu id={`${member.userId}_contextmenu`}>
                       <ContextMenuItem
-                        data={{ userId: member.userId }}
-                        onClick={isMuted ? unMuteMember : muteMember}
+                        onClick={
+                          isMuted
+                            ? () => unMuteMember(null, { userId: member.userId })
+                            : () => muteMember(null, { userId: member.userId })
+                        }
                       >
-                        <img src={mute} />{" "}
+                        <img src={mute}  className="menuimg"/>{" "}
                         {isMuted ? label("unmute") : label("mute")}
                       </ContextMenuItem>
                       <ContextMenuItem
-                        data={{ userId: member.userId }}
-                        onClick={removeMember}
+                        onClick={() => removeMember(null, { userId: member.userId })}
                       >
-                        <img src={remove} /> {label("remove_from_group")}
+                        <img src={remove}  className="menuimg"/> {label("remove_from_group")}
                       </ContextMenuItem>
                       <ContextMenuItem
-                        data={{ userId: member.userId }}
-                        onClick={banMember}
+                        onClick={() => banMember(null, { userId: member.userId })}
                       >
-                        <img src={ban} /> {label("ban_from_group")}
+                        <img src={ban}  className="menuimg"/> {label("ban_from_group")}
                       </ContextMenuItem>
                       <ContextMenuItem divider />
                       <ContextMenuItem
-                        data={{ userId: member.userId }}
-                        onClick={isAdmin ? removeAdmin : makeAdmin}
+                        onClick={isAdmin ? () => removeAdmin(null, { userId: member.userId }) : () => makeAdmin(null, { userId: member.userId })}
                       >
-                        <img src={admin} />{" "}
+                        <img src={admin}  className="menuimg"/>{" "}
                         {isAdmin
                           ? label("remove_admin")
                           : label("make_group_admin")}

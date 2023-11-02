@@ -20,7 +20,7 @@
   width: 24%;
 }
 
-.userAdminBox img {
+.userAdminBox .card-body > img {
   width: 100%;
   max-width: 5rem;
   max-height: 5rem;
@@ -38,6 +38,24 @@
 }
 .card.userAdminBox .card-header {
   padding: 1ex;
+}
+.userAdminBox .completed
+{
+  color: white;
+  background-color: gray;
+  border-radius: 1ex;
+  font-size: small;
+  padding: 3px 1ex;
+  margin-left: 1em;
+  float: right;
+}
+.contextmenu__item{
+  padding: 0 1ex;
+}
+ img.menuimg{
+  width: 2rem;
+  opacity: 0.5;
+  margin-right: 1ex;
 }
 
 .membershipRequests .userId, 
