@@ -215,6 +215,10 @@ div.row-r div.rightconnection:hover {
   background-position: right;
 }
 
+a.theater-link{
+	position: relative;
+}
+
 a.theater-link img
 {
   height: 2rem;
@@ -393,4 +397,13 @@ a.theater-link img:hover
 .muteButton img{
   width: 60%;
   opacity: 0.7;
+}
+
+.card-header-title-wrapper{
+	display:flex;
+	justify-content:space-between;
+}
+
+.theater-link{
+	display:inline-block;
 }
