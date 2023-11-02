@@ -1619,7 +1619,7 @@ function TheaterCommentFeed({ theaterController }) {
     cursorIndex,
     currentProgress,
     currentDuration,
-    cursorChangeWasManual
+		isPlaying
   } = theaterController;
   const currentItem = queue[cursorIndex] || null;
   const coms = currentItem?.coms || [];
@@ -1636,6 +1636,7 @@ function TheaterCommentFeed({ theaterController }) {
   const division = queuedMessages.length > 5 ? queuedMessages.length : 5; // this is for items with low comment count, so its coms dont'get skipped.
   const commentCursor = Math.floor(  (division * (currentProgress * 0.7)) / 100 );
   useEffect(async () => {
+		if(!isPlaying) return;
     //wait 1-3 seconds
     await new Promise(resolve =>
       setTimeout(resolve, 1000 + Math.random() * 2000)
@@ -1644,7 +1645,7 @@ function TheaterCommentFeed({ theaterController }) {
     if (!queuedMessages[commentCursor]) return;
     const onDeckComment = queuedMessages.filter((_,index)=>index <= commentCursor);
     setComments(prev=>new Set([...prev, ...onDeckComment]));
-  }, [commentCursor]);
+  }, [commentCursor,isPlaying]);
 
   return (
     <div className="theater-comment-panel">
