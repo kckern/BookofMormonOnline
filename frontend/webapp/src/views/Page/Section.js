@@ -11,6 +11,7 @@ import { addHighlightTagSelectively } from "./TextContent";
 import theater from "../_Common/svg/theater.svg";
 import { Link } from "react-router-dom/cjs/react-router-dom.min";
 import { label } from "../../models/Utils";
+import ReactTooltip from "react-tooltip";
 
 function Section({ sectionData, pageController, setPageSlug }) {
   let preConnection = null;
@@ -40,10 +41,17 @@ function Section({ sectionData, pageController, setPageSlug }) {
     setSectionHighlights([...sectionHighlights]);
   };
   const slugTip = sectionData.slug.split("/").pop();
-  const theaterLink = <Link to={`/theater/${slugTip}`} className="theater-link" data-tip={label("view_in_theater")} data-for="page-info-tooltip">
-    <img src={theater} alt="theater" />
-  </Link>
 
+	const theaterLink = <>
+		<Link to={`/theater/${slugTip}`} className="theater-link" data-tip={label("view_in_theater")} data-for="page-info-tooltip">
+    	<img src={theater} alt="theater" />
+  	</Link>
+		<ReactTooltip
+			effect="solid"
+			backgroundColor="#666"
+			id="page-info-tooltip"
+		/>
+	</>
   return (
     <>
       {preConnection}
@@ -54,10 +62,12 @@ function Section({ sectionData, pageController, setPageSlug }) {
         titletext={sectionData.title}
       >
         <div className="card-header" style={{ margin: 0 }}>
+				<div className="card-header-title-wrapper">
           <h4 id={"h2/" + sectionData.slug} className="title lg-4 text-left">
             {sectionData.title}
-            {theaterLink}
           </h4>
+					{theaterLink}
+					</div>
           {sectionData.rows.map((rowData, rowIndex) => {
             if (rowData.type === "N") {
               return (
