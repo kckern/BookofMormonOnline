@@ -460,14 +460,7 @@ export default function Page({ appController }) {
 
   if (pageController.states.loading !== false) return <Loader />;
   return (
-    <>
-
-          <ReactTooltip
-              effect="solid"
-              place="top"
-              backgroundColor="#666"
-              id="page-info-tooltip"
-            />
+    <>  
       {!readyToScroll && needToLoadComments ? (
         <LoadingPageCommentsNotice
           commentState={commentState}
@@ -475,7 +468,6 @@ export default function Page({ appController }) {
         />
       ) : null}
       <div
-
         className={"content page " + ((readyToScroll || !needToLoadComments) ? "ready" : "notready")}
         onMouseDown={() => pageController.functions.setTouched(true)}
       >
