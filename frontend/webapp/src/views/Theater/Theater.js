@@ -84,7 +84,7 @@ function TheaterWrapper({ appController }) {
     parseFloat(localStorage.getItem("playbackRate")) || 1
   );
 	const [playbackVolume, setPlaybackVolume] = useState(
-    parseFloat(localStorage.getItem("playbackVolume")) || 1
+    parseFloat(localStorage.getItem("playbackVolume")).toFixed(1) || 1
   );
 	const [isMuted,setIsMuted] = useState((localStorage.getItem("playbackMuted")==='true'?true:false) || false);
   const token = appController.states.user.token;
@@ -1372,7 +1372,7 @@ function PlaybackSettings({setShowPlaybackSettings,theaterController}){
 					localStorage.setItem("playbackVolume", +e.target.value);
 					if(!document.getElementById("theater-audio-player")) return;
 					document.getElementById("theater-audio-player").volume = +e.target.value;
-					return parseFloat((+e.target.value||1).toFixed(1)); // keeping it in float with one decimal point
+					return parseFloat((+e.target.value).toFixed(1)); // keeping it in float with one decimal point
 				});
 			}
 	}
