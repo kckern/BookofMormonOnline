@@ -48,6 +48,7 @@ function Section({ sectionData, pageController, setPageSlug }) {
   	</Link>
 		<ReactTooltip
 			effect="solid"
+      place="left"
 			backgroundColor="#666"
 			id="page-info-tooltip"
 		/>
