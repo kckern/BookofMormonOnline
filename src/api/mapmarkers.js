@@ -1,7 +1,10 @@
-import { Model, Sequelize } from 'sequelize';
-import { models as Models, sequelize, SQLQueryTypes } from '../config/database';
-import { determineLanguage } from "./utils";
-import { includeTranslation, Op, translatedValue } from '../resolvers/_common';
+const Sequelize = require('sequelize');
+const { models: Models, sequelize, SQLQueryTypes } = require('../config/database');
+const { determineLanguage } = require("./utils");
+const { includeTranslation, Op, translatedValue } = require('../resolvers/_common');
+
+
+
 
 const mapMarker = async (req, res) => {
     
@@ -47,4 +50,4 @@ const mapMarker = async (req, res) => {
 
 }
 
-export default {mapMarker};
+module.exports = { mapMarker };
