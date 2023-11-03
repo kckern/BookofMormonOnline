@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
 import Comments from "./Study/Study";
-import { assetUrl } from 'src/models/BoMOnlineAPI';
+import { assetUrl } from "src/models/BoMOnlineAPI";
 import Parser from "html-react-parser";
 import Draggable from "react-draggable";
 import { renderPersonPlaceHTML } from "../Page/PersonPlace";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import ReactTooltip from "react-tooltip";
 import { Link, useHistory } from "react-router-dom";
-import { Victory } from "src/views/User/Victory"
-import moment from 'moment';
+import { Victory } from "src/views/User/Victory";
+import moment from "moment";
 import "./PopUp.css";
 import {
   snapSelectionToWord,
@@ -18,7 +18,13 @@ import {
   log,
   isMobile,
 } from "src/models/Utils";
-import { Button, Dropdown, DropdownItem, DropdownMenu, DropdownToggle } from "reactstrap";
+import {
+  Button,
+  Dropdown,
+  DropdownItem,
+  DropdownMenu,
+  DropdownToggle,
+} from "reactstrap";
 import ReactMarkdown from "react-markdown";
 import Loader, { Spinner } from "./Loader";
 import { MobileDrawer } from "./Drawer";
@@ -38,12 +44,14 @@ export function Loading({ type, appController, callingAPI }) {
             ×
           </li>
         </ul>
-        <div className="popupwindow_head">{label("loading_x", [label(type.toLowerCase())])}</div>
+        <div className="popupwindow_head">
+          {label("loading_x", [label(type.toLowerCase())])}
+        </div>
       </div>
       <div className="card-body">
         <div id="my-tab-content" className="tab-content ">
           <div className="tab-pane active loading" id="home" role="tabpanel">
-            <Spinner top={"10em"}/>
+            <Spinner top={"10em"} />
           </div>
         </div>
       </div>
@@ -58,8 +66,7 @@ function CommentsPlaceholder() {
 
 function PopUp({ appController }) {
   // if (appController.states.popUp.open !== true) return (<></>);
-  const [currentKeyVal,setCurrentKeyVal] = useState(null);
-
+  const [currentKeyVal, setCurrentKeyVal] = useState(null);
 
   //listen for escape key and close popup if pressed
   useEffect(() => {
@@ -74,25 +81,28 @@ function PopUp({ appController }) {
     };
   }, []);
 
-  
-  useEffect(()=>{
+  useEffect(() => {
     const key = appController.states.popUp.type;
-    const val = Array.isArray(appController.states.popUp.activeId) ? appController.states.popUp.activeId.shift() : appController.states.popUp.activeId;
-    if(!key || !val || currentKeyVal===`${key}.${val}`  ) return false;
-    log({appController,key,val});
+    const val = Array.isArray(appController.states.popUp.activeId)
+      ? appController.states.popUp.activeId.shift()
+      : appController.states.popUp.activeId;
+    if (!key || !val || currentKeyVal === `${key}.${val}`) return false;
+    log({ appController, key, val });
     setCurrentKeyVal(`${key}.${val}`);
-  },[appController.states.popUp.type,appController.states.popUp.activeId])
+  }, [appController.states.popUp.type, appController.states.popUp.activeId]);
   if (!appController.popUpData) appController.popUpData = {};
 
-  if(isMobile()) return <MobileDrawer appController={appController} />
+  if (isMobile()) return <MobileDrawer appController={appController} />;
   if (!appController.states.popUp.open) return null;
- 
 
   if (appController.states.popUp.type === "commentary")
     return <Commentary appController={appController} />;
   if (appController.states.popUp.type === "people")
     return <Person appController={appController} />;
-  if (appController.states.popUp.type === "places" || appController.states.popUp.type === "place")
+  if (
+    appController.states.popUp.type === "places" ||
+    appController.states.popUp.type === "place"
+  )
     return <Place appController={appController} />;
   if (appController.states.popUp.type === "victory")
     return <Victory appController={appController} />;
@@ -104,62 +114,69 @@ function PopUp({ appController }) {
 
 export default PopUp;
 
-
-
 export function LegalNotice({ appController, commentaryData, showLegal }) {
   const [markdown, setMarkdown] = useState(null);
   useEffect(() => {
-    BoMOnlineAPI({
-      markdown: "access_notice",
-      sourceUsage: {
-        token: appController.states.user.token,
-        source: commentaryData.publication.source_id
+    BoMOnlineAPI(
+      {
+        markdown: "access_notice",
+        sourceUsage: {
+          token: appController.states.user.token,
+          source: commentaryData.publication.source_id,
+        },
+      },
+      { useCache: ["markdown"] },
+    ).then((result) => {
+      let text = result.markdown.access_notice.markdown;
+      if (typeof text.replace !== "function") {
+        console.log({ result });
+        return false;
       }
-    },
-      { useCache: ["markdown"] })
-      .then(result => {
-        let text = result.markdown.access_notice.markdown;
-        if(typeof text.replace !== "function"){
-          console.log({result});
-          return false;
-        } 
-        let usage = result.sourceUsage[0];
-        text = text.replace("$1",appController.states.user.social?.nickname || label("guest"));
-        text = text.replace("$2",usage);
-        text = text.replace("$3",`${commentaryData.publication.source_title}; © ${commentaryData.publication.source_year} ${commentaryData.publication.source_name}; ${commentaryData.publication.source_publisher}`);
-        setMarkdown(text);
-
-      })
+      let usage = result.sourceUsage[0];
+      text = text.replace(
+        "$1",
+        appController.states.user.social?.nickname || label("guest"),
+      );
+      text = text.replace("$2", usage);
+      text = text.replace(
+        "$3",
+        `${commentaryData.publication.source_title}; © ${commentaryData.publication.source_year} ${commentaryData.publication.source_name}; ${commentaryData.publication.source_publisher}`,
+      );
+      setMarkdown(text);
+    });
   }, [showLegal]);
 
-  if(appController.states.popUp.activeId !== commentaryData.id) return null;
-
+  if (appController.states.popUp.activeId !== commentaryData.id) return null;
 
   if (!markdown || !showLegal) return null;
-  return <div className={"notice"}><ReactMarkdown linkTarget={'_blank'}>{markdown}</ReactMarkdown></div>
+  return (
+    <div className={"notice"}>
+      <ReactMarkdown linkTarget={"_blank"}>{markdown}</ReactMarkdown>
+    </div>
+  );
 }
 
-
 function Person({ appController }) {
-
-
-
   if (
     appController.popUpData[appController.states.popUp.activeId] === undefined
   ) {
-    BoMOnlineAPI({ person: appController.states.popUp.ids },{useCache:["people"]}).then(
-      (response) => {
-        appController.functions.setPopUp({
-          type: "people",
-          ids: appController.states.popUp.ids,
-          popUpData: response.person,
-        });
-        if(!response.person) return false;
-        const person = response.person[appController.states.popUp.ids[0]];
-        const slugs = person.relations?.filter(i=>i.person?.slug).map(i=>i.person.slug) || [];
-       BoMOnlineAPI({ people: slugs }, { useCache: ["people"] });
-      }
-    );
+    BoMOnlineAPI(
+      { person: appController.states.popUp.ids },
+      { useCache: ["people"] },
+    ).then((response) => {
+      appController.functions.setPopUp({
+        type: "people",
+        ids: appController.states.popUp.ids,
+        popUpData: response.person,
+      });
+      if (!response.person) return false;
+      const person = response.person[appController.states.popUp.ids[0]];
+      const slugs =
+        person.relations
+          ?.filter((i) => i.person?.slug)
+          .map((i) => i.person.slug) || [];
+      BoMOnlineAPI({ people: slugs }, { useCache: ["people"] });
+    });
     return <Loading type="Person" appController={appController} />;
   }
 
@@ -177,10 +194,9 @@ function Person({ appController }) {
     Mentioned: "by",
   };
 
-  
   return (
     <>
-      <Draggable handle=".person_head">
+      <Draggable handle=".card-header">
         <div
           id="popUp"
           className="card pp popupwindow"
@@ -208,23 +224,22 @@ function Person({ appController }) {
           <div className="card-body">
             <div className="ppbody">
               <div className="bodytext">
-              <h3>
-                {processName(person.name)}
-                <br />
-                <small className="ppbody-title">
-                  {replaceNumbers(person.title)}
-                </small>
-              </h3>
+                <h3>
+                  {processName(person.name)}
+                  <br />
+                  <small className="ppbody-title">
+                    {replaceNumbers(person.title)}
+                  </small>
+                </h3>
                 {renderPersonPlaceHTML(person.description, appController)}
               </div>
 
               <div className="refbox">
+                <div className="ppimg">
+                  <img alt="reload" src={`${assetUrl}/people/${person.slug}`} />
+                  <br />
+                </div>
 
-              <div className="ppimg">
-                <img alt="reload" src={`${assetUrl}/people/${person.slug}`} />
-                <br />
-              </div>
-              
                 <h4>{label("relationships")}</h4>
                 <table className="refbox-tabel">
                   <tbody>
@@ -274,7 +289,6 @@ function Person({ appController }) {
 }
 
 function Place({ appController }) {
-
   const [showMapsDropDown, showMapsDropDownSet] = useState(false),
     { push } = useHistory();
 
@@ -286,27 +300,24 @@ function Place({ appController }) {
           ids: appController.states.popUp.ids,
           popUpData: response.places,
         });
-      }
+      },
     );
     return <Loading type="Place" appController={appController} />;
   }
 
   const onSelectMapType = (e, map, place) => {
-    e.preventDefault()
-    appController?.functions?.closePopUp()
+    e.preventDefault();
+    appController?.functions?.closePopUp();
     let event = new CustomEvent("handleMapChange");
     event.map = map;
     event.place = place;
     window.dispatchEvent(event);
-    // 
-    push(`/map/${map}/place/${place}`)
+    //
+    push(`/map/${map}/place/${place}`);
   };
-
-
 
   let place = appController.popUpData[appController.states.popUp.activeId];
   if (place === undefined) return <pre>{appController.popUp}</pre>;
-
 
   return (
     <Draggable handle=".place_head">
@@ -326,69 +337,74 @@ function Place({ appController }) {
               appController.states.popUp.ids.length
             }
           >
-            <li
-              className="close"
-              onClick={appController.functions.closePopUp}
-            >
+            <li className="close" onClick={appController.functions.closePopUp}>
               ×
             </li>
           </ul>
         </div>
         <div className="card-body">
           <div className="ppbody">
-
             <div className="bodytext">
-            <h3>
-              <span>
-                {Parser(
-                  place.name
-                    ? place.name.replace(/(\d+$)/, "<sup>$1</sup>")
-                    : ""
-                )}
-              </span>
-              <br />
-              <small className="ppbody-title">{place.info}</small>
-            </h3>
+              <h3>
+                <span>
+                  {Parser(
+                    place.name
+                      ? place.name.replace(/(\d+$)/, "<sup>$1</sup>")
+                      : "",
+                  )}
+                </span>
+                <br />
+                <small className="ppbody-title">{place.info}</small>
+              </h3>
               {renderPersonPlaceHTML(place.description, appController)}
             </div>
 
-
             <div className="refbox">
-
-            <div className="ppimg">
-
-            {place?.maps?.length > 1 ? (
-                <Dropdown isOpen={showMapsDropDown} toggle={() => showMapsDropDownSet(!showMapsDropDown)} direction="right">
-                  <DropdownToggle>
-                    {label("view_on_map")}
-                  </DropdownToggle>
-                  <DropdownMenu>
-                    {place.maps.map((map, index) => <DropdownItem key={index} header>
-                      <Link onClick={(e) => onSelectMapType(e, map.slug, place.slug)}>🌎 {map.name}</Link>
-                    </DropdownItem>)}
-                  </DropdownMenu>
-                </Dropdown>
-              ) : (
-                place?.maps?.length === 1 && (
-                  <Link to={`/map/neareast/place/${place.slug}`} onClick={(e) => onSelectMapType(e, 'neareast', place.slug)}>
-                    <Button
-                      className="map-dropdown"
+              <div className="ppimg">
+                {place?.maps?.length > 1 ? (
+                  <Dropdown
+                    isOpen={showMapsDropDown}
+                    toggle={() => showMapsDropDownSet(!showMapsDropDown)}
+                    direction="right"
+                  >
+                    <DropdownToggle>{label("view_on_map")}</DropdownToggle>
+                    <DropdownMenu>
+                      {place.maps.map((map, index) => (
+                        <DropdownItem key={index} header>
+                          <Link
+                            onClick={(e) =>
+                              onSelectMapType(e, map.slug, place.slug)
+                            }
+                          >
+                            🌎 {map.name}
+                          </Link>
+                        </DropdownItem>
+                      ))}
+                    </DropdownMenu>
+                  </Dropdown>
+                ) : (
+                  place?.maps?.length === 1 && (
+                    <Link
+                      to={`/map/neareast/place/${place.slug}`}
+                      onClick={(e) =>
+                        onSelectMapType(e, "neareast", place.slug)
+                      }
                     >
-                      {label("view_on_map")}
-                    </Button></Link>
-                )
-              )}
-              
-              <img alt="reload" src={`${assetUrl}/places/${place.slug}`} />
-            </div>
-            
+                      <Button className="map-dropdown">
+                        {label("view_on_map")}
+                      </Button>
+                    </Link>
+                  )
+                )}
+
+                <img alt="reload" src={`${assetUrl}/places/${place.slug}`} />
+              </div>
+
               <ReferenceList
                 index={place.index}
                 appController={appController}
               />
             </div>
-
-
           </div>
         </div>
         <Comments />
@@ -398,9 +414,6 @@ function Place({ appController }) {
 }
 
 function ReferenceList({ index, appController }) {
-
-
-
   return (
     <>
       <h4>{label("references")}</h4>
@@ -430,23 +443,24 @@ function ReferenceList({ index, appController }) {
   );
 }
 
-
-
 export const displayDate = (date) => {
   let len = date.length;
-  return moment(date, [(len === 4) ? "YYYY" : 'YYYY-MM-DD']).format((len === 4) ? label("history_date_format_year") : label("history_date_format_full"))
-}
-
+  return moment(date, [len === 4 ? "YYYY" : "YYYY-MM-DD"]).format(
+    len === 4
+      ? label("history_date_format_year")
+      : label("history_date_format_full"),
+  );
+};
 
 function History({ appController }) {
-
   const [doc, setData] = useState(null);
 
   let slug = appController.states.popUp.ids;
 
-  useEffect(()=>{
-    document.title = doc?.document + " (" + doc?.source + ") | " + label("home_title");
-  },doc)
+  useEffect(() => {
+    document.title =
+      doc?.document + " (" + doc?.source + ") | " + label("home_title");
+  }, doc);
 
   useEffect(() => {
     setData(null);
@@ -456,63 +470,67 @@ function History({ appController }) {
       let el = document.querySelector("#popUp .card-body");
       if (el) el.scrollTop = 0;
     });
-  }, [slug])
+  }, [slug]);
 
-  if (!doc) return <Loading appController={appController} type="history" />
+  if (!doc) return <Loading appController={appController} type="history" />;
 
-
-
-  return <div
-    id="popUp"
-    className="card popupwindow historycard"
-    style={{
-      top: appController.states.popUp.top,
-      left: appController.states.popUp.left,
-    }}
-  >
-
-    <div className="card-header">
-      <ul className={"source_tabs souce_tab_list_" + 0}>
-        <li className="close" onClick={appController.functions.closePopUp}>
-          ×
-        </li>
-      </ul>
-      <div className="popupwindow_head">{doc.source} <span>• {displayDate(doc.date)}</span></div>
-    </div>
-    <div className="card-body">
-      <div id="my-tab-content" className="tab-content ">
-        <div className="tab-pane active " id="home" role="tabpanel">
-          <h3>{doc.document}</h3>
-          <div className="transcript"> {Parser(doc.transcript)}</div>
-
-          <div className='history_fax'>{[...Array(doc.pages).keys()].map(i => {
-            return <img src={`${assetUrl}/history/fax/${doc.id}.${i + 1}`} />
-          })}</div>
-
+  return (
+    <div
+      id="popUp"
+      className="card popupwindow historycard"
+      style={{
+        top: appController.states.popUp.top,
+        left: appController.states.popUp.left,
+      }}
+    >
+      <div className="card-header">
+        <ul className={"source_tabs souce_tab_list_" + 0}>
+          <li className="close" onClick={appController.functions.closePopUp}>
+            ×
+          </li>
+        </ul>
+        <div className="popupwindow_head">
+          {doc.source} <span>• {displayDate(doc.date)}</span>
         </div>
       </div>
-    </div>
-    <Comments
-      pageController={appController.activePageController}
-      linkData={{ history: "slug" }}
-    />
-  </div>
+      <div className="card-body">
+        <div id="my-tab-content" className="tab-content ">
+          <div className="tab-pane active " id="home" role="tabpanel">
+            <h3>{doc.document}</h3>
+            <div className="transcript"> {Parser(doc.transcript)}</div>
 
+            <div className="history_fax">
+              {[...Array(doc.pages).keys()].map((i) => {
+                return (
+                  <img src={`${assetUrl}/history/fax/${doc.id}.${i + 1}`} />
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+      <Comments
+        pageController={appController.activePageController}
+        linkData={{ history: "slug" }}
+      />
+    </div>
+  );
 }
 
-
-export function setPopDocTitle(popUpData,type)
-{
-  if(!popUpData) return null;
+export function setPopDocTitle(popUpData, type) {
+  if (!popUpData) return null;
   let title = null;
-  
+
   title = processName(popUpData?.name) || popUpData?.title;
 
   //console.log(popUpData)
   const short = popUpData?.publication?.source_short || "";
-  if(type==="commentary")  title = ( short && short + ": " ) + popUpData.title + " • " + label("commentary_on_x", [popUpData.reference]);
-  
+  if (type === "commentary")
+    title =
+      (short && short + ": ") +
+      popUpData.title +
+      " • " +
+      label("commentary_on_x", [popUpData.reference]);
 
-  if(title) document.title  = title + " | " + label("home_title");
-
+  if (title) document.title = title + " | " + label("home_title");
 }
