@@ -15,7 +15,7 @@ import axios from 'axios';
 import bodyParser from 'body-parser';
 import { processSphinx } from './search/sphinx';
 import {ping} from "../src/library/ping.js"
-import {apis} from "../src/api/index.js"
+import {apis,endpoints} from "../src/api/index.js"
 
 
 const langs = process.env.LANGS?.split(',') || ['', 'en', 'ko', 'dev'];
@@ -152,10 +152,12 @@ app.use( (req, res, next) => {
 });
 
 
-
+//GET Endpoints
+Object.keys(endpoints).forEach((i:any)=>app.get(`/${i}`, endpoints[i]));
 
 
 const frontends = ["webapp", "game", "welcome"];
+
 
 //FRONTEND (GET): STATIC EXPRESS
 frontends.forEach(i=>{
@@ -172,6 +174,7 @@ frontends.forEach(i=>{
 
 const apiPaths = Object.keys(apis);
 apiPaths.forEach((i:any)=>app.post(`/${i}`, apis[i]));
+
 
 
 

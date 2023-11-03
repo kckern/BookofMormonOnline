@@ -1,6 +1,7 @@
 
 const {studyBuddy, studyBuddyTextBlock} = require("./studybuddy");
 const logger = require("../library/utils/logger.cjs");
+const { mapMarker } = require("./mapmarkers").default;
 const webhook = async (req, res) => {
     
     logger.info(`Webhook received: ${JSON.stringify(req.body)}`); // "info" is the log level
@@ -39,6 +40,10 @@ const webhook = async (req, res) => {
 
 const apis = {
     "webhook":webhook,
-    "studybuddy": async (req,res) => res.json(await studyBuddyTextBlock({...req.body}))
+    "studybuddy": async (req,res) => res.json(await studyBuddyTextBlock({...req.body})),
 }
-module.exports = {apis};
+
+const endpoints = {
+    "mapmarker/:id":mapMarker,
+}
+module.exports = {apis,endpoints};
