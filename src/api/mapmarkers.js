@@ -1,7 +1,7 @@
 const Sequelize = require('sequelize');
-const { models: Models, sequelize, SQLQueryTypes } = require('../config/database');
+const { models: Models, sequelize, SQLQueryTypes } = require('../config/database.ts');
 const { determineLanguage } = require("./utils");
-const { includeTranslation, Op, translatedValue } = require('../resolvers/_common');
+const { includeTranslation, Op, translatedValue } = require('../resolvers/_common.ts');
 
 
 
