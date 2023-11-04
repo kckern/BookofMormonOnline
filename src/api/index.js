@@ -1,7 +1,7 @@
 
 const {studyBuddy, studyBuddyTextBlock} = require("./studybuddy");
 const logger = require("../library/utils/logger.cjs");
-const { mapMarker } = require("./mapmarkers").default;
+const { mapMarker } = require("./mapmarkers");
 const webhook = async (req, res) => {
     
     logger.info(`Webhook received: ${JSON.stringify(req.body)}`); // "info" is the log level
