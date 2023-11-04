@@ -1,8 +1,6 @@
-const Sequelize = require('sequelize');
-const { models: Models, sequelize, SQLQueryTypes } = require('../config/database.ts');
-const { determineLanguage } = require("./utils");
-const { includeTranslation, Op, translatedValue } = require('../resolvers/_common.ts');
 
+const { determineLanguage } = require("./utils");
+const { queryDB } = require("../library/db");
 
 
 
@@ -12,20 +10,17 @@ const mapMarker = async (req, res) => {
     const path = req.path.split("/").filter(p=>p);
     const slug = path.pop();
 
-    const config = { where:{slug}};
-    if(lang) config.include = [includeTranslation({ [Op.or]: ['name', 'info'] },lang)];
-
-    const placeData = await Models.BomPlaces.findOne(config);
-    if(!placeData) return res.json({success:false, message: "No place found with that slug"});
-    
-    const translatedName = translatedValue(placeData,"name");
-    const translatedInfo = translatedValue(placeData,"info");
-
-
-    let name = translatedName || placeData.getDataValue("name");
-    let info = translatedInfo || placeData.getDataValue("info");
-
+    const placeDataResults = await queryDB(`SELECT * FROM bom_places WHERE slug = '${slug}'`);
+    const [placeData] = placeDataResults;
+    let name = placeData?.name;
+    if(lang)
+    {
+        const translation = await queryDB(`SELECT * FROM bom_translation WHERE guid = '${placeData.guid}' AND lang = '${lang}' and refkey = 'name'`);
+        const [item] = translation || [];
+        name = item?.value || name;
+    }
     name = name.replace(/\d+$/,"").trim();
+
 
     const markerColor = "#87cefa";
 
