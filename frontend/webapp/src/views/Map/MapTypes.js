@@ -46,12 +46,14 @@ export default function MapTypes({ getMap, mapName }) {
                 : <></>}
 
             <div className='maptypes noselect' style={{ display: isShow ? "block" : "none" }}>
-                {mapList?.map((map, index) => {
+                {mapList?.filter(i=>{
+                    return i.zoom >= 0 && mapName !== i.name
+                }).map((map, index) => {
                     if (map.zoom < 0) return null;
                     const img = new Image();
                     img.src = `${assetUrl}/map/${map.slug}/${map.slug}`;
-                    return mapName !== map.name
-                        ? <div
+                    return <div
+                            
                             data-tip={`<div class='mapType'><img src='${assetUrl}/map/${map.slug}/${map.slug}'><p>${map.desc}</p><div>`}
                             data-for='mapselect'
                             key={index}
@@ -60,7 +62,6 @@ export default function MapTypes({ getMap, mapName }) {
                         >
                             {map.name}
                         </div>
-                        : <></>
                 })}
             </div>
             {mapList ? <ReactTooltip
