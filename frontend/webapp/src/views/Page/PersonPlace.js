@@ -2,14 +2,19 @@
 import React from 'react';
 import parse from 'html-react-parser';
 import ReactTooltip from 'react-tooltip';
-import crypto from "crypto-browserify";
 import { Link } from 'react-router-dom';
 import { assetUrl } from "src/models/BoMOnlineAPI";
 
 export const renderPersonPlaceHTML = (html, pageController) => {
 
-  html = html.replace(/{(.*?)\|(.*?)}/g, "<a class='person' slug='$2' label='$1'></a>");
+	html = html.replace(/{(.*?)\|(.*?)}/g, "<a class='person' slug='$2' label='$1'></a>");
   html = html.replace(/\[(.*?)\|(.*?)\]/g, "<a class='place'  slug='$2' label='$1'></a>");
+
+	let className = html.match(/(?<=class=)'(.*?)'/g);
+
+	html = html+"<span class='react-tooltip'></span>";
+	let slugs = html.match(/(?<=slug=)'(.*?)'/g);
+	
   const options = {
     replace: domNode => {
       if (domNode.attribs && domNode.attribs.class === 'person') {
@@ -18,7 +23,33 @@ export const renderPersonPlaceHTML = (html, pageController) => {
       if (domNode.attribs && domNode.attribs.class === 'place') {
         return <PlaceLink pageController={pageController} label={domNode.attribs.label} id={domNode.attribs.slug} />
       }
-    }
+			if(domNode.attribs && domNode.attribs.class === 'react-tooltip'){
+				if(slugs === null){
+					return <></>;
+				}
+				return(
+					<>
+						{slugs.map(slug=>{
+						const id = slug.replaceAll("'",'');
+						const typeName = className.shift().replaceAll("'",'')+'List';
+						return <ReactTooltip
+							wrapper={"span"}
+							id={id}
+							effect="solid"
+							backgroundColor={"#666"}
+							arrowColor={"#666"}
+						>
+							<NarrationToolTip
+								id={id}
+								type={typeName}
+								appController={pageController?.appController || pageController}
+							/>
+						</ReactTooltip>
+						})}
+					</>
+				)
+			}
+    },
   };
   return parse(html, options);
 }
@@ -30,33 +61,18 @@ function PersonLink({ label, id, pageController }) {
     const appController = pageController?.appController || pageController
     appController.functions.setPopUp({ type: "people", ids: [id], popUpData: pageController.preLoad?.peoplePlaces?.person });
   }
-  let tooltip_id = crypto.randomBytes(20).toString('hex');
-
 
   return (
     <>
       <Link
         to={"/people/" + id}
         data-tip
-        data-for={tooltip_id}
+        data-for={id}
         onClick={handleClick}
         className={"person"}
       >
         {label}
       </Link>
-      <ReactTooltip
-        wrapper={"span"}
-        id={tooltip_id}
-        effect="solid"
-        backgroundColor={"#666"}
-        arrowColor={"#666"}
-      >
-        <NarrationToolTip
-          id={id}
-          type={"personList"}
-          appController={pageController?.appController || pageController}
-        />
-      </ReactTooltip>
     </>
   );
 }
@@ -68,33 +84,18 @@ function PlaceLink({ label, id, pageController }) {
     const appController = pageController?.appController || pageController
     appController.functions.setPopUp({ type: "places", ids: [id], popUpData: pageController.preLoad?.peoplePlaces?.place });
   }
-  let tooltip_id = crypto.randomBytes(20).toString('hex');
-
 
   return (
     <>
       <Link
         to={"/place/" + id}
         data-tip
-        data-for={tooltip_id}
+        data-for={id}
         onClick={handleClick}
         className={"place"}
       >
         {label}
       </Link>
-      <ReactTooltip
-        wrapper={"span"}
-        id={tooltip_id}
-        effect="solid"
-        backgroundColor={"#666"}
-        arrowColor={"#666"}
-      >
-        <NarrationToolTip
-          id={id}
-          type={"placeList"}
-          appController={pageController.appController || pageController}
-        />
-      </ReactTooltip>
     </>
   );
 }
