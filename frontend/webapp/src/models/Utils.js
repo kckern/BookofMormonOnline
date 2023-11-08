@@ -63,7 +63,7 @@ export function label(key, inserts) {
   }
   if (results.length === 1) return results.shift();
   results = results.filter((x) => !!x);
-  let allstrings = results.every((i) => typeof i === "string");
+  let allstrings = results.every((i) => typeof i === "string" || typeof i === "number");  
   if (allstrings) return results.join("");
   return results.filter((x) => !!x);
 }

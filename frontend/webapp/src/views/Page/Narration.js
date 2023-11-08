@@ -662,10 +662,12 @@ function PeoplePlacePanel({ narrationController }) {
     });
   }
 
+  const peopleCount = people.length;
+  const placesCount = places.length;
 
   return (
     <div className="peoplePlacePanelWrapper">
-      <h5>People and Places
+      <h5>{placesCount  && peopleCount ? label("people_places") : placesCount ? label("menu_places") : label("menu_people")}
         <span onClick={closePanel}> × </span>
       </h5>
     <div className="peoplePlacePanel">
@@ -709,7 +711,7 @@ function ScripturePanel({ narrationController }) {
     const handleKeyDown = (event) => {
       const length = textRefs.length;
       const gridEl = document.querySelector(".scripturePanel");
-      const singleW = gridEl.childNodes[0].clientWidth;
+      const singleW = gridEl?.childNodes[0].clientWidth || null;
       const colCount = singleW ? Math.floor(gridEl.clientWidth / singleW) : 1;
       const rightIndex = activeRef < length - 1 ? activeRef + 1 : 0;
       const leftIndex = activeRef > 0 ? activeRef - 1 : length - 1;
@@ -720,23 +722,27 @@ function ScripturePanel({ narrationController }) {
         case 'ArrowRight':
         case 'Tab':
           setActiveRef(rightIndex);
+          event.preventDefault();
           break;
         case 'ArrowLeft':
           setActiveRef(leftIndex);
+          event.preventDefault();
           break;
         case 'ArrowDown':
           setActiveRef(downIndex);
+          event.preventDefault();
           break;
         case 'ArrowUp':
           setActiveRef(upIndex);
+          event.preventDefault();
           break;
         case 'Escape':
           closePanel();
+          event.preventDefault();
           break;
         default:
           break;
       }
-      event.preventDefault();
     };
   
     window.addEventListener('keydown', handleKeyDown);
@@ -749,7 +755,7 @@ function ScripturePanel({ narrationController }) {
 
   if(!refs?.length) return null;
   return <div className="scripturePanelWrapper">
-  <h5 className="noselect">Related Scriptures
+  <h5 className="noselect">{label("related_scriptures")}
     <span onClick={closePanel}> × </span>
   </h5>
     <div className="scripturePanel noselect">
@@ -773,10 +779,9 @@ function ScripturePanelSingle({ narrationController,scriptureData }) {
 
   useEffect(() => {
     if(!verse_id) return false;
-    //150ms timeout to allow cache response without loader
     let timer = setTimeout(()=> {
       setText(null);
-    },150);
+    },200);
     BoMOnlineAPI({scripture:verse_id}).then(({scripture})=> {
       clearTimeout(timer);
       setText(scripture[verse_id].verses.map(i=>i.text).join(" "));
@@ -868,10 +873,11 @@ function FacsimilePanel({ narrationController }) {
 
   if (!narrationController.states.showFax) return null;
 
-  let activeFaxItem = appController.preLoad.fax
-    .filter((i) => i.slug === narrationController.states.activeFax)
+  let activeFaxItem = appController.preLoad.fax?.filter((i) => i.slug === narrationController.states.activeFax)
     .shift();
   let versionName = activeFaxItem?.title;
+
+
 
   let title = versionName + "—" + narrationController.data.text.heading;
 
@@ -936,3 +942,4 @@ function FacsimilePanel({ narrationController }) {
   );
   // }
 }
+

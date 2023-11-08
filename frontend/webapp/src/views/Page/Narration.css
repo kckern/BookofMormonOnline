@@ -256,48 +256,6 @@
     position: relative;
   }
   
-  .fax {
-    position: absolute;
-    left: -1.65em;
-    top: 0em;
-    width: 1.8em;
-    height: calc(1.5rem + 0px);
-    border-radius: 1em;
-    border-top-right-radius: 0em;
-    border-bottom-right-radius: 0em;
-    background-color: #999;
-    color: white;
-    text-align: center;
-    line-height: 1.6rem;
-    cursor: pointer;
-    opacity: 0;
-    padding-left: 8px;
-    transition: opacity 500ms;
-    border-bottom: 2px solid #999;
-  }
-  
-  .fax .comment {
-    position: absolute;
-    top: 0.9em;
-    left: 0.5em;
-  }
-  
-  .fax.visible {
-    opacity: 1;
-    transition: opacity 500ms;
-  }
-  .fax:hover {
-    opacity: 1;
-  }
-  
-  .fax.visible img {
-    filter: invert();
-    position: absolute;
-    top: 0.5ex;
-    left: 1ex;
-    height: 1.2em;
-    width: 1.3em;
-  }
 
   .peoplePlacePanelWrapper,
   .scripturePanelWrapper
