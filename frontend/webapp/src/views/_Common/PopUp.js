@@ -172,7 +172,7 @@ function Person({ appController }) {
       if (!response.person) return false;
       const person = response.person[appController.states.popUp.ids[0]];
       const slugs =
-        person.relations
+        person?.relations
           ?.filter((i) => i.person?.slug)
           .map((i) => i.person.slug) || [];
       BoMOnlineAPI({ people: slugs }, { useCache: ["people"] });
@@ -243,7 +243,7 @@ function Person({ appController }) {
                 <h4>{label("relationships")}</h4>
                 <table className="refbox-tabel">
                   <tbody>
-                    {person.relations &&
+                    {person?.relations &&
                       person.relations.map((relation, index) => (
                         <tr key={index}>
                           <td className="refbox-relation">
