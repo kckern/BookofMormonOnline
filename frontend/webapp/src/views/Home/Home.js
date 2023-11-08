@@ -215,11 +215,10 @@ function GroupBrowser({ appController, activeGroup, setActiveGroup }) {
 }
 
 function RecentFinishers({ finishers }) {
-  console.log("Finishers", finishers);
   return (
     <div className="leaderboard">
       {finishers.slice(0, 5).map((m, i) => (
-        <div className="leaderBoardItem" key={i}>
+        <div className="leaderBoardItem" key={`finisher-${i}`}>
           <div className="rank">{i + 1}</div>
           <div class="img-container">
             <img
@@ -228,8 +227,8 @@ function RecentFinishers({ finishers }) {
               style={privateStyle(m.nickname)}
             />
             <span class="trophies">
-              {m.finished?.map((i) => (
-                <img src={trophy} />
+              {m.finished?.map((i,j) => (
+                <img src={trophy} key={`trophy-${j}`} />
               ))}
             </span>
           </div>
