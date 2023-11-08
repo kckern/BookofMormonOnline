@@ -12,6 +12,7 @@ import {
   includeWhere,
   scoreSlugsfromUserInfo,
   getSlugTip,
+  Op,
   getUserForLog
 } from './_common';
 import { sphinxQuery } from '../search/sphinx';
@@ -48,11 +49,32 @@ export default {
         AND version IN ('${versions.join(`','`)}')
         LIMIT 99999999 ;`;
 
-      return sphinxQuery(sphinxSql).then((results: any) => {
+      //query must be 4 or more characters
+      if(query.length<4) return [];
+      
+      let verse_ids:any = [];
+     // verse_ids = await sphinxQuery(sphinxSql);
+      {
+        verse_ids = await Models.LdsScripturesVerses.findAll({
+          attributes: ['verse_id'],
+          where: {
+            verse_scripture: {
+              [Op.like]: `%${query}%`
+            },
+            verse_id: {
+              [Op.between]: [31103, 37706]
+            }
+          }
+        }).then((results: any) => {
+          return results.map((item: any) => item.verse_id);
+        });
+      }
+      console.log('verse_ids', verse_ids);
+      if(!verse_ids?.length) return [];
 
-        let verseIds = results.map((item: any) => item.verse_id);
-        return  Models.BomLookup.findAll({    
-            where: { verse_id: verseIds },
+
+      return Models.BomLookup.findAll({    
+            where: { verse_id: verse_ids },
             raw: true,
             include: [
                 includeModel(true, Models.LdsScripturesVerses, 'verse'),
@@ -77,7 +99,6 @@ export default {
                 };
             }));
         })
-      });
     },
     
     shortlink: async (input: any, args: any, context: any, info: any) => {
