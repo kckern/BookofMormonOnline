@@ -18,6 +18,7 @@ extend type Query {
     search(query: String): [SearchResult]
     shortlink(hash: [String]): Shortlinks
     markdown(slug: [String]): [Markdown]
+    scripture(ref: String, verse_ids: [Int]): ScriptureResults
   }
 
 
@@ -32,6 +33,17 @@ extend type Mutation {
 type Label {
   key: String
   val: String
+}
+type ScriptureResults {
+  ref: String
+  verses: [Scripture]
+}
+
+type Scripture {
+  book: String
+  chapter: Int
+  verse: Int
+  text: String
 }
 
 type SearchResult {
