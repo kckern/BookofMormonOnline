@@ -6,6 +6,7 @@ import scripture from "../library/scripture"
 import { loadPeopleFromTextGuid, loadPlacesFromTextGuid } from './BomPeoplePlace';
 const { getBlocksToQueue ,getFirstTextBlockGuidFromSlug} = require('./lib')
 import { lookupReference } from 'scripture-guide';
+import { queryDB } from '../library/db';
 
 export default {
   Query: {
@@ -453,6 +454,27 @@ queue: async (root: any, args: any, context: any, info: any) => {
       let comIds = item.dataValues.content.match(/\[c\](\d+)\[\/c\]/ig);
       comIds = comIds && comIds.map((i:string) => parseInt(i.replace(/\D+/g, '')));
      return comIds;
+    },
+    refs: async (item: any, args: any, { db, res }: any, info: any) =>{
+
+      const text_guid = item.getDataValue('guid');
+      const verse_ids = await Models.BomLookup.findAll({
+        where: {
+          text_guid
+        }}
+      ).then(r=>r.map((r:any)=>r.verse_id));
+
+      //scripture.guide.scripture_references
+      const sql = `SELECT dst_verse_id as verse_id,\`type\`,significant,dst_ref as ref
+      FROM \`scripture.guide\`.scripture_references 
+      WHERE src_verse_id IN (?)
+      AND \`type\` = "xref"
+      AND significant IN (0,1,-1)`;
+      const refs = await queryDB(sql, [verse_ids]);
+      return refs;
+
+
+
     },
     next: async (item: any, args: any, { db, res, lang }: any, info: any) =>{
 

@@ -130,6 +130,22 @@ const queries = {
                           content
                           duration
                         }
+                        people {
+                          slug
+                          name
+                          title
+                        }
+                        places {
+                          slug
+                          name
+                          info
+                        }
+                        refs {
+                          verse_id
+                          ref
+                          type
+                          significant
+                        }
                       }
                     }
                     connection {

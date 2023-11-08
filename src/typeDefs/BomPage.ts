@@ -139,8 +139,16 @@ input QueueInput {
     coms: [Commentary]
     people: [People]
     places: [Place]
+    refs: [Reference]
     link: Int
     next: [NarrativePath]
+  }
+
+  type Reference {
+    verse_id: Int
+    ref: String
+    significant: Int
+    type: String
   }
 
   type NarrativePath {
