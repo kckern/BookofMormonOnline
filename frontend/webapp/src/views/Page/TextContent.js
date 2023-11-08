@@ -3,7 +3,6 @@ import { Card, CardHeader, CardBody, Collapse, Col } from "reactstrap";
 import {
   CommentaryBubbles,
   ImageBubbles,
-  FaxBubbleContainer,
 } from "./Annotations";
 import stringSimilarity from "string-similarity";
 import Parser from "html-react-parser";
@@ -15,6 +14,8 @@ import ReactTooltip from "react-tooltip";
 import peopleSVG from "../_Common/svg/people.svg";
 import placesSVG from "../_Common/svg/places.svg";
 import studySVG from "../_Common/svg/study.svg";
+import faxSVG from "src/views/User/svg/oldbook.svg";
+import { label } from "../../models/Utils";
 
 /* ------------------------------------------- */
 /* -------------- STATE CHANGES  ------------- */
@@ -252,12 +253,7 @@ export default function TextContent({ content, narrationController, isQuote }) {
   let CommentaryBubblesContainer = isOpen && !isQuote && <CommentaryBubbles textContentController={textContentController} /> || null;
   let ImageBubblesContainer = isOpen && !isQuote &&   <ImageBubbles textContentController={textContentController} /> || null;
 
-  let faxBubbleContainer = (
-    <FaxBubbleContainer
-      textContentController={textContentController}
-      isQuote={isQuote}
-    />
-  );
+
   let cardWithoutNestedBlocks = true;
   if (Array.isArray(textContentController.renderedTextContent)) {
     for (let item of textContentController.renderedTextContent) {
@@ -339,7 +335,6 @@ export default function TextContent({ content, narrationController, isQuote }) {
               className="content"
               onMouseUp={(e) => handleSelection(e, isQuote)}
             >
-              {faxBubbleContainer}
               {ImageBubblesContainer}
               {CommentaryBubblesContainer}
               {textContentController.renderedTextContent}
@@ -376,6 +371,7 @@ function TextItemCounters({narrationController})
   let peopleCount = people?.length || 0;
   let placeCount = places?.length || 0;
   let refCount = refs?.length || 0;
+  let faxCount = 10;
 
 
   const setPeoplePlaces = () => {
@@ -391,18 +387,47 @@ function TextItemCounters({narrationController})
     setScriptures(scriptures?.refs?.length ? { refs:[] } : { refs });
   }
 
+  const setFaxVisible = () => {
+    const { functions: {toggleFax,clearAllPanels}} = narrationController;
+    clearAllPanels();
+    toggleFax();
+  }
+
+  const ppLabel = (peopleCount,placeCount) => {
+    if(peopleCount>1 && placeCount>1) return label(`x_people_and_x_places`,peopleCount,placeCount);
+    if(peopleCount>1 && placeCount===1) return label(`x_people_and_x_place`,peopleCount,placeCount);
+    if(peopleCount===1 && placeCount>1) return label(`x_person_and_x_places`,peopleCount,placeCount);
+    if(peopleCount===1 && placeCount===1) return label(`x_person_and_x_place`,peopleCount,placeCount);
+    if(!placeCount && peopleCount>1) return label(`x_people`,peopleCount);
+    if(!placeCount && peopleCount===1) return label(`x_person`,peopleCount);
+    if(placeCount && !peopleCount) return label(`x_places`,placeCount);
+    return label(`x_place`,placeCount);
+  }
+
   const tooltipId = `text-item-tooltip-${guid}`
   return <>
   <ReactTooltip
       effect="solid"
       backgroundColor="#666"
       id={tooltipId}
+      getContent={(text) => {
+        return (
+            <div className={"text_item_tooltip"}>{text}</div>
+        )}}
       />
   <div className="text_item_counter noselect">
+
     {!!peopleCount && <span className="item_counter people" 
-    data-tip={`${peopleCount} people`} data-for={tooltipId} onClick={setPeoplePlaces}>
+      data-tip={ ppLabel(peopleCount,placeCount) } data-for={tooltipId} onClick={setPeoplePlaces}>
       <img src={peopleCount ? peopleSVG : placesSVG}/>{peopleCount + placeCount}</span>}
-    {!!refCount && <span className="item_counter refs" onClick={setScriptures}
-    data-tip={`${refCount} references`} data-for={tooltipId}><img src={studySVG}/>{refCount}</span>}
+
+    {!!faxCount && <span className="item_counter fax"         onClick={setFaxVisible}
+    data-tip={label(`x_facsimiles`,faxCount)} data-for={tooltipId} ><img src={faxSVG}/>{faxCount}</span>}
+
+    {!!refCount && <span className="item_counter refs"        onClick={setScriptures}
+    data-tip={refCount===1 ? label(`x_related_scripture`,refCount) : label(`x_related_scriptures`,refCount)}
+    data-for={tooltipId}><img src={studySVG}/>{refCount}</span>}
+
   </div></>
 }
+

@@ -115,13 +115,13 @@
     height: 0.8rem;
     line-height: 1rem;
     margin-right: .3ex;
-    opacity: 0.5;
+    opacity: 0.8;
     margin-bottom: 0.2rem;
 }
 
 
 .card .scripture .reference .text_item_counter .item_counter{
-    background-color: #00000055;
+    background-color: #00000022;
     border-radius: 1ex;
     padding: 0 0.5ex;
     margin-left: 1ex;
@@ -425,6 +425,12 @@
     max-width: 100%;
     border: 1px solid #666;
 
+}
+.text_item_tooltip
+{
+    padding: 0;
+    margin-left: -1ex;
+    margin-right: -1ex;
 }
 
 .tooltip_books.count5
