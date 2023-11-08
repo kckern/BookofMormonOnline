@@ -298,6 +298,142 @@
     height: 1.2em;
     width: 1.3em;
   }
+
+  .peoplePlacePanelWrapper,
+  .scripturePanelWrapper
+  {
+    background-color: #ddd;
+    border-radius: 1rem;
+    margin-right: 1rem;
+    margin-left: 2rem;
+
+  }
+  .peoplePlacePanelWrapper h5,
+  .scripturePanelWrapper h5
+  {
+
+    color: #555;
+    font-weight: bold;
+    text-align: center;
+    line-height: 1em;
+
+    font-size: 14px;
+    padding: 0.5em;
+    line-height: 1.2em;
+    margin-bottom: 0;
+
+  }
+
+  .peoplePlacePanelWrapper h5 span,
+  .scripturePanelWrapper h5 span
+  {
+    float: right;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  .peoplePlacePanelWrapper h5 span:hover,
+  .scripturePanelWrapper h5 span:hover
+  {
+    color: #fff;
+  }
+
+
+  .peoplePlacePanelWrapper h5 span,
+  .scripturePanelWrapper h5 span {
+    float: right;
+    position: relative;
+    top: -5px;
+    cursor: pointer;
+    font-size: 2em;
+    font-family: "Courier New", monospace;
+    margin-top: 0.25em;
+  }
+  
+  .peoplePlacePanelWrapper h5 span:hover,
+  .scripturePanelWrapper h5 span:hover {
+    color: black;
+  }
+
+  .peoplePlacePanel,
+  .scripturePanel{
+    padding: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    background-color: #EEE;
+
+  }
+
+  .peoplePlacePanel .item
+  {
+    max-width: 33%;
+    cursor: pointer;
+  }
+  .peoplePlacePanel .item:hover
+  {
+    filter: brightness(1.2);
+    position: relative;
+    bottom: 2px;;
+  }
+
+  .peoplePlacePanel .name
+  {
+    
+    border-top-right-radius: 1ex;
+    border-top-left-radius: 1ex;  
+    font-weight: bold;
+  }
+  .peoplePlacePanel .info
+  {
+    font-size: 1.5ex;
+    border-bottom-right-radius: 1ex;
+    border-bottom-left-radius: 1ex;; 
+    line-height: 1.7ex;
+    padding: .5ex;
+    opacity: 0.6;
+  }
+  .peoplePlacePanel .name,
+  .peoplePlacePanel .info
+  {
+      text-align: center;
+      background-color: #EEE;
+  }
+.scripturePanel
+{
+  /* flex grid */
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(6rem, 1fr));
+  grid-gap: 0.5ex;
+}
+  .scriptureItem
+  {
+    padding: 0.5ex;
+    border-radius: 1ex;
+    background-color: #00000022;
+    line-height: 100%;
+    display: flex;
+    /* vert and horiz center */
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    text-align: center;
+    font-family: "Roboto Condensed", "Arial Narrow", sans-serif;
+    letter-spacing: -0.3px;
+    font-size: 1.7ex;
+  }
+
+  .scriptureItem:hover
+  {
+    background-color: #00000044;
+    position: relative;
+    bottom: 0.5px;;
+  }
+  .scriptureItem.active
+  {
+    color: white;
+    background-color: #00000088;
+    outline: 2px solid #000;
+  }
   
   /* .image-overlay {
     position: fixed;

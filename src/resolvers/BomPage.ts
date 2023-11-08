@@ -465,12 +465,13 @@ queue: async (root: any, args: any, context: any, info: any) => {
       ).then(r=>r.map((r:any)=>r.verse_id));
 
       //scripture.guide.scripture_references
+      const placeholders = verse_ids.map(() => '?').join(',');
       const sql = `SELECT dst_verse_id as verse_id,\`type\`,significant,dst_ref as ref
-      FROM \`scripture.guide\`.scripture_references 
-      WHERE src_verse_id IN (?)
-      AND \`type\` = "xref"
-      AND significant IN (0,1,-1)`;
-      const refs = await queryDB(sql, [verse_ids]);
+        FROM \`scripture.guide\`.scripture_references 
+        WHERE src_verse_id IN (${placeholders})
+        AND \`type\` = "xref"
+        AND significant IN (0,1,-1)`;
+      const refs = await queryDB(sql, verse_ids);
       return refs;
 
 

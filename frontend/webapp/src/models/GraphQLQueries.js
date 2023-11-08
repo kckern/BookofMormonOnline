@@ -164,6 +164,24 @@ const queries = {
               }`,
     }
   },
+  scripture: (verse_ids) => {
+    return {
+      type: "scripture",
+      key: "verse_ids",
+      val: verse_ids,
+      query: q("scripture", "verse_ids", verse_ids) +
+        `{
+                ref
+                verses {
+                    book
+                    chapter
+                    verse
+                    text
+                }
+            }`,
+    }
+
+  },
   commentary: (ids) => {
     return {
       type: "commentary",

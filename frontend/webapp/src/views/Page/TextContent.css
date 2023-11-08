@@ -96,13 +96,20 @@
 .card .scripture .reference a.refheader
 {
     flex-grow: 1;
+    text-align: left;
 }
 
 .card .scripture .reference .text_item_counter{
     opacity: 0;
     transition: ease-in-out 0.3s opacity;
+    pointer-events: none;
 }
 
+.card .scripture .reference.open .text_item_counter{
+    opacity: 1;
+    transition: ease-in-out 0.3s opacity;
+    pointer-events: all;
+}
 .card .scripture .reference .item_counter img
 {
     height: 0.8rem;
@@ -112,10 +119,6 @@
     margin-bottom: 0.2rem;
 }
 
-.card .scripture .reference.open .text_item_counter{
-    opacity: 1;
-    transition: ease-in-out 0.3s opacity;
-}
 
 .card .scripture .reference .text_item_counter .item_counter{
     background-color: #00000055;
@@ -511,4 +514,30 @@ span.indent{
     opacity: 0;
     transition: opacity 500ms;
     
+}
+
+.scripturePanelSingle 
+{
+    padding-bottom: 1rem;
+}
+
+.scripturePanelSingle .text
+{
+    background-color: white;
+    margin: 0 1em 0 1em;
+    border-radius: 1rem;
+    padding: 1rem;
+    font-family: 'Sorts Mill Goudy', serif;
+    font-size: 1rem;
+    text-align: justify;
+    line-height: 1.2rem;
+    font-weight: bold;
+    color: #444;
+}
+.scripturePanelSingle .loadBar
+{
+    max-height: 5rem;
+    max-width: 3rem;
+    top: 0 !important;
+    position: relative!important;
 }
