@@ -1614,7 +1614,7 @@ function TheaterImagePanel({ theaterController }) {
 function TheaterCommentFeed({ theaterController }) {
 
   const filter = theaterController.appController.states.preferences.commentary.filter;
-  const blacklist = (filter.type==="blacklist" ? filter?.sources : []).map(parseInt) || [];
+  const blacklist = (filter.type==="blacklist" ? filter?.sources : []) || [];
   const [comments, setComments] = useState(new Set());
   const secondsBetweenComments = 5;
   const {
