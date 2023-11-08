@@ -492,7 +492,7 @@ function ImagePanel({ narrationController }) {
     tabs = (
       <div className="thumb_tabs">
         <ul>
-          {narrationController.states.panelImageIds.map((id) => {
+          {narrationController.states.panelImageIds?.map((id) => {
             let commentIcon =
               imgsWithComments.indexOf(parseInt(id)) < 0 ? null : (
                 <span className="comment">💬</span>
@@ -633,7 +633,7 @@ function FacsimilePanel({ narrationController }) {
   var tabs = (
     <div className="thumb_tabs">
       <ul>
-        {narrationController.states.faxData.map((item) => {
+        {narrationController.states.faxData?.map((item) => {
           let id = item.slug;
           if (
             appController.states.preferences.facsimiles.filter.versions.includes(

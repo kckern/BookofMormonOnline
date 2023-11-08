@@ -19,6 +19,11 @@
 
 }
 
+.row.reference.card-header
+{
+    display: flex;
+}
+
 .row.chronoRow div.chronoText{
     width: auto!important;
     background-color: #e7e5e5;
@@ -84,15 +89,45 @@
     font-family: 'Roboto Condensed', 'Arial Narrow', 'sans-serif';
     font-size: .9rem;
     line-height: 1.6rem;
+    display: flex;
+    padding-right: 1ex;
 }
 
-.card .scripture .reference .chrono
+.card .scripture .reference a.refheader
 {
-    float: right;
-    margin-right: 1ex;
-    font-size: small;
+    flex-grow: 1;
+}
+
+.card .scripture .reference .text_item_counter{
+    opacity: 0;
+    transition: ease-in-out 0.3s opacity;
+}
+
+.card .scripture .reference .item_counter img
+{
+    height: 0.8rem;
+    line-height: 1rem;
+    margin-right: .3ex;
     opacity: 0.5;
-    font-weight: 400;
+    margin-bottom: 0.2rem;
+}
+
+.card .scripture .reference.open .text_item_counter{
+    opacity: 1;
+    transition: ease-in-out 0.3s opacity;
+}
+
+.card .scripture .reference .text_item_counter .item_counter{
+    background-color: #00000055;
+    border-radius: 1ex;
+    padding: 0 0.5ex;
+    margin-left: 1ex;
+    cursor: pointer;
+    color: #FFF;
+}
+
+.card .scripture .reference .text_item_counter .item_counter:hover{
+    background-color: #00000033;
 }
 
 .card .scripture .reference .triangle
