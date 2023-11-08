@@ -1,11 +1,11 @@
 import { sendbird } from '../library/sendbird';
 import { models as Models } from '../config/database';
 import dotenv from 'dotenv';
+const {lookup,generateReference} = require("scripture-guide");
 dotenv.config();
 
 import {
   getSlug,
-  Op,
   includeTranslation,
   translatedValue,
   includeModel,
@@ -15,6 +15,7 @@ import {
   getUserForLog
 } from './_common';
 import { sphinxQuery } from '../search/sphinx';
+import { translateReferences } from './xlate';
 const axios = require('axios');
 export default {
   Query: {
@@ -102,6 +103,52 @@ export default {
     },
     test: async (input: any, args: any, context: any, info: any) => {
       return true;
+    },
+    
+    scripture: async (input: any, args: any, context: any, info: any) => {
+      const nolangs = ["eng","en","dev"];
+      const lang = context.lang && !nolangs.includes(context.lang) ? context.lang : null;
+      const reference = args.ref;
+      try{
+        let { verse_ids, ref } = args.verse_ids ? 
+        { verse_ids: args.verse_ids, ref: generateReference(args.verse_ids) } 
+        : lookup(reference);
+      ref = translateReferences(ref, lang);
+  
+      
+      const config = { raw:true, where: {  verse_id:verse_ids  } };
+      const verses = await Models.LdsScripturesVerses.findAll(config);
+
+  
+      if(verses.length===0) return {ref,verses:[]}
+      
+  
+      if(lang && lang!=='eng') {
+        const translations = await Models.LdsScripturesTranslations.findAll({
+          raw:true,
+          where: {  verse_id:verse_ids, lang  }
+        });
+        //replace the text with the translation
+        verses.forEach((verse:any)=>{
+          let translation:any = translations.find((t:any)=>t.verse_id===verse.verse_id);
+          if(translation) verse.verse_scripture = translation.verse_scripture;
+        });
+      }
+  
+      return {ref,verses:verses.map((verse:any)=>{
+        return {
+          book:verse.book_id,
+          chapter:verse.chapter,
+          verse:verse.verse,
+          text:verse.verse_scripture
+        }
+      })}
+  
+    }
+    catch(e){
+      return {ref:(reference||JSON.stringify(args.verse_ids)) + " not found",verses:[]}
+    }
+  
     }
   },
   Mutation: {
@@ -128,6 +175,7 @@ export default {
       return getSlug('link',pageguid).then(slug=>slug+"/"+num);
     },
   },
+
   Test: {
     db: async (item: any, args: any, context: any, info: any) => {
       let count = await Models.BomLog.count();
