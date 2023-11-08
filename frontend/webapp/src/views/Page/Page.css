@@ -402,6 +402,7 @@ a.theater-link img:hover
 .card-header-title-wrapper{
 	display:flex;
 	justify-content:space-between;
+  margin-right: 2rem;
 }
 
 .theater-link{
