@@ -377,6 +377,20 @@ function TextItemCounters({narrationController})
   let placeCount = places?.length || 0;
   let refCount = refs?.length || 0;
 
+
+  const setPeoplePlaces = () => {
+    const {states: {peoplePlaces}, functions: {setPeoplePlaces,clearAllPanels}} = narrationController;
+    //clear images and fax
+    clearAllPanels();
+    setPeoplePlaces((peoplePlaces?.people?.length || peoplePlaces?.places?.length) ? {} : { people, places });
+  }
+
+  const setScriptures = () => {
+    const {states: {scriptures}, functions: {setScriptures,clearAllPanels}} = narrationController;
+    clearAllPanels();
+    setScriptures(scriptures?.refs?.length ? { refs:[] } : { refs });
+  }
+
   const tooltipId = `text-item-tooltip-${guid}`
   return <>
   <ReactTooltip
@@ -384,12 +398,11 @@ function TextItemCounters({narrationController})
       backgroundColor="#666"
       id={tooltipId}
       />
-  <div className="text_item_counter">
+  <div className="text_item_counter noselect">
     {!!peopleCount && <span className="item_counter people" 
-    data-tip={`${peopleCount} people`} data-for={tooltipId}><img src={peopleSVG}/>{peopleCount}</span>}
-    {!!placeCount && <span className="item_counter places"
-    data-tip={`${placeCount} places`} data-for={tooltipId}><img src={placesSVG}/>{placeCount}</span>}
-    {!!refCount && <span className="item_counter refs"
+    data-tip={`${peopleCount} people`} data-for={tooltipId} onClick={setPeoplePlaces}>
+      <img src={peopleCount ? peopleSVG : placesSVG}/>{peopleCount + placeCount}</span>}
+    {!!refCount && <span className="item_counter refs" onClick={setScriptures}
     data-tip={`${refCount} references`} data-for={tooltipId}><img src={studySVG}/>{refCount}</span>}
   </div></>
 }

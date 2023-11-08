@@ -12,6 +12,8 @@ import { snapSelectionToWord,chronoLabel } from "src/models/Utils";
 import { SRLWrapper } from "simple-react-lightbox";
 import {  label} from "src/models/Utils";
 import fullscreen from "src/views/Page/svg/fullscreen.png";
+import Loader from "../_Common/Loader";
+const {generateReference} = require('scripture-guide');
 
 
 function ChronoRow ({chrono}) {
@@ -81,6 +83,20 @@ function reducer(narrationController, input) {
     case "setHighlights":
       narrationController.states.highlights = input.val;
       break;
+    //add setPeoplePlaceSlugs and setScriptures
+    case "setPeoplePlaceSlugs":
+      narrationController.states.peoplePlaces = input.val;
+      break;
+    case "setScriptures":
+      narrationController.states.scriptures = input.val;
+      break;
+    case "clearAllPanels":
+        narrationController.states.showFax = false;
+        narrationController.states.peoplePlaces = {};
+        narrationController.states.scriptures = [];
+        narrationController.states.panelImageIds = [];
+     break;
+
     default:
       break;
   }
@@ -138,17 +154,17 @@ function Narration({ rowData, pageController, addHighlight }) {
     }
     if (rowCommentaryData !== undefined) {
       for (let i in rowCommentaryData) {
-        if (rowCommentaryData[i].id === activeId) {
+        if (rowCommentaryData[i]?.id === activeId) {
           highlights.push({
             class: "primary",
-            string: rowCommentaryData[i].title
+            string: rowCommentaryData[i]?.title
               .replace(/^[^a-z\d]*|[^a-z\d]*$/gi, "")
               .replace(/[^a-z]+/gi, "([^a-z]|<[^>]*>)+?"),
           });
-        } else if (previewIds.includes(rowCommentaryData[i].id)) {
+        } else if (previewIds.includes(rowCommentaryData[i]?.id)) {
           highlights.push({
             class: "secondary",
-            string: rowCommentaryData[i].title
+            string: rowCommentaryData[i]?.title
               .replace(/^[^a-z\d]*|[^a-z\d]*$/gi, "")
               .replace(/[^a-z]+/gi, "([^a-z]|<[^>]*>)+?"),
           });
@@ -222,6 +238,15 @@ function Narration({ rowData, pageController, addHighlight }) {
         },
         toggleFax: (id) => {
           dispatch({ fn: "toggleFax", val: id });
+        },
+        setPeoplePlaces: (slugs) => {
+          dispatch({ fn: "setPeoplePlaceSlugs", val: slugs });
+        },
+        setScriptures: (verse_ids) => {
+          dispatch({ fn: "setScriptures", val: verse_ids });
+        },
+        clearAllPanels: () => {
+          dispatch({ fn: "clearAllPanels" });
         },
         preloadFax: preLoadFax,
         preLoadSupplement: preLoadSupplement,
@@ -314,7 +339,7 @@ function Narration({ rowData, pageController, addHighlight }) {
     let pageSlug = pageController.pageData.slug;
     let channel = pageController.appController.states.studyGroup.activeGroup;
 
-    pageController.appController.sendbird.updatePagePosition({
+    pageController.appController.sendbird?.updatePagePosition({
       channel,
       pageSlug,
       location,
@@ -350,6 +375,8 @@ function Narration({ rowData, pageController, addHighlight }) {
           </p>
           <ImagePanel narrationController={narrationController} />
           <FacsimilePanel narrationController={narrationController} />
+          <PeoplePlacePanel narrationController={narrationController} />
+          <ScripturePanel narrationController={narrationController} />
         </div>
         <TextContent
           content={narrationController.data.text}
@@ -595,6 +622,178 @@ function ImagePanel({ narrationController }) {
   );
 }
 
+function PeoplePlacePanel({ narrationController }) {
+  const states = narrationController.states;
+  const peoplePlaces = states.peoplePlaces || {};
+
+  const people = peoplePlaces?.people?.map((person)=> {
+    return { ...person, type: "people" };
+  }) || [];
+  const places = peoplePlaces?.places?.map((place)=> {
+    return { ... place, type: "places" };
+  }) || [];
+  const items = [...people, ...places];
+
+  const popUpPerson = (slug,type) => {
+    ///    appController.functions.setPopUp({ type: "places", ids: [id], popUpData: pageController.preLoad?.peoplePlaces?.place });
+
+    narrationController.appController.functions.setPopUp({
+      type: type,
+      ids: [slug],
+      popUpData: narrationController.appController.preLoad?.peoplePlaces?.[type==="people"?"people":"place"],
+    });
+  }
+
+  const closePanel = () => {
+    narrationController.functions.setPeoplePlaces({});
+  }
+
+  useEffect(() => {
+    //Preload People and Places
+
+  }, [narrationController.states.peoplePlaces]);
+
+  if(items.length === 0) return null;
+
+  const replaceNumbers = (str) => {
+    return str.replace(/[1-4]/g, function(match) {
+      const superscripts = { '1': '¹', '2': '²', '3': '³', '4': '⁴' };
+      return superscripts[match];
+    });
+  }
+
+
+  return (
+    <div className="peoplePlacePanelWrapper">
+      <h5>People and Places
+        <span onClick={closePanel}> × </span>
+      </h5>
+    <div className="peoplePlacePanel">
+      
+      {items.map((item)=> {
+        return <div key={item.name} className="item" onClick={()=>popUpPerson(item.slug,item.type)}>
+
+          <div className="name">
+            {item.name.replace(/[1-4]/g, replaceNumbers)}
+          </div>
+          <img src={`${assetUrl}/${item.type}/${item.slug}`} alt={item.name} />
+          <div className="info">{(item.title || item.info).replace(/[1-4]/g, replaceNumbers)}</div>
+          
+            </div>;
+      })}
+    </div>
+    </div>
+  );
+}
+
+function ScripturePanel({ narrationController }) {
+
+  const states = narrationController.states;
+  const {refs} = states?.scriptures || {refs:[]};
+
+  const closePanel = () => {
+    narrationController.functions.setScriptures(null);
+  }
+
+  const [textRefs, setTextRefs] = useState([]);
+  const [activeRef, setActiveRef] = useState(null);
+
+  useEffect(() => {
+    if(!refs?.length) return false;
+    const textRefs = refs.map(({verse_id})=> ({ref:generateReference(verse_id),verse_id}));
+    setTextRefs(textRefs);
+  }, [refs]);
+
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      const length = textRefs.length;
+      const gridEl = document.querySelector(".scripturePanel");
+      const singleW = gridEl.childNodes[0].clientWidth;
+      const colCount = singleW ? Math.floor(gridEl.clientWidth / singleW) : 1;
+      const rightIndex = activeRef < length - 1 ? activeRef + 1 : 0;
+      const leftIndex = activeRef > 0 ? activeRef - 1 : length - 1;
+      const downIndex = activeRef + colCount < length ? activeRef + colCount : activeRef;
+      const upIndex = activeRef - colCount >= 0 ? activeRef - colCount : activeRef;
+
+      switch (event.key) {
+        case 'ArrowRight':
+        case 'Tab':
+          setActiveRef(rightIndex);
+          break;
+        case 'ArrowLeft':
+          setActiveRef(leftIndex);
+          break;
+        case 'ArrowDown':
+          setActiveRef(downIndex);
+          break;
+        case 'ArrowUp':
+          setActiveRef(upIndex);
+          break;
+        case 'Escape':
+          closePanel();
+          break;
+        default:
+          break;
+      }
+      event.preventDefault();
+    };
+  
+    window.addEventListener('keydown', handleKeyDown);
+  
+    // Cleanup: remove the event listener when the component is unmounted
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [activeRef]); // Re-run the effect when activeRef changes
+
+  if(!refs?.length) return null;
+  return <div className="scripturePanelWrapper">
+  <h5 className="noselect">Related Scriptures
+    <span onClick={closePanel}> × </span>
+  </h5>
+    <div className="scripturePanel noselect">
+      {textRefs.map(({ref},i)=> {
+        return <div key={ref} className={"scriptureItem" + (activeRef===i?" active":"")} onClick={()=>setActiveRef(i)}>
+          <div className="ref">{ref}</div>
+          <div>
+        </div>
+        </div>
+      })}
+    </div>
+    <ScripturePanelSingle narrationController={narrationController} scriptureData={textRefs[activeRef]}/>
+  </div>
+}
+
+function ScripturePanelSingle({ narrationController,scriptureData }) {
+
+  const {ref,verse_id} = scriptureData || {ref:null,verse_id:null};
+  const [text, setText] = useState(null);
+
+
+  useEffect(() => {
+    if(!verse_id) return false;
+    //150ms timeout to allow cache response without loader
+    let timer = setTimeout(()=> {
+      setText(null);
+    },150);
+    BoMOnlineAPI({scripture:verse_id}).then(({scripture})=> {
+      clearTimeout(timer);
+      setText(scripture[verse_id].verses.map(i=>i.text).join(" "));
+    })
+
+  }, [verse_id]);
+
+
+  if(!verse_id) return null;
+
+  return <div className="scripturePanelSingle">
+    <h5>{ref}</h5>
+   {text ? <div className="text">{text}</div> : <Loader/>}
+  </div>
+
+}
+
 function FacsimilePanel({ narrationController }) {
   const [imgHW, setHW] = useState({ h: 0, w: 0 });
   const [position, setPosition] = useState("center center");
@@ -608,7 +807,7 @@ function FacsimilePanel({ narrationController }) {
       narrationController.pageController.states.route.params.textId;
     if (narrationController.data.text.slug !== fromURL) return false;
     if (
-      narrationController.states.faxList.includes(initOpenVersion)
+      narrationController.states.faxList?.includes(initOpenVersion)
       //&& !narrationController.pageController.states.init
     ) {
       narrationController.functions.setActiveFax(initOpenVersion);
@@ -702,6 +901,9 @@ function FacsimilePanel({ narrationController }) {
     setHW({ h: img.naturalHeight, w: img.naturalWidth });
   };
   let num = narrationController.nums[0];
+
+  if(!imgUrl) return null;
+
   return (
     <div className="images faxbox" key={narrationController.states.activeFax}>
       {tabs}
