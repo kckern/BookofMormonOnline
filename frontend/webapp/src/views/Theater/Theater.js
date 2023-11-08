@@ -20,18 +20,15 @@ import pause from "./svg/pause.svg";
 import play from "./svg/play.svg";
 import prev from "./svg/prev.svg";
 import crossroads from "./svg/crossroads.svg";
-import soundOn from "src/views/User/svg/sound-on.svg"
-import soundOff from "src/views/User/svg/sound-off.svg"
 import detour from "./svg/detour.svg";
 import again from "./svg/again.svg";
 import Switch from "react-bootstrap-switch";
 
-import vol_hi from "./svg/vol_hi.svg";
-import vol_lo from "./svg/vol_lo.svg";
-import fast from "./svg/fast.svg";
-import { determineLanguage, flattenDescription, playSound } from "../../models/Utils";
-import { set } from "lodash";
 
+import { determineLanguage, flattenDescription, playSound } from "../../models/Utils";
+
+
+const {lookup} = require('scripture-guide');
 const loadQueueItemsFromQueue = items => {
   const pages = {};
   for (let item of items) {
@@ -67,6 +64,11 @@ function TheaterWrapper({ appController }) {
 
   let match = useRouteMatch();
   let slug = match?.params?.slug || null;
+
+  const slugIsRef = ((slug)=>{
+    let {verse_ids} = lookup(slug);
+    return !!verse_ids?.length;
+  })(slug);
 
 
   const [queue, setQueue] = useState([]);
@@ -208,6 +210,7 @@ function TheaterWrapper({ appController }) {
 
   useEffect(async () => {
     let items = slug ? [{slug}] : null; //todo: handle reading plan id / index input;
+    if(slugIsRef) items = [{reference:slug}];
     //items = [{slug:"ammon",blocks:[4,5,6,7,8]}];
     const token = localStorage.getItem("token");
     let { queue:loadedQueue } = await BoMOnlineAPI(
