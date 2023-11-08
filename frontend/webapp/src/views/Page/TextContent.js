@@ -11,6 +11,10 @@ import "./TextContent.css";
 import Comments from "../_Common/Study/Study";
 import { snapSelectionToWord } from "src/models/Utils";
 import triangle from "./triangle.svg";
+import ReactTooltip from "react-tooltip";
+import peopleSVG from "../_Common/svg/people.svg";
+import placesSVG from "../_Common/svg/places.svg";
+import studySVG from "../_Common/svg/study.svg";
 
 /* ------------------------------------------- */
 /* -------------- STATE CHANGES  ------------- */
@@ -283,7 +287,7 @@ export default function TextContent({ content, narrationController, isQuote }) {
       ) : null}
       <div role="tablist" aria-multiselectable="true" className="card-collapse">
         <Card className="card-plain textblock">
-          <CardHeader role="tab" className="reference">
+          <CardHeader role="tab" className={"reference" + openClass}>
             <a
               href={"/"+textContentController.data.slug.toString()}
               aria-expanded={
@@ -292,7 +296,7 @@ export default function TextContent({ content, narrationController, isQuote }) {
                   : textContentController.states.isHeaderOpen
               }
               data-toggle="collapse"
-              className={"noselect"+openClass}
+              className={"refheader noselect"+openClass}
               onClick={
                 cardWithoutNestedBlocks
                   ? textContentController.functions.toggleOpenClose
@@ -317,12 +321,11 @@ export default function TextContent({ content, narrationController, isQuote }) {
                 <span className="triangle"><img src={triangle}/></span>
                   {narrationController?.data &&
                     narrationController?.data?.text?.heading}
-                  <span className="chrono">
-                    {narrationController?.data?.text?.chrono}
-                  </span>
+                  
                 </>
               )}
             </a>
+            <TextItemCounters narrationController={narrationController}/>
           </CardHeader>
           <Collapse
             role="tabpanel"
@@ -359,4 +362,34 @@ export default function TextContent({ content, narrationController, isQuote }) {
       </div>
     </Col>
   );
+}
+
+
+function TextItemCounters({narrationController})
+{
+  let appController = narrationController?.pageController?.appController;
+  const {text} = narrationController?.data;
+  if(!text) return null;
+
+  const {people,places,refs,guid} = text;
+
+  let peopleCount = people?.length || 0;
+  let placeCount = places?.length || 0;
+  let refCount = refs?.length || 0;
+
+  const tooltipId = `text-item-tooltip-${guid}`
+  return <>
+  <ReactTooltip
+      effect="solid"
+      backgroundColor="#666"
+      id={tooltipId}
+      />
+  <div className="text_item_counter">
+    {!!peopleCount && <span className="item_counter people" 
+    data-tip={`${peopleCount} people`} data-for={tooltipId}><img src={peopleSVG}/>{peopleCount}</span>}
+    {!!placeCount && <span className="item_counter places"
+    data-tip={`${placeCount} places`} data-for={tooltipId}><img src={placesSVG}/>{placeCount}</span>}
+    {!!refCount && <span className="item_counter refs"
+    data-tip={`${refCount} references`} data-for={tooltipId}><img src={studySVG}/>{refCount}</span>}
+  </div></>
 }
