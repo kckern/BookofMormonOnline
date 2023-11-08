@@ -183,6 +183,15 @@ models.BomLookup.belongsTo(models.BomText, {
   targetKey: 'guid',
   as:"text"
 });
+
+//now opposite
+models.BomText.hasMany(models.BomLookup, {
+  foreignKey: 'text_guid',
+  sourceKey: 'guid',
+  as:"lookup"
+});
+
+
 models.BomLookup.belongsTo(models.LdsScripturesVerses, {
   foreignKey: 'verse_id',
   targetKey: 'verse_id',

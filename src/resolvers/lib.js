@@ -1,6 +1,6 @@
 const { getUserForLog, Op, includeModel } = require("./_common")
 import { models as Models, sequelize, SQLQueryTypes } from '../config/database';
-
+import { lookup } from 'scripture-guide';
 
 
 const getBlocksToQueue = async (token,items) => {
@@ -8,8 +8,12 @@ const getBlocksToQueue = async (token,items) => {
     const isExplicit = items?.[0].slug && items?.[0]?.blocks?.[0];
     if(isExplicit) return items.map((item)=>({slug:item.slug,blocks:item.blocks}));
 
+
     const isSlug = items?.[0].slug;
     if(isSlug) return await getBlocksFromSlug(items[0].slug,token);
+
+    const isReference = items?.[0].reference;
+    if(isReference) return await getBlocksFromReference(items[0].reference);
 
     const isReadingPlan = items?.[0].plan || false;
     if(isReadingPlan) return await getBlocksFromReadingPlan(items[0].plan,token);
@@ -19,6 +23,33 @@ const getBlocksToQueue = async (token,items) => {
  
     return await getBlocksByDefault();
 
+}
+
+const getBlocksFromReference = async (reference,token) => {
+
+    const {verse_ids} = lookup(reference);
+    if(!verse_ids || !verse_ids.length) return await getBlocksByDefault();
+    const firstVerseId = verse_ids[0];
+    const [textBlockData] = await Models.BomText.findAll({
+        raw: true,
+        attributes: ["guid", "page", "link", [sequelize.col('textSlug.slug'), 'pageSlug']],
+        include: [
+            {
+                model: Models.BomLookup,
+                as: "lookup",
+                where: { verse_id: { [Op.in]: [firstVerseId] } },
+            },
+            {
+                model: Models.BomSlug,
+                as: 'textSlug',
+            }
+        ],
+        order: [['queue_weight', 'ASC']]
+    });
+    const link = textBlockData.link;
+    const pageSlug = textBlockData.pageSlug;
+    console.log(`Found textblock ${pageSlug}/${link} for reference ${reference}`);
+    return await getBlocksFromTextBlock(`${pageSlug}/${link}`,token,false);
 }
 
 const getBlocksFromToken = async (token) => {
