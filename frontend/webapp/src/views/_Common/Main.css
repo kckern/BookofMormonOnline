@@ -4861,6 +4861,10 @@ div a.scripture_link
   position: relative;
   bottom: 1px;
 }
+.ko div a.scripture_link
+{
+  font-family: Arial, Helvetica, sans-serif;
+}
 
 
 div a.scripture_link:hover
