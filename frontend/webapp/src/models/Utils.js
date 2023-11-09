@@ -641,8 +641,6 @@ function ScriptureContainer({ scripture }) {
   const [verse_id,setVerseId] = useState(lookupReference(scripture).verse_ids[0]);
 
   useEffect(() => {
-    const lang = determineLanguage();
-    if(["ko"].includes(lang)) setLanguage(lang);
     setVerseId(lookupReference(scripture).verse_ids[0]);
     console.log(lookupReference(scripture).verse_ids);
   }, [scripture])
@@ -735,6 +733,9 @@ function replaceURLWithHTMLLinks(text) {
   const exp = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
   let html = text.replace(exp, match => `<a target='_blank' href='${match}'>${friendlyUrl(match)}</a>`);
   const urls = text.match(exp) || [];
+
+  const lang = determineLanguage();
+  if(["ko"].includes(lang)) setLanguage(lang);
 
   let scriptures = [];
   html = detectReferences(html, (scripture) => {
