@@ -8,7 +8,11 @@ import "moment/locale/ko";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import HTMLReactParser from "html-react-parser";
 import { getCache, setCache } from "./Cache";
+import Loader from "../views/_Common/Loader";
 import { linkScriptureRefs } from "src/models/scripture";
+const {lookupReference, generateReference, detectReferences, setLanguage} = require('scripture-guide');
+
+
 
 
 export function determineLanguage() {
@@ -611,14 +615,55 @@ export function isMobile() {
 }
 
 export function ParseMessage(string) {
-
   if (typeof string !== "string") return string;
-  const { html, urls } = replaceURLWithHTMLLinks(string);
+  const { html, urls, scriptures } = replaceURLWithHTMLLinks(string);
   return <>{HTMLReactParser(html)}
+    <ScripturesContainer scriptures={scriptures} />
     <LinkPreviewContainer urls={urls} />
   </>
 }
 
+function ScripturesContainer({ scriptures, setActiveRef }) {
+  const [activeIndex, setActiveIndex] = useState(0);
+  useEffect(() => {setActiveRef && setActiveRef(scriptures[activeIndex])},[activeIndex])
+  if(!scriptures?.length) return null;
+  return <div className="scriptureContainerWrapper">
+    {(scriptures.length > 1) && <div className="scripturePanel">
+      {scriptures.map((scripture, i) => 
+      <div key={i} className={"scriptureItem" + (activeIndex === i ? " active" : "")} onClick={() => setActiveIndex(i)}>{scripture}</div>)}
+    </div>}
+    <ScriptureContainer scripture={scriptures[activeIndex]}/>
+  </div>
+}
+
+function ScriptureContainer({ scripture }) {
+  const [text, setText] = useState(null);
+  const [verse_id,setVerseId] = useState(lookupReference(scripture).verse_ids[0]);
+
+  useEffect(() => {
+    const lang = determineLanguage();
+    if(["ko"].includes(lang)) setLanguage(lang);
+    setVerseId(lookupReference(scripture).verse_ids[0]);
+    console.log(lookupReference(scripture).verse_ids);
+  }, [scripture])
+
+  useEffect(() => {
+    if(!verse_id) return;
+    let timer = setTimeout(() => {
+      setText(null);
+    }, 200);
+    BoMOnlineAPI({ scripture: verse_id }).then(({ scripture }) => {
+      const newContent = scripture[verse_id].verses.map(i => i.text).join(" ");
+      clearTimeout(timer);
+      setText(newContent);
+    });
+  }, [verse_id])
+
+  return <div className="scripturePanelSingle">
+        <h5>{scripture}</h5>
+      {text ? <div className="text">{text}</div> : <Loader/>}
+    </div>
+}
 
 function LinkPreviewContainer({ urls }) {
   if (!urls) return null;
@@ -691,9 +736,17 @@ function replaceURLWithHTMLLinks(text) {
   let html = text.replace(exp, match => `<a target='_blank' href='${match}'>${friendlyUrl(match)}</a>`);
   const urls = text.match(exp) || [];
 
-  html = linkScriptureRefs(html);
+  let scriptures = [];
+  html = detectReferences(html, (scripture) => {
+    if (!scripture) return;
+    scriptures.push(scripture);
+    return `<a className="scripture_link">${scripture}</a>`
+  }
+  );
+  //dedupe
+  scriptures = [...new Set(scriptures)];
 
-  return { html, urls }
+  return { html, urls, scriptures }
 
 
 
