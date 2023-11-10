@@ -2,14 +2,12 @@ import React, { useState, useEffect, useCallback } from "react";
 import crypto from "crypto-browserify";
 import date from "date-and-time";
 import axios from "axios";
-import Parser from "html-react-parser";
+import Parser, {domToReact} from "html-react-parser";
 import moment from "moment";
 import "moment/locale/ko";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
-import HTMLReactParser from "html-react-parser";
 import { getCache, setCache } from "./Cache";
 import Loader from "../views/_Common/Loader";
-import { linkScriptureRefs } from "src/models/scripture";
 const {lookupReference, generateReference, detectReferences, setLanguage} = require('scripture-guide');
 
 
@@ -611,36 +609,45 @@ export function clickyUser(userData) {
 export function isMobile() {
   return ((window.innerWidth <= 900));
 }
-
 export function ParseMessage(string) {
-
-  const [showScriptures, setShowScripture] = useState(false);
   const [{ html, urls, scriptures }] = useState(replaceURLWithHTMLLinks(string));
-
-  useEffect(() => {
-    if(!html) return;
-    //activate scripture links
-    debugger;
-  }, [html])
-
-
+  const [activeRef, setActiveRef] = useState(null);
   if (typeof string !== "string") return string;
-  return <>{HTMLReactParser(html)}
-    <ScripturesContainer scriptures={scriptures} />
-    <LinkPreviewContainer urls={urls} />
-  </>
+  const options = {
+    replace: ({ name, attribs, children }) => {
+      if (name === 'a' && attribs.classname === 'scripture_link') {
+        const ref = domToReact(children, options);
+        const refIndex = scriptures.indexOf(ref);
+        //replace classname with class
+        attribs.class = attribs.classname;
+        delete attribs.classname;
+        const isActive = activeRef === refIndex;
+        if (isActive) attribs.class += " active";
+        const activateRef = () => {
+          setActiveRef(refIndex);
+        }
+        return <a {...attribs} onClick={activateRef}>{ref}</a>;
+      }
+    }
+  };
+
+  return (
+    <>
+      {Parser(html, options)}
+      <ScripturesContainer scriptures={scriptures} setActiveRef={setActiveRef} activeRef={activeRef} />
+      <LinkPreviewContainer urls={urls} />
+    </>
+  );
 }
 
-function ScripturesContainer({ scriptures, setActiveRef }) {
-  const [activeIndex, setActiveIndex] = useState(-1);
-  useEffect(() => {setActiveRef && setActiveRef(scriptures[activeIndex])},[activeIndex])
+function ScripturesContainer({ scriptures, setActiveRef, activeRef }) {
   if(!scriptures?.length) return null;
   return <div className="scriptureContainerWrapper">
     {(scriptures.length > 1) && <div className="scripturePanel">
       {scriptures.map((scripture, i) => 
-      <div key={i} className={"scriptureItem" + (activeIndex === i ? " active" : "")} onClick={() => setActiveIndex(i)}>{scripture}</div>)}
+      <div key={i} className={"scriptureItem" + (activeRef === i ? " active" : "")} onClick={() => setActiveRef(i)}>{scripture}</div>)}
     </div>}
-    <ScriptureContainer scripture={scriptures[activeIndex]}/>
+    <ScriptureContainer scripture={scriptures[activeRef]}/>
   </div>
 }
 
