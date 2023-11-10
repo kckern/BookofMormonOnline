@@ -16,7 +16,6 @@ const {lookupReference, generateReference, detectReferences, setLanguage} = requ
 
 
 export function determineLanguage() {
-  return "ko";
   let subdomain = window.location.host.split(".").shift();
   let tld = window.location.host.split(".").pop();
   let aliases = {
