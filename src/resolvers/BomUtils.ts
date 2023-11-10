@@ -147,7 +147,10 @@ export default {
 
 
 
-      if(verses.length===0) return {ref,verses:[]}
+      if(verses.length===0) {
+        log("No verses found",{reference,lang,verse_ids})
+        return {ref,verses:[]}
+      }
       if(lang && lang!=='en') {
         const translations = await Models.LdsScripturesTranslations.findAll({
           raw:true,
