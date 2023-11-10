@@ -131,26 +131,20 @@ export default {
 
       const nolangs = ["eng","en","dev"];
       const lang = context.lang && !nolangs.includes(context.lang) ? context.lang : null;
-      if(lang) setLang(lang);
+      const backupVerse_ids = lookup(args.ref)?.verse_ids;
+      setLang(lang);
       const reference = args.ref;
       try{
-        let { verse_ids, ref } = args.verse_ids ? 
-        { verse_ids: args.verse_ids, ref: generateReference(args.verse_ids) } 
-        : lookup(reference);
 
-        
-//      ref = generateReference(verse_ids);
+        let { verse_ids, ref } = args.verse_ids ?   { verse_ids: args.verse_ids, ref: generateReference(args.verse_ids) }  : lookup(reference);
+        if(!verse_ids.length && backupVerse_ids.length) verse_ids = backupVerse_ids;
+        const config = { raw:true, where: {  verse_id:verse_ids  } };
+        const verses = await Models.LdsScripturesVerses.findAll(config);
+        if(verses.length===0) {
+          log("No verses found",{reference,lang,verse_ids})
+          return {ref,verses:[]}
+        }
 
-      
-      const config = { raw:true, where: {  verse_id:verse_ids  } };
-      const verses = await Models.LdsScripturesVerses.findAll(config);
-
-
-
-      if(verses.length===0) {
-        log("No verses found",{reference,lang,verse_ids})
-        return {ref,verses:[]}
-      }
       if(lang && lang!=='en') {
         const translations = await Models.LdsScripturesTranslations.findAll({
           raw:true,

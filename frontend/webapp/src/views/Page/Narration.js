@@ -13,7 +13,8 @@ import { SRLWrapper } from "simple-react-lightbox";
 import {  label} from "src/models/Utils";
 import fullscreen from "src/views/Page/svg/fullscreen.png";
 import Loader from "../_Common/Loader";
-const {generateReference} = require('scripture-guide');
+import { determineLanguage } from "../../models/Utils";
+const {generateReference, setLang} = require('scripture-guide');
 
 
 function ChronoRow ({chrono}) {
@@ -702,6 +703,8 @@ function ScripturePanel({ narrationController }) {
 
   useEffect(() => {
     if(!refs?.length) return false;
+    const siteLang = determineLanguage();
+    setLanguage(siteLang);
     const textRefs = refs.map(({verse_id})=> ({ref:generateReference(verse_id),verse_id}));
     setTextRefs(textRefs);
   }, [refs]);
