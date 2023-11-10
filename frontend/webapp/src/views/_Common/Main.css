@@ -4519,7 +4519,8 @@ button:focus {
   .body.ko .card .scripture .content > p,
   .body.ko .card .scripture .content > blockquote,
   .body.ko .textInFeed .scripture  p,
-  .body.ko .textInFeed .scripture  blockquote
+  .body.ko .textInFeed .scripture  blockquote,
+  .body.ko .scripturePanelSingle .text
   {
 
     font-family: 'Nanum Myeongjo', serif;
@@ -4531,7 +4532,6 @@ button:focus {
   .body.ko .page  h2,
   .body.ko .page  h3,
   .body.ko .page  h4,
-  .body.ko .page  h5,
   .body.ko .table-of-content h5,
   .body.ko  div.toc div.card-body > ul:not(:first-child) > a
   {
@@ -4864,6 +4864,7 @@ div a.scripture_link
 .ko div a.scripture_link
 {
   font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.7rem;
 }
 
 

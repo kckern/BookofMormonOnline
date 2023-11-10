@@ -93,7 +93,7 @@
     "redux": "^4.1.0",
     "redux-persist": "^6.0.0",
     "redux-thunk": "^2.3.0",
-    "scripture-guide": "^1.0.20",
+    "scripture-guide": "^1.0.21",
     "sendbird": "^3.0.153",
     "sendbird-calls": "^1.8.1",
     "simple-react-lightbox": "^3.6.9-0",
