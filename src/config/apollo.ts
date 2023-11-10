@@ -16,11 +16,16 @@ export const apollo_config = {
     context: ({ req }) => {
       const headers = req.headers || {};
 
+      const langDomains = {
+        'xn--289a67xla.kr': 'ko',
+      };
+
       //check if language subdomain
       const subdomain = req.headers.host.split('.')[0];
       const pathlang = req.url.split('/').reverse().shift() || 'en';
+      const langDomain = langDomains[req.headers.host];
 
-      const lang = langs.includes(subdomain) ? subdomain : pathlang;
+      const lang = langs.includes(subdomain) ? subdomain : langDomain || pathlang || 'en';
 
       return {
         lang,

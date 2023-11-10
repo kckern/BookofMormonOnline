@@ -647,8 +647,7 @@ function ScriptureContainer({ scripture }) {
       setText(null);
     }, 200);
     BoMOnlineAPI({ scripture:scripture_reference }).then(({ scripture }) => {
-      debugger;
-      const newContent = scripture[scripture_reference].verses.map(i => i.text).join(" ");
+      const newContent = scripture[scripture_reference]?.verses?.map(i => i.text).join(" ") || label("scripture_not_found");
       clearTimeout(timer);
       setText(newContent);
     });
