@@ -704,7 +704,7 @@ function ScripturePanel({ narrationController }) {
   useEffect(() => {
     if(!refs?.length) return false;
     const siteLang = determineLanguage();
-    setLanguage(siteLang);
+    setLang(siteLang);
     const textRefs = refs.map(({verse_id})=> ({ref:generateReference(verse_id),verse_id}));
     setTextRefs(textRefs);
   }, [refs]);
