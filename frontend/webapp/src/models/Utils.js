@@ -8,7 +8,7 @@ import "moment/locale/ko";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import { getCache, setCache } from "./Cache";
 import Loader from "../views/_Common/Loader";
-const {lookupReference, generateReference, detectReferences, setLanguage} = require('scripture-guide');
+const { detectReferences, setLang} = require('scripture-guide');
 
 
 
@@ -745,7 +745,7 @@ function replaceURLWithHTMLLinks(text) {
   const urls = text.match(exp) || [];
 
   const lang = determineLanguage();
-  if(["ko"].includes(lang)) setLanguage(lang);
+  if(["ko"].includes(lang)) setLang(lang);
 
   let scriptures = [];
   html = detectReferences(html, (scripture) => {
