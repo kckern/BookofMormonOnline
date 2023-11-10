@@ -3,6 +3,8 @@ import { models as Models } from '../config/database';
 import dotenv from 'dotenv';
 const {lookup,generateReference,setLang} = require("scripture-guide");
 dotenv.config();
+const logger = require("../library/utils/logger.cjs");
+const log = (msg:any,obj?:any) => obj ? logger.info(`utils ${msg} ${JSON.stringify(obj)}`) : logger.info(`utils ${msg}`);
 
 import {
   getSlug,
@@ -126,10 +128,12 @@ export default {
     },
     
     scripture: async (input: any, args: any, context: any, info: any) => {
+
       const nolangs = ["eng","en","dev"];
       const lang = context.lang && !nolangs.includes(context.lang) ? context.lang : null;
       if(lang) setLang(lang);
       const reference = args.ref;
+      log({reference});
       try{
         let { verse_ids, ref } = args.verse_ids ? 
         { verse_ids: args.verse_ids, ref: generateReference(args.verse_ids) } 
@@ -138,16 +142,23 @@ export default {
         
 //      ref = generateReference(verse_ids);
 
+      log({verse_ids})
       
       const config = { raw:true, where: {  verse_id:verse_ids  } };
       const verses = await Models.LdsScripturesVerses.findAll(config);
 
+      log({verses})
+
+
+      log({lang})
       if(verses.length===0) return {ref,verses:[]}
       if(lang && lang!=='en') {
         const translations = await Models.LdsScripturesTranslations.findAll({
           raw:true,
           where: {  verse_id:verse_ids, lang  }
         });
+
+      log({translations})
         //replace the text with the translation
         verses.forEach((verse:any)=>{
           let translation:any = translations.find((t:any)=>t.verse_id===verse.verse_id);

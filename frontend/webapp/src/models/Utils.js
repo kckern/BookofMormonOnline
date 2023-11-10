@@ -16,6 +16,7 @@ const {lookupReference, generateReference, detectReferences, setLanguage} = requ
 
 
 export function determineLanguage() {
+  return "ko";
   let subdomain = window.location.host.split(".").shift();
   let tld = window.location.host.split(".").pop();
   let aliases = {
@@ -638,27 +639,23 @@ function ScripturesContainer({ scriptures, setActiveRef }) {
 
 function ScriptureContainer({ scripture }) {
   const [text, setText] = useState(null);
-  const [verse_id,setVerseId] = useState(lookupReference(scripture).verse_ids[0]);
+  const scripture_reference = scripture;
 
   useEffect(() => {
-    setVerseId(lookupReference(scripture).verse_ids[0]);
-    console.log(lookupReference(scripture).verse_ids);
-  }, [scripture])
-
-  useEffect(() => {
-    if(!verse_id) return;
+    if(!scripture_reference) return;
     let timer = setTimeout(() => {
       setText(null);
     }, 200);
-    BoMOnlineAPI({ scripture: verse_id }).then(({ scripture }) => {
-      const newContent = scripture[verse_id].verses.map(i => i.text).join(" ");
+    BoMOnlineAPI({ scripture:scripture_reference }).then(({ scripture }) => {
+      debugger;
+      const newContent = scripture[scripture_reference].verses.map(i => i.text).join(" ");
       clearTimeout(timer);
       setText(newContent);
     });
-  }, [verse_id])
+  }, [scripture_reference])
 
   return <div className="scripturePanelSingle">
-        <h5>{scripture}</h5>
+        <h5>{scripture_reference}</h5>
       {text ? <div className="text">{text}</div> : <Loader/>}
     </div>
 }

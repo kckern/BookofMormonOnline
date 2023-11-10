@@ -164,12 +164,12 @@ const queries = {
               }`,
     }
   },
-  scripture: (verse_ids) => {
+  scripture: (scripture_reference) => {
     return {
       type: "scripture",
-      key: "verse_ids",
-      val: verse_ids,
-      query: q("scripture", "verse_ids", verse_ids) +
+      key: "scripture_reference",
+      val: scripture_reference,
+      query: q("scripture", "ref", scripture_reference) +
         `{
                 ref
                 verses {
