@@ -4,7 +4,7 @@ import { models as Models, sequelize, SQLQueryTypes } from '../config/database';
 import { getSlug, Op, includeTranslation, translatedValue, includeModel, includeWhere, scoreSlugsfromUserInfo, getSlugTip, getUserForLog} from './_common';
 import scripture from "../library/scripture"
 import { loadPeopleFromTextGuid, loadPlacesFromTextGuid } from './BomPeoplePlace';
-const { getBlocksToQueue ,getFirstTextBlockGuidFromSlug} = require('./lib')
+const { getBlocksToQueue ,getFirstTextBlockGuidFromSlug,organizeRelatedScriptures} = require('./lib')
 import { lookupReference } from 'scripture-guide';
 import { queryDB } from '../library/db';
 
@@ -472,9 +472,7 @@ queue: async (root: any, args: any, context: any, info: any) => {
         AND \`type\` = "xref"
         AND significant IN (0,1,-1)`;
       const refs = await queryDB(sql, verse_ids);
-      return refs;
-
-
+      return organizeRelatedScriptures(refs)
 
     },
     next: async (item: any, args: any, { db, res, lang }: any, info: any) =>{

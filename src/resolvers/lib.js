@@ -264,7 +264,17 @@ async function getFirstTextBlockGuidFromSection(sectionGuid)
 }
 
 
+async function organizeRelatedScriptures(scriptureDataArray)
+{
+    //schema:  [{verse_id,type,significant,dst_ref}]
+    //dedupe based on verse_id.  
+    scriptureDataArray = scriptureDataArray.filter((v,i,a)=>a.findIndex(t=>(t.verse_id === v.verse_id))===i);
+    console.log(`Found ${scriptureDataArray.length} related scriptures.`);
+    return scriptureDataArray;
+}
+
+
 
 
 //export
-module.exports = {getBlocksToQueue,getFirstTextBlockGuidFromSlug}
+module.exports = {getBlocksToQueue,getFirstTextBlockGuidFromSlug,organizeRelatedScriptures}
