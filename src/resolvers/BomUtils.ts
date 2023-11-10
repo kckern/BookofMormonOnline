@@ -133,7 +133,7 @@ export default {
       const lang = context.lang && !nolangs.includes(context.lang) ? context.lang : null;
       if(lang) setLang(lang);
       const reference = args.ref;
-      log({reference});
+      log("reference",{reference});
       try{
         let { verse_ids, ref } = args.verse_ids ? 
         { verse_ids: args.verse_ids, ref: generateReference(args.verse_ids) } 
@@ -142,15 +142,15 @@ export default {
         
 //      ref = generateReference(verse_ids);
 
-      log({verse_ids})
+      log("verse_ids",{verse_ids})
       
       const config = { raw:true, where: {  verse_id:verse_ids  } };
       const verses = await Models.LdsScripturesVerses.findAll(config);
 
-      log({verses})
+      log("verses",{verses})
 
 
-      log({lang})
+      log("lang",{lang})
       if(verses.length===0) return {ref,verses:[]}
       if(lang && lang!=='en') {
         const translations = await Models.LdsScripturesTranslations.findAll({
@@ -158,7 +158,7 @@ export default {
           where: {  verse_id:verse_ids, lang  }
         });
 
-      log({translations})
+      log("translations",{translations})
         //replace the text with the translation
         verses.forEach((verse:any)=>{
           let translation:any = translations.find((t:any)=>t.verse_id===verse.verse_id);
