@@ -784,7 +784,7 @@ function ScripturePanelSingle({ narrationController,scriptureData }) {
     },200);
     BoMOnlineAPI({scripture:ref}).then(({scripture})=> {
       clearTimeout(timer);
-      setText(scripture[ref].verses.map(i=>i.text).join(" "));
+      setText(scripture[ref]?.verses?.map(i=>i.text).join(" "));
     })
 
   }, [ref]);
