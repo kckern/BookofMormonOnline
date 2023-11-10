@@ -444,16 +444,23 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId, lang, studyBuddyId})
     //get block content
     log("Loading content for text_guid",{text_guid});
     const {verse_ids,ref,scripture_text} = await loadVerses(text_guid,lang);
-
+    log("Loaded Verses",{verse_ids,ref,scripture_text});
     const commentary = await loadCommentary(verse_ids,lang);
+    log("Loaded Commentary",{commentary});
     const crossReferences = await loadCrossReferences(verse_ids,lang);
+    log("Loaded Cross References",{crossReferences});
     const sectionContext = await loadSectionContext(text_guid,lang);
+    log("Loaded Section Context",{sectionContext});
     const division = await loadDivision(text_guid,lang);
+    log("Loaded Division",{division});
     const {guid:page_guid, title:page, slug:page_slug, page_link} = await loadPage(text_guid,lang);
+    log("Loaded Page",{page_guid, page, page_slug, page_link});
     const sections = await loadPageSections(page_guid,lang);
+    log("Loaded Sections",{sections});
     const sectionNarration = sectionContext.narration;
     const sectionTitle = sectionContext.title;
     const textBlockNarration = await loadTextBlockNarration(text_guid,lang);
+    log("Loaded Narration",{sectionNarration,sectionTitle,textBlockNarration});
     const {people,places} = sectionContext;
     log("studyBuddyTextBlock loaded context");
 
