@@ -1,7 +1,7 @@
 import { sendbird } from '../library/sendbird';
 import { models as Models } from '../config/database';
 import dotenv from 'dotenv';
-const {lookup,generateReference} = require("scripture-guide");
+const {lookup,generateReference,setLang} = require("scripture-guide");
 dotenv.config();
 
 import {
@@ -69,7 +69,6 @@ export default {
           return results.map((item: any) => item.verse_id);
         });
       }
-      console.log('verse_ids', verse_ids);
       if(!verse_ids?.length) return [];
 
 
@@ -129,22 +128,22 @@ export default {
     scripture: async (input: any, args: any, context: any, info: any) => {
       const nolangs = ["eng","en","dev"];
       const lang = context.lang && !nolangs.includes(context.lang) ? context.lang : null;
+      if(lang) setLang(lang);
       const reference = args.ref;
       try{
         let { verse_ids, ref } = args.verse_ids ? 
         { verse_ids: args.verse_ids, ref: generateReference(args.verse_ids) } 
         : lookup(reference);
-      ref = translateReferences(ref, lang);
-  
+
+        
+//      ref = generateReference(verse_ids);
+
       
       const config = { raw:true, where: {  verse_id:verse_ids  } };
       const verses = await Models.LdsScripturesVerses.findAll(config);
 
-  
       if(verses.length===0) return {ref,verses:[]}
-      
-  
-      if(lang && lang!=='eng') {
+      if(lang && lang!=='en') {
         const translations = await Models.LdsScripturesTranslations.findAll({
           raw:true,
           where: {  verse_id:verse_ids, lang  }
@@ -152,7 +151,7 @@ export default {
         //replace the text with the translation
         verses.forEach((verse:any)=>{
           let translation:any = translations.find((t:any)=>t.verse_id===verse.verse_id);
-          if(translation) verse.verse_scripture = translation.verse_scripture;
+          if(translation) verse.verse_scripture = translation.text;
         });
       }
   
