@@ -7,7 +7,7 @@ import moment from "moment";
 import "moment/locale/ko";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import { getCache, setCache } from "./Cache";
-import Loader from "../views/_Common/Loader";
+import {Spinner} from "../views/_Common/Loader";
 const { detectReferences, setLang} = require('scripture-guide');
 
 
@@ -669,7 +669,7 @@ function ScriptureContainer({ scripture }) {
   if(!scripture) return null;
   return <div className="scripturePanelSingle">
         <h5>{scripture_reference}</h5>
-      {text ? <div className="text">{text}</div> : <Loader/>}
+      {text ? <div className="text">{text}</div> : <Spinner/>}
     </div>
 }
 

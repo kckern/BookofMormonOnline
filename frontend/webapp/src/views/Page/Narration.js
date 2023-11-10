@@ -12,7 +12,7 @@ import { snapSelectionToWord,chronoLabel } from "src/models/Utils";
 import { SRLWrapper } from "simple-react-lightbox";
 import {  label} from "src/models/Utils";
 import fullscreen from "src/views/Page/svg/fullscreen.png";
-import Loader from "../_Common/Loader";
+import {Spinner} from "../_Common/Loader";
 import { determineLanguage } from "../../models/Utils";
 const {generateReference, setLang} = require('scripture-guide');
 
@@ -797,7 +797,7 @@ function ScripturePanelSingle({ narrationController,scriptureData }) {
 
   return <div className="scripturePanelSingle">
     <h5>{ref}</h5>
-   {text ? <div className="text">{text}</div> : <Loader/>}
+   {text ? <div className="text">{text}</div> : <Spinner/>}
   </div>
 
 }
