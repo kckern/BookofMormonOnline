@@ -773,24 +773,24 @@ function ScripturePanel({ narrationController }) {
 
 function ScripturePanelSingle({ narrationController,scriptureData }) {
 
-  const {ref,verse_id} = scriptureData || {ref:null,verse_id:null};
+  const {ref} = scriptureData || {ref:null,verse_id:null};
   const [text, setText] = useState(null);
 
 
   useEffect(() => {
-    if(!verse_id) return false;
+    if(!ref) return false;
     let timer = setTimeout(()=> {
       setText(null);
     },200);
-    BoMOnlineAPI({scripture:verse_id}).then(({scripture})=> {
+    BoMOnlineAPI({scripture:ref}).then(({scripture})=> {
       clearTimeout(timer);
-      setText(scripture[verse_id].verses.map(i=>i.text).join(" "));
+      setText(scripture[ref].verses.map(i=>i.text).join(" "));
     })
 
-  }, [verse_id]);
+  }, [ref]);
 
 
-  if(!verse_id) return null;
+  if(!ref) return null;
 
   return <div className="scripturePanelSingle">
     <h5>{ref}</h5>
