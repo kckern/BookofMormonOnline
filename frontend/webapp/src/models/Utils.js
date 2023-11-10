@@ -609,14 +609,22 @@ export function clickyUser(userData) {
 }
 
 export function isMobile() {
-
   return ((window.innerWidth <= 900));
-
 }
 
 export function ParseMessage(string) {
+
+  const [showScriptures, setShowScripture] = useState(false);
+  const [{ html, urls, scriptures }] = useState(replaceURLWithHTMLLinks(string));
+
+  useEffect(() => {
+    if(!html) return;
+    //activate scripture links
+    debugger;
+  }, [html])
+
+
   if (typeof string !== "string") return string;
-  const { html, urls, scriptures } = replaceURLWithHTMLLinks(string);
   return <>{HTMLReactParser(html)}
     <ScripturesContainer scriptures={scriptures} />
     <LinkPreviewContainer urls={urls} />
@@ -624,7 +632,7 @@ export function ParseMessage(string) {
 }
 
 function ScripturesContainer({ scriptures, setActiveRef }) {
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [activeIndex, setActiveIndex] = useState(-1);
   useEffect(() => {setActiveRef && setActiveRef(scriptures[activeIndex])},[activeIndex])
   if(!scriptures?.length) return null;
   return <div className="scriptureContainerWrapper">
@@ -651,7 +659,7 @@ function ScriptureContainer({ scripture }) {
       setText(newContent);
     });
   }, [scripture_reference])
-
+  if(!scripture) return null;
   return <div className="scripturePanelSingle">
         <h5>{scripture_reference}</h5>
       {text ? <div className="text">{text}</div> : <Loader/>}
