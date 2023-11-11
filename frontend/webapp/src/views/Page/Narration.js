@@ -711,6 +711,17 @@ function ScripturePanel({ narrationController }) {
 
 
   useEffect(() => {
+
+    //on activeRef change update the url via react router
+    if(activeRef === null) return false;
+    const {ref} = textRefs[activeRef] || {ref:null};
+    //slugify lowercast
+    const slugRef = ref.replace(/[\s:]+/g,".").toLowerCase();
+    // format: pageSlug/link_num/scripture/ref
+    const newSlug = narrationController.pageController.states.activeRow + "/scripture/" + slugRef;
+    narrationController.appController.functions.setSlug(newSlug);
+    document.title = `${ref} | ${label("cross_reference")}`;
+
     const handleKeyDown = (event) => {
       const length = textRefs.length;
       const gridEl = document.querySelector(".scripturePanel");
@@ -754,6 +765,8 @@ function ScripturePanel({ narrationController }) {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
+
+    
   }, [activeRef]); // Re-run the effect when activeRef changes
 
   if(!refs?.length) return null;
