@@ -577,7 +577,8 @@ queue: async (root: any, args: any, context: any, info: any) => {
       });
 
       if(lang && lang!=="en"){
-        const narrationGuid = parentNarration['textParent.narration.guid'];
+        const narrationGuid = parentNarration?.['textParent.narration.guid'];
+        if(!narrationGuid) return;
         const narration = await Models.BomNarration.findOne({
           where: {
             guid: narrationGuid
@@ -597,14 +598,20 @@ queue: async (root: any, args: any, context: any, info: any) => {
     people: async (item: any, args: any, context: any, info: any) =>{
       const lang = context.lang ? context.lang : null;
       const textBlockGuid = item.getDataValue('guid');
-      const narrationDescription = item.getDataValue('narration')?.getDataValue('description');
+      const narrationDescription = item.getDataValue('narration')?.getDataValue('description') || await (async ()=>{
+        const narration:any = await Models.BomNarration.findOne({raw:true,where:{guid:item.getDataValue('parent')}});
+        return narration?.description || "";
+      })();
       const peopleSlugs = narrationDescription?.match(/\{([^}]+)\}/g)?.map((s:string)=>s.replace(/[{}]/g, '').split("|")[1]);
       return await loadPeopleFromTextGuid(textBlockGuid,peopleSlugs,lang);
     },
     places: async (item: any, args: any, context: any, info: any) =>{
       const lang = context.lang ? context.lang : null;
       const textBlockGuid = item.getDataValue('guid');
-      const narrationDescription = item.getDataValue('narration')?.getDataValue('description');
+      const narrationDescription = item.getDataValue('narration')?.getDataValue('description') || await (async ()=>{
+        const narration:any = await Models.BomNarration.findOne({raw:true,where:{guid:item.getDataValue('parent')}});
+        return narration?.description || "";
+      })();
       const placeSlugs = narrationDescription?.match(/\[([^\]]+)\]/g)?.map((s:string)=>s.replace(/[\[\]]/g, '').split("|")[1]);
       return await loadPlacesFromTextGuid(textBlockGuid,placeSlugs,lang);
     },
