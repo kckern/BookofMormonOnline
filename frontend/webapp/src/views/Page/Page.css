@@ -217,6 +217,9 @@ div.row-r div.rightconnection:hover {
 
 a.theater-link{
 	position: relative;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
 }
 
 a.theater-link img
@@ -226,6 +229,7 @@ a.theater-link img
   filter: invert();
   float: right;
   opacity: 0.1;
+  flex-shrink: 0;
 }
 a.theater-link img:hover
 {
@@ -407,4 +411,6 @@ a.theater-link img:hover
 
 .theater-link{
 	display:inline-block;
+  display: flex;
+  align-items: center;
 }

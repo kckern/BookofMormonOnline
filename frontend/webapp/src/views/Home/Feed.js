@@ -144,15 +144,8 @@ function HomeFeedItem({ appController,seq, item, homeGroups, linkedContent, setA
 
   //load comments from api immediate if seq==1
   useEffect(async () => {
-    setFetching(true);
     if (seq === 1) {
-      fetchComments(-1);
-      let message = item.id;
-      let channel = item.channel_url;
-      let token = appController.states.user.token;
-      let comments = await BoMOnlineAPI({ homethread: { token, channel, message } }, { useCache: false })
-      fetchComments(comments.homethread);
-      setFetching(false);
+      loadCommentsFromAPI();
     }
   }, [seq]);
 
@@ -173,16 +166,22 @@ function HomeFeedItem({ appController,seq, item, homeGroups, linkedContent, setA
     let m = group.members[i];
     memberMap[m.user_id] = m;
   }
+  
+const loadCommentsFromAPI = async () => {
+  if(fetching) return;
+  setFetching(true);
+  let message = item.id;
+  let channel = item.channel_url;
+  let token = appController.states.user.token;
+  let comments = await BoMOnlineAPI({ homethread: { token, channel, message } }, { useCache: false })
+  fetchComments(comments.homethread);
+  setFetching(false);
+}
+  
 
   const handleVisibilityChange = async (visible) => {
-    if(fetching) return;
-    if (visible && !comments.length && item.replycount) {
-      fetchComments(-1);
-      let message = item.id;
-      let channel = item.channel_url;
-      let token = appController.states.user.token;
-      let comments = await BoMOnlineAPI({ homethread: { token, channel, message } }, { useCache: false })
-      fetchComments(comments.homethread);
+    if (visible && !comments?.length && item.replycount) {
+    //  loadCommentsFromAPI();
     }
   }
   let finished = item.user.finished;
@@ -222,7 +221,7 @@ function HomeFeedItem({ appController,seq, item, homeGroups, linkedContent, setA
         {(item.msg === "•") ? null : <div className="itemMsg">{ParseMessage(item.msg || "")}</div>}
         <ContentInFeed item={item} linkedContent={linkedContent} appController={appController} />
       </CardBody>
-      <Comments fetchComments={fetchComments} appController={appController} comments={comments} item={item} group={group} sbChannel={sbChannel} count={item.replycount} memberMap={memberMap} />
+      <Comments fetchComments={fetchComments} appController={appController} comments={comments} item={item} group={group} sbChannel={sbChannel} count={item.replycount} memberMap={memberMap} loadCommentsFromAPI={loadCommentsFromAPI} />
     </Card></VisibilitySensor>
   );
 
@@ -301,7 +300,7 @@ function LikeUI({  likes, memberMap }) {
     }</b> {otherstring} {likelabel}</span>
 }
 
-function Comments({ appController, comments, count, item, group, memberMap, sbChannel, fetchComments}) {
+function Comments({ appController, comments, count, item, group, memberMap, sbChannel, fetchComments,loadCommentsFromAPI}) {
 
 
   const [alertOn, setAlert] = useState(false);
@@ -345,14 +344,25 @@ function Comments({ appController, comments, count, item, group, memberMap, sbCh
     thread = comments.map(comment => <Comment comment={comment} key={comment.id} />);
 
   }
-  count = thread.length
+
+  //thead is zero but item.replycount is not zero put a button to load more
+  if (!thread.length && item.replycount) {
+    thread = <div className="commentThreadItem">
+      <div className="buttonRow loadComments">
+      <Button onClick={() => loadCommentsFromAPI()}>{label("load_x_comments",[count])}</Button>
+      </div>
+    </div>
+  }
+
+
+  count = thread.length || item.replycount;
 
 
   let comlabel = (count === 1) ? "comment_count_singular" : "comment_count_plural";
 
   let countRow = <div className="countRow noselect">
     <div className="likeCount"><LikeUI item={itemState} likes={likes} memberMap={memberMap} /></div>
-    <div className="commentCount"><img src={comment} className="commentimg" />{label(comlabel, [count + ""])} </div>
+    <div className="commentCount"><img src={comment} className="commentimg" />{label(comlabel, [count || "..."])} </div>
   </div>;
 
   if (!likes.length && !count) countRow = null;
