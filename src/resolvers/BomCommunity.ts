@@ -111,7 +111,7 @@ export default {
       const rankedUsers :any = await Models.BomUser.findAll({
         raw: true,
         attributes: ['user',[Sequelize.literal(`MD5(user)`), 'sbuser'],'name','last_active', 'complete'],
-        where: { last_active: { [Op.gt]: activeTimeFrame}},
+        where: { last_active: { [Op.gt]: activeTimeFrame}, zip: { [Op.ne]: -1}},
         order: [['complete', 'DESC']],
       });
       const topUsers = rankedUsers.slice(0,100);
@@ -119,7 +119,7 @@ export default {
       const recentFinishersUsers :any = (await Models.BomUser.findAll({
         raw: true,
         attributes: ['user',[Sequelize.literal(`MD5(user)`), 'sbuser'],'name','finished'],
-        where: { finished : { [Op.gt]: 0}},
+        where: { finished : { [Op.gt]: 0}, zip: { [Op.ne]: -1}},
         order: [['finished', 'DESC']],
         limit: 10
       })).map((u:any)=>({...u,finished:[u.finished]}));
