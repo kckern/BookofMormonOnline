@@ -315,7 +315,7 @@
 
   .peoplePlacePanel,
   .scripturePanel{
-    padding: 1rem;
+    padding: 1ex;
     display: flex;
     flex-wrap: wrap;
     justify-content: space-around;
@@ -341,6 +341,7 @@
     border-top-right-radius: 1ex;
     border-top-left-radius: 1ex;  
     font-weight: bold;
+    line-height: 100%;
   }
   .peoplePlacePanel .info
   {
@@ -350,6 +351,7 @@
     line-height: 1.7ex;
     padding: .5ex;
     opacity: 0.6;
+    margin-bottom: 1ex;
   }
   .peoplePlacePanel .name,
   .peoplePlacePanel .info
