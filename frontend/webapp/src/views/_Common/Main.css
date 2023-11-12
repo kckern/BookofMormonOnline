@@ -3385,7 +3385,6 @@ pre::before {
 body {
     background-color: #323b4d;
     margin: 0;
-    margin-bottom: 100px;
     font-size: 14px;
     /* letter-spacing: .5px; */
     font-family: 'Roboto Condensed', 'Arial Narrow', 'sans-serif';
