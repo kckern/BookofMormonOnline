@@ -1384,3 +1384,11 @@ span.groupName,
     top: 0 !important;
     position: relative!important;
 }
+
+.buttonRow.loadComments
+{
+    display: flex;
+    justify-content: center;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
