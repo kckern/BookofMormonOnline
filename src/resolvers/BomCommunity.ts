@@ -127,7 +127,6 @@ export default {
       const sbIds = [...topUsers,...recentFinishersUsers].map((u:any)=>u.sbuser);
 
       const sendbirdUserObjects = await sendbird.listUsers(sbIds);
-      console.log(sendbirdUserObjects.length,topUsers.length);
 
       const publicUsers = await sendbird.getMembersofPublicGroups();
       const privateUsersVisibleToMe = my_sb_user_id ? await sendbird.getMembersofPrivateGroups(my_sb_user_id) : [];
@@ -136,14 +135,15 @@ export default {
       const currentProgress =  topUsers.map((u:any)=>{
         const sendbirdUserObject = sendbirdUserObjects.find((sbu:any)=>sbu.user_id===u.sbuser);
         return loadHomeUser(sendbirdUserObject,u,visibleUsers);
-      }).filter((u:any)=>!!u).slice(0,50).map(maskUserPrivacy).sort((a:any,b:any)=>b.progress-a.progress);
+      }).filter((u:any)=>!!u).slice(0,50).map(maskUserPrivacy).sort((a:any,b:any)=>b.progress-a.progress)
+      .filter((u:any)=>!u.isAdmin);
 
       const recentFinishers = recentFinishersUsers.map((u:any)=>{
         const sendbirdUserObject = sendbirdUserObjects.find((sbu:any)=>sbu.user_id===u.sbuser);
         return loadHomeUser(sendbirdUserObject,u,visibleUsers);
-      }).map(maskUserPrivacy);
+      }).map(maskUserPrivacy).filter((u:any)=>!u?.isAdmin);
 
-
+      //console.log({currentProgress});
       return {
         recentFinishers,
         currentProgress,
@@ -533,15 +533,15 @@ function loadHomeUser(sbuser, user:any={}, publicUsers = []) {
 
   const user_id = sbuser?.user_id || md5(user?.user);
   const picture =  sbuser?.profile_url ||  `https://api.dicebear.com/7.x/personas/svg?seed=${user_id}&eyes=open,sunglasses,wink,happy&facialHair=beardMustache,goatee&facialHairProbability=20&hair=bobCut,curly,long,pigtails,shortCombover,buzzcut,beanie&mouth=smile,smirk,bigSmile&nose=smallRound,mediumRound&skinColor=d78774,b16a5b,eeb4a4,92594b`;
-
   if(!sbuser?.metadata) return {
     user_id,
-    nickname: user?.name || user?.user || "User",
+    nickname:  user?.name || user?.user || "User",
     picture,
     progress: parseFloat(user?.complete) || 0,
     finished: user.finished || [],
     lastseen: user.last_active,
-    nonSocial:true
+    nonSocial:true,
+    isAdmin: false,
   }
 
 
@@ -562,8 +562,8 @@ function loadHomeUser(sbuser, user:any={}, publicUsers = []) {
     lastseen: bookmark?.latest || 0,
     laststudied: bookmark?.heading  ? `${bookmark?.heading} (${bookmark?.pagetitle})` : null,
     bookmark: bookmark?.slug || null,
+    isAdmin: !!sbuser?.metadata?.isAdmin,
     public: !!publicUsers.includes(sbuser?.user_id) || null
-
   };
 }
 
