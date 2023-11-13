@@ -171,12 +171,11 @@
 .textInFeed .scripture
 {
 
-    font-family: 'Sorts Mill Goudy', serif;
+    font-family: 'Scripture', serif;
     font-size: 1.1em;
     text-align: justify;
     line-height: 1.0em;
     letter-spacing: -0.5px;
-    font-weight: bold;
     color: #666;
     padding: .5em .5em 0em .5em;
     border-left: 1px solid #AAA;

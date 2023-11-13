@@ -225,8 +225,7 @@
     flex-grow: 1;
     text-align: justify;
     padding: 2rem;
-    font-family: 'Sorts Mill Goudy', serif; 
-    font-weight: 800;
+    font-family: 'Scripture', serif; 
     font-size: max(2vw, 1.5vh);
     color: #FFFFFFCC;
     align-items: center;
@@ -517,7 +516,7 @@ img.player-ui:hover{
 }
 
 .theater-intro-slide em{
-    font-family: 'Sorts Mill Goudy', serif;
+    font-family: 'Scripture', serif;
 }
 
 .theater-intro-slide p{
@@ -724,7 +723,7 @@ img.player-ui:hover{
     line-height: 100%;
 }
 .theater-intro-slide.section-intro p{
-    font-family: "Sorts Mill Goudy", serif;
+    font-family: "Scripture", serif;
     font-size: min(2.5rem, 5vh);
     
 }
@@ -788,14 +787,13 @@ span.pageTitle
     transform: translateY(-50%);
     padding: 10%;
     font-style: italic;
-    font-family: "Sorts Mill Goudy", serif;
+    font-family: "Scripture", serif;
     pointer-events: none;
 }
 
 .theater-super-title
 {
-    font-family: 'Sorts Mill Goudy', serif; 
-    font-weight: 800;
+    font-family: 'Scripture', serif; 
     font-size: 2vw;
     flex-grow: 1;
     padding-top: 1ex;
@@ -815,8 +813,7 @@ span.pageTitle
 .theater-meta-content-section
 {
     color: white;
-    font-family: 'Sorts Mill Goudy', serif; 
-    font-weight: 800;
+    font-family: 'Scripture', serif; 
     display: flex;
     justify-content: center;
     align-items: center;

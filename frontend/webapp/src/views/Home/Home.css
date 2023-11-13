@@ -513,8 +513,7 @@ div.toolTipNickname
       text-align: justify;
       color:white;
       line-height: 1.2em;
-      font-family: 'Sorts Mill Goudy', serif; 
-      font-weight: 800;
+      font-family: 'Scripture', serif; 
       height: 100%;
       opacity: 0;
       font-size: 1em;
@@ -1370,11 +1369,10 @@ span.groupName,
     margin: 0 1em 0 1em;
     border-radius: 1rem;
     padding: 1rem;
-    font-family: 'Sorts Mill Goudy', serif;
+    font-family: 'Scripture', serif;
     font-size: 1rem;
     text-align: justify;
     line-height: 1.2rem;
-    font-weight: bold;
     color: #444;
 }
 .scripturePanelSingle .loadBar

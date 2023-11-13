@@ -7,10 +7,10 @@ import { renderPersonPlaceHTML } from "./PersonPlace";
 
 export default function PageLink({ rowData, pageController }) {
   let description = renderPersonPlaceHTML(
-    rowData.capsulation.description,
+    rowData.capsulation?.description || "",
     pageController
   );
-  let reference = rowData.capsulation.reference;
+  let reference = rowData.capsulation?.reference;
   return (
     <div className="card-body">
       {/* CONTENT ROW */}
@@ -30,7 +30,7 @@ export default function PageLink({ rowData, pageController }) {
             <Card className="card-plain">
               <CardHeader role="tab" className="reference link">
                 <Link
-                  to={"/" + rowData.capsulation.slug}
+                  to={"/" + rowData.capsulation?.slug}
                   data-toggle="collapse"
                 >
                   <span className={"square"}>■</span> {reference}

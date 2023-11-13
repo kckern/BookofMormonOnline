@@ -171,6 +171,8 @@ export default function Commentary({ appController }) {
     })
     .join("");
 
+
+  if(!commentaryData.publication) return null;
   return (
     <>
       <Draggable handle=".card-header">

@@ -40,11 +40,10 @@
 }
 .card .scripture .content > p,
 .card .scripture .content > blockquote {
-    font-family: 'Sorts Mill Goudy', serif;
+    font-family: 'Scripture', monospace;
     font-size: 1rem;
     text-align: justify;
     line-height: 1.2rem;
-    font-weight: bold;
     color: #444;
 }
 
@@ -533,11 +532,10 @@ span.indent{
     margin: 0 1em 0 1em;
     border-radius: 1rem;
     padding: 1rem;
-    font-family: 'Sorts Mill Goudy', serif;
+    font-family: 'Scripture', serif;
     font-size: 1rem;
     text-align: justify;
     line-height: 1.2rem;
-    font-weight: bold;
     color: #444;
 }
 .scripturePanelSingle .loadBar

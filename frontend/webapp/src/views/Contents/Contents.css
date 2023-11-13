@@ -79,8 +79,7 @@ div.toc div.card-body > ul:not(:first-child) > a{
       text-align: justify;
       color:white;
       line-height: 1.2em;
-      font-family: 'Sorts Mill Goudy', serif; 
-      font-weight: 800;
+      font-family: 'Scripture', serif; 
       height: 100%;
       opacity: 0;
       font-size: 1em;
