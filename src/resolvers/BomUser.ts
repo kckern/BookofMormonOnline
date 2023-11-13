@@ -1,6 +1,8 @@
 import { models, models as Models } from '../config/database';
 import Sequelize, { Model } from 'sequelize';
 import { sendbird } from '../library/sendbird.js';
+const { genUserAvatar} = require('./lib')
+
 import crypto from 'crypto';
 import {
   Op,
@@ -314,7 +316,7 @@ export default {
       const socialUserId = md5(args.username);
       const emailHash = md5(args.email);
 
-      let profile_url = `https://api.dicebear.com/7.x/thumbs/svg?seed=${socialUserId}`;
+      let profile_url = genUserAvatar(socialUserId);
       if (args.email) {
         let gravatarUrl = `https://www.gravatar.com/avatar/${emailHash}`;
         try {
@@ -382,7 +384,7 @@ export default {
         .catch((error: any) => {
           return {
             isSuccess: false,
-            msg: error.parent.code,
+            msg: error.parent?.code,
             user: null,
             social: null
           };
