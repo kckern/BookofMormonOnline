@@ -16,7 +16,7 @@ import book from "./svg/book.svg";
 import timeline from "./svg/timeline.svg";
 import people from "./svg/people.svg";
 import relationships from "./svg/relationships.svg";
-import roadmap from "./svg/roadmap.svg";
+import loghistory from "./svg/loghistory.svg";
 import places from "./svg/places.svg";
 import maps from "./svg/maps.svg";
 import fax from "./svg/facsimiles.svg";
@@ -177,11 +177,14 @@ function UserInfo({ appController, setActivePath, activePath }) {
   let startedString = (completed > started) ? "" : (" • " + (started?.toFixed(1) || 0) + "% " + label("started"))
 
 
+  const socialUser = appController.states?.user?.social && appController.states?.user?.user;
+  const nonSocialUser = appController.states?.user?.user && !appController.states?.user?.social;
+  const notLoggedIn = !socialUser && !nonSocialUser;
   useEffect(() => {
-    if (appController.states?.user?.social && appController.states?.user?.user) {
+    if (socialUser) {
       setName(appController.states?.user?.social.nickname);
       setImg(appController.states?.user?.social.profile_url);
-    } else if (appController.states?.user?.user) {
+    } else if (nonSocialUser) {
       setName(label("loading_user"));
       setImg(loadingImg);
     } else {
@@ -270,6 +273,9 @@ function UserInfo({ appController, setActivePath, activePath }) {
             />
             <img onClick={toggleSound} data-tip={(appController.states?.preferences.audio ? label("audio_on") : label("audio_off"))} src={appController.states?.preferences.audio ? soundOn : soundOff} />
             <Link to={"/user/preferences"}><img data-tip={label("user_prefs")} src={settings} /></Link>
+            {!notLoggedIn && <NavLink to={"/user/history"}>
+              <img data-tip={label("user_history")} src={loghistory} />
+            </NavLink>}
           </div>
       </li>
     </Nav>
