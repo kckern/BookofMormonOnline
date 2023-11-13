@@ -144,7 +144,7 @@ function HomeFeedItem({ appController,seq, item, homeGroups, linkedContent, setA
 
   //load comments from api immediate if seq==1
   useEffect(async () => {
-    if (seq === 1) {
+    if (seq === 0) {
       loadCommentsFromAPI();
     }
   }, [seq]);
@@ -167,21 +167,21 @@ function HomeFeedItem({ appController,seq, item, homeGroups, linkedContent, setA
     memberMap[m.user_id] = m;
   }
   
-const loadCommentsFromAPI = async () => {
-  if(fetching) return;
-  setFetching(true);
-  let message = item.id;
-  let channel = item.channel_url;
-  let token = appController.states.user.token;
-  let comments = await BoMOnlineAPI({ homethread: { token, channel, message } }, { useCache: false })
-  fetchComments(comments.homethread);
-  setFetching(false);
-}
+  const loadCommentsFromAPI = async () => {
+    if(fetching) return;
+    setFetching(true);
+    let message = item.id;
+    let channel = item.channel_url;
+    let token = appController.states.user.token;
+    let comments = await BoMOnlineAPI({ homethread: { token, channel, message } }, { useCache: false })
+    fetchComments(comments.homethread);
+    setFetching(false);
+  }
   
 
   const handleVisibilityChange = async (visible) => {
     if (visible && !comments?.length && item.replycount) {
-    //  loadCommentsFromAPI();
+      loadCommentsFromAPI();
     }
   }
   let finished = item.user.finished;
@@ -221,7 +221,7 @@ const loadCommentsFromAPI = async () => {
         {(item.msg === "•") ? null : <div className="itemMsg">{ParseMessage(item.msg || "")}</div>}
         <ContentInFeed item={item} linkedContent={linkedContent} appController={appController} />
       </CardBody>
-      <Comments fetchComments={fetchComments} appController={appController} comments={comments} item={item} group={group} sbChannel={sbChannel} count={item.replycount} memberMap={memberMap} loadCommentsFromAPI={loadCommentsFromAPI} />
+      <Comments fetchComments={fetchComments} fetching={fetching} appController={appController} comments={comments} item={item} group={group} sbChannel={sbChannel} count={item.replycount} memberMap={memberMap} loadCommentsFromAPI={loadCommentsFromAPI} />
     </Card></VisibilitySensor>
   );
 
@@ -300,7 +300,7 @@ function LikeUI({  likes, memberMap }) {
     }</b> {otherstring} {likelabel}</span>
 }
 
-function Comments({ appController, comments, count, item, group, memberMap, sbChannel, fetchComments,loadCommentsFromAPI}) {
+function Comments({ appController, comments, count, item, group, memberMap, sbChannel, fetchComments,fetching,loadCommentsFromAPI}) {
 
 
   const [alertOn, setAlert] = useState(false);
@@ -349,7 +349,7 @@ function Comments({ appController, comments, count, item, group, memberMap, sbCh
   if (!thread.length && item.replycount) {
     thread = <div className="commentThreadItem">
       <div className="buttonRow loadComments">
-      <Button onClick={() => loadCommentsFromAPI()}>{label("load_x_comments",[count])}</Button>
+      <Button onClick={() => loadCommentsFromAPI()}>{label(fetching ? "load" : "load_x_comments",[count])}</Button>
       </div>
     </div>
   }
