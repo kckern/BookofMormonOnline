@@ -107,7 +107,7 @@ const routes = [
     component: Contact,
   },
   {
-    path: "/user/signup",
+  path: "/user/signup",
     component: User,
   },
   {
