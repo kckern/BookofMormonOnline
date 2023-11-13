@@ -142,6 +142,11 @@
     stroke: black;
     fill: black;
 }
+.divisionProgressItem .CircularProgressbar
+{
+    flex-shrink: 0;
+    width: calc(50% - 1ex);
+}
 
 .completed_started
 {
