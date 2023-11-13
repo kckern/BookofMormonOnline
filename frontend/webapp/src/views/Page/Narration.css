@@ -365,8 +365,13 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(6rem, 1fr));
   grid-gap: 0.5ex;
+}
+
+.narration .scripturePanel
+{
   border: 1px solid #DDD;
 }
+
   .scriptureItem
   {
     padding: 0.5ex;
