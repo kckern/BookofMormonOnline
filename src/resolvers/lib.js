@@ -279,7 +279,7 @@ const pickOneRamdomly = (arr) => {
     return arr[selectedIndex];
 }
 
-async function genUserAvatar(user_id) {
+function genUserAvatar(user_id) {
     const pallettes =  
     [
       ["FF86F1", "FF00CC"], // Baby Pink to Deep Pink
