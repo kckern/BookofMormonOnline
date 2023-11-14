@@ -4510,23 +4510,6 @@ button:focus {
 /* VN */
 
 
-@import url('https://fonts.cdnfonts.com/css/tex-gyre-pagella');
-
-.body.vn .page .title,
-.body.vn .page h1,
-.body.vn .page  h2,
-.body.vn .page  h3,
-.body.vn .page  h4,
-.body.vn .page  h5,
-.body.vn .table-of-content h5,
-.body.vn .card .scripture .content > p,  
-.body.vn .card .scripture .content > blockquote,
-.body.vn  div.toc div.card-body > ul:not(:first-child) > a
-{
-  font-family: 'TeXGyrePagella', serif;
-  font-weight:600;
-}
-
 
 
 
