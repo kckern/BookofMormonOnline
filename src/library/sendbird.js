@@ -3,7 +3,7 @@ const FormData = require('form-data');
 const fs = require('fs');
 const crypto = require('crypto');
 const isJSON = require("is-json");
-const logger = require("../library/utils/logger.cjs");
+const logger = require("../utils/logger.cjs");
 const log = (msg,obj) => obj ? logger.info(`sendbird ${msg} ${JSON.stringify(obj)}`) : logger.info(`sendbird ${msg}`);
 
 
@@ -765,11 +765,11 @@ class Sendbird {
     return response?.data?.messages || [];
   }
 
+  
   async getBotByLang(lang) {
     log("getBotByLang",lang);
-    //query users where metadata isBot=true and metadata.lang=lang
-    // if none found return english bot lang=en
-    let response = await axios({
+    const defaultBot = {user_id:"ddc26a0e41b6daffff542e9fe8d9171d"};
+    const config = {
       method: 'GET',
       url: `https://api-${SENDBIRD_APPID}.sendbird.com/v3/users?limit=100&metadatakey=isBot&metadatavalues_in=true`,
       headers: {
@@ -777,13 +777,33 @@ class Sendbird {
         'Content-Type': 'application/json'
       },
       json: true
+    };
+
+    log("getBotByLang",{config});
+
+    // Create a new promise that rejects after 5 seconds
+    const timeout = new Promise((resolve, reject) => {
+      const id = setTimeout(() => {
+        clearTimeout(id);
+        resolve(defaultBot);
+      }, 5000);
     });
-    const allBots = response?.data?.users || [];
-    console.log(`allBots`,{lang,allBots});
-    const langBots = allBots.filter(bot=>bot.metadata.lang===lang);
-    console.log(`langBots`,{lang,langBots});
-    return langBots?.[0] || (lang !== "en" && await getBotByLang("en")); 
-   }
+
+    // Race the API call against the timeout
+    const response = await Promise.race([axios(config), timeout]);
+
+    // If the API call won the race
+    if (response && response.data) {
+      const allBots = response.data.users || [];
+      console.log(`allBots`,{lang,allBots});
+      const langBots = allBots.filter(bot=>bot.metadata.lang===lang);
+      console.log(`langBots`,{lang,langBots});
+      return langBots?.[0] || (lang !== "en" && await getBotByLang("en")); 
+    }
+
+    // If the timeout won the race
+    return defaultBot;
+  }
 
 
   async getGroupMessageById(channelUrl, message_id) {
