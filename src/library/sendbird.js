@@ -3,6 +3,8 @@ const FormData = require('form-data');
 const fs = require('fs');
 const crypto = require('crypto');
 const isJSON = require("is-json");
+const logger = require("../library/utils/logger.cjs");
+const log = (msg,obj) => obj ? logger.info(`sendbird ${msg} ${JSON.stringify(obj)}`) : logger.info(`sendbird ${msg}`);
 
 
 const {SENDBIRD_APPID, SENDBIRD_TOKEN} = process.env;
@@ -764,6 +766,7 @@ class Sendbird {
   }
 
   async getBotByLang(lang) {
+    log("getBotByLang",lang);
     //query users where metadata isBot=true and metadata.lang=lang
     // if none found return english bot lang=en
     let response = await axios({
@@ -776,7 +779,9 @@ class Sendbird {
       json: true
     });
     const allBots = response?.data?.users || [];
+    console.log(`allBots`,{lang,allBots});
     const langBots = allBots.filter(bot=>bot.metadata.lang===lang);
+    console.log(`langBots`,{lang,langBots});
     return langBots?.[0] || (lang !== "en" && await getBotByLang("en")); 
    }
 
