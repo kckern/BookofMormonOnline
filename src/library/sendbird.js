@@ -777,8 +777,8 @@ class Sendbird {
     });
     const allBots = response?.data?.users || [];
     const langBots = allBots.filter(bot=>bot.metadata.lang===lang);
-    return langBots?.[0] || lang!=="en" ? getBotByLang("en") : false;
-  }
+    return langBots?.[0] || (lang !== "en" && getBotByLang("en")); 
+   }
 
 
   async getGroupMessageById(channelUrl, message_id) {
