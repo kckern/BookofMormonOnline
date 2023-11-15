@@ -75,11 +75,12 @@ const studyBuddy = async (channelUrl,messageId, messageContent) => {
     if(!channel) return error("No Channel: ", {channelUrl});
     const lang = channel.metadata?.lang || "en";
     const bot = await sendbird.getBotByLang(lang);
+    log("studyBuddy", {channelUrl, messageId, messageContent, lang, bot});
     const studyBuddyId = bot.user_id;
     //console.log("studyBuddy", {channelUrl, messageId, bot});
     const channel_members = await sendbird.getMembers(channelUrl);
     const studyBuddyAdded = channel_members.some(({user_id:u}) => u === studyBuddyId);
-    if(!studyBuddyAdded) return error("studyBuddy not added to channel", {channelUrl,studyBuddyId});
+    if(!studyBuddyAdded) return error("studyBuddy not added to channel", {channelUrl,studyBuddyId,lang,bot});
     log("studyBuddy added to channel", {channelUrl,studyBuddyId});
 
     sendbird.startStopTypingIndicator(channelUrl, [studyBuddyId], true);
