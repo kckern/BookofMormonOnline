@@ -531,11 +531,11 @@ span.indent{
     background-color: white;
     margin: 0 1em 0 1em;
     border-radius: 1rem;
-    padding: 1rem;
+    padding: 0.8rem;
     font-family: 'Scripture', serif;
     font-size: 1rem;
     text-align: justify;
-    line-height: 1.2rem;
+    line-height: 1rem;
     color: #444;
 }
 .scripturePanelSingle .loadBar
