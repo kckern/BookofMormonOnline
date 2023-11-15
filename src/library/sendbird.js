@@ -777,8 +777,7 @@ class Sendbird {
     });
     const allBots = response?.data?.users || [];
     const langBots = allBots.filter(bot=>bot.metadata.lang===lang);
-    if(langBots.length) return langBots[0];
-    return allBots[0];
+    return langBots?.[0] || lang!=="en" ? getBotByLang("en") : false;
   }
 
 

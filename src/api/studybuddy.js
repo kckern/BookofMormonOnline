@@ -225,6 +225,16 @@ const postProcessResponse = (string,ref)=>{
 
 const langNames = {
     "ko": "한국어",
+    "vn": "Tiếng Việt",
+    "fr": "Français",
+    "es": "Español",
+    "pt": "Português",
+    "zh": "中文",
+    "ru": "русский",
+    "de": "Deutsch",
+    "it": "Italiano",
+    "ja": "日本語",
+    "th": "ไทย",
 }
 
 
