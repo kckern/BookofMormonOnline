@@ -3,7 +3,7 @@ const FormData = require('form-data');
 const fs = require('fs');
 const crypto = require('crypto');
 const isJSON = require("is-json");
-const logger = require("../utils/logger.cjs");
+const logger = require("./utils/logger.cjs");
 const log = (msg,obj) => obj ? logger.info(`sendbird ${msg} ${JSON.stringify(obj)}`) : logger.info(`sendbird ${msg}`);
 
 
