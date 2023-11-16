@@ -768,7 +768,14 @@ class Sendbird {
   
   async getBotByLang(lang) {
     log("getBotByLang",lang);
-    const defaultBot = {user_id:"ddc26a0e41b6daffff542e9fe8d9171d"};
+    const kor_bot     = {user_id:"938e2c5ac2c938b8156a7faf9ef9465f"};
+    const defaultBot  = {user_id:"ddc26a0e41b6daffff542e9fe8d9171d"};
+
+    if(lang==="ko") return kor_bot;
+    return defaultBot;
+
+    //TODO: improve the dynamic loading logic, remove the hard coded bots
+
     const config = {
       method: 'GET',
       url: `https://api-${SENDBIRD_APPID}.sendbird.com/v3/users?limit=100&metadatakey=isBot&metadatavalues_in=true`,
