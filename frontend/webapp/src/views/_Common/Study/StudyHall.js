@@ -224,6 +224,7 @@ export function StudyGroupChatPanel({ appController, channel, setPanel }) {
   const history = useHistory();
 
   useEffect(() => {
+		console.log('Channel',channel);
     if (channel.lastMessage?.parentMessageId && !params.messageId) {
       appController.sendbird?.loadPreviousMessages({
           group: channel,
@@ -231,9 +232,12 @@ export function StudyGroupChatPanel({ appController, channel, setPanel }) {
           prevResultSize: 1,
         })
         .then((messages) => {
+					console.log('Messages',messages[0]);
           setThreadMessage(messages.shift());
         });
-    }
+    }else{
+			setThreadMessage(channel.lastMessage);
+		}
     window.clicky?.goal("study");
   }, []);
 

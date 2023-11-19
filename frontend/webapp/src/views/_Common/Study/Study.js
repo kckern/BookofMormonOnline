@@ -632,7 +632,7 @@ function ThreadedMessages({
     if (needsToFetch) {
       setNeedsToFetch(false);
       appController.sendbird.loadThreadedMessages(parentMessage).then((r) => {
-        setThreadMessages(r.threadedReplies);
+        setThreadMessages(...r.threadedReplies);
       });
     }
     return (
@@ -1057,7 +1057,7 @@ function messageReacters(message, memberMap) {
       .map((id) => {
         return {
           userId: memberMap[id]?.userId,
-          nickname: memberMap[id]?.nickname,
+          nickname: memberMap[id]?.nickname
         };
       })
       .reverse();
