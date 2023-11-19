@@ -74,7 +74,7 @@ export function StudyGroupChatInput({ appController, channel }) {
     textbox.classList.add("sending");
     textbox.disabled = true;
 
-    const params = new appController.sendbird.sb.UserMessageParams();
+    const params = {};
     params.message = text;
     params.customType = "comment";
 
@@ -94,34 +94,37 @@ export function StudyGroupChatInput({ appController, channel }) {
 
     if (!params.message) return false;
 
-  
-    setTimeout(channel.endTyping,1000);
-    channel.sendUserMessage(params, function (message, error) {
-      if (error) {
-        // Handle error.
-        console.log({ error });
-        return false;
-      }
-      window.clicky?.goal("comment");
-      textbox.value = "";
-      textbox.classList.remove("sending");
-      auto_grow(textbox);
-      textbox.disabled = false;
-      textbox.focus();
+		
+		// setTimeout(channel.endTyping,1000);
 
-      const studyGroupChatEvent = document.querySelector(".StudyGroupChat");
-      if (studyGroupChatEvent) studyGroupChatEvent.scrollTop = "100%";
 
-      let event = new CustomEvent("addMessage");
-      event.message = message;
-      window.dispatchEvent(event);
-      if (appController.states.editor.value) {
-        return appController.functions.openEditor({
-          isOpen: false,
-          value: "",
-        });
-      }
-    });
+		try {
+			channel.sendUserMessage(params).onSucceeded((message)=>{
+				window.clicky?.goal("comment");
+				textbox.value = "";
+				textbox.classList.remove("sending");
+				auto_grow(textbox);
+				textbox.disabled = false;
+				textbox.focus();
+	
+				const studyGroupChatEvent = document.querySelector(".StudyGroupChat");
+				if (studyGroupChatEvent) studyGroupChatEvent.scrollTop = "100%";
+	
+				let event = new CustomEvent("addMessage");
+				event.message = message;
+				window.dispatchEvent(event);
+				if (appController.states.editor.value) {
+					return appController.functions.openEditor({
+						isOpen: false,
+						value: "",
+					});
+				}
+			});	
+		} catch (error) {
+			console.log('Error',{error});
+			return false;
+		}
+		channel.endTyping();
   };
 
   const [isOpen, setOpen] = useState(false);
@@ -498,9 +501,9 @@ export function StudyGroupChat({
         <Loader />
       ) : (
         messages.map((message, i) => {
-          if (message && messages[i + 1] && messages[i + 1]?._sender)
+          if (message && messages[i + 1] && messages[i + 1]?.sender)
             isSameSender =
-              messages[i + 1]?._sender?.userId === message?._sender?.userId;
+              messages[i + 1]?.sender?.userId === message?.sender?.userId;
           if (i === max_i) isSameSender = false;
           let classes = [];
           classes.push(messages.length - 1 === i ? "last" : "");
@@ -603,7 +606,7 @@ export function StudyGroupThread({
     textbox.classList.add("sending");
     textbox.disabled = true;
 
-    const params = new appController.sendbird.sb.UserMessageParams();
+    const params = {};
 
     ///appController.functions.newMessage({message:text, channelUrl:channel.url})
 
@@ -624,29 +627,31 @@ export function StudyGroupThread({
     //    new sendBirds.me.MessageMetaArray('itemType', ['tablet']),
     //    new sendBirds.me.MessageMetaArray('quality', ['best', 'good'])
     //];
-    setTimeout(channel.endTyping,8000);
-    channel.sendUserMessage(params, function (message, error) {
-      if (error) {
-        // Handle error.
-      }
-      window.clicky?.goal("comment");
-      textbox.value = "";
-      textbox.classList.remove("sending");
-      textbox.disabled = false;
-      textbox.focus();
-
-      const threadEvent = document.querySelector(".thread");
-      if (threadEvent) threadEvent.scrollTop = "100%";
-
-      let event = new CustomEvent("updateReplyCount" + message.parentMessageId);
-      event.message = message;
-      event.increaseCount = true;
-      window.dispatchEvent(event);
-
-      event = new CustomEvent("addMessageToThread");
-      event.message = message;
-      window.dispatchEvent(event);
-    });
+		try {
+			channel.sendUserMessage(params).onSucceeded((message)=> {
+				window.clicky?.goal("comment");
+				textbox.value = "";
+				textbox.classList.remove("sending");
+				textbox.disabled = false;
+				textbox.focus();
+				
+				const threadEvent = document.querySelector(".thread");
+				if (threadEvent) threadEvent.scrollTop = "100%";
+				
+				let event = new CustomEvent("updateReplyCount" + message.parentMessageId);
+				event.message = message;
+				event.increaseCount = true;
+				window.dispatchEvent(event);
+				
+				event = new CustomEvent("addMessageToThread");
+				event.message = message;
+				window.dispatchEvent(event);
+			});	
+		} catch (error) {
+			console.log({error});
+			return false;
+		}
+		channel.endTyping();
   };
 
   const closeThreadMessage = () => {
@@ -730,7 +735,7 @@ function ThreadMessages({
     return <Loader />;
   }
 
-  let count = parentMessage.threadInfo.replyCount;
+  let count = parentMessage?.threadInfo?.replyCount;
   //TODO: Keep count current with realtime updates;
   let messages = (
     <ThreadedMessages
@@ -833,7 +838,8 @@ function ThreadedMessages({
   const loadThreadedMessages = useCallback(
     (needsToLoad) => {
       appController.sendbird.loadThreadedMessages(parentMessage).then((r) => {
-        setMessages([...r.threadedReplies]);
+				console.log("Threaded messages loaded",r);
+        setMessages([...r.threadedMessages]);
       });
     },
     [needsToLoad]
@@ -851,7 +857,7 @@ function ThreadedMessages({
     let isSameSender = false;
     if (messages[i - 1])
       isSameSender =
-        messages[i - 1]?._sender?.userId === message?._sender?.userId;
+        messages[i - 1]?.sender?.userId === message?.sender?.userId;
     return (
       <BaseMessage
         key={message.messageId}
@@ -895,9 +901,8 @@ function BaseMessage({
       let faces = message.threadInfo.mostRepliedUsers.map((u, i) => (
         <img
           key={i}
-          src={
-            u.plainProfileUrl 
-          } onError={breakCache}
+          src={u.plainProfileUrl} 
+					onError={breakCache}
         />
       ));
       let names = message.threadInfo.mostRepliedUsers.map((u) => u.nickname);
@@ -931,7 +936,6 @@ function BaseMessage({
       };
     }
   }, [message.messageId]);
-
   let timestamp = timeAgoString(message.createdAt / 1000);
   
   const addMessageToThread = (e) => {
@@ -940,9 +944,9 @@ function BaseMessage({
         prevState && prevState.replyCount ? prevState.replyCount + 1 : 1;
       let names = prevState && prevState.names ? prevState.names : [];
       let faces = prevState && prevState.faces ? prevState.faces : [];
-      if (names.indexOf(e.message?._sender?.nickname) < 0) {
-        names.push(e.message?._sender?.nickname);
-        faces.push(<img src={e.message?._sender?.plainProfileUrl} />);
+      if (names.indexOf(e.message?.sender?.nickname) < 0) {
+        names.push(e.message?.sender?.nickname);
+        faces.push(<img src={e.message?.sender?.plainProfileUrl} />);
       }
       return { ...prevState, replyCount, faces, names };
     });
@@ -975,12 +979,12 @@ function BaseMessage({
         prevState && prevState.replyCount ? prevState.replyCount + 1 : 1;
       let names = prevState && prevState.names ? prevState.names : [];
       let faces = prevState && prevState.faces ? prevState.faces : [];
-      if (names.indexOf(message?._sender?.nickname) < 0) {
-        names.push(message?._sender?.nickname);
+      if (names.indexOf(message?.sender?.nickname) < 0) {
+        names.push(message?.sender?.nickname);
         faces.push(
           <img
             src={
-              message?._sender?.plainProfileUrl 
+              message?.sender?.plainProfileUrl 
             } onError={breakCache}
           />
         );
@@ -993,13 +997,13 @@ function BaseMessage({
 
   if (message.messageType === "admin") return null;
   let isSelf =
-    message?._sender?.userId === appController.states.user.social?.user_id;
+    message?.sender?.userId === appController.states.user.social?.user_id;
   let image = (
     <img
       src={
-        message?._sender?.plainProfileUrl 
+        message?.sender?.plainProfileUrl 
       }
-      alt={message?._sender?.nickname}  onError={breakCache}
+      alt={message?.sender?.nickname}  onError={breakCache}
     />
   );
 
@@ -1074,15 +1078,13 @@ function BaseMessage({
     window.dispatchEvent(event);
     window.addEventListener("deleteMessage", deleteMessage, false);
   };
-  const deleteMessage = (e) => {
+  const deleteMessage = async (e) => {
     window.removeEventListener("deleteMessage", deleteMessage, false);
     if (!e.isDelete) return true; // remove listiner if message model is cancled
-    channel.deleteMessage(message, function (response, error) {
-      e.hideDeleteMessageAlert(); // hide delete modal
-      if (error) {
-        return false;
-      }
-      let event = null;
+		try {
+			await channel.deleteMessage(message);
+			e.hideDeleteMessageAlert();
+			let event = null;
       if (inThread) {
         event = new CustomEvent("updateReplyCount" + message.parentMessageId);
         event.message = message;
@@ -1102,9 +1104,12 @@ function BaseMessage({
       event = new CustomEvent("deleteChatMessage");
       event.index = index;
       window.dispatchEvent(event);
-    });
+		} catch (error) {
+			console.log({error});
+			return false;
+		}
   };
-  const handleUpdateMessage = (e) => {
+  const handleUpdateMessage = async(e) => {
     let textbox = document.querySelector(".edit .StudyGroupChatInput input");
 
     if (textbox === null) return null;
@@ -1113,7 +1118,7 @@ function BaseMessage({
     if (text.includes) textbox.classList.add("sending");
     textbox.disabled = true;
 
-    const params = new appController.sendbird.sb.UserMessageParams();
+    const params = {};
     params.message = text;
     params.customType = "comment";
 
@@ -1131,39 +1136,36 @@ function BaseMessage({
       params.customType = "formatted_comment";
     }
 
-    channel.updateUserMessage(
-      message.messageId,
-      params,
-      function (message, error) {
-        if (error) {
-          return;
-        }
+		try {
+			const updateMessage = await channel.updateUserMessage(message.messageId, params);	
+			window.removeEventListener(
+				"handleUpdateMessage",
+				handleUpdateMessage,
+				false
+			);
 
-        window.removeEventListener(
-          "handleUpdateMessage",
-          handleUpdateMessage,
-          false
-        );
+			textbox.value = "";
+			textbox.classList.remove("sending");
+			textbox.disabled = false;
+			textbox.focus();
 
-        textbox.value = "";
-        textbox.classList.remove("sending");
-        textbox.disabled = false;
-        textbox.focus();
+			// UPDATE MESSAGE
+			let event = new CustomEvent(
+				inThread && !isParent ? "updateMessageToThread" : "updateMessage"
+			);
 
-        // UPDATE MESSAGE
-        let event = new CustomEvent(
-          inThread && !isParent ? "updateMessageToThread" : "updateMessage"
-        );
+			event.message = updateMessage;
+			event.index = index;
 
-        event.message = message;
-        event.index = index;
+			window.dispatchEvent(event);
+			// CLOSE INPUT
+			event = new CustomEvent("closeEdit");
+			window.dispatchEvent(event);
+		} catch (error) {
+			console.log({error});
+			return false;
+		}
 
-        window.dispatchEvent(event);
-        // CLOSE INPUT
-        event = new CustomEvent("closeEdit");
-        window.dispatchEvent(event);
-      }
-    );
   };
   let messageActions = null;
   let counter = 0;
@@ -1176,7 +1178,7 @@ function BaseMessage({
     );
   } else {
     if (inThread) {
-      counter = isParent ? messagesCount : message.threadInfo.replyCount;
+			counter = isParent ? messagesCount : message.threadInfo === null ? 0 : message.threadInfo.replyCount;
     } else {
       counter = replies?.replyCount === undefined ? 0 : replies.replyCount;
     }
@@ -1208,7 +1210,7 @@ function BaseMessage({
     );
   }
 
-  const isBot = !!message?._sender?.metaData?.isBot;
+  const isBot = !!message?.sender?.metaData?.isBot;
 
   const botBadge = isBot ? <span className="botBadge">BOT</span> : null;
 
@@ -1222,7 +1224,7 @@ function BaseMessage({
     >
       {image}
       <div className={"messageContent"}>
-        <span className="senderName">{message?._sender?.nickname} {botBadge}</span>
+        <span className="senderName">{message?.sender?.nickname} {botBadge}</span>
         <span className="timeStamp">
           {" "}
           •{" "}

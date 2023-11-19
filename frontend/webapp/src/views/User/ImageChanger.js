@@ -51,7 +51,7 @@ function ImageChanger({
         return setOpenModal(false);
       }
       const nickname = appController.states.user.social.nickname;
-      cropper.getCroppedCanvas().toBlob(function (blob) {
+      cropper.getCroppedCanvas().toBlob(async function (blob) {
         let file = null;
         if (blob["type"] === "image/jpeg") {
           file = new File([blob], "profile_picture.jpg", {
@@ -60,27 +60,27 @@ function ImageChanger({
         } else if (blob["type"] === "image/png") {
           file = new File([blob], "profile_picture.png");
         }
-        appController.sendbird.sb.updateCurrentUserInfoWithProfileImage(
-          nickname,
-          file,
-          function (response, error) {
-            if (error) {
-              if(error) return toast.warn(label("error"));
-            }
-            if (response !== null) {
-             // console.log("SB",response.plainProfileUrl);
-              getFwdUrl(response.plainProfileUrl).then(url=>{
-                appController.sendbird.sb.updateCurrentUserInfo(nickname,url,(r,e)=>{
-                  if(e) return toast.warn(label("error"));
-                  //console.log("S3",url,r);
-                  appController.functions.setUserSocialProfileImage(url);
-                })
-              })
-
-            }
-            setTimeout(() => setOpenModal(false), 3000);
-          }
-        );
+				const params = {
+					nickname:nickname,
+					profileImage: file
+				};
+				try {
+					const response = await appController.sendbird.sb.updateCurrentUserInfo(params);
+					if (response !== null) {
+						// console.log("SB",response.plainProfileUrl);
+						getFwdUrl(response.plainProfileUrl).then(url=>{
+							appController.sendbird.sb.updateCurrentUserInfo(nickname,url,(r,e)=>{
+								if(e) return toast.warn(label("error"));
+								 //console.log("S3",url,r);
+								appController.functions.setUserSocialProfileImage(url);
+							})
+						})
+					}
+					appController.functions.setUserSocialProfileImage(response.plainProfileUrl);
+					setTimeout(() => setOpenModal(false), 3000);
+				} catch (error) {
+					if(error) return toast.warn(label("error"));
+				}
       });
     }
   };
@@ -132,7 +132,7 @@ function ImageChanger({
               onClick={getCropData}
               style={{ margin: "20px 10px 20px 0", cursor: "pointer" }}
             >
-             {label("save")}
+            {label("save")}
             </button>
             <button
               className="cropButton cancelCrop"

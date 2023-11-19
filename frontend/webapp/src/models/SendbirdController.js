@@ -1,4 +1,6 @@
-import Sendbird from "sendbird";
+import SendbirdChat from '@sendbird/chat';
+import { OpenChannelModule,OpenChannelHandler } from '@sendbird/chat/openChannel';
+import { GroupChannelModule,GroupChannelHandler } from '@sendbird/chat/groupChannel';
 import SendBirdCall from 'sendbird-calls';
 import { error } from "src/models/alertMessageService";
 import { determineLanguage, refreshChannel, tokenImage } from "./Utils";
@@ -14,6 +16,13 @@ export const md5 = (string) => {
 const prodUrls = [];//["bookofmormon.online"];
 
 export const SendbirdAppId =  "386311F5-8923-4F4D-8BE1-C3E95C2AD963";
+export const SendBirdChatParams = {
+	appId: SendbirdAppId,
+  modules: [
+    new OpenChannelModule(),
+		new GroupChannelModule()
+  ],
+}
 
 export const uuid4 = () => {
   let d = new Date().getTime();
@@ -32,7 +41,7 @@ export default class SendbirdController {
     userId = md5(userId);
 
     this.groupCallMap = {}
-    this.sb = new Sendbird({ appId: appId });
+    this.sb = new SendbirdChat.init(SendBirdChatParams);
     this.userId = userId;
     this.token = token;
     SendBirdCall.init(appId);
@@ -40,63 +49,65 @@ export default class SendbirdController {
     this.connect(userId, token);
 
     //console.log("SendbirdController", { appId, userId, token, appController });
-
-
-    const handler = new this.sb.ChannelHandler();
+		const groupChannelHandler = new GroupChannelHandler();
+		const openChannelHandler = new OpenChannelHandler();
     const appHandlers = AppHandlers(appController);
-    //handler.onMessageReceived = (c,m)=>{ debugger;  }
-    handler.onMessageReceived = appHandlers.onMessageReceived;
-    handler.onMessageUpdated = appHandlers.onMessageUpdated;
-    handler.onMessageDeleted = appHandlers.onMessageDeleted;
 
+		//--GROUP CHANNEL EVENTS--//
+		groupChannelHandler.onMessageReceived = appHandlers.onMessageReceived;
+    groupChannelHandler.onMessageUpdated = appHandlers.onMessageUpdated;
+    groupChannelHandler.onMessageDeleted = appHandlers.onMessageDeleted;
+		groupChannelHandler.onTypingStatusUpdated = appHandlers.onTypingStatusUpdated;
+		groupChannelHandler.onReactionUpdated = appHandlers.onReactionUpdated;
+		groupChannelHandler.onUserJoined = appHandlers.onUserJoined;
+    groupChannelHandler.onUserLeft = appHandlers.onUserLeft;
 
-    handler.onTypingStatusUpdated = appHandlers.onTypingStatusUpdated;
+		let key = uuid4();
+    this.sb.groupChannel.addGroupChannelHandler(key, groupChannelHandler);
 
-    handler.onReactionUpdated = appHandlers.onReactionUpdated;
+		//--OPEN CHANNEL EVENTS--//
+		openChannelHandler.onMessageReceived = appHandlers.onMessageReceived;
+    openChannelHandler.onMessageUpdated = appHandlers.onMessageUpdated;
+    openChannelHandler.onMessageDeleted = appHandlers.onMessageDeleted;
+		openChannelHandler.onReactionUpdated = appHandlers.onReactionUpdated;
+    openChannelHandler.onReactionUpdated = appHandlers.onReactionUpdated;
+    openChannelHandler.onUserEntered = appHandlers.onUserEntered;
+    openChannelHandler.onMetaDataUpdated = appHandlers.onMetaDataUpdated;
+    openChannelHandler.onChannelChanged = appHandlers.onChannelChanged;
+    openChannelHandler.onMetaCounterUpdated = appHandlers.onMetaCounterUpdated;
 
-    handler.onUserJoined = appHandlers.onUserJoined;
-    handler.onUserLeft = appHandlers.onUserLeft;
-    handler.onUserEntered = appHandlers.onUserEntered;
-
-    handler.onMetaDataUpdated = appHandlers.onMetaDataUpdated;
-    handler.onChannelChanged = appHandlers.onChannelChanged;
-    handler.onMetaCounterUpdated = appHandlers.onMetaCounterUpdated;
-    //appHandlers.onMessageReceived;
-    let key = uuid4();
-    this.sb.addChannelHandler(key, handler);
-
+		key = uuid4();
+		this.sb.openChannel.addOpenChannelHandler(key, openChannelHandler);
   }
 
   createNewGroup = async (group, userId) => {
-    var params = new this.sb.GroupChannelParams();
-    params.isPublic = group.type === "open" ? true : false;
-    params.isEphemeral = false;
-    params.isDistinct = false;
-    params.isSuper = false;
-    // params.addUserIds(userIds);
-    params.operatorUserIds = [userId];
-    params.name = group.name;
-    params.data = JSON.stringify({ description: group.description });
-    params.channelUrl = group.url;
-    if (group.groupImage.file) params.coverImage = group.groupImage.file;
+		const params = {};
+		params.name = group.name;
+		params.channelUrl = group.url;
+		if (group.groupImage.file) params.coverImage = group.groupImage.file;
     else if (group.groupImage.img) params.coverUrl = group.groupImage.img;
-    params.customType = group.type;
-    console.log({ group, params });
-    return await this.sb.GroupChannel.createChannel(
-      params,
-      (groupChannel, error) => {
-        if (error) {
-          console.log({ params, error })
-          return error;
-        }
-        let lang = determineLanguage() || "en";
-        return this.createNewRoom()
-          .then(room => {
-            groupChannel.updateMetaData({ roomId: room.id, lang: lang }, true)
-              .then(() => { return { groupChannel, room } });
-          });
-      }
-    );
+		params.operatorUserIds = [userId];
+		params.data = JSON.stringify({ description: group.description });
+		params.customType = group.type;
+		params.isEphemeral = false;
+		
+		if(group.type !== 'open'){
+			params.isDistinct = false;
+			params.isSuper = false;
+		}
+
+		console.log({group,params});
+		try {
+			const groupChannel = await this.sb.groupChannel.createChannel(params);
+			let lang = determineLanguage() || "en";	
+			return await this.createNewRoom().then(room => {
+				return groupChannel.updateMetaData({ roomId: room.id, lang: lang }, true)
+				.then(() => { return { groupChannel, room } });
+			});		
+		} catch (error) {
+			console.log('Error',error);
+			return error;
+		}
   };
 
   createNewRoom = async () => {
@@ -106,17 +117,15 @@ export default class SendbirdController {
     return await SendBirdCall.createRoom(roomParams).then(room => room).catch(e => { console.log("createNewRoom.ERROR", e); return null });
   };
 
-
   getStudyGroups = async () => {
-
-    // await this.connect(this?.userId, this.token);
-    var listQuery = await this.sb.GroupChannel.createMyGroupChannelListQuery();
-    listQuery.includeEmpty = true;
-    listQuery.memberStateFilter = "all";
-    listQuery.customTypesFilter = ["open", "public", "private", "solo"];
-    listQuery.order = "channel_name_alphabetical";
-    listQuery.limit = 30;
-
+		await this.sb.connect(this.userId,this.token);
+    var listQuery = await this.sb.groupChannel.createMyGroupChannelListQuery({
+			includeEmpty: true,
+			memberStateFilter: "all",
+			customTypesFilter: ["open", "public", "private", "solo"],
+			order: "channel_name_alphabetical",
+			limit: 30,
+		});
     if (listQuery.hasNext) {
       return listQuery.next((groupChannels, error) => {
         if (error) return error;
@@ -135,37 +144,35 @@ export default class SendbirdController {
       .catch(e => null);
   }
 
-
-
-fetchRoomFromGroup = async (group, src) => {
-  if (!group) return null;
-  
-// Create a global cache if not already present
-if(!window.roomCache) window.roomCache = {};
-  if(window.roomCache[group.url]){
-    return window.roomCache[group.url];
-  }
-  
-  let metaData = (typeof group.getCachedMetadata === "function") ? group.getCachedMetadata() : null;
-  if (metaData?.roomId) {
-    return this.fetchRoom(metaData.roomId).then(async (room) => {
-      if (!room) return await this.resetRoom(group);
-      this.groupCallMap[group.url] = room;
-      window.roomCache[group.url] = room;
-      return room;
-    });
-  }
-  if (!group.getMetaData) return null;
-  return group.getMetaData(["roomId"]).then(res => {
-    if (!res.roomId) return this.resetRoom(group)
-    return this.fetchRoom(res.roomId).then(async (room) => {
-      if (!room) return await this.resetRoom(group);
-      this.groupCallMap[group.url] = room;
-      window.roomCache[group.url] = room;
-      return room;
-    })
-  })
-}
+	fetchRoomFromGroup = async (group, src) => {
+		if (!group) return null;
+		
+	// Create a global cache if not already present
+	if(!window.roomCache) window.roomCache = {};
+		if(window.roomCache[group.url]){
+			return window.roomCache[group.url];
+		}
+		
+		let metaData = (typeof group.getCachedMetadata === "function") ? group.getCachedMetadata() : null;
+		if (metaData?.roomId) {
+			return this.fetchRoom(metaData.roomId).then(async (room) => {
+				if (!room) return await this.resetRoom(group);
+				this.groupCallMap[group.url] = room;
+				window.roomCache[group.url] = room;
+				return room;
+			});
+		}
+		if (!group.getMetaData) return null;
+		return group.getMetaData(["roomId"]).then(res => {
+			if (!res.roomId) return this.resetRoom(group)
+			return this.fetchRoom(res.roomId).then(async (room) => {
+				if (!room) return await this.resetRoom(group);
+				this.groupCallMap[group.url] = room;
+				window.roomCache[group.url] = room;
+				return room;
+			})
+		})
+	}
 
   fetchGroupOperators = async (groupChannel) => {
     if (!groupChannel) return [];
@@ -182,80 +189,74 @@ if(!window.roomCache) window.roomCache = {};
   }
 
   loadGroupMessages = async (group) => {
-    var listQuery = group.createPreviousMessageListQuery();
-    listQuery.limit = 30;
-    listQuery.reverse = true;
-    listQuery.includeMetaArray = true; // Retrieve a list of messages along with their metaarrays.
-    listQuery.includeReaction = true; // Retrieve a list of messages along with their reactions.
-    listQuery.includeThreadInfo = true; // Retrieve a list of messages along with their reactions.
-    listQuery.includeReplies = false; // Retrieve a list of messages along with their reactions.
-    // Retrieving previous messages.
-    return await listQuery.load(function (messages, error) {
-      if (error) {
-        // Handle error.
-        return [];
-      }
-      return messages;
-    });
+		const params = {};
+		params.limit=30;
+    params.reverse=true;
+    params.includeMetaArray=true; // Retrieve a list of messages along with their metaarrays.
+    params.includeReaction=true; // Retrieve a list of messages along with their reactions.
+    params.includeThreadInfo=true; // Retrieve a list of messages along with their reactions.
+    params.includeReplies=false; // Retrieve a list of messages along with their reactions.
+    const listQuery = group.createPreviousMessageListQuery(params);
+		try {
+			// Retrieving previous messages.
+			return await listQuery.load();
+		} catch (error) {
+			console.log({error});
+			return false;
+		}
   };
 
   loadPreviousMessages = async ({ group, id, prevResultSize }) => {
     if(!id) return new Promise(resolve => resolve([]));
-    const params = new this.sb.MessageListParams();
-    params.isInclusive = true;
-    params.prevResultSize = prevResultSize || 30;
-    params.reverse = true;
-    params.includeParentMessageText = false;
-    params.includeReplies = true;
-    params.includeReactions = true;
-    params.includeThreadInfo = true;
-    return await group.getMessagesByMessageId(id, params, (messages, error) => {
-      if (error) {
-        console.log({error});
-        return [];
-      }
-      return messages;
-    });
-  };
+		const params = {};
+		params.isInclusive = true;
+		params.prevResultSize = prevResultSize || 30;
+		params.reverse = true;
+		params.includeParentMessageInfo = false;
+		params.includeReplies = true;
+		params.includeReactions = true;
+		params.includeThreadInfo = true;
+		try {
+			return await group.getMessagesByMessageId(id, params);
+		} catch(e) {
+			console.log({e});
+			return [];
+		}
+};
 
 
   loadThreadedMessages = async (parentMessage) => {
-    var params = new this.sb.ThreadedMessageListParams();
-    params.nextResultSize = 100;
-    params.prevResultSize = 100;
-    params.isInclusive = true;
-    params.reverse = false;
-    params.includeParentMessageText = false;
-    params.includeReactions = true;
-    params.includeThreadInfo = false;
-
-    // Retrieving previous messages.
-    return await parentMessage.getThreadedMessagesByTimestamp(
-      parentMessage.createdAt,
-      params,
-      ({ parentMessage, threadedReplies }, error) => {
-        if (error) {
-          console.log("getThreadedMessagesByTimestamp - ERROR", error);
-          return [];
-        }
-        // A list of replies of the specified parent message timestamp is successfully retrieved.
-        return threadedReplies;
-      }
-    );
+		const params = {};
+		params.nextResultSize = 100;
+		params.prevResultSize = 100;
+		params.isInclusive = true;
+		params.reverse = false;
+		params.includeParentMessageInfo = false;
+		params.includeReactions = true;
+		try {
+    	// Retrieving previous messages.
+			return await parentMessage.getThreadedMessagesByTimestamp(parentMessage.createdAt, params);	
+		} catch (error) {
+			console.log({error})
+			return false;
+		}
   };
 
 
   loadUnreadDMs = async () => {
-    var listQuery = this.sb.GroupChannel.createMyGroupChannelListQuery();
-    listQuery.includeEmpty = true;
-    listQuery.memberStateFilter = 'all';
-    listQuery.order = 'latest_last_message';
-    listQuery.limit = 100;
-    listQuery.unreadChannelFilter = "unread_message";
-    listQuery.customTypesFilter = ["DM"];
+		await this.sb.connect(this.userId,this.token);
+		const params = {};
+		params.includeEmpty= true;
+    params.memberStateFilter= 'all';
+    params.order= 'latest_last_message';
+    params.limit= 100;
+    params.unreadChannelFilter= "unread_message";
+    params.customTypesFilter= ["DM"];
+
+    var listQuery = await this.sb.groupChannel.createMyGroupChannelListQuery(params);
 
     if (listQuery.hasNext) {
-      return listQuery.next().then((groupChannels, error) => {
+      return listQuery.next((groupChannels, error) => {
         let myUserId = this.sb.currentUser?.userId;
         if (!myUserId) return {};
         if (error) { console.log("loadUnreadDMs", { error }) }
@@ -269,7 +270,6 @@ if(!window.roomCache) window.roomCache = {};
       });
     }
   };
-
 
   updatePagePosition = async ({ channel, pageSlug, location, username }) => {
     return this.fireStudyGroupAction(
@@ -346,9 +346,9 @@ if(!window.roomCache) window.roomCache = {};
 
 
   }
-  connect(userId, token) {
+  async connect(userId, token) {
     if(!userId || !token) return console.log("failed to connect:", {userId, token});
-    this.sb.connect(userId, token, (user, err) => {
+    await this.sb.connect(userId, token, (user, err) => {
       if (err) {
         error("Social " + err.message);
         return false;
@@ -572,8 +572,6 @@ function AppHandlers(appController) {
         if (elapsed < secondsToWait) return false;
       }
       localStorage.setItem(`lastUpdate-${channel.url}`, now);
-
-
 
       refreshChannel(channel, appController);
       if (metaData.action) {

@@ -499,18 +499,15 @@ export function truncate(text, startChars, endChars, maxLength) {
 }
 
 export function refreshChannel(channel, appController) {
-
+	if(channel.memberCount === 0) return;
   return channel.refresh().then((fresh) => {
     try {
-
       appController.sendbird?.fetchRoomFromGroup(fresh, "refreshChannel")
       .then((room) => {
         fresh.room = room;
         appController.functions.updateListedStudyGroup(fresh);
         return fresh;
       });
-
-
     } catch (e) {
       console.log("refreshChannel", e)
     }
@@ -666,7 +663,7 @@ function LinkPreview({ url }) {
   if (!linkData) return null;
   if (!linkData.title) return null;
 
-  return <a href={linkData.url} target="_blank" className="linkPreviewA">
+  return <a href={linkData.url} target="_blank" className="linkPreviewA" rel="noreferrer">
     <div className="linkPreview">
       {linkData.image && hasImage && <div className="linkPreviewImg"><img onError={() => setHasImage(false)} src={linkData.image} /></div>}
       <div className="linkPreviewText">

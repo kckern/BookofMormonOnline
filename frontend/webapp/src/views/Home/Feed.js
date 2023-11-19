@@ -204,7 +204,7 @@ function HomeFeedItem({ appController,seq, item, homeGroups, linkedContent, setA
         <div className="timestamp"><Link to={`/home/${group.url}/${item.id}`}>{timeAgo}</Link></div>
       </CardHeader>
       <CardHeader className="homeFeedHeader noselect">
-        <div className="imagebox">{trophyImg}<img src={item.user.picture} onError={breakCache} /><div className="progress">{item.user.progress}%</div></div>
+        <div className="imagebox">{trophyImg}<img src={item.user.picture} onError={breakCache}/><div className="progress">{item.user.progress}%</div></div>
         <h5>
           <div>
             {item.user.nickname}<span className="feedAction">{label("honorific", -1) + label("honorific_subject", -1) + " "}{label(determinAction(item))}</span>
