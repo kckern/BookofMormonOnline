@@ -82,24 +82,24 @@ export default function User({ appController }) {
     }
 
 
-    let pubs = publications?.map((publication,i) => <Label key={i} rating={publication.source_rating} onClick={(e) => toggleCommentarySource(e, parseInt(publication.source_id))}><Card className={"publicationCard"} >
+    let pubs = publications?.map((publication,i) => <Label key={i} rating={publication?.source_rating} onClick={(e) => toggleCommentarySource(e, parseInt(publication?.source_id))}><Card className={"publicationCard"} >
         <CardHeader>
             <input
                 type="checkbox"
                 readOnly
-                checked={!appController.states.preferences.commentary.filter.sources.includes(parseInt(publication.source_id))}
+                checked={!appController.states.preferences.commentary.filter.sources.includes(parseInt(publication?.source_id))}
             />
             <div>
-            <div className="source_title">{publication.source_title}</div>
-            <div className="source_name">{publication.source_name}</div>
-            <div className="source_publisher">© {publication.source_year || 2000}, {publication.source_publisher}</div>
+            <div className="source_title">{publication?.source_title}</div>
+            <div className="source_name">{publication?.source_name}</div>
+            <div className="source_publisher">© {publication?.source_year || 2000}, {publication?.source_publisher}</div>
             </div>
         </CardHeader>
 
         <CardBody className={"publicationCardBody"}>
-            <img src={`${assetUrl}/source/cover/${publication.source_id.padStart(3, '0')}`} />
+            <img src={`${assetUrl}/source/cover/${publication?.source_id.padStart(3, '0')}`} />
 
-            <div>{publication.source_description}</div>
+            <div>{publication?.source_description}</div>
         </CardBody>
     </Card></Label>)
 
