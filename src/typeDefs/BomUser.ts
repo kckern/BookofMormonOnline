@@ -28,9 +28,9 @@ export default gql`
 extend type Mutation {
     log( token: String!,key: String!, val: String): LogResult
     changePassword(token: String, password: String): Boolean
-    signup(token: String, token: String, username: String, password: String, name: String, email: String, zip: String): SignIn
+    signup(token: String,  username: String, password: String, name: String, email: String, zip: String): SignIn
     signout(token: String): Boolean
-    editProfile(token: String, token: String, name: String, email: String, zip: String): User
+    editProfile(token: String, name: String, email: String, zip: String): User
   }
 
 
