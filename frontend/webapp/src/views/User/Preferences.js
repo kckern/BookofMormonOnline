@@ -122,9 +122,28 @@ export default function User({ appController }) {
         </CardBody>
     </Card></Label>);
 
+    const [clearLabel, setClearLabel] = useState(label("clear_cache"));
+
+    const clearCache = () => {//delete indexedDB BoMCache > items
+        setClearLabel(label("clearing_cache"));
+        let request = window.indexedDB.deleteDatabase("BoMCache");
+        request.onsuccess = function () {
+            window.location = "/study";
+        };
+        request.onerror = function () {
+            alert("Error deleting database.");
+        };
+        
+
+    }
+
     return <>
         <Card className={"userPrefs"}>
-            <CardHeader><h5 className="title"><img src={preferences} />{label("preferences")}</h5></CardHeader>
+            <CardHeader className="prefHeader">
+                <h5 className="title"><img src={preferences} />{label("preferences")}</h5>
+                <Button  onClick={clearCache}
+                >{label(clearLabel)}</Button>
+                </CardHeader>
             <CardBody>
                 <h5 className="title">
                     <Label className="audio_narration"><img src={audio} />
