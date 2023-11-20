@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useReducer } from "react";
-import { Card, CardHeader, CardBody, Collapse, Col } from "reactstrap";
 // CHILD
 import TextContent from "./TextContent";
 import Comments from "../_Common/Study/Study";
@@ -9,7 +8,7 @@ import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
 import "./Narration.css";
 import "./TextContent.css";
 import { snapSelectionToWord,chronoLabel } from "src/models/Utils";
-import { SRLWrapper } from "simple-react-lightbox";
+// import { SRLWrapper } from "simple-react-lightbox";
 import {  label} from "src/models/Utils";
 import fullscreen from "src/views/Page/svg/fullscreen.png";
 import {Spinner} from "../_Common/Loader";
@@ -468,7 +467,6 @@ function LightBox({ narrationController, setOpenLightBox,imgClicker }) {
   const caption = narrationController.supplement.image?.[activeImageId]?.title || "Artwork";
 
   return (
-    <SRLWrapper options={options} callbacks={callbacks}>
       <div className="lightbox-wrapper" style={{ display: "none" }}>
         {panelImages === null && (
           <img
@@ -479,7 +477,6 @@ function LightBox({ narrationController, setOpenLightBox,imgClicker }) {
         )}
         {panelImages}
       </div>
-    </SRLWrapper>
   );
 }
 
