@@ -1,53 +1,60 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import { Link, useHistory, useParams } from "react-router-dom";
-import ReactTooltip from "react-tooltip";
+import { useState, useEffect, useRef, useCallback } from "react"
+import { Link, useHistory, useParams } from "react-router-dom"
+import ReactTooltip from "react-tooltip"
 import {
   StudyGroupUserCircle,
   getClassesFromUserObj,
   UnreadDMCount,
-} from "src/views/_Common/Study/StudyGroupBar";
-import "./StudyHall.css";
+} from "src/views/_Common/Study/StudyGroupBar"
+import "./StudyHall.css"
 import {
   StudyGroupChatInput,
   StudyGroupChat,
   StudyGroupThread,
-} from "./StudyChat.js";
-import { timeAgoString, newPost, replies, label, testJSON, isMobile } from "src/models/Utils";
-import DirectMessages from "./DirectMessages";
-import StudyGroupProgress from "./StudyGroupProgress";
-import StudyGroupNotebook from "./StudyGroupNotebook";
-import StudyGroupAdmin from "./StudyGroupAdmin";
-import { getFreshUsers } from "./StudyGroupBar";
+} from "./StudyChat.js"
+import {
+  timeAgoString,
+  newPost,
+  replies,
+  label,
+  testJSON,
+  isMobile,
+} from "src/models/Utils"
+import DirectMessages from "./DirectMessages"
+import StudyGroupProgress from "./StudyGroupProgress"
+import StudyGroupNotebook from "./StudyGroupNotebook"
+import StudyGroupAdmin from "./StudyGroupAdmin"
+import { getFreshUsers } from "./StudyGroupBar"
 
-import bookmarkicon from "src/views/User/svg/bookmark.svg";
-import lastseen from "src/views/User/svg/lastseen.svg";
-import crosshairs from "src/views/User/svg/crosshairs.svg";
+import bookmarkicon from "src/views/User/svg/bookmark.svg"
+import lastseen from "src/views/User/svg/lastseen.svg"
+import crosshairs from "src/views/User/svg/crosshairs.svg"
 
-import admin from "src/views/User/svg/admin.svg";
-import adduser from "src/views/_Common/Study/svg/adduser.svg";
-import discussion from "src/views/User/svg/discussion.svg";
-import progress from "src/views/User/svg/progress.svg";
-import notebook from "src/views/User/svg/notebook.svg";
-import loadingicon from "src/views/User/svg/loading.svg";
-import dmicon from "src/views/User/svg/chat.svg";
-import moment from "moment";
-import { Button } from "reactstrap";
+import admin from "src/views/User/svg/admin.svg"
+import adduser from "src/views/_Common/Study/svg/adduser.svg"
+import discussion from "src/views/User/svg/discussion.svg"
+import progress from "src/views/User/svg/progress.svg"
+import notebook from "src/views/User/svg/notebook.svg"
+import loadingicon from "src/views/User/svg/loading.svg"
+import dmicon from "src/views/User/svg/chat.svg"
+import moment from "moment"
+import { Button } from "reactstrap"
 
 export function StudyHall({ appController }) {
-  let isDrawerOpen = appController.states.studyGroup.isDrawerOpen;
-  const [opening, setOpening] = useState(true);
+  let isDrawerOpen = appController.states.studyGroup.isDrawerOpen
+  const [opening, setOpening] = useState(true)
   const [activePanel, setPanel] = useState(
     typeof isDrawerOpen === "boolean"
       ? { key: "chat", val: null }
-      : isDrawerOpen
-  );
+      : isDrawerOpen,
+  )
 
-  let studyGroup = appController.states.studyGroup.activeGroup;
+  let studyGroup = appController.states.studyGroup.activeGroup
 
   useEffect(() => {
-    setTimeout(() => setOpening(false), 50);
-  });
-  if (!studyGroup || studyGroup === -1) return null;
+    setTimeout(() => setOpening(false), 50)
+  })
+  if (!studyGroup || studyGroup === -1) return null
   return (
     <div className={"StudyHall" + (opening ? " opening" : "")}>
       <div className={"StudyHallContents "}>
@@ -70,7 +77,7 @@ export function StudyHall({ appController }) {
         </div>
       </div>
     </div>
-  );
+  )
 }
 
 function StudyGroupHeader({ studyGroup, appController }) {
@@ -79,22 +86,25 @@ function StudyGroupHeader({ studyGroup, appController }) {
       <div className={"GroupName"}>{studyGroup.name}</div>
       <InviteButton studyGroup={studyGroup} />
     </div>
-  );
+  )
 }
 
 export function InviteButton({ studyGroup }) {
   if (!["open", "public", "private"].includes(studyGroup.customType))
-    return null;
+    return null
 
   const showInviteLink = () => {
-    var event = new CustomEvent("showInviteLink");
-    event.studyGroup = studyGroup;
-    window.dispatchEvent(event);
-  };
+    var event = new CustomEvent("showInviteLink")
+    event.studyGroup = studyGroup
+    window.dispatchEvent(event)
+  }
 
   return (
-    <Button onClick={showInviteLink} className="invite"> <img src={adduser}/> {label("invite")}</Button>
-  );
+    <Button onClick={showInviteLink} className="invite">
+      {" "}
+      <img src={adduser} /> {label("invite")}
+    </Button>
+  )
 }
 
 function StudyGroupSideBar({
@@ -103,15 +113,17 @@ function StudyGroupSideBar({
   setPanel,
   activePanel,
 }) {
-  const tooltip_id = "SideBar" + studyGroup.url;
+  const tooltip_id = "SideBar" + studyGroup.url
 
   const isActive = (val) => {
-    if (activePanel?.key === val) return "active";
-    return null;
-  };
-  const group = appController.states.studyGroup.activeGroup;
-  let unread = group.unreadMessageCount;
-  const requests = (testJSON(group.data)) ? JSON.parse(group.data).requests?.length : 0;
+    if (activePanel?.key === val) return "active"
+    return null
+  }
+  const group = appController.states.studyGroup.activeGroup
+  let unread = group.unreadMessageCount
+  const requests = testJSON(group.data)
+    ? JSON.parse(group.data).requests?.length
+    : 0
   return (
     <div className={"StudyGroupSideBar noselect"}>
       <ReactTooltip
@@ -145,9 +157,7 @@ function StudyGroupSideBar({
             <div
               className={"userCircle discussion"}
               style={{
-                backgroundImage: `url(${
-                  appController.states.studyGroup.activeGroup.coverUrl
-                }`,
+                backgroundImage: `url(${appController.states.studyGroup.activeGroup.coverUrl}`,
               }}
             />
           </>
@@ -177,7 +187,7 @@ function StudyGroupSideBar({
             </li>
           </>
         ) : null}
-        {((getFreshUsers(appController)||{})?.users || [])?.map((u) => (
+        {((getFreshUsers(appController) || {})?.users || [])?.map((u) => (
           <UserSideBarItem
             key={u.userId}
             appController={appController}
@@ -189,20 +199,20 @@ function StudyGroupSideBar({
         ))}
       </ul>
     </div>
-  );
+  )
 }
 
 export function StudyGroupMainPanel({ appController, activePanel, setPanel }) {
   if (activePanel?.key === "admin")
-    return <StudyGroupAdmin appController={appController} />;
+    return <StudyGroupAdmin appController={appController} />
   if (activePanel?.key === "notebook")
-    return <StudyGroupNotebook appController={appController} />;
+    return <StudyGroupNotebook appController={appController} />
   if (activePanel?.key === "progress")
-    return <StudyGroupProgress appController={appController} />;
+    return <StudyGroupProgress appController={appController} />
   if (activePanel?.key === "message")
     return (
       <DirectMessages appController={appController} userId={activePanel?.val} />
-    );
+    )
   if (activePanel?.key === "chat") {
     return (
       <StudyGroupChatPanel
@@ -210,49 +220,45 @@ export function StudyGroupMainPanel({ appController, activePanel, setPanel }) {
         channel={appController.states.studyGroup.activeGroup}
         setPanel={setPanel}
       />
-    );
+    )
   }
 
-  return <div>{JSON.stringify({ activePanel })}</div>;
+  return <div>{JSON.stringify({ activePanel })}</div>
 }
 
 export function StudyGroupChatPanel({ appController, channel, setPanel }) {
-  const params = useParams();
-  const [chatLinkedContent, setChatLinkedContent] = useState({});
-  const [loader, setLoader] = useState(false);
-  const [parentMessage, setThreadMessage] = useState(false);
-  const history = useHistory();
+  const params = useParams()
+  const [chatLinkedContent, setChatLinkedContent] = useState({})
+  const [loader, setLoader] = useState(false)
+  const [parentMessage, setThreadMessage] = useState(false)
+  const history = useHistory()
 
   useEffect(() => {
-		console.log('Channel',channel);
     if (channel.lastMessage?.parentMessageId && !params.messageId) {
-      appController.sendbird?.loadPreviousMessages({
+      appController.sendbird
+        ?.loadPreviousMessages({
           group: channel,
           id: channel.lastMessage?.parentMessageId,
           prevResultSize: 1,
         })
         .then((messages) => {
-					console.log('Messages',messages[0]);
-          setThreadMessage(messages.shift());
-        });
-    }else{
-			setThreadMessage(channel.lastMessage);
-		}
-    window.clicky?.goal("study");
-  }, []);
+          setThreadMessage(messages.shift())
+        })
+    }
+    window.clicky?.goal("study")
+  }, [])
 
   useEffect(() => {
     if (!appController.states.parentMessage.message) {
-      return;
+      return
     }
     appController.states.parentMessage.message &&
-      setThreadMessage(appController.states.parentMessage.message);
+      setThreadMessage(appController.states.parentMessage.message)
     return () => {
-      appController.functions.setParentMessage(false);
-      history.push("/home");
-    };
-  }, [appController.states.parentMessage.message]);
-
+      appController.functions.setParentMessage(false)
+      history.push("/home")
+    }
+  }, [appController.states.parentMessage.message])
 
   return (
     <div
@@ -274,7 +280,7 @@ export function StudyGroupChatPanel({ appController, channel, setPanel }) {
               channel.members
                 .filter(
                   (u) =>
-                    u.userId !== appController.sendbird.sb?.currentUser?.userId
+                    u.userId !== appController.sendbird.sb?.currentUser?.userId,
                 )
                 .map((u) => u.nickname)
                 .join(", "),
@@ -292,7 +298,7 @@ export function StudyGroupChatPanel({ appController, channel, setPanel }) {
         />
         <StudyGroupChatInput appController={appController} channel={channel} />
       </div>
-      {(parentMessage && !isMobile()) ? (
+      {parentMessage && !isMobile() ? (
         <StudyGroupThread
           appController={appController}
           setThreadMessage={setThreadMessage}
@@ -303,7 +309,7 @@ export function StudyGroupChatPanel({ appController, channel, setPanel }) {
         />
       ) : null}
     </div>
-  );
+  )
 }
 
 function UserSideBarItem({
@@ -313,25 +319,25 @@ function UserSideBarItem({
   setPanel,
   activePanel,
 }) {
-  let lastSeen = timeAgoString(0);
-  let classes = ["userSideBarItem"];
-  if (u.connectionStatus !== "online") classes.push("offline");
+  let lastSeen = timeAgoString(0)
+  let classes = ["userSideBarItem"]
+  if (u.connectionStatus !== "online") classes.push("offline")
   if (activePanel?.key === "message" && activePanel?.val === u.userId)
-    classes.push("active");
+    classes.push("active")
 
-  if (appController.states.user.social?.user_id === u.userId) return null;
+  if (appController.states.user.social?.user_id === u.userId) return null
 
-  let summary = {};
+  let summary = {}
   try {
-    summary = JSON.parse(u?.metaData?.summary);
+    summary = JSON.parse(u?.metaData?.summary)
   } catch (e) {}
-  let bookmark = {};
+  let bookmark = {}
   try {
-    bookmark = JSON.parse(u?.metaData?.bookmark);
+    bookmark = JSON.parse(u?.metaData?.bookmark)
   } catch (e) {}
 
-  let userCircleClasses = getClassesFromUserObj(u, appController);
-  let linkToItems = null;
+  let userCircleClasses = getClassesFromUserObj(u, appController)
+  let linkToItems = null
   if (bookmark.slug)
     linkToItems =
       userCircleClasses.includes("inGroup") ||
@@ -372,9 +378,9 @@ function UserSideBarItem({
             </div>
           </div>
         </Link>
-      );
-  const isBot = !!u?.metaData?.isBot;
-  if(isBot) return null;
+      )
+  const isBot = !!u?.metaData?.isBot
+  if (isBot) return null
   return (
     <li
       onClick={() => setPanel({ key: "message", val: u.userId })}
@@ -388,5 +394,5 @@ function UserSideBarItem({
         <div className={"userLink"}>{linkToItems}</div>
       </div>
     </li>
-  );
+  )
 }

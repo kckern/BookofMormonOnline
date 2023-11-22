@@ -7,7 +7,14 @@ import {
   CommentaryInFeed,
 } from "src/views/_Common/Study/StudyInFeed";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
-import { breakCache, isMobile, label, ParseMessage, testJSON, timeAgoString } from "src/models/Utils";
+import {
+  breakCache,
+  isMobile,
+  label,
+  ParseMessage,
+  testJSON,
+  timeAgoString,
+} from "src/models/Utils";
 import { LikeButton, CommentInput } from "./Study.js";
 import ReactTooltip from "react-tooltip";
 import crypto from "crypto-browserify";
@@ -32,7 +39,6 @@ import {
 
 import Parser from "html-react-parser";
 import Loader from "../Loader/index.js";
-
 
 const modules = {
   toolbar: [
@@ -94,37 +100,35 @@ export function StudyGroupChatInput({ appController, channel }) {
 
     if (!params.message) return false;
 
-		
-		// setTimeout(channel.endTyping,1000);
+    // setTimeout(channel.endTyping,1000);
 
+    try {
+      channel.sendUserMessage(params).onSucceeded((message) => {
+        window.clicky?.goal("comment");
+        textbox.value = "";
+        textbox.classList.remove("sending");
+        auto_grow(textbox);
+        textbox.disabled = false;
+        textbox.focus();
 
-		try {
-			channel.sendUserMessage(params).onSucceeded((message)=>{
-				window.clicky?.goal("comment");
-				textbox.value = "";
-				textbox.classList.remove("sending");
-				auto_grow(textbox);
-				textbox.disabled = false;
-				textbox.focus();
-	
-				const studyGroupChatEvent = document.querySelector(".StudyGroupChat");
-				if (studyGroupChatEvent) studyGroupChatEvent.scrollTop = "100%";
-	
-				let event = new CustomEvent("addMessage");
-				event.message = message;
-				window.dispatchEvent(event);
-				if (appController.states.editor.value) {
-					return appController.functions.openEditor({
-						isOpen: false,
-						value: "",
-					});
-				}
-			});	
-		} catch (error) {
-			console.log('Error',{error});
-			return false;
-		}
-		channel.endTyping();
+        const studyGroupChatEvent = document.querySelector(".StudyGroupChat");
+        if (studyGroupChatEvent) studyGroupChatEvent.scrollTop = "100%";
+
+        let event = new CustomEvent("addMessage");
+        event.message = message;
+        window.dispatchEvent(event);
+        if (appController.states.editor.value) {
+          return appController.functions.openEditor({
+            isOpen: false,
+            value: "",
+          });
+        }
+      });
+    } catch (error) {
+      console.log("Error", { error });
+      return false;
+    }
+    channel.endTyping();
   };
 
   const [isOpen, setOpen] = useState(false);
@@ -135,22 +139,23 @@ export function StudyGroupChatInput({ appController, channel }) {
     //if (typing) return false;
     channel.startTyping();
     setTyping(true);
-    timeoutIds.map(id=>clearTimeout(id));
+    timeoutIds.map((id) => clearTimeout(id));
     let newId = setTimeout(() => {
       channel.endTyping();
       setTimeoutIds([]);
-      setTyping(false);}, 5000);
-    setTimeoutIds(prevIds=>[newId,...prevIds])
+      setTyping(false);
+    }, 5000);
+    setTimeoutIds((prevIds) => [newId, ...prevIds]);
   };
   const auto_grow = (element) => {
     if (element.scrollHeight < 40) return false;
     element.style.height = `8px`;
     element.style.height = `calc(${element.scrollHeight}px + 8px)`;
     document.querySelector(
-      ".StudyGroupChat"
+      ".StudyGroupChat",
     ).style.height = `calc(100% - ${element.scrollHeight}px - 2.7rem)`;
     document.querySelector(
-      ".StudyGroupChatInput"
+      ".StudyGroupChatInput",
     ).style.height = `calc(${element.scrollHeight}px + 2.7rem)`;
   };
   return (
@@ -293,7 +298,7 @@ export function StudyGroupChatInput({ appController, channel }) {
               let text = document.querySelector(".ql-editor").innerText.trim();
               setTimeout(
                 () => (document.querySelector("#inputGroupChat").value = text),
-                100
+                100,
               );
               return appController.functions.openEditor({
                 isOpen: false,
@@ -319,12 +324,12 @@ export function prepareQuery(messages) {
   let slug = null;
   for (let i in messages) {
     let message = messages[i];
-    let key,val = null;
-    if(message.link){
-      key = message.link.key
+    let key,
+      val = null;
+    if (message.link) {
+      key = message.link.key;
       val = message.link.val;
-    }else{
-
+    } else {
       if (!testJSON(message.data)) continue;
       let data = JSON.parse(message.data);
       if (data.links === undefined) continue;
@@ -332,7 +337,7 @@ export function prepareQuery(messages) {
       val = data.links[key];
     }
 
-    let baseUrl = message.customType && message.customType + "/" || "";
+    let baseUrl = (message.customType && message.customType + "/") || "";
 
     switch (key) {
       case "fax":
@@ -395,7 +400,8 @@ export function StudyGroupChat({
       entries.forEach(async (entry) => {
         if (entry.isIntersecting) {
           setPrevLoader(true);
-          appController.sendbird?.loadPreviousMessages({
+          appController.sendbird
+            ?.loadPreviousMessages({
               group: channel,
               id: messages[messages.length - 1].messageId,
             })
@@ -404,9 +410,10 @@ export function StudyGroupChat({
               setMessages((prev) => [...prev, ...messageList]);
               setLastElement(document.querySelector(".last"));
               setPrevLoader(false);
-              appController.sendbird?.loadUnreadDMs()
+              appController.sendbird
+                ?.loadUnreadDMs()
                 .then((unreadCounts) =>
-                  appController.functions.setUnreadDMs(unreadCounts)
+                  appController.functions.setUnreadDMs(unreadCounts),
                 );
             });
           observer.unobserve(lastElement);
@@ -543,23 +550,21 @@ export function StudyGroupChat({
 function TypingIndicators({ appController, channel }) {
   let groupUrl = channel.url;
   let typerIds = appController.states.studyGroup?.typers?.[groupUrl];
-  let lastMessageTime = appController.states.studyGroup.activeGroup.lastMessage?.createdAt || 0;
+  let lastMessageTime =
+    appController.states.studyGroup.activeGroup.lastMessage?.createdAt || 0;
   let timeSince = new Date().getTime() - lastMessageTime;
 
   if (!typerIds || typerIds?.length === 0 || timeSince < 5000) return null;
 
-
-  
   let typers = typerIds.map(
-    (id) => appController.states.studyGroup.activeGroup.memberMap[id]
+    (id) => appController.states.studyGroup.activeGroup.memberMap[id],
   );
   if (typers.length === 0) return null;
   let image = typers.map((user) => (
     <img
-      src={
-        user?.plainProfileUrl 
-      }
-      alt={user?.nickname} onError={breakCache}
+      src={user?.plainProfileUrl}
+      alt={user?.nickname}
+      onError={breakCache}
     />
   ));
 
@@ -589,7 +594,6 @@ export function StudyGroupThread({
   channel,
   setPanel,
 }) {
-  
   const inputRef = useRef(null);
   useEffect(() => {
     window.addEventListener("updateMessage", updateParentMessage, false);
@@ -612,7 +616,7 @@ export function StudyGroupThread({
 
     const mentionUsers = getUsersFromTextInput(
       appController,
-      inputRef.current?.value
+      inputRef.current?.value,
     );
     if (mentionUsers.length > 0) {
       params.mentionType = "users"; // Either 'users' or 'channel'
@@ -627,31 +631,33 @@ export function StudyGroupThread({
     //    new sendBirds.me.MessageMetaArray('itemType', ['tablet']),
     //    new sendBirds.me.MessageMetaArray('quality', ['best', 'good'])
     //];
-		try {
-			channel.sendUserMessage(params).onSucceeded((message)=> {
-				window.clicky?.goal("comment");
-				textbox.value = "";
-				textbox.classList.remove("sending");
-				textbox.disabled = false;
-				textbox.focus();
-				
-				const threadEvent = document.querySelector(".thread");
-				if (threadEvent) threadEvent.scrollTop = "100%";
-				
-				let event = new CustomEvent("updateReplyCount" + message.parentMessageId);
-				event.message = message;
-				event.increaseCount = true;
-				window.dispatchEvent(event);
-				
-				event = new CustomEvent("addMessageToThread");
-				event.message = message;
-				window.dispatchEvent(event);
-			});	
-		} catch (error) {
-			console.log({error});
-			return false;
-		}
-		channel.endTyping();
+    try {
+      channel.sendUserMessage(params).onSucceeded((message) => {
+        window.clicky?.goal("comment");
+        textbox.value = "";
+        textbox.classList.remove("sending");
+        textbox.disabled = false;
+        textbox.focus();
+
+        const threadEvent = document.querySelector(".thread");
+        if (threadEvent) threadEvent.scrollTop = "100%";
+
+        let event = new CustomEvent(
+          "updateReplyCount" + message.parentMessageId,
+        );
+        event.message = message;
+        event.increaseCount = true;
+        window.dispatchEvent(event);
+
+        event = new CustomEvent("addMessageToThread");
+        event.message = message;
+        window.dispatchEvent(event);
+      });
+    } catch (error) {
+      console.log({ error });
+      return false;
+    }
+    channel.endTyping();
   };
 
   const closeThreadMessage = () => {
@@ -670,7 +676,7 @@ export function StudyGroupThread({
     crypto
       .createHash("md5")
       .update(crypto.randomBytes(20).toString("hex"))
-      .digest("hex")
+      .digest("hex"),
   );
 
   const [threadInputVal, setThreadInputVal] = useState(null);
@@ -700,9 +706,8 @@ export function StudyGroupThread({
           inputRef={inputRef}
         />
         <img
-          src={
-            appController.states.user.social.profile_url 
-          } onError={breakCache}
+          src={appController.states.user.social.profile_url}
+          onError={breakCache}
           className={"threadAvatar"}
         />
       </div>
@@ -726,7 +731,7 @@ function ThreadMessages({
   const [highlights, setHighlights] = useState(
     testJSON(parentMessage.data)
       ? JSON.parse(parentMessage.data).highlights
-      : []
+      : [],
   );
 
   const [messagesCount, setMessageCount] = useState(null);
@@ -788,7 +793,7 @@ function ThreadedMessages({
       window.removeEventListener(
         "deleteThreadChatMessage",
         deleteMessage,
-        false
+        false,
       );
       window.removeEventListener("addMessageToThread", addMessage, false);
       window.removeEventListener("updateMessageToThread", updateMessage, false);
@@ -838,11 +843,10 @@ function ThreadedMessages({
   const loadThreadedMessages = useCallback(
     (needsToLoad) => {
       appController.sendbird.loadThreadedMessages(parentMessage).then((r) => {
-				console.log("Threaded messages loaded",r);
         setMessages([...r.threadedMessages]);
       });
     },
-    [needsToLoad]
+    [needsToLoad],
   );
 
   //Load Previous Messages
@@ -899,11 +903,7 @@ function BaseMessage({
     if (message.threadInfo && message.threadInfo.replyCount) {
       let replyCount = message.threadInfo.replyCount;
       let faces = message.threadInfo.mostRepliedUsers.map((u, i) => (
-        <img
-          key={i}
-          src={u.plainProfileUrl} 
-					onError={breakCache}
-        />
+        <img key={i} src={u.plainProfileUrl} onError={breakCache} />
       ));
       let names = message.threadInfo.mostRepliedUsers.map((u) => u.nickname);
       return { replyCount, faces, names, messageId: message.messageId };
@@ -915,29 +915,29 @@ function BaseMessage({
       window.addEventListener(
         "updateReplyCount" + message.messageId,
         updateReplyCount,
-        false
+        false,
       );
       window.addEventListener(
         "addMessageToThread" + message.messageId,
         addMessageToThread,
-        false
+        false,
       );
       return () => {
         window.removeEventListener(
           "updateReplyCount" + message.messageId,
           updateReplyCount,
-          false
+          false,
         );
         window.removeEventListener(
           "addMessageToThread" + message.messageId,
           addMessageToThread,
-          false
+          false,
         );
       };
     }
   }, [message.messageId]);
   let timestamp = timeAgoString(message.createdAt / 1000);
-  
+
   const addMessageToThread = (e) => {
     setReplies((prevState) => {
       let replyCount =
@@ -964,7 +964,7 @@ function BaseMessage({
             <img src={u.plainProfileUrl} />
           ));
           let names = message.threadInfo.mostRepliedUsers.map(
-            (u) => u.nickname
+            (u) => u.nickname,
           );
           return { replyCount, faces, names, messageId: message.messageId };
         }
@@ -982,11 +982,7 @@ function BaseMessage({
       if (names.indexOf(message?.sender?.nickname) < 0) {
         names.push(message?.sender?.nickname);
         faces.push(
-          <img
-            src={
-              message?.sender?.plainProfileUrl 
-            } onError={breakCache}
-          />
+          <img src={message?.sender?.plainProfileUrl} onError={breakCache} />,
         );
       }
       return { ...prevState, replyCount, faces, names };
@@ -1000,23 +996,23 @@ function BaseMessage({
     message?.sender?.userId === appController.states.user.social?.user_id;
   let image = (
     <img
-      src={
-        message?.sender?.plainProfileUrl 
-      }
-      alt={message?.sender?.nickname}  onError={breakCache}
+      src={message?.sender?.plainProfileUrl}
+      alt={message?.sender?.nickname}
+      onError={breakCache}
     />
   );
 
   const handleReply = () => {
-    if(isMobile()) return   appController.functions.setPopUp({
-      type: `group/${message.channelUrl}`,
-      ids: [`${message.messageId}`],
-      popUpData: message,
-      underSlug: `group/${message.channelUrl}`
-    });
+    if (isMobile())
+      return appController.functions.setPopUp({
+        type: `group/${message.channelUrl}`,
+        ids: [`${message.messageId}`],
+        popUpData: message,
+        underSlug: `group/${message.channelUrl}`,
+      });
 
     appController.functions.setSlug(
-      "group/" + message.channelUrl + "/" + message.messageId
+      "group/" + message.channelUrl + "/" + message.messageId,
     );
     if (typeof setThreadMessage !== "function") return false;
     updateReplyCount({ message, resetReplyCount: true });
@@ -1033,10 +1029,10 @@ function BaseMessage({
   if (replies) {
     replyVal = (
       <span data-tip={replies.names.join(", ")} data-for={tooltip_id}>
-        {replies.faces} 
+        {replies.faces}
         {replies.replyCount === 1
           ? label("reply_count_singular")
-          : label("reply_count_plural",[replies.replyCount])}{" "}
+          : label("reply_count_plural", [replies.replyCount])}{" "}
         ►
         <ReactTooltip id={tooltip_id} effect="solid" />
       </span>
@@ -1065,7 +1061,7 @@ function BaseMessage({
     window.removeEventListener(
       "handleUpdateMessage",
       handleUpdateMessage,
-      false
+      false,
     );
   };
   const handleEdit = (e) => {
@@ -1081,10 +1077,10 @@ function BaseMessage({
   const deleteMessage = async (e) => {
     window.removeEventListener("deleteMessage", deleteMessage, false);
     if (!e.isDelete) return true; // remove listiner if message model is cancled
-		try {
-			await channel.deleteMessage(message);
-			e.hideDeleteMessageAlert();
-			let event = null;
+    try {
+      await channel.deleteMessage(message);
+      e.hideDeleteMessageAlert();
+      let event = null;
       if (inThread) {
         event = new CustomEvent("updateReplyCount" + message.parentMessageId);
         event.message = message;
@@ -1104,12 +1100,12 @@ function BaseMessage({
       event = new CustomEvent("deleteChatMessage");
       event.index = index;
       window.dispatchEvent(event);
-		} catch (error) {
-			console.log({error});
-			return false;
-		}
+    } catch (error) {
+      console.log({ error });
+      return false;
+    }
   };
-  const handleUpdateMessage = async(e) => {
+  const handleUpdateMessage = async (e) => {
     let textbox = document.querySelector(".edit .StudyGroupChatInput input");
 
     if (textbox === null) return null;
@@ -1136,36 +1132,38 @@ function BaseMessage({
       params.customType = "formatted_comment";
     }
 
-		try {
-			const updateMessage = await channel.updateUserMessage(message.messageId, params);	
-			window.removeEventListener(
-				"handleUpdateMessage",
-				handleUpdateMessage,
-				false
-			);
+    try {
+      const updateMessage = await channel.updateUserMessage(
+        message.messageId,
+        params,
+      );
+      window.removeEventListener(
+        "handleUpdateMessage",
+        handleUpdateMessage,
+        false,
+      );
 
-			textbox.value = "";
-			textbox.classList.remove("sending");
-			textbox.disabled = false;
-			textbox.focus();
+      textbox.value = "";
+      textbox.classList.remove("sending");
+      textbox.disabled = false;
+      textbox.focus();
 
-			// UPDATE MESSAGE
-			let event = new CustomEvent(
-				inThread && !isParent ? "updateMessageToThread" : "updateMessage"
-			);
+      // UPDATE MESSAGE
+      let event = new CustomEvent(
+        inThread && !isParent ? "updateMessageToThread" : "updateMessage",
+      );
 
-			event.message = updateMessage;
-			event.index = index;
+      event.message = updateMessage;
+      event.index = index;
 
-			window.dispatchEvent(event);
-			// CLOSE INPUT
-			event = new CustomEvent("closeEdit");
-			window.dispatchEvent(event);
-		} catch (error) {
-			console.log({error});
-			return false;
-		}
-
+      window.dispatchEvent(event);
+      // CLOSE INPUT
+      event = new CustomEvent("closeEdit");
+      window.dispatchEvent(event);
+    } catch (error) {
+      console.log({ error });
+      return false;
+    }
   };
   let messageActions = null;
   let counter = 0;
@@ -1178,7 +1176,11 @@ function BaseMessage({
     );
   } else {
     if (inThread) {
-			counter = isParent ? messagesCount : message.threadInfo === null ? 0 : message.threadInfo.replyCount;
+      counter = isParent
+        ? messagesCount
+        : message.threadInfo === null
+        ? 0
+        : message.threadInfo.replyCount;
     } else {
       counter = replies?.replyCount === undefined ? 0 : replies.replyCount;
     }
@@ -1224,7 +1226,9 @@ function BaseMessage({
     >
       {image}
       <div className={"messageContent"}>
-        <span className="senderName">{message?.sender?.nickname} {botBadge}</span>
+        <span className="senderName">
+          {message?.sender?.nickname} {botBadge}
+        </span>
         <span className="timeStamp">
           {" "}
           •{" "}
@@ -1387,9 +1391,12 @@ function TextComment({
       ? chatLinkedContent.textInFeed[message.customType + "/" + data.links.text]
       : false;
 
-      let messageText = formatText(message, setPanel);
-      messageText = !/[•]/.test(messageText?.props?.children?.[0]) ? messageText : <span className={"desc"}>⭐ {data.description}</span>;
-    
+  let messageText = formatText(message, setPanel);
+  messageText = !/[•]/.test(messageText?.props?.children?.[0]) ? (
+    messageText
+  ) : (
+    <span className={"desc"}>⭐ {data.description}</span>
+  );
 
   const updateMessage = () => {
     let event = new CustomEvent("handleUpdateMessage");
@@ -1541,7 +1548,11 @@ function ImageComment({
       : false;
 
   let messageText = formatText(message, setPanel);
-  messageText = !/[•]/.test(messageText?.props?.children?.[0]) ? messageText : <span className={"desc"}>⭐ {data.description}</span>;
+  messageText = !/[•]/.test(messageText?.props?.children?.[0]) ? (
+    messageText
+  ) : (
+    <span className={"desc"}>⭐ {data.description}</span>
+  );
   return (
     <div>
       {messageText} {likes}
@@ -1574,8 +1585,11 @@ function FaxComment({
 
   let messageText = formatText(message, setPanel);
 
-  messageText = !/[•]/.test(messageText?.props?.children?.[0]) ? messageText : <span className={"desc"}>⭐ {data.description}</span>;
-
+  messageText = !/[•]/.test(messageText?.props?.children?.[0]) ? (
+    messageText
+  ) : (
+    <span className={"desc"}>⭐ {data.description}</span>
+  );
 
   return (
     <div>
