@@ -8,21 +8,21 @@ import { renderPersonPlaceHTML } from "./PersonPlace";
 import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
 import "./Narration.css";
 import "./TextContent.css";
-import { snapSelectionToWord,chronoLabel } from "src/models/Utils";
+import { snapSelectionToWord, chronoLabel } from "src/models/Utils";
 import { SRLWrapper } from "simple-react-lightbox";
-import {  label} from "src/models/Utils";
+import { label } from "src/models/Utils";
 import fullscreen from "src/views/Page/svg/fullscreen.png";
 
-
-function ChronoRow ({chrono}) {
-
+function ChronoRow({ chrono }) {
   chrono = chronoLabel(chrono);
 
-  if(!chrono) return null;
+  if (!chrono) return null;
 
-  return <div className="row chronoRow"><div className="chronoText">{chrono}</div></div>
-
-
+  return (
+    <div className="row chronoRow">
+      <div className="chronoText">{chrono}</div>
+    </div>
+  );
 }
 
 function reducer(narrationController, input) {
@@ -30,7 +30,7 @@ function reducer(narrationController, input) {
     case "toggleOpenClose":
       if (narrationController.states.isOpen)
         narrationController.pageController.functions.removeOpenRow(
-          narrationController.data.text.slug
+          narrationController.data.text.slug,
         );
       else
         narrationController.pageController.functions.setActiveRow({
@@ -53,7 +53,7 @@ function reducer(narrationController, input) {
       narrationController.states.showFax = true;
       narrationController.states.activeFax = input.val;
       narrationController.appController.functions.setSlug(
-        narrationController.data.text.slug + "/fax/" + input.val
+        narrationController.data.text.slug + "/fax/" + input.val,
       );
 
       break;
@@ -63,11 +63,11 @@ function reducer(narrationController, input) {
         narrationController.appController.functions.setSlug(
           narrationController.data.text.slug +
             "/fax/" +
-            narrationController.states.activeFax
+            narrationController.states.activeFax,
         );
       } else {
         narrationController.appController.functions.setSlug(
-          narrationController.data.text.slug
+          narrationController.data.text.slug,
         );
         narrationController.functions.setActiveImageId(0);
       }
@@ -246,26 +246,28 @@ function Narration({ rowData, pageController, addHighlight }) {
       //Extract Image and Commentary Values
       let imageIds = [];
       imageIds = imageIds.concat(
-        initNarrationController.data.text.content.match(/\[i\](\d+)\[\/i\]/gi)
+        initNarrationController.data.text.content.match(/\[i\](\d+)\[\/i\]/gi),
       );
       if (initNarrationController.data.text.quotes)
         imageIds = imageIds.concat(
           initNarrationController.data.text.quotes
             .map((q) => q.content.match(/\[i\](\d+)\[\/i\]/gi))
-            .flat()
+            .flat(),
         );
       imageIds =
         imageIds &&
         imageIds.filter((x) => x !== null).map((i) => i.replace(/\D+/g, ""));
       let commentaryIds = [];
       commentaryIds = commentaryIds.concat(
-        initNarrationController.data.text.content.match(/\[c\]((\d+))\[\/c\]/gi)
+        initNarrationController.data.text.content.match(
+          /\[c\]((\d+))\[\/c\]/gi,
+        ),
       );
       if (initNarrationController.data.text.quotes)
         commentaryIds = commentaryIds.concat(
           initNarrationController.data.text.quotes
             .map((q) => q.content.match(/\[c\]((\d+))\[\/c\]/gi))
-            .flat()
+            .flat(),
         );
       commentaryIds =
         commentaryIds &&
@@ -276,10 +278,12 @@ function Narration({ rowData, pageController, addHighlight }) {
         imageIds && imageIds.length ? imageIds : [];
       initNarrationController.data.commentaryIds =
         commentaryIds && commentaryIds.length ? commentaryIds : [];
-      let personIds =
-        initNarrationController.data.description.match(/\|([^\]}]+?)}/g);
-      let placeIds =
-        initNarrationController.data.description.match(/\|([^\]}]+?)\]/g);
+      let personIds = initNarrationController.data.description.match(
+        /\|([^\]}]+?)}/g,
+      );
+      let placeIds = initNarrationController.data.description.match(
+        /\|([^\]}]+?)\]/g,
+      );
       initNarrationController.data.personIds =
         personIds && personIds.length
           ? personIds.map((i) => i.replace(/[|}]/g, ""))
@@ -291,11 +295,11 @@ function Narration({ rowData, pageController, addHighlight }) {
       //Render React Components from plain text
       initNarrationController.components.description = renderPersonPlaceHTML(
         initNarrationController.data.description,
-        pageController
+        pageController,
       );
       //Return the Row Controller
       return initNarrationController;
-    })()
+    })(),
   );
 
   narrationController.pageController = pageController;
@@ -326,7 +330,7 @@ function Narration({ rowData, pageController, addHighlight }) {
   let completed_items = pageController.states.progress?.completed_items;
   let started_items = pageController.states.progress?.started_items;
   let link_index = parseInt(
-    narrationController?.data?.text?.slug?.match(/\d+$/)[0]
+    narrationController?.data?.text?.slug?.match(/\d+$/)[0],
   );
   let progress = started_items?.includes(link_index)
     ? "started"
@@ -336,8 +340,6 @@ function Narration({ rowData, pageController, addHighlight }) {
     ? "completed"
     : "not_started";
   if (!pageController?.states?.progress?.count) progress = "unknown";
-
-
 
   return (
     <div className="card-body">
@@ -377,17 +379,17 @@ function idsWithComments(type, narrationController) {
   return idsWithComments;
 }
 
-function LightBox({ narrationController, setOpenLightBox,imgClicker }) {
+function LightBox({ narrationController, setOpenLightBox, imgClicker }) {
   const activeImageId = narrationController.states.activeImageId;
   const activeImg = document.querySelector(`.img-${activeImageId}`);
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-        imgClicker.click();
+    imgClicker.click();
     if (activeImg && !isOpen) {
-        setTimeout(()=>{
+      setTimeout(() => {
         activeImg.click();
-        },[100]);
+      }, [100]);
     }
   }, [activeImageId, activeImg]);
 
@@ -426,7 +428,8 @@ function LightBox({ narrationController, setOpenLightBox,imgClicker }) {
 
   if (narrationController.states.panelImageIds.length > 1) {
     panelImages = narrationController.states.panelImageIds.map((id) => {
-      const caption = narrationController.supplement.image?.[id]?.title || "Artwork";
+      const caption =
+        narrationController.supplement.image?.[id]?.title || "Artwork";
       return (
         <img
           className={`img-${id}`}
@@ -437,7 +440,8 @@ function LightBox({ narrationController, setOpenLightBox,imgClicker }) {
     });
   }
 
-  const caption = narrationController.supplement.image?.[activeImageId]?.title || "Artwork";
+  const caption =
+    narrationController.supplement.image?.[activeImageId]?.title || "Artwork";
 
   return (
     <SRLWrapper options={options} callbacks={callbacks}>
@@ -461,7 +465,7 @@ function ImagePanel({ narrationController }) {
   useEffect(() => {
     if (
       !document.getElementsByClassName(
-        "ii" + narrationController.states.activeImageId
+        "ii" + narrationController.states.activeImageId,
       )[0]
     )
       return false;
@@ -469,7 +473,7 @@ function ImagePanel({ narrationController }) {
       marginTop -
       document
         .getElementsByClassName(
-          "ii" + narrationController.states.activeImageId
+          "ii" + narrationController.states.activeImageId,
         )[0]
         .getBoundingClientRect().y;
     if (distanceOffScreen > 0) {
@@ -477,11 +481,12 @@ function ImagePanel({ narrationController }) {
     } else {
       setMarginTop(0);
     }
-    
-    const activeId = narrationController.states.activeImageId;
-    const caption = narrationController.supplement.image?.[activeId]?.title || "Artwork";
-    if(caption) document.title = "Art: " + caption + " | " + label("home_title");
 
+    const activeId = narrationController.states.activeImageId;
+    const caption =
+      narrationController.supplement.image?.[activeId]?.title || "Artwork";
+    if (caption)
+      document.title = "Art: " + caption + " | " + label("home_title");
   }, [marginTop, narrationController.states.activeImageId]);
 
   if (narrationController.states.showFax) return null;
@@ -505,10 +510,9 @@ function ImagePanel({ narrationController }) {
                     ? "active"
                     : ""
                 }
-                onClick={() =>{
+                onClick={() => {
                   narrationController.functions.setActiveImageId(id);
-                  }
-                }
+                }}
               >
                 <img src={assetUrl + "/art/" + id} alt="art" />
                 {commentIcon}
@@ -548,7 +552,7 @@ function ImagePanel({ narrationController }) {
     //Load Supplement explicity
     narrationController.functions.preLoadSupplement(narrationController);
   }
-  const imgClicker = document.querySelector('.fullscreen-image');
+  const imgClicker = document.querySelector(".fullscreen-image");
   return (
     <div
       className={"images ii" + narrationController.states.activeImageId}
@@ -614,16 +618,17 @@ function FacsimilePanel({ narrationController }) {
       narrationController.functions.setActiveFax(initOpenVersion);
       //narrationController.pageController.functions.markAsInitiated()
     }
-
-
   }, [narrationController.states]);
 
-
   useEffect(() => {
-
     const version = narrationController.states.activeFax;
-    document.title = "Facsimile: " + version + "—" + narrationController.data.text.heading + " | " + label("home_title");
-
+    document.title =
+      "Facsimile: " +
+      version +
+      "—" +
+      narrationController.data.text.heading +
+      " | " +
+      label("home_title");
   }, [narrationController.states.activeFax]);
 
   let appController = narrationController.appController;
@@ -637,7 +642,7 @@ function FacsimilePanel({ narrationController }) {
           let id = item.slug;
           if (
             appController.states.preferences.facsimiles.filter.versions.includes(
-              id
+              id,
             )
           )
             return null;

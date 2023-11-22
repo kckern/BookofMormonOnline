@@ -10,7 +10,6 @@ import HTMLReactParser from "html-react-parser";
 import { getCache, setCache } from "./Cache";
 import { linkScriptureRefs } from "src/models/scripture";
 
-
 export function determineLanguage() {
   let subdomain = window.location.host.split(".").shift();
   let tld = window.location.host.split(".").pop();
@@ -33,18 +32,23 @@ export function determineLanguage() {
 }
 
 export function tokenImage() {
-  return "https://avatars.dicebear.com/api/jdenticon/" + crypto.createHash("md5").update(localStorage.getItem("token")).digest("hex") + ".svg";
-
+  return (
+    "https://avatars.dicebear.com/api/jdenticon/" +
+    crypto
+      .createHash("md5")
+      .update(localStorage.getItem("token"))
+      .digest("hex") +
+    ".svg"
+  );
 }
 
-export function chronoLabel(string)
-{
-  if(!string) return null;
+export function chronoLabel(string) {
+  if (!string) return null;
   //split the tailing digits
-  let [label_id,num,info] = string.split("|");
-  if(!label_id) return null;
-  if(info) return label(label_id,[num,info]);
-  if(num) return label(label_id,[num]);
+  let [label_id, num, info] = string.split("|");
+  if (!label_id) return null;
+  if (info) return label(label_id, [num, info]);
+  if (num) return label(label_id, [num]);
 }
 
 export function label(key, inserts) {
@@ -77,18 +81,20 @@ export function getUsersFromTextInput(appController, text) {
   return findedUsers;
 }
 
-export function makeLabelDictionary(r,fromCache=false) {
+export function makeLabelDictionary(r, fromCache = false) {
   if (!r.labels || r.labels?.length === 0) return r;
   let labelData = r.labels;
   const isKeyVal = labelData?.[0]?.key && labelData?.[0]?.val;
-  let dictionary = !isKeyVal ? labelData : Object.values(labelData).reduce((obj, item) => {
-    obj[item.key] = item.val;
-    return obj;
-  }, {});
+  let dictionary = !isKeyVal
+    ? labelData
+    : Object.values(labelData).reduce((obj, item) => {
+        obj[item.key] = item.val;
+        return obj;
+      }, {});
 
   r.labels = dictionary;
   //save dictionary to indexedDB as json array, key label.dictionary
-  if(!fromCache) setCache({ "label.dictionary": dictionary });
+  if (!fromCache) setCache({ "label.dictionary": dictionary });
   global.dictionary = dictionary;
   return r;
 }
@@ -118,7 +124,12 @@ export function moveCaretToEnd(el) {
 }
 
 export function processName(name) {
-  return replaceNumbers(name?.split(",").reverse().join(" "));
+  return replaceNumbers(
+    name
+      ?.split(",")
+      .reverse()
+      .join(" "),
+  );
 }
 
 export function replaceNumbers(str) {
@@ -166,9 +177,9 @@ export function renderHTMLContentInFeed(content, highlights) {
   let highlighted = "";
   for (var i in highlights) {
     let highlight = highlights[i];
-    let string = highlight.string.replace(/[()]/ig,'.');
+    let string = highlight.string.replace(/[()]/gi, ".");
     var re = [];
-    re.push(new RegExp("\\b(" + string  + ")\\b", "gi"));
+    re.push(new RegExp("\\b(" + string + ")\\b", "gi"));
     for (let i = 4; i >= 1; i--) {
       let start = string
         .match(new RegExp(`^(\\S+\\s){${i}}`, "gi"))
@@ -217,7 +228,9 @@ export function BlankWord() {
 
 export function BlankParagraph({ min, max }) {
   const [words] = useState(
-    new Array(Math.round(min + Math.random() * (max - min))).fill(<BlankWord />)
+    new Array(Math.round(min + Math.random() * (max - min))).fill(
+      <BlankWord />,
+    ),
   );
 
   return (
@@ -239,7 +252,7 @@ export function timeAgoString(unixTimestamp) {
 
   let timestamp = date.format(
     new Date(unixTimestamp * 1000),
-    label("time_ago_date_format")
+    label("time_ago_date_format"),
   ); //'ddd, DD MMM YYYY [at] h:mma'
 
   return timestamp;
@@ -322,13 +335,13 @@ export function newPost(num) {
 
   axios.get(
     "https://jenkins.kckern.info/buildByToken/buildWithParameters?job=BoMOnline_Posts&token=b97541afa471d&NUM=" +
-    num
+      num,
   );
 }
 
 export function replies() {
   axios.get(
-    "https://jenkins.kckern.info/buildByToken/buildWithParameters?job=BoMOnline_Replies&token=b97541afa471d"
+    "https://jenkins.kckern.info/buildByToken/buildWithParameters?job=BoMOnline_Replies&token=b97541afa471d",
   );
 }
 
@@ -354,7 +367,7 @@ export function getCoords(elem) {
 
 export function generateFakeProgressData(userIds) {
   return Promise.resolve("Success").then(
-    function (value) {
+    function(value) {
       if (!Array.isArray(userIds)) return [];
       let startedDaysAgo = 20 + Math.floor(Math.random() * 100);
       return userIds.map((user_id) => {
@@ -385,7 +398,7 @@ export function generateFakeProgressData(userIds) {
         };
       });
     },
-    () => { }
+    () => {},
   );
 }
 
@@ -499,30 +512,33 @@ export function truncate(text, startChars, endChars, maxLength) {
 }
 
 export function refreshChannel(channel, appController) {
-	if(channel.memberCount === 0) return;
+  if (channel.memberCount === 0) return;
   return channel.refresh().then((fresh) => {
     try {
-      appController.sendbird?.fetchRoomFromGroup(fresh, "refreshChannel")
-      .then((room) => {
-        fresh.room = room;
-        appController.functions.updateListedStudyGroup(fresh);
-        return fresh;
-      });
+      appController.sendbird
+        ?.fetchRoomFromGroup(fresh, "refreshChannel")
+        .then((room) => {
+          fresh.room = room;
+          appController.functions.updateListedStudyGroup(fresh);
+          return fresh;
+        });
     } catch (e) {
-      console.log("refreshChannel", e)
+      console.log("refreshChannel", e);
     }
   });
 }
 
-
 export function log({ appController, key, val }) {
-  BoMOnlineAPI({
-    log: {
-      token: appController.states.user.token,
-      key: key,
-      val: val
-    }
-  }, { useCache: false })
+  BoMOnlineAPI(
+    {
+      log: {
+        token: appController.states.user.token,
+        key: key,
+        val: val,
+      },
+    },
+    { useCache: false },
+  );
 }
 
 export function playSound(sound) {
@@ -532,18 +548,19 @@ export function playSound(sound) {
     const promise = sound.play();
 
     if (promise !== undefined) {
-      promise.then(() => { }).catch((error) => console.error);
+      promise.then(() => {}).catch((error) => console.error);
     }
-  } catch (err) { }
+  } catch (err) {}
 }
 
 export function formatText(message, setPanel, appController, isSection) {
+  if (message.length === 0) return false;
   if (message.mentionedUsers.length > 0) {
     let newText = message.message;
     message.mentionedUsers.forEach((mentionUser) => {
       newText = newText.replaceAll(
         "@" + mentionUser.nickname,
-        `<a className="tagUser" id=${mentionUser.userId} nickName=${mentionUser.nickname}>${mentionUser.nickname}</a>`
+        `<a className="tagUser" id=${mentionUser.userId} nickName=${mentionUser.nickname}>${mentionUser.nickname}</a>`,
       );
     });
 
@@ -556,7 +573,7 @@ export function formatText(message, setPanel, appController, isSection) {
               onClick={() => {
                 if (isSection) {
                   appController.functions.openGroupList(
-                    !appController.states.studyGroup.isGroupListOpen
+                    !appController.states.studyGroup.isGroupListOpen,
                   );
                   appController.functions.openDrawer({
                     key: "message",
@@ -574,25 +591,22 @@ export function formatText(message, setPanel, appController, isSection) {
       },
     });
   } else {
-
     return ParseMessage(message.message);
   }
 }
 
-
 export function breakCache({ currentTarget }) {
   if (!currentTarget) return null;
-  getFwdUrl(currentTarget.src).then(url => currentTarget.src = url);
+  getFwdUrl(currentTarget.src).then((url) => (currentTarget.src = url));
 }
 export async function getFwdUrl(url) {
   return fetch(url)
-    .then(r => r)
-    .then(data => data.url.replace(/\?.*?$/, ''))
-    .catch(err => {
-      throw new Error(err)
+    .then((r) => r)
+    .then((data) => data.url.replace(/\?.*?$/, ""))
+    .catch((err) => {
+      throw new Error(err);
     });
 }
-
 
 export function clickyUser(userData) {
   var clicky_custom = window.clicky_custom || {};
@@ -602,30 +616,27 @@ export function clickyUser(userData) {
 }
 
 export function isMobile() {
-
-  return ((window.innerWidth <= 900));
-
+  return window.innerWidth <= 900;
 }
 
 export function ParseMessage(string) {
-
   if (typeof string !== "string") return string;
   const { html, urls } = replaceURLWithHTMLLinks(string);
-  return <>{HTMLReactParser(html)}
-    <LinkPreviewContainer urls={urls} />
-  </>
+  return (
+    <>
+      {HTMLReactParser(html)}
+      <LinkPreviewContainer urls={urls} />
+    </>
+  );
 }
-
 
 function LinkPreviewContainer({ urls }) {
   if (!urls) return null;
 
-  return urls.map(url => <LinkPreview key={url} url={url} />)
+  return urls.map((url) => <LinkPreview key={url} url={url} />);
 }
 
-
 function LinkPreview({ url }) {
-
   const fetcher = async (url) => {
     const apikey = "1ac77035736dd239dee7958f10930622";
     const hash = "link." + md5hash(url);
@@ -634,10 +645,9 @@ function LinkPreview({ url }) {
     const key = Object.keys(found).shift();
     if (cached.found[key]) return cached.found[key];
 
-
     const response = await fetch("https://api.linkpreview.net", {
-      "method": "POST",
-      "body": `key=${apikey}&q=${url}`
+      method: "POST",
+      body: `key=${apikey}&q=${url}`,
     });
     const json = await response.json();
     if (!json?.title) return null;
@@ -646,68 +656,75 @@ function LinkPreview({ url }) {
       title: json.title,
       description: json.description,
       image: json.image,
-      hostname: json.url.split("/")[2].replace(/^www\./, ''),
-      url: json.url
-    }
+      hostname: json.url.split("/")[2].replace(/^www\./, ""),
+      url: json.url,
+    };
 
     setCache(returnObj);
     return returnObj[hash];
   };
 
-  const [linkData, setLinkData] = useState(null)
-  const [hasImage, setHasImage] = useState(true)
+  const [linkData, setLinkData] = useState(null);
+  const [hasImage, setHasImage] = useState(true);
   useEffect(() => {
-    fetcher(url).then(data => setLinkData(data))
-  }, [])
+    fetcher(url).then((data) => setLinkData(data));
+  }, []);
 
   if (!linkData) return null;
   if (!linkData.title) return null;
 
-  return <a href={linkData.url} target="_blank" className="linkPreviewA" rel="noreferrer">
-    <div className="linkPreview">
-      {linkData.image && hasImage && <div className="linkPreviewImg"><img onError={() => setHasImage(false)} src={linkData.image} /></div>}
-      <div className="linkPreviewText">
-        <h3>{linkData.title}</h3>
-        <p>{linkData.description}</p>
-        <div>
-          <span>{linkData.siteName}</span>
-          <span>{linkData.siteName && linkData.hostname && " • "}</span>
-          <span>{linkData.hostname}</span>
+  return (
+    <a
+      href={linkData.url}
+      target="_blank"
+      className="linkPreviewA"
+      rel="noreferrer"
+    >
+      <div className="linkPreview">
+        {linkData.image && hasImage && (
+          <div className="linkPreviewImg">
+            <img onError={() => setHasImage(false)} src={linkData.image} />
+          </div>
+        )}
+        <div className="linkPreviewText">
+          <h3>{linkData.title}</h3>
+          <p>{linkData.description}</p>
+          <div>
+            <span>{linkData.siteName}</span>
+            <span>{linkData.siteName && linkData.hostname && " • "}</span>
+            <span>{linkData.hostname}</span>
+          </div>
         </div>
       </div>
-    </div>
-  </a>
+    </a>
+  );
 }
-
-
-
 
 function replaceURLWithHTMLLinks(text) {
   if (typeof text.replace !== "function") return text;
-  const exp = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
-  let html = text.replace(exp, match => `<a target='_blank' href='${match}'>${friendlyUrl(match)}</a>`);
+  const exp = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gi;
+  let html = text.replace(
+    exp,
+    (match) => `<a target='_blank' href='${match}'>${friendlyUrl(match)}</a>`,
+  );
   const urls = text.match(exp) || [];
 
   html = linkScriptureRefs(html);
 
-  return { html, urls }
-
-
-
+  return { html, urls };
 }
 
 function friendlyUrl(url) {
-  url = url.replace(/^.*?\/\//, '');
-  url = url.replace(/^www./, '');
+  url = url.replace(/^.*?\/\//, "");
+  url = url.replace(/^www./, "");
   url = decodeURI(url);
   url = start_and_end(url);
   return url;
 }
 
-
 function start_and_end(str) {
   if (str.length > 60) {
-    return str.substr(0, 50) + '...' + str.substr(str.length - 10, str.length);
+    return str.substr(0, 50) + "..." + str.substr(str.length - 10, str.length);
   }
   return str;
 }
