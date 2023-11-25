@@ -320,7 +320,7 @@ function Place({ appController }) {
   if (place === undefined) return <pre>{appController.popUp}</pre>;
 
   return (
-    <Draggable handle=".place_head">
+    <Draggable handle=".card-header">
       <div
         id="popUp"
         className="card pp popupwindow"

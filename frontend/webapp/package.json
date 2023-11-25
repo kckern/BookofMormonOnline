@@ -54,7 +54,6 @@
     "react-big-calendar": "^0.33.6",
     "react-bootstrap-sweetalert": "^5.2.0",
     "react-bootstrap-switch": "^15.5.3",
-    "react-bootstrap-wizard": "0.0.9",
     "react-calendar-heatmap": "^1.9.0",
     "react-chartjs-2": "^3.0.4",
     "react-circular-progressbar": "^2.0.4",
@@ -73,7 +72,6 @@
     "react-loading": "^2.0.3",
     "react-login-by-naver": "^0.1.8",
     "react-markdown": "^7.0.1",
-    "react-masonry-component": "^6.3.0",
     "react-masonry-css": "^1.0.16",
     "react-modern-drawer": "^1.0.1",
     "react-player": "^2.9.0",
@@ -97,7 +95,6 @@
     "sendbird": "^3.0.153",
     "sendbird-calls": "^1.8.1",
     "simple-react-lightbox": "^3.6.9-0",
-    "simple-react-validator": "^1.6.0",
     "slick-carousel": "^1.8.1",
     "string-similarity": "^4.0.4",
     "tinymce": "^5.10.1",
@@ -133,14 +130,14 @@
   },
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
-    "@babel/types": "^7.22.10",
+    "@babel/types": "^7.23.3",
     "babel-polyfill": "^6.26.0",
     "buffer": "^6.0.3",
     "crypto-browserify": "^3.12.0",
     "css-loader": "^6.8.1",
-    "eslint-plugin-react-hooks": "^4.2.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
     "process": "^0.11.10",
-    "sass": "^1.65.1",
+    "sass": "^1.69.5",
     "stream": "^0.0.2"
   }
 }
