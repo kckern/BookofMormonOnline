@@ -5,6 +5,7 @@ import Comments from "../_Common/Study/Study";
 // media Url
 import { renderPersonPlaceHTML } from "./PersonPlace";
 import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
+import Parser, { domToReact } from "html-react-parser";
 import "./Narration.css";
 import "./TextContent.css";
 import { snapSelectionToWord,chronoLabel } from "src/models/Utils";
@@ -13,7 +14,7 @@ import {  label} from "src/models/Utils";
 import fullscreen from "src/views/Page/svg/fullscreen.png";
 import {Spinner} from "../_Common/Loader";
 import { determineLanguage } from "../../models/Utils";
-const {generateReference, setLang} = require('scripture-guide');
+const {generateReference, detectReferences, setLang} = require('scripture-guide');
 
 
 function ChronoRow ({chrono}) {
@@ -90,11 +91,15 @@ function reducer(narrationController, input) {
     case "setScriptures":
       narrationController.states.scriptures = input.val;
       break;
+    case "setNotes":
+      narrationController.states.notes = input.val;
+      break;
     case "clearAllPanels":
         narrationController.states.showFax = false;
         narrationController.states.peoplePlaces = {};
         narrationController.states.scriptures = [];
         narrationController.states.panelImageIds = [];
+        narrationController.states.notes = [];
      break;
 
     default:
@@ -212,6 +217,7 @@ function Narration({ rowData, pageController, addHighlight }) {
         panelImageIds: [],
         activeImageId: 0,
         highlights: [],
+        notes: [],
       };
 
       //Define all Row-level functions
@@ -245,6 +251,9 @@ function Narration({ rowData, pageController, addHighlight }) {
         setScriptures: (verse_ids) => {
           dispatch({ fn: "setScriptures", val: verse_ids });
         },
+        setNotes: (notes) => {
+          dispatch({ fn: "setNotes", val: notes });
+        },
         clearAllPanels: () => {
           dispatch({ fn: "clearAllPanels" });
         },
@@ -255,7 +264,6 @@ function Narration({ rowData, pageController, addHighlight }) {
           setHighlights(null, [], items);
         },
       };
-
       //Create Initial Controller
       var initNarrationController = {
         data: rowData.narration,
@@ -313,6 +321,8 @@ function Narration({ rowData, pageController, addHighlight }) {
         placeIds && placeIds.length
           ? placeIds.map((i) => i.replace(/[|\]]/g, ""))
           : [];
+
+
       //Render React Components from plain text
       initNarrationController.components.description = renderPersonPlaceHTML(
         initNarrationController.data.description,
@@ -376,6 +386,7 @@ function Narration({ rowData, pageController, addHighlight }) {
           <ImagePanel narrationController={narrationController} />
           <FacsimilePanel narrationController={narrationController} />
           <PeoplePlacePanel narrationController={narrationController} />
+          <NotesPanel narrationController={narrationController} />
           <ScripturePanel narrationController={narrationController} />
         </div>
         <TextContent
@@ -687,6 +698,63 @@ function PeoplePlacePanel({ narrationController }) {
   );
 }
 
+
+function NotesPanel({ narrationController }) {
+  const states = narrationController.states;
+  const notes = states.notes || [];
+
+  const closePanel = () => {
+    narrationController.functions.setNotes([]);
+  }
+
+  if(notes?.length === 0) return null;
+  return <div className="notesPanelWrapper">
+  <h5>{label("notes")}
+    <span onClick={closePanel}> × </span>
+  </h5>
+    <div className="notesPanel">
+      {notes.map((item)=> <SingleNoteItem item={item}/>)}
+    </div>
+  </div>
+}
+
+function SingleNoteItem({item}) {
+
+  const [activeScripture, setActiveScripture] = useState(null);
+
+  const scriptureLinks = (scripture) => {
+    return `<a className="scripture_link">${scripture}</a>`
+  }
+  const parserOptions =  {
+    replace: ({ name, attribs, children }) => {
+      if (name === 'a' && attribs.classname === 'scripture_link') {
+        const ref = domToReact(children,parserOptions);
+        //replace classname with class
+        attribs.class = attribs.classname;
+        delete attribs.classname;
+        const activateRef = () => {
+          setActiveScripture(ref);
+        }
+        return <a {...attribs} onClick={activateRef}>{ref}</a>;
+      }
+    }
+  };
+
+  item.text = item.text.replace(/<\/*p.*?>/g,"");
+  return <><div key={item.id} className="noteItem">
+  <div className="noteSource"><img src={`${assetUrl}/source/cover/${item.id.substr(5,3)}`} alt="Note Source" /></div>
+    <div className="noteText">
+      <span>
+        {item.title && <><em className="focusQuote">{item.title}</em>—</>}
+        {Parser(detectReferences(item.text,scriptureLinks),parserOptions)}
+      </span>
+    </div>
+  </div>
+  <ScripturePanelSingle scriptureData={{ref:activeScripture}}/>
+  </>
+
+}
+
 function ScripturePanel({ narrationController }) {
 
   const states = narrationController.states;
@@ -785,7 +853,7 @@ function ScripturePanel({ narrationController }) {
   </div>
 }
 
-function ScripturePanelSingle({ narrationController,scriptureData }) {
+function ScripturePanelSingle({ scriptureData }) {
 
   const {ref} = scriptureData || {ref:null,verse_id:null};
   const [text, setText] = useState(null);

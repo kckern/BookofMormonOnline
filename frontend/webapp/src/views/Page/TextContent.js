@@ -14,6 +14,7 @@ import ReactTooltip from "react-tooltip";
 import peopleSVG from "../_Common/svg/people.svg";
 import placesSVG from "../_Common/svg/places.svg";
 import studySVG from "../_Common/svg/study.svg";
+import notesSVG from "../_Common/svg/notes.svg";
 import faxSVG from "src/views/User/svg/oldbook.svg";
 import { label } from "../../models/Utils";
 
@@ -366,7 +367,7 @@ function TextItemCounters({narrationController})
   const {text} = narrationController?.data;
   if(!text) return null;
 
-  const {people,places,refs,guid} = text;
+  const {people,places,refs,guid,notes} = text;
 
   let peopleCount = people?.length || 0;
   let placeCount = places?.length || 0;
@@ -385,6 +386,13 @@ function TextItemCounters({narrationController})
     const {states: {scriptures}, functions: {setScriptures,clearAllPanels}} = narrationController;
     clearAllPanels();
     setScriptures(scriptures?.refs?.length ? { refs:[] } : { refs });
+  }
+
+  const setNotes = () => {
+    const {data: {text: {notes}}, functions: {setNotes, clearAllPanels}} = narrationController;
+    const hasNotes = !!notes?.length;
+    clearAllPanels();
+    setNotes(hasNotes ? notes : []);
   }
 
   const setFaxVisible = () => {
@@ -427,6 +435,9 @@ function TextItemCounters({narrationController})
     {!!refCount && <span className="item_counter refs"        onClick={setScriptures}
     data-tip={refCount===1 ? label(`x_related_scripture`,refCount) : label(`x_related_scriptures`,refCount)}
     data-for={tooltipId}><img src={studySVG}/>{refCount}</span>}
+
+    {!!notes?.length && <span className="item_counter notes"       onClick={setNotes}
+    data-tip={label(`x_notes`,notes?.length)} data-for={tooltipId}><img src={notesSVG}/>{notes?.length}</span>}
 
   </div></>
 }
