@@ -3,7 +3,7 @@ import Sequelize from 'sequelize';
 import { models as Models, sequelize, SQLQueryTypes } from '../config/database';
 import { getSlug, Op, includeTranslation, translatedValue, includeModel, includeWhere, scoreSlugsfromUserInfo, getSlugTip, getUserForLog} from './_common';
 import scripture from "../library/scripture"
-import { loadPeopleFromTextGuid, loadPlacesFromTextGuid } from './BomPeoplePlace';
+import { loadNotesFromTextGuid, loadPeopleFromTextGuid, loadPlacesFromTextGuid } from './BomPeoplePlace';
 const { getBlocksToQueue ,getFirstTextBlockGuidFromSlug,organizeRelatedScriptures} = require('./lib')
 import { lookupReference } from 'scripture-guide';
 import { queryDB } from '../library/db';
@@ -631,6 +631,14 @@ queue: async (root: any, args: any, context: any, info: any) => {
           }
         }]
       });
+    },
+    notes: async (item: any, args: any, context: any, info: any) =>{
+      const lang = context.lang ? context.lang : "en";
+      return loadNotesFromTextGuid(item.getDataValue('guid'),lang);
+    },
+    note_count: async (item: any, args: any, context: any, info: any) =>{
+      const lang = context.lang ? context.lang : "en";
+      return loadNotesFromTextGuid(item.getDataValue('guid'),lang).then(r=>r.length);
     },
     imgs: async (item: any, args: any, context: any, info: any) =>{
       const content = item.getDataValue('content');

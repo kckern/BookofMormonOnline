@@ -137,11 +137,19 @@ input QueueInput {
     comIds: [String]
     imgs: [Image]
     coms: [Commentary]
+    notes: [Note]
+    note_count: Int
     people: [People]
     places: [Place]
     refs: [Reference]
     link: Int
     next: [NarrativePath]
+  }
+
+  type Note {
+    id: String
+    title: String
+    text: String
   }
 
   type Reference {
