@@ -4,7 +4,7 @@ import ReactDOM from 'react-dom';
 import * as Sentry from "@sentry/react";
 import { BrowserTracing } from "@sentry/tracing";
 import App from './App';
-// import SimpleReactLightbox from 'simple-react-lightbox'
+import SimpleReactLightbox from 'simple-react-lightbox'
 import "./views/_Common/Header.css";
 import "./views/_Common/Main.css";
 
@@ -18,4 +18,4 @@ import "./views/_Common/Main.css";
 //     tracesSampleRate: 1.0,
 //   });
   
-ReactDOM.render(<App />,document.getElementById('root'));
+ReactDOM.render(<SimpleReactLightbox><App /></SimpleReactLightbox>,document.getElementById('root'));
