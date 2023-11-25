@@ -1,10 +1,10 @@
 const { queryDB } = require("../library/db");
 const {askGPT} = require("../library/gpt");
-const {generateReference} =  require('scripture-guide');
+const {generateReference,setLanguage} =  require('scripture-guide');
 const openaiTokenCounter = require('openai-gpt-token-counter');
 const {sendbird} = require("../library/sendbird.js");
 const isJSON = require("is-json");
-const { loadTranslations, translateReferences } = require("./translate");
+const { loadTranslations } = require("./translate");
 const smartquotes = require('smartquotes');
 const logger = require("../library/utils/logger.cjs");
 const log = (msg,obj) => obj ? logger.info(`studdybuddy ${msg} ${JSON.stringify(obj)}`) : logger.info(`studdybuddy ${msg}`);
@@ -75,6 +75,7 @@ const studyBuddy = async (channelUrl,messageId, messageContent) => {
     log("studyBuddy loaded channel", {channel});
     if(!channel) return error("No Channel: ", {channelUrl});
     const lang = channel.metadata?.lang || "en";
+    setLanguage(lang);
     log(`studyBuddy channel lang: ${lang}`);
     const bot = await sendbird.getBotByLang(lang);
     log("studyBuddy", {bot,channelUrl, messageId, messageContent, lang});
@@ -727,7 +728,7 @@ const loadCrossReferences = async (verse_ids, lang) => {
     
     if(lang && lang !== 'en') {
 
-        sql = `SELECT v.verse_title as ref, t.text as text 
+        sql = `SELECT v.verse_id as verse_id, t.text as text 
         FROM lds_scriptures_verses v JOIN lds_scriptures_translations t
                 ON v.verse_id = t.verse_id
                 WHERE v.verse_id IN 
@@ -739,7 +740,7 @@ const loadCrossReferences = async (verse_ids, lang) => {
                 ORDER BY v.verse_id;`
 
     } else {
-        sql = `SELECT verse_title ref, verse_scripture text 
+        sql = `SELECT verse_id, verse_scripture text 
         FROM lds_scriptures_verses 
         WHERE verse_id IN 
         (SELECT distinct dst_verse_id FROM lds_scriptures_crossref
@@ -751,7 +752,8 @@ const loadCrossReferences = async (verse_ids, lang) => {
     
     
     const crossReferences = await queryDB(sql);
-    return crossReferences.map(({ref,text}) => ({ref:translateReferences(lang,ref), text}));
+    //TODO: Group contiguous references
+    return crossReferences.map(({verse_id,text}) => ({ref:generateReference(verse_id), text}));
 
 }
 
@@ -784,7 +786,8 @@ const loadVerses = async (guid, lang) => {
     const verses = await queryDB(sql);
     const verse_ids = verses.map((verse) => verse.verse_id);
     const scripture_text = verses.map((verse) => verse.verse_scripture).join(" ");
-    const ref = translateReferences(lang,generateReference(verse_ids));
+
+    const ref = generateReference(verse_ids)
 
     
 
