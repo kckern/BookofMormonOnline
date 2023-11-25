@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useReducer } from "react";
-import { Card, CardHeader, CardBody, Collapse, Col } from "reactstrap";
 // CHILD
 import TextContent from "./TextContent";
 import Comments from "../_Common/Study/Study";
@@ -466,7 +465,6 @@ function LightBox({ narrationController, setOpenLightBox,imgClicker }) {
   }
 
   const caption = narrationController.supplement.image?.[activeImageId]?.title || "Artwork";
-
   return (
     <SRLWrapper options={options} callbacks={callbacks}>
       <div className="lightbox-wrapper" style={{ display: "none" }}>
