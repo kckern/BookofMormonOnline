@@ -212,7 +212,7 @@
     background-size: auto;
   }
   
-  .narration p {
+  .narration > p {
     margin-left: 1em;
     list-style-position: outside;
     padding-left: 2em;
@@ -223,16 +223,16 @@
     background-image: url("../User/svg/empty.svg");
   }
   
-  .narration p.not_started {
+  .narration > p.not_started {
     background-image: url("../User/svg/blank.svg");
   }
-  .narration p.started {
+  .narration > p.started {
     background-image: url("../User/svg/yellow.svg");
   }
-  .narration p.completed {
+  .narration > p.completed {
     background-image: url("../User/svg/green.svg");
   }
-  .narration p.active {
+  .narration > p.active {
     background-image: url("../User/svg/blue.svg");
   }
   
@@ -241,11 +241,11 @@
     flex-direction: column;
   }
   
-  .narration p a {
+  .narration > p a {
     font-weight: bold;
   }
   
-  .narration p a:hover {
+  .narration > p a:hover {
     font-weight: bold;
     border-bottom: 4px double #aaa;
     position: relative;
@@ -258,6 +258,7 @@
   
 
   .peoplePlacePanelWrapper,
+  .notesPanelWrapper,
   .scripturePanelWrapper
   {
     background-color: #ddd;
@@ -268,6 +269,7 @@
 
   }
   .peoplePlacePanelWrapper h5,
+  .notesPanelWrapper h5,
   .scripturePanelWrapper h5
   {
 
@@ -284,6 +286,7 @@
   }
 
   .peoplePlacePanelWrapper h5 span,
+  .notesPanelWrapper h5 span,
   .scripturePanelWrapper h5 span
   {
     float: right;
@@ -291,6 +294,7 @@
     font-weight: bold;
   }
   .peoplePlacePanelWrapper h5 span:hover,
+  .notesPanelWrapper h5 span:hover,
   .scripturePanelWrapper h5 span:hover
   {
     color: #fff;
@@ -298,6 +302,7 @@
 
 
   .peoplePlacePanelWrapper h5 span,
+  .notesPanelWrapper h5 span,
   .scripturePanelWrapper h5 span {
     float: right;
     position: relative;
@@ -309,6 +314,7 @@
   }
   
   .peoplePlacePanelWrapper h5 span:hover,
+  .notesPanelWrapper h5 span:hover,
   .scripturePanelWrapper h5 span:hover {
     color: black;
   }
@@ -401,6 +407,34 @@
     background-color: #00000088;
     outline: 2px solid #000;
   }
+
+  .noteItem
+  {
+    display: flex;
+    background-color: #EEE;
+    position: relative;
+    padding:1ex
+  }
+
+  .noteItem .noteSource
+  {
+    flex-shrink: 0;
+  }
+  .noteItem .noteSource img
+  {
+    max-width: 2rem;
+  }
+  .noteItem .noteText{
+    display: flex;
+    align-items: center;
+    line-height: 100%;
+    margin-left: 1ex;
+  } 
+  
+  .noteItem .noteText em.focusQuote{
+    color: #999;
+  }
+
   
   /* .image-overlay {
     position: fixed;

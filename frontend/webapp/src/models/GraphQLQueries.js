@@ -146,6 +146,11 @@ const queries = {
                           type
                           significant
                         }
+                        notes {
+                          id
+                          title
+                          text
+                        }
                       }
                     }
                     connection {
