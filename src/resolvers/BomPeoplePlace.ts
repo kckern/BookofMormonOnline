@@ -291,3 +291,24 @@ const places = await Models.BomPlaces.findAll({
 });
 return places;
 }
+
+
+export const loadNotesFromTextGuid = async (guid: string, lang) => {
+  //get from commentary with is_note = 1
+  return (await Models.BomXtrasCommentary.findAll({
+    where: {
+      is_note: 1,
+      location_guid: guid
+    }
+  })||[]).map((item: any) => {
+    return {
+      id: item.getDataValue('id'),
+      title: item.getDataValue('title'),
+      text: item.getDataValue('text'),
+    };
+  });
+
+
+
+
+}

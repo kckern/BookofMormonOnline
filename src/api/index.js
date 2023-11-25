@@ -23,7 +23,10 @@ const webhook = async (req, res) => {
     const messageId = parent_message_id || message_id;
     const channelUrl = channel?.channel_url;
 
-    if(!studyBuddyIsMember) return res.json({success:true, message: "StudyBuddy webhook received.  Not a member of studybuddy"});
+    if(!studyBuddyIsMember) {
+        logger.info(`StudyBuddy webhook received.  Not a member of studybuddy. Channel: ${channelUrl}. Bot: ${studyBuddyIsSender}. Message: ${messageId}`);
+        return res.json({success:true, message: "StudyBuddy webhook received.  Not a member of studybuddy"});
+    }
     if((studyBuddyIsMember && !studyBuddyIsSender))
     {
         res.json({success:true, message: "StudyBuddy webhook received.  Processing..."});
