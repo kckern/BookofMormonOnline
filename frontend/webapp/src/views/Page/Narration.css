@@ -329,6 +329,10 @@
 
   }
 
+  .notesPanel{
+    border: 1px solid #CCC;
+  }
+
   .peoplePlacePanel .item
   {
     max-width: 33%;

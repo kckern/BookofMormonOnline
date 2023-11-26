@@ -745,7 +745,7 @@ function SingleNoteItem({item}) {
   <div className="noteSource"><img src={`${assetUrl}/source/cover/${item.id.substr(5,3)}`} alt="Note Source" /></div>
     <div className="noteText">
       <span>
-        {item.title && <><em className="focusQuote">{item.title}</em>—</>}
+        {item.title && <><em className="focusQuote">{item.title}</em> • </>}
         {Parser(detectReferences(item.text,scriptureLinks),parserOptions)}
       </span>
     </div>

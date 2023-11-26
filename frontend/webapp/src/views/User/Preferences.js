@@ -103,7 +103,7 @@ export default function User({ appController }) {
         </CardBody>
     </Card></Label>)
 
-    let faxs = Object.values(appController.preLoad.fax).map((fax,i) => <Label key={i} onClick={(e) => toggleFaxVersion(e, fax.slug)}><Card className={"faxCard"} >
+    let faxs = Object.values((appController?.preLoad?.fax || [])).map((fax,i) => <Label key={i} onClick={(e) => toggleFaxVersion(e, fax.slug)}><Card className={"faxCard"} >
         <CardHeader className={"faxCardHead"}>
             <input
                 type="checkbox"

@@ -413,6 +413,7 @@ function TextItemCounters({narrationController})
   }
 
   const tooltipId = `text-item-tooltip-${guid}`
+  const noteCount = notes?.length || 0;
   return <>
   <ReactTooltip
       effect="solid"
@@ -437,7 +438,7 @@ function TextItemCounters({narrationController})
     data-for={tooltipId}><img src={studySVG}/>{refCount}</span>}
 
     {!!notes?.length && <span className="item_counter notes"       onClick={setNotes}
-    data-tip={label(`x_notes`,notes?.length)} data-for={tooltipId}><img src={notesSVG}/>{notes?.length}</span>}
+    data-tip={label(noteCount===1 ? `x_note` : `x_notes` ,noteCount)} data-for={tooltipId}><img src={notesSVG}/>{notes?.length}</span>}
 
   </div></>
 }
