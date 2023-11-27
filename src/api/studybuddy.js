@@ -709,7 +709,7 @@ const loadCommentary = async (verse_ids) => {
       WHERE s.source_lang = "en" AND c.verse_id IN (?)
     `;
 
-    logger.info(`SQL: ${sql}`);
+    if(!verse_ids?.length) return [];
 
     const params = [verse_ids]; 
 
@@ -723,6 +723,8 @@ const loadCommentary = async (verse_ids) => {
             ({name, book, title, year, text: stripHTMLTags(text)}));
     } catch (error) {
         logger.error(`Error: ${error}`);
+        logger.error(`SQL: ${sql}`);
+        logger.error({verse_ids});
         return [];
     }
 }
