@@ -849,11 +849,11 @@ function ScripturePanel({ narrationController }) {
         </div>
       })}
     </div>
-    <ScripturePanelSingle narrationController={narrationController} scriptureData={textRefs[activeRef]}/>
+    <ScripturePanelSingle  scriptureData={textRefs[activeRef]}/>
   </div>
 }
 
-function ScripturePanelSingle({ scriptureData }) {
+export function ScripturePanelSingle({ scriptureData }) {
 
   const {ref} = scriptureData || {ref:null,verse_id:null};
   const [passages, setPassages] = useState([]);
