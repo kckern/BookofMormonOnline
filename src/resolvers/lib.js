@@ -278,9 +278,10 @@ async function processPassages(verse_ids, verse_data,lang)
     const versions = ['MEV', 'SEBOM', 'REDC']; //todo: check language
 
     const firstVerse = verse_ids[0];
+    let placeholders = new Array(verse_ids.length).fill('?').join(',');
     const headingSQL = `(SELECT verse_id,text FROM \`scripture.guide\`.scripture_headings WHERE version IN (?, ?, ?) AND verse_id <= ? AND type = 'heading' ORDER BY verse_id DESC LIMIT 1)
-    UNION (SELECT verse_id,text FROM \`scripture.guide\`.scripture_headings WHERE version IN (?, ?, ?) AND verse_id IN (?) AND type = 'heading' ORDER BY verse_id )`;   
-    const params = [...versions, firstVerse, ...versions, verse_ids.join(",")];
+    UNION (SELECT verse_id,text FROM \`scripture.guide\`.scripture_headings WHERE version IN (?, ?, ?) AND verse_id IN (${placeholders}) AND type = 'heading' ORDER BY verse_id )`;   
+    const params = [...versions, firstVerse, ...versions, ...verse_ids];    
     let headingData = await queryDB(headingSQL, params);
     headingData = headingData.filter((v,i,a)=>a.findIndex(t=>(t.verse_id === v.verse_id))===i);
     return headingData.sort((a, b) => a.verse_id - b.verse_id)
