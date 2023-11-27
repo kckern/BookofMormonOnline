@@ -702,25 +702,30 @@ const loadSectionContext = async (text_guid,lang) => {
 };
 
 const loadCommentary = async (verse_ids) => {
-
-    // Use a simple IN clause for verse_id
     const sql = `
       SELECT s.source_name name, s.source_title book, c.title title, s.source_year year, c.text
       FROM bom_xtras_commentary c
       JOIN bom_xtras_source s ON c.source = s.source_id
       WHERE s.source_lang = "en" AND c.verse_id IN (?)
     `;
-  
-    // Prepare the parameters for the IN clause.
+
+    logger.info(`SQL: ${sql}`);
+
     const params = [verse_ids]; 
-  
-    // Execute the query. Note that we are passing an array to queryDB, which should result in a parameterized query being used.
-    const commentary = await queryDB([sql, params]);
-  
-    // Process the results by removing any HTML tags from the text.
-    return commentary.map(({name, book, title, year, text}) => 
-      ({name, book, title, year, text: stripHTMLTags(text)}));
-  }
+
+    try {
+        const commentary = await Promise.race([
+            queryDB([sql, params]),
+            new Promise((_, reject) => setTimeout(reject, 10000))
+        ]);
+
+        return commentary.map(({name, book, title, year, text}) => 
+            ({name, book, title, year, text: stripHTMLTags(text)}));
+    } catch (error) {
+        logger.error(`Error: ${error}`);
+        return [];
+    }
+}
 
   
 const loadCrossReferences = async (verse_ids, lang) => {
