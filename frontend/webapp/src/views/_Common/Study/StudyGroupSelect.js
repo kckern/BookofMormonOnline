@@ -608,7 +608,9 @@ export function generateGroupHash(group, callback) {
 
 const groupCoverUrl = (group_name) => {
     const encodedName = encodeURI(group_name);
-    const newURL = `https://api.dicebear.com/7.x/initials/svg?seed=${encodedName}&rotate=340&fontFamily=Trebuchet%20MS&fontWeight=800&backgroundColor=323b4d,fbc658,dddddd,666666`;
+    const colors = ["323b4d", "fbc658", "dddddd", "666666"];
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    const newURL = `https://api.dicebear.com/7.x/initials/svg?seed=${encodedName}&rotate=340&fontFamily=Trebuchet%20MS&fontWeight=800&backgroundColor=${color}`;
     return newURL;
 }
 
