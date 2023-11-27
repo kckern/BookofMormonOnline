@@ -36,7 +36,7 @@
 
 .card .scripture .content {
 
-    padding: 1em 0 0 1em;
+    padding: 1em!important;
 }
 .card .scripture .content > p,
 .card .scripture .content > blockquote {
@@ -45,6 +45,7 @@
     text-align: justify;
     line-height: 1.2rem;
     color: #444;
+
 }
 
 .card .scripture .content > p:last-child
