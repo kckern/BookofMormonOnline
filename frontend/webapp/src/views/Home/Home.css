@@ -1366,7 +1366,7 @@ span.groupName,
 .scripturePanelSingle .text
 {
     background-color: white;
-    margin: 0 1em 0 1em;
+    margin: 0 1em 1em 1em;
     border-radius: 1rem;
     padding: 0.8rem;
     font-family: 'Scripture', serif;
@@ -1374,6 +1374,16 @@ span.groupName,
     text-align: justify;
     line-height: 1rem;
     color: #444;
+    margin-left: 1em;
+}
+.scripturePanelSingle .text:last-child{
+    margin-bottom: 0;
+}
+.scripturePanelSingle .text p{
+    margin-bottom: 0;
+}
+.scripturePanelSingle .text p.open{
+    max-height: none;
 }
 .scripturePanelSingle .loadBar
 {
@@ -1383,6 +1393,13 @@ span.groupName,
     position: relative!important;
 }
 
+.text h6{
+    font-weight: normal;
+    text-transform: none;
+    font-family: "Roboto Condensed", "Arial Narrow", sans-serif;
+    font-weight: bold ;
+    margin-bottom: 0.2ex;
+  }
 .buttonRow.loadComments
 {
     display: flex;
