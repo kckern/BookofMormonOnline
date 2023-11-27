@@ -8,7 +8,8 @@ import "moment/locale/ko";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import { getCache, setCache } from "./Cache";
 import {Spinner} from "../views/_Common/Loader";
-const { detectReferences, setLang} = require('scripture-guide');
+import { ScripturePanelSingle } from "../views/Page/Narration";
+const { detectReferences, setLang, lookupReference, generateReference} = require('scripture-guide');
 
 
 
@@ -720,36 +721,18 @@ export function ParseMessage(string) {
 
 function ScripturesContainer({ scriptures, setActiveRef, activeRef }) {
   if(!scriptures?.length) return null;
+  //normalize references
+  scriptures = scriptures.map(scripture => lookupReference(scripture).verse_ids).map(verse_ids => generateReference(verse_ids));
+  scriptures = [...new Set(scriptures)];
   return <div className="scriptureContainerWrapper">
     {(scriptures.length > 1) && <div className="scripturePanel">
       {scriptures.map((scripture, i) => 
       <div key={i} className={"scriptureItem" + (activeRef === i ? " active" : "")} onClick={() => setActiveRef(i)}>{scripture}</div>)}
     </div>}
-    <ScriptureContainer scripture={scriptures[activeRef]}/>
+    <ScripturePanelSingle scriptureData={{ref:scriptures[activeRef]}}/>
   </div>
 }
 
-function ScriptureContainer({ scripture }) {
-  const [text, setText] = useState(null);
-  const scripture_reference = scripture;
-
-  useEffect(() => {
-    if(!scripture_reference) return;
-    let timer = setTimeout(() => {
-      setText(null);
-    }, 200);
-    BoMOnlineAPI({ scripture:scripture_reference }).then(({ scripture }) => {
-      const newContent = scripture[scripture_reference]?.verses?.map(i => i.text).join(" ") || label("scripture_not_found");
-      clearTimeout(timer);
-      setText(newContent);
-    });
-  }, [scripture_reference])
-  if(!scripture) return null;
-  return <div className="scripturePanelSingle">
-        <h5>{scripture_reference}</h5>
-      {text ? <div className="text">{text}</div> : <Spinner/>}
-    </div>
-}
 
 function LinkPreviewContainer({ urls }) {
   if (!urls) return null;
