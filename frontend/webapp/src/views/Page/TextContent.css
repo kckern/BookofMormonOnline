@@ -47,25 +47,31 @@
     color: #444;
 }
 
-.scripture .highlight {
+.card .scripture .content > p:last-child
+{
+    margin-bottom: 0;
+}
+
+
+.scripturePanelWrapper .scripture .highlight {
     margin-top: -1em;
 }
 
-.scripture .highlight button {
+.scripturePanelWrapper .scripture .highlight button {
     background-color: #DDD;
     color: #999;
     float: right;
 }
 
 
-.scripture .content p {
+.scripturePanelWrapper .scripture .content p {
     padding-right: 1em;
 }
 
-.scripture .content p a {
+.scripturePanelWrapper .scripture .content p a {
     
 }
-.scripture .content blockquote p {
+.scripturePanelWrapper .scripture .content blockquote p {
 
     text-align: left;
 }
@@ -377,12 +383,12 @@ span.indent{
 
 }
 
-.scripture
+.scripturePanelWrapper .scripture
 {
     position: relative;
 }
 
-.scripture .comments
+.scripturePanelWrapper .scripture .comments
 {
     position: absolute;
     top:-0em;
@@ -400,14 +406,14 @@ span.indent{
     transition: opacity 500ms;
      
 }
-.scripture.open .comments
+.scripturePanelWrapper .scripture.open .comments
 {
     opacity: 0;
     transition: opacity 500ms;
     
 }
 
-.scripturePanelSingle 
+.scripturePanelWrapper .scripturePanelSingle 
 {
     padding-bottom: 1rem;
 }
@@ -420,7 +426,7 @@ span.indent{
     margin-bottom: 0.2ex;
   }
 
-.scripturePanelSingle .text
+.scripturePanelWrapper .scripturePanelSingle .text
 {
     background-color: white;
     margin: 0 1em 1em 1em;
@@ -432,10 +438,10 @@ span.indent{
     line-height: 1rem;
     color: #444;
 }
-.scripturePanelSingle .text:last-child{
+.scripturePanelWrapper .scripturePanelSingle .text:last-child{
     margin-bottom: 0;
 }
-.scripturePanelSingle .text p{
+.scripturePanelWrapper .scripturePanelSingle .text p{
     margin-bottom: 0;
     /* max height: 8 lines */
     max-height: 8rem;
@@ -444,10 +450,10 @@ span.indent{
     margin-left: 1em;
 
 }
-.scripturePanelSingle .text p.open{
+.scripturePanelWrapper .scripturePanelSingle .text p.open{
     max-height: none;
 }
-.scripturePanelSingle .loadBar
+.scripturePanelWrapper .scripturePanelSingle .loadBar
 {
     max-height: 5rem;
     max-width: 3rem;
