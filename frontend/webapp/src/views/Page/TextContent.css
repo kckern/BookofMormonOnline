@@ -79,119 +79,6 @@
     padding-right: 1em;
 }
 
-.card .scripture .reference {
-    font-weight: bold;
-    background-color: #999;
-    padding: 0 0 0 .5em;
-    overflow: hidden;
-    height: 1.6rem;
-    font-family: 'Roboto Condensed', 'Arial Narrow', 'sans-serif';
-    font-size: .9rem;
-    line-height: 1.6rem;
-    display: flex;
-    padding-right: 1ex;
-}
-
-.card .scripture .reference a.refheader
-{
-    flex-grow: 1;
-    text-align: left;
-}
-
-.card .scripture .reference .text_item_counter{
-    opacity: 0;
-    transition: ease-in-out 0.3s opacity;
-    pointer-events: none;
-}
-
-.card .scripture .reference.open .text_item_counter{
-    opacity: 1;
-    transition: ease-in-out 0.3s opacity;
-    pointer-events: all;
-}
-.card .scripture .reference .item_counter img
-{
-    height: 0.8rem;
-    line-height: 1rem;
-    margin-right: .3ex;
-    opacity: 0.8;
-    margin-bottom: 0.2rem;
-}
-
-
-.card .scripture .reference .text_item_counter .item_counter{
-    background-color: #00000022;
-    border-radius: 1ex;
-    padding: 0 0.5ex;
-    margin-left: 1ex;
-    cursor: pointer;
-    color: #FFF;
-}
-
-.card .scripture .reference .text_item_counter .item_counter:hover{
-    background-color: #00000033;
-}
-
-.card .scripture .reference .triangle
-{
-    display: inline-block;
-    font-weight: 800;
-    margin-left: 1ex;
-    margin-right: 1ex;
-    transition: transform 150ms,top 150ms;
-    opacity: 0.5;
-    position: relative;
-    top: 0px;
-
-
-    -webkit-transform: rotate(-90deg);
-    -moz-transform: rotate(-90deg);
-    -o-transform: rotate(-90deg);
-    -ms-transform: rotate(-90deg);
-    transform: rotate(-90deg);
-
-
-    margin-right: 1ex;
-
-}
-
-.card .scripture .reference .square
-{
-    position: relative;
-    top:0px;
-    margin-left: .6ex;
-    margin-right: .6ex;
-    font-size: 1.5em;
-    display: inline-block;
-    line-height: 0rem;
-}
-
-.card .scripture .reference .open > .triangle
-{
-    transition: transform 150ms, top 150ms;
-    -webkit-transform: rotate(0deg);
-    -moz-transform: rotate(-0deg);
-    -o-transform: rotate(-0deg);
-    -ms-transform: rotate(-0deg);
-    transform: rotate(-0deg);
-
-    top: 3px;
-}
-.card .scripture .reference > .triangle img{
-    margin-right: -5ex;
-
-}
-
-.card .scripture .reference .open > .triangle img{
-    margin-top: -1ex;
-
-}
-
-.card .scripture .reference:hover .triangle
-{
-    opacity: 0.7;
-}
-
 .triangle img{
     height: 1em;
     width: 1em;
@@ -202,8 +89,7 @@
     line-height: 1em;
 }
 
-.card-collapse .card .card-header a[data-toggle="collapse"] {
-    font-size: 1.2em;
+.card-collapse .card .card-header a[data-toggle="collapse"].refheader {
     color: #FFF;
 }
 
@@ -567,4 +453,118 @@ span.indent{
     max-width: 3rem;
     top: 0 !important;
     position: relative!important;
+}
+
+
+.card .scripture .reference.card-header {
+    font-weight: bold;
+    background-color: #999;
+    padding: 0 0 0 .5em;
+    overflow: hidden;
+    height: 1.6rem;
+    font-family: 'Roboto Condensed', 'Arial Narrow', 'sans-serif';
+    font-size: .9rem;
+    line-height: 1.6rem;
+    display: flex;
+    padding-right: 1ex;
+}
+
+.card .scripture .reference.card-header a.refheader
+{
+    flex-grow: 1;
+    text-align: left;
+}
+
+.card .scripture .reference.card-header .text_item_counter{
+    opacity: 0;
+    transition: ease-in-out 0.3s opacity;
+    pointer-events: none;
+}
+
+.card .scripture .reference.card-header.open .text_item_counter{
+    opacity: 1;
+    transition: ease-in-out 0.3s opacity;
+    pointer-events: all;
+}
+.card .scripture .reference.card-header .item_counter img
+{
+    height: 0.8rem;
+    line-height: 1rem;
+    margin-right: .3ex;
+    opacity: 0.8;
+    margin-bottom: 0.2rem;
+}
+
+
+.card .scripture .reference.card-header .text_item_counter .item_counter{
+    background-color: #00000022;
+    border-radius: 1ex;
+    padding: 0 0.5ex;
+    margin-left: 1ex;
+    cursor: pointer;
+    color: #FFF;
+}
+
+.card .scripture .reference.card-header .text_item_counter .item_counter:hover{
+    background-color: #00000033;
+}
+
+.card .scripture .reference.card-header .triangle
+{
+    display: inline-block;
+    font-weight: 800;
+    margin-left: 1ex;
+    margin-right: 1ex;
+    transition: transform 150ms,top 150ms;
+    opacity: 0.5;
+    position: relative;
+    top: 0px;
+
+
+    -webkit-transform: rotate(-90deg);
+    -moz-transform: rotate(-90deg);
+    -o-transform: rotate(-90deg);
+    -ms-transform: rotate(-90deg);
+    transform: rotate(-90deg);
+
+
+    margin-right: 1ex;
+
+}
+
+.card .scripture .reference.card-header .square
+{
+    position: relative;
+    top:0px;
+    margin-left: .6ex;
+    margin-right: .6ex;
+    font-size: 1.5em;
+    display: inline-block;
+    line-height: 0rem;
+}
+
+.card .scripture .reference.card-header .open > .triangle
+{
+    transition: transform 150ms, top 150ms;
+    -webkit-transform: rotate(0deg);
+    -moz-transform: rotate(-0deg);
+    -o-transform: rotate(-0deg);
+    -ms-transform: rotate(-0deg);
+    transform: rotate(-0deg);
+
+    top: 3px;
+}
+.card .scripture .reference.card-header > .triangle img{
+    margin-right: -5ex;
+
+}
+
+.card .scripture .reference.card-header .open > .triangle img{
+    margin-top: -1ex;
+
+}
+
+.card .scripture .reference.card-header:hover .triangle
+{
+    opacity: 0.7;
 }
