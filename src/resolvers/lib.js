@@ -282,6 +282,7 @@ async function processPassages(verse_ids, verse_data,lang)
     UNION (SELECT verse_id,text FROM \`scripture.guide\`.scripture_headings WHERE version IN (?, ?, ?) AND verse_id IN (?) ORDER BY verse_id )`;
     const params = [...versions, firstVerse, ...versions, verse_ids.join(",")];
     let headingData = await queryDB(headingSQL, params);
+    headingData = headingData.filter((v,i,a)=>a.findIndex(t=>(t.verse_id === v.verse_id))===i);
     return headingData.sort((a, b) => a.verse_id - b.verse_id)
     .map((item,i)=>{
         const startVerse = item.verse_id;
