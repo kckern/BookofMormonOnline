@@ -289,14 +289,15 @@ async function processPassages(verse_ids, verse_data,lang)
         const verses = verse_data.filter(v=>v.verse_id >= startVerse && v.verse_id <= endVerse);
         const passage_verse_ids = verses.map(v=>v.verse_id);
         const reference = generateReference(passage_verse_ids); //todo: check language
+        const heading = item.text.replace(/｢\d+｣/g,"").trim();
         return {
             reference,
+            heading,
             verses:verses.map(v=>({
                 verse:v.verse,
                 verse_id:v.verse_id,
                 text:v.text
             })),
-            heading:item.text
         }
     });
 

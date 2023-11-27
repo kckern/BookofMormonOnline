@@ -177,11 +177,13 @@ const queries = {
       query: q("scripture", "ref", scripture_reference) +
         `{
                 ref
-                verses {
-                    book
-                    chapter
-                    verse
-                    text
+                passages{
+                    reference
+                    heading
+                    verses{
+                        verse
+                        text
+                    }
                 }
             }`,
     }

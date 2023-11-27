@@ -439,7 +439,14 @@
     color: #999;
   }
 
-  
+  .text h6{
+    font-weight: normal;
+    text-transform: none;
+    font-family: "Roboto Condensed", "Arial Narrow", sans-serif;
+    font-weight: bold ;
+    margin-bottom: 0.2ex;
+  }
+
   /* .image-overlay {
     position: fixed;
     top: 0;

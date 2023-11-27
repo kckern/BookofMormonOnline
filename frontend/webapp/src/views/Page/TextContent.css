@@ -526,10 +526,18 @@ span.indent{
     padding-bottom: 1rem;
 }
 
+.text h6{
+    font-weight: normal;
+    text-transform: none;
+    font-family: "Roboto Condensed", "Arial Narrow", sans-serif;
+    font-weight: bold ;
+    margin-bottom: 0.2ex;
+  }
+
 .scripturePanelSingle .text
 {
     background-color: white;
-    margin: 0 1em 0 1em;
+    margin: 0 1em 1em 1em;
     border-radius: 1rem;
     padding: 0.8rem;
     font-family: 'Scripture', serif;
@@ -537,6 +545,21 @@ span.indent{
     text-align: justify;
     line-height: 1rem;
     color: #444;
+}
+.scripturePanelSingle .text:last-child{
+    margin-bottom: 0;
+}
+.scripturePanelSingle .text p{
+    margin-bottom: 0;
+    /* max height: 8 lines */
+    max-height: 8rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-left: 1em;
+
+}
+.scripturePanelSingle .text p.open{
+    max-height: none;
 }
 .scripturePanelSingle .loadBar
 {
