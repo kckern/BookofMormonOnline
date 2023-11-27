@@ -36,10 +36,18 @@ type Label {
 }
 type ScriptureResults {
   ref: String
+  passages: [Passage]
+  verses: [Scripture]
+}
+
+type Passage {
+  reference: String
+  heading: String
   verses: [Scripture]
 }
 
 type Scripture {
+  verse_id: Int
   book: String
   chapter: Int
   verse: Int

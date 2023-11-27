@@ -2,9 +2,11 @@ import { sendbird } from '../library/sendbird';
 import { models as Models } from '../config/database';
 import dotenv from 'dotenv';
 const {lookup,generateReference,setLang} = require("scripture-guide");
+const { processPassages} = require('./lib')
 dotenv.config();
 const logger = require("../library/utils/logger.cjs");
 const log = (msg:any,obj?:any) => obj ? logger.info(`utils ${msg} ${JSON.stringify(obj)}`) : logger.info(`utils ${msg}`);
+
 
 import {
   getSlug,
@@ -139,10 +141,10 @@ export default {
         let { verse_ids, ref } = args.verse_ids ?   { verse_ids: args.verse_ids, ref: generateReference(args.verse_ids) }  : lookup(reference);
         if(!verse_ids.length && backupVerse_ids.length) verse_ids = backupVerse_ids;
         const config = { raw:true, where: {  verse_id:verse_ids  } };
-        const verses = await Models.LdsScripturesVerses.findAll(config);
-        if(verses.length===0) {
+        const versedata = await Models.LdsScripturesVerses.findAll(config);
+        if(versedata.length===0) {
           log("No verses found",{reference,lang,verse_ids})
-          return {ref,verses:[]}
+          return {ref,passages:[],verses:[]}
         }
 
       if(lang && lang!=='en') {
@@ -152,23 +154,36 @@ export default {
         });
 
         //replace the text with the translation
-        verses.forEach((verse:any)=>{
+        versedata.forEach((verse:any)=>{
           let translation:any = translations.find((t:any)=>t.verse_id===verse.verse_id);
           if(translation) verse.verse_scripture = translation.text;
         });
       }
+
   
-      return {ref,verses:verses.map((verse:any)=>{
+      const verses = versedata.map((verse:any)=>{
         return {
+          verse_id:verse.verse_id,
           book:verse.book_id,
           chapter:verse.chapter,
           verse:verse.verse,
           text:verse.verse_scripture
         }
-      })}
+      });
+
+      let groups = verse_ids.reduce((acc:any, verse_id:any) => {
+        let lastGroup = acc[acc.length-1];
+        if(!lastGroup || lastGroup[lastGroup.length-1] !== verse_id-1) acc.push([verse_id]);
+        else lastGroup.push(verse_id);
+        return acc;
+      }, []);
+
+      const resolvedPassages = (await Promise.all(groups.map(passage_verse_ids => processPassages(passage_verse_ids, verses, lang)).flat())).flat();
+      return {ref, passages: resolvedPassages, verses}
   
     }
     catch(e){
+      console.log("ERROR",e)
       return {ref:(reference||JSON.stringify(args.verse_ids)) + " not found",verses:[]}
     }
   

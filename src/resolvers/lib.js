@@ -1,6 +1,7 @@
 const { getUserForLog, Op, includeModel } = require("./_common")
+import { queryDB } from '../library/db';
 import { models as Models, sequelize, SQLQueryTypes } from '../config/database';
-import { lookup } from 'scripture-guide';
+import { lookup, generateReference } from 'scripture-guide';
 
 
 const getBlocksToQueue = async (token,items) => {
@@ -272,6 +273,34 @@ async function organizeRelatedScriptures(scriptureDataArray)
     console.log(`Found ${scriptureDataArray.length} related scriptures.`);
     return scriptureDataArray;
 }
+async function processPassages(verse_ids, verse_data,lang)
+{
+    const versions = ['MEV', 'SEBOM', 'REDC']; //todo: check language
+
+    const firstVerse = verse_ids[0];
+    const headingSQL = `(SELECT verse_id,text FROM \`scripture.guide\`.scripture_headings WHERE version IN (?, ?, ?) AND verse_id <= ? ORDER BY verse_id DESC LIMIT 1)
+    UNION (SELECT verse_id,text FROM \`scripture.guide\`.scripture_headings WHERE version IN (?, ?, ?) AND verse_id IN (?) ORDER BY verse_id )`;
+    const params = [...versions, firstVerse, ...versions, verse_ids.join(",")];
+    let headingData = await queryDB(headingSQL, params);
+    return headingData.sort((a, b) => a.verse_id - b.verse_id)
+    .map((item,i)=>{
+        const startVerse = item.verse_id;
+        const endVerse = headingData[i+1]?.verse_id || verse_ids[verse_ids.length-1];
+        const verses = verse_data.filter(v=>v.verse_id >= startVerse && v.verse_id <= endVerse);
+        const passage_verse_ids = verses.map(v=>v.verse_id);
+        const reference = generateReference(passage_verse_ids); //todo: check language
+        return {
+            reference,
+            verses:verses.map(v=>({
+                verse:v.verse,
+                verse_id:v.verse_id,
+                text:v.text
+            })),
+            heading:item.text
+        }
+    });
+
+}
 
 const pickOneRamdomly = (arr) => {
 
@@ -354,4 +383,4 @@ function genUserAvatar(user_id) {
 
 
 //export
-module.exports = {getBlocksToQueue,getFirstTextBlockGuidFromSlug,organizeRelatedScriptures,genUserAvatar}
+module.exports = {getBlocksToQueue,getFirstTextBlockGuidFromSlug,organizeRelatedScriptures,genUserAvatar, processPassages}
