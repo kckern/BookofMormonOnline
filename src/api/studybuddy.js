@@ -154,6 +154,8 @@ const postProcessResponse = (string,ref)=>{
     string = string.replace(/^\[.*?!\]:*/g,"").trim();
     string = string.replace(/\[Text Highlights\].*/g,"").trim();
     string = string.replace(/^[^\S+]*:\s*/g,"").trim();
+    string = string.replace(/\s*\([^\)]+\)\s*$/g,"").trim();
+
     let sentences = string.split(/([.?!]["”“]*)/);
     // join the sentences with the delimiters again
     sentences = sentences.reduce((acc, val, i) => {
