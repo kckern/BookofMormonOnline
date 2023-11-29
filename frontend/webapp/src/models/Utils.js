@@ -665,6 +665,7 @@ export function formatText(message, setPanel, appController, isSection) {
 
 
 export function breakCache({ currentTarget }) {
+  return null;
   if (!currentTarget) return null;
   getFwdUrl(currentTarget.src).then(url => currentTarget.src = url);
 }

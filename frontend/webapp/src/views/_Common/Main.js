@@ -14,6 +14,7 @@ import BoMOnlineAPI,{ApiBaseUrl} from "src/models/BoMOnlineAPI";
 // STYLE
 import "./Main.css";
 import "./ToolTip.css";
+import "src/views/_Common/ScripturePanel.css";
 import Loader from "src/views/_Common/Loader";
 import { appControllerReducer, appInit } from "src/models/appController";
 import nowifi from "./svg/no-wifi.svg";
