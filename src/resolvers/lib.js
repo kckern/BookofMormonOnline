@@ -275,10 +275,11 @@ async function organizeRelatedScriptures(scriptureDataArray)
 }
 async function processPassages(verse_ids, verse_data,lang)
 {
+    lang = lang || "en";
     const firstVerse = verse_ids[0];
     let placeholders = new Array(verse_ids.length).fill('?').join(',');
-    const headingSQL = `(SELECT verse_id, text FROM lds_scriptures_headings WHERE verse_id <= ? AND lang = 'en' ORDER BY verse_id DESC LIMIT 1)
-    UNION (SELECT verse_id, text FROM lds_scriptures_headings WHERE verse_id IN (${placeholders}) AND lang = 'en' ORDER BY verse_id)`;
+    const headingSQL = `(SELECT verse_id, text FROM lds_scriptures_headings WHERE verse_id <= ? AND lang = '${lang}' ORDER BY verse_id DESC LIMIT 1)
+    UNION (SELECT verse_id, text FROM lds_scriptures_headings WHERE verse_id IN (${placeholders}) AND lang = '${lang}' ORDER BY verse_id)`;
     const params = [firstVerse,  ...verse_ids];    
     let headingData = await queryDB(headingSQL, params);
     headingData = headingData.filter((v,i,a)=>a.findIndex(t=>(t.verse_id === v.verse_id))===i);

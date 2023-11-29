@@ -874,8 +874,9 @@ export function ScripturePanelSingle({ scriptureData }) {
 
 
   const scripturePassages = passages.map(({reference,heading,verses})=>{
+    const h6Content = (passages.length > 1 ? `${reference}—` : '') + heading;
     return <div className="text">
-        <h6>{passages.length > 1 ? `${reference}—` : ''}{heading}</h6> 
+        {h6Content && <h6>{h6Content}</h6>}
         <p>{verses.map(v=>v.text).join(" ")}</p>
     </div>});
 
