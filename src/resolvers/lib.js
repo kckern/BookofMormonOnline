@@ -283,6 +283,7 @@ async function processPassages(verse_ids, verse_data,lang)
     const params = [firstVerse,  ...verse_ids];    
     let headingData = await queryDB(headingSQL, params);
     headingData = headingData.filter((v,i,a)=>a.findIndex(t=>(t.verse_id === v.verse_id))===i);
+    if(!headingData.length) headingData = [{verse_id:firstVerse}];
     return headingData.sort((a, b) => a.verse_id - b.verse_id)
     .map((item,i)=>{
         const startVerse = item.verse_id;
@@ -290,7 +291,7 @@ async function processPassages(verse_ids, verse_data,lang)
         const verses = verse_data.filter(v=>v.verse_id >= startVerse && v.verse_id <= endVerse);
         const passage_verse_ids = verses.map(v=>v.verse_id);
         const reference = generateReference(passage_verse_ids); //todo: check language
-        const heading = item.text.replace(/｢\d+｣/g,"").trim();
+        const heading = item.text.replace(/｢\d+｣/g,"").trim() || null;
         return {
             reference,
             heading,
