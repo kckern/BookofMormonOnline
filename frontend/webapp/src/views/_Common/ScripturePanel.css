@@ -61,7 +61,8 @@
   text-align: left;
   font-family: "Roboto Condensed", "Arial Narrow", sans-serif;
   margin-bottom: 0.5ex;
-  text-transform: none;;
+  text-transform: none;
+  flex-grow: 1;
 }
 
 .scripturePanelSingle .text
@@ -75,7 +76,12 @@
     text-align: justify;
     line-height: 1rem;
     color: #444;
+    margin-bottom: 1rem;
 }
+.scripturePanelSingle .text:last-child{
+  margin-bottom: 0;
+}
+
 .scripturePanelSingle .text p{
   margin-left: 1em;
   margin-bottom: 0;
@@ -95,24 +101,29 @@
     padding-bottom: 1rem;
 }
 
-.scripturePanelSingle .text
+.scripturePanelSingle .buttons
 {
-    background-color: white;
-    margin: 0 1em 0 1em;
-    border-radius: 1rem;
-    padding: 0.8rem;
-    font-family: 'Scripture', serif;
-    font-size: 1rem;
-    text-align: justify;
-    line-height: 1rem;
-    color: #444;
+  display: flex;
+  justify-content: space-around;
+  font-family: "Roboto Condensed", "Arial Narrow", sans-serif;
+  gap: 1ex;
 }
-.scripturePanelSingle .loadBar
+
+.scripturePanelSingle .scriptureTextHeader
 {
-    max-height: 5rem;
-    max-width: 3rem;
-    top: 0 !important;
-    position: relative!important;
+  display: flex;
+  width: 100%;
+  align-items: center;
+}
+.scripturePanelSingle .scriptureTextHeader .btn
+{
+  margin: 0;
+  padding: 0 0.5rem;
+  height: 1rem;
+  font-size: 0.5rem;
+  margin-top: -1rem;
+  background-color: #DDD;
+  color: #666;
 }
 
 
