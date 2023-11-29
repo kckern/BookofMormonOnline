@@ -634,6 +634,8 @@ queue: async (root: any, args: any, context: any, info: any) => {
     },
     notes: async (item: any, args: any, context: any, info: any) =>{
       const lang = context.lang ? context.lang : "en";
+      //if not english, return empty array
+      if(lang !== "en") return []; //todo translate notes eventually
       return loadNotesFromTextGuid(item.getDataValue('guid'),lang);
     },
     note_count: async (item: any, args: any, context: any, info: any) =>{
