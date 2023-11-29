@@ -14,7 +14,8 @@ import {  label} from "src/models/Utils";
 import fullscreen from "src/views/Page/svg/fullscreen.png";
 import {Spinner} from "../_Common/Loader";
 import { determineLanguage } from "../../models/Utils";
-const {generateReference, detectReferences, setLang} = require('scripture-guide');
+import { Link } from "react-router-dom";
+const {generateReference, detectReferences, setLang, lookupReference} = require('scripture-guide');
 
 
 function ChronoRow ({chrono}) {
@@ -873,10 +874,27 @@ export function ScripturePanelSingle({ scriptureData }) {
 
 
 
+
   const scripturePassages = passages.map(({reference,heading,verses})=>{
-    const h6Content = (passages.length > 1 ? `${reference}—` : '') + heading;
+    const h6Content = (passages.length > 1 ? `${reference}—` : '') + heading ;
+    //between 31103 and 37706 is the BoM
+    const verse_ids = lookupReference(reference).verse_ids;
+    const [verse_id] = verse_ids;
+    const isBoM = verse_id >= 31103 && verse_id <= 37706; 
+
+  const buttons = <div className="buttons">
+  {isBoM && <Link to={`/search/${reference.replace(/\s+/g,".").toLowerCase()}`} >
+  <button className="btn btn-sm btn-outline-secondary" >Study</button>
+  </Link>
+  }
+</div>
+
+
     return <div className="text">
-        {h6Content && <h6>{h6Content}</h6>}
+      <div className="scriptureTextHeader">
+      {h6Content && <h6>{h6Content}</h6>}
+      {buttons}
+      </div>
         <p>{verses.map(v=>v.text).join(" ")}</p>
     </div>});
 
