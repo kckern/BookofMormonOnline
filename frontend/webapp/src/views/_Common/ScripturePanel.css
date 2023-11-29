@@ -61,6 +61,7 @@
   text-align: left;
   font-family: "Roboto Condensed", "Arial Narrow", sans-serif;
   margin-bottom: 0.5ex;
+  text-transform: none;;
 }
 
 .scripturePanelSingle .text
