@@ -71,7 +71,7 @@ export default function Comments({
   if (!appController?.sendbird?.sb?.currentUser) return null;
   if (!appController?.states?.studyGroup?.activeGroup) return null;
 
-  const sendMessage = (textbox, parentMessageId) => {
+  const sendMessage = async (textbox, parentMessageId) => {
     let text = textbox.value;
     textbox.classList.add("sending");
     textbox.disabled = true;
@@ -115,12 +115,11 @@ export default function Comments({
     }
     params.data = JSON.stringify(data);
     params.message = text;
-    console.log("parentMessageId", parentMessageId);
     if (parentMessageId) params.parentMessageId = parentMessageId;
     else params.customType = pageSlug;
 
     try {
-      channel.sendUserMessage(params).onSucceeded((message) => {
+      channel.sendUserMessage(params).onSucceeded(async (message) => {
         window.clicky?.goal("comment");
         textbox.value = "";
         textbox.classList.remove("sending");
@@ -143,9 +142,7 @@ export default function Comments({
           let event = new CustomEvent("addMessage");
           event.message = message;
           window.dispatchEvent(event);
-          console.log("PageController", pageController);
           pageController.functions.addToPageComments(message);
-          console.log("PageController", pageController);
           if (appController.states.popUp.activeId === "" + linkData.com)
             appController.functions.markPopUpComments(true);
         }
@@ -504,6 +501,7 @@ function MessageList({
   isQuote,
 }) {
   if (!parentMessage) return null;
+
   return (
     <>
       <SingleComment
@@ -517,14 +515,16 @@ function MessageList({
         replyToMessage={replyToMessage}
         isQuote={isQuote}
       />
-      <ThreadedMessages
-        parentMessage={parentMessage}
-        pageController={pageController}
-        threadHash={threadHash}
-        appController={appController}
-        replyToMessage={replyToMessage}
-        setCommentHighlights={setCommentHighlights}
-      />
+      <>
+        <ThreadedMessages
+          parentMessage={parentMessage}
+          pageController={pageController}
+          threadHash={threadHash}
+          appController={appController}
+          replyToMessage={replyToMessage}
+          setCommentHighlights={setCommentHighlights}
+        />
+      </>
     </>
   );
 }
@@ -540,14 +540,17 @@ function ThreadedMessages({
   const [expanded, expand] = useState(false);
   const [needsToFetch, setNeedsToFetch] = useState(true);
   const [threadedMessages, setThreadMessages] = useState([]);
-  const [listenerIsSet, setListener] = useState(false);
 
   //Listener Callbacks
-
   const addMessageToThread = (e) => {
     !expanded && expand(true);
     if (threadedMessages.find((x) => x.messageId === e.message.messageId))
       return false;
+    if (!parentMessage.threadInfo) {
+      appController.sendbird.loadThreadedMessages(parentMessage).then((r) => {
+        pageController.functions.addToPageComments(r.parentMessage);
+      });
+    }
     setThreadMessages((messages) => [...messages, e.message]);
   };
   const updateMessageInThread = (e) => {
@@ -561,32 +564,14 @@ function ThreadedMessages({
   };
   const deleteMessageFromThread = (e) => {
     !expanded && expand(true);
-    setThreadMessages((messages) => {
-      //  debugger;
-      return messages;
-      // return messages.filter((x) => x.messageId !== e.message.messageId);
+    appController.sendbird.loadThreadedMessages(parentMessage).then((r) => {
+      pageController.functions.addToPageComments(r.parentMessage);
+      setThreadMessages(r.threadedMessages);
     });
   };
 
-  if (!listenerIsSet) {
-    setListener(true);
-    //REMOVE
-    window.removeEventListener(
-      "addMessageToThread" + parentMessage.messageId,
-      addMessageToThread,
-      false,
-    );
-    window.removeEventListener(
-      "updateMessageInThread" + parentMessage.messageId,
-      updateMessageInThread,
-      false,
-    );
-    window.removeEventListener(
-      "deleteMessageFromThread" + parentMessage.messageId,
-      deleteMessageFromThread,
-      false,
-    );
-    //ADD
+  useEffect(() => {
+    if (parentMessage.messageId === undefined) return false;
     window.addEventListener(
       "addMessageToThread" + parentMessage.messageId,
       addMessageToThread,
@@ -602,7 +587,24 @@ function ThreadedMessages({
       deleteMessageFromThread,
       false,
     );
-  }
+    return () => {
+      window.removeEventListener(
+        "addMessageToThread" + parentMessage.messageId,
+        addMessageToThread,
+        false,
+      );
+      window.removeEventListener(
+        "updateMessageInThread" + parentMessage.messageId,
+        updateMessageInThread,
+        false,
+      );
+      window.removeEventListener(
+        "deleteMessageFromThread" + parentMessage.messageId,
+        deleteMessageFromThread,
+        false,
+      );
+    };
+  }, [parentMessage.messageId]);
 
   if (!parentMessage.threadInfo) return null;
 
@@ -627,10 +629,10 @@ function ThreadedMessages({
   if (replyCount < 3 && !expanded) expand(true);
 
   if (expanded) {
-    if (threadedMessages.length > 0)
-      return threadedMessages.map((m, index) => {
+    if (threadedMessages.length > 0) {
+      const messages = threadedMessages.map((m, index) => {
         return (
-          <div>
+          <>
             <SingleComment
               key={m.messageId}
               message={m}
@@ -641,9 +643,12 @@ function ThreadedMessages({
               setCommentHighlights={setCommentHighlights}
               appController={appController}
             />
-          </div>
+          </>
         );
       });
+      return messages;
+    }
+
     if (needsToFetch) {
       setNeedsToFetch(false);
       appController.sendbird.loadThreadedMessages(parentMessage).then((r) => {
@@ -746,6 +751,7 @@ function SingleComment({
     setCommentHighlights([]);
   };
 
+  if (message.length === 0) return false;
   const { isBot } = message?.sender?.metaData;
 
   return (
@@ -969,7 +975,7 @@ function MessageFooter({
 
   const deleteMessage = async (e) => {
     window.removeEventListener("deleteMessage", deleteMessage, false);
-    if (!e.isDelete) return true; // remove listiner if message model is cancled
+    if (!e.isDelete) return true; // remove listener if message model is canceled
     try {
       await appController.states.studyGroup.activeGroup.deleteMessage(message);
       e.hideDeleteMessageAlert();
@@ -980,7 +986,7 @@ function MessageFooter({
         event.message = message;
         window.dispatchEvent(event);
       } else {
-        if (appController.activePageController) return false;
+        if (appController.activePageController === null) return false;
         appController.activePageController.functions.deleteToPageComments(
           message,
         );
