@@ -64,6 +64,7 @@ export default class SendbirdController {
     groupChannelHandler.onReactionUpdated = appHandlers.onReactionUpdated;
     groupChannelHandler.onUserJoined = appHandlers.onUserJoined;
     groupChannelHandler.onUserLeft = appHandlers.onUserLeft;
+    groupChannelHandler.onThreadInfoUpdated = appHandlers.onThreadInfoUpdated;
 
     let key = uuid4();
     this.sb.groupChannel.addGroupChannelHandler(key, groupChannelHandler);
@@ -546,6 +547,7 @@ export default class SendbirdController {
 function AppHandlers(appController) {
   return {
     onMessageReceived: (channel, message) => {
+      console.log("Recieved message", message);
       if (!message) return false;
       if (message.parentMessageId !== 0) {
         let event = new CustomEvent(
@@ -580,7 +582,6 @@ function AppHandlers(appController) {
         .then((unreadCounts) =>
           appController.functions.setUnreadDMs(unreadCounts),
         );
-
       refreshChannel(channel, appController);
     },
     onMessageUpdated: (channel, message) => {
@@ -611,11 +612,12 @@ function AppHandlers(appController) {
       }
     },
     onMessageDeleted: (channel, messageId) => {
-      if (channel.url !== appController.states.studyGroup.activeGroup?.url)
-        return false;
-      const element = document.getElementById(messageId);
-      if (element) element.remove();
-      refreshChannel(channel, appController);
+      // if (channel.url !== appController.states.studyGroup.activeGroup?.url)
+      //   return false;
+      // const element = document.getElementById(messageId);
+      // console.log("Element", element);
+      // if (element) element.remove();
+      // refreshChannel(channel, appController);
     },
 
     onTypingStatusUpdated: (channel) => {
@@ -667,6 +669,17 @@ function AppHandlers(appController) {
     },
     onChannelChanged: (channel) => {
       return false;
+    },
+    onThreadInfoUpdated: async (channel, threadInfoUpdateEvent) => {
+      const params = {
+        messageId: threadInfoUpdateEvent.targetMessageId,
+        channelType: channel.channelType,
+        channelUrl: channel._url,
+      };
+      const parentMessage = await appController.sendbird.sb.message.getMessage(
+        params,
+      );
+      parentMessage.applyThreadInfoUpdateEvent(threadInfoUpdateEvent);
     },
   };
 }

@@ -631,6 +631,7 @@ export function StudyGroupThread({
     //    new sendBirds.me.MessageMetaArray('itemType', ['tablet']),
     //    new sendBirds.me.MessageMetaArray('quality', ['best', 'good'])
     //];
+		
     try {
       channel.sendUserMessage(params).onSucceeded((message) => {
         window.clicky?.goal("comment");
