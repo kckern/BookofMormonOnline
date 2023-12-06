@@ -7,7 +7,7 @@ import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
 import { toast } from "react-toastify";
 import "./Theater.css";
 import ReactAudioPlayer from "react-audio-player";
-import canAutoplay from 'can-autoplay';
+import canAutoplay from "can-autoplay";
 import ReactTooltip from "react-tooltip";
 import nowifi from "src/views/_Common/svg/no-wifi.svg";
 import logo from "src/views/_Common/svg/logo.svg";
@@ -19,8 +19,8 @@ import pause from "./svg/pause.svg";
 import play from "./svg/play.svg";
 import prev from "./svg/prev.svg";
 import crossroads from "./svg/crossroads.svg";
-import soundOn from "src/views/User/svg/sound-on.svg"
-import soundOff from "src/views/User/svg/sound-off.svg"
+import soundOn from "src/views/User/svg/sound-on.svg";
+import soundOff from "src/views/User/svg/sound-off.svg";
 import detour from "./svg/detour.svg";
 import again from "./svg/again.svg";
 import Switch from "react-bootstrap-switch";
@@ -28,10 +28,14 @@ import Switch from "react-bootstrap-switch";
 import vol_hi from "./svg/vol_hi.svg";
 import vol_lo from "./svg/vol_lo.svg";
 import fast from "./svg/fast.svg";
-import { determineLanguage, flattenDescription, playSound } from "../../models/Utils";
+import {
+  determineLanguage,
+  flattenDescription,
+  playSound,
+} from "../../models/Utils";
 import { set } from "lodash";
 
-const loadQueueItemsFromQueue = items => {
+const loadQueueItemsFromQueue = (items) => {
   const pages = {};
   for (let item of items) {
     const { slug } = item;
@@ -40,30 +44,26 @@ const loadQueueItemsFromQueue = items => {
     pages[slugEnd].push(parseInt(number));
   }
   const keys = Object.keys(pages);
-  const output = keys.map(key => {
+  const output = keys.map((key) => {
     return {
       slug: key,
-      blocks: pages[key]
+      blocks: pages[key],
     };
   });
   return output;
 };
 
 const playAudioElement = (id) => {
-
   const player = document.getElementById(id);
-  if(!player) return;
-  try{
+  if (!player) return;
+  try {
     player.play();
-  }
-  catch(e){
+  } catch (e) {
     console.log(e);
   }
-
-}
+};
 
 function TheaterWrapper({ appController }) {
-
   let match = useRouteMatch();
   let slug = match?.params?.slug || null;
 
@@ -81,12 +81,16 @@ function TheaterWrapper({ appController }) {
   const [currentDuration, setDuration] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(
-    parseFloat(localStorage.getItem("playbackRate")) || 1
+    parseFloat(localStorage.getItem("playbackRate")) || 1,
   );
-	const [playbackVolume, setPlaybackVolume] = useState(
-    parseFloat(localStorage.getItem("playbackVolume")).toFixed(1) || 1
+
+  console.log("localStorage", localStorage.getItem("playbackVolume"));
+  const [playbackVolume, setPlaybackVolume] = useState(
+    parseFloat(localStorage.getItem("playbackVolume")) || 1,
   );
-	const [isMuted,setIsMuted] = useState((localStorage.getItem("playbackMuted")==='true'?true:false) || false);
+  const [isMuted, setIsMuted] = useState(
+    (localStorage.getItem("playbackMuted") === "true" ? true : false) || false,
+  );
   const token = appController.states.user.token;
   const controls = {
     log: () => {
@@ -96,9 +100,9 @@ function TheaterWrapper({ appController }) {
             token,
             key: "block",
             val: queue[cursorIndex]?.slug,
-          }
+          },
         },
-        { useCache: false }
+        { useCache: false },
       );
     },
     pause: () => {
@@ -111,28 +115,27 @@ function TheaterWrapper({ appController }) {
       document.getElementById("theater-audio-player").pause();
       document.getElementById("theater-audio-player").currentTime = 0;
     },
-    next: (trigger, setSubCursorIndex=null) => {
-      if(!!setSubCursorIndex) return setSubCursorIndex(1);
+    next: (trigger, setSubCursorIndex = null) => {
+      if (!!setSubCursorIndex) return setSubCursorIndex(1);
       if (cursorIndex + 1 >= queue.length) return;
-      theaterController.goto(cursorIndex + 1,trigger);
+      theaterController.goto(cursorIndex + 1, trigger);
     },
-    goto:  (index,trigger) => {
+    goto: (index, trigger) => {
       if (index >= queue.length || index < 0) return;
-
 
       const isManual = trigger === "manual";
       setCursorIndexArray([index, isManual]);
     },
     previous: (trigger) => {
       if (cursorIndex - 1 < 0) return;
-      theaterController.goto(cursorIndex - 1,trigger);
+      theaterController.goto(cursorIndex - 1, trigger);
     },
-    incrementPlaybackSpeed: neg => {
-      setPlaybackRate(prevRate => {
+    incrementPlaybackSpeed: (neg) => {
+      setPlaybackRate((prevRate) => {
         let newRate = prevRate;
         const isNum = typeof prevRate === "number";
         const isNan = isNaN(prevRate);
-        if(!isNum || isNan) return;
+        if (!isNum || isNan) return;
         if (neg) {
           newRate -= 0.1;
           if (newRate < 0.75) newRate = 0.75; // limiting the minimum speed to 0.5
@@ -142,20 +145,20 @@ function TheaterWrapper({ appController }) {
         }
         //set local storage
         localStorage.setItem("playbackRate", newRate);
-        if(!document.getElementById("theater-audio-player")) return;
+        if (!document.getElementById("theater-audio-player")) return;
         document.getElementById("theater-audio-player").playbackRate = newRate;
-        return parseFloat((newRate||1).toFixed(1)); // keeping it in float with one decimal point
+        return parseFloat((newRate || 1).toFixed(1)); // keeping it in float with one decimal point
       });
     },
     cyclePlaybackSpeed: () => {
-      setPlaybackRate(prevRate => {
+      setPlaybackRate((prevRate) => {
         let newRate = prevRate + 0.25;
         if (newRate > 2.5) newRate = 0.5;
         //set local storage
         localStorage.setItem("playbackRate", newRate);
-        if(!document.getElementById("theater-audio-player")) return;
+        if (!document.getElementById("theater-audio-player")) return;
         document.getElementById("theater-audio-player").playbackRate = newRate;
-        return parseFloat((newRate||1).toFixed(1)); // keeping it in float with one decimal point
+        return parseFloat((newRate || 1).toFixed(1)); // keeping it in float with one decimal point
       });
     },
 
@@ -168,13 +171,13 @@ function TheaterWrapper({ appController }) {
       if (volume === 0.8) player.volume = 1;
       if (volume === 1) player.volume = 0.2;
     },
-		toggleMusic : ()=>{
-			setIsMuted(prev=>{
-					localStorage.setItem("playbackMuted", !prev);
-					if(!document.getElementById("theater-audio-player")) return;
-					return !prev;
-				});
-		}
+    toggleMusic: () => {
+      setIsMuted((prev) => {
+        localStorage.setItem("playbackMuted", !prev);
+        if (!document.getElementById("theater-audio-player")) return;
+        return !prev;
+      });
+    },
   };
 
   const [isScrollingPanel, setIsScrollingPanel] = useState(false);
@@ -193,28 +196,29 @@ function TheaterWrapper({ appController }) {
     setDuration,
     setIsPlaying,
     isPlaying,
-		playbackVolume,
-		setPlaybackVolume,
+    playbackVolume,
+    setPlaybackVolume,
     playbackRate,
     cursorChangeWasManual,
     setPlaybackRate,
     isScrollingPanel,
     setIsScrollingPanel,
-		isMuted,
-		setIsMuted,
+    isMuted,
+    setIsMuted,
   };
 
   useEffect(async () => {
-    let items = slug ? [{slug}] : null; //todo: handle reading plan id / index input;
+    let items = slug ? [{ slug }] : null; //todo: handle reading plan id / index input;
     //items = [{slug:"ammon",blocks:[4,5,6,7,8]}];
     const token = localStorage.getItem("token");
-    let { queue:loadedQueue } = await BoMOnlineAPI(
+    let { queue: loadedQueue } = await BoMOnlineAPI(
       { queue: { token, items } },
-      { useCache: false }
+      { useCache: false },
     );
-    if(!loadedQueue || !loadedQueue?.length || !loadedQueue?.[0]) return setLoadFailed(true);
-    loadedQueue = loadedQueue.map(item => {
-      if(!item?.coms) return item;
+    if (!loadedQueue || !loadedQueue?.length || !loadedQueue?.[0])
+      return setLoadFailed(true);
+    loadedQueue = loadedQueue.map((item) => {
+      if (!item?.coms) return item;
       item.coms = (item?.coms || []).sort((a, b) => {
         //random
         return Math.random() - 0.5;
@@ -222,13 +226,13 @@ function TheaterWrapper({ appController }) {
       return item;
     });
     setQueue(loadedQueue);
-    setQueueStatus((loadedQueue||[]).map(item => item?.status));
+    setQueueStatus((loadedQueue || []).map((item) => item?.status));
   }, []);
 
   useEffect(() => {
     //determine cursor
     const firstIncompleteItem = queue.findIndex(
-      item => item?.status !== "completed"
+      (item) => item?.status !== "completed",
     );
     theaterController.goto(0, "auto");
     //TODO: are there cases when this is needed?
@@ -255,7 +259,7 @@ function TheaterWrapper({ appController }) {
 
   //Keyboard
   useEffect(() => {
-    const handleKeyDown = e => {
+    const handleKeyDown = (e) => {
       switch (e.code) {
         case "Space":
           setIsPlaying(!isPlaying);
@@ -283,7 +287,7 @@ function TheaterWrapper({ appController }) {
         //zero should reset speed to 1
         case "Digit0":
           setPlaybackRate(1);
-          if(!document.getElementById("theater-audio-player")) return;
+          if (!document.getElementById("theater-audio-player")) return;
           document.getElementById("theater-audio-player").playbackRate = 1;
           break;
 
@@ -295,10 +299,10 @@ function TheaterWrapper({ appController }) {
           if (!lastComment) return false;
           lastComment.click();
           break;
-				case "KeyM":
-					// toggle background music from on to off
-					controls.toggleMusic();
-					break;
+        case "KeyM":
+          // toggle background music from on to off
+          controls.toggleMusic();
+          break;
         default:
           break;
       }
@@ -316,17 +320,22 @@ function TheaterWrapper({ appController }) {
     };
   }, [isPlaying, cursorIndex]);
 
+  if (loadFailed)
+    return (
+      <div className="theater-wrapper">
+        <div className="failed-to-load">
+          <img src={nowifi} />
+          <p>Failed to load theater</p>
+        </div>
+      </div>
+    );
 
-  if(loadFailed) return (
-                   <div className="theater-wrapper">
-                     <div className="failed-to-load">
-                       <img src={nowifi} />
-                       <p>Failed to load theater</p>
-                     </div>
-                   </div>
-                 );
-
-  if (!queue?.length) return <div className="theater-wrapper"><Loader /></div>;
+  if (!queue?.length)
+    return (
+      <div className="theater-wrapper">
+        <Loader />
+      </div>
+    );
 
   return (
     <div className="theater-wrapper">
@@ -337,45 +346,49 @@ function TheaterWrapper({ appController }) {
 }
 
 function TheaterMobileControls({ theaterController }) {
-
   const isPlaying = theaterController.isPlaying;
   const img = isPlaying ? pause : play;
-  const onClickFn = isPlaying ? theaterController.pause : theaterController.play;
+  const onClickFn = isPlaying
+    ? theaterController.pause
+    : theaterController.play;
 
-  return <div className="theater-mobile-controls" onClick={onClickFn}>
-   <img src={img} />
-  </div>
-
+  return (
+    <div className="theater-mobile-controls" onClick={onClickFn}>
+      <img src={img} />
+    </div>
+  );
 }
 function TheaterMainPanel({ theaterController }) {
-  const { queue, cursorIndex,cursorChangeWasManual } = theaterController;
+  const { queue, cursorIndex, cursorChangeWasManual } = theaterController;
   const currentItem = queue[cursorIndex] || null;
 
   const [canAutoPlayState, setCanAutoPlay] = useState(false);
 
   const thisSection = currentItem?.parent_section?.title || null;
   const prevSection = queue[cursorIndex - 1]?.parent_section?.title || null;
-  const isNewSection =  thisSection !== prevSection;
+  const isNewSection = thisSection !== prevSection;
   const isLastItem = cursorIndex === queue.length - 1;
   const hasNextContent = !!currentItem?.next;
   const posttype = isLastItem ? "outro" : hasNextContent ? "crossroads" : null;
 
   const isFirstItem = cursorIndex === 0;
-  const initSubCursorIndex = cursorChangeWasManual ? 0 : isNewSection || isFirstItem ? -1 : 0;
+  const initSubCursorIndex = cursorChangeWasManual
+    ? 0
+    : isNewSection || isFirstItem
+    ? -1
+    : 0;
   const [subCursorIndex, setSubCursorIndex] = useState(initSubCursorIndex);
 
-  const pretype = isFirstItem
-    ? "intro"
-    : isNewSection
-    ? "section"
-    : null;
+  const pretype = isFirstItem ? "intro" : isNewSection ? "section" : null;
 
-  useEffect(()=>{
-      setSubCursorIndex(initSubCursorIndex);
-      theaterController.setIsScrollingPanel(!initSubCursorIndex);
-      if(cursorIndex) return;
-      canAutoplay.audio().then(({result}) => {result ? setCanAutoPlay(true) : setCanAutoPlay(false);} );
-  },[cursorIndex])
+  useEffect(() => {
+    setSubCursorIndex(initSubCursorIndex);
+    theaterController.setIsScrollingPanel(!initSubCursorIndex);
+    if (cursorIndex) return;
+    canAutoplay.audio().then(({ result }) => {
+      result ? setCanAutoPlay(true) : setCanAutoPlay(false);
+    });
+  }, [cursorIndex]);
 
   theaterController = {
     ...theaterController,
@@ -383,20 +396,26 @@ function TheaterMainPanel({ theaterController }) {
     setSubCursorIndex,
     hasNextContent,
     canAutoPlayState,
-    setCanAutoPlay
+    setCanAutoPlay,
   };
 
   const showStatic = subCursorIndex !== 0;
-  
-  if(!canAutoPlayState) return <div className="theater-main-panel">
-    <TheaterQueueIndicator theaterController={theaterController} />
-    <TheaterStaticContent theaterController={theaterController} type="idle" />
-  </div>
+
+  if (!canAutoPlayState)
+    return (
+      <div className="theater-main-panel">
+        <TheaterQueueIndicator theaterController={theaterController} />
+        <TheaterStaticContent
+          theaterController={theaterController}
+          type="idle"
+        />
+      </div>
+    );
 
   return (
     <div className="theater-main-panel">
-    <TheatherMusicPlayer theaterController={theaterController} />
-    <TheaterQueueIndicator theaterController={theaterController} />
+      <TheatherMusicPlayer theaterController={theaterController} />
+      <TheaterQueueIndicator theaterController={theaterController} />
       {canAutoPlayState && showStatic ? (
         <TheaterStaticContent
           theaterController={theaterController}
@@ -407,8 +426,14 @@ function TheaterMainPanel({ theaterController }) {
           <TheaterContent theaterController={theaterController} />
         </>
       )}
-          <TheaterMeta theaterController={theaterController} visible={!showStatic}/>
-          <TheaterControls theaterController={theaterController} visible={!showStatic} />
+      <TheaterMeta
+        theaterController={theaterController}
+        visible={!showStatic}
+      />
+      <TheaterControls
+        theaterController={theaterController}
+        visible={!showStatic}
+      />
     </div>
   );
 }
@@ -430,11 +455,11 @@ function TheaterStaticContent({ theaterController, type }) {
   }
 }
 function TheaterIdle({ theaterController }) {
-  const {setCanAutoPlay } = theaterController;
+  const { setCanAutoPlay } = theaterController;
 
   //listen for enter or space keys
   useEffect(() => {
-    const handleKeyDown = e => {
+    const handleKeyDown = (e) => {
       switch (e.code) {
         case "Space":
         case "Enter":
@@ -450,52 +475,44 @@ function TheaterIdle({ theaterController }) {
     };
   }, []);
 
-  let currentItemText = theaterController.queue[theaterController.cursorIndex]?.content || null;
+  let currentItemText =
+    theaterController.queue[theaterController.cursorIndex]?.content || null;
   currentItemText = prepareContent(currentItemText);
   //remove html
   currentItemText = currentItemText.replace(/(<([^>]+)>)/gi, "");
 
-  return <div className="theater-content-frame theater-queue-intro"
-  >
-
-    <div className={"theater-intro-slide"}>
-    <p className="idleText">{currentItemText}</p>
-    <button className="playbutton" onClick={()=>setCanAutoPlay(true)}>
-      <img src={play} />
-    </button>
-      <p>{label("theater_press_play")}</p>
+  return (
+    <div className="theater-content-frame theater-queue-intro">
+      <div className={"theater-intro-slide"}>
+        <p className="idleText">{currentItemText}</p>
+        <button className="playbutton" onClick={() => setCanAutoPlay(true)}>
+          <img src={play} />
+        </button>
+        <p>{label("theater_press_play")}</p>
+      </div>
     </div>
-    
-  </div>;
-
+  );
 }
 
-
 function TheaterQueueOutro({ theaterController }) {
-
   return <TheaterCrossRoads theaterController={theaterController} />;
-
 }
 function TheaterQueueIntro({ theaterController }) {
   const { queue, cursorIndex } = theaterController;
   const currentItem = queue[cursorIndex] || null;
 
-  const [initSFX] = useState(
-    new Audio(`${assetUrl}/interface/audio/theater`)
-);
-
-
+  const [initSFX] = useState(new Audio(`${assetUrl}/interface/audio/theater`));
 
   const secondsToShow = 15;
   const [countdown, setCountdown] = useState(secondsToShow);
 
   useEffect(() => {
-    if(!cursorIndex) playSound(initSFX);
-    setTimeout(()=>setPart(1),200);
-    setTimeout(()=>setPart(2),6000);
-    setTimeout(()=>setPart(3),12000);
+    if (!cursorIndex) playSound(initSFX);
+    setTimeout(() => setPart(1), 200);
+    setTimeout(() => setPart(2), 6000);
+    setTimeout(() => setPart(3), 12000);
     const timer = setInterval(() => {
-      setCountdown(previousCountdown => {
+      setCountdown((previousCountdown) => {
         if (previousCountdown === 1) {
           // TODO: call setSubCursorIndex when countdown reaches 0
           theaterController.setSubCursorIndex(0);
@@ -511,42 +528,81 @@ function TheaterQueueIntro({ theaterController }) {
 
   const pageTitle = currentItem?.parent_page?.title || null;
   const sectionTitle = currentItem?.parent_section?.title || null;
-  const queueItemsInSameSection = queue.filter( item => item?.parent_section?.title === currentItem?.parent_section?.title);
+  const queueItemsInSameSection = queue.filter(
+    (item) =>
+      item?.parent_section?.title === currentItem?.parent_section?.title,
+  );
   const narrations = queueItemsInSameSection
-    .map(item => item?.narration?.description || null)
-    .filter(item => item);
+    .map((item) => item?.narration?.description || null)
+    .filter((item) => item);
   const uniqueNarrations = [...new Set(narrations)];
   const narrationString = flattenDescription(uniqueNarrations.join(" • "));
 
-  const [part,setPart] = useState(0);
+  const [part, setPart] = useState(0);
 
-  const pages = [...new Set(queue.map(item => item?.parent_page?.title || null))];
+  const pages = [
+    ...new Set(queue.map((item) => item?.parent_page?.title || null)),
+  ];
   const lastPage = pages.pop();
-  const pageString = pages.length > 1 ? pages.join(", ") + "</em> "+label("theater_list_and")+" <em>" + lastPage : lastPage;
+  const pageString =
+    pages.length > 1
+      ? pages.join(", ") +
+        "</em> " +
+        label("theater_list_and") +
+        " <em>" +
+        lastPage
+      : lastPage;
 
-  let sections = [...new Set(queue.map(item => item?.parent_section?.title || null))];
+  let sections = [
+    ...new Set(queue.map((item) => item?.parent_section?.title || null)),
+  ];
 
   const maxCharCount = 400;
-  while(sections.join("").length + pageString.length > maxCharCount){
+  while (sections.join("").length + pageString.length > maxCharCount) {
     sections.pop();
   }
 
-  const sectionString = sections.length > 1 ? sections.slice(0,-1).join(", ") + "</em> "+label("theater_list_and")+" <em>" + sections.reverse()[0] : sections.reverse()[0];
-
+  const sectionString =
+    sections.length > 1
+      ? sections.slice(0, -1).join(", ") +
+        "</em> " +
+        label("theater_list_and") +
+        " <em>" +
+        sections.reverse()[0]
+      : sections.reverse()[0];
 
   const passageCount = queue.length;
 
   return (
     <div className="theater-content-frame theater-queue-intro">
-      <div className={"theater-intro-slide " + (part===1 ? "on" : "off") }>
-      <p className="presents">{Parser(label("bom_presents"))}</p>
-      <img src={logo} className="logo" />
-      <p>{Parser(label("theater_x_passages_from_y",[`${passageCount}`,`<em>${pageString}</em>`])|| "x")}</p>
-      <p>{Parser(label("theater_covering_x",[`<em>${sectionString}</em>`])||"x")}</p>
+      <div className={"theater-intro-slide " + (part === 1 ? "on" : "off")}>
+        <p className="presents">{Parser(label("bom_presents"))}</p>
+        <img src={logo} className="logo" />
+        <p>
+          {Parser(
+            label("theater_x_passages_from_y", [
+              `${passageCount}`,
+              `<em>${pageString}</em>`,
+            ]) || "x",
+          )}
+        </p>
+        <p>
+          {Parser(
+            label("theater_covering_x", [`<em>${sectionString}</em>`]) || "x",
+          )}
+        </p>
       </div>
-      <div className={"theater-intro-slide section-intro " + (part===2 ? "on" : "off") }>
-      <p><span className="pageTitle">{pageTitle}:</span><br/>{sectionTitle}</p>
-      <small>{Parser(narrationString)}</small>
+      <div
+        className={
+          "theater-intro-slide section-intro " + (part === 2 ? "on" : "off")
+        }
+      >
+        <p>
+          <span className="pageTitle">{pageTitle}:</span>
+          <br />
+          {sectionTitle}
+        </p>
+        <small>{Parser(narrationString)}</small>
       </div>
     </div>
   );
@@ -564,19 +620,20 @@ function TheaterSectionIntro({ theaterController }) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    setTimeout(()=>setVisible(true),100);
+    setTimeout(() => setVisible(true), 100);
   }, []);
 
   let sectionNarrations = queue
     .filter(
-      item => item?.parent_section?.title === currentItem?.parent_section?.title
+      (item) =>
+        item?.parent_section?.title === currentItem?.parent_section?.title,
     )
-    .map(item => item?.narration?.description || null)
-    .filter(item => item)
-    .map(item => flattenDescription(item));
+    .map((item) => item?.narration?.description || null)
+    .filter((item) => item)
+    .map((item) => flattenDescription(item));
 
-    const maxCharCount = 400;
-  while(sectionNarrations.join("").length > maxCharCount){
+  const maxCharCount = 400;
+  while (sectionNarrations.join("").length > maxCharCount) {
     sectionNarrations.pop();
   }
 
@@ -599,86 +656,120 @@ function TheaterSectionIntro({ theaterController }) {
 
   return (
     <div className="theater-content-frame theater-section-intro">
-      
-      <div className={"theater-intro-slide section-intro " + (visible ? "on" : "off") }>
+      <div
+        className={
+          "theater-intro-slide section-intro " + (visible ? "on" : "off")
+        }
+      >
         <p className="upnext">{label("theater_up_next")}</p>
-      <p><span className="pageTitle">{pageTitle}:</span><br/>{sectionTitle}</p>
-      <small>{narrationString}</small>
+        <p>
+          <span className="pageTitle">{pageTitle}:</span>
+          <br />
+          {sectionTitle}
+        </p>
+        <small>{narrationString}</small>
       </div>
     </div>
   );
 }
 
-function ButtonTimer({timerprogress}){
-
-  if(!timerprogress) return null;
-  return <div className="timerContainer">
-  <div className="timerBand">
-    <div className="timerProgress" style={{width:timerprogress+"%"}}></div>
-  </div>
-  </div>
-
-}
-
-
-function TheaterCrossRoadsButton({theaterController,config,page,narration,slug,onClick,index,setSelectedIndex,selectedIndex,timerprogress}) {
-  narration = flattenDescription(narration);
-
-  const {finish,more} = config || {};  
-  const isContinue = !finish && !more && !slug;
-  const loadItem = more ? null : (slug||null);
-  const items = loadItem ? [{slug:loadItem}] : null;
-
-  const [mainLabel, setMainLabel] = useState(page || (finish ? label("finish") : more ? label("more") : null));
-  const [subLabel, setSubLabel] = useState(narration || (finish ? label("finish_narration") : more ? label("more_narration") : null));
-
-  const nextQueuePromiseRef = useRef(null);
-
-
-  useEffect(() => {
-    const token = theaterController.appController.states.user.token;
-    nextQueuePromiseRef.current = BoMOnlineAPI({ queue: { token, items } }, { useCache: false }).then(({ queue }) => queue)
-  }, []);
-
-  const handleClick = onClick || (async () => {
-    setMainLabel(label("loading"));
-    setSubLabel(label("loading_narration"));
-    if (finish) {  document.location = "/user";  return; }
-    if(isContinue) return theaterController.next("manual");
-
-    const nextQueue = await nextQueuePromiseRef.current;
-    if (nextQueue) {
-      theaterController.setQueue(nextQueue);
-    }
-
-    }
-  );
-  const isActive = selectedIndex === index;
-
-return (
-    <div className={"theater-crossroads-box-button" + (isActive ? " active" : "") } onClick={handleClick} onMouseEnter={()=>setSelectedIndex(index)} >
-    <h5>{mainLabel}</h5>
-    <h6>{subLabel}</h6>
-    <ButtonTimer timerprogress={timerprogress} />
+function ButtonTimer({ timerprogress }) {
+  if (!timerprogress) return null;
+  return (
+    <div className="timerContainer">
+      <div className="timerBand">
+        <div
+          className="timerProgress"
+          style={{ width: timerprogress + "%" }}
+        ></div>
+      </div>
     </div>
   );
 }
 
+function TheaterCrossRoadsButton({
+  theaterController,
+  config,
+  page,
+  narration,
+  slug,
+  onClick,
+  index,
+  setSelectedIndex,
+  selectedIndex,
+  timerprogress,
+}) {
+  narration = flattenDescription(narration);
 
+  const { finish, more } = config || {};
+  const isContinue = !finish && !more && !slug;
+  const loadItem = more ? null : slug || null;
+  const items = loadItem ? [{ slug: loadItem }] : null;
+
+  const [mainLabel, setMainLabel] = useState(
+    page || (finish ? label("finish") : more ? label("more") : null),
+  );
+  const [subLabel, setSubLabel] = useState(
+    narration ||
+      (finish
+        ? label("finish_narration")
+        : more
+        ? label("more_narration")
+        : null),
+  );
+
+  const nextQueuePromiseRef = useRef(null);
+
+  useEffect(() => {
+    const token = theaterController.appController.states.user.token;
+    nextQueuePromiseRef.current = BoMOnlineAPI(
+      { queue: { token, items } },
+      { useCache: false },
+    ).then(({ queue }) => queue);
+  }, []);
+
+  const handleClick =
+    onClick ||
+    (async () => {
+      setMainLabel(label("loading"));
+      setSubLabel(label("loading_narration"));
+      if (finish) {
+        document.location = "/user";
+        return;
+      }
+      if (isContinue) return theaterController.next("manual");
+
+      const nextQueue = await nextQueuePromiseRef.current;
+      if (nextQueue) {
+        theaterController.setQueue(nextQueue);
+      }
+    });
+  const isActive = selectedIndex === index;
+
+  return (
+    <div
+      className={"theater-crossroads-box-button" + (isActive ? " active" : "")}
+      onClick={handleClick}
+      onMouseEnter={() => setSelectedIndex(index)}
+    >
+      <h5>{mainLabel}</h5>
+      <h6>{subLabel}</h6>
+      <ButtonTimer timerprogress={timerprogress} />
+    </div>
+  );
+}
 
 function TheaterCrossRoads({ theaterController }) {
   const { queue, cursorIndex } = theaterController;
   const currentItem = queue[cursorIndex] || null;
   const { next } = currentItem || {};
   const isLast = cursorIndex === queue.length - 1;
-  
-  const thisItem = queue[cursorIndex] || null;
 
+  const thisItem = queue[cursorIndex] || null;
 
   const narration = thisItem?.narration?.description || null;
   const page = thisItem?.parent_page?.title || null;
   const slug = thisItem?.slug || null;
-
 
   //add countdown from 10 sec
   const secondsToShow = 10;
@@ -690,110 +781,155 @@ function TheaterCrossRoads({ theaterController }) {
   useEffect(theaterController.log, [cursorIndex]);
 
   useEffect(() => {
-
     //interval countdown
     const timer = setInterval(() => {
       const now = Date.now();
       const timePassed = now - startTimestamp;
-      const timeLeft = defaultState.current ? secondsToShow - timePassed/1000 : secondsToShow;
+      const timeLeft = defaultState.current
+        ? secondsToShow - timePassed / 1000
+        : secondsToShow;
 
-      if(!defaultState.current) return clearInterval(timer);  // Stop interval
+      if (!defaultState.current) return clearInterval(timer); // Stop interval
 
-      setCountdown(timeLeft);  // Update countdown
+      setCountdown(timeLeft); // Update countdown
 
-      if(timeLeft <= 0 && defaultState.current){
-        
+      if (timeLeft <= 0 && defaultState.current) {
         //click default button
-        const defaultButton = document.querySelector(".theater-crossroads-box-button");
-        if(defaultButton) defaultButton.click();
+        const defaultButton = document.querySelector(
+          ".theater-crossroads-box-button",
+        );
+        if (defaultButton) defaultButton.click();
 
-        clearInterval(timer);  // Stop interval
+        clearInterval(timer); // Stop interval
       }
     }, 50);
 
-    return () => clearInterval(timer);   // Clean up on unmount
-
+    return () => clearInterval(timer); // Clean up on unmount
   }, [startTimestamp, cursorIndex, theaterController]);
 
   const nextclass = next?.[0]?.nextclass || null;
-  const img = isLast ? again : nextclass==="C" ? crossroads : detour;
-  const {optionalText,defaultLabel,optionalLabel,headingLabel,titleLabel} = (()=>{
-    if(isLast) return{
-      titleLabel:label("section_complete"),
-      headingLabel:label("finish_or_more"),
-      defaultLabel:label("finish"),
-      optionalLabel:label("more"),
-      optionalText:null
-    }
-    if(nextclass==="C") return{
-      titleLabel:label("crossroads"),
-      headingLabel:label("continue_or_detour"),
-      defaultLabel:label("continue"),
-      optionalLabel:label("detour"),
-      optionalText:next?.[0]?.text || null
-    }
+  const img = isLast ? again : nextclass === "C" ? crossroads : detour;
+  const {
+    optionalText,
+    defaultLabel,
+    optionalLabel,
+    headingLabel,
+    titleLabel,
+  } = (() => {
+    if (isLast)
+      return {
+        titleLabel: label("section_complete"),
+        headingLabel: label("finish_or_more"),
+        defaultLabel: label("finish"),
+        optionalLabel: label("more"),
+        optionalText: null,
+      };
+    if (nextclass === "C")
+      return {
+        titleLabel: label("crossroads"),
+        headingLabel: label("continue_or_detour"),
+        defaultLabel: label("continue"),
+        optionalLabel: label("detour"),
+        optionalText: next?.[0]?.text || null,
+      };
     return {
-      titleLabel:label("embedded"),
-      headingLabel:label("step_over_or_into"),
-      defaultLabel:label("step_over"),
-      optionalLabel:label("step_into"),
-      optionalText:next?.[0]?.text || null
-    }
+      titleLabel: label("embedded"),
+      headingLabel: label("step_over_or_into"),
+      defaultLabel: label("step_over"),
+      optionalLabel: label("step_into"),
+      optionalText: next?.[0]?.text || null,
+    };
   })();
 
-  const [selectedIndex,setSelectedIndex] = useState(0);
+  const [selectedIndex, setSelectedIndex] = useState(0);
 
-  const timerprogress = showProgress ? 100-(countdown/secondsToShow)*100 : null
+  const timerprogress = showProgress
+    ? 100 - (countdown / secondsToShow) * 100
+    : null;
 
   useEffect(() => {
-
-    if(!selectedIndex) return;
-    defaultState.current =false;
+    if (!selectedIndex) return;
+    defaultState.current = false;
     setShowProgress(false);
-
   }, [selectedIndex]);
 
-
-  
-
-
-  const finishButton = <TheaterCrossRoadsButton config={{finish:true}} timerprogress={timerprogress} selectedIndex={selectedIndex} setSelectedIndex={setSelectedIndex} theaterController={theaterController} index={0} />;
-  const moreButton = <TheaterCrossRoadsButton config={{more:true}}  isLast={true} isMore={true} selectedIndex={selectedIndex} setSelectedIndex={setSelectedIndex} theaterController={theaterController} index={1} />;
-  const nextButton = <TheaterCrossRoadsButton timerprogress={timerprogress}  selectedIndex={selectedIndex} setSelectedIndex={setSelectedIndex} theaterController={theaterController} page={page} narration={narration} />;
-  const divergeButtons = !next?.length ? null : <>{next.map((n,i) => <TheaterCrossRoadsButton  selectedIndex={selectedIndex} setSelectedIndex={setSelectedIndex} theaterController={theaterController} {...n} index={i+1} />)}</>;
+  const finishButton = (
+    <TheaterCrossRoadsButton
+      config={{ finish: true }}
+      timerprogress={timerprogress}
+      selectedIndex={selectedIndex}
+      setSelectedIndex={setSelectedIndex}
+      theaterController={theaterController}
+      index={0}
+    />
+  );
+  const moreButton = (
+    <TheaterCrossRoadsButton
+      config={{ more: true }}
+      isLast={true}
+      isMore={true}
+      selectedIndex={selectedIndex}
+      setSelectedIndex={setSelectedIndex}
+      theaterController={theaterController}
+      index={1}
+    />
+  );
+  const nextButton = (
+    <TheaterCrossRoadsButton
+      timerprogress={timerprogress}
+      selectedIndex={selectedIndex}
+      setSelectedIndex={setSelectedIndex}
+      theaterController={theaterController}
+      page={page}
+      narration={narration}
+    />
+  );
+  const divergeButtons = !next?.length ? null : (
+    <>
+      {next.map((n, i) => (
+        <TheaterCrossRoadsButton
+          selectedIndex={selectedIndex}
+          setSelectedIndex={setSelectedIndex}
+          theaterController={theaterController}
+          {...n}
+          index={i + 1}
+        />
+      ))}
+    </>
+  );
 
   const defaultButton = isLast ? finishButton : nextButton;
   const optionalButtons = isLast ? moreButton : divergeButtons;
 
-
-  return (  <div className="theater-crossroads">
-  <h2>{titleLabel}</h2>
-  <h3>{headingLabel}</h3>
-  <div className="theater-crossroads-box">
-    <div className="theater-crossroads-box-top">
-      <div className="buttonheader">{defaultLabel}:</div>
-      {defaultButton}
-      <div className="theater-crossroads-box-bottom">
-        <img src={img} />
-        <div className="theater-crossroads-box-offramp">
-          <div className="buttonheader">{optionalLabel}: {optionalText}</div>
-          {optionalButtons}
+  return (
+    <div className="theater-crossroads">
+      <h2>{titleLabel}</h2>
+      <h3>{headingLabel}</h3>
+      <div className="theater-crossroads-box">
+        <div className="theater-crossroads-box-top">
+          <div className="buttonheader">{defaultLabel}:</div>
+          {defaultButton}
+          <div className="theater-crossroads-box-bottom">
+            <img src={img} />
+            <div className="theater-crossroads-box-offramp">
+              <div className="buttonheader">
+                {optionalLabel}: {optionalText}
+              </div>
+              {optionalButtons}
+            </div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-</div>);
+  );
 }
-
-
-
 
 function TheaterSidePanel({ theaterController }) {
   return (
     <div className="theater-side-panel">
       <div className="theater-people-image-panel">
-      <TheaterPeoplePlacePanel theaterController={theaterController} />
-      <TheaterImagePanel theaterController={theaterController} />
+        <TheaterPeoplePlacePanel theaterController={theaterController} />
+        <TheaterImagePanel theaterController={theaterController} />
       </div>
       <TheaterCommentFeed theaterController={theaterController} />
     </div>
@@ -801,9 +937,6 @@ function TheaterSidePanel({ theaterController }) {
 }
 
 function TheaterMeta({ theaterController, visible }) {
-
-
-
   return (
     <div className={"theater-meta" + (visible ? " visible" : "")}>
       <TheaterMetaContent theaterController={theaterController} />
@@ -812,7 +945,6 @@ function TheaterMeta({ theaterController, visible }) {
 }
 
 function TheaterControls({ theaterController, visible }) {
-
   const {
     queue,
     setQueueStatus,
@@ -821,20 +953,17 @@ function TheaterControls({ theaterController, visible }) {
     setDuration,
     hasNextContent,
     setSubCursorIndex,
-		playbackVolume,
+    playbackVolume,
     currentDuration,
   } = theaterController;
-
 
   const history = useHistory();
 
   const [playerCanPlay, setPlayerCanPlay] = useState(false);
 
-
-
   const currentItem = queue[cursorIndex] || null;
   useEffect(() => {
-    if(!currentItem) return;
+    if (!currentItem) return;
     setPlayerCanPlay(false);
     const slug = currentItem?.slug || null;
 
@@ -849,17 +978,14 @@ function TheaterControls({ theaterController, visible }) {
     history.push(`/theater/${slug}`);
 
     */
-
-
   }, [currentItem]);
-
 
   useEffect(() => {
     const player = document.getElementById("theater-audio-player");
     if (!player || !visible) return;
     player.playbackRate = theaterController.playbackRate;
     playAudioElement("theater-audio-player");
-  }, [playerCanPlay,visible]);
+  }, [playerCanPlay, visible]);
 
   if (!currentItem) return <Loader />;
   const [num, pageslug] = currentItem?.slug.split("/").reverse();
@@ -867,18 +993,16 @@ function TheaterControls({ theaterController, visible }) {
   const lang = determineLanguage() || "en";
   const url = `${assetUrl}/audio/${lang}/${media_path}`;
 
-
-  const onCanPlay = e => {
+  const onCanPlay = (e) => {
     setDuration(e.target.duration);
     setPlayerCanPlay(true);
   };
 
-
-  const onListen = e => {
+  const onListen = (e) => {
     const progress = (e / currentDuration) * 100;
     setCurrentProgress(progress);
     const player = document.getElementById("theater-audio-player");
-    if(!player) return;
+    if (!player) return;
     player.playbackRate = theaterController.playbackRate;
 
     //if progress is 60%  log item, but only once!
@@ -889,22 +1013,19 @@ function TheaterControls({ theaterController, visible }) {
   };
 
   const updateQueueStatus = async () => {
-
     //get updated status
     const token = theaterController.appController.states.user.token;
     const queueitems = loadQueueItemsFromQueue(queue);
     const { queuestatus } = await BoMOnlineAPI(
       { queuestatus: { token, items: queueitems } },
-      { useCache: false }
+      { useCache: false },
     );
     if (!queuestatus?.map) return false;
-    const newStatus = queuestatus?.map(item => item?.status) || null;
-    if(!newStatus) return;
+    const newStatus = queuestatus?.map((item) => item?.status) || null;
+    if (!newStatus) return;
 
     setQueueStatus(newStatus);
-
-
-  }
+  };
 
   const logItem = async () => {
     const [number, slugEnd] = currentItem?.slug.split("/").reverse();
@@ -915,13 +1036,13 @@ function TheaterControls({ theaterController, visible }) {
         log: {
           token,
           key: "block",
-          val: slug
-        }
+          val: slug,
+        },
       },
-      { useCache: false }
+      { useCache: false },
     );
     await updateQueueStatus();
-    BoMOnlineAPI( {  userprogress: token, }, { useCache: false } ).then((r) => {
+    BoMOnlineAPI({ userprogress: token }, { useCache: false }).then((r) => {
       let saveMe = r.userprogress?.[token];
       let summary = saveMe.summary;
       const pagetitle = currentItem?.parent_page?.title || null;
@@ -932,10 +1053,9 @@ function TheaterControls({ theaterController, visible }) {
           ...saveMe,
           ...{ slug, pagetitle, heading },
         });
-        window.clicky?.goal("watch");
+      window.clicky?.goal("watch");
       // if 100% then show confetti
-      if(summary?.completed >= 100)
-      {
+      if (summary?.completed >= 100) {
         //pause theater
         theaterController.controls.pause();
         document.getElementById(`theater-music-player-a`)?.pause();
@@ -943,22 +1063,20 @@ function TheaterControls({ theaterController, visible }) {
         theaterController.appController.functions.setPopUp({
           type: "victory",
           popupData: summary,
-          vhtop: 10
+          vhtop: 10,
         });
       }
     });
-    
-
   };
   const isLastItem = cursorIndex === queue.length - 1;
 
   return (
-    <div className={"theater-controls"+(visible ? " visible" : "")}>
+    <div className={"theater-controls" + (visible ? " visible" : "")}>
       <TheaterProgressBar theaterController={theaterController} />
       <ReactAudioPlayer
         id="theater-audio-player"
         src={url}
-				volume={playbackVolume}
+        volume={playbackVolume}
         controls
         playbackRate={theaterController.playbackRate}
         onPause={() => theaterController.setIsPlaying(false)}
@@ -970,15 +1088,19 @@ function TheaterControls({ theaterController, visible }) {
         listenInterval={50}
         onListen={onListen}
         onCanPlay={onCanPlay}
-        onEnded={() => theaterController.next("auto",(hasNextContent || isLastItem) ? setSubCursorIndex : null)}
+        onEnded={() =>
+          theaterController.next(
+            "auto",
+            hasNextContent || isLastItem ? setSubCursorIndex : null,
+          )
+        }
       />
     </div>
   );
 }
 
 function TheatherMusicPlayer({ theaterController }) {
-
-  const { queue, cursorIndex,playbackVolume,isMuted } = theaterController;
+  const { queue, cursorIndex, playbackVolume, isMuted } = theaterController;
   const currentItem = queue[cursorIndex] || null;
   const nextItem = queue[cursorIndex + 1] || null;
   const currentSection = currentItem?.parent_section?.title || null;
@@ -990,8 +1112,8 @@ function TheatherMusicPlayer({ theaterController }) {
 
   const makeSelection = (section) => {
     //TODO: Load based on ambien value
-    return (Math.floor(Math.random() * 300) + 1).toString().padStart(3, '0');
-  }
+    return (Math.floor(Math.random() * 300) + 1).toString().padStart(3, "0");
+  };
 
   const [activeSide, setActiveSide] = useState("a");
   const [trackA, setTrackA] = useState(makeSelection(currentSection));
@@ -1001,68 +1123,70 @@ function TheatherMusicPlayer({ theaterController }) {
   const initPlayerA = () => {
     const player = document.getElementById(`theater-music-player-a`);
     playAudioElement("theater-music-player-a");
-    player.removeEventListener("canplay",initPlayerA);
-  }
-  useEffect(()=>{
+    player.removeEventListener("canplay", initPlayerA);
+  };
+  useEffect(() => {
     const player = document.getElementById(`theater-music-player-a`);
-    player.addEventListener("canplay",initPlayerA);
-  },[])
-
+    player.addEventListener("canplay", initPlayerA);
+  }, []);
 
   //If the next section is new, preload the next track on the quiet side
-  useEffect(()=>{
-    if(!nextSectionIsNew) return;
+  useEffect(() => {
+    if (!nextSectionIsNew) return;
     const newTrack = makeSelection(nextSection);
-    if(activeSide==="a"){
+    if (activeSide === "a") {
       document.getElementById(`theater-music-player-b`).volume = 0;
       setTrackB(newTrack);
-    }else{
+    } else {
       document.getElementById(`theater-music-player-a`).volume = 0;
       setTrackA(newTrack);
     }
-
-  },[nextSection])
+  }, [nextSection]);
 
   // Kick off the crossfade process by setting the preloaded active side
-  useEffect(()=>{
-    if(currentSectionIsNew && !isFirst){
-      setActiveSide(activeSide==="a" ? "b" : "a");
+  useEffect(() => {
+    if (currentSectionIsNew && !isFirst) {
+      setActiveSide(activeSide === "a" ? "b" : "a");
     }
-  },[cursorIndex])
+  }, [cursorIndex]);
 
   // once the active side is set, start the crossfade
-  useEffect(()=>{
+  useEffect(() => {
     crossfade();
-  },[activeSide])
+  }, [activeSide]);
 
-  
   // The active side just changed, so it first needs to be faded in
   // And the previously active side needs to be faded out
   // Fade duration = 3 seconds
   const crossfade = () => {
-		if(isMuted) return;
-    const playerToFadeIn = document.getElementById(`theater-music-player-${activeSide}`);
+    if (isMuted) return;
+    const playerToFadeIn = document.getElementById(
+      `theater-music-player-${activeSide}`,
+    );
     playAudioElement(`theater-music-player-${activeSide}`);
-    const playerToFadeOut = document.getElementById(`theater-music-player-${activeSide==="a" ? "b" : "a"}`);
-    const targetVolume = Math.max(playerToFadeIn.volume,playerToFadeOut.volume);
+    const playerToFadeOut = document.getElementById(
+      `theater-music-player-${activeSide === "a" ? "b" : "a"}`,
+    );
+    const targetVolume = Math.max(
+      playerToFadeIn.volume,
+      playerToFadeOut.volume,
+    );
     const fadeDuration = 3;
     const fadeInterval = 50;
-    const fadeSteps = fadeDuration*1000/fadeInterval;
+    const fadeSteps = (fadeDuration * 1000) / fadeInterval;
     let fadeStep = 0;
-    const fadeOut = setInterval(()=>{
+    const fadeOut = setInterval(() => {
       fadeStep++;
-      const fadeInVolume = fadeStep/fadeSteps*targetVolume;
+      const fadeInVolume = (fadeStep / fadeSteps) * targetVolume;
       const fadeOutVolume = targetVolume - fadeInVolume;
       playerToFadeIn.volume = fadeInVolume;
       playerToFadeOut.volume = fadeOutVolume;
-      if(fadeStep>=fadeSteps){
+      if (fadeStep >= fadeSteps) {
         playerToFadeOut.pause();
         clearInterval(fadeOut);
       }
-    },fadeInterval);
-
-
-  }
+    }, fadeInterval);
+  };
 
   const volA = document.getElementById(`theater-music-player-a`)?.volume;
   const volB = document.getElementById(`theater-music-player-b`)?.volume;
@@ -1071,32 +1195,34 @@ function TheatherMusicPlayer({ theaterController }) {
 
   return (
     <>
-    <ReactAudioPlayer
-      id="theater-music-player-a"
-      src={`${assetUrl}/audio/music/${trackA}`}
-      volume={0.1}
-			muted={isMuted}
-      onCanPlay={()=>{
-        const isPLaying = document.getElementById(`theater-music-player-a`)?.paused;
-        if(isPLaying) return;
-        const isActive = activeSide==="a";
-        if(isActive) return;
-        playAudioElement("theater-music-player-a");
-      }}
-    />
-    <ReactAudioPlayer
-      id="theater-music-player-b"
-      src={`${assetUrl}/audio/music/${trackB}`}
-      volume={0.1}
-			muted={isMuted}
-      onCanPlay={()=>{
-        const isPLaying = document.getElementById(`theater-music-player-a`)?.paused;
-        if(isPLaying) return;
-        const isActive = activeSide==="a";
-        if(isActive) return;
-        playAudioElement("theater-music-player-a");
-      }}
-    />
+      <ReactAudioPlayer
+        id="theater-music-player-a"
+        src={`${assetUrl}/audio/music/${trackA}`}
+        volume={0.1}
+        muted={isMuted}
+        onCanPlay={() => {
+          const isPLaying = document.getElementById(`theater-music-player-a`)
+            ?.paused;
+          if (isPLaying) return;
+          const isActive = activeSide === "a";
+          if (isActive) return;
+          playAudioElement("theater-music-player-a");
+        }}
+      />
+      <ReactAudioPlayer
+        id="theater-music-player-b"
+        src={`${assetUrl}/audio/music/${trackB}`}
+        volume={0.1}
+        muted={isMuted}
+        onCanPlay={() => {
+          const isPLaying = document.getElementById(`theater-music-player-a`)
+            ?.paused;
+          if (isPLaying) return;
+          const isActive = activeSide === "a";
+          if (isActive) return;
+          playAudioElement("theater-music-player-a");
+        }}
+      />
     </>
   );
 }
@@ -1105,65 +1231,76 @@ function TheaterNarration({ theaterController }) {
   const { queue, cursorIndex } = theaterController;
   const currentItem = queue[cursorIndex] || null;
 
-  const replacer = (string)=>{
-      return string.replace(/[{\[](.*?)[}\]]/g, (match, inner) => {
-        return "<b>" + inner.split("|")[0] + "</b>";
-      });
-  }
+  const replacer = (string) => {
+    return string.replace(/[{\[](.*?)[}\]]/g, (match, inner) => {
+      return "<b>" + inner.split("|")[0] + "</b>";
+    });
+  };
 
-  const allNarrations = (queue||[]).map(item => item?.narration?.description || null);
+  const allNarrations = (queue || []).map(
+    (item) => item?.narration?.description || null,
+  );
   const uniqueNarrations = [...new Set(allNarrations)];
   const narrationMap = {};
-  allNarrations.forEach((_,i)=>{
+  allNarrations.forEach((_, i) => {
     const matchIndex = uniqueNarrations.indexOf(allNarrations[i]);
     narrationMap[i] = matchIndex;
   });
 
   const narrationIndex = narrationMap[cursorIndex];
 
-
-  let narrationUL = <ul>  {uniqueNarrations.map((narration, index) => {
-     const queue_index = allNarrations.indexOf(narration);
-     const narrationValue = Parser(replacer(narration))
-      return <li
-      onClick={()=>theaterController.goto(queue_index,"manual")}
-      key={index}className={narrationIndex===index ? "active" : ""}>{narrationValue}</li>
-    })}</ul>;
-
-    useEffect(()=>{
-      //scrollto smooth
-      const narrationEl = document.querySelector(".theater-meta-content-narration");
-      const activeEl = narrationEl.querySelector(".active");
-      if(!activeEl) return;
-      const top = activeEl.offsetTop;
-      //scroll to vertical center -minus half height of li
-      const scrollTo = top - narrationEl.offsetHeight/2 + activeEl.offsetHeight/2;
-      narrationEl.scrollTo({top:scrollTo, behavior:"smooth"});
-
-    },[narrationIndex])
-
-
-    if (!currentItem) return null;
-  return (
-    <div className="theater-meta-content-narration">{narrationUL}</div>
+  let narrationUL = (
+    <ul>
+      {" "}
+      {uniqueNarrations.map((narration, index) => {
+        const queue_index = allNarrations.indexOf(narration);
+        const narrationValue = Parser(replacer(narration));
+        return (
+          <li
+            onClick={() => theaterController.goto(queue_index, "manual")}
+            key={index}
+            className={narrationIndex === index ? "active" : ""}
+          >
+            {narrationValue}
+          </li>
+        );
+      })}
+    </ul>
   );
+
+  useEffect(() => {
+    //scrollto smooth
+    const narrationEl = document.querySelector(
+      ".theater-meta-content-narration",
+    );
+    const activeEl = narrationEl.querySelector(".active");
+    if (!activeEl) return;
+    const top = activeEl.offsetTop;
+    //scroll to vertical center -minus half height of li
+    const scrollTo =
+      top - narrationEl.offsetHeight / 2 + activeEl.offsetHeight / 2;
+    narrationEl.scrollTo({ top: scrollTo, behavior: "smooth" });
+  }, [narrationIndex]);
+
+  if (!currentItem) return null;
+  return <div className="theater-meta-content-narration">{narrationUL}</div>;
 }
 
-const prepareContent = (content)=>{
-
- return  content
-  ?.replace(/\[[civaquote]+\][0-9a-z]+\[\/[civaquote]+\]/g, "")
-  .replace(/[_]/g, "<span class='spacer'></span>")
-  .replace(/\s+/g, " ") || "";
-
-}
+const prepareContent = (content) => {
+  return (
+    content
+      ?.replace(/\[[civaquote]+\][0-9a-z]+\[\/[civaquote]+\]/g, "")
+      .replace(/[_]/g, "<span class='spacer'></span>")
+      .replace(/\s+/g, " ") || ""
+  );
+};
 
 function TheaterContent({ theaterController }) {
   const {
     queue,
     cursorIndex,
     currentProgress,
-    currentDuration
+    currentDuration,
   } = theaterController;
   const playerPosition = document.getElementById("theater-audio-player")
     ?.currentTime;
@@ -1177,14 +1314,13 @@ function TheaterContent({ theaterController }) {
 
   content = prepareContent(content);
 
-  
   useLayoutEffect(() => {
     setTransitioning(true);
-  },[cursorIndex]);
+  }, [cursorIndex]);
 
   //stip comment and image blocks: [c]1234[/c] and [i]1234[/i]
 
-  const computePosition = progress => {
+  const computePosition = (progress) => {
     return progress;
   };
 
@@ -1192,11 +1328,8 @@ function TheaterContent({ theaterController }) {
 
   const [transitioning, setTransitioning] = useState(true);
   useEffect(() => {
-    if(transitioning && currentProgress>0) setTransitioning(false);
-  },[currentProgress])
-
-
-  
+    if (transitioning && currentProgress > 0) setTransitioning(false);
+  }, [currentProgress]);
 
   let opacity = 1;
   const timeElapsed = (currentProgress / 100) * currentDuration;
@@ -1207,19 +1340,22 @@ function TheaterContent({ theaterController }) {
   if (timeElapsed > currentDuration - secondsBuffer)
     opacity = (currentDuration - timeElapsed) / secondsBuffer;
 
-    const isPlaying = !document.getElementById(`theater-audio-player`)?.ended
-    && !document.getElementById(`theater-audio-player`)?.seeking
-    && document.getElementById(`theater-audio-player`)?.currentTime > 0;
-  
-    if(!isPlaying || transitioning) opacity = 0;
+  const isPlaying =
+    !document.getElementById(`theater-audio-player`)?.ended &&
+    !document.getElementById(`theater-audio-player`)?.seeking &&
+    document.getElementById(`theater-audio-player`)?.currentTime > 0;
+
+  if (!isPlaying || transitioning) opacity = 0;
 
   const isFirst = cursorIndex === 0;
   const isLast = cursorIndex === queue.length - 1;
   const backgroundImage = `theater/gold-1`;
 
   return (
-    <div className={`theater-content-frame ${state}`} 
-    style={{backgroundImage:`url(${assetUrl}/${backgroundImage})`}}>
+    <div
+      className={`theater-content-frame ${state}`}
+      style={{ backgroundImage: `url(${assetUrl}/${backgroundImage})` }}
+    >
       <TheaterMobileControls theaterController={theaterController} />
       <div
         className={`theater-content-slider ${state}`}
@@ -1232,14 +1368,14 @@ function TheaterContent({ theaterController }) {
       <div className={"theater-content-prev" + (isFirst ? " hidden" : "")}>
         <img
           src={prev}
-          onClick={()=>theaterController.previous("manual")}
+          onClick={() => theaterController.previous("manual")}
           className="player-ui"
         />
       </div>
       <div className={"theater-content-next" + (isLast ? " hidden" : "")}>
         <img
           src={next}
-          onClick={()=>theaterController.next("manual")}
+          onClick={() => theaterController.next("manual")}
           className="player-ui"
         />
       </div>
@@ -1255,16 +1391,24 @@ function TheaterMetaContent({ theaterController }) {
   const {
     parent_page: { title: page },
     parent_section: { title: section },
-    heading
+    heading,
   } = currentItem;
   const narration = currentItem?.narration?.description || "Sub Item...";
 
-  const StudyButton = <Link className="studylink" to={`/${currentItem?.slug}`}><img src={studyimg} />{label("menu_study")}</Link>
+  const StudyButton = (
+    <Link className="studylink" to={`/${currentItem?.slug}`}>
+      <img src={studyimg} />
+      {label("menu_study")}
+    </Link>
+  );
 
   return (
     <div className="theater-meta-contents">
       <div className="theater-meta-content-left">
-        <div className="theater-meta-content-heading">{heading}{StudyButton}</div>
+        <div className="theater-meta-content-heading">
+          {heading}
+          {StudyButton}
+        </div>
         <div className="theater-meta-content-section">{section}</div>
         <div className="theater-super-title">{page}</div>
       </div>
@@ -1279,15 +1423,22 @@ function TheaterQueueIndicator({ theaterController }) {
   let { queue, cursorIndex, queueStatus } = theaterController;
   queue = Array.isArray(queue) ? queue : [];
   return (
-    <div className="theater-queue-indicator"
+    <div
+      className="theater-queue-indicator"
       style={{
-        gap: `min(1ex,${30/queue.length}vw)`,
+        gap: `min(1ex,${30 / queue.length}vw)`,
       }}
     >
+      <ReactTooltip
+        effect="solid"
+        id="dotToolTip"
+        type="dark"
+        place="bottom"
+        offset="{'top':-10}"
+        className="theater-queue-indicator-tooltip"
+      />
 
-      <ReactTooltip effect="solid" id="dotToolTip" type="dark" place="bottom"  offset="{'top':-10}" className="theater-queue-indicator-tooltip" />
-
-      {(queue||[]).map((_, index) => {
+      {(queue || []).map((_, index) => {
         const status = queueStatus[index] || queue[index]?.status || null;
 
         const nextSection = queue[index + 1]?.parent_section?.title || null;
@@ -1295,19 +1446,20 @@ function TheaterQueueIndicator({ theaterController }) {
         const isLastInSection = nextSection !== thisSection;
         const heading = queue[index]?.heading || null;
         return (
-					<>
-					<div
-            onClick={() => theaterController.goto(index, "manual")}
-            className={`theater-queue-indicator-item ${status || ""} ${
-              index === cursorIndex ? "active" : ""
-            } ${isLastInSection ? "last-in-section" : ""
-            }`}
-            key={index}
-						data-html={true}
-						data-tip={"<b>" + thisSection + "</b> <br/>" + heading + "<br/>" + status}
-            data-for="dotToolTip"
-          ></div>
-					</>
+          <>
+            <div
+              onClick={() => theaterController.goto(index, "manual")}
+              className={`theater-queue-indicator-item ${status || ""} ${
+                index === cursorIndex ? "active" : ""
+              } ${isLastInSection ? "last-in-section" : ""}`}
+              key={index}
+              data-html={true}
+              data-tip={
+                "<b>" + thisSection + "</b> <br/>" + heading + "<br/>" + status
+              }
+              data-for="dotToolTip"
+            ></div>
+          </>
         );
       })}
     </div>
@@ -1320,9 +1472,9 @@ function TheaterProgressBar({ theaterController }) {
     currentDuration,
     isPlaying,
     playbackRate,
-    cyclePlaybackSpeed
+    cyclePlaybackSpeed,
   } = theaterController;
-  const seekTo = e => {
+  const seekTo = (e) => {
     const barElement = document.querySelector(".theater-progress-bar");
     const percent = e.nativeEvent.offsetX / e.target.offsetWidth;
     document.getElementById("theater-audio-player").currentTime =
@@ -1333,8 +1485,8 @@ function TheaterProgressBar({ theaterController }) {
   const playpauseFN = !isPlaying
     ? theaterController.play
     : theaterController.pause;
-  const rateString = (playbackRate||1).toFixed(1) + " ×";
-	const [showPlaybackSettings,setShowPlaybackSettings] = useState(false);
+  const rateString = (playbackRate || 1).toFixed(1) + " ×";
+  const [showPlaybackSettings, setShowPlaybackSettings] = useState(false);
   return (
     <div className="theater-progress-bar-container">
       <div className="theater-progress-bar-buttons left">
@@ -1344,83 +1496,123 @@ function TheaterProgressBar({ theaterController }) {
         <ProgressBar percent={currentProgress} />
       </div>
       <div className="theater-progress-bar-buttons right">
-				{showPlaybackSettings && <PlaybackSettings setShowPlaybackSettings={setShowPlaybackSettings} theaterController={theaterController}/>}
+        {showPlaybackSettings && (
+          <PlaybackSettings
+            setShowPlaybackSettings={setShowPlaybackSettings}
+            theaterController={theaterController}
+          />
+        )}
         <div>
           <div className="playbackRateIcon" onClick={cyclePlaybackSpeed}>
             {rateString}
           </div>
         </div>
-        <img src={menu} className="player-ui" onClick={()=>setShowPlaybackSettings(prev=>!prev)} />
+        <img
+          src={menu}
+          className="player-ui"
+          onClick={() => setShowPlaybackSettings((prev) => !prev)}
+        />
       </div>
     </div>
   );
 }
 
-function PlaybackSettings({setShowPlaybackSettings,theaterController}){
-	const {playbackRate,setPlaybackRate,playbackVolume,setPlaybackVolume,toggleMusic,isMuted}=theaterController;
-	const inputRef = useRef(null);
-	const handleInput = (e)=>{
-			if(e.target.id === 'speedInput'){
-				setPlaybackRate(() => {
-					localStorage.setItem("playbackRate", +e.target.value);
-					if(!document.getElementById("theater-audio-player")) return;
-					document.getElementById("theater-audio-player").playbackRate = +e.target.value;
-					return parseFloat((+e.target.value||1).toFixed(1)); // keeping it in float with one decimal point
-				});
-			}else{
-				setPlaybackVolume(() => {
-					localStorage.setItem("playbackVolume", +e.target.value);
-					if(!document.getElementById("theater-audio-player")) return;
-					document.getElementById("theater-audio-player").volume = +e.target.value;
-					return parseFloat((+e.target.value).toFixed(1)); // keeping it in float with one decimal point
-				});
-			}
-	}
-	const handleKeyInput = (e)=>{
-		if(e.code === 'Escape' || e.code === 'Enter' || e.code === "NumpadEnter") setShowPlaybackSettings(false);
-	}
+function PlaybackSettings({ setShowPlaybackSettings, theaterController }) {
+  const {
+    playbackRate,
+    setPlaybackRate,
+    playbackVolume,
+    setPlaybackVolume,
+    toggleMusic,
+    isMuted,
+  } = theaterController;
+  const inputRef = useRef(null);
+  const handleInput = (e) => {
+    if (e.target.id === "speedInput") {
+      setPlaybackRate(() => {
+        localStorage.setItem("playbackRate", +e.target.value);
+        if (!document.getElementById("theater-audio-player")) return;
+        document.getElementById("theater-audio-player").playbackRate = +e.target
+          .value;
+        return parseFloat((+e.target.value || 1).toFixed(1)); // keeping it in float with one decimal point
+      });
+    } else {
+      setPlaybackVolume(() => {
+        localStorage.setItem("playbackVolume", +e.target.value);
+        if (!document.getElementById("theater-audio-player")) return;
+        document.getElementById("theater-audio-player").volume = +e.target
+          .value;
+        return parseFloat((+e.target.value).toFixed(1)); // keeping it in float with one decimal point
+      });
+    }
+  };
+  const handleKeyInput = (e) => {
+    if (e.code === "Escape" || e.code === "Enter" || e.code === "NumpadEnter")
+      setShowPlaybackSettings(false);
+  };
 
-	useEffect(()=>{
-		inputRef.current.focus();
-	},[])
-  
-  const decimalPaddedRate = (playbackRate||1).toFixed(1);
+  useEffect(() => {
+    inputRef.current.focus();
+  }, []);
 
-	return(
+  const decimalPaddedRate = (playbackRate || 1).toFixed(1);
+
+  return (
     <div className="theater-config" onKeyDown={handleKeyInput}>
-    <div className="theater-config-container">
+      <div className="theater-config-container">
         <div className="playback-rate-label">{label("playback_rate")}:</div>
         <div className="theater-config-value">{decimalPaddedRate} ×</div>
-    </div>
+      </div>
 
-    <div className="playback-rate-input">
-            <input ref={inputRef} type="range" id="speedInput" min="0.8" max="2.0" value={playbackRate} step="0.2" onChange={handleInput}/>
-        </div>
+      <div className="playback-rate-input">
+        <input
+          ref={inputRef}
+          type="range"
+          id="speedInput"
+          min="0.8"
+          max="2.0"
+          value={playbackRate}
+          step="0.2"
+          onChange={handleInput}
+        />
+      </div>
 
-        <hr/>
-    <div className="theater-config-container">
+      <hr />
+      <div className="theater-config-container">
         <div className="playback-volume-label">{label("playback_volume")}:</div>
-        <div className="theater-config-value">{playbackVolume*100}%</div>
-    </div>
+        <div className="theater-config-value">{playbackVolume * 100}%</div>
+      </div>
 
-    <div className="playback-volume-input">
-            <input type="range" id="volumeInput" min="0" max="1.0" value={playbackVolume} step="0.2" onChange={handleInput}/>
+      <div className="playback-volume-input">
+        <input
+          type="range"
+          id="volumeInput"
+          min="0"
+          max="1.0"
+          value={playbackVolume}
+          step="0.2"
+          onChange={handleInput}
+        />
+      </div>
+      <hr />
+      <div className="theater-config-container">
+        <div className="background-music-label">
+          {label("background_music")}:
         </div>
-    <hr/>
-    <div className="theater-config-container">
-        <div className="background-music-label">{label("background_music")}:</div>
-        <div><Switch 
-                            id="audioSwitch"
-                            onText={label("on")}
-                            offText={label("off")}
-                            onChange={toggleMusic}
-                            value={!isMuted}
-                            onColor="default"
-                            offColor="default" /></div>
+        <div>
+          <Switch
+            id="audioSwitch"
+            onText={label("on")}
+            offText={label("off")}
+            onChange={toggleMusic}
+            value={!isMuted}
+            onColor="default"
+            offColor="default"
+          />
+        </div>
+      </div>
     </div>
-
-</div>
-	)
+  );
 }
 
 function ProgressBar({ percent }) {
@@ -1442,25 +1634,25 @@ function TheaterPeoplePlacePanel({ theaterController }) {
     cursorIndex,
     isScrollingPanel,
     currentProgress,
-		currentDuration,
-    appController
+    currentDuration,
+    appController,
   } = theaterController;
   const people =
-    queue[cursorIndex]?.people?.map(i => ({ ...i, type: "people" })) || [];
+    queue[cursorIndex]?.people?.map((i) => ({ ...i, type: "people" })) || [];
   const places =
-    queue[cursorIndex]?.places?.map(i => ({ ...i, type: "places" })) || [];
+    queue[cursorIndex]?.places?.map((i) => ({ ...i, type: "places" })) || [];
   const peoplePlace = [...people, ...places];
 
   const classHide = !peoplePlace.length ? "hidden" : "";
   const currentItemIndex = Math.floor(
-    ((currentProgress * 2) / 100) * peoplePlace.length
+    ((currentProgress * 2) / 100) * peoplePlace.length,
   );
 
   const popUpItem = (type, id) => {
     theaterController.pause();
     appController.functions.setPopUp({
       type,
-      ids: [id]
+      ids: [id],
     });
   };
 
@@ -1470,7 +1662,12 @@ function TheaterPeoplePlacePanel({ theaterController }) {
 
       const { type } = item;
 
-      const name = item?.name.replace(/[0-9]/g, "<sup>$&</sup>").split(",").reverse().join(" ").replace(/\s+/g, " ");
+      const name = item?.name
+        .replace(/[0-9]/g, "<sup>$&</sup>")
+        .split(",")
+        .reverse()
+        .join(" ")
+        .replace(/\s+/g, " ");
       let caption = item?.title || item.info || null;
       caption = caption?.replace(/[0-9]/g, "<sup>$&</sup>");
       const slug = item?.slug || null;
@@ -1492,47 +1689,46 @@ function TheaterPeoplePlacePanel({ theaterController }) {
     })
     .reverse();
 
-  const visibleItemCount = peoplePlaceEl.filter(item =>
-    item.props.className.includes("visible")
+  const visibleItemCount = peoplePlaceEl.filter((item) =>
+    item.props.className.includes("visible"),
   ).length;
 
-	let opacity = 1;
-  const currentTime = -0.5 +( (currentProgress / 100) *( currentDuration +1));
+  let opacity = 1;
+  const currentTime = -0.5 + (currentProgress / 100) * (currentDuration + 1);
   //fade in and out in first and last 3 seconds
   const secondsBuffer = 1.5;
   if (currentTime < secondsBuffer) opacity = currentTime / secondsBuffer;
   if (currentTime > currentDuration - secondsBuffer)
     opacity = (currentDuration - currentTime) / secondsBuffer;
 
-  if(!currentTime || !isScrollingPanel) opacity = 0;
-    useLayoutEffect(() => {
-      setTransitioning(true);
-    },[cursorIndex]);
+  if (!currentTime || !isScrollingPanel) opacity = 0;
+  useLayoutEffect(() => {
+    setTransitioning(true);
+  }, [cursorIndex]);
 
   const [transitioning, setTransitioning] = useState(true);
   useEffect(() => {
-    if(transitioning && currentProgress>0) setTransitioning(false);
-  },[currentProgress])
+    if (transitioning && currentProgress > 0) setTransitioning(false);
+  }, [currentProgress]);
 
-
-  const isPlaying = !document.getElementById(`theater-audio-player`)?.ended
-  && !document.getElementById(`theater-audio-player`)?.seeking
-  && document.getElementById(`theater-audio-player`)?.currentTime > 0;
+  const isPlaying =
+    !document.getElementById(`theater-audio-player`)?.ended &&
+    !document.getElementById(`theater-audio-player`)?.seeking &&
+    document.getElementById(`theater-audio-player`)?.currentTime > 0;
 
   const backgroundImage = `${assetUrl}/theater/people-1`;
 
-  if(!isPlaying || !isScrollingPanel) opacity = 0;
+  if (!isPlaying || !isScrollingPanel) opacity = 0;
   return (
     <div
-      className={
-        `theater-people-place-panel ${classHide}`
-      }
-      style={{backgroundImage:`url(${backgroundImage})`}}
+      className={`theater-people-place-panel ${classHide}`}
+      style={{ backgroundImage: `url(${backgroundImage})` }}
     >
       <h4>{label("people_and_places")}</h4>
       <div className="theater-people-place-items" style={{ opacity }}>
-        <div className={"spacer itemCount" + visibleItemCount}/>
-        {peoplePlaceEl}</div>
+        <div className={"spacer itemCount" + visibleItemCount} />
+        {peoplePlaceEl}
+      </div>
     </div>
   );
 }
@@ -1542,7 +1738,7 @@ function TheaterImagePanel({ theaterController }) {
     queue,
     cursorIndex,
     currentProgress,
-    currentDuration
+    currentDuration,
   } = theaterController;
   const percentZoomPerSec = 0.4 / 30;
   const endZoom = percentZoomPerSec * currentDuration;
@@ -1551,7 +1747,7 @@ function TheaterImagePanel({ theaterController }) {
 
   useEffect(() => {
     //preload images
-    images.forEach(img => {
+    images.forEach((img) => {
       const image = new Image();
       image.src = `${assetUrl}/art/${img.id}`;
     });
@@ -1577,14 +1773,16 @@ function TheaterImagePanel({ theaterController }) {
     opacity = (currentDuration - currentTime) / secondsBuffer;
 
   const imgEl = image ? (
-    <div className="img-element-container" 
-    style={{
-      transform: `scale(${scale}) `,
-      opacity
-    }}>
+    <div
+      className="img-element-container"
+      style={{
+        transform: `scale(${scale}) `,
+        opacity,
+      }}
+    >
       <img
         src={`${assetUrl}/art/${image.id}`}
-        style={{backgroundImage:`url(${assetUrl}/theater/canvas-1)`}}
+        style={{ backgroundImage: `url(${assetUrl}/theater/canvas-1)` }}
       />
     </div>
   ) : null;
@@ -1594,16 +1792,17 @@ function TheaterImagePanel({ theaterController }) {
       <h4>{label("art")}</h4>
       <div className="theater-image-container">{imgEl}</div>
       <div className="imageCaption" style={{ opacity }}>
-        {(image|| {}).title}
+        {(image || {}).title}
       </div>
     </div>
   );
 }
 
 function TheaterCommentFeed({ theaterController }) {
-
-  const filter = theaterController.appController.states.preferences.commentary.filter;
-  const blacklist = (filter.type==="blacklist" ? filter?.sources : []).map(parseInt) || [];
+  const filter =
+    theaterController.appController.states.preferences.commentary.filter;
+  const blacklist =
+    (filter.type === "blacklist" ? filter?.sources : []).map(parseInt) || [];
   const [comments, setComments] = useState(new Set());
   const secondsBetweenComments = 5;
   const {
@@ -1611,38 +1810,47 @@ function TheaterCommentFeed({ theaterController }) {
     cursorIndex,
     currentProgress,
     currentDuration,
-		isPlaying
+    isPlaying,
   } = theaterController;
   const currentItem = queue[cursorIndex] || null;
   const coms = currentItem?.coms || [];
-  const filteredcoms = coms.filter(com => {
+  const filteredcoms = coms.filter((com) => {
     const sourceId = com.id.toString().substr(5, 3);
     if (!com.preview?.trim()) return false;
 
-    if ([...blacklist, 41, 161, 162, 163, 164, 165, 166].includes(parseInt(sourceId)))
+    if (
+      [...blacklist, 41, 161, 162, 163, 164, 165, 166].includes(
+        parseInt(sourceId),
+      )
+    )
       return false;
     return true;
   });
   const allowedMessageCount = currentDuration / secondsBetweenComments;
   const queuedMessages = filteredcoms.slice(0, allowedMessageCount); //randomized earlier
   const division = queuedMessages.length > 5 ? queuedMessages.length : 5; // this is for items with low comment count, so its coms dont'get skipped.
-  const commentCursor = Math.floor(  (division * (currentProgress * 0.7)) / 100 );
+  const commentCursor = Math.floor((division * (currentProgress * 0.7)) / 100);
   useEffect(async () => {
-		if(!isPlaying) return;
+    if (!isPlaying) return;
     //wait 1-3 seconds
-    await new Promise(resolve =>
-      setTimeout(resolve, 1000 + Math.random() * 2000)
+    await new Promise((resolve) =>
+      setTimeout(resolve, 1000 + Math.random() * 2000),
     );
     if (!queuedMessages.length) return;
     if (!queuedMessages[commentCursor]) return;
-    const onDeckComment = queuedMessages.filter((_,index)=>index <= commentCursor);
-    setComments(prev=>new Set([...prev, ...onDeckComment]));
-  }, [commentCursor,isPlaying]);
+    const onDeckComment = queuedMessages.filter(
+      (_, index) => index <= commentCursor,
+    );
+    setComments((prev) => new Set([...prev, ...onDeckComment]));
+  }, [commentCursor, isPlaying]);
 
   return (
     <div className="theater-comment-panel">
       <h4>{label("commentary")}</h4>
-      <CommentFeed comments={[...comments]} theaterController={theaterController} />
+      <CommentFeed
+        comments={[...comments]}
+        theaterController={theaterController}
+      />
     </div>
   );
 }
@@ -1671,7 +1879,7 @@ const Comment = ({ com, theaterController }) => {
     theaterController.pause();
     appController.functions.setPopUp({
       type: "commentary",
-      ids: [com.id]
+      ids: [com.id],
     });
   };
 
