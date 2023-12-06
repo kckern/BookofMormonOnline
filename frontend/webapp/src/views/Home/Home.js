@@ -228,7 +228,7 @@ function RecentFinishers({ finishers }) {
             />
             <span className="trophies">
               {m.finished?.map((i) => (
-                <img src={trophy} key={i}/>
+                <img src={trophy} key={i} />
               ))}
             </span>
           </div>
@@ -289,7 +289,7 @@ function LeaderBoard({ leaders }) {
             />
             <span className="trophies">
               {m.finished?.map((i) => (
-                <img src={trophy} key={i}/>
+                <img src={trophy} key={i} />
               ))}
             </span>
           </div>
@@ -490,16 +490,10 @@ export function GroupCallToAction({ appController, groupData, joinlabel }) {
 
     if (results?.joinOpenGroup?.isSuccess) {
       let channel_url = results.joinOpenGroup.channel;
-      appController.sendbird.sb.GroupChannel.getChannel(channel_url, function(
-        groupChannel,
-        error,
-      ) {
-        if (error) {
-          // Handle error.
-          console.log({ error });
-          toast.warn(label("join_failed"));
-          return false;
-        }
+      try {
+        const groupChannel = await appController.sendbird.sb.groupChannel.getChannel(
+          channel_url,
+        );
         appController.functions.setActiveStudyGroup(groupChannel);
         appController.functions.setStudyMode(true);
         appController.functions.openDrawer(true);
@@ -508,7 +502,12 @@ export function GroupCallToAction({ appController, groupData, joinlabel }) {
           .then((list) => appController.functions.setStudyGroups(list));
         //TODO: Refresh Home
         return true;
-      });
+      } catch (error) {
+        // Handle error.
+        console.log({ error });
+        toast.warn(label("join_failed"));
+        return false;
+      }
     } else {
       //fail
       console.log({ results, url, userToken });

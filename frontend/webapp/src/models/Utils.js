@@ -600,6 +600,7 @@ export function breakCache({ currentTarget }) {
   getFwdUrl(currentTarget.src).then((url) => (currentTarget.src = url));
 }
 export async function getFwdUrl(url) {
+  console.log("Url", url);
   return fetch(url)
     .then((r) => r)
     .then((data) => data.url.replace(/\?.*?$/, ""))
