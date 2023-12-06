@@ -1126,8 +1126,10 @@ export function LikeButton({ type, message, appController }) {
         if (r === appController.states.user.social?.user_id) liked = true;
       });
 
-  let channel = appController.states.studyGroup.activeGroup;
-  const toggleReaction = (emojiKey) => {
+  const toggleReaction = async (emojiKey) => {
+    let channel = await appController.sendbird.sb.groupChannel.getChannel(
+      message.channelUrl,
+    );
     if (!liked) {
       let tmp = { ...reacters };
       if (tmp.like === undefined) tmp.like = [];

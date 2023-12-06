@@ -531,15 +531,11 @@ export default class SendbirdController {
     } catch (e) {}
     data.description = newDesc;
     let newData = JSON.stringify(data);
-    return await channel.updateChannel(
-      newName,
-      channel.coverUrl,
-      newData,
-      (response, err) => {
-        if (err) error(err.message);
-        return response;
-      },
-    );
+    return await channel.updateChannel({
+      name: newName,
+      coverUrl: channel.coverUrl,
+      data: newData,
+    });
   }
 }
 
@@ -547,7 +543,6 @@ export default class SendbirdController {
 function AppHandlers(appController) {
   return {
     onMessageReceived: (channel, message) => {
-      console.log("Recieved message", message);
       if (!message) return false;
       if (message.parentMessageId !== 0) {
         let event = new CustomEvent(
@@ -621,7 +616,7 @@ function AppHandlers(appController) {
     },
 
     onTypingStatusUpdated: (channel) => {
-      var typers = channel.getTypingMembers();
+      var typers = channel.getTypingUsers();
       if (!channel) return false;
       if (typers) {
         var event = new CustomEvent("typingStatusUpdated");
@@ -643,6 +638,7 @@ function AppHandlers(appController) {
       refreshChannel(channel, appController);
     },
     onUserLeft: (channel, user) => {
+      if (user.state === null) return;
       refreshChannel(channel, appController);
     },
     onMetaDataUpdated: (channel, metaData) => {

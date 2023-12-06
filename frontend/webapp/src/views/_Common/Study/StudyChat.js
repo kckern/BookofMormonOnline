@@ -556,8 +556,10 @@ function TypingIndicators({ appController, channel }) {
 
   if (!typerIds || typerIds?.length === 0 || timeSince < 5000) return null;
 
-  let typers = typerIds.map(
-    (id) => appController.states.studyGroup.activeGroup.memberMap[id],
+  let typers = typerIds.map((id) =>
+    appController.states.studyGroup.activeGroup.members.find(
+      (member) => member.userId === id,
+    ),
   );
   if (typers.length === 0) return null;
   let image = typers.map((user) => (
@@ -631,7 +633,7 @@ export function StudyGroupThread({
     //    new sendBirds.me.MessageMetaArray('itemType', ['tablet']),
     //    new sendBirds.me.MessageMetaArray('quality', ['best', 'good'])
     //];
-		
+
     try {
       channel.sendUserMessage(params).onSucceeded((message) => {
         window.clicky?.goal("comment");
