@@ -215,10 +215,24 @@ function GroupBrowser({ appController, activeGroup, setActiveGroup }) {
 }
 
 function RecentFinishers({ finishers }) {
+  const titleFormatter = (phrase, data) => `<b>${phrase}: </b>${data}</br>`;
+  const history = useHistory();
+  console.log("Finishers", finishers);
   return (
     <div className="leaderboard">
+      <ReactTooltip id="leaderBoardItem-tip" place="bottom" effect="solid" />
       {finishers.slice(0, 5).map((m, i) => (
-        <div className="leaderBoardItem" key={`finisher-${i}`}>
+        <div
+          className="leaderBoardItem"
+          key={i}
+          data-for="leaderBoardItem-tip"
+          onClick={() => history.push(`/${m.bookmark}`)}
+          data-tip={
+            titleFormatter("Last seen", timeAgoString(m.lastseen)) +
+            titleFormatter("Last studied", m.laststudied)
+          }
+          data-html={true}
+        >
           <div className="rank">{i + 1}</div>
           <div className="img-container">
             <img
@@ -263,18 +277,18 @@ function LeaderBoard({ leaders }) {
           lastseen
           laststudied
           bookmark*/
-
+  const history = useHistory();
   const titleFormatter = (phrase, data) => `<b>${phrase}: </b>${data}</br>`;
   return (
     <div className="leaderboard">
-      <ReactTooltip id="leaderBoardItem-tip" />
+      <ReactTooltip id="leaderBoardItem-tip" place="bottom" effect="solid" />
       {leaders.map((m, i) => (
         <div
           className="leaderBoardItem"
           key={i}
+          onClick={() => history.push(`/${m.bookmark}`)}
           data-for="leaderBoardItem-tip"
           data-tip={
-            titleFormatter("Bookmark", m.bookmark) +
             titleFormatter("Last seen", timeAgoString(m.lastseen)) +
             titleFormatter("Last studied", m.laststudied)
           }
