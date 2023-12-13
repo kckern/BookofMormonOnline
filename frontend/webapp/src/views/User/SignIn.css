@@ -344,10 +344,6 @@ h2 > span {
   margin-left: 1em;
 }
 
-.studyList {
-  height: calc(100vh - 250px);
-  overflow: auto;
-}
 .descField a {
 }
 .descField a:hover {
