@@ -217,7 +217,6 @@ function GroupBrowser({ appController, activeGroup, setActiveGroup }) {
 function RecentFinishers({ finishers }) {
   const titleFormatter = (phrase, data) => `<b>${phrase}: </b>${data}</br>`;
   const history = useHistory();
-  console.log("Finishers", finishers);
   return (
     <div className="leaderboard">
       <ReactTooltip id="leaderBoardItem-tip" place="bottom" effect="solid" />

@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-globals */
 import React, { useState, useEffect, useCallback } from "react";
 import crypto from "crypto-browserify";
 import date from "date-and-time";
@@ -600,7 +601,6 @@ export function breakCache({ currentTarget }) {
   getFwdUrl(currentTarget.src).then((url) => (currentTarget.src = url));
 }
 export async function getFwdUrl(url) {
-  console.log("Url", url);
   return fetch(url)
     .then((r) => r)
     .then((data) => data.url.replace(/\?.*?$/, ""))
@@ -620,12 +620,65 @@ export function isMobile() {
   return window.innerWidth <= 900;
 }
 
+function PopupCenter(e, n, t, i) {
+  var o = void 0 != window.screenLeft ? window.screenLeft : screen.left,
+    d = void 0 != window.screenTop ? window.screenTop : screen.top,
+    c = window.innerWidth
+      ? window.innerWidth
+      : document.documentElement.clientWidth
+      ? document.documentElement.clientWidth
+      : screen.width,
+    w = window.innerHeight
+      ? window.innerHeight
+      : document.documentElement.clientHeight
+      ? document.documentElement.clientHeight
+      : screen.height,
+    r = c / 2 - t / 2 + o,
+    h = w / 2 - i / 2 + d,
+    s = window.open(
+      e,
+      n,
+      "scrollbars=yes, width=" +
+        t +
+        ", height=" +
+        i +
+        ", top=" +
+        h +
+        ", left=" +
+        r,
+    );
+  return window.focus && s.focus(), !1;
+}
+
+function sgshow(el) {
+  PopupCenter(el.href, "Scripture Guide", 1000, 750);
+}
 export function ParseMessage(string) {
   if (typeof string !== "string") return string;
   const { html, urls } = replaceURLWithHTMLLinks(string);
+  const htmlResult = HTMLReactParser(html, {
+    replace: (domNode) => {
+      if (domNode.attribs && domNode.attribs.onclick) {
+        return (
+          <a
+            className={domNode.attribs.classname}
+            href={domNode.attribs.href}
+            target={domNode.attribs.target}
+            sg-flag={domNode.attribs["sg-flag"]}
+            onClick={(e) => {
+              sgshow(e.target);
+              return false;
+            }}
+          >
+            {domNode.children[0].data}
+          </a>
+        );
+      }
+    },
+  });
   return (
     <>
-      {HTMLReactParser(html)}
+      {htmlResult}
       <LinkPreviewContainer urls={urls} />
     </>
   );

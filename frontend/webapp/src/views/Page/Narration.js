@@ -116,6 +116,7 @@ function Narration({ rowData, pageController, addHighlight }) {
   const setHighlights = (activeId, previewIds, commentHighlights) => {
     const rowImageData = narrationController.supplement.image;
     const rowCommentaryData = narrationController.supplement.commentary;
+    console.log("rowImageData", rowImageData);
     var highlights = [];
     if (rowImageData !== undefined) {
       for (let i in rowImageData) {
@@ -604,6 +605,10 @@ function FacsimilePanel({ narrationController }) {
   const [position, setPosition] = useState("center center");
   useEffect(() => {
     // if (narrationController.states.isOpen) debugger;
+    if (narrationController.states.faxData === undefined) {
+      return null;
+    }
+
     let initOpenVersion =
       narrationController.pageController.states.initOpen.faxVersion;
     let fromURL =
@@ -631,10 +636,15 @@ function FacsimilePanel({ narrationController }) {
       label("home_title");
   }, [narrationController.states.activeFax]);
 
+  if (narrationController.states.faxData === undefined) {
+    return null;
+  }
+
   let appController = narrationController.appController;
   let ref = narrationController.data.text.heading;
   let slug = narrationController.data.text.slug;
   let faxWithComments = idsWithComments("fax", narrationController);
+
   var tabs = (
     <div className="thumb_tabs">
       <ul>
