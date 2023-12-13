@@ -240,9 +240,9 @@ function RecentFinishers({ finishers }) {
               alt={m.nickname}
               style={privateStyle(m.nickname)}
             />
-            <span class="trophies">
-              {m.finished?.map((i,j) => (
-                <img src={trophy} key={`trophy-${j}`} />
+            <span className="trophies">
+              {m.finished?.map((i) => (
+                <img src={trophy} key={i} />
               ))}
             </span>
           </div>
