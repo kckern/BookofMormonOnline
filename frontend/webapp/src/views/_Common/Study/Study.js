@@ -76,7 +76,6 @@ export default function Comments({
     textbox.classList.add("sending");
     textbox.disabled = true;
     let channel = appController?.states?.studyGroup?.activeGroup;
-
     ///appController.functions.newMessage({message:text, channelUrl:channel.url})
     let data = {};
     if (linkData) data.links = linkData;
