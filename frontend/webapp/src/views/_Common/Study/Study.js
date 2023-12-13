@@ -45,18 +45,19 @@ export default function Comments({
     crypto
       .createHash("md5")
       .update(crypto.randomBytes(20).toString("hex"))
-      .digest("hex")
+      .digest("hex"),
   );
   const [locationHash] = useState(
     crypto
       .createHash("md5")
       .update(crypto.randomBytes(20).toString("hex"))
-      .digest("hex")
+      .digest("hex"),
   );
 
   useEffect(() => {
-    if (document.getElementById(threadHash)?.value.length || 0 > 0) setAddComments(true);
-  }, [document.getElementById(threadHash)?.value.length])
+    if (document.getElementById(threadHash)?.value.length || 0 > 0)
+      setAddComments(true);
+  }, [document.getElementById(threadHash)?.value.length]);
 
   if (!appController) appController = pageController?.appController;
   if (!appController?.states?.studyGroup?.studyModeOn) return null;
@@ -70,7 +71,7 @@ export default function Comments({
   if (!appController?.sendbird?.sb?.currentUser) return null;
   if (!appController?.states?.studyGroup?.activeGroup) return null;
 
-  const sendMessage = (textbox, parentMessageId) => {
+  const sendMessage = async (textbox, parentMessageId) => {
     let text = textbox.value;
     textbox.classList.add("sending");
     textbox.disabled = true;
@@ -83,26 +84,30 @@ export default function Comments({
     if (text === "" && highlights && highlights.length > 0) {
       text = "•";
       textbox.innerText = label("saving");
-      data.description = label("x_added_y_highlight" + (highlights.length > 1 ? "s" : ""), [
-        appController.sendbird.sb.currentUser.nickname,
-        highlights.length
-      ]);
+      data.description = label(
+        "x_added_y_highlight" + (highlights.length > 1 ? "s" : ""),
+        [appController.sendbird.sb.currentUser.nickname, highlights.length],
+      );
     }
     if (text === "" && linkData.img) {
       text = "•";
       textbox.innerText = "⭐ " + label("highlighting");
-      data.description = label("x_highlighted_image", [appController.sendbird.sb.currentUser.nickname]);
+      data.description = label("x_highlighted_image", [
+        appController.sendbird.sb.currentUser.nickname,
+      ]);
     }
     if (text === "" && linkData.fax) {
       text = "•";
       textbox.innerText = "⭐ " + label("highlighting");
-      data.description = label("x_highlighted_facsimile", [appController.sendbird.sb.currentUser.nickname]);
+      data.description = label("x_highlighted_facsimile", [
+        appController.sendbird.sb.currentUser.nickname,
+      ]);
     }
-    const params = new appController.sendbird.sb.UserMessageParams();
+    const params = {};
 
     const mentionUsers = getUsersFromTextInput(
       appController,
-      inputRef.current?.value
+      inputRef.current?.value,
     );
     if (mentionUsers.length > 0) {
       params.mentionType = "users"; // Either 'users' or 'channel'
@@ -113,52 +118,53 @@ export default function Comments({
     if (parentMessageId) params.parentMessageId = parentMessageId;
     else params.customType = pageSlug;
 
+    try {
+      channel.sendUserMessage(params).onSucceeded(async (message) => {
+        window.clicky?.goal("comment");
+        textbox.value = "";
+        textbox.classList.remove("sending");
+        textbox.disabled = false;
+        textbox.focus();
 
-    setTimeout(channel.endTyping, 1000);
-    channel.sendUserMessage(params, function (message, error) {
-      if (error) {
-        // Handle error.
-        console.log(error);
-        return false;
-      }
-      window.clicky?.goal("comment");
-      textbox.value = "";
-      textbox.classList.remove("sending");
-      textbox.disabled = false;
-      textbox.focus();
+        if (text === "" && linkData.img) {
+          textbox.remove();
+        }
 
-      if (text === "" && linkData.img) {
-        textbox.remove();
-      }
+        if (removeHighlight) removeHighlight(-1, isQuote);
 
-      if (removeHighlight) removeHighlight(-1, isQuote);
-
-      if (parentMessageId) {
-        let event = new CustomEvent(
-          "addMessageToThread" + message.parentMessageId
-        );
-        event.message = message;
-        window.dispatchEvent(event);
-      } else {
-        let event = new CustomEvent("addMessage");
-        event.message = message;
-        window.dispatchEvent(event);
-        pageController.functions.addToPageComments(message);
-        if (appController.states.popUp.activeId === "" + linkData.com)
-          appController.functions.markPopUpComments(true);
-      }
-    });
+        if (parentMessageId) {
+          let event = new CustomEvent(
+            "addMessageToThread" + message.parentMessageId,
+          );
+          event.message = message;
+          window.dispatchEvent(event);
+        } else {
+          let event = new CustomEvent("addMessage");
+          event.message = message;
+          window.dispatchEvent(event);
+          pageController.functions.addToPageComments(message);
+          if (appController.states.popUp.activeId === "" + linkData.com)
+            appController.functions.markPopUpComments(true);
+        }
+      });
+    } catch (error) {
+      console.log({ error });
+      return false;
+    }
+    channel.endTyping();
   };
 
   const replyToMessage = (e) => {
-    let textarea =
-      e.target.parentNode.parentNode?.parentNode?.querySelector("textarea");
+    let textarea = e.target.parentNode.parentNode?.parentNode?.querySelector(
+      "textarea",
+    );
     let author =
       e.target?.parentNode?.parentNode?.attributes?.author?.value || "";
     if (!textarea) return false;
     if (!isMobile()) textarea.focus();
     textarea.value = `${author}: `;
   };
+
   let parentMessageId = firstComment ? firstComment.messageId : null;
   let channel = appController?.states?.studyGroup?.activeGroup;
   let bottomItem = (
@@ -179,7 +185,8 @@ export default function Comments({
         setThreadInputVal={setThreadInputVal}
         appController={appController}
         inputRef={inputRef}
-      /></>
+      />
+    </>
   );
 
   if (highlights && highlights.length > 0 && !addComments) {
@@ -208,7 +215,8 @@ export default function Comments({
           >
             {label("add_a_comment")}
           </Button>
-        </div></>
+        </div>
+      </>
     );
   }
 
@@ -222,7 +230,7 @@ export default function Comments({
       [firstComment].filter(
         (m) =>
           m?.message === "•" &&
-          m?._sender?.userId === appController.states.user.social?.user_id
+          m?.sender?.userId === appController.states.user.social?.user_id,
       ) || null;
     if (myHighlights.length === 0)
       highlightButton = (
@@ -238,7 +246,7 @@ export default function Comments({
       [firstComment].filter(
         (m) =>
           m?.message === "•" &&
-          m?._sender?.userId === appController.states.user.social?.user_id
+          m?.sender?.userId === appController.states.user.social?.user_id,
       ) || null;
     if (myHighlights.length === 0)
       highlightButton = (
@@ -301,9 +309,7 @@ export function MyComment({
           <div className="avatar" style={{ float: "left" }}>
             <img
               alt={member.nickname}
-              src={
-                member.plainProfileUrl
-              }
+              src={member.plainProfileUrl}
               onError={breakCache}
               className="img-circle img-no-padding img-responsive"
             />
@@ -326,9 +332,8 @@ export function MyComment({
         <div className="avatar" style={{ float: "left" }}>
           <img
             alt="avatar"
-            src={
-              appController.sendbird.sb.currentUser.plainProfileUrl
-            } onError={breakCache}
+            src={appController.sendbird.sb.currentUser.plainProfileUrl}
+            onError={breakCache}
             className="img-circle img-no-padding img-responsive"
           />
         </div>
@@ -356,7 +361,7 @@ export function CommentInput({
   const [typing, setTyping] = useState(false);
   const [timer, setTimer] = useState(false);
   const typingIndicator = () => {
-    if (typing) return false;
+    if (typing || channel === -1) return false;
     channel.startTyping();
     setTyping(true);
     clearTimeout(timer);
@@ -364,7 +369,7 @@ export function CommentInput({
       setTimeout(() => {
         channel.endTyping();
         setTyping(false);
-      }, 5000)
+      }, 5000),
     );
   };
 
@@ -376,21 +381,27 @@ export function CommentInput({
     });
   };
 
-  if (threadInputVal && document.getElementById(threadHash) && !document.getElementById(threadHash)?.value) {
+  if (
+    threadInputVal &&
+    document.getElementById(threadHash) &&
+    !document.getElementById(threadHash)?.value
+  ) {
     document.getElementById(threadHash).value = threadInputVal;
   }
-
 
   useEffect(() => {
     const tx = document.querySelector(".commentInput");
     for (let i = 0; i < tx.length; i++) {
-      tx[i].setAttribute("style", "height:" + (tx[i].scrollHeight) + "px;overflow-y:hidden;");
+      tx[i].setAttribute(
+        "style",
+        "height:" + tx[i].scrollHeight + "px;overflow-y:hidden;",
+      );
       tx[i].addEventListener("input", OnInput, false);
     }
 
     function OnInput() {
       this.style.height = "auto";
-      this.style.height = (this.scrollHeight) + "px";
+      this.style.height = this.scrollHeight + "px";
     }
   }, []);
 
@@ -490,6 +501,7 @@ function MessageList({
   isQuote,
 }) {
   if (!parentMessage) return null;
+
   return (
     <>
       <SingleComment
@@ -503,14 +515,16 @@ function MessageList({
         replyToMessage={replyToMessage}
         isQuote={isQuote}
       />
-      <ThreadedMessages
-        parentMessage={parentMessage}
-        pageController={pageController}
-        threadHash={threadHash}
-        appController={appController}
-        replyToMessage={replyToMessage}
-        setCommentHighlights={setCommentHighlights}
-      />
+      <>
+        <ThreadedMessages
+          parentMessage={parentMessage}
+          pageController={pageController}
+          threadHash={threadHash}
+          appController={appController}
+          replyToMessage={replyToMessage}
+          setCommentHighlights={setCommentHighlights}
+        />
+      </>
     </>
   );
 }
@@ -526,13 +540,17 @@ function ThreadedMessages({
   const [expanded, expand] = useState(false);
   const [needsToFetch, setNeedsToFetch] = useState(true);
   const [threadedMessages, setThreadMessages] = useState([]);
-  const [listenerIsSet, setListener] = useState(false);
 
   //Listener Callbacks
-
   const addMessageToThread = (e) => {
     !expanded && expand(true);
-    if (threadedMessages.find((x) => x.messageId === e.message.messageId)) return false;
+    if (threadedMessages.find((x) => x.messageId === e.message.messageId))
+      return false;
+    if (!parentMessage.threadInfo) {
+      appController.sendbird.loadThreadedMessages(parentMessage).then((r) => {
+        pageController.functions.addToPageComments(r.parentMessage);
+      });
+    }
     setThreadMessages((messages) => [...messages, e.message]);
   };
   const updateMessageInThread = (e) => {
@@ -544,50 +562,49 @@ function ThreadedMessages({
         return [...messages];
       });
   };
-  const deleteMessageFromThread = (messageId) => {
+  const deleteMessageFromThread = (e) => {
     !expanded && expand(true);
-    setThreadMessages((messages) => {
-      //  debugger;
-      messages = messages.filter((x) => x.messageId !== messageId);
-      return [...messages];
+    appController.sendbird.loadThreadedMessages(parentMessage).then((r) => {
+      pageController.functions.addToPageComments(r.parentMessage);
+      setThreadMessages(r.threadedMessages);
     });
   };
 
-  if (!listenerIsSet) {
-    setListener(true);
-    //REMOVE
-    window.removeEventListener(
-      "addMessageToThread" + parentMessage.messageId,
-      addMessageToThread,
-      false
-    );
-    window.removeEventListener(
-      "updateMessageInThread" + parentMessage.messageId,
-      updateMessageInThread,
-      false
-    );
-    window.removeEventListener(
-      "deleteMessageFromThread" + parentMessage.messageId,
-      deleteMessageFromThread,
-      false
-    );
-    //ADD
+  useEffect(() => {
+    if (parentMessage.messageId === undefined) return false;
     window.addEventListener(
       "addMessageToThread" + parentMessage.messageId,
       addMessageToThread,
-      false
+      false,
     );
     window.addEventListener(
       "updateMessageInThread" + parentMessage.messageId,
       updateMessageInThread,
-      false
+      false,
     );
     window.addEventListener(
       "deleteMessageFromThread" + parentMessage.messageId,
       deleteMessageFromThread,
-      false
+      false,
     );
-  }
+    return () => {
+      window.removeEventListener(
+        "addMessageToThread" + parentMessage.messageId,
+        addMessageToThread,
+        false,
+      );
+      window.removeEventListener(
+        "updateMessageInThread" + parentMessage.messageId,
+        updateMessageInThread,
+        false,
+      );
+      window.removeEventListener(
+        "deleteMessageFromThread" + parentMessage.messageId,
+        deleteMessageFromThread,
+        false,
+      );
+    };
+  }, [parentMessage.messageId]);
 
   if (!parentMessage.threadInfo) return null;
 
@@ -601,7 +618,6 @@ function ThreadedMessages({
     />
   ));
   // let names = parentMessage.threadInfo.mostRepliedUsers.map(u => [u.nickname]);
-
   if (threadedMessages.length > 0) {
     replyCount = threadedMessages.length;
     //TODO: Link faces and names
@@ -613,26 +629,30 @@ function ThreadedMessages({
   if (replyCount < 3 && !expanded) expand(true);
 
   if (expanded) {
-    if (threadedMessages.length > 0)
-      return threadedMessages.map((m, index) => {
+    if (threadedMessages.length > 0) {
+      const messages = threadedMessages.map((m, index) => {
         return (
-          <SingleComment
-            key={m.messageId}
-            message={m}
-            index={index}
-            pageController={pageController}
-            replyToMessage={replyToMessage}
-            threadHash={threadHash}
-            setCommentHighlights={setCommentHighlights}
-            appController={appController}
-          />
+          <>
+            <SingleComment
+              key={m.messageId}
+              message={m}
+              index={index}
+              pageController={pageController}
+              replyToMessage={replyToMessage}
+              threadHash={threadHash}
+              setCommentHighlights={setCommentHighlights}
+              appController={appController}
+            />
+          </>
         );
       });
+      return messages;
+    }
 
     if (needsToFetch) {
       setNeedsToFetch(false);
       appController.sendbird.loadThreadedMessages(parentMessage).then((r) => {
-        setThreadMessages(r.threadedReplies);
+        setThreadMessages(r.threadedMessages);
       });
     }
     return (
@@ -665,7 +685,6 @@ function SingleComment({
 
   const [isEditMessage, setEditMessage] = useState(false);
   const [highlights, setCommentHighlights] = useState(data && data.highlights);
-
 
   const removeHighlight = (i) => {
     if (i === -1) return setCommentHighlights([]);
@@ -717,7 +736,6 @@ function SingleComment({
   }
   let messageText = formatText(message, appController, true);
 
-
   let content = <div className="contenttext">{ParseMessage(messageText)}</div>;
   if (message.message === "•") content = null;
 
@@ -733,45 +751,50 @@ function SingleComment({
     setCommentHighlights([]);
   };
 
-  const {isBot} = message._sender?.metaData;
+  if (message.length === 0) return false;
+  const { isBot } = message?.sender?.metaData;
 
   return (
     <div
       className={"comment" + (isBot ? " botComment" : "")}
       key={key || message.messageId}
       threadHash={threadHash}
-      author={message?._sender?.nickname}
+      author={message?.sender?.nickname}
       id={message.messageId}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
       <div className="avatar" style={{ float: "left" }}>
         <img
-          src={message?._sender?.plainProfileUrl}
-          alt={message?._sender?.nickname}
+          src={message?.sender?.plainProfileUrl}
+          alt={message?.sender?.nickname}
           className="img-circle img-no-padding img-responsive"
         />
       </div>
-      {isEditMessage ? <EditComment
-        message={message}
-        index={index}
-        handleEditComment={handleEditComment}
-        removeHighlight={removeHighlight}
-        highlights={highlights}
-        setCommentHighlights={setCommentHighlights}
-        pageController={pageController}
-        editComment={true}
-        isQuote={isQuote}
-        appController={appController}
-      /> : <div className="commentcontainer">
-        <div className="commentcontent">
-          <div className="name">{message?._sender?.nickname} {isBot && <span>BOT</span>}</div>
-          
-          {highlightTags}
-          {content}
+      {isEditMessage ? (
+        <EditComment
+          message={message}
+          index={index}
+          handleEditComment={handleEditComment}
+          removeHighlight={removeHighlight}
+          highlights={highlights}
+          setCommentHighlights={setCommentHighlights}
+          pageController={pageController}
+          editComment={true}
+          isQuote={isQuote}
+          appController={appController}
+        />
+      ) : (
+        <div className="commentcontainer">
+          <div className="commentcontent">
+            <div className="name">
+              {message?.sender?.nickname} {isBot && <span>BOT</span>}
+            </div>
+            {highlightTags}
+            {content}
+          </div>
         </div>
-      </div>}
-
+      )}
       <MessageFooter
         message={message}
         index={index}
@@ -792,15 +815,15 @@ export function EditComment({
   pageController,
   linkData,
   appController,
-  isQuote
+  isQuote,
 }) {
   const [showTagList, setShowTagList] = useState(false);
   const inputRef = useRef(null);
   const [commentMessage, setCommentMessage] = useState(message.message);
 
-
-  const [highlights, setHighlights] = useState(JSON.parse(message.data)?.highlights || []);
-
+  const [highlights, setHighlights] = useState(
+    JSON.parse(message.data)?.highlights || [],
+  );
 
   const removeHighlight = (i) => {
     if (i === -1) return setHighlights([]);
@@ -808,27 +831,25 @@ export function EditComment({
     setHighlights([...highlights]);
   };
 
-
   useEffect(
     () =>
       moveCaretToEnd(
-        document.querySelector(".editMessage" + message.messageId)
+        document.querySelector(".editMessage" + message.messageId),
       ),
-    [message.messageId]
+    [message.messageId],
   );
 
-  const updateComment = (textbox) => {
+  const updateComment = async (textbox) => {
     try {
       let text = commentMessage;
       textbox.classList.add("sending");
       textbox.disabled = true;
       let channel = pageController.appController.states.studyGroup.activeGroup;
 
-      const params =
-        new pageController.appController.sendbird.sb.UserMessageParams();
+      const params = {};
       const mentionUsers = getUsersFromTextInput(
         appController,
-        inputRef.current?.value
+        inputRef.current?.value,
       );
 
       if (mentionUsers.length > 0) {
@@ -860,35 +881,28 @@ export function EditComment({
 
       params.data = JSON.stringify({ ...data, index });
       params.message = text;
-      channel.updateUserMessage(
-        message.messageId,
-        params,
-        function (message, error) {
-          if (error) {
-            console.log(error);
-            return false;
-          }
-          textbox.classList.remove("sending");
-          textbox.disabled = false;
-          textbox.focus();
 
-          if (text === "" && linkData.img) {
-            textbox.remove();
-          }
+      channel.updateUserMessage(message.messageId, params).then((message) => {
+        textbox.classList.remove("sending");
+        textbox.disabled = false;
+        textbox.focus();
 
-          if (message.parentMessageId) {
-            let event = new CustomEvent(
-              "updateMessageInThread" + message.parentMessageId
-            );
-            event.message = message;
-            window.dispatchEvent(event);
-          } else {
-            pageController.functions.updateToPageComment(message);
-          }
-          // if (removeHighlight) removeHighlight(-1);
-          handleEditComment();
+        if (text === "" && linkData.img) {
+          textbox.remove();
         }
-      );
+
+        if (message.parentMessageId) {
+          let event = new CustomEvent(
+            "updateMessageInThread" + message.parentMessageId,
+          );
+          event.message = message;
+          window.dispatchEvent(event);
+        } else {
+          pageController.functions.updateToPageComment(message);
+        }
+        // if (removeHighlight) removeHighlight(-1);
+        handleEditComment();
+      });
     } catch (err) {
       console.log("Update User Message ....", err);
       throw new Error(err);
@@ -903,7 +917,6 @@ export function EditComment({
         isQuote={isQuote}
       />
       <div className="mycomment form-group">
-
         <Textarea
           className={"form-control textarea editMessage" + message.messageId}
           autoFocus={!isMobile()}
@@ -953,36 +966,35 @@ function MessageFooter({
   isEdit,
 }) {
   let isSelf =
-    appController.states.user.social?.user_id === message?._sender?.userId;
+    appController.states.user.social?.user_id === message?.sender?.userId;
 
   let timestamp = timeAgoString(message.createdAt / 1000);
   let link = "/group/" + message.channelUrl + "/" + message.messageId;
 
   let likeObj = LikeButton({ type: "page", message, appController });
 
-  const deleteMessage = (e) => {
+  const deleteMessage = async (e) => {
     window.removeEventListener("deleteMessage", deleteMessage, false);
-    if (!e.isDelete) return true; // remove listiner if message model is cancled
-    appController.states.studyGroup.activeGroup.deleteMessage(
-      message,
-      function (response, error) {
-        e.hideDeleteMessageAlert();
-
-        if (error) {
-          console.log(error);
-          return false;
-        }
-        if (message.parentMessageId) {
-          let event = new CustomEvent(
-            "deleteMessageFromThread" + message.parentMessageId
-          );
-          event.index = index;
-          window.dispatchEvent(event);
-        } else {
-          appController.pageController.functions.deleteToPageComments(message);
-        }
+    if (!e.isDelete) return true; // remove listener if message model is canceled
+    try {
+      await appController.states.studyGroup.activeGroup.deleteMessage(message);
+      e.hideDeleteMessageAlert();
+      if (message.parentMessageId) {
+        let event = new CustomEvent(
+          "deleteMessageFromThread" + message.parentMessageId,
+        );
+        event.message = message;
+        window.dispatchEvent(event);
+      } else {
+        if (appController.activePageController === null) return false;
+        appController.activePageController.functions.deleteToPageComments(
+          message,
+        );
       }
-    );
+    } catch (error) {
+      console.log({ error });
+      return false;
+    }
   };
 
   const onClickDelete = () => {
@@ -1054,10 +1066,10 @@ function messageReacters(message, memberMap) {
   for (let i in message.reactions) {
     let r = message.reactions[i];
     reacters[r.key] = r.userIds
-      .map((id) => {
+      .map((id, index) => {
         return {
-          userId: memberMap[id]?.userId,
-          nickname: memberMap[id]?.nickname,
+          userId: memberMap[index]?.userId,
+          nickname: memberMap[index]?.nickname,
         };
       })
       .reverse();
@@ -1066,9 +1078,10 @@ function messageReacters(message, memberMap) {
 }
 
 export function LikeButton({ type, message, appController }) {
-  let memberMap = appController.states.studyGroup.activeGroup.memberMap;
+  let memberMap = appController.states.studyGroup.activeGroup.members;
+
   const [reacters, updateReacters] = useState(
-    messageReacters(message, memberMap)
+    messageReacters(message, memberMap),
   );
 
   const [init, setInit] = useState(false);
@@ -1084,12 +1097,12 @@ export function LikeButton({ type, message, appController }) {
     window.removeEventListener(
       "reactTo" + message.messageId,
       reactToMessage,
-      false
+      false,
     );
     window.addEventListener(
       "reactTo" + message.messageId,
       reactToMessage,
-      false
+      false,
     );
   }
 
@@ -1113,33 +1126,27 @@ export function LikeButton({ type, message, appController }) {
         if (r === appController.states.user.social?.user_id) liked = true;
       });
 
-  let channel = appController.states.studyGroup.activeGroup;
-  const toggleReaction = (emojiKey) => {
+  const toggleReaction = async (emojiKey) => {
+    let channel = await appController.sendbird.sb.groupChannel.getChannel(
+      message.channelUrl,
+    );
     if (!liked) {
       let tmp = { ...reacters };
       if (tmp.like === undefined) tmp.like = [];
       tmp.like = tmp.like.filter(
-        (u) => appController.states.user.social?.user_id !== u.userId
+        (u) => appController.states.user.social?.user_id !== u.userId,
       );
       liked = true;
       updateReacters(tmp);
-      channel.addReaction(message, emojiKey, function (reactionEvent, error) {
-        if (error) {
-        }
+      channel.addReaction(message, emojiKey).then((reactionEvent) => {
         message.applyReactionEvent(reactionEvent);
         updateReacters(messageReacters(message, memberMap));
       });
     } else {
-      channel.deleteReaction(
-        message,
-        emojiKey,
-        function (reactionEvent, error) {
-          if (error) {
-          }
-          message.applyReactionEvent(reactionEvent);
-          updateReacters(messageReacters(message, memberMap));
-        }
-      );
+      channel.deleteReaction(message, emojiKey).then((reactionEvent) => {
+        message.applyReactionEvent(reactionEvent);
+        updateReacters(messageReacters(message, memberMap));
+      });
     }
   };
 
@@ -1165,7 +1172,7 @@ export function LikeButton({ type, message, appController }) {
     if (likeCount === 0)
       return (
         <span className="likeCount" onClick={() => toggleReaction("like")}>
-          👍{" "}{label("action_like")}
+          👍 {label("action_like")}
         </span>
       );
     return (
@@ -1176,7 +1183,7 @@ export function LikeButton({ type, message, appController }) {
           data-for={tooltip_id}
           onClick={() => toggleReaction("like")}
         >
-          👍{" "}{likeCount}
+          👍 {likeCount}
         </span>
         <ReactTooltip id={tooltip_id} effect="solid" />
       </>

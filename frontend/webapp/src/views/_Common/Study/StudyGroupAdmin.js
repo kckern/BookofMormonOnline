@@ -10,7 +10,11 @@ import {
   InputGroupAddon,
   InputGroupText,
 } from "reactstrap";
-import { ContextMenu, ContextMenuItem, ContextMenuTrigger } from "rctx-contextmenu";
+import {
+  ContextMenu,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "rctx-contextmenu";
 import PictureWithOverlay from "../../User/PictureWithOverlay";
 
 import "./StudyGroupAdmin.css";
@@ -33,7 +37,7 @@ import { toast } from "react-toastify";
 
 export default function StudyGroupAdmin({ appController }) {
   const [group, setGroup] = useState(
-    appController.states.studyGroup.activeGroup
+    appController.states.studyGroup.activeGroup,
   );
   const [groupImage, setGroupImage] = useState({
     img: appController.states.studyGroup.activeGroup.coverUrl,
@@ -41,18 +45,17 @@ export default function StudyGroupAdmin({ appController }) {
   });
   const [openModal, setOpenModal] = useState(false);
 
-  useEffect(()=>{
-
+  useEffect(() => {
     if (appController.states.studyGroup.activeGroup.myRole !== "operator")
       return null;
     if (!appController.states.studyGroup.activeGroupOperators?.length) {
-      appController.sendbird?.fetchGroupOperators(appController.states.studyGroup.activeGroup)
+      appController.sendbird
+        ?.fetchGroupOperators(appController.states.studyGroup.activeGroup)
         .then((operators) => {
           appController.functions.setActiveGroupOperators(operators);
         });
     }
-  },[])
-
+  }, []);
 
   const saveProfileInfo = async (e) => {
     document.getElementById("group_name").disabled = true;
@@ -63,38 +66,29 @@ export default function StudyGroupAdmin({ appController }) {
     let group_name = document.getElementById("group_name").value;
     let group_description = document.getElementById("group_description").value;
 
-    await appController.sendbird.setGroupNameDescription(
-      group,
-      group_name,
-      group_description
-    );
-    await appController.sendbird.sb.GroupChannel.getChannel(
-      appController.states.studyGroup.activeGroup.url,
-      function (groupChannel, error) {
-        if (error) {
-          // handle error
-        }
-        groupChannel.updateChannel(
-          appController.states.studyGroup.activeGroup.name,
-          groupImage.file,
-          appController.states.studyGroup.activeGroup.data,
-          function (freshGroup, error) {
-            if (error) {
-              // handle error
-            }
-            appController.functions.setActiveStudyGroup(freshGroup);
-            setGroup(freshGroup);
-        
-            document.getElementById("group_name").disabled = false;
-            document.getElementById("group_description").disabled = false;
-            button.disabled = false;
-            button.innerText = label("saved");
-          }
-        );
-      }
-    );
+    try {
+      const groupChannel = await appController.sendbird.setGroupNameDescription(
+        group,
+        group_name,
+        group_description,
+      );
+
+      const updateParams = {};
+      updateParams.coverImage = groupImage.file;
+
+      const freshGroup = await groupChannel.updateChannel(updateParams);
+
+      appController.functions.setActiveStudyGroup(freshGroup);
+      setGroup(freshGroup);
+    } catch (error) {
+      console.log({ error });
+    }
+
+    document.getElementById("group_name").disabled = false;
+    document.getElementById("group_description").disabled = false;
+    button.disabled = false;
+    button.innerText = label("saved");
     //setTimeout(()=>appController.functions.hotUpdateActiveCover(freshGroup.coverUrl),1000);
-    
   };
 
   const removeMember = async (e, data) => {
@@ -145,19 +139,19 @@ export default function StudyGroupAdmin({ appController }) {
     return 0;
   };
 
-	const handleLeftMouseClick = (e) => {
-		let evt = new MouseEvent('contextmenu',{
-			bubbles:true,
-      clientX: e.clientX, 
-      clientY: e.clientY
-	});
-		e.target.dispatchEvent(evt);
-  }
+  const handleLeftMouseClick = (e) => {
+    let evt = new MouseEvent("contextmenu", {
+      bubbles: true,
+      clientX: e.clientX,
+      clientY: e.clientY,
+    });
+    e.target.dispatchEvent(evt);
+  };
 
   let description = null;
   try {
     description = JSON.parse(group.data)?.description;
-  } catch (e) { }
+  } catch (e) {}
 
   return (
     <div className={"StudyGroupChatPanel admin noselect"}>
@@ -242,7 +236,12 @@ export default function StudyGroupAdmin({ appController }) {
                         holdToDisplay={0}
                       >
                         <h5 className={"title"}>
-                          <span className="actions" onClick={handleLeftMouseClick}>⋮</span>
+                          <span
+                            className="actions"
+                            onClick={handleLeftMouseClick}
+                          >
+                            ⋮
+                          </span>
                           <img src={membericon} />
                           {member.nickname}
                           <span className="completed">{completed || 0}%</span>
@@ -251,8 +250,8 @@ export default function StudyGroupAdmin({ appController }) {
                     </CardHeader>
                     <CardBody>
                       <img src={member.plainProfileUrl} />
-                      </CardBody>
-                      <CardFooter>
+                    </CardBody>
+                    <CardFooter>
                       {isAdmin ? (
                         <div className="statusline">
                           <img src={admin} className="menuimg" />{" "}
@@ -305,75 +304,88 @@ export default function StudyGroupAdmin({ appController }) {
       </Card>
     </div>
   );
-
 }
-
-
 
 function RequestManagement({ appController }) {
   const token = appController.states.user.token;
   const group = appController.states.studyGroup.activeGroup;
-  const data = (testJSON(group.data)) ? JSON.parse(group.data) : {requests:[]}
+  const data = testJSON(group.data) ? JSON.parse(group.data) : { requests: [] };
   const [hash, setHash] = useState(null);
   const [requesters, setRequesters] = useState([]);
 
-
   useEffect(() => {
-    BoMOnlineAPI({requestedUsers:{token,channel:group.url}},{useCache:false}).then(res=>{
+    BoMOnlineAPI(
+      { requestedUsers: { token, channel: group.url } },
+      { useCache: false },
+    ).then((res) => {
       setRequesters(res.requestedUsers);
-    })
-
-  }, [])
-  if(!data.requests?.length) return null;
-  return <><CardHeader>
-
-    <h5 className={"title"}>
-      <img src={newuser} /> {label("x_memebership_requests", [data.requests.length])}
-    </h5>
-  </CardHeader>
-    <CardBody className="membershipRequests">
-      {requesters.map(userObj => <Requester userObj={userObj} appController={appController} />)}
-    </CardBody></>
+    });
+  }, []);
+  if (!data.requests?.length) return null;
+  return (
+    <>
+      <CardHeader>
+        <h5 className={"title"}>
+          <img src={newuser} />{" "}
+          {label("x_memebership_requests", [data.requests.length])}
+        </h5>
+      </CardHeader>
+      <CardBody className="membershipRequests">
+        {requesters.map((userObj) => (
+          <Requester userObj={userObj} appController={appController} />
+        ))}
+      </CardBody>
+    </>
+  );
 }
 
-
 function Requester({ appController, userObj }) {
-
   const [exits, setExists] = useState(true);
   const [waiting, setWaiting] = useState(false);
 
-  if(!exits || !userObj) return null;
-  let {nickname,user_id,picture,} = userObj;
+  if (!exits || !userObj) return null;
+  let { nickname, user_id, picture } = userObj;
 
-  const grantRequest = (grant)=>
-  {
-    setWaiting((grant) ? 1 :2)
+  const grantRequest = (grant) => {
+    setWaiting(grant ? 1 : 2);
     let token = appController.states.user.token;
     let channel = appController.states.studyGroup.activeGroup.url;
-    console.log({token,channel,user_id,grant});
-    BoMOnlineAPI({processRequest:{token,channel,user_id,grant}},{useCache:false}).then(success=>{
-      if(!success) return toast.warn(label("error"));
+    console.log({ token, channel, user_id, grant });
+    BoMOnlineAPI(
+      { processRequest: { token, channel, user_id, grant } },
+      { useCache: false },
+    ).then((success) => {
+      if (!success) return toast.warn(label("error"));
       setExists(false);
     });
-  }
+  };
 
-  return <Card>
-    <CardHeader>
-      <h5 className={"title"}>
-        <img src={membericon} />
-        {nickname}
-      </h5></CardHeader>
+  return (
+    <Card>
+      <CardHeader>
+        <h5 className={"title"}>
+          <img src={membericon} />
+          {nickname}
+        </h5>
+      </CardHeader>
 
-    <CardBody style={{
-      display: "flex",
-      width: "100%",
-      justifyContent: "center",
-    }}>
-      <img src={picture} />
-    </CardBody>
-    <CardFooter>
-      <Button color="success" onClick={()=>grantRequest(true)} >{label(waiting===1? "approving" : "approve")}</Button>
-      <Button color="danger" onClick={()=>grantRequest(false)} >{label(waiting===2? "denying" : "deny")}</Button>
-    </CardFooter>
-  </Card>
+      <CardBody
+        style={{
+          display: "flex",
+          width: "100%",
+          justifyContent: "center",
+        }}
+      >
+        <img src={picture} />
+      </CardBody>
+      <CardFooter>
+        <Button color="success" onClick={() => grantRequest(true)}>
+          {label(waiting === 1 ? "approving" : "approve")}
+        </Button>
+        <Button color="danger" onClick={() => grantRequest(false)}>
+          {label(waiting === 2 ? "denying" : "deny")}
+        </Button>
+      </CardFooter>
+    </Card>
+  );
 }

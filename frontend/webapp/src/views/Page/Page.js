@@ -10,7 +10,15 @@ import Section from "./Section";
 import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
 import "./Page.css";
 // import Comments from '../_Common/Study/Study';
-import { testJSON, findAncestor, scrollTo, label, playSound, getCoords, isMobile } from "src/models/Utils";
+import {
+  testJSON,
+  findAncestor,
+  scrollTo,
+  label,
+  playSound,
+  getCoords,
+  isMobile,
+} from "src/models/Utils";
 import { useRouteMatch } from "react-router-dom";
 
 import { Floaters } from "./Floaters";
@@ -33,17 +41,15 @@ function prepareInitOpen(params) {
 }
 
 export default function Page({ appController }) {
-
   const match = useRouteMatch();
   if (match.params.pageSlug === "study") {
-    let parts = localStorage.getItem("studybookmark")?.split("/").slice(-2) || [
-      null,
-      null,
-    ];
+    let parts = localStorage
+      .getItem("studybookmark")
+      ?.split("/")
+      .slice(-2) || [null, null];
     match.params.pageSlug = parts[0] || "lehites";
     match.params.textId = parts[1] || 1;
   }
-
 
   let initOpen = prepareInitOpen(match.params);
 
@@ -100,7 +106,11 @@ export default function Page({ appController }) {
           parts[0] = nextNum;
           let newSlug = parts.reverse().join("/");
           let el = document.querySelectorAll(`a[href='/${newSlug}']`)[0];
-          el?.scrollIntoView({ behavior: "smooth", block: "center", inline: "center" });
+          el?.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+            inline: "center",
+          });
           el?.click();
         },
         setPageData: (val) => {
@@ -164,27 +174,28 @@ export default function Page({ appController }) {
       };
       //Return the Row Controller
       return initPageController;
-    })()
+    })(),
   );
 
   useEffect(() => {
     return () => {
       pageController.states.activeAudio?.pause(); // Pause Audio if navigate from another page
-    }
-  }, [])
+    };
+  }, []);
 
   useEffect(() => {
     setReadyToScroll(false);
     startInit(false);
     dispatch({ fn: "markAsInitiated", val: false });
     prepareInitOpen(match.params);
-    handlePageInit()
-  },
-    [match.params.pageSlug]);
+    handlePageInit();
+  }, [match.params.pageSlug]);
 
-  const studyModeisOn =  pageController.appController.states.studyGroup.studyModeOn;
+  const studyModeisOn =
+    pageController.appController.states.studyGroup.studyModeOn;
   const userIsLoggedIn = !!pageController.appController.states.user.user;
-  const hasActiveGroup = !!pageController.appController.states.studyGroup.activeGroup?.url;
+  const hasActiveGroup = !!pageController.appController.states.studyGroup
+    .activeGroup?.url;
   const needToLoadComments = userIsLoggedIn && studyModeisOn && hasActiveGroup;
   const [readyToScroll, setReadyToScroll] = useState(false);
   const [initStarted, startInit] = useState(false);
@@ -218,16 +229,14 @@ export default function Page({ appController }) {
     ) {
       return initPage(pageController, pageController.states.initOpen.lastLeaf);
     }
-  }
+  };
 
-  useEffect(handlePageInit,
-    [
-      readyToScroll,
-      pageController.states.loading,
-      needToLoadComments,
-      document.querySelector(".content")
-    ]);
-
+  useEffect(handlePageInit, [
+    readyToScroll,
+    pageController.states.loading,
+    needToLoadComments,
+    document.querySelector(".content"),
+  ]);
 
   //Load Page Comments
   useEffect(() => {
@@ -243,14 +252,11 @@ export default function Page({ appController }) {
   useEffect(() => {
     if (!pageController.appController.states.preferences.audio) {
       pageController.states.activeAudio?.pause();
-    }
-    else {
-      playSound(pageController.states.activeAudio)
+    } else {
+      playSound(pageController.states.activeAudio);
       // pageController.states.activeAudio?.play();
     }
   }, [pageController.appController.states.preferences.audio]);
-
-
 
   const getPageDataFromAPI = async (pageSlug, textId) => {
     //API Call
@@ -264,7 +270,7 @@ export default function Page({ appController }) {
           slug: [pageSlug],
         },
       },
-      { useCache: ["page"] }
+      { useCache: ["page"] },
     );
 
     //Update Page via Controller
@@ -274,8 +280,11 @@ export default function Page({ appController }) {
     if (!response.page[index]) {
       if (keys.includes(pageSlug))
         return getPageDataFromAPI(
-          pageSlug.split("/").slice(0, -1).join("/"),
-          textId
+          pageSlug
+            .split("/")
+            .slice(0, -1)
+            .join("/"),
+          textId,
         );
       index = Object.keys(response.page)
         .filter((a) => RegExp(pageSlug).test(a))
@@ -286,7 +295,11 @@ export default function Page({ appController }) {
       return document.querySelector(".contents_link a").click();
     } //TODO history.push("/contents");
 
-    pageController.functions.setPageSlugId({ pageSlug, textId, lastLeaf: match.url.split("/").pop() });
+    pageController.functions.setPageSlugId({
+      pageSlug,
+      textId,
+      lastLeaf: match.url.split("/").pop(),
+    });
     pageController.functions.setPageData(response.page[index]);
     pageController.functions.setPageProgress(response.pageprogress);
     if (!pageController.appController.states.studyModeOn) {
@@ -352,10 +365,6 @@ export default function Page({ appController }) {
     if (processors[key]) processors[key](username, val);
   };
 
-  const addMessageToPage = (e) => {
-    pageController.functions.addToPageComments(e.message);
-  };
-
   const loadPageComments = (pageController, setReadyToScroll) => {
     setCommentState("started loading");
     let group = pageController.appController.states.studyGroup.activeGroup;
@@ -389,33 +398,33 @@ export default function Page({ appController }) {
     window.removeEventListener(
       "addMessageToPage-" + pageController.states.pageSlug,
       addMessageToPage,
-      false
+      false,
     );
     window.addEventListener(
       "addMessageToPage-" + pageController.states.pageSlug,
       addMessageToPage,
-      false
+      false,
     );
     window.removeEventListener(
       "updateMessageToPage-" + pageController.states.pageSlug,
       updateMessageToPage,
-      false
+      false,
     );
     window.addEventListener(
       "updateMessageToPage-" + pageController.states.pageSlug,
       updateMessageToPage,
-      false
+      false,
     );
 
     window.removeEventListener(
       "fireStudyGroupAction",
       processStudyGroupEventOnPage,
-      false
+      false,
     );
     window.addEventListener(
       "fireStudyGroupAction",
       processStudyGroupEventOnPage,
-      false
+      false,
     );
 
     // create an Observer instance
@@ -435,32 +444,39 @@ export default function Page({ appController }) {
     listQuery.limit = 100;
     listQuery.reverse = false;
     listQuery.includeThreadInfo = true; // Retrieve a list of messages along with their metaarrays.
-    listQuery.includeReaction = true; // Retrieve a list of messages along with their reactions.
+    listQuery.includeReactions = true; // Retrieve a list of messages along with their reactions.
     listQuery.customTypesFilter = [pageController.pageData?.slug];
     setCommentState("made  query");
-    listQuery.load(function (messages, error) {
-      if (error) {
-      }
-      setCommentState("indexing");
-      let index = indexPageComments(messages);
-      setCommentState("counting");
-      pageController.functions.setPageComments({
-        groupId,
-        index,
-        counts: null,
+    try {
+      listQuery.load().then((messages) => {
+        setCommentState("indexing");
+        let index = indexPageComments(messages);
+        setCommentState("counting");
+        pageController.functions.setPageComments({
+          groupId,
+          index,
+          counts: null,
+        });
+        countPageComments(index, pageController, setCommentState).then(
+          (counts) => {
+            setCommentState("placing");
+            pageController.functions.setPageComments({
+              groupId,
+              index,
+              counts,
+            });
+          },
+        );
       });
-      countPageComments(index, pageController, setCommentState).then(
-        (counts) => {
-          setCommentState("placing");
-          pageController.functions.setPageComments({ groupId, index, counts });
-        }
-      );
-    });
+    } catch (error) {
+      console.log({ error });
+      return false;
+    }
   };
 
   if (pageController.states.loading !== false) return <Loader />;
   return (
-    <>  
+    <>
       {!readyToScroll && needToLoadComments ? (
         <LoadingPageCommentsNotice
           commentState={commentState}
@@ -468,7 +484,10 @@ export default function Page({ appController }) {
         />
       ) : null}
       <div
-        className={"content page " + ((readyToScroll || !needToLoadComments) ? "ready" : "notready")}
+        className={
+          "content page " +
+          (readyToScroll || !needToLoadComments ? "ready" : "notready")
+        }
         onMouseDown={() => pageController.functions.setTouched(true)}
       >
         <MuteButton pageController={pageController} />
@@ -509,18 +528,18 @@ function LoadingPageCommentsNotice({ commentState, setReadyToScroll }) {
 
 // function initPage(pageController) {
 function initPage(pageController, lastLeaf) {
-
   const offsetTop = document.documentElement.clientHeight * 0.2;
 
   if (lastLeaf !== pageController.states.initOpen.pageSlug) {
-    let itemToScrollTo = document.getElementById(pageController.states.initOpen.pageSlug + "/" + lastLeaf)
+    let itemToScrollTo = document.getElementById(
+      pageController.states.initOpen.pageSlug + "/" + lastLeaf,
+    );
     let distance = itemToScrollTo?.offsetTop - offsetTop; //margin
     scrollTo(distance, pageController.functions.markAsInitiated);
-  }
-  else {
+  } else {
     pageController.functions.markAsInitiated();
     pageController.appController.functions.setSlug(
-      pageController.states.initOpen.pageSlug
+      pageController.states.initOpen.pageSlug,
     );
   }
 }
@@ -537,7 +556,6 @@ function justScroll(pageController) {
 }
 
 function initPageItem(pageController, callback) {
-
   const offsetTop = document.documentElement.clientHeight * 0.2;
   let { textToOpen, itemToScrollTo } = findTextToOpen(pageController);
   let distance = itemToScrollTo?.offsetTop - offsetTop; //margin
@@ -552,12 +570,14 @@ function initPageItem(pageController, callback) {
     for (let i in textToOpen) {
       if (!textToOpen[i]) return false;
       setTimeout(() => {
-        let el = document.querySelector(`[textid='${textToOpen[i]}'] .reference a`);
+        let el = document.querySelector(
+          `[textid='${textToOpen[i]}'] .reference a`,
+        );
         if (!el || el?.attributes.autoclicked) return false;
         let coords = getCoords(el);
         el?.setAttribute("autoclicked", true);
         //console.log(`AUTO-CLICK ${textToOpen[i]}`)
-        scrollTo(coords?.top - offsetTop, () => el?.click())
+        scrollTo(coords?.top - offsetTop, () => el?.click());
       }, time);
       time = time + 1000;
     }
@@ -576,7 +596,7 @@ function initPageCommentary(pageController) {
     pageController.appController.functions.setPopUp({
       type: "commentary",
       ids: [pageController.states.initOpen.commentaryId],
-    })
+    }),
   );
 }
 function initPageFax(pageController) {
@@ -585,7 +605,14 @@ function initPageFax(pageController) {
 
 function findTextToOpen(pageController) {
   if (pageController.states.initOpen.goToSection) {
-    return { textToOpen: [], itemToScrollTo: document.getElementById(pageController.states.pageSlug + "/" + pageController.states.initOpen.goToSection) };
+    return {
+      textToOpen: [],
+      itemToScrollTo: document.getElementById(
+        pageController.states.pageSlug +
+          "/" +
+          pageController.states.initOpen.goToSection,
+      ),
+    };
   }
 
   if (!pageController.states.initOpen.textId) {
@@ -599,7 +626,6 @@ function findTextToOpen(pageController) {
   let parentSlug = el?.closest(".row > [textid]")?.getAttribute("textid");
   if (parentSlug !== textSlug) textToOpen.push(parentSlug);
   textToOpen.push(textSlug);
-
 
   //if (itemToScrollTo = document.querySelectorAll("[id='" + match.params.pageSlug + "']")[0];)
   return { textToOpen, itemToScrollTo };
@@ -616,7 +642,8 @@ function onScrollPage(pageController) {
         scrollerTopPosition + (window.innerHeight * 20) / 100,
       sectionId = null;
 
-    let slug, title = null;
+    let slug,
+      title = null;
     for (let i = 0; i < _sections.length; i++) {
       //get section heighr
       let _section = _sections[i],
@@ -662,7 +689,8 @@ function reducer(pageController, input) {
         pageController.functions.autoAdvance();
       });
 
-      if (pageController.appController.states.preferences.audio) playSound(pageController.states.activeAudio)//.play();
+      if (pageController.appController.states.preferences.audio)
+        playSound(pageController.states.activeAudio); //.play();
       document.title = heading + " | " + label("home_title");
       pageController.appController.functions.setSlug(slug);
 
@@ -675,7 +703,7 @@ function reducer(pageController, input) {
             val: slug,
           },
         },
-        { useCache: false }
+        { useCache: false },
       ).then((r) => {
         let link_index = parseInt(slug.match(/\d+$/).shift());
         let progress = pageController.states.progress || {};
@@ -691,7 +719,7 @@ function reducer(pageController, input) {
                 slug: [pageController.pageData.slug],
               },
             },
-            { useCache: false }
+            { useCache: false },
           ).then((response) => {
             pageController.functions.setPageProgress(response.pageprogress);
 
@@ -700,7 +728,7 @@ function reducer(pageController, input) {
               {
                 userprogress: token,
               },
-              { useCache: false }
+              { useCache: false },
             ).then((r) => {
               let saveMe = r.userprogress?.[token];
               let summary = saveMe.summary;
@@ -709,13 +737,13 @@ function reducer(pageController, input) {
                   ...saveMe,
                   ...{ slug, pagetitle, heading },
                 });
-                window.clicky?.goal("read");
+              window.clicky?.goal("read");
               // if 100% then show confetti
-              if(summary?.completed >= 100)
+              if (summary?.completed >= 100)
                 pageController.appController.functions.setPopUp({
                   type: "victory",
                   popupData: summary,
-                  vhtop: 10
+                  vhtop: 10,
                 });
             });
           });
@@ -731,10 +759,12 @@ function reducer(pageController, input) {
       break;
     case "removeOpenRow":
       // MODIFY BY ME
-       document.title = pageController.pageData.title || label("home_title");
-      pageController.appController.functions.setSlug(pageController.states.activeSection || pageController.states.pageSlug);
+      document.title = pageController.pageData.title || label("home_title");
+      pageController.appController.functions.setSlug(
+        pageController.states.activeSection || pageController.states.pageSlug,
+      );
       pageController.states.openRows = pageController.states.openRows.filter(
-        (x) => x !== input.val
+        (x) => x !== input.val,
       );
       // for (let i in pageController.states.openRows) {
       //     if (pageController.states.openRows[i] === input.val) {
@@ -751,11 +781,10 @@ function reducer(pageController, input) {
     case "setActiveSection":
       let { slug: sectionSlug, title: sectionTitle } = input.val;
       pageController.states.activeSection = sectionSlug;
-      if (pageController.states.init || true)
-      {
-        document.title = sectionTitle || pageController.pageData.title || label("home_title");
+      if (pageController.states.init || true) {
+        document.title =
+          sectionTitle || pageController.pageData.title || label("home_title");
         pageController.appController.functions.setSlug(sectionSlug);
-
       }
       //pageController.appController.functions.setSlug(input.val);
       break;
@@ -765,7 +794,7 @@ function reducer(pageController, input) {
       pageController.pageCommentCounts = input.val.counts;
       pageController.states.commentGroupId = input.val.groupId;
       pageController.appController.functions.setActivePageController(
-        pageController
+        pageController,
       );
       break;
     case "setPageSlug":
@@ -775,13 +804,13 @@ function reducer(pageController, input) {
     case "addToPageComments":
       pageController.pageComments = addToPageCommentIndex(
         pageController.pageComments,
-        input.val
+        input.val,
       );
       // pageController.appController.functions.setActivePageController(pageController);
       break;
 
     case "moveStudyBuddies":
-      if(isMobile()) break;
+      if (isMobile()) break;
       let { username, location } = input?.val;
       if (!username) break; //ingnore missing info
       if (pageController.states.studyBuddies[username] === location) break; //ignore non-motion
@@ -801,7 +830,7 @@ function reducer(pageController, input) {
     case "updateToPageComment":
       pageController.pageComments = updateToPageComment(
         pageController.pageComments,
-        input.val
+        input.val,
       );
       // pageController.appController.functions.setActivePageController(pageController);
       break;
@@ -809,7 +838,7 @@ function reducer(pageController, input) {
     case "deleteToPageComments":
       pageController.pageComments = deleteToPageComments(
         pageController.pageComments,
-        input.val
+        input.val,
       );
       // pageController.appController.functions.setActivePageController(pageController);
       break;
@@ -833,7 +862,7 @@ function reducer(pageController, input) {
 
     case "setPageData":
       pageController.pageData = input.val;
-      document.title = pageController.pageData?.title || label("home_title")
+      document.title = pageController.pageData?.title || label("home_title");
       break;
     case "setLoading":
       pageController.states.loading = input.val;
@@ -881,10 +910,11 @@ function countPageComments(commentsIndex, pageController, setCommentState) {
     setCommentState("counting commentary");
     for (let x in r.commentaryLocations) {
       let num = parseInt(
-        r.commentaryLocations[x].location.slug.match(/(.*?)\/(\d+)$/)[2]
+        r.commentaryLocations[x].location.slug.match(/(.*?)\/(\d+)$/)[2],
       );
-      let pageSlug =
-        r.commentaryLocations[x].location.slug.match(/(.*?)\/(\d+)$/)[1];
+      let pageSlug = r.commentaryLocations[x].location.slug.match(
+        /(.*?)\/(\d+)$/,
+      )[1];
       if (pageSlug !== pageController.pageData?.slug) continue;
       if (counts[num] === undefined) counts[num] = {};
       if (counts[num].com === undefined) counts[num].com = [];
@@ -893,10 +923,11 @@ function countPageComments(commentsIndex, pageController, setCommentState) {
     setCommentState("counting images");
     for (let x in r.imageLocations) {
       let num = parseInt(
-        r.imageLocations[x].location.slug.match(/(.*?)\/(\d+)$/)[2]
+        r.imageLocations[x].location.slug.match(/(.*?)\/(\d+)$/)[2],
       );
-      let pageSlug =
-        r.imageLocations[x].location.slug.match(/(.*?)\/(\d+)$/)[1];
+      let pageSlug = r.imageLocations[x].location.slug.match(
+        /(.*?)\/(\d+)$/,
+      )[1];
       if (pageSlug !== pageController.pageData.slug) continue;
       if (counts[num] === undefined) counts[num] = {};
       if (counts[num].img === undefined) counts[num].img = [];
