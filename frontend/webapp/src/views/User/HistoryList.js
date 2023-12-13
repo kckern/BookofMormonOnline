@@ -25,29 +25,35 @@ momentDurationFormatSetup(moment);
 moment.locale(label("moment_locale"));
 
 export function HistoryList({ studyLog, progressList, setHistoryView }) {
-  useEffect(() => history.push("/user/history"), []);
+  useEffect(() => {
+    history.push("/user/history");
+    document.title = label("History") + " | " + label("home_title");
+  }, []);
 
-  if (!studyLog) return   <Card>
-    <CardHeader>
-      <h5 className="title">
-        <img src={calendar_icon} /> {label("study_history")}{" "}
-        <span className="closeme" onClick={() => setHistoryView(false)}>
-          ×
-        </span>
-      </h5>
-    </CardHeader>
+  if (!studyLog)
+    return (
+      <Card>
+        <CardHeader>
+          <h5 className="title">
+            <img src={calendar_icon} /> {label("study_history")}{" "}
+            <span className="closeme" onClick={() => setHistoryView(false)}>
+              ×
+            </span>
+          </h5>
+        </CardHeader>
 
-    <CardBody className={"studyList"}>
-      <Alert color={"info"}>{label("login_for_history")}</Alert>
-    </CardBody>
-  </Card>
+        <CardBody className={"studyList"}>
+          <Alert color={"info"}>{label("login_for_history")}</Alert>
+        </CardBody>
+      </Card>
+    );
 
   const progressDictionary = !progressList
     ? null
-    : progressList.progress.reduce(function (result, field, index) {
-      result[progressList.dates[index]] = field;
-      return result;
-    }, {});
+    : progressList.progress.reduce(function(result, field, index) {
+        result[progressList.dates[index]] = field;
+        return result;
+      }, {});
 
   const array_sum = (previousValue, currentValue) =>
     previousValue + currentValue;
@@ -81,7 +87,7 @@ export function HistoryList({ studyLog, progressList, setHistoryView }) {
   let totalDuration = sumDuration(calendar);
 
   let totalHoursFloat = Math.round(
-    moment.duration({ seconds: totalDuration }).asHours()
+    moment.duration({ seconds: totalDuration }).asHours(),
   );
 
   return (
@@ -94,7 +100,6 @@ export function HistoryList({ studyLog, progressList, setHistoryView }) {
           </span>
         </h5>
       </CardHeader>
-
       <CardBody className={"studyList"}>
         {yearList.map((yearNum, i) => {
           let year = calendar[yearNum];
@@ -103,7 +108,7 @@ export function HistoryList({ studyLog, progressList, setHistoryView }) {
           let yearSessionCount = countSessions(year);
           let yearMonthCount = yearMonths.length;
           return (
-            <div className="studyYear">
+            <div className="studyYear" key={yearNum}>
               {i > 0 ? (
                 <h2>
                   {yearNum}{" "}
@@ -123,7 +128,7 @@ export function HistoryList({ studyLog, progressList, setHistoryView }) {
                 let days = Object.keys(month).reverse();
                 let monthDayCount = days.length;
                 return (
-                  <div className="studyMonth">
+                  <div className="studyMonth" key={monthNum}>
                     <h2>
                       <img src={calendar_icon} />{" "}
                       {moment([yearNum, monthNum - 1])
@@ -140,7 +145,7 @@ export function HistoryList({ studyLog, progressList, setHistoryView }) {
                     {days.map((date) => {
                       let day = month[date];
                       let dayDuration = sumDuration(day);
-                        let dateField = moment([
+                      let dateField = moment([
                         yearNum,
                         monthNum - 1,
                         date - 1,
@@ -152,12 +157,12 @@ export function HistoryList({ studyLog, progressList, setHistoryView }) {
                       ]).format(label("intl_date"));
                       return day.map((session, i) => {
                         return (
-                          <div className="studySession">
+                          <div className="studySession" key={i}>
                             <div className={"progressField"}>
                               {i === 0 && progressDictionary?.[dateKey] ? (
                                 <span>
                                   {parseFloat(
-                                    progressDictionary[dateKey]
+                                    progressDictionary[dateKey],
                                   ).toFixed(1)}
                                   %
                                 </span>
@@ -168,11 +173,11 @@ export function HistoryList({ studyLog, progressList, setHistoryView }) {
                             </div>
                             <div className={"timeField"}>
                               {moment(session.timestamp * 1000).format(
-                                label("time_format")
+                                label("time_format"),
                               )}
                             </div>
                             <div className={"descField"}>
-                              <Link to={"/"+session.slug}>
+                              <Link to={"/" + session.slug}>
                                 {session.description ||
                                   label("extracurricular_activities")}
                               </Link>

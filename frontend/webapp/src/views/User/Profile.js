@@ -11,7 +11,11 @@ import {
   NavLink,
   Nav,
   TabContent,
-  TabPane, Dropdown, DropdownToggle, DropdownMenu, DropdownItem
+  TabPane,
+  Dropdown,
+  DropdownToggle,
+  DropdownMenu,
+  DropdownItem,
 } from "reactstrap";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import { breakCache, label } from "src/models/Utils";
@@ -66,7 +70,7 @@ export function Profile({
         } else {
           //TODO Failed Logout
         }
-      }
+      },
     );
   };
 
@@ -79,12 +83,13 @@ export function Profile({
       {/localhost/.test(window.location.hostname) ? (
         <li
           onClick={() => {
-            appController.functions.setPopUp({ type: "victory" })
+            appController.functions.setPopUp({ type: "victory" });
           }}
         >
           <img src={trophy} />
           {label("debug")}
-        </li>) : null}
+        </li>
+      ) : null}
       <li onClick={() => setProfileState("password")}>
         <img src={padlock} />
         {label("change_password")}{" "}
@@ -96,10 +101,7 @@ export function Profile({
     </ul>
   ) : null;
 
-
-
-  const [dropDown, setDropDown] = useState(false)
-
+  const [dropDown, setDropDown] = useState(false);
 
   let me = appController.states.user.social;
 
@@ -127,7 +129,7 @@ export function Profile({
                 </DropdownToggle>
                 <DropdownMenu>
                   <DropdownItem header>{label("user_profile")}</DropdownItem>
-                  <DropdownItem divider/>
+                  <DropdownItem divider />
                   <DropdownItem onClick={() => setProfileState("edit")}>
                     <img src={edit} />
                     {label("edit_profile")}
@@ -143,8 +145,8 @@ export function Profile({
                   {/localhost/.test(window.location.hostname) ? (
                     <DropdownItem
                       onClick={() => {
-                        appController.functions.setPopUp({ type: "victory" })
-                    }}
+                        appController.functions.setPopUp({ type: "victory" });
+                      }}
                     >
                       <img src={trophy} /> Trophy
                     </DropdownItem>
@@ -167,41 +169,60 @@ export function Profile({
         <CardFooter>
           <hr />
           <div className="button-container">
-            <Row className="quickstats" onClick={setHistoryView}>
+            <Row
+              className="quickstats"
+              onClick={() => {
+                setHistoryView((prev) => !prev);
+              }}
+            >
               <Col className="ml-auto">
                 <h5>
                   <img src={cake} />
-                  <div className="stat_label"><b>{label("date_started")}:</b></div>
+                  <div className="stat_label">
+                    <b>{label("date_started")}:</b>
+                  </div>
                   <div>
-                  {studySummary?.first ? (
-                    moment.unix(studySummary?.first).format(label("history_date_format_full"))
-                  ) : (
-                    <img src={loading} className="loading" />
-                  )}{" "}
-                </div></h5>
+                    {studySummary?.first ? (
+                      moment
+                        .unix(studySummary?.first)
+                        .format(label("history_date_format_full"))
+                    ) : (
+                      <img src={loading} className="loading" />
+                    )}{" "}
+                  </div>
+                </h5>
               </Col>
               <Col className="ml-auto mr-auto">
                 <h5>
                   <img src={parkingmeter} />
-                  <div className="stat_label"><b>{label("study_time")}:</b></div>
+                  <div className="stat_label">
+                    <b>{label("study_time")}:</b>
+                  </div>
                   <div>
-                  {(Number.isInteger(studySummary?.duration)) ? (
-                    moment
-                      .duration(studySummary?.duration, "seconds")
-                      .format(label("duration_format"))
-                  ) : (
-                    <img src={loading} className="loading" />
-                  )}{" "}
-                  </div></h5>
+                    {Number.isInteger(studySummary?.duration) ? (
+                      moment
+                        .duration(studySummary?.duration, "seconds")
+                        .format(label("duration_format"))
+                    ) : (
+                      <img src={loading} className="loading" />
+                    )}{" "}
+                  </div>
+                </h5>
               </Col>
               <Col className="mr-auto">
                 <h5>
                   <img src={count} />
-                  <div className="stat_label"><b>{label("study_sessions")}:</b></div>
+                  <div className="stat_label">
+                    <b>{label("study_sessions")}:</b>
+                  </div>
                   <div>
-                  {(Number.isInteger(studySummary?.count)) ? (studySummary?.count) : <img src={loading} className="loading" /> }{" "}
-               
-                  </div></h5>
+                    {Number.isInteger(studySummary?.count) ? (
+                      studySummary?.count
+                    ) : (
+                      <img src={loading} className="loading" />
+                    )}{" "}
+                  </div>
+                </h5>
               </Col>
             </Row>
           </div>
@@ -220,12 +241,14 @@ export function Profile({
               {studySummary?.finished.map((timestamp) => (
                 <li
                   onClick={() => {
-                   // appController.functions.setPopUp({ type: "victory" });
+                    // appController.functions.setPopUp({ type: "victory" });
                   }}
                 >
                   <img src={trophy} />{" "}
                   {label("completed_on_x", [
-                    moment.unix(timestamp).format(label("history_date_format_full")),
+                    moment
+                      .unix(timestamp)
+                      .format(label("history_date_format_full")),
                   ])}
                 </li>
               ))}
@@ -258,5 +281,5 @@ function ProfilePicture({ appController }) {
       isGroup={false}
     />
   );
-/* tmp */
+  /* tmp */
 }
