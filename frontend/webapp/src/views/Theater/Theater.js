@@ -88,7 +88,7 @@ function TheaterWrapper({ appController }) {
     parseFloat(localStorage.getItem("playbackRate")) || 1
   );
 	const [playbackVolume, setPlaybackVolume] = useState(
-    parseFloat(localStorage.getItem("playbackVolume")).toFixed(1) || 1
+    parseFloat(localStorage.getItem("playbackVolume") || 1).toFixed(1)
   );
 	const [isMuted,setIsMuted] = useState((localStorage.getItem("playbackMuted")==='true'?true:false) || false);
   const token = appController.states.user.token;
