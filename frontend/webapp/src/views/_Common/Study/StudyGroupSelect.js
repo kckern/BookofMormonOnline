@@ -15,7 +15,14 @@ import {
   ToastHeader,
 } from "reactstrap";
 import Switch from "react-bootstrap-switch";
-import { breakCache, channelAtAGlance, isMobile, label, playSound, truncate } from "src/models/Utils";
+import {
+  breakCache,
+  channelAtAGlance,
+  isMobile,
+  label,
+  playSound,
+  truncate,
+} from "src/models/Utils";
 
 import "./StudyGroupSelect.css";
 import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
@@ -131,7 +138,7 @@ export function StudyGroupSelect({ appController }) {
           tabIndex={-1}
           onClick={() => {
             appController.functions.openGroupList(
-              !appController.states.studyGroup.isGroupListOpen
+              !appController.states.studyGroup.isGroupListOpen,
             );
           }}
         >
@@ -176,7 +183,7 @@ export function StudyGroupSelect({ appController }) {
         tabIndex={-1}
         onClick={() => {
           appController.functions.openGroupList(
-            !appController.states.studyGroup.isGroupListOpen
+            !appController.states.studyGroup.isGroupListOpen,
           );
         }}
         style={{ backgroundImage: `url('${imgurl}')` }}
@@ -207,34 +214,34 @@ export function StudyGroupList({ appController }) {
       : studyModeoff;
     if (appController.states.preferences.sound) playSound(sound); //.play();
     appController.functions.setStudyMode(
-      !appController.states.studyGroup.studyModeOn
+      !appController.states.studyGroup.studyModeOn,
     );
   };
 
   let contents = (
     <>
-    <div className="topButtons">
-      <Label className="studymode">
-        {label("study_mode")}:{" "}
-        <Switch
-          onChange={setStudyMode}
-          onText="On"
-          offText="Off"
-          value={appController.states.studyGroup.studyModeOn}
-          onColor="default"
-          offColor="default"
-        />
-      </Label>
+      <div className="topButtons">
+        <Label className="studymode">
+          {label("study_mode")}:{" "}
+          <Switch
+            onChange={setStudyMode}
+            onText="On"
+            offText="Off"
+            value={appController.states.studyGroup.studyModeOn}
+            onColor="default"
+            offColor="default"
+          />
+        </Label>
 
-      <Button
-        className="btn btn-primary newgroupbutton"
-        onClick={(e) => {
-          e.preventDefault();
-          setContentTag("new");
-        }}
-      >
-        ➕ {label("new_group")}
-      </Button>
+        <Button
+          className="btn btn-primary newgroupbutton"
+          onClick={(e) => {
+            e.preventDefault();
+            setContentTag("new");
+          }}
+        >
+          ➕ {label("new_group")}
+        </Button>
       </div>
       <StudyGroupListItems appController={appController} />
     </>
@@ -284,7 +291,7 @@ function StudyGroupListItems({ appController }) {
             group={group}
             appController={appController}
           />
-        ) : null
+        ) : null,
       )}
     </ul>
   );
@@ -305,16 +312,16 @@ function StudyGroupListItem({ group, appController }) {
   });
   let [room, setRoom] = useState(group.room);
 
-  const leave = (s) => {
-    group.leave(function (response, error) {
-      if (error) {
-        // Handle error.
-        return false;
-      }
-      appController.functions.setActiveStudyGroup(null);
-      appController.sendbird?.getStudyGroups()
-        .then((list) => appController.functions.setStudyGroups(list));
-    });
+  const leave = async (s) => {
+		try {
+			await group.leave();
+			appController.functions.setActiveStudyGroup(null);
+			appController.sendbird?.getStudyGroups()
+			.then((list) => appController.functions.setStudyGroups(list));	
+		} catch (error) {
+			console.log('Error',error);
+			return false;
+		}
   };
 
   useEffect(() => {
@@ -342,11 +349,11 @@ function StudyGroupListItem({ group, appController }) {
   ) {
     activeClass = " active";
     activeBadge = <div className="presentHere"></div>;
-    groupOnClick = ()=>{
+    groupOnClick = () => {
       appController.functions.openGroupList(false);
       appController.functions.openDrawer(true);
-      if(isMobile()) appController.functions.setMobileChat(true);
-    }
+      if (isMobile()) appController.functions.setMobileChat(true);
+    };
   }
 
   //COUNTERS
@@ -413,10 +420,9 @@ function StudyGroupListItem({ group, appController }) {
 
   let lastMessage = group.lastMessage?._sender ? (
     <>
-      <img onError={breakCache}
-        src={
-          group.lastMessage._sender.plainProfileUrl 
-        }
+      <img
+        onError={breakCache}
+        src={group.lastMessage._sender.plainProfileUrl}
       />
       <span className="speaker">
         {truncate(group.lastMessage._sender.nickname, 5, 5, 20)}
@@ -426,7 +432,9 @@ function StudyGroupListItem({ group, appController }) {
         {moment.unix(group.lastMessage.createdAt / 1000).fromNow()}
       </span>
       <span className="message">
-        {group.lastMessage.message.replace(/<[^>]*>/gi, "").replace(/^•$/,label("highlight_msg"))}
+        {group.lastMessage.message
+          .replace(/<[^>]*>/gi, "")
+          .replace(/^•$/, label("highlight_msg"))}
       </span>
     </>
   ) : null;
@@ -448,9 +456,9 @@ function StudyGroupListItem({ group, appController }) {
 
   //exclude self and bots
   let members = group.members.filter((m) => {
-    const isSelf = m.userId === appController.states.user.social.user_id 
-    const isBot = !!m.metaData?.isBot
-    if(isSelf || isBot) return false;
+    const isSelf = m.userId === appController.states.user.social.user_id;
+    const isBot = !!m.metaData?.isBot;
+    if (isSelf || isBot) return false;
     return true;
   });
   let url = group.url;
@@ -478,10 +486,7 @@ function StudyGroupListItem({ group, appController }) {
       color: color,
       components: (
         <div className={color}>
-          <img
-           onError={breakCache}
-            src={m.profileUrl }
-          />
+          <img onError={breakCache} src={m.profileUrl} />
           <div className="dot"></div>
         </div>
       ),
@@ -496,7 +501,7 @@ function StudyGroupListItem({ group, appController }) {
       key={group.url}
       className={"groupListItem" + activeClass}
       onClick={() => {
-        groupOnClick(group)
+        groupOnClick(group);
         if (appController.states.preferences.sound) playSound(switchSound); //.play();
       }}
     >
@@ -585,10 +590,12 @@ export function GroupMemberCircles({ circles, greenCount }) {
     <div className="groupMembersContainer">
       <div className="memberCount">
         <img src={usericon} />
-        {greenCount ? greenCount+"/" : null}
+        {greenCount ? greenCount + "/" : null}
         {circles.length + 1}
       </div>
-      <div className="groupMembers">{circles.slice(0,10).map((c) => c?.components)}</div>
+      <div className="groupMembers">
+        {circles.slice(0, 10).map((c) => c?.components)}
+      </div>
     </div>
   );
 }
@@ -597,12 +604,9 @@ export function generateGroupHash(group, callback) {
   if (!group) return null;
   BoMOnlineAPI({ setShortLink: group.url }, { type: "mutation" }).then((r) => {
     var data = { hash: r.setShortLink[group.url].hash };
-    group.createMetaData(data, function (response, error) {
-      if (error) {
-        return null;
-      }
-      callback(response);
-    });
+    group.createMetaData(data).then((response)=>{
+			callback(response);
+		})
   });
 }
 
@@ -618,7 +622,7 @@ function NewStudyGroup({ appController }) {
   const [openModal, setOpenModal] = useState(false);
   const [name, setName] = useState("");
   const [buttonLabel, setButtonLabel] = useState(
-    label("create_new_study_group")
+    label("create_new_study_group"),
   );
   const [groupImage, setGroupImage] = useState({
     img: groupCoverUrl(name),
@@ -639,9 +643,8 @@ function NewStudyGroup({ appController }) {
     }
   }, [groupImage.file]);
   const updateData = () => {
-    let name = document.querySelector(
-      ".CreateGroupInput input[name=groupName]"
-    ).value;
+    let name = document.querySelector(".CreateGroupInput input[name=groupName]")
+      .value;
     setName(name);
     setGroupImage({
       img: groupCoverUrl(name),
@@ -650,12 +653,10 @@ function NewStudyGroup({ appController }) {
   };
 
   const submit = () => {
-    let name = document.querySelector(
-      ".CreateGroupInput input[name=groupName]"
-    ).value;
-    let description = document.querySelector(
-      ".CreateGroupInput textarea"
-    ).value;
+    let name = document.querySelector(".CreateGroupInput input[name=groupName]")
+      .value;
+    let description = document.querySelector(".CreateGroupInput textarea")
+      .value;
     let type =
       document.querySelector("input[type=radio]:checked").value || "private";
     let url = crypto
@@ -665,21 +666,21 @@ function NewStudyGroup({ appController }) {
     let inputData = { name, description, type, url, groupImage };
     if (inputData.name === "") {
       toast.error(label("no_name"));
-      
-      return false
+
+      return false;
     }
     setButtonLabel(label("creating_group"));
-    appController.sendbird?.createNewGroup(inputData, appController.states.user.social?.user_id)
-      .then((group) => {
-        generateGroupHash(group, () => {
-          setButtonLabel(label("status_done"));
-          appController.functions.setActiveStudyGroup(group);
-          appController.functions.openGroupList(false);
-          appController.functions.openDrawer(true);
-          appController.sendbird?.getStudyGroups()
-            .then((list) => appController.functions.setStudyGroups(list));
-        });
+    appController.sendbird.createNewGroup(inputData, appController.states.user.social?.user_id)
+    .then(({groupChannel:group}) => {
+      generateGroupHash(group, () => {
+      	setButtonLabel(label("status_done"));
+        appController.functions.setActiveStudyGroup(group);
+        appController.functions.openGroupList(false);
+        appController.functions.openDrawer(true);
+        appController.sendbird?.getStudyGroups()
+        .then((list) => appController.functions.setStudyGroups(list));
       });
+    });
   };
 
   useEffect(() => {
