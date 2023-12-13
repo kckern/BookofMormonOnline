@@ -2,11 +2,13 @@
 const {studyBuddy, studyBuddyTextBlock} = require("./studybuddy");
 const logger = require("../library/utils/logger.cjs");
 const { mapMarker } = require("./mapmarkers");
+const { virtualgrouptrigger } = require("./virtualgroup");
 const webhook = async (req, res) => {
     
     logger.info(`Webhook received: ${JSON.stringify(req.body)}`); // "info" is the log level
 
-    const {category, channel, members, sender, payload, parent_message_id,type} = req.body;
+    const {category, channel, members, sender, payload, parent_message_id,type,trigger} = req.body;
+    if(trigger==="study_group_bots") return virtualgrouptrigger(req,res);
     const messageContent = payload?.message;
 
 
