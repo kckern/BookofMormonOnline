@@ -611,15 +611,15 @@ export function GroupLeaderBoard({ groupData }) {
         <>
           <div className="leaderBoardItem" key={i}>
             <div className="rank">{i + 1}</div>
-            <div class="img-container">
+            <div className="img-container">
               <img
                 style={privateStyle(m.nickname)}
                 src={m.picture}
                 alt={m.nickname}
               />
-              <span class="trophies">
+              <span className="trophies">
                 {m.finished?.map((i) => (
-                  <img src={trophy} />
+                  <img src={trophy} key={i} />
                 ))}
               </span>
             </div>

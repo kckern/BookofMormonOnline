@@ -420,3 +420,68 @@
   width: 100%;
   height: 100%;
 } */
+.fax {
+  position: absolute;
+  left: -1.65em;
+  top: 0em;
+  width: 1.8em;
+  height: calc(1.5rem + 0px);
+  border-radius: 1em;
+  border-top-right-radius: 0em;
+  border-bottom-right-radius: 0em;
+  background-color: #999;
+  color: white;
+  text-align: center;
+  line-height: 1.6rem;
+  cursor: pointer;
+  opacity: 0;
+  padding-left: 8px;
+  transition: opacity 500ms;
+  border-bottom: 2px solid #999;
+}
+
+.fax .comment {
+  position: absolute;
+  top: 0.9em;
+  left: 0.5em;
+}
+
+.fax.visible {
+  opacity: 1;
+  transition: opacity 500ms;
+}
+.fax:hover {
+  opacity: 1;
+}
+
+.fax.visible img {
+  filter: invert();
+  position: absolute;
+  top: 0.5ex;
+  left: 1ex;
+  height: 1.2em;
+  width: 1.3em;
+}
+
+/* .image-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    background: black;
+    opacity: 0.4;
+    width: 100%;
+    height: 100%;
+    z-index: 12000;
+    overflow: hidden;
+  }
+  
+  .images {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    overflow: hidden;
+    transform: translate(-50%, -50%);
+    z-index: 12001;
+    width: 100%;
+    height: 100%;
+  } */

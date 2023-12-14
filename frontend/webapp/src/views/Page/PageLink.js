@@ -16,12 +16,9 @@ export default function PageLink({ rowData, pageController }) {
       {/* CONTENT ROW */}
       <div className="row">
         <div className="col-sm-6 narration">
-          <p>{description}</p>
+          <div>{description}</div>
         </div>
-        <Col
-          md={6}
-          className="scripture capsulation"
-        >
+        <Col md={6} className="scripture capsulation">
           <div
             role="tablist"
             aria-multiselectable="true"
@@ -34,7 +31,6 @@ export default function PageLink({ rowData, pageController }) {
                   data-toggle="collapse"
                 >
                   <span className={"square"}>■</span> {reference}
-                  
                 </Link>
               </CardHeader>
             </Card>

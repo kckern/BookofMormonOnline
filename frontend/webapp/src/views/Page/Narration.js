@@ -111,6 +111,7 @@ function reducer(narrationController, input) {
 
 function Narration({ rowData, pageController, addHighlight }) {
   const preLoadFax = () => {
+    if (narrationController.states.faxList === undefined) return false;
     return narrationController.states.faxList.forEach((version) => {
       const img1 = new Image();
       let m = narrationController.data.text.slug.match(/([a-z-]+)\/(\d+)$/);
@@ -138,7 +139,6 @@ function Narration({ rowData, pageController, addHighlight }) {
   const setHighlights = (activeId, previewIds, commentHighlights) => {
     const rowImageData = narrationController.supplement.image;
     const rowCommentaryData = narrationController.supplement.commentary;
-    console.log("rowImageData", rowImageData);
     var highlights = [];
     if (rowImageData !== undefined) {
       for (let i in rowImageData) {
@@ -161,7 +161,8 @@ function Narration({ rowData, pageController, addHighlight }) {
     }
     if (rowCommentaryData !== undefined) {
       for (let i in rowCommentaryData) {
-        if (rowCommentaryData[i]?.id === activeId) {
+        if (rowCommentaryData[i] === undefined) return;
+        if (rowCommentaryData[i].id === activeId) {
           highlights.push({
             class: "primary",
             string: rowCommentaryData[i]?.title
@@ -384,9 +385,9 @@ function Narration({ rowData, pageController, addHighlight }) {
       <ChronoRow chrono={narrationController.data.text.chrono} />
       <div className="row" onMouseEnter={handleLocationChange}>
         <div className="col-sm-6 narration">
-          <p onMouseUp={handleSelection} className={progress}>
+          <div onMouseUp={handleSelection} className={progress}>
             {narrationController.components.description}
-          </p>
+          </div>
           <ImagePanel narrationController={narrationController} />
           <FacsimilePanel narrationController={narrationController} />
           <PeoplePlacePanel narrationController={narrationController} />
