@@ -329,7 +329,8 @@ export default class SendbirdController {
     return channel?.updateMetaData(data, true);
   };
 
-  updateUserState = ({ channels, activeGroup, activeCall, key }) => {
+  updateUserState = async ({ channels, activeGroup, activeCall, key }) => {
+    await this.sb.connect(this.userId, this.token);
     if (!Array.isArray(channels)) return false;
     if (!key) key = "updateUserState";
     const SBController = this;

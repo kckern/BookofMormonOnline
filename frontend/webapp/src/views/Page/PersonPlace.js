@@ -1,66 +1,90 @@
-
-import React from 'react';
-import parse from 'html-react-parser';
-import ReactTooltip from 'react-tooltip';
-import { Link } from 'react-router-dom';
+import React from "react";
+import parse from "html-react-parser";
+import ReactTooltip from "react-tooltip";
+import { Link } from "react-router-dom";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 
 export const renderPersonPlaceHTML = (html, pageController) => {
+  html = html.replace(
+    /{(.*?)\|(.*?)}/g,
+    "<a class='person' slug='$2' label='$1'></a>",
+  );
+  html = html.replace(
+    /\[(.*?)\|(.*?)\]/g,
+    "<a class='place'  slug='$2' label='$1'></a>",
+  );
 
-	html = html.replace(/{(.*?)\|(.*?)}/g, "<a class='person' slug='$2' label='$1'></a>");
-  html = html.replace(/\[(.*?)\|(.*?)\]/g, "<a class='place'  slug='$2' label='$1'></a>");
+  let className = html.match(/(?<=class=)'(.*?)'/g);
 
-	let className = html.match(/(?<=class=)'(.*?)'/g);
+  html = html + "<span class='react-tooltip'></span>";
+  let slugs = html.match(/(?<=slug=)'(.*?)'/g);
 
-	html = html+"<span class='react-tooltip'></span>";
-	let slugs = html.match(/(?<=slug=)'(.*?)'/g);
-	
   const options = {
-    replace: domNode => {
-      if (domNode.attribs && domNode.attribs.class === 'person') {
-        return <PersonLink pageController={pageController} label={domNode.attribs.label} id={domNode.attribs.slug} />
+    replace: (domNode) => {
+      if (domNode.attribs && domNode.attribs.class === "person") {
+        return (
+          <PersonLink
+            pageController={pageController}
+            label={domNode.attribs.label}
+            id={domNode.attribs.slug}
+          />
+        );
       }
-      if (domNode.attribs && domNode.attribs.class === 'place') {
-        return <PlaceLink pageController={pageController} label={domNode.attribs.label} id={domNode.attribs.slug} />
+      if (domNode.attribs && domNode.attribs.class === "place") {
+        return (
+          <PlaceLink
+            pageController={pageController}
+            label={domNode.attribs.label}
+            id={domNode.attribs.slug}
+          />
+        );
       }
-			if(domNode.attribs && domNode.attribs.class === 'react-tooltip'){
-				if(slugs === null){
-					return <></>;
-				}
-				return(
-					<>
-						{slugs.map(slug=>{
-						const id = slug.replaceAll("'",'');
-						const typeName = className.shift().replaceAll("'",'')+'List';
-						return <ReactTooltip
-							wrapper={"span"}
-							id={id}
-							effect="solid"
-							backgroundColor={"#666"}
-							arrowColor={"#666"}
-						>
-							<NarrationToolTip
-								id={id}
-								type={typeName}
-								appController={pageController?.appController || pageController}
-							/>
-						</ReactTooltip>
-						})}
-					</>
-				)
-			}
+      if (domNode.attribs && domNode.attribs.class === "react-tooltip") {
+        if (slugs === null) {
+          return <></>;
+        }
+        return (
+          <>
+            {slugs.map((slug, index) => {
+              const id = slug.replaceAll("'", "");
+              const typeName = className.shift().replaceAll("'", "") + "List";
+              return (
+                <ReactTooltip
+                  wrapper={"span"}
+                  id={id}
+                  key={("slug-", id, "-ind", index)}
+                  effect="solid"
+                  backgroundColor={"#666"}
+                  arrowColor={"#666"}
+                >
+                  <NarrationToolTip
+                    id={id}
+                    type={typeName}
+                    appController={
+                      pageController?.appController || pageController
+                    }
+                  />
+                </ReactTooltip>
+              );
+            })}
+          </>
+        );
+      }
     },
   };
   return parse(html, options);
-}
+};
 
 function PersonLink({ label, id, pageController }) {
-
   const handleClick = (e) => {
     e.preventDefault();
-    const appController = pageController?.appController || pageController
-    appController.functions.setPopUp({ type: "people", ids: [id], popUpData: pageController.preLoad?.peoplePlaces?.person });
-  }
+    const appController = pageController?.appController || pageController;
+    appController.functions.setPopUp({
+      type: "people",
+      ids: [id],
+      popUpData: pageController.preLoad?.peoplePlaces?.person,
+    });
+  };
 
   return (
     <>
@@ -77,13 +101,15 @@ function PersonLink({ label, id, pageController }) {
   );
 }
 function PlaceLink({ label, id, pageController }) {
-
   const handleClick = (e) => {
-
     e.preventDefault();
-    const appController = pageController?.appController || pageController
-    appController.functions.setPopUp({ type: "places", ids: [id], popUpData: pageController.preLoad?.peoplePlaces?.place });
-  }
+    const appController = pageController?.appController || pageController;
+    appController.functions.setPopUp({
+      type: "places",
+      ids: [id],
+      popUpData: pageController.preLoad?.peoplePlaces?.place,
+    });
+  };
 
   return (
     <>
@@ -106,12 +132,12 @@ function NarrationToolTip({ type, id, appController }) {
   if (appController.preLoad[type] === undefined) return null;
 
   let list = Object.values(appController.preLoad[type]);
-  let ttData = list.find(x => x.slug === id);
+  let ttData = list.find((x) => x.slug === id);
   if (!ttData) return null;
-  let info =  ttData.title || ttData.info;
-  let name = ttData.name.replace(/(.*?), (.*)/, "$2 $1")
-  let linkType = (type === "personList") ? "people" : "places";
-  if(!info) return null;
+  let info = ttData.title || ttData.info;
+  let name = ttData.name.replace(/(.*?), (.*)/, "$2 $1");
+  let linkType = type === "personList" ? "people" : "places";
+  if (!info) return null;
   return (
     <div className="ppToolTip">
       <img src={`${assetUrl}/${linkType}/${id}`} alt={linkType} />
@@ -120,11 +146,11 @@ function NarrationToolTip({ type, id, appController }) {
         <div className="ppToolTipInfo">{numberFormat(info)}</div>
       </div>
     </div>
-  )
+  );
 }
 
 function numberFormat(string) {
-  if(!string) return null;
+  if (!string) return null;
   string = string.replace("1", "₁");
   string = string.replace("2", "₂");
   string = string.replace("3", "₃");
