@@ -75,7 +75,7 @@ export default function ProgressBox({ appController }) {
     return () => {
       setProgressBoxData({});
     };
-  }, [appController.states.user.user]);
+  }, []);
 
   let completed = ProgressBoxData.userProgress?.completed;
   let started = ProgressBoxData.userProgress?.started;
@@ -240,7 +240,10 @@ export function ProgressDetailsCircles({ progressPages, callBack }) {
             page?.sections?.map((section, i) => {
               if (section.sectionText === undefined) return null;
               return (
-                <span key={"section.slug" + i} className="sectionDots">
+                <span
+                  key={section.slug ? section.slug : section.title}
+                  className="sectionDots"
+                >
                   {section?.sectionText?.map((item, i) => {
                     let dot = <img src={blank} />;
                     let status = label("not_started");
@@ -365,11 +368,7 @@ function ProgressPanel({ item, appController }) {
     return () => {
       setDetails({});
     };
-  }, [
-    progressPages.loading,
-    progressPages.queryBy,
-    appController.states.user.user,
-  ]);
+  }, []);
 
   return (
     <div

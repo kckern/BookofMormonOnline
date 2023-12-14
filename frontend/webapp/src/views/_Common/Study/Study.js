@@ -256,7 +256,7 @@ export default function Comments({
   }
 
   return (
-    <div className="study" threadHash={threadHash}>
+    <div className="study" threadhash={threadHash}>
       {highlightButton}
       <MessageList
         parentMessage={firstComment}
