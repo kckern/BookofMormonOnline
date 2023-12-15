@@ -425,7 +425,7 @@ function TextItemCounters({narrationController})
         )}}
       />
   <div className="text_item_counter noselect">
-
+          
     {!!peopleCount && <span className="item_counter people" 
       data-tip={ ppLabel(peopleCount,placeCount) } data-for={tooltipId} onClick={setPeoplePlaces}>
       <img src={peopleCount ? peopleSVG : placesSVG}/>{peopleCount + placeCount}</span>}

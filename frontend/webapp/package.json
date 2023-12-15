@@ -87,6 +87,7 @@
     "react-slick": "^0.28.1",
     "react-toastify": "^7.0.4",
     "react-tooltip": "^4.2.21",
+    "react-vega": "^7.6.0",
     "react-visibility-sensor": "^5.1.1",
     "reactstrap": "^8.9.0",
     "redux": "^4.1.0",
@@ -100,6 +101,8 @@
     "string-similarity": "^4.0.4",
     "tinymce": "^5.10.1",
     "use-sound": "^4.0.1",
+    "vega": "^5.26.1",
+    "vega-lite": "^5.16.3",
     "web-vitals": "^1.1.2"
   },
   "scripts": {

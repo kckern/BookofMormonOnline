@@ -705,10 +705,10 @@ export function ParseMessage(string) {
         const ref = domToReact(children, options);
         const refIndex = scriptures.indexOf(ref);
         //replace classname with class
-        attribs.class = attribs.classname;
+        attribs.className = attribs.classname;
         delete attribs.classname;
         const isActive = activeRef === refIndex;
-        if (isActive) attribs.class += " active";
+        if (isActive) attribs.className += " active";
         const activateRef = () => {
           setActiveRef(refIndex);
         }

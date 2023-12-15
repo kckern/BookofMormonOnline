@@ -57,7 +57,7 @@ export function HomeFeed({
 
   useEffect(async () => {
     let token = appController.states.user.token;
-    setLoader(<Loader />);
+    setLoader(null);
     let r = await BoMOnlineAPI(
       { homefeed: { token, channel: activeGroup, message: messageId } },
       { useCache: false },
@@ -230,6 +230,9 @@ function HomeFeedItem({
   };
   let finished = item.user.finished;
   const trophyImg = finished ? <img className="trophy" src={trophy} /> : null;
+  const statusBox = item.user.isBot ? 
+  <div className="progress bot">BOT</div> :
+  <div className="progress">{item.user.progress}%</div>;
   return (
     <VisibilitySensor key={item.id} onChange={handleVisibilityChange}>
       <Card className="homeFeed" key={item.id}>
@@ -255,7 +258,7 @@ function HomeFeedItem({
           <div className="imagebox">
             {trophyImg}
             <img src={item.user.picture} onError={breakCache} />
-            <div className="progress">{item.user.progress}%</div>
+            {statusBox}
           </div>
           <h5>
             <div>
@@ -577,7 +580,7 @@ function Comment({ comment }) {
   const urlMatch = parseInt(match.params?.messageId || 0) || 0;
   if (!comment) return null;
   let finished = comment.user.finished;
-  const isBot = comment.user.nickname === "StudyBuddy"; //TODO get from api
+  const isBot = comment.user.nickname === "StudyBuddy" || comment.user.isBot;
   const botBadge = isBot ? <span className="botBadge">BOT</span> : null;
   const trophyImg = finished ? <img className="trophy" src={trophy} /> : null;
   let timeAgo = timeAgoString(comment.timestamp / 1000);
@@ -636,7 +639,7 @@ function MyComment({
           {trophyComp}
           <img src={img} onError={breakCache} />
           <div className="progress">
-            {appController.states.user.progress.completed || 0}%
+            {appController.states.user.progress.completed || 0}%!
           </div>
         </div>
         <div className="textbox notmember">

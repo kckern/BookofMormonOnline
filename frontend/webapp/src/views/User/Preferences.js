@@ -7,6 +7,7 @@ import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
 import "./Preferences.css"
 
 import audio from "src/views/_Common/svg/audio.svg"
+import chat from "src/views/_Common/svg/chat.svg"
 import autoplay from "src/views/_Common/svg/autoplay.svg"
 import commentary from "src/views/_Common/svg/commentary.svg"
 import illustrations from "src/views/_Common/svg/illustrations.svg"
@@ -45,6 +46,11 @@ export default function User({ appController }) {
     const toggleFax = () => {
         let prefs = appController.states.preferences;
         prefs.facsimiles.on = !prefs.facsimiles.on;
+        appController.functions.updatePrefs(prefs);
+    }
+    const toggleChat = () => {
+        let prefs = appController.states.preferences;
+        prefs.canned_responses = !prefs.canned_responses;
         appController.functions.updatePrefs(prefs);
     }
     const toggleCommentarySource = (e, source_id) => {
@@ -169,6 +175,20 @@ export default function User({ appController }) {
                             offText={label("off")}
                             onChange={toggleAutoPlay}
                             value={appController.states.preferences.autoplay}
+                            onColor="default"
+                            offColor="default"
+                        />
+                    </Label>
+                </h5>
+                <hr />
+                <h5 className="title">
+                    <Label className="canned_responses"><img src={chat} />
+                        {label("message_hints")}
+                        <Switch
+                            onText={label("on")}
+                            offText={label("off")}
+                            onChange={toggleChat}
+                            value={appController.states.preferences.canned_responses}
                             onColor="default"
                             offColor="default"
                         />

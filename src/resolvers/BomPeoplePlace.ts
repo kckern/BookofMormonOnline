@@ -29,7 +29,7 @@ export default {
               {
                 model: Models.BomPeople,
                 as: 'personSrc',
-               // include: [includeTranslation({ [Op.or]: ['name', 'title', "description"] }, lang)]
+                include: [includeTranslation({ [Op.or]: ['name', 'title'] }, lang)].filter(x=>!!x)
               }
             ]
           },
@@ -41,7 +41,7 @@ export default {
               {
                 model: Models.BomPeople,
                 as: 'personDst',
-               // include: [includeTranslation({ [Op.or]: ['name', 'title', "description"] }, lang)]
+                include: [includeTranslation({ [Op.or]: ['name', 'title'] }, lang)].filter(x=>!!x)
               }
             ]
           }
@@ -130,8 +130,9 @@ export default {
     description: async (item: any, args: any, { db, res }: any, info: any) => {
       return translatedValue(item, 'description');
     },
-    relations(item: any) {
-      // console.log(item)
+    async relations(item: any, args: any, {lang }: any) {
+
+
       var relationSrc: [any] = item?.getDataValue('relationSrc');
       var relationDst: [any] = item?.getDataValue('relationDst');
       var relations = [];
@@ -149,7 +150,28 @@ export default {
             person: rel.getDataValue('personSrc')
           });
       }
-      return relations;
+      const allLabels = (await Models.BomLabel.findAll({
+        raw: true,
+        //attributes: ['label_id','label_text'],
+        where: {
+          type: 'peoplerel'
+        },
+        include: [{
+          model: Models.BomTranslation,
+          as: 'translation',
+          where: { lang: lang },
+          attributes: ['value'],
+          required: false
+        
+        }]
+      })).map((i:any)=>{return {label_id:i.label_id.replace(/^rel_/,''),label_text:i['translation.value'] || i.label_text}});
+
+      return relations.map((rel: any) => {
+        if(!rel.person) return null;
+        const label = allLabels.find((l:any)=>l.label_id==rel.relation);
+        if(label) rel.relation = label?.['label_text'];
+        return rel;
+      }).filter((x:any)=>!!x);
     },
     index: async (item: any, args: any, { db, res }: any, info: any) => {
       return item.getDataValue('index').map((i: any) => {
@@ -294,7 +316,6 @@ return places;
 
 
 export const loadNotesFromTextGuid = async (guid: string, lang) => {
-  //get from commentary with is_note = 1
   return (await Models.BomXtrasCommentary.findAll({
     where: {
       is_note: 1,

@@ -30,6 +30,8 @@ import Loader, { Spinner } from "./Loader";
 import { MobileDrawer } from "./Drawer";
 import { addHighlightTagSelectively } from "../Page/TextContent";
 import Commentary from "./Commentary";
+import { ScripturePanelSingle } from "../Page/Narration";
+import { detectScriptures } from "scripture-guide";
 
 export function Loading({ type, appController, callingAPI }) {
   return (
@@ -157,6 +159,9 @@ export function LegalNotice({ appController, commentaryData, showLegal }) {
 }
 
 function Person({ appController }) {
+
+  const [PopUpRef,setPopUpRef] = useState(null)
+
   if (
     appController.popUpData[appController.states.popUp.activeId] === undefined
   ) {
@@ -171,6 +176,7 @@ function Person({ appController }) {
       });
       if (!response.person) return false;
       const person = response.person[appController.states.popUp.ids[0]];
+      setPopUpRef(null);
       const slugs =
         person?.relations
           ?.filter((i) => i.person?.slug)
@@ -231,7 +237,11 @@ function Person({ appController }) {
                     {replaceNumbers(person.title)}
                   </small>
                 </h3>
-                {renderPersonPlaceHTML(person.description, appController)}
+                {renderPersonPlaceHTML(detectScriptures(person.description, (scripture) => {
+                  if (!scripture) return;
+                  return `<a className="scripture_link">${scripture}</a>`
+                }
+              ), appController, setPopUpRef)}
               </div>
 
               <div className="refbox">
@@ -241,46 +251,16 @@ function Person({ appController }) {
                 </div>
 
                 <h4>{label("relationships")}</h4>
-                <table className="refbox-tabel">
-                  <tbody>
-                    {person?.relations &&
-                      person.relations.map((relation, index) => (
-                        <tr key={index}>
-                          <td className="refbox-relation">
-                            {relation.relation}
-                          </td>
-                          <td className="refbox-relation-of">
-                            {ofs[relation.relation] || "of"}
-                          </td>
-                          <td className="refbox-related">
-                            {relation.person && (
-                              <Link
-                                onClick={(e) =>
-                                  handleClick(relation.person.slug, e)
-                                }
-                                className="ppref"
-                                to={`people/${relation.person.slug}`}
-                                data-tip={replaceNumbers(relation.person.title)}
-                                data-offset="{'left': 0}"
-                                data-place="top"
-                                effect="solid"
-                              >
-                                {processName(relation.person.name)}
-                              </Link>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
+                <Relationships data={person?.relations} />
                 <ReferenceList
                   index={person.index}
+                  setPopupRef={setPopUpRef}
                   appController={appController}
                 />
               </div>
             </div>
           </div>
-
+          <ScripturePanelSingle scriptureData={{ref:PopUpRef}} closeButton={true} setPopUpRef={setPopUpRef} />
           <Comments />
         </div>
       </Draggable>
@@ -288,7 +268,10 @@ function Person({ appController }) {
   );
 }
 
+
+
 function Place({ appController }) {
+  const [PopUpRef,setPopUpRef] = useState(null)
   const [showMapsDropDown, showMapsDropDownSet] = useState(false),
     { push } = useHistory();
 
@@ -300,6 +283,7 @@ function Place({ appController }) {
           ids: appController.states.popUp.ids,
           popUpData: response.places,
         });
+        setPopUpRef(null);
       },
     );
     return <Loading type="Place" appController={appController} />;
@@ -356,7 +340,12 @@ function Place({ appController }) {
                 <br />
                 <small className="ppbody-title">{place.info}</small>
               </h3>
-              {renderPersonPlaceHTML(place.description, appController)}
+              
+              {renderPersonPlaceHTML(detectScriptures(place.description, (scripture) => {
+                  if (!scripture) return;
+                  return `<a className="scripture_link">${scripture}</a>`
+                }
+              ), appController, setPopUpRef)}
             </div>
 
             <div className="refbox">
@@ -403,17 +392,76 @@ function Place({ appController }) {
               <ReferenceList
                 index={place.index}
                 appController={appController}
+                setPopupRef={setPopUpRef}
               />
             </div>
           </div>
         </div>
+          <ScripturePanelSingle scriptureData={{ref:PopUpRef}} closeButton={true} setPopUpRef={setPopUpRef} />
         <Comments />
       </div>
     </Draggable>
   );
 }
 
-function ReferenceList({ index, appController }) {
+function Relationships({ data }) {
+
+
+  const personRow = (person, i) => {
+
+    //determine split
+    const namePosition = person.relation.indexOf("$1") ? "back" : "front";
+    const StringwithSplitMarker = namePosition === "front" ? 
+      person.relation.replace(/(\$1\S+)/, "$1•")
+    : person.relation.replace("$1", "•$1");
+
+    const replaceWithLink = (text) => {
+      //split by $1, keep delimiter
+      if (!text.includes("$1")) return text;
+      const pieces = text.split(/(\$1)/);
+      if (pieces.length === 1) return text;
+      return pieces.map((piece, i) => {
+        if (piece === "$1") {
+          return  <span className="nameLink">{person.person.name.replace(/\d+/, "")}</span>
+        }
+        return piece;
+      });
+    }
+    const rows = StringwithSplitMarker.split("•").map(replaceWithLink).filter(i=>!!i);
+    const items = [
+      <div className="related_text_top">{rows[0]}</div>, 
+      <div className="related_text_bottom">{rows[1]}</div>];
+
+
+      return      <div className="related_row" key={i}
+        data-for="relToolTip"
+        data-tip={person.title}
+        >
+          <Link
+        style={{display:"flex"}}
+        to={`/people/${person.person.slug}`}>
+        <div className="related_text">
+          {items}
+        </div>
+        
+        <div className="related_avatar">
+          <img src={`${assetUrl}/people/${person.person.slug}`} />
+        </div>
+        </Link>
+      </div> 
+
+  };
+
+
+  return <div className="related_people noselect">
+   <ReactTooltip id="relToolTip" place="left" offset="{'bottom': 0, 'left': '10rem'}" effect="solid" backgroundColor={"#666"} arrowColor={"#666"} />
+    {data?.map((relation, i) => personRow(relation, i))}
+  </div>
+
+}
+
+function ReferenceList({ index, appController,setPopupRef }) {
+  setPopupRef || (setPopupRef = ()=>{})
   return (
     <>
       <h4>{label("references")}</h4>
@@ -421,14 +469,13 @@ function ReferenceList({ index, appController }) {
         {index &&
           index.map((reference, i) => (
             <li key={i}>
-              <Link
+              <a
                 className="ppref"
-                onClick={appController.functions.closePopUp}
-                to={`/${reference.slug}`}
+                onClick={()=>setPopupRef(reference.ref)}
                 data-tip={reference.ref}
               >
                 {replaceNumbers(reference.text)}
-              </Link>
+              </a>
             </li>
           ))}
       </ol>

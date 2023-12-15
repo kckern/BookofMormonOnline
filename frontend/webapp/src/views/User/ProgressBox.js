@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Card,
   CardHeader,
@@ -72,9 +72,6 @@ export default function ProgressBox({ appController }) {
         appController.functions.updateUserProgress(progress);
       }
     });
-    return () => {
-      setProgressBoxData({});
-    };
   }, []);
 
   let completed = ProgressBoxData.userProgress?.completed;
@@ -88,9 +85,9 @@ export default function ProgressBox({ appController }) {
         <h5>
           {label("study_progress_for_x", [name ? name : label("guest")])}:<br />
           <span>
-            {numericLoad(completed)}% {label("completed")} •{" "}
-            {numericLoad(started)}% {label("started")}
-          </span>
+            {completed !== 0 && <>{numericLoad(completed)}% {label("completed")}</>}
+            {completed !== 0 && started !== 0 && " • "}
+            {started !== 0 && <>{numericLoad(started)}% {label("started")}</>}          </span>
         </h5>
         <ProgressBar complete={completed} started={started} />
       </CardHeader>
@@ -349,6 +346,9 @@ function ProgressPanel({ item, appController }) {
   }
 
   useEffect(() => {
+		console.log('Item',item)
+		console.log('Before queryBy',queryBy)
+		console.log('Before ProgressPages', progressPages)
     if (progressPages.loading || progressPages.queryBy !== queryBy) {
       BoMOnlineAPI(
         { divisionProgressDetails: item.slug },
@@ -365,10 +365,7 @@ function ProgressPanel({ item, appController }) {
         });
       });
     }
-    return () => {
-      setDetails({});
-    };
-  }, []);
+  }, [progressPages.slug]);
 
   return (
     <div
@@ -399,9 +396,9 @@ function ProgressPanel({ item, appController }) {
           ></div>
         </div>
         <div className={"textProgress"}>
-          {numericLoad(item.progress?.completed)}% {label("completed")}
-          {" • "}
-          {numericLoad(item.progress?.started)}% {label("started")}
+            {item.progress?.completed !== 0 && <>{numericLoad(item.progress?.completed)}% {label("completed")}</>}
+            {item.progress?.completed !== 0 && item.progress?.started !== 0 && " • "}
+            {item.progress?.started !== 0 && <>{numericLoad(item.progress?.started)}% {label("started")}</>}
         </div>
       </Link>
       <ProgressDetailsCircles progressPages={progressPages} />

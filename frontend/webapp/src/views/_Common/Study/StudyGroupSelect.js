@@ -475,7 +475,7 @@ function StudyGroupListItem({ group, appController }) {
 
     return -a_data.latest + b_data.latest;
   };
-  let circles = members?.sort(sortByLastStudied).map((m) => {
+  let circles = members?.sort(sortByLastStudied).map((m,index) => {
     if (m.userId === appController.states.user.user) return null;
     let color = "grey";
     if (m.connectionStatus === "online") {
@@ -485,7 +485,7 @@ function StudyGroupListItem({ group, appController }) {
     return {
       color: color,
       components: (
-        <div className={color}>
+        <div className={color} key={index}>
           <img onError={breakCache} src={m.profileUrl} />
           <div className="dot"></div>
         </div>
@@ -594,7 +594,7 @@ export function GroupMemberCircles({ circles, greenCount }) {
         {circles.length + 1}
       </div>
       <div className="groupMembers">
-        {circles.slice(0, 10).map((c) => c?.components)}
+        {circles.slice(0, 10).map((c) => c.components )}
       </div>
     </div>
   );

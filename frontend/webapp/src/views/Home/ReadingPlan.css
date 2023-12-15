@@ -1,0 +1,557 @@
+
+.segmentList
+{
+    /* flexbox wrapped rows */
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: flex-start;
+    align-content: flex-start;
+    /* 1rem space between rows */
+    gap: 3px;
+
+}
+
+.segmentListItem{
+    /* 2rem green squares with 1ex rounded corners, no space between */
+    width: 2rem;
+    height: 1rem;
+    border-radius: 1ex;
+    margin: 0;
+    /* green background */
+    /* 1ex space between squares and text */
+    padding: .2ex;
+    /* text is centered */
+    text-align: center;
+    /* text is white */
+    color: #FFFFFF;
+    /* text is bold */
+    overflow: hidden;
+    font-size: 0.6rem;
+    line-height: 1rem;
+    cursor: pointer;
+    /* vertical centering text */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    align-content: center;
+    color: #00000077;
+}
+
+.segmentListItem.complete{
+    /* complete segment is green */
+    background-color: #6bd098;
+}
+
+
+.segmentListItem.inProgress{
+    /* complete segment is green */
+    background-color: #fbc658;
+}
+
+.segmentListItem.notStarted{
+    /* not started segment is red */
+    background-color: #7e7e7e;
+}
+
+.segmentListItem.current.notStarted{
+    background-color: #c2fdbc;
+}
+
+.segmentListItem:hover{
+    /* hover is blue */
+    filter: brightness(1.1);
+}
+
+.segmentListItem.current{
+    /* current segment is blue */
+    outline: 3px solid #53a075;
+}
+
+.segmentListItem.active{
+    /* hover is blue */
+    filter: brightness(1.13);
+    outline: 3px solid #333;
+}
+
+
+/* future segments are gray */
+.segmentListItem.future{
+    background-color: #d3d3d3;
+}
+
+.readingplan.progress {
+    position: relative;
+    margin-bottom: 1ex;
+    flex-grow: 1;
+}
+.readingplan.progress .progressbar
+{
+    background-color: #6bd098;
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    top: 0;
+    height: 1.5rem;
+}
+
+.readingplan.progress span{
+    z-index: 1;
+    position: absolute;
+    left: calc(50% - 1rem);
+    line-height: 1.5rem;
+}
+
+.readingplan.progressContainer{
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    align-items: center;
+    margin-bottom: 1ex;
+    margin-top: 0;
+    margin-top: -1ex;
+}
+
+.home .planName{
+    font-family: "Roboto Condensed", sans-serif;
+    float:none;
+    background-color: #6bd098;
+    padding-left: 1ex;
+    padding-right: 1ex;
+    border-radius: 0.5ex;
+    background-color: #DDDDDD;
+    color: #444444;
+}
+
+.segment h4{
+    margin: 0;
+    font-weight: bold;
+    font-size: 1.3rem;
+}
+.segment .period
+{
+    font-family: "Roboto Condensed", sans-serif;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #444444;
+    margin-bottom: 0.5ex;
+    float: right;
+    background-color: #DDD;
+    padding: 0 1ex;
+    border-radius: 0.5ex;
+}
+
+.segment h4{
+    line-height: 100%;
+    margin-bottom: 1ex;
+}
+.segment{
+    border-top: 1px solid #00000030;
+    padding-top: 1rem;
+}
+  
+
+  .segmentSections{
+    /* flex grid with 3 columns */
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    /* 1rem space between columns */
+    gap: 1ex;
+    /* 1rem space between rows */
+    row-gap: 1ex;
+    line-height: 1.2ex;
+    margin-bottom: 1ex;
+  }
+  .segmentSections h6{
+    text-transform: none;
+    line-height: 0.8rem;
+    text-align: center;
+    margin: 0;
+    margin-bottom: 1ex;
+  }
+
+  .segmentSection{
+    background-color: #EEE;
+    border-radius: 1ex;
+    padding:1ex;
+    max-width: 100%;
+    overflow: hidden;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+
+  }
+  .segmentSection:hover{
+    filter: brightness(105%);
+    outline: 1px solid #00000030;
+  }
+
+  .segmentSection .sectionDots{
+    text-align: center;
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .segmentSection .sectionDots img{
+    height: 1.5ex;
+    cursor: pointer;
+  }
+  .segmentSection .sectionDots img:hover{
+    filter: brightness(105%);
+    outline: 1px solid #00000018;
+    border-radius: 50%;
+    
+  }
+
+  .segment .buttonRow{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    padding: 1ex 25% 1ex 25%;
+    margin-bottom: 1ex;
+    gap: 1rem;
+    background-color: #EEE;
+    border-radius: 1ex;
+  }
+
+  .segment .buttonRow button{
+    background-color: #7e7e7e;
+    width: 6rem;
+  }
+
+  .segment .buttonRow button img{
+    height: 1rem;
+    margin-right: 0.5ex;
+  }
+
+
+  .segment.spinnerBox img,
+  .segment .spinnerBox img
+  {
+    height: 6rem;
+  }
+
+  .segment.spinnerBox,
+  .segment .spinnerBox
+  {
+    height: 6rem;
+    text-align: center;
+    width: 100%;
+  }
+
+  .readingplan .badge.green{
+    background-color: #6bd098;
+  }
+
+  .readingplan .badge.yellow{
+    background-color: #fbc658;
+    color: #333;
+  }
+
+  .readingplan .badge.red{
+    background-color: #fb8358;
+  }
+
+  .readingplan .progress-bar.green{
+    background-color: #6bd098;
+  }
+  /* yellow, red, grey */
+    .readingplan .progress-bar.yellow{
+        background-color: #fbc658;
+    }
+    .readingplan .progress-bar.red{
+        background-color: #fb8358;
+    }
+    .readingplan .progress-bar.grey{
+        background-color: #7e7e7e;
+    }
+  
+
+
+.segmentList
+{
+    /* flexbox wrapped rows */
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: flex-start;
+    align-content: flex-start;
+    /* 1rem space between rows */
+    gap: 3px;
+
+}
+
+.segmentListItem{
+    /* 2rem green squares with 1ex rounded corners, no space between */
+    width: 2rem;
+    height: 1rem;
+    border-radius: 1ex;
+    margin: 0;
+    /* green background */
+    /* 1ex space between squares and text */
+    padding: .2ex;
+    /* text is centered */
+    text-align: center;
+    /* text is white */
+    color: #FFFFFF;
+    /* text is bold */
+    overflow: hidden;
+    font-size: 0.6rem;
+    line-height: 1rem;
+    cursor: pointer;
+    /* vertical centering text */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    align-content: center;
+    color: #00000077;
+}
+
+.segmentListItem.complete{
+    /* complete segment is green */
+    background-color: #6bd098;
+}
+
+
+.segmentListItem.inProgress{
+    /* complete segment is green */
+    background-color: #fbc658;
+}
+
+.segmentListItem.notStarted{
+    /* not started segment is red */
+    background-color: #7e7e7e;
+}
+
+.segmentListItem.current.notStarted{
+    background-color: #c2fdbc;
+}
+
+.segmentListItem:hover{
+    /* hover is blue */
+    filter: brightness(1.1);
+}
+
+.segmentListItem.current{
+    /* current segment is blue */
+    outline: 3px solid #53a075;
+}
+
+.segmentListItem.active{
+    /* hover is blue */
+    filter: brightness(1.13);
+    outline: 3px solid #333;
+}
+
+
+/* future segments are gray */
+.segmentListItem.future{
+    background-color: #d3d3d3;
+}
+
+.readingplan.progress {
+    position: relative;
+    margin-bottom: 1ex;
+    flex-grow: 1;
+}
+.readingplan.progress .progressbar
+{
+    background-color: #6bd098;
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    top: 0;
+    height: 1.5rem;
+}
+
+.readingplan.progress span{
+    z-index: 1;
+    position: absolute;
+    left: calc(50% - 1rem);
+    line-height: 1.5rem;
+}
+
+.readingplan.progressContainer{
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    align-items: center;
+    margin-bottom: 1ex;
+    margin-top: 0;
+    margin-top: -1ex;
+}
+
+.home .planName{
+    font-family: "Roboto Condensed", sans-serif;
+    float:none;
+    background-color: #6bd098;
+    padding-left: 1ex;
+    padding-right: 1ex;
+    border-radius: 0.5ex;
+    background-color: #DDDDDD;
+    color: #444444;
+}
+
+.segment h4{
+    margin: 0;
+    font-weight: bold;
+    font-size: 1.3rem;
+}
+.segment .period
+{
+    font-family: "Roboto Condensed", sans-serif;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #444444;
+    margin-bottom: 0.5ex;
+    float: right;
+}
+
+.segment h4{
+    line-height: 100%;
+    margin-bottom: 1ex;
+}
+.segment{
+    border-top: 1px solid #00000030;
+    padding-top: 1rem;
+}
+  
+
+  .segmentSections{
+    /* flex grid with 3 columns */
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    /* 1rem space between columns */
+    gap: 1ex;
+    /* 1rem space between rows */
+    row-gap: 1ex;
+    line-height: 1.2ex;
+    margin-bottom: 1ex;
+  }
+  .segmentSections h6{
+    text-transform: none;
+    line-height: 0.8rem;
+    text-align: center;
+    margin: 0;
+    margin-bottom: 1ex;
+  }
+
+  .segmentSection{
+    background-color: #EEE;
+    border-radius: 1ex;
+    padding:1ex;
+    max-width: 100%;
+    overflow: hidden;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+
+  }
+  .segmentSection:hover{
+    filter: brightness(105%);
+    outline: 1px solid #00000030;
+  }
+
+  .segmentSection .sectionDots{
+    text-align: center;
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .segmentSection .sectionDots img{
+    height: 1.5ex;
+    cursor: pointer;
+  }
+  .segmentSection .sectionDots img:hover{
+    filter: brightness(105%);
+    outline: 1px solid #00000018;
+    border-radius: 50%;
+    
+  }
+
+  .segment .buttonRow{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    padding: 1ex 25% 1ex 25%;
+    margin-bottom: 1ex;
+    gap: 1rem;
+    background-color: #EEE;
+    border-radius: 1ex;
+  }
+
+  .segment .buttonRow button{
+    background-color: #7e7e7e;
+    width: 6rem;
+  }
+
+  .segment .buttonRow button img{
+    height: 1rem;
+    margin-right: 0.5ex;
+  }
+
+
+  .segment.spinnerBox img,
+  .segment .spinnerBox img
+  {
+    height: 6rem;
+  }
+
+  .segment.spinnerBox,
+  .segment .spinnerBox
+  {
+    height: 6rem;
+    text-align: center;
+    width: 100%;
+  }
+
+  .readingplan .badge.green{
+    background-color: #6bd098;
+  }
+
+  .readingplan .badge.yellow{
+    background-color: #fbc658;
+    color: #333;
+  }
+
+  .readingplan .badge.red{
+    background-color: #fb8358;
+  }
+
+  .readingplan .progress-bar.green{
+    background-color: #6bd098;
+  }
+  /* yellow, red, grey */
+    .readingplan .progress-bar.yellow{
+        background-color: #fbc658;
+    }
+    .readingplan .progress-bar.red{
+        background-color: #fb8358;
+    }
+    .readingplan .progress-bar.grey{
+        background-color: #7e7e7e;
+    }
+  
+
+.segment .miniprogress,
+.segment .miniprogress .progressBar{ 
+    height: 0.5ex; 
+    background-color: #DDD;
+    position: absolute;
+    top:0;
+    left:0;
+    right:0;
+}
+.segment .miniprogress .progressBar{ 
+    background-color: #6bd098;
+    right: auto;
+}

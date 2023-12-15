@@ -15,6 +15,7 @@ import fullscreen from "src/views/Page/svg/fullscreen.png";
 import {Spinner} from "../_Common/Loader";
 import { determineLanguage } from "../../models/Utils";
 import { Link } from "react-router-dom";
+import ReactTooltip from "react-tooltip";
 const {generateReference, detectReferences, setLang, lookupReference} = require('scripture-guide');
 
 function ChronoRow({ chrono }) {
@@ -385,7 +386,7 @@ function Narration({ rowData, pageController, addHighlight }) {
       <ChronoRow chrono={narrationController.data.text.chrono} />
       <div className="row" onMouseEnter={handleLocationChange}>
         <div className="col-sm-6 narration">
-          <div onMouseUp={handleSelection} className={progress}>
+          <div onMouseUp={handleSelection} className={progress + " narration_item"}>
             {narrationController.components.description}
           </div>
           <ImagePanel narrationController={narrationController} />
@@ -859,10 +860,14 @@ function ScripturePanel({ narrationController }) {
   </div>
 }
 
-export function ScripturePanelSingle({ scriptureData }) {
+export function ScripturePanelSingle({ scriptureData,closeButton, setPopUpRef }) {
 
   const {ref} = scriptureData || {ref:null,verse_id:null};
   const [passages, setPassages] = useState([]);
+  
+  const closeButtonEl = !!closeButton ? <div className="closebutton"
+  onClick={()=>setPopUpRef(null)}
+  >×</div> :null;
 
 
   useEffect(() => {
@@ -907,7 +912,7 @@ export function ScripturePanelSingle({ scriptureData }) {
   if(!ref) return null;
 
   return <div className="scripturePanelSingle">
-    <h5>{ref}</h5>
+    <h5>{ref}{closeButtonEl}</h5>
    {passages.length ? scripturePassages : <Spinner/>}
   </div>
 
@@ -976,6 +981,8 @@ function FacsimilePanel({ narrationController }) {
             );
           return (
             <li
+              data-for="faxlabel"
+              data-tip={item.title}
               key={id + "ix"}
               className={
                 id === narrationController.states.activeFax ? "active" : ""
@@ -1036,6 +1043,7 @@ function FacsimilePanel({ narrationController }) {
 
   return (
     <div className="images faxbox" key={narrationController.states.activeFax}>
+      <ReactTooltip id="faxlabel" place="top" effect="solid"/>
       {tabs}
       <div className="heading">
         <span className="close" onClick={() => close()}>

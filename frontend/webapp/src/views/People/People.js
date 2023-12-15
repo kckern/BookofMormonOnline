@@ -9,7 +9,7 @@ import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import { isMobile, label, processName, replaceNumbers } from "src/models/Utils";
 import "./People.css"
 import { assetUrl } from "src/models/BoMOnlineAPI";
-
+import crypto from "crypto-browserify";
 import royalty from "./svg/royalty.svg";
 import prophet from "./svg/prophet.svg";
 import priest from "./svg/priest.svg";
@@ -93,7 +93,7 @@ function PeopleComponent({ appController }) {
       O: <img src={other} />,
       H: <img src={record_keeper} />,
     };
-    return string.split("").map(i => reps[i]);
+    return string?.split("")?.map(i => reps[i]);
   };
   const unitIcons = (string) => {
     var reps = {
@@ -103,7 +103,7 @@ function PeopleComponent({ appController }) {
       S: <img src={society} />,
       C: <img src={civilization} />
     };
-    return string.split("").map(i => reps[i])[0];
+    return string?.split("")?.map(i => reps[i])[0];
   };
 
   const affiliationBadges = (string) => {
@@ -118,7 +118,7 @@ function PeopleComponent({ appController }) {
       H: label("spiritual"),
       O: null
     };
-    return string.split("").map(l => (reps[l]) ? <span key={l} className={"IdBadge " + l}>{reps[l]}</span> : null)
+    return string?.split("")?.map(l => (reps[l]) ? <span key={l} className={"IdBadge " + l}>{reps[l]}</span> : null)
 
   };
 
@@ -142,7 +142,7 @@ function PeopleComponent({ appController }) {
 
   }
 
-
+  
 
   return (
     <div className="container noselect" style={{ display: 'block' }}>
@@ -154,7 +154,7 @@ function PeopleComponent({ appController }) {
             breakpointCols={breakpointColumnsObj}
             className="my-masonry-grid"
             columnClassName="my-masonry-grid_column">
-            {peopleList ? peopleList.filter(filters).map((person, i) => (
+            {peopleList ? peopleList.filter(filters).map((person, i) => ( person ?
               <Link to={"/people/" + person.slug} onClick={(e) => handleClick(person.slug, e)}>
                 <Card key={i} className="personCard">
                   <CardHeader className="text-center">
@@ -173,7 +173,7 @@ function PeopleComponent({ appController }) {
                     <div className="personIcons">{personIcons(person.classification)}</div>
                   </CardFooter>
                 </Card>  </Link>
-            )) : <Spinner top={(isMobile()) ? "50vh" : "60vh"} />}
+            : null )) : <Spinner top={(isMobile()) ? "50vh" : "60vh"} />}
           </Masonry>
         </div>
       </div>
@@ -236,12 +236,11 @@ export function PeopleFilters({ appController, setFilter, peopleFilters }) {
         <Button onClick={() => toggleFilterCategory(data.key, false)}>{label("clear")}</Button>
       </li>
       {data.filters.map(f =>
-        <li className="item" onClick={(e) => toggleFilter(data.key, f.tag)}>
+        <li className="item" key={f.tag} onClick={(e) => toggleFilter(data.key, f.tag)}>
           <BootstrapSwitchButton
             checked={new RegExp(f.tag).test(peopleFilters[data.key])}
             onstyle='success'
             offlabel={label("off")}
-            onstyle='success'
             onlabel={label("on")}
             size={"xs"}
           />
@@ -271,7 +270,7 @@ export function PeopleFilters({ appController, setFilter, peopleFilters }) {
 
   const filterBox = <><h5 className="ppFiltersHeading">{label("filters")} </h5>
     <div className="ppFilters">
-      <Input className="ppSearch" placeHolder={"🔍" + label("search")} onFocus={(e) => e.target.placeholder = ""}
+      <Input className="ppSearch" placeholder={"🔍" + label("search")} onFocus={(e) => e.target.placeholder = ""}
         onChange={(e) => {
           let tmp = { ...peopleFilters }
           tmp.search = e.target.value;
@@ -286,16 +285,16 @@ export function PeopleFilters({ appController, setFilter, peopleFilters }) {
     </div>
   </>
     const handleClick = ()=>{
-
+			const id = appController.states.user.social?.user_id || crypto.createHash('md5').update(crypto.randomBytes(20).toString('hex')).digest("hex");
       appController.functions.setPopUp({
         type: "pFilter",
-        ids: [],
+        ids: [id],
         underSlug: "people",
         popUpData: { filterBox,setFilter, peopleFilters
         },
       });
-
     }
+
   if (isMobile()) return <div className="filterDrawerButton"><Button onClick={handleClick}>{label("filters")}</Button></div>;
 
   return filterBox;

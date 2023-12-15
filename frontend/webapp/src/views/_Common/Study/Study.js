@@ -404,6 +404,53 @@ export function CommentInput({
     }
   }, []);
 
+
+  const items = [
+    'study_question_about',
+    'study_question_main',
+    'study_question_detail',
+    'study_question_understanding',
+    'study_question_scene',
+    'study_question_simpler',
+    'study_question_explanation',
+    'study_question_meaning',
+    'study_question_context',
+  ];
+
+    
+  const [responses] = useState(items.sort(() => Math.random() - 0.5).slice(0, 3));
+
+  const [unSent, setUnsent] = useState(true);
+
+  let cannedResponses = null;
+  const hasBot = channel?.members?.find((m) => m?.metaData?.isBot);
+  const hasPref = Object.keys(appController?.states?.preferences).includes('canned_responses');
+  const preference = hasPref ? appController?.states?.preferences?.canned_responses : true;
+  if(hasBot && !parentMessage && unSent && preference)
+  {
+    cannedResponses = (
+      <div className="cannedResponses">
+        {responses.map((item, i) => {
+          return (
+            <div
+              key={i}
+              className="cannedResponse"
+              onClick={() => {
+                const textarea = inputRef.current;
+                textarea.value = label(item);
+                textarea.focus();
+                setUnsent(false);
+                sendMessage(textarea, parentMessageId);
+              }}
+            >
+              {label(item)}
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
   return (
     <>
       <Textarea
@@ -437,6 +484,7 @@ export function CommentInput({
           showTagList && setShowTagList(false);
         }}
       />
+      {cannedResponses}
       {showTagList && (
         <TagList
           appController={appController}

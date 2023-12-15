@@ -1,3 +1,52 @@
+
+.narration .images.faxbox{
+  margin-left: 0;
+}
+
+.faxbox .thumb_tabs {
+  float: none;
+  position: initial;
+  width: 100%;
+  margin: 0;
+  border-bottom: 1px solid #CCC;
+  padding-bottom: 1ex;
+  margin-bottom: 1ex;
+}
+.faxbox .thumb_tabs ul{
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  gap: 0.3ex;
+  margin: 0;
+}
+.faxbox .thumb_tabs ul li{
+  opacity: 0.5;
+  filter: saturate(0);
+  width: calc(20% - 0.6ex);
+  margin: 0;
+  padding: 0;
+  border-radius: 0.5ex;
+  margin-bottom: 1ex;
+}
+.faxbox .thumb_tabs ul li.active{
+  opacity: 1;
+  filter: saturate(1);
+}
+.faxbox .thumb_tabs ul li:hover{
+  opacity: 1;
+  filter: saturate(1);
+}
+
+.faxbox .thumb_tabs ul li img {
+  margin: 0;
+  height: 100%;
+  width: auto;
+  object-fit: cover;
+}
+.faxbox .thumb_tabs ul li.active img {
+  outline: 2px solid black;
+}
+
 .thumb_tabs li img {
   width: 24px;
   height: 24px;
@@ -182,23 +231,8 @@
   left: -0.3em;
 }
 
-.faxbox.images {
-  margin-left: 5vw;
-}
 
-.faxbox .thumb_tabs {
-  left: -5vw;
-}
 
-.faxbox .thumb_tabs li {
-  height: auto;
-  width: 5vw;
-}
-
-.faxbox .thumb_tabs li img {
-  width: 100px;
-  height: auto;
-}
 
 .narration .images.faxbox .panel {
   min-height: 600px;
@@ -212,7 +246,8 @@
   background-size: auto;
 }
 
-.narration > p {
+.narration > div.capsulation_narration
+{
   margin-left: 1em;
   list-style-position: outside;
   padding-left: 2em;
@@ -223,16 +258,27 @@
   background-image: url("../User/svg/empty.svg");
 }
 
-.narration > p.not_started {
+.narration > div.narration_item {
+  margin-left: 1em;
+  list-style-position: outside;
+  padding-left: 2em;
+  text-align: left;
+  background-repeat: no-repeat;
+  background-position: left top;
+  background-size: 1.5em;
+  background-image: url("../User/svg/empty.svg");
+}
+
+.narration > div.not_started {
   background-image: url("../User/svg/blank.svg");
 }
-.narration > p.started {
+.narration > div.started {
   background-image: url("../User/svg/yellow.svg");
 }
-.narration > p.completed {
+.narration > div.completed {
   background-image: url("../User/svg/green.svg");
 }
-.narration > p.active {
+.narration > div.active {
   background-image: url("../User/svg/blue.svg");
 }
 
@@ -241,16 +287,10 @@
   flex-direction: column;
 }
 
-.narration > p a {
+.narration > div a {
   font-weight: bold;
 }
 
-.narration > p a:hover {
-  font-weight: bold;
-  border-bottom: 4px double #aaa;
-  position: relative;
-  bottom: 2px;
-}
 
 .narration {
   position: relative;
@@ -319,6 +359,12 @@
   color: black;
 }
 
+.notesPanel
+{
+  display: flex;
+  flex-direction: column;
+}
+
 .peoplePlacePanel,
 .scripturePanel{
   padding: 1ex;
@@ -375,7 +421,11 @@
   display: flex;
   background-color: #EEE;
   position: relative;
-  padding:1ex
+  padding: 1ex 1ex 0 1ex;
+}
+.noteItem:last-child
+{
+  padding-bottom: 1ex;
 }
 
 .noteItem .noteSource
@@ -384,7 +434,8 @@
 }
 .noteItem .noteSource img
 {
-  max-width: 2rem;
+  width: 2rem;
+  height: 3rem;
 }
 .noteItem .noteText{
   display: flex;
@@ -419,7 +470,7 @@
   z-index: 12001;
   width: 100%;
   height: 100%;
-} */
+} 
 .fax {
   position: absolute;
   left: -1.65em;
@@ -439,7 +490,7 @@
   transition: opacity 500ms;
   border-bottom: 2px solid #999;
 }
-
+*/
 .fax .comment {
   position: absolute;
   top: 0.9em;

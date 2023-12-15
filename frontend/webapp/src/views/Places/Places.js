@@ -112,7 +112,7 @@ function PlacesComponent({ appController }) {
       N: <img src={nation} />,
       O: <img src={geo_other} />,
     }
-    return string.split("").map((l) => reps[l] || l)
+    return string?.split("")?.map((l) => reps[l] || l)
   }
 
   const handleClick = (id, e) => {
@@ -302,7 +302,7 @@ export function PlaceFilters({ appController, setFilter, placeFilters })
   <div className='ppFilters'>
     <Input
       className='ppSearch'
-      placeHolder={"🔍" + label("search")}
+      placeholder={"🔍" + label("search")}
       onFocus={(e) => (e.target.placeholder = "")}
       onChange={(e) => {
         let tmp = { ...placeFilters }
@@ -321,7 +321,7 @@ export function PlaceFilters({ appController, setFilter, placeFilters })
 
       appController.functions.setPopUp({
         type: "pFilter",
-        ids: [],
+        ids: [appController.states.user.social.user_id],
         underSlug: "places",
         popUpData: { filterBox,setFilter, placeFilters
         },

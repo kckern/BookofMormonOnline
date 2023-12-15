@@ -16,7 +16,7 @@ export default function PageLink({ rowData, pageController }) {
       {/* CONTENT ROW */}
       <div className="row">
         <div className="col-sm-6 narration">
-          <div>{description}</div>
+          <div className="capsulation_narration">{description}</div>
         </div>
         <Col md={6} className="scripture capsulation">
           <div

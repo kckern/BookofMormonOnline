@@ -42,6 +42,7 @@ import { toast } from "react-toastify";
 import Loader, { Spinner } from "../_Common/Loader/index.js";
 import { md5 } from "../../models/SendbirdController.js";
 import { timeAgoString } from "../../models/Utils.js";
+import { ReadingPlan } from "./ReadingPlan.js";
 
 const privateStyle = (nickname) => {
   if (!/[█]/gu.test(nickname)) return {};
@@ -90,6 +91,7 @@ function Home({ appController }) {
         />
       </div>
       <div className="rightPanelScroll">
+        {!activeGroup && <ReadingPlan appController={appController} slug={"cfm2024"}/>}
         <HomeFeed
           appController={appController}
           activeGroup={activeGroup}
@@ -625,7 +627,7 @@ export function GroupLeaderBoard({ groupData }) {
             </div>
             <div className="namenum">
               <div className="nickname">{m.nickname}</div>
-              <div className="progress">
+              {!m.isBot && <div className="progress">
                 <div
                   className="progressbar"
                   style={{ width: `${m.progress}%` }}
@@ -633,7 +635,7 @@ export function GroupLeaderBoard({ groupData }) {
                   {" "}
                 </div>
                 <span>{m.progress}%</span>
-              </div>
+              </div>}
             </div>
           </div>
         </>
