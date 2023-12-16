@@ -368,7 +368,11 @@ function ProgressPanel({ item, appController }) {
     return () => {
       setDetails({});
     };
-  }, []);
+  }, [
+    progressPages.loading,
+    progressPages.queryBy,
+    appController.states.user.user,
+  ]);
 
   return (
     <div
