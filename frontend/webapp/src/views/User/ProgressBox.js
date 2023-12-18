@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Card,
   CardHeader,
@@ -72,9 +72,6 @@ export default function ProgressBox({ appController }) {
         appController.functions.updateUserProgress(progress);
       }
     });
-    return () => {
-      setProgressBoxData({});
-    };
   }, []);
 
   let completed = ProgressBoxData.userProgress?.completed;
@@ -349,6 +346,9 @@ function ProgressPanel({ item, appController }) {
   }
 
   useEffect(() => {
+		console.log('Item',item)
+		console.log('Before queryBy',queryBy)
+		console.log('Before ProgressPages', progressPages)
     if (progressPages.loading || progressPages.queryBy !== queryBy) {
       BoMOnlineAPI(
         { divisionProgressDetails: item.slug },
@@ -365,14 +365,7 @@ function ProgressPanel({ item, appController }) {
         });
       });
     }
-    return () => {
-      setDetails({});
-    };
-  }, [
-    progressPages.loading,
-    progressPages.queryBy,
-    appController.states.user.user,
-  ]);
+  }, [progressPages.slug]);
 
   return (
     <div
