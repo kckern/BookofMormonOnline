@@ -61,11 +61,6 @@
 .scripture .content p {
     padding: 0 1ex;
 }
-.scripture .content p:last-child,
-.scripture .content blockquote:last-child p
- {
-    margin-bottom: 0;
-}
 
 .scripture .content blockquote p {
 

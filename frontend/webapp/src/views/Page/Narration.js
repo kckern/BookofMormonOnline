@@ -859,10 +859,14 @@ function ScripturePanel({ narrationController }) {
   </div>
 }
 
-export function ScripturePanelSingle({ scriptureData }) {
+export function ScripturePanelSingle({ scriptureData,closeButton, setPopUpRef }) {
 
   const {ref} = scriptureData || {ref:null,verse_id:null};
   const [passages, setPassages] = useState([]);
+  
+  const closeButtonEl = !!closeButton ? <div className="closebutton"
+  onClick={()=>setPopUpRef(null)}
+  >×</div> :null;
 
 
   useEffect(() => {
@@ -907,7 +911,7 @@ export function ScripturePanelSingle({ scriptureData }) {
   if(!ref) return null;
 
   return <div className="scripturePanelSingle">
-    <h5>{ref}</h5>
+    <h5>{ref}{closeButtonEl}</h5>
    {passages.length ? scripturePassages : <Spinner/>}
   </div>
 

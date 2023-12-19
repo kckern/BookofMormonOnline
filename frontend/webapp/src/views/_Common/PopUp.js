@@ -30,6 +30,8 @@ import Loader, { Spinner } from "./Loader";
 import { MobileDrawer } from "./Drawer";
 import { addHighlightTagSelectively } from "../Page/TextContent";
 import Commentary from "./Commentary";
+import { ScripturePanelSingle } from "../Page/Narration";
+import { detectScriptures } from "scripture-guide";
 
 export function Loading({ type, appController, callingAPI }) {
   return (
@@ -157,6 +159,9 @@ export function LegalNotice({ appController, commentaryData, showLegal }) {
 }
 
 function Person({ appController }) {
+
+  const [PopUpRef,setPopUpRef] = useState(null)
+
   if (
     appController.popUpData[appController.states.popUp.activeId] === undefined
   ) {
@@ -231,7 +236,11 @@ function Person({ appController }) {
                     {replaceNumbers(person.title)}
                   </small>
                 </h3>
-                {renderPersonPlaceHTML(person.description, appController)}
+                {renderPersonPlaceHTML(detectScriptures(person.description, (scripture) => {
+                  if (!scripture) return;
+                  return `<a className="scripture_link">${scripture}</a>`
+                }
+              ), appController, setPopUpRef)}
               </div>
 
               <div className="refbox">
@@ -275,18 +284,21 @@ function Person({ appController }) {
                 </table>
                 <ReferenceList
                   index={person.index}
+                  setPopupRef={setPopUpRef}
                   appController={appController}
                 />
               </div>
             </div>
           </div>
-
+          <ScripturePanelSingle scriptureData={{ref:PopUpRef}} closeButton={true} setPopUpRef={setPopUpRef} />
           <Comments />
         </div>
       </Draggable>
     </>
   );
 }
+
+
 
 function Place({ appController }) {
   const [showMapsDropDown, showMapsDropDownSet] = useState(false),
@@ -413,7 +425,7 @@ function Place({ appController }) {
   );
 }
 
-function ReferenceList({ index, appController }) {
+function ReferenceList({ index, appController,setPopupRef }) {
   return (
     <>
       <h4>{label("references")}</h4>
@@ -421,14 +433,13 @@ function ReferenceList({ index, appController }) {
         {index &&
           index.map((reference, i) => (
             <li key={i}>
-              <Link
+              <a
                 className="ppref"
-                onClick={appController.functions.closePopUp}
-                to={`/${reference.slug}`}
+                onClick={()=>setPopupRef(reference.ref)}
                 data-tip={reference.ref}
               >
                 {replaceNumbers(reference.text)}
-              </Link>
+              </a>
             </li>
           ))}
       </ol>

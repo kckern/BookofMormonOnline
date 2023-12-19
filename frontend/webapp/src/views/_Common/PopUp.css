@@ -206,6 +206,27 @@
     font-size: small;
 }
 
+#popUp .scripturePanelSingle h5{
+    margin:0;
+}
+#popUp .scripturePanelSingle text{
+    padding:0;
+    margin-bottom: 0;
+}
+
+.scripturePanelSingle .closebutton
+{
+    display: inline;
+    float: right;
+    margin-right: 0.5ex;
+    font-size: 2rem;
+    cursor: pointer;
+}
+.scripturePanelSingle .closebutton:hover
+{
+    color: #000;
+}
+
 .commentary li{
 
     margin-bottom: 0rem;
@@ -361,10 +382,6 @@ ul.source_tabs li:hover
     font-weight: bold;
 }
 
-.ppbody .bodytext a
-{
-    font-weight: bold;
-}
 
 .map button.gm-ui-hover-effect 
 {
