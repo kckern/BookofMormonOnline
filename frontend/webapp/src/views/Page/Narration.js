@@ -385,7 +385,7 @@ function Narration({ rowData, pageController, addHighlight }) {
       <ChronoRow chrono={narrationController.data.text.chrono} />
       <div className="row" onMouseEnter={handleLocationChange}>
         <div className="col-sm-6 narration">
-          <div onMouseUp={handleSelection} className={progress}>
+          <div onMouseUp={handleSelection} className={progress + " narration_item"}>
             {narrationController.components.description}
           </div>
           <ImagePanel narrationController={narrationController} />
