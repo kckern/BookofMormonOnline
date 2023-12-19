@@ -212,7 +212,7 @@
   background-size: auto;
 }
 
-.narration > p {
+.narration > div.narration_item {
   margin-left: 1em;
   list-style-position: outside;
   padding-left: 2em;
@@ -223,16 +223,16 @@
   background-image: url("../User/svg/empty.svg");
 }
 
-.narration > p.not_started {
+.narration > div.not_started {
   background-image: url("../User/svg/blank.svg");
 }
-.narration > p.started {
+.narration > div.started {
   background-image: url("../User/svg/yellow.svg");
 }
-.narration > p.completed {
+.narration > div.completed {
   background-image: url("../User/svg/green.svg");
 }
-.narration > p.active {
+.narration > div.active {
   background-image: url("../User/svg/blue.svg");
 }
 
@@ -241,11 +241,11 @@
   flex-direction: column;
 }
 
-.narration > p a {
+.narration > div a {
   font-weight: bold;
 }
 
-.narration > p a:hover {
+.narration > div a:hover {
   font-weight: bold;
   border-bottom: 4px double #aaa;
   position: relative;
