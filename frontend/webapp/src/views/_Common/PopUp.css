@@ -209,9 +209,9 @@
 #popUp .scripturePanelSingle h5{
     margin:0;
 }
-#popUp .scripturePanelSingle text{
-    padding:0;
-    margin-bottom: 0;
+#popUp .scripturePanelSingle .text{
+    margin: 0;
+    padding-bottom: 0;
 }
 
 .scripturePanelSingle .closebutton
