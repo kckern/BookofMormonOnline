@@ -8,8 +8,9 @@ const { postMessage } = sendbird;
 
 const virtualgrouptrigger = async (req,res) => {
     res = res || {send:console.log};
-    const { lang, group_id, botid } = req.params;
-    res.send({lang,group_id,botid});
+    let { lang, group_id, botid } = req.params;
+    lang = lang || "en";
+    res.send({success:true, message: "Virtual Group webhook received.  Processing..."});
     const virtualgroups = { //TODO: move to config file or database
         en:[
             {
@@ -259,6 +260,7 @@ const virtualgrouptrigger = async (req,res) => {
         ],
         ko:[],
     }
+    group_id = group_id || virtualgroups[lang][0].id;
     const virtualgroup = virtualgroups[lang].find(group => group.id === group_id);
     const context = await firstPost(virtualgroup,lang);
 
@@ -394,7 +396,6 @@ const firstPost = async (virtualgroup,lang)=>{
     });
     const results = await askGPT(instructions,prompt_thread,"gpt-3.5-turbo");
     const custom_type = pageslug;
-    console.log({content});
     const highlights = await findHighlights(results,content);
     const msg_data = {links:{text:link},highlights}; //todo: populate highlights
     const postResults = await postMessage({channelUrl:channel,
