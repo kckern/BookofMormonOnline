@@ -350,7 +350,8 @@ const commentPost = async (virtualgroup,lang, context, attempt)=>{
         const plainMessage = results.replace(/\[[^\]]+\]:* /g,'')
         .replace(`[${nickname}]:`,'')
         .replace(`${nickname}: `,'')
-        .replace(/^["“”]/,'');
+        .replace(/^["“”]/,'')
+        .replace(/ - /g,'—');
 
 
 
