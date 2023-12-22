@@ -251,7 +251,7 @@ const virtualgrouptrigger = async (req,res) => {
                     {role:"assistant",content:"May I refer to my own works, theology, sermons, or other publications?"},
                     {role:"user",content:"Yes, please do."},
                     {role:"assistant",content:"Shall I speak as if I am responding to a question?"},
-                    {role:"user",content:"No, speak as if you are commenting unprompted."},
+                    {role:"user",content:"No, speak as if you are commenting unprompted. Do not begin with 'In considering...'"},
                     {role:"assistant",content:"Okay, I got it.  Please provide the prompt, and I will give my commentary in a brief paragraph."},
                     {role:"user",content:"[[question]]"},
                     {role:"assistant",content:"What a great question!  Here is my commentary:"},
