@@ -4,6 +4,7 @@ const { queryDB, loadScripturesFromVerseIds, loadTextGuidsFromVerseIds,loadPageS
 const { loadTextBlockNarration, loadSectionContext, loadSectionNarration, loadCrossReferences } = require('./studybuddy');
 const { askGPT } = require('../library/gpt');
 const {sendbird} = require('../library/sendbird.js');
+const logger = require("../library/utils/logger.cjs");
 const { postMessage } = sendbird;
 
 const virtualgrouptrigger = async (req,res) => {
@@ -11,6 +12,7 @@ const virtualgrouptrigger = async (req,res) => {
     let { lang, group_id, botid } = req.params;
     lang = lang || "en";
     res.send({success:true, message: "Virtual Group webhook received.  Processing..."});
+    logger.info(`Virtual Group webhook received.  Processing...`);
     const virtualgroups = { //TODO: move to config file or database
         en:[
             {
@@ -346,12 +348,14 @@ const commentPost = async (virtualgroup,lang, context, attempt)=>{
         ];
 
 
+        logger.info(`Commenting on ${virtualgroup.channel} as ${nickname}`);
         const results = await askGPT(instructions,input,"gpt-3.5-turbo");
         const plainMessage = results.replace(/\[[^\]]+\]:* /g,'')
         .replace(`[${nickname}]:`,'')
         .replace(`${nickname}: `,'')
         .replace(/^["“”]/,'')
         .replace(/ - /g,'—');
+        logger.info(`Results: ${plainMessage}`);
 
 
 
@@ -396,7 +400,12 @@ const firstPost = async (virtualgroup,lang)=>{
         .replace('[[crossreferences]]',`${crossReferences.map(x => `${x.ref}: ${x.text}`).join(' • ')}`);
         return t;
     });
+
+    logger.info(`Writing first post to ${channel} as ${bot.nickname}`);
+    logger.info(`Question: ${question}`);
+
     const results = await askGPT(instructions,prompt_thread,"gpt-3.5-turbo");
+    logger.info(`Results: ${results}`);
     const custom_type = pageslug;
     const highlights = await findHighlights(results,content);
     const msg_data = {links:{text:link},highlights}; //todo: populate highlights
