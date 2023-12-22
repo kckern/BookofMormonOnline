@@ -555,7 +555,8 @@ function loadHomeUser(sbuser, user:any={}, publicUsers = []) {
     bookmark = JSON.parse(sbuser?.metadata?.bookmark);
   } catch (e) {}
 
-
+  const isBot = !!sbuser?.metadata?.isBot || /🟢/.test(sbuser?.nickname);
+  if(isBot) sbuser.nickname = sbuser?.nickname.replace(/🟢/g,"").trim();
   return {
     user_id: sbuser?.user_id,
     nickname: sbuser?.nickname,
@@ -567,7 +568,7 @@ function loadHomeUser(sbuser, user:any={}, publicUsers = []) {
     bookmark: bookmark?.slug || null,
     isAdmin: !!sbuser?.metadata?.isAdmin,
     public: !!publicUsers.includes(sbuser?.user_id) || null,
-    isBot: !!sbuser?.metadata?.isBot
+    isBot
   };
 }
 
