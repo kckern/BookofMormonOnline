@@ -533,6 +533,7 @@ function loadHomeUser(sbuser, user:any={}, publicUsers = []) {
 
   const user_id = sbuser?.user_id || md5(user?.user);
   const picture =  sbuser?.profile_url ||  `https://api.dicebear.com/7.x/personas/svg?seed=${user_id}&eyes=open,sunglasses,wink,happy&facialHair=beardMustache,goatee&facialHairProbability=20&hair=bobCut,curly,long,pigtails,shortCombover,buzzcut,beanie&mouth=smile,smirk,bigSmile&nose=smallRound,mediumRound&skinColor=d78774,b16a5b,eeb4a4,92594b`;
+ // console.log({sbuser});
   if(!sbuser?.metadata) return {
     user_id,
     nickname:  user?.name || user?.user || "User",
@@ -542,6 +543,8 @@ function loadHomeUser(sbuser, user:any={}, publicUsers = []) {
     lastseen: user.last_active,
     nonSocial:true,
     isAdmin: false,
+    public: false,
+    isBot: false,
   }
 
 
@@ -563,7 +566,8 @@ function loadHomeUser(sbuser, user:any={}, publicUsers = []) {
     laststudied: bookmark?.heading  ? `${bookmark?.heading} (${bookmark?.pagetitle})` : null,
     bookmark: bookmark?.slug || null,
     isAdmin: !!sbuser?.metadata?.isAdmin,
-    public: !!publicUsers.includes(sbuser?.user_id) || null
+    public: !!publicUsers.includes(sbuser?.user_id) || null,
+    isBot: !!sbuser?.metadata?.isBot
   };
 }
 

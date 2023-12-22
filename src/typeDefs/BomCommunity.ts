@@ -151,6 +151,7 @@ extend type Mutation {
     laststudied: String
     bookmark: String
     public: Boolean
+    isBot: Boolean
   }
 
   type ContentLink

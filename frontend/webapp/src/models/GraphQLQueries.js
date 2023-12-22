@@ -1197,6 +1197,7 @@ const queries = {
                 lastseen
                 laststudied
                 bookmark
+                isBot
             }
             currentProgress{
                 nickname
@@ -1206,6 +1207,7 @@ const queries = {
                 lastseen
                 laststudied
                 bookmark
+                isBot
             }
       }`,
     }
@@ -1241,6 +1243,7 @@ const queries = {
               laststudied
               bookmark
               public
+              isBot
             }
           }
           requests
@@ -1254,6 +1257,7 @@ const queries = {
             laststudied
             bookmark
             public
+            isBot
           }
         }`,
     }
@@ -1357,6 +1361,7 @@ const queries = {
               laststudied
               bookmark
               public
+              isBot
           }
         }
         feed {
@@ -1374,6 +1379,7 @@ const queries = {
             laststudied
             bookmark
             public
+            isBot
           }
           mentioned_users {
             user_id
@@ -1385,6 +1391,7 @@ const queries = {
             laststudied
             bookmark
             public
+            isBot
           }
           likes
           replycount
@@ -1398,6 +1405,7 @@ const queries = {
             laststudied
             bookmark
             public
+            isBot
           }
           link {
             key
@@ -1467,6 +1475,7 @@ const queries = {
             laststudied
             bookmark
             public
+            isBot
           }
           mentioned_users {
             user_id
@@ -1478,6 +1487,7 @@ const queries = {
             laststudied
             bookmark
             public
+            isBot
           }
           likes 
           highlights
@@ -1503,6 +1513,7 @@ const queries = {
           laststudied
           bookmark
           public
+          isBot
       }`,
     }
   },
