@@ -669,9 +669,15 @@ async function getFeaturedGroups(lang, limit = 20) {
     where: { lang: lang },
     order: [['last_active', 'desc']],
     limit
-  });
+  })
+
+  recentUsers = recentUsers.map(u => md5(u.user));
+
+  const virtualUsers = await sendbird.getVirtualUsers();
+  recentUsers = [...virtualUsers, recentUsers];
+
   const groups =  await sendbird.getOthersGroups(
-    recentUsers.map(u => md5(u.user)),
+    recentUsers,
     lang
   );
 

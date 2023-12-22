@@ -467,6 +467,10 @@ class Sendbird {
     return response?.data?.channels || [];
   }
 
+  async getVirtualUsers(){
+    return ["13b1c4fc58a87a68d4da51beb22a0ecd"];
+  }
+
   async getMembers(channelUrl) {
     let response = await axios({
       method: 'GET',
