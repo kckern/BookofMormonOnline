@@ -625,7 +625,7 @@ export function GroupLeaderBoard({ groupData }) {
             </div>
             <div className="namenum">
               <div className="nickname">{m.nickname}</div>
-              <div className="progress">
+              {!m.isBot && <div className="progress">
                 <div
                   className="progressbar"
                   style={{ width: `${m.progress}%` }}
@@ -633,7 +633,7 @@ export function GroupLeaderBoard({ groupData }) {
                   {" "}
                 </div>
                 <span>{m.progress}%</span>
-              </div>
+              </div>}
             </div>
           </div>
         </>

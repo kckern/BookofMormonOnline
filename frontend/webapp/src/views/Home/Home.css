@@ -884,6 +884,10 @@ img.groupAvatar
     line-height: 1.3em;
 }
 
+.homeFeedHeader .progress.bot{  
+      background-color: #d3e1ea;
+    color: #0006;
+}
 
 .homeFeedHeader .progress,
 .commentThreadItem .progress{
