@@ -349,7 +349,8 @@ const commentPost = async (virtualgroup,lang, context, attempt)=>{
         const results = await askGPT(instructions,input,"gpt-3.5-turbo");
         const plainMessage = results.replace(/\[[^\]]+\]:* /g,'')
         .replace(`[${nickname}]:`,'')
-        .replace(`${nickname}: `,'');
+        .replace(`${nickname}: `,'')
+        .replace(/^["“”]/,'');
 
 
 
