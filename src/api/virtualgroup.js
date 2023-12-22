@@ -1,8 +1,19 @@
-const virtualgrouptrigger = (req,res) => {
 
+const {lookup} = require('scripture-guide');
+const { queryDB, loadScripturesFromVerseIds, loadTextGuidsFromVerseIds,loadPageSlugFromTextGuid } = require('../library/db');
+const { loadTextBlockNarration, loadSectionContext, loadSectionNarration, loadCrossReferences } = require('./studybuddy');
+const { askGPT } = require('../library/gpt');
+const {sendbird} = require('../library/sendbird.js');
+const { postMessage } = sendbird;
+
+const virtualgrouptrigger = async (req,res) => {
+    res = res || {send:console.log};
+    const { lang, group_id, botid } = req.params;
+    res.send({lang,group_id,botid});
     const virtualgroups = { //TODO: move to config file or database
         en:[
             {
+                id:"reformers",
                 channel:"36eddcfa954553c01a2b8bacb6ff86f4",
                 bots:{
                     "13b1c4fc58a87a68d4da51beb22a0ecd":{
@@ -220,26 +231,209 @@ const virtualgrouptrigger = (req,res) => {
                         
                     }
                 },
-                prompt: `
-                    Reflect on the following question from your perspective, citing scripture freely:
+                prompt_thread: [
+                    {role:"user",content:"I will first provide you with a scripture to consider, then give you context, then finally ask you a question about it."},
+                    {role:"assistant",content:"Ready.  Please provide the scripture."},
+                    {role:"user",content:"[[scripture]]"},
+                    {role:"assistant",content:"What is the context of this scripture?"},
+                    {role:"user",content:"[[context]]"},
+                    {role:"assistant",content:"What broader context is this scripture found in?"},
+                    {role:"user",content:"[[synopsis]]"},
+                    {role:"assistant",content:"Are there any cross references that might help ground the answer in scripture?"},
+                    {role:"user",content:"[[crossreferences]]"},
+                    {role:"assistant",content:"Has the audience seen the question before?"},
+                    {role:"user",content:"No, please include the substance of the question in your response."},
+                    {role:"assistant",content:"How long should the response be?"},
+                    {role:"user",content:"Limit to a single paragraph."},
+                    {role:"assistant",content:"May I refer to my own works, theology, sermons, or other publications?"},
+                    {role:"user",content:"Yes, please do."},
+                    {role:"assistant",content:"Shall I speak as if I am responding to a question?"},
+                    {role:"user",content:"No, speak as if you are commenting unprompted."},
+                    {role:"assistant",content:"Okay, I got it.  Please provide the prompt, and I will give my commentary in a brief paragraph."},
+                    {role:"user",content:"[[question]]"},
+                    {role:"assistant",content:"What a great question!  Here is my commentary:"},
 
-                    [[question]]
-
-                    The context for this question is found in these passages:
-
-                    [[context]]
-
-                    The passages are contextualize in this synopsis:
-
-                    [[synopsis]]
-                `,
+                ],
                 comments: [3,10]
             }
         ],
         ko:[],
     }
+    const virtualgroup = virtualgroups[lang].find(group => group.id === group_id);
+    const context = await firstPost(virtualgroup,lang);
+
+    const [min,max] = virtualgroup.comments;
+    const commentCount = Math.floor(Math.random() * (max - min + 1) + min);
+
+    for(let i = 0; i < commentCount; i++){
+        await commentPost(virtualgroup,lang,context);
+    }
+    process.exit();
+
+}
+const commentPost = async (virtualgroup,lang, context, attempt)=>{
+    attempt = attempt || 1;
+    if(attempt > 4) return console.log('Gave up on comment post');
+    const {scriptures,message_id,textNarration,title,narration,question,crossReferences} = context;
+    const thread = await sendbird.getThread({channelUrl:virtualgroup.channel,messageId:message_id});
+    const messages = thread.map(x => ({nickname:x.user.nickname,user_id:x.user.user_id,message:x.message}));
+    const mostRecentSpeaker = messages[messages.length-1].user_id
+    const botKeys = Object.keys(virtualgroup.bots).filter(x => x !== mostRecentSpeaker);
+    const speakerId = botKeys[Math.floor(Math.random() * botKeys.length)];   
+    const {nickname,persona} = virtualgroup.bots[speakerId] || {};
+    if(!persona) return console.log(`No persona found for ${speakerId}`,mostRecentSpeaker);
+    const instructions = ` ${persona}
+        You are particiapting in a theological discussion with on the Book of Mormon.
+
+        The current topic is based on the following scripture(s):
+        ${scriptures.map(x => `${x.verse_title} (${x.heading}): ${x.text}`).join(' • ')}
+
+        The context for that scripture is:
+        ${textNarration}
+
+        The broader context for that scripture is:
+        ${title} - ${narration}
+
+        The question being responded to is:
+        ${question}
+
+        The cross references for that scripture are:
+        ${crossReferences.map(x => `${x.ref}: ${x.text}`).join(' • ')}`;
+
+        const lengths = [
+            "Limit to 3-4 sentences",
+            "Write about 1-2 paragraphs",
+            "Respond with 1 short quip",
+            "Limit to 1-2 sentences",
+            "Limit to 1-2 sentences",
+            "Limit to 1-2 sentences",
+        ];
+
+        const tones = [
+            "Thoughtful",
+            "Kind",
+            "Reconciliatory",
+            "Humble",
+            "Gracious",
+            "Cantanekrous",
+            "Witty",
+            "Insightful",
+            "Aggressive",
+            "Passionate"
+        ];
+
+        const length = lengths[Math.floor(Math.random() * lengths.length)];
+        const tone = tones[Math.floor(Math.random() * tones.length)];
+
+        const firstWordsOfMessageThread = messages.map(x => x.message.split(' ')[0]);
+        const falseStarts = [
+            "While",
+            "My esteemed colleagues",
+            "I appreciate the",
+            ...firstWordsOfMessageThread
+        ];
+
+        const input = [
+            ...messages.map(x => ({role:"user",content:`[${x.nickname}]: ${x.message}`})),
+            {role:"system",content:`Now add you own comment to the discussion,
+             using scripture references to support your position.
+             Engage the speakers and topics directly.
+             ${length}.  Tone: ${tone}. Stay in character.  Avoid repeating what others have said.
+             Do not start with any of the following: "${falseStarts.join('", "')}"
+             `}
+        ];
+
+
+        const results = await askGPT(instructions,input,"gpt-3.5-turbo");
+        const plainMessage = results.replace(/\[[^\]]+\]:* /g,'')
+        .replace(`[${nickname}]:`,'')
+        .replace(`${nickname}: `,'');
+
+
+
+        //if plainMessage starts with a false start, recursively call this function again
+        if(falseStarts.some(x => plainMessage.startsWith(x))){
+            //console.log('False start detected on:',plainMessage);
+            return commentPost(virtualgroup,lang,context, attempt + 1);
+        } 
+
+        // async replyToMessage({ channelUrl, messageId, user_id, message }) {
+        await sendbird.replyToMessage({channelUrl:virtualgroup.channel,messageId:message_id,user_id:speakerId,message:plainMessage});
+        return {results:plainMessage,question,message_id,scriptures,textNarration,title,narration,crossReferences};
 
 }
 
+
+const firstPost = async (virtualgroup,lang)=>{
+    const {id} = virtualgroup;
+    const item = await queryDB(`select * FROM bom_virtualgroup_prompts where group_id = ? and lang = ? and thread_id IS NULL order by rand() limit 1;`, [id, lang]);
+    const {reference,prompt:question,bot_id} = item[0];
+    let {prompt_thread, channel, comments} = virtualgroup;
+    const selected_bot_id = bot_id || Object.keys(virtualgroup.bots)[Math.floor(Math.random() * Object.keys(virtualgroup.bots).length)];
+    const bot = virtualgroup.bots[selected_bot_id];
+    bot.id = selected_bot_id;
+    const instructions = bot.persona;
+
+    const {verse_ids} = lookup(reference);
+    const scriptures = await loadScripturesFromVerseIds(verse_ids);
+    const text_guids = await loadTextGuidsFromVerseIds(verse_ids);
+    const text_guid = text_guids[0];
+    const [pageslug, link, content] = await loadPageSlugFromTextGuid(text_guid);
+    const textNarration = await loadTextBlockNarration(text_guid, lang);
+    const {title,narration} = await loadSectionContext(text_guid, lang);
+    const crossReferences = await loadCrossReferences(verse_ids, lang);
+    if(!scriptures?.length) return console.log('No scriptures found');
+    prompt_thread = prompt_thread.map(t => {
+        t.content =  t.content
+        .replace('[[scripture]]',`${scriptures.map(x => `${x.verse_title} (${x.heading}): ${x.text}`).join(' • ')}`)
+        .replace('[[context]]',textNarration)
+        .replace('[[synopsis]]',`${title} -  ${narration}`)
+        .replace('[[question]]',question)
+        .replace('[[crossreferences]]',`${crossReferences.map(x => `${x.ref}: ${x.text}`).join(' • ')}`);
+        return t;
+    });
+    const results = await askGPT(instructions,prompt_thread,"gpt-3.5-turbo");
+    const custom_type = pageslug;
+    console.log({content});
+    const highlights = await findHighlights(results,content);
+    const msg_data = {links:{text:link},highlights}; //todo: populate highlights
+    const postResults = await postMessage({channelUrl:channel,
+        user_id:bot.id,
+        message:results,
+        data:msg_data,
+        custom_type:custom_type
+    });
+    const {message_id} = postResults;
+    return {results,question,message_id,scriptures,textNarration,title,narration,crossReferences,highlights};
+}
+
+
+const findHighlights = async (comment,content)=>{
+    const instructions = ``;
+    const input = [
+        {role:"user",content:`Consider the following comment: ${comment}`},
+        {role:"assistant",content:`I have it in mind.`},
+        {role:"user",content:`What are its main themes?`},
+        {role:"assistant",content:`I can think of one or two.`},
+        {role:"user",content:`Great.  Now consider this content in light of those themes: ${content}`},
+        {role:"assistant",content:`Those themes are indeed present in the content.`},
+        {role:"user",content:`Please extract some substrings from the content that correspond to the themes.`},
+        {role:"assistant",content:`How many?`},
+        {role:"user",content:`1 or 2`},
+        {role:"assistant",content:`How many words should each substring contain?`},
+        {role:"user",content:`2-8`},
+        {role:"assistant",content:`Based on the given comment, here are the substrings that correspond to the comment:`},
+        {role:"user",content:`Wait, no!  The substrings need to come from the content I provided, not the comment.`},
+        {role:"assistant",content:`Oh, I understand now.  I found substrings take from this content: ${content}`},
+        {role:"user",content:`Please provide them in a comma separated list.`},
+        {role:"assistant",content:`Can you give me an example of the format you expect?`},
+        {role:"user",content:`first substring, second substring`},
+        {role:"assistant",content:`Okay, I got it.  Here are the substrings I found:`},
+
+
+    ];
+    const substrings = await askGPT(instructions,input,"gpt-3.5-turbo");
+    return substrings.split(',').map(x => x.trim()).filter(x => !/[\[_]]/.test(x)).slice(0,3);
+}
 
 module.exports = { virtualgrouptrigger }

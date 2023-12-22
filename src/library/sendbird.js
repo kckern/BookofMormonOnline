@@ -665,6 +665,28 @@ class Sendbird {
 
   }
 
+  async postMessage({ channelUrl, user_id, message, data = {}, custom_type = "" }) {
+    const config = {
+      method: 'POST',
+      url: `https://api-${SENDBIRD_APPID}.sendbird.com/v3/group_channels/${channelUrl}/messages`,
+      data: JSON.stringify({
+        user_id,
+        message_type: 'MESG',
+        custom_type,
+        message: message,
+        data: JSON.stringify(data)
+      }),
+      headers: {
+        'Api-Token': SENDBIRD_TOKEN,
+        'Content-Type': 'application/json'
+      },
+      json: true
+    };
+    //console.log(config);
+   let response = await axios(config);
+    return response?.data || {};
+  }
+
   async updateMessage({ channelUrl, messageId, message, data = {}, custom_type = "" }) {
     let response = await axios({
       method: 'PUT',

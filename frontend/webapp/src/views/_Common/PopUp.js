@@ -176,6 +176,7 @@ function Person({ appController }) {
       });
       if (!response.person) return false;
       const person = response.person[appController.states.popUp.ids[0]];
+      setPopUpRef(null);
       const slugs =
         person?.relations
           ?.filter((i) => i.person?.slug)

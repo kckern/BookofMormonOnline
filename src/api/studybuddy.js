@@ -791,7 +791,6 @@ const loadVerses = async (guid, lang) => {
 
     } 
     
-
     const verses = await queryDB(sql);
     const verse_ids = verses.map((verse) => verse.verse_id);
     const scripture_text = verses.map((verse) => verse.verse_scripture).join(" ");
@@ -806,4 +805,4 @@ const loadVerses = async (guid, lang) => {
 
 
 
-module.exports = {studyBuddy, studyBuddyTextBlock}
+module.exports = {studyBuddy, studyBuddyTextBlock, loadSectionNarration, loadSectionContext, loadTextBlockNarration,loadCrossReferences};
