@@ -302,6 +302,7 @@ function Person({ appController }) {
 
 
 function Place({ appController }) {
+  const [PopUpRef,setPopUpRef] = useState(null)
   const [showMapsDropDown, showMapsDropDownSet] = useState(false),
     { push } = useHistory();
 
@@ -313,6 +314,7 @@ function Place({ appController }) {
           ids: appController.states.popUp.ids,
           popUpData: response.places,
         });
+        setPopUpRef(null);
       },
     );
     return <Loading type="Place" appController={appController} />;
@@ -369,7 +371,12 @@ function Place({ appController }) {
                 <br />
                 <small className="ppbody-title">{place.info}</small>
               </h3>
-              {renderPersonPlaceHTML(place.description, appController)}
+              
+              {renderPersonPlaceHTML(detectScriptures(place.description, (scripture) => {
+                  if (!scripture) return;
+                  return `<a className="scripture_link">${scripture}</a>`
+                }
+              ), appController, setPopUpRef)}
             </div>
 
             <div className="refbox">
@@ -416,10 +423,12 @@ function Place({ appController }) {
               <ReferenceList
                 index={place.index}
                 appController={appController}
+                setPopupRef={setPopUpRef}
               />
             </div>
           </div>
         </div>
+          <ScripturePanelSingle scriptureData={{ref:PopUpRef}} closeButton={true} setPopUpRef={setPopUpRef} />
         <Comments />
       </div>
     </Draggable>
@@ -427,6 +436,7 @@ function Place({ appController }) {
 }
 
 function ReferenceList({ index, appController,setPopupRef }) {
+  setPopupRef || (setPopupRef = ()=>{})
   return (
     <>
       <h4>{label("references")}</h4>
