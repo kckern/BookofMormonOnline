@@ -257,7 +257,7 @@ const virtualgrouptrigger = async (req,res) => {
                     {role:"assistant",content:"What a great question!  Here is my commentary:"},
 
                 ],
-                comments: [3,10]
+                comments: [2,6]
             }
         ],
         ko:[],
@@ -337,6 +337,15 @@ const commentPost = async (virtualgroup,lang, context, attempt)=>{
             ...firstWordsOfMessageThread
         ];
 
+        const phrasesToAvoid = [
+            "In considering",
+            "let us not",
+            "As [self], I",
+            "let us remember",
+        ];
+
+            
+
         const input = [
             ...messages.map(x => ({role:"user",content:`[${x.nickname}]: ${x.message}`})),
             {role:"system",content:`Now add you own comment to the discussion,
@@ -344,6 +353,7 @@ const commentPost = async (virtualgroup,lang, context, attempt)=>{
              Engage the speakers and topics directly.
              ${length}.  Tone: ${tone}. Stay in character.  Avoid repeating what others have said.
              Do not start with any of the following: "${falseStarts.join('", "')}"
+             Avoid the following phrases: "${phrasesToAvoid.join('", "')}
              `}
         ];
 
