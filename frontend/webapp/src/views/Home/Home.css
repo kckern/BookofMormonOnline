@@ -929,6 +929,20 @@ img.groupAvatar
     color: #AAA;
 }
 
+.commentThreadItem .mesg .scriptureContainerWrapper
+{
+   border-radius: 0;
+   margin-top: 1ex;
+}
+
+
+.commentThreadItem .mesg .scriptureContainerWrapper,
+.commentThreadItem .mesg .scriptureContainerWrapper h5,
+.commentThreadItem .mesg .scripturePanel
+{
+    border-top-right-radius: 1ex;
+    border-top-left-radius: 1ex;
+}
 .commentThreadItem .textbox .namerow .botBadge
 {
     
