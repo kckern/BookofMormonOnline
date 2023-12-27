@@ -470,7 +470,7 @@ const loadReadingPlan = async (slug,completed_items) => {
     for (let i = 0; i < planSegments.length; i++) {
         const seg = planSegments[i];
         const {period,ref,title,duedate,start,end} = seg;
-        const today = moment("Feb 5, 2024").format("YYYY-MM-DD");
+        const today = moment().format("YYYY-MM-DD"); //TODO: use timezone from user
         const due = moment(duedate).format("YYYY-MM-DD");
         const isFuture = moment(today).isBefore(due);
 
