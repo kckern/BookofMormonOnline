@@ -385,11 +385,14 @@ export const completedGuids = async (userInfo: any) => {
     where: {
       user: userInfo.queryBy,
       type: 'block',
-      timestamp: { [Op.gt]: userInfo.lastcompleted || 0 }
+      timestamp: { [Op.gt]: userInfo.lastcompleted || 0 },
+      credit: { [Op.gte]: process.env.PERCENT_TO_COUNT_AS_COMPLETE || 40 }
     },
+    group: ['value'],
     order: [['timestamp', 'desc']]
   });
-  return completedItems.map((item: any) => item.getDataValue('value'));
+  return completedItems.map((item: any) => item.getDataValue('value'))
+  .filter((item, pos, self) => self.indexOf(item) == pos);
 
 
 }

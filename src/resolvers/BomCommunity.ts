@@ -389,7 +389,6 @@ export default {
       const queryBy = user?.user || args.token;
       const userInfo = {queryBy, lastcompleted: user?.lastcompleted || 0};
       const completed_items = await completedGuids(userInfo);
-      console.log({userInfo,completed_items});
       return await loadReadingPlan(args.slug, completed_items);
 
     },
