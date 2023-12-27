@@ -379,6 +379,21 @@ export const updateActiveItems = async (userInfo: any) => {
   return true;
 };
 
+export const completedGuids = async (userInfo: any) => {
+  let completedItems = await Models.BomLog.findAll({
+    attributes: ['timestamp', 'type', 'value'],
+    where: {
+      user: userInfo.queryBy,
+      type: 'block',
+      timestamp: { [Op.gt]: userInfo.lastcompleted || 0 }
+    },
+    order: [['timestamp', 'desc']]
+  });
+  return completedItems.map((item: any) => item.getDataValue('value'));
+
+
+}
+
 export const scoreSlugsfromUserInfo = (slugs: any, userInfo: any) => {
   if (!userInfo.lastcompleted) userInfo.lastcompleted = 0;
   let findThis = {

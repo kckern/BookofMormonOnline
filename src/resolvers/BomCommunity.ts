@@ -1,6 +1,7 @@
 import { models as Models } from '../config/database';
 import Sequelize, { Model } from 'sequelize';
-import { getStandardizedValuesFromUserList } from './_common';
+import { completedGuids, getStandardizedValuesFromUserList } from './_common';
+const { loadReadingPlan } = require('./lib')
 import { sendbird } from '../library/sendbird';
 import { url } from 'inspector';
 import crypto from "crypto";
@@ -369,7 +370,31 @@ export default {
       group = await loadGroup(group, 'admin');
       let userIds = group.requests;
       return sendbird.listUsers(userIds).then(data=>data.map(sbUser => loadHomeUser(sbUser)));
-    }
+    },
+    //  readingplan(token:String, slug:String): ReadingPlan
+    readingplan: async (item: any, args: any, context: any, info: any) => {
+  
+      if (!args.token) return [];
+      if (!args.slug) return [];
+      let user: any = await Models.BomUser.findOne({
+        include: [
+          {
+            model: Models.BomUserToken,
+            where: {
+              token: args.token
+            }
+          }
+        ]
+      });
+      const queryBy = user?.user || args.token;
+      const userInfo = {queryBy, lastcompleted: user?.lastcompleted || 0};
+      const completed_items = await completedGuids(userInfo);
+      console.log({userInfo,completed_items});
+      return await loadReadingPlan(args.slug, completed_items);
+
+    },
+
+
   },
   Mutation: {
 
