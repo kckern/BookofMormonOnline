@@ -2,6 +2,7 @@ const { getUserForLog, Op, includeModel } = require("./_common")
 import { queryDB } from '../library/db';
 import { models as Models, sequelize, SQLQueryTypes } from '../config/database';
 import { lookup, generateReference } from 'scripture-guide';
+import moment from 'moment';
 
 
 const getBlocksToQueue = async (token,items) => {
@@ -382,8 +383,83 @@ function genUserAvatar(user_id) {
 
 }
 
+const loadPlanData = async (slug) => {
+    
+        const [planData] = await queryDB(`SELECT * FROM bom_readingplan WHERE slug = ?`,[slug]);
+        if(!planData) return null;
+        planData["planSegments"] = await queryDB(`SELECT * FROM bom_readingplan_seg WHERE plan = ? ORDER BY start ASC`,[planData.slug]);
+        return planData;
+
+}
+
+
+const scoreSegment = async (segment,allTextBlocks,history) => {
+    const {start,end} = segment;
+    //SELECT section_guid FROM ( SELECT bom_text.section AS section_guid, bom_lookup.verse_id FROM bom_lookup INNER JOIN bom_text ON bom_lookup.text_guid = bom_text.guid WHERE bom_lookup.verse_id BETWEEN 31103 AND 31237 ORDER BY bom_lookup.verse_id ASC ) tmp GROUP BY section_guid ORDER BY min(tmp.verse_id) ASC;
+    const sql = `SELECT section FROM ( SELECT bom_text.section, bom_lookup.verse_id FROM bom_lookup INNER JOIN bom_text ON bom_lookup.text_guid = bom_text.guid WHERE bom_lookup.verse_id BETWEEN ? AND ? ORDER BY bom_lookup.verse_id ASC ) tmp GROUP BY section ORDER BY min(tmp.verse_id) ASC`;
+    const sectionGuids = (await queryDB(sql, [start, end])).map(s=>s.section);
+    const segmentBlocks = allTextBlocks.filter(b=>sectionGuids.includes(b.section));
+    const completedBlocks = segmentBlocks.filter(b=>history.includes(b.guid));
+    const completed = Math.round((completedBlocks.length/segmentBlocks.length)*10000)/100;
+    return {
+        items:segmentBlocks.length,
+        completed:completedBlocks.length,
+        progress:completed,
+    }
+}
+
+
+const loadReadingPlan = async (slug,completed_items) => {
+
+    //TODO convert to sequelize
+    const {guid,title,startdate,duedate,planSegments} = await loadPlanData(slug);
+    const sql = `SELECT guid,section FROM bom_text`;
+    const allTextBlocks = await queryDB(sql);
+
+    let toDateItems = 0;
+    let toDateCompleted = 0;
+
+
+    let segments = [];
+    
+    for (let i = 0; i < planSegments.length; i++) {
+        const isFuture = moment(planSegments[i].start).isAfter(moment());
+
+        const seg = planSegments[i];
+        const {period,ref,title,duedate,start,end} = seg;
+        const {items,completed,progress} = await scoreSegment({start,end},allTextBlocks,completed_items);
+        if(!isFuture) { toDateItems += items; toDateCompleted += completed; }
+        segments.push({
+            period,
+            ref,
+            title,
+            duedate:moment(duedate).format("YYYY-MM-DD"),
+            progress,
+            start,
+            end
+        });
+    }
+    const progress = Math.round((toDateCompleted/toDateItems)*10000)/100;
+
+return  {
+      guid,
+      slug,
+      title,
+      startdate:moment(startdate).format("YYYY-MM-DD"),
+      duedate:moment(duedate).format("YYYY-MM-DD"),
+      progress,
+      segments
+    }
+}
+
 
 
 
 //export
-module.exports = {getBlocksToQueue,getFirstTextBlockGuidFromSlug,organizeRelatedScriptures,genUserAvatar, processPassages}
+module.exports = {
+    getBlocksToQueue,
+    getFirstTextBlockGuidFromSlug,
+    organizeRelatedScriptures,
+    genUserAvatar, 
+    loadReadingPlan,
+    processPassages}

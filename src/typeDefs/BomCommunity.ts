@@ -19,6 +19,7 @@ extend type Query {
   moregroups(token:String, grouping:String): [HomeGroup]
   requestedUsers(token:String, channel:String): [HomeUser]
   leaderboard(token:String): LeaderBoard
+  readingplan(token:String, slug:String): ReadingPlan
   botlist: [Bot]
 }
 
@@ -184,6 +185,25 @@ extend type Mutation {
     members: [HomeUser]
   }
 
+  type ReadingPlan{
+    guid: String
+    slug: String
+    tite: String
+    startdate: String
+    duedate: String
+    progress: Float
+    segments: [ReadingPlanSegment]
+  }
+
+  type ReadingPlanSegment{
+    period: String
+    ref: String
+    title: String
+    duedate: String
+    progress: Float
+    start: Int
+    end: Int
+  }
 
 `
 
