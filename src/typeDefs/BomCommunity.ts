@@ -203,6 +203,7 @@ extend type Mutation {
     progress: Float
     start: Int
     end: Int
+    nextup: String
   }
 
 `
