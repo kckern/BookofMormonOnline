@@ -176,7 +176,6 @@ function ReadingPlanSegmentSections({guid, token}){
             { readingplansegment: { token, guid } },
             { useCache: false })
             .then((data) => {
-                console.log(data.readingplansegment);
                 setSectionData(data.readingplansegment[0]);
             });
     }, [guid]);
