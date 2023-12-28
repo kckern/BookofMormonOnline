@@ -246,7 +246,7 @@ function ReadingPlanLoading(){
     <CardHeader>
         <h3>Reading Plan: <span className="planName">Loading...</span></h3>
     </CardHeader>
-    <CardBody className="spinnerBox segment">
+    <CardBody className="spinnerBox segment" style={{border: "none"}}>
         <img src={loading} style={{height: "4rem"}}/>        
     </CardBody>
     </Card>
