@@ -47,7 +47,7 @@ export function ReadingPlan({appController,slug}){
     })];
     let averageProgress = (nonFutureSegments?.reduce((acc,segment) => {
         return acc + parseFloat(segment?.progress);
-    },0) / (nonFutureSegments?.length || 1)).toFixed(2);
+    },0) / (nonFutureSegments?.length || 1)).toFixed(1);
 
     averageProgress = isNaN(averageProgress) ? 0 : averageProgress;
     const progressInt = parseInt(averageProgress);
@@ -224,7 +224,7 @@ function ReadingPlanSection({section}){
         return acc + (item.status === "complete" ? 1 : 0);
     }
     ,0);
-    section.progress = (sectionProgress / sectionText.length * 100).toFixed(2);
+    section.progress = (sectionProgress / sectionText.length * 100).toFixed(1);
     //
     return (<>
         <ReactTooltip place="bottom" effect="solid" id={`sectionDotTips-${slug}`} />
