@@ -91,7 +91,7 @@ function Home({ appController }) {
         />
       </div>
       <div className="rightPanelScroll">
-        <ReadingPlan appController={appController} slug={"cfm2024"}/>
+        {!activeGroup && <ReadingPlan appController={appController} slug={"cfm2024"}/>}
         <HomeFeed
           appController={appController}
           activeGroup={activeGroup}
