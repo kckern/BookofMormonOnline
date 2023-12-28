@@ -516,7 +516,9 @@ const loadReadingPlanSegment = async (guid,queryBy,lang) => {
         ELSE NULL END) AS completion_status,
     bom_log.credit AS credit
     FROM bom_text 
-    LEFT JOIN (SELECT DISTINCT value as guid, credit FROM bom_log WHERE type = "block" and user = ? and timestamp > 0) bom_log ON bom_text.guid = bom_log.guid 
+    LEFT JOIN (
+        SELECT value as guid, MAX(credit) as credit FROM bom_log WHERE type = "block" AND user = ? AND timestamp > 0 GROUP BY guid
+        ) bom_log ON bom_text.guid = bom_log.guid 
     WHERE bom_text.section IN (SELECT DISTINCT bom_text.section FROM bom_readingplan_seg AS segment LEFT JOIN bom_lookup ON bom_lookup.verse_id BETWEEN segment.start AND segment.end LEFT JOIN bom_text ON bom_text.guid = bom_lookup.text_guid WHERE segment.guid = ? )
     ORDER BY bom_text.min_verse_id ASC
     `;
@@ -560,12 +562,12 @@ const loadReadingPlanSegment = async (guid,queryBy,lang) => {
         .map(b=>({
             heading: b.heading,
             slug: `${s['page.pageSlug.slug']}/${b.link}`,
-            status: b.completion_status === 1 ? "complete" : b.completion_status === 0 ? "started" : "incomplete"
+            status: b.completion_status === 1 ? "completed" : b.completion_status === 0 ? "started" : "incomplete"
         }))
     }));
 
     const countOfSectionItems = sections.reduce((a,b)=>a+b.sectionText.length,0);
-    const countOfSectionItemsCompleted = sections.reduce((a,b)=>a+b.sectionText.filter(i=>i.status === "complete").length,0);
+    const countOfSectionItemsCompleted = sections.reduce((a,b)=>a+b.sectionText.filter(i=>i.status === "completed").length,0);
     const progress = Math.round((countOfSectionItemsCompleted/countOfSectionItems)*10000)/100;
     
     return {
