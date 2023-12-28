@@ -1,0 +1,210 @@
+
+.segmentList
+{
+    /* flexbox wrapped rows */
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: flex-start;
+    align-content: flex-start;
+    /* 1rem space between rows */
+    gap: 3px;
+
+}
+
+.segmentListItem{
+    /* 2rem green squares with 1ex rounded corners, no space between */
+    width: 2rem;
+    height: 1rem;
+    border-radius: 1ex;
+    margin: 0;
+    /* green background */
+    /* 1ex space between squares and text */
+    padding: .2ex;
+    /* text is centered */
+    text-align: center;
+    /* text is white */
+    color: #FFFFFF;
+    /* text is bold */
+    overflow: hidden;
+    font-size: 0.6rem;
+    line-height: 1rem;
+    cursor: pointer;
+    /* vertical centering text */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    align-content: center;
+}
+
+.segmentListItem.complete{
+    /* complete segment is green */
+    background-color: #53a075;
+}
+
+
+.segmentListItem.inProgress{
+    /* complete segment is green */
+    background-color: #fbc658;
+}
+
+.segmentListItem.notStarted{
+    /* not started segment is red */
+    background-color: #7e7e7e;
+}
+
+.segmentListItem.current.notStarted{
+    background-color: #c2fdbc;
+}
+
+.segmentListItem:hover{
+    /* hover is blue */
+    filter: brightness(1.1);
+}
+
+.segmentListItem.current{
+    /* current segment is blue */
+    outline: 3px solid #53a075;
+}
+
+.segmentListItem.active{
+    /* hover is blue */
+    filter: brightness(1.13);
+    outline: 3px solid #333;
+}
+
+
+/* future segments are gray */
+.segmentListItem.future{
+    background-color: #d3d3d3;
+}
+
+.readingplan.progress {
+    position: relative;
+    margin-bottom: 1ex;
+    flex-grow: 1;
+}
+.readingplan.progress .progressbar
+{
+    background-color: #6bd098;
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    top: 0;
+    height: 1.5rem;
+}
+
+.readingplan.progress span{
+    z-index: 1;
+    position: absolute;
+    left: calc(50% - 1rem);
+    line-height: 1.5rem;
+}
+
+.readingplan.progressContainer{
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    align-items: center;
+    margin-bottom: 1ex;
+    margin-top: 0;
+    margin-top: -1ex;
+}
+
+.home .planName{
+    font-family: "Roboto Condensed", sans-serif;
+    float:none;
+    background-color: #6bd098;
+    padding-left: 1ex;
+    padding-right: 1ex;
+    border-radius: 0.5ex;
+    background-color: #DDDDDD;
+    color: #444444;
+}
+
+.segment h4{
+    margin: 0;
+    font-weight: bold;
+    font-size: 1.3rem;
+}
+.segment .period
+{
+    font-family: "Roboto Condensed", sans-serif;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #444444;
+    margin-bottom: 0.5ex;
+    float: right;
+}
+
+
+.ProgressBoxPane .sectionDots {
+    padding-right: 0.3em;
+    margin-right: 0.3em;
+    letter-spacing: -0.3em;
+    border-right: 3px solid #CACACA;
+    word-break: break-all;
+  }
+  
+  
+  .ProgressBoxPane .sectionDots span img {
+    border:0;
+    height: 1.2rem;
+    width: 1.2rem;
+    margin-right: -.4ex;
+  }
+  .ProgressBoxPane .sectionDots a:last-child span img 
+  {
+    margin-right: 0;
+  }
+  
+  
+  .ProgressBoxPane .sectionDots span img:hover {
+    filter: brightness(110%)
+  }
+  
+  
+  .ProgressBoxPane .sectionDots:last-child {
+    border: none;
+  }
+  
+
+  .segmentSections{
+    /* flex grid with 3 columns */
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    /* 1rem space between columns */
+    gap: 1ex;
+    /* 1rem space between rows */
+    row-gap: 1ex;
+    line-height: 1.2ex;
+  }
+  .segmentSections h6{
+    text-transform: none;
+    line-height: 0.8rem;
+    text-align: center;
+    margin: 0;
+    margin-bottom: 1ex;
+  }
+
+  .segmentSection{
+    background-color: #EEE;
+    border-radius: 1ex;
+    padding:1ex;
+    max-width: 100%;
+    overflow: hidden;
+
+  }
+  .segmentSection .sectionDots{
+    text-align: center;
+  }
+
+  .segmentSection .sectionDots img{
+    height: 1.5ex;
+    cursor: pointer;
+  }
+  .segmentSection .sectionDots img:hover{
+    filter: brightness(110%);
+    
+  }

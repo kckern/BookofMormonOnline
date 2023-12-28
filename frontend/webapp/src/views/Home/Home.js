@@ -42,6 +42,7 @@ import { toast } from "react-toastify";
 import Loader, { Spinner } from "../_Common/Loader/index.js";
 import { md5 } from "../../models/SendbirdController.js";
 import { timeAgoString } from "../../models/Utils.js";
+import { ReadingPlan } from "./ReadingPlan.js";
 
 const privateStyle = (nickname) => {
   if (!/[█]/gu.test(nickname)) return {};
@@ -90,6 +91,7 @@ function Home({ appController }) {
         />
       </div>
       <div className="rightPanelScroll">
+        <ReadingPlan appController={appController} slug={"cfm2024"}/>
         <HomeFeed
           appController={appController}
           activeGroup={activeGroup}
