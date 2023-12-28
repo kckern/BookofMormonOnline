@@ -36,11 +36,12 @@
     justify-content: center;
     align-items: center;
     align-content: center;
+    color: #00000077;
 }
 
 .segmentListItem.complete{
     /* complete segment is green */
-    background-color: #53a075;
+    background-color: #6bd098;
 }
 
 
@@ -138,36 +139,11 @@
     float: right;
 }
 
+.segment h4{
+    line-height: 100%;
+    margin-bottom: 1ex;
+}
 
-.ProgressBoxPane .sectionDots {
-    padding-right: 0.3em;
-    margin-right: 0.3em;
-    letter-spacing: -0.3em;
-    border-right: 3px solid #CACACA;
-    word-break: break-all;
-  }
-  
-  
-  .ProgressBoxPane .sectionDots span img {
-    border:0;
-    height: 1.2rem;
-    width: 1.2rem;
-    margin-right: -.4ex;
-  }
-  .ProgressBoxPane .sectionDots a:last-child span img 
-  {
-    margin-right: 0;
-  }
-  
-  
-  .ProgressBoxPane .sectionDots span img:hover {
-    filter: brightness(110%)
-  }
-  
-  
-  .ProgressBoxPane .sectionDots:last-child {
-    border: none;
-  }
   
 
   .segmentSections{
@@ -194,10 +170,18 @@
     padding:1ex;
     max-width: 100%;
     overflow: hidden;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 
   }
   .segmentSection .sectionDots{
     text-align: center;
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
   }
 
   .segmentSection .sectionDots img{
@@ -205,6 +189,8 @@
     cursor: pointer;
   }
   .segmentSection .sectionDots img:hover{
-    filter: brightness(110%);
+    filter: brightness(105%);
+    outline: 1px solid #00000018;
+    border-radius: 50%;
     
   }
