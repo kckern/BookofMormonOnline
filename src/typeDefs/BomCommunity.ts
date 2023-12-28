@@ -20,6 +20,7 @@ extend type Query {
   requestedUsers(token:String, channel:String): [HomeUser]
   leaderboard(token:String): LeaderBoard
   readingplan(token:String, slug:String): ReadingPlan
+  readingplansegment(token:String, guid:String): ReadingPlanSegment
   botlist: [Bot]
 }
 
@@ -196,14 +197,16 @@ extend type Mutation {
   }
 
   type ReadingPlanSegment{
+    guid: String
     period: String
     ref: String
+    url: String
     title: String
     duedate: String
     progress: Float
     start: Int
     end: Int
-    nextup: String
+    sections: [Section]
   }
 
 `
