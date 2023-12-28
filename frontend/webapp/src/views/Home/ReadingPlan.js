@@ -58,29 +58,29 @@ export function ReadingPlan({appController,slug}){
         let status = {};
         
         if (progressInt > 95 || nonFutureSegments?.length === 1) {
-            status = { label: "On Track", labelClass: "green" };
+            status = { label: label("status_ontrack"), labelClass: "green" };
         } else if (progressInt === 0) {
-            status = { label: "Not Started", labelClass: "grey" };
+            status = { label: label("status_notstarted"), labelClass: "gray" };
         } else if (progressInt > 50) {
-            status = { label: "Catching Up", labelClass: "yellow" };
+            status = { label: label("status_catchingup"), labelClass: "yellow" };
         } else {
-            status = { label: "Fallen Behind", labelClass: "red" };
+            status = { label: label("status_fallenbehind"), labelClass: "red" };
         }
 
         return status;
     }
 
 // Usage
-const { label, labelClass } = getProgressStatus(progressInt);
+const { label:labelText, labelClass } = getProgressStatus(progressInt);
 
-
+ 
     if(!planData) return <ReadingPlanLoading />;
     return (
         <Card className="noselect">
             <CardHeader>
-                <h3>Reading Plan: <span className="planName">{planData.title}</span></h3>
+                <h3>{label("reading_plan")}: <span className="planName">{planData.title}</span></h3>
             <div className="readingplan progressContainer">
-            <div><Badge className={labelClass}>{label}</Badge></div>
+            <div><Badge className={labelClass}>{labelText}</Badge></div>
             <div className="readingplan progress">
               <div  style={{ width: `${planData.progress || 0}%` }} className={`progress-bar ${labelClass}`}>
                 {" "}
@@ -259,7 +259,7 @@ function ReadingPlanSection({section}){
 function ReadingPlanLoading(){
     return <Card >
     <CardHeader>
-        <h3>Reading Plan: <span className="planName">Loading...</span></h3>
+        <h3>{label("reading_plan")}: <span className="planName">{label("loading")}</span></h3>
     </CardHeader>
     <CardBody className="spinnerBox segment" style={{border: "none"}}>
         <img src={loading} style={{height: "4rem"}}/>        
