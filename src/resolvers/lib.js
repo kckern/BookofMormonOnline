@@ -462,6 +462,7 @@ const loadReadingPlan = async (slug,completed_items,lang) => {
         const {items,completed,progress} = await scoreSegment(seg.sectionGuids,allTextBlocks,completed_items);
         if(!isFuture) { toDateItems +=(items || 0); toDateCompleted += (completed || 0); }
         segments.push({
+            guid,
             period,
             ref,
             title,
