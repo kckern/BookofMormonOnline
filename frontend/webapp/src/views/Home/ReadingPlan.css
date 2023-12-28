@@ -550,4 +550,5 @@
 }
 .segment .miniprogress .progressBar{ 
     background-color: #6bd098;
+    right: auto;
 }

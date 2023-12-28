@@ -227,7 +227,7 @@ function ReadingPlanSection({section}){
     }
 
     const sectionProgress = sectionText.reduce((acc,item) => {
-        return acc + (item.status === "complete" ? 1 : 0);
+        return acc + (item.status === "completed" ? 1 : 0);
     }
     ,0);
     section.progress = (sectionProgress / sectionText.length * 100).toFixed(1);
@@ -237,7 +237,7 @@ function ReadingPlanSection({section}){
         <Link to={`/${slug}`}>
         <div className="segmentSection">
             <div className="miniprogress">
-                <div style={{right: `${100-section.progress || 0}%`}} className="progressBar" />
+                <div style={{width: `${section.progress || 0}%`}} className="progressBar" />
             </div>
             <h6>{title}</h6>
             <div className="sectionDots">
