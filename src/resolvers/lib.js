@@ -454,7 +454,7 @@ const loadReadingPlan = async (slug,completed_items,lang) => {
     
     for (let i = 0; i < planSegments.length; i++) {
         const seg = planSegments[i];
-        const {period,ref,title,duedate,start,end,guid} = seg;
+        const {period,ref,title,duedate,start,end,guid:segmentGuid} = seg;
         const today = moment().format("YYYY-MM-DD");
         const due = moment(duedate).format("YYYY-MM-DD");
         const isFuture = moment(today).isBefore(due);
@@ -462,7 +462,7 @@ const loadReadingPlan = async (slug,completed_items,lang) => {
         const {items,completed,progress} = await scoreSegment(seg.sectionGuids,allTextBlocks,completed_items);
         if(!isFuture) { toDateItems +=(items || 0); toDateCompleted += (completed || 0); }
         segments.push({
-            guid,
+            guid:segmentGuid,
             period,
             ref,
             title,
