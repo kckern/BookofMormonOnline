@@ -3,10 +3,10 @@
 import React, { useState, useEffect } from "react";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI.js";
 import "./ReadingPlan.css";
-
+import { Link, NavLink, useHistory, useRouteMatch } from "react-router-dom";
+import ReactTooltip from "react-tooltip";
 import { Card, CardHeader, CardBody, CardFooter, Button, Badge } from "reactstrap";
 import moment from "moment";
-import { Link } from "react-router-dom/cjs/react-router-dom.min";
 import green from "../User/svg/green.svg";
 import blank from "../User/svg/blank.svg";
 export function ReadingPlan({appController,slug}){
@@ -115,8 +115,7 @@ function ReadingPlanSegment({segment, token, index}){
     const title = segment.title ? `${segment.ref} • ${segment.title}` : segment.ref;
     const period = segment.period ? segment.period : null;
     return <div className="segment">
-        <h4>{title} {period ? <span className="period">{period}</span> : null}</h4>
-        <p>Guid: {segment.guid}</p>
+        <h4>{period ? <span className="period">{period}</span> : null}{title}</h4>
         <ReadingPlanSegmentSections token={token} guid={segment.guid} />
         </div>
 }
@@ -147,14 +146,32 @@ function ReadingPlanSegmentSections({guid, token}){
 
 function ReadingPlanSection({section}){
     const {title, slug,sectionText} = section;
+    const history = useHistory();
+
+    const clickDot = (e,item) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const link = `/${item.slug}`;
+        if(link) history.push(link);
+    }
     //
     return (
+        <Link to={`/${slug}`}>
         <div className="segmentSection">
-            <h6><Link to={`/${slug}`}>{title}</Link></h6>
+            <h6>{title}</h6>
             <div className="sectionDots">
-            {sectionText.map((item) => <img src={ item.status === "complete" ? green : blank} />)}
+            <ReactTooltip place="bottom" effect="solid" id={`sectionDotTips-${slug}`} />
+            {sectionText.map((item) => 
+            <img 
+            onClick={(e)=>clickDot(e,item)}
+            data-for={`sectionDotTips-${slug}`}
+            data-tip={item.heading}
+            src={ item.status === "complete" ? green : blank} />
+            
+            )}
+            </div>
         </div>
-        </div>
+        </Link>
     )
 }
 
