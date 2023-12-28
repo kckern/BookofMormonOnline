@@ -373,9 +373,9 @@ export default {
     },
     //  readingplan(token:String, slug:String): ReadingPlan
     readingplan: async (item: any, args: any, context: any, info: any) => {
-  
       if (!args.token) return [];
       if (!args.slug) return [];
+      const lang = context.lang ? context.lang : null;
       let user: any = await Models.BomUser.findOne({
         include: [
           {
@@ -389,10 +389,9 @@ export default {
       const queryBy = user?.user || args.token;
       const userInfo = {queryBy, lastcompleted: user?.lastcompleted || 0};
       const completed_items = await completedGuids(userInfo);
-      return await loadReadingPlan(args.slug, completed_items);
+      return await loadReadingPlan(args.slug, completed_items,lang);
 
     },
-
     readingplansegment: async (item: any, args: any, context: any, info: any) => {
       const token = args.token;
       const guid = args.guid;
@@ -410,13 +409,9 @@ export default {
       });
       const queryBy = user?.user || token;
       return await loadReadingPlanSegment(guid, queryBy, lang);
-
     }
-
-
   },
   Mutation: {
-
     addBot: async (item: any, args: any, context: any, info: any) => {
       const {token,channel,bot} = args;
       const user = await loadUserFromToken(token);
