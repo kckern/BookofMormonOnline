@@ -188,7 +188,7 @@ extend type Mutation {
   type ReadingPlan{
     guid: String
     slug: String
-    tite: String
+    title: String
     startdate: String
     duedate: String
     progress: Float
