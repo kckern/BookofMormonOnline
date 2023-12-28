@@ -1,4 +1,4 @@
-const { getUserForLog, Op, includeModel } = require("./_common")
+const { getUserForLog, Op, includeModel, getSlug } = require("./_common")
 import { queryDB } from '../library/db';
 import { models as Models, sequelize, SQLQueryTypes } from '../config/database';
 import { lookup, generateReference } from 'scripture-guide';
@@ -78,12 +78,12 @@ const getBlocksFromToken = async (token) => {
 }
 
 
-const getBlocksFromReadingPlan = async (plan) => {
+const getBlocksFromReadingPlan = async (plan,token) => {
     console.log(`Loading plan ${plan}`);
     const sectionGuidSQL = `SELECT sectionGuids FROM bom_readingplan_seg WHERE guid = ? ORDER BY start ASC`;
     const sectionGuids = (await queryDB(sectionGuidSQL,[plan]))[0]?.sectionGuids || [];
     const sectionGuidArray = JSON.parse(sectionGuids);
-    return await buildQueueFromSections({sectionGuids:sectionGuidArray});
+    return await buildQueueFromSections({sectionGuids:sectionGuidArray, token});
 
 }
 
@@ -506,20 +506,32 @@ const loadReadingPlanSegment = async (guid,queryBy,lang) => {
     const segmentData = (await queryDB(`SELECT * FROM bom_readingplan_seg WHERE guid = ?`, [guid]))[0];
     if (!segmentData) return null;
     const {period,ref,title,duedate,start,end} = segmentData;
-
+    const threshold = process.env.PERCENT_TO_COUNT_AS_COMPLETE || 40;
     // SELECT bom_text.guid, bom_text.min_verse_id, bom_text.heading, page_slug.slug AS page_slug, bom_text.link, section_slug.slug AS section_slug, bom_text.min_verse_id, (CASE WHEN bom_log.guid is NOT NULL THEN TRUE ELSE FALSE END) AS complete FROM bom_text LEFT JOIN (SELECT DISTINCT value as guid FROM bom_log WHERE type = "block" and user = "kckern" and credit >= 40 and timestamp > 0) bom_log ON bom_text.guid = bom_log.guid LEFT JOIN bom_slug as page_slug ON page_slug.link = bom_text.page LEFT JOIN bom_slug as section_slug ON section_slug.link = bom_text.section WHERE bom_text.section IN (SELECT DISTINCT bom_text.section FROM bom_readingplan_seg AS segment LEFT JOIN bom_lookup ON bom_lookup.verse_id BETWEEN segment.start AND segment.end LEFT JOIN bom_text ON bom_text.guid = bom_lookup.text_guid WHERE segment.guid = "27c91f4a39" )
     const sql = `
-        SELECT bom_text.guid, bom_text.page, bom_text.section, bom_text.min_verse_id, bom_text.heading, bom_text.page, bom_text.link, bom_text.section, bom_text.min_verse_id, (CASE WHEN bom_log.guid is NOT NULL THEN TRUE ELSE FALSE END) AS complete 
-        FROM bom_text 
-        LEFT JOIN (SELECT DISTINCT value as guid FROM bom_log WHERE type = "block" and user = ? and credit >= 40 and timestamp > 0) bom_log ON bom_text.guid = bom_log.guid 
-        WHERE bom_text.section IN (SELECT DISTINCT bom_text.section FROM bom_readingplan_seg AS segment LEFT JOIN bom_lookup ON bom_lookup.verse_id BETWEEN segment.start AND segment.end LEFT JOIN bom_text ON bom_text.guid = bom_lookup.text_guid WHERE segment.guid = ? )
-        ORDER BY bom_text.min_verse_id ASC
+    SELECT bom_text.guid, bom_text.page, bom_text.section, bom_text.min_verse_id, bom_text.heading, bom_text.page, bom_text.link, bom_text.section, bom_text.min_verse_id, 
+    (CASE 
+        WHEN bom_log.credit < ${threshold} THEN 0 
+        WHEN bom_log.credit >= ${threshold} THEN 1 
+        ELSE NULL END) AS completion_status,
+    bom_log.credit AS credit
+    FROM bom_text 
+    LEFT JOIN (
+        SELECT value as guid, MAX(credit) as credit FROM bom_log WHERE type = "block" AND user = ? AND timestamp > 0 GROUP BY guid
+        ) bom_log ON bom_text.guid = bom_log.guid 
+    WHERE bom_text.section IN (SELECT DISTINCT bom_text.section FROM bom_readingplan_seg AS segment LEFT JOIN bom_lookup ON bom_lookup.verse_id BETWEEN segment.start AND segment.end LEFT JOIN bom_text ON bom_text.guid = bom_lookup.text_guid WHERE segment.guid = ? )
+    ORDER BY bom_text.min_verse_id ASC
     `;
     const params = [queryBy, guid];
     const segmentTextBlocks = await queryDB(sql,params);
 
     const uniqueSectionGuids = [...new Set(segmentTextBlocks.map(b=>b.section))];
-    //return Models.BomSection.findAll({ include: [ includeWhere( Models.BomSlug, "slug", slugs , "sectionSlug",[]), includeTranslation('title', lang), includeModel(info, Models.BomSectionrow, 'rows', [ //TODO: Rows not joining capulation and narration includeModel(info, Models.BomNarration, 'narration', [includeTranslation('description', lang)].filter(x => !!x)) ].filter(x => !!x)) ].filter(x => !!x), order: ['weight'] })
+    const pageGuids = [...new Set(segmentTextBlocks.map(b=>b.page))];
+    const slugPromises = pageGuids.map(async (pageGuid)=>{
+        const slug = await getSlug("link",pageGuid);
+        return {pageGuid,slug}
+    });
+    const pageSlugs = await Promise.all(slugPromises);
     const sectionData = await Models.BomSection.findAll({
         raw:true,
         attributes:["guid","parent","title"],
@@ -531,16 +543,15 @@ const loadReadingPlanSegment = async (guid,queryBy,lang) => {
             },
             {
                 model:Models.BomPage,
-                as:"page",
-                include:[
-                    {
-                        model:Models.BomSlug,
-                        as:"pageSlug",
-                    }
-                ]
+                as:"page"
             }
 
         ]
+    });
+    sectionData.forEach(s=>{
+        const pageGuid = s.parent;
+        const slug = pageSlugs.find(s=>s.pageGuid === pageGuid)?.slug || null;
+        s['page.pageSlug.slug'] = slug;
     });
 
     const sections = uniqueSectionGuids
@@ -551,13 +562,12 @@ const loadReadingPlanSegment = async (guid,queryBy,lang) => {
         .map(b=>({
             heading: b.heading,
             slug: `${s['page.pageSlug.slug']}/${b.link}`,
-            status: b.complete ? "complete" : "incomplete",
-
+            status: b.completion_status === 1 ? "completed" : b.completion_status === 0 ? "started" : "incomplete"
         }))
     }));
 
     const countOfSectionItems = sections.reduce((a,b)=>a+b.sectionText.length,0);
-    const countOfSectionItemsCompleted = sections.reduce((a,b)=>a+b.sectionText.filter(i=>i.status === "complete").length,0);
+    const countOfSectionItemsCompleted = sections.reduce((a,b)=>a+b.sectionText.filter(i=>i.status === "completed").length,0);
     const progress = Math.round((countOfSectionItemsCompleted/countOfSectionItems)*10000)/100;
     
     return {
