@@ -140,7 +140,7 @@ function ReadingPlanSegmentListItem({segmentListItem, index, setActiveSegment, a
     return (
         <div className={`segmentListItem ${className} ${statusClass} ${activeSegment === index ? "active" : ""}`} 
          onClick={() => setActiveSegment(index)}>
-            {progressInt ? `${progressInt}%` : null}
+            {progressInt ? `${progressInt}%` : (index + 1)}
         </div>
     )
 
@@ -242,11 +242,11 @@ function ReadingPlanSection({section}){
 
 
 function ReadingPlanLoading(){
-    return <Card className="segment">
+    return <Card >
     <CardHeader>
         <h3>Reading Plan: <span className="planName">Loading...</span></h3>
     </CardHeader>
-    <CardBody className="spinnerBox">
+    <CardBody className="spinnerBox segment">
         <img src={loading} style={{height: "4rem"}}/>        
     </CardBody>
     </Card>
