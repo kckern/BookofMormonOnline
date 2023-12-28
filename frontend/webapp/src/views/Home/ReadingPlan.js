@@ -8,6 +8,7 @@ import ReactTooltip from "react-tooltip";
 import { Card, CardHeader, CardBody, CardFooter, Button, Badge } from "reactstrap";
 import moment from "moment";
 import green from "../User/svg/green.svg";
+import yellow from "../User/svg/yellow.svg";
 import blank from "../User/svg/blank.svg";
 
 import theater from "../_Common/svg/theater.svg";
@@ -245,7 +246,7 @@ function ReadingPlanSection({section}){
             onClick={(e)=>clickDot(e,item)}
             data-for={`sectionDotTips-${slug}`}
             data-tip={item.heading}
-            src={ item.status === "complete" ? green : blank} />
+            src={ item.status === "completed" ? green : item.status === "started" ? yellow : blank} />
             
             )}
             </div>
