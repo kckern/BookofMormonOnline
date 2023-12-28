@@ -219,11 +219,20 @@ function ReadingPlanSection({section}){
         const link = `/${item.slug}`;
         if(link) history.push(link);
     }
+
+    const sectionProgress = sectionText.reduce((acc,item) => {
+        return acc + (item.status === "complete" ? 1 : 0);
+    }
+    ,0);
+    section.progress = (sectionProgress / sectionText.length * 100).toFixed(2);
     //
     return (<>
         <ReactTooltip place="bottom" effect="solid" id={`sectionDotTips-${slug}`} />
         <Link to={`/${slug}`}>
         <div className="segmentSection">
+            <div className="miniprogress">
+                <div style={{right: `${100-section.progress || 0}%`}} className="progressBar" />
+            </div>
             <h6>{title}</h6>
             <div className="sectionDots">
             {sectionText.map((item) => 
