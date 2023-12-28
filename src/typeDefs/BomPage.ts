@@ -97,6 +97,7 @@ export default gql`
 
 input QueueInput {
   slug: String
+  plan: String
   reference: String
   blocks: [Int!]
 }

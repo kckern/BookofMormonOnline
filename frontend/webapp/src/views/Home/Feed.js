@@ -57,7 +57,7 @@ export function HomeFeed({
 
   useEffect(async () => {
     let token = appController.states.user.token;
-    setLoader(<Loader />);
+    setLoader(null);
     let r = await BoMOnlineAPI(
       { homefeed: { token, channel: activeGroup, message: messageId } },
       { useCache: false },

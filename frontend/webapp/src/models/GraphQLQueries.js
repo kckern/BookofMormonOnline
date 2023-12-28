@@ -1182,6 +1182,58 @@ const queries = {
     }
   },
 
+  readingplan: (input) => {
+    input = input.shift();
+    return {
+      type: "readingplan",
+      key: "token",
+      val: false,
+      query: `readingplan(slug:"${input.slug}", token:"${input.token}") {
+        slug
+        title
+        startdate
+        duedate
+        progress
+        segments {
+          guid
+          period
+          ref
+          title
+          duedate
+          progress
+          start
+          end
+        }
+      }`,
+    }
+  },
+
+  readingplansegment: (input) => {
+    input = input.shift();
+    return {
+      type: "readingplansegment",
+      key: "token",
+      val: false,
+      query: `readingplansegment(guid: "${input.guid}", token:"${input.token}") {
+        period
+        ref
+        title
+        url
+        duedate
+        progress
+        sections {
+          title
+          slug
+          sectionText {
+            heading
+            slug
+            status
+          }
+        }
+      }`
+    }},
+    
+
   leaderboard: (input) => {
     input = input.shift();
     return {
