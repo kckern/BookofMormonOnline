@@ -79,8 +79,11 @@ const getBlocksFromToken = async (token) => {
 
 
 const getBlocksFromReadingPlan = async (plan) => {
-
-    return {slug:"lehites",blocks:Array(20).map((_,i)=>(i+1))};
+    console.log(`Loading plan ${plan}`);
+    const sectionGuidSQL = `SELECT sectionGuids FROM bom_readingplan_seg WHERE guid = ? ORDER BY start ASC`;
+    const sectionGuids = (await queryDB(sectionGuidSQL,[plan]))[0]?.sectionGuids || [];
+    const sectionGuidArray = JSON.parse(sectionGuids);
+    return await buildQueueFromSections({sectionGuids:sectionGuidArray});
 
 }
 
@@ -134,6 +137,20 @@ const getBlocksFromPage = async (pageGuid,token=null) => {
 };
 
 
+const buildQueueFromSections = async ({ sectionGuids }) => {
+    const allBlocks = await Models.BomText.findAll({
+      raw: true,
+      attributes: ["guid", "section", "page", "queue_weight", "link"],
+      order: [['queue_weight', 'ASC']]
+    });
+  
+    let queue = [];
+    sectionGuids.forEach(sectionGuid => {
+      const text_guids = allBlocks.filter(b => b.section === sectionGuid).map(b => b.guid);
+      queue = [...queue, ...text_guids];
+    });
+    return await resolveQueueFromTextBlocks(allBlocks.filter(b => queue.includes(b.guid)));
+  };
 
 const buildQueueFromSection = async ({sectionGuid,token,forceSection}) => {
     if(!sectionGuid) return [];
