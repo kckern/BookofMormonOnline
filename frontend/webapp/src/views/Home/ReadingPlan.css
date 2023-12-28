@@ -226,10 +226,13 @@
   }
 
 
-  .segment .spinnerBox img{
+  .segment.spinnerBox img,
+  .segment .spinnerBox img
+  {
     height: 6rem;
   }
 
+  .segment.spinnerBox,
   .segment .spinnerBox
   {
     height: 6rem;
