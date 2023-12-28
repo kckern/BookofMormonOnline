@@ -236,12 +236,11 @@ export function PeopleFilters({ appController, setFilter, peopleFilters }) {
         <Button onClick={() => toggleFilterCategory(data.key, false)}>{label("clear")}</Button>
       </li>
       {data.filters.map(f =>
-        <li className="item" onClick={(e) => toggleFilter(data.key, f.tag)}>
+        <li className="item" key={f.tag} onClick={(e) => toggleFilter(data.key, f.tag)}>
           <BootstrapSwitchButton
             checked={new RegExp(f.tag).test(peopleFilters[data.key])}
             onstyle='success'
             offlabel={label("off")}
-            onstyle='success'
             onlabel={label("on")}
             size={"xs"}
           />
@@ -271,7 +270,7 @@ export function PeopleFilters({ appController, setFilter, peopleFilters }) {
 
   const filterBox = <><h5 className="ppFiltersHeading">{label("filters")} </h5>
     <div className="ppFilters">
-      <Input className="ppSearch" placeHolder={"🔍" + label("search")} onFocus={(e) => e.target.placeholder = ""}
+      <Input className="ppSearch" placeholder={"🔍" + label("search")} onFocus={(e) => e.target.placeholder = ""}
         onChange={(e) => {
           let tmp = { ...peopleFilters }
           tmp.search = e.target.value;
@@ -286,15 +285,13 @@ export function PeopleFilters({ appController, setFilter, peopleFilters }) {
     </div>
   </>
     const handleClick = ()=>{
-
       appController.functions.setPopUp({
         type: "pFilter",
-        ids: [],
+        ids: [appController.states.user.social.user_id],
         underSlug: "people",
         popUpData: { filterBox,setFilter, peopleFilters
         },
       });
-
     }
   if (isMobile()) return <div className="filterDrawerButton"><Button onClick={handleClick}>{label("filters")}</Button></div>;
 
