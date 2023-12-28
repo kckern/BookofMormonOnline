@@ -1,4 +1,4 @@
-const { getUserForLog, Op, includeModel, getSlug } = require("./_common")
+const { getUserForLog, Op, includeModel, getSlug, includeTranslation } = require("./_common")
 import { queryDB } from '../library/db';
 import { models as Models, sequelize, SQLQueryTypes } from '../config/database';
 import { lookup, generateReference } from 'scripture-guide';
@@ -509,7 +509,8 @@ const loadReadingPlanSegment = async (guid,queryBy,lang) => {
     const threshold = process.env.PERCENT_TO_COUNT_AS_COMPLETE || 40;
     // SELECT bom_text.guid, bom_text.min_verse_id, bom_text.heading, page_slug.slug AS page_slug, bom_text.link, section_slug.slug AS section_slug, bom_text.min_verse_id, (CASE WHEN bom_log.guid is NOT NULL THEN TRUE ELSE FALSE END) AS complete FROM bom_text LEFT JOIN (SELECT DISTINCT value as guid FROM bom_log WHERE type = "block" and user = "kckern" and credit >= 40 and timestamp > 0) bom_log ON bom_text.guid = bom_log.guid LEFT JOIN bom_slug as page_slug ON page_slug.link = bom_text.page LEFT JOIN bom_slug as section_slug ON section_slug.link = bom_text.section WHERE bom_text.section IN (SELECT DISTINCT bom_text.section FROM bom_readingplan_seg AS segment LEFT JOIN bom_lookup ON bom_lookup.verse_id BETWEEN segment.start AND segment.end LEFT JOIN bom_text ON bom_text.guid = bom_lookup.text_guid WHERE segment.guid = "27c91f4a39" )
     const sql = `
-    SELECT bom_text.guid, bom_text.page, bom_text.section, bom_text.min_verse_id, bom_text.heading, bom_text.page, bom_text.link, bom_text.section, bom_text.min_verse_id, 
+    SELECT bom_text.guid, bom_text.page, bom_text.section, bom_text.min_verse_id, bom_text.heading, 
+    bom_translation.value AS heading_lang,  bom_text.page, bom_text.link, bom_text.section, bom_text.min_verse_id, 
     (CASE 
         WHEN bom_log.credit < ${threshold} THEN 0 
         WHEN bom_log.credit >= ${threshold} THEN 1 
@@ -519,10 +520,11 @@ const loadReadingPlanSegment = async (guid,queryBy,lang) => {
     LEFT JOIN (
         SELECT value as guid, MAX(credit) as credit FROM bom_log WHERE type = "block" AND user = ? AND timestamp > 0 GROUP BY guid
         ) bom_log ON bom_text.guid = bom_log.guid 
+        LEFT JOIN bom_translation ON bom_text.guid = bom_translation.guid AND bom_translation.lang = ? AND bom_translation.refkey = "heading"
     WHERE bom_text.section IN (SELECT DISTINCT bom_text.section FROM bom_readingplan_seg AS segment LEFT JOIN bom_lookup ON bom_lookup.verse_id BETWEEN segment.start AND segment.end LEFT JOIN bom_text ON bom_text.guid = bom_lookup.text_guid WHERE segment.guid = ? )
     ORDER BY bom_text.min_verse_id ASC
     `;
-    const params = [queryBy, guid];
+    const params = [queryBy, lang,guid];
     const segmentTextBlocks = await queryDB(sql,params);
 
     const uniqueSectionGuids = [...new Set(segmentTextBlocks.map(b=>b.section))];
@@ -534,7 +536,6 @@ const loadReadingPlanSegment = async (guid,queryBy,lang) => {
     const pageSlugs = await Promise.all(slugPromises);
     const sectionData = await Models.BomSection.findAll({
         raw:true,
-        attributes:["guid","parent","title"],
         where:{guid:{[Op.in]:uniqueSectionGuids}},
         include:[
             {
@@ -548,6 +549,16 @@ const loadReadingPlanSegment = async (guid,queryBy,lang) => {
 
         ]
     });
+
+    const sectionTranslations = lang ? await Models.BomTranslation.findAll({
+        raw:true,
+        where:{
+            guid:{[Op.in]:uniqueSectionGuids},
+            refkey:"title",
+            lang
+        }
+    }) : [];
+
     sectionData.forEach(s=>{
         const pageGuid = s.parent;
         const slug = pageSlugs.find(s=>s.pageGuid === pageGuid)?.slug || null;
@@ -557,14 +568,16 @@ const loadReadingPlanSegment = async (guid,queryBy,lang) => {
     const sections = uniqueSectionGuids
     .map(g=>sectionData.find(s=>s.guid === g))
     .map(s=>({...s,
+        title: sectionTranslations.find(t=>t.guid === s.guid)?.value || s.title,
         slug: `${s['page.pageSlug.slug']}/${s['sectionSlug.slug']}`,
         sectionText:segmentTextBlocks.filter(b=>b.section === s.guid)
         .map(b=>({
-            heading: b.heading,
+            heading: b.heading_lang || b.heading,
             slug: `${s['page.pageSlug.slug']}/${b.link}`,
             status: b.completion_status === 1 ? "completed" : b.completion_status === 0 ? "started" : "incomplete"
         }))
     }));
+
 
     const countOfSectionItems = sections.reduce((a,b)=>a+b.sectionText.length,0);
     const countOfSectionItemsCompleted = sections.reduce((a,b)=>a+b.sectionText.filter(i=>i.status === "completed").length,0);
@@ -584,6 +597,14 @@ const loadReadingPlanSegment = async (guid,queryBy,lang) => {
     }
 
 }
+
+
+const translateItems = async (items,lang,guidkey="guid") => {
+
+    
+
+}
+
 
 
 //export
