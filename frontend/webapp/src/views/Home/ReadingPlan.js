@@ -89,6 +89,7 @@ const { label, labelClass } = getProgressStatus(progressInt);
             </div>
             </CardHeader>
             <CardBody>
+                <ReactTooltip place="top" effect="solid" id={`segmentTips`} />
                 <ReadingPlanSegmentList segments={planData.segments} 
                 today={today}
                 setActiveSegment={setActiveSegment} activeSegment={activeSegment} />
@@ -138,7 +139,11 @@ function ReadingPlanSegmentListItem({segmentListItem, index, setActiveSegment, a
     const progressInt = parseInt(progress);
     const statusClass = progressInt === 100 ? "complete" : progressInt > 0 ? "inProgress" : "notStarted";
     return (
-        <div className={`segmentListItem ${className} ${statusClass} ${activeSegment === index ? "active" : ""}`} 
+        <div 
+        data-for={`segmentTips`}
+        data-tip={`<b>${segmentListItem.period} • ${ref}</b><br/>${segmentListItem.title}`}
+        data-html={true}
+        className={`segmentListItem ${className} ${statusClass} ${activeSegment === index ? "active" : ""}`} 
          onClick={() => setActiveSegment(index)}>
             {progressInt ? `${progressInt}%` : (index + 1)}
         </div>
