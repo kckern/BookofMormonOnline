@@ -143,7 +143,10 @@
     line-height: 100%;
     margin-bottom: 1ex;
 }
-
+.segment{
+    border-top: 1px solid #00000030;
+    padding-top: 1rem;
+}
   
 
   .segmentSections{
@@ -155,6 +158,7 @@
     /* 1rem space between rows */
     row-gap: 1ex;
     line-height: 1.2ex;
+    margin-bottom: 1ex;
   }
   .segmentSections h6{
     text-transform: none;
@@ -175,6 +179,11 @@
     flex-direction: column;
 
   }
+  .segmentSection:hover{
+    filter: brightness(105%);
+    outline: 1px solid #00000030;
+  }
+
   .segmentSection .sectionDots{
     text-align: center;
     flex-grow: 1;
@@ -194,3 +203,64 @@
     border-radius: 50%;
     
   }
+
+  .segment .buttonRow{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    padding: 1ex 25% 1ex 25%;
+    margin-bottom: 1ex;
+    gap: 1rem;
+    background-color: #EEE;
+    border-radius: 1ex;
+  }
+
+  .segment .buttonRow button{
+    background-color: #7e7e7e;
+    width: 6rem;
+  }
+
+  .segment .buttonRow button img{
+    height: 1rem;
+    margin-right: 0.5ex;
+  }
+
+
+  .segment .spinnerBox img{
+    height: 6rem;
+  }
+
+  .segment .spinnerBox
+  {
+    height: 6rem;
+    text-align: center;
+    width: 100%;
+  }
+
+  .readingplan .badge.green{
+    background-color: #6bd098;
+  }
+
+  .readingplan .badge.yellow{
+    background-color: #fbc658;
+    color: #333;
+  }
+
+  .readingplan .badge.red{
+    background-color: #fb8358;
+  }
+
+  .readingplan .progress-bar.green{
+    background-color: #6bd098;
+  }
+  /* yellow, red, grey */
+    .readingplan .progress-bar.yellow{
+        background-color: #fbc658;
+    }
+    .readingplan .progress-bar.red{
+        background-color: #fb8358;
+    }
+    .readingplan .progress-bar.grey{
+        background-color: #7e7e7e;
+    }
+  

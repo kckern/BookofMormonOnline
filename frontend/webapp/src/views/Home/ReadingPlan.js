@@ -9,6 +9,12 @@ import { Card, CardHeader, CardBody, CardFooter, Button, Badge } from "reactstra
 import moment from "moment";
 import green from "../User/svg/green.svg";
 import blank from "../User/svg/blank.svg";
+
+import theater from "../_Common/svg/theater.svg";
+import study from "../_Common/svg/study.svg";
+import { Spinner } from "../_Common/Loader";
+import loading from  "../_Common/svg/loadbar.svg"
+import { label } from "../../models/Utils";
 export function ReadingPlan({appController,slug}){
 
     const token = appController.states.user.token;
@@ -31,22 +37,54 @@ export function ReadingPlan({appController,slug}){
             });
     }, []);
 
-    const today = moment("2024-06-25");
+    const today = moment();
 
-   if(planData) planData.progress = 60;
+    let nonFutureSegments = planData?.segments?.filter((segment) => {
+        return moment(segment.duedate).isBefore(today);
+    }) || [];
+    nonFutureSegments = [...nonFutureSegments,planData?.segments?.find((segment) => {
+        return moment(segment.duedate).isAfter(today);
+    })];
+    let averageProgress = (nonFutureSegments?.reduce((acc,segment) => {
+        return acc + parseFloat(segment?.progress);
+    },0) / (nonFutureSegments?.length || 1)).toFixed(2);
+
+    averageProgress = isNaN(averageProgress) ? 0 : averageProgress;
+    const progressInt = parseInt(averageProgress);
+
+    if(planData) planData.progress = averageProgress || 0;
+    function getProgressStatus(progressInt) {
+        let status = {};
+        
+        if (progressInt > 95 || nonFutureSegments?.length === 1) {
+            status = { label: "On Track", labelClass: "green" };
+        } else if (progressInt === 0) {
+            status = { label: "Not Started", labelClass: "grey" };
+        } else if (progressInt > 50) {
+            status = { label: "Catching Up", labelClass: "yellow" };
+        } else {
+            status = { label: "Fallen Behind", labelClass: "red" };
+        }
+
+        return status;
+    }
+
+// Usage
+const { label, labelClass } = getProgressStatus(progressInt);
+
 
     if(!planData) return <ReadingPlanLoading />;
     return (
-        <Card>
+        <Card className="noselect">
             <CardHeader>
                 <h3>Reading Plan: <span className="planName">{planData.title}</span></h3>
             <div className="readingplan progressContainer">
-            <div><Badge color="success">On Track</Badge></div>
+            <div><Badge className={labelClass}>{label}</Badge></div>
             <div className="readingplan progress">
-              <div className="progressbar" style={{ width: `${planData.progress}%` }}>
+              <div  style={{ width: `${planData.progress || 0}%` }} className={`progress-bar ${labelClass}`}>
                 {" "}
               </div>
-              <span>{planData.progress}%</span>
+              <span>{planData.progress || 0}%</span>
             </div>
             </div>
             </CardHeader>
@@ -122,6 +160,8 @@ function ReadingPlanSegment({segment, token, index}){
 
 function ReadingPlanSegmentSections({guid, token}){
 
+    const history = useHistory();
+
     const [sectionData, setSectionData] = useState(null);
     useEffect(() => {
         if(sectionData?.guid === guid) return;
@@ -134,11 +174,36 @@ function ReadingPlanSegmentSections({guid, token}){
                 setSectionData(data.readingplansegment[0]);
             });
     }, [guid]);
-    if(!sectionData) return null; 
+    if(!sectionData) return <div className="spinnerBox">
+        <img src={loading} />
+    </div>;
+
+
+
+    const flatSectionText = sectionData.sections.reduce((acc,section) => {
+        return [...acc,...section.sectionText];
+    }
+    ,[]);
+    const studySlug = flatSectionText
+    .filter((item) =>  item.status !== "complete")
+    .map((item) => item.slug)[0] || flatSectionText[0].slug;
+
+
+
     return (
+        <>
+        <div className="buttonRow">
+            <Link to={`/${studySlug}`}>
+            <Button color="primary" size="sm">
+                <img src={study} /> {label("menu_study")}</Button></Link>
+            <Link to={`/theater/plan/${guid}`}>
+            <Button color="secondary" size="sm">
+                <img src={theater} /> {label("menu_theater")}</Button></Link>
+        </div>
         <div className="segmentSections">
             {sectionData.sections.map((section) => <ReadingPlanSection section={section} />)}
         </div>
+        </>
     )
 
 
@@ -155,12 +220,12 @@ function ReadingPlanSection({section}){
         if(link) history.push(link);
     }
     //
-    return (
+    return (<>
+        <ReactTooltip place="bottom" effect="solid" id={`sectionDotTips-${slug}`} />
         <Link to={`/${slug}`}>
         <div className="segmentSection">
             <h6>{title}</h6>
             <div className="sectionDots">
-            <ReactTooltip place="bottom" effect="solid" id={`sectionDotTips-${slug}`} />
             {sectionText.map((item) => 
             <img 
             onClick={(e)=>clickDot(e,item)}
@@ -171,11 +236,18 @@ function ReadingPlanSection({section}){
             )}
             </div>
         </div>
-        </Link>
+        </Link></>
     )
 }
 
 
 function ReadingPlanLoading(){
-    return null
+    return <Card className="segment">
+    <CardHeader>
+        <h3>Reading Plan: <span className="planName">Loading...</span></h3>
+    </CardHeader>
+    <CardBody className="spinnerBox">
+        <img src={loading} style={{height: "4rem"}}/>        
+    </CardBody>
+    </Card>
 }
