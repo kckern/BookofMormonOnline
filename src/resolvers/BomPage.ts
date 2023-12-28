@@ -302,11 +302,11 @@ queue: async (root: any, args: any, context: any, info: any) => {
   
   Section: {
     slug: async (item: any, args: any, { db, res }: any, info: any) => {
-      if(item.slug) return item.slug;
+      if(!item?.getDataValue) return item.slug;
       return getSlug('link', item.getDataValue('guid'));
     },
     title: async (item: any, args: any, { db, res }: any, info: any) => {
-      if(item.title) return item.title;
+      if(!item?.getDataValue) return item.title;
       return translatedValue(item, 'title');
     },
     badge: async (item: any, args: any, { db, res }: any, info: any) => {
@@ -384,7 +384,7 @@ queue: async (root: any, args: any, context: any, info: any) => {
     status: async (item: any, args: any, { db, res }: any, x: any) => {
 
 
-      if(item.status) return item.status;
+      if(!item?.getDataValue) return item.status;
       const percentToCountAsComplete = parseInt(process.env.PERCENT_TO_COUNT_AS_COMPLETE) || 40;
 
       const {token} = args;
@@ -408,7 +408,7 @@ queue: async (root: any, args: any, context: any, info: any) => {
     },
     heading: async (item: any, args: any, { db, res, lang }: any, info: any) => {
 
-      if(item.heading) return item.heading;
+      if(!item?.getDataValue) return item.heading;
 
       // console.log(item)
       const heading = translatedValue(item, 'heading');
@@ -447,7 +447,7 @@ queue: async (root: any, args: any, context: any, info: any) => {
     },
     slug: (item: any, args: any, { db, res }: any, info: any) => 
     {
-      if(item.slug) return item.slug;
+      if(!item?.getDataValue) return item?.slug;
       return getSlug('link', item.getDataValue('page')).then(slug=>slug+"/"+item.getDataValue('link'));
     },
     imgIds: (item: any, args: any, { db, res }: any, info: any) => 
