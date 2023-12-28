@@ -468,7 +468,18 @@ const loadReadingPlan = async (slug,completed_items,lang) => {
 
 
     let segments = [];
+    const config = {
+        raw:true,
+        where:{
+            guid: [guid,...planSegments.map(s=>s.guid)],
+            refkey:["title","ref","period"],
+            lang
+        }
+    };
+    const translatedItems = lang ? await Models.BomTranslation.findAll(config) : [];
     
+    console.log({translatedItems,guid,config})
+
     for (let i = 0; i < planSegments.length; i++) {
         const seg = planSegments[i];
         const {period,ref,title,duedate,start,end,guid:segmentGuid} = seg;
@@ -480,9 +491,9 @@ const loadReadingPlan = async (slug,completed_items,lang) => {
         if(!isFuture) { toDateItems +=(items || 0); toDateCompleted += (completed || 0); }
         segments.push({
             guid:segmentGuid,
-            period,
-            ref,
-            title,
+            period:translatedItems.find(t=>t.guid === segmentGuid && t.refkey === "period")?.value || period,
+            ref:translatedItems.find(t=>t.guid === segmentGuid && t.refkey === "ref")?.value || ref,
+            title:translatedItems.find(t=>t.guid === segmentGuid && t.refkey === "title")?.value || title,
             duedate:moment(duedate).format("YYYY-MM-DD"),
             progress,
             start,
@@ -493,7 +504,7 @@ const loadReadingPlan = async (slug,completed_items,lang) => {
 return  {
       guid,
       slug,
-      title,
+      title:translatedItems.find(t=>t.guid === guid && t.refkey === "title")?.value || title,
       startdate:moment(startdate).format("YYYY-MM-DD"),
       duedate:moment(duedate).format("YYYY-MM-DD"),
       progress,
@@ -582,13 +593,23 @@ const loadReadingPlanSegment = async (guid,queryBy,lang) => {
     const countOfSectionItems = sections.reduce((a,b)=>a+b.sectionText.length,0);
     const countOfSectionItemsCompleted = sections.reduce((a,b)=>a+b.sectionText.filter(i=>i.status === "completed").length,0);
     const progress = Math.round((countOfSectionItemsCompleted/countOfSectionItems)*10000)/100;
+
+
+    const segmentTranslations = lang ? await Models.BomTranslation.findAll({
+        raw:true,
+        where:{
+            guid,
+            refkey:["title","ref","period"],
+            lang
+        }
+    }) : [];
     
     return {
         guid,
-        period,
-        ref,
+        period:segmentTranslations.find(t=>t.refkey === "period")?.value || segmentData.period,
+        ref:segmentTranslations.find(t=>t.refkey === "ref")?.value || segmentData.ref,
         url:null,
-        title,
+        title:segmentTranslations.find(t=>t.refkey === "title")?.value || segmentData.title,
         duedate:moment(duedate).format("YYYY-MM-DD"),
         progress,
         start,
