@@ -1,7 +1,7 @@
 import { models as Models } from '../config/database';
 import Sequelize, { Model } from 'sequelize';
 import { completedGuids, getStandardizedValuesFromUserList } from './_common';
-const { loadReadingPlan } = require('./lib')
+const { loadReadingPlan,loadReadingPlanSegment } = require('./lib')
 import { sendbird } from '../library/sendbird';
 import { url } from 'inspector';
 import crypto from "crypto";
@@ -392,6 +392,26 @@ export default {
       return await loadReadingPlan(args.slug, completed_items);
 
     },
+
+    readingplansegment: async (item: any, args: any, context: any, info: any) => {
+      const token = args.token;
+      const guid = args.guid;
+      if (!token || !guid) return [];
+      const lang = context.lang ? context.lang : null;
+      let user: any = await Models.BomUser.findOne({
+        include: [
+          {
+            model: Models.BomUserToken,
+            where: {
+              token: token
+            }
+          }
+        ]
+      });
+      const queryBy = user?.user || token;
+      return await loadReadingPlanSegment(guid, queryBy, lang);
+
+    }
 
 
   },
