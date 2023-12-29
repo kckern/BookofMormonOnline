@@ -38,6 +38,11 @@ export default class _bom_xtras_commentary extends ModelBase {
           type: DataTypes.STRING(255),
           allowNull: false
         },
+        is_note: {
+          type: DataTypes.INTEGER,
+          allowNull: false,
+          defaultValue: 0
+        },
         text: {
           type: DataTypes.TEXT,
           allowNull: false
