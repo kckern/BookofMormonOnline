@@ -444,6 +444,8 @@ function BotPlugin({ appController }) {
           </DropdownItem>
           {bots.map((bot) => {
             if (!bot?.id) return null;
+            //if has green circle emoji
+            if(/🟢/.test(bot?.name)) return null;
             else
               return (
                 <>

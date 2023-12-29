@@ -331,6 +331,12 @@
   color: black;
 }
 
+.notesPanel
+{
+  display: flex;
+  flex-direction: column;
+}
+
 .peoplePlacePanel,
 .scripturePanel{
   padding: 1ex;
@@ -387,7 +393,11 @@
   display: flex;
   background-color: #EEE;
   position: relative;
-  padding:1ex
+  padding: 1ex 1ex 0 1ex;
+}
+.noteItem:last-child
+{
+  padding-bottom: 1ex;
 }
 
 .noteItem .noteSource
@@ -396,7 +406,8 @@
 }
 .noteItem .noteSource img
 {
-  max-width: 2rem;
+  width: 2rem;
+  height: 3rem;
 }
 .noteItem .noteText{
   display: flex;
