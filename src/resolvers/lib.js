@@ -119,6 +119,7 @@ const getBlocksFromTextBlock = async (slug,token,force) => {
         raw:true,
         where:{link:blocknum, page:pageSlugData.link}
     });
+    if(!block) return await getBlocksByDefault();
     const sectionGuid = block.section;
     return await buildQueueFromSection({sectionGuid,token,forceSection:force});
 
@@ -620,11 +621,6 @@ const loadReadingPlanSegment = async (guid,queryBy,lang) => {
 }
 
 
-const translateItems = async (items,lang,guidkey="guid") => {
-
-    
-
-}
 
 
 
