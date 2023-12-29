@@ -405,16 +405,19 @@ export function CommentInput({
   }, []);
 
 
+  const items = [
+    'study_question_about',
+    'study_question_main',
+    'study_question_detail',
+    'study_question_understanding',
+    'study_question_scene',
+    'study_question_simpler',
+    'study_question_explanation',
+    'study_question_meaning',
+    'study_question_context',
+  ];
 
-  const items = ["What is this about?",
-  "What is the main point?",
-  "Please explain this in more detail.",
-  "I don't understand.",
-  "What is going on here?",
-  "Please restate in simpler terms.",
-  "Explanation please.",
-  "What does this mean?",
-  "I need some more context here."];
+    
   const [responses] = useState(items.sort(() => Math.random() - 0.5).slice(0, 3));
 
   const [unSent, setUnsent] = useState(true);
@@ -439,7 +442,7 @@ export function CommentInput({
                 sendMessage(textarea, parentMessageId);
               }}
             >
-              {item}
+              {label(item)}}
             </div>
           );
         })}
