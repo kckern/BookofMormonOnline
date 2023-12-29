@@ -137,6 +137,9 @@
     color: #444444;
     margin-bottom: 0.5ex;
     float: right;
+    background-color: #DDD;
+    padding: 0 1ex;
+    border-radius: 0.5ex;
 }
 
 .segment h4{
