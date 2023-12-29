@@ -53,7 +53,7 @@ export const appInit = () => {
     preferences = {
       lang: lang,
       audio: false,
-      cannedResponses: true,
+      canned_responses: true,
       autoplay: false,
       sound: true,
       art: true,

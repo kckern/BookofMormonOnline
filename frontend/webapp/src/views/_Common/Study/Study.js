@@ -424,7 +424,8 @@ export function CommentInput({
 
   let cannedResponses = null;
   const hasBot = channel?.members?.find((m) => m?.metaData?.isBot);
-  const preference = appController?.states?.preferences?.canned_responses;
+  const hasPref = Object.keys(appController?.states?.preferences).includes('canned_responses');
+  const preference = hasPref ? appController?.states?.preferences?.canned_responses : true;
   if(hasBot && !parentMessage && unSent && preference)
   {
     cannedResponses = (
