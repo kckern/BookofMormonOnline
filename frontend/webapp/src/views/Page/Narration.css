@@ -257,12 +257,6 @@
   font-weight: bold;
 }
 
-.narration > div a:hover {
-  font-weight: bold;
-  border-bottom: 4px double #aaa;
-  position: relative;
-  bottom: 2px;
-}
 
 .narration {
   position: relative;
