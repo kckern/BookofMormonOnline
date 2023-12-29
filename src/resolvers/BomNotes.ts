@@ -112,7 +112,7 @@ export default {
     preview: (item: any, args: any, { db, res }: any, info: any) => {
       let text = item.getDataValue('text');
       let isNote = item.getDataValue('is_note');
-      if([-1,1].includes(isNote)) return text;
+      if([-1,1].includes(isNote)) return text.replace(/(<([^>]+)>)/gi, '');
       //remove html tags
       text = text.replace(/(<([^>]+)>)/gi, '').replace(/&#(\d+);/g, function(match, dec) {
         return String.fromCharCode(dec);
