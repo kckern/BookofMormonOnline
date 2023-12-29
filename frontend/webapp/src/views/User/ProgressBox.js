@@ -85,8 +85,9 @@ export default function ProgressBox({ appController }) {
         <h5>
           {label("study_progress_for_x", [name ? name : label("guest")])}:<br />
           <span>
-            {numericLoad(completed)}% {label("completed")} •{" "}
-            {numericLoad(started)}% {label("started")}
+            {completed !== 0 && `${numericLoad(completed)}% ${label("completed")}`}
+            {completed !== 0 && started !== 0 && " • "}
+            {started !== 0 && `${numericLoad(started)}% ${label("started")}`}
           </span>
         </h5>
         <ProgressBar complete={completed} started={started} />
@@ -396,9 +397,9 @@ function ProgressPanel({ item, appController }) {
           ></div>
         </div>
         <div className={"textProgress"}>
-          {numericLoad(item.progress?.completed)}% {label("completed")}
-          {" • "}
-          {numericLoad(item.progress?.started)}% {label("started")}
+          {item.progress?.completed !== 0 && `${numericLoad(item.progress?.completed)}% ${label("completed")}`}
+          {item.progress?.completed !== 0 && item.progress?.started !== 0 && " • "}
+          {item.progress?.started !== 0 && `${numericLoad(item.progress?.started)}% ${label("started")}`}
         </div>
       </Link>
       <ProgressDetailsCircles progressPages={progressPages} />
