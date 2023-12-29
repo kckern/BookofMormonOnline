@@ -226,6 +226,13 @@
 {
     color: #000;
 }
+.commentary .source_name hr{
+    margin: 0.5ex;
+}
+.commentary .source_name
+{
+    line-height: 100%;
+}
 
 .commentary li{
 
@@ -380,6 +387,11 @@ ul.source_tabs li:hover
     text-decoration:underline;
     text-decoration-color:rgba(209, 165, 82, 0.5);
     font-weight: bold;
+}
+
+#popUp #bodytext 
+{
+    padding-bottom: 1rem;
 }
 
 
