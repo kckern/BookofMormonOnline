@@ -52,7 +52,9 @@
 
 .bottom-nav-item img, .bottom-nav-item .img
 {
-    max-width: 1.65rem;
+    width: 1.65rem;
+    height: 1.65rem;
+    object-fit: cover;
     border-radius: 20%;
     flex-shrink: 0;
 }
