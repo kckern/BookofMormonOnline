@@ -294,7 +294,6 @@ return places;
 
 
 export const loadNotesFromTextGuid = async (guid: string, lang) => {
-  //get from commentary with is_note = 1
   return (await Models.BomXtrasCommentary.findAll({
     where: {
       is_note: 1,
