@@ -160,7 +160,7 @@ export default function Commentary({ appController }) {
   if (atvHTML) htmlObject = htmlObject.replace(atvHTML, "").trim();
 
   // replace the last 2 spaces with non-breaking spaces
-  const headingWords = commentaryData.title.split(" ");
+  const headingWords = commentaryData.title?.split(" ") || [];
   const wordCount = headingWords.length;
   const commentaryHeading = headingWords
     .map((word, index) => {
@@ -193,7 +193,7 @@ export default function Commentary({ appController }) {
           <div className="card-body">
             <div id="my-tab-content" className="tab-content ">
               <div className="tab-pane active " id="home" role="tabpanel">
-                <h3>{commentaryHeading}</h3>
+                {commentaryHeading && <h3>{commentaryHeading}</h3>}
                 <div className="source noselect">
                   <a
                     target="_blank"
