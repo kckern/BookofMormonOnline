@@ -708,7 +708,7 @@ const loadCommentary = async (verse_ids) => {
       SELECT s.source_name name, s.source_title book, c.title title, s.source_year year, c.text
       FROM bom_xtras_commentary c
       JOIN bom_xtras_source s ON c.source = s.source_id
-      WHERE s.source_lang = "en" AND c.verse_id IN (?)
+      WHERE s.source_lang = "en" AND c.verse_id IN (?) AND c.is_note = 1
     `;
 
     if(!verse_ids?.length) return [];
