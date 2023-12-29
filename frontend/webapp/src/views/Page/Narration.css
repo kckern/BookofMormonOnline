@@ -1,8 +1,57 @@
+
+.narration .images.faxbox{
+  margin-left: 0;
+}
+
+.faxbox .thumb_tabs {
+  float: none;
+  position: initial;
+  width: 100%;
+  margin: 0;
+  border-bottom: 1px solid #CCC;
+  padding-bottom: 1ex;
+  margin-bottom: 1ex;
+}
+.faxbox .thumb_tabs ul{
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  gap: 0.3ex;
+  margin: 0;
+}
+.faxbox .thumb_tabs ul li{
+  opacity: 0.5;
+  filter: saturate(0);
+  width: calc(20% - 0.6ex);
+  margin: 0;
+  padding: 0;
+  border-radius: 0.5ex;
+  margin-bottom: 1ex;
+}
+.faxbox .thumb_tabs ul li.active{
+  opacity: 1;
+  filter: saturate(1);
+}
+.faxbox .thumb_tabs ul li:hover{
+  opacity: 1;
+  filter: saturate(1);
+}
+
+.faxbox .thumb_tabs ul li img {
+  margin: 0;
+  height: 100%;
+  width: auto;
+  object-fit: cover;
+}
+.faxbox .thumb_tabs ul li.active img {
+  outline: 2px solid black;
+}
+
 .thumb_tabs li img {
   width: 24px;
   height: 24px;
   margin: 3px;
-  object-fit: cover;
+  object-fit: contain;
   object-position: center;
   /* Center the image within the element */
 }
@@ -182,23 +231,8 @@
   left: -0.3em;
 }
 
-.faxbox.images {
-  margin-left: 5vw;
-}
 
-.faxbox .thumb_tabs {
-  left: -5vw;
-}
 
-.faxbox .thumb_tabs li {
-  height: auto;
-  width: 5vw;
-}
-
-.faxbox .thumb_tabs li img {
-  width: 100px;
-  height: auto;
-}
 
 .narration .images.faxbox .panel {
   min-height: 600px;

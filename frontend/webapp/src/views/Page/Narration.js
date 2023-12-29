@@ -15,6 +15,7 @@ import fullscreen from "src/views/Page/svg/fullscreen.png";
 import {Spinner} from "../_Common/Loader";
 import { determineLanguage } from "../../models/Utils";
 import { Link } from "react-router-dom";
+import ReactTooltip from "react-tooltip";
 const {generateReference, detectReferences, setLang, lookupReference} = require('scripture-guide');
 
 function ChronoRow({ chrono }) {
@@ -980,6 +981,8 @@ function FacsimilePanel({ narrationController }) {
             );
           return (
             <li
+              data-for="faxlabel"
+              data-tip={item.title}
               key={id + "ix"}
               className={
                 id === narrationController.states.activeFax ? "active" : ""
@@ -1040,6 +1043,7 @@ function FacsimilePanel({ narrationController }) {
 
   return (
     <div className="images faxbox" key={narrationController.states.activeFax}>
+      <ReactTooltip id="faxlabel" place="top" effect="solid"/>
       {tabs}
       <div className="heading">
         <span className="close" onClick={() => close()}>
