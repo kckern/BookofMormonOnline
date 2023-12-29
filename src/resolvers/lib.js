@@ -113,7 +113,7 @@ const getBlocksFromTextBlock = async (slug,token,force) => {
     const pageSlugData = await Models.BomSlug.findOne({
         raw:true,
         attributes:["link"],
-        where:{slug:pageslug}
+        where:{slug:pageslug,type:"PG"}
     });
     const block = await Models.BomText.findOne({
         raw:true,
