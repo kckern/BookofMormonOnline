@@ -9,8 +9,12 @@ import "./Commentary.css";
 import { LegalNotice, Loading } from "./PopUp";
 import { addHighlightTagSelectively } from "../Page/TextContent";
 import { snapSelectionToWord, label } from "src/models/Utils";
+import { ScripturePanelSingle } from "../Page/Narration";
+import { detectScriptures } from "scripture-guide";
 
 export default function Commentary({ appController }) {
+
+  const [PopUpRef,setPopUpRef] = useState(null)
   const [commentaryHighlights, setCommentaryHighlights] = useState([]);
   const [callingAPI, setAPICallStatus] = useState(false);
   const [popUpOpen, setOpenState] = useState(true);
@@ -49,6 +53,7 @@ export default function Commentary({ appController }) {
       BoMOnlineAPI({ commentary: appController.states.popUp.ids }).then(
         (response) => {
           setAPICallStatus(false);
+          setPopUpRef(null);
           appController.functions.setPopUp({
             type: "commentary",
             ids: Object.keys(response.commentary),
@@ -171,8 +176,25 @@ export default function Commentary({ appController }) {
     })
     .join("");
 
-
   if(!commentaryData.publication) return null;
+  htmlObject = detectScriptures(htmlObject,(scripture) => {
+    if (!scripture) return;
+    return `<a className="scripture_link">${scripture}</a>`
+  });
+
+  const parseOptions = {
+    replace: (domNode) => {
+      const attribs = { ...domNode.attribs };
+      if (attribs?.classname === 'scripture_link') {
+        const ref = domNode.children[0].data;
+        attribs.class = attribs.classname;
+        delete attribs.classname;
+        return <a {...attribs} onClick={()=>setPopUpRef(ref)}>{ref}</a>;
+      }
+    }
+  }
+
+
   return (
     <>
       <Draggable handle=".card-header">
@@ -219,6 +241,7 @@ export default function Commentary({ appController }) {
                     >
                       <div>
                         <div className="source_name">
+                          {commentaryData.publication.source_title} <hr/>
                           {commentaryData.publication.source_name}
                         </div>
                         <div className="source_publisher">
@@ -243,23 +266,12 @@ export default function Commentary({ appController }) {
                   />
 
                   <ATVHeader atvHTML={atvHTML} />
-                  {Parser(htmlObject)}
-                </div>
-                <div className="attribution">
-                  {" "}
-                  —
-                  <a
-                    target="_blank"
-                    rel="noreferrer"
-                    className="imglink"
-                    href={commentaryData.publication.source_url}
-                  >
-                    {commentaryData.publication.source_title}
-                  </a>
+                  {Parser(htmlObject, parseOptions)}
                 </div>
               </div>
             </div>
           </div>
+          <ScripturePanelSingle scriptureData={{ref:PopUpRef}} closeButton={true} setPopUpRef={setPopUpRef} />
           <Comments
             pageController={appController.activePageController}
             linkData={{ com: parseInt(commentaryData.id) }}
