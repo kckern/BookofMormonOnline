@@ -404,6 +404,49 @@ export function CommentInput({
     }
   }, []);
 
+
+
+  const items = ["What is this about?",
+  "What is the main point?",
+  "Please explain this in more detail.",
+  "I don't understand.",
+  "What is going on here?",
+  "Please restate in simpler terms.",
+  "Explanation please.",
+  "What does this mean?",
+  "I need some more context here."];
+  const [responses] = useState(items.sort(() => Math.random() - 0.5).slice(0, 3));
+
+  const [unSent, setUnsent] = useState(true);
+
+  let cannedResponses = null;
+  const hasBot = channel?.members?.find((m) => m?.metaData?.isBot);
+  const preference = appController?.states?.preferences?.canned_responses;
+  if(hasBot && !parentMessage && unSent && preference)
+  {
+    cannedResponses = (
+      <div className="cannedResponses">
+        {responses.map((item, i) => {
+          return (
+            <div
+              key={i}
+              className="cannedResponse"
+              onClick={() => {
+                const textarea = inputRef.current;
+                textarea.value = item;
+                textarea.focus();
+                setUnsent(false);
+                sendMessage(textarea, parentMessageId);
+              }}
+            >
+              {item}
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
   return (
     <>
       <Textarea
@@ -437,6 +480,7 @@ export function CommentInput({
           showTagList && setShowTagList(false);
         }}
       />
+      {cannedResponses}
       {showTagList && (
         <TagList
           appController={appController}

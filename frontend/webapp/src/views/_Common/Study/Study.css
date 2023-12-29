@@ -204,6 +204,37 @@ div.study > div.mycomment.form-group > textarea {
   padding-bottom: 0;
 }
 
+.cannedResponses
+{
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  justify-content: space-around;
+  overflow: hidden;
+  height: 1.5rem;
+  gap: 2ex;
+  padding-left: 3rem;
+  padding-right: 1rem;
+  padding-top: 3px;
+}
+
+.cannedResponses .cannedResponse
+{
+  background-color: white;
+  outline: 3px solid #00000011;
+  border-radius: 1rem;
+  height: 1rem;
+  padding: 0 1ex;
+  color: #00000044;
+  cursor: pointer;
+  line-height: 1rem;
+}
+.cannedResponses .cannedResponse:hover
+{
+  outline: 3px solid #aaa;
+  color: black;
+}
+
 .highlightTag {
   display: inline-block;
   background-color: rgb(255, 249, 170);

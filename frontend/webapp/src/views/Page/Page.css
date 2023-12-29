@@ -417,3 +417,14 @@ a.theater-link img:hover
   display: flex;
   align-items: center;
 }
+
+
+.cannedResponses
+{
+  display: none;
+}
+
+.scripture .cannedResponses
+{
+  display: flex;
+}
