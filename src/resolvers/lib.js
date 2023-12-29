@@ -113,12 +113,13 @@ const getBlocksFromTextBlock = async (slug,token,force) => {
     const pageSlugData = await Models.BomSlug.findOne({
         raw:true,
         attributes:["link"],
-        where:{slug:pageslug}
+        where:{slug:pageslug,type:"PG"}
     });
     const block = await Models.BomText.findOne({
         raw:true,
         where:{link:blocknum, page:pageSlugData.link}
     });
+    if(!block) return await getBlocksByDefault();
     const sectionGuid = block.section;
     return await buildQueueFromSection({sectionGuid,token,forceSection:force});
 
@@ -620,11 +621,6 @@ const loadReadingPlanSegment = async (guid,queryBy,lang) => {
 }
 
 
-const translateItems = async (items,lang,guidkey="guid") => {
-
-    
-
-}
 
 
 

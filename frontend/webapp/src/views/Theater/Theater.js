@@ -1631,15 +1631,19 @@ function TheaterCommentFeed({ theaterController }) {
   const currentItem = queue[cursorIndex] || null;
   const coms = currentItem?.coms || [];
   const filteredcoms = coms.filter(com => {
+    const noteSources = [192,193];
     const sourceId = com.id.toString().substr(5, 3);
     if (!com.preview?.trim()) return false;
+    if(noteSources.includes(parseInt(sourceId))) return true;
 
     if ([...blacklist, 41, 161, 162, 163, 164, 165, 166].includes(parseInt(sourceId)))
       return false;
     return true;
-  });
+  }) // sort by length, short to long
+  .sort((a, b) => a.preview.length - b.preview.length);
+
   const allowedMessageCount = currentDuration / secondsBetweenComments;
-  const queuedMessages = filteredcoms.slice(0, allowedMessageCount); //randomized earlier
+  const queuedMessages = filteredcoms.slice(0, allowedMessageCount).sort(() => Math.random() - 0.5);
   const division = queuedMessages.length > 5 ? queuedMessages.length : 5; // this is for items with low comment count, so its coms dont'get skipped.
   const commentCursor = Math.floor(  (division * (currentProgress * 0.7)) / 100 );
   useEffect(async () => {
