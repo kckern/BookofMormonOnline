@@ -717,7 +717,7 @@ const loadCommentary = async (verse_ids) => {
 
     try {
         const commentary = await Promise.race([
-            queryDB([sql, params]),
+            queryDB(sql, params),
             new Promise((_, reject) => setTimeout(reject, 10000))
         ]);
 
