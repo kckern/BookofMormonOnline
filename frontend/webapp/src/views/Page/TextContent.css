@@ -97,14 +97,17 @@
 
 .card .scripture .reference .text_item_counter{
     opacity: 0;
-    transition: ease-in-out 0.3s opacity;
     pointer-events: none;
+    width: 0;
+    transition: ease-in-out 0.3s opacity;
 }
 
 .card .scripture .reference.open .text_item_counter{
     opacity: 1;
-    transition: ease-in-out 0.3s opacity;
     pointer-events: all;
+    width: auto;
+    transition: ease-in-out 0.3s opacity;
+
 }
 .card .scripture .reference .item_counter img
 {
