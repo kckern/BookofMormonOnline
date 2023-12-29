@@ -436,13 +436,13 @@ export function CommentInput({
               className="cannedResponse"
               onClick={() => {
                 const textarea = inputRef.current;
-                textarea.value = item;
+                textarea.value = label(item);
                 textarea.focus();
                 setUnsent(false);
                 sendMessage(textarea, parentMessageId);
               }}
             >
-              {label(item)}}
+              {label(item)}
             </div>
           );
         })}
