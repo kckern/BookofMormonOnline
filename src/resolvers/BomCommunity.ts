@@ -117,15 +117,29 @@ export default {
       });
       const topUsers = rankedUsers.slice(0,100);
 
+      const recentFinishes:any = await Models.BomLog.findAll({
+        raw: true,
+        attributes: ['timestamp','user'],
+        where: { type: 'finished'},
+        order: [['timestamp', 'DESC']],
+        limit: 10
+      });
       const recentFinishersUsers :any = (await Models.BomUser.findAll({
         raw: true,
         attributes: ['user',[Sequelize.literal(`MD5(user)`), 'sbuser'],'name','finished'],
-        where: { finished : { [Op.gt]: 0}, zip: { [Op.ne]: -1}},
-        order: [['finished', 'DESC']],
-        limit: 10
-      })).map((u:any)=>({...u,finished:[u.finished]}));
+        where: { user: recentFinishes.map((u:any)=>u.user)},
+      }));
+      const recentFinishesWithUsers = recentFinishes.map((f:any)=>{
+        const user = recentFinishersUsers.find((u:any)=>u.user===f.user);
+        return {
+          ...user,
+          finished: f.timestamp
+        }
+      }).sort((a:any,b:any)=>b.finished-a.finished)
+      .map((u:any)=>({...u,finished:[u.finished]}));
 
-      const sbIds = [...topUsers,...recentFinishersUsers].map((u:any)=>u.sbuser);
+
+      const sbIds = [...topUsers,...recentFinishesWithUsers].map((u:any)=>u.sbuser);
 
       const sendbirdUserObjects = await sendbird.listUsers(sbIds);
 
@@ -139,7 +153,7 @@ export default {
       }).filter((u:any)=>!!u).slice(0,50).map(maskUserPrivacy).sort((a:any,b:any)=>b.progress-a.progress)
       .filter((u:any)=>!u.isAdmin);
 
-      const recentFinishers = recentFinishersUsers.map((u:any)=>{
+      const recentFinishers = recentFinishesWithUsers.map((u:any)=>{
         const sendbirdUserObject = sendbirdUserObjects.find((sbu:any)=>sbu.user_id===u.sbuser);
         return loadHomeUser(sendbirdUserObject,u,visibleUsers);
       }).map(maskUserPrivacy).filter((u:any)=>!u?.isAdmin);
@@ -573,6 +587,7 @@ function loadHomeUser(sbuser, user:any={}, publicUsers = []) {
   const user_id = sbuser?.user_id || md5(user?.user);
   const picture =  sbuser?.profile_url ||  `https://api.dicebear.com/7.x/personas/svg?seed=${user_id}&eyes=open,sunglasses,wink,happy&facialHair=beardMustache,goatee&facialHairProbability=20&hair=bobCut,curly,long,pigtails,shortCombover,buzzcut,beanie&mouth=smile,smirk,bigSmile&nose=smallRound,mediumRound&skinColor=d78774,b16a5b,eeb4a4,92594b`;
  // console.log({sbuser});
+  if(user.finished && !Array.isArray(user.finished)) user.finished = [user.finished];
   if(!sbuser?.metadata) return {
     user_id,
     nickname:  user?.name || user?.user || "User",
@@ -601,7 +616,7 @@ function loadHomeUser(sbuser, user:any={}, publicUsers = []) {
     nickname: sbuser?.nickname,
     picture: sbuser?.profile_url,
     progress: summary?.completed || 0,
-    finished: summary?.finished || [],
+    finished: user?.finished || summary?.finished || [],
     lastseen: bookmark?.latest || 0,
     laststudied: bookmark?.heading  ? `${bookmark?.heading} (${bookmark?.pagetitle})` : null,
     bookmark: bookmark?.slug || null,

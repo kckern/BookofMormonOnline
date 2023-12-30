@@ -51,7 +51,7 @@
   width: 24px;
   height: 24px;
   margin: 3px;
-  object-fit: contain;
+  object-fit: cover;
   object-position: center;
   /* Center the image within the element */
 }
