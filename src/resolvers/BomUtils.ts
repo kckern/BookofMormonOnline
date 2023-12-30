@@ -27,6 +27,12 @@ export default {
     labels: async (root: any, args: any, context: any, info: any) => {
       const lang = context.lang ? context.lang : null;
       return Models.BomLabel.findAll({
+        //where type is not peoplerel
+        where: {
+          type: {
+            [Op.not]: 'peoplerel'
+          }
+        },
         include: [includeTranslation('label_text', lang)].filter(x => !!x)
       }).then((labels: any) => {
        // console.log('labels', labels);
