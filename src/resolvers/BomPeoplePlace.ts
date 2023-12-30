@@ -130,8 +130,9 @@ export default {
     description: async (item: any, args: any, { db, res }: any, info: any) => {
       return translatedValue(item, 'description');
     },
-    relations(item: any) {
-      // console.log(item)
+    async relations(item: any, args: any, {lang }: any) {
+
+
       var relationSrc: [any] = item?.getDataValue('relationSrc');
       var relationDst: [any] = item?.getDataValue('relationDst');
       var relations = [];
@@ -149,7 +150,22 @@ export default {
             person: rel.getDataValue('personSrc')
           });
       }
-      return relations;
+      console.log({lang});
+      const allLabels = (await Models.BomLabel.findAll({
+        raw: true,
+        attributes: ['label_id','label_text'],
+        where: {
+          type: 'peoplerel'
+        },
+        include: [includeTranslation('label_text', lang)].filter(x => !!x)
+      })).map((i:any)=>{return {label_id:i.label_id.replace(/^rel_/,''),label_text:i.label_text}});
+
+      return relations.map((rel: any) => {
+        if(!rel.person) return null;
+        const label = allLabels.find((l:any)=>l.label_id==rel.relation);
+        if(label) rel.relation = label.label_text;
+        return rel;
+      }).filter((x:any)=>!!x);
     },
     index: async (item: any, args: any, { db, res }: any, info: any) => {
       return item.getDataValue('index').map((i: any) => {
