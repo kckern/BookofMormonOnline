@@ -411,7 +411,9 @@ function Relationships({ data }) {
 
     //determine split
     const namePosition = person.relation.indexOf("$1") ? "back" : "front";
-    const StringwithSplitMarker = namePosition === "front" ? person.relation.replace("$1", `X`) : person.relation.replace("$1", "•$1");
+    const StringwithSplitMarker = namePosition === "front" ? 
+      person.relation.replace(/(\$1\S+)/, "$1•")
+    : person.relation.replace("$1", "•$1");
 
     const replaceWithLink = (text) => {
       //split by $1, keep delimiter
@@ -425,8 +427,10 @@ function Relationships({ data }) {
         return piece;
       });
     }
-    const rows = StringwithSplitMarker.split("•").map(replaceWithLink);
-    const items = [rows[0], <br/>, rows[1]];
+    const rows = StringwithSplitMarker.split("•").map(replaceWithLink).filter(i=>!!i);
+    const items = [
+      <div className="related_text_top">{rows[0]}</div>, 
+      <div className="related_text_bottom">{rows[1]}</div>];
 
 
       return      <div className="related_row" key={i}
