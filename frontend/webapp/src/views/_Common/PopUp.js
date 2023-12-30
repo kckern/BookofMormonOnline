@@ -422,7 +422,7 @@ function Relationships({ data }) {
       if (pieces.length === 1) return text;
       return pieces.map((piece, i) => {
         if (piece === "$1") {
-          return  <span className="nameLink">{person.person.name.replace(/(\d+$)/, "")}</span>
+          return  <span className="nameLink">{person.person.name.replace(/\d+/, "")}</span>
         }
         return piece;
       });
