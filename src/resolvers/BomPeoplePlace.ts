@@ -150,20 +150,27 @@ export default {
             person: rel.getDataValue('personSrc')
           });
       }
-      console.log({lang});
       const allLabels = (await Models.BomLabel.findAll({
         raw: true,
-        attributes: ['label_id','label_text'],
+        //attributes: ['label_id','label_text'],
         where: {
           type: 'peoplerel'
         },
-        include: [includeTranslation('label_text', lang)].filter(x => !!x)
-      })).map((i:any)=>{return {label_id:i.label_id.replace(/^rel_/,''),label_text:i.label_text}});
+        include: [{
+          model: Models.BomTranslation,
+          as: 'translation',
+          where: { lang: lang },
+          attributes: ['value'],
+          required: false
+        
+        }]
+      })).map((i:any)=>{return {label_id:i.label_id.replace(/^rel_/,''),label_text:i['translation.value'] || i.label_text}});
 
+      console.log({allLabels});
       return relations.map((rel: any) => {
         if(!rel.person) return null;
         const label = allLabels.find((l:any)=>l.label_id==rel.relation);
-        if(label) rel.relation = label.label_text;
+        if(label) rel.relation = label?.['label_text'];
         return rel;
       }).filter((x:any)=>!!x);
     },
