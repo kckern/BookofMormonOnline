@@ -29,7 +29,7 @@ export default {
               {
                 model: Models.BomPeople,
                 as: 'personSrc',
-               // include: [includeTranslation({ [Op.or]: ['name', 'title', "description"] }, lang)]
+                include: [includeTranslation({ [Op.or]: ['name', 'title'] }, lang)]
               }
             ]
           },
@@ -41,7 +41,7 @@ export default {
               {
                 model: Models.BomPeople,
                 as: 'personDst',
-               // include: [includeTranslation({ [Op.or]: ['name', 'title', "description"] }, lang)]
+                include: [includeTranslation({ [Op.or]: ['name', 'title'] }, lang)]
               }
             ]
           }
@@ -166,7 +166,6 @@ export default {
         }]
       })).map((i:any)=>{return {label_id:i.label_id.replace(/^rel_/,''),label_text:i['translation.value'] || i.label_text}});
 
-      console.log({allLabels});
       return relations.map((rel: any) => {
         if(!rel.person) return null;
         const label = allLabels.find((l:any)=>l.label_id==rel.relation);
