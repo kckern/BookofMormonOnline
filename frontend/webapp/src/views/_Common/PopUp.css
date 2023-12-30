@@ -548,3 +548,76 @@ ul.source_tabs li:hover
     margin-bottom: 50vh;
 
 }
+.related_row:hover {
+    background-color: #EEE;
+}
+.related_row:hover img {
+    filter: brightness(1.2)
+}
+
+.related_row 
+{
+    border-top-left-radius: 1ex;
+    border-bottom-left-radius: 1ex;
+    cursor: pointer;
+    display: flex;
+    width: calc(50% - 1ex);
+    flex-shrink: 0;
+    font-size: 0.8rem;
+    line-height: 1rem;
+    text-align: right;
+    color: #666;
+    /* allow broken letters */
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    hyphens: auto;
+    overflow: hidden;
+    height: 3rem;
+    justify-content: right
+}
+
+.related_row .related_avatar{
+    width:3rem;
+    height: 3rem;
+    flex-shrink: 0;
+    margin-left: 0.2rem;
+    flex-grow: 0;
+}
+
+.related_people
+{
+    display: flex;
+    flex-wrap: wrap;
+    gap:1ex;
+    margin-right: -0.5rem;
+    margin-left: -0.5rem;
+    margin-top: 1ex;
+    margin-bottom: 1rem;
+}
+
+.related_row span.nameLink{
+    cursor: pointer;
+    font-weight: bold;
+    color: black;
+    letter-spacing: -0px;
+    cursor: pointer;
+}
+
+.related_row .related_text
+{
+    cursor: pointer;
+    overflow: auto;
+    letter-spacing: -0.5px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    line-height: 0.8rem;
+    flex-grow: 1;
+    width: 100%;
+    margin-left: 0.5ex;
+}
+.related_row img{
+
+    cursor: pointer;
+    border: 1px solid #0005;
+}
