@@ -251,38 +251,7 @@ function Person({ appController }) {
                 </div>
 
                 <h4>{label("relationships")}</h4>
-                <table className="refbox-tabel">
-                  <tbody>
-                    {person?.relations &&
-                      person.relations.map((relation, index) => (
-                        <tr key={index}>
-                          <td className="refbox-relation">
-                            {relation.relation}
-                          </td>
-                          <td className="refbox-relation-of">
-                            {ofs[relation.relation] || "of"}
-                          </td>
-                          <td className="refbox-related">
-                            {relation.person && (
-                              <Link
-                                onClick={(e) =>
-                                  handleClick(relation.person.slug, e)
-                                }
-                                className="ppref"
-                                to={`people/${relation.person.slug}`}
-                                data-tip={replaceNumbers(relation.person.title)}
-                                data-offset="{'left': 0}"
-                                data-place="top"
-                                effect="solid"
-                              >
-                                {processName(relation.person.name)}
-                              </Link>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
+                <Relationships data={person?.relations} />
                 <ReferenceList
                   index={person.index}
                   setPopupRef={setPopUpRef}
@@ -433,6 +402,58 @@ function Place({ appController }) {
       </div>
     </Draggable>
   );
+}
+
+function Relationships({ data }) {
+
+
+  const personRow = (person, i) => {
+
+    //determine split
+    const namePosition = person.relation.indexOf("$1") ? "back" : "front";
+    const StringwithSplitMarker = namePosition === "front" ? person.relation.replace("$1", `X`) : person.relation.replace("$1", "•$1");
+
+    const replaceWithLink = (text) => {
+      //split by $1, keep delimiter
+      if (!text.includes("$1")) return text;
+      const pieces = text.split(/(\$1)/);
+      if (pieces.length === 1) return text;
+      return pieces.map((piece, i) => {
+        if (piece === "$1") {
+          return  <span className="nameLink">{person.person.name.replace(/(\d+$)/, "")}</span>
+        }
+        return piece;
+      });
+    }
+    const rows = StringwithSplitMarker.split("•").map(replaceWithLink);
+    const items = [rows[0], <br/>, rows[1]];
+
+
+      return      <div className="related_row" key={i}
+        data-for="relToolTip"
+        data-tip={person.title}
+        >
+          <Link
+        style={{display:"flex"}}
+        to={`/people/${person.person.slug}`}>
+        <div className="related_text">
+          {items}
+        </div>
+        
+        <div className="related_avatar">
+          <img src={`${assetUrl}/people/${person.person.slug}`} />
+        </div>
+        </Link>
+      </div> 
+
+  };
+
+
+  return <div className="related_people noselect">
+   <ReactTooltip id="relToolTip" place="left" offset="{'bottom': 0, 'left': '10rem'}" effect="solid" backgroundColor={"#666"} arrowColor={"#666"} />
+    {data?.map((relation, i) => personRow(relation, i))}
+  </div>
+
 }
 
 function ReferenceList({ index, appController,setPopupRef }) {
