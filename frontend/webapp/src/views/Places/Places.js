@@ -112,7 +112,7 @@ function PlacesComponent({ appController }) {
       N: <img src={nation} />,
       O: <img src={geo_other} />,
     }
-    return string.split("").map((l) => reps[l] || l)
+    return string?.split("")?.map((l) => reps[l] || l)
   }
 
   const handleClick = (id, e) => {

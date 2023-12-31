@@ -29,7 +29,7 @@ export default {
               {
                 model: Models.BomPeople,
                 as: 'personSrc',
-                include: [includeTranslation({ [Op.or]: ['name', 'title'] }, lang)]
+                include: [includeTranslation({ [Op.or]: ['name', 'title'] }, lang)].filter(x=>!!x)
               }
             ]
           },
@@ -41,7 +41,7 @@ export default {
               {
                 model: Models.BomPeople,
                 as: 'personDst',
-                include: [includeTranslation({ [Op.or]: ['name', 'title'] }, lang)]
+                include: [includeTranslation({ [Op.or]: ['name', 'title'] }, lang)].filter(x=>!!x)
               }
             ]
           }
