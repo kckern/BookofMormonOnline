@@ -1,6 +1,6 @@
 
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState,useRef } from 'react';
 import { Vega } from 'react-vega';
 import "./Network.css";
 
@@ -258,10 +258,31 @@ function PeopleNetwork() {
       }
     ]
   };
+
   const signalListeners = { hover: handleHover };
+
+	useEffect(()=>{
+		const vegaBoxElement = document.querySelector('.vega-embed');
+		const handleResize = ()=>{
+			const containerHeight = vegaBoxElement.getBoundingClientRect().height;
+			const containerWidth = vegaBoxElement.getBoundingClientRect().width;
+			
+			setContainerWidth(containerWidth);
+			setContainerHeight(containerHeight);
+		}
+
+		window.addEventListener('resize', handleResize);
+
+		handleResize();
+
+		return ()=>{
+			window.removeEventListener('resize', handleResize);
+		}
+	},[])
+
   return (  <div className="container">
     <div className='network_container'>
-      <Vega spec={spec} signalListeners={signalListeners} />
+      <Vega spec={spec} signalListeners={signalListeners}/>
       </div>
     </div>
   );
