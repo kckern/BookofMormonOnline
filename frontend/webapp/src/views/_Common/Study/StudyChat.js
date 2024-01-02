@@ -502,7 +502,7 @@ export function StudyGroupChat({
   let isSameSender = false;
   let max_i = messages.length - 1;
   return (
-    <div className={"StudyGroupChat"} key={channel.url}>
+    <div className={"StudyGroupChat"}>
       <TypingIndicators appController={appController} channel={channel} />
       {loading ? (
         <Loader />
@@ -521,13 +521,12 @@ export function StudyGroupChat({
             classes.push("unreadMsg");
           return (
             <div
-              messageid={messages.length - 1 === i ? message.messageId : null}
+							key={messages.messageId}
+              // messageid={messages.length - 1 === i ? message.messageId : null}
               className={classes.join(" ")}
-              key={messages.messageId}
             >
               <BaseMessage
                 isSameSender={isSameSender}
-                key={message.messageId}
                 index={i}
                 inThread={false}
                 id={message.messageId}
@@ -906,7 +905,7 @@ function BaseMessage({
     if (message.threadInfo && message.threadInfo.replyCount) {
       let replyCount = message.threadInfo.replyCount;
       let faces = message.threadInfo.mostRepliedUsers.map((u, i) => (
-        <img key={i} src={u.plainProfileUrl} onError={breakCache} />
+        <img key={i} src={u.plainProfileUrl} onError={breakCache} alt="profileImage"/>
       ));
       let names = message.threadInfo.mostRepliedUsers.map((u) => u.nickname);
       return { replyCount, faces, names, messageId: message.messageId };

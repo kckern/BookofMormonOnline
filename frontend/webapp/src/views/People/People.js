@@ -9,7 +9,7 @@ import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import { isMobile, label, processName, replaceNumbers } from "src/models/Utils";
 import "./People.css"
 import { assetUrl } from "src/models/BoMOnlineAPI";
-
+import crypto from "crypto-browserify";
 import royalty from "./svg/royalty.svg";
 import prophet from "./svg/prophet.svg";
 import priest from "./svg/priest.svg";
@@ -285,14 +285,16 @@ export function PeopleFilters({ appController, setFilter, peopleFilters }) {
     </div>
   </>
     const handleClick = ()=>{
+			const id = appController.states.user.social?.user_id || crypto.createHash('md5').update(crypto.randomBytes(20).toString('hex')).digest("hex");
       appController.functions.setPopUp({
         type: "pFilter",
-        ids: [appController.states.user.social.user_id],
+        ids: [id],
         underSlug: "people",
         popUpData: { filterBox,setFilter, peopleFilters
         },
       });
     }
+
   if (isMobile()) return <div className="filterDrawerButton"><Button onClick={handleClick}>{label("filters")}</Button></div>;
 
   return filterBox;

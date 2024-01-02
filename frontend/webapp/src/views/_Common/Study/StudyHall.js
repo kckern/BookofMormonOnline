@@ -226,7 +226,7 @@ export function StudyGroupMainPanel({ appController, activePanel, setPanel }) {
   return <div>{JSON.stringify({ activePanel })}</div>
 }
 
-export function StudyGroupChatPanel({ appController, channel, setPanel }) {
+export function  StudyGroupChatPanel({ appController, channel, setPanel }) {
   const params = useParams()
   const [chatLinkedContent, setChatLinkedContent] = useState({})
   const [loader, setLoader] = useState(false)
