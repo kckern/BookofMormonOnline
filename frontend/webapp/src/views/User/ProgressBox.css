@@ -205,6 +205,11 @@
   border: none;
 }
 
+
+.container .divProgress h2{
+  font-weight: 400;
+}
+
 .ProgressBox h1 {
   font-family: "Scripture", serif;
   /* letter-spacing: -0.5em;  */

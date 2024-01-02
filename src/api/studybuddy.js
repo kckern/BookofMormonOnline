@@ -708,7 +708,7 @@ const loadCommentary = async (verse_ids) => {
       SELECT s.source_name name, s.source_title book, c.title title, s.source_year year, c.text
       FROM bom_xtras_commentary c
       JOIN bom_xtras_source s ON c.source = s.source_id
-      WHERE s.source_lang = "en" AND c.verse_id IN (?)
+      WHERE s.source_lang = "en" AND c.verse_id IN (?) AND c.is_note = 1
     `;
 
     if(!verse_ids?.length) return [];
@@ -717,7 +717,7 @@ const loadCommentary = async (verse_ids) => {
 
     try {
         const commentary = await Promise.race([
-            queryDB([sql, params]),
+            queryDB(sql, params),
             new Promise((_, reject) => setTimeout(reject, 10000))
         ]);
 
@@ -791,7 +791,6 @@ const loadVerses = async (guid, lang) => {
 
     } 
     
-
     const verses = await queryDB(sql);
     const verse_ids = verses.map((verse) => verse.verse_id);
     const scripture_text = verses.map((verse) => verse.verse_scripture).join(" ");
@@ -806,4 +805,4 @@ const loadVerses = async (guid, lang) => {
 
 
 
-module.exports = {studyBuddy, studyBuddyTextBlock}
+module.exports = {studyBuddy, studyBuddyTextBlock, loadSectionNarration, loadSectionContext, loadTextBlockNarration,loadCrossReferences};

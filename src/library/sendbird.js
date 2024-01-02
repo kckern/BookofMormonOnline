@@ -467,6 +467,10 @@ class Sendbird {
     return response?.data?.channels || [];
   }
 
+  async getVirtualUsers(){
+    return ["13b1c4fc58a87a68d4da51beb22a0ecd"];
+  }
+
   async getMembers(channelUrl) {
     let response = await axios({
       method: 'GET',
@@ -663,6 +667,28 @@ class Sendbird {
    //console.log(`curl -X POST "https://api-${SENDBIRD_APPID}.sendbird.com/v3/group_channels/${channelUrl}/messages" -H "accept: application/json" -H "Api-Token: ${SENDBIRD_TOKEN}" -H "Content-Type: application/json" -d "{\\"message_type\\":\\"MESG\\",\\"user_id\\":\\"${user_id}\\",\\"message\\":\\"${message}\\",\\"parent_message_id\\":\\"${messageId}\\"}"`)
     return response?.data || {};
 
+  }
+
+  async postMessage({ channelUrl, user_id, message, data = {}, custom_type = "" }) {
+    const config = {
+      method: 'POST',
+      url: `https://api-${SENDBIRD_APPID}.sendbird.com/v3/group_channels/${channelUrl}/messages`,
+      data: JSON.stringify({
+        user_id,
+        message_type: 'MESG',
+        custom_type,
+        message: message,
+        data: JSON.stringify(data)
+      }),
+      headers: {
+        'Api-Token': SENDBIRD_TOKEN,
+        'Content-Type': 'application/json'
+      },
+      json: true
+    };
+    //console.log(config);
+   let response = await axios(config);
+    return response?.data || {};
   }
 
   async updateMessage({ channelUrl, messageId, message, data = {}, custom_type = "" }) {

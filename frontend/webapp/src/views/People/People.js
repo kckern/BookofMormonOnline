@@ -93,7 +93,7 @@ function PeopleComponent({ appController }) {
       O: <img src={other} />,
       H: <img src={record_keeper} />,
     };
-    return string.split("").map(i => reps[i]);
+    return string?.split("")?.map(i => reps[i]);
   };
   const unitIcons = (string) => {
     var reps = {
@@ -103,7 +103,7 @@ function PeopleComponent({ appController }) {
       S: <img src={society} />,
       C: <img src={civilization} />
     };
-    return string.split("").map(i => reps[i])[0];
+    return string?.split("")?.map(i => reps[i])[0];
   };
 
   const affiliationBadges = (string) => {
@@ -118,7 +118,7 @@ function PeopleComponent({ appController }) {
       H: label("spiritual"),
       O: null
     };
-    return string.split("").map(l => (reps[l]) ? <span key={l} className={"IdBadge " + l}>{reps[l]}</span> : null)
+    return string?.split("")?.map(l => (reps[l]) ? <span key={l} className={"IdBadge " + l}>{reps[l]}</span> : null)
 
   };
 
@@ -142,7 +142,7 @@ function PeopleComponent({ appController }) {
 
   }
 
-
+  
 
   return (
     <div className="container noselect" style={{ display: 'block' }}>
@@ -154,7 +154,7 @@ function PeopleComponent({ appController }) {
             breakpointCols={breakpointColumnsObj}
             className="my-masonry-grid"
             columnClassName="my-masonry-grid_column">
-            {peopleList ? peopleList.filter(filters).map((person, i) => (
+            {peopleList ? peopleList.filter(filters).map((person, i) => ( person ?
               <Link to={"/people/" + person.slug} onClick={(e) => handleClick(person.slug, e)}>
                 <Card key={i} className="personCard">
                   <CardHeader className="text-center">
@@ -173,7 +173,7 @@ function PeopleComponent({ appController }) {
                     <div className="personIcons">{personIcons(person.classification)}</div>
                   </CardFooter>
                 </Card>  </Link>
-            )) : <Spinner top={(isMobile()) ? "50vh" : "60vh"} />}
+            : null )) : <Spinner top={(isMobile()) ? "50vh" : "60vh"} />}
           </Masonry>
         </div>
       </div>

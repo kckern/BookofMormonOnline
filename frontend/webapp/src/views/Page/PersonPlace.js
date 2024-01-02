@@ -4,7 +4,7 @@ import ReactTooltip from "react-tooltip";
 import { Link } from "react-router-dom";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 
-export const renderPersonPlaceHTML = (html, pageController) => {
+export const renderPersonPlaceHTML = (html, pageController,setPopupRef) => {
   html = html.replace(
     /{(.*?)\|(.*?)}/g,
     "<a class='person' slug='$2' label='$1'></a>",
@@ -21,6 +21,14 @@ export const renderPersonPlaceHTML = (html, pageController) => {
 
   const options = {
     replace: (domNode) => {
+      const attribs = { ...domNode.attribs };
+      if (attribs?.classname === 'scripture_link') {
+        const ref = domNode.children[0].data;
+        attribs.class = attribs.classname;
+        delete attribs.classname;
+        return <a {...attribs} onClick={()=>setPopupRef(ref)}>{ref}</a>;
+      }
+
       if (domNode.attribs && domNode.attribs.class === "person") {
         return (
           <PersonLink

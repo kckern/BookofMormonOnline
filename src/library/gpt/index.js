@@ -1,5 +1,6 @@
 
 const axios = require('axios');
+const smartquotes = require('smartquotes');
 
 require('dotenv').config()
 
@@ -113,8 +114,7 @@ const askGPT = async (instructions, input, model, attempt) => {
     }
   
     if (!response) return askGPT(instructions, input,  model, attempt + 1);
-  
-    return response;
+    return smartquotes(response);
   };
 
 

@@ -209,9 +209,13 @@ function TheaterWrapper({ appController }) {
   };
 
   useEffect(async () => {
-    let items = slug ? [{slug}] : null; //todo: handle reading plan id / index input;
+    let items = slug ? [{slug}] : null; 
+
     if(slugIsRef) items = [{reference:slug}];
+    const [plan,segment] = slug?.split("/") || [];
+    if(plan==="plan" && segment) items = [{plan:segment}];
     //items = [{slug:"ammon",blocks:[4,5,6,7,8]}];
+    //items = [{plan:"12345"}];
     const token = localStorage.getItem("token");
     let { queue:loadedQueue } = await BoMOnlineAPI(
       { queue: { token, items } },
@@ -1627,15 +1631,19 @@ function TheaterCommentFeed({ theaterController }) {
   const currentItem = queue[cursorIndex] || null;
   const coms = currentItem?.coms || [];
   const filteredcoms = coms.filter(com => {
+    const noteSources = [192,193];
     const sourceId = com.id.toString().substr(5, 3);
     if (!com.preview?.trim()) return false;
+    if(noteSources.includes(parseInt(sourceId))) return true;
 
     if ([...blacklist, 41, 161, 162, 163, 164, 165, 166].includes(parseInt(sourceId)))
       return false;
     return true;
-  });
+  }) // sort by length, short to long
+  .sort((a, b) => a.preview.length - b.preview.length);
+
   const allowedMessageCount = currentDuration / secondsBetweenComments;
-  const queuedMessages = filteredcoms.slice(0, allowedMessageCount); //randomized earlier
+  const queuedMessages = filteredcoms.slice(0, allowedMessageCount).sort(() => Math.random() - 0.5);
   const division = queuedMessages.length > 5 ? queuedMessages.length : 5; // this is for items with low comment count, so its coms dont'get skipped.
   const commentCursor = Math.floor(  (division * (currentProgress * 0.7)) / 100 );
   useEffect(async () => {

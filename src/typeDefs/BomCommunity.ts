@@ -19,6 +19,8 @@ extend type Query {
   moregroups(token:String, grouping:String): [HomeGroup]
   requestedUsers(token:String, channel:String): [HomeUser]
   leaderboard(token:String): LeaderBoard
+  readingplan(token:String, slug:String): ReadingPlan
+  readingplansegment(token:String, guid:String): ReadingPlanSegment
   botlist: [Bot]
 }
 
@@ -151,6 +153,7 @@ extend type Mutation {
     laststudied: String
     bookmark: String
     public: Boolean
+    isBot: Boolean
   }
 
   type ContentLink
@@ -183,6 +186,28 @@ extend type Mutation {
     members: [HomeUser]
   }
 
+  type ReadingPlan{
+    guid: String
+    slug: String
+    title: String
+    startdate: String
+    duedate: String
+    progress: Float
+    segments: [ReadingPlanSegment]
+  }
+
+  type ReadingPlanSegment{
+    guid: String
+    period: String
+    ref: String
+    url: String
+    title: String
+    duedate: String
+    progress: Float
+    start: Int
+    end: Int
+    sections: [Section]
+  }
 
 `
 

@@ -884,6 +884,10 @@ img.groupAvatar
     line-height: 1.3em;
 }
 
+.homeFeedHeader .progress.bot{  
+      background-color: #d3e1ea;
+    color: #0006;
+}
 
 .homeFeedHeader .progress,
 .commentThreadItem .progress{
@@ -925,6 +929,20 @@ img.groupAvatar
     color: #AAA;
 }
 
+.commentThreadItem .mesg .scriptureContainerWrapper
+{
+   border-radius: 0;
+   margin-top: 1ex;
+}
+
+
+.commentThreadItem .mesg .scriptureContainerWrapper,
+.commentThreadItem .mesg .scriptureContainerWrapper h5,
+.commentThreadItem .mesg .scripturePanel
+{
+    border-top-right-radius: 1ex;
+    border-top-left-radius: 1ex;
+}
 .commentThreadItem .textbox .namerow .botBadge
 {
     
@@ -959,7 +977,6 @@ img.groupAvatar
 .commentThreadItem
 {
     border-bottom: 1px solid #EEE;
-    padding-bottom: 1rem;
     margin-bottom: 1rem;
 }
 

@@ -1,6 +1,7 @@
 import { models as Models } from '../config/database';
 import Sequelize, { Model } from 'sequelize';
-import { getStandardizedValuesFromUserList } from './_common';
+import { completedGuids, getStandardizedValuesFromUserList } from './_common';
+const { loadReadingPlan,loadReadingPlanSegment } = require('./lib')
 import { sendbird } from '../library/sendbird';
 import { url } from 'inspector';
 import crypto from "crypto";
@@ -116,15 +117,29 @@ export default {
       });
       const topUsers = rankedUsers.slice(0,100);
 
+      const recentFinishes:any = await Models.BomLog.findAll({
+        raw: true,
+        attributes: ['timestamp','user'],
+        where: { type: 'finished'},
+        order: [['timestamp', 'DESC']],
+        limit: 10
+      });
       const recentFinishersUsers :any = (await Models.BomUser.findAll({
         raw: true,
         attributes: ['user',[Sequelize.literal(`MD5(user)`), 'sbuser'],'name','finished'],
-        where: { finished : { [Op.gt]: 0}, zip: { [Op.ne]: -1}},
-        order: [['finished', 'DESC']],
-        limit: 10
-      })).map((u:any)=>({...u,finished:[u.finished]}));
+        where: { user: recentFinishes.map((u:any)=>u.user)},
+      }));
+      const recentFinishesWithUsers = recentFinishes.map((f:any)=>{
+        const user = recentFinishersUsers.find((u:any)=>u.user===f.user);
+        return {
+          ...user,
+          finished: f.timestamp
+        }
+      }).sort((a:any,b:any)=>b.finished-a.finished)
+      .map((u:any)=>({...u,finished:[u.finished]}));
 
-      const sbIds = [...topUsers,...recentFinishersUsers].map((u:any)=>u.sbuser);
+
+      const sbIds = [...topUsers,...recentFinishesWithUsers].map((u:any)=>u.sbuser);
 
       const sendbirdUserObjects = await sendbird.listUsers(sbIds);
 
@@ -138,7 +153,7 @@ export default {
       }).filter((u:any)=>!!u).slice(0,50).map(maskUserPrivacy).sort((a:any,b:any)=>b.progress-a.progress)
       .filter((u:any)=>!u.isAdmin);
 
-      const recentFinishers = recentFinishersUsers.map((u:any)=>{
+      const recentFinishers = recentFinishesWithUsers.map((u:any)=>{
         const sendbirdUserObject = sendbirdUserObjects.find((sbu:any)=>sbu.user_id===u.sbuser);
         return loadHomeUser(sendbirdUserObject,u,visibleUsers);
       }).map(maskUserPrivacy).filter((u:any)=>!u?.isAdmin);
@@ -369,10 +384,48 @@ export default {
       group = await loadGroup(group, 'admin');
       let userIds = group.requests;
       return sendbird.listUsers(userIds).then(data=>data.map(sbUser => loadHomeUser(sbUser)));
+    },
+    //  readingplan(token:String, slug:String): ReadingPlan
+    readingplan: async (item: any, args: any, context: any, info: any) => {
+      if (!args.token) return [];
+      if (!args.slug) return [];
+      const lang = context.lang ? context.lang : null;
+      let user: any = await Models.BomUser.findOne({
+        include: [
+          {
+            model: Models.BomUserToken,
+            where: {
+              token: args.token
+            }
+          }
+        ]
+      });
+      const queryBy = user?.user || args.token;
+      const userInfo = {queryBy, lastcompleted: user?.lastcompleted || 0};
+      const completed_items = await completedGuids(userInfo);
+      return await loadReadingPlan(args.slug, completed_items,lang);
+
+    },
+    readingplansegment: async (item: any, args: any, context: any, info: any) => {
+      const token = args.token;
+      const guid = args.guid;
+      if (!token || !guid) return [];
+      const lang = context.lang ? context.lang : null;
+      let user: any = await Models.BomUser.findOne({
+        include: [
+          {
+            model: Models.BomUserToken,
+            where: {
+              token: token
+            }
+          }
+        ]
+      });
+      const queryBy = user?.user || token;
+      return await loadReadingPlanSegment(guid, queryBy, lang);
     }
   },
   Mutation: {
-
     addBot: async (item: any, args: any, context: any, info: any) => {
       const {token,channel,bot} = args;
       const user = await loadUserFromToken(token);
@@ -533,6 +586,8 @@ function loadHomeUser(sbuser, user:any={}, publicUsers = []) {
 
   const user_id = sbuser?.user_id || md5(user?.user);
   const picture =  sbuser?.profile_url ||  `https://api.dicebear.com/7.x/personas/svg?seed=${user_id}&eyes=open,sunglasses,wink,happy&facialHair=beardMustache,goatee&facialHairProbability=20&hair=bobCut,curly,long,pigtails,shortCombover,buzzcut,beanie&mouth=smile,smirk,bigSmile&nose=smallRound,mediumRound&skinColor=d78774,b16a5b,eeb4a4,92594b`;
+ // console.log({sbuser});
+  if(user.finished && !Array.isArray(user.finished)) user.finished = [user.finished];
   if(!sbuser?.metadata) return {
     user_id,
     nickname:  user?.name || user?.user || "User",
@@ -542,6 +597,8 @@ function loadHomeUser(sbuser, user:any={}, publicUsers = []) {
     lastseen: user.last_active,
     nonSocial:true,
     isAdmin: false,
+    public: false,
+    isBot: false,
   }
 
 
@@ -552,18 +609,20 @@ function loadHomeUser(sbuser, user:any={}, publicUsers = []) {
     bookmark = JSON.parse(sbuser?.metadata?.bookmark);
   } catch (e) {}
 
-
+  const isBot = !!sbuser?.metadata?.isBot || /🟢/.test(sbuser?.nickname);
+  if(isBot) sbuser.nickname = sbuser?.nickname.replace(/🟢/g,"").trim();
   return {
     user_id: sbuser?.user_id,
     nickname: sbuser?.nickname,
     picture: sbuser?.profile_url,
     progress: summary?.completed || 0,
-    finished: summary?.finished || [],
+    finished: user?.finished || summary?.finished || [],
     lastseen: bookmark?.latest || 0,
     laststudied: bookmark?.heading  ? `${bookmark?.heading} (${bookmark?.pagetitle})` : null,
     bookmark: bookmark?.slug || null,
     isAdmin: !!sbuser?.metadata?.isAdmin,
-    public: !!publicUsers.includes(sbuser?.user_id) || null
+    public: !!publicUsers.includes(sbuser?.user_id) || null,
+    isBot
   };
 }
 
@@ -669,9 +728,15 @@ async function getFeaturedGroups(lang, limit = 20) {
     where: { lang: lang },
     order: [['last_active', 'desc']],
     limit
-  });
+  })
+
+  recentUsers = recentUsers.map(u => md5(u.user));
+
+  const virtualUsers = await sendbird.getVirtualUsers();
+  recentUsers = [...virtualUsers, recentUsers];
+
   const groups =  await sendbird.getOthersGroups(
-    recentUsers.map(u => md5(u.user)),
+    recentUsers,
     lang
   );
 
