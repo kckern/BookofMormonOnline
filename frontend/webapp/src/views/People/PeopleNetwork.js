@@ -13,6 +13,7 @@ function PeopleNetwork() {
   const [containerWidth, setContainerWidth] = useState(800);
   const [containerHeight, setContainerHeight] = useState(500);
   const [vegaBox, setVegaBox] = useState(null);
+	const vegaBoxRef = useRef();
 
   const spec = {
     $schema: "https://vega.github.io/schema/vega/v5.json",
@@ -262,10 +263,11 @@ function PeopleNetwork() {
   const signalListeners = { hover: handleHover };
 
 	useEffect(()=>{
+		const vegaBoxElement = vegaBoxRef.current.vegaEmbed.current.containerRef.current;
+		
 		const handleResize = ()=>{
-			const vegaBoxElement = document.getElementsByClassName('vega-embed')[0];
-			const containerHeight = vegaBoxElement?.getBoundingClientRect().height;
-			const containerWidth = vegaBoxElement?.getBoundingClientRect().width;
+			const containerHeight = vegaBoxElement.getBoundingClientRect().height;
+			const containerWidth = vegaBoxElement.getBoundingClientRect().width;
 				setContainerWidth(containerWidth);
 				setContainerHeight(containerHeight);
 		}
@@ -285,7 +287,7 @@ function PeopleNetwork() {
   return (  
 	<div className="container">
     <div className='network_container'>
-      <Vega spec={spec} signalListeners={signalListeners}/>
+      <Vega spec={spec} signalListeners={signalListeners} ref={vegaBoxRef}/>
       </div>
     </div>
   );
