@@ -262,7 +262,8 @@ function PeopleNetwork() {
   const signalListeners = { hover: handleHover };
 
 	useEffect(()=>{
-		const vegaBoxElement = document.querySelector('.vega-embed');
+		const vegaBoxElement = document.getElementsByClassName('vega-embed')[0];
+
 		const handleResize = ()=>{
 			const containerHeight = vegaBoxElement.getBoundingClientRect().height;
 			const containerWidth = vegaBoxElement.getBoundingClientRect().width;
