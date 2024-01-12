@@ -234,7 +234,7 @@ function StudyGroupStatus({ appController }) {
       let username = Object.keys(diff)[0];
       let mysocialId = appController.states.user.social.user_id;
       let user =
-        appController.states.studyGroup.activeGroup?.memberMap[username] || {};
+        appController.states.studyGroup.activeGroup?.memberMap?.[username] || {};
       let { oldVal: oldColor, newVal: newColor } = Object.values(diff)[0];
       const isMe = mysocialId === username;
 
