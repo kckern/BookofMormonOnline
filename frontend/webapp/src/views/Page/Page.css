@@ -316,10 +316,6 @@ a.theater-link img:hover
   .faxbox .thumb_tabs li {
     width: 3em;
   }
-  .faxbox .thumb_tabs {
-    left: -3em;
-  }
-
   .faxbox.images {
     margin-left: 4em;
   }
