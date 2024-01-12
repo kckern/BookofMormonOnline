@@ -5,6 +5,7 @@ import { generateGroupHash } from "../../Study/StudyGroupSelect";
 import QRCode from "react-qr-code";
 // CSS
 import "../Style.scss";
+import { Alert } from "reactstrap";
 
 // :- TODOS
 // * call/dispatch "showInviteLink" is listener to show/hide model
@@ -15,7 +16,7 @@ export default function InviteLinkModal({  }) {
         [visible, setVisible] = useState(false),
         [studyGroup, setStudyGroup] = useState(null),
         copyTxt = useRef(),
-        inviteLink = window.location.origin + "/invite/" + hash;
+        inviteLink = hash ? window.location.origin + "/invite/" + hash : "";
 
     const toggleInviteLink = (e) => {
         setStudyGroup(e.studyGroup);
@@ -29,13 +30,10 @@ export default function InviteLinkModal({  }) {
         };
     }, []);
 
-    useEffect(() => {
-        studyGroup?.getMetaData(["hash"], function (response, error) {
-            if (error) { }
-            if (response)
-                if (response.hash === undefined) generateGroupHash(studyGroup, (response) => setHash(response.hash));
-                else setHash(response.hash);
-        });
+    useEffect(async () => {
+        const {hash} = await studyGroup?.getMetaData(["hash"]);
+        if(!hash || hash === "null") generateGroupHash(studyGroup, (response) => setHash(response.hash));
+        else setHash(hash);
     }, [studyGroup])
 
     const handleCopyTxt = useCallback(() => {
@@ -66,6 +64,16 @@ export default function InviteLinkModal({  }) {
             document.body.removeChild(textarea);
         }
     }, [inviteLink]);
+
+    if(!inviteLink) return  <SweetAlert 
+    customClass={"sweet-alert-modal"}
+    show={visible}
+    title={label("invite_link")}
+    onConfirm={() => setVisible(false)}
+    >
+        <Alert color="danger">{label("error")}</Alert>
+    </SweetAlert>
+
 
     return (
         <SweetAlert
