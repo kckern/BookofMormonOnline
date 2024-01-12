@@ -31,7 +31,7 @@ export default function InviteLinkModal({  }) {
     }, []);
 
     useEffect(async () => {
-        const {hash} = await studyGroup?.getMetaData(["hash"]);
+        const {hash} =( await studyGroup?.getMetaData(["hash"]) || {});
         if(!hash || hash === "null") generateGroupHash(studyGroup, (response) => setHash(response.hash));
         else setHash(hash);
     }, [studyGroup])
