@@ -746,7 +746,30 @@ function LinkPreviewContainer({ urls }) {
   return urls.map((url) => <LinkPreview key={url} url={url} />);
 }
 
+
+function CommentaryPreview({url}){
+  const commentaryId = parseInt(url.split("/").pop());
+  if(!commentaryId) return null;
+  const [commentary, setCommentary] = useState(null);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    BoMOnlineAPI({commentary:{id:commentaryId}}).then(data => {
+      setCommentary(data.commentary);
+      setLoading(false);
+    })
+  }, []);
+  if(!commentary) return null;
+  return <div className="commentaryPreview">
+    <pre>{JSON.stringify(commentary, null, 2)}</pre>
+  </div>
+}
+
+
 function LinkPreview({ url }) {
+
+  //check if commentary. TODO: Check domain
+  if(/commentary\/\d+$/.test(url)) return <CommentaryPreview url={url} />
+
   const fetcher = async (url) => {
     const apikey = "1ac77035736dd239dee7958f10930622";
     const hash = "link." + md5hash(url);
@@ -815,7 +838,7 @@ function replaceURLWithHTMLLinks(text) {
   const exp = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gi;
   let html = text.replace(
     exp,
-    (match) => `<a target='_blank' href='${match}'>${friendlyUrl(match)}</a>`,
+    (match) => urlHTML(match),
   );
   const urls = text.match(exp) || [];
 
@@ -837,6 +860,14 @@ function replaceURLWithHTMLLinks(text) {
 
 
 }
+
+
+function urlHTML(url) {
+  const isCommentary = /commentary\/\d+$/.test(url);
+  if(isCommentary) return null;
+  return `<a target='_blank' href='${url}'>${friendlyUrl(url)}</a>`;
+}
+
 
 function friendlyUrl(url) {
   url = url.replace(/^.*?\/\//, "");
