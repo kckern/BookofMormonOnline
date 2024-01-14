@@ -458,7 +458,7 @@ function Comments({ appController, comments, count, item, group, memberMap, sbCh
       return seen.hasOwnProperty(item.id) ? false : (seen[item.id] = true);
     });
     thread = comments.map((comment) => (
-      <Comment comment={comment} key={comment.id} />
+      <Comment comment={{...comment,appController}} key={comment.id} appController={appController} />
     ));
   }
 
@@ -579,6 +579,7 @@ function Comment({ comment }) {
   const match = useRouteMatch();
   const urlMatch = parseInt(match.params?.messageId || 0) || 0;
   if (!comment) return null;
+  const appController = comment.appController;
   let finished = comment.user.finished;
   const isBot = comment.user.nickname === "StudyBuddy" || comment.user.isBot;
   const botBadge = isBot ? <span className="botBadge">BOT</span> : null;
@@ -608,7 +609,7 @@ function Comment({ comment }) {
             </Link>
           </span>
         </div>
-        <div className="mesg">{ParseMessage(comment.msg)}</div>
+        <div className="mesg">{ParseMessage(comment.msg,appController)}</div>
       </div>
     </div>
   );

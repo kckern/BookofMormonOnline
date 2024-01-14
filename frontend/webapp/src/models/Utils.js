@@ -5,7 +5,7 @@ import axios from "axios";
 import Parser, {domToReact} from "html-react-parser";
 import moment from "moment";
 import "moment/locale/ko";
-import BoMOnlineAPI from "src/models/BoMOnlineAPI";
+import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
 import { getCache, setCache } from "./Cache";
 import {Spinner} from "../views/_Common/Loader";
 import { ScripturePanelSingle } from "../views/Page/Narration";
@@ -695,8 +695,8 @@ export function clickyUser(userData) {
 export function isMobile() {
   return ((window.innerWidth <= 900));
 }
-export function ParseMessage(string) {
-  const [{ html, urls, scriptures }] = useState(replaceURLWithHTMLLinks(string));
+export function ParseMessage(string,appController) {
+  const [{ html, urls, scriptures }] = useState(replaceURLWithHTMLLinks(string,appController));
   const [activeRef, setActiveRef] = useState(null);
   if (typeof string !== "string") return string;
   const options = {
@@ -721,7 +721,7 @@ export function ParseMessage(string) {
     <>
       {Parser(html, options)}
       <ScripturesContainer scriptures={scriptures} setActiveRef={setActiveRef} activeRef={activeRef} />
-      <LinkPreviewContainer urls={urls} />
+      <LinkPreviewContainer urls={urls} appController={appController} />
     </>
   );
 }
@@ -740,36 +740,53 @@ function ScripturesContainer({ scriptures, setActiveRef, activeRef }) {
   </div>
 }
 
-function LinkPreviewContainer({ urls }) {
+function LinkPreviewContainer({ urls,appController }) {
   if (!urls) return null;
 
-  return urls.map((url) => <LinkPreview key={url} url={url} />);
+  return urls.map((url) => <LinkPreview key={url} url={url} appController={appController}/>);
 }
 
 
-function CommentaryPreview({url}){
-  const commentaryId = parseInt(url.split("/").pop());
-  if(!commentaryId) return null;
+function CommentaryPreview({url,appController}){
+  const commentaryId = url.split("/").pop();
   const [commentary, setCommentary] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [error,setError] = useState(null);
   useEffect(() => {
-    BoMOnlineAPI({commentary:{id:commentaryId}}).then(data => {
+    if(!commentaryId) return;
+    BoMOnlineAPI({commentary:commentaryId}).then(data => {
       setCommentary(data.commentary);
-      setLoading(false);
-    })
+    }).catch(err => {
+      setError(err?.message || JSON.stringify(err));
+    });
   }, []);
-  if(!commentary) return null;
-  return <div className="commentaryPreview">
-    <pre>{JSON.stringify(commentary, null, 2)}</pre>
+  if(!commentary) return error ? <code>{commentaryId} | {error}</code> : <Spinner />;
+
+  const source_id = commentaryId.toString().slice(-5).slice(0,3);
+  const {title, reference, publication, location, text:html} = commentary[commentaryId] || {};
+  const {source_title, source_name, source_short, source_url, source_year, source_publisher} = publication || {};
+  const text = Parser(html);
+
+  const popUpCommentary = () => {
+    appController.functions.setPopUp({
+      type: "commentary",
+      underSlug: window.location.href.replace(/^.*?\/\/.*?\//, ""),
+      ids: [commentaryId.toString()],
+      popUpData: commentary});
+  };
+
+
+  return <div className="commentaryPreview" onClick={popUpCommentary}>
+    <img src={`${assetUrl}/source/cover/${source_id}`} />
+    <div className="commentaryPreviewContent">
+      <div className="commentaryPreviewContentTitle">{title}</div>
+      <div className="commentaryPreviewContentText">{text}</div>
+      <div className="commentaryPreviewContentSource">{source_name}: {source_title}</div>
+    </div>
   </div>
 }
 
 
-function LinkPreview({ url }) {
-
-  //check if commentary. TODO: Check domain
-  if(/commentary\/\d+$/.test(url)) return <CommentaryPreview url={url} />
-
+function LinkPreview({ url,appController }) {
   const fetcher = async (url) => {
     const apikey = "1ac77035736dd239dee7958f10930622";
     const hash = "link." + md5hash(url);
@@ -796,12 +813,16 @@ function LinkPreview({ url }) {
     setCache(returnObj);
     return returnObj[hash];
   };
-
   const [linkData, setLinkData] = useState(null);
   const [hasImage, setHasImage] = useState(true);
   useEffect(() => {
     fetcher(url).then((data) => setLinkData(data));
   }, []);
+
+  //check if commentary. TODO: Check domain
+  if(/commentary\/\d+$/.test(url)) return <CommentaryPreview url={url} appController={appController} />
+
+
 
   if (!linkData) return null;
   if (!linkData.title) return null;
@@ -862,9 +883,9 @@ function replaceURLWithHTMLLinks(text) {
 }
 
 
-function urlHTML(url) {
+function urlHTML(url,force) {
   const isCommentary = /commentary\/\d+$/.test(url);
-  if(isCommentary) return null;
+  if(isCommentary && !force) return "";
   return `<a target='_blank' href='${url}'>${friendlyUrl(url)}</a>`;
 }
 
