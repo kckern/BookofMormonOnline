@@ -4,6 +4,7 @@ import crypto from "crypto-browserify";
 import ProgressBox from "../User/ProgressBox.js";
 import { Card, CardHeader, CardBody, CardFooter, Button } from "reactstrap";
 
+
 import { loadHomeFeed } from "src/models/dummyData/study";
 import {
   FaxInFeed,
@@ -43,6 +44,7 @@ import openIcon from "src/views/_Common/Study/svg/open.svg";
 import ReactTooltip from "react-tooltip";
 import trophy from "src/views/User/svg/trophy.svg";
 import { GroupCallToAction, GroupLeaderBoard } from "./Home.js";
+import { PopupCenter, md5 } from "../../models/Utils.js";
 
 export function HomeFeed({
   appController,
@@ -138,7 +140,7 @@ function HomeFeedBanner({ appController, bannerGroup, setActiveGroup }) {
 
   if (!bannerGroup) return null;
   return (
-    <Card>
+    <Card className="homeBannerCard">
       <CardBody className="homeBanner">
         <div className="homeBannerImg">
           <img src={bannerGroup.picture} />
@@ -277,10 +279,11 @@ function HomeFeedItem({
             alt={group.url}
           />
         </CardHeader>
-        <CardBody>
+        <CardBody className="homeFeedBody">
           {item.msg === "•" ? null : (
-            <div className="itemMsg">{ParseMessage(item.msg || "")}</div>
+            <div className="itemMsg"><MessageMedia item={item} /> {ParseMessage(item.msg || "")}</div>
           )}
+        
           <ContentInFeed
             item={item}
             linkedContent={linkedContent}
@@ -414,6 +417,57 @@ function LikeUI({ likes, memberMap }) {
       {otherstring} {likelabel}
     </span>
   );
+}
+
+
+function MessageMedia({ item }) {
+
+  return null;
+
+  const [componendId] = useState(md5(item.id));
+  const [parentElementWidth, setParentElementWidth] = useState(0);
+  const [mediaSize, setMediaSize] = useState(null);
+
+  const imageUrl = "https://ipxy.io/img/WVhKMGFXTnNaVWxrUFVNXlJFdyVkSEIyWjNZMkpuVl5iRDFvZEhSd2NeVV5OVE5CSlRJMU1rWWxNalVeUm5OamIyNTBaVzUwTFdOa1p6UXRNITVqWkc1KmJuTjBZV2ReWVcwdVkyOXRKVEkxTWtaMkpUSTFNa1owTlRFdU1qZzROUzAlTlNVXk5USkdOREU1TWprNU9ESTJYelk1T0RrJU5ETTRPVEUlTlRRME9EUmZOek0xTVRrek9UVTROVEU1TVRjMk1qVTVYMjR1YW5CbkpUSTFNMFp6ZEhBbE1qVXpSR1J6ZEMxcWNHZGZaVEUxSlRJMU1qWmZibU5mYUhRbE1qVXpSSE5qYjI1MFpXNTBMV05rWnpRdE0hNWpaRzUqYm5OMFlXZF5ZVzB1WTI5dEpUSTFNalpmYm1OZlkyRjBKVEkxTTBRJU1EQWxNalVeTmw5dVkxOXZhR01sTWpVelJGQmFVM2h3TlROWmFYTk5RVmd0ZW4qWFpuUWxNalVeTm1Wa2JTVV5OVE5FUVU5Uk1XTXdkMEpCUVVGQkpUSTFNalpqWTJJbE1qVXpSRGN0TlNVXk5USTJiMmdsTWpVelJEQXdYMEZtUVd0dE0wViFZbEJMWmpkRE1WWjFSWGx6T1clIVVFTjRRazR0VTJoTE9IQlpOVmR6V0VFdGJFNUtRMUVsTWpVXk5tOWxKVEkxTTBRMk5VRTBRVFkyUlNVXk5USTJYMjVqWDNOKlpDVV5OVE5FT0dJek5UUTI";
+
+  const overlay = "instagram";
+  const url = "https://www.instagram.com/p/C2DL1tpvgv6"
+
+
+
+  const popUpImage = () => {
+      PopupCenter(url, "Instagram", 740, 825);
+  }
+
+  const fitItem = () => {
+
+
+
+  };
+
+    useEffect(()=>{
+      console.log("useEffect: setParentElementWidth");
+      const parentElement = document.getElementById(componendId)?.parentElement;
+      setParentElementWidth(parentElement?.offsetWidth);
+
+    },[!!document.getElementById(componendId), window?.innerWidth]);
+
+    useEffect(()=>{
+
+      if(parentElementWidth < 300) setMediaSize("small");
+      else if(parentElementWidth < 500) setMediaSize("medium");
+      else setMediaSize("large");
+
+    },[parentElementWidth]);
+
+    if(!mediaSize) return null;
+
+  return <div className="messageMedia" onClick={popUpImage}  id={componendId}>
+    <img src={imageUrl} />
+    {mediaSize}
+    {parentElementWidth}
+  </div>
+
 }
 
 function Comments({ appController, comments, count, item, group, memberMap, sbChannel, fetchComments,fetching,loadCommentsFromAPI}) {
