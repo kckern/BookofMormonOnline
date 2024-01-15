@@ -133,6 +133,7 @@ function Sidebar(props) {
           <SearchBox appController={props.appController} setActivePath={setActivePath} />
           {menu.map((r,index) => {
             let isActive = activePath.match(new RegExp("^/" + r.slug));
+            if(/welcome/.test(window.location.pathname)) isActive=false;
             let activeClass = isActive ? "active" : "";
             return (
               <li className={r.slug + "_link  menuitem " + activeClass} key={r.slug} >
@@ -144,7 +145,7 @@ function Sidebar(props) {
                     props.appController.functions.closePopUp(); 
                     setActivePath("/" + r.slug)}}
                 >
-                  <span className="sidebar-normal">{r.title}</span>
+                  <span className="sidebar-normal">{r.title}  </span>
                 </NavLink>
               </li>
             );

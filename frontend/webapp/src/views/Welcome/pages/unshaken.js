@@ -59,27 +59,18 @@ function CommunityFeed({groupId, appController})
 function ShowCasePanels() //3x3 grid of panels
 {
 
-const panels = [
-    {title: <span>Scan the Table of <strong>Contents</strong></span>, video: "toc"},
-    {title: <span> <strong>Art</strong> and Illustrations</span>, video: "keyfeatures"},
-    {title: <span><strong>Skim</strong> the Stories</span>, video: "skim"},
-    {title: <span>Consult <strong>Commentaries</strong></span>, video: "study"},
-    {title: <span><strong>Share</strong> with Others</span>, video: "share"},
-    {title: <span><strong>Browse</strong> Historic Editions</span>, video: "fax"},
-    {title: <span>Meet the <strong>People</strong></span>, video: "people"},
-    {title: <span>Leave <strong>Comments</strong></span>, video: "comments"},
-    {title: <span>Lookup <strong>Facsimiles</strong></span>, video: "faxlookup"},
-    {title: <span>Explore <strong>Maps</strong></span>, video: "map"},
-    {title: <span>Join the <strong>Community</strong></span>, video: "community"},
-    {title: <span>Read <strong>Commentary</strong></span>, video: "commentary"},
-    {title: <span>Learn <strong>History</strong></span>, video: "history"},
-    {title: <span>Follow the <strong>Timeline</strong></span>, video: "timeline"},
-    {title: <span>Visit <strong>Places</strong></span>, video: "places"},
-    {title: <span>Track Your <strong>Progress</strong></span>, video: "progress"},
-    {title: <span>Enjoy <strong>Art</strong></span>, video: "art"},
-]
 
-const [showcasePanels] = useState(panels.sort(() => Math.random() - 0.5).slice(0,6));
+   const panels = [
+    {title: <span>Track your Study <strong>Progress</strong></span>, video: "progress"},
+    {title: <span>Meet the <strong>People</strong></span>, video: "people"},
+    {title: <span>Visit <strong>Places</strong></span>, video: "places"},
+    {title: <span>Explore <strong>Maps</strong></span>, video: "map"},
+    {title: <span>Read <strong>Commentary</strong></span>, video: "commentary"},
+    {title: <span>Chat with the <strong>AI</strong> Study Buddy</span>, video: "faxlookup"},
+   ];
+
+
+const [showcasePanels] = useState(panels.slice(0,6));
 
 const [acitveIndex, setActiveIndex] = useState(0);
 
