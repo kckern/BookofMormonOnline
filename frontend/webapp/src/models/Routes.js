@@ -21,6 +21,7 @@ const MobileGroups = lazy(() => import("../views/_Common/Study/Mobile/MobileStud
 const MobileMenu = lazy(() => import("../views/_Common/MobileMenu.js"));
 const Group = lazy(() => import("../views/_Common/Group.js"));
 const Theater = lazy(() => import("../views/Theater/Theater.js"));
+const Welcome = lazy(() => import("../views/Welcome/Welcome.js"));
 
 
 const routes = [
@@ -65,6 +66,10 @@ const routes = [
   {
     path: "/contents",
     component: Contents,
+  },
+  {
+    path: "/welcome/:welcomeId",
+    component: Welcome,
   },
   {
     path: "/fax/:faxVersion+",
@@ -213,6 +218,7 @@ const routes = [
     component: Page,
     exact: true,
   },
+
 
   // {
   //      component: TextPageComponent

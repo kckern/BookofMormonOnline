@@ -4879,3 +4879,20 @@ div a.scripture_link:hover
 {
   margin-bottom: 0;
 }
+
+
+.messageMedia{
+  float: left;
+  margin-right: 1rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+}
+
+.messageMedia:hover{
+  filter: brightness(1.1);
+}
+
+.messageMedia img{
+  max-height: 10px;
+}

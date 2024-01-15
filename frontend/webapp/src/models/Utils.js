@@ -671,7 +671,7 @@ export function formatText(message, setPanel, appController, isSection) {
 }
 
 export function breakCache({ currentTarget }) {
-  return null;
+  return `${assetUrl}/interface/blank`;
   if (!currentTarget) return null;
   getFwdUrl(currentTarget.src).then((url) => (currentTarget.src = url));
 }
@@ -904,3 +904,15 @@ function start_and_end(str) {
   }
   return str;
 }
+
+
+export function PopupCenter(e, n, t, i) {
+  var screen = window.screen || {};
+  var o = void 0 != window.screenLeft ? window.screenLeft : screen.left,
+  d = void 0 != window.screenTop ? window.screenTop : screen.top,
+  c = window.innerWidth ? window.innerWidth : document.documentElement.clientWidth ? document.documentElement.clientWidth : screen.width,
+  w = window.innerHeight ? window.innerHeight : document.documentElement.clientHeight ? document.documentElement.clientHeight : screen.height,
+  r = c / 2 - t / 2 + o,
+  h = w / 2 - i / 2 + d,
+  s = window.open(e, n, "scrollbars=yes, width=" + t + ", height=" + i + ", top=" + h + ", left=" + r);
+  return window.focus && s.focus(), !1}
