@@ -59,28 +59,6 @@ function CommunityFeed({groupId, appController})
 function ShowCasePanels() //3x3 grid of panels
 {
 
-    /*
-    video/welcome/toc
-video/welcome/keyfeatures
-video/welcome/skim
-video/welcome/study
-video/welcome/share
-video/welcome/fax
-video/welcome/people
-video/welcome/groups
-video/welcome/comments
-video/welcome/faxlookup
-video/welcome/map
-video/welcome/community
-video/welcome/commentary
-video/welcome/history
-video/welcome/timeline
-video/welcome/places
-video/welcome/progress
-video/welcome/art
-video/welcome/search
-*/
-
 const panels = [
     {title: <span>Scan the Table of <strong>Contents</strong></span>, video: "toc"},
     {title: <span> <strong>Art</strong> and Illustrations</span>, video: "keyfeatures"},
