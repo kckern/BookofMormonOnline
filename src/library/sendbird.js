@@ -457,14 +457,18 @@ class Sendbird {
       method: 'GET',
       url:
         `https://api-${SENDBIRD_APPID}.sendbird.com/v3/group_channels` +
-        `?members_include_in=${encodeURI(user_ids.join(','))}&custom_types=public,open&query_type=OR&metadata_key=lang&metadata_values=${lang}`,
+        `?limit=100&custom_types=public,open&metadata_key=lang&metadata_values=${lang}`,
       headers: {
         'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
       json: true
     });
-    return response?.data?.channels || [];
+
+    const last100Channels =  response?.data?.channels
+    if(!last100Channels) return [];
+    const  sorted = last100Channels.filter(c=>!!c.last_message).sort((a,b)=>b.last_message?.created_at-a.last_message?.created_at);
+    return sorted || last100Channels || [];
   }
 
   async getVirtualUsers(){

@@ -738,7 +738,7 @@ async function getFeaturedGroups(lang, limit = 20) {
 
   const groups =  await sendbird.getOthersGroups(
     recentUsers,
-    lang
+    lang || "en"
   );
 
   if(!groups || !groups?.length && !["en","dev"].includes(lang)) return await getFeaturedGroups("en", 50);
