@@ -20,7 +20,10 @@
     opacity: 0.8;filter: brightness(0.5);
     transition: all 0.5s ease-in-out;
 }
-.welcome .showcase-panel.active
+
+
+.welcome .showcase-panel.active,
+.welcome .showcase-panel:hover
 {
     opacity: 1;filter: brightness(1);
     transition: all 0.5s ease-in-out;
