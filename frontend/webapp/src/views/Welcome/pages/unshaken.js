@@ -72,22 +72,34 @@ function ShowCasePanels() //3x3 grid of panels
 
 const [showcasePanels] = useState(panels.slice(0,6));
 
-const [acitveIndex, setActiveIndex] = useState(0);
+const [activeIndex, setActiveIndex] = useState(null);
 
 //cycle through active every 5 seconds
 useEffect(() => {
-    const interval = setInterval(() => {
-        setActiveIndex((acitveIndex + 1) % showcasePanels.length);
+		let interval = null;
+
+		const timeout = setTimeout(()=>{
+
+			setActiveIndex(0);
+
+			interval = setInterval(() => {
+        setActiveIndex(prev=>prev === 5?0:prev+1);
     }, 2000);
-    return () => clearInterval(interval);
+
+		},1000)
+
+    return () => {
+			clearInterval(interval);
+			clearTimeout(timeout);
+		};
 }
-, [acitveIndex, showcasePanels.length]);
+, []);
 
 
 
 
     return <div className="showcase-panels" >
-        {showcasePanels.map((panel, i) => <ShowCasePanel key={i} {...panel} isActive={acitveIndex === i} />)}
+        {showcasePanels.map((panel, i) => <ShowCasePanel key={i} {...panel} isActive={activeIndex === i}/>)}
     </div>
 }
 
@@ -95,6 +107,7 @@ function ShowCasePanel({title, video, link, isActive})
 {
 
     const [isPlaying, setIsPlaying] = useState(false);
+
     useEffect(() => {
         if(isActive) setIsPlaying(true);
         else setTimeout(() => setIsPlaying(false), 1000);
@@ -110,8 +123,9 @@ function ShowCasePanel({title, video, link, isActive})
 
     const onMouseEnter = () => setIsPlaying(true);
     const onMouseLeave = () => setIsPlaying(false);
+
     const onClick = () => {
-        history.push(link);
+        history.push(`/${link}`);
     }
 
     const history = useHistory();
@@ -122,6 +136,7 @@ function ShowCasePanel({title, video, link, isActive})
         </CardHeader>
         <CardBody className="showcase-panel-body">
         <video 
+						id={`video-${video}`}
             style={{  
                  objectFit: 'cover',
                  objectPosition: 'top center',
