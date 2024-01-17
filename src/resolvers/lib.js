@@ -461,6 +461,11 @@ const loadReadingPlan = async (slug,completed_items,lang) => {
 
     //TODO convert to sequelize
     const {guid,title,startdate,duedate,planSegments} = await loadPlanData(slug);
+
+    const startdateTimestamp = moment(startdate).unix();
+    completed_items = completed_items.filter(i=>i.timestamp > startdateTimestamp);
+    console.log({completed_items,startdate,startdateTimestamp})
+
     const sql = `SELECT guid,section FROM bom_text`;
     const allTextBlocks = await queryDB(sql);
 
@@ -479,7 +484,6 @@ const loadReadingPlan = async (slug,completed_items,lang) => {
     };
     const translatedItems = lang ? await Models.BomTranslation.findAll(config) : [];
     
-    console.log({translatedItems,guid,config})
 
     for (let i = 0; i < planSegments.length; i++) {
         const seg = planSegments[i];
@@ -515,11 +519,11 @@ return  {
 
 const loadReadingPlanSegment = async (guid,queryBy,lang) => {
 
-    const segmentData = (await queryDB(`SELECT * FROM bom_readingplan_seg WHERE guid = ?`, [guid]))[0];
+    const segmentData = (await queryDB(`SELECT s.*,p.title,p.startdate plan_start FROM bom_readingplan_seg s JOIN bom_readingplan p ON s.plan = p.slug WHERE s.guid = ?`, [guid]))[0];
     if (!segmentData) return null;
-    const {period,ref,title,duedate,start,end} = segmentData;
+    const {plan_start,duedate,start,end} = segmentData;
+    const plan_start_timestamp = moment(plan_start).unix();
     const threshold = process.env.PERCENT_TO_COUNT_AS_COMPLETE || 40;
-    // SELECT bom_text.guid, bom_text.min_verse_id, bom_text.heading, page_slug.slug AS page_slug, bom_text.link, section_slug.slug AS section_slug, bom_text.min_verse_id, (CASE WHEN bom_log.guid is NOT NULL THEN TRUE ELSE FALSE END) AS complete FROM bom_text LEFT JOIN (SELECT DISTINCT value as guid FROM bom_log WHERE type = "block" and user = "kckern" and credit >= 40 and timestamp > 0) bom_log ON bom_text.guid = bom_log.guid LEFT JOIN bom_slug as page_slug ON page_slug.link = bom_text.page LEFT JOIN bom_slug as section_slug ON section_slug.link = bom_text.section WHERE bom_text.section IN (SELECT DISTINCT bom_text.section FROM bom_readingplan_seg AS segment LEFT JOIN bom_lookup ON bom_lookup.verse_id BETWEEN segment.start AND segment.end LEFT JOIN bom_text ON bom_text.guid = bom_lookup.text_guid WHERE segment.guid = "27c91f4a39" )
     const sql = `
     SELECT bom_text.guid, bom_text.page, bom_text.section, bom_text.min_verse_id, bom_text.heading, 
     bom_translation.value AS heading_lang,  bom_text.page, bom_text.link, bom_text.section, bom_text.min_verse_id, 
@@ -530,7 +534,7 @@ const loadReadingPlanSegment = async (guid,queryBy,lang) => {
     bom_log.credit AS credit
     FROM bom_text 
     LEFT JOIN (
-        SELECT value as guid, MAX(credit) as credit FROM bom_log WHERE type = "block" AND user = ? AND timestamp > 0 GROUP BY guid
+        SELECT value as guid, MAX(credit) as credit FROM bom_log WHERE type = "block" AND user = ? AND timestamp > ${plan_start_timestamp || 0} GROUP BY guid
         ) bom_log ON bom_text.guid = bom_log.guid 
         LEFT JOIN bom_translation ON bom_text.guid = bom_translation.guid AND bom_translation.lang = ? AND bom_translation.refkey = "heading"
     WHERE bom_text.section IN (SELECT DISTINCT bom_text.section FROM bom_readingplan_seg AS segment LEFT JOIN bom_lookup ON bom_lookup.verse_id BETWEEN segment.start AND segment.end LEFT JOIN bom_text ON bom_text.guid = bom_lookup.text_guid WHERE segment.guid = ? )
