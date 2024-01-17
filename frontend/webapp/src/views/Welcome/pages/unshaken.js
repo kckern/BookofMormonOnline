@@ -64,7 +64,7 @@ function ShowCasePanels() //3x3 grid of panels
     {title: <span>Track your study <strong>Progress</strong></span>, video: "progress", link: "user"},
     {title: <span>Meet the <strong>People</strong></span>, video: "people", link: "people"},
     {title: <span>Map out the <strong>Places</strong></span>, video: "places", link: "places"},
-    {title: <span>Chat with the <strong>AI</strong> Study Buddy</span>, video: "bot", link: "study"},
+    {title: <span>Chat with the <strong>AI</strong> Study Buddy</span>, video: "bot", link: "home"},
     {title: <span>Experience the <strong>Theater</strong></span>, video: "theater", link: "theater"},
     {title: <span>Explore the <strong>Commentary</strong></span>, video: "commentary", link: "study"},
    ];
