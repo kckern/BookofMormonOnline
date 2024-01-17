@@ -40,7 +40,7 @@ class Sendbird {
         await axios.get(gravatarUrl + '?d=404');
         profile_url = gravatarUrl;
       } catch (e) {}
-    } else if (profile_url && !/svg$/.test(profile_url)) {
+    } else if (profile_url && !/svg/.test(profile_url)) {
       const response = await axios({
         method: 'get',
         url: profile_url,
