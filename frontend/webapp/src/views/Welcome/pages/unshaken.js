@@ -3,12 +3,12 @@ import React, { useState, useEffect } from "react";
 import { HomeFeed } from "../../Home/Feed"; 
 import { Button, Card, CardBody, CardFooter, CardHeader } from "reactstrap";
 import BoMOnlineAPI, { assetUrl } from 'src/models/BoMOnlineAPI';
+import { Link ,useHistory} from "react-router-dom/cjs/react-router-dom.min";
 
 
 export default function WelcomeUnShaken({appController})
 {
 
-    
     const groupId = "163262f02963f4437e3085c12996090e";
     return   <div id="page" className="welcome">
         <HeroBanner />
@@ -59,73 +59,55 @@ function CommunityFeed({groupId, appController})
 function ShowCasePanels() //3x3 grid of panels
 {
 
-    /*
-    video/welcome/toc
-video/welcome/keyfeatures
-video/welcome/skim
-video/welcome/study
-video/welcome/share
-video/welcome/fax
-video/welcome/people
-video/welcome/groups
-video/welcome/comments
-video/welcome/faxlookup
-video/welcome/map
-video/welcome/community
-video/welcome/commentary
-video/welcome/history
-video/welcome/timeline
-video/welcome/places
-video/welcome/progress
-video/welcome/art
-video/welcome/search
-*/
 
-const panels = [
-    {title: <span>Scan the Table of <strong>Contents</strong></span>, video: "toc"},
-    {title: <span> <strong>Art</strong> and Illustrations</span>, video: "keyfeatures"},
-    {title: <span><strong>Skim</strong> the Stories</span>, video: "skim"},
-    {title: <span>Consult <strong>Commentaries</strong></span>, video: "study"},
-    {title: <span><strong>Share</strong> with Others</span>, video: "share"},
-    {title: <span><strong>Browse</strong> Historic Editions</span>, video: "fax"},
-    {title: <span>Meet the <strong>People</strong></span>, video: "people"},
-    {title: <span>Leave <strong>Comments</strong></span>, video: "comments"},
-    {title: <span>Lookup <strong>Facsimiles</strong></span>, video: "faxlookup"},
-    {title: <span>Explore <strong>Maps</strong></span>, video: "map"},
-    {title: <span>Join the <strong>Community</strong></span>, video: "community"},
-    {title: <span>Read <strong>Commentary</strong></span>, video: "commentary"},
-    {title: <span>Learn <strong>History</strong></span>, video: "history"},
-    {title: <span>Follow the <strong>Timeline</strong></span>, video: "timeline"},
-    {title: <span>Visit <strong>Places</strong></span>, video: "places"},
-    {title: <span>Track Your <strong>Progress</strong></span>, video: "progress"},
-    {title: <span>Enjoy <strong>Art</strong></span>, video: "art"},
-]
+   const panels = [
+    {title: <span>Track your study <strong>Progress</strong></span>, video: "progress", link: "user"},
+    {title: <span>Meet the <strong>People</strong></span>, video: "people", link: "people"},
+    {title: <span>Map out the <strong>Places</strong></span>, video: "places", link: "places"},
+    {title: <span>Chat with the <strong>AI</strong> Study Buddy</span>, video: "bot", link: "study"},
+    {title: <span>Experience the <strong>Theater</strong></span>, video: "theater", link: "theater"},
+    {title: <span>Explore the <strong>Commentary</strong></span>, video: "commentary", link: "study"},
+   ];
 
-const [showcasePanels] = useState(panels.sort(() => Math.random() - 0.5).slice(0,6));
 
-const [acitveIndex, setActiveIndex] = useState(0);
+const [showcasePanels] = useState(panels.slice(0,6));
+
+const [activeIndex, setActiveIndex] = useState(null);
 
 //cycle through active every 5 seconds
 useEffect(() => {
-    const interval = setInterval(() => {
-        setActiveIndex((acitveIndex + 1) % showcasePanels.length);
-    }, 5000);
-    return () => clearInterval(interval);
+		let interval = null;
+
+		const timeout = setTimeout(()=>{
+
+			setActiveIndex(0);
+
+			interval = setInterval(() => {
+        setActiveIndex(prev=>prev === 5?0:prev+1);
+    }, 2000);
+
+		},1000)
+
+    return () => {
+			clearInterval(interval);
+			clearTimeout(timeout);
+		};
 }
-, [acitveIndex, showcasePanels.length]);
+, []);
 
 
 
 
     return <div className="showcase-panels" >
-        {showcasePanels.map((panel, i) => <ShowCasePanel key={i} {...panel} isActive={acitveIndex === i} />)}
+        {showcasePanels.map((panel, i) => <ShowCasePanel key={i} {...panel} isActive={activeIndex === i}/>)}
     </div>
 }
 
-function ShowCasePanel({title, video,isActive})
+function ShowCasePanel({title, video, link, isActive})
 {
 
     const [isPlaying, setIsPlaying] = useState(false);
+
     useEffect(() => {
         if(isActive) setIsPlaying(true);
         else setTimeout(() => setIsPlaying(false), 1000);
@@ -139,13 +121,22 @@ function ShowCasePanel({title, video,isActive})
         }catch(e){}
     }, [isPlaying]);
 
-    
-    return <Card className={`showcase-panel ${isActive ? "active" : ""}`}>
+    const onMouseEnter = () => setIsPlaying(true);
+    const onMouseLeave = () => setIsPlaying(false);
+
+    const onClick = () => {
+        history.push(`/${link}`);
+    }
+
+    const history = useHistory();
+
+    return <Card className={`showcase-panel ${isActive ? "active" : ""}`} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} onClick={onClick}>
         <CardHeader className="showcase-panel-header" display="flex" justifyContent="space-between">
             <h6>{title} </h6>
         </CardHeader>
         <CardBody className="showcase-panel-body">
         <video 
+						id={`video-${video}`}
             style={{  
                  objectFit: 'cover',
                  objectPosition: 'top center',
