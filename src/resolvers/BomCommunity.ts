@@ -721,10 +721,12 @@ function reflect(promise) {
 
 async function getFeaturedGroups(lang, limit = 20) {
   if (lang === 'dev' || !lang) lang = 'en';
+  let isdefaultLang = lang==="en";
+  let whereCondition =  { lang:  isdefaultLang ? { [Op.or]: [lang, 'en'] } : lang };
   let recentUsers: any = await Models.BomUser.findAll({
     raw: true,
     attributes: ['user'],
-    where: { lang: lang },
+    where: whereCondition,
     order: [['last_active', 'desc']],
     limit
   })
