@@ -379,13 +379,16 @@ export const updateActiveItems = async (userInfo: any) => {
   return true;
 };
 
-export const completedGuids = async (userInfo: any) => {
+export const completedGuids = async (userInfo: any, timestamp: Number=0) => {
+
+  const cutOff =  timestamp || userInfo.lastcompleted || 0;
+
   let completedItems = await Models.BomLog.findAll({
     attributes: ['timestamp', 'type', 'value'],
     where: {
       user: userInfo.queryBy,
       type: 'block',
-      timestamp: { [Op.gt]: userInfo.lastcompleted || 0 },
+      timestamp: { [Op.gt]: cutOff || 0 },
       credit: { [Op.gte]: process.env.PERCENT_TO_COUNT_AS_COMPLETE || 40 }
     },
     group: ['value'],

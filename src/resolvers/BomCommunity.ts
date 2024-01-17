@@ -402,8 +402,7 @@ export default {
       });
       const queryBy = user?.user || args.token;
       const userInfo = {queryBy, lastcompleted: user?.lastcompleted || 0};
-      const completed_items = await completedGuids(userInfo);
-      return await loadReadingPlan(args.slug, completed_items,lang);
+      return await loadReadingPlan(args.slug, userInfo,lang);
 
     },
     readingplansegment: async (item: any, args: any, context: any, info: any) => {

@@ -1,4 +1,4 @@
-const { getUserForLog, Op, includeModel, getSlug, includeTranslation } = require("./_common")
+const { getUserForLog, Op, includeModel, getSlug, completedGuids } = require("./_common")
 import { queryDB } from '../library/db';
 import { models as Models, sequelize, SQLQueryTypes } from '../config/database';
 import { lookup, generateReference } from 'scripture-guide';
@@ -457,14 +457,15 @@ const scoreSegment = async (sectionGuids, allTextBlocks, history) => {
 
 
 
-const loadReadingPlan = async (slug,completed_items,lang) => {
+const loadReadingPlan = async (slug,userInfo,lang) => {
+
+    
 
     //TODO convert to sequelize
     const {guid,title,startdate,duedate,planSegments} = await loadPlanData(slug);
-
     const startdateTimestamp = moment(startdate).unix();
-    completed_items = completed_items.filter(i=>i.timestamp > startdateTimestamp);
-    console.log({completed_items,startdate,startdateTimestamp})
+    const completed_items = await completedGuids(userInfo,startdateTimestamp);
+
 
     const sql = `SELECT guid,section FROM bom_text`;
     const allTextBlocks = await queryDB(sql);
