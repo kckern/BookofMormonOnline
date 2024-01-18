@@ -1,3 +1,4 @@
 export default  [
-    "unshaken"
+    "unshaken",
+    "showcase"
 ];
