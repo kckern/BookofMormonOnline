@@ -77,6 +77,7 @@ export const appInit = () => {
     slug: "/community",
     user: {
       user: null,
+      loaded: false,
       token: null,
       progress: {
         completed: 0.1,
@@ -291,7 +292,10 @@ export const appFunctions = {
 
   setPreLoadData: (appController, input) => {
     let localToken = localStorage.getItem("token");
+    
     if (!input.val) return appController;
+    const fromAPI = input.val.fromAPI;
+    appController.states.user.loaded = !!fromAPI;
     if (input.val?.tokenSignIn?.[localToken].isSuccess) {
       appController.states.user = input.val.tokenSignIn[localToken].user;
       appController.states.user.token = localToken;
@@ -316,6 +320,7 @@ export const appFunctions = {
     } else {
       appController.states.user = guestUser({ localToken });
     }
+    appController.states.user.loaded = !!fromAPI;
 
     let preload = input.val;
     // let fax = {};
