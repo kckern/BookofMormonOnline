@@ -91,7 +91,7 @@ function Sidebar(props) {
   const determinePath = () => {
     let slugs = menu.map((m) => m.slug);
     let slugRoot = window.location.pathname.split("/")[1];
-    if (["message", "community", "invite"].includes(slugRoot)) return "/community";
+    if (["message", "community", "","invite"].includes(slugRoot)) return "/community";
     if (["search"].includes(slugRoot)) return "/search";
     if (["user"].includes(slugRoot)) return "/user";
     if (["%ED%8A%B9%EB%B3%84%EB%B0%98","studyedition"].includes(slugRoot)) return "/특별반";
@@ -133,8 +133,10 @@ function Sidebar(props) {
           <SearchBox appController={props.appController} setActivePath={setActivePath} />
           {menu.map((r,index) => {
             let isActive = !!activePath.match(new RegExp("^/" + r.slug));
-            console.log("isActive",isActive,activePath,r.slug)
-            if(/welcome/.test(window.location.pathname) || window.location.pathname==="/") isActive=false;
+            if(/welcome/.test(window.location.pathname)) isActive=false;
+            const isGuest = props.appController.states?.user?.user === null;
+            if(window.location.pathname==="/" && isGuest) isActive=false;
+
             let activeClass = isActive ? "active" : "";
             return (
               <li className={r.slug + "_link  menuitem " + activeClass} key={r.slug} >
