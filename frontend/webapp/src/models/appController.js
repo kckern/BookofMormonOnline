@@ -74,7 +74,7 @@ export const appInit = () => {
     };
 
   var states = {
-    slug: "/home",
+    slug: "/community",
     user: {
       user: null,
       token: null,

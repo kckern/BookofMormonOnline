@@ -8,10 +8,10 @@ export default function  Welcome({appController})
 {
     const history = useHistory();
     const match = useRouteMatch();
-    const {welcomeId} = match?.params;
+    const {welcomeId} = match?.params?.welcomeId ? match.params : {welcomeId: "showcase"};
     const Item = useMemo(()=>React.lazy(() => import(`./pages/${welcomeId}.js`)),[welcomeId]);
     const isValid = validWelcomes.includes(welcomeId);
-    if(!isValid) { history.push("/home"); return null; }
+    if(!isValid) { history.push("/community"); return null; }
 
     return <div className="container" style={{ display: 'block' }}>
 

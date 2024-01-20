@@ -217,7 +217,7 @@ export const logFromSessions =  async (sessions: Array<any>, lang: string) => {
   returnData = returnData.map((data: any) => {
     let repguid_1 = data.description;
     data.description = repguid_1 ? guidmap[repguid_1]?.page + '—' + guidmap[repguid_1]?.section : null;
-    data.slug = repguid_1 ? guidmap[repguid_1]?.slug : 'home';
+    data.slug = repguid_1 ? guidmap[repguid_1]?.slug : 'community';
     data.pagelink = repguid_1 ? guidmap[repguid_1]?.pagelink : null;
     return data;
   });
