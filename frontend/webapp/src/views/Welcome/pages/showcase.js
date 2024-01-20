@@ -4,6 +4,8 @@ import { HomeFeed } from "../../Home/Feed";
 import { Button, Card, CardBody, CardFooter, CardHeader } from "reactstrap";
 import BoMOnlineAPI, { assetUrl } from 'src/models/BoMOnlineAPI';
 import { Link ,useHistory} from "react-router-dom/cjs/react-router-dom.min";
+import { ReadingPlan } from "../../Home/ReadingPlan";
+import logo from "src/views/_Common/svg/logo.svg";
 
 
 export default function WelcomeUnShaken({appController})
@@ -14,6 +16,7 @@ export default function WelcomeUnShaken({appController})
         <HeroBanner />
         <div  className="welcome-content" >
             <ShowCasePanels />
+            <CommunityFeed groupId={groupId} appController={appController} />
         </div>
     </div>
             
@@ -24,9 +27,11 @@ function HeroBanner()
     return <div className="hero-banner">
         <Card className="hero-banner-content">
             <CardBody className="hero-banner-body">
+
+                 <img src={`${logo}`} className="face" />
                 <div className="text">
-                    <h5>Dive deep into the Book of Mormon</h5>
-                    <p>Using the resources of <i>Book of Mormon Online</i>, discover the richness of the Book of Mormon and how it can bless your life today. Sign up and join the study group today!</p>
+                    <h5>Book of Mormon Online: <em>A Book of Mormon Study Resource</em></h5>
+                    <p>Experience the Book of Mormon in a whole new way with <i>Book of Mormon Online</i>. This free resource will guide you through the Book of Mormon in a way that will help you understand the narrative, the people, the places, and the teachings of the Book of Mormon. Track your progress, start a study group, start exploring everything the Book of Mormon has to offer.</p>
                 </div>
             </CardBody>
         </Card>
@@ -36,19 +41,7 @@ function HeroBanner()
 function CommunityFeed({groupId, appController})
 {
     return <div className="community-feed" >
-        <Card>
-            <CardHeader style={{height:"3rem"}}>
-                <h6>Community Feed
-
-                <Button color="primary" size="sm"  style={{float:"right", position:"relative",bottom:"1rem"}}>Join Group</Button>
-                </h6>
-            </CardHeader>
-            <CardBody style={{textAlign: 'center'}}>
-                Here are the latest insights from Jared’s study group. Join the group to add your own comments and insights.
-           
-            </CardBody>
-        </Card>
-        <HomeFeed appController={appController} activeGroup={groupId} />
+        <ReadingPlan appController={appController} slug={"cfm2024"} />
     </div>
 }
 
@@ -61,7 +54,7 @@ function ShowCasePanels() //3x3 grid of panels
     {title: <span>Track your study <strong>Progress</strong></span>, video: "progress", link: "user"},
     {title: <span>Meet the <strong>People</strong></span>, video: "people", link: "people"},
     {title: <span>Map out the <strong>Places</strong></span>, video: "places", link: "places"},
-    {title: <span>Chat with the <strong>AI</strong> Study Buddy</span>, video: "bot", link: "home"},
+    {title: <span>Chat with the <strong>AI</strong> Study Buddy</span>, video: "bot", link: "community"},
     {title: <span>Experience the <strong>Theater</strong></span>, video: "theater", link: "theater"},
     {title: <span>Explore the <strong>Commentary</strong></span>, video: "commentary", link: "study"},
    ];
