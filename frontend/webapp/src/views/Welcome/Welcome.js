@@ -33,6 +33,5 @@ export default function  Welcome({appController})
     <Suspense fallback={<Loader />}>
         <Item appController={appController} />
     </Suspense>
-    <pre>{JSON.stringify({ready})}</pre>
 </div>
 }
