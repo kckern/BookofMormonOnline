@@ -65,15 +65,15 @@ function Home({ appController }) {
   const params = match.params;
   const base = match.url.split("/")[1];
 
-  let urlFeedGroup = base === "community" ? params.channelId : null;
-  let urlFeedMessage = base === "community" ? params.messageId : null;
+  let urlFeedGroup = base === "home" ? params.channelId : null;
+  let urlFeedMessage = base === "home" ? params.messageId : null;
 
   const [activeGroup, setActiveGroup] = useState(urlFeedGroup);
   const [activeMessage, setActiveMessage] = useState(urlFeedMessage);
 
   useEffect(() => {
-    let urlFeedGroup = base === "community" ? params.channelId : null;
-    let urlFeedMessage = base === "community" ? params.messageId : null;
+    let urlFeedGroup = base === "home" ? params.channelId : null;
+    let urlFeedMessage = base === "home" ? params.messageId : null;
     setActiveGroup(urlFeedGroup);
     setActiveMessage(urlFeedMessage);
   }, [params]);

@@ -28,11 +28,11 @@ const routes = [
   {
     exact: true,
     path: "/",
-    component: Welcome,
+    component: Home,
   },
   {
     exact: true,
-    path: "/community",
+    path: "/home",
     component: Home,
   },
   {
@@ -66,10 +66,6 @@ const routes = [
   {
     path: "/contents",
     component: Contents,
-  },
-  {
-    path: "/welcome",
-    component: Welcome,
   },
   {
     path: "/welcome/:welcomeId",

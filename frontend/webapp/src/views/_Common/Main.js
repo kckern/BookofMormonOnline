@@ -109,7 +109,6 @@ function Main(props) {
       if (!r || !r.tokenSignIn || !r.tokenSignIn[localToken])
         return setApiFailed({ r });
       r = makeLabelDictionary(r);
-      r.fromAPI = true;
       appController.functions.setPreLoadData(r);
       document.title = label("home_title");
 

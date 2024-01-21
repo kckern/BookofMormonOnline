@@ -9,7 +9,7 @@ export default  function MobileMenu({appController})
     return <div className="content ">
         <h3>{label("title_more")}</h3>
         <div className="mobilemenu">
-        {menu.filter(i=>!["community","study"].includes(i.slug)).map(item=><Link to={item.slug}><div>{item.title}</div></Link>)}    
+        {menu.filter(i=>!["home","study"].includes(i.slug)).map(item=><Link to={item.slug}><div>{item.title}</div></Link>)}    
         </div>
         
     </div>

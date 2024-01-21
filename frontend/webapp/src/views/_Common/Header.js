@@ -28,7 +28,7 @@ function Header({ appController, isReady }) {
         <StudyGroupBar appController={appController} />
       </>
     );
-    homeLink = <Link to="/community">{homeLink}</Link>;
+    homeLink = <Link to="/home">{homeLink}</Link>;
   }
 
   if (isMobile() && appController) return <MobileHeader appController={appController} />

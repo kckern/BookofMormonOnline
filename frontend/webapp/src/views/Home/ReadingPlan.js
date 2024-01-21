@@ -50,16 +50,6 @@ export function ReadingPlan({appController,slug}){
         return acc + parseFloat(segment?.progress);
     },0) / (nonFutureSegments?.length || 1)).toFixed(1);
 
-    const pastSegments = planData?.segments?.filter((segment) => {
-        return moment(segment.duedate).isBefore(today);
-    }
-    ) || [];
-
-    const pastSegmentsAreComplete = pastSegments?.every((segment) => {
-        return segment.progress === 100;
-    });
-
-
     averageProgress = isNaN(averageProgress) ? 0 : averageProgress;
     const progressInt = parseInt(averageProgress);
 
@@ -67,7 +57,7 @@ export function ReadingPlan({appController,slug}){
     function getProgressStatus(progressInt) {
         let status = {};
         
-        if (progressInt > 95 || nonFutureSegments?.length === 1 || pastSegmentsAreComplete) {
+        if (progressInt > 95 || nonFutureSegments?.length === 1) {
             status = { label: label("status_ontrack"), labelClass: "green" };
         } else if (progressInt === 0) {
             status = { label: label("status_notstarted"), labelClass: "gray" };

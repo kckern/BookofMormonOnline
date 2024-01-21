@@ -118,13 +118,13 @@ export default function Invitation({ appController }) {
           throw new Error("Group channel not found");
         }
       } else {
-        history.push("/community");
+        history.push("/home");
         return {channel_url: null, group: null, results:{}}
       }
     } catch (error) {
       console.log({error});
       // Handle error appropriately
-      history.push("/community");
+      history.push("/home");
       return {channel_url: null, group: null, results:false}
     }
   }
@@ -153,7 +153,7 @@ export default function Invitation({ appController }) {
     main: <><CardBody className="profileCard">
       <div className="accept_decline">
         <Button onClick={handleAccept} className="btn btn-success">{accepting ? label("accept_inviting") : label("accept_invite")}</Button>
-        <Link to={"/community"}><Button className="btn btn-danger">{label("decline_invite")}</Button></Link>
+        <Link to={"/home"}><Button className="btn btn-danger">{label("decline_invite")}</Button></Link>
       </div>
 
       <div>{label("study_groups_are")}</div>
