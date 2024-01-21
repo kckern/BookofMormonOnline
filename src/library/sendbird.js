@@ -793,49 +793,15 @@ class Sendbird {
 
   
   async getBotByLang(lang) {
-    log("getBotByLang",lang);
-    const kor_bot     = {user_id:"938e2c5ac2c938b8156a7faf9ef9465f"};
-    const defaultBot  = {user_id:"ddc26a0e41b6daffff542e9fe8d9171d"};
-
-    if(lang==="ko") return kor_bot;
-    return defaultBot;
-
-    //TODO: improve the dynamic loading logic, remove the hard coded bots
-
-    const config = {
-      method: 'GET',
-      url: `https://api-${SENDBIRD_APPID}.sendbird.com/v3/users?limit=100&metadatakey=isBot&metadatavalues_in=true`,
-      headers: {
-        'Api-Token': SENDBIRD_TOKEN,
-        'Content-Type': 'application/json'
-      },
-      json: true
+    log("getBotByLang", lang);
+    
+    const bots = {
+      "ko": "938e2c5ac2c938b8156a7faf9ef9465f",
+      "fr": "5bddebc6f6d86290a99a87fd5d72d6c7",
+      "default": "ddc26a0e41b6daffff542e9fe8d9171d"
     };
 
-    log("getBotByLang",{config});
-
-    // Create a new promise that rejects after 5 seconds
-    const timeout = new Promise((resolve, reject) => {
-      const id = setTimeout(() => {
-        clearTimeout(id);
-        resolve(defaultBot);
-      }, 5000);
-    });
-
-    // Race the API call against the timeout
-    const response = await Promise.race([axios(config), timeout]);
-
-    // If the API call won the race
-    if (response && response.data) {
-      const allBots = response.data.users || [];
-      console.log(`allBots`,{lang,allBots});
-      const langBots = allBots.filter(bot=>bot.metadata.lang===lang);
-      console.log(`langBots`,{lang,langBots});
-      return langBots?.[0] || (lang !== "en" && await getBotByLang("en")); 
-    }
-
-    // If the timeout won the race
-    return defaultBot;
+    return {user_id: bots[lang] || bots["default"]};
   }
 
 
