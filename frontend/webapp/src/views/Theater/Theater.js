@@ -1194,13 +1194,6 @@ function TheaterContent({ theaterController }) {
 
   
   useLayoutEffect(() => {
-    const contentWithouTags = content.replace(/(<([^>]+)>)/gi, "");
-    if(!contentWithouTags.trim()) 
-    {
-      theaterController.log();
-      return theaterController.next("auto");
-    }
-
     setTransitioning(true);
   },[cursorIndex]);
 

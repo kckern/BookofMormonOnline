@@ -14,7 +14,7 @@ export function BottomMenu({ appController }) {
   const determineSelection = () => {
     let slugRoot = window.location.pathname.split('/')[1]
     if (['groups', 'group', 'invite'].includes(slugRoot)) return 0
-    if (['community'].includes(slugRoot)) return 1
+    if (['home'].includes(slugRoot)) return 1
     if (['user'].includes(slugRoot)) return 3
     if (['mobilemenu'].includes(slugRoot)) return 4
     return 2
@@ -65,7 +65,7 @@ export function BottomMenu({ appController }) {
       title: label('menu_home'),
       icon: <HomeIcon className="img" fill="#7F7F7F" />,
       activeIcon: <HomeIcon className="img" />,
-      path: '/community',
+      path: '/home',
     },
     {
       title: label('menu_study'),
