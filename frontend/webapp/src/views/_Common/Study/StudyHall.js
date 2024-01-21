@@ -256,7 +256,7 @@ export function StudyGroupChatPanel({ appController, channel, setPanel }) {
       setThreadMessage(appController.states.parentMessage.message)
     return () => {
       appController.functions.setParentMessage(false)
-      history.push("/home")
+      history.push("/community")
     }
   }, [appController.states.parentMessage.message])
 

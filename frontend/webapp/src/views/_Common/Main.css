@@ -4896,3 +4896,8 @@ div a.scripture_link:hover
 .messageMedia img{
   max-height: 10px;
 }
+
+
+.readingplan .badge.gray{
+  background-color: #00000066;
+}

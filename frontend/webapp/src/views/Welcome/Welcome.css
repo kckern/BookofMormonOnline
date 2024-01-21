@@ -2,6 +2,13 @@
 {
     display: none;
 }
+.welcome .card-header h3 {
+    font-size: 1.57em;
+    font-weight: 800;
+    margin-bottom: 1ex;
+    line-height: 1.6em;
+}
+
 .welcome .showcase-panels
 {
     max-height: calc(100% - 4rem);
@@ -20,7 +27,14 @@
     opacity: 0.8;filter: brightness(0.5);
     transition: all 0.5s ease-in-out;
 }
-.welcome .showcase-panel.active
+
+.welcome h5 em{
+    color: #00000055;
+}
+
+
+.welcome .showcase-panel.active,
+.welcome .showcase-panel:hover
 {
     opacity: 1;filter: brightness(1);
     transition: all 0.5s ease-in-out;

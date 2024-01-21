@@ -152,7 +152,7 @@ function HomeFeedBanner({ appController, bannerGroup, setActiveGroup }) {
         <div className="homeBannerText">
           <h3>
             {bannerGroup.name}
-            <Link to={"/home"} onClick={() => setActiveGroup(null)}>
+            <Link to={"/community"} onClick={() => setActiveGroup(null)}>
               ×
             </Link>
           </h3>
