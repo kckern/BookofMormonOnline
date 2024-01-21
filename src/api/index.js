@@ -18,7 +18,11 @@ const webhook = async (req, res) => {
     const {message_id, message} = payload || {};
     if(!message && !parent_message_id) return res.json({success:true, message: "No message found in payload"});
 
-    const studyBuddyIds = ["ddc26a0e41b6daffff542e9fe8d9171d","938e2c5ac2c938b8156a7faf9ef9465f"];
+    const studyBuddyIds = [
+        "ddc26a0e41b6daffff542e9fe8d9171d",   // english
+        "938e2c5ac2c938b8156a7faf9ef9465f",  // korean
+        "5bddebc6f6d86290a99a87fd5d72d6c7", // french
+    ]
 
     const studyBuddyIsMember = members?.some(member=>studyBuddyIds.includes(member?.user_id));
     const studyBuddyIsSender = sender?.user_id && studyBuddyIds.includes(sender?.user_id);
