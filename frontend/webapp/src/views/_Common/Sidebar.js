@@ -30,7 +30,7 @@ import { assetUrl } from "src/models/BoMOnlineAPI";
 
 export function loadMenu(){
   var list = [
-    { slug: "home", title: <span><img src={home} /> {label("menu_home")}</span> },
+    { slug: "community", title: <span><img src={home} /> {label("menu_home")}</span> },
     { slug: "contents", title: <span><img src={contents} /> {label("menu_contents")}</span> },
     { slug: "study", title: <span><img src={study} /> {label("menu_study")}</span> },
     { slug: "theater", title: <span><img src={theater} /> {label("menu_theater")}</span> },
@@ -91,7 +91,7 @@ function Sidebar(props) {
   const determinePath = () => {
     let slugs = menu.map((m) => m.slug);
     let slugRoot = window.location.pathname.split("/")[1];
-    if (["message", "", "invite"].includes(slugRoot)) return "/home";
+    if (["message", "community", "","invite"].includes(slugRoot)) return "/community";
     if (["search"].includes(slugRoot)) return "/search";
     if (["user"].includes(slugRoot)) return "/user";
     if (["%ED%8A%B9%EB%B3%84%EB%B0%98","studyedition"].includes(slugRoot)) return "/특별반";
@@ -132,7 +132,11 @@ function Sidebar(props) {
         <Nav className="sidebar-menu">
           <SearchBox appController={props.appController} setActivePath={setActivePath} />
           {menu.map((r,index) => {
-            let isActive = activePath.match(new RegExp("^/" + r.slug));
+            let isActive = !!activePath.match(new RegExp("^/" + r.slug));
+            if(/welcome/.test(window.location.pathname)) isActive=false;
+            const isGuest = props.appController.states?.user?.user === null;
+            if(window.location.pathname==="/" && isGuest) isActive=false;
+
             let activeClass = isActive ? "active" : "";
             return (
               <li className={r.slug + "_link  menuitem " + activeClass} key={r.slug} >
@@ -144,7 +148,7 @@ function Sidebar(props) {
                     props.appController.functions.closePopUp(); 
                     setActivePath("/" + r.slug)}}
                 >
-                  <span className="sidebar-normal">{r.title}</span>
+                  <span className="sidebar-normal">{r.title}  </span>
                 </NavLink>
               </li>
             );

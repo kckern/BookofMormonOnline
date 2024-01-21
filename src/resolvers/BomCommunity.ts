@@ -402,8 +402,7 @@ export default {
       });
       const queryBy = user?.user || args.token;
       const userInfo = {queryBy, lastcompleted: user?.lastcompleted || 0};
-      const completed_items = await completedGuids(userInfo);
-      return await loadReadingPlan(args.slug, completed_items,lang);
+      return await loadReadingPlan(args.slug, userInfo,lang);
 
     },
     readingplansegment: async (item: any, args: any, context: any, info: any) => {
@@ -722,10 +721,12 @@ function reflect(promise) {
 
 async function getFeaturedGroups(lang, limit = 20) {
   if (lang === 'dev' || !lang) lang = 'en';
+  let isdefaultLang = lang==="en";
+  let whereCondition =  { lang:  isdefaultLang ? { [Op.or]: [lang, 'en'] } : lang };
   let recentUsers: any = await Models.BomUser.findAll({
     raw: true,
     attributes: ['user'],
-    where: { lang: lang },
+    where: whereCondition,
     order: [['last_active', 'desc']],
     limit
   })
@@ -737,7 +738,7 @@ async function getFeaturedGroups(lang, limit = 20) {
 
   const groups =  await sendbird.getOthersGroups(
     recentUsers,
-    lang
+    lang || "en"
   );
 
   if(!groups || !groups?.length && !["en","dev"].includes(lang)) return await getFeaturedGroups("en", 50);
