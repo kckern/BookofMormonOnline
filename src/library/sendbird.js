@@ -804,6 +804,7 @@ class Sendbird {
       "fr": "5bddebc6f6d86290a99a87fd5d72d6c7",
       "vn": "ed8caa04d5e38b7f1139d69b35899e51",
       "de": "20a1fe8595f749c00462f907b8276031",
+      "tgl": "1893bd0d165e2cd28329d7750307785a",
       "default": "ddc26a0e41b6daffff542e9fe8d9171d"
     };
 
