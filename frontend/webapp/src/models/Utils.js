@@ -19,8 +19,12 @@ export function determineLanguage() {
   let aliases = {
     ko: ["kr", "kor"],
     fr: ["fra", "fre"],
+    de: ["ger", "deu"],
     es: ["fra", "fre"],
     vn: ["vina", "viet", "vie"],
+    swe: ["se", "sv", "swe"],
+    pt: ["por"],
+    jp: ["jpn"],
     tgl: ["phil", "ph"],
     ru: ["rus"],
   };
