@@ -802,6 +802,8 @@ class Sendbird {
     const bots = {
       "ko": "938e2c5ac2c938b8156a7faf9ef9465f",
       "fr": "5bddebc6f6d86290a99a87fd5d72d6c7",
+      "vn": "ed8caa04d5e38b7f1139d69b35899e51",
+      "de": "20a1fe8595f749c00462f907b8276031",
       "default": "ddc26a0e41b6daffff542e9fe8d9171d"
     };
 
