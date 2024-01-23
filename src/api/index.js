@@ -22,6 +22,8 @@ const webhook = async (req, res) => {
         "ddc26a0e41b6daffff542e9fe8d9171d",   // english
         "938e2c5ac2c938b8156a7faf9ef9465f",  // korean
         "5bddebc6f6d86290a99a87fd5d72d6c7", // french
+        "20a1fe8595f749c00462f907b8276031", // german
+        "ed8caa04d5e38b7f1139d69b35899e51", // vietnamese
     ]
 
     const studyBuddyIsMember = members?.some(member=>studyBuddyIds.includes(member?.user_id));
