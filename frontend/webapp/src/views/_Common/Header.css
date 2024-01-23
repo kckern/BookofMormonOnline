@@ -28,7 +28,7 @@
     color:#DDD;
     font-weight: 800;
     font-size: 1.38em;
-    letter-spacing: -1.2px;
+    letter-spacing: -0.8px;
     font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
     cursor: pointer;
     height: 2em; 
@@ -36,6 +36,7 @@
     width: 250px;
     line-height: 1em;
     margin-top: 1ex;
+    font-variant: small-caps;
 }
 .headerTitle small
 {
