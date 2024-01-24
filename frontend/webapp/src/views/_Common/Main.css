@@ -4911,6 +4911,7 @@ div a.scripture_link:hover
 .languageDropdown.dropdown-menu .dropdown-item   img
 {
   width: 2rem;
+  height: 1.5rem;
   margin-right: 1ex;
 }
 .languageDropdown .disabled
