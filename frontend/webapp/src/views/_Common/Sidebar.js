@@ -32,6 +32,7 @@ import fr from "./svg/flags/fr.svg";
 import de from "./svg/flags/de.svg";
 import kr from "./svg/flags/kr.svg";
 import vn from "./svg/flags/vn.svg";
+import tgl from "./svg/flags/tgl.svg";
 
 
 export function loadMenu(){
@@ -193,7 +194,12 @@ function LanguageSelect() {
       url: "https://vn.bookofmormon.online",
       label: "Tiếng Việt",
       icon: vn
-    }
+    },
+    tgl: {
+      url: "https://tl.bookofmormon.online",
+      label: "Tagalog",
+      icon: tgl
+    },
   }
 
   const selectLanguage = (language) => {
