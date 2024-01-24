@@ -196,7 +196,7 @@ function LanguageSelect() {
       icon: vn
     },
     tgl: {
-      url: "https://tl.bookofmormon.online",
+      url: "https://tgl.bookofmormon.online",
       label: "Tagalog",
       icon: tgl
     },
