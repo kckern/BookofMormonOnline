@@ -208,7 +208,10 @@ function LanguageSelect() {
     window.location.href = selectedUrl + currentPath;
   };
 
-  const currentLang = determineLanguage() || "en";
+  const currentLang = determineLanguage();
+
+  if(!langs[currentLang]) return null;
+
   return (
     <div className="languageSelect">
       <Dropdown isOpen={dropdownOpen} toggle={toggle}>
