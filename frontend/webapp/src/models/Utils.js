@@ -17,6 +17,7 @@ export function determineLanguage() {
   let subdomain = window.location.host.split(".").shift();
   let tld = window.location.host.split(".").pop();
   let aliases = {
+    en: ["net","online"],
     ko: ["kr", "kor"],
     fr: ["fra", "fre"],
     de: ["ger", "deu"],
