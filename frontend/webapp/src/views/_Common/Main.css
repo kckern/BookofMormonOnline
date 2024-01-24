@@ -4905,7 +4905,8 @@ div a.scripture_link:hover
 }
 .languageSelect .dropdown button
 {
-  padding:5px 1em
+  padding:5px 1em;
+  opacity: 0.7
 }
 .languageSelect img,
 .languageDropdown.dropdown-menu .dropdown-item   img
