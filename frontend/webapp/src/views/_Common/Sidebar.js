@@ -176,7 +176,7 @@ function LanguageSelect() {
       icon: en
     },
     fr: {
-      url: "https://fr.bookofmormon.online",
+      url: "https://livredemormon.fr",
       label: "Français",
       icon: fr
     },
