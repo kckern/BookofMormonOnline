@@ -33,6 +33,7 @@ import de from "./svg/flags/de.svg";
 import kr from "./svg/flags/kr.svg";
 import vn from "./svg/flags/vn.svg";
 import tgl from "./svg/flags/tgl.svg";
+import es from "./svg/flags/es.svg";
 
 
 export function loadMenu(){
@@ -174,6 +175,11 @@ function LanguageSelect() {
       url: "https://bookofmormon.online",
       label: "English",
       icon: en
+    },
+    fr: {
+      url: "https://es.bookofmormon.online",
+      label: "Español",
+      icon: es
     },
     fr: {
       url: "https://livredemormon.fr",
