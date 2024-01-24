@@ -185,7 +185,7 @@ function LanguageSelect() {
       icon: de
     },
     kr: {
-      url: "https://ko.bookofmormon.online",
+      url: "https://몰몬경.kr",
       label: "한국어",
       icon: kr
     },
