@@ -17,7 +17,6 @@ export function determineLanguage() {
   let subdomain = window.location.host.split(".").shift();
   let tld = window.location.host.split(".").pop();
   let aliases = {
-    en: ["net","online"],
     ko: ["kr", "kor"],
     fr: ["fra", "fre"],
     de: ["ger", "deu"],
@@ -32,13 +31,10 @@ export function determineLanguage() {
     ru: ["rus"],
   };
   let index = {};
-  for (let i in aliases) {
-    index[i] = i;
-    for (let j in aliases[i]) index[aliases[i][j]] = i;
-  }
+  Object.keys(aliases).forEach(i => { index[i] = i; Object.keys(aliases[i]).forEach(j => index[aliases[i][j]] = i); });
   subdomain = index[subdomain] || null;
   tld = index[tld] || null;
-  return tld || subdomain;
+  return tld || subdomain || "en";
 }
 const pickOneRamdomly = (arr) => {
 
