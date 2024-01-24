@@ -438,18 +438,23 @@ class Sendbird {
   }
 
   async getMyGroups({ user_id }) {
-    let response = await axios({
-      method: 'GET',
-      url:
-        `https://api-${SENDBIRD_APPID}.sendbird.com/v3/users/${encodeURI(user_id)}/my_group_channels` +
-        '?custom_types=private,public,open&order=latest_last_message&show_empty=true',
-      headers: {
-        'Api-Token': SENDBIRD_TOKEN,
-        'Content-Type': 'application/json'
-      },
-      json: true
-    });
-    return response?.data?.channels || [];
+    let url = `https://api-${SENDBIRD_APPID}.sendbird.com/v3/users/${encodeURI(user_id)}/my_group_channels` +
+        '?custom_types=private,public,open&order=latest_last_message&show_empty=true';
+    try {
+      let response = await axios({
+        method: 'GET',
+        url: url,
+        headers: {
+          'Api-Token': SENDBIRD_TOKEN,
+          'Content-Type': 'application/json'
+        },
+        json: true
+      });
+      return response?.data?.channels || [];
+    } catch (error) {
+      //console.error(error);
+      return [];
+    }
   }
 
   async getOthersGroups(user_ids, lang) {
