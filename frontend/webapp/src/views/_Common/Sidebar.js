@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, NavLink, useHistory, useRouteMatch } from "react-router-dom";
-import { Nav } from "reactstrap";
+import { Nav, Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 import "./Sidebar.css";
 import { breakCache, determineLanguage, label, tokenImage } from "src/models/Utils.js";
 import crypto from "crypto-browserify";
@@ -26,6 +26,12 @@ import about from "./svg/about.svg";
 import theater from "./svg/theater.svg";
 import contact from "./svg/contact.svg";
 import { assetUrl } from "src/models/BoMOnlineAPI";
+
+import en from "./svg/flags/en.svg";
+import fr from "./svg/flags/fr.svg";
+import de from "./svg/flags/de.svg";
+import kr from "./svg/flags/kr.svg";
+import vn from "./svg/flags/vn.svg";
 
 
 export function loadMenu(){
@@ -150,7 +156,76 @@ function Sidebar(props) {
             );
           })}
         </Nav>
+        <LanguageSelect />
       </div>
+    </div>
+  );
+}
+
+
+function LanguageSelect() {
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  const toggle = () => setDropdownOpen(prevState => !prevState);
+
+  const langs = {
+    en: {
+      url: "https://bookofmormon.online",
+      label: "English",
+      icon: en
+    },
+    fr: {
+      url: "https://fr.bookofmormon.online",
+      label: "Français",
+      icon: fr
+    },
+    de: {
+      url: "https://de.bookofmormon.online",
+      label: "Deutsch",
+      icon: de
+    },
+    kr: {
+      url: "https://ko.bookofmormon.online",
+      label: "한국어",
+      icon: kr
+    },
+    vn: {
+      url: "https://vn.bookofmormon.online",
+      label: "Tiếng Việt",
+      icon: vn
+    }
+  }
+
+  const selectLanguage = (language) => {
+    const currentPath = window.location.pathname;
+    const selectedUrl = langs[language].url;
+    window.location.href = selectedUrl + currentPath;
+  };
+
+  const currentLang = determineLanguage() || "en";
+  return (
+    <div className="languageSelect">
+      <Dropdown isOpen={dropdownOpen} toggle={toggle}>
+        <DropdownToggle >
+          <img src={langs[currentLang].icon} />
+           {langs[currentLang].label}
+            </DropdownToggle>
+        <DropdownMenu container={'.sidebar-wrapper'} className="languageDropdown">
+          <DropdownItem header>{label("lang_select")}</DropdownItem>
+          {Object.keys(langs).map((lang, index) => {
+            return (
+              <DropdownItem 
+                key={index} 
+                onClick={() => selectLanguage(lang)}
+                disabled={currentLang === lang}  // Add this line
+              >
+                <img src={langs[lang].icon} />
+                {langs[lang].label}
+              </DropdownItem>
+            );
+          })}
+        </DropdownMenu>
+      </Dropdown>
     </div>
   );
 }

@@ -4896,3 +4896,24 @@ div a.scripture_link:hover
 .messageMedia img{
   max-height: 10px;
 }
+
+
+.languageSelect .dropdown
+{
+  display: flex;
+  justify-content: center;
+}
+.languageSelect .dropdown button
+{
+  padding:5px 1em
+}
+.languageSelect img,
+.languageDropdown.dropdown-menu .dropdown-item   img
+{
+  width: 2rem;
+  margin-right: 1ex;
+}
+.languageDropdown .disabled
+{
+ display: none;
+}
