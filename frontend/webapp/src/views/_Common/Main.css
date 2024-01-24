@@ -4914,6 +4914,7 @@ div a.scripture_link:hover
   width: 2rem;
   height: 1.5rem;
   margin-right: 1ex;
+  border: 1px solid #00000033;
 }
 .languageDropdown .disabled
 {
