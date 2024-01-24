@@ -185,7 +185,7 @@ function LanguageSelect() {
       label: "Deutsch",
       icon: de
     },
-    kr: {
+    ko: {
       url: "https://몰몬경.kr",
       label: "한국어",
       icon: kr
@@ -213,7 +213,7 @@ function LanguageSelect() {
     <div className="languageSelect">
       <Dropdown isOpen={dropdownOpen} toggle={toggle}>
         <DropdownToggle >
-          <img src={langs[currentLang].icon} />
+          <img src={langs[currentLang]?.icon} />
            {langs[currentLang].label}
             </DropdownToggle>
         <DropdownMenu container={'.sidebar-wrapper'} className="languageDropdown">
@@ -225,7 +225,7 @@ function LanguageSelect() {
                 onClick={() => selectLanguage(lang)}
                 disabled={currentLang === lang}  // Add this line
               >
-                <img src={langs[lang].icon} />
+                <img src={langs[lang]?.icon} />
                 {langs[lang].label}
               </DropdownItem>
             );
