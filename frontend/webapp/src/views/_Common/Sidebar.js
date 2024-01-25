@@ -187,7 +187,7 @@ function LanguageSelect() {
       icon: fr
     },
     de: {
-      url: "https://de.bookofmormon.online",
+      url: "https://buchmormon.de",
       label: "Deutsch",
       icon: de
     },
@@ -197,7 +197,7 @@ function LanguageSelect() {
       icon: kr
     },
     vn: {
-      url: "https://vn.bookofmormon.online",
+      url: "https://sachmacmon.vn",
       label: "Tiếng Việt",
       icon: vn
     },
