@@ -209,6 +209,8 @@ function LanguageSelect() {
   }
 
   const selectLanguage = (language) => {
+    
+    window.clicky?.goal("language");
     const currentPath = window.location.pathname;
     const selectedUrl = langs[language].url;
     window.location.href = selectedUrl + currentPath;
