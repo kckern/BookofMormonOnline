@@ -103,12 +103,6 @@ function About() {
       </Card>
       <Card>
         <CardBody>
-          <img src={bom} />
-          <ReactMarkdown>{aboutPageData.bom.markdown}</ReactMarkdown>
-        </CardBody>
-      </Card>
-      <Card>
-        <CardBody>
           <img src={contribute} />
           <ReactMarkdown>{aboutPageData.contribute.markdown}</ReactMarkdown>
         </CardBody>
