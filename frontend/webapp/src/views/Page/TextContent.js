@@ -16,7 +16,7 @@ import placesSVG from "../_Common/svg/places.svg";
 import studySVG from "../_Common/svg/study.svg";
 import notesSVG from "../_Common/svg/notes.svg";
 import faxSVG from "src/views/User/svg/oldbook.svg";
-import { label } from "../../models/Utils";
+import { determineLanguage, label } from "../../models/Utils";
 
 /* ------------------------------------------- */
 /* -------------- STATE CHANGES  ------------- */
@@ -368,11 +368,12 @@ function TextItemCounters({narrationController})
   if(!text) return null;
 
   const {people,places,refs,guid,notes} = text;
+  const lang = determineLanguage();
 
   let peopleCount = people?.length || 0;
   let placeCount = places?.length || 0;
   let refCount = refs?.length || 0;
-  let faxCount = 10;
+  let faxCount = lang === "en" ? 10 : 0;
 
 
   const setPeoplePlaces = () => {
