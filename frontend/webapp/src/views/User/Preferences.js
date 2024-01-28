@@ -20,12 +20,14 @@ export default function User({ appController }) {
 
     useEffect(()=>document.title = label("preferences") + " | " + label("home_title"),[])
 
+    const lang = appController.states.preferences.lang;
+
     const [publications, setPublications] = useState(null);
     const [loading, setLoading] = useState(false);
     if (!publications && !loading) {
         setLoading(true);
         BoMOnlineAPI({ publications: true }).then(result => {
-            setPublications(result.publications);
+            setPublications(result.publications.filter(x=>!!x));
         })
     }
     const toggleValue = (value) => {
@@ -224,23 +226,10 @@ export default function User({ appController }) {
                     </Label>
                 </h5>
 
-                <hr />
-                <h5 className="title">
-                    <Label className="commentary_select"><img src={commentary} />
-                        {label("commentary_singular")}
-                        <Switch
-                            onText={label("on")}
-                            offText={label("off")}
-                            onChange={toggleCommentary}
-                            value={appController.states.preferences.commentary.on}
-                            onColor="default"
-                            offColor="default"
-                        />
-                    </Label>
-                </h5>
-                <Publications appController={appController} pubs={pubs} />
-                 <hr />
-                <h5 className="title">
+
+                <Publications appController={appController} pubs={pubs} toggleCommentary={toggleCommentary}/>
+
+                {lang==="en" && <><hr/><h5 className="title">
                     <Label className="fax_select"><img src={facsimiles} />
                         {label("facsimiles")}
                         <Switch
@@ -256,7 +245,7 @@ export default function User({ appController }) {
 
                 <div className={"faxCards"}>
                     {(appController.states.preferences.facsimiles.on ? faxs ? faxs : <div>{label("loading_facsimiles")}</div> : null)}
-                </div>
+                </div></>}
 
             </CardBody>
         </Card></>
@@ -264,7 +253,7 @@ export default function User({ appController }) {
 }
 
 
-function Publications({appController,pubs}){
+function Publications({appController,pubs,toggleCommentary}){
 
 
     const [showControversial, setShowControversial] = useState(false);
@@ -275,13 +264,33 @@ function Publications({appController,pubs}){
     let gpubs = pubs.filter(p=>p.props.rating!=="R");
     let rpubs = pubs.filter(p=>p.props.rating==="R");
 
+
     let controversial = (rpubs && rpubs.length > 0) ? <>
     <Alert color="warning">{label("controversial_commentaries_warning")}</Alert>
     <div className={"publicationCards"}>{rpubs}</div></> : null;
 
-    return   <><div className={"publicationCards"}>{gpubs}</div>
+    if(!gpubs.length && !rpubs.length) return false;
 
-<h5 className="title">
+    return   <>
+    
+    <hr />
+    <h5 className="title">
+                    <Label className="commentary_select"><img src={commentary} />
+                        {label("commentary_singular")}
+                        <Switch
+                            onText={label("on")}
+                            offText={label("off")}
+                            onChange={toggleCommentary}
+                            value={appController.states.preferences.commentary.on}
+                            onColor="default"
+                            offColor="default"
+                        />
+                    </Label>
+                </h5>
+    
+                <div className={"publicationCards"}>{gpubs}</div>
+
+                    {rpubs.length && <h5 className="title">
                     <Label className="fax_select"><img src={commentary} />
                         {label("controversial_commentaries")}
                         <Switch
@@ -293,14 +302,13 @@ function Publications({appController,pubs}){
                             offColor="default"
                         />
                     </Label>
-                </h5>
+                </h5>}
     
     {showControversial ? controversial : <>
     
     
     </> }
 
-    
     </>
 
 

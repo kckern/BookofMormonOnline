@@ -37,6 +37,8 @@ import es from "./svg/flags/es.svg";
 
 
 export function loadMenu(){
+
+  const lang = determineLanguage();
   var list = [
     { slug: "home", title: <span><img src={home} /> {label("menu_home")}</span> },
     { slug: "contents", title: <span><img src={contents} /> {label("menu_contents")}</span> },
@@ -52,6 +54,14 @@ export function loadMenu(){
     { slug: "analysis", title: <span><img src={analysis} /> {label("menu_analysis")}</span>, dev:true },
     { slug: "about", title: <span><img src={about} /> {label("menu_about")}</span> },
   ];
+
+  if(lang!=="en") //TODO: remove this when we have translations
+  {
+    const englishOnly = ["fax","timeline","history"];
+    list = list.filter(i=>!englishOnly.includes(i.slug));
+  }
+
+
 
   if(determineLanguage()==="ko")
   {
