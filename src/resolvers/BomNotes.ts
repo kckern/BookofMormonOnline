@@ -28,7 +28,7 @@ export default {
             ].filter(x => !!x)
           )
         ].filter(x => !!x),
-        limit: 5
+        limit: 100
       });
     },
     fax: async (root: any, args: any, context: any, info: any) => {
