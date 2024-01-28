@@ -34,6 +34,7 @@ import kr from "./svg/flags/kr.svg";
 import vn from "./svg/flags/vn.svg";
 import tgl from "./svg/flags/tgl.svg";
 import es from "./svg/flags/es.svg";
+import swe from "./svg/flags/swe.svg";
 
 
 export function loadMenu(){
@@ -201,6 +202,11 @@ function LanguageSelect() {
       label: "Deutsch",
       icon: de
     },
+    swe:{
+      url: "https://swe.bookofmormon.online",
+      label: "Svenska",
+      icon: swe
+    },
     ko: {
       url: "https://몰몬경.kr",
       label: "한국어",
@@ -219,6 +225,8 @@ function LanguageSelect() {
   }
 
   const selectLanguage = (language) => {
+    
+    window.clicky?.goal("language");
     const currentPath = window.location.pathname;
     const selectedUrl = langs[language].url;
     window.location.href = selectedUrl + currentPath;
