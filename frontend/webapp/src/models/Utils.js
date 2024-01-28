@@ -859,7 +859,7 @@ function LinkPreview({ url,appController }) {
 
 function replaceURLWithHTMLLinks(text) {
   if (typeof text.replace !== "function") return text;
-  const exp = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gi;
+  const exp = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;$]*[-A-Z0-9+&@#\/%=~_|])/gi;
   let html = text.replace(
     exp,
     (match) => urlHTML(match),
