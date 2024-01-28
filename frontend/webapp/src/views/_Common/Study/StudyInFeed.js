@@ -105,7 +105,7 @@ export function SectionInFeed({ appController, sectionData, highlights }) {
 }
 export function CommentaryInFeed({ appController, comData, highlights }) {
 
-  if (!comData) return <Placeholder classname="com" />;
+  if (!comData) return null;//<Placeholder classname="com" />;
   if(!comData.location?.narration?.description) {} // Nested location have no narration
   let description = flattenDescription(comData.location?.narration?.description || "");
 

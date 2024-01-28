@@ -66,7 +66,9 @@ export function HomeFeed({
     );
     let items = r.homefeed[0]?.feed || [];
     let q = prepareQuery(items);
+
     let linkedContent = await BoMOnlineAPI(q);
+    console.log({ q,linkedContent });
     setLinkedContent(linkedContent);
     setHomeItems(items);
     setHomeGroups(r.homefeed[0]?.groups || []);
@@ -694,7 +696,7 @@ function MyComment({
           {trophyComp}
           <img src={img} onError={breakCache} />
           <div className="progress">
-            {appController.states.user.progress.completed || 0}%!
+            {appController.states.user.progress.completed || 0}%
           </div>
         </div>
         <div className="textbox notmember">
