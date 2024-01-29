@@ -60,11 +60,14 @@ export default {
         LIMIT 99999999 ;`;
 
       //query must be 4 or more characters
-      if(query.length<4) return [];
+      if(query.length<3) return [];
       
+
+      const isEnglish = !lang || lang === 'en' || lang === 'eng' || lang === 'dev';
+
       let verse_ids:any = [];
      // verse_ids = await sphinxQuery(sphinxSql);
-      {
+      if(isEnglish){
         verse_ids = await Models.LdsScripturesVerses.findAll({
           attributes: ['verse_id'],
           where: {
@@ -79,35 +82,60 @@ export default {
           return results.map((item: any) => item.verse_id);
         });
       }
+      else{
+        const translations = await Models.LdsScripturesTranslations.findAll({
+          raw:true,
+          where: {  text: { [Op.like]: `%${query}%` }, lang  }
+        });
+        verse_ids = translations.map((item:any)=>item.verse_id);
+      }
+
       if(!verse_ids?.length) return [];
 
 
-      return Models.BomLookup.findAll({    
-            where: { verse_id: verse_ids },
-            raw: true,
+      const translationModel = isEnglish ? null : { 
+        model: Models.LdsScripturesTranslations, 
+        as: 'verse_translation', 
+        where: { lang: lang }
+      };
+
+
+      const textItems = await Models.BomLookup.findAll({
+        raw: true,
+        where: { verse_id: verse_ids },
+        include: [
+          {
+            model: Models.BomText,
+            as: 'text',
             include: [
-                includeModel(true, Models.LdsScripturesVerses, 'verse'),
-                includeModel(true, Models.BomText, 'text', [
-                    includeTranslation('content', lang),
-                    includeModel(true, Models.BomNarration, 'narration', [includeTranslation('description', lang)]),
-                    includeModel(true, Models.BomSection, 'parent_section', [includeTranslation('title', lang)]),
-                    includeModel(true, Models.BomPage, 'parent_page', [includeTranslation('title', lang)])  
-                ].filter(x => !!x))
-            ].filter(x => !!x)
-        }).then(r => {
-            return (r.map(item => {
-                return {
-                pageguid:item['text.parent_page.guid'],
-                link: item['text.link'],
-                reference: item['verse.verse_title'],
-                text: item['verse.verse_scripture'],
-                section: item['text.parent_section.title'],
-                page: item['text.parent_page.title'] ,
-                narration: item['text.narration.description'],
-                content: item['text.content']
-                };
-            }));
-        })
+              { model: Models.BomPage, as: 'parent_page', include: [includeTranslation('title', lang, false)].filter(x => !!x) },
+              { model: Models.BomSection, as: 'parent_section', include: [includeTranslation('title', lang, false)].filter(x => !!x) },
+              { model: Models.BomNarration, as: 'narration', include: [includeTranslation('description', lang, false)].filter(x => !!x) },
+            ].filter(x => !!x),
+          },
+          { 
+            model: Models.LdsScripturesVerses, 
+            as: 'verse' 
+          },
+          translationModel
+        ].filter(x => !!x) 
+      });
+
+      return textItems.map((item:any)=>{
+
+        return {
+          pageguid:item['text.parent_page.guid'],
+          link: item['text.link'],
+          reference: item['verse_translation.book'] || item['verse.verse_title'],
+          text: item['verse_translation.text'] || item['verse.verse_scripture'],
+          section: item['text.parent_section.translation.value'] || item['text.parent_section.title'],
+          page: item['text.parent_page.translation.value'] || item['text.parent_page.title'] ,
+          narration: item['text.narration.translation.value'] || item['text.narration.description'],
+          content: null
+          };
+        });
+
+        
     },
     
     shortlink: async (input: any, args: any, context: any, info: any) => {
