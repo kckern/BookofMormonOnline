@@ -1288,6 +1288,7 @@ span.pageTitle
     .theater-wrapper
     {
         flex-direction: column;
+        margin-bottom: 4rem;
     }
     .theater-wrapper .theater-main-panel
     {
