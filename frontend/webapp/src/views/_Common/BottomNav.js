@@ -50,7 +50,7 @@ export function BottomMenu({ appController }) {
 
   const bottomNavItemsData = [
     {
-      title: label('groups'),
+      title: label('groups') || 'Groups',
       icon: (
           <img
             className={activeGroup?.coverUrl ? 'activeGroup' : 'none'}
@@ -62,25 +62,25 @@ export function BottomMenu({ appController }) {
       path: '/groups',
     },
     {
-      title: label('menu_home'),
+      title: label('menu_home') || 'Home',
       icon: <HomeIcon className="img" fill="#7F7F7F" />,
       activeIcon: <HomeIcon className="img" />,
       path: '/home',
     },
     {
-      title: label('menu_study'),
+      title: label('menu_study') || 'Study',
       icon: <StudyIcon className='img' fill='#7F7F7F' />,
       activeIcon: <StudyIcon className='img' />,
       path: '/study',
     },
     {
-      title: label('user'),
+      title: label('user') || 'User',
       icon: <UserIcon className='img' fill='#7F7F7F' />,
       activeIcon: <UserIcon className='img' />,
       path: '/user',
     },
     {
-      title: label('menu_more'),
+      title: label('menu_more') || 'More',
       icon: <MenuIcon fill='#7F7F7F' className='img' />,
       activeIcon: <MenuIcon className='img'  />,
       path: '/mobilemenu',
