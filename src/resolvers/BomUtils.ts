@@ -93,13 +93,6 @@ export default {
       if(!verse_ids?.length) return [];
 
 
-      const translationModel = isEnglish ? null : { 
-        model: Models.LdsScripturesTranslations, 
-        as: 'verse_translation', 
-        where: { lang: lang }
-      };
-
-
       const textItems = await Models.BomLookup.findAll({
         raw: true,
         where: { verse_id: verse_ids },
@@ -117,7 +110,11 @@ export default {
             model: Models.LdsScripturesVerses, 
             as: 'verse' 
           },
-          translationModel
+          isEnglish ? null : { 
+            model: Models.LdsScripturesTranslations, 
+            as: 'verse_translation', 
+            where: { lang: lang }
+          }
         ].filter(x => !!x) 
       });
 
