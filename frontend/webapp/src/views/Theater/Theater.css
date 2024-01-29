@@ -1288,7 +1288,7 @@ span.pageTitle
     .theater-wrapper
     {
         flex-direction: column;
-        position: absolute;
+        position: fixed;
         top: 3.6rem;
         bottom: 4rem;
     }
