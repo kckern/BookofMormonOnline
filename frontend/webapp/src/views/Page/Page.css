@@ -114,6 +114,7 @@
   margin-left: 1ex;
   height: 1.8rem;
   width: 1.8rem;
+  right:0;
   background: url(../_Common/svg/right.svg) no-repeat;
   transition: 0.6s transform;
 }
@@ -194,6 +195,7 @@ div.row div.rightconnection {
   line-height: 100%;
   display: flex;
   align-items: center;
+  position: relative;
 }
 
 div.row-r div.rightconnection {
