@@ -93,7 +93,7 @@ export function BottomMenu({ appController }) {
     >
       {bottomNavItemsData.map((navItem, i) => {
         return (
-          <Link key={navItem.title} to={navItem.path}>
+          <Link key={navItem.path} to={navItem.path}>
             <div
             id={`nav-item-${i}`}
             className={`bottom-nav-item`}
