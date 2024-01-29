@@ -131,8 +131,9 @@ function MobileProgressBox({ appController }) {
   let started = ProgressBoxData.userProgress?.started;
   let name = appController.states.user.social?.nickname;
 
-  if (!Array.isArray(ProgressBoxData.progressData))
+  if (!Array.isArray(ProgressBoxData.progressData) && ProgressBoxData.progressData)
     ProgressBoxData.progressData = Object.values(ProgressBoxData.progressData);
+  
   return (
     <div>
       <h4>{label("study_progress_for_x", [name ? name : label("guest")])}</h4>

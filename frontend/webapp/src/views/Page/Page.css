@@ -169,6 +169,9 @@ div.row div.leftconnection {
   position: relative;
   left: -1em;
   transition: 0.6s margin;
+  line-height: 100%;
+  display: flex;
+  align-items: center;
 }
 
 div.row div.backconnection {
@@ -188,6 +191,9 @@ div.row div.rightconnection {
   padding-right: 2.5em;
   text-align: right;
   transition: 0.6s margin;
+  line-height: 100%;
+  display: flex;
+  align-items: center;
 }
 
 div.row-r div.rightconnection {
