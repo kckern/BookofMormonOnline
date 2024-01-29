@@ -198,6 +198,11 @@ models.BomLookup.belongsTo(models.LdsScripturesVerses, {
   as:"verse"
 });
 
+models.BomLookup.belongsTo(models.LdsScripturesTranslations, {
+  foreignKey: 'verse_id',
+  targetKey: 'verse_id',
+  as:"verse_translation"
+});
 
 //Main Page Chain
 
