@@ -709,7 +709,7 @@ export function StudyGroupThread({
           inputRef={inputRef}
         />
         <img
-          src={appController.states.user.social.profile_url}
+          src={appController.states.user.social?.profile_url}
           onError={breakCache}
           className={"threadAvatar"}
         />

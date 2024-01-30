@@ -456,7 +456,7 @@ function StudyGroupListItem({ group, appController }) {
 
   //exclude self and bots
   let members = group.members.filter((m) => {
-    const isSelf = m.userId === appController.states.user.social.user_id;
+    const isSelf = m.userId === appController.states.user.social?.user_id;
     const isBot = !!m.metaData?.isBot;
     if (isSelf || isBot) return false;
     return true;

@@ -287,7 +287,7 @@ export function PeopleFilters({ appController, setFilter, peopleFilters }) {
     const handleClick = ()=>{
       appController.functions.setPopUp({
         type: "pFilter",
-        ids: [appController.states.user.social.user_id],
+        ids: [appController.states.user.social?.user_id],
         underSlug: "people",
         popUpData: { filterBox,setFilter, peopleFilters
         },

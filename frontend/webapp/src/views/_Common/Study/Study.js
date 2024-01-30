@@ -1155,7 +1155,7 @@ export function LikeButton({ type, message, appController }) {
 
   let reactions = null;
   let liked = false;
-  //   let myId = appController.states.user.social.sbUserID;
+  //   let myId = appController.states.user.social?.sbUserID;
 
   if (reacters.like && reacters.like.length > 0) {
     reactions = (
@@ -1203,7 +1203,7 @@ export function LikeButton({ type, message, appController }) {
     likeCount &&
     reacters.like
       .map((u) => u.userId)
-      .indexOf(appController.states.user.social.userId) >= 0;
+      .indexOf(appController.states.user.social?.userId) >= 0;
 
   if (type === "page") {
     return {

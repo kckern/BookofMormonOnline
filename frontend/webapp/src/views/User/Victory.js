@@ -98,7 +98,7 @@ export function Victory({ appController, context }) {
             >×</span>
         </h5>
         <div className="profile">
-            <img src={appController.states.user.social.profile_url} />
+            <img src={appController.states.user.social?.profile_url} />
         </div>
         <div className="revealtext" >
             <ReactRevealText show={show} >{text}</ReactRevealText>
@@ -123,7 +123,7 @@ export function Victory({ appController, context }) {
                 </CardHeader>
                 <CardBody className="victorybody">
                     <div className="profile">
-                        <img src={appController.states.user.social.profile_url} />
+                        <img src={appController.states.user.social?.profile_url} />
                     </div>
                     <div className="revealtext" >
                         <ReactRevealText show={show} >{text}</ReactRevealText>

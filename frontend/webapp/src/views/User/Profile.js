@@ -266,11 +266,11 @@ function ProfilePicture({ appController }) {
   const sb = appController.sendbird.sb;
   useEffect(() => {
     if (
-      profileImage !== appController.states.user.social.profile_url ||
+      profileImage !== appController.states.user.social?.profile_url ||
       profileImage === null
     )
-      setProfileImage(appController.states.user.social.profile_url);
-  }, [appController.states.user.social.profile_url]);
+      setProfileImage(appController.states.user.social?.profile_url);
+  }, [appController.states.user.social?.profile_url]);
   return (
     <PictureWithOverlay
       imgUrl={profileImage}
