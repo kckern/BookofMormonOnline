@@ -981,7 +981,10 @@ function TheaterControls({ theaterController, visible }) {
           theaterController.setIsPlaying(true);
           theaterController.setIsScrollingPanel(true);
           logItem();
-        }}
+        }}        
+        onError={() => {
+          theaterController.next("auto",(hasNextContent || isLastItem) ? setSubCursorIndex : null);
+         }}
         listenInterval={50}
         onListen={onListen}
         onCanPlay={onCanPlay}

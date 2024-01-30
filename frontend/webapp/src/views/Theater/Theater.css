@@ -37,6 +37,14 @@
 @media (max-width: 900px){
 
 
+    .theater-wrapper
+    {
+        flex-direction: column;
+        position: fixed;
+        top: 3.6rem;
+        bottom: 4rem;
+    }
+    
     .theater-side-panel{
         display: none!important;
     }
@@ -1288,9 +1296,6 @@ span.pageTitle
     .theater-wrapper
     {
         flex-direction: column;
-        position: fixed;
-        top: 3.6rem;
-        bottom: 4rem;
     }
     .theater-wrapper .theater-main-panel
     {
