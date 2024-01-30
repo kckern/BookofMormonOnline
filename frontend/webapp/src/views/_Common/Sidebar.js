@@ -35,6 +35,7 @@ import vn from "./svg/flags/vn.svg";
 import tgl from "./svg/flags/tgl.svg";
 import es from "./svg/flags/es.svg";
 import swe from "./svg/flags/swe.svg";
+import ru from "./svg/flags/ru.svg";
 
 
 export function loadMenu(){
@@ -206,6 +207,11 @@ function LanguageSelect() {
       url: "https://swe.bookofmormon.online",
       label: "Svenska",
       icon: swe
+    },
+    ru:{
+      url: "https://ru.bookofmormon.online",
+      label: "Русский",
+      icon: ru
     },
     ko: {
       url: "https://몰몬경.kr",
