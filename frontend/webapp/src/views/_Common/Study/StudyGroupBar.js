@@ -126,7 +126,7 @@ export function getFreshUsers(appController) {
 
   let users =
     group.members?.filter((m) => {
-      const isSelf = m.userId === appController.states.user.social.user_id;
+      const isSelf = m.userId === appController.states.user.social?.user_id;
       const isBot = !!m.metaData?.isBot;
       if (isSelf || isBot) return false;
       return true;
@@ -134,7 +134,7 @@ export function getFreshUsers(appController) {
 
   let bots =
     group.members?.filter((m) => {
-      const isSelf = m.userId === appController.states.user.social.user_id;
+      const isSelf = m.userId === appController.states.user.social?.user_id;
       const isBot = !!m.metaData?.isBot;
       if (isSelf || !isBot) return false;
       return true;
@@ -232,7 +232,7 @@ function StudyGroupStatus({ appController }) {
       if (diffCounts !== 1) return newColors;
 
       let username = Object.keys(diff)[0];
-      let mysocialId = appController.states.user.social.user_id;
+      let mysocialId = appController.states.user.social?.user_id;
       let user =
         appController.states.studyGroup.activeGroup?.memberMap?.[username] || {};
       let { oldVal: oldColor, newVal: newColor } = Object.values(diff)[0];

@@ -321,7 +321,7 @@ export function PlaceFilters({ appController, setFilter, placeFilters })
 
       appController.functions.setPopUp({
         type: "pFilter",
-        ids: [appController.states.user.social.user_id],
+        ids: [appController.states.user.social?.user_id],
         underSlug: "places",
         popUpData: { filterBox,setFilter, placeFilters
         },

@@ -50,7 +50,7 @@ function ImageChanger({
         });
         return setOpenModal(false);
       }
-      const nickname = appController.states.user.social.nickname;
+      const nickname = appController.states.user.social?.nickname;
       cropper.getCroppedCanvas().toBlob(async function (blob) {
         let file = null;
         if (blob["type"] === "image/jpeg") {

@@ -257,6 +257,10 @@ export function renderHTMLContentInFeed(content, highlights) {
     let highlight = highlights[i];
     let string = highlight.string.replace(/[()]/gi, ".");
     var re = [];
+
+    //sanitize string for regex
+    string = string.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
+
     re.push(new RegExp("\\b(" + string + ")\\b", "gi"));
     for (let i = 4; i >= 1; i--) {
       let start = string
