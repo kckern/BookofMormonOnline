@@ -5,6 +5,7 @@ const { loadReadingPlan,loadReadingPlanSegment } = require('./lib')
 import { sendbird } from '../library/sendbird';
 import { url } from 'inspector';
 import crypto from "crypto";
+import BomUser from './BomUser';
 const Op = Sequelize.Op;
 
 const md5 = (value: string)=>{
@@ -143,7 +144,11 @@ export default {
 
       const sendbirdUserObjects = await sendbird.listUsers(sbIds);
 
-      const publicUsers = await sendbird.getMembersofPublicGroups();
+      const publicUsers =( await Models.BomUser.findAll({
+        raw: true,
+        attributes: ['user',[Sequelize.literal(`MD5(user)`), 'sbuser']],
+        where: {visibility: 'public'}
+      })).map((u:any)=>u.sbuser);
       const privateUsersVisibleToMe = my_sb_user_id ? await sendbird.getMembersofPrivateGroups(my_sb_user_id) : [];
       const visibleUsers = [...publicUsers,...privateUsersVisibleToMe];
 
