@@ -61,7 +61,12 @@ async function  listTranslations(req, res) {
 
     const list = await queryDB(sql, [refkey, lang, user, limit]);
 
-    return res.json(list);
+    const filteredList = list.filter(row => {
+        if(table === "bom_text" && /\d$/.test(row.src)) return false;
+        return true;
+    });
+
+    return res.json(filteredList);
 }
 
 async function auditTranslation(req, res) {
