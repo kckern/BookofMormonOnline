@@ -21,6 +21,10 @@ export default class _bom_user extends ModelBase {
           type: DataTypes.STRING(100),
           allowNull: true
         },
+        visibility: {
+          type: DataTypes.STRING(100),
+          allowNull: true
+        },
         name: {
           type: DataTypes.STRING(100),
           allowNull: true
