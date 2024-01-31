@@ -290,7 +290,7 @@ const pickFlag = () => {
         default: return en;
     }}
 
-    const {src, dst} = item;
+    const {src, dst} = itemRules(item);
     return <div className={`audit-item ${saving ? "saving" : ""}`}>
     <div className="audit-controls">
 
@@ -318,4 +318,18 @@ const pickFlag = () => {
             <div>{src}</div>
         </div>
     </div>
+}
+
+
+function itemRules (item)
+{
+    [
+        [/\$[0-9]+/,"…"]
+        
+    ].forEach(([from, to]) => {
+        item.dst = item.dst.replace(from, to);
+        item.src = item.src.replace(from, to);
+    });
+
+    return item;
 }
