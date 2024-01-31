@@ -62,19 +62,10 @@ export function loadMenu(){
   {
     const englishOnly = ["fax","timeline","history"];
     list = list.filter(i=>!englishOnly.includes(i.slug));
-  }
-  else{
-    // language audit
-    list.push({ slug: "audit", title: <span><img src={audit} /> {label("menu_audit")}</span>});
+    if(lang==="ko")  list.splice(3,0, { slug: "특별반", title: <span><img src={book} />특별반</span> });
+    list.push({ slug: "audit", title: <span><img src={audit} /> {label("menu_audit")}</span>} );
   }
 
-
-
-
-  if(determineLanguage()==="ko")
-  {
-    list.splice(3,0, { slug: "특별반", title: <span><img src={book} />특별반</span> });
-  }
   return list.filter(i=>{
     const isDev = /localhost|^dev/.test(window.location.hostname);
     return !i.dev || isDev;
