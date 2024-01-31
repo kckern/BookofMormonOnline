@@ -9,6 +9,7 @@ import vn from "../_Common/svg/flags/vn.svg"
 import ko from "../_Common/svg/flags/kr.svg"
 import { Button } from "reactstrap";
 import { determineLanguage } from "../../models/Utils";
+import { ApiBaseUrl } from "../../models/BoMOnlineAPI";
 
 //"bom_map name gpt-4" "bom_map desc gpt-4" "bom_division description gpt-4" "bom_page title gpt-4" "bom_section title  gpt-4" "bom_connection text  gpt-4" "bom_capsulation description  gpt-4" "bom_label label_text" "bom_people title" "bom_places info" "bom_text heading" "bom_markdown markdown gpt-4"
 const bom_types = [
@@ -111,8 +112,7 @@ async function loadItems(table,refkey,user) {
     const isLocalhost = window.location.hostname === "localhost";
     const lang = isLocalhost ? "ko" : determineLanguage();
    
-    const host = `https://bookofmormon.online`
-    const list = await axios.post(`${host}/translate`, {
+    const list = await axios.post(`${ApiBaseUrl}/translate`, {
         action: "list",
         table,
         refkey,
@@ -156,6 +156,7 @@ export default function  Audit({appController})
 
 
     useEffect(() => {
+        if(!user) return;
         //console.log("loading items", table, refkey);
         loadItems(
             table,
@@ -165,7 +166,7 @@ export default function  Audit({appController})
             //console.log("loaded items", table, refkey,items);
             setItems(items);
         })
-    }, [table, refkey]);
+    }, [table+refkey, user]);
 
 
 
@@ -183,8 +184,9 @@ export default function  Audit({appController})
 }
 async function saveItemAudit({id, score, user}) {
     await new Promise(resolve => setTimeout(resolve, 500));
+
     if(score === null) return;
-    const postRequest = axios.post(`https://bookofmormon.online/translate`, {
+    const postRequest = axios.post(`${ApiBaseUrl}/translate`, {
         action: "audit",
         id,
         score,
