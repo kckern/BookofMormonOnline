@@ -208,7 +208,7 @@ export const appFunctions = {
 
   //POPUP FUNCTIONS
   setPopUp: (appController, input) => {
-    if (input.val.ids.length === 0) return appController;
+    if (input.val?.ids?.length === 0) return appController;
     if (!appController.states.popUp.open)
       appController.states.popUp.underSlug = input.val.underSlug || appController.states.slug?.replace(
         /^\//,

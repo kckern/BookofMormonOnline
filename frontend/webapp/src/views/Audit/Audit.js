@@ -16,9 +16,10 @@ import tgl from "../_Common/svg/flags/tgl.svg"
 
 
 
-import { Button } from "reactstrap";
+import { Button, Card, CardBody } from "reactstrap";
 import { determineLanguage } from "../../models/Utils";
 import { ApiBaseUrl } from "../../models/BoMOnlineAPI";
+import SignIn from "../User/SignIn";
 
 //"bom_map name gpt-4" "bom_map desc gpt-4" "bom_division description gpt-4" "bom_page title gpt-4" "bom_section title  gpt-4" "bom_connection text  gpt-4" "bom_capsulation description  gpt-4" "bom_label label_text" "bom_people title" "bom_places info" "bom_text heading" "bom_markdown markdown gpt-4"
 const bom_types = [
@@ -179,8 +180,16 @@ export default function  Audit({appController})
 
 
 
-    if(!user) return <Loader/>
-
+    if(!user) return <div className="container">
+            
+      <Card className="card-login">
+        <CardBody>
+            <SignIn appController={appController} />
+        </CardBody>
+        </Card>
+        </div>
+    
+    
     return <div className="container" style={{ display: 'block', textAlign: 'center' }}>
         <h2>Translation Review</h2>
         <p>Review the item below and mark it as "Good" or "Needs Revision". If unsure, you can skip it for now.</p>

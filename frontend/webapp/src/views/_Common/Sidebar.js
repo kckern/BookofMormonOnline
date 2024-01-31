@@ -25,6 +25,7 @@ import analysis from "./svg/analysis.svg";
 import about from "./svg/about.svg";
 import theater from "./svg/theater.svg";
 import contact from "./svg/contact.svg";
+import audit from "./svg/audit.svg";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 
 import en from "./svg/flags/en.svg";
@@ -62,6 +63,11 @@ export function loadMenu(){
     const englishOnly = ["fax","timeline","history"];
     list = list.filter(i=>!englishOnly.includes(i.slug));
   }
+  else{
+    // language audit
+    list.push({ slug: "audit", title: <span><img src={audit} /> {label("menu_audit")}</span>});
+  }
+
 
 
 
