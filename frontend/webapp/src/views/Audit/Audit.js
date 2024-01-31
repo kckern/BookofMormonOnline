@@ -324,7 +324,7 @@ const pickFlag = () => {
 function itemRules (item)
 {
     [
-        [/\$[0-9]+/,"…"]
+        [/\$[0-9]+/ig,"…"]
         
     ].forEach(([from, to]) => {
         item.dst = item.dst.replace(from, to);
