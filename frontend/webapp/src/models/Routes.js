@@ -22,6 +22,7 @@ const MobileMenu = lazy(() => import("../views/_Common/MobileMenu.js"));
 const Group = lazy(() => import("../views/_Common/Group.js"));
 const Theater = lazy(() => import("../views/Theater/Theater.js"));
 const Welcome = lazy(() => import("../views/Welcome/Welcome.js"));
+const Audit = lazy(() => import("../views/Audit/Audit.js"));
 
 
 const routes = [
@@ -90,6 +91,10 @@ const routes = [
   {
     path: "/theater/:slug*",
     component: Theater,
+  },
+  {
+    path: "/audit/:key*",
+    component: Audit,
   },
   {
     path: "/studyedition",

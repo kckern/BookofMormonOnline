@@ -1,0 +1,87 @@
+.audit-src img,
+.audit-dst img {
+  width: 2rem;
+}
+
+.audit-src {
+    opacity: 0.3;
+}
+.audit-src, .audit-dst {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  font-size: 2rem;
+  text-align: left;
+  
+}
+
+.audit-controls .btn, .audit-controls .btn {
+  width: calc(100vw / 5);
+  overflow: hidden;
+}
+
+
+.audit-controls .btn.highlight {
+    outline: 3px solid #FFFFFF;
+    filter: brightness(1.1);
+ }
+   
+
+.audit-item
+{
+    background-color: #DDD;
+    flex-direction: column;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+}
+
+.audit-item.saving
+{
+   opacity: 0.5;
+   pointer-events: none;
+   /* no select */
+    user-select: none;
+    /* hourglass */
+    cursor: wait!important;
+}
+
+.keyboardLabel
+{
+    background-color: #FFFFFF55;
+    color: #00000055;
+    padding: 0 1rem;
+    float: right;
+    border-radius: 1ex;
+    opacity: 0.5;
+}
+
+.bomtypes
+{
+    display: flex;
+    flex-wrap: wrap;
+    gap:5px;
+    justify-content: space-around;
+    margin-bottom: 1ex;
+}
+.bomtypes div{
+
+    background-color: #00000033;
+    padding: 0 1em;
+    opacity: 0.3;
+    border-radius: 1em;
+    cursor: pointer;
+    font-size: smaller;
+    letter-spacing: -1px;
+}
+
+.bomtypes div:hover{
+
+    opacity: 1;
+}
+
+.bomtypes div.active{
+
+    opacity: 1;
+    font-weight: bold;
+}
