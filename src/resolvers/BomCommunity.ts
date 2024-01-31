@@ -140,9 +140,10 @@ export default {
       .map((u:any)=>({...u,finished:[u.finished]}));
 
 
-      const sbIds = [...topUsers,...recentFinishesWithUsers].map((u:any)=>u.sbuser);
+      const sbIds = [...recentFinishesWithUsers,...topUsers,].map((u:any)=>u.sbuser).slice(0,100);
 
       const sendbirdUserObjects = await sendbird.listUsers(sbIds);
+
 
       const publicUsers =( await Models.BomUser.findAll({
         raw: true,
@@ -158,12 +159,14 @@ export default {
       }).filter((u:any)=>!!u).slice(0,50).map(maskUserPrivacy).sort((a:any,b:any)=>b.progress-a.progress)
       .filter((u:any)=>!u.isAdmin);
 
+
       const recentFinishers = recentFinishesWithUsers.map((u:any)=>{
         const sendbirdUserObject = sendbirdUserObjects.find((sbu:any)=>sbu.user_id===u.sbuser);
         return loadHomeUser(sendbirdUserObject,u,visibleUsers);
       }).map(maskUserPrivacy).filter((u:any)=>!u?.isAdmin);
 
-      //console.log({currentProgress});
+
+
       return {
         recentFinishers,
         currentProgress,
@@ -587,6 +590,8 @@ async function loadGroupFromChannelId(channelId: string) {
 
 
 function loadHomeUser(sbuser, user:any={}, publicUsers = []) {
+
+  publicUsers = Array.isArray(publicUsers) ? publicUsers : [];
 
   const user_id = sbuser?.user_id || md5(user?.user);
   const picture =  sbuser?.profile_url ||  `https://api.dicebear.com/7.x/personas/svg?seed=${user_id}&eyes=open,sunglasses,wink,happy&facialHair=beardMustache,goatee&facialHairProbability=20&hair=bobCut,curly,long,pigtails,shortCombover,buzzcut,beanie&mouth=smile,smirk,bigSmile&nose=smallRound,mediumRound&skinColor=d78774,b16a5b,eeb4a4,92594b`;
