@@ -7,6 +7,15 @@ import axios from "axios";
 import en from "../_Common/svg/flags/en.svg"
 import vn from "../_Common/svg/flags/vn.svg"
 import ko from "../_Common/svg/flags/kr.svg"
+import swe from "../_Common/svg/flags/swe.svg"
+import fr from "../_Common/svg/flags/fr.svg"
+import de from "../_Common/svg/flags/de.svg"
+import ru from "../_Common/svg/flags/ru.svg"
+import es from "../_Common/svg/flags/es.svg"
+import tgl from "../_Common/svg/flags/tgl.svg"
+
+
+
 import { Button } from "reactstrap";
 import { determineLanguage } from "../../models/Utils";
 import { ApiBaseUrl } from "../../models/BoMOnlineAPI";
@@ -172,9 +181,9 @@ export default function  Audit({appController})
 
     if(!user) return <Loader/>
 
-    return <div className="container" style={{ display: 'block' }}>
-        <h2>Translation Auditor</h2>
-        <p>Review the item(s) below and mark the translations as acceptable or needing revision.</p>
+    return <div className="container" style={{ display: 'block', textAlign: 'center' }}>
+        <h2>Translation Review</h2>
+        <p>Review the item below and mark it as "Good" or "Needs Revision". If unsure, you can skip it for now.</p>
         <div className="bomtypes">{bom_types.map(i=>{
             return <BomType type={i} />
         })}</div>
@@ -257,6 +266,21 @@ function AuditItem({items,setItems, setTable, setRefkey, typeIndex, setTypeIndex
         };
     }, [auditItem]);
 
+const pickFlag = () => {
+    const lang = determineLanguage();
+    switch(lang) {
+        case "en": return en;
+        case "vn": return vn;
+        case "ko": return ko;
+        case "swe": return swe;
+        case "fr": return fr;
+        case "de": return de;
+        case "ru": return ru;
+        case "es": return es;
+        case "tgl": return tgl;
+        default: return en;
+    }}
+
     const {src, dst} = item;
     return <div className={`audit-item ${saving ? "saving" : ""}`}>
     <div className="audit-controls">
@@ -277,7 +301,7 @@ function AuditItem({items,setItems, setTable, setRefkey, typeIndex, setTypeIndex
         </Button>
     </div>
         <div className="audit-dst">
-            <div><img src={ko} alt="Vietnamese" /></div>
+            <div><img src={pickFlag()} alt="Language" /></div>
             <div>{dst}</div>
         </div>
         <div className="audit-src">
