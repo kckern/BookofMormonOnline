@@ -256,6 +256,9 @@
   .readingplan .badge.red{
     background-color: #fb8358;
   }
+  .readingplan .badge.gray{
+    background-color: #00000066;
+  }
 
   .readingplan .progress-bar.green{
     background-color: #6bd098;
