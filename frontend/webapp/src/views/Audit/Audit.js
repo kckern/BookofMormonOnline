@@ -107,7 +107,7 @@ const bom_types = [
 
 
 
-async function loadItems(table,refkey) {
+async function loadItems(table,refkey,user) {
     const isLocalhost = window.location.hostname === "localhost";
     const lang = isLocalhost ? "ko" : determineLanguage();
    
@@ -116,7 +116,8 @@ async function loadItems(table,refkey) {
         action: "list",
         table,
         refkey,
-        lang   
+        lang,
+        user
     });
     return list.data.sort(() => Math.random() - 0.5);
 }
@@ -125,6 +126,7 @@ async function loadItems(table,refkey) {
 export default function  Audit({appController})
 {
 
+    const {user} = appController.states.user;
     const history = useHistory();
     const match = useRouteMatch();
     const {key} = match?.params;
@@ -140,7 +142,7 @@ export default function  Audit({appController})
         const handleClick = () => {
             setTable(type.table);
             setRefkey(type.refkey);
-            loadItems(type.table, type.refkey).then(setItems);
+            loadItems(type.table, type.refkey, user).then(setItems);
             //set history to slug
             history.push(`/audit/${type.slug}`);
         };
@@ -157,7 +159,8 @@ export default function  Audit({appController})
         //console.log("loading items", table, refkey);
         loadItems(
             table,
-            refkey
+            refkey,
+            user
         ).then((items) => {
             //console.log("loaded items", table, refkey,items);
             setItems(items);
@@ -165,7 +168,6 @@ export default function  Audit({appController})
     }, [table, refkey]);
 
 
-    const {user} = appController.states.user;
 
     if(!user) return <Loader/>
 
@@ -176,7 +178,7 @@ export default function  Audit({appController})
             return <BomType type={i} />
         })}</div>
         {items.length === 0 ? <Loader /> :
-         <AuditItem  setItems={setItems} items={items}  setRefkey={setRefkey} setTable={setTable} typeIndex={index} setTypeIndex={setIndex} />}
+         <AuditItem  setItems={setItems} items={items}  setRefkey={setRefkey} setTable={setTable} typeIndex={index} setTypeIndex={setIndex} user={user} />}
     </div>
 }
 async function saveItemAudit({id, score, user}) {
@@ -186,13 +188,13 @@ async function saveItemAudit({id, score, user}) {
         action: "audit",
         id,
         score,
-        user: "admin"
+        user
     });
 
     return await postRequest;
 }
 
-function AuditItem({items,setItems, setTable, setRefkey, typeIndex, setTypeIndex})
+function AuditItem({items,setItems, setTable, setRefkey, typeIndex, setTypeIndex, user})
 {
     const [highlight, setHighlight] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -204,7 +206,7 @@ function AuditItem({items,setItems, setTable, setRefkey, typeIndex, setTypeIndex
         if(status === "skip") score = null;
         setSaving(true);
         setHighlight(status);
-        await saveItemAudit({id, score, user: "admin"}); //This takes no time, why no delay?
+        await saveItemAudit({id, score, user}); //This takes no time, why no delay?
         items[index].done = true;
         setItems([...items]);
         setSaving(false);
@@ -220,7 +222,7 @@ function AuditItem({items,setItems, setTable, setRefkey, typeIndex, setTypeIndex
         setTable(newTable);
         setRefkey(newRefkey);
         setTypeIndex(newIndex);
-        loadItems(newTable, newRefkey).then(setItems);
+        loadItems(newTable, newRefkey, user).then(setItems);
 
     }
 
