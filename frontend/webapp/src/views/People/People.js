@@ -257,7 +257,9 @@ export function PeopleFilters({ appController, setFilter, peopleFilters }) {
       if (tmp[key] === "") tmp[key] = null;
     }
     else tmp[key] = (tmp[key] !== null) ? tmp[key] + val : val;
-    setFilter(tmp);
+    setFilter(prev=>{
+			return tmp;
+		});
   }
 
 
@@ -293,6 +295,18 @@ export function PeopleFilters({ appController, setFilter, peopleFilters }) {
         },
       });
     }
+	
+	useEffect(()=>{
+		if(isMobile() && appController.states.popUp.type === "pFilter"){
+			appController.functions.setPopUp({
+				...appController.states.popUp,
+				popUpData:{
+					filterBox,setFilter, peopleFilters
+				}
+			})
+		}
+	},[peopleFilters,appController.states.popUp.type])
+
   if (isMobile()) return <div className="filterDrawerButton"><Button onClick={handleClick}>{label("filters")}</Button></div>;
 
   return filterBox;
