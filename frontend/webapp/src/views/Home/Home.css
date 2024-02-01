@@ -446,7 +446,12 @@ div.toolTipNickname
     font-weight: 800;
 }
 
-
+.loginGroup
+{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
 
 .loginGroup  .btn > img
 {
