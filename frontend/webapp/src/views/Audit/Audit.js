@@ -1,4 +1,4 @@
-import React, { Suspense, useCallback, useEffect, useState } from "react";
+import React, { Suspense, useCallback, useEffect, useState, useRef } from "react";
 import Loader from "../_Common/Loader";
 import { useRouteMatch, useHistory, Link } from "react-router-dom";
 import "./Audit.css";
@@ -16,7 +16,7 @@ import tgl from "../_Common/svg/flags/tgl.svg"
 
 
 
-import { Button, Card, CardBody } from "reactstrap";
+import { Button, Card, CardBody, CardHeader, Nav, NavItem } from "reactstrap";
 import { determineLanguage } from "../../models/Utils";
 import { ApiBaseUrl } from "../../models/BoMOnlineAPI";
 import SignIn from "../User/SignIn";
@@ -120,7 +120,7 @@ const bom_types = [
 
 async function loadItems(table,refkey,user) {
     const isLocalhost = window.location.hostname === "localhost";
-    const lang = isLocalhost ? "ko" : determineLanguage();
+    const lang = determineLanguage();
    
     const list = await axios.post(`${ApiBaseUrl}/translate`, {
         action: "list",
@@ -146,6 +146,7 @@ export default function  Audit({appController})
     const [items, setItems] = useState([]);
     const [table, setTable] = useState(bom_types[index].table);
     const [refkey, setRefkey] = useState(bom_types[index].refkey);
+    const [editMode, setEditMode] = useState(false);
 
     const BomType = ({ type }) => {
         const isActive = type.table === table && type.refkey === refkey;
@@ -158,9 +159,9 @@ export default function  Audit({appController})
         };
     
         return (
-            <div key={type.slug} className={isActive ? "active" : ""} onClick={handleClick}>
+            <NavItem key={type.slug} className={isActive ? "active" : ""} onClick={handleClick}>
                 {type.label}
-            </div>
+            </NavItem>
         );
     };
 
@@ -193,11 +194,14 @@ export default function  Audit({appController})
     return <div className="container" style={{ display: 'block', textAlign: 'center' }}>
         <h2>Translation Review</h2>
         <p>Review the item below and mark it as "Good" or "Needs Revision". If unsure, you can skip it for now.</p>
-        <div className="bomtypes">{bom_types.map(i=>{
+        <Nav pills className="bomtypes">{bom_types.map(i=>{
             return <BomType type={i} />
-        })}</div>
+        })}</Nav>
         {items.length === 0 ? <Loader /> :
-         <AuditItem  setItems={setItems} items={items}  setRefkey={setRefkey} setTable={setTable} typeIndex={index} setTypeIndex={setIndex} user={user} />}
+         <AuditItem  setItems={setItems} items={items}  setRefkey={setRefkey} setTable={setTable} typeIndex={index} setTypeIndex={setIndex} user={user}
+            setEditMode={setEditMode} editMode={editMode}
+
+         />}
     </div>
 }
 async function saveItemAudit({id, score, user}) {
@@ -214,7 +218,19 @@ async function saveItemAudit({id, score, user}) {
     return await postRequest;
 }
 
-function AuditItem({items,setItems, setTable, setRefkey, typeIndex, setTypeIndex, user})
+async function saveItemEdit({id, dst, user}) {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    const postRequest = axios.post(`${ApiBaseUrl}/translate`, {
+        action: "update",
+        id,
+        value: dst,
+        user
+    });
+    return await postRequest;
+}
+
+
+function AuditItem({items,setItems, setTable, setRefkey, typeIndex, setTypeIndex, user, setEditMode, editMode})
 {
     const [highlight, setHighlight] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -233,9 +249,10 @@ function AuditItem({items,setItems, setTable, setRefkey, typeIndex, setTypeIndex
         setHighlight(false);
     }, [item, index, items, setItems]); // add other dependencies if needed
     
-    const updateTableAndRefKey = () => {
-        const maxIndex = bom_types.length - 1;
-        const newIndex = typeIndex === maxIndex ? 0 : typeIndex + 1;
+    const updateTableAndRefKey = (num) => {
+        num = num > 0 ? 1 : -1; 
+        const maxIndex = bom_types.length;
+        const newIndex = (typeIndex + num + maxIndex) % maxIndex;
         const newItem = bom_types[newIndex];
         const newTable = newItem.table;
         const newRefkey = newItem.refkey;
@@ -243,24 +260,44 @@ function AuditItem({items,setItems, setTable, setRefkey, typeIndex, setTypeIndex
         setRefkey(newRefkey);
         setTypeIndex(newIndex);
         loadItems(newTable, newRefkey, user).then(setItems);
-
     }
 
     useEffect(() => {
         const handleKeyDown = (event) => {
             switch(event.key) {
                 case ' ':
+                    if(editMode) return;
                     auditItem("fail");
                     break;
                 case 'Enter':
+                    if(editMode){
+                        const isShift = event.shiftKey;
+                        if(isShift) return;
+                        event.preventDefault(); // Prevent the default action
+                        document.querySelector("#savebutton").click();
+                        return;
+                    }
                     auditItem("pass");
                     break;
                 case 'Escape':
+                    if(editMode) return setEditMode(false);
                     auditItem("skip");
                     break;
-                case 'Tab':
+                case 'ArrowRight':
+                    if(editMode) return;
                     event.preventDefault(); // Prevent the default action
-                    updateTableAndRefKey(); // Call the function that updates the table and refkey
+                    updateTableAndRefKey(1); // Call the function that updates the table and refkey
+                    break;
+                case 'ArrowLeft':
+                    if(editMode) return;
+                    event.preventDefault(); // Prevent the default action
+                    updateTableAndRefKey(-1); // Call the function that updates the table and refkey
+                    break;
+                case 'Tab':
+                    if(editMode) return;
+                    event.preventDefault(); // Prevent the default action
+                    setEditMode(true);
+                    // EDIT
                     break;
                 default:
                     break;
@@ -274,6 +311,13 @@ function AuditItem({items,setItems, setTable, setRefkey, typeIndex, setTypeIndex
             window.removeEventListener('keydown', handleKeyDown);
         };
     }, [auditItem]);
+
+    useEffect(() => {
+        if(!editMode) return;
+        //focus on the textarea
+        const textarea = document.querySelector("textarea#editor");
+        if(textarea) textarea.focus();
+    }, [editMode]);
 
 const pickFlag = () => {
     const lang = determineLanguage();
@@ -291,35 +335,78 @@ const pickFlag = () => {
     }}
 
     const {src, dst} = itemRules(item);
-    return <div className={`audit-item ${saving ? "saving" : ""}`}>
-    <div className="audit-controls">
+    return <Card className={`audit-item ${saving ? "saving" : ""} ${editMode ? "editMode" : ""}`}>
+    <CardHeader className="audit-controls">
 
     <Button color="info"  onClick={() => auditItem("skip")} className={highlight === "skip" ? "highlight" : ""}>
     ⎋ Skip For Now
             <span className="keyboardLabel">⎋ Esc</span>
         </Button>
 
-        <Button color="danger"  onClick={() => auditItem("fail")} className={highlight === "fail" ? "highlight" : ""}>
-            ❌  Translation Needs Revision
-            <span className="keyboardLabel">⌴ Space</span> 
-        </Button>
+<Button color="danger"  onClick={() => auditItem("fail")} className={highlight === "fail" ? "highlight" : ""}>
+    ❌ • Needs Revision
+    <span className="keyboardLabel">⌴ Space</span> 
+</Button>
+
+    <Button color="warning"  onClick={() => setEditMode(true)} className={highlight === "edit" ? "highlight" : ""}>
+    ✏️ •  Edit 
+        <span className="keyboardLabel">↦ Tab</span> 
+    </Button>
 
         <Button color="success" onClick={() => auditItem("pass")} className={highlight === "pass" ? "highlight" : ""}>
-            ✅ Translation is Good
+            ✅ • GOOD
             <span className="keyboardLabel">↩ Return</span>
         </Button>
-    </div>
+    </CardHeader>
+    <CardBody>
         <div className="audit-dst">
             <div><img src={pickFlag()} alt="Language" /></div>
-            <div>{dst}</div>
+            <div className="dst-content">
+                {editMode ? <>
+                    <Textarea
+                        value={dst}
+                        onChange={(e) => {items[index].dst = e.target.value; setItems([...items])}}
+                    />
+                <Button id="savebutton" color="info" onClick={async () => {
+                    setEditMode(false);
+                    setSaving(true);
+                    const value = document.querySelector("textarea#editor").value;
+                    await saveItemEdit({id: item.id, dst: value, user});
+                    items[index].dst = value;
+                    items[index].done = true;
+                    setItems([...items]);
+                    setSaving(false);
+                }}>Save</Button>
+                </> : dst}
+            </div>
         </div>
         <div className="audit-src">
             <div><img src={en} alt="English" /></div>
             <div>{src}</div>
         </div>
-    </div>
+    </CardBody>
+</Card>
 }
 
+const Textarea = ({ value, onChange }) => {
+    const textareaRef = useRef(null);
+    
+    useEffect(() => {
+      if (textareaRef.current) {
+        textareaRef.current.style.height = 'auto';
+        textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+      }
+    }, [value]);
+  
+    return (
+      <textarea
+        id="editor"
+        ref={textareaRef}
+        value={value}
+        onChange={onChange}
+      />
+    );
+  };
 
 function itemRules (item)
 {
