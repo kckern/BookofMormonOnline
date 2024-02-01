@@ -18,7 +18,7 @@ import tgl from "../_Common/svg/flags/tgl.svg"
 
 import { Button, Card, CardBody, CardHeader, Nav, NavItem } from "reactstrap";
 import { determineLanguage } from "../../models/Utils";
-import { ApiBaseUrl } from "../../models/BoMOnlineAPI";
+import { ApiBaseUrl, assetUrl } from "../../models/BoMOnlineAPI";
 import SignIn from "../User/SignIn";
 
 //"bom_map name gpt-4" "bom_map desc gpt-4" "bom_division description gpt-4" "bom_page title gpt-4" "bom_section title  gpt-4" "bom_connection text  gpt-4" "bom_capsulation description  gpt-4" "bom_label label_text" "bom_people title" "bom_places info" "bom_text heading" "bom_markdown markdown gpt-4"
@@ -42,28 +42,10 @@ const bom_types = [
         refkey: "title",
     },
     {
-        label: "Synopses",
-        slug: "synopses",
-        table: "bom_narration",
-        refkey: "description",
-    },
-    {
         label: "Subheadings",
         slug: "subheadings",
         table: "bom_text",
         refkey: "heading",
-    },
-    {
-        label: "Connections",
-        slug: "connections",
-        table: "bom_connection",
-        refkey: "text",
-    },
-    {
-        label: "Capsulations",
-        slug: "capsulations",
-        table: "bom_capsulation",
-        refkey: "description",
     },
     {
         label: "Divisions",
@@ -83,6 +65,37 @@ const bom_types = [
         table: "bom_people",
         refkey: "title",
     },
+    /*
+    {
+        label: "Map Titles",
+        slug: "map-titles",
+        table: "bom_map",
+        refkey: "name",
+    },
+    {
+        label: "Map Descriptions",
+        slug: "map-descriptions",
+        table: "bom_map",
+        refkey: "desc",
+    }
+    {
+        label: "Synopses",
+        slug: "synopses",
+        table: "bom_narration",
+        refkey: "description",
+    },
+    {
+        label: "Connections",
+        slug: "connections",
+        table: "bom_connection",
+        refkey: "text",
+    },
+    {
+        label: "Capsulations",
+        slug: "capsulations",
+        table: "bom_capsulation",
+        refkey: "description",
+    },
     {
         label: "Place Names",
         slug: "place-names",
@@ -100,20 +113,8 @@ const bom_types = [
         slug: "markdown",
         table: "bom_markdown",
         refkey: "markdown",
-    },
-    {
-        label: "Map Titles",
-        slug: "map-titles",
-        table: "bom_map",
-        refkey: "name",
-    },
-    {
-        label: "Map Descriptions",
-        slug: "map-descriptions",
-        table: "bom_map",
-        refkey: "desc",
     }
-
+    */
 ]
 
 
@@ -436,19 +437,195 @@ function itemRules (item)
 
 function ContextCard({item, table, refkey})
 {
+
+    const [content, setContent] = useState(null);
+    useEffect(() => {
+        if(!item) return;
+        getContext({table, guid: item.guid}).then(setContent);
+    }, [item, table, refkey]);
+
+    if(!content) return null;
+
+    const renderMe = {
+        bom_page: (content) => <PageContext content={content} />,
+        bom_section: (content) => <SectionContext content={content} />,
+        bom_people: (content) => <PeopleContext content={content} slug={item.guid} />,
+        bom_places: (content) => <PlacesContext content={content} />,
+        bom_text: (content) => <TextContext content={content} />,
+    };
+
+    if(content.error) return null;
+
     return <Card className="context-card">
-        <CardHeader>
-            <h5>{table}</h5>
-        </CardHeader>
         <CardBody>
-            <pre>
-                {JSON.stringify([item,{table,refkey}], null, 2)}
-            </pre>
+            {renderMe[table] ? renderMe[table](content) : <pre>{JSON.stringify(content, null, 2)}</pre>}
         </CardBody>
     </Card>
 }
 
+function TextContext({content})
+{
+    const {text_content, text_images, text_people} = content;
+    if(!text_content) return null;
+    return <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+        <div style={{ width: '25%', flexShrink: 0 }}>
+            <h3>Text Content</h3>
+            <p>{text_content}</p>
+        </div>
+        {!!text_images.length && <div style={{ width: '45%', flexShrink: 0 }}>
+            <h3>Text Images</h3>
+            <div style={{ display: 'flex', justifyContent: 'center' , flexWrap: 'wrap'}}>
+                <ContextImagePanel images={text_images} />
+            </div>
+        </div>}
+        <div style={{ maxWidth: '50%'}}>
+            <h3>Text People</h3>
+                <div style={{display: 'flex', justifyContent: 'space-between', flexGrow:1, flexWrap: 'wrap'}}>
+                <ContextPeoplePanel people={text_people} />
+            </div>
+        </div>
+    </div>
+}
 
-async function getContext({table, refkey, guid}) {
+function PeopleContext({content, slug, name})
+{
+    const {people_refs} = content;
+    if(!people_refs) return null;
+    return <div>
+        <h3>People References</h3>
+        <div style={{width: '10rem', float: 'left'}}>
+        <h5>{slug}</h5>
+        <img src={`${assetUrl}/people/${slug}`}  />
+
+        </div>
+        <table style={{textAlign: 'left'}}>
+            <tbody>
+                {people_refs.map((ref, index) => (
+                    <tr key={index} style={{borderBottom: '1px solid #00000022'}}>
+                        <td style={{textAlign: 'right', fontWeight: 'bold', color: '#00000055', paddingRight: '1rem', minWidth: '8rem'
+                    }}>{ref.ref}</td>
+                        <td>{ref.text}</td>
+                    </tr>
+                ))}
+            </tbody>
+        </table>
+    </div>
+}
+function PlacesContext({content})
+{
+    return null;
+
+}
+
+function PageContext ({content})
+{
+    const {section_titles, page_images, page_people} = content;
+    if(!section_titles?.length) return null;
+    return (
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <div style={{ width: '20%', flexShrink: 0 , textAlign: 'left' }}>
+                <h3>Page Sections</h3>
+                <ul style={{fontSize: '1.2rem', textAlign: 'left', fontWeight: 'bold'}}>
+                {section_titles.map((title, index) => (
+                    <li key={index}>{title}</li>
+                ))}
+                </ul>
+            </div>
+            {!!page_images.length && <div style={{ width: '50%', flexShrink: 0 }}>
+                <h3>Page Images</h3>
+                <div style={{ display: 'flex', justifyContent: 'center' , flexWrap: 'wrap'}}>
+                    <ContextImagePanel images={page_images} />
+                </div>
+            </div>}
+            <div style={{ maxWidth: '50%'}}>
+                <h3>Page People</h3>
+                    <div style={{display: 'flex', justifyContent: 'space-between', flexGrow:1, flexWrap: 'wrap'}}>
+                    <ContextPeoplePanel people={page_people} />
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function SectionContext ({content})
+{
+    const {narrations, section_images, section_people} = content;
+    if(!narrations?.length) return null;
+    return <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+        <div style={{ width: '25%', flexShrink: 0 }}>
+            <h3>Section Narrations</h3>
+            <ul style={{fontSize: '1.2rem', textAlign: 'left', fontWeight: 'bold'}}>
+            {narrations.map((narration, index) => (
+                <li key={index}>{narration}</li>
+            ))}
+            </ul>
+        </div>
+        {!!section_images.length && <div style={{ width: '45%', flexShrink: 0 }}>
+            <h3>Section Images</h3>
+            <div style={{ display: 'flex', justifyContent: 'center' , flexWrap: 'wrap'}}>
+                <ContextImagePanel images={section_images} />
+            </div>
+        </div>}
+        <div style={{ maxWidth: '50%'}}>
+            <h3>Section People</h3>
+                <div style={{display: 'flex', justifyContent: 'space-between', flexGrow:1, flexWrap: 'wrap'}}>
+                <ContextPeoplePanel people={section_people} />
+            </div>
+        </div>
+    </div>
+
+
+}
+
+function ContextImagePanel({images})
+{
+    return <>
+        {images.map((image, index) => (
+            <img 
+                src={`${assetUrl}/art/${image}`} 
+                alt={image} 
+                style={{ 
+                    height: '12rem',
+                    width: '12rem',
+                    objectFit: 'cover' 
+                }} 
+            />
+        ))}
+    </>
+}
+
+function ContextPeoplePanel({people})
+{
+    return <>
+        {people.map((person, index) => (
+            <div style={{ width: '50%', outline: '1px solid #00000055',  position: 'relative'}} key={index}>
+            <img src={`${assetUrl}/people/${person.slug}`} alt={person} key={index} style={{width: '100%',}} />
+            <div style={{
+                position: 'absolute',
+                height: '3rem',
+                bottom: '0',
+                background: '#00000055',
+                color: '#fff',
+                width: '100%',
+                textAlign: 'center'
+            }}>
+                <strong>{person.name.replace(/\d+/ig,"")}</strong><br/><small>{person.title}</small>
+            </div>
+        </div>
+        ))}
+    </>
+
+}
+
+
+async function getContext({table, guid}) {
+
+    const context = await axios.post(`${ApiBaseUrl}/translate`, {
+        action: "context",
+        table,
+        guid,
+        lang: determineLanguage()
+    });
+    return context.data;
 
 };
