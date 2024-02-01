@@ -199,7 +199,7 @@ export default function  Audit({appController})
         })}</Nav>
         {items.length === 0 ? <Loader /> :
          <AuditItem  setItems={setItems} items={items}  setRefkey={setRefkey} setTable={setTable} typeIndex={index} setTypeIndex={setIndex} user={user}
-            setEditMode={setEditMode} editMode={editMode}
+            setEditMode={setEditMode} editMode={editMode} table={table} refkey={refkey}
 
          />}
     </div>
@@ -230,7 +230,7 @@ async function saveItemEdit({id, dst, user}) {
 }
 
 
-function AuditItem({items,setItems, setTable, setRefkey, typeIndex, setTypeIndex, user, setEditMode, editMode})
+function AuditItem({items,setItems, setTable, setRefkey, typeIndex, setTypeIndex, user, setEditMode, editMode, table, refkey})
 {
     const [highlight, setHighlight] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -264,6 +264,14 @@ function AuditItem({items,setItems, setTable, setRefkey, typeIndex, setTypeIndex
 
     useEffect(() => {
         const handleKeyDown = (event) => {
+            //check if #savebutton exists in dom
+            const editMode = !!document.querySelector("#savebutton");
+            if(editMode){
+                if(event.key === "Escape") setEditMode(false);
+                if(event.key === "Enter") document.querySelector("#savebutton").click();
+                return;
+            }
+
             switch(event.key) {
                 case ' ':
                     if(editMode) return;
@@ -335,26 +343,26 @@ const pickFlag = () => {
     }}
 
     const {src, dst} = itemRules(item);
-    return <Card className={`audit-item ${saving ? "saving" : ""} ${editMode ? "editMode" : ""}`}>
+    return <><Card className={`audit-item ${saving ? "saving" : ""} ${editMode ? "editMode" : ""}`}>
     <CardHeader className="audit-controls">
 
     <Button color="info"  onClick={() => auditItem("skip")} className={highlight === "skip" ? "highlight" : ""}>
-    ⎋ Skip For Now
+    ⎋{"\u2003"} Skip For Now
             <span className="keyboardLabel">⎋ Esc</span>
         </Button>
 
 <Button color="danger"  onClick={() => auditItem("fail")} className={highlight === "fail" ? "highlight" : ""}>
-    ❌ • Needs Revision
+    ❌ {"\u2003"} Needs Revision
     <span className="keyboardLabel">⌴ Space</span> 
 </Button>
 
     <Button color="warning"  onClick={() => setEditMode(true)} className={highlight === "edit" ? "highlight" : ""}>
-    ✏️ •  Edit 
+    ✏️ {"\u2003"}  Edit 
         <span className="keyboardLabel">↦ Tab</span> 
     </Button>
 
         <Button color="success" onClick={() => auditItem("pass")} className={highlight === "pass" ? "highlight" : ""}>
-            ✅ • GOOD
+            ✅ {"\u2003"} GOOD
             <span className="keyboardLabel">↩ Return</span>
         </Button>
     </CardHeader>
@@ -386,6 +394,8 @@ const pickFlag = () => {
         </div>
     </CardBody>
 </Card>
+<ContextCard item={item} table={table} refkey={refkey} />
+</>
 }
 
 const Textarea = ({ value, onChange }) => {
@@ -422,3 +432,23 @@ function itemRules (item)
 
     return item;
 }
+
+
+function ContextCard({item, table, refkey})
+{
+    return <Card className="context-card">
+        <CardHeader>
+            <h5>{table}</h5>
+        </CardHeader>
+        <CardBody>
+            <pre>
+                {JSON.stringify([item,{table,refkey}], null, 2)}
+            </pre>
+        </CardBody>
+    </Card>
+}
+
+
+async function getContext({table, refkey, guid}) {
+
+};
