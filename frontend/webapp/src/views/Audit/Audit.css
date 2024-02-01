@@ -108,3 +108,12 @@ textarea#editor
     margin: 0;
     font-size: 1rem;
 }
+
+.context-card h3{
+    font-weight: 800;
+    font-size: 1.5rem;
+    text-align: center;
+    margin:0;
+    margin-bottom: 1ex;
+    border-bottom: 1px solid #00000033;
+}
