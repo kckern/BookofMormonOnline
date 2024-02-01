@@ -11,12 +11,11 @@ import logo from "src/views/_Common/svg/logo.svg";
 export default function WelcomeUnShaken({appController})
 {
 
-    const groupId = "163262f02963f4437e3085c12996090e";
     return   <div id="page" className="welcome">
         <HeroBanner />
         <div  className="welcome-content" >
             <ShowCasePanels />
-            <CommunityFeed groupId={groupId} appController={appController} />
+            <CommunityFeed appController={appController} />
         </div>
     </div>
             
@@ -38,7 +37,7 @@ function HeroBanner()
     </div>
 }
 
-function CommunityFeed({groupId, appController})
+function CommunityFeed({ appController})
 {
     return <div className="community-feed" >
         <ReadingPlan appController={appController} slug={"cfm2024"} />

@@ -69,7 +69,11 @@ const routes = [
     component: Contents,
   },
   {
-    path: "/welcome/:welcomeId",
+    path: "/welcome",
+    component: Welcome,
+  },
+  {
+    path: "/welcome/:welcomeId+",
     component: Welcome,
   },
   {
