@@ -125,7 +125,7 @@ function ShowCasePanel({title, video, link, isActive})
         </CardHeader>
         <CardBody className="showcase-panel-body">
         <video 
-						id={`video-${video}`}
+			id={`video-${video}`}
             style={{  
                  objectFit: 'cover',
                  objectPosition: 'top center',
@@ -133,6 +133,7 @@ function ShowCasePanel({title, video, link, isActive})
                 }} 
             loop 
             muted   
+            playsInline={true}
             src={`${assetUrl}/video/welcome/${video || "skim"}`}
         />
         </CardBody>
