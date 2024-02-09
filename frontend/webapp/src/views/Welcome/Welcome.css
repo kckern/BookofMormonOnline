@@ -170,4 +170,10 @@
     {
         min-height: 20rem;
     }
+    .welcome .showcase-panel {
+        flex: 1 0 40%; /* This will force 3 columns. Adjust the percentage as needed. */
+        height: calc(50%);
+        opacity: 0.8;filter: brightness(0.5);
+        transition: all 0.5s ease-in-out;
+    }
 }
