@@ -1,4 +1,5 @@
 import { lazy } from "react";
+import { determineLanguage } from "./Utils.js";
 // COMPONENTS
 const About = lazy(() => import("../views/About/About.js"));
 const KRSEB = lazy(() => import("../views/About/KRSEB.js"));
@@ -24,12 +25,14 @@ const Theater = lazy(() => import("../views/Theater/Theater.js"));
 const Welcome = lazy(() => import("../views/Welcome/Welcome.js"));
 const Audit = lazy(() => import("../views/Audit/Audit.js"));
 
+const lang = determineLanguage();
+
 
 const routes = [
   {
     exact: true,
     path: "/",
-    component: Home,
+    component: (!lang || lang === "en") ? Welcome : Home,
   },
   {
     exact: true,
