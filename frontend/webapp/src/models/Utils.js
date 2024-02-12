@@ -15,7 +15,7 @@ const { detectReferences, setLang, lookupReference, generateReference} = require
 
 export function determineLanguage() {
   const isLocalhost = window.location.host.includes("localhost");
-  if(isLocalhost) return "vn";
+  if(isLocalhost) return "fr";
   let subdomain = window.location.host.split(".").shift();
   let tld = window.location.host.split(".").pop();
   let aliases = {
@@ -873,7 +873,7 @@ function replaceURLWithHTMLLinks(text) {
   const urls = text.match(exp) || [];
 
   const lang = determineLanguage();
-  if(["ko"].includes(lang)) setLang(lang);
+  if(["ko","fr","vn","de"].includes(lang)) setLang(lang);
 
   let scriptures = [];
   html = detectReferences(html, (scripture) => {

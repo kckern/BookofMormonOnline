@@ -36,3 +36,67 @@
 
     background-color: yellow;
 }
+
+
+
+.grid
+{
+    position: relative;
+    height: calc(100vh - 130px);
+
+}
+
+.gridTable{
+    width: 80%;
+    height: 100%;
+
+}
+
+.leftHeader
+{
+    /* vertical tet */
+    writing-mode: vertical-rl;
+    /* reverse text */
+    transform: scale(-1);
+    text-align: center  ;
+    width: 2rem;
+}
+.leftHeaders
+{
+    width: 2rem;
+    padding: 1ex;
+    text-align: right;
+    font-weight: bold;
+}
+
+.gridTable thead
+{
+    font-weight: bold;
+    text-align: center;
+}
+
+
+
+
+.leftHeaders, .topHeaders
+{
+    background-color: #00000033;
+    padding: 1ex;
+    border: 1px solid black;
+    cursor: pointer;
+}
+.leftHeaders:hover, .topHeaders:hover{
+    background-color: #00000066;
+    color: white;
+}
+
+.gridCell
+{
+    height: calc(100%);
+    width: calc(100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+}
+
