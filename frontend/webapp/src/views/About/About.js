@@ -42,15 +42,13 @@ function About() {
   useEffect(() => {
     BoMOnlineAPI({ markdown: items }, { useCache: false })
       .then((result) => {
-        setAboutPageData(result.markdown);
+        setAboutPageData(result?.markdown);
 
       })
   }, [])
 
 
   if (!aboutPageData) return <Loader />;
-
-
 
 
   let cards = (match.params.value === "tos") ? <Card>
@@ -70,47 +68,35 @@ function About() {
       columnClassName="my-masonry-grid_column"
     ><Card>
         <CardBody>
-          <img src={what} />
-          <ReactMarkdown>{aboutPageData.what.markdown}</ReactMarkdown>
+          <CardContent img={<img src={bom} />} markdown={aboutPageData.what.markdown} />
         </CardBody>
       </Card>
 
       <Card>
         <CardBody>
-          <img src={why} />
-          <ReactMarkdown>{aboutPageData.why.markdown}</ReactMarkdown>
+          <CardContent img={<img src={why} />} markdown={aboutPageData.why.markdown} />
+        </CardBody>
+      </Card>
+      <Card>
+        <CardBody>
+          <CardContent img={<img src={contribute} />} markdown={aboutPageData.contribute.markdown} />
+        </CardBody>
+      </Card>
+      <Card>
+        <CardBody>
+          <CardContent img={<img src={contact} />} markdown={aboutPageData.contact.markdown} />
         </CardBody>
       </Card>
 
       <Card>
         <CardBody>
-          <img src={disclaimer} />
-          <ReactMarkdown>{aboutPageData.disclaimer.markdown}</ReactMarkdown>
+          <CardContent img={<img src={who} />} markdown={aboutPageData.who.markdown} />
         </CardBody>
       </Card>
 
       <Card>
         <CardBody>
-          <img src={who} />
-          <ReactMarkdown linkTarget={'_blank'}>{aboutPageData.who.markdown}</ReactMarkdown>
-        </CardBody>
-      </Card>
-      <Card>
-        <CardBody>
-          <img src={official} />
-          <ReactMarkdown>{aboutPageData.official.markdown}</ReactMarkdown>
-        </CardBody>
-      </Card>
-      <Card>
-        <CardBody>
-          <img src={contribute} />
-          <ReactMarkdown>{aboutPageData.contribute.markdown}</ReactMarkdown>
-        </CardBody>
-      </Card>
-      <Card>
-        <CardBody>
-          <img src={contact} />
-          <ReactMarkdown linkTarget={'_blank'}>{aboutPageData.contact.markdown}</ReactMarkdown>
+          <CardContent img={<img src={disclaimer} />} markdown={aboutPageData.disclaimer.markdown} />
         </CardBody>
       </Card>
       </Masonry>;
@@ -125,4 +111,18 @@ function About() {
   );
 }
 
+
+function CardContent({img, markdown}){
+
+  const lines = (markdown||"")?.split("\n");
+  const firstLine = lines.shift().replace(/#+/g, "").trim();
+  const rest = lines.join("\n").trim();
+
+  return <div>
+    <h3>{img}
+    <span>{firstLine}</span>
+    </h3>
+    <ReactMarkdown>{rest}</ReactMarkdown>
+  </div>
+}
 export default About;
