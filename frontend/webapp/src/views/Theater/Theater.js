@@ -88,7 +88,10 @@ function TheaterWrapper({ appController }) {
     parseFloat(localStorage.getItem("playbackRate")) || 1
   );
 	const [playbackVolume, setPlaybackVolume] = useState(
-    parseFloat(localStorage.getItem("playbackVolume") || 1).toFixed(1)
+    +parseFloat(localStorage.getItem("playbackVolume") || 1).toFixed(1)
+  );
+	const [playbackMusicVolume,setPlaybackMusicVolume] =useState(
+    +parseFloat(localStorage.getItem("playbackMusicVolume") || 0.2).toFixed(1)
   );
 	const [isMuted,setIsMuted] = useState((localStorage.getItem("playbackMuted")==='true'?true:false) || false);
   const token = appController.states.user.token;
@@ -166,6 +169,7 @@ function TheaterWrapper({ appController }) {
     cycleVolume: () => {
       const player = document.getElementById("theater-audio-player");
       const volume = player.volume;
+			console.log('Volume',volume);
       if (volume === 0.2) player.volume = 0.4;
       if (volume === 0.4) player.volume = 0.6;
       if (volume === 0.6) player.volume = 0.8;
@@ -199,6 +203,8 @@ function TheaterWrapper({ appController }) {
     isPlaying,
 		playbackVolume,
 		setPlaybackVolume,
+		playbackMusicVolume,
+		setPlaybackMusicVolume,
     playbackRate,
     cursorChangeWasManual,
     setPlaybackRate,
@@ -996,7 +1002,7 @@ function TheaterControls({ theaterController, visible }) {
 
 function TheatherMusicPlayer({ theaterController }) {
 
-  const { queue, cursorIndex,playbackVolume,isMuted } = theaterController;
+  const { queue, cursorIndex,playbackVolume,playbackMusicVolume, isMuted } = theaterController;
   const currentItem = queue[cursorIndex] || null;
   const nextItem = queue[cursorIndex + 1] || null;
   const currentSection = currentItem?.parent_section?.title || null;
@@ -1092,7 +1098,7 @@ function TheatherMusicPlayer({ theaterController }) {
     <ReactAudioPlayer
       id="theater-music-player-a"
       src={`${assetUrl}/audio/music/${trackA}`}
-      volume={0.1}
+      volume={playbackMusicVolume}
 			muted={isMuted}
       onCanPlay={()=>{
         const isPLaying = document.getElementById(`theater-music-player-a`)?.paused;
@@ -1105,7 +1111,7 @@ function TheatherMusicPlayer({ theaterController }) {
     <ReactAudioPlayer
       id="theater-music-player-b"
       src={`${assetUrl}/audio/music/${trackB}`}
-      volume={0.1}
+      volume={playbackMusicVolume}
 			muted={isMuted}
       onCanPlay={()=>{
         const isPLaying = document.getElementById(`theater-music-player-a`)?.paused;
@@ -1382,9 +1388,10 @@ function TheaterProgressBar({ theaterController }) {
 }
 
 function PlaybackSettings({setShowPlaybackSettings,theaterController}){
-	const {playbackRate,setPlaybackRate,playbackVolume,setPlaybackVolume,toggleMusic,isMuted}=theaterController;
+	const {playbackRate,setPlaybackRate,playbackVolume,setPlaybackVolume,playbackMusicVolume,setPlaybackMusicVolume,toggleMusic,isMuted}=theaterController;
 	const inputRef = useRef(null);
 	const handleInput = (e)=>{
+		console.log('e.target.id',e.target.id);
 			if(e.target.id === 'speedInput'){
 				setPlaybackRate(() => {
 					localStorage.setItem("playbackRate", +e.target.value);
@@ -1392,13 +1399,21 @@ function PlaybackSettings({setShowPlaybackSettings,theaterController}){
 					document.getElementById("theater-audio-player").playbackRate = +e.target.value;
 					return parseFloat((+e.target.value||1).toFixed(1)); // keeping it in float with one decimal point
 				});
-			}else{
+			}else if(e.target.id === "volumeInput"){
 				setPlaybackVolume(() => {
 					localStorage.setItem("playbackVolume", +e.target.value);
 					if(!document.getElementById("theater-audio-player")) return;
 					document.getElementById("theater-audio-player").volume = +e.target.value;
 					return parseFloat((+e.target.value).toFixed(1)); // keeping it in float with one decimal point
 				});
+			}else if(e.target.id === 'musicVolumeInput'){
+				setPlaybackMusicVolume(() => {
+          localStorage.setItem("playbackMusicVolume", +e.target.value);
+          if(!document.getElementById("theater-music-player-a") && !document.getElementById("theater-music-player-a")) return;
+          document.getElementById("theater-music-player-a").volume = +e.target.value;
+          document.getElementById("theater-music-player-a").volume = +e.target.value;
+          return parseFloat((+e.target.value).toFixed(1)); // keeping it in float with one decimal point
+        });
 			}
 	}
 	const handleKeyInput = (e)=>{
@@ -1430,7 +1445,16 @@ function PlaybackSettings({setShowPlaybackSettings,theaterController}){
 
     <div className="playback-volume-input">
             <input type="range" id="volumeInput" min="0" max="1.0" value={playbackVolume} step="0.2" onChange={handleInput}/>
-        </div>
+    </div>
+		<hr/>
+		<div className="theater-config-container">
+        <div className="playback-music-volume-label">{label("playback_music_volume")}:</div>
+        <div className="theater-config-value">{playbackMusicVolume*100}%</div>
+    </div>
+
+    <div className="playback-music-volume-input">
+            <input type="range" id="musicVolumeInput" min="0" max="1.0" value={playbackMusicVolume} step="0.2" onChange={handleInput}/>
+    </div>
     <hr/>
     <div className="theater-config-container">
         <div className="background-music-label">{label("background_music")}:</div>
