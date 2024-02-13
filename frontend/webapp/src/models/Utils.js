@@ -15,7 +15,7 @@ const { detectReferences, setLang, lookupReference, generateReference} = require
 
 export function determineLanguage() {
   const isLocalhost = window.location.host.includes("localhost");
-  if(isLocalhost) return "ko";
+  if(isLocalhost) return "en";
   let subdomain = window.location.host.split(".").shift();
   let tld = window.location.host.split(".").pop();
   let aliases = {
