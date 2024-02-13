@@ -32,6 +32,7 @@ export default function Comments({
   highlights,
   removeHighlight,
   setCommentHighlights,
+  commentaryIds,
   isQuote = false,
 }) {
   const inputRef = useRef(null);
@@ -184,6 +185,7 @@ export default function Comments({
         setThreadInputVal={setThreadInputVal}
         appController={appController}
         inputRef={inputRef}
+        commentaryIds={commentaryIds}
       />
     </>
   );
@@ -265,6 +267,7 @@ export default function Comments({
         replyToMessage={replyToMessage}
         threadHash={threadHash}
         isQuote={isQuote}
+        commentaryIds={commentaryIds}
         removeHighlight={removeHighlight}
         setCommentHighlights={setCommentHighlights}
       />
@@ -353,6 +356,7 @@ export function CommentInput({
   threadInputVal,
   appController,
   inputRef,
+  commentaryIds
 }) {
   //useEffect(()=>document.getElementById(threadHash).focus(),[]);
   const [showTagList, setShowTagList] = useState(false);
@@ -546,11 +550,39 @@ function MessageList({
   pageController,
   removeHighlight,
   isQuote,
+  commentaryIds,
 }) {
   if (!parentMessage) return null;
 
+const commentaryComments = Object.keys(pageController.pageComments?.com || {})
+.map(messageId => { 
+  const msg =  pageController.pageComments.com[messageId]; 
+  const message = msg?.message;
+  const data = msg?.data ? JSON.parse(msg.data) : {}; 
+  const comId = data?.links?.com; if(!(commentaryIds||[]).includes(comId.toString())) return null; 
+  return {message, comId, highlights: data.highlights,msg} 
+}).filter(x => !!x);
+
+  const commentaryCommentsUI = commentaryComments.map((comment, i) => {
+    const { message, comId, highlights, msg } = comment;
+
+    msg.message  = `${window.location.origin}/commentary/${comId} \n ${msg.message}`;
+
+    return <SingleComment
+      key={msg.messageId}
+      message={msg}
+      pageController={pageController}
+      replyToMessage={replyToMessage}
+      threadHash={threadHash}
+      setCommentHighlights={setCommentHighlights}
+      appController={appController}
+      removeHighlight={removeHighlight}
+      isQuote={isQuote}
+    />});
+
   return (
     <>
+       {commentaryCommentsUI}
       <SingleComment
         key={parentMessage.messageId}
         pageController={pageController}
@@ -674,7 +706,6 @@ function ThreadedMessages({
 
   if (!replyCount) return null;
   if (replyCount < 3 && !expanded) expand(true);
-
   if (expanded) {
     if (threadedMessages.length > 0) {
       const messages = threadedMessages.map((m, index) => {
@@ -728,7 +759,7 @@ function SingleComment({
 }) {
   let data = useMemo(() => {
     return message.data ? JSON.parse(message.data) : { links: {} };
-  }, [message.data]);
+  }, [message?.data]);
 
   const [isEditMessage, setEditMessage] = useState(false);
   const [highlights, setCommentHighlights] = useState(data && data.highlights);
@@ -783,7 +814,7 @@ function SingleComment({
   }
   let messageText = formatText(message, appController, true);
 
-  let content = <div className="contenttext">{ParseMessage(messageText)}</div>;
+  let content = <div className="contenttext">{ParseMessage(messageText,appController)}</div>;
   if (message.message === "•") content = null;
 
   const handleMouseEnter = () => {

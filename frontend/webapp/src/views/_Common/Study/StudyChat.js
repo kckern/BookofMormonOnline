@@ -1678,7 +1678,7 @@ function Message({
 
   if (message.customType === "formatted_comment") {
     if (typeof messageText !== "object") {
-      messageText = ParseMessage(messageText);
+      messageText = ParseMessage(messageText,appController);
     }
   }
   return !isEdit ? (
@@ -1688,7 +1688,7 @@ function Message({
       onMouseLeave={handleMouseLeave}
     >
       {highlightTags}
-      {ParseMessage(messageText)} {likes}
+      {ParseMessage(messageText,appController)} {likes}
     </div>
   ) : message.customType === "formatted_comment" ? (
     <div

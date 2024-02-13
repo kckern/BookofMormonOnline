@@ -15,7 +15,11 @@ const { detectReferences, setLang, lookupReference, generateReference} = require
 
 export function determineLanguage() {
   const isLocalhost = window.location.host.includes("localhost");
+<<<<<<< Updated upstream
   if(isLocalhost) return "fr";
+=======
+  if(isLocalhost) return "en";
+>>>>>>> Stashed changes
   let subdomain = window.location.host.split(".").shift();
   let tld = window.location.host.split(".").pop();
   let aliases = {
@@ -638,7 +642,9 @@ export function playSound(sound) {
 }
 
 export function formatText(message, setPanel, appController, isSection) {
-  if (message.length === 0) return false;
+  if (message.length === 0 ) return false;
+  const messgeIsString = typeof message === "string";
+  if(messgeIsString) return ParseMessage(message,appController);
   if (message.mentionedUsers.length > 0) {
     let newText = message.message;
     message.mentionedUsers.forEach((mentionUser) => {
@@ -675,7 +681,7 @@ export function formatText(message, setPanel, appController, isSection) {
       },
     });
   } else {
-    return ParseMessage(message.message);
+    return ParseMessage(message.message,appController);
   }
 }
 
@@ -776,6 +782,9 @@ function CommentaryPreview({url,appController}){
   const text = Parser(html);
 
   const popUpCommentary = () => {
+
+  if(!appController?.functions) debugger;
+  
     appController.functions.setPopUp({
       type: "commentary",
       underSlug: window.location.href.replace(/^.*?\/\/.*?\//, ""),

@@ -283,7 +283,7 @@ function HomeFeedItem({
         </CardHeader>
         <CardBody className="homeFeedBody">
           {item.msg === "•" ? null : (
-            <div className="itemMsg"><MessageMedia item={item} /> {ParseMessage(item.msg || "")}</div>
+            <div className="itemMsg"><MessageMedia item={item} /> {ParseMessage(item.msg || "",appController)}</div>
           )}
         
           <ContentInFeed

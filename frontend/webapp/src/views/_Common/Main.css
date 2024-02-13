@@ -4834,18 +4834,22 @@ div a.scripture_link:hover
 {
   display: flex;
   border: 3px double #00000011;
-  background-color: #FAFAFA;
+  background-color: #EEE;
+  color:#666;
   border-radius: 1rem;
   padding: 1rem;
+  margin: 1ex 0;
   margin-bottom: 1ex;
   cursor: pointer;
+  max-height: 12rem;
+  overflow: hidden;
 
 }
 
 
 .commentaryPreview img
 {
-  height: 10rem;
+  height: 6rem;
   flex-shrink: 0;
   margin-right: 1rem;
   outline: 1px solid black;
@@ -4867,6 +4871,8 @@ div a.scripture_link:hover
   font-weight: bold;
   text-align: center;
   font-size: 1.1rem;
+  line-height: 100%;
+  margin-bottom: 1ex;
 }
 .commentaryPreviewContentText
 {
