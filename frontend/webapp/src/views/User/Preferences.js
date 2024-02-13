@@ -229,7 +229,7 @@ export default function User({ appController }) {
 
                 <Publications appController={appController} pubs={pubs} toggleCommentary={toggleCommentary}/>
 
-                {lang==="en" && <><hr/><h5 className="title">
+                {(!lang || lang==="en") && <><hr/><h5 className="title">
                     <Label className="fax_select"><img src={facsimiles} />
                         {label("facsimiles")}
                         <Switch
@@ -258,7 +258,6 @@ function Publications({appController,pubs,toggleCommentary}){
 
     const [showControversial, setShowControversial] = useState(false);
 
-    if(!appController.states.preferences.commentary.on) return false;
     if(!pubs) return false;
 
     let gpubs = pubs.filter(p=>p.props.rating!=="R");
@@ -270,6 +269,9 @@ function Publications({appController,pubs,toggleCommentary}){
     <div className={"publicationCards"}>{rpubs}</div></> : null;
 
     if(!gpubs.length && !rpubs.length) return false;
+
+
+    const isOn = !!appController.states.preferences.commentary.on
 
     return   <>
     
@@ -288,8 +290,7 @@ function Publications({appController,pubs,toggleCommentary}){
                     </Label>
                 </h5>
     
-                <div className={"publicationCards"}>{gpubs}</div>
-
+                {isOn && <><div className={"publicationCards"}>{gpubs}</div>
                     {rpubs.length && <h5 className="title">
                     <Label className="fax_select"><img src={commentary} />
                         {label("controversial_commentaries")}
@@ -303,11 +304,8 @@ function Publications({appController,pubs,toggleCommentary}){
                         />
                     </Label>
                 </h5>}
-    
-    {showControversial ? controversial : <>
-    
-    
-    </> }
+                {showControversial ? controversial : <></> }
+                </>}
 
     </>
 
