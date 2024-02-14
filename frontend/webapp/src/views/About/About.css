@@ -39,8 +39,13 @@
 .about .card-body img{
     height: 1.5em;
     width: 1.5em;
-    float: left;
     margin: .7ex;
     opacity: 0.5;
     margin-right: 1em;
+}
+
+.about .card-body h3{
+    display: flex;
+    align-items: center;
+    line-height: 100%;
 }
