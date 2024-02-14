@@ -134,4 +134,32 @@
     padding-bottom: 1ex;
     font-size: smaller;
     color: #888;
+    text-align: center;
+}
+
+
+.teaser{
+    margin: 0 10%;
+    background-color: #E4E4E4;
+    padding: 1rem;
+    line-height: 100%;
+    border-radius: 1rem;
+    color: #888;
+    margin-bottom: 1em;
+    border: 1px solid #CCC;
+
+}
+.teaser p{
+    margin: 0;
+
+}
+.teaser p:first-child{
+    margin-bottom: 1ex;
+    font-style: italic;
+    text-align: center;
+    padding-bottom: 1ex;
+    border-bottom: 1px dashed #CCC;
+}
+.teaser ul{
+    margin: 0;
 }
