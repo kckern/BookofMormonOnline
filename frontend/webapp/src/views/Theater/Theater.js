@@ -91,7 +91,7 @@ function TheaterWrapper({ appController }) {
     +parseFloat(localStorage.getItem("playbackVolume") || 1).toFixed(1)
   );
 	const [playbackMusicVolume,setPlaybackMusicVolume] =useState(
-    +parseFloat(localStorage.getItem("playbackMusicVolume") || 0.2).toFixed(1)
+    +parseFloat(localStorage.getItem("playbackMusicVolume") || 0.1).toFixed(1)
   );
 	const [isMuted,setIsMuted] = useState((localStorage.getItem("playbackMuted")==='true'?true:false) || false);
   const token = appController.states.user.token;
@@ -1444,18 +1444,22 @@ function PlaybackSettings({setShowPlaybackSettings,theaterController}){
     </div>
 
     <div className="playback-volume-input">
-            <input type="range" id="volumeInput" min="0" max="1.0" value={playbackVolume} step="0.2" onChange={handleInput}/>
+            <input type="range" id="volumeInput" min="0" max="1.0" value={playbackVolume} step="0.1" onChange={handleInput}/>
     </div>
 		<hr/>
+
+	{!isMuted && 
+		<>
 		<div className="theater-config-container">
         <div className="playback-music-volume-label">{label("playback_music_volume")}:</div>
         <div className="theater-config-value">{playbackMusicVolume*100}%</div>
     </div>
-
-    <div className="playback-music-volume-input">
-            <input type="range" id="musicVolumeInput" min="0" max="1.0" value={playbackMusicVolume} step="0.2" onChange={handleInput}/>
+		<div className="playback-music-volume-input">
+        <input type="range" id="musicVolumeInput" min="0" max="1.0" value={playbackMusicVolume} step="0.1" onChange={handleInput}/>
     </div>
     <hr/>
+		</>}
+
     <div className="theater-config-container">
         <div className="background-music-label">{label("background_music")}:</div>
         <div><Switch 
