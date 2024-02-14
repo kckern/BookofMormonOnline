@@ -168,3 +168,55 @@
 {
     font-size: 1rem;
 }
+
+.thumbbox
+{
+    position: relative;
+}
+
+
+.thumbbox .thumb_teaser
+{
+    position: absolute;
+    top:0;
+    bottom: 0;
+    overflow: hidden;
+    background-color: #000000AA;
+    color:white;
+    padding: 1rem;
+    line-height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    opacity: 0.1;
+    padding-top: 1rem;
+    transition: opacity 0.5s;
+}
+.thumbbox .thumb_teaser ul {
+    margin: 0;
+    padding: 0;
+    color: #EEE;
+    text-align: justify;
+    overflow: hidden;
+}
+.thumbbox .thumb_teaser ul li{
+    display: inline;
+    font-size: smaller;
+}
+
+.thumbbox .thumb_teaser ul li:not(:first-child)::before {
+    content: " • ";
+}
+
+.thumbbox .thumb_teaser p
+{
+    font-weight: bold;
+}
+
+.thumbbox .thumb_teaser p:nth-child(2){
+   display: none;
+}
+
+.historycard:hover .thumb_teaser{
+    opacity: 1;
+}

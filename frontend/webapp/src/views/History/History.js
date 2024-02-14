@@ -111,7 +111,9 @@ function History({ appController }) {
             popUpData: doc,
             vhtop: 10,
             underSlug: `history/${match.params.slug?.substr(0,4) || dateFilter}`,
-          })}>
+          })}
+            className='historycard'
+          >
             <CardHeader className="text-left">
               <div className='sourcebox'>
                 <div className='pub'>{doc.source}</div>
@@ -119,7 +121,10 @@ function History({ appController }) {
               </div>
 
             </CardHeader>
+            <div className='thumbbox'>
             <img key={doc.id} src={`${assetUrl}/history/thumbs/${doc.id}`} />
+            <div className='thumb_teaser'>{Parser(doc.teaser)}</div>
+            </div>
             <h5>{doc.document}</h5>
             <div className='citation'>{Parser(doc.citation + "")}</div>
             <CardBody>
