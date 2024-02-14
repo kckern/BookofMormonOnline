@@ -544,6 +544,7 @@ function History({ appController }) {
         <div id="my-tab-content" className="tab-content ">
           <div className="tab-pane active " id="home" role="tabpanel">
             <h3>{doc.document}</h3>
+            <div className="teaser"> {Parser(doc.teaser)}</div>
             <div className="transcript"> {Parser(doc.transcript)}</div>
 
             <div className="history_fax">
