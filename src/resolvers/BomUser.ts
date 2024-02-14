@@ -339,7 +339,8 @@ export default {
           .update(args.password)
           .digest('hex'),
         zip: args.zip,
-        lang: lang
+        lang: lang || "en",
+        created_at: Sequelize.fn('NOW')
       })
         .then((myUser: any) => {
           if (!myUser) {

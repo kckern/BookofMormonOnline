@@ -61,6 +61,11 @@ export default class _bom_user extends ModelBase {
           type: DataTypes.INTEGER,
           allowNull: true
         },
+        created_at: { //datetime
+          type: DataTypes.DATE,
+          allowNull: true
+        },
+
       }, {
       sequelize,
       tableName: 'bom_user',
