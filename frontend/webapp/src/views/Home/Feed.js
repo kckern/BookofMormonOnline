@@ -293,6 +293,7 @@ function HomeFeedItem({
           />
         </CardBody>
         <Comments
+					loadCommentsFromAPI={loadCommentsFromAPI}
           fetchComments={fetchComments}
           appController={appController}
           comments={comments}
@@ -522,7 +523,7 @@ function Comments({ appController, comments, count, item, group, memberMap, sbCh
   if (!thread.length && item.replycount) {
     thread = <div className="commentThreadItem">
       <div className="buttonRow loadComments">
-      <Button onClick={() => loadCommentsFromAPI()}>{label(fetching ? "load" : "load_x_comments",[count])}</Button>
+      <Button onClick={loadCommentsFromAPI}>{label(fetching ? "load" : "load_x_comments",[count])}</Button>
       </div>
     </div>
   }
