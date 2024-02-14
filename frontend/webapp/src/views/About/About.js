@@ -99,6 +99,14 @@ function About() {
           <CardContent img={<img src={disclaimer} />} markdown={aboutPageData.disclaimer.markdown} />
         </CardBody>
       </Card>
+      <Card>
+        <CardBody>
+          <CardContent img={<img src={disclaimer} />} markdown={aboutPageData.official.markdown} />
+        </CardBody>
+      </Card>
+
+
+
       </Masonry>;
 
   return (
@@ -122,7 +130,7 @@ function CardContent({img, markdown}){
     <h3>{img}
     <span>{firstLine}</span>
     </h3>
-    <ReactMarkdown>{rest}</ReactMarkdown>
+    <ReactMarkdown linkTarget={'_blank'}>{rest}</ReactMarkdown>
   </div>
 }
 export default About;
