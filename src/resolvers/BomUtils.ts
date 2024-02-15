@@ -1,6 +1,7 @@
 import { sendbird } from '../library/sendbird';
 import { models as Models } from '../config/database';
 import dotenv from 'dotenv';
+import { generateReference, setLang } from 'scripture-guide';
 dotenv.config();
 const logger = require("../library/utils/logger.cjs");
 const log = (msg:any,obj?:any) => obj ? logger.info(`utils ${msg} ${JSON.stringify(obj)}`) : logger.info(`utils ${msg}`);
@@ -46,6 +47,7 @@ export default {
       return [null];
     },
     search: async (root: any, args: any, context: any, info: any) => {
+      context.lang = context.lang.replace(/%[0-9A-F]{2}/gi, '');
       const lang = context.lang ? context.lang : null;
 
 
@@ -58,11 +60,15 @@ export default {
         AND version IN ('${versions.join(`','`)}')
         LIMIT 99999999 ;`;
 
+        const isEnglish = !lang || lang === 'en' || lang === 'eng' || lang === 'dev';
+        const isKorean = lang === 'ko';
+
+        const minLen = isKorean ? 1 : 3;
+
       //query must be 4 or more characters
-      if(query.length<3) return [];
+      if(query.length<minLen) return [];
       
 
-      const isEnglish = !lang || lang === 'en' || lang === 'eng' || lang === 'dev';
 
       let verse_ids:any = [];
      // verse_ids = await sphinxQuery(sphinxSql);
@@ -82,12 +88,14 @@ export default {
         });
       }
       else{
+        console.log({lang,query});
         const translations = await Models.LdsScripturesTranslations.findAll({
           raw:true,
           where: {  text: { [Op.like]: `%${query}%` }, lang  }
         });
         verse_ids = translations.map((item:any)=>item.verse_id);
       }
+
 
       if(!verse_ids?.length) return [];
 
@@ -119,10 +127,15 @@ export default {
 
       return textItems.map((item:any)=>{
 
+        const verse_id = item['verse_translation.verse_id'] || item['verse.verse_id'];
+        console.log = ()=>{};
+        if(!isEnglish) setLang(lang);
+        const reference = generateReference(verse_id);
+
         return {
           pageguid:item['text.parent_page.guid'],
           link: item['text.link'],
-          reference: item['verse_translation.book'] || item['verse.verse_title'],
+          reference:reference,
           text: item['verse_translation.text'] || item['verse.verse_scripture'],
           section: item['text.parent_section.translation.value'] || item['text.parent_section.title'],
           page: item['text.parent_page.translation.value'] || item['text.parent_page.title'] ,
