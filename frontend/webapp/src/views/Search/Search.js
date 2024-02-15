@@ -10,21 +10,22 @@ import "./Search.css";
 
 const getSearchValue = (value) => {
   value =value?.replace(/[.]/ig, " ");
-  return value;
+  return value || "";
 }
 
 
 function SearchComponent({ appController }) {
 
+  const match = useRouteMatch();
   useEffect(() => document.title = label("menu_search") + " | " + label("home_title"), [])
-  const match = useRouteMatch(),
-    { push } = useHistory(),
+  const { push } = useHistory(),
     [keyword, setKeyWord] = useState(getSearchValue(match.params?.value)),
     [content, setContent] = useState(<Loader />);
 
   const highlight = (needle, haystack) => {
-    const full_pattern =  new RegExp(needle.replace(/(ing|s|es|ed)$/,'') + ".*?\\b", 'gi');
-    if(full_pattern.test(haystack)) return Parser(haystack.replace(full_pattern, (str) => `<em>${str}</em>`));
+    const full_pattern =  new RegExp(needle.replace(/(ing|s|es|ed)$/,'') + ".*?(\\b| )", 'gi');
+    console.log(full_pattern);
+    if(full_pattern.test(haystack)) return Parser(haystack.replace(full_pattern, (str) => `<em>${str.trim()}</em> `));
 
     let needles = needle.split(/[ ,.;!?]+/).map(str=>(new RegExp("\\b"+str.replace(/(ing|s|es|ed)$/,'')  + ".*?\\b", 'gi')));
     for(let i in needles)

@@ -84,7 +84,7 @@ function SearchBox({appController,setActivePath}) {
       setActivePath("/search");
       let searchSlug = e.target.value
         .toLowerCase()
-        .replace(/[^a-z0-9:–—~-]+/gi, ".")
+        .replace(/[,;.]+/gi, ".")
         .replace(/(^\.|\.$)/g, "");
       history.push("/search/" + searchSlug);
       e.preventDefault();
