@@ -27,7 +27,7 @@ apiProxy.on('proxyRes', (proxyRes, req:any, res:any) => {
 
     const curl = `curl -X ${req.method} "${req.url}" -H "Host: ${req.headers.host}" ${Object.keys(reqheaders).map(i=>`-H "${i}: ${reqheaders[i]}"`).join(" ")} ${req.body ? `-d '${JSON.stringify(req.body)}'` : ""}`;
 
-    console.error(`[Proxy Error] ${proxyRes.statusCode}, ${req.method} ${req.url}`);
+    //console.error(`[Proxy Error] ${proxyRes.statusCode}, ${req.method} ${req.url}`);
     const {statusCode, statusMessage,headers: proxiedHeaders} = proxyRes;
     res.status(500).send({proxy:"error",reqheaders,curl, statusCode, statusMessage, proxiedHeaders, req: {method: req.method, url: req.url}});
   }
