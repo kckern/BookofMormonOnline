@@ -11,6 +11,7 @@ const Places = lazy(() => import("../views/Places/Places.js"));
 const Map = lazy(() => import("../views/Map/Map.js"));
 const PeopleNetWork = lazy(() => import("../views/People/PeopleNetwork.js"));
 const TimeLine = lazy(() => import("../views/Timeline/Timeline.js"));
+const TimeGrid = lazy(() => import("../views/Timeline/TimeGrid.js"));
 const Contents = lazy(() => import("../views/Contents/Contents.js"));
 const SearchComponent = lazy(() => import("../views/Search/Search.js"));
 const Home = lazy(() => import("../views/Home/Home.js"));
@@ -182,6 +183,10 @@ const routes = [
   {
     path: "/timeline",
     component: TimeLine,
+  },
+  {
+    path: "/timegrid",
+    component: TimeGrid,
   },
   {
     path: "/map/:mapType/place/:placeName",
