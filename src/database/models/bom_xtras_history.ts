@@ -64,7 +64,11 @@ export default class _bom_xtras_history extends ModelBase {
       transcript: {
         type: DataTypes.TEXT,
         allowNull: true
-      }
+      }, //aspect FLOAT
+      aspect: {
+        type: DataTypes.FLOAT,
+        allowNull: true
+      },
     }, {
       sequelize,
       tableName: 'bom_xtras_history',

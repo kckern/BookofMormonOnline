@@ -122,7 +122,9 @@ function History({ appController }) {
 
             </CardHeader>
             <div className='thumbbox'>
-            <img key={doc.id} src={`${assetUrl}/history/thumbs/${doc.id}`} />
+            <img key={doc.id} src={`${assetUrl}/history/thumbs/${String(doc.id).padStart(4, '0')}`} alt={doc.document} 
+            style={{aspectRatio: doc.aspect}}
+            />     
             <div className='thumb_teaser'>{Parser(doc.teaser)}</div>
             </div>
             <h5>{doc.document}</h5>

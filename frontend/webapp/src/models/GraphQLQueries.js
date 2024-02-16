@@ -311,6 +311,7 @@ const queries = {
           document
           citation
           teaser
+          aspect
           pages
           ${(slugs) ? "transcript" : ""}
          }`,

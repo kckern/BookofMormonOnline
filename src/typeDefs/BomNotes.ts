@@ -37,6 +37,7 @@ extend type Query {
     citation: String
     teaser: String
     transcript: String
+    aspect: Float
   }
   
   
