@@ -4,6 +4,7 @@ const logger = require("../library/utils/logger.cjs");
 const { mapMarker } = require("./mapmarkers");
 const { virtualgrouptrigger } = require("./virtualgroup");
 const { translate } = require("./translate");
+const {ical} = require("./ical.js");
 const webhook = async (req, res) => {
     
     logger.info(`Webhook received: ${JSON.stringify(req.body)}`); // "info" is the log level
@@ -59,5 +60,6 @@ const apis = {
 
 const endpoints = {
     "mapmarker/:id":mapMarker,
+    "ical/:token":ical
 }
 module.exports = {apis,endpoints};
