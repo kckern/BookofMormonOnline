@@ -203,8 +203,8 @@ export default {
         let summary = summaryFromSessions(sessions, finished);
 
         //Handle summary-only request
-        let requestQuery = JSON.stringify(info?.fieldNodes);
-        if (info && !new RegExp(`{"kind":"Name","value":"sessions"`).test(requestQuery)) return { summary };
+        let requestQuery = JSON.stringify(info.fieldNodes);
+        if (!new RegExp(`{"kind":"Name","value":"sessions"`).test(requestQuery)) return { summary };
 
         //handle session request
         return logFromSessions(sessions, lang).then((log: any) => {
