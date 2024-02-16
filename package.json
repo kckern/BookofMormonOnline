@@ -26,7 +26,6 @@
     "jsonwebtoken": "^9.0.2",
     "lodash": "^4.17.21",
     "moment": "^2.29.4",
-    "moment-duration-format": "^2.3.2",
     "mysql": "^2.18.1",
     "mysql2": "^3.6.3",
     "net": "^1.0.2",
