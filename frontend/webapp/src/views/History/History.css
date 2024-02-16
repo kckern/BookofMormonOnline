@@ -220,3 +220,8 @@
 .historycard:hover .thumb_teaser{
     opacity: 1;
 }
+
+.historyDrawer .teaser{
+    margin-left: 0;
+    margin-right: 0;
+}
