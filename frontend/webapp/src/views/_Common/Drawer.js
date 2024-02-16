@@ -246,6 +246,8 @@ function HistoryDrawer({ appController }) {
             });
         }, [])
     }, 500);
+
+    
     if (!doc) return <Spinner />;
     return <div className="historyDrawer">
         <h4>{doc.source} <span>• {displayDate(doc.date)}</span></h4>
@@ -253,8 +255,8 @@ function HistoryDrawer({ appController }) {
         <div className="teaser">{Parser(doc.teaser)}</div>
         <div className="transcript">{Parser(doc.transcript)}</div>
         <div className='history_fax'>{[...Array(doc.pages).keys()].map(i => {
-            return <img src={`${assetUrl}/history/fax/${doc.id}.${i + 1}`} />
-        })}</div>
+            return <img src={`${assetUrl}/history/fax/${String(doc.id).padStart(4, '0')}.${String(i + 1).padStart(3, '0')}`} /> 
+       })}</div>
     </div>
 
 }
