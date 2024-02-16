@@ -550,8 +550,7 @@ function History({ appController }) {
             <div className="history_fax">
               {[...Array(doc.pages).keys()].map((i) => {
                 return (
-                  <img src={`${assetUrl}/history/fax/${doc.id}.${i + 1}`} />
-                );
+                  <img src={`${assetUrl}/history/fax/${String(doc.id).padStart(4, '0')}.${String(i + 1).padStart(3, '0')}`} />                );
               })}
             </div>
           </div>

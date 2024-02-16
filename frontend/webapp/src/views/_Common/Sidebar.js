@@ -72,7 +72,6 @@ export function loadMenu(){
   });
 }
 
-
 function SearchBox({appController,setActivePath}) {
 
   const history = useHistory();
