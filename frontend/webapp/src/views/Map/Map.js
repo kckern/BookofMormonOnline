@@ -11,7 +11,7 @@ import BoMOnlineAPI from "src/models/BoMOnlineAPI"
 import "./Map.css"
 import MapTypes from "./MapTypes";
 import { label } from "src/models/Utils"
-import MapTiles from "./MapTiles"
+import MapContents from "./MapContents"
 
 function MapContainer({ appController }) {
 
@@ -83,27 +83,5 @@ function MapContainer({ appController }) {
   )
 }
 
-
-const MapContents = ({ currentMap, placeName, updateUrl, appController }) => {
-
-  const apiKey = appController.preLoad.labels.gmaps;
-  const isDev = [/^localhost/, /^dev/].some((regex) => regex.test(window.location.hostname));
-  if(isDev) return <MapTiles
-  apiKey={apiKey}
-  mapData={currentMap}
-  placeName={placeName}
-  updateUrl={updateUrl}
-  appController={appController}
-/> 
-
-return <TileMap
-  apiKey={apiKey}
-  mapData={currentMap}
-  placeName={placeName}
-  updateUrl={updateUrl}
-  appController={appController}
-/>;
-
-}
 
 export default MapContainer;
