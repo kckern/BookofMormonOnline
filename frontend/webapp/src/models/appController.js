@@ -316,6 +316,7 @@ export const appFunctions = {
     } else {
       appController.states.user = guestUser({ localToken });
     }
+    if(!!input.val?.personList) appController.states.preloaded = true;
 
     let preload = input.val;
     // let fax = {};
