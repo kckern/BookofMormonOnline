@@ -86,9 +86,7 @@ function MapContainer({ appController }) {
       <div className={`mappanel_wrapper ${isOpen ? "open" : ""}`}>
         <MapTypes getMap={getMap} mapName={mapName} />
         <MapPanel mapController={mapController}  />
-        <div id='map' className='map' style={{ overflow: "hidden" }}>
           {currentMap ?  <MapContents  mapController={mapController}  />  : <Loader />  }
-        </div>
       </div>
     </>
   )
