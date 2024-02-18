@@ -474,6 +474,7 @@ export default function Page({ appController }) {
     }
   };
 
+  if(!appController.states.preloaded) return <Loader />;
   if (pageController.states.loading !== false) return <Loader />;
   return (
     <>
