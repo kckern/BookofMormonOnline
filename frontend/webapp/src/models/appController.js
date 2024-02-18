@@ -316,7 +316,7 @@ export const appFunctions = {
     } else {
       appController.states.user = guestUser({ localToken });
     }
-
+    if(!!input.val?.personList) appController.states.preloaded = true;
     let preload = input.val;
     // let fax = {};
     // for(let i in preload.fax) { fax[preload.fax[i].slug] = preload.fax[i]; preload.fax[i].weight = i; };
