@@ -8,15 +8,17 @@ import {
 import * as ol from 'openlayers';
 import Loader from "../_Common/Loader";
 
-const MapContents = ({ currentMap, placeName, updateUrl, appController }) => {
+const MapContents = ({ mapController }) => {
+    const {currentMap, placeName, updateUrl, appController} = mapController;
     const [source, setSource] = useState(null);
 
+
     useEffect(() => {
-        setSource(new ol.source.XYZ({
+        setSource(!!ol.source && new ol.source.XYZ({
             url: 'https://media.bookofmormon.online/map/malay3/{z}/{x}/{y}',
             projection: 'EPSG:4326'
         }));
-    }, []);
+    }, [ol.source]);
 
     const showPopup = (evt) => {
         alert("showPopup");

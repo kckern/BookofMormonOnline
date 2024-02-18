@@ -12,13 +12,20 @@ import "./Map.css"
 import MapTypes from "./MapTypes";
 import { label } from "src/models/Utils"
 import MapContents from "./MapContents"
-
+import {
+  Button,
+  Card,
+  CardBody,
+  CardFooter,
+  CardHeader
+} from "reactstrap";
 function MapContainer({ appController }) {
 
   const params = useParams(),
     [currentMap, setCurrentMap] = useState(null),
     [mapName, setMapName] = useState(""),
-    [placeName, setPlaceName] = useState(params.placeName);
+    [placeName, setPlaceName] = useState(params.placeName),
+    [isOpen, openPanel] = useState(true);
 
   useEffect(() => {
 
@@ -64,23 +71,46 @@ function MapContainer({ appController }) {
     appController.functions.closePopUp()
   }
 
+  const mapController = {
+    openPanel,
+    isOpen,
+    getMap,
+    mapName,
+    placeName,
+    updateUrl,
+    appController
+  }
+
 
   return (  <>
-      <MapTypes getMap={getMap} mapName={mapName} />
-      <div id='map' className='map' style={{ overflow: "hidden" }}>
-        {currentMap ? (
-          <MapContents 
-            currentMap={currentMap} 
-            placeName={placeName} 
-            updateUrl={updateUrl} 
-            appController={appController}
-         / >
-        )
-          : <Loader />
-        }
+      <div className={`mappanel_wrapper ${isOpen ? "open" : ""}`}>
+        <MapTypes getMap={getMap} mapName={mapName} />
+        <MapPanel mapController={mapController}  />
+        <div id='map' className='map' style={{ overflow: "hidden" }}>
+          {currentMap ?  <MapContents  mapController={mapController}  />  : <Loader />  }
+        </div>
       </div>
     </>
   )
+}
+
+
+function MapPanel({mapController})
+{
+  const {isOpen, openPanel} = mapController;
+  return <div className="mapPanel">
+    <Card>
+      <CardHeader>
+        <h5 className="title">Map Panel</h5>
+      </CardHeader>
+      <CardBody>
+        <Button onClick={()=>openPanel(false)}>Close</Button>
+      </CardBody>
+      <CardFooter>
+        <p>Map Panel</p>
+      </CardFooter>
+    </Card>
+  </div>
 }
 
 
