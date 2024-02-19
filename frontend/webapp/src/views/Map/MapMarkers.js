@@ -71,6 +71,14 @@ const renderMarker = ({ name, location_type }) => {
 
     canvas.height =  fontHeight * lines.length;
 
+
+    //Fill background for click detection
+    context.fillStyle = "#FFFFFF01";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+
+
+
+
     if (centerX) { // Draw the icon if needed
         context.beginPath();
         context.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
@@ -99,11 +107,6 @@ const renderMarker = ({ name, location_type }) => {
     const iconXOffsetPerc = centerX / canvas.width;
     const anchorX = !iconWidth ? 0.5 : iconXOffsetPerc;
     const anchorY = 0.5; // centerY is always middle of the canvas height, simplifying the calculation
-
-    //outline in pink
-    context.strokeStyle = "pink";
-    context.lineWidth = 5;
-    context.strokeRect(0, 0, canvas.width, canvas.height);
 
     return [
         canvas.height,

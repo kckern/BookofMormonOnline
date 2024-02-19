@@ -37,6 +37,7 @@ const MapContents = ({mapController}) => {
         marker.setStyle(iconStyle);
         marker.set('name', i.name);
         marker.set('slug', i.slug);
+        marker.set('label_height', height);
         return marker;
     });
     
@@ -90,16 +91,10 @@ const drawMap = ()=>{
         map.current.forEachFeatureAtPixel(e.pixel, (feature) => {
             const geometry = feature.getGeometry();
             const coordinates = geometry.getCoordinates();
-            const resolution = map.current.getView().getResolution();
-            const extent = geometry.getExtent();
-
-            //Calculate the XY position of the marker relative to the map current view
             const [x, y] = map.current.getPixelFromCoordinate(coordinates);
-            const [w, h] = feature.getStyle().getImage().getSize();
-
-        
-            markerPosition = [x, y, w, h];
-            return true; // Stop the forEachFeatureAtPixel loop after the first feature
+            const [w,h] = feature.getStyle().getImage().getSize();
+            markerPosition = [x, y, w , h];
+            return true; 
         });
         setTooltipAndCursor(isHoveringOverMarker, markerPosition, markerSlug);
     });
@@ -107,9 +102,7 @@ const drawMap = ()=>{
     //on click alert the marker name
     map.current.on('click', function(e) {
         map.current.forEachFeatureAtPixel(e.pixel, (feature) => {
-            var coords = feature.getGeometry().getCoordinates();
-            var lonLatCoords = window.ol.proj.transform(coords, 'EPSG:3857', 'EPSG:4326');
-            alert(feature.get('name') + ' ' + JSON.stringify(lonLatCoords));
+            mapController.setPanelContents({slug: feature.get('slug')});
         });
     });
     
@@ -141,7 +134,6 @@ const drawMap = ()=>{
     useEffect(drawMap, []);
 
     return <>
-    <pre>{JSON.stringify(mapController.tooltip.slug)}</pre>
     <div id="map" ref={mapElement} ></div>
     </>
 };
