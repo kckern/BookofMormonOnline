@@ -7,10 +7,24 @@ import { CanvasMarker } from "./MapMarkers";
 const MapContents = ({mapController}) => {
     const mapElement = useRef(); // This ref will point to the map container
     const map = useRef(); // This ref will store the initialized map
+    const {slug: mapslug = "baja"} = mapController;
+    const [mapData, setMapData] = useState({});
+    const [markers, setMarkers] = useState([]);
+
+    useEffect(() => {
+        BoMOnlineAPI({ maps: mapslug },(result)=>{
+            debu
+            setMapData(result);
+        });
+    }, []);
+
+
+
+
+
 
     const isAdmin = true;
 
-    const mapslug = "baja";
     const mapBounds = [-117.729321, 22.298062, -108.945432, 31.797617];
     const mapCenter = [
         (mapBounds[0] + mapBounds[2]) / 2,
@@ -20,7 +34,7 @@ const MapContents = ({mapController}) => {
     const maxZoom = 9;
     const iniZoom = 6;
 
-    const markers = [
+    const markers_tmp = [
         {  name: "Town", xy: [-112.337377, 31.047839], location_type: "town"  , slug: "midian" },
         {  name: "New York", xy: [-113.337377, 27.047839], location_type: "city" , slug: "hill-cumorah" },
         {  name: "City Sea", xy: [-113.337377, 30.047839], location_type: "city_right" , slug: "city-by-the-sea" },
@@ -70,7 +84,7 @@ const drawMap = ()=>{
     });
 
 
-    map.current.addLayer(new window.ol.layer.Vector({ source: new window.ol.source.Vector({ features: [...markers] }) }));
+    map.current.addLayer(new window.ol.layer.Vector({ source: new window.ol.source.Vector({ features: [...markers_tmp] }) }));
 
     // Extracted the repeated code into a separate function
     const setTooltipAndCursor = (isHovering, position, slug) => {
@@ -173,6 +187,7 @@ const drawMap = ()=>{
     }, [mapController.panelContents.slug]);
 
 
+    return <pre>{JSON.stringify(mapData, null, 2)}</pre>;
 
     return <>
     <div id="map" ref={mapElement} ></div>
