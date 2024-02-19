@@ -261,3 +261,52 @@
   justify-content: space-between;
   z-index: 100;
 }
+
+.mapTooltip
+{
+  position: absolute;
+  z-index: 1;;
+  background-color: #EEE;
+  border-radius: 1ex;
+  outline: 3px solid #EEE;
+  border: 1px solid #000;
+  /* drop shadow */
+  box-shadow: 0 0 10px #000;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+/*
+Add a triangle notch pointing down at the bottom of the tooltip
+*/
+.mapTooltip:after
+{
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 10px solid #EEE;
+  bottom: -11px;
+  left: 50%;
+  transform: translateX(-50%);
+  /* make the background image 100% and 100% width */
+}
+
+.mapTooltip .placeInfo
+{
+  display: flex;
+  font-size: 12px;
+  line-height: 100%;
+  text-align: center;
+  line-height: 100%;
+  align-items: center;
+  padding: 1em;
+  height: 100%;
+  color: white;
+  text-align: center;
+  background-color: #00000088;
+  width: 100%;
+}
