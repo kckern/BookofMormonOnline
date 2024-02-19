@@ -43,6 +43,13 @@ const renderMarker = ({ name, location_type }) => {
             iconWidth = fontSize;
             radius = iconWidth / 3;
             iconPadding = 2;
+            break;
+        case "town":
+            fontSize = 10;
+            iconWidth = fontSize;
+            radius = iconWidth / 3;
+            iconPadding = 2;
+            break;
         default: // For city and other types
             iconWidth = fontSize; 
             radius = iconWidth / 3;
@@ -89,7 +96,8 @@ const renderMarker = ({ name, location_type }) => {
     });
     
     // Adjust anchorX and anchorY based on whether or not there's an icon
-    const anchorX = iconWidth ? (iconWidth + iconPadding) / canvas.width : 0.5;
+    const iconXOffsetPerc = centerX / canvas.width;
+    const anchorX = !iconWidth ? 0.5 : iconXOffsetPerc;
     const anchorY = 0.5; // centerY is always middle of the canvas height, simplifying the calculation
 
     //outline in pink
