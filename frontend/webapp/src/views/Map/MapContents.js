@@ -18,6 +18,7 @@ const MapContents = () => {
     const iniZoom = 6;
 
     const markers = [
+        {  name: "Town", xy: [-112.337377, 31.047839], location_type: "town"  },
         {  name: "New York", xy: [-113.337377, 27.047839], location_type: "city"  },
         {  name: "City Sea", xy: [-113.337377, 30.047839], location_type: "city_right"  },
         {  name: "Zarahemla", xy: [-113.337377, 28.047839], location_type: "land"  },
