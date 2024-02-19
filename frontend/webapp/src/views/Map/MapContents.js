@@ -118,17 +118,19 @@ const drawMap = ()=>{
     });
     
 
-
     if(isAdmin){
         var modify = new window.ol.interaction.Modify({ 
             features: new window.ol.Collection(markers),
-            style: ()=>[]
+            style: ()=>[],
+            hitTolerance: 1000 // Increase this value to increase the draggable area
+        });
+        modify.on('modifystart', (e) => {
+            setTooltipAndCursor(false);
         });
         modify.on('modifyend', (e) => {
             var coords = e.features.getArray()[0].getGeometry().getCoordinates();
             var lonLatCoords = window.ol.proj.transform(coords, 'EPSG:3857', 'EPSG:4326');
             alert(JSON.stringify(lonLatCoords));
-            //then alert the marker name
             console.log(e.features.getArray());
         });
         map.current.addInteraction(modify);
