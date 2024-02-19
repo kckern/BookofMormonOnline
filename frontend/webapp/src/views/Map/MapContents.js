@@ -62,7 +62,11 @@ const drawMap = ()=>{
             zoom: iniZoom,
             minZoom: minZoom,
             maxZoom: maxZoom
-        })
+        }),
+        interactions: window.ol.interaction.defaults().extend([
+            new window.ol.interaction.KeyboardPan(),
+            new window.ol.interaction.KeyboardZoom()
+        ])
     });
 
 
@@ -129,6 +133,22 @@ const drawMap = ()=>{
         });
         map.current.addInteraction(modify);
     }
+
+
+    mapController.setMapFunctions({
+        selectPlace: (slug) => {
+            slug = "midian";
+            const feature = map.current.getLayers().getArray()[1].getSource().getFeatures().find(i=>i.get('slug') === slug);
+            const coords = feature.getGeometry().getCoordinates();
+            map.current.getView().animate({center: coords, duration: 500});
+            //set tooltip
+            setTooltipAndCursor(true, coords, slug);
+            //TODO: Highlight the marker
+            //TODO: Zoom if needed
+        }
+    });
+
+
 
     return () => { 
         if (map.current) map.current.setTarget(undefined);  

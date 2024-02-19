@@ -7,6 +7,7 @@ import { useParams } from "react-router-dom"
 import TileMap from "./TileMap"
 import spinner from  "../_Common/svg/loadbar.svg"
 import Loader from "../_Common/Loader"
+import places from "../_Common/svg/places.svg";
 // AACTION TYPES
 import BoMOnlineAPI from "src/models/BoMOnlineAPI"
 // CSS
@@ -93,6 +94,7 @@ function MapContainer({ appController }) {
     appController,
     setTooltip,
     tooltip,
+    mapFunctions,
     setMapFunctions
   }
 
@@ -139,7 +141,7 @@ function MapToolTip({ tooltip, appController, panelContents }) {
 
 function MapPanel({mapController})
 {
-  const {panelContents, setPanelContents} = mapController;
+  const {panelContents, setPanelContents,mapFunctions} = mapController;
 
   const {slug} = panelContents || {};
 
@@ -169,22 +171,27 @@ function MapPanel({mapController})
   const  body = !placeDetails?.description ?  <div className='noselect' style={{display : "flex", justifyContent: "center"}}>
     <img  src={spinner} alt="loading"  style={{ height: "10rem" }} />
     </div> : <><Nav tabs className="noselect">
-    <NavItem>
-        <NavLink onClick={() => setActiveTab("1")} className={activeTab === "1" ? "active" : ""}>Description</NavLink>
+    <NavItem onClick={() => setActiveTab("1")} className={activeTab === "1" ? "active" : ""}>
+      <img src={places} alt="places" style={{filter: "invert(1)", opacity: 0.5}} />
+      <div>Description</div>
     </NavItem>
-    <NavItem>
-        <NavLink onClick={() => setActiveTab("2")} className={activeTab === "2" ? "active" : ""}>Events</NavLink>
+    <NavItem onClick={() => setActiveTab("2")} className={activeTab === "2" ? "active" : ""}>
+      <div><span className="counter">{placeDetails.index?.length || 0}</span></div>
+      <div>Events</div>
     </NavItem>
-    <NavItem>
-        <NavLink onClick={() => setActiveTab("3")} className={activeTab === "3" ? "active" : ""}>Viscinity</NavLink>
+    <NavItem onClick={() => setActiveTab("3")} className={activeTab === "3" ? "active" : ""}>
+      <div><span className="counter">{placeDetails.index?.length || 0}</span></div>
+      <div>Viscinity</div>
     </NavItem>
-    <NavItem>
-        <NavLink onClick={() => setActiveTab("4")} className={activeTab === "4" ? "active" : ""}><span className="counter">{placeDetails.index?.length || 0}</span> References</NavLink>
+    <NavItem onClick={() => setActiveTab("4")} className={activeTab === "4" ? "active" : ""}>
+      <div><span className="counter">{placeDetails.index?.length || 0}</span></div>
+      <div>References</div>
     </NavItem>
 </Nav>
 <TabContent activeTab={activeTab}>
     <TabPane tabId="1">
-        <div>{Parser(placeDetails.description)}</div>
+        <div className="desc"
+        >{Parser(placeDetails.description)}</div>
     </TabPane>
     <TabPane tabId="2">
         <div>Events</div>
@@ -192,7 +199,13 @@ function MapPanel({mapController})
     <TabPane tabId="3" className="viscinity">
         {["jerusalem-1","zarahemla","land-bountiful","bountiful"].map((place_slug, i) => {
           // get more info
-            return <div key={i} className="viscinity_place">
+            return <div key={i} className="viscinity_place" onClick={()=>{
+
+                mapController.setPanelContents({slug: place_slug});
+                setActiveTab("1");
+                mapFunctions.selectPlace("midian");
+
+            }}>
                 <img src={`${assetUrl}/places/${place_slug}`} alt={place_slug} />
                 <p>{getPlaceInfo(place_slug, mapController.appController).name}</p>
             </div>
