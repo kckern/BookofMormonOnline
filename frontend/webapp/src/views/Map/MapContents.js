@@ -11,8 +11,11 @@ const MapContents = ({mapController}) => {
     const isAdmin = true;
 
     const mapslug = "baja";
-    const mapCenter = [-113.337377, 27.047839];
     const mapBounds = [-117.729321, 22.298062, -108.945432, 31.797617];
+    const mapCenter = [
+        (mapBounds[0] + mapBounds[2]) / 2,
+        (mapBounds[1] + mapBounds[3]) / 2
+    ];
     const minZoom = 6;
     const maxZoom = 9;
     const iniZoom = 6;
@@ -62,6 +65,7 @@ const drawMap = ()=>{
         })
     });
 
+
     map.current.addLayer(new window.ol.layer.Vector({ source: new window.ol.source.Vector({ features: [...markers] }) }));
 
     // Extracted the repeated code into a separate function
@@ -103,6 +107,9 @@ const drawMap = ()=>{
     map.current.on('click', function(e) {
         map.current.forEachFeatureAtPixel(e.pixel, (feature) => {
             mapController.setPanelContents({slug: feature.get('slug')});
+            const coords = feature.getGeometry().getCoordinates();
+            mapController.setTooltip({x: coords[0], y: coords[1], slug: null});
+            map.current.getView().animate({center: coords, duration: 500});
         });
     });
     
@@ -131,7 +138,19 @@ const drawMap = ()=>{
 
 }
 
+
     useEffect(drawMap, []);
+
+    useEffect(async () => {
+
+        //wait 500ms
+        await new Promise(resolve => setTimeout(resolve, 500));
+        map.current.updateSize();
+
+
+    }, [mapController.panelContents.slug]);
+
+
 
     return <>
     <div id="map" ref={mapElement} ></div>

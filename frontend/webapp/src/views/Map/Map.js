@@ -34,6 +34,7 @@ function MapContainer({ appController }) {
     [mapName, setMapName] = useState(""),
     [placeName, setPlaceName] = useState(params.placeName),
     [tooltip, setTooltip] = useState({ x: 0, y: 0, slug: null }),
+    [mapFunctions, setMapFunctions] = useState({}),
     [panelContents, setPanelContents] = useState({});
 
   useEffect(() => {
@@ -91,7 +92,8 @@ function MapContainer({ appController }) {
     updateUrl,
     appController,
     setTooltip,
-    tooltip
+    tooltip,
+    setMapFunctions
   }
 
 
@@ -174,7 +176,10 @@ function MapPanel({mapController})
         <NavLink onClick={() => setActiveTab("2")} className={activeTab === "2" ? "active" : ""}>Events</NavLink>
     </NavItem>
     <NavItem>
-        <NavLink onClick={() => setActiveTab("3")} className={activeTab === "3" ? "active" : ""}><span className="counter">{placeDetails.index?.length || 0}</span> References</NavLink>
+        <NavLink onClick={() => setActiveTab("3")} className={activeTab === "3" ? "active" : ""}>Viscinity</NavLink>
+    </NavItem>
+    <NavItem>
+        <NavLink onClick={() => setActiveTab("4")} className={activeTab === "4" ? "active" : ""}><span className="counter">{placeDetails.index?.length || 0}</span> References</NavLink>
     </NavItem>
 </Nav>
 <TabContent activeTab={activeTab}>
@@ -184,7 +189,16 @@ function MapPanel({mapController})
     <TabPane tabId="2">
         <div>Events</div>
     </TabPane>
-    <TabPane tabId="3">
+    <TabPane tabId="3" className="viscinity">
+        {["jerusalem-1","zarahemla","land-bountiful","bountiful"].map((place_slug, i) => {
+          // get more info
+            return <div key={i} className="viscinity_place">
+                <img src={`${assetUrl}/places/${place_slug}`} alt={place_slug} />
+                <p>{getPlaceInfo(place_slug, mapController.appController).name}</p>
+            </div>
+        })}
+    </TabPane>
+    <TabPane tabId="4">
         <table className="place_refs">
             <tbody>
                 {index.map((item, i) => {
