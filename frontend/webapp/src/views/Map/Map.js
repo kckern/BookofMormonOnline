@@ -103,6 +103,18 @@ function MapContainer({ appController }) {
       <div className={`mappanel_wrapper ${!!panelContents.slug ? "open" : ""}`}>
         <MapTypes getMap={getMap} mapName={mapName} />
         <MapPanel mapController={mapController}  />
+        <div className="mapHighlight">
+          <svg width="100%" height="100%" version="1.1" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <mask id="circleMask">
+                <rect width="100%" height="100%" fill="white" />
+                <circle cx="500" cy="500" r="50" fill="black" />
+              </mask>
+            </defs>
+            <circle cx="500" cy="500" r="50" fill="transparent" />
+            <rect width="100%" height="100%" fill="#00000022" mask="url(#circleMask)" />
+          </svg>
+        </div>
         <MapToolTip {...mapController} />
           {currentMap ?  <MapContents  mapController={mapController}  />  : <Loader />  }
       </div>
