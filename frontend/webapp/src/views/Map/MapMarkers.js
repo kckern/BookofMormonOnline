@@ -103,7 +103,7 @@ const renderMarker = ({ name, location_type }) => {
     //outline in pink
     context.strokeStyle = "pink";
     context.lineWidth = 5;
-    //context.strokeRect(0, 0, canvas.width, canvas.height);
+    context.strokeRect(0, 0, canvas.width, canvas.height);
 
     return [
         canvas.height,
