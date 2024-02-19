@@ -1,9 +1,11 @@
 /** @format */
 
 import React, { useState, useEffect, useCallback } from "react"
+import Parser from "html-react-parser";
 import { useParams } from "react-router-dom"
 // VIEW
 import TileMap from "./TileMap"
+import spinner from  "../_Common/svg/loadbar.svg"
 import Loader from "../_Common/Loader"
 // AACTION TYPES
 import BoMOnlineAPI from "src/models/BoMOnlineAPI"
@@ -17,7 +19,12 @@ import {
   Card,
   CardBody,
   CardFooter,
-  CardHeader
+  CardHeader,
+  Nav,
+  NavItem,
+  NavLink,
+  TabPane,
+  TabContent
 } from "reactstrap";
 import { assetUrl } from "../../models/BoMOnlineAPI"
 function MapContainer({ appController }) {
@@ -27,7 +34,7 @@ function MapContainer({ appController }) {
     [mapName, setMapName] = useState(""),
     [placeName, setPlaceName] = useState(params.placeName),
     [tooltip, setTooltip] = useState({ x: 0, y: 0, slug: null }),
-    [isOpen, openPanel] = useState(true);
+    [panelContents, setPanelContents] = useState({});
 
   useEffect(() => {
 
@@ -74,18 +81,10 @@ function MapContainer({ appController }) {
   }
 
 
-  const showTooltip = (e) => {
-
-  }
-
-  const hideTooltip = (e) => {
-
-
-  }
 
   const mapController = {
-    openPanel,
-    isOpen,
+    setPanelContents,
+    panelContents,
     getMap,
     mapName,
     placeName,
@@ -97,7 +96,7 @@ function MapContainer({ appController }) {
 
 
   return (  <>
-      <div className={`mappanel_wrapper ${isOpen ? "open" : ""}`}>
+      <div className={`mappanel_wrapper ${!!panelContents.slug ? "open" : ""}`}>
         <MapTypes getMap={getMap} mapName={mapName} />
         <MapPanel mapController={mapController}  />
         <MapToolTip {...mapController} />
@@ -107,24 +106,30 @@ function MapContainer({ appController }) {
   )
 }
 
-function MapToolTip({ tooltip, appController, isOpen }) {
-  const { x, y, w,h, slug } = tooltip;
-  if(!slug) return null;
+function getPlaceInfo(slug, appController) {
   const keys = Object.keys(appController.preLoad.placeList || {});
   const key = keys.find((key) => appController.preLoad.placeList[key].slug === slug);
-  const placeInfo = key ? appController.preLoad.placeList[key] : {};
+  return key ? appController.preLoad.placeList[key] : {};
+}
+
+function MapToolTip({ tooltip, appController, panelContents }) {
+  const { x, y, w,h, slug } = tooltip;
+  if(!slug) return null;
+  const placeInfo = getPlaceInfo(slug, appController);
   const {name, info, location, occupants, type} = placeInfo;
 
-  const [boxH,boxW] = [150,200];
+  const [boxH,boxW] = [100,150];
+  const margin = 10;
 
-  const leftVal = `calc( ${isOpen ? 30 : 0}% + ${x - (boxW/2)}px )`;
+  const leftVal = `calc( ${!!panelContents.slug ? 30 : 0}% + ${x - (boxW/2)}px )`;
 
   return (
-    <div className="mapTooltip" style={{left: leftVal, top: y - boxH - h
+    <div className="mapTooltip" style={{left: leftVal, top: y - boxH - (h/2) - margin
     ,backgroundImage: `url(${assetUrl}/places/${slug})`, width: boxW, height: boxH
     }}
     >
-      <div className="placeInfo">{info}</div>
+     
+      <div className="placeInfo"> <h4>{name}</h4><p>{info}</p></div>
     </div>
   )
 }
@@ -132,19 +137,84 @@ function MapToolTip({ tooltip, appController, isOpen }) {
 
 function MapPanel({mapController})
 {
-  const {isOpen, openPanel} = mapController;
+  const {panelContents, setPanelContents} = mapController;
+
+  const {slug} = panelContents || {};
+
+  const placeInfo = getPlaceInfo(slug, mapController.appController);
+  const title = placeInfo?.name;
+  const info = placeInfo?.info;
+
+  const [placeDetails, setPlaceDetails] = useState({});
+  useEffect(()=>{
+    //scroll .mapPanel to top
+    const panel = document.querySelector('.mapPanel');
+    if(panel) panel.scrollTop = 0;
+
+    if(slug){
+      BoMOnlineAPI({places: [slug]}).then((result)=>{
+        setPlaceDetails(result?.places?.[slug] || {});
+      })
+    }
+  }, [slug])
+
+
+  const index = placeDetails?.index || [];
+  const maps = placeDetails?.maps || [];
+
+  const [activeTab, setActiveTab] = useState("1");
+
+  const  body = !placeDetails?.description ?  <div className='noselect' style={{display : "flex", justifyContent: "center"}}>
+    <img  src={spinner} alt="loading"  style={{ height: "10rem" }} />
+    </div> : <><Nav tabs className="noselect">
+    <NavItem>
+        <NavLink onClick={() => setActiveTab("1")} className={activeTab === "1" ? "active" : ""}>Description</NavLink>
+    </NavItem>
+    <NavItem>
+        <NavLink onClick={() => setActiveTab("2")} className={activeTab === "2" ? "active" : ""}>Events</NavLink>
+    </NavItem>
+    <NavItem>
+        <NavLink onClick={() => setActiveTab("3")} className={activeTab === "3" ? "active" : ""}><span className="counter">{placeDetails.index?.length || 0}</span> References</NavLink>
+    </NavItem>
+</Nav>
+<TabContent activeTab={activeTab}>
+    <TabPane tabId="1">
+        <div>{Parser(placeDetails.description)}</div>
+    </TabPane>
+    <TabPane tabId="2">
+        <div>Events</div>
+    </TabPane>
+    <TabPane tabId="3">
+        <table className="place_refs">
+            <tbody>
+                {index.map((item, i) => {
+                    return <tr key={i}>
+                        <td className="ref">{item.ref}</td>
+                        <td>{item.text}</td>
+                    </tr>
+                })}
+            </tbody>
+        </table>
+    </TabPane>
+</TabContent>
+    </>
+
   return <div className="mapPanel">
     <Card>
       <CardHeader>
-        <h5 className="title">Map Panel</h5>
+        <h5 className="title">{title}</h5>
+       <div className="info">{info}</div>
+        <span 
+          className="closePanelButton"
+          onClick={()=>setPanelContents(false)}
+        >
+          ×
+        </span>
       </CardHeader>
+        <img src={`${assetUrl}/places/${slug}`} alt={title} />
       <CardBody>
-        <Button onClick={()=>openPanel(false)}>Close</Button>
+        {body}
       </CardBody>
-      <CardFooter>
-        <p>Map Panel</p>
-        <pre>{JSON.stringify(mapController.tooltip)}</pre>
-      </CardFooter>
     </Card>
   </div>
 }
