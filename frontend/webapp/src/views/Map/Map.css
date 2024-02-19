@@ -15,9 +15,15 @@
 }
 
 
-#map .ol-viewport canvas{
+#map .ol-viewport{
   object-fit: cover;
 
+  border-left: 5px solid #EEE;
+  border-right: 5px solid #EEE;
+}
+
+
+.open #map .ol-viewport canvas{
   border-left: 1px solid #AAA;
 }
 
@@ -356,7 +362,6 @@ Add a triangle notch pointing down at the bottom of the tooltip
     color: #999;
     margin-bottom: 1rem;
 }
-
 .mapPanel .nav-tabs .nav-item .nav-link.active:before,
 .mapPanel .nav-tabs .nav-item .nav-link.active:after{
   content: none;
@@ -367,13 +372,27 @@ Add a triangle notch pointing down at the bottom of the tooltip
   justify-content: space-between;
   overflow: hidden;
   flex-wrap: nowrap;
-}
-.mapPanel .nav-tabs 
-{
   margin-bottom: 1rem;
   padding: 0;
 }
-.mapPanel .nav-tabs .nav-item .nav-link.active
+.mapPanel .nav-tabs .nav-item 
+{
+  width: calc(25%);
+  overflow: hidden;
+  height: 3rem;
+  word-break: break-all;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  color: #AAA;
+}
+.mapPanel .nav-tabs .nav-item:hover
+{
+  color:#444;
+}
+.mapPanel .nav-tabs .nav-item.active
 {
   color: #000;
   font-weight: bold;
@@ -444,9 +463,21 @@ Add a triangle notch pointing down at the bottom of the tooltip
   align-items: center;
   justify-content: center;
   margin: 0;
+  border-radius: 0 0 1ex 1ex;
+}
+.viscinity_place img
+{
+
+  border-radius: 1ex;
+  object-fit: cover;
 }
 
 .viscinity_place:hover
 {
   filter: brightness(1.2);
+}
+
+.mapPanel .desc
+{
+  text-align: justify;
 }
