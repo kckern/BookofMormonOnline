@@ -72,12 +72,19 @@ const renderMarker = ({ name, label, icon, isActive }) => {
             break;
     }
 
+    const dpr = window.devicePixelRatio || 1;
+    fontSize = fontSize * dpr;
+    iconWidth = iconWidth * dpr;
+    iconPadding = iconPadding * dpr;
+    radius = radius * dpr;
+    lineWidth = lineWidth * dpr;
+
+
     const fontString = `${bold} ${fontSize}px 'Roboto Condensed'`;
 
 
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d');
-    const dpr = window.devicePixelRatio || 1;
 
     context.font = fontString;
     const metrics = lines.map(line => context.measureText(line));
@@ -100,7 +107,7 @@ const renderMarker = ({ name, label, icon, isActive }) => {
         context.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
         context.fillStyle = !isActive ? "#6b7d91" : "#FFFFFF";
         context.strokeStyle = "#FFFFFF88";
-        context.lineWidth = 5;
+        context.lineWidth = 5 * dpr;
         context.stroke();
         context.fill();
     }

@@ -45,8 +45,10 @@ const drawMap = ()=>{
     });
 
     function createIconStyle(i,isActive) {
+        const dpr = window.devicePixelRatio || 1;
         const [height, width, anchor, src] = CanvasMarker({...i, isActive});
-        const image     = new window.ol.style.Icon({ src, size: [width, height], anchor });
+        const scale = 1 / dpr; // calculate scale based on device pixel ratio
+        const image = new window.ol.style.Icon({ src, scale, anchor });        
         let iconStyle   = new window.ol.style.Style({image});
         return [iconStyle,height];
     }
@@ -63,7 +65,6 @@ const drawMap = ()=>{
         const { minZoom, maxZoom} = i;
         const name =  getPlaceInfo(i.slug, mapController.appController).name;
         i.name = name;
-        console.log({i});
         const geometry  = new window.ol.geom.Point(window.ol.proj.fromLonLat(xy));
         const marker    = new window.ol.Feature({ geometry });
         let [iconStyle,height] = createIconStyle(i);
