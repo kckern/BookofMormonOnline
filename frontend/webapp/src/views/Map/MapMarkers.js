@@ -9,7 +9,7 @@ const renderMarker = ({ name, label, icon, isActive }) => {
 
     //Preliminary setup
 
-    name =  name || label;
+    name =  label || name;
     name = name.replace(/[0-9]/g, ''); // Remove numbers
 
     const lines = name?.split(/[\/]/g) || ["place"] // Split name into lines
@@ -73,6 +73,7 @@ const renderMarker = ({ name, label, icon, isActive }) => {
             break;
     }
 
+
     const dpr = window.devicePixelRatio || 1;
     fontSize = fontSize * dpr;
     iconWidth = iconWidth * dpr;
@@ -86,6 +87,7 @@ const renderMarker = ({ name, label, icon, isActive }) => {
 
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d');
+    
 
     context.font = fontString;
     const metrics = lines.map(line => context.measureText(line));
@@ -97,7 +99,7 @@ const renderMarker = ({ name, label, icon, isActive }) => {
     centerX =  (rightAligned ? (textWidth - (ex/2)) : 0) + (iconWidth / 2) 
     centerY = (iconWidth / 2) 
     canvas.height =  fontHeight * lines.length + (lineWidth * 1)
-    context.fillStyle = "#FFFFFF01";
+    context.fillStyle = isActive ? "#FFFFFF01" : "#FFFFFF01";
     context.fillRect(0, 0, canvas.width, canvas.height);
 
 
