@@ -193,6 +193,7 @@ const drawMap = ()=>{
 
     useEffect(async () => {
 
+        map.current.updateSize();
         //set slug into global space
         window.ol.panelMapSlug = mapController.panelContents.slug;
         const markers = map.current.getLayers().getArray()[1].getSource().getFeatures();
