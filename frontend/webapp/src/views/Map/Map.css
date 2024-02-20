@@ -229,16 +229,6 @@
 
 
 
-@media screen and (max-width: 900px)
-{
-  #map
-  {
-    position: absolute;
-    top:60px;
-    height: calc(100vh - 50px);
-  }
-
-}
 
 #map .ol-zoom
 {
@@ -490,4 +480,21 @@ Add a triangle notch pointing down at the bottom of the tooltip
   width: 100%;
   height: 100%;
   pointer-events: none;
+}
+
+
+@media screen and (max-width: 900px)
+{
+  .mappanel_wrapper
+  {
+    position: fixed;
+    top:60px;
+    height: calc(100vh - 60px - 60px);
+    overflow: hidden;
+  }
+  .mappanel_wrapper #map
+  {
+    height: 100%;
+  }
+
 }
