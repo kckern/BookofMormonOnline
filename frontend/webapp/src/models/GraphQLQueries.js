@@ -660,6 +660,8 @@ const queries = {
         places {
           slug
           name
+          label
+          icon
           info
           lng
           lat

@@ -1,14 +1,16 @@
 
-const CanvasMarker = ({ name, slug, location_type,isActive }) => {
+const CanvasMarker = ({ name, label, icon, isActive }) => {
 
 
-    return renderMarker({ name, location_type,isActive });
+    return renderMarker({ name, label, icon,isActive });
 };
 
-const renderMarker = ({ name, location_type, isActive }) => {
+const renderMarker = ({ name, label, icon, isActive }) => {
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d');
     const dpr = window.devicePixelRatio || 1;
+
+    name = label || name;
 
     const lines = name?.split(/[\/]/g) || ["place"] // Split name into lines
     // Common settings
@@ -16,29 +18,32 @@ const renderMarker = ({ name, location_type, isActive }) => {
     let iconPadding = 0;
     let iconWidth = 0;
     let radius = 0;
-    let strokeColor = "#FFFFFF";
-    let textColor = "#000000";
+    let strokeColor = "#000000";
+    let textColor = "#FFFFFF";
     let lineWidth = 3;
+    let bold = "";
     let centerX = 0, centerY = 0; // Initialized to 0 for the 'region' case
 
-    const rightAligned = location_type === "city_right";
+    const rightAligned = icon === "city_right";
 
-    switch (location_type) {
+    switch (icon) {
         case "region":
-            fontSize = 30;
-            lineWidth = 7;
+            fontSize = 24;
+            lineWidth = 4;
             break;
         case "land":
+            fontSize = 18 ;
+            bold = "bold";
             break;
         case "geo":
-            textColor = "#a9cba3";
+            textColor = "#bad9b5";
             strokeColor = "#313e2f";
-            fontSize = 15;
+            fontSize = 13;
             break;       
         case "aqua":
-            textColor = "#a3c1cb";
-            strokeColor = "#2f323e";
-            fontSize = 12;
+            textColor = "#bbdaf4";
+            strokeColor = "#4f6a80";
+            fontSize = 13;
             break;
         case "city_right":
             iconWidth = fontSize;
@@ -46,8 +51,18 @@ const renderMarker = ({ name, location_type, isActive }) => {
             iconPadding = 2;
             break;
         case "town":
-            fontSize = 10;
+            textColor = "#000000";
+            strokeColor = "#FFFFFF";
+            fontSize = 11;
+            lineWidth = 2;
             iconWidth = fontSize;
+            radius = iconWidth / 3;
+            iconPadding = 2;
+            break;   
+        case "city":
+            textColor = "#000000";
+            strokeColor = "#FFFFFF";
+            iconWidth = fontSize; 
             radius = iconWidth / 3;
             iconPadding = 2;
             break;
@@ -58,19 +73,19 @@ const renderMarker = ({ name, location_type, isActive }) => {
             break;
     }
 
-    const fontString = `${fontSize}px 'Roboto Condensed'`;
+    const fontString = `${bold} ${fontSize}px 'Roboto Condensed'`;
     context.font = fontString;
     
     const metrics = lines.map(line => context.measureText(line));
     const ex = context.measureText("x").width;
     const textWidth = Math.max(...metrics.map(m => m.width)) + ex;
-    canvas.width = textWidth + iconWidth + iconPadding;
+    canvas.width = textWidth + iconWidth + iconPadding + (lineWidth * 2);
     const fontHeight = (metrics[0].actualBoundingBoxAscent + metrics[0].actualBoundingBoxDescent) + (lineWidth * 2);
     iconWidth = iconWidth ? fontHeight : 0;
     centerX =  (rightAligned ? (textWidth - (ex/2)) : 0) + (iconWidth / 2) 
     centerY = (iconWidth / 2) 
 
-    canvas.height =  fontHeight * lines.length;
+    canvas.height =  fontHeight * lines.length + (lineWidth * 1)
 
 
     //Fill background for click detection
