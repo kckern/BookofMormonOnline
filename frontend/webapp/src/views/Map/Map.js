@@ -28,6 +28,7 @@ import {
   TabContent
 } from "reactstrap";
 import { assetUrl } from "../../models/BoMOnlineAPI"
+import { ScripturePanelSingle } from "../Page/Narration";
 function MapContainer({ appController }) {
 
   const params = useParams(),
@@ -195,14 +196,14 @@ function MapPanel({mapController})
       <img src={places} alt="places" style={{filter: "invert(1)", opacity: 0.5}} />
       <div>Description</div>
     </NavItem>
-    <NavItem onClick={() => setActiveTab("2")} className={activeTab === "2" ? "active" : ""}>
+    {/*<NavItem onClick={() => setActiveTab("2")} className={activeTab === "2" ? "active" : ""}>
       <div><span className="counter">{placeDetails.index?.length || 0}</span></div>
       <div>Events</div>
     </NavItem>
     <NavItem onClick={() => setActiveTab("3")} className={activeTab === "3" ? "active" : ""}>
       <div><span className="counter">{placeDetails.index?.length || 0}</span></div>
       <div>Viscinity</div>
-    </NavItem>
+</NavItem>*/}
     <NavItem onClick={() => setActiveTab("4")} className={activeTab === "4" ? "active" : ""}>
       <div><span className="counter">{placeDetails.index?.length || 0}</span></div>
       <div>References</div>
@@ -247,6 +248,7 @@ function MapPanel({mapController})
     </>
 
   return <div className="mapPanel">
+    <div className="mapPanelCardContainer">
     <Card>
       <CardHeader>
         <h5 className="title">{title}</h5>
@@ -263,6 +265,10 @@ function MapPanel({mapController})
         {body}
       </CardBody>
     </Card>
+    </div>
+    <div className="mapPanelScripture">
+      <ScripturePanelSingle closeButton={true} scriptureData={{ref:"1 Nephi 1:1"}}  setPopUpRef={()=>{}} />
+    </div>
   </div>
 }
 

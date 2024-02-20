@@ -9,11 +9,6 @@
 .mappanel_wrapper.open #map {
   left: 30%;
 }
-.mapPanel{
-  height: 100%;
-  overflow: scroll;
-}
-
 
 #map .ol-viewport{
   object-fit: cover;
@@ -367,7 +362,7 @@ Add a triangle notch pointing down at the bottom of the tooltip
 }
 .mapPanel .nav-tabs .nav-item 
 {
-  width: calc(25%);
+  flex: 1;
   overflow: hidden;
   height: 3rem;
   word-break: break-all;
@@ -423,6 +418,31 @@ Add a triangle notch pointing down at the bottom of the tooltip
 
   background-color: #000;
 
+}
+
+
+.mapPanel 
+{
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.mapPanel .mapPanelCardContainer
+{
+  overflow: scroll;
+}
+
+.mapPanel .mapPanelScripture
+{
+  margin: -1rem;
+  margin-top: 0;
+  outline: 3px solid pink;
+  bottom: 0;
+  left: 250px;
+  width: calc(100% + 2rem);
+  background-color: #FFFFFF44;
 }
 
 .tab-content > .active.viscinity
