@@ -44,6 +44,13 @@ const drawMap = ()=>{
         ])
     });
 
+    function createIconStyle(i,isActive) {
+        const [height, width, anchor, src] = CanvasMarker({...i, isActive});
+        const image     = new window.ol.style.Icon({ src, size: [width, height], anchor });
+        let iconStyle   = new window.ol.style.Style({image});
+        return [iconStyle,height];
+    }
+
     function getPlaceInfo(slug, appController) {
         const keys = Object.keys(appController.preLoad.placeList || {});
         const key = keys.find((key) => appController.preLoad.placeList[key].slug === slug);
@@ -56,14 +63,16 @@ const drawMap = ()=>{
         const { minZoom, maxZoom} = i;
         const name =  getPlaceInfo(i.slug, mapController.appController).name;
         i.name = name;
-        const [height, width, anchor, src] = CanvasMarker({...i});
+        console.log({i});
         const geometry  = new window.ol.geom.Point(window.ol.proj.fromLonLat(xy));
-        const image     = new window.ol.style.Icon({ src, size: [width, height], anchor });
-        let iconStyle   = new window.ol.style.Style({image});
         const marker    = new window.ol.Feature({ geometry });
-        marker.setStyle(function() {
+        let [iconStyle,height] = createIconStyle(i);
+        let [iconStyleActive] = createIconStyle(i,true);
+        marker.setStyle(()=>{
+            const slug = window.ol.panelMapSlug; //TODO: dont use global, get from mapController state
             const zoom = view.getZoom();
             if(zoom < minZoom || zoom > maxZoom) return null;
+            if(i.slug === slug) return iconStyleActive;
             return iconStyle;
         });
         marker.set('name', name);
@@ -132,6 +141,7 @@ const drawMap = ()=>{
             const coords = feature.getGeometry().getCoordinates();
             mapController.setTooltip({x: coords[0], y: coords[1], slug: null});
             map.current.getView().animate({center: coords, duration: 500});
+            markers_tmp.forEach(i=>i.changed());
         });
     });
     
@@ -183,9 +193,10 @@ const drawMap = ()=>{
 
     useEffect(async () => {
 
-        //wait 500ms
-        await new Promise(resolve => setTimeout(resolve, 500));
-        map.current.updateSize();
+        //set slug into global space
+        window.ol.panelMapSlug = mapController.panelContents.slug;
+        const markers = map.current.getLayers().getArray()[1].getSource().getFeatures();
+        markers.forEach(i=>i.changed());
 
 
     }, [mapController.panelContents.slug]);
