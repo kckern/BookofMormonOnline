@@ -57,7 +57,7 @@ function MapContainer({ appController }) {
   }, [])
 
   // get active map data
-  const getMap = useCallback((type = "internal", place) => {
+  const getMap = useCallback((type = "baja", place) => {
     // update Url
     updateUrl(`/map/${type}`)
     setMapName(label("loading"))
@@ -95,32 +95,40 @@ function MapContainer({ appController }) {
     setTooltip,
     tooltip,
     mapFunctions,
-    setMapFunctions
+    setMapFunctions,
+    currentMap
   }
-
+  const {placeList} = appController.preLoad;
 
   return (  <>
       <div className={`mappanel_wrapper ${!!panelContents.slug ? "open" : ""}`}>
         <MapTypes getMap={getMap} mapName={mapName} />
         <MapPanel mapController={mapController}  />
-        <div className="mapHighlight">
-          <svg width="100%" height="100%" version="1.1" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <mask id="circleMask">
-                <rect width="100%" height="100%" fill="white" />
-                <circle cx="500" cy="500" r="50" fill="black" />
-              </mask>
-            </defs>
-            <circle cx="500" cy="500" r="50" fill="transparent" />
-            <rect width="100%" height="100%" fill="#00000022" mask="url(#circleMask)" />
-          </svg>
-        </div>
+        <MapSpotlight mapController={mapController} />
         <MapToolTip {...mapController} />
-          {currentMap ?  <MapContents  mapController={mapController}  />  : <Loader />  }
+        {placeList && currentMap ?  <MapContents  mapController={mapController}  />  : <Loader />  }
       </div>
     </>
   )
 }
+function MapSpotlight({ mapController }) {
+
+  return null;
+  return <div className="mapHighlight">
+  <svg width="100%" height="100%" version="1.1" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <mask id="circleMask">
+        <rect width="100%" height="100%" fill="white" />
+        <circle cx="500" cy="500" r="50" fill="black" />
+      </mask>
+    </defs>
+    <circle cx="500" cy="500" r="50" fill="transparent" />
+    <rect width="100%" height="100%" fill="#00000022" mask="url(#circleMask)" />
+  </svg>
+</div>
+
+}
+
 
 function getPlaceInfo(slug, appController) {
   const keys = Object.keys(appController.preLoad.placeList || {});

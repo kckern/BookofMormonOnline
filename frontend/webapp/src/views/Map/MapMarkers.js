@@ -8,8 +8,7 @@ const renderMarker = ({ name, location_type }) => {
     const context = canvas.getContext('2d');
     const dpr = window.devicePixelRatio || 1;
 
-    const lines = name.split(/[\/]/g); // Split name into lines
-    
+    const lines = name?.split(/[\/]/g) || ["place"] // Split name into lines
     // Common settings
     let fontSize = 16 ;
     let iconPadding = 0;
