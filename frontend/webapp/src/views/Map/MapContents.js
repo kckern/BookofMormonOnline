@@ -7,56 +7,18 @@ import { CanvasMarker } from "./MapMarkers";
 const MapContents = ({mapController}) => {
     const mapElement = useRef(); // This ref will point to the map container
     const map = useRef(); // This ref will store the initialized map
-    const {slug: mapslug = "baja"} = mapController;
-    const [mapData, setMapData] = useState({});
-    const [markers, setMarkers] = useState([]);
+    const {currentMap} = mapController;
+    const {slug:mapslug,places} = currentMap;
 
-    useEffect(() => {
-        BoMOnlineAPI({ maps: mapslug },(result)=>{
-            debu
-            setMapData(result);
-        });
-    }, []);
-
-
-
-
-
+    const {centerx, centery, minzoom, maxzoom, zoom} = currentMap;
 
     const isAdmin = true;
 
-    const mapBounds = [-117.729321, 22.298062, -108.945432, 31.797617];
-    const mapCenter = [
-        (mapBounds[0] + mapBounds[2]) / 2,
-        (mapBounds[1] + mapBounds[3]) / 2
-    ];
-    const minZoom = 6;
-    const maxZoom = 9;
-    const iniZoom = 6;
 
-    const markers_tmp = [
-        {  name: "Town", xy: [-112.337377, 31.047839], location_type: "town"  , slug: "midian" },
-        {  name: "New York", xy: [-113.337377, 27.047839], location_type: "city" , slug: "hill-cumorah" },
-        {  name: "City Sea", xy: [-113.337377, 30.047839], location_type: "city_right" , slug: "city-by-the-sea" },
-        {  name: "Zarahemla", xy: [-113.337377, 28.047839], location_type: "land" , slug: "zarahemla" },
-        {  name: "서울", xy: [-111.337377, 29.047839], location_type: "region",  maxResolution: 6 , slug: "valley-of-alma" },
-        {  name: "Land of Nephi", xy: [-112.337377, 26.047839], location_type: "geo" , slug: "land-of-nephi" },
-        {  name: "Sea/South", xy: [-112.337377, 25.047839], location_type: "aqua", slug: "sea-south" },
-    ]
-    .map(i=>{
-
-        const {minResolution = minZoom, maxResolution = maxZoom} = i;
-        const [height, width, anchor, src] = CanvasMarker({...i});
-        const geometry  = new window.ol.geom.Point(window.ol.proj.fromLonLat(i.xy));
-        const image     = new window.ol.style.Icon({ src, size: [width, height], anchor });
-        let iconStyle   = new window.ol.style.Style({image, minResolution, maxResolution});
-        const marker    = new window.ol.Feature({ geometry });
-        marker.setStyle(iconStyle);
-        marker.set('name', i.name);
-        marker.set('slug', i.slug);
-        marker.set('label_height', height);
-        return marker;
-    });
+    const mapCenter = [centery, centerx];
+    const minZoom = minzoom;
+    const maxZoom = maxzoom;
+    const iniZoom = zoom;
     
 const drawMap = ()=>{
 
@@ -65,7 +27,6 @@ const drawMap = ()=>{
     map.current = new window.ol.Map({
         target: mapElement.current,
         layers: [new window.ol.layer.Tile({
-            extent: window.ol.proj.transformExtent(mapBounds, 'EPSG:4326', 'EPSG:3857'),
             source: new window.ol.source.XYZ({
                 url: `${assetUrl}/maptiles/${mapslug}/{z}/{x}/{y}`, 
                 tilePixelRatio: 1, minZoom,  maxZoom
@@ -83,8 +44,46 @@ const drawMap = ()=>{
         ])
     });
 
+    function getPlaceInfo(slug, appController) {
+        const keys = Object.keys(appController.preLoad.placeList || {});
+        const key = keys.find((key) => appController.preLoad.placeList[key].slug === slug);
+        return key ? appController.preLoad.placeList[key] : {};
+      }
+    const view = map.current?.getView();
+    const markers_tmp = places
+    .map(i=>{
+        const xy = [i.lat, i.lng];
+        const { minZoom, maxZoom} = i;
+        const name =  getPlaceInfo(i.slug, mapController.appController).name;
+        i.name = name;
+        const [height, width, anchor, src] = CanvasMarker({...i});
+        const geometry  = new window.ol.geom.Point(window.ol.proj.fromLonLat(xy));
+        const image     = new window.ol.style.Icon({ src, size: [width, height], anchor });
+        let iconStyle   = new window.ol.style.Style({image});
+        const marker    = new window.ol.Feature({ geometry });
+        marker.setStyle(function() {
+            const zoom = view.getZoom();
+            if(zoom < minZoom || zoom > maxZoom) return null;
+            return iconStyle;
+        });
+        marker.set('name', name);
+        marker.set('slug', i.slug);
+        marker.set('label_height', height);
+        return marker;
+    });
+    
 
-    map.current.addLayer(new window.ol.layer.Vector({ source: new window.ol.source.Vector({ features: [...markers_tmp] }) }));
+
+    map.current.addLayer(
+        new window.ol.layer.Vector({
+          source: new window.ol.source.Vector({
+            features: [...markers_tmp]
+          }),
+          style: function (feature, resolution) {
+            console.log({feature,resolution});
+          }
+        })
+      );
 
     // Extracted the repeated code into a separate function
     const setTooltipAndCursor = (isHovering, position, slug) => {
@@ -103,6 +102,8 @@ const drawMap = ()=>{
     
     }
 
+
+
     map.current.on('pointermove', function(e) {
         if (e.dragging) return;
 
@@ -114,7 +115,10 @@ const drawMap = ()=>{
             const geometry = feature.getGeometry();
             const coordinates = geometry.getCoordinates();
             const [x, y] = map.current.getPixelFromCoordinate(coordinates);
-            const [w,h] = feature.getStyle().getImage().getSize();
+            const style = feature.getStyle();
+            if(!style) return;
+            if(!style.getImage) return;
+            const [w,h] = style.getImage()?.getSize();
             markerPosition = [x, y, w , h];
             return true; 
         });
@@ -134,7 +138,7 @@ const drawMap = ()=>{
 
     if(isAdmin){
         var modify = new window.ol.interaction.Modify({ 
-            features: new window.ol.Collection(markers),
+            features: new window.ol.Collection(markers_tmp),
             style: ()=>[],
             hitTolerance: 1000 // Increase this value to increase the draggable area
         });
@@ -175,7 +179,7 @@ const drawMap = ()=>{
 }
 
 
-    useEffect(drawMap, []);
+    useEffect(drawMap, [mapslug]);
 
     useEffect(async () => {
 
@@ -187,7 +191,6 @@ const drawMap = ()=>{
     }, [mapController.panelContents.slug]);
 
 
-    return <pre>{JSON.stringify(mapData, null, 2)}</pre>;
 
     return <>
     <div id="map" ref={mapElement} ></div>
