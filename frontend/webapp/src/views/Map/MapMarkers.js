@@ -6,9 +6,8 @@ const CanvasMarker = ({ name, label, icon, isActive }) => {
 };
 
 const renderMarker = ({ name, label, icon, isActive }) => {
-    const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d');
-    const dpr = window.devicePixelRatio || 1;
+
+    //Preliminary setup
 
     name = label || name;
 
@@ -74,8 +73,13 @@ const renderMarker = ({ name, label, icon, isActive }) => {
     }
 
     const fontString = `${bold} ${fontSize}px 'Roboto Condensed'`;
+
+
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+
     context.font = fontString;
-    
     const metrics = lines.map(line => context.measureText(line));
     const ex = context.measureText("x").width;
     const textWidth = Math.max(...metrics.map(m => m.width)) + ex;
@@ -84,11 +88,7 @@ const renderMarker = ({ name, label, icon, isActive }) => {
     iconWidth = iconWidth ? fontHeight : 0;
     centerX =  (rightAligned ? (textWidth - (ex/2)) : 0) + (iconWidth / 2) 
     centerY = (iconWidth / 2) 
-
     canvas.height =  fontHeight * lines.length + (lineWidth * 1)
-
-
-    //Fill background for click detection
     context.fillStyle = "#FFFFFF01";
     context.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -123,6 +123,9 @@ const renderMarker = ({ name, label, icon, isActive }) => {
     const iconXOffsetPerc = centerX / canvas.width;
     const anchorX = !iconWidth ? 0.5 : iconXOffsetPerc;
     const anchorY = 0.5; // centerY is always middle of the canvas height, simplifying the calculation
+
+
+
 
     return [
         canvas.height,
