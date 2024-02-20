@@ -9,7 +9,8 @@ const renderMarker = ({ name, label, icon, isActive }) => {
 
     //Preliminary setup
 
-    name = label || name;
+    name =  name || label;
+    name = name.replace(/[0-9]/g, ''); // Remove numbers
 
     const lines = name?.split(/[\/]/g) || ["place"] // Split name into lines
     // Common settings
@@ -121,6 +122,9 @@ const renderMarker = ({ name, label, icon, isActive }) => {
         const gap = longestLineByPixels - context.measureText(line).width;
         const offset = gap / 2;
         const textStartY = (i + 1) * fontSize;
+
+        context.lineJoin = 'round';
+        context.miterLimit = 2;
         context.strokeText(line, textStartX + offset, textStartY);
         context.fillStyle = textColor;
         context.fillText(line, textStartX+ offset, textStartY);

@@ -50,7 +50,7 @@ const drawMap = ()=>{
         const scale = 1 / dpr; // calculate scale based on device pixel ratio
         const image = new window.ol.style.Icon({ src, scale, anchor });        
         let iconStyle   = new window.ol.style.Style({image});
-        return [iconStyle,height];
+        return [iconStyle,width/dpr,height/dpr];
     }
 
     function getPlaceInfo(slug, appController) {
@@ -67,7 +67,7 @@ const drawMap = ()=>{
         i.name = name;
         const geometry  = new window.ol.geom.Point(window.ol.proj.fromLonLat(xy));
         const marker    = new window.ol.Feature({ geometry });
-        let [iconStyle,height] = createIconStyle(i);
+        let [iconStyle,width,height] = createIconStyle(i);
         let [iconStyleActive] = createIconStyle(i,true);
         marker.setStyle(()=>{
             const slug = window.ol.panelMapSlug; //TODO: dont use global, get from mapController state
@@ -78,7 +78,7 @@ const drawMap = ()=>{
         });
         marker.set('name', name);
         marker.set('slug', i.slug);
-        marker.set('label_height', height);
+        marker.set('wh', [width, height]);
         return marker;
     });
     
@@ -120,15 +120,12 @@ const drawMap = ()=>{
         const isHoveringOverMarker = map.current.forEachFeatureAtPixel(e.pixel, ()=>true);
         const markerSlug = map.current.forEachFeatureAtPixel(e.pixel, (feature) => feature.get('slug'));
         let markerPosition;
-
         map.current.forEachFeatureAtPixel(e.pixel, (feature) => {
             const geometry = feature.getGeometry();
             const coordinates = geometry.getCoordinates();
             const [x, y] = map.current.getPixelFromCoordinate(coordinates);
-            const style = feature.getStyle();
-            if(!style) return;
-            if(!style.getImage) return;
-            const [w,h] = style.getImage()?.getSize();
+            const [w, h] = feature.get('wh') || [0,0];
+            if(w === 0 || h === 0) return;
             markerPosition = [x, y, w , h];
             return true; 
         });
