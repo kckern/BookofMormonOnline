@@ -1,9 +1,11 @@
 
-const CanvasMarker = ({ name, location_type }) => {
-    return renderMarker({ name, location_type });
+const CanvasMarker = ({ name, slug, location_type,isActive }) => {
+
+
+    return renderMarker({ name, location_type,isActive });
 };
 
-const renderMarker = ({ name, location_type }) => {
+const renderMarker = ({ name, location_type, isActive }) => {
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d');
     const dpr = window.devicePixelRatio || 1;
@@ -81,7 +83,7 @@ const renderMarker = ({ name, location_type }) => {
     if (centerX) { // Draw the icon if needed
         context.beginPath();
         context.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
-        context.fillStyle = "#6b7d91";
+        context.fillStyle = !isActive ? "#6b7d91" : "#FFFFFF";
         context.strokeStyle = "#FFFFFF88";
         context.lineWidth = 5;
         context.stroke();
