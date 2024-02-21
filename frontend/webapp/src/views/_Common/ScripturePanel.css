@@ -57,6 +57,11 @@
     background-color: #DDD;
     color: #666;
 }
+.scripturePanelSingle .scripturePassages
+{
+  margin-top: 1ex;
+}
+
 .scripturePanelSingle h6{
   text-align: left;
   font-family: "Roboto Condensed", "Arial Narrow", sans-serif;
