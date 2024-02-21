@@ -285,8 +285,9 @@ function MapPanel({mapController})
                           {item.ref}
                           </a>
                           </td>
-                        <td>{item.text}</td>
-                    </tr>
+                        <td>{["1","2","3","4"].reduce((a, e, i) => 
+                          a.replace(new RegExp(e, "g"), ["¹","²","³","⁴"][i]), item.text)}</td>                    
+                        </tr>
                 })}
             </tbody>
         </table>
