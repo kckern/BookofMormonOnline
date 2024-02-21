@@ -754,6 +754,19 @@ class Sendbird {
     return response?.data || {};
   }
 
+  async getUserMetadata(user_id) {
+    let response = await axios({
+      method: 'GET',
+      url: `https://api-${SENDBIRD_APPID}.sendbird.com/v3/users/${user_id}/metadata`,
+      headers: {
+        'Api-Token': SENDBIRD_TOKEN,
+        'Content-Type': 'application/json'
+      },
+      json: true
+    });
+    return response?.data || {};
+  }
+
 
   async getLatestMessage(channelUrl) {
     let now = Math.round(Date.now() / 1);
