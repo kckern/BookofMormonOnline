@@ -24,7 +24,7 @@ const renderMarker = ({ name, label, icon, isActive }) => {
     let bold = "";
     let centerX = 0, centerY = 0; // Initialized to 0 for the 'region' case
 
-    const rightAligned = icon === "city_right";
+    const rightAligned = /_right$/.test(icon);
 
     switch (icon) {
         case "region":
@@ -51,6 +51,7 @@ const renderMarker = ({ name, label, icon, isActive }) => {
             iconPadding = 2;
             break;
         case "town":
+        case "town_right":
             textColor = "#000000";
             strokeColor = "#FFFFFF";
             fontSize = 11;
