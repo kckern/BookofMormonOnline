@@ -913,7 +913,9 @@ export function ScripturePanelSingle({ scriptureData,closeButton, setPopUpRef })
 
   return <div className="scripturePanelSingle">
     <h5>{ref}{closeButtonEl}</h5>
+    <div className="scripturePassages">
    {passages.length ? scripturePassages : <Spinner/>}
+   </div>
   </div>
 
 }

@@ -190,7 +190,8 @@ const drawMap = ()=>{
     useEffect(drawMap, [mapslug]);
 
     useEffect(async () => {
-
+        //wait 500ms for the map to be drawn
+        await new Promise(resolve => setTimeout(resolve, 500));
         map.current.updateSize();
         //set slug into global space
         window.ol.panelMapSlug = mapController.panelContents.slug;
