@@ -64,7 +64,7 @@ function MapContainer({ appController }) {
   }, [])
 
   // get active map data
-  const getMap = useCallback((type = "baja", place) => {
+  const getMap = useCallback((type = "internal", place) => {
     // update Url
     if(!type) return;
     updateUrl(`/map/${type}${place ? "/place/" + place : ""}`)
