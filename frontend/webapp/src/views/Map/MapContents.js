@@ -45,10 +45,11 @@ const drawMap = ()=>{
     });
 
     function createIconStyle(i,isActive) {
+        const hasActive = !!window.ol.panelMapSlug;
         const dpr = window.devicePixelRatio || 1;
         const [height, width, anchor, src] = CanvasMarker({...i, isActive});
         const scale = 1 / dpr; // calculate scale based on device pixel ratio
-        const image = new window.ol.style.Icon({ src, scale, anchor });        
+        const image = new window.ol.style.Icon({ src, scale, anchor, opacity: isActive ? 1 : hasActive ? 0.5 : 1 });
         let iconStyle   = new window.ol.style.Style({image});
         return [iconStyle,width/dpr,height/dpr];
     }
@@ -191,12 +192,12 @@ const drawMap = ()=>{
 
     useEffect(async () => {
         //wait 500ms for the map to be drawn
-        await new Promise(resolve => setTimeout(resolve, 500));
-        map.current.updateSize();
         //set slug into global space
         window.ol.panelMapSlug = mapController.panelContents.slug;
         const markers = map.current.getLayers().getArray()[1].getSource().getFeatures();
         markers.forEach(i=>i.changed());
+        await new Promise(resolve => setTimeout(resolve, 500));
+        map.current.updateSize();
 
 
     }, [mapController.panelContents.slug]);
