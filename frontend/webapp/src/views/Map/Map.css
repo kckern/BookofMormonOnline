@@ -61,7 +61,6 @@
 {
   width: 0;
   transition: all 0.5s;
-  padding: 1rem;
   opacity: 0;
 }
 .open .mapPanel
@@ -223,7 +222,10 @@
 }
 
 
-
+.mapPanel .mapPanelCardContainer{
+  margin: 1rem;
+  margin-bottom: 0;
+}
 
 
 #map .ol-zoom
@@ -437,12 +439,8 @@ Add a triangle notch pointing down at the bottom of the tooltip
 
 .mapPanel .mapPanelScripture
 {
-  margin: -1rem;
-  margin-top: 0;
-  margin-right: -1.5rem;
   bottom: 0;
   left: 250px;
-  width: calc(100% + 2rem);
   background-color: #FFFFFF44;
 }
 
