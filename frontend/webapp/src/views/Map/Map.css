@@ -225,8 +225,7 @@
 
 
 .mapPanel .mapPanelCardContainer{
-  margin: 1rem;
-  margin-bottom: 0;
+  margin: 0;
 }
 
 
@@ -436,6 +435,8 @@ Add a triangle notch pointing down at the bottom of the tooltip
 
 .mapPanel .mapPanelCardContainer
 {
+  padding: 1rem;
+  padding-bottom: 0;
   overflow: scroll;
 }
 
