@@ -29,6 +29,8 @@ import {
 } from "reactstrap";
 import { assetUrl } from "../../models/BoMOnlineAPI"
 import { ScripturePanelSingle } from "../Page/Narration";
+import { detectScriptures } from "scripture-guide";
+import { renderPersonPlaceHTML } from "../Page/PersonPlace";
 function MapContainer({ appController }) {
 
   const params = useParams(),
@@ -174,6 +176,7 @@ function MapPanel({mapController})
   useEffect(()=>{
     //scroll .mapPanel to top
     const panel = document.querySelector('.mapPanel');
+    setScripture(null);
     if(panel) panel.scrollTop = 0;
 
     if(slug){
@@ -188,6 +191,29 @@ function MapPanel({mapController})
   const maps = placeDetails?.maps || [];
 
   const [activeTab, setActiveTab] = useState("1");
+  const [scripture, setScripture] = useState("1 Nephi 1:1");
+
+
+  const parseOptions = {
+    replace: (domNode) => {
+      const attribs = { ...domNode.attribs };
+      if (attribs?.classname === 'scripture_link') {
+        const ref = domNode.children[0].data;
+        attribs.class = attribs.classname;
+        delete attribs.classname;
+        return <a {...attribs} onClick={()=>setScripture(ref)}>{ref}</a>;
+      }
+    }
+  }
+
+  let desc_with_scripturelinks =  placeDetails?.description;
+  
+
+    desc_with_scripturelinks = detectScriptures(
+    placeDetails?.description || "", 
+    (scripture) => { if (!scripture) return;
+       return `<a className="scripture_link">${scripture}</a>` }
+       );
 
   const  body = !placeDetails?.description ?  <div className='noselect' style={{display : "flex", justifyContent: "center"}}>
     <img  src={spinner} alt="loading"  style={{ height: "10rem" }} />
@@ -211,8 +237,8 @@ function MapPanel({mapController})
 </Nav>
 <TabContent activeTab={activeTab}>
     <TabPane tabId="1">
-        <div className="desc"
-        >{Parser(placeDetails.description)}</div>
+        <div className="desc" >
+          {Parser(desc_with_scripturelinks,parseOptions)}</div>
     </TabPane>
     <TabPane tabId="2">
         <div>Events</div>
@@ -237,7 +263,13 @@ function MapPanel({mapController})
             <tbody>
                 {index.map((item, i) => {
                     return <tr key={i}>
-                        <td className="ref">{item.ref}</td>
+                        <td className="ref">
+                          <a onClick={()=>
+                            setScripture(item.ref)
+                          } className="scripture_link">
+                          {item.ref}
+                          </a>
+                          </td>
                         <td>{item.text}</td>
                     </tr>
                 })}
@@ -246,6 +278,7 @@ function MapPanel({mapController})
     </TabPane>
 </TabContent>
     </>
+
 
   return <div className="mapPanel">
     <div className="mapPanelCardContainer">
@@ -267,7 +300,7 @@ function MapPanel({mapController})
     </Card>
     </div>
     <div className="mapPanelScripture">
-      <ScripturePanelSingle closeButton={true} scriptureData={{ref:"1 Nephi 1:1"}}  setPopUpRef={()=>{}} />
+      <ScripturePanelSingle closeButton={true} scriptureData={{ref:scripture}}  setPopUpRef={setScripture} />
     </div>
   </div>
 }

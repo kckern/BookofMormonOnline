@@ -12,9 +12,12 @@
 
 #map .ol-viewport{
   object-fit: cover;
-
   border-left: 5px solid #EEE;
   border-right: 5px solid #EEE;
+}
+
+.open #map .ol-viewport{
+  border-left: 0;
 }
 
 
@@ -438,11 +441,18 @@ Add a triangle notch pointing down at the bottom of the tooltip
 {
   margin: -1rem;
   margin-top: 0;
-  outline: 3px solid pink;
+  margin-right: -1.5rem;
   bottom: 0;
   left: 250px;
   width: calc(100% + 2rem);
   background-color: #FFFFFF44;
+}
+
+.mapPanelScripture .scripturePassages
+{
+
+  max-height: 30vh;
+  overflow: auto;
 }
 
 .tab-content > .active.viscinity
