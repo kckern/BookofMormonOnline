@@ -50,7 +50,7 @@ const drawMap = ()=>{
         const dpr = window.devicePixelRatio || 1;
         const [height, width, anchor, src] = CanvasMarker({...i, isActive});
         const scale = 1 / dpr; // calculate scale based on device pixel ratio
-        const image = new window.ol.style.Icon({ src, scale, anchor, opacity: isActive ? 1 : hasActive ? 0.5 : 1 });
+        const image = new window.ol.style.Icon({ src, scale, anchor, opacity: isActive ? 1 : hasActive ? 1 : 1 });
         let iconStyle   = new window.ol.style.Style({image});
         return [iconStyle,width/dpr,height/dpr];
     }
