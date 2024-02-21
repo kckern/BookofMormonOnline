@@ -155,7 +155,9 @@ const drawMap = ()=>{
             setTooltipAndCursor(false);
         });
         modify.on('modifyend', (e) => {
-            const item = e.features.getArray()[0];
+
+            const item = e.features.getArray()
+            .sort(()=>Math.random()-0.5)[0];
             var coords = item.getGeometry().getCoordinates();
             var lonLatCoords = window.ol.proj.transform(coords, 'EPSG:3857', 'EPSG:4326');
             const {token}  = mapController.appController.states.user;
@@ -166,6 +168,18 @@ const drawMap = ()=>{
             updatePlaceCoords({lat,lng,map,slug,token}).then((success)=>{
                 if(success){
                     console.log(`Coords updated for ${slug} to ${lat},${lng}`);
+                    //delete  map.{mapSlug} key from BoMCache.items indexDB
+                    let databaseName = "BoMCache";
+                    var request = indexedDB.open(databaseName, 1);
+                    request.onsuccess = function (event) {
+                        var db = event.target.result;
+                        var transaction = db.transaction(["items"], "readwrite");
+                        var objectStore = transaction.objectStore("items");
+                        var objectStoreRequest = objectStore.delete(`map.${mapslug}`);
+                        objectStoreRequest.onsuccess = function(event) {
+                            console.log(`Deleted map.${mapslug} from BoMCache.items indexDB`);
+                        };
+                    };
                 }
                 else{
                     console.error(`Coords update failed for ${slug} to ${lat},${lng}`);
