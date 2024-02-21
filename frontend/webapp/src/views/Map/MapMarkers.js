@@ -89,6 +89,7 @@ const renderMarker = ({ name, label, icon, isActive }) => {
     const context = canvas.getContext('2d');
     
 
+
     context.font = fontString;
     const metrics = lines.map(line => context.measureText(line));
     const ex = context.measureText("x").width;
@@ -108,7 +109,7 @@ const renderMarker = ({ name, label, icon, isActive }) => {
     if (centerX) { // Draw the icon if needed
         context.beginPath();
         context.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
-        context.fillStyle = !isActive ? "#6b7d91" : "#FFFFFF";
+        context.fillStyle = !isActive ? "#6b7d91" : "#000000";
         context.strokeStyle = "#FFFFFF88";
         context.lineWidth = 5 * dpr;
         context.stroke();
@@ -136,7 +137,6 @@ const renderMarker = ({ name, label, icon, isActive }) => {
     const iconXOffsetPerc = centerX / canvas.width;
     const anchorX = !iconWidth ? 0.5 : iconXOffsetPerc;
     const anchorY = 0.5; // centerY is always middle of the canvas height, simplifying the calculation
-
 
 
 
