@@ -183,21 +183,23 @@ function MapPanel({mapController})
     const panel = document.querySelector('.mapPanel');
     setScripture(null);
     if(panel) panel.scrollTop = 0;
-
+    const mapSlug = mapController.currentMap?.slug;
+    if(!mapSlug) return;
     if(slug){
 
       //update router path
-      mapController.appController.functions.setSlug(`/map/${mapController.currentMap?.slug}/place/${slug}`);
+     
+      mapController.appController.functions.setSlug(`/map/${mapSlug}/place/${slug}`);
 
       BoMOnlineAPI({places: [slug]}).then((result)=>{
         setPlaceDetails(result?.places?.[slug] || {});
       })
     }
     else{
-      mapController.appController.functions.setSlug(`/map/${mapController.currentMap?.slug}`);
+      mapController.appController.functions.setSlug(`/map/${mapSlug}`);
 
     }
-  }, [slug,panelContents?.slug])
+  }, [slug,panelContents?.slug,mapController.currentMap?.slug])
 
 
   const index = placeDetails?.index || [];
