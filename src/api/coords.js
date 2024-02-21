@@ -15,7 +15,7 @@ const updateCoords =async  (req, res) => {
     //get token from header
     const {token} = req.headers;
     //get lat, lng, map, and guid from body
-    const {lat,lng,map,guid} = req.body;
+    const {lat,lng,map,slug} = req.body;
 
     let result = await queryDB("SELECT user FROM bom_user_token WHERE token = ?",[token]);
     let user = null;
@@ -31,11 +31,13 @@ const updateCoords =async  (req, res) => {
     const keys = Object.keys(metadata);
     if(["isAdmin","isMapper"].every(key=>!keys.includes(key))) return res.json({success:false, message: "User is not a mapper", keys});
 
-    //validate token
+    const guidR = await queryDB("SELECT guid FROM bom_places WHERE slug = ?",[slug]);
+    const guid = guidR?.[0]?.guid;
+    if(!guid) return res.json({success:false, message: "Invalid slug", slug, guidR});
 
     if(!lat || !lng || !map || !guid) return res.json({success:false, message: "Invalid data", lat,lng,map,guid});
 
-    const sql = `UPDATE bom_places_coords SET lat = ?, lng = ?, map = ?, time = NOW(), user = ? WHERE guid = ? LIMIT 1`;
+    const sql = `UPDATE bom_places_coords SET lat = ?, lng = ?, time = NOW(), user = ? WHERE guid = ? AND map = ? LIMIT 1`;
     await queryDB(sql,[lat,lng,map,user,guid]);
 
 
