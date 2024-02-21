@@ -31,6 +31,7 @@ import { assetUrl } from "../../models/BoMOnlineAPI"
 import { ScripturePanelSingle } from "../Page/Narration";
 import { detectScriptures } from "scripture-guide";
 import { renderPersonPlaceHTML } from "../Page/PersonPlace";
+import { map } from "highcharts";
 function MapContainer({ appController }) {
 
   const params = useParams(),
@@ -45,12 +46,15 @@ function MapContainer({ appController }) {
 
     appController.functions.closePopUp()
 
-    const element = document.getElementsByClassName("main-panel")[0]
-    element.style.paddingRight = 0
+    if(!appController.preLoad.placeList) return;
+
     getMap(params.mapType, params.placeName)
 
+    if(params.placeName){
+      setPanelContents({slug: params.placeName});
+    }
 
-  }, [])
+  }, [appController.preLoad.placeList])
 
   useEffect(() => {
     window.addEventListener("handleMapChange", handleMapChange, false);
@@ -62,7 +66,8 @@ function MapContainer({ appController }) {
   // get active map data
   const getMap = useCallback((type = "baja", place) => {
     // update Url
-    updateUrl(`/map/${type}`)
+    if(!type) return;
+    updateUrl(`/map/${type}${place ? "/place/" + place : ""}`)
     setMapName(label("loading"))
     
     BoMOnlineAPI({ map: type }).then((result) => {
@@ -80,7 +85,7 @@ function MapContainer({ appController }) {
   }
 
   const handleMapChange = ({ map, place }) => {
-    console.log(map, place)
+    place = place || mapController.panelContents.slug;
     getMap(map, place)
     appController.functions.closePopUp()
   }
@@ -109,7 +114,7 @@ function MapContainer({ appController }) {
         <MapPanel mapController={mapController}  />
         <MapSpotlight mapController={mapController} />
         <MapToolTip {...mapController} />
-        {placeList && currentMap ?  <MapContents  mapController={mapController}  />  : <Loader />  }
+        {placeList && currentMap?.places ?  <MapContents  mapController={mapController}  />  : <Loader />  }
       </div>
     </>
   )
@@ -180,11 +185,19 @@ function MapPanel({mapController})
     if(panel) panel.scrollTop = 0;
 
     if(slug){
+
+      //update router path
+      mapController.appController.functions.setSlug(`/map/${mapController.currentMap?.slug}/place/${slug}`);
+
       BoMOnlineAPI({places: [slug]}).then((result)=>{
         setPlaceDetails(result?.places?.[slug] || {});
       })
     }
-  }, [slug])
+    else{
+      mapController.appController.functions.setSlug(`/map/${mapController.currentMap?.slug}`);
+
+    }
+  }, [slug,panelContents?.slug])
 
 
   const index = placeDetails?.index || [];
