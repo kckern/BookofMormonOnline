@@ -2,6 +2,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import BoMOnlineAPI, { assetUrl } from "../../models/BoMOnlineAPI";
 import { CanvasMarker } from "./MapMarkers";
+import { updatePlaceCoords } from '../Audit/Audit';
 
 
 const MapContents = ({mapController}) => {
@@ -133,7 +134,6 @@ const drawMap = ()=>{
         setTooltipAndCursor(isHoveringOverMarker, markerPosition, markerSlug);
     });
 
-    //on click alert the marker name
     map.current.on('click', function(e) {
         map.current.forEachFeatureAtPixel(e.pixel, (feature) => {
             mapController.setPanelContents({slug: feature.get('slug')});
@@ -155,10 +155,25 @@ const drawMap = ()=>{
             setTooltipAndCursor(false);
         });
         modify.on('modifyend', (e) => {
-            var coords = e.features.getArray()[0].getGeometry().getCoordinates();
+            const item = e.features.getArray()[0];
+            var coords = item.getGeometry().getCoordinates();
             var lonLatCoords = window.ol.proj.transform(coords, 'EPSG:3857', 'EPSG:4326');
-            alert(JSON.stringify(lonLatCoords));
-            console.log(e.features.getArray());
+            const {token}  = mapController.appController.states.user;
+            const map = mapController.currentMap?.slug;
+            const slug = item.get('slug');
+
+            const [lat,lng] = lonLatCoords;
+            updatePlaceCoords({lat,lng,map,slug,token}).then((success)=>{
+                if(success){
+                    console.log(`Coords updated for ${slug} to ${lat},${lng}`);
+                }
+                else{
+                    console.error(`Coords update failed for ${slug} to ${lat},${lng}`);
+                }
+            }).catch((e)=>{
+                console.error(`Coords update failed for ${slug} to ${lat},${lng}`,e);
+            });
+
         });
         map.current.addInteraction(modify);
     }

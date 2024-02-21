@@ -23,25 +23,22 @@ const updateCoords =async  (req, res) => {
         user = result[0].user;
     }    
     if(!user) return res.json({success:false, message: "Invalid token"});
-    console.log("username",user);
+
 
     const md5Username = md5(user);
     //get sendbird object
     const metadata = await sendbird.getUserMetadata(md5Username);
     const keys = Object.keys(metadata);
     if(["isAdmin","isMapper"].every(key=>!keys.includes(key))) return res.json({success:false, message: "User is not a mapper", keys});
-
     const guidR = await queryDB("SELECT guid FROM bom_places WHERE slug = ?",[slug]);
     const guid = guidR?.[0]?.guid;
     if(!guid) return res.json({success:false, message: "Invalid slug", slug, guidR});
-
     if(!lat || !lng || !map || !guid) return res.json({success:false, message: "Invalid data", lat,lng,map,guid});
-
     const sql = `UPDATE bom_places_coords SET lat = ?, lng = ?, time = NOW(), user = ? WHERE guid = ? AND map = ? LIMIT 1`;
-    await queryDB(sql,[lat,lng,map,user,guid]);
-
-
-    res.json({success:true, message: "Coords updated", user});
+    await queryDB(sql,[lat,lng,user,guid,map]);
+    let i = 0;
+    const renderedSQL = sql.replace(/\?/g, () => `'${[lat,lng,user,guid,map][i++]}'`);
+    res.json({success:true, message: "Coords updated", renderedSQL, lat,lng,map,guid});
 }
 
 
