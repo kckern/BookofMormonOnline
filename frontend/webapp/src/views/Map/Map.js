@@ -191,7 +191,8 @@ function MapPanel({mapController})
      
       mapController.appController.functions.setSlug(`/map/${mapSlug}/place/${slug}`);
 
-      BoMOnlineAPI({places: [slug]}).then((result)=>{
+      //TODO: use the cache after data entry is complete, is not admin
+      BoMOnlineAPI({places: [slug]},{ useCache: false }).then((result)=>{
         setPlaceDetails(result?.places?.[slug] || {});
       })
     }
