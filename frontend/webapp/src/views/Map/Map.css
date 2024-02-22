@@ -435,7 +435,7 @@ Add a triangle notch pointing down at the bottom of the tooltip
 {
   padding: 1rem;
   padding-bottom: 0;
-  overflow: scroll;
+  overflow: auto;
 }
 
 .mapPanel .mapPanelScripture
