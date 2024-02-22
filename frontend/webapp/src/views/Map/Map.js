@@ -13,8 +13,9 @@ import BoMOnlineAPI from "src/models/BoMOnlineAPI"
 // CSS
 import "./Map.css"
 import MapTypes from "./MapTypes";
-import { label } from "src/models/Utils"
+import { label,isMobile } from "src/models/Utils"
 import MapContents from "./MapContents"
+
 import {
   Button,
   Card,
@@ -155,6 +156,8 @@ function MapToolTip({ tooltip, appController, panelContents }) {
 
   const leftVal = `calc( ${!!panelContents.slug ? 30 : 0}% + ${x - (boxW/2)}px )`;
 
+  if(isMobile()) return null;
+
   return (
     <div className="mapTooltip" style={{left: leftVal, top: y - boxH - (h/2) - margin
     ,backgroundImage: `url(${assetUrl}/places/${slug})`, width: boxW, height: boxH
@@ -202,13 +205,13 @@ function MapPanel({mapController})
     }
   }, [slug,panelContents?.slug,mapController.currentMap?.slug])
 
-
   const index = placeDetails?.index || [];
   const maps = placeDetails?.maps || [];
 
   const [activeTab, setActiveTab] = useState("1");
   const [scripture, setScripture] = useState("1 Nephi 1:1");
 
+  if(isMobile()) return null;
 
   const parseOptions = {
     replace: (domNode) => {

@@ -34,6 +34,8 @@
   cursor: pointer;
   border-radius: 11px;
   cursor: pointer;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 
@@ -512,6 +514,12 @@ Add a triangle notch pointing down at the bottom of the tooltip
 
 @media screen and (max-width: 900px)
 {
+  .mappanel_wrapper.open #map{
+    left: 0;
+  }
+  #map .ol-viewport{
+    border: 0;
+  }
   .mappanel_wrapper
   {
     position: fixed;
@@ -522,6 +530,11 @@ Add a triangle notch pointing down at the bottom of the tooltip
   .mappanel_wrapper #map
   {
     height: 100%;
+  }
+
+  .mappanel_wrapper .map-selector-menu
+  {
+    left: 2rem;
   }
 
 }
