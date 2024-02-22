@@ -177,7 +177,8 @@ const drawMap = ()=>{
             mapController.setPanelContents({slug, lat, lng});
             mapController.setTooltip({x, y, slug: null});
             markers_tmp.forEach(i=>i.changed());
-            map.current.getView().animate({center: [lat,lng], duration: 500});
+            setTimeout(()=>map.current.getView().animate({center: [lat,lng], duration: 500}), 0);
+            
         });
     });
     
@@ -231,20 +232,6 @@ const drawMap = ()=>{
     }else{
         console.log("Not admin mode", {mapController});
     }
-
-
-    mapController.setMapFunctions({
-        selectPlace: (slug) => {
-            slug = "midian";
-            const feature = map.current.getLayers().getArray()[1].getSource().getFeatures().find(i=>i.get('slug') === slug);
-            const coords = feature.getGeometry().getCoordinates();
-            map.current.getView().animate({center: coords, duration: 500});
-            //set tooltip
-            setTooltipAndCursor(true, coords, slug);
-            //TODO: Highlight the marker
-            //TODO: Zoom if needed
-        }
-    });
 
 
 
