@@ -147,7 +147,10 @@ function MapToolTip({ tooltip, appController, panelContents }) {
 
   const leftVal = `calc( ${!!panelContents.slug ? 30 : 0}% + ${x - (boxW/2)}px )`;
 
-  if(isMobile()) return null;
+  const isSelectedInPanel = panelContents.slug === slug;
+
+
+  if(isMobile() || isSelectedInPanel) return null;
 
   const toolTip =  <div className="mapTooltip" style={{left: leftVal, top: y - boxH - (h/2) - margin
     ,backgroundImage: `url(${assetUrl}/places/${slug})`, width: boxW, height: boxH
@@ -202,7 +205,6 @@ function MapPanel({mapController})
   const [activeTab, setActiveTab] = useState("1");
   const [scripture, setScripture] = useState("1 Nephi 1:1");
 
-  if(isMobile()) return null;
 
   const parseOptions = {
     replace: (domNode) => {
@@ -292,6 +294,9 @@ function MapPanel({mapController})
     </>
 
 
+const [zoomLevel,setZoomLevel] = useState(window.ol.zoomLevel || 0);
+useState(()=>setZoomLevel(window.ol.zoomLevel || 0),[window.ol.zoomLevel]);
+
 const adminPanel = isAdmin ? <Card className="adminPanel">
   <CardHeader>
     <h6 className="title">Zoom Levels</h6>
@@ -299,7 +304,7 @@ const adminPanel = isAdmin ? <Card className="adminPanel">
   <CardBody>
     {/* 3 columns: Current, min max: 1. read only input, 2 and 3 dropdowns 3-9*/}
     <div className="zoomLevels" style={{display: "flex", justifyContent: "space-between"}}>
-      <div className="currentZoom"><label>Current Zoom:</label>:  <code>5</code></div>
+      <div className="currentZoom"><label>Current Zoom:</label>:  <code>{zoomLevel}</code></div>
       <div className="minZoom">
         <label>Min Zoom:</label>
         <select>
@@ -328,6 +333,8 @@ const adminPanel = isAdmin ? <Card className="adminPanel">
   </CardBody>
 </Card> : null;
 
+
+if(isMobile()) return null;
 
   return <div className="mapPanel">
     <div className="mapPanelCardContainer">

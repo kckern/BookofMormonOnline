@@ -27,6 +27,9 @@ const MapContents = ({mapController}) => {
 const drawMap = ()=>{
 
     if (!window.ol) return console.error('OpenLayers library not found');
+
+    const zoomLevel = map.current?.getView().getZoom();
+    window.ol.zoomLevel = zoomLevel || 0;
     
     map.current = new window.ol.Map({
         target: mapElement.current,
@@ -189,7 +192,13 @@ const drawMap = ()=>{
             
         });
     });
-    
+
+    map.current.getView().on('change:resolution', function(e) {
+        const zoomLevel = map.current?.getView().getZoom() || 0;
+        window.ol.zoomLevel = zoomLevel;
+        mapController.panelContents.zoom = zoomLevel;
+        mapController.setPanelContents(mapController.panelContents);
+    });
 
     if(isAdmin){
         console.log("Admin mode");
