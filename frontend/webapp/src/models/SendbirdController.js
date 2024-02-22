@@ -48,6 +48,9 @@ export default class SendbirdController {
     this.token = token;
     SendBirdCall.init(appId);
 
+
+
+
     this.connect(userId, token);
 
     //console.log("SendbirdController", { appId, userId, token, appController });
@@ -84,6 +87,7 @@ export default class SendbirdController {
     this.sb.openChannel.addOpenChannelHandler(key, openChannelHandler);
   }
 
+
   createNewGroup = async (group, userId) => {
     const params = {};
     params.name = group.name;
@@ -115,6 +119,10 @@ export default class SendbirdController {
       console.log("Error", error);
       return error;
     }
+  };
+
+  getCurrentUser = () => {
+    return this.sb.currentUser;
   };
 
   createNewRoom = async () => {

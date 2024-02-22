@@ -4,16 +4,17 @@ import BoMOnlineAPI, { assetUrl } from "../../models/BoMOnlineAPI";
 import { CanvasMarker } from "./MapMarkers";
 import { updatePlaceCoords } from '../Audit/Audit';
 
+import mapIcon from "../_Common/svg/maps.svg";
+
 
 const MapContents = ({mapController}) => {
     const mapElement = useRef(); // This ref will point to the map container
     const map = useRef(); // This ref will store the initialized map
-    const {currentMap} = mapController;
+    let {currentMap,isAdmin} = mapController;
     const {slug:mapslug,places} = currentMap;
 
     const {centerx, centery, minzoom, maxzoom, zoom} = currentMap;
 
-    const isAdmin = true;
 
 
     const mapCenter = [centery, centerx];
@@ -44,15 +45,41 @@ const drawMap = ()=>{
             new window.ol.interaction.KeyboardZoom()
         ])
     });
-
-    function createIconStyle(i,isActive) {
+    function createIconStyle(i, isActive) {
         const hasActive = !!window.ol.panelMapSlug;
         const dpr = window.devicePixelRatio || 1;
         const [height, width, anchor, src] = CanvasMarker({...i, isActive});
         const scale = 1 / dpr; // calculate scale based on device pixel ratio
         const image = new window.ol.style.Icon({ src, scale, anchor, opacity: isActive ? 1 : hasActive ? 1 : 1 });
-        let iconStyle   = new window.ol.style.Style({image});
-        return [iconStyle,width/dpr,height/dpr];
+        let iconStyle = new window.ol.style.Style({image});
+
+        let styles = [iconStyle];
+
+        // If isActive is true, add a large red circle above the image
+        if (isActive) {
+
+            const relativeMargin = height > 50 ? 0.3 : 0.2; 
+
+            const resolution = map.current.getView().getResolution();
+            const mapPinStyle = new window.ol.style.Style({
+                image: new window.ol.style.Icon({
+                    src: "/img/pin.png",
+                    scale: 0.5, // adjust the size as needed
+                    anchor: [0.5, 1 + relativeMargin], // anchor at bottom center
+                    anchorXUnits: 'fraction', // anchor units in fraction (relative to the icon)
+                    anchorYUnits: 'fraction' // anchor units in fraction (relative to the icon)
+                }),
+                stroke: new window.ol.style.Stroke({
+                    color: 'red',
+                    width: 2
+                }),
+                zIndex: 1
+            });
+
+            styles.push(mapPinStyle);
+        }
+
+        return [styles, width/dpr, height/dpr];
     }
 
     function getPlaceInfo(slug, appController) {
@@ -83,6 +110,9 @@ const drawMap = ()=>{
         marker.set('wh', [width, height]);
         return marker;
     });
+
+
+
     
 
 
@@ -96,6 +126,8 @@ const drawMap = ()=>{
           }
         })
       );
+
+
 
     // Extracted the repeated code into a separate function
     const setTooltipAndCursor = (isHovering, position, slug) => {
@@ -136,16 +168,20 @@ const drawMap = ()=>{
 
     map.current.on('click', function(e) {
         map.current.forEachFeatureAtPixel(e.pixel, (feature) => {
-            mapController.setPanelContents({slug: feature.get('slug')});
-            const coords = feature.getGeometry().getCoordinates();
-            mapController.setTooltip({x: coords[0], y: coords[1], slug: null});
-            map.current.getView().animate({center: coords, duration: 500});
+
+            const slug = feature.get('slug');
+            const [lat,lng] = feature.getGeometry().getCoordinates();
+            const [x, y] = map.current.getPixelFromCoordinate([lat,lng]);   
+            mapController.setPanelContents({slug, lat, lng});
+            mapController.setTooltip({x, y, slug: null});
             markers_tmp.forEach(i=>i.changed());
+            map.current.getView().animate({center: [lat,lng], duration: 500});
         });
     });
     
 
     if(isAdmin){
+        console.log("Admin mode");
         var modify = new window.ol.interaction.Modify({ 
             features: new window.ol.Collection(markers_tmp),
             style: ()=>[],
@@ -190,6 +226,8 @@ const drawMap = ()=>{
 
         });
         map.current.addInteraction(modify);
+    }else{
+        console.log("Not admin mode", {mapController});
     }
 
 
@@ -210,14 +248,14 @@ const drawMap = ()=>{
 
     return () => { 
         if (map.current) map.current.setTarget(undefined);  
-        map.current.removeInteraction(modify);
+       if(isAdmin) map.current.removeInteraction(modify);
     };
 
 
 }
 
 
-    useEffect(drawMap, [mapslug]);
+    useEffect(drawMap, [mapslug,isAdmin]);
 
     useEffect(async () => {
         //wait 500ms for the map to be drawn
