@@ -15,12 +15,14 @@ const MapContents = ({mapController}) => {
 
     const {centerx, centery, minzoom, maxzoom, zoom} = currentMap;
 
+    const panelSlug = mapController.panelContents.slug;
+    const activePlace = places.find(i=>i.slug === panelSlug);
 
 
-    const mapCenter = [centery, centerx];
+    const mapCenter = [activePlace?.lat || centery, activePlace?.lng || centerx];
     const minZoom = minzoom;
     const maxZoom = maxzoom;
-    const iniZoom = zoom;
+    const iniZoom = activePlace?.minZoom || zoom;
     
 const drawMap = ()=>{
 
