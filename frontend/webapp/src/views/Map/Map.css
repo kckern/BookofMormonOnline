@@ -88,8 +88,12 @@
 
 }
 
-.mapPanel h5,
-.mapPanel h6{
+.mapPanel h5{
+  text-align: center;
+}
+
+.adminPanel h6{
+
   text-align: center;
 }
 
