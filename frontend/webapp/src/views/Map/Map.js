@@ -43,6 +43,15 @@ function MapContainer({ appController }) {
     [mapFunctions, setMapFunctions] = useState({}),
     [panelContents, setPanelContents] = useState({});
 
+
+  const userMetadata = appController.sendbird?.getCurrentUser()?.metaData
+  const metaKeys = Object.keys(userMetadata || {});
+  const isAdmin = ["isAdmin", "isMapper"].some((key) => metaKeys.includes(key));
+
+    
+
+
+
   useEffect(() => {
 
     appController.functions.closePopUp()
@@ -105,14 +114,15 @@ function MapContainer({ appController }) {
     tooltip,
     mapFunctions,
     setMapFunctions,
-    currentMap
+    currentMap,
+    isAdmin
   }
   const {placeList} = appController.preLoad;
 
   return (  <>
       <div className={`mappanel_wrapper ${!!panelContents.slug ? "open" : ""}`}>
         <MapTypes getMap={getMap} mapName={mapName} />
-        <MapPanel mapController={mapController}  />
+        <MapPanel mapController={mapController}   />
         <MapSpotlight mapController={mapController} />
         <MapToolTip {...mapController} />
         {placeList && currentMap?.places ?  <MapContents  mapController={mapController}  />  : <Loader />  }
@@ -158,21 +168,21 @@ function MapToolTip({ tooltip, appController, panelContents }) {
 
   if(isMobile()) return null;
 
-  return (
-    <div className="mapTooltip" style={{left: leftVal, top: y - boxH - (h/2) - margin
+  const toolTip =  <div className="mapTooltip" style={{left: leftVal, top: y - boxH - (h/2) - margin
     ,backgroundImage: `url(${assetUrl}/places/${slug})`, width: boxW, height: boxH
-    }}
-    >
-     
+    }}>
       <div className="placeInfo"> <h4>{name}</h4><p>{info}</p></div>
     </div>
-  )
+  
+  
+
+    return toolTip
 }
 
 
 function MapPanel({mapController})
 {
-  const {panelContents, setPanelContents,mapFunctions} = mapController;
+  const {panelContents, setPanelContents,mapFunctions, isAdmin} = mapController;
 
   const {slug} = panelContents || {};
 
@@ -267,6 +277,7 @@ function MapPanel({mapController})
           // get more info
             return <div key={i} className="viscinity_place" onClick={()=>{
 
+
                 mapController.setPanelContents({slug: place_slug});
                 setActiveTab("1");
                 mapFunctions.selectPlace("midian");
@@ -300,6 +311,43 @@ function MapPanel({mapController})
     </>
 
 
+const adminPanel = isAdmin ? <Card className="adminPanel">
+  <CardHeader>
+    <h6 className="title">Zoom Levels</h6>
+  </CardHeader>
+  <CardBody>
+    {/* 3 columns: Current, min max: 1. read only input, 2 and 3 dropdowns 3-9*/}
+    <div className="zoomLevels" style={{display: "flex", justifyContent: "space-between"}}>
+      <div className="currentZoom"><label>Current Zoom:</label>:  <code>5</code></div>
+      <div className="minZoom">
+        <label>Min Zoom:</label>
+        <select>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+          <option value="6">6</option>
+          <option value="7">7</option>
+          <option value="8">8</option>
+          <option value="9">9</option>
+        </select>
+      </div>
+      <div className="maxZoom">
+        <label>Max Zoom</label>
+        <select>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+          <option value="6">6</option>
+          <option value="7">7</option>
+          <option value="8">8</option>
+          <option value="9">9</option>
+        </select>
+      </div>
+    </div>
+  </CardBody>
+</Card> : null;
+
+
   return <div className="mapPanel">
     <div className="mapPanelCardContainer">
     <Card>
@@ -314,6 +362,7 @@ function MapPanel({mapController})
         </span>
       </CardHeader>
         <img src={`${assetUrl}/places/${slug}`} alt={title} />
+      {adminPanel}
       <CardBody>
         {body}
       </CardBody>

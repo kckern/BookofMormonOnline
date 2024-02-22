@@ -65,6 +65,22 @@
   transition: all 0.5s;
   opacity: 0;
 }
+
+.mapPanel select
+{
+  width: 2rem;
+  height: 1.5rem;
+  margin-left: 1ex;
+  line-height: 1rem;
+  border: 1px solid #DDD;
+  border-radius: 1ex;
+}
+
+.mapPanel .adminPanel
+{
+  margin: 1rem;
+}
+
 .open .mapPanel
 {
   width: 30%;
@@ -72,7 +88,8 @@
 
 }
 
-.mapPanel h5{
+.mapPanel h5,
+.mapPanel h6{
   text-align: center;
 }
 
@@ -283,6 +300,12 @@
   background-repeat: no-repeat;
   background-position: center;
   transition: left 0.5s;
+}
+
+.selectionPin
+{
+  position: absolute;
+  z-index: 1;
 }
 
 /*
