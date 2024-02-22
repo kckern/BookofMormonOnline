@@ -134,9 +134,13 @@ const drawMap = ()=>{
     // Extracted the repeated code into a separate function
     const setTooltipAndCursor = (isHovering, position, slug) => {
         const cursorStyle = isHovering ? 'pointer' : '';
+
+        const isMoving =!!window.ol.isMoving
+
+
         const [x,y,w,h] = position || [0,0,0,0];
         mapElement.current.style.cursor = cursorStyle;
-        if (isHovering) {
+        if (isHovering && !isMoving) {
             //set cursor
             const mapTooltipFoundInDom = !!document.querySelector('.mapTooltip');
             if(mapTooltipFoundInDom) return;
@@ -176,8 +180,12 @@ const drawMap = ()=>{
             const [x, y] = map.current.getPixelFromCoordinate([lat,lng]);   
             mapController.setPanelContents({slug, lat, lng});
             mapController.setTooltip({x, y, slug: null});
-            markers_tmp.forEach(i=>i.changed());
-            setTimeout(()=>map.current.getView().animate({center: [lat,lng], duration: 500}), 0);
+            window.ol.isMoving = true;
+            setTimeout(()=>{
+                markers_tmp.forEach(i=>i.changed());
+                map.current.getView().animate({center: [lat,lng], duration: 500}, ()=>window.ol.isMoving = false);
+               
+            }, 0);
             
         });
     });

@@ -38,6 +38,10 @@
   white-space: nowrap;
 }
 
+.map-type-active p
+{
+  white-space: wrap;
+}
 
 .map-selector-menu {
   position: absolute;
