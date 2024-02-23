@@ -79,6 +79,7 @@
     "react-player": "^2.9.0",
     "react-qr-code": "^2.0.3",
     "react-quill": "^2.0.0",
+    "react-range-slider-input": "^3.0.7",
     "react-recaptcha": "^2.3.10",
     "react-redux": "^7.2.4",
     "react-reveal-text": "^0.1.1",
