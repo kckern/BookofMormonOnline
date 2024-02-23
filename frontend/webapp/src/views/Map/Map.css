@@ -38,6 +38,17 @@
   white-space: nowrap;
 }
 
+.mapPanel .grid-container {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 20px;
+}
+
+.mapPanel .grid-item {
+  display: flex;
+  flex-direction: column;
+}
+
 .map-type-active p
 {
   white-space: wrap;
@@ -568,4 +579,89 @@ Add a triangle notch pointing down at the bottom of the tooltip
     left: 2rem;
   }
 
+}
+
+
+
+
+.mappanel_wrapper .map-place-search
+{
+  position: absolute;
+  top: 10%;
+  width: 50%;
+  left: 25%;
+  
+}
+
+.mappanel_wrapper  .map-place-search .card-header
+{
+  display: flex;
+  padding-bottom: 1ex;
+  font-size: 1rem;
+}
+
+.mappanel_wrapper  .map-place-search .card-header input
+{
+  flex-grow: 1;
+  margin: 0 1rem;
+  font-size: 1.3rem;
+  padding: 0.3ex;
+  outline: none;
+  border-radius: 0.5ex;
+  border-color: #DDD;
+  border-collapse: collapse;
+}
+
+
+.map-place-search .search-result
+{
+  display: flex;
+  text-align: left;
+  margin-bottom: 0.5ex;
+}
+
+.map-place-search .search-result.primarResult:last-of-type
+{
+  border-bottom: 3px solid black;
+}
+
+.map-place-search .search-result.secondaryResult
+{
+  opacity: 0.5;
+}
+
+.map-place-search  .search-results
+{
+  margin-top: 0;
+}
+
+.map-place-search .search-result > div
+{
+  flex-grow: 1;
+}
+.map-place-search .search-result > img
+{
+  height: 4rem;
+  width: 4rem;
+  object-fit: cover;
+  margin-right:1ex;
+  flex-shrink: 0;
+}
+.search-result-name
+{
+  font-weight: bold;
+  font-size: 1rem;
+  height: 50%;
+  display: flex;
+  align-items: end;
+}
+.search-result-info
+{
+  color: #999;
+}
+
+.map-place-search .close{
+  font-size: 2rem;
+  font-family: Arial, Helvetica, sans-serif;
+  color: #AAA;
 }
