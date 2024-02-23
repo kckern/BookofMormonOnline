@@ -15,6 +15,7 @@ import "./Map.css"
 import MapTypes from "./MapTypes";
 import { label,isMobile } from "src/models/Utils"
 import MapContents from "./MapContents"
+import {MapPlaceSearch} from "./MapPlaceSearch"
 import RangeSlider from 'react-range-slider-input';
 import 'react-range-slider-input/dist/style.css';
 import {
@@ -42,6 +43,7 @@ function MapContainer({ appController }) {
     [placeName, setPlaceName] = useState(params.placeName),
     [tooltip, setTooltip] = useState({ x: 0, y: 0, slug: null }),
     [mapFunctions, setMapFunctions] = useState({}),
+    [searching,setSearching] = useState(null),
     [panelContents, setPanelContents] = useState({});
 
 
@@ -49,28 +51,37 @@ function MapContainer({ appController }) {
   const metaKeys = Object.keys(userMetadata || {});
   const isAdmin = ["isAdmin", "isMapper"].some((key) => metaKeys.includes(key));
 
-    
+  //set keyboard listener so that typing will populate searching with seatSearching, escape will set it back to null
 
 
+  const handleKeyDown = (event) => {
+    if (event.key === 'Escape') {
+      setSearching(null);
+    }
+    // todo: handle arrows and +/-
+    else {
+      if(event.key.length > 1) return false;
+      const input = document.querySelector(".map-place-search input");
+      if(input) return false;
+      setSearching({firstLetter:event.key});
+    }
+  };
 
   useEffect(() => {
-
     appController.functions.closePopUp()
-
     if(!appController.preLoad.placeList) return;
-
     getMap(params.mapType, params.placeName)
-
     if(params.placeName){
       setPanelContents({slug: params.placeName});
     }
-
   }, [appController.preLoad.placeList])
 
   useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
     window.addEventListener("handleMapChange", handleMapChange, false);
     return ()=>{
       window.removeEventListener("handleMapChange", handleMapChange, false)
+      window.removeEventListener('keydown', handleKeyDown);
     }
   }, [])
 
@@ -116,7 +127,9 @@ function MapContainer({ appController }) {
     mapFunctions,
     setMapFunctions,
     currentMap,
-    isAdmin
+    isAdmin,
+    searching,
+    setSearching
   }
   const {placeList} = appController.preLoad;
 
@@ -125,7 +138,11 @@ function MapContainer({ appController }) {
         <MapTypes getMap={getMap} mapName={mapName} />
         <MapPanel mapController={mapController}   />
         <MapToolTip {...mapController} />
-        {placeList && currentMap?.places ?  <MapContents  mapController={mapController}  />  : <Loader />  }
+        {placeList && currentMap?.places ? <>
+          <MapContents  mapController={mapController}  />
+          <MapPlaceSearch {...{mapController}}/>
+          </>   : <Loader />  }
+       
       </div>
     </>
   )
@@ -296,12 +313,12 @@ function MapPanel({mapController})
     </TabPane>
 </TabContent>
     </>
-const [zoomLevel,setZoomLevel] = useState(window.ol.zoomLevel || 0);
-useState(()=>setZoomLevel(window.ol.zoomLevel || 0),[window.ol.zoomLevel]);
+const [zoomLevel,setZoomLevel] = useState(window.ol?.zoomLevel || 0);
+useState(()=>setZoomLevel(window.ol?.zoomLevel || 0),[window.ol?.zoomLevel]);
 const [[minZoom,maxZoom],setMinMaxZoom] = useState([place?.minZoom,place?.maxZoom]);
 useEffect(()=>{setMinMaxZoom([place?.minZoom,place?.maxZoom])},[place?.minZoom,place?.maxZoom]);
 
-const adminPanel = isAdmin ? <Card className="adminPanel">
+const adminPanel = isAdmin ? place ? <Card className="adminPanel">
   <CardHeader>
     <h6 className="title">Zoom Levels</h6>
   </CardHeader>
@@ -328,18 +345,18 @@ const adminPanel = isAdmin ? <Card className="adminPanel">
     <h6 className="title">Labels</h6>
   </CardHeader>
   <CardBody>
-    <div className="labels">
-      <div className="label">
-        <label>Place Name</label>
-        <input type="text" value={title}  />
-      </div>
-      <div className="label">
-        <label>Place Info</label>
-        <input value={info} />
-      </div>
+  <div className="grid-container">
+    <div className="grid-item">
+      <label>Place Name</label>
+      <input type="text" value={title} />
     </div>
-  </CardBody>
-</Card> : null;
+    <div className="grid-item">
+      <label>Place Info</label>
+      <input value={info} />
+    </div>
+  </div>
+</CardBody>
+</Card> : <Button>Place on Map</Button> : null;
 
 
 if(isMobile()) return null;

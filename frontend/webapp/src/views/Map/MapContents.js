@@ -51,7 +51,7 @@ const drawMap = ()=>{
         ])
     });
     function createIconStyle(i, isActive) {
-        const hasActive = !!window.ol.panelMapSlug;
+        const hasActive = !!window.ol?.panelMapSlug;
         const dpr = window.devicePixelRatio || 1;
         const [height, width, anchor, src] = CanvasMarker({...i, isActive});
         const scale = 1 / dpr; // calculate scale based on device pixel ratio
@@ -124,7 +124,7 @@ const drawMap = ()=>{
         let [iconStyle,width,height] = createIconStyle(i);
         let [iconStyleActive] = createIconStyle(i,true);
         marker.setStyle(()=>{
-            const slug = window.ol.panelMapSlug; //TODO: dont use global, get from mapController state
+            const slug = window.ol?.panelMapSlug; //TODO: dont use global, get from mapController state
             const zoom = view.getZoom();
             if(zoom < minZoom || zoom > maxZoom) return null;
             if(i.slug === slug) return iconStyleActive;
