@@ -57,6 +57,7 @@ const drawMap = ()=>{
         const scale = 1 / dpr; // calculate scale based on device pixel ratio
         const image = new window.ol.style.Icon({ src, scale, anchor, opacity: isActive ? 1 : hasActive ? 1 : 1 });
         let iconStyle = new window.ol.style.Style({image});
+        if(isActive) iconStyle.setZIndex(9999);
 
         let styles = [iconStyle];
 
@@ -74,14 +75,33 @@ const drawMap = ()=>{
                     anchorXUnits: 'fraction', // anchor units in fraction (relative to the icon)
                     anchorYUnits: 'fraction' // anchor units in fraction (relative to the icon)
                 }),
-                stroke: new window.ol.style.Stroke({
-                    color: 'red',
-                    width: 2
-                }),
                 zIndex: 1
             });
 
             styles.push(mapPinStyle);
+
+            // halo circle around the marker
+            const padding = 2;
+            const radius =(width/2) + padding;
+
+            const haloStyle = new window.ol.style.Style({
+                image: new window.ol.style.Circle({
+                    radius,
+                    anchor: [0.5, 0.5],
+                    stroke: new window.ol.style.Stroke({
+                        color: 'rgba(255, 255, 255, 0.2)',
+                        width: 2
+                    }),
+                    fill: new window.ol.style.Fill({
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    }),
+                }),
+                zIndex: 0
+            });
+            styles.push(haloStyle);
+
+
+
         }
 
         return [styles, width/dpr, height/dpr];
@@ -114,7 +134,7 @@ const drawMap = ()=>{
         marker.set('slug', i.slug);
         marker.set('wh', [width, height]);
         return marker;
-    });
+    })
 
 
 

@@ -15,7 +15,8 @@ import "./Map.css"
 import MapTypes from "./MapTypes";
 import { label,isMobile } from "src/models/Utils"
 import MapContents from "./MapContents"
-
+import RangeSlider from 'react-range-slider-input';
+import 'react-range-slider-input/dist/style.css';
 import {
   Button,
   Card,
@@ -166,13 +167,16 @@ function MapToolTip({ tooltip, appController, panelContents }) {
 
 function MapPanel({mapController})
 {
-  const {panelContents, tooltip, setPanelContents,mapFunctions, isAdmin} = mapController;
+  const {panelContents, currentMap, setPanelContents,mapFunctions, isAdmin} = mapController;
 
   const {slug} = panelContents || {};
 
   const placeInfo = getPlaceInfo(slug, mapController.appController);
   const title = placeInfo?.name;
   const info = placeInfo?.info;
+
+  const {places} = currentMap || {};
+  const place = places?.find((place) => place.slug === slug);
 
   const [placeDetails, setPlaceDetails] = useState({});
   useEffect(()=>{
@@ -292,10 +296,10 @@ function MapPanel({mapController})
     </TabPane>
 </TabContent>
     </>
-
-
 const [zoomLevel,setZoomLevel] = useState(window.ol.zoomLevel || 0);
 useState(()=>setZoomLevel(window.ol.zoomLevel || 0),[window.ol.zoomLevel]);
+const [[minZoom,maxZoom],setMinMaxZoom] = useState([place?.minZoom,place?.maxZoom]);
+useEffect(()=>{setMinMaxZoom([place?.minZoom,place?.maxZoom])},[place?.minZoom,place?.maxZoom]);
 
 const adminPanel = isAdmin ? <Card className="adminPanel">
   <CardHeader>
@@ -303,31 +307,35 @@ const adminPanel = isAdmin ? <Card className="adminPanel">
   </CardHeader>
   <CardBody>
     {/* 3 columns: Current, min max: 1. read only input, 2 and 3 dropdowns 3-9*/}
-    <div className="zoomLevels" style={{display: "flex", justifyContent: "space-between"}}>
+    <div className="zoomLevels" style={{display: "flex", justifyContent: "space-between", gap: "1rem"}}>
       <div className="currentZoom"><label>Current Zoom:</label>:  <code>{zoomLevel}</code></div>
-      <div className="minZoom">
-        <label>Min Zoom:</label>
-        <select>
-          <option value="3">3</option>
-          <option value="4">4</option>
-          <option value="5">5</option>
-          <option value="6">6</option>
-          <option value="7">7</option>
-          <option value="8">8</option>
-          <option value="9">9</option>
-        </select>
+      {minZoom && <div
+        style={{display: "flex", flexDirection: "column", justifyContent: "space-between", flexGrow: 1}}
+      ><RangeSlider
+          min={currentMap?.minzoom}
+          max={currentMap?.maxzoom}
+          defaultValue={[minZoom,maxZoom]}
+          onInput={([min,max])=>{ setMinMaxZoom([min,max])}}
+      />
+      <div className="minMax" style={{display: "flex", justifyContent: "space-around"}}>
+        <span>{minZoom}</span> - <span>{maxZoom}</span>
       </div>
-      <div className="maxZoom">
-        <label>Max Zoom</label>
-        <select>
-          <option value="3">3</option>
-          <option value="4">4</option>
-          <option value="5">5</option>
-          <option value="6">6</option>
-          <option value="7">7</option>
-          <option value="8">8</option>
-          <option value="9">9</option>
-        </select>
+      </div>}
+      
+    </div>
+  </CardBody>
+  <CardHeader>
+    <h6 className="title">Labels</h6>
+  </CardHeader>
+  <CardBody>
+    <div className="labels">
+      <div className="label">
+        <label>Place Name</label>
+        <input type="text" value={title}  />
+      </div>
+      <div className="label">
+        <label>Place Info</label>
+        <input value={info} />
       </div>
     </div>
   </CardBody>
