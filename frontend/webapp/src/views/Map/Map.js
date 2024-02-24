@@ -45,6 +45,7 @@ function MapContainer({ appController }) {
     [tooltip, setTooltip] = useState({ x: 0, y: 0, slug: null }),
     [mapFunctions, setMapFunctions] = useState({}),
     [searching,setSearching] = useState(null),
+    [initSearchLetter, setInitSearchLetter] = useState(null),
     [panelContents, setPanelContents] = useState({});
 
 
@@ -54,9 +55,7 @@ function MapContainer({ appController }) {
 
   //set keyboard listener so that typing will populate searching with seatSearching, escape will set it back to null
 
-
   const handleKeyDown = (event) => {
-
     if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) return false;
 
     if (event.key === 'Escape') {
@@ -65,12 +64,10 @@ function MapContainer({ appController }) {
     // todo: handle arrows and +/-
     else {
       if(event.key.length > 1) return false;
-      const input = document.querySelector(".map-place-search input");
-      if(input) return false;
-      setSearching({firstLetter:event.key});
+      setSearching(true);
+      setInitSearchLetter(event.key);
     }
   };
-
   useEffect(() => {
     appController.functions.closePopUp()
     if(!appController.preLoad.placeList) return;
@@ -144,7 +141,7 @@ function MapContainer({ appController }) {
         <MapToolTip {...mapController} />
         {placeList && currentMap?.places ? <>
           <MapContents  mapController={mapController}  />
-          <MapPlaceSearch {...{mapController}}/>
+          <MapPlaceSearch {...{mapController}} />
           </>   : <Loader />  }
        
       </div>
@@ -381,7 +378,7 @@ if(isMobile()) return null;
     <div className="mapPanelCardContainer">
     <Card>
       <CardHeader>
-        <div  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height:"1rem" }}>
+        <div  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height:"1.5rem" }}>
         <span 
           className="searchPanelButton"
           onClick={()=>mapController.setSearching({firstLetter:""})}
