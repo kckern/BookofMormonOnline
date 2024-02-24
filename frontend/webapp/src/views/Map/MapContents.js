@@ -217,6 +217,7 @@ const drawMap = ()=>{
     map.current.getView().on('change:resolution', function(e) {
         const zoomLevel = map.current?.getView().getZoom() || 0;
         window.ol.zoomLevel = zoomLevel;
+        if(!mapController.panelContents) return;
         mapController.panelContents.zoom = zoomLevel;
         mapController.setPanelContents(mapController.panelContents);
     });
