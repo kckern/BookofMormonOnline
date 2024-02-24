@@ -48,8 +48,6 @@ export function MapPlaceSearch({ mapController }) {
     useEffect(() => {
         const input = document.querySelector(".map-place-search input");
         input?.focus();
-        const { firstLetter } = searching || {};
-        if (firstLetter) input.value = firstLetter;
     }, [searching]);
 
     // Handle search input changes
@@ -90,7 +88,7 @@ export function MapPlaceSearch({ mapController }) {
         <Card className="map-place-search">
             <CardHeader>
                 <div className='close'>🔍</div>
-                <input type="text" placeholder="Search for a place" onChange={handleTyping} />
+                <input type="text" placeholder="Search for a place" onChange={handleTyping} defaultValue={""} />
                 <div onClick={() => setSearching(null)} className='close'>×</div>
             </CardHeader>
             <CardBody>
