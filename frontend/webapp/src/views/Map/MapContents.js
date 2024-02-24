@@ -35,8 +35,9 @@ const drawMap = ()=>{
         target: mapElement.current,
         layers: [new window.ol.layer.Tile({
             source: new window.ol.source.XYZ({
-                url: `${assetUrl}/maptiles/${mapslug}/{z}/{x}/{y}`, 
-                tilePixelRatio: 1, minZoom,  maxZoom
+                url: `${assetUrl}/map/${mapslug}/{z}/{x}/{y}`, 
+                tilePixelRatio: 2, 
+                minZoom,  maxZoom
             })
         })],
         view: new window.ol.View({

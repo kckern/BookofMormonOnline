@@ -370,10 +370,7 @@ Add a triangle notch pointing down at the bottom of the tooltip
 }
 
 .closePanelButton{
-  position: absolute;
   font-family: 'Courier New', Courier, monospace;
-  top:0;
-  right:5px;
   font-size: 3rem;
   line-height: 4rem;
   cursor: pointer;
@@ -588,8 +585,15 @@ Add a triangle notch pointing down at the bottom of the tooltip
 {
   position: absolute;
   top: 10%;
-  width: 50%;
-  left: 25%;
+  width: 30%;
+  left: 35%;
+
+  /* 10 px drop shadow in all directions */
+  box-shadow: 0 0 5rem #000;
+  max-height: calc(100vh - 60px - 10%);
+  overflow: hidden;
+
+  z-index: 100;
   
 }
 
@@ -598,6 +602,7 @@ Add a triangle notch pointing down at the bottom of the tooltip
   display: flex;
   padding-bottom: 1ex;
   font-size: 1rem;
+  border-bottom: 1px solid #DDD;
 }
 
 .mappanel_wrapper  .map-place-search .card-header input
@@ -620,9 +625,21 @@ Add a triangle notch pointing down at the bottom of the tooltip
   margin-bottom: 0.5ex;
 }
 
-.map-place-search .search-result.primarResult:last-of-type
+.map-place-search .search-result.selected
 {
-  border-bottom: 3px solid black;
+  outline: 1px solid #bcd6ab;
+  border-radius: 0.5ex;
+  background-color: #93c6ef22;
+}
+.map-place-search .search-result.selected img{
+  filter: brightness(1.2);
+}
+
+.map-place-search .search-result.primaryResult.last
+{
+  border-bottom: 1px dashed #AAA;
+  margin-bottom: 1ex;
+  padding-bottom: 1ex;
 }
 
 .map-place-search .search-result.secondaryResult
@@ -652,16 +669,45 @@ Add a triangle notch pointing down at the bottom of the tooltip
   font-weight: bold;
   font-size: 1rem;
   height: 50%;
-  display: flex;
-  align-items: end;
+  position: relative;
+  bottom: -1ex;
 }
 .search-result-info
 {
   color: #999;
+
+  white-space: nowrap;
+  overflow: hidden;
+  height: 1.2rem;
+  margin-right: -3rem;
 }
 
 .map-place-search .close{
   font-size: 2rem;
   font-family: Arial, Helvetica, sans-serif;
   color: #AAA;
+  cursor: pointer;
+}
+.map-place-search .close:hover{
+  color: #000;
+}
+.map-place-search .highlight{
+  background-color: #FFFF0055;
+}
+
+.search-result.no-results
+{
+  text-align: center;
+  color: #999;
+  flex-grow: 1;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.searchPanelButton img{
+  height: 2rem;
+  width: 2rem;
+  cursor: pointer;
+  opacity: 0.3 ;
 }
