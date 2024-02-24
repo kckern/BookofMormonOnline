@@ -20,6 +20,7 @@ export default {
         include: [
           includeTranslation({ [Op.or]: ['name', 'title',"description"] }, lang),
           includeModel(info, Models.BomIndex, 'index', [
+            includeTranslation('text', lang), // Add translation here
             includeModel(true, Models.BomLookup, 'text_guid', [includeModel(true, Models.BomText, 'text')])
           ]),
           {
