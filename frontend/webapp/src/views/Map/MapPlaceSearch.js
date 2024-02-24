@@ -2,6 +2,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Card, CardBody, CardHeader } from 'reactstrap';
 import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
+import Parser from "html-react-parser";
 
 export function MapPlaceSearch({ mapController }) {
 
@@ -71,6 +72,20 @@ export function MapPlaceSearch({ mapController }) {
 
     if (!searching || !placeList) return null;
 
+    const highlight = (needle, haystack) => {
+        haystack = haystack.replace(/[0-9]/g, '');
+        const full_pattern =  new RegExp(needle.replace(/(ing|s|es|ed)$/,'') + ".*?(\\b| )", 'gi');
+        if(full_pattern.test(haystack)) return Parser(haystack.replace(full_pattern, (str) => `<em>${str.trim()}</em> `));
+    
+        let needles = needle.split(/[ ,.;!?]+/).map(str=>(new RegExp("\\b"+str.replace(/(ing|s|es|ed)$/,'')  + ".*?\\b", 'gi')));
+        for(let i in needles)
+        {
+          haystack = haystack.replace(needles[i], (str) => `<em>${str}</em>`);
+        }
+        haystack = haystack.replace(/<\/em>\s+<em>/," ");
+        return Parser(haystack);
+    
+      }
     return (
         <Card className="map-place-search">
             <CardHeader>
@@ -80,15 +95,18 @@ export function MapPlaceSearch({ mapController }) {
             </CardHeader>
             <CardBody>
                 <div className="search-results" ref={resultsRef}>
-                    {searchString && searchResults.length && searchResults.map((result, index) => (
-                        <div key={index} className={`search-result ${result.className} ${index === selectedResult ? 'selected' : ''}`}>
-                            <img alt={`${result.name}`} src={`${assetUrl}/places/${result.slug}`} />
-                            <div>
-                                <div className="search-result-name">{result.name}</div>
-                                <div className="search-result-info">{result.info}</div>
+                    {searchString && searchResults.length && searchResults.map((result, index) => {
+                        const isLastInGroup = index < searchResults.length - 1 && result.className !== searchResults[index + 1].className;
+                        return (
+                            <div key={index} className={`search-result ${result.className} ${index === selectedResult ? 'selected' : ''} ${isLastInGroup ? 'last' : ''}`}>
+                                <img alt={`${result.name}`} src={`${assetUrl}/places/${result.slug}`}  key={`${result.slug}`} />
+                                <div>
+                                    <div className="search-result-name">{highlight(searchString, result.name)}</div>
+                                    <div className="search-result-info">{highlight(searchString, result.info)}</div>
+                                </div>
                             </div>
-                        </div>
-                    )) || searchString && 
+                        );
+                    }) || searchString && 
                     <div className="search-result no-results">No results found</div> || 
                     <div className="search-result no-results">Start typing to search</div>}
                 </div>

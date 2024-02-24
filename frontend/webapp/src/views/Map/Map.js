@@ -7,7 +7,7 @@ import { useParams } from "react-router-dom"
 import TileMap from "./TileMap"
 import spinner from  "../_Common/svg/loadbar.svg"
 import Loader from "../_Common/Loader"
-import places from "../_Common/svg/places.svg";
+import placesIcon from "../_Common/svg/places.svg";
 // AACTION TYPES
 import BoMOnlineAPI from "src/models/BoMOnlineAPI"
 // CSS
@@ -268,7 +268,7 @@ function MapPanel({mapController})
     <img  src={spinner} alt="loading"  style={{ height: "10rem" }} />
     </div> : <><Nav tabs className="noselect">
     <NavItem onClick={() => setActiveTab("1")} className={activeTab === "1" ? "active" : ""}>
-      <img src={places} alt="places" style={{filter: "invert(1)", opacity: 0.5}} />
+      <img src={placesIcon} alt="places" style={{filter: "invert(1)", opacity: 0.5}} />
       <div>Description</div>
     </NavItem>
     {/*<NavItem onClick={() => setActiveTab("2")} className={activeTab === "2" ? "active" : ""}>
