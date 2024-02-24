@@ -627,7 +627,7 @@ Add a triangle notch pointing down at the bottom of the tooltip
 
 .map-place-search .search-result.selected
 {
-  outline: 1px solid #bcd6ab;
+  outline: 1px solid #EEE;
   border-radius: 0.5ex;
   background-color: #93c6ef22;
 }
@@ -644,7 +644,7 @@ Add a triangle notch pointing down at the bottom of the tooltip
 
 .map-place-search .search-result.secondaryResult
 {
-  opacity: 0.5;
+  opacity: 0.7;
 }
 
 .map-place-search  .search-results
@@ -710,4 +710,9 @@ Add a triangle notch pointing down at the bottom of the tooltip
   width: 2rem;
   cursor: pointer;
   opacity: 0.3 ;
+}
+
+.search-result em{
+  font-style: normal;
+  background-color: #FFFF0033;
 }
