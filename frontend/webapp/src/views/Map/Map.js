@@ -17,6 +17,7 @@ import { label,isMobile } from "src/models/Utils"
 import MapContents from "./MapContents"
 import {MapPlaceSearch} from "./MapPlaceSearch"
 import RangeSlider from 'react-range-slider-input';
+import searchIcon from "../_Common/svg/search.svg";
 import 'react-range-slider-input/dist/style.css';
 import {
   Button,
@@ -55,6 +56,9 @@ function MapContainer({ appController }) {
 
 
   const handleKeyDown = (event) => {
+
+    if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) return false;
+
     if (event.key === 'Escape') {
       setSearching(null);
     }
@@ -196,6 +200,18 @@ function MapPanel({mapController})
   const place = places?.find((place) => place.slug === slug);
 
   const [placeDetails, setPlaceDetails] = useState({});
+
+  useEffect(()=>{
+    const placeSlug = panelContents?.slug;
+    if(!placeSlug) return;
+
+    //ignore if triggered by map place
+
+    //todo center map on place
+
+  },[panelContents?.slug])
+
+
   useEffect(()=>{
     //scroll .mapPanel to top
     const panel = document.querySelector('.mapPanel');
@@ -365,14 +381,24 @@ if(isMobile()) return null;
     <div className="mapPanelCardContainer">
     <Card>
       <CardHeader>
-        <h5 className="title">{title}</h5>
-       <div className="info">{info}</div>
+        <div  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height:"1rem" }}>
+        <span 
+          className="searchPanelButton"
+          onClick={()=>mapController.setSearching({firstLetter:""})}
+          style={{ flexShrink: 0 }}
+        >
+          <img src={searchIcon} alt="search" />
+        </span>
+        <h5 className="title" style={{ flexGrow: 1, textAlign: 'center' }}>{title}</h5>
         <span 
           className="closePanelButton"
           onClick={()=>setPanelContents(false)}
+          style={{ flexShrink: 0 }}
         >
           ×
         </span>
+        </div>
+        <div className="info">{info}</div>
       </CardHeader>
         <img src={`${assetUrl}/places/${slug}`} alt={title} />
       {adminPanel}
