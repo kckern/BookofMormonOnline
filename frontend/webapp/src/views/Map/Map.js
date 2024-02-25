@@ -224,7 +224,7 @@ function MapPanel({mapController})
       //update router path
      
       mapController.appController.functions.setSlug(`/map/${mapSlug}/place/${slug}`);
-
+      setPlaceDetails({});
       //TODO: use the cache after data entry is complete, is not admin
       BoMOnlineAPI({places: [slug]},{ useCache: false }).then((result)=>{
         setPlaceDetails(result?.places?.[slug] || {});
