@@ -29,7 +29,8 @@ import {
   NavItem,
   NavLink,
   TabPane,
-  TabContent
+  TabContent,
+  Alert
 } from "reactstrap";
 import { assetUrl } from "../../models/BoMOnlineAPI"
 import { ScripturePanelSingle } from "../Page/Narration";
@@ -116,11 +117,13 @@ function MapContainer({ appController }) {
 
 
 
+  const {placeList} = appController.preLoad;
   const mapController = {
     setPanelContents,
     panelContents,
     getMap,
     mapName,
+    placeList,
     placeName,
     updateUrl,
     appController,
@@ -135,7 +138,6 @@ function MapContainer({ appController }) {
     zoomLevel,
     setZoomLevel,
   }
-  const {placeList} = appController.preLoad;
 
   return (  <>
       <div className={`mappanel_wrapper ${!!panelContents.slug ? "open" : ""}`}>
@@ -188,7 +190,10 @@ function MapToolTip({ tooltip, appController, panelContents }) {
 
 function MapPanel({mapController})
 {
-  const {panelContents, zoomLevel, currentMap, setPanelContents,mapFunctions, isAdmin} = mapController;
+  
+  const [prevMapType, setPrevMapType] = useState(null);
+
+  const {panelContents, zoomLevel, currentMap, setPanelContents,mapFunctions, isAdmin, placeList} = mapController;
 
   const {slug} = panelContents || {};
 
@@ -332,14 +337,47 @@ function MapPanel({mapController})
 const [[minZoom,maxZoom],setMinMaxZoom] = useState([place?.minZoom,place?.maxZoom]);
 useEffect(()=>{setMinMaxZoom([place?.minZoom,place?.maxZoom])},[place?.minZoom,place?.maxZoom]);
 
+const preloadedPlace = Object.values(placeList||{}).find((place)=>place.slug === slug);
+
+
+useEffect(()=>{
+  const isOutOfMapScope = (currentMap?.slug === "neareast") !== (preloadedPlace?.location === "W");
+  if(!isOutOfMapScope) return false;
+  // TODO: prevMapType is not being set correctly
+  const dstMap = currentMap?.slug === "neareast" ? (prevMapType || "internal") : "neareast";
+  if(dstMap !== "neareast") setPrevMapType(dstMap); 
+  mapController.getMap(dstMap,slug)
+},[preloadedPlace?.location]);
+
+useEffect(()=>{
+  const isOutOfMapScope = (currentMap?.slug === "neareast") !== (preloadedPlace?.location === "W");
+  if(!isOutOfMapScope) return false;
+  //clear panel
+  setPanelContents(false);
+},[currentMap?.slug])
+
+
 const adminPanel = isAdmin ? place ? <Card className="adminPanel">
+
+    <CardBody>
+    <div className="grid-container">
+      <div className="grid-item">
+        <label>Place Name</label>
+        <input type="text" value={title} />
+      </div>
+      <div className="grid-item">
+        <label>Place Label</label>
+        <input value={place.label} />
+      </div>
+    </div>
+  </CardBody>
   <CardHeader>
     <h6 className="title">Zoom Levels</h6>
   </CardHeader>
   <CardBody>
     {/* 3 columns: Current, min max: 1. read only input, 2 and 3 dropdowns 3-9*/}
     <div className="zoomLevels" style={{display: "flex", justifyContent: "space-between", gap: "1rem"}}>
-      <div className="currentZoom"><label>Current Zoom:</label>:  <code>{zoomLevel}</code></div>
+      <div className="currentZoom"><label>Current Zoom:</label>:  <code>{Math.round(zoomLevel)}</code></div>
       {minZoom && <div
         style={{display: "flex", flexDirection: "column", justifyContent: "space-between", flexGrow: 1}}
       ><RangeSlider
@@ -355,22 +393,10 @@ const adminPanel = isAdmin ? place ? <Card className="adminPanel">
       
     </div>
   </CardBody>
-  <CardHeader>
-    <h6 className="title">Labels</h6>
-  </CardHeader>
-  <CardBody>
-  <div className="grid-container">
-    <div className="grid-item">
-      <label>Place Name</label>
-      <input type="text" value={title} />
-    </div>
-    <div className="grid-item">
-      <label>Place Info</label>
-      <input value={info} />
-    </div>
-  </div>
-</CardBody>
-</Card> : <Button>Place on Map</Button> : null;
+  <CardFooter style={{ display: 'flex', justifyContent: 'flex-end' }}>
+    <Button>Save</Button>
+  </CardFooter>
+</Card> :  <Button>Place on Map</Button> : null;
 
 
 if(isMobile()) return null;
@@ -387,7 +413,8 @@ if(isMobile()) return null;
         >
           <img src={searchIcon} alt="search" />
         </span>
-        <h5 className="title" style={{ flexGrow: 1, textAlign: 'center' }}>{title}</h5>
+        <h5 className="title" style={{ flexGrow: 1, textAlign: 'center' }}>{Parser((title||"").replace(/([0-9])/, "<sup>$1</sup>"))
+        }</h5>
         <span 
           className="closePanelButton"
           onClick={()=>setPanelContents(false)}
@@ -396,7 +423,7 @@ if(isMobile()) return null;
           ×
         </span>
         </div>
-        <div className="info">{info}</div>
+        <div className="info">{Parser((info||"").replace(/([0-9])/, "<sup>$1</sup>"))}</div>
       </CardHeader>
         <img src={`${assetUrl}/places/${slug}`} alt={title} />
       {adminPanel}
