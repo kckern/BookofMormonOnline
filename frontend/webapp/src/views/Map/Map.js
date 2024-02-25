@@ -44,6 +44,7 @@ function MapContainer({ appController }) {
     [placeName, setPlaceName] = useState(params.placeName),
     [tooltip, setTooltip] = useState({ x: 0, y: 0, slug: null }),
     [mapFunctions, setMapFunctions] = useState({}),
+    [zoomLevel,setZoomLevel] = useState(0),
     [searching,setSearching] = useState(null),
     [initSearchLetter, setInitSearchLetter] = useState(null),
     [panelContents, setPanelContents] = useState({});
@@ -130,7 +131,9 @@ function MapContainer({ appController }) {
     currentMap,
     isAdmin,
     searching,
-    setSearching
+    setSearching,
+    zoomLevel,
+    setZoomLevel,
   }
   const {placeList} = appController.preLoad;
 
@@ -185,7 +188,7 @@ function MapToolTip({ tooltip, appController, panelContents }) {
 
 function MapPanel({mapController})
 {
-  const {panelContents, currentMap, setPanelContents,mapFunctions, isAdmin} = mapController;
+  const {panelContents, zoomLevel, currentMap, setPanelContents,mapFunctions, isAdmin} = mapController;
 
   const {slug} = panelContents || {};
 
@@ -326,8 +329,6 @@ function MapPanel({mapController})
     </TabPane>
 </TabContent>
     </>
-const [zoomLevel,setZoomLevel] = useState(window.ol?.zoomLevel || 0);
-useState(()=>setZoomLevel(window.ol?.zoomLevel || 0),[window.ol?.zoomLevel]);
 const [[minZoom,maxZoom],setMinMaxZoom] = useState([place?.minZoom,place?.maxZoom]);
 useEffect(()=>{setMinMaxZoom([place?.minZoom,place?.maxZoom])},[place?.minZoom,place?.maxZoom]);
 
