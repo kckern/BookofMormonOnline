@@ -112,6 +112,12 @@
   text-align: center;
 }
 
+.adminPanel input{
+  border: 1px solid #DDD;
+  border-radius: 0.8ex;
+  padding: 0.5ex;
+}
+
 .map-type:hover {
   background: #4b6070
 }
@@ -715,4 +721,22 @@ Add a triangle notch pointing down at the bottom of the tooltip
 .search-result em{
   font-style: normal;
   background-color: #FFFF0033;
+}
+
+.rangeSliderContainer span
+{
+  width: 2rem;
+  text-align: center;
+  border-radius: 1rem;
+  margin-bottom: 1ex;
+  color: #AAA  ;
+
+}
+.rangeSliderContainer span.selected{
+  background-color: #888;
+  color: white  ;
+  font-weight: bold;
+}
+.rangeSliderContainer span.current{
+  outline: 2px solid red;
 }
