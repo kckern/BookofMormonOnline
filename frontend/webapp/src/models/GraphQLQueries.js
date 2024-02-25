@@ -89,6 +89,7 @@ const queries = {
         `{
                 slug
                 name
+                label
                 info
                 occupants
                 type
