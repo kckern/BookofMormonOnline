@@ -357,6 +357,8 @@ useEffect(()=>{
 },[currentMap?.slug])
 
 
+const zoomRange = currentMap?.maxzoom - currentMap?.minzoom;
+
 const adminPanel = isAdmin ? place ? <Card className="adminPanel">
 
     <CardBody>
@@ -371,29 +373,47 @@ const adminPanel = isAdmin ? place ? <Card className="adminPanel">
       </div>
     </div>
   </CardBody>
-  <CardHeader>
-    <h6 className="title">Zoom Levels</h6>
+  {!!zoomRange && (<><CardHeader>
+    <h6 className="title">Zoom Levels
+    (Current: <code>{Math.round(zoomLevel)}</code>)
+    </h6>
   </CardHeader>
   <CardBody>
     {/* 3 columns: Current, min max: 1. read only input, 2 and 3 dropdowns 3-9*/}
     <div className="zoomLevels" style={{display: "flex", justifyContent: "space-between", gap: "1rem"}}>
-      <div className="currentZoom"><label>Current Zoom:</label>:  <code>{Math.round(zoomLevel)}</code></div>
-      {minZoom && <div
-        style={{display: "flex", flexDirection: "column", justifyContent: "space-between", flexGrow: 1}}
-      ><RangeSlider
-          min={currentMap?.minzoom}
-          max={currentMap?.maxzoom}
-          defaultValue={[minZoom,maxZoom]}
-          onInput={([min,max])=>{ setMinMaxZoom([min,max])}}
-      />
-      <div className="minMax" style={{display: "flex", justifyContent: "space-around"}}>
-        <span>{minZoom}</span> - <span>{maxZoom}</span>
-      </div>
-      </div>}
       
+    
+{minZoom && (
+  <div
+    style={{display: "flex", flexDirection: "column-reverse", justifyContent: "space-between", flexGrow: 1}}
+    className="rangeSliderContainer"
+  >
+    <RangeSlider
+      min={currentMap?.minzoom}
+      max={currentMap?.maxzoom}
+      defaultValue={[minZoom,maxZoom]}
+      onInput={([min,max])=>{ setMinMaxZoom([min,max])}}
+    />
+    <div className="minMax" style={{display: "flex", justifyContent: "space-between",marginBottom:"1ex"}}>
+      {Array.from({length: currentMap?.maxzoom - currentMap?.minzoom + 1}, (_, i) => currentMap?.minzoom + i).map((zoomLevelLabel) => (
+        <span 
+          key={zoomLevelLabel} 
+          className={`
+            ${zoomLevelLabel === minZoom || zoomLevelLabel === maxZoom ? 'selected' : ''}
+            ${zoomLevelLabel === Math.round(zoomLevel) ? 'current' : ''}
+          `}
+        >
+          {zoomLevelLabel}
+        </span>
+      ))}
     </div>
-  </CardBody>
+  </div>
+  
+)}
+    </div>
+  </CardBody></>)}
   <CardFooter style={{ display: 'flex', justifyContent: 'flex-end' }}>
+
     <Button>Save</Button>
   </CardFooter>
 </Card> :  <Button>Place on Map</Button> : null;
