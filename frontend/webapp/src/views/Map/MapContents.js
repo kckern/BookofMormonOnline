@@ -30,6 +30,9 @@ const drawMap = ()=>{
 
     const zoomLevel = map.current?.getView().getZoom();
     window.ol.zoomLevel = zoomLevel || 0;
+
+
+    mapController.setZoomLevel(zoomLevel);
     
     map.current = new window.ol.Map({
         target: mapElement.current,
@@ -133,6 +136,7 @@ const drawMap = ()=>{
         });
         marker.set('name', name);
         marker.set('slug', i.slug);
+        marker.set('minZoom', minZoom);
         marker.set('wh', [width, height]);
         return marker;
     })
@@ -218,8 +222,7 @@ const drawMap = ()=>{
         const zoomLevel = map.current?.getView().getZoom() || 0;
         window.ol.zoomLevel = zoomLevel;
         if(!mapController.panelContents) return;
-        mapController.panelContents.zoom = zoomLevel;
-        mapController.setPanelContents(mapController.panelContents);
+        mapController.setZoomLevel(zoomLevel);
     });
 
     if(isAdmin){
@@ -293,7 +296,23 @@ const drawMap = ()=>{
         markers.forEach(i=>i.changed());
         await new Promise(resolve => setTimeout(resolve, 500));
         map.current.updateSize();
+        //trigger click on the active place
+        const activePlace = mapController.panelContents.slug;
+        const activeMarker = markers.find(i=>i.get('slug') === activePlace);
+        if(activeMarker){
+            const [lat,lng] = activeMarker.getGeometry().getCoordinates();
+            const minZoom = activeMarker.get('minZoom');
+            const zoomTo = Math.max(minZoom, window.ol.zoomLevel);
+            setTimeout(() => {
+                map.current.getView().animate({
+                    center: [lat, lng],
+                    zoom: zoomTo,
+                    duration: 500
+                });
+            }, 0);
+            //zoom to the active place minZoom
 
+        }
 
     }, [mapController.panelContents.slug]);
 
