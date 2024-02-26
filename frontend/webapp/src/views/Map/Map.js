@@ -19,6 +19,7 @@ import {MapPlaceSearch} from "./MapPlaceSearch"
 import RangeSlider from 'react-range-slider-input';
 import searchIcon from "../_Common/svg/search.svg";
 import 'react-range-slider-input/dist/style.css';
+import axios from "axios";
 import {
   Button,
   Card,
@@ -32,7 +33,7 @@ import {
   TabContent,
   Alert
 } from "reactstrap";
-import { assetUrl } from "../../models/BoMOnlineAPI"
+import { ApiBaseUrl, assetUrl } from "../../models/BoMOnlineAPI"
 import { ScripturePanelSingle } from "../Page/Narration";
 import { detectScriptures } from "scripture-guide";
 import { renderPersonPlaceHTML } from "../Page/PersonPlace";
@@ -59,6 +60,12 @@ function MapContainer({ appController }) {
 
   const handleKeyDown = (event) => {
     if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) return false;
+
+    //input is focused
+    if (document.activeElement.tagName === "INPUT") {
+      event.stopPropagation();
+      return false;
+    }
 
     if (event.key === 'Escape') {
       setSearching(null);
@@ -132,6 +139,7 @@ function MapContainer({ appController }) {
     mapFunctions,
     setMapFunctions,
     currentMap,
+    setCurrentMap,
     isAdmin,
     searching,
     setSearching,
@@ -202,19 +210,18 @@ function MapPanel({mapController})
   const info = placeInfo?.info;
 
   const {places} = currentMap || {};
-  const place = places?.find((place) => place.slug === slug);
+
+  const [place, setPlace] = useState(places?.find((place) => place.slug === slug));
+
+
+  
 
   const [placeDetails, setPlaceDetails] = useState({});
 
   useEffect(()=>{
-    const placeSlug = panelContents?.slug;
-    if(!placeSlug) return;
-
-    //ignore if triggered by map place
-
-    //todo center map on place
-
-  },[panelContents?.slug])
+    if(!slug || !currentMap) return;
+    setPlace(currentMap.places?.find((place) => place.slug === slug));
+  },[slug,currentMap])
 
 
   useEffect(()=>{
@@ -359,17 +366,78 @@ useEffect(()=>{
 
 const zoomRange = currentMap?.maxzoom - currentMap?.minzoom;
 
-const adminPanel = isAdmin ? place ? <Card className="adminPanel">
+
+const clearCache = (slug)=>{
+  let databaseName = "BoMCache";
+  var request = indexedDB.open(databaseName, 1);
+  request.onsuccess = function (event) {
+    var db = event.target.result;
+    var transaction = db.transaction(["items"], "readwrite");
+    var objectStore = transaction.objectStore("items");
+    //delete entire store
+    objectStore.clear();
+    mapController.setCurrentMap("neareast");
+    //clear panel
+    mapController.setPanelContents(false);
+    setTimeout(()=>{
+      mapController.getMap(currentMap?.slug)
+      mapController.setPanelContents({slug});
+    },1000);
+  }
+
+}
+
+const savePointConfig = () => {
+
+  const button = document.querySelector("#saveButton");
+  //saving...
+  button.innerHTML = "Saving...";
+
+
+
+  const data = {
+    name: document.querySelector("#placeName")?.value,
+    label: document.querySelector("#placeLabel")?.value,
+    min:minZoom,
+    max:maxZoom,
+    zoom:Math.round(zoomLevel),
+    slug
+  }
+  const token = mapController.appController.states.user.token;
+  var options = {
+    method: 'POST',
+    url: `${ApiBaseUrl}/coords`,
+    headers: {'Content-Type': 'application/json', token},
+    data
+  };
+  axios.request(options).then(function (response) {
+    console.log(response.data);
+    button.innerHTML = "Saved";
+    clearCache();
+
+    setTimeout(()=>{button.innerHTML = "Save"},2000);
+    //redraw map
+    mapController.getMap(null,null);
+    setTimeout(()=>{mapController.getMap(currentMap?.slug,slug)},100);
+
+  }).catch(function (error) {
+    console.error(error);
+    button.innerHTML = "Error";
+  });
+}
+
+
+const adminPanel = isAdmin ? place ? <Card className="adminPanel" onKeyDown={(e)=>{if(e.key === "Enter") savePointConfig()}}>
 
     <CardBody>
     <div className="grid-container">
       <div className="grid-item">
         <label>Place Name</label>
-        <input type="text" value={title} />
+        <input type="text" defaultValue={title} id="placeName"  key={title} />
       </div>
       <div className="grid-item">
         <label>Place Label</label>
-        <input value={place.label} />
+        <input defaultValue={place.label} id="placeLabel" type="text" key={place.label} />
       </div>
     </div>
   </CardBody>
@@ -414,7 +482,9 @@ const adminPanel = isAdmin ? place ? <Card className="adminPanel">
   </CardBody></>)}
   <CardFooter style={{ display: 'flex', justifyContent: 'flex-end' }}>
 
-    <Button>Save</Button>
+    <Button id="saveButton"
+      onClick={savePointConfig}
+    >Save</Button>
   </CardFooter>
 </Card> :  <Button>Place on Map</Button> : null;
 

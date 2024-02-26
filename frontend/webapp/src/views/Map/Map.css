@@ -738,5 +738,5 @@ Add a triangle notch pointing down at the bottom of the tooltip
   font-weight: bold;
 }
 .rangeSliderContainer span.current{
-  outline: 2px solid red;
+  outline: 2px solid #2196f3;
 }
