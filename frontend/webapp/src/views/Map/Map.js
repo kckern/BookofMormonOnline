@@ -443,8 +443,8 @@ const addNewPlace = () => {
   const token = mapController.appController.states.user.token;
 
   const data = {
-    lat: mapCenter[0],
-    lng: mapCenter[1],
+    lat: mapCenter.lat,
+    lng: mapCenter.lng,
     zoom: Math.round(minzoom+1),
     min: minzoom,
     max: maxzoom,
@@ -526,7 +526,7 @@ const adminPanel = isAdmin ? place ? <Card className="adminPanel" onKeyDown={(e)
     >Save</Button>
   </CardFooter>
 </Card> :  <><Button
-      disabled={!place || !mapCenter[0] || !mapCenter[1]}
+      disabled={!mapController.panelContents.slug || !mapCenter.lat || !mapCenter.lng}
       onClick={addNewPlace}
 >Place on Map</Button></>: null;
 
