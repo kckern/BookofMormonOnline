@@ -1,5 +1,6 @@
 import { Sequelize, QueryTypes } from 'sequelize';
 import {Op} from '../resolvers/_common';
+import fs from 'fs';
 
 import BomCapsulation from '../database/models/bom_capsulation';
 import BomConnection from '../database/models/bom_connection';
@@ -69,7 +70,17 @@ const {
  */
 export const sequelize = new Sequelize(MYSQL_DB, MYSQL_USER, MYSQL_PASSWORD, {
   dialect: 'mysql',
-  logging: false,
+  logging: (query) => {
+    return false;
+    query = query.replace("Executing (default): ", "");
+    const now = new Date();
+    const oneLineQuery = query.replace(/\n/g, ' ').replace(/\s+/g, ' ');
+    fs.appendFile('log.sql', `-- ${now.toISOString()}\n${oneLineQuery}\n\n`, (err) => {
+      if (err) {
+        console.error(err);
+      }
+    } );
+  },
   host: MYSQL_HOST,
   pool: {
     acquire: +DB_POOL_ACQUIRE,
@@ -357,6 +368,16 @@ models.BomSection.hasMany(models.BomTranslation, {
   },
   as: 'translation'
 });
+
+
+models.BomIndex.hasMany(models.BomTranslation, {
+  foreignKey: {
+    name: 'guid'
+  },
+//  sourceKey: 'guid',
+  as: 'translation'
+});
+
 models.BomMarkdown.hasMany(models.BomTranslation, {
   foreignKey: {
     name: 'guid'

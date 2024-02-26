@@ -46,10 +46,6 @@
     outline: 2px solid #000;
   }
   
-.scripturePanelSingle 
-{
-    padding-bottom: 1rem;
-}
 .scripturePanelSingle h5{
     text-align: center;
     font-size: 1rem;
@@ -59,13 +55,14 @@
 }
 .scripturePanelSingle .scripturePassages
 {
-  margin-top: 1ex;
+  padding-top: 1ex;
+  padding-bottom: 1rem;
+  padding-right: 1ex;
 }
 
 .scripturePanelSingle h6{
   text-align: left;
   font-family: "Roboto Condensed", "Arial Narrow", sans-serif;
-  margin-bottom: 0.5ex;
   text-transform: none;
   flex-grow: 1;
 }
@@ -101,10 +98,6 @@
 
 
 
-.scripturePanelSingle 
-{
-    padding-bottom: 1rem;
-}
 
 .scripturePanelSingle .buttons
 {

@@ -24,7 +24,7 @@ const renderMarker = ({ name, label, icon, isActive }) => {
     let bold = "";
     let centerX = 0, centerY = 0; // Initialized to 0 for the 'region' case
 
-    const rightAligned = icon === "city_right";
+    const rightAligned = /_right$/.test(icon);
 
     switch (icon) {
         case "region":
@@ -51,6 +51,7 @@ const renderMarker = ({ name, label, icon, isActive }) => {
             iconPadding = 2;
             break;
         case "town":
+        case "town_right":
             textColor = "#000000";
             strokeColor = "#FFFFFF";
             fontSize = 11;
@@ -73,6 +74,11 @@ const renderMarker = ({ name, label, icon, isActive }) => {
             break;
     }
 
+    if(isActive) {
+        textColor = "#b31312";
+        strokeColor = "#FFF";
+
+    }
 
     const dpr = window.devicePixelRatio || 1;
     fontSize = fontSize * dpr;
@@ -109,7 +115,7 @@ const renderMarker = ({ name, label, icon, isActive }) => {
     if (centerX) { // Draw the icon if needed
         context.beginPath();
         context.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
-        context.fillStyle = !isActive ? "#6b7d91" : "#000000";
+        context.fillStyle = !isActive ? "#6b7d91" : "#b31312";
         context.strokeStyle = "#FFFFFF88";
         context.lineWidth = 5 * dpr;
         context.stroke();

@@ -1,6 +1,7 @@
 import { Model, Sequelize } from 'sequelize';
 import { models as Models, sequelize, SQLQueryTypes } from '../config/database';
 import { getSlug, Op, includeTranslation, translatedValue, includeModel, queryWhere } from './_common';
+import {setLang, generateReference} from "scripture-guide";
 
 export default {
   Query: {
@@ -19,6 +20,7 @@ export default {
         include: [
           includeTranslation({ [Op.or]: ['name', 'title',"description"] }, lang),
           includeModel(info, Models.BomIndex, 'index', [
+            includeTranslation('text', lang), // Add translation here
             includeModel(true, Models.BomLookup, 'text_guid', [includeModel(true, Models.BomText, 'text')])
           ]),
           {
@@ -66,8 +68,9 @@ export default {
           includeModel(info, Models.BomMap, 'maps',[includeTranslation({ [Op.or]: ['name', 'desc'] }, lang)]),
           includeTranslation({ [Op.or]: ['name', 'info'] }, lang),
           includeModel(info, Models.BomIndex, 'index', [
+            includeTranslation('text', lang), // Add translation here
             includeModel(true, Models.BomLookup, 'text_guid', [includeModel(true, Models.BomText, 'text')])
-          ])
+          ].filter(x => !!x))
         ].filter(x => !!x),
         order: ['weight', indexSort].filter(x => !!x)
       });
@@ -82,7 +85,9 @@ export default {
           },
           include: [
             includeTranslation({ [Op.or]: ['name', 'desc'] }, lang),
-            includeModel(info, Models.BomPlaces, 'places')].filter(x => !!x),
+            includeModel(info, Models.BomPlaces, 'places',[
+              includeTranslation({ [Op.or]: ['name', 'info','label'] }, lang)
+            ])].filter(x => !!x),
           order: ['priority']
         });
       return Models.BomMap.findAll({
@@ -202,6 +207,9 @@ export default {
     name: async (item: any, args: any, { db, res }: any, info: any) => {
       return translatedValue(item, 'name');
     },
+    label: async (item: any, args: any, { db, res }: any, info: any) => {
+      return translatedValue(item, 'label');
+    },
     info: async (item: any, args: any, { db, res }: any, info: any) => {
       return translatedValue(item, 'info');
     },
@@ -236,6 +244,20 @@ export default {
         .getDataValue('text')
         .getDataValue('link');
       return getSlug('link', guid).then(slug => slug + '/' + num);
+    },
+    ref: async (item: any, args: any, { lang }: any, info: any) => {
+      lang = lang || 'en';
+      const from =  parseInt(item.getDataValue('verse_id'));
+      const to =  parseInt(item.getDataValue('verse_id_end'));
+      const range = [...new Set(Array.from({length: to - from + 1}, (_, i) => from + i))];
+      if(lang !== 'en') setLang(lang);
+      const ref = generateReference(range);
+      return `${ref}`;
+
+    },
+    text: async (item: any, args: any, { db, res }: any, info: any) => {
+      //console.log({item});
+      return translatedValue(item, 'text');
     }
   },
   Map :{
