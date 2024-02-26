@@ -460,7 +460,12 @@ const addNewPlace = () => {
     data
   };
 
-
+  axios.request(config).then(function (response) {
+    mapController.getMap("neareast",null);
+    setTimeout(()=>{mapController.getMap(currentMap?.slug,slug)},100);
+  }).catch(function (error) {
+    console.error(error);
+  });
 
 }
 
