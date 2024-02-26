@@ -23,6 +23,13 @@ const MapContents = ({mapController}) => {
 const drawMap = ()=>{
 
     if (!window.ol) return console.error('OpenLayers library not found');
+
+    const zoomLevel = map.current?.getView().getZoom();
+    window.ol.zoomLevel = zoomLevel || 0;
+
+
+    mapController.setZoomLevel(zoomLevel);
+    mapController.setMapCenter({lat: mapCenter[0], lng: mapCenter[1]});
     
     map.current = new window.ol.Map({
         target: mapElement.current,
@@ -144,6 +151,13 @@ const drawMap = ()=>{
         });
     });
     
+
+    //on pan map setMapCenter
+    map.current.getView().on('change:center', function(e) {
+        const center = map.current?.getView().getCenter();
+        const [lat,lng] = window.ol.proj.transform(center, 'EPSG:3857', 'EPSG:4326');
+        mapController.setMapCenter({lat,lng});
+    });
 
     if(isAdmin){
         var modify = new window.ol.interaction.Modify({ 

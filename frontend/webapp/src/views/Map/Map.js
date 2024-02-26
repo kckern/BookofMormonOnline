@@ -40,6 +40,10 @@ function MapContainer({ appController }) {
     [placeName, setPlaceName] = useState(params.placeName),
     [tooltip, setTooltip] = useState({ x: 0, y: 0, slug: null }),
     [mapFunctions, setMapFunctions] = useState({}),
+    [zoomLevel,setZoomLevel] = useState(0),
+    [mapCenter, setMapCenter] = useState([0,0]),
+    [searching,setSearching] = useState(null),
+    [initSearchLetter, setInitSearchLetter] = useState(null),
     [panelContents, setPanelContents] = useState({});
 
   useEffect(() => {
@@ -104,7 +108,15 @@ function MapContainer({ appController }) {
     tooltip,
     mapFunctions,
     setMapFunctions,
-    currentMap
+    currentMap,
+    setCurrentMap,
+    isAdmin,
+    searching,
+    setSearching,
+    zoomLevel,
+    setZoomLevel,
+    mapCenter,
+    setMapCenter,
   }
   const {placeList} = appController.preLoad;
 
@@ -169,7 +181,10 @@ function MapToolTip({ tooltip, appController, panelContents }) {
 
 function MapPanel({mapController})
 {
-  const {panelContents, setPanelContents,mapFunctions} = mapController;
+  
+  const [prevMapType, setPrevMapType] = useState(null);
+
+  const {panelContents, zoomLevel, currentMap, mapCenter, setPanelContents,mapFunctions, isAdmin, placeList} = mapController;
 
   const {slug} = panelContents || {};
 
@@ -295,6 +310,191 @@ function MapPanel({mapController})
 </TabContent>
     </>
 
+const preloadedPlace = Object.values(placeList||{}).find((place)=>place.slug === slug);
+
+
+useEffect(()=>{
+  const isOutOfMapScope = (currentMap?.slug === "neareast") !== (preloadedPlace?.location === "W");
+  if(!isOutOfMapScope) return false;
+  // TODO: prevMapType is not being set correctly
+  const dstMap = currentMap?.slug === "neareast" ? (prevMapType || "internal") : "neareast";
+  if(dstMap !== "neareast") setPrevMapType(dstMap); 
+  mapController.getMap(dstMap,slug)
+},[preloadedPlace?.location]);
+
+useEffect(()=>{
+  const isOutOfMapScope = (currentMap?.slug === "neareast") !== (preloadedPlace?.location === "W");
+  if(!isOutOfMapScope) return false;
+  //clear panel
+  setPanelContents(false);
+},[currentMap?.slug])
+
+
+const zoomRange = currentMap?.maxzoom - currentMap?.minzoom;
+
+
+const clearCache = (slug)=>{
+  let databaseName = "BoMCache";
+  var request = indexedDB.open(databaseName, 1);
+  request.onsuccess = function (event) {
+    var db = event.target.result;
+    var transaction = db.transaction(["items"], "readwrite");
+    var objectStore = transaction.objectStore("items");
+    //delete entire store
+    objectStore.clear();
+    mapController.setCurrentMap("neareast");
+    //clear panel
+    mapController.setPanelContents(false);
+    setTimeout(()=>{
+      mapController.getMap(currentMap?.slug)
+      mapController.setPanelContents({slug});
+    },1000);
+  }
+
+}
+
+const savePointConfig = () => {
+
+  const button = document.querySelector("#saveButton");
+  //saving...
+  button.innerHTML = "Saving...";
+
+
+
+  const data = {
+    name: document.querySelector("#placeName")?.value,
+    label: document.querySelector("#placeLabel")?.value,
+    min:minZoom,
+    max:maxZoom,
+    zoom:Math.round(zoomLevel),
+    slug
+  }
+
+  if(!data.name) delete data.name;
+  if(!data.label) delete data.label;
+  if(!data.min) delete data.min;
+  if(!data.max) delete data.max;
+  if(!data.zoom) delete data.zoom;
+
+
+  const token = mapController.appController.states.user.token;
+  var options = {
+    method: 'POST',
+    url: `${ApiBaseUrl}/coords`,
+    headers: {'Content-Type': 'application/json', token},
+    data
+  };
+  axios.request(options).then(function (response) {
+    console.log(response.data);
+    button.innerHTML = "Saved";
+    clearCache();
+
+    setTimeout(()=>{button.innerHTML = "Save"},2000);
+    //redraw map
+    mapController.getMap(null,null);
+    setTimeout(()=>{mapController.getMap(currentMap?.slug,slug)},100);
+
+  }).catch(function (error) {
+    console.error(error);
+    button.innerHTML = "Error";
+  });
+}
+
+const addNewPlace = () => {
+
+  const {minzoom,maxzoom} = currentMap;
+  const token = mapController.appController.states.user.token;
+
+  const data = {
+    lat: mapCenter[0],
+    lng: mapCenter[1],
+    zoom: Math.round(minzoom+1),
+    min: minzoom,
+    max: maxzoom,
+    map: currentMap?.slug,
+    slug
+  }
+
+  alert(JSON.stringify(data,null,2));
+  const config = {
+    method: 'POST',
+    url: `${ApiBaseUrl}/coords`,
+    headers: {'Content-Type': 'application/json', token},
+    data
+  };
+
+
+
+}
+
+
+const adminPanel = isAdmin ? place ? <Card className="adminPanel" onKeyDown={(e)=>{if(e.key === "Enter") savePointConfig()}}>
+
+    <CardBody>
+    <div className="grid-container">
+      <div className="grid-item">
+        <label>Place Name</label>
+        <input type="text" defaultValue={title} id="placeName"  key={title} />
+      </div>
+      <div className="grid-item">
+        <label>Place Label</label>
+        <input defaultValue={place.label} id="placeLabel" type="text" key={place.label} />
+      </div>
+    </div>
+  </CardBody>
+  {!!zoomRange && (<><CardHeader>
+    <h6 className="title">Zoom Levels
+    (Current: <code>{Math.round(zoomLevel)}</code>)
+    </h6>
+  </CardHeader>
+  <CardBody>
+    {/* 3 columns: Current, min max: 1. read only input, 2 and 3 dropdowns 3-9*/}
+    <div className="zoomLevels" style={{display: "flex", justifyContent: "space-between", gap: "1rem"}}>
+      
+    
+{minZoom && (
+  <div
+    style={{display: "flex", flexDirection: "column-reverse", justifyContent: "space-between", flexGrow: 1}}
+    className="rangeSliderContainer"
+  >
+    <RangeSlider
+      key={`${minZoom}-${maxZoom}`}
+      min={currentMap?.minzoom}
+      max={currentMap?.maxzoom}
+      defaultValue={[minZoom,maxZoom]}
+      onInput={([min,max])=>{ setMinMaxZoom([min,max])}}
+    />
+    <div className="minMax" style={{display: "flex", justifyContent: "space-between",marginBottom:"1ex"}}>
+      {Array.from({length: currentMap?.maxzoom - currentMap?.minzoom + 1}, (_, i) => currentMap?.minzoom + i).map((zoomLevelLabel) => (
+        <span 
+          key={zoomLevelLabel} 
+          className={`
+            ${zoomLevelLabel === minZoom || zoomLevelLabel === maxZoom ? 'selected' : ''}
+            ${zoomLevelLabel === Math.round(zoomLevel) ? 'current' : ''}
+          `}
+        >
+          {zoomLevelLabel}
+        </span>
+      ))}
+    </div>
+  </div>
+  
+)}
+    </div>
+  </CardBody></>)}
+  <CardFooter style={{ display: 'flex', justifyContent: 'flex-end' }}>
+
+    <Button id="saveButton"
+      onClick={savePointConfig}
+    >Save</Button>
+  </CardFooter>
+</Card> :  <><Button
+      disabled={!place || !mapCenter[0] || !mapCenter[1]}
+      onClick={addNewPlace}
+>Place on Map</Button></>: null;
+
+
+if(isMobile()) return null;
 
   return <div className="mapPanel">
     <div className="mapPanelCardContainer">
