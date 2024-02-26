@@ -457,6 +457,7 @@ const adminPanel = isAdmin ? place ? <Card className="adminPanel" onKeyDown={(e)
     className="rangeSliderContainer"
   >
     <RangeSlider
+      key={`${minZoom}-${maxZoom}`}
       min={currentMap?.minzoom}
       max={currentMap?.maxzoom}
       defaultValue={[minZoom,maxZoom]}
