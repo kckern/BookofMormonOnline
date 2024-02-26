@@ -7,14 +7,19 @@ import { useParams } from "react-router-dom"
 import TileMap from "./TileMap"
 import spinner from  "../_Common/svg/loadbar.svg"
 import Loader from "../_Common/Loader"
-import places from "../_Common/svg/places.svg";
+import placesIcon from "../_Common/svg/places.svg";
 // AACTION TYPES
 import BoMOnlineAPI from "src/models/BoMOnlineAPI"
 // CSS
 import "./Map.css"
 import MapTypes from "./MapTypes";
-import { label } from "src/models/Utils"
+import { label,isMobile } from "src/models/Utils"
 import MapContents from "./MapContents"
+import {MapPlaceSearch} from "./MapPlaceSearch"
+import RangeSlider from 'react-range-slider-input';
+import searchIcon from "../_Common/svg/search.svg";
+import 'react-range-slider-input/dist/style.css';
+import axios from "axios";
 import {
   Button,
   Card,
@@ -25,9 +30,10 @@ import {
   NavItem,
   NavLink,
   TabPane,
-  TabContent
+  TabContent,
+  Alert
 } from "reactstrap";
-import { assetUrl } from "../../models/BoMOnlineAPI"
+import { ApiBaseUrl, assetUrl } from "../../models/BoMOnlineAPI"
 import { ScripturePanelSingle } from "../Page/Narration";
 import { detectScriptures } from "scripture-guide";
 import { renderPersonPlaceHTML } from "../Page/PersonPlace";
@@ -46,29 +52,52 @@ function MapContainer({ appController }) {
     [initSearchLetter, setInitSearchLetter] = useState(null),
     [panelContents, setPanelContents] = useState({});
 
+
+  const userMetadata = appController.sendbird?.getCurrentUser()?.metaData
+  const metaKeys = Object.keys(userMetadata || {});
+  const isAdmin = ["isAdmin", "isMapper"].some((key) => metaKeys.includes(key));
+
+  //set keyboard listener so that typing will populate searching with seatSearching, escape will set it back to null
+
+  const handleKeyDown = (event) => {
+    if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) return false;
+
+    //input is focused
+    if (document.activeElement.tagName === "INPUT") {
+      event.stopPropagation();
+      return false;
+    }
+
+    if (event.key === 'Escape') {
+      setSearching(null);
+    }
+    // todo: handle arrows and +/-
+    else {
+      if(event.key.length > 1) return false;
+      setSearching(true);
+      setInitSearchLetter(event.key);
+    }
+  };
   useEffect(() => {
-
     appController.functions.closePopUp()
-
     if(!appController.preLoad.placeList) return;
-
     getMap(params.mapType, params.placeName)
-
     if(params.placeName){
       setPanelContents({slug: params.placeName});
     }
-
   }, [appController.preLoad.placeList])
 
   useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
     window.addEventListener("handleMapChange", handleMapChange, false);
     return ()=>{
       window.removeEventListener("handleMapChange", handleMapChange, false)
+      window.removeEventListener('keydown', handleKeyDown);
     }
   }, [])
 
   // get active map data
-  const getMap = useCallback((type = "baja", place) => {
+  const getMap = useCallback((type = "internal", place) => {
     // update Url
     if(!type) return;
     updateUrl(`/map/${type}${place ? "/place/" + place : ""}`)
@@ -96,11 +125,13 @@ function MapContainer({ appController }) {
 
 
 
+  const {placeList} = appController.preLoad;
   const mapController = {
     setPanelContents,
     panelContents,
     getMap,
     mapName,
+    placeList,
     placeName,
     updateUrl,
     appController,
@@ -118,37 +149,21 @@ function MapContainer({ appController }) {
     mapCenter,
     setMapCenter,
   }
-  const {placeList} = appController.preLoad;
 
   return (  <>
       <div className={`mappanel_wrapper ${!!panelContents.slug ? "open" : ""}`}>
         <MapTypes getMap={getMap} mapName={mapName} />
-        <MapPanel mapController={mapController}  />
-        <MapSpotlight mapController={mapController} />
+        <MapPanel mapController={mapController}   />
         <MapToolTip {...mapController} />
-        {placeList && currentMap?.places ?  <MapContents  mapController={mapController}  />  : <Loader />  }
+        {placeList && currentMap?.places ? <>
+          <MapContents  mapController={mapController}  />
+          <MapPlaceSearch {...{mapController}} />
+          </>   : <Loader />  }
+       
       </div>
     </>
   )
 }
-function MapSpotlight({ mapController }) {
-
-  return null;
-  return <div className="mapHighlight">
-  <svg width="100%" height="100%" version="1.1" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <mask id="circleMask">
-        <rect width="100%" height="100%" fill="white" />
-        <circle cx="500" cy="500" r="50" fill="black" />
-      </mask>
-    </defs>
-    <circle cx="500" cy="500" r="50" fill="transparent" />
-    <rect width="100%" height="100%" fill="#00000022" mask="url(#circleMask)" />
-  </svg>
-</div>
-
-}
-
 
 function getPlaceInfo(slug, appController) {
   const keys = Object.keys(appController.preLoad.placeList || {});
@@ -157,8 +172,8 @@ function getPlaceInfo(slug, appController) {
 }
 
 function MapToolTip({ tooltip, appController, panelContents }) {
-  const { x, y, w,h, slug } = tooltip;
-  if(!slug) return null;
+  const { x, y, w,h, slug, moving } = tooltip;
+  if(!slug || moving) return null;
   const placeInfo = getPlaceInfo(slug, appController);
   const {name, info, location, occupants, type} = placeInfo;
 
@@ -167,15 +182,20 @@ function MapToolTip({ tooltip, appController, panelContents }) {
 
   const leftVal = `calc( ${!!panelContents.slug ? 30 : 0}% + ${x - (boxW/2)}px )`;
 
-  return (
-    <div className="mapTooltip" style={{left: leftVal, top: y - boxH - (h/2) - margin
+  const isSelectedInPanel = panelContents.slug === slug;
+
+
+  if(isMobile() || isSelectedInPanel) return null;
+
+  const toolTip =  <div className="mapTooltip" style={{left: leftVal, top: y - boxH - (h/2) - margin
     ,backgroundImage: `url(${assetUrl}/places/${slug})`, width: boxW, height: boxH
-    }}
-    >
-     
+    }}>
       <div className="placeInfo"> <h4>{name}</h4><p>{info}</p></div>
     </div>
-  )
+  
+  
+
+    return toolTip
 }
 
 
@@ -192,7 +212,21 @@ function MapPanel({mapController})
   const title = placeInfo?.name;
   const info = placeInfo?.info;
 
+  const {places} = currentMap || {};
+
+  const [place, setPlace] = useState(places?.find((place) => place.slug === slug));
+
+
+  
+
   const [placeDetails, setPlaceDetails] = useState({});
+
+  useEffect(()=>{
+    if(!slug || !currentMap) return;
+    setPlace(currentMap.places?.find((place) => place.slug === slug));
+  },[slug,currentMap])
+
+
   useEffect(()=>{
     //scroll .mapPanel to top
     const panel = document.querySelector('.mapPanel');
@@ -205,8 +239,9 @@ function MapPanel({mapController})
       //update router path
      
       mapController.appController.functions.setSlug(`/map/${mapSlug}/place/${slug}`);
-
-      BoMOnlineAPI({places: [slug]}).then((result)=>{
+      setPlaceDetails({});
+      //TODO: use the cache after data entry is complete, is not admin
+      BoMOnlineAPI({places: [slug]},{ useCache: false }).then((result)=>{
         setPlaceDetails(result?.places?.[slug] || {});
       })
     }
@@ -215,7 +250,6 @@ function MapPanel({mapController})
 
     }
   }, [slug,panelContents?.slug,mapController.currentMap?.slug])
-
 
   const index = placeDetails?.index || [];
   const maps = placeDetails?.maps || [];
@@ -249,7 +283,7 @@ function MapPanel({mapController})
     <img  src={spinner} alt="loading"  style={{ height: "10rem" }} />
     </div> : <><Nav tabs className="noselect">
     <NavItem onClick={() => setActiveTab("1")} className={activeTab === "1" ? "active" : ""}>
-      <img src={places} alt="places" style={{filter: "invert(1)", opacity: 0.5}} />
+      <img src={placesIcon} alt="places" style={{filter: "invert(1)", opacity: 0.5}} />
       <div>Description</div>
     </NavItem>
     {/*<NavItem onClick={() => setActiveTab("2")} className={activeTab === "2" ? "active" : ""}>
@@ -277,6 +311,7 @@ function MapPanel({mapController})
         {["jerusalem-1","zarahemla","land-bountiful","bountiful"].map((place_slug, i) => {
           // get more info
             return <div key={i} className="viscinity_place" onClick={()=>{
+
 
                 mapController.setPanelContents({slug: place_slug});
                 setActiveTab("1");
@@ -309,6 +344,8 @@ function MapPanel({mapController})
     </TabPane>
 </TabContent>
     </>
+const [[minZoom,maxZoom],setMinMaxZoom] = useState([place?.minZoom,place?.maxZoom]);
+useEffect(()=>{setMinMaxZoom([place?.minZoom,place?.maxZoom])},[place?.minZoom,place?.maxZoom]);
 
 const preloadedPlace = Object.values(placeList||{}).find((place)=>place.slug === slug);
 
@@ -500,16 +537,28 @@ if(isMobile()) return null;
     <div className="mapPanelCardContainer">
     <Card>
       <CardHeader>
-        <h5 className="title">{title}</h5>
-       <div className="info">{info}</div>
+        <div  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height:"1.5rem" }}>
+        <span 
+          className="searchPanelButton"
+          onClick={()=>mapController.setSearching({firstLetter:""})}
+          style={{ flexShrink: 0 }}
+        >
+          <img src={searchIcon} alt="search" />
+        </span>
+        <h5 className="title" style={{ flexGrow: 1, textAlign: 'center' }}>{Parser((title||"").replace(/([0-9])/, "<sup>$1</sup>"))
+        }</h5>
         <span 
           className="closePanelButton"
           onClick={()=>setPanelContents(false)}
+          style={{ flexShrink: 0 }}
         >
           ×
         </span>
+        </div>
+        <div className="info">{Parser((info||"").replace(/([0-9])/, "<sup>$1</sup>"))}</div>
       </CardHeader>
         <img src={`${assetUrl}/places/${slug}`} alt={title} />
+      {adminPanel}
       <CardBody>
         {body}
       </CardBody>

@@ -214,6 +214,12 @@
     padding-bottom: 0;
 }
 
+.scripturePassages
+{
+    max-height: 50vh;
+    overflow-y: auto;
+}
+
 .scripturePanelSingle .closebutton
 {
     display: inline;
@@ -221,6 +227,7 @@
     margin-right: 0.5ex;
     font-size: 2rem;
     cursor: pointer;
+    font-family: Arial, Helvetica, sans-serif;
 }
 .scripturePanelSingle .closebutton:hover
 {

@@ -340,7 +340,7 @@ export default {
           .digest('hex'),
         zip: args.zip,
         lang: lang || "en",
-        created_at: Sequelize.fn('NOW')
+        created_at: Sequelize.literal('CURRENT_TIMESTAMP')
       })
         .then((myUser: any) => {
           if (!myUser) {

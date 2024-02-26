@@ -30,7 +30,7 @@ export default function MapTypes({ getMap, mapName }) {
             {activeMap ? <div
                 className={`map-type-active ${isShow ? "active" : ""}`}
                 onClick={() => { ReactTooltip.hide();setIsShow(!isShow)}}
-                data-tip={`<div class='mapType'><img src='${assetUrl}/map/${activeMap?.slug}/${activeMap?.slug}'><p>${activeMap?.desc}</p><div>`}
+                data-tip={`<div class='mapType'><img src='${assetUrl}/map/preview/${activeMap?.slug}'><p>${activeMap?.desc}</p><div>`}
                 data-for='activemapselect'
             >
                 {mapName}{" "}
@@ -51,10 +51,10 @@ export default function MapTypes({ getMap, mapName }) {
                 }).map((map, index) => {
                     if (map.zoom < 0) return null;
                     const img = new Image();
-                    img.src = `${assetUrl}/map/${map.slug}/${map.slug}`;
+                    img.src = `${assetUrl}/map/preview/${map.slug}`;
                     return <div
                             
-                            data-tip={`<div class='mapType'><img src='${assetUrl}/map/${map.slug}/${map.slug}'><p>${map.desc}</p><div>`}
+                            data-tip={`<div class='mapType'><img src='${assetUrl}/map/preview/${map.slug}'><p>${map.desc}</p><div>`}
                             data-for='mapselect'
                             key={index}
                             className='map-type'

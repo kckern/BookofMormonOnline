@@ -74,6 +74,8 @@ extend type Query {
     name: String
     aka: String
     info: String
+    label: String
+    icon: String
     occupants: String
     type: String
     location: String
