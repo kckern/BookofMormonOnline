@@ -133,6 +133,7 @@ export function CallCircle({ appController }) {
                     setCallState("warmUp");
                     if (playSounds) playSound(playLocalJoined)//.play();
                     appController?.states?.studyGroup?.activeCall.setAudioForLargeRoom(document.getElementById("call_audio"))
+										console.log('appController?.states?.studyGroup?.activeCall?._participantCollection',appController?.states?.studyGroup?.activeCall?._participantCollection);
                     setParticipants(
                         appController?.states?.studyGroup?.activeCall?._participantCollection
                     );

@@ -107,7 +107,7 @@ export function StudyGroupBar({ appController }) {
   );
 }
 
-export function getFreshUsers(appController) {
+export function getFreshUsers(appController,queryUsers) {
   const determineColor = (userObject) =>
     userObject.inCall
       ? "blue"
@@ -125,7 +125,7 @@ export function getFreshUsers(appController) {
     ) || [];
 
   let users =
-    group.members?.filter((m) => {
+    queryUsers?.filter((m) => {
       const isSelf = m.userId === appController.states.user.social?.user_id;
       const isBot = !!m.metaData?.isBot;
       if (isSelf || isBot) return false;
@@ -133,14 +133,15 @@ export function getFreshUsers(appController) {
     }) || [];
 
   let bots =
-    group.members?.filter((m) => {
+    queryUsers?.filter((m) => {
       const isSelf = m.userId === appController.states.user.social?.user_id;
       const isBot = !!m.metaData?.isBot;
       if (isSelf || !isBot) return false;
       return true;
     }) || [];
 
-  for (let i in users) {
+  console.log('Users',users);
+		for (let i in users) {
     let userGroup = users[i].metaData.activeGroup;
     let thisGroup = group?.url;
     users[i].isInGroup =
@@ -182,6 +183,7 @@ export function getFreshUsers(appController) {
 }
 
 function StudyGroupStatus({ appController }) {
+
   let playSounds = appController.states.preferences.sound;
 
   const [cameOnline] = useState(() => {
@@ -211,8 +213,36 @@ function StudyGroupStatus({ appController }) {
     return map;
   };
 
-  let { users, bots } = getFreshUsers(appController) || { users: [], bots: [] };
+  // let { users, bots } = getFreshUsers(appController) || { users: [], bots: [] };
+  const [ users,setUsers] = useState([]);
+  const [ bots,setBots] = useState([]);
+  // let { users, bots } = getFreshUsers(appController) || { users: [], bots: [] };
   const [userColors, setUserColors] = useState(getColorMap(users));
+
+useEffect(()=>{
+	const getLiveFreshUsers = async()=>{
+		const activeGroupMembers = appController.states.studyGroup.activeGroup?.members;
+		if(activeGroupMembers !== undefined){
+		const mainUser = appController.states.user;
+		const queryParams = {
+			userIdsFilter:[activeGroupMembers.filter(member=>member.userId !== mainUser.social.user_id)[0].userId]
+		}
+		const query = appController.sendbird.sb.createApplicationUserListQuery(queryParams);
+
+		const queryUsers = await query.next();
+		
+		let { users, bots } = getFreshUsers(appController, queryUsers);
+		setUsers(users);
+		setBots(bots);
+		}
+	}
+	const interval = setInterval(()=>{
+		getLiveFreshUsers();
+	},5000)
+	return ()=>{
+		clearInterval(interval);
+	}
+},[appController.states.studyGroup.activeGroup?.members])
 
   useEffect(() => {
     setUserColors((oldColors) => {
@@ -233,16 +263,18 @@ function StudyGroupStatus({ appController }) {
 
       let username = Object.keys(diff)[0];
       let mysocialId = appController.states.user.social?.user_id;
+
       let user =
-        appController.states.studyGroup.activeGroup?.memberMap?.[username] || {};
+        appController.states.studyGroup.activeGroup?.members?.filter(member=>member.userId === username)[0] || {};
       let { oldVal: oldColor, newVal: newColor } = Object.values(diff)[0];
       const isMe = mysocialId === username;
 
       //debugger;
 
       if (!!appController.states.studyGroup.studyModeOn && !isMe) {
-        let notificationHistory =
-          JSON.parse(localStorage.getItem("notificationHistory")) || [];
+        // let notificationHistory =
+        //   JSON.parse(localStorage.getItem("notificationHistory")) || [];
+        let notificationHistory = [];
         const time = moment().unix();
 
         if (newColor === "blue") {
@@ -312,10 +344,10 @@ function StudyGroupStatus({ appController }) {
         notificationHistory = notificationHistory.filter(
           (x) => x.time > deadline,
         );
-        localStorage.setItem(
-          "notificationHistory",
-          JSON.stringify(notificationHistory),
-        );
+        // localStorage.setItem(
+        //   "notificationHistory",
+        //   JSON.stringify(notificationHistory),
+        // );
       }
       return newColors;
     });
@@ -514,6 +546,7 @@ export function getClassesFromUserObj(userObject, appController) {
 }
 
 export function StudyGroupUserCircle({ userObject, appController, isBot }) {
+	const [unreadMessageCount,setUnreadMessageCount] = useState(0);
   let classes = getClassesFromUserObj(userObject, appController);
   const isTyping = classes.includes("isTyping");
 
@@ -552,6 +585,22 @@ export function StudyGroupUserCircle({ userObject, appController, isBot }) {
     </>
   ) : null;
 
+
+	useEffect(()=>{
+		const getMessages = async()=>{
+			const params = {
+				channelCustomTypesFilter:["DM"]	
+			}
+			const count = await appController.sendbird.sb.groupChannel.getTotalUnreadMessageCount(params);
+			setUnreadMessageCount(count);
+		}
+		const interval = setInterval(()=>{
+			getMessages();
+		},5000)
+		return ()=>{
+			clearInterval(interval);
+		}
+	},[appController.sendbird.sb.groupChannel])
   return (
     <React.Fragment key={userObject.userId}>
       <div
@@ -571,7 +620,7 @@ export function StudyGroupUserCircle({ userObject, appController, isBot }) {
         <div className={"progressBadge"}>{badgeVal}</div>
         {trophyIcons}
       </div>
-      <UnreadDMCount appController={appController} userId={userObject.userId} />
+      <UnreadDMCount appController={appController} userId={userObject.userId} count={unreadMessageCount > 0?unreadMessageCount:''}/>
     </React.Fragment>
   );
 }
