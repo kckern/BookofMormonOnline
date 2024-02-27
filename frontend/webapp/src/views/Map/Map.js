@@ -61,6 +61,9 @@ function MapContainer({ appController }) {
 
   const handleKeyDown = (event) => {
     if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) return false;
+    if (event.key === 'Escape') {
+      setSearching(null);
+    }
 
     //input is focused
     if (document.activeElement.tagName === "INPUT") {
@@ -68,9 +71,6 @@ function MapContainer({ appController }) {
       return false;
     }
 
-    if (event.key === 'Escape') {
-      setSearching(null);
-    }
     // todo: handle arrows and +/-
     else {
       if(event.key.length > 1) return false;
@@ -153,7 +153,7 @@ function MapContainer({ appController }) {
 
   return (  <>
       <div className={`mappanel_wrapper ${!!panelContents.slug ? "open" : ""}`}>
-        <MapTypes getMap={getMap} mapName={mapName} />
+        <MapTypes getMap={getMap} mapName={mapName} mapController={mapController} />
         <MapPanel mapController={mapController}   />
         <MapToolTip {...mapController} />
         {placeList && currentMap?.places ? <>
