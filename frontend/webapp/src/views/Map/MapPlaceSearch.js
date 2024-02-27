@@ -16,6 +16,12 @@ export function MapPlaceSearch({ mapController }) {
     const { preLoad: { placeList } } = appController;
 
     // Keyboard navigation
+    const SelectItem = (slug) => {
+        //TODO: Mobile Drawer
+        if(isMobile())  mapController.appController.functions.setPopUp({ type: "places", ids: [slug] });
+        else    mapController.setPanelContents({slug});
+
+    }
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
@@ -37,9 +43,7 @@ export function MapPlaceSearch({ mapController }) {
                 const selected = searchResults[selectedResult] || searchResults[0];
                 if (selected) {
                     const selectedSlug = selected.slug;
-                    //TODO: Mobile Drawer
-                    if(isMobile())  mapController.appController.functions.setPopUp({ type: "places", ids: [selectedSlug] });
-                    else    mapController.setPanelContents({selectedSlug});
+                    SelectItem(selectedSlug);
                 }
             }
         }
@@ -100,7 +104,10 @@ export function MapPlaceSearch({ mapController }) {
                     {searchString && searchResults.length && searchResults.map((result, index) => {
                         const isLastInGroup = index < searchResults.length - 1 && result.className !== searchResults[index + 1].className;
                         return (
-                            <div key={index} className={`search-result ${result.className} ${index === selectedResult ? 'selected' : ''} ${isLastInGroup ? 'last' : ''}`}>
+                            <div
+                            onClick={() => SelectItem(result.slug)}
+                            
+                            key={index} className={`search-result ${result.className} ${index === selectedResult ? 'selected' : ''} ${isLastInGroup ? 'last' : ''}`}>
                                 <img alt={`${result.name}`} src={`${assetUrl}/places/${result.slug}`}  key={`${result.slug}`} />
                                 <div>
                                     <div className="search-result-name">{highlight(searchString, result.name)}</div>
