@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import BoMOnlineAPI, { assetUrl } from "../../models/BoMOnlineAPI";
 import { CanvasMarker } from "./MapMarkers";
 import { updatePlaceCoords } from '../Audit/Audit';
+import { isMobile } from "../../models/Utils";
 
 import mapIcon from "../_Common/svg/maps.svg";
 
@@ -207,7 +208,10 @@ const drawMap = ()=>{
             const slug = feature.get('slug');
             const [lat,lng] = feature.getGeometry().getCoordinates();
             const [x, y] = map.current.getPixelFromCoordinate([lat,lng]);   
-            mapController.setPanelContents({slug, lat, lng});
+
+             if(isMobile())  mapController.appController.functions.setPopUp({ type: "places", ids: [slug] });
+             else    mapController.setPanelContents({slug, lat, lng});
+      
             mapController.setTooltip({x, y, slug: null});
             window.ol.isMoving = true;
             setTimeout(()=>{

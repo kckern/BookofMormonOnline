@@ -83,7 +83,8 @@ function MapContainer({ appController }) {
     if(!appController.preLoad.placeList) return;
     getMap(params.mapType, params.placeName)
     if(params.placeName){
-      setPanelContents({slug: params.placeName});
+      if(isMobile())  appController.functions.setPopUp({ type: "places", ids: [params.placeName] });
+      else setPanelContents({slug: params.placeName});
     }
   }, [appController.preLoad.placeList])
 
@@ -384,7 +385,10 @@ const clearCache = (slug)=>{
     mapController.setPanelContents(false);
     setTimeout(()=>{
       mapController.getMap(currentMap?.slug)
-      mapController.setPanelContents({slug});
+
+      if(isMobile())  mapController.appController.functions.setPopUp({ type: "places", ids: [slug] });
+      else  mapController.setPanelContents({slug});
+
     },1000);
   }
 
@@ -468,7 +472,6 @@ const addNewPlace = () => {
   });
 
 }
-
 
 const adminPanel = isAdmin ? place ? <Card className="adminPanel" onKeyDown={(e)=>{if(e.key === "Enter") savePointConfig()}}>
 
