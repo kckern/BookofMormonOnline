@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Card, CardBody, CardHeader } from 'reactstrap';
 import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
 import Parser from "html-react-parser";
+import { label,isMobile } from "src/models/Utils"
 
 export function MapPlaceSearch({ mapController }) {
 
@@ -90,7 +91,7 @@ export function MapPlaceSearch({ mapController }) {
         <Card className="map-place-search">
             <CardHeader>
                 <div className='close'>🔍</div>
-                <input type="text" placeholder="Search for a place" onChange={handleTyping} defaultValue={""} />
+                <input type="text" placeholder={label("search_for_a_place")} onChange={handleTyping} defaultValue={""} />
                 <div onClick={() => setSearching(null)} className='close'>×</div>
             </CardHeader>
             <CardBody>
@@ -107,8 +108,8 @@ export function MapPlaceSearch({ mapController }) {
                             </div>
                         );
                     }) || searchString && 
-                    <div className="search-result no-results">No results found</div> || 
-                    <div className="search-result no-results">Start typing to search</div>}
+                    <div className="search-result no-results">{label("no_results_found")}</div> || 
+                    <div className="search-result no-results">{label("start_typing_to_search")}</div>}
                 </div>
             </CardBody>
         </Card>
