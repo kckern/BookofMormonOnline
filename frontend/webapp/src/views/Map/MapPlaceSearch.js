@@ -37,8 +37,9 @@ export function MapPlaceSearch({ mapController }) {
                 const selected = searchResults[selectedResult] || searchResults[0];
                 if (selected) {
                     const selectedSlug = selected.slug;
-                    //set panel to selected place
-                    mapController.setPanelContents({slug:selectedSlug});
+                    //TODO: Mobile Drawer
+                    if(isMobile())  mapController.appController.functions.setPopUp({ type: "places", ids: [selectedSlug] });
+                    else    mapController.setPanelContents({selectedSlug});
                 }
             }
         }
