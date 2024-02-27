@@ -284,7 +284,7 @@ function MapPanel({mapController})
     </div> : <><Nav tabs className="noselect">
     <NavItem onClick={() => setActiveTab("1")} className={activeTab === "1" ? "active" : ""}>
       <img src={placesIcon} alt="places" style={{filter: "invert(1)", opacity: 0.5}} />
-      <div>Description</div>
+      <div>{label("description")}</div>
     </NavItem>
     {/*<NavItem onClick={() => setActiveTab("2")} className={activeTab === "2" ? "active" : ""}>
       <div><span className="counter">{placeDetails.index?.length || 0}</span></div>
@@ -296,7 +296,7 @@ function MapPanel({mapController})
 </NavItem>*/}
     <NavItem onClick={() => setActiveTab("4")} className={activeTab === "4" ? "active" : ""}>
       <div><span className="counter">{placeDetails.index?.length || 0}</span></div>
-      <div>References</div>
+      <div>{label("references")}</div>
     </NavItem>
 </Nav>
 <TabContent activeTab={activeTab}>
@@ -305,7 +305,7 @@ function MapPanel({mapController})
           {Parser(desc_with_scripturelinks,parseOptions)}</div>
     </TabPane>
     <TabPane tabId="2">
-        <div>Events</div>
+        <div>{label("events")}</div>
     </TabPane>
     <TabPane tabId="3" className="viscinity">
         {["jerusalem-1","zarahemla","land-bountiful","bountiful"].map((place_slug, i) => {
@@ -394,7 +394,7 @@ const savePointConfig = () => {
 
   const button = document.querySelector("#saveButton");
   //saving...
-  button.innerHTML = "Saving...";
+  button.innerHTML = label("saving");
 
 
 
@@ -423,17 +423,17 @@ const savePointConfig = () => {
   };
   axios.request(options).then(function (response) {
     console.log(response.data);
-    button.innerHTML = "Saved";
+    button.innerHTML = label("saved");
     clearCache();
 
-    setTimeout(()=>{button.innerHTML = "Save"},2000);
+    setTimeout(()=>{button.innerHTML = label("save")},2000);
     //redraw map
     mapController.getMap(null,null);
     setTimeout(()=>{mapController.getMap(currentMap?.slug,slug)},100);
 
   }).catch(function (error) {
     console.error(error);
-    button.innerHTML = "Error";
+    button.innerHTML = label("error");
   });
 }
 
@@ -452,7 +452,7 @@ const addNewPlace = () => {
     slug
   }
 
-  alert(JSON.stringify(data,null,2));
+  //alert(JSON.stringify(data,null,2));
   const config = {
     method: 'POST',
     url: `${ApiBaseUrl}/coords`,
@@ -475,18 +475,18 @@ const adminPanel = isAdmin ? place ? <Card className="adminPanel" onKeyDown={(e)
     <CardBody>
     <div className="grid-container">
       <div className="grid-item">
-        <label>Place Name</label>
+        <label>{label("place_name")}</label>
         <input type="text" defaultValue={title} id="placeName"  key={title} />
       </div>
       <div className="grid-item">
-        <label>Place Label</label>
+        <label>{label("place_label")}</label>
         <input defaultValue={place.label} id="placeLabel" type="text" key={place.label} />
       </div>
     </div>
   </CardBody>
   {!!zoomRange && (<><CardHeader>
-    <h6 className="title">Zoom Levels
-    (Current: <code>{Math.round(zoomLevel)}</code>)
+    <h6 className="title">{label("zoom_levels")}
+    {" "}({label("current_zoom")}: <code>{Math.round(zoomLevel)}</code>)
     </h6>
   </CardHeader>
   <CardBody>
@@ -533,7 +533,7 @@ const adminPanel = isAdmin ? place ? <Card className="adminPanel" onKeyDown={(e)
 </Card> :  <><Button
       disabled={!mapController.panelContents.slug || !mapCenter.lat || !mapCenter.lng}
       onClick={addNewPlace}
->Place on Map</Button></>: null;
+>{label("place_on_map")}</Button></>: null;
 
 
 if(isMobile()) return null;
