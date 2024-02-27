@@ -27,9 +27,9 @@ export default function MapTypes({ getMap, mapName, mapController }) {
 
     return (
         <div className='map-selector-menu noselect'>
-            <div className='searchBox'
+            {!mapController.searching && <div className='searchBox'
             onClick={()=>mapController.setSearching(true)}
-            >🔍</div>
+            >🔍</div>}
             {activeMap ? <div
                 className={`map-type-active ${isShow ? "active" : ""}`}
                 onClick={() => { ReactTooltip.hide();setIsShow(!isShow)}}
