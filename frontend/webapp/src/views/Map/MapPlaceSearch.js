@@ -20,6 +20,7 @@ export function MapPlaceSearch({ mapController }) {
         //TODO: Mobile Drawer
         if(isMobile())  mapController.appController.functions.setPopUp({ type: "places", ids: [slug] });
         else    mapController.setPanelContents({slug});
+        setSearching(null);
 
     }
     useEffect(() => {
@@ -106,7 +107,7 @@ export function MapPlaceSearch({ mapController }) {
                         return (
                             <div
                             onClick={() => SelectItem(result.slug)}
-                            
+                            onMouseEnter={() => setSelectedResult(index)}
                             key={index} className={`search-result ${result.className} ${index === selectedResult ? 'selected' : ''} ${isLastInGroup ? 'last' : ''}`}>
                                 <img alt={`${result.name}`} src={`${assetUrl}/places/${result.slug}`}  key={`${result.slug}`} />
                                 <div>
