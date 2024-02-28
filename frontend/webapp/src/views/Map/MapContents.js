@@ -119,7 +119,7 @@ const drawMap = ()=>{
         return key ? appController.preLoad.placeList[key] : {};
       }
     const view = map.current?.getView();
-    const markers_tmp = places
+    const markers = places
     .map(i=>{
         const xy = [i.lat, i.lng];
         const { minZoom, maxZoom} = i;
@@ -144,20 +144,56 @@ const drawMap = ()=>{
     })
 
 
+    //link each marker in a chain with lines
+    const lines = markers.reduce((acc, marker, index, array) => {
+        if (index === 0) return acc;
+        const prevMarker = array[index - 1];
+        const startPoint = prevMarker.getGeometry().getCoordinates();
+        const endPoint = marker.getGeometry().getCoordinates();
+        const midPoint = startPoint.map((val, index) => ((val + endPoint[index]) / 2) + 5);        
+        const line = new window.ol.Feature({
+            geometry: new window.ol.geom.LineString([
+                startPoint,midPoint,endPoint
+            ])
+        });
+        acc.push(line);
+        return acc;
+    }, []);
 
+    /*
+    map.current.addLayer(
+        new window.ol.layer.Vector({
+            source: new window.ol.source.Vector({
+                features: [...lines]
+            }),
+            style: function (feature, resolution) {
+                return new window.ol.style.Style({
+                    stroke: new window.ol.style.Stroke({
+                        color: '#FF000044',
+                        lineDash: [10, 10],
+                        lineDashOffset: (()=>lineDashOffset)(),
+                        width: 3
+                    })
+                });
+            }
+        })
+    );
+    */
     
 
 
     map.current.addLayer(
         new window.ol.layer.Vector({
           source: new window.ol.source.Vector({
-            features: [...markers_tmp]
+            features: [...markers]
           }),
           style: function (feature, resolution) {
             console.log({feature,resolution});
           }
         })
       );
+
+
 
 
 
@@ -215,7 +251,7 @@ const drawMap = ()=>{
             mapController.setTooltip({x, y, slug: null});
             window.ol.isMoving = true;
             setTimeout(()=>{
-                markers_tmp.forEach(i=>i.changed());
+                markers.forEach(i=>i.changed());
                 map.current.getView().animate({center: [lat,lng], duration: 500}, ()=>window.ol.isMoving = false);
                
             }, 0);
@@ -240,7 +276,7 @@ const drawMap = ()=>{
     if(isAdmin){
         console.log("Admin mode");
         var modify = new window.ol.interaction.Modify({ 
-            features: new window.ol.Collection(markers_tmp),
+            features: new window.ol.Collection(markers),
             style: ()=>[],
             hitTolerance: 1000 // Increase this value to increase the draggable area
         });

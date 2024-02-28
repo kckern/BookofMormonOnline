@@ -651,6 +651,7 @@ Add a triangle notch pointing down at the bottom of the tooltip
   display: flex;
   text-align: left;
   margin-bottom: 0.5ex;
+  cursor: pointer;
 }
 
 .map-place-search .search-result.selected
