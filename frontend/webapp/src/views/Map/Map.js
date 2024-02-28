@@ -407,6 +407,7 @@ const savePointConfig = () => {
     label: document.querySelector("#placeLabel")?.value,
     min:minZoom,
     max:maxZoom,
+    map: currentMap?.slug,
     zoom:Math.round(zoomLevel),
     slug
   }
