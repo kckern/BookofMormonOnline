@@ -9,10 +9,11 @@ import BomIndex from '../database/models/bom_index';
 import BomLabel from '../database/models/bom_label';
 import BomLog from '../database/models/bom_log';
 import BomLookup from '../database/models/bom_lookup';
-import BomMapEvent from '../database/models/bom_map_event';
 import BomXtrasFax from '../database/models/bom_xtras_fax';
 import BomMapMove from '../database/models/bom_map_move';
 import BomMapStory from '../database/models/bom_map_story';
+import BomMapMovePeople from '../database/models/bom_map_move_people';
+import BomMapMoveCoords from '../database/models/bom_map_move_coords';
 import BomMap from '../database/models/bom_map';
 import BomNarration from '../database/models/bom_narration';
 import BomMarkdown from '../database/models/bom_markdown';
@@ -104,10 +105,11 @@ export const models: Models = {
   BomLabel: BomLabel.initModel(sequelize),
   BomLog: BomLog.initModel(sequelize),
   BomLookup: BomLookup.initModel(sequelize),
-  BomMapEvent: BomMapEvent.initModel(sequelize),
-  BomMapMove: BomMapMove.initModel(sequelize),
-  BomMapStory: BomMapStory.initModel(sequelize),
   BomMap: BomMap.initModel(sequelize),
+  BomMapStory: BomMapStory.initModel(sequelize),
+  BomMapMovePeople: BomMapMovePeople.initModel(sequelize),
+  BomMapMoveCoords: BomMapMoveCoords.initModel(sequelize),
+  BomMapMove: BomMapMove.initModel(sequelize),
   BomNarration: BomNarration.initModel(sequelize),
   BomMarkdown: BomMarkdown.initModel(sequelize),
   BomPage: BomPage.initModel(sequelize),
@@ -435,6 +437,21 @@ models.BomXtrasHistory.hasMany(models.BomTranslation, {
   as: 'translation'
 });
 
+models.BomMapMove.hasMany(models.BomTranslation, {
+  foreignKey: {
+    name: 'guid'
+  },
+  sourceKey: 'guid',
+  as: 'translation'
+});
+models.BomMapStory.hasMany(models.BomTranslation, {
+  foreignKey: {
+    name: 'guid'
+  },
+  sourceKey: 'guid',
+  as: 'translation'
+});
+
 
 
 models.BomTimeline.hasOne(models.BomText, {
@@ -617,4 +634,34 @@ models.BomLog.belongsTo(models.BomText, {
   as: "logText",
   foreignKey: 'value',
   targetKey: 'guid'
+});
+
+
+models.BomMapMove.belongsTo(models.BomMapStory, {
+  foreignKey: 'parent',
+  targetKey: 'guid',
+  as: 'story'
+});
+
+models.BomMapMove.hasOne(models.BomPlaces, {
+  foreignKey: 'guid',
+  sourceKey: 'start',
+  as: 'startPlace'
+});
+
+models.BomMapMove.hasOne(models.BomPlaces, {
+  foreignKey: 'guid',
+  sourceKey: 'end',
+  as: 'endPlace'
+});
+
+
+models.BomMapMove.hasMany(models.BomMapMovePeople, {
+  foreignKey: 'parent',
+  as: 'people'
+});
+
+models.BomMapMove.hasMany(models.BomMapMoveCoords, {
+  foreignKey: 'parent',
+  as: 'coords'
 });
