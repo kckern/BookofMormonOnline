@@ -25,7 +25,9 @@ import {
 } from "reactstrap";
 import { ApiBaseUrl, assetUrl } from "../../models/BoMOnlineAPI"
 import { ScripturePanelSingle } from "../Page/Narration";
-import { detectScriptures } from "scripture-guide";
+import { detectScriptures, generateReference } from "scripture-guide";
+
+
 
 export function getPlaceInfo(slug, appController) {
     const keys = Object.keys(appController.preLoad.placeList || {});
@@ -35,30 +37,40 @@ export function getPlaceInfo(slug, appController) {
 
 export function MapPanel({mapController})
 {
-  
+    const parseOptions = {
+        replace: (domNode) => {
+          const attribs = { ...domNode.attribs };
+          if (attribs?.classname === 'scripture_link') {
+            const ref = domNode.children[0].data;
+            attribs.class = attribs.classname;
+            delete attribs.classname;
+            return <a {...attribs} onClick={()=>setScripture(ref)}>{ref}</a>;
+          }
+        }
+      }
+
   const [prevMapType, setPrevMapType] = useState(null);
   const [selectedStory, setSelectedStory] = useState(null);
-
   const {panelContents, zoomLevel, currentMap, mapCenter, setPanelContents,mapFunctions, isAdmin, placeList} = mapController;
-
   const {slug} = panelContents || {};
-
   const placeInfo = getPlaceInfo(slug, mapController.appController);
   const title = placeInfo?.name;
   const info = placeInfo?.info;
-
   const {places} = currentMap || {};
-
   const [place, setPlace] = useState(places?.find((place) => place.slug === slug));
-
-
-  
-
   const [placeDetails, setPlaceDetails] = useState({});
 
   useEffect(()=>{
     if(!slug || !currentMap) return;
     setPlace(currentMap.places?.find((place) => place.slug === slug));
+
+    //setSelectedStory(null) if the new slug is not a start or end point in any of the moves of the current story
+    if(selectedStory && 
+        !selectedStory.moves.some((move) => 
+            move.startPlace.slug === slug || 
+                move.endPlace.slug === slug)) 
+                    setSelectedStory(null);
+
   },[slug,currentMap])
 
 
@@ -90,20 +102,7 @@ export function MapPanel({mapController})
   const maps = placeDetails?.maps || [];
 
   const [activeTab, setActiveTab] = useState("1");
-  const [scripture, setScripture] = useState("1 Nephi 1:1");
-
-
-  const parseOptions = {
-    replace: (domNode) => {
-      const attribs = { ...domNode.attribs };
-      if (attribs?.classname === 'scripture_link') {
-        const ref = domNode.children[0].data;
-        attribs.class = attribs.classname;
-        delete attribs.classname;
-        return <a {...attribs} onClick={()=>setScripture(ref)}>{ref}</a>;
-      }
-    }
-  }
+  const [scripture, setScripture] = useState(null);
 
   let desc_with_scripturelinks =  placeDetails?.description;
   
@@ -212,7 +211,7 @@ useEffect(()=>{
 mapController.selectedStory = selectedStory;
 mapController.setSelectedStory = setSelectedStory;
 
-if(selectedStory) return <MapStoryPanel mapController={mapController} />
+if(selectedStory) return <MapStoryPanel mapController={mapController}  />
 
 
 const zoomRange = currentMap?.maxzoom - currentMap?.minzoom;
@@ -429,12 +428,25 @@ if(isMobile()) return null;
 function MapStoryPanel({mapController})
 {
     const {selectedStory, setSelectedStory} = mapController;
-
     const preLoadedPlaces = Object.values(mapController.placeList);
+    const [scripture, setScripture] = useState(null);
+    const parseOptions = {
+        replace: (domNode) => {
+          const attribs = { ...domNode.attribs };
+          if (attribs?.classname === 'scripture_link') {
+            const ref = domNode.children[0].data;
+            attribs.class = attribs.classname;
+            delete attribs.classname;
+            return <a {...attribs} onClick={()=>setScripture(ref)}>{ref}</a>;
+          }
+        }
+      } 
 
+    const moveCount = selectedStory.moves.length;
 
 
     return <div className="mapPanel">
+    <div className="mapPanelCardContainer">
         <Card>
             <CardHeader>
                 <span
@@ -445,35 +457,41 @@ function MapStoryPanel({mapController})
             </CardHeader>
             <CardBody>
                 <p>{selectedStory.description}</p>
-                <h6>Events</h6>
+                <h6>{moveCount} Movements</h6>
                 {selectedStory.moves.map((move, i) => {
-                    const {seq, travelers, ref, description, startPlace, endPlace} = move;
+                    const {seq, travelers, verse_ids, description, startPlace, endPlace} = move;
+                    const scriptureref = generateReference(verse_ids);
+                    const ref = `<a className="scripture_link">${scriptureref}</a>`;
+  
 
                     const start = preLoadedPlaces.find((place) => place.slug === startPlace.slug);
                     const end = preLoadedPlaces.find((place) => place.slug === endPlace.slug);
 
 
-                    return <div key={i+seq}>
-                        <div className="map_story_move" style={{display: "flex", justifyContent: "space-between", alignItems: "center"}}>
-                            <div>
-                                <img src={`${assetUrl}/places/${startPlace.slug}`} alt={startPlace.slug} />
-                                <caption>{start.name}</caption>
+                    return <div key={i+seq} className="map_story_move" >
+                            <MapEventImageCaption location={start} />
+                            <div className="map_story_move_desc">
+                                {Parser(`<p><b>${travelers}</b>—${description} (${ref})</p>`, parseOptions)}
                             </div>
-                            <div>
-                                <p>{description}</p>
-                                <p>{travelers}</p>
-                                <p>{ref}</p>
-                            </div>
-                            <div>
-                                <img src={`${assetUrl}/places/${endPlace.slug}`} alt={endPlace.slug} />
-                                <caption>{end.name}</caption>
-                            </div>
+                            <MapEventImageCaption location={end} />
                         </div>
-
-                    <pre>{JSON.stringify(move)}</pre>
-                    </div>
                 })}
             </CardBody>
         </Card>
     </div>
+    <div className="mapPanelScripture">
+      <ScripturePanelSingle closeButton={true} scriptureData={{ref:scripture}}  setPopUpRef={setScripture} />
+    </div>
+    </div>
+}
+
+
+function MapEventImageCaption({location}){
+
+    const label = location?.label.replace(/\//g, " ").replace(/ +/g, " ");
+
+    return <div className="map_story_move_place">
+    <img src={`${assetUrl}/places/${location.slug}`} alt={location.slug} />
+    <caption>{label}</caption>
+</div>
 }
