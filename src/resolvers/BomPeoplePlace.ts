@@ -154,63 +154,51 @@ export default {
             include: [
               includeTranslation({ [Op.or]: ['travelers', 'description'] }, context.lang),
               {
-                model: Models.BomMapMove,
-                as: 'moves',
+                model: Models.BomPlaces,
+                as: 'startPlace',
+                foreignKey: 'guid',
+                sourceKey: 'start',
                 include: [
-                  includeTranslation({ [Op.or]: ['travelers', 'description'] }, context.lang),
+                  includeTranslation({ [Op.or]: ['name', 'info'] }, context.lang),
                   {
-                    model: Models.BomPlaces,
-                    as: 'startPlace',
-                    foreignKey: 'guid',
-                    sourceKey: 'start',
-                    include: [includeTranslation({ [Op.or]: ['name', 'info'] }, context.lang),
-                    {
-                      model: Models.BomPlacesCoords,
-                      as: 'startCoords',
-                      where: {
-                        map: mapSlug
-                      },
-                      required: false
-                    }
-                  ]
-                  },
-                  {
-                    model: Models.BomPlaces,
-                    as: 'endPlace',
-                    foreignKey: 'guid',
-                    sourceKey: 'end',
-                    include: [includeTranslation({ [Op.or]: ['name', 'info'] }, context.lang),
-                    {
-                      model: Models.BomPlacesCoords,
-                      as: 'endCoords',
-                      where: {
-                        map: mapSlug
-                      },
-                      required: false
-                    }]
-
-                  },
-                  {
-                    model: Models.BomMapMoveCoords,
-                    as: 'midCoords',
+                    model: Models.BomPlacesCoords,
+                    as: 'coords',
                     where: {
                       map: mapSlug
                     },
                     required: false
-                  },
-                  {
-                    model: Models.BomMapMovePeople,
-                    as: 'people',
-                    required: false,
-                    include: [
-                      {
-                        model: Models.BomPeople,
-                        as: 'person',
-                        include: [includeTranslation({ [Op.or]: ['name', 'title'] }, context.lang)]
-                      }
-                    ]
                   }
-                ]
+                ].filter(x => !!x)
+              },
+              {
+                model: Models.BomPlaces,
+                as: 'endPlace',
+                foreignKey: 'guid',
+                sourceKey: 'end',
+                include: [
+                  includeTranslation({ [Op.or]: ['name', 'info'] }, context.lang),
+                  {
+                    model: Models.BomPlacesCoords,
+                    as: 'coords',
+                    where: {
+                      map: mapSlug
+                    },
+                    required: false
+                  }
+                ].filter(x => !!x)
+              },
+              {
+                model: Models.BomMapMoveCoords,
+                as: 'coords',
+                where: {
+                  map: mapSlug
+                },
+                required: false
+              },
+              {
+                model: Models.BomPeople,
+                as: 'people',
+                include: [includeTranslation({ [Op.or]: ['name', 'title'] }, context.lang)]
               }
             ]
           }
@@ -309,10 +297,14 @@ export default {
       return translatedValue(item, 'info');
     },
     lat: async (item: any, args: any, { db, res }: any, info: any) => {
-      return item.dataValues?._bom_places_coords?.lat || null;
+      const coords = item.getDataValue('coords')?.[0]?.dataValues || item.dataValues || {};
+      console.log({lat:coords});
+      return coords?.lat || null;
     },
     lng: async (item: any, args: any, { db, res }: any, info: any) => {
-      return item.dataValues?._bom_places_coords?.lng || null;
+      const coords = item.getDataValue('coords')?.[0]?.dataValues || item.dataValues || {};
+      console.log({lat:coords});
+      return coords?.lng || null;
     },
     minZoom: async (item: any, args: any, { db, res }: any, info: any) => {
       return item.dataValues?._bom_places_coords?.min || null;

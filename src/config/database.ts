@@ -452,6 +452,13 @@ models.BomMapStory.hasMany(models.BomTranslation, {
   as: 'translation'
 });
 
+models.BomMapStory.hasMany(models.BomMapMove, {
+  foreignKey: {
+    name: 'parent'
+  },
+  sourceKey: 'guid',
+  as: 'moves'
+});
 
 
 models.BomTimeline.hasOne(models.BomText, {
@@ -576,7 +583,6 @@ models.BomMap.belongsToMany(models.BomPlaces, {
 
 
 
-
 models.BomXtrasCommentary.hasOne(models.BomXtrasSource, {
   sourceKey: 'source',
   foreignKey: 'source_id',
@@ -644,24 +650,29 @@ models.BomMapMove.belongsTo(models.BomMapStory, {
 });
 
 models.BomMapMove.hasOne(models.BomPlaces, {
-  foreignKey: 'guid',
+  foreignKey: 'slug',
   sourceKey: 'start',
   as: 'startPlace'
 });
 
 models.BomMapMove.hasOne(models.BomPlaces, {
-  foreignKey: 'guid',
+  foreignKey: 'slug',
   sourceKey: 'end',
   as: 'endPlace'
 });
 
 
-models.BomMapMove.hasMany(models.BomMapMovePeople, {
-  foreignKey: 'parent',
+models.BomMapMove.belongsToMany(models.BomPeople, {
+  through: models.BomMapMovePeople,
+  foreignKey: 'segment_guid',
+  otherKey: 'people_slug',
   as: 'people'
 });
 
+
 models.BomMapMove.hasMany(models.BomMapMoveCoords, {
-  foreignKey: 'parent',
+  //mapMapMove has guid
+  //matche bomMapMoveCoords on segment_guid
+  foreignKey: 'segment_guid',
   as: 'coords'
 });
