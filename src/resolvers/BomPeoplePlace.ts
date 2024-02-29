@@ -1,7 +1,7 @@
 import { Model, Sequelize } from 'sequelize';
 import { models, models as Models, sequelize, SQLQueryTypes } from '../config/database';
 import { getSlug, Op, includeTranslation, translatedValue, includeModel, queryWhere } from './_common';
-import {setLang, generateReference} from "scripture-guide";
+import {setLang, generateReference,lookupReference} from "scripture-guide";
 
 export default {
   Query: {
@@ -22,7 +22,7 @@ export default {
           includeModel(info, Models.BomIndex, 'index', [
             includeTranslation('text', lang), // Add translation here
             includeModel(true, Models.BomLookup, 'text_guid', [includeModel(true, Models.BomText, 'text')])
-          ]),
+          ].filter(x=>!!x)),
           {
             model: Models.BomPeopleRels.unscoped(),
             as: 'relationDst',
@@ -33,7 +33,7 @@ export default {
                 as: 'personSrc',
                 include: [includeTranslation({ [Op.or]: ['name', 'title'] }, lang)].filter(x=>!!x)
               }
-            ]
+            ].filter(x=>!!x)
           },
           {
             model: Models.BomPeopleRels.unscoped(),
@@ -45,7 +45,7 @@ export default {
                 as: 'personDst',
                 include: [includeTranslation({ [Op.or]: ['name', 'title'] }, lang)].filter(x=>!!x)
               }
-            ]
+            ].filter(x=>!!x)
           }
           // includeModel(info, Models.BomPeopleRels, 'r'),
         ].filter(x => !!x),
@@ -379,6 +379,12 @@ export default {
     },
     description: async (item: any, args: any, { db, res }: any, info: any) => {
       return translatedValue(item, 'description');
+    },
+    verse_ids: async (item: any, args: any, { db, res }: any, info: any) => {
+      const ref = item.getDataValue('ref');
+      const verse_ids = lookupReference(ref).verse_ids;
+      if(!Array.isArray(verse_ids)) return null;
+      return verse_ids;
     }
   },
 };
