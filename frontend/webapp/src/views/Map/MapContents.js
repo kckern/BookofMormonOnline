@@ -148,6 +148,10 @@ const drawMap = ()=>{
     const lines =  moves.map((m,i)=>{
         return [[m.startPlace.lat, m.startPlace.lng], [m.endPlace.lat, m.endPlace.lng]];
     })?.map(([start,end],i)=>{
+        //trim to 4 decimal places
+        start = [parseFloat(start[0]), parseFloat(start[1])];
+        end = [parseFloat(end[0]), parseFloat(end[1])];
+        console.log(start,end);
         const startCoords = window.ol.proj.fromLonLat(start);
         const endCoords = window.ol.proj.fromLonLat(end);
         const line =  new window.ol.Feature({
