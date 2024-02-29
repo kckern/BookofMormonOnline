@@ -549,6 +549,7 @@ models.BomPlaces.hasMany(models.BomIndex, {
   sourceKey: 'slug',
   as: 'index'
 });
+
 models.BomPlaces.hasMany(models.BomPlacesCoords, {
   foreignKey: {
     name: 'guid'
@@ -568,15 +569,10 @@ models.BomPlaces.belongsToMany(models.BomMap, {
 
 models.BomMap.belongsToMany(models.BomPlaces, {
   through: models.BomPlacesCoords,
-
-
   otherKey: 'guid',
   foreignKey: 'map',
-
-
   sourceKey: 'slug',
   targetKey: 'guid',
-
   as: 'places'
 });
 
