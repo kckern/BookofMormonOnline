@@ -190,8 +190,6 @@ const queries = {
     }
 
   },
-<<<<<<< Updated upstream
-=======
   
   mapstories: (map) => {
     return {
@@ -226,7 +224,6 @@ const queries = {
       }
     },
 
->>>>>>> Stashed changes
   commentary: (ids) => {
     return {
       type: "commentary",
