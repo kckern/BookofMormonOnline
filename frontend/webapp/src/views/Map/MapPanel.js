@@ -11,6 +11,8 @@ import { isMobile } from "src/models/Utils"
 import RangeSlider from 'react-range-slider-input';
 import searchIcon from "../_Common/svg/search.svg";
 import 'react-range-slider-input/dist/style.css';
+import { getDistance } from 'geolib';
+
 import axios from "axios";
 import {
   Button,
@@ -27,6 +29,7 @@ import { ApiBaseUrl, assetUrl } from "../../models/BoMOnlineAPI"
 import { ScripturePanelSingle } from "../Page/Narration";
 import { detectScriptures, generateReference } from "scripture-guide";
 
+const metersToMiles = (meters) => Math.round(meters * 0.000621371192 * 1) / 1;
 
 
 export function getPlaceInfo(slug, appController) {
@@ -125,7 +128,13 @@ export function MapPanel({mapController})
       <img src={placesIcon} alt="places" style={{filter: "invert(1)", opacity: 0.5}} />
       <div>Description</div>
     </NavItem>
-    {!!storyCount && <NavItem onClick={() => setActiveTab("2")} className={activeTab === "2" ? "active" : ""}>
+    {!!storyCount && <NavItem onClick={() =>{
+        if(storyCount===1) {
+            const firstAndOnlyStory = matchingStories[0];
+            mapController.updateUrl(`/map/${currentMap?.slug}/story/${firstAndOnlyStory.slug}`);
+            setSelectedStory(firstAndOnlyStory)
+        }else setActiveTab("2")
+        }} className={activeTab === "2" ? "active" : ""}>
       <div><span className="counter">{storyCount}</span></div>
       <div>Events</div>
     </NavItem>}
@@ -142,7 +151,10 @@ export function MapPanel({mapController})
     </TabPane>
     <TabPane tabId="2">
     {matchingStories.map((story, i) => {
-    return <div key={i} className="map_story" onClick={()=>{setSelectedStory(story)}}>
+    return <div key={i} className="map_story" onClick={()=>{
+        mapController.updateUrl(`/map/${currentMap?.slug}/story/${story.slug}`);
+        setSelectedStory(story)
+        }}>
             <h6>{story.title}</h6>
             <p>{story.description}</p>
         </div>
@@ -459,7 +471,7 @@ function MapStoryPanel({mapController})
                 <p>{selectedStory.description}</p>
                 <h6>{moveCount} Movements</h6>
                 {selectedStory.moves.map((move, i) => {
-                    const {seq, travelers, verse_ids, description, startPlace, endPlace} = move;
+                    const {seq, travelers, verse_ids, description, startPlace, endPlace, duration} = move;
                     const scriptureref = generateReference(verse_ids);
                     const ref = `<a className="scripture_link">${scriptureref}</a>`;
   
@@ -467,11 +479,16 @@ function MapStoryPanel({mapController})
                     const start = preLoadedPlaces.find((place) => place.slug === startPlace.slug);
                     const end = preLoadedPlaces.find((place) => place.slug === endPlace.slug);
 
+                    const startPoint = [startPlace.lat, startPlace.lng];
+                    const endPoint = [endPlace.lat, endPlace.lng];
+                    const miles =  metersToMiles(getDistance(startPoint, endPoint));
 
                     return <div key={i+seq} className="map_story_move" >
                             <MapEventImageCaption location={start} />
                             <div className="map_story_move_desc">
-                                {Parser(`<p><b>${travelers}</b>—${description} (${ref})</p>`, parseOptions)}
+                                <p><b>{travelers}</b><span className="distance"> • {miles} miles</span>{!!duration && <span className="duration"> • {duration}</span>}
+                                </p>
+                                {Parser(`<p class='desc'>${description} (${ref})</p>`, parseOptions)}
                             </div>
                             <MapEventImageCaption location={end} />
                         </div>
@@ -488,7 +505,8 @@ function MapStoryPanel({mapController})
 
 function MapEventImageCaption({location}){
 
-    const label = location?.label.replace(/\//g, " ").replace(/ +/g, " ");
+    if(!location?.slug) return null
+    const label = (location?.label || location?.name)?.replace(/\//g, " ").replace(/ +/g, " ");
 
     return <div className="map_story_move_place">
     <img src={`${assetUrl}/places/${location.slug}`} alt={location.slug} />

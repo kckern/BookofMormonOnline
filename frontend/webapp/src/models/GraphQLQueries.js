@@ -206,6 +206,7 @@ const queries = {
               verse_ids
               seq
               travelers
+              duration
               people{
                   slug
                   name
