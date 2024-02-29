@@ -190,6 +190,40 @@ const queries = {
     }
 
   },
+  
+  mapstories: (map) => {
+    return {
+      type: "mapstories",
+      key: "map",
+      val: map,
+      query: q("mapstories", "map", map) +
+        `{
+          slug
+          title
+          description
+          moves {
+              seq
+              travelers
+              people{
+                  slug
+                  name
+              }
+              description
+              startPlace{
+                  slug
+                  lat
+                  lng
+              }
+              endPlace{
+                  slug
+                  lat
+                  lng
+              }
+          }
+        }`,
+      }
+    },
+
   commentary: (ids) => {
     return {
       type: "commentary",
