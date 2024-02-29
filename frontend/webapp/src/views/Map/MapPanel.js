@@ -62,44 +62,33 @@ export function MapPanel({mapController})
   const {places} = currentMap || {};
   const [place, setPlace] = useState(places?.find((place) => place.slug === slug));
   const [placeDetails, setPlaceDetails] = useState({});
-
-  useEffect(()=>{
-    if(!slug || !currentMap) return;
+  
+useEffect(() => {
+    // First useEffect logic
+    if (!slug || !currentMap) return;
     setPlace(currentMap.places?.find((place) => place.slug === slug));
 
-    //setSelectedStory(null) if the new slug is not a start or end point in any of the moves of the current story
-    if(selectedStory && 
-        !selectedStory.moves.some((move) => 
-            move.startPlace.slug === slug || 
-                move.endPlace.slug === slug)) 
-                    setSelectedStory(null);
+    if (selectedStory && !selectedStory.moves.some((move) => move.startPlace.slug === slug || move.endPlace.slug === slug)) {
+        setSelectedStory(null);
+    }
 
-  },[slug,currentMap])
-
-
-  useEffect(()=>{
-    //scroll .mapPanel to top
+    // Second useEffect logic
     const panel = document.querySelector('.mapPanel');
     setScripture(null);
-    if(panel) panel.scrollTop = 0;
+    if (panel) panel.scrollTop = 0;
     const mapSlug = mapController.currentMap?.slug;
-    if(!mapSlug) return;
-    if(slug){
-
-      //update router path
-     
-      mapController.appController.functions.setSlug(`/map/${mapSlug}/place/${slug}`);
-      setPlaceDetails({});
-      //TODO: use the cache after data entry is complete, is not admin
-      BoMOnlineAPI({places: [slug]},{ useCache: false }).then((result)=>{
-        setPlaceDetails(result?.places?.[slug] || {});
-      })
+    if (!mapSlug) return;
+    if (slug) {
+        mapController.appController.functions.setSlug(`/map/${mapSlug}/place/${slug}`);
+        setPlaceDetails({});
+        BoMOnlineAPI({ places: [slug] }, { useCache: false }).then((result) => {
+            setPlaceDetails(result?.places?.[slug] || {});
+        });
+    } else {
+        mapController.appController.functions.setSlug(`/map/${mapSlug}`);
     }
-    else{
-      mapController.appController.functions.setSlug(`/map/${mapSlug}`);
+}, [slug, currentMap?.slug, selectedStory]);
 
-    }
-  }, [slug,panelContents?.slug,mapController.currentMap?.slug])
 
   const index = placeDetails?.index || [];
   const maps = placeDetails?.maps || [];
