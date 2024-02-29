@@ -36,10 +36,12 @@ const updateCoords =async  (req, res) => {
     const guid = guidR?.[0]?.guid;
     if(!guid) return res.json({success:false, message: "Invalid slug", slug, guidR});
     req.body.guid = guid;
-    if(lat && lng && map  && guid && slug)
+    if( map  && guid && slug)
     {
+        if(lat && lng) {
         const sql = `INSERT INTO bom_places_coords (lat, lng, time, user, guid, map, slug) VALUES (?, ?, NOW(), ?, ?, ?, ?) ON DUPLICATE KEY UPDATE lat = VALUES(lat), lng = VALUES(lng), time = VALUES(time), user = VALUES(user), slug = VALUES(slug)`;
         await queryDB(sql,[lat,lng,user,guid,map,slug]);
+        }
 
         if(min || max || zoom) {
             const fields = { min, max, zoom };

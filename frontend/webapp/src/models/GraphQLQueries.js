@@ -204,7 +204,6 @@ const queries = {
           moves {
               seq
               travelers
-              ref
               people{
                   slug
                   name

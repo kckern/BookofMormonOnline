@@ -197,11 +197,11 @@ export default {
               {
                 model: Models.BomPeople,
                 as: 'people',
-                include: [includeTranslation({ [Op.or]: ['name', 'title'] }, context.lang)]
+                include: [includeTranslation({ [Op.or]: ['name', 'title'] }, context.lang)].filter(x => !!x)
               }
-            ]
+            ].filter(x => !!x)
           }
-        ]
+        ].filter(x => !!x)
       }).then((stories: any) => {
         return stories.map((story: any) => {
           const moves = story.getDataValue('moves').map((move: any) => {
@@ -308,7 +308,6 @@ export default {
       return translatedValue(item, 'info');
     },
     lat: async (item: any, args: any, { db, res }: any, info: any) => {
-      console.log({item});
       const coords = item.getDataValue('coords')?.[0]?.dataValues || item.dataValues?._bom_places_coords || {};
       return coords?.lat || null;
     },

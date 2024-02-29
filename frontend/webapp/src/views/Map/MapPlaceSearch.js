@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Card, CardBody, CardHeader } from 'reactstrap';
 import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
 import Parser from "html-react-parser";
+import { label,isMobile } from "src/models/Utils"
 
 export function MapPlaceSearch({ mapController }) {
 
@@ -15,6 +16,13 @@ export function MapPlaceSearch({ mapController }) {
     const { preLoad: { placeList } } = appController;
 
     // Keyboard navigation
+    const SelectItem = (slug) => {
+        //TODO: Mobile Drawer
+        if(isMobile())  mapController.appController.functions.setPopUp({ type: "places", ids: [slug] });
+        else    mapController.setPanelContents({slug});
+        setSearching(null);
+
+    }
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
@@ -36,8 +44,7 @@ export function MapPlaceSearch({ mapController }) {
                 const selected = searchResults[selectedResult] || searchResults[0];
                 if (selected) {
                     const selectedSlug = selected.slug;
-                    //set panel to selected place
-                    mapController.setPanelContents({slug:selectedSlug});
+                    SelectItem(selectedSlug);
                 }
             }
         }
@@ -90,7 +97,7 @@ export function MapPlaceSearch({ mapController }) {
         <Card className="map-place-search">
             <CardHeader>
                 <div className='close'>🔍</div>
-                <input type="text" placeholder="Search for a place" onChange={handleTyping} defaultValue={""} />
+                <input type="text" placeholder={label("search_for_a_place")} onChange={handleTyping} defaultValue={""} />
                 <div onClick={() => setSearching(null)} className='close'>×</div>
             </CardHeader>
             <CardBody>
@@ -98,7 +105,10 @@ export function MapPlaceSearch({ mapController }) {
                     {searchString && searchResults.length && searchResults.map((result, index) => {
                         const isLastInGroup = index < searchResults.length - 1 && result.className !== searchResults[index + 1].className;
                         return (
-                            <div key={index} className={`search-result ${result.className} ${index === selectedResult ? 'selected' : ''} ${isLastInGroup ? 'last' : ''}`}>
+                            <div
+                            onClick={() => SelectItem(result.slug)}
+                            onMouseEnter={() => setSelectedResult(index)}
+                            key={index} className={`search-result ${result.className} ${index === selectedResult ? 'selected' : ''} ${isLastInGroup ? 'last' : ''}`}>
                                 <img alt={`${result.name}`} src={`${assetUrl}/places/${result.slug}`}  key={`${result.slug}`} />
                                 <div>
                                     <div className="search-result-name">{highlight(searchString, result.name)}</div>
@@ -107,8 +117,8 @@ export function MapPlaceSearch({ mapController }) {
                             </div>
                         );
                     }) || searchString && 
-                    <div className="search-result no-results">No results found</div> || 
-                    <div className="search-result no-results">Start typing to search</div>}
+                    <div className="search-result no-results">{label("no_results_found")}</div> || 
+                    <div className="search-result no-results">{label("start_typing_to_search")}</div>}
                 </div>
             </CardBody>
         </Card>
