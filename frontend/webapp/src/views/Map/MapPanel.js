@@ -189,16 +189,17 @@ useEffect(() => {
 const [[minZoom,maxZoom],setMinMaxZoom] = useState([place?.minZoom,place?.maxZoom]);
 useEffect(()=>{setMinMaxZoom([place?.minZoom,place?.maxZoom])},[place?.minZoom,place?.maxZoom]);
 
-const preloadedPlace = Object.values(placeList||{}).find((place)=>place.slug === slug);
+const preloadedPlace = Object.values(placeList||{}).find((place)=>place.slug === slug) || null;
 
 
 useEffect(()=>{
+  if(!preloadedPlace) return false;
   const isOutOfMapScope = (currentMap?.slug === "neareast") !== (preloadedPlace?.location === "W");
   if(!isOutOfMapScope) return false;
   // TODO: prevMapType is not being set correctly
   const dstMap = currentMap?.slug === "neareast" ? (prevMapType || "internal") : "neareast";
   if(dstMap !== "neareast") setPrevMapType(dstMap); 
-  mapController.getMap(dstMap,slug)
+   mapController.getMap(dstMap,slug)
 },[preloadedPlace?.location]);
 
 useEffect(()=>{
