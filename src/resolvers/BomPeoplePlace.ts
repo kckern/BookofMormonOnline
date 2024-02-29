@@ -144,7 +144,6 @@ export default {
     mapstories: async (root: any, args: any, context: any, info: any) => {
 
       const mapSlug = args.map;
-
       return Models.BomMapStory.findAll({
         include: [
           includeTranslation({ [Op.or]: ['title', 'description'] }, context.lang),
@@ -166,7 +165,7 @@ export default {
                     where: {
                       map: mapSlug
                     },
-                    required: false
+                    required: true // Make sure this is true
                   }
                 ].filter(x => !!x)
               },
@@ -183,7 +182,7 @@ export default {
                     where: {
                       map: mapSlug
                     },
-                    required: false
+                    required: true // Make sure this is true
                   }
                 ].filter(x => !!x)
               },
@@ -193,7 +192,7 @@ export default {
                 where: {
                   map: mapSlug
                 },
-                required: false
+                required: false // Make this false as it's optional
               },
               {
                 model: Models.BomPeople,
@@ -203,6 +202,17 @@ export default {
             ]
           }
         ]
+      }).then((stories: any) => {
+        return stories.map((story: any) => {
+          const moves = story.getDataValue('moves').map((move: any) => {
+            const coords = move.dataValues.startPlace?.coords?.[0]?.dataValues;
+            if(!coords?.lat) return null;
+            return move;
+          }).filter((x:any)=>!!x);
+          if(!moves.length) return null;
+          story.moves = moves;
+          return story;
+        }).filter((x:any)=>!!x);
       });
       }
 
@@ -298,12 +308,10 @@ export default {
     },
     lat: async (item: any, args: any, { db, res }: any, info: any) => {
       const coords = item.getDataValue('coords')?.[0]?.dataValues || item.dataValues || {};
-      console.log({lat:coords});
       return coords?.lat || null;
     },
     lng: async (item: any, args: any, { db, res }: any, info: any) => {
       const coords = item.getDataValue('coords')?.[0]?.dataValues || item.dataValues || {};
-      console.log({lat:coords});
       return coords?.lng || null;
     },
     minZoom: async (item: any, args: any, { db, res }: any, info: any) => {
