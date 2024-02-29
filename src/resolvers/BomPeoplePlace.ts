@@ -1,7 +1,7 @@
 import { Model, Sequelize } from 'sequelize';
 import { models, models as Models, sequelize, SQLQueryTypes } from '../config/database';
 import { getSlug, Op, includeTranslation, translatedValue, includeModel, queryWhere } from './_common';
-import {setLang, generateReference} from "scripture-guide";
+import {setLang, generateReference,lookupReference} from "scripture-guide";
 
 export default {
   Query: {
@@ -380,6 +380,12 @@ export default {
     },
     description: async (item: any, args: any, { db, res }: any, info: any) => {
       return translatedValue(item, 'description');
+    },
+    verse_ids: async (item: any, args: any, { db, res }: any, info: any) => {
+      const ref = item.getDataValue('ref');
+      const verse_ids = lookupReference(ref).verse_ids;
+      if(!Array.isArray(verse_ids)) return null;
+      return verse_ids;
     }
   },
 };

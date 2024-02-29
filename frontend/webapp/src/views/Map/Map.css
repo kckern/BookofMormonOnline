@@ -740,3 +740,25 @@ Add a triangle notch pointing down at the bottom of the tooltip
 .rangeSliderContainer span.current{
   outline: 2px solid #2196f3;
 }
+.map_story p{
+  margin:0;
+  line-height: 100%;
+}
+.map_story
+{
+  border: 1px solid #DDD;
+  padding: 1.4ex;
+  border-radius: 1ex;
+  background-color: #f4f3f3;
+  cursor: pointer;
+  color: #444;
+  margin-bottom: 1rem;
+}
+.map_story:hover
+{
+  background-color: #EEEEEE;
+  border: 1px solid #AAA;
+}
+.map_story_move img{
+  max-width: 5rem;
+}
