@@ -72,6 +72,8 @@ blockquote::selection,
 strong::selection,
 b::selection,
 i::selection,
+sup::selection,
+sub::selection,
 span::selection,
 em::selection {
     color: #000;
