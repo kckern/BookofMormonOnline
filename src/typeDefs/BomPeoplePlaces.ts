@@ -12,9 +12,8 @@ extend type Query {
     place(slug: [String]): [Place]
     places(map: [String]): [Place]
     maps(slug: [String]): [Map]
-    mapstory(slug: [String]): [MapStory]
-    mapstories(map: [String]): [MapStory]
-    
+    mapstory(slug: String,map: String): [MapStory]
+    mapstories(map: [String]!): [MapStory]
     timeline(slug: [String]): [Event]
 }
 
@@ -117,6 +116,7 @@ extend type Query {
   }
 
   type MapStory {
+    slug: String
     guid: String
     title: String
     description: String
@@ -126,7 +126,9 @@ extend type Query {
     guid: String
     seq: Int
     start: String
+    startPlace: Place
     end: String
+    endPlace: Place
     travelers: String
     people: [People]
     duration: String
