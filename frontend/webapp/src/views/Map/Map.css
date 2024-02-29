@@ -801,12 +801,29 @@ Add a triangle notch pointing down at the bottom of the tooltip
 }
 .map_story_move_desc{
   display: flex;
-  align-items: center;
+  flex-direction: column;
 }
 .map_story_move_desc p{
-  margin: 1ex;
-  margin-top: 0;
-  line-height: 100%;
+  font-size: 1rem;
+  margin: 0 1ex;
+  line-height: 110%;
+  font-size: small;
+
+}
+
+.map_story_move_desc p .distance,
+.map_story_move_desc p .duration{
+  font-size: 0.7rem;
+  color: #AAA;
+  font-family: Arial;
+  font-size: smaller;
+  border-radius: 1ex;
+}
+
+.map_story_move_desc p.desc{
+  font-size: 0.8rem;
+  color: #444;
+  text-align: left;
 }
 
 .map_story_move_place caption

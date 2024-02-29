@@ -166,7 +166,7 @@ const drawMap = ()=>{
     map.current.addLayer(
         new window.ol.layer.Vector({
             source: new window.ol.source.Vector({
-                features: [...lines]
+                features: []// [...lines]
             }),
             style: function (feature, resolution) {
                 return new window.ol.style.Style({
