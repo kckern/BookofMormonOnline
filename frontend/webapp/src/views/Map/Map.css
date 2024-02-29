@@ -782,6 +782,45 @@ Add a triangle notch pointing down at the bottom of the tooltip
   background-color: #EEEEEE;
   border: 1px solid #AAA;
 }
+.map_story_move{
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-top: 1rem;
+}
+.map_story_move_place{
+  position: relative;
+  width: 4rem;
+  height: 4rem;
+  margin: 0;
+  flex-shrink: 0;
+}
 .map_story_move img{
-  max-width: 5rem;
+  position: absolute;
+  width: 100%;
+}
+.map_story_move_desc{
+  display: flex;
+  align-items: center;
+}
+.map_story_move_desc p{
+  margin: 1ex;
+  margin-top: 0;
+  line-height: 100%;
+}
+
+.map_story_move_place caption
+{
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: #00000099;
+  color: white;;
+  font-size: 0.7rem;
+  line-height: 100%;
+  padding: 2px;
+  text-align: center;
+  border-radius: 3px;
+  letter-spacing: -0.5px;
 }

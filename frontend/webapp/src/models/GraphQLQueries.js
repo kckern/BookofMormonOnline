@@ -202,6 +202,8 @@ const queries = {
           title
           description
           moves {
+              guid
+              verse_ids
               seq
               travelers
               people{
