@@ -190,6 +190,43 @@ const queries = {
     }
 
   },
+<<<<<<< Updated upstream
+=======
+  
+  mapstories: (map) => {
+    return {
+      type: "mapstories",
+      key: "map",
+      val: map,
+      query: 
+        `mapstories(map: "${map}"){
+          slug
+          title
+          description
+          moves {
+              seq
+              travelers
+              people{
+                  slug
+                  name
+              }
+              description
+              startPlace{
+                  slug
+                  lat
+                  lng
+              }
+              endPlace{
+                  slug
+                  lat
+                  lng
+              }
+          }
+        }`,
+      }
+    },
+
+>>>>>>> Stashed changes
   commentary: (ids) => {
     return {
       type: "commentary",

@@ -11,7 +11,7 @@ const MapContents = ({mapController}) => {
     const mapElement = useRef(); // This ref will point to the map container
     const map = useRef(); // This ref will store the initialized map
     let {currentMap,isAdmin} = mapController;
-    const {slug:mapslug,places} = currentMap;
+    const {slug:mapslug,places,stories} = currentMap;
 
     const {centerx, centery, minzoom, maxzoom, zoom} = currentMap;
 
@@ -118,7 +118,12 @@ const drawMap = ()=>{
         return key ? appController.preLoad.placeList[key] : {};
       }
     const view = map.current?.getView();
+<<<<<<< Updated upstream
     const markers_tmp = places
+=======
+
+    const markers = places
+>>>>>>> Stashed changes
     .map(i=>{
         const xy = [i.lat, i.lng];
         const { minZoom, maxZoom} = i;
@@ -143,8 +148,44 @@ const drawMap = ()=>{
     })
 
 
+<<<<<<< Updated upstream
 
     
+=======
+    const moves = stories?.map(s=>s.moves).flat() || [];
+    const lines =  moves.map((m,i)=>{
+        return [[m.startPlace.lat, m.startPlace.lng], [m.endPlace.lat, m.endPlace.lng]];
+    })?.map(([start,end],i)=>{
+        const startCoords = window.ol.proj.fromLonLat(start);
+        const endCoords = window.ol.proj.fromLonLat(end);
+        const line =  new window.ol.Feature({
+            geometry: new window.ol.geom.LineString([
+                startCoords, endCoords
+            ])
+        });
+        return line;
+    });
+
+
+    map.current.addLayer(
+        new window.ol.layer.Vector({
+            source: new window.ol.source.Vector({
+                features: [...lines]
+            }),
+            style: function (feature, resolution) {
+                return new window.ol.style.Style({
+                    stroke: new window.ol.style.Stroke({
+                        color: '#FF000044',
+                        lineDash: [10, 10],
+                        lineDashOffset: 0,
+                        width: 3
+                    })
+                });
+            }
+        })
+    );
+
+>>>>>>> Stashed changes
 
 
     map.current.addLayer(
