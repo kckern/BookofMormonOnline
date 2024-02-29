@@ -22,7 +22,7 @@ export default {
           includeModel(info, Models.BomIndex, 'index', [
             includeTranslation('text', lang), // Add translation here
             includeModel(true, Models.BomLookup, 'text_guid', [includeModel(true, Models.BomText, 'text')])
-          ]),
+          ].filter(x=>!!x)),
           {
             model: Models.BomPeopleRels.unscoped(),
             as: 'relationDst',
@@ -33,7 +33,7 @@ export default {
                 as: 'personSrc',
                 include: [includeTranslation({ [Op.or]: ['name', 'title'] }, lang)].filter(x=>!!x)
               }
-            ]
+            ].filter(x=>!!x)
           },
           {
             model: Models.BomPeopleRels.unscoped(),
@@ -45,7 +45,7 @@ export default {
                 as: 'personDst',
                 include: [includeTranslation({ [Op.or]: ['name', 'title'] }, lang)].filter(x=>!!x)
               }
-            ]
+            ].filter(x=>!!x)
           }
           // includeModel(info, Models.BomPeopleRels, 'r'),
         ].filter(x => !!x),
