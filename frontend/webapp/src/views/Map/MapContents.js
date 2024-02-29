@@ -118,12 +118,8 @@ const drawMap = ()=>{
         return key ? appController.preLoad.placeList[key] : {};
       }
     const view = map.current?.getView();
-<<<<<<< Updated upstream
-    const markers_tmp = places
-=======
 
     const markers = places
->>>>>>> Stashed changes
     .map(i=>{
         const xy = [i.lat, i.lng];
         const { minZoom, maxZoom} = i;
@@ -148,10 +144,6 @@ const drawMap = ()=>{
     })
 
 
-<<<<<<< Updated upstream
-
-    
-=======
     const moves = stories?.map(s=>s.moves).flat() || [];
     const lines =  moves.map((m,i)=>{
         return [[m.startPlace.lat, m.startPlace.lng], [m.endPlace.lat, m.endPlace.lng]];
@@ -185,13 +177,12 @@ const drawMap = ()=>{
         })
     );
 
->>>>>>> Stashed changes
 
 
     map.current.addLayer(
         new window.ol.layer.Vector({
           source: new window.ol.source.Vector({
-            features: [...markers_tmp]
+            features: [...markers]
           }),
           style: function (feature, resolution) {
             console.log({feature,resolution});
