@@ -243,7 +243,7 @@ const drawMap = ()=>{
             mapController.setTooltip({x, y, slug: null});
             window.ol.isMoving = true;
             setTimeout(()=>{
-                markers_tmp.forEach(i=>i.changed());
+                markers.forEach(i=>i.changed());
                 map.current.getView().animate({center: [lat,lng], duration: 500}, ()=>window.ol.isMoving = false);
                
             }, 0);
@@ -268,7 +268,7 @@ const drawMap = ()=>{
     if(isAdmin){
         console.log("Admin mode");
         var modify = new window.ol.interaction.Modify({ 
-            features: new window.ol.Collection(markers_tmp),
+            features: new window.ol.Collection(markers),
             style: ()=>[],
             hitTolerance: 1000 // Increase this value to increase the draggable area
         });
