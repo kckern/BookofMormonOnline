@@ -205,12 +205,13 @@ export default {
       }).then((stories: any) => {
         return stories.map((story: any) => {
           const moves = story.getDataValue('moves').map((move: any) => {
-            const coords = move.dataValues.startPlace?.coords?.[0]?.dataValues;
-            if(!coords?.lat) return null;
+            const start = move.dataValues.startPlace?.coords?.[0]?.dataValues?.lat;
+            const end = move.dataValues.endPlace?.coords?.[0]?.dataValues?.lat;
+            if(!start || !end) return null;
             return move;
           }).filter((x:any)=>!!x);
           if(!moves.length) return null;
-          story.moves = moves;
+          story.moves = moves.sort((a:any,b:any)=>a.seq-b.seq);
           return story;
         }).filter((x:any)=>!!x);
       });
@@ -307,11 +308,12 @@ export default {
       return translatedValue(item, 'info');
     },
     lat: async (item: any, args: any, { db, res }: any, info: any) => {
-      const coords = item.getDataValue('coords')?.[0]?.dataValues || item.dataValues || {};
+      console.log({item});
+      const coords = item.getDataValue('coords')?.[0]?.dataValues || item.dataValues?._bom_places_coords || {};
       return coords?.lat || null;
     },
     lng: async (item: any, args: any, { db, res }: any, info: any) => {
-      const coords = item.getDataValue('coords')?.[0]?.dataValues || item.dataValues || {};
+      const coords = item.getDataValue('coords')?.[0]?.dataValues || item.dataValues?._bom_places_coords || {};
       return coords?.lng || null;
     },
     minZoom: async (item: any, args: any, { db, res }: any, info: any) => {
