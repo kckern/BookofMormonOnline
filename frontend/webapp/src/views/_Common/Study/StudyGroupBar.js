@@ -140,7 +140,6 @@ export function getFreshUsers(appController,queryUsers) {
       return true;
     }) || [];
 
-  console.log('Users',users);
 		for (let i in users) {
     let userGroup = users[i].metaData.activeGroup;
     let thisGroup = group?.url;
@@ -230,15 +229,16 @@ useEffect(()=>{
 		const query = appController.sendbird.sb.createApplicationUserListQuery(queryParams);
 
 		const queryUsers = await query.next();
-		
+
 		let { users, bots } = getFreshUsers(appController, queryUsers);
+
 		setUsers(users);
 		setBots(bots);
 		}
 	}
 	const interval = setInterval(()=>{
 		getLiveFreshUsers();
-	},5000)
+	},1000)
 	return ()=>{
 		clearInterval(interval);
 	}
@@ -596,7 +596,7 @@ export function StudyGroupUserCircle({ userObject, appController, isBot }) {
 		}
 		const interval = setInterval(()=>{
 			getMessages();
-		},5000)
+		},1000)
 		return ()=>{
 			clearInterval(interval);
 		}
@@ -617,7 +617,7 @@ export function StudyGroupUserCircle({ userObject, appController, isBot }) {
       >
         {inCallElements}
         {typingIndicator}
-        <div className={"progressBadge"}>{badgeVal}</div>
+        <div className={"progressBadge"} onClick={()=>console.log('bageClick')}>{badgeVal}</div>
         {trophyIcons}
       </div>
       <UnreadDMCount appController={appController} userId={userObject.userId} count={unreadMessageCount > 0?unreadMessageCount:''}/>
