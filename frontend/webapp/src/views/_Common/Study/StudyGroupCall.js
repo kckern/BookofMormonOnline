@@ -1,7 +1,4 @@
-
-
-
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import { playSound } from "src/models/Utils";
 import StudyGroupHangUp from "./StudyGroupHangUp.svg";
@@ -16,8 +13,6 @@ export function CallCircle({ appController }) {
         return (othersInCall > 0) ? "isCall" : "noCall";
     }
     );
-
-
     let playSounds = appController.states.preferences.sound;
 
     const [playLocalJoined] = useState(
@@ -38,7 +33,32 @@ export function CallCircle({ appController }) {
 
     if (callState === "isCall" && participants.length === 0) setCallState("noCall");
     if (callState === "isCall") if (playSounds) playSound(playOngoingCall);//.play();
+		useEffect(()=>{
+			const getLiveRoom  = async()=>{
+				const activeGroupMembers = appController.states.studyGroup.activeGroup?.members;
+				if(activeGroupMembers !== undefined){
+					const mainUser = appController.states.user;
+					const queryParams = {
+						userIdsFilter:[activeGroupMembers.filter(member=>member.userId !== mainUser.social.user_id)[0].userId]
+					}
+					const query = appController.sendbird.sb.createApplicationUserListQuery(queryParams);
+			
+					const queryUsers = await query.next();
+					if(queryUsers[0].metaData.activeCall && callState === 'noCall'){
+						setParticipants(queryUsers);
+					}else if(!queryUsers[0].metaData.activeCall && callState === 'noCall'){
+						setParticipants([])
+					}else if(!queryUsers[0].metaData.activeCall && callState === 'isCall'){
+						setCallState('noCall');
+					}
+				}
+			}
 
+			const interval = setInterval(getLiveRoom,1000);
+			return ()=>{
+				clearInterval(interval);
+			}
+		},[appController?.states?.studyGroup?.activeCall])
 
     useEffect(() => {
         if (appController?.states?.studyGroup?.activeCall?.autostart) enterCall();
@@ -61,8 +81,8 @@ export function CallCircle({ appController }) {
         let othersInCall = numberOfOthersInCall(newP, appController);
         let newCallStateVal = (othersInCall > 0) ? callState !== "wasCall" ? callState : "isCall" : "noCall";
         setCallState(newCallStateVal);
-
     }, [appController?.states?.studyGroup?.activeCall?._participantCollection?._remoteParticipants.length]);
+
 
 
     useEffect(() => {
@@ -133,7 +153,6 @@ export function CallCircle({ appController }) {
                     setCallState("warmUp");
                     if (playSounds) playSound(playLocalJoined)//.play();
                     appController?.states?.studyGroup?.activeCall.setAudioForLargeRoom(document.getElementById("call_audio"))
-										console.log('appController?.states?.studyGroup?.activeCall?._participantCollection',appController?.states?.studyGroup?.activeCall?._participantCollection);
                     setParticipants(
                         appController?.states?.studyGroup?.activeCall?._participantCollection
                     );
@@ -142,7 +161,6 @@ export function CallCircle({ appController }) {
                         activeCall: appController?.states?.studyGroup?.activeCall?.roomId,
                         key: "enterCall"
                     });
-
                 })
                 .catch((e) => {
                     // Handle error.
