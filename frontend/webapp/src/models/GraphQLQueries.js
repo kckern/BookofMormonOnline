@@ -311,6 +311,7 @@ const queries = {
           document
           citation
           teaser
+          aspect
           pages
           ${(slugs) ? "transcript" : ""}
          }`,
@@ -659,6 +660,8 @@ const queries = {
         places {
           slug
           name
+          label
+          icon
           info
           lng
           lat

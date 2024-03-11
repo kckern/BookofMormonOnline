@@ -82,7 +82,9 @@ export default {
           },
           include: [
             includeTranslation({ [Op.or]: ['name', 'desc'] }, lang),
-            includeModel(info, Models.BomPlaces, 'places')].filter(x => !!x),
+            includeModel(info, Models.BomPlaces, 'places',[
+              includeTranslation({ [Op.or]: ['name', 'info','label'] }, lang)
+            ])].filter(x => !!x),
           order: ['priority']
         });
       return Models.BomMap.findAll({
@@ -201,6 +203,9 @@ export default {
   Place: {
     name: async (item: any, args: any, { db, res }: any, info: any) => {
       return translatedValue(item, 'name');
+    },
+    label: async (item: any, args: any, { db, res }: any, info: any) => {
+      return translatedValue(item, 'label');
     },
     info: async (item: any, args: any, { db, res }: any, info: any) => {
       return translatedValue(item, 'info');

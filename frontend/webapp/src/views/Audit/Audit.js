@@ -219,6 +219,24 @@ async function saveItemAudit({id, score, user}) {
     return await postRequest;
 }
 
+
+
+export const updatePlaceCoords = async ({lat,lng,map,slug,token}) => {
+
+    var options = {
+      method: 'POST',
+      url: `${ApiBaseUrl}/coords`,
+      headers: {'Content-Type': 'application/json', token},
+      data: {lat,lng,map,slug}
+    };
+    
+    const response = await axios.request(options);
+    const success = !!response.data.success;
+    return success;
+
+
+}
+
 async function saveItemEdit({id, dst, user}) {
     await new Promise(resolve => setTimeout(resolve, 500));
     const postRequest = axios.post(`${ApiBaseUrl}/translate`, {
