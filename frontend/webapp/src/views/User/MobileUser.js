@@ -148,7 +148,7 @@ function MobileProgressBox({ appController }) {
       <hr />
 
       <div className="divisionProgress">
-        {ProgressBoxData.progressData.map((item) => {
+        {ProgressBoxData.progressData?.map((item) => {
           const percentage = item.progress.completed || 0;
           return (
             <div

@@ -64,7 +64,15 @@ export default class _bom_places extends ModelBase {
         ay: {
           type: DataTypes.INTEGER,
           allowNull: false
-        }
+        },
+        label: {
+          type: DataTypes.STRING(255),
+          allowNull: true
+        },
+        icon: {
+          type: DataTypes.STRING(50),
+          allowNull: true
+        },
       }, {
       sequelize,
       tableName: 'bom_places',
