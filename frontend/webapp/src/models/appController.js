@@ -468,7 +468,8 @@ export const appFunctions = {
     appController.sendbird?.updateUserState({
       channels: appController.states.studyGroup.groupList,
       activeCall: "",
-      activeGroup: appController.states.studyGroup.studyModeOn ? appController.states.studyGroup.activeGroup.url : ""
+      activeGroup: appController.states.studyGroup.studyModeOn ? appController.states.studyGroup.activeGroup.url : "",
+			
     });
 
     return appController;
