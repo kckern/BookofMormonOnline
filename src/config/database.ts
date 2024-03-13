@@ -1,5 +1,6 @@
 import { Sequelize, QueryTypes } from 'sequelize';
 import {Op} from '../resolvers/_common';
+import fs from 'fs';
 
 import BomCapsulation from '../database/models/bom_capsulation';
 import BomConnection from '../database/models/bom_connection';
@@ -8,10 +9,11 @@ import BomIndex from '../database/models/bom_index';
 import BomLabel from '../database/models/bom_label';
 import BomLog from '../database/models/bom_log';
 import BomLookup from '../database/models/bom_lookup';
-import BomMapEvent from '../database/models/bom_map_event';
 import BomXtrasFax from '../database/models/bom_xtras_fax';
 import BomMapMove from '../database/models/bom_map_move';
 import BomMapStory from '../database/models/bom_map_story';
+import BomMapMovePeople from '../database/models/bom_map_move_people';
+import BomMapMoveCoords from '../database/models/bom_map_move_coords';
 import BomMap from '../database/models/bom_map';
 import BomNarration from '../database/models/bom_narration';
 import BomMarkdown from '../database/models/bom_markdown';
@@ -69,7 +71,17 @@ const {
  */
 export const sequelize = new Sequelize(MYSQL_DB, MYSQL_USER, MYSQL_PASSWORD, {
   dialect: 'mysql',
-  logging: false,
+  logging: (query) => {
+    return false;
+    query = query.replace("Executing (default): ", "");
+    const now = new Date();
+    const oneLineQuery = query.replace(/\n/g, ' ').replace(/\s+/g, ' ');
+    fs.appendFile('log.sql', `-- ${now.toISOString()}\n${oneLineQuery}\n\n`, (err) => {
+      if (err) {
+        console.error(err);
+      }
+    } );
+  },
   host: MYSQL_HOST,
   pool: {
     acquire: +DB_POOL_ACQUIRE,
@@ -93,10 +105,11 @@ export const models: Models = {
   BomLabel: BomLabel.initModel(sequelize),
   BomLog: BomLog.initModel(sequelize),
   BomLookup: BomLookup.initModel(sequelize),
-  BomMapEvent: BomMapEvent.initModel(sequelize),
-  BomMapMove: BomMapMove.initModel(sequelize),
-  BomMapStory: BomMapStory.initModel(sequelize),
   BomMap: BomMap.initModel(sequelize),
+  BomMapStory: BomMapStory.initModel(sequelize),
+  BomMapMovePeople: BomMapMovePeople.initModel(sequelize),
+  BomMapMoveCoords: BomMapMoveCoords.initModel(sequelize),
+  BomMapMove: BomMapMove.initModel(sequelize),
   BomNarration: BomNarration.initModel(sequelize),
   BomMarkdown: BomMarkdown.initModel(sequelize),
   BomPage: BomPage.initModel(sequelize),
@@ -357,6 +370,16 @@ models.BomSection.hasMany(models.BomTranslation, {
   },
   as: 'translation'
 });
+
+
+models.BomIndex.hasMany(models.BomTranslation, {
+  foreignKey: {
+    name: 'guid'
+  },
+//  sourceKey: 'guid',
+  as: 'translation'
+});
+
 models.BomMarkdown.hasMany(models.BomTranslation, {
   foreignKey: {
     name: 'guid'
@@ -414,6 +437,28 @@ models.BomXtrasHistory.hasMany(models.BomTranslation, {
   as: 'translation'
 });
 
+models.BomMapMove.hasMany(models.BomTranslation, {
+  foreignKey: {
+    name: 'guid'
+  },
+  sourceKey: 'guid',
+  as: 'translation'
+});
+models.BomMapStory.hasMany(models.BomTranslation, {
+  foreignKey: {
+    name: 'guid'
+  },
+  sourceKey: 'guid',
+  as: 'translation'
+});
+
+models.BomMapStory.hasMany(models.BomMapMove, {
+  foreignKey: {
+    name: 'parent'
+  },
+  sourceKey: 'guid',
+  as: 'moves'
+});
 
 
 models.BomTimeline.hasOne(models.BomText, {
@@ -504,6 +549,7 @@ models.BomPlaces.hasMany(models.BomIndex, {
   sourceKey: 'slug',
   as: 'index'
 });
+
 models.BomPlaces.hasMany(models.BomPlacesCoords, {
   foreignKey: {
     name: 'guid'
@@ -523,18 +569,12 @@ models.BomPlaces.belongsToMany(models.BomMap, {
 
 models.BomMap.belongsToMany(models.BomPlaces, {
   through: models.BomPlacesCoords,
-
-
   otherKey: 'guid',
   foreignKey: 'map',
-
-
   sourceKey: 'slug',
   targetKey: 'guid',
-
   as: 'places'
 });
-
 
 
 
@@ -596,4 +636,39 @@ models.BomLog.belongsTo(models.BomText, {
   as: "logText",
   foreignKey: 'value',
   targetKey: 'guid'
+});
+
+
+models.BomMapMove.belongsTo(models.BomMapStory, {
+  foreignKey: 'parent',
+  targetKey: 'guid',
+  as: 'story'
+});
+
+models.BomMapMove.hasOne(models.BomPlaces, {
+  foreignKey: 'slug',
+  sourceKey: 'start',
+  as: 'startPlace'
+});
+
+models.BomMapMove.hasOne(models.BomPlaces, {
+  foreignKey: 'slug',
+  sourceKey: 'end',
+  as: 'endPlace'
+});
+
+
+models.BomMapMove.belongsToMany(models.BomPeople, {
+  through: models.BomMapMovePeople,
+  foreignKey: 'segment_guid',
+  otherKey: 'people_slug',
+  as: 'people'
+});
+
+
+models.BomMapMove.hasMany(models.BomMapMoveCoords, {
+  //mapMapMove has guid
+  //matche bomMapMoveCoords on segment_guid
+  foreignKey: 'segment_guid',
+  as: 'coords'
 });

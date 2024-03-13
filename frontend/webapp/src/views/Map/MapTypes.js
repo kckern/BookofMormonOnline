@@ -5,7 +5,7 @@ import { assetUrl } from 'src/models/BoMOnlineAPI';
 import BoMOnlineAPI from "src/models/BoMOnlineAPI"
 
 
-export default function MapTypes({ getMap, mapName }) {
+export default function MapTypes({ getMap, mapName, mapController }) {
     const [isShow, setIsShow] = useState(false),
         [mapList, setMapList] = useState(null),
         activeMap = mapList?.find(map => map.name === mapName);
@@ -27,6 +27,9 @@ export default function MapTypes({ getMap, mapName }) {
 
     return (
         <div className='map-selector-menu noselect'>
+            {!mapController.searching && <div className='searchBox'
+            onClick={()=>mapController.setSearching(true)}
+            >🔍</div>}
             {activeMap ? <div
                 className={`map-type-active ${isShow ? "active" : ""}`}
                 onClick={() => { ReactTooltip.hide();setIsShow(!isShow)}}

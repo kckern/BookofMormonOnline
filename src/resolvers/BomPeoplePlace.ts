@@ -1,6 +1,7 @@
 import { Model, Sequelize } from 'sequelize';
-import { models as Models, sequelize, SQLQueryTypes } from '../config/database';
+import { models, models as Models, sequelize, SQLQueryTypes } from '../config/database';
 import { getSlug, Op, includeTranslation, translatedValue, includeModel, queryWhere } from './_common';
+import {setLang, generateReference,lookupReference} from "scripture-guide";
 
 export default {
   Query: {
@@ -19,8 +20,9 @@ export default {
         include: [
           includeTranslation({ [Op.or]: ['name', 'title',"description"] }, lang),
           includeModel(info, Models.BomIndex, 'index', [
+            includeTranslation('text', lang), // Add translation here
             includeModel(true, Models.BomLookup, 'text_guid', [includeModel(true, Models.BomText, 'text')])
-          ]),
+          ].filter(x=>!!x)),
           {
             model: Models.BomPeopleRels.unscoped(),
             as: 'relationDst',
@@ -31,7 +33,7 @@ export default {
                 as: 'personSrc',
                 include: [includeTranslation({ [Op.or]: ['name', 'title'] }, lang)].filter(x=>!!x)
               }
-            ]
+            ].filter(x=>!!x)
           },
           {
             model: Models.BomPeopleRels.unscoped(),
@@ -43,7 +45,7 @@ export default {
                 as: 'personDst',
                 include: [includeTranslation({ [Op.or]: ['name', 'title'] }, lang)].filter(x=>!!x)
               }
-            ]
+            ].filter(x=>!!x)
           }
           // includeModel(info, Models.BomPeopleRels, 'r'),
         ].filter(x => !!x),
@@ -66,8 +68,9 @@ export default {
           includeModel(info, Models.BomMap, 'maps',[includeTranslation({ [Op.or]: ['name', 'desc'] }, lang)]),
           includeTranslation({ [Op.or]: ['name', 'info'] }, lang),
           includeModel(info, Models.BomIndex, 'index', [
+            includeTranslation('text', lang), // Add translation here
             includeModel(true, Models.BomLookup, 'text_guid', [includeModel(true, Models.BomText, 'text')])
-          ])
+          ].filter(x => !!x))
         ].filter(x => !!x),
         order: ['weight', indexSort].filter(x => !!x)
       });
@@ -84,7 +87,8 @@ export default {
             includeTranslation({ [Op.or]: ['name', 'desc'] }, lang),
             includeModel(info, Models.BomPlaces, 'places',[
               includeTranslation({ [Op.or]: ['name', 'info','label'] }, lang)
-            ])].filter(x => !!x),
+            ])
+          ].filter(x => !!x),
           order: ['priority']
         });
       return Models.BomMap.findAll({
@@ -119,7 +123,100 @@ export default {
         ],
         order: ['y']
       });
-    }
+    },
+    mapstory: async (root: any, args: any, context: any, info: any) => {
+
+      return Models.BomMapStory.findOne({
+        where: {
+          slug: args.slug
+        },
+        include: [
+          {
+            model: Models.BomMapMove,
+            as: 'moves',
+            include: [
+              includeTranslation({ [Op.or]: ['travelers', 'description'] }, context.lang)
+            ]
+          }
+        ]
+      });
+    },
+    mapstories: async (root: any, args: any, context: any, info: any) => {
+
+      const mapSlug = args.map;
+      return Models.BomMapStory.findAll({
+        include: [
+          includeTranslation({ [Op.or]: ['title', 'description'] }, context.lang),
+          {
+            model: Models.BomMapMove,
+            as: 'moves',
+            include: [
+              includeTranslation({ [Op.or]: ['travelers', 'description'] }, context.lang),
+              {
+                model: Models.BomPlaces,
+                as: 'startPlace',
+                foreignKey: 'guid',
+                sourceKey: 'start',
+                include: [
+                  includeTranslation({ [Op.or]: ['name', 'info'] }, context.lang),
+                  {
+                    model: Models.BomPlacesCoords,
+                    as: 'coords',
+                    where: {
+                      map: mapSlug
+                    },
+                    required: true // Make sure this is true
+                  }
+                ].filter(x => !!x)
+              },
+              {
+                model: Models.BomPlaces,
+                as: 'endPlace',
+                foreignKey: 'guid',
+                sourceKey: 'end',
+                include: [
+                  includeTranslation({ [Op.or]: ['name', 'info'] }, context.lang),
+                  {
+                    model: Models.BomPlacesCoords,
+                    as: 'coords',
+                    where: {
+                      map: mapSlug
+                    },
+                    required: true // Make sure this is true
+                  }
+                ].filter(x => !!x)
+              },
+              {
+                model: Models.BomMapMoveCoords,
+                as: 'coords',
+                where: {
+                  map: mapSlug
+                },
+                required: false // Make this false as it's optional
+              },
+              {
+                model: Models.BomPeople,
+                as: 'people',
+                include: [includeTranslation({ [Op.or]: ['name', 'title'] }, context.lang)].filter(x => !!x)
+              }
+            ].filter(x => !!x)
+          }
+        ].filter(x => !!x)
+      }).then((stories: any) => {
+        return stories.map((story: any) => {
+          const moves = story.getDataValue('moves').map((move: any) => {
+            const start = move.dataValues.startPlace?.coords?.[0]?.dataValues?.lat;
+            const end = move.dataValues.endPlace?.coords?.[0]?.dataValues?.lat;
+            if(!start || !end) return null;
+            return move;
+          }).filter((x:any)=>!!x);
+          if(!moves.length) return null;
+          story.moves = moves.sort((a:any,b:any)=>a.seq-b.seq);
+          return story;
+        }).filter((x:any)=>!!x);
+      });
+      }
+
   },
 
   People: {
@@ -211,10 +308,12 @@ export default {
       return translatedValue(item, 'info');
     },
     lat: async (item: any, args: any, { db, res }: any, info: any) => {
-      return item.dataValues?._bom_places_coords?.lat || null;
+      const coords = item.getDataValue('coords')?.[0]?.dataValues || item.dataValues?._bom_places_coords || {};
+      return coords?.lat || null;
     },
     lng: async (item: any, args: any, { db, res }: any, info: any) => {
-      return item.dataValues?._bom_places_coords?.lng || null;
+      const coords = item.getDataValue('coords')?.[0]?.dataValues || item.dataValues?._bom_places_coords || {};
+      return coords?.lng || null;
     },
     minZoom: async (item: any, args: any, { db, res }: any, info: any) => {
       return item.dataValues?._bom_places_coords?.min || null;
@@ -241,6 +340,20 @@ export default {
         .getDataValue('text')
         .getDataValue('link');
       return getSlug('link', guid).then(slug => slug + '/' + num);
+    },
+    ref: async (item: any, args: any, { lang }: any, info: any) => {
+      lang = lang || 'en';
+      const from =  parseInt(item.getDataValue('verse_id'));
+      const to =  parseInt(item.getDataValue('verse_id_end'));
+      const range = [...new Set(Array.from({length: to - from + 1}, (_, i) => from + i))];
+      if(lang !== 'en') setLang(lang);
+      const ref = generateReference(range);
+      return `${ref}`;
+
+    },
+    text: async (item: any, args: any, { db, res }: any, info: any) => {
+      //console.log({item});
+      return translatedValue(item, 'text');
     }
   },
   Map :{
@@ -251,7 +364,29 @@ export default {
     desc: async (item: any, args: any, { db, res }: any, info: any) => {
       return translatedValue(item, 'desc');
     },
-  }
+  },
+  MapStory: {
+    title: async (item: any, args: any, { db, res }: any, info: any) => {
+      return translatedValue(item, 'title');
+    },
+    description: async (item: any, args: any, { db, res }: any, info: any) => {
+      return translatedValue(item, 'description');
+    },
+  },
+  MapMove: {
+    travelers: async (item: any, args: any, { db, res }: any, info: any) => {
+      return translatedValue(item, 'travelers');
+    },
+    description: async (item: any, args: any, { db, res }: any, info: any) => {
+      return translatedValue(item, 'description');
+    },
+    verse_ids: async (item: any, args: any, { db, res }: any, info: any) => {
+      const ref = item.getDataValue('ref');
+      const verse_ids = lookupReference(ref).verse_ids;
+      if(!Array.isArray(verse_ids)) return null;
+      return verse_ids;
+    }
+  },
 };
 
 export  const loadPeopleFromTextGuid = async (guid: string, slugs: string[],lang) => {

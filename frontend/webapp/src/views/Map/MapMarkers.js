@@ -74,6 +74,11 @@ const renderMarker = ({ name, label, icon, isActive }) => {
             break;
     }
 
+    if(isActive) {
+        textColor = "#b31312";
+        strokeColor = "#FFF";
+
+    }
 
     const dpr = window.devicePixelRatio || 1;
     fontSize = fontSize * dpr;
@@ -110,7 +115,7 @@ const renderMarker = ({ name, label, icon, isActive }) => {
     if (centerX) { // Draw the icon if needed
         context.beginPath();
         context.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
-        context.fillStyle = !isActive ? "#6b7d91" : "#000000";
+        context.fillStyle = !isActive ? "#6b7d91" : "#b31312";
         context.strokeStyle = "#FFFFFF88";
         context.lineWidth = 5 * dpr;
         context.stroke();

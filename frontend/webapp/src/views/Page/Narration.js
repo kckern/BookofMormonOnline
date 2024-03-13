@@ -866,7 +866,10 @@ export function ScripturePanelSingle({ scriptureData,closeButton, setPopUpRef })
   const [passages, setPassages] = useState([]);
   
   const closeButtonEl = !!closeButton ? <div className="closebutton"
-  onClick={()=>setPopUpRef(null)}
+  onClick={()=>{
+    setPopUpRef(null)
+    setPassages([]);
+  }}
   >×</div> :null;
 
 
