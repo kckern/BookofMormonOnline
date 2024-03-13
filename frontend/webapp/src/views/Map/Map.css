@@ -34,25 +34,61 @@
   cursor: pointer;
   border-radius: 11px;
   cursor: pointer;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
+.mapPanel .grid-container {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 20px;
+}
+
+.mapPanel .grid-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.map-type-active p
+{
+  white-space: wrap;
+}
 
 .map-selector-menu {
   position: absolute;
   top: 2rem;
   left: 2em;
   z-index: 9;
-  width: 170px;
   text-align: center;
   color: #fff;
   font-size: 15px;
-  bottom: 40px;
-  right: 90px;
   z-index: 5;
   float: right;
   cursor: pointer;
   transition: left 0.5s;
 }
+
+
+.map-selector-menu  .searchBox{
+  position: absolute;
+  right: -2.4rem;
+  top:2px;
+  height: 2rem;
+  width: 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #FFFFFF55;
+  border-radius: 1ex;
+  /* 10 px drop shadow in all directions */
+  box-shadow: 0 0 10px #00000099;
+
+}
+.map-selector-menu  .searchBox:hover{
+  background-color: #FFFFFF99;
+
+}
+
 
 .open .map-selector-menu {
   left: calc(30% + 2rem);
@@ -65,6 +101,22 @@
   transition: all 0.5s;
   opacity: 0;
 }
+
+.mapPanel select
+{
+  width: 2rem;
+  height: 1.5rem;
+  margin-left: 1ex;
+  line-height: 1rem;
+  border: 1px solid #DDD;
+  border-radius: 1ex;
+}
+
+.mapPanel .adminPanel
+{
+  margin: 1rem;
+}
+
 .open .mapPanel
 {
   width: 30%;
@@ -74,6 +126,17 @@
 
 .mapPanel h5{
   text-align: center;
+}
+
+.adminPanel h6{
+
+  text-align: center;
+}
+
+.adminPanel input{
+  border: 1px solid #DDD;
+  border-radius: 0.8ex;
+  padding: 0.5ex;
 }
 
 .map-type:hover {
@@ -285,6 +348,12 @@
   transition: left 0.5s;
 }
 
+.selectionPin
+{
+  position: absolute;
+  z-index: 1;
+}
+
 /*
 Add a triangle notch pointing down at the bottom of the tooltip
 */
@@ -328,10 +397,7 @@ Add a triangle notch pointing down at the bottom of the tooltip
 }
 
 .closePanelButton{
-  position: absolute;
   font-family: 'Courier New', Courier, monospace;
-  top:0;
-  right:5px;
   font-size: 3rem;
   line-height: 4rem;
   cursor: pointer;
@@ -437,7 +503,7 @@ Add a triangle notch pointing down at the bottom of the tooltip
 {
   padding: 1rem;
   padding-bottom: 0;
-  overflow: scroll;
+  overflow: auto;
 }
 
 .mapPanel .mapPanelScripture
@@ -514,6 +580,12 @@ Add a triangle notch pointing down at the bottom of the tooltip
 
 @media screen and (max-width: 900px)
 {
+  .mappanel_wrapper.open #map{
+    left: 0;
+  }
+  #map .ol-viewport{
+    border: 0;
+  }
   .mappanel_wrapper
   {
     position: fixed;
@@ -526,4 +598,168 @@ Add a triangle notch pointing down at the bottom of the tooltip
     height: 100%;
   }
 
+  .mappanel_wrapper .map-selector-menu
+  {
+    left: 2rem;
+  }
+
+}
+
+
+
+
+.mappanel_wrapper .map-place-search
+{
+  position: absolute;
+  top: 10%;
+  width: 30%;
+  left: 35%;
+  min-width: 20rem;
+
+  /* 10 px drop shadow in all directions */
+  box-shadow: 0 0 5rem #000;
+  max-height: calc(100vh - 60px - 10%);
+  overflow: hidden;
+
+  z-index: 100;
+  
+}
+
+.mappanel_wrapper  .map-place-search .card-header
+{
+  display: flex;
+  padding-bottom: 1ex;
+  font-size: 1rem;
+  border-bottom: 1px solid #DDD;
+}
+
+.mappanel_wrapper  .map-place-search .card-header input
+{
+  flex-grow: 1;
+  margin: 0 1rem;
+  font-size: 1.3rem;
+  padding: 0.3ex;
+  outline: none;
+  border-radius: 0.5ex;
+  border-color: #DDD;
+  border-collapse: collapse;
+}
+
+
+.map-place-search .search-result
+{
+  display: flex;
+  text-align: left;
+  margin-bottom: 0.5ex;
+  cursor: pointer;
+}
+
+.map-place-search .search-result.selected
+{
+  outline: 1px solid #EEE;
+  border-radius: 0.5ex;
+  background-color: #93c6ef22;
+}
+.map-place-search .search-result.selected img{
+  filter: brightness(1.2);
+}
+
+.map-place-search .search-result.primaryResult.last
+{
+  border-bottom: 1px dashed #AAA;
+  margin-bottom: 1ex;
+  padding-bottom: 1ex;
+}
+
+.map-place-search .search-result.secondaryResult
+{
+  opacity: 0.7;
+}
+
+.map-place-search  .search-results
+{
+  margin-top: 0;
+}
+
+.map-place-search .search-result > div
+{
+  flex-grow: 1;
+}
+.map-place-search .search-result > img
+{
+  height: 4rem;
+  width: 4rem;
+  object-fit: cover;
+  margin-right:1ex;
+  flex-shrink: 0;
+}
+.search-result-name
+{
+  font-weight: bold;
+  font-size: 1rem;
+  height: 50%;
+  position: relative;
+  bottom: -1ex;
+}
+.search-result-info
+{
+  color: #999;
+
+  white-space: nowrap;
+  overflow: hidden;
+  height: 1.2rem;
+  margin-right: -3rem;
+}
+
+.map-place-search .close{
+  font-size: 2rem;
+  font-family: Arial, Helvetica, sans-serif;
+  color: #AAA;
+  cursor: pointer;
+}
+.map-place-search .close:hover{
+  color: #000;
+}
+.map-place-search .highlight{
+  background-color: #FFFF0055;
+}
+
+.search-result.no-results
+{
+  text-align: center;
+  color: #999;
+  flex-grow: 1;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.searchPanelButton img{
+  height: 2rem;
+  width: 2rem;
+  cursor: pointer;
+  opacity: 0.3 ;
+}
+
+.search-result em{
+  font-style: normal;
+  background-color: #FFFF0033;
+}
+
+.rangeSliderContainer span
+{
+  width: 2rem;
+  text-align: center;
+  border-radius: 1rem;
+  margin-bottom: 1ex;
+  color: #AAA  ;
+
+}
+.rangeSliderContainer span.selected{
+  background-color: #888;
+  color: white  ;
+  font-weight: bold;
+}
+.rangeSliderContainer span.current{
+  outline: 2px solid #2196f3;
 }

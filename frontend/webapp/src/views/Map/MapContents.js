@@ -3,34 +3,46 @@ import React, { useEffect, useRef, useState } from 'react';
 import BoMOnlineAPI, { assetUrl } from "../../models/BoMOnlineAPI";
 import { CanvasMarker } from "./MapMarkers";
 import { updatePlaceCoords } from '../Audit/Audit';
+import { isMobile } from "../../models/Utils";
+
+import mapIcon from "../_Common/svg/maps.svg";
 
 
 const MapContents = ({mapController}) => {
     const mapElement = useRef(); // This ref will point to the map container
     const map = useRef(); // This ref will store the initialized map
-    const {currentMap} = mapController;
+    let {currentMap,isAdmin} = mapController;
     const {slug:mapslug,places} = currentMap;
 
     const {centerx, centery, minzoom, maxzoom, zoom} = currentMap;
 
-    const isAdmin = true;
+    const panelSlug = mapController.panelContents.slug;
+    const activePlace = places.find(i=>i.slug === panelSlug);
 
 
-    const mapCenter = [centery, centerx];
+    const mapCenter = [activePlace?.lat || centery, activePlace?.lng || centerx];
     const minZoom = minzoom;
     const maxZoom = maxzoom;
-    const iniZoom = zoom;
+    const iniZoom = activePlace?.minZoom || zoom;
     
 const drawMap = ()=>{
 
     if (!window.ol) return console.error('OpenLayers library not found');
+
+    const zoomLevel = map.current?.getView().getZoom();
+    window.ol.zoomLevel = zoomLevel || 0;
+
+
+    mapController.setZoomLevel(zoomLevel);
+    mapController.setMapCenter({lat: mapCenter[0], lng: mapCenter[1]});
     
     map.current = new window.ol.Map({
         target: mapElement.current,
         layers: [new window.ol.layer.Tile({
             source: new window.ol.source.XYZ({
-                url: `${assetUrl}/maptiles/${mapslug}/{z}/{x}/{y}`, 
-                tilePixelRatio: 1, minZoom,  maxZoom
+                url: `${assetUrl}/map/${mapslug}/{z}/{x}/{y}`, 
+                tilePixelRatio: 2, 
+                minZoom,  maxZoom
             })
         })],
         view: new window.ol.View({
@@ -44,15 +56,61 @@ const drawMap = ()=>{
             new window.ol.interaction.KeyboardZoom()
         ])
     });
-
-    function createIconStyle(i,isActive) {
-        const hasActive = !!window.ol.panelMapSlug;
+    function createIconStyle(i, isActive) {
+        const hasActive = !!window.ol?.panelMapSlug;
         const dpr = window.devicePixelRatio || 1;
         const [height, width, anchor, src] = CanvasMarker({...i, isActive});
         const scale = 1 / dpr; // calculate scale based on device pixel ratio
         const image = new window.ol.style.Icon({ src, scale, anchor, opacity: isActive ? 1 : hasActive ? 1 : 1 });
-        let iconStyle   = new window.ol.style.Style({image});
-        return [iconStyle,width/dpr,height/dpr];
+        let iconStyle = new window.ol.style.Style({image});
+        if(isActive) iconStyle.setZIndex(9999);
+
+        let styles = [iconStyle];
+
+        // If isActive is true, add a large red circle above the image
+        if (isActive) {
+
+            const relativeMargin = height > 50 ? 0.3 : 0.2; 
+
+            const resolution = map.current.getView().getResolution();
+            const mapPinStyle = new window.ol.style.Style({
+                image: new window.ol.style.Icon({
+                    src: "/img/pin.png",
+                    scale: 0.5, // adjust the size as needed
+                    anchor: [0.5, 1 + relativeMargin], // anchor at bottom center
+                    anchorXUnits: 'fraction', // anchor units in fraction (relative to the icon)
+                    anchorYUnits: 'fraction' // anchor units in fraction (relative to the icon)
+                }),
+                zIndex: 1
+            });
+
+            styles.push(mapPinStyle);
+
+            // halo circle around the marker
+            const padding = 2;
+            const radius =(width/2) + padding;
+
+            const haloStyle = new window.ol.style.Style({
+                image: new window.ol.style.Circle({
+                    radius,
+                    anchor: [0.5, 0.5],
+                    stroke: new window.ol.style.Stroke({
+                        color: 'rgba(255, 255, 255, 0.2)',
+                        width: 2
+                    }),
+                    fill: new window.ol.style.Fill({
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    }),
+                }),
+                zIndex: 0
+            });
+            styles.push(haloStyle);
+
+
+
+        }
+
+        return [styles, width/dpr, height/dpr];
     }
 
     function getPlaceInfo(slug, appController) {
@@ -61,7 +119,7 @@ const drawMap = ()=>{
         return key ? appController.preLoad.placeList[key] : {};
       }
     const view = map.current?.getView();
-    const markers_tmp = places
+    const markers = places
     .map(i=>{
         const xy = [i.lat, i.lng];
         const { minZoom, maxZoom} = i;
@@ -72,7 +130,7 @@ const drawMap = ()=>{
         let [iconStyle,width,height] = createIconStyle(i);
         let [iconStyleActive] = createIconStyle(i,true);
         marker.setStyle(()=>{
-            const slug = window.ol.panelMapSlug; //TODO: dont use global, get from mapController state
+            const slug = window.ol?.panelMapSlug; //TODO: dont use global, get from mapController state
             const zoom = view.getZoom();
             if(zoom < minZoom || zoom > maxZoom) return null;
             if(i.slug === slug) return iconStyleActive;
@@ -80,16 +138,54 @@ const drawMap = ()=>{
         });
         marker.set('name', name);
         marker.set('slug', i.slug);
+        marker.set('minZoom', minZoom);
         marker.set('wh', [width, height]);
         return marker;
-    });
+    })
+
+
+    //link each marker in a chain with lines
+    const lines = markers.reduce((acc, marker, index, array) => {
+        if (index === 0) return acc;
+        const prevMarker = array[index - 1];
+        const startPoint = prevMarker.getGeometry().getCoordinates();
+        const endPoint = marker.getGeometry().getCoordinates();
+        const midPoint = startPoint.map((val, index) => ((val + endPoint[index]) / 2) + 5);        
+        const line = new window.ol.Feature({
+            geometry: new window.ol.geom.LineString([
+                startPoint,midPoint,endPoint
+            ])
+        });
+        acc.push(line);
+        return acc;
+    }, []);
+
+    /*
+    map.current.addLayer(
+        new window.ol.layer.Vector({
+            source: new window.ol.source.Vector({
+                features: [...lines]
+            }),
+            style: function (feature, resolution) {
+                return new window.ol.style.Style({
+                    stroke: new window.ol.style.Stroke({
+                        color: '#FF000044',
+                        lineDash: [10, 10],
+                        lineDashOffset: (()=>lineDashOffset)(),
+                        width: 3
+                    })
+                });
+            }
+        })
+    );
+    */
     
 
 
     map.current.addLayer(
         new window.ol.layer.Vector({
           source: new window.ol.source.Vector({
-            features: [...markers_tmp]
+            features: [...markers]
           }),
           style: function (feature, resolution) {
             console.log({feature,resolution});
@@ -97,12 +193,20 @@ const drawMap = ()=>{
         })
       );
 
+
+
+
+
     // Extracted the repeated code into a separate function
     const setTooltipAndCursor = (isHovering, position, slug) => {
         const cursorStyle = isHovering ? 'pointer' : '';
+
+        const isMoving =!!window.ol.isMoving
+
+
         const [x,y,w,h] = position || [0,0,0,0];
         mapElement.current.style.cursor = cursorStyle;
-        if (isHovering) {
+        if (isHovering && !isMoving) {
             //set cursor
             const mapTooltipFoundInDom = !!document.querySelector('.mapTooltip');
             if(mapTooltipFoundInDom) return;
@@ -136,18 +240,43 @@ const drawMap = ()=>{
 
     map.current.on('click', function(e) {
         map.current.forEachFeatureAtPixel(e.pixel, (feature) => {
-            mapController.setPanelContents({slug: feature.get('slug')});
-            const coords = feature.getGeometry().getCoordinates();
-            mapController.setTooltip({x: coords[0], y: coords[1], slug: null});
-            map.current.getView().animate({center: coords, duration: 500});
-            markers_tmp.forEach(i=>i.changed());
+
+            const slug = feature.get('slug');
+            const [lat,lng] = feature.getGeometry().getCoordinates();
+            const [x, y] = map.current.getPixelFromCoordinate([lat,lng]);   
+
+             if(isMobile())  mapController.appController.functions.setPopUp({ type: "places", ids: [slug] });
+             else    mapController.setPanelContents({slug, lat, lng});
+      
+            mapController.setTooltip({x, y, slug: null});
+            window.ol.isMoving = true;
+            setTimeout(()=>{
+                markers.forEach(i=>i.changed());
+                map.current.getView().animate({center: [lat,lng], duration: 500}, ()=>window.ol.isMoving = false);
+               
+            }, 0);
+            
         });
     });
-    
+
+    map.current.getView().on('change:resolution', function(e) {
+        const zoomLevel = map.current?.getView().getZoom() || 0;
+        window.ol.zoomLevel = zoomLevel;
+        if(!mapController.panelContents) return;
+        mapController.setZoomLevel(zoomLevel);
+    });
+
+    //on pan map setMapCenter
+    map.current.getView().on('change:center', function(e) {
+        const center = map.current?.getView().getCenter();
+        const [lat,lng] = window.ol.proj.transform(center, 'EPSG:3857', 'EPSG:4326');
+        mapController.setMapCenter({lat,lng});
+    });
 
     if(isAdmin){
+        console.log("Admin mode");
         var modify = new window.ol.interaction.Modify({ 
-            features: new window.ol.Collection(markers_tmp),
+            features: new window.ol.Collection(markers),
             style: ()=>[],
             hitTolerance: 1000 // Increase this value to increase the draggable area
         });
@@ -190,34 +319,22 @@ const drawMap = ()=>{
 
         });
         map.current.addInteraction(modify);
+    }else{
+        console.log("Not admin mode", {mapController});
     }
-
-
-    mapController.setMapFunctions({
-        selectPlace: (slug) => {
-            slug = "midian";
-            const feature = map.current.getLayers().getArray()[1].getSource().getFeatures().find(i=>i.get('slug') === slug);
-            const coords = feature.getGeometry().getCoordinates();
-            map.current.getView().animate({center: coords, duration: 500});
-            //set tooltip
-            setTooltipAndCursor(true, coords, slug);
-            //TODO: Highlight the marker
-            //TODO: Zoom if needed
-        }
-    });
 
 
 
     return () => { 
         if (map.current) map.current.setTarget(undefined);  
-        map.current.removeInteraction(modify);
+       if(isAdmin) map.current.removeInteraction(modify);
     };
 
 
 }
 
 
-    useEffect(drawMap, [mapslug]);
+    useEffect(drawMap, [mapslug,isAdmin]);
 
     useEffect(async () => {
         //wait 500ms for the map to be drawn
@@ -227,7 +344,23 @@ const drawMap = ()=>{
         markers.forEach(i=>i.changed());
         await new Promise(resolve => setTimeout(resolve, 500));
         map.current.updateSize();
+        //trigger click on the active place
+        const activePlace = mapController.panelContents.slug;
+        const activeMarker = markers.find(i=>i.get('slug') === activePlace);
+        if(activeMarker){
+            const [lat,lng] = activeMarker.getGeometry().getCoordinates();
+            const minZoom = activeMarker.get('minZoom');
+            const zoomTo = Math.max(minZoom, window.ol.zoomLevel);
+            setTimeout(() => {
+                map.current.getView().animate({
+                    center: [lat, lng],
+                    zoom: zoomTo,
+                    duration: 500
+                });
+            }, 0);
+            //zoom to the active place minZoom
 
+        }
 
     }, [mapController.panelContents.slug]);
 

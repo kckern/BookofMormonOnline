@@ -303,7 +303,7 @@ async function processPassages(verse_ids, verse_data,lang)
     if(!headingData.length) headingData = [{verse_id:firstVerse}];
     return headingData.sort((a, b) => a.verse_id - b.verse_id)
     .map((item,i)=>{
-        const startVerse = item.verse_id;
+        const startVerse = Math.max(item.verse_id,Math.min(...verse_ids));
         const endVerse = headingData[i+1]?.verse_id || verse_ids[verse_ids.length-1];
         const verses = verse_data.filter(v=>v.verse_id >= startVerse && v.verse_id <= endVerse);
         const passage_verse_ids = verses.map(v=>v.verse_id);

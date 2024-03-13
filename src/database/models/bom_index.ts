@@ -12,6 +12,11 @@ export default class _bom_index extends ModelBase {
           autoIncrement: true,
           type: DataTypes.INTEGER,
           allowNull: false,
+          primaryKey: false
+        },
+        guid: {
+          type: DataTypes.STRING(50),
+          allowNull: false,
           primaryKey: true
         },
         type: {
