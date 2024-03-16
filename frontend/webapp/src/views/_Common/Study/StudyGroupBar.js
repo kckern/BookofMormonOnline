@@ -224,7 +224,7 @@ useEffect(()=>{
 		if(activeGroupMembers !== undefined){
 		const mainUser = appController.states.user;
 		const queryParams = {
-			userIdsFilter:[activeGroupMembers.filter(member=>member.userId !== mainUser.social.user_id)[0].userId]
+			userIdsFilter:[...activeGroupMembers.filter(member=>member.userId !== mainUser.social.user_id).map(user=>user.userId)]
 		}
 		const query = appController.sendbird.sb.createApplicationUserListQuery(queryParams);
 
@@ -586,13 +586,21 @@ export function StudyGroupUserCircle({ userObject, appController, isBot }) {
   ) : null;
 
 
+	// console.log('activeGroup',appController.states.studyGroup.activeGroup);
+	// console.log('groupChannel',appController.sendbird.sb.groupChannel);
+	// console.log('UserObj',userObject);
 	useEffect(()=>{
 		const getMessages = async()=>{
-			const params = {
-				channelCustomTypesFilter:["DM"]	
+			const groupParams = {
+				customTypesFilter:["DM"],
+				nicknameContainsFilter:userObject.nickname
 			}
-			const count = await appController.sendbird.sb.groupChannel.getTotalUnreadMessageCount(params);
-			setUnreadMessageCount(count);
+			const query = await appController.sendbird.sb.groupChannel.createMyGroupChannelListQuery(groupParams);
+			
+			const channels = await query.next();
+			if(channels.length > 0) {
+				setUnreadMessageCount(channels[0].unreadMessageCount);
+			}
 		}
 		const interval = setInterval(()=>{
 			getMessages();
@@ -601,6 +609,7 @@ export function StudyGroupUserCircle({ userObject, appController, isBot }) {
 			clearInterval(interval);
 		}
 	},[appController.sendbird.sb.groupChannel])
+	
   return (
     <React.Fragment key={userObject.userId}>
       <div
