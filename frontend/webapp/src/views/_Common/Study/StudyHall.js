@@ -129,7 +129,7 @@ function StudyGroupSideBar({
 		useEffect(()=>{
 			const getLiveFreshUsers = async()=>{
 				const activeGroupMembers = group.members;
-				if(activeGroupMembers !== undefined){
+				if(activeGroupMembers!==undefined && activeGroupMembers?.length !== 1){
 				const mainUser = appController.states.user;
 				const queryParams = {
 					userIdsFilter:[...activeGroupMembers.filter(member=>member.userId !== mainUser.social.user_id).map(user=>user.userId)]
