@@ -36,10 +36,10 @@ export function CallCircle({ appController }) {
 		useEffect(()=>{
 			const getLiveRoom  = async()=>{
 				const activeGroupMembers = appController.states.studyGroup.activeGroup?.members;
-				if(activeGroupMembers !== undefined){
+				if(activeGroupMembers!==undefined && activeGroupMembers?.length !== 1){
 					const mainUser = appController.states.user;
 					const queryParams = {
-						userIdsFilter:[activeGroupMembers.filter(member=>member.userId !== mainUser.social.user_id)[0].userId]
+						userIdsFilter:[activeGroupMembers.filter(member=>member.userId !== mainUser.social.user_id)[0]?.userId]
 					}
 					const query = appController.sendbird.sb.createApplicationUserListQuery(queryParams);
 			
