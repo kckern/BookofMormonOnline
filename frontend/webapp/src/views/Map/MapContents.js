@@ -13,27 +13,30 @@ const MapContents = ({mapController}) => {
     const map = useRef(); // This ref will store the initialized map
     let {currentMap,isAdmin} = mapController;
     const {slug:mapslug,places,stories} = currentMap;
+		const [animateZoom,setAnimateZoom] = useState(0);
+		const [isMoving,setIsMoving] = useState(false);
 
     const {centerx, centery, minzoom, maxzoom, zoom} = currentMap;
 
     const panelSlug = mapController.panelContents.slug;
     const activePlace = places.find(i=>i.slug === panelSlug);
+		const [activeStyleIcons,setActiveStyleIcons] = useState({
+			activeIcon:'',
+			icons:[]
+		});
+		const [styleIcons,setStyleIcons]=useState([]);
 
 
     const mapCenter = [activePlace?.lat || centery, activePlace?.lng || centerx];
     const minZoom = minzoom;
     const maxZoom = maxzoom;
-    const iniZoom = activePlace?.minZoom || zoom;
+    const iniZoom =  activePlace?.minZoom || zoom;
     
 const drawMap = ()=>{
 
     if (!window.ol) return console.error('OpenLayers library not found');
-
-    const zoomLevel = map.current?.getView().getZoom();
-    window.ol.zoomLevel = zoomLevel || 0;
-
-
-    mapController.setZoomLevel(zoomLevel);
+		setAnimateZoom(mapController.zoomLevel || iniZoom);
+    mapController.setZoomLevel(iniZoom);
     mapController.setMapCenter({lat: mapCenter[0], lng: mapCenter[1]});
     
     map.current = new window.ol.Map({
@@ -57,7 +60,7 @@ const drawMap = ()=>{
         ])
     });
     function createIconStyle(i, isActive) {
-        const hasActive = !!window.ol?.panelMapSlug;
+        const hasActive = !!activePlace;
         const dpr = window.devicePixelRatio || 1;
         const [height, width, anchor, src] = CanvasMarker({...i, isActive});
         const scale = 1 / dpr; // calculate scale based on device pixel ratio
@@ -129,11 +132,14 @@ const drawMap = ()=>{
         const marker    = new window.ol.Feature({ geometry });
         let [iconStyle,width,height] = createIconStyle(i);
         let [iconStyleActive] = createIconStyle(i,true);
+				setActiveStyleIcons(prev=>({
+					...prev,
+					icons:[...prev.icons,{slug:i.slug,icon:iconStyleActive}]
+				}));
+				setStyleIcons(prev=>([...prev,{slug:i.slug,icon:iconStyle}]));
         marker.setStyle(()=>{
-            const slug = window.ol?.panelMapSlug; //TODO: dont use global, get from mapController state
             const zoom = view.getZoom();
             if(zoom < minZoom || zoom > maxZoom) return null;
-            if(i.slug === slug) return iconStyleActive;
             return iconStyle;
         });
         marker.set('name', name);
@@ -151,7 +157,6 @@ const drawMap = ()=>{
         //trim to 4 decimal places
         start = [parseFloat(start[0]), parseFloat(start[1])];
         end = [parseFloat(end[0]), parseFloat(end[1])];
-        console.log(start,end);
         const startCoords = window.ol.proj.fromLonLat(start);
         const endCoords = window.ol.proj.fromLonLat(end);
         const line =  new window.ol.Feature({
@@ -162,6 +167,16 @@ const drawMap = ()=>{
         return line;
     });
 
+		map.current.addLayer(
+			new window.ol.layer.Vector({
+				source: new window.ol.source.Vector({
+					features: [...markers]
+				}),
+				style: function (feature, resolution) {
+					console.log({feature,resolution});
+				}
+			})
+		);
 
     map.current.addLayer(
         new window.ol.layer.Vector({
@@ -183,31 +198,18 @@ const drawMap = ()=>{
 
 
 
-    map.current.addLayer(
-        new window.ol.layer.Vector({
-          source: new window.ol.source.Vector({
-            features: [...markers]
-          }),
-          style: function (feature, resolution) {
-            console.log({feature,resolution});
-          }
-        })
-      );
-
-
-
 
 
     // Extracted the repeated code into a separate function
     const setTooltipAndCursor = (isHovering, position, slug) => {
         const cursorStyle = isHovering ? 'pointer' : '';
 
-        const isMoving =!!window.ol.isMoving
+        const isMovingValue =!!isMoving
 
 
         const [x,y,w,h] = position || [0,0,0,0];
         mapElement.current.style.cursor = cursorStyle;
-        if (isHovering && !isMoving) {
+        if (isHovering && !isMovingValue) {
             //set cursor
             const mapTooltipFoundInDom = !!document.querySelector('.mapTooltip');
             if(mapTooltipFoundInDom) return;
@@ -250,11 +252,10 @@ const drawMap = ()=>{
              else    mapController.setPanelContents({slug, lat, lng});
       
             mapController.setTooltip({x, y, slug: null});
-            window.ol.isMoving = true;
+            setIsMoving(true);
             setTimeout(()=>{
                 markers.forEach(i=>i.changed());
-                map.current.getView().animate({center: [lat,lng], duration: 500}, ()=>window.ol.isMoving = false);
-               
+                map.current.getView().animate({center: [lat,lng], duration: 500}, ()=>setIsMoving(false));
             }, 0);
             
         });
@@ -262,7 +263,6 @@ const drawMap = ()=>{
 
     map.current.getView().on('change:resolution', function(e) {
         const zoomLevel = map.current?.getView().getZoom() || 0;
-        window.ol.zoomLevel = zoomLevel;
         if(!mapController.panelContents) return;
         mapController.setZoomLevel(zoomLevel);
     });
@@ -340,18 +340,39 @@ const drawMap = ()=>{
     useEffect(async () => {
         //wait 500ms for the map to be drawn
         //set slug into global space
-        window.ol.panelMapSlug = mapController.panelContents.slug;
         const markers = map.current.getLayers().getArray()[1].getSource().getFeatures();
         markers.forEach(i=>i.changed());
         await new Promise(resolve => setTimeout(resolve, 500));
         map.current.updateSize();
+				map.current.getView().on('change:resolution', function(e) {
+					const zoomLevel = map.current?.getView().getZoom() || 0;
+					if(!mapController.panelContents) return;
+					mapController.setZoomLevel(zoomLevel);
+			});
         //trigger click on the active place
         const activePlace = mapController.panelContents.slug;
         const activeMarker = markers.find(i=>i.get('slug') === activePlace);
         if(activeMarker){
+					if(activeStyleIcons.activeIcon){
+						const existedActiveMarker = markers.find(i=>i.get('slug') === activeStyleIcons.activeIcon);
+						existedActiveMarker.setStyle(()=>{
+							const zoom = map.current?.getView()?.getZoom();
+							if(zoom < minZoom || zoom > maxZoom) return null;
+							return styleIcons.find(icon=>icon.slug === activeStyleIcons.activeIcon).icon;
+					});
+					}
+					activeMarker.setStyle(()=>{
+							const zoom = map.current?.getView()?.getZoom();
+							if(zoom < minZoom || zoom > maxZoom) return null;
+							return activeStyleIcons.icons.find(icon=>icon.slug === activePlace).icon;
+					});
+					setActiveStyleIcons(prev=>({
+						...prev,
+						activeIcon:activePlace
+					}));
             const [lat,lng] = activeMarker.getGeometry().getCoordinates();
             const minZoom = activeMarker.get('minZoom');
-            const zoomTo = Math.max(minZoom, window.ol.zoomLevel);
+            const zoomTo = Math.max(minZoom, animateZoom);
             setTimeout(() => {
                 map.current.getView().animate({
                     center: [lat, lng],
@@ -360,7 +381,6 @@ const drawMap = ()=>{
                 });
             }, 0);
             //zoom to the active place minZoom
-
         }
 
     }, [mapController.panelContents.slug]);
