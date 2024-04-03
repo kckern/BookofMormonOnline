@@ -1,11 +1,12 @@
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import BoMOnlineAPI, { assetUrl } from "../../models/BoMOnlineAPI";
 import { CanvasMarker } from "./MapMarkers";
 import { updatePlaceCoords } from '../Audit/Audit';
 import { isMobile } from "../../models/Utils";
 
 import mapIcon from "../_Common/svg/maps.svg";
+import { useParams } from "react-router-dom"
 
 
 const MapContents = ({mapController}) => {
@@ -31,6 +32,43 @@ const MapContents = ({mapController}) => {
     const minZoom = minzoom;
     const maxZoom = maxzoom;
     const iniZoom =  activePlace?.minZoom || zoom;
+
+		const keyDownHandler = (event)=>{
+			if(event.key === 'Tab'){
+				event.preventDefault();
+				const markers = map.current.getLayers().getArray()[1].getSource().getFeatures().sort((a,b)=>a.A.name > b.A.name?1:-1);
+				let slug = null;
+				let cordsLatLng = null;
+				let cordsXY = null;
+				if(activePlace?.slug){
+					const activeMarkerIndex = markers.findIndex(i=>i.get('slug') === activePlace?.slug);
+					if(activeMarkerIndex === markers.length -1){
+						slug = markers[0].get('slug');
+            cordsLatLng = markers[0].getGeometry().getCoordinates();
+            cordsXY = map.current.getPixelFromCoordinate(cordsLatLng);
+					}else{
+						slug = markers[activeMarkerIndex + 1].get('slug');
+            cordsLatLng = markers[activeMarkerIndex + 1].getGeometry().getCoordinates();
+            cordsXY = map.current.getPixelFromCoordinate(cordsLatLng);
+					}
+				}else{
+					slug = markers[0].get('slug');
+					cordsLatLng = markers[0].getGeometry().getCoordinates();
+					cordsXY = map.current.getPixelFromCoordinate(cordsLatLng);	
+				}   
+
+			  mapController.setPanelContents({slug, ...cordsLatLng});
+				mapController.setTooltip({...cordsXY, slug: null});
+				setIsMoving(true);
+				setTimeout(()=>{
+						markers.forEach(i=>i.changed());
+						map.current.getView().animate({center: cordsLatLng, duration: 500}, ()=>setIsMoving(false));
+				}, 0);
+				setTimeout(()=>{
+					window.focus();
+				},0)
+			}
+		}
     
 const drawMap = ()=>{
 
@@ -54,10 +92,11 @@ const drawMap = ()=>{
             minZoom: minZoom,
             maxZoom: maxZoom
         }),
-        interactions: window.ol.interaction.defaults().extend([
+        interactions: window.ol.interaction.defaults({KeyboardPan: false, KeyboardZoom: false}).extend([
             new window.ol.interaction.KeyboardPan(),
-            new window.ol.interaction.KeyboardZoom()
-        ])
+            new window.ol.interaction.KeyboardZoom(),
+        ]),
+				keyboardEventTarget:window
     });
     function createIconStyle(i, isActive) {
         const hasActive = !!activePlace;
@@ -243,7 +282,6 @@ const drawMap = ()=>{
 
     map.current.on('click', function(e) {
         map.current.forEachFeatureAtPixel(e.pixel, (feature) => {
-
             const slug = feature.get('slug');
             const [lat,lng] = feature.getGeometry().getCoordinates();
             const [x, y] = map.current.getPixelFromCoordinate([lat,lng]);   
@@ -337,6 +375,13 @@ const drawMap = ()=>{
 
     useEffect(drawMap, [mapslug,isAdmin]);
 
+		useEffect(()=>{
+			window.addEventListener('keydown',keyDownHandler);
+			return ()=>{
+				window.removeEventListener('keydown',keyDownHandler);
+			} 
+			},[mapslug,activePlace?.slug])
+
     useEffect(async () => {
         //wait 500ms for the map to be drawn
         //set slug into global space
@@ -358,13 +403,13 @@ const drawMap = ()=>{
 						existedActiveMarker.setStyle(()=>{
 							const zoom = map.current?.getView()?.getZoom();
 							if(zoom < minZoom || zoom > maxZoom) return null;
-							return styleIcons.find(icon=>icon.slug === activeStyleIcons.activeIcon).icon;
+							return styleIcons.find(icon=>icon?.slug === activeStyleIcons.activeIcon)?.icon;
 					});
 					}
 					activeMarker.setStyle(()=>{
 							const zoom = map.current?.getView()?.getZoom();
 							if(zoom < minZoom || zoom > maxZoom) return null;
-							return activeStyleIcons.icons.find(icon=>icon.slug === activePlace).icon;
+							return activeStyleIcons.icons.find(icon=>icon.slug === activePlace)?.icon;
 					});
 					setActiveStyleIcons(prev=>({
 						...prev,
@@ -384,8 +429,6 @@ const drawMap = ()=>{
         }
 
     }, [mapController.panelContents.slug]);
-
-
 
     return <>
     <div id="map" ref={mapElement} ></div>

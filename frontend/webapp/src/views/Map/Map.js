@@ -36,7 +36,10 @@ function MapContainer({ appController }) {
 
   //set keyboard listener so that typing will populate searching with seatSearching, escape will set it back to null
 
-  const handleKeyDown = (event) => {
+  const handleKeyDown = (event) => { 
+		if(document.activeElement.tagName !== "INPUT" && (event.key === "+" || event.key==="-" || event.key === 'Tab')){
+      return false;
+		}
     if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) return false;
     if (event.key === 'Escape') {
       setSearching(null);
@@ -97,6 +100,8 @@ function MapContainer({ appController }) {
   }
 
   const handleMapChange = ({ map, place }) => {
+		console.log('Map',map);
+		console.log('place',place);
     place = place || mapController.panelContents.slug;
     getMap(map, place)
     appController.functions.closePopUp()
