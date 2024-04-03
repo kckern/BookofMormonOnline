@@ -113,6 +113,7 @@ function StudyGroupSideBar({
   setPanel,
   activePanel,
 }) {
+	const [users,setUsers] = useState([]);
   const tooltip_id = "SideBar" + studyGroup.url
 
   const isActive = (val) => {
@@ -124,6 +125,32 @@ function StudyGroupSideBar({
   const requests = testJSON(group.data)
     ? JSON.parse(group.data).requests?.length
     : 0
+
+		useEffect(()=>{
+			const getLiveFreshUsers = async()=>{
+				const activeGroupMembers = group.members;
+				if(activeGroupMembers!==undefined && activeGroupMembers?.length !== 1){
+				const mainUser = appController.states.user;
+				const queryParams = {
+					userIdsFilter:[...activeGroupMembers.filter(member=>member.userId !== mainUser.social.user_id).map(user=>user.userId)]
+				}
+				const query = appController.sendbird.sb.createApplicationUserListQuery(queryParams);
+		
+				const queryUsers = await query.next();
+		
+				let { users } = getFreshUsers(appController, queryUsers);
+		
+				setUsers(users);
+				}
+			}
+			const interval = setInterval(()=>{
+				getLiveFreshUsers();
+			},1000)
+			return ()=>{
+				clearInterval(interval);
+			}
+		},[group.members])
+
   return (
     <div className={"StudyGroupSideBar noselect"}>
       <ReactTooltip
@@ -187,7 +214,7 @@ function StudyGroupSideBar({
             </li>
           </>
         ) : null}
-        {((getFreshUsers(appController) || {})?.users || [])?.map((u) => (
+        {users.map((u) => (
           <UserSideBarItem
             key={u.userId}
             appController={appController}

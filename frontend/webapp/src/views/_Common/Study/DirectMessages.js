@@ -20,7 +20,7 @@ export default function DirectMessages({ appController, userId }) {
     params.name = `DM between ${myId} and ${theirId}`;
     params.customType = "DM";
     params.channelUrl = md5(); // In a group channel, you can create a new channel by specifying its unique channel URL in a 'GroupChannelParams' object.
-
+		console.log('params',params);
     try {
       appController.sendbird.sb.groupChannel
         .createChannel(params)
