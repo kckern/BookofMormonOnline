@@ -68,7 +68,21 @@ const MapContents = ({mapController}) => {
 					window.focus();
 				},0)
 			}
-		}
+
+            const view = map.current.getView();
+          
+            const zoomOutChars = ["_","-","["];
+            const zoomInChars = ["+","=","]"];
+
+            
+            if ([...zoomOutChars, ...zoomInChars].includes(event.key)) {
+                event.preventDefault();
+                const currentZoom = view.getZoom();
+                const newZoom = currentZoom + ((zoomOutChars.includes(event.key) ? -1 : 1)/2);
+                view.animate({zoom: newZoom, duration: 500});
+            }
+        }
+
     
 const drawMap = ()=>{
 
@@ -93,8 +107,8 @@ const drawMap = ()=>{
             maxZoom: maxZoom
         }),
         interactions: window.ol.interaction.defaults({KeyboardPan: false, KeyboardZoom: false}).extend([
-            new window.ol.interaction.KeyboardPan(),
-            new window.ol.interaction.KeyboardZoom(),
+            new window.ol.interaction.KeyboardPan({ pixelDelta: 64})
+            //new window.ol.interaction.KeyboardZoom(),
         ]),
 				keyboardEventTarget:window
     });

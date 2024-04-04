@@ -37,9 +37,10 @@ function MapContainer({ appController }) {
   //set keyboard listener so that typing will populate searching with seatSearching, escape will set it back to null
 
   const handleKeyDown = (event) => { 
-		if(document.activeElement.tagName !== "INPUT" && (event.key === "+" || event.key==="-" || event.key === 'Tab')){
+  const ignoreKeys = ['-', '_', '=', '+', '[', ']', 'Tab',"\\","/","|"];
+    if (document.activeElement.tagName !== "INPUT" && ignoreKeys.includes(event.key)) {
       return false;
-		}
+    }
     if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) return false;
     if (event.key === 'Escape') {
       setSearching(null);
