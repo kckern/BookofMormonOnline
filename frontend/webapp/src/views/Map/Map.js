@@ -12,7 +12,7 @@ import MapTypes from "./MapTypes";
 import { label,isMobile } from "src/models/Utils"
 import MapContents from "./MapContents"
 import {MapPlaceSearch} from "./MapPlaceSearch"
-import {MapPanel,getPlaceInfo} from "./MapPanel"
+import {MapPanel,getPlaceInfo} from "./MapPanel.js"
 import 'react-range-slider-input/dist/style.css';
 import {  assetUrl } from "../../models/BoMOnlineAPI"
 function MapContainer({ appController }) {
