@@ -74,11 +74,19 @@ const MapContents = ({mapController}) => {
             const zoomOutChars = ["_","-","["];
             const zoomInChars = ["+","=","]"];
 
-            
-            if ([...zoomOutChars, ...zoomInChars].includes(event.key)) {
+            if ([...zoomOutChars, ...zoomInChars].includes(event.key) || 
+                (
+                    (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) 
+                    && (event.key.startsWith('Arrow')))) {
                 event.preventDefault();
                 const currentZoom = view.getZoom();
-                const newZoom = currentZoom + ((zoomOutChars.includes(event.key) ? -1 : 1)/2);
+                let zoomChange = 0;
+                if (zoomOutChars.includes(event.key) || ["ArrowDown", "ArrowLeft"].includes(event.key)) {
+                    zoomChange = -1;
+                } else if (zoomInChars.includes(event.key) || ["ArrowUp", "ArrowRight"].includes(event.key)) {
+                    zoomChange = 1;
+                }
+                const newZoom = currentZoom + (zoomChange / 2);
                 view.animate({zoom: newZoom, duration: 500});
             }
         }
