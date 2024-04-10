@@ -1,10 +1,28 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { assetUrl } from "../../models/BoMOnlineAPI";
 import { isMobile } from "../../models/Utils";
 import { updatePlaceCoords } from '../Audit/Audit';
 import { CanvasMarker } from "./MapMarkers";
-
+import Map from 'ol/map';
+import View from 'ol/view';
+import TileLayer from 	'ol/layer/tile';
+import XYZ from 'ol/source/xyz';
+import Interaction from 'ol/interaction';
+import OlProj from 'ol/proj';
+import Style from 'ol/style/style';
+import Icon from 'ol/style/icon';
+import Circle from 'ol/style/circle';
+import Fill from 'ol/style/fill';
+import Stroke from 'ol/style/stroke';
+import Feature from 'ol/feature';
+import VectorLayer from "ol/layer/vector"
+import VectorSource from 'ol/source/vector';
+import KeyboardPan from 'ol/interaction/keyboardpan';
+import Collection from "ol/collection"
+import Point from 'ol/geom/point';
+import LineString from 'ol/geom/linestring';
+import Modify from 'ol/interaction/modify';
+import OL from "ol";
 
 
 const MapContents = ({mapController}) => {
@@ -14,9 +32,7 @@ const MapContents = ({mapController}) => {
     const {slug:mapslug,places,stories} = currentMap;
 		const [animateZoom,setAnimateZoom] = useState(0);
 		const [isMoving,setIsMoving] = useState(false);
-
     const {centerx, centery, minzoom, maxzoom, zoom} = currentMap;
-
     const panelSlug = mapController.panelContents.slug;
     const activePlace = places.find(i=>i.slug === panelSlug);
 		const [activeStyleIcons,setActiveStyleIcons] = useState({
@@ -34,7 +50,7 @@ const MapContents = ({mapController}) => {
 		const keyDownHandler = (event)=>{
 			if(event.key === 'Tab'){
 				event.preventDefault();
-				const markers = map.current.getLayers().getArray()[1].getSource().getFeatures().sort((a,b)=>a.A.name > b.A.name?1:-1);
+				const markers = map.current.getLayers().getArray()[1].getSource().getFeatures().sort((a,b)=>a.values_.name > b.values_.name?1:-1);
 				let slug = null;
 				let cordsLatLng = null;
 				let cordsXY = null;
@@ -88,33 +104,31 @@ const MapContents = ({mapController}) => {
                 view.animate({zoom: newZoom, duration: 500});
             }
         }
-
     
 const drawMap = ()=>{
 
-    if (!window.ol) return console.error('OpenLayers library not found');
+    if (!OL) return console.error('OpenLayers library not found');
 		setAnimateZoom(mapController.zoomLevel || iniZoom);
     mapController.setZoomLevel(iniZoom);
     mapController.setMapCenter({lat: mapCenter[0], lng: mapCenter[1]});
     
-    map.current = new window.ol.Map({
+    map.current = new Map({
         target: mapElement.current,
-        layers: [new window.ol.layer.Tile({
-            source: new window.ol.source.XYZ({
+        layers: [new TileLayer({
+            source: new XYZ({
                 url: `${assetUrl}/map/${mapslug}/{z}/{x}/{y}`, 
                 tilePixelRatio: 2, 
                 minZoom,  maxZoom
             })
         })],
-        view: new window.ol.View({
-            center: window.ol.proj.fromLonLat(mapCenter),
+        view: new View({
+            center: OlProj.fromLonLat(mapCenter),
             zoom: iniZoom,
             minZoom: minZoom,
             maxZoom: maxZoom
         }),
-        interactions: window.ol.interaction.defaults({KeyboardPan: false, KeyboardZoom: false}).extend([
-            new window.ol.interaction.KeyboardPan({ pixelDelta: 64})
-            //new window.ol.interaction.KeyboardZoom(),
+        interactions: Interaction.defaults({KeyboardPan: false, KeyboardZoom: false}).extend([
+            new KeyboardPan({ pixelDelta: 64})
         ]),
 				keyboardEventTarget:window
     });
@@ -123,8 +137,8 @@ const drawMap = ()=>{
         const dpr = window.devicePixelRatio || 1;
         const [height, width, anchor, src] = CanvasMarker({...i, isActive});
         const scale = 1 / dpr; // calculate scale based on device pixel ratio
-        const image = new window.ol.style.Icon({ src, scale, anchor, opacity: isActive ? 1 : hasActive ? 1 : 1 });
-        let iconStyle = new window.ol.style.Style({image});
+        const image = new Icon({ src, scale, anchor, opacity: isActive ? 1 : hasActive ? 1 : 1 });
+        let iconStyle = new Style({image});
         if(isActive) iconStyle.setZIndex(9999);
 
         let styles = [iconStyle];
@@ -135,8 +149,8 @@ const drawMap = ()=>{
             const relativeMargin = height > 50 ? 0.3 : 0.2; 
 
             const resolution = map.current.getView().getResolution();
-            const mapPinStyle = new window.ol.style.Style({
-                image: new window.ol.style.Icon({
+            const mapPinStyle = new Style({
+                image: new Icon({
                     src: "/img/pin.png",
                     scale: 0.5, // adjust the size as needed
                     anchor: [0.5, 1 + relativeMargin], // anchor at bottom center
@@ -152,15 +166,15 @@ const drawMap = ()=>{
             const padding = 2;
             const radius =(width/2) + padding;
 
-            const haloStyle = new window.ol.style.Style({
-                image: new window.ol.style.Circle({
+            const haloStyle = new Style({
+                image: new Circle({
                     radius,
                     anchor: [0.5, 0.5],
-                    stroke: new window.ol.style.Stroke({
+                    stroke: new Stroke({
                         color: 'rgba(255, 255, 255, 0.2)',
                         width: 2
                     }),
-                    fill: new window.ol.style.Fill({
+                    fill: new Fill({
                         color: 'rgba(255, 255, 255, 0.1)'
                     }),
                 }),
@@ -189,8 +203,8 @@ const drawMap = ()=>{
         const { minZoom, maxZoom} = i;
         const name =  getPlaceInfo(i.slug, mapController.appController).name;
         i.name = name;
-        const geometry  = new window.ol.geom.Point(window.ol.proj.fromLonLat(xy));
-        const marker    = new window.ol.Feature({ geometry });
+        const geometry  = new Point(OlProj.fromLonLat(xy));
+        const marker    = new Feature({ geometry });
         let [iconStyle,width,height] = createIconStyle(i);
         let [iconStyleActive] = createIconStyle(i,true);
 				activeStyleIcons.push({slug:i.slug,icon:iconStyleActive});
@@ -221,10 +235,10 @@ const drawMap = ()=>{
         //trim to 4 decimal places
         start = [parseFloat(start[0]), parseFloat(start[1])];
         end = [parseFloat(end[0]), parseFloat(end[1])];
-        const startCoords = window.ol.proj.fromLonLat(start);
-        const endCoords = window.ol.proj.fromLonLat(end);
-        const line =  new window.ol.Feature({
-            geometry: new window.ol.geom.LineString([
+        const startCoords = OlProj.fromLonLat(start);
+        const endCoords = OlProj.fromLonLat(end);
+        const line =  new Feature({
+            geometry: new LineString([
                 startCoords, endCoords
             ])
         });
@@ -232,8 +246,8 @@ const drawMap = ()=>{
     });
 
 		map.current.addLayer(
-			new window.ol.layer.Vector({
-				source: new window.ol.source.Vector({
+			new VectorLayer({
+				source: new VectorSource({
 					features: [...markers]
 				}),
 				style: function (feature, resolution) {
@@ -243,13 +257,13 @@ const drawMap = ()=>{
 		);
 
     map.current.addLayer(
-        new window.ol.layer.Vector({
-            source: new window.ol.source.Vector({
+        new VectorLayer({
+            source: new VectorSource({
                 features: []// [...lines]
             }),
             style: function (feature, resolution) {
-                return new window.ol.style.Style({
-                    stroke: new window.ol.style.Stroke({
+                return new Style({
+                    stroke: new Stroke({
                         color: '#FF000044',
                         lineDash: [10, 10],
                         lineDashOffset: 0,
@@ -333,14 +347,14 @@ const drawMap = ()=>{
     //on pan map setMapCenter
     map.current.getView().on('change:center', function(e) {
         const center = map.current?.getView().getCenter();
-        const [lat,lng] = window.ol.proj.transform(center, 'EPSG:3857', 'EPSG:4326');
+        const [lat,lng] = OlProj.transform(center, 'EPSG:3857', 'EPSG:4326');
         mapController.setMapCenter({lat,lng});
     });
 
     if(isAdmin){
         console.log("Admin mode");
-        var modify = new window.ol.interaction.Modify({ 
-            features: new window.ol.Collection(markers),
+        var modify = new Modify({ 
+            features: new Collection(markers),
             style: ()=>[],
             hitTolerance: 1000 // Increase this value to increase the draggable area
         });
@@ -352,7 +366,7 @@ const drawMap = ()=>{
             const item = e.features.getArray()
             .sort(()=>Math.random()-0.5)[0];
             var coords = item.getGeometry().getCoordinates();
-            var lonLatCoords = window.ol.proj.transform(coords, 'EPSG:3857', 'EPSG:4326');
+            var lonLatCoords = OlProj.transform(coords, 'EPSG:3857', 'EPSG:4326');
             const {token}  = mapController.appController.states.user;
             const map = mapController.currentMap?.slug;
             const slug = item.get('slug');
