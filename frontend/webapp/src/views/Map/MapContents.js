@@ -1,12 +1,10 @@
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import BoMOnlineAPI, { assetUrl } from "../../models/BoMOnlineAPI";
-import { CanvasMarker } from "./MapMarkers";
-import { updatePlaceCoords } from '../Audit/Audit';
+import React, { useEffect, useRef, useState } from 'react';
+import { assetUrl } from "../../models/BoMOnlineAPI";
 import { isMobile } from "../../models/Utils";
+import { updatePlaceCoords } from '../Audit/Audit';
+import { CanvasMarker } from "./MapMarkers";
 
-import mapIcon from "../_Common/svg/maps.svg";
-import { useParams } from "react-router-dom"
 
 
 const MapContents = ({mapController}) => {
@@ -25,8 +23,8 @@ const MapContents = ({mapController}) => {
 			activeIcon:'',
 			icons:[]
 		});
-		const [styleIcons,setStyleIcons]=useState([]);
 
+		const [styleIcons,setStyleIcons]=useState([]);
 
     const mapCenter = [activePlace?.lat || centery, activePlace?.lng || centerx];
     const minZoom = minzoom;
@@ -183,6 +181,8 @@ const drawMap = ()=>{
         return key ? appController.preLoad.placeList[key] : {};
       }
     const view = map.current?.getView();
+		let styleIcons = [];
+		let activeStyleIcons = [];
     const markers = places
     .map(i=>{
         const xy = [i.lat, i.lng];
@@ -193,11 +193,8 @@ const drawMap = ()=>{
         const marker    = new window.ol.Feature({ geometry });
         let [iconStyle,width,height] = createIconStyle(i);
         let [iconStyleActive] = createIconStyle(i,true);
-				setActiveStyleIcons(prev=>({
-					...prev,
-					icons:[...prev.icons,{slug:i.slug,icon:iconStyleActive}]
-				}));
-				setStyleIcons(prev=>([...prev,{slug:i.slug,icon:iconStyle}]));
+				activeStyleIcons.push({slug:i.slug,icon:iconStyleActive});
+				styleIcons.push({slug:i.slug,icon:iconStyle});
         marker.setStyle(()=>{
             const zoom = view.getZoom();
             if(zoom < minZoom || zoom > maxZoom) return null;
@@ -210,6 +207,12 @@ const drawMap = ()=>{
         return marker;
     })
 
+		setActiveStyleIcons({
+			activeIcon:"",
+			icons:[...activeStyleIcons]
+		})
+
+		setStyleIcons([...styleIcons])
 
     const moves = stories?.map(s=>s.moves).flat() || [];
     const lines =  moves.map((m,i)=>{
@@ -408,6 +411,7 @@ const drawMap = ()=>{
         //wait 500ms for the map to be drawn
         //set slug into global space
         const markers = map.current.getLayers().getArray()[1].getSource().getFeatures();
+				if(markers.length !== activeStyleIcons.icons.length) return;
         markers.forEach(i=>i.changed());
         await new Promise(resolve => setTimeout(resolve, 500));
         map.current.updateSize();
@@ -450,7 +454,7 @@ const drawMap = ()=>{
             //zoom to the active place minZoom
         }
 
-    }, [mapController.panelContents.slug]);
+    }, [mapController.panelContents.slug,activeStyleIcons.icons.length,mapslug]);
 
     return <>
     <div id="map" ref={mapElement} ></div>
