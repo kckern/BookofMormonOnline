@@ -191,7 +191,6 @@ useEffect(()=>{setMinMaxZoom([place?.minZoom,place?.maxZoom])},[place?.minZoom,p
 
 const preloadedPlace = Object.values(placeList||{}).find((place)=>place.slug === slug) || null;
 
-
 useEffect(()=>{
   if(!preloadedPlace) return false;
   const isOutOfMapScope = (currentMap?.slug === "neareast") !== (preloadedPlace?.location === "W");
@@ -318,7 +317,6 @@ const addNewPlace = () => {
 
 }
 
-
 const adminPanel = isAdmin ? place ? <Card className="adminPanel" onKeyDown={(e)=>{if(e.key === "Enter") savePointConfig()}}>
 
     <CardBody>
@@ -352,8 +350,9 @@ const adminPanel = isAdmin ? place ? <Card className="adminPanel" onKeyDown={(e)
       key={`${minZoom}-${maxZoom}`}
       min={currentMap?.minzoom}
       max={currentMap?.maxzoom}
+			value={[minZoom,maxZoom]}
       defaultValue={[minZoom,maxZoom]}
-      onInput={([min,max])=>{ setMinMaxZoom([min,max])}}
+      onInput={(data)=>setMinMaxZoom(data)}
     />
     <div className="minMax" style={{display: "flex", justifyContent: "space-between",marginBottom:"1ex"}}>
       {Array.from({length: currentMap?.maxzoom - currentMap?.minzoom + 1}, (_, i) => currentMap?.minzoom + i).map((zoomLevelLabel) => (
