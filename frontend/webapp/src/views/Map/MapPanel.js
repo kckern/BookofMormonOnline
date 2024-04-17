@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback } from "react"
 import Parser from "html-react-parser";
 import spinner from  "../_Common/svg/loadbar.svg"
 import placesIcon from "../_Common/svg/places.svg";
+import { useHistory } from 'react-router';
 // AACTION TYPES
 import BoMOnlineAPI from "src/models/BoMOnlineAPI"
 // CSS
@@ -62,6 +63,8 @@ export function MapPanel({mapController})
   const {places} = currentMap || {};
   const [place, setPlace] = useState(places?.find((place) => place.slug === slug));
   const [placeDetails, setPlaceDetails] = useState({});
+
+	const history = useHistory();
   
 useEffect(() => {
     // First useEffect logic
@@ -230,10 +233,13 @@ const clearCache = (slug)=>{
     mapController.setCurrentMap("neareast");
     //clear panel
     mapController.setPanelContents(false);
-    setTimeout(()=>{
-      mapController.getMap(currentMap?.slug)
-      mapController.setPanelContents({slug});
-    },1000);
+
+		if(slug){
+			setTimeout(()=>{
+				mapController.getMap(currentMap?.slug)
+				mapController.setPanelContents({slug});
+			},1000);
+		}	
   }
 
 }
@@ -270,14 +276,16 @@ const savePointConfig = () => {
     data
   };
   axios.request(options).then(function (response) {
-    console.log(response.data);
     button.innerHTML = "Saved";
     clearCache();
 
     setTimeout(()=>{button.innerHTML = "Save"},2000);
     //redraw map
     mapController.getMap(null,null);
-    setTimeout(()=>{mapController.getMap(currentMap?.slug,slug)},100);
+		setTimeout(()=>{
+			mapController.getMap(currentMap?.slug,response.data.items.slug)
+			mapController.setPanelContents({slug:response.data.items.slug});
+		},1000)
 
   }).catch(function (error) {
     console.error(error);
@@ -300,7 +308,6 @@ const addNewPlace = () => {
     slug
   }
 
-  alert(JSON.stringify(data,null,2));
   const config = {
     method: 'POST',
     url: `${ApiBaseUrl}/coords`,
@@ -309,8 +316,12 @@ const addNewPlace = () => {
   };
 
   axios.request(config).then(function (response) {
-    mapController.getMap("neareast",null);
-    setTimeout(()=>{mapController.getMap(currentMap?.slug,slug)},100);
+		clearCache();
+    mapController.getMap(null,null);
+    setTimeout(()=>{
+			mapController.getMap(currentMap?.slug,response.data.items.slug)
+			mapController.setPanelContents({slug:response.data.items.slug});
+		},100);
   }).catch(function (error) {
     console.error(error);
   });
@@ -388,7 +399,7 @@ if(isMobile()) return null;
 
 
 
-  return <div className="mapPanel">
+  return <div className="mapPanel">	
     <div className="mapPanelCardContainer">
     <Card>
       <CardHeader>
@@ -404,7 +415,12 @@ if(isMobile()) return null;
         }</h5>
         <span 
           className="closePanelButton"
-          onClick={()=>setPanelContents(false)}
+          onClick={()=>{
+						setPanelContents(false)
+						history.push({
+							pathname:`/map/${currentMap.slug}`
+						})
+						}}
           style={{ flexShrink: 0 }}
         >
           ×

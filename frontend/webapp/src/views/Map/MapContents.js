@@ -466,7 +466,14 @@ const drawMap = ()=>{
                 });
             }, 0);
             //zoom to the active place minZoom
-        }
+        }else{
+					const existedActiveMarker = markers.find(i=>i.get('slug') === activeStyleIcons.activeIcon);
+					existedActiveMarker?.setStyle(()=>{
+						const zoom = map.current?.getView()?.getZoom();
+						if(zoom < minZoom || zoom > maxZoom) return null;
+						return styleIcons.find(icon=>icon?.slug === activeStyleIcons.activeIcon)?.icon;
+				});
+				}
 
     }, [mapController.panelContents.slug,activeStyleIcons.icons.length,mapslug]);
 
