@@ -232,7 +232,6 @@ const clearCache = (slug)=>{
     objectStore.clear();
     mapController.setCurrentMap("neareast");
     //clear panel
-    mapController.setPanelContents(false);
 
 		if(slug){
 			setTimeout(()=>{
