@@ -45,6 +45,11 @@ export default function User({ appController }) {
         prefs.commentary.on = !prefs.commentary.on;
         appController.functions.updatePrefs(prefs);
     }
+		const toggleControversialCommentary = () => {
+			let prefs = appController.states.preferences;
+			prefs.controversialCommentary = !prefs.controversialCommentary;
+			appController.functions.updatePrefs(prefs);
+	}
     const toggleFax = () => {
         let prefs = appController.states.preferences;
         prefs.facsimiles.on = !prefs.facsimiles.on;
@@ -227,7 +232,7 @@ export default function User({ appController }) {
                 </h5>
 
 
-                <Publications appController={appController} pubs={pubs} toggleCommentary={toggleCommentary}/>
+                <Publications appController={appController} pubs={pubs} toggleCommentary={toggleCommentary} toggleControversialCommentary={toggleControversialCommentary}/>
 
                 {(!lang || lang==="en") && <><hr/><h5 className="title">
                     <Label className="fax_select"><img src={facsimiles} />
@@ -253,10 +258,7 @@ export default function User({ appController }) {
 }
 
 
-function Publications({appController,pubs,toggleCommentary}){
-
-
-    const [showControversial, setShowControversial] = useState(false);
+function Publications({appController,pubs,toggleControversialCommentary,toggleCommentary}){
 
     if(!pubs) return false;
 
@@ -272,6 +274,8 @@ function Publications({appController,pubs,toggleCommentary}){
 
 
     const isOn = !!appController.states.preferences.commentary.on
+
+		const showControversial = appController.states.preferences.controversialCommentary
 
     return   <>
     
@@ -297,7 +301,7 @@ function Publications({appController,pubs,toggleCommentary}){
                         <Switch
                             onText={label("Hide")}
                             offText={label("Show")}
-                            onChange={()=>setShowControversial(!showControversial)}
+                            onChange={toggleControversialCommentary}
                             value={showControversial}
                             onColor="default"
                             offColor="default"
