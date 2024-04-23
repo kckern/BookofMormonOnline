@@ -64,6 +64,7 @@ export const appInit = () => {
           sources: [41,141,142,143,144,145]
         },
       },
+			controversialCommentary:false,
       facsimiles: {
         on: true,
         filter: {
