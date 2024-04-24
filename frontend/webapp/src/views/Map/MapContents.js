@@ -356,21 +356,25 @@ const drawMap = ()=>{
         var modify = new Modify({ 
             features: new Collection(markers),
             style: ()=>[],
-            hitTolerance: 1000 // Increase this value to increase the draggable area
+            hitTolerance: 100 // Increase this value to increase the draggable area
         });
         modify.on('modifystart', (e) => {
             setTooltipAndCursor(false);
         });
         modify.on('modifyend', (e) => {
 
-            const item = e.features.getArray()
-            .sort(()=>Math.random()-0.5)[0];
-            var coords = item.getGeometry().getCoordinates();
-            var lonLatCoords = OlProj.transform(coords, 'EPSG:3857', 'EPSG:4326');
             const {token}  = mapController.appController.states.user;
             const map = mapController.currentMap?.slug;
-            const slug = item.get('slug');
 
+            const allFeatures = e.features.getArray(); 
+            // this gets all the features, but we need the one that was dropped
+            // See: https://stackoverflow.com/questions/69888067/openlayers-6-get-geometry-of-a-modified-feature#comment123545170_69888067
+
+            const item = allFeatures[0]; // This is not the dropped feature, it is the first feature of many in the collection
+
+            const slug = item.get('slug');
+            var coords = item.getGeometry().getCoordinates();
+            var lonLatCoords = OlProj.transform(coords, 'EPSG:3857', 'EPSG:4326');
             const [lat,lng] = lonLatCoords;
             updatePlaceCoords({lat,lng,map,slug,token}).then((success)=>{
                 if(success){
