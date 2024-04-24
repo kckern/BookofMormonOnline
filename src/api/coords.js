@@ -36,6 +36,9 @@ const updateCoords =async  (req, res) => {
     const guid = guidR?.[0]?.guid;
     if(!guid) return res.json({success:false, message: "Invalid slug", slug, guidR});
     req.body.guid = guid;
+    if(!map) return res.json({success:false, message: "No map provided"});
+    if(!slug) return res.json({success:false, message: "No slug provided"});
+    if(!guid) return res.json({success:false, message: "No guid provided"});
     if( map  && guid && slug)
     {
         if(lat && lng) {
@@ -96,6 +99,7 @@ const updateCoords =async  (req, res) => {
 
     //load fresh from database
     const [coords] = await queryDB("SELECT * FROM bom_places_coords WHERE guid = ? AND map = ?",[guid,map]);
+    if(!coords) return res.json({success:false, message: "No coords found", guid, map});
     console.log("coords",{guid,map,coords});
     const updatedBody = { lat : coords.lat, lng : coords.lng, min : coords.min, max : coords.max, zoom : coords.zoom , guid, map, slug, updated: 1};
     res.json({success:true, items:updatedBody});
