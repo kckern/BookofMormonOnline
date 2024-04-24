@@ -207,8 +207,7 @@ useEffect(()=>{
 useEffect(()=>{
   const isOutOfMapScope = (currentMap?.slug === "neareast") !== (preloadedPlace?.location === "W");
   if(!isOutOfMapScope) return false;
-  //clear panel
-  setPanelContents(false);
+  //clear panel setPanelContents(false);
 },[currentMap?.slug])
 
 
