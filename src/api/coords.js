@@ -96,6 +96,7 @@ const updateCoords =async  (req, res) => {
 
     //load fresh from database
     const [coords] = await queryDB("SELECT * FROM bom_places_coords WHERE guid = ? AND map = ?",[guid,map]);
+    console.log("coords",{guid,map,coords});
     const updatedBody = { lat : coords.lat, lng : coords.lng, min : coords.min, max : coords.max, zoom : coords.zoom , guid, map, slug, updated: 1};
     res.json({success:true, items:updatedBody});
 
