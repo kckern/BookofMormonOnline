@@ -86,8 +86,8 @@ function PlacesComponent({ appController }) {
     }
     return string
       .split("")
-      .map((l) =>
-        reps[l] ? <span className={"IdBadge " + l}>{reps[l]}</span> : null
+      .map((l, index) =>
+        reps[l] ? <span key={index} className={"IdBadge " + l}>{reps[l]}</span> : null
       )
   }
   const geoBadges = (string) => {
@@ -101,18 +101,18 @@ function PlacesComponent({ appController }) {
     }
     return string
       .split("")
-      .map((l) => <span className={"location " + l}>{reps[l]}</span>)
+      .map((l, index) => <span key={index} className={"location " + l}>{reps[l]}</span>)
   }
   const typeIcon = (string) => {
     var reps = {
-      C: <img src={city} />,
-      G: <img src={geographic_feature} />,
-      L: <img src={land} />,
-      T: <img src={town} />,
-      N: <img src={nation} />,
-      O: <img src={geo_other} />,
+      C: (key) => <img key={key} src={city} />,
+      G: (key) => <img key={key} src={geographic_feature} />,
+      L: (key) => <img key={key} src={land} />,
+      T: (key) => <img key={key} src={town} />,
+      N: (key) => <img key={key} src={nation} />,
+      O: (key) => <img key={key} src={geo_other} />,
     }
-    return string?.split("")?.map((l) => reps[l] || l)
+    return string?.split("")?.map((l, index) => reps[l]?.(index) || l)
   }
 
   const handleClick = (id, e) => {
@@ -162,35 +162,36 @@ function PlacesComponent({ appController }) {
               PlaceList.filter(filters).filter(p=>p.slug).map((place, i) => (
 
                 <Link
-                to={"/places/" + place.slug}
-                onClick={(e) => handleClick(place.slug, e)}
-              >
-                <Card key={i}>
-                  <CardHeader className='text-center'>
-                    <h5> {processName(place.name)} </h5>
-                  </CardHeader>
-                  <CardBody
-                    className='placeInfo'
-                    style={{
-                      backgroundImage:
-                        `url(${assetUrl}/places/` +
-                        place.slug +
-                        ")",
-                    }}
-                  >
-                      {!geoBadges(place.location) ? null : (
-                        <div className='location'>
-                          {geoBadges(place.location)}
-                        </div>
-                      )}
-                      <div className='info'> {replaceNumbers(place.info)} </div>
-                  </CardBody>
-                  <CardFooter className='text-center'>
-                    <div className="labels">{occupantBadges(place.occupants)}</div>
-                    <div className="icons">{typeIcon(place.type)}</div>
-                  </CardFooter>
-                </Card>
-             </Link>
+                  key={i}
+                  to={"/places/" + place.slug}
+                  onClick={(e) => handleClick(place.slug, e)}
+                >
+                  <Card key={i}>
+                    <CardHeader className='text-center'>
+                      <h5> {processName(place.name)} </h5>
+                    </CardHeader>
+                    <CardBody
+                      className='placeInfo'
+                      style={{
+                        backgroundImage:
+                          `url(${assetUrl}/places/` +
+                          place.slug +
+                          ")",
+                      }}
+                    >
+                        {!geoBadges(place.location) ? null : (
+                          <div className='location'>
+                            {geoBadges(place.location)}
+                          </div>
+                        )}
+                        <div className='info'> {replaceNumbers(place.info)} </div>
+                    </CardBody>
+                    <CardFooter className='text-center'>
+                      <div className="labels">{occupantBadges(place.occupants)}</div>
+                      <div className="icons">{typeIcon(place.type)}</div>
+                    </CardFooter>
+                  </Card>
+                </Link>
               ))
             ) : (
               <Spinner top={(isMobile())? "50vh" : "60vh"} />
@@ -264,8 +265,8 @@ export function PlaceFilters({ appController, setFilter, placeFilters })
             {label("clear")}
           </Button>
         </li>
-        {data.filters.map((f) => (
-          <li className='item' onClick={(e) => toggleFilter(data.key, f.tag)}>
+        {data.filters.map((f, index) => (
+          <li key={index} className='item' onClick={(e) => toggleFilter(data.key, f.tag)}>
             <BootstrapSwitchButton
               checked={new RegExp(f.tag).test(placeFilters[data.key])}
               onstyle='success'
@@ -296,7 +297,7 @@ export function PlaceFilters({ appController, setFilter, placeFilters })
     else tmp[key] = filterSections[key].filters.map((f) => f.tag).join("")
     setFilter(tmp)
   }
-  
+
 
   const filterBox = <><h5 className='ppFiltersHeading'>{label("selectors")}</h5>
   <div className='ppFilters'>

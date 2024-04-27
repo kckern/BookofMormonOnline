@@ -150,11 +150,11 @@ function ReadingPlanSegmentListItem({segmentListItem, index, setActiveSegment, a
     const progressInt = parseInt(progress);
     const statusClass = progressInt === 100 ? "complete" : progressInt > 0 ? "inProgress" : "notStarted";
     return (
-        <div 
+        <div
         data-for={`segmentTips`}
         data-tip={`<b>${segmentListItem.period} • ${ref}</b><br/>${segmentListItem.title}`}
         data-html={true}
-        className={`segmentListItem ${className} ${statusClass} ${activeSegment === index ? "active" : ""}`} 
+        className={`segmentListItem ${className} ${statusClass} ${activeSegment === index ? "active" : ""}`}
          onClick={() => setActiveSegment(index)}>
             {progressInt ? `${progressInt}%` : (index + 1)}
         </div>
@@ -250,8 +250,9 @@ function ReadingPlanSection({section}){
             </div>
             <h6>{title}</h6>
             <div className="sectionDots">
-            {sectionText.map((item) => 
-            <img 
+            {sectionText.map((item, index) =>
+            <img
+            key={index}
             onClick={(e)=>clickDot(e,item)}
             data-for={`sectionDotTips-${slug}`}
             data-tip={item.heading}
