@@ -3,26 +3,26 @@ import { assetUrl } from "../../models/BoMOnlineAPI";
 import { isMobile } from "../../models/Utils";
 import { updatePlaceCoords } from '../Audit/Audit';
 import { CanvasMarker } from "./MapMarkers";
-import Map from 'ol/map';
-import View from 'ol/view';
-import TileLayer from 	'ol/layer/tile';
-import XYZ from 'ol/source/xyz';
-import Interaction from 'ol/interaction';
-import OlProj from 'ol/proj';
-import Style from 'ol/style/style';
-import Icon from 'ol/style/icon';
-import Circle from 'ol/style/circle';
-import Fill from 'ol/style/fill';
-import Stroke from 'ol/style/stroke';
-import Feature from 'ol/feature';
-import VectorLayer from "ol/layer/vector"
-import VectorSource from 'ol/source/vector';
-import KeyboardPan from 'ol/interaction/keyboardpan';
-import Collection from "ol/collection"
-import Point from 'ol/geom/point';
-import LineString from 'ol/geom/linestring';
-import Modify from 'ol/interaction/modify';
-import OL from "ol";
+import Map from 'ol/Map';
+import View from 'ol/View';
+import TileLayer from 	'ol/layer/Tile';
+import XYZ from 'ol/source/XYZ';
+import * as Interaction from 'ol/interaction';
+import * as OlProj from 'ol/proj';
+import Style from 'ol/style/Style';
+import Icon from 'ol/style/Icon';
+import Circle from 'ol/style/Circle';
+import Fill from 'ol/style/Fill';
+import Stroke from 'ol/style/Stroke';
+import Feature from 'ol/Feature';
+import VectorLayer from "ol/layer/Vector"
+import VectorSource from 'ol/source/Vector';
+import KeyboardPan from 'ol/interaction/KeyboardPan';
+import Collection from "ol/Collection"
+import Point from 'ol/geom/Point';
+import LineString from 'ol/geom/LineString';
+import Modify from 'ol/interaction/Modify';
+import * as OL from "ol";
 
 
 const MapContents = ({mapController}) => {
@@ -41,7 +41,6 @@ const MapContents = ({mapController}) => {
 		});
 
 		const [styleIcons,setStyleIcons]=useState([]);
-
     const mapCenter = [activePlace?.lat || centery, activePlace?.lng || centerx];
     const minZoom = minzoom;
     const maxZoom = maxzoom;
