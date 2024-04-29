@@ -790,7 +790,7 @@ function TheaterCrossRoads({ theaterController }) {
   const finishButton = <TheaterCrossRoadsButton config={{finish:true}} timerprogress={timerprogress} selectedIndex={selectedIndex} setSelectedIndex={setSelectedIndex} theaterController={theaterController} index={0} />;
   const moreButton = <TheaterCrossRoadsButton config={{more:true}}  isLast={true} isMore={true} selectedIndex={selectedIndex} setSelectedIndex={setSelectedIndex} theaterController={theaterController} index={1} />;
   const nextButton = <TheaterCrossRoadsButton timerprogress={timerprogress}  selectedIndex={selectedIndex} setSelectedIndex={setSelectedIndex} theaterController={theaterController} page={page} narration={narration} />;
-  const divergeButtons = !next?.length ? null : <>{next.map((n,i) => <TheaterCrossRoadsButton optionalOverride={optionalOverride}  selectedIndex={selectedIndex} setSelectedIndex={setSelectedIndex} theaterController={theaterController} {...n} index={i+1} />)}</>;
+  const divergeButtons = !next?.length ? null : <>{next.map((n,i) => <TheaterCrossRoadsButton key={`diverge_${i}`} optionalOverride={optionalOverride}  selectedIndex={selectedIndex} setSelectedIndex={setSelectedIndex} theaterController={theaterController} {...n} index={i+1} />)}</>;
 
   const defaultButton = isLast ? finishButton : nextButton;
   const optionalButtons = isLast ? moreButton : divergeButtons;
@@ -1316,7 +1316,7 @@ function TheaterQueueIndicator({ theaterController }) {
       }}
     >
 
-      <ReactTooltip effect="solid" id="dotToolTip" type="dark" place="bottom"  offset="{'top':-10}" className="theater-queue-indicator-tooltip" />
+      <ReactTooltip effect="solid" id="dotToolTip" type="dark" place="bottom"  offset={{'top':-10}} className="theater-queue-indicator-tooltip" />
 
       {(queue||[]).map((_, index) => {
         const status = queueStatus[index] || queue[index]?.status || null;
@@ -1326,19 +1326,17 @@ function TheaterQueueIndicator({ theaterController }) {
         const isLastInSection = nextSection !== thisSection;
         const heading = queue[index]?.heading || null;
         return (
-					<>
-					<div
+          <div
             onClick={() => theaterController.goto(index, "manual")}
             className={`theater-queue-indicator-item ${status || ""} ${
               index === cursorIndex ? "active" : ""
             } ${isLastInSection ? "last-in-section" : ""
             }`}
             key={index}
-						data-html={true}
-						data-tip={"<b>" + thisSection + "</b> <br/>" + heading + "<br/>" + status}
+            data-html={true}
+            data-tip={"<b>" + thisSection + "</b> <br/>" + heading + "<br/>" + status}
             data-for="dotToolTip"
           ></div>
-					</>
         );
       })}
     </div>
