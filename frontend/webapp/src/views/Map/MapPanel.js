@@ -207,8 +207,7 @@ useEffect(()=>{
 useEffect(()=>{
   const isOutOfMapScope = (currentMap?.slug === "neareast") !== (preloadedPlace?.location === "W");
   if(!isOutOfMapScope) return false;
-  //clear panel
-  setPanelContents(false);
+  //clear panel setPanelContents(false);
 },[currentMap?.slug])
 
 
@@ -256,6 +255,7 @@ const savePointConfig = () => {
     label: document.querySelector("#placeLabel")?.value,
     min:minZoom,
     max:maxZoom,
+    map:currentMap?.slug,
     zoom:Math.round(zoomLevel),
     slug
   }
