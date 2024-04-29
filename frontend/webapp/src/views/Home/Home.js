@@ -608,10 +608,10 @@ export function GroupLeaderBoard({ groupData }) {
     (a, b) => b.progress - a.progress,
   );
   return (
-    <div class="GroupLeaderBoard">
+    <div className="GroupLeaderBoard">
       {sortedMembers.map((m, i) => (
-        <>
-          <div className="leaderBoardItem" key={i}>
+        <div key={i}>
+          <div className="leaderBoardItem">
             <div className="rank">{i + 1}</div>
             <div className="img-container">
               <img
@@ -638,7 +638,7 @@ export function GroupLeaderBoard({ groupData }) {
               </div>}
             </div>
           </div>
-        </>
+        </div>
       ))}
     </div>
   );

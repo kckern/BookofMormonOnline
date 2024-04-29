@@ -81,29 +81,28 @@ function PeopleComponent({ appController }) {
     underSlug: "people",});
   }
 
-
-
   const personIcons = (string) => {
     var reps = {
-      R: <img src={royalty} />, //Royalty
-      P: <img src={prophet} />, //Prophet
-      I: <img src={priest} />, //Prophet
-      W: <img src={warrior} />,
-      J: <img src={judge} />,
-      O: <img src={other} />,
-      H: <img src={record_keeper} />,
+      R: (key) => <img key={key} src={royalty} />, //Royalty
+      P: (key) => <img key={key} src={prophet} />, //Prophet
+      I: (key) => <img key={key} src={priest} />, //Prophet
+      W: (key) => <img key={key} src={warrior} />,
+      J: (key) => <img key={key} src={judge} />,
+      O: (key) => <img key={key} src={other} />,
+      H: (key) => <img key={key} src={record_keeper} />,
     };
-    return string?.split("")?.map(i => reps[i]);
+    return string?.split("")?.map((i, index) => reps[i]?.(index));
   };
+
   const unitIcons = (string) => {
     var reps = {
-      I: <img src={individual} />, //Royalty
-      G: <img src={group} />, //Prophet
-      O: <img src={organization} />, //Prophet
-      S: <img src={society} />,
-      C: <img src={civilization} />
+      I: (key) => <img key={key} src={individual} />, //Royalty
+      G: (key) => <img key={key} src={group} />, //Prophet
+      O: (key) => <img key={key} src={organization} />, //Prophet
+      S: (key) => <img key={key} src={society} />,
+      C: (key) => <img key={key} src={civilization} />
     };
-    return string?.split("")?.map(i => reps[i])[0];
+    return string?.split("")?.map((i, index) => reps[i]?.(index))[0];
   };
 
   const affiliationBadges = (string) => {
@@ -119,12 +118,9 @@ function PeopleComponent({ appController }) {
       O: null
     };
     return string?.split("")?.map(l => (reps[l]) ? <span key={l} className={"IdBadge " + l}>{reps[l]}</span> : null)
-
   };
 
-
   const filters = (item) => {
-
     let search = (peopleFilters.search) ? (new RegExp(peopleFilters.search, "gi").test(item.name)) : true;
     let identification = (peopleFilters.identification) ? testFilter(peopleFilters, item, "identification") : true;
     let classification = (peopleFilters.classification) ? testFilter(peopleFilters, item, "classification") : true;
@@ -132,17 +128,13 @@ function PeopleComponent({ appController }) {
     return search && unit && identification && classification;
   };
 
-
   const testFilter = (filter, item, type) => {
     let filterString = filter[type];
     let itemString = item[type];
     let letters = itemString.split("")
     let matches = letters.map(l => filterString.match(new RegExp(l, "gi"))).filter(m => m);
     return (filterString.split("").length === matches.length) ? true : false;
-
   }
-
-  
 
   return (
     <div className="container noselect" style={{ display: 'block' }}>
@@ -155,12 +147,10 @@ function PeopleComponent({ appController }) {
             className="my-masonry-grid"
             columnClassName="my-masonry-grid_column">
             {peopleList ? peopleList.filter(filters).map((person, i) => ( person ?
-              <Link to={"/people/" + person.slug} onClick={(e) => handleClick(person.slug, e)}>
-                <Card key={i} className="personCard">
+              <Link key={i} to={"/people/" + person.slug} onClick={(e) => handleClick(person.slug, e)}>
+                <Card className="personCard">
                   <CardHeader className="text-center">
-
-                    <h5>{unitIcons(person.unit)} <Link to={"/people/" + person.slug}><span>{processName(person.name)}</span></Link></h5>
-
+                    <h5>{unitIcons(person.unit)} <span>{processName(person.name)}</span></h5>
                   </CardHeader>
                   <CardBody className="personInfo" style={{ backgroundImage: `url(${assetUrl}/people/` + person.slug + ")" }}>
                     {person.date ? <span className="date">{(person.date)}</span> : null}
@@ -172,7 +162,8 @@ function PeopleComponent({ appController }) {
                     <div className="personInfoBadges">{affiliationBadges(person.identification)} </div>
                     <div className="personIcons">{personIcons(person.classification)}</div>
                   </CardFooter>
-                </Card>  </Link>
+                </Card>
+              </Link>
             : null )) : <Spinner top={(isMobile()) ? "50vh" : "60vh"} />}
           </Masonry>
         </div>
@@ -295,7 +286,7 @@ export function PeopleFilters({ appController, setFilter, peopleFilters }) {
         },
       });
     }
-	
+
 	useEffect(()=>{
 		if(isMobile() && appController.states.popUp.type === "pFilter"){
 			appController.functions.setPopUp({

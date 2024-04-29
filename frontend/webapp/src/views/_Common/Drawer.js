@@ -187,8 +187,8 @@ function Person({ appController, setLocalOpen }) {
             ).then((response) => {
                 setPersonData(response.person[slug]);
             });
-        }, [])
-    }, 500);
+        }, 500)
+    }, []);
     if (!person) return <Spinner />;
 
     return <div>
@@ -216,8 +216,8 @@ function Place({ appController, setLocalOpen }) {
             ).then((response) => {
                 setPlaceData(response.places[slug]);
             });
-        }, [])
-    }, 500);
+        }, 500);
+    }, []);
     if (!place) return <Spinner />;
     return <div>
         <div className="pDrawerHeaderBox">
@@ -311,7 +311,7 @@ function CommentaryDrawer({ appController }) {
     useEffect(() => setLegal(false), [appController.states.popUp.activeId])
 
     useEffect(() => {
-        setDebug("usefEffect")
+        setDebug("useEffect")
         setCommentaryData(null)
         setTimeout(() => {
             setDebug("timeout")

@@ -340,7 +340,7 @@ function Place({ appController }) {
                 <br />
                 <small className="ppbody-title">{place.info}</small>
               </h3>
-              
+
               {renderPersonPlaceHTML(detectScriptures(place.description, (scripture) => {
                   if (!scripture) return;
                   return `<a className="scripture_link">${scripture}</a>`
@@ -405,13 +405,10 @@ function Place({ appController }) {
 }
 
 function Relationships({ data }) {
-
-
   const personRow = (person, i) => {
-
     //determine split
     const namePosition = person.relation.indexOf("$1") ? "back" : "front";
-    const StringwithSplitMarker = namePosition === "front" ? 
+    const StringwithSplitMarker = namePosition === "front" ?
       person.relation.replace(/(\$1\S+)/, "$1•")
     : person.relation.replace("$1", "•$1");
 
@@ -422,42 +419,46 @@ function Relationships({ data }) {
       if (pieces.length === 1) return text;
       return pieces.map((piece, i) => {
         if (piece === "$1") {
-          return  <span className="nameLink">{person.person.name.replace(/\d+/, "")}</span>
+          return  <span key={i} className="nameLink">{person.person.name.replace(/\d+/, "")}</span>
         }
         return piece;
       });
     }
     const rows = StringwithSplitMarker.split("•").map(replaceWithLink).filter(i=>!!i);
     const items = [
-      <div className="related_text_top">{rows[0]}</div>, 
-      <div className="related_text_bottom">{rows[1]}</div>];
+      <div key={`${i}_0`} className="related_text_top">{rows[0]}</div>,
+      <div key={`${i}_1`} className="related_text_bottom">{rows[1]}</div>
+    ];
 
-
-      return      <div className="related_row" key={i}
+    return (
+      <div
+        key={i}
+        className="related_row"
         data-for="relToolTip"
         data-tip={person.title}
+      >
+        <Link
+          style={{display:"flex"}}
+          to={`/people/${person.person.slug}`}
         >
-          <Link
-        style={{display:"flex"}}
-        to={`/people/${person.person.slug}`}>
-        <div className="related_text">
-          {items}
-        </div>
-        
-        <div className="related_avatar">
-          <img src={`${assetUrl}/people/${person.person.slug}`} />
-        </div>
-        </Link>
-      </div> 
+          <div className="related_text">
+            {items}
+          </div>
 
+          <div className="related_avatar">
+            <img src={`${assetUrl}/people/${person.person.slug}`} />
+          </div>
+        </Link>
+      </div>
+    );
   };
 
-
-  return <div className="related_people noselect">
-   <ReactTooltip id="relToolTip" place="left" offset="{'bottom': 0, 'left': '10rem'}" effect="solid" backgroundColor={"#666"} arrowColor={"#666"} />
-    {data?.map((relation, i) => personRow(relation, i))}
-  </div>
-
+  return (
+    <div className="related_people noselect">
+      <ReactTooltip id="relToolTip" place="left" offset={{'bottom': 0, 'left': '10rem'}} effect="solid" backgroundColor={"#666"} arrowColor={"#666"} />
+      {data?.map((relation, i) => personRow(relation, i))}
+    </div>
+  );
 }
 
 function ReferenceList({ index, appController,setPopupRef }) {
@@ -481,7 +482,7 @@ function ReferenceList({ index, appController,setPopupRef }) {
       </ol>
       <ReactTooltip
         place="left"
-        offset="{'bottom': 0, 'left': '10rem'}"
+        offset={{'bottom': 0, 'left': '10rem'}}
         effect="solid"
         backgroundColor={"#666"}
         arrowColor={"#666"}
