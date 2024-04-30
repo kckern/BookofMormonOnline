@@ -10,9 +10,13 @@ import { LegalNotice, Loading } from "./PopUp";
 import { addHighlightTagSelectively } from "../Page/TextContent";
 import { snapSelectionToWord, label } from "src/models/Utils";
 import { ScripturePanelSingle } from "../Page/Narration";
-import { detectScriptures } from "scripture-guide";
+import { setLanguage, detectScriptures } from "scripture-guide";
+import { determineLanguage } from "../../models/Utils";
+//
 
 export default function Commentary({ appController }) {
+
+  setLanguage(determineLanguage());
 
   const [PopUpRef,setPopUpRef] = useState(null)
   const [commentaryHighlights, setCommentaryHighlights] = useState([]);
