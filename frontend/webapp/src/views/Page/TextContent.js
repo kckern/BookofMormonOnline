@@ -374,7 +374,7 @@ function TextItemCounters({narrationController})
   let peopleCount = people?.length || 0;
   let placeCount = places?.length || 0;
   let refCount = refs?.length || 0;
-  let faxCount = lang!=="en" ? faxData?.filter(fax=>!appController?.states?.preferences?.facsimiles?.filter?.versions?.includes(fax.slug))?.length || 0 : 0;
+  let faxCount = lang==="en" ? faxData?.filter(fax=>!appController?.states?.preferences?.facsimiles?.filter?.versions?.includes(fax.slug))?.length || 0 : 0;
 
 
   const setPeoplePlaces = () => {
