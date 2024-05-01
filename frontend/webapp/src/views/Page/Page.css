@@ -320,7 +320,7 @@ a.theater-link img:hover
     background-color: #eee;
   }
 
-  .faxbox .thumb_tabs,
+  .faxbox 
   .faxbox .thumb_tabs li {
     width: 3em;
   }
