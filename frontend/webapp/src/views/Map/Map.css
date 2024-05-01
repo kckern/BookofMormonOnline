@@ -8,7 +8,7 @@
   background-color: #6b7d91;
 }
 .mappanel_wrapper.open #map {
-  left: 30%;
+  left: max(30%, 20rem);
 }
 
 #map .ol-viewport{
@@ -92,7 +92,7 @@
 
 
 .open .map-selector-menu {
-  left: calc(30% + 2rem);
+  left: max(calc(30% + 2rem), 22rem);
 
 }
 
@@ -122,6 +122,7 @@
 {
   width: 30%;
   opacity: 1;
+  min-width: 20rem;
 
 }
 
