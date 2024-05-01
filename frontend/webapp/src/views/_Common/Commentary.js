@@ -12,6 +12,7 @@ import { snapSelectionToWord, label } from "src/models/Utils";
 import { ScripturePanelSingle } from "../Page/Narration";
 import { setLanguage, detectScriptures } from "scripture-guide";
 import { determineLanguage } from "../../models/Utils";
+import { ATVHeader } from "./ATV";
 //
 
 export default function Commentary({ appController }) {
@@ -287,27 +288,4 @@ export default function Commentary({ appController }) {
       </Draggable>
     </>
   );
-}
-
-function ATVHeader({ atvHTML }) {
-  if (!atvHTML) return null;
-
-  atvHTML = atvHTML.replace(/\[(.*?)\]/g, ATVBrackets);
-
-  return <div className="atv">{Parser(atvHTML)}</div>;
-}
-
-function ATVBrackets(a, string) {
-  string = string.replace("NULL", "<b>∅</b>");
-  const parts = string.split("|").map((i) => {
-    let indexes = i.match(/[A-Z01]+$/)[0];
-    let content = i.replace(indexes, "").trim();
-    return [content, indexes];
-  });
-
-  return parts
-    .map(
-      (i) => `<span class="atv-string" data-indexes="${i[1]}">${i[0]}</span>`,
-    )
-    .join(" / ");
 }
