@@ -628,3 +628,19 @@ ul.source_tabs li:hover
     cursor: pointer;
     border: 1px solid #0005;
 }
+
+
+/* viewport smaller that 1000px */
+@media only screen and (max-width: 1200px) {
+    .related_row {
+        width: calc(80% - 1ex);
+    }
+
+}
+/* viewport smaller that 1000px */
+@media only screen and (max-width: 800px) {
+    .related_row {
+        width: calc(100% - 1ex);
+    }
+
+}
