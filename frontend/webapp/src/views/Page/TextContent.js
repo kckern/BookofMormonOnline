@@ -374,7 +374,7 @@ function TextItemCounters({narrationController})
   let peopleCount = people?.length || 0;
   let placeCount = places?.length || 0;
   let refCount = refs?.length || 0;
-  let faxCount = lang!=="en" ? faxData?.filter(fax=>!appController?.states?.preferences?.facsimiles?.filter?.versions?.includes(fax.slug))?.length || 0 : 0;
+  let faxCount = lang==="en" ? faxData?.filter(fax=>!appController?.states?.preferences?.facsimiles?.filter?.versions?.includes(fax.slug))?.length || 0 : 0;
 
 
   const setPeoplePlaces = () => {
@@ -432,8 +432,8 @@ function TextItemCounters({narrationController})
       data-tip={ ppLabel(peopleCount,placeCount) } data-for={tooltipId} onClick={setPeoplePlaces}>
       <img src={peopleCount ? peopleSVG : placesSVG}/>{peopleCount + placeCount}</span>}
 
-    {!!appController.states.preferences.facsimiles.on && faxCount && <span className="item_counter fax"         onClick={setFaxVisible}
-    data-tip={label(`x_facsimiles`,faxCount)} data-for={tooltipId} ><img src={faxSVG}/>{faxCount}</span>}
+    {!!appController.states.preferences.facsimiles.on && !!faxCount && <span className="item_counter fax"         onClick={setFaxVisible}
+    data-tip={label(`x_facsimiles`,faxCount)} data-for={tooltipId} ><img src={faxSVG}/>{faxCount || ""}</span>}
 
     {!!refCount && <span className="item_counter refs"        onClick={setScriptures}
     data-tip={refCount===1 ? label(`x_related_scripture`,refCount) : label(`x_related_scriptures`,refCount)}
