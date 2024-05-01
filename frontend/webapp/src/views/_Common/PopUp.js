@@ -167,7 +167,7 @@ function Person({ appController }) {
   ) {
     BoMOnlineAPI(
       { person: appController.states.popUp.ids },
-      { useCache: ["people"] },
+      { useCache: ["person"] },
     ).then((response) => {
       appController.functions.setPopUp({
         type: "people",

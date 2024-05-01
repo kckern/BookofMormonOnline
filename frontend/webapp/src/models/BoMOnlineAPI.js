@@ -20,13 +20,14 @@ export function exitBeacon(appController){
 }
 
 export default async function BoMOnlineAPI(input, options) {
-
+		console.log('Input',input);
+		console.log('Options',options);
     // Check Cache
     if (!options) options = {};
     let cacheResults;
     if (options.useCache !== false) cacheResults = await getCache(input);
     else cacheResults = { missing: input, found: {} };
-
+		console.log('CacheResults',cacheResults);
     //Prepare Server Query based on non-cached items
     let queries = prepareQueries(cacheResults.missing, options.token);
 
@@ -37,11 +38,13 @@ export default async function BoMOnlineAPI(input, options) {
         let compoundQuery = "{" + queries.map((q) => q.query).join("\n") + "}";
         compoundQuery = compoundQuery.replace(/{mutation(.*)}/, 'mutation$1');
         let apiResults = await serverGQLCall(compoundQuery);
+				console.log('ApiResult',apiResults);
         if(!apiResults?.data) return {error:apiResults};
         //Cache each new item
        
         if (options.useCache !== false) {
             let newCacheObject = prepareCacheObject(queries, apiResults.data, options.useCache);
+						console.log('NewCacheObject', newCacheObject);
             setCache(newCacheObject);
         }
 
