@@ -31,7 +31,20 @@
     font-weight: bold;
     font-family: "Roboto Condensed", sans-serif;
     color: #000;
+    cursor:default;
 }
+.atv-string:hover{
+    position: relative;
+    bottom: 1px;
+    border-bottom: 1px solid #FFF;
+}
+
+.atv-change{
+    color: #AAA;
+    font-size: x-small;
+    font-style: italic;
+}
+
 .atv-string b
 {
     color: #FF000066
