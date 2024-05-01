@@ -181,7 +181,7 @@ function Person({ appController }) {
         person?.relations
           ?.filter((i) => i.person?.slug)
           .map((i) => i.person.slug) || [];
-      BoMOnlineAPI({ people: slugs }, { useCache: ["people"] });
+      BoMOnlineAPI({ person: slugs }, { useCache: ["person"] });
     });
     return <Loading type="Person" appController={appController} />;
   }
