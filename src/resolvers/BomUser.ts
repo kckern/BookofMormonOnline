@@ -402,7 +402,7 @@ export default {
             }
           }
         ]
-      }).then((myUser: any) => {
+      }).then(async (myUser: any) => {
         if (!myUser?.user) return null;
         let updatedValues = args;
         delete updatedValues.token;
@@ -410,8 +410,10 @@ export default {
         return Models.BomUser.update(updatedValues, { where: { user: myUser.user } }).then((result: any) => {
           // if(result.shift() === 0) return null
           Object.assign(myUser, updatedValues);
+          const { user } = myUser;
+          const hashed_id = md5(user);
           if (updatedValues?.name)
-            return sendbird.updateUserNickname(myUser.user, updatedValues.name).then((sbResponse: any) => {
+            return sendbird.updateUserNickname(hashed_id, updatedValues.name).then((sbResponse: any) => {
               if (!sbResponse) return null;
               return myUser;
             });
