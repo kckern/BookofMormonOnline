@@ -317,7 +317,11 @@ function StudyGroupListItem({ group, appController }) {
 			await group.leave();
 			appController.functions.setActiveStudyGroup(null);
 			appController.sendbird?.getStudyGroups()
-			.then((list) => appController.functions.setStudyGroups(list));	
+			.then((list) =>{ 
+        const [group] = list || [];
+        if(group) appController.functions.setActiveStudyGroup(group);
+        appController.functions.setStudyGroups(list)
+      });	
 		} catch (error) {
 			console.log('Error',error);
 			return false;
