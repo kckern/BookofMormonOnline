@@ -170,7 +170,7 @@ function ReadingPlanSegment({segment, token, index}){
     const period = segment.period ? segment.period : null;
     return <div className="segment" key={segment.guid}>
         <h4>{period ? <span className="period">{period}</span> : null}{title}</h4>
-        <ReadingPlanSegmentSections token={token} guid={segment.guid + index} />
+        <ReadingPlanSegmentSections token={token} guid={segment.guid } />
         </div>
 }
 
@@ -186,10 +186,10 @@ function ReadingPlanSegmentSections({guid, token}){
             { readingplansegment: { token, guid } },
             { useCache: false })
             .then((data) => {
-                setSectionData(data.readingplansegment[0]);
+                setSectionData(data.readingplansegment?.[0] || {});
             });
     }, [guid]);
-    if(!sectionData) return <div className="spinnerBox">
+    if(!sectionData) return <div className="spinnerBox" key={guid}>
         <img src={loading} />
     </div>;
 
@@ -203,7 +203,7 @@ function ReadingPlanSegmentSections({guid, token}){
     .filter((item) =>  item.status !== "complete")
     .map((item) => item.slug)[0] || flatSectionText[0].slug;
 
-
+    const random = Math.random();
 
     return (
         <React.Fragment key={guid}>
@@ -215,8 +215,8 @@ function ReadingPlanSegmentSections({guid, token}){
             <Button color="secondary" size="sm">
                 <img src={theater} /> {label("menu_theater")}</Button></Link>
         </div>
-        <div className="segmentSections">
-            {sectionData.sections.map((section,i) => <ReadingPlanSection section={section} key={section.guid + i} />)}
+        <div className="segmentSections" key={guid + `${random}`}>
+            {sectionData.sections.map((section,i) => <ReadingPlanSection section={section} key={section.guid + `${i}`} />)}
         </div>
         </React.Fragment>
     )
