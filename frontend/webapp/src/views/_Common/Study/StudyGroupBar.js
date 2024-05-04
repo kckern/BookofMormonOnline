@@ -237,6 +237,8 @@ useEffect(()=>{
 		}
 	}
 	const interval = setInterval(()=>{
+    if(users.length) return;
+    if(bots.length) return;
 		getLiveFreshUsers();
 	},1000)
 	return ()=>{
@@ -603,8 +605,9 @@ export function StudyGroupUserCircle({ userObject, appController, isBot }) {
 			}
 		}
 		const interval = setInterval(()=>{
+      if(unreadMessageCount) return;
 			getMessages();
-		},1000)
+		},60000)
 		return ()=>{
 			clearInterval(interval);
 		}
