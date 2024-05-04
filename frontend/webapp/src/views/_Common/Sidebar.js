@@ -185,7 +185,7 @@ function LanguageSelect() {
       icon: en
     },
     es: {
-      url: "https://es.bookofmormon.online",
+      url: "https://libromormon.es",
       label: "Español",
       icon: es
     },
