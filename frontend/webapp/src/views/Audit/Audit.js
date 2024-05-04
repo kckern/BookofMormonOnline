@@ -485,20 +485,20 @@ function TextContext({content})
 {
     const {text_content, text_images, text_people} = content;
     if(!text_content) return null;
-    return <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+    return <div style={{ display: 'flex', justifycontent: 'space-between' }}>
         <div style={{ width: '25%', flexShrink: 0 }}>
             <h3>Text Content</h3>
             <p>{text_content}</p>
         </div>
         {!!text_images.length && <div style={{ width: '45%', flexShrink: 0 }}>
             <h3>Text Images</h3>
-            <div style={{ display: 'flex', justifyContent: 'center' , flexWrap: 'wrap'}}>
+            <div style={{ display: 'flex', justifycontent: 'center' , flexWrap: 'wrap'}}>
                 <ContextImagePanel images={text_images} />
             </div>
         </div>}
         <div style={{ maxWidth: '50%'}}>
             <h3>Text People</h3>
-                <div style={{display: 'flex', justifyContent: 'space-between', flexGrow:1, flexWrap: 'wrap'}}>
+                <div style={{display: 'flex', justifycontent: 'space-between', flexGrow:1, flexWrap: 'wrap'}}>
                 <ContextPeoplePanel people={text_people} />
             </div>
         </div>
@@ -540,7 +540,7 @@ function PageContext ({content})
     const {section_titles, page_images, page_people} = content;
     if(!section_titles?.length) return null;
     return (
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', justifycontent: 'space-between' }}>
             <div style={{ width: '20%', flexShrink: 0 , textAlign: 'left' }}>
                 <h3>Page Sections</h3>
                 <ul style={{fontSize: '1.2rem', textAlign: 'left', fontWeight: 'bold'}}>
@@ -551,13 +551,13 @@ function PageContext ({content})
             </div>
             {!!page_images.length && <div style={{ width: '50%', flexShrink: 0 }}>
                 <h3>Page Images</h3>
-                <div style={{ display: 'flex', justifyContent: 'center' , flexWrap: 'wrap'}}>
+                <div style={{ display: 'flex', justifycontent: 'center' , flexWrap: 'wrap'}}>
                     <ContextImagePanel images={page_images} />
                 </div>
             </div>}
             <div style={{ maxWidth: '50%'}}>
                 <h3>Page People</h3>
-                    <div style={{display: 'flex', justifyContent: 'space-between', flexGrow:1, flexWrap: 'wrap'}}>
+                    <div style={{display: 'flex', justifycontent: 'space-between', flexGrow:1, flexWrap: 'wrap'}}>
                     <ContextPeoplePanel people={page_people} />
                 </div>
             </div>
@@ -569,7 +569,7 @@ function SectionContext ({content})
 {
     const {narrations, section_images, section_people} = content;
     if(!narrations?.length) return null;
-    return <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+    return <div style={{ display: 'flex', justifycontent: 'space-between' }}>
         <div style={{ width: '25%', flexShrink: 0 }}>
             <h3>Section Narrations</h3>
             <ul style={{fontSize: '1.2rem', textAlign: 'left', fontWeight: 'bold'}}>
@@ -580,13 +580,13 @@ function SectionContext ({content})
         </div>
         {!!section_images.length && <div style={{ width: '45%', flexShrink: 0 }}>
             <h3>Section Images</h3>
-            <div style={{ display: 'flex', justifyContent: 'center' , flexWrap: 'wrap'}}>
+            <div style={{ display: 'flex', justifycontent: 'center' , flexWrap: 'wrap'}}>
                 <ContextImagePanel images={section_images} />
             </div>
         </div>}
         <div style={{ maxWidth: '50%'}}>
             <h3>Section People</h3>
-                <div style={{display: 'flex', justifyContent: 'space-between', flexGrow:1, flexWrap: 'wrap'}}>
+                <div style={{display: 'flex', justifycontent: 'space-between', flexGrow:1, flexWrap: 'wrap'}}>
                 <ContextPeoplePanel people={section_people} />
             </div>
         </div>
