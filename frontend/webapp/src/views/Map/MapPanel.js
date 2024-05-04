@@ -113,7 +113,7 @@ useEffect(() => {
 
   const storyCount = matchingStories.length;
 
-  const  body = !placeDetails?.description ?  <div className='noselect' style={{display : "flex", justifyContent: "center"}}>
+  const  body = !placeDetails?.description ?  <div className='noselect' style={{display : "flex", justifycontent: "center"}}>
     <img  src={spinner} alt="loading"  style={{ height: "10rem" }} />
     </div> : <><Nav tabs className="noselect">
     <NavItem onClick={() => setActiveTab("1")} className={activeTab === "1" ? "active" : ""}>
@@ -348,12 +348,12 @@ const adminPanel = isAdmin ? place ? <Card className="adminPanel" onKeyDown={(e)
   </CardHeader>
   <CardBody>
     {/* 3 columns: Current, min max: 1. read only input, 2 and 3 dropdowns 3-9*/}
-    <div className="zoomLevels" style={{display: "flex", justifyContent: "space-between", gap: "1rem"}}>
+    <div className="zoomLevels" style={{display: "flex", justifycontent: "space-between", gap: "1rem"}}>
       
     
 {minZoom && (
   <div
-    style={{display: "flex", flexDirection: "column-reverse", justifyContent: "space-between", flexGrow: 1}}
+    style={{display: "flex", flexDirection: "column-reverse", justifycontent: "space-between", flexGrow: 1}}
     className="rangeSliderContainer"
   >
     <RangeSlider
@@ -364,7 +364,7 @@ const adminPanel = isAdmin ? place ? <Card className="adminPanel" onKeyDown={(e)
       defaultValue={[minZoom,maxZoom]}
       onInput={(data)=>setMinMaxZoom(data)}
     />
-    <div className="minMax" style={{display: "flex", justifyContent: "space-between",marginBottom:"1ex"}}>
+    <div className="minMax" style={{display: "flex", justifycontent: "space-between",marginBottom:"1ex"}}>
       {Array.from({length: currentMap?.maxzoom - currentMap?.minzoom + 1}, (_, i) => currentMap?.minzoom + i).map((zoomLevelLabel) => (
         <span 
           key={zoomLevelLabel} 
@@ -382,7 +382,7 @@ const adminPanel = isAdmin ? place ? <Card className="adminPanel" onKeyDown={(e)
 )}
     </div>
   </CardBody></>)}
-  <CardFooter style={{ display: 'flex', justifyContent: 'flex-end' }}>
+  <CardFooter style={{ display: 'flex', justifycontent: 'flex-end' }}>
 
     <Button id="saveButton"
       onClick={savePointConfig}
@@ -402,7 +402,7 @@ if(isMobile()) return null;
     <div className="mapPanelCardContainer">
     <Card>
       <CardHeader>
-        <div  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height:"1.5rem" }}>
+        <div  style={{ display: 'flex', justifycontent: 'space-between', alignItems: 'center', height:"1.5rem" }}>
         <span 
           className="searchPanelButton"
           onClick={()=>mapController.setSearching({firstLetter:""})}

@@ -32,7 +32,7 @@ export async function getCache(input) {
             }
         }
     }
-		console.log('GetCacheITems',items);
+		//console.log('GetCacheITems',items);
     return new Promise(function (resolve, reject) {
         resolve(items);
     });

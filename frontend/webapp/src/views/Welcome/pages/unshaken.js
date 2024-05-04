@@ -131,7 +131,7 @@ function ShowCasePanel({title, video, link, isActive})
     const history = useHistory();
 
     return <Card className={`showcase-panel ${isActive ? "active" : ""}`} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} onClick={onClick}>
-        <CardHeader className="showcase-panel-header" display="flex" justifyContent="space-between">
+        <CardHeader className="showcase-panel-header" display="flex" justifycontent="space-between">
             <h6>{title} </h6>
         </CardHeader>
         <CardBody className="showcase-panel-body">
