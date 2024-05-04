@@ -11,6 +11,7 @@ extend type Query {
   sources(id: [String]): [Source]
   publications: [Source]
   history(slug: [String]): [HistoricalDocument]
+  chiasmus(id: [String]): [Chiasmus]
 }
 
 
@@ -21,6 +22,19 @@ extend type Query {
   # -----------------------------------------------
   
 
+  type Chiasmus {
+    chiasmus_id: String
+    reference: String
+    scheme: String
+    lines: [ChiasmusLine]
+  }
+  type ChiasmusLine {
+    guid: String
+    line_key: String
+    line_text: String
+    highlights: String
+    label: String
+  }
   
   type HistoricalDocument {
     seq: Int

@@ -72,6 +72,51 @@ export default {
           ].filter(x => !!x)
         });
       return null;
+    },
+    chiasmus: async (root: any, args: any, context: any, info: any) => {
+      const lang = context.lang ? context.lang : null;
+      const id = args.id;
+    const config = {
+      where: queryWhere('chiasmus_id', id),
+      include: [includeTranslation({ [Op.or]: ['line_text', 'highlights','label'] }, lang)].filter(x => !!x)
+    };
+      if(!id) delete config.where;
+      const lines = await Models.BomXtrasChiasmus.findAll(config);
+
+      const chiasms =  lines.reduce((acc: any, item: any) => {
+        const chiasmus_id = item.chiasmus_id; // Assuming each item has a chiasmus_id property
+
+        const scheme = lines.filter((x:any)=>x.chiasmus_id === chiasmus_id).map((x:any)=>x.line_key).join('');
+        const uniqueVerseIds = lines.filter((x:any)=>x.chiasmus_id === chiasmus_id).map((x:any)=>{
+          const {verse_id, verses} = x;
+          const versesIds = [];
+          for(let i = 0; i < verses; i++){
+            versesIds.push(parseInt(verse_id) + i);
+          }
+          return versesIds
+        }).flat().filter((x:any,i:any,a:any)=>a.indexOf(x) === i);
+        const reference = scripture.generateReference(uniqueVerseIds);
+
+        if (!acc[chiasmus_id]) {
+          acc[chiasmus_id] = {
+            reference,
+            scheme,
+            chiasmus_id,
+            lines: []
+          };
+        }
+
+        acc[chiasmus_id].lines.push({
+          guid: item.guid,
+          line_key: item.line_key,
+          line_text: item.line_text,
+          highlights: item.highlights,
+          label: item.label
+        });
+
+        return acc;
+      }, {});
+      return Object.values(chiasms);
     }
   },
   Mutation: {},

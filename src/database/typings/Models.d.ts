@@ -45,6 +45,8 @@ import LdsScripturesVerses from '../models/lds_scriptures_verses';
 import LdsScripturesVolumes from '../models/lds_scriptures_volumes';
 import SocialPosts from '../models/social_posts';
 import ModelBase from '../models/ModelBase';
+import BomXtrasHistory from '../models/bom_xtras_history';
+import BomXtrasChiasmus from '../models/bom_xtras_chiasmus';
 
 export interface Models {
   BomCapsulation: typeof BomCapsulation;
@@ -85,6 +87,7 @@ export interface Models {
   BomXtrasFax: typeof BomXtrasFax;
   BomXtrasImage: typeof BomXtrasImage;
   BomXtrasHistory: typeof BomXtrasHistory;
+  BomXtrasChiasmus: typeof BomXtrasChiasmus;
   BomXtrasSource: typeof BomXtrasSource;
   BomXtrasStats: typeof BomXtrasStats;
   LdsScripturesBooks: typeof LdsScripturesBooks;

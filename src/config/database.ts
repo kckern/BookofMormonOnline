@@ -39,6 +39,7 @@ import BomUser from '../database/models/bom_user';
 import BomXtrasSaractorsSim from '../database/models/bom_xtras_caractors_sim';
 import BomXtrasCaractors from '../database/models/bom_xtras_caractors';
 import BomXtrasCommentary from '../database/models/bom_xtras_commentary';
+import BomXtrasChiasmus from '../database/models/bom_xtras_chiasmus';
 import BomXtrasImage from '../database/models/bom_xtras_image';
 import BomXtrasSource from '../database/models/bom_xtras_source';
 import BomXtrasStats from '../database/models/bom_xtras_stats';
@@ -72,7 +73,7 @@ const {
 export const sequelize = new Sequelize(MYSQL_DB, MYSQL_USER, MYSQL_PASSWORD, {
   dialect: 'mysql',
   logging: (query) => {
-    return false;
+   // return false;
     query = query.replace("Executing (default): ", "");
     const now = new Date();
     const oneLineQuery = query.replace(/\n/g, ' ').replace(/\s+/g, ' ');
@@ -128,6 +129,7 @@ export const models: Models = {
   BomTranslationLocked: BomTranslationLocked.initModel(sequelize),
   BomTranslation: BomTranslation.initModel(sequelize),
   BomXtrasHistory: BomXtrasHistory.initModel(sequelize),
+  BomXtrasChiasmus: BomXtrasChiasmus.initModel(sequelize),
   BomUserSocial: BomUserSocial.initModel(sequelize),
   BomUserToken: BomUserToken.initModel(sequelize),
   BomUser: BomUser.initModel(sequelize),
@@ -434,6 +436,15 @@ models.BomXtrasHistory.hasMany(models.BomTranslation, {
     name: 'guid'
   },
   sourceKey: 'id',
+  as: 'translation'
+});
+
+//chiasmus
+models.BomXtrasChiasmus.hasMany(models.BomTranslation, {
+  foreignKey: {
+    name: 'guid'
+  },
+  sourceKey: 'guid',
   as: 'translation'
 });
 

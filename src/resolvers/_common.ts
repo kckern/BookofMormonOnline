@@ -240,11 +240,15 @@ export const includeModel = (requestInfo: any, model: any, as: any, include?: Ar
   // console.log({ includeModel });
   return includeModel;
 };
-
 export const queryWhere = (key: string, filter: any) => {
   if (!filter) return null;
+  if(!filter.length) return null;
+  if (Array.isArray(filter)) {
+    return { [key]: { [Op.in]: filter }};
+  }
   return { [key]: filter };
 };
+
 
 export const scoreTextItems = (textItems: Array<any>, summary: any) => {
 
