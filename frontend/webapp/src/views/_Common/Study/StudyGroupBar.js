@@ -240,7 +240,7 @@ useEffect(()=>{
     if(users.length) return;
     if(bots.length) return;
 		getLiveFreshUsers();
-	},1000)
+	},10000)
 	return ()=>{
 		clearInterval(interval);
 	}

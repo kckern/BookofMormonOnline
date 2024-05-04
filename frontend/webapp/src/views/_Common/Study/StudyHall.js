@@ -145,7 +145,7 @@ function StudyGroupSideBar({
 			}
 			const interval = setInterval(()=>{
 				getLiveFreshUsers();
-			},1000)
+			},10000)
 			return ()=>{
 				clearInterval(interval);
 			}
