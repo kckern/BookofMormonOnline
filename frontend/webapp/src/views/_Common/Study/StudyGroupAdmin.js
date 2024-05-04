@@ -373,7 +373,7 @@ function Requester({ appController, userObj }) {
         style={{
           display: "flex",
           width: "100%",
-          justifyContent: "center",
+          justifycontent: "center",
         }}
       >
         <img src={picture} />

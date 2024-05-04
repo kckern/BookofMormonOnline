@@ -126,6 +126,7 @@ export default class SendbirdController {
   };
 
   createNewRoom = async () => {
+    return //todo: fix this
     const roomParams = {
       roomType: SendBirdCall.RoomType.LARGE_ROOM_FOR_AUDIO_ONLY,
     };

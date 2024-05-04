@@ -168,9 +168,9 @@ function ReadingPlanSegment({segment, token, index}){
 
     const title = segment.title ? `${segment.ref} • ${segment.title}` : segment.ref;
     const period = segment.period ? segment.period : null;
-    return <div className="segment">
+    return <div className="segment" key={segment.guid}>
         <h4>{period ? <span className="period">{period}</span> : null}{title}</h4>
-        <ReadingPlanSegmentSections token={token} guid={segment.guid} />
+        <ReadingPlanSegmentSections token={token} guid={segment.guid + index} />
         </div>
 }
 
@@ -206,8 +206,8 @@ function ReadingPlanSegmentSections({guid, token}){
 
 
     return (
-        <>
-        <div className="buttonRow">
+        <React.Fragment key={guid}>
+        <div className="buttonRow" key={guid}>
             <Link to={`/${studySlug}`}>
             <Button color="primary" size="sm">
                 <img src={study} /> {label("menu_study")}</Button></Link>
@@ -216,9 +216,9 @@ function ReadingPlanSegmentSections({guid, token}){
                 <img src={theater} /> {label("menu_theater")}</Button></Link>
         </div>
         <div className="segmentSections">
-            {sectionData.sections.map((section) => <ReadingPlanSection section={section} />)}
+            {sectionData.sections.map((section,i) => <ReadingPlanSection section={section} key={section.guid + i} />)}
         </div>
-        </>
+        </React.Fragment>
     )
 
 
