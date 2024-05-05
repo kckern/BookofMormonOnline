@@ -1,0 +1,24 @@
+.nameAnalysisList{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
+    grid-column-gap: 0.5ex;
+    /* 1em spacing between rows */
+    grid-row-gap: 0.5ex;
+    padding-bottom: 2rem;
+}
+
+.nameAnalysisList .nameAnalysisItem{
+    align-items: center;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    text-align: center;
+    cursor: pointer;
+}
+.nameAnalysisList .nameAnalysisItem:hover{
+    background-color: #f9f9f9;
+    position: relative;
+    bottom: 1px;
+    border-bottom: 2px solid #ccc;
+    margin-bottom: -1px;
+
+}
