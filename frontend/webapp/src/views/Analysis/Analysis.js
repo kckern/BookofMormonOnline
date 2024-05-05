@@ -7,6 +7,7 @@ import { Card, CardHeader, CardBody, CardFooter, Button, Input } from "reactstra
 import Masonry from 'react-masonry-css'
 import Caractors from "./Caractors/Caractors.js"
 import Bible from "./Bible/Bible.js"
+import Chiasmus from "./Chiasmus/Chiasmus.js"
 import { Link, useRouteMatch } from 'react-router-dom';
 import { label } from 'src/models/Utils';
 
@@ -17,6 +18,7 @@ function Analysis() {
 
     if(match.params.value==="caractors") return <Caractors/>;
     if(match.params.value==="bible") return <Bible/>;
+    if(match.params.value==="chiasmus") return <Chiasmus/>;
 
     const breakpointColumnsObj = {
         default: 4,
@@ -28,13 +30,14 @@ function Analysis() {
     const sections = [
         {heading:"“Caractors” Document",text:"A glyph-level comparative and sequential analysis of the “Caractors” document recovered from the Whitmer estate in 1884.",slug:"caractors", ready:true},
         {heading:"Bible Quotations",text:"ok",slug:"bible", ready:true},
+        {heading:"Chiastic Features",text:"An inventory of all identified chiasms in the Book of Mormon.",
+        slug:"chiasmus", ready:true},
         {heading:"Discursive Analysis",text:"ok",slug:"discourse"},
         {heading:"Narrative Analysis",text:"ok",slug:"narrative"},
         {heading:"Intertextuality",text:"ok",slug:"intertext"},
         {heading:"Structural Analysis",text:"ok",slug:"structure"},
         {heading:"Internal Quotations",text:"ok",slug:"internalquotes"},
         {heading:"Names",text:"ok",slug:"names"},
-        {heading:"Chiastic Features",text:"ok",slug:"chiasm"},
         {heading:"N-gram Analysis",text:"ok",slug:"ngram"},
         {heading:"Word Search",text:"ok",slug:"search"},
         {heading:"Critical Text",text:"ok",slug:"criticaltext"},
