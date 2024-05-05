@@ -205,7 +205,7 @@ function LanguageSelect() {
       icon: swe
     },
     ru:{
-      url: "https://ru.bookofmormon.online",
+      url: "https://xn--80aahtjpadfibw.net",
       label: "Русский",
       icon: ru
     },

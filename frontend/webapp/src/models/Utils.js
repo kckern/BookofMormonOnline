@@ -30,7 +30,7 @@ export function determineLanguage() {
     pt: ["por"],
     jp: ["jpn"],
     tgl: ["phil", "ph"],
-    ru: ["rus","рф","xn--p1ai"],
+    ru: ["rus","рф","xn--p1ai","net"],
   };
   let index = {};
   Object.keys(aliases).forEach(i => { index[i] = i; Object.keys(aliases[i]).forEach(j => index[aliases[i][j]] = i); });
