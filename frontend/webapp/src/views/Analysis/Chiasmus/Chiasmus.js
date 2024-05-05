@@ -7,7 +7,7 @@ import Chiasm from "./Chiasm";
 
 function ChiasmusControl() {
 
-    return <div className="chiasmus_control">
+    return <div className="chiasmus_controls">
         <button>Sort by Depth</button>
         <button>Sort by Reference</button>
         <button>Sort by Author</button>
@@ -24,7 +24,7 @@ function Chiasmus({chiasmus,setChiasmusId}) {
 
 
     return   <div>
-         <h3>Chiasmus in the Book of Mormon</h3>
+         <h3 class="title lg-4 text-center">Chiasmus in the Book of Mormon</h3>
          <ChiasmusControl/>
     <div className="chiasmus_list">
        
@@ -36,8 +36,8 @@ function Chiasmus({chiasmus,setChiasmusId}) {
             const depth = maxLetter.charCodeAt(0) - 64;
 
             return <div key={i} className="chiasmus" onClick={()=>setChiasmusId(chiasmus_id)}>
-                <div className="reference">{reference}</div>
-                <div className="scheme">Depth: {depth}</div>
+                <span className="reference">{reference}</span>
+                <span className="depth">Depth: {depth}</span>
             </div>
         })}
     </div>
