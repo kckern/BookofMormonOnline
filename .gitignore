@@ -12,3 +12,4 @@ npm-debug.log
 Thumbs.db
 key
 *.env
+log.sql

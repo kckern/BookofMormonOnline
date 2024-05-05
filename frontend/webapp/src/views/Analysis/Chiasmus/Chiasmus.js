@@ -5,6 +5,17 @@ import "./Chiasmus.css";
 import Chiasm from "./Chiasm";
 
 
+function ChiasmusControl() {
+
+    return <div className="chiasmus_control">
+        <button>Sort by Depth</button>
+        <button>Sort by Reference</button>
+        <button>Sort by Author</button>
+        <button>Filter By Depth</button>
+    </div>
+}
+
+
 
 function Chiasmus({chiasmus,setChiasmusId}) {
 
@@ -12,15 +23,26 @@ function Chiasmus({chiasmus,setChiasmusId}) {
     if(!Array.isArray(chiasmus) || chiasmus.length===0) return <pre>No chiasmus found {JSON.stringify(chiasmus)}</pre>
 
 
-    return <div className="chiasmus_list">
+    return   <div>
+         <h3>Chiasmus in the Book of Mormon</h3>
+         <ChiasmusControl/>
+    <div className="chiasmus_list">
+       
         {chiasmus.map((chiasm, i) => {
             const {chiasmus_id, reference, scheme} = chiasm;
+
+            const upperLetters = scheme.replace(/[^A-Z]/g, "").split("").sort();
+            const maxLetter = upperLetters[upperLetters.length-1];
+            const depth = maxLetter.charCodeAt(0) - 64;
+
             return <div key={i} className="chiasmus" onClick={()=>setChiasmusId(chiasmus_id)}>
                 <div className="reference">{reference}</div>
-                <div className="scheme">{scheme}</div>
+                <div className="scheme">Depth: {depth}</div>
             </div>
         })}
     </div>
+    </div>
+    
 }
 
 
