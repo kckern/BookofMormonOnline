@@ -54,6 +54,7 @@ function Chiasm({chiasm_id, setChiasmusId, nextId, prevId}) {
     const [activeScheme, setActiveScheme] = useState(null);
     
     useEffect(() => {
+        setChiasm(null);
         BoMOnlineAPI({chiasm:[chiasm_id]}).then(({chiasm}) => {
             setChiasm(chiasm[chiasm_id]);
             
