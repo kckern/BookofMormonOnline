@@ -31,11 +31,7 @@ function ChiasticLine({line_key, line_text, highlights, activeScheme, setActiveS
     const alphabetPosition = upperCaseLetter.charCodeAt(0) - 64 -1;
     const indexCSS = {marginLeft: `${alphabetPosition * 1.5}ex`};
 
-    const minorAlphabetPosition = lowerCaseLetter.replace("α", "a")
-    .replace("β", "b")
-    .replace("γ", "c")
-    .replace("δ", "d")
-    charCodeAt(0) - 96 -1;
+    const minorAlphabetPosition = lowerCaseLetter.replace(/[αβγδ]/g, char => String.fromCharCode(char.charCodeAt(0) - 848)).charCodeAt(0) - 96 - 1;
 
     const minorCSS = {marginLeft: `${minorAlphabetPosition * 1.5}ex`};
 
