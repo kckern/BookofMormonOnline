@@ -1,0 +1,54 @@
+
+
+.chiasmus_list
+{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    /* 1em spacing between columns */
+    grid-column-gap: 1ex;
+    /* 1em spacing between rows */
+    grid-row-gap: 1ex;
+    padding-bottom: 2rem;
+}
+
+.chiasmus_list .chiasmus
+{
+    display: flex;
+    border: 1px solid #e0e0e0;
+    background-color: #DDD;
+    padding: 1ex;
+    overflow: hidden;
+    border-radius: 1ex;
+    cursor: pointer;
+    
+}
+
+.chiasmus_list .chiasmus:hover
+{
+    background-color: #CCC;
+}
+
+.chiasmus_line
+{
+    display: flex;
+    font-size: 1.3rem;
+    margin-bottom: 1ex;
+    line-height: 1.2rem;
+}
+.chiasmus_line .scheme
+{
+    margin-right: 1ex;
+    background-color: black;
+    color: white;
+    width: 2rem;
+    text-align: center;
+    border-radius: 50%;
+    height: 2rem;
+    flex-shrink: 0;
+    line-height: 2rem;
+}
+
+.chiasmus_line .text 
+{
+    font-family: "Scripture", serif;
+}

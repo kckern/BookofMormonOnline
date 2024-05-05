@@ -190,6 +190,44 @@ const queries = {
     }
 
   },
+
+  chiasmus: () => {
+    //{ chiasmus { chiasmus_id reference scheme } }
+    return {
+      type: "chiasmus",
+      key: "guid",
+      val: false,
+      query:
+        q("chiasmus", "id", [null]) +
+        ` {
+                chiasmus_id
+                reference
+                scheme
+            }`,
+    }
+
+  },
+
+  chiasm: (ids) => {
+    //{ chiasmus(id:["guid"]) { chiasmus_id reference scheme lines{ line_key line_text highlights label } } }
+    return {
+      type: "chiasm",
+      key: "guid",
+      val: ids,
+      query: q("chiasmus", "id", ids) +
+        `{
+                chiasmus_id
+                reference
+                scheme
+                lines{
+                    line_key
+                    line_text
+                    highlights
+                    label
+                }
+            }`,
+    }
+  },
   
   mapstories: (map) => {
     return {
