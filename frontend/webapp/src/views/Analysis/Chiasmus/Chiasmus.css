@@ -35,6 +35,7 @@
     line-height: 1.2rem;
     margin-bottom: 0.3ex;
     max-width: 30rem;
+    cursor: pointer;
 }
 .chiasmus_line .scheme
 {
@@ -54,9 +55,16 @@
     position: relative;
 }
 
+.chiasmus_line .scheme.minor{
+    background-color: #CCC;
+    color: #888;
+
+}
+
 .chiasmus_line .text 
 {
     font-family: "Scripture", serif;
+    color: #AAA;
 }
 
 .chiasm h4
@@ -64,14 +72,53 @@
     font-weight: 800;
 }
 
+
 .chiasmus{
     display: flex;
-    flex-direction: column;
     text-align: center;
+    justify-content: space-between;
+    
 }
 .chiasmus .reference{
     font-weight: 800;
 }
 .chiasmus .scheme{
     color: #888 ;
+}
+
+.chiasmus_line:not(.inactive) .highlight
+{
+    font-weight: 500;
+    color: black    ;
+}
+
+.chiasmus_line.active .highlight
+{
+    font-weight: 500;
+    color: black    ;
+    background-color: #FFFF0022;
+    padding-left: 1ex;
+    padding-right: 1ex;
+    margin-left: -1ex;
+    margin-right: -1ex;
+}
+
+.chiasmus_line.inactive{
+    opacity: 0.5;
+}
+
+
+.chiasmus_line.active .scheme
+{
+    background-color: #FFFF0022;
+    color: black;
+    border: 1px solid #888;
+}
+
+.chiasmus_controls
+{
+    display: flex;
+    justify-content: space-around;
+    margin-top: 1ex;
+    margin-bottom: 2rem;
 }
