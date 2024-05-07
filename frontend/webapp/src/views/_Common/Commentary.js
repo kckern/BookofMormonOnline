@@ -17,8 +17,6 @@ import { ATVHeader } from "./ATV";
 
 export default function Commentary({ appController }) {
 
-  setLanguage(determineLanguage());
-
   const [PopUpRef,setPopUpRef] = useState(null)
   const [commentaryHighlights, setCommentaryHighlights] = useState([]);
   const [callingAPI, setAPICallStatus] = useState(false);
@@ -182,6 +180,8 @@ export default function Commentary({ appController }) {
     .join("");
 
   if(!commentaryData.publication) return null;
+  setLanguage(determineLanguage());
+
   htmlObject = detectScriptures(htmlObject,(scripture) => {
     if (!scripture) return;
     return `<a className="scripture_link">${scripture}</a>`
