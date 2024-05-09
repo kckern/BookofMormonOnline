@@ -1,4 +1,4 @@
-import SendbirdChat from "@sendbird/chat";
+import SendbirdChat, { UserEventHandler } from "@sendbird/chat";
 import {
   OpenChannelModule,
   OpenChannelHandler,
@@ -48,14 +48,12 @@ export default class SendbirdController {
     this.token = token;
     SendBirdCall.init(appId);
 
-
-
-
     this.connect(userId, token);
 
     //console.log("SendbirdController", { appId, userId, token, appController });
     const groupChannelHandler = new GroupChannelHandler();
     const openChannelHandler = new OpenChannelHandler();
+		const userEventHandler = new UserEventHandler();
     const appHandlers = AppHandlers(appController);
 
     //--GROUP CHANNEL EVENTS--//
@@ -85,6 +83,13 @@ export default class SendbirdController {
 
     key = uuid4();
     this.sb.openChannel.addOpenChannelHandler(key, openChannelHandler);
+
+
+		userEventHandler.onTotalUnreadMessageCountChanged = appHandlers.onTotalUnreadMessageCountChanged;
+    
+		key = uuid4();
+    this.sb.addUserEventHandler(key, userEventHandler);
+
   }
 
 
@@ -552,6 +557,10 @@ export default class SendbirdController {
 //EVENT HANDLERS
 function AppHandlers(appController) {
   return {
+		onTotalUnreadMessageCountChanged:()=>{
+			let event = new CustomEvent("unreadMessageCountChanged");
+			window.dispatchEvent(event);
+		},
     onMessageReceived: (channel, message) => {
       if (!message) return false;
       if (message.parentMessageId !== 0) {

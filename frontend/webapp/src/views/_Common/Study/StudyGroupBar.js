@@ -240,7 +240,10 @@ useEffect(()=>{
     if(users.length) return;
     if(bots.length) return;
 		getLiveFreshUsers();
-	},10000)
+	},60000)
+
+	setTimeout(getLiveFreshUsers,100);
+
 	return ()=>{
 		clearInterval(interval);
 	}
@@ -587,10 +590,6 @@ export function StudyGroupUserCircle({ userObject, appController, isBot }) {
     </>
   ) : null;
 
-
-	// console.log('activeGroup',appController.states.studyGroup.activeGroup);
-	// console.log('groupChannel',appController.sendbird.sb.groupChannel);
-	// console.log('UserObj',userObject);
 	useEffect(()=>{
 		const getMessages = async()=>{
 			const groupParams = {
@@ -604,13 +603,11 @@ export function StudyGroupUserCircle({ userObject, appController, isBot }) {
 				setUnreadMessageCount(channels[0].unreadMessageCount);
 			}
 		}
-		const interval = setInterval(()=>{
-      if(unreadMessageCount) return;
-			getMessages();
-		},60000)
-		return ()=>{
-			clearInterval(interval);
-		}
+
+		window.addEventListener("unreadMessageCountChanged",getMessages);
+
+		return ()=>window.removeEventListener('unreadMessageCountChanged',getMessages);
+		
 	},[appController.sendbird.sb.groupChannel])
 	
   return (

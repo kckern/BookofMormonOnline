@@ -143,9 +143,11 @@ function StudyGroupSideBar({
 				setUsers(users);
 				}
 			}
-			const interval = setInterval(()=>{
-				getLiveFreshUsers();
-			},10000)
+
+			const interval = setInterval(getLiveFreshUsers,60000);
+
+			setTimeout(getLiveFreshUsers,100);
+
 			return ()=>{
 				clearInterval(interval);
 			}
