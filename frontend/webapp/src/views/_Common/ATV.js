@@ -71,7 +71,7 @@ function ATVBrackets(a, string) {
             for(const key of changeKeys) {
                 const replacement = changes[key];
                 const oitem = item + "";
-                item = item.replace(key, `<span class="atv-change">⮕ </span>`);
+                item = item.replace(` ${key} `, `<span class="atv-change">⮕ </span>`);
                 if(oitem !== item) break;
             }
 
