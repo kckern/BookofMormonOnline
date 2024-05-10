@@ -122,3 +122,40 @@
     margin-top: 1ex;
     margin-bottom: 2rem;
 }
+
+.innerChiasmContainer{
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+}
+
+.chiasmIndexPanel{
+    flex-grow: 1;
+    overflow: auto;
+    height: calc(100vh - 10.5rem);
+    padding: 0 1ex;
+}
+
+.chiasmPanel{
+    transition: width 0.5s ease;
+    overflow: auto;
+    height: calc(100vh - 10.5rem);
+}
+
+.chiasmPanel.closed{
+    width: 0;
+}
+
+.chiasmPanel.open{
+    width: 40%;
+}
+
+.chiasm .close{
+    float: right;
+}
+
+.chiasmus.active{
+    outline: 3px solid #000;
+    background-color: #CCC;
+    border: 0;
+}
