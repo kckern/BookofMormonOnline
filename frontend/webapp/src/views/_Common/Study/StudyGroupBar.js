@@ -226,9 +226,14 @@ useEffect(()=>{
 		const queryParams = {
 			userIdsFilter:[...activeGroupMembers.filter(member=>member.userId !== mainUser.social.user_id).map(user=>user.userId)]
 		}
-		const query = appController.sendbird.sb.createApplicationUserListQuery(queryParams);
+    let allUsers = [];
+    let query = appController.sendbird.sb.createApplicationUserListQuery(queryParams);
 
-		const queryUsers = await query.next();
+    while(query.hasNext) {
+        let queryUsers = await query.next();
+        allUsers = allUsers.concat(queryUsers);
+    }
+    const queryUsers = allUsers;
 
 		let { users, bots } = getFreshUsers(appController, queryUsers);
 
