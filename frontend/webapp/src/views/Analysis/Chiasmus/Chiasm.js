@@ -66,7 +66,7 @@ function Chiasm({chiasm_id, setChiasmusId, nextId, prevId}) {
     const {lines, reference} = chiasm;
 
     return <div className="chiasm">
-        <button onClick={()=>setChiasmusId(null)}>← Back</button><br/>
+        <button className="close" onClick={()=>setChiasmusId(null)}>X</button>
         <button onClick={()=>setChiasmusId(prevId)}>← Previous</button>
         <button onClick={()=>setChiasmusId(nextId)}>Next →</button>
         <h4>{reference}</h4>
