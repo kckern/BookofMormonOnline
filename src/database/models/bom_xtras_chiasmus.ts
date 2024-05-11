@@ -45,7 +45,11 @@ export default class _bom_xtras_chiasmus extends ModelBase {
         label: {
           type: DataTypes.STRING(255),
           allowNull: true
-        }
+        },
+        title: {
+          type: DataTypes.STRING(255),
+          allowNull: true
+        },
       }, {
       sequelize,
       tableName: 'bom_xtras_chiasmus',

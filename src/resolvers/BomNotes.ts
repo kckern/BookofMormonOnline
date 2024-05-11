@@ -78,7 +78,7 @@ export default {
       const id = args.id;
     const config = {
       where: queryWhere('chiasmus_id', id),
-      include: [includeTranslation({ [Op.or]: ['line_text', 'highlights','label'] }, lang)].filter(x => !!x)
+      include: [includeTranslation({ [Op.or]: ['line_text', 'highlights','label','title'] }, lang)].filter(x => !!x)
     };
       if(!id) delete config.where;
       const lines = await Models.BomXtrasChiasmus.findAll(config);
@@ -96,10 +96,12 @@ export default {
           return versesIds
         }).flat().filter((x:any,i:any,a:any)=>a.indexOf(x) === i);
         const reference = scripture.generateReference(uniqueVerseIds);
-
+        // title of first line 
+        const firstLine = lines.find((x:any)=>x.chiasmus_id === chiasmus_id);
         if (!acc[chiasmus_id]) {
           acc[chiasmus_id] = {
             reference,
+            title: firstLine.getDataValue('title'),
             scheme,
             chiasmus_id,
             lines: []
