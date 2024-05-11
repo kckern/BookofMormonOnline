@@ -61,3 +61,45 @@
 {
     text-transform: lowercase;
 }
+
+.search .searchbox{
+    width: 100%;
+}
+
+.search .searchboxWrapper
+{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1ex;
+    width: 100%;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15); /* Add shadow for depth */
+    border-radius: 25px; /* Rounded corners */
+    background-color: #fff; /* White background */
+}
+
+.search .searchboxWrapper input{
+    flex-grow: 1;
+    border: none; /* Remove border */
+    padding: 0.5em; /* Add padding */
+    font-size: 1em; /* Adjust font size */
+    border-radius: 25px; /* Rounded corners */
+    outline: none; /* Remove focus outline */
+}
+
+.search .searchboxWrapper button{
+    flex-grow: 0;
+    width: 4em;
+    border: none; /* Remove border */
+    background-color: #9a9a9a; /* Blue background */
+    color: #fff; /* White text */
+    border-radius: 25px; /* Rounded corners */
+    cursor: pointer; /* Cursor pointer on hover */
+    transition: background-color 0.3s; /* Transition for hover effect */
+    height: 3rem;
+}
+
+.search .searchboxWrapper button:hover{
+    background-color: #6b6b6b; /* Darker blue on hover */
+}
