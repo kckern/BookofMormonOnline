@@ -26,6 +26,7 @@ extend type Query {
     chiasmus_id: String
     reference: String
     scheme: String
+    title: String
     lines: [ChiasmusLine]
   }
   type ChiasmusLine {

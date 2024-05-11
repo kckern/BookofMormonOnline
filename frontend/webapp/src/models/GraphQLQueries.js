@@ -203,6 +203,7 @@ const queries = {
                 chiasmus_id
                 reference
                 scheme
+                title
             }`,
     }
 
@@ -219,6 +220,7 @@ const queries = {
                 chiasmus_id
                 reference
                 scheme
+                title
                 lines{
                     line_key
                     line_text
