@@ -2,9 +2,10 @@ import { loadMenu } from "./Sidebar"
 import "./MobileMenu.css"
 import { label } from "src/models/Utils"
 import { Link } from "react-router-dom";
+import search from "./svg/search.svg";
 
 export default  function MobileMenu({appController}) {
-    const menu = loadMenu();
+    const menu = [{ slug: "search", title: <span><img src={search} /> {label("menu_search")}</span> },...loadMenu()]
     return <div className="content ">
         <h3>{label("title_more")}</h3>
         <div className="mobilemenu">
