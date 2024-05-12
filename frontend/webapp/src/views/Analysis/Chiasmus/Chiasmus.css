@@ -75,13 +75,33 @@
 
 .chiasmus{
     display: flex;
-    text-align: center;
+    text-align: left;
     justify-content: space-between;
+    flex-direction: column;
     
 }
-.chiasmus .reference{
+.chiasmus .title{
     font-weight: 800;
+    color: #000 ;
+    display: flex;
+    justify-content: space-between;
 }
+.chiasmus .reference{
+    font-weight: 200;
+    color: #444 ;
+    font-size: 0.8rem;
+}
+
+
+.chiasmus .depth{
+    background-color: #888;
+    height: 1rem;
+    padding: 0 1ex;
+    color: white;
+    border-radius: 50%;
+    line-height: 1rem;
+}
+
 .chiasmus .scheme{
     color: #888 ;
 }
