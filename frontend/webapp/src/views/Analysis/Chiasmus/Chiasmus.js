@@ -23,7 +23,7 @@ function Chiasmus({chiasmus,setChiasmusId,activeChiasmus}) {
     if(!Array.isArray(chiasmus) || chiasmus.length===0) return <pre>No chiasmus found {JSON.stringify(chiasmus)}</pre>
 
 
-    return   <div className="chiasmIndexPanel">
+    return   <div className="chiasmIndexPanel noselect">
         
          <ChiasmusControl/>
     <div className="chiasmus_list">

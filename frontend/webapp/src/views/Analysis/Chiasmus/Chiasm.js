@@ -22,7 +22,7 @@ function addHighlights(text, highlights) {
 }
 
 
-function ChiasticLine({line_key, line_text, highlights, activeScheme, setActiveScheme}) {
+function ChiasticLine({line_key, label, line_text, highlights, activeScheme, setActiveScheme}) {
 
     const highlightsArray = JSON.parse(highlights || "[]");
     const text = addHighlights(line_text.replace(/_/g, "").replace(/\s+/g, " "), highlightsArray);  
@@ -41,9 +41,9 @@ function ChiasticLine({line_key, line_text, highlights, activeScheme, setActiveS
     const extraClass = hasActiveScheme ? (isActiveScheme ? "active" : "inactive") : "";
 
     return <div className={`chiasmus_line ${extraClass}`} style={indexCSS} onMouseEnter={()=>setActiveScheme(upperCaseLetter)} >
-        <div className="scheme">{upperCaseLetter}</div>
+        <div className="scheme noselect">{upperCaseLetter}</div>
         {lowerCaseLetter && <div className="scheme minor" style={minorCSS}>{lowerCaseLetter}</div>}
-        <div className="text">{text}</div>
+        <div className="text"><span className="label noselect">{label}</span> {text}</div>
     </div>
 
 }
@@ -63,17 +63,22 @@ function Chiasm({chiasm_id, setChiasmusId, nextId, prevId}) {
 
     if(!chiasm) return <Loader/>
 
-    const {lines, reference} = chiasm;
+    const {lines, reference, title} = chiasm;
 
     return <div className="chiasm">
-        <button className="close" onClick={()=>setChiasmusId(null)}>X</button>
-        <button onClick={()=>setChiasmusId(prevId)}>← Previous</button>
-        <button onClick={()=>setChiasmusId(nextId)}>Next →</button>
-        <h4>{reference}</h4>
+        <h4 className="title text-center title">{title || "Chiasm Title"}
+            <span className="close noselect" onClick={()=>setChiasmusId(null)}>×</span>
+        </h4>
+        <h4 className="title text-center reference">{reference}</h4>
         <div className="chiasmus_lines" onMouseLeave={()=>setActiveScheme(null)}>
             {lines.map((line, i) => {
                 return <ChiasticLine key={i} {...line} activeScheme={activeScheme} setActiveScheme={setActiveScheme}/>
             })}
+        </div>
+
+        <div  className="chiasmus_nav noselect">
+        <div onClick={()=>setChiasmusId(prevId)}>⬅ Previous</div>
+        <div onClick={()=>setChiasmusId(nextId)}>Next ⮕</div>
         </div>
     </div>
         
