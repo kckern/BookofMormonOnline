@@ -29,15 +29,15 @@ function Chiasmus({chiasmus,setChiasmusId,activeChiasmus}) {
     <div className="chiasmus_list">
        
         {chiasmus.map((chiasm, i) => {
-            const {chiasmus_id, reference, scheme} = chiasm;
+            const {chiasmus_id, reference, scheme, title} = chiasm;
 
             const upperLetters = scheme.replace(/[^A-Z]/g, "").split("").sort();
             const maxLetter = upperLetters[upperLetters.length-1];
             const depth = maxLetter.charCodeAt(0) - 64;
 
             return <div key={i}  onClick={()=>setChiasmusId(chiasmus_id)} className={`chiasmus ${activeChiasmus===chiasmus_id ? "active" : ""}`}>
-                <span className="reference">{reference}</span>
-                <span className="depth">Depth: {depth}</span>
+                <div className="title"> {title || "Chiasm Title"}<span className="depth">{depth}</span></div>
+                <div className="reference">{reference}</div>
             </div>
         })}
     </div>
