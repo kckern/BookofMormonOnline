@@ -9,6 +9,27 @@
     /* 1em spacing between rows */
     grid-row-gap: 1ex;
     padding-bottom: 2rem;
+    overflow: auto;
+    max-height: calc(100vh - 14.5rem);
+    padding: 1ex;
+}
+
+.chiasmus_controls .filtered{
+    opacity: 0.2;
+}
+
+.depth_filter .btn{
+    font-size: 1.2rem;
+    padding: 0;
+    width: 2rem;
+    line-height: 50%;
+}
+.depth_filter .btn .counter{
+    font-size: 0.8rem;
+    color: #AAA;
+    margin-top: -0.5rem;
+    position: relative;
+    top: -1rem;
 }
 
 .chiasmus_list .chiasmus
@@ -17,9 +38,12 @@
     border: 1px solid #e0e0e0;
     background-color: #DDD;
     padding: 1ex;
+    height: auto;
     overflow: hidden;
     border-radius: 1ex;
     cursor: pointer;
+    flex-shrink: 0;
+    min-height: auto;
     
 }
 
@@ -152,9 +176,9 @@
 .chiasmus_controls
 {
     display: flex;
-    justify-content: space-around;
+    justify-content: space-between;
     margin-top: 1ex;
-    margin-bottom: 2rem;
+    margin-bottom: 0rem;
 }
 
 .innerChiasmContainer{
@@ -164,10 +188,9 @@
 }
 
 .chiasmIndexPanel{
+    width: 100%;
     flex-grow: 1;
     overflow: auto;
-    height: calc(100vh - 10.5rem);
-    padding: 0 1ex;
 }
 
 .chiasmPanel{
@@ -252,4 +275,9 @@
 .chiasmus_nav div:hover {
     background-color: #888;
     color: white;
+}
+
+.chiasm .loadBar{
+    position: relative;
+    margin-top: -10rem;
 }

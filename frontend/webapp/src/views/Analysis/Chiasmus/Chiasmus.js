@@ -1,20 +1,76 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import BoMOnlineAPI from "../../../models/BoMOnlineAPI";
 import Loader from "../../_Common/Loader";
 import "./Chiasmus.css";
 import Chiasm from "./Chiasm";
-
+import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem,Button, Label } from 'reactstrap';
+import searchIcon from "../../_Common/svg/search.svg";
 
 function ChiasmusControl() {
+    const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
+    const [sortField, setSortField] = useState('reference'); // 'reference' or 'depth'
+    const [sortOrder, setSortOrder] = useState('asc'); // 'asc' or 'desc'
+    const depthCounts = {2:100, 3:40, 4:20, 5:10, 6:5, 7:2, 8:1};
 
-    return <div className="chiasmus_controls">
-        <button>Sort by Depth</button>
-        <button>Sort by Reference</button>
-        <button>Sort by Author</button>
-        <button>Filter By Depth</button>
-    </div>
+    const toggleSort = () => setSortDropdownOpen(prevState => !prevState);
+
+    const handleSort = (field) => {
+        setSortField(field);
+    }
+
+    const toggleSortOrder = () => {
+        setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    }
+
+    return (
+        <div className="chiasmus_controls">
+            <DepthFilter depthCounts={depthCounts} />
+            <div className="sort_controls" style={{display: 'flex', justifyContent: 'space-between'}}>
+            <Dropdown isOpen={sortDropdownOpen} toggle={toggleSort} >
+                <DropdownToggle caret style={{minWidth: '10rem'}}>
+                    Sort By: {sortField}
+                </DropdownToggle>
+                <DropdownMenu>
+                    <DropdownItem onClick={() => handleSort('reference')}>
+                        Reference
+                    </DropdownItem>
+                    <DropdownItem onClick={() => handleSort('depth')}>
+                        Depth
+                    </DropdownItem>
+                </DropdownMenu>
+            </Dropdown>
+            <Button onClick={toggleSortOrder}>
+                {sortOrder === 'asc' ? '⬇' : '⬆'}
+            </Button>
+
+            </div>
+        </div>
+    );
 }
 
+
+function DepthFilter({ depthCounts }) {
+    const [filteredItems, setFilters] = useState({});
+
+    const toggleButton = (depth) => {
+        setFilters(prevState => ({
+            ...prevState,
+            [depth]: !prevState[depth]
+        }));
+    };
+
+    return (
+        <div className="depth_filter" style={{display: 'flex', flexDirection: 'row'}}>
+            {Object.keys(depthCounts).map(depth => <Button 
+                        className={filteredItems[depth] ? 'filtered' : ''} 
+                        onClick={() => toggleButton(depth)}
+                    >
+                        <div className="counter">{depthCounts[depth]}</div>
+                        {depth}
+                    </Button>)}
+        </div>
+    );
+}
 
 
 function Chiasmus({chiasmus,setChiasmusId,activeChiasmus}) {
@@ -49,11 +105,57 @@ function Chiasmus({chiasmus,setChiasmusId,activeChiasmus}) {
 function Container() {
     const [chiasmus, setChiasmus] = useState(null);
     const [chiasmus_id, setChiasmusId] = useState(null);
+    const chiasmusIdRef = useRef(chiasmus_id); // Create a ref
+    useEffect(() => {
+        chiasmusIdRef.current = chiasmus_id; // Update the ref whenever chiasmus_id changes
+        //scroll into view in chiasmus_list
+        const activeElement = document.querySelector(".chiasmus.active");
+        if(activeElement){
+            activeElement.scrollIntoView({behavior: "smooth", block: "center", inline: "center"});
+        }
+    }, [chiasmus_id]);
+
     useEffect(() => {
         BoMOnlineAPI({chiasmus:true}).then(({chiasmus}) => {
             setChiasmus(chiasmus);
         });
-    }, []);
+
+
+        const handleKeyDown = e => {
+            if(e.key === "ArrowRight") navigateChiasmus(1);
+            if(e.key === "ArrowLeft") navigateChiasmus(-1);
+            if(e.key === "Escape") setChiasmusId(null);
+        };
+
+        //set keyboard shortcuts for left and right arrow keys to navigate chiasmus
+        document.addEventListener("keydown", handleKeyDown);
+
+        // Cleanup function to remove the event listener
+        return () => {
+            document.removeEventListener("keydown", handleKeyDown);
+        };
+
+    }, []); // Empty array ensures this runs on mount and unmount only
+
+        const navigateChiasmus = async (direction) => {
+            //wait 1 sec
+            await new Promise(resolve => setTimeout(resolve, 1));
+
+            if (!chiasmus) {
+                return; // Return early if chiasmus is null or undefined
+            }
+
+            const idIndex = chiasmus.findIndex(x => x.chiasmus_id === chiasmusIdRef.current);
+
+            let newIndex = idIndex === -1 ? 0 : idIndex + direction;
+            if (newIndex < 0) {
+                newIndex = chiasmus.length - 1;
+            } else if (newIndex >= chiasmus.length) {
+                newIndex = 0;
+            }
+            setChiasmusId(chiasmus[newIndex].chiasmus_id);
+        }
+
 
     if(!chiasmus && !chiasmus_id) return <Loader/>
     let singlePanel = <div className="chiasmPanel closed"
