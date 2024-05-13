@@ -5,42 +5,56 @@ import "./Chiasmus.css";
 import Chiasm from "./Chiasm";
 import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem,Button, Label } from 'reactstrap';
 import searchIcon from "../../_Common/svg/search.svg";
-
-function ChiasmusControl() {
-    const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
-    const [sortField, setSortField] = useState('reference'); // 'reference' or 'depth'
-    const [sortOrder, setSortOrder] = useState('asc'); // 'asc' or 'desc'
-    const depthCounts = {2:100, 3:40, 4:20, 5:10, 6:5, 7:2, 8:1};
-
-    const toggleSort = () => setSortDropdownOpen(prevState => !prevState);
+function ChiasmusControl({chiasmusControls, setChiasmusControls}) {
+    const toggleSort = () => setChiasmusControls(prevState => ({...prevState, sortDropdownOpen: !prevState.sortDropdownOpen}));
 
     const handleSort = (field) => {
-        setSortField(field);
+        setChiasmusControls(prevState => ({...prevState, sortField: field}));
     }
 
     const toggleSortOrder = () => {
-        setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+        setChiasmusControls(prevState => ({...prevState, sortOrder: prevState.sortOrder === 'asc' ? 'desc' : 'asc'}));
     }
+
+    const toggleSortField = () => {
+        setChiasmusControls(prevState => ({...prevState, sortFieldButton: prevState.sortFieldButton === 'Reference' ? 'Depth' : 'Reference'}));
+    };
+
+const toggleButton = (depth) => {
+    setChiasmusControls(prevState => {
+        let newFilteredLevels = [...prevState.filteredLevels];
+        const isNumeric = !isNaN(depth);
+        depth = isNumeric ? parseInt(depth) : depth;
+        const index = newFilteredLevels.indexOf(depth);
+        
+        if (index === -1) {
+            newFilteredLevels.push(depth);
+        } else {
+            newFilteredLevels.splice(index, 1);
+        }
+
+        return {
+            ...prevState,
+            filteredLevels: newFilteredLevels
+        };
+    });
+};
+
+    const toggleBiblical = () => {
+        setChiasmusControls(prevState => ({...prevState, biblical: !prevState.biblical}));
+    };
+
+    const toggleCompound = () => {
+        setChiasmusControls(prevState => ({...prevState, compound: !prevState.compound}));
+    };
 
     return (
         <div className="chiasmus_controls">
-            <DepthFilter depthCounts={depthCounts} />
+            <DepthFilter depthCounts={chiasmusControls.depthCounts} chiasmusControls={chiasmusControls} toggleButton={toggleButton} toggleBiblical={toggleBiblical} toggleCompound={toggleCompound} />
             <div className="sort_controls" style={{display: 'flex', justifyContent: 'space-between'}}>
-            <Dropdown isOpen={sortDropdownOpen} toggle={toggleSort} >
-                <DropdownToggle caret style={{minWidth: '10rem'}}>
-                    Sort By: {sortField}
-                </DropdownToggle>
-                <DropdownMenu>
-                    <DropdownItem onClick={() => handleSort('reference')}>
-                        Reference
-                    </DropdownItem>
-                    <DropdownItem onClick={() => handleSort('depth')}>
-                        Depth
-                    </DropdownItem>
-                </DropdownMenu>
-            </Dropdown>
-            <Button onClick={toggleSortOrder}>
-                {sortOrder === 'asc' ? '⬇' : '⬆'}
+            <SortButton chiasmusControls={chiasmusControls} toggleSortField={toggleSortField} />
+            <Button onClick={toggleSortOrder}  className="sort_order_button">
+                {chiasmusControls.sortOrder === 'asc' ? '⬇' : '⬆'}
             </Button>
 
             </div>
@@ -49,47 +63,87 @@ function ChiasmusControl() {
 }
 
 
-function DepthFilter({ depthCounts }) {
-    const [filteredItems, setFilters] = useState({});
+function SortButton({chiasmusControls, toggleSortField}) {
+    return (
+        <Button onClick={toggleSortField} style={{minWidth: '10rem'}}>
+            Sort: {chiasmusControls.sortFieldButton}
+        </Button>
+    );
+}
 
-    const toggleButton = (depth) => {
-        setFilters(prevState => ({
-            ...prevState,
-            [depth]: !prevState[depth]
-        }));
-    };
-
+function DepthFilter({depthCounts, chiasmusControls, toggleButton, toggleBiblical, toggleCompound}) {
     return (
         <div className="depth_filter" style={{display: 'flex', flexDirection: 'row'}}>
+            <div className="filter_label">  Chiastic<br/>Levels</div>
             {Object.keys(depthCounts).map(depth => <Button 
-                        className={filteredItems[depth] ? 'filtered' : ''} 
+                        className={chiasmusControls.filteredLevels.includes(parseInt(depth)) ? 'filtered' : ''}
                         onClick={() => toggleButton(depth)}
                     >
                         <div className="counter">{depthCounts[depth]}</div>
                         {depth}
                     </Button>)}
+
+            <div className="filter_label">Biblical</div>
+            <Button className={chiasmusControls.biblical ? 'filtered' : ''} onClick={toggleBiblical}>
+            <div className="counter">100</div>
+                <input type="checkbox" checked={!chiasmusControls.biblical} style={{color: '#AAA'}} />
+            </Button>
+
+            <div className="filter_label">Compound</div>
+            <Button className={chiasmusControls.compound ? 'filtered' : ''} onClick={toggleCompound}>
+            <div className="counter">100</div>
+                <input type="checkbox" checked={!chiasmusControls.compound} style={{color: '#AAA'}} />
+            </Button>
         </div>
     );
 }
 
-
 function Chiasmus({chiasmus,setChiasmusId,activeChiasmus}) {
+
+
+    const [chiasmusControls, setChiasmusControls] = useState({
+        sortDropdownOpen: false,
+        sortField: 'reference', // 'reference' or 'depth'
+        sortOrder: 'asc', // 'asc' or 'desc'
+        depthCounts: {2:100, 3:40, 4:20, 5:10, 6:5, 7:2, "+":1},
+        sortFieldButton: 'Reference',
+        filteredLevels: [],
+        biblical: false,
+        compound: false
+    });
+
 
 
     if(!Array.isArray(chiasmus) || chiasmus.length===0) return <pre>No chiasmus found {JSON.stringify(chiasmus)}</pre>
 
 
+    const filterChiasm = (chiasm) => {
+        const {filteredLevels, biblical, compound} = chiasmusControls;
+        const {depth, scheme} = chiasm;
+        const isCompound = /Aa/.test(scheme);
+        console.log(scheme,"isCompound", isCompound);
+        if(compound && isCompound) return false;
+        if (filteredLevels.includes(depth)) return false;
+        return true;
+    }
+
     return   <div className="chiasmIndexPanel noselect">
         
-         <ChiasmusControl/>
+         <ChiasmusControl chiasmusControls={chiasmusControls} setChiasmusControls={setChiasmusControls} />
     <div className="chiasmus_list">
        
-        {chiasmus.map((chiasm, i) => {
-            const {chiasmus_id, reference, scheme, title} = chiasm;
-
-            const upperLetters = scheme.replace(/[^A-Z]/g, "").split("").sort();
+        {chiasmus
+        .map((chiasm, i) => {
+            const upperLetters = chiasm.scheme.replace(/[^A-Z]/g, "").split("").sort();
             const maxLetter = upperLetters[upperLetters.length-1];
             const depth = maxLetter.charCodeAt(0) - 64;
+            chiasm = {...chiasm, depth};
+            return chiasm;
+        })
+        .filter(filterChiasm)
+        .map((chiasm, i) => {
+            const {chiasmus_id, reference, depth, title} = chiasm;
+
 
             return <div key={i}  onClick={()=>setChiasmusId(chiasmus_id)} className={`chiasmus ${activeChiasmus===chiasmus_id ? "active" : ""}`}>
                 <div className="title"> {title || "Chiasm Title"}<span className="depth">{depth}</span></div>

@@ -165,6 +165,10 @@
     position: relative;
     bottom: 0.5ex;
 }
+.chiasmus_line.active .text span.label
+{
+    background-color: #555!important;
+}
 
 .chiasmus_line.active .scheme
 {
@@ -280,4 +284,26 @@
 .chiasm .loadBar{
     position: relative;
     margin-top: -10rem;
+}
+
+.depth_filter .filter_label{
+    font-size: 0.7rem;
+    text-align: center;
+    color: #888;
+    rotate: 270deg;
+    display: flex;
+    align-items: center;
+    line-height: 100%;
+    letter-spacing: -0.1ex;
+}
+
+.chiasmus_controls input[type="checkbox"]{
+    transform: scale(1.5);
+}
+.chiasmus_controls .sort_order_button
+{
+    font-size: 1.2rem;
+    padding: 0;
+    width: 2rem;
+    line-height: 50%;
 }
