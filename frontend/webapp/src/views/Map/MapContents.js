@@ -110,13 +110,15 @@ const drawMap = ()=>{
 		setAnimateZoom(mapController.zoomLevel || iniZoom);
     mapController.setZoomLevel(iniZoom);
     mapController.setMapCenter({lat: mapCenter[0], lng: mapCenter[1]});
+
+    const nonretinatiles = ["internal-b"];
     
     map.current = new Map({
         target: mapElement.current,
         layers: [new TileLayer({
             source: new XYZ({
                 url: `${assetUrl}/map/${mapslug}/{z}/{x}/{y}`, 
-                tilePixelRatio: 2, 
+                tilePixelRatio: nonretinatiles.includes(mapslug) ? 1 : 2,
                 minZoom,  maxZoom
             })
         })],

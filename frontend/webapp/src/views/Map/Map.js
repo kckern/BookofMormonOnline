@@ -87,7 +87,7 @@ function MapContainer({ appController }) {
     setMapName(label("loading"))
     
     BoMOnlineAPI({ map: type, mapstories: [type] },{useCache:false}).then((result) => {
-      result.map[type].stories = result.mapstories || [];
+      result.map[type].stories = result?.mapstories || [];
       setPlaceName(place)
       setMapName(result.map?.[type]?.name)
       setCurrentMap({ ...result.map[type] })
