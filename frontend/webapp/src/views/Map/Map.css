@@ -150,6 +150,10 @@
   object-fit: cover;
 }
 
+.mapPanel .minMax{
+  justify-content: space-between;
+}
+
 /* .map .gm-style a img */
 
 
