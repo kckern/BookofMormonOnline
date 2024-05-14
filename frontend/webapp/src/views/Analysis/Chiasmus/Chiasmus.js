@@ -5,19 +5,19 @@ import "./Chiasmus.css";
 import Chiasm from "./Chiasm";
 import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem,Button, Label } from 'reactstrap';
 import searchIcon from "../../_Common/svg/search.svg";
+import {lookupReference} from "scripture-guide";
 function ChiasmusControl({chiasmusControls, setChiasmusControls}) {
-    const toggleSort = () => setChiasmusControls(prevState => ({...prevState, sortDropdownOpen: !prevState.sortDropdownOpen}));
 
-    const handleSort = (field) => {
-        setChiasmusControls(prevState => ({...prevState, sortField: field}));
-    }
 
     const toggleSortOrder = () => {
         setChiasmusControls(prevState => ({...prevState, sortOrder: prevState.sortOrder === 'asc' ? 'desc' : 'asc'}));
     }
 
     const toggleSortField = () => {
-        setChiasmusControls(prevState => ({...prevState, sortFieldButton: prevState.sortFieldButton === 'Reference' ? 'Depth' : 'Reference'}));
+        setChiasmusControls(prevState => ({...prevState, 
+            sortFieldButton: prevState.sortFieldButton === 'Reference' ? 'Depth' : 'Reference',
+            sortField: prevState.sortField === 'reference' ? 'depth' : 'reference'
+        }));
     };
 
 const toggleButton = (depth) => {
@@ -76,13 +76,11 @@ function DepthFilter({depthCounts, chiasmusControls, toggleButton, toggleBiblica
         <div className="depth_filter" style={{display: 'flex', flexDirection: 'row'}}>
             <div className="filter_label">  Chiastic<br/>Levels</div>
             {Object.keys(depthCounts).map(depth => <Button 
-                        className={chiasmusControls.filteredLevels.includes(parseInt(depth)) ? 'filtered' : ''}
-                        onClick={() => toggleButton(depth)}
-                    >
+                className={chiasmusControls.filteredLevels.includes(isNaN(depth) ? depth : parseInt(depth) ) ? 'filtered' : ''}                        
+                    onClick={() => toggleButton(depth)} >
                         <div className="counter">{depthCounts[depth]}</div>
                         {depth}
                     </Button>)}
-
             <div className="filter_label">Biblical</div>
             <Button className={chiasmusControls.biblical ? 'filtered' : ''} onClick={toggleBiblical}>
             <div className="counter">100</div>
@@ -119,19 +117,28 @@ function Chiasmus({chiasmus,setChiasmusId,activeChiasmus}) {
 
     const filterChiasm = (chiasm) => {
         const {filteredLevels, biblical, compound} = chiasmusControls;
-        const {depth, scheme} = chiasm;
+        let {depth, scheme} = chiasm;
+        if(depth > 7) depth = "+";
         const isCompound = /Aa/.test(scheme);
-        console.log(scheme,"isCompound", isCompound);
         if(compound && isCompound) return false;
         if (filteredLevels.includes(depth)) return false;
         return true;
     }
 
+    const sortChiasmus = (a, b) => {
+        const {sortField, sortOrder} = chiasmusControls;
+        if (sortField === 'depth') {
+            return sortOrder === 'asc' ? a.depth - b.depth : b.depth - a.depth;
+        } else {
+            const [aVerseId] = lookupReference(a.reference).verse_ids;
+            const [bVerseId] = lookupReference(b.reference).verse_ids;
+            return sortOrder === 'asc' ? aVerseId - bVerseId : bVerseId - aVerseId;
+        }
+    }
+
     return   <div className="chiasmIndexPanel noselect">
-        
          <ChiasmusControl chiasmusControls={chiasmusControls} setChiasmusControls={setChiasmusControls} />
     <div className="chiasmus_list">
-       
         {chiasmus
         .map((chiasm, i) => {
             const upperLetters = chiasm.scheme.replace(/[^A-Z]/g, "").split("").sort();
@@ -141,10 +148,9 @@ function Chiasmus({chiasmus,setChiasmusId,activeChiasmus}) {
             return chiasm;
         })
         .filter(filterChiasm)
+        .sort(sortChiasmus)
         .map((chiasm, i) => {
             const {chiasmus_id, reference, depth, title} = chiasm;
-
-
             return <div key={i}  onClick={()=>setChiasmusId(chiasmus_id)} className={`chiasmus ${activeChiasmus===chiasmus_id ? "active" : ""}`}>
                 <div className="title"> {title || "Chiasm Title"}<span className="depth">{depth}</span></div>
                 <div className="reference">{reference}</div>
