@@ -48,6 +48,45 @@ export default function Commentary({ appController }) {
     setText(tmp + "");
   };
 
+	console.log('appController.states.popUp.ids',appController.states.popUp.ids);
+	
+	const handleKeyboardListener = (e)=>{
+		e.preventDefault();
+
+		const activeId = appController.states.popUp.activeId;
+		
+		const ids = appController.states.popUp.ids;
+
+		const activeIdIndex = ids.findIndex(id=>id === activeId);
+
+		console.log('ActvieId',activeId);
+		console.log('Ids',ids);
+		console.log('AppController',appController);
+
+		const cardBodyElement = document.getElementById('popUp').childNodes[1];
+
+		if(ids.length >= 2){
+		if(e.key === 'Tab' || e.key === 'ArrowRight'){
+				if(activeIdIndex === ids.length - 1){
+					appController.functions.setActivePopUpId({ id: ids[0] })
+				}else {
+					appController.functions.setActivePopUpId({ id: ids[activeIdIndex+1] })
+				}
+		}else if(e.key === 'ArrowLeft'){
+			if(activeIdIndex === 0){
+				appController.functions.setActivePopUpId({ id: ids[ids.length-1] })
+			}else {
+				appController.functions.setActivePopUpId({ id: ids[activeIdIndex-1] })
+			}
+		}
+		}
+		if(e.key === 'ArrowUp'){
+			cardBodyElement.scrollTop = cardBodyElement.scrollTop - 30;
+		}else if(e.key === 'ArrowDown'){
+			cardBodyElement.scrollTop = cardBodyElement.scrollTop + 30;
+		}
+	}
+
   if (!popUpOpen) return null;
 
   if (appController.states.popUp.loading) {
@@ -55,6 +94,7 @@ export default function Commentary({ appController }) {
       setAPICallStatus(true);
       BoMOnlineAPI({ commentary: appController.states.popUp.ids }).then(
         (response) => {
+					console.log('Response',response);
           setAPICallStatus(false);
           setPopUpRef(null);
           appController.functions.setPopUp({
@@ -199,7 +239,6 @@ export default function Commentary({ appController }) {
     }
   }
 
-
   return (
     <>
       <Draggable handle=".card-header">
@@ -210,6 +249,8 @@ export default function Commentary({ appController }) {
             top: appController.states.popUp.top,
             left: appController.states.popUp.left,
           }}
+					onKeyDown={handleKeyboardListener}
+					tabIndex={0}
         >
           <div className="card-header">
             {tabs}
