@@ -248,6 +248,8 @@
   border-bottom: 1px solid #c0c0c042;
   cursor: pointer;
   transition: 0.3s;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 
