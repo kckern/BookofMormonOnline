@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import BoMOnlineAPI from "../../../models/BoMOnlineAPI";
-import Loader from "../../_Common/Loader";
+import { Spinner } from "../../_Common/Loader";
 import Parser from "html-react-parser";
 
 
@@ -61,7 +61,7 @@ function Chiasm({chiasm_id, setChiasmusId, nextId, prevId}) {
         });
     }, [chiasm_id]);
 
-    if(!chiasm) return <Loader/>
+    if(!chiasm) return <div className="chiasm"><Spinner/></div>
 
     const {lines, reference, title} = chiasm;
 
