@@ -47,8 +47,6 @@ export default function Commentary({ appController }) {
     tmp = tmp.replace(/\s+/g, " ");
     setText(tmp + "");
   };
-
-	console.log('appController.states.popUp.ids',appController.states.popUp.ids);
 	
 	const handleKeyboardListener = (e)=>{
 		e.preventDefault();
@@ -59,27 +57,30 @@ export default function Commentary({ appController }) {
 
 		const activeIdIndex = ids.findIndex(id=>id === activeId);
 
-		console.log('ActvieId',activeId);
-		console.log('Ids',ids);
-		console.log('AppController',appController);
-
 		const cardBodyElement = document.getElementById('popUp').childNodes[1];
 
 		if(ids.length >= 2){
-		if(e.key === 'Tab' || e.key === 'ArrowRight'){
-				if(activeIdIndex === ids.length - 1){
-					appController.functions.setActivePopUpId({ id: ids[0] })
-				}else {
-					appController.functions.setActivePopUpId({ id: ids[activeIdIndex+1] })
-				}
-		}else if(e.key === 'ArrowLeft'){
-			if(activeIdIndex === 0){
-				appController.functions.setActivePopUpId({ id: ids[ids.length-1] })
-			}else {
-				appController.functions.setActivePopUpId({ id: ids[activeIdIndex-1] })
+			switch(e.key){
+				case 'Tab':
+				case 'ArrowRight':
+					if(activeIdIndex === ids.length - 1){
+						appController.functions.setActivePopUpId({ id: ids[0] })
+					}else {
+						appController.functions.setActivePopUpId({ id: ids[activeIdIndex+1] })
+					}
+					break;
+					case 'ArrowLeft':
+						if(activeIdIndex === 0){
+							appController.functions.setActivePopUpId({ id: ids[ids.length-1] })
+						}else {
+							appController.functions.setActivePopUpId({ id: ids[activeIdIndex-1] })
+						}
+						break;
+						default:
+							break;
 			}
 		}
-		}
+
 		if(e.key === 'ArrowUp'){
 			cardBodyElement.scrollTop = cardBodyElement.scrollTop - 30;
 		}else if(e.key === 'ArrowDown'){
@@ -94,9 +95,11 @@ export default function Commentary({ appController }) {
       setAPICallStatus(true);
       BoMOnlineAPI({ commentary: appController.states.popUp.ids }).then(
         (response) => {
-					console.log('Response',response);
           setAPICallStatus(false);
           setPopUpRef(null);
+					const undefinedResponseElementArray = Object.entries(response.commentary);
+					const undefinedResponseElementItem = undefinedResponseElementArray.find(element=>element[1] === undefined);
+					delete response.commentary[undefinedResponseElementItem[0]];
           appController.functions.setPopUp({
             type: "commentary",
             ids: Object.keys(response.commentary),
@@ -142,8 +145,19 @@ export default function Commentary({ appController }) {
     appController.popUpData[appController.states.popUp.activeId] ||
     appController.popUpData[randomKey];
 
-  if (!text || text !== commentaryData.text) {
-    setText(commentaryData.text);
+		if(commentaryData ===undefined) {
+		const commentaryDataEntriesArray = Object.entries(appController.popUpData);
+		const commentaryDataUndefinedIndex = commentaryDataEntriesArray.findIndex(entry=>entry[1] === undefined);
+		if(commentaryDataUndefinedIndex === commentaryDataEntriesArray.length -1){
+			appController.functions.setActivePopUpId({ id: commentaryDataEntriesArray[0][0] })
+		}else{
+			appController.functions.setActivePopUpId({ id: commentaryDataEntriesArray[commentaryDataUndefinedIndex+1][0] })
+		}
+		return null;
+	}
+
+  if (!text || text !== commentaryData?.text) {
+    setText(commentaryData?.text);
     setLegal(false);
   }
   let num = commentaryData?.location?.slug.replace(/\D+/, "") || 0;
@@ -208,7 +222,7 @@ export default function Commentary({ appController }) {
   if (atvHTML) htmlObject = htmlObject.replace(atvHTML, "").trim();
 
   // replace the last 2 spaces with non-breaking spaces
-  const headingWords = commentaryData.title?.split(" ") || [];
+  const headingWords = commentaryData?.title?.split(" ") || [];
   const wordCount = headingWords.length;
   const commentaryHeading = headingWords
     .map((word, index) => {
@@ -219,7 +233,7 @@ export default function Commentary({ appController }) {
     })
     .join("");
 
-  if(!commentaryData.publication) return null;
+  if(!commentaryData?.publication) return null;
   setLanguage(determineLanguage());
 
   htmlObject = detectScriptures(htmlObject,(scripture) => {
