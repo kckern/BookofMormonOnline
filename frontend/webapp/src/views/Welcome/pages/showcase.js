@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 
-import { HomeFeed } from "../../Home/Feed"; 
+import { HomeFeed } from "../../Home/Feed";
 import { Button, Card, CardBody, CardFooter, CardHeader } from "reactstrap";
 import BoMOnlineAPI, { assetUrl } from 'src/models/BoMOnlineAPI';
 import { Link ,useHistory} from "react-router-dom/cjs/react-router-dom.min";
@@ -18,7 +18,7 @@ export default function WelcomeUnShaken({appController})
             <CommunityFeed appController={appController} />
         </div>
     </div>
-            
+
 }
 
 function HeroBanner()
@@ -120,19 +120,19 @@ function ShowCasePanel({title, video, link, isActive})
     const history = useHistory();
 
     return <Card className={`showcase-panel ${isActive ? "active" : ""}`} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} onClick={onClick}>
-        <CardHeader className="showcase-panel-header" display="flex" justifycontent="space-between">
+        <CardHeader className="showcase-panel-header" display="flex" style={{justifyContent: 'space-between'}}>
             <h6>{title} </h6>
         </CardHeader>
         <CardBody className="showcase-panel-body">
-        <video 
+        <video
 			id={`video-${video}`}
-            style={{  
+            style={{
                  objectFit: 'cover',
                  objectPosition: 'top center',
 
-                }} 
-            loop 
-            muted   
+                }}
+            loop
+            muted
             playsInline={true}
             src={`${assetUrl}/video/welcome/${video || "skim"}`}
         />

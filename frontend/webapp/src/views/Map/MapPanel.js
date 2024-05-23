@@ -29,6 +29,8 @@ import {
 import { ApiBaseUrl, assetUrl } from "../../models/BoMOnlineAPI"
 import { ScripturePanelSingle } from "../Page/Narration";
 import { detectScriptures, generateReference } from "scripture-guide";
+import { get } from "lodash";
+import { getHtmlScriptureLinkParserOptions } from "../_Common/ViewUtils";
 
 const metersToMiles = (meters) => Math.round(meters * 0.000621371192 * 1) / 1;
 
@@ -39,20 +41,10 @@ export function getPlaceInfo(slug, appController) {
     return key ? appController.preLoad.placeList[key] : {};
   }
 
-export function MapPanel({mapController})
-{
-    const parseOptions = {
-        replace: (domNode) => {
-          const attribs = { ...domNode.attribs };
-          if (attribs?.classname === 'scripture_link') {
-            const ref = domNode.children[0].data;
-            attribs.class = attribs.classname;
-            delete attribs.classname;
-            return <a {...attribs} onClick={()=>setScripture(ref)}>{ref}</a>;
-          }
-        }
-      }
-
+export function MapPanel({mapController}) {
+  const [activeTab, setActiveTab] = useState("1");
+  const [scripture, setScripture] = useState(null);
+  const parserOptions = getHtmlScriptureLinkParserOptions(setScripture);
   const [prevMapType, setPrevMapType] = useState(null);
   const [selectedStory, setSelectedStory] = useState(null);
   const {panelContents, zoomLevel, currentMap, mapCenter, setPanelContents,mapFunctions, isAdmin, placeList} = mapController;
@@ -65,8 +57,8 @@ export function MapPanel({mapController})
   const [placeDetails, setPlaceDetails] = useState({});
 
 	const history = useHistory();
-  
-useEffect(() => {
+
+  useEffect(() => {
     // First useEffect logic
     if (!slug || !currentMap) return;
     setPlace(currentMap.places?.find((place) => place.slug === slug));
@@ -90,20 +82,17 @@ useEffect(() => {
     } else {
         mapController.appController.functions.setSlug(`/map/${mapSlug}`);
     }
-}, [slug, currentMap?.slug, selectedStory]);
+  }, [slug, currentMap?.slug, selectedStory]);
 
 
   const index = placeDetails?.index || [];
   const maps = placeDetails?.maps || [];
 
-  const [activeTab, setActiveTab] = useState("1");
-  const [scripture, setScripture] = useState(null);
-
   let desc_with_scripturelinks =  placeDetails?.description;
-  
+
 
     desc_with_scripturelinks = detectScriptures(
-    placeDetails?.description || "", 
+    placeDetails?.description || "",
     (scripture) => { if (!scripture) return;
        return `<a className="scripture_link">${scripture}</a>` }
        );
@@ -138,8 +127,7 @@ useEffect(() => {
 </Nav>
 <TabContent activeTab={activeTab}>
     <TabPane tabId="1">
-        <div className="desc" >
-          {Parser(desc_with_scripturelinks,parseOptions)}</div>
+        <div className="desc">{Parser(desc_with_scripturelinks, parserOptions)}</div>
     </TabPane>
     <TabPane tabId="2">
     {matchingStories.map((story, i) => {
@@ -180,8 +168,8 @@ useEffect(() => {
                           {item.ref}
                           </a>
                           </td>
-                        <td>{["1","2","3","4"].reduce((a, e, i) => 
-                          a.replace(new RegExp(e, "g"), ["¹","²","³","⁴"][i]), item.text)}</td>                    
+                        <td>{["1","2","3","4"].reduce((a, e, i) =>
+                          a.replace(new RegExp(e, "g"), ["¹","²","³","⁴"][i]), item.text)}</td>
                         </tr>
                 })}
             </tbody>
@@ -200,7 +188,7 @@ useEffect(()=>{
   if(!isOutOfMapScope) return false;
   // TODO: prevMapType is not being set correctly
   const dstMap = currentMap?.slug === "neareast" ? (prevMapType || "internal") : "neareast";
-  if(dstMap !== "neareast") setPrevMapType(dstMap); 
+  if(dstMap !== "neareast") setPrevMapType(dstMap);
    mapController.getMap(dstMap,slug)
 },[preloadedPlace?.location]);
 
@@ -237,7 +225,7 @@ const clearCache = (slug)=>{
 				mapController.getMap(currentMap?.slug)
 				mapController.setPanelContents({slug});
 			},1000);
-		}	
+		}
   }
 
 }
@@ -348,9 +336,9 @@ const adminPanel = isAdmin ? place ? <Card className="adminPanel" onKeyDown={(e)
   </CardHeader>
   <CardBody>
     {/* 3 columns: Current, min max: 1. read only input, 2 and 3 dropdowns 3-9*/}
-    <div className="zoomLevels" style={{display: "flex", justifycontent: "space-between", gap: "1rem"}}>
-      
-    
+    <div className="zoomLevels" style={{display: "flex", justifyContent: "space-between", gap: "1rem"}}>
+
+
 {minZoom && (
   <div
     style={{display: "flex", flexDirection: "column-reverse", justifycontent: "space-between", flexGrow: 1}}
@@ -366,8 +354,8 @@ const adminPanel = isAdmin ? place ? <Card className="adminPanel" onKeyDown={(e)
     />
     <div className="minMax" style={{display: "flex", justifycontent: "space-between",marginBottom:"1ex"}}>
       {Array.from({length: currentMap?.maxzoom - currentMap?.minzoom + 1}, (_, i) => currentMap?.minzoom + i).map((zoomLevelLabel) => (
-        <span 
-          key={zoomLevelLabel} 
+        <span
+          key={zoomLevelLabel}
           className={`
             ${zoomLevelLabel === minZoom || zoomLevelLabel === maxZoom ? 'selected' : ''}
             ${zoomLevelLabel === Math.round(zoomLevel) ? 'current' : ''}
@@ -378,7 +366,7 @@ const adminPanel = isAdmin ? place ? <Card className="adminPanel" onKeyDown={(e)
       ))}
     </div>
   </div>
-  
+
 )}
     </div>
   </CardBody></>)}
@@ -398,12 +386,12 @@ if(isMobile()) return null;
 
 
 
-  return <div className="mapPanel">	
+  return <div className="mapPanel">
     <div className="mapPanelCardContainer">
     <Card>
       <CardHeader>
-        <div  style={{ display: 'flex', justifycontent: 'space-between', alignItems: 'center', height:"1.5rem" }}>
-        <span 
+        <div  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height:"1.5rem" }}>
+        <span
           className="searchPanelButton"
           onClick={()=>mapController.setSearching({firstLetter:""})}
           style={{ flexShrink: 0 }}
@@ -412,7 +400,7 @@ if(isMobile()) return null;
         </span>
         <h5 className="title" style={{ flexGrow: 1, textAlign: 'center' }}>{Parser((title||"").replace(/([0-9])/, "<sup>$1</sup>"))
         }</h5>
-        <span 
+        <span
           className="closePanelButton"
           onClick={()=>{
 						setPanelContents(false)
@@ -446,17 +434,7 @@ function MapStoryPanel({mapController})
     const {selectedStory, setSelectedStory} = mapController;
     const preLoadedPlaces = Object.values(mapController.placeList);
     const [scripture, setScripture] = useState(null);
-    const parseOptions = {
-        replace: (domNode) => {
-          const attribs = { ...domNode.attribs };
-          if (attribs?.classname === 'scripture_link') {
-            const ref = domNode.children[0].data;
-            attribs.class = attribs.classname;
-            delete attribs.classname;
-            return <a {...attribs} onClick={()=>setScripture(ref)}>{ref}</a>;
-          }
-        }
-      } 
+	  const parserOptions = getHtmlScriptureLinkParserOptions(setScripture);
 
     const moveCount = selectedStory.moves.length;
 
@@ -478,7 +456,7 @@ function MapStoryPanel({mapController})
                     const {seq, travelers, verse_ids, description, startPlace, endPlace, duration} = move;
                     const scriptureref = generateReference(verse_ids);
                     const ref = `<a className="scripture_link">${scriptureref}</a>`;
-  
+
 
                     const start = preLoadedPlaces.find((place) => place.slug === startPlace.slug);
                     const end = preLoadedPlaces.find((place) => place.slug === endPlace.slug);
@@ -492,7 +470,7 @@ function MapStoryPanel({mapController})
                             <div className="map_story_move_desc">
                                 <p><b>{travelers}</b><span className="distance"> • {miles} miles</span>{!!duration && <span className="duration"> • {duration}</span>}
                                 </p>
-                                {Parser(`<p class='desc'>${description} (${ref})</p>`, parseOptions)}
+                                {Parser(`<p class='desc'>${description} (${ref})</p>`, parserOptions)}
                             </div>
                             <MapEventImageCaption location={end} />
                         </div>

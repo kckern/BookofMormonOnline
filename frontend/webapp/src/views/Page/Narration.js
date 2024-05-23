@@ -16,6 +16,7 @@ import {Spinner} from "../_Common/Loader";
 import { determineLanguage } from "../../models/Utils";
 import { Link } from "react-router-dom";
 import ReactTooltip from "react-tooltip";
+import classNames from "classnames";
 const {generateReference, detectReferences, setLang, lookupReference} = require('scripture-guide');
 
 function ChronoRow({ chrono }) {
@@ -688,7 +689,7 @@ function PeoplePlacePanel({ narrationController }) {
         <span onClick={closePanel}> × </span>
       </h5>
     <div className="peoplePlacePanel">
-      
+
       {items.map((item)=> {
         return <div key={item.name} className="item" onClick={()=>popUpPerson(item.slug,item.type)}>
 
@@ -697,7 +698,7 @@ function PeoplePlacePanel({ narrationController }) {
           </div>
           <img src={`${assetUrl}/${item.type}/${item.slug}`} alt={item.name} />
           <div className="info">{(item.title || item.info).replace(/[1-4]/g, replaceNumbers)}</div>
-          
+
             </div>;
       })}
     </div>
@@ -831,15 +832,15 @@ function ScripturePanel({ narrationController }) {
           break;
       }
     };
-  
+
     window.addEventListener('keydown', handleKeyDown);
-  
+
     // Cleanup: remove the event listener when the component is unmounted
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
 
-    
+
   }, [activeRef]); // Re-run the effect when activeRef changes
 
   if(!refs?.length) return null;
@@ -860,18 +861,19 @@ function ScripturePanel({ narrationController }) {
   </div>
 }
 
-export function ScripturePanelSingle({ scriptureData,closeButton, setPopUpRef }) {
-
+export function ScripturePanelSingle({ scriptureData, closeButton, onClose, setPopUpRef }) {
   const {ref} = scriptureData || {ref:null,verse_id:null};
   const [passages, setPassages] = useState([]);
-  
-  const closeButtonEl = !!closeButton ? <div className="closebutton"
-  onClick={()=>{
-    setPopUpRef(null)
-    setPassages([]);
-  }}
-  >×</div> :null;
 
+  const closeButtonEl = !!closeButton ? (
+    <div className="closebutton"
+      onClick={()=>{
+        onClose?.();
+        setPopUpRef?.(null)
+        setPassages([]);
+      }}
+    >×</div>
+  ) : null;
 
   useEffect(() => {
     if(!ref) return false;
@@ -885,42 +887,45 @@ export function ScripturePanelSingle({ scriptureData,closeButton, setPopUpRef })
 
   }, [ref]);
 
-
-
-
-  const scripturePassages = passages.map(({reference,heading,verses})=>{
+  const scripturePassages = passages.map(({reference, heading, verses}, index)=>{
     const h6Content = (passages.length > 1 ? `${reference}—` : '') + heading ;
     //between 31103 and 37706 is the BoM
     const verse_ids = lookupReference(reference).verse_ids;
     const [verse_id] = verse_ids;
-    const isBoM = verse_id >= 31103 && verse_id <= 37706; 
+    const isBoM = verse_id >= 31103 && verse_id <= 37706;
 
-  const buttons = <div className="buttons">
-  {isBoM && <Link to={`/search/${reference.replace(/\s+/g,".").toLowerCase()}`} >
-  <button className="btn btn-sm btn-outline-secondary" >Study</button>
-  </Link>
-  }
-</div>
-
-
-    return <div className="text">
-      <div className="scriptureTextHeader">
-      {h6Content && <h6>{h6Content}</h6>}
-      {buttons}
+    const buttons = (
+      <div className="buttons">
+        {isBoM && (
+          <Link to={`/search/${reference.replace(/\s+/g,".").toLowerCase()}`} >
+            <button className="btn btn-sm btn-outline-secondary" >Study</button>
+          </Link>
+        )}
       </div>
+    );
+
+    return (
+      <div key={index} className="text">
+        <div className="scriptureTextHeader">
+          {h6Content && <h6>{h6Content}</h6>}
+          {buttons}
+        </div>
         <p>{verses.map(v=>v.text).join(" ")}</p>
-    </div>});
+      </div>
+    )
+  });
 
 
   if(!ref) return null;
 
-  return <div className="scripturePanelSingle">
-    <h5>{ref}{closeButtonEl}</h5>
-    <div className="scripturePassages">
-   {passages.length ? scripturePassages : <Spinner/>}
-   </div>
-  </div>
-
+  return (
+    <div className="scripturePanelSingle px-0">
+      <h5 className="m-0">{ref}{closeButtonEl}</h5>
+      <div className="scripturePassages p-0 pt-2 pb-4">
+        {passages.length ? scripturePassages : <Spinner/>}
+      </div>
+    </div>
+  );
 }
 
 function FacsimilePanel({ narrationController }) {
