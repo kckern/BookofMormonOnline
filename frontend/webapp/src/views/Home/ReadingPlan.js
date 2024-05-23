@@ -66,7 +66,7 @@ export function ReadingPlan({appController,slug}){
     if(planData) planData.progress = averageProgress || 0;
     function getProgressStatus(progressInt) {
         let status = {};
-        
+
         if (progressInt > 95 || nonFutureSegments?.length === 1 || pastSegmentsAreComplete) {
             status = { label: label("status_ontrack"), labelClass: "green" };
         } else if (progressInt === 0) {
@@ -83,7 +83,7 @@ export function ReadingPlan({appController,slug}){
 // Usage
 const { label:labelText, labelClass } = getProgressStatus(progressInt);
 
- 
+
     if(!planData) return <ReadingPlanLoading />;
     return (
         <Card className="noselect">
@@ -101,7 +101,7 @@ const { label:labelText, labelClass } = getProgressStatus(progressInt);
             </CardHeader>
             <CardBody>
                 <ReactTooltip place="top" effect="solid" id={`segmentTips`} />
-                <ReadingPlanSegmentList segments={planData.segments} 
+                <ReadingPlanSegmentList segments={planData.segments}
                 today={today}
                 setActiveSegment={setActiveSegment} activeSegment={activeSegment} />
             </CardBody>
@@ -257,7 +257,7 @@ function ReadingPlanSection({section}){
             data-for={`sectionDotTips-${slug}`}
             data-tip={item.heading}
             src={ item.status === "completed" ? green : item.status === "started" ? yellow : blank} />
-            
+
             )}
             </div>
         </div>
@@ -272,7 +272,7 @@ function ReadingPlanLoading(){
         <h3>{label("reading_plan")}: <span className="planName">{label("loading")}</span></h3>
     </CardHeader>
     <CardBody className="spinnerBox segment" style={{border: "none"}}>
-        <img src={loading} style={{height: "4rem"}}/>        
+        <img src={loading} style={{height: "4rem"}}/>
     </CardBody>
     </Card>
 }

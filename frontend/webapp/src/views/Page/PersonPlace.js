@@ -1,10 +1,10 @@
 import React from "react";
-import parse from "html-react-parser";
+import Parser from "html-react-parser";
 import ReactTooltip from "react-tooltip";
 import { Link } from "react-router-dom";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 
-export const renderPersonPlaceHTML = (html, pageController,setPopupRef) => {
+export const renderPersonPlaceHTML = (html, pageController, scriptureLinkClickHandler) => {
   html = html.replace(
     /{(.*?)\|(.*?)}/g,
     "<a class='person' slug='$2' label='$1'></a>",
@@ -24,9 +24,10 @@ export const renderPersonPlaceHTML = (html, pageController,setPopupRef) => {
       const attribs = { ...domNode.attribs };
       if (attribs?.classname === 'scripture_link') {
         const ref = domNode.children[0].data;
-        attribs.class = attribs.classname;
+        // TODO: figure out why not a regular class here insead of className (reparsed?)
+        attribs.className = attribs.classname;
         delete attribs.classname;
-        return <a {...attribs} onClick={()=>setPopupRef(ref)}>{ref}</a>;
+        return <a {...attribs} onClick={()=>scriptureLinkClickHandler(ref)}>{ref}</a>;
       }
 
       if (domNode.attribs && domNode.attribs.class === "person") {
@@ -80,7 +81,7 @@ export const renderPersonPlaceHTML = (html, pageController,setPopupRef) => {
       }
     },
   };
-  return parse(html, options);
+  return Parser(html, options);
 };
 
 function PersonLink({ label, id, pageController }) {

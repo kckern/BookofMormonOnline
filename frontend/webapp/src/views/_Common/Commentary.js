@@ -13,7 +13,7 @@ import { ScripturePanelSingle } from "../Page/Narration";
 import { setLanguage, detectScriptures } from "scripture-guide";
 import { determineLanguage } from "../../models/Utils";
 import { ATVHeader } from "./ATV";
-//
+import { getHtmlScriptureLinkParserOptions } from "./ViewUtils";
 
 export default function Commentary({ appController }) {
 
@@ -187,18 +187,7 @@ export default function Commentary({ appController }) {
     return `<a className="scripture_link">${scripture}</a>`
   });
 
-  const parseOptions = {
-    replace: (domNode) => {
-      const attribs = { ...domNode.attribs };
-      if (attribs?.classname === 'scripture_link') {
-        const ref = domNode.children[0].data;
-        attribs.class = attribs.classname;
-        delete attribs.classname;
-        return <a {...attribs} onClick={()=>setPopUpRef(ref)}>{ref}</a>;
-      }
-    }
-  }
-
+  const parserOptions = getHtmlScriptureLinkParserOptions((ref) => setPopUpRef(ref));
 
   return (
     <>
@@ -271,7 +260,7 @@ export default function Commentary({ appController }) {
                   />
 
                   <ATVHeader atvHTML={atvHTML} />
-                  {Parser(htmlObject, parseOptions)}
+                  {Parser(htmlObject, parserOptions)}
                 </div>
               </div>
             </div>
