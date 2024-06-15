@@ -1389,7 +1389,7 @@ function PlaybackSettings({setShowPlaybackSettings,theaterController}){
 	const {playbackRate,setPlaybackRate,playbackVolume,setPlaybackVolume,playbackMusicVolume,setPlaybackMusicVolume,toggleMusic,isMuted}=theaterController;
 	const inputRef = useRef(null);
 	const handleInput = (e)=>{
-		console.log('e.target.id',e.target.id);
+		//console.log('e.target.id',e.target.id);
 			if(e.target.id === 'speedInput'){
 				setPlaybackRate(() => {
 					localStorage.setItem("playbackRate", +e.target.value);
@@ -1406,11 +1406,14 @@ function PlaybackSettings({setShowPlaybackSettings,theaterController}){
 				});
 			}else if(e.target.id === 'musicVolumeInput'){
 				setPlaybackMusicVolume(() => {
-          localStorage.setItem("playbackMusicVolume", +e.target.value);
+          const musicLabel = parseFloat(+e.target.value).toFixed(1)
+          const musicVolume = parseFloat((musicLabel / 20).toFixed(3)) ;
+          console.log('musicVolume',musicVolume);
+          localStorage.setItem("playbackMusicVolume",musicVolume);
           if(!document.getElementById("theater-music-player-a") && !document.getElementById("theater-music-player-a")) return;
-          document.getElementById("theater-music-player-a").volume = +e.target.value;
-          document.getElementById("theater-music-player-a").volume = +e.target.value;
-          return parseFloat((+e.target.value).toFixed(1)); // keeping it in float with one decimal point
+          document.getElementById("theater-music-player-a").volume =musicVolume;
+          document.getElementById("theater-music-player-a").volume =musicVolume;
+          return musicLabel; // keeping it in float with one decimal point
         });
 			}
 	}
