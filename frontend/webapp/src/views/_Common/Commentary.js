@@ -58,12 +58,12 @@ export default function Commentary({ appController }) {
     tmp = tmp.replace(/\s+/g, " ");
     setText(tmp + "");
   };
-	
+
 	const handleKeyboardListener = (e)=>{
 		e.preventDefault();
 
 		const activeId = appController.states.popUp.activeId;
-		
+
 		const ids = appController.states.popUp.ids;
 
 		const activeIdIndex = ids.findIndex(id=>id === activeId);
@@ -110,7 +110,7 @@ export default function Commentary({ appController }) {
           setPopUpRef(null);
 					const undefinedResponseElementArray = Object.entries(response.commentary);
 					const undefinedResponseElementItem = undefinedResponseElementArray.find(element=>element[1] === undefined);
-					delete response.commentary[undefinedResponseElementItem[0]];
+					if(undefinedResponseElementItem) delete response.commentary[undefinedResponseElementItem[0]];
           appController.functions.setPopUp({
             type: "commentary",
             ids: Object.keys(response.commentary),
@@ -310,7 +310,7 @@ export default function Commentary({ appController }) {
 					<SweetAlert
 							title="Are you sure you want to hide?"
 							show={showHideModal.isShow}
-							onConfirm={handleHideCommentary} 
+							onConfirm={handleHideCommentary}
 							onCancel={handleCancelHideCommentary}
 							confirmBtnBsStyle="danger"
 							cancelBtnBsStyle="default"
