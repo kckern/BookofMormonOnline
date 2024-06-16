@@ -49,3 +49,15 @@
 {
     color: #FF000066
 }
+
+.comment_tab{
+	position: relative;
+}
+
+.hide_commentary{
+	position:absolute;
+	top:-8%;
+	right:12%;
+	color:white;
+	font-size:15px;
+}

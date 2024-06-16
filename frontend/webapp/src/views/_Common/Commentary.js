@@ -23,6 +23,15 @@ export default function Commentary({ appController }) {
   const [popUpOpen, setOpenState] = useState(true);
   const [text, setText] = useState("");
   const [showLegal, setLegal] = useState(false);
+	const [showHideCommentaryButton,setShowHideCommentaryButton] = useState({
+		activeId:null
+	});
+	const [showHideModal,setShowHideModal] = useState({
+		sourceTitle:'',
+		activeId:null,
+		isShow:false,
+		sourceId:null
+	});
   useEffect(() => setLegal(false), [appController.states.popUp.activeId]);
   const setCommentHighlights = (items) => {
     if (!items || items.length === 0) return setText(commentaryData.text);
@@ -138,6 +147,36 @@ export default function Commentary({ appController }) {
     addHighlight(selection);
   };
 
+	const handleHideCommentary = ()=>{
+		let prefs = appController.states.preferences;
+		let sources = prefs.commentary.filter.sources;
+		const sourceId = parseInt(showHideModal.sourceId);
+		if (sources.includes(sourceId)) {
+				const index = sources.indexOf(sourceId);
+				if (index > -1) {
+						sources.splice(index, 1);
+				}
+		}
+		else {
+				sources.push(sourceId);
+		}
+		prefs.commentary.filter.sources = sources;
+		appController.functions.updatePrefs(prefs);
+		const activeId = showHideModal.activeId;
+		const popUpData = appController.popUpData;
+		delete popUpData[activeId];
+		appController.functions.setPopUp({
+			type: "commentary",
+			ids: Object.keys(popUpData),
+			popUpData
+		});
+		handleCancelHideCommentary();
+}
+
+	const handleCancelHideCommentary = ()=>{
+		setShowHideModal({isShow:false,sourceTitle:'',sourceId:null,activeId:null})
+	}
+
   let commentaryData = false;
   let allKeys = Object.keys(appController.popUpData);
   let randomKey = allKeys[Math.floor(Math.random() * allKeys.length)];
@@ -183,14 +222,24 @@ export default function Commentary({ appController }) {
           ) : null;
         let active = id === appController.states.popUp.activeId ? "active" : "";
         return (
-          <li key={"tab" + id + i.toString()} className={active}>
+          <li key={"tab" + id + i.toString()} className={'comment_tab '+active} onMouseEnter={()=>setShowHideCommentaryButton({
+						activeId:id
+					})} onMouseLeave={()=>setShowHideCommentaryButton({
+						activeId:null
+					})}>
             <img
               alt={source}
               onClick={() =>
                 appController.functions.setActivePopUpId({ id: id })
               }
               src={assetUrl + "/source/cover/" + source}
-            ></img>
+            />
+						{showHideCommentaryButton.activeId === id && <span className="hide_commentary" onClick={()=>setShowHideModal({
+							isShow:true,
+							activeId:id,
+							sourceTitle:appController.popUpData[showHideCommentaryButton.activeId].publication.source_title,
+							sourceId:appController.popUpData[showHideCommentaryButton.activeId].publication.source_id
+						})}>x</span>}
             {commentsIcon}
           </li>
         );
@@ -256,6 +305,20 @@ export default function Commentary({ appController }) {
 					onKeyDown={handleKeyboardListener}
 					tabIndex={0}
         >
+					<SweetAlert
+							title="Are you sure you want to hide?"
+							show={showHideModal.isShow}
+							onConfirm={handleHideCommentary} 
+							onCancel={handleCancelHideCommentary}
+							confirmBtnBsStyle="danger"
+							cancelBtnBsStyle="default"
+							confirmBtnText={label("hide")}
+							cancelBtnText={label("cancel")}
+							showCancel
+							btnSize=""
+							>
+								<p>{showHideModal.sourceTitle}</p>
+					</SweetAlert>
           <div className="card-header">
             {tabs}
             <div className="popupwindow_head commentary_head">
