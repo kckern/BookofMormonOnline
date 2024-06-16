@@ -14,6 +14,8 @@ import { setLanguage, detectScriptures } from "scripture-guide";
 import { determineLanguage } from "../../models/Utils";
 import { ATVHeader } from "./ATV";
 import { getHtmlScriptureLinkParserOptions } from "./ViewUtils";
+import SweetAlert from "react-bootstrap-sweetalert";
+//
 
 export default function Commentary({ appController }) {
 
