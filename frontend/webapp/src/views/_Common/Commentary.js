@@ -25,9 +25,7 @@ export default function Commentary({ appController }) {
   const [popUpOpen, setOpenState] = useState(true);
   const [text, setText] = useState("");
   const [showLegal, setLegal] = useState(false);
-	const [showHideCommentaryButton,setShowHideCommentaryButton] = useState({
-		activeId:null
-	});
+	const [showHideCommentaryButton,setShowHideCommentaryButton] = useState(false);
 	const [showHideModal,setShowHideModal] = useState({
 		sourceTitle:'',
 		activeId:null,
@@ -108,9 +106,6 @@ export default function Commentary({ appController }) {
         (response) => {
           setAPICallStatus(false);
           setPopUpRef(null);
-					const undefinedResponseElementArray = Object.entries(response.commentary);
-					const undefinedResponseElementItem = undefinedResponseElementArray.find(element=>element[1] === undefined);
-					if(undefinedResponseElementItem) delete response.commentary[undefinedResponseElementItem[0]];
           appController.functions.setPopUp({
             type: "commentary",
             ids: Object.keys(response.commentary),
@@ -151,33 +146,66 @@ export default function Commentary({ appController }) {
 
 	const handleHideCommentary = ()=>{
 		let prefs = appController.states.preferences;
-		let sources = prefs.commentary.filter.sources;
+		let sources = [...prefs.commentary.filter.sources];
 		const sourceId = parseInt(showHideModal.sourceId);
 		if (sources.includes(sourceId)) {
 				const index = sources.indexOf(sourceId);
 				if (index > -1) {
 						sources.splice(index, 1);
 				}
+
 		}
 		else {
 				sources.push(sourceId);
 		}
-		prefs.commentary.filter.sources = sources;
+
+		prefs.commentary.filter.sources = [...sources];
 		appController.functions.updatePrefs(prefs);
 		const activeId = showHideModal.activeId;
-		const popUpData = appController.popUpData;
-		delete popUpData[activeId];
-		appController.functions.setPopUp({
-			type: "commentary",
-			ids: Object.keys(popUpData),
-			popUpData
-		});
+    let activeNextId = null;
+
+    const activeIdIndex = appController.states.popUp.ids.findIndex(id=>id === activeId);
+
+    if(activeIdIndex === appController.states.popUp.ids.length - 1){
+      activeNextId = appController.states.popUp.ids[0];
+    }else{
+      activeNextId = appController.states.popUp.ids[activeIdIndex+1];
+    }
+
+		const popUpIdsFiltered = [...appController.states.popUp.ids].filter(id=>id !== activeId);
+    BoMOnlineAPI({ commentary: popUpIdsFiltered }).then(
+      (response) => {
+        if(Object.keys(response).length === 0) {
+          handleCancelHideCommentary();
+          setOpenState(false);
+          appController.functions.closePopUp();
+          return;
+        }
+
+        appController.functions.setPopUp({
+          type: "commentary",
+          ids: Object.keys(response.commentary),
+          popUpData: response.commentary,
+        });
+        appController.functions.setActivePopUpId({ id: activeNextId })
+      },
+    );
 		handleCancelHideCommentary();
 }
 
 	const handleCancelHideCommentary = ()=>{
 		setShowHideModal({isShow:false,sourceTitle:'',sourceId:null,activeId:null})
+    setShowHideCommentaryButton(false);
 	}
+
+  const handleOpenHideCommentaryModal = ()=>{
+    setShowHideModal({
+        isShow:true,
+        activeId:appController.states.popUp.activeId,
+        sourceTitle:appController.popUpData[appController.states.popUp.activeId].publication.source_title,
+        sourceId:appController.popUpData[appController.states.popUp.activeId].publication.source_id
+      })
+  }
 
   let commentaryData = false;
   let allKeys = Object.keys(appController.popUpData);
@@ -224,11 +252,7 @@ export default function Commentary({ appController }) {
           ) : null;
         let active = id === appController.states.popUp.activeId ? "active" : "";
         return (
-          <li key={"tab" + id + i.toString()} className={'comment_tab '+active} onMouseEnter={()=>setShowHideCommentaryButton({
-						activeId:id
-					})} onMouseLeave={()=>setShowHideCommentaryButton({
-						activeId:null
-					})}>
+          <li key={"tab" + id + i.toString()} className={'comment_tab '+active}>
             <img
               alt={source}
               onClick={() =>
@@ -236,12 +260,6 @@ export default function Commentary({ appController }) {
               }
               src={assetUrl + "/source/cover/" + source}
             />
-						{showHideCommentaryButton.activeId === id && <span className="hide_commentary" onClick={()=>setShowHideModal({
-							isShow:true,
-							activeId:id,
-							sourceTitle:appController.popUpData[showHideCommentaryButton.activeId].publication.source_title,
-							sourceId:appController.popUpData[showHideCommentaryButton.activeId].publication.source_id
-						})}>x</span>}
             {commentsIcon}
           </li>
         );
@@ -332,6 +350,7 @@ export default function Commentary({ appController }) {
               <div className="tab-pane active " id="home" role="tabpanel">
                 {commentaryHeading && <h3>{commentaryHeading}</h3>}
                 <div className="source noselect">
+                  <div className="commentary_content_image">
                   <a
                     target="_blank"
                     rel="noreferrer"
@@ -339,15 +358,25 @@ export default function Commentary({ appController }) {
                   >
                     <img
                       alt={commentaryData.publication.source_title}
-                      className="src"
+                      className={`src ${showHideCommentaryButton && 'fade_image'}`}
                       src={
                         assetUrl +
                         "/source/cover/" +
                         commentaryData.publication.source_id.padStart(3, 0)
                       }
                       key={commentaryData.publication.source_slug}
+                      onMouseEnter={()=>setShowHideCommentaryButton(true)}
+                      onMouseLeave={(e)=>{
+                      if(!e.relatedTarget.className.includes('commentary_hide_button')){
+                        setShowHideCommentaryButton(false)
+                      };
+                      }}
                     />
                   </a>
+                  <button
+                  className={`commentary_hide_button ${showHideCommentaryButton && 'show_button'}`}
+                  onClick={handleOpenHideCommentaryModal}>x</button>
+                  </div>
                   <div className="caption">
                     <a
                       target="_blank"
