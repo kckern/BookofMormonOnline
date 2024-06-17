@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Comments from "./Study/Study";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import Parser from "html-react-parser";
@@ -32,7 +32,14 @@ export default function Commentary({ appController }) {
 		isShow:false,
 		sourceId:null
 	});
-  useEffect(() => setLegal(false), [appController.states.popUp.activeId]);
+  useEffect(() => {
+    const popUpWindow = document.getElementById('popUp');
+    const cardBodyElement = popUpWindow.childNodes[1];
+    if(cardBodyElement.scrollTop !==0) cardBodyElement.scrollTop = 0;
+    if(document.activeElement !== popUpWindow) popUpWindow.focus();
+    setLegal(false)
+  }, [appController.states.popUp.activeId]);
+
   const setCommentHighlights = (items) => {
     if (!items || items.length === 0) return setText(commentaryData.text);
     let tmp = text + "";
