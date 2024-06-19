@@ -15,6 +15,7 @@ import { determineLanguage } from "../../models/Utils";
 import { ATVHeader } from "./ATV";
 import { getHtmlScriptureLinkParserOptions } from "./ViewUtils";
 import SweetAlert from "react-bootstrap-sweetalert";
+import { Link } from "react-router-dom/cjs/react-router-dom.min";
 //
 
 export default function Commentary({ appController }) {
@@ -333,18 +334,18 @@ export default function Commentary({ appController }) {
 					tabIndex={0}
         >
 					<SweetAlert
-							title="Are you sure you want to hide?"
+							title="Are you sure you want to disable this commentary?"
 							show={showHideModal.isShow}
 							onConfirm={handleHideCommentary}
 							onCancel={handleCancelHideCommentary}
 							confirmBtnBsStyle="danger"
 							cancelBtnBsStyle="default"
-							confirmBtnText={label("hide")}
+							confirmBtnText={label("disable")}
 							cancelBtnText={label("cancel")}
 							showCancel
 							btnSize=""
 							>
-								<p>{showHideModal.sourceTitle}</p>
+                <p><em>Commentaries from <strong>{showHideModal.sourceTitle}</strong> will no longer appear in the margins.  You can re-enable this commentary in your <Link to="/user/preferences">preferences</Link>.</em></p>
 					</SweetAlert>
           <div className="card-header">
             {tabs}
@@ -374,15 +375,15 @@ export default function Commentary({ appController }) {
                       key={commentaryData.publication.source_slug}
                       onMouseEnter={()=>setShowHideCommentaryButton(true)}
                       onMouseLeave={(e)=>{
-                      if(!e.relatedTarget.className.includes('commentary_hide_button')){
+                      if(!e.relatedTarget.className?.includes('commentary_hide_button')){
                         setShowHideCommentaryButton(false)
                       };
                       }}
                     />
                   </a>
-                  <button
+                  <div
                   className={`commentary_hide_button ${showHideCommentaryButton && 'show_button'}`}
-                  onClick={handleOpenHideCommentaryModal}>x</button>
+                  onClick={handleOpenHideCommentaryModal}>×</div>
                   </div>
                   <div className="caption">
                     <a

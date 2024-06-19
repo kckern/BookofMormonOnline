@@ -61,21 +61,44 @@
   height:100%;
 }
 
-.commentary_hide_button{
-  position: absolute;
-  top:-5px;
-  right:0;
-  border-left:3px solid black;
-  border-bottom:3px solid black;
-  border-right:none;
-  border-top:none;
-  background-color:rgba(255,255,255,0.5);
-  border-radius:5px;
-  color:black;
-  font-size:2rem;
-  display:none;
-  z-index:1000;
+.commentary_hide_button
+{
+  display: none;
 }
+.commentary_content_image .fade_image{
+  transition: filter 0.5s ease; /* Add transition effect */
+  filter: blur(2px);
+  /* darker */
+  filter: brightness(0.6);
+}
+.commentary_content_image .false{
+  transition: filter 0.5s ease; /* Add transition effect */
+  filter: blur(0px);
+  /* darker */
+  filter: brightness(1);
+}
+.commentary_hide_button.show_button{
+  cursor: pointer;
+  display: block;
+  position: absolute;
+  top: .4ex;
+  right:0.4ex;
+  height: 1.5rem;
+  width: 1.5rem;
+  line-height: 1.5rem;
+  font-family: monospace;
+  background-color: #FFFFFF55;
+  color: #000;
+  font-weight: bold;
+  font-size: 1.5rem;
+  border-radius: 50%;
+}
+
+.commentary_hide_button.show_button:hover{
+  background-color: #FFFFFFAA;
+  line-height: 1.35rem;
+}
+
 
 .show_button{
   display:block;
