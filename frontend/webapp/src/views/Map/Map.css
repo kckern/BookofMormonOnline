@@ -417,7 +417,6 @@ Add a triangle notch pointing down at the bottom of the tooltip
 
 .mapPanel h5{
   margin-bottom: 0;
-  
 }
 
 .mapPanel .info{
@@ -438,7 +437,7 @@ Add a triangle notch pointing down at the bottom of the tooltip
   margin-bottom: 1rem;
   padding: 0;
 }
-.mapPanel .nav-tabs .nav-item 
+.mapPanel .nav-tabs .nav-item
 {
   flex: 1;
   overflow: hidden;
@@ -499,7 +498,7 @@ Add a triangle notch pointing down at the bottom of the tooltip
 }
 
 
-.mapPanel 
+.mapPanel
 {
   position: relative;
   display: flex;
@@ -630,7 +629,7 @@ Add a triangle notch pointing down at the bottom of the tooltip
   overflow: hidden;
 
   z-index: 100;
-  
+
 }
 
 .mappanel_wrapper  .map-place-search .card-header
@@ -769,8 +768,14 @@ Add a triangle notch pointing down at the bottom of the tooltip
   font-weight: bold;
 }
 .rangeSliderContainer span.current{
-  outline: 2px solid #2196f3;
+  outline: 2px solid #3f51b5;
 }
+
+.rangeSliderContainer .input-range{
+  width:calc(100% - 2rem);
+  margin-left:1rem;
+}
+
 .map_story p{
   margin:0;
   line-height: 100%;
