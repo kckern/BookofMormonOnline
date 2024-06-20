@@ -1,20 +1,20 @@
 
-import React, { useState, useEffect, useCallback } from "react"
 import Parser from "html-react-parser";
-import spinner from  "../_Common/svg/loadbar.svg"
-import placesIcon from "../_Common/svg/places.svg";
+import React, { useEffect, useState } from "react";
 import { useHistory } from 'react-router';
+import spinner from "../_Common/svg/loadbar.svg";
+import placesIcon from "../_Common/svg/places.svg";
 // AACTION TYPES
-import BoMOnlineAPI from "src/models/BoMOnlineAPI"
+import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 // CSS
-import "./Map.css"
-import { isMobile } from "src/models/Utils"
-import RangeSlider from 'react-range-slider-input';
-import searchIcon from "../_Common/svg/search.svg";
-import 'react-range-slider-input/dist/style.css';
 import { getDistance } from 'geolib';
+import 'react-input-range/lib/css/index.css';
+import { isMobile } from "src/models/Utils";
+import searchIcon from "../_Common/svg/search.svg";
+import "./Map.css";
 
 import axios from "axios";
+import InputRange from "react-input-range";
 import {
   Button,
   Card,
@@ -23,13 +23,12 @@ import {
   CardHeader,
   Nav,
   NavItem,
-  TabPane,
-  TabContent
+  TabContent,
+  TabPane
 } from "reactstrap";
-import { ApiBaseUrl, assetUrl } from "../../models/BoMOnlineAPI"
-import { ScripturePanelSingle } from "../Page/Narration";
 import { detectScriptures, generateReference } from "scripture-guide";
-import { get } from "lodash";
+import { ApiBaseUrl, assetUrl } from "../../models/BoMOnlineAPI";
+import { ScripturePanelSingle } from "../Page/Narration";
 import { getHtmlScriptureLinkParserOptions } from "../_Common/ViewUtils";
 
 const metersToMiles = (meters) => Math.round(meters * 0.000621371192 * 1) / 1;
@@ -344,14 +343,13 @@ const adminPanel = isAdmin ? place ? <Card className="adminPanel" onKeyDown={(e)
     style={{display: "flex", flexDirection: "column-reverse", justifycontent: "space-between", flexGrow: 1}}
     className="rangeSliderContainer"
   >
-    <RangeSlider
-      key={`${minZoom}-${maxZoom}`}
-      min={currentMap?.minzoom}
-      max={currentMap?.maxzoom}
-			value={[minZoom,maxZoom]}
-      defaultValue={[minZoom,maxZoom]}
-      onInput={(data)=>setMinMaxZoom(data)}
-    />
+    <InputRange
+        minValue={currentMap?.minzoom}
+        maxValue={currentMap?.maxzoom}
+        step={1}
+        formatLabel={value => ``}
+        value={{ min: minZoom, max:maxZoom }}
+        onChange={value => setMinMaxZoom([value.min,value.max])} />
     <div className="minMax" style={{display: "flex", justifycontent: "space-between",marginBottom:"1ex"}}>
       {Array.from({length: currentMap?.maxzoom - currentMap?.minzoom + 1}, (_, i) => currentMap?.minzoom + i).map((zoomLevelLabel) => (
         <span

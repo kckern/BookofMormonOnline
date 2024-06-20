@@ -13,7 +13,6 @@ import { label,isMobile } from "src/models/Utils"
 import MapContents from "./MapContents"
 import {MapPlaceSearch} from "./MapPlaceSearch"
 import {MapPanel,getPlaceInfo} from "./MapPanel.js"
-import 'react-range-slider-input/dist/style.css';
 import {  assetUrl } from "../../models/BoMOnlineAPI"
 function MapContainer({ appController }) {
 
@@ -36,7 +35,7 @@ function MapContainer({ appController }) {
 
   //set keyboard listener so that typing will populate searching with seatSearching, escape will set it back to null
 
-  const handleKeyDown = (event) => { 
+  const handleKeyDown = (event) => {
   const ignoreKeys = ['-', '_', '=', '+', '[', ']', 'Tab',"\\","/","|"];
     if (document.activeElement.tagName !== "INPUT" && ignoreKeys.includes(event.key)) {
       return false;
@@ -85,7 +84,7 @@ function MapContainer({ appController }) {
     if(!type) return;
     updateUrl(`/map/${type}${place ? "/place/" + place : ""}`)
     setMapName(label("loading"))
-    
+
     BoMOnlineAPI({ map: type, mapstories: [type] },{useCache:false}).then((result) => {
       result.map[type].stories = result?.mapstories || [];
       setPlaceName(place)
@@ -144,7 +143,7 @@ function MapContainer({ appController }) {
           <MapContents  mapController={mapController}  />
           <MapPlaceSearch {...{mapController}} />
           </>   : <Loader />  }
-       
+
       </div>
     </>
   )
@@ -172,8 +171,8 @@ function MapToolTip({ tooltip, appController, panelContents }) {
     }}>
       <div className="placeInfo"> <h4>{name}</h4><p>{info}</p></div>
     </div>
-  
-  
+
+
 
     return toolTip
 }
