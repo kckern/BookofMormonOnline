@@ -771,11 +771,6 @@ Add a triangle notch pointing down at the bottom of the tooltip
   outline: 2px solid #3f51b5;
 }
 
-.rangeSliderContainer .input-range{
-  width:calc(100% - 2rem);
-  margin-left:1rem;
-}
-
 .map_story p{
   margin:0;
   line-height: 100%;

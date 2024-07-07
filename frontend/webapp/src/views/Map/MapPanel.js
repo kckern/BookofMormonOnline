@@ -8,13 +8,11 @@ import placesIcon from "../_Common/svg/places.svg";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 // CSS
 import { getDistance } from 'geolib';
-import 'react-input-range/lib/css/index.css';
 import { isMobile } from "src/models/Utils";
 import searchIcon from "../_Common/svg/search.svg";
 import "./Map.css";
 
 import axios from "axios";
-import InputRange from "react-input-range";
 import {
   Button,
   Card,
@@ -30,6 +28,7 @@ import { detectScriptures, generateReference } from "scripture-guide";
 import { ApiBaseUrl, assetUrl } from "../../models/BoMOnlineAPI";
 import { ScripturePanelSingle } from "../Page/Narration";
 import { getHtmlScriptureLinkParserOptions } from "../_Common/ViewUtils";
+import RangeSlider from "./RangeSlider";
 
 const metersToMiles = (meters) => Math.round(meters * 0.000621371192 * 1) / 1;
 
@@ -343,13 +342,13 @@ const adminPanel = isAdmin ? place ? <Card className="adminPanel" onKeyDown={(e)
     style={{display: "flex", flexDirection: "column-reverse", justifycontent: "space-between", flexGrow: 1}}
     className="rangeSliderContainer"
   >
-    <InputRange
-        minValue={currentMap?.minzoom}
-        maxValue={currentMap?.maxzoom}
-        step={1}
-        formatLabel={value => ``}
-        value={{ min: minZoom, max:maxZoom }}
-        onChange={value => setMinMaxZoom([value.min,value.max])} />
+    <RangeSlider
+      min={currentMap?.minzoom}
+      max={currentMap?.maxzoom}
+      step={1}
+      value={{ min: minZoom, max:maxZoom }}
+      onChange={value => setMinMaxZoom([value.min,value.max])}
+    />
     <div className="minMax" style={{display: "flex", justifycontent: "space-between",marginBottom:"1ex"}}>
       {Array.from({length: currentMap?.maxzoom - currentMap?.minzoom + 1}, (_, i) => currentMap?.minzoom + i).map((zoomLevelLabel) => (
         <span
