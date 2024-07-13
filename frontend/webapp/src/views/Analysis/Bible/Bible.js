@@ -356,12 +356,11 @@ function VerseViewer({verse_viewer_content, setVerseViewerContent}) {
     useEffect(() => {
         const allVerseIds = matches.map(({colVid, rowVid}) => [colVid, rowVid]).flat(); 
         BoMOnlineAPI({verses:allVerseIds})
-            .then(({verses})=> { setVerseContent(verses); })
+            .then(({verses})=> { setVerseContent(Object.values(verses)); })
     }, []);
 
-    const findVerseText = (vid) => {
-        if(!verseContent) return "Loading...";
-        return verseContent.find(({verse_id}) => verse_id === vid)?.text;
+    const findVerseData = (vid) => {
+        return verseContent.find(({verse_id}) => verse_id === vid);
     }
 
     const [sort, setSort] = useState("col");
@@ -369,8 +368,9 @@ function VerseViewer({verse_viewer_content, setVerseViewerContent}) {
         const isAsc = sort.column === column && sort.direction === "asc";
         setSort({ column, direction: isAsc ? "desc" : "asc" });
     };
+    if(!verseContent) return <div>Loading...</div>;
 
-
+    console.log(verseContent);
     return (
         <div className="verseViewer">
         <Button onClick={() => setVerseViewerContent(null)}>Back</Button>
@@ -406,15 +406,25 @@ function VerseViewer({verse_viewer_content, setVerseViewerContent}) {
                             }
                         })
                         .map(({colRef, rowRef, isQuote, colVid, rowVid}, i) => {
-                            const leftText = findVerseText(colVid);
-                            const rightText = findVerseText(rowVid);
-                            if(!leftText || !rightText) return null;
+                            const leftData = findVerseData(colVid);
+                            const rightData = findVerseData(rowVid);
+                            if(!leftData || !rightData) return null;
+                            const {text: leftText, heading: leftHeading} = leftData;
+                            const {text: rightText, heading: rightHeading} = rightData;
+                            
+                            console.log({rowVid, leftHeading, colVid, rightHeading});
 
+                            const smallWords = ["and", "the", "their", "of", "an", 
+                            "in", "to", "with", "for", "on", "as", "by", "at",
+                            "from", "that", "which", "this", "these", "those", "there", "here"];
+
+                            const isOnlySmallWords = (text) => text.toLowerCase().trim().split(" ").every(word => smallWords.includes(word));
 
                             const commonStrings = diffMatchPatch.diff_main(leftText, rightText);
                             const common = commonStrings.filter(([type]) => type === DiffMatchPatch.DIFF_EQUAL).map(([, text]) => text).map(i=>i.trim()
                             )
                             .map(i=>i.replace(/^[a-z]{0,1}[^a-z]+/i, "").replace(/[^a-z]+[a-z]{0,1}$/i, ""))
+                            .filter(i=>i.length > 5 && !isOnlySmallWords(i))
                             .sort((a, b) => b.length - a.length).slice(0, 10)
 
 
@@ -422,36 +432,60 @@ function VerseViewer({verse_viewer_content, setVerseViewerContent}) {
                                 // Early return if arrayOfStrings is falsy
                                 if (!arrayOfStrings || arrayOfStrings.length === 0) return text;
 
-                                // Modify regex to capture the matched strings
-                                const regex = new RegExp(`(${arrayOfStrings.join("|")})`, "gi");
+                                let parts = []; // To store start and end points of matches
+                                let currentIndex = 0; // To keep track of the current index in the text
 
-                                // Split text by the regex, including the matched strings
-                                return (
-                                    <>
-                                    {text.split(regex).map((part, index) => {
-                                        // Check if the current part matches any string in arrayOfStrings
-                                        const isHighlight = arrayOfStrings.some(str => new RegExp(str, "gi").test(part));
-                                        const isFragment = part.length < 5;
+                                // Find matches for each string in arrayOfStrings
+                                arrayOfStrings.forEach(str => {
+                                    let match;
+                                    const regex = new RegExp(str, "gi"); // Case-insensitive search
+                                    while ((match = regex.exec(text)) !== null) {
+                                        parts.push({ start: match.index, end: regex.lastIndex, match: match[0] });
+                                    }
+                                });
 
-                                        // Conditionally render part with highlight span if it matches
-                                        return isHighlight && !isFragment ? (
-                                            <span key={index} className="highlight">{part}</span>
-                                        ) : (
-                                            <span key={index}>{part}</span>
-                                        );
-                                    })}
-                                    </>
-                                );
+                                // Sort parts by start index
+                                parts.sort((a, b) => a.start - b.start);
+
+                                // Merge overlapping parts and build the result JSX
+                                const result = [];
+                                parts.forEach(part => {
+                                    if (part.start >= currentIndex) {
+                                        // Add non-matched text
+                                        if (part.start > currentIndex) {
+                                            result.push(<span key={currentIndex}>{text.substring(currentIndex, part.start)}</span>);
+                                        }
+                                        // Add matched text
+                                        result.push(<span key={part.start} className="highlight">{part.match}</span>);
+                                        currentIndex = part.end;
+                                    }
+                                });
+
+                                // Add any remaining text after the last match
+                                if (currentIndex < text.length) {
+                                    result.push(<span key={currentIndex}>{text.substring(currentIndex)}</span>);
+                                }
+
+                                return <>{result}</>;
                             };
-
                             
                             return (
                             <React.Fragment key={i}>
-                            <tr key={i}>
-                                <td className="scriptureRef left">{colRef}</td>
-                                <td className="scriptureRef right">{rowRef}</td>
+                            <tr key={i+`-tr`} className={isQuote ? "quote" : ""}>
+                                <td className="scriptureRef left">
+                                    <div className="header_container">
+                                        <div className="ref">{colRef}</div>
+                                        <div className="heading">{leftHeading}</div>
+                                    </div>
+                                    </td>
+                                <td className="scriptureRef right">
+                                    <div className="header_container">
+                                    <div className="heading">{rightData.heading}</div>
+                                        <div className="ref">{rowRef}</div>
+                                    </div>
+                                </td>
                             </tr>
-                            <tr>
+                            <tr className={isQuote ? "quote" : ""}>
                                 <td className="scriptureCell left">
                                     <p>{highlightTextJSX(leftText, common)}</p>
                                 </td>
