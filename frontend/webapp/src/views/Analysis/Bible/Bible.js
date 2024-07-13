@@ -1,4 +1,3 @@
-
 //import Bible.css
 import React, { useEffect, useState } from "react";
 import "./Bible.css"
@@ -7,10 +6,11 @@ import { Button } from "reactstrap";
 import { index } from "./data";
 import BoMOnlineAPI from "../../../models/BoMOnlineAPI";
 import DiffMatchPatch from 'diff-match-patch';
- 
+import { Spinner } from "../../_Common/Loader";
+import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
+
 const diffMatchPatch = new DiffMatchPatch();
 DiffMatchPatch.DIFF_EQUAL = 0;
-
 
 const levels = ["groups", "books"];
 
@@ -179,55 +179,64 @@ const getColRowValues = (level, id) => {
 
 
 function Bible() {
-    const [level_col, setLevelCol] = useState("groups");
     const [level_row, setLevelRow] = useState("groups");
-    const [column_id, setColumnId] = useState({key: "bom", val: "Book of Mormon"}); // BoM as columns
-    const [row_id, setRowId] = useState({key: "bible", val: "Bible"}); // Bible as rows
+    const [level_col, setLevelCol] = useState("groups");
+    const [row_id, setRowId] = useState({key: "bom", val: "Book of Mormon"}); // BoM as rows
+    const [column_id, setColumnId] = useState({key: "bible", val: "Bible"}); // Bible as columns
     const [verse_viewer_content, setVerseViewerContent] = useState(null);
 
-    const rows = getColRowValues(level_row, row_id);
     const columns = getColRowValues(level_col, column_id);
+    const rows = getColRowValues(level_row, row_id);
 
     const grid = rows.map(rowId => columns.map(column => {
-        const bible = getStartEnd(level_row, {key: rowId.key});
-        const bom = getStartEnd(level_col, {key: column.key});
-        const bibleVids = Array.from({length: bible[1] - bible[0] + 1}, (_, i) => i + bible[0]);
+        const bom = getStartEnd(level_row, {key: rowId.key});
+        const bible = getStartEnd(level_col, {key: column.key});
         const bomVids = Array.from({length: bom[1] - bom[0] + 1}, (_, i) => i + bom[0]);
+        const bibleVids = Array.from({length: bible[1] - bible[0] + 1}, (_, i) => i + bible[0]);
         const indexItems = index.filter(([bom_vid, bible_vid, isQuote]) => {
-            return bibleVids.includes(bible_vid) && bomVids.includes(bom_vid);
+            // Ensure bom_vid and bible_vid are treated as the same type as elements in bomVids and bibleVids
+            const bom_vid_num = Number(bom_vid);
+            const bible_vid_num = Number(bible_vid);
+            return bibleVids.includes(bible_vid_num) && bomVids.includes(bom_vid_num);
         });
         return {indexItems};
     }));
-
     const maxCount = Math.max(...grid.flat().map(({indexItems}) => indexItems.length));
 
-
-    const openVerseViewer = (colbook, rowbook) => {
-        setVerseViewerContent({colbook, rowbook});
+    const openVerseViewer = (rowbook, colbook) => {
+        setVerseViewerContent({rowbook, colbook});
     };
 
 
-    const reset = () => {
-        setLevelCol("groups");
-        setLevelRow("groups");
-        setColumnId({key: "bom", val: "bom"});
-        setRowId({key: "bible", val: "bible"});  
-    };
+    const isBaseState = () => {
+        return level_row === "groups" && level_col === "groups";
+    }
 
-    const handleColumnClick = (id) => {
-        const nextLevel = levels[levels.indexOf(level_col) + 1];
-        if (!nextLevel) return openVerseViewer(id, row_id);
-        setLevelCol(nextLevel);
-        setColumnId(id);
-    };
-
-    const handleRowClick = (id) => {
+    const handleRowClick = (id, count) => {
+        if(!count) return;
         const nextLevel = levels[levels.indexOf(level_row) + 1];
+        if (!nextLevel) return openVerseViewer(id, column_id);
         setLevelRow(nextLevel);
         setRowId(id);
     };
 
-    const handleCircleClick = (colId, rowId) => {
+    const handleColumnClick = (id, count) => {
+        if(!count) return;
+        const nextLevel = levels[levels.indexOf(level_col) + 1];
+        if (!nextLevel) return openVerseViewer(row_id, id);
+        setLevelCol(nextLevel);
+        setColumnId(id);
+    };
+    const handleBackClick = () => {
+
+        setLevelRow("groups");
+        setLevelCol("groups");
+        setRowId({key: "bom", val: "Book of Mormon"});
+        setColumnId({key: "bible", val: "Bible"}); 
+       
+    };
+
+    const handleCircleClick = (rowId, colId) => {
         const nextRowLevel = levels[levels.indexOf(level_row) + 1];
         const nextColLevel = levels[levels.indexOf(level_col) + 1];
         if(nextRowLevel && nextColLevel) {
@@ -235,28 +244,35 @@ function Bible() {
             handleColumnClick(colId);
         }
         else{
-            openVerseViewer(colId, rowId);
+            openVerseViewer(rowId, colId);
         }
     }
 
-    const gridState = {level_col, level_row, column_id, row_id, handleColumnClick, handleRowClick, handleCircleClick};
+    const gridState = {level_row, level_col, row_id, column_id, handleRowClick, handleColumnClick, handleCircleClick};
 
     if(verse_viewer_content) return <VerseViewer verse_viewer_content={verse_viewer_content} setVerseViewerContent={setVerseViewerContent} />;
 
+    
+    const columnSums = columns.map((_, i) => grid.map(row => row[i].indexItems.length).reduce((a, b) => a + b, 0));
+    const rowSums = grid.map(row => row.map(({indexItems}) => indexItems.length).reduce((a, b) => a + b, 0));
     return (
         <div className="grid">
+            <h4>Bible Quotes and Phrases</h4>
             <table className="gridTable">
-                <thead>
+                <thead className="noselect">
                     <tr>
                         <th colSpan={2} rowSpan={2}>
-                            <button onClick={reset}>RESET</button>
+                            { !isBaseState() && <div className="backbutton" onClick={() => handleBackClick()}>⬅ Back</div>}
                         </th>
                         <th colSpan={columns.length + 2}>{column_id.val}</th>
                     </tr>
                     <tr>
                         {columns.map((id, i) => (
-                            <th key={i} onClick={() => handleColumnClick(id)} className="topHeaders">
-                                {id.val}
+                            <th key={i} onClick={() => handleColumnClick(id, columnSums[i])} className="topHeaders">
+                                <div className="topHeaderContainer">
+                                    <div>{id.val}</div>
+                                    {!!columnSums[i] && <div className="topHeaderCount">{columnSums[i]}</div>}
+                                </div>
                             </th>
                         ))}
                     </tr>
@@ -264,16 +280,30 @@ function Bible() {
                 <tbody>
                     {rows.map((rowId, rowIndex) => (
                         <tr key={rowIndex}>
-                            
-                            {!rowIndex && <td rowSpan={rows.length} className="leftHeader" width={1/rows.length * 100 + "%"} height={1/rows.length * 100 + "%"}>
-                                {row_id.val}
-                            </td>}
-                            <td onClick={() => handleRowClick(rowId)} className="leftHeaders">
-                                {rowId.val}
+                            {!rowIndex && (
+                                <td rowSpan={rows.length} className="leftHeader noselect" width={(1 / rows.length) * 100 + "%"} height={(1 / rows.length) * 100 + "%"}>
+                                    {row_id.val}
+                                </td>
+                            )}
+                            <td onClick={() => handleRowClick(rowId, rowSums[rowIndex])} className="leftHeaders noselect">
+                                <div className="leftHeaderContainer">
+                                    <div>{rowId.val.split(' of ').map((part, index, array) => (
+                                        <React.Fragment key={index}>
+                                            {part}{index < array.length - 1 ? <> of <br /></> : ''}
+                                        </React.Fragment>
+                                    ))}</div>
+                                
+                                    {!!rowSums[rowIndex] && <div className="leftHeaderCount">{rowSums[rowIndex]}</div>}
+                                </div>
+                                
                             </td>
                             {columns.map((colId, columnIndex) => (
-                                <td key={columnIndex} width={1/columns.length * 100 + "%"} height={1/rows.length * 100 + "%"} align="center">
-                                    <GridCell  {...(grid[rowIndex][columnIndex])} maxCount={maxCount} gridState={{...gridState, rowId, colId}} />
+                                <td key={columnIndex} width={(1 / columns.length) * 100 + "%"} height={(1 / rows.length) * 100 + "%"} align="center" className="gridCellContainer noselect">
+                                    <GridCell  
+                                        {...(grid[rowIndex][columnIndex])} 
+                                        maxCount={maxCount} 
+                                        gridState={{...gridState, rowId, colId}} // Pass rowId and colId to gridState
+                                    />
                                 </td>
                             ))}
                         </tr>
@@ -282,40 +312,47 @@ function Bible() {
             </table>
         </div>
     );
-}
     
-function GridCell({indexItems,maxCount, gridState}) {
+    
+}
 
-
+function GridCell({ indexItems, maxCount, gridState }) {
     const itemCount = indexItems.length;
+
+    // Extract row and column labels directly from gridState, which contains current iteration values
+    const rowLabel = gridState.rowId.val;
+    const colLabel = gridState.colId.val;
+
     const quoteCount = indexItems.filter(([_, __, isQuote]) => isQuote).length;
     const nonQuoteCount = indexItems.length - quoteCount;
-    const percentage = (Math.log10(indexItems.length + 1) / Math.log10(maxCount + 1)) * 100;    
-    const hex = Math.floor(percentage * 2.55).toString(16);
+    const percentage = (Math.log10(indexItems.length + 1) / Math.log10(maxCount + 1)) * 100;
 
-
-    const minRadius = "2";
-    const maxRadius = "6";
+    const minRadius = 2; // Assuming these should be numbers for mathematical operations
+    const maxRadius = 6;
     const unit = "ex";
-    const diff = maxRadius - minRadius;
-    const itemDiff = diff * percentage / 100;
-    const radius = parseInt(minRadius) + itemDiff;
+    const logBase = 10; // Base for logarithmic calculation, can be adjusted as needed
+
+    // Calculate the logarithmic scale factor
+    const scaleFactor = Math.log(maxRadius / minRadius) / Math.log(logBase);
+
+    // Apply the logarithmic scale based on the percentage
+    const radius = minRadius * Math.pow(logBase, scaleFactor * percentage / 100);
 
     const handleClick = () => {
-
-        const {rowId, colId} = gridState;
-        gridState.handleCircleClick(colId, rowId);
+        const { rowId, colId } = gridState;
+        gridState.handleCircleClick(rowId, colId);
     }
 
     return (
-        <div className="gridCell"  >
-            {!!quoteCount ? <div style={{
+        <div className="gridCell noselect">
+            {!!itemCount ? <div style={{
                 borderRadius: "50%",
                 color: "white",
                 fontSize: "1.5em",
                 lineHeight: radius + "ex",
                 width: radius + unit,
                 height: radius + "ex",
+                opacity: percentage / 100,
                 display: "inline-block",
                 maxWidth: maxRadius + unit,
                 maxHeight: maxRadius + unit
@@ -337,82 +374,120 @@ function Container() {
 
 
 function VerseViewer({verse_viewer_content, setVerseViewerContent}) {
+    useEffect(() => {
+        const handleKeyDown = (event) => {
+            if (event.key === "Escape") {
+                setVerseViewerContent(null);
+            }
+        };
+    
+        document.addEventListener("keydown", handleKeyDown);
+    
+        // Cleanup function to remove the event listener
+        return () => {
+            document.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [setVerseViewerContent]); 
 
+    const selectedRowBook = verse_viewer_content.rowbook.val
+    const selectedColBook = verse_viewer_content.colbook.val
 
     const [verseContent, setVerseContent] = useState(null);
-    const colKey = verse_viewer_content.colbook.key;
     const rowKey = verse_viewer_content.rowbook.key;
-    const colVerseRange = getStartEnd("books", {key: colKey});
+    const colKey = verse_viewer_content.colbook.key;
     const rowVerseRange = getStartEnd("books", {key: rowKey});
-    const matches = index.filter(([colVid, rowVid, isQuote]) => {
-        return colVid >= colVerseRange[0] && colVid <= colVerseRange[1] && rowVid >= rowVerseRange[0] && rowVid <= rowVerseRange[1];
-    }).map(([colVid, rowVid, isQuote]) => {
-        const colRef = generateReference(colVid);
-        const rowRef = generateReference(rowVid);
-        return {colVid, rowVid, isQuote, colRef, rowRef}
-    });
+    const colVerseRange = getStartEnd("books", {key: colKey});
+
+        const matches = index.filter(([rowVid, colVid, isQuote]) => {
+            const hasRows = rowVerseRange?.[0] > 1;
+            const hasCols = colVerseRange?.[0] > 1;
+            const rowCondition = hasRows ? rowVid >= rowVerseRange[0] && rowVid <= rowVerseRange[1] : true;
+            const colCondition = hasCols ? colVid >= colVerseRange[0] && colVid <= colVerseRange[1] : true;
+            return rowCondition && colCondition;
+        }).map(([rowVid, colVid, isQuote]) => {
+            const rowRef = generateReference(colVid);
+            const colRef = generateReference(rowVid);
+            return {rowVid, colVid, isQuote, rowRef, colRef};
+        });
+
 
 
     useEffect(() => {
-        const allVerseIds = matches.map(({colVid, rowVid}) => [colVid, rowVid]).flat(); 
-        BoMOnlineAPI({verses:allVerseIds})
-            .then(({verses})=> { setVerseContent(Object.values(verses)); })
+        const allMatchedVerseIds = matches.map(({rowVid, colVid}) => [rowVid, colVid]).flat(); 
+        if(allMatchedVerseIds.length === 0) {
+            console.log(JSON.stringify({rowVerseRange, colVerseRange}));
+            alert("No verses found");
+            return setVerseViewerContent(null);
+        }
+        BoMOnlineAPI({verses:allMatchedVerseIds})
+            .then(({verses}) => { setVerseContent(Object.values(verses)); });
     }, []);
 
     const findVerseData = (vid) => {
         return verseContent.find(({verse_id}) => verse_id === vid);
     }
 
-    const [sort, setSort] = useState("col");
+    const [sort, setSort] = useState({ column: "row", direction: "asc" });
     const handleSort = (column) => {
         const isAsc = sort.column === column && sort.direction === "asc";
         setSort({ column, direction: isAsc ? "desc" : "asc" });
     };
-    if(!verseContent) return <div>Loading...</div>;
+    
+    const history = useHistory();
 
-    console.log(verseContent);
+    const navigateToSearch = (ref) => {
+      history.push(`/search/${ref}`);
+    };
+
+    if (!verseContent) return <Spinner />;
+
+
+    const count = matches.length;
     return (
         <div className="verseViewer">
-        <Button onClick={() => setVerseViewerContent(null)}>Back</Button>
-        <div className="verseViewerContent">
-            <table className="verseViewerTable">
-                <thead>
+            <div className="verseViewerContent">
+                <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }} className="noselect">
+                    <div className="backbutton" onClick={() => setVerseViewerContent(null)}>⬅ Back</div>
+                    <h3><span className="count">{count}</span> references to <span className="book">{selectedColBook}</span> in <span className="book">{selectedRowBook}</span></h3>
+                    <div style={{ flexgrow: 0, width: '100px' }}/>
+                </div>
+                <table className="verseViewerTable ">
+                    <thead className="noselect">
                     <tr>
-                        <th>
-                            Book of Mormon
-                            <button 
-                                className={sort.column === 'col' ? 'active' : ''} 
-                                onClick={() => handleSort('col')}>
-                                {sort.column === 'col' && sort.direction === 'asc' ? '↓' : '↑'}
-                            </button>
-                        </th>
-                        <th>
-                            Bible
-                            <button 
-                                className={sort.column === 'row' ? 'active' : ''} 
-                                onClick={() => handleSort('row')}>
-                                {sort.column === 'row' && sort.direction === 'asc' ? '↓' : '↑'}
-                            </button>
-                        </th>
+                    <th>
+                        <h4 style={{ cursor: 'pointer' }} onClick={() => handleSort('row')}>
+                            {selectedRowBook}
+                            <span className={sort.column === 'row' ? 'sort active' : 'sort'}>
+                                {sort.column === 'row' && sort.direction === 'asc' ? '▼' : (sort.column === 'row' ? '▲' : '▽')}
+                            </span>
+                        </h4>
+                    </th>
+                    <th>
+                        <h4 style={{ cursor: 'pointer' }} onClick={() => handleSort('col')}>
+                            {selectedColBook}
+                            <span className={sort.column === 'col' ? 'sort active' : 'sort'}>
+                                {sort.column !== 'row' && sort.direction === 'asc' ? '▼' : (sort.column === 'col' ? '▲' : '▽')}
+                            </span>
+                        </h4>
+                    </th>
                     </tr>
-                </thead>
+                    </thead>
                     <tbody>
                         {matches
                         .sort((a, b) => {
-                            if (sort.column === "col") {
-                                return sort.direction === "asc" ? a.colVid - b.colVid : b.colVid - a.colVid;
-                            } else {
+                            if (sort.column === "row") {
                                 return sort.direction === "asc" ? a.rowVid - b.rowVid : b.rowVid - a.rowVid;
+                            } else {
+                                return sort.direction === "asc" ? a.colVid - b.colVid : b.colVid - a.colVid;
                             }
                         })
-                        .map(({colRef, rowRef, isQuote, colVid, rowVid}, i) => {
-                            const leftData = findVerseData(colVid);
-                            const rightData = findVerseData(rowVid);
-                            if(!leftData || !rightData) return null;
+                        .map(({rowRef, colRef, isQuote, rowVid, colVid}, i) => {
+                            const prevItem = matches[i - 1]||{};
+                            console.log(JSON.stringify({i,prevItem}));
+                            const leftData = findVerseData(colVid) || {};
+                            const rightData = findVerseData(rowVid) || {};
                             const {text: leftText, heading: leftHeading} = leftData;
                             const {text: rightText, heading: rightHeading} = rightData;
-                            
-                            console.log({rowVid, leftHeading, colVid, rightHeading});
 
                             const smallWords = ["and", "the", "their", "of", "an", 
                             "in", "to", "with", "for", "on", "as", "by", "at",
@@ -420,87 +495,85 @@ function VerseViewer({verse_viewer_content, setVerseViewerContent}) {
 
                             const isOnlySmallWords = (text) => text.toLowerCase().trim().split(" ").every(word => smallWords.includes(word));
 
-                            const commonStrings = diffMatchPatch.diff_main(leftText, rightText);
-                            const common = commonStrings.filter(([type]) => type === DiffMatchPatch.DIFF_EQUAL).map(([, text]) => text).map(i=>i.trim()
-                            )
-                            .map(i=>i.replace(/^[a-z]{0,1}[^a-z]+/i, "").replace(/[^a-z]+[a-z]{0,1}$/i, ""))
-                            .filter(i=>i.length > 5 && !isOnlySmallWords(i))
-                            .sort((a, b) => b.length - a.length).slice(0, 10)
-
+                            const commonStrings = diffMatchPatch.diff_main(leftText || "", rightText || "");
+                            const common = commonStrings.filter(([type]) => type === DiffMatchPatch.DIFF_EQUAL).map(([, text]) => text).map(i => i.trim())
+                            .map(i => i.replace(/^[a-z]{0,1}[^a-z]+/i, "").replace(/[^a-z]+[a-z]{0,1}$/i, ""))
+                            .filter(i => i.length > 5 && !isOnlySmallWords(i))
+                            .sort((a, b) => b.length - a.length).slice(0, 10);
 
                             const highlightTextJSX = (text, arrayOfStrings) => {
-                                // Early return if arrayOfStrings is falsy
                                 if (!arrayOfStrings || arrayOfStrings.length === 0) return text;
 
-                                let parts = []; // To store start and end points of matches
-                                let currentIndex = 0; // To keep track of the current index in the text
+                                let parts = [];
+                                let currentIndex = 0;
 
-                                // Find matches for each string in arrayOfStrings
                                 arrayOfStrings.forEach(str => {
                                     let match;
-                                    const regex = new RegExp(str, "gi"); // Case-insensitive search
+                                    const regex = new RegExp(str, "gi");
                                     while ((match = regex.exec(text)) !== null) {
                                         parts.push({ start: match.index, end: regex.lastIndex, match: match[0] });
                                     }
                                 });
 
-                                // Sort parts by start index
                                 parts.sort((a, b) => a.start - b.start);
 
-                                // Merge overlapping parts and build the result JSX
                                 const result = [];
                                 parts.forEach(part => {
                                     if (part.start >= currentIndex) {
-                                        // Add non-matched text
                                         if (part.start > currentIndex) {
                                             result.push(<span key={currentIndex}>{text.substring(currentIndex, part.start)}</span>);
                                         }
-                                        // Add matched text
                                         result.push(<span key={part.start} className="highlight">{part.match}</span>);
                                         currentIndex = part.end;
                                     }
                                 });
 
-                                // Add any remaining text after the last match
                                 if (currentIndex < text.length) {
                                     result.push(<span key={currentIndex}>{text.substring(currentIndex)}</span>);
                                 }
 
                                 return <>{result}</>;
                             };
-                            
+
+                            const prevVerseIds = prevItem ? [prevItem.rowVid, prevItem.colVid] : [];
+
+                            const prevLeftisSameasCurrentLeft = prevVerseIds.some(vid => vid === rowVid);
+                            const prevRightisSameasCurrentRight = prevVerseIds.some(vid => vid === colVid);
+
                             return (
-                            <React.Fragment key={i}>
-                            <tr key={i+`-tr`} className={isQuote ? "quote" : ""}>
-                                <td className="scriptureRef left">
-                                    <div className="header_container">
-                                        <div className="ref">{colRef}</div>
-                                        <div className="heading">{leftHeading}</div>
-                                    </div>
-                                    </td>
-                                <td className="scriptureRef right">
-                                    <div className="header_container">
-                                    <div className="heading">{rightData.heading}</div>
-                                        <div className="ref">{rowRef}</div>
+                                
+                                <React.Fragment key={i}>
+                                <tr key={i + `-tr`} className={isQuote ? "" : ""}>
+                                <td className="scriptureRef left" onClick={() => navigateToSearch(colRef)}>
+                                    <div className={`header_container`}>
+                                    <div className="ref">{prevLeftisSameasCurrentLeft ? colRef : colRef}</div>
+                                    <div className="heading noselect">{prevLeftisSameasCurrentLeft ? "" : leftHeading}</div>
                                     </div>
                                 </td>
-                            </tr>
-                            <tr className={isQuote ? "quote" : ""}>
-                                <td className="scriptureCell left">
-                                    <p>{highlightTextJSX(leftText, common)}</p>
+                                <td className="scriptureRef right" onClick={() => navigateToSearch(colRef)}>
+                                    <div className={`header_container`}>
+                                        <div className="ref">{prevRightisSameasCurrentRight ? rowRef : rowRef}</div>
+                                        <div className="heading noselect">{prevRightisSameasCurrentRight ? "" : rightHeading}</div>
+                                    </div>
                                 </td>
-                                <td className="scriptureCell right">
+                                </tr>
+                                <tr className={isQuote ? "" : ""}>
+                                <td className="scriptureCell left" >
                                     <p>{highlightTextJSX(rightText, common)}</p>
                                 </td>
-                            </tr></React.Fragment>
-                        )})}
+                                <td className="scriptureCell right" >
+                                    <p>{highlightTextJSX(leftText, common)}</p>
+                                </td>
+                                </tr>
+                            </React.Fragment> 
+                            );
+                        })}
                     </tbody>
                 </table>
             </div>
         </div>
     );
 }
-
 
 
 export default Container;

@@ -1,37 +1,65 @@
+import exp from 'constants';
 import ModelBase from './ModelBase';
 import {
   DataTypes,
   Sequelize,
 } from 'sequelize';
-
-export default class _bom_capsulation extends ModelBase {
-  public static initModel(sequelize: Sequelize): typeof _bom_capsulation {
+export default class _bom_data_bible extends ModelBase {
+  public static initModel(sequelize: Sequelize): typeof _bom_data_bible {
     this.init(
       {
         guid: {
-          type: DataTypes.STRING(50),
+          type: DataTypes.STRING(255),
           allowNull: false,
           primaryKey: true
         },
-        description: {
-          type: DataTypes.STRING(500),
-          allowNull: false
+        src: {
+          type: DataTypes.STRING(255),
+          allowNull: true
         },
-        reference: {
-          type: DataTypes.STRING(500),
-          allowNull: false
+        bom_verse_id: {
+          type: DataTypes.INTEGER,
+          allowNull: true
         },
-        link: {
-          type: DataTypes.STRING(50),
-          allowNull: false
+        bible_verse_id: {
+          type: DataTypes.INTEGER,
+          allowNull: true
         },
-        parent: {
-          type: DataTypes.STRING(50),
-          allowNull: false
+        quote: {
+          type: DataTypes.TINYINT,
+          allowNull: true
+        },
+        plus: {
+          type: DataTypes.TINYINT,
+          allowNull: true
+        },
+        bom_highlight: {
+          type: DataTypes.JSON,
+          allowNull: true
+        },
+        bible_highlight: {
+          type: DataTypes.JSON,
+          allowNull: true
+        },
+        bom_ref: {
+          type: DataTypes.STRING(255),
+          allowNull: true
+        },
+        bible_ref: {
+          type: DataTypes.STRING(255),
+          allowNull: true
+        },
+        similarity: {
+          type: DataTypes.FLOAT,
+          allowNull: true
+        },
+        seq: {
+          type: DataTypes.INTEGER,
+          allowNull: true
         }
       }, {
       sequelize,
-      tableName: 'bom_capsulation',
+      tableName: 'bom_data_bible',
       timestamps: false,
       indexes: [
         {

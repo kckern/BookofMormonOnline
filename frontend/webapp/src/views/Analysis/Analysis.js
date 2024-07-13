@@ -33,7 +33,7 @@ function Analysis({appController}) {
     const sections = [
         {heading:"Chiastic Features",text:"An inventory of all identified chiasms in the Book of Mormon.",
         slug:"chiasmus", ready:true},
-        {heading:"Bible Quotations",slug:"bible", ready:true,text:"An analysis of the quotations from the Bible in the Book of Mormon."},
+        {heading:"Bible References",slug:"bible", ready:true,text:"An analysis of the quotations from the Bible in the Book of Mormon."},
         {heading:"Names",slug:"names",text:"An analysis of the names in the Book of Mormon.", ready:true},
         {heading:"“Caractors” Document",text:"A glyph-level comparative and sequential analysis of the “Caractors” document recovered from the Whitmer estate in 1884.",slug:"caractors", ready:true},
 
