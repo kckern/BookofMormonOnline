@@ -502,7 +502,10 @@ function VerseViewer({ verseViewerContent, setVerseViewerContent }) {
     const history = useHistory();
 
     const navigateToSearch = (ref) => {
-        history.push(`/search/${ref}`);
+        const verse_id = lookupReference(ref).verse_ids[0];
+        //copy to clipboard
+        navigator.clipboard.writeText(verse_id);
+        alert(`Copied to clipboard: ${ref} (Verse ID: ${verse_id})`);
     };
 
     if (!verseContent) return <Spinner />;
@@ -624,7 +627,7 @@ function VerseViewer({ verseViewerContent, setVerseViewerContent }) {
                                   return <>
                                       <span>{highlighted}</span>
                                       <pre>
-                                          {JSON.stringify([rowVid, colVid, arrayOfStrings])}
+                                          {JSON.stringify(arrayOfStrings)}
                                       </pre>
                                   </>
 
@@ -648,7 +651,7 @@ function VerseViewer({ verseViewerContent, setVerseViewerContent }) {
                                                     <div className="heading noselect">{prevLeftisSameasCurrentLeft ? "" : leftHeading}</div>
                                                 </div>
                                             </td>
-                                            <td className="scriptureRef right" onClick={() => navigateToSearch(colRef)}>
+                                            <td className="scriptureRef right" onClick={() => navigateToSearch(rowRef)}>
                                                 <div className={`header_container`}>
                                                 <div className="heading noselect">{prevRightisSameasCurrentRight ? "" : rightHeading}</div>
                                                     <div className="ref">{prevRightisSameasCurrentRight ? rowRef : rowRef}</div>
