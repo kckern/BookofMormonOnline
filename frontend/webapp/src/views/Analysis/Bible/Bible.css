@@ -100,3 +100,18 @@
 
 }
 
+
+.quoteCountCircle
+{
+    cursor: pointer;
+    filter: opacity(1);
+    background-color: #20c997;
+}
+.quoteCountCircle:hover
+{
+    filter: opacity(1);
+    outline: 2px solid black;
+    background-color: #20c997AA;
+    color: black!important;
+    font-weight: bold;
+}
