@@ -47,9 +47,11 @@ import SocialPosts from '../models/social_posts';
 import ModelBase from '../models/ModelBase';
 import BomXtrasHistory from '../models/bom_xtras_history';
 import BomXtrasChiasmus from '../models/bom_xtras_chiasmus';
+import BoMDataBible from '../models/bom_bible';
 
 export interface Models {
   BomCapsulation: typeof BomCapsulation;
+  BoMDataBible: typeof BoMDataBible;
   BomConnection: typeof BomConnection;
   BomDivision: typeof BomDivision;
   BomIndex: typeof BomIndex;

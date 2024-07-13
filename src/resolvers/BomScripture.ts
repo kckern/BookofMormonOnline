@@ -27,7 +27,6 @@ export const loadScripture = async (lang:string, reference:string, arg_verse_ids
           where: {  verse_id:verse_ids, lang  }
         });
 
-        //replace the text with the translation
         versedata.forEach((verse:any)=>{
           let translation:any = translations.find((t:any)=>t.verse_id===verse.verse_id);
           if(translation) verse.verse_scripture = translation.text;
@@ -91,4 +90,30 @@ export const loadVerses = async (verse_ids:any, lang:string) => {
   });
   return found;
 
+}
+
+
+export const loadVerseHighlights = async (verse_pairs:any, lang) => {
+
+  console.log("verse_pairs",verse_pairs);
+  //verse_pairs [ [ 1, 1 ], [ 2, 2 ] ]
+  const highlights = await Models.BoMDataBible.findAll({
+    raw:true,
+    where: {
+      bom_verse_id:verse_pairs.map((pair:any)=>pair[0]),
+      bible_verse_id:verse_pairs.map((pair:any)=>pair[1]),
+      src: "hardy"
+    }
+  });
+  console.log("highlights",highlights);
+  //{ guid: '237ecd07fb', src: 'manual', bom_verse_id: 33771, bible_verse_id: 28391, quote: null, plus: null, bom_highlight: [ 'things of the world' ], bible_highlight: [ 'things of the world' ], bom_ref: 'Alma 7:6', bible_ref: '1 Corinthians 1:27', similarity: null, seq: null }
+  return highlights.map((highlight:any)=>{
+    return {
+      bom_verse_id:highlight.bom_verse_id,
+      bible_verse_id:highlight.bible_verse_id,
+      bom_highlight:highlight.bom_highlight,
+      bible_highlight:highlight.bible_highlight,
+      isQuote:highlight.quote
+    }
+  });
 }
