@@ -207,6 +207,21 @@ const queries = {
     }
 
   },
+  versehighlights: (verse_pairs) => {
+    return {
+      type: "versehighlights",
+      key: "verse_pairs",
+      val: verse_pairs,
+      query: q("versehighlights", "verse_pairs", verse_pairs) +
+        `{
+                isQuote
+                bom_verse_id
+                bible_verse_id
+                bom_highlight
+                bible_highlight
+            }`,
+    }
+  },
 
   chiasmus: () => {
     //{ chiasmus { chiasmus_id reference scheme } }
