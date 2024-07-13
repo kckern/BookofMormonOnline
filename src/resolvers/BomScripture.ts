@@ -77,14 +77,14 @@ export const loadVerses = async (verse_ids:any, lang:string) => {
     const relevantHeadings = headings.filter(({ verse_id }) => verse_id <= verseId);
     const latestHeading = relevantHeadings.reduce((latest: any, current: any) => 
       current.verse_id > latest.verse_id ? current : latest, relevantHeadings[0]);
-    return latestHeading.text; // Changed from latestHeading.heading to latestHeading.text
+    return latestHeading?.text || null;
   };
 
 
   const found = versedata.map((verse:any)=>{
     return {
       verse_id:verse.verse_id,
-      heading:findHeading(verse.verse_id),
+      heading:findHeading(verse.verse_id) || null,
       reference:verse.verse_title,
       text:verse.verse_scripture
     }
