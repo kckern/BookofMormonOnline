@@ -87,10 +87,13 @@ type Source {
     slug: String
     code: String
     title: String
-    pgoffset: String
+    pages: Int
+    pgoffset: Int
+    index: [String]
     info: String
     com: Int
     fax: Int
+    format: String
   }
   type Image {
     id: String

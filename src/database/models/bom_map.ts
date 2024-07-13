@@ -17,6 +17,10 @@ export default class _bom_map extends ModelBase {
           allowNull: false,
           primaryKey: true
         },
+        group: {
+          type: DataTypes.STRING(255),
+          allowNull: true
+        },
         guid: {
           type: DataTypes.STRING(255),
           allowNull: false,

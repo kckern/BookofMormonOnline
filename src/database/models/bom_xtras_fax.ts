@@ -30,6 +30,10 @@ export default class _bom_xtras_fax extends ModelBase {
         type: DataTypes.STRING(200),
         allowNull: false
       },
+      pages: {
+        type: DataTypes.INTEGER,
+        allowNull: false
+      },
       pgoffset: {
         type: DataTypes.INTEGER,
         allowNull: true
@@ -42,7 +46,11 @@ export default class _bom_xtras_fax extends ModelBase {
         type: DataTypes.SMALLINT,
         allowNull: false,
         defaultValue: 0
-      }
+      },
+      format: {
+        type: DataTypes.STRING(50),
+        allowNull: false
+      },
     }, {
       sequelize,
       tableName: 'bom_xtras_fax',

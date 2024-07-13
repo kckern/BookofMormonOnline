@@ -19,8 +19,9 @@ extend type Query {
     shortlink(hash: [String]): Shortlinks
     markdown(slug: [String]): [Markdown]
     scripture(ref: String, verse_ids: [Int]): ScriptureResults
+    verses(verse_ids: [Int]): [Scripture]
+    versehighlights(verse_pairs: [[Int]]): [ScriptureHighlights]
   }
-
 
 extend type Mutation {
     shortlink(string: String): Shortlinks
@@ -48,10 +49,19 @@ type Passage {
 
 type Scripture {
   verse_id: Int
+  heading: String
+  reference: String
   book: String
   chapter: Int
   verse: Int
   text: String
+}
+type ScriptureHighlights {
+  bom_verse_id: Int
+  bible_verse_id: Int
+  bom_highlight: [String]
+  bible_highlight: [String]
+  isQuote: Boolean
 }
 
 type SearchResult {

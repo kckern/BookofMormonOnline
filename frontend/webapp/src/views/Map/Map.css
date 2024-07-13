@@ -26,18 +26,6 @@
   border-left: 1px solid #AAA;
 }
 
-.map-type-active {
-  box-shadow: 0 0 9px #4a4a4a;
-  padding: 10px 0;
-  border-radius: 10%;
-  background: #1a1d20;
-  text-transform: capitalize;
-  cursor: pointer;
-  border-radius: 11px;
-  cursor: pointer;
-  overflow: hidden;
-  white-space: nowrap;
-}
 
 .mapPanel .grid-container {
   display: grid;
@@ -217,7 +205,7 @@
 
 .map-type-active {
   background: white;
-  height: 35px;
+  height: 2.3rem;
   width: 120px;
   display: flex;
   justify-content: center;
@@ -244,7 +232,7 @@
   background: #59778d;
   color: #fff;
   font-size: 17px;
-  padding: 8px 0;
+  padding: 0.3ex 0;
   border-bottom: 1px solid #c0c0c042;
   cursor: pointer;
   transition: 0.3s;
@@ -253,20 +241,63 @@
 }
 
 
+.map-group{
+  outline: 2px solid #FFFFFF33;
+  border-radius: 1ex;
+  margin-top:1ex;
+
+}
+
+.map-group h6{
+  background-color: #344652;
+  margin: 0;
+  color:#FFFFFF88;
+
+  border-top-left-radius: 1ex;
+  border-top-right-radius: 1ex;
+}
+
 .map-type:hover {
   color: #fff;
   font-weight: bold;
 }
 
+.map-type + .map-group {
+  outline: 2px solid #FFFFFF33;
+}
 
 .map-type-active.active {
-  border-radius: .5em .5em 0 0;
+  /* border-radius: .5em .5em 0 0; */
   box-shadow: 0 0 9px #4a4a4a;
+}
+.map-type.nextItemIsGroup{
+  border-bottom-left-radius: 1ex;
+  border-bottom-right-radius: 1ex;
 }
 
 
 .map-type:last-child {
-  border-radius: 0 0 11px 11px;
+
+  border-bottom-left-radius: 1ex;
+  border-bottom-right-radius: 1ex;
+}
+
+.active-map-group{
+  display: flex;
+  flex-direction: column;
+  font-size: 1rem;
+  line-height: 0.8rem;
+  font-weight: 800;
+  justify-content: center;
+  height: 100%;
+
+}
+
+.active-map-group small{
+  font-size: 0.7rem;
+  font-weight: 400;
+  color:#888;
+
 }
 
 
