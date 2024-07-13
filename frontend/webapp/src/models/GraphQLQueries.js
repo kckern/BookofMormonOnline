@@ -190,6 +190,24 @@ const queries = {
     }
 
   },
+  verses: (verse_ids) => {
+    return {
+      type: "scripture",
+      key: "scripture_reference",
+      val: scripture_reference,
+      query: q("scripture", "ref", scripture_reference) +
+        `{
+               
+                    verses{
+                        verse_id
+                        heading
+                        
+                        text
+                    }
+            }`,
+    }
+
+  },
 
   chiasmus: () => {
     //{ chiasmus { chiasmus_id reference scheme } }

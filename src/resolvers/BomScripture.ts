@@ -3,7 +3,7 @@
 const {lookup,generateReference,setLang} = require("scripture-guide");
 import { models as Models } from '../config/database';
 import logger from "../library/utils/logger.cjs";
-const { processPassages} = require('./lib')
+const { processPassages, loadHeadings} = require('./lib')
 const log = (msg:any,obj?:any) => obj ? logger.info(`utils ${msg} ${JSON.stringify(obj)}`) : logger.info(`utils ${msg}`);
 
 export const loadScripture = async (lang:string, reference:string, arg_verse_ids:any) => {
@@ -61,5 +61,34 @@ export const loadScripture = async (lang:string, reference:string, arg_verse_ids
       if(lang && lang!=='en') return loadScripture(null,reference,arg_verse_ids);
       return {ref:(reference||JSON.stringify(arg_verse_ids)) + " not found",verses:[]}
     }
+
+}
+
+
+
+export const loadVerses = async (verse_ids:any, lang:string) => {
+  const config = { raw:true, where: {  verse_id:verse_ids  } };
+  const [versedata, headings] = await Promise.all([
+    Models.LdsScripturesVerses.findAll(config),
+    loadHeadings(verse_ids)
+  ]);
+  
+  const findHeading = (verseId: number) => {
+    const relevantHeadings = headings.filter(({ verse_id }) => verse_id <= verseId);
+    const latestHeading = relevantHeadings.reduce((latest: any, current: any) => 
+      current.verse_id > latest.verse_id ? current : latest, relevantHeadings[0]);
+    return latestHeading.text; // Changed from latestHeading.heading to latestHeading.text
+  };
+
+
+  const found = versedata.map((verse:any)=>{
+    return {
+      verse_id:verse.verse_id,
+      heading:findHeading(verse.verse_id),
+      reference:verse.verse_title,
+      text:verse.verse_scripture
+    }
+  });
+  return found;
 
 }
