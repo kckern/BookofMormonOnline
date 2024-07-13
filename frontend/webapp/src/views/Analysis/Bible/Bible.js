@@ -1,11 +1,15 @@
 
 //import Bible.css
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import "./Bible.css"
 import {generateReference, lookupReference} from "scripture-guide";
 import { Button } from "reactstrap";
 import { index } from "./data";
 import BoMOnlineAPI from "../../../models/BoMOnlineAPI";
+import DiffMatchPatch from 'diff-match-patch';
+ 
+const diffMatchPatch = new DiffMatchPatch();
+DiffMatchPatch.DIFF_EQUAL = 0;
 
 
 const levels = ["groups", "books"];
@@ -351,9 +355,8 @@ function VerseViewer({verse_viewer_content, setVerseViewerContent}) {
 
     useEffect(() => {
         const allVerseIds = matches.map(({colVid, rowVid}) => [colVid, rowVid]).flat(); 
-        const ref = generateReference(allVerseIds);
-        BoMOnlineAPI({scripture:ref})
-            .then(({scripture})=> { setVerseContent(scripture[ref]?.passages?.reduce((acc, {verses}) => [...acc, ...verses], []))})
+        BoMOnlineAPI({verses:allVerseIds})
+            .then(({verses})=> { setVerseContent(verses); })
     }, []);
 
     const findVerseText = (vid) => {
@@ -372,7 +375,7 @@ function VerseViewer({verse_viewer_content, setVerseViewerContent}) {
         <div className="verseViewer">
         <Button onClick={() => setVerseViewerContent(null)}>Back</Button>
         <div className="verseViewerContent">
-            <table>
+            <table className="verseViewerTable">
                 <thead>
                     <tr>
                         <th>
@@ -402,20 +405,61 @@ function VerseViewer({verse_viewer_content, setVerseViewerContent}) {
                                 return sort.direction === "asc" ? a.rowVid - b.rowVid : b.rowVid - a.rowVid;
                             }
                         })
-                        .map(({colRef, rowRef, isQuote, colVid, rowVid}, i) => (
-                            <><tr key={i}>
-                                <td>{colRef}</td>
-                                <td>{rowRef}</td>
+                        .map(({colRef, rowRef, isQuote, colVid, rowVid}, i) => {
+                            const leftText = findVerseText(colVid);
+                            const rightText = findVerseText(rowVid);
+                            if(!leftText || !rightText) return null;
+
+
+                            const commonStrings = diffMatchPatch.diff_main(leftText, rightText);
+                            const common = commonStrings.filter(([type]) => type === DiffMatchPatch.DIFF_EQUAL).map(([, text]) => text).map(i=>i.trim()
+                            )
+                            .map(i=>i.replace(/^[a-z]{0,1}[^a-z]+/i, "").replace(/[^a-z]+[a-z]{0,1}$/i, ""))
+                            .sort((a, b) => b.length - a.length).slice(0, 10)
+
+
+                            const highlightTextJSX = (text, arrayOfStrings) => {
+                                // Early return if arrayOfStrings is falsy
+                                if (!arrayOfStrings || arrayOfStrings.length === 0) return text;
+
+                                // Modify regex to capture the matched strings
+                                const regex = new RegExp(`(${arrayOfStrings.join("|")})`, "gi");
+
+                                // Split text by the regex, including the matched strings
+                                return (
+                                    <>
+                                    {text.split(regex).map((part, index) => {
+                                        // Check if the current part matches any string in arrayOfStrings
+                                        const isHighlight = arrayOfStrings.some(str => new RegExp(str, "gi").test(part));
+                                        const isFragment = part.length < 5;
+
+                                        // Conditionally render part with highlight span if it matches
+                                        return isHighlight && !isFragment ? (
+                                            <span key={index} className="highlight">{part}</span>
+                                        ) : (
+                                            <span key={index}>{part}</span>
+                                        );
+                                    })}
+                                    </>
+                                );
+                            };
+
+                            
+                            return (
+                            <React.Fragment key={i}>
+                            <tr key={i}>
+                                <td className="scriptureRef left">{colRef}</td>
+                                <td className="scriptureRef right">{rowRef}</td>
                             </tr>
                             <tr>
-                                <td>
-                                   {findVerseText(colVid)}
+                                <td className="scriptureCell left">
+                                    <p>{highlightTextJSX(leftText, common)}</p>
                                 </td>
-                                <td>
-                                    {findVerseText(rowVid)}
+                                <td className="scriptureCell right">
+                                    <p>{highlightTextJSX(rightText, common)}</p>
                                 </td>
-                            </tr></>
-                        ))}
+                            </tr></React.Fragment>
+                        )})}
                     </tbody>
                 </table>
             </div>

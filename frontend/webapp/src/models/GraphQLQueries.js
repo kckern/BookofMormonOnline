@@ -183,6 +183,7 @@ const queries = {
                     heading
                     verses{
                         verse
+                        verse_id
                         text
                     }
                 }
@@ -192,18 +193,16 @@ const queries = {
   },
   verses: (verse_ids) => {
     return {
-      type: "scripture",
-      key: "scripture_reference",
-      val: scripture_reference,
-      query: q("scripture", "ref", scripture_reference) +
+      type: "verses",
+      key: "verse_ids",
+      val: verse_ids,
+      query: q("verses", "verse_ids", verse_ids) +
         `{
                
-                    verses{
-                        verse_id
-                        heading
-                        
-                        text
-                    }
+              verses{
+                  verse_id
+                  text
+              }
             }`,
     }
 
