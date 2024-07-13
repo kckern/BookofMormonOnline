@@ -20,7 +20,7 @@ import {
 } from './_common';
 import { sphinxQuery } from '../search/sphinx';
 import { translateReferences } from './xlate';
-import { loadScripture, loadVerses } from './BomScripture';
+import { loadScripture, loadVerseHighlights, loadVerses } from './BomScripture';
 const axios = require('axios');
 export default {
   Query: {
@@ -183,6 +183,11 @@ export default {
       const lang = context.lang ? context.lang : null;
       const {verse_ids} = args;
       return loadVerses(verse_ids, lang);
+    },
+    versehighlights: async (input: any, args: any, context: any, info: any) => {
+      const lang = context.lang ? context.lang : null;
+      const {verse_pairs} = args;
+      return loadVerseHighlights(verse_pairs, lang);
     }
   },
   Mutation: {
