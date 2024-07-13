@@ -115,3 +115,53 @@
     color: black!important;
     font-weight: bold;
 }
+
+
+.verseViewerTable
+{
+    width: calc(100% - 2rem);
+    height: 100%;
+    overflow: auto;
+    margin-left: 2rem;
+}
+
+.verseViewerTable td
+{
+    width: 50%
+}
+
+.verseViewerTable td.scriptureRef{
+    font-weight: bold;
+    font-size: 1rem;
+}
+.verseViewerTable td.scriptureRef.right{
+    text-align: right;
+}
+.verseViewerTable td.scriptureText{
+    font-style: italic;
+}
+
+.verseViewerTable td.scriptureCell{
+    /* valign top */
+    vertical-align: top;
+
+}
+
+.verseViewerTable td.scriptureCell.left{ padding-right: 0.5rem;}
+.verseViewerTable td.scriptureCell.right{ padding-left: 0.5rem;}
+
+.verseViewerTable .scriptureCell p{
+    background-color: white;
+    font-family: "Scripture", serif;
+    font-size: 1rem;
+    line-height: 1rem;
+    text-align: justify;
+    padding: 0.8rem;
+    border-radius: 1ex;
+}
+
+.verseViewerTable .scriptureCell p span.highlight{
+    color: #CC0000;
+    position: relative;
+    background-color: #FFFF0033;
+}
