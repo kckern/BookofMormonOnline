@@ -138,7 +138,7 @@ function getStartEnd(level, { key }) {
   if (level === "books") {
     // id is book name string: eg "1 Nephi"
     const book = allBooks.find(([name]) => name === key);
-    if (!book) return [0, 0];
+    if (!book) return getStartEnd("groups", { key });
     return [book[1], book[2]];
   }
 
@@ -285,6 +285,10 @@ function ScriptureGrid() {
     const rowSums = grid.map((row) =>
       row.map(({ indexItems }) => indexItems.length).reduce((a, b) => a + b, 0)
     );
+
+    const rowLabel = rowId.val;
+    const levelRowLabel = levelRow === "groups" ? "Book of Mormon" : Object.keys(bom).find((key) => key === rowLabel);
+    const rowSuperLabel = levelRow === "groups" ? "Book of Mormon" : levelRowLabel;
   
     return (
       <div className="grid">
@@ -331,7 +335,7 @@ function ScriptureGrid() {
                     width={(1 / rows.length) * 100 + "%"}
                     height={(1 / rows.length) * 100 + "%"}
                   >
-                    {rowId.val}
+                    {rowSuperLabel}
                   </td>
                 )}
                 <td
