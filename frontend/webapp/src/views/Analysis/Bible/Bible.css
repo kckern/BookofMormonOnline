@@ -255,16 +255,19 @@
 }
 .verseViewerTable td.scriptureRef.right .ref{
     text-align: right;
-    padding-left: 1rem;
     
 }
 .verseViewerTable td.scriptureRef.right .ref{
     text-align: right;
-    padding-right: 1rem;
     text-align: right;
     
 }
 
+
+.topHeaderContainer.disabled{
+    opacity: 0.5;
+    color:#000!important
+}
 
 
 .verseViewerTable td.scriptureText{
