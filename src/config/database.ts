@@ -3,6 +3,7 @@ import {Op} from '../resolvers/_common';
 import fs from 'fs';
 
 import BomCapsulation from '../database/models/bom_capsulation';
+import BomDataBible from '../database/models/bom_bible';
 import BomConnection from '../database/models/bom_connection';
 import BomDivision from '../database/models/bom_division';
 import BomIndex from '../database/models/bom_index';
@@ -99,7 +100,9 @@ export const sequelize = new Sequelize(MYSQL_DB, MYSQL_USER, MYSQL_PASSWORD, {
 export const SQLQueryTypes = QueryTypes;
 
 export const models: Models = {
+
   BomCapsulation: BomCapsulation.initModel(sequelize),
+  BoMDataBible: BomDataBible.initModel(sequelize),
   BomConnection: BomConnection.initModel(sequelize),
   BomDivision: BomDivision.initModel(sequelize),
   BomIndex: BomIndex.initModel(sequelize),

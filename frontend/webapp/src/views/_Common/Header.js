@@ -17,8 +17,6 @@ function Header({ appController, isReady }) {
   let homeLink = (
     <div className="headerTitle">
       {label("home_title")}
-      <br />
-      <small>{label("beta")}</small>
     </div>
   );
   if (isReady && appController.states?.user?.user) {

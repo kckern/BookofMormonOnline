@@ -3,7 +3,7 @@
 const {lookup,generateReference,setLang} = require("scripture-guide");
 import { models as Models } from '../config/database';
 import logger from "../library/utils/logger.cjs";
-const { processPassages} = require('./lib')
+const { processPassages, loadHeadings} = require('./lib')
 const log = (msg:any,obj?:any) => obj ? logger.info(`utils ${msg} ${JSON.stringify(obj)}`) : logger.info(`utils ${msg}`);
 
 export const loadScripture = async (lang:string, reference:string, arg_verse_ids:any) => {
@@ -27,7 +27,6 @@ export const loadScripture = async (lang:string, reference:string, arg_verse_ids
           where: {  verse_id:verse_ids, lang  }
         });
 
-        //replace the text with the translation
         versedata.forEach((verse:any)=>{
           let translation:any = translations.find((t:any)=>t.verse_id===verse.verse_id);
           if(translation) verse.verse_scripture = translation.text;
@@ -62,4 +61,59 @@ export const loadScripture = async (lang:string, reference:string, arg_verse_ids
       return {ref:(reference||JSON.stringify(arg_verse_ids)) + " not found",verses:[]}
     }
 
+}
+
+
+
+export const loadVerses = async (verse_ids:any, lang:string) => {
+  const config = { raw:true, where: {  verse_id:verse_ids  } };
+  const [versedata, headings] = await Promise.all([
+    Models.LdsScripturesVerses.findAll(config),
+    loadHeadings(verse_ids)
+  ]);
+  
+  const findHeading = (verseId: number) => {
+    const relevantHeadings = headings.filter(({ verse_id }) => verse_id <= verseId);
+    const latestHeading = relevantHeadings.reduce((latest: any, current: any) => 
+      current.verse_id > latest.verse_id ? current : latest, relevantHeadings[0]);
+    return latestHeading?.text || null;
+  };
+
+
+  const found = versedata.map((verse:any)=>{
+    return {
+      verse_id:verse.verse_id,
+      heading:findHeading(verse.verse_id) || null,
+      reference:verse.verse_title,
+      text:verse.verse_scripture
+    }
+  });
+  return found;
+
+}
+
+
+export const loadVerseHighlights = async (verse_pairs:any, lang) => {
+
+  console.log("verse_pairs",verse_pairs);
+  //verse_pairs [ [ 1, 1 ], [ 2, 2 ] ]
+  const highlights = await Models.BoMDataBible.findAll({
+    raw:true,
+    where: {
+      bom_verse_id:verse_pairs.map((pair:any)=>pair[0]),
+      bible_verse_id:verse_pairs.map((pair:any)=>pair[1]),
+      src: "hardy"
+    }
+  });
+  console.log("highlights",highlights);
+  //{ guid: '237ecd07fb', src: 'manual', bom_verse_id: 33771, bible_verse_id: 28391, quote: null, plus: null, bom_highlight: [ 'things of the world' ], bible_highlight: [ 'things of the world' ], bom_ref: 'Alma 7:6', bible_ref: '1 Corinthians 1:27', similarity: null, seq: null }
+  return highlights.map((highlight:any)=>{
+    return {
+      bom_verse_id:highlight.bom_verse_id,
+      bible_verse_id:highlight.bible_verse_id,
+      bom_highlight:highlight.bom_highlight,
+      bible_highlight:highlight.bible_highlight,
+      isQuote:highlight.quote
+    }
+  });
 }

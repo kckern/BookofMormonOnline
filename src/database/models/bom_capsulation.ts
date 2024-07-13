@@ -1,3 +1,4 @@
+import exp from 'constants';
 import ModelBase from './ModelBase';
 import {
   DataTypes,

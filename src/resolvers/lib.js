@@ -79,7 +79,6 @@ const getBlocksFromToken = async (token) => {
 
 
 const getBlocksFromReadingPlan = async (plan,token) => {
-    console.log(`Loading plan ${plan}`);
     const sectionGuidSQL = `SELECT sectionGuids FROM bom_readingplan_seg WHERE guid = ? ORDER BY start ASC`;
     const sectionGuids = (await queryDB(sectionGuidSQL,[plan]))[0]?.sectionGuids || [];
     const sectionGuidArray = JSON.parse(sectionGuids);
@@ -179,7 +178,7 @@ const buildQueueFromSection = async ({sectionGuid,token,forceSection}) => {
         const text_guids = allBlocks.filter(b=>b.section === sectionGuid).map(b=>b.guid);
         const sectionIsDone = text_guids.every(t=>completedBlocks.includes(t));
         if(sectionIsDone && !forceSection){
-            console.log(`Section ${sectionGuid} is done. ${text_guids.length} blocks completed.`);
+            //.log(`Section ${sectionGuid} is done. ${text_guids.length} blocks completed.`);
             continue;
         }
         const tmpQueue = [...queue, ...text_guids];
@@ -289,38 +288,42 @@ async function organizeRelatedScriptures(scriptureDataArray)
     //dedupe based on verse_id.  
     scriptureDataArray = scriptureDataArray.filter((v,i,a)=>a.findIndex(t=>(t.verse_id === v.verse_id))===i);
     return scriptureDataArray;
-}
-async function processPassages(verse_ids, verse_data,lang)
-{
-    lang = lang || "en";
-    const firstVerse = verse_ids[0];
-    let placeholders = new Array(verse_ids.length).fill('?').join(',');
-    const headingSQL = `(SELECT verse_id, text FROM lds_scriptures_headings WHERE verse_id <= ? AND lang = '${lang}' ORDER BY verse_id DESC LIMIT 1)
-    UNION (SELECT verse_id, text FROM lds_scriptures_headings WHERE verse_id IN (${placeholders}) AND lang = '${lang}' ORDER BY verse_id)`;
-    const params = [firstVerse,  ...verse_ids];    
-    let headingData = await queryDB(headingSQL, params);
-    headingData = headingData.filter((v,i,a)=>a.findIndex(t=>(t.verse_id === v.verse_id))===i);
-    if(!headingData.length) headingData = [{verse_id:firstVerse}];
-    return headingData.sort((a, b) => a.verse_id - b.verse_id)
-    .map((item,i)=>{
-        const startVerse = Math.max(item.verse_id,Math.min(...verse_ids));
-        const endVerse = headingData[i+1]?.verse_id || verse_ids[verse_ids.length-1];
-        const verses = verse_data.filter(v=>v.verse_id >= startVerse && v.verse_id <= endVerse);
-        const passage_verse_ids = verses.map(v=>v.verse_id);
-        const reference = generateReference(passage_verse_ids); //todo: check language
-        const heading = item.text?.replace(/｢\d+｣/g,"").trim() || reference;
-        return {
-            reference,
-            heading,
-            verses:verses.map(v=>({
-                verse:v.verse,
-                verse_id:v.verse_id,
-                text:v.text
-            })),
-        }
-    });
+    }// Function to load headings from the database
 
-}
+export async function loadHeadings(verse_ids, lang = "en") {
+        lang = lang || "en";
+        const firstVerse = verse_ids[0];
+        let placeholders = new Array(verse_ids.length).fill('?').join(',');
+        const headingSQL = `(SELECT verse_id, text FROM lds_scriptures_headings WHERE verse_id <= ? AND lang = '${lang}' ORDER BY verse_id DESC LIMIT 1)
+        UNION (SELECT verse_id, text FROM lds_scriptures_headings WHERE verse_id IN (${placeholders}) AND lang = '${lang}' ORDER BY verse_id)`;
+        const params = [firstVerse, ...verse_ids];
+        let headingData = await queryDB(headingSQL, params);
+        headingData = headingData.filter((v, i, a) => a.findIndex(t => (t.verse_id === v.verse_id)) === i);
+        if (!headingData.length) headingData = [{ verse_id: firstVerse }];
+        return headingData.sort((a, b) => a.verse_id - b.verse_id);
+    }
+
+    // Modified processPassages function to use loadHeadings
+    async function processPassages(verse_ids, verse_data, lang = "en") {
+        let headingData = await loadHeadings(verse_ids, lang);
+        return headingData.map((item, i) => {
+            const startVerse = Math.max(item.verse_id, Math.min(...verse_ids));
+            const endVerse = headingData[i + 1]?.verse_id || verse_ids[verse_ids.length - 1];
+            const verses = verse_data.filter(v => v.verse_id >= startVerse && v.verse_id <= endVerse);
+            const passage_verse_ids = verses.map(v => v.verse_id);
+            const reference = generateReference(passage_verse_ids); //todo: check language
+            const heading = item.text?.replace(/｢\d+｣/g, "").trim() || reference;
+            return {
+                reference,
+                heading,
+                verses: verses.map(v => ({
+                    verse: v.verse,
+                    verse_id: v.verse_id,
+                    text: v.text
+                })),
+            }
+        });
+    }
 
 const pickOneRamdomly = (arr) => {
 
@@ -635,6 +638,7 @@ module.exports = {
     getFirstTextBlockGuidFromSlug,
     organizeRelatedScriptures,
     genUserAvatar, 
+    loadHeadings,
     loadReadingPlan,
     loadReadingPlanSegment,
     processPassages}

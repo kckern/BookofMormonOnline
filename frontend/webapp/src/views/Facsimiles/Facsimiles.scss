@@ -1,0 +1,265 @@
+.card .card-body.faxInfo
+{
+    display: flex;
+    height: 13em;
+    background-size: cover;
+    background-position: center center;
+    border: 4px solid #CCC;
+    position: relative;
+    padding:0;
+    transition: filter 250ms;
+    filter: sepia(0.3);
+
+}
+
+.card .card-body.faxInfo:hover
+{
+
+    -webkit-backdrop-filter: blur(2em);
+    backdrop-filter: blur(2em);
+    transition: filter 250ms;
+}
+
+.card .card-body.faxInfo .faxInfoText
+{
+   position: absolute;
+   top:0;
+   left:0;
+   bottom:0;
+   right:0;
+   padding: 1em;
+    opacity: 0;
+    background-color: rgb(0,0,0,.7);
+    color:white;
+    transition: opacity 250ms;
+    font-size: 1.0em;
+    line-height: 1.2em;
+    text-align: justify;
+
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    
+}
+.card .card-body.faxInfo .faxInfoText:hover
+{
+
+    opacity: 1;
+    transition: opacity 250ms;
+}
+
+.faxiframe {
+    position: absolute;
+    left: 0;
+    top:60px;
+    width:100%;
+    height: calc(100% - 60px)
+}
+
+.closeFax
+{
+    z-index: 9999;
+    position: absolute;
+    right:0;
+    top: 60px;;
+    font-family: monospace;
+    color: white;
+    padding: 0rem 1rem 0rem 1rem;
+    font-size: 3em;
+}
+
+.closeFax:hover{
+    color: #EEE;
+}
+
+@media screen and (min-width: 992px)
+{
+
+    .sidebar .sidebar-wrapper li.active > a:not([data-toggle="collapse"]):after{
+        /*border-right: 17px solid rgb(68, 68, 68);*/
+    }
+}
+
+.faxlist h5{
+    font-weight: 800;
+    margin-top: 0;
+    padding: 0;
+    margin-bottom: 0;
+    white-space: nowrap;
+    overflow: hidden;
+}
+.faxlist .card-header
+{
+    padding:  .5em 0 .5em 0;
+}
+
+
+.faxlist .my-masonry-grid_column:first-child
+{
+    padding-left:4em;
+}
+
+
+
+.faxlist .badge{
+    position: absolute;
+    top:2ex;
+    right:1ex;
+    opacity: 0.2;
+    padding:0.5ex;
+}
+
+.faxGridViewer{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1ex;
+    justify-content: space-around;
+
+}
+
+.faxGridViewer > .faxPage{
+    width: 200px;
+    outline: 1px solid #CCC;
+    background-color: #555;
+    border-radius: 1ex;
+    position: relative;
+    cursor: pointer;
+    min-height: 300px;
+}
+.faxGridViewer > .faxPage > img{
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 1ex;
+}
+
+.faxGridViewer > .faxPage > .pageOverlay{
+    position: absolute;
+    top:0;
+    left:0;
+    right:0;
+    bottom:0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 1em;
+    border-radius: 1ex;
+    background-color: rgba(0,0,0,0);
+    color: #FFFFFF15;
+    transition: color 250ms, background-color 250ms;
+}
+
+
+.faxGridViewer > .faxPage > .pageOverlay:hover{
+    background-color: rgba(0,0,0,0.8);
+    color: white;
+    transition: color 250ms, background-color 250ms;
+}
+
+
+.pageNumbers h6{
+    margin: 0;
+    padding: 0;
+    color: #CCC;
+
+}
+
+.pagesContainer {
+    display: flex;
+    gap: 1ex;
+    justify-content: space-around;
+    justify-content: center;
+    background-color: #555;
+    padding: 1rem;
+    border-radius: 1ex;
+
+    // Use aspect-ratio to maintain the ratio while respecting max-height
+    aspect-ratio: 1.3 / 1; // Example ratio, adjust based on your design needs
+    width: auto; // Allow width to adjust based on height constraints
+    max-height: calc(100vh - 12rem); // Max height constraint
+    height: auto; // Allow height to grow but respect max-height
+
+    // Fallback for browsers that do not support aspect-ratio
+    @supports not (aspect-ratio: 1 / 1) {
+        // Maintain the aspect ratio using a pseudo-element if aspect-ratio is not supported
+        &:before {
+            float: left;
+            padding-top: calc((100vh - 12rem) * 0.6); // Adjust based on the desired aspect ratio
+            content: "";
+            shape-outside: rect(0 0 0 0);
+        }
+
+        &:after {
+            display: block;
+            content: "";
+            clear: both;
+        }
+    }
+}
+
+
+.pageNumbers
+{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1ex;
+    justify-content: space-around;
+    border-radius: 1ex;
+    height: 100%;
+    max-height: 100%;
+
+}
+
+.pagesContainer .page{
+    width: 50%;
+    aspect-ratio: 2 / 3; /* Sets the aspect ratio to 2:3 */
+
+    background-color: #222;
+    border-radius: 1ex;
+    cursor: pointer;
+}
+.pagesContainer .page img{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 1ex;
+    /* place on right side with fit */
+    object-position: 100% 50%;
+}
+
+.pagesContainer .page img:hover{
+    filter: brightness(1.1);
+}
+
+.seekBlocks{
+    display: none;
+    display: flex;
+    height: 2rem;
+    outline: 1px solid #CCC;
+    margin: 5px;
+    flex-direction: row;
+    justify-content: space-between; /* Spread the blocks evenly */
+}
+
+.seekBlock > div.seekBlock{
+    height: 2rem;
+    border-right: 1px solid #333;
+    width: 100%;
+}
+.facsimileViewer h2{
+    text-align: center;
+}
+
+h2.facsimileViewerTitle{
+    display: flex;
+}
+
+.faxPageViewer{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1ex;
+}

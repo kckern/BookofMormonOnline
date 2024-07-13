@@ -159,8 +159,10 @@ function Main(props) {
       </div>
     );
 
+  const isDev =  /^dev\.|^localhost/.test(window.location.host);
+
   return (
-    <div className={"body"+(lang ? " "+lang: "")}>
+    <div className={"body"+(lang ? " "+lang: "") + (isDev ? " dev" : "")}>
       {debug}
       <Header {...props} appController={appController} isReady={true} />
       {/* <Navbar user={user} showSideNav={showSideNav} manageLayout={manageLayout} toggleSideNav={toggleSideNav} /> */}

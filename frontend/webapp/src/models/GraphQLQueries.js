@@ -183,12 +183,44 @@ const queries = {
                     heading
                     verses{
                         verse
+                        verse_id
                         text
                     }
                 }
             }`,
     }
 
+  },
+  verses: (verse_ids) => {
+    return {
+      type: "verses",
+      key: "verse_ids",
+      val: verse_ids,
+      query: q("verses", "verse_ids", verse_ids) +
+        `{
+                  verse_id
+                  reference
+                  heading
+                  text
+            
+            }`,
+    }
+
+  },
+  versehighlights: (verse_pairs) => {
+    return {
+      type: "versehighlights",
+      key: "verse_pairs",
+      val: verse_pairs,
+      query: q("versehighlights", "verse_pairs", verse_pairs) +
+        `{
+                isQuote
+                bom_verse_id
+                bible_verse_id
+                bom_highlight
+                bible_highlight
+            }`,
+    }
   },
 
   chiasmus: () => {
@@ -695,6 +727,10 @@ const queries = {
         title
         info
         code
+        pages
+        index
+        pgoffset
+        format
       }`,
     }
   },
@@ -709,6 +745,7 @@ const queries = {
         slug
         name
         desc
+        group
         centerx
         centery
         minzoom

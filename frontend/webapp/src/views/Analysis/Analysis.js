@@ -33,18 +33,18 @@ function Analysis({appController}) {
     const sections = [
         {heading:"Chiastic Features",text:"An inventory of all identified chiasms in the Book of Mormon.",
         slug:"chiasmus", ready:true},
-        {heading:"Bible Quotations",slug:"bible", ready:true,text:"An analysis of the quotations from the Bible in the Book of Mormon."},
+        {heading:"Bible References",slug:"bible", ready:true,text:"An analysis of the quotations from the Bible in the Book of Mormon."},
         {heading:"Names",slug:"names",text:"An analysis of the names in the Book of Mormon.", ready:true},
         {heading:"“Caractors” Document",text:"A glyph-level comparative and sequential analysis of the “Caractors” document recovered from the Whitmer estate in 1884.",slug:"caractors", ready:true},
 
         {heading:"Intertextuality",text:"ok",slug:"intertext"},
         {heading:"Discursive Rhetoric",text:"ok",slug:"discourse"},
-        {heading:"Narrative Typology",text:"ok",slug:"narrative"},
+       // {heading:"Narrative Typology",text:"ok",slug:"narrative"},
         {heading:"Literary Structures",text:"ok",slug:"structure"},
         {heading:"Internal Quotations",text:"ok",slug:"internalquotes"},
-        {heading:"N-gram Stylometry",text:"ok",slug:"ngram"},
-        {heading:"Word Search",text:"ok",slug:"search"},
-        {heading:"Critical Text",text:"ok",slug:"criticaltext"},
+       // {heading:"N-gram Stylometry",text:"ok",slug:"ngram"},
+        //{heading:"Word Search",text:"ok",slug:"search"},
+       // {heading:"Critical Text",text:"ok",slug:"criticaltext"},
     ]
     
     return <div className="container">

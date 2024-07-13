@@ -37,6 +37,9 @@
     line-height: 1em;
     margin-top: 1ex;
     font-variant: small-caps;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
 }
 .headerTitle small
 {
