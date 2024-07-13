@@ -198,11 +198,11 @@ const queries = {
       val: verse_ids,
       query: q("verses", "verse_ids", verse_ids) +
         `{
-               
-              verses{
                   verse_id
+                  reference
+                  heading
                   text
-              }
+            
             }`,
     }
 
