@@ -93,6 +93,7 @@ type Source {
     info: String
     com: Int
     fax: Int
+    format: String
   }
   type Image {
     id: String
