@@ -30,6 +30,10 @@ export default class _bom_xtras_fax extends ModelBase {
         type: DataTypes.STRING(200),
         allowNull: false
       },
+      pages: {
+        type: DataTypes.INTEGER,
+        allowNull: false
+      },
       pgoffset: {
         type: DataTypes.INTEGER,
         allowNull: true
