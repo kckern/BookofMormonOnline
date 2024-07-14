@@ -54,7 +54,7 @@ export function loadMenu(){
     { slug: "map", title: <span><img src={maps} /> {label("menu_map")}</span> },
     { slug: "fax", title: <span><img src={fax} /> {label("menu_fax")}</span> },
     { slug: "history", title: <span><img src={historyicon} /> {label("menu_history")}</span> },
-    { slug: "analysis", title: <span><img src={analysis} /> {label("menu_analysis")}</span>, dev:true },
+    { slug: "analysis", title: <span><img src={analysis} /> {label("menu_analysis")}</span>, beta:true },
     { slug: "about", title: <span><img src={about} /> {label("menu_about")}</span> },
   ];
 
@@ -150,6 +150,7 @@ function Sidebar(props) {
           {menu.map((r,index) => {
             let isActive = activePath.match(new RegExp("^/" + r.slug));
             let activeClass = isActive ? "active" : "";
+            let betaBadge = r.beta ? <span className="badge menu_beta">Beta</span> : null;
             return (
               <li className={r.slug + "_link  menuitem " + activeClass} key={r.slug} >
                 <NavLink
@@ -160,7 +161,7 @@ function Sidebar(props) {
                     props.appController.functions.closePopUp(); 
                     setActivePath("/" + r.slug)}}
                 >
-                  <span className="sidebar-normal">{r.title}</span>
+                  <span className="sidebar-normal">{r.title} {betaBadge}</span>
                 </NavLink>
               </li>
             );

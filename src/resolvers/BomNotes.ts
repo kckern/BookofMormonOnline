@@ -36,11 +36,12 @@ export default {
       let filter = args.filter;
       let where = filter === 'pdf' ? { com: 0, hide: 0 } : { fax: 1 };
       const model = Models.BomXtrasFax;
-      return model.findAll({
+      const results = await model.findAll({
         where: where,
         order: ['weight'],
         include: [includeTranslation({ [Op.or]: ['title', 'info'] }, lang)].filter(x => !!x)
       });
+      return results;
     },
     history: async (root: any, args: any, context: any, info: any) => {
       const lang = context.lang ? context.lang : null;
@@ -188,6 +189,9 @@ export default {
     },
     info: (item: any, args: any, { db, res }: any, info: any) => {
       return translatedValue(item,"info");
+    },
+    index: (item: any, args: any, { db, res }: any, info: any) => {
+      return [0];
     }
   }
 };
