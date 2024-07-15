@@ -80,6 +80,10 @@ const routes = [
     component: Welcome,
   },
   {
+    path: "/fax/:faxVersion/:pageNumber",
+    component: Facsimiles,
+  },
+  {
     path: "/fax/:faxVersion+",
     component: Facsimiles,
   },
