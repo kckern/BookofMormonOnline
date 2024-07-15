@@ -727,6 +727,10 @@ const queries = {
         title
         info
         code
+        pages
+        index
+        pgoffset
+        format
       }`,
     }
   },
