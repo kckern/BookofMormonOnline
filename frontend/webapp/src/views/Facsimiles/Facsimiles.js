@@ -95,7 +95,6 @@ function FacsimilePageViewer({ item, activePage, setActivePage }) {
   const rightUrl = pageUrl(rightPage);
   return (
     <div className="faxPageViewer noselect">
-      
       <div className="pagesContainer">
         <div className="leftPage page" onClick={goToPrevPages}>
           <img src={leftUrl} alt={`Page ${leftPage}`} />
