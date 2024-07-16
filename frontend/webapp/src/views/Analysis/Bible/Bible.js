@@ -641,7 +641,6 @@ function VerseViewer({ verseViewerContent, setVerseViewerContent }) {
                                 const prevLeftisSameasCurrentLeft = prevVerseIds.some(vid => vid === rowVid);
                                 const prevRightisSameasCurrentRight = prevVerseIds.some(vid => vid === colVid);
 
-                                console.log(highlights);
                                 return (
                                     <React.Fragment key={i}>
                                         <tr key={i + `-tr`} className={isQuote ? "" : ""}>

@@ -49,7 +49,7 @@ export function loadMenu(){
     { slug: "theater", title: <span><img src={theater} /> {label("menu_theater")}</span> },
     { slug: "timeline", title: <span><img src={timeline} /> {label("menu_timeline")}</span> },
     { slug: "people", title: <span><img src={people} /> {label("menu_people")}</span> },
-    { slug: "relationships", title: <span><img src={relationships} /> {label("menu_network")}</span>, dev:true },
+    { slug: "relationships", title: <span><img src={relationships} /> {label("menu_network")}</span>, dev:true, lang: ["en"] },
     { slug: "places", title: <span><img src={places} /> {label("menu_places")}</span> },
     { slug: "map", title: <span><img src={maps} /> {label("menu_map")}</span> },
     { slug: "fax", title: <span><img src={fax} /> {label("menu_fax")}</span> },
@@ -68,7 +68,8 @@ export function loadMenu(){
 
   return list.filter(i=>{
     const isDev = /localhost|^dev/.test(window.location.hostname);
-    return !i.dev || isDev;
+    const isLang = i.lang ? i.lang.includes(lang) : true;
+    return !i.dev || isDev && isLang;
   });
 }
 
