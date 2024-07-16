@@ -86,7 +86,7 @@ export function StudyHistory({
   if (!studyLog) return null;
 
   return (
-    <Card className="historySide" onClick={() => setHistoryView(true)}>
+    <Card className="historySide" onClick={() => setHistoryView(true)}> 
       <CardHeader>
         <h5 className="title">
           <img src={calendar} /> {label("study_history")}
@@ -98,7 +98,7 @@ export function StudyHistory({
           <div className="nav-tabs-wrapper">
             <Nav id="tabs" role="tablist" tabs>
               {(years || [new Date().getFullYear().toString()]).map((y, i) => (
-                <NavItem key={i}>
+                <NavItem key={i} className="yeartab">
                   <NavLink
                     aria-expanded={horizontalTabs === y}
                     data-toggle="tab"

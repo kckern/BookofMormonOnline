@@ -39,12 +39,12 @@ function Analysis({appController}) {
 
         {heading:"Intertextuality",text:"ok",slug:"intertext"},
         {heading:"Discursive Rhetoric",text:"ok",slug:"discourse"},
-        {heading:"Narrative Typology",text:"ok",slug:"narrative"},
+       // {heading:"Narrative Typology",text:"ok",slug:"narrative"},
         {heading:"Literary Structures",text:"ok",slug:"structure"},
         {heading:"Internal Quotations",text:"ok",slug:"internalquotes"},
-        {heading:"N-gram Stylometry",text:"ok",slug:"ngram"},
-        {heading:"Word Search",text:"ok",slug:"search"},
-        {heading:"Critical Text",text:"ok",slug:"criticaltext"},
+       // {heading:"N-gram Stylometry",text:"ok",slug:"ngram"},
+        //{heading:"Word Search",text:"ok",slug:"search"},
+       // {heading:"Critical Text",text:"ok",slug:"criticaltext"},
     ]
     
     return <div className="container">

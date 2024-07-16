@@ -6,6 +6,7 @@ import Chiasm from "./Chiasm";
 import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem,Button, Label } from 'reactstrap';
 import searchIcon from "../../_Common/svg/search.svg";
 import {lookupReference} from "scripture-guide";
+import { Switch } from "react-router-dom/cjs/react-router-dom.min";
 function ChiasmusControl({chiasmusControls, setChiasmusControls}) {
 
 
@@ -84,13 +85,21 @@ function DepthFilter({depthCounts, chiasmusControls, toggleButton, toggleBiblica
             <div className="filter_label">Biblical</div>
             <Button className={chiasmusControls.biblical ? 'filtered' : ''} onClick={toggleBiblical}>
             <div className="counter">100</div>
-                <input type="checkbox" checked={!chiasmusControls.biblical} style={{color: '#AAA'}} />
+            <Switch 
+                checked={chiasmusControls.biblical} 
+                onChange={toggleBiblical} 
+                color="default" 
+                />
             </Button>
 
             <div className="filter_label">Compound</div>
             <Button className={chiasmusControls.compound ? 'filtered' : ''} onClick={toggleCompound}>
-            <div className="counter">100</div>
-                <input type="checkbox" checked={!chiasmusControls.compound} style={{color: '#AAA'}} />
+            <div className="counter">100</div>        
+                    <Switch 
+                checked={chiasmusControls.compound}
+                onChange={toggleCompound}
+                color="default" 
+                />
             </Button>
         </div>
     );
