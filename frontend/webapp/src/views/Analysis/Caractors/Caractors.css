@@ -1,10 +1,23 @@
 .caractors .grid {
-  display: flex;
   width: 100%;
-  flex-wrap: wrap;
   background-color: #fde4b8;
   justify-content: space-between;
+  height:calc(100vh - 35em);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(3em, 1fr));
+  gap: 1ex;
+  padding: 1ex;
 }
+
+.caractors small a{
+  font-weight: bold;
+  text-decoration: underline;
+}
+.caractors p{
+  font-size: 1rem;
+  line-height: 0.9rem;
+}
+
 
 .caractors .grid .tile {
   height: 3em;

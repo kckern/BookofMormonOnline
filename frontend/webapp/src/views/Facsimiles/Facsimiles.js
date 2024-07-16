@@ -84,12 +84,11 @@ function FacsimileViewer({item}) {
   const match = useParams();
 
 
-  const pageNumberFromUrl = parseInt(match.pageNumber ? match.pageNumber + item.pgoffset : 0);
+  const pageNumberFromUrl = /[0-9]+/.test(match.pageNumber) ? parseInt(match.pageNumber): match.pageNumber || 0;
   const pageNumber = convertRomanNumeralToInt(pageNumberFromUrl);
 
   const [activePage, setActivePage] = useState(pageNumber);
   const { title } = item;
-  console.log({item, activePage})
   return <div className="facsimileViewer">
     <h2 className="facsimileViewerTitle">
       <span 
