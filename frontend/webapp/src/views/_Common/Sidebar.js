@@ -49,12 +49,12 @@ export function loadMenu(){
     { slug: "theater", title: <span><img src={theater} /> {label("menu_theater")}</span> },
     { slug: "timeline", title: <span><img src={timeline} /> {label("menu_timeline")}</span> },
     { slug: "people", title: <span><img src={people} /> {label("menu_people")}</span> },
-    { slug: "relationships", title: <span><img src={relationships} /> {label("menu_network")}</span>, dev:true, lang: ["en"] },
+    { slug: "relationships", title: <span><img src={relationships} /> {label("menu_network")}</span>, dev:true },
     { slug: "places", title: <span><img src={places} /> {label("menu_places")}</span> },
     { slug: "map", title: <span><img src={maps} /> {label("menu_map")}</span> },
     { slug: "fax", title: <span><img src={fax} /> {label("menu_fax")}</span> },
     { slug: "history", title: <span><img src={historyicon} /> {label("menu_history")}</span> },
-    { slug: "analysis", title: <span><img src={analysis} /> {label("menu_analysis")}</span>, beta:true },
+    { slug: "analysis", title: <span><img src={analysis} /> {label("menu_analysis")}</span>, beta:true, lang: ["en"]},
     { slug: "about", title: <span><img src={about} /> {label("menu_about")}</span> },
   ];
 

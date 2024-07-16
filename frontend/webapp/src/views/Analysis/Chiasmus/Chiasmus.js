@@ -21,17 +21,31 @@ function ChiasmusControl({chiasmusControls, setChiasmusControls}) {
         }));
     };
 
-const toggleButton = (depth) => {
+const toggleButton = (depth, onoff) => {
     setChiasmusControls(prevState => {
         let newFilteredLevels = [...prevState.filteredLevels];
         const isNumeric = !isNaN(depth);
         depth = isNumeric ? parseInt(depth) : depth;
         const index = newFilteredLevels.indexOf(depth);
-        
-        if (index === -1) {
-            newFilteredLevels.push(depth);
-        } else {
-            newFilteredLevels.splice(index, 1);
+
+        if (onoff===true) {
+            // Force on: Add depth if it's not already present
+            if (index === -1) {
+                newFilteredLevels.push(depth);
+            }
+        } else if (onoff===false) {
+            // Force off: Remove depth if it's present
+            if (index !== -1) {
+                newFilteredLevels.splice(index, 1);
+            }
+        }
+        else //toggle
+        {
+            if (index === -1) {
+                newFilteredLevels.push(depth);
+            } else {
+                newFilteredLevels.splice(index, 1);
+            }
         }
 
         return {
@@ -51,7 +65,7 @@ const toggleButton = (depth) => {
 
     return (
         <div className="chiasmus_controls">
-            <DepthFilter depthCounts={chiasmusControls.depthCounts} chiasmusControls={chiasmusControls} toggleButton={toggleButton} toggleBiblical={toggleBiblical} toggleCompound={toggleCompound} />
+            <DepthFilter depthCounts={chiasmusControls.depthCounts} chiasmusControls={chiasmusControls} toggleButton={toggleButton} toggleBiblical={toggleBiblical} toggleCompound={toggleCompound} setChiasmusControls={setChiasmusControls} />
             <div className="sort_controls" style={{display: 'flex', justifyContent: 'space-between'}}>
             <SortButton chiasmusControls={chiasmusControls} toggleSortField={toggleSortField} />
             <Button onClick={toggleSortOrder}  className="sort_order_button">
@@ -72,34 +86,48 @@ function SortButton({chiasmusControls, toggleSortField}) {
     );
 }
 
-function DepthFilter({depthCounts, chiasmusControls, toggleButton, toggleBiblical, toggleCompound}) {
+function DepthFilter({depthCounts, chiasmusControls, toggleButton, toggleBiblical, toggleCompound, setChiasmusControls}) {
+
+
+    const setOnlyFilter = (depth) => {
+        //turn off all levels
+        chiasmusControls.filteredLevels.forEach(depth => toggleButton(depth, true));
+        //turn on only this level
+        toggleButton(depth, false);
+
+    }
+
+
     return (
         <div className="depth_filter" style={{display: 'flex', flexDirection: 'row'}}>
             <div className="filter_label">  Chiastic<br/>Levels</div>
-            {Object.keys(depthCounts).map(depth => <Button 
-                className={chiasmusControls.filteredLevels.includes(isNaN(depth) ? depth : parseInt(depth) ) ? 'filtered' : ''}                        
-                    onClick={() => toggleButton(depth)} >
-                        <div className="counter">{depthCounts[depth]}</div>
-                        {depth}
-                    </Button>)}
+            {Object.keys(depthCounts).map(depth => (
+                <>
+                    <Button 
+                        className={chiasmusControls.filteredLevels.includes(isNaN(depth) ? depth : parseInt(depth)) ? 'filtered' : ''}                        
+                        onClick={() => toggleButton(depth)}>
+                            <div className="counter">{depthCounts[depth]}</div>
+                            {depth}
+                    </Button>
+
+                    {false && <Button 
+                        className="only-filter"                        
+                        onClick={() => setOnlyFilter(depth)}>
+                            Only
+                    </Button>}
+                </>
+            ))}
             <div className="filter_label">Biblical</div>
             <Button className={chiasmusControls.biblical ? 'filtered' : ''} onClick={toggleBiblical}>
-            <div className="counter">100</div>
-            <Switch 
-                checked={chiasmusControls.biblical} 
-                onChange={toggleBiblical} 
-                color="default" 
-                />
+            <div className="counter">{chiasmusControls.categoryCounts.biblical}</div>
+            {/* unicode icons*/ !chiasmusControls.biblical ? '✓' : '✗' }
             </Button>
 
             <div className="filter_label">Compound</div>
             <Button className={chiasmusControls.compound ? 'filtered' : ''} onClick={toggleCompound}>
-            <div className="counter">100</div>        
-                    <Switch 
-                checked={chiasmusControls.compound}
-                onChange={toggleCompound}
-                color="default" 
-                />
+            <div className="counter">{chiasmusControls.categoryCounts.compound}</div>    
+
+            {/* unicode icons*/ !chiasmusControls.compound ? '✓' : '✗' }
             </Button>
         </div>
     );
@@ -108,11 +136,39 @@ function DepthFilter({depthCounts, chiasmusControls, toggleButton, toggleBiblica
 function Chiasmus({chiasmus,setChiasmusId,activeChiasmus}) {
 
 
+    const bibleRefs = `2 Nephi 12-24, 1 Nephi 20-21, 3 Nephi 12-14, 3 Nephi 24-25, Mosiah 14`;
+    const bibleVerseIds = lookupReference(bibleRefs).verse_ids;
+
+    const depthCounts = chiasmus.reduce((acc, chiasm) => {
+        const {scheme, verse_id} = chiasm;
+        const upperLetters = scheme.replace(/[^A-Z]/g, "").split("").sort();
+        const maxLetter = upperLetters[upperLetters.length-1];
+        let depth = maxLetter.charCodeAt(0) - 64;
+
+        if(depth > 7) depth = "+";
+        return {...acc, [depth]: acc[depth] ? acc[depth] + 1 : 1};
+    }, {});
+
+
+    const categoryCounts = chiasmus.reduce((acc, chiasm) => {
+        const {reference, scheme} = chiasm;
+        const verse_id = lookupReference(reference).verse_ids[0];
+        const isBiblical = bibleVerseIds.includes(verse_id);
+        const isCompound = /Aa/.test(scheme);
+        return {
+            ...acc,
+            biblical: isBiblical ? acc.biblical + 1 : acc.biblical,
+            compound: isCompound ? acc.compound + 1 : acc.compound
+        };
+    }, {biblical: 0, compound: 0});
+    console.log(categoryCounts);
+
     const [chiasmusControls, setChiasmusControls] = useState({
         sortDropdownOpen: false,
         sortField: 'reference', // 'reference' or 'depth'
         sortOrder: 'asc', // 'asc' or 'desc'
-        depthCounts: {2:100, 3:40, 4:20, 5:10, 6:5, 7:2, "+":1},
+        depthCounts,
+        categoryCounts,
         sortFieldButton: 'Reference',
         filteredLevels: [],
         biblical: false,
@@ -130,6 +186,7 @@ function Chiasmus({chiasmus,setChiasmusId,activeChiasmus}) {
         if(depth > 7) depth = "+";
         const isCompound = /Aa/.test(scheme);
         if(compound && isCompound) return false;
+        if(biblical && bibleVerseIds.includes(lookupReference(chiasm.reference).verse_ids[0])) return false;
         if (filteredLevels.includes(depth)) return false;
         return true;
     }
