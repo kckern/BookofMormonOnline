@@ -292,7 +292,9 @@ function ScriptureGrid() {
   
     return (
       <div className="grid">
-        <h4>Bible Quotes and Phrases</h4>
+       <h3 class="title lg-4 text-center"
+        style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", flexGrow:0 }}
+       >Bible Quotes and Phrases in the Book of Mormon</h3>
         <table className="gridTable">
           <thead className="noselect">
             <tr>
