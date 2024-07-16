@@ -8,6 +8,8 @@ import BoMOnlineAPI from "../../../models/BoMOnlineAPI";
 import DiffMatchPatch from "diff-match-patch";
 import { Spinner } from "../../_Common/Loader";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import { highlightTextJSX } from "./highlighter";
+
 
 const diffMatchPatch = new DiffMatchPatch();
 DiffMatchPatch.DIFF_EQUAL = 0;
@@ -456,8 +458,8 @@ function VerseViewer({ verseViewerContent, setVerseViewerContent }) {
     const colVerseRange = getStartEnd("books", { key: colKey });
 
     const matches = index.filter(([rowVid, colVid, isQuote]) => {
-        const hasRows = rowVerseRange?.[0] > 1;
-        const hasCols = colVerseRange?.[0] > 1;
+        const hasRows = rowVerseRange?.[0] >= 1;
+        const hasCols = colVerseRange?.[0] >= 1;
         const rowCondition = hasRows ? rowVid >= rowVerseRange[0] && rowVid <= rowVerseRange[1] : true;
         const colCondition = hasCols ? colVid >= colVerseRange[0] && colVid <= colVerseRange[1] : true;
         return rowCondition && colCondition;
@@ -560,80 +562,9 @@ function VerseViewer({ verseViewerContent, setVerseViewerContent }) {
                                 const { text: rightText, heading: rightHeading } = rightData;
 
 
-                                const generateHighlightedText = (text, arrayOfStrings) => {
-                                  // Convert strings in arrayOfStrings to regex patterns that ignore case and non-alphabetic characters
-                                  const inOutPositions = arrayOfStrings.map((str) => {
-                                      str = str.replace(/ /g, "[^a-z]");
-                                      const regex = new RegExp(str, "ig");
-                                      let match;
-                                      let matches = [];
-                              
-                                      // Find all matches and their positions
-                                      while ((match = regex.exec(text)) !== null) {
-                                          matches.push([match.index, match.index + match[0].length]);
-                                      }
-                                      return matches;
-                                  }).flat();
-                              
-                                  // Sort positions for easier processing
-                                  inOutPositions.sort((a, b) => a[0] - b[0]);
-                              
-                                  // Check if any position spans the entire text
-                                  const entireTextMatch = inOutPositions.some(([start, end]) => start === 0 && end === text.length);
-                              
-                                  if (entireTextMatch) {
-                                      // If the entire text is matched, return it fully highlighted
-                                      return <span className="highlight">{text}</span>;
-                                  }
-                              
-                                  let parts = [];
-                                  let lastIndex = 0;
-                              
-                                  // Process text to handle highlighted and non-highlighted regions
-                                  inOutPositions.forEach((position, index) => {
-                                      const [start, end] = position;
-                                      // Non-highlighted part before the current match
-                                      if (start > lastIndex) {
-                                          parts.push({ text: text.slice(lastIndex, start), highlighted: false });
-                                      }
-                                      // The current match which should be highlighted
-                                      parts.push({ text: text.slice(start, end), highlighted: true });
-                                      lastIndex = end;
-                                  });
-                              
-                                  // Handle any remaining non-highlighted text after the last match
-                                  if (lastIndex < text.length) {
-                                      parts.push({ text: text.slice(lastIndex), highlighted: false });
-                                  }
-                              
-                                  // Generate React components
-                                  const highlightText = parts.map((part, i) => (
-                                      <span key={i} className={part.highlighted ? "highlight" : ""}>{part.text}</span>
-                                  ));
-                              
-                                  return highlightText;
-                              };
-                              
 
 
 
-                                const highlightTextJSX = (text, arrayOfStrings) => {
-                                  arrayOfStrings = arrayOfStrings || [];
-                                  const splitText = text.split(new RegExp(`(${arrayOfStrings.join("|")})`, "ig"));
-                                  const highlighted =  generateHighlightedText(text, arrayOfStrings);
-                                  const highlightCount = highlighted.length;
-                                  if(highlightCount > 1) return <>
-                                      <span>{highlighted}</span>
-                                  </>
-
-                                  return <>
-                                      <span>{highlighted}</span>
-                                      <pre>
-                                          {JSON.stringify(arrayOfStrings)}
-                                      </pre>
-                                  </>
-
-                                };
 
                                 const leftHighlights = highlights.bom_highlight;
                                 const rightHighlights = highlights.bible_highlight;
@@ -661,10 +592,10 @@ function VerseViewer({ verseViewerContent, setVerseViewerContent }) {
                                         </tr>
                                         <tr className={isQuote ? "" : ""}>
                                             <td className="scriptureCell left">
-                                                <p>{highlightTextJSX(leftText, leftHighlights)}</p>
+                                                <p>{highlightTextJSX(leftText, leftHighlights, rowVid)}</p>
                                             </td>
                                             <td className="scriptureCell right">
-                                                <p>{highlightTextJSX(rightText, rightHighlights)}</p>
+                                                <p>{highlightTextJSX(rightText, rightHighlights, colVid)}</p>
                                             </td>
                                         </tr>
                                     </React.Fragment>
