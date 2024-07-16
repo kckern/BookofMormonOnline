@@ -50,18 +50,21 @@ export const generateHighlightedText = (text, arrayOfStrings) => {
             return acc;
           }, [0]).flat();
 
-
+    const startsWithHighlight = !!cutpoints[1];
     const cutText = cutpoints.map((position, index) => {
         position = position<0 ? 0 : position;
         const nextPosition = cutpoints[index + 1] || text.length;
+        if(!position && !nextPosition) return "";
         return text.slice(position, nextPosition);
     });
+    if(!startsWithHighlight) cutText[0] = "";
+
     const debug = {text,arrayOfStrings,patterns,cutpoints, cutText};
     //return <pre>  {JSON.stringify(, null, 2)}  </pre>
 
     const jsx = cutText.map((text, index) => {
         const isHighlighted = index % 2 === 1;
-        return isHighlighted ? <span className="highlight">{text}</span> : <span>{" "}{text}{" "}</span>;
+        return isHighlighted ? <><span className="highlight">{text}</span>{" "}</> : <span>{text}</span>;
     });
 
     return {jsx, debug};
