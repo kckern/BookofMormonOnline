@@ -745,6 +745,7 @@ const queries = {
         slug
         name
         desc
+        group
         centerx
         centery
         minzoom

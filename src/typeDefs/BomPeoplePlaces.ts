@@ -96,6 +96,7 @@ extend type Query {
     name: String
     slug: String
     desc: String
+    group: String
     centerx: Float
     centery: Float
     minzoom: Int
