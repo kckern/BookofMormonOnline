@@ -341,6 +341,10 @@ pre {
     margin-bottom: 0.2rem;
     max-height: 300px;
     overflow-y: scroll;
+    display: none;
+}
+.dev pre {
+    display: block;
 }
 
 pre::before {
