@@ -1,6 +1,6 @@
 .nameAnalysisList{
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(6rem, 1fr));
     grid-column-gap: 0.5ex;
     /* 1em spacing between rows */
     grid-row-gap: 0.5ex;
@@ -21,4 +21,14 @@
     border-bottom: 2px solid #ccc;
     margin-bottom: -1px;
 
+}
+
+.nameform td{
+    padding:0
+}
+
+.nameform th{
+    text-align: center;
+    font-weight: 800;
+    font-size: 1.2rem;
 }
