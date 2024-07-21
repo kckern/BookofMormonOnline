@@ -34,11 +34,16 @@ export default function Commentary({ appController }) {
 		sourceId:null
 	});
   useEffect(() => {
+    document.body.style = 'overflow: hidden';
     const popUpWindow = document.getElementById('popUp');
     const cardBodyElement = popUpWindow.childNodes[1];
     if(cardBodyElement.scrollTop !==0) cardBodyElement.scrollTop = 0;
     if(document.activeElement !== popUpWindow) popUpWindow.focus();
     setLegal(false)
+
+    return ()=>{
+      document.body.style = 'overflow: auto';
+    }
   }, [appController.states.popUp.activeId]);
 
   const setCommentHighlights = (items) => {
@@ -66,7 +71,6 @@ export default function Commentary({ appController }) {
   };
 
 	const handleKeyboardListener = (e)=>{
-		e.preventDefault();
 
 		const activeId = appController.states.popUp.activeId;
 
