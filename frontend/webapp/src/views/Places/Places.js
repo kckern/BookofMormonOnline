@@ -36,6 +36,7 @@ import city from "../People/svg/city.svg";
 import town from "../People/svg/town.svg";
 import geographic_feature from "../People/svg/geographic_feature.svg";
 import geo_other from "../People/svg/other.svg";
+import { SearchPopUp } from "../_Common/SearchPopUp"
 
 function PlacesComponent({ appController }) {
   useEffect(() => document.title = label("menu_places") + " | " + label("home_title"), [])
@@ -209,7 +210,7 @@ export default PlacesComponent
 export function PlaceFilters({ appController, setFilter, placeFilters })
 {
 
-
+  const [isOpen,setIsOpen] = useState(false);
 
   const filterSections = {
     occupants: {
@@ -298,24 +299,33 @@ export function PlaceFilters({ appController, setFilter, placeFilters })
     setFilter(tmp)
   }
 
+  const {placeList} = appController.preLoad;
+
+  const selectItemHandler = (slug)=>{
+    appController.functions.setPopUp({ type: "places", ids: [slug],underSlug: "places",});
+    setIsOpen(false);
+}
+
 
   const filterBox = <><h5 className='ppFiltersHeading'>{label("selectors")}</h5>
   <div className='ppFilters'>
-    <Input
-      className='ppSearch'
-      placeholder={"🔍" + label("search")}
-      onFocus={(e) => (e.target.placeholder = "")}
-      onChange={(e) => {
-        let tmp = { ...placeFilters }
-        tmp.search = e.target.value
-        setFilter(tmp)
-      }}
-    />
+  {!isMobile() && <button className="ppFiltersSearchButton" onClick={()=>setIsOpen(true)}>
+    🔍
+    </button>}
     <div className='ppColumns'>
       {filterUI(filterSections.occupants)}
       {filterUI(filterSections.location)}
       {filterUI(filterSections.type)}
     </div>
+    {!isMobile() && <SearchPopUp
+      placeholder="search_for_a_place"
+      preLoadData={placeList}
+      selectItemHandler={selectItemHandler}
+      isOpen={isOpen}
+      setIsOpen={setIsOpen}
+      testFieldNames={{primary:'name',secondary:'info'}}
+      assetName="places"
+      />}
   </div></>
 
     const handleClick = ()=>{
@@ -332,6 +342,16 @@ export function PlaceFilters({ appController, setFilter, placeFilters })
 
   if(isMobile()) return <div className="filterDrawerButton">
     <Button onClick={handleClick}>{label("selectors")}</Button>
+    <button className="ppFiltersSearchButtonMobile" onClick={()=>setIsOpen(true)}>🔍</button>
+    <SearchPopUp
+      placeholder="search_for_a_place"
+      preLoadData={placeList}
+      selectItemHandler={selectItemHandler}
+      isOpen={isOpen}
+      setIsOpen={setIsOpen}
+      testFieldNames={{primary:'name',secondary:'info'}}
+      assetName="places"
+      />
     </div>;
 
   return filterBox;

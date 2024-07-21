@@ -34,6 +34,7 @@ import black from "./svg/black.svg";
 import grey from "./svg/grey.svg";
 import orange from "./svg/orange.svg";
 import red from "./svg/red.svg";
+import { SearchPopUp } from "../_Common/SearchPopUp";
 
 
 function PeopleComponent({ appController }) {
@@ -178,6 +179,8 @@ function PeopleComponent({ appController }) {
 
 export function PeopleFilters({ appController, setFilter, peopleFilters }) {
 
+  const [isOpen,setIsOpen] = useState(false);
+
   const filterSections = {
     identification: {
       title: label("social_identification"),
@@ -261,20 +264,33 @@ export function PeopleFilters({ appController, setFilter, peopleFilters }) {
     setFilter(tmp);
   }
 
-  const filterBox = <><h5 className="ppFiltersHeading">{label("filters")} </h5>
+  const {personList} = appController.preLoad;
+
+  const selectItemHandler = (slug)=>{
+      appController.functions.setPopUp({ type: "people", ids: [slug],underSlug: "people",});
+      setIsOpen(false);
+  }
+
+  const filterBox = <>
+  <h5 className="ppFiltersHeading">{label("filters")} </h5>
     <div className="ppFilters">
-      <Input className="ppSearch" placeholder={"🔍" + label("search")} onFocus={(e) => e.target.placeholder = ""}
-        onChange={(e) => {
-          let tmp = { ...peopleFilters }
-          tmp.search = e.target.value;
-          setFilter(tmp)
-        }}
-      />
+    {!isMobile() && <button className="ppFiltersSearchButton" onClick={()=>setIsOpen(true)}>
+    🔍
+    </button>}
       <div className="ppColumns">
         {filterUI(filterSections.identification)}
         {filterUI(filterSections.classification)}
         {filterUI(filterSections.unit)}
       </div>
+      {!isMobile() && <SearchPopUp
+      placeholder="search_for_a_people"
+      preLoadData={personList}
+      selectItemHandler={selectItemHandler}
+      isOpen={isOpen}
+      setIsOpen={setIsOpen}
+      testFieldNames={{primary:'name',secondary:'title'}}
+      assetName="people"
+      />}
     </div>
   </>
     const handleClick = ()=>{
@@ -298,7 +314,19 @@ export function PeopleFilters({ appController, setFilter, peopleFilters }) {
 		}
 	},[peopleFilters,appController.states.popUp.type])
 
-  if (isMobile()) return <div className="filterDrawerButton"><Button onClick={handleClick}>{label("filters")}</Button></div>;
+  if (isMobile()) return <div className="filterDrawerButton">
+    <Button onClick={handleClick}>{label("filters")}</Button>
+    <button className="ppFiltersSearchButtonMobile" onClick={()=>setIsOpen(true)}>🔍</button>
+    <SearchPopUp
+      placeholder="search_for_a_people"
+      preLoadData={personList}
+      selectItemHandler={selectItemHandler}
+      isOpen={isOpen}
+      setIsOpen={setIsOpen}
+      testFieldNames={{primary:'name',secondary:'title'}}
+      assetName="people"
+      />
+    </div>;
 
   return filterBox;
 }

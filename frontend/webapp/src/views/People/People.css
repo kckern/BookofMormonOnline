@@ -130,19 +130,19 @@ h5.ppFiltersHeading{
     display: flex;
 }
 
-input.ppSearch 
+.ppFiltersSearchButton
 {
-    width: 18.5em;
+    outline:none;
+    border:none;
     position: absolute;
     right: 0em;
     top:-2em;
     opacity: 0.5;
-
 }
-input.ppSearch::placeholder
-{
-    text-align: center;
-    letter-spacing: 1ex;
+
+.ppFiltersSearchButtonMobile{
+  outline:none;
+  border:none;
 }
 
 .ppFilters ul{
@@ -164,7 +164,7 @@ li.item .bootstrap-switch
     flex-shrink: 0;
 }
 
-li.item 
+li.item
 {
     cursor: pointer;
     display: flex;
@@ -179,7 +179,7 @@ li.item:hover
     font-weight: bold;
 }
 
-.lifoot 
+.lifoot
 {
     display: flex;
 }
@@ -252,7 +252,7 @@ li.item:hover
 }
 
 
-.personCard 
+.personCard
 {
     height: 18em;
     display: flex;
@@ -306,7 +306,7 @@ li.item:hover
     flex-grow: 1;
 }
 
-.peopleList .card-body.personInfo 
+.peopleList .card-body.personInfo
 {
     flex-shrink: 1;
     flex-grow: 0;
@@ -375,4 +375,9 @@ li.item:hover
     justify-content: center;
     margin-bottom: 2em;
     margin-top: -1em;
+    position: relative;
+}
+
+.filterDrawerButton > div{
+  left:0%;
 }
