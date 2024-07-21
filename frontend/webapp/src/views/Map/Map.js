@@ -11,9 +11,9 @@ import "./Map.css"
 import MapTypes from "./MapTypes";
 import { label,isMobile } from "src/models/Utils"
 import MapContents from "./MapContents"
-import {MapPlaceSearch} from "./MapPlaceSearch"
 import {MapPanel,getPlaceInfo} from "./MapPanel.js"
 import {  assetUrl } from "../../models/BoMOnlineAPI"
+import { SearchPopUp } from "../_Common/SearchPopUp.js"
 function MapContainer({ appController }) {
 
   const params = useParams(),
@@ -100,8 +100,6 @@ function MapContainer({ appController }) {
   }
 
   const handleMapChange = ({ map, place }) => {
-		console.log('Map',map);
-		console.log('place',place);
     place = place || mapController.panelContents.slug;
     getMap(map, place)
     appController.functions.closePopUp()
@@ -134,6 +132,14 @@ function MapContainer({ appController }) {
     setMapCenter,
   }
 
+  const selectItemHandler = (slug) => {
+    //TODO: Mobile Drawer
+    if(isMobile())  mapController.appController.functions.setPopUp({ type: "places", ids: [slug] });
+    else    mapController.setPanelContents({slug});
+    setSearching(null);
+}
+
+
   return (  <>
       <div className={`mappanel_wrapper ${!!panelContents.slug ? "open" : ""}`}>
         <MapTypes getMap={getMap} mapName={mapName} mapController={mapController} />
@@ -141,7 +147,15 @@ function MapContainer({ appController }) {
         <MapToolTip {...mapController} />
         {placeList && currentMap?.places ? <>
           <MapContents  mapController={mapController}  />
-          <MapPlaceSearch {...{mapController}} />
+          <SearchPopUp
+          placeholder="search_for_a_place"
+          preLoadData={placeList}
+          selectItemHandler={selectItemHandler}
+          isOpen={searching}
+          setIsOpen={setSearching}
+          testFieldNames={{primary:'info',secondary:'name'}}
+          assetName="places"
+          />
           </>   : <Loader />  }
 
       </div>
