@@ -251,7 +251,7 @@ function Person({ appController }) {
                 </div>
 
                 <h4>{label("relationships")}</h4>
-                <Relationships data={person?.relations} />
+                <Relationships data={person?.relations} appController={appController}/>
                 <ReferenceList
                   index={person.index}
                   setPopupRef={setPopUpRef}
@@ -404,7 +404,7 @@ function Place({ appController }) {
   );
 }
 
-function Relationships({ data }) {
+function Relationships({ data,appController }) {
   const personRow = (person, i) => {
     //determine split
     const namePosition = person.relation.indexOf("$1") ? "back" : "front";
@@ -437,9 +437,12 @@ function Relationships({ data }) {
         data-for="relToolTip"
         data-tip={person.title}
       >
-        <Link
+        <div
           style={{display:"flex"}}
-          to={`/people/${person.person.slug}`}
+          onClick={()=>{
+            appController.functions.setPopUp({ type: "people", ids: [person.person.slug],
+              underSlug: "people", });
+          }}
         >
           <div className="related_text">
             {items}
@@ -448,7 +451,7 @@ function Relationships({ data }) {
           <div className="related_avatar">
             <img src={`${assetUrl}/people/${person.person.slug}`} />
           </div>
-        </Link>
+        </div>
       </div>
     );
   };
