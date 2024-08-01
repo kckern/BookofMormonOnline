@@ -124,36 +124,7 @@ function FacsimileGridViewer({ item, setActivePage }) {
   const [thumbnailWidth, setThumbnailWidth] = useState(300);
   const [faxGridViewerWidth, setFaxGridViewerWidth] = useState(0);
 
-  useEffect(() => {
 
-    const maxThumnailWidth = 300;
-    const colCount = Math.ceil(faxGridViewerWidth / maxThumnailWidth);
-    const gapWidthSum = (colCount - 1) * 5;
-    const remainingWidth = faxGridViewerWidth - (colCount * maxThumnailWidth);
-    const permissableWidth = maxThumnailWidth + (remainingWidth / colCount);
-    console.log({faxGridViewerWidth, colCount, remainingWidth, permissableWidth});
-    setThumbnailWidth(permissableWidth-(gapWidthSum/colCount));
-
-  }, [faxGridViewerWidth]);
-
-  const handleResize = () => {
-    const faxGridViewer = document.querySelector(".faxGridViewer");
-    if (!faxGridViewer) return;
-    setFaxGridViewerWidth(faxGridViewer.offsetWidth);
-  };
-  
-  useEffect(() => {
-    // Call handleResize on component mount
-    handleResize();
-  
-    // Add event listener for window resize
-    window.addEventListener('resize', handleResize);
-  
-    // Cleanup function to remove event listener
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, []);
 
 
   return (
@@ -163,7 +134,7 @@ function FacsimileGridViewer({ item, setActivePage }) {
         const alt = `${item.title} - Page ${i}`;
         if(i <= 0) i = convertToRomanNumeral(item.pgoffset + i, true);
         return (
-          <div key={i} className="faxPage" onClick={() => setActivePage(i)} style={{ width: thumbnailWidth }}>
+          <div key={i} className="faxPage" onClick={() => setActivePage(i)} >
             <div className="pageOverlay">Page {i}</div>
             <img src={url} alt={alt} />
           </div>
