@@ -110,16 +110,14 @@
     padding:0.5ex;
 }
 
-.faxGridViewer{
-    display: flex;
-    flex-wrap: wrap;
+.faxGridViewer {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 5px;
-    justify-content: space-around;
-
+    justify-content: center;
 }
 
-.faxGridViewer > .faxPage{
-    width: 200px;
+.faxPage {
     outline: 1px solid #CCC;
     background-color: #FFF;
     border-radius: 1ex;
