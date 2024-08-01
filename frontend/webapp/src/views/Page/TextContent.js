@@ -146,7 +146,13 @@ export default function TextContent({ content, narrationController, isQuote }) {
         if (domNode.attribs && domNode.attribs.class === "quote") {
           return (
             <>
-              {narrationController.data.text.quotes?.map((quote) => {
+              {narrationController.data.text.quotes?.sort((a, b) =>{
+                const aInt = parseInt(a.slug.replace(/\D+/g, ""));
+                const bInt = parseInt(b.slug.replace(/\D+/g, ""));
+                return aInt - bInt;
+              
+              })
+              .map((quote) => {
                 if (quote.parent !== domNode.attribs.guid) return null;
                 return (
                   <TextContent
