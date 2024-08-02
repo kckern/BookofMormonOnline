@@ -9,6 +9,7 @@ import DiffMatchPatch from "diff-match-patch";
 import { Spinner } from "../../_Common/Loader";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { highlightTextJSX } from "./highlighter";
+import { label } from 'src/models/Utils';
 
 
 const diffMatchPatch = new DiffMatchPatch();
@@ -174,12 +175,29 @@ const getColumnRowValues = (level, id) => {
 
   return ["A", "B", "C", "D"];
 }
+
+const slugify = (str) => str?.toLowerCase().replace(/\s/g, "-") || "";
+
+
 function ScriptureGrid() {
     const [levelRow, setLevelRow] = useState("groups");
     const [levelCol, setLevelCol] = useState("groups");
     const [rowId, setRowId] = useState({ key: "bom", val: "Book of Mormon" }); // BoM as rows
     const [columnId, setColumnId] = useState({ key: "bible", val: "Bible" }); // Bible as columns
     const [verseViewerContent, setVerseViewerContent] = useState(null);
+    const { push } = useHistory();
+
+    useEffect(() => {
+      const leftSidLabel = document.querySelector(".leftHeader");
+      const topSidLabel = document.querySelector(".topHeader");
+      document.title = `${leftSidLabel?.textContent} × ${topSidLabel?.textContent} | ${label("home_title")}`;
+      //update slug
+      const leftSlug = slugify(leftSidLabel?.textContent);
+      const topSlug = slugify(topSidLabel?.textContent);
+
+      push(`/analysis/bible/${leftSlug}~${topSlug}`);
+    }, [rowId, columnId]);
+
   
     const columns = getColumnRowValues(levelCol, columnId);
     const rows = getColumnRowValues(levelRow, rowId);
@@ -310,7 +328,7 @@ function ScriptureGrid() {
                   </div>
                 )}
               </th>
-              <th colSpan={columns.length + 2}>{columnId.val}</th>
+              <th colSpan={columns.length + 2} className="topHeader">{columnId.val}</th>
             </tr>
             <tr>
               {columns.map((id, i) => (
@@ -426,6 +444,10 @@ function ScriptureGrid() {
 }
 
 function Container() {
+
+
+    useEffect(()=>document.title = "Bible | " + label("home_title"),[])
+
     return <div className="container">
         <ScriptureGrid />
     </div>

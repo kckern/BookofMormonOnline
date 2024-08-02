@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import "./Analysis.css"
 import { Card, CardHeader, CardBody} from "reactstrap";
 import Masonry from 'react-masonry-css'
@@ -17,11 +17,14 @@ function Analysis({appController}) {
 
 
     const match = useRouteMatch();
+    const hasParameter = !!match.params.value;
 
-    if(match.params.value==="caractors") return <Caractors/>;
-    if(match.params.value==="bible") return <Bible/>;
-    if(match.params.value==="chiasmus") return <Chiasmus/>;
-    if(match.params.value==="names") return <Names appController={appController}/>;
+    useEffect(()=>{if(!hasParameter) document.title = label("menu_analysis") + " | " + label("home_title")},[])
+
+    if(match.params.value?.startsWith("caractors")) return <Caractors/>;
+    if(match.params.value?.startsWith("bible")) return <Bible/>;
+    if(match.params.value?.startsWith("chiasmus")) return <Chiasmus/>;
+    if(match.params.value?.startsWith("names")) return <Names appController={appController}/>;
 
     const breakpointColumnsObj = {
         default: 4,

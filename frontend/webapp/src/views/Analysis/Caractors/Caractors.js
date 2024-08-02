@@ -1,6 +1,7 @@
 import "./Caractors.css"; 
 import tileData from "./tiles.json";
 import similarData from "./matches.json";
+import { label } from 'src/models/Utils';
 import {
   Card,
   CardHeader,
@@ -25,6 +26,7 @@ function Caractors() {
   const [activeTile, setActiveTile] = useState(null);
   const [activeItem, setActiveItem] = useState(null);
 
+  useEffect(()=>document.title = "Caractors | " + label("home_title"),[])
 
   const [openedCollapses, setOpenedCollapses] = React.useState([
     "collapseOne",
