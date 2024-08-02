@@ -6,6 +6,7 @@ export default gql`
 # -----------------------------------------------
 extend type Query {
   fax(filter: String): [Fax]
+  faxIndex(slug: String): FaxIndex
   image(id: [String]): [Image]
   commentary(id: [String]): [Commentary]
   sources(id: [String]): [Source]
@@ -95,6 +96,11 @@ type Source {
     fax: Int
     format: String
   }
+  type FaxIndex {
+    slug: String
+    pages: [[Int]]
+  }
+
   type Image {
     id: String
     file: String
