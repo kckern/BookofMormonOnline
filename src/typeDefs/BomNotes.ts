@@ -95,6 +95,8 @@ type Source {
     com: Int
     fax: Int
     format: String
+    indexRef: String
+    bgcolor: String
   }
   type FaxIndex {
     slug: String
