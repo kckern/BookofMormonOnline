@@ -6,6 +6,7 @@ import Chiasm from "./Chiasm";
 import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem,Button, Label } from 'reactstrap';
 import searchIcon from "../../_Common/svg/search.svg";
 import {lookupReference} from "scripture-guide";
+import { label } from 'src/models/Utils';
 import { Switch } from "react-router-dom/cjs/react-router-dom.min";
 function ChiasmusControl({chiasmusControls, setChiasmusControls}) {
 
@@ -136,6 +137,7 @@ function DepthFilter({depthCounts, chiasmusControls, toggleButton, toggleBiblica
 function Chiasmus({chiasmus,setChiasmusId,activeChiasmus}) {
 
 
+    useEffect(()=>document.title = "Chiasms | " + label("home_title"),[])
     const bibleRefs = `2 Nephi 12-24, 1 Nephi 20-21, 3 Nephi 12-14, 3 Nephi 24-25, Mosiah 14`;
     const bibleVerseIds = lookupReference(bibleRefs).verse_ids;
 
@@ -161,7 +163,6 @@ function Chiasmus({chiasmus,setChiasmusId,activeChiasmus}) {
             compound: isCompound ? acc.compound + 1 : acc.compound
         };
     }, {biblical: 0, compound: 0});
-    console.log(categoryCounts);
 
     const [chiasmusControls, setChiasmusControls] = useState({
         sortDropdownOpen: false,

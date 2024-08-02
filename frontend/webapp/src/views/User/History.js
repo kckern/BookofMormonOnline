@@ -32,6 +32,9 @@ export function StudyHistory({
   setProgressList,
   progressList,
 }) {
+
+
+
   const [horizontalTabs, setHorizontalTabs] = useState(
     new Date().getFullYear().toString(),
   );

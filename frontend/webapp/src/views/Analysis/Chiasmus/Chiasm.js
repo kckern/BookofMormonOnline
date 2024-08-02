@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import BoMOnlineAPI from "../../../models/BoMOnlineAPI";
 import { Spinner } from "../../_Common/Loader";
 import Parser from "html-react-parser";
+import { label } from 'src/models/Utils';
+import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 
 
 function addHighlights(text, highlights) {
@@ -52,7 +54,9 @@ function Chiasm({chiasm_id, setChiasmusId, nextId, prevId}) {
 
     const [chiasm, setChiasm] = useState(null);
     const [activeScheme, setActiveScheme] = useState(null);
+
     
+    const {push} = useHistory();
     useEffect(() => {
         setChiasm(null);
         BoMOnlineAPI({chiasm:[chiasm_id]}).then(({chiasm}) => {
@@ -61,9 +65,16 @@ function Chiasm({chiasm_id, setChiasmusId, nextId, prevId}) {
         });
     }, [chiasm_id]);
 
+
+    const {lines, reference, title} = chiasm || {};
+    useEffect(()=>{
+        
+        push(`/analysis/chiasmus/${chiasm_id}`);
+        
+        document.title =title + " | " + label("home_title")},[title])
+
     if(!chiasm) return <div className="chiasm"><Spinner/></div>
 
-    const {lines, reference, title} = chiasm;
 
     return <div className="chiasm">
         <h4 className="title text-center title">{title || "Chiasm Title"}

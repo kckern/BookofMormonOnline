@@ -10,6 +10,7 @@ import { assetUrl } from 'src/models/BoMOnlineAPI';
 import "./Facsimiles.scss"
 import { useLocation, useParams, useRouteMatch, useHistory } from "react-router-dom";
 import { label } from "src/models/Utils";
+import scriptureguide from "scripture-guide";
 
 
 const convertRomanNumeralToInt = (num) => {
@@ -105,7 +106,19 @@ function FacsimileViewer({item}) {
 }
 function FacsimileGridViewer({ item, setActivePage }) {
   const leafCount = item.pages + item.pgoffset;
-  const { format, slug } = item;
+  const { format, slug,indexRef,bgColor, pgOffset,pgfirstVerse } = item;
+  const blankPageCount = pgOffset + pgfirstVerse;
+
+  const [pageIndex, setPageIndex] = useState([]);
+
+  useEffect(() => {
+    if(!indexRef) return;
+    BoMOnlineAPI({ faxIndex:indexRef }).then((r) => {
+        const {pages} = r?.fax[slug];
+        const placeholderArray = Array.from({ length: blankPageCount }, (_, i) => [0, 0]);
+        setPageIndex([...placeholderArray, ...pages]);
+    });
+  }, [slug]);
 
   const cells = Array.from({ length: leafCount }, (_, i) => i - item.pgoffset + 1);
 
@@ -135,7 +148,7 @@ function FacsimileGridViewer({ item, setActivePage }) {
         if(i <= 0) i = convertToRomanNumeral(item.pgoffset + i, true);
         return (
           <div key={i} className="faxPage" onClick={() => setActivePage(i)} >
-            <div className="pageOverlay">Page {i}</div>
+            <PageOverlay pageNum={i} pageIndex={pageIndex} />
             <img src={url} alt={alt} />
           </div>
         );
@@ -143,6 +156,22 @@ function FacsimileGridViewer({ item, setActivePage }) {
     </div>
   );
 }
+
+function PageOverlay({ pageNum, pageIndex }) {
+  const itemIndex = parseInt(pageNum) - 1;
+  const [startingVerseId, verseCount] = pageIndex?.[itemIndex] || [0, 0];
+  const verseRangeArray = Array.from({ length: verseCount }, (_, i) => startingVerseId + i);
+  const ref = scriptureguide.generateReference(verseRangeArray);
+  const showRef = pageIndex.length > 0 && startingVerseId > 0;
+  return (
+    <div className="pageOverlay">
+      <div>Page {pageNum}</div>
+      {showRef && <div>{ref}</div>}
+    </div>
+  );
+}
+
+
 function FacsimilePageViewer({ item, activePage, setActivePage }) {
   // Determine if the current page is even or odd
   const isEvenPage = activePage % 2 === 0;

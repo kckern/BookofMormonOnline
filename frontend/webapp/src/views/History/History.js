@@ -32,6 +32,9 @@ import { history } from 'src/models/routeHistory';
 function History({ appController }) {
 
 
+  useEffect(()=>document.title = label("menu_history") + " | " + label("home_title"),[])
+
+
   const match = useRouteMatch();
   const [dateFilter, setDate] = useState(1829);
   const [docList, setDocList] = useState(null);

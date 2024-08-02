@@ -1,12 +1,15 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import BootstrapSwitchButton from 'bootstrap-switch-button-react';
 import { MultiSelect } from "react-multi-select-component";
+import { label } from 'src/models/Utils';
 
 import "./Names.css";
 import names from "./data.js";
 
 function Container({ appController }) {
   const [nameControls, setNameControls] = useState({});
+
+  useEffect(()=>document.title = "Names | " + label("home_title"),[])
   
   return (
     <div className="container" >
