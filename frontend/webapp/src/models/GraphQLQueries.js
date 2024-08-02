@@ -730,7 +730,23 @@ const queries = {
         pages
         index
         pgoffset
+        pgfirstVerse
         format
+        bgcolor
+        indexRef
+      }`,
+    }
+  },
+  faxIndex: (input) => {
+    return {
+      type: "fax",
+      key: "slug",
+      val: input,
+      query:
+        q("faxIndex", "slug", input) +
+        `  {   
+        slug
+        pages
       }`,
     }
   },
