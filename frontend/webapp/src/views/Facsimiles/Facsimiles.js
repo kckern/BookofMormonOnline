@@ -84,6 +84,18 @@ function FacsimileViewer({item}) {
   const history = useHistory()
   const match = useParams();
 
+  const [pageIndex, setPageIndex] = useState([]);
+
+  useEffect(() => {
+    if(!item.indexRef) return;
+    const { indexRef, pgOffset,pgfirstVerse } = item || {};
+    const blankPageCount = (pgOffset||0) + pgfirstVerse -1;
+    BoMOnlineAPI({ faxIndex:indexRef }).then((r) => {
+        const {pages} = r?.fax[indexRef];
+        const placeholderArray = Array.from({ length: blankPageCount }, (_, i) => [0, 0]);
+        setPageIndex([...placeholderArray, ...pages]);
+    });
+  }, [item.slug]);
 
   const pageNumberFromUrl = /[0-9]+/.test(match.pageNumber) ? parseInt(match.pageNumber): match.pageNumber || 0;
   const pageNumber = convertRomanNumeralToInt(pageNumberFromUrl);
@@ -100,28 +112,15 @@ function FacsimileViewer({item}) {
       }>{title}</span>
       </h2>
     {!!activePage ? 
-      <FacsimilePageViewer item={item} activePage={activePage}  setActivePage={setActivePage} /> :
-      <FacsimileGridViewer item={item} setActivePage={setActivePage} />  }
+      <FacsimilePageViewer item={item} activePage={activePage}  setActivePage={setActivePage} pageIndex={pageIndex} /> :
+      <FacsimileGridViewer item={item} setActivePage={setActivePage}  pageIndex={pageIndex} /> }
   </div>
 }
-function FacsimileGridViewer({ item, setActivePage }) {
+function FacsimileGridViewer({ item, setActivePage, pageIndex }) {
   const leafCount = item.pages + item.pgoffset;
-  const { format, slug,indexRef,bgColor, pgOffset,pgfirstVerse } = item;
-  const blankPageCount = (pgOffset||0) + pgfirstVerse -1;
-
-  const [pageIndex, setPageIndex] = useState([]);
-
-  useEffect(() => {
-    if(!indexRef) return;
-    BoMOnlineAPI({ faxIndex:indexRef }).then((r) => {
-        const {pages} = r?.fax[slug];
-        const placeholderArray = Array.from({ length: blankPageCount }, (_, i) => [0, 0]);
-        setPageIndex([...placeholderArray, ...pages]);
-    });
-  }, [slug]);
+  const { format, slug } = item;
 
   const cells = Array.from({ length: leafCount }, (_, i) => i - item.pgoffset + 1);
-
   const urlFormatter = (pagenum) => {
     if (pagenum <= 0) {
       // Calculate new page number by adding negative pagenum to pgoffset
@@ -157,22 +156,30 @@ function FacsimileGridViewer({ item, setActivePage }) {
   );
 }
 
-function PageOverlay({ pageNum, pageIndex }) {
+const getRefFromIndex = (pageIndex, pageNum) => {
   const itemIndex = parseInt(pageNum) - 1;
-  const [startingVerseId, verseCount] = pageIndex?.[itemIndex] || [0, 0];
+  const [startingVerseId, verseCount, startsAtTop] = pageIndex?.[itemIndex] || [0, 0];
+  const nextStartsAtTop = pageIndex?.[itemIndex + 1]?.[2] || false;
   const verseRangeArray = Array.from({ length: verseCount }, (_, i) => startingVerseId + i);
   const ref = scriptureguide.generateReference(verseRangeArray);
   const showRef = pageIndex.length > 0 && startingVerseId > 0;
+  return showRef ? ref : null;
+};
+
+
+function PageOverlay({ pageNum, pageIndex }) {
+
+  const ref = getRefFromIndex(pageIndex, pageNum);
   return (
     <div className="pageOverlay">
       <div className="pageNum" >Page {pageNum}</div>
-      {showRef && <div  className="pageRef">{ref}</div>}
+      {!!ref && <div  className="pageRef">{ref}</div>}
     </div>
   );
 }
 
 
-function FacsimilePageViewer({ item, activePage, setActivePage }) {
+function FacsimilePageViewer({ item, activePage, setActivePage, pageIndex }) {
   // Determine if the current page is even or odd
   const isEvenPage = activePage % 2 === 0;
   const history = useHistory();
@@ -239,8 +246,18 @@ function FacsimilePageViewer({ item, activePage, setActivePage }) {
 const rightPageFormatted = pageNumFormatter(rightPage);
 
 
+  const leftPageRef = getRefFromIndex(pageIndex, leftPage);
+  const rightPageRef = getRefFromIndex(pageIndex, rightPage);
+
+
+
   return (
     <div className="faxPageViewer noselect">
+
+    <div className="pageReferences">
+      <h6 style={{ marginRight: "3rem" }}>{leftPageRef}</h6>
+      <h6 style={{ marginLeft: "3rem" }}>{rightPageRef}</h6>
+      </div>
       <div className="pagesContainer">
         <div className="leftPage page" onClick={goToPrevPages}>
           <img src={leftUrl} alt={`Page ${pageNumFormatter(leftPage)}`} />
