@@ -50,12 +50,13 @@ export default {
 
       const items = await Models.BomXtrasFaxIndex.findAll({
         where: {
-          version: '1840'
+          version: faxSlug
         },
         attributes: [
           'version',
           'page',
           [Sequelize.fn('MIN', Sequelize.col('verse_id')), 'first_verse_id'],
+          [Sequelize.fn('MAX', Sequelize.col('verse_id')), 'last_verse_id'],
           [Sequelize.fn('COUNT', Sequelize.col('verse_id')), 'verse_count']
         ],
         group: ['version', 'page'],
@@ -63,7 +64,13 @@ export default {
       });
       return {
         slug: faxSlug,
-        pages: items.map((x: any) => [x.getDataValue('first_verse_id'), x.getDataValue('verse_count')])
+        pages: items.map((x: any, i: number) => {
+          const prevItem = items[i - 1];
+          const firstWholeVerseIsFirstContent = !prevItem || prevItem && prevItem.getDataValue('last_verse_id') !== x.getDataValue('first_verse_id');
+          const vals = [x.getDataValue('first_verse_id'), x.getDataValue('verse_count')];
+          if(firstWholeVerseIsFirstContent) vals.push(1);
+          return vals;
+        })
       };
     },
     history: async (root: any, args: any, context: any, info: any) => {
