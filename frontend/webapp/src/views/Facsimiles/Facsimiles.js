@@ -107,7 +107,7 @@ function FacsimileViewer({item}) {
 function FacsimileGridViewer({ item, setActivePage }) {
   const leafCount = item.pages + item.pgoffset;
   const { format, slug,indexRef,bgColor, pgOffset,pgfirstVerse } = item;
-  const blankPageCount = pgOffset + pgfirstVerse;
+  const blankPageCount = (pgOffset||0) + pgfirstVerse -1;
 
   const [pageIndex, setPageIndex] = useState([]);
 
@@ -165,8 +165,8 @@ function PageOverlay({ pageNum, pageIndex }) {
   const showRef = pageIndex.length > 0 && startingVerseId > 0;
   return (
     <div className="pageOverlay">
-      <div>Page {pageNum}</div>
-      {showRef && <div>{ref}</div>}
+      <div className="pageNum" >Page {pageNum}</div>
+      {showRef && <div  className="pageRef">{ref}</div>}
     </div>
   );
 }

@@ -153,6 +153,13 @@
 }
 
 
+.faxGridViewer > .faxPage > .pageOverlay .pageNum{
+    font-size: 1.5em;
+    font-weight: 800;
+    opacity: 0.5;
+}
+
+
 .faxGridViewer > .faxPage > .pageOverlay:hover{
     background-color: rgba(0,0,0,0.8);
     color: white;
