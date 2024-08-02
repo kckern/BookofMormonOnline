@@ -38,6 +38,10 @@ export default class _bom_xtras_fax extends ModelBase {
         type: DataTypes.INTEGER,
         allowNull: true
       },
+      pgfirstVerse: {
+        type: DataTypes.INTEGER,
+        allowNull: true
+      },
       info: {
         type: DataTypes.TEXT,
         allowNull: false

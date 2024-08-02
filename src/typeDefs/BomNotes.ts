@@ -90,6 +90,7 @@ type Source {
     title: String
     pages: Int
     pgoffset: Int
+    pgfirstVerse: Int
     index: [String]
     info: String
     com: Int
