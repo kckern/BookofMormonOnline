@@ -3,6 +3,7 @@ import BomConnection from '../models/bom_connection';
 import BomIndex from '../models/bom_index';
 import BomDivision from '../models/bom_division';
 import BomXtrasFax from '../models/bom_xtras_fax';
+import BomXtrasFaxIndex from '../models/bom_xtras_fax_index';
 import BomLabel from '../models/bom_label';
 import BomLog from '../models/bom_log';
 import BomLookup from '../models/bom_lookup';
@@ -87,6 +88,7 @@ export interface Models {
   BomXtrasCaractors: typeof BomXtrasCaractors;
   BomXtrasCommentary: typeof BomXtrasCommentary;
   BomXtrasFax: typeof BomXtrasFax;
+  BomXtrasFaxIndex: typeof BomXtrasFaxIndex;
   BomXtrasImage: typeof BomXtrasImage;
   BomXtrasHistory: typeof BomXtrasHistory;
   BomXtrasChiasmus: typeof BomXtrasChiasmus;

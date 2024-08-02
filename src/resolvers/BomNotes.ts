@@ -1,4 +1,4 @@
-import { models as Models } from '../config/database';
+import { models as Models, sequelize as Sequelize } from '../config/database';
 import { getSlug, Op, includeTranslation, translatedValue, includeModel, queryWhere } from './_common';
 import { split, SentenceSplitterSyntax } from 'sentence-splitter';
 import scripture from '../library/scripture';
@@ -42,6 +42,29 @@ export default {
         include: [includeTranslation({ [Op.or]: ['title', 'info'] }, lang)].filter(x => !!x)
       });
       return results;
+    },
+    faxIndex: async (root: any, args: any, context: any, info: any) => {
+      const lang = context.lang ? context.lang : null;
+      const faxSlug = args.slug;
+      //type FaxIndex { slug: String pages: [[Int]] }
+
+      const items = await Models.BomXtrasFaxIndex.findAll({
+        where: {
+          version: '1840'
+        },
+        attributes: [
+          'version',
+          'page',
+          [Sequelize.fn('MIN', Sequelize.col('verse_id')), 'first_verse_id'],
+          [Sequelize.fn('COUNT', Sequelize.col('verse_id')), 'verse_count']
+        ],
+        group: ['version', 'page'],
+        order: ['version', 'page']
+      });
+      return {
+        slug: faxSlug,
+        pages: items.map((x: any) => [x.getDataValue('first_verse_id'), x.getDataValue('verse_count')])
+      };
     },
     history: async (root: any, args: any, context: any, info: any) => {
       const lang = context.lang ? context.lang : null;

@@ -11,6 +11,7 @@ import BomLabel from '../database/models/bom_label';
 import BomLog from '../database/models/bom_log';
 import BomLookup from '../database/models/bom_lookup';
 import BomXtrasFax from '../database/models/bom_xtras_fax';
+import BomXtrasFaxIndex from '../database/models/bom_xtras_fax_index';
 import BomMapMove from '../database/models/bom_map_move';
 import BomMapStory from '../database/models/bom_map_story';
 import BomMapMovePeople from '../database/models/bom_map_move_people';
@@ -74,7 +75,7 @@ const {
 export const sequelize = new Sequelize(MYSQL_DB, MYSQL_USER, MYSQL_PASSWORD, {
   dialect: 'mysql',
   logging: (query) => {
-   // return false;
+    return false;
     query = query.replace("Executing (default): ", "");
     const now = new Date();
     const oneLineQuery = query.replace(/\n/g, ' ').replace(/\s+/g, ' ');
@@ -140,6 +141,7 @@ export const models: Models = {
   BomXtrasCaractors: BomXtrasCaractors.initModel(sequelize),
   BomXtrasCommentary: BomXtrasCommentary.initModel(sequelize),
   BomXtrasFax: BomXtrasFax.initModel(sequelize),
+  BomXtrasFaxIndex: BomXtrasFaxIndex.initModel(sequelize),
   BomXtrasImage: BomXtrasImage.initModel(sequelize),
   BomXtrasSource: BomXtrasSource.initModel(sequelize),
   BomXtrasStats: BomXtrasStats.initModel(sequelize),
