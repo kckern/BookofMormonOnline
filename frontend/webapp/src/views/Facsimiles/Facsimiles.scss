@@ -206,9 +206,18 @@
         }
     }
 }
+.pageReferences
+{
+    width: calc(100% - 5rem);
+}
+.pageReferences h6{
+    margin: 0;
+    padding: 0;
+    color: #444;
+    min-height: 1.2rem;
+}
 
-
-.pageNumbers
+.pageNumbers, .pageReferences
 {
     display: flex;
     flex-wrap: wrap;

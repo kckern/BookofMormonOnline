@@ -57,7 +57,7 @@ export default {
           'page',
           [Sequelize.fn('MIN', Sequelize.col('verse_id')), 'first_verse_id'],
           [Sequelize.fn('MAX', Sequelize.col('verse_id')), 'last_verse_id'],
-          [Sequelize.fn('COUNT', Sequelize.col('verse_id')), 'verse_count']
+          [Sequelize.fn('COUNT', Sequelize.fn('DISTINCT', Sequelize.col('verse_id'))), 'verse_count']
         ],
         group: ['version', 'page'],
         order: ['version', 'page']
