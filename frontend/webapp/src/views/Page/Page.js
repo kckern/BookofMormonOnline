@@ -199,6 +199,7 @@ export default function Page({ appController }) {
   const needToLoadComments = userIsLoggedIn && studyModeisOn && hasActiveGroup;
   const [readyToScroll, setReadyToScroll] = useState(false);
   const [initStarted, startInit] = useState(false);
+  const [stageClass, setStageClass] = useState(null);
 
   useEffect(() => {
     if (pageController.pageComments) setReadyToScroll(true);
@@ -476,6 +477,7 @@ export default function Page({ appController }) {
 
   if(!appController.states.preloaded) return <Loader />;
   if (pageController.states.loading !== false) return <Loader />;
+  pageController.appController.functions['setStageClass'] = setStageClass;
   return (
     <>
       {!readyToScroll && needToLoadComments ? (
@@ -487,7 +489,8 @@ export default function Page({ appController }) {
       <div
         className={
           "content page " +
-          (readyToScroll || !needToLoadComments ? "ready" : "notready")
+          (readyToScroll || !needToLoadComments ? "ready " : "notready ") +
+          (stageClass ? stageClass : "")
         }
         onMouseDown={() => pageController.functions.setTouched(true)}
       >

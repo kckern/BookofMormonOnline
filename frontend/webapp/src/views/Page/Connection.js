@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 
 import { Link } from "react-router-dom";
+import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 
-export default function Connection({ index, rowData, onClickConnection }) {
+export default function Connection({ index, rowData, pageController }) {
   const [pageAnimation, setPageAnimation] = useState({
     connectionType: "rightconnection",
     image: "right-image",
@@ -59,19 +60,46 @@ export default function Connection({ index, rowData, onClickConnection }) {
   //     }
   // }
 
+
+
   return (
     <div className="row" type={rowData.connection.type}>
       <div style={{ width: "100%" }}>
-        <Link to={`/${rowData.connection.slug}`}>
-          <div>
-            <div
-              className={`${pageAnimation.image} ${pageAnimation.connectionType} connection `}
-            >
-              {rowData.connection.text}
-            </div>
-          </div>
-        </Link>
+        <ConnectionLink rowData={rowData} pageAnimation={pageAnimation} pageController={pageController} />
       </div>
     </div>
   );
 }
+
+const ConnectionLink = ({ rowData, pageAnimation, pageController }) => {
+  const history = useHistory();
+  const {setStageClass} = pageController.appController?.functions || {};
+  const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const {slug, type:linkType} = rowData.connection;
+  const [first,second] = linkType !== "right" ?["stageRight","stageLeft"]:["stageLeft","stageRight"];
+
+  const handleClick = async (event) => {
+    if(!setStageClass) return;
+    event.preventDefault();
+    setStageClass(first);
+    await wait(400);
+    setStageClass(second + " "  + first);
+    await wait(10);
+    setStageClass(second);
+    history.push(`/${slug}`);
+    await wait(500);
+    while (!document.querySelector(".content.ready"))  await wait(50);
+    setStageClass(null);
+  };
+
+  return (
+    <Link to={`/${slug}`} onClick={handleClick}>
+      <div>
+        <div
+          className={`${pageAnimation.image} ${pageAnimation.connectionType} connection`} >
+          {rowData.connection.text}
+        </div>
+      </div>
+    </Link>
+  );
+};

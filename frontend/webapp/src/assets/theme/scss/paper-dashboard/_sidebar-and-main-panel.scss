@@ -455,8 +455,24 @@
     padding: 0 30px 30px;
     min-height: calc(100vh - 123px);
     margin-top: 93px;
+    position: relative;
+    transition: left 400ms ease 0s, right 400ms ease 0s;
+    left: 0;
+    right:0;
   }
 
+  > .content.stageRight {
+    left: 100%;
+  }
+
+  > .content.stageLeft {
+    left: -100%;
+  }
+
+  .content.stageRight.stageLeft {
+    transition: none!important;
+  }
+  
   > .navbar {
     margin-bottom: 0;
   }
