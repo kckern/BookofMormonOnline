@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 // COMPONENTS
 import Loader from "../_Common/Loader";
 
@@ -11,6 +11,7 @@ import "./Facsimiles.scss"
 import { useLocation, useParams, useRouteMatch, useHistory } from "react-router-dom";
 import { label } from "src/models/Utils";
 import scriptureguide from "scripture-guide";
+import { isMobile, useSwipe, useWindowSize } from "../../models/Utils";
 
 
 const convertRomanNumeralToInt = (num) => {
@@ -95,23 +96,23 @@ function FacsimileViewer({item}) {
         const placeholderArray = Array.from({ length: blankPageCount }, (_, i) => [0, 0]);
         setPageIndex([...placeholderArray, ...pages]);
     });
-  }, [item.slug]);
+  }, [item.slug,item]);
 
   const pageNumberFromUrl = /[0-9]+/.test(match.pageNumber) ? parseInt(match.pageNumber): match.pageNumber || 0;
   const pageNumber = convertRomanNumeralToInt(pageNumberFromUrl);
 
-  const [activePage, setActivePage] = useState(pageNumber);
+  const [activePage, setActivePage] = useState(()=>pageNumber>item.pages?1:pageNumber);
   const { title } = item;
   return <div className="facsimileViewer">
     <h2 className="facsimileViewerTitle">
-      <span 
+      <span
         style={{flexGrow: 0, cursor: "pointer"}}
       onClick={() => history.push("/fax")}>⬅</span>
       <span style={
         {flexGrow: 1, color: "black"}
       }>{title}</span>
       </h2>
-    {!!activePage ? 
+    {!!activePage ?
       <FacsimilePageViewer item={item} activePage={activePage}  setActivePage={setActivePage} pageIndex={pageIndex} /> :
       <FacsimileGridViewer item={item} setActivePage={setActivePage}  pageIndex={pageIndex} /> }
   </div>
@@ -184,27 +185,42 @@ function FacsimilePageViewer({ item, activePage, setActivePage, pageIndex }) {
   const isEvenPage = activePage % 2 === 0;
   const history = useHistory();
 
+  const { width } = useWindowSize();
+
+  const swipeHandlers = useSwipe({
+    onSwipedLeft:()=>goToPrevPages(1),
+    onSwipedRight:()=>goToNextPages(1)
+  })
+
+
   // Determine the companion page based on the current page's parity
   const companionPage = isEvenPage ? activePage + 1 : activePage - 1;
 
   useEffect(() => {
     // set route to /fax/:slug/:page
-    history.push(`/fax/${item.slug}/${activePage}`)
-  }, [activePage]);
+    history.push(`/fax/${item.slug}/${convertToRomanNumeral(activePage,true)}`)
+  }, [activePage,history,item.slug]);
 
   // Function to navigate to the next set of pages
-  const goToNextPages = () => {
+  const goToNextPages = (step=0) => {
+
     const hasNextPage = activePage < item.pages;
     if (!hasNextPage) return;
+    if(step >0){
+      return setActivePage(prev=>prev+step);
+    }
     // Assuming the item has a 'pages' property that is an array of pages
     const nextPage = activePage + (isEvenPage ? 2 : 1);
     setActivePage(nextPage);
   };
 
   // Function to navigate to the previous set of pages
-  const goToPrevPages = () => {
-    const hasPrevPage = activePage-1 > 1;
+  const goToPrevPages = (step=0) => {
+    const hasPrevPage = activePage-1 >= 1;
     if (!hasPrevPage) return;
+    if(step >0){
+      return setActivePage(prev=>prev-step);
+    }
     const prevPage = activePage - (isEvenPage ? 1 : 2);
     setActivePage(prevPage);
   };
@@ -250,6 +266,28 @@ const rightPageFormatted = pageNumFormatter(rightPage);
   const rightPageRef = getRefFromIndex(pageIndex, rightPage);
 
 
+  if(width <=1200) {
+
+    const imgUrl = pageUrl(activePage);
+    const pageFormatted = pageNumFormatter(activePage);
+    const pageRef = getRefFromIndex(pageIndex,activePage);
+
+    return (
+      <div className="faxPageViewer">
+      <div className="pageReferences">
+        <h6>{pageRef}</h6>
+        </div>
+        <div className="pageContainer">
+          <div className="page" {...swipeHandlers}>
+            <img src={imgUrl} alt={`Page ${pageNumFormatter(activePage)}`} />
+          </div>
+        </div>
+        <div className="pageNumbers">
+        <h6>{pageFormatted ? `Page ${activePage}` : ''}</h6>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="faxPageViewer noselect">
@@ -272,6 +310,7 @@ const rightPageFormatted = pageNumFormatter(rightPage);
       </div>
     </div>
   );
+
 }
 
 
@@ -296,7 +335,7 @@ function Facsimiles() {
     if (FaxList && activeFax?.code){
       let [code,token] = activeFax?.code.split(".");
       return <><Link className="closeFax" to="/fax">✕</Link><iframe className="faxiframe" allowfullscreen="allowfullscreen" src={`https://designrr.page?id=${code}&token=${token}&type=FP`} frameborder="0"></iframe></>
-    } 
+    }
 
     var sortable = [];
     for (var i in FaxList) {
