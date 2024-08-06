@@ -499,6 +499,15 @@ export function StudyGroupChat({
     if (channel.myMemberState === "invited") channel.acceptInvitation();
   }, []);
 
+  useEffect(()=>{
+    const studyGroupChatElement = document.getElementsByClassName('StudyGroupChat');
+    if(studyGroupChatElement[0] && !loading && messages.length > 0){
+      setTimeout(()=>{
+        window.scrollTo(0, studyGroupChatElement[0].scrollHeight);
+      },1000)
+    }
+  },[loading,messages])
+
   let isSameSender = false;
   let max_i = messages.length - 1;
   return (

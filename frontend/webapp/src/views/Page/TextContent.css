@@ -1,5 +1,5 @@
 
-.page  .show, 
+.page  .show,
 .page  .collapsing {
     border-left: 1px solid #CCC;
     border-right: 1px solid #CCC;
@@ -9,7 +9,7 @@
 .row.chronoRow
 {
     align-items: center;
-    
+
     text-align: left;
     font-family: 'Roboto Condensed', 'Arial Narrow', 'sans-serif';
     font-size: x-small;
@@ -228,6 +228,12 @@
 
 .main-panel > .content{
     margin-bottom: 60vh;
+}
+
+@media(max-width:900px){
+  .main-panel > .content{
+    margin-bottom: 0px;
+}
 }
 
 .contenttext
@@ -512,11 +518,11 @@ span.indent{
     cursor: pointer;
     opacity: 1;
     transition: opacity 500ms;
-     
+
 }
 .scripture.open .comments
 {
     opacity: 0;
     transition: opacity 500ms;
-    
+
 }
