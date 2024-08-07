@@ -1033,8 +1033,8 @@ function MessageFooter({
         event.message = message;
         window.dispatchEvent(event);
       } else {
-        if (appController.activePageController === null) return false;
-        appController.activePageController.functions.deleteToPageComments(
+        if (appController.activeLeafCursorController === null) return false;
+        appController.activeLeafCursorController.functions.deleteToPageComments(
           message,
         );
       }

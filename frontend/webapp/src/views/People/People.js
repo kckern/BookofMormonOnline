@@ -180,6 +180,9 @@ function PeopleComponent({ appController }) {
 export function PeopleFilters({ appController, setFilter, peopleFilters }) {
 
   const [isOpen,setIsOpen] = useState(false);
+  const [initSearchString,setInitSearchString] = useState('')
+
+
 
   const filterSections = {
     identification: {
@@ -290,10 +293,12 @@ export function PeopleFilters({ appController, setFilter, peopleFilters }) {
       setIsOpen={setIsOpen}
       testFieldNames={{primary:'name',secondary:'title'}}
       assetName="people"
+      initSearchString={initSearchString}
       />}
     </div>
   </>
-    const handleClick = ()=>{
+
+  const handleClick = ()=>{
       appController.functions.setPopUp({
         type: "pFilter",
         ids: [appController.states.user.social?.user_id],
@@ -302,6 +307,30 @@ export function PeopleFilters({ appController, setFilter, peopleFilters }) {
         },
       });
     }
+
+    const handleKeyDown = (event) => {
+      const ignoreKeys = ['-', '_', '=', '+', '[', ']', 'Tab',"\\","/","|"];
+        if (document.activeElement.tagName !== "INPUT" && ignoreKeys.includes(event.key)) {
+          return false;
+        }
+        if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) return false;
+        if (event.key === 'Escape') {
+          setIsOpen(false);
+        }
+
+        //input is focused
+        if (document.activeElement.tagName === "INPUT") {
+          event.stopPropagation();
+          return false;
+        }
+
+        // todo: handle arrows and +/-
+        else {
+          if(event.key.length > 1) return false;
+          setIsOpen(true);
+          setInitSearchString(event.key);
+        }
+      };
 
 	useEffect(()=>{
 		if(isMobile() && appController.states.popUp.type === "pFilter"){
@@ -314,6 +343,13 @@ export function PeopleFilters({ appController, setFilter, peopleFilters }) {
 		}
 	},[peopleFilters,appController.states.popUp.type])
 
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
+    return ()=>{
+      window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [])
+
   if (isMobile()) return <div className="filterDrawerButton">
     <Button onClick={handleClick}>{label("filters")}</Button>
     <button className="ppFiltersSearchButtonMobile" onClick={()=>setIsOpen(true)}>🔍</button>
@@ -325,6 +361,7 @@ export function PeopleFilters({ appController, setFilter, peopleFilters }) {
       setIsOpen={setIsOpen}
       testFieldNames={{primary:'name',secondary:'title'}}
       assetName="people"
+      initSearchString={initSearchString}
       />
     </div>;
 
