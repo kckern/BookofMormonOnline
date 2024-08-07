@@ -561,7 +561,7 @@ function History({ appController }) {
         </div>
       </div>
       <Comments
-        pageController={appController.activePageController}
+        pageController={appController.activeLeafCursorController}
         linkData={{ history: "slug" }}
       />
     </div>

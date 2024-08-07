@@ -802,7 +802,7 @@ function reducer(pageController, input) {
       pageController.pageComments = input.val.index;
       pageController.pageCommentCounts = input.val.counts;
       pageController.states.commentGroupId = input.val.groupId;
-      pageController.appController.functions.setActivePageController(
+      pageController.appController.functions.setActiveLeafCursorController(
         pageController,
       );
       break;
@@ -815,7 +815,7 @@ function reducer(pageController, input) {
         pageController.pageComments,
         input.val,
       );
-      // pageController.appController.functions.setActivePageController(pageController);
+      // pageController.appController.functions.setActiveLeafCursorController(pageController);
       break;
 
     case "moveStudyBuddies":
@@ -841,7 +841,7 @@ function reducer(pageController, input) {
         pageController.pageComments,
         input.val,
       );
-      // pageController.appController.functions.setActivePageController(pageController);
+      // pageController.appController.functions.setActiveLeafCursorController(pageController);
       break;
 
     case "deleteToPageComments":
@@ -849,7 +849,7 @@ function reducer(pageController, input) {
         pageController.pageComments,
         input.val,
       );
-      // pageController.appController.functions.setActivePageController(pageController);
+      // pageController.appController.functions.setActiveLeafCursorController(pageController);
       break;
 
     case "setPageSlugId":
