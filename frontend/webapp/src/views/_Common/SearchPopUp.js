@@ -6,10 +6,10 @@ import { assetUrl } from "src/models/BoMOnlineAPI";
 import { label } from "src/models/Utils";
 import "./SearchPopUp.css";
 
-export function SearchPopUp({ preLoadData, selectItemHandler,placeholder,isOpen,setIsOpen,testFieldNames,assetName }) {
+export function SearchPopUp({ preLoadData, selectItemHandler,placeholder,isOpen,setIsOpen,testFieldNames,assetName,initSearchString = "" }) {
 
     const [searchResults, setSearchResults] = useState([]);
-    const [searchString, setSearchString] = useState("");
+    const [searchString, setSearchString] = useState(initSearchString);
     const [selectedResult, setSelectedResult] = useState(0);
     const resultsRef = useRef();
     const searchInputRef = useRef(null);
@@ -39,6 +39,9 @@ export function SearchPopUp({ preLoadData, selectItemHandler,placeholder,isOpen,
                     const selectedSlug = selected.slug;
                     selectItemHandler(selectedSlug);
                 }
+            }else if (e.key === 'Escape'){
+              setSearchString('');
+              setIsOpen(false);
             }
         }
 
