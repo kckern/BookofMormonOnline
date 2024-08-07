@@ -378,6 +378,3 @@ li.item:hover
     position: relative;
 }
 
-.filterDrawerButton > div{
-  left:0%;
-}

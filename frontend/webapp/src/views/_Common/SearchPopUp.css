@@ -2,7 +2,8 @@
   position: absolute;
   top: 10%;
   width: 30%;
-  left: 35%;
+  left: 50%;
+  transform: translateX(-50%);
   min-width: fit-content;
 
   /* 10 px drop shadow in all directions */
