@@ -211,6 +211,7 @@ export function PlaceFilters({ appController, setFilter, placeFilters })
 {
 
   const [isOpen,setIsOpen] = useState(false);
+  const [initSearchString,setInitSearchString] = useState('')
 
   const filterSections = {
     occupants: {
@@ -325,6 +326,7 @@ export function PlaceFilters({ appController, setFilter, placeFilters })
       setIsOpen={setIsOpen}
       testFieldNames={{primary:'name',secondary:'info'}}
       assetName="places"
+      initSearchString={initSearchString}
       />}
   </div></>
 
@@ -340,6 +342,37 @@ export function PlaceFilters({ appController, setFilter, placeFilters })
 
     }
 
+    const handleKeyDown = (event) => {
+      const ignoreKeys = ['-', '_', '=', '+', '[', ']', 'Tab',"\\","/","|"];
+        if (document.activeElement.tagName !== "INPUT" && ignoreKeys.includes(event.key)) {
+          return false;
+        }
+        if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) return false;
+        if (event.key === 'Escape') {
+          setIsOpen(false);
+        }
+
+        //input is focused
+        if (document.activeElement.tagName === "INPUT") {
+          event.stopPropagation();
+          return false;
+        }
+
+        // todo: handle arrows and +/-
+        else {
+          if(event.key.length > 1) return false;
+          setIsOpen(true);
+          setInitSearchString(event.key);
+        }
+      };
+
+      useEffect(() => {
+        window.addEventListener('keydown', handleKeyDown);
+        return ()=>{
+          window.removeEventListener('keydown', handleKeyDown);
+        }
+      }, [])
+
   if(isMobile()) return <div className="filterDrawerButton">
     <Button onClick={handleClick}>{label("selectors")}</Button>
     <button className="ppFiltersSearchButtonMobile" onClick={()=>setIsOpen(true)}>🔍</button>
@@ -351,6 +384,7 @@ export function PlaceFilters({ appController, setFilter, placeFilters })
       setIsOpen={setIsOpen}
       testFieldNames={{primary:'name',secondary:'info'}}
       assetName="places"
+      initSearchString={initSearchString}
       />
     </div>;
 

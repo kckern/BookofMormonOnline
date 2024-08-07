@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 // COMPONENTS
 import Loader from "../_Common/Loader";
 
@@ -11,78 +11,16 @@ import "./Facsimiles.scss"
 import { useLocation, useParams, useRouteMatch, useHistory } from "react-router-dom";
 import { label } from "src/models/Utils";
 import scriptureguide from "scripture-guide";
+import { isMobile, useSwipe, useWindowSize, convertIntToRomanNumeral, convertRomanNumeralToInt } from "../../models/Utils";
+import { act } from "react";
 
-
-const convertRomanNumeralToInt = (num) => {
-  const isAlreadyInt = typeof num === "number";
-  if (isAlreadyInt) return num;
-  const isAlreadyNumericString = /^\d+$/.test(num);
-  if (isAlreadyNumericString) return parseInt(num);
-  const romanNumeralMap = [
-    { numeral: "M", value: 1000 },
-    { numeral: "CM", value: 900 },
-    { numeral: "D", value: 500 },
-    { numeral: "CD", value: 400 },
-    { numeral: "C", value: 100 },
-    { numeral: "XC", value: 90 },
-    { numeral: "L", value: 50 },
-    { numeral: "XL", value: 40 },
-    { numeral: "X", value: 10 },
-    { numeral: "IX", value: 9 },
-    { numeral: "V", value: 5 },
-    { numeral: "IV", value: 4 },
-    { numeral: "I", value: 1 },
-  ];
-
-  let result = 0;
-  let number = num.toUpperCase();
-
-  for (let i = 0; i < romanNumeralMap.length; i++) {
-    const { numeral, value } = romanNumeralMap[i];
-    while (number.indexOf(numeral) === 0) {
-      result += value;
-      number = number.replace(numeral, "");
-    }
-  }
-  return result;
-
-}
-
-
-const convertToRomanNumeral = (int, lowercase=false) => {
-  int = Math.abs(int);
-  const romanNumeralMap = [
-    { numeral: "M", value: 1000 },
-    { numeral: "CM", value: 900 },
-    { numeral: "D", value: 500 },
-    { numeral: "CD", value: 400 },
-    { numeral: "C", value: 100 },
-    { numeral: "XC", value: 90 },
-    { numeral: "L", value: 50 },
-    { numeral: "XL", value: 40 },
-    { numeral: "X", value: 10 },
-    { numeral: "IX", value: 9 },
-    { numeral: "V", value: 5 },
-    { numeral: "IV", value: 4 },
-    { numeral: "I", value: 1 },
-  ];
-
-  let result = "";
-  let number = int;
-
-  for (let i = 0; i < romanNumeralMap.length; i++) {
-    const { numeral, value } = romanNumeralMap[i];
-    result += numeral.repeat(Math.floor(number / value));
-    number %= value;
-  }
-  if(lowercase) result = result.toLowerCase();
-  return result
-}
 
 function FacsimileViewer({item}) {
 
   const history = useHistory()
   const match = useParams();
+
+
 
   const [pageIndex, setPageIndex] = useState([]);
 
@@ -95,60 +33,73 @@ function FacsimileViewer({item}) {
         const placeholderArray = Array.from({ length: blankPageCount }, (_, i) => [0, 0]);
         setPageIndex([...placeholderArray, ...pages]);
     });
-  }, [item.slug]);
+  }, [item.slug,item]);
 
-  const pageNumberFromUrl = /[0-9]+/.test(match.pageNumber) ? parseInt(match.pageNumber): match.pageNumber || 0;
-  const pageNumber = convertRomanNumeralToInt(pageNumberFromUrl);
 
-  const [activePage, setActivePage] = useState(pageNumber);
+  const {pages, pgoffset} = item;
+  const totalLeaves = pages + pgoffset;
+  const leafIndex = Array.from({ length: totalLeaves }, (_, i) => i - pgoffset + 1).map((i) => {
+    const baseUrl = `${assetUrl}/fax/pages/${item.slug}/`;
+    const pageNumInt = i>0?i:null;
+    const pagesAwayFromFirst = i;
+    const pageNumRoman = i<=0?convertIntToRomanNumeral(pgoffset + i, true):null;
+    const pageAssetUrl = i>0?`${baseUrl}${i.toString().padStart(3, "0")}.${item.format || "jpg"}`:`${baseUrl}000.${(pgoffset + i).toString().padStart(2, "0")}.${item.format || "jpg"}`;
+    const isRightSide = (i+1) % 2 === 0;
+    return {
+      leafCursor:i + pgoffset -1,
+      leafSequence: pageNumInt || pagesAwayFromFirst - 1,
+      pageNumInt,
+      pageNumRoman,
+      pageSlugLeaf: pageNumRoman || pageNumInt,
+      pageReference: getRefFromIndex(pageIndex, i),
+      isRightSide,
+      pageAssetUrl
+    }
+  });
+
+
+
+
+  const [activeLeafCursor, setActiveLeafCursor] = useState(-1);
+  useEffect(() => {
+    const activeLeaf = leafIndex.find((leaf) => `${leaf.pageSlugLeaf}` === match.pageNumber)|| null;
+    console.log({activeLeaf,match})
+    setActiveLeafCursor(activeLeaf?.leafCursor);
+  },[match.pageNumber])
+
   const { title } = item;
   return <div className="facsimileViewer">
     <h2 className="facsimileViewerTitle">
-      <span 
+      <span
         style={{flexGrow: 0, cursor: "pointer"}}
-      onClick={() => history.push("/fax")}>⬅</span>
+      onClick={() => history.push(`/fax${activeLeafCursor >= 0 ? `/${item.slug}` : ""}`)}>⬅</span>
       <span style={
         {flexGrow: 1, color: "black"}
       }>{title}</span>
       </h2>
-    {!!activePage ? 
-      <FacsimilePageViewer item={item} activePage={activePage}  setActivePage={setActivePage} pageIndex={pageIndex} /> :
-      <FacsimileGridViewer item={item} setActivePage={setActivePage}  pageIndex={pageIndex} /> }
+    {activeLeafCursor >= 0 ?
+      <FacsimilePageViewer item={item} activeLeafCursor={activeLeafCursor}  setActiveLeafCursor={setActiveLeafCursor} leafIndex={leafIndex}  /> :
+      <FacsimileGridViewer item={item} setActiveLeafCursor={setActiveLeafCursor}  leafIndex={leafIndex} activeLeafCursor={activeLeafCursor} /> }
   </div>
 }
-function FacsimileGridViewer({ item, setActivePage, pageIndex }) {
+function FacsimileGridViewer({ item, activeLeafCursor, leafIndex }) {
   const leafCount = item.pages + item.pgoffset;
   const { format, slug } = item;
-
-  const cells = Array.from({ length: leafCount }, (_, i) => i - item.pgoffset + 1);
-  const urlFormatter = (pagenum) => {
-    if (pagenum <= 0) {
-      // Calculate new page number by adding negative pagenum to pgoffset
-      const newPageNum = item.pgoffset + pagenum;
-      // Return the URL with `000.{prepage}` format
-      return `${assetUrl}/fax/thumb/${slug}/000.${newPageNum.toString().padStart(2, "0")}.${format || "jpg"}`;
-    } else {
-      // Proceed with the original formatting for non-negative pagenum
-      return `${assetUrl}/fax/thumb/${slug}/${pagenum.toString().padStart(3, "0")}.${format || "jpg"}`;
-    }
-  };
-
-  const [thumbnailWidth, setThumbnailWidth] = useState(300);
-  const [faxGridViewerWidth, setFaxGridViewerWidth] = useState(0);
-
+  const history = useHistory();
 
 
 
   return (
     <div className="faxGridViewer">
-      {cells.map((i) => {
-        const url = urlFormatter(i);
-        const alt = `${item.title} - Page ${i}`;
-        if(i <= 0) i = convertToRomanNumeral(item.pgoffset + i, true);
+      {leafIndex.map((i) => {
+        const alt = `${item.title} - Page ${i.pageSlugLeaf}`;
         return (
-          <div key={i} className="faxPage" onClick={() => setActivePage(i)} >
-            <PageOverlay pageNum={i} pageIndex={pageIndex} />
-            <img src={url} alt={alt} />
+          <div key={i.seq} className="faxPage" onClick={() => {
+           // alert(`clicked ${i.pageSlugLeaf}, setting activeLeafCursor to ${i.leafCursor}`);
+            history.push(`/fax/${slug}/${i.pageSlugLeaf}`);
+            } }>
+            <PageOverlay pageLeaf={i} />
+            <img src={i.pageAssetUrl} alt={alt} />
           </div>
         );
       })}
@@ -167,111 +118,104 @@ const getRefFromIndex = (pageIndex, pageNum) => {
 };
 
 
-function PageOverlay({ pageNum, pageIndex }) {
+function PageOverlay({ pageLeaf }) {
 
-  const ref = getRefFromIndex(pageIndex, pageNum);
+  const{pageReference,pageNumInt,pageNumRoman} = pageLeaf
   return (
     <div className="pageOverlay">
-      <div className="pageNum" >Page {pageNum}</div>
-      {!!ref && <div  className="pageRef">{ref}</div>}
+      <div className="pageNum" >Page {pageNumRoman || pageNumInt}</div>
+      {!!pageReference && <div  className="pageRef">{pageReference}</div>}
     </div>
   );
 }
 
 
-function FacsimilePageViewer({ item, activePage, setActivePage, pageIndex }) {
-  // Determine if the current page is even or odd
-  const isEvenPage = activePage % 2 === 0;
+function FacsimilePageViewer({ item, activeLeafCursor, setActiveLeafCursor, leafIndex }) {
+  const match = useRouteMatch();
+  activeLeafCursor = activeLeafCursor <0 ? 0 : activeLeafCursor;
+  const activeLeafIndexInt = activeLeafCursor;
+  const activeLeaf = leafIndex[activeLeafIndexInt || 0] || leafIndex[0];
+  const leftPage = activeLeaf.isRightSide ? leafIndex[activeLeafIndexInt - 1] || {} : activeLeaf;
+  const rightPage = activeLeaf.isRightSide ? activeLeaf : leafIndex[activeLeafIndexInt + 1];
+
+
   const history = useHistory();
 
-  // Determine the companion page based on the current page's parity
-  const companionPage = isEvenPage ? activePage + 1 : activePage - 1;
+  const { width } = useWindowSize();
+
+
+  const swipeHandlers = useSwipe({
+    onSwipedLeft:()=>goToPrevPages(1),
+    onSwipedRight:()=>goToNextPages(1)
+  })
 
   useEffect(() => {
-    // set route to /fax/:slug/:page
-    history.push(`/fax/${item.slug}/${activePage}`)
-  }, [activePage]);
+    const currentUrlLeaf = match.pageNumber;
+    if(currentUrlLeaf === activeLeaf.pageSlugLeaf) return false;
+    history.push(`/fax/${item.slug}/${activeLeaf.pageSlugLeaf}`);
+  }, [activeLeafIndexInt,history,item.slug]);
 
-  // Function to navigate to the next set of pages
-  const goToNextPages = () => {
-    const hasNextPage = activePage < item.pages;
-    if (!hasNextPage) return;
-    // Assuming the item has a 'pages' property that is an array of pages
-    const nextPage = activePage + (isEvenPage ? 2 : 1);
-    setActivePage(nextPage);
+  const goToNextPages = (step=2) => {
+    setActiveLeafCursor(activeLeafIndexInt + (step || 1) );
   };
-
-  // Function to navigate to the previous set of pages
-  const goToPrevPages = () => {
-    const hasPrevPage = activePage-1 > 1;
-    if (!hasPrevPage) return;
-    const prevPage = activePage - (isEvenPage ? 1 : 2);
-    setActivePage(prevPage);
+  const goToPrevPages = (step=2) => {
+    setActiveLeafCursor(activeLeafIndexInt - (step || 1) );
   };
 
 
-  const maxPages = item.pages + item.pgoffset;
-  const arrayOfCount = Array.from({ length: maxPages }, (_, i) => i - item.pgoffset + 1);
-  const SeekBlocks = <div className="seekBlocks">
-    {arrayOfCount.map((i) => <div key={i} className="seekBlock" onClick={() => setActivePage(i)}></div>)}
-  </div>
-
-  // URL formatter to handle subzero pages logic
-  const pageUrl = (pagenum) => {
-    if (pagenum <= 0) {
-      // Calculate new page number by adding negative pagenum to pgoffset
-      const newPageNum = item.pgoffset + pagenum;
-      // Return the URL with `000.{prepage}` format
-      return `${assetUrl}/fax/pages/${item.slug}/000.${newPageNum.toString().padStart(2, "0")}.${item.format || "jpg"}`;
-    } else {
-      // Proceed with the original formatting for non-negative pagenum
-      return `${assetUrl}/fax/pages/${item.slug}/${pagenum.toString().padStart(3, "0")}.${item.format || "jpg"}`;
-    }
-  };
-
-  const pageNumFormatter = (pagenum) => {
-    if (pagenum <= 0) {
-      return convertToRomanNumeral(item.pgoffset + pagenum, true);
-    } else {
-      return pagenum;
-    }
-  };
-
-  const leftPage = isEvenPage ? activePage : companionPage;
-  const rightPage = isEvenPage ? companionPage : activePage;
-  const leftUrl = pageUrl(leftPage);
-  const rightUrl = pageUrl(rightPage);
-
-  const leftPageFormatted = pageNumFormatter(leftPage);
-const rightPageFormatted = pageNumFormatter(rightPage);
 
 
-  const leftPageRef = getRefFromIndex(pageIndex, leftPage);
-  const rightPageRef = getRefFromIndex(pageIndex, rightPage);
+  if(width <=1200) {
+      /*
+    const imgUrl = pageUrl(activeLeafCursor);
+    const pageFormatted = pageNumFormatter(activeLeafCursor);
+    const pageRef = null;
+
+    return (
+      <div className="faxPageViewer">
+      <div className="pageReferences">
+        <h6>{pageRef}</h6>
+        </div>
+        <div className="pageContainer">
+          <div className="page" {...swipeHandlers}>
+            <img src={imgUrl} alt={`Page ${pageNumFormatter(activeLeafCursor)}`} />
+          </div>
+        </div>
+        <div className="pageNumbers">
+        <h6>{pageFormatted ? `Page ${activeLeafCursor}` : ''}</h6>
+        </div>
+      </div>
+    );
+    */
+  }
 
 
+  //preload the images on the other sides
+  //use activeLeafIndexInt
+  const sidesToPreload = [activeLeafIndexInt - 2, activeLeafIndexInt - 1, activeLeafIndexInt + 1, activeLeafIndexInt + 2];
+  const preloadLeaves = leafIndex.filter((leaf) => sidesToPreload.includes(leaf.seq));
 
   return (
     <div className="faxPageViewer noselect">
-
     <div className="pageReferences">
-      <h6 style={{ marginRight: "3rem" }}>{leftPageRef}</h6>
-      <h6 style={{ marginLeft: "3rem" }}>{rightPageRef}</h6>
+      <h6 style={{ marginRight: "3rem" }}>{leftPage.pageReference}</h6>
+      <h6 style={{ marginLeft: "3rem" }}>{rightPage.pageReference}</h6>
       </div>
       <div className="pagesContainer">
-        <div className="leftPage page" onClick={goToPrevPages}>
-          <img src={leftUrl} alt={`Page ${pageNumFormatter(leftPage)}`} />
+        <div className="leftPage page" onClick={()=>goToPrevPages(2)}>
+         {!!leftPage.pageAssetUrl && <img src={leftPage.pageAssetUrl} alt={`Page ${leftPage.pageSlugLeaf}`} />}
         </div>
-        <div className="rightPage page" onClick={goToNextPages}>
-          <img src={rightUrl} alt={`Page ${pageNumFormatter(rightPage)}`} />
+        <div className="rightPage page" onClick={()=>goToNextPages(2)}>
+          <img src={rightPage.pageAssetUrl} alt={`Page ${rightPage.pageSlugLeaf}`} />
         </div>
       </div>
       <div className="pageNumbers">
-      <h6 style={{ marginRight: "3rem" }}>{leftPageFormatted ? `Page ${leftPageFormatted}` : ''}</h6>
-      <h6 style={{ marginLeft: "3rem" }}>{rightPageFormatted ? `Page ${rightPageFormatted}` : ''}</h6>
+      <h6 style={{ marginRight: "3rem" }}>{true ? `Page ${leftPage.pageSlugLeaf}` : ''}</h6>
+      <h6 style={{ marginLeft: "3rem" }}>{true ? `Page ${rightPage.pageSlugLeaf}` : ''}</h6>
       </div>
     </div>
   );
+
 }
 
 
@@ -296,7 +240,7 @@ function Facsimiles() {
     if (FaxList && activeFax?.code){
       let [code,token] = activeFax?.code.split(".");
       return <><Link className="closeFax" to="/fax">✕</Link><iframe className="faxiframe" allowfullscreen="allowfullscreen" src={`https://designrr.page?id=${code}&token=${token}&type=FP`} frameborder="0"></iframe></>
-    } 
+    }
 
     var sortable = [];
     for (var i in FaxList) {

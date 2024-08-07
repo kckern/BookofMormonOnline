@@ -40,7 +40,7 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    
+
 }
 .card .card-body.faxInfo .faxInfoText:hover
 {
@@ -258,6 +258,115 @@
 
 .pagesContainer .page img:hover{
     filter: brightness(1.1);
+}
+
+@media screen and (max-width:1200px){
+  .faxPageViewer{
+    min-height: calc(100vh - 20rem);
+  }
+  .pageContainer {
+    background-color: #555;
+    padding: 1rem;
+    border-radius: 1ex;
+    // Use aspect-ratio to maintain the ratio while respecting max-height
+    aspect-ratio: 1.3 / 1; // Example ratio, adjust based on your design needs
+    max-height: calc(100vh - 12rem); // Max height constraint
+    height:auto;
+    width:50%;
+    // Fallback for browsers that do not support aspect-ratio
+    @supports not (aspect-ratio: 1 / 1) {
+        // Maintain the aspect ratio using a pseudo-element if aspect-ratio is not supported
+        &:before {
+            float: left;
+            padding-top: calc((100vh - 12rem) * 0.6); // Adjust based on the desired aspect ratio
+            content: "";
+            shape-outside: rect(0 0 0 0);
+        }
+
+        &:after {
+            display: block;
+            content: "";
+            clear: both;
+        }
+    }
+}
+
+.pageNumbers, .pageReferences
+{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1ex;
+    justify-content: space-around;
+    border-radius: 1ex;
+    height: 100%;
+    max-height: 100%;
+}
+
+.pageContainer .page{
+    background-color: #222;
+    border-radius: 1ex;
+    cursor: pointer;
+    aspect-ratio: 2 / 3; /* Sets the aspect ratio to 2:3 */
+}
+
+
+.pageContainer .page img{
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 1ex;
+}
+}
+
+@media screen and (max-width:1100px){
+  .pageContainer{
+    width:55%;
+  }
+}
+
+@media screen and (max-width:890px){
+  .pageContainer{
+    width:50%;
+  }
+}
+
+@media screen and (max-width:767px){
+  .pageContainer{
+    width:70%;
+  }
+}
+
+@media screen and (max-width:545px){
+  .pageContainer{
+    width:75%;
+  }
+}
+
+@media screen and (max-width:525px){
+  .pageContainer{
+    width:80%;
+  }
+}
+
+@media screen and (max-width:490px){
+  .pageContainer{
+    width:85%;
+  }
+}
+
+@media screen and (max-width:425px){
+  .pageContainer{
+    width:95%;
+  }
+  .faxPageViewer{
+    min-height: calc(100vh - 15rem);
+  }
+}
+
+@media screen and (max-width:375px){
+  .pageContainer{
+    width:105%;
+  }
 }
 
 .seekBlocks{

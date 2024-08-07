@@ -45,7 +45,7 @@ const pickOneRamdomly = (arr) => {
 }
 
 function genUserAvatar(user_id) {
-  const pallettes =  
+  const pallettes =
   [
     ["FF86F1", "FF00CC"], // Baby Pink to Deep Pink
     ["00FFFF", "000080"], // Aqua to Navy
@@ -147,7 +147,7 @@ export function label(key, inserts) {
   }
   if (results.length === 1) return results.shift();
   results = results.filter((x) => !!x);
-  let allstrings = results.every((i) => typeof i === "string" || typeof i === "number");  
+  let allstrings = results.every((i) => typeof i === "string" || typeof i === "number");
   if (allstrings) return results.join("");
   return results.filter((x) => !!x);
 }
@@ -704,6 +704,8 @@ export function clickyUser(userData) {
 export function isMobile() {
   return ((window.innerWidth <= 900));
 }
+
+
 export function ParseMessage(string,appController) {
   const [{ html, urls, scriptures }] = useState(replaceURLWithHTMLLinks(string,appController));
   const [activeRef, setActiveRef] = useState(null);
@@ -742,7 +744,7 @@ function ScripturesContainer({ scriptures, setActiveRef, activeRef }) {
   scriptures = [...new Set(scriptures)];
   return <div className="scriptureContainerWrapper">
     {(scriptures.length > 1) && <div className="scripturePanel">
-      {scriptures.map((scripture, i) => 
+      {scriptures.map((scripture, i) =>
       <div key={i} className={"scriptureItem" + (activeRef === i ? " active" : "")} onClick={() => setActiveRef(i)}>{scripture}</div>)}
     </div>}
     <ScripturePanelSingle scriptureData={{ref:scriptures[activeRef]}}/>
@@ -925,3 +927,107 @@ export function PopupCenter(e, n, t, i) {
   h = w / 2 - i / 2 + d,
   s = window.open(e, n, "scrollbars=yes, width=" + t + ", height=" + i + ", top=" + h + ", left=" + r);
   return window.focus && s.focus(), !1}
+
+
+export function useSwipe(input){
+  const [touchStart, setTouchStart] = useState(0);
+  const [touchEnd, setTouchEnd] = useState(0);
+
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e) => {
+      setTouchEnd(0); // otherwise the swipe is fired even with usual touch events
+      setTouchStart(e.targetTouches[0].clientX);
+  }
+
+  const onTouchMove = (e) => setTouchEnd(e.targetTouches[0].clientX);
+
+  const onTouchEnd = () => {
+      if (!touchStart || !touchEnd) return;
+      const distance = touchStart - touchEnd;
+      const isLeftSwipe = distance > minSwipeDistance;
+      const isRightSwipe = distance < -minSwipeDistance;
+      if (isLeftSwipe) {
+          input.onSwipedLeft();
+      }
+      if (isRightSwipe) {
+          input.onSwipedRight();
+      }
+  }
+
+  return {
+      onTouchStart,
+      onTouchMove,
+      onTouchEnd
+  }
+}
+
+
+
+
+
+export const convertRomanNumeralToInt = (num) => {
+  const isAlreadyInt = typeof num === "number";
+  if (isAlreadyInt) return num;
+  const isAlreadyNumericString = /^\d+$/.test(num);
+  if (isAlreadyNumericString) return parseInt(num);
+  const romanNumeralMap = [
+    { numeral: "M", value: 1000 },
+    { numeral: "CM", value: 900 },
+    { numeral: "D", value: 500 },
+    { numeral: "CD", value: 400 },
+    { numeral: "C", value: 100 },
+    { numeral: "XC", value: 90 },
+    { numeral: "L", value: 50 },
+    { numeral: "XL", value: 40 },
+    { numeral: "X", value: 10 },
+    { numeral: "IX", value: 9 },
+    { numeral: "V", value: 5 },
+    { numeral: "IV", value: 4 },
+    { numeral: "I", value: 1 },
+  ];
+
+  let result = 0;
+  let number = num.toUpperCase();
+
+  for (let i = 0; i < romanNumeralMap.length; i++) {
+    const { numeral, value } = romanNumeralMap[i];
+    while (number.indexOf(numeral) === 0) {
+      result += value;
+      number = number.replace(numeral, "");
+    }
+  }
+  return result;
+
+}
+
+
+export const convertIntToRomanNumeral = (int, lowercase=false) => {
+  int = Math.abs(int);
+  const romanNumeralMap = [
+    { numeral: "M", value: 1000 },
+    { numeral: "CM", value: 900 },
+    { numeral: "D", value: 500 },
+    { numeral: "CD", value: 400 },
+    { numeral: "C", value: 100 },
+    { numeral: "XC", value: 90 },
+    { numeral: "L", value: 50 },
+    { numeral: "XL", value: 40 },
+    { numeral: "X", value: 10 },
+    { numeral: "IX", value: 9 },
+    { numeral: "V", value: 5 },
+    { numeral: "IV", value: 4 },
+    { numeral: "I", value: 1 },
+  ];
+
+  let result = "";
+  let number = int;
+
+  for (let i = 0; i < romanNumeralMap.length; i++) {
+    const { numeral, value } = romanNumeralMap[i];
+    result += numeral.repeat(Math.floor(number / value));
+    number %= value;
+  }
+  if(lowercase) result = result.toLowerCase();
+  return result
+}

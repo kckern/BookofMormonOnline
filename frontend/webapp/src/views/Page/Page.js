@@ -532,14 +532,19 @@ function LoadingPageCommentsNotice({ commentState, setReadyToScroll }) {
 
 // function initPage(pageController) {
 function initPage(pageController, lastLeaf) {
-  const offsetTop = document.documentElement.clientHeight * 0.2;
 
   if (lastLeaf !== pageController.states.initOpen.pageSlug) {
     let itemToScrollTo = document.getElementById(
       pageController.states.initOpen.pageSlug + "/" + lastLeaf,
     );
-    let distance = itemToScrollTo?.offsetTop - offsetTop; //margin
-    scrollTo(distance, pageController.functions.markAsInitiated);
+    setTimeout(()=>{
+      itemToScrollTo.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+        inline: 'nearest'
+      });
+      setTimeout(pageController.functions.markAsInitiated,1000);
+    },1000)
   } else {
     pageController.functions.markAsInitiated();
     pageController.appController.functions.setSlug(
@@ -797,7 +802,7 @@ function reducer(pageController, input) {
       pageController.pageComments = input.val.index;
       pageController.pageCommentCounts = input.val.counts;
       pageController.states.commentGroupId = input.val.groupId;
-      pageController.appController.functions.setActivePageController(
+      pageController.appController.functions.setActiveLeafCursorController(
         pageController,
       );
       break;
@@ -810,7 +815,7 @@ function reducer(pageController, input) {
         pageController.pageComments,
         input.val,
       );
-      // pageController.appController.functions.setActivePageController(pageController);
+      // pageController.appController.functions.setActiveLeafCursorController(pageController);
       break;
 
     case "moveStudyBuddies":
@@ -836,7 +841,7 @@ function reducer(pageController, input) {
         pageController.pageComments,
         input.val,
       );
-      // pageController.appController.functions.setActivePageController(pageController);
+      // pageController.appController.functions.setActiveLeafCursorController(pageController);
       break;
 
     case "deleteToPageComments":
@@ -844,7 +849,7 @@ function reducer(pageController, input) {
         pageController.pageComments,
         input.val,
       );
-      // pageController.appController.functions.setActivePageController(pageController);
+      // pageController.appController.functions.setActiveLeafCursorController(pageController);
       break;
 
     case "setPageSlugId":

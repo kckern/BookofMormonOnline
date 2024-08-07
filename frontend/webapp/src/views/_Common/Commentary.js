@@ -244,12 +244,12 @@ export default function Commentary({ appController }) {
   let num = commentaryData?.location?.slug.replace(/\D+/, "") || 0;
   let coms_with_comments = [];
   if (
-    appController.activePageController &&
-    appController.activePageController.pageCommentCounts?.[num] &&
-    appController.activePageController.pageCommentCounts?.[num].com
+    appController.activeLeafCursorController &&
+    appController.activeLeafCursorController.pageCommentCounts?.[num] &&
+    appController.activeLeafCursorController.pageCommentCounts?.[num].com
   )
     coms_with_comments =
-      appController.activePageController.pageCommentCounts?.[num].com || 0;
+      appController.activeLeafCursorController.pageCommentCounts?.[num].com || 0;
 
   let c_ids = appController.states.popUp.ids;
   if (!c_ids.length) c_ids = Object.keys(c_ids);
@@ -429,7 +429,7 @@ export default function Commentary({ appController }) {
           </div>
           <ScripturePanelSingle scriptureData={{ref:PopUpRef}} closeButton={true} setPopUpRef={setPopUpRef} />
           <Comments
-            pageController={appController.activePageController}
+            pageController={appController.activeLeafCursorController}
             linkData={{ com: parseInt(commentaryData.id) }}
             highlights={commentaryHighlights}
             removeHighlight={removeHighlight}
