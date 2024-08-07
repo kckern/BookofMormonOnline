@@ -961,3 +961,73 @@ export function useSwipe(input){
       onTouchEnd
   }
 }
+
+
+
+
+
+export const convertRomanNumeralToInt = (num) => {
+  const isAlreadyInt = typeof num === "number";
+  if (isAlreadyInt) return num;
+  const isAlreadyNumericString = /^\d+$/.test(num);
+  if (isAlreadyNumericString) return parseInt(num);
+  const romanNumeralMap = [
+    { numeral: "M", value: 1000 },
+    { numeral: "CM", value: 900 },
+    { numeral: "D", value: 500 },
+    { numeral: "CD", value: 400 },
+    { numeral: "C", value: 100 },
+    { numeral: "XC", value: 90 },
+    { numeral: "L", value: 50 },
+    { numeral: "XL", value: 40 },
+    { numeral: "X", value: 10 },
+    { numeral: "IX", value: 9 },
+    { numeral: "V", value: 5 },
+    { numeral: "IV", value: 4 },
+    { numeral: "I", value: 1 },
+  ];
+
+  let result = 0;
+  let number = num.toUpperCase();
+
+  for (let i = 0; i < romanNumeralMap.length; i++) {
+    const { numeral, value } = romanNumeralMap[i];
+    while (number.indexOf(numeral) === 0) {
+      result += value;
+      number = number.replace(numeral, "");
+    }
+  }
+  return result;
+
+}
+
+
+export const convertIntToRomanNumeral = (int, lowercase=false) => {
+  int = Math.abs(int);
+  const romanNumeralMap = [
+    { numeral: "M", value: 1000 },
+    { numeral: "CM", value: 900 },
+    { numeral: "D", value: 500 },
+    { numeral: "CD", value: 400 },
+    { numeral: "C", value: 100 },
+    { numeral: "XC", value: 90 },
+    { numeral: "L", value: 50 },
+    { numeral: "XL", value: 40 },
+    { numeral: "X", value: 10 },
+    { numeral: "IX", value: 9 },
+    { numeral: "V", value: 5 },
+    { numeral: "IV", value: 4 },
+    { numeral: "I", value: 1 },
+  ];
+
+  let result = "";
+  let number = int;
+
+  for (let i = 0; i < romanNumeralMap.length; i++) {
+    const { numeral, value } = romanNumeralMap[i];
+    result += numeral.repeat(Math.floor(number / value));
+    number %= value;
+  }
+  if(lowercase) result = result.toLowerCase();
+  return result
+}

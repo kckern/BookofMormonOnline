@@ -137,7 +137,7 @@ export const appInit = () => {
   //Create Initial Controller
   var initAppController = {
     states: states,
-    activePageController: null,
+    activeLeafCursorController: null,
     popUpData: [],
     preLoad: false,
     // functions: functions,
@@ -475,8 +475,8 @@ export const appFunctions = {
 
     return appController;
   },
-  setActivePageController: (appController, input) => {
-    appController.activePageController = input.val;
+  setActiveLeafCursorController: (appController, input) => {
+    appController.activeLeafCursorController = input.val;
     return appController;
   },
   markPopUpComments: (appController, input) => {
@@ -527,7 +527,7 @@ export const appFunctions = {
     //OVERRIDES
     if (message._sender?.userId === appController.sendbird.sb.currentUser?.userId) actionNeeded = false;
     if (appController.states.studyGroup.isDrawerOpen) actionNeeded = false;
-    if (!!appController.activePageController?.states?.studyBuddies?.[message?._sender?.userId]) actionNeeded = false;
+    if (!!appController.activeLeafCursorController?.states?.studyBuddies?.[message?._sender?.userId]) actionNeeded = false;
     if (!actionNeeded) return appController;
 
     message.channel = channel;

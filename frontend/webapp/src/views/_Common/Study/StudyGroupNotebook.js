@@ -10,7 +10,7 @@ export default function StudyGroupNotebook({ appController }) {
 
     const [contents, setContents] = useState([]);
     const [activeDivision, setActiveDivision] = useState("lehites");
-    const [activePages, setActivePages] = useState(null);
+    const [activeLeafCursors, setActiveLeafCursors] = useState(null);
     const [activeNotes, setActiveNotes] = useState(null);
     if (!contents.length) {
         BoMOnlineAPI({ contents: null }).then((r) => setContents(r.contents));
@@ -20,7 +20,7 @@ export default function StudyGroupNotebook({ appController }) {
     }
 
 
-    if(!activePages && activeDivision)
+    if(!activeLeafCursors && activeDivision)
     {
         //get page slugs
         for(let i in contents)
@@ -28,13 +28,13 @@ export default function StudyGroupNotebook({ appController }) {
             let item = contents[i];
             if(item.slug===activeDivision)
             {
-                setActivePages(item.pages.map(page=>page.slug.split("/").reverse().shift()));
+                setActiveLeafCursors(item.pages.map(page=>page.slug.split("/").reverse().shift()));
             }
         }
     }
 
 
-    if(activePages && !activeNotes)
+    if(activeLeafCursors && !activeNotes)
     {
 
         let group = appController.states.studyGroup.activeGroup;
@@ -44,7 +44,7 @@ export default function StudyGroupNotebook({ appController }) {
         listQuery.reverse = false;
         listQuery.includeThreadInfo = true; // Retrieve a list of messages along with their metaarrays.
         listQuery.includeReaction = true; // Retrieve a list of messages along with their reactions.
-        listQuery.customTypesFilter = activePages;
+        listQuery.customTypesFilter = activeLeafCursors;
         listQuery.load(function (notes, error) {
           if (error) {
               console.log(error)
