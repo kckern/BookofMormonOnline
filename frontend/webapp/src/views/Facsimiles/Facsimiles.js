@@ -46,6 +46,7 @@ function FacsimileViewer({item}) {
     const pagesAwayFromFirst = i;
     const pageNumRoman = i<=0?convertIntToRomanNumeral(pgoffset + i, true):null;
     const pageAssetUrl = i>0?`${baseUrl}${i.toString().padStart(3, "0")}.${item.format || "jpg"}`:`${baseUrl}000.${(pgoffset + i).toString().padStart(2, "0")}.${item.format || "jpg"}`;
+    const thumbAssetUrl = pageAssetUrl.replace("pages", "thumb");
     const isRightSide = (i+1) % 2 === 0;
     return {
       leafCursor:i + pgoffset -1,
@@ -55,7 +56,8 @@ function FacsimileViewer({item}) {
       pageSlugLeaf: pageNumRoman || pageNumInt,
       pageReference: getRefFromIndex(pageIndex, i),
       isRightSide,
-      pageAssetUrl
+      pageAssetUrl,
+      thumbAssetUrl
     }
   });
 
@@ -98,7 +100,7 @@ function FacsimileGridViewer({ item, leafIndex }) {
           <Link key={i.leafCursor} to={`/fax/${item.slug}/${i.pageSlugLeaf}`}>
           <div key={i.leafCursor} className="faxPage">
             <PageOverlay pageLeaf={i} />
-            <img src={i.pageAssetUrl} alt={alt} />
+            <img src={i.thumbAssetUrl} alt={alt} />
           </div>
           </Link>
         );
@@ -134,17 +136,26 @@ function FacsimilePageViewer({ item, leafIndex, findLeafFromSlug }) {
 
   const match = useParams();
   const activeLeaf = findLeafFromSlug(leafIndex, match);
-  if(!activeLeaf) return null;
   const activeLeafIndexInt = activeLeaf.leafCursor;
   const leftPage = activeLeaf.isRightSide ? leafIndex[activeLeafIndexInt - 1] || {} : activeLeaf;
   const rightPage = activeLeaf.isRightSide ? activeLeaf : leafIndex[activeLeafIndexInt + 1];
   const offLeftPage = leafIndex[leftPage.leafCursor - 1] || null
   const offRightPage = leafIndex[rightPage.leafCursor + 1] || null
+  const offLeftNextPage = leafIndex[leftPage.leafCursor - 2] || null
+  const offRightNextPage = leafIndex[rightPage.leafCursor + 2] || null
   const goToPrevUrl = offLeftPage ? `/fax/${item.slug}/${offLeftPage.pageSlugLeaf}` : `/fax/${item.slug}`;
   const goToNextUrl = offRightPage ? `/fax/${item.slug}/${offRightPage.pageSlugLeaf}` : `/fax/${item.slug}`;
 
 
-  
+  useEffect(() => {
+    [offLeftNextPage, offRightNextPage, offLeftPage, offRightPage].forEach((page) => {
+      if (page) {
+        const img = new Image();
+        img.src = page.pageAssetUrl;
+      }
+    });
+  }, [match.pageNumber]);
+
 
   return (
     <div className="faxPageViewer noselect">
