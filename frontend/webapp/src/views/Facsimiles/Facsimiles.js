@@ -13,6 +13,7 @@ import { label } from "src/models/Utils";
 import scriptureguide from "scripture-guide";
 import { isMobile, useSwipe, useWindowSize, convertIntToRomanNumeral, convertRomanNumeralToInt } from "../../models/Utils";
 import { act } from "react";
+import { set } from "lodash";
 
 
 function FacsimileViewer({item}) {
@@ -60,44 +61,85 @@ function FacsimileViewer({item}) {
 
 
 
-  const [activeLeafCursor, setActiveLeafCursor] = useState(-1);
-  useEffect(() => {
-    const activeLeaf = leafIndex.find((leaf) => `${leaf.pageSlugLeaf}` === match.pageNumber)|| null;
-    console.log({activeLeaf,match})
-    setActiveLeafCursor(activeLeaf?.leafCursor);
-  },[match.pageNumber])
+
+  const [activeLeafCursor, setActiveLeafCursor] = useState(-2);
+  const activeLeaf = leafIndex.find((leaf) => `${leaf.leafCursor}` === `${activeLeafCursor}`) || null;
+  const showGrid = activeLeafCursor < 0;
+  const slugToShow = !showGrid ? `${item.slug}/${activeLeaf.pageSlugLeaf}` : item.slug;
+
+  const findLeafFromSlug = () => {
+    return leafIndex.find((leaf) => `${leaf.pageSlugLeaf}` === `${match.pageNumber}`) || null;
+  };
+    
+  const handleActiveLeaf = () => {
+    const dstActiveLeaf = findLeafFromSlug();
+    if (dstActiveLeaf) {
+      setActiveLeafCursor(dstActiveLeaf.leafCursor);
+    }
+  };
+
+  useEffect(() => {      
+      if (!activeLeaf && match.pageNumber && !showGrid) {
+          console.log("Path 2: !activeLeaf && match.pageNumber",{slugToShow, showGrid});
+          handleActiveLeaf();
+      }
+      
+      if (`${activeLeaf?.pageSlugLeaf}` === `${match.pageNumber}`) {
+          console.log("Path 3: activeLeaf?.pageSlugLeaf === match.pageNumber");
+          return;
+      }
+      
+      if (slugToShow === item.slug) {
+          console.log("Path 4: slugToShow === item.slug");
+          return;
+      }
+      
+      if (activeLeaf?.pageSlugLeaf) {
+          console.log("Path 5: activeLeaf?.pageSlugLeaf exists");
+          history.push(`/fax/${slugToShow}`);
+      } else {
+          console.log("Path 6: activeLeaf?.pageSlugLeaf does not exist");
+          handleActiveLeaf();
+      }
+      
+      if (showGrid) {
+          console.log("Path 7: showGrid is true");
+          history.push(`/fax/${item.slug}`);
+      }
+  }, [slugToShow, match.pageNumber, showGrid, activeLeafCursor]);
+
+
 
   const { title } = item;
   return <div className="facsimileViewer">
     <h2 className="facsimileViewerTitle">
+      <pre>
+        {JSON.stringify({slugToShow}, null, 2)}
+      </pre>
       <span
         style={{flexGrow: 0, cursor: "pointer"}}
-      onClick={() => history.push(`/fax${activeLeafCursor >= 0 ? `/${item.slug}` : ""}`)}>⬅</span>
+      onClick={() => setActiveLeafCursor(-2)}>⬅</span>
       <span style={
         {flexGrow: 1, color: "black"}
       }>{title}</span>
       </h2>
-    {activeLeafCursor >= 0 ?
-      <FacsimilePageViewer item={item} activeLeafCursor={activeLeafCursor}  setActiveLeafCursor={setActiveLeafCursor} leafIndex={leafIndex}  /> :
-      <FacsimileGridViewer item={item} setActiveLeafCursor={setActiveLeafCursor}  leafIndex={leafIndex} activeLeafCursor={activeLeafCursor} /> }
+    {showGrid ?
+      <FacsimileGridViewer item={item} setActiveLeafCursor={setActiveLeafCursor}  leafIndex={leafIndex} activeLeafCursor={activeLeafCursor} />  :
+      <FacsimilePageViewer item={item} activeLeafCursor={activeLeafCursor}  setActiveLeafCursor={setActiveLeafCursor} leafIndex={leafIndex}  /> }
   </div>
 }
-function FacsimileGridViewer({ item, activeLeafCursor, leafIndex }) {
+function FacsimileGridViewer({ item, setActiveLeafCursor, leafIndex }) {
   const leafCount = item.pages + item.pgoffset;
   const { format, slug } = item;
   const history = useHistory();
-
-
+  const match = useRouteMatch();
 
   return (
     <div className="faxGridViewer">
       {leafIndex.map((i) => {
         const alt = `${item.title} - Page ${i.pageSlugLeaf}`;
         return (
-          <div key={i.seq} className="faxPage" onClick={() => {
-           // alert(`clicked ${i.pageSlugLeaf}, setting activeLeafCursor to ${i.leafCursor}`);
-            history.push(`/fax/${slug}/${i.pageSlugLeaf}`);
-            } }>
+          <div key={i.seq} className="faxPage" onClick={() => setActiveLeafCursor(i.leafCursor)}>
             <PageOverlay pageLeaf={i} />
             <img src={i.pageAssetUrl} alt={alt} />
           </div>
@@ -131,6 +173,7 @@ function PageOverlay({ pageLeaf }) {
 
 
 function FacsimilePageViewer({ item, activeLeafCursor, setActiveLeafCursor, leafIndex }) {
+
   const match = useRouteMatch();
   activeLeafCursor = activeLeafCursor <0 ? 0 : activeLeafCursor;
   const activeLeafIndexInt = activeLeafCursor;
@@ -138,28 +181,22 @@ function FacsimilePageViewer({ item, activeLeafCursor, setActiveLeafCursor, leaf
   const leftPage = activeLeaf.isRightSide ? leafIndex[activeLeafIndexInt - 1] || {} : activeLeaf;
   const rightPage = activeLeaf.isRightSide ? activeLeaf : leafIndex[activeLeafIndexInt + 1];
 
-
   const history = useHistory();
-
   const { width } = useWindowSize();
 
 
-  const swipeHandlers = useSwipe({
-    onSwipedLeft:()=>goToPrevPages(1),
-    onSwipedRight:()=>goToNextPages(1)
-  })
 
-  useEffect(() => {
-    const currentUrlLeaf = match.pageNumber;
-    if(currentUrlLeaf === activeLeaf.pageSlugLeaf) return false;
-    history.push(`/fax/${item.slug}/${activeLeaf.pageSlugLeaf}`);
-  }, [activeLeafIndexInt,history,item.slug]);
+  const swipeHandlers = useSwipe({
+    onSwipedLeft:   ()=>goToPrevPages(1),
+    onSwipedRight:  ()=>goToNextPages(1)
+  })
 
   const goToNextPages = (step=2) => {
     setActiveLeafCursor(activeLeafIndexInt + (step || 1) );
   };
   const goToPrevPages = (step=2) => {
-    setActiveLeafCursor(activeLeafIndexInt - (step || 1) );
+    const newIndex = activeLeafIndexInt - (step || 1);
+    setActiveLeafCursor(newIndex === -1 ? 0 : newIndex < 0 ? -2 : newIndex);
   };
 
 
