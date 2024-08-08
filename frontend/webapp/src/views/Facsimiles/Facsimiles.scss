@@ -125,7 +125,7 @@
     cursor: pointer;
     min-height: 300px;
 }
-.faxGridViewer > .faxPage > img{
+.faxGridViewer  .faxPage > img{
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -134,7 +134,7 @@
 
 
 
-.faxGridViewer > .faxPage > .pageOverlay{
+.faxGridViewer  .faxPage > .pageOverlay{
     position: absolute;
     top:0;
     left:0;
@@ -153,14 +153,14 @@
 }
 
 
-.faxGridViewer > .faxPage > .pageOverlay .pageNum{
+.faxGridViewer  .faxPage > .pageOverlay .pageNum{
     font-size: 1.5em;
     font-weight: 800;
     opacity: 0.5;
 }
 
 
-.faxGridViewer > .faxPage > .pageOverlay:hover{
+.faxGridViewer  .faxPage > .pageOverlay:hover{
     background-color: rgba(0,0,0,0.8);
     color: white;
     transition: color 250ms, background-color 250ms;
