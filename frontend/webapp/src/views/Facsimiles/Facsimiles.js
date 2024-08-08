@@ -18,9 +18,10 @@ import { set } from "lodash";
 
 function FacsimileViewer({item}) {
 
-  const history = useHistory()
   const match = useParams();
-
+  const findLeafFromSlug = (leafIndex, match) => {
+    return leafIndex.find((leaf) => `${leaf.pageSlugLeaf}` === `${match.pageNumber}`) || null;
+  };
 
 
   const [pageIndex, setPageIndex] = useState([]);
@@ -58,91 +59,48 @@ function FacsimileViewer({item}) {
     }
   });
 
-
-
-
-
-  const [activeLeafCursor, setActiveLeafCursor] = useState(-2);
-  const activeLeaf = leafIndex.find((leaf) => `${leaf.leafCursor}` === `${activeLeafCursor}`) || null;
-  const showGrid = activeLeafCursor < 0;
-  const slugToShow = !showGrid ? `${item.slug}/${activeLeaf.pageSlugLeaf}` : item.slug;
-
-  const findLeafFromSlug = () => {
-    return leafIndex.find((leaf) => `${leaf.pageSlugLeaf}` === `${match.pageNumber}`) || null;
-  };
-    
-  const handleActiveLeaf = () => {
-    const dstActiveLeaf = findLeafFromSlug();
-    if (dstActiveLeaf) {
-      setActiveLeafCursor(dstActiveLeaf.leafCursor);
+  //onpress escape, click #fax_back
+  const handleKeyPress = useCallback((e) => {
+    if (e.key === "Escape") {
+      document.getElementById("fax_back").click();
     }
-  };
+  }, []);
 
-  useEffect(() => {      
-      if (!activeLeaf && match.pageNumber && !showGrid) {
-          console.log("Path 2: !activeLeaf && match.pageNumber",{slugToShow, showGrid});
-          handleActiveLeaf();
-      }
-      
-      if (`${activeLeaf?.pageSlugLeaf}` === `${match.pageNumber}`) {
-          console.log("Path 3: activeLeaf?.pageSlugLeaf === match.pageNumber");
-          return;
-      }
-      
-      if (slugToShow === item.slug) {
-          console.log("Path 4: slugToShow === item.slug");
-          return;
-      }
-      
-      if (activeLeaf?.pageSlugLeaf) {
-          console.log("Path 5: activeLeaf?.pageSlugLeaf exists");
-          history.push(`/fax/${slugToShow}`);
-      } else {
-          console.log("Path 6: activeLeaf?.pageSlugLeaf does not exist");
-          handleActiveLeaf();
-      }
-      
-      if (showGrid) {
-          console.log("Path 7: showGrid is true");
-          history.push(`/fax/${item.slug}`);
-      }
-  }, [slugToShow, match.pageNumber, showGrid, activeLeafCursor]);
+  useEffect(() => {
+    document.addEventListener("keydown", handleKeyPress);
+    return () => {
+      document.removeEventListener("keydown", handleKeyPress);
+    }
+  }, [handleKeyPress]);
 
 
-
+  const activeLeaf = findLeafFromSlug(leafIndex, match);
   const { title } = item;
   return <div className="facsimileViewer">
     <h2 className="facsimileViewerTitle">
-      <pre>
-        {JSON.stringify({slugToShow}, null, 2)}
-      </pre>
-      <span
-        style={{flexGrow: 0, cursor: "pointer"}}
-      onClick={() => setActiveLeafCursor(-2)}>⬅</span>
+      <Link id="fax_back" to={activeLeaf ? `/fax/${item.slug}` : "/fax"}>←</Link>
       <span style={
         {flexGrow: 1, color: "black"}
       }>{title}</span>
       </h2>
-    {showGrid ?
-      <FacsimileGridViewer item={item} setActiveLeafCursor={setActiveLeafCursor}  leafIndex={leafIndex} activeLeafCursor={activeLeafCursor} />  :
-      <FacsimilePageViewer item={item} activeLeafCursor={activeLeafCursor}  setActiveLeafCursor={setActiveLeafCursor} leafIndex={leafIndex}  /> }
+    {!activeLeaf ?
+      <FacsimileGridViewer item={item} leafIndex={leafIndex}   /> :
+      <FacsimilePageViewer item={item} leafIndex={leafIndex} findLeafFromSlug={findLeafFromSlug} /> }
   </div>
 }
-function FacsimileGridViewer({ item, setActiveLeafCursor, leafIndex }) {
-  const leafCount = item.pages + item.pgoffset;
-  const { format, slug } = item;
-  const history = useHistory();
-  const match = useRouteMatch();
+function FacsimileGridViewer({ item, leafIndex }) {
 
   return (
     <div className="faxGridViewer">
       {leafIndex.map((i) => {
         const alt = `${item.title} - Page ${i.pageSlugLeaf}`;
         return (
-          <div key={i.seq} className="faxPage" onClick={() => setActiveLeafCursor(i.leafCursor)}>
+          <Link key={i.leafCursor} to={`/fax/${item.slug}/${i.pageSlugLeaf}`}>
+          <div key={i.leafCursor} className="faxPage">
             <PageOverlay pageLeaf={i} />
             <img src={i.pageAssetUrl} alt={alt} />
           </div>
+          </Link>
         );
       })}
     </div>
@@ -172,65 +130,21 @@ function PageOverlay({ pageLeaf }) {
 }
 
 
-function FacsimilePageViewer({ item, activeLeafCursor, setActiveLeafCursor, leafIndex }) {
+function FacsimilePageViewer({ item, leafIndex, findLeafFromSlug }) {
 
-  const match = useRouteMatch();
-  activeLeafCursor = activeLeafCursor <0 ? 0 : activeLeafCursor;
-  const activeLeafIndexInt = activeLeafCursor;
-  const activeLeaf = leafIndex[activeLeafIndexInt || 0] || leafIndex[0];
+  const match = useParams();
+  const activeLeaf = findLeafFromSlug(leafIndex, match);
+  if(!activeLeaf) return null;
+  const activeLeafIndexInt = activeLeaf.leafCursor;
   const leftPage = activeLeaf.isRightSide ? leafIndex[activeLeafIndexInt - 1] || {} : activeLeaf;
   const rightPage = activeLeaf.isRightSide ? activeLeaf : leafIndex[activeLeafIndexInt + 1];
-
-  const history = useHistory();
-  const { width } = useWindowSize();
-
-
-
-  const swipeHandlers = useSwipe({
-    onSwipedLeft:   ()=>goToPrevPages(1),
-    onSwipedRight:  ()=>goToNextPages(1)
-  })
-
-  const goToNextPages = (step=2) => {
-    setActiveLeafCursor(activeLeafIndexInt + (step || 1) );
-  };
-  const goToPrevPages = (step=2) => {
-    const newIndex = activeLeafIndexInt - (step || 1);
-    setActiveLeafCursor(newIndex === -1 ? 0 : newIndex < 0 ? -2 : newIndex);
-  };
+  const offLeftPage = leafIndex[leftPage.leafCursor - 1] || null
+  const offRightPage = leafIndex[rightPage.leafCursor + 1] || null
+  const goToPrevUrl = offLeftPage ? `/fax/${item.slug}/${offLeftPage.pageSlugLeaf}` : `/fax/${item.slug}`;
+  const goToNextUrl = offRightPage ? `/fax/${item.slug}/${offRightPage.pageSlugLeaf}` : `/fax/${item.slug}`;
 
 
-
-
-  if(width <=1200) {
-      /*
-    const imgUrl = pageUrl(activeLeafCursor);
-    const pageFormatted = pageNumFormatter(activeLeafCursor);
-    const pageRef = null;
-
-    return (
-      <div className="faxPageViewer">
-      <div className="pageReferences">
-        <h6>{pageRef}</h6>
-        </div>
-        <div className="pageContainer">
-          <div className="page" {...swipeHandlers}>
-            <img src={imgUrl} alt={`Page ${pageNumFormatter(activeLeafCursor)}`} />
-          </div>
-        </div>
-        <div className="pageNumbers">
-        <h6>{pageFormatted ? `Page ${activeLeafCursor}` : ''}</h6>
-        </div>
-      </div>
-    );
-    */
-  }
-
-
-  //preload the images on the other sides
-  //use activeLeafIndexInt
-  const sidesToPreload = [activeLeafIndexInt - 2, activeLeafIndexInt - 1, activeLeafIndexInt + 1, activeLeafIndexInt + 2];
-  const preloadLeaves = leafIndex.filter((leaf) => sidesToPreload.includes(leaf.seq));
+  
 
   return (
     <div className="faxPageViewer noselect">
@@ -239,12 +153,12 @@ function FacsimilePageViewer({ item, activeLeafCursor, setActiveLeafCursor, leaf
       <h6 style={{ marginLeft: "3rem" }}>{rightPage.pageReference}</h6>
       </div>
       <div className="pagesContainer">
-        <div className="leftPage page" onClick={()=>goToPrevPages(2)}>
+        <Link to={goToPrevUrl} className="leftPage page">
          {!!leftPage.pageAssetUrl && <img src={leftPage.pageAssetUrl} alt={`Page ${leftPage.pageSlugLeaf}`} />}
-        </div>
-        <div className="rightPage page" onClick={()=>goToNextPages(2)}>
+        </Link>
+        <Link to={goToNextUrl} className="rightPage page">
           <img src={rightPage.pageAssetUrl} alt={`Page ${rightPage.pageSlugLeaf}`} />
-        </div>
+        </Link>
       </div>
       <div className="pageNumbers">
       <h6 style={{ marginRight: "3rem" }}>{true ? `Page ${leftPage.pageSlugLeaf}` : ''}</h6>
@@ -259,8 +173,8 @@ function FacsimilePageViewer({ item, activeLeafCursor, setActiveLeafCursor, leaf
 function Facsimiles() {
 
   const [FaxList, setFaxList] = useState(null);
-  const match = useRouteMatch();
-  const activeFax = FaxList?.[match.params.faxVersion];
+  const match = useParams();
+  const activeFax = FaxList?.[match.faxVersion];
   useEffect(()=>document.title = (activeFax?.title || label("menu_fax")) + " | " + label("home_title"),[activeFax?.code])
   const contentsUI = () => {
     const breakpointColumnsObj = {
