@@ -34,7 +34,7 @@ export default function Commentary({ appController }) {
 		sourceId:null
 	});
   useEffect(() => {
-    document.body.style = 'overflow: hidden';
+ //   document.body.style = 'overflow: hidden';
     const popUpWindow = document.getElementById('popUp');
     const cardBodyElement = popUpWindow.childNodes[1];
     if(cardBodyElement.scrollTop !==0) cardBodyElement.scrollTop = 0;
@@ -42,7 +42,7 @@ export default function Commentary({ appController }) {
     setLegal(false)
 
     return ()=>{
-      document.body.style = 'overflow: auto';
+  //    document.body.style = 'overflow: auto';
     }
   }, [appController.states.popUp.activeId]);
 
