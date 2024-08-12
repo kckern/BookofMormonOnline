@@ -286,7 +286,7 @@ export function PeopleFilters({ appController, setFilter, peopleFilters }) {
         {filterUI(filterSections.unit)}
       </div>
       {!isMobile() && <SearchPopUp
-      placeholder="search_for_a_people"
+      placeholder="search_for_a_person"
       preLoadData={personList}
       selectItemHandler={selectItemHandler}
       isOpen={isOpen}
@@ -354,7 +354,7 @@ export function PeopleFilters({ appController, setFilter, peopleFilters }) {
     <Button onClick={handleClick}>{label("filters")}</Button>
     <button className="ppFiltersSearchButtonMobile" onClick={()=>setIsOpen(true)}>🔍</button>
     <SearchPopUp
-      placeholder="search_for_a_people"
+      placeholder="search_for_a_person"
       preLoadData={personList}
       selectItemHandler={selectItemHandler}
       isOpen={isOpen}

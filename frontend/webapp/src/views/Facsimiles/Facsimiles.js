@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect, useRef } from "react";
 // COMPONENTS
 import Loader from "../_Common/Loader";
 
-import { Card, CardHeader, CardBody, CardFooter } from "reactstrap";
+import { Card, CardHeader, CardBody, CardFooter, Alert } from "reactstrap";
 import { Link } from 'react-router-dom';
 import Masonry from 'react-masonry-css'
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
@@ -201,7 +201,14 @@ function Facsimiles() {
 
     if (FaxList && activeFax?.code){
       let [code,token] = activeFax?.code.split(".");
-      return <><Link className="closeFax" to="/fax">✕</Link><iframe className="faxiframe" allowfullscreen="allowfullscreen" src={`https://designrr.page?id=${code}&token=${token}&type=FP`} frameborder="0"></iframe></>
+      return <div id="page" className="table-of-content faxpage">
+        <h3 className="title lg-4 text-center">{activeFax?.title}</h3>
+
+        <Alert color="warning" className="text-center">{label("fax_not_available")}</Alert>
+
+        </div>
+
+        
     }
 
     var sortable = [];

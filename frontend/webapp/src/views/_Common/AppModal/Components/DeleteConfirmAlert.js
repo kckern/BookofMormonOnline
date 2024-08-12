@@ -45,7 +45,7 @@ export default function DeleteConfirmAlert() {
     >
       {() => (
         <div className="custom-alert-container">
-          <div className="">{label("are_your_sure")}</div>
+          <div className="">{label("are_you_sure")}</div>
         </div>
       )}
     </SweetAlert>
