@@ -22,7 +22,7 @@ const langs = process.env.LANGS?.split(',') || ['', 'en', 'ko', 'dev'];
 
 var apiProxy = httpProxy.createProxyServer();
 apiProxy.on('proxyRes', (proxyRes, req:any, res:any) => {
-  if(proxyRes.statusCode > 200) {
+  if(proxyRes.statusCode >= 400) {
     const reqheaders = req.headers;
 
     const curl = `curl -X ${req.method} "${req.url}" -H "Host: ${req.headers.host}" ${Object.keys(reqheaders).map(i=>`-H "${i}: ${reqheaders[i]}"`).join(" ")} ${req.body ? `-d '${JSON.stringify(req.body)}'` : ""}`;
