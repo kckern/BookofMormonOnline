@@ -12,71 +12,86 @@ const {SENDBIRD_APPID, SENDBIRD_TOKEN} = process.env;
 class Sendbird {
 
   
-
-  async createUser(user_id, nickname="", profile_url="", email="", attempt=0) {
-
-    if(attempt>5) return false;
-    if (!user_id) return false;
-    if (!nickname) return false;
-
+  async createUser(user_id, nickname = "", profile_url = "", email = "", attempt = 0) {
+    if (attempt > 5) return false;
+    if (!user_id || !nickname) return false;
+  
     //mkdir -p ./tmp
     if (!fs.existsSync('./tmp')) fs.mkdirSync('./tmp');
     const profile_path = `./tmp/${Math.random() * 1000}.jpg`;
-    if (!profile_url) profile_url = '';
-
-    var data = new FormData();
-    data.append('user_id', user_id);
-    data.append('nickname', nickname);
-    data.append('issue_access_token', 'true');
-
-    if (email && !profile_url) {
+    
+    const isSVG = /svg/.test(profile_url);
+    if (!profile_url && email) {
       let gravatarUrl =
         'https://www.gravatar.com/avatar/' +
-        crypto
-          .createHash('md5')
-          .update(email)
-          .digest('hex');
+        crypto.createHash('md5').update(email).digest('hex');
       try {
         await axios.get(gravatarUrl + '?d=404');
         profile_url = gravatarUrl;
       } catch (e) {}
-    } else if (profile_url && !/svg/.test(profile_url)) {
+    } else if (profile_url && !isSVG) {
       const response = await axios({
         method: 'get',
         url: profile_url,
         responseType: 'stream'
       });
       await response.data.pipe(fs.createWriteStream(profile_path));
-      await checkExistsWithTimeout(profile_path,2000);
+      await checkExistsWithTimeout(profile_path, 2000);
       profile_url = '';
-      data.append('profile_file', fs.createReadStream(profile_path));
     }
-    data.append('profile_url', profile_url);
-    var config = {
+  
+    let data;
+    let headers;
+  
+    if (isSVG) {
+      // Use JSON for SVG profile URLs
+      data = {
+        user_id,
+        nickname,
+        issue_access_token: 'true',
+        profile_url
+      };
+      headers = {
+        'Api-Token': SENDBIRD_TOKEN,
+        'Content-Type': 'application/json'
+      };
+    } else {
+      // Use FormData for image uploads
+      data = new FormData();
+      data.append('user_id', user_id);
+      data.append('nickname', nickname);
+      data.append('issue_access_token', 'true');
+      if (profile_url) {
+        data.append('profile_url', profile_url);
+      } else {
+        data.append('profile_file', fs.createReadStream(profile_path));
+      }
+      headers = {
+        'Api-Token': SENDBIRD_TOKEN,
+        ...data.getHeaders()
+      };
+    }
+  
+    const config = {
       method: 'POST',
       url: 'https://api-' + SENDBIRD_APPID + '.sendbird.com/v3/users',
-      headers: {
-        'Api-Token': SENDBIRD_TOKEN,
-        'Content-Type': 'application/json',
-        ...data.getHeaders()
-      },
+      headers: headers,
       data: data
     };
+  
     return axios(config)
-      .then(function(response) {
-        fs.unlink(profile_path, () => {});
+      .then(function (response) {
+        fs.unlink(profile_path, () => { });
         const newProfileUrl = response.data.profile_url;
-        if (!newProfileUrl) return  sendbird.loadUser(user_id,nickname,profile_url,email,attempt+1);
+        if (!newProfileUrl) return sendbird.loadUser(user_id, nickname, profile_url, email, attempt + 1);
         return getFwdUrl(newProfileUrl).then(S3Url => {
-       //   console.log({ newProfileUrl, S3Url });
-          return sendbird.updateUserProfileUrl(user_id, S3Url).then(r=>{
-              return sendbird.loadUser(user_id,nickname,S3Url,email,attempt+1);
-          })
+          return sendbird.updateUserProfileUrl(user_id, S3Url).then(r => {
+            return sendbird.loadUser(user_id, nickname, S3Url, email, attempt + 1);
+          });
         });
       })
-      .catch(function(error) {
-    //    console.log("LINE 71 ERROR - ",error.response.data.message);
-       return sendbird.loadUser(user_id,nickname,profile_url,email,attempt+1);
+      .catch(function (error) {
+        return sendbird.loadUser(user_id, nickname, profile_url, email, attempt + 1);
       });
   }
 
