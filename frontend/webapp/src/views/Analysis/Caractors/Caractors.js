@@ -19,7 +19,7 @@ import {
 } from "reactstrap";
 import React, { useEffect, useState } from "react";
 import { assetUrl } from "src/models/BoMOnlineAPI";
-console.log(similarData);
+//console.log(similarData);
 function Caractors() {
   const [similars, setSimilars] = useState([]);
   const [activeGrid, setActiveGrid] = useState(false);

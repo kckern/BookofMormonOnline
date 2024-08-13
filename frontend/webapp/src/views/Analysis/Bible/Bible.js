@@ -10,6 +10,8 @@ import { Spinner } from "../../_Common/Loader";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { highlightTextJSX } from "./highlighter";
 import { label } from 'src/models/Utils';
+import { isMobile } from "../../../models/Utils";
+
 
 
 const diffMatchPatch = new DiffMatchPatch();
@@ -179,11 +181,19 @@ const getColumnRowValues = (level, id) => {
 const slugify = (str) => str?.toLowerCase().replace(/\s/g, "-") || "";
 
 
+
 function ScriptureGrid() {
     const [levelRow, setLevelRow] = useState("groups");
     const [levelCol, setLevelCol] = useState("groups");
-    const [rowId, setRowId] = useState({ key: "bom", val: "Book of Mormon" }); // BoM as rows
-    const [columnId, setColumnId] = useState({ key: "bible", val: "Bible" }); // Bible as columns
+    const screenRation = window.innerWidth / window.innerHeight;
+    const isPortrait = screenRation < 1;
+    const [orientation, setOrientation] = useState(isPortrait ? "portrait" : "landscape");  
+
+    const rowInit = orientation === "portrait" ? { key: "bible", val: "Bible" } : { key: "bom", val: "Book of Mormon" };
+    const colInit = orientation === "portrait" ? { key: "bom", val: "Book of Mormon" } : { key: "bible", val: "Bible" };
+
+    const [rowId, setRowId]         = useState(rowInit); // Book of Mormon as rows
+    const [columnId, setColumnId]  = useState(colInit); // Bible as columns
     const [verseViewerContent, setVerseViewerContent] = useState(null);
     const { push } = useHistory();
 
@@ -204,34 +214,37 @@ function ScriptureGrid() {
   
     const grid = rows.map((rowId) =>
       columns.map((column) => {
-        const bom = getStartEnd(levelRow, { key: rowId.key });
-        const bible = getStartEnd(levelCol, { key: column.key });
-        const bomVids = Array.from(
-          { length: bom[1] - bom[0] + 1 },
-          (_, i) => i + bom[0]
+        const leftSide = getStartEnd(levelRow, { key: rowId.key });
+        const topSide = getStartEnd(levelCol, { key: column.key });
+        const leftIds = Array.from(
+          { length: leftSide[1] - leftSide[0] + 1 },
+          (_, i) => i + leftSide[0]
         );
-        const bibleVids = Array.from(
-          { length: bible[1] - bible[0] + 1 },
-          (_, i) => i + bible[0]
+        const topIds = Array.from(
+          { length: topSide[1] - topSide[0] + 1 },
+          (_, i) => i + topSide[0]
         );
-        const indexItems = index.filter(([bomVid, bibleVid, isQuote]) => {
+        const indexItems = index.filter(([bibleId, bomId, isQuote]) => {
           // Ensure bomVid and bibleVid are treated as the same type as elements in bomVids and bibleVids
-          const bomVidNum = Number(bomVid);
-          const bibleVidNum = Number(bibleVid);
+          const leftVidNum = Number(isPortrait ? bomId : bibleId);
+          const topVidNum = Number(isPortrait ? bibleId : bomId);
           return (
-            bibleVids.includes(bibleVidNum) && bomVids.includes(bomVidNum)
+            topIds.includes(topVidNum) && leftIds.includes(leftVidNum)
           );
         });
         return { indexItems };
       })
     );
+
   
     const maxCount = Math.max(
       ...grid.flat().map(({ indexItems }) => indexItems.length)
     );
   
     const openVerseViewer = (rowbook, colbook) => {
-      setVerseViewerContent({ rowbook, colbook });
+      const rowbookVal = !isPortrait ? rowbook : colbook;
+      const colbookVal = !isPortrait ? colbook : rowbook;
+      setVerseViewerContent({ rowbook: rowbookVal, colbook: colbookVal });
     };
   
     const isBaseState = () => {
@@ -258,8 +271,8 @@ function ScriptureGrid() {
     const handleBackClick = () => {
       setLevelRow("groups");
       setLevelCol("groups");
-      setRowId({ key: "bom", val: "Book of Mormon" });
-      setColumnId({ key: "bible", val: "Bible" });
+      setRowId(rowInit);
+      setColumnId(colInit);
     };
   
     const handleCircleClick = (rowId, colId) => {
@@ -307,8 +320,8 @@ function ScriptureGrid() {
     );
 
     const rowLabel = rowId.val;
-    const levelRowLabel = levelRow === "groups" ? "Book of Mormon" : Object.keys(bom).find((key) => key === rowLabel);
-    const rowSuperLabel = levelRow === "groups" ? "Book of Mormon" : levelRowLabel;
+    const levelRowLabel = levelRow === "groups" ? rowLabel : Object.keys(bom).find((key) => key === rowLabel);
+    const rowSuperLabel = levelRow === "groups" ? levelRowLabel :  rowLabel;
   
     return (
       <div className="grid">
@@ -478,7 +491,6 @@ function VerseViewer({ verseViewerContent, setVerseViewerContent }) {
     const colKey = verseViewerContent.colbook.key;
     const rowVerseRange = getStartEnd("books", { key: rowKey });
     const colVerseRange = getStartEnd("books", { key: colKey });
-
     const matches = index.filter(([rowVid, colVid, isQuote]) => {
         const hasRows = rowVerseRange?.[0] >= 1;
         const hasCols = colVerseRange?.[0] >= 1;
@@ -494,8 +506,7 @@ function VerseViewer({ verseViewerContent, setVerseViewerContent }) {
     .filter((vid, index, self) => self.indexOf(vid) === index)
     .sort((a, b) => a - b);
 
-    const matchedRef = generateReference(allMatchedVerseIds);
-
+    console.log({ allMatchedVerseIds, matches });
     useEffect(() => {
         if (allMatchedVerseIds.length === 0) {
             //console.log(JSON.stringify({ rowVerseRange, colVerseRange }));
