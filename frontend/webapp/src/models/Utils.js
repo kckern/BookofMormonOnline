@@ -31,6 +31,14 @@ export function determineLanguage() {
     jp: ["jpn"],
     tgl: ["phil", "ph"],
     ru: ["rus","рф","xn--p1ai","net"],
+    //english editions
+    rlds: ["coc","rlds"],
+    covoc: ["covoc","cc"],
+    slv: ["street","streetlegal"],
+    plain: ["plain","plainenglish"],
+    easy: ["easy","easytoread","erb"],
+    concise: ["concise","ctb"],
+
   };
   let index = {};
   Object.keys(aliases).forEach(i => { index[i] = i; Object.keys(aliases[i]).forEach(j => index[aliases[i][j]] = i); });
