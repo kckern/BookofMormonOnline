@@ -52,7 +52,7 @@ export function loadMenu(){
     { slug: "relationships", title: <span><img src={relationships} /> {label("menu_network")}</span>, dev:true },
     { slug: "places", title: <span><img src={places} /> {label("menu_places")}</span> },
     { slug: "map", title: <span><img src={maps} /> {label("menu_map")}</span> },
-    { slug: "fax", title: <span><img src={fax} /> {label("menu_fax")}</span> },
+    { slug: "fax", title: <span><img src={fax} /> {label("menu_fax")}</span> , lang: ["en"]},
     { slug: "history", title: <span><img src={historyicon} /> {label("menu_history")}</span> },
     { slug: "analysis", title: <span><img src={analysis} /> {label("menu_analysis")}</span>, beta:true, lang: ["en"]},
     { slug: "about", title: <span><img src={about} /> {label("menu_about")}</span> },
@@ -60,16 +60,19 @@ export function loadMenu(){
 
   if(lang!=="en") //TODO: remove this when we have translations
   {
-    const englishOnly = ["fax","timeline","history"];
-    list = list.filter(i=>!englishOnly.includes(i.slug));
     if(lang==="ko")  list.splice(3,0, { slug: "특별반", title: <span><img src={book} />특별반</span> });
     list.push({ slug: "audit", title: <span><img src={audit} /> {label("menu_audit")}</span>} );
   }
 
   return list.filter(i=>{
-    const isDev = /localhost|^dev/.test(window.location.hostname);
-    const isLang = i.lang ? i.lang.includes(lang) : true;
-    return !i.dev || isDev && isLang;
+    const envIsDev = /localhost|^dev/.test(window.location.hostname);
+    const itemIsDev = i.dev;
+    const envLang = lang;
+    const itemLangs = i.lang;
+    const okayToShowBasedOnLang = itemLangs ? itemLangs.includes(envLang) : true;
+    const okayToShowBasedOnDev = envIsDev ? true : !itemIsDev;
+    return okayToShowBasedOnLang && okayToShowBasedOnDev;
+
   });
 }
 
