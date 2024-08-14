@@ -304,7 +304,14 @@ export function renderHTMLContentInFeed(content, highlights) {
 
   content = content.replace(/_/g, '<span class="indent"></span>');
   content = content.replace(/\s+/g, " ");
-  return Parser(content);
+  if(/bl<span/.test(content)) return content;
+  try{
+    return Parser(content);
+  }
+  catch(e){
+    return content;
+  }
+    
 }
 
 export function BlankWord() {
