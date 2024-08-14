@@ -81,6 +81,7 @@ class Sendbird {
   
     return axios(config)
       .then(function (response) {
+        if(isSVG) return sendbird.loadUser(user_id, nickname, profile_url, email, attempt + 1);
         fs.unlink(profile_path, () => { });
         const newProfileUrl = response.data.profile_url;
         if (!newProfileUrl) return sendbird.loadUser(user_id, nickname, profile_url, email, attempt + 1);
