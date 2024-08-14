@@ -46,34 +46,32 @@ export function loadMenu(){
     { slug: "home", title: <span><img src={home} /> {label("menu_home")}</span> },
     { slug: "contents", title: <span><img src={contents} /> {label("menu_contents")}</span> },
     { slug: "study", title: <span><img src={study} /> {label("menu_study")}</span> },
+    { slug: "특별반", title: <span><img src={book} />특별반</span>, lang: ["ko"] },
     { slug: "theater", title: <span><img src={theater} /> {label("menu_theater")}</span> },
     { slug: "timeline", title: <span><img src={timeline} /> {label("menu_timeline")}</span> },
     { slug: "people", title: <span><img src={people} /> {label("menu_people")}</span> },
-    { slug: "relationships", title: <span><img src={relationships} /> {label("menu_network")}</span>, dev:true },
+    //{ slug: "relationships", title: <span><img src={relationships} /> {label("menu_network")}</span>, dev:true },
     { slug: "places", title: <span><img src={places} /> {label("menu_places")}</span> },
     { slug: "map", title: <span><img src={maps} /> {label("menu_map")}</span> },
     { slug: "fax", title: <span><img src={fax} /> {label("menu_fax")}</span> , lang: ["en"]},
-    { slug: "history", title: <span><img src={historyicon} /> {label("menu_history")}</span> },
+    { slug: "history", title: <span><img src={historyicon} /> {label("menu_history")}</span>, lang: ["en"] },
     { slug: "analysis", title: <span><img src={analysis} /> {label("menu_analysis")}</span>, beta:true, lang: ["en"]},
     { slug: "about", title: <span><img src={about} /> {label("menu_about")}</span> },
+    { slug: "audit", title: <span><img src={audit} /> {label("menu_audit")}</span> , lang: ["vn","es","fr","de","swe","ru","tgl","ko"]},
   ];
-
-  if(lang!=="en") //TODO: remove this when we have translations
-  {
-    if(lang==="ko")  list.splice(3,0, { slug: "특별반", title: <span><img src={book} />특별반</span> });
-    list.push({ slug: "audit", title: <span><img src={audit} /> {label("menu_audit")}</span>} );
-  }
 
   return list.filter(i=>{
     const envIsDev = /localhost|^dev/.test(window.location.hostname);
     const itemIsDev = i.dev;
+    const okayToShowBasedOnDev = itemIsDev ? envIsDev : true;
+    return okayToShowBasedOnDev;
+  }).filter(i => {
     const envLang = lang;
     const itemLangs = i.lang;
     const okayToShowBasedOnLang = itemLangs ? itemLangs.includes(envLang) : true;
-    const okayToShowBasedOnDev = envIsDev ? true : !itemIsDev;
-    return okayToShowBasedOnLang && okayToShowBasedOnDev;
-
+    return okayToShowBasedOnLang;
   });
+
 }
 
 function SearchBox({appController,setActivePath}) {
