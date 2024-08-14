@@ -430,12 +430,14 @@ function Relationships({ data,appController }) {
       <div key={`${i}_1`} className="related_text_bottom">{rows[1]}</div>
     ];
 
+    const personTitle = person.person.title;
+
     return (
       <div
         key={i}
         className="related_row"
         data-for="relToolTip"
-        data-tip={person.title}
+        data-tip={`${personTitle}`}
       >
         <div
           style={{display:"flex"}}
@@ -458,7 +460,14 @@ function Relationships({ data,appController }) {
 
   return (
     <div className="related_people noselect">
-      <ReactTooltip id="relToolTip" place="left" offset={{'bottom': 0, 'left': '10rem'}} effect="solid" backgroundColor={"#666"} arrowColor={"#666"} />
+      <ReactTooltip 
+        id="relToolTip" 
+        place="left" 
+        offset={{'bottom': 0, 'left': '10rem'}} 
+        effect="solid" 
+        backgroundColor={"#666"} 
+        arrowColor={"#666"} 
+      />      
       {data?.map((relation, i) => personRow(relation, i))}
     </div>
   );
