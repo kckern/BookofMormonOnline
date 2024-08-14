@@ -367,6 +367,8 @@ li.item:hover
 .peopleList .card:hover
 {
     outline: 2px solid #0006;
+    border-bottom-right-radius: 1ex;
+    border-bottom-left-radius: 1ex;
 }
 
 .filterDrawerButton
