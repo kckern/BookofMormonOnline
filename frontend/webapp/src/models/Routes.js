@@ -24,7 +24,7 @@ const Group = lazy(() => import("../views/_Common/Group.js"));
 const Theater = lazy(() => import("../views/Theater/Theater.js"));
 const Welcome = lazy(() => import("../views/Welcome/Welcome.js"));
 const Audit = lazy(() => import("../views/Audit/Audit.js"));
-
+const Witnesses = lazy(() => import("../views/History/Witnesses.js"));
 const lang = determineLanguage();
 
 
@@ -116,7 +116,7 @@ const routes = [
     component: KRSEB,
   },
   {
-    path: "/analysis/:value",
+    path: "/analysis/:value*",
     component: Analysis,
   },
   {
@@ -146,6 +146,10 @@ const routes = [
   {
     path: "/search",
     component: SearchComponent,
+  },
+  {
+      path: "/history/witnesses/:witness?/:source?",
+      component: Witnesses,
   },
   {
     path: "/history/:slug",
