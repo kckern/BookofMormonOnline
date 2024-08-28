@@ -1,8 +1,8 @@
 .search-popup{
-  position: absolute;
+  position: fixed;
   top: 10%;
-  width: 30%;
-  left: 50%;
+  width: 30vw;
+  left: calc(50% + 100px);
   transform: translateX(-50%);
   min-width: fit-content;
 
@@ -75,6 +75,21 @@
 {
   flex-grow: 1;
 }
+
+
+.search-popup .search-result-title{
+  white-space: nowrap;
+  width: calc(30vw - 2rem);
+  /* overflow with ellipsis */
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.search-popup .card-header input{
+  font-size: 1.2rem;
+  padding-left: 1ex;
+}
+
 .search-popup .search-result > img
 {
   height: 4rem;
