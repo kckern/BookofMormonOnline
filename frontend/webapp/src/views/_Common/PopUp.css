@@ -413,8 +413,20 @@ ul.source_tabs li:hover
     margin: 1ex!important;
 }
 .ppbody .refbox button{
-    width: 100%;
-    margin-right: 2rem;
+    width: calc(100% - 2ex);
+    margin: 0.5ex 1ex 0 1ex;
+    height: 2.2rem;
+}
+
+.ppbody .refbox button:last-of-type{
+    margin-bottom: 1ex;
+}
+
+.ppbody .refbox button + button{
+    margin-left: 2rem;
+    width: calc(100% - 1ex - 2rem);
+    text-align: left;
+    background-color: #888;
 }
 
 .ppbody .refbox

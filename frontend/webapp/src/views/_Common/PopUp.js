@@ -271,6 +271,8 @@ function Person({ appController }) {
 
 
 function Place({ appController }) {
+
+  const [showOptions, setShowOptions] = useState(false);
   const [PopUpRef,setPopUpRef] = useState(null)
   const [showMapsDropDown, showMapsDropDownSet] = useState(false),
     { push } = useHistory();
@@ -299,10 +301,10 @@ function Place({ appController }) {
     //
     push(`/map/${map}/place/${place}`);
   };
-
+  
   let place = appController.popUpData[appController.states.popUp.activeId];
   if (place === undefined) return <pre>{appController.popUp}</pre>;
-
+  //console.log(place.maps);
   return (
     <Draggable handle=".card-header">
       <div
@@ -350,41 +352,31 @@ function Place({ appController }) {
 
             <div className="refbox">
               <div className="ppimg">
-                {place?.maps?.length > 1 ? (
-                  <Dropdown
-                    isOpen={showMapsDropDown}
-                    toggle={() => showMapsDropDownSet(!showMapsDropDown)}
-                    direction="right"
+              {place?.maps?.length > 0 ? (
+                <Button 
+                  onClick={(e) => {
+                    if(place.maps.length > 1) {
+                    setShowOptions(!showOptions)
+                    } else {
+                      onSelectMapType(e, place.maps[0].slug, place.slug)
+                    }
+                  }
+                }
+                >
+                  {label("view_on_map")}
+                </Button>
+              ) : null}
+
+              {showOptions && (
+                place.maps.map((map, index) => (
+                  <Button 
+                    key={index} 
+                    onClick={(e) => onSelectMapType(e, map.slug, place.slug)}
                   >
-                    <DropdownToggle>{label("view_on_map")}</DropdownToggle>
-                    <DropdownMenu>
-                      {place.maps.map((map, index) => (
-                        <DropdownItem key={index} header>
-                          <Link
-                            onClick={(e) =>
-                              onSelectMapType(e, map.slug, place.slug)
-                            }
-                          >
-                            🌎 {map.name}
-                          </Link>
-                        </DropdownItem>
-                      ))}
-                    </DropdownMenu>
-                  </Dropdown>
-                ) : (
-                  place?.maps?.length === 1 && (
-                    <Link
-                      to={`/map/neareast/place/${place.slug}`}
-                      onClick={(e) =>
-                        onSelectMapType(e, "neareast", place.slug)
-                      }
-                    >
-                      <Button className="map-dropdown">
-                        {label("view_on_map")}
-                      </Button>
-                    </Link>
-                  )
-                )}
+                    {map.name}
+                  </Button>
+                ))
+              )}
 
                 <img alt="reload" src={`${assetUrl}/places/${place.slug}`} />
               </div>
