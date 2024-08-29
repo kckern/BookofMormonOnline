@@ -5,8 +5,9 @@ import { getSlug, Op, includeTranslation, translatedValue, includeModel, include
 import scripture from "../library/scripture"
 import { loadNotesFromTextGuid, loadPeopleFromTextGuid, loadPlacesFromTextGuid } from './BomPeoplePlace';
 const { getBlocksToQueue ,getFirstTextBlockGuidFromSlug,organizeRelatedScriptures} = require('./lib')
-import { lookupReference } from 'scripture-guide';
+import { lookupReference,generateReference } from 'scripture-guide';
 import { queryDB } from '../library/db';
+import { loadLines, loadScripture, loadVerses } from './BomScripture';
 
 export default {
   Query: {
@@ -246,6 +247,87 @@ queue: async (root: any, args: any, context: any, info: any) => {
           return r;
         })
       });
+    },
+
+    read: async (root, args, context, info) => {
+      const lang = context.lang || null;
+      const { token } = args;
+      const { verse_ids, ref } = lookupReference(args.ref);
+      const lines = await loadLines(verse_ids, lang);
+      const scripture = await loadVerses(verse_ids, lang);
+      const currentChapter = generateReference(verse_ids[0]).replace(/:\d+$/, '');
+      const currentChapterVerseIds = lookupReference(currentChapter).verse_ids;
+
+      let prev_ref = generateReference(currentChapterVerseIds[0] - 1).replace(/:\d+$/, '');
+      let next_ref = generateReference(currentChapterVerseIds[currentChapterVerseIds.length - 1] + 1).replace(/:\d+$/, '');
+      if(currentChapterVerseIds[0] <= 31103) prev_ref = null;
+      if(currentChapterVerseIds[currentChapterVerseIds.length - 1] >= 37706) next_ref = null;
+
+    
+      const headingMap = scripture.reduce((acc, verse) => {
+        acc[verse.verse_id] = verse.heading;
+        return acc;
+      }, {});
+    
+      let sections = [], currentSection = null, lastPersonSlug = null, lastVoice = null;
+    
+      for (let line of lines) {
+        const thisSection = headingMap[line.verse_id];
+    
+        if (!currentSection || currentSection.heading !== thisSection) {
+          currentSection = { 
+            ref, heading: thisSection, verse_id: line.verse_id, verse_count: 0, blocks: [] 
+          };
+          sections.push(currentSection);
+        }
+    
+        const lastBlock = currentSection.blocks.length ? currentSection.blocks[currentSection.blocks.length - 1] : null;
+        
+        if (!lastBlock || line.person_slug !== lastPersonSlug || line.voice !== lastVoice) {
+          currentSection.blocks.push({
+            ref,
+            verse_id: line.verse_id,
+            verse_count: 0,
+            person_slug: line.person_slug,
+            voice: line.voice,
+            lines: []
+          });
+          lastPersonSlug = line.person_slug;
+          lastVoice = line.voice;
+        }
+    
+        const currentBlock = currentSection.blocks[currentSection.blocks.length - 1];
+        const lineRef = generateReference(line.verse_id);
+    
+        currentBlock.lines.push({
+          ref: lineRef,
+          verse_num: lineRef.split(":").pop(),
+          verse_id: line.verse_id,
+          text: line.text
+        });
+    
+        currentBlock.verse_count++;
+        currentSection.verse_count++;
+      }
+    
+      sections.forEach(section => {
+        section.blocks.forEach(block => {
+          const verse_ids = Array.from({ length: block.verse_count }, (_, i) => block.verse_id + i);
+          block.ref = generateReference(verse_ids);
+        });
+    
+        const verse_ids = Array.from({ length: section.verse_count }, (_, i) => section.verse_id + i);
+        section.ref = generateReference(verse_ids);
+      });
+    
+      return {
+        ref,
+        verse_id: verse_ids[0],
+        verse_count: verse_ids.length,
+        sections,
+        prev_ref,
+        next_ref
+      };
     }
   },
 

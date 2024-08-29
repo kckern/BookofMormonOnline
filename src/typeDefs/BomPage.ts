@@ -12,12 +12,49 @@ export default gql`
     text(slug: [String]): [TextBlock]
     lookup(ref: [String]): [TextBlock]
     queue(token: String, items: [QueueInput]): [TextBlock]
+    read(token: String, ref: String): ReadBlock
   }
 
   # -----------------------------------------------
   # TYPES
   # -----------------------------------------------
   
+  type ReadBlock {
+  ref: String
+  verse_id: Int
+  verse_count: Int
+  next_ref: String
+  prev_ref: String
+  sections: [ReadSection]
+  }
+
+  type ReadSection {
+    ref: String
+    heading: String
+    verse_id: Int
+    verse_count: Int
+    blocks: [ReadUnit]
+  }
+
+  type ReadUnit {
+    ref: String
+    verse_id: Int
+    verse_count: Int
+    person_slug: String
+    voice: String
+    lines: [ReadLine]
+  }
+  type ReadLine {
+    ref: String
+    verse_num: Int
+    verse_id: Int
+    text: String
+  }
+
+
+    
+
+
   type Division {
     page: String
     guid: String

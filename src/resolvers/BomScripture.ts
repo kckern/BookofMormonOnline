@@ -117,3 +117,11 @@ export const loadVerseHighlights = async (verse_pairs:any, lang) => {
     }
   });
 }
+
+
+export const loadLines = async (verse_ids:any, lang:string) => {
+  const config = { raw:true, where: {  verse_id:verse_ids  } };
+  const line_data = await Models.LdsScripturesLines.findAll(config);
+  return line_data.sort((a:any,b:any)=>`${a.verse_id}.${a.line_num}` > `${b.verse_id}.${b.line_num}` ? 1 : -1);
+
+}

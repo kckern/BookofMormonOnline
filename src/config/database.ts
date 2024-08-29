@@ -48,6 +48,7 @@ import BomXtrasStats from '../database/models/bom_xtras_stats';
 import LdsScripturesBooks from '../database/models/lds_scriptures_books';
 import LdsScripturesFootnotes from '../database/models/lds_scriptures_footnotes';
 import LdsScripturesTranslations from '../database/models/lds_scriptures_translations';
+import LdsScripturesLines from '../database/models/lds_scriptures_lines';
 import LdsScripturesVerses from '../database/models/lds_scriptures_verses';
 import LdsScripturesVolumes from '../database/models/lds_scriptures_volumes';
 import SocialPosts from '../database/models/social_posts';
@@ -148,6 +149,7 @@ export const models: Models = {
   LdsScripturesBooks: LdsScripturesBooks.initModel(sequelize),
   LdsScripturesFootnotes: LdsScripturesFootnotes.initModel(sequelize),
   LdsScripturesTranslations: LdsScripturesTranslations.initModel(sequelize),
+  LdsScripturesLines: LdsScripturesLines.initModel(sequelize),
   LdsScripturesVerses: LdsScripturesVerses.initModel(sequelize),
   LdsScripturesVolumes: LdsScripturesVolumes.initModel(sequelize),
   SocialPosts: SocialPosts.initModel(sequelize)
