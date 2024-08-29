@@ -105,13 +105,47 @@ const data = {
             "slug": "josiah-stoal",
             "name": "Josiah Stoal",
             "birthday": "1771",
-            "bio": ""
+            "bio": "",
+            "sources": [
+                {
+                    "slug": "people-vs-joseph-smith",
+                    "source": "The People, vs. Samuel Dickenson, Joseph Smith, Jr. Complainant (June 1830); Minutes taken by Joel K. Noble, Esq. Justice of the Peace. Published on 16 November 1832  Morning Star (Limerick, Maine) 7, no. 20",
+                    "title": "The People vs. Joseph Smith",
+                    "subtitles": "Minutes of an June 1830 court case in Broome County, New York",
+                    "description": "Josiah Stowell testifies in court that he accidentially saw a corner plates while Joseph Smith was carrying them.",
+                    "source_url": "https://www.josephsmithpapers.org/paper-summary/trial-report-28-august-1832-state-of-new-york-v-js-c/1",
+                    "exerpts": [
+                        "[Joseph Smith] told [Josiah Stowell] that the Lord had told [Joseph] that a golden Bible was in a certain hill; that Smith, [Joseph], went in the night, and brought the [golden] Bible",
+                        "[Josiah Stowell] saw a corner of [the golden Bible]; it resembled a stone of a greenish caste",
+                        "about one foot square and six inches thick",
+                        "It was unknown to Smith, that [Josiah] saw a corner of the [golden] Bible",
+                        "[Joseph] would not let it be seen by any one; the Lord had commanded [Joseph] not",
+                        "[Joseph] told the witness the leaves were of gold; there were written characters on the leaves; [Joseph] was commanded to translate the same by the Lord"
+                    ],
+                    "history_slug": "1832-11-16-mormonism",
+                    "tags":["court","plates", "size", "color", "characters"]
+                }
+            ]
         },
         {
             "slug": "emma-smith",
             "name": "Emma Smith",
             "birthday": "1804-07-10",
             "bio": ""
+        },{
+            //William T. Hussey and Azel Vandruver
+            "slug": "william-hussey-azel-vandruver",
+            "name": "William T. Hussey and Azel Vandruver",
+            "birthday": "1800",
+            "bio": "",
+            
+        },{
+            //William T. Hussey and Azel Vandruver
+            "slug": "willard-chase",
+            "name": "Willard Chase",
+            "birthday": "1800",
+            "bio": "",
+            
         }
     ]
 }
@@ -218,7 +252,7 @@ const Witnesses = () => {
                 </div>  
                 <hr/>
                 <div className='other-witnesses'>
-                    <h4>Other Witnesses</h4>
+                    <h4>Other Sources</h4>
                     <h5>
                         Had various experiences with the plates or with Joseph while in posession of the plates
                     </h5>
