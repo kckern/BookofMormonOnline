@@ -1,0 +1,141 @@
+.read-content .read-section
+{
+    font-family: "Scripture";
+    background-color: #FFF;
+    padding: 1rem;
+    margin-bottom: 2rem;
+    border-radius: 1rem;
+    margin-left: 1rem;
+}
+
+.read-content .read-section .read-block
+{
+    display: flex;
+}
+.read-content .read-section .read-section-header
+{
+    display: flex;
+    font-family: "Roboto Condensed";
+}
+.read-content .read-section .read-section-header h4{
+    font-size: 1.5rem;
+    font-weight: bold;
+    line-height: 1.5rem;
+    margin: 0;
+    padding: 0;
+    color: #444;
+    margin-bottom: 1ex;
+    flex-grow: 1;
+}.read-content .read-section .read-section-header p{
+    padding-top: 1ex;
+    color: #AAA;
+    flex-shrink: 0;
+}
+
+.read-content .read-section .read-block .left-gutter
+{
+    flex-grow: 0;
+    flex-shrink: 0;
+    width: 5rem;
+    padding: 0 1rem 1ex 0;
+    margin-left: 3rem;
+}
+.read-content .read-section .read-block .main-content
+{
+    /* vert center */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex-grow: 1;
+    padding: 0 1rem;
+}
+
+.read-content .read-section .read-block .left-gutter{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.read-content .read-section .read-block .left-gutter img
+{
+    border-radius: 50%;
+    border: 1px solid #444;
+    width: 4rem;
+    height: 4rem;
+}
+.read-content .read-section .read-block .left-gutter div.read-voice
+{
+    font-family: "Roboto Condensed";
+    text-align: center;
+    min-height: 1rem;
+    min-width: 3rem;
+    line-height: 0.5rem;
+    font-size: 0.5rem;
+    margin:0;
+    padding: 0.5ex 1ex;
+    border-radius: 1ex;
+    margin-top: -1rem;
+    color: #444;
+    color: white;
+    background-color: #92785dee;
+    font-weight: bold;
+    /* small caps */
+    text-transform:capitalize;
+
+    z-index: 1;
+    position: relative;
+    width: fit-content;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.read-scripture
+{
+    font-family: "Scripture";
+    font-size: 1.2rem;
+    line-height: 1.2rem;
+    text-align: justify;
+    /* 2 columns */
+    
+}
+.read-scripture.split
+{
+    columns: 1;
+    column-gap: 2rem;
+}
+.read-scripture sup{
+    font-family: "Roboto Condensed";
+    font-size: 0.6rem;
+    color: #999;
+    margin: 0 0.5ex;
+}
+.read-header-nav{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+
+.read-header-nav .btn.btn-primary,
+.read-section-footer .btn.btn-primary
+{
+    font-family: "Roboto Condensed";
+    font-size: 0.8rem;
+    padding: 0.5rem 1rem;
+    border-radius: 1rem;
+    background-color: #444;
+    color: white;
+}
+
+.read-section-footer{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+    font-family: "Roboto Condensed";
+    font-size: 0.8rem;
+    color: #444;
+    margin-bottom: 3rem;
+}

@@ -223,6 +223,44 @@ const queries = {
     }
   },
 
+  read: (ref) => {
+    return {
+      type: "read",
+      key: "ref",
+      val: ref,
+      query: q("read", "ref", ref) +
+        `{
+            ref
+            verse_id
+            verse_count
+            prev_ref
+            next_ref
+            sections {
+                ref
+                heading
+                verse_id
+                verse_count
+                blocks {
+                    ref
+                    verse_id
+                    verse_count
+                    person_slug
+                    voice
+                    lines {
+                        ref
+                        verse_num
+                        verse_id
+                        text
+                    }
+                }
+            }
+          }`,
+    }
+
+
+  },
+
+
   chiasmus: () => {
     //{ chiasmus { chiasmus_id reference scheme } }
     return {

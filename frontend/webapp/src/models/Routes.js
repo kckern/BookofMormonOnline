@@ -26,6 +26,7 @@ const Welcome = lazy(() => import("../views/Welcome/Welcome.js"));
 const Audit = lazy(() => import("../views/Audit/Audit.js"));
 const Witnesses = lazy(() => import("../views/History/Witnesses.js"));
 const JosephSmith = lazy(() => import("../views/History/JosephSmith.js"));
+const ReadScripture = lazy(() => import("../views/Read/Read.js"));
 const lang = determineLanguage();
 
 
@@ -99,6 +100,10 @@ const routes = [
   {
     path: "/about",
     component: About,
+  },
+  {
+    path: "/read/:value*",
+    component: ReadScripture,
   },
   {
     path: "/theater/:slug*",
