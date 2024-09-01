@@ -38,7 +38,7 @@
     flex-shrink: 0;
     width: 5rem;
     padding: 0 1rem 1ex 0;
-    margin-left: 3rem;
+    margin-left: 1rem;
 }
 .read-content .read-section .read-block .main-content
 {
@@ -47,7 +47,7 @@
     flex-direction: column;
     justify-content: center;
     flex-grow: 1;
-    padding: 0 1rem;
+    padding: 0 1rem 0 0;
 }
 
 .read-content .read-section .read-block .left-gutter{
@@ -60,8 +60,9 @@
 {
     border-radius: 50%;
     border: 1px solid #444;
-    width: 4rem;
+    width: 3.8rem;
     height: 4rem;
+    object-fit: cover;
 }
 .read-content .read-section .read-block .left-gutter div.read-voice
 {
@@ -81,6 +82,7 @@
     font-weight: bold;
     /* small caps */
     text-transform:capitalize;
+    border: 1px solid #444;
 
     z-index: 1;
     position: relative;
