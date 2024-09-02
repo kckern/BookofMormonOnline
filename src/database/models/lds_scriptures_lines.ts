@@ -9,6 +9,7 @@ export default class _lds_scriptures_lines extends ModelBase {
   person_slug: any;
   voice: any;
   text: any;
+  format: any;
   public static initModel(sequelize: Sequelize): typeof _lds_scriptures_lines {
     this.init(
       {
@@ -37,6 +38,10 @@ export default class _lds_scriptures_lines extends ModelBase {
           type: DataTypes.TEXT,
           allowNull: true,
         },
+        format: {
+          type: DataTypes.STRING(100),
+          allowNull: true,
+        }
       },
       {
         sequelize,
