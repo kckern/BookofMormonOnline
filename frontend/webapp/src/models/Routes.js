@@ -102,6 +102,10 @@ const routes = [
     component: About,
   },
   {
+    path: "/read/:bookCh/:verseNum",
+    component: ReadScripture,
+  },
+  {
     path: "/read/:value*",
     component: ReadScripture,
   },
@@ -144,6 +148,10 @@ const routes = [
   {
     path: "/user",
     component: User,
+  },
+  {
+    path: "/study/:value",
+    component: SearchComponent,
   },
   {
     path: "/search/:value",
