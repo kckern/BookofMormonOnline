@@ -205,3 +205,41 @@ p.read-scripture.heading
     }
   }
   
+.chapter-nav {
+    display: grid;
+    /* auto fit, make grid 2:1 ratio */
+    grid-template-columns: repeat(auto-fit, minmax(1.33rem, 1.5fr));
+    margin-bottom: 1rem;
+    border: 1px solid #AAA;
+    margin-left: 1rem;
+    border-radius: 1ex;
+    background-color: #CCC;
+    margin-top: -2rem;
+}
+
+.chapter-nav a {
+    font-size: 1.2ex;
+    text-align: center;
+    background-color: #EEE;
+    font-weight: bold;
+}
+.chapter-nav a.first {
+    outline: 1px solid black;
+    z-index: 1;
+    background-color: #777!important;
+    color: white;
+}
+
+.chapter-nav a:nth-child(odd) {
+    background-color: #DDD;
+}
+.chapter-nav a.active {
+    outline: 2px solid #ff6f00;
+    background-color: #FFFF0099!important;
+    color: #000;
+    z-index: 2;
+}
+.chapter-nav a:hover{
+    outline: 2px solid #ff6f0077;
+    z-index: 3;
+}

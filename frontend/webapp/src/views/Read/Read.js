@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import Loader from "../_Common/Loader";
 import BoMOnlineAPI, { assetUrl } from "../../models/BoMOnlineAPI";
 import { generateReference, lookupReference } from "scripture-guide";
+import ReactTooltip from "react-tooltip";
 
 const slugify = (text) => {
     if(!text) return null;
@@ -118,7 +119,7 @@ export default function ReadScripture({ appController }) {
                         {readData.next_ref} ▶
                       </button>
                     )} </div>
-                
+                <ChapterNav chapterRef={chapterRef} />
                 {readData.sections.map((section, index) => {
                     return <div key={index} className="read-section">
                         <div className="read-section-header">
@@ -234,4 +235,35 @@ export default function ReadScripture({ appController }) {
       )
 
 
+}
+
+
+function ChapterNav({ chapterRef }) {
+
+    const chapterCounts = [22,33,7,1,1,1,1,29,63,16,30,1,9,15,10];
+    const bookNames = ["1 Nephi", "2 Nephi", "Jacob", "Enos", "Jarom", "Omni", "Words of Mormon", "Mosiah", "Alma", "Helaman", "3 Nephi", "4 Nephi", "Mormon", "Ether", "Moroni"];
+
+    const boxes = [];
+    let j = 0;
+    for(let bookChapterCount of chapterCounts) {
+        const book = bookNames[j++];
+        for(let i=1; i<=bookChapterCount; i++) {
+            const chapter = `${book} ${i}`;
+            const boxChapterRef = `${slugify(chapter)}`;
+            const isFirst = i === 1;
+            const firstLetterOfBook = book?.[0].toUpperCase() || i;
+            const isActive = slugify(chapterRef) === boxChapterRef;
+            boxes.push(<Link to={`/read/${boxChapterRef}`}
+                className={`chapter-box ${isFirst ? "first" : ""} ${isActive ? "active" : ""}`}
+                data-tip={chapter}
+                data-for="chapter-nav-tip"
+            >{isFirst ? firstLetterOfBook : i}
+            </Link>)
+        }
+    }
+
+    return <div className="chapter-nav">
+        <ReactTooltip id="chapter-nav-tip" place="top" effect="solid" />
+        {boxes}
+    </div>
 }
