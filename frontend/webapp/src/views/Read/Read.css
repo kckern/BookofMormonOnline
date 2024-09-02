@@ -192,3 +192,16 @@ p.read-scripture.heading
     color: #444;
     margin-bottom: 3rem;
 }
+
+@media only screen and (max-width: 900px) {
+    
+    .read-content, .read-content .read-section{
+        margin: -0.6rem;
+    }
+    /* left gutter smaller */
+    .read-content .read-section .read-block .left-gutter
+    {
+        margin: 0;
+    }
+  }
+  
