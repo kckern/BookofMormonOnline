@@ -101,6 +101,29 @@
     /* 2 columns */
     
 }
+
+p.read-scripture + p.read-scripture
+{
+    margin-top: -1.5ex;
+}
+
+p.read-scripture.italic
+{
+    font-style: italic;
+    margin: 2rem 2rem;
+    font-size: 1rem;
+    line-height: 1rem;
+    color: #999;
+}
+
+p.read-scripture.heading
+{
+    /* small caps */
+    text-transform: capitalize;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
 .read-scripture.split
 {
     columns: 1;
@@ -131,6 +154,14 @@
     color: white;
 }
 
+
+.read-header-nav .btn.btn-primary.disabled  ,
+.read-section-footer .btn.btn-primary.disabled
+{
+    background-color: #999;
+    color: white;
+    cursor: not-allowed;
+}
 .read-section-footer{
     display: flex;
     justify-content: space-between;

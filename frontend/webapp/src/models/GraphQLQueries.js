@@ -251,6 +251,7 @@ const queries = {
                         verse_num
                         verse_id
                         text
+                        format
                     }
                 }
             }
