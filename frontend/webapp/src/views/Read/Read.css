@@ -202,7 +202,16 @@ p.read-scripture.heading
     .read-content .read-section .read-block .left-gutter
     {
         margin: 0;
+        width: 100%;
+        text-align: center;
+        display: flex;
+        justify-content: center;
+
     }
+    .read-block{
+        flex-direction: column;
+    }
+
   }
   
 .chapter-nav {
