@@ -1,19 +1,36 @@
-import { useRouteMatch, Link } from "react-router-dom";
+import { useRouteMatch, Link, useHistory } from "react-router-dom";
 import "./Read.css";
 import React, { useState, useEffect, useCallback } from "react";
 import Loader from "../_Common/Loader";
 import BoMOnlineAPI, { assetUrl } from "../../models/BoMOnlineAPI";
+import { generateReference, lookupReference } from "scripture-guide";
 
 const slugify = (text) => {
     if(!text) return null;
-    return text.toLowerCase().replace(/ /g, ".").replace(/:/g, ".").replace(/[.]+/g, ".").replace(/[^a-z0-9.]/g, "");
+    const slug = text.toLowerCase().replace(/ /g, ".").replace(/:/g, ".").replace(/[.]+/g, ".").replace(/[^a-z0-9.-]/g, "");
+    return slug;
+
 }
 
 export default function ReadScripture({ appController }) {
 
     //react router
     const match = useRouteMatch();
-    const [content, setContent] = useState(<Loader />);
+    const { params } = match;
+    const fullReference = params?.verseNum ? `${params.bookCh}:${params.verseNum}` : params?.value;
+    const fullVerseIds = lookupReference(params?.verseNum ? `${params.bookCh}` : params?.value).verse_ids;
+    const initHighlightedVerse = params?.verseNum ? lookupReference(fullReference).verse_ids[0] : null;
+    const chapterRef = generateReference(fullVerseIds);
+
+    const history = useHistory();
+    const [content, setContent] = useState(null);
+
+
+    const refFromUrl = match.params?.value?.replace(/\//g, ":");
+    const hasVerse = /:/.test(refFromUrl);
+
+    const [highlightedVerse, setHighlightedVerse] = useState(initHighlightedVerse);
+    const [hoveredVerse, setHoveredVerse] = useState(null);
 
 
     // add listener to to keyboard left right arrows to got next and previous
@@ -29,6 +46,26 @@ export default function ReadScripture({ appController }) {
                 prev.click();
             }
         }
+        //up down arrows increment highlighted verse, if none then start at first verse
+        //TODO FIX ME
+        if (e.key === "ArrowUp") {
+            const verseIndex = fullVerseIds.indexOf(highlightedVerse);
+            const nextVerse = fullVerseIds[verseIndex - 1] || fullVerseIds[0];
+            setHighlightedVerse(nextVerse);
+        }
+        if (e.key === "ArrowDown") {
+            const verseIndex = fullVerseIds.indexOf(highlightedVerse);
+            const nextVerse = fullVerseIds[verseIndex + 1] || fullVerseIds[fullVerseIds.length - 1];
+            setHighlightedVerse(nextVerse);
+        }
+
+        //escape clear highlighted verse
+        if (e.key === "Escape") {
+            setHighlightedVerse(null);
+            history.push(`/read/${slugify(chapterRef)}`);
+            //update title
+            document.title = chapterRef;
+        }
     }, []);
 
     useEffect(() => {
@@ -38,6 +75,19 @@ export default function ReadScripture({ appController }) {
         }
     }, [handleKeyDown]);
     
+    useEffect(() => {
+        if(!highlightedVerse) return 
+        const highlightedref = generateReference(highlightedVerse);
+        const [bookchapter,verse] = highlightedref.split(":");
+
+        history.push(`/read/${slugify(bookchapter)}/${verse}`);
+        document.title = chapterRef + ":" + verse;
+
+        document.title = chapterRef + ":" + verse;
+        //scroll to highlighted verse
+        const highlightedElement = document.querySelector(`.highlighted`);
+
+    }, [highlightedVerse]);
 
 
     const buildContent = (readData) => {
@@ -73,7 +123,7 @@ export default function ReadScripture({ appController }) {
                     return <div key={index} className="read-section">
                         <div className="read-section-header">
                             <h4>{section.heading.replace(/｢\d+｣/g, "").trim()}</h4>
-                            <p>{section.ref}</p>
+                            <p><Link to={`/study/${slugify(section.ref)}`}>{section.ref}</Link></p>
                         </div>                      
                         {section.blocks.map((block, index) => { 
                             const blockLineWordCount = block.lines.reduce((acc, line) => {
@@ -95,19 +145,32 @@ export default function ReadScripture({ appController }) {
                                 paragraphs[paragraphCursor].push(line);
                             }
 
-
+                            const handleImgClick = (e) => {
+                                    appController.functions.setPopUp({ type: "people", ids: [block.person_slug],
+                                      underSlug: "read/" + slugify(chapterRef) });
+                                  
+                            }
                             return <div key={index} className="read-block">
                                 <div className="left-gutter">
-                                    <img alt={block.voice} src={assetUrl + `/people/${block.person_slug}`} />
-                                    <div className="read-voice">{block.voice}</div>
+                                    <img alt={block.voice} src={assetUrl + `/people/${block.person_slug}`} onClick={handleImgClick} />
+                                    <div className="read-voice"
+                                     onClick={handleImgClick}
+                                    >{block.voice}</div>
                                 </div>
                                 <div className="main-content">
 
-                                {paragraphs?.map(p=><p className={`read-scripture ${specialClass} ${p[0].class}`}>{p?.map((line, index) => {
+                                {paragraphs?.map(p=><p className={`read-scripture ${specialClass} ${p?.[0]?.class || ""}`}>{p?.map((line, index) => {
 
-
-
-                                    return <span key={index}><sup>{line.verse_num}</sup>{line.text}</span>
+                                    const lineVerseId = line.verse_id;
+                                    const lineClass = lineVerseId === highlightedVerse ? "highlighted" : lineVerseId === hoveredVerse ? "hovered" : "";
+                                    return <span key={index} className={lineClass}
+                                        onClick={() => setHighlightedVerse(lineVerseId)} 
+                                        onMouseEnter={() => {
+                                            setHoveredVerse(lineVerseId);
+                                        }}
+                                        onMouseLeave={() => setHoveredVerse(null)}
+                                    
+                                    ><sup>{line.verse_num}</sup>{line.text}</span>
                                 })}</p>)}
                                 </div>
                                 
@@ -144,17 +207,18 @@ export default function ReadScripture({ appController }) {
 
 
     useEffect(() => {
-        const slug = match.params?.value || "1Ne1";
+        
         let loaderTimeout;
     
         loaderTimeout = setTimeout(() => {
-            setContent(<Loader />);
-        }, 100);
-    
-        BoMOnlineAPI({read: slug}).then((data) => {
+            setContent(null);
+        }, 200);
+        
+        document.title = chapterRef || "1 Nephi 1";
+        BoMOnlineAPI({read: chapterRef || "1 Nephi 1"}).then((data) => {
             clearTimeout(loaderTimeout);
             const mainKey = Object.keys(data.read)[0];
-            setContent(buildContent(data.read[mainKey]));
+            setContent(data.read[mainKey]);
             //scroll to top
             window.scrollTo(0, 0);
         });
@@ -165,7 +229,7 @@ export default function ReadScripture({ appController }) {
 
     return (<div className="container" style={{ display: 'block' }}>
         <div id="page" className="read">
-          {content}
+          {content ? buildContent(content) : <Loader />}
         </div></div>
       )
 
