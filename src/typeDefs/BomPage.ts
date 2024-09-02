@@ -49,6 +49,7 @@ export default gql`
     verse_num: Int
     verse_id: Int
     text: String
+    format: String
   }
 
 

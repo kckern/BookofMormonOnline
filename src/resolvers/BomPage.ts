@@ -5,7 +5,7 @@ import { getSlug, Op, includeTranslation, translatedValue, includeModel, include
 import scripture from "../library/scripture"
 import { loadNotesFromTextGuid, loadPeopleFromTextGuid, loadPlacesFromTextGuid } from './BomPeoplePlace';
 const { getBlocksToQueue ,getFirstTextBlockGuidFromSlug,organizeRelatedScriptures} = require('./lib')
-import { lookupReference,generateReference } from 'scripture-guide';
+import { lookupReference,generateReference,setLanguage } from 'scripture-guide';
 import { queryDB } from '../library/db';
 import { loadLines, loadScripture, loadVerses } from './BomScripture';
 
@@ -251,6 +251,7 @@ queue: async (root: any, args: any, context: any, info: any) => {
 
     read: async (root, args, context, info) => {
       const lang = context.lang || null;
+      setLanguage(lang);
       const { token } = args;
       const { verse_ids, ref } = lookupReference(args.ref);
       const lines = await loadLines(verse_ids, lang);
@@ -273,10 +274,12 @@ queue: async (root: any, args: any, context: any, info: any) => {
     
       for (let line of lines) {
         const thisSection = headingMap[line.verse_id];
+
+        const lineVerseId = line.verse_id;
     
         if (!currentSection || currentSection.heading !== thisSection) {
           currentSection = { 
-            ref, heading: thisSection, verse_id: line.verse_id, verse_count: 0, blocks: [] 
+            ref, heading: thisSection, verse_id: lineVerseId, verse_count: 0, blocks: [] 
           };
           sections.push(currentSection);
         }
@@ -286,7 +289,7 @@ queue: async (root: any, args: any, context: any, info: any) => {
         if (!lastBlock || line.person_slug !== lastPersonSlug || line.voice !== lastVoice) {
           currentSection.blocks.push({
             ref,
-            verse_id: line.verse_id,
+            verse_id: lineVerseId,
             verse_count: 0,
             person_slug: line.person_slug,
             voice: line.voice,
@@ -297,26 +300,36 @@ queue: async (root: any, args: any, context: any, info: any) => {
         }
     
         const currentBlock = currentSection.blocks[currentSection.blocks.length - 1];
-        const lineRef = generateReference(line.verse_id);
+        const lineRef = generateReference(lineVerseId);
     
         currentBlock.lines.push({
           ref: lineRef,
           verse_num: lineRef.split(":").pop(),
-          verse_id: line.verse_id,
-          text: line.text
+          verse_id: lineVerseId,
+          text: line.text,
+          format: line.format
         });
+
+        const getBlockUniqueVerseIds = (block: any) => {
+          const allVerseIds = [];
+          block.lines.forEach((line: any) => {
+            allVerseIds.push(line.verse_id);
+          });
+          const uniqueVerseIds = Array.from(new Set(allVerseIds));
+          return uniqueVerseIds;
+        }
     
-        currentBlock.verse_count++;
-        currentSection.verse_count++;
+        currentBlock.verse_ids = getBlockUniqueVerseIds(currentBlock);
+        currentBlock.verse_count = currentBlock.verse_ids.length;
+        currentSection.verse_count = currentSection.blocks.map((block: any) => block.verse_count).reduce((a: any, b: any) => a + b, 0);
       }
     
       sections.forEach(section => {
-        section.blocks.forEach(block => {
-          const verse_ids = Array.from({ length: block.verse_count }, (_, i) => block.verse_id + i);
-          block.ref = generateReference(verse_ids);
+        section.blocks.forEach((block:any) => {
+          block.ref = generateReference(block.verse_ids);
         });
     
-        const verse_ids = Array.from({ length: section.verse_count }, (_, i) => section.verse_id + i);
+        const verse_ids = Array.from(new Set(section.blocks.map((block:any) => block.verse_ids).flat())).sort((a: any, b: any) => a - b);
         section.ref = generateReference(verse_ids);
       });
     
