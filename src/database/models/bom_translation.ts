@@ -5,6 +5,8 @@ import {
 } from 'sequelize';
 
 export default class _bom_translation extends ModelBase {
+  text: any;
+  value: any;
   public static initModel(sequelize: Sequelize): typeof _bom_translation {
     this.init(
       {

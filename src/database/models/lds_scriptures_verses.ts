@@ -5,6 +5,8 @@ import {
 } from 'sequelize';
 
 export default class _lds_scriptures_verses extends ModelBase {
+  verse_scripture: any;
+  verse_id: any;
   public static initModel(sequelize: Sequelize): typeof _lds_scriptures_verses {
     this.init(
       {

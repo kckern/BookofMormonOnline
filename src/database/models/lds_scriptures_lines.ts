@@ -10,6 +10,8 @@ export default class _lds_scriptures_lines extends ModelBase {
   voice: any;
   text: any;
   format: any;
+  line_scripture: any;
+  guid: any;
   public static initModel(sequelize: Sequelize): typeof _lds_scriptures_lines {
     this.init(
       {
