@@ -3,9 +3,9 @@
     font-family: "Scripture";
     background-color: #FFF;
     padding: 1rem;
-    margin-bottom: 2rem;
     border-radius: 1rem;
     margin-left: 1rem;
+    margin-bottom: 1rem;
 }
 
 .read-content .read-section .read-block
@@ -109,6 +109,11 @@
     text-align: justify;
     /* 2 columns */
     
+}
+
+.read-content{
+
+    margin-bottom: 40vh;
 }
 
 p.read-scripture + p.read-scripture
@@ -256,6 +261,50 @@ p.read-scripture.heading
     color: #000;
     z-index: 3;
 }
+
+
+.readAudioPlayerContainer{
+
+    height: 33vh;
+
+    position: fixed;
+    bottom: 0;
+    right:0;
+    left:250px;
+    z-index: 100;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s;
+}
+.readAudioPlayerContainer.show{
+    opacity: 1;
+    pointer-events: all;
+    transition: opacity 0.5s;
+}
+.readAudioPlayer{
+    width: 90%;
+    height: 70%;
+    background-color: #444444F5;
+    color: white;
+    border-radius: 2rem;
+    padding: 3rem;
+    text-align: center;
+    /* shadow on all sides */
+    box-shadow: 0 0 1rem 0.5rem #000;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-direction: column;
+
+}
+
+.readAudioPlayer span.current{
+    outline: 2px solid #ff6f00;
+}
+
 
 @media only screen and (max-width: 900px) {
     

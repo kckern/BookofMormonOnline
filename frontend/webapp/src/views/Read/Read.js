@@ -5,6 +5,7 @@ import Loader from "../_Common/Loader";
 import BoMOnlineAPI, { assetUrl } from "../../models/BoMOnlineAPI";
 import { generateReference, lookupReference } from "scripture-guide";
 import ReactTooltip from "react-tooltip";
+import ReactAudioPlayer from "react-audio-player";
 
 const slugify = (text) => {
     if(!text) return null;
@@ -32,6 +33,24 @@ export default function ReadScripture({ appController }) {
 
     const [highlightedVerse, setHighlightedVerse] = useState(initHighlightedVerse);
     const [hoveredVerse, setHoveredVerse] = useState(null);
+    const [showAudioPlayer, setShowAudioPlayer] = useState(false);
+
+    const [activeText, setActiveText] = useState([]);
+
+    const readController = {
+        functions: {
+            setHighlightedVerse,
+            setHoveredVerse,
+            setShowAudioPlayer,
+        },
+        states: {
+            fullVerseIds,
+            highlightedVerse,
+            hoveredVerse,
+            activeText,
+            showAudioPlayer
+        }
+    }
 
 
     // add listener to to keyboard left right arrows to got next and previous
@@ -84,6 +103,14 @@ export default function ReadScripture({ appController }) {
         history.push(`/read/${slugify(bookchapter)}/${verse}`);
         document.title = chapterRef + ":" + verse;
 
+        const activeLines = content?.sections.map(section => {
+            return section.blocks.map(block => {
+                return block.lines.filter(line => line.verse_id === highlightedVerse);
+            });
+        }).flat(2).flat(2) || [];
+        setActiveText(activeLines);
+
+
     }, [highlightedVerse]);
 
 
@@ -116,6 +143,7 @@ export default function ReadScripture({ appController }) {
                       </button>
                     )} </div>
                 <ChapterNav chapterRef={chapterRef} />
+                <button className="btn btn-primary" onClick={() => setShowAudioPlayer(!showAudioPlayer)}>Audio</button>
                 {readData.sections.map((section, index) => {
                     return <div key={index} className="read-section">
                         <div className="read-section-header">
@@ -225,9 +253,13 @@ export default function ReadScripture({ appController }) {
 
 
     return (<div className="container" style={{ display: 'block' }}>
+        
         <div id="page" className="read">
           {content ? buildContent(content) : <Loader />}
-        </div></div>
+          <ReadAudioPlayer readController={readController} />
+        </div>
+        
+        </div>
       )
 
 
@@ -262,4 +294,55 @@ function ChapterNav({ chapterRef }) {
         <ReactTooltip id="chapter-nav-tip" place="top" effect="solid" />
         {boxes}
     </div>
+}
+
+
+function ReadAudioPlayer({ readController }) {
+
+    const {highlightedVerse,fullVerseIds,activeText} = readController.states;
+    const {setShowAudioPlayer, setHighlightedVerse} = readController.functions;
+
+    const [audioDuration, setAudioDuration] = useState(0);
+
+    const handleXClick = () =>  setShowAudioPlayer(false);
+
+    const audioUrl = highlightedVerse ? assetUrl + "/audio/verses/en-legacy/" + highlightedVerse + ".mp3" : null;
+
+    const handleAudioEnd = () => {
+        const verseIndex = fullVerseIds.indexOf(highlightedVerse);
+        const nextVerse = fullVerseIds[verseIndex + 1] || null;
+        if(nextVerse) setHighlightedVerse(nextVerse);
+        else setShowAudioPlayer(false);
+    }   
+
+    const [timecode, setTimecode] = useState(0);
+
+    const textArray = activeText.map(line => line.text.split(/([^A-z]+)/g)).flat().filter(Boolean);
+    const wordCount = textArray.filter(i=>/^[A-z]+$/.test(i)).length;
+    const secondsPerWord = (audioDuration / wordCount) /2;
+    let currentWordIndex = Math.floor((timecode / secondsPerWord) || 0) || 0;
+    currentWordIndex = currentWordIndex % 2 !== 0 ? currentWordIndex - 1 : currentWordIndex;
+  
+
+
+    return <div className={`readAudioPlayerContainer ${readController.states.showAudioPlayer ? "show" : ""}`}>
+            <div className="readAudioPlayer">
+                <button onClick={handleXClick} className="close">X</button>
+                    <p>{textArray.map((word, index) => {
+                        const isCurrentWord = index === currentWordIndex;
+                        return <span className={isCurrentWord ? "current" : ""}>{word}</span>
+                    })}</p>
+                    <ReactAudioPlayer
+                        src={audioUrl}
+                        autoPlay
+                        controls
+                        onEnded={handleAudioEnd}
+                        listenInterval={50}
+                        onListen={(e) => setTimecode(e)}
+                        onCanPlay={(e) => setAudioDuration(e.target.duration)}
+                    />
+            </div>
+        </div>
+
+
 }
