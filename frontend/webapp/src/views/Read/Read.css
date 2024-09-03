@@ -130,6 +130,10 @@ p.read-scripture.italic
     line-height: 1rem;
     color: #999;
 }
+p.read-scripture.italic:first-child
+{
+    margin-top: 0;
+}
 
 p.read-scripture.italic sup,
 p.read-scripture.heading sup
