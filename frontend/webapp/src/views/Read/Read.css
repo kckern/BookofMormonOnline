@@ -233,6 +233,14 @@ p.read-scripture.heading
         justify-content: center;
 
     }
+
+    .read-content .read-section .read-block + .read-block .left-gutter
+    {
+        border-top: 1px solid #CCC;
+        padding-top: 1ex;
+        margin-top: -1ex;
+    }
+
     .read-block{
         flex-direction: column;
     }
@@ -255,7 +263,9 @@ p.read-scripture.heading
     .read-section-footer{
         padding-bottom: 3rem;
     }
-
+    p.read-scripture.italic{
+        margin: 1.5rem 0;
+    }
   }
   
 .chapter-nav {
