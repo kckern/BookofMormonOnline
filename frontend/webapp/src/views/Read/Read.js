@@ -3,15 +3,32 @@ import "./Read.css";
 import React, { useState, useEffect, useCallback } from "react";
 import Loader from "../_Common/Loader";
 import BoMOnlineAPI, { assetUrl } from "../../models/BoMOnlineAPI";
-import { generateReference, lookupReference } from "scripture-guide";
+import { generateReference, lookupReference, setLanguage } from "scripture-guide";
 import ReactTooltip from "react-tooltip";
+import { determineLanguage, label } from "../../models/Utils";
 
-const slugify = (text) => {
+const slugify = (text,verse_ids) => {
     if(!text) return null;
-    const slug = text.toLowerCase().replace(/ /g, ".").replace(/:/g, ".").replace(/[.]+/g, ".").replace(/[^a-z0-9.-]/g, "");
+    const hasAlpha = /[a-z]/.test(text.toLowerCase());
+    if(hasAlpha) return  text.toLowerCase().replace(/ /g, ".").replace(/:/g, ".").replace(/[.]+/g, ".").replace(/[^a-z0-9.-]/g, "");
+    const slug = text.replace(/ /g, ".").replace(/:/g, ".").replace(/[-]+/g, "~");
     return slug;
 
 }
+
+const lang = determineLanguage();
+
+const getEnglishReference = (ref) => {
+    if(lang === "en") return ref;
+    setLanguage(lang);
+    const verse_ids = lookupReference(ref).verse_ids;
+    setLanguage("en");
+    const enref = generateReference(verse_ids);
+    setLanguage(lang);
+    return enref;
+}
+
+
 
 export default function ReadScripture({ appController }) {
 
@@ -32,8 +49,7 @@ export default function ReadScripture({ appController }) {
 
     const [highlightedVerse, setHighlightedVerse] = useState(initHighlightedVerse);
     const [hoveredVerse, setHoveredVerse] = useState(null);
-
-
+    
     // add listener to to keyboard left right arrows to got next and previous
     const handleKeyDown = useCallback((e) => {
         if (e.key === "ArrowRight") {
@@ -81,7 +97,7 @@ export default function ReadScripture({ appController }) {
         const highlightedref = generateReference(highlightedVerse);
         const [bookchapter,verse] = highlightedref.split(":");
 
-        history.push(`/read/${slugify(bookchapter)}/${verse}`);
+        history.push(`/read/${slugify(getEnglishReference(bookchapter))}/${verse}`);
         document.title = chapterRef + ":" + verse;
 
     }, [highlightedVerse]);
@@ -91,8 +107,8 @@ export default function ReadScripture({ appController }) {
         if (readData) {
 
 
-            const prevSlug = slugify(readData.prev_ref);
-            const nextSlug = slugify(readData.next_ref);
+            const prevSlug = slugify(getEnglishReference(readData.prev_ref));
+            const nextSlug = slugify(getEnglishReference(readData.next_ref));
 
             return <div className="read-content">
                 <div className="read-header-nav">
@@ -120,7 +136,7 @@ export default function ReadScripture({ appController }) {
                     return <div key={index} className="read-section">
                         <div className="read-section-header">
                             <h4>{section.heading.replace(/｢\d+｣/g, "").trim()}</h4>
-                            <p><Link to={`/study/${slugify(section.ref)}`}>{section.ref}</Link></p>
+                            <p><Link to={`/study/${slugify(getEnglishReference(section.ref))}`}>{section.ref}</Link></p>
                         </div>                      
                         {section.blocks.map((block, index) => { 
                             const blockLineWordCount = block.lines.reduce((acc, line) => {
@@ -152,7 +168,7 @@ export default function ReadScripture({ appController }) {
                                     <img alt={block.voice} src={assetUrl + `/people/${block.person_slug}`} onClick={handleImgClick} />
                                     <div className="read-voice"
                                      onClick={handleImgClick}
-                                    >{block.voice}</div>
+                                    >{label(block.voice)}</div>
                                 </div>
                                 <div className="main-content">
 

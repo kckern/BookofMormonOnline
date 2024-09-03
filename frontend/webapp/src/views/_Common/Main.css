@@ -4496,6 +4496,7 @@ button:focus {
   .body.ko .page  h3,
   .body.ko .page  h4,
   .body.ko .table-of-content h5,
+  .body.ko .read-scripture,
   .body.ko  div.toc div.card-body > ul:not(:first-child) > a
   {
     font-family: 'Nanum Myeongjo', serif;
