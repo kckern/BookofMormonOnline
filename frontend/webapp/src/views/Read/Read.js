@@ -140,7 +140,7 @@ export default function ReadScripture({ appController }) {
                         </div>                      
                         {section.blocks.map((block, index) => { 
                             const blockLineWordCount = block.lines.reduce((acc, line) => {
-                                return acc + line.text.split(" ").length;
+                                return acc + line.text?.split(" ").length || 0;
                             }, 0);
 
                             const specialClass = blockLineWordCount > 150 ? "split" : "";
