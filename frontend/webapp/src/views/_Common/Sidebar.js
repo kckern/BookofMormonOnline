@@ -47,7 +47,7 @@ export function loadMenu(){
     { slug: "home", title: <span><img src={home} /> {label("menu_home")}</span> },
     { slug: "contents", title: <span><img src={contents} /> {label("menu_contents")}</span> },
     { slug: "study", title: <span><img src={study} /> {label("menu_study")}</span> },
-    { slug: "read", title: <span><img src={read} /> {label("menu_read")}</span> , lang: ["en"] },
+    { slug: "read", title: <span><img src={read} /> {label("menu_read")}</span> , lang: ["en","fr","ko","covoc"] },
     { slug: "특별반", title: <span><img src={book} />특별반</span>, lang: ["ko"] },
     { slug: "theater", title: <span><img src={theater} /> {label("menu_theater")}</span> },
     { slug: "timeline", title: <span><img src={timeline} /> {label("menu_timeline")}</span> },
