@@ -298,6 +298,7 @@ export async function loadHeadings(verse_ids, lang = "en") {
         UNION (SELECT verse_id, text FROM lds_scriptures_headings WHERE verse_id IN (${placeholders}) AND lang = '${lang}' ORDER BY verse_id)`;
         const params = [firstVerse, ...verse_ids];
         let headingData = await queryDB(headingSQL, params);
+        if(!headingData.length  && lang !== "en") return await loadHeadings(verse_ids, "en");
         headingData = headingData.filter((v, i, a) => a.findIndex(t => (t.verse_id === v.verse_id)) === i);
         if (!headingData.length) headingData = [{ verse_id: firstVerse }];
         return headingData.sort((a, b) => a.verse_id - b.verse_id);

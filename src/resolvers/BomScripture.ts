@@ -69,15 +69,25 @@ export const loadVerses = async (verse_ids:any, lang:string) => {
   const config = { raw:true, where: {  verse_id:verse_ids  } };
   const [versedata, headings] = await Promise.all([
     Models.LdsScripturesVerses.findAll(config),
-    loadHeadings(verse_ids)
+    loadHeadings(verse_ids, lang)
   ]);
-  
   const findHeading = (verseId: number) => {
     const relevantHeadings = headings.filter(({ verse_id }) => verse_id <= verseId);
     const latestHeading = relevantHeadings.reduce((latest: any, current: any) => 
       current.verse_id > latest.verse_id ? current : latest, relevantHeadings[0]);
     return latestHeading?.text || null;
   };
+
+  if(lang && lang!=='en') {
+    const translations = await Models.LdsScripturesTranslations.findAll({
+      raw:true,
+      where: {  verse_id:verse_ids, lang  }
+    });
+    for(const verse of versedata) {
+      const translation = translations.find((t:any)=>t.verse_id===verse.verse_id);
+      if(translation) verse.verse_scripture = translation.text;
+    }
+  }
 
 
   const found = versedata.map((verse:any)=>{
@@ -122,6 +132,17 @@ export const loadVerseHighlights = async (verse_pairs:any, lang) => {
 export const loadLines = async (verse_ids:any, lang:string) => {
   const config = { raw:true, where: {  verse_id:verse_ids  } };
   const line_data = await Models.LdsScripturesLines.findAll(config);
+  if(lang && lang!=='en') {
+    const guids = line_data.map((line:any)=>line.guid);
+    const translations = await Models.BomTranslation.findAll({
+      raw:true,
+      where: {  guid:guids, lang, refkey: "text"  }
+    });
+    for(let i = 0; i < line_data.length; i++) {
+      const translation = translations.find((t:any)=>t.guid===line_data[i].guid);
+      if(translation) line_data[i].text = translation.value;
+    }
+  }
   return line_data.sort((a:any,b:any)=>`${a.verse_id}.${a.line_num}` > `${b.verse_id}.${b.line_num}` ? 1 : -1);
 
 }

@@ -5,6 +5,7 @@ import {
 } from 'sequelize';
 
 export default class _lds_scriptures_translations extends ModelBase {
+  text: any;
   public static initModel(sequelize: Sequelize): typeof _lds_scriptures_translations {
     this.init(
       {
