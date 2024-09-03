@@ -84,10 +84,6 @@ export default function ReadScripture({ appController }) {
         history.push(`/read/${slugify(bookchapter)}/${verse}`);
         document.title = chapterRef + ":" + verse;
 
-        document.title = chapterRef + ":" + verse;
-        //scroll to highlighted verse
-        const highlightedElement = document.querySelector(`.highlighted`);
-
     }, [highlightedVerse]);
 
 

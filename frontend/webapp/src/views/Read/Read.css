@@ -125,6 +125,22 @@ p.read-scripture.italic
     color: #999;
 }
 
+p.read-scripture.italic sup,
+p.read-scripture.heading sup
+{
+    display: none;
+}
+
+p.read-scripture.heading span + span{
+    padding-left: 1ex;
+}
+/* put a bullet before (p.read-scripture.heading span + span) using content */
+p.read-scripture.heading span + span::before{
+    content: "•";
+    padding-right: 1ex;
+}
+
+
 p.read-scripture.heading
 {
     /* small caps */
