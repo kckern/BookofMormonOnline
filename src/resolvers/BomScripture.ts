@@ -136,13 +136,17 @@ export const loadLines = async (verse_ids:any, lang:string) => {
     const guids = line_data.map((line:any)=>line.guid);
     const translations = await Models.BomTranslation.findAll({
       raw:true,
-      where: {  guid:guids, lang, refkey: "text"  }
+      where: {  guid:guids, lang  }
     });
     for(let i = 0; i < line_data.length; i++) {
-      const translation = translations.find((t:any)=>t.guid===line_data[i].guid);
+      const translation = translations.find((t:any)=>t.guid===line_data[i].guid && t.refkey==="text");
+      const lang_line_num = translations.find((t:any)=>t.guid===line_data[i].guid && t.refkey==="line_num");
       if(translation) line_data[i].text = translation.value;
+      if(lang_line_num) line_data[i].line_num = lang_line_num.value;
     }
   }
-  return line_data.sort((a:any,b:any)=>`${a.verse_id}.${a.line_num}` > `${b.verse_id}.${b.line_num}` ? 1 : -1);
+  return line_data
+    .filter((line:any)=>line.text!=='∅')
+    .sort((a:any,b:any)=>`${a.verse_id}.${a.line_num}` > `${b.verse_id}.${b.line_num}` ? 1 : -1);
 
 }
