@@ -12,6 +12,7 @@ export default class _lds_scriptures_lines extends ModelBase {
   format: any;
   line_scripture: any;
   guid: any;
+  line_num: any;
   public static initModel(sequelize: Sequelize): typeof _lds_scriptures_lines {
     this.init(
       {
