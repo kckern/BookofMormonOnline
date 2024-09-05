@@ -35,10 +35,11 @@ export default function ReadScripture({ appController }) {
     //react router
     const match = useRouteMatch();
     const { params } = match;
-    const fullReference = params?.verseNum ? `${params.bookCh}:${params.verseNum}` : params?.value;
-    const fullVerseIds = lookupReference(params?.verseNum ? `${params.bookCh}` : params?.value).verse_ids;
-    const initHighlightedVerse = params?.verseNum ? lookupReference(fullReference).verse_ids[0] : null;
-    const chapterRef = generateReference(fullVerseIds);
+    const { bookCh, verseNum } = params;
+    const fullReference = verseNum ? `${bookCh}:${verseNum}` : bookCh;
+    const chapterVerseIds = lookupReference(bookCh).verse_ids;
+    const initHighlightedVerse = verseNum ? lookupReference(fullReference).verse_ids[0] : null;
+    const chapterRef = bookCh ? generateReference(chapterVerseIds) : window.localStorage.getItem("chapterRef") || "1 Nephi 1";
 
     const history = useHistory();
     const [content, setContent] = useState(null);
@@ -54,26 +55,22 @@ export default function ReadScripture({ appController }) {
     const handleKeyDown = useCallback((e) => {
         if (e.key === "ArrowRight") {
             const next = document.querySelector(".read-section-footer a:last-child");
-            if (next) {
-                next.click();
-            }
+            if (next) next.click();
         } else if (e.key === "ArrowLeft") {
             const prev = document.querySelector(".read-section-footer a:first-child");
-            if (prev) {
-                prev.click();
-            }
+            if (prev)  prev.click();
         }
         //up down arrows increment highlighted verse, if none then start at first verse
         //TODO FIX ME
-        if (e.key === "ArrowUp") {
-            const verseIndex = fullVerseIds.indexOf(highlightedVerse);
-            const nextVerse = fullVerseIds[verseIndex - 1] || fullVerseIds[0];
-            setHighlightedVerse(nextVerse);
-        }
-        if (e.key === "ArrowDown") {
-            const verseIndex = fullVerseIds.indexOf(highlightedVerse);
-            const nextVerse = fullVerseIds[verseIndex + 1] || fullVerseIds[fullVerseIds.length - 1];
-            setHighlightedVerse(nextVerse);
+
+        //or tab
+        if (e.key === "ArrowDown" || e.key === "Tab" || e.key === "ArrowUp") {
+            const offset = e.key === "ArrowUp" ? -1 : 1;
+            e.preventDefault();
+            setHighlightedVerse(previousHighlightedVerse=>{
+                const goTo = !previousHighlightedVerse ? chapterVerseIds[0] : chapterVerseIds[chapterVerseIds.indexOf(previousHighlightedVerse) + offset] || chapterVerseIds[0];
+                return goTo;
+            });
         }
 
         //escape clear highlighted verse
@@ -91,18 +88,21 @@ export default function ReadScripture({ appController }) {
             document.removeEventListener("keydown", handleKeyDown);
         }
     }, [handleKeyDown]);
-    
+
     useEffect(() => {
         if(!highlightedVerse) return 
-        const highlightedref = generateReference(highlightedVerse);
-        const [bookchapter,verse] = highlightedref.split(":");
+        if (highlightedVerse) {
+            const highlightedElement = document.querySelector(".highlighted");
+            if (highlightedElement) {
+                highlightedElement.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
+        }
+        const highlightedRef = generateReference([highlightedVerse]);
+        const highlightedVerseNum = highlightedRef.split(":")[1];
+        history.push(`/read/${slugify(chapterRef)}/${highlightedVerseNum}`);
 
-        history.push(`/read/${slugify(getEnglishReference(bookchapter))}/${verse}`);
-        document.title = chapterRef + ":" + verse;
 
     }, [highlightedVerse]);
-
-
     const buildContent = (readData) => {
         if (readData) {
 
@@ -136,7 +136,9 @@ export default function ReadScripture({ appController }) {
                     return <div key={index} className="read-section">
                         <div className="read-section-header">
                             <h4>{section.heading.replace(/｢\d+｣/g, "").trim()}</h4>
-                            <p><Link to={`/study/${slugify(getEnglishReference(section.ref))}`}>{section.ref}</Link></p>
+                            <p><Link to={`/study/${slugify(getEnglishReference(section.ref))}`}>
+                       
+                            {section.ref}<button className="btn btn-sm btn-outline-secondary" >{label("study_button")}</button></Link></p>    
                         </div>                      
                         {section.blocks.map((block, index) => { 
                             const blockLineWordCount = block.lines.reduce((acc, line) => {
@@ -222,22 +224,22 @@ export default function ReadScripture({ appController }) {
     useEffect(() => {
         
         let loaderTimeout;
-    
-        loaderTimeout = setTimeout(() => {
-            setContent(null);
-        }, 200);
-        
-        document.title = chapterRef || "1 Nephi 1";
-        BoMOnlineAPI({read: chapterRef || "1 Nephi 1"}).then((data) => {
+        loaderTimeout = setTimeout(() => {setContent(null);}, 200);
+        document.title = chapterRef;
+        BoMOnlineAPI({read: chapterRef}).then((data) => {
             clearTimeout(loaderTimeout);
             const mainKey = Object.keys(data.read)[0];
             setContent(data.read[mainKey]);
             //scroll to top
             window.scrollTo(0, 0);
+            //save chapterRef to local storage
+            localStorage.setItem("chapterRef", chapterRef);
+            //reset highlighted verse if not in URL
+            setHighlightedVerse(null);
         });
     
         return () => clearTimeout(loaderTimeout);
-    }, [match?.params?.value]);
+    }, [chapterRef]);
 
 
     return (<div className="container" style={{ display: 'block' }}>
