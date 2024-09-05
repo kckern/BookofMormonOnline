@@ -102,11 +102,7 @@ const routes = [
     component: About,
   },
   {
-    path: "/read/:bookCh/:verseNum",
-    component: ReadScripture,
-  },
-  {
-    path: "/read/:value*",
+    path: "/read/:bookCh?/:verseNum?",
     component: ReadScripture,
   },
   {
