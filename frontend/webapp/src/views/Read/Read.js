@@ -1,6 +1,6 @@
 import { useRouteMatch, Link, useHistory } from "react-router-dom";
 import "./Read.css";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import Loader from "../_Common/Loader";
 import BoMOnlineAPI, { assetUrl } from "../../models/BoMOnlineAPI";
 import { generateReference, lookupReference, setLanguage } from "scripture-guide";
@@ -13,8 +13,13 @@ const slugify = (text,verse_ids) => {
     if(hasAlpha) return  text.toLowerCase().replace(/ /g, ".").replace(/:/g, ".").replace(/[.]+/g, ".").replace(/[^a-z0-9.-]/g, "");
     const slug = text.replace(/ /g, ".").replace(/:/g, ".").replace(/[-]+/g, "~");
     return slug;
-
 }
+
+const verseIdToSlug = (verseIds) => {
+    const ref = generateReference(verseIds);
+    return slugify(ref).replace(/[.](\d+$)/, "/$1");
+}
+
 
 const lang = determineLanguage();
 
@@ -28,57 +33,80 @@ const getEnglishReference = (ref) => {
     return enref;
 }
 
+const getPrevNextChapter = (verse_ids) => {
+    const nextVerseId = verse_ids[verse_ids.length - 1] + 1;
+    const prevVerseId = verse_ids[0] - 1;
+    const nextChapter = nextVerseId > 37706 ? null : generateReference([nextVerseId]).split(":")[0];
+    const prevChapter = prevVerseId < 31103 ? null : generateReference([prevVerseId]).split(":")[0];
+    return { nextChapter, prevChapter };
+}
 
 
-export default function ReadScripture({ appController }) {
-
-    //react router
-    const match = useRouteMatch();
+const reInit = (match) => {
     const { params } = match;
     const { bookCh, verseNum } = params;
     const fullReference = verseNum ? `${bookCh}:${verseNum}` : bookCh;
     const chapterVerseIds = lookupReference(bookCh).verse_ids;
-    const initHighlightedVerse = verseNum ? lookupReference(fullReference).verse_ids[0] : null;
-    const chapterRef = bookCh ? generateReference(chapterVerseIds) : window.localStorage.getItem("chapterRef") || "1 Nephi 1";
+    const initHighlightedVerses = verseNum ? lookupReference(fullReference).verse_ids : null;
+    const initChapterRef = bookCh ? generateReference(chapterVerseIds) : window.localStorage.getItem("chapterRef") || "1 Nephi 1";
+    const { nextChapter: initNextChapter, prevChapter: initPrevChapter } = getPrevNextChapter(chapterVerseIds);
+    return { initChapterRef, initHighlightedVerses, initNextChapter, initPrevChapter };
+};
 
-    const history = useHistory();
+export default function ReadScripture({ appController }) {
+    const match = useRouteMatch();
+    const { initChapterRef, initHighlightedVerses, initNextChapter, initPrevChapter } = reInit(match);
+
     const [content, setContent] = useState(null);
-
-
-    const refFromUrl = match.params?.value?.replace(/\//g, ":");
-    const hasVerse = /:/.test(refFromUrl);
-
-    const [highlightedVerse, setHighlightedVerse] = useState(initHighlightedVerse);
+    const [chapterRef, setChapterRef] = useState(initChapterRef);
+    const [highlightedVerses, setHighlightedVerses] = useState(initHighlightedVerses);
     const [hoveredVerse, setHoveredVerse] = useState(null);
-    
+    const [nextChapterRef, setNextChapterRef] = useState(initNextChapter);
+    const [prevChapterRef, setPrevChapterRef] = useState(initPrevChapter);
+
+    const prevInitChapterRef = useRef(initChapterRef);
+    const prevInitHighlightedVerses = useRef(initHighlightedVerses);
+
+    useEffect(() => {
+        console.log("Reinitializing");
+        const { 
+            initChapterRef: newInitChapterRef, 
+            initHighlightedVerses: newInitHighlightedVerses, 
+            initNextChapter: newInitNextChapter, 
+            initPrevChapter: newInitPrevChapter 
+        } = reInit(match);
+
+        if (prevInitChapterRef.current !== newInitChapterRef) {
+            setChapterRef(newInitChapterRef);
+            prevInitChapterRef.current = newInitChapterRef;
+        }
+
+        if (prevInitHighlightedVerses.current !== newInitHighlightedVerses) {
+            setHighlightedVerses(newInitHighlightedVerses);
+            prevInitHighlightedVerses.current = newInitHighlightedVerses;
+        }
+
+        setNextChapterRef(newInitNextChapter);
+        setPrevChapterRef(newInitPrevChapter);
+    }, [match.params]);
+
+
+
     // add listener to to keyboard left right arrows to got next and previous
     const handleKeyDown = useCallback((e) => {
         if (e.key === "ArrowRight") {
-            const next = document.querySelector(".read-section-footer a:last-child");
-            if (next) next.click();
+        
         } else if (e.key === "ArrowLeft") {
-            const prev = document.querySelector(".read-section-footer a:first-child");
-            if (prev)  prev.click();
+           
         }
-        //up down arrows increment highlighted verse, if none then start at first verse
-        //TODO FIX ME
-
         //or tab
         if (e.key === "ArrowDown" || e.key === "Tab" || e.key === "ArrowUp") {
-            const offset = e.key === "ArrowUp" ? -1 : 1;
-            e.preventDefault();
-            setHighlightedVerse(previousHighlightedVerse=>{
-                const goTo = !previousHighlightedVerse ? chapterVerseIds[0] : chapterVerseIds[chapterVerseIds.indexOf(previousHighlightedVerse) + offset] || chapterVerseIds[0];
-                return goTo;
-            });
+    
         }
 
         //escape clear highlighted verse
         if (e.key === "Escape") {
-            setHighlightedVerse(null);
-            history.push(`/read/${slugify(chapterRef)}`);
-            //update title
-            document.title = chapterRef;
+           
         }
     }, []);
 
@@ -89,20 +117,6 @@ export default function ReadScripture({ appController }) {
         }
     }, [handleKeyDown]);
 
-    useEffect(() => {
-        if(!highlightedVerse) return 
-        if (highlightedVerse) {
-            const highlightedElement = document.querySelector(".highlighted");
-            if (highlightedElement) {
-                highlightedElement.scrollIntoView({ behavior: "smooth", block: "center" });
-            }
-        }
-        const highlightedRef = generateReference([highlightedVerse]);
-        const highlightedVerseNum = highlightedRef.split(":")[1];
-        history.push(`/read/${slugify(chapterRef)}/${highlightedVerseNum}`);
-
-
-    }, [highlightedVerse]);
     const buildContent = (readData) => {
         if (readData) {
 
@@ -144,11 +158,7 @@ export default function ReadScripture({ appController }) {
                             const blockLineWordCount = block.lines.reduce((acc, line) => {
                                 return acc + line.text?.split(" ").length || 0;
                             }, 0);
-
                             const specialClass = blockLineWordCount > 150 ? "split" : "";
-
-
-
                             const paragraphs = [];
                             let paragraphCursor = 0;
                             for(let line of block.lines) {
@@ -177,15 +187,23 @@ export default function ReadScripture({ appController }) {
                                 {paragraphs?.map(p=><p className={`read-scripture ${specialClass} ${p?.[0]?.class || ""}`}>{p?.map((line, index) => {
 
                                     const lineVerseId = line.verse_id;
-                                    const lineClass = lineVerseId === highlightedVerse ? "highlighted" : lineVerseId === hoveredVerse ? "hovered" : "";
-                                    return <span key={index} className={lineClass}
-                                        onClick={() => setHighlightedVerse(lineVerseId)} 
+
+                                    const verseIsHighlighted = Array.isArray(highlightedVerses) && highlightedVerses?.includes(lineVerseId);
+                                    const verseIsHovered = lineVerseId === hoveredVerse;
+
+                                    const lineClass = `${line.class || ""} ${verseIsHighlighted ? "highlighted" : ""} ${verseIsHovered ? "hovered" : ""}`;
+
+
+                                    const slugToVerse = verseIdToSlug([lineVerseId]);
+
+                                    return <Link key={index} className={lineClass}
+                                        to={`/read/${slugToVerse}`}
                                         onMouseEnter={() => {
                                             setHoveredVerse(lineVerseId);
                                         }}
                                         onMouseLeave={() => setHoveredVerse(null)}
                                     
-                                    ><sup>{line.verse_num}</sup>{line.text}</span>
+                                    ><sup>{line.verse_num}</sup>{line.text}</Link>
                                 })}</p>)}
                                 </div>
                                 
@@ -221,8 +239,8 @@ export default function ReadScripture({ appController }) {
     }
 
 
-    useEffect(() => {
-        
+    useEffect((prevChapterRef) => {
+        console.log(`New chapterRef: ${chapterRef}`);
         let loaderTimeout;
         loaderTimeout = setTimeout(() => {setContent(null);}, 200);
         document.title = chapterRef;
@@ -235,7 +253,8 @@ export default function ReadScripture({ appController }) {
             //save chapterRef to local storage
             localStorage.setItem("chapterRef", chapterRef);
             //reset highlighted verse if not in URL
-            setHighlightedVerse(null);
+            const newHighlightedVerses = !prevChapterRef ? highlightedVerses : prevChapterRef === chapterRef ? highlightedVerses : null;
+            setHighlightedVerses(newHighlightedVerses);
         });
     
         return () => clearTimeout(loaderTimeout);

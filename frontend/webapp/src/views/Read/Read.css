@@ -198,14 +198,14 @@ p.read-scripture.heading
     white-space: nowrap;
 }
 
-.read-scripture span{
+.read-scripture a{
     cursor: pointer;
 }
-.read-scripture span.hovered{
+.read-scripture a.hovered{
     color: #6a1313;
 }
 
-.read-scripture span.highlighted{
+.read-scripture a.highlighted{
     background-color: #FFFF0033;
 }
 
