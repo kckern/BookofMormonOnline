@@ -24,12 +24,31 @@
   flex-direction: column;
   position: relative;
   overflow: hidden;
+  /* no flex wrap */
+  flex-wrap: nowrap;
 }
 .sidebar .nav.sidebar-menu > li {
-  height: 6%;
+  /* 6% or 1.5rem, whichever is smaller */
+  height: min(6%, 2.5rem);
   position: relative;
-  max-height: 2.5rem;
 }
+.sidebar .nav.sidebar-menu > li > a img {
+  /* img height must stay within parent height even when parent is 6%, no hardcoding */
+  margin-right: 1ex;
+}
+/* if screen is less than 650 height */
+@media (max-height: 650px) {
+  .sidebar .nav li > a {
+    font-size: calc(3vh);
+    position: relative;
+    top:2rem
+  }
+  .sidebar .nav li img{
+    height: 3vh!important;
+  }
+}
+
+
 .sidebar .nav.sidebar-menu > li > a {
   height: 100%;
   line-height: inherit;
