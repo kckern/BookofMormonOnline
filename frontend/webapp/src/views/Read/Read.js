@@ -45,6 +45,9 @@ const getPrevNextChapter = (verse_ids) => {
 const reInit = (match) => {
     const { params } = match;
     const { bookCh, verseNum } = params;
+    const urlSlug = match.url?.replace(/^\/read\//, "");
+    console.log("urlSlug", urlSlug);
+
     const fullReference = verseNum ? `${bookCh}:${verseNum}` : bookCh;
     const initChapterVerseIds = lookupReference(bookCh).verse_ids;
     const initHighlightedVerses = verseNum ? lookupReference(fullReference).verse_ids : null;
@@ -277,7 +280,10 @@ export default function ReadScripture({ appController }) {
 
 
     useEffect((prevChapterRef) => {
-        console.log(`New chapterRef: ${chapterRef}`);
+
+        const urlSlug = match.url?.replace(/^\/read\//, "");
+        const idealSlug = highlightedVerses ? verseIdToSlug(highlightedVerses) : slugify(chapterRef);
+        if(idealSlug && idealSlug !== urlSlug) history.push(`/read/${idealSlug}`);
         let loaderTimeout;
         loaderTimeout = setTimeout(() => {setContent(null);}, 200);
         document.title = chapterRef;
