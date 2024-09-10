@@ -18,8 +18,8 @@ function Contents() {
   const contentsUI = () => {
     const breakpointColumnsObj = {
       default: 3,
-      700: 2,
-      500: 1,
+      1100: 2,
+      766: 1,
     };
 
 
