@@ -55,7 +55,7 @@ export function loadMenu(){
     //{ slug: "relationships", title: <span><img src={relationships} /> {label("menu_network")}</span>, dev:true },
     { slug: "places", title: <span><img src={places} /> {label("menu_places")}</span> },
     { slug: "map", title: <span><img src={maps} /> {label("menu_map")}</span> },
-    { slug: "fax", title: <span><img src={fax} /> {label("menu_fax")}</span> , lang: ["en"]},
+    { slug: "fax", title: <span><img src={fax} /> {label("menu_fax")}</span> , lang: ["en","ko"]},
     { slug: "history", title: <span><img src={historyicon} /> {label("menu_history")}</span>, lang: ["en"] },
     { slug: "analysis", title: <span><img src={analysis} /> {label("menu_analysis")}</span>, beta:true, lang: ["en"]},
     { slug: "about", title: <span><img src={about} /> {label("menu_about")}</span> },
