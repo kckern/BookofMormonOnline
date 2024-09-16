@@ -32,15 +32,27 @@ export default {
       });
     },
     fax: async (root: any, args: any, context: any, info: any) => {
-      const lang = context.lang ? context.lang : null;
+      const fetchResults = async (model: any, where: any, lang: string) => {
+        return await model.findAll({
+          where: where,
+          order: ['weight'],
+          include: [includeTranslation({ [Op.or]: ['title', 'info'] }, lang)].filter(x => !!x)
+        });
+      };
+    
+      let lang = context.lang ? context.lang : null;
       let filter = args.filter;
-      let where = filter === 'pdf' ? { com: 0, hide: 0 } : { fax: 1 };
+      let where = filter === 'pdf' ? { com: 0, hide: 0, lang: lang } : { fax: 1, lang: lang};
       const model = Models.BomXtrasFax;
-      const results = await model.findAll({
-        where: where,
-        order: ['weight'],
-        include: [includeTranslation({ [Op.or]: ['title', 'info'] }, lang)].filter(x => !!x)
-      });
+    
+      let results = await fetchResults(model, where, lang);
+    
+      if (results.length === 0 && lang !== 'en') {
+        lang = 'en';
+        where = filter === 'pdf' ? { com: 0, hide: 0, lang: lang } : { fax: 1, lang: lang };
+        results = await fetchResults(model, where, lang);
+      }
+    
       return results;
     },
     faxIndex: async (root: any, args: any, context: any, info: any) => {
