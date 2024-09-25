@@ -151,7 +151,7 @@
    border-top: none;
  }
 
- @media screen and (max-width: 767px) {
+ @media screen and (max-width: 800px) {
    div.dataTables_wrapper div.dataTables_length,
    div.dataTables_wrapper div.dataTables_filter,
    div.dataTables_wrapper div.dataTables_info,
@@ -510,7 +510,7 @@
      }
  }
 
- @media screen and (max-width: 767px) {
+ @media screen and (max-width: 800px) {
      div.dtr-modal div.dtr-modal-display {
          width: 95%;
      }
