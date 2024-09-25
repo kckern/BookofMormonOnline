@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 // COMPONENTS
 import Loader from "../_Common/Loader";
+import ReactTooltip from "react-tooltip";
 
 import { Card, CardHeader, CardBody, CardFooter, Alert } from "reactstrap";
 import { Link } from 'react-router-dom';
@@ -66,6 +67,7 @@ function FacsimileViewer({item}) {
     if (e.key === "Escape") {
       document.getElementById("fax_back").click();
     }
+    // Add left and right arrow key navigation
   }, []);
 
   useEffect(() => {
@@ -188,10 +190,14 @@ function Facsimiles() {
   const activeFax = FaxList?.[match.faxVersion];
   useEffect(()=>document.title = (activeFax?.title || label("menu_fax")) + " | " + label("home_title"),[activeFax?.code])
   const contentsUI = () => {
-    const breakpointColumnsObj = {
+    const faxCount = Object.keys(FaxList).length;
+    const breakpointColumnsObj = faxCount > 6 ? {
       default: 4,
       1500: 3,
       1100: 2,
+      800: 1
+    } : {
+      default: 2,
       800: 1
     };
 

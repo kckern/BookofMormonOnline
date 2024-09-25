@@ -3811,7 +3811,7 @@ background: #779dcfb0;
     }
 }
 
-@media only screen and (min-device-width:768px) and (max-device-width:1024px) {
+@media only screen and (min-device-width:800px) and (max-device-width:1024px) {
     .heading-bar {
         height: 60px;
     }
@@ -3981,7 +3981,7 @@ top: 10%;
     }
 }
 
-@media only screen and (max-width: 770px) {
+@media only screen and (max-width: 800px) {
     .heading-bar {
         height: 60px;
     }

@@ -315,13 +315,13 @@
   }
 }
 
-@media (max-width: 900px) and (min-width: 768px) {
+@media (max-width: 900px) and (min-width: 800px) {
   .nav-tabs-navigation.verical-navs {
     padding: 0px 2px;
   }
 }
 
-@media screen and (min-width: 768px) {
+@media screen and (min-width: 800px) {
   .footer {
     .footer-nav {
       padding-left: 21px;
@@ -415,7 +415,7 @@
   }
 }
 
-@media screen and (max-width: 768px) {
+@media screen and (max-width: 800px) {
   .card-stats [class*="col-"] .statistics::after {
     display: none;
   }
@@ -447,7 +447,7 @@
   }
 }
 
-@media screen and (max-width: 767px) {
+@media screen and (max-width: 800px) {
   .typography-line {
     padding-left: 23% !important;
 
