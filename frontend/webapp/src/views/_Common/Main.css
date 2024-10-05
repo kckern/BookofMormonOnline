@@ -4497,10 +4497,14 @@ button:focus {
   .body.ko .page  h4,
   .body.ko .table-of-content h5,
   .body.ko .read-scripture,
+  .body.ko .search p,
   .body.ko  div.toc div.card-body > ul:not(:first-child) > a
   {
     font-family: 'Nanum Myeongjo', serif;
     font-weight:800;
+  }
+  .body.ko .search p{
+    line-height: 1.1rem;
   }
 
   .body.ko .square

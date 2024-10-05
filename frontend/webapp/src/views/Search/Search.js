@@ -104,7 +104,8 @@ function SearchComponent({ appController }) {
                   <button onClick={(e)=>handleReadClick(e,reference)} >{label("menu_read")}</button>
                   <button>{label("menu_study")}</button>
                   </h5>
-                  <p>{highlight(keyword, text)}</p>
+                  <p className="scripture"
+                  >{highlight(keyword, text)}</p>
                 </div>
               </div></Link>
           })}

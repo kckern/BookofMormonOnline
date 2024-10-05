@@ -135,6 +135,17 @@
 
 }
 
+.search .text p{
+    font-family: 'Scripture';
+    font-size: 1rem;
+    line-height: 1rem;
+    text-align: justify;
+}.search .text p em{
+    font-family: 'Roboto Condensed';
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
 .search .speaker img
 {
     border-radius: 50%;
