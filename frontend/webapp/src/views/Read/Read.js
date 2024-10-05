@@ -45,13 +45,14 @@ const getPrevNextChapter = (verse_ids) => {
 const reInit = (match) => {
     const { params } = match;
     const { bookCh, verseNum } = params;
+    const modifiedBookCh = bookCh?.replace(/[.]/g, " ") || "1 Nephi 1";
     const urlSlug = match.url?.replace(/^\/read\//, "");
-    console.log("urlSlug", urlSlug);
+    setLanguage(lang || "en");
 
-    const fullReference = verseNum ? `${bookCh}:${verseNum}` : bookCh;
-    const initChapterVerseIds = lookupReference(bookCh).verse_ids;
+    const fullReference = verseNum ? `${modifiedBookCh}:${verseNum}` : modifiedBookCh;
+    const initChapterVerseIds = lookupReference(modifiedBookCh).verse_ids;
     const initHighlightedVerses = verseNum ? lookupReference(fullReference).verse_ids : null;
-    const initChapterRef = bookCh ? generateReference(initChapterVerseIds) : window.localStorage.getItem("chapterRef") || "1 Nephi 1";
+    const initChapterRef = modifiedBookCh ? generateReference(initChapterVerseIds) : window.localStorage.getItem("chapterRef") || "1 Nephi 1";
     const { nextChapter: initNextChapter, prevChapter: initPrevChapter } = getPrevNextChapter(initChapterVerseIds);
     return { initChapterRef, initHighlightedVerses, initNextChapter, initPrevChapter,initChapterVerseIds };
 };
@@ -73,7 +74,7 @@ export default function ReadScripture({ appController }) {
     const prevInitHighlightedVerses = useRef(initHighlightedVerses);
 
     useEffect(() => {
-        console.log("Reinitializing");
+        //console.log("Reinitializing");
         const { 
             initChapterRef: newInitChapterRef, 
             initHighlightedVerses: newInitHighlightedVerses, 
@@ -125,8 +126,8 @@ export default function ReadScripture({ appController }) {
     
             const maxVerse = highlightedVersesFromDom.length ? Math.max(...highlightedVersesFromDom) : 0;
 
-            const nextVerse = maxVerse ? maxVerse + direction : chapterVerseIds[0];
-            const goTo = chapterVerseIds.includes(nextVerse) ? nextVerse : chapterVerseIds[0];
+            const nextVerse = maxVerse ? maxVerse + direction : chapterVerseIds?.[0] || 1;
+            const goTo = chapterVerseIds.includes(nextVerse) ? nextVerse : chapterVerseIds?.[0] || 1;
             const classNameGoto = `verse_${goTo}`;
             const goToDom = document.querySelector(`.${classNameGoto}`);
             if (goToDom) {
@@ -157,36 +158,38 @@ export default function ReadScripture({ appController }) {
     
 
 
-    const buildContent = (readData) => {
-        if (readData) {
+    const buildContent = (readData, { chapterRef, nextChapterRef, prevChapterRef }) => {
 
+        const prevRef = readData?.prev_ref || prevChapterRef;
+        const nextRef = readData?.next_ref || nextChapterRef;
+        const ref = readData?.ref || chapterRef;
 
-            const prevSlug = slugify(getEnglishReference(readData.prev_ref));
-            const nextSlug = slugify(getEnglishReference(readData.next_ref));
+            const prevSlug = slugify(prevRef);
+            const nextSlug = slugify(nextRef);
 
             return <div className="read-content">
                 <div className="read-header-nav">
                     {prevSlug ? (
                         <Link to={`/read/${prevSlug}`} className="btn btn-primary">
-                            ◀ {readData.prev_ref}
+                            ◀ {prevRef}
                         </Link>
                         ) : (
                         <button className="btn btn-primary disabled" disabled>
-                            ◀ {readData.prev_ref}
+                            ◀ {nextRef}
                         </button>
                         )}
-                        <h3 className="title lg-4 text-center">{readData.ref}</h3>
+                        <h3 className="title lg-4 text-center">{ref}</h3>
                     {nextSlug ? (
                       <Link to={`/read/${nextSlug}`} className="btn btn-primary">
-                        {readData.next_ref} ▶
+                        {nextRef} ▶
                       </Link>
                     ) : (
                       <button className="btn btn-primary disabled" disabled>
-                        {readData.next_ref} ▶
+                        {nextRef} ▶
                       </button>
                     )} </div>
                 <ChapterNav chapterRef={chapterRef} />
-                {readData.sections.map((section, index) => {
+                {readData ? readData.sections.map((section, index) => {
                     return <div key={index} className="read-section">
                         <div className="read-section-header">
                             <h4>{section.heading.replace(/｢\d+｣/g, "").trim()}</h4>
@@ -251,31 +254,28 @@ export default function ReadScripture({ appController }) {
 
                         })}
                     </div>
-                })}
+                } ) : <Loader top={"30vh"} />}
                 <div className="read-section-footer">
                     {prevSlug ? (
                         <Link to={`/read/${prevSlug}`} className="btn btn-primary">
-                            ◀ {readData.prev_ref}
+                            ◀ {prevRef}
                         </Link>
                         ) : (
                         <button className="btn btn-primary disabled" disabled>
-                            ◀ {readData.prev_ref}
+                            ◀ {prevRef}
                         </button>
                         )}
                     {nextSlug ? (
                       <Link to={`/read/${nextSlug}`} className="btn btn-primary">
-                        {readData.next_ref} ▶
+                        {nextRef} ▶
                       </Link>
                     ) : (
                       <button className="btn btn-primary disabled" disabled>
-                        {readData.next_ref} ▶
+                        {nextRef} ▶
                       </button>
                     )}
                 </div>
             </div>
-        } else {
-            return <Loader />
-        }
     }
 
 
@@ -303,10 +303,12 @@ export default function ReadScripture({ appController }) {
         return () => clearTimeout(loaderTimeout);
     }, [chapterRef]);
 
+    
+
 
     return (<div className="container" style={{ display: 'block' }}>
         <div id="page" className="read">
-          {content ? buildContent(content) : <Loader />}
+          {buildContent(content, { chapterRef, nextChapterRef, prevChapterRef })}
         </div></div>
       )
 
@@ -316,18 +318,22 @@ export default function ReadScripture({ appController }) {
 
 function ChapterNav({ chapterRef }) {
 
+
     const chapterCounts = [22,33,7,1,1,1,1,29,63,16,30,1,9,15,10];
-    const bookNames = ["1 Nephi", "2 Nephi", "Jacob", "Enos", "Jarom", "Omni", "Words of Mormon", "Mosiah", "Alma", "Helaman", "3 Nephi", "4 Nephi", "Mormon", "Ether", "Moroni"];
+    const book_keys = ["1_ne", "2_ne", "jacob", "enos", "jarom", "omni", "w_of_m", "mosiah", "alma", "helaman", "3_ne", "4_ne", "mormon", "ether", "moroni"];
+    const bookNames = book_keys.map((book) => label(book));
+    const bookFirsts = book_keys.map((book) => `${book}_first`).map(i=>label(i));
+
 
     const boxes = [];
     let j = 0;
     for(let bookChapterCount of chapterCounts) {
         const book = bookNames[j++];
+        const firstLetterOfBook = bookFirsts[j-1];
         for(let i=1; i<=bookChapterCount; i++) {
             const chapter = `${book} ${i}`;
             const boxChapterRef = `${slugify(chapter)}`;
             const isFirst = i === 1;
-            const firstLetterOfBook = book?.[0].toUpperCase() || i;
             const isActive = slugify(chapterRef) === boxChapterRef;
             boxes.push(<Link to={`/read/${boxChapterRef}`}
                 className={`chapter-box ${isFirst ? "first" : ""} ${isActive ? "active" : ""}`}
