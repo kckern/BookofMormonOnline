@@ -86,7 +86,7 @@ function SearchComponent({ appController }) {
             const handleImgClick = (e) => {
               e.preventDefault();
               e.stopPropagation();
-             appController.functions.setPopUp({ type: "people", ids: [speaker], underSlug: `search/${keyword}` });
+              appController.functions.setPopUp({ type: "people", ids: [speaker], underSlug: `search/${keyword}` });
             }
 
 
