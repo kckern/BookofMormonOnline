@@ -159,123 +159,118 @@ export default function ReadScripture({ appController }) {
 
 
     const buildContent = (readData, { chapterRef, nextChapterRef, prevChapterRef }) => {
-
         const prevRef = readData?.prev_ref || prevChapterRef;
         const nextRef = readData?.next_ref || nextChapterRef;
         const ref = readData?.ref || chapterRef;
 
-            const prevSlug = slugify(prevRef);
-            const nextSlug = slugify(nextRef);
+        const prevSlug = slugify(prevRef);
+        const nextSlug = slugify(nextRef);
 
-            return <div className="read-content">
-                <div className="read-header-nav">
-                    {prevSlug ? (
-                        <Link to={`/read/${prevSlug}`} className="btn btn-primary">
-                            ◀ {prevRef}
-                        </Link>
-                        ) : (
-                        <button className="btn btn-primary disabled" disabled>
-                            ◀ {nextRef}
-                        </button>
-                        )}
-                        <h3 className="title lg-4 text-center">{ref}</h3>
-                    {nextSlug ? (
-                      <Link to={`/read/${nextSlug}`} className="btn btn-primary">
-                        {nextRef} ▶
-                      </Link>
+        return <div className="read-content">
+            <div className="read-header-nav">
+                {prevSlug ? (
+                    <Link to={`/read/${prevSlug}`} className="btn btn-primary">
+                        ◀ {prevRef}
+                    </Link>
                     ) : (
-                      <button className="btn btn-primary disabled" disabled>
-                        {nextRef} ▶
-                      </button>
-                    )} </div>
-                <ChapterNav chapterRef={chapterRef} />
-                {readData ? readData.sections.map((section, index) => {
-                    return <div key={index} className="read-section">
-                        <div className="read-section-header">
-                            <h4>{section.heading.replace(/｢\d+｣/g, "").trim()}</h4>
-                            <p><Link to={`/study/${slugify(getEnglishReference(section.ref))}`}>
-                       
-                            {section.ref}<button className="btn btn-sm btn-outline-secondary" >{label("study_button")}</button></Link></p>    
-                        </div>                      
-                        {section.blocks.map((block, index) => { 
-                            const blockLineWordCount = block.lines.reduce((acc, line) => {
-                                return acc + line.text?.split(" ").length || 0;
-                            }, 0);
-                            const specialClass = blockLineWordCount > 150 ? "split" : "";
-                            const paragraphs = [];
-                            let paragraphCursor = 0;
-                            for(let line of block.lines) {
-                                if(/¶/.test(line.format) && paragraphs.length > 0) paragraphCursor++;
-                                if(/i/.test(line.format)) line.class = "italic";
-                                if(/§/.test(line.format)) line.class = "heading";
-                                if(!line.format) line.class = "normal";
-                                if(!paragraphs[paragraphCursor]) paragraphs[paragraphCursor] = [];
-                                paragraphs[paragraphCursor].push(line);
-                            }
-
-                            const handleImgClick = (e) => {
-                                    appController.functions.setPopUp({ type: "people", ids: [block.person_slug],
-                                      underSlug: "read/" + slugify(chapterRef) });
-                                  
-                            }
-                            return <div key={index} className="read-block">
-                                <div className="left-gutter">
-                                    <img alt={block.voice} src={assetUrl + `/people/${block.person_slug}`} onClick={handleImgClick} />
-                                    <div className="read-voice"
-                                     onClick={handleImgClick}
-                                    >{label(block.voice)}</div>
-                                </div>
-                                <div className="main-content">
-
-                                {paragraphs?.map(p=><p className={`read-scripture ${specialClass} ${p?.[0]?.class || ""}`}>{p?.map((line, index) => {
-
-                                    const lineVerseId = line.verse_id;
-
-                                    const verseIsHighlighted = Array.isArray(highlightedVerses) && highlightedVerses?.includes(lineVerseId);
-                                    const verseIsHovered = lineVerseId === hoveredVerse;
-
-                                    const lineClass = `verse_`+lineVerseId +  " " +`${line.class || ""} ${verseIsHighlighted ? "highlighted" : ""} ${verseIsHovered ? "hovered" : ""}`;
-
-
-                                    const slugToVerse = verseIdToSlug([lineVerseId]);
-
-                                    return <Link key={index} className={lineClass}
-                                        to={`/read/${slugToVerse}`}
-                                        onMouseEnter={() => {
-                                            setHoveredVerse(lineVerseId);
-                                        }}
-                                        onMouseLeave={() => setHoveredVerse(null)}
-                                    
-                                    ><sup>{line.verse_num}</sup>{line.text}</Link>
-                                })}</p>)}
-                                </div>
-                                
-                            </div>
-
-                        })}
-                    </div>
-                } ) : <Loader top={"30vh"} />}
-                <div className="read-section-footer">
-                    {prevSlug ? (
-                        <Link to={`/read/${prevSlug}`} className="btn btn-primary">
-                            ◀ {prevRef}
-                        </Link>
-                        ) : (
-                        <button className="btn btn-primary disabled" disabled>
-                            ◀ {prevRef}
-                        </button>
-                        )}
-                    {nextSlug ? (
-                      <Link to={`/read/${nextSlug}`} className="btn btn-primary">
-                        {nextRef} ▶
-                      </Link>
-                    ) : (
-                      <button className="btn btn-primary disabled" disabled>
-                        {nextRef} ▶
-                      </button>
+                    <button className="btn btn-primary disabled" disabled>  ◀  </button>
                     )}
+                    <h3 className="title lg-4 text-center">{ref}</h3>
+                {nextSlug ? (
+                    <Link to={`/read/${nextSlug}`} className="btn btn-primary">
+                    {nextRef} ▶
+                    </Link>
+                ) : (
+                    <button className="btn btn-primary disabled" disabled>  ▶ </button>
+                )} </div>
+            <ChapterNav chapterRef={chapterRef} />
+            {readData ? readData.sections.map((section, index) => {
+                return <div key={index} className="read-section">
+                    <div className="read-section-header">
+                        <h4>{section.heading.replace(/｢\d+｣/g, "").trim()}</h4>
+                        <p><Link to={`/study/${slugify(getEnglishReference(section.ref))}`}>
+                    
+                        {section.ref}<button className="btn btn-sm btn-outline-secondary" >{label("study_button")}</button></Link></p>    
+                    </div>                      
+                    {section.blocks.map((block, index) => { 
+                        const blockLineWordCount = block.lines.reduce((acc, line) => {
+                            return acc + line.text?.split(" ").length || 0;
+                        }, 0);
+                        const specialClass = blockLineWordCount > 150 ? "split" : "";
+                        const paragraphs = [];
+                        let paragraphCursor = 0;
+                        for(let line of block.lines) {
+                            if(/¶/.test(line.format) && paragraphs.length > 0) paragraphCursor++;
+                            if(/i/.test(line.format)) line.class = "italic";
+                            if(/§/.test(line.format)) line.class = "heading";
+                            if(!line.format) line.class = "normal";
+                            if(!paragraphs[paragraphCursor]) paragraphs[paragraphCursor] = [];
+                            paragraphs[paragraphCursor].push(line);
+                        }
+
+                        const handleImgClick = (e) => {
+                                appController.functions.setPopUp({ type: "people", ids: [block.person_slug],
+                                    underSlug: "read/" + slugify(chapterRef) });
+                                
+                        }
+                        return <div key={index} className="read-block">
+                            <div className="left-gutter">
+                                <img alt={block.voice} src={assetUrl + `/people/${block.person_slug}`} onClick={handleImgClick} />
+                                <div className="read-voice"
+                                    onClick={handleImgClick}
+                                >{label(block.voice)}</div>
+                            </div>
+                            <div className="main-content">
+
+                            {paragraphs?.map(p=><p className={`read-scripture ${specialClass} ${p?.[0]?.class || ""}`}>{p?.map((line, index) => {
+
+                                const lineVerseId = line.verse_id;
+
+                                const verseIsHighlighted = Array.isArray(highlightedVerses) && highlightedVerses?.includes(lineVerseId);
+                                const verseIsHovered = lineVerseId === hoveredVerse;
+
+                                const lineClass = `verse_`+lineVerseId +  " " +`${line.class || ""} ${verseIsHighlighted ? "highlighted" : ""} ${verseIsHovered ? "hovered" : ""}`;
+
+
+                                const slugToVerse = verseIdToSlug([lineVerseId]);
+
+                                return <Link key={index} className={lineClass}
+                                    to={`/read/${slugToVerse}`}
+                                    onMouseEnter={() => {
+                                        setHoveredVerse(lineVerseId);
+                                    }}
+                                    onMouseLeave={() => setHoveredVerse(null)}
+                                
+                                ><sup>{line.verse_num}</sup>{line.text}</Link>
+                            })}</p>)}
+                            </div>
+                            
+                        </div>
+
+                    })}
                 </div>
-            </div>
+            } ) : <Loader top={"30vh"} />}
+            { !!readData && <div className="read-section-footer">
+                {prevSlug ? (
+                    <Link to={`/read/${prevSlug}`} className="btn btn-primary">
+                        ◀ {prevRef}
+                    </Link>
+                    ) : (
+                    <button className="btn btn-primary disabled" disabled>
+                        ◀ {prevRef}
+                    </button>
+                    )}
+                {nextSlug ? (
+                    <Link to={`/read/${nextSlug}`} className="btn btn-primary">
+                    {nextRef} ▶
+                    </Link>
+                ) : (
+                    <button className="btn btn-primary disabled" disabled>
+                    {nextRef} ▶
+                    </button>
+                )}
+            </div> }
+        </div>
     }
 
 
