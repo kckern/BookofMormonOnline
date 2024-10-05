@@ -4,7 +4,7 @@ import Parser from "html-react-parser";
 import Loader from "../_Common/Loader";
 import { useRouteMatch, useHistory, Link } from "react-router-dom";
 import { label } from "src/models/Utils";
-import BoMOnlineAPI from "src/models/BoMOnlineAPI";
+import BoMOnlineAPI, {assetUrl} from "src/models/BoMOnlineAPI";
 import { toast } from "react-toastify";
 import "./Search.css";
 
@@ -83,11 +83,22 @@ function SearchComponent({ appController }) {
               history.push("/read/" + chapterSlug);
             }
 
+            const handleImgClick = (e) => {
+            }
+
+            const speakerSlug = `nephi1`;
+
             return <Link to={"/" + slug}>
               <div className="resultItem">
-                <div className="reference">{reference}</div>
+                <div className="reference noselect">{reference}</div>
+                <div className="speaker noselect">
+                  <img alt={speakerSlug} src={assetUrl + `/people/${speakerSlug}`} onClick={handleImgClick} />
+                  <div className="read-voice"
+                      onClick={handleImgClick}
+                  >{label(speakerSlug)}</div>
+              </div>
                 <div className="text">
-                  <h5>{section} <span>{page}</span>
+                  <h5 className="noselect">{section} <span>{page}</span>
                   <button onClick={(e)=>handleReadClick(e,reference)} >{label("menu_read")}</button>
                   <button>{label("menu_study")}</button>
                   </h5>
