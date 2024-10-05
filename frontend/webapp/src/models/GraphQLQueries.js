@@ -415,6 +415,8 @@ const queries = {
             page
             section
             narration
+            speaker
+            voice
           }`,
     }
   },
