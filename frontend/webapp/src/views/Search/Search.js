@@ -16,6 +16,7 @@ const getSearchValue = (value) => {
 
 function SearchComponent({ appController }) {
 
+  const history = useHistory();
   const match = useRouteMatch();
   useEffect(() => document.title = label("menu_search") + " | " + label("home_title"), [])
   const { push } = useHistory(),
@@ -74,11 +75,22 @@ function SearchComponent({ appController }) {
         setContent(<div><h3 className="title lg-4 text-center">{label("x_search_results_for_y", [count,<code>{keyword}</code>])}</h3>
           {r?.search?.map(item => {
             const { reference, text, slug, page, section, narration } = item;
+
+            const handleReadClick = (e,ref) => {
+              e.preventDefault();
+              e.stopPropagation();
+              const chapterSlug = ref.split(":")[0];
+              history.push("/read/" + chapterSlug);
+            }
+
             return <Link to={"/" + slug}>
               <div className="resultItem">
                 <div className="reference">{reference}</div>
                 <div className="text">
-                  <h5>{section} <span>{page}</span></h5>
+                  <h5>{section} <span>{page}</span>
+                  <button onClick={(e)=>handleReadClick(e,reference)} >{label("menu_read")}</button>
+                  <button>{label("menu_study")}</button>
+                  </h5>
                   <p>{highlight(keyword, text)}</p>
                 </div>
               </div></Link>

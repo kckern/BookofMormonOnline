@@ -3,6 +3,8 @@
     display: flex;
     flex-direction: row;
     padding-top: 1ex;
+    padding-right: 1ex;
+    border-radius: 0.5ex;
 }
 
 .search .resultItem em
@@ -17,18 +19,34 @@
 
 .search .reference
 {
-    min-width: 6em;
+    width: 9%;
     text-align: right;
     font-weight: 800;
     padding: 0 1em;
     font-size: 1rem;
     line-height: 1.2em;
+    flex-shrink: 0;
+}
+.search h5 button{
+    float: right;
+    margin-left: 1ex;
+    background-color: #666;
+    color: #FFF;
+    line-height: 1rem;
+    font-size: 0.8rem;
+    border:0;
+    /* button style border emboss */
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5) inset, 0 1px 2px rgba(0, 0, 0, 0.2);
+    border-radius: 0.5ex;
+    opacity: 0.5;
+}
+.search h5 button:hover{
+    opacity: 1;
 }
 
-.search .text
-{
-   
-    min-width: calc(100% - 6em);
+.resultItem .text{
+
+    flex-grow: 1;
 }
 
 .resultItem h5{
