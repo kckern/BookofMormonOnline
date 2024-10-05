@@ -281,6 +281,12 @@ p.read-scripture.heading
     z-index: 3;
 }
 
+p.heading a.heading + a.heading::before{
+    content: "•";
+    padding: 0 0.5ex;
+
+}
+
 @media only screen and (max-width: 900px) {
     
     .read-content, .read-content .read-section{
