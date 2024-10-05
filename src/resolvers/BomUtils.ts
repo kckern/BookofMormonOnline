@@ -136,7 +136,7 @@ export default {
         console.log = ()=>{};
         if(!isEnglish) setLang(lang);
         const reference = generateReference(verse_id);
-
+        const {person_slug, voice} = speakers.find((x:any)=>x.verse_id===verse_id) || {};
         return {
           pageguid:item['text.parent_page.guid'],
           link: item['text.link'],
@@ -147,7 +147,8 @@ export default {
           narration: item['text.narration.translation.value'] || item['text.narration.description'],
           content: null,
           verse_id: verse_id,
-          speaker: speakers.find((x:any)=>x.verse_id===verse_id)?.person_slug || null
+          speaker: person_slug,
+          voice: voice
           };
         });
 

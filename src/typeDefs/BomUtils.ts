@@ -72,6 +72,7 @@ type SearchResult {
   narration: String
   slug: String
   speaker: String
+  voice: String
   }
 
   type Markdown {

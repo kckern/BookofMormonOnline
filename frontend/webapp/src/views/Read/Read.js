@@ -216,9 +216,7 @@ export default function ReadScripture({ appController }) {
                         return <div key={index} className="read-block">
                             <div className="left-gutter">
                                 <img alt={block.voice} src={assetUrl + `/people/${block.person_slug}`} onClick={handleImgClick} />
-                                <div className="read-voice"
-                                    onClick={handleImgClick}
-                                >{label(block.voice)}</div>
+                                <div className="read-voice"  onClick={handleImgClick} >{label(block.voice)}</div>
                             </div>
                             <div className="main-content">
 
