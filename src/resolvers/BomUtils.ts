@@ -63,6 +63,8 @@ export default {
         const isEnglish = !lang || lang === 'en' || lang === 'eng' || lang === 'dev';
         const isKorean = lang === 'ko';
 
+        console.log({isEnglish,isKorean,lang});
+
         const minLen = isKorean ? 1 : 3;
 
       //query must be 4 or more characters
@@ -88,7 +90,7 @@ export default {
         });
       }
       else{
-        console.log({lang,query});
+        //console.log({lang,query});
         const translations = await Models.LdsScripturesTranslations.findAll({
           raw:true,
           where: {  text: { [Op.like]: `%${query}%` }, lang  }
@@ -134,7 +136,7 @@ export default {
 
         const verse_id = item['verse_translation.verse_id'] || item['verse.verse_id'];
         console.log = ()=>{};
-        if(!isEnglish) setLang(lang);
+        setLang(isEnglish ? 'en' : lang);
         const reference = generateReference(verse_id);
         const {person_slug, voice} = speakers.find((x:any)=>x.verse_id===verse_id) || {};
         return {
@@ -148,7 +150,8 @@ export default {
           content: null,
           verse_id: verse_id,
           speaker: person_slug,
-          voice: voice
+          voice: voice,
+          lang: `lang: ${lang} • isEnglish: ${isEnglish} • isKorean: ${isKorean}`
           };
         });
 

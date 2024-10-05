@@ -73,6 +73,7 @@ type SearchResult {
   slug: String
   speaker: String
   voice: String
+  lang: String
   }
 
   type Markdown {
