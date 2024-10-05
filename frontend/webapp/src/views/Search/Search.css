@@ -19,10 +19,10 @@
 
 .search .reference
 {
-    width: 9%;
+    width: 5rem;
     text-align: right;
     font-weight: 800;
-    padding: 0 1em;
+    padding: 0;
     font-size: 1rem;
     line-height: 1.2em;
     flex-shrink: 0;
@@ -120,4 +120,57 @@
 
 .search .searchboxWrapper button:hover{
     background-color: #6b6b6b; /* Darker blue on hover */
+}
+
+
+
+.search .speaker{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+    width: 5rem;
+    
+}
+
+.search .speaker img
+{
+    border-radius: 50%;
+    border: 1px solid #444;
+    width: 3.8rem;
+    height: 4rem;
+    object-fit: cover;
+    cursor: pointer;
+}
+.search .speaker img:hover
+{
+    filter:  brightness(1.2);
+    border: 3px solid #000;
+}
+.search .speaker div.read-voice
+{
+    font-family: "Roboto Condensed";
+    text-align: center;
+    min-height: 1rem;
+    min-width: 3rem;
+    line-height: 0.5rem;
+    font-size: 0.5rem;
+    margin:0;
+    padding: 0.5ex 1ex;
+    border-radius: 1ex;
+    margin-top: -1rem;
+    color: #444;
+    color: white;
+    background-color: #92785dee;
+    font-weight: bold;
+    /* small caps */
+    text-transform:capitalize;
+    border: 1px solid #444;
+
+    z-index: 1;
+    position: relative;
+    width: fit-content;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
