@@ -125,6 +125,11 @@ export default {
         ].filter(x => !!x) 
       });
 
+      const speakers = await Models.LdsScripturesLines.findAll({
+        raw: true,
+        where: { verse_id: verse_ids }
+      });
+
       return textItems.map((item:any)=>{
 
         const verse_id = item['verse_translation.verse_id'] || item['verse.verse_id'];
@@ -140,7 +145,9 @@ export default {
           section: item['text.parent_section.translation.value'] || item['text.parent_section.title'],
           page: item['text.parent_page.translation.value'] || item['text.parent_page.title'] ,
           narration: item['text.narration.translation.value'] || item['text.narration.description'],
-          content: null
+          content: null,
+          verse_id: verse_id,
+          speaker: speakers.find((x:any)=>x.verse_id===verse_id)?.person_slug || null
           };
         });
 
@@ -212,7 +219,7 @@ export default {
       let pageguid =  item['pageguid'];
       let num = item['link'];
       return getSlug('link',pageguid).then(slug=>slug+"/"+num);
-    },
+    }
   },
 
   Test: {
