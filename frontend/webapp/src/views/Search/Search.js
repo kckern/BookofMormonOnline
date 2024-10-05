@@ -74,7 +74,7 @@ function SearchComponent({ appController }) {
         let count = r?.search?.length;
         setContent(<div><h3 className="title lg-4 text-center">{label("x_search_results_for_y", [count,<code>{keyword}</code>])}</h3>
           {r?.search?.map(item => {
-            const { reference, text, slug, page, section, narration } = item;
+            const { reference, text, slug, page, section, speaker, voice } = item;
 
             const handleReadClick = (e,ref) => {
               e.preventDefault();
@@ -91,16 +91,15 @@ function SearchComponent({ appController }) {
 
             }
 
-            const speakerSlug = `nephi1`;
 
             return <Link to={"/" + slug}>
               <div className="resultItem">
                 <div className="reference noselect">{reference}</div>
                 <div className="speaker noselect">
-                  <img alt={speakerSlug} src={assetUrl + `/people/${speakerSlug}`} onClick={handleImgClick} />
+                  <img alt={label(voice)} src={assetUrl + `/people/${speaker}`} onClick={handleImgClick} />
                   <div className="read-voice"
                       onClick={handleImgClick}
-                  >{label(speakerSlug)}</div>
+                  >{label(voice)}</div>
               </div>
                 <div className="text">
                   <h5 className="noselect">{section} <span>{page}</span>
