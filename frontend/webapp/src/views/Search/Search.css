@@ -26,6 +26,7 @@
     font-size: 1rem;
     line-height: 1.2em;
     flex-shrink: 0;
+    padding-left: 0.5ex;
 }
 .search h5 button{
     float: right;
@@ -130,7 +131,8 @@
     align-items: center;
     flex-shrink: 0;
     width: 5rem;
-    
+    margin-top: -0.5ex;
+
 }
 
 .search .speaker img

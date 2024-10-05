@@ -84,6 +84,11 @@ function SearchComponent({ appController }) {
             }
 
             const handleImgClick = (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+               // appController.functions.setPopUp({ type: "people", ids: [block.person_slug],
+              //  underSlug: "read/" + slugify(chapterRef) });
+
             }
 
             const speakerSlug = `nephi1`;
