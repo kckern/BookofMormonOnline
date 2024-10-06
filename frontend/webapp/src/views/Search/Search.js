@@ -92,13 +92,15 @@ function SearchComponent({ appController }) {
 
             return <Link to={"/" + slug}>
               <div className="resultItem">
+                <div className="reference-speaker noselect">
                 <div className="reference noselect">{reference}</div>
                 <div className="speaker noselect">
                   <img alt={label(voice)} src={assetUrl + `/people/${speaker}`} onClick={handleImgClick} />
                   <div className="read-voice"
                       onClick={handleImgClick}
                   >{label(voice)}</div>
-              </div>
+                </div>
+                </div>
                 <div className="text">
                   <h5 className="noselect">{section} <span>{page}</span>
                   <button onClick={(e)=>handleReadClick(e,reference)} >{label("menu_read")}</button>
