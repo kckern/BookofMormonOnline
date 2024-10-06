@@ -208,4 +208,8 @@
     .search > div > a > .resultItem{
         margin: 0 -1.5rem
     }
+    .search h5 > span,
+    .search h5 > button{
+        display: none;
+    }
 }
