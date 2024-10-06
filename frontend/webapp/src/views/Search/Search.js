@@ -45,16 +45,23 @@ function SearchComponent({ appController }) {
     
   }, [match?.params?.value])
 
+  const searchFor = (keyword) => {
+    if (keyword.trim() === "") return;
+    history.push("/search/" + keyword);
+    document.querySelector(".nav .searchbox input").value = keyword;
+
+  }
+
   const searchBox = <div className="searchboxWrapper">
     <input type="text" 
     autoFocus
     onKeyUp={(e) => { 
-      if (e.key === "Enter" && e.target.value.trim() !== "") push("/search/" + e.target.value) 
+      if (e.key === "Enter" && e.target.value.trim() !== "") searchFor(e.target.value) 
     }}
     className="onpage searchbox" />
     <button onClick={(e) => {
-      const searchValue = document.querySelector(".searchbox").value;
-      if(searchValue.trim() !== "") push("/search/" + searchValue)
+      const searchValue = document.querySelector(".search .searchbox").value
+      searchFor(searchValue)
     }}>{label("search")}</button>
   </div>
 
@@ -65,14 +72,14 @@ function SearchComponent({ appController }) {
       if (r?.lookup) {
         let goTo = r?.lookup?.[0]?.slug || null;
         document.querySelector(".searchbox input").value = "";
-        if (goTo) push("/" + goTo); else toast.warning(label("no_results_for_x", [<code>{keyword}</code>]), { position: 'top-center' })
+        if (goTo) push("/" + goTo); else toast.warning(label("no_results_for_x", [<span>{keyword}</span>]), { position: 'top-center' })
       } else {
         if(!keyword || keyword.length===1) return setContent(<div>
           <h3 className="title lg-4 text-center">{label("search")}</h3>{searchBox}</div>);
-        if (!r?.search?.map) return setContent(<div><h3 className="title lg-4 text-center">{label("no_results_for_x", [<code>{keyword}</code>])}</h3>{searchBox}</div>);
+        if (!r?.search?.map) return setContent(<div><h3 className="title lg-4 text-center">{label("no_results_for_x", [<span>{keyword}</span>])}</h3>{searchBox}</div>);
 
         let count = r?.search?.length;
-        setContent(<div><h3 className="title lg-4 text-center">{label("x_search_results_for_y", [count,<code>{keyword}</code>])}</h3>
+        setContent(<div><h3 className="title lg-4 text-center">{label("x_search_results_for_y", [count,<span>{keyword}</span>])}</h3>
           {r?.search?.map(item => {
             const { reference, text, slug, page, section, speaker, voice } = item;
 
