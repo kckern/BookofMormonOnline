@@ -154,7 +154,22 @@ export default function ReadScripture({ appController }) {
     }, [handleKeyDown, chapterRef, history]);
 
 
+    //scroll to highlighted verse on load
+    useEffect(() => {
+        const highlightedVersesFromDom = [...document.querySelectorAll(".highlighted")].map((el) => {
+            const match = el.className.match(/verse_(\d+)/);
+            return match ? parseInt(match[1]) : null;
+        }).filter(Boolean);
 
+        const maxVerse = highlightedVersesFromDom.length ? Math.max(...highlightedVersesFromDom) : 0;
+        const classNameGoto = `verse_${maxVerse}`;
+        const goToDom = document.querySelector(`.${classNameGoto}`);
+        if (goToDom) {
+            goToDom.scrollIntoView({ behavior: "smooth", block: "center" });
+        } else {
+            //console.error("Verse not found:", classNameGoto);
+        }
+    }, [highlightedVerses, chapterRef]);
     
 
 

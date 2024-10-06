@@ -25,7 +25,7 @@ function SearchComponent({ appController }) {
 
   const highlight = (needle, haystack) => {
     const full_pattern =  new RegExp(needle.replace(/(ing|s|es|ed)$/,'') + ".*?(\\b| )", 'gi');
-    console.log(full_pattern);
+    //console.log(full_pattern);
     if(full_pattern.test(haystack)) return Parser(haystack.replace(full_pattern, (str) => `<em>${str.trim()}</em> `));
 
     let needles = needle.split(/[ ,.;!?]+/).map(str=>(new RegExp("\\b"+str.replace(/(ing|s|es|ed)$/,'')  + ".*?\\b", 'gi')));
@@ -87,7 +87,8 @@ function SearchComponent({ appController }) {
               e.preventDefault();
               e.stopPropagation();
               const chapterSlug = ref.split(":")[0];
-              history.push("/read/" + chapterSlug);
+              const verse = ref.split(":")[1];
+              history.push("/read/" + chapterSlug + "/" + verse);
             }
 
             const handleImgClick = (e) => {
