@@ -194,6 +194,11 @@
     flex-direction: row
 }
 
+.search h3 span{
+    color:#666;
+    font-family: "Scripture";
+}
+
 /* mobile mode 1000px */
 @media (max-width: 900px) {
 
