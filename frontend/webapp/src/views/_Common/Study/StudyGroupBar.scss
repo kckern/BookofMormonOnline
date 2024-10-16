@@ -60,6 +60,22 @@ $antcolor: #6bd0a9;
   cursor: pointer;
   position: relative;
 }
+.disabled .botButton
+{
+  display: none;
+}
+.botButton
+{
+  text-transform: uppercase;
+  border: 0;
+  border-radius: 0.5ex;
+  font-weight: 800;
+  color: #FFF;
+  font-size: 0.8rem;
+  float: right;
+  background-color: #55a579;
+  padding: 0 0.5ex;
+}
 .StudyGroupBar .userStatus .userCircle .progressBadge,
 .StudyHall .userCircle .progressBadge {
   position: absolute;

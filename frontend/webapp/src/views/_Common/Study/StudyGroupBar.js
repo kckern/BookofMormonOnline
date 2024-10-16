@@ -383,10 +383,10 @@ useEffect(()=>{
     >
       <BotCircles bots={bots} appController={appController} />
       {greenUsers?.length >= 1 ? (
-        <>
+        <React.Fragment key={"callCircle"}>
           <div className="divider"></div>
           <CallCircle appController={appController} />
-        </>
+        </React.Fragment>
       ) : null}
       <audio id="call_audio" autoPlay={true} />
       {users?.slice(0, 11).map((user) => (
@@ -478,47 +478,46 @@ function BotPlugin({ appController }) {
             <img src={socket} />
           </div>
         </DropdownToggle>
-        <DropdownMenu className="dropdownMenu" key={userId}>
+        <DropdownMenu className="dropdownMenu" key={`bot-${userId}`}>
           <DropdownItem header>{label("plugin_bot")}</DropdownItem>
           <DropdownItem divider />
           <DropdownItem className="dropdownInfoBox disabled">
             <p>{label("bot_info")}</p>
           </DropdownItem>
-          {bots.map((bot) => {
+          {bots.map((bot, index) => {
             if (!bot?.id) return null;
             //if has green circle emoji
             if(/🟢/.test(bot?.name)) return null;
             else
               return (
-                <>
+                <React.Fragment key={`bot-${index}`}>
                   <DropdownItem divider />
                   <DropdownItem
                     className={`botItem ${
                       bot?.enabled ? "enabled" : "disabled"
                     }`}
-                    key={bot?.name}
                     onClick={() => {
                       if (bot?.enabled) addBot(bot);
                     }}
                   >
-                    <div className={`botInfo`} key={bot?.id}>
+                    <div className={`botInfo`}>
                       <img src={bot?.picture} />
                       <div className="botInfoText">
                         <h6 className="botName">
                           {bot?.name}
-                          <Button>
+                          <div className="botButton" disabled={addingBot}>
                             {addingBot
                               ? label("bot_plugging", [bot?.name])
                               : label("bot_select")}
-                          </Button>
+                          </div>
                         </h6>
                         <div className="botDescription">{bot?.description}</div>
                       </div>
                     </div>
                   </DropdownItem>
-                </>
+                </React.Fragment>
               );
-          })}
+          }).filter((x) => x)}
         </DropdownMenu>
       </Dropdown>
     </React.Fragment>
@@ -528,11 +527,11 @@ function BotPlugin({ appController }) {
 function BotCircles({ bots, appController }) {
   bots = bots?.length ? bots : [];
 
-  if (!bots.length) return <BotPlugin appController={appController} />;
+  if (!bots.length) return <BotPlugin appController={appController} key={0} />;
 
-  return bots.map((bot) => (
+  return bots.map((bot, index) => (
     <StudyGroupUser
-      key={bot.userId}
+      key={bot.userId || `bot-${index}`}
       userObject={bot}
       appController={appController}
       isBot={true}
