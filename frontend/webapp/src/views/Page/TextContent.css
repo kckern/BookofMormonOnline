@@ -6,6 +6,12 @@
     border-bottom: 1px solid #CCC;
 }
 
+.scripture strong{
+    color: #000;
+    font-weight: 400;
+    background-color: #EEE;
+}
+
 .row.chronoRow
 {
     align-items: center;
