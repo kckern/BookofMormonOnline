@@ -8,6 +8,7 @@ import "./Preferences.css"
 
 import audio from "src/views/_Common/svg/audio.svg"
 import chat from "src/views/_Common/svg/chat.svg"
+import darkmode from "src/views/_Common/svg/darkmode.svg"
 import autoplay from "src/views/_Common/svg/autoplay.svg"
 import commentary from "src/views/_Common/svg/commentary.svg"
 import illustrations from "src/views/_Common/svg/illustrations.svg"
@@ -60,6 +61,13 @@ export default function User({ appController }) {
         prefs.canned_responses = !prefs.canned_responses;
         appController.functions.updatePrefs(prefs);
     }
+
+    const toggleDarkMode = () => {
+        let prefs = appController.states.preferences;
+        prefs.darkMode = !prefs.darkMode;
+        appController.functions.updatePrefs(prefs);
+    }
+
     const toggleCommentarySource = (e, source_id) => {
         e.preventDefault();
         let prefs = appController.states.preferences;
@@ -196,6 +204,20 @@ export default function User({ appController }) {
                             offText={label("off")}
                             onChange={toggleChat}
                             value={appController.states.preferences.canned_responses}
+                            onColor="default"
+                            offColor="default"
+                        />
+                    </Label>
+                </h5>
+                <hr />
+                <h5 className="title">
+                    <Label className="dark_mode"><img src={darkmode} />
+                        {label("dark_mode")}
+                        <Switch
+                            onText={label("on")}
+                            offText={label("off")}
+                            onChange={toggleDarkMode}
+                            value={appController.states.preferences.dark_mode}
                             onColor="default"
                             offColor="default"
                         />
