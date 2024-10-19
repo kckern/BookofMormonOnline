@@ -1,0 +1,122 @@
+.body.dark{
+    :root {
+        color-scheme: dark;
+      }
+      
+
+
+    .main-panel{
+        background-color: #1a1a1a;
+        color: #fff;
+        /* make scrollbars dark */
+
+    }
+
+    .sidebar .sidebar-wrapper li.active > a:not([data-toggle=collapse]):before,
+    .sidebar .sidebar-wrapper li.active > a:not([data-toggle=collapse]):after  {
+        
+        border-right-color: #1a1a1a;
+
+    }
+
+    .card{
+        background-color: #222;
+        color: #fff;
+    }
+    a{
+        color: #AAA;
+    }
+    a:hover,
+    div.toc ul:not(:first-of-type) a:hover{
+        color: #FFF;
+    }
+    div.toc ul:not(:first-of-type){
+        border-color: #555;
+    }
+    div.toc ul:not(:first-of-type) a {
+        color: #AAA;
+    }
+    .pagesection > .study{
+        background-color: #333;
+        color: #fff;
+    }
+    .right-image.leftconnection::before {
+        /* invert background image */
+        filter: invert(1);
+    }
+    div.study > div.mycomment.form-group > textarea {
+        background-color: #444;
+        color: #fff;
+        border-color: #555;
+    }
+    .page .card .scripture .reference{
+        background-color: #555;
+    }
+    .page .show{
+        border-color: #555;
+    }
+    .card-header{
+        border-color: #1a1a1a;
+    }
+    .card .scripture .content > p, .card .scripture .content > blockquote {
+        color: #DDD;
+    }
+    .annotation {
+        background-color: #333;
+        color: #fff;
+    }
+    .read-content .read-section{
+        background-color: #333;
+        color: #CCC;
+    }
+    .read-content .read-section .read-section-header h4 {
+        color: #DDD;
+    }
+    .chapter-nav a {
+        /* invert background color */
+        background-color: #333;
+    }
+    .chapter-nav a:nth-child(odd) {
+        /* invert background color */
+        background-color: #444;
+    }
+    .container.home .card-header{
+        background-color: #333;
+        color: #fff;
+    }
+    .leaderBoardItem{
+        background-color: #333;
+        color: #fff;
+    }
+    .progressbar .progressbar{
+        color: #333!important;
+    }
+    .Community .groupCard .groupContent{
+        background-color: #1a1a1a;
+        border-color: #555;
+    }
+    .home .itemInFeedContainer {
+        background-color: #333;
+        color: #fff;
+    }
+
+    .prefHeader img, .userPrefs label > img{
+        filter: invert(1);
+    }
+    .bootstrap-switch .bootstrap-switch-handle-off.bootstrap-switch-default {
+        background-color: #444;
+    }
+
+    .quickstats img{
+        filter: invert(1);
+    }
+
+    .ppFilters{
+        background-color: #333;
+        color: #fff;
+    }
+    .ppFilters ul:last-of-type img{
+        filter: invert(1);
+    }
+
+}

@@ -54,6 +54,7 @@ export const appInit = () => {
       lang: lang,
       audio: false,
       canned_responses: true,
+      dark_mode: false,
       autoplay: false,
       sound: true,
       art: true,

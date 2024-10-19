@@ -160,9 +160,10 @@ function Main(props) {
     );
 
   const isDev =  /^dev\.|^localhost/.test(window.location.host);
+  const isDarkMode = !!appController.states.preferences.darkMode;
 
   return (
-    <div className={"body"+(lang ? " "+lang: "") + (isDev ? " dev" : "")}>
+    <div className={"body"+(lang ? " "+lang: "") + (isDev ? " dev" : "") + (isDarkMode ? " dark" : "")}>
       {debug}
       <Header {...props} appController={appController} isReady={true} />
       {/* <Navbar user={user} showSideNav={showSideNav} manageLayout={manageLayout} toggleSideNav={toggleSideNav} /> */}

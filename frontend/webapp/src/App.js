@@ -9,6 +9,7 @@ import Header from "./views/_Common/Header";
 import "react-toastify/dist/ReactToastify.css";
 import "bootstrap/dist/css/bootstrap.css";
 import "./assets/theme/scss/paper-dashboard.scss";
+import "./assets/theme/scss/darkmode.scss";
 //import Cohere from "cohere-js";
 import crypto from "crypto-browserify";
 import { AppModal } from "./views/_Common/AppModal";
