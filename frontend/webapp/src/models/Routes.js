@@ -190,7 +190,11 @@ const routes = [
     component: People,
   },
   {
-    path: "/places?/:placeName",
+    path: "/place/:placeName",
+    component: Places,
+  },
+  {
+    path: "/places/:placeName",
     component: Places,
   },
   {
