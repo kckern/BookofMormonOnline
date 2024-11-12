@@ -190,7 +190,7 @@ const routes = [
     component: People,
   },
   {
-    path: "/places/:placeName",
+    path: "/places?/:placeName",
     component: Places,
   },
   {
