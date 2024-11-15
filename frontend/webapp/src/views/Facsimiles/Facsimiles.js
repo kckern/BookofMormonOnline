@@ -17,6 +17,8 @@ import { act } from "react";
 import { set } from "lodash";
 
 
+
+
 function FacsimileViewer({item}) {
 
   const match = useParams();
@@ -134,53 +136,249 @@ function PageOverlay({ pageLeaf }) {
 }
 
 
-function FacsimilePageViewer({ item, leafIndex, findLeafFromSlug }) {
-
-  const match = useParams();
-  const activeLeaf = findLeafFromSlug(leafIndex, match);
-  const activeLeafIndexInt = activeLeaf.leafCursor;
-  const leftPage = activeLeaf.isRightSide ? leafIndex[activeLeafIndexInt - 1] || {} : activeLeaf;
-  const rightPage = activeLeaf.isRightSide ? activeLeaf : leafIndex[activeLeafIndexInt + 1];
-  const offLeftPage = leafIndex[leftPage.leafCursor - 1] || null
-  const offRightPage = leafIndex[rightPage.leafCursor + 1] || null
-  const offLeftNextPage = leafIndex[leftPage.leafCursor - 2] || null
-  const offRightNextPage = leafIndex[rightPage.leafCursor + 2] || null
-  const goToPrevUrl = offLeftPage ? `/fax/${item.slug}/${offLeftPage.pageSlugLeaf}` : `/fax/${item.slug}`;
-  const goToNextUrl = offRightPage ? `/fax/${item.slug}/${offRightPage.pageSlugLeaf}` : `/fax/${item.slug}`;
 
 
+
+
+
+
+
+
+
+function FacsimilePageViewer({ item, leafIndex }) {
+  const history = useHistory();
+  const { pageNumber } = useParams();
+  const isOnMobile = isMobile();
+  const [currentPageIndex, setCurrentPageIndex] = useState(0);
+  const [sliderValue, setSliderValue] = useState(0);
+  const [showTooltip, setShowTooltip] = useState(false);
+  const [tooltipContent, setTooltipContent] = useState(null);
+  const [tooltipPosition, setTooltipPosition] = useState({ left: 0, top: 0 });
+  const sliderRef = useRef(null);
+
+  const totalPages = leafIndex.length;
+
+  // Initialize page index based on URL
   useEffect(() => {
-    [offLeftNextPage, offRightNextPage, offLeftPage, offRightPage].forEach((page) => {
-      if (page) {
-        const img = new Image();
-        img.src = page.pageAssetUrl;
-      }
-    });
-  }, [match.pageNumber]);
+    const index = leafIndex.findIndex(leaf => `${leaf.pageSlugLeaf}` === pageNumber);
+    if (index !== -1) {
+      setCurrentPageIndex(index);
+      setSliderValue(index);
+    }
+  }, [pageNumber, leafIndex]);
 
+  // Handle page index calculation
+  const getAdjustedPageIndex = useCallback((index) => {
+    if (isOnMobile) return index;
+    if (index === 0) return -1;
+    return index % 2 === 0 ? index - 1 : index - 1;
+  }, [isOnMobile]);
+
+  // Preload image calculation
+  const getPagesToPreload = useCallback(() => {
+    if (!leafIndex) return [];
+    const preloadRange = 2;
+    const startIdx = Math.max(0, currentPageIndex - preloadRange);
+    const endIdx = Math.min(leafIndex.length - 1, currentPageIndex + preloadRange);
+    return leafIndex.slice(startIdx, endIdx + 1);
+  }, [currentPageIndex, leafIndex]);
+
+  // Background image preloading
+  useEffect(() => {
+    const pagesToLoad = getPagesToPreload();
+    pagesToLoad.forEach(page => {
+      const img = new Image();
+      img.src = page.pageAssetUrl;
+    });
+  }, [getPagesToPreload]);
+
+  const adjustedPageIndex = getAdjustedPageIndex(currentPageIndex);
+  const leftPage = leafIndex[adjustedPageIndex] || null;
+  const rightPage = isOnMobile ? null : leafIndex[adjustedPageIndex + 1] || null;
+
+  // Navigation handlers
+  const handlePageChange = useCallback((newIndex) => {
+    const adjustedIndex = getAdjustedPageIndex(newIndex);
+    const targetPage = leafIndex[adjustedIndex];
+    if (targetPage) {
+      history.push(`/fax/${item.slug}/${targetPage.pageSlugLeaf}`);
+    }
+  }, [history, item.slug, leafIndex, getAdjustedPageIndex]);
+
+  const handleSwipeLeft = useCallback(() => {
+    handlePageChange(Math.min(totalPages - 1, currentPageIndex + (isOnMobile ? 1 : 2)));
+  }, [currentPageIndex, isOnMobile, totalPages, handlePageChange]);
+
+  const handleSwipeRight = useCallback(() => {
+    handlePageChange(Math.max(0, currentPageIndex - (isOnMobile ? 1 : 2)));
+  }, [currentPageIndex, isOnMobile, handlePageChange]);
+
+  const swipeHandlers = useSwipe({
+    onSwipedLeft: handleSwipeLeft,
+    onSwipedRight: handleSwipeRight
+  });
+
+  // Slider interaction handlers
+  const handleSliderChange = useCallback((e) => {
+    setSliderValue(parseInt(e.target.value, 10));
+  }, []);
+
+  const handleSliderRelease = useCallback(() => {
+    handlePageChange(sliderValue);
+  }, [handlePageChange, sliderValue]);
+
+  const handleSliderMouseMove = useCallback((e) => {
+    if (!sliderRef.current) return;
+    const sliderRect = sliderRef.current.getBoundingClientRect();
+    const position = (e.clientX - sliderRect.left) / sliderRect.width;
+    const value = Math.round(position * (totalPages - 1));
+    const page = leafIndex[value];
+
+    if (page) {
+      setTooltipContent(
+        <div className="tooltip-content">
+          <img 
+            src={page.thumbAssetUrl} 
+            alt={`Thumbnail of page ${page.pageSlugLeaf}`} 
+            style={{ width: '100px', height: 'auto' }} 
+          />
+          <p>Page {page.pageSlugLeaf}</p>
+        </div>
+      );
+      setTooltipPosition({
+        left: e.clientX - sliderRect.left,
+        top: -200,
+      });
+      setShowTooltip(true);
+    }
+  }, [leafIndex, totalPages]);
+
+  // Page rendering
+  const renderPage = (page, onClick) => {
+    if (!page) return null;
+    return (
+      <img src={page.pageAssetUrl} alt={`Page ${page.pageSlugLeaf}`} onClick={onClick} />
+    );
+  };
+
+  // Page stack rendering
+  const renderPageStack = useCallback((side) => {
+    const stackPages = side === 'left' 
+      ? leafIndex.slice(0, adjustedPageIndex).reverse()
+      : leafIndex.slice(adjustedPageIndex + 2);
+    
+    const stackWidth = Math.min(36, (stackPages.length / totalPages) * 36);
+    
+    return (
+      <div className={`pageStack ${side}Stack`} style={{ width: `${stackWidth}px` }}>
+        {stackPages.map((page) => (
+          <div
+            key={page.leafCursor}
+            className="stackedPage"
+            style={{ 
+              width: `${100 / stackPages.length}%`,
+              height: '100%' 
+            }}
+            onClick={() => handlePageChange(leafIndex.indexOf(page))}
+            data-tip={`Page ${page.pageSlugLeaf}`}
+            data-for={`${side}StackTooltip`}
+          />
+        ))}
+        <ReactTooltip id={`${side}StackTooltip`} place={side} effect="solid" />
+      </div>
+    );
+  }, [adjustedPageIndex, leafIndex, totalPages, handlePageChange]);
 
   return (
-    <div className="faxPageViewer noselect">
-    <div className="pageReferences">
-      <h6 style={{ marginRight: "3rem" }}>{leftPage.pageReference}</h6>
-      <h6 style={{ marginLeft: "3rem" }}>{rightPage.pageReference}</h6>
+    <div className="faxPageViewer noselect" {...swipeHandlers}>
+      <div className="pageReferences">
+        <h6>{leftPage?.pageReference || ''}</h6>
+        {!isOnMobile && <h6>{rightPage?.pageReference || ''}</h6>}
       </div>
+
       <div className="pagesContainer">
-        <Link to={goToPrevUrl} className="leftPage page">
-         {!!leftPage.pageAssetUrl && <img src={leftPage.pageAssetUrl} alt={`Page ${leftPage.pageSlugLeaf}`} />}
-        </Link>
-        <Link to={goToNextUrl} className="rightPage page">
-          <img src={rightPage.pageAssetUrl} alt={`Page ${rightPage.pageSlugLeaf}`} />
-        </Link>
+        <div className={`pageContainer ${isOnMobile ? 'mobile' : ''}`}>
+          {!isOnMobile && adjustedPageIndex > 0 && renderPageStack('left')}
+          
+          {isOnMobile ? (
+            <div className="page">
+              {renderPage(leftPage, handleSwipeLeft)}
+            </div>
+          ) : (
+            <>
+              <div className="page leftPage">
+                {adjustedPageIndex === -1 ? null : renderPage(leftPage, handleSwipeRight)}
+              </div>
+              <div className="page rightPage">
+                {renderPage(rightPage || leftPage, handleSwipeLeft)}
+              </div>
+            </>
+          )}
+
+          {!isOnMobile && adjustedPageIndex < totalPages - 2 && renderPageStack('right')}
+        </div>
       </div>
-      <div className="pageNumbers">
-      <h6 style={{ marginRight: "3rem" }}>{true ? `Page ${leftPage.pageSlugLeaf}` : ''}</h6>
-      <h6 style={{ marginLeft: "3rem" }}>{true ? `Page ${rightPage.pageSlugLeaf}` : ''}</h6>
+
+      <div className={`facsimile-navigation ${isOnMobile ? 'mobile' : ''}`}>
+        <button 
+          className="nav-button" 
+          onClick={handleSwipeRight} 
+          disabled={currentPageIndex === 0}
+        >
+          &#8249;
+        </button>
+        <div className="slider-container" ref={sliderRef}>
+          {showTooltip && (
+            <div 
+              className="custom-tooltip" 
+              style={{ 
+                left: `${tooltipPosition.left}px`, 
+                top: '-200px',
+                transform: 'translateX(-50%)'
+              }}
+            >
+              {tooltipContent}
+            </div>
+          )}
+          <input
+            type="range"
+            min={0}
+            max={totalPages - 1}
+            value={sliderValue}
+            onChange={handleSliderChange}
+            onMouseUp={handleSliderRelease}
+            onTouchEnd={handleSliderRelease}
+            onMouseMove={handleSliderMouseMove}
+            onMouseEnter={() => setShowTooltip(true)}
+            onMouseLeave={() => setShowTooltip(false)}
+            className="custom-slider"
+          />
+        </div>
+        <button 
+          className="nav-button" 
+          onClick={handleSwipeLeft} 
+          disabled={currentPageIndex >= totalPages - (isOnMobile ? 1 : 2)}
+        >
+          &#8250;
+        </button>
       </div>
     </div>
   );
-
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 function Facsimiles() {
