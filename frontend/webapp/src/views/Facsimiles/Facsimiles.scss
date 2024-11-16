@@ -1,430 +1,481 @@
 
-
-.card .card-body.faxInfo
-{
-    display: flex;
-    background-size: cover;
-    background-position: center center;
-    border: 4px solid #CCC;
-    position: relative;
-    padding:0;
-    transition: filter 250ms;
-    filter: sepia(0.3);
-
-    min-height: 13rem;
-    max-height: 20vw;
-   
-
-
+.card .card-body.faxInfo {
+  display: flex;
+  background-size: cover;
+  background-position: center center;
+  border: 4px solid #CCC;
+  position: relative;
+  padding: 0;
+  transition: filter 250ms;
+  filter: sepia(0.3);
+  min-height: 13rem;
+  max-height: 20vw;
 }
 
-.ko .card .card-body.faxInfo
-{
-
-    height: 20vw;
-    max-height: 30vw;
+.ko .card .card-body.faxInfo {
+  height: 20vw;
+  max-height: 30vw;
 }
 
-/* mobile 800px and below */
-@media screen and (max-width: 800px)
-{
-    .card .card-body.faxInfo
-    {
-        
+@media screen and (max-width: 800px) {
+  .card .card-body.faxInfo {
     max-height: min(25vh, 80vw, 15rem);
-    
-    }
+  }
 }
 
-.card .card-body.faxInfo:hover
-{
-
-    -webkit-backdrop-filter: blur(2em);
-    backdrop-filter: blur(2em);
-    transition: filter 250ms;
+.card .card-body.faxInfo:hover {
+  -webkit-backdrop-filter: blur(2em);
+  backdrop-filter: blur(2em);
+  transition: filter 250ms;
 }
 
-.card .card-body.faxInfo .faxInfoText
-{
-   position: absolute;
-   top:0;
-   left:0;
-   bottom:0;
-   right:0;
-   padding: 1em;
-    opacity: 0;
-    background-color: rgb(0,0,0,.7);
-    color:white;
-    transition: opacity 250ms;
-    font-size: 1.0em;
-    line-height: 1.2em;
-    text-align: justify;
-
-
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-
+.card .card-body.faxInfo .faxInfoText {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  padding: 1em;
+  opacity: 0;
+  background-color: rgba(0,0,0,.7);
+  color: white;
+  transition: opacity 250ms;
+  font-size: 1.0em;
+  line-height: 1.2em;
+  text-align: justify;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
-.card .card-body.faxInfo .faxInfoText:hover
-{
 
-    opacity: 1;
-    transition: opacity 250ms;
+.card .card-body.faxInfo .faxInfoText:hover {
+  opacity: 1;
+  transition: opacity 250ms;
 }
 
 .faxiframe {
-    position: absolute;
-    left: 0;
-    top:60px;
-    width:100%;
-    height: calc(100% - 60px)
+  position: absolute;
+  left: 0;
+  top: 60px;
+  width: 100%;
+  height: calc(100% - 60px)
 }
 
-.closeFax
-{
-    z-index: 9999;
-    position: absolute;
-    right:0;
-    top: 60px;;
-    font-family: monospace;
-    color: white;
-    padding: 0rem 1rem 0rem 1rem;
-    font-size: 3em;
+.closeFax {
+  z-index: 9999;
+  position: absolute;
+  right: 0;
+  top: 60px;
+  font-family: monospace;
+  color: white;
+  padding: 0rem 1rem 0rem 1rem;
+  font-size: 3em;
 }
 
-.closeFax:hover{
-    color: #EEE;
+.closeFax:hover {
+  color: #EEE;
 }
 
-@media screen and (min-width: 992px)
-{
-
-    .sidebar .sidebar-wrapper li.active > a:not([data-toggle="collapse"]):after{
-        /*border-right: 17px solid rgb(68, 68, 68);*/
-    }
+@media screen and (min-width: 992px) {
+  .sidebar .sidebar-wrapper li.active > a:not([data-toggle="collapse"]):after {
+    /*border-right: 17px solid rgb(68, 68, 68);*/
+  }
 }
 
-.faxlist h5{
-    font-weight: 800;
-    margin-top: 0;
-    padding: 0;
-    margin-bottom: 0;
-    white-space: nowrap;
-    overflow: hidden;
-}
-.faxlist .card-header
-{
-    padding:  .5em 0 .5em 0;
+.faxlist h5 {
+  font-weight: 800;
+  margin-top: 0;
+  padding: 0;
+  margin-bottom: 0;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
-
-.faxlist .my-masonry-grid_column:first-child
-{
-    padding-left:4em;
+.faxlist .card-header {
+  padding: .5em 0 .5em 0;
 }
 
+.faxlist .my-masonry-grid_column:first-child {
+  padding-left: 4em;
+}
 
-
-.faxlist .badge{
-    position: absolute;
-    top:2ex;
-    right:1ex;
-    opacity: 0.2;
-    padding:0.5ex;
+.faxlist .badge {
+  position: absolute;
+  top: 2ex;
+  right: 1ex;
+  opacity: 0.2;
+  padding: 0.5ex;
 }
 
 .faxGridViewer {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
-    gap: 5px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
+  gap: 5px;
 }
-@media screen and (max-width: 800px)
-{
-    .faxGridViewer {
-        margin: 0 -1.3rem;
-    }
+
+@media screen and (max-width: 800px) {
+  .faxGridViewer {
+    margin: 0 -1.3rem;
+  }
 }
 
 .faxPage {
-    outline: 1px solid #CCC;
-    background-color: #FFF;
-    border-radius: 1ex;
-    position: relative;
-    cursor: pointer;
-    min-height: 300px;
-}
-.faxGridViewer  .faxPage > img{
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 1ex;
+  outline: 1px solid #CCC;
+  background-color: #FFF;
+  border-radius: 1ex;
+  position: relative;
+  cursor: pointer;
+  min-height: 300px;
+  height: 100%;
+  width: 100%;
 }
 
-
-
-.faxGridViewer  .faxPage > .pageOverlay{
-    position: absolute;
-    top:0;
-    left:0;
-    right:0;
-    bottom:0;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    color: white;
-    font-size: 1em;
-    border-radius: 1ex;
-    background-color: rgba(0,0,0,0);
-    color: #FFFFFF15;
-    transition: color 250ms, background-color 250ms;
+.faxGridViewer .faxPage > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 1ex;
+  min-height: 100%;
 }
 
-
-.faxGridViewer  .faxPage > .pageOverlay .pageNum{
-    font-size: 1.5em;
-    font-weight: 800;
-    opacity: 0.5;
+.faxGridViewer .faxPage > .pageOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  font-size: 1em;
+  border-radius: 1ex;
+  background-color: rgba(0,0,0,0);
+  color: #FFFFFF15;
+  transition: color 250ms, background-color 250ms;
 }
 
-
-.faxGridViewer  .faxPage > .pageOverlay:hover{
-    background-color: rgba(0,0,0,0.8);
-    color: white;
-    transition: color 250ms, background-color 250ms;
+.faxGridViewer .faxPage > .pageOverlay .pageNum {
+  font-size: 1.5em;
+  font-weight: 800;
+  opacity: 0.5;
 }
 
+.faxGridViewer .faxPage > .pageOverlay:hover {
+  background-color: rgba(0,0,0,0.8);
+  color: white;
+  transition: color 250ms, background-color 250ms;
+}
 
-.pageNumbers h6{
-    margin: 0;
-    padding: 0;
-    color: #CCC;
-
+.faxPageViewer {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 100px);
+  margin: 0;
+  padding: 0;
 }
 
 .pagesContainer {
-    display: flex;
-    gap: 1ex;
-    justify-content: space-around;
-    justify-content: center;
-    background-color: #555;
-    padding: 1rem;
-    border-radius: 1ex;
-
-    // Use aspect-ratio to maintain the ratio while respecting max-height
-    aspect-ratio: 1.3 / 1; // Example ratio, adjust based on your design needs
-    width: auto; // Allow width to adjust based on height constraints
-    max-height: calc(100vh - 12rem); // Max height constraint
-    height: auto; // Allow height to grow but respect max-height
-
-    // Fallback for browsers that do not support aspect-ratio
-    @supports not (aspect-ratio: 1 / 1) {
-        // Maintain the aspect ratio using a pseudo-element if aspect-ratio is not supported
-        &:before {
-            float: left;
-            padding-top: calc((100vh - 12rem) * 0.6); // Adjust based on the desired aspect ratio
-            content: "";
-            shape-outside: rect(0 0 0 0);
-        }
-
-        &:after {
-            display: block;
-            content: "";
-            clear: both;
-        }
-    }
-}
-.pageReferences
-{
-    width: calc(100% - 5rem);
-}
-.pageReferences h6{
-    margin: 0;
-    padding: 0;
-    color: #444;
-    min-height: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  background-color: #CCC;
+  border-radius: 1rem;
 }
 
-.pageNumbers, .pageReferences
-{
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1ex;
-    justify-content: space-around;
-    border-radius: 1ex;
-    height: 100%;
-    max-height: 100%;
-
+.pageContainer {
+  aspect-ratio: 1.3 / 1; 
+  position: relative; /* To contain absolute children */
+  display: flex;
+  gap: 0.25rem;
+  height: auto;
+  justify-content: center;
+  max-height: calc(100vh - 12rem);
+  width: auto; /* Let the width adjust based on content */
+  flex-grow: 0; /* Prevent it from taking up 100% */
+  outline: 2px solid #CCC;
+  background-color: #AAA;
 }
 
-.pagesContainer .page{
-    width: 50%;
-    aspect-ratio: 2 / 3; /* Sets the aspect ratio to 2:3 */
-
-    background-color: #222;
-    border-radius: 1ex;
-    cursor: pointer;
+.pageContainer.mobile {
+  width: 100%;
 }
 
-
-.pagesContainer .page img{
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    border-radius: 1ex;
-}
-.pagesContainer .page.leftPage img{
-    object-position:  right
+.page {
+  max-width: 100%;
+  padding: 0;
+  margin: 0;
+  background-color: white;
+  height: auto;
 }
 
-.pagesContainer .page.rightPage img{
-    object-position:  left
+.page img {
+  object-fit: fill;
+  cursor: pointer;
+  height: 100%;
+  width: 100%;
 }
 
-
-
-
-.pagesContainer .page img:hover{
-    filter: brightness(1.1);
+.pageStack {
+  display: flex;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 48px;
 }
 
-@media screen and (max-width:1200px){
-  .faxPageViewer{
-    min-height: calc(100vh - 20rem);
+.leftStack {
+  left: 0px;
+  direction: rtl;
+  transform: translateX(-100%);
+}
+
+.rightStack {
+  right: 0px;
+  transform: translateX(100%);
+}
+
+.stackedPage:nth-child(odd) {
+  background-color: #ccc;
+}
+
+.stackedPage:nth-child(even) {
+  background-color: #aaa;
+}
+.stackedPage:hover{
+  border-right: 1px solid black;
+  cursor: pointer;
+}
+
+.pageReferences {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.pageReferences h6 {
+  margin: 0;
+  padding: 0;
+  color: #444;
+  min-height: 1.2rem;
+}
+
+.facsimile-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  background-color: #f0f0f0;
+  margin-top: 2rem;
+}
+
+.nav-button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 5px 10px;
+}
+
+.nav-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.slider-container {
+  position: relative;
+  flex-grow: 1;
+  margin: 0 10px;
+}
+
+.custom-slider {
+  width: 100%;
+  -webkit-appearance: none;
+  background: #d3d3d3;
+  outline: none;
+  opacity: 0.7;
+  transition: opacity .2s;
+  border-radius: 1rem;  
+  cursor: pointer;
+}
+
+.custom-slider:hover {
+  opacity: 1;
+}
+
+.custom-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 1rem;
+  height: 1rem;
+  background: #000000;
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.custom-slider::-moz-range-thumb {
+  width: 1rem;
+  height: 1rem;
+  background: #000000;
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.custom-tooltip {
+  position: absolute;
+  background-color: white;
+  border: 1px solid #ccc;
+  padding: 5px;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  z-index: 1000;
+  top: -225px !important;
+}
+
+.tooltip-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.tooltip-content img {
+  max-width: 100px;
+  height: auto;
+  margin-bottom: 5px;
+}
+
+.seekBlocks {
+  display: flex;
+  height: 2rem;
+  outline: 1px solid #CCC;
+  margin: 5px;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.seekBlock > div.seekBlock {
+  height: 2rem;
+  border-right: 1px solid #333;
+  width: 100%;
+}
+
+.facsimileViewer h2 {
+  text-align: center;
+}
+
+h2.facsimileViewerTitle {
+  display: flex;
+}
+
+@media (max-width: 768px) {
+  .faxPageViewer {
+    height: calc(100vh - 60px);
   }
-  .pageContainer {
-    background-color: #555;
-    padding: 1rem;
-    border-radius: 1ex;
-    // Use aspect-ratio to maintain the ratio while respecting max-height
-    aspect-ratio: 1.3 / 1; // Example ratio, adjust based on your design needs
-    max-height: calc(100vh - 12rem); // Max height constraint
-    height:auto;
-    width:50%;
-    // Fallback for browsers that do not support aspect-ratio
-    @supports not (aspect-ratio: 1 / 1) {
-        // Maintain the aspect ratio using a pseudo-element if aspect-ratio is not supported
-        &:before {
-            float: left;
-            padding-top: calc((100vh - 12rem) * 0.6); // Adjust based on the desired aspect ratio
-            content: "";
-            shape-outside: rect(0 0 0 0);
-        }
 
-        &:after {
-            display: block;
-            content: "";
-            clear: both;
-        }
-    }
-}
-
-.pageNumbers, .pageReferences
-{
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1ex;
-    justify-content: space-around;
-    border-radius: 1ex;
-    height: 100%;
-    max-height: 100%;
-}
-
-.pageContainer .page{
-    background-color: #222;
-    border-radius: 1ex;
-    cursor: pointer;
-    aspect-ratio: 2 / 3; /* Sets the aspect ratio to 2:3 */
-}
-
-
-.pageContainer .page img{
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    border-radius: 1ex;
-}
-}
-
-@media screen and (max-width:1100px){
-  .pageContainer{
-    width:55%;
+  .pagesContainer {
+    height: calc(100% - 150px);
   }
-}
 
-@media screen and (max-width:890px){
-  .pageContainer{
-    width:50%;
-  }
-}
-
-@media screen and (max-width:800px){
-  .pageContainer{
-    width:70%;
-  }
-}
-
-@media screen and (max-width:545px){
-  .pageContainer{
-    width:75%;
-  }
-}
-
-@media screen and (max-width:525px){
-  .pageContainer{
-    width:80%;
-  }
-}
-
-@media screen and (max-width:490px){
-  .pageContainer{
-    width:85%;
-  }
-}
-
-@media screen and (max-width:425px){
-  .pageContainer{
-    width:95%;
-  }
-  .faxPageViewer{
-    min-height: calc(100vh - 15rem);
-  }
-}
-
-@media screen and (max-width:375px){
-  .pageContainer{
-    width:105%;
-  }
-}
-
-.seekBlocks{
-    display: none;
-    display: flex;
-    height: 2rem;
-    outline: 1px solid #CCC;
-    margin: 5px;
-    flex-direction: row;
-    justify-content: space-between; /* Spread the blocks evenly */
-}
-
-.seekBlock > div.seekBlock{
-    height: 2rem;
-    border-right: 1px solid #333;
-    width: 100%;
-}
-.facsimileViewer h2{
-    text-align: center;
-}
-
-h2.facsimileViewerTitle{
-    display: flex;
-}
-
-.faxPageViewer{
+  .pageContainer.mobile {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 1ex;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .facsimile-navigation.mobile {
+    flex-direction: column;
+  }
+
+  .facsimile-navigation.mobile .slider-container {
+    margin-bottom: 10px;
+    width: 100%;
+  }
+
+  .facsimile-navigation.mobile .nav-button {
+    margin-top: 10px;
+  }
+
+  .pageStack {
+    display: none;
+  }
+
+  .page {
+    max-width: 100%;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+.faxPageViewer {
+  /* Remove fixed height, use available space */
+  height: auto;
+  /* Account for navbar and ensure all content is visible */
+  max-height: calc(100vh - 16vh);
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+}
+
+.pagesContainer {
+  /* Use flex-grow to fill available space while allowing navigation to remain visible */
+  flex: 1 1 auto;
+  min-height: 0; /* Allows container to shrink */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  padding: 0 4rem; /* Maintain padding for tooltips */
+}
+
+.pageContainer {
+  /* Allow container to shrink while maintaining aspect ratio */
+  height: auto;
+  /* Adjust max-height to leave room for navigation */
+  max-height: calc(100vh - 32vh); /* Account for navbar, page refs, and navigation */
+  width: auto;
+  display: flex;
+  gap: 0.25rem;
+  justify-content: center;
+  position: relative;
+  margin-bottom: 3px;
+}
+
+.page {
+  height: auto;
+  max-height: calc(100vh - 180px);
+  display: flex;
+  align-items: center;
+  /* Limit width while maintaining aspect ratio */
+  max-width: calc(50vw - 8rem);
+}
+
+.page img {
+  max-height: 100%;
+  max-width: 100%;
+  object-fit: contain;
+  width: auto;
+  height: auto;
+}
+
+/* Ensure navigation stays visible */
+.facsimile-navigation {
+  flex: 0 0 auto; /* Prevent navigation from shrinking */
+  margin-top: auto; /* Push to bottom */
+  padding: 10px 0;
+  background-color: #f0f0f0;
+  position: relative; /* Ensure it stays in flow */
+  z-index: 2; /* Keep above other content if needed */
 }
