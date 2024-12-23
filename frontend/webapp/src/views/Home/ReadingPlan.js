@@ -112,36 +112,43 @@ const { label:labelText, labelClass } = getProgressStatus(progressInt);
     )
 }
 
-function ReadingPlanSegmentList({segments, setActiveSegment, activeSegment, today}){
-
-    const currentSegment = segments?.find((segment) => {
-        return moment(segment.duedate).isAfter(today);
-    }); currentSegment.className = "current";
-    const currentIndex = segments.findIndex((segment) => {
-        return moment(segment.duedate).isAfter(today);
-    });
-    const futureSegments = segments?.filter((segment) => {
-        return moment(segment.duedate).isAfter(today) && segment !== currentSegment;
-    })?.map((segment) => ({...segment, className: "future"}));
-    const pastSegments = segments?.filter((segment) => {
-        return moment(segment.duedate).isBefore(today);
-    })?.map((segment) => ({...segment, className: "past"}));
-
-    useEffect(() => {
-        if(activeSegment===null) setActiveSegment(currentIndex);
-    }, [activeSegment, currentIndex]);
-
-    if(!segments || !segments.length) return null;
-
-
-    //useFlexbox, 1 square for each segment, highlight active segment, onClick to set active segment
+function ReadingPlanSegmentList({ segments, setActiveSegment, activeSegment, today }) {
+    if (!segments || !segments.length) return null;
+  
+    // Find the index of the first segment whose duedate is after today
+    const currentIndex = segments.findIndex(segment => moment(segment.duedate).isAfter(today));
+  
+    let displaySegments;
+  
+    if (currentIndex === -1) {
+      // No future segments; all segments are in the past
+      displaySegments = segments.map(segment => ({ ...segment, className: 'past' }));
+    } else {
+      displaySegments = segments.map((segment, index) => {
+        if (index < currentIndex) {
+          return { ...segment, className: 'past' };
+        } else if (index === currentIndex) {
+          return { ...segment, className: 'current' };
+        } else {
+          return { ...segment, className: 'future' };
+        }
+      });
+    }
+  
     return (
-        <div className="segmentList">
-            {[...pastSegments,currentSegment,...futureSegments].map((segment,i) => <ReadingPlanSegmentListItem segmentListItem={segment} key={i} index={i} setActiveSegment={setActiveSegment} activeSegment={activeSegment} />)}
-        </div>
-    )
-}
-
+      <div className="segmentList">
+        {displaySegments.map((segment, i) => (
+          <ReadingPlanSegmentListItem
+            segmentListItem={segment}
+            key={segment.id || i}
+            index={i}
+            setActiveSegment={setActiveSegment}
+            activeSegment={activeSegment}
+          />
+        ))}
+      </div>
+    );
+  }
 
 function ReadingPlanSegmentListItem({segmentListItem, index, setActiveSegment, activeSegment}){
 
