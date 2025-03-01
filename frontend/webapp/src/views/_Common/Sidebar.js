@@ -60,7 +60,7 @@ export function loadMenu(){
     { slug: "history", title: <span><img src={historyicon} /> {label("menu_history")}</span>, lang: ["en"] },
     { slug: "analysis", title: <span><img src={analysis} /> {label("menu_analysis")}</span>, beta:true, lang: ["en"]},
     { slug: "about", title: <span><img src={about} /> {label("menu_about")}</span> },
-    { slug: "audit", title: <span><img src={audit} /> {label("menu_audit")}</span> , lang: ["vn","es","fr","de","swe","ru","tgl","ko"]},
+    { slug: "audit", title: <span><img src={audit} /> {label("menu_audit")}</span> , lang: ["vn","es","fr","de","swe","ru","tgl","ko", "slv"]},
   ];
 
   return list.filter(i=>{
