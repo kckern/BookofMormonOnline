@@ -38,6 +38,7 @@ import tgl from "./svg/flags/tgl.svg";
 import es from "./svg/flags/es.svg";
 import swe from "./svg/flags/swe.svg";
 import ru from "./svg/flags/ru.svg";
+import slv from "./svg/flags/slv.svg";
 
 
 export function loadMenu(){
@@ -208,6 +209,11 @@ function LanguageSelect() {
       url: "https://swe.bookofmormon.online",
       label: "Svenska",
       icon: swe
+    },
+    slv:{
+      url: "https://mosijevaknjiga.si",
+      label: "Slovenščina",
+      icon: slv
     },
     ru:{
       url: "https://xn--80aahtjpadfibw.net",
