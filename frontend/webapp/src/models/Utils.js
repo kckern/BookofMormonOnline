@@ -31,8 +31,8 @@ export function determineLanguage() {
     jp: ["jpn"],
     tgl: ["phil", "ph"],
     ru: ["rus","рф","xn--p1ai","net"],
-    slv: ["slv","slo"],
-    
+    slv: ["slv","slo","si"],
+
     //english editions
     rlds: ["coc","rlds"],
     covoc: ["covoc","cc"],
