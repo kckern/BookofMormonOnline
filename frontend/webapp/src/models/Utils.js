@@ -36,7 +36,7 @@ export function determineLanguage() {
     //english editions
     rlds: ["coc","rlds"],
     covoc: ["covoc","cc"],
-    slv: ["street","streetlegal"],
+    str: ["street","streetlegal"],
     plain: ["plain","plainenglish"],
     easy: ["easy","easytoread","erb"],
     concise: ["concise","ctb"],
