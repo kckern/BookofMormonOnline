@@ -211,7 +211,7 @@ function LanguageSelect() {
       icon: swe
     },
     slv:{
-      url: "https://mosijevaknjiga.si",
+      url: "https://mormonovaknjiga.si",
       label: "Slovenščina",
       icon: slv
     },
