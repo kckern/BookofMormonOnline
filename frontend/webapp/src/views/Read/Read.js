@@ -9,9 +9,9 @@ import { determineLanguage, label } from "../../models/Utils";
 
 const slugify = (text,verse_ids) => {
     if(!text) return null;
-    const hasAlpha = /[a-z]/.test(text.toLowerCase());
-    if(hasAlpha) return  text.toLowerCase().replace(/ /g, ".").replace(/:/g, ".").replace(/[.]+/g, ".").replace(/[^a-z0-9.-]/g, "");
-    const slug = text.replace(/ /g, ".").replace(/:/g, ".").replace(/[-]+/g, "~");
+    //const hasAlpha = /[a-z]/.test(text.toLowerCase());
+    //if(hasAlpha) return  text.toLowerCase().replace(/ /g, ".").replace(/:/g, ".").replace(/[.]+/g, ".").replace(/[^a-z0-9.-]/g, "");
+    const slug = text.replace(/ /g, ".").replace(/:/g, ".").replace(/[-]+/g, "~").toLowerCase();    
     return slug;
 }
 
@@ -190,7 +190,7 @@ export default function ReadScripture({ appController }) {
                     ) : (
                     <button className="btn btn-primary disabled" disabled>  ◀  </button>
                     )}
-                    <h3 className="title lg-4 text-center">{ref}</h3>
+                    <h3 className="title lg-4 text-center">{ref || label("menu_read")}</h3>
                 {nextSlug ? (
                     <Link to={`/read/${nextSlug}`} className="btn btn-primary">
                     {nextRef} ▶
