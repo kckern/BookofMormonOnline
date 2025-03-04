@@ -34,7 +34,7 @@ const routes = [
   {
     exact: true,
     path: "/",
-    component: (!lang || lang === "en") ? Welcome : Home,
+    component: (!lang || lang === "en") ? Welcome : ReadScripture,
   },
   {
     exact: true,
