@@ -3,13 +3,14 @@ import ReactTooltip from 'react-tooltip';
 //
 import { assetUrl } from 'src/models/BoMOnlineAPI';
 import BoMOnlineAPI from "src/models/BoMOnlineAPI"
+import { label } from '../../models/Utils';
 
 
 function MapGroup({mapGroup, handleClickMapType})
 {
     const {group,maps} = mapGroup;
     return <div className='map-group'>
-        <h6>{group}</h6>
+        <h6>{label(`mapgroup_${group.toLowerCase()}`)}</h6>
         <div className='map-group-list'>
         {maps.map((map,index)=><SingleMapMenuItem map={map} key={index} handleClickMapType={handleClickMapType} />)}
         </div>
