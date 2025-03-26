@@ -290,6 +290,8 @@ async function organizeRelatedScriptures(scriptureDataArray)
     return scriptureDataArray;
     }// Function to load headings from the database
 
+
+
 export async function loadHeadings(verse_ids, lang = "en") {
         lang = lang || "en";
         const firstVerse = verse_ids[0];
@@ -305,8 +307,12 @@ export async function loadHeadings(verse_ids, lang = "en") {
     }
 
     // Modified processPassages function to use loadHeadings
-    async function processPassages(verse_ids, verse_data, lang = "en") {
+    async function processPassages(verse_ids, verse_data, lang = "en", version="LDS") {
         let headingData = await loadHeadings(verse_ids, lang);
+        let meta = (await Models.LdsScripturesMeta.findAll({
+            raw: true,
+            where: { version,verse_id: { [Op.in]: verse_ids } }
+        })).map(m => ({ verse_id: m.verse_id, key: m.type, value: m.text }));
         return headingData.map((item, i) => {
             const startVerse = Math.max(item.verse_id, Math.min(...verse_ids));
             const endVerse = headingData[i + 1]?.verse_id || verse_ids[verse_ids.length - 1];
@@ -317,6 +323,7 @@ export async function loadHeadings(verse_ids, lang = "en") {
             return {
                 reference,
                 heading,
+                meta,
                 verses: verses.map(v => ({
                     verse: v.verse,
                     verse_id: v.verse_id,

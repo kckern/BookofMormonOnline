@@ -187,8 +187,8 @@ export default {
 
       const nolangs = ["eng","en","dev"];
       const lang = context.lang && !nolangs.includes(context.lang) ? context.lang : null;
-      const {ref,verse_ids} = args;
-      return loadScripture(lang, ref, verse_ids);
+      const {ref,verse_ids,version} = args;
+      return loadScripture(lang, ref, verse_ids, version);
     },
     verses: async (input: any, args: any, context: any, info: any) => {
       const lang = context.lang ? context.lang : null;

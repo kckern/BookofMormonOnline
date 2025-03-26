@@ -43,6 +43,7 @@ import LdsScripturesBooks from '../models/lds_scriptures_books';
 import LdsScripturesFootnotes from '../models/lds_scriptures_footnotes';
 import LdsScripturesTranslations from '../models/lds_scriptures_translations';
 import LdsScripturesLines from '../models/lds_scriptures_lines';
+import LdsScripturesMeta from '../models/lds_scriptures_meta';
 import LdsScripturesVerses from '../models/lds_scriptures_verses';
 import LdsScripturesVolumes from '../models/lds_scriptures_volumes';
 import SocialPosts from '../models/social_posts';
@@ -99,6 +100,7 @@ export interface Models {
   LdsScripturesFootnotes: typeof LdsScripturesFootnotes;
   LdsScripturesTranslations: typeof LdsScripturesTranslations;
   LdsScripturesLines: typeof LdsScripturesLines;
+  LdsScripturesMeta: typeof LdsScripturesMeta;
   LdsScripturesVerses: typeof LdsScripturesVerses;
   LdsScripturesVolumes: typeof LdsScripturesVolumes;
   SocialPosts: typeof SocialPosts;

@@ -50,6 +50,7 @@ const reInit = (match) => {
     setLanguage(lang || "en");
 
     const fullReference = verseNum ? `${modifiedBookCh}:${verseNum}` : modifiedBookCh;
+    //alert(fullReference);
     const initChapterVerseIds = lookupReference(modifiedBookCh).verse_ids;
     const initHighlightedVerses = verseNum ? lookupReference(fullReference).verse_ids : null;
     const initChapterRef = modifiedBookCh ? generateReference(initChapterVerseIds) : window.localStorage.getItem("chapterRef") || "1 Nephi 1";
@@ -84,6 +85,7 @@ export default function ReadScripture({ appController }) {
         } = reInit(match);
 
         if (prevInitChapterRef.current !== newInitChapterRef) {
+
             setChapterRef(newInitChapterRef);
             prevInitChapterRef.current = newInitChapterRef;
         }
@@ -340,10 +342,10 @@ function ChapterNav({ chapterRef }) {
         const firstLetterOfBook = bookFirsts[j-1];
         for(let i=1; i<=bookChapterCount; i++) {
             const chapter = `${book} ${i}`;
-            const boxChapterRef = `${slugify(chapter)}`;
+            const boxChapterRef = chapter;//`${slugify(chapter)}`;
             const isFirst = i === 1;
             const isActive = slugify(chapterRef) === boxChapterRef;
-            boxes.push(<Link to={`/read/${boxChapterRef}`}
+            boxes.push(<Link to={`/read/${slugify(boxChapterRef)}`}
                 className={`chapter-box ${isFirst ? "first" : ""} ${isActive ? "active" : ""}`}
                 data-tip={chapter}
                 data-for="chapter-nav-tip"
