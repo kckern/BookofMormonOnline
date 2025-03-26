@@ -6,7 +6,7 @@ import logger from "../library/utils/logger.cjs";
 const { processPassages, loadHeadings} = require('./lib')
 const log = (msg:any,obj?:any) => obj ? logger.info(`utils ${msg} ${JSON.stringify(obj)}`) : logger.info(`utils ${msg}`);
 
-export const loadScripture = async (lang:string, reference:string, arg_verse_ids:any) => {
+export const loadScripture = async (lang:string, reference:string, arg_verse_ids:any, version:string="LDS") => {
 
     setLang(lang || "en");
     const backupVerse_ids = lookup(reference)?.verse_ids;
@@ -51,7 +51,7 @@ export const loadScripture = async (lang:string, reference:string, arg_verse_ids
         return acc;
       }, []);
 
-      const resolvedPassages = (await Promise.all(groups.map(passage_verse_ids => processPassages(passage_verse_ids, verses, lang)).flat())).flat();
+      const resolvedPassages = (await Promise.all(groups.map(passage_verse_ids => processPassages(passage_verse_ids, verses, lang, version)).flat())).flat();
       return {ref, passages: resolvedPassages, verses}
   
     }
@@ -65,12 +65,15 @@ export const loadScripture = async (lang:string, reference:string, arg_verse_ids
 
 
 
-export const loadVerses = async (verse_ids:any, lang:string) => {
+export const loadVerses = async (verse_ids:any, lang:string, version:string="LDS") => {
+
   const config = { raw:true, where: {  verse_id:verse_ids  } };
-  const [versedata, headings] = await Promise.all([
+  const [versedata, headings, meta] = await Promise.all([
     Models.LdsScripturesVerses.findAll(config),
-    loadHeadings(verse_ids, lang)
+    loadHeadings(verse_ids, lang),
+    Models.LdsScripturesMeta.findAll({...config, where: { ...config.where, version }})
   ]);
+  console.log({meta});
   const findHeading = (verseId: number) => {
     const relevantHeadings = headings.filter(({ verse_id }) => verse_id <= verseId);
     const latestHeading = relevantHeadings.reduce((latest: any, current: any) => 
@@ -94,6 +97,7 @@ export const loadVerses = async (verse_ids:any, lang:string) => {
     return {
       verse_id:verse.verse_id,
       heading:findHeading(verse.verse_id) || null,
+      meta:meta.map(({verse_id,type,text})=>{return {verse_id,key:type,value:text}}),
       reference:verse.verse_title,
       text:verse.verse_scripture
     }

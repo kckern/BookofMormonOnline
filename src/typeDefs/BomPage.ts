@@ -31,9 +31,17 @@ export default gql`
   type ReadSection {
     ref: String
     heading: String
+    meta: [SectionMeta]
     verse_id: Int
     verse_count: Int
     blocks: [ReadUnit]
+    extra: [ReadExtra]
+  }
+
+  type SectionMeta{
+    verse_id: Int
+    key: String
+    value: String
   }
 
   type ReadUnit {
@@ -50,6 +58,18 @@ export default gql`
     verse_id: Int
     text: String
     format: String
+  }
+  type ReadExtra {
+    images: [Int]
+    commentary: [Int]
+    notes: [Int]
+    fax: [String]
+    chiasmus: [String]
+    people: [String]
+    places: [String]
+    references: [String]
+    maps: [String]
+    events: [String]
   }
 
 

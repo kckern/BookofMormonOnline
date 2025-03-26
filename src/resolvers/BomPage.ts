@@ -7,7 +7,7 @@ import { loadNotesFromTextGuid, loadPeopleFromTextGuid, loadPlacesFromTextGuid }
 const { getBlocksToQueue ,getFirstTextBlockGuidFromSlug,organizeRelatedScriptures} = require('./lib')
 import { lookupReference,generateReference,setLanguage } from 'scripture-guide';
 import { queryDB } from '../library/db';
-import { loadLines, loadScripture, loadVerses } from './BomScripture';
+import { loadLines,  loadVerses } from './BomScripture';
 
 export default {
   Query: {
@@ -230,6 +230,7 @@ queue: async (root: any, args: any, context: any, info: any) => {
     lookup: async (root: any, args: any, context: any, info: any) => {
 
       const lang = context.lang ? context.lang : null;
+      const version = args.version || context.version || "LDS";
       let verseIds = args.ref.map((r:any)=>scripture.lookupReference(r).verse_ids);
       if(!verseIds.length) return [];
       return Models.BomLookup.findAll({
@@ -256,6 +257,12 @@ queue: async (root: any, args: any, context: any, info: any) => {
       const { verse_ids, ref } = lookupReference(args.ref);
       const lines = await loadLines(verse_ids, lang);
       const scripture = await loadVerses(verse_ids, lang);
+      const meta = (await Models.LdsScripturesMeta
+        .findAll({ where: { verse_id: { [Op.in]: verse_ids }, version: "LDS" } }))
+        .map(({type,verse_id, text}) => ({ verse_id, key: type, text }));
+
+        console.log({meta})
+
       const currentChapter = generateReference(verse_ids[0]).replace(/:\d+$/, '');
       const currentChapterVerseIds = lookupReference(currentChapter).verse_ids;
 
@@ -263,6 +270,8 @@ queue: async (root: any, args: any, context: any, info: any) => {
       let next_ref = generateReference(currentChapterVerseIds[currentChapterVerseIds.length - 1] + 1).replace(/:\d+$/, '');
       if(currentChapterVerseIds[0] <= 31103) prev_ref = null;
       if(currentChapterVerseIds[currentChapterVerseIds.length - 1] >= 37706) next_ref = null;
+
+      
 
     
       const headingMap = scripture.reduce((acc, verse) => {
@@ -279,7 +288,7 @@ queue: async (root: any, args: any, context: any, info: any) => {
     
         if (!currentSection || currentSection.heading !== thisSection) {
           currentSection = { 
-            ref, heading: thisSection, verse_id: lineVerseId, verse_count: 0, blocks: [] 
+            ref, heading: thisSection, meta, verse_id: lineVerseId, verse_count: 0, blocks: [] 
           };
           sections.push(currentSection);
         }

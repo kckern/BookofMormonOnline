@@ -49,6 +49,8 @@ import LdsScripturesBooks from '../database/models/lds_scriptures_books';
 import LdsScripturesFootnotes from '../database/models/lds_scriptures_footnotes';
 import LdsScripturesTranslations from '../database/models/lds_scriptures_translations';
 import LdsScripturesLines from '../database/models/lds_scriptures_lines';
+import LdsScripturesMeta from '../database/models/lds_scriptures_meta';
+
 import LdsScripturesVerses from '../database/models/lds_scriptures_verses';
 import LdsScripturesVolumes from '../database/models/lds_scriptures_volumes';
 import SocialPosts from '../database/models/social_posts';
@@ -150,6 +152,7 @@ export const models: Models = {
   LdsScripturesFootnotes: LdsScripturesFootnotes.initModel(sequelize),
   LdsScripturesTranslations: LdsScripturesTranslations.initModel(sequelize),
   LdsScripturesLines: LdsScripturesLines.initModel(sequelize),
+  LdsScripturesMeta: LdsScripturesMeta.initModel(sequelize),
   LdsScripturesVerses: LdsScripturesVerses.initModel(sequelize),
   LdsScripturesVolumes: LdsScripturesVolumes.initModel(sequelize),
   SocialPosts: SocialPosts.initModel(sequelize)

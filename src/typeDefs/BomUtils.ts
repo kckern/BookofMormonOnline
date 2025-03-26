@@ -18,7 +18,7 @@ extend type Query {
     search(query: String): [SearchResult]
     shortlink(hash: [String]): Shortlinks
     markdown(slug: [String]): [Markdown]
-    scripture(ref: String, verse_ids: [Int]): ScriptureResults
+    scripture(ref: String, verse_ids: [Int], version: String): ScriptureResults
     verses(verse_ids: [Int]): [Scripture]
     versehighlights(verse_pairs: [[Int]]): [ScriptureHighlights]
   }
@@ -44,6 +44,7 @@ type ScriptureResults {
 type Passage {
   reference: String
   heading: String
+  meta: [SectionMeta]
   verses: [Scripture]
 }
 
@@ -51,6 +52,7 @@ type Scripture {
   verse_id: Int
   heading: String
   reference: String
+  version: String
   book: String
   chapter: Int
   verse: Int
