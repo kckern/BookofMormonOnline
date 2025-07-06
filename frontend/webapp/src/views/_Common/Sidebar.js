@@ -39,6 +39,7 @@ import es from "./svg/flags/es.svg";
 import swe from "./svg/flags/swe.svg";
 import ru from "./svg/flags/ru.svg";
 import slv from "./svg/flags/slv.svg";
+import tr from "./svg/flags/tr.svg";
 
 
 export function loadMenu(){
@@ -229,6 +230,11 @@ function LanguageSelect() {
       url: "https://sachmacmon.vn",
       label: "Tiếng Việt",
       icon: vn
+    },
+    tr: {
+      url: "https://tr.bookofmormon.online",
+      label: "Türkçe",
+      icon: tr
     },
     tgl: {
       url: "https://tgl.bookofmormon.online",
