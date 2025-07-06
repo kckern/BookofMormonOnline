@@ -51,7 +51,7 @@ export function loadMenu(){
     { slug: "study", title: <span><img src={study} /> {label("menu_study")}</span> },
     { slug: "read", title: <span><img src={read} /> {label("menu_read")}</span> , lang: ["en","fr","tr","ko","covoc","slv","es","ru"] },
     { slug: "특별반", title: <span><img src={book} />특별반</span>, lang: ["ko"] },
-    { slug: "theater", title: <span><img src={theater} /> {label("menu_theater")}</span> },
+    { slug: "theater", title: <span><img src={theater} /> {label("menu_theater")}</span>, langNot: ["tr"] },
     { slug: "timeline", title: <span><img src={timeline} /> {label("menu_timeline")}</span> },
     { slug: "people", title: <span><img src={people} /> {label("menu_people")}</span> },
     //{ slug: "relationships", title: <span><img src={relationships} /> {label("menu_network")}</span>, dev:true },
@@ -61,7 +61,7 @@ export function loadMenu(){
     { slug: "history", title: <span><img src={historyicon} /> {label("menu_history")}</span>, lang: ["en"] },
     { slug: "analysis", title: <span><img src={analysis} /> {label("menu_analysis")}</span>, beta:true, lang: ["en"]},
     { slug: "about", title: <span><img src={about} /> {label("menu_about")}</span> },
-    { slug: "audit", title: <span><img src={audit} /> {label("menu_audit")}</span> , lang: ["vn","es","fr","de","swe","ru","tgl","ko", "slv", "tr"]},
+    { slug: "audit", title: <span><img src={audit} /> {label("menu_audit")}</span> , langNot: ["en","covoc"]},
   ];
 
   return list.filter(i=>{
@@ -72,8 +72,10 @@ export function loadMenu(){
   }).filter(i => {
     const envLang = lang;
     const itemLangs = i.lang;
+    const itemLangsNot = i.langNot;
     const okayToShowBasedOnLang = itemLangs ? itemLangs.includes(envLang) : true;
-    return okayToShowBasedOnLang;
+    const okayToShowBasedOnLangNot = itemLangsNot ? !itemLangsNot.includes(envLang) : true;
+    return okayToShowBasedOnLang && okayToShowBasedOnLangNot;
   });
 
 }
