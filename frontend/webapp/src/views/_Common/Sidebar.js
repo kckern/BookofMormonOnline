@@ -49,7 +49,7 @@ export function loadMenu(){
     { slug: "home", title: <span><img src={home} /> {label("menu_home")}</span> },
     { slug: "contents", title: <span><img src={contents} /> {label("menu_contents")}</span> },
     { slug: "study", title: <span><img src={study} /> {label("menu_study")}</span> },
-    { slug: "read", title: <span><img src={read} /> {label("menu_read")}</span> , lang: ["en","fr","ko","covoc","slv","es","ru"] },
+    { slug: "read", title: <span><img src={read} /> {label("menu_read")}</span> , lang: ["en","fr","tr","ko","covoc","slv","es","ru"] },
     { slug: "특별반", title: <span><img src={book} />특별반</span>, lang: ["ko"] },
     { slug: "theater", title: <span><img src={theater} /> {label("menu_theater")}</span> },
     { slug: "timeline", title: <span><img src={timeline} /> {label("menu_timeline")}</span> },
@@ -61,7 +61,7 @@ export function loadMenu(){
     { slug: "history", title: <span><img src={historyicon} /> {label("menu_history")}</span>, lang: ["en"] },
     { slug: "analysis", title: <span><img src={analysis} /> {label("menu_analysis")}</span>, beta:true, lang: ["en"]},
     { slug: "about", title: <span><img src={about} /> {label("menu_about")}</span> },
-    { slug: "audit", title: <span><img src={audit} /> {label("menu_audit")}</span> , lang: ["vn","es","fr","de","swe","ru","tgl","ko", "slv"]},
+    { slug: "audit", title: <span><img src={audit} /> {label("menu_audit")}</span> , lang: ["vn","es","fr","de","swe","ru","tgl","ko", "slv", "tr"]},
   ];
 
   return list.filter(i=>{
