@@ -6,7 +6,7 @@ import Chiasm from "./Chiasm";
 import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem,Button, Label } from 'reactstrap';
 import searchIcon from "../../_Common/svg/search.svg";
 import {lookupReference} from "scripture-guide";
-import { label } from 'src/models/Utils';
+import { label, determineLanguage } from 'src/models/Utils';
 import { Switch } from "react-router-dom/cjs/react-router-dom.min";
 function ChiasmusControl({chiasmusControls, setChiasmusControls}) {
 
@@ -136,10 +136,10 @@ function DepthFilter({depthCounts, chiasmusControls, toggleButton, toggleBiblica
 
 function Chiasmus({chiasmus,setChiasmusId,activeChiasmus}) {
 
-
+    const lang = determineLanguage();
     useEffect(()=>document.title = "Chiasms | " + label("home_title"),[])
     const bibleRefs = `2 Nephi 12-24, 1 Nephi 20-21, 3 Nephi 12-14, 3 Nephi 24-25, Mosiah 14`;
-    const bibleVerseIds = lookupReference(bibleRefs).verse_ids;
+    const bibleVerseIds = lookupReference(bibleRefs, lang).verse_ids;
 
     const depthCounts = chiasmus.reduce((acc, chiasm) => {
         const {scheme, verse_id} = chiasm;
@@ -154,7 +154,7 @@ function Chiasmus({chiasmus,setChiasmusId,activeChiasmus}) {
 
     const categoryCounts = chiasmus.reduce((acc, chiasm) => {
         const {reference, scheme} = chiasm;
-        const verse_id = lookupReference(reference).verse_ids[0];
+        const verse_id = lookupReference(reference, lang).verse_ids[0];
         const isBiblical = bibleVerseIds.includes(verse_id);
         const isCompound = /Aa/.test(scheme);
         return {
@@ -187,7 +187,7 @@ function Chiasmus({chiasmus,setChiasmusId,activeChiasmus}) {
         if(depth > 7) depth = "+";
         const isCompound = /Aa/.test(scheme);
         if(compound && isCompound) return false;
-        if(biblical && bibleVerseIds.includes(lookupReference(chiasm.reference).verse_ids[0])) return false;
+        if(biblical && bibleVerseIds.includes(lookupReference(chiasm.reference, lang).verse_ids[0])) return false;
         if (filteredLevels.includes(depth)) return false;
         return true;
     }
@@ -197,8 +197,8 @@ function Chiasmus({chiasmus,setChiasmusId,activeChiasmus}) {
         if (sortField === 'depth') {
             return sortOrder === 'asc' ? a.depth - b.depth : b.depth - a.depth;
         } else {
-            const [aVerseId] = lookupReference(a.reference).verse_ids;
-            const [bVerseId] = lookupReference(b.reference).verse_ids;
+            const [aVerseId] = lookupReference(a.reference, lang).verse_ids;
+            const [bVerseId] = lookupReference(b.reference, lang).verse_ids;
             return sortOrder === 'asc' ? aVerseId - bVerseId : bVerseId - aVerseId;
         }
     }

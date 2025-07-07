@@ -32,6 +32,7 @@ import { addHighlightTagSelectively } from "../Page/TextContent";
 import Commentary from "./Commentary";
 import { ScripturePanelSingle } from "../Page/Narration";
 import { detectScriptures } from "scripture-guide";
+import { determineLanguage } from "../../models/Utils";
 
 export function Loading({ type, appController, callingAPI }) {
   return (
@@ -240,7 +241,7 @@ function Person({ appController }) {
                 {renderPersonPlaceHTML(detectScriptures(person.description, (scripture) => {
                   if (!scripture) return;
                   return `<a className="scripture_link">${scripture}</a>`
-                }
+                }, determineLanguage()
               ), appController, setPopUpRef)}
               </div>
 
@@ -346,7 +347,7 @@ function Place({ appController }) {
               {renderPersonPlaceHTML(detectScriptures(place.description, (scripture) => {
                   if (!scripture) return;
                   return `<a className="scripture_link">${scripture}</a>`
-                }
+                }, determineLanguage()
               ), appController, setPopUpRef)}
             </div>
 

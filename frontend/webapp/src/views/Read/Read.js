@@ -3,7 +3,7 @@ import "./Read.css";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import Loader from "../_Common/Loader";
 import BoMOnlineAPI, { assetUrl } from "../../models/BoMOnlineAPI";
-import { generateReference, lookupReference, setLanguage } from "scripture-guide";
+import { generateReference, lookupReference } from "scripture-guide";
 import ReactTooltip from "react-tooltip";
 import { determineLanguage, label } from "../../models/Utils";
 
@@ -16,7 +16,7 @@ const slugify = (text,verse_ids) => {
 }
 
 const verseIdToSlug = (verseIds) => {
-    const ref = generateReference(verseIds);
+    const ref = generateReference(verseIds, lang || "en");
     return slugify(ref).replace(/[.](\d+$)/, "/$1");
 }
 
@@ -24,20 +24,16 @@ const verseIdToSlug = (verseIds) => {
 const lang = determineLanguage();
 
 const getEnglishReference = (ref) => {
-    if(lang === "en") return ref;
-    setLanguage(lang);
-    const verse_ids = lookupReference(ref).verse_ids;
-    setLanguage("en");
-    const enref = generateReference(verse_ids);
-    setLanguage(lang);
+    const verse_ids = lookupReference(ref,"en").verse_ids;
+    const enref = generateReference(verse_ids, "en");
     return enref;
 }
 
 const getPrevNextChapter = (verse_ids) => {
     const nextVerseId = verse_ids[verse_ids.length - 1] + 1;
     const prevVerseId = verse_ids[0] - 1;
-    const nextChapter = nextVerseId > 37706 ? null : generateReference([nextVerseId]).split(":")[0];
-    const prevChapter = prevVerseId < 31103 ? null : generateReference([prevVerseId]).split(":")[0];
+    const nextChapter = nextVerseId > 37706 ? null : generateReference([nextVerseId], lang || "en").split(":")[0];
+    const prevChapter = prevVerseId < 31103 ? null : generateReference([prevVerseId], lang || "en").split(":")[0];
     return { nextChapter, prevChapter };
 }
 
@@ -47,13 +43,12 @@ const reInit = (match) => {
     const { bookCh, verseNum } = params;
     const modifiedBookCh = bookCh?.replace(/[.]/g, " ") || "1 Nephi 1";
     const urlSlug = match.url?.replace(/^\/read\//, "");
-    setLanguage(lang || "en");
 
     const fullReference = verseNum ? `${modifiedBookCh}:${verseNum}` : modifiedBookCh;
     //alert(fullReference);
-    const initChapterVerseIds = lookupReference(modifiedBookCh).verse_ids;
-    const initHighlightedVerses = verseNum ? lookupReference(fullReference).verse_ids : null;
-    const initChapterRef = modifiedBookCh ? generateReference(initChapterVerseIds) : window.localStorage.getItem("chapterRef") || "1 Nephi 1";
+    const initChapterVerseIds = lookupReference(modifiedBookCh, lang || "en").verse_ids;
+    const initHighlightedVerses = verseNum ? lookupReference(fullReference, lang || "en").verse_ids : null;
+    const initChapterRef = modifiedBookCh ? generateReference(initChapterVerseIds, lang || "en") : window.localStorage.getItem("chapterRef") || "1 Nephi 1";
     const { nextChapter: initNextChapter, prevChapter: initPrevChapter } = getPrevNextChapter(initChapterVerseIds);
     return { initChapterRef, initHighlightedVerses, initNextChapter, initPrevChapter,initChapterVerseIds };
 };

@@ -5,7 +5,7 @@ import { lookupReference } from "scripture-guide";
 import { index } from "./data";
 import DiffMatchPatch from "diff-match-patch";
 import { useHistory, useRouteMatch } from "react-router-dom";
-import { label } from 'src/models/Utils';
+import { label, determineLanguage } from 'src/models/Utils';
 import VerseViewer from "./VerseView";
 
 
@@ -164,7 +164,8 @@ const getColumnRowValues = (level, id) => {
     return chaptersArray.map((chapter) => ({ key: `${book_name} ${chapter}`, val: `${chapter}` }));
   } else if (level === "verses") {
     // id is chapter name string: eg "1 Nephi 1"
-    const verse_ids = lookupReference(id.key).verse_ids;
+    const lang = determineLanguage();
+    const verse_ids = lookupReference(id.key, lang).verse_ids;
     const verseArray = Array.from({ length: verse_ids.length }, (_, i) => i + 1);
     return verseArray.map((verse) => ({ key: `${id.key}:${verse}`, val: `v${verse}` }));
   }

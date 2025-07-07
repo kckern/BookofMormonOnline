@@ -9,7 +9,7 @@ import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
 import { getCache, setCache } from "./Cache";
 import {Spinner} from "../views/_Common/Loader";
 import { ScripturePanelSingle } from "../views/Page/Narration";
-const { detectReferences, setLang, lookupReference, generateReference} = require('scripture-guide');
+const { detectReferences, lookupReference, generateReference} = require('scripture-guide');
 
 
 
@@ -757,7 +757,8 @@ export function ParseMessage(string,appController) {
 function ScripturesContainer({ scriptures, setActiveRef, activeRef }) {
   if(!scriptures?.length) return null;
   //normalize references
-  scriptures = scriptures.map(scripture => lookupReference(scripture).verse_ids).map(verse_ids => generateReference(verse_ids));
+  const lang = determineLanguage();
+  scriptures = scriptures.map(scripture => lookupReference(scripture, lang).verse_ids).map(verse_ids => generateReference(verse_ids, lang));
   scriptures = [...new Set(scriptures)];
   return <div className="scriptureContainerWrapper">
     {(scriptures.length > 1) && <div className="scripturePanel">
@@ -892,7 +893,6 @@ function replaceURLWithHTMLLinks(text) {
   const urls = text.match(exp) || [];
 
   const lang = determineLanguage();
-  if(["ko","fr","vn","de"].includes(lang)) setLang(lang);
 
   let scriptures = [];
   html = detectReferences(html, (scripture) => {

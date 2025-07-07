@@ -25,6 +25,7 @@ import {
   TabPane
 } from "reactstrap";
 import { detectScriptures, generateReference } from "scripture-guide";
+import { determineLanguage } from "../../models/Utils";
 import { ApiBaseUrl, assetUrl } from "../../models/BoMOnlineAPI";
 import { ScripturePanelSingle } from "../Page/Narration";
 import { getHtmlScriptureLinkParserOptions } from "../_Common/ViewUtils";
@@ -93,6 +94,7 @@ export function MapPanel({mapController}) {
     placeDetails?.description || "",
     (scripture) => { if (!scripture) return;
        return `<a className="scripture_link">${scripture}</a>` }
+       , determineLanguage()
        );
 
 
@@ -451,7 +453,8 @@ function MapStoryPanel({mapController})
                 <h6>{moveCount} Movements</h6>
                 {selectedStory.moves.map((move, i) => {
                     const {seq, travelers, verse_ids, description, startPlace, endPlace, duration} = move;
-                    const scriptureref = generateReference(verse_ids);
+                    const lang = determineLanguage();
+                    const scriptureref = generateReference(verse_ids, lang);
                     const ref = `<a className="scripture_link">${scriptureref}</a>`;
 
 
