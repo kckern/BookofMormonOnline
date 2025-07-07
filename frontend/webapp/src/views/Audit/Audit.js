@@ -13,6 +13,7 @@ import de from "../_Common/svg/flags/de.svg"
 import ru from "../_Common/svg/flags/ru.svg"
 import es from "../_Common/svg/flags/es.svg"
 import tgl from "../_Common/svg/flags/tgl.svg"
+import tr from "../_Common/svg/flags/tr.svg"
 
 
 
@@ -358,6 +359,7 @@ const pickFlag = () => {
         case "ru": return ru;
         case "es": return es;
         case "tgl": return tgl;
+        case "tr": return tr;
         default: return en;
     }}
 

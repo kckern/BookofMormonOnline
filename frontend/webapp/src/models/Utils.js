@@ -30,6 +30,7 @@ export function determineLanguage() {
     pt: ["por"],
     jp: ["jpn"],
     tgl: ["phil", "ph"],
+    tr: ["tur", "trk"],
     ru: ["rus","рф","xn--p1ai","net"],
     slv: ["slv","slo","si"],
 
