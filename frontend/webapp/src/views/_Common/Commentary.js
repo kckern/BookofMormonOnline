@@ -10,7 +10,7 @@ import { LegalNotice, Loading } from "./PopUp";
 import { addHighlightTagSelectively } from "../Page/TextContent";
 import { snapSelectionToWord, label } from "src/models/Utils";
 import { ScripturePanelSingle } from "../Page/Narration";
-import { setLanguage, detectScriptures } from "scripture-guide";
+import { detectScriptures } from "scripture-guide";
 import { determineLanguage } from "../../models/Utils";
 import { ATVHeader } from "./ATV";
 import { getHtmlScriptureLinkParserOptions } from "./ViewUtils";
@@ -315,12 +315,11 @@ export default function Commentary({ appController }) {
     .join("");
 
   if(!commentaryData?.publication) return null;
-  setLanguage(determineLanguage());
 
   htmlObject = detectScriptures(htmlObject,(scripture) => {
     if (!scripture) return;
     return `<a className="scripture_link">${scripture}</a>`
-  });
+  },determineLanguage());
 
   const parserOptions = getHtmlScriptureLinkParserOptions((ref) => setPopUpRef(ref));
 

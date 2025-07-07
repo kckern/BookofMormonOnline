@@ -39,11 +39,36 @@ import es from "./svg/flags/es.svg";
 import swe from "./svg/flags/swe.svg";
 import ru from "./svg/flags/ru.svg";
 import slv from "./svg/flags/slv.svg";
+<<<<<<< Updated upstream
+=======
+import tr from "./svg/flags/tr.svg";
+import { menuConfig } from "./menuConfig";
+>>>>>>> Stashed changes
 
+// Icon mapping for menu items
+const iconMap = {
+  home,
+  contents,
+  study,
+  read,
+  특별반: book,
+  theater,
+  timeline,
+  people,
+  relationships,
+  places,
+  map: maps,
+  fax,
+  history: historyicon,
+  analysis,
+  about,
+  audit
+};
 
 export function loadMenu(){
 
   const lang = determineLanguage();
+<<<<<<< Updated upstream
   var list = [
     { slug: "home", title: <span><img src={home} /> {label("menu_home")}</span> },
     { slug: "contents", title: <span><img src={contents} /> {label("menu_contents")}</span> },
@@ -62,6 +87,29 @@ export function loadMenu(){
     { slug: "about", title: <span><img src={about} /> {label("menu_about")}</span> },
     { slug: "audit", title: <span><img src={audit} /> {label("menu_audit")}</span> , lang: ["vn","es","fr","de","swe","ru","tgl","ko", "slv"]},
   ];
+=======
+  
+  // Build menu list from configuration
+  var list = menuConfig.map(item => {
+    const icon = iconMap[item.slug];
+    
+    let title;
+    if (item.customTitle) {
+      title = <span><img src={icon} />{item.customTitle}</span>;
+    } else {
+      title = <span><img src={icon} /> {label(item.labelKey)}</span>;
+    }
+    
+    return {
+      slug: item.slug,
+      title,
+      lang: item.lang,
+      langNot: item.langNot,
+      dev: item.dev,
+      beta: item.beta
+    };
+  });
+>>>>>>> Stashed changes
 
   return list.filter(i=>{
     const envIsDev = /localhost|^dev/.test(window.location.hostname);

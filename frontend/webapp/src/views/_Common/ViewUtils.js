@@ -74,5 +74,5 @@ export function getDetectedScripturesHtml(html) {
     return detectScriptures(html, (scripture) => {
         if (!scripture) return;
         return `<a className="scripture_link">${scripture}</a>`
-    });
+    }, determineLanguage());
 }

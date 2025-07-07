@@ -8,9 +8,12 @@ import { Spinner } from "../../_Common/Loader";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { highlightTextJSX } from "./highlighter";
 import { getStartEnd } from "./Bible";
+import { determineLanguage } from "../../../models/Utils";
 
 
 export default function VerseViewer({ verseViewerContent, setVerseViewerContent }) {
+    const lang = determineLanguage();
+    
     useEffect(() => {
         const handleKeyDown = (event) => {
             if (event.key === "Escape") {
@@ -42,8 +45,8 @@ export default function VerseViewer({ verseViewerContent, setVerseViewerContent 
         const colCondition = hasCols ? colVid >= colVerseRange[0] && colVid <= colVerseRange[1] : true;
         return rowCondition && colCondition;
     }).map(([rowVid, colVid, isQuote]) => {
-        const rowRef = generateReference(colVid);
-        const colRef = generateReference(rowVid);
+        const rowRef = generateReference(colVid, lang);
+        const colRef = generateReference(rowVid, lang);
         return { rowVid, colVid, isQuote, rowRef, colRef };
     });
     const allMatchedVerseIds = matches.map(({ rowVid, colVid }) => [rowVid, colVid]).flat()
@@ -83,7 +86,7 @@ export default function VerseViewer({ verseViewerContent, setVerseViewerContent 
     const history = useHistory();
 
     const navigateToSearch = (ref) => {
-        const verse_id = lookupReference(ref).verse_ids[0];
+        const verse_id = lookupReference(ref, lang).verse_ids[0];
         //copy to clipboard
         navigator.clipboard.writeText(verse_id);
         alert(`Copied to clipboard: ${ref} (Verse ID: ${verse_id})`);

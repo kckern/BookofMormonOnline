@@ -97,7 +97,11 @@
     "redux": "^4.1.0",
     "redux-persist": "^6.0.0",
     "redux-thunk": "^2.3.0",
+<<<<<<< Updated upstream
     "scripture-guide": "^1.0.61",
+=======
+    "scripture-guide": "^1.0.64",
+>>>>>>> Stashed changes
     "sendbird": "^3.0.153",
     "sendbird-calls": "^1.8.1",
     "simple-react-lightbox": "^3.6.9-0",

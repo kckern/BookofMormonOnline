@@ -10,7 +10,7 @@ import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import { assetUrl } from 'src/models/BoMOnlineAPI';
 import "./Facsimiles.scss"
 import { useParams, useHistory } from "react-router-dom";
-import { label } from "src/models/Utils";
+import { label, determineLanguage } from "src/models/Utils";
 import scriptureguide from "scripture-guide";
 import { isMobile, useSwipe, convertIntToRomanNumeral } from "../../models/Utils";
 
@@ -109,7 +109,8 @@ const getRefFromIndex = (pageIndex, pageNum) => {
   const itemIndex = parseInt(pageNum) - 1;
   const [startingVerseId, verseCount] = pageIndex?.[itemIndex] || [0, 0];
   const verseRangeArray = Array.from({ length: verseCount }, (_, i) => startingVerseId + i);
-  const ref = scriptureguide.generateReference(verseRangeArray);
+  const lang = determineLanguage();
+  const ref = scriptureguide.generateReference(verseRangeArray, lang);
   const showRef = pageIndex.length > 0 && startingVerseId > 0;
   return showRef ? ref : null;
 };

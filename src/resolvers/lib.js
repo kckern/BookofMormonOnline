@@ -318,7 +318,7 @@ export async function loadHeadings(verse_ids, lang = "en") {
             const endVerse = headingData[i + 1]?.verse_id || verse_ids[verse_ids.length - 1];
             const verses = verse_data.filter(v => v.verse_id >= startVerse && v.verse_id <= endVerse);
             const passage_verse_ids = verses.map(v => v.verse_id);
-            const reference = generateReference(passage_verse_ids); //todo: check language
+            const reference = generateReference(passage_verse_ids, lang);
             const heading = item.text?.replace(/｢\d+｣/g, "").trim() || reference;
             return {
                 reference,

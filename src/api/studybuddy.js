@@ -1,6 +1,6 @@
 const { queryDB } = require("../library/db");
 const {askGPT} = require("../library/gpt");
-const {generateReference,setLanguage} =  require('scripture-guide');
+const {generateReference} =  require('scripture-guide');
 const openaiTokenCounter = require('openai-gpt-token-counter');
 const {sendbird} = require("../library/sendbird.js");
 const isJSON = require("is-json");
@@ -75,7 +75,6 @@ const studyBuddy = async (channelUrl,messageId, messageContent) => {
     log("studyBuddy loaded channel", {channel});
     if(!channel) return error("No Channel: ", {channelUrl});
     const lang = channel.metadata?.lang || "en";
-    setLanguage(lang);
     log(`studyBuddy channel lang: ${lang}`);
     const bot = await sendbird.getBotByLang(lang);
     log("studyBuddy", {bot,channelUrl, messageId, messageContent, lang});
@@ -763,7 +762,7 @@ const loadCrossReferences = async (verse_ids, lang) => {
     
     const crossReferences = await queryDB(sql);
     //TODO: Group contiguous references
-    return crossReferences.map(({verse_id,text}) => ({ref:generateReference(verse_id), text}));
+    return crossReferences.map(({verse_id,text}) => ({ref:generateReference(verse_id, lang), text}));
 
 }
 
@@ -796,7 +795,7 @@ const loadVerses = async (guid, lang) => {
     const verse_ids = verses.map((verse) => verse.verse_id);
     const scripture_text = verses.map((verse) => verse.verse_scripture).join(" ");
 
-    const ref = generateReference(verse_ids)
+    const ref = generateReference(verse_ids, lang)
 
     
 

@@ -17,7 +17,7 @@ import { determineLanguage } from "../../models/Utils";
 import { Link } from "react-router-dom";
 import ReactTooltip from "react-tooltip";
 import classNames from "classnames";
-const {generateReference, detectReferences, setLang, lookupReference} = require('scripture-guide');
+const {generateReference, detectReferences, lookupReference} = require('scripture-guide');
 
 function ChronoRow({ chrono }) {
   chrono = chronoLabel(chrono);
@@ -778,8 +778,7 @@ function ScripturePanel({ narrationController }) {
   useEffect(() => {
     if(!refs?.length) return false;
     const siteLang = determineLanguage();
-    setLang(siteLang);
-    const textRefs = refs.map(({verse_id})=> ({ref:generateReference(verse_id),verse_id}));
+    const textRefs = refs.map(({verse_id})=> ({ref:generateReference(verse_id, siteLang),verse_id}));
     setTextRefs(textRefs);
   }, [refs]);
 
@@ -890,7 +889,8 @@ export function ScripturePanelSingle({ scriptureData, closeButton, onClose, setP
   const scripturePassages = passages.map(({reference, heading, verses}, index)=>{
     const h6Content = (passages.length > 1 ? `${reference}—` : '') + heading ;
     //between 31103 and 37706 is the BoM
-    const verse_ids = lookupReference(reference).verse_ids;
+    const siteLang = determineLanguage();
+    const verse_ids = lookupReference(reference, siteLang).verse_ids;
     const [verse_id] = verse_ids;
     const isBoM = verse_id >= 31103 && verse_id <= 37706;
 
