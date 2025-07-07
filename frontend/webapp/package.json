@@ -98,7 +98,11 @@
     "redux-persist": "^6.0.0",
     "redux-thunk": "^2.3.0",
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     "scripture-guide": "^1.0.61",
+=======
+    "scripture-guide": "^1.0.64",
+>>>>>>> Stashed changes
 =======
     "scripture-guide": "^1.0.64",
 >>>>>>> Stashed changes
