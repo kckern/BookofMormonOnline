@@ -45,6 +45,9 @@ import tr from "./svg/flags/tr.svg";
 import { menuConfig } from "./menuConfig";
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -77,6 +80,7 @@ export function loadMenu(){
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
   var list = [
     { slug: "home", title: <span><img src={home} /> {label("menu_home")}</span> },
     { slug: "contents", title: <span><img src={contents} /> {label("menu_contents")}</span> },
@@ -96,6 +100,8 @@ export function loadMenu(){
     { slug: "audit", title: <span><img src={audit} /> {label("menu_audit")}</span> , lang: ["vn","es","fr","de","swe","ru","tgl","ko", "slv"]},
   ];
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
@@ -123,6 +129,9 @@ export function loadMenu(){
   });
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
