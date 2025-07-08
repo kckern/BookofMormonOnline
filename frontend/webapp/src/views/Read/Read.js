@@ -41,14 +41,14 @@ const getPrevNextChapter = (verse_ids) => {
 const reInit = (match) => {
     const { params } = match;
     const { bookCh, verseNum } = params;
-    const modifiedBookCh = bookCh?.replace(/[.]/g, " ") || generateReference([31103], lang).trim();
+    const modifiedBookCh = bookCh?.replace(/[.]/g, " ") || generateReference(lookupReference("1Ne1").verse_ids, lang).trim();
     const urlSlug = match.url?.replace(/^\/read\//, "");
 
     const fullReference = verseNum ? `${modifiedBookCh}:${verseNum}` : modifiedBookCh;
     //alert(fullReference);
     const initChapterVerseIds = lookupReference(modifiedBookCh, lang).verse_ids;
     const initHighlightedVerses = verseNum ? lookupReference(fullReference, lang).verse_ids : null;
-    const initChapterRef = modifiedBookCh ? generateReference(initChapterVerseIds, lang).trim() : window.localStorage.getItem("chapterRef").trim() || generateReference([31103], lang).trim();
+    const initChapterRef = modifiedBookCh ? generateReference(initChapterVerseIds, lang).trim() : window.localStorage.getItem("chapterRef").trim() || generateReference(lookupReference("1Ne1").verse_ids, lang).trim();
     const { nextChapter: initNextChapter, prevChapter: initPrevChapter } = getPrevNextChapter(initChapterVerseIds);
     return { initChapterRef, initHighlightedVerses, initNextChapter, initPrevChapter,initChapterVerseIds };
 };
@@ -81,7 +81,7 @@ export default function ReadScripture({ appController }) {
 
         if (prevInitChapterRef.current !== newInitChapterRef) {
 
-            setChapterRef(newInitChapterRef || generateReference([31103], lang).trim());
+            setChapterRef(newInitChapterRef || generateReference(lookupReference("1Ne1").verse_ids, lang).trim());
             prevInitChapterRef.current = newInitChapterRef;
         }
 
