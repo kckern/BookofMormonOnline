@@ -339,7 +339,7 @@ queue: async (root: any, args: any, context: any, info: any) => {
         });
     
         const verse_ids = Array.from(new Set(section.blocks.map((block:any) => block.verse_ids).flat())).sort((a: any, b: any) => a - b);
-        section.ref = generateReference(verse_ids);
+        section.ref = generateReference(verse_ids as number[]);
       });
     
       return {

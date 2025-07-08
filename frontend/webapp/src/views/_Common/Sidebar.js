@@ -39,20 +39,8 @@ import es from "./svg/flags/es.svg";
 import swe from "./svg/flags/swe.svg";
 import ru from "./svg/flags/ru.svg";
 import slv from "./svg/flags/slv.svg";
-<<<<<<< Updated upstream
-=======
 import tr from "./svg/flags/tr.svg";
 import { menuConfig } from "./menuConfig";
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 
 // Icon mapping for menu items
 const iconMap = {
@@ -77,10 +65,7 @@ const iconMap = {
 export function loadMenu(){
 
   const lang = determineLanguage();
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
+
   var list = [
     { slug: "home", title: <span><img src={home} /> {label("menu_home")}</span> },
     { slug: "contents", title: <span><img src={contents} /> {label("menu_contents")}</span> },
@@ -98,15 +83,9 @@ export function loadMenu(){
     { slug: "analysis", title: <span><img src={analysis} /> {label("menu_analysis")}</span>, beta:true, lang: ["en"]},
     { slug: "about", title: <span><img src={about} /> {label("menu_about")}</span> },
     { slug: "audit", title: <span><img src={audit} /> {label("menu_audit")}</span> , lang: ["vn","es","fr","de","swe","ru","tgl","ko", "slv"]},
+
   ];
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-  
+
   // Build menu list from configuration
   var list = menuConfig.map(item => {
     const icon = iconMap[item.slug];
@@ -127,16 +106,7 @@ export function loadMenu(){
       beta: item.beta
     };
   });
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
+
 
   return list.filter(i=>{
     const envIsDev = /localhost|^dev/.test(window.location.hostname);

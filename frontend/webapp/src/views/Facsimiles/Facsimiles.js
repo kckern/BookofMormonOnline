@@ -11,7 +11,7 @@ import { assetUrl } from 'src/models/BoMOnlineAPI';
 import "./Facsimiles.scss"
 import { useParams, useHistory } from "react-router-dom";
 import { label, determineLanguage } from "src/models/Utils";
-import scriptureguide from "scripture-guide";
+import {generateReference} from "scripture-guide";
 import { isMobile, useSwipe, convertIntToRomanNumeral } from "../../models/Utils";
 
 function FacsimileViewer({ item }) {
@@ -110,7 +110,7 @@ const getRefFromIndex = (pageIndex, pageNum) => {
   const [startingVerseId, verseCount] = pageIndex?.[itemIndex] || [0, 0];
   const verseRangeArray = Array.from({ length: verseCount }, (_, i) => startingVerseId + i);
   const lang = determineLanguage();
-  const ref = scriptureguide.generateReference(verseRangeArray, lang);
+  const ref = generateReference(verseRangeArray, lang);
   const showRef = pageIndex.length > 0 && startingVerseId > 0;
   return showRef ? ref : null;
 };
