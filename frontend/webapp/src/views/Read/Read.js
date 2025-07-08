@@ -81,7 +81,7 @@ export default function ReadScripture({ appController }) {
 
         if (prevInitChapterRef.current !== newInitChapterRef) {
 
-            setChapterRef(newInitChapterRef);
+            setChapterRef(newInitChapterRef || generateReference([31103], lang).trim());
             prevInitChapterRef.current = newInitChapterRef;
         }
 

@@ -41,6 +41,8 @@ import ru from "./svg/flags/ru.svg";
 import slv from "./svg/flags/slv.svg";
 import tr from "./svg/flags/tr.svg";
 import { menuConfig } from "./menuConfig";
+import { isMobile } from "../../models/Utils";
+
 
 // Icon mapping for menu items
 const iconMap = {
@@ -62,44 +64,38 @@ const iconMap = {
   audit
 };
 
+
+export const MenuItem = ({ icon, labelKey, customTitle }) => {
+
+  const m = isMobile();
+  if(m) return <div style={{display: "flex", alignItems: "center", gap: "0.5rem"}}>
+    <img src={icon} alt={labelKey} />
+    <div><b>{customTitle || label(labelKey)}</b></div>
+    </div>
+  return (
+    <span>
+      <img src={icon} alt={labelKey} />
+      {customTitle || label(labelKey)}
+    </span>
+  );
+};
+
 export function loadMenu(){
 
   const lang = determineLanguage();
 
-  var list = [
-    { slug: "home", title: <span><img src={home} /> {label("menu_home")}</span> },
-    { slug: "contents", title: <span><img src={contents} /> {label("menu_contents")}</span> },
-    { slug: "study", title: <span><img src={study} /> {label("menu_study")}</span> },
-    { slug: "read", title: <span><img src={read} /> {label("menu_read")}</span> , lang: ["en","fr","ko","covoc","slv","es","ru"] },
-    { slug: "특별반", title: <span><img src={book} />특별반</span>, lang: ["ko"] },
-    { slug: "theater", title: <span><img src={theater} /> {label("menu_theater")}</span> },
-    { slug: "timeline", title: <span><img src={timeline} /> {label("menu_timeline")}</span> },
-    { slug: "people", title: <span><img src={people} /> {label("menu_people")}</span> },
-    //{ slug: "relationships", title: <span><img src={relationships} /> {label("menu_network")}</span>, dev:true },
-    { slug: "places", title: <span><img src={places} /> {label("menu_places")}</span> },
-    { slug: "map", title: <span><img src={maps} /> {label("menu_map")}</span> },
-    { slug: "fax", title: <span><img src={fax} /> {label("menu_fax")}</span> , lang: ["en","ko"]},
-    { slug: "history", title: <span><img src={historyicon} /> {label("menu_history")}</span>, lang: ["en"] },
-    { slug: "analysis", title: <span><img src={analysis} /> {label("menu_analysis")}</span>, beta:true, lang: ["en"]},
-    { slug: "about", title: <span><img src={about} /> {label("menu_about")}</span> },
-    { slug: "audit", title: <span><img src={audit} /> {label("menu_audit")}</span> , lang: ["vn","es","fr","de","swe","ru","tgl","ko", "slv"]},
-
-  ];
-
   // Build menu list from configuration
   var list = menuConfig.map(item => {
     const icon = iconMap[item.slug];
-    
-    let title;
-    if (item.customTitle) {
-      title = <span><img src={icon} />{item.customTitle}</span>;
-    } else {
-      title = <span><img src={icon} /> {label(item.labelKey)}</span>;
-    }
+    const jsx = <MenuItem 
+      icon={icon} 
+      labelKey={item.labelKey} 
+      customTitle={item.customTitle} 
+    />;
     
     return {
       slug: item.slug,
-      title,
+      jsx: jsx,
       lang: item.lang,
       langNot: item.langNot,
       dev: item.dev,
@@ -116,8 +112,15 @@ export function loadMenu(){
   }).filter(i => {
     const envLang = lang;
     const itemLangs = i.lang;
+    const itemLangsNot = i.langNot;
+    
+    // Check whitelist (lang)
     const okayToShowBasedOnLang = itemLangs ? itemLangs.includes(envLang) : true;
-    return okayToShowBasedOnLang;
+    
+    // Check blacklist (langNot)
+    const okayToShowBasedOnLangNot = itemLangsNot ? !itemLangsNot.includes(envLang) : true;
+    
+    return okayToShowBasedOnLang && okayToShowBasedOnLangNot;
   });
 
 }
@@ -211,7 +214,7 @@ function Sidebar(props) {
                     props.appController.functions.closePopUp(); 
                     setActivePath("/" + r.slug)}}
                 >
-                  <span className="sidebar-normal">{r.title} {betaBadge}</span>
+                  <span className="sidebar-normal">{r.jsx} {betaBadge}</span>
                 </NavLink>
               </li>
             );
