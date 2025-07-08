@@ -25,7 +25,6 @@ export const menuConfig = [
   {
     slug: "read",
     labelKey: "menu_read",
-    lang: ["en", "fr", "tr", "ko", "covoc", "slv", "es", "ru"],
   },
   {
     slug: "특별반",
