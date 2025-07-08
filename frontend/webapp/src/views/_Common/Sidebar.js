@@ -279,7 +279,7 @@ function LanguageSelect() {
       icon: vn
     },
     tr: {
-      url: "https://kitab-i-mormon.com",
+      url: "https://tr.bookofmormon.online",
       label: "Türkçe",
       icon: tr
     },
