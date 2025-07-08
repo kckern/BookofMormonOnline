@@ -322,13 +322,43 @@ export default function ReadScripture({ appController }) {
 
 
 function ChapterNav({ chapterRef }) {
-
-
     const chapterCounts = [22,33,7,1,1,1,1,29,63,16,30,1,9,15,10];
     const book_keys = ["1_ne", "2_ne", "jacob", "enos", "jarom", "omni", "w_of_m", "mosiah", "alma", "helaman", "3_ne", "4_ne", "mormon", "ether", "moroni"];
-    const bookNames = book_keys.map((book) => label(book));
-    const bookFirsts = book_keys.map((book) => `${book}_first`).map(i=>label(i));
+    
+    // Static references that don't change
+    const bookNames = React.useMemo(() => book_keys.map((book) => label(book)), []);
+    const bookFirsts = React.useMemo(() => book_keys.map((book) => `${book}_first`).map(i=>label(i)), []);
 
+    // Memoize the current chapter's first verse ID to avoid repeated lookups
+    const currentChapterFirstVerseId = React.useMemo(() => {
+        try {
+            return lookupReference(chapterRef, lang).verse_ids[0];
+        } catch (error) {
+            console.error("Error looking up current chapter reference:", chapterRef, error);
+            return null;
+        }
+    }, [chapterRef]);
+
+    // Memoize all chapter verse IDs with efficient caching
+    const allChapterVerseIds = React.useMemo(() => {
+        const chapterVerseMap = new Map();
+        let bookIndex = 0;
+        
+        for(let bookChapterCount of chapterCounts) {
+            const book = bookNames[bookIndex++];
+            for(let i=1; i<=bookChapterCount; i++) {
+                const chapter = `${book} ${i}`;
+                try {
+                    const verseIds = lookupReference(chapter, lang).verse_ids;
+                    chapterVerseMap.set(chapter, verseIds[0]);
+                } catch (error) {
+                    console.error("Error looking up chapter reference:", chapter, error);
+                    chapterVerseMap.set(chapter, null);
+                }
+            }
+        }
+        return chapterVerseMap;
+    }, [bookNames]); // Only recalculate when bookNames change (which should be never)
 
     const boxes = [];
     let j = 0;
@@ -339,7 +369,8 @@ function ChapterNav({ chapterRef }) {
             const chapter = `${book} ${i}`;
             const boxChapterRef = chapter;//`${slugify(chapter)}`;
             const isFirst = i === 1;
-            const isActive = slugify(chapterRef) === boxChapterRef;
+            const boxChapterFirstVerseId = allChapterVerseIds.get(chapter);
+            const isActive = boxChapterFirstVerseId && currentChapterFirstVerseId && boxChapterFirstVerseId === currentChapterFirstVerseId;
             boxes.push(<Link to={`/read/${slugify(boxChapterRef)}`}
                 className={`chapter-box ${isFirst ? "first" : ""} ${isActive ? "active" : ""}`}
                 data-tip={chapter}
