@@ -275,6 +275,11 @@ function LanguageSelect() {
       label: "Tiếng Việt",
       icon: vn
     },
+    tr: {
+      url: "https://kitab-i-mormon.com",
+      label: "Türkçe",
+      icon: tr
+    },
     tgl: {
       url: "https://tgl.bookofmormon.online",
       label: "Tagalog",
