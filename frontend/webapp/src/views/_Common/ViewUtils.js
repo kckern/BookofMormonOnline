@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { detectScriptures } from "scripture-guide";
 import { Collapse } from 'bootstrap';
+import { determineLanguage } from '../../models/Utils';
 
 // a react hook for detecting if a component is mounted
 export function useIsMounted() {

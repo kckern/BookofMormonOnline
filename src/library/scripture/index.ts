@@ -46,16 +46,6 @@ const lookupSingleRef = function(ref: any) {
 
 }
 
-const generateReference = function(verse_ids: any) {
-
-    let ranges = loadVerseStructure(verse_ids);
-    let refs = loadRefsFromRanges(ranges);
-    let ref = refs.join("; ");
-    return ref;
-
-}
-
-
 const lookupMultiBookRange = function(cleanRef) { //eg Matthew 15—Mark 2
 
 

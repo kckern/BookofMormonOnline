@@ -9,7 +9,7 @@ import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
 import { getCache, setCache } from "./Cache";
 import {Spinner} from "../views/_Common/Loader";
 import { ScripturePanelSingle } from "../views/Page/Narration";
-const { detectReferences, lookupReference, generateReference} = require('scripture-guide');
+import { detectReferences, lookupReference, generateReference } from 'scripture-guide';
 
 
 
@@ -900,7 +900,7 @@ function replaceURLWithHTMLLinks(text) {
     if (!scripture) return;
     scriptures.push(scripture);
     return `<a className="scripture_link">${scripture}</a>`
-  }
+  }, lang,
   );
   //dedupe
   scriptures = [...new Set(scriptures)];

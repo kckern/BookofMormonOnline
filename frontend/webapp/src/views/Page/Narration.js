@@ -17,7 +17,7 @@ import { determineLanguage } from "../../models/Utils";
 import { Link } from "react-router-dom";
 import ReactTooltip from "react-tooltip";
 import classNames from "classnames";
-const {generateReference, detectReferences, lookupReference} = require('scripture-guide');
+import { generateReference, detectReferences, lookupReference } from 'scripture-guide';
 
 function ChronoRow({ chrono }) {
   chrono = chronoLabel(chrono);

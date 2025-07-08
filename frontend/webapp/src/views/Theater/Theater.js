@@ -23,12 +23,12 @@ import crossroads from "./svg/crossroads.svg";
 import detour from "./svg/detour.svg";
 import again from "./svg/again.svg";
 import Switch from "react-bootstrap-switch";
+import { lookup } from "scripture-guide";
 
 
 import { determineLanguage, flattenDescription, playSound } from "../../models/Utils";
 
 
-const {lookup} = require('scripture-guide');
 const loadQueueItemsFromQueue = items => {
   const pages = {};
   for (let item of items) {
