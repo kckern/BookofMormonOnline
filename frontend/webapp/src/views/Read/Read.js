@@ -16,7 +16,7 @@ const slugify = (text,verse_ids) => {
 }
 
 const verseIdToSlug = (verseIds) => {
-    const ref = generateReference(verseIds, lang || "en");
+    const ref = generateReference(verseIds, lang);
     return slugify(ref).replace(/[.](\d+$)/, "/$1");
 }
 
@@ -32,8 +32,8 @@ const getEnglishReference = (ref) => {
 const getPrevNextChapter = (verse_ids) => {
     const nextVerseId = verse_ids[verse_ids.length - 1] + 1;
     const prevVerseId = verse_ids[0] - 1;
-    const nextChapter = nextVerseId > 37706 ? null : generateReference([nextVerseId], lang || "en").split(":")[0];
-    const prevChapter = prevVerseId < 31103 ? null : generateReference([prevVerseId], lang || "en").split(":")[0];
+    const nextChapter = nextVerseId > 37706 ? null : generateReference([nextVerseId], lang).split(":")[0];
+    const prevChapter = prevVerseId < 31103 ? null : generateReference([prevVerseId], lang).split(":")[0];
     return { nextChapter, prevChapter };
 }
 
@@ -41,14 +41,14 @@ const getPrevNextChapter = (verse_ids) => {
 const reInit = (match) => {
     const { params } = match;
     const { bookCh, verseNum } = params;
-    const modifiedBookCh = bookCh?.replace(/[.]/g, " ") || "1 Nephi 1";
+    const modifiedBookCh = bookCh?.replace(/[.]/g, " ") || generateReference([31103], lang).trim();
     const urlSlug = match.url?.replace(/^\/read\//, "");
 
     const fullReference = verseNum ? `${modifiedBookCh}:${verseNum}` : modifiedBookCh;
     //alert(fullReference);
-    const initChapterVerseIds = lookupReference(modifiedBookCh, lang || "en").verse_ids;
-    const initHighlightedVerses = verseNum ? lookupReference(fullReference, lang || "en").verse_ids : null;
-    const initChapterRef = modifiedBookCh ? generateReference(initChapterVerseIds, lang || "en") : window.localStorage.getItem("chapterRef") || "1 Nephi 1";
+    const initChapterVerseIds = lookupReference(modifiedBookCh, lang).verse_ids;
+    const initHighlightedVerses = verseNum ? lookupReference(fullReference, lang).verse_ids : null;
+    const initChapterRef = modifiedBookCh ? generateReference(initChapterVerseIds, lang).trim() : window.localStorage.getItem("chapterRef").trim() || generateReference([31103], lang).trim();
     const { nextChapter: initNextChapter, prevChapter: initPrevChapter } = getPrevNextChapter(initChapterVerseIds);
     return { initChapterRef, initHighlightedVerses, initNextChapter, initPrevChapter,initChapterVerseIds };
 };
