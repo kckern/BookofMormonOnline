@@ -389,9 +389,9 @@ export default {
   },
 };
 
-export  const loadPeopleFromTextGuid = async (guid: string, slugs: string[],lang) => {
+export const loadPeopleFromTextGuid = async (guid: string, slugs: string[],lang) => {
   slugs = Array.isArray(slugs) ? slugs : slugs ? [slugs] : [];
-//use Models.BoMLookup and Models.BomIndex to get the people slugs from the text_guid
+//use Models.BomLookup and Models.BomIndex to get the people slugs from the text_guid
 const peopleSlugs = (await Models.BomLookup.findAll({
   attributes: ['text_guid'],
   where: {
@@ -419,41 +419,104 @@ const people = await Models.BomPeople.findAll({
   include: [includeTranslation({ [Op.or]: ['name', 'title', "description"] }, lang)].filter(x => !!x),
 });
 
-
 return people;
-
-
 }
 
-export const loadPlacesFromTextGuid = async (guid: string, slugs: string[], lang) => {
+export const loadPlacesFromTextGuid = async (guid: string, slugs: string[], lang: string) => {
   slugs = Array.isArray(slugs) ? slugs : slugs ? [slugs] : [];
-//use Models.BoMLookup and Models.BomIndex to get the people slugs from the text_guid
-const placeSlugs = (await Models.BomLookup.findAll({
-  attributes: ['text_guid'],
-  where: {
-    text_guid: guid
-  },
-  include: [
-    {
-      model: Models.BomIndex,
-      as: 'bomIndexReference',
-      attributes: ['slug'],
-      where: {
-        type: 'places'
+  
+  // Use Models.BomLookup and Models.BomIndex to get the place slugs from the text_guid
+  const placeSlugs = (await Models.BomLookup.findAll({
+    attributes: ['text_guid'],
+    where: {
+      text_guid: guid
+    },
+    include: [
+      {
+        model: Models.BomIndex,
+        as: 'bomIndexReference',
+        attributes: ['slug'],
+        where: {
+          type: 'place' // retrieved slugs for 'place' type
+        }
       }
-    }
-  ]
-}))?.map((item: any) => item.getDataValue('bomIndexReference').getDataValue('slug')).filter(x=>!!x);
-const uniqueSlugs = [...new Set([...placeSlugs, ...slugs])];
-const places = await Models.BomPlaces.findAll({
-  where: {
-    slug: uniqueSlugs
-  },
-  include: [includeTranslation({ [Op.or]: ['name', 'info'] }, lang)].filter(x => !!x),
-});
-return places;
+    ]
+  }))?.map((item: any) => item.getDataValue('bomIndexReference').getDataValue('slug')).filter(x => !!x);
+
+  const uniqueSlugs = [...new Set([...placeSlugs, ...slugs])];
+
+  // Load places using query function above
+  const places = await Models.BomPlaces.findAll({
+    where: {
+      slug: uniqueSlugs
+    },
+    include: [includeTranslation({ [Op.or]: ['name', 'info'] }, lang)].filter(x => !!x),
+  });
+
+  return places;
 }
 
+// Load people directly from verse IDs using BomIndex with proper range handling
+export const loadPeopleFromVerseIds = async (verse_ids: number[], lang: string) => {
+  if (!verse_ids.length) return [];
+  
+  const minVerseId = Math.min(...verse_ids);
+  const maxVerseId = Math.max(...verse_ids);
+  
+  const peopleSlugs = (await Models.BomIndex.findAll({
+    where: {
+      type: 'people',
+      // Check for overlap: entry starts before or at our max, and ends after or at our min
+      verse_id: { [Op.lte]: maxVerseId },
+      verse_id_end: { [Op.gte]: minVerseId }
+    },
+    attributes: ['slug']
+  }))?.map((item: any) => item.getDataValue('slug')).filter(x => !!x);
+
+  const uniqueSlugs = [...new Set(peopleSlugs)];
+  
+  if (uniqueSlugs.length === 0) return [];
+
+  const people = await Models.BomPeople.findAll({
+    where: {
+      slug: uniqueSlugs
+    },
+    include: [includeTranslation({ [Op.or]: ['name', 'title', "description"] }, lang)].filter(x => !!x),
+  });
+
+  return people;
+}
+
+// Load places directly from verse IDs using BomIndex with proper range handling
+export const loadPlacesFromVerseIds = async (verse_ids: number[], lang: string) => {
+  if (!verse_ids.length) return [];
+  
+  const minVerseId = Math.min(...verse_ids);
+  const maxVerseId = Math.max(...verse_ids);
+  
+  const placeSlugs = (await Models.BomIndex.findAll({
+    where: {
+      type: 'place', // Note: might be 'place' not 'places'
+      // Check for overlap: entry starts before or at our max, and ends after or at our min
+      verse_id: { [Op.lte]: maxVerseId },
+      verse_id_end: { [Op.gte]: minVerseId }
+    },
+    attributes: ['slug']
+  }))?.map((item: any) => item.getDataValue('slug')).filter(x => !!x);
+
+  const uniqueSlugs = [...new Set(placeSlugs)];
+  
+  if (uniqueSlugs.length === 0) return [];
+
+  const places = await Models.BomPlaces.findAll({
+    where: {
+      slug: uniqueSlugs
+    },
+    include: [includeTranslation({ [Op.or]: ['name', 'info'] }, lang)].filter(x => !!x),
+  });
+
+  return places;
+}
 
 export const loadNotesFromTextGuid = async (guid: string, lang) => {
   return (await Models.BomXtrasCommentary.findAll({
@@ -468,8 +531,4 @@ export const loadNotesFromTextGuid = async (guid: string, lang) => {
       text: item.getDataValue('text'),
     };
   });
-
-
-
-
 }
