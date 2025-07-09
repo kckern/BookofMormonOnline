@@ -97,6 +97,48 @@ const queries = {
             }`,
     }
   },
+  passagenotes: (verse_ids) => {
+    return {
+      type: "passagenotes",
+      key: "verse_ids",
+      val: verse_ids,
+      query: q("passagenotes", "verse_ids", verse_ids) +
+        `{
+                commentary {
+                    id
+                    title
+                    preview
+                    reference
+                }
+                people {
+                    name
+                    slug
+                    title
+                }
+                places {
+                    name
+                    info
+                    slug
+                }
+                images {
+                    title
+                    file
+                    artist
+                }
+                chiasmus {
+                    title
+                    reference
+                    scheme
+                }
+                refs {
+                    verse_id
+                    ref
+                    type
+                    significant
+                }
+            }`,
+    }
+  },
   page: (ids) => {
     return {
       type: "page",

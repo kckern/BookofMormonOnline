@@ -2,6 +2,10 @@ import { models as Models, sequelize as Sequelize } from '../config/database';
 import { getSlug, Op, includeTranslation, translatedValue, includeModel, queryWhere } from './_common';
 import { split, SentenceSplitterSyntax } from 'sentence-splitter';
 import scripture from '../library/scripture';
+import { lookupReference } from 'scripture-guide';
+import { loadPeopleFromTextGuid, loadPeopleFromVerseIds, loadPlacesFromVerseIds, loadNotesFromTextGuid } from './BomPeoplePlace';
+import { queryDB } from '../library/db';
+const { organizeRelatedScriptures } = require('./lib');
 
 export default {
   Query: {
@@ -162,6 +166,213 @@ export default {
         return acc;
       }, {});
       return Object.values(chiasms);
+    },
+    passagenotes: async (root: any, args: any, context: any, info: any) => {
+      const lang = context.lang ? context.lang : null;
+      
+      // Handle both verse_ids array and start/end verse_id parameters
+      let verse_ids: number[] = [];
+      
+      if (args.verse_ids && Array.isArray(args.verse_ids)) {
+        verse_ids = args.verse_ids;
+      } else if (args.start_verse_id && args.end_verse_id) {
+        // Generate array from start to end verse_id (inclusive)
+        const start = parseInt(args.start_verse_id);
+        const end = parseInt(args.end_verse_id);
+        if (start <= end) {
+          verse_ids = Array.from({ length: end - start + 1 }, (_, i) => start + i);
+        }
+      } else if (args.start_verse_id) {
+        // Just a single verse if only start_verse_id is provided
+        verse_ids = [parseInt(args.start_verse_id)];
+      }
+      
+      if (!verse_ids.length) {
+        return {
+          commentary: [],
+          sources: [],
+          chiasmus: [],
+          people: [],
+          places: [],
+          images: [],
+          notes: [],
+          fax: [],
+          mapstory: [],
+          refs: []
+        };
+      }
+
+      const [
+        commentary,
+        sources,
+        chiasmus,
+        images,
+        fax,
+        mapstory,
+        textGuids,
+        refs
+      ] = await Promise.all([
+        // Commentary
+        Models.BomXtrasCommentary.findAll({
+          where: {
+            verse_id: verse_ids,
+            is_note: { [Op.ne]: 1 }
+          },
+          include: [
+            includeModel(info, Models.BomXtrasSource, 'publication'),
+            includeModel(info, Models.BomText, 'location')
+          ].filter(x => !!x),
+          limit: 100
+        }),
+        
+        // Sources
+        Models.BomXtrasSource.findAll({
+          where: queryWhere('source_lang', lang || 'en')
+        }),
+        
+        // Chiasmus
+        Models.BomXtrasChiasmus.findAll({
+          where: {
+            verse_id: verse_ids
+          },
+          include: [includeTranslation({ [Op.or]: ['line_text', 'highlights','label','title'] }, lang)].filter(x => !!x)
+        }),
+        
+        // Images - get via text guids since they don't have verse_id directly
+        (async () => {
+          const lookups = await Models.BomLookup.findAll({
+            where: {
+              verse_id: verse_ids
+            },
+            attributes: ['text_guid'],
+            raw: true
+          });
+          const textGuids = [...new Set(lookups.map((l: any) => l.text_guid))];
+          if (textGuids.length === 0) return [];
+          return await Models.BomXtrasImage.findAll({
+            where: {
+              location_guid: textGuids
+            },
+            include: [
+              includeTranslation({ [Op.or]: ['title'] }, lang),
+              includeModel(info, Models.BomText, 'location')
+            ].filter(x => !!x)
+          });
+        })(),
+        
+        // Fax
+        Models.BomXtrasFax.findAll({
+          where: {
+            fax: 1,
+            lang: lang || 'en'
+          },
+          include: [includeTranslation({ [Op.or]: ['title', 'info'] }, lang)].filter(x => !!x)
+        }),
+        
+        // Map stories - need to check by reference parsing since moves don't have verse_id
+        (async () => {
+          const stories = await Models.BomMapStory.findAll({
+            include: [
+              includeTranslation({ [Op.or]: ['title', 'description'] }, lang),
+              {
+                model: Models.BomMapMove,
+                as: 'moves',
+                required: false,
+                include: [
+                  includeTranslation({ [Op.or]: ['travelers', 'description'] }, lang)
+                ].filter(x => !!x)
+              }
+            ].filter(x => !!x)
+          });
+          // Filter stories that have moves with relevant verse references
+          return stories.filter((story: any) => 
+            story.moves && story.moves.some((move: any) => {
+              const ref = move.getDataValue('ref');
+              if (!ref) return false;
+              try {
+                const { verse_ids: moveVerseIds } = lookupReference(ref) || { verse_ids: [] };
+                return moveVerseIds && moveVerseIds.some((vid: number) => verse_ids.includes(vid));
+              } catch {
+                return false;
+              }
+            })
+          );
+        })(),
+        
+        // Get text guids for loading people, places, and notes
+        Models.BomLookup.findAll({
+          where: {
+            verse_id: verse_ids
+          },
+          attributes: ['text_guid'],
+          raw: true
+        }),
+        
+        // Refs/Cross-references
+        (async () => {
+          const placeholders = verse_ids.map(() => '?').join(',');
+          const sql = `SELECT dst_verse_id as verse_id,\`type\`,significant,dst_ref as ref
+            FROM \`scripture.guide\`.scripture_references 
+            WHERE src_verse_id IN (${placeholders})
+            AND \`type\` = "xref"
+            AND significant IN (0,1,-1)`;
+          const refsData = await queryDB(sql, verse_ids);
+          return organizeRelatedScriptures(refsData);
+        })()
+      ]);
+
+      // Get unique text guids
+      const guids = [...new Set(textGuids.map((t: any) => t.text_guid).filter(guid => guid))];
+      
+      // Load people, places, and notes using both verse-based and text-guid-based approaches
+      const [people, places, notes] = await Promise.all([
+        // Load people from both verse IDs and text GUIDs
+        Promise.all([
+          loadPeopleFromVerseIds(verse_ids, lang),
+          guids.length > 0 ? Promise.all(guids.map(guid => loadPeopleFromTextGuid(guid, [], lang))).then(results => results.flat()) : []
+        ]).then(results => results.flat()),
+        
+        // Load places directly from verse IDs via BomIndex
+        loadPlacesFromVerseIds(verse_ids, lang),
+        
+        // Load notes from text GUIDs
+        guids.length > 0 ? Promise.all(guids.map(guid => loadNotesFromTextGuid(guid, lang))).then(results => results.flat()) : []
+      ]);
+
+      // Process chiasmus data similar to the existing chiasmus resolver
+      const processedChiasmus = chiasmus.reduce((acc: any, item: any) => {
+        const chiasmus_id = item.chiasmus_id;
+        if (!acc[chiasmus_id]) {
+          acc[chiasmus_id] = {
+            reference: scripture.generateReference([item.verse_id]),
+            title: item.getDataValue('title'),
+            scheme: item.line_key,
+            chiasmus_id,
+            lines: []
+          };
+        }
+        acc[chiasmus_id].lines.push({
+          guid: item.guid,
+          line_key: item.line_key,
+          line_text: item.line_text,
+          highlights: item.highlights,
+          label: item.label
+        });
+        return acc;
+      }, {});
+
+      return {
+        commentary: commentary || [],
+        sources: sources || [],
+        chiasmus: Object.values(processedChiasmus) || [],
+        people: people || [],
+        places: places || [],
+        images: images || [],
+        notes: notes || [],
+        fax: fax || [],
+        mapstory: mapstory || [],
+        refs: refs || []
+      };
     }
   },
   Mutation: {},

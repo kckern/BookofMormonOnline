@@ -13,6 +13,7 @@ extend type Query {
   publications: [Source]
   history(slug: [String]): [HistoricalDocument]
   chiasmus(id: [String]): [Chiasmus]
+  passagenotes(verse_ids: [Int], start_verse_id: Int, end_verse_id: Int): PassageNotes
 }
 
 
@@ -22,6 +23,27 @@ extend type Query {
   # TYPES
   # -----------------------------------------------
   
+  type PassageNotes {
+    commentary: [Commentary]
+    sources: [Source]
+    chiasmus: [Chiasmus]
+    people: [People]
+    places: [Place]
+    images: [Image]
+    notes: [Note]
+    fax: [Fax]
+    mapstory: [MapStory]
+    refs: [Reference]
+  }
+
+  type Reference {
+    verse_id: Int
+    ref: String
+    type: String
+    significant: Int
+  }
+
+
 
   type Chiasmus {
     chiasmus_id: String
