@@ -287,6 +287,12 @@ p.heading a.heading + a.heading::before{
 
 }
 
+
+.read-content .read-section  .section-footer{
+
+    margin: 1ex -1rem -1rem -1rem;
+}
+
 @media only screen and (max-width: 900px) {
     
     .read-content, .read-content .read-section{
