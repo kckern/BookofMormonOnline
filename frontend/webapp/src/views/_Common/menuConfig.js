@@ -35,7 +35,7 @@ export const menuConfig = [
   {
     slug: "theater",
     labelKey: "menu_theater",
-    langNot: ["tr"],
+    langNot: ["tr", "slv"]
   },
   {
     slug: "timeline",
