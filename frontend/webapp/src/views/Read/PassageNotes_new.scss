@@ -1,0 +1,100 @@
+.section-footer {
+    
+  .passage-notes {
+    overflow: hidden;
+    transition: max-height 300ms ease-out, opacity 300ms ease-out;
+    
+    &.loading {
+      max-height: 0;
+      opacity: 0;
+      min-height: 0;
+      transition-delay: 0ms !important;
+      animation-delay: 0ms !important;
+    }
+    
+    &:not(.loading) {
+      max-height: 50vh; // Adjust this value based on your expected content height
+      opacity: 1;
+      animation: slideDown 300ms ease-out forwards;
+      // Note: animationDelay and transitionDelay are set via inline styles
+    }
+    
+    .category-tabs {
+      display: flex;
+      flex-wrap: nowrap;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px;
+      background: #f8f8f8;
+      border-top: 1px solid #dee2e6;
+      border-bottom-left-radius: 1rem;
+      border-bottom-right-radius: 1rem;
+
+      .category-tab {
+        display: flex;
+        width: 100%;
+        flex-direction: column;
+        align-items: center;
+        padding: 8px 12px;
+        background: white;
+        border-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        min-width: 70px;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+        
+        &:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+        }
+        
+        &.active {
+          background: #007bff;
+          color: white;
+          
+          .count {
+            color: white;
+          }
+          
+          .label {
+            color: rgba(255, 255, 255, 0.9);
+          }
+        }
+        
+        .count {
+          font-size: 18px;
+          font-weight: bold;
+          color: #495057;
+          line-height: 1;
+        }
+        
+        .label {
+          font-size: 11px;
+          color: #6c757d;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          margin-top: 4px;
+          text-align: center;
+        }
+      }
+    }
+  }
+  
+  p {
+    margin: 10px 0;
+    color: #6c757d;
+    font-style: italic;
+    text-align: center;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    max-height: 0;
+    opacity: 0;
+  }
+  to {
+    max-height: 50vh;
+    opacity: 1;
+  }
+}

@@ -6,6 +6,7 @@ import BoMOnlineAPI, { assetUrl } from "../../models/BoMOnlineAPI";
 import { generateReference, lookupReference } from "scripture-guide";
 import ReactTooltip from "react-tooltip";
 import { determineLanguage, label } from "../../models/Utils";
+import PassageNotes from "./PassageNotes";
 
 const slugify = (text,verse_ids) => {
     if(!text) return null;
@@ -65,6 +66,8 @@ export default function ReadScripture({ appController }) {
     const [nextChapterRef, setNextChapterRef] = useState(initNextChapter);
     const [prevChapterRef, setPrevChapterRef] = useState(initPrevChapter);
     const [chapterVerseIds, setChapterVerseIds] = useState(initChapterVerseIds);
+    const [passageNotesData, setPassageNotesData] = useState({});
+    const [passageNotesLoading, setPassageNotesLoading] = useState(false);
 
     const prevInitChapterRef = useRef(initChapterRef);
     const prevInitHighlightedVerses = useRef(initHighlightedVerses);
@@ -96,7 +99,45 @@ export default function ReadScripture({ appController }) {
         setPrevChapterRef(newInitPrevChapter);
     }, [match.params]);
 
+    // Function to fetch passage notes for all sections in a single API call with multiple queries
+    const fetchPassageNotesForAllSections = useCallback(async (sectionVerseIdsMap) => {
+        try {
+            // Create multiple passagenotes queries for a single API call
+            const apiRequest = {};
+            const sectionKeyToQueryKey = {};
+            
+            Object.entries(sectionVerseIdsMap).forEach(([sectionKey, verseIds], index) => {
+                if (verseIds && verseIds.length > 0) {
+                    const queryKey = `passagenotes_${index}`;
+                    apiRequest[queryKey] = verseIds;
+                    sectionKeyToQueryKey[sectionKey] = queryKey;
+                }
+            });
+            
+            if (Object.keys(apiRequest).length === 0) return {};
+            
+            // Make single API call with multiple passagenotes queries
+            const data = await BoMOnlineAPI(apiRequest);
+            
+            // Map the results back to section keys
+            const sectionPassageNotesMap = {};
+            Object.entries(sectionKeyToQueryKey).forEach(([sectionKey, queryKey]) => {
+                if (data && data[queryKey]) {
+                    sectionPassageNotesMap[sectionKey] = data[queryKey];
+                }
+            });
+            
+            return sectionPassageNotesMap;
+        } catch (error) {
+            console.error('Error fetching passage notes for sections', error);
+            return {};
+        }
+    }, []);
 
+    // Function to get passage notes for a specific section
+    const getPassageNotesForSection = useCallback((sectionKey) => {
+        return passageNotesData[sectionKey] || null;
+    }, [passageNotesData]);
 
     // add listener to to keyboard left right arrows to got next and previous
     const handleKeyDown = useCallback((e) => {
@@ -196,15 +237,31 @@ export default function ReadScripture({ appController }) {
                     <button className="btn btn-primary disabled" disabled>  ▶ </button>
                 )} </div>
             <ChapterNav chapterRef={chapterRef} />
-            {readData ? readData.sections.map((section, index) => {
-                return <div key={index} className="read-section">
+            {readData ? readData.sections.map((section, sectionIndex) => {
+                // Gather actual verse IDs from this section's blocks and lines
+                const sectionVerseIds = [];
+                section.blocks.forEach(block => {
+                    block.lines.forEach(line => {
+                        if (line.verse_id && !sectionVerseIds.includes(line.verse_id)) {
+                            sectionVerseIds.push(line.verse_id);
+                        }
+                    });
+                });
+                
+                // Create a unique key for this section
+                const sectionKey = `section_${sectionIndex}_${section.ref?.replace(/[^a-zA-Z0-9]/g, '_')}`;
+                
+                // Get passage notes for this specific section
+                const sectionPassageNotes = getPassageNotesForSection(sectionKey);
+                
+                return <div key={sectionIndex} className="read-section">
                     <div className="read-section-header">
                         <h4>{section.heading.replace(/｢\d+｣/g, "").trim()}</h4>
                         <p><Link to={`/study/${slugify(getEnglishReference(section.ref))}`}>
                     
                         {section.ref}<button className="btn btn-sm btn-outline-secondary" >{label("study_button")}</button></Link></p>    
                     </div>                      
-                    {section.blocks.map((block, index) => { 
+                    {section.blocks.map((block, blockIndex) => { 
                         const blockLineWordCount = block.lines.reduce((acc, line) => {
                             return acc + line.text?.split(" ").length || 0;
                         }, 0);
@@ -225,14 +282,14 @@ export default function ReadScripture({ appController }) {
                                     underSlug: "read/" + slugify(chapterRef) });
                                 
                         }
-                        return <div key={index} className="read-block">
+                        return <div key={blockIndex} className="read-block">
                             <div className="left-gutter">
                                 <img alt={block.voice} src={assetUrl + `/people/${block.person_slug}`} onClick={handleImgClick} />
                                 <div className="read-voice"  onClick={handleImgClick} >{label(block.voice)}</div>
                             </div>
                             <div className="main-content">
 
-                            {paragraphs?.map(p=><p className={`read-scripture ${specialClass} ${p?.[0]?.class || ""}`}>{p?.map((line, index) => {
+                            {paragraphs?.map(p=><p className={`read-scripture ${specialClass} ${p?.[0]?.class || ""}`}>{p?.map((line, lineIndex) => {
 
                                 const lineVerseId = line.verse_id;
 
@@ -244,7 +301,7 @@ export default function ReadScripture({ appController }) {
 
                                 const slugToVerse = verseIdToSlug([lineVerseId]);
 
-                                return <Link key={index} className={lineClass}
+                                return <Link key={lineIndex} className={lineClass}
                                     to={`/read/${slugToVerse}`}
                                     onMouseEnter={() => {
                                         setHoveredVerse(lineVerseId);
@@ -254,12 +311,18 @@ export default function ReadScripture({ appController }) {
                                 ><sup>{line.verse_num}</sup>{line.text}</Link>
                             })}</p>)}
                             </div>
-                            
                         </div>
 
                     })}
+                    
+                    <PassageNotes 
+                        passageNotesLoading={passageNotesLoading}
+                        sectionPassageNotes={sectionPassageNotes}
+                        sectionVerseIds={sectionVerseIds}
+                        animationDelay={sectionIndex * 300}
+                    />
                 </div>
-            } ) : <Loader top={"30vh"} />}
+            }) : <Loader top={"30vh"} />}
             { !!readData && <div className="read-section-footer">
                 {prevSlug ? (
                     <Link to={`/read/${prevSlug}`} className="btn btn-primary">
@@ -292,10 +355,44 @@ export default function ReadScripture({ appController }) {
         let loaderTimeout;
         loaderTimeout = setTimeout(() => {setContent(null);}, 200);
         document.title = chapterRef;
-        BoMOnlineAPI({read: chapterRef}).then((data) => {
+        
+        // Clear passage notes data when chapter changes
+        setPassageNotesData({});
+        setPassageNotesLoading(true);
+        
+        BoMOnlineAPI({read: chapterRef}).then(async (data) => {
             clearTimeout(loaderTimeout);
             const mainKey = Object.keys(data.read)[0];
-            setContent(data.read[mainKey]);
+            const readContent = data.read[mainKey];
+            setContent(readContent);
+            
+            // Create a map of section keys to their verse IDs for separate API calls
+            const sectionVerseIdsMap = {};
+            if (readContent && readContent.sections) {
+                readContent.sections.forEach((section, sectionIndex) => {
+                    const sectionVerseIds = [];
+                    section.blocks.forEach(block => {
+                        block.lines.forEach(line => {
+                            if (line.verse_id && !sectionVerseIds.includes(line.verse_id)) {
+                                sectionVerseIds.push(line.verse_id);
+                            }
+                        });
+                    });
+                    
+                    if (sectionVerseIds.length > 0) {
+                        const sectionKey = `section_${sectionIndex}_${section.ref?.replace(/[^a-zA-Z0-9]/g, '_')}`;
+                        sectionVerseIdsMap[sectionKey] = sectionVerseIds;
+                    }
+                });
+            }
+            
+            // Fetch passage notes for each section separately to get partitioned results
+            if (Object.keys(sectionVerseIdsMap).length > 0) {
+                const sectionPassageNotes = await fetchPassageNotesForAllSections(sectionVerseIdsMap);
+                setPassageNotesData(sectionPassageNotes);
+            }
+            setPassageNotesLoading(false);
+            
             //scroll to top
             window.scrollTo(0, 0);
             //save chapterRef to local storage
@@ -306,7 +403,7 @@ export default function ReadScripture({ appController }) {
         });
     
         return () => clearTimeout(loaderTimeout);
-    }, [chapterRef]);
+    }, [chapterRef, fetchPassageNotesForAllSections]);
 
     
 
