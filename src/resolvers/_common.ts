@@ -617,8 +617,12 @@ export const getStandardizedValuesFromUserList = async (userList: Array<string>)
     for (let j in userList) {
       let user = userList[j];
       if (!lastValues[user]) lastValues[user] = 0;
-      if (history[user].progress[date]) dateProgress[date][user] = history[user].progress[date];
-      else dateProgress[date][user] = lastValues[user];
+      // Fix: Check if history[user] exists before accessing its properties
+      if (history[user] && history[user].progress && history[user].progress[date]) {
+        dateProgress[date][user] = history[user].progress[date];
+      } else {
+        dateProgress[date][user] = lastValues[user];
+      }
       lastValues[user] = dateProgress[date][user];
     }
     standardizedValues.push({ date: date, progress: dateProgress[date] });
