@@ -196,7 +196,7 @@ export default function ReadScripture({ appController }) {
                     <button className="btn btn-primary disabled" disabled>  ▶ </button>
                 )} </div>
             <ChapterNav chapterRef={chapterRef} />
-            {readData ? readData.sections.map((section, index) => {
+            {readData ? readData.sections?.map((section, index) => {
                 return <div key={index} className="read-section">
                     <div className="read-section-header">
                         <h4>{section.heading.replace(/｢\d+｣/g, "").trim()}</h4>
