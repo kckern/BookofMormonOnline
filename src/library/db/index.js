@@ -1,36 +1,22 @@
 
-const mysql = require('mysql2/promise');
+const { sequelize, SQLQueryTypes } = require('../../config/database');
 const dotenv = require('dotenv');
 dotenv.config();
 
-const connectToDB = async () => {
-
-    const connection = await mysql.createConnection({
-        host: process.env.MYSQL_HOST,
-        port: process.env.MYSQL_PORT,
-        user: process.env.MYSQL_USER,
-        database: process.env.MYSQL_DB,
-        password: process.env.MYSQL_PASSWORD
-    });
-
-
-    return connection;
-
+const queryDB = async (sql, params = []) => {
+    try {
+        const results = await sequelize.query(sql, {
+            replacements: params,
+            type: SQLQueryTypes.SELECT
+        });
+        return results;
+    } catch (error) {
+        console.error('Database query error:', error);
+        throw error;
+    }
 }
 
-
-const queryDB = async (sql, params) => {
-
-    if(params) sql = mysql.format(sql, params);
-    const connection = await connectToDB();
-    const results = (await connection.query(sql))[0];
-    connection.end();
-    return results;
-
-}
-
-const loadScripturesFromVerseIds = async (verse_ids,lang) => {
-
+const loadScripturesFromVerseIds = async (verse_ids, lang) => {
     //TODO: add language support
 
     const count = verse_ids.length;
@@ -56,16 +42,12 @@ const loadTextGuidsFromVerseIds = async (verse_ids) => {
 
 const loadPageSlugFromTextGuid = async (text_guid) => {
     const sql = `SELECT bt.link, bt.content, bt.guid AS 'text_guid', TRIM(LEADING '/' FROM CONCAT_WS('/', IFNULL(bs2.slug,''), IFNULL(bs1.slug,''), bs.slug)) AS 'pageslug' FROM bom_text bt JOIN bom_slug bs ON bs.link = bt.page LEFT JOIN bom_slug bs1 ON bs1.guid = bs.parent LEFT JOIN bom_slug bs2 ON bs2.guid = bs1.parent WHERE bt.guid = ?`;
-    const item = await queryDB(sql, text_guid);
-    const {link, pageslug, content} = item[0];
+    const items = await queryDB(sql, [text_guid]);
+    const {link, pageslug, content} = items[0];
     return [pageslug, link, content];
-
-
-
 }
 
 module.exports = {
-    connectToDB,
     queryDB,
     loadScripturesFromVerseIds,
     loadTextGuidsFromVerseIds,
