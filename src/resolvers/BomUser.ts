@@ -58,34 +58,40 @@ export default {
           msg: 'Login Failed',
           user: null
         };
-      return Models.BomUser.findOne({
-        where: {
-          [Op.or]: {
-            user: args.username,
-            email: args.username
-          },
-          pass: crypto
-            .createHash('md5')
-            .update(args.password)
-            .digest('hex')
-        }
-      }).then((myUser: any) => {
-        if (myUser == null) {
+      
+      try {
+        const myUser: any = await Models.BomUser.findOne({
+          where: {
+            [Op.or]: {
+              user: args.username,
+              email: args.username
+            },
+            pass: crypto
+              .createHash('md5')
+              .update(args.password)
+              .digest('hex')
+          }
+        });
+
+        if (!myUser) {
           return {
             isSuccess: false,
-            msg: 'User or password incorrect',
+            msg: 'Login Failed',
             user: null
           };
         }
+
         //New Token Processing
-        Models.BomUserToken.upsert({ token: args.token, user: myUser.user }).then(function () {
-          //console.log('signin');
-          return Models.BomUserToken.findAll({ where: { user: myUser.user } }).then(function (results) {
-            var tokens = results.map((itme: any) => itme.getDataValue('token'));
-            // console.log({ tokens });
-            Models.BomLog.update({ user: myUser.user }, { where: { user: tokens } });
-          });
-        });
+        try {
+          await Models.BomUserToken.upsert({ token: args.token, user: myUser.user });
+          const results: any = await Models.BomUserToken.findAll({ where: { user: myUser.user } });
+          const tokens = results.map((item: any) => item.getDataValue('token'));
+          await Models.BomLog.update({ user: myUser.user }, { where: { user: tokens } });
+        } catch (tokenError) {
+          console.error('Token processing error during signin:', tokenError);
+          // Continue with login even if token processing fails
+        }
+
         const hashed_id = md5(myUser.getDataValue("user"));
         return {
           isSuccess: true,
@@ -93,18 +99,33 @@ export default {
           user: myUser,
           social: sendbird.loadUser(hashed_id)
         };
-      });
+      } catch (error) {
+        console.error('Database error during signin:', error);
+        return {
+          isSuccess: false,
+          msg: 'Database error',
+          user: null
+        };
+      }
     },
     user: async (root: any, args: any, context: any, info: any) => {
-      return Models.BomUser.findOne(findUserByToken(args.token)).then((foundUser: any) => {
+      try {
+        const foundUser: any = await Models.BomUser.findOne(findUserByToken(args.token));
         return foundUser;
-      });
+      } catch (error) {
+        console.error('Database error during user lookup:', error);
+        return null;
+      }
     },
     closetab: async (root: any, args: any, context: any, info: any) => {
-      return Models.BomUser.findOne(findUserByToken(args.token)).then((foundUser: any) => {
+      try {
+        const foundUser: any = await Models.BomUser.findOne(findUserByToken(args.token));
         if (!foundUser) return false;
         return sendbird.closeTab(foundUser.getDataValue('user'));
-      });
+      } catch (error) {
+        console.error('Database error during closetab:', error);
+        return false;
+      }
     },
 
     socialsignin: async (root: any, args: any, context: any, info: any) => {
@@ -122,22 +143,25 @@ export default {
     tokensignin: async (root: any, args: any, context: any, info: any) => {
       let token = args.token;
       // console.log('tokensignin');
-      return Models.BomUser.findOne({
-        include: [
-          {
-            model: Models.BomUserToken,
-            where: {
-              token: args.token
-            }
-          },
-          includeModel(info, Models.BomUserSocial, 'networks')
-        ]
-      }).then((myUser: any) => {
-        if (!myUser)
+      try {
+        const myUser: any = await Models.BomUser.findOne({
+          include: [
+            {
+              model: Models.BomUserToken,
+              where: {
+                token: args.token
+              }
+            },
+            includeModel(info, Models.BomUserSocial, 'networks')
+          ]
+        });
+
+        if (!myUser) {
           return {
             isSuccess: false,
             msg: 'Token Login Failure'
           };
+        }
 
         const hashed_id = md5(myUser.getDataValue("user"));
         return {
@@ -146,43 +170,53 @@ export default {
           user: myUser,
           social: sendbird.loadUser(hashed_id)
         };
-      });
+      } catch (error) {
+        console.error('Database error during token signin:', error);
+        return {
+          isSuccess: false,
+          msg: 'Database error'
+        };
+      }
     },
     sourceUsage: async (root: any, args: any, context: any, info: any) => {
       if (!args.token || !args.source) return 0;
-      return Models.BomUser.findAll({
-        raw: true,
-        include: [
-          {
-            model: Models.BomUserToken,
-            where: {
-              token: args.token
-            }
-          },
-          {
-            model: Models.BomLog,
-            where: {
-              type: 'commentary',
-              value: {
-                [Op.like]: '_____' + args.source.padStart(3, '0') + '__'
+      try {
+        const logs: any = await Models.BomUser.findAll({
+          raw: true,
+          include: [
+            {
+              model: Models.BomUserToken,
+              where: {
+                token: args.token
+              }
+            },
+            {
+              model: Models.BomLog,
+              where: {
+                type: 'commentary',
+                value: {
+                  [Op.like]: '_____' + args.source.padStart(3, '0') + '__'
+                }
               }
             }
-          }
-        ]
-      }).then((logs: any) => {
-        return Models.BomXtrasSource.findOne({
+          ]
+        });
+
+        const sourceInfo = await Models.BomXtrasSource.findOne({
           raw: true,
           attributes: ["item_count"],
           where: {
             source_id: args.source
           }
-        }).then(sourceInfo => {
+        });
 
-          let nom = 100 * 100 * (1 + logs.map(l => l['_bom_log.value']).filter((value, index, self) => self.indexOf(value) === index).length || 1);
-          let denom = sourceInfo['item_count'] || 100;
-          return Math.round(nom / denom) / 100;
-        })
-      });
+        let nom = 100 * 100 * (1 + logs.map(l => l['_bom_log.value']).filter((value, index, self) => self.indexOf(value) === index).length || 1);
+        let denom = sourceInfo?.['item_count'] || 100;
+        return Math.round(nom / denom) / 100;
+      } catch (error) {
+        console.error('Database error during sourceUsage:', error);
+        return 0;
+      }
     },
     studylog: async (root: any, args: any, context: any, info: any) => {
       const lang = context.lang ? context.lang : null;
@@ -214,26 +248,33 @@ export default {
       });
     },
     userdailyscores: async (root: any, args: any, context: any, info: any) => {
-      return Models.BomUser.findOne({
-        attributes: ['user'],
-        include: [
-          {
-            model: Models.BomUserToken,
-            where: {
-              token: args.token
+      try {
+        const user: any = await Models.BomUser.findOne({
+          attributes: ['user'],
+          include: [
+            {
+              model: Models.BomUserToken,
+              where: {
+                token: args.token
+              }
             }
-          }
-        ]
-      }).then((user: any) => {
+          ]
+        });
+
         let username = user ? user?.getDataValue('user') : args.token;
 
-        return getStandardizedValuesFromUserList([username]).then((standardizedValues: any) => {
-          return {
-            dates: standardizedValues.map((item: any) => item.date),
-            progress: standardizedValues.map((item: any) => item.progress[username])
-          };
-        });
-      });
+        const standardizedValues: any = await getStandardizedValuesFromUserList([username]);
+        return {
+          dates: standardizedValues.map((item: any) => item.date),
+          progress: standardizedValues.map((item: any) => item.progress[username])
+        };
+      } catch (error) {
+        console.error('Database error during userdailyscores:', error);
+        return {
+          dates: [],
+          progress: []
+        };
+      }
     },
     pageprogress: async (root: any, args: any, context: any, info: any) => {
       let pageslugs = getSlugTip(args.slug);
@@ -301,13 +342,17 @@ export default {
   },
   Mutation: {
     signout: async (root: any, args: any, context: any, info: any) => {
-      return Models.BomUserToken.destroy({
-        where: {
-          token: args.token
-        }
-      }).then((result: any) => {
+      try {
+        const result: any = await Models.BomUserToken.destroy({
+          where: {
+            token: args.token
+          }
+        });
         return result === 1;
-      });
+      } catch (error) {
+        console.error('Database error during signout:', error);
+        return false;
+      }
     },
     signup: async (root: any, args: any, context: any, info: any) => {
       const lang = context.lang ? context.lang : "en";
@@ -393,33 +438,45 @@ export default {
     },
     editProfile: async (root: any, args: any, context: any, info: any) => {
       if (!args.token) return false;
-      return Models.BomUser.findOne({
-        include: [
-          {
-            model: Models.BomUserToken,
-            where: {
-              token: args.token
+      try {
+        const myUser: any = await Models.BomUser.findOne({
+          include: [
+            {
+              model: Models.BomUserToken,
+              where: {
+                token: args.token
+              }
             }
-          }
-        ]
-      }).then(async (myUser: any) => {
+          ]
+        });
+
         if (!myUser?.user) return null;
+        
         let updatedValues = args;
         delete updatedValues.token;
         // console.log({ updatedValues });
-        return Models.BomUser.update(updatedValues, { where: { user: myUser.user } }).then((result: any) => {
-          // if(result.shift() === 0) return null
-          Object.assign(myUser, updatedValues);
-          const { user } = myUser;
-          const hashed_id = md5(user);
-          if (updatedValues?.name)
-            return sendbird.updateUserNickname(hashed_id, updatedValues.name).then((sbResponse: any) => {
-              if (!sbResponse) return null;
-              return myUser;
-            });
-          return myUser;
-        });
-      });
+        
+        const result: any = await Models.BomUser.update(updatedValues, { where: { user: myUser.user } });
+        // if(result.shift() === 0) return null
+        Object.assign(myUser, updatedValues);
+        const { user } = myUser;
+        const hashed_id = md5(user);
+        
+        if (updatedValues?.name) {
+          try {
+            const sbResponse: any = await sendbird.updateUserNickname(hashed_id, updatedValues.name);
+            if (!sbResponse) return null;
+            return myUser;
+          } catch (sendbirdError) {
+            console.error('Sendbird update error:', sendbirdError);
+            return myUser; // Return user even if sendbird update fails
+          }
+        }
+        return myUser;
+      } catch (error) {
+        console.error('Database error during editProfile:', error);
+        return null;
+      }
     },
     changePassword: async (root: any, args: any, context: any, info: any) => {
       if (!args.password) return false;
@@ -428,25 +485,31 @@ export default {
         .createHash('md5')
         .update(args.password)
         .digest('hex');
-      return Models.BomUser.findOne({
-        attributes: ['user'],
-        where: {
-          pass: { [Op.notLike]: newPassword }
-        },
-        include: [
-          {
-            model: Models.BomUserToken,
-            where: {
-              token: args.token
+      
+      try {
+        const myUser: any = await Models.BomUser.findOne({
+          attributes: ['user'],
+          where: {
+            pass: { [Op.notLike]: newPassword }
+          },
+          include: [
+            {
+              model: Models.BomUserToken,
+              where: {
+                token: args.token
+              }
             }
-          }
-        ]
-      }).then((myUser: any) => {
-        if (!myUser?.user) return false;
-        return Models.BomUser.update({ pass: newPassword }, { where: { user: myUser.user } }).then((result: any) => {
-          return result.shift() === 1;
+          ]
         });
-      });
+
+        if (!myUser?.user) return false;
+        
+        const result: any = await Models.BomUser.update({ pass: newPassword }, { where: { user: myUser.user } });
+        return result.shift() === 1;
+      } catch (error) {
+        console.error('Database error during changePassword:', error);
+        return false;
+      }
     },
     log: async (root: any, args: any, context: any, info: any) => {
       return getUserForLog(args.token).then((userInfo: any) => {
