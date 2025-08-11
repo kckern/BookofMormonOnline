@@ -77,29 +77,33 @@ const {
  */
 export const sequelize = new Sequelize(MYSQL_DB, MYSQL_USER, MYSQL_PASSWORD, {
   dialect: 'mysql',
-  logging: (query) => {
-    return false;
-    query = query.replace("Executing (default): ", "");
-    const now = new Date();
-    const oneLineQuery = query.replace(/\n/g, ' ').replace(/\s+/g, ' ');
-    fs.appendFile('log.sql', `-- ${now.toISOString()}\n${oneLineQuery}\n\n`, (err) => {
-      if (err) {
-        console.error(err);
-      }
-    } );
-  },
+  logging: false, // Disabled logging to avoid unreachable code and improve performance
   host: MYSQL_HOST,
   pool: {
-    acquire: +DB_POOL_ACQUIRE,
-    idle: +DB_POOL_IDLE,
-    max: +DB_POOL_MAX_CONN,
-    min: +DB_POOL_MIN_CONN
+    acquire: +DB_POOL_ACQUIRE || 60000,  // Increase timeout to 60 seconds
+    idle: +DB_POOL_IDLE || 10000,        // Close idle connections after 10 seconds
+    max: +DB_POOL_MAX_CONN || 10,        // Reduce max connections to be more conservative
+    min: +DB_POOL_MIN_CONN || 0,         // Allow pool to scale down completely
+    evict: 1000                          // Check for idle connections every second
   },
   port: +process.env.MYSQL_PORT,
   define: {
     paranoid: true
   }
 });
+
+// Add connection monitoring and error handling
+sequelize.authenticate()
+  .then(() => console.log('Database connected successfully'))
+  .catch(err => console.error('Database connection failed:', err));
+
+// Monitor pool status (runs every 30 seconds)
+setInterval(() => {
+  const pool = (sequelize.connectionManager as any).pool;
+  if (pool) {
+    console.log(`Pool status - Size: ${pool.size}, Available: ${pool.available}, Pending: ${pool.pending}`);
+  }
+}, 30000);
 
 export const SQLQueryTypes = QueryTypes;
 
