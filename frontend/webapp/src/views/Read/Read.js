@@ -199,7 +199,7 @@ export default function ReadScripture({ appController }) {
             {readData ? readData.sections?.map((section, index) => {
                 return <div key={index} className="read-section">
                     <div className="read-section-header">
-                        <h4>{section.heading.replace(/｢\d+｣/g, "").trim()}</h4>
+                        <h4>{section.heading?.replace(/｢\d+｣/g, "").trim()}</h4>
                         <p><Link to={`/study/${slugify(getEnglishReference(section.ref))}`}>
                     
                         {section.ref}<button className="btn btn-sm btn-outline-secondary" >{label("study_button")}</button></Link></p>    
