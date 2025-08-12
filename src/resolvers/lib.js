@@ -422,9 +422,13 @@ const loadPlanData = async (slug) => {
     );
     
     // Utilize the sectionGuids if available. If not, then fetch from DB and UPDATE it.
-    for (let seg of planSegments) {
-        if (!seg.sectionGuids) {
-            seg.sectionGuids = (await queryDB(
+    // Process segments that need sectionGuids in parallel to avoid connection leaks
+    const segmentsNeedingGuids = planSegments.filter(seg => !seg.sectionGuids);
+    
+    if (segmentsNeedingGuids.length > 0) {
+        // Fetch all section guids in parallel
+        const sectionGuidPromises = segmentsNeedingGuids.map(seg => 
+            queryDB(
                 `SELECT section FROM (
                     SELECT bom_text.section, bom_lookup.verse_id
                     FROM bom_lookup
@@ -435,18 +439,38 @@ const loadPlanData = async (slug) => {
                  GROUP BY section
                  ORDER BY MIN(tmp.verse_id) ASC`, 
                 [seg.start, seg.end]
-            )).map(s => s.section);
-
-            // Update the bom_readingplan_seg table with the fetched sectionGuids
-            await queryDB(
-                `UPDATE bom_readingplan_seg SET sectionGuids = ? WHERE guid = ?`, 
-                [JSON.stringify(seg.sectionGuids), seg.guid]
+            ).then(results => ({
+                guid: seg.guid,
+                sectionGuids: results.map(s => s.section)
+            }))
+        );
+        
+        const sectionGuidResults = await Promise.all(sectionGuidPromises);
+        
+        // Update segments with results
+        sectionGuidResults.forEach(result => {
+            const seg = segmentsNeedingGuids.find(s => s.guid === result.guid);
+            if (seg) seg.sectionGuids = result.sectionGuids;
+        });
+        
+        // Batch update all segments at once
+        if (sectionGuidResults.length > 0) {
+            const updatePromises = sectionGuidResults.map(result =>
+                queryDB(
+                    `UPDATE bom_readingplan_seg SET sectionGuids = ? WHERE guid = ?`, 
+                    [JSON.stringify(result.sectionGuids), result.guid]
+                )
             );
-        } else {
-            // If sectionGuids are already in JSON format, parse back to array
-            seg.sectionGuids = JSON.parse(seg.sectionGuids);
+            await Promise.all(updatePromises);
         }
     }
+    
+    // Parse existing sectionGuids from JSON
+    planSegments.forEach(seg => {
+        if (seg.sectionGuids && typeof seg.sectionGuids === 'string') {
+            seg.sectionGuids = JSON.parse(seg.sectionGuids);
+        }
+    });
 
     planData["planSegments"] = planSegments;
     return planData;

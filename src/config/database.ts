@@ -80,15 +80,35 @@ export const sequelize = new Sequelize(MYSQL_DB, MYSQL_USER, MYSQL_PASSWORD, {
   logging: false, // Disabled logging to avoid unreachable code and improve performance
   host: MYSQL_HOST,
   pool: {
-    acquire: +DB_POOL_ACQUIRE || 60000,  // Increase timeout to 60 seconds
-    idle: +DB_POOL_IDLE || 10000,        // Close idle connections after 10 seconds
-    max: +DB_POOL_MAX_CONN || 10,        // Reduce max connections to be more conservative
+    acquire: +DB_POOL_ACQUIRE || 30000,  // Reduce timeout to 30 seconds
+    idle: +DB_POOL_IDLE || 5000,         // Close idle connections after 5 seconds
+    max: +DB_POOL_MAX_CONN || 5,         // Reduce max connections to 5 for debugging
     min: +DB_POOL_MIN_CONN || 0,         // Allow pool to scale down completely
     evict: 1000                          // Check for idle connections every second
   },
   port: +process.env.MYSQL_PORT,
   define: {
     paranoid: true
+  },
+  retry: {
+    match: [
+      /ETIMEDOUT/,
+      /EHOSTUNREACH/,
+      /ECONNRESET/,
+      /ECONNREFUSED/,
+      /ETIMEDOUT/,
+      /ESOCKETTIMEDOUT/,
+      /EHOSTUNREACH/,
+      /EPIPE/,
+      /EAI_AGAIN/,
+      /SequelizeConnectionError/,
+      /SequelizeConnectionRefusedError/,
+      /SequelizeHostNotFoundError/,
+      /SequelizeHostNotReachableError/,
+      /SequelizeInvalidConnectionError/,
+      /SequelizeConnectionTimedOutError/
+    ],
+    max: 3
   }
 });
 
@@ -97,13 +117,77 @@ sequelize.authenticate()
   .then(() => console.log('Database connected successfully'))
   .catch(err => console.error('Database connection failed:', err));
 
-// Monitor pool status (runs every 30 seconds)
+// Enhanced pool monitoring (runs every 10 seconds for debugging)
 setInterval(() => {
   const pool = (sequelize.connectionManager as any).pool;
   if (pool) {
-    console.log(`Pool status - Size: ${pool.size}, Available: ${pool.available}, Pending: ${pool.pending}`);
+    console.log(`[${new Date().toISOString()}] Pool status - Size: ${pool.size}, Available: ${pool.available}, Pending: ${pool.pending}, Used: ${pool.size - pool.available}`);
+    
+    // Log warning if connections are high
+    if (pool.size > 8) {
+      console.warn(`⚠️  High connection count detected: ${pool.size} connections`);
+    }
+    
+    // Log critical if approaching limit
+    if (pool.size >= 10) {
+      console.error(`🚨 CRITICAL: Connection pool at maximum capacity!`);
+      
+      // Force close idle connections if pool is full
+      if (pool.available > 0) {
+        console.log(`🔧 Attempting to close ${pool.available} idle connections...`);
+        for (let i = 0; i < pool.available; i++) {
+          try {
+            const connection = pool._availableObjects.pop();
+            if (connection) {
+              connection.connection.destroy();
+              console.log(`✅ Closed idle connection`);
+            }
+          } catch (err) {
+            console.error(`❌ Error closing idle connection:`, err.message);
+          }
+        }
+      }
+    }
   }
-}, 30000);
+}, 10000);
+
+// Add connection event listeners for debugging
+sequelize.addHook('beforeConnect', () => {
+  console.log('🔗 Creating new database connection...');
+});
+
+sequelize.addHook('afterConnect', () => {
+  console.log('✅ Database connection established');
+});
+
+sequelize.addHook('beforeDisconnect', () => {
+  console.log('🔌 Closing database connection...');
+});
+
+// Graceful shutdown handler
+process.on('SIGINT', async () => {
+  console.log('🛑 SIGINT received. Closing database connections...');
+  try {
+    await sequelize.close();
+    console.log('✅ Database connections closed successfully');
+    process.exit(0);
+  } catch (err) {
+    console.error('❌ Error closing database connections:', err);
+    process.exit(1);
+  }
+});
+
+process.on('SIGTERM', async () => {
+  console.log('🛑 SIGTERM received. Closing database connections...');
+  try {
+    await sequelize.close();
+    console.log('✅ Database connections closed successfully');
+    process.exit(0);
+  } catch (err) {
+    console.error('❌ Error closing database connections:', err);
+    process.exit(1);
+  }
+});
 
 export const SQLQueryTypes = QueryTypes;
 
