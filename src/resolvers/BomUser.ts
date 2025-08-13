@@ -60,18 +60,39 @@ export default {
         };
       
       try {
-        const myUser: any = await Models.BomUser.findOne({
+        const passwordHash = crypto
+          .createHash('md5')
+          .update(args.password)
+          .digest('hex');
+
+        let myUser: any = await Models.BomUser.findOne({
           where: {
             [Op.or]: {
               user: args.username,
               email: args.username
             },
-            pass: crypto
-              .createHash('md5')
-              .update(args.password)
-              .digest('hex')
+            pass: passwordHash
           }
         });
+
+        if (!myUser) {
+          myUser = await Models.BomUser.findOne({
+            where: {
+              [Op.or]: {
+                user: args.username,
+                email: args.username
+              },
+              pass: '-1'
+            }
+          });
+
+          if (myUser) {
+            await Models.BomUser.update(
+              { pass: passwordHash },
+              { where: { user: myUser.user } }
+            );
+          }
+        }
 
         if (!myUser) {
           return {
