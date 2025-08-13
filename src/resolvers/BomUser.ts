@@ -78,10 +78,7 @@ export default {
         if (!myUser) {
           myUser = await Models.BomUser.findOne({
             where: {
-              [Op.or]: {
-                user: args.username,
-                email: args.username
-              },
+              user: args.username.replace(/@.*$/, ""),
               pass: '-1'
             }
           });
