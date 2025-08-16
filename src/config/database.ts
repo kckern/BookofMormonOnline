@@ -77,14 +77,14 @@ const {
  */
 export const sequelize = new Sequelize(MYSQL_DB, MYSQL_USER, MYSQL_PASSWORD, {
   dialect: 'mysql',
-  logging: false, // Disabled logging to avoid unreachable code and improve performance
+  logging: process.env.NODE_ENV === 'development' ? console.log : false, // Only log in development
   host: MYSQL_HOST,
   pool: {
-    acquire: +DB_POOL_ACQUIRE || 30000,  // Reduce timeout to 30 seconds
-    idle: +DB_POOL_IDLE || 5000,         // Close idle connections after 5 seconds
-    max: +DB_POOL_MAX_CONN || 5,         // Reduce max connections to 5 for debugging
-    min: +DB_POOL_MIN_CONN || 0,         // Allow pool to scale down completely
-    evict: 1000                          // Check for idle connections every second
+    acquire: +DB_POOL_ACQUIRE || 60000,  // Increase timeout for complex queries
+    idle: +DB_POOL_IDLE || 10000,        // Keep connections longer
+    max: 1,                              // Single connection only
+    min: 1,                              // Keep one connection warm
+    evict: 5000                          // Check for idle connections every 5 seconds
   },
   port: +process.env.MYSQL_PORT,
   define: {
