@@ -13,3 +13,4 @@ Thumbs.db
 key
 *.env
 log.sql
+/test
