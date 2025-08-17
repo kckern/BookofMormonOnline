@@ -5,17 +5,17 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 import { ApolloServer } from 'apollo-server-express';
 import { apollo_config } from './config/apollo';
 import express from 'express';
-import {handleSSR} from '../src/ssr/index.js';
-import {requireSSR} from '../src/ssr/lib.js';
-//import json_apis from  '../src/json/index.js';
+import {handleSSR} from './ssr/index';
+import {requireSSR} from './ssr/lib';
+//import json_apis from  './json/index';
 import httpProxy from 'http-proxy';
 import dns from 'dns';
 import net from 'net';
 import axios from 'axios';
 import bodyParser from 'body-parser';
 import { processSphinx } from './search/sphinx';
-import {ping} from "../src/library/ping.js"
-import {apis,endpoints} from "../src/api/index.js"
+import {ping} from "./library/ping"
+import {apis,endpoints} from "./api/index"
 
 
 const langs = process.env.LANGS?.split(',') || ['', 'en', 'ko', 'dev'];
@@ -46,10 +46,7 @@ const findTarget = (req:any): string | boolean  => {
   let fwdTarget = "";
   const fwds = [
     ["ssr", process.env.PROXY_BOM_SSR],
-    ["preview", process.env.PROXY_BOM_IMG],
-    ["sg", process.env.PROXY_SCRIPTURE_GUIDE],
-    ["translate", process.env.PROXY_TRANSLATE],
-    ["scripture.guide", process.env.PROXY_SCRIPTURE_GUIDE]
+    ["preview", process.env.PROXY_BOM_IMG]
     ];
   fwdTarget = fwds.find(([sub, target]) => (new RegExp(`^${sub}`,"i")).test(host))?.pop() || "";
 

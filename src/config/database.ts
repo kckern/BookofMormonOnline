@@ -82,8 +82,8 @@ export const sequelize = new Sequelize(MYSQL_DB, MYSQL_USER, MYSQL_PASSWORD, {
   pool: {
     acquire: +DB_POOL_ACQUIRE || 60000,  // Increase timeout for complex queries
     idle: +DB_POOL_IDLE || 10000,        // Keep connections longer
-    max: 1,                              // Single connection only
-    min: 1,                              // Keep one connection warm
+    max: +DB_POOL_MAX_CONN || 10,        // Increase max connections
+    min: +DB_POOL_MIN_CONN || 2,         // Keep minimum connections warm
     evict: 5000                          // Check for idle connections every 5 seconds
   },
   port: +process.env.MYSQL_PORT,

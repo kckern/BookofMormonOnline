@@ -1,5 +1,5 @@
 
-const { sequelize, SQLQueryTypes } = require('../../config/database');
+const { sequelize, SQLQueryTypes } = require('../../../dist/config/database');
 const dotenv = require('dotenv');
 dotenv.config();
 

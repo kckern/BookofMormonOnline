@@ -1,6 +1,6 @@
 import { models, models as Models } from '../config/database';
 import Sequelize, { Model } from 'sequelize';
-import { sendbird } from '../library/sendbird.js';
+import { sendbird } from '../library/sendbird';
 const { genUserAvatar} = require('./lib')
 
 import crypto from 'crypto';
