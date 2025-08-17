@@ -6,9 +6,11 @@
         "moduleResolution": "node",
         "skipLibCheck": true,
         "sourceMap": true,
-        "outDir": ".build",
+        "outDir": "dist",
+        "rootDir": "./src",
         "baseUrl": ".",
         "resolveJsonModule": true,
+        "allowJs": true,
         "lib": [
             "es6",
             "esnext.asynciterable"
