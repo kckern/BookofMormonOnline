@@ -310,6 +310,9 @@ export default {
         
         // Refs/Cross-references
         (async () => {
+          if (!verse_ids || verse_ids.length === 0) {
+            return [];
+          }
           const placeholders = verse_ids.map(() => '?').join(',');
           const sql = `SELECT dst_verse_id as verse_id,\`type\`,significant,dst_ref as ref
             FROM \`scripture.guide\`.scripture_references 

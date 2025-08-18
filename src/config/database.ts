@@ -77,19 +77,20 @@ const {
  */
 export const sequelize = new Sequelize(MYSQL_DB, MYSQL_USER, MYSQL_PASSWORD, {
   dialect: 'mysql',
-  logging: process.env.NODE_ENV === 'development' ? console.log : false, // Only log in development
+  //logging: () => {},
   host: MYSQL_HOST,
   pool: {
-    acquire: +DB_POOL_ACQUIRE || 60000,  // Increase timeout for complex queries
-    idle: +DB_POOL_IDLE || 10000,        // Keep connections longer
-    max: +DB_POOL_MAX_CONN || 10,        // Increase max connections
-    min: +DB_POOL_MIN_CONN || 2,         // Keep minimum connections warm
-    evict: 5000                          // Check for idle connections every 5 seconds
+    acquire: +DB_POOL_ACQUIRE || 60000,
+    idle: +DB_POOL_IDLE || 30000, // Keep connections alive longer (30 seconds)
+    max: +DB_POOL_MAX_CONN || 8,  // Slightly reduce max connections
+    min: +DB_POOL_MIN_CONN || 4,  // Increase min to handle concurrent GraphQL resolvers
+    evict: 10000 // Check for idle connections every 10 seconds
   },
   port: +process.env.MYSQL_PORT,
   define: {
     paranoid: true
   },
+  benchmark: true, // <-- Enables executionTime in logging
   retry: {
     match: [
       /ETIMEDOUT/,
@@ -151,7 +152,9 @@ setInterval(() => {
   }
 }, 10000);
 
-// Add connection event listeners for debugging
+// Connection event listeners disabled for cleaner logs
+// Can be re-enabled for debugging connection issues
+/*
 sequelize.addHook('beforeConnect', () => {
   console.log('🔗 Creating new database connection...');
 });
@@ -163,6 +166,7 @@ sequelize.addHook('afterConnect', () => {
 sequelize.addHook('beforeDisconnect', () => {
   console.log('🔌 Closing database connection...');
 });
+*/
 
 // Graceful shutdown handler
 process.on('SIGINT', async () => {

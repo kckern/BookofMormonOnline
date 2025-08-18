@@ -23,6 +23,7 @@
     "graphql-resolvers": "^0.4.2",
     "http-proxy": "^1.18.1",
     "is-json": "^2.0.1",
+    "js-yaml": "^4.1.0",
     "jsonwebtoken": "^9.0.2",
     "lodash": "^4.17.21",
     "moment": "^2.29.4",
