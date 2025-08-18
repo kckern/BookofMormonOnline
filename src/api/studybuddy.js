@@ -570,6 +570,9 @@ const loadPeople = async (people_slugs,lang="en") => {
     const max_sentences = 5;
     people_slugs = people_slugs.filter((slug) => !["god","jesus-christ"].includes(slug));
   
+    // Check again after filtering
+    if(!people_slugs?.length) return [];
+  
     let sql = `SELECT * FROM bom_people WHERE slug IN (${people_slugs.map((slug) => `"${slug}"`).join(",")})`;
     let people = await queryDB(sql);
 
@@ -733,6 +736,10 @@ const loadCommentary = async (verse_ids) => {
 
   
 const loadCrossReferences = async (verse_ids, lang) => {
+    if (!verse_ids || !Array.isArray(verse_ids) || verse_ids.length === 0) {
+        return [];
+    }
+    
     let sql;
     
     if(lang && lang !== 'en') {

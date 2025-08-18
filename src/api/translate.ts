@@ -5,8 +5,12 @@ const loadTranslations = async (lang: string, items: any[], guidkey: string = "g
 
     if(!items || !items.length) return [];
     if(!Array.isArray(items)) items = [items];
-    const guids = items.map(item => item?.[guidkey]);
+    const guids = items.map(item => item?.[guidkey]).filter(guid => guid != null);
     const refKeys = [...new Set(items.flatMap(item => Object.keys(item)))].filter(key => ["guid",guidkey].indexOf(key) === -1);
+    
+    // Return early if no guids or refKeys to query
+    if (!guids.length || !refKeys.length) return items;
+    
     const sql = `SELECT refkey, value, guid FROM bom_translation 
         WHERE lang = ? AND guid IN (${guids.map((guid) => "?").join(",")}) 
         AND refkey IN (${refKeys.map((key) => "?").join(",")})`;
