@@ -2,6 +2,7 @@ import { Sequelize, QueryTypes } from 'sequelize';
 import {Op} from '../resolvers/_common';
 import fs from 'fs';
 
+import BomCache from '../database/models/bom_cache';
 import BomCapsulation from '../database/models/bom_capsulation';
 import BomDataBible from '../database/models/bom_bible';
 import BomConnection from '../database/models/bom_connection';
@@ -77,7 +78,7 @@ const {
  */
 export const sequelize = new Sequelize(MYSQL_DB, MYSQL_USER, MYSQL_PASSWORD, {
   dialect: 'mysql',
-  //logging: () => {},
+  logging: false,
   host: MYSQL_HOST,
   pool: {
     acquire: +DB_POOL_ACQUIRE || 60000,
@@ -197,6 +198,7 @@ export const SQLQueryTypes = QueryTypes;
 
 export const models: Models = {
 
+  BomCache: BomCache.initModel(sequelize),
   BomCapsulation: BomCapsulation.initModel(sequelize),
   BoMDataBible: BomDataBible.initModel(sequelize),
   BomConnection: BomConnection.initModel(sequelize),

@@ -42,21 +42,72 @@ export default {
     page: async (root: any, args: any, context: any, info: any) => {
       const lang = context.lang ? context.lang : null;
       const slugs = getSlugTip(args.slug);
+      
+      // Try field-level cache first for full page subtree
+      if ('slug' in args && args.slug) {
+        const slugStr = Array.isArray(args.slug) ? args.slug[0] : String(args.slug);
+        console.log(`🔍 Page query for: ${slugStr}`);
+        try {
+          const crypto = require('crypto');
+          const cacheData = { slug: [slugStr], lang: lang || 'en' };
+          const hash = crypto.createHash('md5').update(JSON.stringify(cacheData)).digest('hex');
+          const cacheKey = `page.${slugStr}`;
+
+          const cached = await Models.BomCache.findOne({ where: { key: cacheKey, hash } });
+          if (cached) {
+            console.log(`🎯 Cache HIT for page: ${slugStr}`);
+            const content = cached.getDataValue('content');
+            // Mark cached objects so child resolvers can passthrough when appropriate
+            const mark = (obj: any): any => {
+              if (Array.isArray(obj)) return obj.map(mark);
+              if (obj && typeof obj === 'object') {
+                const copy: any = { ...obj, __fromCache: true };
+                Object.keys(copy).forEach(k => {
+                  if (copy[k] && typeof copy[k] === 'object') copy[k] = mark(copy[k]);
+                });
+                return copy;
+              }
+              return obj;
+            };
+            return mark(content);
+          }
+          console.log(`⚡ Cache MISS for page: ${slugStr} - executing query`);
+        } catch (e) {
+          console.error('Cache error:', e);
+        }
+      }
+      
       const sectionTextOrder = ((new RegExp(`{"kind":"Name","value":"sectionText"`).test( JSON.stringify(info.fieldNodes))) ? [
         {model:Models.BomSection, as: "sections"},
         {model:Models.BomText, as: "sectionText"},
         "link"
       ] : null);
-      if ('slug' in args)
-        return Models.BomPage.findAll({
+      if ('slug' in args) {
+        const result = await Models.BomPage.findAll({
           include: [
             includeWhere( Models.BomSlug, "slug", slugs , "pageSlug",[]),
             includeTranslation('title', lang),
-            // Only load sections, not their nested rows - let GraphQL resolvers handle the rest
-            includeModel(info, Models.BomSection, 'sections', [
+            // Include ALL possible nested data for complete caching
+            includeModel(true, Models.BomSection, 'sections', [
               includeTranslation('title', lang),
               includeModel(true, Models.BomText, 'sectionText', [
                 includeTranslation("heading", lang)
+              ].filter(x => !!x)),
+              // Include all rows and their nested content
+              includeModel(true, Models.BomSectionrow, 'rows', [
+                includeModel(true, Models.BomConnection, 'connection', [includeTranslation('text', lang)].filter(x => !!x)),
+                includeModel(true, Models.BomCapsulation, 'capsulation', [includeTranslation({ [Op.or]: ['description', 'reference'] }, lang)].filter(x => !!x)),
+                includeModel(true, Models.BomNarration, 'narration', [
+                  includeTranslation('description', lang),
+                  includeModel(true, Models.BomTimeline, 'timeline'),
+                  // Include text here to avoid N+1 queries
+                  includeModel(true, Models.BomText, 'text', [
+                    includeTranslation({ [Op.or]: ['heading', 'content'] }, lang),
+                    includeModel(true, Models.BomText, 'quotes',[
+                      includeTranslation({ [Op.or]: ['heading', 'content'] }, lang)
+                    ].filter(x => !!x))
+                  ].filter(x => !!x))
+                ])
               ].filter(x => !!x))
             ].filter(x => !!x))
           ].filter(x => !!x),
@@ -72,7 +123,25 @@ export default {
               "link"
             ]
           ]
-        })
+        });
+        
+        // Save to cache for future hits
+        try {
+          const slugStr = Array.isArray(args.slug) ? args.slug[0] : String(args.slug);
+          const crypto = require('crypto');
+          const cacheData = { slug: [slugStr], lang: lang || 'en' };
+          const hash = crypto.createHash('md5').update(JSON.stringify(cacheData)).digest('hex');
+          const cacheKey = `page.${slugStr}`;
+          const timestamp = Math.floor(Date.now() / 1000);
+          await Models.BomCache.upsert({ key: cacheKey, hash, timestamp, content: result });
+          console.log(`💾 Cached result for: ${slugStr}`);
+        } catch (e) {
+          console.error('Cache save error:', e);
+        }
+
+        console.log(`✅ Page query completed: ${result.length} results`);
+        return result;
+      }
       return Models.BomPage.findAll({
       });
     },
@@ -356,20 +425,27 @@ queue: async (root: any, args: any, context: any, info: any) => {
   },
 
   Page: {
-    title: async (item: any, args: any, context: any, info: any) => {
+    title: async (item: any) => {
+      if (item.__fromCache) return item.title;
       return translatedValue(item, 'title');
     },
-    ref: async (item: any, args: any, { db, res }: any, info: any) => {
+    ref: async (item: any) => {
+      if (item.__fromCache) return item.ref;
       return translatedValue(item, 'ref');
     },
     slug: async (item: any, args: any, { db, res }: any, info: any) => {
-      return getSlug('link', item.getDataValue('guid'));
+      // Handle both Sequelize models and plain JSON objects from cache
+      const guid = item.getDataValue ? item.getDataValue('guid') : item.guid;
+      if (item.__fromCache && item.slug) return item.slug;
+      return getSlug('link', guid);
     },
     counts: async (item: any, args: any, { db, res }: any, info: any) => {
+      // Handle both Sequelize models and plain JSON objects from cache
+      const guid = item.getDataValue ? item.getDataValue('guid') : item.guid;
       return sequelize
         .query('SELECT min(link) as l, count(*) as count FROM `bom_text` WHERE page = :pageguid group by section order by l ;', {
           replacements: {
-            pageguid: item.getDataValue('guid')
+            pageguid: guid
           },
           type: SQLQueryTypes.SELECT
         })
@@ -380,33 +456,44 @@ queue: async (root: any, args: any, context: any, info: any) => {
     progress: (item: any, args: any, { db, res }: any, info: any) => { 
        return getUserForLog(args.token).then((userInfo: any) => {
          //let userInfo = {queryBy:"tytus",  lastcompleted : 1371215870};
-         const guids = [item.getDataValue("guid")];
+         const guid = item.getDataValue ? item.getDataValue('guid') : item.guid;
+         const guids = [guid];
          return scoreSlugsfromUserInfo(guids, userInfo)
        });
+    },
+    sections: async (item: any) => {
+      if (item.__fromCache) return item.sections;
+      return item.sections || [];
     },
   },
   
   Section: {
-    slug: async (item: any, args: any, { db, res }: any, info: any) => {
+    slug: async (item: any) => {
+      if (item.__fromCache && item.slug) return item.slug;
       if(!item?.getDataValue) return item.slug;
       return getSlug('link', item.getDataValue('guid'));
     },
-    title: async (item: any, args: any, { db, res }: any, info: any) => {
+    title: async (item: any) => {
+      if (item.__fromCache) return item.title;
       if(!item?.getDataValue) return item.title;
       return translatedValue(item, 'title');
     },
-    badge: async (item: any, args: any, { db, res }: any, info: any) => {
+    badge: async (item: any) => {
+      if (item.__fromCache) return item.badge;
       return translatedValue(item, 'badge');
     },
-    ref: async (item: any, args: any, { db, res }: any, info: any) => {
+    ref: async (item: any) => {
+      if (item.__fromCache) return item.ref;
       return translatedValue(item, 'ref');
     },
     rows: async (item: any, args: any, context: any, info: any) => {
+      if (item.__fromCache && Array.isArray(item.rows)) return item.rows;
       const lang = context.lang ? context.lang : null;
-      
+
+      const guid = item.getDataValue ? item.getDataValue('guid') : item.guid;
       return Models.BomSectionrow.findAll({
         where: {
-          parent: item.getDataValue('guid')
+          parent: guid
         },
         include: [
           includeModel(info, Models.BomConnection, 'connection', [includeTranslation('text', lang)].filter(x => !!x)),
@@ -427,76 +514,97 @@ queue: async (root: any, args: any, context: any, info: any) => {
       });
     },
     page: async (item: any, args: any, context: any, info: any) => {
+      if (item.__fromCache) return item.page;
       const lang = context.lang ? context.lang : null;
+      const parent = item.getDataValue ? item.getDataValue('parent') : item.parent;
       return Models.BomPage.findOne({
         where: {
-          guid: item.getDataValue('parent')
+          guid: parent
         },include:[includeTranslation('title', lang)].filter(x => !!x)
       });
     }
   },
   Row: {
     narration: async (item: any, args: any, { db, res }: any, info: any) => {
-      if (item.getDataValue('type') === 'N') {
-        return item.getDataValue('narration');
+      if (item.__fromCache) return item.narration;
+      const type = item.getDataValue ? item.getDataValue('type') : item.type;
+      if (type === 'N') {
+        return item.getDataValue ? item.getDataValue('narration') : item.narration;
       }
     },
     connection: async (item: any, args: any, { db, res }: any, info: any) => {
-      if (item.getDataValue('type') === 'C') {
-        return item.getDataValue('connection');
+      if (item.__fromCache) return item.connection;
+      const type = item.getDataValue ? item.getDataValue('type') : item.type;
+      if (type === 'C') {
+        return item.getDataValue ? item.getDataValue('connection') : item.connection;
       }
     },
     capsulation: async (item: any, args: any, { db, res }: any, info: any) => {
-      if (item.getDataValue('type') === 'O') {
-        return item.getDataValue('capsulation');
+      if (item.__fromCache) return item.capsulation;
+      const type = item.getDataValue ? item.getDataValue('type') : item.type;
+      if (type === 'O') {
+        return item.getDataValue ? item.getDataValue('capsulation') : item.capsulation;
       }
     }
   },
   Conn: {
     text: (item: any, args: any, { db, res }: any, info: any) => {
+  if (item.__fromCache) return item.text;
       return translatedValue(item, 'text');
     },
     link: async (item: any, args: any, { db, res }: any, info: any) => {
-      return getSlug('guid', item.getDataValue('link'));
+      if (item.__fromCache) return item.link;
+      const link = item.getDataValue ? item.getDataValue('link') : item.link;
+      return getSlug('guid', link);
     },
     slug: (item: any, args: any, { db, res }: any, info: any) => {
-      return getSlug('guid', item.getDataValue("link"));
+      if (item.__fromCache) return item.slug;
+      const link = item.getDataValue ? item.getDataValue('link') : item.link;
+      return getSlug('guid', link);
     }
   },
   Caps: {
     description: (item: any, args: any, { db, res }: any, info: any) => {
+  if (item.__fromCache) return item.description;
       return translatedValue(item, 'description');
     },
     reference: (item: any, args: any, { db, res }: any, info: any) => {
+  if (item.__fromCache) return item.reference;
       return translatedValue(item, 'reference');
     },
     slug: (item: any, args: any, { db, res }: any, info: any) => {
-      return getSlug('guid', item.getDataValue("link"));
+      if (item.__fromCache) return item.slug;
+      const link = item.getDataValue ? item.getDataValue('link') : item.link;
+      return getSlug('guid', link);
     }
   },
   Narration: {
     text(item: any) {
-      return item.getDataValue('text');
+  if (item.__fromCache) return item.text;
+      return item.getDataValue ? item.getDataValue('text') : item.text;
     },
     description: (item: any, args: any, { db, res }: any, info: any) => {
+  if (item.__fromCache) return item.description;
       return translatedValue(item, 'description');
     },
     timeline(item: any) {
-      return item.getDataValue('timeline');
+  if (item.__fromCache) return item.timeline;
+      return item.getDataValue ? item.getDataValue('timeline') : item.timeline;
     },
     section(item: any) {
-      return Models.BomSection.findOne({ where: { guid: item.getDataValue('parent') } });
+  if (item.__fromCache) return item.section;
+      const parent = item.getDataValue ? item.getDataValue('parent') : item.parent;
+      return Models.BomSection.findOne({ where: { guid: parent } });
     }
   },
   TextBlock: {
     status: async (item: any, args: any, { db, res }: any, x: any) => {
-
-
-      if(!item?.getDataValue) return item.status;
+  // Always compute status (per-user)
+  if(!item?.getDataValue && !item?.guid) return item.status;
       const percentToCountAsComplete = parseInt(process.env.PERCENT_TO_COUNT_AS_COMPLETE) || 40;
 
       const {token} = args;
-      const textGuid = item.getDataValue('guid');
+      const textGuid = item.getDataValue ? item.getDataValue('guid') : item.guid;
 
       //load username from token 
       const {queryBy,userObj} = await getUserForLog(token);
@@ -515,7 +623,7 @@ queue: async (root: any, args: any, context: any, info: any) => {
       return status
     },
     heading: async (item: any, args: any, { db, res, lang }: any, info: any) => {
-
+  if (item.__fromCache) return item.heading;
       if(!item?.getDataValue) return item.heading;
 
       // console.log(item)
@@ -523,7 +631,7 @@ queue: async (root: any, args: any, context: any, info: any) => {
       if(/[0-9]/.test(heading)) return heading;
 
       //load parent Heading
-      const parentGuid = item.getDataValue('parent');
+      const parentGuid = item.getDataValue ? item.getDataValue('parent') : item.parent;
       const parentHeading = await Models.BomQuote.findOne({
         raw: true,
         where: {
@@ -551,28 +659,37 @@ queue: async (root: any, args: any, context: any, info: any) => {
 
     },
     content: (item: any, args: any, { db, res }: any, info: any) => {
+  if (item.__fromCache) return item.content;
       return translatedValue(item, 'content');
     },
     slug: (item: any, args: any, { db, res }: any, info: any) => 
     {
+      if (item.__fromCache) return item.slug;
       if(!item?.getDataValue) return item?.slug;
-      return getSlug('link', item.getDataValue('page')).then(slug=>slug+"/"+item.getDataValue('link'));
+      const page = item.getDataValue ? item.getDataValue('page') : item.page;
+      const link = item.getDataValue ? item.getDataValue('link') : item.link;
+      return getSlug('link', page).then(slug=>slug+"/"+link);
     },
     imgIds: (item: any, args: any, { db, res }: any, info: any) => 
     {
-      let imageIds = item.dataValues.content.match(/\[i\](\d+)\[\/i\]/ig);
+  // compute from content even on cache
+  let content = item.dataValues ? item.dataValues.content : item.content;
+      let imageIds = content.match(/\[i\](\d+)\[\/i\]/ig);
       imageIds = imageIds && imageIds.map((i:string) => parseInt(i.replace(/\D+/g, ''))) || [];
      return imageIds;
     },
     comIds: (item: any, args: any, { db, res }: any, info: any) => 
     {
-      let comIds = item.dataValues.content.match(/\[c\](\d+)\[\/c\]/ig);
+  // compute from content even on cache
+  let content = item.dataValues ? item.dataValues.content : item.content;
+      let comIds = content.match(/\[c\](\d+)\[\/c\]/ig);
       comIds = comIds && comIds.map((i:string) => parseInt(i.replace(/\D+/g, '')));
      return comIds;
     },
     refs: async (item: any, args: any, { db, res }: any, info: any) =>{
+  // Always compute refs to ensure latest related references
 
-      const text_guid = item.getDataValue('guid');
+      const text_guid = item.getDataValue ? item.getDataValue('guid') : item.guid;
       const verse_ids = await Models.BomLookup.findAll({
         where: {
           text_guid
@@ -609,10 +726,10 @@ queue: async (root: any, args: any, context: any, info: any) => {
     next: async (item: any, args: any, { db, res, lang }: any, info: any) =>{
 
       //get this  narration id
-      const rowGuid = item.getDataValue('narration')?.getDataValue('parent');
+  const rowGuid = item.getDataValue ? item.getDataValue('narration')?.getDataValue('parent') : item?.narration?.parent;
       if(!rowGuid) return [];
       //get page guid
-      const pageGuid = item.getDataValue('page');
+  const pageGuid = item.getDataValue ? item.getDataValue('page') : item.page;
       
       //get all page sections, then get section rows from all the sections 
       const sections = await Models.BomSection.findAll({
@@ -727,28 +844,35 @@ queue: async (root: any, args: any, context: any, info: any) => {
 
     },
     people: async (item: any, args: any, context: any, info: any) =>{
+      if (item.__fromCache) return item.people;
       const lang = context.lang ? context.lang : null;
-      const textBlockGuid = item.getDataValue('guid');
-      const narrationDescription = item.getDataValue('narration')?.getDataValue('description') || await (async ()=>{
-        const narration:any = await Models.BomNarration.findOne({raw:true,where:{guid:item.getDataValue('parent')}});
+      const textBlockGuid = item.getDataValue ? item.getDataValue('guid') : item.guid;
+      const narration = item.getDataValue ? item.getDataValue('narration') : item.narration;
+      const narrationDescription = narration?.getDataValue ? narration.getDataValue('description') : narration?.description || await (async ()=>{
+        const parent = item.getDataValue ? item.getDataValue('parent') : item.parent;
+        const narration:any = await Models.BomNarration.findOne({raw:true,where:{guid:parent}});
         return narration?.description || "";
       })();
       const peopleSlugs = narrationDescription?.match(/\{([^}]+)\}/g)?.map((s:string)=>s.replace(/[{}]/g, '').split("|")[1]);
       return await loadPeopleFromTextGuid(textBlockGuid,peopleSlugs,lang);
     },
     places: async (item: any, args: any, context: any, info: any) =>{
+      if (item.__fromCache) return item.places;
       const lang = context.lang ? context.lang : null;
-      const textBlockGuid = item.getDataValue('guid');
-      const narrationDescription = item.getDataValue('narration')?.getDataValue('description') || await (async ()=>{
-        const narration:any = await Models.BomNarration.findOne({raw:true,where:{guid:item.getDataValue('parent')}});
+      const textBlockGuid = item.getDataValue ? item.getDataValue('guid') : item.guid;
+      const narration = item.getDataValue ? item.getDataValue('narration') : item.narration;
+      const narrationDescription = narration?.getDataValue ? narration.getDataValue('description') : narration?.description || await (async ()=>{
+        const parent = item.getDataValue ? item.getDataValue('parent') : item.parent;
+        const narration:any = await Models.BomNarration.findOne({raw:true,where:{guid:parent}});
         return narration?.description || "";
       })();
       const placeSlugs = narrationDescription?.match(/\[([^\]]+)\]/g)?.map((s:string)=>s.replace(/[\[\]]/g, '').split("|")[1]);
       return await loadPlacesFromTextGuid(textBlockGuid,placeSlugs,lang);
     },
     coms: async (item: any, args: any, context: any, info: any) =>{
+      if (item.__fromCache) return item.coms;
       const lang = context.lang ? context.lang : "en";
-      const text_guid = item.getDataValue('guid');
+      const text_guid = item.getDataValue ? item.getDataValue('guid') : item.guid;
       //const comIds = content?.match(/\[c\](\d+)\[\/c\]/ig)?.map((s:string)=>s.replace(/\D+/g, '')) || [];
       return Models.BomXtrasCommentary.findAll({
         where: {
@@ -764,14 +888,18 @@ queue: async (root: any, args: any, context: any, info: any) => {
       });
     },
     notes: async (item: any, args: any, context: any, info: any) =>{
+      if (item.__fromCache) return item.notes;
       const lang = context.lang ? context.lang : "en";
       //if not english, return empty array
       if(lang !== "en") return []; //todo translate notes eventually
-      return loadNotesFromTextGuid(item.getDataValue('guid'),lang);
+      const guid = item.getDataValue ? item.getDataValue('guid') : item.guid;
+      return loadNotesFromTextGuid(guid,lang);
     },
     note_count: async (item: any, args: any, context: any, info: any) =>{
+      if (item.__fromCache) return item.note_count;
       const lang = context.lang ? context.lang : "en";
-      return loadNotesFromTextGuid(item.getDataValue('guid'),lang).then(r=>r.length);
+      const guid = item.getDataValue ? item.getDataValue('guid') : item.guid;
+      return loadNotesFromTextGuid(guid,lang).then(r=>r.length);
     },
     imgs: async (item: any, args: any, context: any, info: any) =>{
       const content = item.getDataValue('content');

@@ -1,3 +1,4 @@
+import BomCache from '../models/bom_cache';
 import BomCapsulation from '../models/bom_capsulation';
 import BomConnection from '../models/bom_connection';
 import BomIndex from '../models/bom_index';
@@ -53,6 +54,7 @@ import BomXtrasChiasmus from '../models/bom_xtras_chiasmus';
 import BoMDataBible from '../models/bom_bible';
 
 export interface Models {
+  BomCache: typeof BomCache;
   BomCapsulation: typeof BomCapsulation;
   BoMDataBible: typeof BoMDataBible;
   BomConnection: typeof BomConnection;
