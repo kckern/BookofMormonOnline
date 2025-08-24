@@ -51,7 +51,8 @@ const messagePreScreen = async (message,lang) => {
     }
     `;
     const results = await askGPT(instructions, [{role:"user",content:message}], "gpt-3.5-turbo");
-    let JSONString = results.replace(/[\n\r]+/g,"").replace(/^[^\{]+/,"").replace(/[^\}]+$/,"").trim();
+    if (!results) return false;
+    let JSONString = (results as string).replace(/[\n\r]+/g,"").replace(/^[^\{]+/,"").replace(/[^\}]+$/,"").trim();
     if(!JSONString.startsWith("{")) JSONString = "{"+JSONString;
     if(!JSONString.endsWith("}")) JSONString = JSONString+"}";
     const valid = isJSON(JSONString);
@@ -510,7 +511,8 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId, lang, studyBuddyId})
     
     startTyping();
     log("studyBuddyTextBlock prepared messages",{messages});
-    let response =  (await askGPT(instructions, messages, "gpt-3.5-turbo-16k"))?.split(/[\n\r]+/). join(" ");
+    const gptResponse = await askGPT(instructions, messages, "gpt-3.5-turbo-16k");
+    let response = gptResponse ? gptResponse.split(/[\n\r]+/).join(" ") : "";
     response = postProcessResponse(response, ref);
     log("studyBuddyTextBlock generated response",{response});
     
