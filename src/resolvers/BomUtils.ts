@@ -20,7 +20,7 @@ import {
 } from './_common';
 import { sphinxQuery } from '../search/sphinx';
 import { loadScripture, loadVerseHighlights, loadVerses } from './BomScripture';
-const axios = require('axios');
+import axios from 'axios';
 export default {
   Query: {
     labels: async (root: any, args: any, context: any, info: any) => {
