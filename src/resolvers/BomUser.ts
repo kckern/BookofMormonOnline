@@ -1,7 +1,7 @@
 import { models, models as Models } from '../config/database';
 import Sequelize, { Model } from 'sequelize';
 import { sendbird } from '../library/sendbird';
-const { genUserAvatar} = require('./lib')
+import { genUserAvatar } from './lib';
 
 import crypto from 'crypto';
 import {

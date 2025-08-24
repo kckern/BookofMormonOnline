@@ -6,7 +6,7 @@ import { sendbird } from "../library/sendbird";
 import * as isJSON from "is-json";
 import { loadTranslations } from "./translate";
 import * as smartquotes from 'smartquotes';
-import * as logger from "../library/utils/logger.cjs";
+import logger from "../library/utils/logger";
 const log = (msg: string, obj?: any) => obj ? logger.info(`studdybuddy ${msg} ${JSON.stringify(obj)}`) : logger.info(`studdybuddy ${msg}`);
 const error = (msg: string, obj?: any) => obj ? logger.error(`studdybuddy ${msg} ${JSON.stringify(obj)}`) : logger.error(`studdybuddy ${msg}`);
 

@@ -5,7 +5,7 @@ import scripture from '../library/scripture';
 import { lookupReference } from 'scripture-guide';
 import { loadPeopleFromTextGuid, loadPeopleFromVerseIds, loadPlacesFromVerseIds, loadNotesFromTextGuid } from './BomPeoplePlace';
 import { queryDB } from '../library/db';
-const { organizeRelatedScriptures } = require('./lib');
+import { organizeRelatedScriptures } from './lib';
 
 export default {
   Query: {

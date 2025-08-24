@@ -2,8 +2,8 @@ import { sendbird } from '../library/sendbird';
 import { models as Models } from '../config/database';
 import dotenv from 'dotenv';
 import { generateReference, setLang } from 'scripture-guide';
+import logger from "../library/utils/logger";
 dotenv.config();
-const logger = require("../library/utils/logger.cjs");
 const log = (msg:any,obj?:any) => obj ? logger.info(`utils ${msg} ${JSON.stringify(obj)}`) : logger.info(`utils ${msg}`);
 
 

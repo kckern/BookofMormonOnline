@@ -4,7 +4,7 @@ import { models as Models, sequelize, SQLQueryTypes } from '../config/database';
 import { getSlug, Op, includeTranslation, translatedValue, includeModel, includeWhere, scoreSlugsfromUserInfo, getSlugTip, getUserForLog} from './_common';
 import scripture from "../library/scripture"
 import { loadNotesFromTextGuid, loadPeopleFromTextGuid, loadPlacesFromTextGuid } from './BomPeoplePlace';
-const { getBlocksToQueue ,getFirstTextBlockGuidFromSlug,organizeRelatedScriptures} = require('./lib')
+import { getBlocksToQueue, getFirstTextBlockGuidFromSlug, organizeRelatedScriptures } from './lib';
 import { lookupReference,generateReference,setLanguage } from 'scripture-guide';
 import { queryDB } from '../library/db';
 import { loadLines,  loadVerses } from './BomScripture';

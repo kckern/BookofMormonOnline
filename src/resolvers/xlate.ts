@@ -1,5 +1,19 @@
-const postProcessFns = {
-  ko: i => {
+interface PostProcessFunction {
+  (text: string): string;
+}
+
+interface PostProcessFunctions {
+  [lang: string]: PostProcessFunction;
+}
+
+interface TranslationDictionary {
+  [bookName: string]: {
+    [lang: string]: string;
+  };
+}
+
+const postProcessFns: PostProcessFunctions = {
+  ko: (i: string): string => {
     i = i.replace(/([\u3131-\uD79D]) *([0-9]+)/gi, "$1 $2장  ");
     i = i.replace(/[–-]+/g, "~"); 
     i = i.replace(/\s*:\s*([0-9~]+)/g, "$1절");
@@ -14,11 +28,12 @@ const postProcessFns = {
 };
 
 //TEMPORARY FUNCTION UNTIL THIS BECOME NATIVE IN SCRIPTURE_GUIDE
-export const translateReferences = (text, lang) => {
+export const translateReferences = (text: string, lang: string): string => {
   //we assume the text is english and has already been processed by scripture guide
 
   if (lang !== "ko") return text;
-  const dictionary = {
+  
+  const dictionary: TranslationDictionary = {
     "1 Nephi": { ko: "니파이전서" },
     "2 Nephi": { ko: "니파이후서" },
     Jacob: { ko: "야곱서" },
@@ -108,13 +123,17 @@ export const translateReferences = (text, lang) => {
     Revelation: { ko: "요한 계시록" }
   };
 
-  let books = Object.keys(dictionary).join("|");
-  let pattern = new RegExp("(" + books + ")\\s*\\d+", "g");
-  text = text.replace(pattern, (match, p1) => {
+  const books = Object.keys(dictionary).join("|");
+  const pattern = new RegExp("(" + books + ")\\s*\\d+", "g");
+  
+  text = text.replace(pattern, (match: string, p1: string): string => {
     if (!dictionary[p1]?.[lang]) return match;
     return match.replace(p1, dictionary[p1][lang]);
   });
 
-  if (postProcessFns[lang]) text = postProcessFns[lang](text);
+  if (postProcessFns[lang]) {
+    text = postProcessFns[lang](text);
+  }
+  
   return text;
 };
