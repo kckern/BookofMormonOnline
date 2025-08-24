@@ -53,6 +53,8 @@
     "@types/graphql": "^14.5.0",
     "@types/node": "^20.9.2",
     "@types/redis": "^4.0.10",
+    "@types/winston": "^2.4.4",
+    "@types/winston-syslog": "^2.4.3",
     "@typescript-eslint/eslint-plugin": "^6.11.0",
     "@typescript-eslint/parser": "^6.11.0",
     "concurrently": "^8.2.2",

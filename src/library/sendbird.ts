@@ -1,10 +1,11 @@
-const axios = require('axios');
-const FormData = require('form-data');
-const fs = require('fs');
-const crypto = require('crypto');
-const isJSON = require("is-json");
-const logger = require("./utils/logger.ts").default;
-const log = (msg,obj) => obj ? logger.info(`sendbird ${msg} ${JSON.stringify(obj)}`) : logger.info(`sendbird ${msg}`);
+import axios from 'axios';
+import FormData from 'form-data';
+import * as fs from 'fs';
+import * as crypto from 'crypto';
+import isJSON from 'is-json';
+import logger from './utils/logger';
+
+const log = (msg: string, obj?: any) => obj ? logger.info(`sendbird ${msg} ${JSON.stringify(obj)}`) : logger.info(`sendbird ${msg}`);
 
 
 const {SENDBIRD_APPID, SENDBIRD_TOKEN} = process.env;
@@ -900,4 +901,4 @@ function checkExistsWithTimeout(path, timeout) {
   })
 }
 
-module.exports = { sendbird, getFwdUrl };
+export { sendbird, getFwdUrl };

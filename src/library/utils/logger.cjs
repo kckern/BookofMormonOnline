@@ -1,5 +1,5 @@
-const winston = require('winston');
-require('winston-syslog');
+import winston from 'winston';
+import 'winston-syslog';
 
 const papertrail = new winston.transports.Syslog({
   host: process.env.LOG_HOST,
@@ -16,7 +16,4 @@ const logger = winston.createLogger({
   transports: [papertrail]
 });
 
-
-
-
-module.exports = logger;
+export default logger;

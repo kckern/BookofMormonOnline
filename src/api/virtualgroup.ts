@@ -4,7 +4,7 @@ import { queryDB, loadScripturesFromVerseIds, loadTextGuidsFromVerseIds, loadPag
 import { loadTextBlockNarration, loadSectionContext, loadSectionNarration, loadCrossReferences } from './studybuddy';
 import { askGPT } from '../library/gpt';
 import { sendbird } from '../library/sendbird';
-import * as logger from "../library/utils/logger.cjs";
+import logger from "../library/utils/logger";
 const { postMessage } = sendbird;
 
 const virtualgrouptrigger = async (req: any, res: any) => {

@@ -1,11 +1,12 @@
-const { getUserForLog, Op, includeModel, getSlug, completedGuids } = require("./_common")
+import { getUserForLog, Op, includeModel, getSlug, completedGuids } from "./_common";
 import { queryDB } from '../library/db';
 import { models as Models, sequelize, SQLQueryTypes } from '../config/database';
 import { lookup, generateReference } from 'scripture-guide';
+import logger from '../library/utils/logger';
 import moment from 'moment';
 
 
-const getBlocksToQueue = async (token,items) => {
+const getBlocksToQueue = async (token: string, items: any[]): Promise<any> => {
 
     const isExplicit = items?.[0].slug && items?.[0]?.blocks?.[0];
     if(isExplicit) return items.map((item)=>({slug:item.slug,blocks:item.blocks}));
@@ -15,7 +16,7 @@ const getBlocksToQueue = async (token,items) => {
     if(isSlug) return await getBlocksFromSlug(items[0].slug,token);
 
     const isReference = items?.[0].reference;
-    if(isReference) return await getBlocksFromReference(items[0].reference);
+    if(isReference) return await getBlocksFromReference(items[0].reference, token);
 
     const isReadingPlan = items?.[0].plan || false;
     if(isReadingPlan) return await getBlocksFromReadingPlan(items[0].plan,token);
@@ -48,8 +49,8 @@ const getBlocksFromReference = async (reference,token) => {
         ],
         order: [['queue_weight', 'ASC']]
     });
-    const link = textBlockData.link;
-    const pageSlug = textBlockData.pageSlug;
+    const link = (textBlockData as any).link;
+    const pageSlug = (textBlockData as any).pageSlug;
     return await getBlocksFromTextBlock(`${pageSlug}/${link}`,token,false);
 }
 
@@ -71,10 +72,10 @@ const getBlocksFromToken = async (token) => {
 
   if(!logEntry) return await getBlocksByDefault();
 
-  const textBlockData = await Models.BomText.findOne({raw:true,where:{guid:logEntry.value}});
-  const link = textBlockData.link;
-  const pageSlug = await Models.BomSlug.findOne({raw:true,where:{link:textBlockData.page}});
-  return await getBlocksFromTextBlock(`${pageSlug.slug}/${link}`,token,false);
+  const textBlockData = await Models.BomText.findOne({raw:true,where:{guid:(logEntry as any).value}});
+  const link = (textBlockData as any).link;
+  const pageSlug = await Models.BomSlug.findOne({raw:true,where:{link:(textBlockData as any).page}});
+  return await getBlocksFromTextBlock(`${(pageSlug as any).slug}/${link}`,token,false);
 }
 
 
@@ -82,7 +83,7 @@ const getBlocksFromReadingPlan = async (plan,token) => {
     const sectionGuidSQL = `SELECT sectionGuids FROM bom_readingplan_seg WHERE guid = ? ORDER BY start ASC`;
     const sectionGuids = (await queryDB(sectionGuidSQL,[plan]))[0]?.sectionGuids || [];
     const sectionGuidArray = JSON.parse(sectionGuids);
-    return await buildQueueFromSections({sectionGuids:sectionGuidArray, token});
+    return await buildQueueFromSections({sectionGuids:sectionGuidArray, token} as any);
 
 }
 
@@ -99,7 +100,7 @@ const getBlocksFromSlug = async (slug,token) => {
     const isNumeric = (parseInt(last_item)||0) > 0;
     if(isNumeric) return await getBlocksFromTextBlock(slug,token,true);
     const slugData = await Models.BomSlug.findOne({ raw:true, where: { slug: last_item  } });
-    const {type,link} = slugData || {};
+    const {type,link} = (slugData as any) || {};
     if(type === "SC") return await buildQueueFromSection({sectionGuid:link,token,forceSection:true});
     if(type === "PG") return await getBlocksFromPage(link,token);
     return {slug:"lehites",blocks:Array(20).map((_,i)=>(i+1))};
@@ -116,10 +117,10 @@ const getBlocksFromTextBlock = async (slug,token,force) => {
     });
     const block = await Models.BomText.findOne({
         raw:true,
-        where:{link:blocknum, page:pageSlugData.link}
+        where:{link:blocknum, page:(pageSlugData as any).link}
     });
     if(!block) return await getBlocksByDefault();
-    const sectionGuid = block.section;
+    const sectionGuid = (block as any).section;
     return await buildQueueFromSection({sectionGuid,token,forceSection:force});
 
 
@@ -131,7 +132,7 @@ const getBlocksFromPage = async (pageGuid,token=null) => {
         raw:true,
         where:{parent:pageGuid}
     });
-    const [sectionGuid] = sectionsOnPage.map(s=>s.guid);
+    const [sectionGuid] = sectionsOnPage.map(s=>(s as any).guid);
     return await buildQueueFromSection({sectionGuid,token,forceSection:true});
     
 };
@@ -146,10 +147,10 @@ const buildQueueFromSections = async ({ sectionGuids }) => {
   
     let queue = [];
     sectionGuids.forEach(sectionGuid => {
-      const text_guids = allBlocks.filter(b => b.section === sectionGuid).map(b => b.guid);
+      const text_guids = allBlocks.filter(b => (b as any).section === sectionGuid).map(b => (b as any).guid);
       queue = [...queue, ...text_guids];
     });
-    return await resolveQueueFromTextBlocks(allBlocks.filter(b => queue.includes(b.guid)));
+    return await resolveQueueFromTextBlocks(allBlocks.filter(b => queue.includes((b as any).guid)));
   };
 
 const buildQueueFromSection = async ({sectionGuid,token,forceSection}) => {
@@ -163,7 +164,7 @@ const buildQueueFromSection = async ({sectionGuid,token,forceSection}) => {
         attributes:["guid","section","page","queue_weight","link"],
         order:[['queue_weight','ASC']]
     });
-    const unqueSectionGuids = [...new Set(allBlocks.map(b=>b.section))];
+    const unqueSectionGuids = Array.from(new Set(allBlocks.map(b=>(b as any).section)));
     let sectionIndex = unqueSectionGuids.findIndex(s=>s === sectionGuid);
     let queueIsReady = false;
     let queue = [];
@@ -175,7 +176,7 @@ const buildQueueFromSection = async ({sectionGuid,token,forceSection}) => {
         sectionIndex++;
         if(sectionIndex >= unqueSectionGuids.length) sectionIndex = 0;
         if(!sectionGuid) break;
-        const text_guids = allBlocks.filter(b=>b.section === sectionGuid).map(b=>b.guid);
+        const text_guids = allBlocks.filter(b=>(b as any).section === sectionGuid).map(b=>(b as any).guid);
         const sectionIsDone = text_guids.every(t=>completedBlocks.includes(t));
         if(sectionIsDone && !forceSection){
             //.log(`Section ${sectionGuid} is done. ${text_guids.length} blocks completed.`);
@@ -188,7 +189,7 @@ const buildQueueFromSection = async ({sectionGuid,token,forceSection}) => {
         queue = tmpQueue;
     }
 
-    return await resolveQueueFromTextBlocks(allBlocks.filter(b=>queue.includes(b.guid)));
+    return await resolveQueueFromTextBlocks(allBlocks.filter(b=>queue.includes((b as any).guid)));
 
 
 }
@@ -207,7 +208,7 @@ const loadCompletedBlocks = async ({queryBy, finished}) => {
             order:[['timestamp','DESC']],
         });
 
-        return  results.map(r=>r.value);
+        return  results.map(r=>(r as any).value);
 
 }
 
@@ -233,7 +234,7 @@ const checkCompletion = async ({queryBy, finished, text_guids}) => {
 
 const resolveQueueFromTextBlocks = async (textBlocks) => {
 
-    const uniquePageGuids = [...new Set(textBlocks.map(b=>b.page))];
+    const uniquePageGuids = Array.from(new Set(textBlocks.map(b=>(b as any).page)));
     const slugs = await Models.BomSlug.findAll({
         raw:true,
         attributes:["link","slug"],
@@ -245,7 +246,7 @@ const resolveQueueFromTextBlocks = async (textBlocks) => {
     const output = [];
     for(const pageGuid of uniquePageGuids){
         output.push({
-            slug: slugs?.find(s=>s.link === pageGuid).slug || pageGuid,
+            slug: (slugs?.find(s=>(s as any).link === pageGuid) as any)?.slug || pageGuid,
             blocks:textBlocks.filter(b=>b.page === pageGuid).map(b=>b.link)
         })
     }
@@ -267,7 +268,7 @@ async function getFirstTextBlockGuidFromPage(pageGuid)
         where:{page:pageGuid},
         order:[['queue_weight','ASC']]
     });
-    return textBlock?.guid;
+    return (textBlock as any)?.guid;
 
 }
 
@@ -278,7 +279,7 @@ async function getFirstTextBlockGuidFromSection(sectionGuid)
         where:{section:sectionGuid},
         order:[['queue_weight','ASC']]
     });
-    return textBlock?.guid;
+    return (textBlock as any)?.guid;
 }
 
 
@@ -318,7 +319,7 @@ export async function loadHeadings(verse_ids, lang = "en") {
             const endVerse = headingData[i + 1]?.verse_id || verse_ids[verse_ids.length - 1];
             const verses = verse_data.filter(v => v.verse_id >= startVerse && v.verse_id <= endVerse);
             const passage_verse_ids = verses.map(v => v.verse_id);
-            const reference = generateReference(passage_verse_ids, lang);
+            const reference = generateReference(passage_verse_ids, lang as any);
             const heading = item.text?.replace(/｢\d+｣/g, "").trim() || reference;
             return {
                 reference,
@@ -532,9 +533,9 @@ const loadReadingPlan = async (slug,userInfo,lang) => {
         if(!isFuture) { toDateItems +=(items || 0); toDateCompleted += (completed || 0); }
         segments.push({
             guid:segmentGuid,
-            period:translatedItems.find(t=>t.guid === segmentGuid && t.refkey === "period")?.value || period,
-            ref:translatedItems.find(t=>t.guid === segmentGuid && t.refkey === "ref")?.value || ref,
-            title:translatedItems.find(t=>t.guid === segmentGuid && t.refkey === "title")?.value || title,
+            period:translatedItems.find(t=>(t as any).guid === segmentGuid && (t as any).refkey === "period")?.value || period,
+            ref:translatedItems.find(t=>(t as any).guid === segmentGuid && (t as any).refkey === "ref")?.value || ref,
+            title:translatedItems.find(t=>(t as any).guid === segmentGuid && (t as any).refkey === "title")?.value || title,
             duedate:moment(duedate).format("YYYY-MM-DD"),
             progress,
             start,
@@ -545,7 +546,7 @@ const loadReadingPlan = async (slug,userInfo,lang) => {
 return  {
       guid,
       slug,
-      title:translatedItems.find(t=>t.guid === guid && t.refkey === "title")?.value || title,
+      title:translatedItems.find(t=>(t as any).guid === guid && (t as any).refkey === "title")?.value || title,
       startdate:moment(startdate).format("YYYY-MM-DD"),
       duedate:moment(duedate).format("YYYY-MM-DD"),
       progress,
@@ -579,8 +580,8 @@ const loadReadingPlanSegment = async (guid,queryBy,lang) => {
     const params = [queryBy, lang,guid];
     const segmentTextBlocks = await queryDB(sql,params);
 
-    const uniqueSectionGuids = [...new Set(segmentTextBlocks.map(b=>b.section))];
-    const pageGuids = [...new Set(segmentTextBlocks.map(b=>b.page))];
+    const uniqueSectionGuids = Array.from(new Set(segmentTextBlocks.map(b=>(b as any).section)));
+    const pageGuids = Array.from(new Set(segmentTextBlocks.map(b=>(b as any).page)));
     const slugPromises = pageGuids.map(async (pageGuid)=>{
         const slug = await getSlug("link",pageGuid);
         return {pageGuid,slug}
@@ -612,17 +613,17 @@ const loadReadingPlanSegment = async (guid,queryBy,lang) => {
     }) : [];
 
     sectionData.forEach(s=>{
-        const pageGuid = s.parent;
+        const pageGuid = (s as any).parent;
         const slug = pageSlugs.find(s=>s.pageGuid === pageGuid)?.slug || null;
         s['page.pageSlug.slug'] = slug;
     });
 
     const sections = uniqueSectionGuids
-    .map(g=>sectionData.find(s=>s.guid === g))
+    .map(g=>sectionData.find(s=>(s as any).guid === g))
     .map(s=>({...s,
-        title: sectionTranslations.find(t=>t.guid === s.guid)?.value || s.title,
+        title: sectionTranslations.find(t=>(t as any).guid === (s as any).guid)?.value || (s as any).title,
         slug: `${s['page.pageSlug.slug']}/${s['sectionSlug.slug']}`,
-        sectionText:segmentTextBlocks.filter(b=>b.section === s.guid)
+        sectionText:segmentTextBlocks.filter(b=>(b as any).section === (s as any).guid)
         .map(b=>({
             heading: b.heading_lang || b.heading,
             slug: `${s['page.pageSlug.slug']}/${b.link}`,
@@ -647,10 +648,10 @@ const loadReadingPlanSegment = async (guid,queryBy,lang) => {
     
     return {
         guid,
-        period:segmentTranslations.find(t=>t.refkey === "period")?.value || segmentData.period,
-        ref:segmentTranslations.find(t=>t.refkey === "ref")?.value || segmentData.ref,
+        period:segmentTranslations.find(t=>(t as any).refkey === "period")?.value || segmentData.period,
+        ref:segmentTranslations.find(t=>(t as any).refkey === "ref")?.value || segmentData.ref,
         url:null,
-        title:segmentTranslations.find(t=>t.refkey === "title")?.value || segmentData.title,
+        title:segmentTranslations.find(t=>(t as any).refkey === "title")?.value || segmentData.title,
         duedate:moment(duedate).format("YYYY-MM-DD"),
         progress,
         start,
@@ -664,13 +665,13 @@ const loadReadingPlanSegment = async (guid,queryBy,lang) => {
 
 
 
-//export
-module.exports = {
+//Note: Some functions are exported inline, others below
+export {
     getBlocksToQueue,
     getFirstTextBlockGuidFromSlug,
     organizeRelatedScriptures,
     genUserAvatar, 
-    loadHeadings,
     loadReadingPlan,
     loadReadingPlanSegment,
-    processPassages}
+    processPassages
+};

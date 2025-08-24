@@ -1,7 +1,7 @@
 import { models as Models } from '../config/database';
 import Sequelize, { Model } from 'sequelize';
 import { completedGuids, getStandardizedValuesFromUserList } from './_common';
-const { loadReadingPlan,loadReadingPlanSegment } = require('./lib')
+import { loadReadingPlan, loadReadingPlanSegment } from './lib';
 import { sendbird } from '../library/sendbird';
 import { url } from 'inspector';
 import crypto from "crypto";

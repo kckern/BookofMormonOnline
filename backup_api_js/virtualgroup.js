@@ -4,7 +4,7 @@ const { queryDB, loadScripturesFromVerseIds, loadTextGuidsFromVerseIds,loadPageS
 const { loadTextBlockNarration, loadSectionContext, loadSectionNarration, loadCrossReferences } = require('./studybuddy');
 const { askGPT } = require('../library/gpt');
 const {sendbird} = require('../library/sendbird.js');
-const logger = require("../library/utils/logger.cjs");
+const logger = require("../library/utils/logger.ts").default;
 const { postMessage } = sendbird;
 
 const virtualgrouptrigger = async (req,res) => {
