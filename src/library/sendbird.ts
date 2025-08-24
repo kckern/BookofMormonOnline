@@ -13,7 +13,7 @@ const {SENDBIRD_APPID, SENDBIRD_TOKEN} = process.env;
 class Sendbird {
 
   
-  async createUser(user_id, nickname = "", profile_url = "", email = "", attempt = 0) {
+  async createUser(user_id: string, nickname = "", profile_url = "", email = "", attempt = 0) {
     if (attempt > 5) return false;
     if (!user_id || !nickname) return false;
   
@@ -109,7 +109,6 @@ class Sendbird {
         'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
-      json: true
     };
     return axios(authOptions)
       .then((res) => {
@@ -134,7 +133,6 @@ class Sendbird {
         'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
-      json: true
     };
     return axios(authOptions)
       .then((res) => {
@@ -174,7 +172,6 @@ class Sendbird {
         'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
-      json: true
     };
     return axios(authOptions)
       .then((res) => {
@@ -197,7 +194,6 @@ class Sendbird {
         'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
-      json: true
     };
     return axios(authOptions)
       .then((res) => {
@@ -246,7 +242,6 @@ class Sendbird {
         'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
-      json: true
     };
     return axios(authOptions)
       .then((res) => {
@@ -274,7 +269,6 @@ class Sendbird {
         'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
-      json: true
     };
     return axios(authOptions)
       .then((res) => {
@@ -294,7 +288,6 @@ class Sendbird {
         'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
-      json: true
     };
     // console.log(authOptions);
     return axios(authOptions)
@@ -317,7 +310,6 @@ class Sendbird {
         'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
-      json: true
     };
     let response = { data: null };
       response = await axios(authOptions);
@@ -355,29 +347,29 @@ class Sendbird {
   }
   }
 
-  request(channelObj, username) {
+  request(channelObj: any, username: string) {
     let data = JSON.parse(channelObj.data);
 
     if (!data.requests) data.requests = [];
     if (data.requests.includes(username)) return { isSuccess: true, msg: 'Already Sent' };
     data.requests.push(username);
     var authOptions = {
-      method: 'PUT',
+      method: 'PUT' as const,
       url: 'https://api-' + SENDBIRD_APPID + '.sendbird.com/v3/group_channels/' + channelObj.channel_url,
       data: JSON.stringify({ data: JSON.stringify(data) }),
       headers: {
         'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
-      },
-      json: true
+      }
     };
-    return axios(authOptions).then((res, error) => {
-      if (error) return { isSuccess: false, msg: 'Request Failed' };
+    return axios(authOptions).then((res) => {
       return { isSuccess: true, msg: 'Request Sent' };
+    }).catch((error) => {
+      return { isSuccess: false, msg: 'Request Failed' };
     });
   }
 
-  withdraw(channelObj, username) {
+  withdraw(channelObj: any, username: string) {
     let data = JSON.parse(channelObj.data);
    // console.log(data);
    // console.log(`Withdraw ${username} from ${channelObj.channel_url} ${JSON.stringify(data.requests)}`);
@@ -387,18 +379,18 @@ class Sendbird {
     data.requests.splice(index, 1);
 
     var authOptions = {
-      method: 'PUT',
+      method: 'PUT' as const,
       url: 'https://api-' + SENDBIRD_APPID + '.sendbird.com/v3/group_channels/' + channelObj.channel_url,
       data: JSON.stringify({ data: JSON.stringify(data) }),
       headers: {
         'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
-      },
-      json: true
+      }
     };
-    return axios(authOptions).then((res, error) => {
-      if (error) return { isSuccess: false, msg: 'Withdraw request failed' };
+    return axios(authOptions).then((res) => {
       return { isSuccess: true, msg: 'Request withdrawn' };
+    }).catch((error) => {
+      return { isSuccess: false, msg: 'Withdraw request failed' };
     });
   }
 
@@ -411,7 +403,6 @@ class Sendbird {
         'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
-      json: true
     };
     return axios(authOptions)
       .then((res) => {
@@ -437,7 +428,6 @@ class Sendbird {
         'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
-      json: true
     };
     return axios(authOptions)
       .then((res) => {
@@ -465,7 +455,6 @@ class Sendbird {
           'Api-Token': SENDBIRD_TOKEN,
           'Content-Type': 'application/json'
         },
-        json: true
       });
       return response?.data?.channels || [];
     } catch (error) {
@@ -484,7 +473,6 @@ class Sendbird {
         'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
-      json: true
     });
 
     const last100Channels =  response?.data?.channels
@@ -505,7 +493,6 @@ class Sendbird {
         'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
-      json: true
     });
     return response?.data?.members || [];
   }
@@ -538,7 +525,6 @@ class Sendbird {
         'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
-      json: true
     });
     return response?.data || {};
   }
@@ -553,7 +539,6 @@ class Sendbird {
         'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
-      json: true
     });
     //todo lang filter
     
@@ -589,7 +574,6 @@ class Sendbird {
         'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
-      json: true
     });
 
 
@@ -601,7 +585,6 @@ class Sendbird {
           'Api-Token': SENDBIRD_TOKEN,
           'Content-Type': 'application/json'
         },
-        json: true
       });
       return members.data.members.map((m)=>{return {...m,channel_name:channel.name}});
     }));
@@ -620,7 +603,6 @@ class Sendbird {
         'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
-      json: true
     });
 
     let members = await Promise.all(channels.data.channels.map(async (channel)=>{
@@ -631,7 +613,6 @@ class Sendbird {
           'Api-Token': SENDBIRD_TOKEN,
           'Content-Type': 'application/json'
         },
-        json: true
       });
       return members.data.members.map((m)=>{return {...m,channel_name:channel.name}});
     }));
@@ -652,7 +633,6 @@ class Sendbird {
         'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
-      json: true
     });
     return response?.data || {};
   }
@@ -667,7 +647,6 @@ class Sendbird {
         'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
-      json: true
     });
 
     return response?.data?.messages;
@@ -687,7 +666,6 @@ class Sendbird {
         'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
-      json: true
     });
     //log curl
    //console.log(`curl -X POST "https://api-${SENDBIRD_APPID}.sendbird.com/v3/group_channels/${channelUrl}/messages" -H "accept: application/json" -H "Api-Token: ${SENDBIRD_TOKEN}" -H "Content-Type: application/json" -d "{\\"message_type\\":\\"MESG\\",\\"user_id\\":\\"${user_id}\\",\\"message\\":\\"${message}\\",\\"parent_message_id\\":\\"${messageId}\\"}"`)
@@ -710,7 +688,6 @@ class Sendbird {
         'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
-      json: true
     };
     //console.log(config);
    let response = await axios(config);
@@ -731,7 +708,6 @@ class Sendbird {
         'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
-      json: true
     });
     return response?.data || {};
   }
@@ -748,7 +724,6 @@ class Sendbird {
         'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
-      json: true
     });
     return response?.data || {};
 
@@ -766,7 +741,6 @@ class Sendbird {
         'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
-      json: true
     });
     return response?.data || {};
   }
@@ -779,7 +753,6 @@ class Sendbird {
         'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
-      json: true
     });
     return response?.data || {};
   }
@@ -796,7 +769,6 @@ class Sendbird {
         'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
-      json: true
     });
     return response?.data?.messages?.shift() || [];
   }
@@ -825,7 +797,6 @@ class Sendbird {
         'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
-      json: true
     });
     return response?.data?.messages || [];
   }
@@ -858,7 +829,6 @@ class Sendbird {
         'Api-Token': SENDBIRD_TOKEN,
         'Content-Type': 'application/json'
       },
-      json: true
     });
     return response?.data || {};
   }

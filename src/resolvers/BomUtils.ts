@@ -19,7 +19,6 @@ import {
   getUserForLog
 } from './_common';
 import { sphinxQuery } from '../search/sphinx';
-import { translateReferences } from './xlate';
 import { loadScripture, loadVerseHighlights, loadVerses } from './BomScripture';
 const axios = require('axios');
 export default {
