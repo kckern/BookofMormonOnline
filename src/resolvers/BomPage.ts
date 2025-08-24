@@ -154,7 +154,7 @@ queue: async (root: any, args: any, context: any, info: any) => {
   const lang = context.lang ? context.lang : null;
   const {token,items} = args;
 
-  const inputs = await getBlocksToQueue(token, items, info);
+  const inputs = await getBlocksToQueue(token, items);
 
   const textBlocks = inputs.map(async ({ slug, blocks }) => {
 

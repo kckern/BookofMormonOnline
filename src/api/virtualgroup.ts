@@ -360,6 +360,7 @@ const commentPost = async (virtualgroup,lang, context, attempt)=>{
 
         logger.info(`Commenting on ${virtualgroup.channel} as ${nickname}`);
         const results = await askGPT(instructions,input,"gpt-3.5-turbo");
+        if (!results) return;
         const plainMessage = results.replace(/\[[^\]]+\]:* /g,'')
         .replace(`[${nickname}]:`,'')
         .replace(`${nickname}: `,'')
@@ -433,28 +434,29 @@ const firstPost = async (virtualgroup,lang)=>{
 const findHighlights = async (comment,content)=>{
     const instructions = ``;
     const input = [
-        {role:"user",content:`Consider the following comment: ${comment}`},
-        {role:"assistant",content:`I have it in mind.`},
-        {role:"user",content:`What are its main themes?`},
-        {role:"assistant",content:`I can think of one or two.`},
-        {role:"user",content:`Great.  Now consider this content in light of those themes: ${content}`},
-        {role:"assistant",content:`Those themes are indeed present in the content.`},
-        {role:"user",content:`Please extract some substrings from the content that correspond to the themes.`},
-        {role:"assistant",content:`How many?`},
-        {role:"user",content:`1 or 2`},
-        {role:"assistant",content:`How many words should each substring contain?`},
-        {role:"user",content:`2-8`},
-        {role:"assistant",content:`Based on the given comment, here are the substrings that correspond to the comment:`},
-        {role:"user",content:`Wait, no!  The substrings need to come from the content I provided, not the comment.`},
-        {role:"assistant",content:`Oh, I understand now.  I found substrings take from this content: ${content}`},
-        {role:"user",content:`Please provide them in a comma separated list.`},
-        {role:"assistant",content:`Can you give me an example of the format you expect?`},
-        {role:"user",content:`first substring, second substring`},
-        {role:"assistant",content:`Okay, I got it.  Here are the substrings I found:`},
+        {role:"user" as const,content:`Consider the following comment: ${comment}`},
+        {role:"assistant" as const,content:`I have it in mind.`},
+        {role:"user" as const,content:`What are its main themes?`},
+        {role:"assistant" as const,content:`I can think of one or two.`},
+        {role:"user" as const,content:`Great.  Now consider this content in light of those themes: ${content}`},
+        {role:"assistant" as const,content:`Those themes are indeed present in the content.`},
+        {role:"user" as const,content:`Please extract some substrings from the content that correspond to the themes.`},
+        {role:"assistant" as const,content:`How many?`},
+        {role:"user" as const,content:`1 or 2`},
+        {role:"assistant" as const,content:`How many words should each substring contain?`},
+        {role:"user" as const,content:`2-8`},
+        {role:"assistant" as const,content:`Based on the given comment, here are the substrings that correspond to the comment:`},
+        {role:"user" as const,content:`Wait, no!  The substrings need to come from the content I provided, not the comment.`},
+        {role:"assistant" as const,content:`Oh, I understand now.  I found substrings take from this content: ${content}`},
+        {role:"user" as const,content:`Please provide them in a comma separated list.`},
+        {role:"assistant" as const,content:`Can you give me an example of the format you expect?`},
+        {role:"user" as const,content:`first substring, second substring`},
+        {role:"assistant" as const,content:`Okay, I got it.  Here are the substrings I found:`},
 
 
     ];
     const substrings = await askGPT(instructions,input,"gpt-3.5-turbo");
+    if (!substrings) return [];
     return substrings.split(',').map(x => x.trim()).filter(x => !/[\[_]]/.test(x)).slice(0,3);
 }
 
