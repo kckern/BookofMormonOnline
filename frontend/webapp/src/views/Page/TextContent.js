@@ -114,6 +114,7 @@ export default function TextContent({ content, narrationController, isQuote }) {
 
   // let appController = narrationController.appController;
   const renderTextContent = (content, textContentController) => {
+    if (!content) return "";
     content = content.replace(
       /\[([a-z])\]([0-9]+?)\[\/[a-z]\]/g,
       '<a class="$1" contentid="$2"></a>'
@@ -147,8 +148,8 @@ export default function TextContent({ content, narrationController, isQuote }) {
           return (
             <>
               {narrationController.data.text.quotes?.sort((a, b) =>{
-                const aInt = parseInt(a.slug.replace(/\D+/g, ""));
-                const bInt = parseInt(b.slug.replace(/\D+/g, ""));
+                const aInt = parseInt(a.slug?.replace(/\D+/g, "") || "0");
+                const bInt = parseInt(b.slug?.replace(/\D+/g, "") || "0");
                 return aInt - bInt;
               
               })
@@ -212,10 +213,10 @@ export default function TextContent({ content, narrationController, isQuote }) {
 
       //Extract Image and Commentary Values
       let imageIds =
-        initTextContentController.data.content.match(/\[i\](\d+)\[\/i\]/gi);
+        initTextContentController.data.content?.match(/\[i\](\d+)\[\/i\]/gi);
       imageIds = imageIds && imageIds.map((i) => i.replace(/\D+/g, ""));
       let commentaryIds =
-        initTextContentController.data.content.match(/\[c\]((\d+))\[\/c\]/gi);
+        initTextContentController.data.content?.match(/\[c\]((\d+))\[\/c\]/gi);
       commentaryIds =
         commentaryIds && commentaryIds.map((i) => i.replace(/\D+/g, ""));
       initTextContentController.data.imageIds =
@@ -242,7 +243,7 @@ export default function TextContent({ content, narrationController, isQuote }) {
 
   textContentController.pageController = narrationController.pageController;
 
-  let num = parseInt(textContentController.data.slug.replace(/\D+/g, ""));
+  let num = parseInt(textContentController.data.slug?.replace(/\D+/g, "") || "0");
 
   let counts = null;
   if (
@@ -271,7 +272,7 @@ export default function TextContent({ content, narrationController, isQuote }) {
   }
 
   if(textContentController.data?.heading)
-  textContentController.data.heading = textContentController.data.heading.replace(/^\[.*?\]/, "").trim();
+  textContentController.data.heading = textContentController.data.heading?.replace(/^\[.*?\]/, "").trim();
 
   let openClass =  (textContentController.states.isOpen || textContentController.states.isHeaderOpen) ? " open" : "";
   return (
@@ -292,7 +293,7 @@ export default function TextContent({ content, narrationController, isQuote }) {
         <Card className="card-plain textblock">
           <CardHeader role="tab" className={"reference" + openClass}>
             <a
-              href={"/"+textContentController.data.slug.toString()}
+              href={"/"+textContentController.data.slug?.toString() || ""}
               aria-expanded={
                 cardWithoutNestedBlocks
                   ? textContentController.states.isOpen
