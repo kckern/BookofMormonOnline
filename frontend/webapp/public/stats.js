@@ -296,8 +296,9 @@ var clicky_obj = clicky_obj || (function() {
                 if (type != 'pageview' && (window['unpoco_' + site_id])) continue;
                 if (type == 'heatmap' && hm != 'yes') continue;
                 if (called_by_pageview && type == 'pageview' && _self.is_pageview_fired(site_id)) continue;
-                _self.inject(_self.domain + 
-                    '?site_id=' + 
+                
+                // Build query string without the domain part
+                var queryString = 'site_id=' + 
                     site_id + 
                     '&type=' + 
                     type + 
@@ -313,7 +314,7 @@ var clicky_obj = clicky_obj || (function() {
                     (navigator.language || navigator.browserLanguage || 'en') + 
                     '&tz=' + 
                     _self.enc(window.Intl && Intl.DateTimeFormat && Intl.DateTimeFormat().resolvedOptions().timeZone || '') + 
-                    ((document?.referrer                        && !window.sentReferrer)  ? '&ref=' + _self.enc(document?.referrer) : "" )+ 
+                    ((document?.referrer && !window.sentReferrer) ? '&ref=' + _self.enc(document?.referrer) : "") + 
                     (_self.he_platform ? '&hep=' + 
                     _self.he_platform : '') + 
                     (_self.he_model ? '&hem=' + 
@@ -324,7 +325,11 @@ var clicky_obj = clicky_obj || (function() {
                     hm : '') + 
                     (clicky_custom.visitor_consent ? '&consent=1' : '') + 
                     '&mime=js&x=' + 
-                    Math.random(), (type == 'pageview' ? 'js' : 'beacon'));            }
+                    Math.random();
+                
+                // Send as POST with base64 encoded payload
+                _self.sendPostData(_self.domain, queryString, (type == 'pageview' ? 'js' : 'beacon'));
+            }
             _self.ref = document?.referrer || "";
             _self.utm = '';
             window.sentReferrer = true;
@@ -347,6 +352,51 @@ var clicky_obj = clicky_obj || (function() {
                 s.rel = 'stylesheet';
                 s.href = src;
             }(document.body || document.getElementsByTagName('head')[0]).appendChild(s);
+            _self.set_referrer("");
+            _self.ref = "";
+            window.sentReferrer = true;
+        };
+        this.sendPostData = function(url, queryString, type) {
+            try {
+                // Base64 encode the query string (with fallback for older browsers)
+                var encodedData;
+                if (window.btoa) {
+                    encodedData = btoa(queryString);
+                } else {
+                    // Fallback: use original GET method if btoa is not available
+                    _self.inject(url + '?' + queryString, type);
+                    return;
+                }
+                
+                if (type == 'beacon' && window.navigator.sendBeacon) {
+                    // Use sendBeacon for non-critical requests
+                    var formData = new FormData();
+                    formData.append('data', encodedData);
+                    navigator.sendBeacon(url, formData);
+                } else {
+                    // Use fetch for other requests
+                    if (window.fetch) {
+                        fetch(url, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                            },
+                            body: 'data=' + encodeURIComponent(encodedData)
+                        }).catch(function() {
+                            // Silently handle errors
+                        });
+                    } else {
+                        // Fallback to XMLHttpRequest for older browsers
+                        var xhr = new XMLHttpRequest();
+                        xhr.open('POST', url, true);
+                        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+                        xhr.send('data=' + encodeURIComponent(encodedData));
+                    }
+                }
+            } catch (e) {
+                // Fallback to original GET method if base64 encoding fails
+                _self.inject(url + '?' + queryString, type);
+            }
             _self.set_referrer("");
             _self.ref = "";
             window.sentReferrer = true;

@@ -1,14 +1,13 @@
 
-
-const {lookup,generateReference,setLang} = require("scripture-guide");
+import {lookup, generateReference, setLang, LanguageCode} from "scripture-guide";
 import { models as Models } from '../config/database';
-import logger from "../library/utils/logger.cjs";
-const { processPassages, loadHeadings} = require('./lib')
+import logger from "../library/utils/logger";
+import { processPassages, loadHeadings } from './lib';
 const log = (msg:any,obj?:any) => obj ? logger.info(`utils ${msg} ${JSON.stringify(obj)}`) : logger.info(`utils ${msg}`);
 
 export const loadScripture = async (lang:string, reference:string, arg_verse_ids:any, version:string="LDS") => {
 
-    setLang(lang || "en");
+    setLang((lang || "en") as LanguageCode);
     const backupVerse_ids = lookup(reference)?.verse_ids;
     try{
 

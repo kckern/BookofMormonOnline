@@ -6,7 +6,7 @@ import { sendbird } from "../library/sendbird";
 import * as isJSON from "is-json";
 import { loadTranslations } from "./translate";
 import * as smartquotes from 'smartquotes';
-import * as logger from "../library/utils/logger.cjs";
+import logger from "../library/utils/logger";
 const log = (msg: string, obj?: any) => obj ? logger.info(`studdybuddy ${msg} ${JSON.stringify(obj)}`) : logger.info(`studdybuddy ${msg}`);
 const error = (msg: string, obj?: any) => obj ? logger.error(`studdybuddy ${msg} ${JSON.stringify(obj)}`) : logger.error(`studdybuddy ${msg}`);
 
@@ -51,7 +51,8 @@ const messagePreScreen = async (message,lang) => {
     }
     `;
     const results = await askGPT(instructions, [{role:"user",content:message}], "gpt-3.5-turbo");
-    let JSONString = results.replace(/[\n\r]+/g,"").replace(/^[^\{]+/,"").replace(/[^\}]+$/,"").trim();
+    if (!results) return false;
+    let JSONString = (results as string).replace(/[\n\r]+/g,"").replace(/^[^\{]+/,"").replace(/[^\}]+$/,"").trim();
     if(!JSONString.startsWith("{")) JSONString = "{"+JSONString;
     if(!JSONString.endsWith("}")) JSONString = JSONString+"}";
     const valid = isJSON(JSONString);
@@ -510,7 +511,8 @@ const studyBuddyTextBlock = async ({ channelUrl, messageId, lang, studyBuddyId})
     
     startTyping();
     log("studyBuddyTextBlock prepared messages",{messages});
-    let response =  (await askGPT(instructions, messages, "gpt-3.5-turbo-16k"))?.split(/[\n\r]+/). join(" ");
+    const gptResponse = await askGPT(instructions, messages, "gpt-3.5-turbo-16k");
+    let response = gptResponse ? gptResponse.split(/[\n\r]+/).join(" ") : "";
     response = postProcessResponse(response, ref);
     log("studyBuddyTextBlock generated response",{response});
     
@@ -574,6 +576,9 @@ const loadPeople = async (people_slugs,lang="en") => {
     if(!people_slugs?.length) return [];
     const max_sentences = 5;
     people_slugs = people_slugs.filter((slug) => !["god","jesus-christ"].includes(slug));
+  
+    // Check again after filtering
+    if(!people_slugs?.length) return [];
   
     let sql = `SELECT * FROM bom_people WHERE slug IN (${people_slugs.map((slug) => `"${slug}"`).join(",")})`;
     let people = await queryDB(sql);
@@ -738,6 +743,10 @@ const loadCommentary = async (verse_ids) => {
 
   
 const loadCrossReferences = async (verse_ids, lang) => {
+    if (!verse_ids || !Array.isArray(verse_ids) || verse_ids.length === 0) {
+        return [];
+    }
+    
     let sql;
     
     if(lang && lang !== 'en') {

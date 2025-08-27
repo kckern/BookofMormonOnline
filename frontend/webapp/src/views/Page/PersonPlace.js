@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 
 export const renderPersonPlaceHTML = (html, pageController, scriptureLinkClickHandler) => {
+  if (!html) return null;
   html = html.replace(
     /{(.*?)\|(.*?)}/g,
     "<a class='person' slug='$2' label='$1'></a>",

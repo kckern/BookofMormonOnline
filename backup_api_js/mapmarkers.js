@@ -1,5 +1,5 @@
 
-const { determineLanguage } = require("./utils");
+const { determineLanguage } = require("./utils.js");
 const { queryDB } = require("../library/db");
 
 

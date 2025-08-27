@@ -4,9 +4,9 @@ const {generateReference} =  require('scripture-guide');
 const openaiTokenCounter = require('openai-gpt-token-counter');
 const {sendbird} = require("../library/sendbird.js");
 const isJSON = require("is-json");
-const { loadTranslations } = require("./translate");
+const { loadTranslations } = require("./translate.js");
 const smartquotes = require('smartquotes');
-const logger = require("../library/utils/logger.cjs");
+const logger = require("../library/utils/logger.ts").default;
 const log = (msg,obj) => obj ? logger.info(`studdybuddy ${msg} ${JSON.stringify(obj)}`) : logger.info(`studdybuddy ${msg}`);
 const error = (msg,obj) => obj ? logger.error(`studdybuddy ${msg} ${JSON.stringify(obj)}`) : logger.error(`studdybuddy ${msg}`);
 
@@ -116,10 +116,18 @@ const studyBuddy = async (channelUrl,messageId, messageContent) => {
 
 const prepareThread = async (thread)=>
 {
+    if (!thread || !Array.isArray(thread) || thread.length === 0) {
+        return {text_guid:null, thread_messages:[]};
+    }
+    
     const firstMessage = thread[0];
+    if (!firstMessage || !firstMessage.custom_type) {
+        return {text_guid:null, thread_messages:[]};
+    }
+    
     const lastSlug = firstMessage.custom_type.split("/")?.pop();
     if(isJSON(firstMessage.data)) firstMessage.data = JSON.parse(firstMessage.data) || {};
-    const {links} = firstMessage.data;
+    const {links} = firstMessage.data || {};
     if(!links?.text) return {text_guid:null, thread_messages:[]};
     //todo if links.section, then get section context
     const sql = `SELECT t.guid FROM bom_slug s
@@ -570,6 +578,9 @@ const loadPeople = async (people_slugs,lang="en") => {
     const max_sentences = 5;
     people_slugs = people_slugs.filter((slug) => !["god","jesus-christ"].includes(slug));
   
+    // Check again after filtering
+    if(!people_slugs?.length) return [];
+  
     let sql = `SELECT * FROM bom_people WHERE slug IN (${people_slugs.map((slug) => `"${slug}"`).join(",")})`;
     let people = await queryDB(sql);
 
@@ -733,6 +744,10 @@ const loadCommentary = async (verse_ids) => {
 
   
 const loadCrossReferences = async (verse_ids, lang) => {
+    if (!verse_ids || !Array.isArray(verse_ids) || verse_ids.length === 0) {
+        return [];
+    }
+    
     let sql;
     
     if(lang && lang !== 'en') {

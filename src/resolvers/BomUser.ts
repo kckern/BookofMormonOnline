@@ -1,7 +1,7 @@
 import { models, models as Models } from '../config/database';
 import Sequelize, { Model } from 'sequelize';
 import { sendbird } from '../library/sendbird';
-const { genUserAvatar} = require('./lib')
+import { genUserAvatar } from './lib';
 
 import crypto from 'crypto';
 import {
@@ -25,8 +25,8 @@ import {
   getLoggedTextItems
 } from './_common';
 import { userInfo } from 'os';
-const request = require('request-promise');
-const axios = require('axios');
+import request from 'request-promise';
+import axios from 'axios';
 
 const md5 = (value: string) => {
   if (!value) return "";
@@ -51,7 +51,6 @@ const cleanUsername = (username: string, email: string) => {
 export default {
   Query: {
     signin: async (root: any, args: any, context: any, info: any) => {
-      var crypto = require('crypto');
       if (!args.username || !args.password || !args.token)
         return {
           isSuccess: false,
