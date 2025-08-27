@@ -1,10 +1,12 @@
 
-const {studyBuddy, studyBuddyTextBlock} = require("./studybuddy");
-const logger = require("../library/utils/logger.cjs");
-const { mapMarker } = require("./mapmarkers");
-const { virtualgrouptrigger } = require("./virtualgroup");
-const { translate } = require("./translate");
-const { updateCoords } = require("./coords");
+const {studyBuddy, studyBuddyTextBlock} = require("./studybuddy.js");
+const { queryDB } = require("../library/db");
+const { sendbird } = require("../library/sendbird.js");
+const logger = require("../library/utils/logger.ts").default;
+const { mapMarker } = require("./mapmarkers.js");
+const { virtualgrouptrigger } = require("./virtualgroup.js");
+const { translate } = require("./translate.js");
+const { updateCoords } = require("./coords.js");
 const webhook = async (req, res) => {
     
     logger.info(`Webhook received: ${JSON.stringify(req.body)}`); // "info" is the log level

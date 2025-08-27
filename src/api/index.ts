@@ -1,6 +1,6 @@
 
 import { studyBuddy, studyBuddyTextBlock } from "./studybuddy";
-import * as logger from "../library/utils/logger.cjs";
+import logger from "../library/utils/logger";
 import { mapMarker } from "./mapmarkers";
 import { virtualgrouptrigger } from "./virtualgroup";
 import { translate } from "./translate";

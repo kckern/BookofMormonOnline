@@ -17,6 +17,10 @@ const queryDB = async <T = any>(sql: string, params: any[] = []): Promise<T[]> =
 
 const loadScripturesFromVerseIds = async (verse_ids: number[], lang: string) => {
     //TODO: add language support
+    
+    if (!verse_ids || !Array.isArray(verse_ids) || verse_ids.length === 0) {
+        return [];
+    }
 
     const count = verse_ids.length;
     const questionmarks = Array(count).fill('?').join(',');
@@ -32,6 +36,11 @@ const loadScripturesFromVerseIds = async (verse_ids: number[], lang: string) => 
 
 const loadTextGuidsFromVerseIds = async (verse_ids: number[]) => {
     //bom_prd.bom_lookup
+    
+    if (!verse_ids || !Array.isArray(verse_ids) || verse_ids.length === 0) {
+        return [];
+    }
+    
     const questionmarks = Array(verse_ids.length).fill('?').join(',');
     const sql = `SELECT text_guid FROM bom_prd.bom_lookup WHERE verse_id IN (${questionmarks}) ORDER BY verse_id ASC;`;
     const text_guids = await queryDB(sql, verse_ids);
