@@ -77,7 +77,7 @@ const {
  */
 export const sequelize = new Sequelize(MYSQL_DB, MYSQL_USER, MYSQL_PASSWORD, {
   dialect: 'mysql',
-  //logging: () => {},
+  logging: () => {},
   host: MYSQL_HOST,
   pool: {
     acquire: +DB_POOL_ACQUIRE || 60000,

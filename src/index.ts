@@ -5,8 +5,8 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 import { ApolloServer } from 'apollo-server-express';
 import { apollo_config } from './config/apollo';
 import express from 'express';
-import {handleSSR} from './ssr/index';
-import {requireSSR} from './ssr/lib';
+import { handleSSR, ssrRoutes } from './ssr/index';
+import { requireSSR } from './ssr/lib';
 //import json_apis from  './json/index';
 import httpProxy from 'http-proxy';
 import dns from 'dns';
@@ -14,8 +14,8 @@ import net from 'net';
 import axios from 'axios';
 import bodyParser from 'body-parser';
 import { processSphinx } from './search/sphinx';
-import {ping} from "./library/ping"
-import {apis,endpoints} from "./api/index"
+import { ping } from "./library/ping"
+import { apis, endpoints } from "./api/index"
 
 
 const langs = process.env.LANGS?.split(',') || ['', 'en', 'ko', 'dev'];
@@ -40,8 +40,6 @@ apiProxy.on('error', (err, req, res:any) => {
 
 
 const findTarget = (req:any): string | boolean  => {
-
-
   const host = req.headers.host;
   let fwdTarget = "";
   const fwds = [
@@ -49,11 +47,6 @@ const findTarget = (req:any): string | boolean  => {
     ["preview", process.env.PROXY_BOM_IMG]
     ];
   fwdTarget = fwds.find(([sub, target]) => (new RegExp(`^${sub}`,"i")).test(host))?.pop() || "";
-
-
-  const isSSR = requireSSR(req);
-  if(isSSR && !fwdTarget) return process.env.PROXY_BOM_SSR;
-
 
   return fwdTarget;
 };
@@ -87,12 +80,35 @@ app.use((req, res, next) => {
 
 app.all("/ping", ping);
 
+// Handle specific SSR files first (always handle these, regardless of requireSSR)
+ssrRoutes.forEach(route => {
+  app.get(route, handleSSR);
+});
 
 app.use( (req, res, next) => {
   const target = String(findTarget(req));
   const host = req.headers.host;
+  
+  // Check if requireSSR and no specific target, then proxy to SSR
+  const isSSR = requireSSR(req);
+  if(isSSR && !target) {
+    const ssrTarget = process.env.PROXY_BOM_SSR;
+    if(ssrTarget) {
+      const targetDomain = ssrTarget.split("://").pop();
+      delete req.headers["range"];
+      
+      apiProxy.web(req, res, {
+        target: ssrTarget,
+        setTimeout: 500000,
+        autoRewrite: true,
+        cookieDomainRewrite: targetDomain,
+        changeOrigin: false
+      });
+      return;
+    }
+  }
+  
   if(target) {
-
     const targetDomain = target.split("://").pop();
     //remove these headers:
     delete req.headers["range"];
