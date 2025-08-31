@@ -52,7 +52,7 @@ const generateManifest = async (lang?: string): Promise<object> => {
             start_url: "/",
             display: "standalone",
             background_color: "#323b4d",
-            theme_color: "#003366",
+            theme_color: "#000000",
             icons: [
                 {
                     src: "/icons/icon-16.png",
