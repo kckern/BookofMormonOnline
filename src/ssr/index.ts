@@ -41,15 +41,23 @@ const handleSSR = (req: Request, res: Response): void | Promise<void> => {
 const handleRobots = (req: Request, res: Response): void => {
     res.setHeader("Content-Type", "text/plain");
     const host = req.get('host') || '';
-    if (host === 'bookofmormon.online') {
-        res.send(`User-agent: *
-Disallow:
-Sitemap: https://bookofmormon.online/sitemap.xml
-`);
+    
+    // Whitelist of domains allowed to be crawled
+    const indexedDomains = ['bookofmormon.online', 'xn--289a67xla.kr']; //TODO: externalize config
+
+    if (indexedDomains.includes(host)) {
+        res.send([
+            'User-agent: *',
+            'Disallow:',
+            `Sitemap: https://${host}/sitemap.xml`,
+            ''
+        ].join('\n'));
     } else {
-        res.send(`User-agent: *
-Disallow: /
-`);
+        res.send([
+            'User-agent: *',
+            'Disallow: /',
+            ''
+        ].join('\n'));
     }
 }
 
