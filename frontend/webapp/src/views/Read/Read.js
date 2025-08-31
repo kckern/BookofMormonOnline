@@ -1,11 +1,11 @@
 import { useRouteMatch, Link, useHistory } from "react-router-dom";
 import "./Read.css";
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import Loader from "../_Common/Loader";
+import Loader, { Spinner } from "../_Common/Loader";
 import BoMOnlineAPI, { assetUrl } from "../../models/BoMOnlineAPI";
 import { generateReference, lookupReference } from "scripture-guide";
 import ReactTooltip from "react-tooltip";
-import { determineLanguage, label } from "../../models/Utils";
+import { determineLanguage, label, isMobile } from "../../models/Utils";
 
 const slugify = (text,verse_ids) => {
     if(!text) return null;
@@ -259,7 +259,7 @@ export default function ReadScripture({ appController }) {
 
                     })}
                 </div>
-            } ) : <Loader top={"30vh"} />}
+            } ) : isMobile() ? <Spinner top="65vh" /> : <Loader top="30vh" />}
             { !!readData && <div className="read-section-footer">
                 {prevSlug ? (
                     <Link to={`/read/${prevSlug}`} className="btn btn-primary">
