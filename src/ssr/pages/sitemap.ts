@@ -7,6 +7,32 @@ interface ImageInfo {
     artist: string;
 }
 
+const getSlugDirect = async (guid: string): Promise<string> => {
+    let slug = '';
+    let currentGuid = guid;
+    
+    while (currentGuid) {
+        const slugRecord = await models.BomSlug.findOne({
+            where: { guid: currentGuid },
+            attributes: ['slug', 'parent']
+        });
+        
+        if (!slugRecord) break;
+        
+        const recordData = slugRecord as any;
+        
+        if (slug === '') {
+            slug = recordData.slug;
+        } else {
+            slug = recordData.slug + '/' + slug;
+        }
+        
+        currentGuid = recordData.parent || '';
+    }
+    
+    return slug;
+};
+
 const xmlify = (url: string, priority: string = "0.5", img: ImageInfo | false = false): string => {
     const lastWeek = new Date();
     lastWeek.setDate(lastWeek.getDate() - 7);
@@ -43,9 +69,8 @@ const generateSitemap = async (host: string = 'bookofmormon.online'): Promise<st
         });
         
         for (const slug of slugs) {
-            // Note: get_slug_direct function would need to be implemented
-            // For now, using guid directly
-            xml += xmlify(`${baseUrl}/${(slug as any).guid}`, "0.8");
+            const fullSlug = await getSlugDirect((slug as any).guid);
+            xml += xmlify(`${baseUrl}/${fullSlug}`, "0.8");
         }
         
         // Map pages
