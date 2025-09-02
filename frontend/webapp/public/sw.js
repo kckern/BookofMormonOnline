@@ -66,3 +66,286 @@ self.addEventListener('activate', (event) => {
     })
   );
 });
+
+// =============================================================================
+// BACKGROUND SYNC - Sync data when connection is restored
+// =============================================================================
+self.addEventListener('sync', (event) => {
+  console.log('Background sync triggered:', event.tag);
+  
+  if (event.tag === 'background-sync-notes') {
+    event.waitUntil(syncNotes());
+  } else if (event.tag === 'background-sync-progress') {
+    event.waitUntil(syncReadingProgress());
+  }
+});
+
+async function syncNotes() {
+  try {
+    // TODO: Implement note synchronization
+    // - Get queued notes from IndexedDB
+    // - Send to server
+    // - Remove from queue on success
+    console.log('Syncing notes in background...');
+  } catch (error) {
+    console.error('Background sync failed:', error);
+    throw error; // Re-throw to retry later
+  }
+}
+
+async function syncReadingProgress() {
+  try {
+    // TODO: Implement reading progress synchronization
+    // - Get reading progress from IndexedDB
+    // - Send to server
+    // - Update local storage
+    console.log('Syncing reading progress in background...');
+  } catch (error) {
+    console.error('Reading progress sync failed:', error);
+    throw error;
+  }
+}
+
+// =============================================================================
+// PERIODIC SYNC - Regular background updates
+// =============================================================================
+self.addEventListener('periodicsync', (event) => {
+  console.log('Periodic sync triggered:', event.tag);
+  
+  if (event.tag === 'content-update') {
+    event.waitUntil(checkForContentUpdates());
+  } else if (event.tag === 'daily-verse') {
+    event.waitUntil(updateDailyVerse());
+  }
+});
+
+async function checkForContentUpdates() {
+  try {
+    // TODO: Check for new scripture content, translations, etc.
+    // - Fetch latest content version from server
+    // - Compare with local version
+    // - Download and cache new content if available
+    console.log('Checking for content updates...');
+  } catch (error) {
+    console.error('Content update check failed:', error);
+  }
+}
+
+async function updateDailyVerse() {
+  try {
+    // TODO: Update daily scripture verse/thought
+    // - Fetch today's featured verse
+    // - Cache for offline access
+    // - Update notification badge if needed
+    console.log('Updating daily verse...');
+  } catch (error) {
+    console.error('Daily verse update failed:', error);
+  }
+}
+
+// =============================================================================
+// PUSH NOTIFICATIONS - Handle incoming notifications
+// =============================================================================
+self.addEventListener('push', (event) => {
+  console.log('Push notification received:', event);
+  
+  const options = {
+    body: 'New content available in Book of Mormon Online',
+    icon: '/icons/icon-192.png',
+    badge: '/icons/icon-96.png',
+    tag: 'bom-notification',
+    requireInteraction: false,
+    actions: [
+      {
+        action: 'open',
+        title: 'Open App',
+        icon: '/icons/shortcut-read.png'
+      },
+      {
+        action: 'dismiss',
+        title: 'Dismiss',
+        icon: '/icons/icon-32.png'
+      }
+    ]
+  };
+
+  if (event.data) {
+    try {
+      const data = event.data.json();
+      
+      // Update badge based on notification type
+      updateBadgeOnPush(data);
+      
+      // TODO: Handle different notification types
+      switch (data.type) {
+        case 'daily-verse':
+          options.title = 'Daily Scripture';
+          options.body = data.verse || 'Check out today\'s featured verse';
+          options.tag = 'daily-verse';
+          break;
+          
+        case 'study-reminder':
+          options.title = 'Study Reminder';
+          options.body = data.message || 'Time for your daily scripture study';
+          options.tag = 'study-reminder';
+          break;
+          
+        case 'new-content':
+          options.title = 'New Content Available';
+          options.body = data.message || 'New features and content have been added';
+          options.tag = 'content-update';
+          break;
+          
+        default:
+          options.title = data.title || 'Book of Mormon Online';
+          options.body = data.body || options.body;
+      }
+    } catch (error) {
+      console.error('Error parsing push data:', error);
+      options.title = 'Book of Mormon Online';
+    }
+  } else {
+    options.title = 'Book of Mormon Online';
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(options.title, options)
+  );
+});
+
+// Handle notification clicks
+self.addEventListener('notificationclick', (event) => {
+  console.log('Notification clicked:', event);
+  
+  event.notification.close();
+  
+  // Clear badge when notification is clicked
+  clearBadgeOnClick(event.notification.tag);
+  
+  const action = event.action;
+  
+  if (action === 'dismiss') {
+    return; // Just close the notification
+  }
+  
+  // TODO: Handle different notification actions
+  let urlToOpen = '/';
+  
+  if (event.notification.tag === 'daily-verse') {
+    urlToOpen = '/read';
+  } else if (event.notification.tag === 'study-reminder') {
+    urlToOpen = '/study';
+  } else if (action === 'open') {
+    urlToOpen = '/';
+  }
+  
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then((clientList) => {
+        // Focus existing window if available
+        for (const client of clientList) {
+          if (client.url.includes(self.location.origin) && 'focus' in client) {
+            client.navigate(urlToOpen);
+            return client.focus();
+          }
+        }
+        
+        // Open new window if no existing window
+        if (clients.openWindow) {
+          return clients.openWindow(urlToOpen);
+        }
+      })
+  );
+});
+
+// Handle notification close
+self.addEventListener('notificationclose', (event) => {
+  console.log('Notification closed:', event.notification.tag);
+  // TODO: Track notification analytics
+});
+
+// =============================================================================
+// APP BADGES - Show counts/status on app icon
+// =============================================================================
+
+// Set badge count (for unread notifications, new content, etc.)
+async function setBadge(count = 0) {
+  try {
+    if ('setAppBadge' in navigator) {
+      if (count > 0) {
+        await navigator.setAppBadge(count);
+        console.log(`Badge set to: ${count}`);
+      } else {
+        await navigator.clearAppBadge();
+        console.log('Badge cleared');
+      }
+    } else {
+      console.log('App Badge API not supported');
+    }
+  } catch (error) {
+    console.error('Failed to set app badge:', error);
+  }
+}
+
+// Clear badge
+async function clearBadge() {
+  await setBadge(0);
+}
+
+// Update badge based on different content types
+async function updateBadgeForContent(type, count) {
+  switch (type) {
+    case 'unread-notes':
+      // TODO: Show count of unsynced notes
+      await setBadge(count);
+      break;
+      
+    case 'new-content':
+      // TODO: Show when new scripture content is available
+      await setBadge(count || 1);
+      break;
+      
+    case 'daily-verse':
+      // TODO: Show when daily verse is unread
+      await setBadge(1);
+      break;
+      
+    case 'study-streak':
+      // TODO: Show study streak count
+      await setBadge(count);
+      break;
+      
+    case 'clear':
+      await clearBadge();
+      break;
+      
+    default:
+      console.log('Unknown badge type:', type);
+  }
+}
+
+// Listen for badge update messages from main app
+self.addEventListener('message', (event) => {
+  console.log('Service worker received message:', event.data);
+  
+  if (event.data && event.data.type === 'UPDATE_BADGE') {
+    const { badgeType, count } = event.data;
+    updateBadgeForContent(badgeType, count);
+  }
+});
+
+// Update badges when push notifications arrive
+function updateBadgeOnPush(notificationData) {
+  if (notificationData.type === 'daily-verse') {
+    updateBadgeForContent('daily-verse');
+  } else if (notificationData.type === 'new-content') {
+    updateBadgeForContent('new-content', notificationData.count);
+  }
+}
+
+// Clear badge when notification is clicked
+function clearBadgeOnClick(notificationTag) {
+  if (notificationTag === 'daily-verse') {
+    clearBadge();
+  }
+}

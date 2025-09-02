@@ -160,7 +160,7 @@ const fetchLabels = async (lang?: string): Promise<Map<string, string>> => {
 };
 
 // Helper function to create the base manifest structure
-const createBaseManifest = (labels: Map<string, string>, lang?: string): object => {
+const createBaseManifest = (labels: Map<string, string>, lang?: string, host?: string): object => {
     const defaults = MANIFEST_CONSTANTS.DEFAULT_VALUES;
     
     return {
@@ -180,34 +180,44 @@ const createBaseManifest = (labels: Map<string, string>, lang?: string): object 
         screenshots: generateScreenshots(labels),
         icons: generateIcons(),
         shortcuts: generateShortcuts(labels),
+        iarc_rating_id: "e84b072d-71b3-4d3e-86ae-31a8ce4e53b7",
+        prefer_related_applications: false,
+        related_applications: [],
+        scope_extensions: [
+            {
+                origin: `https://${host || 'bookofmormon.online'}`
+            }
+        ],
         launch_handler: {
             client_mode: "focus-existing"
         }
     };
 };
 
-const generateManifest = async (lang?: string): Promise<object> => {
+const generateManifest = async (lang?: string, host?: string): Promise<object> => {
     try {
         const labels = await fetchLabels(lang);
-        return createBaseManifest(labels, lang);
+        return createBaseManifest(labels, lang, host);
     } catch (error) {
         console.error('Error loading manifest from database:', error);
         // Fallback to default values with empty labels map
-        return createBaseManifest(new Map(), lang);
+        return createBaseManifest(new Map(), lang, host);
     }
 };
 
 const handleManifest = async (req: Request, res: Response): Promise<void> => {
     try {
         const lang = determineLanguage(req) || 'en';
-        const manifest = await generateManifest(lang);
+        const host = req.get('host') || 'bookofmormon.online';
+        const manifest = await generateManifest(lang, host);
         
         res.setHeader("Content-Type", "application/json");
         res.send(JSON.stringify(manifest, null, 2));
     } catch (error) {
         console.error('Error generating manifest:', error);
         // Fallback uses the same base manifest with empty labels
-        const fallbackManifest = createBaseManifest(new Map(), 'en');
+        const host = req.get('host') || 'bookofmormon.online';
+        const fallbackManifest = createBaseManifest(new Map(), 'en', host);
         res.setHeader("Content-Type", "application/json");
         res.send(JSON.stringify(fallbackManifest, null, 2));
     }
