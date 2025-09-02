@@ -730,7 +730,7 @@ function NotesPanel({ narrationController }) {
     <span onClick={closePanel}> × </span>
   </h5>
     <div className="notesPanel">
-      {notes.map((item)=> <SingleNoteItem item={item}/>)}
+      {notes.map((item)=> <SingleNoteItem key={item.id} item={item}/>)}
     </div>
   </div>
 }
