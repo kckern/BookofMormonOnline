@@ -13,6 +13,7 @@ RUN apk add --no-cache tzdata && \
     cp /usr/share/zoneinfo/America/Los_Angeles /etc/localtime && \
     echo "America/Los_Angeles" > /etc/timezone
 RUN cd frontend/webapp/public && date > build.txt && echo ${MY_COMMIT_ID:-"unknown"} >> build.txt
+RUN cd frontend/webapp/public && sed -i "s/{{BUILD_VERSION}}/${MY_COMMIT_ID:-unknown}/g" sw.js
 RUN npm install -g typescript forever && \
 cd frontend/webapp && npm install react-app-rewired sass && npm run build && cd ../.. && \
 npm install && tsc -p tsconfig.build.json
