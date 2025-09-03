@@ -71,23 +71,26 @@ const createIcon = (size: string, purpose?: string): object => ({
 
 // Helper function to generate icons array
 const generateIcons = (): object[] => [
-    createIcon("16"),
-    createIcon("32"),
-    createIcon("48"),
-    createIcon("72"),
-    createIcon("96"),
-    createIcon("144"),
-    createIcon("192", "any"),
-    { ...createIcon("192", "maskable"), src: "/icons/icon-192-maskable.png" },
-    createIcon("512", "any"),
-    { ...createIcon("512", "maskable"), src: "/icons/icon-512-maskable.png" },
-    createIcon("1024", "any"),
-    createIcon("2048", "any"),
     {
         src: "/favicon.ico",
         sizes: "64x64 32x32 24x24 16x16",
         type: "image/x-icon"
-    }
+    },
+    createIcon("16"),
+    createIcon("32"),
+    createIcon("48"),
+    createIcon("64"),
+    createIcon("72"),
+    createIcon("96"),
+    createIcon("128"),
+    createIcon("144"),
+    createIcon("192", "any"),
+    { ...createIcon("192", "maskable"), src: "/icons/icon-192-maskable.png" },
+    createIcon("256"),
+    createIcon("512", "any"),
+    { ...createIcon("512", "maskable"), src: "/icons/icon-512-maskable.png" },
+    createIcon("1024", "any"),
+    createIcon("2048", "any")
 ];
 
 // Helper function to generate screenshots
