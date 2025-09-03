@@ -24,6 +24,37 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js')
       .then((registration) => {
         console.log('SW registered: ', registration);
+        
+        // Listen for messages from service worker
+        navigator.serviceWorker.addEventListener('message', (event) => {
+          if (event.data && event.data.type === 'CACHE_CLEARED' && event.data.reload) {
+            console.log('Cache cleared by service worker, reloading...');
+            window.location.reload();
+          }
+        });
+        
+        // Check for updates to the service worker
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing;
+          if (newWorker) {
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                // New service worker available, ask it to skip waiting
+                console.log('New service worker available, activating...');
+                newWorker.postMessage({ type: 'SKIP_WAITING' });
+                // Reload the page to get fresh content
+                setTimeout(() => window.location.reload(), 1000);
+              }
+            });
+          }
+        });
+
+        // Add global function to manually clear cache (for debugging)
+        window.clearServiceWorkerCache = () => {
+          if (navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({ type: 'CLEAR_CACHE' });
+          }
+        };
       })
       .catch((registrationError) => {
         console.log('SW registration failed: ', registrationError);

@@ -1,14 +1,20 @@
-const CACHE_NAME = 'bom-online-v1';
+// Cache versioning - update this on each deployment
+const BUILD_VERSION = '{{BUILD_VERSION}}'; // This should be replaced during build
+const CACHE_VERSION = BUILD_VERSION || new Date().getTime();
+const CACHE_NAME = `bom-online-v${CACHE_VERSION}`;
 const urlsToCache = [
   '/',
-  '/static/js/bundle.js',
-  '/static/css/main.css',
   '/font/scripture.woff2',
   '/manifest.json'
+  // Note: Don't pre-cache JS/CSS files with hashes - let them be cached on-demand
 ];
 
 // Install event - cache resources
 self.addEventListener('install', (event) => {
+  console.log('Service Worker installing with cache:', CACHE_NAME);
+  // Skip waiting to activate immediately
+  self.skipWaiting();
+  
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
@@ -38,6 +44,21 @@ self.addEventListener('fetch', (event) => {
           });
         })
     );
+  } else if (event.request.url.includes('/static/')) {
+    // Handle static assets (JS, CSS) with cache busting
+    event.respondWith(
+      fetch(event.request).then((fetchResponse) => {
+        // Always fetch fresh static assets and update cache
+        const responseClone = fetchResponse.clone();
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(event.request, responseClone);
+        });
+        return fetchResponse;
+      }).catch(() => {
+        // Fallback to cache if network fails
+        return caches.match(event.request);
+      })
+    );
   } else {
     // Standard caching for other requests
     event.respondWith(
@@ -53,6 +74,10 @@ self.addEventListener('fetch', (event) => {
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
+  console.log('Service Worker activating with cache:', CACHE_NAME);
+  // Take control of all clients immediately
+  self.clients.claim();
+  
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
@@ -331,6 +356,28 @@ self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'UPDATE_BADGE') {
     const { badgeType, count } = event.data;
     updateBadgeForContent(badgeType, count);
+  } else if (event.data && event.data.type === 'CLEAR_CACHE') {
+    // Clear all caches and force reload
+    event.waitUntil(
+      caches.keys().then((cacheNames) => {
+        return Promise.all(
+          cacheNames.map((cacheName) => {
+            console.log('Force clearing cache:', cacheName);
+            return caches.delete(cacheName);
+          })
+        );
+      }).then(() => {
+        // Notify all clients to reload
+        return self.clients.matchAll().then((clients) => {
+          clients.forEach((client) => {
+            client.postMessage({ type: 'CACHE_CLEARED', reload: true });
+          });
+        });
+      })
+    );
+  } else if (event.data && event.data.type === 'SKIP_WAITING') {
+    // Force service worker to activate
+    self.skipWaiting();
   }
 });
 
