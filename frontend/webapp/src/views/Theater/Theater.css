@@ -873,6 +873,41 @@ span.pageTitle
     animation: blinking-outline 1s infinite ease-in-out;
 }
 
+/* Scrubbing styles for mobile long press */
+.theater-queue-indicator.scrubbing {
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+}
+
+.theater-queue-indicator-item.scrub-selected {
+    transform: scale(1.3);
+    background-color: #ffd700 !important;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+    transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.1s ease;
+    z-index: 10;
+    position: relative;
+}
+
+.theater-queue-indicator.scrubbing .theater-queue-indicator-item {
+    transition: transform 0.1s ease;
+}
+
+.theater-queue-indicator.scrubbing .theater-queue-indicator-item:not(.scrub-selected) {
+    opacity: 0.7;
+}
+
+/* Enhanced tooltip visibility during scrubbing */
+.theater-queue-indicator.scrubbing .theater-queue-indicator-tooltip {
+    z-index: 1000 !important;
+    pointer-events: none;
+}
+
+.theater-queue-indicator.scrubbing .scrub-selected[data-tip] {
+    position: relative;
+    z-index: 100;
+}
+
 
 .theater-queue-indicator .theater-queue-indicator-item.last-in-section
 {

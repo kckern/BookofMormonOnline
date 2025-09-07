@@ -1309,11 +1309,108 @@ function TheaterMetaContent({ theaterController }) {
 function TheaterQueueIndicator({ theaterController }) {
   let { queue, cursorIndex, queueStatus } = theaterController;
   queue = Array.isArray(queue) ? queue : [];
+  
+  // Add touch state
+  const [touchState, setTouchState] = useState({
+    isLongPress: false,
+    startX: 0,
+    currentX: 0,
+    selectedIndex: cursorIndex,
+    longPressTimer: null
+  });
+
+  // Touch handlers
+  const handleTouchStart = (e, index) => {
+    const touch = e.touches[0];
+    const timer = setTimeout(() => {
+      setTouchState(prev => ({
+        ...prev,
+        isLongPress: true,
+        startX: touch.clientX,
+        currentX: touch.clientX,
+        selectedIndex: index
+      }));
+      // Haptic feedback if available
+      if (navigator.vibrate) {
+        navigator.vibrate(50);
+      }
+    }, 500); // 500ms for long press
+
+    setTouchState(prev => ({
+      ...prev,
+      longPressTimer: timer,
+      startX: touch.clientX,
+      selectedIndex: index
+    }));
+  };
+
+  const handleTouchMove = (e) => {
+    if (!touchState.isLongPress) return;
+    
+    e.preventDefault(); // Prevent scrolling
+    const touch = e.touches[0];
+    const currentX = touch.clientX;
+    
+    // Calculate which item is under the finger
+    const indicatorElement = e.currentTarget;
+    const rect = indicatorElement.getBoundingClientRect();
+    const relativeX = currentX - rect.left;
+    const itemWidth = rect.width / queue.length;
+    const newIndex = Math.max(0, Math.min(queue.length - 1, Math.floor(relativeX / itemWidth)));
+    
+    setTouchState(prev => ({
+      ...prev,
+      currentX,
+      selectedIndex: newIndex
+    }));
+  };
+
+  const handleTouchEnd = () => {
+    if (touchState.longPressTimer) {
+      clearTimeout(touchState.longPressTimer);
+    }
+    
+    if (touchState.isLongPress) {
+      // Navigate to selected item
+      theaterController.goto(touchState.selectedIndex, "manual");
+      // Haptic feedback
+      if (navigator.vibrate) {
+        navigator.vibrate(25);
+      }
+    }
+    
+    // Reset state
+    setTouchState({
+      isLongPress: false,
+      startX: 0,
+      currentX: 0,
+      selectedIndex: cursorIndex,
+      longPressTimer: null
+    });
+  };
+
+  const handleTouchCancel = () => {
+    if (touchState.longPressTimer) {
+      clearTimeout(touchState.longPressTimer);
+    }
+    setTouchState({
+      isLongPress: false,
+      startX: 0,
+      currentX: 0,
+      selectedIndex: cursorIndex,
+      longPressTimer: null
+    });
+  };
+
   return (
-    <div className="theater-queue-indicator"
+    <div 
+      className={`theater-queue-indicator ${touchState.isLongPress ? 'scrubbing' : ''}`}
       style={{
         gap: `min(1ex,${30/queue.length}vw)`,
       }}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchCancel}
     >
 
       <ReactTooltip effect="solid" id="dotToolTip" type="dark" place="bottom"  offset={{'top':-10}} className="theater-queue-indicator-tooltip" />
@@ -1325,16 +1422,36 @@ function TheaterQueueIndicator({ theaterController }) {
         const thisSection = queue[index]?.parent_section?.title || null;
         const isLastInSection = nextSection !== thisSection;
         const heading = queue[index]?.heading || null;
+        
+        // Determine if this item is selected during scrub
+        const isScrubbingSelected = touchState.isLongPress && touchState.selectedIndex === index;
+        
+        // Dynamic tooltip content - show scrubbed item info during scrubbing, or original during normal state
+        const getTooltipContent = () => {
+          if (touchState.isLongPress) {
+            const selectedItem = queue[touchState.selectedIndex];
+            if (selectedItem) {
+              const selectedStatus = queueStatus[touchState.selectedIndex] || selectedItem?.status || null;
+              const selectedSection = selectedItem?.parent_section?.title || null;
+              const selectedHeading = selectedItem?.heading || null;
+              return "<b>" + selectedSection + "</b> <br/>" + selectedHeading + "<br/>" + selectedStatus;
+            }
+          }
+          return "<b>" + thisSection + "</b> <br/>" + heading + "<br/>" + status;
+        };
+        
         return (
           <div
-            onClick={() => theaterController.goto(index, "manual")}
+            onClick={() => !touchState.isLongPress && theaterController.goto(index, "manual")}
+            onTouchStart={(e) => handleTouchStart(e, index)}
             className={`theater-queue-indicator-item ${status || ""} ${
               index === cursorIndex ? "active" : ""
-            } ${isLastInSection ? "last-in-section" : ""
+            } ${isLastInSection ? "last-in-section" : ""} ${
+              isScrubbingSelected ? "scrub-selected" : ""
             }`}
             key={index}
             data-html={true}
-            data-tip={"<b>" + thisSection + "</b> <br/>" + heading + "<br/>" + status}
+            data-tip={getTooltipContent()}
             data-for="dotToolTip"
           ></div>
         );
