@@ -1,11 +1,81 @@
 import { useRouteMatch, Link, useHistory } from "react-router-dom";
-import "./Read.css";
+import "./Read.scss";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import Loader, { Spinner } from "../_Common/Loader";
 import BoMOnlineAPI, { assetUrl } from "../../models/BoMOnlineAPI";
 import { generateReference, lookupReference } from "scripture-guide";
 import ReactTooltip from "react-tooltip";
 import { determineLanguage, label, isMobile } from "../../models/Utils";
+
+// Debug flag - set to true to always show skeleton loader
+const DEBUG_SKELETON = false;
+
+const SkeletonLoader = () => {
+    const [skeletonData] = useState(() => {
+        const getRandomWidth = () => Math.floor(Math.random() * (80 - 40 + 1)) + 40;
+        const getRandomParagraphs = () => Math.floor(Math.random() * 5) + 1; // 1-5 paragraphs
+        const getRandomLines = () => Math.floor(Math.random() * 6) + 2; // 2-7 lines
+        const getRandomLineWidth = (isLast) => {
+            if (isLast) {
+                // Last line in paragraph: 50-75% width for ragged edge
+                return Math.floor(Math.random() * 26) + 50;
+            }
+            // Regular lines: 90-100% width with some variation in last 10%
+            return Math.floor(Math.random() * 11) + 90;
+        };
+
+        // Generate skeleton data once
+        return [1, 2, 3].map((sectionIndex) => ({
+            id: sectionIndex,
+            headingWidth: getRandomWidth(),
+            paragraphs: Array.from({ length: getRandomParagraphs() }, (_, paragraphIndex) => {
+                const numLines = getRandomLines();
+                return {
+                    id: paragraphIndex,
+                    lines: Array.from({ length: numLines }, (_, lineIndex) => {
+                        const isLastLine = lineIndex === numLines - 1;
+                        return {
+                            id: lineIndex,
+                            width: getRandomLineWidth(isLastLine)
+                        };
+                    })
+                };
+            })
+        }));
+    });
+    
+    return (
+        <div className="read-content">
+            {skeletonData.map((section) => (
+                <div key={section.id} className="read-section skeleton-section">
+                    <div className="read-section-header skeleton-header">
+                        <div className="skeleton-heading" style={{ width: `${section.headingWidth}%` }}></div>
+                        <div className="skeleton-study-btn"></div>
+                    </div>
+                    <div className="read-block skeleton-block">
+                        <div className="left-gutter skeleton-gutter">
+                            <div className="skeleton-avatar"></div>
+                            <div className="skeleton-voice"></div>
+                        </div>
+                        <div className="main-content skeleton-content">
+                            {section.paragraphs.map((paragraph) => (
+                                <div key={paragraph.id} className="skeleton-paragraph">
+                                    {paragraph.lines.map((line) => (
+                                        <div 
+                                            key={line.id} 
+                                            className="skeleton-text-line" 
+                                            style={{ width: `${line.width}%` }}
+                                        ></div>
+                                    ))}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+};
 
 const slugify = (text,verse_ids) => {
     if(!text) return null;
@@ -196,7 +266,22 @@ export default function ReadScripture({ appController }) {
                     <button className="btn btn-primary disabled" disabled>  ▶ </button>
                 )} </div>
             <ChapterNav chapterRef={chapterRef} />
-            {readData ? readData.sections?.map((section, index) => {
+            <div className="read-mobile-nav">
+                {prevSlug ? (
+                    <Link to={`/read/${prevSlug}`} className="btn btn-primary">
+                        ◀ {prevRef}
+                    </Link>
+                    ) : (
+                    <button className="btn btn-primary disabled" disabled>  ◀  </button>
+                    )}
+                {nextSlug ? (
+                    <Link to={`/read/${nextSlug}`} className="btn btn-primary">
+                    {nextRef} ▶
+                    </Link>
+                ) : (
+                    <button className="btn btn-primary disabled" disabled>  ▶ </button>
+                )} </div>
+            {(readData && !DEBUG_SKELETON) ? readData.sections?.map((section, index) => {
                 return <div key={index} className="read-section">
                     <div className="read-section-header">
                         <h4>{section.heading?.replace(/｢\d+｣/g, "").trim()}</h4>
@@ -259,8 +344,8 @@ export default function ReadScripture({ appController }) {
 
                     })}
                 </div>
-            } ) : isMobile() ? <Spinner top="65vh" /> : <Loader top="30vh" />}
-            { !!readData && <div className="read-section-footer">
+            } ) : <SkeletonLoader />}
+            { !!readData && !DEBUG_SKELETON && <div className="read-section-footer">
                 {prevSlug ? (
                     <Link to={`/read/${prevSlug}`} className="btn btn-primary">
                         ◀ {prevRef}
@@ -292,12 +377,14 @@ export default function ReadScripture({ appController }) {
         let loaderTimeout;
         loaderTimeout = setTimeout(() => {setContent(null);}, 200);
         document.title = chapterRef;
+        
+        //scroll to top immediately when navigation starts
+        window.scrollTo(0, 0);
+        
         BoMOnlineAPI({read: chapterRef}).then((data) => {
             clearTimeout(loaderTimeout);
             const mainKey = Object.keys(data.read)[0];
             setContent(data.read[mainKey]);
-            //scroll to top
-            window.scrollTo(0, 0);
             //save chapterRef to local storage
             localStorage.setItem("chapterRef", chapterRef);
             //reset highlighted verse if not in URL
