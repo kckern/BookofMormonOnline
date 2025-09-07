@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { handleSitemap } from './pages/sitemap';
 import { handleManifest } from './pages/pwaManifest';
+import { handleAssetlinks } from './pages/assetlinks';
 
 const handleSSR = (req: Request, res: Response): void | Promise<void> => {
     const path = req.path;
@@ -18,6 +19,11 @@ const handleSSR = (req: Request, res: Response): void | Promise<void> => {
     // Handle manifest.json
     if (path === '/manifest.json') {
         return handleManifest(req, res);
+    }
+
+    // Handle assetlinks.json
+    if (path === '/.well-known/assetlinks.json') {
+        return handleAssetlinks(req, res);
     }
 
     // Default SSR page
@@ -62,5 +68,5 @@ const handleRobots = (req: Request, res: Response): void => {
 }
 
 // Export the single handler and the match patterns
-export const ssrRoutes = ['/sitemap.xml', '/robots.txt', '/manifest.json'];
+export const ssrRoutes = ['/sitemap.xml', '/robots.txt', '/manifest.json', '/.well-known/assetlinks.json'];
 export { handleSSR };

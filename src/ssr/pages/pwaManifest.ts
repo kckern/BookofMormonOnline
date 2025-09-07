@@ -173,6 +173,7 @@ const createBaseManifest = (labels: Map<string, string>, lang?: string, host?: s
         start_url: defaults.start_url,
         scope: defaults.scope,
         display: defaults.display,
+        display_override: ["standalone", "minimal-ui","window-controls-overlay"],
         orientation: defaults.orientation,
         background_color: defaults.background_color,
         theme_color: defaults.theme_color,
