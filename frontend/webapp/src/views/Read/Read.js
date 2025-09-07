@@ -136,9 +136,9 @@ export default function ReadScripture({ appController }) {
     const [prevChapterRef, setPrevChapterRef] = useState(initPrevChapter);
     const [chapterVerseIds, setChapterVerseIds] = useState(initChapterVerseIds);
 
-    // Touch/swipe state
+    // Touch/swipe state - only for horizontal swipes
     const [touchStart, setTouchStart] = useState(null);
-    const [touchEnd, setTouchEnd] = useState(null);
+    const [isHorizontalSwipe, setIsHorizontalSwipe] = useState(false);
 
     const prevInitChapterRef = useRef(initChapterRef);
     const prevInitHighlightedVerses = useRef(initHighlightedVerses);
@@ -234,50 +234,78 @@ export default function ReadScripture({ appController }) {
         }
     }, [handleKeyDown, chapterRef, history]);
 
-    // Swipe handling functions
+    // Smart swipe handling - only intercepts clear horizontal swipes
     const handleTouchStart = useCallback((e) => {
-        setTouchEnd(null);
-        setTouchStart(e.targetTouches[0].clientX);
+        setTouchStart({
+            x: e.targetTouches[0].clientX,
+            y: e.targetTouches[0].clientY,
+            time: Date.now()
+        });
+        setIsHorizontalSwipe(false);
     }, []);
 
     const handleTouchMove = useCallback((e) => {
-        setTouchEnd(e.targetTouches[0].clientX);
-    }, []);
-
-    const handleTouchEnd = useCallback(() => {
-        if (!touchStart || !touchEnd) return;
+        if (!touchStart || isHorizontalSwipe) return;
         
-        const distance = touchStart - touchEnd;
-        const isLeftSwipe = distance > 50;
-        const isRightSwipe = distance < -50;
-
-        if (isLeftSwipe) {
-            // Left swipe - go to next chapter
-            goToNextChapter();
+        const currentX = e.targetTouches[0].clientX;
+        const currentY = e.targetTouches[0].clientY;
+        
+        const deltaX = Math.abs(currentX - touchStart.x);
+        const deltaY = Math.abs(currentY - touchStart.y);
+        
+        // Only consider it a swipe if horizontal movement is significantly greater than vertical
+        // AND we've moved at least 15px horizontally
+        if (deltaX > 15 && deltaX > deltaY * 2) {
+            setIsHorizontalSwipe(true);
+            // Prevent scrolling only when we're sure it's a horizontal swipe
+            e.preventDefault();
         }
+    }, [touchStart, isHorizontalSwipe]);
 
-        if (isRightSwipe) {
-            // Right swipe - go to previous chapter
-            goToPreviousChapter();
+    const handleTouchEnd = useCallback((e) => {
+        if (!touchStart || !isHorizontalSwipe) {
+            setTouchStart(null);
+            setIsHorizontalSwipe(false);
+            return;
         }
-    }, [touchStart, touchEnd, goToNextChapter, goToPreviousChapter]);
+        
+        const endX = e.changedTouches[0].clientX;
+        const distance = touchStart.x - endX;
+        const timeDiff = Date.now() - touchStart.time;
+        
+        // Only trigger if it's a fast swipe (< 300ms) with significant distance
+        if (timeDiff < 300 && Math.abs(distance) > 50) {
+            if (distance > 0) {
+                // Left swipe - go to next chapter
+                goToNextChapter();
+            } else {
+                // Right swipe - go to previous chapter  
+                goToPreviousChapter();
+            }
+        }
+        
+        setTouchStart(null);
+        setIsHorizontalSwipe(false);
+    }, [touchStart, isHorizontalSwipe, goToNextChapter, goToPreviousChapter]);
 
-    // Add touch event listeners for swipe detection
+    // Add touch event listeners to each section
     useEffect(() => {
-        const container = readContentRef.current;
-        if (container) {
-            container.addEventListener('touchstart', handleTouchStart);
-            container.addEventListener('touchmove', handleTouchMove);
-            container.addEventListener('touchend', handleTouchEnd);
+        const sections = document.querySelectorAll('.read-section');
+        
+        sections.forEach(section => {
+            section.addEventListener('touchstart', handleTouchStart, { passive: true });
+            section.addEventListener('touchmove', handleTouchMove, { passive: false });
+            section.addEventListener('touchend', handleTouchEnd, { passive: true });
+        });
 
-            return () => {
-                container.removeEventListener('touchstart', handleTouchStart);
-                container.removeEventListener('touchmove', handleTouchMove);
-                container.removeEventListener('touchend', handleTouchEnd);
-            };
-        }
-    }, [handleTouchStart, handleTouchMove, handleTouchEnd]);
-
+        return () => {
+            sections.forEach(section => {
+                section.removeEventListener('touchstart', handleTouchStart);
+                section.removeEventListener('touchmove', handleTouchMove);
+                section.removeEventListener('touchend', handleTouchEnd);
+            });
+        };
+    }, [handleTouchStart, handleTouchMove, handleTouchEnd, content]); // Re-run when content changes
 
     //scroll to highlighted verse on load
     useEffect(() => {

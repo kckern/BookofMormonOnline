@@ -4,6 +4,11 @@
     font-size: 1rem;
 }
 
+.read-content {
+    /* Improve touch scrolling performance on mobile */
+    -webkit-overflow-scrolling: touch;
+}
+
 .read-content .read-section
 {
     font-family: "Scripture";
