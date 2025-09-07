@@ -18,6 +18,7 @@ export function determineLanguage() {
   if(isLocalhost) return "en";
   let subdomain = window.location.host.split(".").shift();
   let tld = window.location.host.split(".").pop();
+  
   let aliases = {
     ko: ["kr", "kor"],
     fr: ["fra", "fre"],
@@ -45,6 +46,13 @@ export function determineLanguage() {
   };
   let index = {};
   Object.keys(aliases).forEach(i => { index[i] = i; Object.keys(aliases[i]).forEach(j => index[aliases[i][j]] = i); });
+
+  // If subdomain is "app", use browser language preferences
+  if(subdomain === "app") {
+    const browserLang = navigator.language || navigator.languages?.[0] || "en";
+    const langCode = browserLang.split("-")[0].toLowerCase(); // Extract language code (e.g., "en" from "en-US")
+    return index[langCode] || langCode || "en"; // Map through aliases, fallback to original code, then "en"
+  }
   subdomain = index[subdomain] || null;
   tld = index[tld] || null;
   return tld || subdomain || "en";
@@ -933,18 +941,6 @@ function start_and_end(str) {
   }
   return str;
 }
-
-
-export function PopupCenter(e, n, t, i) {
-  var screen = window.screen || {};
-  var o = void 0 != window.screenLeft ? window.screenLeft : screen.left,
-  d = void 0 != window.screenTop ? window.screenTop : screen.top,
-  c = window.innerWidth ? window.innerWidth : document.documentElement.clientWidth ? document.documentElement.clientWidth : screen.width,
-  w = window.innerHeight ? window.innerHeight : document.documentElement.clientHeight ? document.documentElement.clientHeight : screen.height,
-  r = c / 2 - t / 2 + o,
-  h = w / 2 - i / 2 + d,
-  s = window.open(e, n, "scrollbars=yes, width=" + t + ", height=" + i + ", top=" + h + ", left=" + r);
-  return window.focus && s.focus(), !1}
 
 
 export function useSwipe(input){
