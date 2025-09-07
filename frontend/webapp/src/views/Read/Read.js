@@ -136,8 +136,28 @@ export default function ReadScripture({ appController }) {
     const [prevChapterRef, setPrevChapterRef] = useState(initPrevChapter);
     const [chapterVerseIds, setChapterVerseIds] = useState(initChapterVerseIds);
 
+    // Touch/swipe state
+    const [touchStart, setTouchStart] = useState(null);
+    const [touchEnd, setTouchEnd] = useState(null);
+
     const prevInitChapterRef = useRef(initChapterRef);
     const prevInitHighlightedVerses = useRef(initHighlightedVerses);
+    const readContentRef = useRef(null);
+
+    // Navigation functions
+    const goToNextChapter = useCallback(() => {
+        const nextSlug = slugify(nextChapterRef);
+        if (nextSlug) {
+            history.push(`/read/${nextSlug}`);
+        }
+    }, [nextChapterRef, history]);
+
+    const goToPreviousChapter = useCallback(() => {
+        const prevSlug = slugify(prevChapterRef);
+        if (prevSlug) {
+            history.push(`/read/${prevSlug}`);
+        }
+    }, [prevChapterRef, history]);
 
     useEffect(() => {
         //console.log("Reinitializing");
@@ -171,15 +191,9 @@ export default function ReadScripture({ appController }) {
     // add listener to to keyboard left right arrows to got next and previous
     const handleKeyDown = useCallback((e) => {
         if (e.key === "ArrowRight") {
-
-            const next = document.querySelector(".read-section-footer a:last-child");
-            if (next) next.click();
-        
+            goToNextChapter();
         } else if (e.key === "ArrowLeft") {
-                
-                const prev = document.querySelector(".read-section-footer a:first-child");
-                if (prev) prev.click();
-           
+            goToPreviousChapter();
         }
         //or tab
         if (e.key === "ArrowDown" || e.key === "Tab" || e.key === "ArrowUp") {
@@ -211,7 +225,7 @@ export default function ReadScripture({ appController }) {
            const slug = slugify(chapterRef);
               history.push(`/read/${slug}`);
         }
-    }, []);
+    }, [goToNextChapter, goToPreviousChapter, chapterRef, history, chapterVerseIds]);
 
     useEffect(() => {
         document.addEventListener("keydown", handleKeyDown);
@@ -219,6 +233,50 @@ export default function ReadScripture({ appController }) {
             document.removeEventListener("keydown", handleKeyDown);
         }
     }, [handleKeyDown, chapterRef, history]);
+
+    // Swipe handling functions
+    const handleTouchStart = useCallback((e) => {
+        setTouchEnd(null);
+        setTouchStart(e.targetTouches[0].clientX);
+    }, []);
+
+    const handleTouchMove = useCallback((e) => {
+        setTouchEnd(e.targetTouches[0].clientX);
+    }, []);
+
+    const handleTouchEnd = useCallback(() => {
+        if (!touchStart || !touchEnd) return;
+        
+        const distance = touchStart - touchEnd;
+        const isLeftSwipe = distance > 50;
+        const isRightSwipe = distance < -50;
+
+        if (isLeftSwipe) {
+            // Left swipe - go to next chapter
+            goToNextChapter();
+        }
+
+        if (isRightSwipe) {
+            // Right swipe - go to previous chapter
+            goToPreviousChapter();
+        }
+    }, [touchStart, touchEnd, goToNextChapter, goToPreviousChapter]);
+
+    // Add touch event listeners for swipe detection
+    useEffect(() => {
+        const container = readContentRef.current;
+        if (container) {
+            container.addEventListener('touchstart', handleTouchStart);
+            container.addEventListener('touchmove', handleTouchMove);
+            container.addEventListener('touchend', handleTouchEnd);
+
+            return () => {
+                container.removeEventListener('touchstart', handleTouchStart);
+                container.removeEventListener('touchmove', handleTouchMove);
+                container.removeEventListener('touchend', handleTouchEnd);
+            };
+        }
+    }, [handleTouchStart, handleTouchMove, handleTouchEnd]);
 
 
     //scroll to highlighted verse on load
@@ -245,39 +303,36 @@ export default function ReadScripture({ appController }) {
         const nextRef = readData?.next_ref || nextChapterRef;
         const ref = readData?.ref || chapterRef;
 
-        const prevSlug = slugify(prevRef);
-        const nextSlug = slugify(nextRef);
-
-        return <div className="read-content">
+        return <div className="read-content" ref={readContentRef}>
             <div className="read-header-nav">
-                {prevSlug ? (
-                    <Link to={`/read/${prevSlug}`} className="btn btn-primary">
+                {prevRef ? (
+                    <button onClick={goToPreviousChapter} className="btn btn-primary">
                         ◀ {prevRef}
-                    </Link>
+                    </button>
                     ) : (
                     <button className="btn btn-primary disabled" disabled>  ◀  </button>
                     )}
                     <h3 className="title lg-4 text-center">{ref || label("menu_read")}</h3>
-                {nextSlug ? (
-                    <Link to={`/read/${nextSlug}`} className="btn btn-primary">
+                {nextRef ? (
+                    <button onClick={goToNextChapter} className="btn btn-primary">
                     {nextRef} ▶
-                    </Link>
+                    </button>
                 ) : (
                     <button className="btn btn-primary disabled" disabled>  ▶ </button>
                 )} </div>
             <ChapterNav chapterRef={chapterRef} />
             <div className="read-mobile-nav">
-                {prevSlug ? (
-                    <Link to={`/read/${prevSlug}`} className="btn btn-primary">
+                {prevRef ? (
+                    <button onClick={goToPreviousChapter} className="btn btn-primary">
                         ◀ {prevRef}
-                    </Link>
+                    </button>
                     ) : (
                     <button className="btn btn-primary disabled" disabled>  ◀  </button>
                     )}
-                {nextSlug ? (
-                    <Link to={`/read/${nextSlug}`} className="btn btn-primary">
+                {nextRef ? (
+                    <button onClick={goToNextChapter} className="btn btn-primary">
                     {nextRef} ▶
-                    </Link>
+                    </button>
                 ) : (
                     <button className="btn btn-primary disabled" disabled>  ▶ </button>
                 )} </div>
@@ -346,19 +401,19 @@ export default function ReadScripture({ appController }) {
                 </div>
             } ) : <SkeletonLoader />}
             { !!readData && !DEBUG_SKELETON && <div className="read-section-footer">
-                {prevSlug ? (
-                    <Link to={`/read/${prevSlug}`} className="btn btn-primary">
+                {prevRef ? (
+                    <button onClick={goToPreviousChapter} className="btn btn-primary">
                         ◀ {prevRef}
-                    </Link>
+                    </button>
                     ) : (
                     <button className="btn btn-primary disabled" disabled>
                         ◀ {prevRef}
                     </button>
                     )}
-                {nextSlug ? (
-                    <Link to={`/read/${nextSlug}`} className="btn btn-primary">
+                {nextRef ? (
+                    <button onClick={goToNextChapter} className="btn btn-primary">
                     {nextRef} ▶
-                    </Link>
+                    </button>
                 ) : (
                     <button className="btn btn-primary disabled" disabled>
                     {nextRef} ▶
