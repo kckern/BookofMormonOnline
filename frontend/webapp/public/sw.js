@@ -26,6 +26,12 @@ self.addEventListener('install', (event) => {
 
 // Fetch event - serve from cache when offline
 self.addEventListener('fetch', (event) => {
+  // Skip service worker for audio files - let browser handle them directly
+  if (event.request.url.includes('media.bookofmormon.online/audio')) {
+    // Don't intercept audio requests - let them go directly to the network
+    return;
+  }
+  
   // Handle images from media.bookofmormon.online with longer cache
   if (event.request.url.includes('media.bookofmormon.online')) {
     event.respondWith(
