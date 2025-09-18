@@ -236,19 +236,27 @@ export default function ReadScripture({ appController }) {
 
     // Handle explicit chapter navigation from grid - clear all content and reset
     const handleExplicitChapterNavigation = useCallback(() => {
-        // Clear all infinite scroll content
+        console.log('(2) New navigation triggered - clearing all content and resetting state');
+        
+        // Disconnect chapter observer to prevent stale container detection
+        if (chapterObserverRef.current) {
+            chapterObserverRef.current.disconnect();
+        }
+        
+        // Immediately show clean state
+        setContent(null); // This will trigger skeleton loader
         setAllChapters([]);
         setPreloadedChapter(null);
-        setContent(null);
         setIsLoadingNext(false);
         setIsScrolling(false);
+        setHighlightedVerses(null); // Clear any highlighted verses
         
         // Clear any scroll timeout
         if (scrollTimeoutRef.current) {
             clearTimeout(scrollTimeoutRef.current);
         }
         
-        // Scroll to top
+        // Scroll to top immediately for clean experience
         window.scrollTo(0, 0);
     }, []);
 
@@ -401,6 +409,9 @@ export default function ReadScripture({ appController }) {
 
     // Observer for tracking which chapter is currently in view (for URL updates)
     useEffect(() => {
+        // Don't set up observer if content is loading (content is null)
+        if (!content) return;
+        
         const options = {
             root: null,
             rootMargin: '-50% 0px -50% 0px', // Trigger when chapter is in center of viewport
@@ -420,6 +431,7 @@ export default function ReadScripture({ appController }) {
                         const currentSlug = window.location.pathname.replace(/^\/read\//, "");
                         const newSlug = slugify(chapterRefFromContainer);
                         if (newSlug && newSlug !== currentSlug) {
+                            console.log('(3) URL updating from', currentSlug, 'to', newSlug, 'for chapter:', chapterRefFromContainer);
                             // Use window.history directly to avoid React Router triggers
                             window.history.replaceState(null, "", `/read/${newSlug}`);
                             document.title = chapterRefFromContainer;
@@ -429,18 +441,22 @@ export default function ReadScripture({ appController }) {
             });
         }, options);
 
-        // Observe all chapter containers
-        const chapterContainers = document.querySelectorAll('.chapter-container');
-        chapterContainers.forEach(container => {
-            chapterObserverRef.current.observe(container);
-        });
+        // Use a small delay to ensure DOM is fully updated after content loads
+        setTimeout(() => {
+            const chapterContainers = document.querySelectorAll('.chapter-container');
+            chapterContainers.forEach(container => {
+                if (chapterObserverRef.current) {
+                    chapterObserverRef.current.observe(container);
+                }
+            });
+        }, 100);
 
         return () => {
             if (chapterObserverRef.current) {
                 chapterObserverRef.current.disconnect();
             }
         };
-    }, [allChapters, content, activeChapterRef]); // Removed history and match.url to avoid triggers
+    }, [content, activeChapterRef]); // Only depend on content and activeChapterRef
 
     //scroll to highlighted verse on load
     useEffect(() => {
@@ -623,13 +639,19 @@ export default function ReadScripture({ appController }) {
         const urlSlug = match.url?.replace(/^\/read\//, "");
         const currentBaseChapter = content ? chapterRef : null;
         
+        // Always use the current chapterRef from reInit, not the potentially stale state
+        const currentChapterRef = initChapterRef; // Use fresh reference from reInit
+        
         // Only reload content if this is a completely new navigation (not from infinite scroll)
         // Check if the URL represents a chapter that's not already loaded
         const isNewNavigation = currentBaseChapter && !allChapters.some(ch => slugify(ch.ref) === urlSlug) && slugify(currentBaseChapter) !== urlSlug;
         
         if (isNewNavigation || !content) {
-            let loaderTimeout = setTimeout(() => {setContent(null);}, 200);
-            document.title = chapterRef;
+            console.log('(2.5) Loading content for chapter:', currentChapterRef, 'due to navigation or no content');
+            // Always show skeleton immediately for any navigation
+            setContent(null); // This triggers skeleton loader immediately
+            
+            document.title = currentChapterRef;
             
             // Only scroll to top and clear chapters for true navigation
             if (isNewNavigation) {
@@ -639,21 +661,27 @@ export default function ReadScripture({ appController }) {
                 setPreloadedChapter(null); // Clear preloaded chapter on new navigation
             }
             
-            BoMOnlineAPI({read: chapterRef}).then((data) => {
-                clearTimeout(loaderTimeout);
+            BoMOnlineAPI({read: currentChapterRef}).then((data) => {
                 const mainKey = Object.keys(data.read)[0];
                 setContent(data.read[mainKey]);
-                localStorage.setItem("chapterRef", chapterRef);
+                localStorage.setItem("chapterRef", currentChapterRef);
+                
+                // Update URL on initial load if needed
+                const currentSlug = window.location.pathname.replace(/^\/read\//, "");
+                const expectedSlug = slugify(currentChapterRef);
+                if (expectedSlug && expectedSlug !== currentSlug) {
+                    console.log('(3) URL updating from', currentSlug, 'to', expectedSlug, 'for initial load of chapter:', currentChapterRef);
+                    window.history.replaceState(null, "", `/read/${expectedSlug}`);
+                    document.title = currentChapterRef;
+                }
                 
                 // Preload next chapter immediately after main content loads
                 if (nextChapterRef) {
                     preloadNextChapter(nextChapterRef);
                 }
             });
-            
-            return () => clearTimeout(loaderTimeout);
         }
-    }, [match.params, nextChapterRef, preloadNextChapter]); // Added dependencies for preload
+    }, [match.params, nextChapterRef, preloadNextChapter, initChapterRef]); // Use initChapterRef instead of chapterRef
     
     // Separate effect for handling highlighted verses from URL
     useEffect(() => {
@@ -732,6 +760,7 @@ function ChapterNav({ chapterRef, onChapterClick }) {
             
             const handleChapterClick = (e) => {
                 e.preventDefault();
+                console.log('(1) Grid item clicked for chapter:', boxChapterRef);
                 if (onChapterClick) {
                     onChapterClick();
                 }
