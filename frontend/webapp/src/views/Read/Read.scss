@@ -249,11 +249,13 @@ p.read-scripture.heading
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 1rem;
+    justify-self: center;
+    margin-top: 0;
     font-family: "Roboto Condensed";
     font-size: 0.8rem;
     color: #444;
     margin-bottom: 3rem;
+    padding: 0;
 }
 
 .chapter-nav {
