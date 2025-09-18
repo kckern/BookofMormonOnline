@@ -505,6 +505,7 @@ p.heading a.heading + a.heading::before{
     }
     .read-section-footer{
         padding-bottom: 3rem;
+        margin-top: 1rem;
     }
     p.read-scripture.italic{
         margin: 1.5rem 0;

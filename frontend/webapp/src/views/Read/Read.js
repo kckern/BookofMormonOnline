@@ -444,6 +444,9 @@ export default function ReadScripture({ appController }) {
 
     //scroll to highlighted verse on load
     useEffect(() => {
+        // Don't auto-scroll to verses during infinite scroll - only on initial page load
+        if (allChapters.length > 0) return; // Skip if infinite scroll has loaded additional chapters
+        
         const highlightedVersesFromDom = [...document.querySelectorAll(".highlighted")].map((el) => {
             const match = el.className.match(/verse_(\d+)/);
             return match ? parseInt(match[1]) : null;
@@ -457,7 +460,7 @@ export default function ReadScripture({ appController }) {
         } else {
             //console.error("Verse not found:", classNameGoto);
         }
-    }, [highlightedVerses, chapterRef]);
+    }, [highlightedVerses, chapterRef, allChapters.length]);
     
 
 
@@ -630,7 +633,8 @@ export default function ReadScripture({ appController }) {
             
             // Only scroll to top and clear chapters for true navigation
             if (isNewNavigation) {
-                window.scrollTo(0, 0);
+                // Don't auto-scroll to top for infinite scroll - let user maintain their position
+                // window.scrollTo(0, 0);
                 setAllChapters([]);
                 setPreloadedChapter(null); // Clear preloaded chapter on new navigation
             }
