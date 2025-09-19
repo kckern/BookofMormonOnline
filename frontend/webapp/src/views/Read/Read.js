@@ -61,6 +61,11 @@ export default function ReadScripture({ appController }) {
     // Refs
     const verseRefs = useRef(new Map()); // to store verse element refs (verseId -> DOM element)
     const scrollTimeoutRef = useRef(null);
+    const hasUserScrolled = useRef(false); // Track if user has scrolled
+    const lastLoadedChapterCount = useRef(0); // Track number of loaded chapters
+    const lastScrollY = useRef(0); // Track last scroll position
+    const nextChapterPreloaded = useRef(false); // Track if next chapter is already preloaded
+    const lastContentLoadTime = useRef(0); // Track when content was last loaded
 
     // ---------------------------------------------------------
     // Navigate to next/previous chapters
@@ -89,6 +94,25 @@ export default function ReadScripture({ appController }) {
         }
         if (!nextChapterRef) return;
 
+        // Prevent automatic loading if we're not near the bottom and it's not manual
+        if (!isManualOverride) {
+            const { scrollHeight, scrollTop, clientHeight } = document.documentElement;
+            const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+            const scrollProgress = scrollTop / (scrollHeight - clientHeight);
+            const timeSinceLastLoad = Date.now() - lastContentLoadTime.current;
+            
+            // Only auto-load if user has scrolled significantly, is near bottom, 
+            // and enough time has passed since last load
+            if (distanceFromBottom > 200 && scrollProgress < 0.7) {
+                return;
+            }
+            
+            // Prevent rapid successive loads
+            if (timeSinceLastLoad < 1000) {
+                return;
+            }
+        }
+
         // Execute next-chapter load
         await executeOperation(
             "loadNext",
@@ -103,14 +127,20 @@ export default function ReadScripture({ appController }) {
 
                 const nextChapterVerses = memoizedLookupReference(nextChapterRef).verse_ids;
                 // Add it to the ability to render multiple chapters
-                setAllChapters((prev) => [
-                    ...prev,
-                    {
-                        ref: nextChapterRef,
-                        data: nextChapterData,
-                        verseIds: nextChapterVerses,
-                    },
-                ]);
+                setAllChapters((prev) => {
+                    const newChapters = [
+                        ...prev,
+                        {
+                            ref: nextChapterRef,
+                            data: nextChapterData,
+                            verseIds: nextChapterVerses,
+                        },
+                    ];
+                    // Update our tracking of loaded chapters
+                    lastLoadedChapterCount.current = newChapters.length + 1; // +1 for main content
+                    lastContentLoadTime.current = Date.now(); // Track when content was loaded
+                    return newChapters;
+                });
 
                 // Update nextChapterRef so user can keep loading further
                 const { nextChapter } = getPrevNextChapter(nextChapterVerses);
@@ -131,6 +161,11 @@ export default function ReadScripture({ appController }) {
         setContent(null);
         setAllChapters([]);
         setHighlightedVerses(null);
+        hasUserScrolled.current = false; // Reset scroll tracking
+        lastLoadedChapterCount.current = 0; // Reset chapter count
+        lastScrollY.current = 0; // Reset scroll position
+        nextChapterPreloaded.current = false; // Reset preload flag
+        lastContentLoadTime.current = 0; // Reset load time tracking
         window.scrollTo(0, 0);
     }, [abortAllOperations]);
 
@@ -153,6 +188,11 @@ export default function ReadScripture({ appController }) {
         setPrevChapterRef(newPrev);
         setChapterVerseIds(newVerseIds);
         setInitialLoad(true); // Force reload if route changes
+        hasUserScrolled.current = false; // Reset scroll tracking for new route
+        lastLoadedChapterCount.current = 0; // Reset chapter count
+        lastScrollY.current = 0; // Reset scroll position
+        nextChapterPreloaded.current = false; // Reset preload flag
+        lastContentLoadTime.current = 0; // Reset load time tracking
     }, [match.params]);
 
     // ---------------------------------------------------------
@@ -239,15 +279,25 @@ export default function ReadScripture({ appController }) {
     // Scroll handler for near-bottom detection
     // ---------------------------------------------------------
     const throttledScrollHandler = useThrottle(() => {
+        const currentScrollY = window.scrollY;
+        
+        // Only mark as scrolled if user actually scrolled down (not just programmatic scroll)
+        if (currentScrollY > lastScrollY.current + 10) {
+            hasUserScrolled.current = true;
+        }
+        lastScrollY.current = currentScrollY;
+        
         if (!isOperationRunning("loadNext")) {
             const { scrollHeight, scrollTop, clientHeight } = document.documentElement;
             const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
-            // If within 100px of bottom, attempt load next
-            if (distanceFromBottom < 100) {
+            const scrollProgress = scrollTop / (scrollHeight - clientHeight);
+            
+            // Only load when truly near bottom (within 50px) and significant scroll progress
+            if (distanceFromBottom < 50 && scrollProgress > 0.8) {
                 loadNextChapter(false);
             }
         }
-    }, 150);
+    }, 200);
 
     useEffect(() => {
         window.addEventListener("scroll", throttledScrollHandler, { passive: true });
@@ -282,6 +332,7 @@ export default function ReadScripture({ appController }) {
                 if (chapterData) {
                     setContent(chapterData);
                     setInitialLoad(false);
+                    lastContentLoadTime.current = Date.now(); // Track when initial content was loaded
                     localStorage.setItem("chapterRef", chapterRef);
                     
                     // Ensure browser URL is correct
@@ -313,26 +364,38 @@ export default function ReadScripture({ appController }) {
     }, [highlightedVerses, allChapters.length]);
 
     // ---------------------------------------------------------
-    // If the loaded chapter is super short, load next immediately
+    // If the loaded chapter is super short, pre-load next but only after user scrolls
     // ---------------------------------------------------------
     useEffect(() => {
         if (!content) return;
+        
         // Delay measurement slightly to ensure the DOM is rendered
         const checkShortContent = () => {
             const doc = document.documentElement;
             const contentHeight = doc.scrollHeight;
             const viewportHeight = doc.clientHeight;
 
-            // If the entire content + newly loaded chapter fits vertically,
-            // auto-load the next chapter (one time).
-            if (contentHeight <= viewportHeight * 1.1 && nextChapterRef) {
+            // Only pre-load if:
+            // 1. Content is short (fits in viewport)
+            // 2. User has scrolled (showing intent to read)
+            // 3. We haven't already preloaded for this chapter
+            // 4. Next chapter exists
+            // 5. No additional chapters are already loaded
+            if (
+                contentHeight <= viewportHeight * 1.2 && 
+                hasUserScrolled.current && 
+                !nextChapterPreloaded.current &&
+                nextChapterRef &&
+                allChapters.length === 0
+            ) {
+                nextChapterPreloaded.current = true;
                 loadNextChapter(false);
             }
         };
         // Run after small delay to ensure rendering
-        const t = setTimeout(checkShortContent, 200);
+        const t = setTimeout(checkShortContent, 500);
         return () => clearTimeout(t);
-    }, [content, nextChapterRef, loadNextChapter]);
+    }, [content, nextChapterRef, loadNextChapter, allChapters.length]);
 
     // ---------------------------------------------------------
     // Update URL if highlightedVerses changes
