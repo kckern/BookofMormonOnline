@@ -1,10 +1,11 @@
+
 import { useRouteMatch, Link, useHistory } from "react-router-dom";
 import "./Read.scss";
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import BoMOnlineAPI from "../../models/BoMOnlineAPI";
 import { label } from "../../models/Utils";
 
-// Import utilities and components
+// Utilities & components
 import { 
     slugify, 
     verseIdToSlug, 
@@ -18,25 +19,35 @@ import { ChapterNav } from "./components/ChapterNav";
 import { SkeletonLoader } from "./components/SkeletonLoader";
 import { ChapterContent } from "./components/ChapterContent";
 
-// Debug flag - set to true to always show skeleton loader
 const DEBUG_SKELETON = false;
+
 export default function ReadScripture({ appController }) {
     const match = useRouteMatch();
     const history = useHistory();
-    const { executeOperation, isOperationRunning, abortAllOperations } = useConcurrentOperations();
-    
-    // Initialize chapter data using memoized utility
+
+    // Concurrency hook
     const { 
-        initChapterRef, 
-        initHighlightedVerses, 
-        initNextChapter, 
-        initPrevChapter, 
-        initChapterVerseIds 
+        executeOperation, 
+        isOperationRunning, 
+        abortAllOperations 
+    } = useConcurrentOperations();
+
+    // ---------------------------------------------------------
+    // Initialize chapter data from route
+    // ---------------------------------------------------------
+    const {
+        initChapterRef,
+        initHighlightedVerses,
+        initNextChapter,
+        initPrevChapter,
+        initChapterVerseIds
     } = useMemo(() => initializeChapterData(match), [match.params]);
 
-    // State management
-    const [content, setContent] = useState(null);
-    const [allChapters, setAllChapters] = useState([]);
+    // ---------------------------------------------------------
+    // Manage state
+    // ---------------------------------------------------------
+    const [content, setContent] = useState(null);               // The content of the main/current chapter
+    const [allChapters, setAllChapters] = useState([]);         // Additional chapters loaded by infinite scroll
     const [chapterRef, setChapterRef] = useState(initChapterRef);
     const [activeChapterRef, setActiveChapterRef] = useState(initChapterRef);
     const [highlightedVerses, setHighlightedVerses] = useState(initHighlightedVerses);
@@ -44,20 +55,16 @@ export default function ReadScripture({ appController }) {
     const [nextChapterRef, setNextChapterRef] = useState(initNextChapter);
     const [prevChapterRef, setPrevChapterRef] = useState(initPrevChapter);
     const [chapterVerseIds, setChapterVerseIds] = useState(initChapterVerseIds);
-    const [preloadedChapter, setPreloadedChapter] = useState(null);
-    const [isScrolling, setIsScrolling] = useState(false);
 
-    // Refs for managing observers and timeouts
-    const prevInitChapterRef = useRef(initChapterRef);
-    const prevInitHighlightedVerses = useRef(initHighlightedVerses);
-    const readContentRef = useRef(null);
-    const nextButtonRef = useRef(null);
-    const observerRef = useRef(null);
-    const chapterObserverRef = useRef(null);
+    const [initialLoad, setInitialLoad] = useState(true);       // Whether we’re on the initial load
+
+    // Refs
+    const verseRefs = useRef(new Map()); // to store verse element refs (verseId -> DOM element)
     const scrollTimeoutRef = useRef(null);
-    const verseRefs = useRef(new Map()); // Map to store verse element refs
 
-    // Navigation functions with memoized dependencies
+    // ---------------------------------------------------------
+    // Navigate to next/previous chapters
+    // ---------------------------------------------------------
     const goToNextChapter = useCallback(() => {
         const nextSlug = slugify(nextChapterRef);
         if (nextSlug) {
@@ -72,182 +79,120 @@ export default function ReadScripture({ appController }) {
         }
     }, [prevChapterRef, history]);
 
-    // Preload next chapter with concurrency control
-    const preloadNextChapter = useCallback(async (chapterToPreload) => {
-        if (!chapterToPreload) return;
-        
-        return executeOperation(
-            `preload-${chapterToPreload}`,
-            async (signal) => {
-                const data = await BoMOnlineAPI({ read: chapterToPreload }, { signal });
-                const mainKey = Object.keys(data.read)[0];
-                const chapterData = data.read[mainKey];
-                
-                if (chapterData && !signal.aborted) {
-                    const chapterVerseIds = memoizedLookupReference(chapterToPreload).verse_ids;
-                    setPreloadedChapter({
-                        ref: chapterToPreload,
-                        data: chapterData,
-                        verseIds: chapterVerseIds
-                    });
-                }
-                return chapterData;
-            },
-            { allowMultiple: false, abortPrevious: true }
-        );
-    }, [executeOperation]);
+    // ---------------------------------------------------------
+    // Load the next chapter: can be called automatically or manually
+    // ---------------------------------------------------------
+    const loadNextChapter = useCallback(async (isManualOverride = false) => {
+        // If already loading, skip (unless user forcibly overrides)
+        if (isOperationRunning("loadNext") && !isManualOverride) {
+            return;
+        }
+        if (!nextChapterRef) return;
 
-    // Load next chapter for infinite scroll with race condition prevention
-    const loadNextChapter = useCallback(async () => {
-        if (!nextChapterRef || isOperationRunning('loadNext')) return;
-        
-        return executeOperation(
-            'loadNext',
+        // Execute next-chapter load
+        await executeOperation(
+            "loadNext",
             async (signal) => {
-                let chapterToAdd;
-                
-                // Use preloaded chapter if it matches what we need
-                if (preloadedChapter && preloadedChapter.ref === nextChapterRef) {
-                    chapterToAdd = preloadedChapter;
-                    setPreloadedChapter(null);
-                } else {
-                    // Load chapter if not preloaded
-                    const data = await BoMOnlineAPI({ read: nextChapterRef }, { signal });
-                    const mainKey = Object.keys(data.read)[0];
-                    const nextChapterData = data.read[mainKey];
-                    
-                    if (nextChapterData && !signal.aborted) {
-                        const nextChapterVerseIds = memoizedLookupReference(nextChapterRef).verse_ids;
-                        chapterToAdd = {
-                            ref: nextChapterRef,
-                            data: nextChapterData,
-                            verseIds: nextChapterVerseIds
-                        };
-                    }
-                }
-                
-                if (chapterToAdd && !signal.aborted) {
-                    setAllChapters(prev => [...prev, chapterToAdd]);
-                    
-                    // Update next chapter reference for subsequent loads
-                    const { nextChapter } = getPrevNextChapter(chapterToAdd.verseIds);
-                    setNextChapterRef(nextChapter);
-                    
-                    // Immediately preload the new next chapter
-                    if (nextChapter) {
-                        preloadNextChapter(nextChapter);
-                    }
-                }
-                
-                return chapterToAdd;
+                // Load next-chapter data from the API
+                const data = await BoMOnlineAPI({ read: nextChapterRef }, { signal });
+                if (signal.aborted) return null;
+
+                const mainKey = Object.keys(data.read)[0];
+                const nextChapterData = data.read[mainKey];
+                if (!nextChapterData) return null;
+
+                const nextChapterVerses = memoizedLookupReference(nextChapterRef).verse_ids;
+                // Add it to the ability to render multiple chapters
+                setAllChapters((prev) => [
+                    ...prev,
+                    {
+                        ref: nextChapterRef,
+                        data: nextChapterData,
+                        verseIds: nextChapterVerses,
+                    },
+                ]);
+
+                // Update nextChapterRef so user can keep loading further
+                const { nextChapter } = getPrevNextChapter(nextChapterVerses);
+                setNextChapterRef(nextChapter || null);
+
+                return nextChapterData;
             },
             { allowMultiple: false }
         );
-    }, [nextChapterRef, preloadedChapter, executeOperation, isOperationRunning, preloadNextChapter]);
+    }, [nextChapterRef, isOperationRunning, executeOperation]);
 
-    // Handle explicit chapter navigation from grid - clear all content and reset
+    // ---------------------------------------------------------
+    // Called when the user explicitly navigates to a new chapter
+    // Clears everything and sets up for new content
+    // ---------------------------------------------------------
     const handleExplicitChapterNavigation = useCallback(() => {
-        console.log('(2) New navigation triggered - clearing all content and resetting state');
-        
-        // Abort all operations to prevent stale data
         abortAllOperations();
-        
-        // Disconnect chapter observer to prevent stale container detection
-        if (chapterObserverRef.current) {
-            chapterObserverRef.current.disconnect();
-        }
-        
-        // Immediately show clean state
         setContent(null);
         setAllChapters([]);
-        setPreloadedChapter(null);
-        setIsScrolling(false);
         setHighlightedVerses(null);
-        
-        // Clear any scroll timeout
-        if (scrollTimeoutRef.current) {
-            clearTimeout(scrollTimeoutRef.current);
-        }
-        
-        // Scroll to top immediately for clean experience
         window.scrollTo(0, 0);
     }, [abortAllOperations]);
 
-    // Update state when route parameters change
+    // ---------------------------------------------------------
+    // Monitor changes to route, update references accordingly
+    // ---------------------------------------------------------
     useEffect(() => {
-        const { 
-            initChapterRef: newInitChapterRef, 
-            initHighlightedVerses: newInitHighlightedVerses, 
-            initNextChapter: newInitNextChapter, 
-            initPrevChapter: newInitPrevChapter,
-            initChapterVerseIds: newChapterVerseIds
+        const {
+            initChapterRef: newRef,
+            initHighlightedVerses: newHighlited,
+            initNextChapter: newNext,
+            initPrevChapter: newPrev,
+            initChapterVerseIds: newVerseIds
         } = initializeChapterData(match);
 
-        if (prevInitChapterRef.current !== newInitChapterRef) {
-            setChapterRef(newInitChapterRef || memoizedGenerateReference(memoizedLookupReference("1Ne1").verse_ids).trim());
-            setActiveChapterRef(newInitChapterRef || memoizedGenerateReference(memoizedLookupReference("1Ne1").verse_ids).trim());
-            prevInitChapterRef.current = newInitChapterRef;
-        }
-
-        if (prevInitHighlightedVerses.current !== newInitHighlightedVerses) {
-            setHighlightedVerses(newInitHighlightedVerses);
-            prevInitHighlightedVerses.current = newInitHighlightedVerses;
-        }
-
-        setNextChapterRef(newInitNextChapter);
-        setChapterVerseIds(newChapterVerseIds);
-        setPrevChapterRef(newInitPrevChapter);
+        setChapterRef(newRef);
+        setActiveChapterRef(newRef);
+        setHighlightedVerses(newHighlited);
+        setNextChapterRef(newNext);
+        setPrevChapterRef(newPrev);
+        setChapterVerseIds(newVerseIds);
+        setInitialLoad(true); // Force reload if route changes
     }, [match.params]);
 
-
-
-    // Find the next/previous verse for keyboard navigation using React state
+    // ---------------------------------------------------------
+    // Keyboard navigation for next/previous chapter, verse jumps
+    // ---------------------------------------------------------
     const findAdjacentVerse = useCallback((direction) => {
         if (!chapterVerseIds?.length) return null;
-        
+
         if (!highlightedVerses?.length) {
-            // No verses highlighted, start from first verse
             return chapterVerseIds[0];
         }
-        
+
         const maxHighlighted = Math.max(...highlightedVerses);
         const currentIndex = chapterVerseIds.indexOf(maxHighlighted);
-        
         if (currentIndex === -1) return chapterVerseIds[0];
-        
+
         const nextIndex = currentIndex + direction;
         if (nextIndex >= 0 && nextIndex < chapterVerseIds.length) {
             return chapterVerseIds[nextIndex];
         }
-        
-        // Stay at current verse if at boundary
         return maxHighlighted;
     }, [chapterVerseIds, highlightedVerses]);
 
-    // Navigate to a specific verse using refs instead of DOM queries
     const navigateToVerse = useCallback((verseId) => {
         if (!verseId) return;
-        
-        // Use verse ref if available
         const verseElement = verseRefs.current.get(verseId);
         if (verseElement) {
             verseElement.scrollIntoView({ behavior: "smooth", block: "center" });
-            // Navigate to the verse by updating the URL
-            const versesToHighlight = [verseId];
-            const slug = verseIdToSlug(versesToHighlight);
-            history.push(`/read/${slug}`);
-        } else {
-            console.warn("Verse element not found for ID:", verseId);
+            history.push(`/read/${verseIdToSlug([verseId])}`);
         }
     }, [history]);
 
-    // Improved keyboard navigation with accessibility
     const handleKeyDown = useCallback((e) => {
-        // Only handle keys when not in input fields
-        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) {
+        if (
+            e.target.tagName === "INPUT" ||
+            e.target.tagName === "TEXTAREA" ||
+            e.target.isContentEditable
+        ) {
             return;
         }
-        
         switch (e.key) {
             case "ArrowRight":
                 goToNextChapter();
@@ -269,134 +214,95 @@ export default function ReadScripture({ appController }) {
                 break;
             }
             case "Escape": {
-                // Clear highlighted verses
                 const slug = slugify(activeChapterRef);
                 history.push(`/read/${slug}`);
                 break;
             }
+            default:
+                break;
         }
-    }, [goToNextChapter, goToPreviousChapter, activeChapterRef, history, findAdjacentVerse, navigateToVerse]);
+    }, [
+        goToNextChapter,
+        goToPreviousChapter,
+        findAdjacentVerse,
+        navigateToVerse,
+        activeChapterRef,
+        history,
+    ]);
 
-    // Add keyboard event listener
     useEffect(() => {
         document.addEventListener("keydown", handleKeyDown);
-        return () => {
-            document.removeEventListener("keydown", handleKeyDown);
-        };
+        return () => document.removeEventListener("keydown", handleKeyDown);
     }, [handleKeyDown]);
 
-    // Throttled scroll handler to improve performance
+    // ---------------------------------------------------------
+    // Scroll handler for near-bottom detection
+    // ---------------------------------------------------------
     const throttledScrollHandler = useThrottle(() => {
-        setIsScrolling(true);
-        
-        if (scrollTimeoutRef.current) {
-            clearTimeout(scrollTimeoutRef.current);
-        }
-        
-        scrollTimeoutRef.current = setTimeout(() => {
-            setIsScrolling(false);
-        }, 150);
-        
-        const scrollHeight = document.documentElement.scrollHeight;
-        const scrollTop = document.documentElement.scrollTop;
-        const clientHeight = document.documentElement.clientHeight;
-        
-        const contentHeight = scrollHeight - clientHeight;
-        const hasSubstantialContent = contentHeight > 200;
-        
-        // Trigger load when user is near bottom (within 100px) AND has scrolled substantially
-        if (hasSubstantialContent && scrollHeight - scrollTop - clientHeight < 100 && !isOperationRunning('loadNext')) {
-            loadNextChapter();
-        }
-    }, 100);
-
-    // Combined effect for intersection observers and scroll handling
-    useEffect(() => {
-        // Set up intersection observer for infinite scroll
-        if (nextButtonRef.current) {
-            const intersectionOptions = {
-                root: null,
-                rootMargin: '50px',
-                threshold: 0.1
-            };
-
-            observerRef.current = new IntersectionObserver((entries) => {
-                entries.forEach((entry) => {
-                    if (entry.isIntersecting && !isOperationRunning('loadNext')) {
-                        const hasScrolled = window.scrollY > 100;
-                        if (hasScrolled) {
-                            loadNextChapter();
-                        }
-                    }
-                });
-            }, intersectionOptions);
-
-            observerRef.current.observe(nextButtonRef.current);
-        }
-
-        // Add scroll listener
-        window.addEventListener('scroll', throttledScrollHandler, { passive: true });
-
-        return () => {
-            if (observerRef.current) {
-                observerRef.current.disconnect();
+        if (!isOperationRunning("loadNext")) {
+            const { scrollHeight, scrollTop, clientHeight } = document.documentElement;
+            const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+            // If within 100px of bottom, attempt load next
+            if (distanceFromBottom < 100) {
+                loadNextChapter(false);
             }
-            window.removeEventListener('scroll', throttledScrollHandler);
+        }
+    }, 150);
+
+    useEffect(() => {
+        window.addEventListener("scroll", throttledScrollHandler, { passive: true });
+        return () => {
+            window.removeEventListener("scroll", throttledScrollHandler);
             if (scrollTimeoutRef.current) {
                 clearTimeout(scrollTimeoutRef.current);
             }
         };
-    }, [loadNextChapter, isOperationRunning, throttledScrollHandler]);
-    // Chapter observer for URL updates
-    useEffect(() => {
-        if (!content) return;
-        
-        const chapterOptions = {
-            root: null,
-            rootMargin: '-50% 0px -50% 0px',
-            threshold: 0
-        };
+    }, [throttledScrollHandler, loadNextChapter]);
 
-        chapterObserverRef.current = new IntersectionObserver((entries) => {
-            entries.forEach((entry) => {
-                if (entry.isIntersecting) {
-                    const chapterContainer = entry.target;
-                    const chapterRefFromContainer = chapterContainer.dataset.chapterRef;
-                    if (chapterRefFromContainer && chapterRefFromContainer !== activeChapterRef) {
-                        setActiveChapterRef(chapterRefFromContainer);
-                        
-                        const currentSlug = window.location.pathname.replace(/^\/read\//, "");
-                        const newSlug = slugify(chapterRefFromContainer);
-                        if (newSlug && newSlug !== currentSlug) {
-                            console.log('(3) URL updating from', currentSlug, 'to', newSlug, 'for chapter:', chapterRefFromContainer);
-                            window.history.replaceState(null, "", `/read/${newSlug}`);
-                            document.title = chapterRefFromContainer;
-                        }
+    // ---------------------------------------------------------
+    // Load the initial content
+    // ---------------------------------------------------------
+    useEffect(() => {
+        if (!initialLoad) return;
+        if (!chapterRef) return;
+
+        setContent(null);
+        setAllChapters([]);
+        document.title = chapterRef;
+
+        // Load the chapter content
+        executeOperation(
+            "loadContent",
+            async (signal) => {
+                const data = await BoMOnlineAPI({ read: chapterRef }, { signal });
+                if (signal.aborted) return null;
+
+                const mainKey = Object.keys(data.read)[0];
+                const chapterData = data.read[mainKey];
+                if (chapterData) {
+                    setContent(chapterData);
+                    setInitialLoad(false);
+                    localStorage.setItem("chapterRef", chapterRef);
+                    
+                    // Ensure browser URL is correct
+                    const currentSlug = window.location.pathname.replace(/^\/read\//, "");
+                    const expectedSlug = slugify(chapterRef);
+                    if (expectedSlug && expectedSlug !== currentSlug) {
+                        window.history.replaceState(null, "", `/read/${expectedSlug}`);
+                        document.title = chapterRef;
                     }
                 }
-            });
-        }, chapterOptions);
+                return chapterData;
+            },
+            { abortPrevious: true }
+        );
+    }, [chapterRef, initialLoad, executeOperation]);
 
-        setTimeout(() => {
-            const chapterContainers = document.querySelectorAll('.chapter-container');
-            chapterContainers.forEach(container => {
-                if (chapterObserverRef.current) {
-                    chapterObserverRef.current.observe(container);
-                }
-            });
-        }, 100);
-
-        return () => {
-            if (chapterObserverRef.current) {
-                chapterObserverRef.current.disconnect();
-            }
-        };
-    }, [content, activeChapterRef]);
-
-    // Auto-scroll to highlighted verse on load using React state
+    // ---------------------------------------------------------
+    // Auto-scroll to highlighted verse on load if no multiple chapters
+    // ---------------------------------------------------------
     useEffect(() => {
-        if (allChapters.length > 0) return; // Skip if infinite scroll has loaded additional chapters
-        
+        if (allChapters.length > 0) return; // skip if multi-chapters are already loaded
         if (highlightedVerses?.length) {
             const maxVerse = Math.max(...highlightedVerses);
             const verseElement = verseRefs.current.get(maxVerse);
@@ -404,63 +310,103 @@ export default function ReadScripture({ appController }) {
                 verseElement.scrollIntoView({ behavior: "smooth", block: "center" });
             }
         }
-    }, [highlightedVerses, chapterRef, allChapters.length]);
+    }, [highlightedVerses, allChapters.length]);
 
-    const buildContent = (readData, { chapterRef, nextChapterRef, prevChapterRef }) => {
-        const prevRef = readData?.prev_ref || prevChapterRef;
-        const nextRef = readData?.next_ref || nextChapterRef;
-        const ref = readData?.ref || chapterRef;
+    // ---------------------------------------------------------
+    // If the loaded chapter is super short, load next immediately
+    // ---------------------------------------------------------
+    useEffect(() => {
+        if (!content) return;
+        // Delay measurement slightly to ensure the DOM is rendered
+        const checkShortContent = () => {
+            const doc = document.documentElement;
+            const contentHeight = doc.scrollHeight;
+            const viewportHeight = doc.clientHeight;
 
-        // Combine current chapter with all loaded additional chapters
-        const allChapterData = [
+            // If the entire content + newly loaded chapter fits vertically,
+            // auto-load the next chapter (one time).
+            if (contentHeight <= viewportHeight * 1.1 && nextChapterRef) {
+                loadNextChapter(false);
+            }
+        };
+        // Run after small delay to ensure rendering
+        const t = setTimeout(checkShortContent, 200);
+        return () => clearTimeout(t);
+    }, [content, nextChapterRef, loadNextChapter]);
+
+    // ---------------------------------------------------------
+    // Update URL if highlightedVerses changes
+    // ---------------------------------------------------------
+    useEffect(() => {
+        if (!highlightedVerses) return;
+        const urlSlug = match.url.replace(/^\/read\//, "");
+        const idealSlug = verseIdToSlug(highlightedVerses) || slugify(activeChapterRef);
+        if (idealSlug && idealSlug !== urlSlug) {
+            history.push(`/read/${idealSlug}`);
+        }
+    }, [highlightedVerses, activeChapterRef, history, match.url]);
+
+    // ---------------------------------------------------------
+    // Render all chapters
+    // ---------------------------------------------------------
+    const buildContent = (readData) => {
+        // Combine the current chapter content with all loaded chapters
+        const combinedChapters = [
             { ref: chapterRef, data: readData },
             ...allChapters
-        ].filter(chapter => chapter.data);
+        ].filter(ch => ch.data);
 
         return (
-            <div className="read-content" ref={readContentRef}>
+            <div className="read-content">
+                {/* TOP NAV */}
                 <div className="read-header-nav">
-                    {prevRef ? (
+                    {prevChapterRef ? (
                         <button onClick={goToPreviousChapter} className="btn btn-primary">
-                            ◀ {prevRef}
+                            ◀ {prevChapterRef}
                         </button>
                     ) : (
                         <button className="btn btn-primary disabled" disabled>  ◀  </button>
                     )}
-                    <h3 className="title lg-4 text-center">{ref || label("menu_read")}</h3>
-                    {nextRef ? (
+                    <h3 className="title lg-4 text-center">
+                        {chapterRef || label("menu_read")}
+                    </h3>
+                    {nextChapterRef ? (
                         <button onClick={goToNextChapter} className="btn btn-primary">
-                            {nextRef} ▶
+                            {nextChapterRef} ▶
                         </button>
                     ) : (
                         <button className="btn btn-primary disabled" disabled>  ▶ </button>
                     )}
                 </div>
-                
-                <ChapterNav chapterRef={activeChapterRef} onChapterClick={handleExplicitChapterNavigation} />
-                
+
+                {/* Chapter Navigation Bar */}
+                <ChapterNav
+                    chapterRef={activeChapterRef}
+                    onChapterClick={handleExplicitChapterNavigation}
+                />
+
                 <div className="read-mobile-nav">
-                    {prevRef ? (
+                    {prevChapterRef ? (
                         <button onClick={goToPreviousChapter} className="btn btn-primary">
-                            ◀ {prevRef}
+                            ◀ {prevChapterRef}
                         </button>
                     ) : (
                         <button className="btn btn-primary disabled" disabled>  ◀  </button>
                     )}
-                    {nextRef ? (
+                    {nextChapterRef ? (
                         <button onClick={goToNextChapter} className="btn btn-primary">
-                            {nextRef} ▶
+                            {nextChapterRef} ▶
                         </button>
                     ) : (
                         <button className="btn btn-primary disabled" disabled>  ▶ </button>
                     )}
                 </div>
-                
-                {/* Render all chapters using new component */}
-                {allChapterData.map((chapterItem) => (
+
+                {/* MAIN CHAPTER CONTENTS */}
+                {combinedChapters.map((chapItem) => (
                     <ChapterContent
-                        key={chapterItem.ref}
-                        chapterItem={chapterItem}
+                        key={chapItem.ref}
+                        chapterItem={chapItem}
                         highlightedVerses={highlightedVerses}
                         hoveredVerse={hoveredVerse}
                         setHoveredVerse={setHoveredVerse}
@@ -470,24 +416,23 @@ export default function ReadScripture({ appController }) {
                         verseRefs={verseRefs}
                     />
                 ))}
-                
-                {/* Show skeleton loader if no content at all */}
-                {(!readData && allChapters.length === 0) && <SkeletonLoader />}
-                
-                {/* Single centered Next button */}
+
+                {/* If no data at all, show skeleton */}
+                {!readData && combinedChapters.length === 0 && <SkeletonLoader />}
+
+                {/* Manual NEXT button at the bottom */}
                 {!!readData && !DEBUG_SKELETON && (
                     <div className="read-section-footer">
                         {nextChapterRef ? (
                             <button 
-                                ref={nextButtonRef}
-                                onClick={loadNextChapter} 
+                                onClick={() => loadNextChapter(true)}
                                 className="btn btn-primary btn-lg"
-                                disabled={isOperationRunning('loadNext') || isScrolling}
                                 style={{ minWidth: '200px' }}
                             >
-                                {isOperationRunning('loadNext') || isScrolling ? (
+                                {isOperationRunning("loadNext") ? (
                                     <>
                                         <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                        <span style={{ marginLeft: '8px' }}>Loading... (Click to retry)</span>
                                     </>
                                 ) : (
                                     <>{nextChapterRef} ▶</>
@@ -504,69 +449,13 @@ export default function ReadScripture({ appController }) {
         );
     };
 
-    // Load content effect with improved API call using utilities
-    useEffect(() => {
-        const urlSlug = match.url?.replace(/^\/read\//, "");
-        const currentBaseChapter = content ? chapterRef : null;
-        const currentChapterRef = initChapterRef;
-        
-        const isNewNavigation = currentBaseChapter && !allChapters.some(ch => slugify(ch.ref) === urlSlug) && slugify(currentBaseChapter) !== urlSlug;
-        
-        if (isNewNavigation || !content) {
-            console.log('(2.5) Loading content for chapter:', currentChapterRef, 'due to navigation or no content');
-            setContent(null);
-            document.title = currentChapterRef;
-            
-            if (isNewNavigation) {
-                setAllChapters([]);
-                setPreloadedChapter(null);
-            }
-            
-            executeOperation(
-                'loadContent',
-                async (signal) => {
-                    const data = await BoMOnlineAPI({ read: currentChapterRef }, { signal });
-                    const mainKey = Object.keys(data.read)[0];
-                    const contentData = data.read[mainKey];
-                    
-                    if (contentData && !signal.aborted) {
-                        setContent(contentData);
-                        localStorage.setItem("chapterRef", currentChapterRef);
-                        
-                        const currentSlug = window.location.pathname.replace(/^\/read\//, "");
-                        const expectedSlug = slugify(currentChapterRef);
-                        if (expectedSlug && expectedSlug !== currentSlug) {
-                            console.log('(3) URL updating from', currentSlug, 'to', expectedSlug, 'for initial load of chapter:', currentChapterRef);
-                            window.history.replaceState(null, "", `/read/${expectedSlug}`);
-                            document.title = currentChapterRef;
-                        }
-                        
-                        if (nextChapterRef) {
-                            preloadNextChapter(nextChapterRef);
-                        }
-                    }
-                    
-                    return contentData;
-                },
-                { abortPrevious: true }
-            );
-        }
-    }, [match.params, nextChapterRef, preloadNextChapter, initChapterRef, executeOperation]);
-    
-    // Handle highlighted verses URL updates
-    useEffect(() => {
-        const urlSlug = match.url?.replace(/^\/read\//, "");
-        const idealSlug = highlightedVerses ? verseIdToSlug(highlightedVerses) : slugify(activeChapterRef);
-        
-        if (idealSlug && idealSlug !== urlSlug && highlightedVerses) {
-            history.push(`/read/${idealSlug}`);
-        }
-    }, [highlightedVerses, activeChapterRef, history]);
-
+    // ---------------------------------------------------------
+    // Final render
+    // ---------------------------------------------------------
     return (
         <div className="container" style={{ display: 'block' }}>
             <div id="page" className="read">
-                {buildContent(content, { chapterRef, nextChapterRef, prevChapterRef })}
+                {buildContent(content)}
             </div>
         </div>
     );
