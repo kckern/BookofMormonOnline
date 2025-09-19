@@ -58,11 +58,12 @@ export function ChapterNav({ chapterRef, onChapterClick }) {
     // Memoize the boxes to avoid rebuilding on every render
     const boxes = useMemo(() => {
         const result = [];
-        let j = 0;
+        let bookIndex = 0;
         
         for(let bookChapterCount of chapterCounts) {
-            const book = bookNames[j++];
-            const firstLetterOfBook = bookFirsts[j-1];
+            const book = bookNames[bookIndex];
+            const firstLetterOfBook = bookFirsts[bookIndex];
+            const bookKey = book_keys[bookIndex]; // Use original book key for unique keys
             
             for(let i = 1; i <= bookChapterCount; i++) {
                 const chapter = `${book} ${i}`;
@@ -87,12 +88,13 @@ export function ChapterNav({ chapterRef, onChapterClick }) {
                         className={`chapter-box ${isFirst ? "first" : ""} ${isActive ? "active" : ""}`}
                         data-tip={chapter}
                         data-for="chapter-nav-tip"
-                        key={`${book}-${i}`}
+                        key={`${bookKey}-${i}`} // Use bookKey instead of translated book name
                     >
                         {isFirst ? firstLetterOfBook : i}
                     </Link>
                 );
             }
+            bookIndex++;
         }
         return result;
     }, [bookNames, bookFirsts, chapterCounts, allChapterVerseIds, currentChapterFirstVerseId, onChapterClick, history]);
