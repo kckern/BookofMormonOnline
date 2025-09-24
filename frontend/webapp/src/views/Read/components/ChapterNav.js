@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, memo } from 'react';
 import { Link, useHistory } from 'react-router-dom';
 import ReactTooltip from 'react-tooltip';
 import { slugify, memoizedLookupReference } from '../../../utils/scriptureUtils';
@@ -7,11 +7,11 @@ import { label, determineLanguage } from '../../../models/Utils';
 const lang = determineLanguage();
 
 /**
- * Chapter navigation grid component
+ * Chapter navigation grid component - memoized for performance
  * @param {string} chapterRef - Current chapter reference
  * @param {Function} onChapterClick - Callback when chapter is clicked
  */
-export function ChapterNav({ chapterRef, onChapterClick }) {
+export const ChapterNav = memo(({ chapterRef, onChapterClick }) => {
     const history = useHistory();
     
     // Static data - these never change
@@ -105,4 +105,6 @@ export function ChapterNav({ chapterRef, onChapterClick }) {
             {boxes}
         </div>
     );
-}
+});
+
+ChapterNav.displayName = 'ChapterNav';
