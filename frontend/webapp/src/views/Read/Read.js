@@ -503,7 +503,7 @@ export default function ReadScripture({ appController }) {
                                 {isOperationRunning("loadNext") || isContentLoading ? (
                                     <>
                                         <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                                        <span style={{ marginLeft: '8px' }}>Loading... (Click to retry)</span>
+                                        <span style={{ marginLeft: '8px' }}></span>
                                     </>
                                 ) : (
                                     <>{nextChapterRef} ▶</>
@@ -511,7 +511,7 @@ export default function ReadScripture({ appController }) {
                             </button>
                         ) : (
                             <div className="text-muted">
-                                <em>End of Book</em>
+                      
                             </div>
                         )}
                     </div>
