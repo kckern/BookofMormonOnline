@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 /**
  * Skeleton loader component for read view
@@ -39,23 +39,7 @@ export const SkeletonLoader = () => {
     }, []); // Empty dependency array - generate once
     
     return (
-        <div className="read-content">
-            {/* Top navigation skeleton */}
-            <div className="read-header-nav skeleton-nav">
-                <div className="skeleton-nav-btn"></div>
-                <div className="skeleton-title"></div>
-                <div className="skeleton-nav-btn"></div>
-            </div>
-
-            {/* Chapter navigation skeleton */}
-            <div className="skeleton-chapter-nav"></div>
-
-            {/* Mobile navigation skeleton */}
-            <div className="read-mobile-nav skeleton-nav">
-                <div className="skeleton-nav-btn"></div>
-                <div className="skeleton-nav-btn"></div>
-            </div>
-
+        <>
             {skeletonData.map((section) => (
                 <div key={section.id} className="read-section skeleton-section">
                     <div className="read-section-header skeleton-header">
@@ -83,6 +67,6 @@ export const SkeletonLoader = () => {
                     </div>
                 </div>
             ))}
-        </div>
+        </>
     );
 };
