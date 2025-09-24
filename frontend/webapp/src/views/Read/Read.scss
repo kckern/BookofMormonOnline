@@ -319,9 +319,7 @@ p.heading a.heading + a.heading::before{
     padding: 1rem;
     margin-bottom: 2rem;
     border-radius: 1rem;
-    margin: 0ex!important;
-    margin-bottom: 2rem!important;
-    
+    margin-left: 1rem; /* Match real read-section margin */
 }
 
 .skeleton-nav {
@@ -356,7 +354,8 @@ p.heading a.heading + a.heading::before{
     animation: skeleton-loading 1.5s infinite;
     margin-bottom: 1rem;
     border-radius: 2px;
-    margin-left: 1rem;
+    margin-left: 1rem; /* Match real chapter-nav margin */
+    margin-top: -2rem; /* Match real chapter-nav negative margin */
 }
 
 .skeleton-header {
