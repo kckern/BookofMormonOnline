@@ -34,10 +34,17 @@ function FacsimileViewer({ item }) {
   }, [item.slug, item]);
 
   const { pages, pgoffset } = item;
-  const totalLeaves = pages + pgoffset;
+  // Ensure we include page 380 by making sure totalLeaves is correctly calculated
+  // We add 1 here because pages appears to be 0-indexed (0-379 instead of 1-380)
+  const totalLeaves = (parseInt(pages) + 1) + parseInt(pgoffset);
+  
   const leafIndex = Array.from({ length: totalLeaves }, (_, idx) => {
     const i = idx - pgoffset + 0;
     const baseUrl = `${assetUrl}/fax/pages/${item.slug}/`;
+    
+    // Check if this is the last page (page 380 in this case)
+    const isLastPage = (i === pages);
+    
     const pageNumInt = i > 0 ? i : null;
     const pageNumRoman = i <= 0 ? convertIntToRomanNumeral(pgoffset + i, true) : null;
     const pageAssetUrl = i > 0 ? `${baseUrl}${i.toString().padStart(3, "0")}.${item.format || "jpg"}` : `${baseUrl}000.${(pgoffset + i).toString().padStart(2, "0")}.${item.format || "jpg"}`;
@@ -71,6 +78,8 @@ function FacsimileViewer({ item }) {
     }
   }, [handleKeyPress]);
 
+  // Leaf index processing complete
+  
   const activeLeaf = findLeafFromSlug(leafIndex, match);
   const { title } = item;
   return (
@@ -81,22 +90,47 @@ function FacsimileViewer({ item }) {
       </h2>
       {!activeLeaf ?
         <FacsimileGridViewer item={item} leafIndex={leafIndex} /> :
-        <FacsimilePageViewer item={item} leafIndex={leafIndex} />
+        <FacsimilePageViewer item={item} leafIndex={leafIndex} pgoffset={pgoffset} />
       }
     </div>
   );
 }
 
 function FacsimileGridViewer({ item, leafIndex }) {
+  // Process leaf index for grid display
+  
+  // Use a filter instead of slice(1) to ensure we're not excluding valid pages
+  // Filter out any undefined or null entries, but keep all valid pages
+  const validLeaves = leafIndex.filter((leaf, idx) => {
+    // Skip the first page if it's a cover or blank page (keeping original slice(1) behavior)
+    if (idx === 0 && leaf.pageNumInt === null) return false;
+    
+    // Special handling for the last page (e.g., page 380)
+    if (idx === leafIndex.length - 1) {
+      return true;
+    }
+    
+    // Include all other valid pages
+    return leaf && (leaf.pageNumInt !== null || leaf.pageNumRoman !== null);
+  });
+  
+  // Grid viewer ready to display pages
+
   return (
     <div className="faxGridViewer">
-      {leafIndex.slice(1).map((i) => {
+      {validLeaves.map((i) => {
         const alt = `${item.title} - Page ${i.pageSlugLeaf}`;
         return (
           <Link key={i.leafCursor} to={`/fax/${item.slug}/${i.pageSlugLeaf}`}>
             <div key={i.leafCursor} className="faxPage">
               <PageOverlay pageLeaf={i} />
-              <img src={i.thumbAssetUrl} alt={alt} />
+              <img 
+                src={i.thumbAssetUrl} 
+                alt={alt} 
+                onError={(e) => {
+                  e.target.src = `${assetUrl}/img/placeholder.jpg`; // Fallback image
+                }}
+              />
             </div>
           </Link>
         );
@@ -125,7 +159,7 @@ function PageOverlay({ pageLeaf }) {
   );
 }
 
-function FacsimilePageViewer({ item, leafIndex }) {
+function FacsimilePageViewer({ item, leafIndex, pgoffset }) {
   const history = useHistory();
   const { pageNumber } = useParams();
   const isOnMobile = isMobile();
@@ -141,18 +175,56 @@ function FacsimilePageViewer({ item, leafIndex }) {
 
   // Initialize page index based on URL
   useEffect(() => {
+    // Special handling for page 380 (or any specific last page)
+    if (pageNumber === '380' || parseInt(pageNumber) === item.pages) {
+      // Direct check for the last page by its number
+      const lastPageIndex = leafIndex.findIndex(leaf => 
+        leaf.pageNumInt === parseInt(pageNumber) || `${leaf.pageSlugLeaf}` === pageNumber
+      );
+      
+      if (lastPageIndex !== -1) {
+        setCurrentPageIndex(lastPageIndex);
+        setSliderValue(lastPageIndex);
+        return;
+      }
+    }
+    
+    // Standard page lookup
     const index = leafIndex.findIndex(leaf => `${leaf.pageSlugLeaf}` === pageNumber);
+    
     if (index !== -1) {
       setCurrentPageIndex(index);
       setSliderValue(index);
+    } else {
+      // If page not found, check if it's the last page
+      const lastPageNum = leafIndex[leafIndex.length - 1]?.pageSlugLeaf;
+      if (lastPageNum && `${lastPageNum}` === pageNumber) {
+        // It's the last page but wasn't found with exact match - handle special case
+        const lastIndex = leafIndex.length - 1;
+        setCurrentPageIndex(lastIndex);
+        setSliderValue(lastIndex);
+      }
     }
-  }, [pageNumber, leafIndex]);
+  }, [pageNumber, leafIndex, item.pages]);
 
   // Adjust page index to ensure even pages are on the left
   const getAdjustedPageIndex = useCallback((index) => {
     if (index <= 0) return 0; // Handle first page
+    
+    // Handle the last page - whether it's odd or even
+    if (index === totalPages - 1) {
+      // For the last page, if it's odd, show it on the right of previous even page
+      if (index % 2 !== 0) {
+        return index - 1;
+      } 
+      // If it's even, show it on the left side as usual
+      // (the right side will be blank in this case)
+      return index;
+    }
+    
+    // Standard case: ensure even pages are on left
     return index % 2 === 0 ? index : index - 1;
-  }, []);
+  }, [totalPages]);
 
   // Preload adjacent pages
   const getPagesToPreload = useCallback(() => {
@@ -186,7 +258,15 @@ function FacsimilePageViewer({ item, leafIndex }) {
 
   // Update to move 2 pages at a time
   const handleSwipeLeft = useCallback(() => {
-    handlePageChange(Math.min(totalPages - 1, currentPageIndex + (isOnMobile ? 1 : 2)));
+    // For the last page(s), adjust how far to move based on whether totalPages is even or odd
+    const moveAmount = isOnMobile ? 1 : 2;
+    const newIndex = Math.min(totalPages - 1, currentPageIndex + moveAmount);
+    // Handle special case for even-numbered last page
+    if (!isOnMobile && totalPages % 2 === 0 && newIndex >= totalPages - 2) {
+      handlePageChange(totalPages - 2); // Go to second-to-last spread
+    } else {
+      handlePageChange(newIndex);
+    }
   }, [currentPageIndex, isOnMobile, totalPages, handlePageChange]);
 
   const handleSwipeRight = useCallback(() => {
@@ -216,6 +296,11 @@ function FacsimilePageViewer({ item, leafIndex }) {
     // Adjust value to ensure even pages on left
     value = value % 2 === 0 ? value : value - 1;
     if (value < 0) value = 0;
+    
+    // Handle case where value is beyond the last valid page spread
+    if (value > totalPages - 2) {
+      value = totalPages - 2; // Always show the last valid spread (last or second-to-last page on right)
+    }
 
     const leftPage = leafIndex[value];
     const rightPage = leafIndex[value + 1];
@@ -258,8 +343,18 @@ function FacsimilePageViewer({ item, leafIndex }) {
       // Return a blank placeholder for missing pages
       return <div className="blankPage"></div>;
     }
+    
+    // Special handling for the last page
+    const isLastPage = (pgoffset !== undefined && page.pageNumInt === totalPages - pgoffset) || 
+                       page.pageSlugLeaf === leafIndex[leafIndex.length - 1]?.pageSlugLeaf;
+    
     return (
-      <img src={page.pageAssetUrl} alt={`Page ${page.pageSlugLeaf}`} onClick={onClick} />
+      <img 
+        src={page.pageAssetUrl} 
+        alt={`Page ${page.pageSlugLeaf}`} 
+        onClick={onClick}
+        className={isLastPage ? "last-page" : ""}
+      />
     );
   };
 
@@ -316,12 +411,20 @@ function FacsimilePageViewer({ item, leafIndex }) {
                 )}
               </div>
               <div className="page rightPage">
-                {renderPage(rightPage || null, handleSwipeLeft)}
+                {/* Special handling for the final page in a book with even page count */}
+                {(totalPages % 2 === 0 && adjustedPageIndex === totalPages - 2) ? 
+                  renderPage(rightPage || null, () => {}) : // Disable clicking on the last page
+                  renderPage(rightPage || null, handleSwipeLeft)
+                }
               </div>
             </>
           )}
 
-          {!isOnMobile && adjustedPageIndex < totalPages - 2 && renderPageStack('right')}
+          {!isOnMobile && 
+            // Only show right stack if we're not at the last page or second-to-last page spread
+            (adjustedPageIndex < totalPages - 2 || 
+             (totalPages % 2 === 0 && adjustedPageIndex < totalPages - 1)) && 
+             renderPageStack('right')}
         </div>
       </div>
 
@@ -349,7 +452,7 @@ function FacsimilePageViewer({ item, leafIndex }) {
           <input
             type="range"
             min={0}
-            max={totalPages - (isOnMobile ? 1 : 2)}
+            max={totalPages - (isOnMobile ? 1 : (totalPages % 2 === 0 ? 1 : 2))}
             step={isOnMobile ? 1 : 2} // Move slider in steps
             value={sliderValue}
             onChange={handleSliderChange}
@@ -364,7 +467,7 @@ function FacsimilePageViewer({ item, leafIndex }) {
         <button
           className="nav-button"
           onClick={handleSwipeLeft}
-          disabled={currentPageIndex >= totalPages - (isOnMobile ? 1 : 2)}
+          disabled={currentPageIndex >= totalPages - (isOnMobile ? 1 : (totalPages % 2 === 0 ? 1 : 2))}
         >
           &#8250;
         </button>

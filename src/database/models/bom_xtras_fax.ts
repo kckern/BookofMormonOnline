@@ -67,6 +67,10 @@ export default class _bom_xtras_fax extends ModelBase {
         type: DataTypes.STRING(10),
         allowNull: true
       },
+      weight: {
+        type: DataTypes.INTEGER,
+        allowNull: true
+      },
     }, {
       sequelize,
       tableName: 'bom_xtras_fax',
