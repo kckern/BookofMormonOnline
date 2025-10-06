@@ -16,6 +16,27 @@
   height: 20vw;
   max-height: 30vw;
 }
+#fax_back{
+  margin-left: 1rem;
+}
+
+.table-of-content.faxpage {
+  margin-top: 1rem;
+}
+
+.faxMainContainer{
+  position: absolute;
+  top: 60px;
+  padding: 0;
+  left: 0;
+  right:0;
+  height: calc(100vh - 60px);
+  display: flex;
+  flex-direction: column;
+  //background-color: #00000033;
+  overflow-y: auto;
+  min-height: 0;
+}
 
 @media screen and (max-width: 800px) {
   .card .card-body.faxInfo {
@@ -76,11 +97,7 @@
   color: #EEE;
 }
 
-@media screen and (min-width: 992px) {
-  .sidebar .sidebar-wrapper li.active > a:not([data-toggle="collapse"]):after {
-    /*border-right: 17px solid rgb(68, 68, 68);*/
-  }
-}
+/* removed empty sidebar override to satisfy linter */
 
 .faxlist h5 {
   font-weight: 800;
@@ -111,6 +128,8 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
   gap: 5px;
+  padding: 2rem;
+  overflow-y: auto;
 }
 
 @media screen and (max-width: 800px) {
@@ -171,9 +190,11 @@
 .faxPageViewer {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 100px);
+  flex-grow: 1;
   margin: 0;
   padding: 0;
+  height: 100%;
+  overflow: hidden;
 }
 
 .pagesContainer {
@@ -182,21 +203,24 @@
   align-items: center;
   position: relative;
   background-color: #CCC;
-  border-radius: 1rem;
+  flex-grow: 1;
+  overflow: hidden;
+  min-height: 0;
 }
 
 .pageContainer {
-  aspect-ratio: 1.3 / 1; 
+  aspect-ratio: auto; /* let content drive ratio */
   position: relative; /* To contain absolute children */
   display: flex;
   gap: 0.25rem;
-  height: auto;
+  height: 100%;
   justify-content: center;
-  max-height: calc(100vh - 12rem);
-  width: auto; /* Let the width adjust based on content */
-  flex-grow: 0; /* Prevent it from taking up 100% */
-  outline: 2px solid #CCC;
-  background-color: #AAA;
+  max-height: none;
+  width: 100%;
+  flex-grow: 1; /* allow it to fill available space */
+  outline: none;
+  background-color: transparent;
+  min-height: 0; /* allow children to shrink */
 }
 
 .pageContainer.mobile {
@@ -208,7 +232,7 @@
   padding: 0;
   margin: 0;
   background-color: white;
-  height: auto;
+  height: 100%;
 }
 
 .page img {
@@ -269,7 +293,7 @@
   justify-content: space-between;
   padding: 10px 0;
   background-color: #f0f0f0;
-  margin-top: 2rem;
+  margin-top: 0;
 }
 
 .nav-button {
@@ -294,6 +318,7 @@
 .custom-slider {
   width: 100%;
   -webkit-appearance: none;
+  appearance: none;
   background: #d3d3d3;
   outline: none;
   opacity: 0.7;
@@ -362,21 +387,48 @@
   width: 100%;
 }
 
+
+.facsimileViewer{
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+
 .facsimileViewer h2 {
   text-align: center;
+  flex-shrink: 0;
 }
 
 h2.facsimileViewerTitle {
   display: flex;
+  margin-bottom: 0;
+  flex-shrink: 0;
+  margin-right: 6rem;
+}
+
+.facsimileViewer .faxPageViewer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+  height: auto !important;
+  max-height: none !important;
 }
 
 @media (max-width: 768px) {
   .faxPageViewer {
-    height: calc(100vh - 60px);
+    flex-grow: 1;
+    height: calc(100vh - 50px);
+    overflow: hidden;
   }
 
   .pagesContainer {
-    height: calc(100% - 150px);
+    flex-grow: 1;
+    overflow: hidden;
   }
 
   .pageContainer.mobile {
@@ -418,64 +470,4 @@ h2.facsimileViewerTitle {
 
 
 
-.faxPageViewer {
-  /* Remove fixed height, use available space */
-  height: auto;
-  /* Account for navbar and ensure all content is visible */
-  max-height: calc(100vh - 16vh);
-  display: flex;
-  flex-direction: column;
-  margin: 0;
-  padding: 0;
-}
-
-.pagesContainer {
-  /* Use flex-grow to fill available space while allowing navigation to remain visible */
-  flex: 1 1 auto;
-  min-height: 0; /* Allows container to shrink */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  position: relative;
-  padding: 0 4rem; /* Maintain padding for tooltips */
-}
-
-.pageContainer {
-  /* Allow container to shrink while maintaining aspect ratio */
-  height: auto;
-  /* Adjust max-height to leave room for navigation */
-  max-height: calc(100vh - 32vh); /* Account for navbar, page refs, and navigation */
-  width: auto;
-  display: flex;
-  gap: 0.25rem;
-  justify-content: center;
-  position: relative;
-  margin-bottom: 3px;
-}
-
-.page {
-  height: auto;
-  max-height: calc(100vh - 180px);
-  display: flex;
-  align-items: center;
-  /* Limit width while maintaining aspect ratio */
-  max-width: calc(50vw - 8rem);
-}
-
-.page img {
-  max-height: 100%;
-  max-width: 100%;
-  object-fit: contain;
-  width: auto;
-  height: auto;
-}
-
-/* Ensure navigation stays visible */
-.facsimile-navigation {
-  flex: 0 0 auto; /* Prevent navigation from shrinking */
-  margin-top: auto; /* Push to bottom */
-  padding: 10px 0;
-  background-color: #f0f0f0;
-  position: relative; /* Ensure it stays in flow */
-  z-index: 2; /* Keep above other content if needed */
-}
+/* removed duplicate viewer layout overrides */
