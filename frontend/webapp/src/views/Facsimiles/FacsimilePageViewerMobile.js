@@ -1,0 +1,179 @@
+import React, { useState, useCallback, useEffect, useRef } from "react";
+import { useParams, useHistory } from "react-router-dom";
+import { useSwipe } from "../../models/Utils";
+import { assetUrl } from 'src/models/BoMOnlineAPI';
+import "./FacsimilePageViewer.scss";
+import { getRefFromIndex, PageOverlay } from "./Facsimiles";
+
+/**
+ * FacsimilePageViewerMobile - Mobile version of the facsimile page viewer
+ * Displays a single page at a time, optimized for mobile screens
+ */
+function FacsimilePageViewerMobile({ item, leafIndex, pgoffset }) {
+  const history = useHistory();
+  const { pageNumber } = useParams();
+
+  const [currentPageIndex, setCurrentPageIndex] = useState(0);
+  const [sliderValue, setSliderValue] = useState(0);
+  const sliderRef = useRef(null);
+
+  const totalPages = leafIndex.length;
+
+  // Initialize page index based on URL
+  useEffect(() => {
+    // Special handling for the last page (or any specific page)
+    if (pageNumber === String(item.pages) || parseInt(pageNumber) === item.pages) {
+      // Direct check for the last page by its number
+      const lastPageIndex = leafIndex.findIndex(leaf => 
+        leaf.pageNumInt === parseInt(pageNumber) || `${leaf.pageSlugLeaf}` === pageNumber
+      );
+      
+      if (lastPageIndex !== -1) {
+        setCurrentPageIndex(lastPageIndex);
+        setSliderValue(lastPageIndex);
+        return;
+      }
+    }
+    
+    // Standard page lookup
+    const index = leafIndex.findIndex(leaf => `${leaf.pageSlugLeaf}` === pageNumber);
+    
+    if (index !== -1) {
+      setCurrentPageIndex(index);
+      setSliderValue(index);
+    } else {
+      // If page not found, check if it's the last page
+      const lastPageNum = leafIndex[leafIndex.length - 1]?.pageSlugLeaf;
+      if (lastPageNum && `${lastPageNum}` === pageNumber) {
+        // It's the last page but wasn't found with exact match - handle special case
+        const lastIndex = leafIndex.length - 1;
+        setCurrentPageIndex(lastIndex);
+        setSliderValue(lastIndex);
+      }
+    }
+  }, [pageNumber, leafIndex, item.pages]);
+
+  // Preload adjacent pages
+  const getPagesToPreload = useCallback(() => {
+    if (!leafIndex) return [];
+    const preloadRange = 3;
+    const startIdx = Math.max(0, currentPageIndex - preloadRange);
+    const endIdx = Math.min(leafIndex.length - 1, currentPageIndex + preloadRange);
+    return leafIndex.slice(startIdx, endIdx + 1);
+  }, [currentPageIndex, leafIndex]);
+
+  useEffect(() => {
+    const pagesToLoad = getPagesToPreload();
+    pagesToLoad.forEach(page => {
+      const img = new Image();
+      img.src = page.pageAssetUrl;
+    });
+  }, [getPagesToPreload]);
+
+  const currentPage = leafIndex[currentPageIndex] || null;
+
+  // Navigation handlers
+  const handlePageChange = useCallback((newIndex) => {
+    if (newIndex < 0 || newIndex >= leafIndex.length) return;
+    
+    const targetPage = leafIndex[newIndex];
+    if (targetPage) {
+      history.push(`/fax/${item.slug}/${targetPage.pageSlugLeaf}`);
+    }
+  }, [history, item.slug, leafIndex]);
+
+  // Navigate one page at a time for mobile
+  const handleSwipeLeft = useCallback(() => {
+    const newIndex = Math.min(totalPages - 1, currentPageIndex + 1);
+    handlePageChange(newIndex);
+  }, [currentPageIndex, totalPages, handlePageChange]);
+
+  const handleSwipeRight = useCallback(() => {
+    const newIndex = Math.max(0, currentPageIndex - 1);
+    handlePageChange(newIndex);
+  }, [currentPageIndex, handlePageChange]);
+
+  const swipeHandlers = useSwipe({
+    onSwipedLeft: handleSwipeLeft,
+    onSwipedRight: handleSwipeRight
+  });
+
+  // Slider interaction handlers
+  const handleSliderChange = useCallback((e) => {
+    setSliderValue(parseInt(e.target.value, 10));
+  }, []);
+
+  const handleSliderRelease = useCallback(() => {
+    handlePageChange(sliderValue);
+  }, [handlePageChange, sliderValue]);
+
+  // Page rendering
+  const renderPage = (page) => {
+    if (!page) {
+      // Return a blank placeholder for missing pages
+      return <div className="blankPage"></div>;
+    }
+    
+    // Special handling for the last page
+    const isLastPage = (pgoffset !== undefined && page.pageNumInt === totalPages - pgoffset) || 
+                       page.pageSlugLeaf === leafIndex[leafIndex.length - 1]?.pageSlugLeaf;
+    
+    return (
+      <img 
+        src={page.pageAssetUrl} 
+        alt={`Page ${page.pageSlugLeaf}`} 
+        className={isLastPage ? "last-page" : ""}
+      />
+    );
+  };
+
+  return (
+    <div className="faxPageViewer mobile" style={{ maxHeight: 'none' }} {...swipeHandlers}>
+      <div className="pageReferences">
+        <h6>{currentPage?.pageReference || ''}</h6>
+      </div>
+      <div className="pagesContainer">
+        <div className="pageContainer mobile">
+          <div className="page">
+            {renderPage(currentPage)}
+          </div>
+        </div>
+      </div>
+
+      <div className="facsimile-navigation mobile">
+        <button
+          className="nav-button"
+          onClick={handleSwipeRight}
+          disabled={currentPageIndex <= 0}
+        >
+          &#8249;
+        </button>
+        <div className="slider-container">
+          <input
+            type="range"
+            min={0}
+            max={totalPages - 1}
+            step={1} // Move slider in steps of 1 for mobile (single pages)
+            value={sliderValue}
+            onChange={handleSliderChange}
+            onMouseUp={handleSliderRelease}
+            onTouchEnd={handleSliderRelease}
+            className="custom-slider"
+          />
+        </div>
+        <button
+          className="nav-button"
+          onClick={handleSwipeLeft}
+          disabled={currentPageIndex >= totalPages - 1}
+        >
+          &#8250;
+        </button>
+      </div>
+      <div className="page-counter">
+        {currentPageIndex + 1} / {totalPages}
+      </div>
+    </div>
+  );
+}
+
+export default FacsimilePageViewerMobile;
