@@ -126,11 +126,14 @@
 }
 
 .faxGridViewer {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
+  /* switched to flex to allow tiles with explicit width derived from measured aspect */
+  display: flex;
+  flex-wrap: wrap;
   gap: 5px;
   padding: 2rem;
+  justify-content: space-between;
   overflow-y: auto;
+  position: relative; /* required for sticky child and z-index layering */
 }
 
 @media screen and (max-width: 800px) {
@@ -145,9 +148,32 @@
   border-radius: 1ex;
   position: relative;
   cursor: pointer;
-  min-height: 300px;
-  height: 100%;
+  min-height: 300px; /* default height; width set inline by component */
+  height: 300px;
+}
+
+/* Sticky overhang shadow that appears when grid scrolls */
+.faxGridViewer .gridOverhang {
+  position: sticky;
+  top: -2rem;
+  left: 0;
+  right: 0;
+  height: 16px;
+  margin-top: -2rem; /* counter padding so shadow hugs container top */
+  /* soft shadow via gradient */
+  background: linear-gradient(to bottom, rgba(0,0,0,0.25), rgba(0,0,0,0.14) 45%, rgba(0,0,0,0));
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 180ms ease-in-out;
+  z-index: 3; /* above tiles */
+  /* ensure it spans the full row inside flex container */
+  flex: 0 0 100%;
   width: 100%;
+  align-self: stretch;
+}
+
+.faxGridViewer .gridOverhang.visible {
+  opacity: 1;
 }
 
 /* When using PageImage for grid thumbs */
@@ -155,6 +181,8 @@
   width: 100%;
   height: 100%;
   border-radius: 1ex;
+  position: relative; /* ensure stacking context for z-index */
+  z-index: 1; /* image layer */
 }
 
 .faxGridViewer .faxPage .pageImageWrapper img.main-image,
@@ -179,6 +207,7 @@
   background-color: rgba(0,0,0,0);
   color: #FFFFFF15;
   transition: color 250ms, background-color 250ms;
+  z-index: 2; /* overlay above image */
 }
 
 .faxGridViewer .faxPage > .pageOverlay .pageNum {
@@ -254,7 +283,7 @@
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background-color: #888;
+  background-color: #FFF;
 }
 
 .pageImageWrapper img.main-image {
@@ -462,12 +491,12 @@
   overflow: visible;
 }
 
-.facsimileViewer h2 {
+.facsimileViewer h1 {
   text-align: center;
   flex-shrink: 0;
 }
 
-h2.facsimileViewerTitle {
+h1.facsimileViewerTitle {
   display: flex;
   margin-bottom: 0;
   flex-shrink: 0;
