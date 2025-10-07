@@ -21,7 +21,8 @@
 }
 
 .table-of-content.faxpage {
-  margin-top: 1rem;
+  margin: 1rem 2rem 2rem 0;
+
 }
 
 .faxMainContainer{
@@ -357,7 +358,7 @@
   border-radius: 5px;
   box-shadow: 0 2px 5px rgba(0,0,0,0.2);
   z-index: 1000;
-  top: -225px !important;
+  /* positioning is controlled by the viewer component */
 }
 
 .tooltip-content {
@@ -395,6 +396,13 @@
   flex: 1;
   overflow: hidden;
   min-height: 0;
+}
+
+.facsimileViewer.gridMode{
+  /* In grid mode, don't consume all available height; allow content to define height
+     so that .faxMainContainer's overflow-y can take effect */
+  height: auto;
+  overflow: visible;
 }
 
 .facsimileViewer h2 {

@@ -83,9 +83,10 @@ function FacsimileViewer({ item }) {
   // Leaf index processing complete
   
   const activeLeaf = findLeafFromSlug(leafIndex, match);
+  const isGridMode = !activeLeaf;
   const { title } = item;
   return (
-    <div className="facsimileViewer">
+    <div className={`facsimileViewer${isGridMode ? ' gridMode' : ''}`}>
       <h2 className="facsimileViewerTitle">
         <Link id="fax_back" to={activeLeaf ? `/fax/${item.slug}` : "/fax"}>←</Link>
         <span style={{ flexGrow: 1, color: "black" }}>{title}</span>
