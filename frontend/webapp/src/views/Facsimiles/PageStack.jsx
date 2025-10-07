@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { createPortal } from 'react-dom';
+import { generateReference, lookupReference } from "scripture-guide";
 import { assetUrl } from 'src/models/BoMOnlineAPI';
 
 /**
@@ -28,7 +29,21 @@ export default function PageStack({ side, leafIndex, adjustedPageIndex, totalPag
     return [Math.min(totalPages, adjustedPageIndex + 2), totalPages - 1];
   }, [side, adjustedPageIndex, totalPages]);
 
-  const count = Math.max(0, endIdx - startIdx + 1);
+  // Build the list of page indices included in this stack by parity
+  const stackIndices = useMemo(() => {
+    if (startIdx > endIdx) return [];
+    const indices = [];
+    for (let i = startIdx; i <= endIdx; i++) {
+      if (side === 'left') {
+        if (i % 2 === 0) indices.push(i); // even pages for left stack
+      } else {
+        if (i % 2 === 1) indices.push(i); // odd pages for right stack
+      }
+    }
+    return indices;
+  }, [startIdx, endIdx, side]);
+
+  const count = stackIndices.length;
 
   // Desired width is 1px per page up to 200px
   const targetWidth = useMemo(() => Math.min(200, count), [count]);
@@ -58,8 +73,8 @@ export default function PageStack({ side, leafIndex, adjustedPageIndex, totalPag
     // Map left-to-right within the stack to increasing page numbers regardless of stack side
     const ratio = r;
     const relative = Math.max(0, Math.min(count - 1, Math.floor(ratio * count)));
-    return startIdx + relative;
-  }, [containerWidth, targetWidth, count, startIdx]);
+    return stackIndices[relative] ?? null;
+  }, [containerWidth, targetWidth, count, stackIndices]);
 
   const onMove = useCallback((e) => {
     if (!containerRef.current) return;
@@ -81,6 +96,11 @@ export default function PageStack({ side, leafIndex, adjustedPageIndex, totalPag
   }, [hover.pageIdx, onPageChange, totalPages]);
 
   const page = hover.pageIdx != null ? leafIndex[hover.pageIdx] : null;
+  const [thumbLoaded, setThumbLoaded] = useState(false);
+  useEffect(() => {
+    // reset load state whenever hovered page changes or tooltip hides
+    setThumbLoaded(false);
+  }, [page?.thumbAssetUrl, page?.pageAssetUrl, hover.visible]);
 
   // Tooltip position relative to stack side; show above the bar, X at hovered column
   const tooltipViewportStyle = useMemo(() => {
@@ -102,6 +122,16 @@ export default function PageStack({ side, leafIndex, adjustedPageIndex, totalPag
 
   // Set CSS variables for sampling/alternating colors
   const stackStyle = { width: `${width ?? targetWidth}px` };
+
+  const pageVerseIds = useMemo(() => {
+    if (!page?.pageReference) return [];
+    const refs = lookupReference(page.pageReference);
+    return refs?.verse_ids || [];
+  }, [page?.pageReference]);
+
+  const firstVerseId = pageVerseIds.length > 0 ? Math.min(...pageVerseIds) : null;
+  const firstVerseRef = firstVerseId ? generateReference(firstVerseId) : null;
+  
 
   // Alternating page colors can be themed via CSS vars
   return (
@@ -125,20 +155,28 @@ export default function PageStack({ side, leafIndex, adjustedPageIndex, totalPag
       {page && hover.visible && createPortal(
         <div className="stack-tooltip" style={tooltipViewportStyle}>
           <div className="stack-tooltip-content vertical">
-            <img
-              src={page.thumbAssetUrl}
-              alt={`Thumbnail of page ${page.pageSlugLeaf}`}
-              onError={(e) => {
-                const img = e.currentTarget;
-                if (!img.dataset.fallback && page.pageAssetUrl) {
-                  img.dataset.fallback = '1';
-                  img.src = page.pageAssetUrl;
-                } else {
-                  img.src = `${assetUrl}/img/placeholder.jpg`;
-                }
-              }}
-            />
+            <div className="stack-thumb" style={{ width: 96, aspectRatio: '2 / 3', position: 'relative', overflow: 'hidden' }}>
+              {!thumbLoaded && <div className="skeleton-shimmer" />}
+              <img
+                src={page.thumbAssetUrl}
+                alt={`Thumbnail of page ${page.pageSlugLeaf}`}
+                onLoad={() => setThumbLoaded(true)}
+                onError={(e) => {
+                  const img = e.currentTarget;
+                  if (!img.dataset.fallback && page.pageAssetUrl) {
+                    img.dataset.fallback = '1';
+                    img.src = page.pageAssetUrl;
+                  } else {
+                    img.src = `${assetUrl}/img/placeholder.jpg`;
+                  }
+                }}
+                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }}
+              />
+            </div>
             <div className="meta">
+              {!!firstVerseRef && (
+                <div className="ref">{firstVerseRef}</div>
+              )}
               <div className="title">Page {page.pageSlugLeaf}</div>
             </div>
           </div>

@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react';
  * Shows a shimmer placeholder immediately when src changes, then
  * fades the image in once it has loaded.
  */
-export default function PageImage({ src, alt, onClick, className = '', previewSrc, label }) {
+export default function PageImage({ src, alt, onClick, className = '', previewSrc, label, reference }) {
   const [loaded, setLoaded] = useState(false);
   const [showPlaceholder, setShowPlaceholder] = useState(true);
 
@@ -22,7 +22,12 @@ export default function PageImage({ src, alt, onClick, className = '', previewSr
         <img className="preview-blur" src={previewSrc} alt="" aria-hidden="true" />
       )}
       {!loaded && showPlaceholder && <div className="skeleton-shimmer" aria-hidden="true" />}
-      {!loaded && showPlaceholder && !!label && <div className="loading-label">{label}</div>}
+      {!loaded && showPlaceholder && (reference || label) && (
+        <div className="loading-label">
+          {reference && <div className="ref">{reference}</div>}
+          {label && <div className="pageLabel">{label}</div>}
+        </div>
+      )}
       <img
         className="main-image"
         src={src}

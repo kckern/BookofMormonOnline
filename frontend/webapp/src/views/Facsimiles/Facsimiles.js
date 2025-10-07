@@ -16,6 +16,7 @@ import { isMobile, useSwipe, convertIntToRomanNumeral } from "../../models/Utils
 import FacsimilePageViewer from './FacsimilePageViewer';
 import FacsimilePageViewerMobile from './FacsimilePageViewerMobile';
 import PageImage from './PageImage';
+import backIcon from '../_Common/svg/back.svg';
 
 function FacsimileViewer({ item, volumeOrder, currentVolumeIndex }) {
   const match = useParams();
@@ -89,7 +90,9 @@ function FacsimileViewer({ item, volumeOrder, currentVolumeIndex }) {
   return (
     <div className={`facsimileViewer${isGridMode ? ' gridMode' : ''}`}>
       <h2 className="facsimileViewerTitle">
-        <Link id="fax_back" to={activeLeaf ? `/fax/${item.slug}` : "/fax"}>←</Link>
+        <Link id="fax_back" to={activeLeaf ? `/fax/${item.slug}` : "/fax"} aria-label="Back to facsimiles">
+          <img src={backIcon} alt="Back" style={{ width: 20, height: 20 }} />
+        </Link>
         <span style={{ flexGrow: 1, color: "black" }}>{title}</span>
       </h2>
       {!activeLeaf ?
@@ -136,6 +139,7 @@ function FacsimileGridViewer({ item, leafIndex }) {
                 previewSrc={i.thumbAssetUrl}
                 alt={alt}
                 label={`Page ${i.pageSlugLeaf}`}
+                reference={i.pageReference}
                 onClick={undefined}
                 className="grid-thumb"
               />

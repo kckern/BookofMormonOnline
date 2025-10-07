@@ -296,10 +296,20 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(0,0,0,0.7);
-  font-weight: 700;
-  font-size: 1.6rem; /* ~2x typical body size */
+  color: rgba(0,0,0,0.8);
   text-shadow: 0 1px 2px rgba(255,255,255,0.8);
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pageImageWrapper .loading-label .ref {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.pageImageWrapper .loading-label .pageLabel {
+  font-size: 1.4rem;
+  font-weight: 700;
 }
 
 @keyframes shimmer {
@@ -314,6 +324,7 @@
   justify-content: space-between;
   width: 100%;
   margin-bottom: 10px;
+  background-color: #00000011;
 }
 
 .pageReferences h6 {
@@ -321,6 +332,7 @@
   padding: 0;
   color: #444;
   min-height: 1.2rem;
+  line-height: 1.6;
 }
 
 .facsimile-navigation {
@@ -402,6 +414,16 @@
   align-items: center;
 }
 
+.custom-tooltip .tooltip-content .ref {
+  margin: 4px 0 2px;
+  font-size: 0.9em;
+  color: #555;
+}
+
+.custom-tooltip .tooltip-content .pages {
+  margin: 0;
+}
+
 .tooltip-content img {
   max-width: 100px;
   height: auto;
@@ -450,6 +472,8 @@ h2.facsimileViewerTitle {
   margin-bottom: 0;
   flex-shrink: 0;
   margin-right: 6rem;
+  font-weight: 800;
+  color: #000!important;
 }
 
 .facsimileViewer .faxPageViewer {
