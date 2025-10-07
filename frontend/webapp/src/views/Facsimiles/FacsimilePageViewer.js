@@ -7,6 +7,7 @@ import "./FacsimilePageViewer.scss";
 import { getRefFromIndex, PageOverlay } from "./Facsimiles";
 import PageImage from "./PageImage";
 import PageStack from "./PageStack";
+import { generateReference, lookupReference } from "scripture-guide";
 
 /**
  * FacsimilePageViewer - Desktop version of the facsimile page viewer
@@ -257,6 +258,11 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
     const leftPage = leafIndex[value];
     const rightPage = leafIndex[value + 1];
 
+    const leftPageVerseIds = lookupReference(leftPage?.pageReference || '')?.verse_ids || [];
+    const rightPageVerseIds = lookupReference(rightPage?.pageReference || '')?.verse_ids || [];
+    const combinedVerseIds = Array.from(new Set([...leftPageVerseIds, ...rightPageVerseIds]));
+    const combinedReference = generateReference(combinedVerseIds);
+
     if (leftPage) {
       setTooltipContent(
         <div className="tooltip-content">
@@ -275,7 +281,10 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
               />
             )}
           </div>
-          <p>
+          {!!combinedVerseIds.length && (
+            <p className="ref">{combinedReference}</p>
+          )}
+          <p className="pages">
             Pages {leftPage.pageSlugLeaf}
             {rightPage ? ` - ${rightPage.pageSlugLeaf}` : ''}
           </p>
@@ -306,7 +315,8 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
       <PageImage
         src={page.pageAssetUrl}
         previewSrc={page.thumbAssetUrl}
-        label={page.pageReference || `Page ${page.pageSlugLeaf}`}
+        label={`Page ${page.pageSlugLeaf}`}
+        reference={page.pageReference}
         alt={`Page ${page.pageSlugLeaf}`}
         onClick={onClick}
         className={isLastPage ? "last-page" : ""}
