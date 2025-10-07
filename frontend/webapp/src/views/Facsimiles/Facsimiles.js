@@ -160,35 +160,69 @@ function FacsimileGridViewer({ item, leafIndex }) {
   useEffect(() => {
     if (!gridRef.current) return;
     const el = gridRef.current;
+    
+    // Debounce to prevent ResizeObserver loops
+    let timeout = null;
     const measure = () => {
-      const cs = window.getComputedStyle(el);
-      const pl = parseFloat(cs.paddingLeft) || 0;
-      const pr = parseFloat(cs.paddingRight) || 0;
-      // clientWidth includes padding; subtract it to get the true inner content width available to flex items
-      const inner = (el.clientWidth || el.getBoundingClientRect().width) - pl - pr;
-      setContainerWidth(inner);
+      clearTimeout(timeout);
+      timeout = setTimeout(() => {
+        if (!el || !gridRef.current) return;
+        // Use requestAnimationFrame to ensure measurements happen in the next frame
+        requestAnimationFrame(() => {
+          const cs = window.getComputedStyle(el);
+          const pl = parseFloat(cs.paddingLeft) || 0;
+          const pr = parseFloat(cs.paddingRight) || 0;
+          // clientWidth includes padding; subtract it to get the true inner content width available to flex items
+          const inner = (el.clientWidth || el.getBoundingClientRect().width) - pl - pr;
+          setContainerWidth(inner);
+        });
+      }, 100); // 100ms debounce
     };
+    
     measure();
-    const ro = new ResizeObserver(measure);
+    
+    const ro = new ResizeObserver(() => {
+      measure();
+    });
+    
     ro.observe(el);
     window.addEventListener('resize', measure);
+    
     return () => {
+      clearTimeout(timeout);
       try { ro.disconnect(); } catch {}
       window.removeEventListener('resize', measure);
     };
   }, []);
 
-  // Baseline width at baseline height
-  const baseTileWidth = Math.round(TILE_HEIGHT * (tileAspect || DEFAULT_ASPECT));
-  // Compute max columns that fit at baseline, then scale tiles up to fill width exactly
-  const columns = Math.max(1, Math.floor((containerWidth + GAP) / (baseTileWidth + GAP)) || 1);
-  const fittedTileWidth = columns > 0
-    ? ((containerWidth - GAP * (columns - 1)) / columns)
-    : baseTileWidth;
-  const fittedTileHeight = (fittedTileWidth / (tileAspect || DEFAULT_ASPECT));
-  // Ensure we never go below baseline height
-  const tileWidth = Math.max(baseTileWidth, fittedTileWidth);
-  const tileHeight = Math.max(TILE_HEIGHT, fittedTileHeight);
+  // Memoize tile size calculations to reduce re-renders
+  const [tileDimensions, setTileDimensions] = useState({ width: 0, height: 0 });
+  
+  // Calculate tile dimensions when containerWidth or tileAspect changes
+  useEffect(() => {
+    // Don't calculate if container width isn't available yet
+    if (!containerWidth || containerWidth <= 0) return;
+    
+    const aspectRatio = tileAspect || DEFAULT_ASPECT;
+    const baseTileWidth = TILE_HEIGHT * aspectRatio;
+    
+    // Compute columns that fit at baseline
+    const columns = Math.max(1, Math.floor((containerWidth + GAP) / (baseTileWidth + GAP)));
+    
+    // Calculate width to exactly fill the container
+    const fittedTileWidth = (containerWidth - GAP * (columns - 1)) / columns;
+    const fittedTileHeight = fittedTileWidth / aspectRatio;
+    
+    // Ensure minimum dimensions
+    const finalWidth = Math.max(baseTileWidth, fittedTileWidth);
+    const finalHeight = Math.max(TILE_HEIGHT, fittedTileHeight);
+    
+    setTileDimensions({ width: finalWidth, height: finalHeight });
+  }, [containerWidth, tileAspect]);
+  
+  // Use memoized dimensions
+  const tileWidth = tileDimensions.width;
+  const tileHeight = tileDimensions.height;
 
   // Grid viewer ready to display pages
   return (
@@ -199,14 +233,21 @@ function FacsimileGridViewer({ item, leafIndex }) {
       style={{ display: 'flex', flexWrap: 'wrap', gap: GAP }}
     >
       <div className={`gridOverhang ${hasScrolled ? 'visible' : ''}`} />
-      {validLeaves.map((i) => {
+      {tileWidth > 0 && tileHeight > 0 && validLeaves.map((i) => {
         const alt = `${item.title} - Page ${i.pageSlugLeaf}`;
         return (
           <Link key={i.leafCursor} to={`/fax/${item.slug}/${i.pageSlugLeaf}`}>
             <div
               key={i.leafCursor}
               className="faxPage"
-              style={{ width: `${tileWidth}px`, height: `${tileHeight}px` }}
+              style={{ 
+                width: `${tileWidth}px`, 
+                height: `${tileHeight}px`,
+                // Add will-change to help browser optimize rendering
+                willChange: 'transform',
+                // Use transform instead of width/height for smoother transitions when size changes
+                transform: 'translate3d(0, 0, 0)'
+              }}
             >
               <PageOverlay pageLeaf={i} />
               <PageImage
