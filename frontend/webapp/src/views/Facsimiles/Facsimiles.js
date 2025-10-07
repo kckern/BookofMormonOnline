@@ -17,7 +17,7 @@ import FacsimilePageViewer from './FacsimilePageViewer';
 import FacsimilePageViewerMobile from './FacsimilePageViewerMobile';
 import PageImage from './PageImage';
 
-function FacsimileViewer({ item }) {
+function FacsimileViewer({ item, volumeOrder, currentVolumeIndex }) {
   const match = useParams();
   const findLeafFromSlug = (leafIndex, match) => {
     return leafIndex.find((leaf) => `${leaf.pageSlugLeaf}` === `${match.pageNumber}`) || null;
@@ -95,8 +95,8 @@ function FacsimileViewer({ item }) {
       {!activeLeaf ?
         <FacsimileGridViewer item={item} leafIndex={leafIndex} /> :
         (isMobile() ? 
-          <FacsimilePageViewerMobile item={item} leafIndex={leafIndex} pgoffset={pgoffset} /> :
-          <FacsimilePageViewer item={item} leafIndex={leafIndex} pgoffset={pgoffset} />
+          <FacsimilePageViewerMobile item={item} leafIndex={leafIndex} pgoffset={pgoffset} volumeOrder={volumeOrder} currentVolumeIndex={currentVolumeIndex} /> :
+          <FacsimilePageViewer item={item} leafIndex={leafIndex} pgoffset={pgoffset} volumeOrder={volumeOrder} currentVolumeIndex={currentVolumeIndex} />
         )
       }
     </div>
@@ -188,7 +188,15 @@ function Facsimiles() {
       800: 1
     };
 
-    if (FaxList && activeFax?.pages) return <FacsimileViewer item={activeFax} />
+    if (FaxList && activeFax?.pages) {
+      const volumeOrder = Object.values(FaxList).sort((a, b) => {
+        if (a.title < b.title) return -1;
+        if (a.title > b.title) return 1;
+        return 0;
+      });
+      const currentVolumeIndex = volumeOrder.findIndex(v => v.slug === activeFax.slug);
+      return <FacsimileViewer item={activeFax} volumeOrder={volumeOrder} currentVolumeIndex={currentVolumeIndex} />
+    }
 
     if (FaxList && activeFax?.code) {
       let [code, token] = activeFax?.code.split(".");
