@@ -55,10 +55,11 @@ export default function PageStack({ side, leafIndex, adjustedPageIndex, totalPag
     const width = containerWidth || targetWidth;
     if (width <= 0 || count <= 0) return null;
     const r = Math.max(0, Math.min(1, x / width));
-    const ratio = side === 'left' ? (1 - r) : r;
+    // Map left-to-right within the stack to increasing page numbers regardless of stack side
+    const ratio = r;
     const relative = Math.max(0, Math.min(count - 1, Math.floor(ratio * count)));
     return startIdx + relative;
-  }, [containerWidth, targetWidth, count, startIdx, side]);
+  }, [containerWidth, targetWidth, count, startIdx]);
 
   const onMove = useCallback((e) => {
     if (!containerRef.current) return;

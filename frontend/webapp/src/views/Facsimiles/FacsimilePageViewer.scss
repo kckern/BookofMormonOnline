@@ -35,10 +35,10 @@
     /* Alternating 1px vertical stripes (#333 / #444) to simulate page edges */
     background: repeating-linear-gradient(
       to right,
-      #333 0,
-      #333 1px,
-      #444 1px,
-      #444 2px
+      #AAA 0,
+      #888 2px,
+      #AAA 1px,
+      #888 2px
     );
   border-radius: 0;
   box-shadow: none;
@@ -176,14 +176,13 @@
     cursor: pointer;
     opacity: 0.7;
     transition: opacity 0.2s ease;
-    background: linear-gradient(to right, #ddd, #fff);
     
     &:hover {
       opacity: 1;
     }
     
     &.leftStack {
-      transform: scaleX(-1);
+     // transform: scaleX(-1);
       margin-right: 5px;
     }
     
