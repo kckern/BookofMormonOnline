@@ -135,7 +135,7 @@ function FacsimileGridViewer({ item, leafIndex }) {
   // After first thumb loads, detect actual aspect ratio and use it for all tiles
   useEffect(() => {
     if (!validLeaves?.length) return;
-    const first = validLeaves[0];
+    const first = validLeaves[10];
     if (!first?.thumbAssetUrl) return;
     let cancelled = false;
     const img = new Image();
