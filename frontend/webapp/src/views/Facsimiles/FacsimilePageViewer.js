@@ -145,13 +145,14 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
     return () => { img.onload = null; };
   }, [rightPage?.thumbAssetUrl, rightPage?.pageAssetUrl]);
 
-  // Estimate stack widths to keep empty space outside stacks
+  // Estimate stack widths with parity filtering: left = even pages before current spread; right = odd pages after
   const { leftStackWidth, rightStackWidth } = useMemo(() => {
-    const leftCount = Math.max(0, adjustedPageIndex);
-    const rightCount = Math.max(0, totalPages - (adjustedPageIndex + 2));
+    // adjustedPageIndex is even (left page)
+    const leftEvenCount = Math.max(0, Math.floor(adjustedPageIndex / 2));
+    const rightOddCount = Math.max(0, Math.floor((totalPages - (adjustedPageIndex + 2)) / 2));
     return {
-      leftStackWidth: Math.min(200, leftCount),
-      rightStackWidth: Math.min(200, rightCount)
+      leftStackWidth: Math.min(200, leftEvenCount),
+      rightStackWidth: Math.min(200, rightOddCount)
     };
   }, [adjustedPageIndex, totalPages]);
 
