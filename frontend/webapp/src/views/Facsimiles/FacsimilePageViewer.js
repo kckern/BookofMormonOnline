@@ -35,8 +35,6 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
 
   // Initialize page index based on URL
   useEffect(() => {
-    if (hasLetters) return; // Skip initialization if it's a reference
-    
     // Special handling for the last page (or any specific page)
     if (pageNumber === String(item.pages) || parseInt(pageNumber) === item.pages) {
       // Direct check for the last page by its number
@@ -51,7 +49,43 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
       }
     }
     
-    // Standard page lookup
+    // Handle reference URLs (containing A-Z letters)
+    if (hasLetters) {
+      try {
+        const refs = lookupReference(pageNumber);
+        const verseIds = refs?.verse_ids || [];
+        
+        if (verseIds.length > 0) {
+          // Get the minimum verse ID to find the first page containing this reference
+          const minVerseId = Math.min(...verseIds);
+          
+          // Look for a page containing this verse ID
+          for (let i = 0; i < leafIndex.length; i++) {
+            const page = leafIndex[i];
+            if (page?.pageReference) {
+              const pageVerseIds = lookupReference(page.pageReference)?.verse_ids || [];
+              if (pageVerseIds.includes(minVerseId)) {
+                setCurrentPageIndex(i);
+                setSliderValue(i);
+                return;
+              }
+            }
+          }
+        }
+        
+        // If we can't find a match, just default to page 1
+        setCurrentPageIndex(0);
+        setSliderValue(0);
+        return;
+      } catch (e) {
+        // If reference parsing fails, default to page 1
+        setCurrentPageIndex(0);
+        setSliderValue(0);
+        return;
+      }
+    }
+    
+    // Standard page lookup for numeric pages
     const index = leafIndex.findIndex(leaf => `${leaf.pageSlugLeaf}` === pageNumber);
     
     if (index !== -1) {
@@ -65,6 +99,10 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
         const lastIndex = leafIndex.length - 1;
         setCurrentPageIndex(lastIndex);
         setSliderValue(lastIndex);
+      } else {
+        // If we can't find a match, just default to page 1
+        setCurrentPageIndex(0);
+        setSliderValue(0);
       }
     }
   }, [pageNumber, leafIndex, item.pages, hasLetters]);
@@ -98,14 +136,12 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
   }, [currentPageIndex, leafIndex]);
 
   useEffect(() => {
-    if (hasLetters) return; // Skip if it's a reference
-    
     const pagesToLoad = getPagesToPreload();
     pagesToLoad.forEach(page => {
       const img = new Image();
       img.src = page.pageAssetUrl;
     });
-  }, [getPagesToPreload, hasLetters]);
+  }, [getPagesToPreload]);
 
   const adjustedPageIndex = getAdjustedPageIndex(currentPageIndex);
   const leftPage = leafIndex[adjustedPageIndex] || null;
@@ -113,7 +149,7 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
 
   // Measure container size to compute intrinsic page widths
   useEffect(() => {
-    if (hasLetters || !pagesContainerRef.current) return;
+    if (!pagesContainerRef.current) return;
     
     const el = pagesContainerRef.current;
     const updateSize = () => {
@@ -128,11 +164,11 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
       try { ro.disconnect(); } catch {}
       window.removeEventListener('resize', updateSize);
     };
-  }, [hasLetters]);
+  }, []);
 
   // Load left page image and calculate aspect ratio
   useEffect(() => {
-    if (hasLetters || !leftPage) { 
+    if (!leftPage) { 
       setLeftRatio(0.75); 
       return; 
     }
@@ -143,11 +179,11 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
     };
     img.src = leftPage.thumbAssetUrl || leftPage.pageAssetUrl;
     return () => { img.onload = null; };
-  }, [leftPage?.thumbAssetUrl, leftPage?.pageAssetUrl, hasLetters, leftPage]);
+  }, [leftPage?.thumbAssetUrl, leftPage?.pageAssetUrl, leftPage]);
 
   // Load right page image and calculate aspect ratio
   useEffect(() => {
-    if (hasLetters || !rightPage) { 
+    if (!rightPage) { 
       setRightRatio(0.75); 
       return; 
     }
@@ -158,12 +194,10 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
     };
     img.src = rightPage.thumbAssetUrl || rightPage.pageAssetUrl;
     return () => { img.onload = null; };
-  }, [rightPage?.thumbAssetUrl, rightPage?.pageAssetUrl, hasLetters, rightPage]);
+  }, [rightPage?.thumbAssetUrl, rightPage?.pageAssetUrl, rightPage]);
 
   // Estimate stack widths with parity filtering: left = even pages before current spread; right = odd pages after
   const { leftStackWidth, rightStackWidth } = useMemo(() => {
-    if (hasLetters) return { leftStackWidth: 0, rightStackWidth: 0 };
-    
     // adjustedPageIndex is even (left page)
     const leftEvenCount = Math.max(0, Math.floor(adjustedPageIndex / 2));
     const rightOddCount = Math.max(0, Math.floor((totalPages - (adjustedPageIndex + 2)) / 2));
@@ -171,12 +205,10 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
       leftStackWidth: Math.min(200, leftEvenCount),
       rightStackWidth: Math.min(200, rightOddCount)
     };
-  }, [adjustedPageIndex, totalPages, hasLetters]);
+  }, [adjustedPageIndex, totalPages]);
 
   // Compute page widths (px) from container height and aspect ratios; scale to fit container width
   const { leftPageWidth, rightPageWidth } = useMemo(() => {
-    if (hasLetters) return { leftPageWidth: 0, rightPageWidth: 0 };
-    
     const h = containerSize.height || 0;
     if (h <= 0) return { leftPageWidth: undefined, rightPageWidth: undefined };
     let lw = h * (leftRatio || 0.75);
@@ -190,31 +222,25 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
       rw = Math.floor(rw * s);
     }
     return { leftPageWidth: lw, rightPageWidth: rw };
-  }, [containerSize.width, containerSize.height, leftRatio, rightRatio, leftStackWidth, rightStackWidth, hasLetters]);
+  }, [containerSize.width, containerSize.height, leftRatio, rightRatio, leftStackWidth, rightStackWidth]);
 
   const innerWidth = useMemo(() => {
-    if (hasLetters) return 0;
-    
     const lw = leftPageWidth || 0;
     const rw = rightPageWidth || 0;
     return leftStackWidth + lw + rw + rightStackWidth;
-  }, [leftPageWidth, rightPageWidth, leftStackWidth, rightStackWidth, hasLetters]);
+  }, [leftPageWidth, rightPageWidth, leftStackWidth, rightStackWidth]);
 
   // Navigation handlers
   const handlePageChange = useCallback((newIndex) => {
-    if (hasLetters) return;
-    
     const adjustedIndex = getAdjustedPageIndex(newIndex);
     const targetPage = leafIndex[adjustedIndex];
     if (targetPage) {
       history.push(`/fax/${item.slug}/${targetPage.pageSlugLeaf}`);
     }
-  }, [history, item.slug, leafIndex, getAdjustedPageIndex, hasLetters]);
+  }, [history, item.slug, leafIndex, getAdjustedPageIndex]);
 
   // Update to move 2 pages at a time
   const handleSwipeLeft = useCallback(() => {
-    if (hasLetters) return;
-    
     // For the last page(s), adjust how far to move based on whether totalPages is even or odd
     const newIndex = Math.min(totalPages - 1, currentPageIndex + 2);
     // Handle special case for even-numbered last page
@@ -223,13 +249,11 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
     } else {
       handlePageChange(newIndex);
     }
-  }, [currentPageIndex, totalPages, handlePageChange, hasLetters]);
+  }, [currentPageIndex, totalPages, handlePageChange]);
 
   const handleSwipeRight = useCallback(() => {
-    if (hasLetters) return;
-    
     handlePageChange(Math.max(0, currentPageIndex - 2));
-  }, [currentPageIndex, handlePageChange, hasLetters]);
+  }, [currentPageIndex, handlePageChange]);
 
   const swipeHandlers = useSwipe({
     onSwipedLeft: handleSwipeLeft,
@@ -238,8 +262,6 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
 
   // Arrow key navigation: left/right pages, up/down volumes
   useEffect(() => {
-    if (hasLetters) return;
-    
     const onKey = (e) => {
       if (e.defaultPrevented) return;
       if (e.key === 'ArrowLeft') { e.preventDefault(); handleSwipeRight(); }
@@ -282,23 +304,19 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [handleSwipeLeft, handleSwipeRight, volumeOrder, currentVolumeIndex, history, leftPage?.pageSlugLeaf, rightPage?.pageSlugLeaf, leftPage?.pageReference, rightPage?.pageReference, hasLetters]);
+  }, [handleSwipeLeft, handleSwipeRight, volumeOrder, currentVolumeIndex, history, leftPage?.pageSlugLeaf, rightPage?.pageSlugLeaf, leftPage?.pageReference, rightPage?.pageReference]);
 
   // Slider interaction handlers
   const handleSliderChange = useCallback((e) => {
-    if (hasLetters) return;
-    
     setSliderValue(parseInt(e.target.value, 10));
-  }, [hasLetters]);
+  }, []);
 
   const handleSliderRelease = useCallback(() => {
-    if (hasLetters) return;
-    
     handlePageChange(sliderValue);
-  }, [handlePageChange, sliderValue, hasLetters]);
+  }, [handlePageChange, sliderValue]);
 
   const handleSliderMouseMove = useCallback((e) => {
-    if (hasLetters || !sliderRef.current) return;
+    if (!sliderRef.current) return;
     
     const sliderRect = sliderRef.current.getBoundingClientRect();
     const position = (e.clientX - sliderRect.left) / sliderRect.width;
@@ -356,7 +374,7 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
       });
       setShowTooltip(true);
     }
-  }, [leafIndex, totalPages, hasLetters]);
+  }, [leafIndex, totalPages]);
 
   // Page rendering
   const renderPage = (page, onClick) => {
@@ -381,11 +399,6 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
       />
     );
   };
-
-  // If the URL contains a reference, don't render the component
-  if (hasLetters) {
-    return null; // Return null instead of rendering
-  }
 
   // Page stack is now a separate component
   return (

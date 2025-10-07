@@ -85,17 +85,25 @@ function FacsimileViewer({ item, volumeOrder, currentVolumeIndex }) {
   // Leaf index processing complete
   
   const activeLeaf = findLeafFromSlug(leafIndex, match);
-  const isGridMode = !activeLeaf;
+  // Check if we have a path parameter (either a page number or reference)
+  const hasPathParameter = match.pageNumber !== undefined;
+  // If no match found but we have a path parameter, default to page 1
+  const defaultLeaf = hasPathParameter && !activeLeaf ? leafIndex.find(leaf => leaf.pageNumInt === 1 || leaf.pageSlugLeaf === "1") : null;
+  // Only show grid if there's no path parameter (no "tail" in the URL)
+  const isGridMode = !hasPathParameter;
+  // Use the found leaf or the default leaf (page 1)
+  const displayLeaf = activeLeaf || defaultLeaf;
+  
   const { title } = item;
   return (
     <div className={`facsimileViewer${isGridMode ? ' gridMode' : ''}`}>
       <h1 className="facsimileViewerTitle">
-        <Link id="fax_back" to={activeLeaf ? `/fax/${item.slug}` : "/fax"} aria-label="Back to facsimiles">
+        <Link id="fax_back" to={displayLeaf ? `/fax/${item.slug}` : "/fax"} aria-label="Back to facsimiles">
           <img src={backIcon} alt="Back" style={{ width: 20, height: 20 }} />
         </Link>
         <span style={{ flexGrow: 1, color: "black" }}>{title}</span>
       </h1>
-      {!activeLeaf ?
+      {isGridMode ?
         <FacsimileGridViewer item={item} leafIndex={leafIndex} /> :
         (isMobile() ? 
           <FacsimilePageViewerMobile item={item} leafIndex={leafIndex} pgoffset={pgoffset} volumeOrder={volumeOrder} currentVolumeIndex={currentVolumeIndex} /> :
