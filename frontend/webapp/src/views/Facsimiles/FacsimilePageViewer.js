@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from "react";
+import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useParams, useHistory } from "react-router-dom";
 import ReactTooltip from "react-tooltip";
 import { useSwipe } from "../../models/Utils";
@@ -98,6 +98,84 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset }) {
   const adjustedPageIndex = getAdjustedPageIndex(currentPageIndex);
   const leftPage = leafIndex[adjustedPageIndex] || null;
   const rightPage = leafIndex[adjustedPageIndex + 1] || null;
+
+  // Measure container size to compute intrinsic page widths
+  const pagesContainerRef = useRef(null);
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    if (!pagesContainerRef.current) return;
+    const el = pagesContainerRef.current;
+    const updateSize = () => {
+      const rect = el.getBoundingClientRect();
+      setContainerSize({ width: Math.floor(rect.width), height: Math.floor(rect.height) });
+    };
+    updateSize();
+    const ro = new ResizeObserver(updateSize);
+    ro.observe(el);
+    window.addEventListener('resize', updateSize);
+    return () => {
+      try { ro.disconnect(); } catch {}
+      window.removeEventListener('resize', updateSize);
+    };
+  }, []);
+
+  // Derive aspect ratios from thumbnails (fallback to 3:4)
+  const [leftRatio, setLeftRatio] = useState(0.75);
+  const [rightRatio, setRightRatio] = useState(0.75);
+
+  useEffect(() => {
+    if (!leftPage) { setLeftRatio(0.75); return; }
+    const img = new Image();
+    img.onload = () => {
+      if (img.naturalHeight > 0) setLeftRatio(img.naturalWidth / img.naturalHeight);
+    };
+    img.src = leftPage.thumbAssetUrl || leftPage.pageAssetUrl;
+    return () => { img.onload = null; };
+  }, [leftPage?.thumbAssetUrl, leftPage?.pageAssetUrl]);
+
+  useEffect(() => {
+    if (!rightPage) { setRightRatio(0.75); return; }
+    const img = new Image();
+    img.onload = () => {
+      if (img.naturalHeight > 0) setRightRatio(img.naturalWidth / img.naturalHeight);
+    };
+    img.src = rightPage.thumbAssetUrl || rightPage.pageAssetUrl;
+    return () => { img.onload = null; };
+  }, [rightPage?.thumbAssetUrl, rightPage?.pageAssetUrl]);
+
+  // Estimate stack widths to keep empty space outside stacks
+  const { leftStackWidth, rightStackWidth } = useMemo(() => {
+    const leftCount = Math.max(0, adjustedPageIndex);
+    const rightCount = Math.max(0, totalPages - (adjustedPageIndex + 2));
+    return {
+      leftStackWidth: Math.min(200, leftCount),
+      rightStackWidth: Math.min(200, rightCount)
+    };
+  }, [adjustedPageIndex, totalPages]);
+
+  // Compute page widths (px) from container height and aspect ratios; scale to fit container width
+  const { leftPageWidth, rightPageWidth } = useMemo(() => {
+    const h = containerSize.height || 0;
+    if (h <= 0) return { leftPageWidth: undefined, rightPageWidth: undefined };
+    let lw = h * (leftRatio || 0.75);
+    let rw = h * (rightRatio || 0.75);
+    const available = containerSize.width;
+    // total content includes stacks and two pages; no internal gaps
+    const total = leftStackWidth + lw + rw + rightStackWidth;
+    if (available > 0 && total > available) {
+      const s = available / total;
+      lw = Math.floor(lw * s);
+      rw = Math.floor(rw * s);
+    }
+    return { leftPageWidth: lw, rightPageWidth: rw };
+  }, [containerSize.width, containerSize.height, leftRatio, rightRatio, leftStackWidth, rightStackWidth]);
+
+  const innerWidth = useMemo(() => {
+    const lw = leftPageWidth || 0;
+    const rw = rightPageWidth || 0;
+    return leftStackWidth + lw + rw + rightStackWidth;
+  }, [leftPageWidth, rightPageWidth, leftStackWidth, rightStackWidth]);
 
   // Navigation handlers
   const handlePageChange = useCallback((newIndex) => {
@@ -221,45 +299,49 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset }) {
         <h6>{leftPage?.pageReference || ''}</h6>
         <h6>{rightPage?.pageReference || ''}</h6>
       </div>
-      <div className="pagesContainer">
+      <div className="pagesContainer" ref={pagesContainerRef}>
         <div className="pageContainer">
-          {adjustedPageIndex > 0 && (
-            <PageStack
-              side="left"
-              leafIndex={leafIndex}
-              adjustedPageIndex={adjustedPageIndex}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-            />
-          )}
+          <div className="spreadInner" style={innerWidth ? { width: `${innerWidth}px`, display: 'flex', alignItems: 'stretch', gap: 0 } : { display: 'flex', alignItems: 'stretch', gap: 0 }}>
+            {adjustedPageIndex > 0 && (
+              <PageStack
+                side="left"
+                leafIndex={leafIndex}
+                adjustedPageIndex={adjustedPageIndex}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                width={leftStackWidth}
+              />
+            )}
 
-          <div className="page leftPage">
+            <div className="page leftPage" style={leftPageWidth ? { width: `${leftPageWidth}px` } : undefined}>
             {/* If first page, show blank left page */}
             {adjustedPageIndex === 0 ? (
               <div className="blankPage"></div>
             ) : (
               renderPage(leftPage, handleSwipeRight)
             )}
-          </div>
-          <div className="page rightPage">
+            </div>
+            <div className="page rightPage" style={rightPageWidth ? { width: `${rightPageWidth}px` } : undefined}>
             {/* Special handling for the final page in a book with even page count */}
             {(totalPages % 2 === 0 && adjustedPageIndex === totalPages - 2) ? 
               renderPage(rightPage || null, () => {}) : // Disable clicking on the last page
               renderPage(rightPage || null, handleSwipeLeft)
             }
-          </div>
+            </div>
 
-          {/* Only show right stack if we're not at the last page or second-to-last page spread */}
-          {(adjustedPageIndex < totalPages - 2 || 
-            (totalPages % 2 === 0 && adjustedPageIndex < totalPages - 1)) && (
-            <PageStack
-              side="right"
-              leafIndex={leafIndex}
-              adjustedPageIndex={adjustedPageIndex}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-            />
-          )}
+            {/* Only show right stack if we're not at the last page or second-to-last page spread */}
+            {(adjustedPageIndex < totalPages - 2 || 
+              (totalPages % 2 === 0 && adjustedPageIndex < totalPages - 1)) && (
+              <PageStack
+                side="right"
+                leafIndex={leafIndex}
+                adjustedPageIndex={adjustedPageIndex}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                width={rightStackWidth}
+              />
+            )}
+          </div>
         </div>
       </div>
 

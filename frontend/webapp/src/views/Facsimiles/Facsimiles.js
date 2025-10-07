@@ -15,6 +15,7 @@ import {generateReference} from "scripture-guide";
 import { isMobile, useSwipe, convertIntToRomanNumeral } from "../../models/Utils";
 import FacsimilePageViewer from './FacsimilePageViewer';
 import FacsimilePageViewerMobile from './FacsimilePageViewerMobile';
+import PageImage from './PageImage';
 
 function FacsimileViewer({ item }) {
   const match = useParams();
@@ -130,12 +131,13 @@ function FacsimileGridViewer({ item, leafIndex }) {
           <Link key={i.leafCursor} to={`/fax/${item.slug}/${i.pageSlugLeaf}`}>
             <div key={i.leafCursor} className="faxPage">
               <PageOverlay pageLeaf={i} />
-              <img 
-                src={i.thumbAssetUrl} 
-                alt={alt} 
-                onError={(e) => {
-                  e.target.src = `${assetUrl}/img/placeholder.jpg`; // Fallback image
-                }}
+              <PageImage
+                src={i.thumbAssetUrl}
+                previewSrc={i.thumbAssetUrl}
+                alt={alt}
+                label={`Page ${i.pageSlugLeaf}`}
+                onClick={undefined}
+                className="grid-thumb"
               />
             </div>
           </Link>

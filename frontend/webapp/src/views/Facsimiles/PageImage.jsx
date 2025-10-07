@@ -7,15 +7,13 @@ import React, { useEffect, useState } from 'react';
  */
 export default function PageImage({ src, alt, onClick, className = '', previewSrc, label }) {
   const [loaded, setLoaded] = useState(false);
-  const [showPlaceholder, setShowPlaceholder] = useState(false);
+  const [showPlaceholder, setShowPlaceholder] = useState(true);
 
   useEffect(() => {
     // Reset loading state whenever the source changes
     setLoaded(false);
-    setShowPlaceholder(false);
-    // Show placeholder after 200ms to avoid flicker for cached images
-    const t = setTimeout(() => setShowPlaceholder(true), 200);
-    return () => clearTimeout(t);
+    // Immediately show placeholder on first load and on src changes
+    setShowPlaceholder(true);
   }, [src]);
 
   return (
