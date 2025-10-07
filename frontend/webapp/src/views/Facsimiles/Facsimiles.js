@@ -111,9 +111,11 @@ function FacsimileGridViewer({ item, leafIndex }) {
   // Default aspect ratio width:height = 1:1.5 (i.e., 0.666...) and fixed tile height 300px
   const DEFAULT_ASPECT = 1 / 1.5;
   const TILE_HEIGHT = 300;
+  const GAP = 5; // must match inline style gap in container
   const [tileAspect, setTileAspect] = useState(DEFAULT_ASPECT);
   const [hasScrolled, setHasScrolled] = useState(false);
   const gridRef = useRef(null);
+  const [containerWidth, setContainerWidth] = useState(0);
 
   // Use a filter instead of slice(1) to ensure we're not excluding valid pages
   // Filter out any undefined or null entries, but keep all valid pages
@@ -154,7 +156,39 @@ function FacsimileGridViewer({ item, leafIndex }) {
     };
   }, [validLeaves?.[0]?.thumbAssetUrl]);
 
-  const tileWidth = Math.round(TILE_HEIGHT * (tileAspect || DEFAULT_ASPECT));
+  // Measure container width to compute fitted tile size per row
+  useEffect(() => {
+    if (!gridRef.current) return;
+    const el = gridRef.current;
+    const measure = () => {
+      const cs = window.getComputedStyle(el);
+      const pl = parseFloat(cs.paddingLeft) || 0;
+      const pr = parseFloat(cs.paddingRight) || 0;
+      // clientWidth includes padding; subtract it to get the true inner content width available to flex items
+      const inner = (el.clientWidth || el.getBoundingClientRect().width) - pl - pr;
+      setContainerWidth(inner);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    window.addEventListener('resize', measure);
+    return () => {
+      try { ro.disconnect(); } catch {}
+      window.removeEventListener('resize', measure);
+    };
+  }, []);
+
+  // Baseline width at baseline height
+  const baseTileWidth = Math.round(TILE_HEIGHT * (tileAspect || DEFAULT_ASPECT));
+  // Compute max columns that fit at baseline, then scale tiles up to fill width exactly
+  const columns = Math.max(1, Math.floor((containerWidth + GAP) / (baseTileWidth + GAP)) || 1);
+  const fittedTileWidth = columns > 0
+    ? ((containerWidth - GAP * (columns - 1)) / columns)
+    : baseTileWidth;
+  const fittedTileHeight = (fittedTileWidth / (tileAspect || DEFAULT_ASPECT));
+  // Ensure we never go below baseline height
+  const tileWidth = Math.max(baseTileWidth, fittedTileWidth);
+  const tileHeight = Math.max(TILE_HEIGHT, fittedTileHeight);
 
   // Grid viewer ready to display pages
   return (
@@ -162,7 +196,7 @@ function FacsimileGridViewer({ item, leafIndex }) {
       className="faxGridViewer"
       ref={gridRef}
       onScroll={(e) => setHasScrolled(e.currentTarget.scrollTop > 0)}
-      style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}
+      style={{ display: 'flex', flexWrap: 'wrap', gap: GAP }}
     >
       <div className={`gridOverhang ${hasScrolled ? 'visible' : ''}`} />
       {validLeaves.map((i) => {
@@ -172,7 +206,7 @@ function FacsimileGridViewer({ item, leafIndex }) {
             <div
               key={i.leafCursor}
               className="faxPage"
-              style={{ width: `${tileWidth}px`, height: `${TILE_HEIGHT}px` }}
+              style={{ width: `${tileWidth}px`, height: `${tileHeight}px` }}
             >
               <PageOverlay pageLeaf={i} />
               <PageImage

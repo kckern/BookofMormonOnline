@@ -131,7 +131,7 @@
   flex-wrap: wrap;
   gap: 5px;
   padding: 2rem;
-  justify-content: space-between;
+  justify-content: justify;
   overflow-y: auto;
   position: relative; /* required for sticky child and z-index layering */
 }
