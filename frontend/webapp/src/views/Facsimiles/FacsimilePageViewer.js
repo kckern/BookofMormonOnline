@@ -5,6 +5,7 @@ import { useSwipe } from "../../models/Utils";
 import { assetUrl } from 'src/models/BoMOnlineAPI';
 import "./FacsimilePageViewer.scss";
 import { getRefFromIndex, PageOverlay } from "./Facsimiles";
+import PageStack from "./PageStack";
 
 /**
  * FacsimilePageViewer - Desktop version of the facsimile page viewer
@@ -209,33 +210,7 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset }) {
     );
   };
 
-  // Page stack rendering
-  const renderPageStack = useCallback((side) => {
-    const stackPages = side === 'left'
-      ? leafIndex.slice(0, adjustedPageIndex).reverse()
-      : leafIndex.slice(adjustedPageIndex + 2);
-
-    const stackWidth = Math.min(36, (stackPages.length / totalPages) * 36);
-
-    return (
-      <div className={`pageStack ${side}Stack`} style={{ width: `${stackWidth}px` }}>
-        {stackPages.map((page) => (
-          <div
-            key={page.leafCursor}
-            className="stackedPage"
-            style={{
-              width: `${100 / stackPages.length}%`,
-              height: '100%'
-            }}
-            onClick={() => handlePageChange(leafIndex.indexOf(page))}
-            data-tip={`Page ${page.pageSlugLeaf}`}
-            data-for={`${side}StackTooltip`}
-          />
-        ))}
-        <ReactTooltip id={`${side}StackTooltip`} place={side} effect="solid" />
-      </div>
-    );
-  }, [adjustedPageIndex, leafIndex, totalPages, handlePageChange]);
+  // Page stack is now a separate component
 
   return (
     <div className="faxPageViewer" style={{ maxHeight: 'none' }} {...swipeHandlers}>
@@ -245,7 +220,15 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset }) {
       </div>
       <div className="pagesContainer">
         <div className="pageContainer">
-          {adjustedPageIndex > 0 && renderPageStack('left')}
+          {adjustedPageIndex > 0 && (
+            <PageStack
+              side="left"
+              leafIndex={leafIndex}
+              adjustedPageIndex={adjustedPageIndex}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
+          )}
 
           <div className="page leftPage">
             {/* If first page, show blank left page */}
@@ -265,8 +248,15 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset }) {
 
           {/* Only show right stack if we're not at the last page or second-to-last page spread */}
           {(adjustedPageIndex < totalPages - 2 || 
-            (totalPages % 2 === 0 && adjustedPageIndex < totalPages - 1)) && 
-            renderPageStack('right')}
+            (totalPages % 2 === 0 && adjustedPageIndex < totalPages - 1)) && (
+            <PageStack
+              side="right"
+              leafIndex={leafIndex}
+              adjustedPageIndex={adjustedPageIndex}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
+          )}
         </div>
       </div>
 

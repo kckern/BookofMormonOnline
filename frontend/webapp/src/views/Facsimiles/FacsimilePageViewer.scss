@@ -11,6 +11,91 @@
   user-select: none;
   overflow: hidden;
   
+/* PageStack overhaul */
+  .pagesContainer {
+    display: flex;
+    min-height: 0;
+    height: 100%;
+    .pageContainer {
+      display: flex;
+      align-items: stretch; /* make children full height */
+      justify-content: center;
+      gap: 0 !important; /* absolutely flush stacks to page edges */
+      height: 100%;
+      min-height: 0;
+    }
+  }
+
+  .pageStack {
+    position: relative;
+    align-self: stretch; /* full height to mimic page edge */
+    height: 100%;
+    margin: 0; /* absolutely flush */
+    cursor: pointer;
+    /* Alternating 1px columns horizontally; skip groups when compressed */
+    --dark: rgba(70, 90, 130, 0.8);
+    --light: rgba(70, 90, 130, 0.2);
+    --skip: 1; /* updated from component */
+    background: repeating-linear-gradient(
+      to right,
+      var(--dark) 0px,
+      var(--dark) 1px,
+      var(--light) 1px,
+      var(--light) calc(var(--skip) * 1px)
+    );
+  border-radius: 0;
+  box-shadow: none;
+      overflow: visible; /* allow tooltip to render outside */
+
+  &.leftStack { order: 0; margin-right: 0; }
+  &.rightStack { order: 3; margin-left: 0; }
+
+    .stack-hover-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: #4aa3ff;
+      transform: translateY(-50%);
+      box-shadow: 0 0 0 1px #fff;
+      pointer-events: none;
+    }
+
+    .stack-hover-column {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: #4aa3ff;
+      transform: translateX(-50%);
+      box-shadow: 0 0 0 1px #fff;
+      pointer-events: none;
+    }
+
+    .stack-tooltip {
+      position: fixed; /* comes via portal; ensure fixed respects viewport */
+      z-index: 9999;
+      pointer-events: none;
+      white-space: nowrap;
+      .stack-tooltip-content {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #fff;
+        border-radius: 8px;
+        padding: 6px 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        border: 1px solid rgba(0,0,0,0.1);
+        &.vertical {
+          flex-direction: column;
+          align-items: center;
+          img { width: 96px; height: auto; border: 1px solid #ddd; margin-bottom: 6px; }
+          .meta { .title { font-size: 14px; color: #333; font-weight: 600; } }
+        }
+      }
+    }
+  }
+
   .pageReferences {
     display: flex;
     justify-content: space-between;
@@ -241,6 +326,45 @@
       }
     }
   }
+}
+
+/* Global tooltip styles for PageStack (rendered via portal) */
+.stack-tooltip {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.stack-tooltip .stack-tooltip-content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  border-radius: 8px;
+  padding: 6px 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  border: 1px solid rgba(0,0,0,0.12);
+}
+
+.stack-tooltip .stack-tooltip-content.vertical {
+  flex-direction: column;
+  align-items: center;
+}
+
+.stack-tooltip .stack-tooltip-content.vertical img {
+  width: 84px; /* fixed size to prevent scaling */
+  height: auto;
+  border: 1px solid #ddd;
+  border-radius: 2px;
+  margin-bottom: 4px;
+}
+
+.stack-tooltip .stack-tooltip-content .meta .title {
+  font-size: 13px;
+  line-height: 1.2;
+  font-weight: 600;
+  color: #333;
 }
 
 // Desktop specific styles
