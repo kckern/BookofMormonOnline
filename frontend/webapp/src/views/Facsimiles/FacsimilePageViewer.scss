@@ -151,12 +151,13 @@
     img {
       max-height: 100%;
       max-width: 100%;
-      object-fit: cover;
+      object-fit: contain;
+        transform: scale(1.015);
       box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
       transition: transform 0.2s ease;
       
       &:hover {
-        transform: scale(1.01);
+        transform: scale(1.02);
       }
       
       &.last-page {
