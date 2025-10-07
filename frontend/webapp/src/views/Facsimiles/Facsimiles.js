@@ -11,7 +11,7 @@ import { assetUrl } from 'src/models/BoMOnlineAPI';
 import "./Facsimiles.scss"
 import { useParams, useHistory } from "react-router-dom";
 import { label, determineLanguage } from "src/models/Utils";
-import {generateReference} from "scripture-guide";
+import { generateReference, lookupReference } from "scripture-guide";
 import { isMobile, useSwipe, convertIntToRomanNumeral } from "../../models/Utils";
 import FacsimilePageViewer from './FacsimilePageViewer';
 import FacsimilePageViewerMobile from './FacsimilePageViewerMobile';
@@ -89,12 +89,12 @@ function FacsimileViewer({ item, volumeOrder, currentVolumeIndex }) {
   const { title } = item;
   return (
     <div className={`facsimileViewer${isGridMode ? ' gridMode' : ''}`}>
-      <h2 className="facsimileViewerTitle">
+      <h1 className="facsimileViewerTitle">
         <Link id="fax_back" to={activeLeaf ? `/fax/${item.slug}` : "/fax"} aria-label="Back to facsimiles">
           <img src={backIcon} alt="Back" style={{ width: 20, height: 20 }} />
         </Link>
         <span style={{ flexGrow: 1, color: "black" }}>{title}</span>
-      </h2>
+      </h1>
       {!activeLeaf ?
         <FacsimileGridViewer item={item} leafIndex={leafIndex} /> :
         (isMobile() ? 
@@ -108,31 +108,72 @@ function FacsimileViewer({ item, volumeOrder, currentVolumeIndex }) {
 
 function FacsimileGridViewer({ item, leafIndex }) {
   // Process leaf index for grid display
-  
+  // Default aspect ratio width:height = 1:1.5 (i.e., 0.666...) and fixed tile height 300px
+  const DEFAULT_ASPECT = 1 / 1.5;
+  const TILE_HEIGHT = 300;
+  const [tileAspect, setTileAspect] = useState(DEFAULT_ASPECT);
+  const [hasScrolled, setHasScrolled] = useState(false);
+  const gridRef = useRef(null);
+
   // Use a filter instead of slice(1) to ensure we're not excluding valid pages
   // Filter out any undefined or null entries, but keep all valid pages
   const validLeaves = leafIndex.filter((leaf, idx) => {
     // Skip the first page if it's a cover or blank page (keeping original slice(1) behavior)
-    if (idx === 0 && leaf.pageNumInt === null) return false;
-    
+    if (idx === 0 && leaf?.pageNumInt === null) return false;
+
     // Special handling for the last page (e.g., page 380)
     if (idx === leafIndex.length - 1) {
       return true;
     }
-    
-    // Include all other valid pages
-    return leaf && (leaf.pageNumInt !== null || leaf.pageNumRoman !== null);
-  });
-  
-  // Grid viewer ready to display pages
 
+    // Include all other valid pages
+    return !!leaf && (leaf.pageNumInt !== null || leaf.pageNumRoman !== null);
+  });
+
+  // After first thumb loads, detect actual aspect ratio and use it for all tiles
+  useEffect(() => {
+    if (!validLeaves?.length) return;
+    const first = validLeaves[0];
+    if (!first?.thumbAssetUrl) return;
+    let cancelled = false;
+    const img = new Image();
+    img.onload = () => {
+      if (cancelled) return;
+      const w = img.naturalWidth || img.width;
+      const h = img.naturalHeight || img.height;
+      if (w > 0 && h > 0) {
+        setTileAspect(w / h);
+      }
+    };
+    img.onerror = () => {
+      // Keep default aspect on error
+    };
+    img.src = first.thumbAssetUrl;
+    return () => {
+      cancelled = true;
+    };
+  }, [validLeaves?.[0]?.thumbAssetUrl]);
+
+  const tileWidth = Math.round(TILE_HEIGHT * (tileAspect || DEFAULT_ASPECT));
+
+  // Grid viewer ready to display pages
   return (
-    <div className="faxGridViewer">
+    <div
+      className="faxGridViewer"
+      ref={gridRef}
+      onScroll={(e) => setHasScrolled(e.currentTarget.scrollTop > 0)}
+      style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}
+    >
+      <div className={`gridOverhang ${hasScrolled ? 'visible' : ''}`} />
       {validLeaves.map((i) => {
         const alt = `${item.title} - Page ${i.pageSlugLeaf}`;
         return (
           <Link key={i.leafCursor} to={`/fax/${item.slug}/${i.pageSlugLeaf}`}>
-            <div key={i.leafCursor} className="faxPage">
+            <div
+              key={i.leafCursor}
+              className="faxPage"
+              style={{ width: `${tileWidth}px`, height: `${TILE_HEIGHT}px` }}
+            >
               <PageOverlay pageLeaf={i} />
               <PageImage
                 src={i.thumbAssetUrl}
@@ -178,8 +219,87 @@ export function PageOverlay({ pageLeaf }) {
 function Facsimiles() {
   const [FaxList, setFaxList] = useState(null);
   const match = useParams();
+  const history = useHistory();
   const activeFax = FaxList?.[match.faxVersion];
   useEffect(() => document.title = (activeFax?.title || label("menu_fax")) + " | " + label("home_title"), [activeFax?.code])
+
+  // Handle route expansions and redirects
+  useEffect(() => {
+    if (!FaxList) return; // wait until list is loaded
+    const edition = match.faxVersion;
+    const rawPage = match.pageNumber; // could be undefined, 'last', numeric, or scripture ref
+    const fax = FaxList?.[edition];
+    if (!fax) return; // unknown edition, let normal rendering handle
+
+    // Determine highest numeric page for this edition
+    const totalPages = parseInt(fax?.pages, 10);
+    const maxPage = Number.isFinite(totalPages) ? totalPages : null;
+
+    // 1) '/fax/{edition}/last' -> forward to highest page
+    if (rawPage === 'last' && maxPage) {
+      if (history?.replace) history.replace(`/fax/${edition}/${maxPage}`);
+      return;
+    }
+
+    // If page isn't present, nothing to normalize
+    if (rawPage == null) return;
+
+    // 2) numeric overflow -> clamp to highest page
+    const pageNum = parseInt(rawPage, 10);
+    const isNumeric = String(pageNum) === String(rawPage);
+    if (isNumeric && maxPage && pageNum > maxPage) {
+      if (history?.replace) history.replace(`/fax/${edition}/${maxPage}`);
+      return;
+    }
+
+    // 3) Non-numeric page -> treat as scripture reference
+    if (!isNumeric && /[A-Za-z]/.test(rawPage || '')) {
+      try {
+        const refs = lookupReference(rawPage);
+        const firstVerseId = refs?.verse_ids?.length ? Math.min(...refs.verse_ids) : null;
+        const isIndexed = !!fax?.indexRef;
+
+        // If edition is indexed and we have a verse id, fetch page index and map to page
+        if (isIndexed && firstVerseId) {
+          const { indexRef, pgOffset, pgoffset, pgfirstVerse } = fax || {};
+          const effectivePgOffset = (typeof pgOffset === 'number' ? pgOffset : pgoffset) || 0;
+          const blankPageCount = effectivePgOffset + (pgfirstVerse || 1) - 1;
+          BoMOnlineAPI({ faxIndex: indexRef }).then((r) => {
+            try {
+              const { pages } = r?.fax?.[indexRef] || {};
+              if (!Array.isArray(pages) || pages.length === 0) return;
+              const pageIndex = [
+                ...Array.from({ length: blankPageCount }, () => [0, 0]),
+                ...pages,
+              ];
+              // Find first page that contains this verse id
+              let targetPage = null;
+              for (let i = 0; i < pageIndex.length; i++) {
+                const [start, count] = pageIndex[i] || [0, 0];
+                if (start > 0 && count > 0) {
+                  if (firstVerseId >= start && firstVerseId < start + count) {
+                    targetPage = i + 1; // page numbers are 1-based
+                    break;
+                  }
+                }
+              }
+              // Clamp and navigate if found
+              if (targetPage) {
+                const target = maxPage ? Math.min(targetPage, maxPage) : targetPage;
+                if (history?.replace) history.replace(`/fax/${edition}/${target}`);
+              }
+            } catch (e) {
+              // Ignore errors and fall back to grid
+            }
+          });
+        } else {
+          // Not indexed or no verse match: fall back to grid view (no redirect)
+        }
+      } catch (e) {
+        // Invalid reference: ignore and stay in grid
+      }
+    }
+  }, [FaxList, match.faxVersion, match.pageNumber, history]);
   const contentsUI = () => {
     const faxCount = Object.keys(FaxList).length;
     const breakpointColumnsObj = faxCount > 6 ? {
