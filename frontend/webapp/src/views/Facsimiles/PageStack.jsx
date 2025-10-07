@@ -48,11 +48,7 @@ export default function PageStack({ side, leafIndex, adjustedPageIndex, totalPag
     };
   }, []);
 
-  // Skip factor: number of pages per rendered pixel column
-  const skip = useMemo(() => {
-    const width = containerWidth || targetWidth || 1;
-    return Math.max(1, Math.ceil(count / width));
-  }, [count, containerWidth, targetWidth]);
+  // Skip factor no longer needed for visual stripes (we render 1px per column up to 200px)
 
   // Map X offset within container to a page index in this stack
   const positionToPageIdx = useCallback((x) => {
@@ -104,10 +100,7 @@ export default function PageStack({ side, leafIndex, adjustedPageIndex, totalPag
   }, [hover.visible, hover.y, hover.x, page, side]);
 
   // Set CSS variables for sampling/alternating colors
-  const stackStyle = {
-    ['--skip']: skip,
-    width: `${targetWidth}px`,
-  };
+  const stackStyle = { width: `${targetWidth}px` };
 
   // Alternating page colors can be themed via CSS vars
   return (

@@ -5,6 +5,7 @@ import { useSwipe } from "../../models/Utils";
 import { assetUrl } from 'src/models/BoMOnlineAPI';
 import "./FacsimilePageViewer.scss";
 import { getRefFromIndex, PageOverlay } from "./Facsimiles";
+import PageImage from "./PageImage";
 import PageStack from "./PageStack";
 
 /**
@@ -201,9 +202,11 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset }) {
                        page.pageSlugLeaf === leafIndex[leafIndex.length - 1]?.pageSlugLeaf;
     
     return (
-      <img 
-        src={page.pageAssetUrl} 
-        alt={`Page ${page.pageSlugLeaf}`} 
+      <PageImage
+        src={page.pageAssetUrl}
+        previewSrc={page.thumbAssetUrl}
+        label={page.pageReference || `Page ${page.pageSlugLeaf}`}
+        alt={`Page ${page.pageSlugLeaf}`}
         onClick={onClick}
         className={isLastPage ? "last-page" : ""}
       />

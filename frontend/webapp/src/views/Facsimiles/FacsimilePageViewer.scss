@@ -32,16 +32,13 @@
     height: 100%;
     margin: 0; /* absolutely flush */
     cursor: pointer;
-    /* Alternating 1px columns horizontally; skip groups when compressed */
-    --dark: rgba(70, 90, 130, 0.8);
-    --light: rgba(70, 90, 130, 0.2);
-    --skip: 1; /* updated from component */
+    /* Alternating 1px vertical stripes (#333 / #444) to simulate page edges */
     background: repeating-linear-gradient(
       to right,
-      var(--dark) 0px,
-      var(--dark) 1px,
-      var(--light) 1px,
-      var(--light) calc(var(--skip) * 1px)
+      #333 0,
+      #333 1px,
+      #444 1px,
+      #444 2px
     );
   border-radius: 0;
   box-shadow: none;
