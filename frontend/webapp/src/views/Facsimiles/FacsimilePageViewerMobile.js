@@ -5,6 +5,7 @@ import { assetUrl } from 'src/models/BoMOnlineAPI';
 import "./FacsimilePageViewer.scss";
 import { getRefFromIndex, PageOverlay } from "./Facsimiles";
 import PageImage from "./PageImage";
+import { generateReference, lookupReference } from "scripture-guide";
 
 /**
  * FacsimilePageViewerMobile - Mobile version of the facsimile page viewer
@@ -20,6 +21,9 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
 
   const totalPages = leafIndex.length;
 
+  // Check if the pageNumber contains any letters (A-z), which means it's a reference
+  const hasLetters = /[A-Za-z]/.test(pageNumber || '');
+
   // Initialize page index based on URL
   useEffect(() => {
     // Special handling for the last page (or any specific page)
@@ -32,6 +36,42 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
       if (lastPageIndex !== -1) {
         setCurrentPageIndex(lastPageIndex);
         setSliderValue(lastPageIndex);
+        return;
+      }
+    }
+    
+    // Handle reference URLs (containing A-Z letters)
+    if (hasLetters) {
+      try {
+        const refs = lookupReference(pageNumber);
+        const verseIds = refs?.verse_ids || [];
+        
+        if (verseIds.length > 0) {
+          // Get the minimum verse ID to find the first page containing this reference
+          const minVerseId = Math.min(...verseIds);
+          
+          // Look for a page containing this verse ID
+          for (let i = 0; i < leafIndex.length; i++) {
+            const page = leafIndex[i];
+            if (page?.pageReference) {
+              const pageVerseIds = lookupReference(page.pageReference)?.verse_ids || [];
+              if (pageVerseIds.includes(minVerseId)) {
+                setCurrentPageIndex(i);
+                setSliderValue(i);
+                return;
+              }
+            }
+          }
+        }
+        
+        // If we can't find a match, just default to page 1
+        setCurrentPageIndex(0);
+        setSliderValue(0);
+        return;
+      } catch (e) {
+        // If reference parsing fails, default to page 1
+        setCurrentPageIndex(0);
+        setSliderValue(0);
         return;
       }
     }
