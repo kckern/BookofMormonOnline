@@ -12,7 +12,7 @@ import PageStack from "./PageStack";
  * FacsimilePageViewer - Desktop version of the facsimile page viewer
  * Displays pages in a book-like spread with left and right pages
  */
-function FacsimilePageViewer({ item, leafIndex, pgoffset }) {
+function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], currentVolumeIndex = -1 }) {
   const history = useHistory();
   const { pageNumber } = useParams();
 
@@ -206,6 +206,29 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset }) {
     onSwipedLeft: handleSwipeLeft,
     onSwipedRight: handleSwipeRight
   });
+
+  // Arrow key navigation: left/right pages, up/down volumes
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.defaultPrevented) return;
+      if (e.key === 'ArrowLeft') { e.preventDefault(); handleSwipeRight(); }
+      else if (e.key === 'ArrowRight') { e.preventDefault(); handleSwipeLeft(); }
+      else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+        if (!Array.isArray(volumeOrder) || currentVolumeIndex < 0) return;
+        const isUp = e.key === 'ArrowUp';
+        const nextIndex = isUp ? currentVolumeIndex - 1 : currentVolumeIndex + 1;
+        const next = volumeOrder[nextIndex];
+        if (!next) return;
+        e.preventDefault();
+        // Try to navigate to same page number slug if exists
+        const targetSlug = leftPage?.pageSlugLeaf || rightPage?.pageSlugLeaf;
+        const targetPath = targetSlug ? `/fax/${next.slug}/${targetSlug}` : `/fax/${next.slug}`;
+        history.push(targetPath);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [handleSwipeLeft, handleSwipeRight, volumeOrder, currentVolumeIndex, history, leftPage?.pageSlugLeaf, rightPage?.pageSlugLeaf]);
 
   // Slider interaction handlers
   const handleSliderChange = useCallback((e) => {

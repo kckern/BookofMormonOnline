@@ -10,7 +10,7 @@ import PageImage from "./PageImage";
  * FacsimilePageViewerMobile - Mobile version of the facsimile page viewer
  * Displays a single page at a time, optimized for mobile screens
  */
-function FacsimilePageViewerMobile({ item, leafIndex, pgoffset }) {
+function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = [], currentVolumeIndex = -1 }) {
   const history = useHistory();
   const { pageNumber } = useParams();
 
@@ -98,6 +98,28 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset }) {
     onSwipedLeft: handleSwipeLeft,
     onSwipedRight: handleSwipeRight
   });
+
+  // Arrow keys: left/right page, up/down volumes
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.defaultPrevented) return;
+      if (e.key === 'ArrowLeft') { e.preventDefault(); handleSwipeRight(); }
+      else if (e.key === 'ArrowRight') { e.preventDefault(); handleSwipeLeft(); }
+      else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+        if (!Array.isArray(volumeOrder) || currentVolumeIndex < 0) return;
+        const isUp = e.key === 'ArrowUp';
+        const nextIndex = isUp ? currentVolumeIndex - 1 : currentVolumeIndex + 1;
+        const next = volumeOrder[nextIndex];
+        if (!next) return;
+        e.preventDefault();
+        const targetSlug = currentPage?.pageSlugLeaf;
+        const targetPath = targetSlug ? `/fax/${next.slug}/${targetSlug}` : `/fax/${next.slug}`;
+        history.push(targetPath);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [handleSwipeLeft, handleSwipeRight, volumeOrder, currentVolumeIndex, history, currentPage?.pageSlugLeaf]);
 
   // Slider interaction handlers
   const handleSliderChange = useCallback((e) => {
