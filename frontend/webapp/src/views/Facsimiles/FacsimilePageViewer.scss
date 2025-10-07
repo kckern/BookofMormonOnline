@@ -154,15 +154,31 @@
       height: 40px;
       display: flex;
       align-items: center;
+      /* hover cursor positioned absolutely inside the slider container */
+      .hover-cursor {
+        position: absolute;
+        bottom: 8px; /* align to track */
+        width: 4px; /* narrow vertical indicator */
+        height: 18px;
+        border-radius: 2px;
+        background: #9bbcf0; /* secondary color */
+        transform: translateX(-50%);
+        pointer-events: none;
+        box-shadow: 0 0 0 1px #ffffff, 0 1px 3px rgba(0,0,0,0.25);
+        z-index: 5;
+      }
       
       .custom-tooltip {
         position: absolute;
-        background: white;
-        padding: 10px;
+        background: #fff;
+        padding: 8px 10px 10px;
         border-radius: 5px;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
         pointer-events: none;
         z-index: 10;
+        /* keep the preview compact */
+        max-width: 240px;
+        width: auto;
         
         .tooltip-content {
           text-align: center;
@@ -170,17 +186,22 @@
           .thumbnail-spread {
             display: flex;
             justify-content: center;
-            margin-bottom: 5px;
+            gap: 6px;
+            margin-bottom: 6px;
             
             img {
-              margin: 0 2px;
               border: 1px solid #ccc;
+              width: 56px; /* narrower thumbnails */
+              height: auto;
+              object-fit: contain;
             }
           }
           
           p {
             margin: 5px 0 0;
             font-size: 0.9em;
+            line-height: 1.2;
+            color: #555;
           }
         }
       }

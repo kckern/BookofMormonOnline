@@ -178,9 +178,11 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset }) {
           </p>
         </div>
       );
+      // Clamp left position to keep tooltip within the slider container
+      const rawLeft = e.clientX - sliderRect.left;
+      const clampedLeft = Math.max(16, Math.min(sliderRect.width - 16, rawLeft));
       setTooltipPosition({
-        left: e.clientX - sliderRect.left,
-        top: -200,
+        left: clampedLeft
       });
       setShowTooltip(true);
     }
@@ -279,10 +281,17 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset }) {
         <div className="slider-container" ref={sliderRef}>
           {showTooltip && (
             <div
+              className="hover-cursor"
+              style={{ left: `${tooltipPosition.left}px` }}
+            />
+          )}
+          {showTooltip && (
+            <div
               className="custom-tooltip"
               style={{
                 left: `${tooltipPosition.left}px`,
-                top: '-200px',
+                top: 'auto',
+                bottom: '48px', // 40px slider height + 8px gap
                 transform: 'translateX(-50%)'
               }}
             >
