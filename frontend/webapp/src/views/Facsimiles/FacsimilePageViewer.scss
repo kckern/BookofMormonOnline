@@ -124,10 +124,15 @@
     width: 100%;
     height: 100%;
     max-height: none; /* allow container to fill parent fully */
-    
+
     &.mobile {
       flex-direction: column;
     }
+  }
+
+  /* inner strip with exact width (stacks + pages) */
+  .spreadInner {
+    margin: 0 auto;
   }
   
   .page {
@@ -135,6 +140,9 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    /* Ensure pages always occupy space even before content loads */
+    flex: 1 1 0;
+    min-width: 0; /* allow shrinking without overflow */
     height: 100%;
     max-height: none; /* avoid clamping height in tall view */
     
@@ -154,13 +162,8 @@
       }
     }
     
-    &.leftPage {
-      margin-right: 5px;
-    }
-    
-    &.rightPage {
-      margin-left: 5px;
-    }
+    &.leftPage { margin-right: 0; }
+    &.rightPage { margin-left: 0; }
   }
   
   .blankPage {

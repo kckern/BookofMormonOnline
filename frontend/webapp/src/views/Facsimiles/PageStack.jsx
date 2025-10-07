@@ -15,7 +15,7 @@ import { assetUrl } from 'src/models/BoMOnlineAPI';
  * - totalPages: number (total leaf count)
  * - onPageChange: (index: number) => void (expects left page index of a spread)
  */
-export default function PageStack({ side, leafIndex, adjustedPageIndex, totalPages, onPageChange }) {
+export default function PageStack({ side, leafIndex, adjustedPageIndex, totalPages, onPageChange, width }) {
   const containerRef = useRef(null);
   const [containerWidth, setContainerWidth] = useState(0);
   const [hover, setHover] = useState({ visible: false, x: 0, y: 0, pageIdx: null });
@@ -101,7 +101,7 @@ export default function PageStack({ side, leafIndex, adjustedPageIndex, totalPag
   }, [hover.visible, hover.y, hover.x, page, side]);
 
   // Set CSS variables for sampling/alternating colors
-  const stackStyle = { width: `${targetWidth}px` };
+  const stackStyle = { width: `${width ?? targetWidth}px` };
 
   // Alternating page colors can be themed via CSS vars
   return (
