@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react';
  * Shows a shimmer placeholder immediately when src changes, then
  * fades the image in once it has loaded.
  */
-export default function PageImage({ src, alt, onClick, className = '', previewSrc, label, reference }) {
+export default function PageImage({ src, alt, onClick, className = '', previewSrc, label, reference, style }) {
   const [loaded, setLoaded] = useState(false);
   const [showPlaceholder, setShowPlaceholder] = useState(true);
 
@@ -17,9 +17,13 @@ export default function PageImage({ src, alt, onClick, className = '', previewSr
   }, [src]);
 
   return (
-    <div className={`pageImageWrapper ${loaded ? 'loaded' : 'loading'} ${className}`} onClick={onClick}>
+    <div 
+      className={`pageImageWrapper ${loaded ? 'loaded' : 'loading'} ${className}`} 
+      onClick={onClick}
+      style={style}
+    >
       {!loaded && showPlaceholder && previewSrc && (
-        <img className="preview-blur" src={previewSrc} alt="" aria-hidden="true" />
+        <img className="preview-blur" src={previewSrc} alt="" aria-hidden="true" style={style} />
       )}
       {!loaded && showPlaceholder && <div className="skeleton-shimmer" aria-hidden="true" />}
       {!loaded && showPlaceholder && (reference || label) && (
@@ -34,6 +38,7 @@ export default function PageImage({ src, alt, onClick, className = '', previewSr
         alt={alt}
         onLoad={() => setLoaded(true)}
         onError={() => setLoaded(true)}
+        style={style}
       />
     </div>
   );

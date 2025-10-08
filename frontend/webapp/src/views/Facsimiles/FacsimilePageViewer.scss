@@ -9,20 +9,31 @@
   width: 100%;
   flex: 1;
   user-select: none;
-  overflow: hidden;
+  overflow: auto; /* allow vertical scroll if needed so nav is never hidden */
+  // Prevent resize observer loops with contain
+  contain: layout style;
   
 /* PageStack overhaul */
   .pagesContainer {
     display: flex;
-    min-height: 0;
-    height: 100%;
+    /* shrink-wrap to content height so extra vertical space goes to nav */
+    flex: 0 0 auto;
+    height: auto;
+    align-items: flex-start; /* no vertical centering that creates top/bottom gaps */
+    contain: layout style;
+    position: relative;
+    width: 100%;
+    overflow: visible;
+
     .pageContainer {
       display: flex;
       align-items: stretch; /* make children full height */
       justify-content: center;
       gap: 0 !important; /* absolutely flush stacks to page edges */
-      height: 100%;
-      min-height: 0;
+      height: auto; /* follow content */
+      width: 100%;
+      contain: layout;
+      padding: 0;
     }
   }
 
@@ -108,29 +119,7 @@
       color: #666;
     }
   }
-  
-  .pagesContainer {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex: 1;
-    overflow: hidden;
-    position: relative;
-  }
-  
-  .pageContainer {
-    display: flex;
-    position: relative;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    height: 100%;
-    max-height: none; /* allow container to fill parent fully */
 
-    &.mobile {
-      flex-direction: column;
-    }
-  }
 
   /* inner strip with exact width (stacks + pages) */
   .spreadInner {
@@ -142,31 +131,35 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    /* Ensure pages always occupy space even before content loads */
-    flex: 1 1 0;
-    min-width: 0; /* allow shrinking without overflow */
-    height: 100%;
-    max-height: none; /* avoid clamping height in tall view */
+    /* Let explicit inline sizes control dimensions to avoid gaps */
+    min-width: 0;
+    min-height: 0;
+    height: auto;
+    max-height: none;
+    will-change: width, height; /* optimize for animations */
+    contain: layout; /* improve performance */
     
     img {
-      max-height: 100%;
-      max-width: 100%;
+      height: 100%;
+      width: auto; /* preserve aspect ratio */
+      max-width: 100%; /* don't exceed container width */
       object-fit: contain;
-        transform: scale(1.015);
+      /* Never crop or scale beyond the container to avoid hiding content */
       box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-      transition: transform 0.2s ease;
-      
-      &:hover {
-        transform: scale(1.02);
-      }
+      transition: none;
+      will-change: auto;
       
       &.last-page {
         border: 2px solid #f0c040;
       }
     }
     
-    &.leftPage { margin-right: 0; }
-    &.rightPage { margin-left: 0; }
+    &.leftPage { 
+      margin-right: 0; 
+    }
+    &.rightPage { 
+      margin-left: 0; 
+    }
   }
   
   .blankPage {
@@ -174,28 +167,14 @@
     height: 100%;
     background-color: #f8f8f8;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    /* Make sure blank pages respect the same sizing as normal pages */
+    min-height: 0;
+    min-width: 0;
+    contain: layout;
   }
   
+  /* retain thumbnail style for stacked pages within stacks */
   .pageStack {
-    position: relative;
-    height: 100%;
-    cursor: pointer;
-    opacity: 0.7;
-    transition: opacity 0.2s ease;
-    
-    &:hover {
-      opacity: 1;
-    }
-    
-    &.leftStack {
-     // transform: scaleX(-1);
-      margin-right: 5px;
-    }
-    
-    &.rightStack {
-      margin-left: 5px;
-    }
-    
     .stackedPage {
       display: inline-block;
       position: relative;
@@ -211,6 +190,12 @@
     align-items: center;
     margin-top: 0;
     margin-bottom: 0;
+    /* keep nav at intrinsic height; pages decide content height */
+    flex: 0 0 auto;
+    min-height: 50px;
+    contain: layout;
+    position: relative;
+    z-index: 10;
     
     .nav-button {
       background: #f0f0f0;

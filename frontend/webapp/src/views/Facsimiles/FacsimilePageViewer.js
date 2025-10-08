@@ -25,7 +25,7 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
   const [tooltipPosition, setTooltipPosition] = useState({ left: 0, top: 0 });
   const sliderRef = useRef(null);
   const pagesContainerRef = useRef(null);
-  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0, top: 0, viewportH: typeof window !== 'undefined' ? window.innerHeight : 0 });
   const [leftRatio, setLeftRatio] = useState(0.75);
   const [rightRatio, setRightRatio] = useState(0.75);
   
@@ -147,24 +147,124 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
   const leftPage = leafIndex[adjustedPageIndex] || null;
   const rightPage = leafIndex[adjustedPageIndex + 1] || null;
 
-  // Measure container size to compute intrinsic page widths
+  // Measure container size with improved throttling to prevent ResizeObserver loops
   useEffect(() => {
     if (!pagesContainerRef.current) return;
     
     const el = pagesContainerRef.current;
-    const updateSize = () => {
-      const rect = el.getBoundingClientRect();
-      setContainerSize({ width: Math.floor(rect.width), height: Math.floor(rect.height) });
+    
+    // Track the last update timestamp to enforce minimum intervals between updates
+    let lastUpdateTime = 0;
+    let pendingUpdate = false;
+    let pendingSize = null;
+    let timeoutId = null;
+    
+    // Only update size if significant changes occurred or minimum time passed
+    const MIN_UPDATE_INTERVAL = 100; // ms between state updates
+    const SIZE_THRESHOLD = 5; // px difference to consider significant
+    
+    const processResize = (width, height, top) => {
+      // Round to avoid minor fluctuations
+      width = Math.floor(width);
+      height = Math.floor(height);
+      top = Math.floor(top || 0);
+      
+      const now = Date.now();
+      const timeSinceLastUpdate = now - lastUpdateTime;
+      const widthDiff = Math.abs(width - containerSize.width);
+      const heightDiff = Math.abs(height - containerSize.height);
+      const topDiff = Math.abs(top - (containerSize.top || 0));
+      const hasSizeChanged = widthDiff > SIZE_THRESHOLD || heightDiff > SIZE_THRESHOLD;
+      
+      // Either update immediately for significant changes or store for later update
+      if (hasSizeChanged || timeSinceLastUpdate >= MIN_UPDATE_INTERVAL) {
+        // Clear any pending update
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
+        
+        lastUpdateTime = now;
+        pendingUpdate = false;
+        pendingSize = null;
+        
+        // Only update state if size has actually changed
+        if (width !== containerSize.width || height !== containerSize.height || topDiff > 0) {
+          setContainerSize({ width, height, top, viewportH: window.innerHeight });
+        }
+      } else if (!pendingUpdate) {
+        // Schedule update for later
+        pendingUpdate = true;
+        pendingSize = { width, height, top };
+        
+        // Clear any existing timeout and set a new one
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
+        
+        // Schedule update after delay
+        timeoutId = setTimeout(() => {
+          if (pendingSize) {
+            lastUpdateTime = Date.now();
+            setContainerSize({ ...pendingSize, viewportH: window.innerHeight });
+            pendingUpdate = false;
+            pendingSize = null;
+          }
+        }, MIN_UPDATE_INTERVAL - timeSinceLastUpdate);
+      } else {
+        // Update pending size with latest measurements
+        pendingSize = { width, height, top };
+      }
     };
+    
+    const updateSize = () => {
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      processResize(rect.width, rect.height, rect.top);
+    };
+    
+    // Get initial size
     updateSize();
-    const ro = new ResizeObserver(updateSize);
-    ro.observe(el);
+    
+    // Set up ResizeObserver with error handling
+    const ro = new ResizeObserver((entries) => {
+      try {
+        // Only update if our target element has changed size
+        const entry = entries.find(entry => entry.target === el);
+        if (entry) {
+          // Use contentRect for more stable measurements
+          const { width, height } = entry.contentRect;
+          const rect = el.getBoundingClientRect();
+          processResize(width, height, rect.top);
+        }
+      } catch (err) {
+        console.warn("ResizeObserver error:", err);
+      }
+    });
+    
+    // Start observing with error handling
+    try {
+      ro.observe(el, { box: 'border-box' });
+    } catch (err) {
+      console.warn("ResizeObserver failed to observe:", err);
+    }
+    
+    // Also listen for window resize events as backup
     window.addEventListener('resize', updateSize);
+    
+    // Cleanup
     return () => {
-      try { ro.disconnect(); } catch {}
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      try {
+        ro.disconnect();
+      } catch (err) {
+        console.warn("ResizeObserver disconnect failed:", err);
+      }
       window.removeEventListener('resize', updateSize);
     };
-  }, []);
+  }, []); // Empty dependency array - we handle updates manually
 
   // Load left page image and calculate aspect ratio
   useEffect(() => {
@@ -207,27 +307,73 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
     };
   }, [adjustedPageIndex, totalPages]);
 
-  // Compute page widths (px) from container height and aspect ratios; scale to fit container width
-  const { leftPageWidth, rightPageWidth } = useMemo(() => {
-    const h = containerSize.height || 0;
-    if (h <= 0) return { leftPageWidth: undefined, rightPageWidth: undefined };
-    let lw = h * (leftRatio || 0.75);
-    let rw = h * (rightRatio || 0.75);
-    const available = containerSize.width;
-    // total content includes stacks and two pages; no internal gaps
-    const total = leftStackWidth + lw + rw + rightStackWidth;
-    if (available > 0 && total > available) {
-      const s = available / total;
-      lw = Math.floor(lw * s);
-      rw = Math.floor(rw * s);
+  // Calculate page dimensions width-first: fill horizontal space (after stacks),
+  // then derive a uniform height that preserves each page's intrinsic ratio.
+  const { leftPageWidth, rightPageWidth, calculatedHeight } = useMemo(() => {
+    // Don't recalculate until container size is stable and reasonable
+    const containerH = containerSize.height || 0;
+    const containerW = containerSize.width || 0;
+    const containerTop = containerSize.top || 0;
+    const viewportH = containerSize.viewportH || 0;
+    
+    // Don't calculate dimensions until we have a reasonable container size
+    if (containerH < 100 || containerW < 100) {
+      return { 
+        leftPageWidth: undefined, 
+        rightPageWidth: undefined, 
+        calculatedHeight: undefined 
+      };
     }
-    return { leftPageWidth: lw, rightPageWidth: rw };
-  }, [containerSize.width, containerSize.height, leftRatio, rightRatio, leftStackWidth, rightStackWidth]);
+    
+    // Use stable aspect ratios with defaults
+    const safeLeftRatio = Number.isFinite(leftRatio) && leftRatio > 0 ? leftRatio : 0.75;
+    const safeRightRatio = Number.isFinite(rightRatio) && rightRatio > 0 ? rightRatio : 0.75;
+    
+    // PRIORITIZE WIDTH USAGE:
+    // Use the full container width for content (no internal empty space),
+    // allowing a tiny 1px rounding margin.
+    const stackSpace = leftStackWidth + rightStackWidth;
+    const pageSpaceWidth = Math.max(0, containerW - stackSpace);
+
+    // Derive the uniform page height directly from available width and ratios:
+    // lw + rw = H*(rL + rR) = pageSpaceWidth  =>  H = pageSpaceWidth / (rL + rR)
+    const totalRatio = safeLeftRatio + safeRightRatio;
+  const rawHeightFromWidth = totalRatio > 0 ? pageSpaceWidth / totalRatio : 0;
+
+  // Also respect the available viewport height so nav remains visible and pages aren't clipped
+  const NAV_MIN = 50; // px
+  const MARGIN = 12; // breathing room
+  const availableH = viewportH > 0 ? Math.max(1, Math.floor(viewportH - containerTop - NAV_MIN - MARGIN)) : Infinity;
+
+  const pageHeight = Math.max(1, Math.floor(Math.min(rawHeightFromWidth, availableH)));
+
+    // Compute exact widths from the uniform height
+    const lw = Math.max(0, Math.floor(pageHeight * safeLeftRatio));
+    const rw = Math.max(0, Math.floor(pageHeight * safeRightRatio));
+
+    return {
+      leftPageWidth: lw,
+      rightPageWidth: rw,
+      calculatedHeight: pageHeight
+    };
+  }, [
+    // Reduce sensitivity to small changes by rounding container dimensions
+    Math.floor(containerSize.width / 10) * 10, 
+  Math.floor(containerSize.height / 10) * 10,
+    // Use fixed precision for ratios to avoid constant recalculation 
+    Number(leftRatio.toFixed(2)),
+    Number(rightRatio.toFixed(2)),
+    // Stack widths should be stable already
+    leftStackWidth, 
+    rightStackWidth
+  ]);
 
   const innerWidth = useMemo(() => {
-    const lw = leftPageWidth || 0;
-    const rw = rightPageWidth || 0;
-    return leftStackWidth + lw + rw + rightStackWidth;
+    // If we don't have calculated page widths yet, don't force a width
+    if (!leftPageWidth || !rightPageWidth) return null;
+
+    // Exact content width: stacks + pages (no internal extra space)
+    return leftStackWidth + leftPageWidth + rightPageWidth + rightStackWidth;
   }, [leftPageWidth, rightPageWidth, leftStackWidth, rightStackWidth]);
 
   // Navigation handlers
@@ -387,6 +533,10 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
     const isLastPage = (pgoffset !== undefined && page.pageNumInt === totalPages - pgoffset) || 
                        page.pageSlugLeaf === leafIndex[leafIndex.length - 1]?.pageSlugLeaf;
     
+    // Determine which side (left or right) for additional styling if needed
+    const isLeft = page === leftPage;
+    const aspectRatio = isLeft ? leftRatio : rightRatio;
+    
     return (
       <PageImage
         src={page.pageAssetUrl}
@@ -396,6 +546,11 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
         alt={`Page ${page.pageSlugLeaf}`}
         onClick={onClick}
         className={isLastPage ? "last-page" : ""}
+        style={{
+          aspectRatio: aspectRatio ? `${aspectRatio}` : undefined,
+          height: '100%',
+          width: 'auto'
+        }}
       />
     );
   };
@@ -409,7 +564,18 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
       </div>
       <div className="pagesContainer" ref={pagesContainerRef}>
         <div className="pageContainer">
-          <div className="spreadInner" style={innerWidth ? { width: `${innerWidth}px`, display: 'flex', alignItems: 'stretch', gap: 0 } : { display: 'flex', alignItems: 'stretch', gap: 0 }}>
+          <div 
+            className="spreadInner" 
+            style={{ 
+              width: innerWidth ? `${innerWidth}px` : undefined,
+              display: 'flex', 
+              alignItems: 'stretch', 
+              justifyContent: 'flex-start',
+              gap: 0,
+              // Center the exact-width strip; outside space is allowed only outside stacks
+              margin: '0 auto'
+            }}
+          >
             {adjustedPageIndex > 0 && (
               <PageStack
                 side="left"
@@ -421,7 +587,19 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
               />
             )}
 
-            <div className="page leftPage" style={leftPageWidth ? { width: `${leftPageWidth}px` } : undefined}>
+            <div 
+              className="page leftPage" 
+              style={{
+                width: leftPageWidth ? `${leftPageWidth}px` : undefined,
+                height: calculatedHeight ? `${calculatedHeight}px` : undefined,
+                // Smooth transitions
+                transition: 'width 0.15s ease, height 0.15s ease',
+                // Flex for centering image within the page box
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center'
+              }}
+            >
             {/* If first page, show blank left page */}
             {adjustedPageIndex === 0 ? (
               <div className="blankPage"></div>
@@ -429,7 +607,19 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
               renderPage(leftPage, handleSwipeRight)
             )}
             </div>
-            <div className="page rightPage" style={rightPageWidth ? { width: `${rightPageWidth}px` } : undefined}>
+            <div 
+              className="page rightPage" 
+              style={{
+                width: rightPageWidth ? `${rightPageWidth}px` : undefined,
+                height: calculatedHeight ? `${calculatedHeight}px` : undefined,
+                // Smooth transitions
+                transition: 'width 0.15s ease, height 0.15s ease',
+                // Flex for centering
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center'
+              }}
+            >
             {/* Special handling for the final page in a book with even page count */}
             {(totalPages % 2 === 0 && adjustedPageIndex === totalPages - 2) ? 
               renderPage(rightPage || null, () => {}) : // Disable clicking on the last page
@@ -453,7 +643,22 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
         </div>
       </div>
 
-      <div className="facsimile-navigation">
+      <div 
+        className="facsimile-navigation" 
+        style={{ 
+          // Keep nav compact; we'll widen pages before changing nav height
+          height: '50px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '5px 0',
+          position: 'relative',
+          zIndex: 1,
+          // Match content width exactly when known; otherwise don't force it
+          width: innerWidth ? `${innerWidth}px` : undefined,
+          margin: '0 auto'
+        }}
+      >
         <button
           className="nav-button"
           onClick={handleSwipeRight}
