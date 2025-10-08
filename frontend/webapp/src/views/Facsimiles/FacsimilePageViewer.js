@@ -158,6 +158,9 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
     let pendingUpdate = false;
     let pendingSize = null;
     let timeoutId = null;
+    let rafId = null;
+    let latestWidth = 0;
+    let latestHeight = 0;
     
     // Only update size if significant changes occurred or minimum time passed
     const MIN_UPDATE_INTERVAL = 100; // ms between state updates
@@ -217,10 +220,22 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
       }
     };
     
+    const scheduleUpdate = (width, height) => {
+      latestWidth = Math.floor(width);
+      latestHeight = Math.floor(height);
+      if (rafId != null) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        if (!el) return;
+        const rect = el.getBoundingClientRect();
+        processResize(latestWidth, latestHeight, rect.top);
+      });
+    };
+
     const updateSize = () => {
       if (!el) return;
       const rect = el.getBoundingClientRect();
-      processResize(rect.width, rect.height, rect.top);
+      scheduleUpdate(rect.width, rect.height);
     };
     
     // Get initial size
@@ -234,8 +249,7 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
         if (entry) {
           // Use contentRect for more stable measurements
           const { width, height } = entry.contentRect;
-          const rect = el.getBoundingClientRect();
-          processResize(width, height, rect.top);
+          scheduleUpdate(width, height);
         }
       } catch (err) {
         console.warn("ResizeObserver error:", err);
@@ -256,6 +270,9 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
     return () => {
       if (timeoutId) {
         clearTimeout(timeoutId);
+      }
+      if (rafId != null) {
+        cancelAnimationFrame(rafId);
       }
       try {
         ro.disconnect();
