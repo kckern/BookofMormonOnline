@@ -536,10 +536,12 @@ export default {
 
         return getValueForLog(args.key, args.val).then((value: string) => {
           // console.log({ context });
+          // Extract the actual client IP (first in the chain) and truncate to fit the column
+          const clientIp = context.ip ? context.ip.split(',')[0].trim().substring(0, 45) : '';
           return Models.BomLog.create({
             timestamp: now,
             user: userInfo.queryBy,
-            ip: context.ip,
+            ip: clientIp,
             type: args.key,
             value: value,
             credit: -1,
