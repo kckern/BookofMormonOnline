@@ -2,6 +2,7 @@
 import path from 'path';
 import dotenv from 'dotenv';
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
+import http from 'http';
 import { ApolloServer } from 'apollo-server-express';
 import { apollo_config } from './config/apollo';
 import express from 'express';
@@ -16,6 +17,7 @@ import bodyParser from 'body-parser';
 import { processSphinx } from './search/sphinx';
 import { ping } from "./library/ping"
 import { apis, endpoints } from "./api/index"
+import { initializeWebSocket } from './socket';
 
 
 const langs = process.env.LANGS?.split(',') || ['', 'en', 'ko', 'dev'];
@@ -192,11 +194,26 @@ apiPaths.forEach((i:any)=>app.post(`/${i}`, apis[i]));
 
 
 //BACKEND (POST): APOLLO SERVER
-const server = new ApolloServer(apollo_config);
+const apolloServer = new ApolloServer(apollo_config);
 const { sequelize } = apollo_config;
-server.start().then(() => {
-  ["",...langs].map(i => server.applyMiddleware({ app, path: `/${i}` }));
-  app.listen(process.env.PORT, async () => {
+
+// Create HTTP server for both Express and Socket.io
+const httpServer = http.createServer(app);
+
+apolloServer.start().then(async () => {
+  ["",...langs].map(i => apolloServer.applyMiddleware({ app, path: `/${i}` }));
+  
+  // Initialize WebSocket server (Phase 3: Messenger)
+  if (process.env.MESSENGER_ENABLED !== 'false') {
+    try {
+      await initializeWebSocket(httpServer);
+      console.log('🔌 Messenger WebSocket enabled');
+    } catch (error) {
+      console.error('❌ Messenger WebSocket failed to initialize:', error);
+    }
+  }
+  
+  httpServer.listen(process.env.PORT, async () => {
     try {
       await sequelize.authenticate();
       console.log('Sequelize initiated.');

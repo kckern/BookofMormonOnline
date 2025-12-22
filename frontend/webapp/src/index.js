@@ -8,6 +8,15 @@ import SimpleReactLightbox from 'simple-react-lightbox'
 import "./views/_Common/Header.css";
 import "./views/_Common/Main.css";
 
+// Clear old Sendbird localStorage data (CDN is dead, service discontinued)
+try {
+  Object.keys(localStorage)
+    .filter(k => k.toLowerCase().includes('sendbird') || k.startsWith('sb_') || k.startsWith('SB_'))
+    .forEach(k => localStorage.removeItem(k));
+} catch (e) {
+  console.warn('Failed to clear Sendbird storage:', e);
+}
+
 // Sentry.init({
 //     dsn: "https://714feecb8d8146cfa52a9b494c3fbfb9@o1153664.ingest.sentry.io/6233207",
 //     integrations: [new BrowserTracing()],

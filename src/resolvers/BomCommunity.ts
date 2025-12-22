@@ -2,11 +2,38 @@ import { models as Models } from '../config/database';
 import Sequelize, { Model } from 'sequelize';
 import { completedGuids, getStandardizedValuesFromUserList } from './_common';
 import { loadReadingPlan, loadReadingPlanSegment } from './lib';
-import { sendbird } from '../library/sendbird';
+import { messenger } from '../library/messenger';
 import { url } from 'inspector';
 import crypto from "crypto";
 import BomUser from './BomUser';
 const Op = Sequelize.Op;
+
+// Feature flag - messaging disabled until Phase 5 data migration
+const MESSENGER_ENABLED = process.env.MESSENGER_ENABLED === 'true';
+
+// Sendbird-compatible shim - returns empty data when messaging disabled
+const sendbird: any = MESSENGER_ENABLED ? messenger : {
+  loadChannel: async () => null,
+  getGroup: async () => null,
+  getChannel: async () => null,
+  getMyGroups: async () => [],
+  getMembers: async () => [],
+  getChannelMembers: async () => [],
+  getGroupMessages: async () => [],
+  getMessages: async () => [],
+  listUsers: async () => [],
+  getUsers: async () => [],
+  listBotUsers: async () => [],
+  getBots: async () => [],
+  getMembersofPrivateGroups: async () => [],
+  getVirtualUsers: async () => [],
+  getThread: async () => null,
+  getThreadMessages: async () => [],
+  addUserToChannel: async () => false,
+  removeUserFromChannel: async () => false,
+  invite: async () => false,
+  inviteToChannel: async () => false,
+};
 
 const md5 = (value: string)=>{
   if(!value) return "";
