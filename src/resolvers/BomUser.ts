@@ -1,9 +1,31 @@
 import { models, models as Models } from '../config/database';
 import Sequelize, { Model } from 'sequelize';
-import { sendbird } from '../library/sendbird';
+import { messenger } from '../library/messenger';
 import { genUserAvatar } from './lib';
 
 import crypto from 'crypto';
+
+// Feature flag - messaging disabled until Phase 5 data migration
+const MESSENGER_ENABLED = process.env.MESSENGER_ENABLED === 'true';
+
+// Sendbird-compatible shim - returns mock data when messaging disabled
+const sendbird: any = MESSENGER_ENABLED ? messenger : {
+  loadUser: async (id: string, name?: string, url?: string, email?: string) => ({ 
+    user_id: id, 
+    nickname: name || 'User', 
+    profile_url: url || '',
+    metadata: null,
+    is_online: false,
+    last_seen_at: null,
+    is_bot: false
+  }),
+  getUser: async (id: string) => null,
+  createUser: async (id: string, name: string, url: string) => ({ user_id: id, nickname: name, profile_url: url }),
+  upsertUser: async (id: string, data: any) => ({ user_id: id, ...data }),
+  updateUserNickname: async () => ({}),
+  updateUser: async () => ({}),
+  closeTab: async () => ({}),
+};
 import {
   Op,
   includeTranslation,
@@ -110,11 +132,13 @@ export default {
         }
 
         const hashed_id = md5(myUser.getDataValue("user"));
+        const userName = myUser.getDataValue("name");
+        const userAvatar = genUserAvatar(hashed_id);
         return {
           isSuccess: true,
           msg: 'login_success',
           user: myUser,
-          social: sendbird.loadUser(hashed_id)
+          social: await sendbird.loadUser(hashed_id, userName, userAvatar)
         };
       } catch (error) {
         console.error('Database error during signin:', error);
@@ -181,11 +205,13 @@ export default {
         }
 
         const hashed_id = md5(myUser.getDataValue("user"));
+        const userName = myUser.getDataValue("name");
+        const userAvatar = genUserAvatar(hashed_id);
         return {
           isSuccess: true,
           msg: 'Token Login Success',
           user: myUser,
-          social: sendbird.loadUser(hashed_id)
+          social: await sendbird.loadUser(hashed_id, userName, userAvatar)
         };
       } catch (error) {
         console.error('Database error during token signin:', error);

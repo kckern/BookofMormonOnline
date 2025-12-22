@@ -16,6 +16,9 @@ import preferences from "src/views/_Common/svg/preferences.svg"
 import sound from "src/views/_Common/svg/sound.svg"
 import facsimiles from "src/views/_Common/svg/fax.svg"
 
+// Feature flag - messaging disabled until Phase 5 data migration
+const USE_MESSENGER = process.env.REACT_APP_USE_MESSENGER === 'true';
+
 
 export default function User({ appController }) {
 
@@ -196,6 +199,7 @@ export default function User({ appController }) {
                     </Label>
                 </h5>
                 <hr />
+                {USE_MESSENGER && <>
                 <h5 className="title">
                     <Label className="canned_responses"><img src={chat} />
                         {label("message_hints")}
@@ -210,6 +214,7 @@ export default function User({ appController }) {
                     </Label>
                 </h5>
                 <hr />
+                </>}
                 <h5 className="title">
                     <Label className="dark_mode"><img src={darkmode} />
                         {label("dark_mode")}

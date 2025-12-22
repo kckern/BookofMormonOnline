@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { assetUrl } from "models/BoMOnlineAPI";
 import { isMobile, label, tokenImage } from "models/Utils.js";
+import UserAvatar from "src/components/UserAvatar";
 
 import "./Header.css";
 import { StudyGroupBar } from "./Study/StudyGroupBar.js";
@@ -11,6 +12,9 @@ import none from "src/views/_Common/svg/none.svg";
 import logo from "src/views/_Common/svg/logo.svg";
 import green from "src/views/User/svg/green.svg";
 import yellow from "src/views/User/svg/yellow.svg";
+
+// Feature flag - messaging disabled until Phase 5 data migration
+const USE_MESSENGER = process.env.REACT_APP_USE_MESSENGER === 'true';
 
 function Header({ appController, isReady }) {
   let dynamicContent = null;
@@ -23,10 +27,10 @@ function Header({ appController, isReady }) {
     dynamicContent = (
       <>
         <Notifications appController={appController} />
-        <StudyGroupBar appController={appController} />
+        {USE_MESSENGER && <StudyGroupBar appController={appController} />}
       </>
     );
-    homeLink = <Link to="/home">{homeLink}</Link>;
+    homeLink = USE_MESSENGER ? <Link to="/home">{homeLink}</Link> : homeLink;
   }
 
   if (isMobile() && appController) return <MobileHeader appController={appController} />
@@ -142,7 +146,7 @@ function MobileHeader({ appController }) {
           </div>
           <div className="headername">{name}</div>
         </div>
-        <img src={`${img}`} />
+        <UserAvatar userId={appController.states?.user?.user} profileUrl={img} size={40} />
       </div>
     </div>
       </Link>

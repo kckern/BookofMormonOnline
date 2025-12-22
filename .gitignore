@@ -16,3 +16,4 @@ log.sql
 /test
 /dist
 *.sh
+*.log

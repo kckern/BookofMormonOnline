@@ -2,13 +2,33 @@ import { queryDB } from "../library/db";
 import { askGPT } from "../library/gpt";
 import { generateReference } from 'scripture-guide';
 import * as openaiTokenCounter from 'openai-gpt-token-counter';
-import { sendbird } from "../library/sendbird";
+import { messenger } from "../library/messenger";
 import * as isJSON from "is-json";
 import { loadTranslations } from "./translate";
 import * as smartquotes from 'smartquotes';
 import logger from "../library/utils/logger";
 const log = (msg: string, obj?: any) => obj ? logger.info(`studdybuddy ${msg} ${JSON.stringify(obj)}`) : logger.info(`studdybuddy ${msg}`);
 const error = (msg: string, obj?: any) => obj ? logger.error(`studdybuddy ${msg} ${JSON.stringify(obj)}`) : logger.error(`studdybuddy ${msg}`);
+
+// Feature flag - messaging disabled until Phase 5 data migration
+const MESSENGER_ENABLED = process.env.MESSENGER_ENABLED === 'true';
+
+// Sendbird-compatible shim - returns null/empty when messaging disabled
+const sendbird: any = MESSENGER_ENABLED ? messenger : {
+  loadChannel: async () => null,
+  getChannel: async () => null,
+  getMembers: async () => [],
+  getChannelMembers: async () => [],
+  getBotByLang: async () => null,
+  getBot: async () => null,
+  startStopTypingIndicator: async () => {},
+  loadSingleMessage: async () => null,
+  getMessage: async () => null,
+  getThread: async () => null,
+  getThreadMessages: async () => [],
+  replyToMessage: async () => null,
+  postMessage: async () => null,
+};
 
 
 const stripHTMLTags = (text: string) => text.replace(/<[^>]*>?/gm, '').replace(/\s+/g," ").trim();
