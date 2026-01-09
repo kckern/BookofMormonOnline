@@ -128,42 +128,24 @@ sequelize.authenticate()
   .then(() => console.log('Database connected successfully'))
   .catch(err => console.error('Database connection failed:', err));
 
-// Enhanced pool monitoring (runs every 10 seconds for debugging)
+// Pool monitoring - only logs warnings when pool is stressed
 // Disabled during tests (JEST_WORKER_ID is set)
 if (!process.env.JEST_WORKER_ID) {
   setInterval(() => {
     const pool = (sequelize.connectionManager as any).pool;
     if (pool) {
-      console.log(`[${new Date().toISOString()}] Pool status - Size: ${pool.size}, Available: ${pool.available}, Pending: ${pool.pending}, Used: ${pool.size - pool.available}`);
-      
-      // Log warning if connections are high
-      if (pool.size > 8) {
-        console.warn(`⚠️  High connection count detected: ${pool.size} connections`);
+      const maxConn = +process.env.DB_POOL_MAX_CONN || 8;
+      // Only log when pool usage is high (>75% of max)
+      if (pool.size > maxConn * 0.75) {
+        console.warn(`⚠️  Pool pressure: Size: ${pool.size}/${maxConn}, Available: ${pool.available}, Used: ${pool.size - pool.available}`);
       }
-      
-      // Log critical if approaching limit
-      if (pool.size >= 10) {
-        console.error(`🚨 CRITICAL: Connection pool at maximum capacity!`);
-      
-      // Force close idle connections if pool is full
-      if (pool.available > 0) {
-        console.log(`🔧 Attempting to close ${pool.available} idle connections...`);
-        for (let i = 0; i < pool.available; i++) {
-          try {
-            const connection = pool._availableObjects.pop();
-            if (connection) {
-              connection.connection.destroy();
-              console.log(`✅ Closed idle connection`);
-            }
-          } catch (err) {
-            console.error(`❌ Error closing idle connection:`, err.message);
-          }
-        }
+      // Critical warning at max capacity
+      if (pool.size >= maxConn && pool.available === 0) {
+        console.error(`🚨 CRITICAL: Connection pool exhausted! Size: ${pool.size}, Pending: ${pool.pending}`);
       }
     }
-  }
-}, 10000);
-} // End of if (!process.env.JEST_WORKER_ID)
+  }, 60000); // Check every 60 seconds
+}
 
 // Connection event listeners disabled for cleaner logs
 // Can be re-enabled for debugging connection issues
