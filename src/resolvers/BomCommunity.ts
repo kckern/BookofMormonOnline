@@ -2,17 +2,17 @@ import { models as Models } from '../config/database';
 import Sequelize, { Model } from 'sequelize';
 import { completedGuids, getStandardizedValuesFromUserList } from './_common';
 import { loadReadingPlan, loadReadingPlanSegment } from './lib';
-import { messenger } from '../library/messenger';
+// messenger import removed - sendbird gutted, awaiting Redis replacement
 import { url } from 'inspector';
 import crypto from "crypto";
 import BomUser from './BomUser';
 const Op = Sequelize.Op;
 
-// Feature flag - messaging disabled until Phase 5 data migration
-const MESSENGER_ENABLED = process.env.MESSENGER_ENABLED === 'true';
+// Feature flag - messaging disabled until Redis replacement is ready
+const MESSENGER_ENABLED = false; // Hardcoded off - sendbird gutted, awaiting Redis replacement
 
 // Sendbird-compatible shim - returns empty data when messaging disabled
-const sendbird: any = MESSENGER_ENABLED ? messenger : {
+const sendbird: any = {
   loadChannel: async () => null,
   getGroup: async () => null,
   getChannel: async () => null,
@@ -33,6 +33,11 @@ const sendbird: any = MESSENGER_ENABLED ? messenger : {
   removeUserFromChannel: async () => false,
   invite: async () => false,
   inviteToChannel: async () => false,
+  request: async () => false,
+  withdraw: async () => false,
+  getLatestMessage: async () => null,
+  getGroupMessageById: async () => null,
+  getOthersGroups: async () => [],
 };
 
 const md5 = (value: string)=>{
@@ -348,8 +353,16 @@ export default {
       }
     },
     homefeed: async (item: any, args: any, context: any, info: any) => {
+      // When messaging is disabled, return minimal valid response for health check
+      if (!MESSENGER_ENABLED) {
+        return {
+          groups: [],
+          feed: [{ id: 0, msg: 'Messaging temporarily disabled', timestamp: Date.now() }]
+        };
+      }
+
       const lang = context.lang ? context.lang : null;
-      
+
       try {
         let user: any = await Models.BomUser.findOne({
           raw: true,

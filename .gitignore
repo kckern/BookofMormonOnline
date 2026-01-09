@@ -17,3 +17,4 @@ log.sql
 /dist
 *.sh
 *.log
+/.claude
