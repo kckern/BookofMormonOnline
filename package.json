@@ -87,6 +87,8 @@
     "dev:backend": "ts-node src/index.ts",
     "test": "jest",
     "test:messenger": "jest messenger.test.ts --verbose",
+    "test:regression": "jest test/regression --verbose",
+    "test:all": "jest --verbose",
     "test:watch": "jest --watch"
   }
 }
