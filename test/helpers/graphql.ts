@@ -44,6 +44,15 @@ export const executeMutation = async <T = any>(
   return executeQuery<T>(mutation, variables);
 };
 
+// Helper for authenticated queries
+export const executeAuthQuery = <T = any>(
+  query: string,
+  token: string,
+  variables?: Record<string, unknown>
+): Promise<{ data?: T; errors?: readonly any[] }> => {
+  return executeQuery<T>(query, { ...variables, token });
+};
+
 // Common query fragments
 export const fragments = {
   user: `
