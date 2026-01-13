@@ -5,3 +5,5 @@ export interface Comment {
   createdAt: number,
   deleted: Boolean
 }
+
+export * from './types/graphql';
