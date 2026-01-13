@@ -16,5 +16,18 @@ module.exports = {
   ],
   moduleNameMapper: {
     '^nanoid$': '<rootDir>/node_modules/nanoid/index.cjs'
+  },
+  // Use isolatedModules to skip type-checking during tests
+  // Strict type checking is done separately via tsc --noEmit
+  transform: {
+    '^.+\\.tsx?$': [
+      'ts-jest',
+      {
+        isolatedModules: true,
+        diagnostics: {
+          warnOnly: true
+        }
+      }
+    ]
   }
 };
