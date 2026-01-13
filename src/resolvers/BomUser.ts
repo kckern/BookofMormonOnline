@@ -2,6 +2,7 @@ import { models, models as Models } from '../config/database';
 import Sequelize, { Model } from 'sequelize';
 import { messenger } from '../library/messenger';
 import { genUserAvatar } from './lib';
+import { verifyPassword, hashPassword, needsRehash } from '../library/auth/password';
 
 import crypto from 'crypto';
 
@@ -79,23 +80,19 @@ export default {
           msg: 'Login Failed',
           user: null
         };
-      
-      try {
-        const passwordHash = crypto
-          .createHash('md5')
-          .update(args.password)
-          .digest('hex');
 
+      try {
+        // Find user by username or email first
         let myUser: any = await Models.BomUser.findOne({
           where: {
             [Op.or]: {
               user: args.username,
               email: args.username
-            },
-            pass: passwordHash
+            }
           }
         });
 
+        // Handle special case: user with pass='-1' (migration case)
         if (!myUser) {
           myUser = await Models.BomUser.findOne({
             where: {
@@ -105,10 +102,30 @@ export default {
           });
 
           if (myUser) {
+            // Set new password with bcrypt for migrated user
+            const newHash = await hashPassword(args.password);
             await Models.BomUser.update(
-              { pass: passwordHash },
+              { pass: newHash },
               { where: { user: myUser.user } }
             );
+          }
+        } else {
+          // Verify password against stored hash
+          const storedHash = myUser.getDataValue('pass');
+          const isValid = await verifyPassword(args.password, storedHash);
+
+          if (!isValid) {
+            return {
+              isSuccess: false,
+              msg: 'Login Failed',
+              user: null
+            };
+          }
+
+          // Rehash if using legacy MD5
+          if (needsRehash(storedHash)) {
+            const newHash = await hashPassword(args.password);
+            await myUser.update({ pass: newHash });
           }
         }
 
@@ -418,14 +435,15 @@ export default {
           msg: 'Sign-up Failed',
           user: null
         };
+
+      // Hash password with bcrypt
+      const hashedPassword = await hashPassword(args.password);
+
       return Models.BomUser.create({
         user: args.username,
         name: args.name,
         email: args.email,
-        pass: crypto
-          .createHash('md5')
-          .update(args.password)
-          .digest('hex'),
+        pass: hashedPassword,
         zip: args.zip,
         lang: lang || "en",
         created_at: Sequelize.literal('CURRENT_TIMESTAMP')
@@ -524,17 +542,11 @@ export default {
     changePassword: async (root: any, args: any, context: any, info: any) => {
       if (!args.password) return false;
       if (!args.token) return false;
-      let newPassword = crypto
-        .createHash('md5')
-        .update(args.password)
-        .digest('hex');
-      
+
       try {
+        // Find user by token (without comparing password hashes)
         const myUser: any = await Models.BomUser.findOne({
-          attributes: ['user'],
-          where: {
-            pass: { [Op.notLike]: newPassword }
-          },
+          attributes: ['user', 'pass'],
           include: [
             {
               model: Models.BomUserToken,
@@ -546,8 +558,19 @@ export default {
         });
 
         if (!myUser?.user) return false;
-        
-        const result: any = await Models.BomUser.update({ pass: newPassword }, { where: { user: myUser.user } });
+
+        // Hash new password with bcrypt
+        const newPasswordHash = await hashPassword(args.password);
+
+        // Check if new password is same as old (for bcrypt hashes)
+        const currentHash = myUser.getDataValue('pass');
+        if (currentHash && !needsRehash(currentHash)) {
+          // If current hash is bcrypt, compare with new password
+          const isSamePassword = await verifyPassword(args.password, currentHash);
+          if (isSamePassword) return false; // Don't update if same password
+        }
+
+        const result: any = await Models.BomUser.update({ pass: newPasswordHash }, { where: { user: myUser.user } });
         return result.shift() === 1;
       } catch (error) {
         console.error('Database error during changePassword:', error);
