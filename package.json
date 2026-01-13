@@ -93,6 +93,13 @@
     "test:messenger": "jest messenger.test.ts --verbose",
     "test:regression": "jest test/regression --verbose",
     "test:all": "jest --verbose",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "test:user": "jest test/user --verbose",
+    "test:content": "jest test/content --verbose",
+    "test:scripture": "jest test/scripture --verbose",
+    "test:community": "jest test/community --verbose",
+    "test:reference": "jest test/reference --verbose",
+    "test:fast": "jest test/services --verbose",
+    "test:coverage": "jest --coverage"
   }
 }
