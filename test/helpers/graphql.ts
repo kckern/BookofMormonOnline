@@ -23,7 +23,7 @@ export const getTestServer = (): ApolloServer => {
 export const executeQuery = async <T = any>(
   query: string,
   variables?: Record<string, any>
-): Promise<{ data?: T; errors?: any[] }> => {
+): Promise<{ data?: T; errors?: readonly any[] }> => {
   const server = getTestServer();
   const result = await server.executeOperation({
     query,
@@ -40,7 +40,7 @@ export const executeQuery = async <T = any>(
 export const executeMutation = async <T = any>(
   mutation: string,
   variables?: Record<string, any>
-): Promise<{ data?: T; errors?: any[] }> => {
+): Promise<{ data?: T; errors?: readonly any[] }> => {
   return executeQuery<T>(mutation, variables);
 };
 
