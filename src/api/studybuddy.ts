@@ -150,9 +150,9 @@ const prepareThread = async (thread)=>
     //todo if links.section, then get section context
     const sql = `SELECT t.guid FROM bom_slug s
     JOIN bom_text t ON s.link = t.page
-    WHERE t.link = '${links.text}'
-    AND s.slug = '${lastSlug}'`;
-    const [item] = await queryDB(sql)
+    WHERE t.link = ?
+    AND s.slug = ?`;
+    const [item] = await queryDB(sql, [links.text, lastSlug])
     const text_guid = item?.guid || null;
     const firstHighlights = firstMessage.data.highlights || null;
     const thread_messages = thread.map(({user, message, data}, i) => {
@@ -600,8 +600,9 @@ const loadPeople = async (people_slugs,lang="en") => {
     // Check again after filtering
     if(!people_slugs?.length) return [];
   
-    let sql = `SELECT * FROM bom_people WHERE slug IN (${people_slugs.map((slug) => `"${slug}"`).join(",")})`;
-    let people = await queryDB(sql);
+    const placeholders = people_slugs.map(() => '?').join(',');
+    let sql = `SELECT * FROM bom_people WHERE slug IN (${placeholders})`;
+    let people = await queryDB(sql, people_slugs);
 
     if(lang!=="en") people = await loadTranslations(lang, people, "slug");
 
@@ -618,8 +619,9 @@ const loadPeople = async (people_slugs,lang="en") => {
 const loadPlaces = async (place_slugs,lang="en") => {
         if(!place_slugs?.length) return [];
         const max_sentences = 5;
-        const sql = `SELECT * FROM bom_places WHERE slug IN (${place_slugs.map((slug) => `"${slug}"`).join(",")})`;
-        let places = await queryDB(sql);
+        const placeholders = place_slugs.map(() => '?').join(',');
+        const sql = `SELECT * FROM bom_places WHERE slug IN (${placeholders})`;
+        let places = await queryDB(sql, place_slugs);
 
         if(lang!=="en") places = await loadTranslations(lang, places);
 
@@ -639,8 +641,8 @@ const loadDivision = async (text_guid, lang) => {
     const sql = `SELECT d.guid, description from bom_division d
     JOIN bom_page p ON p.guid = d.page
     JOIN bom_text t ON t.page = p.guid
-    WHERE t.guid = "${text_guid}";`
-    const items = await queryDB(sql);
+    WHERE t.guid = ?`;
+    const items = await queryDB(sql, [text_guid]);
     if(!items.length) return null;
     const division = await loadTranslations(lang, items);
     return division[0].description
@@ -650,11 +652,11 @@ const loadDivision = async (text_guid, lang) => {
 const loadPage = async (text_guid, lang) => {
 
     const sql = `SELECT DISTINCT p.guid, title, t.link page_link, s.slug
-    from bom_page p 
+    from bom_page p
     JOIN bom_text t ON t.page = p.guid
     JOIN bom_slug s on p.guid = s.link
-    WHERE t.guid = "${text_guid}";`
-    const items = await queryDB(sql);
+    WHERE t.guid = ?`;
+    const items = await queryDB(sql, [text_guid]);
     const page = await loadTranslations(lang, items);
     if(!page.length) return null;
     const {guid, title, slug, page_link} = page[0];
@@ -665,8 +667,8 @@ const loadPage = async (text_guid, lang) => {
 
 const loadPageSections = async (page_guid, lang) => {
     const sql = `SELECT guid, title from bom_section
-    WHERE parent = "${page_guid}";`
-    const sections = await loadTranslations(lang, await queryDB(sql));
+    WHERE parent = ?`;
+    const sections = await loadTranslations(lang, await queryDB(sql, [page_guid]));
     return sections.map(({title}) => title);
 }
 
@@ -677,8 +679,8 @@ const loadSectionNarration = async (text_guid, lang) => {
     JOIN bom_sectionrow bsr ON bs.guid = bsr.parent
     JOIN bom_narration bn ON bsr.guid = bn.parent
     JOIN bom_text bt ON bs.guid = bt.section
-    WHERE bt.guid = "${text_guid}";`;
-    const narration = await loadTranslations(lang, await queryDB(sql));
+    WHERE bt.guid = ?`;
+    const narration = await loadTranslations(lang, await queryDB(sql, [text_guid]));
 
 
     return narration.map(({description}) => stripPeoplePlaces(description)).join("");
@@ -689,10 +691,10 @@ const loadTextBlockNarration = async (text_guid, lang) => {
     const sql = `SELECT bn.guid, description
     FROM bom_narration bn
     JOIN bom_text bt ON bt.parent = bn.guid
-    WHERE bt.guid = "${text_guid}";`;
+    WHERE bt.guid = ?`;
 
 
-    const narration = await loadTranslations(lang, await queryDB(sql));
+    const narration = await loadTranslations(lang, await queryDB(sql, [text_guid]));
     return narration.map(({description}) => stripPeoplePlaces(description)).join(" • ");
 }
 
@@ -705,16 +707,16 @@ const loadSectionContext = async (text_guid,lang) => {
     const sectionTitleSQL = `SELECT bs.guid, title
     FROM bom_section bs
     JOIN bom_text bt ON bs.guid = bt.section
-    WHERE bt.guid = "${text_guid}";`;
-    const sectionTitle = await loadTranslations(lang, await queryDB(sectionTitleSQL));
+    WHERE bt.guid = ?`;
+    const sectionTitle = await loadTranslations(lang, await queryDB(sectionTitleSQL, [text_guid]));
 
     const sectionNarrationSQL = `SELECT bn.guid, description
     FROM bom_section bs
     JOIN bom_sectionrow bsr ON bs.guid = bsr.parent
     JOIN bom_narration bn ON bsr.guid = bn.parent
     JOIN bom_text bt ON bs.guid = bt.section
-    WHERE bt.guid = "${text_guid}";`;
-    const sectionNarration = await queryDB(sectionNarrationSQL);
+    WHERE bt.guid = ?`;
+    const sectionNarration = await queryDB(sectionNarrationSQL, [text_guid]);
 
 
     const {people, places} = extractPeoplePlaceIds(sectionNarration.map(({description}) => description).join(" "));
@@ -766,35 +768,39 @@ const loadCrossReferences = async (verse_ids, lang) => {
     if (!verse_ids || !Array.isArray(verse_ids) || verse_ids.length === 0) {
         return [];
     }
-    
+
+    const verseIdPlaceholders = verse_ids.map(() => '?').join(',');
     let sql;
-    
+    let params;
+
     if(lang && lang !== 'en') {
 
-        sql = `SELECT v.verse_id as verse_id, t.text as text 
+        sql = `SELECT v.verse_id as verse_id, t.text as text
         FROM lds_scriptures_verses v JOIN lds_scriptures_translations t
                 ON v.verse_id = t.verse_id
-                WHERE v.verse_id IN 
+                WHERE v.verse_id IN
                     (SELECT distinct dst_verse_id FROM lds_scriptures_crossref
-                    WHERE src_verse_id IN (${verse_ids.join(",")})
+                    WHERE src_verse_id IN (${verseIdPlaceholders})
                     AND type = "xref"
                     AND significant = 0
-                    AND t.lang = '${lang}' )
+                    AND t.lang = ? )
                 ORDER BY v.verse_id;`
+        params = [...verse_ids, lang];
 
     } else {
-        sql = `SELECT verse_id, verse_scripture text 
-        FROM lds_scriptures_verses 
-        WHERE verse_id IN 
+        sql = `SELECT verse_id, verse_scripture text
+        FROM lds_scriptures_verses
+        WHERE verse_id IN
         (SELECT distinct dst_verse_id FROM lds_scriptures_crossref
-        WHERE src_verse_id IN (${verse_ids.join(",")})
+        WHERE src_verse_id IN (${verseIdPlaceholders})
         AND type = "xref" and significant = 0
-        ORDER BY dst_verse_id) 
+        ORDER BY dst_verse_id)
         ORDER BY verse_id;`;
-    } 
-    
-    
-    const crossReferences = await queryDB(sql);
+        params = verse_ids;
+    }
+
+
+    const crossReferences = await queryDB(sql, params);
     //TODO: Group contiguous references
     return crossReferences.map(({verse_id,text}) => ({ref:generateReference(verse_id, lang), text}));
 
@@ -803,14 +809,9 @@ const loadCrossReferences = async (verse_ids, lang) => {
 
 const loadVerses = async (guid, lang) => {
 
-    let sql = `
-    SELECT v.verse_id, v.verse_scripture
-    FROM bom_lookup l
-    JOIN lds_scriptures_verses v
-    ON l.verse_id = v.verse_id
-    WHERE l.text_guid = '${guid}'
-    ORDER BY l.verse_id;`;
-    
+    let sql;
+    let params;
+
     if(lang && lang !== 'en') {
 
         sql = `SELECT v.verse_id, t.text as verse_scripture
@@ -819,13 +820,23 @@ const loadVerses = async (guid, lang) => {
         ON l.verse_id = v.verse_id
         JOIN lds_scriptures_translations t
         ON v.verse_id = t.verse_id
-        WHERE t.lang = '${lang}'
-        AND l.text_guid = '${guid}'
+        WHERE t.lang = ?
+        AND l.text_guid = ?
         ORDER BY l.verse_id;`;
+        params = [lang, guid];
 
-    } 
-    
-    const verses = await queryDB(sql);
+    } else {
+        sql = `
+        SELECT v.verse_id, v.verse_scripture
+        FROM bom_lookup l
+        JOIN lds_scriptures_verses v
+        ON l.verse_id = v.verse_id
+        WHERE l.text_guid = ?
+        ORDER BY l.verse_id;`;
+        params = [guid];
+    }
+
+    const verses = await queryDB(sql, params);
     const verse_ids = verses.map((verse) => verse.verse_id);
     const scripture_text = verses.map((verse) => verse.verse_scripture).join(" ");
 

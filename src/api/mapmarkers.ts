@@ -8,12 +8,18 @@ const mapMarker = async (req: any, res: any) => {
     const path = req.path.split("/").filter(p=>p);
     const slug = path.pop();
 
-    const placeDataResults = await queryDB(`SELECT * FROM bom_places WHERE slug = '${slug}'`);
+    const placeDataResults = await queryDB(
+        `SELECT * FROM bom_places WHERE slug = ?`,
+        [slug]
+    );
     const [placeData] = placeDataResults;
     let name = placeData?.name;
     if(lang)
     {
-        const translation = await queryDB(`SELECT * FROM bom_translation WHERE guid = '${placeData.guid}' AND lang = '${lang}' and refkey = 'name'`);
+        const translation = await queryDB(
+            `SELECT * FROM bom_translation WHERE guid = ? AND lang = ? AND refkey = 'name'`,
+            [placeData.guid, lang]
+        );
         const [item] = translation || [];
         name = item?.value || name;
     }
