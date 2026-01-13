@@ -49,7 +49,8 @@
     "util": "^0.12.5",
     "utility-types": "^3.10.0",
     "winston": "^3.11.0",
-    "winston-syslog": "^2.7.0"
+    "winston-syslog": "^2.7.0",
+    "zod": "^4.3.5"
   },
   "devDependencies": {
     "@types/aws-lambda": "8.10.126",
