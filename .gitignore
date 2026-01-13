@@ -19,5 +19,6 @@ log.sql
 /test/*.log
 /dist
 *.sh
+!test/run-regression.sh
 *.log
 /.claude
