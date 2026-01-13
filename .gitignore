@@ -13,7 +13,10 @@ Thumbs.db
 key
 *.env
 log.sql
-/test
+# Allow test directory but ignore test results and generated files
+!/test
+/test/results*
+/test/*.log
 /dist
 *.sh
 *.log
