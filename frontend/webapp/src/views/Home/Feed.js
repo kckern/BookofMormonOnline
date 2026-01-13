@@ -44,7 +44,7 @@ import openIcon from "src/views/_Common/Study/svg/open.svg";
 import ReactTooltip from "react-tooltip";
 import trophy from "src/views/User/svg/trophy.svg";
 import { GroupCallToAction, GroupLeaderBoard } from "./Home.js";
-import { PopupCenter, md5 } from "../../models/Utils.js";
+import { md5 } from "../../models/Utils.js";
 
 export function HomeFeed({
   appController,
@@ -439,7 +439,8 @@ function MessageMedia({ item }) {
 
 
   const popUpImage = () => {
-      PopupCenter(url, "Instagram", 740, 825);
+      // PopupCenter removed - could open in new tab instead
+      window.open(url, "_blank");
   }
 
   const fitItem = () => {

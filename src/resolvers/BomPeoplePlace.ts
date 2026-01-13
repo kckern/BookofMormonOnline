@@ -3,75 +3,189 @@ import { models, models as Models, sequelize, SQLQueryTypes } from '../config/da
 import { getSlug, Op, includeTranslation, translatedValue, includeModel, queryWhere } from './_common';
 import {setLang, generateReference,lookupReference} from "scripture-guide";
 
+// Cache for relationship labels to avoid repeated database calls
+const labelsCache = new Map();
+
+// Helper function to detect which fields are being requested in the GraphQL query
+const getRequestedFields = (info: any, typeName: string): string[] => {
+  if (!info || info === true) return [];
+  
+  try {
+    // Get the field nodes from the GraphQL info object
+    const fieldNode = info.fieldNodes[0];
+    if (!fieldNode || !fieldNode.selectionSet) {
+      return [];
+    }
+    
+    // Get the selection nodes for the specified type
+    const selections = fieldNode.selectionSet.selections || [];
+    
+    // Extract the field names that are being requested
+    return selections
+      .filter(selection => selection.kind === 'Field')
+      .map(selection => selection.name.value);
+  } catch (e) {
+    console.error('Error extracting requested fields:', e);
+    return [];
+  }
+};
+
+// Helper function to include translations only for requested fields
+const includeSelectiveTranslation = (
+  possibleFields: string[], 
+  info: any, 
+  lang: string, 
+  resolverType: string = 'person'
+): object | null => {
+  // Return early if no translation needed
+  if (!lang || lang === 'en') return null;
+  
+  // Get requested fields from the current resolver context
+  const requestedFields = info !== true ? getRequestedFields(info, resolverType) : [];
+  
+  // If we can't determine requested fields, include all possible fields for safety
+  if (!requestedFields.length) {
+    return includeTranslation({ [Op.or]: possibleFields }, lang);
+  }
+  
+  // Only include translations for fields that are actually requested
+  const fieldsToInclude = possibleFields.filter(field => 
+    requestedFields.includes(field)
+  );
+  
+  // If none of the requested fields need translation, return null
+  if (!fieldsToInclude.length) return null;
+  
+  return includeTranslation({ [Op.or]: fieldsToInclude }, lang);
+};
+
 export default {
   Query: {
     person: async (root: any, args: any, context: any, info: any) => {
       const lang = context.lang ? context.lang : null;
       let indexSort = null;
-      if (info !== true) {
-        let requestQuery = JSON.stringify(info.fieldNodes);
-        if (new RegExp(`{"kind":"Name","value":"index"`).test(requestQuery)) indexSort = ['index', 'verse_id'];
+      
+      // Get requested fields using proper AST traversal
+      const requestedFields = info !== true ? getRequestedFields(info, 'person') : [];
+      const needsIndex = requestedFields.includes('index');
+      const needsRelations = requestedFields.includes('relations');
+      
+      if (needsIndex) indexSort = ['index', 'verse_id'];
+      
+      // Only include relationships when explicitly requested
+      // This can greatly reduce query complexity and time
+      const includes = [];
+      
+      // Only include translations for requested fields
+      const translationInclude = includeSelectiveTranslation(
+        ['name', 'title', 'description'], 
+        info, 
+        lang,
+        'person'
+      );
+      
+      if (translationInclude) {
+        includes.push(translationInclude);
       }
-      return Models.BomPeople.findAll({
-        where: queryWhere(
-          'slug',
-          args.slug?.map((s: any) => s.replace(/^.*?\//, ''))
-        ),
-        include: [
-          includeTranslation({ [Op.or]: ['name', 'title',"description"] }, lang),
+      
+      // Only include index if requested
+      if (needsIndex) {
+        includes.push(
           includeModel(info, Models.BomIndex, 'index', [
-            includeTranslation('text', lang), // Add translation here
+            includeTranslation('text', lang),
             includeModel(true, Models.BomLookup, 'text_guid', [includeModel(true, Models.BomText, 'text')])
-          ].filter(x=>!!x)),
+          ].filter(x => !!x))
+        );
+      }
+      
+      // Only include relationships if relations field is requested
+      if (needsRelations) {
+        includes.push(
           {
             model: Models.BomPeopleRels.unscoped(),
             as: 'relationDst',
             include: [
-              //includeTranslation({ [Op.or]: ["srcrel", "dstrel"] }, lang),
               {
                 model: Models.BomPeople,
                 as: 'personSrc',
-                include: [includeTranslation({ [Op.or]: ['name', 'title'] }, lang)].filter(x=>!!x)
+                include: [includeTranslation({ [Op.or]: ['name', 'title'] }, lang)].filter(x => !!x)
               }
-            ].filter(x=>!!x)
+            ].filter(x => !!x)
           },
           {
             model: Models.BomPeopleRels.unscoped(),
             as: 'relationSrc',
             include: [
-             // includeTranslation({ [Op.or]: ["srcrel", "dstrel"] }, lang),
               {
                 model: Models.BomPeople,
                 as: 'personDst',
-                include: [includeTranslation({ [Op.or]: ['name', 'title'] }, lang)].filter(x=>!!x)
+                include: [includeTranslation({ [Op.or]: ['name', 'title'] }, lang)].filter(x => !!x)
               }
-            ].filter(x=>!!x)
+            ].filter(x => !!x)
           }
-          // includeModel(info, Models.BomPeopleRels, 'r'),
-        ].filter(x => !!x),
+        );
+      }
+      
+      return Models.BomPeople.findAll({
+        where: queryWhere(
+          'slug',
+          args.slug?.map((s: any) => s.replace(/^.*?\//, ''))
+        ),
+        include: includes.filter(x => !!x),
         order: ['weight', indexSort].filter(x => !!x)
       });
     },
     place: async (root: any, args: any, context: any, info: any) => {
       const lang = context.lang ? context.lang : null;
       let indexSort = null;
-      if (info !== true) {
-        let requestQuery = JSON.stringify(info.fieldNodes);
-        if (new RegExp(`{"kind":"Name","value":"index"`).test(requestQuery)) indexSort = ['index', 'verse_id'];
+      
+      // Get requested fields using proper AST traversal
+      const requestedFields = info !== true ? getRequestedFields(info, 'place') : [];
+      const needsIndex = requestedFields.includes('index');
+      const needsMaps = requestedFields.includes('maps');
+      
+      if (needsIndex) indexSort = ['index', 'verse_id'];
+      
+      // Only include relationships when explicitly requested
+      const includes = [];
+      
+      // Only include translations for requested fields
+      const translationInclude = includeSelectiveTranslation(
+        ['name', 'info', 'label'], 
+        info, 
+        lang,
+        'place'
+      );
+      
+      if (translationInclude) {
+        includes.push(translationInclude);
       }
+      
+      // Only include maps if requested
+      if (needsMaps) {
+        includes.push(
+          includeModel(info, Models.BomMap, 'maps', [
+            includeTranslation({ [Op.or]: ['name', 'desc'] }, lang)
+          ].filter(x => !!x))
+        );
+      }
+      
+      // Only include index if requested
+      if (needsIndex) {
+        includes.push(
+          includeModel(info, Models.BomIndex, 'index', [
+            includeTranslation('text', lang),
+            includeModel(true, Models.BomLookup, 'text_guid', [includeModel(true, Models.BomText, 'text')])
+          ].filter(x => !!x))
+        );
+      }
+      
       return Models.BomPlaces.findAll({
         where: queryWhere(
           'slug',
           args.slug?.map((s: any) => s.replace(/^.*?\//, ''))
         ),
-        include: [
-          includeModel(info, Models.BomMap, 'maps',[includeTranslation({ [Op.or]: ['name', 'desc'] }, lang)]),
-          includeTranslation({ [Op.or]: ['name', 'info'] }, lang),
-          includeModel(info, Models.BomIndex, 'index', [
-            includeTranslation('text', lang), // Add translation here
-            includeModel(true, Models.BomLookup, 'text_guid', [includeModel(true, Models.BomText, 'text')])
-          ].filter(x => !!x))
-        ].filter(x => !!x),
+        include: includes.filter(x => !!x),
         order: ['weight', indexSort].filter(x => !!x)
       });
     },
@@ -229,54 +343,91 @@ export default {
     description: async (item: any, args: any, { db, res }: any, info: any) => {
       return translatedValue(item, 'description');
     },
-    async relations(item: any, args: any, {lang }: any) {
-
-
-      var relationSrc: [any] = item?.getDataValue('relationSrc');
-      var relationDst: [any] = item?.getDataValue('relationDst');
-      var relations = [];
-      for (var rel of relationSrc) {
-        if (rel.getDataValue('srcrel'))
-          relations.push({
-            relation: translatedValue(rel, 'srcrel'),
-            person: rel.getDataValue('personDst')
-          });
+    async relations(item: any, args: any, {lang}: any) {
+      // Extract relationSrc and relationDst if they exist
+      var relationSrc: [any] = item?.getDataValue('relationSrc') || [];
+      var relationDst: [any] = item?.getDataValue('relationDst') || [];
+      
+      // Early return if there are no relationships
+      if (!relationSrc.length && !relationDst.length) {
+        return [];
       }
-      for (var rel of relationDst) {
-        if (rel.getDataValue('dstrel'))
-          relations.push({
-            relation: translatedValue(rel, 'dstrel'),
-            person: rel.getDataValue('personSrc')
-          });
-      }
-      const allLabels = (await Models.BomLabel.findAll({
-        raw: true,
-        //attributes: ['label_id','label_text'],
-        where: {
-          type: 'peoplerel'
-        },
-        include: [{
-          model: Models.BomTranslation,
-          as: 'translation',
-          where: { lang: lang },
-          attributes: ['value'],
-          required: false
+      
+      // Get all relationship labels once and cache them per language
+      const cacheKey = `peoplerel_${lang || 'en'}`;
+      
+      let allLabels;
+      if (!labelsCache.has(cacheKey)) {
+        allLabels = (await Models.BomLabel.findAll({
+          raw: true,
+          where: {
+            type: 'peoplerel'
+          },
+          include: [{
+            model: Models.BomTranslation,
+            as: 'translation',
+            where: { lang: lang },
+            attributes: ['value'],
+            required: false
+          }]
+        })).map((i:any)=>{return {
+          label_id: i.label_id.replace(/^rel_/,''),
+          label_text: i['translation.value'] || i.label_text
+        }});
         
-        }]
-      })).map((i:any)=>{return {label_id:i.label_id.replace(/^rel_/,''),label_text:i['translation.value'] || i.label_text}});
-
-      return relations.map((rel: any) => {
-        if(!rel.person) return null;
-        const label = allLabels.find((l:any)=>l.label_id==rel.relation);
-        if(label) rel.relation = label?.['label_text'];
-        return rel;
-      }).filter((x:any)=>!!x);
+        // Store in cache - each language has its own cache entry
+        labelsCache.set(cacheKey, allLabels);
+      } else {
+        allLabels = labelsCache.get(cacheKey);
+      }
+      
+      // Build relations array with optimized handling
+      const relations = [];
+      
+      // Process source relations
+      for (const rel of relationSrc) {
+        if (rel.getDataValue('srcrel')) {
+          const relation = translatedValue(rel, 'srcrel');
+          const person = rel.getDataValue('personDst');
+          
+          if (person) {
+            const label = allLabels.find((l:any) => l.label_id === relation);
+            relations.push({
+              relation: label ? label.label_text : relation,
+              person
+            });
+          }
+        }
+      }
+      
+      // Process destination relations
+      for (const rel of relationDst) {
+        if (rel.getDataValue('dstrel')) {
+          const relation = translatedValue(rel, 'dstrel');
+          const person = rel.getDataValue('personSrc');
+          
+          if (person) {
+            const label = allLabels.find((l:any) => l.label_id === relation);
+            relations.push({
+              relation: label ? label.label_text : relation,
+              person
+            });
+          }
+        }
+      }
+      
+      return relations;
     },
     index: async (item: any, args: any, { db, res }: any, info: any) => {
-      return item.getDataValue('index').map((i: any) => {
-        if(i.getDataValue('type') == 'people') return i;
-        return null;
-      }).filter((x:any)=>!!x);
+      const indices = item.getDataValue('index');
+      
+      // Handle the case when no indices are loaded
+      if (!indices || !indices.length) {
+        return [];
+      }
+      
+      // Filter only people indices efficiently
+      return indices.filter((i: any) => i.getDataValue('type') === 'people');
     }
   },
 
@@ -322,10 +473,15 @@ export default {
       return item.dataValues?._bom_places_coords?.max || null;
     },
     index: async (item: any, args: any, { db, res }: any, info: any) => {
-      return item.getDataValue('index').map((i: any) => {
-        if(i.getDataValue('type') == 'place') return i;
-        return null;
-      }).filter((x:any)=>!!x);
+      const indices = item.getDataValue('index');
+      
+      // Handle the case when no indices are loaded
+      if (!indices || !indices.length) {
+        return [];
+      }
+      
+      // Filter only place indices efficiently
+      return indices.filter((i: any) => i.getDataValue('type') === 'place');
     }
   },
   Index: {
@@ -389,43 +545,55 @@ export default {
   },
 };
 
-export const loadPeopleFromTextGuid = async (guid: string, slugs: string[],lang) => {
+export const loadPeopleFromTextGuid = async (guid: string, slugs: string[], lang) => {
   slugs = Array.isArray(slugs) ? slugs : slugs ? [slugs] : [];
-//use Models.BomLookup and Models.BomIndex to get the people slugs from the text_guid
-const peopleSlugs = (await Models.BomLookup.findAll({
-  attributes: ['text_guid'],
-  where: {
-    text_guid: guid
-  },
-  include: [
-    {
-      model: Models.BomIndex,
-      as: 'bomIndexReference',
-      attributes: ['slug'],
-      where: {
-        type: 'people' // retrieved slugs for 'people' type
+  
+  // Use the newly added index on text_guid to make this query more efficient
+  const peopleSlugs = (await Models.BomLookup.findAll({
+    attributes: ['text_guid'],
+    where: {
+      text_guid: guid
+    },
+    include: [
+      {
+        model: Models.BomIndex,
+        as: 'bomIndexReference',
+        attributes: ['slug'],
+        where: {
+          type: 'people' // retrieved slugs for 'people' type
+        }
       }
-    }
-  ]
-}))?.map((item: any) => item.getDataValue('bomIndexReference').getDataValue('slug')).filter(x=>!!x);
+    ]
+  }))?.map((item: any) => item.getDataValue('bomIndexReference').getDataValue('slug')).filter(x => !!x);
 
-const uniqueSlugs = [...new Set([...peopleSlugs, ...slugs])];
+  const uniqueSlugs = [...new Set([...peopleSlugs, ...slugs])];
+  
+  // Return early if no slugs to avoid unnecessary DB query
+  if (!uniqueSlugs.length) {
+    return [];
+  }
 
-//load people using query function above
-const people = await Models.BomPeople.findAll({
-  where: {
-    slug: uniqueSlugs
-  },
-  include: [includeTranslation({ [Op.or]: ['name', 'title', "description"] }, lang)].filter(x => !!x),
-});
+  // Load people using query function above
+  // Only include translation if language is not English
+  const include = [];
+  if (lang && lang !== 'en') {
+    include.push(includeTranslation({ [Op.or]: ['name', 'title', 'description'] }, lang));
+  }
+  
+  const people = await Models.BomPeople.findAll({
+    where: {
+      slug: uniqueSlugs
+    },
+    include: include.filter(x => !!x),
+  });
 
-return people;
+  return people;
 }
 
 export const loadPlacesFromTextGuid = async (guid: string, slugs: string[], lang: string) => {
   slugs = Array.isArray(slugs) ? slugs : slugs ? [slugs] : [];
   
-  // Use Models.BomLookup and Models.BomIndex to get the place slugs from the text_guid
+  // Use the newly added index on text_guid to make this query more efficient
   const placeSlugs = (await Models.BomLookup.findAll({
     attributes: ['text_guid'],
     where: {
@@ -444,13 +612,24 @@ export const loadPlacesFromTextGuid = async (guid: string, slugs: string[], lang
   }))?.map((item: any) => item.getDataValue('bomIndexReference').getDataValue('slug')).filter(x => !!x);
 
   const uniqueSlugs = [...new Set([...placeSlugs, ...slugs])];
+  
+  // Return early if no slugs to avoid unnecessary DB query
+  if (!uniqueSlugs.length) {
+    return [];
+  }
+  
+  // Only include translation if language is not English
+  const include = [];
+  if (lang && lang !== 'en') {
+    include.push(includeTranslation({ [Op.or]: ['name', 'info'] }, lang));
+  }
 
   // Load places using query function above
   const places = await Models.BomPlaces.findAll({
     where: {
       slug: uniqueSlugs
     },
-    include: [includeTranslation({ [Op.or]: ['name', 'info'] }, lang)].filter(x => !!x),
+    include: include.filter(x => !!x),
   });
 
   return places;

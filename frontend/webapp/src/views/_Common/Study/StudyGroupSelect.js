@@ -42,9 +42,12 @@ import openIcon from "src/views/_Common/Study/svg/open.svg";
 import soloIcon from "src/views/_Common/Study/svg/solo.svg";
 import privateIcon from "src/views/_Common/Study/svg/private.svg";
 import publicIcon from "src/views/_Common/Study/svg/public.svg";
-
 import moment from "moment";
 import { history } from "src/models/routeHistory";
+
+// Messenger feature flag
+const USE_MESSENGER = process.env.REACT_APP_USE_MESSENGER === 'true';
+
 moment.locale(label("moment_locale"), {
   relativeTime: {
     future: label("moment_future"),
@@ -209,6 +212,9 @@ export function StudyGroupList({ appController }) {
   });
 
   const setStudyMode = (e) => {
+    // Don't allow study mode when messenger is disabled
+    if (!USE_MESSENGER) return;
+    
     let sound = !appController.states.studyGroup.studyModeOn
       ? studyModeOn
       : studyModeoff;
@@ -217,6 +223,19 @@ export function StudyGroupList({ appController }) {
       !appController.states.studyGroup.studyModeOn,
     );
   };
+
+  // If messenger is disabled, don't show study group UI
+  if (!USE_MESSENGER) {
+    return (
+      <div className="studygrouplist">
+        <div className="topButtons">
+          <Label className="studymode" style={{ opacity: 0.5 }}>
+            {label("study_mode")}: {label("coming_soon") || "Coming Soon"}
+          </Label>
+        </div>
+      </div>
+    );
+  }
 
   let contents = (
     <>

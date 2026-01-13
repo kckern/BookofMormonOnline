@@ -70,6 +70,7 @@
   cursor: pointer;
 }
 
+
 .ProgressBox .progress {
   height: 1.8vh;
   margin-left: 0;
@@ -143,7 +144,6 @@
   position: relative;
   top: -2em;
 }
-
 .ProgressBoxPane .sectionBox {
   background-color: #eee;
   margin-top: 1em;
@@ -151,6 +151,7 @@
   border-radius: 0.5em;
   color: #888;
 }
+
 
 
 .ProgressBoxPane .pagePerc {

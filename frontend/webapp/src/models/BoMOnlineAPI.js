@@ -12,7 +12,8 @@ const isWebappOnly = parseInt(currentPort) === 3000;
 const localTest = /localhost/.test(currentDomain) && false;
 
 export const assetUrl = "https://media.bookofmormon.online";
-export const ApiBaseUrl = localTest ?   "http://localhost:5005" : isWebappOnly? "https://bookofmormon.online" : containedAPI ;
+// Use empty string for localhost:3000 to leverage proxy, otherwise use appropriate API URL
+export const ApiBaseUrl = localTest ? "http://localhost:5005" : isWebappOnly ? "" : containedAPI;
 export const fbPixel = "4544125442358924";
 
 export function exitBeacon(appController){

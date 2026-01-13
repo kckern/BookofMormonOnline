@@ -11,6 +11,7 @@ import crypto from "crypto-browserify";
 import ReactTooltip from "react-tooltip";
 import TagList from "./TagList";
 import "views/_Common/Study/Study.css";
+import UserAvatar from "src/components/UserAvatar";
 import {
   timeAgoString,
   moveCaretToEnd,
@@ -306,10 +307,10 @@ export function MyComment({
       realtime = (
         <div className="mycomment form-group">
           <div className="avatar" style={{ float: "left" }}>
-            <img
-              alt={member.nickname}
-              src={member.plainProfileUrl}
-              onError={breakCache}
+            <UserAvatar
+              userId={member.userId}
+              profileUrl={member.plainProfileUrl}
+              size={40}
               className="img-circle img-no-padding img-responsive"
             />
           </div>
@@ -329,10 +330,10 @@ export function MyComment({
       {realtime}
       <div className="mycomment form-group">
         <div className="avatar" style={{ float: "left" }}>
-          <img
-            alt="avatar"
-            src={appController.sendbird.sb.currentUser.plainProfileUrl}
-            onError={breakCache}
+          <UserAvatar
+            userId={appController.states?.user?.user}
+            profileUrl={appController.states?.user?.social?.profile_url}
+            size={40}
             className="img-circle img-no-padding img-responsive"
           />
         </div>
@@ -657,11 +658,11 @@ function ThreadedMessages({
 
   let replyCount = parentMessage.threadInfo.replyCount;
   let faces = parentMessage.threadInfo.mostRepliedUsers.map((u, i) => (
-    <img
+    <UserAvatar
       key={i}
-      alt={u.nickname}
-      onError={breakCache}
-      src={u.plainProfileUrl}
+      userId={u.userId}
+      profileUrl={u.plainProfileUrl}
+      size={24}
     />
   ));
   // let names = parentMessage.threadInfo.mostRepliedUsers.map(u => [u.nickname]);
@@ -812,9 +813,10 @@ function SingleComment({
       onMouseLeave={handleMouseLeave}
     >
       <div className="avatar" style={{ float: "left" }}>
-        <img
-          src={message?.sender?.plainProfileUrl}
-          alt={message?.sender?.nickname}
+        <UserAvatar
+          userId={message?.sender?.userId}
+          profileUrl={message?.sender?.plainProfileUrl}
+          size={40}
           className="img-circle img-no-padding img-responsive"
         />
       </div>

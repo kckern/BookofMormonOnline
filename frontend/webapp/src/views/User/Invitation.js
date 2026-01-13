@@ -28,6 +28,7 @@ import lock from "src/views/_Common/Study/svg/private.svg"
 import group_icon from "./svg/group.svg"
 import members from "./svg/members.svg"
 import chat from "./svg/chat.svg"
+import UserAvatar from "src/components/UserAvatar";
 import warning from "./svg/warning.svg"
 import newuser from "./svg/newuser.svg"
 import signin from "./svg/signin.svg"
@@ -175,7 +176,7 @@ export default function Invitation({ appController }) {
                 let summary = testJSON(member.metadata.summary) || {};
                 let completed = isNaN(0 + parseInt(summary.completed)) ? 0 : summary.completed;
                 return <li className={"memberItem " + (member.is_online ? "online" : "")} key={member.user_id}>
-                  <img src={member.profile_url} />
+                  <UserAvatar userId={member.user_id} profileUrl={member.profile_url} size={40} />
                   <div className={"completedLabel"}>{completed}%</div>
                   <div className={"nicknameLabel"}>{member.nickname}</div>
                 </li>
@@ -190,7 +191,7 @@ export default function Invitation({ appController }) {
             <ul >
               {group.messages?.map(message => {
                 return <li className={"messageItem"}>
-                  <img src={message.user?.profile_url}/>
+                  <UserAvatar userId={message.user?.user_id} profileUrl={message.user?.profile_url} size={40} />
                   <div>
                     <div className="nickname">{message.user?.nickname} <span>{moment(message.created_at).format(label("full_datetime"))}</span></div>
                     <div>{message.message.replace(/(<([^>]+)>)/ig, '').replace(/^•$/,label("highlight_msg"))}</div>

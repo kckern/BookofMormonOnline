@@ -17,7 +17,7 @@ export default class _bom_log extends ModelBase {
           allowNull: false
         },
         ip: {
-          type: DataTypes.STRING(30),
+          type: DataTypes.STRING(50),
           allowNull: false
         },
         type: {

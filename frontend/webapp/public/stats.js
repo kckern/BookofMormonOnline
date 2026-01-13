@@ -88,11 +88,24 @@ var clicky_obj = clicky_obj || (function() {
         this.set_referrer = function() {
 
             var r = clicky_custom.track_iframe || !top.document.referrer ? document.referrer : top.document.referrer;
-            r = r && r.match(/^https?:/) ? (RegExp("^https?://[^/]*" + location.host.replace(/^www\./i, "") + "/", "i").test(r) ? '' : r) : '';
+            
+            // Enhanced referrer processing: preserve path and extract search keywords
+            if (r && r.match(/^https?:/)) {
+                var currentDomain = location.host.replace(/^www\./i, "");
+                var isSameDomain = RegExp("^https?://[^/]*" + currentDomain + "/", "i").test(r);
+                
+                if (isSameDomain) {
+                    // For same-domain referrers, keep the path but mark as internal
+                    r = r; // Keep full URL with path for internal navigation
+                } else {
+                    // For external referrers, extract search keywords if from search engines
+                    r = _self.extract_search_keywords(r);
+                }
+            } else {
+                r = '';
+            }
+            
             if (!r) r = _self.get_cookie('_referrer_og');
-
-
-
 
             _self.ref = r;
             if (!_self.get_href().match(/utm_campaign/)) {
@@ -100,9 +113,75 @@ var clicky_obj = clicky_obj || (function() {
             }
             //console.log({selfref:_self.ref,r,document})
         };
+        
+        this.extract_search_keywords = function(referrer) {
+            if (!referrer) return referrer;
+            
+            try {
+                var url = new URL(referrer);
+                var searchParams = url.searchParams;
+                var keywords = '';
+                
+                // Cascade through common search query parameter names
+                var queryParams = ['q', 'query', 'search', 'p', 'text', 'wd', 'word', 'k', 'keywords', 'term', 'terms'];
+                
+                for (var i = 0; i < queryParams.length; i++) {
+                    keywords = searchParams.get(queryParams[i]);
+                    if (keywords && keywords.trim()) {
+                        break;
+                    }
+                }
+                
+                // If keywords found, append them to the referrer URL
+                if (keywords && keywords.trim()) {
+                    // Add keywords as a fragment or parameter for tracking
+                    return referrer + (referrer.includes('#') ? '&' : '#') + 'clicky_keywords=' + encodeURIComponent(keywords.trim());
+                }
+                
+                // Return original referrer with full path preserved
+                return referrer;
+                
+            } catch (e) {
+                // If URL parsing fails, return original referrer
+                return referrer;
+            }
+        };
+        
+        this.extract_keywords_from_referrer = function(referrer) {
+            if (!referrer) return '';
+            
+            try {
+                // Check if keywords are already embedded in our enhanced referrer
+                if (referrer.includes('clicky_keywords=')) {
+                    var match = referrer.match(/clicky_keywords=([^&#]*)/);
+                    return match ? decodeURIComponent(match[1]) : '';
+                }
+                
+                // Otherwise, extract from original URL using cascade fallback
+                var url = new URL(referrer);
+                var searchParams = url.searchParams;
+                
+                // Cascade through common search query parameter names
+                var queryParams = ['q', 'query', 'search', 'p', 'text', 'wd', 'word', 'k', 'keywords', 'term', 'terms'];
+                
+                for (var i = 0; i < queryParams.length; i++) {
+                    var keywords = searchParams.get(queryParams[i]);
+                    if (keywords && keywords.trim()) {
+                        return keywords.trim();
+                    }
+                }
+                
+                return '';
+                
+            } catch (e) {
+                return '';
+            }
+        };
+        
         this.pageview = function(only_once) {
             var href = _self.get_href();
             if (_self.facebook_is_lame(href)) return;
+            
             _self.beacon('pageview', '&href=' + _self.enc(href) + '&title=' + _self.enc(clicky_custom.title || window.clicky_page_title || (clicky_custom.track_iframe || !top.document.title ? document.title : top.document.title)) + (_self.ref ? '&ref=' + _self.enc(_self.ref) : '') + (_self.utm ? '&utm=' + _self.enc(_self.utm) : ''), (only_once ? 1 : 0));
             for (var p = 0; p < site_ids.length; p++) {
                 if (!_self.is_pageview_fired(site_ids[p])) {
@@ -296,8 +375,12 @@ var clicky_obj = clicky_obj || (function() {
                 if (type != 'pageview' && (window['unpoco_' + site_id])) continue;
                 if (type == 'heatmap' && hm != 'yes') continue;
                 if (called_by_pageview && type == 'pageview' && _self.is_pageview_fired(site_id)) continue;
-                _self.inject(_self.domain + 
-                    '?site_id=' + 
+                
+                // Extract and send search keywords separately if available
+                var searchKeywords = _self.extract_keywords_from_referrer(document?.referrer || _self.ref);
+                
+                // Build query string without the domain part
+                var queryString = 'site_id=' + 
                     site_id + 
                     '&type=' + 
                     type + 
@@ -313,7 +396,8 @@ var clicky_obj = clicky_obj || (function() {
                     (navigator.language || navigator.browserLanguage || 'en') + 
                     '&tz=' + 
                     _self.enc(window.Intl && Intl.DateTimeFormat && Intl.DateTimeFormat().resolvedOptions().timeZone || '') + 
-                    ((document?.referrer                        && !window.sentReferrer)  ? '&ref=' + _self.enc(document?.referrer) : "" )+ 
+                    ((document?.referrer && !window.sentReferrer) ? '&ref=' + _self.enc(document?.referrer) : "") + 
+                    (searchKeywords ? '&search_keywords=' + _self.enc(searchKeywords) : '') + 
                     (_self.he_platform ? '&hep=' + 
                     _self.he_platform : '') + 
                     (_self.he_model ? '&hem=' + 
@@ -324,7 +408,11 @@ var clicky_obj = clicky_obj || (function() {
                     hm : '') + 
                     (clicky_custom.visitor_consent ? '&consent=1' : '') + 
                     '&mime=js&x=' + 
-                    Math.random(), (type == 'pageview' ? 'js' : 'beacon'));            }
+                    Math.random();
+                
+                // Send as POST with base64 encoded payload
+                _self.sendPostData(_self.domain, queryString, (type == 'pageview' ? 'js' : 'beacon'));
+            }
             _self.ref = document?.referrer || "";
             _self.utm = '';
             window.sentReferrer = true;
@@ -347,6 +435,51 @@ var clicky_obj = clicky_obj || (function() {
                 s.rel = 'stylesheet';
                 s.href = src;
             }(document.body || document.getElementsByTagName('head')[0]).appendChild(s);
+            _self.set_referrer("");
+            _self.ref = "";
+            window.sentReferrer = true;
+        };
+        this.sendPostData = function(url, queryString, type) {
+            try {
+                // Base64 encode the query string (with fallback for older browsers)
+                var encodedData;
+                if (window.btoa) {
+                    encodedData = btoa(queryString);
+                } else {
+                    // Fallback: use original GET method if btoa is not available
+                    _self.inject(url + '?' + queryString, type);
+                    return;
+                }
+                
+                if (type == 'beacon' && window.navigator.sendBeacon) {
+                    // Use sendBeacon for non-critical requests
+                    var formData = new FormData();
+                    formData.append('data', encodedData);
+                    navigator.sendBeacon(url, formData);
+                } else {
+                    // Use fetch for other requests
+                    if (window.fetch) {
+                        fetch(url, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                            },
+                            body: 'data=' + encodeURIComponent(encodedData)
+                        }).catch(function() {
+                            // Silently handle errors
+                        });
+                    } else {
+                        // Fallback to XMLHttpRequest for older browsers
+                        var xhr = new XMLHttpRequest();
+                        xhr.open('POST', url, true);
+                        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+                        xhr.send('data=' + encodeURIComponent(encodedData));
+                    }
+                }
+            } catch (e) {
+                // Fallback to original GET method if base64 encoding fails
+                _self.inject(url + '?' + queryString, type);
+            }
             _self.set_referrer("");
             _self.ref = "";
             window.sentReferrer = true;

@@ -18,6 +18,7 @@ export function determineLanguage() {
   if(isLocalhost) return "en";
   let subdomain = window.location.host.split(".").shift();
   let tld = window.location.host.split(".").pop();
+  
   let aliases = {
     ko: ["kr", "kor"],
     fr: ["fra", "fre"],
@@ -45,6 +46,13 @@ export function determineLanguage() {
   };
   let index = {};
   Object.keys(aliases).forEach(i => { index[i] = i; Object.keys(aliases[i]).forEach(j => index[aliases[i][j]] = i); });
+
+  // If subdomain is "app", use browser language preferences
+  if(subdomain === "app") {
+    const browserLang = navigator.language || navigator.languages?.[0] || "en";
+    const langCode = browserLang.split("-")[0].toLowerCase(); // Extract language code (e.g., "en" from "en-US")
+    return index[langCode] || langCode || "en"; // Map through aliases, fallback to original code, then "en"
+  }
   subdomain = index[subdomain] || null;
   tld = index[tld] || null;
   return tld || subdomain || "en";
@@ -56,74 +64,34 @@ const pickOneRamdomly = (arr) => {
 }
 
 function genUserAvatar(user_id) {
-  const pallettes =
-  [
-    ["FF86F1", "FF00CC"], // Baby Pink to Deep Pink
-    ["00FFFF", "000080"], // Aqua to Navy
-    ["99FFCC", "009933"], // Mint Cream to Pakistan Green
-    ["FF6699", "990033"], // Thulian Pink to Smokey Topaz
-    ["33CCFF", "003366"], // Vivid Sky Blue to Smoky Black
-    ["00FF80", "004D40"], // Spring Green to Deep Jungle Green
-    ["FF9933", "6B4423"], // Neon Carrot to Brown Pod
-    ["FF99FF", "993399"], // Pink Flamingo to Tyrian Purple
-    ["99CCFF", "003399"], // Light Cornflower Blue to Dark Powder Blue
-    ["00CC99", "006633"], // Caribbean Green to MSU Green
-    ["FF9999", "800000"], // Light Salmon to Maroon
-    ["FFFF99", "808000"], // Canary to Olive
-    ["99FF99", "006400"], // Witches Green to Pakistan Green
-    ["FFCC99", "8B4513"], // Peach Orange to Saddle Brown
-    ["CCCCFF", "000099"], // Periwinkle to Duke Blue
-    ["CC99FF", "660099"], // Light Pastel Purple to Blue-violet
-    ["FF66CC", "660033"], // Carnation Pink to Rosewood
-    ["CCFFFF", "006666"], // Pale Cyan to Midnight Green
-    ["FF9966", "663300"], // Atomic Tangerine to Zinnwaldite Brown
-    ["66CCFF", "002266"], // Sky Blue to Navy blue
-    ["99CC66", "435D36"], // Asparagus to Rifle Green
-    ["66FF66", "003300"], // Screamin' Green to Dark Green
-    ["FFFF66", "878700"], // Yellow to Olive Green
-    ["FF9999", "942121"], // Light Salmon Pink to Dark Sienna
-    ["FFCCCC", "853333"], // Bubble Gum to Deep Chestnut
-    ["99CC99", "385438"], // Pale Green to British Racing Green
-    ["CCCC99", "545400"], // Pale Olive to Army Green
-    ["CCFFCC", "004700"], // Mint Cream to Dartmouth Green
-    ["FFCC99", "6B3600"], // Peach-orange to Brown
-    ["CCFF99", "3B5900"], // Pale Lime to Olive Drab
-    ["FFFFCC", "878600"], // Cream to Dark Yellow
-    ["FF9966", "803000"], // Atomic Tangerine to Mahogany
-    ["CCFF66", "315000"], // Lime Green to Lush Pine
-    ["FFCC66", "804000"], // Mango Tango to Caput Mortuum
-    ["CC9999", "541717"], // Copper Rose to Dark Sienna
-    ["CC66FF", "440088"], // Heliotrope to Violet
-    ["FF66CC", "880044"], // Carnation Pink to Byzantium
-    ["CC9966", "543517"], // Wood Brown to Liver
-    ["FF66FF", "880088"], // Shocking Pink to Purple
-    ["FFCCCC", "884444"], // Bubble Gum to Redwood
-    ["CCFFCC", "004400"], // Mint Cream to British Racing Green
-    ["CCCCFF", "000088"], // Light Periwinkle to Dark Blue
-    ["99CCFF", "002288"], // Pale Cyan to Sapphire
-    ["CC99CC", "541754"], // Lilac to Tyrian Purple
-    ["9933CC", "320066"], // Dark Orchid to Ultra Purple
-    ["3333CC", "000066"], // Medium Blue to Blue Black
-    ["0099CC", "002266"], // Bondi Blue to Navy Blue
-    ["6699CC", "001544"], // Jordy Blue to Oxford Blue
-    ["CC3366", "54001A"], // Fuchsia Rose to Blackberry
-    ["009933", "00260D"], // Shamrock Green to British Racing Green
-    ["669966", "001400"]  // Camouflage Green to Dark Green
+  const pallettes = [
+    ["FF86F1", "FF00CC"], ["00FFFF", "000080"], ["99FFCC", "009933"],
+    ["FF6699", "990033"], ["33CCFF", "003366"], ["00FF80", "004D40"],
+    ["FF9933", "6B4423"], ["FF99FF", "993399"], ["99CCFF", "003399"],
+    ["00CC99", "006633"], ["FF9999", "800000"], ["FFFF99", "808000"],
+    ["99FF99", "006400"], ["FFCC99", "8B4513"], ["CCCCFF", "000099"],
+    ["CC99FF", "660099"], ["FF66CC", "660033"], ["CCFFFF", "006666"],
+    ["FF9966", "663300"], ["66CCFF", "002266"], ["99CC66", "435D36"],
+    ["66FF66", "003300"], ["FFFF66", "878700"], ["FF9999", "942121"],
+    ["FFCCCC", "853333"], ["99CC99", "385438"], ["CCCC99", "545400"],
+    ["CCFFCC", "004700"], ["FFCC99", "6B3600"], ["CCFF99", "3B5900"],
+    ["FFFFCC", "878600"], ["FF9966", "803000"], ["CCFF66", "315000"],
   ];
 
-  const pack = "thumbs"; //icons, shapes, rings
-  const seed = user_id.slice(0, 5);
-  const [back,fore] = pickOneRamdomly(pallettes);
-  const mouths = ["variant1","variant2","variant3","variant4"];
-  const rotations = ["0", "20", "340", "40", "320"];
+  const mouths = ["variant1", "variant2", "variant3", "variant4"];
+  const rotations = [0, 20, 340, 40, 320];
   const eyes = "variant6W10,variant8W14,variant2W10";
-  const backgroundColor = `backgroundColor=${back}`;
-  const shapeColor = `shapeColor=${fore}`;
-  const rotation = `rotate=${pickOneRamdomly(rotations)}`
-  const mouth = `mouth=${pickOneRamdomly(mouths)}`;
-  const url = `https://api.dicebear.com/7.x/${pack}/svg?seed=${seed}&${backgroundColor}&${shapeColor}&eyes=${eyes}&${rotation}&scale=70&${mouth}`;
-  return url;
 
+  // Deterministic selection based on userId hash
+  const id = user_id || 'user';
+  const hash = id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+
+  const seed = id.slice(0, 5);
+  const [back, fore] = pallettes[hash % pallettes.length];
+  const mouth = mouths[hash % mouths.length];
+  const rotation = rotations[hash % rotations.length];
+
+  return `https://api.dicebear.com/7.x/thumbs/svg?seed=${seed}&backgroundColor=${back}&shapeColor=${fore}&eyes=${eyes}&rotate=${rotation}&scale=70&mouth=${mouth}`;
 }
 
 
@@ -933,18 +901,6 @@ function start_and_end(str) {
   }
   return str;
 }
-
-
-export function PopupCenter(e, n, t, i) {
-  var screen = window.screen || {};
-  var o = void 0 != window.screenLeft ? window.screenLeft : screen.left,
-  d = void 0 != window.screenTop ? window.screenTop : screen.top,
-  c = window.innerWidth ? window.innerWidth : document.documentElement.clientWidth ? document.documentElement.clientWidth : screen.width,
-  w = window.innerHeight ? window.innerHeight : document.documentElement.clientHeight ? document.documentElement.clientHeight : screen.height,
-  r = c / 2 - t / 2 + o,
-  h = w / 2 - i / 2 + d,
-  s = window.open(e, n, "scrollbars=yes, width=" + t + ", height=" + i + ", top=" + h + ", left=" + r);
-  return window.focus && s.focus(), !1}
 
 
 export function useSwipe(input){

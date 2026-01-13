@@ -86,6 +86,10 @@ function MapContainer({ appController }) {
     setMapName(label("loading"))
 
     BoMOnlineAPI({ map: type, mapstories: [type] },{useCache:false}).then((result) => {
+      if (!result?.map?.[type]) {
+        console.error('Map data not found for type:', type);
+        return;
+      }
       result.map[type].stories = result?.mapstories || [];
       setPlaceName(place)
       setMapName(result.map?.[type]?.name)

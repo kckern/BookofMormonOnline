@@ -1,0 +1,379 @@
+// FacsimilePageViewer.scss - Styles for the facsimile page viewer components
+
+// Common styles for both mobile and desktop
+.faxPageViewer {
+  display: flex;
+  flex-direction: column;
+  height: auto !important;
+  max-height: none !important;
+  width: 100%;
+  flex: 1;
+  user-select: none;
+  overflow: auto; /* allow vertical scroll if needed so nav is never hidden */
+  // Prevent resize observer loops with contain
+  contain: layout style;
+  
+/* PageStack overhaul */
+  .pagesContainer {
+    display: flex;
+    /* shrink-wrap to content height so extra vertical space goes to nav */
+    flex: 0 0 auto;
+    height: auto;
+    align-items: flex-start; /* no vertical centering that creates top/bottom gaps */
+    contain: layout style;
+    position: relative;
+    width: 100%;
+    overflow: visible;
+
+    .pageContainer {
+      display: flex;
+      align-items: stretch; /* make children full height */
+      justify-content: center;
+      gap: 0 !important; /* absolutely flush stacks to page edges */
+      height: auto; /* follow content */
+      width: 100%;
+      contain: layout;
+      padding: 0;
+    }
+  }
+
+  .pageStack {
+    position: relative;
+    align-self: stretch; /* full height to mimic page edge */
+    height: 100%;
+    margin: 0; /* absolutely flush */
+    cursor: pointer;
+    /* Alternating 1px vertical stripes (#333 / #444) to simulate page edges */
+    background: repeating-linear-gradient(
+      to right,
+      #AAA 0,
+      #888 2px,
+      #AAA 1px,
+      #888 2px
+    );
+  border-radius: 0;
+  box-shadow: none;
+      overflow: visible; /* allow tooltip to render outside */
+
+  &.leftStack { order: 0; margin-right: 0; }
+  &.rightStack { order: 3; margin-left: 0; }
+
+    .stack-hover-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: #4aa3ff;
+      transform: translateY(-50%);
+      box-shadow: 0 0 0 1px #fff;
+      pointer-events: none;
+    }
+
+    .stack-hover-column {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: #4aa3ff;
+      transform: translateX(-50%);
+      box-shadow: 0 0 0 1px #fff;
+      pointer-events: none;
+    }
+
+    .stack-tooltip {
+      position: fixed; /* comes via portal; ensure fixed respects viewport */
+      z-index: 9999;
+      pointer-events: none;
+      white-space: nowrap;
+      .stack-tooltip-content {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #fff;
+        border-radius: 8px;
+        padding: 6px 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        border: 1px solid rgba(0,0,0,0.1);
+        &.vertical {
+          flex-direction: column;
+          align-items: center;
+          .stack-thumb { width: 96px; aspect-ratio: 2 / 3; position: relative; overflow: hidden; border: 1px solid #ddd; border-radius: 2px; margin-bottom: 6px; }
+          .stack-thumb .skeleton-shimmer { position: absolute; inset: 0; }
+          .stack-thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+          .meta { .title { font-size: 14px; color: #333; font-weight: 600; } }
+        }
+      }
+    }
+  }
+
+  .pageReferences {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0;
+    
+    h6 {
+      text-align: center;
+      flex: 1;
+      margin: 0;
+      font-size: 0.9em;
+      color: #666;
+    }
+  }
+
+
+  /* inner strip with exact width (stacks + pages) */
+  .spreadInner {
+    margin: 0 auto;
+  }
+  
+  .page {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* Let explicit inline sizes control dimensions to avoid gaps */
+    min-width: 0;
+    min-height: 0;
+    height: auto;
+    max-height: none;
+    will-change: width, height; /* optimize for animations */
+    contain: layout; /* improve performance */
+    
+    img {
+      height: 100%;
+      width: auto; /* preserve aspect ratio */
+      max-width: 100%; /* don't exceed container width */
+      object-fit: contain;
+      /* Never crop or scale beyond the container to avoid hiding content */
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      transition: none;
+      will-change: auto;
+      
+      &.last-page {
+        border: 2px solid #f0c040;
+      }
+    }
+    
+    &.leftPage { 
+      margin-right: 0; 
+    }
+    &.rightPage { 
+      margin-left: 0; 
+    }
+  }
+  
+  .blankPage {
+    width: 100%;
+    height: 100%;
+    background-color: #f8f8f8;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    /* Make sure blank pages respect the same sizing as normal pages */
+    min-height: 0;
+    min-width: 0;
+    contain: layout;
+  }
+  
+  /* retain thumbnail style for stacked pages within stacks */
+  .pageStack {
+    .stackedPage {
+      display: inline-block;
+      position: relative;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.05);
+      border-right: 1px solid rgba(0, 0, 0, 0.1);
+    }
+  }
+  
+  .facsimile-navigation {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 0;
+    margin-bottom: 0;
+    /* keep nav at intrinsic height; pages decide content height */
+    flex: 0 0 auto;
+    min-height: 50px;
+    contain: layout;
+    position: relative;
+    z-index: 10;
+    
+    .nav-button {
+      background: #f0f0f0;
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      font-size: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      margin: 0 10px;
+      
+      &:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      
+      &:hover:not(:disabled) {
+        background: #e0e0e0;
+      }
+    }
+    
+    .slider-container {
+      position: relative;
+      width: 60%;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      /* hover cursor positioned absolutely inside the slider container */
+      .hover-cursor {
+        position: absolute;
+        bottom: 8px; /* align to track */
+        width: 4px; /* narrow vertical indicator */
+        height: 18px;
+        border-radius: 2px;
+        background: #9bbcf0; /* secondary color */
+        transform: translateX(-50%);
+        pointer-events: none;
+        box-shadow: 0 0 0 1px #ffffff, 0 1px 3px rgba(0,0,0,0.25);
+        z-index: 5;
+      }
+      
+      .custom-tooltip {
+        position: absolute;
+        background: #fff;
+        padding: 8px 10px 10px;
+        border-radius: 5px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        pointer-events: none;
+        z-index: 10;
+        /* keep the preview compact */
+        max-width: 240px;
+        width: auto;
+        
+        .tooltip-content {
+          text-align: center;
+          
+          .thumbnail-spread {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            margin-bottom: 6px;
+            
+            img {
+              border: 1px solid #ccc;
+              width: 56px; /* narrower thumbnails */
+              height: auto;
+              object-fit: contain;
+            }
+          }
+          
+          p {
+            margin: 5px 0 0;
+            font-size: 0.9em;
+            line-height: 1.2;
+            color: #555;
+          }
+        }
+      }
+      
+      .custom-slider {
+        width: 100%;
+        -webkit-appearance: none;
+        appearance: none;
+        height: 5px;
+        background: #ddd;
+        outline: none;
+        border-radius: 5px;
+        
+        &::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 15px;
+          height: 15px;
+          border-radius: 50%;
+          background: #4a90e2;
+          cursor: pointer;
+        }
+        
+        &::-moz-range-thumb {
+          width: 15px;
+          height: 15px;
+          border-radius: 50%;
+          background: #4a90e2;
+          cursor: pointer;
+        }
+      }
+    }
+    
+    &.mobile {
+      .slider-container {
+        width: 50%;
+      }
+    }
+  }
+}
+
+/* Global tooltip styles for PageStack (rendered via portal) */
+.stack-tooltip {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.stack-tooltip .stack-tooltip-content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  border-radius: 8px;
+  padding: 6px 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  border: 1px solid rgba(0,0,0,0.12);
+}
+
+.stack-tooltip .stack-tooltip-content.vertical {
+  flex-direction: column;
+  align-items: center;
+}
+
+.stack-tooltip .stack-tooltip-content.vertical img {
+  width: 84px; /* fixed size to prevent scaling */
+  height: auto;
+  border: 1px solid #ddd;
+  border-radius: 2px;
+  margin-bottom: 4px;
+}
+
+.stack-tooltip .stack-tooltip-content .meta .title {
+  font-size: 13px;
+  line-height: 1.2;
+  font-weight: 600;
+  color: #333;
+}
+.stack-tooltip .stack-tooltip-content .meta .ref {
+  font-size: 12px;
+  color: #555;
+  margin-bottom: 2px;
+}
+
+// Desktop specific styles
+.faxPageViewer:not(.mobile) {
+  .pageContainer {
+    flex-direction: row;
+  }
+}
+
+// Mobile specific styles
+.faxPageViewer.mobile {
+  .pageContainer {
+    flex-direction: column;
+  }
+  
+  .page {
+    width: 100%;
+    max-width: 100%;
+  }
+}
