@@ -2,20 +2,22 @@
 import path from 'path';
 import dotenv from 'dotenv';
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
+import http from 'http';
 import { ApolloServer } from 'apollo-server-express';
 import { apollo_config } from './config/apollo';
 import express from 'express';
-import {handleSSR} from '../src/ssr/index.js';
-import {requireSSR} from '../src/ssr/lib.js';
-//import json_apis from  '../src/json/index.js';
+import { handleSSR, ssrRoutes } from './ssr/index';
+import { requireSSR } from './ssr/lib';
+//import json_apis from  './json/index';
 import httpProxy from 'http-proxy';
 import dns from 'dns';
 import net from 'net';
 import axios from 'axios';
 import bodyParser from 'body-parser';
 import { processSphinx } from './search/sphinx';
-import {ping} from "../src/library/ping.js"
-import {apis,endpoints} from "../src/api/index.js"
+import { ping } from "./library/ping"
+import { apis, endpoints } from "./api/index"
+import { initializeWebSocket } from './socket';
 
 
 const langs = process.env.LANGS?.split(',') || ['', 'en', 'ko', 'dev'];
@@ -40,23 +42,13 @@ apiProxy.on('error', (err, req, res:any) => {
 
 
 const findTarget = (req:any): string | boolean  => {
-
-
   const host = req.headers.host;
   let fwdTarget = "";
   const fwds = [
     ["ssr", process.env.PROXY_BOM_SSR],
-    ["preview", process.env.PROXY_BOM_IMG],
-    ["sg", process.env.PROXY_SCRIPTURE_GUIDE],
-    ["translate", process.env.PROXY_TRANSLATE],
-    ["scripture.guide", process.env.PROXY_SCRIPTURE_GUIDE]
+    ["preview", process.env.PROXY_BOM_IMG]
     ];
   fwdTarget = fwds.find(([sub, target]) => (new RegExp(`^${sub}`,"i")).test(host))?.pop() || "";
-
-
-  const isSSR = requireSSR(req);
-  if(isSSR && !fwdTarget) return process.env.PROXY_BOM_SSR;
-
 
   return fwdTarget;
 };
@@ -68,11 +60,9 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 //allow cors from all
 
-const allowedOrigins = [
-  'localhost', 
-  'bookofmormon.online', 
-  'xn--289a67xla.kr'
-];
+const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS || 'localhost,bookofmormon.online,xn--289a67xla.kr')
+  .split(',')
+  .map(s => s.trim());
 
 app.use((req, res, next) => {
   const origin = Array.isArray(req.headers.origin) ? req.headers.origin[0] : req.headers.origin;
@@ -90,12 +80,35 @@ app.use((req, res, next) => {
 
 app.all("/ping", ping);
 
+// Handle specific SSR files first (always handle these, regardless of requireSSR)
+ssrRoutes.forEach(route => {
+  app.get(route, handleSSR);
+});
 
 app.use( (req, res, next) => {
   const target = String(findTarget(req));
   const host = req.headers.host;
+  
+  // Check if requireSSR and no specific target, then proxy to SSR
+  const isSSR = requireSSR(req);
+  if(isSSR && !target) {
+    const ssrTarget = process.env.PROXY_BOM_SSR;
+    if(ssrTarget) {
+      const targetDomain = ssrTarget.split("://").pop();
+      delete req.headers["range"];
+      
+      apiProxy.web(req, res, {
+        target: ssrTarget,
+        setTimeout: 500000,
+        autoRewrite: true,
+        cookieDomainRewrite: targetDomain,
+        changeOrigin: false
+      });
+      return;
+    }
+  }
+  
   if(target) {
-
     const targetDomain = target.split("://").pop();
     //remove these headers:
     delete req.headers["range"];
@@ -179,11 +192,26 @@ apiPaths.forEach((i:any)=>app.post(`/${i}`, apis[i]));
 
 
 //BACKEND (POST): APOLLO SERVER
-const server = new ApolloServer(apollo_config);
+const apolloServer = new ApolloServer(apollo_config);
 const { sequelize } = apollo_config;
-server.start().then(() => {
-  ["",...langs].map(i => server.applyMiddleware({ app, path: `/${i}` }));
-  app.listen(process.env.PORT, async () => {
+
+// Create HTTP server for both Express and Socket.io
+const httpServer = http.createServer(app);
+
+apolloServer.start().then(async () => {
+  ["",...langs].map(i => apolloServer.applyMiddleware({ app, path: `/${i}` }));
+  
+  // Initialize WebSocket server (Phase 3: Messenger)
+  if (process.env.MESSENGER_ENABLED !== 'false') {
+    try {
+      await initializeWebSocket(httpServer);
+      console.log('🔌 Messenger WebSocket enabled');
+    } catch (error) {
+      console.error('❌ Messenger WebSocket failed to initialize:', error);
+    }
+  }
+  
+  httpServer.listen(process.env.PORT, async () => {
     try {
       await sequelize.authenticate();
       console.log('Sequelize initiated.');

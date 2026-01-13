@@ -119,4 +119,1066 @@
         filter: invert(1);
     }
 
+    /* ============================================
+       READING PLAN DARK MODE STYLES
+       ============================================ */
+    
+    /* Reading Plan Card Components */
+    .readingplan.progress {
+        background-color: #444;
+        border-color: #555;
+    }
+    
+    .readingplan.progress .progressbar {
+        background-color: #5cb85c;
+    }
+    
+    .readingplan.progress span {
+        color: #fff;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+    }
+    
+    .home .planName {
+        background-color: #444;
+        color: #ddd;
+    }
+    
+    /* Segment List Items */
+    .segmentListItem {
+        background-color: #555;
+        color: #ddd;
+        border: 1px solid #666;
+    }
+    
+    .segmentListItem.complete {
+        background-color: #5cb85c;
+        color: #fff;
+    }
+    
+    .segmentListItem.inProgress {
+        background-color: #f0ad4e;
+        color: #333;
+    }
+    
+    .segmentListItem.notStarted {
+        background-color: #666;
+        color: #ccc;
+    }
+    
+    .segmentListItem.current.notStarted {
+        background-color: #7cb87c;
+        color: #fff;
+    }
+    
+    .segmentListItem.current {
+        outline-color: #7cb87c;
+        box-shadow: 0 0 5px rgba(124, 184, 124, 0.5);
+    }
+    
+    .segmentListItem.active {
+        outline-color: #ddd;
+        box-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+    }
+    
+    .segmentListItem.future {
+        background-color: #777;
+        color: #aaa;
+    }
+    
+    /* Segment Sections */
+    .segment {
+        border-top-color: #555;
+    }
+    
+    .segment h4 {
+        color: #fff;
+    }
+    
+    .segment .period {
+        background-color: #555;
+        color: #ddd;
+    }
+    
+    .segmentSections {
+        background-color: transparent;
+    }
+    
+    .segmentSection {
+        background-color: #444;
+        border: 1px solid #555;
+        color: #ddd;
+    }
+    
+    .segmentSection:hover {
+        background-color: #4a4a4a;
+        border-color: #666;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .segmentSection h6 {
+        color: #fff;
+    }
+    
+    .segmentSection .miniprogress {
+        background-color: #666;
+    }
+    
+    .segmentSection .miniprogress .progressBar {
+        background-color: #5cb85c;
+    }
+    
+    .segment .buttonRow {
+        background-color: #333;
+        border: 1px solid #555;
+    }
+    
+    .segment .buttonRow button {
+        background-color: #666;
+        border-color: #777;
+        color: #fff;
+    }
+    
+    .segment .buttonRow button:hover {
+        background-color: #777;
+        border-color: #888;
+    }
+    
+    /* Badge Colors for Dark Mode */
+    .readingplan .badge.green {
+        background-color: #5cb85c;
+        color: #fff;
+    }
+    
+    .readingplan .badge.yellow {
+        background-color: #f0ad4e;
+        color: #333;
+    }
+    
+    .readingplan .badge.red {
+        background-color: #d9534f;
+        color: #fff;
+    }
+    
+    .readingplan .badge.gray {
+        background-color: #777;
+        color: #ddd;
+    }
+
+    /* ============================================
+       HOME FEED DARK MODE STYLES
+       ============================================ */
+    
+    /* Home Feed Cards */
+    .homeFeed {
+        background-color: #333;
+        border-color: #555;
+    }
+    
+    .homeFeedHeader {
+        background-color: #2a2a2a;
+        border-bottom-color: #555;
+        color: #fff;
+    }
+    
+    .homeFeedHeader h5 {
+        color: #fff;
+    }
+    
+    .homeFeedHeader .imagebox {
+        background-color: #444;
+        border: 1px solid #555;
+    }
+    
+    .homeFeedHeader .progress {
+        background-color: #5cb85c;
+        color: #fff;
+        border: 1px solid #666;
+    }
+    
+    .homeFeedHeader .progress.bot {
+        background-color: #f0ad4e;
+        color: #333;
+    }
+    
+    .homeFeedBody {
+        background-color: #333;
+        color: #ddd;
+    }
+    
+    .homeFeed .itemMsg {
+        color: #ddd;
+    }
+    
+    .homeFeed .textInFeed {
+        background-color: #444;
+        color: #ddd;
+        border: 1px solid #555;
+    }
+    
+    /* Home Feed Header Groups */
+    .homeFeedHeader.group .topLine .groupName {
+        color: #fff;
+    }
+    
+    .homeFeedHeader.group .topLine .groupName:hover {
+        color: #5cb85c;
+    }
+    
+    .homeFeedHeader .timestamp a {
+        color: #aaa;
+    }
+    
+    .homeFeedHeader .timestamp a:hover {
+        color: #fff;
+    }
+    
+    .homeFeedHeader span.feedAction {
+        color: #ccc;
+    }
+    
+    /* Home Banner */
+    .homeBanner {
+        background-color: #333;
+        color: #fff;
+    }
+    
+    .homeBanner .homeBannerText h3 {
+        color: #fff;
+    }
+    
+    .homeBanner .homeBannerText h3 a {
+        color: #ddd;
+        background-color: #555;
+    }
+    
+    .homeBanner .homeBannerText h3 a:hover {
+        background-color: #666;
+        color: #fff;
+    }
+    
+    .homeBanner .homeBannerText div.description {
+        color: #ddd;
+    }
+    
+    .homeBannerCard {
+        background-color: #333;
+        border-color: #555;
+    }
+    
+    /* Comments */
+    .commentThreadItem {
+        background-color: #2a2a2a;
+        border-color: #555;
+        color: #ddd;
+    }
+    
+    .commentThreadItem.selected {
+        background-color: #3a3a3a;
+        border-color: #666;
+    }
+    
+    .commentThreadItem .imagebox {
+        background-color: #444;
+        border: 1px solid #555;
+    }
+    
+    .commentThreadItem .progress {
+        background-color: #5cb85c;
+        color: #fff;
+    }
+    
+    .commentThreadItem .textbox {
+        background-color: transparent;
+    }
+    
+    .commentThreadItem .textbox .namerow span a {
+        color: #5cb85c;
+    }
+    
+    .commentThreadItem .textbox .namerow span a:hover {
+        color: #7cb87c;
+    }
+    
+    .commentThreadItem .textbox .namerow .botBadge {
+        background-color: #f0ad4e;
+        color: #333;
+    }
+    
+    .commentThreadItem .textbox .mesg {
+        color: #ddd;
+    }
+    
+    .home textarea.form-control {
+        background-color: #444;
+        border-color: #555;
+        color: #fff;
+    }
+    
+    .home textarea.form-control:focus {
+        background-color: #4a4a4a;
+        border-color: #666;
+        box-shadow: 0 0 0 0.2rem rgba(92, 184, 92, 0.25);
+    }
+    
+    /* Study Count Row and Buttons */
+    .study .countRow {
+        background-color: #2a2a2a;
+        border-color: #555;
+    }
+    
+    .study .commentCount {
+        color: #ddd;
+    }
+    
+    .study .buttonRow {
+        background-color: #2a2a2a;
+        border-color: #555;
+    }
+    
+    .study .buttonRow .btn {
+        background-color: #555;
+        border-color: #666;
+        color: #fff;
+    }
+    
+    .study .buttonRow .btn:hover {
+        background-color: #666;
+        border-color: #777;
+    }
+    
+    .study .buttonRow .btn.disabled {
+        background-color: #444;
+        color: #777;
+        border-color: #555;
+    }
+    
+    .study .buttonRow.disabledrow {
+        opacity: 0.6;
+    }
+    
+    .textbox.notmember {
+        background-color: #444;
+        color: #ddd;
+    }
+    
+    .notmember .btn {
+        background-color: #666;
+        border-color: #777;
+        color: #fff;
+    }
+
+    /* ============================================
+       GROUP BROWSER & COMMUNITY DARK MODE STYLES
+       ============================================ */
+    
+    /* Community Groups */
+    .Community .groupCard {
+        background-color: #2a2a2a;
+        border: 1px solid #555;
+    }
+    
+    .Community .groupCard .groupContent {
+        background-color: #333;
+        border-color: #555;
+    }
+    
+    .Community .groupCard .groupContent:hover {
+        background-color: #3a3a3a;
+        border-color: #666;
+    }
+    
+    .Community .groupCard.active .groupContent {
+        background-color: #3a3a3a;
+        border-color: #5cb85c;
+        box-shadow: 0 0 5px rgba(92, 184, 92, 0.3);
+    }
+    
+    .Community .groupCard.inactive .groupContent {
+        background-color: #2a2a2a;
+        opacity: 0.7;
+    }
+    
+    .Community .groupCard.inactive:hover .groupContent {
+        opacity: 0.9;
+    }
+    
+    .Community .groupCard .groupTitle {
+        color: #fff;
+    }
+    
+    .Community .groupCard .groupMessage {
+        background-color: #444;
+        color: #ddd;
+    }
+    
+    .Community .groupCard .groupMessageContent {
+        color: #ddd;
+    }
+    
+    .Community .groupCard .groupMembership {
+        background-color: #2a2a2a;
+    }
+    
+    .Community .groupCard .groupMembershipCount {
+        background-color: #555;
+        color: #fff;
+        border: 1px solid #666;
+    }
+    
+    .Community .groupCard .groupCTA .btn {
+        background-color: #5cb85c;
+        border-color: #4cae4c;
+        color: #fff;
+    }
+    
+    .Community .groupCard .groupCTA .btn:hover {
+        background-color: #4cae4c;
+        border-color: #449d44;
+    }
+    
+    .Community .groupCard .groupCTA.applied .btn {
+        background-color: #666;
+        border-color: #555;
+        color: #ddd;
+    }
+    
+    .groupCTA.applied .btn {
+        background-color: #666;
+        border-color: #555;
+    }
+    
+    /* Leader Board Enhancements */
+    .leaderboard {
+        background-color: transparent;
+    }
+    
+    .leaderBoardItem {
+        background-color: #2a2a2a;
+        border: 1px solid #555;
+        color: #fff;
+        border-radius: 8px;
+    }
+    
+    .leaderBoardItem:hover {
+        background-color: #3a3a3a;
+        border-color: #666;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .leaderBoardItem .rank {
+        background-color: #666;
+        color: #fff;
+        border: 2px solid #777;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+    }
+    
+    .leaderBoardItem .nickname {
+        color: #fff;
+        font-weight: 500;
+    }
+    
+    .leaderBoardItem .lastseen {
+        color: #aaa;
+    }
+    
+    .leaderBoardItem .namenum {
+        color: #ddd;
+    }
+    
+    .leaderBoardItem .progress {
+        background-color: #444;
+        border: 1px solid #555;
+        border-radius: 4px;
+    }
+    
+    .leaderBoardItem .progress .progressbar {
+        background-color: #5cb85c;
+        border-radius: 3px;
+    }
+    
+    .leaderBoardItem .progress span {
+        color: #fff;
+        font-weight: 600;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+    }
+    
+    /* Trophy Images Enhancement */
+    .leaderBoardItem .trophies img {
+        background-color: rgba(255,255,255,0.9) !important;
+        border: 1px solid #666;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        filter: brightness(1.1) contrast(1.1);
+    }
+    
+    .leaderboard > .leaderBoardItem .img-container .trophies img,
+    .GroupLeaderBoard .leaderBoardItem .trophies img {
+        background-color: rgba(255,255,255,0.95) !important;
+        border: 1px solid #888;
+    }
+    
+    /* Image Container */
+    .leaderboard > .leaderBoardItem .img-container,
+    .GroupLeaderBoard .leaderBoardItem .img-container {
+        border: 1px solid #555;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    
+    .GroupLeaderBoard {
+        background-color: transparent;
+    }
+    
+    .GroupLeaderBoard .leaderBoardItem {
+        background-color: #333;
+        border: 1px solid #555;
+        border-radius: 6px;
+    }
+    
+    .GroupLeaderBoard .leaderBoardItem:hover {
+        background-color: #3a3a3a;
+        border-color: #666;
+    }
+    
+    .GroupLeaderBoard .leaderBoardItem .rank {
+        background-color: #555;
+        color: #fff;
+        border: 2px solid #666;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.4);
+    }
+    
+    .GroupLeaderBoard .leaderBoardItem .nickname {
+        color: #fff;
+        font-weight: 500;
+    }
+    
+    .GroupLeaderBoard .leaderBoardItem .namenum {
+        color: #ddd;
+    }
+    
+    .GroupLeaderBoard .leaderBoardItem .progress {
+        background-color: #444;
+        border-radius: 3px;
+    }
+    
+    .GroupLeaderBoard .leaderBoardItem .progress .progressbar {
+        background-color: #5cb85c;
+        border-radius: 2px;
+    }
+    
+    .GroupLeaderBoard .leaderBoardItem .progress span {
+        color: #fff;
+        font-weight: 600;
+        text-shadow: 1px 1px 1px rgba(0,0,0,0.6);
+    }
+    
+    /* Community Load Bar */
+    .Community .loadBar {
+        background-color: #444;
+        color: #ddd;
+    }
+    
+    /* See More Button */
+    .Community .seeMore {
+        background-color: #555;
+        color: #ddd;
+        border: 1px solid #666;
+    }
+    
+    .Community .seeMore:hover {
+        background-color: #666;
+        color: #fff;
+        border-color: #777;
+    }
+    
+    /* Login Group */
+    .loginGroup {
+        background-color: #333;
+        border: 1px solid #555;
+        color: #ddd;
+    }
+    
+    .loginGroup .btn img {
+        filter: brightness(1.2);
+    }
+
+    /* ============================================
+       TOOLTIPS & INTERACTIVE ELEMENTS
+       ============================================ */
+    
+    /* Tooltip Enhancements */
+    .privacyTip {
+        background-color: #444 !important;
+        color: #fff !important;
+        border: 1px solid #666 !important;
+    }
+    
+    .likeTip {
+        background-color: #444 !important;
+        color: #fff !important;
+        border: 1px solid #666 !important;
+    }
+    
+    .likeTip ul {
+        background-color: transparent;
+    }
+    
+    .likeTip li {
+        color: #fff;
+    }
+    
+    .likeTip .progress {
+        background-color: #5cb85c;
+        color: #fff;
+    }
+    
+    .cardTip {
+        background-color: #444 !important;
+        color: #fff !important;
+        border: 1px solid #666 !important;
+    }
+    
+    .cardTip > div {
+        background-color: #444;
+        color: #fff;
+    }
+    
+    .cardTip .groupimg {
+        border: 1px solid #666;
+    }
+    
+    .cardTip .titledesc {
+        color: #fff;
+    }
+    
+    .cardTip .titledesc p {
+        color: #ddd;
+    }
+    
+    .cardTip ul {
+        background-color: #333;
+        border: 1px solid #555;
+    }
+    
+    .cardTip li {
+        color: #ddd;
+        border-bottom: 1px solid #555;
+    }
+    
+    .cardTip li:last-child {
+        border-bottom: none;
+    }
+    
+    .cardTip li div.tip-progress {
+        background-color: #555;
+    }
+    
+    .cardTip li div.tip-progress div {
+        background-color: #5cb85c;
+    }
+    
+    /* Progress Panel */
+    .progressPanel .ProgressBoxPane {
+        background-color: #333;
+        border: 1px solid #555;
+        color: #fff;
+    }
+    
+    .ProgressBoxPane .card-body {
+        background-color: #333;
+        color: #ddd;
+    }
+    
+    .ProgressBoxPane {
+        background-color: #333;
+        border-color: #555;
+    }
+    
+    /* Table of Contents */
+    .toc {
+        background-color: #333;
+        border: 1px solid #555;
+    }
+    
+    .toc h5 {
+        color: #fff;
+        border-bottom: 1px solid #555;
+    }
+
+    /* ============================================
+       SCROLL PANELS
+       ============================================ */
+    
+    .leftPanelScroll,
+    .rightPanelScroll {
+        background-color: #1a1a1a;
+    }
+    
+    .leftPanelScroll::-webkit-scrollbar,
+    .rightPanelScroll::-webkit-scrollbar {
+        background-color: #333;
+        width: 8px;
+    }
+    
+    .leftPanelScroll::-webkit-scrollbar-thumb,
+    .rightPanelScroll::-webkit-scrollbar-thumb {
+        background-color: #666;
+        border-radius: 4px;
+    }
+    
+    .leftPanelScroll::-webkit-scrollbar-thumb:hover,
+    .rightPanelScroll::-webkit-scrollbar-thumb:hover {
+        background-color: #777;
+    }
+    
+    /* Trophy Images */
+    .home img.trophy {
+        filter: brightness(1.2) sepia(0.3) hue-rotate(45deg);
+    }
+    
+    .home .commentThreadItem img.trophy {
+        filter: brightness(1.2) sepia(0.3) hue-rotate(45deg);
+    }
+    
+    /* Spinner Adjustments */
+    .segment.spinnerBox,
+    .segment .spinnerBox {
+        background-color: #333;
+    }
+    
+    .segment.spinnerBox img,
+    .segment .spinnerBox img {
+        filter: brightness(1.2);
+    }
+
+    /* ============================================
+       SECTION.JS DARK MODE STYLES
+       ============================================ */
+    
+    /* Page Sections */
+    .pagesection {
+        background-color: #333;
+        border-color: #555;
+        color: #fff;
+    }
+    
+    .pagesection.card {
+        background-color: #333;
+        border-color: #555;
+    }
+    
+    .pagesection .card-header {
+        background-color: #2a2a2a;
+        border-bottom-color: #555;
+        color: #fff;
+    }
+    
+    .pagesection h4 {
+        color: #fff;
+    }
+    
+    .pagesection .card-body {
+        background-color: #333;
+        color: #ddd;
+    }
+    
+    /* Card Header Title Wrapper */
+    .card-header-title-wrapper {
+        background-color: transparent;
+    }
+    
+    /* Theater Link */
+    .theater-link {
+        background-color: #555;
+        border: 1px solid #666;
+        color: #fff;
+    }
+    
+    .theater-link:hover {
+        background-color: #666;
+        border-color: #777;
+        color: #fff;
+    }
+    
+    .theater-link img {
+        filter: brightness(1.2) invert(1);
+    }
+    
+    a.theater-link {
+        background-color: #555;
+        border-color: #666;
+    }
+    
+    a.theater-link:hover {
+        background-color: #666;
+        border-color: #777;
+    }
+    
+    a.theater-link img {
+        filter: brightness(1.2) invert(1);
+    }
+    
+    a.theater-link img:hover {
+        filter: brightness(1.4) invert(1);
+    }
+
+    /* ============================================
+       TEXTCONTENT.JS DARK MODE STYLES
+       ============================================ */
+    
+    /* Scripture Cards */
+    .card .scripture {
+        background-color: #333;
+        color: #ddd;
+    }
+    
+    .card .scripture .content {
+        background-color: #333;
+        color: #ddd;
+    }
+    
+    .card .scripture .content > p,
+    .card .scripture .content > blockquote {
+        color: #ddd;
+    }
+    
+    .page .card .scripture .reference {
+        background-color: #555;
+        color: #fff;
+        border-color: #666;
+    }
+    
+    .card .scripture .reference a.refheader {
+        color: #fff;
+    }
+    
+    .card .scripture .reference a.refheader:hover {
+        color: #5cb85c;
+    }
+    
+    .card .scripture .reference.open {
+        background-color: #666;
+        color: #fff;
+    }
+    
+    /* Text Item Counters */
+    .card .scripture .reference .text_item_counter {
+        background-color: transparent;
+    }
+    
+    .card .scripture .reference .text_item_counter .item_counter {
+        background-color: #444;
+        color: #fff;
+        border: 1px solid #555;
+    }
+    
+    .card .scripture .reference .text_item_counter .item_counter:hover {
+        background-color: #555;
+        color: #fff;
+        border-color: #666;
+    }
+    
+    .card .scripture .reference .item_counter img {
+        filter: brightness(1.2) invert(1);
+    }
+    
+    /* Triangle Icons */
+    .card .scripture .reference .triangle {
+        color: #fff;
+    }
+    
+    .card .scripture .reference .triangle img {
+        filter: brightness(1.2) invert(1);
+    }
+    
+    .card .scripture .reference.open .triangle img {
+        filter: brightness(1.2) invert(1);
+    }
+    
+    .card .scripture .reference:hover .triangle {
+        color: #5cb85c;
+    }
+    
+    .triangle img {
+        filter: brightness(1.2) invert(1);
+    }
+    
+    /* Scripture Text Highlights */
+    .scripture strong {
+        background-color: #555;
+        color: #fff;
+    }
+    
+    .scripture .highlight {
+        background-color: #444;
+        color: #fff;
+        border: 1px solid #555;
+    }
+    
+    .scripture .highlight button {
+        background-color: #555;
+        color: #ddd;
+        border: 1px solid #666;
+    }
+    
+    .scripture .highlight button:hover {
+        background-color: #666;
+        color: #fff;
+    }
+    
+    /* Text Block Cards */
+    .card-plain.textblock {
+        background-color: #333;
+        border-color: #555;
+    }
+    
+    .card-plain.textblock .card-header {
+        background-color: #2a2a2a;
+        border-color: #555;
+        color: #fff;
+    }
+    
+    .card-plain.textblock .card-body {
+        background-color: #333;
+        color: #ddd;
+    }
+    
+    /* Chronology Rows */
+    .row.chronoRow {
+        color: #ddd;
+    }
+    
+    .row.chronoRow div.chronoText {
+        background-color: #555;
+        color: #ddd;
+        border-color: #666;
+    }
+    
+    /* Comments Indicators */
+    .scripture .comments {
+        background-color: #f0ad4e;
+        color: #333;
+        border: 1px solid #e0971f;
+    }
+    
+    /* Text Item Tooltip */
+    .text_item_tooltip {
+        background-color: #444;
+        color: #fff;
+        border: 1px solid #666;
+    }
+
+    /* ============================================
+       ITEM IN FEED DARK MODE STYLES
+       ============================================ */
+    
+    /* Item In Feed Container */
+    .itemInFeedContainer {
+        background-color: #333;
+        border-color: #555;
+        color: #fff;
+    }
+    
+    .home .itemInFeedContainer {
+        background-color: #333;
+        border-color: #555;
+        color: #fff;
+    }
+    
+    .itemInFeedContainer .notch {
+        color: #555;
+    }
+    
+    /* Item In Feed Elements */
+    .itemInFeed {
+        background-color: #2a2a2a;
+        color: #ddd;
+        border: 1px solid #555;
+    }
+    
+    .itemInFeed:hover {
+        background-color: #3a3a3a;
+        color: #fff;
+        border-color: #666;
+    }
+    
+    .itemInFeed h5 {
+        color: #fff;
+    }
+    
+    .itemInFeed .imageContainer {
+        background-color: #1a1a1a;
+        border: 1px solid #555;
+    }
+    
+    .itemInFeed .coverImage {
+        background-color: #1a1a1a;
+    }
+    
+    .itemInFeed .containImage {
+        border: 1px solid #555;
+    }
+    
+    .itemInFeed .imageSource {
+        background-color: #444;
+        color: #ddd;
+        border: 1px solid #555;
+    }
+    
+    .itemInFeed .imageStar {
+        background-color: #f0ad4e;
+        color: #333;
+        border: 1px solid #e0971f;
+    }
+    
+    .itemInFeed .pageSection {
+        background-color: #444;
+        color: #ddd;
+        border: 1px solid #555;
+    }
+    
+    .itemInFeed .narration {
+        background-color: #3a3a3a;
+        color: #ddd;
+    }
+    
+    .itemInFeed .caption {
+        background-color: #444;
+        color: #ddd;
+        border-top: 1px solid #555;
+    }
+    
+    .itemInFeed .reference {
+        background-color: #555;
+        color: #fff;
+        border: 1px solid #666;
+    }
+    
+    .itemInFeed .imgBox {
+        background-color: #2a2a2a;
+        border: 1px solid #555;
+    }
+    
+    .itemInFeed .imgBox:hover {
+        background-color: #3a3a3a;
+        border-color: #666;
+    }
+    
+    /* Text In Feed */
+    .textInFeed {
+        background-color: #444;
+        color: #ddd;
+        border: 1px solid #555;
+    }
+    
+    .textInFeed span.indent {
+        color: #777;
+    }
+    
+    .textInFeed blockquote {
+        background-color: #3a3a3a;
+        color: #ddd;
+        border-left: 3px solid #5cb85c;
+        padding-left: 1em;
+    }
+
 }

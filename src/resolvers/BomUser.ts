@@ -1,9 +1,52 @@
 import { models, models as Models } from '../config/database';
 import Sequelize, { Model } from 'sequelize';
-import { sendbird } from '../library/sendbird.js';
-const { genUserAvatar} = require('./lib')
+import { messenger } from '../library/messenger';
+import { genUserAvatar } from './lib';
+import { verifyPassword, hashPassword, needsRehash } from '../library/auth/password';
+import { GraphQLContext, ResolverFn, AuthResponse, UserData } from '../types/graphql';
+import { authService } from '../services';
 
 import crypto from 'crypto';
+
+// Argument interfaces for resolvers
+interface SigninArgs {
+  username: string;
+  password: string;
+  token: string;
+}
+
+interface SignupArgs {
+  username: string;
+  email: string;
+  password: string;
+  token: string;
+}
+
+interface CheckUsernameArgs {
+  username: string;
+}
+
+// Feature flag - messaging disabled until Phase 5 data migration
+const MESSENGER_ENABLED = process.env.MESSENGER_ENABLED === 'true';
+
+// Sendbird-compatible shim - returns mock data when messaging disabled
+const sendbird: any = MESSENGER_ENABLED ? messenger : {
+  loadUser: async (id: string, name?: string, url?: string, email?: string) => ({ 
+    user_id: id, 
+    nickname: name || 'User', 
+    profile_url: url || '',
+    metadata: null,
+    is_online: false,
+    last_seen_at: null,
+    is_bot: false
+  }),
+  getUser: async (id: string) => null,
+  createUser: async (id: string, name: string, url: string) => ({ user_id: id, nickname: name, profile_url: url }),
+  upsertUser: async (id: string, data: any) => ({ user_id: id, ...data }),
+  updateUserNickname: async () => ({}),
+  updateUser: async () => ({}),
+  closeTab: async () => ({}),
+};
 import {
   Op,
   includeTranslation,
@@ -25,8 +68,8 @@ import {
   getLoggedTextItems
 } from './_common';
 import { userInfo } from 'os';
-const request = require('request-promise');
-const axios = require('axios');
+import request from 'request-promise';
+import axios from 'axios';
 
 const md5 = (value: string) => {
   if (!value) return "";
@@ -50,61 +93,72 @@ const cleanUsername = (username: string, email: string) => {
 
 export default {
   Query: {
-    signin: async (root: any, args: any, context: any, info: any) => {
-      var crypto = require('crypto');
-      if (!args.username || !args.password || !args.token)
+    signin: async (
+      _root: unknown,
+      args: SigninArgs,
+      context: GraphQLContext,
+      _info: unknown
+    ): Promise<AuthResponse> => {
+      // Delegate authentication to AuthService
+      const result = await authService.signin(
+        args.username,
+        args.password,
+        args.token
+      );
+
+      if (!result.success || !result.user) {
         return {
           isSuccess: false,
-          msg: 'Login Failed',
+          msg: result.message || 'Login Failed',
           user: null
         };
-      return Models.BomUser.findOne({
-        where: {
-          [Op.or]: {
-            user: args.username,
-            email: args.username
-          },
-          pass: crypto
-            .createHash('md5')
-            .update(args.password)
-            .digest('hex')
-        }
-      }).then((myUser: any) => {
-        if (myUser == null) {
-          return {
-            isSuccess: false,
-            msg: 'User or password incorrect',
-            user: null
-          };
-        }
-        //New Token Processing
-        Models.BomUserToken.upsert({ token: args.token, user: myUser.user }).then(function () {
-          //console.log('signin');
-          return Models.BomUserToken.findAll({ where: { user: myUser.user } }).then(function (results) {
-            var tokens = results.map((itme: any) => itme.getDataValue('token'));
-            // console.log({ tokens });
-            Models.BomLog.update({ user: myUser.user }, { where: { user: tokens } });
-          });
-        });
-        const hashed_id = md5(myUser.getDataValue("user"));
-        return {
-          isSuccess: true,
-          msg: 'login_success',
-          user: myUser,
-          social: sendbird.loadUser(hashed_id)
-        };
+      }
+
+      try {
+        // Token processing - associate token with user and update logs
+        await Models.BomUserToken.upsert({ token: args.token, user: result.user.username });
+        const results: any = await Models.BomUserToken.findAll({ where: { user: result.user.username } });
+        const tokens = results.map((item: any) => item.getDataValue('token'));
+        await Models.BomLog.update({ user: result.user.username }, { where: { user: tokens } });
+      } catch (tokenError) {
+        console.error('Token processing error during signin:', tokenError);
+        // Continue with login even if token processing fails
+      }
+
+      // Load full user model for response (needed for GraphQL field resolvers)
+      const myUser = await Models.BomUser.findOne({
+        where: { user: result.user.username }
       });
+
+      const hashed_id = md5(result.user.username);
+      const userName = result.user.name;
+      const userAvatar = genUserAvatar(hashed_id);
+
+      return {
+        isSuccess: true,
+        msg: 'login_success',
+        user: myUser,
+        social: await sendbird.loadUser(hashed_id, userName, userAvatar)
+      };
     },
     user: async (root: any, args: any, context: any, info: any) => {
-      return Models.BomUser.findOne(findUserByToken(args.token)).then((foundUser: any) => {
+      try {
+        const foundUser: any = await Models.BomUser.findOne(findUserByToken(args.token));
         return foundUser;
-      });
+      } catch (error) {
+        console.error('Database error during user lookup:', error);
+        return null;
+      }
     },
     closetab: async (root: any, args: any, context: any, info: any) => {
-      return Models.BomUser.findOne(findUserByToken(args.token)).then((foundUser: any) => {
+      try {
+        const foundUser: any = await Models.BomUser.findOne(findUserByToken(args.token));
         if (!foundUser) return false;
         return sendbird.closeTab(foundUser.getDataValue('user'));
-      });
+      } catch (error) {
+        console.error('Database error during closetab:', error);
+        return false;
+      }
     },
 
     socialsignin: async (root: any, args: any, context: any, info: any) => {
@@ -122,67 +176,82 @@ export default {
     tokensignin: async (root: any, args: any, context: any, info: any) => {
       let token = args.token;
       // console.log('tokensignin');
-      return Models.BomUser.findOne({
-        include: [
-          {
-            model: Models.BomUserToken,
-            where: {
-              token: args.token
-            }
-          },
-          includeModel(info, Models.BomUserSocial, 'networks')
-        ]
-      }).then((myUser: any) => {
-        if (!myUser)
+      try {
+        const myUser: any = await Models.BomUser.findOne({
+          include: [
+            {
+              model: Models.BomUserToken,
+              where: {
+                token: args.token
+              }
+            },
+            includeModel(info, Models.BomUserSocial, 'networks')
+          ]
+        });
+
+        if (!myUser) {
           return {
             isSuccess: false,
             msg: 'Token Login Failure'
           };
+        }
 
         const hashed_id = md5(myUser.getDataValue("user"));
+        const userName = myUser.getDataValue("name");
+        const userAvatar = genUserAvatar(hashed_id);
         return {
           isSuccess: true,
           msg: 'Token Login Success',
           user: myUser,
-          social: sendbird.loadUser(hashed_id)
+          social: await sendbird.loadUser(hashed_id, userName, userAvatar)
         };
-      });
+      } catch (error) {
+        console.error('Database error during token signin:', error);
+        return {
+          isSuccess: false,
+          msg: 'Database error'
+        };
+      }
     },
     sourceUsage: async (root: any, args: any, context: any, info: any) => {
       if (!args.token || !args.source) return 0;
-      return Models.BomUser.findAll({
-        raw: true,
-        include: [
-          {
-            model: Models.BomUserToken,
-            where: {
-              token: args.token
-            }
-          },
-          {
-            model: Models.BomLog,
-            where: {
-              type: 'commentary',
-              value: {
-                [Op.like]: '_____' + args.source.padStart(3, '0') + '__'
+      try {
+        const logs: any = await Models.BomUser.findAll({
+          raw: true,
+          include: [
+            {
+              model: Models.BomUserToken,
+              where: {
+                token: args.token
+              }
+            },
+            {
+              model: Models.BomLog,
+              where: {
+                type: 'commentary',
+                value: {
+                  [Op.like]: '_____' + args.source.padStart(3, '0') + '__'
+                }
               }
             }
-          }
-        ]
-      }).then((logs: any) => {
-        return Models.BomXtrasSource.findOne({
+          ]
+        });
+
+        const sourceInfo = await Models.BomXtrasSource.findOne({
           raw: true,
           attributes: ["item_count"],
           where: {
             source_id: args.source
           }
-        }).then(sourceInfo => {
+        });
 
-          let nom = 100 * 100 * (1 + logs.map(l => l['_bom_log.value']).filter((value, index, self) => self.indexOf(value) === index).length || 1);
-          let denom = sourceInfo['item_count'] || 100;
-          return Math.round(nom / denom) / 100;
-        })
-      });
+        let nom = 100 * 100 * (1 + logs.map(l => l['_bom_log.value']).filter((value, index, self) => self.indexOf(value) === index).length || 1);
+        let denom = sourceInfo?.['item_count'] || 100;
+        return Math.round(nom / denom) / 100;
+      } catch (error) {
+        console.error('Database error during sourceUsage:', error);
+        return 0;
+      }
     },
     studylog: async (root: any, args: any, context: any, info: any) => {
       const lang = context.lang ? context.lang : null;
@@ -214,26 +283,33 @@ export default {
       });
     },
     userdailyscores: async (root: any, args: any, context: any, info: any) => {
-      return Models.BomUser.findOne({
-        attributes: ['user'],
-        include: [
-          {
-            model: Models.BomUserToken,
-            where: {
-              token: args.token
+      try {
+        const user: any = await Models.BomUser.findOne({
+          attributes: ['user'],
+          include: [
+            {
+              model: Models.BomUserToken,
+              where: {
+                token: args.token
+              }
             }
-          }
-        ]
-      }).then((user: any) => {
+          ]
+        });
+
         let username = user ? user?.getDataValue('user') : args.token;
 
-        return getStandardizedValuesFromUserList([username]).then((standardizedValues: any) => {
-          return {
-            dates: standardizedValues.map((item: any) => item.date),
-            progress: standardizedValues.map((item: any) => item.progress[username])
-          };
-        });
-      });
+        const standardizedValues: any = await getStandardizedValuesFromUserList([username]);
+        return {
+          dates: standardizedValues.map((item: any) => item.date),
+          progress: standardizedValues.map((item: any) => item.progress[username])
+        };
+      } catch (error) {
+        console.error('Database error during userdailyscores:', error);
+        return {
+          dates: [],
+          progress: []
+        };
+      }
     },
     pageprogress: async (root: any, args: any, context: any, info: any) => {
       let pageslugs = getSlugTip(args.slug);
@@ -301,13 +377,17 @@ export default {
   },
   Mutation: {
     signout: async (root: any, args: any, context: any, info: any) => {
-      return Models.BomUserToken.destroy({
-        where: {
-          token: args.token
-        }
-      }).then((result: any) => {
+      try {
+        const result: any = await Models.BomUserToken.destroy({
+          where: {
+            token: args.token
+          }
+        });
         return result === 1;
-      });
+      } catch (error) {
+        console.error('Database error during signout:', error);
+        return false;
+      }
     },
     signup: async (root: any, args: any, context: any, info: any) => {
       const lang = context.lang ? context.lang : "en";
@@ -330,14 +410,15 @@ export default {
           msg: 'Sign-up Failed',
           user: null
         };
+
+      // Hash password with bcrypt
+      const hashedPassword = await hashPassword(args.password);
+
       return Models.BomUser.create({
         user: args.username,
         name: args.name,
         email: args.email,
-        pass: crypto
-          .createHash('md5')
-          .update(args.password)
-          .digest('hex'),
+        pass: hashedPassword,
         zip: args.zip,
         lang: lang || "en",
         created_at: Sequelize.literal('CURRENT_TIMESTAMP')
@@ -393,60 +474,83 @@ export default {
     },
     editProfile: async (root: any, args: any, context: any, info: any) => {
       if (!args.token) return false;
-      return Models.BomUser.findOne({
-        include: [
-          {
-            model: Models.BomUserToken,
-            where: {
-              token: args.token
+      try {
+        const myUser: any = await Models.BomUser.findOne({
+          include: [
+            {
+              model: Models.BomUserToken,
+              where: {
+                token: args.token
+              }
             }
-          }
-        ]
-      }).then(async (myUser: any) => {
+          ]
+        });
+
         if (!myUser?.user) return null;
+        
         let updatedValues = args;
         delete updatedValues.token;
         // console.log({ updatedValues });
-        return Models.BomUser.update(updatedValues, { where: { user: myUser.user } }).then((result: any) => {
-          // if(result.shift() === 0) return null
-          Object.assign(myUser, updatedValues);
-          const { user } = myUser;
-          const hashed_id = md5(user);
-          if (updatedValues?.name)
-            return sendbird.updateUserNickname(hashed_id, updatedValues.name).then((sbResponse: any) => {
-              if (!sbResponse) return null;
-              return myUser;
-            });
-          return myUser;
-        });
-      });
+        
+        const result: any = await Models.BomUser.update(updatedValues, { where: { user: myUser.user } });
+        // if(result.shift() === 0) return null
+        Object.assign(myUser, updatedValues);
+        const { user } = myUser;
+        const hashed_id = md5(user);
+        
+        if (updatedValues?.name) {
+          try {
+            const sbResponse: any = await sendbird.updateUserNickname(hashed_id, updatedValues.name);
+            if (!sbResponse) return null;
+            return myUser;
+          } catch (sendbirdError) {
+            console.error('Sendbird update error:', sendbirdError);
+            return myUser; // Return user even if sendbird update fails
+          }
+        }
+        return myUser;
+      } catch (error) {
+        console.error('Database error during editProfile:', error);
+        return null;
+      }
     },
     changePassword: async (root: any, args: any, context: any, info: any) => {
       if (!args.password) return false;
       if (!args.token) return false;
-      let newPassword = crypto
-        .createHash('md5')
-        .update(args.password)
-        .digest('hex');
-      return Models.BomUser.findOne({
-        attributes: ['user'],
-        where: {
-          pass: { [Op.notLike]: newPassword }
-        },
-        include: [
-          {
-            model: Models.BomUserToken,
-            where: {
-              token: args.token
+
+      try {
+        // Find user by token (without comparing password hashes)
+        const myUser: any = await Models.BomUser.findOne({
+          attributes: ['user', 'pass'],
+          include: [
+            {
+              model: Models.BomUserToken,
+              where: {
+                token: args.token
+              }
             }
-          }
-        ]
-      }).then((myUser: any) => {
-        if (!myUser?.user) return false;
-        return Models.BomUser.update({ pass: newPassword }, { where: { user: myUser.user } }).then((result: any) => {
-          return result.shift() === 1;
+          ]
         });
-      });
+
+        if (!myUser?.user) return false;
+
+        // Hash new password with bcrypt
+        const newPasswordHash = await hashPassword(args.password);
+
+        // Check if new password is same as old (for bcrypt hashes)
+        const currentHash = myUser.getDataValue('pass');
+        if (currentHash && !needsRehash(currentHash)) {
+          // If current hash is bcrypt, compare with new password
+          const isSamePassword = await verifyPassword(args.password, currentHash);
+          if (isSamePassword) return false; // Don't update if same password
+        }
+
+        const result: any = await Models.BomUser.update({ pass: newPasswordHash }, { where: { user: myUser.user } });
+        return result.shift() === 1;
+      } catch (error) {
+        console.error('Database error during changePassword:', error);
+        return false;
+      }
     },
     log: async (root: any, args: any, context: any, info: any) => {
       return getUserForLog(args.token).then((userInfo: any) => {
@@ -456,10 +560,12 @@ export default {
 
         return getValueForLog(args.key, args.val).then((value: string) => {
           // console.log({ context });
+          // Extract the actual client IP (first in the chain) and truncate to fit the column
+          const clientIp = context.ip ? context.ip.split(',')[0].trim().substring(0, 45) : '';
           return Models.BomLog.create({
             timestamp: now,
             user: userInfo.queryBy,
-            ip: context.ip,
+            ip: clientIp,
             type: args.key,
             value: value,
             credit: -1,

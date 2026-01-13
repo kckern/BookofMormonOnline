@@ -7,7 +7,14 @@
       content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width"
     />
     <title></title>
-     <link rel="shortcut icon" href="https://media.bookofmormon.online/interface/logo">
+     <link rel="shortcut icon" href="/favicon.ico">
+     <!--PWA-->
+     <link rel="manifest" href="/manifest.json">
+     <meta name="theme-color" content="#323b4d">
+     <meta name="apple-mobile-web-app-capable" content="yes">
+     <meta name="apple-mobile-web-app-status-bar-style" content="default">
+     <meta name="apple-mobile-web-app-title" content="Book of Mormon">
+     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
       <meta Http-Equiv="Cache" content="no-cache">
       <meta Http-Equiv="Pragma-Control" content="no-cache">
       <meta Http-Equiv="Cache-directive" Content="no-cache">
@@ -22,15 +29,43 @@
       <link rel="stylesheet" href="https://cdn.maptiler.com/ol/v6.12.0/ol.css" type="text/css">
       <script src="https://cdn.maptiler.com/ol/v6.12.0/ol.js" type="text/javascript"></script> -->
       
-      <!-- Polyfill.io CDN -->
-      <script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=requestAnimationFrame,Element.prototype.classList,URL,fetch,Function.prototype.bind,es5&flags=always,gated&unknown=polyfill" type="text/javascript"></script>
+      <!-- Polyfills no longer needed for modern browsers -->
+
+      <!-- Simple error detection for missing main bundle -->
+      <script type="text/javascript">
+        window.hasReloaded = false;
+        
+        // Only handle the specific case of main bundle syntax errors
+        window.addEventListener('error', function(e) {
+          if (window.hasReloaded) return;
+          
+          // Check if this is the main bundle syntax error (HTML served instead of JS)
+          if (e.message && e.filename && 
+              e.filename.includes('main.') && 
+              e.filename.includes('.js') && 
+              e.message.includes('Unexpected token')) {
+            
+            console.error('Main bundle returned HTML instead of JS, forcing cache refresh...');
+            window.hasReloaded = true;
+            
+            // Clear all caches and force reload
+            if ('caches' in window) {
+              caches.keys().then(function(names) {
+                for (let name of names) {
+                  caches.delete(name);
+                }
+                window.location.reload(true);
+              });
+            } else {
+              window.location.reload(true);
+            }
+          }
+        });
+      </script>
 
       
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <script type="text/javascript">
-      function PopupCenter(e,n,t,i){var o=void 0!=window.screenLeft?window.screenLeft:screen.left,d=void 0!=window.screenTop?window.screenTop:screen.top,c=window.innerWidth?window.innerWidth:document.documentElement.clientWidth?document.documentElement.clientWidth:screen.width,w=window.innerHeight?window.innerHeight:document.documentElement.clientHeight?document.documentElement.clientHeight:screen.height,r=c/2-t/2+o,h=w/2-i/2+d,s=window.open(e,n,"scrollbars=yes, width="+t+", height="+i+", top="+h+", left="+r);return window.focus&&s.focus(),!1} 
-      function sgshow(el) { PopupCenter(el.href, "Scripture Guide", 1000, 750);}
-      
       var clicky_custom = {};
       clicky_custom.pageview_disable = true;
       clicky_custom.history_disable = true;

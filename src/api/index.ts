@@ -1,0 +1,62 @@
+
+import { studyBuddy, studyBuddyTextBlock } from "./studybuddy";
+import logger from "../library/utils/logger";
+import { mapMarker } from "./mapmarkers";
+import { virtualgrouptrigger } from "./virtualgroup";
+import { translate } from "./translate";
+import { updateCoords } from "./coords";
+
+const webhook = async (req: any, res: any) => {
+    
+    logger.info(`Webhook received: ${JSON.stringify(req.body)}`); // "info" is the log level
+
+    const {category, channel, members, sender, payload, parent_message_id,type,trigger} = req.body;
+    if(trigger==="study_group_bots") return virtualgrouptrigger(req,res);
+    const messageContent = payload?.message;
+
+
+    //ignore admin  message
+    if(type!=="MESG") return res.json({success:true, message: "Not a normal message event"});
+    if(category!=="group_channel:message_send") return res.json({success:true, message: "Not a message send event"});
+    const {message_id, message} = payload || {};
+    if(!message && !parent_message_id) return res.json({success:true, message: "No message found in payload"});
+
+    const studyBuddyIds = (process.env.STUDYBUDDY_BOT_IDS || '')
+        .split(',')
+        .filter(Boolean)
+        .map(s => s.trim());
+
+    const studyBuddyIsMember = members?.some(member=>studyBuddyIds.includes(member?.user_id));
+    const studyBuddyIsSender = sender?.user_id && studyBuddyIds.includes(sender?.user_id);
+    const messageId = parent_message_id || message_id;
+    const channelUrl = channel?.channel_url;
+
+    if(!studyBuddyIsMember) {
+        logger.info(`StudyBuddy webhook received.  Not a member of studybuddy. Channel: ${channelUrl}. Bot: ${studyBuddyIsSender}. Message: ${messageId}`);
+        return res.json({success:true, message: "StudyBuddy webhook received.  Not a member of studybuddy"});
+    }
+    if((studyBuddyIsMember && !studyBuddyIsSender))
+    {
+        res.json({success:true, message: "StudyBuddy webhook received.  Processing..."});
+        await studyBuddy(channelUrl, messageId, messageContent); // dont await
+        return 
+    }
+    return res.json({success:true, message: "StudyBuddy webhook received.  Ignoring.",debug:{
+        studyBuddyIsMember,
+        studyBuddyIsSender,
+        messageId,
+        channelUrl
+    }});
+}
+
+const apis = {
+    "webhook":webhook,
+    "studybuddy": async (req,res) => res.json(await studyBuddyTextBlock({...req.body})),
+    "translate": translate,
+    "coords": updateCoords
+}
+
+const endpoints = {
+    "mapmarker/:id":mapMarker,
+}
+export {apis,endpoints};

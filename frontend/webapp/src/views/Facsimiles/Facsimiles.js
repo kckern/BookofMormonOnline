@@ -11,10 +11,14 @@ import { assetUrl } from 'src/models/BoMOnlineAPI';
 import "./Facsimiles.scss"
 import { useParams, useHistory } from "react-router-dom";
 import { label, determineLanguage } from "src/models/Utils";
-import {generateReference} from "scripture-guide";
+import { generateReference, lookupReference } from "scripture-guide";
 import { isMobile, useSwipe, convertIntToRomanNumeral } from "../../models/Utils";
+import FacsimilePageViewer from './FacsimilePageViewer';
+import FacsimilePageViewerMobile from './FacsimilePageViewerMobile';
+import PageImage from './PageImage';
+import backIcon from '../_Common/svg/back.svg';
 
-function FacsimileViewer({ item }) {
+function FacsimileViewer({ item, volumeOrder, currentVolumeIndex }) {
   const match = useParams();
   const findLeafFromSlug = (leafIndex, match) => {
     return leafIndex.find((leaf) => `${leaf.pageSlugLeaf}` === `${match.pageNumber}`) || null;
@@ -34,10 +38,17 @@ function FacsimileViewer({ item }) {
   }, [item.slug, item]);
 
   const { pages, pgoffset } = item;
-  const totalLeaves = pages + pgoffset;
+  // Ensure we include page 380 by making sure totalLeaves is correctly calculated
+  // We add 1 here because pages appears to be 0-indexed (0-379 instead of 1-380)
+  const totalLeaves = (parseInt(pages) + 1) + parseInt(pgoffset);
+  
   const leafIndex = Array.from({ length: totalLeaves }, (_, idx) => {
     const i = idx - pgoffset + 0;
     const baseUrl = `${assetUrl}/fax/pages/${item.slug}/`;
+    
+    // Check if this is the last page (page 380 in this case)
+    const isLastPage = (i === pages);
+    
     const pageNumInt = i > 0 ? i : null;
     const pageNumRoman = i <= 0 ? convertIntToRomanNumeral(pgoffset + i, true) : null;
     const pageAssetUrl = i > 0 ? `${baseUrl}${i.toString().padStart(3, "0")}.${item.format || "jpg"}` : `${baseUrl}000.${(pgoffset + i).toString().padStart(2, "0")}.${item.format || "jpg"}`;
@@ -71,32 +82,191 @@ function FacsimileViewer({ item }) {
     }
   }, [handleKeyPress]);
 
+  // Leaf index processing complete
+  
   const activeLeaf = findLeafFromSlug(leafIndex, match);
+  // Check if we have a path parameter (either a page number or reference)
+  const hasPathParameter = match.pageNumber !== undefined;
+  // If no match found but we have a path parameter, default to page 1
+  const defaultLeaf = hasPathParameter && !activeLeaf ? leafIndex.find(leaf => leaf.pageNumInt === 1 || leaf.pageSlugLeaf === "1") : null;
+  // Only show grid if there's no path parameter (no "tail" in the URL)
+  const isGridMode = !hasPathParameter;
+  // Use the found leaf or the default leaf (page 1)
+  const displayLeaf = activeLeaf || defaultLeaf;
+  
   const { title } = item;
   return (
-    <div className="facsimileViewer">
-      <h2 className="facsimileViewerTitle">
-        <Link id="fax_back" to={activeLeaf ? `/fax/${item.slug}` : "/fax"}>←</Link>
+    <div className={`facsimileViewer${isGridMode ? ' gridMode' : ''}`}>
+      <h1 className="facsimileViewerTitle">
+        <Link id="fax_back" to={displayLeaf ? `/fax/${item.slug}` : "/fax"} aria-label="Back to facsimiles">
+          <img src={backIcon} alt="Back" style={{ width: 20, height: 20 }} />
+        </Link>
         <span style={{ flexGrow: 1, color: "black" }}>{title}</span>
-      </h2>
-      {!activeLeaf ?
+      </h1>
+      {isGridMode ?
         <FacsimileGridViewer item={item} leafIndex={leafIndex} /> :
-        <FacsimilePageViewer item={item} leafIndex={leafIndex} />
+        (isMobile() ? 
+          <FacsimilePageViewerMobile item={item} leafIndex={leafIndex} pgoffset={pgoffset} volumeOrder={volumeOrder} currentVolumeIndex={currentVolumeIndex} /> :
+          <FacsimilePageViewer item={item} leafIndex={leafIndex} pgoffset={pgoffset} volumeOrder={volumeOrder} currentVolumeIndex={currentVolumeIndex} />
+        )
       }
     </div>
   );
 }
 
 function FacsimileGridViewer({ item, leafIndex }) {
+  // Process leaf index for grid display
+  // Default aspect ratio width:height = 1:1.5 (i.e., 0.666...) and fixed tile height 300px
+  const DEFAULT_ASPECT = 1 / 1.5;
+  const TILE_HEIGHT = 300;
+  const GAP = 5; // must match inline style gap in container
+  const [tileAspect, setTileAspect] = useState(DEFAULT_ASPECT);
+  const [hasScrolled, setHasScrolled] = useState(false);
+  const gridRef = useRef(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+
+  // Use a filter instead of slice(1) to ensure we're not excluding valid pages
+  // Filter out any undefined or null entries, but keep all valid pages
+  const validLeaves = leafIndex.filter((leaf, idx) => {
+    // Skip the first page if it's a cover or blank page (keeping original slice(1) behavior)
+    if (idx === 0 && leaf?.pageNumInt === null) return false;
+
+    // Special handling for the last page (e.g., page 380)
+    if (idx === leafIndex.length - 1) {
+      return true;
+    }
+
+    // Include all other valid pages
+    return !!leaf && (leaf.pageNumInt !== null || leaf.pageNumRoman !== null);
+  });
+
+  // After first thumb loads, detect actual aspect ratio and use it for all tiles
+  useEffect(() => {
+    if (!validLeaves?.length) return;
+    const first = validLeaves[10];
+    if (!first?.thumbAssetUrl) return;
+    let cancelled = false;
+    const img = new Image();
+    img.onload = () => {
+      if (cancelled) return;
+      const w = img.naturalWidth || img.width;
+      const h = img.naturalHeight || img.height;
+      if (w > 0 && h > 0) {
+        setTileAspect(w / h);
+      }
+    };
+    img.onerror = () => {
+      // Keep default aspect on error
+    };
+    img.src = first.thumbAssetUrl;
+    return () => {
+      cancelled = true;
+    };
+  }, [validLeaves?.[0]?.thumbAssetUrl]);
+
+  // Measure container width to compute fitted tile size per row
+  useEffect(() => {
+    if (!gridRef.current) return;
+    const el = gridRef.current;
+    
+    // Debounce to prevent ResizeObserver loops
+    let timeout = null;
+    const measure = () => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => {
+        if (!el || !gridRef.current) return;
+        // Use requestAnimationFrame to ensure measurements happen in the next frame
+        requestAnimationFrame(() => {
+          const cs = window.getComputedStyle(el);
+          const pl = parseFloat(cs.paddingLeft) || 0;
+          const pr = parseFloat(cs.paddingRight) || 0;
+          // clientWidth includes padding; subtract it to get the true inner content width available to flex items
+          const inner = (el.clientWidth || el.getBoundingClientRect().width) - pl - pr;
+          setContainerWidth(inner);
+        });
+      }, 100); // 100ms debounce
+    };
+    
+    measure();
+    
+    const ro = new ResizeObserver(() => {
+      measure();
+    });
+    
+    ro.observe(el);
+    window.addEventListener('resize', measure);
+    
+    return () => {
+      clearTimeout(timeout);
+      try { ro.disconnect(); } catch {}
+      window.removeEventListener('resize', measure);
+    };
+  }, []);
+
+  // Memoize tile size calculations to reduce re-renders
+  const [tileDimensions, setTileDimensions] = useState({ width: 0, height: 0 });
+  
+  // Calculate tile dimensions when containerWidth or tileAspect changes
+  useEffect(() => {
+    // Don't calculate if container width isn't available yet
+    if (!containerWidth || containerWidth <= 0) return;
+    
+    const aspectRatio = tileAspect || DEFAULT_ASPECT;
+    const baseTileWidth = TILE_HEIGHT * aspectRatio;
+    
+    // Compute columns that fit at baseline
+    const columns = Math.max(1, Math.floor((containerWidth + GAP) / (baseTileWidth + GAP)));
+    
+    // Calculate width to exactly fill the container
+    const fittedTileWidth = (containerWidth - GAP * (columns - 1)) / columns;
+    const fittedTileHeight = fittedTileWidth / aspectRatio;
+    
+    // Ensure minimum dimensions
+    const finalWidth = Math.max(baseTileWidth, fittedTileWidth);
+    const finalHeight = Math.max(TILE_HEIGHT, fittedTileHeight);
+    
+    setTileDimensions({ width: finalWidth, height: finalHeight });
+  }, [containerWidth, tileAspect]);
+  
+  // Use memoized dimensions
+  const tileWidth = tileDimensions.width;
+  const tileHeight = tileDimensions.height;
+
+  // Grid viewer ready to display pages
   return (
-    <div className="faxGridViewer">
-      {leafIndex.slice(1).map((i) => {
+    <div
+      className="faxGridViewer"
+      ref={gridRef}
+      onScroll={(e) => setHasScrolled(e.currentTarget.scrollTop > 0)}
+      style={{ display: 'flex', flexWrap: 'wrap', gap: GAP }}
+    >
+      <div className={`gridOverhang ${hasScrolled ? 'visible' : ''}`} />
+      {tileWidth > 0 && tileHeight > 0 && validLeaves.map((i) => {
         const alt = `${item.title} - Page ${i.pageSlugLeaf}`;
         return (
           <Link key={i.leafCursor} to={`/fax/${item.slug}/${i.pageSlugLeaf}`}>
-            <div key={i.leafCursor} className="faxPage">
+            <div
+              key={i.leafCursor}
+              className="faxPage"
+              style={{ 
+                width: `${tileWidth}px`, 
+                height: `${tileHeight}px`,
+                // Add will-change to help browser optimize rendering
+                willChange: 'transform',
+                // Use transform instead of width/height for smoother transitions when size changes
+                transform: 'translate3d(0, 0, 0)'
+              }}
+            >
               <PageOverlay pageLeaf={i} />
-              <img src={i.thumbAssetUrl} alt={alt} />
+              <PageImage
+                src={i.thumbAssetUrl}
+                previewSrc={i.thumbAssetUrl}
+                alt={alt}
+                label={`Page ${i.pageSlugLeaf}`}
+                reference={i.pageReference}
+                onClick={undefined}
+                className="grid-thumb"
+              />
             </div>
           </Link>
         );
@@ -105,7 +275,7 @@ function FacsimileGridViewer({ item, leafIndex }) {
   );
 }
 
-const getRefFromIndex = (pageIndex, pageNum) => {
+export const getRefFromIndex = (pageIndex, pageNum) => {
   const itemIndex = parseInt(pageNum) - 1;
   const [startingVerseId, verseCount] = pageIndex?.[itemIndex] || [0, 0];
   const verseRangeArray = Array.from({ length: verseCount }, (_, i) => startingVerseId + i);
@@ -115,7 +285,7 @@ const getRefFromIndex = (pageIndex, pageNum) => {
   return showRef ? ref : null;
 };
 
-function PageOverlay({ pageLeaf }) {
+export function PageOverlay({ pageLeaf }) {
   const { pageReference, pageNumInt, pageNumRoman } = pageLeaf;
   return (
     <div className="pageOverlay">
@@ -125,259 +295,94 @@ function PageOverlay({ pageLeaf }) {
   );
 }
 
-function FacsimilePageViewer({ item, leafIndex }) {
-  const history = useHistory();
-  const { pageNumber } = useParams();
-  const isOnMobile = isMobile();
-
-  const [currentPageIndex, setCurrentPageIndex] = useState(0);
-  const [sliderValue, setSliderValue] = useState(0);
-  const [showTooltip, setShowTooltip] = useState(false);
-  const [tooltipContent, setTooltipContent] = useState(null);
-  const [tooltipPosition, setTooltipPosition] = useState({ left: 0, top: 0 });
-  const sliderRef = useRef(null);
-
-  const totalPages = leafIndex.length;
-
-  // Initialize page index based on URL
-  useEffect(() => {
-    const index = leafIndex.findIndex(leaf => `${leaf.pageSlugLeaf}` === pageNumber);
-    if (index !== -1) {
-      setCurrentPageIndex(index);
-      setSliderValue(index);
-    }
-  }, [pageNumber, leafIndex]);
-
-  // Adjust page index to ensure even pages are on the left
-  const getAdjustedPageIndex = useCallback((index) => {
-    if (index <= 0) return 0; // Handle first page
-    return index % 2 === 0 ? index : index - 1;
-  }, []);
-
-  // Preload adjacent pages
-  const getPagesToPreload = useCallback(() => {
-    if (!leafIndex) return [];
-    const preloadRange = 4;
-    const startIdx = Math.max(0, currentPageIndex - preloadRange);
-    const endIdx = Math.min(leafIndex.length - 1, currentPageIndex + preloadRange);
-    return leafIndex.slice(startIdx, endIdx + 1);
-  }, [currentPageIndex, leafIndex]);
-
-  useEffect(() => {
-    const pagesToLoad = getPagesToPreload();
-    pagesToLoad.forEach(page => {
-      const img = new Image();
-      img.src = page.pageAssetUrl;
-    });
-  }, [getPagesToPreload]);
-
-  const adjustedPageIndex = getAdjustedPageIndex(currentPageIndex);
-  const leftPage = leafIndex[adjustedPageIndex] || null;
-  const rightPage = isOnMobile ? null : leafIndex[adjustedPageIndex + 1] || null;
-
-  // Navigation handlers
-  const handlePageChange = useCallback((newIndex) => {
-    const adjustedIndex = getAdjustedPageIndex(newIndex);
-    const targetPage = leafIndex[adjustedIndex];
-    if (targetPage) {
-      history.push(`/fax/${item.slug}/${targetPage.pageSlugLeaf}`);
-    }
-  }, [history, item.slug, leafIndex, getAdjustedPageIndex]);
-
-  // Update to move 2 pages at a time
-  const handleSwipeLeft = useCallback(() => {
-    handlePageChange(Math.min(totalPages - 1, currentPageIndex + (isOnMobile ? 1 : 2)));
-  }, [currentPageIndex, isOnMobile, totalPages, handlePageChange]);
-
-  const handleSwipeRight = useCallback(() => {
-    handlePageChange(Math.max(0, currentPageIndex - (isOnMobile ? 1 : 2)));
-  }, [currentPageIndex, isOnMobile, handlePageChange]);
-
-  const swipeHandlers = useSwipe({
-    onSwipedLeft: handleSwipeLeft,
-    onSwipedRight: handleSwipeRight
-  });
-
-  // Slider interaction handlers
-  const handleSliderChange = useCallback((e) => {
-    setSliderValue(parseInt(e.target.value, 10));
-  }, []);
-
-  const handleSliderRelease = useCallback(() => {
-    handlePageChange(sliderValue);
-  }, [handlePageChange, sliderValue]);
-
-  const handleSliderMouseMove = useCallback((e) => {
-    if (!sliderRef.current) return;
-    const sliderRect = sliderRef.current.getBoundingClientRect();
-    const position = (e.clientX - sliderRect.left) / sliderRect.width;
-    let value = Math.round(position * (totalPages - 1));
-
-    // Adjust value to ensure even pages on left
-    value = value % 2 === 0 ? value : value - 1;
-    if (value < 0) value = 0;
-
-    const leftPage = leafIndex[value];
-    const rightPage = leafIndex[value + 1];
-
-    if (leftPage) {
-      setTooltipContent(
-        <div className="tooltip-content">
-          {/* Display two thumbnails side by side */}
-          <div className="thumbnail-spread">
-            <img
-              src={leftPage.thumbAssetUrl}
-              alt={`Thumbnail of page ${leftPage.pageSlugLeaf}`}
-              style={{ width: '50px', height: 'auto' }}
-            />
-            {rightPage && (
-              <img
-                src={rightPage.thumbAssetUrl}
-                alt={`Thumbnail of page ${rightPage.pageSlugLeaf}`}
-                style={{ width: '50px', height: 'auto' }}
-              />
-            )}
-          </div>
-          <p>
-            Pages {leftPage.pageSlugLeaf}
-            {rightPage ? ` - ${rightPage.pageSlugLeaf}` : ''}
-          </p>
-        </div>
-      );
-      setTooltipPosition({
-        left: e.clientX - sliderRect.left,
-        top: -200,
-      });
-      setShowTooltip(true);
-    }
-  }, [leafIndex, totalPages]);
-
-  // Page rendering
-  const renderPage = (page, onClick) => {
-    if (!page) {
-      // Return a blank placeholder for missing pages
-      return <div className="blankPage"></div>;
-    }
-    return (
-      <img src={page.pageAssetUrl} alt={`Page ${page.pageSlugLeaf}`} onClick={onClick} />
-    );
-  };
-
-  // Page stack rendering
-  const renderPageStack = useCallback((side) => {
-    const stackPages = side === 'left'
-      ? leafIndex.slice(0, adjustedPageIndex).reverse()
-      : leafIndex.slice(adjustedPageIndex + 2);
-
-    const stackWidth = Math.min(36, (stackPages.length / totalPages) * 36);
-
-    return (
-      <div className={`pageStack ${side}Stack`} style={{ width: `${stackWidth}px` }}>
-        {stackPages.map((page) => (
-          <div
-            key={page.leafCursor}
-            className="stackedPage"
-            style={{
-              width: `${100 / stackPages.length}%`,
-              height: '100%'
-            }}
-            onClick={() => handlePageChange(leafIndex.indexOf(page))}
-            data-tip={`Page ${page.pageSlugLeaf}`}
-            data-for={`${side}StackTooltip`}
-          />
-        ))}
-        <ReactTooltip id={`${side}StackTooltip`} place={side} effect="solid" />
-      </div>
-    );
-  }, [adjustedPageIndex, leafIndex, totalPages, handlePageChange]);
-
-  return (
-    <div className="faxPageViewer noselect" {...swipeHandlers}>
-      <div className="pageReferences">
-        <h6>{leftPage?.pageReference || ''}</h6>
-        {!isOnMobile && <h6>{rightPage?.pageReference || ''}</h6>}
-      </div>
-      <div className="pagesContainer">
-        <div className={`pageContainer ${isOnMobile ? 'mobile' : ''}`}>
-          {!isOnMobile && adjustedPageIndex > 0 && renderPageStack('left')}
-
-          {isOnMobile ? (
-            <div className="page">
-              {renderPage(leftPage, handleSwipeLeft)}
-            </div>
-          ) : (
-            <>
-              <div className="page leftPage">
-                {/* If first page, show blank left page */}
-                {adjustedPageIndex === 0 ? (
-                  <div className="blankPage"></div>
-                ) : (
-                  renderPage(leftPage, handleSwipeRight)
-                )}
-              </div>
-              <div className="page rightPage">
-                {renderPage(rightPage || null, handleSwipeLeft)}
-              </div>
-            </>
-          )}
-
-          {!isOnMobile && adjustedPageIndex < totalPages - 2 && renderPageStack('right')}
-        </div>
-      </div>
-
-      <div className={`facsimile-navigation ${isOnMobile ? 'mobile' : ''}`}>
-        <button
-          className="nav-button"
-          onClick={handleSwipeRight}
-          disabled={currentPageIndex <= 0}
-        >
-          &#8249;
-        </button>
-        <div className="slider-container" ref={sliderRef}>
-          {showTooltip && (
-            <div
-              className="custom-tooltip"
-              style={{
-                left: `${tooltipPosition.left}px`,
-                top: '-200px',
-                transform: 'translateX(-50%)'
-              }}
-            >
-              {tooltipContent}
-            </div>
-          )}
-          <input
-            type="range"
-            min={0}
-            max={totalPages - (isOnMobile ? 1 : 2)}
-            step={isOnMobile ? 1 : 2} // Move slider in steps
-            value={sliderValue}
-            onChange={handleSliderChange}
-            onMouseUp={handleSliderRelease}
-            onTouchEnd={handleSliderRelease}
-            onMouseMove={handleSliderMouseMove}
-            onMouseEnter={() => setShowTooltip(true)}
-            onMouseLeave={() => setShowTooltip(false)}
-            className="custom-slider"
-          />
-        </div>
-        <button
-          className="nav-button"
-          onClick={handleSwipeLeft}
-          disabled={currentPageIndex >= totalPages - (isOnMobile ? 1 : 2)}
-        >
-          &#8250;
-        </button>
-      </div>
-    </div>
-  );
-}
+// FacsimilePageViewer has been moved to its own files: 
+// - FacsimilePageViewer.js for desktop 
+// - FacsimilePageViewerMobile.js for mobile
 
 function Facsimiles() {
   const [FaxList, setFaxList] = useState(null);
   const match = useParams();
+  const history = useHistory();
   const activeFax = FaxList?.[match.faxVersion];
   useEffect(() => document.title = (activeFax?.title || label("menu_fax")) + " | " + label("home_title"), [activeFax?.code])
+
+  // Handle route expansions and redirects
+  useEffect(() => {
+    if (!FaxList) return; // wait until list is loaded
+    const edition = match.faxVersion;
+    const rawPage = match.pageNumber; // could be undefined, 'last', numeric, or scripture ref
+    const fax = FaxList?.[edition];
+    if (!fax) return; // unknown edition, let normal rendering handle
+
+    // Determine highest numeric page for this edition
+    const totalPages = parseInt(fax?.pages, 10);
+    const maxPage = Number.isFinite(totalPages) ? totalPages : null;
+
+    // 1) '/fax/{edition}/last' -> forward to highest page
+    if (rawPage === 'last' && maxPage) {
+      if (history?.replace) history.replace(`/fax/${edition}/${maxPage}`);
+      return;
+    }
+
+    // If page isn't present, nothing to normalize
+    if (rawPage == null) return;
+
+    // 2) numeric overflow -> clamp to highest page
+    const pageNum = parseInt(rawPage, 10);
+    const isNumeric = String(pageNum) === String(rawPage);
+    if (isNumeric && maxPage && pageNum > maxPage) {
+      if (history?.replace) history.replace(`/fax/${edition}/${maxPage}`);
+      return;
+    }
+
+    // 3) Non-numeric page -> treat as scripture reference
+    if (!isNumeric && /[A-Za-z]/.test(rawPage || '')) {
+      try {
+        const refs = lookupReference(rawPage);
+        const firstVerseId = refs?.verse_ids?.length ? Math.min(...refs.verse_ids) : null;
+        const isIndexed = !!fax?.indexRef;
+
+        // If edition is indexed and we have a verse id, fetch page index and map to page
+        if (isIndexed && firstVerseId) {
+          const { indexRef, pgOffset, pgoffset, pgfirstVerse } = fax || {};
+          const effectivePgOffset = (typeof pgOffset === 'number' ? pgOffset : pgoffset) || 0;
+          const blankPageCount = effectivePgOffset + (pgfirstVerse || 1) - 1;
+          BoMOnlineAPI({ faxIndex: indexRef }).then((r) => {
+            try {
+              const { pages } = r?.fax?.[indexRef] || {};
+              if (!Array.isArray(pages) || pages.length === 0) return;
+              const pageIndex = [
+                ...Array.from({ length: blankPageCount }, () => [0, 0]),
+                ...pages,
+              ];
+              // Find first page that contains this verse id
+              let targetPage = null;
+              for (let i = 0; i < pageIndex.length; i++) {
+                const [start, count] = pageIndex[i] || [0, 0];
+                if (start > 0 && count > 0) {
+                  if (firstVerseId >= start && firstVerseId < start + count) {
+                    targetPage = i + 1; // page numbers are 1-based
+                    break;
+                  }
+                }
+              }
+              // Clamp and navigate if found
+              if (targetPage) {
+                const target = maxPage ? Math.min(targetPage, maxPage) : targetPage;
+                if (history?.replace) history.replace(`/fax/${edition}/${target}`);
+              }
+            } catch (e) {
+              // Ignore errors and fall back to grid
+            }
+          });
+        } else {
+          // Not indexed or no verse match: fall back to grid view (no redirect)
+        }
+      } catch (e) {
+        // Invalid reference: ignore and stay in grid
+      }
+    }
+  }, [FaxList, match.faxVersion, match.pageNumber, history]);
   const contentsUI = () => {
     const faxCount = Object.keys(FaxList).length;
     const breakpointColumnsObj = faxCount > 6 ? {
@@ -390,7 +395,15 @@ function Facsimiles() {
       800: 1
     };
 
-    if (FaxList && activeFax?.pages) return <FacsimileViewer item={activeFax} />
+    if (FaxList && activeFax?.pages) {
+      const volumeOrder = Object.values(FaxList).sort((a, b) => {
+        if (a.title < b.title) return -1;
+        if (a.title > b.title) return 1;
+        return 0;
+      });
+      const currentVolumeIndex = volumeOrder.findIndex(v => v.slug === activeFax.slug);
+      return <FacsimileViewer item={activeFax} volumeOrder={volumeOrder} currentVolumeIndex={currentVolumeIndex} />
+    }
 
     if (FaxList && activeFax?.code) {
       let [code, token] = activeFax?.code.split(".");
@@ -451,7 +464,7 @@ function Facsimiles() {
   });
   return (
     FaxList ?
-      <div className="container" style={{ display: 'block' }}>
+      <div className="faxMainContainer">
         {contentsUI()}
       </div> : <Loader />
   )

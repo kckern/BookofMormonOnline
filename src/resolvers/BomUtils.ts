@@ -1,10 +1,19 @@
-import { sendbird } from '../library/sendbird';
+import { messenger } from '../library/messenger';
 import { models as Models } from '../config/database';
 import dotenv from 'dotenv';
 import { generateReference, setLang } from 'scripture-guide';
+import logger from "../library/utils/logger";
 dotenv.config();
-const logger = require("../library/utils/logger.cjs");
 const log = (msg:any,obj?:any) => obj ? logger.info(`utils ${msg} ${JSON.stringify(obj)}`) : logger.info(`utils ${msg}`);
+
+// Feature flag - messaging disabled until Phase 5 data migration
+const MESSENGER_ENABLED = process.env.MESSENGER_ENABLED === 'true';
+
+// Sendbird-compatible shim - returns null when messaging disabled
+const sendbird: any = MESSENGER_ENABLED ? messenger : {
+  loadUser: async () => null,
+  getUser: async () => null,
+};
 
 
 import {
@@ -19,9 +28,8 @@ import {
   getUserForLog
 } from './_common';
 import { sphinxQuery } from '../search/sphinx';
-import { translateReferences } from './xlate';
 import { loadScripture, loadVerseHighlights, loadVerses } from './BomScripture';
-const axios = require('axios');
+import axios from 'axios';
 export default {
   Query: {
     labels: async (root: any, args: any, context: any, info: any) => {

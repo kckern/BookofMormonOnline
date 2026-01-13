@@ -6,6 +6,7 @@ import BomUser from './BomUser';
 import BomUtils from './BomUtils';
 import BomPeoplePlaces from './BomPeoplePlaces';
 import BomCommunity from './BomCommunity';
+import BomMessenger from './BomMessenger';
 
 const linkedSchema = gql`
   type Query {
@@ -14,5 +15,6 @@ const linkedSchema = gql`
   type Mutation {
     _: Boolean
   }
+  scalar JSON
 `;
-export default [BomNotes, BomPage, BomPeoplePlaces, BomUser, BomUtils,BomNotes,BomCommunity,linkedSchema]; //
+export default [BomNotes, BomPage, BomPeoplePlaces, BomUser, BomUtils,BomNotes,BomCommunity,BomMessenger,linkedSchema]; //

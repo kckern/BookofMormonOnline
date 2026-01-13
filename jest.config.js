@@ -1,0 +1,40 @@
+/** @type {import('ts-jest').JestConfigWithTsJest} */
+module.exports = {
+  preset: 'ts-jest',
+  testEnvironment: 'node',
+  roots: ['<rootDir>/test', '<rootDir>/src'],
+  testMatch: ['**/*.test.ts'],
+  collectCoverageFrom: [
+    'src/**/*.ts',
+    '!src/**/*.d.ts',
+    '!src/database/models/**'
+  ],
+  coverageDirectory: 'coverage',
+  coverageReporters: ['text', 'lcov', 'html'],
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+  setupFilesAfterEnv: ['<rootDir>/test/setup.ts'],
+  testTimeout: 30000,
+  verbose: true,
+  bail: 1, // Stop on first test failure
+  maxWorkers: 1, // Run tests serially to avoid connection pool issues
+  // Don't transform node_modules except for ESM packages
+  transformIgnorePatterns: [
+    'node_modules/(?!(nanoid)/)'
+  ],
+  moduleNameMapper: {
+    '^nanoid$': '<rootDir>/node_modules/nanoid/index.cjs'
+  },
+  // Use isolatedModules to skip type-checking during tests
+  // Strict type checking is done separately via tsc --noEmit
+  transform: {
+    '^.+\\.tsx?$': [
+      'ts-jest',
+      {
+        isolatedModules: true,
+        diagnostics: {
+          warnOnly: true
+        }
+      }
+    ]
+  }
+};

@@ -114,9 +114,10 @@ function reducer(narrationController, input) {
 function Narration({ rowData, pageController, addHighlight }) {
   const preLoadFax = () => {
     if (narrationController.states.faxList === undefined) return false;
+    let m = narrationController.data.text.slug.match(/([a-z-]+)\/(\d+)$/);
+    if (!m) return false;
     return narrationController.states.faxList.forEach((version) => {
       const img1 = new Image();
-      let m = narrationController.data.text.slug.match(/([a-z-]+)\/(\d+)$/);
       img1.src = `${assetUrl}/fax/text/${version}/${m[1]}-${m[2]}`;
       const img2 = new Image();
       img2.src = `${assetUrl}/fax/tabs/${version}`;
@@ -192,11 +193,14 @@ function Narration({ rowData, pageController, addHighlight }) {
   };
 
   const loadNumsFromText = (text) => {
+    if (!text || !text.slug) return [];
     let nums = [];
-    nums.push(parseInt(text.slug.match(/\d+$/)));
+    let slugMatch = text.slug.match(/\d+$/);
+    if (slugMatch) nums.push(parseInt(slugMatch[0]));
     for (let i in text.quotes) {
       let quote = text.quotes[i];
-      nums.push(parseInt(quote.slug.match(/\d+$/)));
+      let quoteMatch = quote.slug.match(/\d+$/);
+      if (quoteMatch) nums.push(parseInt(quoteMatch[0]));
     }
     return nums;
   };
@@ -269,6 +273,8 @@ function Narration({ rowData, pageController, addHighlight }) {
           setHighlights(null, [], items);
         },
       };
+
+      rowData.narration = rowData.narration || {};
       //Create Initial Controller
       var initNarrationController = {
         data: rowData.narration,
@@ -283,21 +289,23 @@ function Narration({ rowData, pageController, addHighlight }) {
 
       //Extract Image and Commentary Values
       let imageIds = [];
+      initNarrationController.data.text = initNarrationController.data.text || {};
       imageIds = imageIds.concat(
-        initNarrationController.data.text.content.match(/\[i\](\d+)\[\/i\]/gi),
+        initNarrationController.data.text.content?.match(/\[i\](\d+)\[\/i\]/gi),
       );
       if (initNarrationController.data.text.quotes)
         imageIds = imageIds.concat(
           initNarrationController.data.text.quotes
             .map((q) => q.content.match(/\[i\](\d+)\[\/i\]/gi))
+            .filter(Boolean)
             .flat(),
         );
       imageIds =
         imageIds &&
-        imageIds.filter((x) => x !== null).map((i) => i.replace(/\D+/g, ""));
+        [...new Set(imageIds.filter((x) => x !== null).map((i) => i?.replace(/\D+/g, "")))];
       let commentaryIds = [];
       commentaryIds = commentaryIds.concat(
-        initNarrationController.data.text.content.match(
+        initNarrationController.data.text.content?.match(
           /\[c\]((\d+))\[\/c\]/gi,
         ),
       );
@@ -305,21 +313,22 @@ function Narration({ rowData, pageController, addHighlight }) {
         commentaryIds = commentaryIds.concat(
           initNarrationController.data.text.quotes
             .map((q) => q.content.match(/\[c\]((\d+))\[\/c\]/gi))
+            .filter(Boolean)
             .flat(),
         );
       commentaryIds =
         commentaryIds &&
-        commentaryIds
+        [...new Set(commentaryIds
           .filter((x) => x !== null)
-          .map((i) => i.replace(/\D+/g, ""));
+          .map((i) => i?.replace(/\D+/g, "")))];
       initNarrationController.data.imageIds =
         imageIds && imageIds.length ? imageIds : [];
       initNarrationController.data.commentaryIds =
         commentaryIds && commentaryIds.length ? commentaryIds : [];
-      let personIds = initNarrationController.data.description.match(
+      let personIds = initNarrationController.data.description?.match(
         /\|([^\]}]+?)}/g,
       );
-      let placeIds = initNarrationController.data.description.match(
+      let placeIds = initNarrationController.data.description?.match(
         /\|([^\]}]+?)\]/g,
       );
       initNarrationController.data.personIds =
@@ -354,7 +363,7 @@ function Narration({ rowData, pageController, addHighlight }) {
       return null;
     if (!pageController.appController.states.user.user) return null;
     let username = pageController.appController.states.user.social?.user_id;
-    let location = narrationController.data.text.slug.match(/\d+$/)[0];
+    let location = narrationController.data.text.slug.match(/\d+$/)?.[0];
     let pageSlug = pageController.pageData.slug;
     let channel = pageController.appController.states.studyGroup.activeGroup;
 
@@ -370,7 +379,7 @@ function Narration({ rowData, pageController, addHighlight }) {
   let completed_items = pageController.states.progress?.completed_items;
   let started_items = pageController.states.progress?.started_items;
   let link_index = parseInt(
-    narrationController?.data?.text?.slug?.match(/\d+$/)[0],
+    narrationController?.data?.text?.slug?.match(/\d+$/)?.[0] || "0",
   );
   let progress = started_items?.includes(link_index)
     ? "started"
@@ -456,7 +465,7 @@ function LightBox({ narrationController, setOpenLightBox, imgClicker }) {
     onSlideChange: ({ slides }) => {
       const regexp = /-?\d+(\.\d+)?/g;
       const id = slides.current.source.match(regexp);
-      narrationController.functions.setActiveImageId(id);
+      if (id) narrationController.functions.setActiveImageId(id);
     },
     onLightboxOpened: () => {
       setIsOpen(true);
@@ -721,7 +730,7 @@ function NotesPanel({ narrationController }) {
     <span onClick={closePanel}> × </span>
   </h5>
     <div className="notesPanel">
-      {notes.map((item)=> <SingleNoteItem item={item}/>)}
+      {notes.map((item)=> <SingleNoteItem key={item.id} item={item}/>)}
     </div>
   </div>
 }
@@ -849,7 +858,7 @@ function ScripturePanel({ narrationController }) {
   </h5>
     <div className="scripturePanel noselect">
       {textRefs.map(({ref},i)=> {
-        return <div key={ref} className={"scriptureItem" + (activeRef===i?" active":"")} onClick={()=>setActiveRef(i)}>
+        return <div key={ref + "_" + i} className={"scriptureItem" + (activeRef===i?" active":"")} onClick={()=>setActiveRef(i)}>
           <div className="ref">{ref}</div>
           <div>
         </div>
@@ -1037,6 +1046,7 @@ function FacsimilePanel({ narrationController }) {
   };
 
   let m = slug.match(/([a-z-]+)\/(\d+)$/);
+  if (!m) return null;
   let imgUrl = `${assetUrl}/fax/text/${narrationController.states.activeFax}/${m[1]}-${m[2]}`;
 
   let style = {
@@ -1072,7 +1082,7 @@ function FacsimilePanel({ narrationController }) {
         onMouseEnter={magnify}
         onMouseMove={magnify}
         onMouseLeave={resetMag}
-        key={narrationController.states.activeFax + "/" + ref}
+        key={narrationController.states.activeFax + "/" + slug + "/" + num}
         style={style}
         alt="fax"
       ></div>

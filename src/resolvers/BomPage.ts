@@ -4,7 +4,7 @@ import { models as Models, sequelize, SQLQueryTypes } from '../config/database';
 import { getSlug, Op, includeTranslation, translatedValue, includeModel, includeWhere, scoreSlugsfromUserInfo, getSlugTip, getUserForLog} from './_common';
 import scripture from "../library/scripture"
 import { loadNotesFromTextGuid, loadPeopleFromTextGuid, loadPlacesFromTextGuid } from './BomPeoplePlace';
-const { getBlocksToQueue ,getFirstTextBlockGuidFromSlug,organizeRelatedScriptures} = require('./lib')
+import { getBlocksToQueue, getFirstTextBlockGuidFromSlug, organizeRelatedScriptures } from './lib';
 import { lookupReference,generateReference,setLanguage } from 'scripture-guide';
 import { queryDB } from '../library/db';
 import { loadLines,  loadVerses } from './BomScripture';
@@ -52,24 +52,11 @@ export default {
           include: [
             includeWhere( Models.BomSlug, "slug", slugs , "pageSlug",[]),
             includeTranslation('title', lang),
+            // Only load sections, not their nested rows - let GraphQL resolvers handle the rest
             includeModel(info, Models.BomSection, 'sections', [
               includeTranslation('title', lang),
               includeModel(true, Models.BomText, 'sectionText', [
                 includeTranslation("heading", lang)
-              ].filter(x => !!x)),
-              includeModel(info, Models.BomSectionrow, 'rows', [
-                includeModel(info, Models.BomConnection, 'connection', [includeTranslation('text', lang)].filter(x => !!x)),
-                includeModel(info, Models.BomCapsulation, 'capsulation', [includeTranslation({ [Op.or]: ['description', 'reference'] }, lang)].filter(x => !!x)),
-                includeModel(info, Models.BomNarration, 'narration', [
-                  includeTranslation('description', lang),
-                  includeModel(info, Models.BomTimeline, 'timeline'),
-                  includeModel(info, Models.BomText, 'text', [
-                    includeTranslation({ [Op.or]: ['heading', 'content'] }, lang),
-                    includeModel(info, Models.BomText, 'quotes',[
-                      includeTranslation({ [Op.or]: ['heading', 'content'] }, lang)
-                    ].filter(x => !!x))
-                  ].filter(x => !!x))
-                ])
               ].filter(x => !!x))
             ].filter(x => !!x))
           ].filter(x => !!x),
@@ -77,11 +64,6 @@ export default {
             'weight',
             [
               {model:Models.BomSection, as: "sections"},
-              "weight"
-            ],
-            [
-              {model:Models.BomSection, as: "sections"},
-              {model:Models.BomSectionrow, as: "rows"},
               "weight"
             ],
             [
@@ -172,7 +154,7 @@ queue: async (root: any, args: any, context: any, info: any) => {
   const lang = context.lang ? context.lang : null;
   const {token,items} = args;
 
-  const inputs = await getBlocksToQueue(token, items, info);
+  const inputs = await getBlocksToQueue(token, items);
 
   const textBlocks = inputs.map(async ({ slug, blocks }) => {
 
@@ -419,8 +401,30 @@ queue: async (root: any, args: any, context: any, info: any) => {
     ref: async (item: any, args: any, { db, res }: any, info: any) => {
       return translatedValue(item, 'ref');
     },
-    rows: async (item: any, args: any, { db, res }: any, info: any) => {
-      return item.getDataValue('rows');
+    rows: async (item: any, args: any, context: any, info: any) => {
+      const lang = context.lang ? context.lang : null;
+      
+      return Models.BomSectionrow.findAll({
+        where: {
+          parent: item.getDataValue('guid')
+        },
+        include: [
+          includeModel(info, Models.BomConnection, 'connection', [includeTranslation('text', lang)].filter(x => !!x)),
+          includeModel(info, Models.BomCapsulation, 'capsulation', [includeTranslation({ [Op.or]: ['description', 'reference'] }, lang)].filter(x => !!x)),
+          includeModel(info, Models.BomNarration, 'narration', [
+            includeTranslation('description', lang),
+            includeModel(info, Models.BomTimeline, 'timeline'),
+            // Include text here to avoid N+1 queries
+            includeModel(info, Models.BomText, 'text', [
+              includeTranslation({ [Op.or]: ['heading', 'content'] }, lang),
+              includeModel(info, Models.BomText, 'quotes',[
+                includeTranslation({ [Op.or]: ['heading', 'content'] }, lang)
+              ].filter(x => !!x))
+            ].filter(x => !!x))
+          ])
+        ].filter(x => !!x),
+        order: ['weight']
+      });
     },
     page: async (item: any, args: any, context: any, info: any) => {
       const lang = context.lang ? context.lang : null;
@@ -575,8 +579,24 @@ queue: async (root: any, args: any, context: any, info: any) => {
         }}
       ).then(r=>r.map((r:any)=>r.verse_id));
 
+      // Return empty array if no verse_ids found
+      if (!verse_ids || verse_ids.length === 0) {
+        return [];
+      }
+
+      // Double check to ensure verse_ids is not empty before creating placeholders
+      if (!Array.isArray(verse_ids) || verse_ids.length === 0) {
+        return [];
+      }
+
       //scripture.guide.scripture_references
       const placeholders = verse_ids.map(() => '?').join(',');
+      
+      // Final safety check to ensure placeholders is not empty
+      if (!placeholders || placeholders.trim() === '') {
+        return [];
+      }
+      
       const sql = `SELECT dst_verse_id as verse_id,\`type\`,significant,dst_ref as ref
         FROM \`scripture.guide\`.scripture_references 
         WHERE src_verse_id IN (${placeholders})

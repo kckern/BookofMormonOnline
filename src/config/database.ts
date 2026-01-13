@@ -54,6 +54,16 @@ import LdsScripturesMeta from '../database/models/lds_scriptures_meta';
 import LdsScripturesVerses from '../database/models/lds_scriptures_verses';
 import LdsScripturesVolumes from '../database/models/lds_scriptures_volumes';
 import SocialPosts from '../database/models/social_posts';
+
+// Messenger models (Sendbird replacement - Phase 1)
+import MessengerUser from '../database/models/messenger_users';
+import MessengerChannel from '../database/models/messenger_channels';
+import MessengerMember from '../database/models/messenger_members';
+import MessengerMessage from '../database/models/messenger_messages';
+import MessengerHighlight from '../database/models/messenger_highlights';
+import MessengerReaction from '../database/models/messenger_reactions';
+import MessengerFile from '../database/models/messenger_files';
+
 import { Models } from '../database/typings/Models';
 
 const {
@@ -77,28 +87,109 @@ const {
  */
 export const sequelize = new Sequelize(MYSQL_DB, MYSQL_USER, MYSQL_PASSWORD, {
   dialect: 'mysql',
-  logging: (query) => {
-    return false;
-    query = query.replace("Executing (default): ", "");
-    const now = new Date();
-    const oneLineQuery = query.replace(/\n/g, ' ').replace(/\s+/g, ' ');
-    fs.appendFile('log.sql', `-- ${now.toISOString()}\n${oneLineQuery}\n\n`, (err) => {
-      if (err) {
-        console.error(err);
-      }
-    } );
-  },
+  logging: () => {},
   host: MYSQL_HOST,
   pool: {
-    acquire: +DB_POOL_ACQUIRE,
-    idle: +DB_POOL_IDLE,
-    max: +DB_POOL_MAX_CONN,
-    min: +DB_POOL_MIN_CONN
+    acquire: +DB_POOL_ACQUIRE || 60000,
+    idle: +DB_POOL_IDLE || 30000, // Keep connections alive longer (30 seconds)
+    max: +DB_POOL_MAX_CONN || 8,  // Slightly reduce max connections
+    min: +DB_POOL_MIN_CONN || 4,  // Increase min to handle concurrent GraphQL resolvers
+    evict: 10000 // Check for idle connections every 10 seconds
   },
   port: +process.env.MYSQL_PORT,
   define: {
     paranoid: true
+  },
+  benchmark: true, // <-- Enables executionTime in logging
+  retry: {
+    match: [
+      /ETIMEDOUT/,
+      /EHOSTUNREACH/,
+      /ECONNRESET/,
+      /ECONNREFUSED/,
+      /ETIMEDOUT/,
+      /ESOCKETTIMEDOUT/,
+      /EHOSTUNREACH/,
+      /EPIPE/,
+      /EAI_AGAIN/,
+      /SequelizeConnectionError/,
+      /SequelizeConnectionRefusedError/,
+      /SequelizeHostNotFoundError/,
+      /SequelizeHostNotReachableError/,
+      /SequelizeInvalidConnectionError/,
+      /SequelizeConnectionTimedOutError/
+    ],
+    max: 3
   }
+});
+
+// Add connection monitoring and error handling
+sequelize.authenticate()
+  .then(() => console.log('Database connected successfully'))
+  .catch(err => console.error('Database connection failed:', err));
+
+// Pool monitoring - only logs warnings when pool is stressed
+// Disabled during tests (JEST_WORKER_ID is set)
+if (!process.env.JEST_WORKER_ID) {
+  setInterval(() => {
+    const pool = (sequelize.connectionManager as any).pool;
+    if (pool) {
+      const maxConn = +process.env.DB_POOL_MAX_CONN || 8;
+      // Only log when pool usage is high (>75% of max)
+      if (pool.size > maxConn * 0.75) {
+        console.warn(`⚠️  Pool pressure: Size: ${pool.size}/${maxConn}, Available: ${pool.available}, Used: ${pool.size - pool.available}`);
+      }
+      // Critical warning at max capacity
+      if (pool.size >= maxConn && pool.available === 0) {
+        console.error(`🚨 CRITICAL: Connection pool exhausted! Size: ${pool.size}, Pending: ${pool.pending}`);
+      }
+    }
+  }, 60000); // Check every 60 seconds
+}
+
+// Connection event listeners disabled for cleaner logs
+// Can be re-enabled for debugging connection issues
+/*
+sequelize.addHook('beforeConnect', () => {
+  console.log('🔗 Creating new database connection...');
+});
+
+sequelize.addHook('afterConnect', () => {
+  console.log('✅ Database connection established');
+});
+
+sequelize.addHook('beforeDisconnect', () => {
+  console.log('🔌 Closing database connection...');
+});
+*/
+
+// Graceful shutdown handler
+let isShuttingDown = false;
+
+process.on('SIGINT', async () => {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+  console.log('🛑 SIGINT received. Closing database connections...');
+  try {
+    await sequelize.close();
+    console.log('✅ Database connections closed successfully');
+  } catch (err) {
+    console.error('❌ Error closing database connections:', err);
+  }
+  process.exit(0);
+});
+
+process.on('SIGTERM', async () => {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+  console.log('🛑 SIGTERM received. Closing database connections...');
+  try {
+    await sequelize.close();
+    console.log('✅ Database connections closed successfully');
+  } catch (err) {
+    console.error('❌ Error closing database connections:', err);
+  }
+  process.exit(0);
 });
 
 export const SQLQueryTypes = QueryTypes;
@@ -155,7 +246,16 @@ export const models: Models = {
   LdsScripturesMeta: LdsScripturesMeta.initModel(sequelize),
   LdsScripturesVerses: LdsScripturesVerses.initModel(sequelize),
   LdsScripturesVolumes: LdsScripturesVolumes.initModel(sequelize),
-  SocialPosts: SocialPosts.initModel(sequelize)
+  SocialPosts: SocialPosts.initModel(sequelize),
+  
+  // Messenger models (Sendbird replacement - Phase 1)
+  MessengerUser: MessengerUser.initModel(sequelize),
+  MessengerChannel: MessengerChannel.initModel(sequelize),
+  MessengerMember: MessengerMember.initModel(sequelize),
+  MessengerMessage: MessengerMessage.initModel(sequelize),
+  MessengerHighlight: MessengerHighlight.initModel(sequelize),
+  MessengerReaction: MessengerReaction.initModel(sequelize),
+  MessengerFile: MessengerFile.initModel(sequelize)
 };
 
 Object.keys(models).forEach((key: string) => {
@@ -692,4 +792,138 @@ models.BomMapMove.hasMany(models.BomMapMoveCoords, {
   //matche bomMapMoveCoords on segment_guid
   foreignKey: 'segment_guid',
   as: 'coords'
+});
+
+
+// =====================================
+// MESSENGER ASSOCIATIONS (Phase 1)
+// Sendbird replacement infrastructure
+// =====================================
+
+// User <-> Channel (Many-to-Many through Member)
+models.MessengerUser.belongsToMany(models.MessengerChannel, {
+  through: models.MessengerMember,
+  foreignKey: 'user_id',
+  otherKey: 'channel_url',
+  as: 'channels'
+});
+
+models.MessengerChannel.belongsToMany(models.MessengerUser, {
+  through: models.MessengerMember,
+  foreignKey: 'channel_url',
+  otherKey: 'user_id',
+  as: 'users'
+});
+
+// Member belongs to User and Channel
+models.MessengerMember.belongsTo(models.MessengerUser, {
+  foreignKey: 'user_id',
+  as: 'user'
+});
+
+models.MessengerMember.belongsTo(models.MessengerChannel, {
+  foreignKey: 'channel_url',
+  as: 'channel'
+});
+
+// Channel has many Members
+models.MessengerChannel.hasMany(models.MessengerMember, {
+  foreignKey: 'channel_url',
+  as: 'members'
+});
+
+// User has many Members (memberships)
+models.MessengerUser.hasMany(models.MessengerMember, {
+  foreignKey: 'user_id',
+  as: 'memberships'
+});
+
+// Message belongs to User and Channel
+models.MessengerMessage.belongsTo(models.MessengerUser, {
+  foreignKey: 'user_id',
+  as: 'sender'
+});
+
+models.MessengerMessage.belongsTo(models.MessengerChannel, {
+  foreignKey: 'channel_url',
+  as: 'channel'
+});
+
+// Channel has many Messages
+models.MessengerChannel.hasMany(models.MessengerMessage, {
+  foreignKey: 'channel_url',
+  as: 'messages'
+});
+
+// User has many Messages
+models.MessengerUser.hasMany(models.MessengerMessage, {
+  foreignKey: 'user_id',
+  as: 'messages'
+});
+
+// Message self-reference for replies (threads)
+models.MessengerMessage.belongsTo(models.MessengerMessage, {
+  as: 'parent',
+  foreignKey: 'parent_message_id'
+});
+
+models.MessengerMessage.hasMany(models.MessengerMessage, {
+  as: 'replies',
+  foreignKey: 'parent_message_id'
+});
+
+// Message has many Highlights
+models.MessengerMessage.hasMany(models.MessengerHighlight, {
+  foreignKey: 'message_id',
+  as: 'highlights'
+});
+
+models.MessengerHighlight.belongsTo(models.MessengerMessage, {
+  foreignKey: 'message_id',
+  as: 'message'
+});
+
+// Message has many Reactions
+models.MessengerMessage.hasMany(models.MessengerReaction, {
+  foreignKey: 'message_id',
+  as: 'reactions'
+});
+
+models.MessengerReaction.belongsTo(models.MessengerMessage, {
+  foreignKey: 'message_id',
+  as: 'message'
+});
+
+// Reaction belongs to User
+models.MessengerReaction.belongsTo(models.MessengerUser, {
+  foreignKey: 'user_id',
+  as: 'user'
+});
+
+// File relationships
+models.MessengerFile.belongsTo(models.MessengerMessage, {
+  foreignKey: 'message_id',
+  as: 'message'
+});
+
+models.MessengerFile.belongsTo(models.MessengerUser, {
+  foreignKey: 'user_id',
+  as: 'uploader'
+});
+
+models.MessengerMessage.hasMany(models.MessengerFile, {
+  foreignKey: 'message_id',
+  as: 'files'
+});
+
+models.MessengerUser.hasMany(models.MessengerFile, {
+  foreignKey: 'user_id',
+  as: 'uploadedFiles'
+});
+
+// Link MessengerUser to BomUser (optional, for non-bot users)
+models.MessengerUser.belongsTo(models.BomUser, {
+  foreignKey: 'bom_user_id',
+  targetKey: 'user',
+  as: 'bomUser'
 });
