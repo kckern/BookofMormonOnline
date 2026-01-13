@@ -4,6 +4,7 @@ import resolvers from '../resolvers';
 import { isArray } from 'util';
 import { sequelize } from './database';
 import { formatGraphQLError } from './errorHandler';
+import { createDataLoaders } from '../library/dataloaders';
 
 const langs = (process.env.SUPPORTED_LANGUAGES || 'en,fr,de,nl,pt,ko,jpn,zh,ru,hi,eo,es,vn,tgl,th,ukr,tam,swe')
   .split(',')
@@ -33,7 +34,8 @@ export const apollo_config = {
       return {
         lang,
         ip: maybeGetuserIpAddress(headers),
-        db: sequelize
+        db: sequelize,
+        loaders: createDataLoaders()
       };
     },
     formatResponse: (res) => {

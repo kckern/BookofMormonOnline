@@ -14,6 +14,7 @@
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
+    "dataloader": "^2.2.3",
     "dns": "^0.2.2",
     "dotenv": "^16.3.1",
     "email-validator": "^2.0.4",
