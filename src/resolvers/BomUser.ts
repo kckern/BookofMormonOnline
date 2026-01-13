@@ -4,6 +4,7 @@ import { messenger } from '../library/messenger';
 import { genUserAvatar } from './lib';
 import { verifyPassword, hashPassword, needsRehash } from '../library/auth/password';
 import { GraphQLContext, ResolverFn, AuthResponse, UserData } from '../types/graphql';
+import { authService } from '../services';
 
 import crypto from 'crypto';
 
@@ -98,97 +99,47 @@ export default {
       context: GraphQLContext,
       _info: unknown
     ): Promise<AuthResponse> => {
-      if (!args.username || !args.password || !args.token)
+      // Delegate authentication to AuthService
+      const result = await authService.signin(
+        args.username,
+        args.password,
+        args.token
+      );
+
+      if (!result.success || !result.user) {
         return {
           isSuccess: false,
-          msg: 'Login Failed',
-          user: null
-        };
-
-      try {
-        // Find user by username or email first
-        let myUser: any = await Models.BomUser.findOne({
-          where: {
-            [Op.or]: {
-              user: args.username,
-              email: args.username
-            }
-          }
-        });
-
-        // Handle special case: user with pass='-1' (migration case)
-        if (!myUser) {
-          myUser = await Models.BomUser.findOne({
-            where: {
-              user: args.username.replace(/@.*$/, ""),
-              pass: '-1'
-            }
-          });
-
-          if (myUser) {
-            // Set new password with bcrypt for migrated user
-            const newHash = await hashPassword(args.password);
-            await Models.BomUser.update(
-              { pass: newHash },
-              { where: { user: myUser.user } }
-            );
-          }
-        } else {
-          // Verify password against stored hash
-          const storedHash = myUser.getDataValue('pass');
-          const isValid = await verifyPassword(args.password, storedHash);
-
-          if (!isValid) {
-            return {
-              isSuccess: false,
-              msg: 'Login Failed',
-              user: null
-            };
-          }
-
-          // Rehash if using legacy MD5
-          if (needsRehash(storedHash)) {
-            const newHash = await hashPassword(args.password);
-            await myUser.update({ pass: newHash });
-          }
-        }
-
-        if (!myUser) {
-          return {
-            isSuccess: false,
-            msg: 'Login Failed',
-            user: null
-          };
-        }
-
-        //New Token Processing
-        try {
-          await Models.BomUserToken.upsert({ token: args.token, user: myUser.user });
-          const results: any = await Models.BomUserToken.findAll({ where: { user: myUser.user } });
-          const tokens = results.map((item: any) => item.getDataValue('token'));
-          await Models.BomLog.update({ user: myUser.user }, { where: { user: tokens } });
-        } catch (tokenError) {
-          console.error('Token processing error during signin:', tokenError);
-          // Continue with login even if token processing fails
-        }
-
-        const hashed_id = md5(myUser.getDataValue("user"));
-        const userName = myUser.getDataValue("name");
-        const userAvatar = genUserAvatar(hashed_id);
-        return {
-          isSuccess: true,
-          msg: 'login_success',
-          user: myUser,
-          social: await sendbird.loadUser(hashed_id, userName, userAvatar)
-        };
-      } catch (error) {
-        console.error('Database error during signin:', error);
-        return {
-          isSuccess: false,
-          msg: 'Database error',
+          msg: result.message || 'Login Failed',
           user: null
         };
       }
+
+      try {
+        // Token processing - associate token with user and update logs
+        await Models.BomUserToken.upsert({ token: args.token, user: result.user.username });
+        const results: any = await Models.BomUserToken.findAll({ where: { user: result.user.username } });
+        const tokens = results.map((item: any) => item.getDataValue('token'));
+        await Models.BomLog.update({ user: result.user.username }, { where: { user: tokens } });
+      } catch (tokenError) {
+        console.error('Token processing error during signin:', tokenError);
+        // Continue with login even if token processing fails
+      }
+
+      // Load full user model for response (needed for GraphQL field resolvers)
+      const myUser = await Models.BomUser.findOne({
+        where: { user: result.user.username }
+      });
+
+      const hashed_id = md5(result.user.username);
+      const userName = result.user.name;
+      const userAvatar = genUserAvatar(hashed_id);
+
+      return {
+        isSuccess: true,
+        msg: 'login_success',
+        user: myUser,
+        social: await sendbird.loadUser(hashed_id, userName, userAvatar)
+      };
     },
     user: async (root: any, args: any, context: any, info: any) => {
       try {
