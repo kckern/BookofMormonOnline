@@ -8,7 +8,7 @@ export const fixtures = {
 
   // Scripture
   scriptureRefs: ['1 Nephi 1:1', '1 Nephi 1:1-5', 'Alma 32:21'],
-  verseIds: [31103001, 31103002, 31103003], // 1 Nephi 1:1-3
+  verseIds: [31103, 31104, 31105], // 1 Nephi 1:1-3
 
   // People & Places
   people: ['nephi-1', 'lehi-1', 'laman-1', 'lemuel-1'],
