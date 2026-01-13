@@ -60,11 +60,9 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 //allow cors from all
 
-const allowedOrigins = [
-  'localhost', 
-  'bookofmormon.online', 
-  'xn--289a67xla.kr'
-];
+const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS || 'localhost,bookofmormon.online,xn--289a67xla.kr')
+  .split(',')
+  .map(s => s.trim());
 
 app.use((req, res, next) => {
   const origin = Array.isArray(req.headers.origin) ? req.headers.origin[0] : req.headers.origin;

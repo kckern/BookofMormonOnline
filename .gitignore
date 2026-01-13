@@ -8,6 +8,7 @@
 /tmp
 .DS_Store
 .env*
+!.env.example
 npm-debug.log
 Thumbs.db
 key
