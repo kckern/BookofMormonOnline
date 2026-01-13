@@ -34,11 +34,23 @@ export interface IdArgs {
   id: string | number;
 }
 
+// Social user data from sendbird/messenger
+export interface SocialUser {
+  user_id: string;
+  nickname: string;
+  profile_url: string;
+  metadata?: unknown;
+  is_online?: boolean;
+  last_seen_at?: number | null;
+  is_bot?: boolean;
+}
+
 // Response types
 export interface AuthResponse {
   isSuccess: boolean;
   msg: string;
   user: UserData | null;
+  social?: SocialUser | null;
 }
 
 export interface UserData {

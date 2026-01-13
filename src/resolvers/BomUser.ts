@@ -3,8 +3,27 @@ import Sequelize, { Model } from 'sequelize';
 import { messenger } from '../library/messenger';
 import { genUserAvatar } from './lib';
 import { verifyPassword, hashPassword, needsRehash } from '../library/auth/password';
+import { GraphQLContext, ResolverFn, AuthResponse, UserData } from '../types/graphql';
 
 import crypto from 'crypto';
+
+// Argument interfaces for resolvers
+interface SigninArgs {
+  username: string;
+  password: string;
+  token: string;
+}
+
+interface SignupArgs {
+  username: string;
+  email: string;
+  password: string;
+  token: string;
+}
+
+interface CheckUsernameArgs {
+  username: string;
+}
 
 // Feature flag - messaging disabled until Phase 5 data migration
 const MESSENGER_ENABLED = process.env.MESSENGER_ENABLED === 'true';
@@ -73,7 +92,12 @@ const cleanUsername = (username: string, email: string) => {
 
 export default {
   Query: {
-    signin: async (root: any, args: any, context: any, info: any) => {
+    signin: async (
+      _root: unknown,
+      args: SigninArgs,
+      context: GraphQLContext,
+      _info: unknown
+    ): Promise<AuthResponse> => {
       if (!args.username || !args.password || !args.token)
         return {
           isSuccess: false,
