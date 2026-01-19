@@ -1,16 +1,16 @@
-// Tokens from Postman collection (existing test accounts)
+// Test tokens - replace with valid tokens for your test environment
 export const TEST_TOKENS = {
-  primary: '0309b46d612e932dd8c7b00ed2efdfae',
-  user2: '000f816ba47633696710912db6ffbbb0',
-  user3: '00cf38c20c878e8fabef8a1a1669de54',
-  user4: '27095f03c04b827dcc750a14947e00ff',
-  user5: '028ffcba9790e8bac5086c1411a90e23',
-  newSession: '2abb97d6f314acaddca76804b368060',
+  primary: '<test-token-primary>',
+  user2: '<test-token-user2>',
+  user3: '<test-token-user3>',
+  user4: '<test-token-user4>',
+  user5: '<test-token-user5>',
+  newSession: '<test-token-new>',
 };
 
 export const TEST_CREDENTIALS = {
-  username: 'kckern',
-  password: 'password1',
+  username: '<test-username>',
+  password: '<test-password>',
 };
 
 export const TEST_SLUGS = {
