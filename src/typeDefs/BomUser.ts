@@ -31,6 +31,7 @@ extend type Mutation {
     signup(token: String,  username: String, password: String, name: String, email: String, zip: String): SignIn
     signout(token: String): Boolean
     editProfile(token: String, name: String, email: String, zip: String): User
+    uploadProfileImage(token: String!, imageData: String!): Boolean
   }
 
 
