@@ -24,3 +24,4 @@ log.sql
 *.log
 /.claude
 .worktrees/
+coverage/
