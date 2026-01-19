@@ -5,8 +5,9 @@ import "cropperjs/dist/cropper.css";
 import ReactLoading from "react-loading";
 import Gluejar from "react-gluejar";
 import selectImg from "./svg/selectimg.svg";
-import { getFwdUrl, label } from "src/models/Utils";
+import { label } from "src/models/Utils";
 import { toast } from "react-toastify";
+import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 function ImageChanger({
   setOpenModal,
   appController,
@@ -32,7 +33,7 @@ function ImageChanger({
       setCropData(cropper.getCroppedCanvas().toDataURL());
     }
   };
-  const uploadImage = () => {
+  const uploadImage = async () => {
     setUploading(true);
     if (typeof cropper !== "undefined") {
       if (isGroup) {
@@ -50,38 +51,33 @@ function ImageChanger({
         });
         return setOpenModal(false);
       }
-      const nickname = appController.states.user.social?.nickname;
-      cropper.getCroppedCanvas().toBlob(async function (blob) {
-        let file = null;
-        if (blob["type"] === "image/jpeg") {
-          file = new File([blob], "profile_picture.jpg", {
-            type: "image/jpeg",
-          });
-        } else if (blob["type"] === "image/png") {
-          file = new File([blob], "profile_picture.png");
+
+      // Get cropped image as base64
+      const imageData = cropper.getCroppedCanvas().toDataURL("image/jpeg", 0.9);
+      const token = appController.states.user.token;
+
+      try {
+        const result = await BoMOnlineAPI(
+          { uploadProfileImage: [{ token, imageData }] },
+          { useCache: false }
+        );
+
+        if (result?.uploadProfileImage) {
+          // Generate new profile URL and update state
+          const userId = appController.states.user.social?.user_id;
+          const newProfileUrl = `https://assets.bookofmormon.online/profiles/${userId}.jpg?v=${Date.now()}`;
+          appController.functions.setUserSocialProfileImage(newProfileUrl);
+          toast.success(label("profile_updated") || "Profile image updated");
+          setTimeout(() => setOpenModal(false), 1000);
+        } else {
+          toast.warn(label("error") || "Upload failed");
         }
-				const params = {
-					nickname:nickname,
-					profileImage: file
-				};
-				try {
-					const response = await appController.sendbird.sb.updateCurrentUserInfo(params);
-					if (response !== null) {
-						// console.log("SB",response.plainProfileUrl);
-						getFwdUrl(response.plainProfileUrl).then(url=>{
-							appController.sendbird.sb.updateCurrentUserInfo(nickname,url,(r,e)=>{
-								if(e) return toast.warn(label("error"));
-								 //console.log("S3",url,r);
-								appController.functions.setUserSocialProfileImage(url);
-							})
-						})
-					}
-					appController.functions.setUserSocialProfileImage(response.plainProfileUrl);
-					setTimeout(() => setOpenModal(false), 3000);
-				} catch (error) {
-					if(error) return toast.warn(label("error"));
-				}
-      });
+      } catch (error) {
+        console.error("Upload error:", error);
+        toast.warn(label("error") || "Upload failed");
+      } finally {
+        setUploading(false);
+      }
     }
   };
   return (

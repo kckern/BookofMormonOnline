@@ -7,6 +7,7 @@ import { GraphQLContext, ResolverFn, AuthResponse, UserData } from '../types/gra
 import { authService } from '../services';
 
 import crypto from 'crypto';
+import { uploadProfileImage } from '../library/s3';
 
 // Argument interfaces for resolvers
 interface SigninArgs {
@@ -487,31 +488,41 @@ export default {
         });
 
         if (!myUser?.user) return null;
-        
+
         let updatedValues = args;
         delete updatedValues.token;
-        // console.log({ updatedValues });
-        
-        const result: any = await Models.BomUser.update(updatedValues, { where: { user: myUser.user } });
-        // if(result.shift() === 0) return null
+
+        await Models.BomUser.update(updatedValues, { where: { user: myUser.user } });
         Object.assign(myUser, updatedValues);
-        const { user } = myUser;
-        const hashed_id = md5(user);
-        
-        if (updatedValues?.name) {
-          try {
-            const sbResponse: any = await sendbird.updateUserNickname(hashed_id, updatedValues.name);
-            if (!sbResponse) return null;
-            return myUser;
-          } catch (sendbirdError) {
-            console.error('Sendbird update error:', sendbirdError);
-            return myUser; // Return user even if sendbird update fails
-          }
-        }
+
         return myUser;
       } catch (error) {
         console.error('Database error during editProfile:', error);
         return null;
+      }
+    },
+    uploadProfileImage: async (
+      _root: unknown,
+      args: { token: string; imageData: string },
+      context: GraphQLContext
+    ): Promise<boolean> => {
+      const { token, imageData } = args;
+
+      // Find user by token
+      const user: any = await Models.BomUser.findOne(findUserByToken(token));
+      if (!user) {
+        throw new Error('Invalid token');
+      }
+
+      // Get user hash (same hash used elsewhere in the codebase)
+      const userHash = md5(user.user);
+
+      try {
+        await uploadProfileImage(imageData, userHash);
+        return true;
+      } catch (error) {
+        console.error('Profile image upload failed:', error);
+        return false;
       }
     },
     changePassword: async (root: any, args: any, context: any, info: any) => {
