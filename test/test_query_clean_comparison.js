@@ -256,7 +256,7 @@ async function runSingleTest(testSlug) {
                 }
               }
             }
-            pageprogress(token:"dc20ba0ad6130b646adffcfe87227f3a",slug: ["lehites"]) {   
+            pageprogress(token:"<test-token>",slug: ["lehites"]) {   
               count
               completed_items
               started_items

@@ -622,7 +622,7 @@ describe('User History', () => {
     it('should return daily scores', async () => {
       const { data, errors } = await executeQuery(`
         {
-          userdailyscores(token: "a268be0cc02fece744c453236fc4b94f") {
+          userdailyscores(token: "<test-token>") {
             dates
             progress
           }
