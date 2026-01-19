@@ -65,12 +65,12 @@ test/
 ```typescript
 // Tokens from Postman collection (existing test accounts)
 export const TEST_TOKENS = {
-  primary: '0309b46d612e932dd8c7b00ed2efdfae',
-  user2: '000f816ba47633696710912db6ffbbb0',
-  user3: '00cf38c20c878e8fabef8a1a1669de54',
-  user4: '27095f03c04b827dcc750a14947e00ff',
-  user5: '028ffcba9790e8bac5086c1411a90e23',
-  newSession: '2abb97d6f314acaddca76804b368060',
+  primary: '<test-token>',
+  user2: '<test-token>',
+  user3: '<test-token>',
+  user4: '<test-token>',
+  user5: '<test-token>',
+  newSession: '<test-token>',
 };
 
 export const TEST_CREDENTIALS = {
@@ -1876,7 +1876,7 @@ describe('Community Groups', () => {
       const { data, errors } = await executeMutation(`
         mutation {
           joinOpenGroup(
-            url: "08e1a6987e4d8dab52919b6191f279aa"
+            url: "<test-hash>"
             token: "${TEST_TOKENS.user3}"
           ) {
             isSuccess
@@ -1898,7 +1898,7 @@ describe('Community Groups', () => {
       const { data, errors } = await executeMutation(`
         mutation {
           requestToJoinGroup(
-            url: "a8d5d36bb1b8d4afb382bb60f17bd588"
+            url: "<test-hash>"
             token: "${TEST_TOKENS.user3}"
           ) {
             isSuccess
@@ -1939,7 +1939,7 @@ describe('Shortlinks', () => {
     it('should create shortlink', async () => {
       const { data, errors } = await executeMutation(`
         mutation {
-          shortlink(string: "4ef489e2de8cc731f8c9aea557e20a3c") {
+          shortlink(string: "<test-hash>") {
             hash
           }
         }
