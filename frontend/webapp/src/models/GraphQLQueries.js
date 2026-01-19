@@ -1126,6 +1126,21 @@ const queries = {
       `,
     }
   },
+  uploadProfileImage: (input) => {
+    input = input.shift();
+    return {
+      type: "uploadProfileImage",
+      key: 0,
+      val: input,
+      query: `mutation {` +
+      `        uploadProfileImage(` +
+      `          token: "${input.token}"` +
+      `          imageData: "${input.imageData}"` +
+      `        )` +
+      `      }
+      `,
+    }
+  },
   changePassword: (input) => {
     input = input.shift();
     return {
