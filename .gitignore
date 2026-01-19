@@ -23,3 +23,4 @@ log.sql
 !test/run-regression.sh
 *.log
 /.claude
+.worktrees/
