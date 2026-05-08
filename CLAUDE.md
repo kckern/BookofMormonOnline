@@ -89,3 +89,28 @@ frontend/webapp/
 ├── public/       # Static assets
 └── package.json  # Frontend dependencies
 ```
+
+## Working Notes & Documentation Layout
+
+When you (Claude) need to persist non-code working artifacts — design specs, implementation plans, audit findings, bug write-ups, or external-system references — **write them to `docs/<category>/`**, not to the repo root, not to `/tmp`, and not as inline conversation summaries the user has to scroll back to find.
+
+```
+docs/
+├── api/         # GraphQL/REST API reference (queries.md, mutations.md, types.md, README.md)
+├── specs/       # Feature specifications: what is being built, requirements, acceptance criteria
+├── plans/       # Implementation plans: step-by-step approach for a feature/refactor before coding
+├── audits/      # Code audits, security reviews, performance investigations, dependency scans
+├── bugs/        # Bug investigations & post-mortems: symptom, root cause, fix, regression test
+└── reference/   # External pointers, environment notes, on-call dashboards, config catalogs
+```
+
+**Conventions:**
+- Filename in `specs/`, `plans/`, `audits/`, `bugs/`: `YYYY-MM-DD-kebab-case-title.md` — point-in-time artifacts, dated by when they were written.
+- Filename in `reference/`: `kebab-case-title.md` — evergreen, no date prefix. Update in place as facts change rather than dating new versions.
+- `api/` follows its own existing structure (`README.md`, `queries.md`, etc.) and is also evergreen; keep it in sync with the schema.
+- One artifact per file. Don't dump unrelated work into one document.
+- Update an existing file when the topic continues; create a new one when the topic is new.
+- Specs and plans are written *before* implementation; audits and bugs are written *during or after*.
+- For multi-step work, the plan in `docs/plans/` is the source of truth — the in-conversation TaskList is for execution-time tracking, the plan file is for the design decisions.
+
+**When to skip docs/:** purely conversational work, single-file edits with no design decisions, or anything the user explicitly says doesn't need a record. Don't manufacture documents to look thorough.
