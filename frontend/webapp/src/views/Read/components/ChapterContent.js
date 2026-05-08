@@ -3,6 +3,20 @@ import { Link } from 'react-router-dom';
 import { assetUrl } from '../../../models/BoMOnlineAPI';
 import { slugify, getEnglishReference, verseIdToSlug } from '../../../utils/scriptureUtils';
 import { label } from '../../../models/Utils';
+import PassageNotes from '../PassageNotes';
+
+const sectionPassageNotesKey = (chapterRef, sectionIndex, sectionRef) =>
+    `${chapterRef}__section_${sectionIndex}_${(sectionRef || "").replace(/[^a-zA-Z0-9]/g, '_')}`;
+
+const collectSectionVerseIds = (section) => {
+    const ids = [];
+    section.blocks?.forEach(block => {
+        block.lines?.forEach(line => {
+            if (line.verse_id && !ids.includes(line.verse_id)) ids.push(line.verse_id);
+        });
+    });
+    return ids;
+};
 
 /**
  * Individual chapter content component
@@ -14,14 +28,16 @@ import { label } from '../../../models/Utils';
  * @param {Object} appController - App controller for popups
  * @param {boolean} DEBUG_SKELETON - Debug flag for skeleton loader
  */
-export const ChapterContent = memo(({ 
-    chapterItem, 
-    highlightedVerses, 
-    hoveredVerse, 
-    setHoveredVerse, 
-    activeChapterRef, 
-    appController, 
-    DEBUG_SKELETON 
+export const ChapterContent = memo(({
+    chapterItem,
+    highlightedVerses,
+    hoveredVerse,
+    setHoveredVerse,
+    activeChapterRef,
+    appController,
+    DEBUG_SKELETON,
+    passageNotesData,
+    passageNotesLoading,
 }) => {
     if (!chapterItem.data && !DEBUG_SKELETON) {
         return null; // Will be handled by parent component
@@ -29,32 +45,43 @@ export const ChapterContent = memo(({
 
     return (
         <div className="chapter-container" data-chapter-ref={chapterItem.ref}>
-            {chapterItem.data && !DEBUG_SKELETON && chapterItem.data.sections?.map((section, index) => (
-                <div key={`${chapterItem.ref}-${index}`} className="read-section">
-                    <div className="read-section-header">
-                        <h4>{section.heading?.replace(/｢\d+｣/g, "").trim()}</h4>
-                        <p>
-                            <Link to={`/study/${slugify(getEnglishReference(section.ref))}`}>
-                                {section.ref}
-                                <button className="btn btn-sm btn-outline-secondary">
-                                    {label("study_button")}
-                                </button>
-                            </Link>
-                        </p>    
-                    </div>                      
-                    {section.blocks.map((block, blockIndex) => (
-                        <ScriptureBlock
-                            key={`${chapterItem.ref}-${blockIndex}`}
-                            block={block}
-                            highlightedVerses={highlightedVerses}
-                            hoveredVerse={hoveredVerse}
-                            setHoveredVerse={setHoveredVerse}
-                            activeChapterRef={activeChapterRef}
-                            appController={appController}
+            {chapterItem.data && !DEBUG_SKELETON && chapterItem.data.sections?.map((section, index) => {
+                const sectionVerseIds = collectSectionVerseIds(section);
+                const sectionKey = sectionPassageNotesKey(chapterItem.ref, index, section.ref);
+                const sectionPassageNotes = passageNotesData ? passageNotesData[sectionKey] : null;
+                return (
+                    <div key={`${chapterItem.ref}-${index}`} className="read-section">
+                        <div className="read-section-header">
+                            <h4>{section.heading?.replace(/｢\d+｣/g, "").trim()}</h4>
+                            <p>
+                                <Link to={`/study/${slugify(getEnglishReference(section.ref))}`}>
+                                    {section.ref}
+                                    <button className="btn btn-sm btn-outline-secondary">
+                                        {label("study_button")}
+                                    </button>
+                                </Link>
+                            </p>
+                        </div>
+                        {section.blocks.map((block, blockIndex) => (
+                            <ScriptureBlock
+                                key={`${chapterItem.ref}-${blockIndex}`}
+                                block={block}
+                                highlightedVerses={highlightedVerses}
+                                hoveredVerse={hoveredVerse}
+                                setHoveredVerse={setHoveredVerse}
+                                activeChapterRef={activeChapterRef}
+                                appController={appController}
+                            />
+                        ))}
+                        <PassageNotes
+                            passageNotesLoading={passageNotesLoading}
+                            sectionPassageNotes={sectionPassageNotes}
+                            sectionVerseIds={sectionVerseIds}
+                            animationDelay={index * 300}
                         />
-                    ))}
-                </div>
-            ))}
+                    </div>
+                );
+            })}
         </div>
     );
 });
