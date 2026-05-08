@@ -1,484 +1,623 @@
 import { useRouteMatch, Link, useHistory } from "react-router-dom";
 import "./Read.scss";
-import React, { useState, useEffect, useCallback, useRef } from "react";
-import Loader from "../_Common/Loader";
-import BoMOnlineAPI, { assetUrl } from "../../models/BoMOnlineAPI";
-import { generateReference, lookupReference } from "scripture-guide";
-import ReactTooltip from "react-tooltip";
-import { determineLanguage, label } from "../../models/Utils";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import BoMOnlineAPI from "../../models/BoMOnlineAPI";
+import { label } from "../../models/Utils";
+
+// Utilities & components
+import { 
+    slugify, 
+    verseIdToSlug, 
+    memoizedLookupReference, 
+    memoizedGenerateReference,
+    getPrevNextChapter, 
+    initializeChapterData 
+} from "../../utils/scriptureUtils";
+import { useConcurrentOperations, useThrottle, useDebounce } from "../../hooks/useConcurrentOperations";
+import { ChapterNav } from "./components/ChapterNav";
+import { SkeletonLoader } from "./components/SkeletonLoader";
+import { ChapterContent } from "./components/ChapterContent";
 import PassageNotes from "./PassageNotes";
 
-const slugify = (text,verse_ids) => {
-    if(!text) return null;
-    //const hasAlpha = /[a-z]/.test(text.toLowerCase());
-    //if(hasAlpha) return  text.toLowerCase().replace(/ /g, ".").replace(/:/g, ".").replace(/[.]+/g, ".").replace(/[^a-z0-9.-]/g, "");
-    const slug = text.replace(/ /g, ".").replace(/:/g, ".").replace(/[-]+/g, "~").toLowerCase();    
-    return slug;
-}
+const DEBUG_SKELETON = false;
 
-const verseIdToSlug = (verseIds) => {
-    const ref = generateReference(verseIds, lang);
-    return slugify(ref).replace(/[.](\d+$)/, "/$1");
-}
+const sectionPassageNotesKey = (chapterRef, sectionIndex, sectionRef) =>
+    `${chapterRef}__section_${sectionIndex}_${(sectionRef || "").replace(/[^a-zA-Z0-9]/g, '_')}`;
 
+const buildSectionVerseIdsMap = (chapterRef, chapterData) => {
+    const map = {};
+    if (!chapterData?.sections) return map;
+    chapterData.sections.forEach((section, sectionIndex) => {
+        const ids = [];
+        section.blocks?.forEach(block => {
+            block.lines?.forEach(line => {
+                if (line.verse_id && !ids.includes(line.verse_id)) ids.push(line.verse_id);
+            });
+        });
+        if (ids.length > 0) {
+            map[sectionPassageNotesKey(chapterRef, sectionIndex, section.ref)] = ids;
+        }
+    });
+    return map;
+};
 
-const lang = determineLanguage();
-
-const getEnglishReference = (ref) => {
-    const verse_ids = lookupReference(ref,"en").verse_ids;
-    const enref = generateReference(verse_ids, "en");
-    return enref;
-}
-
-const getPrevNextChapter = (verse_ids) => {
-    const nextVerseId = verse_ids[verse_ids.length - 1] + 1;
-    const prevVerseId = verse_ids[0] - 1;
-    const nextChapter = nextVerseId > 37706 ? null : generateReference([nextVerseId], lang).split(":")[0];
-    const prevChapter = prevVerseId < 31103 ? null : generateReference([prevVerseId], lang).split(":")[0];
-    return { nextChapter, prevChapter };
-}
-
-
-const reInit = (match) => {
-    const { params } = match;
-    const { bookCh, verseNum } = params;
-    const modifiedBookCh = bookCh?.replace(/[.]/g, " ") || generateReference(lookupReference("1Ne1").verse_ids, lang).trim();
-    const urlSlug = match.url?.replace(/^\/read\//, "");
-
-    const fullReference = verseNum ? `${modifiedBookCh}:${verseNum}` : modifiedBookCh;
-    //alert(fullReference);
-    const initChapterVerseIds = lookupReference(modifiedBookCh, lang).verse_ids;
-    const initHighlightedVerses = verseNum ? lookupReference(fullReference, lang).verse_ids : null;
-    const initChapterRef = modifiedBookCh ? generateReference(initChapterVerseIds, lang).trim() : window.localStorage.getItem("chapterRef").trim() || generateReference(lookupReference("1Ne1").verse_ids, lang).trim();
-    const { nextChapter: initNextChapter, prevChapter: initPrevChapter } = getPrevNextChapter(initChapterVerseIds);
-    return { initChapterRef, initHighlightedVerses, initNextChapter, initPrevChapter,initChapterVerseIds };
+const fetchPassageNotesForSections = async (sectionVerseIdsMap, signal) => {
+    const apiRequest = {};
+    const sectionKeyToQueryKey = {};
+    Object.entries(sectionVerseIdsMap).forEach(([sectionKey, verseIds], index) => {
+        if (verseIds && verseIds.length > 0) {
+            const queryKey = `passagenotes_${index}`;
+            apiRequest[queryKey] = verseIds;
+            sectionKeyToQueryKey[sectionKey] = queryKey;
+        }
+    });
+    if (Object.keys(apiRequest).length === 0) return {};
+    try {
+        const data = await BoMOnlineAPI(apiRequest, signal ? { signal } : undefined);
+        const out = {};
+        Object.entries(sectionKeyToQueryKey).forEach(([sectionKey, queryKey]) => {
+            if (data && data[queryKey]) out[sectionKey] = data[queryKey];
+        });
+        return out;
+    } catch (e) {
+        console.error('Error fetching passage notes for sections', e);
+        return {};
+    }
 };
 
 export default function ReadScripture({ appController }) {
     const match = useRouteMatch();
     const history = useHistory();
-    const { initChapterRef, initHighlightedVerses, initNextChapter, initPrevChapter, initChapterVerseIds } = reInit(match);
 
-    const [content, setContent] = useState(null);
+    // Concurrency hook
+    const { 
+        executeOperation, 
+        isOperationRunning, 
+        abortAllOperations 
+    } = useConcurrentOperations();
+
+    // ---------------------------------------------------------
+    // Initialize chapter data from route - stabilized to prevent re-renders
+    // ---------------------------------------------------------
+    const routeKey = useMemo(() => {
+        const { bookCh, verseNum } = match.params;
+        return `${bookCh || 'default'}_${verseNum || 'none'}`;
+    }, [match.params.bookCh, match.params.verseNum]);
+
+    const chapterData = useMemo(() => {
+        // Only recalculate when route key actually changes
+        return initializeChapterData(match);
+    }, [routeKey]);
+
+    const {
+        initChapterRef,
+        initHighlightedVerses,
+        initNextChapter,
+        initPrevChapter,
+        initChapterVerseIds
+    } = chapterData;
+
+    // ---------------------------------------------------------
+    // Manage state - optimized with loading state
+    // ---------------------------------------------------------
+    const [content, setContent] = useState(null);               
+    const [allChapters, setAllChapters] = useState([]);         
     const [chapterRef, setChapterRef] = useState(initChapterRef);
+    const [activeChapterRef, setActiveChapterRef] = useState(initChapterRef);
     const [highlightedVerses, setHighlightedVerses] = useState(initHighlightedVerses);
     const [hoveredVerse, setHoveredVerse] = useState(null);
     const [nextChapterRef, setNextChapterRef] = useState(initNextChapter);
     const [prevChapterRef, setPrevChapterRef] = useState(initPrevChapter);
     const [chapterVerseIds, setChapterVerseIds] = useState(initChapterVerseIds);
+    const [initialLoad, setInitialLoad] = useState(true);
+    const [isContentLoading, setIsContentLoading] = useState(false);
     const [passageNotesData, setPassageNotesData] = useState({});
     const [passageNotesLoading, setPassageNotesLoading] = useState(false);
 
-    const prevInitChapterRef = useRef(initChapterRef);
-    const prevInitHighlightedVerses = useRef(initHighlightedVerses);
+    // Refs
+    const verseRefs = useRef(new Map()); 
+    const scrollTimeoutRef = useRef(null);
+    const hasUserScrolled = useRef(false); 
+    const lastLoadedChapterCount = useRef(0); 
+    const lastScrollY = useRef(0); 
+    const nextChapterPreloaded = useRef(false); 
+    const lastContentLoadTime = useRef(0); 
 
-    useEffect(() => {
-        //console.log("Reinitializing");
-        const { 
-            initChapterRef: newInitChapterRef, 
-            initHighlightedVerses: newInitHighlightedVerses, 
-            initNextChapter: newInitNextChapter, 
-            initPrevChapter: newInitPrevChapter ,
-            chapterVerseIds: newChapterVerseIds
-        } = reInit(match);
-
-        if (prevInitChapterRef.current !== newInitChapterRef) {
-
-            setChapterRef(newInitChapterRef || generateReference(lookupReference("1Ne1").verse_ids, lang).trim());
-            prevInitChapterRef.current = newInitChapterRef;
+    // ---------------------------------------------------------
+    // Navigate to next/previous chapters - memoized
+    // ---------------------------------------------------------
+    const goToNextChapter = useCallback(() => {
+        const nextSlug = slugify(nextChapterRef);
+        if (nextSlug) {
+            history.push(`/read/${nextSlug}`);
         }
+    }, [nextChapterRef, history]);
 
-        if (prevInitHighlightedVerses.current !== newInitHighlightedVerses) {
-            setHighlightedVerses(newInitHighlightedVerses);
-            prevInitHighlightedVerses.current = newInitHighlightedVerses;
+    const goToPreviousChapter = useCallback(() => {
+        const prevSlug = slugify(prevChapterRef);
+        if (prevSlug) {
+            history.push(`/read/${prevSlug}`);
         }
+    }, [prevChapterRef, history]);
 
-        setNextChapterRef(newInitNextChapter);
-        setChapterVerseIds(newChapterVerseIds);
-
-        setPrevChapterRef(newInitPrevChapter);
-    }, [match.params]);
-
-    // Function to fetch passage notes for all sections in a single API call with multiple queries
-    const fetchPassageNotesForAllSections = useCallback(async (sectionVerseIdsMap) => {
-        try {
-            // Create multiple passagenotes queries for a single API call
-            const apiRequest = {};
-            const sectionKeyToQueryKey = {};
-            
-            Object.entries(sectionVerseIdsMap).forEach(([sectionKey, verseIds], index) => {
-                if (verseIds && verseIds.length > 0) {
-                    const queryKey = `passagenotes_${index}`;
-                    apiRequest[queryKey] = verseIds;
-                    sectionKeyToQueryKey[sectionKey] = queryKey;
-                }
-            });
-            
-            if (Object.keys(apiRequest).length === 0) return {};
-            
-            // Make single API call with multiple passagenotes queries
-            const data = await BoMOnlineAPI(apiRequest);
-            
-            // Map the results back to section keys
-            const sectionPassageNotesMap = {};
-            Object.entries(sectionKeyToQueryKey).forEach(([sectionKey, queryKey]) => {
-                if (data && data[queryKey]) {
-                    sectionPassageNotesMap[sectionKey] = data[queryKey];
-                }
-            });
-            
-            return sectionPassageNotesMap;
-        } catch (error) {
-            console.error('Error fetching passage notes for sections', error);
-            return {};
+    // ---------------------------------------------------------
+    // Load the next chapter: can be called automatically or manually
+    // ---------------------------------------------------------
+    const loadNextChapter = useCallback(async (isManualOverride = false) => {
+        if (isOperationRunning("loadNext") && !isManualOverride) {
+            return;
         }
-    }, []);
+        if (!nextChapterRef) return;
 
-    // Function to get passage notes for a specific section
-    const getPassageNotesForSection = useCallback((sectionKey) => {
-        return passageNotesData[sectionKey] || null;
-    }, [passageNotesData]);
-
-    // add listener to to keyboard left right arrows to got next and previous
-    const handleKeyDown = useCallback((e) => {
-        if (e.key === "ArrowRight") {
-
-            const next = document.querySelector(".read-section-footer a:last-child");
-            if (next) next.click();
-        
-        } else if (e.key === "ArrowLeft") {
-                
-                const prev = document.querySelector(".read-section-footer a:first-child");
-                if (prev) prev.click();
-           
-        }
-        //or tab
-        if (e.key === "ArrowDown" || e.key === "Tab" || e.key === "ArrowUp") {
-            e.preventDefault();
-
-            const direction = e.key === "ArrowUp" ? -1 : 1;
-            let highlightedVersesFromDom = [...document.querySelectorAll(".highlighted")].map((el) => {
-                const match = el.className.match(/verse_(\d+)/);
-                return match ? parseInt(match[1]) : null;
-            }).filter(Boolean);
-    
-            const maxVerse = highlightedVersesFromDom.length ? Math.max(...highlightedVersesFromDom) : 0;
-
-            const nextVerse = maxVerse ? maxVerse + direction : chapterVerseIds?.[0] || 1;
-            const goTo = chapterVerseIds.includes(nextVerse) ? nextVerse : chapterVerseIds?.[0] || 1;
-            const classNameGoto = `verse_${goTo}`;
-            const goToDom = document.querySelector(`.${classNameGoto}`);
-            if (goToDom) {
-                goToDom.scrollIntoView({ behavior: "smooth", block: "center" });
-                goToDom.click();
-            } else {
-                console.error("Verse not found:", classNameGoto);
+        if (!isManualOverride) {
+            const { scrollHeight, scrollTop, clientHeight } = document.documentElement;
+            const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+            const scrollProgress = scrollTop / (scrollHeight - clientHeight);
+            const timeSinceLastLoad = Date.now() - lastContentLoadTime.current;
+            
+            if (distanceFromBottom > 200 && scrollProgress < 0.7) {
+                return;
             }
-    
+            
+            if (timeSinceLastLoad < 1000) {
+                return;
+            }
         }
 
-        //escape clear highlighted verse
-        if (e.key === "Escape") {
-           const slug = slugify(chapterRef);
-              history.push(`/read/${slug}`);
+        await executeOperation(
+            "loadNext",
+            async (signal) => {
+                setIsContentLoading(true);
+                try {
+                    const data = await BoMOnlineAPI({ read: nextChapterRef }, { signal });
+                    if (signal.aborted) return null;
+
+                    const mainKey = Object.keys(data.read)[0];
+                    const nextChapterData = data.read[mainKey];
+                    if (!nextChapterData) return null;
+
+                    const nextChapterVerses = memoizedLookupReference(nextChapterRef).verse_ids;
+                    
+                    setAllChapters((prev) => {
+                        const newChapters = [
+                            ...prev,
+                            {
+                                ref: nextChapterRef,
+                                data: nextChapterData,
+                                verseIds: nextChapterVerses,
+                            },
+                        ];
+                        lastLoadedChapterCount.current = newChapters.length + 1;
+                        lastContentLoadTime.current = Date.now();
+                        return newChapters;
+                    });
+
+                    const { nextChapter } = getPrevNextChapter(nextChapterVerses);
+                    setNextChapterRef(nextChapter || null);
+
+                    const sectionMap = buildSectionVerseIdsMap(nextChapterRef, nextChapterData);
+                    if (Object.keys(sectionMap).length > 0) {
+                        const notes = await fetchPassageNotesForSections(sectionMap, signal);
+                        if (!signal.aborted) {
+                            setPassageNotesData(prev => ({ ...prev, ...notes }));
+                        }
+                    }
+
+                    return nextChapterData;
+                } finally {
+                    setIsContentLoading(false);
+                }
+            },
+            { allowMultiple: false }
+        );
+    }, [nextChapterRef, isOperationRunning, executeOperation]);
+
+    // ---------------------------------------------------------
+    // Called when the user explicitly navigates to a new chapter
+    // ---------------------------------------------------------
+    const handleExplicitChapterNavigation = useCallback(() => {
+        abortAllOperations();
+        setContent(null);
+        setAllChapters([]);
+        setHighlightedVerses(null);
+        setIsContentLoading(false);
+        setPassageNotesData({});
+        setPassageNotesLoading(false);
+        hasUserScrolled.current = false;
+        lastLoadedChapterCount.current = 0;
+        lastScrollY.current = 0;
+        nextChapterPreloaded.current = false;
+        lastContentLoadTime.current = 0;
+        window.scrollTo(0, 0);
+    }, [abortAllOperations]);
+
+    // ---------------------------------------------------------
+    // Monitor changes to route - optimized with batching (React < 18 compatible)
+    // ---------------------------------------------------------
+    useEffect(() => {
+        // Batch state updates using setTimeout to prevent cascade re-renders
+        const batchedUpdate = () => {
+            setChapterRef(initChapterRef);
+            setActiveChapterRef(initChapterRef);
+            setHighlightedVerses(initHighlightedVerses);
+            setNextChapterRef(initNextChapter);
+            setPrevChapterRef(initPrevChapter);
+            setChapterVerseIds(initChapterVerseIds);
+            setInitialLoad(true);
+            setIsContentLoading(false);
+            
+            // Reset tracking values
+            hasUserScrolled.current = false;
+            lastLoadedChapterCount.current = 0;
+            lastScrollY.current = 0;
+            nextChapterPreloaded.current = false;
+            lastContentLoadTime.current = 0;
+        };
+
+        // Use setTimeout to batch updates and prevent flickering
+        const timeoutId = setTimeout(batchedUpdate, 0);
+        return () => clearTimeout(timeoutId);
+    }, [initChapterRef, initHighlightedVerses, initNextChapter, initPrevChapter, initChapterVerseIds]);
+
+    // ---------------------------------------------------------
+    // Keyboard navigation - memoized
+    // ---------------------------------------------------------
+    const findAdjacentVerse = useCallback((direction) => {
+        if (!chapterVerseIds?.length) return null;
+
+        if (!highlightedVerses?.length) {
+            return chapterVerseIds[0];
         }
-    }, []);
+
+        const maxHighlighted = Math.max(...highlightedVerses);
+        const currentIndex = chapterVerseIds.indexOf(maxHighlighted);
+        if (currentIndex === -1) return chapterVerseIds[0];
+
+        const nextIndex = currentIndex + direction;
+        if (nextIndex >= 0 && nextIndex < chapterVerseIds.length) {
+            return chapterVerseIds[nextIndex];
+        }
+        return maxHighlighted;
+    }, [chapterVerseIds, highlightedVerses]);
+
+    const navigateToVerse = useCallback((verseId) => {
+        if (!verseId) return;
+        const verseElement = verseRefs.current.get(verseId);
+        if (verseElement) {
+            verseElement.scrollIntoView({ behavior: "smooth", block: "center" });
+            history.push(`/read/${verseIdToSlug([verseId])}`);
+        }
+    }, [history]);
+
+    const handleKeyDown = useCallback((e) => {
+        if (
+            e.target.tagName === "INPUT" ||
+            e.target.tagName === "TEXTAREA" ||
+            e.target.isContentEditable
+        ) {
+            return;
+        }
+        switch (e.key) {
+            case "ArrowRight":
+                goToNextChapter();
+                break;
+            case "ArrowLeft":
+                goToPreviousChapter();
+                break;
+            case "ArrowDown":
+            case "Tab": {
+                e.preventDefault();
+                const nextVerse = findAdjacentVerse(1);
+                navigateToVerse(nextVerse);
+                break;
+            }
+            case "ArrowUp": {
+                e.preventDefault();
+                const prevVerse = findAdjacentVerse(-1);
+                navigateToVerse(prevVerse);
+                break;
+            }
+            case "Escape": {
+                const slug = slugify(activeChapterRef);
+                history.push(`/read/${slug}`);
+                break;
+            }
+            default:
+                break;
+        }
+    }, [
+        goToNextChapter,
+        goToPreviousChapter,
+        findAdjacentVerse,
+        navigateToVerse,
+        activeChapterRef,
+        history,
+    ]);
 
     useEffect(() => {
         document.addEventListener("keydown", handleKeyDown);
-        return () => {
-            document.removeEventListener("keydown", handleKeyDown);
-        }
-    }, [handleKeyDown, chapterRef, history]);
+        return () => document.removeEventListener("keydown", handleKeyDown);
+    }, [handleKeyDown]);
 
-
-    //scroll to highlighted verse on load
-    useEffect(() => {
-        const highlightedVersesFromDom = [...document.querySelectorAll(".highlighted")].map((el) => {
-            const match = el.className.match(/verse_(\d+)/);
-            return match ? parseInt(match[1]) : null;
-        }).filter(Boolean);
-
-        const maxVerse = highlightedVersesFromDom.length ? Math.max(...highlightedVersesFromDom) : 0;
-        const classNameGoto = `verse_${maxVerse}`;
-        const goToDom = document.querySelector(`.${classNameGoto}`);
-        if (goToDom) {
-            goToDom.scrollIntoView({ behavior: "smooth", block: "center" });
-        } else {
-            //console.error("Verse not found:", classNameGoto);
-        }
-    }, [highlightedVerses, chapterRef]);
-    
-
-
-    const buildContent = (readData, { chapterRef, nextChapterRef, prevChapterRef }) => {
-        const prevRef = readData?.prev_ref || prevChapterRef;
-        const nextRef = readData?.next_ref || nextChapterRef;
-        const ref = readData?.ref || chapterRef;
-
-        const prevSlug = slugify(prevRef);
-        const nextSlug = slugify(nextRef);
-
-        return <div className="read-content">
-            <div className="read-header-nav">
-                {prevSlug ? (
-                    <Link to={`/read/${prevSlug}`} className="btn btn-primary">
-                        ◀ {prevRef}
-                    </Link>
-                    ) : (
-                    <button className="btn btn-primary disabled" disabled>  ◀  </button>
-                    )}
-                    <h3 className="title lg-4 text-center">{ref || label("menu_read")}</h3>
-                {nextSlug ? (
-                    <Link to={`/read/${nextSlug}`} className="btn btn-primary">
-                    {nextRef} ▶
-                    </Link>
-                ) : (
-                    <button className="btn btn-primary disabled" disabled>  ▶ </button>
-                )} </div>
-            <ChapterNav chapterRef={chapterRef} />
-            {readData ? readData.sections.map((section, sectionIndex) => {
-                // Gather actual verse IDs from this section's blocks and lines
-                const sectionVerseIds = [];
-                section.blocks.forEach(block => {
-                    block.lines.forEach(line => {
-                        if (line.verse_id && !sectionVerseIds.includes(line.verse_id)) {
-                            sectionVerseIds.push(line.verse_id);
-                        }
-                    });
-                });
-                
-                // Create a unique key for this section
-                const sectionKey = `section_${sectionIndex}_${section.ref?.replace(/[^a-zA-Z0-9]/g, '_')}`;
-                
-                // Get passage notes for this specific section
-                const sectionPassageNotes = getPassageNotesForSection(sectionKey);
-                
-                return <div key={sectionIndex} className="read-section">
-                    <div className="read-section-header">
-                        <h4>{section.heading.replace(/｢\d+｣/g, "").trim()}</h4>
-                        <p><Link to={`/study/${slugify(getEnglishReference(section.ref))}`}>
-                    
-                        {section.ref}<button className="btn btn-sm btn-outline-secondary" >{label("study_button")}</button></Link></p>    
-                    </div>                      
-                    {section.blocks.map((block, blockIndex) => { 
-                        const blockLineWordCount = block.lines.reduce((acc, line) => {
-                            return acc + line.text?.split(" ").length || 0;
-                        }, 0);
-                        const specialClass = blockLineWordCount > 150 ? "split" : "";
-                        const paragraphs = [];
-                        let paragraphCursor = 0;
-                        for(let line of block.lines) {
-                            if(/¶/.test(line.format) && paragraphs.length > 0) paragraphCursor++;
-                            if(/i/.test(line.format)) line.class = "italic";
-                            if(/§/.test(line.format)) line.class = "heading";
-                            if(!line.format) line.class = "normal";
-                            if(!paragraphs[paragraphCursor]) paragraphs[paragraphCursor] = [];
-                            paragraphs[paragraphCursor].push(line);
-                        }
-
-                        const handleImgClick = (e) => {
-                                appController.functions.setPopUp({ type: "people", ids: [block.person_slug],
-                                    underSlug: "read/" + slugify(chapterRef) });
-                                
-                        }
-                        return <div key={blockIndex} className="read-block">
-                            <div className="left-gutter">
-                                <img alt={block.voice} src={assetUrl + `/people/${block.person_slug}`} onClick={handleImgClick} />
-                                <div className="read-voice"  onClick={handleImgClick} >{label(block.voice)}</div>
-                            </div>
-                            <div className="main-content">
-
-                            {paragraphs?.map(p=><p className={`read-scripture ${specialClass} ${p?.[0]?.class || ""}`}>{p?.map((line, lineIndex) => {
-
-                                const lineVerseId = line.verse_id;
-
-                                const verseIsHighlighted = Array.isArray(highlightedVerses) && highlightedVerses?.includes(lineVerseId);
-                                const verseIsHovered = lineVerseId === hoveredVerse;
-
-                                const lineClass = `verse_`+lineVerseId +  " " +`${line.class || ""} ${verseIsHighlighted ? "highlighted" : ""} ${verseIsHovered ? "hovered" : ""}`;
-
-
-                                const slugToVerse = verseIdToSlug([lineVerseId]);
-
-                                return <Link key={lineIndex} className={lineClass}
-                                    to={`/read/${slugToVerse}`}
-                                    onMouseEnter={() => {
-                                        setHoveredVerse(lineVerseId);
-                                    }}
-                                    onMouseLeave={() => setHoveredVerse(null)}
-                                
-                                ><sup>{line.verse_num}</sup>{line.text}</Link>
-                            })}</p>)}
-                            </div>
-                        </div>
-
-                    })}
-                    
-                    <PassageNotes 
-                        passageNotesLoading={passageNotesLoading}
-                        sectionPassageNotes={sectionPassageNotes}
-                        sectionVerseIds={sectionVerseIds}
-                        animationDelay={sectionIndex * 300}
-                    />
-                </div>
-            }) : <Loader top={"30vh"} />}
-            { !!readData && <div className="read-section-footer">
-                {prevSlug ? (
-                    <Link to={`/read/${prevSlug}`} className="btn btn-primary">
-                        ◀ {prevRef}
-                    </Link>
-                    ) : (
-                    <button className="btn btn-primary disabled" disabled>
-                        ◀ {prevRef}
-                    </button>
-                    )}
-                {nextSlug ? (
-                    <Link to={`/read/${nextSlug}`} className="btn btn-primary">
-                    {nextRef} ▶
-                    </Link>
-                ) : (
-                    <button className="btn btn-primary disabled" disabled>
-                    {nextRef} ▶
-                    </button>
-                )}
-            </div> }
-        </div>
-    }
-
-
-    useEffect((prevChapterRef) => {
-
-        const urlSlug = match.url?.replace(/^\/read\//, "");
-        const idealSlug = highlightedVerses ? verseIdToSlug(highlightedVerses) : slugify(chapterRef);
-        if(idealSlug && idealSlug !== urlSlug) history.push(`/read/${idealSlug}`);
-        let loaderTimeout;
-        loaderTimeout = setTimeout(() => {setContent(null);}, 200);
-        document.title = chapterRef;
+    // ---------------------------------------------------------
+    // Scroll handler - throttled and optimized
+    // ---------------------------------------------------------
+    const throttledScrollHandler = useThrottle(() => {
+        const currentScrollY = window.scrollY;
         
-        // Clear passage notes data when chapter changes
+        if (currentScrollY > lastScrollY.current + 10) {
+            hasUserScrolled.current = true;
+        }
+        lastScrollY.current = currentScrollY;
+        
+        if (!isOperationRunning("loadNext") && !isContentLoading) {
+            const { scrollHeight, scrollTop, clientHeight } = document.documentElement;
+            const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+            const scrollProgress = scrollTop / (scrollHeight - clientHeight);
+            
+            if (distanceFromBottom < 50 && scrollProgress > 0.8) {
+                loadNextChapter(false);
+            }
+        }
+    }, 200);
+
+    useEffect(() => {
+        window.addEventListener("scroll", throttledScrollHandler, { passive: true });
+        return () => {
+            window.removeEventListener("scroll", throttledScrollHandler);
+            if (scrollTimeoutRef.current) {
+                clearTimeout(scrollTimeoutRef.current);
+            }
+        };
+    }, [throttledScrollHandler, loadNextChapter, isContentLoading]);
+
+    // ---------------------------------------------------------
+    // Load the initial content - with loading state
+    // ---------------------------------------------------------
+    useEffect(() => {
+        if (!initialLoad) return;
+        if (!chapterRef) return;
+
+        setContent(null);
+        setAllChapters([]);
+        document.title = chapterRef;
+
         setPassageNotesData({});
         setPassageNotesLoading(true);
-        
-        BoMOnlineAPI({read: chapterRef}).then(async (data) => {
-            clearTimeout(loaderTimeout);
-            const mainKey = Object.keys(data.read)[0];
-            const readContent = data.read[mainKey];
-            setContent(readContent);
-            
-            // Create a map of section keys to their verse IDs for separate API calls
-            const sectionVerseIdsMap = {};
-            if (readContent && readContent.sections) {
-                readContent.sections.forEach((section, sectionIndex) => {
-                    const sectionVerseIds = [];
-                    section.blocks.forEach(block => {
-                        block.lines.forEach(line => {
-                            if (line.verse_id && !sectionVerseIds.includes(line.verse_id)) {
-                                sectionVerseIds.push(line.verse_id);
-                            }
-                        });
-                    });
-                    
-                    if (sectionVerseIds.length > 0) {
-                        const sectionKey = `section_${sectionIndex}_${section.ref?.replace(/[^a-zA-Z0-9]/g, '_')}`;
-                        sectionVerseIdsMap[sectionKey] = sectionVerseIds;
-                    }
-                });
-            }
-            
-            // Fetch passage notes for each section separately to get partitioned results
-            if (Object.keys(sectionVerseIdsMap).length > 0) {
-                const sectionPassageNotes = await fetchPassageNotesForAllSections(sectionVerseIdsMap);
-                setPassageNotesData(sectionPassageNotes);
-            }
-            setPassageNotesLoading(false);
-            
-            //scroll to top
-            window.scrollTo(0, 0);
-            //save chapterRef to local storage
-            localStorage.setItem("chapterRef", chapterRef);
-            //reset highlighted verse if not in URL
-            const newHighlightedVerses = !prevChapterRef ? highlightedVerses : prevChapterRef === chapterRef ? highlightedVerses : null;
-            setHighlightedVerses(newHighlightedVerses);
-        });
-    
-        return () => clearTimeout(loaderTimeout);
-    }, [chapterRef, fetchPassageNotesForAllSections]);
 
-    
-
-
-    return (<div className="container" style={{ display: 'block' }}>
-        <div id="page" className="read">
-          {buildContent(content, { chapterRef, nextChapterRef, prevChapterRef })}
-        </div></div>
-      )
-
-
-}
-
-
-function ChapterNav({ chapterRef }) {
-    const chapterCounts = [22,33,7,1,1,1,1,29,63,16,30,1,9,15,10];
-    const book_keys = ["1_ne", "2_ne", "jacob", "enos", "jarom", "omni", "w_of_m", "mosiah", "alma", "helaman", "3_ne", "4_ne", "mormon", "ether", "moroni"];
-    
-    // Static references that don't change
-    const bookNames = React.useMemo(() => book_keys.map((book) => label(book)), []);
-    const bookFirsts = React.useMemo(() => book_keys.map((book) => `${book}_first`).map(i=>label(i)), []);
-
-    // Memoize the current chapter's first verse ID to avoid repeated lookups
-    const currentChapterFirstVerseId = React.useMemo(() => {
-        try {
-            return lookupReference(chapterRef, lang).verse_ids[0];
-        } catch (error) {
-            console.error("Error looking up current chapter reference:", chapterRef, error);
-            return null;
-        }
-    }, [chapterRef]);
-
-    // Memoize all chapter verse IDs with efficient caching
-    const allChapterVerseIds = React.useMemo(() => {
-        const chapterVerseMap = new Map();
-        let bookIndex = 0;
-        
-        for(let bookChapterCount of chapterCounts) {
-            const book = bookNames[bookIndex++];
-            for(let i=1; i<=bookChapterCount; i++) {
-                const chapter = `${book} ${i}`;
+        executeOperation(
+            "loadContent",
+            async (signal) => {
+                setIsContentLoading(true);
                 try {
-                    const verseIds = lookupReference(chapter, lang).verse_ids;
-                    chapterVerseMap.set(chapter, verseIds[0]);
-                } catch (error) {
-                    console.error("Error looking up chapter reference:", chapter, error);
-                    chapterVerseMap.set(chapter, null);
+                    const data = await BoMOnlineAPI({ read: chapterRef }, { signal });
+                    if (signal.aborted) return null;
+
+                    const mainKey = Object.keys(data.read)[0];
+                    const chapterData = data.read[mainKey];
+                    if (chapterData) {
+                        setContent(chapterData);
+                        setInitialLoad(false);
+                        lastContentLoadTime.current = Date.now();
+                        localStorage.setItem("chapterRef", chapterRef);
+
+                        const currentSlug = window.location.pathname.replace(/^\/read\//, "");
+                        const expectedSlug = slugify(chapterRef);
+                        if (expectedSlug && expectedSlug !== currentSlug) {
+                            window.history.replaceState(null, "", `/read/${expectedSlug}`);
+                            document.title = chapterRef;
+                        }
+
+                        const sectionMap = buildSectionVerseIdsMap(chapterRef, chapterData);
+                        if (Object.keys(sectionMap).length > 0) {
+                            const notes = await fetchPassageNotesForSections(sectionMap, signal);
+                            if (!signal.aborted) {
+                                setPassageNotesData(prev => ({ ...prev, ...notes }));
+                            }
+                        }
+                        if (!signal.aborted) setPassageNotesLoading(false);
+                    } else {
+                        setPassageNotesLoading(false);
+                    }
+                    return chapterData;
+                } finally {
+                    setIsContentLoading(false);
                 }
+            },
+            { abortPrevious: true }
+        );
+    }, [chapterRef, initialLoad, executeOperation]);
+
+    // ---------------------------------------------------------
+    // Auto-scroll to highlighted verse - debounced to prevent flickering
+    // ---------------------------------------------------------
+    const debouncedHighlightedVerses = useDebounce(highlightedVerses, 300);
+    
+    useEffect(() => {
+        if (allChapters.length > 0) return;
+        if (debouncedHighlightedVerses?.length && !isContentLoading) {
+            const maxVerse = Math.max(...debouncedHighlightedVerses);
+            const verseElement = verseRefs.current.get(maxVerse);
+            if (verseElement) {
+                verseElement.scrollIntoView({ behavior: "smooth", block: "center" });
             }
         }
-        return chapterVerseMap;
-    }, [bookNames]); // Only recalculate when bookNames change (which should be never)
+    }, [debouncedHighlightedVerses, allChapters.length, isContentLoading]);
 
-    const boxes = [];
-    let j = 0;
-    for(let bookChapterCount of chapterCounts) {
-        const book = bookNames[j++];
-        const firstLetterOfBook = bookFirsts[j-1];
-        for(let i=1; i<=bookChapterCount; i++) {
-            const chapter = `${book} ${i}`;
-            const boxChapterRef = chapter;//`${slugify(chapter)}`;
-            const isFirst = i === 1;
-            const boxChapterFirstVerseId = allChapterVerseIds.get(chapter);
-            const isActive = boxChapterFirstVerseId && currentChapterFirstVerseId && boxChapterFirstVerseId === currentChapterFirstVerseId;
-            boxes.push(<Link to={`/read/${slugify(boxChapterRef)}`}
-                className={`chapter-box ${isFirst ? "first" : ""} ${isActive ? "active" : ""}`}
-                data-tip={chapter}
-                data-for="chapter-nav-tip"
-            >{isFirst ? firstLetterOfBook : i}
-            </Link>)
+    // ---------------------------------------------------------
+    // Pre-load short content - optimized
+    // ---------------------------------------------------------
+    useEffect(() => {
+        if (!content || isContentLoading) return;
+        
+        const checkShortContent = () => {
+            const doc = document.documentElement;
+            const contentHeight = doc.scrollHeight;
+            const viewportHeight = doc.clientHeight;
+
+            if (
+                contentHeight <= viewportHeight * 1.2 && 
+                hasUserScrolled.current && 
+                !nextChapterPreloaded.current &&
+                nextChapterRef &&
+                allChapters.length === 0
+            ) {
+                nextChapterPreloaded.current = true;
+                loadNextChapter(false);
+            }
+        };
+        
+        const t = setTimeout(checkShortContent, 500);
+        return () => clearTimeout(t);
+    }, [content, nextChapterRef, loadNextChapter, allChapters.length, isContentLoading]);
+
+    // ---------------------------------------------------------
+    // Update URL - debounced to prevent excessive updates
+    // ---------------------------------------------------------
+    const debouncedHighlightedVersesForUrl = useDebounce(highlightedVerses, 500);
+    
+    useEffect(() => {
+        if (!debouncedHighlightedVersesForUrl) return;
+        const urlSlug = match.url.replace(/^\/read\//, "");
+        const idealSlug = verseIdToSlug(debouncedHighlightedVersesForUrl) || slugify(activeChapterRef);
+        if (idealSlug && idealSlug !== urlSlug) {
+            history.push(`/read/${idealSlug}`);
         }
-    }
+    }, [debouncedHighlightedVersesForUrl, activeChapterRef, history, match.url]);
 
-    return <div className="chapter-nav">
-        <ReactTooltip id="chapter-nav-tip" place="top" effect="solid" />
-        {boxes}
-    </div>
+    // ---------------------------------------------------------
+    // Render all chapters - memoized to prevent unnecessary re-renders
+    // ---------------------------------------------------------
+    const buildContent = useCallback((readData) => {
+        const combinedChapters = [
+            { ref: chapterRef, data: readData },
+            ...allChapters
+        ].filter(ch => ch.data);
+
+        return (
+            <div className="read-content">
+                {/* TOP NAV */}
+                <div className="read-header-nav">
+                    {prevChapterRef ? (
+                        <button onClick={goToPreviousChapter} className="btn btn-primary">
+                            ◀ {prevChapterRef}
+                        </button>
+                    ) : (
+                        <button className="btn btn-primary disabled" disabled>  ◀  </button>
+                    )}
+                    <h3 className="title lg-4 text-center">
+                        {chapterRef || label("menu_read")}
+                    </h3>
+                    {nextChapterRef ? (
+                        <button onClick={goToNextChapter} className="btn btn-primary">
+                            {nextChapterRef} ▶
+                        </button>
+                    ) : (
+                        <button className="btn btn-primary disabled" disabled>  ▶ </button>
+                    )}
+                </div>
+
+                {/* Chapter Navigation Bar */}
+                <ChapterNav
+                    chapterRef={activeChapterRef}
+                    onChapterClick={handleExplicitChapterNavigation}
+                />
+
+                <div className="read-mobile-nav">
+                    {prevChapterRef ? (
+                        <button onClick={goToPreviousChapter} className="btn btn-primary">
+                            ◀ {prevChapterRef}
+                        </button>
+                    ) : (
+                        <button className="btn btn-primary disabled" disabled>  ◀  </button>
+                    )}
+                    {nextChapterRef ? (
+                        <button onClick={goToNextChapter} className="btn btn-primary">
+                            {nextChapterRef} ▶
+                        </button>
+                    ) : (
+                        <button className="btn btn-primary disabled" disabled>  ▶ </button>
+                    )}
+                </div>
+
+                {/* MAIN CHAPTER CONTENTS */}
+                {combinedChapters.map((chapItem) => (
+                    <ChapterContent
+                        key={chapItem.ref}
+                        chapterItem={chapItem}
+                        highlightedVerses={highlightedVerses}
+                        hoveredVerse={hoveredVerse}
+                        setHoveredVerse={setHoveredVerse}
+                        activeChapterRef={activeChapterRef}
+                        appController={appController}
+                        DEBUG_SKELETON={DEBUG_SKELETON}
+                        verseRefs={verseRefs}
+                        passageNotesData={passageNotesData}
+                        passageNotesLoading={passageNotesLoading}
+                    />
+                ))}
+
+                {/* Loading indicator for content */}
+                {isContentLoading && <SkeletonLoader />}
+
+                {/* If no data at all and not loading, show skeleton */}
+                {!readData && combinedChapters.length === 0 && !isContentLoading && <SkeletonLoader />}
+
+                {/* Manual NEXT button at the bottom */}
+                {!!readData && !DEBUG_SKELETON && (
+                    <div className="read-section-footer">
+                        {nextChapterRef ? (
+                            <button 
+                                onClick={() => loadNextChapter(true)}
+                                className="btn btn-primary btn-lg"
+                                style={{ minWidth: '200px' }}
+                                disabled={isContentLoading}
+                            >
+                                {isOperationRunning("loadNext") || isContentLoading ? (
+                                    <>
+                                        <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                        <span style={{ marginLeft: '8px' }}></span>
+                                    </>
+                                ) : (
+                                    <>{nextChapterRef} ▶</>
+                                )}
+                            </button>
+                        ) : (
+                            <div className="text-muted">
+                      
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
+        );
+    }, [
+        chapterRef, 
+        allChapters, 
+        prevChapterRef, 
+        nextChapterRef, 
+        goToPreviousChapter, 
+        goToNextChapter, 
+        activeChapterRef, 
+        handleExplicitChapterNavigation,
+        highlightedVerses,
+        hoveredVerse,
+        appController,
+        isContentLoading,
+        isOperationRunning,
+        loadNextChapter,
+        passageNotesData,
+        passageNotesLoading,
+    ]);
+
+    // ---------------------------------------------------------
+    // Final render with loading state consideration
+    // ---------------------------------------------------------
+    return (
+        <div className="container" style={{ display: 'block' }}>
+            <div id="page" className="read">
+                {buildContent(content)}
+            </div>
+        </div>
+    );
 }
