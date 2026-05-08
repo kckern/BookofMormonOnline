@@ -1,5 +1,5 @@
 import { useRouteMatch, Link, useHistory } from "react-router-dom";
-import "./Read.css";
+import "./Read.scss";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import Loader from "../_Common/Loader";
 import BoMOnlineAPI, { assetUrl } from "../../models/BoMOnlineAPI";
