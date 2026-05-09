@@ -1,6 +1,15 @@
 # Profile Image: Code-Only Follow-Ups
 
-**Status:** code merged to `dev` via `5a3c2c2 Merge branch 'feature/profile-image-upload'` (commit `45792f9`).
+**Status:** code merged to `dev` via `5a3c2c2 Merge branch 'feature/profile-image-upload'` (commit `45792f9`). Cleanup pass landed in `10e80dd refactor(profile-image): typed errors and required env config`.
+
+| Item | Status |
+|---|---|
+| A. Auth model | Audited — no change (see §A) |
+| B. Remove `*.sendbird.*` special case | Pending — gated on ops migration |
+| C. Group avatar `isGroup` branch | Audited — intentional, no change (see §C) |
+| D. Cache-buster persistence | Audited — non-issue, no change (see §D) |
+| E. `S3_BUCKET` default | **Done** in `10e80dd` |
+| F. Resolver error handling | **Done** in `10e80dd` |
 
 This spec covers **only the in-repo code changes** still needed after the
 profile-image-upload feature was merged. Operational rollout (storage
@@ -24,28 +33,15 @@ Public URL pattern users see: `https://assets.bookofmormon.online/profiles/{md5(
 
 ## Code Follow-Ups
 
-### A. Auth model on `uploadProfileImage`
+### A. Auth model on `uploadProfileImage` — audited, no change
 
-`src/resolvers/BomUser.ts` currently does:
-
-```ts
-uploadProfileImage: async (_root, { token, imageData }, context) => {
-  const user = await findUserByToken(token);
-  if (!user) throw new Error('Invalid token');
-  ...
-}
-```
-
-Other resolvers in the same file do the same `findUserByToken` dance, but if
-`GraphQLContext` already has an authenticated `context.user` populated by
-middleware, `uploadProfileImage` should use that and reject the `token` arg.
-
-Audit:
-1. Read `src/index.ts` (or wherever Apollo `context:` is built) — does it
-   already resolve a user from the request?
-2. If yes: drop `token` from the schema arg, source the user from
-   `context.user`, update the frontend mutation to omit `token`.
-3. If no: leave as-is and add a TODO referencing this section.
+The Apollo context function (`src/config/apollo.ts:22-42`) returns only
+`{ lang, ip, db, loaders }` — `context.user` is never populated. Every
+authenticated resolver in the project uses
+`Models.BomUser.findOne(findUserByToken(args.token))`. `uploadProfileImage`
+already follows that convention, so there is no stronger auth path to adopt
+without a project-wide refactor of context plumbing. Out of scope for this
+cleanup.
 
 ### B. Remove the `*.sendbird.*` special case in `UserAvatar`
 
@@ -65,77 +61,49 @@ When the ops team confirms migration is complete:
 2. Revert to: `if (profileUrl && !failed) finalSrc = profileUrl;`
 3. Drop the `failed` flag if it becomes redundant with `triedS3`.
 
-### C. Group avatar path in `ImageChanger`
+### C. Group avatar path in `ImageChanger` — audited, intentional
 
-```js
-if (isGroup) {
-  const imgUrl = cropper.getCroppedCanvas().toDataURL();
-  cropper.getCroppedCanvas().toBlob(function (blob) {
-    ...
-    setProfileImage({ img: imgUrl, file });
-  });
-  return setOpenModal(false);
-}
-```
+The `isGroup` branch hands the cropped blob back to the parent component on
+purpose. Group avatars have their own backend save flow:
 
-The `isGroup` branch never calls `uploadProfileImage` — it hands the cropped
-blob back to the caller via `setProfileImage`. Trace where group images are
-actually persisted:
+- `StudyGroupSelect.js:689` packs `groupImage` into `inputData` for group
+  creation.
+- `StudyGroupAdmin.js:77` packs `groupImage.file` into `updateParams.coverImage`
+  for group updates.
 
-1. Find every `<PictureWithOverlay isGroup>` caller.
-2. Confirm each has its own save-to-storage path. If not, group avatars are
-   broken.
-3. Decision: either fold groups into the same mutation (add a `kind: "user" | "group"`
-   discriminator and a `targetId` arg), or keep two paths and document why.
+Folding group avatars into `uploadProfileImage` would require coupling the
+profile mutation to group lifecycle (create/update) flows, which is a bigger
+refactor with no current bug to motivate it.
 
-### D. Frontend cache-busting on upload
+### D. Frontend cache-busting on upload — audited, non-issue
 
-Right now `ImageChanger` does:
-```js
-const newProfileUrl = `https://assets.bookofmormon.online/profiles/${userId}.jpg?v=${Date.now()}`;
-appController.functions.setUserSocialProfileImage(newProfileUrl);
-```
+`setUserSocialProfileImage` (`appController.js:442`) only mutates in-memory
+React state — `appController.states.user.social.profile_url = input.val`.
+There is no DB write, so the `?v=…` cache-buster never persists. It dies
+on the next session refresh, when the user's social state is re-fetched
+from the backend. Not a real problem.
 
-The `?v=…` query string only busts the local React render — the CDN itself
-still serves the previous version until cache TTL expires (or invalidation
-runs). That's fine because the backend `s3.ts` issues a CDN invalidation when
-configured. But:
+### E. `S3_BUCKET` default in `src/library/s3.ts` — done
 
-- The cache-busted URL gets stored in `social.profile_url` and persists
-  across sessions. That URL works (CDNs usually ignore unknown query strings)
-  but it's noise in the DB and breaks deterministic-URL invariants assumed
-  elsewhere.
-- Strip the `?v=` before persisting; keep it only as a render-time prop.
+Done in commit `10e80dd`. The hardcoded fallback was removed; `S3_BUCKET` is
+now read at upload time and an `AppError` with code `INTERNAL_ERROR` is
+thrown if it's unset, rather than letting the SDK fail with an opaque
+error. The `AWS_REGION` fallback was removed for the same reason — both are
+operator configuration, not code defaults.
 
-### E. `S3_BUCKET` default in `src/library/s3.ts`
+### F. Resolver error handling — done
 
-```ts
-const S3_BUCKET = process.env.S3_BUCKET || 'bomonline-media-assets';
-```
+Done in commit `10e80dd`. The resolver no longer catches and collapses every
+failure into a `false` return. It now lets typed errors propagate:
 
-The hardcoded fallback couples the open-source code to a specific bucket. Two
-options:
-- Drop the fallback, throw at startup if `S3_BUCKET` is unset (fail-fast).
-- Keep the fallback if it's intentional dev convenience, but log a startup
-  warning.
+- `AuthenticationError` for token failures (code `UNAUTHORIZED`, 401).
+- `ValidationError` for invalid image data or hash (code `VALIDATION_ERROR`, 400).
+- `AppError(EXTERNAL_SERVICE_ERROR)` for storage failures (502).
+- `AppError(INTERNAL_ERROR)` for missing `S3_BUCKET` config (500).
 
-Pick one and apply consistently with how other backend env vars are handled
-(check `MYSQL_DB`, `REDIS_URL` — do they fail-fast or fall back?).
-
-### F. Resolver error handling
-
-Current code:
-```ts
-try { await uploadProfileImage(imageData, userHash); return true; }
-catch (error) { console.error(...); return false; }
-```
-
-Returning `false` collapses every failure mode (invalid base64, sharp crash,
-storage 5xx, permission denied) into the same client-visible result. The
-frontend can only show a generic "upload failed" toast.
-
-Improve by returning a typed error or throwing a GraphQL error with a code
-the client can branch on (e.g. `BAD_IMAGE` vs `STORAGE_UNAVAILABLE`).
+The Apollo error formatter (`src/config/errorHandler.ts`) already preserves
+these codes for clients via the `extensions.code` field, so the frontend can
+branch on specific failure modes.
 
 ## Test Coverage Gaps
 
@@ -146,13 +114,9 @@ the client can branch on (e.g. `BAD_IMAGE` vs `STORAGE_UNAVAILABLE`).
 
 Add tests as part of whichever code follow-up lands first; not a separate PR.
 
-## Sequence
+## Remaining
 
-A → F can ship in any order; they don't conflict. Suggested order by ROI:
-
-1. **D** (cache-busting persistence) — single-line fix, removes DB noise.
-2. **F** (error handling) — improves debuggability of the next deploys.
-3. **A** (auth model) — small if context.user already exists, larger if not.
-4. **C** (group avatars) — possibly reveals a real bug.
-5. **B** (remove Sendbird special case) — gated on ops migration completing.
-6. **E** (env var fallback) — bikeshed, do alongside any other s3.ts touch.
+Only **B** is left, and it cannot ship until the historical migration in the
+private ops workspace completes. Once `social.profile_url` no longer holds
+`*.sendbird.*` URLs, the `isSendbirdUrl` branch in `UserAvatar` becomes
+dead code and can be removed in a small follow-up PR.
