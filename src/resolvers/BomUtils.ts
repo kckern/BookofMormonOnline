@@ -42,10 +42,6 @@ export default {
           }
         },
         include: [includeTranslation('label_text', lang)].filter(x => !!x)
-      }).then((labels: any) => {
-       // console.log('labels', labels);
-        labels.push({gmaps: process.env.GMAPS_API_KEY});
-        return labels;
       });
     },
     menu: async (root: any, args: any, context: any, info: any) => {
