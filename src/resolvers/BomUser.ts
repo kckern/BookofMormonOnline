@@ -8,6 +8,7 @@ import { authService } from '../services';
 
 import crypto from 'crypto';
 import { uploadProfileImage } from '../library/s3';
+import { AuthenticationError } from '../library/errors';
 
 // Argument interfaces for resolvers
 interface SigninArgs {
@@ -508,22 +509,14 @@ export default {
     ): Promise<boolean> => {
       const { token, imageData } = args;
 
-      // Find user by token
       const user: any = await Models.BomUser.findOne(findUserByToken(token));
       if (!user) {
-        throw new Error('Invalid token');
+        throw new AuthenticationError('Invalid token');
       }
 
-      // Get user hash (same hash used elsewhere in the codebase)
       const userHash = md5(user.user);
-
-      try {
-        await uploadProfileImage(imageData, userHash);
-        return true;
-      } catch (error) {
-        console.error('Profile image upload failed:', error);
-        return false;
-      }
+      await uploadProfileImage(imageData, userHash);
+      return true;
     },
     changePassword: async (root: any, args: any, context: any, info: any) => {
       if (!args.password) return false;
