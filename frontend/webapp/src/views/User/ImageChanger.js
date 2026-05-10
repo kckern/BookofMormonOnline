@@ -8,6 +8,7 @@ import selectImg from "./svg/selectimg.svg";
 import { label } from "src/models/Utils";
 import { toast } from "react-toastify";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
+import { getProfileImageUrl } from "src/components/UserAvatar";
 function ImageChanger({
   setOpenModal,
   appController,
@@ -63,9 +64,12 @@ function ImageChanger({
         );
 
         if (result?.uploadProfileImage) {
-          // Generate new profile URL and update state
+          // Reuse the same URL builder the avatar component reads from, so a
+          // single env var (REACT_APP_PROFILE_IMAGE_BASE_URL) drives both
+          // sides. Cache-buster forces the browser past CloudFront's cache.
           const userId = appController.states.user.social?.user_id;
-          const newProfileUrl = `https://assets.bookofmormon.online/profiles/${userId}.jpg?v=${Date.now()}`;
+          const baseUrl = getProfileImageUrl(userId);
+          const newProfileUrl = baseUrl ? `${baseUrl}?v=${Date.now()}` : null;
           appController.functions.setUserSocialProfileImage(newProfileUrl);
           toast.success(label("profile_updated") || "Profile image updated");
           setTimeout(() => setOpenModal(false), 1000);

@@ -3,6 +3,11 @@ import { md5hash } from 'src/models/Utils';
 
 const MD5_RE = /^[a-f0-9]{32}$/i;
 
+// Base URL for the profile-image CDN. Override in env per environment;
+// trailing slashes are tolerated.
+export const PROFILE_IMAGE_BASE_URL =
+  (process.env.REACT_APP_PROFILE_IMAGE_BASE_URL || 'https://assets.bookofmormon.online').replace(/\/+$/, '');
+
 /**
  * Deterministic avatar URL generator - produces consistent results for the same userId
  * Uses thumbs style with deterministic color selection based on user ID hash
@@ -51,7 +56,7 @@ export function generateAvatarUrl(userId) {
 export function getProfileImageUrl(userId) {
   if (!userId) return null;
   const hash = MD5_RE.test(userId) ? userId : md5hash(userId);
-  return `https://assets.bookofmormon.online/profiles/${hash}.jpg`;
+  return `${PROFILE_IMAGE_BASE_URL}/profiles/${hash}.jpg`;
 }
 
 export default function UserAvatar({ userId, profileUrl, size = 40, className = '', style = {} }) {

@@ -7,6 +7,10 @@ import { logInfo, logError } from './utils/logger';
 const s3Client = new S3Client({});
 const cloudFrontClient = new CloudFrontClient({});
 
+// Base URL for the profile-image CDN. Configure per environment via env;
+// the frontend reads a parallel REACT_APP_PROFILE_IMAGE_BASE_URL.
+const PROFILE_IMAGE_BASE_URL = (process.env.S3_PUBLIC_URL || 'https://assets.bookofmormon.online').replace(/\/+$/, '');
+
 export async function uploadProfileImage(base64Data: string, userHash: string): Promise<string> {
   const bucket = process.env.S3_BUCKET;
   if (!bucket) {
@@ -81,9 +85,9 @@ export async function uploadProfileImage(base64Data: string, userHash: string): 
     invalidated,
   });
 
-  return `https://assets.bookofmormon.online/${key}`;
+  return `${PROFILE_IMAGE_BASE_URL}/${key}`;
 }
 
 export function getProfileImageUrl(userHash: string): string {
-  return `https://assets.bookofmormon.online/profiles/${userHash}.jpg`;
+  return `${PROFILE_IMAGE_BASE_URL}/profiles/${userHash}.jpg`;
 }
