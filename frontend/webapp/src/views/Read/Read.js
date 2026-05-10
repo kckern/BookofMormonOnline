@@ -531,23 +531,6 @@ export default function ReadScripture({ appController }) {
                     onChapterClick={handleExplicitChapterNavigation}
                 />
 
-                <div className="read-mobile-nav">
-                    {prevChapterRef ? (
-                        <button onClick={goToPreviousChapter} className="btn btn-primary">
-                            ◀ {prevChapterRef}
-                        </button>
-                    ) : (
-                        <button className="btn btn-primary disabled" disabled>  ◀  </button>
-                    )}
-                    {nextChapterRef ? (
-                        <button onClick={goToNextChapter} className="btn btn-primary">
-                            {nextChapterRef} ▶
-                        </button>
-                    ) : (
-                        <button className="btn btn-primary disabled" disabled>  ▶ </button>
-                    )}
-                </div>
-
                 {/* MAIN CHAPTER CONTENTS */}
                 {combinedChapters.map((chapItem) => (
                     <ChapterContent
