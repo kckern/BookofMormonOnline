@@ -16,3 +16,5 @@ log.sql
 /test
 /dist
 *.sh
+/coverage
+/.claude
