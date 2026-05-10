@@ -43,35 +43,24 @@ export function getProfileImageUrl(userId) {
   return `https://assets.bookofmormon.online/profiles/${userId}.jpg`;
 }
 
-/**
- * User avatar with DiceBear fallback for broken/missing images
- * Tries: 1) provided profileUrl, 2) S3 profile image, 3) DiceBear fallback
- */
 export default function UserAvatar({ userId, profileUrl, size = 40, className = '', style = {} }) {
   const [failed, setFailed] = useState(false);
   const [triedS3, setTriedS3] = useState(false);
 
-  // Determine which URL to use
   let finalSrc;
-
-  // If we have a profileUrl that's not from dead Sendbird, use it
-  const isSendbirdUrl = profileUrl && (profileUrl.includes('sendbird.com') || profileUrl.includes('sendbird.io'));
-
-  if (profileUrl && !isSendbirdUrl && !failed) {
+  if (profileUrl && !failed) {
     finalSrc = profileUrl;
   } else if (userId && !triedS3) {
-    // Try our S3 bucket
     finalSrc = getProfileImageUrl(userId);
   } else {
-    // Fall back to DiceBear
     finalSrc = generateAvatarUrl(userId);
   }
 
   const handleError = () => {
-    if (!triedS3 && userId) {
-      // First failure - we were trying profileUrl or S3, try fallback
-      setTriedS3(true);
+    if (!failed && profileUrl) {
       setFailed(true);
+    } else if (!triedS3 && userId) {
+      setTriedS3(true);
     }
   };
 
