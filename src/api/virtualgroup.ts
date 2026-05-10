@@ -3,8 +3,19 @@ import { lookup } from 'scripture-guide';
 import { queryDB, loadScripturesFromVerseIds, loadTextGuidsFromVerseIds, loadPageSlugFromTextGuid } from '../library/db';
 import { loadTextBlockNarration, loadSectionContext, loadSectionNarration, loadCrossReferences } from './studybuddy';
 import { askGPT } from '../library/gpt';
-import { sendbird } from '../library/sendbird';
+import { messenger } from '../library/messenger';
 import logger from "../library/utils/logger";
+
+// Feature flag - messaging disabled until Phase 5 data migration
+const MESSENGER_ENABLED = process.env.MESSENGER_ENABLED === 'true';
+
+// Sendbird-compatible shim - returns null when messaging disabled
+const sendbird: any = MESSENGER_ENABLED ? messenger : {
+  postMessage: async () => null,
+  getThread: async () => null,
+  getThreadMessages: async () => [],
+  replyToMessage: async () => null,
+};
 const { postMessage } = sendbird;
 
 const virtualgrouptrigger = async (req: any, res: any) => {

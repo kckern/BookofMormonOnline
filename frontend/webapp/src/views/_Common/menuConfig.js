@@ -8,11 +8,17 @@
 // - langNot: Array of language codes where this item should NOT be shown (blacklist)
 // - dev: Only show in development environment (localhost or dev domains)
 // - beta: Show beta badge next to the item
+// - requiresMessenger: Only show when REACT_APP_USE_MESSENGER is true
 //
+
+// Feature flag - messaging disabled until Phase 5 data migration
+const USE_MESSENGER = process.env.REACT_APP_USE_MESSENGER === 'true';
+
 export const menuConfig = [
   {
     slug: "home",
     labelKey: "menu_home",
+    requiresMessenger: true,
   },
   {
     slug: "contents",

@@ -1,0 +1,90 @@
+.base-panel {
+  background: white;
+  animation: slideDown 200ms ease-out;
+  overflow: hidden;
+  margin: 0;
+
+  .category-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    
+    h5{
+      color: #495057;
+      font-size: 16px;
+      font-family: "Roboto Condensed";
+      font-weight: 600;
+      padding:1ex;
+
+      margin: 0;
+    }
+    
+    .close-button {
+      background: none;
+      border: none;
+      font-size: 20px;
+      color: #6c757d;
+      cursor: pointer;
+      padding: 0;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 3px;
+      transition: background-color 0.2s ease, color 0.2s ease;
+      
+      &:hover {
+        background: #e9ecef;
+        color: #495057;
+      }
+      
+      &:focus {
+        outline: 2px solid #007bff;
+        outline-offset: 1px;
+      }
+    }
+  }
+  
+  .panel-content {
+    padding: 15px;
+  }
+}
+
+.category-panel {
+  // Remove all previous styling since panels are now content-only
+  .category-data {
+    font-size: 11px;
+    line-height: 1.4;
+    max-height: 250px;
+    overflow: auto;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    padding: 10px;
+    margin: 0;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 3px;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: #c1c1c1;
+      border-radius: 3px;
+      
+      &:hover {
+        background: #a8a8a8;
+      }
+    }
+  }
+}

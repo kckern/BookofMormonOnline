@@ -17,8 +17,53 @@ import { useConcurrentOperations, useThrottle, useDebounce } from "../../hooks/u
 import { ChapterNav } from "./components/ChapterNav";
 import { SkeletonLoader } from "./components/SkeletonLoader";
 import { ChapterContent } from "./components/ChapterContent";
+import PassageNotes from "./PassageNotes";
 
 const DEBUG_SKELETON = false;
+
+const sectionPassageNotesKey = (chapterRef, sectionIndex, sectionRef) =>
+    `${chapterRef}__section_${sectionIndex}_${(sectionRef || "").replace(/[^a-zA-Z0-9]/g, '_')}`;
+
+const buildSectionVerseIdsMap = (chapterRef, chapterData) => {
+    const map = {};
+    if (!chapterData?.sections) return map;
+    chapterData.sections.forEach((section, sectionIndex) => {
+        const ids = [];
+        section.blocks?.forEach(block => {
+            block.lines?.forEach(line => {
+                if (line.verse_id && !ids.includes(line.verse_id)) ids.push(line.verse_id);
+            });
+        });
+        if (ids.length > 0) {
+            map[sectionPassageNotesKey(chapterRef, sectionIndex, section.ref)] = ids;
+        }
+    });
+    return map;
+};
+
+const fetchPassageNotesForSections = async (sectionVerseIdsMap, signal) => {
+    const apiRequest = {};
+    const sectionKeyToQueryKey = {};
+    Object.entries(sectionVerseIdsMap).forEach(([sectionKey, verseIds], index) => {
+        if (verseIds && verseIds.length > 0) {
+            const queryKey = `passagenotes_${index}`;
+            apiRequest[queryKey] = verseIds;
+            sectionKeyToQueryKey[sectionKey] = queryKey;
+        }
+    });
+    if (Object.keys(apiRequest).length === 0) return {};
+    try {
+        const data = await BoMOnlineAPI(apiRequest, signal ? { signal } : undefined);
+        const out = {};
+        Object.entries(sectionKeyToQueryKey).forEach(([sectionKey, queryKey]) => {
+            if (data && data[queryKey]) out[sectionKey] = data[queryKey];
+        });
+        return out;
+    } catch (e) {
+        console.error('Error fetching passage notes for sections', e);
+        return {};
+    }
+};
 
 export default function ReadScripture({ appController }) {
     const match = useRouteMatch();
@@ -64,8 +109,10 @@ export default function ReadScripture({ appController }) {
     const [nextChapterRef, setNextChapterRef] = useState(initNextChapter);
     const [prevChapterRef, setPrevChapterRef] = useState(initPrevChapter);
     const [chapterVerseIds, setChapterVerseIds] = useState(initChapterVerseIds);
-    const [initialLoad, setInitialLoad] = useState(true);       
-    const [isContentLoading, setIsContentLoading] = useState(false);  
+    const [initialLoad, setInitialLoad] = useState(true);
+    const [isContentLoading, setIsContentLoading] = useState(false);
+    const [passageNotesData, setPassageNotesData] = useState({});
+    const [passageNotesLoading, setPassageNotesLoading] = useState(false);
 
     // Refs
     const verseRefs = useRef(new Map()); 
@@ -148,6 +195,14 @@ export default function ReadScripture({ appController }) {
                     const { nextChapter } = getPrevNextChapter(nextChapterVerses);
                     setNextChapterRef(nextChapter || null);
 
+                    const sectionMap = buildSectionVerseIdsMap(nextChapterRef, nextChapterData);
+                    if (Object.keys(sectionMap).length > 0) {
+                        const notes = await fetchPassageNotesForSections(sectionMap, signal);
+                        if (!signal.aborted) {
+                            setPassageNotesData(prev => ({ ...prev, ...notes }));
+                        }
+                    }
+
                     return nextChapterData;
                 } finally {
                     setIsContentLoading(false);
@@ -166,6 +221,8 @@ export default function ReadScripture({ appController }) {
         setAllChapters([]);
         setHighlightedVerses(null);
         setIsContentLoading(false);
+        setPassageNotesData({});
+        setPassageNotesLoading(false);
         hasUserScrolled.current = false;
         lastLoadedChapterCount.current = 0;
         lastScrollY.current = 0;
@@ -325,6 +382,9 @@ export default function ReadScripture({ appController }) {
         setAllChapters([]);
         document.title = chapterRef;
 
+        setPassageNotesData({});
+        setPassageNotesLoading(true);
+
         executeOperation(
             "loadContent",
             async (signal) => {
@@ -340,13 +400,24 @@ export default function ReadScripture({ appController }) {
                         setInitialLoad(false);
                         lastContentLoadTime.current = Date.now();
                         localStorage.setItem("chapterRef", chapterRef);
-                        
+
                         const currentSlug = window.location.pathname.replace(/^\/read\//, "");
                         const expectedSlug = slugify(chapterRef);
                         if (expectedSlug && expectedSlug !== currentSlug) {
                             window.history.replaceState(null, "", `/read/${expectedSlug}`);
                             document.title = chapterRef;
                         }
+
+                        const sectionMap = buildSectionVerseIdsMap(chapterRef, chapterData);
+                        if (Object.keys(sectionMap).length > 0) {
+                            const notes = await fetchPassageNotesForSections(sectionMap, signal);
+                            if (!signal.aborted) {
+                                setPassageNotesData(prev => ({ ...prev, ...notes }));
+                            }
+                        }
+                        if (!signal.aborted) setPassageNotesLoading(false);
+                    } else {
+                        setPassageNotesLoading(false);
                     }
                     return chapterData;
                 } finally {
@@ -481,6 +552,8 @@ export default function ReadScripture({ appController }) {
                         appController={appController}
                         DEBUG_SKELETON={DEBUG_SKELETON}
                         verseRefs={verseRefs}
+                        passageNotesData={passageNotesData}
+                        passageNotesLoading={passageNotesLoading}
                     />
                 ))}
 
@@ -532,7 +605,9 @@ export default function ReadScripture({ appController }) {
         appController,
         isContentLoading,
         isOperationRunning,
-        loadNextChapter
+        loadNextChapter,
+        passageNotesData,
+        passageNotesLoading,
     ]);
 
     // ---------------------------------------------------------

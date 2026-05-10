@@ -4,11 +4,6 @@
     font-size: 1rem;
 }
 
-.read-content {
-    /* Improve touch scrolling performance on mobile */
-    -webkit-overflow-scrolling: touch;
-}
-
 .read-content .read-section
 {
     font-family: "Scripture";
@@ -177,7 +172,6 @@ p.read-scripture.heading
     text-transform: capitalize;
     font-size: 1.2rem;
     font-weight: bold;
-    text-align: left;
 }
 
 .read-scripture.split
@@ -193,13 +187,6 @@ p.read-scripture.heading
 }
 .read-header-nav{
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-}
-
-.read-mobile-nav {
-    display: none;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1rem;
@@ -224,8 +211,7 @@ p.read-scripture.heading
 
 
 .read-header-nav .btn.btn-primary,
-.read-section-footer .btn.btn-primary,
-.read-mobile-nav .btn.btn-primary
+.read-section-footer .btn.btn-primary
 {
     font-family: "Roboto Condensed";
     font-size: 0.8rem;
@@ -237,9 +223,8 @@ p.read-scripture.heading
 }
 
 
-.read-header-nav .btn.btn-primary.disabled,
-.read-section-footer .btn.btn-primary.disabled,
-.read-mobile-nav .btn.btn-primary.disabled
+.read-header-nav .btn.btn-primary.disabled  ,
+.read-section-footer .btn.btn-primary.disabled
 {
     background-color: #999;
     color: white;
@@ -249,13 +234,11 @@ p.read-scripture.heading
     display: flex;
     justify-content: space-between;
     align-items: center;
-    justify-self: center;
-    margin-top: 0;
+    margin-top: 1rem;
     font-family: "Roboto Condensed";
     font-size: 0.8rem;
     color: #444;
     margin-bottom: 3rem;
-    padding: 0;
 }
 
 .chapter-nav {
@@ -304,148 +287,10 @@ p.heading a.heading + a.heading::before{
 
 }
 
-/* Skeleton Loader Styles */
-@keyframes skeleton-loading {
-    0% {
-        background-position: -200px 0;
-    }
-    100% {
-        background-position: calc(200px + 100%) 0;
-    }
-}
 
-.skeleton-section {
-    background-color: #FFF;
-    padding: 1rem;
-    margin-bottom: 2rem;
-    border-radius: 1rem;
-    margin-left: 1rem; /* Match real read-section margin */
-}
+.read-content .read-section  .section-footer{
 
-.skeleton-nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-}
-
-.skeleton-nav-btn {
-    width: 120px;
-    height: 40px;
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-    background-size: 200px 100%;
-    animation: skeleton-loading 1.5s infinite;
-    border-radius: 1rem;
-}
-
-.skeleton-title {
-    width: 200px;
-    height: 32px;
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-    background-size: 200px 100%;
-    animation: skeleton-loading 1.5s infinite;
-    border-radius: 4px;
-}
-
-.skeleton-chapter-nav {
-    height: 60px;
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-    background-size: 200px 100%;
-    animation: skeleton-loading 1.5s infinite;
-    margin-bottom: 1rem;
-    border-radius: 2px;
-    margin-left: 1rem; /* Match real chapter-nav margin */
-    margin-top: -2rem; /* Match real chapter-nav negative margin */
-}
-
-.skeleton-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 1rem;
-}
-
-.skeleton-heading {
-    width: 250px;
-    height: 24px;
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-    background-size: 200px 100%;
-    animation: skeleton-loading 1.5s infinite;
-    border-radius: 4px;
-}
-
-.skeleton-study-btn {
-    width: 100px;
-    height: 32px;
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-    background-size: 200px 100%;
-    animation: skeleton-loading 1.5s infinite;
-    border-radius: 4px;
-}
-
-.skeleton-block {
-    display: flex;
-}
-
-.skeleton-gutter {
-    flex-grow: 0;
-    flex-shrink: 0;
-    width: 5rem;
-    padding: 0 1rem 1ex 0;
-    margin-left: 1rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.skeleton-avatar {
-    width: 4rem;
-    height: 4rem;
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-    background-size: 200px 100%;
-    animation: skeleton-loading 1.5s infinite;
-    border-radius: 50%;
-    margin-bottom: 0.5rem;
-}
-
-.skeleton-voice {
-    width: 3rem;
-    height: 1rem;
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-    background-size: 200px 100%;
-    animation: skeleton-loading 1.5s infinite;
-    border-radius: 1ex;
-}
-
-.skeleton-content {
-    flex-grow: 1;
-    padding: 0 1rem 0 0;
-}
-
-.skeleton-paragraph {
-    margin-bottom: 2rem;
-}
-
-.skeleton-text-line {
-    height: 1.2rem;
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-    background-size: 200px 100%;
-    animation: skeleton-loading 1.5s infinite;
-    border-radius: 4px;
-    margin-bottom: 0.8rem;
-    width: 100%;
-}
-
-.skeleton-text-line.short {
-    width: 75%;
-}
-
-.skeleton-text-line:nth-child(2n) {
-    width: 90%;
-}
-
-.skeleton-text-line:nth-child(3n) {
-    width: 85%;
+    margin: 1ex -1rem -1rem -1rem;
 }
 
 @media only screen and (max-width: 900px) {
@@ -481,21 +326,10 @@ p.heading a.heading + a.heading::before{
         align-items: flex-start;
         margin-top: -3rem;
         margin-bottom: 2rem;
-    }
-    
-    .read-header-nav .btn.btn-primary {
-        display: none;
-    }
-    
-    .read-mobile-nav {
-        display: flex;
-    }
-    
-    .read-header-nav h3{
+    }.read-header-nav h3{
         margin-bottom: 0;
         text-align: center;
         width: 100%;
-        padding: 1rem 2rem;
     }
     .read-header-nav .btn.btn-primary:last-child{
        /* make this align right */
@@ -504,56 +338,12 @@ p.heading a.heading + a.heading::before{
     }
     .read-section-footer{
         padding-bottom: 3rem;
-        margin-top: 1rem;
     }
     p.read-scripture.italic{
         margin: 1.5rem 0;
     }
     .chapter-nav {
         margin-left: 0
-    }
-
-    /* Skeleton Loader Mobile Styles */
-    .skeleton-section, .skeleton-chapter-nav {
-        margin: -0.6rem;
-        margin-top: 1.3rem;
-    }
-    
-    .skeleton-chapter-nav {
-        margin-left: 0;
-    }
-
-    .skeleton-gutter {
-        margin: 0;
-        width: 100%;
-        text-align: center;
-        display: flex;
-        justify-content: center;
-        flex-direction: row;
-        align-items: center;
-        gap: 0.5rem;
-        margin-bottom: 1rem;
-    }
-
-    .skeleton-block {
-        flex-direction: column;
-    }
-
-    .skeleton-nav {
-        flex-direction: column;
-        align-items: flex-start;
-        margin-top: -3rem;
-        margin-bottom: 2rem;
-    }
-
-    .skeleton-title {
-        margin-bottom: 0;
-        text-align: center;
-        width: 100%;
-    }
-
-    .skeleton-nav-btn:last-child {
-        margin-left: auto;
     }
   }
   

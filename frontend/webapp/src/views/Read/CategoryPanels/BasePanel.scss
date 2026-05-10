@@ -1,0 +1,45 @@
+.base-panel {
+    overflow: hidden;
+    transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out;
+    max-height: 0;
+    opacity: 0;
+    border-radius: 4px;
+}
+
+.base-panel.open {
+    max-height: 1000px; /* Adjust as needed */
+    opacity: 1;
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    background-color: #f1f1f1;
+    border-bottom: 1px solid #ddd;
+
+    h3 {
+        margin: 0;
+        font-size: 1.2em;
+        font-weight: 500;
+    }
+
+    .close-button {
+        background: transparent;
+        border: none;
+        font-size: 24px;
+        line-height: 1;
+        cursor: pointer;
+        padding: 0;
+        color: #777;
+
+        &:hover {
+            color: #333;
+        }
+    }
+}
+
+.panel-content {
+    padding: 15px;
+}

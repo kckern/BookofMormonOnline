@@ -2,11 +2,43 @@ import { models as Models } from '../config/database';
 import Sequelize, { Model } from 'sequelize';
 import { completedGuids, getStandardizedValuesFromUserList } from './_common';
 import { loadReadingPlan, loadReadingPlanSegment } from './lib';
-import { sendbird } from '../library/sendbird';
+// messenger import removed - sendbird gutted, awaiting Redis replacement
 import { url } from 'inspector';
 import crypto from "crypto";
 import BomUser from './BomUser';
 const Op = Sequelize.Op;
+
+// Feature flag - messaging disabled until Redis replacement is ready
+const MESSENGER_ENABLED = false; // Hardcoded off - sendbird gutted, awaiting Redis replacement
+
+// Sendbird-compatible shim - returns empty data when messaging disabled
+const sendbird: any = {
+  loadChannel: async () => null,
+  getGroup: async () => null,
+  getChannel: async () => null,
+  getMyGroups: async () => [],
+  getMembers: async () => [],
+  getChannelMembers: async () => [],
+  getGroupMessages: async () => [],
+  getMessages: async () => [],
+  listUsers: async () => [],
+  getUsers: async () => [],
+  listBotUsers: async () => [],
+  getBots: async () => [],
+  getMembersofPrivateGroups: async () => [],
+  getVirtualUsers: async () => [],
+  getThread: async () => null,
+  getThreadMessages: async () => [],
+  addUserToChannel: async () => false,
+  removeUserFromChannel: async () => false,
+  invite: async () => false,
+  inviteToChannel: async () => false,
+  request: async () => false,
+  withdraw: async () => false,
+  getLatestMessage: async () => null,
+  getGroupMessageById: async () => null,
+  getOthersGroups: async () => [],
+};
 
 const md5 = (value: string)=>{
   if(!value) return "";
@@ -321,8 +353,16 @@ export default {
       }
     },
     homefeed: async (item: any, args: any, context: any, info: any) => {
+      // When messaging is disabled, return minimal valid response for health check
+      if (!MESSENGER_ENABLED) {
+        return {
+          groups: [],
+          feed: [{ id: 0, msg: 'Messaging temporarily disabled', timestamp: Date.now() }]
+        };
+      }
+
       const lang = context.lang ? context.lang : null;
-      
+
       try {
         let user: any = await Models.BomUser.findOne({
           raw: true,

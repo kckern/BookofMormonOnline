@@ -1,6 +1,15 @@
 import { queryDB } from "../library/db";
-import { sendbird } from "../library/sendbird";
+import { messenger } from "../library/messenger";
 import * as crypto from 'crypto';
+
+// Feature flag - messaging disabled until Phase 5 data migration
+const MESSENGER_ENABLED = process.env.MESSENGER_ENABLED === 'true';
+
+// Sendbird-compatible shim - returns empty when messaging disabled
+const sendbird: any = MESSENGER_ENABLED ? messenger : {
+  getUserMetadata: async () => ({}),
+  getUser: async () => null,
+};
 
 const md5 = (value: string): string => {
     if(!value) return "";

@@ -1126,6 +1126,21 @@ const queries = {
       `,
     }
   },
+  uploadProfileImage: (input) => {
+    input = input.shift();
+    return {
+      type: "uploadProfileImage",
+      key: 0,
+      val: input,
+      query: `mutation {` +
+      `        uploadProfileImage(` +
+      `          token: "${input.token}"` +
+      `          imageData: "${input.imageData}"` +
+      `        )` +
+      `      }
+      `,
+    }
+  },
   changePassword: (input) => {
     input = input.shift();
     return {
@@ -1805,7 +1820,53 @@ const queries = {
       query:
       `sourceUsage(token:"${input.token}" , source: "${input.source}" ) `
       }
-  }
+  },
+
+  // Dynamic passagenotes queries for batch requests (passagenotes_0, passagenotes_1, etc.)
+  ...Array.from({ length: 20 }, (_, i) => ({
+    [`passagenotes_${i}`]: (verse_ids) => {
+      return {
+        type: `passagenotes_${i}`,
+        key: "verse_ids",
+        val: verse_ids,
+        query: q(`passagenotes_${i}: passagenotes`, "verse_ids", verse_ids) +
+          `{
+                  commentary {
+                      id
+                      title
+                      preview
+                      reference
+                  }
+                  people {
+                      name
+                      slug
+                      title
+                  }
+                  places {
+                      name
+                      info
+                      slug
+                  }
+                  images {
+                      title
+                      file
+                      artist
+                  }
+                  chiasmus {
+                      title
+                      reference
+                      scheme
+                  }
+                  refs {
+                      verse_id
+                      ref
+                      type
+                      significant
+                  }
+              }`,
+      }
+    }
+  })).reduce((acc, obj) => ({ ...acc, ...obj }), {}),
 }
 /*
 mutation{
