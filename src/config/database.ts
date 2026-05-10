@@ -1,6 +1,7 @@
 import { Sequelize, QueryTypes } from 'sequelize';
 import {Op} from '../resolvers/_common';
 import fs from 'fs';
+import { applySandboxGuards } from '../library/sandboxMode';
 
 import BomCapsulation from '../database/models/bom_capsulation';
 import BomDataBible from '../database/models/bom_bible';
@@ -122,6 +123,10 @@ export const sequelize = new Sequelize(MYSQL_DB, MYSQL_USER, MYSQL_PASSWORD, {
     max: 3
   }
 });
+
+// Apply sandbox-mode write guards if enabled (silently no-ops INSERT/UPDATE/DELETE
+// when the backend is pointed at a read-only DB user). See library/sandboxMode.ts.
+applySandboxGuards();
 
 // Add connection monitoring and error handling
 sequelize.authenticate()

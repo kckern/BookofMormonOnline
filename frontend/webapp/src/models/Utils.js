@@ -32,7 +32,7 @@ export function determineLanguage() {
     jp: ["jpn"],
     tgl: ["phil", "ph"],
     tr: ["tur", "trk"],
-    ru: ["rus","рф","xn--p1ai","net"],
+    ru: ["rus","рф","xn--p1ai"],
     slv: ["slv","slo","si"],
 
     //english editions

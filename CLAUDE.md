@@ -14,36 +14,38 @@ Book of Mormon Online - an interactive scripture study platform for the Book of 
 ### Backend (`/src/`)
 - Node.js with TypeScript
 - Express + Apollo GraphQL
-- Sequelize ORM with MySQL (remote AWS RDS)
+- Sequelize ORM with MySQL (remote container, creds in Infisical)
 - Redis for caching
 - Socket.io for WebSocket connections
 
-## Development Setup
+## Environments
 
-### Frontend Development
-```bash
-cd frontend/webapp
-npm install
-npm start
-```
-- Runs on localhost, connects to **production backend by default**
-- Environment config in `.env` file
-- Use `.env.production` for prod-specific settings
+| Env | URL | Where it runs |
+|---|---|---|
+| **dev** | `bom.kckern.net` | systemd user unit `bom-dev` on the host this CLAUDE.md sits on; frontend on `:8200`, backend on `:5005`, fronted by Nginx Proxy Manager + Cloudflare. Secrets loaded from local Infisical via `bom-load-env` ExecStartPre. |
+| **prod** | (separate deployment) | Tracked by the `prod` branch; deployment target is currently out of date relative to `origin/prod` source. Confirm with the team before assuming where prod lives. |
 
-### Backend Development
-```bash
-cd /Users/kckern/Documents/GitHub/BookofMormonOnline
-npm install
-npm run dev:backend
-```
-- Connects to remote MySQL database (no local DB needed)
-- TypeScript source in `src/`
+`bom.kckern.net` is **dev**, not prod. Do not treat traffic there as production. Restarting `bom-dev` (e.g. `systemctl --user restart bom-dev`) bounces the public dev URL — coordinate before doing it.
 
-### Production Access
+## Development setup
+
+### On this dev host (the one CLAUDE.md lives on)
 ```bash
-ssh bom 'docker bookofmormon-online'
+systemctl --user status bom-dev          # is it running?
+systemctl --user restart bom-dev         # bounce frontend + backend together
+journalctl --user -u bom-dev -f          # tail logs
 ```
-SSH aliases configured in `~/.ssh/config`
+The unit's `ExecStartPre=/usr/local/bin/bom-load-env` pulls fresh secrets from local Infisical (`http://localhost:8070`, `bom-dev` machine identity in `~/infisical/`) into `$XDG_RUNTIME_DIR/bom-dev.env` (tmpfs, mode 600) before each start.
+
+### On a developer laptop
+```bash
+cd frontend/webapp && npm install && npm start    # frontend dev server
+npm install && npm run dev:backend                # backend (TypeScript via ts-node)
+```
+The backend connects to the remote MySQL — no local DB needed. Credentials must be supplied via env (the laptop is not on Infisical).
+
+### Database
+MySQL 8.0.40 in a container on a remote host. Default db is `bom_prd`. Read-only user `reader@%` for dev/staging traffic; the writable `bom_app` user lives in `BoMOnlineWorkspace` and is not used here.
 
 ## Code Conventions
 
