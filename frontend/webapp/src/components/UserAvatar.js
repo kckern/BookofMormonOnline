@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import { md5hash } from 'src/models/Utils';
+
+const MD5_RE = /^[a-f0-9]{32}$/i;
 
 /**
  * Deterministic avatar URL generator - produces consistent results for the same userId
@@ -36,11 +39,19 @@ export function generateAvatarUrl(userId) {
 }
 
 /**
- * Generate the profile image URL from user ID
+ * Generate the profile image URL from a user identifier.
+ *
+ * The S3 key is `profiles/<md5(username)>.jpg` (per the upload-side resolver
+ * `BomUser.uploadProfileImage`). Callers in this app pass either the raw
+ * username (e.g. Header / Sidebar pulling `appController.states.user.user`)
+ * or an already-hashed messenger user id (32-char hex). Auto-detect to
+ * support both: if the input is already a 32-char hex, treat as a hash;
+ * otherwise hash it.
  */
 export function getProfileImageUrl(userId) {
   if (!userId) return null;
-  return `https://assets.bookofmormon.online/profiles/${userId}.jpg`;
+  const hash = MD5_RE.test(userId) ? userId : md5hash(userId);
+  return `https://assets.bookofmormon.online/profiles/${hash}.jpg`;
 }
 
 export default function UserAvatar({ userId, profileUrl, size = 40, className = '', style = {} }) {
