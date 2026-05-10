@@ -1,7 +1,6 @@
 import winston from 'winston';
-import 'winston-syslog';
 
-const { PAPERTRAIL_HOST, PAPERTRAIL_PORT, NODE_ENV, LOG_LEVEL } = process.env;
+const { NODE_ENV, LOG_LEVEL } = process.env;
 
 const formatMeta = (meta: Record<string, unknown>) => {
   const cleaned = { ...meta };
@@ -20,30 +19,10 @@ const consoleFormat = winston.format.combine(
   })
 );
 
-const transports: winston.transport[] = [
-  new winston.transports.Console({
-    format: consoleFormat,
-    level: LOG_LEVEL || (NODE_ENV === 'production' ? 'info' : 'debug')
-  })
-];
-
-if (PAPERTRAIL_HOST && PAPERTRAIL_PORT) {
-  transports.push(
-    new (winston.transports as any).Syslog({
-      host: PAPERTRAIL_HOST,
-      port: parseInt(PAPERTRAIL_PORT, 10),
-      protocol: 'tls4',
-      localhost: 'bom-api',
-      app_name: 'bookofmormon',
-      format: winston.format.json()
-    })
-  );
-}
-
 export const logger = winston.createLogger({
-  level: LOG_LEVEL || 'info',
+  level: LOG_LEVEL || (NODE_ENV === 'production' ? 'info' : 'debug'),
   defaultMeta: { service: 'bom-api' },
-  transports
+  transports: [new winston.transports.Console({ format: consoleFormat })]
 });
 
 // Convenience methods with context

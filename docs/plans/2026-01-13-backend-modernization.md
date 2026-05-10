@@ -720,6 +720,13 @@ git commit -m "feat: add custom error classes
 
 ### Task 3.2: Implement Structured Logging
 
+> **Historical note (2026-05-09):** the snippets below ship logs to Papertrail.
+> Papertrail has since been retired. The current codebase keeps winston with
+> only the console transport — production logs are read via `docker logs`. The
+> Papertrail/syslog code below is kept here only as a record of what shipped at
+> the time of this plan; do not copy it.
+
+
 **Files:**
 - Modify: `src/library/utils/logger.ts`
 - Create: `src/library/utils/requestLogger.ts`
