@@ -21,6 +21,10 @@ import PassageNotes from "./PassageNotes";
 
 const DEBUG_SKELETON = false;
 
+// Feature flag: PassageNotes panels are still under perf/design work.
+// Off by default; flip REACT_APP_ENABLE_PASSAGE_NOTES=true to enable.
+const PASSAGE_NOTES_ENABLED = process.env.REACT_APP_ENABLE_PASSAGE_NOTES === 'true';
+
 const sectionPassageNotesKey = (chapterRef, sectionIndex, sectionRef) =>
     `${chapterRef}__section_${sectionIndex}_${(sectionRef || "").replace(/[^a-zA-Z0-9]/g, '_')}`;
 
@@ -195,11 +199,13 @@ export default function ReadScripture({ appController }) {
                     const { nextChapter } = getPrevNextChapter(nextChapterVerses);
                     setNextChapterRef(nextChapter || null);
 
-                    const sectionMap = buildSectionVerseIdsMap(nextChapterRef, nextChapterData);
-                    if (Object.keys(sectionMap).length > 0) {
-                        const notes = await fetchPassageNotesForSections(sectionMap, signal);
-                        if (!signal.aborted) {
-                            setPassageNotesData(prev => ({ ...prev, ...notes }));
+                    if (PASSAGE_NOTES_ENABLED) {
+                        const sectionMap = buildSectionVerseIdsMap(nextChapterRef, nextChapterData);
+                        if (Object.keys(sectionMap).length > 0) {
+                            const notes = await fetchPassageNotesForSections(sectionMap, signal);
+                            if (!signal.aborted) {
+                                setPassageNotesData(prev => ({ ...prev, ...notes }));
+                            }
                         }
                     }
 
@@ -383,7 +389,7 @@ export default function ReadScripture({ appController }) {
         document.title = chapterRef;
 
         setPassageNotesData({});
-        setPassageNotesLoading(true);
+        setPassageNotesLoading(PASSAGE_NOTES_ENABLED);
 
         executeOperation(
             "loadContent",
@@ -408,11 +414,13 @@ export default function ReadScripture({ appController }) {
                             document.title = chapterRef;
                         }
 
-                        const sectionMap = buildSectionVerseIdsMap(chapterRef, chapterData);
-                        if (Object.keys(sectionMap).length > 0) {
-                            const notes = await fetchPassageNotesForSections(sectionMap, signal);
-                            if (!signal.aborted) {
-                                setPassageNotesData(prev => ({ ...prev, ...notes }));
+                        if (PASSAGE_NOTES_ENABLED) {
+                            const sectionMap = buildSectionVerseIdsMap(chapterRef, chapterData);
+                            if (Object.keys(sectionMap).length > 0) {
+                                const notes = await fetchPassageNotesForSections(sectionMap, signal);
+                                if (!signal.aborted) {
+                                    setPassageNotesData(prev => ({ ...prev, ...notes }));
+                                }
                             }
                         }
                         if (!signal.aborted) setPassageNotesLoading(false);
