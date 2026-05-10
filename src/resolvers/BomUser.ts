@@ -9,6 +9,7 @@ import { authService } from '../services';
 import crypto from 'crypto';
 import { uploadProfileImage } from '../library/s3';
 import { AuthenticationError } from '../library/errors';
+import { logInfo } from '../library/utils/logger';
 
 // Argument interfaces for resolvers
 interface SigninArgs {
@@ -515,6 +516,7 @@ export default {
       }
 
       const userHash = md5(user.user);
+      logInfo('profile_image.request', { username: user.user, hash: userHash });
       await uploadProfileImage(imageData, userHash);
       return true;
     },
