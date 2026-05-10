@@ -5,11 +5,19 @@
 | Item | Status |
 |---|---|
 | A. Auth model | Audited — no change (see §A) |
-| B. Remove `*.sendbird.*` special case | Pending — gated on ops migration |
+| B. Remove `*.sendbird.*` special case | **Done** (also fixed cascade bug — see §B) |
 | C. Group avatar `isGroup` branch | Audited — intentional, no change (see §C) |
 | D. Cache-buster persistence | Audited — non-issue, no change (see §D) |
 | E. `S3_BUCKET` default | **Done** in `10e80dd` |
 | F. Resolver error handling | **Done** in `10e80dd` |
+
+**Note on the design:** profile image URLs are NOT stored in the database.
+The frontend computes `md5(username)` and constructs the URL deterministically
+(`https://assets.bookofmormon.online/profiles/{md5}.jpg`). On 404, the frontend
+falls back to a DiceBear avatar derived from the same identity. There is no
+`social.profile_url` column to clean up, no migration record, no per-user state
+on the backend. This is what makes the system trivially restorable — a user's
+identity is the only input.
 
 This spec covers **only the in-repo code changes** still needed after the
 profile-image-upload feature was merged. Operational rollout (storage
@@ -43,23 +51,18 @@ already follows that convention, so there is no stronger auth path to adopt
 without a project-wide refactor of context plumbing. Out of scope for this
 cleanup.
 
-### B. Remove the `*.sendbird.*` special case in `UserAvatar`
+### B. Remove the `*.sendbird.*` special case in `UserAvatar` — done
 
-`UserAvatar.js` has:
+The Sendbird URL guard was a hedge against the user object holding stale
+profile_url values that still pointed at the dead Sendbird CDN. Once the
+design moved to "URL is derived from `md5(username)`, no DB column", the
+guard became dead weight and was removed.
 
-```js
-const isSendbirdUrl = profileUrl && (profileUrl.includes('sendbird.com') || profileUrl.includes('sendbird.io'));
-if (profileUrl && !isSendbirdUrl && !failed) { ... }
-```
-
-This exists because the user table still holds dead Sendbird CDN URLs. After
-historical migration + DB cleanup (tracked privately) those rows become
-`NULL`, and the special case is dead weight.
-
-When the ops team confirms migration is complete:
-1. Remove the `isSendbirdUrl` branch.
-2. Revert to: `if (profileUrl && !failed) finalSrc = profileUrl;`
-3. Drop the `failed` flag if it becomes redundant with `triedS3`.
+While doing this, fixed a related cascade bug in `handleError`. Previously
+a single error set BOTH `failed` and `triedS3` true at once, so a
+`profileUrl` failure jumped straight to DiceBear without trying S3. Now
+the two flags advance one stage at a time, giving the proper waterfall:
+`profileUrl` → S3 → DiceBear.
 
 ### C. Group avatar path in `ImageChanger` — audited, intentional
 
@@ -116,7 +119,6 @@ Add tests as part of whichever code follow-up lands first; not a separate PR.
 
 ## Remaining
 
-Only **B** is left, and it cannot ship until the historical migration in the
-private ops workspace completes. Once `social.profile_url` no longer holds
-`*.sendbird.*` URLs, the `isSendbirdUrl` branch in `UserAvatar` becomes
-dead code and can be removed in a small follow-up PR.
+All in-tree code follow-ups for this feature are now done. Operational
+follow-ups (backend redeploy with the new env, manual end-to-end UI
+upload test) are tracked in the private ops workspace.
