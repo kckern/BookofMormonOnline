@@ -1,5 +1,13 @@
 import { lazy } from "react";
 import { determineLanguage } from "./Utils.js";
+import { Redirect } from "react-router-dom";
+
+// Feature flag - messaging disabled until Phase 5 data migration
+const USE_MESSENGER = process.env.REACT_APP_USE_MESSENGER === 'true';
+
+// Redirect component for disabled routes
+const DisabledRedirect = () => <Redirect to="/" />;
+
 // COMPONENTS
 const About = lazy(() => import("../views/About/About.js"));
 const KRSEB = lazy(() => import("../views/About/KRSEB.js"));
@@ -39,31 +47,31 @@ const routes = [
   {
     exact: true,
     path: "/home",
-    component: Home,
+    component: USE_MESSENGER ? Home : DisabledRedirect,
   },
   {
     path: "/home/:channelId/:messageId(\\d+)",
-    component: Home,
+    component: USE_MESSENGER ? Home : DisabledRedirect,
   },
   {
     path: "/home/:channelId",
-    component: Home,
+    component: USE_MESSENGER ? Home : DisabledRedirect,
   },
   {
     path: "/groups",
-    component: Group,
+    component: USE_MESSENGER ? Group : DisabledRedirect,
   },
   {
     path: "/group/:channelId/:messageId(\\d+)",
-    component: Group,
+    component: USE_MESSENGER ? Group : DisabledRedirect,
   },
   {
     path: "/group/:channelId/:leaderboard",
-    component: Group,
+    component: USE_MESSENGER ? Group : DisabledRedirect,
   },
   {
     path: "/group/:channelId",
-    component: Group,
+    component: USE_MESSENGER ? Group : DisabledRedirect,
   },
   {
     path: "/mobilemenu",
@@ -175,7 +183,7 @@ const routes = [
   },
   {
     path: "/invite/:hash",
-    component: Invitation,
+    component: USE_MESSENGER ? Invitation : DisabledRedirect,
   },
   {
     path: "/relationships",

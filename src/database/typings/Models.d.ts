@@ -52,6 +52,15 @@ import BomXtrasHistory from '../models/bom_xtras_history';
 import BomXtrasChiasmus from '../models/bom_xtras_chiasmus';
 import BoMDataBible from '../models/bom_bible';
 
+// Messenger models (Sendbird replacement - Phase 1)
+import MessengerUser from '../models/messenger_users';
+import MessengerChannel from '../models/messenger_channels';
+import MessengerMember from '../models/messenger_members';
+import MessengerMessage from '../models/messenger_messages';
+import MessengerHighlight from '../models/messenger_highlights';
+import MessengerReaction from '../models/messenger_reactions';
+import MessengerFile from '../models/messenger_files';
+
 export interface Models {
   BomCapsulation: typeof BomCapsulation;
   BoMDataBible: typeof BoMDataBible;
@@ -104,5 +113,15 @@ export interface Models {
   LdsScripturesVerses: typeof LdsScripturesVerses;
   LdsScripturesVolumes: typeof LdsScripturesVolumes;
   SocialPosts: typeof SocialPosts;
+  
+  // Messenger models (Sendbird replacement - Phase 1)
+  MessengerUser: typeof MessengerUser;
+  MessengerChannel: typeof MessengerChannel;
+  MessengerMember: typeof MessengerMember;
+  MessengerMessage: typeof MessengerMessage;
+  MessengerHighlight: typeof MessengerHighlight;
+  MessengerReaction: typeof MessengerReaction;
+  MessengerFile: typeof MessengerFile;
+  
   [key: string]: typeof ModelBase;
 }

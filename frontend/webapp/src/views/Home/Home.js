@@ -40,7 +40,7 @@ import {
 } from "reactstrap";
 import { toast } from "react-toastify";
 import Loader, { Spinner } from "../_Common/Loader/index.js";
-import { md5 } from "../../models/SendbirdController.js";
+import { md5 } from "../../models/MessengerController.js";
 import { timeAgoString } from "../../models/Utils.js";
 import { ReadingPlan } from "./ReadingPlan.js";
 

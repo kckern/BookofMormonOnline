@@ -4,6 +4,7 @@ import { Nav, Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'react
 import "./Sidebar.css";
 import { breakCache, determineLanguage, label, tokenImage } from "src/models/Utils.js";
 import crypto from "crypto-browserify";
+import UserAvatar from "src/components/UserAvatar";
 
 import soundOn from "src/views/User/svg/sound-on.svg"
 import soundOff from "src/views/User/svg/sound-off.svg"
@@ -99,12 +100,19 @@ export function loadMenu(){
       lang: item.lang,
       langNot: item.langNot,
       dev: item.dev,
-      beta: item.beta
+      beta: item.beta,
+      requiresMessenger: item.requiresMessenger
     };
   });
 
+  // Feature flag - messaging disabled until Phase 5 data migration
+  const USE_MESSENGER = process.env.REACT_APP_USE_MESSENGER === 'true';
 
   return list.filter(i=>{
+    // Filter by messenger requirement
+    if (i.requiresMessenger && !USE_MESSENGER) return false;
+    return true;
+  }).filter(i=>{
     const envIsDev = /localhost|^dev/.test(window.location.hostname);
     const itemIsDev = i.dev;
     const okayToShowBasedOnDev = itemIsDev ? envIsDev : true;
@@ -401,7 +409,7 @@ function UserInfo({ appController, setActivePath, activePath }) {
           }}>
           <div className="nameContainer">
             {" "}
-            <img alt={name} src={img } onError={breakCache} />
+            <UserAvatar userId={appController.states?.user?.user} profileUrl={img} size={50} />
             <div className={"name"}>{name}</div>
           </div>
           <div className="progresslist">

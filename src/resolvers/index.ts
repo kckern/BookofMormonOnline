@@ -4,5 +4,6 @@ import BomUser from './BomUser';
 import BomUtils from './BomUtils';
 import BomCommunity from './BomCommunity';
 import BomPeoplePlace from './BomPeoplePlace';
+import BomMessenger from './BomMessenger';
 
-export default [BomPage,BomPeoplePlace, BomNotes, BomUser, BomUtils, BomCommunity];
+export default [BomPage,BomPeoplePlace, BomNotes, BomUser, BomUtils, BomCommunity, BomMessenger];

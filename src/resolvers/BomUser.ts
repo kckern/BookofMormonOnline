@@ -1,9 +1,55 @@
 import { models, models as Models } from '../config/database';
 import Sequelize, { Model } from 'sequelize';
-import { sendbird } from '../library/sendbird';
+import { messenger } from '../library/messenger';
 import { genUserAvatar } from './lib';
+import { verifyPassword, hashPassword, needsRehash } from '../library/auth/password';
+import { GraphQLContext, ResolverFn, AuthResponse, UserData } from '../types/graphql';
+import { authService } from '../services';
 
 import crypto from 'crypto';
+import { uploadProfileImage } from '../library/s3';
+import { AuthenticationError } from '../library/errors';
+import { logInfo } from '../library/utils/logger';
+
+// Argument interfaces for resolvers
+interface SigninArgs {
+  username: string;
+  password: string;
+  token: string;
+}
+
+interface SignupArgs {
+  username: string;
+  email: string;
+  password: string;
+  token: string;
+}
+
+interface CheckUsernameArgs {
+  username: string;
+}
+
+// Feature flag - messaging disabled until Phase 5 data migration
+const MESSENGER_ENABLED = process.env.MESSENGER_ENABLED === 'true';
+
+// Sendbird-compatible shim - returns mock data when messaging disabled
+const sendbird: any = MESSENGER_ENABLED ? messenger : {
+  loadUser: async (id: string, name?: string, url?: string, email?: string) => ({ 
+    user_id: id, 
+    nickname: name || 'User', 
+    profile_url: url || '',
+    metadata: null,
+    is_online: false,
+    last_seen_at: null,
+    is_bot: false
+  }),
+  getUser: async (id: string) => null,
+  createUser: async (id: string, name: string, url: string) => ({ user_id: id, nickname: name, profile_url: url }),
+  upsertUser: async (id: string, data: any) => ({ user_id: id, ...data }),
+  updateUserNickname: async () => ({}),
+  updateUser: async () => ({}),
+  closeTab: async () => ({}),
+};
 import {
   Op,
   includeTranslation,
@@ -50,80 +96,53 @@ const cleanUsername = (username: string, email: string) => {
 
 export default {
   Query: {
-    signin: async (root: any, args: any, context: any, info: any) => {
-      if (!args.username || !args.password || !args.token)
+    signin: async (
+      _root: unknown,
+      args: SigninArgs,
+      context: GraphQLContext,
+      _info: unknown
+    ): Promise<AuthResponse> => {
+      // Delegate authentication to AuthService
+      const result = await authService.signin(
+        args.username,
+        args.password,
+        args.token
+      );
+
+      if (!result.success || !result.user) {
         return {
           isSuccess: false,
-          msg: 'Login Failed',
-          user: null
-        };
-      
-      try {
-        const passwordHash = crypto
-          .createHash('md5')
-          .update(args.password)
-          .digest('hex');
-
-        let myUser: any = await Models.BomUser.findOne({
-          where: {
-            [Op.or]: {
-              user: args.username,
-              email: args.username
-            },
-            pass: passwordHash
-          }
-        });
-
-        if (!myUser) {
-          myUser = await Models.BomUser.findOne({
-            where: {
-              user: args.username.replace(/@.*$/, ""),
-              pass: '-1'
-            }
-          });
-
-          if (myUser) {
-            await Models.BomUser.update(
-              { pass: passwordHash },
-              { where: { user: myUser.user } }
-            );
-          }
-        }
-
-        if (!myUser) {
-          return {
-            isSuccess: false,
-            msg: 'Login Failed',
-            user: null
-          };
-        }
-
-        //New Token Processing
-        try {
-          await Models.BomUserToken.upsert({ token: args.token, user: myUser.user });
-          const results: any = await Models.BomUserToken.findAll({ where: { user: myUser.user } });
-          const tokens = results.map((item: any) => item.getDataValue('token'));
-          await Models.BomLog.update({ user: myUser.user }, { where: { user: tokens } });
-        } catch (tokenError) {
-          console.error('Token processing error during signin:', tokenError);
-          // Continue with login even if token processing fails
-        }
-
-        const hashed_id = md5(myUser.getDataValue("user"));
-        return {
-          isSuccess: true,
-          msg: 'login_success',
-          user: myUser,
-          social: sendbird.loadUser(hashed_id)
-        };
-      } catch (error) {
-        console.error('Database error during signin:', error);
-        return {
-          isSuccess: false,
-          msg: 'Database error',
+          msg: result.message || 'Login Failed',
           user: null
         };
       }
+
+      try {
+        // Token processing - associate token with user and update logs
+        await Models.BomUserToken.upsert({ token: args.token, user: result.user.username });
+        const results: any = await Models.BomUserToken.findAll({ where: { user: result.user.username } });
+        const tokens = results.map((item: any) => item.getDataValue('token'));
+        await Models.BomLog.update({ user: result.user.username }, { where: { user: tokens } });
+      } catch (tokenError) {
+        console.error('Token processing error during signin:', tokenError);
+        // Continue with login even if token processing fails
+      }
+
+      // Load full user model for response (needed for GraphQL field resolvers)
+      const myUser = await Models.BomUser.findOne({
+        where: { user: result.user.username }
+      });
+
+      const hashed_id = md5(result.user.username);
+      const userName = result.user.name;
+      const userAvatar = genUserAvatar(hashed_id);
+
+      return {
+        isSuccess: true,
+        msg: 'login_success',
+        user: myUser,
+        social: await sendbird.loadUser(hashed_id, userName, userAvatar)
+      };
     },
     user: async (root: any, args: any, context: any, info: any) => {
       try {
@@ -181,11 +200,13 @@ export default {
         }
 
         const hashed_id = md5(myUser.getDataValue("user"));
+        const userName = myUser.getDataValue("name");
+        const userAvatar = genUserAvatar(hashed_id);
         return {
           isSuccess: true,
           msg: 'Token Login Success',
           user: myUser,
-          social: sendbird.loadUser(hashed_id)
+          social: await sendbird.loadUser(hashed_id, userName, userAvatar)
         };
       } catch (error) {
         console.error('Database error during token signin:', error);
@@ -392,14 +413,15 @@ export default {
           msg: 'Sign-up Failed',
           user: null
         };
+
+      // Hash password with bcrypt
+      const hashedPassword = await hashPassword(args.password);
+
       return Models.BomUser.create({
         user: args.username,
         name: args.name,
         email: args.email,
-        pass: crypto
-          .createHash('md5')
-          .update(args.password)
-          .digest('hex'),
+        pass: hashedPassword,
         zip: args.zip,
         lang: lang || "en",
         created_at: Sequelize.literal('CURRENT_TIMESTAMP')
@@ -468,47 +490,44 @@ export default {
         });
 
         if (!myUser?.user) return null;
-        
+
         let updatedValues = args;
         delete updatedValues.token;
-        // console.log({ updatedValues });
-        
-        const result: any = await Models.BomUser.update(updatedValues, { where: { user: myUser.user } });
-        // if(result.shift() === 0) return null
+
+        await Models.BomUser.update(updatedValues, { where: { user: myUser.user } });
         Object.assign(myUser, updatedValues);
-        const { user } = myUser;
-        const hashed_id = md5(user);
-        
-        if (updatedValues?.name) {
-          try {
-            const sbResponse: any = await sendbird.updateUserNickname(hashed_id, updatedValues.name);
-            if (!sbResponse) return null;
-            return myUser;
-          } catch (sendbirdError) {
-            console.error('Sendbird update error:', sendbirdError);
-            return myUser; // Return user even if sendbird update fails
-          }
-        }
+
         return myUser;
       } catch (error) {
         console.error('Database error during editProfile:', error);
         return null;
       }
     },
+    uploadProfileImage: async (
+      _root: unknown,
+      args: { token: string; imageData: string },
+      context: GraphQLContext
+    ): Promise<boolean> => {
+      const { token, imageData } = args;
+
+      const user: any = await Models.BomUser.findOne(findUserByToken(token));
+      if (!user) {
+        throw new AuthenticationError('Invalid token');
+      }
+
+      const userHash = md5(user.user);
+      logInfo('profile_image.request', { username: user.user, hash: userHash });
+      await uploadProfileImage(imageData, userHash);
+      return true;
+    },
     changePassword: async (root: any, args: any, context: any, info: any) => {
       if (!args.password) return false;
       if (!args.token) return false;
-      let newPassword = crypto
-        .createHash('md5')
-        .update(args.password)
-        .digest('hex');
-      
+
       try {
+        // Find user by token (without comparing password hashes)
         const myUser: any = await Models.BomUser.findOne({
-          attributes: ['user'],
-          where: {
-            pass: { [Op.notLike]: newPassword }
-          },
+          attributes: ['user', 'pass'],
           include: [
             {
               model: Models.BomUserToken,
@@ -520,8 +539,19 @@ export default {
         });
 
         if (!myUser?.user) return false;
-        
-        const result: any = await Models.BomUser.update({ pass: newPassword }, { where: { user: myUser.user } });
+
+        // Hash new password with bcrypt
+        const newPasswordHash = await hashPassword(args.password);
+
+        // Check if new password is same as old (for bcrypt hashes)
+        const currentHash = myUser.getDataValue('pass');
+        if (currentHash && !needsRehash(currentHash)) {
+          // If current hash is bcrypt, compare with new password
+          const isSamePassword = await verifyPassword(args.password, currentHash);
+          if (isSamePassword) return false; // Don't update if same password
+        }
+
+        const result: any = await Models.BomUser.update({ pass: newPasswordHash }, { where: { user: myUser.user } });
         return result.shift() === 1;
       } catch (error) {
         console.error('Database error during changePassword:', error);

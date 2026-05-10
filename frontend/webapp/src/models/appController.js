@@ -1,9 +1,51 @@
 import { lang } from "moment";
-import SendbirdController, { SendbirdAppId } from "./SendbirdController.js";
+import MessengerController from "./MessengerController.js";
 import { clickyUser, determineLanguage, tokenImage } from "./Utils.js";
 import crypto from "crypto-browserify";
 import { history } from "./routeHistory.js";
 import { setPopDocTitle } from "src/views/_Common/PopUp.js";
+
+// Feature flag for using new Messenger system
+// OFF = messaging disabled (no data migrated yet)
+// ON = use new MessengerController
+const USE_MESSENGER = process.env.REACT_APP_USE_MESSENGER === 'true';
+
+/**
+ * Creates the appropriate chat controller based on feature flag
+ */
+const createChatController = (userId, accessToken, appController) => {
+  if (USE_MESSENGER) {
+    console.log('Using MessengerController (custom backend)');
+    return new MessengerController(
+      process.env.REACT_APP_API_URL || window.location.origin,
+      userId,
+      accessToken,
+      appController
+    );
+  } else {
+    // Messaging disabled - return no-op controller
+    console.log('Messaging disabled until data migration');
+    return {
+      connect: () => Promise.resolve({ user_id: userId, nickname: 'User' }),
+      getStudyGroups: () => Promise.resolve([]),
+      loadGroupMessages: () => Promise.resolve([]),
+      loadPreviousMessages: () => Promise.resolve([]),
+      sendUserMessage: () => Promise.reject(new Error('Messaging coming soon')),
+      updateUserState: () => {},
+      updateUserSummary: () => {},
+      fireStudyGroupAction: () => {},
+      fetchRoomFromGroup: () => Promise.resolve(null),
+      loadUnreadDMs: () => Promise.resolve({}),
+      disconnect: () => {},
+      updatePagePosition: () => {},
+      updateTypingLocation: () => {},
+      loadThreadedMessages: () => Promise.resolve({ parentMessage: null, threadedMessages: [] }),
+      getCurrentUser: () => ({ userId, metaData: {} }),
+      sb: { currentUser: { userId, metaData: {} } },
+      _currentUser: { user_id: userId, nickname: 'User' }
+    };
+  }
+};
 
 const checkQuota =  () => {
   // Check if 'timestamp' exists in localStorage
@@ -43,7 +85,9 @@ const checkQuota =  () => {
 }
 
 export const appInit = () => {
-  let studyMode = localStorage.getItem("studyModeOn") !== "false";
+  // Study mode requires messenger to be enabled
+  const messengerEnabled = process.env.REACT_APP_USE_MESSENGER === 'true';
+  let studyMode = messengerEnabled && localStorage.getItem("studyModeOn") !== "false";
   const lang = determineLanguage();
   //Set Initial States
 
@@ -278,8 +322,7 @@ export const appFunctions = {
     appController.states.user.token = localToken;
 
     if (appController.states.user.social?.user_id) {
-      appController.sendbird = new SendbirdController(
-        SendbirdAppId,
+      appController.sendbird = createChatController(
         appController.states.user.social?.user_id,
         appController.states.user.social.access_token,
         appController
@@ -301,8 +344,7 @@ export const appFunctions = {
       appController.states.user.social = response?.user?.social || response?.social;
 
       if (appController.states.user.social?.user_id) {
-        appController.sendbird = new SendbirdController(
-          SendbirdAppId,
+        appController.sendbird = createChatController(
           appController.states.user.social?.user_id,
           appController.states.user.social.access_token,
           appController
@@ -621,8 +663,7 @@ export const appFunctions = {
     let user = input.val.user;
     user.social = input.val.social || user.social;
     if (user.social?.user_id)
-      appController.sendbird = new SendbirdController(
-        SendbirdAppId,
+      appController.sendbird = createChatController(
         user.social?.user_id,
         user.social?.access_token,
         appController
@@ -655,7 +696,7 @@ export const appFunctions = {
     appController.states.user.progress.completed = 0;
     appController.states.user.progress.started = 0;
     appController.states.studyGroup = {
-      studyModeOn: true,
+      studyModeOn: USE_MESSENGER,
       isDrawerOpen: false,
       isGroupListOpen: false,
       isMobileChat: false,
@@ -664,7 +705,7 @@ export const appFunctions = {
       action: {},
       groupList: [],
     };
-    appController.sendbird.sb.disconnect();
+    appController.sendbird?.disconnect();
     return appController;
   },
 

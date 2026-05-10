@@ -8,13 +8,20 @@
 /tmp
 .DS_Store
 .env*
+!.env.example
 npm-debug.log
 Thumbs.db
 key
 *.env
 log.sql
-/test
+# Allow test directory but ignore test results and generated files
+!/test
+/test/results*
+/test/*.log
 /dist
 *.sh
-/coverage
+!test/run-regression.sh
+*.log
 /.claude
+.worktrees/
+coverage/

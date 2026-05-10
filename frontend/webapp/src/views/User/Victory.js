@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { label, playSound, useWindowSize } from "src/models/Utils";
 import Confetti from 'react-confetti'
 import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
+import UserAvatar from "src/components/UserAvatar";
 import ReactRevealText from 'react-reveal-text'
 import moment from "moment";
 import momentDurationFormatSetup from "moment-duration-format";
@@ -98,7 +99,7 @@ export function Victory({ appController, context }) {
             >×</span>
         </h5>
         <div className="profile">
-            <img src={appController.states.user.social?.profile_url} />
+            <UserAvatar userId={appController.states.user.user} profileUrl={appController.states.user.social?.profile_url} size={80} />
         </div>
         <div className="revealtext" >
             <ReactRevealText show={show} >{text}</ReactRevealText>
@@ -123,7 +124,7 @@ export function Victory({ appController, context }) {
                 </CardHeader>
                 <CardBody className="victorybody">
                     <div className="profile">
-                        <img src={appController.states.user.social?.profile_url} />
+                        <UserAvatar userId={appController.states.user.user} profileUrl={appController.states.user.social?.profile_url} size={80} />
                     </div>
                     <div className="revealtext" >
                         <ReactRevealText show={show} >{text}</ReactRevealText>
