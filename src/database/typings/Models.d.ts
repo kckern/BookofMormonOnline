@@ -19,6 +19,8 @@ import BomPeopleRels from '../models/bom_people_rels';
 import BomPeople from '../models/bom_people';
 import BomPlacesCoords from '../models/bom_places_coords';
 import BomPlaces from '../models/bom_places';
+import BomObjects from '../models/bom_objects';
+import BomXrels from '../models/bom_xrels';
 import BomQuote from '../models/bom_quote';
 import BomReferences from '../models/bom_references';
 import BomSection from '../models/bom_section';
@@ -82,6 +84,8 @@ export interface Models {
   BomPeople: typeof BomPeople;
   BomPlacesCoords: typeof BomPlacesCoords;
   BomPlaces: typeof BomPlaces;
+  BomObjects: typeof BomObjects;
+  BomXrels: typeof BomXrels;
   BomQuote: typeof BomQuote;
   BomReferences: typeof BomReferences;
   BomSection: typeof BomSection;

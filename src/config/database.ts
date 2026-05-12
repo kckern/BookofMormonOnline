@@ -25,6 +25,8 @@ import BomPeopleRels from '../database/models/bom_people_rels';
 import BomPeople from '../database/models/bom_people';
 import BomPlacesCoords from '../database/models/bom_places_coords';
 import BomPlaces from '../database/models/bom_places';
+import BomObjects from '../database/models/bom_objects';
+import BomXrels from '../database/models/bom_xrels';
 import BomQuote from '../database/models/bom_quote';
 import BomReferences from '../database/models/bom_references';
 import BomSection from '../database/models/bom_section';
@@ -221,6 +223,8 @@ export const models: Models = {
   BomPeople: BomPeople.initModel(sequelize),
   BomPlacesCoords: BomPlacesCoords.initModel(sequelize),
   BomPlaces: BomPlaces.initModel(sequelize),
+  BomObjects: BomObjects.initModel(sequelize),
+  BomXrels: BomXrels.initModel(sequelize),
   BomQuote: BomQuote.initModel(sequelize),
   BomReferences: BomReferences.initModel(sequelize),
   BomSection: BomSection.initModel(sequelize),
