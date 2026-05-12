@@ -4,6 +4,7 @@ import { split, SentenceSplitterSyntax } from 'sentence-splitter';
 import scripture from '../library/scripture';
 import { lookupReference } from 'scripture-guide';
 import { loadPeopleFromTextGuid, loadPeopleFromVerseIds, loadPlacesFromVerseIds, loadNotesFromTextGuid } from './BomPeoplePlace';
+import { loadObjectsFromTextGuid, loadObjectsFromVerseIds } from './BomObjects';
 import { queryDB } from '../library/db';
 import { organizeRelatedScriptures } from './lib';
 
@@ -194,6 +195,7 @@ export default {
           chiasmus: [],
           people: [],
           places: [],
+          objects: [],
           images: [],
           notes: [],
           fax: [],
@@ -327,17 +329,23 @@ export default {
       // Get unique text guids
       const guids = [...new Set(textGuids.map((t: any) => t.text_guid).filter(guid => guid))];
       
-      // Load people, places, and notes using both verse-based and text-guid-based approaches
-      const [people, places, notes] = await Promise.all([
+      // Load people, places, objects, and notes using both verse-based and text-guid-based approaches
+      const [people, places, objects, notes] = await Promise.all([
         // Load people from both verse IDs and text GUIDs
         Promise.all([
           loadPeopleFromVerseIds(verse_ids, lang),
           guids.length > 0 ? Promise.all(guids.map(guid => loadPeopleFromTextGuid(guid, [], lang))).then(results => results.flat()) : []
         ]).then(results => results.flat()),
-        
+
         // Load places directly from verse IDs via BomIndex
         loadPlacesFromVerseIds(verse_ids, lang),
-        
+
+        // Load objects from both verse IDs and text GUIDs
+        Promise.all([
+          loadObjectsFromVerseIds(verse_ids, lang),
+          guids.length > 0 ? Promise.all(guids.map(guid => loadObjectsFromTextGuid(guid, [], lang))).then(results => results.flat()) : []
+        ]).then(results => results.flat()),
+
         // Load notes from text GUIDs
         guids.length > 0 ? Promise.all(guids.map(guid => loadNotesFromTextGuid(guid, lang))).then(results => results.flat()) : []
       ]);
@@ -370,6 +378,7 @@ export default {
         chiasmus: Object.values(processedChiasmus) || [],
         people: people || [],
         places: places || [],
+        objects: objects || [],
         images: images || [],
         notes: notes || [],
         fax: fax || [],

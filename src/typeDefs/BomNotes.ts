@@ -29,6 +29,7 @@ extend type Query {
     chiasmus: [Chiasmus]
     people: [People]
     places: [Place]
+    objects: [Object]
     images: [Image]
     notes: [Note]
     fax: [Fax]
