@@ -5,6 +5,9 @@ import { slugify, getEnglishReference, verseIdToSlug } from '../../../utils/scri
 import { label } from '../../../models/Utils';
 import PassageNotes from '../PassageNotes';
 
+// Temporarily disabled — flip to true to re-enable.
+const PASSAGE_NOTES_ENABLED = false;
+
 const sectionPassageNotesKey = (chapterRef, sectionIndex, sectionRef) =>
     `${chapterRef}__section_${sectionIndex}_${(sectionRef || "").replace(/[^a-zA-Z0-9]/g, '_')}`;
 
@@ -73,12 +76,14 @@ export const ChapterContent = memo(({
                                 appController={appController}
                             />
                         ))}
-                        <PassageNotes
-                            passageNotesLoading={passageNotesLoading}
-                            sectionPassageNotes={sectionPassageNotes}
-                            sectionVerseIds={sectionVerseIds}
-                            animationDelay={index * 300}
-                        />
+                        {PASSAGE_NOTES_ENABLED && (
+                            <PassageNotes
+                                passageNotesLoading={passageNotesLoading}
+                                sectionPassageNotes={sectionPassageNotes}
+                                sectionVerseIds={sectionVerseIds}
+                                animationDelay={index * 300}
+                            />
+                        )}
                     </div>
                 );
             })}

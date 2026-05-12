@@ -192,6 +192,10 @@ p.read-scripture.heading
     margin-bottom: 1rem;
 }
 
+.read-mobile-nav {
+    display: none;
+}
+
 .read-header-nav h3
 {
     
@@ -344,6 +348,12 @@ p.heading a.heading + a.heading::before{
     }
     .chapter-nav {
         margin-left: 0
+    }
+    .read-mobile-nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 0.5rem 0 1rem;
     }
   }
   

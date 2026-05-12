@@ -63,6 +63,7 @@
 }
 
 .sidebar .nav li.menuitem img {
+  width: 1.2em;
   height: 1.2em;
   position: relative;
   bottom: 2px;

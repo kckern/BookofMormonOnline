@@ -4,7 +4,7 @@ export class ValidationError extends Error {
   public readonly errors: Array<{ field: string; message: string }>;
 
   constructor(zodError: ZodError) {
-    const errors = zodError.errors.map(e => ({
+    const errors = zodError.issues.map(e => ({
       field: e.path.join('.'),
       message: e.message
     }));

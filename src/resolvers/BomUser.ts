@@ -129,7 +129,7 @@ export default {
       }
 
       // Load full user model for response (needed for GraphQL field resolvers)
-      const myUser = await Models.BomUser.findOne({
+      const myUser: any = await Models.BomUser.findOne({
         where: { user: result.user.username }
       });
 

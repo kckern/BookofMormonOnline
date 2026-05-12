@@ -1,14 +1,15 @@
-ARG NODE_VERSION=18.16.0
+# syntax=docker/dockerfile:1.4
+ARG NODE_VERSION=18.20.4
 FROM node:${NODE_VERSION}-alpine AS builder
 
 WORKDIR /usr/src/app
 
-# Install build dependencies first (cached unless package.json changes)
+# Install build dependencies first (cached unless package.json/package-lock.json changes)
 COPY package*.json ./
 COPY frontend/webapp/package*.json ./frontend/webapp/
-RUN npm install -g typescript
-RUN npm install
-RUN cd frontend/webapp && npm install react-app-rewired sass
+RUN npm install -g typescript@5.3.2
+RUN --mount=type=cache,target=/root/.npm npm ci
+RUN --mount=type=cache,target=/root/.npm cd frontend/webapp && npm ci
 
 # Now copy source (only this layer invalidates on code changes)
 ARG COMMIT_ID

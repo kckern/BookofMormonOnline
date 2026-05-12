@@ -9,9 +9,9 @@ import ReferencesPanel from './CategoryPanels/ReferencesPanel';
 import BasePanel from './CategoryPanels/BasePanel';
 import './CategoryPanels/CategoryPanels.scss';
 
-const PassageNotes = ({ 
-    passageNotesLoading, 
-    sectionPassageNotes, 
+const PassageNotes = ({
+    passageNotesLoading,
+    sectionPassageNotes,
     sectionVerseIds,
     animationDelay = 0
 }) => {
