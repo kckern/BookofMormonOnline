@@ -1,0 +1,56 @@
+/* Objects view — mirrors Places.css with object-specific tweaks */
+
+.ObjectList .card .objectInfo {
+  min-height: 8em;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+
+.ObjectList .card .subtitle {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 0.5em;
+  background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+  color: white;
+  font-size: 0.85em;
+  line-height: 1.3;
+}
+
+.ObjectList .card .CategoryBadge {
+  display: inline-block;
+  padding: 0.15em 0.5em;
+  margin-right: 0.25em;
+  border-radius: 0.4em;
+  font-size: 0.75em;
+  text-transform: capitalize;
+  background: rgba(0,0,0,0.1);
+}
+
+.ObjectList .card .EraBadge {
+  display: inline-block;
+  padding: 0.15em 0.5em;
+  border-radius: 0.4em;
+  font-size: 0.75em;
+  background: rgba(0,0,0,0.05);
+  color: #666;
+  text-transform: capitalize;
+}
+
+.ObjectList .card .SpecificityBadge {
+  display: inline-block;
+  margin-left: 0.25em;
+  padding: 0.1em 0.4em;
+  font-size: 0.7em;
+  border: 1px solid #999;
+  border-radius: 0.3em;
+  color: #555;
+}
+
+.ObjectEmptyState {
+  text-align: center;
+  padding: 4em 2em;
+  color: #888;
+}
