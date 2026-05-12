@@ -27,6 +27,8 @@ Book of Mormon Online - an interactive scripture study platform for the Book of 
 
 `bom.kckern.net` is **dev**, not prod. Do not treat traffic there as production. Restarting `bom-dev` (e.g. `systemctl --user restart bom-dev`) bounces the public dev URL — coordinate before doing it.
 
+**Cloudflare caches frontend assets at the edge** with `cache-control: max-age=14400` (4 hours) — including `/static/js/bundle.js`, the live CRA dev bundle. Frontend source edits propagate to `localhost:8200` instantly via HMR, but `bom.kckern.net` continues to serve a stale bundle until the CDN cache expires (`cf-cache-status: HIT` confirms a cached response). When verifying frontend changes during a session, **screenshot/curl `http://localhost:8200` directly** rather than `bom.kckern.net` — same content, no edge caching. To force the public URL fresh: purge in the Cloudflare dashboard, append a cache-busting query string, or wait out the TTL. (Note: this applies to the dev URL only; production has its own deploy path.)
+
 ## Development setup
 
 ### On this dev host (the one CLAUDE.md lives on)
