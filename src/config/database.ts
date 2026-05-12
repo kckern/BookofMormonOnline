@@ -688,6 +688,22 @@ models.BomPlaces.hasMany(models.BomPlacesCoords, {
   as: 'coords'
 });
 
+models.BomObjects.hasMany(models.BomTranslation, {
+  foreignKey: {
+    name: 'guid'
+  },
+  sourceKey: 'guid',
+  as: 'translation'
+});
+
+models.BomObjects.hasMany(models.BomIndex, {
+  foreignKey: {
+    name: 'slug'
+  },
+  sourceKey: 'slug',
+  as: 'index'
+});
+
 models.BomPlaces.belongsToMany(models.BomMap, {
   through: models.BomPlacesCoords,
   foreignKey: 'guid',
