@@ -1,4 +1,10 @@
 import React, { useState } from 'react';
+import { md5hash } from 'src/models/Utils';
+
+// Profile images live at profiles/<md5(username)>.jpg.
+// Callers pass either the raw username or the already-hashed user_id;
+// hash here when input doesn't look like a 32-char hex hash.
+const toUserHash = (id) => /^[a-f0-9]{32}$/i.test(id || '') ? id : md5hash(String(id || ''));
 
 /**
  * Deterministic avatar URL generator - produces consistent results for the same userId
@@ -40,15 +46,23 @@ export function generateAvatarUrl(userId) {
  */
 export function getProfileImageUrl(userId) {
   if (!userId) return null;
-  return `https://assets.bookofmormon.online/profiles/${userId}.jpg`;
+  return `https://assets.bookofmormon.online/profiles/${toUserHash(userId)}.jpg`;
 }
+
+// DiceBear is a generated fallback, not a real photo — never prefer it over a
+// possible S3 upload. Backend sets it as social.profile_url by default so we
+// have to detect and ignore it here.
+const isPlaceholderUrl = (url) =>
+  typeof url === 'string' && url.includes('api.dicebear.com');
 
 export default function UserAvatar({ userId, profileUrl, size = 40, className = '', style = {} }) {
   const [failed, setFailed] = useState(false);
   const [triedS3, setTriedS3] = useState(false);
 
+  const useProfileUrl = profileUrl && !failed && !isPlaceholderUrl(profileUrl);
+
   let finalSrc;
-  if (profileUrl && !failed) {
+  if (useProfileUrl) {
     finalSrc = profileUrl;
   } else if (userId && !triedS3) {
     finalSrc = getProfileImageUrl(userId);
@@ -57,7 +71,7 @@ export default function UserAvatar({ userId, profileUrl, size = 40, className = 
   }
 
   const handleError = () => {
-    if (!failed && profileUrl) {
+    if (useProfileUrl) {
       setFailed(true);
     } else if (!triedS3 && userId) {
       setTriedS3(true);

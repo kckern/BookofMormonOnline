@@ -9,8 +9,11 @@ import { label } from '../../models/Utils';
 function MapGroup({mapGroup, handleClickMapType})
 {
     const {group,maps} = mapGroup;
+    const labelKey = `mapgroup_${group.toLowerCase()}`;
+    const resolved = label(labelKey);
+    const groupLabel = resolved === labelKey ? group.charAt(0) + group.slice(1).toLowerCase() : resolved;
     return <div className='map-group'>
-        <h6>{label(`mapgroup_${group.toLowerCase()}`)}</h6>
+        <h6>{groupLabel}</h6>
         <div className='map-group-list'>
         {maps.map((map,index)=><SingleMapMenuItem map={map} key={index} handleClickMapType={handleClickMapType} />)}
         </div>
