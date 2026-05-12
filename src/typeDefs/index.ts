@@ -5,6 +5,7 @@ import BomPage from './BomPage';
 import BomUser from './BomUser';
 import BomUtils from './BomUtils';
 import BomPeoplePlaces from './BomPeoplePlaces';
+import BomObjects from './BomObjects';
 import BomCommunity from './BomCommunity';
 import BomMessenger from './BomMessenger';
 
@@ -17,4 +18,4 @@ const linkedSchema = gql`
   }
   scalar JSON
 `;
-export default [BomNotes, BomPage, BomPeoplePlaces, BomUser, BomUtils,BomNotes,BomCommunity,BomMessenger,linkedSchema]; //
+export default [BomNotes, BomPage, BomPeoplePlaces, BomObjects, BomUser, BomUtils,BomNotes,BomCommunity,BomMessenger,linkedSchema];

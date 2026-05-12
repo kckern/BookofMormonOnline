@@ -1,0 +1,37 @@
+import { gql } from 'apollo-server-express';
+
+export default gql`
+extend type Query {
+  object(slug: [String]): [Object]
+}
+
+type Object {
+  guid: String
+  slug: String
+  name: String
+  subtitle: String
+  category: String
+  specificity: String
+  usage: String
+  era: String
+  provenance: String
+  aliases: String
+  tags: String
+  description: String
+  verse_id: Int
+  weight: Int
+  index: [Index]
+  xrels: [Xrel]
+}
+
+type Xrel {
+  rel: String
+  srcweight: Int
+  dst_type: String
+  dst_slug: String
+  dst_name: String
+  dst_title: String
+  note: String
+  verse_id: Int
+}
+`;
