@@ -107,6 +107,8 @@ function PopUp({ appController }) {
     appController.states.popUp.type === "place"
   )
     return <Place appController={appController} />;
+  if (appController.states.popUp.type === "object")
+    return <ObjectPopUp appController={appController} />;
   if (appController.states.popUp.type === "victory")
     return <Victory appController={appController} />;
   if (appController.states.popUp.type === "history")
@@ -391,6 +393,139 @@ function Place({ appController }) {
           </div>
         </div>
           <ScripturePanelSingle scriptureData={{ref:PopUpRef}} closeButton={true} setPopUpRef={setPopUpRef} />
+        <Comments />
+      </div>
+    </Draggable>
+  );
+}
+
+function ObjectPopUp({ appController }) {
+  const [PopUpRef, setPopUpRef] = useState(null);
+  const activeId = appController.states.popUp.activeId;
+
+  if (appController.popUpData[activeId] === undefined) {
+    BoMOnlineAPI(
+      { object: appController.states.popUp.ids },
+      { useCache: ["object"] }
+    ).then((response) => {
+      appController.functions.setPopUp({
+        type: "object",
+        ids: appController.states.popUp.ids,
+        popUpData: response.object,
+      });
+      if (!response.object) return false;
+      const obj = response.object[activeId];
+      const siblingObjectSlugs = (obj?.xrels || [])
+        .filter((x) => x.dst_type === "object" && x.dst_slug)
+        .map((x) => x.dst_slug);
+      if (siblingObjectSlugs.length) {
+        BoMOnlineAPI({ object: siblingObjectSlugs }, { useCache: ["object"] });
+      }
+      setPopUpRef(null);
+    });
+    return <Loading type="Object" appController={appController} />;
+  }
+
+  const obj = appController.popUpData[activeId];
+  if (!obj) return <pre>{appController.popUp}</pre>;
+
+  const handleXrelClick = (xrel, e) => {
+    e.preventDefault();
+    if (xrel.dst_type === "people") {
+      appController.functions.setPopUp({ type: "people", ids: [xrel.dst_slug], underSlug: "people" });
+    } else if (xrel.dst_type === "place") {
+      appController.functions.setPopUp({ type: "places", ids: [xrel.dst_slug], underSlug: "places" });
+    } else if (xrel.dst_type === "object") {
+      appController.functions.setPopUp({ type: "object", ids: [xrel.dst_slug], underSlug: "objects" });
+    }
+    // group: non-clickable, no-op
+  };
+
+  return (
+    <Draggable handle=".card-header">
+      <div
+        id="popUp"
+        className="card pp popupwindow"
+        style={{
+          top: appController.states.popUp.top,
+          left: appController.states.popUp.left,
+        }}
+      >
+        <div className="card-header">
+          <div className="person_head">{label("object_profile") || "Object"}</div>
+          <ul className={"source_tabs souce_tab_list_" + appController.states.popUp.ids.length}>
+            <li className="close" onClick={appController.functions.closePopUp}>
+              ×
+            </li>
+          </ul>
+        </div>
+        <div className="card-body">
+          <div className="ppbody">
+            <div className="bodytext">
+              <h3>
+                {processName(obj.name)}
+                {obj.subtitle && (
+                  <>
+                    <br />
+                    <small className="ppbody-title">{replaceNumbers(obj.subtitle)}</small>
+                  </>
+                )}
+              </h3>
+              {renderPersonPlaceHTML(
+                detectScriptures(
+                  obj.description || "",
+                  (scripture) => scripture ? `<a className="scripture_link">${scripture}</a>` : "",
+                  determineLanguage()
+                ),
+                appController,
+                setPopUpRef
+              )}
+            </div>
+
+            <div className="refbox">
+              <div className="ppimg">
+                <img
+                  alt={obj.name}
+                  src={`${assetUrl}/objects/${obj.slug}`}
+                  onError={(e) => {
+                    if (e.target.dataset.fallback === "1") return;
+                    e.target.dataset.fallback = "1";
+                    e.target.style.opacity = "0.5";
+                  }}
+                />
+                <br />
+              </div>
+
+              <h4>{label("relationships")}</h4>
+              {(obj.xrels && obj.xrels.length > 0) ? (
+                <ul className="xrels">
+                  {obj.xrels.map((x, idx) => {
+                    const clickable = ["people", "place", "object"].includes(x.dst_type);
+                    return (
+                      <li key={idx} className={"xrel xrel-" + x.dst_type + (clickable ? " clickable" : "")}>
+                        <span className="rel-verb">{x.rel}</span>
+                        <a href="#" onClick={clickable ? (e) => handleXrelClick(x, e) : (e) => e.preventDefault()}>
+                          {x.dst_name}
+                          {x.dst_title && <em> ({x.dst_title})</em>}
+                        </a>
+                        {x.note && <div className="xrel-note">{x.note}</div>}
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                <p className="xrels-empty">{label("no_relationships") || "No relationships."}</p>
+              )}
+
+              <ReferenceList
+                index={obj.index}
+                setPopupRef={setPopUpRef}
+                appController={appController}
+              />
+            </div>
+          </div>
+        </div>
+        <ScripturePanelSingle scriptureData={{ ref: PopUpRef }} closeButton={true} setPopUpRef={setPopUpRef} />
         <Comments />
       </div>
     </Draggable>

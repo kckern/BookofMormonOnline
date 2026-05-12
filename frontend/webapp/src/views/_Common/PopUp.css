@@ -662,3 +662,50 @@ ul.source_tabs li:hover
     }
 
 }
+
+.xrels {
+  list-style: none;
+  padding: 0;
+  margin: 0.5em 0;
+  max-height: 18em;
+  overflow-y: auto;
+}
+
+.xrels .xrel {
+  padding: 0.35em 0.5em;
+  border-bottom: 1px solid #eee;
+  font-size: 0.9em;
+}
+
+.xrels .xrel .rel-verb {
+  display: inline-block;
+  min-width: 7em;
+  padding: 0.1em 0.4em;
+  margin-right: 0.5em;
+  font-size: 0.75em;
+  color: #666;
+  background: #f4f4f4;
+  border-radius: 0.3em;
+  text-transform: capitalize;
+}
+
+.xrels .xrel a {
+  color: #333;
+}
+
+.xrels .xrel.clickable a {
+  color: #0066aa;
+  cursor: pointer;
+}
+
+.xrels .xrel.xrel-group a {
+  color: #999;
+  cursor: default;
+}
+
+.xrels .xrel .xrel-note {
+  font-size: 0.8em;
+  color: #888;
+  margin-top: 0.15em;
+  margin-left: 7.5em;
+}
