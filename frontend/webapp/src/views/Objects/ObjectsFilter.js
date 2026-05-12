@@ -87,7 +87,7 @@ export function ObjectsFilter({ appController, objectFilters, setFilter, objectL
 
   const handleClick = () => {
     appController.functions.setPopUp({
-      type: "oFilter",
+      type: "pFilter",
       ids: [appController.states.user.social?.user_id],
       underSlug: "objects",
       popUpData: { filterBox, setFilter, objectFilters },
