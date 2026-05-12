@@ -93,7 +93,67 @@ const queries = {
                 info
                 occupants
                 type
-                location 
+                location
+            }`,
+    }
+  },
+  object: (ids) => {
+    return {
+      type: "object",
+      key: "slug",
+      val: ids,
+      query:
+        q("object", "slug", ids) +
+        `{
+                slug
+                name
+                subtitle
+                category
+                specificity
+                usage
+                era
+                provenance
+                aliases
+                tags
+                description
+                weight
+                verse_id
+                index {
+                    slug
+                    ref
+                    verse_id
+                    text
+                }
+                xrels {
+                    rel
+                    srcweight
+                    dst_type
+                    dst_slug
+                    dst_name
+                    dst_title
+                    note
+                    verse_id
+                }
+            }`,
+    }
+  },
+  objectList: (ids) => {
+    return {
+      type: "objectList",
+      key: "slug",
+      val: ids,
+      query:
+        q("objectList: object", "slug", ids) +
+        `{
+                slug
+                name
+                subtitle
+                category
+                era
+                provenance
+                specificity
+                usage
+                weight
             }`,
     }
   },
@@ -119,6 +179,12 @@ const queries = {
                     name
                     info
                     slug
+                }
+                objects {
+                    slug
+                    name
+                    subtitle
+                    category
                 }
                 images {
                     title
@@ -1846,6 +1912,12 @@ const queries = {
                       name
                       info
                       slug
+                  }
+                  objects {
+                      slug
+                      name
+                      subtitle
+                      category
                   }
                   images {
                       title
