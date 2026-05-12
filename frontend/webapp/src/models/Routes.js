@@ -16,6 +16,7 @@ const Contact = lazy(() => import("../views/Contact/Contact.js"));
 const User = lazy(() => import("../views/User/User.js"));
 const People = lazy(() => import("../views/People/People.js"));
 const Places = lazy(() => import("../views/Places/Places.js"));
+const Objects = lazy(() => import("../views/Objects/Objects.js"));
 const Map = lazy(() => import("../views/Map/Map.js"));
 const PeopleNetWork = lazy(() => import("../views/People/PeopleNetwork.js"));
 const TimeLine = lazy(() => import("../views/Timeline/Timeline.js"));
@@ -208,6 +209,14 @@ const routes = [
   {
     path: "/places",
     component: Places,
+  },
+  {
+    path: "/objects/:objectSlug",
+    component: Objects,
+  },
+  {
+    path: "/objects",
+    component: Objects,
   },
   {
     path: "/timeline/:markerSlug",
