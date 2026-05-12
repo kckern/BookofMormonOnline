@@ -174,13 +174,29 @@ function ObjectsComponent({ appController }) {
                       )}
                     </CardBody>
                     <CardFooter className="text-center">
-                      <span className={"CategoryBadge cat-" + obj.category}>
-                        {obj.category}
-                      </span>
-                      <span className={"EraBadge era-" + obj.era}>{obj.era}</span>
-                      {obj.specificity === "specific" && (
-                        <span className="SpecificityBadge">{label("spec_specific") || "Named"}</span>
-                      )}
+                      <div className="labels">
+                        <span
+                          className={"IdBadge cat-" + obj.category}
+                          title={label("object_cat_" + (obj.category || "").replace(/-/g, "_")) || obj.category}
+                        >
+                          {(obj.category || "?").charAt(0).toUpperCase()}
+                        </span>
+                        <span
+                          className={"IdBadge era-" + obj.era}
+                          title={label("era_" + (obj.era || "").replace(/-/g, "_")) || obj.era}
+                        >
+                          {(obj.era || "?").charAt(0).toUpperCase()}
+                        </span>
+                        {obj.specificity === "specific" && (
+                          <span
+                            className="IdBadge spec-named"
+                            title={label("spec_specific") || "Named"}
+                          >
+                            ★
+                          </span>
+                        )}
+                      </div>
+                      <div className="icons"></div>
                     </CardFooter>
                   </Card>
                 </Link>
