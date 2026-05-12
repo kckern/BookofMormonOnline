@@ -3,6 +3,7 @@ import './PassageNotes.scss';
 import CommentaryPanel from './CategoryPanels/CommentaryPanel';
 import PeoplePanel from './CategoryPanels/PeoplePanel';
 import PlacesPanel from './CategoryPanels/PlacesPanel';
+import ObjectsPanel from './CategoryPanels/ObjectsPanel';
 import ImagesPanel from './CategoryPanels/ImagesPanel';
 import ChiasmusPanel from './CategoryPanels/ChiasmusPanel';
 import ReferencesPanel from './CategoryPanels/ReferencesPanel';
@@ -23,6 +24,7 @@ const PassageNotes = ({
             commentary: [],
             people: [],
             places: [],
+            objects: [],
             images: [],
             chiasmus: [],
             refs: []
@@ -33,6 +35,7 @@ const PassageNotes = ({
             if (verseData.commentary) counts.commentary.push(...verseData.commentary);
             if (verseData.people) counts.people.push(...verseData.people);
             if (verseData.places) counts.places.push(...verseData.places);
+            if (verseData.objects) counts.objects.push(...verseData.objects);
             if (verseData.images) counts.images.push(...verseData.images);
             if (verseData.chiasmus) counts.chiasmus.push(...verseData.chiasmus);
             if (verseData.refs) counts.refs.push(...verseData.refs);
@@ -57,6 +60,7 @@ const PassageNotes = ({
             commentary: { title: 'Commentary', Component: CommentaryPanel },
             people: { title: 'People', Component: PeoplePanel },
             places: { title: 'Places', Component: PlacesPanel },
+            objects: { title: 'Objects', Component: ObjectsPanel },
             images: { title: 'Images', Component: ImagesPanel },
             chiasmus: { title: 'Chiasmus', Component: ChiasmusPanel },
             refs: { title: 'References', Component: ReferencesPanel },
@@ -109,12 +113,21 @@ const PassageNotes = ({
                             </div>
                         )}
                         {categoryCounts.places && categoryCounts.places.length > 0 && (
-                            <div 
+                            <div
                                 className={`category-tab ${activePanel === 'places' ? 'active' : ''}`}
                                 onClick={() => handleTabClick('places')}
                             >
                                 <span className="count">{categoryCounts.places.length}</span>
                                 <span className="label">Places</span>
+                            </div>
+                        )}
+                        {categoryCounts.objects && categoryCounts.objects.length > 0 && (
+                            <div
+                                className={`category-tab ${activePanel === 'objects' ? 'active' : ''}`}
+                                onClick={() => handleTabClick('objects')}
+                            >
+                                <span className="count">{categoryCounts.objects.length}</span>
+                                <span className="label">Objects</span>
                             </div>
                         )}
                         {categoryCounts.images && categoryCounts.images.length > 0 && (
