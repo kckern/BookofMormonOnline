@@ -56,9 +56,15 @@ export default async function BoMOnlineAPI(input, options) {
             let allKeys = Object.keys(cacheResults.found).concat(Object.keys(structuredResults));
             for (let i in allKeys) {
                 let key = allKeys[i];
-                if (cacheResults.found[key] === undefined) cacheResults.found[key] = {};
-                if (structuredResults[key] === undefined) structuredResults[key] = {};
-                results[key] = { ...structuredResults[key], ...cacheResults.found[key] };
+                const fresh = structuredResults[key];
+                const cached = cacheResults.found[key];
+                if (Array.isArray(fresh)) {
+                    results[key] = fresh;
+                } else if (Array.isArray(cached)) {
+                    results[key] = cached;
+                } else {
+                    results[key] = { ...(fresh || {}), ...(cached || {}) };
+                }
             }
         } else {
             results = structuredResults;

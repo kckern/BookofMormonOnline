@@ -632,6 +632,7 @@ function ReferenceList({ index, appController,setPopupRef }) {
 }
 
 export const displayDate = (date) => {
+  if (!date) return "";
   let len = date.length;
   return moment(date, [len === 4 ? "YYYY" : "YYYY-MM-DD"]).format(
     len === 4
