@@ -40,12 +40,20 @@ const WitnessLifeHeatmap = ({ witness, sources, selectedYearMonth, onSelectYearM
 
     useEffect(() => {
         if (!wrapperRef.current || typeof ResizeObserver === 'undefined') return undefined;
+        let rafId = null;
         const ro = new ResizeObserver(entries => {
-            for (const entry of entries) setWrapperWidth(entry.contentRect.width);
+            if (rafId !== null) cancelAnimationFrame(rafId);
+            rafId = requestAnimationFrame(() => {
+                rafId = null;
+                for (const entry of entries) setWrapperWidth(entry.contentRect.width);
+            });
         });
         ro.observe(wrapperRef.current);
         setWrapperWidth(wrapperRef.current.getBoundingClientRect().width);
-        return () => ro.disconnect();
+        return () => {
+            if (rafId !== null) cancelAnimationFrame(rafId);
+            ro.disconnect();
+        };
     }, []);
 
     const { yearStart, yearEnd, sourcesByYm, totalMapped, undated, deathOrdinal, excommunicationOrdinal, birthYear } = useMemo(() => {
