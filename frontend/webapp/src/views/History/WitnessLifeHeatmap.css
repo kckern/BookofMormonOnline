@@ -59,14 +59,16 @@
     display: grid;
     grid-auto-rows: var(--bom-heatmap-cell);
     grid-auto-flow: row;
-    gap: var(--bom-heatmap-gap);
+    gap: 1px;
+    background: #C8C8C8;
+    padding: 1px;
 }
 
 .witness-life-heatmap-grid .cell {
     width: var(--bom-heatmap-cell);
     height: var(--bom-heatmap-cell);
-    background: #EEE;
-    border-radius: 1px;
+    background: #FFF;
+    box-sizing: border-box;
 }
 
 .witness-life-heatmap-grid .cell.has-sources {
@@ -84,11 +86,88 @@
     z-index: 1;
 }
 
-.witness-life-heatmap-grid .cell.bucket-0 { background: #EEE; }
-.witness-life-heatmap-grid .cell.bucket-1 { background: #c6e48b; }
-.witness-life-heatmap-grid .cell.bucket-2 { background: #7bc96f; }
-.witness-life-heatmap-grid .cell.bucket-3 { background: #239a3b; }
-.witness-life-heatmap-grid .cell.bucket-4 { background: #196127; }
+/* Witness era (1829 through death) — greens */
+.witness-life-heatmap-grid .cell.era-witness.bucket-0 { background: #FAFAFA; }
+.witness-life-heatmap-grid .cell.era-witness.bucket-1 { background: #c6e48b; }
+.witness-life-heatmap-grid .cell.era-witness.bucket-2 { background: #7bc96f; }
+.witness-life-heatmap-grid .cell.era-witness.bucket-3 { background: #239a3b; }
+.witness-life-heatmap-grid .cell.era-witness.bucket-4 { background: #196127; }
+
+/* Death month — red marker */
+.witness-life-heatmap-grid .cell.era-death { background: #c62828; }
+.witness-life-heatmap-grid .cell.era-death.has-sources { background: #b71c1c; }
+
+/* Posthumous era — desaturated ambers */
+.witness-life-heatmap-grid .cell.era-posthumous.bucket-0 { background: #F5EFDF; }
+.witness-life-heatmap-grid .cell.era-posthumous.bucket-1 { background: #f4e7b8; }
+.witness-life-heatmap-grid .cell.era-posthumous.bucket-2 { background: #e0c97b; }
+.witness-life-heatmap-grid .cell.era-posthumous.bucket-3 { background: #b89645; }
+.witness-life-heatmap-grid .cell.era-posthumous.bucket-4 { background: #826724; }
+
+.witness-life-heatmap-legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.3em 0.9em;
+    margin-top: 0.75rem;
+    font-size: 0.65rem;
+    color: #777;
+}
+
+.witness-life-heatmap-legend .swatch {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    margin-right: 0.25em;
+    vertical-align: middle;
+    border-radius: 1px;
+    border: 1px solid #DCDCDC;
+    box-sizing: border-box;
+}
+
+.witness-life-heatmap-legend .swatch.era-witness.bucket-0 { background: #FAFAFA; }
+.witness-life-heatmap-legend .swatch.era-witness.bucket-2 { background: #7bc96f; border-color: #5fae53; }
+.witness-life-heatmap-legend .swatch.era-witness.bucket-4 { background: #196127; border-color: #114519; }
+.witness-life-heatmap-legend .swatch.era-death { background: #c62828; border-color: #6e1010; }
+.witness-life-heatmap-legend .swatch.era-posthumous.bucket-0 { background: #F5EFDF; border-color: #E8DCB7; }
+
+.witness-life-heatmap-ages {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: var(--bom-heatmap-cell);
+    column-gap: 1px;
+    margin-left: calc(0.6rem + 6px);
+    margin-bottom: 2px;
+    font-size: 0.6rem;
+    color: #666;
+    height: 18px;
+    align-items: end;
+}
+
+.witness-life-heatmap-ages .age-tick {
+    position: relative;
+    text-align: center;
+    width: 0;
+    overflow: visible;
+}
+
+.witness-life-heatmap-ages .age-tick .age-label {
+    position: absolute;
+    bottom: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    line-height: 1;
+}
+
+.witness-life-heatmap-ages .age-tick .tick-mark {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 1px;
+    height: 4px;
+    background: #999;
+}
 
 .witness-life-heatmap-years {
     display: grid;
