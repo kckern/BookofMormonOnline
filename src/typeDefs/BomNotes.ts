@@ -11,7 +11,7 @@ extend type Query {
   commentary(id: [String]): [Commentary]
   sources(id: [String]): [Source]
   publications: [Source]
-  history(slug: [String]): [HistoricalDocument]
+  history(slug: [String], archive: String, principal: [String]): [HistoricalDocument]
   chiasmus(id: [String]): [Chiasmus]
   passagenotes(verse_ids: [Int], start_verse_id: Int, end_verse_id: Int): PassageNotes
 }
@@ -77,6 +77,10 @@ extend type Query {
     teaser: String
     transcript: String
     aspect: Float
+    archive: String
+    principal: String
+    event_year: Int
+    event_date: String
   }
   
   

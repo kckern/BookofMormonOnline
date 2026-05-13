@@ -69,6 +69,43 @@ export default class _bom_xtras_history extends ModelBase {
         type: DataTypes.FLOAT,
         allowNull: true
       },
+      guid: {
+        type: DataTypes.CHAR(10),
+        allowNull: true
+      },
+      archive: {
+        type: DataTypes.STRING(255),
+        allowNull: true
+      },
+      event_year: {
+        type: DataTypes.INTEGER,
+        allowNull: true
+      },
+      event_date: {
+        type: DataTypes.STRING(255),
+        allowNull: true
+      },
+      repository: {
+        type: DataTypes.STRING(255),
+        allowNull: true
+      },
+      archive_id: {
+        type: DataTypes.STRING(128),
+        allowNull: true
+      },
+      principal: {
+        type: DataTypes.TEXT,
+        allowNull: true
+      },
+      language: {
+        type: DataTypes.CHAR(8),
+        allowNull: true,
+        defaultValue: 'en'
+      },
+      metadata: {
+        type: DataTypes.JSON,
+        allowNull: true
+      },
     }, {
       sequelize,
       tableName: 'bom_xtras_history',
@@ -110,6 +147,16 @@ export default class _bom_xtras_history extends ModelBase {
           fields: [
             { name: "transcript" },
           ]
+        },
+        {
+          name: "idx_archive",
+          using: "BTREE",
+          fields: [{ name: "archive" }]
+        },
+        {
+          name: "idx_event_year",
+          using: "BTREE",
+          fields: [{ name: "event_year" }]
         },
       ]
     });

@@ -92,12 +92,15 @@ export default {
     },
     history: async (root: any, args: any, context: any, info: any) => {
       const lang = context.lang ? context.lang : null;
-      let conditions = {
-        where: {slug:args.slug},
+      const where: any = {};
+      if (args.slug)      where.slug      = args.slug;
+      if (args.archive)   where.archive   = args.archive;
+      if (args.principal) where.principal = { [Op.in]: args.principal };
+      const conditions: any = {
         order: ['seq'],
         include: [includeTranslation({ [Op.or]: ['source','author','document','citation','teaser','transcript'] }, lang)].filter(x => !!x)
       };
-      if(!args.slug) delete conditions.where;
+      if (Object.keys(where).length) conditions.where = where;
       return Models.BomXtrasHistory.findAll(conditions);
     },
     image: async (root: any, args: any, context: any, info: any) => {
