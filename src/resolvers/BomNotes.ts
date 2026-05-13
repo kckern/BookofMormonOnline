@@ -95,7 +95,7 @@ export default {
       const where: any = {};
       if (args.slug)      where.slug      = args.slug;
       if (args.archive)   where.archive   = args.archive;
-      if (args.principal) where.principal = { [Op.in]: args.principal };
+      if (args.principal?.length) where.principal = { [Op.in]: args.principal };
       const conditions: any = {
         order: ['seq'],
         include: [includeTranslation({ [Op.or]: ['source','author','document','citation','teaser','transcript'] }, lang)].filter(x => !!x)
