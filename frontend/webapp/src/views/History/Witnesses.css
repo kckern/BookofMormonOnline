@@ -180,3 +180,29 @@
     object-position: top center;
     min-height: 6em;
 }
+
+.single-witnesses .witness-sources .thumbbox {
+    position: relative;
+}
+
+.single-witnesses .witness-sources .thumbbox .thumb_teaser {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    overflow: hidden;
+    background-color: #000000AA;
+    color: white;
+    padding: 1rem;
+    line-height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    opacity: 0;
+    padding-top: 1rem;
+    transition: opacity 0.5s;
+}
+
+.single-witnesses .witness-sources .historycard:hover .thumb_teaser {
+    opacity: 1;
+}
+
