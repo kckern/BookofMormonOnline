@@ -67,12 +67,13 @@ function History({ appController }) {
         }
         else{
           let item = r.history.filter(i=>i.slug===match.params.slug).shift();
-          setDate(parseInt(match.params.slug.substr(0,4)));
+          const yearPrefix = match.params.slug.substr(0,4);
+          if (/^\d{4}$/.test(yearPrefix)) setDate(parseInt(yearPrefix));
           appController.functions.setPopUp({
             type: "history",
-            ids: [item.slug],
-            popUpData: item,
-            underSlug: `history/${match.params.slug.substr(0,4)}`,
+            ids: [match.params.slug],
+            popUpData: item || { slug: match.params.slug },
+            underSlug: `history/${yearPrefix}`,
             vhtop: 10
           })
         }

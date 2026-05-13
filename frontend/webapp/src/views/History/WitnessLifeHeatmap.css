@@ -1,0 +1,109 @@
+.witness-life-heatmap {
+    --bom-heatmap-cell: 8px;
+    --bom-heatmap-gap: 1px;
+    margin: 1.5rem 0;
+    font-size: 0.75rem;
+    color: #555;
+}
+
+.witness-life-heatmap-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    margin-bottom: 0.5rem;
+    font-size: 0.7rem;
+    color: #777;
+}
+
+.witness-life-heatmap-meta .dot {
+    color: #BBB;
+}
+
+.witness-life-heatmap-clear {
+    margin-left: auto;
+    background: #fff;
+    border: 1px solid #BBB;
+    border-radius: 1em;
+    padding: 0.1em 0.7em;
+    font-size: 0.7rem;
+    color: #444;
+    cursor: pointer;
+}
+
+.witness-life-heatmap-clear:hover {
+    border-color: #444;
+    background: #f7f7f7;
+}
+
+.witness-life-heatmap-grid-wrap {
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+}
+
+.witness-life-heatmap-months {
+    display: grid;
+    grid-template-rows: repeat(12, calc(var(--bom-heatmap-cell) + var(--bom-heatmap-gap)));
+    font-size: 0.6rem;
+    color: #999;
+    line-height: var(--bom-heatmap-cell);
+    text-align: right;
+    padding-right: 2px;
+}
+
+.witness-life-heatmap-months .month-label {
+    height: var(--bom-heatmap-cell);
+}
+
+.witness-life-heatmap-grid {
+    display: grid;
+    grid-auto-rows: var(--bom-heatmap-cell);
+    grid-auto-flow: row;
+    gap: var(--bom-heatmap-gap);
+}
+
+.witness-life-heatmap-grid .cell {
+    width: var(--bom-heatmap-cell);
+    height: var(--bom-heatmap-cell);
+    background: #EEE;
+    border-radius: 1px;
+}
+
+.witness-life-heatmap-grid .cell.has-sources {
+    cursor: pointer;
+}
+
+.witness-life-heatmap-grid .cell.has-sources:hover {
+    outline: 1px solid #000;
+    outline-offset: 1px;
+}
+
+.witness-life-heatmap-grid .cell.selected {
+    outline: 2px solid #c75200;
+    outline-offset: 1px;
+    z-index: 1;
+}
+
+.witness-life-heatmap-grid .cell.bucket-0 { background: #EEE; }
+.witness-life-heatmap-grid .cell.bucket-1 { background: #c6e48b; }
+.witness-life-heatmap-grid .cell.bucket-2 { background: #7bc96f; }
+.witness-life-heatmap-grid .cell.bucket-3 { background: #239a3b; }
+.witness-life-heatmap-grid .cell.bucket-4 { background: #196127; }
+
+.witness-life-heatmap-years {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: var(--bom-heatmap-cell);
+    column-gap: var(--bom-heatmap-gap);
+    margin-left: calc(0.6rem + 6px);
+    margin-top: 4px;
+    font-size: 0.6rem;
+    color: #999;
+}
+
+.witness-life-heatmap-years .year-label {
+    transform: rotate(-90deg);
+    transform-origin: left top;
+    white-space: nowrap;
+    height: 1em;
+}

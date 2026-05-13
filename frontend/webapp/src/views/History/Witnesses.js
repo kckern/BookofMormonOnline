@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Masonry from 'react-masonry-css';
 import Parser from 'html-react-parser';
@@ -6,6 +6,7 @@ import './Witnesses.css';
 import { label } from '../../models/Utils';
 import BoMOnlineAPI, { assetUrl } from 'src/models/BoMOnlineAPI';
 import moment from 'moment';
+import WitnessLifeHeatmap, { matchesYearMonth } from './WitnessLifeHeatmap';
 const data = {
     "three-witnesses": [
         { "slug": "martin-harris",      "name": "Martin Harris",      "birthday": "1783-05-18", "bio": "", "principalNames": ["Martin Harris", "Three Witnesses"] },
@@ -39,6 +40,7 @@ const data = {
 const SingleWitness = ({ witness, sourceSlug, appController }) => {
 
     const [sources, setSources] = useState(null);
+    const [selectedYearMonth, setSelectedYearMonth] = useState(null);
 
     useEffect(() => {
         const handleEsc = (event) => { if (event.keyCode === 27) window.history.back(); };
@@ -47,6 +49,7 @@ const SingleWitness = ({ witness, sourceSlug, appController }) => {
     }, []);
 
     useEffect(() => {
+        setSelectedYearMonth(null);
         if (!witness?.principalNames?.length) {
             setSources([]);
             return;
@@ -86,28 +89,63 @@ const SingleWitness = ({ witness, sourceSlug, appController }) => {
         );
     };
 
+    const visibleSources = useMemo(() => {
+        if (!sources) return null;
+        if (!selectedYearMonth) return sources;
+        return sources.filter(s => matchesYearMonth(s, selectedYearMonth));
+    }, [sources, selectedYearMonth]);
+
+    const witnessAge = witness?.birthday ? moment('1829-06-28').diff(moment(witness.birthday), 'years') : null;
+
     const breakpointColumnsObj = { default: 4, 1400: 3, 1100: 2, 800: 1 };
 
     return <div className="container" style={{ display: 'block' }}>
         <div id="page" className='single-witnesses'>
             <Link to='/history/witnesses' className='btn btn-primary'>Back</Link>
             <h3 className="title lg-4 text-center">{witness.name}</h3>
-            <div className='witness-image'>
-                <img src={`${assetUrl}/history/witnesses/people/${witness.slug}.jpg`} alt={witness.name} />
+
+            <div className='witness-hero'>
+                <div className='witness-hero-portrait'>
+                    <img src={`${assetUrl}/history/witnesses/people/${witness.slug}.jpg`} alt={witness.name} />
+                </div>
+                <div className='witness-hero-bio'>
+                    <div className='witness-hero-facts'>
+                        {witness.birthday && <div><span className='witness-hero-facts-label'>Born</span> {witness.birthday}</div>}
+                        {witnessAge !== null && !Number.isNaN(witnessAge) && (
+                            <div><span className='witness-hero-facts-label'>Age in 1829</span> {witnessAge}</div>
+                        )}
+                    </div>
+                    <div className='witness-bio'>
+                        {witness.bio
+                            ? witness.bio
+                            : <span className='witness-bio-placeholder'>Biography coming soon.</span>}
+                    </div>
+                </div>
             </div>
-            {witness.bio && <div className='witness-bio'>{witness.bio}</div>}
+
+            {sources && sources.length > 0 && (
+                <WitnessLifeHeatmap
+                    witness={witness}
+                    sources={sources}
+                    selectedYearMonth={selectedYearMonth}
+                    onSelectYearMonth={setSelectedYearMonth}
+                />
+            )}
 
             <div className='witness-sources'>
                 {sources === null && <div className='witness-sources-loading'>Loading sources…</div>}
                 {sources && sources.length === 0 && (
                     <div className='witness-sources-empty'>No sources available for this witness.</div>
                 )}
-                {sources && sources.length > 0 && (
+                {visibleSources && visibleSources.length === 0 && sources && sources.length > 0 && (
+                    <div className='witness-sources-empty'>No sources in this month.</div>
+                )}
+                {visibleSources && visibleSources.length > 0 && (
                     <Masonry
                         breakpointCols={breakpointColumnsObj}
                         className="my-masonry-grid"
                         columnClassName="my-masonry-grid_column">
-                        {sources.map((doc, i) => (
+                        {visibleSources.map((doc, i) => (
                             <div
                                 key={doc.slug || i}
                                 className='historycard card'
