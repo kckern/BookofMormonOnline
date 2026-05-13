@@ -551,6 +551,9 @@ const queries = {
     }
   },
   history: (input) => {
+    if (Array.isArray(input) && input.length === 1 && input[0] && typeof input[0] === 'object' && !Array.isArray(input[0])) {
+      input = input[0];
+    }
     const isObject = input && typeof input === 'object' && !Array.isArray(input);
     const slug      = isObject ? input.slug      : (input === true ? null : input);
     const archive   = isObject ? input.archive   : null;
