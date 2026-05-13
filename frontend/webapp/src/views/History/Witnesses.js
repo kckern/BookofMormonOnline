@@ -125,7 +125,7 @@ const SingleWitness = ({ witness, sourceSlug, appController }) => {
             history: { archive: "witnesses", principal: witness.principalNames }
         }).then(r => {
             const list = r.history || [];
-            list.sort((a, b) => (b.event_year || b.year || 0) - (a.event_year || a.year || 0) || (a.seq || 0) - (b.seq || 0));
+            list.sort((a, b) => (b.year || 0) - (a.year || 0) || (a.seq || 0) - (b.seq || 0));
             setSources(list);
         });
     }, [witness?.slug]);

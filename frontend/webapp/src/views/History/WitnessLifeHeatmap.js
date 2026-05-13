@@ -67,10 +67,11 @@ const WitnessLifeHeatmap = ({ witness, sources, selectedYearMonth, onSelectYearM
         let undated = 0;
         let totalMapped = 0;
 
+        const maxReasonableYear = new Date().getFullYear() + 5;
         for (const src of sources || []) {
-            const parsed = parseYearMonth(src.event_date || src.date);
+            const parsed = parseYearMonth(src.date);
             if (!parsed) { undated += 1; continue; }
-            if (parsed.year < HEATMAP_START_YEAR) continue;
+            if (parsed.year < HEATMAP_START_YEAR || parsed.year > maxReasonableYear) { undated += 1; continue; }
             if (latestSourceYear === null || parsed.year > latestSourceYear) latestSourceYear = parsed.year;
             if (parsed.month) {
                 const key = ymKey(parsed.year, parsed.month);
@@ -316,7 +317,7 @@ const WitnessLifeHeatmapHover = ({ hoveredKey, sourcesByYm, eraOf, witness, birt
 
 export const matchesYearMonth = (source, yearMonth) => {
     if (!yearMonth) return true;
-    const parsed = parseYearMonth(source.event_date || source.date);
+    const parsed = parseYearMonth(source.date);
     if (!parsed || !parsed.month) return false;
     return `${parsed.year}-${String(parsed.month).padStart(2, '0')}` === yearMonth;
 };
