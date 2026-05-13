@@ -95,19 +95,58 @@ const WitnessLifeHeatmap = ({ witness, sources, selectedYearMonth, onSelectYearM
     const years = [];
     for (let y = yearStart; y <= yearEnd; y++) years.push(y);
 
-    const cellPx = (() => {
+    const COMPRESS_THRESHOLD = 3;
+    const COMFORT_CELL_PX = 7;
+    const deathYear = deathOrdinal !== null ? Math.floor(deathOrdinal / 12) : null;
+    const excomYear = excommunicationOrdinal !== null ? Math.floor(excommunicationOrdinal / 12) : null;
+    const isMarkerYear = (year) => year === 1829 || year === deathYear || year === excomYear;
+    const hasSourcesInYear = (year) => {
+        for (let m = 1; m <= 12; m++) if (sourcesByYm.has(ymKey(year, m))) return true;
+        return false;
+    };
+
+    const compressedColumns = [];
+    {
+        let runStart = null;
+        const flushRun = (start, end) => {
+            const len = end - start + 1;
+            if (len >= COMPRESS_THRESHOLD) {
+                compressedColumns.push({ type: 'compressed', startYear: start, endYear: end });
+            } else {
+                for (let y = start; y <= end; y++) compressedColumns.push({ type: 'year', year: y });
+            }
+        };
+        for (const year of years) {
+            const compressible = !isMarkerYear(year) && !hasSourcesInYear(year);
+            if (compressible) {
+                if (runStart === null) runStart = year;
+            } else {
+                if (runStart !== null) { flushRun(runStart, year - 1); runStart = null; }
+                compressedColumns.push({ type: 'year', year });
+            }
+        }
+        if (runStart !== null) flushRun(runStart, years[years.length - 1]);
+    }
+    const uncompressedColumns = years.map(y => ({ type: 'year', year: y }));
+
+    const widthFor = (cols) => {
         if (!wrapperWidth) return CELL_PX_MAX;
         const available = wrapperWidth - MONTHS_COL_PX - SIDE_PADDING_PX * 2;
-        const perCol = Math.floor(available / years.length) - GAP_PX;
-        return Math.max(CELL_PX_MIN, Math.min(CELL_PX_MAX, perCol));
-    })();
+        return Math.max(CELL_PX_MIN, Math.min(CELL_PX_MAX, Math.floor(available / cols.length) - GAP_PX));
+    };
+    const uncompressedCellPx = widthFor(uncompressedColumns);
+    const canCompress = compressedColumns.length < uncompressedColumns.length;
+    const shouldCompress = wrapperWidth > 0 && canCompress && uncompressedCellPx < COMFORT_CELL_PX;
+    const displayColumns = shouldCompress ? compressedColumns : uncompressedColumns;
+
+    const cellPx = widthFor(displayColumns);
 
     const labelWidthPx = 32;
     const minLabelEvery = Math.max(1, Math.ceil(labelWidthPx / (cellPx + GAP_PX)));
-    const labelEvery = years.length > 60 ? Math.max(10, minLabelEvery)
-        : years.length > 30 ? Math.max(5, minLabelEvery)
+    const labelEvery = displayColumns.length > 60 ? Math.max(10, minLabelEvery)
+        : displayColumns.length > 30 ? Math.max(5, minLabelEvery)
         : Math.max(2, minLabelEvery);
-    const lastIdx = years.length - 1;
+    const lastIdx = displayColumns.length - 1;
     const labelLastYear = lastIdx > 0 && (lastIdx % labelEvery) >= minLabelEvery;
     const isLabeled = (i) => i % labelEvery === 0 || (i === lastIdx && labelLastYear);
 
@@ -129,6 +168,11 @@ const WitnessLifeHeatmap = ({ witness, sources, selectedYearMonth, onSelectYearM
                 <span className='dot'>·</span>
                 <span>{totalMapped} of {sources.length} sources placed</span>
                 {undated > 0 && <><span className='dot'>·</span><span>{undated} undated</span></>}
+                {shouldCompress && (
+                    <><span className='dot'>·</span><span className='witness-life-heatmap-compressed-note'>
+                        {years.length - displayColumns.length} empty years compressed
+                    </span></>
+                )}
                 {selectedYearMonth && (
                     <button className='witness-life-heatmap-clear' onClick={() => onSelectYearMonth(null)}>
                         Clear filter ({selectedYearMonth})
@@ -137,31 +181,44 @@ const WitnessLifeHeatmap = ({ witness, sources, selectedYearMonth, onSelectYearM
             </div>
             <div className='witness-life-heatmap-scroll'>
                 <div className='witness-life-heatmap-ages'>
-                    {(() => {
-                        const deathYear = deathOrdinal !== null ? Math.floor(deathOrdinal / 12) : null;
-                        return years.map((y, i) => {
-                            const isAlive = deathYear === null || y <= deathYear;
-                            const age = birthYear !== null && isAlive ? y - birthYear : null;
-                            const isDeathYear = deathYear !== null && y === deathYear;
-                            const show = isLabeled(i) || isDeathYear;
-                            const cls = `age-tick${isDeathYear ? ' age-tick-death' : ''}`;
-                            return (
-                                <div key={y} className={cls} style={{ visibility: show ? 'visible' : 'hidden' }}>
-                                    {age !== null && <div className='age-label'>{age}</div>}
-                                    <div className='tick-mark' />
-                                </div>
-                            );
-                        });
-                    })()}
+                    {displayColumns.map((col, i) => {
+                        if (col.type === 'compressed') {
+                            return <div key={`c-${col.startYear}`} className='age-tick age-tick-compressed' />;
+                        }
+                        const y = col.year;
+                        const isAlive = deathYear === null || y <= deathYear;
+                        const age = birthYear !== null && isAlive ? y - birthYear : null;
+                        const isDeathYear = deathYear !== null && y === deathYear;
+                        const show = isLabeled(i) || isDeathYear;
+                        const cls = `age-tick${isDeathYear ? ' age-tick-death' : ''}`;
+                        return (
+                            <div key={y} className={cls} style={{ visibility: show ? 'visible' : 'hidden' }}>
+                                {age !== null && <div className='age-label'>{age}</div>}
+                                <div className='tick-mark' />
+                            </div>
+                        );
+                    })}
                 </div>
                 <div className='witness-life-heatmap-grid-wrap'>
                     <div className='witness-life-heatmap-months'>
                         {MONTHS.map(m => <div key={m} className='month-label'>{m[0]}</div>)}
                     </div>
-                    <div className='witness-life-heatmap-grid' style={{ gridTemplateColumns: `repeat(${years.length}, var(--bom-heatmap-cell, 8px))` }}>
+                    <div className='witness-life-heatmap-grid' style={{ gridTemplateColumns: `repeat(${displayColumns.length}, var(--bom-heatmap-cell, 8px))` }}>
                         {MONTHS.map((_, mi) => (
-                            years.map((year) => {
+                            displayColumns.map((col) => {
                                 const month = mi + 1;
+                                if (col.type === 'compressed') {
+                                    const compKey = `compressed:${col.startYear}-${col.endYear}`;
+                                    return (
+                                        <div
+                                            key={`${compKey}-${month}`}
+                                            className='cell era-compressed'
+                                            onMouseEnter={() => setHoveredKey(compKey)}
+                                            onMouseLeave={() => setHoveredKey(prev => prev === compKey ? null : prev)}
+                                        />
+                                    );
+                                }
+                                const year = col.year;
                                 const key = ymKey(year, month);
                                 const cellSources = sourcesByYm.get(key) || [];
                                 const count = cellSources.length;
@@ -189,11 +246,16 @@ const WitnessLifeHeatmap = ({ witness, sources, selectedYearMonth, onSelectYearM
                     </div>
                 </div>
                 <div className='witness-life-heatmap-years'>
-                    {years.map((y, i) => (
-                        <div key={y} className='year-slot'>
-                            {isLabeled(i) && <span className='year-label'>{y}</span>}
-                        </div>
-                    ))}
+                    {displayColumns.map((col, i) => {
+                        if (col.type === 'compressed') {
+                            return <div key={`c-${col.startYear}`} className='year-slot year-slot-compressed' />;
+                        }
+                        return (
+                            <div key={col.year} className='year-slot'>
+                                {isLabeled(i) && <span className='year-label'>{col.year}</span>}
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
             <WitnessLifeHeatmapHover hoveredKey={hoveredKey} sourcesByYm={sourcesByYm} eraOf={eraOf} witness={witness} birthYear={birthYear} />
@@ -205,6 +267,7 @@ const WitnessLifeHeatmap = ({ witness, sources, selectedYearMonth, onSelectYearM
                 {excommunicationOrdinal !== null && <><span className='swatch era-excommunication bucket-0' /> <span>excommunicated</span></>}
                 <span className='swatch era-death bucket-0' /> <span>death month</span>
                 <span className='swatch era-posthumous bucket-0' /> <span>posthumous</span>
+                {shouldCompress && <><span className='swatch era-compressed' /> <span>compressed</span></>}
             </div>
         </div>
     );
@@ -213,6 +276,17 @@ const WitnessLifeHeatmap = ({ witness, sources, selectedYearMonth, onSelectYearM
 const WitnessLifeHeatmapHover = ({ hoveredKey, sourcesByYm, eraOf, witness, birthYear }) => {
     if (!hoveredKey) {
         return <div className='witness-life-heatmap-hover witness-life-heatmap-hover-empty'>Hover a cell for details · click to filter</div>;
+    }
+    if (hoveredKey.startsWith('compressed:')) {
+        const [a, b] = hoveredKey.slice('compressed:'.length).split('-').map(s => parseInt(s, 10));
+        const span = b - a + 1;
+        return (
+            <div className='witness-life-heatmap-hover'>
+                <span className='hover-date'>{a}–{b}</span>
+                <span className='hover-count'>{span} empty years compressed</span>
+                <span className='hover-era era-compressed'>· no sources, no events</span>
+            </div>
+        );
     }
     const [yearStr, monthStr] = hoveredKey.split('-');
     const year = parseInt(yearStr, 10);

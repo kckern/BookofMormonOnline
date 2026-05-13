@@ -101,6 +101,19 @@
 .witness-life-heatmap-grid .cell.era-witness.bucket-3 { background: #239a3b; }
 .witness-life-heatmap-grid .cell.era-witness.bucket-4 { background: #196127; }
 
+/* Compressed run of empty years — diagonal hatch */
+.witness-life-heatmap-grid .cell.era-compressed {
+    background-color: #EEEEEE;
+    background-image: repeating-linear-gradient(
+        135deg,
+        transparent 0,
+        transparent 2px,
+        #BFBFBF 2px,
+        #BFBFBF 3px
+    );
+    cursor: help;
+}
+
 /* Witness event month (Jun 1829) — blue marker */
 .witness-life-heatmap-grid .cell.era-event { background: #1565c0; }
 .witness-life-heatmap-grid .cell.era-event.has-sources { background: #0d47a1; }
@@ -149,6 +162,23 @@
 .witness-life-heatmap-legend .swatch.era-excommunication { background: #7b1fa2; border-color: #4a0072; }
 .witness-life-heatmap-legend .swatch.era-death { background: #c62828; border-color: #6e1010; }
 .witness-life-heatmap-legend .swatch.era-posthumous.bucket-0 { background: #ECECEC; border-color: #D0D0D0; }
+.witness-life-heatmap-legend .swatch.era-compressed {
+    background-color: #EEEEEE;
+    background-image: repeating-linear-gradient(135deg, transparent 0, transparent 2px, #BFBFBF 2px, #BFBFBF 3px);
+    border-color: #C0C0C0;
+}
+
+.witness-life-heatmap-compressed-note {
+    color: #777;
+    font-style: italic;
+}
+
+.witness-life-heatmap-hover .hover-era.era-compressed { color: #666; font-style: italic; }
+
+.witness-life-heatmap-ages .age-tick-compressed,
+.witness-life-heatmap-years .year-slot-compressed {
+    /* compressed columns get no label/tick — the grid hatch is the indicator */
+}
 
 .witness-life-heatmap-hover {
     margin-top: 0.6rem;
