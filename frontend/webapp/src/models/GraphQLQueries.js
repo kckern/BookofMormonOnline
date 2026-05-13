@@ -550,30 +550,52 @@ const queries = {
             }`,
     }
   },
-  history: (slugs) => {
+  history: (input) => {
+    const isObject = input && typeof input === 'object' && !Array.isArray(input);
+    const slug      = isObject ? input.slug      : (input === true ? null : input);
+    const archive   = isObject ? input.archive   : null;
+    const principal = isObject ? input.principal : null;
+
+    const argFragments = [];
+    if (slug != null && slug !== false) {
+      const v = Array.isArray(slug) && slug.length === 1 ? slug[0] : slug;
+      argFragments.push(`slug: ${JSON.stringify(v)}`);
+    }
+    if (archive) {
+      argFragments.push(`archive: ${JSON.stringify(archive)}`);
+    }
+    if (principal) {
+      const p = Array.isArray(principal) ? principal : [principal];
+      argFragments.push(`principal: ${JSON.stringify(p)}`);
+    }
+    const args = argFragments.length ? `(${argFragments.join(', ')})` : '';
+    const wantsTranscript = !!slug;
+
     return {
       type: "history",
       key: "slug",
-      val: slugs,
-      query:
-        q("history", "slug", slugs) +
-        `{
-          seq
-          id
-          slug
-          year
-          date
-          link
-          type
-          source
-          author
-          document
-          citation
-          teaser
-          aspect
-          pages
-          ${(slugs) ? "transcript" : ""}
-         }`,
+      val: slug,
+      query: `history ${args} {
+        seq
+        id
+        slug
+        year
+        date
+        link
+        type
+        source
+        author
+        document
+        citation
+        teaser
+        aspect
+        pages
+        archive
+        principal
+        event_year
+        event_date
+        ${wantsTranscript ? 'transcript' : ''}
+      }`,
     }
   },
   divisionShell: (ids, token) => {

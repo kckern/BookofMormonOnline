@@ -56,7 +56,7 @@ function History({ appController }) {
   };
 
   useEffect(() => {
-    BoMOnlineAPI({ history: true, markdown: "history" }).then(r => {  
+    BoMOnlineAPI({ history: { archive: "reception" }, markdown: "history" }).then(r => {
       setDocList(r.history); 
       setIntro(r.markdown.history.markdown);
     
