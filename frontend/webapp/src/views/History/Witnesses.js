@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Masonry from 'react-masonry-css';
 import Parser from 'html-react-parser';
@@ -36,6 +36,73 @@ const data = {
 }
 
 
+
+const GROUP_LABELS = {
+    "three-witnesses": "Three Witnesses",
+    "eight-witnesses": "Eight Witnesses",
+    "other-witnesses": "Other Sources",
+};
+
+const WitnessBreadcrumbs = ({ witness }) => {
+    const [open, setOpen] = useState(false);
+    const wrapperRef = useRef(null);
+
+    useEffect(() => {
+        if (!open) return undefined;
+        const onDocClick = (e) => {
+            if (wrapperRef.current && !wrapperRef.current.contains(e.target)) setOpen(false);
+        };
+        const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
+        document.addEventListener('mousedown', onDocClick);
+        document.addEventListener('keydown', onKey);
+        return () => {
+            document.removeEventListener('mousedown', onDocClick);
+            document.removeEventListener('keydown', onKey);
+        };
+    }, [open]);
+
+    return (
+        <nav className='witness-breadcrumbs' aria-label='Breadcrumb' ref={wrapperRef}>
+            <Link to='/history' className='breadcrumb-link'>History</Link>
+            <span className='breadcrumb-sep' aria-hidden='true'>›</span>
+            <Link to='/history/witnesses' className='breadcrumb-link'>Witnesses</Link>
+            <span className='breadcrumb-sep' aria-hidden='true'>›</span>
+            <button
+                type='button'
+                className={`breadcrumb-current${open ? ' open' : ''}`}
+                aria-haspopup='listbox'
+                aria-expanded={open}
+                onClick={() => setOpen(o => !o)}
+            >
+                {witness.name}
+                <span className='breadcrumb-chevron' aria-hidden='true'>▾</span>
+            </button>
+            {open && (
+                <div className='breadcrumb-dropdown' role='listbox'>
+                    {Object.keys(data).map(groupKey => (
+                        <div key={groupKey} className='breadcrumb-group'>
+                            <div className='breadcrumb-group-label'>{GROUP_LABELS[groupKey] || groupKey}</div>
+                            {data[groupKey].map(w => {
+                                const isCurrent = w.slug === witness.slug;
+                                return (
+                                    <Link
+                                        key={w.slug}
+                                        to={`/history/witnesses/${w.slug}`}
+                                        className={`breadcrumb-option${isCurrent ? ' current' : ''}`}
+                                        aria-current={isCurrent ? 'page' : undefined}
+                                        onClick={() => setOpen(false)}
+                                    >
+                                        {w.name}
+                                    </Link>
+                                );
+                            })}
+                        </div>
+                    ))}
+                </div>
+            )}
+        </nav>
+    );
+};
 
 const SingleWitness = ({ witness, sourceSlug, appController }) => {
 
@@ -101,7 +168,7 @@ const SingleWitness = ({ witness, sourceSlug, appController }) => {
 
     return <div className="container" style={{ display: 'block' }}>
         <div id="page" className='single-witnesses'>
-            <Link to='/history/witnesses' className='btn btn-primary'>Back</Link>
+            <WitnessBreadcrumbs witness={witness} />
             <h3 className="title lg-4 text-center">{witness.name}</h3>
 
             <div className='witness-hero'>
