@@ -56,10 +56,8 @@ const SingleWitness = ({ witness, sourceSlug, appController }) => {
         }).then(r => setSources(r.history || []));
     }, [witness?.slug]);
 
-    useEffect(() => {
-        if (!sourceSlug || !sources?.length || !appController) return;
-        const doc = sources.find(s => s.slug === sourceSlug);
-        if (!doc) return;
+    const openSource = (doc) => {
+        if (!appController || !doc) return;
         appController.functions.setPopUp({
             type: "history",
             ids: [doc.slug],
@@ -67,6 +65,11 @@ const SingleWitness = ({ witness, sourceSlug, appController }) => {
             underSlug: `history/witnesses/${witness.slug}`,
             vhtop: 10,
         });
+    };
+
+    useEffect(() => {
+        if (!sourceSlug || !sources?.length || !appController) return;
+        openSource(sources.find(s => s.slug === sourceSlug));
     }, [sourceSlug, sources, appController, witness?.slug]);
 
     const displayDate = (date) => {
@@ -80,17 +83,6 @@ const SingleWitness = ({ witness, sourceSlug, appController }) => {
     };
 
     const breakpointColumnsObj = { default: 4, 1400: 3, 1100: 2, 800: 1 };
-
-    const openSource = (doc) => {
-        if (!appController) return;
-        appController.functions.setPopUp({
-            type: "history",
-            ids: [doc.slug],
-            popUpData: doc,
-            underSlug: `history/witnesses/${witness.slug}`,
-            vhtop: 10,
-        });
-    };
 
     return <div className="container" style={{ display: 'block' }}>
         <div id="page" className='single-witnesses'>
