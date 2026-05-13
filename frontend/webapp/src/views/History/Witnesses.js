@@ -9,22 +9,22 @@ import moment from 'moment';
 import WitnessLifeHeatmap, { matchesYearMonth } from './WitnessLifeHeatmap';
 const data = {
     "three-witnesses": [
-        { "slug": "martin-harris",      "name": "Martin Harris",      "birthday": "1783-05-18", "deathday": "1875-07-10", "bio": "", "principalNames": ["Martin Harris", "Three Witnesses"] },
-        { "slug": "oliver-cowdery",     "name": "Oliver Cowdery",     "birthday": "1806-10-03", "deathday": "1850-03-03", "bio": "", "principalNames": ["Oliver Cowdery", "Three Witnesses"] },
-        { "slug": "david-whitmer",      "name": "David Whitmer",      "birthday": "1805-01-07", "deathday": "1888-01-25", "bio": "", "principalNames": ["David Whitmer", "Three Witnesses"] }
+        { "slug": "martin-harris",      "name": "Martin Harris",      "birthday": "1783-05-18", "deathday": "1875-07-10", "excommunication": "1837-12-27", "bio": "", "principalNames": ["Martin Harris", "Three Witnesses"] },
+        { "slug": "oliver-cowdery",     "name": "Oliver Cowdery",     "birthday": "1806-10-03", "deathday": "1850-03-03", "excommunication": "1838-04-12", "bio": "", "principalNames": ["Oliver Cowdery", "Three Witnesses"] },
+        { "slug": "david-whitmer",      "name": "David Whitmer",      "birthday": "1805-01-07", "deathday": "1888-01-25", "excommunication": "1838-04-13", "bio": "", "principalNames": ["David Whitmer", "Three Witnesses"] }
     ],
     "eight-witnesses": [
-        { "slug": "john-whitmer",       "name": "John Whitmer",       "birthday": "1802-08-27", "deathday": "1878-07-11", "bio": "", "principalNames": ["John Whitmer", "Eight Witnesses"] },
-        { "slug": "jacob-whitmer",      "name": "Jacob Whitmer",      "birthday": "1800-01-27", "deathday": "1856-04-21", "bio": "", "principalNames": ["Jacob Whitmer", "Eight Witnesses"] },
+        { "slug": "john-whitmer",       "name": "John Whitmer",       "birthday": "1802-08-27", "deathday": "1878-07-11", "excommunication": "1838-03-10", "bio": "", "principalNames": ["John Whitmer", "Eight Witnesses"] },
+        { "slug": "jacob-whitmer",      "name": "Jacob Whitmer",      "birthday": "1800-01-27", "deathday": "1856-04-21", "excommunication": "1838-06-27", "bio": "", "principalNames": ["Jacob Whitmer", "Eight Witnesses"] },
         { "slug": "christian-whitmer",  "name": "Christian Whitmer",  "birthday": "1798-01-18", "deathday": "1835-11-27", "bio": "", "principalNames": ["Christian Whitmer", "Christian Whitmer and Peter Whitmer, Jr.", "Eight Witnesses"] },
         { "slug": "peter-whitmer-jr",   "name": "Peter Whitmer Jr.",  "birthday": "1809-09-27", "deathday": "1836-09-22", "bio": "", "principalNames": ["Peter Whitmer Jr.", "Peter Whitmer, Jr.", "Christian Whitmer and Peter Whitmer, Jr.", "Eight Witnesses"] },
-        { "slug": "hiram-page",         "name": "Hiram Page",         "birthday": "1800",       "deathday": "1852-08-12", "bio": "", "principalNames": ["Hiram Page", "Eight Witnesses"] },
+        { "slug": "hiram-page",         "name": "Hiram Page",         "birthday": "1800",       "deathday": "1852-08-12", "excommunication": "1838-06-27", "bio": "", "principalNames": ["Hiram Page", "Eight Witnesses"] },
         { "slug": "joseph-smith-sr",    "name": "Joseph Smith Sr.",   "birthday": "1771-07-12", "deathday": "1840-09-14", "bio": "", "principalNames": ["Joseph Smith Sr.", "Eight Witnesses"] },
         { "slug": "samuel-smith",       "name": "Samuel Smith",       "birthday": "1808-03-13", "deathday": "1844-07-30", "bio": "", "principalNames": ["Samuel H. Smith", "Eight Witnesses"] },
         { "slug": "hyrum-smith",        "name": "Hyrum Smith",        "birthday": "1800-02-09", "deathday": "1844-06-27", "bio": "", "principalNames": ["Hyrum Smith", "Eight Witnesses"] }
     ],
     "other-witnesses": [
-        { "slug": "william-smith",                 "name": "William Smith",                          "birthday": "1811-03-13", "deathday": "1893-11-13", "bio": "", "principalNames": ["William Smith", "William B. Smith"] },
+        { "slug": "william-smith",                 "name": "William Smith",                          "birthday": "1811-03-13", "deathday": "1893-11-13", "excommunication": "1845-10-19", "bio": "", "principalNames": ["William Smith", "William B. Smith"] },
         { "slug": "mary-whitmer",                  "name": "Mary Whitmer",                           "birthday": "1778-08-27", "deathday": "1856-01-13", "bio": "", "principalNames": ["Mary Whitmer"] },
         { "slug": "lucy-mack-smith",               "name": "Lucy Mack Smith",                        "birthday": "1775-07-08", "deathday": "1856-05-14", "bio": "", "principalNames": ["Lucy Mack Smith"] },
         { "slug": "katherine-smith",               "name": "Katherine Smith",                        "birthday": "1813-07-28", "deathday": "1900-02-01", "bio": "", "principalNames": ["Katherine"] },
