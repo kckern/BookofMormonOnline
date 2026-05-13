@@ -1,5 +1,11 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import './WitnessLifeHeatmap.css';
+
+const CELL_PX_MAX = 10;
+const CELL_PX_MIN = 4;
+const GAP_PX = 1;
+const MONTHS_COL_PX = 14;
+const SIDE_PADDING_PX = 4;
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const MONTHS_FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -29,6 +35,18 @@ const ymOrdinal = (year, month) => year * 12 + (month - 1);
 const WitnessLifeHeatmap = ({ witness, sources, selectedYearMonth, onSelectYearMonth }) => {
 
     const [hoveredKey, setHoveredKey] = useState(null);
+    const wrapperRef = useRef(null);
+    const [wrapperWidth, setWrapperWidth] = useState(0);
+
+    useEffect(() => {
+        if (!wrapperRef.current || typeof ResizeObserver === 'undefined') return undefined;
+        const ro = new ResizeObserver(entries => {
+            for (const entry of entries) setWrapperWidth(entry.contentRect.width);
+        });
+        ro.observe(wrapperRef.current);
+        setWrapperWidth(wrapperRef.current.getBoundingClientRect().width);
+        return () => ro.disconnect();
+    }, []);
 
     const { yearStart, yearEnd, sourcesByYm, totalMapped, undated, deathOrdinal, excommunicationOrdinal, birthYear } = useMemo(() => {
         const birth = parseYearMonth(witness?.birthday);
@@ -69,10 +87,15 @@ const WitnessLifeHeatmap = ({ witness, sources, selectedYearMonth, onSelectYearM
     const years = [];
     for (let y = yearStart; y <= yearEnd; y++) years.push(y);
 
-    const cellPx = 8;
-    const gapPx = 1;
+    const cellPx = (() => {
+        if (!wrapperWidth) return CELL_PX_MAX;
+        const available = wrapperWidth - MONTHS_COL_PX - SIDE_PADDING_PX * 2;
+        const perCol = Math.floor(available / years.length) - GAP_PX;
+        return Math.max(CELL_PX_MIN, Math.min(CELL_PX_MAX, perCol));
+    })();
+
     const labelWidthPx = 32;
-    const minLabelEvery = Math.max(1, Math.ceil(labelWidthPx / (cellPx + gapPx)));
+    const minLabelEvery = Math.max(1, Math.ceil(labelWidthPx / (cellPx + GAP_PX)));
     const labelEvery = years.length > 60 ? Math.max(10, minLabelEvery)
         : years.length > 30 ? Math.max(5, minLabelEvery)
         : Math.max(2, minLabelEvery);
@@ -92,7 +115,7 @@ const WitnessLifeHeatmap = ({ witness, sources, selectedYearMonth, onSelectYearM
     };
 
     return (
-        <div className='witness-life-heatmap'>
+        <div className='witness-life-heatmap' ref={wrapperRef} style={{ '--bom-heatmap-cell': `${cellPx}px` }}>
             <div className='witness-life-heatmap-meta'>
                 <span>{yearStart}–{yearEnd}</span>
                 <span className='dot'>·</span>
@@ -104,64 +127,66 @@ const WitnessLifeHeatmap = ({ witness, sources, selectedYearMonth, onSelectYearM
                     </button>
                 )}
             </div>
-            <div className='witness-life-heatmap-ages'>
-                {(() => {
-                    const deathYear = deathOrdinal !== null ? Math.floor(deathOrdinal / 12) : null;
-                    return years.map((y, i) => {
-                        const isAlive = deathYear === null || y <= deathYear;
-                        const age = birthYear !== null && isAlive ? y - birthYear : null;
-                        const isDeathYear = deathYear !== null && y === deathYear;
-                        const show = isLabeled(i) || isDeathYear;
-                        const cls = `age-tick${isDeathYear ? ' age-tick-death' : ''}`;
-                        return (
-                            <div key={y} className={cls} style={{ visibility: show ? 'visible' : 'hidden' }}>
-                                {age !== null && <div className='age-label'>{age}</div>}
-                                <div className='tick-mark' />
-                            </div>
-                        );
-                    });
-                })()}
-            </div>
-            <div className='witness-life-heatmap-grid-wrap'>
-                <div className='witness-life-heatmap-months'>
-                    {MONTHS.map(m => <div key={m} className='month-label'>{m[0]}</div>)}
-                </div>
-                <div className='witness-life-heatmap-grid' style={{ gridTemplateColumns: `repeat(${years.length}, var(--bom-heatmap-cell, 8px))` }}>
-                    {MONTHS.map((_, mi) => (
-                        years.map((year) => {
-                            const month = mi + 1;
-                            const key = ymKey(year, month);
-                            const cellSources = sourcesByYm.get(key) || [];
-                            const count = cellSources.length;
-                            const isSelected = selectedYearMonth === key;
-                            const era = eraOf(year, month);
-                            const isMarker = era === 'death' || era === 'excommunication' || era === 'event';
-                            const cls = [
-                                'cell',
-                                `era-${era}`,
-                                `bucket-${colorBucket(count)}`,
-                                isSelected ? 'selected' : '',
-                                count || isMarker ? 'has-sources' : '',
-                            ].filter(Boolean).join(' ');
+            <div className='witness-life-heatmap-scroll'>
+                <div className='witness-life-heatmap-ages'>
+                    {(() => {
+                        const deathYear = deathOrdinal !== null ? Math.floor(deathOrdinal / 12) : null;
+                        return years.map((y, i) => {
+                            const isAlive = deathYear === null || y <= deathYear;
+                            const age = birthYear !== null && isAlive ? y - birthYear : null;
+                            const isDeathYear = deathYear !== null && y === deathYear;
+                            const show = isLabeled(i) || isDeathYear;
+                            const cls = `age-tick${isDeathYear ? ' age-tick-death' : ''}`;
                             return (
-                                <div
-                                    key={key}
-                                    className={cls}
-                                    onClick={count ? () => onSelectYearMonth(isSelected ? null : key) : undefined}
-                                    onMouseEnter={() => setHoveredKey(key)}
-                                    onMouseLeave={() => setHoveredKey(prev => prev === key ? null : prev)}
-                                />
+                                <div key={y} className={cls} style={{ visibility: show ? 'visible' : 'hidden' }}>
+                                    {age !== null && <div className='age-label'>{age}</div>}
+                                    <div className='tick-mark' />
+                                </div>
                             );
-                        })
+                        });
+                    })()}
+                </div>
+                <div className='witness-life-heatmap-grid-wrap'>
+                    <div className='witness-life-heatmap-months'>
+                        {MONTHS.map(m => <div key={m} className='month-label'>{m[0]}</div>)}
+                    </div>
+                    <div className='witness-life-heatmap-grid' style={{ gridTemplateColumns: `repeat(${years.length}, var(--bom-heatmap-cell, 8px))` }}>
+                        {MONTHS.map((_, mi) => (
+                            years.map((year) => {
+                                const month = mi + 1;
+                                const key = ymKey(year, month);
+                                const cellSources = sourcesByYm.get(key) || [];
+                                const count = cellSources.length;
+                                const isSelected = selectedYearMonth === key;
+                                const era = eraOf(year, month);
+                                const isMarker = era === 'death' || era === 'excommunication' || era === 'event';
+                                const cls = [
+                                    'cell',
+                                    `era-${era}`,
+                                    `bucket-${colorBucket(count)}`,
+                                    isSelected ? 'selected' : '',
+                                    count || isMarker ? 'has-sources' : '',
+                                ].filter(Boolean).join(' ');
+                                return (
+                                    <div
+                                        key={key}
+                                        className={cls}
+                                        onClick={count ? () => onSelectYearMonth(isSelected ? null : key) : undefined}
+                                        onMouseEnter={() => setHoveredKey(key)}
+                                        onMouseLeave={() => setHoveredKey(prev => prev === key ? null : prev)}
+                                    />
+                                );
+                            })
+                        ))}
+                    </div>
+                </div>
+                <div className='witness-life-heatmap-years'>
+                    {years.map((y, i) => (
+                        <div key={y} className='year-slot'>
+                            {isLabeled(i) && <span className='year-label'>{y}</span>}
+                        </div>
                     ))}
                 </div>
-            </div>
-            <div className='witness-life-heatmap-years'>
-                {years.map((y, i) => (
-                    <div key={y} className='year-slot'>
-                        {isLabeled(i) && <span className='year-label'>{y}</span>}
-                    </div>
-                ))}
             </div>
             <WitnessLifeHeatmapHover hoveredKey={hoveredKey} sourcesByYm={sourcesByYm} eraOf={eraOf} witness={witness} birthYear={birthYear} />
             <div className='witness-life-heatmap-legend'>

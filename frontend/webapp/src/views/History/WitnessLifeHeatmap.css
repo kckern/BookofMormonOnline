@@ -6,6 +6,12 @@
     color: #555;
 }
 
+.witness-life-heatmap-scroll {
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 2px;
+}
+
 .witness-life-heatmap-meta {
     display: flex;
     align-items: center;
