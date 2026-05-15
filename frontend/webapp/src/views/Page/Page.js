@@ -147,6 +147,9 @@ export default function Page({ appController }) {
         setPageSlugId: (val) => {
           dispatch({ fn: "setPageSlugId", val: val });
         },
+        resetAutoClicked: () => {
+          dispatch({ fn: "resetAutoClicked" });
+        },
         resetPage: (val) => {
           dispatch({ fn: "resetPage", val: val });
         },
@@ -191,6 +194,7 @@ export default function Page({ appController }) {
     setReadyToScroll(false);
     startInit(false);
     dispatch({ fn: "markAsInitiated", val: false });
+    pageController.functions.resetAutoClicked();
     prepareInitOpen(match.params);
     handlePageInit();
   }, [match.params.pageSlug]);
@@ -886,6 +890,10 @@ function reducer(pageController, input) {
         pageController.states.pageSlug = input.val.pageSlug;
       if (input.val.lastLeaf)
         pageController.states.initOpen.lastLeaf = input.val.lastLeaf;
+      break;
+
+    case "resetAutoClicked":
+      pageController.states.autoClicked = new Set();
       break;
 
     case "setInitOpen":
