@@ -4,6 +4,9 @@ beforeEach(() => {
   window.__deepLinkInstrument = false;
   // mock window.scrollTo
   window.scrollTo = jest.fn();
+  // Reset matchMedia so prior tests that set { matches: true } do not bleed into
+  // tests that expect default (no reduced motion) behavior.
+  window.matchMedia = jest.fn().mockReturnValue({ matches: false });
 });
 
 describe("scrollTo (refactored)", () => {
@@ -59,13 +62,18 @@ describe("scrollTo (refactored)", () => {
     expect(cb).toHaveBeenCalledTimes(1);
   });
 
-  test("callback fires via fallback timer if scrollend never arrives", () => {
+  test("callback fires via fallback timer if scrollend never arrives at 2000ms exactly", () => {
     jest.useFakeTimers();
-    const cb = jest.fn();
-    scrollTo(500, cb);
-    jest.advanceTimersByTime(2000);
-    expect(cb).toHaveBeenCalledTimes(1);
-    jest.useRealTimers();
+    try {
+      const cb = jest.fn();
+      scrollTo(500, cb);
+      jest.advanceTimersByTime(1999);
+      expect(cb).not.toHaveBeenCalled();
+      jest.advanceTimersByTime(1);
+      expect(cb).toHaveBeenCalledTimes(1);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   test("instant scroll fires callback synchronously", () => {
