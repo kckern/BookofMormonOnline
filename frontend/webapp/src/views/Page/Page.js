@@ -659,10 +659,9 @@ function scrollToAsync(distance) {
 }
 
 function initPageImage(pageController) {
+  const imageId = pageController.states.initOpen.imageId;
   initPageItem(pageController, () => {
-    pageController.appController.functions.requestImageActivation({
-      imageId: pageController.states.initOpen.imageId,
-    });
+    pageController.appController.functions.requestImageActivation({ imageId });
   });
 }
 
