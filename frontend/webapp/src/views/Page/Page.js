@@ -26,6 +26,8 @@ import { Alert } from "reactstrap";
 import loading_comments from "src/views/_Common/Study/svg/loading_comment.svg";
 import { MuteButton } from "./MuteButton";
 import { recordDeepLinkEvent } from "src/utils/deepLinkInstrument";
+import { orderByDomAncestry } from "src/utils/orderByDomAncestry";
+import { awaitDomOpen } from "src/utils/awaitDomOpen";
 
 function prepareInitOpen(params) {
   let initOpen = {};
@@ -85,6 +87,7 @@ export default function Page({ appController }) {
         openRows: [],
         studyBuddies: {},
         progress: {},
+        autoClicked: new Set(),
       };
       let preLoad = {
         peoplePlaceToolTipData: {},
@@ -565,52 +568,55 @@ function justScroll(pageController) {
   scrollTo(distance, 0);
 }
 
-function initPageItem(pageController, callback) {
+async function initPageItem(pageController, callback) {
   recordDeepLinkEvent("initPageItem:enter");
   const offsetTop = document.documentElement.clientHeight * 0.2;
-  let { textToOpen, itemToScrollTo } = findTextToOpen(pageController);
-  let distance = itemToScrollTo?.offsetTop - offsetTop; //margin
+  const { textToOpen: rawTextToOpen, itemToScrollTo } = findTextToOpen(pageController);
 
-  textToOpen = textToOpen.sort();
-  recordDeepLinkEvent("initPageItem:plan", { textToOpen, hasItem: !!itemToScrollTo });
+  if (!itemToScrollTo || rawTextToOpen.length === 0) {
+    recordDeepLinkEvent("initPageItem:noTarget", { rawTextToOpen });
+    pageController.functions.markAsInitiated();
+    if (callback) callback();
+    return;
+  }
 
-  //console.log({ itemToScrollTo, textToOpen });
+  const ordered = orderByDomAncestry(rawTextToOpen);
+  recordDeepLinkEvent("initPageItem:plan", { textToOpen: ordered });
 
-  //Open all of the items (even nested ones)
-  let time = 0;
-  scrollTo(distance, () => {
-    recordDeepLinkEvent("initPageItem:outerScrollDone");
-    for (let i in textToOpen) {
-      if (!textToOpen[i]) return false;
-      setTimeout(() => {
-        let el = document.querySelector(
-          `[textid='${textToOpen[i]}'] .reference a`,
-        );
-        if (!el || el?.attributes.autoclicked) {
-          recordDeepLinkEvent("initPageItem:itemSkip", { slug: textToOpen[i] });
-          return false;
-        }
-        let coords = getCoords(el);
-        el?.setAttribute("autoclicked", true);
-        //console.log(`AUTO-CLICK ${textToOpen[i]}`)
-        recordDeepLinkEvent("initPageItem:itemScrollStart", { slug: textToOpen[i] });
-        scrollTo(coords?.top - offsetTop, () => {
-          recordDeepLinkEvent("initPageItem:itemClick", { slug: textToOpen[i] });
-          el?.click();
-        });
-      }, time);
-      time = time + 1000;
+  await scrollToAsync(itemToScrollTo.offsetTop - offsetTop);
+  recordDeepLinkEvent("initPageItem:outerScrollDone");
+
+  for (const slug of ordered) {
+    const el = document.querySelector(`[textid='${slug}'] .reference a`);
+    if (!el) {
+      recordDeepLinkEvent("initPageItem:itemSkip", { slug, reason: "missing" });
+      continue;
     }
+    if (pageController.states.autoClicked.has(slug)) {
+      recordDeepLinkEvent("initPageItem:itemSkip", { slug, reason: "already-clicked" });
+      continue;
+    }
+    pageController.states.autoClicked.add(slug);
 
-    setTimeout(() => {
-      recordDeepLinkEvent("initPageItem:markAsInitiated");
-      pageController.functions.markAsInitiated();
-    }, time);
-    if (callback) setTimeout(() => {
-      recordDeepLinkEvent("initPageItem:callback");
-      callback();
-    }, time);
-  });
+    const coords = getCoords(el);
+    recordDeepLinkEvent("initPageItem:itemScrollStart", { slug });
+    await scrollToAsync(coords?.top - offsetTop);
+    recordDeepLinkEvent("initPageItem:itemClick", { slug });
+    el.click();
+    const result = await awaitDomOpen(slug, 2000);
+    recordDeepLinkEvent("initPageItem:itemOpened", { slug, result });
+  }
+
+  recordDeepLinkEvent("initPageItem:markAsInitiated");
+  pageController.functions.markAsInitiated();
+  if (callback) {
+    recordDeepLinkEvent("initPageItem:callback");
+    callback();
+  }
+}
+
+function scrollToAsync(distance) {
+  return new Promise(resolve => scrollTo(distance, resolve));
 }
 
 function initPageImage(pageController) {

@@ -1,0 +1,45 @@
+const { test, expect, getEvents, waitForEvent } = require("./fixtures");
+
+const COMMENTARY_ID = process.env.E2E_COMMENTARY_ID || "REPLACE_ME";
+const NESTED_COMMENTARY_ID = process.env.E2E_NESTED_COMMENTARY_ID || COMMENTARY_ID;
+
+test.describe("commentary deep-link sequencing", () => {
+  test.skip(COMMENTARY_ID === "REPLACE_ME", "Set E2E_COMMENTARY_ID to run");
+
+  test("popup callback fires AFTER the last row open", async ({ instrumentedPage: page }) => {
+    await page.goto(`/commentary/${NESTED_COMMENTARY_ID}`);
+    await waitForEvent(page, "initPageItem:callback");
+    const events = await getEvents(page);
+    const lastOpen = events.map(e => e.name).lastIndexOf("initPageItem:itemOpened");
+    const cbIdx = events.map(e => e.name).indexOf("initPageItem:callback");
+    expect(lastOpen).toBeGreaterThan(-1);
+    expect(cbIdx).toBeGreaterThan(lastOpen);
+  });
+
+  test("items open in DOM-ancestry order (parent before leaf)", async ({ instrumentedPage: page }) => {
+    await page.goto(`/commentary/${NESTED_COMMENTARY_ID}`);
+    await waitForEvent(page, "initPageItem:callback");
+    const events = await getEvents(page);
+    const opens = events.filter(e => e.name === "initPageItem:itemOpened").map(e => e.payload.slug);
+
+    if (opens.length < 2) test.skip(true, "Not a nested case for this ID");
+
+    // The first opened slug must be an ancestor of the second
+    const order = await page.evaluate(
+      ([a, b]) => {
+        const aEl = document.querySelector(`[textid='${a}']`);
+        const bEl = document.querySelector(`[textid='${b}']`);
+        if (!aEl || !bEl) return "missing";
+        return aEl.contains(bEl) ? "ancestor" : "not-ancestor";
+      },
+      [opens[0], opens[1]],
+    );
+    expect(order).toBe("ancestor");
+  });
+
+  test("popup is visible by the time callback fires", async ({ instrumentedPage: page }) => {
+    await page.goto(`/commentary/${COMMENTARY_ID}`);
+    await waitForEvent(page, "initPageItem:callback");
+    await expect(page.locator("#popUp")).toBeVisible({ timeout: 5000 });
+  });
+});
