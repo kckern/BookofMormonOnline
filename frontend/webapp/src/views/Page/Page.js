@@ -22,9 +22,13 @@ import {
 import { useRouteMatch } from "react-router-dom";
 
 import { Floaters } from "./Floaters";
+import PageNotFound from "./PageNotFound";
 import { Alert } from "reactstrap";
 import loading_comments from "src/views/_Common/Study/svg/loading_comment.svg";
 import { MuteButton } from "./MuteButton";
+import { recordDeepLinkEvent } from "src/utils/deepLinkInstrument";
+import { orderByDomAncestry } from "src/utils/orderByDomAncestry";
+import { awaitDomOpen } from "src/utils/awaitDomOpen";
 
 function prepareInitOpen(params) {
   let initOpen = {};
@@ -53,6 +57,9 @@ export default function Page({ appController }) {
 
   let initOpen = prepareInitOpen(match.params);
 
+  const routeKey = `${match.params.pageSlug || ""}|${match.params.textId || ""}|${match.params.commentaryId || ""}|${match.params.imageId || ""}|${match.params.faxVersion || ""}`;
+  const pageIdentityKey = `${match.params.pageSlug || ""}|${match.params.commentaryId || ""}|${match.params.imageId || ""}`;
+
   useEffect(() => {
     pageController.functions.setPageData(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -60,7 +67,7 @@ export default function Page({ appController }) {
     if (match.params.imageId || match.params.commentaryId)
       getPageDataFromAPIViaNote(match.params);
     else getPageDataFromAPI(match.params.pageSlug);
-  }, [match.params.pageSlug]);
+  }, [pageIdentityKey]);
 
   let [commentState, setCommentState] = useState("init");
 
@@ -84,6 +91,8 @@ export default function Page({ appController }) {
         openRows: [],
         studyBuddies: {},
         progress: {},
+        autoClicked: new Set(),
+        notFound: null,  // { type: "commentary" | "image", id: string } when set
       };
       let preLoad = {
         peoplePlaceToolTipData: {},
@@ -143,6 +152,12 @@ export default function Page({ appController }) {
         setPageSlugId: (val) => {
           dispatch({ fn: "setPageSlugId", val: val });
         },
+        resetAutoClicked: () => {
+          dispatch({ fn: "resetAutoClicked" });
+        },
+        setNotFound: (val) => {
+          dispatch({ fn: "setNotFound", val: val });
+        },
         resetPage: (val) => {
           dispatch({ fn: "resetPage", val: val });
         },
@@ -187,9 +202,13 @@ export default function Page({ appController }) {
     setReadyToScroll(false);
     startInit(false);
     dispatch({ fn: "markAsInitiated", val: false });
-    prepareInitOpen(match.params);
+    pageController.functions.resetAutoClicked();
+    pageController.functions.setNotFound(null);
+    pageController.appController.functions.requestImageActivation(null);
+    const newInitOpen = prepareInitOpen(match.params);
+    pageController.functions.setInitOpen(newInitOpen);
     handlePageInit();
-  }, [match.params.pageSlug]);
+  }, [routeKey]);
 
   const studyModeisOn =
     pageController.appController.states.studyGroup.studyModeOn;
@@ -310,20 +329,35 @@ export default function Page({ appController }) {
 
   //Load Page Data in Case of /image/000 or /commentary/0000 loadd
   const getPageDataFromAPIViaNote = async (params) => {
-    let { pageSlug, textId } = false;
-    if (params.imageId) {
-      let response = await BoMOnlineAPI({ image: params.imageId });
-      let image = response.image[params.imageId];
-      pageSlug = image.location.slug.replace(/\/\d+$/, "");
-      textId = image.location.slug.match(/\d+$/)[0];
+    try {
+      let { pageSlug, textId } = false;
+      if (params.imageId) {
+        let response = await BoMOnlineAPI({ image: params.imageId });
+        let image = response?.image?.[params.imageId];
+        if (!image?.location?.slug) {
+          pageController.functions.setNotFound({ type: "image", id: params.imageId });
+          return;
+        }
+        pageSlug = image.location.slug.replace(/\/\d+$/, "");
+        textId = image.location.slug.match(/\d+$/)?.[0];
+      }
+      if (params.commentaryId) {
+        let response = await BoMOnlineAPI({ commentary: params.commentaryId });
+        let commentary = response?.commentary?.[params.commentaryId];
+        if (!commentary?.location?.slug) {
+          pageController.functions.setNotFound({ type: "commentary", id: params.commentaryId });
+          return;
+        }
+        pageSlug = commentary.location.slug.replace(/\/\d+$/, "");
+        textId = commentary.location.slug.match(/\d+$/)?.[0];
+      }
+      if (pageSlug) getPageDataFromAPI(pageSlug, textId);
+    } catch (err) {
+      console.error("getPageDataFromAPIViaNote failed", err);
+      const type = params.imageId ? "image" : "commentary";
+      const id = params.imageId || params.commentaryId;
+      pageController.functions.setNotFound({ type, id });
     }
-    if (params.commentaryId) {
-      let response = await BoMOnlineAPI({ commentary: params.commentaryId });
-      let commentary = response.commentary[params.commentaryId];
-      pageSlug = commentary.location?.slug.replace(/\/\d+$/, "");
-      textId = commentary.location?.slug.match(/\d+$/)[0];
-    }
-    if (pageSlug) getPageDataFromAPI(pageSlug, textId);
   };
 
   const processStudyGroupEventOnPage = (e) => {
@@ -428,13 +462,6 @@ export default function Page({ appController }) {
       false,
     );
 
-    // create an Observer instance
-    const resizeObserver = new ResizeObserver((entries) => {
-      if (pageController.states.touched) return null;
-      justScroll(pageController);
-    });
-    resizeObserver.observe(document.querySelector(".main-panel"));
-
     setCommentState("set Listeners");
     if (!group || !group.createPreviousMessageListQuery) {
       setReadyToScroll(true);
@@ -448,8 +475,15 @@ export default function Page({ appController }) {
     listQuery.includeReactions = true; // Retrieve a list of messages along with their reactions.
     listQuery.customTypesFilter = [pageController.pageData?.slug];
     setCommentState("made  query");
+    const COMMENTS_FALLBACK_MS = 2500;
+    const fallbackTimer = setTimeout(() => {
+      recordDeepLinkEvent("loadPageComments:fallback");
+      setReadyToScroll(true);
+    }, COMMENTS_FALLBACK_MS);
+
     try {
       listQuery.load().then((messages) => {
+        clearTimeout(fallbackTimer);
         setCommentState("indexing");
         let index = indexPageComments(messages);
         setCommentState("counting");
@@ -470,12 +504,16 @@ export default function Page({ appController }) {
         );
       });
     } catch (error) {
+      clearTimeout(fallbackTimer);
       console.log({ error });
       return false;
     }
   };
 
   if(!appController.states.preloaded) return <Loader />;
+  if (pageController.states.notFound) {
+    return <PageNotFound type={pageController.states.notFound.type} id={pageController.states.notFound.id} />;
+  }
   if (pageController.states.loading !== false) return <Loader />;
   pageController.appController.functions['setStageClass'] = setStageClass;
   return (
@@ -553,51 +591,62 @@ function initPage(pageController, lastLeaf) {
   }
 }
 
-function justScroll(pageController) {
-  return false;
-  let { itemToScrollTo } = findTextToOpen(pageController);
-  let sectionSlug = pageController.states.route.params.pageSlug;
-  if (!itemToScrollTo)
-    itemToScrollTo = document.querySelector("[id='" + sectionSlug + "']");
-  let distance = itemToScrollTo?.offsetTop - 100; //margin
+async function initPageItem(pageController, callback) {
+  recordDeepLinkEvent("initPageItem:enter");
+  const offsetTop = document.documentElement.clientHeight * 0.2;
+  const { textToOpen: rawTextToOpen, itemToScrollTo } = findTextToOpen(pageController);
 
-  scrollTo(distance, 0);
+  if (!itemToScrollTo || rawTextToOpen.length === 0) {
+    recordDeepLinkEvent("initPageItem:noTarget", { rawTextToOpen });
+    pageController.functions.markAsInitiated();
+    if (callback) callback();
+    return;
+  }
+
+  const ordered = orderByDomAncestry(rawTextToOpen);
+  recordDeepLinkEvent("initPageItem:plan", { textToOpen: ordered });
+
+  await scrollToAsync(itemToScrollTo.offsetTop - offsetTop);
+  recordDeepLinkEvent("initPageItem:outerScrollDone");
+
+  for (const slug of ordered) {
+    const el = document.querySelector(`[textid='${slug}'] .reference a`);
+    if (!el) {
+      recordDeepLinkEvent("initPageItem:itemSkip", { slug, reason: "missing" });
+      continue;
+    }
+    if (pageController.states.autoClicked.has(slug)) {
+      recordDeepLinkEvent("initPageItem:itemSkip", { slug, reason: "already-clicked" });
+      continue;
+    }
+    pageController.states.autoClicked.add(slug);
+
+    const coords = getCoords(el);
+    recordDeepLinkEvent("initPageItem:itemScrollStart", { slug });
+    await scrollToAsync(coords?.top - offsetTop);
+    recordDeepLinkEvent("initPageItem:itemClick", { slug });
+    el.click();
+    const result = await awaitDomOpen(slug, 2000);
+    recordDeepLinkEvent("initPageItem:itemOpened", { slug, result });
+  }
+
+  recordDeepLinkEvent("initPageItem:markAsInitiated");
+  pageController.functions.markAsInitiated();
+  if (callback) {
+    recordDeepLinkEvent("initPageItem:callback");
+    callback();
+  }
 }
 
-function initPageItem(pageController, callback) {
-  const offsetTop = document.documentElement.clientHeight * 0.2;
-  let { textToOpen, itemToScrollTo } = findTextToOpen(pageController);
-  let distance = itemToScrollTo?.offsetTop - offsetTop; //margin
-
-  textToOpen = textToOpen.sort();
-
-  //console.log({ itemToScrollTo, textToOpen });
-
-  //Open all of the items (even nested ones)
-  let time = 0;
-  scrollTo(distance, () => {
-    for (let i in textToOpen) {
-      if (!textToOpen[i]) return false;
-      setTimeout(() => {
-        let el = document.querySelector(
-          `[textid='${textToOpen[i]}'] .reference a`,
-        );
-        if (!el || el?.attributes.autoclicked) return false;
-        let coords = getCoords(el);
-        el?.setAttribute("autoclicked", true);
-        //console.log(`AUTO-CLICK ${textToOpen[i]}`)
-        scrollTo(coords?.top - offsetTop, () => el?.click());
-      }, time);
-      time = time + 1000;
-    }
-
-    setTimeout(() => pageController.functions.markAsInitiated(), time);
-    if (callback) setTimeout(callback, time);
-  });
+function scrollToAsync(distance) {
+  return new Promise(resolve => scrollTo(distance, resolve));
 }
 
 function initPageImage(pageController) {
-  initPageItem(pageController);
+  const imageId = pageController.states.initOpen.imageId;
+  initPageItem(pageController, () => {
+    pageController.appController.functions.requestImageActivation({ imageId });
+  });
 }
 
 function initPageCommentary(pageController) {
@@ -687,7 +736,7 @@ function loadAudioUrl(slug) {
 function reducer(pageController, input) {
   switch (input.fn) {
     case "setActiveRow":
-      let { slug, duration, pagetitle, heading } = input.val;
+      let { slug, duration, pagetitle, heading, auto } = input.val;
       pageController.states.activeRow = slug;
       pageController.states.openRows.push(slug);
       if (pageController.states.activeAudio)
@@ -701,7 +750,8 @@ function reducer(pageController, input) {
       if (pageController.appController.states.preferences.audio)
         playSound(pageController.states.activeAudio); //.play();
       document.title = heading + " | " + label("home_title");
-      pageController.appController.functions.setSlug(slug);
+      pageController.appController.functions.setSlug(slug, { replace: auto === true });
+      if (auto === true) pageController.states.autoClicked.delete(slug);
 
       localStorage.setItem("studybookmark", slug);
       BoMOnlineAPI(
@@ -760,8 +810,10 @@ function reducer(pageController, input) {
         // pageController.appController.functions.updateUserSummary({ ...r.log.progress, ...{ slug, pagetitle, heading } })
       });
 
-      if (pageController.states.init)
-        pageController.appController.functions.setSlug(slug);
+      if (pageController.states.init) {
+        pageController.appController.functions.setSlug(slug, { replace: auto === true });
+        if (auto === true) pageController.states.autoClicked.delete(slug);
+      }
       break;
     case "addOpenRow":
       pageController.states.openRows.push(input.val);
@@ -865,6 +917,10 @@ function reducer(pageController, input) {
         pageController.states.initOpen.lastLeaf = input.val.lastLeaf;
       break;
 
+    case "resetAutoClicked":
+      pageController.states.autoClicked = new Set();
+      break;
+
     case "setInitOpen":
       pageController.states.initOpen = input.val;
       break;
@@ -872,6 +928,10 @@ function reducer(pageController, input) {
     case "setPageData":
       pageController.pageData = input.val;
       document.title = pageController.pageData?.title || label("home_title");
+      break;
+    case "setNotFound":
+      pageController.states.notFound = input.val;
+      pageController.states.loading = false;
       break;
     case "setLoading":
       pageController.states.loading = input.val;

@@ -119,6 +119,14 @@
       "react-app/jest"
     ]
   },
+  "jest": {
+    "moduleNameMapper": {
+      "^src/(.*)$": "<rootDir>/src/$1",
+      "^views/(.*)$": "<rootDir>/src/views/$1",
+      "^components/(.*)$": "<rootDir>/src/components/$1",
+      "^models/(.*)$": "<rootDir>/src/models/$1"
+    }
+  },
   "browserslist": {
     "production": [
       ">0.2%",

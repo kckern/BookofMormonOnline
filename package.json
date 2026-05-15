@@ -57,6 +57,7 @@
     "zod": "^4.3.5"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "@types/aws-lambda": "8.10.126",
     "@types/dotenv": "^6.1.1",
     "@types/graphql": "^14.5.0",
@@ -91,6 +92,7 @@
     "dev:frontend": "cd frontend/webapp && npm start",
     "dev:backend": "ts-node src/index.ts",
     "test": "jest",
+    "e2e": "playwright test --config=e2e/playwright.config.js",
     "test:messenger": "jest messenger.test.ts --verbose",
     "test:regression": "jest test/regression --verbose",
     "test:all": "jest --verbose",

@@ -10,6 +10,7 @@ import { getCache, setCache } from "./Cache";
 import {Spinner} from "../views/_Common/Loader";
 import { ScripturePanelSingle } from "../views/Page/Narration";
 import { detectReferences, lookupReference, generateReference } from 'scripture-guide';
+import { recordDeepLinkEvent } from "src/utils/deepLinkInstrument";
 
 
 
@@ -383,21 +384,44 @@ export function findAncestor(el, sel) {
   return el;
 }
 
+const SCROLL_FALLBACK_MS = 2000;
+
 export function scrollTo(scrollHeight, callback) {
-  let time = 1000;
-  if (!scrollHeight || scrollHeight < 0)
-    if (typeof callback === "function") return callback();
-    else return false;
-  let behavior = {
-    top: scrollHeight,
-    behavior: "smooth",
+  const fire = () => {
+    if (typeof callback === "function") {
+      recordDeepLinkEvent("scrollTo:callback", { scrollHeight });
+      callback();
+    }
   };
-  if (callback === 0) behavior.behavior = "instant";
-  setTimeout(() => {
-    // page will be scroll after 1 secounds
-    window.scrollTo(behavior);
-  }, time);
-  if (typeof callback === "function") setTimeout(() => callback(), time);
+
+  if (typeof scrollHeight !== "number" || !Number.isFinite(scrollHeight) || scrollHeight < 0) {
+    recordDeepLinkEvent("scrollTo:skip", { scrollHeight });
+    fire();
+    return;
+  }
+
+  const reduced = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)")?.matches);
+  const behavior = callback === 0 || reduced ? "instant" : "smooth";
+
+  recordDeepLinkEvent("scrollTo:start", { scrollHeight, behavior });
+  window.scrollTo({ top: scrollHeight, behavior });
+
+  if (behavior === "instant") {
+    fire();
+    return;
+  }
+
+  let done = false;
+  const finish = () => {
+    if (done) return;
+    done = true;
+    window.removeEventListener("scrollend", onScrollEnd);
+    clearTimeout(fallback);
+    fire();
+  };
+  const onScrollEnd = () => finish();
+  window.addEventListener("scrollend", onScrollEnd, { once: true });
+  const fallback = setTimeout(finish, SCROLL_FALLBACK_MS);
 }
 
 export function newPost(num) {
