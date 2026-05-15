@@ -752,7 +752,7 @@ function loadAudioUrl(slug) {
 function reducer(pageController, input) {
   switch (input.fn) {
     case "setActiveRow":
-      let { slug, duration, pagetitle, heading } = input.val;
+      let { slug, duration, pagetitle, heading, auto } = input.val;
       pageController.states.activeRow = slug;
       pageController.states.openRows.push(slug);
       if (pageController.states.activeAudio)
@@ -766,7 +766,7 @@ function reducer(pageController, input) {
       if (pageController.appController.states.preferences.audio)
         playSound(pageController.states.activeAudio); //.play();
       document.title = heading + " | " + label("home_title");
-      pageController.appController.functions.setSlug(slug);
+      pageController.appController.functions.setSlug(slug, { replace: auto === true });
 
       localStorage.setItem("studybookmark", slug);
       BoMOnlineAPI(
@@ -826,7 +826,7 @@ function reducer(pageController, input) {
       });
 
       if (pageController.states.init)
-        pageController.appController.functions.setSlug(slug);
+        pageController.appController.functions.setSlug(slug, { replace: auto === true });
       break;
     case "addOpenRow":
       pageController.states.openRows.push(input.val);

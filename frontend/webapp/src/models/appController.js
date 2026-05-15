@@ -211,6 +211,11 @@ export const appDispatch = () => {
       global._appDispatch({ fn: fn, val: val });
     };
   }
+  // Override setSlug to accept an optional opts arg (e.g. { replace: true }).
+  // Backward compatible: existing callers `setSlug(slug)` still work.
+  dispatches.setSlug = (val, opts) => {
+    global._appDispatch({ fn: "setSlug", val: val, replace: opts?.replace === true });
+  };
   return dispatches;
 };
 
@@ -229,7 +234,8 @@ export const appFunctions = {
     if (!/^\//.test(slug)) slug = `/${slug}`;
     if (appController.states.slug === slug) return appController;
     appController.states.slug = slug;
-    input.val && history?.push(slug);
+    const useReplace = input.replace === true;
+    input.val && (useReplace ? history?.replace(slug) : history?.push(slug));
     return appController;
   },
   setUser: (appController, input) => {

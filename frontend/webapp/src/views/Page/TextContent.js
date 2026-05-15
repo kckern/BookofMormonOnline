@@ -35,7 +35,8 @@ function reducer(textContentController, input) {
             slug:textContentController.data.slug,
             duration:textContentController.data.duration,
             pagetitle: textContentController.narrationController.pageController.pageData.title,
-            heading: textContentController.data.heading
+            heading: textContentController.data.heading,
+            auto: textContentController.pageController.states.autoClicked?.has(textContentController.data.slug) === true,
           }
         );
       textContentController.states.isOpen =
@@ -52,7 +53,8 @@ function reducer(textContentController, input) {
             slug:textContentController.data.slug,
             duration:textContentController.data.duration,
             pagetitle: textContentController.narrationController.pageController.pageData.title,
-            heading: textContentController.data.heading
+            heading: textContentController.data.heading,
+            auto: textContentController.pageController.states.autoClicked?.has(textContentController.data.slug) === true,
           }
         );
       textContentController.states.isHeaderOpen =

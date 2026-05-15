@@ -42,4 +42,14 @@ test.describe("commentary deep-link sequencing", () => {
     await waitForEvent(page, "initPageItem:callback");
     await expect(page.locator("#popUp")).toBeVisible({ timeout: 5000 });
   });
+
+  test("auto-click history entries don't pollute back-button", async ({ instrumentedPage: page }) => {
+    test.skip(NESTED_COMMENTARY_ID === "REPLACE_ME", "Set E2E_NESTED_COMMENTARY_ID to run");
+    await page.goto(`/commentary/${NESTED_COMMENTARY_ID}`);
+    await waitForEvent(page, "initPageItem:callback");
+    await page.goBack();
+    // After one back, we should NOT be on /<pageSlug>/<textId>
+    const url = page.url();
+    expect(url).not.toMatch(/\/[^/]+\/\d+$/);
+  });
 });
