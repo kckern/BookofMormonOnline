@@ -22,6 +22,7 @@ import {
 import { useRouteMatch } from "react-router-dom";
 
 import { Floaters } from "./Floaters";
+import PageNotFound from "./PageNotFound";
 import { Alert } from "reactstrap";
 import loading_comments from "src/views/_Common/Study/svg/loading_comment.svg";
 import { MuteButton } from "./MuteButton";
@@ -90,6 +91,7 @@ export default function Page({ appController }) {
         studyBuddies: {},
         progress: {},
         autoClicked: new Set(),
+        notFound: null,  // { type: "commentary" | "image", id: string } when set
       };
       let preLoad = {
         peoplePlaceToolTipData: {},
@@ -152,6 +154,9 @@ export default function Page({ appController }) {
         resetAutoClicked: () => {
           dispatch({ fn: "resetAutoClicked" });
         },
+        setNotFound: (val) => {
+          dispatch({ fn: "setNotFound", val: val });
+        },
         resetPage: (val) => {
           dispatch({ fn: "resetPage", val: val });
         },
@@ -197,6 +202,7 @@ export default function Page({ appController }) {
     startInit(false);
     dispatch({ fn: "markAsInitiated", val: false });
     pageController.functions.resetAutoClicked();
+    pageController.functions.setNotFound(null);
     const newInitOpen = prepareInitOpen(match.params);
     pageController.functions.setInitOpen(newInitOpen);
     handlePageInit();
@@ -324,15 +330,23 @@ export default function Page({ appController }) {
     let { pageSlug, textId } = false;
     if (params.imageId) {
       let response = await BoMOnlineAPI({ image: params.imageId });
-      let image = response.image[params.imageId];
+      let image = response?.image?.[params.imageId];
+      if (!image?.location?.slug) {
+        pageController.functions.setNotFound({ type: "image", id: params.imageId });
+        return;
+      }
       pageSlug = image.location.slug.replace(/\/\d+$/, "");
-      textId = image.location.slug.match(/\d+$/)[0];
+      textId = image.location.slug.match(/\d+$/)?.[0];
     }
     if (params.commentaryId) {
       let response = await BoMOnlineAPI({ commentary: params.commentaryId });
-      let commentary = response.commentary[params.commentaryId];
-      pageSlug = commentary.location?.slug.replace(/\/\d+$/, "");
-      textId = commentary.location?.slug.match(/\d+$/)[0];
+      let commentary = response?.commentary?.[params.commentaryId];
+      if (!commentary?.location?.slug) {
+        pageController.functions.setNotFound({ type: "commentary", id: params.commentaryId });
+        return;
+      }
+      pageSlug = commentary.location.slug.replace(/\/\d+$/, "");
+      textId = commentary.location.slug.match(/\d+$/)?.[0];
     }
     if (pageSlug) getPageDataFromAPI(pageSlug, textId);
   };
@@ -487,6 +501,9 @@ export default function Page({ appController }) {
   };
 
   if(!appController.states.preloaded) return <Loader />;
+  if (pageController.states.notFound) {
+    return <PageNotFound type={pageController.states.notFound.type} id={pageController.states.notFound.id} />;
+  }
   if (pageController.states.loading !== false) return <Loader />;
   pageController.appController.functions['setStageClass'] = setStageClass;
   return (
@@ -906,6 +923,10 @@ function reducer(pageController, input) {
     case "setPageData":
       pageController.pageData = input.val;
       document.title = pageController.pageData?.title || label("home_title");
+      break;
+    case "setNotFound":
+      pageController.states.notFound = input.val;
+      pageController.states.loading = false;
       break;
     case "setLoading":
       pageController.states.loading = input.val;
