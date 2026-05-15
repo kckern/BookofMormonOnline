@@ -58,6 +58,7 @@ export default function Page({ appController }) {
   let initOpen = prepareInitOpen(match.params);
 
   const routeKey = `${match.params.pageSlug || ""}|${match.params.textId || ""}|${match.params.commentaryId || ""}|${match.params.imageId || ""}|${match.params.faxVersion || ""}`;
+  const pageIdentityKey = `${match.params.pageSlug || ""}|${match.params.commentaryId || ""}|${match.params.imageId || ""}`;
 
   useEffect(() => {
     pageController.functions.setPageData(null);
@@ -66,7 +67,7 @@ export default function Page({ appController }) {
     if (match.params.imageId || match.params.commentaryId)
       getPageDataFromAPIViaNote(match.params);
     else getPageDataFromAPI(match.params.pageSlug);
-  }, [routeKey]);
+  }, [pageIdentityKey]);
 
   let [commentState, setCommentState] = useState("init");
 
@@ -203,6 +204,7 @@ export default function Page({ appController }) {
     dispatch({ fn: "markAsInitiated", val: false });
     pageController.functions.resetAutoClicked();
     pageController.functions.setNotFound(null);
+    pageController.appController.functions.requestImageActivation(null);
     const newInitOpen = prepareInitOpen(match.params);
     pageController.functions.setInitOpen(newInitOpen);
     handlePageInit();
