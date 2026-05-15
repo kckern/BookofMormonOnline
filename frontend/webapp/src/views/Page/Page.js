@@ -327,28 +327,35 @@ export default function Page({ appController }) {
 
   //Load Page Data in Case of /image/000 or /commentary/0000 loadd
   const getPageDataFromAPIViaNote = async (params) => {
-    let { pageSlug, textId } = false;
-    if (params.imageId) {
-      let response = await BoMOnlineAPI({ image: params.imageId });
-      let image = response?.image?.[params.imageId];
-      if (!image?.location?.slug) {
-        pageController.functions.setNotFound({ type: "image", id: params.imageId });
-        return;
+    try {
+      let { pageSlug, textId } = false;
+      if (params.imageId) {
+        let response = await BoMOnlineAPI({ image: params.imageId });
+        let image = response?.image?.[params.imageId];
+        if (!image?.location?.slug) {
+          pageController.functions.setNotFound({ type: "image", id: params.imageId });
+          return;
+        }
+        pageSlug = image.location.slug.replace(/\/\d+$/, "");
+        textId = image.location.slug.match(/\d+$/)?.[0];
       }
-      pageSlug = image.location.slug.replace(/\/\d+$/, "");
-      textId = image.location.slug.match(/\d+$/)?.[0];
-    }
-    if (params.commentaryId) {
-      let response = await BoMOnlineAPI({ commentary: params.commentaryId });
-      let commentary = response?.commentary?.[params.commentaryId];
-      if (!commentary?.location?.slug) {
-        pageController.functions.setNotFound({ type: "commentary", id: params.commentaryId });
-        return;
+      if (params.commentaryId) {
+        let response = await BoMOnlineAPI({ commentary: params.commentaryId });
+        let commentary = response?.commentary?.[params.commentaryId];
+        if (!commentary?.location?.slug) {
+          pageController.functions.setNotFound({ type: "commentary", id: params.commentaryId });
+          return;
+        }
+        pageSlug = commentary.location.slug.replace(/\/\d+$/, "");
+        textId = commentary.location.slug.match(/\d+$/)?.[0];
       }
-      pageSlug = commentary.location.slug.replace(/\/\d+$/, "");
-      textId = commentary.location.slug.match(/\d+$/)?.[0];
+      if (pageSlug) getPageDataFromAPI(pageSlug, textId);
+    } catch (err) {
+      console.error("getPageDataFromAPIViaNote failed", err);
+      const type = params.imageId ? "image" : "commentary";
+      const id = params.imageId || params.commentaryId;
+      pageController.functions.setNotFound({ type, id });
     }
-    if (pageSlug) getPageDataFromAPI(pageSlug, textId);
   };
 
   const processStudyGroupEventOnPage = (e) => {
