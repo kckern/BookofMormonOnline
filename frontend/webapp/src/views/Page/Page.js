@@ -460,13 +460,6 @@ export default function Page({ appController }) {
       false,
     );
 
-    // create an Observer instance
-    const resizeObserver = new ResizeObserver((entries) => {
-      if (pageController.states.touched) return null;
-      justScroll(pageController);
-    });
-    resizeObserver.observe(document.querySelector(".main-panel"));
-
     setCommentState("set Listeners");
     if (!group || !group.createPreviousMessageListQuery) {
       setReadyToScroll(true);
@@ -594,17 +587,6 @@ function initPage(pageController, lastLeaf) {
       pageController.states.initOpen.pageSlug,
     );
   }
-}
-
-function justScroll(pageController) {
-  return false;
-  let { itemToScrollTo } = findTextToOpen(pageController);
-  let sectionSlug = pageController.states.route.params.pageSlug;
-  if (!itemToScrollTo)
-    itemToScrollTo = document.querySelector("[id='" + sectionSlug + "']");
-  let distance = itemToScrollTo?.offsetTop - 100; //margin
-
-  scrollTo(distance, 0);
 }
 
 async function initPageItem(pageController, callback) {
