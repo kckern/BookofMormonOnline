@@ -480,8 +480,15 @@ export default function Page({ appController }) {
     listQuery.includeReactions = true; // Retrieve a list of messages along with their reactions.
     listQuery.customTypesFilter = [pageController.pageData?.slug];
     setCommentState("made  query");
+    const COMMENTS_FALLBACK_MS = 2500;
+    const fallbackTimer = setTimeout(() => {
+      recordDeepLinkEvent("loadPageComments:fallback");
+      setReadyToScroll(true);
+    }, COMMENTS_FALLBACK_MS);
+
     try {
       listQuery.load().then((messages) => {
+        clearTimeout(fallbackTimer);
         setCommentState("indexing");
         let index = indexPageComments(messages);
         setCommentState("counting");
@@ -502,6 +509,7 @@ export default function Page({ appController }) {
         );
       });
     } catch (error) {
+      clearTimeout(fallbackTimer);
       console.log({ error });
       return false;
     }
