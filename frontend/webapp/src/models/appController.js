@@ -161,6 +161,7 @@ export const appInit = () => {
 
     preferences: preferences,
     toolTip: {},
+    imageActivationRequest: null,
     popUp: {
       open: false,
       loading: true,
@@ -310,6 +311,11 @@ export const appFunctions = {
   clearPopUp: (appController) => {
     appController.popUpData = [];
     appController.states.popUp.activeId = null;
+    return appController;
+  },
+
+  requestImageActivation: (appController, input) => {
+    appController.states.imageActivationRequest = input.val;
     return appController;
   },
 

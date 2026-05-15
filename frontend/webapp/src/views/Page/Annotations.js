@@ -277,27 +277,27 @@ function ImageBubble({ narrationController, textContentController, item }) {
   let cycleTimer = useRef(null);
 
   useEffect(() => {
-    
+
     if (fadeClass !== " fadedIn") setTimeout(() => makeFadeIn(" fadedIn"), 500);
-    let urlOpenImageId =
-      narrationController.pageController.states.initOpen.imageId;
+    const req = narrationController.pageController.appController.states.imageActivationRequest;
+    const urlOpenImageId = req?.imageId;
     if (
       urlOpenImageId &&
       item.ids.indexOf(urlOpenImageId) >= 0 &&
-      !narrationController.pageController.states.loading &&
       !narrationController.states.activeImageId
     ) {
       narrationController.functions.setActiveImageId(urlOpenImageId);
       narrationController.functions.setPanelImageIds(item.ids);
-      history.push(`/art/${urlOpenImageId}`)
+      history.push(`/art/${urlOpenImageId}`);
       setAutoCyle(false);
+      // Clear the request so re-renders don't repeat
+      narrationController.pageController.appController.functions.requestImageActivation(null);
     }
   }, [
     fadeClass,
     item.ids,
     narrationController.functions,
-    narrationController.pageController.states.initOpen.imageId,
-    narrationController.pageController.states.loading
+    narrationController.pageController.appController.states.imageActivationRequest,
   ]);
 
   const cycleImage = useCallback(() => {
