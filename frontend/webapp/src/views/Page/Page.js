@@ -56,6 +56,8 @@ export default function Page({ appController }) {
 
   let initOpen = prepareInitOpen(match.params);
 
+  const routeKey = `${match.params.pageSlug || ""}|${match.params.textId || ""}|${match.params.commentaryId || ""}|${match.params.imageId || ""}|${match.params.faxVersion || ""}`;
+
   useEffect(() => {
     pageController.functions.setPageData(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -63,7 +65,7 @@ export default function Page({ appController }) {
     if (match.params.imageId || match.params.commentaryId)
       getPageDataFromAPIViaNote(match.params);
     else getPageDataFromAPI(match.params.pageSlug);
-  }, [match.params.pageSlug]);
+  }, [routeKey]);
 
   let [commentState, setCommentState] = useState("init");
 
@@ -195,9 +197,10 @@ export default function Page({ appController }) {
     startInit(false);
     dispatch({ fn: "markAsInitiated", val: false });
     pageController.functions.resetAutoClicked();
-    prepareInitOpen(match.params);
+    const newInitOpen = prepareInitOpen(match.params);
+    pageController.functions.setInitOpen(newInitOpen);
     handlePageInit();
-  }, [match.params.pageSlug]);
+  }, [routeKey]);
 
   const studyModeisOn =
     pageController.appController.states.studyGroup.studyModeOn;
