@@ -43,13 +43,24 @@ test.describe("commentary deep-link sequencing", () => {
     await expect(page.locator("#popUp")).toBeVisible({ timeout: 5000 });
   });
 
-  test("auto-click history entries don't pollute back-button", async ({ instrumentedPage: page }) => {
+  test("auto-click history entries collapse — single back-button stop reaches the page", async ({ instrumentedPage: page }) => {
     test.skip(NESTED_COMMENTARY_ID === "REPLACE_ME", "Set E2E_NESTED_COMMENTARY_ID to run");
+    await page.goto("/");
     await page.goto(`/commentary/${NESTED_COMMENTARY_ID}`);
     await waitForEvent(page, "initPageItem:callback");
-    await page.goBack();
-    // After one back, we should NOT be on /<pageSlug>/<textId>
-    const url = page.url();
-    expect(url).not.toMatch(/\/[^/]+\/\d+$/);
+
+    // After init, the URL should be /commentary/<id> (the popup's slug).
+    await expect(page).toHaveURL(new RegExp(`/commentary/${NESTED_COMMENTARY_ID}$`));
+
+    // One back should land on the underlying row URL (collapsed from N auto-clicks to 1).
+    await page.goBack({ waitUntil: "commit" });
+    const afterOne = page.url();
+    expect(afterOne).toMatch(/\/[^/]+\/\d+$/);
+
+    // Two backs should escape the deep-link entirely (back to "/" from the initial goto).
+    await page.goBack({ waitUntil: "commit" });
+    const afterTwo = page.url();
+    expect(afterTwo).not.toMatch(/\/[^/]+\/\d+$/);
+    expect(afterTwo).not.toMatch(new RegExp(`/commentary/${NESTED_COMMENTARY_ID}$`));
   });
 });

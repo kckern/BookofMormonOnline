@@ -767,6 +767,7 @@ function reducer(pageController, input) {
         playSound(pageController.states.activeAudio); //.play();
       document.title = heading + " | " + label("home_title");
       pageController.appController.functions.setSlug(slug, { replace: auto === true });
+      if (auto === true) pageController.states.autoClicked.delete(slug);
 
       localStorage.setItem("studybookmark", slug);
       BoMOnlineAPI(
@@ -825,8 +826,10 @@ function reducer(pageController, input) {
         // pageController.appController.functions.updateUserSummary({ ...r.log.progress, ...{ slug, pagetitle, heading } })
       });
 
-      if (pageController.states.init)
+      if (pageController.states.init) {
         pageController.appController.functions.setSlug(slug, { replace: auto === true });
+        if (auto === true) pageController.states.autoClicked.delete(slug);
+      }
       break;
     case "addOpenRow":
       pageController.states.openRows.push(input.val);
