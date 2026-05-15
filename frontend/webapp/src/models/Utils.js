@@ -10,6 +10,7 @@ import { getCache, setCache } from "./Cache";
 import {Spinner} from "../views/_Common/Loader";
 import { ScripturePanelSingle } from "../views/Page/Narration";
 import { detectReferences, lookupReference, generateReference } from 'scripture-guide';
+import { recordDeepLinkEvent } from "src/utils/deepLinkInstrument";
 
 
 
@@ -385,19 +386,25 @@ export function findAncestor(el, sel) {
 
 export function scrollTo(scrollHeight, callback) {
   let time = 1000;
-  if (!scrollHeight || scrollHeight < 0)
+  if (!scrollHeight || scrollHeight < 0) {
+    recordDeepLinkEvent("scrollTo:skip", { scrollHeight });
     if (typeof callback === "function") return callback();
     else return false;
+  }
   let behavior = {
     top: scrollHeight,
     behavior: "smooth",
   };
   if (callback === 0) behavior.behavior = "instant";
+  recordDeepLinkEvent("scrollTo:start", { scrollHeight, behavior: behavior.behavior });
   setTimeout(() => {
     // page will be scroll after 1 secounds
     window.scrollTo(behavior);
   }, time);
-  if (typeof callback === "function") setTimeout(() => callback(), time);
+  if (typeof callback === "function") setTimeout(() => {
+    recordDeepLinkEvent("scrollTo:callback", { scrollHeight });
+    callback();
+  }, time);
 }
 
 export function newPost(num) {
