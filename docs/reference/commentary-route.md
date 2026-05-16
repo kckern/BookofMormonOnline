@@ -272,7 +272,10 @@ The callback runs `appController.functions.setPopUp(...)`. The reducer
   `popUp.ids = [<commentaryId>]`, `popUp.activeId = <commentaryId>`.
 - Sets `popUp.top = window.scrollY + window.innerHeight * 0.20` so the
   popup is positioned near the user's current scroll position, just below
-  the row that was opened.
+  the row that was opened. (The `0.20` is the default — callers can
+  override via `vhtop` on the `setPopUp` input, which the reducer expands
+  as `window.innerHeight / (100 / (input.val.vhtop || 20))`, but
+  `initPageCommentary` doesn't pass it.)
 - **Marks `popUp.loading = true`** because no `popUpData` was passed in.
 - Calls `setSlug("commentary/<id>")` **without** the `{replace: true}`
   flag — so this is a `history.push`, not a replace. The URL bar moves
@@ -306,10 +309,14 @@ BoMOnlineAPI({ commentary: appController.states.popUp.ids })
 ```
 
 This is a **second** fetch of the same commentary record (the first was in
-step 2). They're not deduplicated at the call site, but `BoMOnlineAPI`'s
-own request batching/caching may collapse them depending on cache settings.
-While the second fetch is in flight, the popup shows `<Loading
-type="Commentary" />`.
+step 2). For the direct-navigation flow documented here, this fetch always
+runs — `setPopUp` was called without `popUpData`, so `popUp.loading ===
+true` is guaranteed and `Commentary` fires the request. (When entered via
+the chat-preview path, `popUpData` is supplied and this fetch is skipped.)
+`BoMOnlineAPI` has no in-flight request coalescing — the two requests are
+not deduplicated at the call site, so expect two network requests on the
+direct-navigation flow. While the second fetch is in flight, the popup
+shows `<Loading type="Commentary" />`.
 
 ### 10. Render
 
