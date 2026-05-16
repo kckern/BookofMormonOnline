@@ -28,7 +28,7 @@ routes was used to enter.
   same `Page` component with `match.params.imageId` set.
 - The behavioral difference between the two is purely the URL the user
   starts on. The flow below is identical; the only end-state difference is
-  that the URL bar always ends up at `/art/<imageId>` (see step 7).
+  that the URL bar always ends up at `/art/<imageId>` (see step 8).
 
 ## Entry points that produce these URLs
 
@@ -44,7 +44,7 @@ routes was used to enter.
 ## Full flow
 
 The flow mirrors the commentary route up to step 5; the divergence is at
-step 7 (no popup; an explicit-callback image activation request that an
+step 8 (no popup; an explicit-callback image activation request that an
 `ImageBubble` claims).
 
 ### 1. Route mounts → `Page` component initializes
