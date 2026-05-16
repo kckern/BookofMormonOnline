@@ -12,23 +12,26 @@ import "./Page.css";
 // import Comments from '../_Common/Study/Study';
 import {
   testJSON,
-  findAncestor,
-  scrollTo,
   label,
   playSound,
-  getCoords,
   isMobile,
 } from "src/models/Utils";
 import { useRouteMatch } from "react-router-dom";
 
 import { Floaters } from "./Floaters";
 import PageNotFound from "./PageNotFound";
+import InitWarning from "./InitWarning";
 import { Alert } from "reactstrap";
 import loading_comments from "src/views/_Common/Study/svg/loading_comment.svg";
 import { MuteButton } from "./MuteButton";
 import { recordDeepLinkEvent } from "src/utils/deepLinkInstrument";
-import { orderByDomAncestry } from "src/utils/orderByDomAncestry";
-import { awaitDomOpen } from "src/utils/awaitDomOpen";
+import {
+  initPage,
+  initPageItem,
+  initPageImage,
+  initPageCommentary,
+  initPageFax,
+} from "./initPipeline";
 
 function prepareInitOpen(params) {
   let initOpen = {};
@@ -93,6 +96,7 @@ export default function Page({ appController }) {
         progress: {},
         autoClicked: new Set(),
         notFound: null,  // { type: "commentary" | "image", id: string } when set
+        initWarning: null,  // { type: "verseNotFound", slug?: string } when set
       };
       let preLoad = {
         peoplePlaceToolTipData: {},
@@ -158,6 +162,9 @@ export default function Page({ appController }) {
         setNotFound: (val) => {
           dispatch({ fn: "setNotFound", val: val });
         },
+        setInitWarning: (val) => {
+          dispatch({ fn: "setInitWarning", val: val });
+        },
         resetPage: (val) => {
           dispatch({ fn: "resetPage", val: val });
         },
@@ -204,6 +211,7 @@ export default function Page({ appController }) {
     dispatch({ fn: "markAsInitiated", val: false });
     pageController.functions.resetAutoClicked();
     pageController.functions.setNotFound(null);
+    pageController.functions.setInitWarning(null);
     pageController.appController.functions.requestImageActivation(null);
     const newInitOpen = prepareInitOpen(match.params);
     pageController.functions.setInitOpen(newInitOpen);
@@ -524,6 +532,10 @@ export default function Page({ appController }) {
           setReadyToScroll={setReadyToScroll}
         />
       ) : null}
+      <InitWarning
+        warning={pageController.states.initWarning}
+        onDismiss={() => pageController.functions.setInitWarning(null)}
+      />
       <div
         className={
           "content page " +
@@ -567,127 +579,6 @@ function LoadingPageCommentsNotice({ commentState, setReadyToScroll }) {
   );
 }
 //<pre>{commentState}</pre>
-
-// function initPage(pageController) {
-function initPage(pageController, lastLeaf) {
-
-  if (lastLeaf !== pageController.states.initOpen.pageSlug) {
-    let itemToScrollTo = document.getElementById(
-      pageController.states.initOpen.pageSlug + "/" + lastLeaf,
-    );
-    setTimeout(()=>{
-      itemToScrollTo.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start',
-        inline: 'nearest'
-      });
-      setTimeout(pageController.functions.markAsInitiated,1000);
-    },1000)
-  } else {
-    pageController.functions.markAsInitiated();
-    pageController.appController.functions.setSlug(
-      pageController.states.initOpen.pageSlug,
-    );
-  }
-}
-
-async function initPageItem(pageController, callback) {
-  recordDeepLinkEvent("initPageItem:enter");
-  const offsetTop = document.documentElement.clientHeight * 0.2;
-  const { textToOpen: rawTextToOpen, itemToScrollTo } = findTextToOpen(pageController);
-
-  if (!itemToScrollTo || rawTextToOpen.length === 0) {
-    recordDeepLinkEvent("initPageItem:noTarget", { rawTextToOpen });
-    pageController.functions.markAsInitiated();
-    if (callback) callback();
-    return;
-  }
-
-  const ordered = orderByDomAncestry(rawTextToOpen);
-  recordDeepLinkEvent("initPageItem:plan", { textToOpen: ordered });
-
-  await scrollToAsync(itemToScrollTo.offsetTop - offsetTop);
-  recordDeepLinkEvent("initPageItem:outerScrollDone");
-
-  for (const slug of ordered) {
-    const el = document.querySelector(`[textid='${slug}'] .reference a`);
-    if (!el) {
-      recordDeepLinkEvent("initPageItem:itemSkip", { slug, reason: "missing" });
-      continue;
-    }
-    if (pageController.states.autoClicked.has(slug)) {
-      recordDeepLinkEvent("initPageItem:itemSkip", { slug, reason: "already-clicked" });
-      continue;
-    }
-    pageController.states.autoClicked.add(slug);
-
-    const coords = getCoords(el);
-    recordDeepLinkEvent("initPageItem:itemScrollStart", { slug });
-    await scrollToAsync(coords?.top - offsetTop);
-    recordDeepLinkEvent("initPageItem:itemClick", { slug });
-    el.click();
-    const result = await awaitDomOpen(slug, 2000);
-    recordDeepLinkEvent("initPageItem:itemOpened", { slug, result });
-  }
-
-  recordDeepLinkEvent("initPageItem:markAsInitiated");
-  pageController.functions.markAsInitiated();
-  if (callback) {
-    recordDeepLinkEvent("initPageItem:callback");
-    callback();
-  }
-}
-
-function scrollToAsync(distance) {
-  return new Promise(resolve => scrollTo(distance, resolve));
-}
-
-function initPageImage(pageController) {
-  const imageId = pageController.states.initOpen.imageId;
-  initPageItem(pageController, () => {
-    pageController.appController.functions.requestImageActivation({ imageId });
-  });
-}
-
-function initPageCommentary(pageController) {
-  initPageItem(pageController, () =>
-    pageController.appController.functions.setPopUp({
-      type: "commentary",
-      ids: [pageController.states.initOpen.commentaryId],
-    }),
-  );
-}
-function initPageFax(pageController) {
-  initPageItem(pageController);
-}
-
-function findTextToOpen(pageController) {
-  if (pageController.states.initOpen.goToSection) {
-    return {
-      textToOpen: [],
-      itemToScrollTo: document.getElementById(
-        pageController.states.pageSlug +
-          "/" +
-          pageController.states.initOpen.goToSection,
-      ),
-    };
-  }
-
-  if (!pageController.states.initOpen.textId) {
-    return { textToOpen: [], itemToScrollTo: null };
-  }
-
-  let textToOpen = [];
-  let textSlug = `${pageController.states.pageSlug}/${pageController.states.initOpen.textId}`;
-  let el = document.querySelector(`[textid="${textSlug}"]`);
-  let itemToScrollTo = findAncestor(el, ".row");
-  let parentSlug = el?.closest(".row > [textid]")?.getAttribute("textid");
-  if (parentSlug !== textSlug) textToOpen.push(parentSlug);
-  textToOpen.push(textSlug);
-
-  //if (itemToScrollTo = document.querySelectorAll("[id='" + match.params.pageSlug + "']")[0];)
-  return { textToOpen, itemToScrollTo };
-}
 
 function onScrollPage(pageController) {
   var _sections = document.getElementsByClassName("pagesection");
@@ -932,6 +823,9 @@ function reducer(pageController, input) {
     case "setNotFound":
       pageController.states.notFound = input.val;
       pageController.states.loading = false;
+      break;
+    case "setInitWarning":
+      pageController.states.initWarning = input.val;
       break;
     case "setLoading":
       pageController.states.loading = input.val;

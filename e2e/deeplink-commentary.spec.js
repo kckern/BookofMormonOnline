@@ -1,7 +1,9 @@
-const { test, expect, getEvents, waitForEvent } = require("./fixtures");
+const { test, expect, getEvents, waitForEvent, getFixture } = require("./fixtures");
 
-const COMMENTARY_ID = process.env.E2E_COMMENTARY_ID || "REPLACE_ME";
-const NESTED_COMMENTARY_ID = process.env.E2E_NESTED_COMMENTARY_ID || COMMENTARY_ID;
+const COMMENTARY_ID = getFixture("commentaryId");
+const NESTED_COMMENTARY_ID = getFixture("nestedCommentaryId") !== "REPLACE_ME"
+  ? getFixture("nestedCommentaryId")
+  : COMMENTARY_ID;
 
 test.describe("commentary deep-link sequencing", () => {
   test.skip(COMMENTARY_ID === "REPLACE_ME", "Set E2E_COMMENTARY_ID to run");

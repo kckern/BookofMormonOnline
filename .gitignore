@@ -25,3 +25,6 @@ log.sql
 /.claude
 .worktrees/
 coverage/
+e2e/local-fixtures.json
+test-results/
+playwright-report/

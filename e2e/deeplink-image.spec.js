@@ -1,6 +1,6 @@
-const { test, expect, getEvents, waitForEvent } = require("./fixtures");
+const { test, expect, getEvents, waitForEvent, getFixture } = require("./fixtures");
 
-const IMAGE_ID = process.env.E2E_IMAGE_ID || "REPLACE_ME";
+const IMAGE_ID = getFixture("imageId");
 
 test.describe("image deep-link", () => {
   test.skip(IMAGE_ID === "REPLACE_ME", "Set E2E_IMAGE_ID to run");

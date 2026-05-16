@@ -93,6 +93,8 @@
     "dev:backend": "ts-node src/index.ts",
     "test": "jest",
     "e2e": "playwright test --config=e2e/playwright.config.js",
+    "e2e:all": "playwright test --config=e2e/playwright.config.js",
+    "e2e:unconditional": "playwright test --config=e2e/playwright.config.js e2e/deeplink-notfound.spec.js",
     "test:messenger": "jest messenger.test.ts --verbose",
     "test:regression": "jest test/regression --verbose",
     "test:all": "jest --verbose",
