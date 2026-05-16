@@ -33,7 +33,7 @@ Three places in the codebase navigate to `/commentary/<id>`:
 | Source | File | What it does |
 | --- | --- | --- |
 | Study feed cards | `views/_Common/Study/StudyInFeed.js:121,128,145` | `<Link to="/commentary/<id>">` on commentary cards in feed views — full route push, runs the flow below from scratch. |
-| Chat URL preview | `models/Utils.js:748` (`CommentaryPreview`) | A URL pasted into chat that matches `/commentary/\d+$` is rendered as a `CommentaryPreview` card. Clicking the card calls `setPopUp({ type: "commentary", ids: [id], underSlug: <current URL> })` **directly**, without changing the route — so the underlying page does *not* change. Closing the popup returns to the previous URL via `underSlug`. |
+| Chat URL preview | `models/Utils.js` (`CommentaryPreview`) | A URL pasted into chat that matches `/commentary/\d+$` is rendered as a `CommentaryPreview` card. Clicking the card calls `setPopUp({ type: "commentary", ids: [id], underSlug: <current URL> })` **directly**, without changing the route — so the underlying page does *not* change. Closing the popup returns to the previous URL via `underSlug`. |
 | Direct navigation | external link, address bar, shared URL | Hits the React Router route and runs the full flow. |
 
 The "full flow" documented below applies to entry points 1 and 3. Entry
@@ -49,33 +49,55 @@ already in hand.
 `match.params` only contains `commentaryId`. `match.params.pageSlug` and
 `match.params.textId` are **undefined** at this stage — the route has no slug.
 
-`prepareInitOpen(match.params)` (Page.js:29) builds:
+`prepareInitOpen(match.params)` (Page.js:33-45) builds:
 
 ```js
 initOpen = { pageSlug: undefined, commentaryId: "<id>" }
 ```
 
 This is stored on the page-controller state as `initOpen`. The page is then
-considered "loading" and the controller's `pageData` is `null`.
+considered "loading" and the controller's `pageData` is `null`. The
+controller also seeds `autoClicked: new Set()` and `notFound: null` for this
+mount (Page.js:94-95).
+
+Two composite keys drive the effects that follow:
+
+- `pageIdentityKey = pageSlug | commentaryId | imageId` (Page.js:61) — gates
+  the data-fetch effect, so navigating within the same `/commentary/<id>`
+  doesn't refire the GraphQL load.
+- `routeKey = pageSlug | textId | commentaryId | imageId | faxVersion`
+  (Page.js:60) — gates the route-reset effect, which clears `initStarted`,
+  `readyToScroll`, `autoClicked`, `notFound`, and any pending
+  `imageActivationRequest` before re-running `handlePageInit`
+  (Page.js:201-211).
 
 ### 2. Resolve commentary → page slug + text id
 
-`Page.js:60-62`:
+`Page.js:63-70`:
 
 ```js
-if (match.params.imageId || match.params.commentaryId)
-  getPageDataFromAPIViaNote(match.params);
-else getPageDataFromAPI(match.params.pageSlug);
+useEffect(() => {
+  pageController.functions.setPageData(null);
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  pageController.functions.setLoading(true);
+  if (match.params.imageId || match.params.commentaryId)
+    getPageDataFromAPIViaNote(match.params);
+  else getPageDataFromAPI(match.params.pageSlug);
+}, [pageIdentityKey]);
 ```
 
-`getPageDataFromAPIViaNote` (Page.js:312-327) issues a GraphQL query for the
-commentary:
+`getPageDataFromAPIViaNote` (Page.js:331-361) issues a GraphQL query for the
+commentary inside a `try/catch`:
 
 ```js
 let response = await BoMOnlineAPI({ commentary: params.commentaryId });
-let commentary = response.commentary[params.commentaryId];
-pageSlug = commentary.location?.slug.replace(/\/\d+$/, "");
-textId   = commentary.location?.slug.match(/\d+$/)[0];
+let commentary = response?.commentary?.[params.commentaryId];
+if (!commentary?.location?.slug) {
+  pageController.functions.setNotFound({ type: "commentary", id: params.commentaryId });
+  return;
+}
+pageSlug = commentary.location.slug.replace(/\/\d+$/, "");
+textId   = commentary.location.slug.match(/\d+$/)?.[0];
 ```
 
 The commentary record's `location` is a `BomText` row (see
@@ -86,9 +108,14 @@ The commentary record's `location` is a `BomText` row (see
 
 Then `getPageDataFromAPI(pageSlug, textId)` is called.
 
+If the commentary is missing (`response.commentary[id]` empty or
+`location.slug` null) or the fetch throws, `setNotFound({type:"commentary",
+id})` is dispatched and the render branch switches to `<PageNotFound />` —
+see the "Edge case: not found" section below.
+
 ### 3. Load the page data
 
-`getPageDataFromAPI` (Page.js:262-309) queries:
+`getPageDataFromAPI` (Page.js:281-328) queries:
 
 ```js
 BoMOnlineAPI(
@@ -109,33 +136,47 @@ pageController.functions.setPageData(response.page[index]);
 pageController.functions.setPageProgress(response.pageprogress);
 ```
 
-The `setPageSlugId` reducer (Page.js:855-866) folds `textId` and `pageSlug`
-back into `initOpen` so the subsequent init logic can use them — they
-weren't in the URL params, but they exist on `initOpen` now.
+The `setPageSlugId` reducer folds `textId` and `pageSlug` back into
+`initOpen` so the subsequent init logic can use them — they weren't in the
+URL params, but they exist on `initOpen` now.
 
 `setPageData` triggers the React render of the page sections and rows.
 
 ### 4. Wait for "ready to scroll"
 
-The page-init effect (Page.js:213-240) won't run until **all** of:
+The page-init effect (Page.js:254-259) won't run until **all** of:
 
 - `initStarted === false` (it hasn't already run)
 - `readyToScroll === true`
 - `document.querySelector(".content")` exists (rows are in the DOM)
 
-`readyToScroll` is set by `loadPageComments` (Page.js:369+). If the user is
-logged in **and** in study mode **and** an active study group is selected,
-the page comments must finish loading first (it subscribes to socket events,
-fetches existing comments, and only then calls `setReadyToScroll(true)`).
-Otherwise it short-circuits to `setReadyToScroll(true)` immediately.
+`readyToScroll` is set by `loadPageComments` (Page.js:403-511). If the user
+is logged in **and** in study mode **and** an active study group is
+selected, the page comments must finish loading first (it subscribes to
+socket events, fetches existing comments, and only then calls
+`setReadyToScroll(true)`). Otherwise it short-circuits to
+`setReadyToScroll(true)` immediately.
 
-This is why the commentary popup sometimes appears almost instantly and
-sometimes takes a second or two — the timing follows the page-comment
-pipeline, not the commentary fetch.
+To prevent that pipeline from hanging the deep-link forever, the chat-list
+load is bounded by a **2.5 s `COMMENTS_FALLBACK_MS` fallback timer**
+(Page.js:478-482):
+
+```js
+const COMMENTS_FALLBACK_MS = 2500;
+const fallbackTimer = setTimeout(() => {
+  recordDeepLinkEvent("loadPageComments:fallback");
+  setReadyToScroll(true);
+}, COMMENTS_FALLBACK_MS);
+```
+
+If `listQuery.load()` resolves first the timer is cleared. Either way,
+`readyToScroll` is guaranteed to flip true within ~2.5 s of the page data
+arriving, so the commentary deep-link can never wedge on a slow chat
+service.
 
 ### 5. Dispatch to `initPageCommentary`
 
-`handlePageInit` (Page.js:213-233) routes by `initOpen` flags. With
+`handlePageInit` (Page.js:232-252) routes by `initOpen` flags. With
 `commentaryId` set, it dispatches to:
 
 ```js
@@ -149,43 +190,81 @@ function initPageCommentary(pageController) {
 }
 ```
 
-So the open-popup call is supplied as the **callback** to `initPageItem` —
-it only fires after the scroll-and-expand has completed.
+(Page.js:652-658.) So the open-popup call is supplied as the **callback**
+to `initPageItem` — it only fires after the scroll-and-expand has
+completed.
 
 ### 6. Scroll, then expand the text row(s)
 
-`initPageItem` (Page.js:567-597) does the visual choreography:
+`initPageItem` (Page.js:594-639) is an `async` function that drives the
+visual choreography sequentially. The pipeline is **signal-driven**, not
+timer-paced — there is no `setTimeout(..., 1000)` stagger anymore.
 
-1. `findTextToOpen(pageController)` walks the DOM to find the row whose
-   element has `textid="<pageSlug>/<textId>"`. It also walks up to the
-   closest `.row > [textid]` ancestor to find a **parent text slug** (if
-   the target text is nested inside a parent text, e.g. a subordinate row
-   inside a quotation block) and includes both in `textToOpen`.
-2. It computes a scroll target: the row's `offsetTop` minus 20% of the
-   viewport height (so the row lands roughly one-fifth from the top).
-3. `scrollTo(distance, callback)` (Utils.js:386-401) waits one second and
-   then calls `window.scrollTo({ top, behavior: "smooth" })`. After another
-   second it fires the callback.
-4. Inside the callback, for **each** `textToOpen` entry (parent first,
-   then leaf — they're sorted), it:
-   - Looks up `[textid='<slug>'] .reference a` (the verse-reference link
+1. `findTextToOpen(pageController)` (Page.js:664-690) walks the DOM to find
+   the row whose element has `textid="<pageSlug>/<textId>"`. It also walks
+   up to the closest `.row > [textid]` ancestor to find a **parent text
+   slug** (if the target text is nested inside a parent text, e.g. a
+   subordinate row inside a quotation block) and pushes both into the
+   `textToOpen` array.
+
+2. The raw `textToOpen` array is reordered via
+   `orderByDomAncestry(rawTextToOpen)`
+   (`frontend/webapp/src/utils/orderByDomAncestry.js`). This uses
+   `compareDocumentPosition` so an ancestor row always sorts before its
+   descendant, regardless of the order `findTextToOpen` produced. Net
+   effect for commentaries: a containing quotation block (if any) opens
+   first, then the leaf text — so the leaf is visible when its parent
+   expands.
+
+3. The outer scroll: `await scrollToAsync(itemToScrollTo.offsetTop -
+   offsetTop)`, where `offsetTop` is 20% of the viewport height (so the
+   row lands roughly one-fifth from the top). `scrollToAsync` wraps the
+   `scrollTo` helper at `models/Utils.js:387-425`. That helper calls
+   `window.scrollTo({ top, behavior: "smooth" })` and resolves the
+   callback when the browser fires the **`scrollend`** event — with a
+   `SCROLL_FALLBACK_MS = 2000` `setTimeout` for browsers that don't yet
+   support `scrollend` (older Safari). If `prefers-reduced-motion` is set
+   the scroll runs in `instant` mode and resolves synchronously.
+
+4. For **each** slug in the DOM-ancestry-ordered list, in order:
+   - Look up `[textid='<slug>'] .reference a` (the verse-reference link
      that toggles the row open/closed).
-   - If the element is missing or already has the `autoclicked` attribute,
-     skips it.
-   - Otherwise tags the element with `autoclicked="true"`, scrolls the
-     element into view, and synthesizes a `.click()`.
-   - Each click is staggered by 1000 ms (`time += 1000` per item).
-5. After all the staggered clicks, `setTimeout(callback, time)` fires the
-   outer callback supplied by `initPageCommentary` — which is what opens
-   the popup.
+   - **Skip if missing** (the row never rendered) and continue to the
+     next slug.
+   - **Skip if `pageController.states.autoClicked.has(slug)`** —
+     `autoClicked` is a `Set` on controller state (Page.js:94) that
+     records which slugs the init pipeline has already dispatched to,
+     so re-entry of the loop can't double-click the same row.
+   - Otherwise, add the slug to `autoClicked`, scroll to the row's
+     `.reference a` coordinates (`getCoords(el).top - offsetTop`) via
+     another `await scrollToAsync(...)`, then call `el.click()`.
+   - `await awaitDomOpen(slug, 2000)`
+     (`frontend/webapp/src/utils/awaitDomOpen.js`). This returns a
+     Promise that resolves when `[textid='<slug>'] .reference` gains the
+     `open` class — driven by a `MutationObserver` watching `class`
+     attribute mutations. A 2 s timeout backstops it so a row that
+     refuses to open can't stall the rest of the chain.
 
-Net effect: smooth scroll → ~1 s pause → row reference link clicked open
-→ ~1 s per nested level → popup appears.
+5. After the loop, `markAsInitiated()` flips the controller into its
+   "init complete" state, and the supplied callback (the one from
+   `initPageCommentary`) fires — opening the popup.
+
+Net effect: a single smooth outer scroll → per-row scroll/click → wait for
+the DOM to confirm the row opened → next row → popup. No magic-number
+timers; all waits are on actual browser signals.
+
+The auto-click side-effect on URL bar: when `el.click()` fires the row's
+toggle handler, `setActiveRow` is dispatched with `auto: true` (because the
+slug was just added to `autoClicked`, so `autoClicked?.has(slug)` is true).
+The reducer at Page.js:738-755 then calls `setSlug(slug, { replace: true })`
+and deletes the slug from `autoClicked`. The auto-click thus
+`history.replace`s the URL into the row, rather than pushing a new history
+entry. See the URL-bar section below.
 
 ### 7. Open the commentary popup
 
 The callback runs `appController.functions.setPopUp(...)`. The reducer
-(`models/appController.js:256-283`) does:
+(`models/appController.js:263-290`) does:
 
 - If the popup wasn't already open, captures `underSlug` from the current
   app slug. (This is what closing the popup will restore.)
@@ -195,16 +274,15 @@ The callback runs `appController.functions.setPopUp(...)`. The reducer
   popup is positioned near the user's current scroll position, just below
   the row that was opened.
 - **Marks `popUp.loading = true`** because no `popUpData` was passed in.
-- Calls `setSlug("commentary/<id>")` — which pushes the path into
-  `react-router`'s history (`models/appController.js:225-232`). The URL bar
-  now reads `/commentary/<id>` (which is already the URL you're on, so this
-  is effectively a no-op on direct navigation, but matters when the popup
-  is opened from a chat preview that started on a different URL).
+- Calls `setSlug("commentary/<id>")` **without** the `{replace: true}`
+  flag — so this is a `history.push`, not a replace. The URL bar moves
+  back to `/commentary/<id>`. (See the URL-bar table below for how this
+  composes with the prior auto-click replace.)
 - Updates the document title via `setPopDocTitle`.
 
 ### 8. PopUp component decides which renderer
 
-`views/_Common/PopUp.js:98-115`:
+`views/_Common/PopUp.js`:
 
 - `if (isMobile()) return <MobileDrawer ... />` — mobile uses a drawer
   variant; the same `popUp.type === "commentary"` branch applies but the
@@ -213,8 +291,8 @@ The callback runs `appController.functions.setPopUp(...)`. The reducer
 
 ### 9. `Commentary` fetches data if it doesn't already have it
 
-`views/_Common/Commentary.js:114-137`. With `popUp.loading === true` and
-no `appController.popUpData`, it fires:
+`views/_Common/Commentary.js`. With `popUp.loading === true` and no
+`appController.popUpData`, it fires:
 
 ```js
 BoMOnlineAPI({ commentary: appController.states.popUp.ids })
@@ -235,8 +313,8 @@ type="Commentary" />`.
 
 ### 10. Render
 
-Once the data is in place, `Commentary` (Commentary.js:222+) renders a
-draggable card containing:
+Once the data is in place, `Commentary` renders a draggable card
+containing:
 
 - **Header** — `commentary_on_x` label populated with `reference`, plus a
   tab strip if multiple commentaries are in `ids` (Tab/ArrowRight/ArrowLeft
@@ -256,33 +334,62 @@ draggable card containing:
 - **Comments thread** — `<Comments linkData={{ com: <id> }} ... />`
   attaches the studygroup chat scoped to this commentary id.
 
+## Timing model
+
+Total deterministic latency from page-ready to popup is now dominated by
+actual scroll completion plus a single `MutationObserver` wait per row. On a
+fast desktop with a 1000 px scroll distance, a non-nested commentary
+deep-link completes in roughly 400-800 ms (one outer scroll, one row open).
+A nested commentary deep-link (parent + leaf) takes roughly 800-1400 ms
+(two scrolls, two row opens). Per-step `setTimeout(..., 1000)` stagger is
+gone — the previous "4 + N seconds" model no longer applies.
+
 ## What changes in the URL bar
 
 | Moment | URL |
 | --- | --- |
 | User hits `/commentary/<id>` | `/commentary/<id>` |
-| After page data loads, before scroll | unchanged |
-| After `initPageCommentary` opens popup | `setSlug("commentary/<id>")` → unchanged in practice (same path); `underSlug` is the page's previous slug (empty string on cold load). |
-| User closes popup | `setSlug(underSlug)` — for a cold load this is `""`, so the URL pushes to `/`. For a popup opened from another page (via chat preview), it returns to that page. |
+| Page data loads, init begins | unchanged |
+| Auto-click of `.reference a` fires `setActiveRow({...auto: true})` → `setSlug(slug, { replace: true })` | URL replaces in place (no new history entry) — `/<pageSlug>/<textId>` |
+| Each subsequent auto-click of a nested row | URL keeps replacing — only the last replaced entry remains, e.g. the leaf `/<pageSlug>/<leafTextId>` |
+| `setPopUp` fires `setSlug("commentary/<id>")` (no `replace` flag, so it's a push) | URL pushes back to `/commentary/<id>` — net 2 history entries after init: `[/<row>, /commentary/<id>]` |
+| Back button once | Lands on `/<row>` (single back-stop) — the row stays open, popup closes |
+| Back button twice | Escapes to the page that preceded the `/commentary/<id>` navigation |
+| User closes popup via × | `closePopUp` runs `setSlug(underSlug)`. For a cold direct-navigation load `underSlug` is the slug captured at `setPopUp` time (the auto-clicked row slug), so the URL returns to `/<pageSlug>/<textId>`. |
 
-This means **closing the commentary popup after a deep-link load drops you
-on the home page, not the underlying scripture page you were just looking
-at**. The underlying page is still mounted (the popup never unmounted it),
-so visually you stay there, but the URL is `/`. This is a known quirk of
-`underSlug` being captured at `setPopUp` time, when the deep-link's
-"under" slug was never set.
+The two-entry history trail is intentional: it lets a single back-button
+press land the user on the row that the popup was anchored to (so they can
+keep reading the surrounding scripture), rather than skipping that context
+on the way to the previous page.
 
 ## What does NOT happen
 
 - The route does **not** redirect to `/<pageSlug>/<textId>` first and then
-  open the popup. It stays at `/commentary/<id>` for the entire init
-  sequence; only the popup opening pushes a new slug.
+  open the popup. The user-visible URL during init is the auto-click
+  replace target (`/<pageSlug>/<textId>`) and then the popup push
+  (`/commentary/<id>`) — there is no separate scripted redirect.
 - `findTextToOpen` does **not** rely on `match.params.textId` — for this
   route there is none. It uses `initOpen.textId`, which was populated by
   `setPageSlugId` after the commentary record was fetched in step 2.
 - The page's normal "open the row when you visit `/<pageSlug>/<textId>`"
   path (`initPageItem` called directly) is reused; the only addition for
   commentaries is the callback that fires `setPopUp` after the row opens.
+- The flow does **not** rely on a polling loop or fixed timer for row
+  opens. `awaitDomOpen`'s `MutationObserver` is the only signal the
+  pipeline waits on (with a 2 s timeout as a backstop).
+
+## Edge case: not found
+
+If `BoMOnlineAPI({commentary: id})` returns empty data (sandbox mode,
+invalid id, permissions) or rejects with a network error,
+`getPageDataFromAPIViaNote` (Page.js:331-361) catches the failure mode and
+dispatches `setNotFound({type: "commentary", id})`. The render branch at
+Page.js:514-516 short-circuits to `<PageNotFound />` (in
+`frontend/webapp/src/views/Page/PageNotFound.js`) instead of looping on a
+`<Loader />`. The route-change effect at Page.js:201-211 clears
+`notFound` (alongside `autoClicked`, `imageActivationRequest`, and the init
+flags) on any subsequent navigation, so the user can recover by clicking
+another link without a hard reload.
 
 ## Backend support
 
@@ -305,25 +412,39 @@ type Commentary {
 ```
 
 The `location.slug` is the load-bearing field for this whole flow — if it
-were ever null, `getPageDataFromAPIViaNote` would call `getPageDataFromAPI(undefined, undefined)` and the page would silently fail to load.
+is null or missing, the frontend short-circuits to `setNotFound` rather
+than calling `getPageDataFromAPI(undefined, undefined)`.
 
 ## File map
 
 | File | Lines | Role |
 | --- | --- | --- |
-| `frontend/webapp/src/models/Routes.js` | 250-252 | Route definition |
-| `frontend/webapp/src/views/Page/Page.js` | 29-41 | `prepareInitOpen` — stashes `commentaryId` into `initOpen` |
-| `frontend/webapp/src/views/Page/Page.js` | 56-63 | useEffect routes commentary loads to `getPageDataFromAPIViaNote` |
-| `frontend/webapp/src/views/Page/Page.js` | 312-327 | `getPageDataFromAPIViaNote` — commentary → pageSlug + textId |
-| `frontend/webapp/src/views/Page/Page.js` | 213-240 | `handlePageInit` — dispatches to `initPageCommentary` once ready |
-| `frontend/webapp/src/views/Page/Page.js` | 567-613 | `initPageItem` / `initPageCommentary` — scroll, expand row, fire callback |
-| `frontend/webapp/src/views/Page/Page.js` | 615-641 | `findTextToOpen` — locates target row and its parent |
-| `frontend/webapp/src/models/appController.js` | 256-283 | `setPopUp` reducer — opens the popup |
-| `frontend/webapp/src/models/appController.js` | 225-232 | `setSlug` — pushes the popup's slug into history |
-| `frontend/webapp/src/views/_Common/PopUp.js` | 70-118 | `<PopUp>` — routes to `<Commentary>` (or `<MobileDrawer>`) |
-| `frontend/webapp/src/views/_Common/Commentary.js` | 114-137 | Lazy-fetches commentary data when popup loads |
-| `frontend/webapp/src/views/_Common/Commentary.js` | 222-440 | Renders the commentary card UI |
-| `frontend/webapp/src/models/GraphQLQueries.js` | 449-478 | `commentary` query builder |
+| `frontend/webapp/src/models/Routes.js` | 249-252 | Route definition |
+| `frontend/webapp/src/views/Page/Page.js` | 33-45 | `prepareInitOpen` — stashes `commentaryId` into `initOpen` |
+| `frontend/webapp/src/views/Page/Page.js` | 60-61 | `routeKey` / `pageIdentityKey` composite deps |
+| `frontend/webapp/src/views/Page/Page.js` | 63-70 | Data-fetch effect routes commentary loads to `getPageDataFromAPIViaNote` |
+| `frontend/webapp/src/views/Page/Page.js` | 94-95 | `autoClicked` Set + `notFound` initial state |
+| `frontend/webapp/src/views/Page/Page.js` | 201-211 | Route-reset effect — clears init flags, `autoClicked`, `notFound`, `imageActivationRequest` |
+| `frontend/webapp/src/views/Page/Page.js` | 232-252 | `handlePageInit` — dispatches to `initPageCommentary` once ready |
+| `frontend/webapp/src/views/Page/Page.js` | 281-328 | `getPageDataFromAPI` — fetches page + progress |
+| `frontend/webapp/src/views/Page/Page.js` | 331-361 | `getPageDataFromAPIViaNote` — commentary → pageSlug + textId, with `setNotFound` on miss + try/catch |
+| `frontend/webapp/src/views/Page/Page.js` | 478-482 | `COMMENTS_FALLBACK_MS` (2.5 s) backstop for the chat-list wait |
+| `frontend/webapp/src/views/Page/Page.js` | 514-516 | Render branch that short-circuits to `<PageNotFound />` |
+| `frontend/webapp/src/views/Page/Page.js` | 594-639 | `initPageItem` — async sequential scroll/click/await per row |
+| `frontend/webapp/src/views/Page/Page.js` | 641-643 | `scrollToAsync` Promise wrapper around `scrollTo` |
+| `frontend/webapp/src/views/Page/Page.js` | 652-658 | `initPageCommentary` — one-line wrapper passing the popup callback to `initPageItem` |
+| `frontend/webapp/src/views/Page/Page.js` | 664-690 | `findTextToOpen` — locates target row and its parent |
+| `frontend/webapp/src/views/Page/Page.js` | 738-755 | `setActiveRow` reducer — `setSlug(..., {replace: auto === true})` and `autoClicked.delete(slug)` |
+| `frontend/webapp/src/views/Page/PageNotFound.js` | 1-19 | Not-found UI shown when `notFound` is set |
+| `frontend/webapp/src/utils/orderByDomAncestry.js` | 1-19 | Sort slugs by DOM ancestry so ancestor rows open before descendants |
+| `frontend/webapp/src/utils/awaitDomOpen.js` | 1-25 | `MutationObserver`-backed wait for a row's `.reference` to gain `open` |
+| `frontend/webapp/src/utils/deepLinkInstrument.js` | 1-17 | Opt-in event recorder (`window.__deepLinkInstrument`) used by init pipeline |
+| `frontend/webapp/src/models/Utils.js` | 387-425 | `scrollTo` — `scrollend`-event-driven, 2 s fallback for older browsers |
+| `frontend/webapp/src/models/appController.js` | 231-240 | `setSlug` — push by default, `history.replace` when `{replace: true}` opts passed |
+| `frontend/webapp/src/models/appController.js` | 263-290 | `setPopUp` reducer — opens the popup, pushes `/commentary/<id>` |
+| `frontend/webapp/src/views/_Common/PopUp.js` | — | `<PopUp>` — routes to `<Commentary>` (or `<MobileDrawer>`) |
+| `frontend/webapp/src/views/_Common/Commentary.js` | — | Lazy-fetches commentary data when popup loads and renders the card UI |
+| `frontend/webapp/src/models/GraphQLQueries.js` | — | `commentary` query builder |
 | `src/resolvers/BomNotes.ts` | 19-37 | `commentary` GraphQL resolver |
-| `frontend/webapp/src/models/Utils.js` | 748-784 | `CommentaryPreview` — chat-link card that opens the popup without changing the route |
+| `frontend/webapp/src/models/Utils.js` | — | `CommentaryPreview` — chat-link card that opens the popup without changing the route |
 | `frontend/webapp/src/views/_Common/Study/StudyInFeed.js` | 121, 128, 145 | Feed cards that link to `/commentary/<id>` |
