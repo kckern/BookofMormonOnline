@@ -1,10 +1,10 @@
-const { test, expect, getEvents, waitForEvent } = require("./fixtures");
+const { test, expect, getEvents, waitForEvent, getFixture } = require("./fixtures");
 
-const A = process.env.E2E_COMMENTARY_ID || "REPLACE_ME";
-const B = process.env.E2E_COMMENTARY_ID_B || "REPLACE_ME";
+const A = getFixture("commentaryId");
+const B = getFixture("secondCommentaryId");
 
 test.describe("commentary deep-link renavigation", () => {
-  test.skip(A === "REPLACE_ME" || B === "REPLACE_ME", "Set E2E_COMMENTARY_ID and E2E_COMMENTARY_ID_B to run");
+  test.skip(A === "REPLACE_ME" || B === "REPLACE_ME", "Set E2E_COMMENTARY_ID and E2E_SECOND_COMMENTARY_ID to run");
 
   test("navigating /commentary/A → /commentary/B re-runs init with B's id", async ({ instrumentedPage: page }) => {
     await page.goto(`/commentary/${A}`);
