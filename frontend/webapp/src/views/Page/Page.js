@@ -23,6 +23,7 @@ import { useRouteMatch } from "react-router-dom";
 
 import { Floaters } from "./Floaters";
 import PageNotFound from "./PageNotFound";
+import InitWarning from "./InitWarning";
 import { Alert } from "reactstrap";
 import loading_comments from "src/views/_Common/Study/svg/loading_comment.svg";
 import { MuteButton } from "./MuteButton";
@@ -93,6 +94,7 @@ export default function Page({ appController }) {
         progress: {},
         autoClicked: new Set(),
         notFound: null,  // { type: "commentary" | "image", id: string } when set
+        initWarning: null,  // { type: "verseNotFound", slug?: string } when set
       };
       let preLoad = {
         peoplePlaceToolTipData: {},
@@ -158,6 +160,9 @@ export default function Page({ appController }) {
         setNotFound: (val) => {
           dispatch({ fn: "setNotFound", val: val });
         },
+        setInitWarning: (val) => {
+          dispatch({ fn: "setInitWarning", val: val });
+        },
         resetPage: (val) => {
           dispatch({ fn: "resetPage", val: val });
         },
@@ -204,6 +209,7 @@ export default function Page({ appController }) {
     dispatch({ fn: "markAsInitiated", val: false });
     pageController.functions.resetAutoClicked();
     pageController.functions.setNotFound(null);
+    pageController.functions.setInitWarning(null);
     pageController.appController.functions.requestImageActivation(null);
     const newInitOpen = prepareInitOpen(match.params);
     pageController.functions.setInitOpen(newInitOpen);
@@ -524,6 +530,10 @@ export default function Page({ appController }) {
           setReadyToScroll={setReadyToScroll}
         />
       ) : null}
+      <InitWarning
+        warning={pageController.states.initWarning}
+        onDismiss={() => pageController.functions.setInitWarning(null)}
+      />
       <div
         className={
           "content page " +
@@ -598,6 +608,12 @@ async function initPageItem(pageController, callback) {
 
   if (!itemToScrollTo || rawTextToOpen.length === 0) {
     recordDeepLinkEvent("initPageItem:noTarget", { rawTextToOpen });
+    // Only warn when the user asked for a specific verse but we couldn't find its row.
+    // Bare /<pageSlug> routes have no textId set — those are not failures.
+    if (pageController.states.initOpen.textId) {
+      const slug = `${pageController.states.pageSlug}/${pageController.states.initOpen.textId}`;
+      pageController.functions.setInitWarning({ type: "verseNotFound", slug });
+    }
     pageController.functions.markAsInitiated();
     if (callback) callback();
     return;
@@ -932,6 +948,9 @@ function reducer(pageController, input) {
     case "setNotFound":
       pageController.states.notFound = input.val;
       pageController.states.loading = false;
+      break;
+    case "setInitWarning":
+      pageController.states.initWarning = input.val;
       break;
     case "setLoading":
       pageController.states.loading = input.val;
