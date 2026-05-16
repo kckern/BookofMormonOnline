@@ -49,7 +49,7 @@ already in hand.
 `match.params` only contains `commentaryId`. `match.params.pageSlug` and
 `match.params.textId` are **undefined** at this stage — the route has no slug.
 
-`prepareInitOpen(match.params)` (Page.js:33-45) builds:
+`prepareInitOpen(match.params)` (Page.js:36-48) builds:
 
 ```js
 initOpen = { pageSlug: undefined, commentaryId: "<id>" }
@@ -58,22 +58,22 @@ initOpen = { pageSlug: undefined, commentaryId: "<id>" }
 This is stored on the page-controller state as `initOpen`. The page is then
 considered "loading" and the controller's `pageData` is `null`. The
 controller also seeds `autoClicked: new Set()` and `notFound: null` for this
-mount (Page.js:94-95).
+mount (Page.js:97-99).
 
 Two composite keys drive the effects that follow:
 
-- `pageIdentityKey = pageSlug | commentaryId | imageId` (Page.js:61) — gates
+- `pageIdentityKey = pageSlug | commentaryId | imageId` (Page.js:64) — gates
   the data-fetch effect, so navigating within the same `/commentary/<id>`
   doesn't refire the GraphQL load.
 - `routeKey = pageSlug | textId | commentaryId | imageId | faxVersion`
-  (Page.js:60) — gates the route-reset effect, which clears `initStarted`,
+  (Page.js:63) — gates the route-reset effect, which clears `initStarted`,
   `readyToScroll`, `autoClicked`, `notFound`, and any pending
   `imageActivationRequest` before re-running `handlePageInit`
-  (Page.js:201-211).
+  (Page.js:208-219).
 
 ### 2. Resolve commentary → page slug + text id
 
-`Page.js:63-70`:
+`Page.js:66-73`:
 
 ```js
 useEffect(() => {
@@ -86,7 +86,7 @@ useEffect(() => {
 }, [pageIdentityKey]);
 ```
 
-`getPageDataFromAPIViaNote` (Page.js:331-361) issues a GraphQL query for the
+`getPageDataFromAPIViaNote` (Page.js:339-369) issues a GraphQL query for the
 commentary inside a `try/catch`:
 
 ```js
@@ -115,7 +115,7 @@ see the "Edge case: not found" section below.
 
 ### 3. Load the page data
 
-`getPageDataFromAPI` (Page.js:281-328) queries:
+`getPageDataFromAPI` (Page.js:289-336) queries:
 
 ```js
 BoMOnlineAPI(
@@ -144,13 +144,13 @@ URL params, but they exist on `initOpen` now.
 
 ### 4. Wait for "ready to scroll"
 
-The page-init effect (Page.js:254-259) won't run until **all** of:
+The page-init effect (Page.js:262-267) won't run until **all** of:
 
 - `initStarted === false` (it hasn't already run)
 - `readyToScroll === true`
 - `document.querySelector(".content")` exists (rows are in the DOM)
 
-`readyToScroll` is set by `loadPageComments` (Page.js:403-511). If the user
+`readyToScroll` is set by `loadPageComments` (Page.js:411-519). If the user
 is logged in **and** in study mode **and** an active study group is
 selected, the page comments must finish loading first (it subscribes to
 socket events, fetches existing comments, and only then calls
@@ -159,7 +159,7 @@ socket events, fetches existing comments, and only then calls
 
 To prevent that pipeline from hanging the deep-link forever, the chat-list
 load is bounded by a **2.5 s `COMMENTS_FALLBACK_MS` fallback timer**
-(Page.js:478-482):
+(Page.js:486-490):
 
 ```js
 const COMMENTS_FALLBACK_MS = 2500;
@@ -176,7 +176,7 @@ service.
 
 ### 5. Dispatch to `initPageCommentary`
 
-`handlePageInit` (Page.js:232-252) routes by `initOpen` flags. With
+`handlePageInit` (Page.js:240-260) routes by `initOpen` flags. With
 `commentaryId` set, it dispatches to:
 
 ```js
@@ -190,17 +190,17 @@ function initPageCommentary(pageController) {
 }
 ```
 
-(Page.js:652-658.) So the open-popup call is supplied as the **callback**
+(initPipeline.js:96-103.) So the open-popup call is supplied as the **callback**
 to `initPageItem` — it only fires after the scroll-and-expand has
 completed.
 
 ### 6. Scroll, then expand the text row(s)
 
-`initPageItem` (Page.js:594-639) is an `async` function that drives the
+`initPageItem` (initPipeline.js:32-83) is an `async` function that drives the
 visual choreography sequentially. The pipeline is **signal-driven**, not
 timer-paced — there is no `setTimeout(..., 1000)` stagger anymore.
 
-1. `findTextToOpen(pageController)` (Page.js:664-690) walks the DOM to find
+1. `findTextToOpen(pageController)` (initPipeline.js:108-134) walks the DOM to find
    the row whose element has `textid="<pageSlug>/<textId>"`. It also walks
    up to the closest `.row > [textid]` ancestor to find a **parent text
    slug** (if the target text is nested inside a parent text, e.g. a
@@ -232,7 +232,7 @@ timer-paced — there is no `setTimeout(..., 1000)` stagger anymore.
    - **Skip if missing** (the row never rendered) and continue to the
      next slug.
    - **Skip if `pageController.states.autoClicked.has(slug)`** —
-     `autoClicked` is a `Set` on controller state (Page.js:94) that
+     `autoClicked` is a `Set` on controller state (Page.js:97) that
      records which slugs the init pipeline has already dispatched to,
      so re-entry of the loop can't double-click the same row.
    - Otherwise, add the slug to `autoClicked`, scroll to the row's
@@ -256,7 +256,7 @@ timers; all waits are on actual browser signals.
 The auto-click side-effect on URL bar: when `el.click()` fires the row's
 toggle handler, `setActiveRow` is dispatched with `auto: true` (because the
 slug was just added to `autoClicked`, so `autoClicked?.has(slug)` is true).
-The reducer at Page.js:738-755 then calls `setSlug(slug, { replace: true })`
+The reducer at Page.js:629-708 then calls `setSlug(slug, { replace: true })`
 and deletes the slug from `autoClicked`. The auto-click thus
 `history.replace`s the URL into the row, rather than pushing a new history
 entry. See the URL-bar section below.
@@ -389,11 +389,11 @@ on the way to the previous page.
 
 If `BoMOnlineAPI({commentary: id})` returns empty data (sandbox mode,
 invalid id, permissions) or rejects with a network error,
-`getPageDataFromAPIViaNote` (Page.js:331-361) catches the failure mode and
+`getPageDataFromAPIViaNote` (Page.js:339-369) catches the failure mode and
 dispatches `setNotFound({type: "commentary", id})`. The render branch at
-Page.js:514-516 short-circuits to `<PageNotFound />` (in
+Page.js:522-524 short-circuits to `<PageNotFound />` (in
 `frontend/webapp/src/views/Page/PageNotFound.js`) instead of looping on a
-`<Loader />`. The route-change effect at Page.js:201-211 clears
+`<Loader />`. The route-change effect at Page.js:208-219 clears
 `notFound` (alongside `autoClicked`, `imageActivationRequest`, and the init
 flags) on any subsequent navigation, so the user can recover by clicking
 another link without a hard reload.
@@ -427,21 +427,21 @@ than calling `getPageDataFromAPI(undefined, undefined)`.
 | File | Lines | Role |
 | --- | --- | --- |
 | `frontend/webapp/src/models/Routes.js` | 249-252 | Route definition |
-| `frontend/webapp/src/views/Page/Page.js` | 33-45 | `prepareInitOpen` — stashes `commentaryId` into `initOpen` |
-| `frontend/webapp/src/views/Page/Page.js` | 60-61 | `routeKey` / `pageIdentityKey` composite deps |
-| `frontend/webapp/src/views/Page/Page.js` | 63-70 | Data-fetch effect routes commentary loads to `getPageDataFromAPIViaNote` |
-| `frontend/webapp/src/views/Page/Page.js` | 94-95 | `autoClicked` Set + `notFound` initial state |
-| `frontend/webapp/src/views/Page/Page.js` | 201-211 | Route-reset effect — clears init flags, `autoClicked`, `notFound`, `imageActivationRequest` |
-| `frontend/webapp/src/views/Page/Page.js` | 232-252 | `handlePageInit` — dispatches to `initPageCommentary` once ready |
-| `frontend/webapp/src/views/Page/Page.js` | 281-328 | `getPageDataFromAPI` — fetches page + progress |
-| `frontend/webapp/src/views/Page/Page.js` | 331-361 | `getPageDataFromAPIViaNote` — commentary → pageSlug + textId, with `setNotFound` on miss + try/catch |
-| `frontend/webapp/src/views/Page/Page.js` | 478-482 | `COMMENTS_FALLBACK_MS` (2.5 s) backstop for the chat-list wait |
-| `frontend/webapp/src/views/Page/Page.js` | 514-516 | Render branch that short-circuits to `<PageNotFound />` |
-| `frontend/webapp/src/views/Page/Page.js` | 594-639 | `initPageItem` — async sequential scroll/click/await per row |
-| `frontend/webapp/src/views/Page/Page.js` | 641-643 | `scrollToAsync` Promise wrapper around `scrollTo` |
-| `frontend/webapp/src/views/Page/Page.js` | 652-658 | `initPageCommentary` — one-line wrapper passing the popup callback to `initPageItem` |
-| `frontend/webapp/src/views/Page/Page.js` | 664-690 | `findTextToOpen` — locates target row and its parent |
-| `frontend/webapp/src/views/Page/Page.js` | 738-755 | `setActiveRow` reducer — `setSlug(..., {replace: auto === true})` and `autoClicked.delete(slug)` |
+| `frontend/webapp/src/views/Page/Page.js` | 36-48 | `prepareInitOpen` — stashes `commentaryId` into `initOpen` |
+| `frontend/webapp/src/views/Page/Page.js` | 63-64 | `routeKey` / `pageIdentityKey` composite deps |
+| `frontend/webapp/src/views/Page/Page.js` | 66-73 | Data-fetch effect routes commentary loads to `getPageDataFromAPIViaNote` |
+| `frontend/webapp/src/views/Page/Page.js` | 97-99 | `autoClicked` Set + `notFound` initial state |
+| `frontend/webapp/src/views/Page/Page.js` | 208-219 | Route-reset effect — clears init flags, `autoClicked`, `notFound`, `imageActivationRequest` |
+| `frontend/webapp/src/views/Page/Page.js` | 240-260 | `handlePageInit` — dispatches to `initPageCommentary` once ready |
+| `frontend/webapp/src/views/Page/Page.js` | 289-336 | `getPageDataFromAPI` — fetches page + progress |
+| `frontend/webapp/src/views/Page/Page.js` | 339-369 | `getPageDataFromAPIViaNote` — commentary → pageSlug + textId, with `setNotFound` on miss + try/catch |
+| `frontend/webapp/src/views/Page/Page.js` | 486-490 | `COMMENTS_FALLBACK_MS` (2.5 s) backstop for the chat-list wait |
+| `frontend/webapp/src/views/Page/Page.js` | 522-524 | Render branch that short-circuits to `<PageNotFound />` |
+| `frontend/webapp/src/views/Page/initPipeline.js` | 33-84 | `initPageItem` — async sequential scroll/click/await per row |
+| `frontend/webapp/src/views/Page/initPipeline.js` | 86-88 | `scrollToAsync` Promise wrapper around `scrollTo` |
+| `frontend/webapp/src/views/Page/initPipeline.js` | 97-104 | `initPageCommentary` — one-line wrapper passing the popup callback to `initPageItem` |
+| `frontend/webapp/src/views/Page/initPipeline.js` | 109-135 | `findTextToOpen` — locates target row and its parent |
+| `frontend/webapp/src/views/Page/Page.js` | 629-708 | `setActiveRow` reducer — `setSlug(..., {replace: auto === true})` and `autoClicked.delete(slug)` |
 | `frontend/webapp/src/views/Page/PageNotFound.js` | 1-19 | Not-found UI shown when `notFound` is set |
 | `frontend/webapp/src/utils/orderByDomAncestry.js` | 1-19 | Sort slugs by DOM ancestry so ancestor rows open before descendants |
 | `frontend/webapp/src/utils/awaitDomOpen.js` | 1-25 | `MutationObserver`-backed wait for a row's `.reference` to gain `open` |

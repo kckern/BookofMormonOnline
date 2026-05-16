@@ -7,7 +7,6 @@ import { recordDeepLinkEvent } from "src/utils/deepLinkInstrument";
 import { orderByDomAncestry } from "src/utils/orderByDomAncestry";
 import { awaitDomOpen } from "src/utils/awaitDomOpen";
 
-// function initPage(pageController) {
 export function initPage(pageController, lastLeaf) {
 
   if (lastLeaf !== pageController.states.initOpen.pageSlug) {

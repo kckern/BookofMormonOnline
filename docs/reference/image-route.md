@@ -49,24 +49,24 @@ step 8 (no popup; an explicit-callback image activation request that an
 
 ### 1. Route mounts → `Page` component initializes
 
-`frontend/webapp/src/views/Page/Page.js:33-45` — `prepareInitOpen` builds:
+`frontend/webapp/src/views/Page/Page.js:36-48` — `prepareInitOpen` builds:
 
 ```js
 initOpen = { pageSlug: undefined, imageId: "<id>" }
 ```
 
 `pageSlug` and `textId` are undefined at this point — the URL has only
-`imageId`. `Page.js:60-61` also derives two keys from `match.params`:
+`imageId`. `Page.js:63-64` also derives two keys from `match.params`:
 
 - `routeKey` — the full `pageSlug|textId|commentaryId|imageId|faxVersion`
-  tuple. The route-reset effect (`Page.js:201-211`) is keyed on this.
+  tuple. The route-reset effect (`Page.js:208-219`) is keyed on this.
 - `pageIdentityKey` — `pageSlug|commentaryId|imageId` (no `textId`). The
-  data-fetch effect (`Page.js:63-70`) is keyed on this so that changes to
+  data-fetch effect (`Page.js:66-73`) is keyed on this so that changes to
   `textId` alone do not retrigger the network fetch.
 
 ### 2. Data-fetch effect resolves image → page slug + text id
 
-`Page.js:63-70`:
+`Page.js:66-73`:
 
 ```js
 useEffect(() => {
@@ -79,7 +79,7 @@ useEffect(() => {
 }, [pageIdentityKey]);
 ```
 
-`getPageDataFromAPIViaNote` (`Page.js:331-361`), image branch:
+`getPageDataFromAPIViaNote` (`Page.js:339-369`), image branch:
 
 ```js
 try {
@@ -111,7 +111,7 @@ and rendering bails to `<PageNotFound />`.
 
 ### 3. Route-reset effect
 
-`Page.js:201-211` runs on `[routeKey]`. On every route change it clears
+`Page.js:208-219` runs on `[routeKey]`. On every route change it clears
 the per-navigation state so a stale deep-link can't leak across pages:
 
 ```js
@@ -141,7 +141,7 @@ section/row render.
 
 ### 5. Wait for "ready to scroll"
 
-Same gate as the commentary flow — `handlePageInit` (`Page.js:232-252`)
+Same gate as the commentary flow — `handlePageInit` (`Page.js:240-260`)
 only fires once `readyToScroll`, `pageData`, and
 `document.querySelector(".content")` are all in place. `readyToScroll` is
 set immediately for guests; for logged-in study-mode users it waits on
@@ -157,7 +157,7 @@ if (pageController.states.initOpen.imageId)
 ```
 
 ```js
-// Page.js:645-650
+// initPipeline.js:89-94
 function initPageImage(pageController) {
   const imageId = pageController.states.initOpen.imageId;
   initPageItem(pageController, () => {
@@ -174,7 +174,7 @@ the row is still opening).
 
 ### 7. Scroll, then expand the text row(s)
 
-`initPageItem` (`Page.js:594-639`) — exact same async-sequential routine
+`initPageItem` (`initPipeline.js:32-83`) — exact same async-sequential routine
 documented for the commentary route:
 
 1. `findTextToOpen` locates `[textid="<pageSlug>/<textId>"]` and walks up
@@ -191,7 +191,7 @@ documented for the commentary route:
    a `MutationObserver` wrapper that resolves when the row's content
    children mount (or times out at 2 s).
 4. The click triggers `TextContent.js:27-43` (`toggleOpenClose`), which
-   expands the row and dispatches `setActiveRow` (`Page.js:738-817`).
+   expands the row and dispatches `setActiveRow` (`Page.js:629-708`).
    `setActiveRow` does a lot of side work: starts audio, updates document
    title, calls `appController.functions.setSlug(slug)` (which on the
    image route uses `{ replace: true }` because `auto === true`, so the
@@ -202,7 +202,7 @@ documented for the commentary route:
 
 ### 8. Image activation (request → claim)
 
-1. `initPageImage` (`Page.js:645-650`) captures
+1. `initPageImage` (`initPipeline.js:89-94`) captures
    `imageId = pageController.states.initOpen.imageId` AT SCHEDULING TIME
    (before any await), then calls `initPageItem(pageController, callback)`.
    The closure-local `imageId` shields the callback from any
@@ -292,7 +292,7 @@ Consequently, the canonical end-state URL for any image deep-link is
 ## Edge cases
 
 **Image ID not in the DB.** Same as commentary —
-`getPageDataFromAPIViaNote` (`Page.js:331-361`) catches missing/null
+`getPageDataFromAPIViaNote` (`Page.js:339-369`) catches missing/null
 `image.location.slug` and rejection from `BoMOnlineAPI`, dispatches
 `setNotFound({type: "image", id})`. Render bails to `<PageNotFound />`.
 
@@ -300,7 +300,7 @@ Consequently, the canonical end-state URL for any image deep-link is
 `ImageBubble`.** Rare — would happen if the image's `location.slug`
 resolved to a page where the `[i]` anchor was stripped or the bubble
 didn't render. In that case, no bubble claims the request. The
-route-change reset effect at `Page.js:207` calls
+route-change reset effect at `Page.js:215` calls
 `requestImageActivation(null)` on the next navigation, so the stale
 request doesn't leak across pages.
 

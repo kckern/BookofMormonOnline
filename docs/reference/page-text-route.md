@@ -50,8 +50,8 @@ This URL is produced by **almost every interaction with text rows**:
 | Source | File | What it does |
 | --- | --- | --- |
 | Reference link inside each row | `views/Page/TextContent.js:296-310` | Each row's `<a href="/<slug>">` inside `<CardHeader className="reference">` produces this URL on hover/Ctrl-click. `onClick` calls `toggleOpenClose` / `toggleOpenCloseHeader` instead of navigating — so a normal click *doesn't* navigate but the URL is still the link target. |
-| `setActiveRow` reducer | `views/Page/Page.js:738-817` | When any row is expanded (whether by user click or by `initPageItem`'s auto-click), `setSlug(slug, { replace: auto === true })` is called, pushing `/<pageSlug>/<textId>` into history (or `history.replace`ing it if the click came from the init pipeline). |
-| `localStorage.studybookmark` | `views/Page/Page.js:756` | The same `setActiveRow` writes the slug to `localStorage` so `/study` reopens to the same row. |
+| `setActiveRow` reducer | `views/Page/Page.js:629-708` | When any row is expanded (whether by user click or by `initPageItem`'s auto-click), `setSlug(slug, { replace: auto === true })` is called, pushing `/<pageSlug>/<textId>` into history (or `history.replace`ing it if the click came from the init pipeline). |
+| `localStorage.studybookmark` | `views/Page/Page.js:647` | The same `setActiveRow` writes the slug to `localStorage` so `/study` reopens to the same row. |
 | External links / address bar | — | Anyone sharing a scripture position uses this URL. |
 
 This is the route the app **gravitates toward** — opening any row
@@ -63,39 +63,39 @@ re-rewrite on top of it.)
 
 ### 1. Route mounts → `Page` component initializes
 
-`frontend/webapp/src/views/Page/Page.js:47-58`
+`frontend/webapp/src/views/Page/Page.js:50-61`
 
 `match.params` contains `pageSlug` and `textId` (both set from the URL).
 
-`prepareInitOpen` (Page.js:33-45) builds:
+`prepareInitOpen` (Page.js:36-48) builds:
 
 ```js
 initOpen = { pageSlug: "<slug>", textId: "<id>" }
 ```
 
-There is also a special case at Page.js:49-56: if `match.params.pageSlug
+There is also a special case at Page.js:52-59: if `match.params.pageSlug
 === "study"`, the slug is replaced with the most-recent slug from
 `localStorage.studybookmark` (falling back to `lehites/1`). This is what
 makes `/study` resume where the user left off.
 
-The page controller also seeds `autoClicked: new Set()` and
-`notFound: null` for this mount (Page.js:94-95).
+The page controller also seeds `autoClicked: new Set()`, `notFound: null`,
+and `initWarning: null` for this mount (Page.js:97-99).
 
 ### Two route keys
 
-`Page.js` computes two composite strings (Page.js:60-61) that scope the
+`Page.js` computes two composite strings (Page.js:63-64) that scope the
 two main effects independently:
 
 - `pageIdentityKey = pageSlug|commentaryId|imageId` — drives the
-  data-fetch effect (Page.js:63-70). Re-fires only when the underlying
+  data-fetch effect (Page.js:66-73). Re-fires only when the underlying
   page changes; an in-page row click that updates only `textId` does NOT
   trigger a refetch or Loader flicker.
 - `routeKey = pageSlug|textId|commentaryId|imageId|faxVersion` — drives
-  the reset/init effect (Page.js:201-211). Re-fires on any
+  the reset/init effect (Page.js:208-219). Re-fires on any
   route-param change, so navigating from `/<page>/<textA>` to
   `/<page>/<textB>` correctly re-runs `initPageItem` and clears
-  `autoClicked` / `notFound` / `imageActivationRequest` between
-  transitions.
+  `autoClicked` / `notFound` / `initWarning` / `imageActivationRequest`
+  between transitions.
 
 The split is what allows R4 (re-init on commentary→commentary
 navigation) without regressing in-page row clicks into a Loader flicker.
@@ -105,7 +105,7 @@ GraphQL page data is reused.
 
 ### 2. Load page data (no commentary/image indirection)
 
-`Page.js:63-70`:
+`Page.js:66-73`:
 
 ```js
 useEffect(() => {
@@ -120,7 +120,7 @@ useEffect(() => {
 
 Neither `imageId` nor `commentaryId` is set, so
 `getPageDataFromAPI(pageSlug)` runs directly (textId is *not* passed
-as the second argument). The function (Page.js:281-328) then runs its
+as the second argument). The function (Page.js:289-336) then runs its
 standard query:
 
 ```js
@@ -130,14 +130,14 @@ BoMOnlineAPI(
 )
 ```
 
-A subtle detail (Page.js:300-312): if the response doesn't contain an
+A subtle detail (Page.js:308-320): if the response doesn't contain an
 exact-match key for `pageSlug`, the function strips the trailing segment
 of the slug and re-fetches — letting nested slugs like `mosiah/chapter-1`
 fall back to `mosiah` if needed. If the matched page has no `sections`,
 it simulates a click on `.contents_link a` (i.e. routes to the contents
 page).
 
-When the response arrives (Page.js:318-324):
+When the response arrives (Page.js:326-332):
 
 ```js
 pageController.functions.setPageSlugId({
@@ -149,7 +149,7 @@ pageController.functions.setPageData(response.page[index]);
 pageController.functions.setPageProgress(response.pageprogress);
 ```
 
-The reducer (Page.js:907-918) only updates `initOpen.textId` if
+The reducer (Page.js:798-810) only updates `initOpen.textId` if
 `textId` is truthy — so for this route, `initOpen.textId` keeps the
 value it got at component mount from `match.params.textId`. The
 `lastLeaf` value matters for the `initPage` fallback path (step 5b) but
@@ -157,7 +157,7 @@ not for the primary text-row path.
 
 ### 3. Wait for "ready to scroll"
 
-The page-init effect (Page.js:254-259) won't run until **all** of:
+The page-init effect (Page.js:262-267) won't run until **all** of:
 
 - `initStarted === false` (it hasn't already run; flipped back to
   `false` by the route-reset effect on any param change)
@@ -165,15 +165,15 @@ The page-init effect (Page.js:254-259) won't run until **all** of:
   comments are loaded — or immediately if study mode is off)
 - `document.querySelector(".content")` exists (rows are in the DOM)
 
-`readyToScroll` is set by `loadPageComments` (Page.js:403-511). When
+`readyToScroll` is set by `loadPageComments` (Page.js:411-519). When
 study mode is off / no active group / user logged out, it short-circuits
 to `setReadyToScroll(true)` immediately. Otherwise, the chat-list load
 is bounded by a **2.5 s `COMMENTS_FALLBACK_MS` fallback timer**
-(Page.js:478-482) so the deep-link can't wedge on a slow chat service.
+(Page.js:486-490) so the deep-link can't wedge on a slow chat service.
 
 ### 4. Dispatch to `initPageItem`
 
-`handlePageInit` (Page.js:232-252) checks flags in order:
+`handlePageInit` (Page.js:240-260) checks flags in order:
 
 ```js
 if (pageController.states.initOpen.faxVersion)   return initPageFax(...);
@@ -194,11 +194,11 @@ both pass a post-open callback.
 
 ### 5. Scroll, then expand the text row(s)
 
-`initPageItem` (Page.js:594-639) is an `async` function that drives the
+`initPageItem` (initPipeline.js:32-83) is an `async` function that drives the
 visual choreography sequentially. The pipeline is **signal-driven**, not
 timer-paced — there is no `setTimeout(..., 1000)` stagger anymore.
 
-1. `findTextToOpen(pageController)` (Page.js:664-690) walks the DOM to
+1. `findTextToOpen(pageController)` (initPipeline.js:108-134) walks the DOM to
    find the row whose element has `textid="<pageSlug>/<textId>"`. It
    also walks up to the closest `.row > [textid]` ancestor to find a
    **parent text slug** (for nested rows like quotations inside a
@@ -215,7 +215,7 @@ timer-paced — there is no `setTimeout(..., 1000)` stagger anymore.
 3. The outer scroll: `await scrollToAsync(itemToScrollTo.offsetTop -
    offsetTop)`, where `offsetTop` is 20% of the viewport height (so the
    row lands roughly one-fifth from the top). `scrollToAsync`
-   (Page.js:641-643) wraps the `scrollTo` helper at
+   (initPipeline.js:85-87) wraps the `scrollTo` helper at
    `models/Utils.js:387-425`. That helper calls
    `window.scrollTo({ top, behavior: "smooth" })` and resolves the
    callback when the browser fires the **`scrollend`** event — with a
@@ -228,7 +228,7 @@ timer-paced — there is no `setTimeout(..., 1000)` stagger anymore.
      that toggles the row open/closed).
    - **Skip if missing** (the row never rendered) and continue.
    - **Skip if `pageController.states.autoClicked.has(slug)`** —
-     `autoClicked` is a `Set` on controller state (Page.js:94) that
+     `autoClicked` is a `Set` on controller state (Page.js:97) that
      records which slugs the init pipeline has already dispatched to,
      so re-entry of the loop can't double-click the same row.
    - Otherwise, add the slug to `autoClicked`, scroll to the row's
@@ -270,7 +270,7 @@ reducer:
 
 #### 5b. `setActiveRow` side effects
 
-`Page.js:738-817` — this is where most of the URL/state changes happen.
+`Page.js:629-708` — this is where most of the URL/state changes happen.
 The reducer:
 
 - Pushes `slug` onto `openRows`.
@@ -278,12 +278,12 @@ The reducer:
   the `audio` preference is on.
 - Updates `document.title` to `"<heading> | <home_title>"`.
 - **Calls `appController.functions.setSlug(slug, { replace: auto === true })`
-  (Page.js:753)** — pushes `/<pageSlug>/<textId>` into the router
+  (Page.js:644)** — pushes `/<pageSlug>/<textId>` into the router
   history, or `history.replace`s it instead when `auto === true`. The
   init pipeline thus rewrites the URL **without** adding history
   entries; user clicks push normally.
 - Immediately after, **`pageController.states.autoClicked.delete(slug)`
-  (Page.js:754)** — so any subsequent manual re-open of the same slug
+  (Page.js:645)** — so any subsequent manual re-open of the same slug
   (e.g. user closes the row, then clicks it again) pushes normally
   instead of replacing.
 - Writes the slug to `localStorage.studybookmark`.
@@ -303,18 +303,18 @@ There is no step 6 — no popup, no panel. The row stays open, the user
 scrolls/reads/listens. If they click another row, that row opens, the
 URL updates via `setSlug` (pushing, because the new slug is *not* in
 `autoClicked`), and `openRows` grows. Closing the row
-(`removeOpenRow`, Page.js:821-841) reverts `setSlug` to either the
+(`removeOpenRow`, Page.js:712-732) reverts `setSlug` to either the
 active section or the bare `pageSlug`.
 
 ## `findTextToOpen` corner cases
 
-`Page.js:664-690` has three branches:
+`initPipeline.js:108-134` has three branches:
 
 1. `initOpen.goToSection` set → returns the section element by id (no
    textToOpen, just scroll). This branch is used by section-jump links
    (e.g. table-of-contents clicks), not by `/<page>/<textId>` deep-links.
 2. `initOpen.textId` falsy → returns `{textToOpen: [], itemToScrollTo:
-   null}`. In `initPageItem`, the early-return at Page.js:599-604
+   null}`. In `initPageItem`, the early-return at initPipeline.js:38-46
    fires `markAsInitiated` (and any callback) immediately; the page is
    left at the top with no row opened. So for a bare `/<pageSlug>`
    route the flow falls through to `initPage` instead (handlePageInit's
@@ -353,20 +353,20 @@ position with no row opened. There is no error or user feedback today
 
 The `autoClicked` Set on `pageController.states` tracks slugs added by
 `initPageItem`'s auto-click loop. When `setActiveRow` reducer
-(Page.js:738-817) fires for those slugs — triggered by the synthesized
+(Page.js:629-708) fires for those slugs — triggered by the synthesized
 `el.click()` flowing through `TextContent.js`'s `toggleOpenClose`
 (which copies `auto:
 pageController.states.autoClicked?.has(slug) === true` into the
 payload) — it passes `{ replace: auto }` to `setSlug`, then
 `pageController.states.autoClicked.delete(slug)` so any subsequent
 manual re-open of the same slug pushes normally instead of replacing.
-The route-reset effect (Page.js:201-211) calls
-`resetAutoClicked()` (Page.js:920-922) on every route-param change, so
+The route-reset effect (Page.js:208-219) calls
+`resetAutoClicked()` (Page.js:811-813) on every route-param change, so
 the Set never carries stale slugs across navigations.
 
 ## The `/study` shortcut
 
-`Page.js:49-56` rewrites `/study` to the most recent bookmarked
+`Page.js:52-59` rewrites `/study` to the most recent bookmarked
 `<pageSlug>/<textId>` from `localStorage.studybookmark` (or `lehites/1`
 if no bookmark). The match params are mutated in place before
 `prepareInitOpen` runs, so the rest of the flow is identical to a normal
@@ -378,21 +378,21 @@ doesn't push the rewritten slug.
 | File | Lines | Role |
 | --- | --- | --- |
 | `frontend/webapp/src/models/Routes.js` | 263-274 | Route definitions (fax, page+text, page only) |
-| `frontend/webapp/src/views/Page/Page.js` | 33-45 | `prepareInitOpen` — stashes route params into `initOpen` |
-| `frontend/webapp/src/views/Page/Page.js` | 47-58 | Component entry + `/study` shortcut |
-| `frontend/webapp/src/views/Page/Page.js` | 60-61 | `routeKey` / `pageIdentityKey` composite deps |
-| `frontend/webapp/src/views/Page/Page.js` | 63-70 | Data-fetch effect (`getPageDataFromAPI` for this route) |
-| `frontend/webapp/src/views/Page/Page.js` | 94-95 | `autoClicked` Set + `notFound` initial state |
-| `frontend/webapp/src/views/Page/Page.js` | 201-211 | Route-reset effect — clears init flags, `autoClicked`, `notFound`, `imageActivationRequest` |
-| `frontend/webapp/src/views/Page/Page.js` | 232-252 | `handlePageInit` — dispatches to `initPageItem` once ready |
-| `frontend/webapp/src/views/Page/Page.js` | 281-328 | `getPageDataFromAPI` — page data fetch + slug-fallback retry |
-| `frontend/webapp/src/views/Page/Page.js` | 572-592 | `initPage` — fallback path when only `pageSlug` is set, scrolls to last leaf if any |
-| `frontend/webapp/src/views/Page/Page.js` | 594-639 | `initPageItem` — async sequential scroll/click/await per row |
-| `frontend/webapp/src/views/Page/Page.js` | 641-643 | `scrollToAsync` Promise wrapper around `scrollTo` |
-| `frontend/webapp/src/views/Page/Page.js` | 664-690 | `findTextToOpen` — locates the target row and any parent |
-| `frontend/webapp/src/views/Page/Page.js` | 738-817 | `setActiveRow` reducer — `setSlug(slug, { replace: auto === true })`, `autoClicked.delete(slug)`, audio, progress logging |
-| `frontend/webapp/src/views/Page/Page.js` | 821-841 | `removeOpenRow` reducer — restores URL to active section / bare slug |
-| `frontend/webapp/src/views/Page/Page.js` | 907-922 | `setPageSlugId` + `resetAutoClicked` reducers |
+| `frontend/webapp/src/views/Page/Page.js` | 36-48 | `prepareInitOpen` — stashes route params into `initOpen` |
+| `frontend/webapp/src/views/Page/Page.js` | 50-61 | Component entry + `/study` shortcut |
+| `frontend/webapp/src/views/Page/Page.js` | 63-64 | `routeKey` / `pageIdentityKey` composite deps |
+| `frontend/webapp/src/views/Page/Page.js` | 66-73 | Data-fetch effect (`getPageDataFromAPI` for this route) |
+| `frontend/webapp/src/views/Page/Page.js` | 97-99 | `autoClicked` Set + `notFound` + `initWarning` initial state |
+| `frontend/webapp/src/views/Page/Page.js` | 208-219 | Route-reset effect — clears init flags, `autoClicked`, `notFound`, `initWarning`, `imageActivationRequest` |
+| `frontend/webapp/src/views/Page/Page.js` | 240-260 | `handlePageInit` — dispatches to `initPageItem` once ready |
+| `frontend/webapp/src/views/Page/Page.js` | 289-336 | `getPageDataFromAPI` — page data fetch + slug-fallback retry |
+| `frontend/webapp/src/views/Page/initPipeline.js` | 10-30 | `initPage` — fallback path when only `pageSlug` is set, scrolls to last leaf if any |
+| `frontend/webapp/src/views/Page/initPipeline.js` | 32-83 | `initPageItem` — async sequential scroll/click/await per row |
+| `frontend/webapp/src/views/Page/initPipeline.js` | 85-87 | `scrollToAsync` Promise wrapper around `scrollTo` |
+| `frontend/webapp/src/views/Page/initPipeline.js` | 108-134 | `findTextToOpen` — locates the target row and any parent |
+| `frontend/webapp/src/views/Page/Page.js` | 629-708 | `setActiveRow` reducer — `setSlug(slug, { replace: auto === true })`, `autoClicked.delete(slug)`, audio, progress logging |
+| `frontend/webapp/src/views/Page/Page.js` | 712-732 | `removeOpenRow` reducer — restores URL to active section / bare slug |
+| `frontend/webapp/src/views/Page/Page.js` | 798-813 | `setPageSlugId` + `resetAutoClicked` reducers |
 | `frontend/webapp/src/views/Page/TextContent.js` | 25-67 | Row local reducer — `toggleOpenClose` / `toggleOpenCloseHeader` copy the `auto` flag from `autoClicked.has(slug)` into the `setActiveRow` payload |
 | `frontend/webapp/src/views/Page/TextContent.js` | 296-310 | Row reference link rendering (`.reference a`) |
 | `frontend/webapp/src/utils/orderByDomAncestry.js` | 1-19 | Sort slugs by DOM ancestry so ancestor rows open before descendants |
