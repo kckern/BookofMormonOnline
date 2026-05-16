@@ -394,8 +394,14 @@ export function scrollTo(scrollHeight, callback) {
     }
   };
 
+  if (scrollHeight === 0) {
+    recordDeepLinkEvent("scrollTo:noop", { scrollHeight });
+    fire();
+    return;
+  }
   if (typeof scrollHeight !== "number" || !Number.isFinite(scrollHeight) || scrollHeight < 0) {
-    recordDeepLinkEvent("scrollTo:skip", { scrollHeight });
+    console.warn("scrollTo: invalid distance, skipping scroll", { scrollHeight });
+    recordDeepLinkEvent("scrollTo:failed", { scrollHeight });
     fire();
     return;
   }
