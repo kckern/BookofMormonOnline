@@ -157,3 +157,20 @@ test("avatars slide: top changes when selection moves", async ({ browser }) => {
   await context.close();
   if (errors.length) throw new Error(errors.join("\n"));
 });
+
+test("segment layer active when a move is selected", async ({ page }) => {
+  const errors = attachConsole(page);
+  await page.goto("/map/internal/story/sons-of-mosiah");
+  // Wait for the map to mount and for the URL effect to set selectedMoveSeq=1.
+  await expect(page.locator(".mapPanel .map_story_move").first()).toBeVisible({ timeout: 15_000 });
+  await page.waitForTimeout(800);
+  const debug = await page.evaluate(() => window.__mapDebug);
+  expect(debug, "window.__mapDebug should be exposed").toBeTruthy();
+  expect(debug.segmentFeatureCount).toBe(1);
+  // Marching ants should be advancing the offset.
+  const o1 = await page.evaluate(() => window.__mapDebug.lineDashOffset);
+  await page.waitForTimeout(400);
+  const o2 = await page.evaluate(() => window.__mapDebug.lineDashOffset);
+  expect(o2).not.toBe(o1);
+  if (errors.length) throw new Error(errors.join("\n"));
+});

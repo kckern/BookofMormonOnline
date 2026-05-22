@@ -28,6 +28,9 @@ import * as OL from "ol";
 const MapContents = ({mapController}) => {
     const mapElement = useRef(); // This ref will point to the map container
     const map = useRef(); // This ref will store the initialized map
+    const segmentLayerRef = useRef(null);
+    const segmentLineRef = useRef(null);
+    const lineDashOffsetRef = useRef(0);
     let {currentMap,isAdmin} = mapController;
     const {slug:mapslug,places,stories} = currentMap;
 		const [animateZoom,setAnimateZoom] = useState(0);
@@ -279,6 +282,29 @@ const drawMap = ()=>{
 
 
 
+    const segmentSource = new VectorSource({ features: [] });
+    const segmentLayer = new VectorLayer({
+      source: segmentSource,
+      style: () => new Style({
+        stroke: new Stroke({
+          color: '#b31312',
+          width: 3,
+          lineDash: [8, 8],
+          lineDashOffset: lineDashOffsetRef.current,
+        }),
+      }),
+    });
+    segmentLayer.setZIndex(100);
+    map.current.addLayer(segmentLayer);
+    segmentLayerRef.current = segmentLayer;
+
+    // Marching ants: advance the dash offset every postrender.
+    map.current.on('postrender', () => {
+      if (!segmentSource.getFeatures().length) return;
+      lineDashOffsetRef.current = (lineDashOffsetRef.current - 0.5) % 16;
+      segmentLayer.changed();
+    });
+
     // Extracted the repeated code into a separate function
     const setTooltipAndCursor = (isHovering, position, slug) => {
         const cursorStyle = isHovering ? 'pointer' : '';
@@ -418,6 +444,34 @@ const drawMap = ()=>{
 
 
     useEffect(drawMap, [mapslug,isAdmin]);
+
+    useEffect(() => {
+      const seq = mapController.selectedMoveSeq;
+      const story = mapController.selectedStory;
+      const segmentLayer = segmentLayerRef.current;
+      if (!map.current || !segmentLayer) return;
+      const source = segmentLayer.getSource();
+      source.clear();
+      segmentLineRef.current = null;
+      if (!story || !seq) {
+        window.__mapDebug = { segmentFeatureCount: 0, lineDashOffset: lineDashOffsetRef.current };
+        return;
+      }
+      const move = story.moves.find((m) => m.seq === seq);
+      if (!move) {
+        window.__mapDebug = { segmentFeatureCount: 0, lineDashOffset: lineDashOffsetRef.current };
+        return;
+      }
+      const start = OlProj.fromLonLat([move.startPlace.lat, move.startPlace.lng]);
+      const end = OlProj.fromLonLat([move.endPlace.lat, move.endPlace.lng]);
+      const line = new Feature({ geometry: new LineString([start, end]) });
+      source.addFeature(line);
+      segmentLineRef.current = line;
+      window.__mapDebug = {
+        segmentFeatureCount: source.getFeatures().length,
+        get lineDashOffset() { return lineDashOffsetRef.current; },
+      };
+    }, [mapController.selectedMoveSeq, mapController.selectedStory?.slug]);
 
 		useEffect(()=>{
 			window.addEventListener('keydown',keyDownHandler);
