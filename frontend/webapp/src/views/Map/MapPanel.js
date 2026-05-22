@@ -30,7 +30,7 @@ import { ApiBaseUrl, assetUrl } from "../../models/BoMOnlineAPI";
 import { ScripturePanelSingle } from "../Page/Narration";
 import { getHtmlScriptureLinkParserOptions } from "../_Common/ViewUtils";
 import RangeSlider from "./RangeSlider";
-import { computeRuns, colorForRun } from './colors';
+import { computeRuns, colorForRun, buildPanelItems } from './colors';
 
 const metersToMiles = (meters) => Math.round(meters * 0.000621371192 * 1) / 1;
 
@@ -466,6 +466,7 @@ function MapStoryPanel({mapController})
 	  const parserOptions = getHtmlScriptureLinkParserOptions(setScripture);
     const history = useHistory();
     const moveRefs = useRef({});
+    const fenceRefs = useRef({});
     const cardBodyRef = useRef(null);
     const [avatarTop, setAvatarTop] = useState(0);
 
@@ -526,64 +527,43 @@ function MapStoryPanel({mapController})
             <CardBody innerRef={cardBodyRef}>
                 <p>{selectedStory.description}</p>
                 <h6>{moveCount} Movements</h6>
-                {selectedStory.moves.map((move, i) => {
-                    const {seq, travelers, verse_ids, description, startPlace, endPlace, duration} = move;
-                    const lang = determineLanguage();
-                    const scriptureref = generateReference(verse_ids, lang);
-                    const ref = `<a className="scripture_link">${scriptureref}</a>`;
-
-
-                    const start = preLoadedPlaces.find((place) => place.slug === startPlace.slug);
-
-                    const startPoint = [startPlace.lat, startPlace.lng];
-                    const endPoint = [endPlace.lat, endPlace.lng];
-                    const miles =  metersToMiles(getDistance(startPoint, endPoint));
-
-                    const isSelected = mapController.selectedMoveSeq === seq;
-                    const isLast = i === selectedStory.moves.length - 1;
-                    const nextMove = selectedStory.moves[i + 1];
-                    // Last row always connects down to the terminus tile (the
-                    // terminus IS this move's endPlace). Earlier rows connect
-                    // only when the journey is continuous.
-                    const continuesNext = isLast
-                      ? true
-                      : endPlace.slug === nextMove?.startPlace?.slug;
-
-                    const prevTravelers = i > 0 ? selectedStory.moves[i - 1].travelers : null;
-                    const hideTravelers = travelers === prevTravelers;
-                    const showHeader = !hideTravelers || !!duration;
-
-                    return <div
-                            key={i+seq}
-                            ref={(el) => { if (el) moveRefs.current[seq] = el; }}
-                            className={`map_story_move${isSelected ? ' selected' : ''}`}
-                            style={{ '--run-color': runColorByMoveSeq.get(seq) }}
-                            onClick={() => history.push(`/map/${currentMap?.slug}/story/${selectedStory.slug}/move/${seq}`)}
-                        >
-                            <MapEventImageCaption
-                              location={start}
-                              continuesNext={continuesNext}
-                              distanceMiles={continuesNext ? miles : null}
-                            />
-                            <div className="map_story_move_desc">
-                                {showHeader && (
-                                  <p>
-                                    {!hideTravelers && <b>{travelers}</b>}
-                                    {!hideTravelers && !!duration && <span> • </span>}
-                                    {!!duration && <span className="duration">{duration}</span>}
-                                  </p>
-                                )}
-                                {Parser(`<p class='desc'>${description} (${ref})</p>`, parserOptions)}
-                            </div>
-                        </div>
-                })}
                 {(() => {
-                    const lastMove = selectedStory.moves[selectedStory.moves.length - 1];
-                    const terminus = lastMove && preLoadedPlaces.find((place) => place.slug === lastMove.endPlace.slug);
-                    if (!terminus) return null;
-                    return <div className="map_story_terminus" style={{ '--run-color': terminusColor }}>
-                        <MapEventImageCaption location={terminus} />
-                    </div>;
+                  const items = buildPanelItems(selectedStory.moves);
+                  let prevTravelers = null;
+                  return items.map((item) => {
+                    if (item.kind === 'post') {
+                      return (
+                        <MapStoryPost
+                          key={item.key}
+                          place={item.place}
+                          runColor={item.runColor}
+                          connectsBelow={item.connectsBelow}
+                        />
+                      );
+                    }
+                    // fence
+                    const { move: m, runColor, connectsBelow } = item;
+                    const hideTravelers = m.travelers === prevTravelers;
+                    prevTravelers = m.travelers;
+                    const startPoint = [m.startPlace.lat, m.startPlace.lng];
+                    const endPoint = [m.endPlace.lat, m.endPlace.lng];
+                    const miles = metersToMiles(getDistance(startPoint, endPoint));
+                    const isSelected = mapController.selectedMoveSeq === m.seq;
+                    return (
+                      <MapStoryFence
+                        key={item.key}
+                        move={m}
+                        runColor={runColor}
+                        connectsBelow={connectsBelow}
+                        isSelected={isSelected}
+                        hideTravelers={hideTravelers}
+                        miles={miles}
+                        parserOptions={parserOptions}
+                        onClick={() => history.push(`/map/${currentMap?.slug}/story/${selectedStory.slug}/move/${m.seq}`)}
+                        refCallback={(el) => { if (el) { fenceRefs.current[m.seq] = el; moveRefs.current[m.seq] = el; } }}
+                      />
+                    );
+                  });
                 })()}
                 <MapStoryAvatars people={selectedPeople} top={avatarTop} />
             </CardBody>
@@ -595,6 +575,60 @@ function MapStoryPanel({mapController})
     </div>
 }
 
+
+function MapStoryPost({ place, runColor, connectsBelow, refCallback }) {
+  if (!place?.slug) return null;
+  const label = (place?.label || place?.name)?.replace(/\//g, " ").replace(/ +/g, " ");
+  return (
+    <div
+      className={`map_story_post${connectsBelow ? ' connects' : ''}`}
+      style={{ '--run-color': runColor }}
+      ref={refCallback || undefined}
+    >
+      <img src={`${assetUrl}/places/${place.slug}`} alt={place.slug} />
+      <caption>{label}</caption>
+    </div>
+  );
+}
+
+function MapStoryFence({
+  move,
+  runColor,
+  connectsBelow,
+  isSelected,
+  hideTravelers,
+  miles,
+  parserOptions,
+  onClick,
+  refCallback,
+}) {
+  const { seq, travelers, verse_ids, description, duration } = move;
+  const lang = determineLanguage();
+  const scriptureref = generateReference(verse_ids, lang);
+  const ref = `<a className="scripture_link">${scriptureref}</a>`;
+  const showHeader = !hideTravelers || !!duration;
+  return (
+    <div
+      className={`map_story_fence${isSelected ? ' selected' : ''}${connectsBelow ? ' connects' : ''}`}
+      style={{ '--run-color': runColor }}
+      data-seq={seq}
+      onClick={onClick}
+      ref={refCallback || undefined}
+    >
+      <span className="map_story_distance_badge">{miles} mi</span>
+      <div className="map_story_fence_body">
+        {showHeader && (
+          <p>
+            {!hideTravelers && <b>{travelers}</b>}
+            {!hideTravelers && !!duration && <span> • </span>}
+            {!!duration && <span className="duration">{duration}</span>}
+          </p>
+        )}
+        {Parser(`<p class='desc'>${description} (${ref})</p>`, parserOptions)}
+      </div>
+    </div>
+  );
+}
 
 function MapEventImageCaption({location, continuesNext, distanceMiles}){
 

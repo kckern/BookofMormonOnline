@@ -23,34 +23,37 @@ function attachConsole(page) {
 test("default selection: /story/X selects move 1", async ({ page }) => {
   const errors = attachConsole(page);
   await page.goto("/map/internal/story/sons-of-mosiah");
-  const firstRow = page.locator(".mapPanel .map_story_move").first();
-  await expect(firstRow).toBeVisible({ timeout: 15_000 });
-  await expect(firstRow).toHaveClass(/selected/);
+  const firstFence = page.locator(".mapPanel .map_story_fence").first();
+  await expect(firstFence).toBeVisible({ timeout: 15_000 });
+  await expect(firstFence).toHaveClass(/selected/);
   if (errors.length) throw new Error(errors.join("\n"));
 });
 
-test("explicit selection: /story/X/move/3 selects row 3", async ({ page }) => {
+test("explicit selection: /story/X/move/3 selects fence with data-seq=3", async ({ page }) => {
   const errors = attachConsole(page);
   await page.goto("/map/internal/story/sons-of-mosiah/move/3");
-  const rows = page.locator(".mapPanel .map_story_move");
-  await expect(rows.first()).toBeVisible({ timeout: 15_000 });
-  // Row at array index 2 = seq 3 (1-indexed).
-  await expect(rows.nth(2)).toHaveClass(/selected/);
+  const targetFence = page.locator(".mapPanel .map_story_fence[data-seq='3']");
+  await expect(targetFence).toBeVisible({ timeout: 15_000 });
+  await expect(targetFence).toHaveClass(/selected/);
   if (errors.length) throw new Error(errors.join("\n"));
 });
 
-test("row layout: flex-end + desc negative margin", async ({ page }) => {
+test("panel alternates post and fence, posts ≥ fences + 1", async ({ page }) => {
   const errors = attachConsole(page);
-  await page.goto("/map/internal/story/sons-of-mosiah");
-  const firstRow = page.locator(".mapPanel .map_story_move").first();
-  await expect(firstRow).toBeVisible({ timeout: 15_000 });
-  const rowAlignItems = await firstRow.evaluate((el) => getComputedStyle(el).alignItems);
-  expect(rowAlignItems).toBe("flex-end");
-  const descMarginBottom = await firstRow
-    .locator(".map_story_move_desc")
-    .evaluate((el) => getComputedStyle(el).marginBottom);
-  // -1rem at default 16px root font → "-16px"
-  expect(descMarginBottom).toBe("-16px");
+  await page.goto("/map/internal/story/sons-of-mosiah/move/1");
+  await expect(page.locator(".mapPanel .map_story_fence").first()).toBeVisible({ timeout: 15_000 });
+  const sequence = await page.$$eval(
+    ".mapPanel .map_story_post, .mapPanel .map_story_fence",
+    (els) => els.map((e) => (e.classList.contains("map_story_post") ? "P" : "F")),
+  );
+  expect(sequence.length).toBeGreaterThan(0);
+  expect(sequence[0]).toBe("P");
+  expect(sequence[sequence.length - 1]).toBe("P");
+  const postCount = sequence.filter((s) => s === "P").length;
+  const fenceCount = sequence.filter((s) => s === "F").length;
+  expect(postCount).toBeGreaterThanOrEqual(fenceCount + 1);
+  // sons-of-mosiah has 14 moves; with at least one shared post, postCount is at most 15.
+  expect(fenceCount).toBe(14);
   if (errors.length) throw new Error(errors.join("\n"));
 });
 
@@ -144,8 +147,8 @@ test("avatars slide: top changes when selection moves", async ({ browser }) => {
   // Record top at default selection (move 1).
   const topAt1 = await avatars.evaluate((el) => el.getBoundingClientRect().top);
 
-  // Click move 3 (array index 2).
-  await page.locator(".mapPanel .map_story_move").nth(2).click();
+  // Click move 3 fence.
+  await page.locator(".mapPanel .map_story_fence[data-seq='3']").click();
   await expect(page).toHaveURL(/\/move\/3$/, { timeout: 5_000 });
 
   // Allow slide transition (0.4 s) to finish.
@@ -162,7 +165,7 @@ test("segment layer active when a move is selected", async ({ page }) => {
   const errors = attachConsole(page);
   await page.goto("/map/internal/story/sons-of-mosiah");
   // Wait for the map to mount and for the URL effect to set selectedMoveSeq=1.
-  await expect(page.locator(".mapPanel .map_story_move").first()).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator(".mapPanel .map_story_fence").first()).toBeVisible({ timeout: 15_000 });
   await page.waitForTimeout(800);
   const debug = await page.evaluate(() => window.__mapDebug);
   expect(debug, "window.__mapDebug should be exposed").toBeTruthy();
@@ -178,11 +181,11 @@ test("segment layer active when a move is selected", async ({ page }) => {
 test("view auto-fits to the selected segment", async ({ page }) => {
   const errors = attachConsole(page);
   await page.goto("/map/internal/story/sons-of-mosiah");
-  await expect(page.locator(".mapPanel .map_story_move").first()).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator(".mapPanel .map_story_fence").first()).toBeVisible({ timeout: 15_000 });
   await page.waitForTimeout(900); // allow fit animation
   const center1 = await page.evaluate(() => window.__mapDebug?.viewCenter);
   // Click move 5.
-  await page.locator(".mapPanel .map_story_move").nth(4).click();
+  await page.locator(".mapPanel .map_story_fence[data-seq='5']").click();
   await expect(page).toHaveURL(/\/move\/5$/);
   await page.waitForTimeout(900);
   const center2 = await page.evaluate(() => window.__mapDebug?.viewCenter);
@@ -196,7 +199,7 @@ test("view auto-fits to the selected segment", async ({ page }) => {
 test("walker feature on canvas animates along selected segment", async ({ page }) => {
   const errors = attachConsole(page);
   await page.goto("/map/internal/story/sons-of-mosiah/move/3");
-  await expect(page.locator(".mapPanel .map_story_move").first()).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator(".mapPanel .map_story_fence").first()).toBeVisible({ timeout: 15_000 });
   await page.waitForTimeout(800);
   const c1 = await page.evaluate(() => window.__mapDebug?.walkerCoords);
   expect(c1).toBeTruthy();
@@ -210,7 +213,7 @@ test("walker feature on canvas animates along selected segment", async ({ page }
 test("segment clears when story closes", async ({ page }) => {
   const errors = attachConsole(page);
   await page.goto("/map/internal/story/sons-of-mosiah/move/2");
-  await expect(page.locator(".mapPanel .map_story_move").first()).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator(".mapPanel .map_story_fence").first()).toBeVisible({ timeout: 15_000 });
   await page.waitForTimeout(800);
   // Click the back arrow (⬅) to leave the story.
   await page.locator(".mapPanel span", { hasText: "⬅" }).first().click();
@@ -226,7 +229,7 @@ test("segment clears when story closes", async ({ page }) => {
 test("URL auto-replaces /story/X with /story/X/move/1 on cold load", async ({ page }) => {
   const errors = attachConsole(page);
   await page.goto("/map/internal/story/sons-of-mosiah");
-  await expect(page.locator(".mapPanel .map_story_move").first()).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator(".mapPanel .map_story_fence").first()).toBeVisible({ timeout: 15_000 });
   await page.waitForTimeout(800);
   await expect(page).toHaveURL(/\/map\/internal\/story\/sons-of-mosiah\/move\/1$/);
   if (errors.length) throw new Error(errors.join("\n"));
@@ -235,7 +238,7 @@ test("URL auto-replaces /story/X with /story/X/move/1 on cold load", async ({ pa
 test("selected segment uses run color (not always red)", async ({ page }) => {
   const errors = attachConsole(page);
   await page.goto("/map/internal/story/sons-of-mosiah/move/1");
-  await expect(page.locator(".mapPanel .map_story_move").first()).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator(".mapPanel .map_story_fence").first()).toBeVisible({ timeout: 15_000 });
   await page.waitForTimeout(800);
   const color = await page.evaluate(() => window.__mapDebug?.selectedColor);
   // STORY_RUN_COLORS first entry is '#3b82f6'
@@ -246,7 +249,7 @@ test("selected segment uses run color (not always red)", async ({ page }) => {
 test("only the active story's moves draw on the map", async ({ page }) => {
   const errors = attachConsole(page);
   await page.goto("/map/internal/story/sons-of-mosiah/move/1");
-  await expect(page.locator(".mapPanel .map_story_move").first()).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator(".mapPanel .map_story_fence").first()).toBeVisible({ timeout: 15_000 });
   await page.waitForTimeout(800);
   // sons-of-mosiah has 14 moves; static layer has 13 (selected excluded); segment has 1.
   const debug = await page.evaluate(() => window.__mapDebug);
@@ -264,7 +267,7 @@ test("only the active story's moves draw on the map", async ({ page }) => {
 test("static story lines: all non-selected moves drawn, run-colored", async ({ page }) => {
   const errors = attachConsole(page);
   await page.goto("/map/internal/story/sons-of-mosiah/move/3");
-  await expect(page.locator(".mapPanel .map_story_move").first()).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator(".mapPanel .map_story_fence").first()).toBeVisible({ timeout: 15_000 });
   await page.waitForTimeout(900);
   const debug = await page.evaluate(() => window.__mapDebug);
   // sons-of-mosiah has 14 moves; selected is excluded; static layer should have 13.
@@ -274,32 +277,14 @@ test("static story lines: all non-selected moves drawn, run-colored", async ({ p
   if (errors.length) throw new Error(errors.join("\n"));
 });
 
-test("panel tile outlines + connector use run colors", async ({ page }) => {
+test("first post has run color #3b82f6 outline + connector", async ({ page }) => {
   const errors = attachConsole(page);
   await page.goto("/map/internal/story/sons-of-mosiah/move/1");
-  await expect(page.locator(".mapPanel .map_story_move").first()).toBeVisible({ timeout: 15_000 });
-  await page.waitForTimeout(800);
-
-  // First row (move 1, runIdx 0) — outline + connector + badge should match #3b82f6.
-  const firstRow = page.locator(".mapPanel .map_story_move").first();
-  const cssVar = await firstRow.evaluate((el) => getComputedStyle(el).getPropertyValue('--run-color').trim());
+  const firstPost = page.locator(".mapPanel .map_story_post").first();
+  await expect(firstPost).toBeVisible({ timeout: 15_000 });
+  const cssVar = await firstPost.evaluate((el) => getComputedStyle(el).getPropertyValue('--run-color').trim());
   expect(cssVar).toBe('#3b82f6');
-
-  // The image tile's outline color should reflect the variable.
-  const tile = firstRow.locator(".map_story_move_place").first();
-  const outlineColor = await tile.evaluate((el) => getComputedStyle(el).outlineColor);
-  // CSS rgb() form: rgb(59, 130, 246)
+  const outlineColor = await firstPost.evaluate((el) => getComputedStyle(el).outlineColor);
   expect(outlineColor).toBe('rgb(59, 130, 246)');
-
-  // Connector background-color matches.
-  const connector = firstRow.locator(".map_story_connector").first();
-  const connectorBg = await connector.evaluate((el) => getComputedStyle(el).backgroundColor);
-  expect(connectorBg).toBe('rgb(59, 130, 246)');
-
-  // Badge border-color matches.
-  const badge = firstRow.locator(".map_story_distance_badge").first();
-  const badgeBorder = await badge.evaluate((el) => getComputedStyle(el).borderColor);
-  expect(badgeBorder).toBe('rgb(59, 130, 246)');
-
   if (errors.length) throw new Error(errors.join("\n"));
 });

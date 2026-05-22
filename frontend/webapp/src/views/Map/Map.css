@@ -808,3 +808,127 @@ Add a triangle notch pointing down at the bottom of the tooltip
   border-radius: 3px;
   letter-spacing: -0.5px;
 }
+
+/* Post = a place tile (4rem) */
+.map_story_post {
+  position: relative;
+  width: 4rem;
+  height: 4rem;
+  margin: 0 auto;
+  flex-shrink: 0;
+  outline: 3px solid var(--run-color, transparent);
+  outline-offset: 0;
+  border-radius: 2px;
+}
+.map_story_post img {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.map_story_post caption {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: #00000099;
+  color: white;
+  font-size: 0.7rem;
+  line-height: 100%;
+  padding: 2px;
+  text-align: center;
+  border-radius: 3px;
+  letter-spacing: -0.5px;
+}
+.map_story_post.connects::after {
+  content: '';
+  display: block;
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 3px;
+  height: 1rem;
+  background-color: var(--run-color, #b8b8b8);
+}
+
+/* Fence = a move card */
+.map_story_fence {
+  position: relative;
+  padding: 0.6rem 0.75rem 0.6rem 0.75rem;
+  margin: 1rem 0;
+  border-radius: 0.5rem;
+  border: 1px solid #ddd;
+  cursor: pointer;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+  background-color: #fff;
+}
+.map_story_fence:hover {
+  background-color: #f4f3f3;
+}
+.map_story_fence.selected {
+  background-color: #fff5d6;
+  box-shadow: inset 0 0 0 2px #d4a92b;
+}
+.map_story_fence::before {
+  content: '';
+  display: block;
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 3px;
+  height: 1rem;
+  background-color: var(--run-color, #b8b8b8);
+}
+.map_story_fence.connects::after {
+  content: '';
+  display: block;
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 3px;
+  height: 1rem;
+  background-color: var(--run-color, #b8b8b8);
+}
+.map_story_fence_body p {
+  font-size: 1rem;
+  margin: 0 1ex;
+  line-height: 110%;
+  font-size: small;
+}
+.map_story_fence_body p .duration {
+  font-size: 0.7rem;
+  color: #AAA;
+  font-family: Arial;
+  font-size: smaller;
+}
+.map_story_fence_body p.desc {
+  font-size: 0.8rem;
+  color: #444;
+  text-align: left;
+}
+
+/* Distance badge — re-anchored to the top-right corner of the fence card */
+.map_story_fence .map_story_distance_badge {
+  position: absolute;
+  top: -0.6rem;
+  right: 0.5rem;
+  left: auto;
+  transform: none;
+  background-color: #fff;
+  color: var(--run-color, #555);
+  font-family: Arial, sans-serif;
+  font-size: 0.65rem;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 1em;
+  border: 1px solid var(--run-color, #b8b8b8);
+  white-space: nowrap;
+}
+
+/* Discontinuity: two adjacent posts. Extra breathing room. */
+.map_story_post + .map_story_post {
+  margin-top: 0.5rem;
+}
