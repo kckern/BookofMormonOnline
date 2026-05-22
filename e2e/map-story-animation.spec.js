@@ -273,3 +273,33 @@ test("static story lines: all non-selected moves drawn, run-colored", async ({ p
   expect(debug.forceShowCount).toBeGreaterThan(2);
   if (errors.length) throw new Error(errors.join("\n"));
 });
+
+test("panel tile outlines + connector use run colors", async ({ page }) => {
+  const errors = attachConsole(page);
+  await page.goto("/map/internal/story/sons-of-mosiah/move/1");
+  await expect(page.locator(".mapPanel .map_story_move").first()).toBeVisible({ timeout: 15_000 });
+  await page.waitForTimeout(800);
+
+  // First row (move 1, runIdx 0) — outline + connector + badge should match #3b82f6.
+  const firstRow = page.locator(".mapPanel .map_story_move").first();
+  const cssVar = await firstRow.evaluate((el) => getComputedStyle(el).getPropertyValue('--run-color').trim());
+  expect(cssVar).toBe('#3b82f6');
+
+  // The image tile's outline color should reflect the variable.
+  const tile = firstRow.locator(".map_story_move_place").first();
+  const outlineColor = await tile.evaluate((el) => getComputedStyle(el).outlineColor);
+  // CSS rgb() form: rgb(59, 130, 246)
+  expect(outlineColor).toBe('rgb(59, 130, 246)');
+
+  // Connector background-color matches.
+  const connector = firstRow.locator(".map_story_connector").first();
+  const connectorBg = await connector.evaluate((el) => getComputedStyle(el).backgroundColor);
+  expect(connectorBg).toBe('rgb(59, 130, 246)');
+
+  // Badge border-color matches.
+  const badge = firstRow.locator(".map_story_distance_badge").first();
+  const badgeBorder = await badge.evaluate((el) => getComputedStyle(el).borderColor);
+  expect(badgeBorder).toBe('rgb(59, 130, 246)');
+
+  if (errors.length) throw new Error(errors.join("\n"));
+});

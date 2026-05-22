@@ -30,6 +30,7 @@ import { ApiBaseUrl, assetUrl } from "../../models/BoMOnlineAPI";
 import { ScripturePanelSingle } from "../Page/Narration";
 import { getHtmlScriptureLinkParserOptions } from "../_Common/ViewUtils";
 import RangeSlider from "./RangeSlider";
+import { computeRuns, colorForRun } from './colors';
 
 const metersToMiles = (meters) => Math.round(meters * 0.000621371192 * 1) / 1;
 
@@ -504,6 +505,14 @@ function MapStoryPanel({mapController})
     const selectedMove = selectedStory.moves.find((m) => m.seq === selectedMoveSeq) || selectedStory.moves[0];
     const selectedPeople = selectedMove?.people || [];
 
+    const runs = computeRuns(selectedStory.moves);
+    const runColorByMoveSeq = new Map();
+    for (const { move: m, runIdx } of runs) {
+      runColorByMoveSeq.set(m.seq, colorForRun(runIdx));
+    }
+    const lastMove = selectedStory.moves[selectedStory.moves.length - 1];
+    const terminusColor = lastMove ? runColorByMoveSeq.get(lastMove.seq) : null;
+
     return <div className="mapPanel">
     <div className="mapPanelCardContainer">
         <Card>
@@ -548,6 +557,7 @@ function MapStoryPanel({mapController})
                             key={i+seq}
                             ref={(el) => { if (el) moveRefs.current[seq] = el; }}
                             className={`map_story_move${isSelected ? ' selected' : ''}`}
+                            style={{ '--run-color': runColorByMoveSeq.get(seq) }}
                             onClick={() => history.push(`/map/${currentMap?.slug}/story/${selectedStory.slug}/move/${seq}`)}
                         >
                             <MapEventImageCaption
@@ -571,7 +581,7 @@ function MapStoryPanel({mapController})
                     const lastMove = selectedStory.moves[selectedStory.moves.length - 1];
                     const terminus = lastMove && preLoadedPlaces.find((place) => place.slug === lastMove.endPlace.slug);
                     if (!terminus) return null;
-                    return <div className="map_story_terminus">
+                    return <div className="map_story_terminus" style={{ '--run-color': terminusColor }}>
                         <MapEventImageCaption location={terminus} />
                     </div>;
                 })()}

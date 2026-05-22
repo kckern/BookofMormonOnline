@@ -23,9 +23,7 @@ import Point from 'ol/geom/Point';
 import LineString from 'ol/geom/LineString';
 import Modify from 'ol/interaction/Modify';
 import * as OL from "ol";
-
-
-const STORY_RUN_COLORS = ['#3b82f6', '#f97316', '#10b981', '#ec4899', '#8b5cf6', '#eab308', '#06b6d4', '#ef4444'];
+import { STORY_RUN_COLORS, computeRuns } from './colors';
 
 const MapContents = ({mapController}) => {
     const mapElement = useRef(); // This ref will point to the map container
@@ -472,22 +470,6 @@ const drawMap = ()=>{
           const markerLayer = map.current.getLayers().getArray()[1];
           if (markerLayer) markerLayer.getSource().getFeatures().forEach(f => f.changed());
         }
-      };
-
-      const computeRuns = (moves) => {
-        const result = [];
-        let prevEnd = null;
-        let runIdx = -1;
-        for (const m of moves) {
-          if (prevEnd && m.startPlace.slug === prevEnd) {
-            // continue current run
-          } else {
-            runIdx += 1;
-          }
-          result.push({ move: m, runIdx });
-          prevEnd = m.endPlace.slug;
-        }
-        return result;
       };
 
       const noActiveSegment = () => {
