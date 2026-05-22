@@ -458,6 +458,8 @@ function MapStoryPanel({mapController})
 	  const parserOptions = getHtmlScriptureLinkParserOptions(setScripture);
     const history = useHistory();
     const moveRefs = useRef({});
+    const cardBodyRef = useRef(null);
+    const [avatarTop, setAvatarTop] = useState(0);
 
     const moveCount = selectedStory.moves.length;
 
@@ -466,6 +468,17 @@ function MapStoryPanel({mapController})
       const el = moveRefs.current[moveSeq];
       if (el) el.scrollIntoView({behavior: 'smooth', block: 'center'});
     }, [moveSeq, selectedStory?.slug]);
+
+    useEffect(() => {
+      const seq = mapController.selectedMoveSeq;
+      if (!seq) return;
+      const row = moveRefs.current[seq];
+      const container = cardBodyRef.current;
+      if (!row || !container) return;
+      // offsetTop of row relative to the card body; bottom-align: row bottom minus avatar height (28px)
+      const top = row.offsetTop + row.offsetHeight - 28;
+      setAvatarTop(top);
+    }, [mapController.selectedMoveSeq, selectedStory?.slug]);
 
     const closeStory = () => {
       const mapSlug = currentMap?.slug;
@@ -494,7 +507,7 @@ function MapStoryPanel({mapController})
                 >⬅</span>
                 <h5 className="title">{selectedStory.title}</h5>
             </CardHeader>
-            <CardBody>
+            <CardBody innerRef={cardBodyRef}>
                 <p>{selectedStory.description}</p>
                 <h6>{moveCount} Movements</h6>
                 {selectedStory.moves.map((move, i) => {
@@ -555,7 +568,7 @@ function MapStoryPanel({mapController})
                         <MapEventImageCaption location={terminus} />
                     </div>;
                 })()}
-                <MapStoryAvatars people={selectedPeople} />
+                <MapStoryAvatars people={selectedPeople} top={avatarTop} />
             </CardBody>
         </Card>
     </div>
@@ -584,10 +597,10 @@ function MapEventImageCaption({location, continuesNext, distanceMiles}){
 </div>
 }
 
-function MapStoryAvatars({people}) {
+function MapStoryAvatars({people, top}) {
   if (!people?.length) return null;
   return (
-    <div className="map_story_avatars" aria-hidden="true">
+    <div className="map_story_avatars" aria-hidden="true" style={{ top }}>
       {people.map((p) => (
         <img
           key={p.slug}

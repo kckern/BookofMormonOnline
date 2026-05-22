@@ -100,3 +100,60 @@ test("floating avatars render for the selected move", async ({ browser }) => {
   await context.close();
   if (errors.length) throw new Error(errors.join("\n"));
 });
+
+test("avatars slide: top changes when selection moves", async ({ browser }) => {
+  // bom_map_move_people is unpopulated in the dev DB — mirror Task 3's SW-block
+  // + route intercept to inject people on ALL moves so .map_story_avatars exists
+  // at both the initial position (move 1) and after clicking (move 3).
+  const context = await browser.newContext({ serviceWorkers: "block" });
+  const page = await context.newPage();
+  const errors = attachConsole(page);
+
+  const mockPeople = [
+    { slug: "ammon1", name: "Ammon" },
+    { slug: "aaron1", name: "Aaron" },
+  ];
+
+  await page.route("http://localhost:8200/en", async (route) => {
+    const req = route.request();
+    let body = {};
+    try { body = JSON.parse(req.postData() || "{}"); } catch (_) {}
+    const isMapstories = typeof body.query === "string" && body.query.includes("mapstories");
+    if (!isMapstories) {
+      await route.continue();
+      return;
+    }
+    const resp = await route.fetch();
+    const json = await resp.json();
+    const stories = json?.data?.mapstories;
+    if (Array.isArray(stories)) {
+      const story = stories.find((s) => s.slug === "sons-of-mosiah");
+      if (story?.moves) {
+        // Inject people on every move so the avatars element exists regardless
+        // of which move is selected.
+        story.moves.forEach((move) => { move.people = mockPeople; });
+      }
+    }
+    await route.fulfill({ contentType: "application/json", body: JSON.stringify(json) });
+  });
+
+  await page.goto("http://localhost:8200/map/internal/story/sons-of-mosiah");
+  const avatars = page.locator(".mapPanel .map_story_avatars");
+  await expect(avatars).toBeVisible({ timeout: 15_000 });
+
+  // Record top at default selection (move 1).
+  const topAt1 = await avatars.evaluate((el) => el.getBoundingClientRect().top);
+
+  // Click move 3 (array index 2).
+  await page.locator(".mapPanel .map_story_move").nth(2).click();
+  await expect(page).toHaveURL(/\/move\/3$/, { timeout: 5_000 });
+
+  // Allow slide transition (0.4 s) to finish.
+  await page.waitForTimeout(700);
+
+  const topAt3 = await avatars.evaluate((el) => el.getBoundingClientRect().top);
+  expect(topAt3).toBeGreaterThan(topAt1);
+
+  await context.close();
+  if (errors.length) throw new Error(errors.join("\n"));
+});

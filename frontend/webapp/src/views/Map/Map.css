@@ -740,6 +740,7 @@ Add a triangle notch pointing down at the bottom of the tooltip
   right: 0.75rem;
   display: flex;
   pointer-events: none;
+  transition: top 0.4s ease;
 }
 .map_story_avatars img{
   width: 28px;
