@@ -61,7 +61,10 @@ function MapContainer({ appController }) {
   useEffect(() => {
     appController.functions.closePopUp()
     if(!appController.preLoad.placeList) return;
-    getMap(params.mapType, params.placeName)
+    // skipUrlPush: the URL is already correct on cold load (it's what we're
+    // mounting under). Pushing /map/:mapType here would clobber any
+    // /story/:storySlug or /event/:storySlug segment in the URL.
+    getMap(params.mapType, params.placeName, { skipUrlPush: true })
     if(params.placeName){
       if(isMobile())  appController.functions.setPopUp({ type: "places", ids: [params.placeName] });
       else setPanelContents({slug: params.placeName});
@@ -79,10 +82,12 @@ function MapContainer({ appController }) {
 
 
   // get active map data
-  const getMap = useCallback((type = "internal", place) => {
+  const getMap = useCallback((type = "internal", place, opts = {}) => {
     // update Url
     if(!type) return;
-    updateUrl(`/map/${type}${place ? "/place/" + place : ""}`)
+    if (!opts.skipUrlPush) {
+      updateUrl(`/map/${type}${place ? "/place/" + place : ""}`)
+    }
     setMapName(label("loading"))
 
     BoMOnlineAPI({ map: type, mapstories: [type] },{useCache:false}).then((result) => {
@@ -134,6 +139,9 @@ function MapContainer({ appController }) {
     setZoomLevel,
     mapCenter,
     setMapCenter,
+    storySlug: params.storySlug || null,
+    moveSeq: params.moveSeq ? parseInt(params.moveSeq, 10) : null,
+    selectedMoveSeq: (params.moveSeq ? parseInt(params.moveSeq, 10) : null) ?? 1,
   }
 
   const selectItemHandler = (slug) => {

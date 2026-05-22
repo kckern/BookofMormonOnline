@@ -1,6 +1,6 @@
 
 import Parser from "html-react-parser";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useHistory } from 'react-router';
 import spinner from "../_Common/svg/loadbar.svg";
 import placesIcon from "../_Common/svg/places.svg";
@@ -72,16 +72,40 @@ export function MapPanel({mapController}) {
     if (panel) panel.scrollTop = 0;
     const mapSlug = mapController.currentMap?.slug;
     if (!mapSlug) return;
+    // When the URL points at a story, the story URL is canonical — don't
+    // overwrite it with the place URL here.
+    const onStoryUrl = !!mapController.storySlug;
     if (slug) {
-        mapController.appController.functions.setSlug(`/map/${mapSlug}/place/${slug}`);
+        if (!onStoryUrl) {
+          mapController.appController.functions.setSlug(`/map/${mapSlug}/place/${slug}`);
+        }
         setPlaceDetails({});
         BoMOnlineAPI({ places: [slug] }, { useCache: false }).then((result) => {
             setPlaceDetails(result?.places?.[slug] || {});
         });
-    } else {
+    } else if (!onStoryUrl) {
         mapController.appController.functions.setSlug(`/map/${mapSlug}`);
     }
-  }, [slug, currentMap?.slug, selectedStory]);
+  }, [slug, currentMap?.slug, selectedStory, mapController.storySlug]);
+
+  useEffect(() => {
+    const urlStorySlug = mapController.storySlug;
+    if (!currentMap?.stories) return;
+    if (!urlStorySlug) {
+      if (selectedStory) setSelectedStory(null);
+      return;
+    }
+    const story = currentMap.stories.find((s) => s.slug === urlStorySlug);
+    if (!story) {
+      if (selectedStory) setSelectedStory(null);
+      return;
+    }
+    if (selectedStory?.slug !== story.slug) setSelectedStory(story);
+    if (!slug) {
+      const firstMoveSlug = story.moves?.[0]?.startPlace?.slug;
+      if (firstMoveSlug) setPanelContents({ slug: firstMoveSlug });
+    }
+  }, [mapController.storySlug, currentMap?.slug, currentMap?.stories?.length]);
 
 
   const index = placeDetails?.index || [];
@@ -112,8 +136,7 @@ export function MapPanel({mapController}) {
     {!!storyCount && <NavItem onClick={() =>{
         if(storyCount===1) {
             const firstAndOnlyStory = matchingStories[0];
-            mapController.updateUrl(`/map/${currentMap?.slug}/story/${firstAndOnlyStory.slug}`);
-            setSelectedStory(firstAndOnlyStory)
+            history.push(`/map/${currentMap?.slug}/story/${firstAndOnlyStory.slug}`);
         }else setActiveTab("2")
         }} className={activeTab === "2" ? "active" : ""}>
       <div><span className="counter">{storyCount}</span></div>
@@ -132,8 +155,7 @@ export function MapPanel({mapController}) {
     <TabPane tabId="2">
     {matchingStories.map((story, i) => {
     return <div key={i} className="map_story" onClick={()=>{
-        mapController.updateUrl(`/map/${currentMap?.slug}/story/${story.slug}`);
-        setSelectedStory(story)
+        history.push(`/map/${currentMap?.slug}/story/${story.slug}`);
         }}>
             <h6>{story.title}</h6>
             <p>{story.description}</p>
@@ -430,20 +452,40 @@ if(isMobile()) return null;
 
 function MapStoryPanel({mapController})
 {
-    const {selectedStory, setSelectedStory} = mapController;
+    const {selectedStory, moveSeq, currentMap, panelContents} = mapController;
     const preLoadedPlaces = Object.values(mapController.placeList);
     const [scripture, setScripture] = useState(null);
 	  const parserOptions = getHtmlScriptureLinkParserOptions(setScripture);
+    const history = useHistory();
+    const moveRefs = useRef({});
 
     const moveCount = selectedStory.moves.length;
 
+    useEffect(() => {
+      if (!moveSeq) return;
+      const el = moveRefs.current[moveSeq];
+      if (el) el.scrollIntoView({behavior: 'smooth', block: 'center'});
+    }, [moveSeq, selectedStory?.slug]);
+
+    const closeStory = () => {
+      const mapSlug = currentMap?.slug;
+      const placeSlug = panelContents?.slug;
+      const placeBelongsToStory = placeSlug && selectedStory?.moves?.some((m) =>
+        m.startPlace.slug === placeSlug || m.endPlace.slug === placeSlug
+      );
+      if (placeBelongsToStory) {
+        history.push(`/map/${mapSlug}/place/${placeSlug}`);
+      } else {
+        history.push(`/map/${mapSlug}`);
+      }
+    };
 
     return <div className="mapPanel">
     <div className="mapPanelCardContainer">
         <Card>
             <CardHeader>
                 <span
-                    onClick={()=>setSelectedStory(null)}
+                    onClick={closeStory}
                     style={{cursor: "pointer", fontSize: "1.5rem", marginRight: "1rem", float: "left", opacity: 0.5}}
                 >⬅</span>
                 <h5 className="title">{selectedStory.title}</h5>
@@ -459,22 +501,56 @@ function MapStoryPanel({mapController})
 
 
                     const start = preLoadedPlaces.find((place) => place.slug === startPlace.slug);
-                    const end = preLoadedPlaces.find((place) => place.slug === endPlace.slug);
 
                     const startPoint = [startPlace.lat, startPlace.lng];
                     const endPoint = [endPlace.lat, endPlace.lng];
                     const miles =  metersToMiles(getDistance(startPoint, endPoint));
 
-                    return <div key={i+seq} className="map_story_move" >
-                            <MapEventImageCaption location={start} />
+                    const isSelected = mapController.selectedMoveSeq === seq;
+                    const isLast = i === selectedStory.moves.length - 1;
+                    const nextMove = selectedStory.moves[i + 1];
+                    // Last row always connects down to the terminus tile (the
+                    // terminus IS this move's endPlace). Earlier rows connect
+                    // only when the journey is continuous.
+                    const continuesNext = isLast
+                      ? true
+                      : endPlace.slug === nextMove?.startPlace?.slug;
+
+                    const prevTravelers = i > 0 ? selectedStory.moves[i - 1].travelers : null;
+                    const hideTravelers = travelers === prevTravelers;
+                    const showHeader = !hideTravelers || !!duration;
+
+                    return <div
+                            key={i+seq}
+                            ref={(el) => { if (el) moveRefs.current[seq] = el; }}
+                            className={`map_story_move${isSelected ? ' selected' : ''}`}
+                            onClick={() => history.push(`/map/${currentMap?.slug}/story/${selectedStory.slug}/move/${seq}`)}
+                        >
+                            <MapEventImageCaption
+                              location={start}
+                              continuesNext={continuesNext}
+                              distanceMiles={continuesNext ? miles : null}
+                            />
                             <div className="map_story_move_desc">
-                                <p><b>{travelers}</b><span className="distance"> • {miles} miles</span>{!!duration && <span className="duration"> • {duration}</span>}
-                                </p>
+                                {showHeader && (
+                                  <p>
+                                    {!hideTravelers && <b>{travelers}</b>}
+                                    {!hideTravelers && !!duration && <span> • </span>}
+                                    {!!duration && <span className="duration">{duration}</span>}
+                                  </p>
+                                )}
                                 {Parser(`<p class='desc'>${description} (${ref})</p>`, parserOptions)}
                             </div>
-                            <MapEventImageCaption location={end} />
                         </div>
                 })}
+                {(() => {
+                    const lastMove = selectedStory.moves[selectedStory.moves.length - 1];
+                    const terminus = lastMove && preLoadedPlaces.find((place) => place.slug === lastMove.endPlace.slug);
+                    if (!terminus) return null;
+                    return <div className="map_story_terminus">
+                        <MapEventImageCaption location={terminus} />
+                    </div>;
+                })()}
             </CardBody>
         </Card>
     </div>
@@ -485,7 +561,7 @@ function MapStoryPanel({mapController})
 }
 
 
-function MapEventImageCaption({location}){
+function MapEventImageCaption({location, continuesNext, distanceMiles}){
 
     if(!location?.slug) return null
     const label = (location?.label || location?.name)?.replace(/\//g, " ").replace(/ +/g, " ");
@@ -493,5 +569,12 @@ function MapEventImageCaption({location}){
     return <div className="map_story_move_place">
     <img src={`${assetUrl}/places/${location.slug}`} alt={location.slug} />
     <caption>{label}</caption>
+    {continuesNext && (
+      <span className="map_story_connector" aria-hidden="true">
+        {distanceMiles != null && (
+          <span className="map_story_distance_badge">{distanceMiles} mi</span>
+        )}
+      </span>
+    )}
 </div>
 }
