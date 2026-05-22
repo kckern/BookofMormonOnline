@@ -227,23 +227,19 @@ const routes = [
     component: TimeLine,
   },
   {
-    path: "/map/:mapType/place/:placeName",
-    component: Map,
-  },
-  // {
-  //   path: "/map/place/:mapType",
-  //   component: Map,
-  // },
-  {
-    path: "/map/:mapType",
-    component: Map,
-  },
-  {
-    path: "/maps",
-    component: Map,
-  },
-  {
-    path: "/map",
+    // Single Route for all map URLs so <Switch> never unmounts Map when
+    // navigating between place/story/event/move variants. Order matters:
+    // path-to-regexp tries each in turn, so more specific patterns come first.
+    path: [
+      "/map/:mapType/story/:storySlug/move/:moveSeq(\\d+)",
+      "/map/:mapType/story/:storySlug",
+      "/map/:mapType/event/:storySlug/move/:moveSeq(\\d+)",
+      "/map/:mapType/event/:storySlug",
+      "/map/:mapType/place/:placeName",
+      "/map/:mapType",
+      "/maps",
+      "/map",
+    ],
     component: Map,
   },
   {
