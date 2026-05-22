@@ -38,3 +38,18 @@ test("explicit selection: /story/X/move/3 selects row 3", async ({ page }) => {
   await expect(rows.nth(2)).toHaveClass(/selected/);
   if (errors.length) throw new Error(errors.join("\n"));
 });
+
+test("row layout: flex-end + desc negative margin", async ({ page }) => {
+  const errors = attachConsole(page);
+  await page.goto("/map/internal/story/sons-of-mosiah");
+  const firstRow = page.locator(".mapPanel .map_story_move").first();
+  await expect(firstRow).toBeVisible({ timeout: 15_000 });
+  const rowAlignItems = await firstRow.evaluate((el) => getComputedStyle(el).alignItems);
+  expect(rowAlignItems).toBe("flex-end");
+  const descMarginBottom = await firstRow
+    .locator(".map_story_move_desc")
+    .evaluate((el) => getComputedStyle(el).marginBottom);
+  // -1rem at default 16px root font → "-16px"
+  expect(descMarginBottom).toBe("-16px");
+  if (errors.length) throw new Error(errors.join("\n"));
+});
