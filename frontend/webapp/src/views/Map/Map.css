@@ -821,3 +821,13 @@ Add a triangle notch pointing down at the bottom of the tooltip
   object-fit: cover;
   display: block;
 }
+
+/* Z-stack: labels (marker layer z=200) above segment line (z=50); walker behind canvas.
+   OL sets position:absolute on the canvas via inline style, so we only need z-index here.
+   The walker overlay gets z-index:-1 so the canvas (z-index:0) draws above it. */
+#map .ol-viewport canvas {
+  z-index: 0;
+}
+.map_story_walker_overlay {
+  z-index: -1;
+}

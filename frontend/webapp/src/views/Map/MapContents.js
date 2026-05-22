@@ -35,6 +35,7 @@ const MapContents = ({mapController}) => {
     const walkerOverlayRef = useRef(null);
     const walkerRafRef = useRef(null);
     const walkerStartRef = useRef(0);
+    const forceShowSlugsRef = useRef(new Set());
     let {currentMap,isAdmin} = mapController;
     const {slug:mapslug,places,stories} = currentMap;
 		const [animateZoom,setAnimateZoom] = useState(0);
@@ -219,7 +220,7 @@ const drawMap = ()=>{
 				styleIcons.push({slug:i.slug,icon:iconStyle});
         marker.setStyle(()=>{
             const zoom = view.getZoom();
-            if(zoom < minZoom || zoom > maxZoom) return null;
+            if (!forceShowSlugsRef.current.has(i.slug) && (zoom < minZoom || zoom > maxZoom)) return null;
             return iconStyle;
         });
         marker.set('name', name);
@@ -253,16 +254,16 @@ const drawMap = ()=>{
         return line;
     });
 
-		map.current.addLayer(
-			new VectorLayer({
-				source: new VectorSource({
-					features: [...markers]
-				}),
-				style: function (feature, resolution) {
-					console.log({feature,resolution});
-				}
-			})
-		);
+		const markerLayer = new VectorLayer({
+			source: new VectorSource({
+				features: [...markers]
+			}),
+			style: function (feature, resolution) {
+				console.log({feature,resolution});
+			}
+		});
+		markerLayer.setZIndex(200);
+		map.current.addLayer(markerLayer);
 
     map.current.addLayer(
         new VectorLayer({
@@ -298,7 +299,7 @@ const drawMap = ()=>{
         }),
       }),
     });
-    segmentLayer.setZIndex(100);
+    segmentLayer.setZIndex(50);
     map.current.addLayer(segmentLayer);
     segmentLayerRef.current = segmentLayer;
 
@@ -316,6 +317,7 @@ const drawMap = ()=>{
       element: walkerEl,
       positioning: 'center-center',
       stopEvent: false,
+      className: 'ol-overlay-container map_story_walker_overlay',
     });
     map.current.addOverlay(walkerOverlay);
     walkerOverlayRef.current = walkerOverlay;
@@ -479,7 +481,16 @@ const drawMap = ()=>{
       source.clear();
       segmentLineRef.current = null;
 
+      const clearForceShow = () => {
+        if (forceShowSlugsRef.current.size > 0) {
+          forceShowSlugsRef.current = new Set();
+          const markerLayer = map.current.getLayers().getArray()[1];
+          if (markerLayer) markerLayer.getSource().getFeatures().forEach(f => f.changed());
+        }
+      };
+
       const noActiveSegment = () => {
+        clearForceShow();
         window.__mapDebug = {
           segmentFeatureCount: 0,
           get lineDashOffset() { return lineDashOffsetRef.current; },
@@ -490,6 +501,11 @@ const drawMap = ()=>{
       if (!story || !seq) { noActiveSegment(); return; }
       const move = story.moves.find((m) => m.seq === seq);
       if (!move) { noActiveSegment(); return; }
+
+      // Force-show the segment endpoints regardless of per-place zoom range.
+      forceShowSlugsRef.current = new Set([move.startPlace.slug, move.endPlace.slug]);
+      const markerLayer = map.current.getLayers().getArray()[1];
+      if (markerLayer) markerLayer.getSource().getFeatures().forEach(f => f.changed());
 
       const start = OlProj.fromLonLat([move.startPlace.lat, move.startPlace.lng]);
       const end = OlProj.fromLonLat([move.endPlace.lat, move.endPlace.lng]);
@@ -537,6 +553,11 @@ const drawMap = ()=>{
           walkerRafRef.current = null;
         }
         walkerOverlay.setPosition(undefined);
+        if (forceShowSlugsRef.current.size > 0) {
+          forceShowSlugsRef.current = new Set();
+          const markerLayer = map.current?.getLayers().getArray()[1];
+          if (markerLayer) markerLayer.getSource().getFeatures().forEach(f => f.changed());
+        }
       };
     }, [mapController.selectedMoveSeq, mapController.selectedStory?.slug]);
 
@@ -568,13 +589,13 @@ const drawMap = ()=>{
 						const existedActiveMarker = markers.find(i=>i.get('slug') === activeStyleIcons.activeIcon);
 						existedActiveMarker.setStyle(()=>{
 							const zoom = map.current?.getView()?.getZoom();
-							if(zoom < minZoom || zoom > maxZoom) return null;
+							if(!forceShowSlugsRef.current.has(activeStyleIcons.activeIcon) && (zoom < minZoom || zoom > maxZoom)) return null;
 							return styleIcons.find(icon=>icon?.slug === activeStyleIcons.activeIcon)?.icon;
 					});
 					}
 					activeMarker.setStyle(()=>{
 							const zoom = map.current?.getView()?.getZoom();
-							if(zoom < minZoom || zoom > maxZoom) return null;
+							if(!forceShowSlugsRef.current.has(activePlace) && (zoom < minZoom || zoom > maxZoom)) return null;
 							return activeStyleIcons.icons.find(icon=>icon.slug === activePlace)?.icon;
 					});
 					setActiveStyleIcons(prev=>({
@@ -596,7 +617,7 @@ const drawMap = ()=>{
 					const existedActiveMarker = markers.find(i=>i.get('slug') === activeStyleIcons.activeIcon);
 					existedActiveMarker?.setStyle(()=>{
 						const zoom = map.current?.getView()?.getZoom();
-						if(zoom < minZoom || zoom > maxZoom) return null;
+						if(!forceShowSlugsRef.current.has(activeStyleIcons.activeIcon) && (zoom < minZoom || zoom > maxZoom)) return null;
 						return styleIcons.find(icon=>icon?.slug === activeStyleIcons.activeIcon)?.icon;
 				});
 				}

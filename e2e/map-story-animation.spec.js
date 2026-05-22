@@ -208,6 +208,31 @@ test("walker overlay appears and moves along the segment", async ({ page }) => {
   if (errors.length) throw new Error(errors.join("\n"));
 });
 
+test("endpoint markers force-visible + label z-stack", async ({ page }) => {
+  const errors = attachConsole(page);
+  await page.goto("/map/internal/story/sons-of-mosiah/move/3");
+  // Wait for segment + walker to be present.
+  await expect(page.locator(".map_story_walker")).toBeVisible({ timeout: 15_000 });
+  await page.waitForTimeout(800);
+
+  // Check that the walker overlay container has z-index: -1.
+  const walkerZ = await page
+    .locator(".ol-overlay-container.map_story_walker_overlay")
+    .first()
+    .evaluate((el) => getComputedStyle(el).zIndex);
+  expect(walkerZ).toBe("-1");
+
+  // Check that the canvas has an explicit z-index (OL sets position:absolute inline;
+  // our CSS sets z-index:0 so the canvas draws above the walker's z-index:-1 overlay).
+  const canvasZ = await page
+    .locator("#map .ol-viewport canvas")
+    .first()
+    .evaluate((el) => getComputedStyle(el).zIndex);
+  expect(canvasZ).toBe("0");
+
+  if (errors.length) throw new Error(errors.join("\n"));
+});
+
 test("walker hides + segment clears when story closes", async ({ page }) => {
   const errors = attachConsole(page);
   await page.goto("/map/internal/story/sons-of-mosiah/move/2");
