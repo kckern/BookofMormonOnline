@@ -117,6 +117,7 @@ function MapContainer({ appController }) {
 
 
   const {placeList} = appController.preLoad;
+  const moveSeqParam = params.moveSeq ? parseInt(params.moveSeq, 10) : null;
   const mapController = {
     setPanelContents,
     panelContents,
@@ -140,8 +141,8 @@ function MapContainer({ appController }) {
     mapCenter,
     setMapCenter,
     storySlug: params.storySlug || null,
-    moveSeq: params.moveSeq ? parseInt(params.moveSeq, 10) : null,
-    selectedMoveSeq: (params.moveSeq ? parseInt(params.moveSeq, 10) : null) ?? 1,
+    moveSeq: moveSeqParam,
+    selectedMoveSeq: moveSeqParam ?? 1,
   }
 
   const selectItemHandler = (slug) => {
