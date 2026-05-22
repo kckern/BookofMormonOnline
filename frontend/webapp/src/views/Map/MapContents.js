@@ -23,6 +23,7 @@ import Point from 'ol/geom/Point';
 import LineString from 'ol/geom/LineString';
 import Modify from 'ol/interaction/Modify';
 import * as OL from "ol";
+import Overlay from 'ol/Overlay';
 
 
 const MapContents = ({mapController}) => {
@@ -31,6 +32,9 @@ const MapContents = ({mapController}) => {
     const segmentLayerRef = useRef(null);
     const segmentLineRef = useRef(null);
     const lineDashOffsetRef = useRef(0);
+    const walkerOverlayRef = useRef(null);
+    const walkerRafRef = useRef(null);
+    const walkerStartRef = useRef(0);
     let {currentMap,isAdmin} = mapController;
     const {slug:mapslug,places,stories} = currentMap;
 		const [animateZoom,setAnimateZoom] = useState(0);
@@ -305,6 +309,18 @@ const drawMap = ()=>{
       segmentLayer.changed();
     });
 
+    const walkerEl = document.createElement('div');
+    walkerEl.className = 'map_story_walker';
+    walkerEl.innerHTML = '<img alt="" />';
+    const walkerOverlay = new Overlay({
+      element: walkerEl,
+      positioning: 'center-center',
+      stopEvent: false,
+    });
+    map.current.addOverlay(walkerOverlay);
+    walkerOverlayRef.current = walkerOverlay;
+    walkerOverlay.setPosition(undefined); // hidden until a segment is selected
+
     // Extracted the repeated code into a separate function
     const setTooltipAndCursor = (isHovering, position, slug) => {
         const cursorStyle = isHovering ? 'pointer' : '';
@@ -449,42 +465,78 @@ const drawMap = ()=>{
       const seq = mapController.selectedMoveSeq;
       const story = mapController.selectedStory;
       const segmentLayer = segmentLayerRef.current;
-      if (!map.current || !segmentLayer) return;
+      const walkerOverlay = walkerOverlayRef.current;
+      if (!map.current || !segmentLayer || !walkerOverlay) return;
+
+      // Stop any in-flight walker.
+      if (walkerRafRef.current) {
+        cancelAnimationFrame(walkerRafRef.current);
+        walkerRafRef.current = null;
+      }
+      walkerOverlay.setPosition(undefined);
+
       const source = segmentLayer.getSource();
       source.clear();
       segmentLineRef.current = null;
-      if (!story || !seq) {
+
+      const noActiveSegment = () => {
         window.__mapDebug = {
           segmentFeatureCount: 0,
           get lineDashOffset() { return lineDashOffsetRef.current; },
           get viewCenter() { return map.current?.getView().getCenter() || null; },
         };
-        return;
-      }
+      };
+
+      if (!story || !seq) { noActiveSegment(); return; }
       const move = story.moves.find((m) => m.seq === seq);
-      if (!move) {
-        window.__mapDebug = {
-          segmentFeatureCount: 0,
-          get lineDashOffset() { return lineDashOffsetRef.current; },
-          get viewCenter() { return map.current?.getView().getCenter() || null; },
-        };
-        return;
-      }
+      if (!move) { noActiveSegment(); return; }
+
       const start = OlProj.fromLonLat([move.startPlace.lat, move.startPlace.lng]);
       const end = OlProj.fromLonLat([move.endPlace.lat, move.endPlace.lng]);
       const line = new Feature({ geometry: new LineString([start, end]) });
       source.addFeature(line);
       segmentLineRef.current = line;
+
       const extent = line.getGeometry().getExtent();
       map.current.getView().fit(extent, {
         duration: 500,
         padding: [80, 80, 80, 80],
-        maxZoom: maxzoom,
+        maxZoom: currentMap?.maxzoom,
       });
+
+      // Walker image: first person on the move, or fallback to a generic dot.
+      const hero = move.people?.[0];
+      const img = walkerOverlay.getElement().querySelector('img');
+      if (hero?.slug) {
+        img.src = `${assetUrl}/people/${hero.slug}`;
+        img.style.display = '';
+      } else {
+        img.removeAttribute('src');
+        img.style.display = 'none';
+      }
+
+      const DURATION_MS = 4000;
+      walkerStartRef.current = performance.now();
+      const tick = (now) => {
+        const t = ((now - walkerStartRef.current) % DURATION_MS) / DURATION_MS;
+        const pos = [start[0] + (end[0] - start[0]) * t, start[1] + (end[1] - start[1]) * t];
+        walkerOverlay.setPosition(pos);
+        walkerRafRef.current = requestAnimationFrame(tick);
+      };
+      walkerRafRef.current = requestAnimationFrame(tick);
+
       window.__mapDebug = {
         segmentFeatureCount: source.getFeatures().length,
         get lineDashOffset() { return lineDashOffsetRef.current; },
         get viewCenter() { return map.current?.getView().getCenter() || null; },
+      };
+
+      return () => {
+        if (walkerRafRef.current) {
+          cancelAnimationFrame(walkerRafRef.current);
+          walkerRafRef.current = null;
+        }
+        walkerOverlay.setPosition(undefined);
       };
     }, [mapController.selectedMoveSeq, mapController.selectedStory?.slug]);
 

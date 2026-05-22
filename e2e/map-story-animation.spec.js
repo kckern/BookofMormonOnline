@@ -192,3 +192,18 @@ test("view auto-fits to the selected segment", async ({ page }) => {
   expect(center1[0] !== center2[0] || center1[1] !== center2[1]).toBe(true);
   if (errors.length) throw new Error(errors.join("\n"));
 });
+
+test("walker overlay appears and moves along the segment", async ({ page }) => {
+  const errors = attachConsole(page);
+  await page.goto("/map/internal/story/sons-of-mosiah");
+  const walker = page.locator(".map_story_walker");
+  await expect(walker).toBeVisible({ timeout: 15_000 });
+  // Walker uses an ol/Overlay which positions its container via `transform`
+  // on the wrapping ol-overlay element. Read transform across frames.
+  const wrapper = page.locator(".ol-overlay-container").filter({ has: walker });
+  const t1 = await wrapper.evaluate((el) => el.style.transform);
+  await page.waitForTimeout(500);
+  const t2 = await wrapper.evaluate((el) => el.style.transform);
+  expect(t1).not.toBe(t2);
+  if (errors.length) throw new Error(errors.join("\n"));
+});
