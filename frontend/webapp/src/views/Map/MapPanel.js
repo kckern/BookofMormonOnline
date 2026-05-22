@@ -461,7 +461,6 @@ if(isMobile()) return null;
 function MapStoryPanel({mapController})
 {
     const {selectedStory, moveSeq, currentMap, panelContents} = mapController;
-    const preLoadedPlaces = Object.values(mapController.placeList);
     const [scripture, setScripture] = useState(null);
 	  const parserOptions = getHtmlScriptureLinkParserOptions(setScripture);
     const history = useHistory();
@@ -510,9 +509,6 @@ function MapStoryPanel({mapController})
     for (const { move: m, runIdx } of runs) {
       runColorByMoveSeq.set(m.seq, colorForRun(runIdx));
     }
-    const lastMove = selectedStory.moves[selectedStory.moves.length - 1];
-    const terminusColor = lastMove ? runColorByMoveSeq.get(lastMove.seq) : null;
-
     return <div className="mapPanel">
     <div className="mapPanelCardContainer">
         <Card>
@@ -627,24 +623,6 @@ function MapStoryFence({
       </div>
     </div>
   );
-}
-
-function MapEventImageCaption({location, continuesNext, distanceMiles}){
-
-    if(!location?.slug) return null
-    const label = (location?.label || location?.name)?.replace(/\//g, " ").replace(/ +/g, " ");
-
-    return <div className="map_story_move_place">
-    <img src={`${assetUrl}/places/${location.slug}`} alt={location.slug} />
-    <caption>{label}</caption>
-    {continuesNext && (
-      <span className="map_story_connector" aria-hidden="true">
-        {distanceMiles != null && (
-          <span className="map_story_distance_badge">{distanceMiles} mi</span>
-        )}
-      </span>
-    )}
-</div>
 }
 
 function MapStoryAvatars({people, top}) {

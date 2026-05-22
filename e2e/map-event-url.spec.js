@@ -4,7 +4,7 @@ test.describe("map event URL routing", () => {
   test("clicking Events on Jershon updates URL to /story/", async ({ page }) => {
     // Filter out pre-existing React warnings unrelated to this fix:
     //  - detectScriptures emits `class=` strings parsed back through React (Invalid DOM property)
-    //  - MapEventImageCaption uses <caption> inside a <div> (validateDOMNesting)
+    //  - MapStoryPost uses <caption> inside a <div> (validateDOMNesting)
     const IGNORED_CONSOLE_PATTERNS = [
       /Invalid DOM property/,
       /validateDOMNesting/,
@@ -55,8 +55,11 @@ test.describe("map event URL routing", () => {
     // (a) Single matching story → URL jumps straight to /story/:slug.
     // (b) Multiple matching stories → tab content shows .map_story cards;
     //     click the first to navigate.
+    // Allow for optional /move/N suffix that the app auto-appends on load.
+    const STORY_URL_RE = /\/map\/internal\/story\/[^/]+(\/move\/\d+)?$/;
+
     const directNavigated = await page
-      .waitForURL(/\/map\/internal\/story\/[^/]+$/, { timeout: 3_000 })
+      .waitForURL(STORY_URL_RE, { timeout: 3_000 })
       .then(() => true)
       .catch(() => false);
 
@@ -64,14 +67,14 @@ test.describe("map event URL routing", () => {
       const firstStory = page.locator(".mapPanel .map_story").first();
       await expect(firstStory).toBeVisible({ timeout: 5_000 });
       await firstStory.click();
-      await expect(page).toHaveURL(/\/map\/internal\/story\/[^/]+$/, { timeout: 5_000 });
+      await expect(page).toHaveURL(STORY_URL_RE, { timeout: 5_000 });
     }
 
     // Let any post-click setSlug/getMap effects fire.
     await page.waitForTimeout(1_500);
 
     // Final URL is stable on /story/.
-    await expect(page).toHaveURL(/\/map\/internal\/story\/[^/]+$/);
+    await expect(page).toHaveURL(STORY_URL_RE);
 
     // Merge framenav events + pushState/replaceState calls in time order
     // and assert that once we land on /story/, nothing pushes us back to
@@ -89,51 +92,45 @@ test.describe("map event URL routing", () => {
       `URL reverted to /place/jershon after navigating to /story/. transitions after story:\n${JSON.stringify(afterStory, null, 2)}`,
     ).toBe(-1);
 
-    // Sanity: the story panel actually rendered (movements list visible).
-    await expect(page.locator(".mapPanel .map_story_move").first()).toBeVisible({ timeout: 5_000 });
+    // Sanity: the story panel actually rendered (fence cards visible).
+    await expect(page.locator(".mapPanel .map_story_fence").first()).toBeVisible({ timeout: 5_000 });
 
     // Screenshot what we actually rendered so we can eyeball the new layout.
     await page.locator(".mapPanel").screenshot({ path: "../test-results/story-panel.png" });
 
-    // --- New layout assertions ---
+    // --- New layout assertions (post/fence alternating panel) ---
 
-    // 1. Each move row contains exactly ONE place tile on the left (we removed
-    //    the right-hand dst tile).
-    const rowTileCounts = await page.$$eval(
-      ".mapPanel .map_story_move",
-      (rows) => rows.map((r) => r.querySelectorAll(".map_story_move_place").length),
-    );
-    expect(rowTileCounts.length).toBeGreaterThan(0);
-    for (const count of rowTileCounts) expect(count).toBe(1);
+    // 1. Each fence card represents one movement; verify at least one exists.
+    const fenceCount = await page.locator(".mapPanel .map_story_fence").count();
+    expect(fenceCount).toBeGreaterThan(0);
 
-    // 2. Exactly one terminus tile after the rows.
-    const terminus = page.locator(".mapPanel .map_story_terminus");
-    await expect(terminus).toHaveCount(1);
-    await expect(terminus.locator(".map_story_move_place")).toHaveCount(1);
+    // 2. Posts (place tiles) >= fences + 1.
+    //    Normally posts = fences + 1 (shared posts), but discontinuities emit two
+    //    back-to-back posts, adding one extra post per gap.
+    const postCount = await page.locator(".mapPanel .map_story_post").count();
+    expect(postCount).toBeGreaterThanOrEqual(fenceCount + 1);
 
-    // 3. The last regular row always connects down to the terminus, so its
-    //    tile must have a connector.
-    const lastRowConnector = page
-      .locator(".mapPanel .map_story_move")
-      .last()
-      .locator(".map_story_move_place .map_story_connector");
-    await expect(lastRowConnector).toHaveCount(1);
+    // 3. The last fence connects down when another post follows it.
+    //    Since there is always a terminus post, the last fence must have .connects.
+    const lastFence = page.locator(".mapPanel .map_story_fence").last();
+    await expect(lastFence).toHaveClass(/connects/);
 
-    // 4. The terminus tile must NOT have a connector (nothing comes after it).
-    await expect(terminus.locator(".map_story_connector")).toHaveCount(0);
+    // 4. The terminus post (last post) must NOT have .connects (nothing comes after it).
+    const lastPost = page.locator(".mapPanel .map_story_post").last();
+    await expect(lastPost).not.toHaveClass(/connects/);
 
-    // 5. At least one inter-row connector exists for a typical story.
-    const totalConnectors = await page.locator(".mapPanel .map_story_connector").count();
-    expect(totalConnectors).toBeGreaterThanOrEqual(1);
+    // 5. At least one post connects below (i.e., has a run-colored line segment).
+    const connectingPostCount = await page.locator(".mapPanel .map_story_post.connects").count();
+    expect(connectingPostCount).toBeGreaterThanOrEqual(1);
 
-    // 6. Distance is now a badge on the connector (not text in the desc).
+    // 6. Distance badge appears on every fence card.
     const badgeCount = await page.locator(".mapPanel .map_story_distance_badge").count();
     expect(badgeCount).toBeGreaterThanOrEqual(1);
-    // Every continuous connector should carry a distance badge.
-    expect(badgeCount).toBe(totalConnectors);
+    // One badge per fence.
+    expect(badgeCount).toBe(fenceCount);
     // Description text should no longer contain "miles".
     const descTexts = await page.$$eval(
-      ".mapPanel .map_story_move_desc",
+      ".mapPanel .map_story_fence_body",
       (els) => els.map((e) => e.textContent || ""),
     );
     for (const text of descTexts) expect(text).not.toMatch(/\bmiles?\b/i);
@@ -141,11 +138,10 @@ test.describe("map event URL routing", () => {
     // 7. Travelers header collapses when same as previous row's travelers.
     //    For Ammonites this should produce at least one collapsed row (the
     //    Sons of Mosiah travel together across multiple consecutive moves).
-    const rowCount = rowTileCounts.length;
     const travelerHeaderCount = await page
-      .locator(".mapPanel .map_story_move .map_story_move_desc > p > b")
+      .locator(".mapPanel .map_story_fence .map_story_fence_body > p > b")
       .count();
-    expect(travelerHeaderCount).toBeLessThan(rowCount);
+    expect(travelerHeaderCount).toBeLessThan(fenceCount);
     expect(travelerHeaderCount).toBeGreaterThanOrEqual(1);
 
     if (consoleErrors.length) {
@@ -172,12 +168,12 @@ test.describe("map event URL routing", () => {
     await page.goto("/map/internal/story/ammonites");
     // Wait for the story panel to actually render so we know data has loaded
     // and all mount-time effects have fired.
-    await expect(page.locator(".mapPanel .map_story_move").first()).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator(".mapPanel .map_story_fence").first()).toBeVisible({ timeout: 15_000 });
     // Give any straggling setSlug calls a beat to fire.
     await page.waitForTimeout(1_500);
 
-    // URL must still be /story/ammonites.
-    await expect(page).toHaveURL(/\/map\/internal\/story\/ammonites$/);
+    // URL must still be on /story/ammonites (with optional /move/N suffix).
+    await expect(page).toHaveURL(/\/map\/internal\/story\/ammonites(\/move\/\d+)?$/);
 
     // Nothing should have pushed us to /map/internal (or any non-story URL).
     const pushes = await page.evaluate(() => window.__pushLog);
