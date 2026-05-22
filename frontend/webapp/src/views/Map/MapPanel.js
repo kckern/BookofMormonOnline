@@ -465,7 +465,6 @@ function MapStoryPanel({mapController})
     const [scripture, setScripture] = useState(null);
 	  const parserOptions = getHtmlScriptureLinkParserOptions(setScripture);
     const history = useHistory();
-    const moveRefs = useRef({});
     const fenceRefs = useRef({});
     const cardBodyRef = useRef(null);
     const [avatarTop, setAvatarTop] = useState(0);
@@ -474,18 +473,18 @@ function MapStoryPanel({mapController})
 
     useEffect(() => {
       if (!moveSeq) return;
-      const el = moveRefs.current[moveSeq];
-      if (el) el.scrollIntoView({behavior: 'smooth', block: 'center'});
+      const fence = fenceRefs.current[moveSeq];
+      if (fence) fence.scrollIntoView({behavior: 'smooth', block: 'center'});
     }, [moveSeq, selectedStory?.slug]);
 
     useEffect(() => {
       const seq = mapController.selectedMoveSeq;
       if (!seq) return;
-      const row = moveRefs.current[seq];
+      const fence = fenceRefs.current[seq];
       const container = cardBodyRef.current;
-      if (!row || !container) return;
-      // offsetTop of row relative to the card body; bottom-align: row bottom minus avatar height (28px)
-      const top = row.offsetTop + row.offsetHeight - 28;
+      if (!fence || !container) return;
+      // Vertically center the 28px avatar row on the fence card.
+      const top = fence.offsetTop + fence.offsetHeight / 2 - 14;
       setAvatarTop(top);
     }, [mapController.selectedMoveSeq, selectedStory?.slug]);
 
@@ -560,7 +559,7 @@ function MapStoryPanel({mapController})
                         miles={miles}
                         parserOptions={parserOptions}
                         onClick={() => history.push(`/map/${currentMap?.slug}/story/${selectedStory.slug}/move/${m.seq}`)}
-                        refCallback={(el) => { if (el) { fenceRefs.current[m.seq] = el; moveRefs.current[m.seq] = el; } }}
+                        refCallback={(el) => { if (el) fenceRefs.current[m.seq] = el; }}
                       />
                     );
                   });
