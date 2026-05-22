@@ -303,3 +303,35 @@ test("posts are not clickable; fences are", async ({ page }) => {
   expect(fenceCursor).toBe("pointer");
   if (errors.length) throw new Error(errors.join("\n"));
 });
+
+test("connector continuity: post.connects::after has run color, last post has no ::after", async ({ page }) => {
+  const errors = attachConsole(page);
+  await page.goto("/map/internal/story/sons-of-mosiah/move/1");
+  const firstPost = page.locator(".mapPanel .map_story_post").first();
+  await expect(firstPost).toBeVisible({ timeout: 15_000 });
+  // First post should have a colored connector (followed by fence 1).
+  const firstAfterBg = await firstPost.evaluate(
+    (el) => getComputedStyle(el, '::after').backgroundColor,
+  );
+  expect(firstAfterBg).toBe('rgb(59, 130, 246)');
+  // Last post is the terminus — no ::after content.
+  const lastPost = page.locator(".mapPanel .map_story_post").last();
+  const lastAfterContent = await lastPost.evaluate(
+    (el) => getComputedStyle(el, '::after').content,
+  );
+  // Browsers report no-content as 'none' when the rule doesn't apply.
+  expect(lastAfterContent).toBe('none');
+  if (errors.length) throw new Error(errors.join("\n"));
+});
+
+test("distance badge is anchored on the fence with run color", async ({ page }) => {
+  const errors = attachConsole(page);
+  await page.goto("/map/internal/story/sons-of-mosiah/move/1");
+  const firstFence = page.locator(".mapPanel .map_story_fence").first();
+  await expect(firstFence).toBeVisible({ timeout: 15_000 });
+  const badge = firstFence.locator(".map_story_distance_badge");
+  await expect(badge).toHaveCount(1);
+  const borderColor = await badge.evaluate((el) => getComputedStyle(el).borderColor);
+  expect(borderColor).toBe('rgb(59, 130, 246)');
+  if (errors.length) throw new Error(errors.join("\n"));
+});
