@@ -504,11 +504,6 @@ function MapStoryPanel({mapController})
     const selectedMove = selectedStory.moves.find((m) => m.seq === selectedMoveSeq) || selectedStory.moves[0];
     const selectedPeople = selectedMove?.people || [];
 
-    const runs = computeRuns(selectedStory.moves);
-    const runColorByMoveSeq = new Map();
-    for (const { move: m, runIdx } of runs) {
-      runColorByMoveSeq.set(m.seq, colorForRun(runIdx));
-    }
     return <div className="mapPanel">
     <div className="mapPanelCardContainer">
         <Card>
@@ -581,7 +576,7 @@ function MapStoryPost({ place, runColor, connectsBelow, refCallback }) {
       ref={refCallback || undefined}
     >
       <img src={`${assetUrl}/places/${place.slug}`} alt={place.slug} />
-      <caption>{label}</caption>
+      <span className="map_story_post_caption">{label}</span>
     </div>
   );
 }
