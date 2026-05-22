@@ -288,3 +288,18 @@ test("first post has run color #3b82f6 outline + connector", async ({ page }) =>
   expect(outlineColor).toBe('rgb(59, 130, 246)');
   if (errors.length) throw new Error(errors.join("\n"));
 });
+
+test("posts are not clickable; fences are", async ({ page }) => {
+  const errors = attachConsole(page);
+  await page.goto("/map/internal/story/sons-of-mosiah/move/1");
+  await expect(page.locator(".mapPanel .map_story_fence").first()).toBeVisible({ timeout: 15_000 });
+  const postCursor = await page.locator(".mapPanel .map_story_post").first().evaluate(
+    (el) => getComputedStyle(el).cursor,
+  );
+  expect(postCursor).not.toBe("pointer");
+  const fenceCursor = await page.locator(".mapPanel .map_story_fence").first().evaluate(
+    (el) => getComputedStyle(el).cursor,
+  );
+  expect(fenceCursor).toBe("pointer");
+  if (errors.length) throw new Error(errors.join("\n"));
+});
