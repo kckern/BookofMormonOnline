@@ -805,31 +805,3 @@ Add a triangle notch pointing down at the bottom of the tooltip
   border-radius: 3px;
   letter-spacing: -0.5px;
 }
-.map_story_walker{
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: 3px solid #fff;
-  box-shadow: 0 0 0 2px #b31312, 0 2px 6px rgba(0,0,0,0.35);
-  overflow: hidden;
-  background: #ddd;
-  pointer-events: none;
-}
-.map_story_walker img{
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-/* Z-stack: labels (marker layer z=200) above segment line (z=50); walker behind canvas.
-   The walker uses stopEvent:false, which puts it inside .ol-overlaycontainer (not
-   the -stopevent sibling that holds zoom controls). Dropping the whole
-   .ol-overlaycontainer to z-index:-1 puts the walker behind the canvas while
-   leaving the zoom controls / attribution untouched. */
-#map .ol-viewport canvas {
-  z-index: 0;
-}
-#map .ol-overlaycontainer {
-  z-index: -1 !important;
-}

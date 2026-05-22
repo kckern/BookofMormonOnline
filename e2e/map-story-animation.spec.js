@@ -193,53 +193,25 @@ test("view auto-fits to the selected segment", async ({ page }) => {
   if (errors.length) throw new Error(errors.join("\n"));
 });
 
-test("walker overlay appears and moves along the segment", async ({ page }) => {
-  const errors = attachConsole(page);
-  await page.goto("/map/internal/story/sons-of-mosiah");
-  const walker = page.locator(".map_story_walker");
-  await expect(walker).toBeVisible({ timeout: 15_000 });
-  // Walker uses an ol/Overlay which positions its container via `transform`
-  // on the wrapping ol-overlay element. Read transform across frames.
-  const wrapper = page.locator(".ol-overlay-container").filter({ has: walker });
-  const t1 = await wrapper.evaluate((el) => el.style.transform);
-  await page.waitForTimeout(500);
-  const t2 = await wrapper.evaluate((el) => el.style.transform);
-  expect(t1).not.toBe(t2);
-  if (errors.length) throw new Error(errors.join("\n"));
-});
-
-test("endpoint markers force-visible + label z-stack", async ({ page }) => {
+test("walker feature on canvas animates along selected segment", async ({ page }) => {
   const errors = attachConsole(page);
   await page.goto("/map/internal/story/sons-of-mosiah/move/3");
-  // Wait for segment + walker to be present.
-  await expect(page.locator(".map_story_walker")).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator(".mapPanel .map_story_move").first()).toBeVisible({ timeout: 15_000 });
   await page.waitForTimeout(800);
-
-  // Check that the .ol-overlaycontainer (parent of all stopEvent:false overlays,
-  // including the walker) has z-index: -1 so the canvas stacking context sits above it.
-  // OL sets inline zIndex:'0' on this element, so our CSS rule uses !important.
-  const walkerZ = await page
-    .locator("#map .ol-overlaycontainer")
-    .first()
-    .evaluate((el) => getComputedStyle(el).zIndex);
-  expect(walkerZ).toBe("-1");
-
-  // Check that the canvas has an explicit z-index (OL sets position:absolute inline;
-  // our CSS sets z-index:0 so the canvas draws above the walker's z-index:-1 overlay).
-  const canvasZ = await page
-    .locator("#map .ol-viewport canvas")
-    .first()
-    .evaluate((el) => getComputedStyle(el).zIndex);
-  expect(canvasZ).toBe("0");
-
+  const c1 = await page.evaluate(() => window.__mapDebug?.walkerCoords);
+  expect(c1).toBeTruthy();
+  await page.waitForTimeout(500);
+  const c2 = await page.evaluate(() => window.__mapDebug?.walkerCoords);
+  expect(c2).toBeTruthy();
+  expect(c1[0] !== c2[0] || c1[1] !== c2[1]).toBe(true);
   if (errors.length) throw new Error(errors.join("\n"));
 });
 
-test("walker hides + segment clears when story closes", async ({ page }) => {
+test("segment clears when story closes", async ({ page }) => {
   const errors = attachConsole(page);
   await page.goto("/map/internal/story/sons-of-mosiah/move/2");
-  const walker = page.locator(".map_story_walker");
-  await expect(walker).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator(".mapPanel .map_story_move").first()).toBeVisible({ timeout: 15_000 });
+  await page.waitForTimeout(800);
   // Click the back arrow (⬅) to leave the story.
   await page.locator(".mapPanel span", { hasText: "⬅" }).first().click();
   // URL goes back to a /place/ URL.
@@ -247,26 +219,45 @@ test("walker hides + segment clears when story closes", async ({ page }) => {
   await page.waitForTimeout(400);
   const debug = await page.evaluate(() => window.__mapDebug);
   expect(debug.segmentFeatureCount).toBe(0);
-  // Walker's overlay wrapper exists but is positioned undefined → not visible.
-  const walkerVisible = await walker.isVisible().catch(() => false);
-  expect(walkerVisible).toBe(false);
+  expect(debug.walkerCoords).toBe(null);
   if (errors.length) throw new Error(errors.join("\n"));
 });
 
-test("walker behind canvas: parent overlay container z-index", async ({ page }) => {
+test("URL auto-replaces /story/X with /story/X/move/1 on cold load", async ({ page }) => {
   const errors = attachConsole(page);
-  await page.goto("/map/internal/story/sons-of-mosiah/move/3");
-  await expect(page.locator(".map_story_walker")).toBeVisible({ timeout: 15_000 });
-  await page.waitForTimeout(500);
-  // The .ol-overlaycontainer (parent of walker, sibling of canvas) must be z-index: -1.
-  const containerZ = await page
-    .locator("#map .ol-overlaycontainer")
-    .first()
-    .evaluate((el) => getComputedStyle(el).zIndex);
-  expect(containerZ).toBe("-1");
-  // Zoom controls (in .ol-overlaycontainer-stopevent, a sibling) must remain visible.
-  const zoomVisible = await page.locator(".ol-zoom").isVisible();
-  expect(zoomVisible).toBe(true);
+  await page.goto("/map/internal/story/sons-of-mosiah");
+  await expect(page.locator(".mapPanel .map_story_move").first()).toBeVisible({ timeout: 15_000 });
+  await page.waitForTimeout(800);
+  await expect(page).toHaveURL(/\/map\/internal\/story\/sons-of-mosiah\/move\/1$/);
+  if (errors.length) throw new Error(errors.join("\n"));
+});
+
+test("selected segment uses run color (not always red)", async ({ page }) => {
+  const errors = attachConsole(page);
+  await page.goto("/map/internal/story/sons-of-mosiah/move/1");
+  await expect(page.locator(".mapPanel .map_story_move").first()).toBeVisible({ timeout: 15_000 });
+  await page.waitForTimeout(800);
+  const color = await page.evaluate(() => window.__mapDebug?.selectedColor);
+  // STORY_RUN_COLORS first entry is '#3b82f6'
+  expect(color).toBe('#3b82f6');
+  if (errors.length) throw new Error(errors.join("\n"));
+});
+
+test("only the active story's moves draw on the map", async ({ page }) => {
+  const errors = attachConsole(page);
+  await page.goto("/map/internal/story/sons-of-mosiah/move/1");
+  await expect(page.locator(".mapPanel .map_story_move").first()).toBeVisible({ timeout: 15_000 });
+  await page.waitForTimeout(800);
+  // sons-of-mosiah has 14 moves; static layer has 13 (selected excluded); segment has 1.
+  const debug = await page.evaluate(() => window.__mapDebug);
+  expect(debug.storyLinesFeatureCount).toBe(13);
+  expect(debug.segmentFeatureCount).toBe(1);
+  // Navigate away to a /place/ URL; both layers should clear.
+  await page.goto("/map/internal/place/jershon");
+  await page.waitForTimeout(800);
+  const debug2 = await page.evaluate(() => window.__mapDebug);
+  expect(debug2.storyLinesFeatureCount).toBe(0);
+  expect(debug2.segmentFeatureCount).toBe(0);
   if (errors.length) throw new Error(errors.join("\n"));
 });
 

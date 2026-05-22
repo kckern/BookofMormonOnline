@@ -23,7 +23,6 @@ import Point from 'ol/geom/Point';
 import LineString from 'ol/geom/LineString';
 import Modify from 'ol/interaction/Modify';
 import * as OL from "ol";
-import Overlay from 'ol/Overlay';
 
 
 const STORY_RUN_COLORS = ['#3b82f6', '#f97316', '#10b981', '#ec4899', '#8b5cf6', '#eab308', '#06b6d4', '#ef4444'];
@@ -35,7 +34,8 @@ const MapContents = ({mapController}) => {
     const storyLinesLayerRef = useRef(null);
     const segmentLineRef = useRef(null);
     const lineDashOffsetRef = useRef(0);
-    const walkerOverlayRef = useRef(null);
+    const walkerLayerRef = useRef(null);
+    const walkerFeatureRef = useRef(null);
     const walkerRafRef = useRef(null);
     const walkerStartRef = useRef(0);
     const forceShowSlugsRef = useRef(new Set());
@@ -240,23 +240,6 @@ const drawMap = ()=>{
 
 		setStyleIcons([...styleIcons])
 
-    const moves = stories?.map(s=>s.moves).flat() || [];
-    const lines =  moves.map((m,i)=>{
-        return [[m.startPlace.lat, m.startPlace.lng], [m.endPlace.lat, m.endPlace.lng]];
-    })?.map(([start,end],i)=>{
-        //trim to 4 decimal places
-        start = [parseFloat(start[0]), parseFloat(start[1])];
-        end = [parseFloat(end[0]), parseFloat(end[1])];
-        const startCoords = OlProj.fromLonLat(start);
-        const endCoords = OlProj.fromLonLat(end);
-        const line =  new Feature({
-            geometry: new LineString([
-                startCoords, endCoords
-            ])
-        });
-        return line;
-    });
-
 		const markerLayer = new VectorLayer({
 			source: new VectorSource({
 				features: [...markers]
@@ -268,23 +251,6 @@ const drawMap = ()=>{
 		markerLayer.setZIndex(200);
 		map.current.addLayer(markerLayer);
 
-    map.current.addLayer(
-        new VectorLayer({
-            source: new VectorSource({
-                features: []// [...lines]
-            }),
-            style: function (feature, resolution) {
-                return new Style({
-                    stroke: new Stroke({
-                        color: '#FF000044',
-                        lineDash: [10, 10],
-                        lineDashOffset: 0,
-                        width: 3
-                    })
-                });
-            }
-        })
-    );
 
 
 
@@ -311,11 +277,11 @@ const drawMap = ()=>{
     const segmentSource = new VectorSource({ features: [] });
     const segmentLayer = new VectorLayer({
       source: segmentSource,
-      style: () => new Style({
+      style: (feature) => new Style({
         stroke: new Stroke({
-          color: '#b31312',
-          width: 3,
-          lineDash: [8, 8],
+          color: feature.get('strokeColor') || '#b31312',
+          width: 5,
+          lineDash: [10, 6],
           lineDashOffset: lineDashOffsetRef.current,
         }),
       }),
@@ -331,18 +297,16 @@ const drawMap = ()=>{
       segmentLayer.changed();
     });
 
-    const walkerEl = document.createElement('div');
-    walkerEl.className = 'map_story_walker';
-    walkerEl.innerHTML = '<img alt="" />';
-    const walkerOverlay = new Overlay({
-      element: walkerEl,
-      positioning: 'center-center',
-      stopEvent: false,
-      className: 'ol-overlay-container map_story_walker_overlay',
+    // Walker as a canvas Feature in its own VectorLayer (zIndex 60: above segment/static
+    // lines but below markers at 200). Styled per-feature when a segment is selected.
+    const walkerSource = new VectorSource({ features: [] });
+    const walkerLayer = new VectorLayer({
+      source: walkerSource,
+      style: () => null, // per-feature style set when populated
     });
-    map.current.addOverlay(walkerOverlay);
-    walkerOverlayRef.current = walkerOverlay;
-    walkerOverlay.setPosition(undefined); // hidden until a segment is selected
+    walkerLayer.setZIndex(60);
+    map.current.addLayer(walkerLayer);
+    walkerLayerRef.current = walkerLayer;
 
     // Extracted the repeated code into a separate function
     const setTooltipAndCursor = (isHovering, position, slug) => {
@@ -488,15 +452,15 @@ const drawMap = ()=>{
       const seq = mapController.selectedMoveSeq;
       const story = mapController.selectedStory;
       const segmentLayer = segmentLayerRef.current;
-      const walkerOverlay = walkerOverlayRef.current;
-      if (!map.current || !segmentLayer || !walkerOverlay) return;
+      if (!map.current || !segmentLayer) return;
 
       // Stop any in-flight walker.
       if (walkerRafRef.current) {
         cancelAnimationFrame(walkerRafRef.current);
         walkerRafRef.current = null;
       }
-      walkerOverlay.setPosition(undefined);
+      if (walkerLayerRef.current) walkerLayerRef.current.getSource().clear();
+      walkerFeatureRef.current = null;
 
       const source = segmentLayer.getSource();
       source.clear();
@@ -533,6 +497,8 @@ const drawMap = ()=>{
           segmentFeatureCount: 0,
           storyLinesFeatureCount: 0,
           forceShowCount: 0,
+          selectedColor: null,
+          get walkerCoords() { return null; },
           get lineDashOffset() { return lineDashOffsetRef.current; },
           get viewCenter() { return map.current?.getView().getCenter() || null; },
         };
@@ -542,11 +508,17 @@ const drawMap = ()=>{
       const move = story.moves.find((m) => m.seq === seq);
       if (!move) { noActiveSegment(); return; }
 
+      // Compute runs once for both static lines and selected-segment color.
+      const runs = computeRuns(story.moves);
+      const selectedRun = runs.find((r) => r.move.seq === seq);
+      const selectedColor = selectedRun
+        ? STORY_RUN_COLORS[selectedRun.runIdx % STORY_RUN_COLORS.length]
+        : '#b31312';
+
       // Populate static story-lines layer with all non-selected moves, run-colored.
       const storyLinesSource = storyLinesLayerRef.current?.getSource();
       if (storyLinesSource) {
         storyLinesSource.clear();
-        const runs = computeRuns(story.moves);
         for (const { move: m, runIdx } of runs) {
           if (m.seq === seq) continue; // selected move is drawn in animated segmentLayer
           const mStart = OlProj.fromLonLat([m.startPlace.lat, m.startPlace.lng]);
@@ -570,6 +542,7 @@ const drawMap = ()=>{
       const start = OlProj.fromLonLat([move.startPlace.lat, move.startPlace.lng]);
       const end = OlProj.fromLonLat([move.endPlace.lat, move.endPlace.lng]);
       const line = new Feature({ geometry: new LineString([start, end]) });
+      line.set('strokeColor', selectedColor);
       source.addFeature(line);
       segmentLineRef.current = line;
 
@@ -580,31 +553,61 @@ const drawMap = ()=>{
         maxZoom: currentMap?.maxzoom,
       });
 
-      // Walker image: first person on the move, or fallback to a generic dot.
-      const hero = move.people?.[0];
-      const img = walkerOverlay.getElement().querySelector('img');
-      if (hero?.slug) {
-        img.src = `${assetUrl}/people/${hero.slug}`;
-        img.style.display = '';
-      } else {
-        img.removeAttribute('src');
-        img.style.display = 'none';
-      }
+      // Walker: canvas Feature in walkerLayer (zIndex 60).
+      const walkerSource = walkerLayerRef.current?.getSource();
+      if (walkerSource) {
+        walkerSource.clear();
+        const walkerFeature = new Feature({ geometry: new Point(start) });
+        const heroSlug = move.people?.[0]?.slug;
+        const halo = new Style({
+          image: new Circle({
+            radius: 18,
+            fill: new Fill({ color: 'rgba(255,255,255,0.95)' }),
+            stroke: new Stroke({ color: selectedColor, width: 2 }),
+          }),
+          zIndex: 0,
+        });
+        const avatar = heroSlug
+          ? new Style({
+              image: new Icon({
+                src: `${assetUrl}/people/${heroSlug}`,
+                scale: 0.6,
+                anchor: [0.5, 0.5],
+              }),
+              zIndex: 1,
+            })
+          : new Style({
+              image: new Circle({
+                radius: 12,
+                fill: new Fill({ color: '#888' }),
+              }),
+              zIndex: 1,
+            });
+        walkerFeature.setStyle([halo, avatar]);
+        walkerSource.addFeature(walkerFeature);
+        walkerFeatureRef.current = walkerFeature;
 
-      const DURATION_MS = 4000;
-      walkerStartRef.current = performance.now();
-      const tick = (now) => {
-        const t = ((now - walkerStartRef.current) % DURATION_MS) / DURATION_MS;
-        const pos = [start[0] + (end[0] - start[0]) * t, start[1] + (end[1] - start[1]) * t];
-        walkerOverlay.setPosition(pos);
+        const DURATION_MS = 4000;
+        walkerStartRef.current = performance.now();
+        const tick = (now) => {
+          const t = ((now - walkerStartRef.current) % DURATION_MS) / DURATION_MS;
+          const pos = [start[0] + (end[0] - start[0]) * t, start[1] + (end[1] - start[1]) * t];
+          walkerFeature.getGeometry().setCoordinates(pos);
+          walkerRafRef.current = requestAnimationFrame(tick);
+        };
         walkerRafRef.current = requestAnimationFrame(tick);
-      };
-      walkerRafRef.current = requestAnimationFrame(tick);
+      }
 
       window.__mapDebug = {
         segmentFeatureCount: source.getFeatures().length,
         storyLinesFeatureCount: storyLinesLayerRef.current?.getSource().getFeatures().length || 0,
         forceShowCount: forceShowSlugsRef.current.size,
+        selectedColor,
+        get walkerCoords() {
+          const f = walkerFeatureRef.current;
+          if (!f) return null;
+          return f.getGeometry().getCoordinates();
+        },
         get lineDashOffset() { return lineDashOffsetRef.current; },
         get viewCenter() { return map.current?.getView().getCenter() || null; },
       };
@@ -614,7 +617,8 @@ const drawMap = ()=>{
           cancelAnimationFrame(walkerRafRef.current);
           walkerRafRef.current = null;
         }
-        walkerOverlay.setPosition(undefined);
+        if (walkerLayerRef.current) walkerLayerRef.current.getSource().clear();
+        walkerFeatureRef.current = null;
         if (forceShowSlugsRef.current.size > 0) {
           forceShowSlugsRef.current = new Set();
           const markerLayer = map.current?.getLayers().getArray()[1];

@@ -105,6 +105,13 @@ export function MapPanel({mapController}) {
       const firstMoveSlug = story.moves?.[0]?.startPlace?.slug;
       if (firstMoveSlug) setPanelContents({ slug: firstMoveSlug });
     }
+    // Auto-add /move/1 to the URL so the seq is always explicit.
+    if (mapController.moveSeq == null && story.moves?.length) {
+      const firstSeq = story.moves[0]?.seq;
+      if (firstSeq != null) {
+        history.replace(`/map/${currentMap?.slug}/story/${story.slug}/move/${firstSeq}`);
+      }
+    }
   }, [mapController.storySlug, currentMap?.slug, currentMap?.stories?.length]);
 
 
