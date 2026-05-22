@@ -480,6 +480,10 @@ function MapStoryPanel({mapController})
       }
     };
 
+    const selectedMoveSeq = mapController.selectedMoveSeq;
+    const selectedMove = selectedStory.moves.find((m) => m.seq === selectedMoveSeq) || selectedStory.moves[0];
+    const selectedPeople = selectedMove?.people || [];
+
     return <div className="mapPanel">
     <div className="mapPanelCardContainer">
         <Card>
@@ -551,6 +555,7 @@ function MapStoryPanel({mapController})
                         <MapEventImageCaption location={terminus} />
                     </div>;
                 })()}
+                <MapStoryAvatars people={selectedPeople} />
             </CardBody>
         </Card>
     </div>
@@ -577,4 +582,19 @@ function MapEventImageCaption({location, continuesNext, distanceMiles}){
       </span>
     )}
 </div>
+}
+
+function MapStoryAvatars({people}) {
+  if (!people?.length) return null;
+  return (
+    <div className="map_story_avatars" aria-hidden="true">
+      {people.map((p) => (
+        <img
+          key={p.slug}
+          src={`${assetUrl}/people/${p.slug}`}
+          alt={p.name || p.slug}
+        />
+      ))}
+    </div>
+  );
 }

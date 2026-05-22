@@ -735,6 +735,29 @@ Add a triangle notch pointing down at the bottom of the tooltip
   margin-top: 1rem;
   padding: 0.5rem;
 }
+.map_story_avatars{
+  position: absolute;
+  right: 0.75rem;
+  display: flex;
+  gap: -0.4rem;
+  pointer-events: none;
+}
+.map_story_avatars img{
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.25);
+  object-fit: cover;
+  background: #ddd;
+  margin-left: -0.5rem;
+}
+.map_story_avatars img:first-child{
+  margin-left: 0;
+}
+.mapPanelCardContainer .card-body{
+  position: relative;
+}
 .map_story_move img{
   position: absolute;
   width: 100%;
