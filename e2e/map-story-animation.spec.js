@@ -207,3 +207,21 @@ test("walker overlay appears and moves along the segment", async ({ page }) => {
   expect(t1).not.toBe(t2);
   if (errors.length) throw new Error(errors.join("\n"));
 });
+
+test("walker hides + segment clears when story closes", async ({ page }) => {
+  const errors = attachConsole(page);
+  await page.goto("/map/internal/story/sons-of-mosiah/move/2");
+  const walker = page.locator(".map_story_walker");
+  await expect(walker).toBeVisible({ timeout: 15_000 });
+  // Click the back arrow (⬅) to leave the story.
+  await page.locator(".mapPanel span", { hasText: "⬅" }).first().click();
+  // URL goes back to a /place/ URL.
+  await expect(page).toHaveURL(/\/place\//, { timeout: 5_000 });
+  await page.waitForTimeout(400);
+  const debug = await page.evaluate(() => window.__mapDebug);
+  expect(debug.segmentFeatureCount).toBe(0);
+  // Walker's overlay wrapper exists but is positioned undefined → not visible.
+  const walkerVisible = await walker.isVisible().catch(() => false);
+  expect(walkerVisible).toBe(false);
+  if (errors.length) throw new Error(errors.join("\n"));
+});
