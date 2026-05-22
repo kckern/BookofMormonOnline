@@ -174,3 +174,21 @@ test("segment layer active when a move is selected", async ({ page }) => {
   expect(o2).not.toBe(o1);
   if (errors.length) throw new Error(errors.join("\n"));
 });
+
+test("view auto-fits to the selected segment", async ({ page }) => {
+  const errors = attachConsole(page);
+  await page.goto("/map/internal/story/sons-of-mosiah");
+  await expect(page.locator(".mapPanel .map_story_move").first()).toBeVisible({ timeout: 15_000 });
+  await page.waitForTimeout(900); // allow fit animation
+  const center1 = await page.evaluate(() => window.__mapDebug?.viewCenter);
+  // Click move 5.
+  await page.locator(".mapPanel .map_story_move").nth(4).click();
+  await expect(page).toHaveURL(/\/move\/5$/);
+  await page.waitForTimeout(900);
+  const center2 = await page.evaluate(() => window.__mapDebug?.viewCenter);
+  expect(center1).toBeTruthy();
+  expect(center2).toBeTruthy();
+  // Centers should differ (different move = different segment midpoint).
+  expect(center1[0] !== center2[0] || center1[1] !== center2[1]).toBe(true);
+  if (errors.length) throw new Error(errors.join("\n"));
+});

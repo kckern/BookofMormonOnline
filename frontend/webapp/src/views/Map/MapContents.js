@@ -454,12 +454,20 @@ const drawMap = ()=>{
       source.clear();
       segmentLineRef.current = null;
       if (!story || !seq) {
-        window.__mapDebug = { segmentFeatureCount: 0, lineDashOffset: lineDashOffsetRef.current };
+        window.__mapDebug = {
+          segmentFeatureCount: 0,
+          get lineDashOffset() { return lineDashOffsetRef.current; },
+          get viewCenter() { return map.current?.getView().getCenter() || null; },
+        };
         return;
       }
       const move = story.moves.find((m) => m.seq === seq);
       if (!move) {
-        window.__mapDebug = { segmentFeatureCount: 0, lineDashOffset: lineDashOffsetRef.current };
+        window.__mapDebug = {
+          segmentFeatureCount: 0,
+          get lineDashOffset() { return lineDashOffsetRef.current; },
+          get viewCenter() { return map.current?.getView().getCenter() || null; },
+        };
         return;
       }
       const start = OlProj.fromLonLat([move.startPlace.lat, move.startPlace.lng]);
@@ -467,9 +475,16 @@ const drawMap = ()=>{
       const line = new Feature({ geometry: new LineString([start, end]) });
       source.addFeature(line);
       segmentLineRef.current = line;
+      const extent = line.getGeometry().getExtent();
+      map.current.getView().fit(extent, {
+        duration: 500,
+        padding: [80, 80, 80, 80],
+        maxZoom: maxzoom,
+      });
       window.__mapDebug = {
         segmentFeatureCount: source.getFeatures().length,
         get lineDashOffset() { return lineDashOffsetRef.current; },
+        get viewCenter() { return map.current?.getView().getCenter() || null; },
       };
     }, [mapController.selectedMoveSeq, mapController.selectedStory?.slug]);
 
