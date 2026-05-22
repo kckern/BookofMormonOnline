@@ -215,9 +215,11 @@ test("endpoint markers force-visible + label z-stack", async ({ page }) => {
   await expect(page.locator(".map_story_walker")).toBeVisible({ timeout: 15_000 });
   await page.waitForTimeout(800);
 
-  // Check that the walker overlay container has z-index: -1.
+  // Check that the .ol-overlaycontainer (parent of all stopEvent:false overlays,
+  // including the walker) has z-index: -1 so the canvas stacking context sits above it.
+  // OL sets inline zIndex:'0' on this element, so our CSS rule uses !important.
   const walkerZ = await page
-    .locator(".ol-overlay-container.map_story_walker_overlay")
+    .locator("#map .ol-overlaycontainer")
     .first()
     .evaluate((el) => getComputedStyle(el).zIndex);
   expect(walkerZ).toBe("-1");
@@ -248,5 +250,35 @@ test("walker hides + segment clears when story closes", async ({ page }) => {
   // Walker's overlay wrapper exists but is positioned undefined → not visible.
   const walkerVisible = await walker.isVisible().catch(() => false);
   expect(walkerVisible).toBe(false);
+  if (errors.length) throw new Error(errors.join("\n"));
+});
+
+test("walker behind canvas: parent overlay container z-index", async ({ page }) => {
+  const errors = attachConsole(page);
+  await page.goto("/map/internal/story/sons-of-mosiah/move/3");
+  await expect(page.locator(".map_story_walker")).toBeVisible({ timeout: 15_000 });
+  await page.waitForTimeout(500);
+  // The .ol-overlaycontainer (parent of walker, sibling of canvas) must be z-index: -1.
+  const containerZ = await page
+    .locator("#map .ol-overlaycontainer")
+    .first()
+    .evaluate((el) => getComputedStyle(el).zIndex);
+  expect(containerZ).toBe("-1");
+  // Zoom controls (in .ol-overlaycontainer-stopevent, a sibling) must remain visible.
+  const zoomVisible = await page.locator(".ol-zoom").isVisible();
+  expect(zoomVisible).toBe(true);
+  if (errors.length) throw new Error(errors.join("\n"));
+});
+
+test("static story lines: all non-selected moves drawn, run-colored", async ({ page }) => {
+  const errors = attachConsole(page);
+  await page.goto("/map/internal/story/sons-of-mosiah/move/3");
+  await expect(page.locator(".mapPanel .map_story_move").first()).toBeVisible({ timeout: 15_000 });
+  await page.waitForTimeout(900);
+  const debug = await page.evaluate(() => window.__mapDebug);
+  // sons-of-mosiah has 14 moves; selected is excluded; static layer should have 13.
+  expect(debug.storyLinesFeatureCount).toBe(13);
+  // forceShow set should cover all unique endpoint slugs across the story.
+  expect(debug.forceShowCount).toBeGreaterThan(2);
   if (errors.length) throw new Error(errors.join("\n"));
 });

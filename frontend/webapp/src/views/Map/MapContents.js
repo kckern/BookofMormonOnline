@@ -26,10 +26,13 @@ import * as OL from "ol";
 import Overlay from 'ol/Overlay';
 
 
+const STORY_RUN_COLORS = ['#3b82f6', '#f97316', '#10b981', '#ec4899', '#8b5cf6', '#eab308', '#06b6d4', '#ef4444'];
+
 const MapContents = ({mapController}) => {
     const mapElement = useRef(); // This ref will point to the map container
     const map = useRef(); // This ref will store the initialized map
     const segmentLayerRef = useRef(null);
+    const storyLinesLayerRef = useRef(null);
     const segmentLineRef = useRef(null);
     const lineDashOffsetRef = useRef(0);
     const walkerOverlayRef = useRef(null);
@@ -287,6 +290,24 @@ const drawMap = ()=>{
 
 
 
+    // Static story-lines layer: all non-selected moves drawn as faint dashed
+    // strokes so the user sees the whole journey shape; only the selected
+    // move animates in the segment layer below.
+    const storyLinesSource = new VectorSource({ features: [] });
+    const storyLinesLayer = new VectorLayer({
+      source: storyLinesSource,
+      style: (feature) => new Style({
+        stroke: new Stroke({
+          color: feature.get('strokeColor') || '#888',
+          width: 2,
+          lineDash: [6, 6],
+        }),
+      }),
+    });
+    storyLinesLayer.setZIndex(40);
+    map.current.addLayer(storyLinesLayer);
+    storyLinesLayerRef.current = storyLinesLayer;
+
     const segmentSource = new VectorSource({ features: [] });
     const segmentLayer = new VectorLayer({
       source: segmentSource,
@@ -489,10 +510,29 @@ const drawMap = ()=>{
         }
       };
 
+      const computeRuns = (moves) => {
+        const result = [];
+        let prevEnd = null;
+        let runIdx = -1;
+        for (const m of moves) {
+          if (prevEnd && m.startPlace.slug === prevEnd) {
+            // continue current run
+          } else {
+            runIdx += 1;
+          }
+          result.push({ move: m, runIdx });
+          prevEnd = m.endPlace.slug;
+        }
+        return result;
+      };
+
       const noActiveSegment = () => {
+        if (storyLinesLayerRef.current) storyLinesLayerRef.current.getSource().clear();
         clearForceShow();
         window.__mapDebug = {
           segmentFeatureCount: 0,
+          storyLinesFeatureCount: 0,
+          forceShowCount: 0,
           get lineDashOffset() { return lineDashOffsetRef.current; },
           get viewCenter() { return map.current?.getView().getCenter() || null; },
         };
@@ -502,8 +542,28 @@ const drawMap = ()=>{
       const move = story.moves.find((m) => m.seq === seq);
       if (!move) { noActiveSegment(); return; }
 
-      // Force-show the segment endpoints regardless of per-place zoom range.
-      forceShowSlugsRef.current = new Set([move.startPlace.slug, move.endPlace.slug]);
+      // Populate static story-lines layer with all non-selected moves, run-colored.
+      const storyLinesSource = storyLinesLayerRef.current?.getSource();
+      if (storyLinesSource) {
+        storyLinesSource.clear();
+        const runs = computeRuns(story.moves);
+        for (const { move: m, runIdx } of runs) {
+          if (m.seq === seq) continue; // selected move is drawn in animated segmentLayer
+          const mStart = OlProj.fromLonLat([m.startPlace.lat, m.startPlace.lng]);
+          const mEnd = OlProj.fromLonLat([m.endPlace.lat, m.endPlace.lng]);
+          const feat = new Feature({ geometry: new LineString([mStart, mEnd]) });
+          feat.set('strokeColor', STORY_RUN_COLORS[runIdx % STORY_RUN_COLORS.length]);
+          storyLinesSource.addFeature(feat);
+        }
+      }
+
+      // Force-show ALL story endpoints regardless of per-place zoom range.
+      const allEndpoints = new Set();
+      for (const m of story.moves) {
+        allEndpoints.add(m.startPlace.slug);
+        allEndpoints.add(m.endPlace.slug);
+      }
+      forceShowSlugsRef.current = allEndpoints;
       const markerLayer = map.current.getLayers().getArray()[1];
       if (markerLayer) markerLayer.getSource().getFeatures().forEach(f => f.changed());
 
@@ -543,6 +603,8 @@ const drawMap = ()=>{
 
       window.__mapDebug = {
         segmentFeatureCount: source.getFeatures().length,
+        storyLinesFeatureCount: storyLinesLayerRef.current?.getSource().getFeatures().length || 0,
+        forceShowCount: forceShowSlugsRef.current.size,
         get lineDashOffset() { return lineDashOffsetRef.current; },
         get viewCenter() { return map.current?.getView().getCenter() || null; },
       };
