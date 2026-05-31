@@ -454,6 +454,7 @@ ul.source_tabs li:hover
     font-style: italic;
     font-size: small;
     line-height: 1ex;
+    text-align: left;
 }
 
 #popUp .ppbody

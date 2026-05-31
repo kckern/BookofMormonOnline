@@ -105,7 +105,7 @@ function PersonLink({ label, id, pageController }) {
         onClick={handleClick}
         className={"person"}
       >
-        {label}
+        <strong>{label}</strong>
       </Link>
     </>
   );
@@ -130,7 +130,7 @@ function PlaceLink({ label, id, pageController }) {
         onClick={handleClick}
         className={"place"}
       >
-        {label}
+        <strong>{label}</strong>
       </Link>
     </>
   );
