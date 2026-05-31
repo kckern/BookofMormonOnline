@@ -2,7 +2,27 @@ import React from "react";
 import Parser from "html-react-parser";
 import ReactTooltip from "react-tooltip";
 import { Link } from "react-router-dom";
+import { detectScriptures } from "scripture-guide";
 import { assetUrl } from "src/models/BoMOnlineAPI";
+
+// Slugs like "mormon2" inside {Mormon|mormon2} otherwise read as the scripture
+// reference "Mormon 2" and corrupt the slug capture before token parsing.
+const PP_TOKEN_SENTINEL = "";
+const PP_TOKEN_REGEX = /\{(.*?)\|(.*?)\}|\[(.*?)\|(.*?)\]/g;
+
+export const detectScripturesPreservingTokens = (text, callback, options) => {
+  if (typeof text !== "string" || !text) return text;
+  const tokens = [];
+  const masked = text.replace(PP_TOKEN_REGEX, (m) => {
+    tokens.push(m);
+    return PP_TOKEN_SENTINEL;
+  });
+  if (tokens.length === 0) return detectScriptures(text, callback, options);
+  const detected = detectScriptures(masked, callback, options);
+  if (typeof detected !== "string") return detected;
+  let i = 0;
+  return detected.replace(new RegExp(PP_TOKEN_SENTINEL, "g"), () => tokens[i++] ?? "");
+};
 
 export const renderPersonPlaceHTML = (html, pageController, scriptureLinkClickHandler) => {
   if (!html) return null;

@@ -3,7 +3,7 @@ import Comments from "./Study/Study";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import Parser from "html-react-parser";
 import Draggable from "react-draggable";
-import { renderPersonPlaceHTML } from "../Page/PersonPlace";
+import { renderPersonPlaceHTML, detectScripturesPreservingTokens } from "../Page/PersonPlace";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import ReactTooltip from "react-tooltip";
 import { Link, useHistory } from "react-router-dom";
@@ -31,7 +31,6 @@ import { MobileDrawer } from "./Drawer";
 import { addHighlightTagSelectively } from "../Page/TextContent";
 import Commentary from "./Commentary";
 import { ScripturePanelSingle } from "../Page/Narration";
-import { detectScriptures } from "scripture-guide";
 import { determineLanguage } from "../../models/Utils";
 
 export function Loading({ type, appController, callingAPI }) {
@@ -240,7 +239,7 @@ function Person({ appController }) {
                     {replaceNumbers(person.title)}
                   </small>
                 </h3>
-                {renderPersonPlaceHTML(detectScriptures(person.description, (scripture) => {
+                {renderPersonPlaceHTML(detectScripturesPreservingTokens(person.description, (scripture) => {
                   if (!scripture) return;
                   return `<a className="scripture_link">${scripture}</a>`
                 }, determineLanguage()
@@ -346,7 +345,7 @@ function Place({ appController }) {
                 <small className="ppbody-title">{place.info}</small>
               </h3>
 
-              {renderPersonPlaceHTML(detectScriptures(place.description, (scripture) => {
+              {renderPersonPlaceHTML(detectScripturesPreservingTokens(place.description, (scripture) => {
                   if (!scripture) return;
                   return `<a className="scripture_link">${scripture}</a>`
                 }, determineLanguage()
@@ -472,7 +471,7 @@ function ObjectPopUp({ appController }) {
                 )}
               </h3>
               {renderPersonPlaceHTML(
-                detectScriptures(
+                detectScripturesPreservingTokens(
                   obj.description || "",
                   (scripture) => scripture ? `<a className="scripture_link">${scripture}</a>` : "",
                   determineLanguage()
