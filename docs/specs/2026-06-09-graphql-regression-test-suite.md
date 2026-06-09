@@ -22,8 +22,27 @@ suite that can verify prod, dev, or a local refactored backend against committed
 
 - Unit-testing resolvers in-process (the existing `test/regression/` ApolloServer suite does that).
 - Load/perf testing.
-- Non-English language permutations (`/{lang}` path prefix) — noted as a future phase.
+- Languages beyond English and Korean — other `/{lang}` prefixes are a future phase.
 - Sendbird-dependent community functions — **parked** (see below).
+
+## Language coverage
+
+The API is multilingual via a URL path prefix (`POST /{lang}`). Translation functions are part
+of the contract being frozen, so **every read query runs twice: English (`POST /en`) and
+Korean (`POST /ko`)**, with baselines stored per language
+(`tests/baselines/<lang>/<query>/<case>.json`). Verified working: prod and the local backend
+return translated content on `/ko`.
+
+Mutations and the signin/signout/signup flow run **English-only** in v1 — running the mutation
+chain twice would double state writes for no translation-path coverage; localized mutation
+messages can be added later.
+
+**Known dev defect (pre-existing):** the public dev URL (`bom.kckern.net`) proxies API paths
+through CRA's `setupProxy.js`, and Express `app.use('/ko', …)` strips the mount path before
+`http-proxy-middleware` forwards it — so `POST bom.kckern.net/ko` reaches the backend as `/`
+and returns English. Direct backend (`localhost:5005/ko`) is correctly Korean. Korean cases
+against `TARGET=dev` will fail until that proxy is fixed; this gets a write-up in `docs/bugs/`
+and is a known-diff, not a regression-suite bug.
 
 ## Architecture
 
@@ -38,10 +57,10 @@ tests/
 ├── harness/
 │   ├── client.js         # mirrors BoMOnlineAPI.serverGQLCall: wrap queries in a compound
 │   │                     # "{...}" string, POST {query} to the target root, 45s timeout
-│   ├── targets.js        # TARGET=prod|dev|local → base URL
-│   │                     #   prod:  https://bookofmormon.online   (confirm at impl time)
+│   ├── targets.js        # TARGET=prod|dev|local → base URL; requests POST to {base}/{lang}
+│   │                     #   prod:  https://bookofmormon.online   (verified live)
 │   │                     #   dev:   https://bom.kckern.net        (API POSTs bypass CDN cache)
-│   │                     #   local: http://localhost:5005
+│   │                     #   local: http://localhost:5005         (verified live)
 │   ├── normalize.js      # volatile-field scrubbing applied before capture AND compare
 │   ├── baseline.js       # load/save/diff tests/baselines/<query>/<case>.json
 │   └── auth.js           # test-user bootstrap: signin → fallback signup → token
@@ -50,7 +69,9 @@ tests/
 │   │                     # objectList, maplist, contents, publications, …), sample a
 │   │                     # deterministic spread of slugs/IDs, write inputs.json
 │   └── inputs.json       # committed input matrix: query type → named cases
-├── baselines/            # committed prod-captured, normalized JSON; one file per case
+├── baselines/            # committed prod-captured, normalized JSON
+│   ├── en/<query>/<case>.json
+│   └── ko/<query>/<case>.json
 └── suites/
     ├── content.test.js   # person/personList/place/placeList/object/objectList/page/
     │                     # contents/divisionShell/markdown/about/labels/passagenotes(+_N)
@@ -159,12 +180,12 @@ In scope despite living in the community resolver: `leaderboard` (DB-backed, `sh
 
 ## Acceptance criteria
 
-1. `npm run test:gql:capture` against prod populates baselines for every in-scope case;
-   re-running without `RECAPTURE=1` changes nothing.
+1. `npm run test:gql:capture` against prod populates en + ko baselines for every in-scope
+   case; re-running without `RECAPTURE=1` changes nothing.
 2. `TARGET=prod npm run test:gql` passes 100% immediately after capture.
-3. `TARGET=dev npm run test:gql` passes, with `user.test.js` in shape mode
-   (any legitimate prod/dev behavior differences found become documented known-diffs
-   or bug write-ups in `docs/bugs/` before the overhaul starts).
+3. `TARGET=dev npm run test:gql` passes apart from documented known-diffs (the `/ko`
+   proxy-strip defect, sandbox-mode user behavior); each known-diff gets a write-up in
+   `docs/bugs/` before the overhaul starts.
 4. Parked Sendbird cases are visible as todos in the report, not silently absent.
 5. A deliberately broken resolver field (manual smoke check) produces a failing test that
    names the query, case, and field path.
@@ -172,6 +193,6 @@ In scope despite living in the community resolver: `leaderboard` (DB-backed, `sh
 ## Future phases (out of scope now)
 
 - Activate parked Sendbird cases after the messaging replacement.
-- Language permutations via the `/{lang}` URL prefix.
+- Languages beyond en/ko; localized mutation responses.
 - CI wiring (run verify vs dev on PRs to `dev`).
 - Group-mutation coverage once a test group fixture exists in the new messaging system.
