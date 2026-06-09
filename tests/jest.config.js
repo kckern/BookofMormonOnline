@@ -11,7 +11,7 @@ module.exports = {
   verbose: true,
   transform: {
     // configFile/babelrc false: never pick up CRA babel config from frontend/webapp
-    '^.+\\.js$': ['babel-jest', {
+    '^.+\\.m?js$': ['babel-jest', {
       configFile: false,
       babelrc: false,
       presets: [['@babel/preset-env', { targets: { node: 'current' } }]],
