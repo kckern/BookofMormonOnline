@@ -1,0 +1,177 @@
+# GraphQL Regression Test Suite — Design Spec
+
+**Date:** 2026-06-09
+**Status:** Approved design, pre-implementation
+**Motivation:** A full backend resolver overhaul (`src/resolvers/`) is planned, with concurrent
+frontend refactoring. The GraphQL surface consumed by
+`frontend/webapp/src/models/GraphQLQueries.js` must stay byte-identical through the overhaul.
+Before any resolver work begins, we freeze current behavior as a golden-snapshot regression
+suite that can verify prod, dev, or a local refactored backend against committed baselines.
+
+## Goals
+
+1. Inventory and exercise the **entire query surface** defined in `GraphQLQueries.js`
+   (~50 builders incl. mutations and the dynamic `passagenotes_N` aliases).
+2. Capture **golden baselines from the production API** and commit them.
+3. Verify any target (`prod`, `dev`, `local`) against those baselines with readable diffs.
+4. Build queries with the **actual frontend code** (`import { prepareQueries } / queries`)
+   so the suite can never drift from the real surface.
+5. Self-bootstrap a **dedicated test user** for authenticated reads and user-scoped mutations.
+
+## Non-Goals
+
+- Unit-testing resolvers in-process (the existing `test/regression/` ApolloServer suite does that).
+- Load/perf testing.
+- Non-English language permutations (`/{lang}` path prefix) — noted as a future phase.
+- Sendbird-dependent community functions — **parked** (see below).
+
+## Architecture
+
+New root `tests/` directory, registered as a standalone Jest project (root `package.json`
+scripts `test:gql` and `test:gql:capture`). The existing `test/` directory is untouched.
+
+```
+tests/
+├── jest.config.js        # standalone Jest project; babel transform so the suite can
+│                         # import the frontend ESM file GraphQLQueries.js
+├── README.md             # capture/verify workflow, test-user setup, baseline policy
+├── harness/
+│   ├── client.js         # mirrors BoMOnlineAPI.serverGQLCall: wrap queries in a compound
+│   │                     # "{...}" string, POST {query} to the target root, 45s timeout
+│   ├── targets.js        # TARGET=prod|dev|local → base URL
+│   │                     #   prod:  https://bookofmormon.online   (confirm at impl time)
+│   │                     #   dev:   https://bom.kckern.net        (API POSTs bypass CDN cache)
+│   │                     #   local: http://localhost:5005
+│   ├── normalize.js      # volatile-field scrubbing applied before capture AND compare
+│   ├── baseline.js       # load/save/diff tests/baselines/<query>/<case>.json
+│   └── auth.js           # test-user bootstrap: signin → fallback signup → token
+├── matrix/
+│   ├── harvest.mjs       # one-time: query prod list endpoints (personList, placeList,
+│   │                     # objectList, maplist, contents, publications, …), sample a
+│   │                     # deterministic spread of slugs/IDs, write inputs.json
+│   └── inputs.json       # committed input matrix: query type → named cases
+├── baselines/            # committed prod-captured, normalized JSON; one file per case
+└── suites/
+    ├── content.test.js   # person/personList/place/placeList/object/objectList/page/
+    │                     # contents/divisionShell/markdown/about/labels/passagenotes(+_N)
+    ├── scripture.test.js # scripture/verses/read/lookup/versehighlights/chiasmus/chiasm
+    ├── media.test.js     # image/imageInFeed/imageLocations/commentary/commentaryInFeed/
+    │                     # commentaryLocations/textInFeed/sectionInFeed/fax/faxIndex/
+    │                     # maplist/map/mapstories/timeline/publications
+    ├── search.test.js    # search/shortLink/setShortLink/history
+    ├── user.test.js      # auth bootstrap, tokenSignIn, signin/signout, studylog,
+    │                     # userdailyscores/userprogress/divisionProgress(Details)/
+    │                     # pageprogress/pageinfoprogress/readingplan(segment)/queue/
+    │                     # queuestatus, mutations: log/editProfile/changePassword/
+    │                     # uploadProfileImage/signup, sourceUsage
+    └── community.test.js # leaderboard (active) + parked Sendbird surface as test.todo
+```
+
+## Execution model
+
+Each case:
+
+1. Build the query with the real builder: `queries[type](caseInputs)` imported from
+   `frontend/webapp/src/models/GraphQLQueries.js`.
+2. Wrap exactly as the frontend does (`"{" + q.query + "}"`, mutation unwrap regex —
+   `BoMOnlineAPI.js:39-40`).
+3. POST `{ query }` to the selected target root.
+4. Normalize the response (per the query's volatility tier).
+5. **Capture mode** (`CAPTURE=1 TARGET=prod`): write the normalized response to
+   `tests/baselines/<query>/<case>.json`. Refuses to overwrite an existing baseline
+   unless `RECAPTURE=1`.
+6. **Verify mode** (default; `TARGET=prod|dev|local`): `expect(normalized).toEqual(baseline)`.
+   Jest's native object diff reports the exact regressed field path.
+   A missing baseline **fails loudly** ("run capture first") — never a silent pass.
+
+One matrix file (`inputs.json`) drives both modes, so capture and verify cannot diverge.
+Network errors retry once; a second failure fails the case with the transport error attached.
+
+## Input matrix
+
+Generated once by `harvest.mjs` against prod, then committed and stable. Per query:
+
+- **single** — one representative slug/ID/ref.
+- **batch** — multi-item array (exercises the `q()` array-vs-scalar arg formatting).
+- **missing** — nonexistent slug/ID. The current null/empty/error response is part of
+  the frozen contract.
+- **query-specific permutations**, e.g.:
+  - `history`: bare, `{slug}`, `{archive}`, `{principal}` arg forms (`GraphQLQueries.js:553`)
+  - `scripture`/`read`/`lookup`: single verse, verse range, cross-chapter ref
+  - `queue`/`queuestatus`: with and without `items`
+  - `passagenotes_0` and `passagenotes_7`: prove dynamic aliasing
+  - `fax`: filter input form vs `faxIndex` slug form
+  - `search`: single-word, multi-word, no-results term
+
+## Volatility tiers
+
+Declared per query in the matrix; normalization runs before capture and before compare,
+so baselines never contain masked values.
+
+| Tier | Treatment | Queries (examples) |
+|---|---|---|
+| `exact` | byte-for-byte | scripture, verses, read, person, place, object, page, chiasmus, contents, maps, fax, publications, markdown, labels, about, history, lookup |
+| `scrubbed` | mask volatile fields (`access_token`, timestamps, `lastseen`, `laststudied`, `joined_ts`, `created_at`, `datetime`, `timestamp`, durations of live sessions), then exact | tokenSignIn, signin, studylog, userprogress, userdailyscores, pageprogress, divisionProgress* |
+| `shape` | assert structure/types only (deep shape walk), values free | search (ranking churn), leaderboard, queue/queuestatus next-content, anything whose values move with live user activity |
+
+When `TARGET=dev`, all of `user.test.js` automatically downgrades to `shape`:
+dev's sandbox mode (`sandboxMode.ts`) swallows writes and auth state doesn't persist,
+so exact user-state baselines are a prod-only (and later refactored-prod-candidate) check.
+
+## Test user & mutations
+
+- Credentials live in `tests/.env.test` (**gitignored — this repo is public; never commit
+  tokens or passwords**). `tests/README.md` documents creation.
+- `auth.js` bootstrap: attempt `signin`; on failure run `signup` (username e.g.
+  `regression-test`), then `signin`. The token feeds all gated queries in the run.
+- Mutations run against the test user only, in a controlled order:
+  `log` → `editProfile` (same values re-applied) → `changePassword` (re-set to the same
+  password so state is fixed) → `uploadProfileImage` (tiny fixed image) → `signout`
+  (last; invalidates the session deliberately). `setShortLink` is tokenless and lives in
+  `search.test.js` with a deterministic input string.
+- `signup` exact-baseline runs only when the user doesn't exist yet; otherwise its case
+  verifies the "already exists" failure response — both shapes are captured.
+
+## Parked: Sendbird-dependent surface
+
+Sendbird has been gutted from the backend (`BomCommunity.ts` shim, `MESSENGER_ENABLED = false`)
+pending the rip-and-replace messaging work. These queries currently return shim/degraded data
+on dev and possibly different data on prod (older deploy). **They are inventoried but parked**:
+each gets a `test.todo()` entry tagged `PARKED-SENDBIRD` in `community.test.js` so they appear
+in every test report and can be activated after the messaging replacement lands.
+
+Parked: `loadGroupsFromHash`, `homegroups`, `homefeed`, `homethread`, `requestedUsers`,
+`processRequest`, `joinGroup`, `joinOpenGroup`, `requestToJoinGroup`, `withdrawRequest`,
+`botlist`, `addBot`, `removeBot`.
+
+Also parked: `socialsignin` (requires a live third-party OAuth token; cannot be automated).
+
+In scope despite living in the community resolver: `leaderboard` (DB-backed, `shape` tier).
+
+## Error handling
+
+- Transport failure: one retry, then fail with the axios error summarized.
+- GraphQL `errors` array in a response is **captured as part of the baseline** — error
+  behavior is contract too.
+- Capture mode aborts (does not write) if the response is a transport-level failure.
+- Harvest script failures (e.g. a list endpoint empty) abort harvest with a clear message
+  rather than writing a partial matrix.
+
+## Acceptance criteria
+
+1. `npm run test:gql:capture` against prod populates baselines for every in-scope case;
+   re-running without `RECAPTURE=1` changes nothing.
+2. `TARGET=prod npm run test:gql` passes 100% immediately after capture.
+3. `TARGET=dev npm run test:gql` passes, with `user.test.js` in shape mode
+   (any legitimate prod/dev behavior differences found become documented known-diffs
+   or bug write-ups in `docs/bugs/` before the overhaul starts).
+4. Parked Sendbird cases are visible as todos in the report, not silently absent.
+5. A deliberately broken resolver field (manual smoke check) produces a failing test that
+   names the query, case, and field path.
+
+## Future phases (out of scope now)
+
+- Activate parked Sendbird cases after the messaging replacement.
+- Language permutations via the `/{lang}` URL prefix.
+- CI wiring (run verify vs dev on PRs to `dev`).
+- Group-mutation coverage once a test group fixture exists in the new messaging system.
