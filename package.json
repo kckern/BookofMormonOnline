@@ -57,6 +57,8 @@
     "zod": "^4.3.5"
   },
   "devDependencies": {
+    "@babel/core": "^7.29.7",
+    "@babel/preset-env": "^7.29.7",
     "@playwright/test": "^1.60.0",
     "@types/aws-lambda": "8.10.126",
     "@types/dotenv": "^6.1.1",
@@ -69,6 +71,7 @@
     "@types/winston": "^2.4.4",
     "@typescript-eslint/eslint-plugin": "^6.11.0",
     "@typescript-eslint/parser": "^6.11.0",
+    "babel-jest": "^30.4.1",
     "concurrently": "^8.2.2",
     "eslint": "^8.54.0",
     "eslint-config-prettier": "^9.0.0",
@@ -105,6 +108,9 @@
     "test:community": "jest test/community --verbose",
     "test:reference": "jest test/reference --verbose",
     "test:fast": "jest test/services --verbose",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "test:gql": "jest --config tests/jest.config.js",
+    "test:gql:capture": "CAPTURE=1 TARGET=prod jest --config tests/jest.config.js",
+    "test:gql:harvest": "node tests/matrix/harvest.mjs"
   }
 }

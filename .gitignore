@@ -9,6 +9,7 @@
 .DS_Store
 .env*
 !.env.example
+!tests/.env.test.example
 npm-debug.log
 Thumbs.db
 key
@@ -28,3 +29,4 @@ coverage/
 e2e/local-fixtures.json
 test-results/
 playwright-report/
+tests/.env.test
