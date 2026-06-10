@@ -17,10 +17,11 @@ import type { Resolvers } from '../../../codegen/graphql.js';
 import type { AppContext } from '../context.js';
 import { md5 } from '../../auth/identity.js';
 import { getChannel, getMyChannels, getPublicChannels } from '../../messaging/channels.js';
-import { getChannelMembers } from '../../messaging/members.js';
+import { getChannelMembers, addUserToChannel, removeUserFromChannel } from '../../messaging/members.js';
 import { getMessages, getThread } from '../../messaging/messages.js';
 import { getUser, getUsers, listBotUsers } from '../../messaging/users.js';
 import type { ChannelDTO, MessageDTO, UserDTO } from '../../messaging/dto.js';
+import { getBus } from '../../realtime/RealtimeBus.js';
 
 // ─── Token → messenger user_id ───────────────────────────────────────────────
 
@@ -546,6 +547,213 @@ export const communityResolvers: Resolvers = {
       } catch (err) {
         console.error('botlist error:', err);
         return asGql([]);
+      }
+    },
+  },
+
+  Mutation: {
+    /**
+     * joinGroup — join a channel identified by a bom_shortlinks hash.
+     * hash → bom_shortlinks.string → channel_url → addUserToChannel (state=joined).
+     * Fires user_joined + membership_changed on the RealtimeBus.
+     */
+    joinGroup: async (_root, args, ctx: AppContext) => {
+      const token = args.token as string | null | undefined;
+      const hash = args.hash as string | null | undefined;
+
+      if (!token) return asGql({ isSuccess: false, msg: 'User token missing', channel: null, user: null });
+      if (!hash) return asGql({ isSuccess: false, msg: 'Group hash missing', channel: null, user: null });
+
+      try {
+        const myUserId = await resolveMessengerUserId(ctx, token);
+        if (!myUserId) return asGql({ isSuccess: false, msg: 'User not found', channel: null, user: null });
+
+        const row = await ctx.db
+          .selectFrom('bom_shortlinks')
+          .select('string')
+          .where('hash', '=', hash)
+          .executeTakeFirst();
+        const channelUrl = row?.string;
+        if (!channelUrl) return asGql({ isSuccess: false, msg: 'Group not found', channel: null, user: null });
+
+        const success = await addUserToChannel(ctx.db, channelUrl, myUserId, 'member');
+        if (!success) return asGql({ isSuccess: false, msg: 'Already a member', channel: channelUrl, user: myUserId });
+
+        const userDto = await getUser(ctx.db, myUserId);
+        const userShape = userDto ? assembleHomeUser(userDto) : null;
+
+        getBus().emit('user_joined', channelUrl, { channelUrl, user: userShape });
+        getBus().emit('membership_changed', channelUrl, { channelUrl, user: myUserId });
+
+        return asGql({ isSuccess: true, msg: 'Joined group', channel: channelUrl, user: myUserId });
+      } catch (err) {
+        console.error('joinGroup error:', err);
+        return asGql({ isSuccess: false, msg: 'Database error', channel: null, user: null });
+      }
+    },
+
+    /**
+     * joinOpenGroup — join a channel by its channel_url directly.
+     * Validates custom_type === 'open'; then addUserToChannel (state=joined).
+     * Fires user_joined + membership_changed on the RealtimeBus.
+     */
+    joinOpenGroup: async (_root, args, ctx: AppContext) => {
+      const token = args.token as string | null | undefined;
+      const url = args.url as string | null | undefined;
+
+      if (!token) return asGql({ isSuccess: false, msg: 'User token missing', channel: null, user: null });
+      if (!url) return asGql({ isSuccess: false, msg: 'Group not found', channel: null, user: null });
+
+      try {
+        const myUserId = await resolveMessengerUserId(ctx, token);
+        if (!myUserId) return asGql({ isSuccess: false, msg: 'User not found', channel: null, user: null });
+
+        const channel = await getChannel(ctx.db, url);
+        if (!channel) return asGql({ isSuccess: false, msg: 'Group not found', channel: null, user: null });
+        if (channel.custom_type !== 'open') return asGql({ isSuccess: false, msg: 'Group is not open enrollment', channel: null, user: null });
+
+        const success = await addUserToChannel(ctx.db, url, myUserId, 'member');
+        if (!success) return asGql({ isSuccess: false, msg: 'Already a member', channel: url, user: myUserId });
+
+        const userDto = await getUser(ctx.db, myUserId);
+        const userShape = userDto ? assembleHomeUser(userDto) : null;
+
+        getBus().emit('user_joined', url, { channelUrl: url, user: userShape });
+        getBus().emit('membership_changed', url, { channelUrl: url, user: myUserId });
+
+        return asGql({ isSuccess: true, msg: 'Joined group', channel: url, user: myUserId });
+      } catch (err) {
+        console.error('joinOpenGroup error:', err);
+        return asGql({ isSuccess: false, msg: 'Database error', channel: null, user: null });
+      }
+    },
+
+    /**
+     * requestToJoinGroup — submit a join request on a public channel.
+     * Validates custom_type === 'public'; inserts membership row with state='requested'
+     * via an inline Kysely upsert (members.ts only exposes addUserToChannel → state='joined').
+     * Fires membership_changed on the RealtimeBus.
+     */
+    requestToJoinGroup: async (_root, args, ctx: AppContext) => {
+      const token = args.token as string | null | undefined;
+      const url = args.url as string | null | undefined;
+
+      if (!token) return asGql({ isSuccess: false, msg: 'User token missing', channel: null, user: null });
+      if (!url) return asGql({ isSuccess: false, msg: 'Group not found', channel: null, user: null });
+
+      try {
+        const myUserId = await resolveMessengerUserId(ctx, token);
+        if (!myUserId) return asGql({ isSuccess: false, msg: 'User not found', channel: null, user: null });
+
+        const channel = await getChannel(ctx.db, url);
+        if (!channel) return asGql({ isSuccess: false, msg: 'Group not found', channel: null, user: null });
+        if (channel.custom_type !== 'public') return asGql({ isSuccess: false, msg: 'Group is not public', channel: null, user: null });
+
+        // Insert with state='requested'; ignore duplicate (already requested/joined)
+        try {
+          await ctx.db
+            .insertInto('messenger_members')
+            .values({
+              channel_url: url,
+              user_id: myUserId,
+              role: 'member',
+              state: 'requested',
+            })
+            .execute();
+        } catch {
+          // Duplicate-key: already requested or already a member — treat as success
+        }
+
+        getBus().emit('membership_changed', url, { channelUrl: url, user: myUserId });
+
+        return asGql({ isSuccess: true, msg: 'Request submitted', channel: url, user: myUserId });
+      } catch (err) {
+        console.error('requestToJoinGroup error:', err);
+        return asGql({ isSuccess: false, msg: 'Database error', channel: null, user: null });
+      }
+    },
+
+    /**
+     * withdrawRequest — cancel a pending join request on a public channel.
+     * Validates custom_type === 'public'; removes the membership row (regardless of state).
+     * Fires membership_changed on the RealtimeBus.
+     */
+    withdrawRequest: async (_root, args, ctx: AppContext) => {
+      const token = args.token as string | null | undefined;
+      const url = args.url as string | null | undefined;
+
+      if (!token) return asGql({ isSuccess: false, msg: 'User token missing', channel: null, user: null });
+      if (!url) return asGql({ isSuccess: false, msg: 'Group not found', channel: null, user: null });
+
+      try {
+        const myUserId = await resolveMessengerUserId(ctx, token);
+        if (!myUserId) return asGql({ isSuccess: false, msg: 'User not found', channel: null, user: null });
+
+        const channel = await getChannel(ctx.db, url);
+        if (!channel) return asGql({ isSuccess: false, msg: 'Group not found', channel: null, user: null });
+        if (channel.custom_type !== 'public') return asGql({ isSuccess: false, msg: 'Group is not public', channel: null, user: null });
+
+        await removeUserFromChannel(ctx.db, url, myUserId);
+
+        getBus().emit('membership_changed', url, { channelUrl: url, user: myUserId });
+
+        return asGql({ isSuccess: true, msg: 'Request withdrawn', channel: url, user: myUserId });
+      } catch (err) {
+        console.error('withdrawRequest error:', err);
+        return asGql({ isSuccess: false, msg: 'Database error', channel: null, user: null });
+      }
+    },
+
+    /**
+     * processRequest — operator grants or denies a pending join request.
+     * Caller must be an operator on the channel; target user_id must exist.
+     * grant=true  → addUserToChannel (state=joined) + remove the requested row first
+     *             → fires user_joined + membership_changed
+     * grant=false → removeUserFromChannel (deletes the requested row)
+     *             → fires membership_changed
+     * Returns Boolean per SDL.
+     */
+    processRequest: async (_root, args, ctx: AppContext) => {
+      const token = args.token as string | null | undefined;
+      const channelArg = args.channel as string | null | undefined;
+      const targetUserId = args.user_id as string | null | undefined;
+      const grant = args.grant as boolean | null | undefined;
+
+      if (!token || !channelArg || !targetUserId) return false;
+
+      try {
+        const myUserId = await resolveMessengerUserId(ctx, token);
+        if (!myUserId) return false;
+
+        const members = await getChannelMembers(ctx.db, channelArg);
+
+        // Gate: caller must be an operator
+        const isOperator = members.some(
+          (m) => m.user_id === myUserId && m.role === 'operator',
+        );
+        if (!isOperator) return false;
+
+        if (grant) {
+          // Remove the requested row first so addUserToChannel doesn't hit a dup-key
+          await removeUserFromChannel(ctx.db, channelArg, targetUserId);
+          const added = await addUserToChannel(ctx.db, channelArg, targetUserId, 'member');
+          if (!added) return false;
+
+          const userDto = await getUser(ctx.db, targetUserId);
+          const userShape = userDto ? assembleHomeUser(userDto) : null;
+
+          getBus().emit('user_joined', channelArg, { channelUrl: channelArg, user: userShape });
+          getBus().emit('membership_changed', channelArg, { channelUrl: channelArg, user: targetUserId });
+        } else {
+          // Deny: remove the requested membership row
+          await removeUserFromChannel(ctx.db, channelArg, targetUserId);
+          getBus().emit('membership_changed', channelArg, { channelUrl: channelArg, user: targetUserId });
+        }
+
+        return true;
+      } catch (err) {
+        console.error('processRequest error:', err);
+        return false;
       }
     },
   },
