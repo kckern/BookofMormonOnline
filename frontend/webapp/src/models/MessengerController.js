@@ -30,6 +30,17 @@ export const uuid4 = () => {
   });
 };
 
+/**
+ * Normalize a reactions array to the shape messageReacters() reads: { key, userIds }.
+ * Sources differ — GraphQL gives { reaction_key, user_ids }, the socket gives
+ * { key, user_ids } — so accept both field spellings.
+ */
+const normalizeReactions = (raw) =>
+  (raw || []).map((r) => ({
+    key: r.key ?? r.reaction_key,
+    userIds: r.userIds ?? r.user_ids ?? [],
+  }));
+
 export default class MessengerController {
   constructor(serverUrl, userId, token, appController) {
     this.userId = md5(userId);
@@ -243,10 +254,34 @@ export default class MessengerController {
       },
       createdAt: new Date(msg.created_at).getTime(),
       updatedAt: msg.updated_at ? new Date(msg.updated_at).getTime() : 0,
-      reactions: msg.reactions || [],
+      reactions: normalizeReactions(msg.reactions),
       threadInfo: msg.thread_info || { replyCount: 0 },
       // Compatibility methods
-      applyThreadInfoUpdateEvent: () => {}
+      applyThreadInfoUpdateEvent: () => {},
+      /**
+       * Apply a reaction event in-place (Sendbird SDK parity). Handles BOTH:
+       *   - full-array form: socket reaction_changed / message_received → { reactions: [...] }
+       *   - delta form: optimistic local add/delete → { key|reaction_key, userId, operation }
+       * Keeps this.reactions in the { key, userIds } shape messageReacters() reads.
+       */
+      applyReactionEvent(event) {
+        if (!event) return;
+        if (Array.isArray(event.reactions)) {
+          this.reactions = normalizeReactions(event.reactions);
+          return;
+        }
+        const key = event.key ?? event.reaction_key;
+        const userId = event.userId;
+        if (!key || !userId) return;
+        let r = this.reactions.find((x) => x.key === key);
+        if (event.operation === 'delete') {
+          if (r) r.userIds = r.userIds.filter((id) => id !== userId);
+          this.reactions = this.reactions.filter((x) => x.userIds.length > 0);
+        } else {
+          if (!r) { r = { key, userIds: [] }; this.reactions.push(r); }
+          if (!r.userIds.includes(userId)) r.userIds.push(userId);
+        }
+      }
     };
   }
 
