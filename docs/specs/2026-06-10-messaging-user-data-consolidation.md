@@ -54,7 +54,9 @@ Holds the Sendbird user data bom_user doesn't model; promote the two fields the 
 queries to columns, keep the rest in a JSON bag.
 ```sql
 CREATE TABLE bom_user_meta (
-  user            VARCHAR(256) NOT NULL,        -- FK → bom_user.user
+  -- 'user' pinned to utf8mb3_unicode_ci to MATCH bom_user.user exactly; an FK requires
+  -- identical charset+collation (utf8mb4 here errors 3780, even though a JOIN would coerce).
+  user            VARCHAR(256) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL,  -- FK → bom_user.user
   bookmark        JSON DEFAULT NULL,            -- {latest,slug,pagetitle,heading}
   active_group    VARCHAR(255) DEFAULT NULL,    -- current study-group channel_url
   metadata        JSON DEFAULT NULL,            -- phone, preferred_languages, discovery_keys,

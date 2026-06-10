@@ -525,7 +525,10 @@ async function main() {
   out.push('-- A. Schema: bom_user_meta (1:1 join-on metadata for bom_user)');
   out.push('-- ---------------------------------------------------------------------');
   out.push(`CREATE TABLE IF NOT EXISTS bom_user_meta (
-  user VARCHAR(256) NOT NULL,
+  -- 'user' MUST match bom_user.user exactly (utf8mb3_unicode_ci) or the FK errors 3780.
+  -- An FK requires identical charset+collation; it does NOT allow the implicit coercion
+  -- that a JOIN comparison would. The table default below is utf8mb4 for the other columns.
+  user VARCHAR(256) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL,
   bookmark JSON DEFAULT NULL,
   active_group VARCHAR(255) DEFAULT NULL,
   metadata JSON DEFAULT NULL,
