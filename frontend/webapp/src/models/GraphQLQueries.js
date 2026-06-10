@@ -729,7 +729,8 @@ const queries = {
       query:
         q("shortlink", "hash", hash) +
         `{
-            shortLink
+            hash
+            string
           }`,
     }
   },
