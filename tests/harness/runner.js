@@ -79,11 +79,17 @@ function defineSuite(types) {
       // from the local backend (current code, same DB); prod verify skips visibly.
       const captureTarget = CAPTURE && def.prodStale ? { name: 'local', ...TARGETS.local } : target;
       const skipOnProd = !CAPTURE && def.prodStale && target.name === 'prod';
+      // sandboxSkip: sandbox targets mangle this type's response structurally
+      // (writes swallowed + Apollo null-stripping, or dev code ahead of the prod
+      // deployment), so even shape comparison is meaningless there.
+      const skipOnSandbox = !CAPTURE && def.sandboxSkip && target.sandbox;
+      const skipReason = skipOnProd ? ' (skipped: prod schema stale)'
+        : skipOnSandbox ? ' (skipped: sandbox target mangles response)' : '';
 
       for (const lang of def.langs || ['en', 'ko']) {
         for (const [caseName, rawInput] of Object.entries(def.cases)) {
-          const testFn = skipOnProd ? test.skip : test;
-          testFn(`${type}.${caseName} [${lang}]${skipOnProd ? ' (skipped: prod schema stale)' : ''}`, async () => {
+          const testFn = skipOnProd || skipOnSandbox ? test.skip : test;
+          testFn(`${type}.${caseName} [${lang}]${skipReason}`, async () => {
             const c = def.auth ? creds() : {};
             const input = fillPlaceholders(rawInput, {
               TOKEN: token, USER: c.username, PASS: c.password,

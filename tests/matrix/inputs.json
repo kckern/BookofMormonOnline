@@ -535,6 +535,7 @@
     "langs": [
       "en"
     ],
+    "sandboxSkip": true,
     "cases": {
       "tiny": [
         {
@@ -742,6 +743,7 @@
     "langs": [
       "en"
     ],
+    "sandboxSkip": true,
     "cases": {
       "duplicate": [
         {

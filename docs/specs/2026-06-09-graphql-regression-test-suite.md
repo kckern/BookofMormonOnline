@@ -168,6 +168,14 @@ When `TARGET=dev`, all of `user.test.js` automatically downgrades to `shape`:
 dev's sandbox mode (`sandboxMode.ts`) swallows writes and auth state doesn't persist,
 so exact user-state baselines are a prod-only (and later refactored-prod-candidate) check.
 
+Two types differ **structurally** on sandbox targets, beyond what shape comparison can
+absorb, and are marked `sandboxSkip: true` (visible Jest skip on dev/local, verified on
+prod only): `uploadProfileImage` (the sandbox swallows the write; the response value is
+null and Apollo's null-stripping `formatResponse` removes the key entirely) and `signup`
+(the current code returns `social`/`user` on the duplicate path; the prod deployment
+returns only `isSuccess`/`msg` — version drift, resolves when the overhaul deploys and
+baselines are recaptured).
+
 ## Test user & mutations
 
 - Credentials live in `tests/.env.test` (**gitignored — this repo is public; never commit

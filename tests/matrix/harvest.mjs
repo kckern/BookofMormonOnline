@@ -167,7 +167,8 @@ async function main() {
     log:            { tier: 'scrubbed', auth: true, langs: ['en'], cases: { bookmark: [{ token: '{{TOKEN}}', key: 'bookmark', val: p('texts', 1)[0] }] } },
     editProfile:    { tier: 'scrubbed', auth: true, langs: ['en'], cases: { same: [{ token: '{{TOKEN}}', name: '{{NAME}}', email: '{{EMAIL}}', zip: '{{ZIP}}' }] } },
     changePassword: { tier: 'scrubbed', auth: true, langs: ['en'], cases: { same: [{ token: '{{TOKEN}}', password: '{{PASS}}' }] } },
-    uploadProfileImage: { tier: 'shape', auth: true, langs: ['en'], cases: { tiny: [{ token: '{{TOKEN}}', imageData: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==' }] } },
+    // sandboxSkip: sandbox targets swallow the write and Apollo strips the null key — see spec
+    uploadProfileImage: { tier: 'shape', auth: true, langs: ['en'], sandboxSkip: true, cases: { tiny: [{ token: '{{TOKEN}}', imageData: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==' }] } },
     tokenSignIn:  { tier: 'scrubbed', auth: true, cases: { single: ['{{TOKEN}}'] } },
     signin:       { tier: 'scrubbed', auth: true, langs: ['en'], cases: { valid: [{ username: '{{USER}}', password: '{{PASS}}', token: '{{TOKEN}}' }], badpassword: [{ username: '{{USER}}', password: 'wrong-password', token: '{{TOKEN}}' }] } },
     studylog:        { tier: 'shape', auth: true, cases: { single: ['{{TOKEN}}'] } },
@@ -183,7 +184,8 @@ async function main() {
     queuestatus: { tier: 'scrubbed', auth: true, cases: { noitems: [{ token: '{{TOKEN}}', items: null }] } },
     sourceUsage: pools.publications ? { tier: 'exact', auth: true, langs: ['en'], cases: { single: [{ token: '{{TOKEN}}', source: p('publications', 1)[0] }] } } : undefined,
     signout: { tier: 'scrubbed', auth: true, langs: ['en'], cases: { current: [{ token: '{{TOKEN}}' }] } },
-    signup:  { tier: 'scrubbed', auth: true, langs: ['en'], cases: { duplicate: [{ token: '{{TOKEN}}', username: '{{USER}}', password: '{{PASS}}', name: '{{NAME}}', email: '{{EMAIL}}', zip: '{{ZIP}}' }] } },
+    // sandboxSkip: dev code returns social/user on the duplicate path; prod deployment doesn't
+    signup:  { tier: 'scrubbed', auth: true, langs: ['en'], sandboxSkip: true, cases: { duplicate: [{ token: '{{TOKEN}}', username: '{{USER}}', password: '{{PASS}}', name: '{{NAME}}', email: '{{EMAIL}}', zip: '{{ZIP}}' }] } },
 
     // ---- community suite ----
     leaderboard: { tier: 'shape', auth: true, cases: { single: [{ token: '{{TOKEN}}' }] } },
