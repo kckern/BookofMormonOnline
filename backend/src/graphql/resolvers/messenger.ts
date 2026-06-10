@@ -12,6 +12,7 @@ import { getChannel, getMyChannels, createChannel } from '../../messaging/channe
 import { getChannelMembers, addUserToChannel, removeUserFromChannel } from '../../messaging/members.js';
 import { getMessages, getMessage, getThread } from '../../messaging/messages.js';
 import { getBus } from '../../realtime/RealtimeBus.js';
+import { isDuplicateKeyError } from '../../data/errors.js';
 import type { MessageDTO } from '../../messaging/dto.js';
 
 // ─── Auth helper ──────────────────────────────────────────────────────────────
@@ -33,6 +34,19 @@ async function resolveActingUserId(ctx: AppContext): Promise<string | null> {
     .executeTakeFirst();
   if (!row) return null;
   return md5(row.username);
+}
+
+/**
+ * Gate a channel-admin action on the bearer user being an OPERATOR of the channel.
+ * Returns the acting user_id when authorized, else null. Channel-admin mutations
+ * (rename, role change, remove member) must not be open to any authenticated user.
+ */
+async function requireOperator(ctx: AppContext, channelUrl: string): Promise<string | null> {
+  const actingUserId = await resolveActingUserId(ctx);
+  if (!actingUserId) return null;
+  const members = await getChannelMembers(ctx.db, channelUrl);
+  const isOperator = members.some((m) => m.user_id === actingUserId && m.role === 'operator');
+  return isOperator ? actingUserId : null;
 }
 
 // ─── link_type / link_target extraction from data JSON ───────────────────────
@@ -289,6 +303,8 @@ export const messengerResolvers: Resolvers = {
         description?: string | null;
       };
       if (!channelUrl) return null;
+      // Operator-only: don't let any authenticated user rename a channel.
+      if (!(await requireOperator(ctx, channelUrl))) return null;
 
       try {
         // Build the update set only from supplied fields
@@ -384,6 +400,8 @@ export const messengerResolvers: Resolvers = {
 
       const validRoles = ['operator', 'member'] as const;
       if (!validRoles.includes(role as typeof validRoles[number])) return false;
+      // Operator-only: only an operator may promote/demote members.
+      if (!(await requireOperator(ctx, channelUrl))) return false;
 
       try {
         const result = await ctx.db
@@ -416,11 +434,18 @@ export const messengerResolvers: Resolvers = {
         userId?: string | null;
       };
       if (!channelUrl || !userId) return false;
+      // Allow an operator to remove anyone, OR a user to remove themselves (leave).
+      const actingUserId = await resolveActingUserId(ctx);
+      if (!actingUserId) return false;
+      if (actingUserId !== userId && !(await requireOperator(ctx, channelUrl))) return false;
 
       try {
         const removed = await removeUserFromChannel(ctx.db, channelUrl, userId);
         if (removed) {
+          // Emit both: membership_changed (channel refresh) + user_left (symmetry with
+          // user_joined; the client listens for both).
           getBus().emit('membership_changed', channelUrl, { channelUrl, userId });
+          getBus().emit('user_left', channelUrl, { channelUrl, user: userId });
         }
         return removed;
       } catch (err) {
@@ -458,8 +483,13 @@ export const messengerResolvers: Resolvers = {
             .execute();
           anySuccess = true;
           getBus().emit('membership_changed', channelUrl, { channelUrl, userId, state: 'invited' });
-        } catch {
-          // Duplicate-key: already a member/invited — skip silently
+        } catch (err) {
+          // Duplicate-key (already a member/invited) is fine; a real failure must NOT
+          // be masked as success.
+          if (!isDuplicateKeyError(err)) {
+            console.error('messengerInviteMembers insert error:', err);
+            return false;
+          }
         }
       }
       return anySuccess;

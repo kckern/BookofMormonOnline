@@ -9,16 +9,6 @@ function getSlugTip(slug: string): string {
   return slug.split('/').pop() ?? slug;
 }
 
-/** Generate a random alphanumeric string of given length (mirrors legacy makeid). */
-function makeId(length: number): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let result = '';
-  for (let i = 0; i < length; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
-}
-
 type DbAccessor = { _db: Parameters<typeof searchQuery>[0] };
 
 export const searchhistResolvers: Resolvers = {
@@ -54,29 +44,8 @@ export const searchhistResolvers: Resolvers = {
     },
   },
 
-  Mutation: {
-    /**
-     * shortlink mutation: find-or-create by string.
-     * Sandbox mode suppresses inserts; the regression anchor pre-exists so the
-     * findOne path is always taken for the suite case.
-     */
-    shortlink: async (_root, args, ctx: AppContext) => {
-      const string = args.string ?? null;
-      if (!string) return null;
-      const db = (ctx.loaders as unknown as DbAccessor)._db;
-      const existing = await db
-        .selectFrom('bom_shortlinks')
-        .select(['hash', 'string'])
-        .where('string', '=', string)
-        .limit(1)
-        .execute();
-      if (existing[0]) return existing[0] as unknown as never;
-      if (ctx.sandbox) return null;
-      const newhash = makeId(9);
-      await db.insertInto('bom_shortlinks').values({ hash: newhash, string }).execute();
-      return { hash: newhash, string } as unknown as never;
-    },
-  },
+  // Mutation.shortlink lives in useractivity.ts (the runWrite-based, sandbox-aware
+  // find-or-create). This module owns only Query.shortlink (lookup by hash).
 
   SearchResult: {
     reference: (parent) => (parent as unknown as SearchResultRow).reference ?? null,

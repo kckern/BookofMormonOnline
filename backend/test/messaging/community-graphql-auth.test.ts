@@ -216,7 +216,7 @@ describeAuth('joinOpenGroup', () => {
 });
 
 describeAuth('requestToJoinGroup + withdrawRequest', () => {
-  it('requests + withdraws when writable; surfaces the masked-write quirk read-only', async () => {
+  it('requests + withdraws when writable; returns graceful failure read-only', async () => {
     expect(publicNotJoined, 'no public channel the user is missing from').toBeTruthy();
     const url = publicNotJoined!;
 
@@ -240,11 +240,12 @@ describeAuth('requestToJoinGroup + withdrawRequest', () => {
       expect((wd['withdrawRequest'] as Record<string, unknown>)['isSuccess']).toBe(true);
       expect(await isMember(url, uid)).toBe(false);
     } else {
-      // KNOWN QUIRK: requestToJoinGroup wraps its INSERT in an inner try/catch that treats
-      // any failure as a duplicate → reports isSuccess:true even though the write was denied.
-      expect(reqOk).toBe(true);
-      expect(await isMember(url, uid)).toBe(false); // ...but nothing was actually inserted.
-      // withdrawRequest's DELETE is NOT masked → it returns the graceful failure.
+      // Write denied (read-only). The insert error is NO LONGER masked as success —
+      // isDuplicateKeyError distinguishes a real failure from a dup-key, so the resolver
+      // returns the graceful failure (fixed 2026-06-10; previously reported isSuccess:true).
+      expect(reqOk).toBe(false);
+      expect(await isMember(url, uid)).toBe(false);
+      // withdrawRequest's DELETE likewise returns the graceful failure.
       const wd = await exec(
         `mutation ($t: String, $u: String) { withdrawRequest(token: $t, url: $u) { isSuccess } }`,
         { t: TOKEN, u: url },

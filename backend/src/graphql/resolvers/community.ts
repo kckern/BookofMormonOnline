@@ -23,6 +23,7 @@ import { getUser, getUsers, listBotUsers } from '../../messaging/users.js';
 import { addBotToChannel, removeBotFromChannel } from '../../messaging/bots/registry.js';
 import type { ChannelDTO, MessageDTO, UserDTO } from '../../messaging/dto.js';
 import { getBus } from '../../realtime/RealtimeBus.js';
+import { isDuplicateKeyError } from '../../data/errors.js';
 
 // ─── Token → messenger user_id ───────────────────────────────────────────────
 
@@ -652,7 +653,8 @@ export const communityResolvers: Resolvers = {
         if (!channel) return asGql({ isSuccess: false, msg: 'Group not found', channel: null, user: null });
         if (channel.custom_type !== 'public') return asGql({ isSuccess: false, msg: 'Group is not public', channel: null, user: null });
 
-        // Insert with state='requested'; ignore duplicate (already requested/joined)
+        // Insert with state='requested'. A duplicate-key (already requested/joined) is
+        // success; a genuine write failure must NOT be masked as success.
         try {
           await ctx.db
             .insertInto('messenger_members')
@@ -663,8 +665,12 @@ export const communityResolvers: Resolvers = {
               state: 'requested',
             })
             .execute();
-        } catch {
-          // Duplicate-key: already requested or already a member — treat as success
+        } catch (e) {
+          if (!isDuplicateKeyError(e)) {
+            console.error('requestToJoinGroup insert error:', e);
+            return asGql({ isSuccess: false, msg: 'Database error', channel: null, user: null });
+          }
+          // duplicate-key: already requested or a member — treat as success
         }
 
         getBus().emit('membership_changed', url, { channelUrl: url, user: myUserId });
