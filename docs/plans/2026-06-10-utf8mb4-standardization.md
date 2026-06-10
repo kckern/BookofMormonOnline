@@ -86,40 +86,26 @@ change), or mojibake → fix the script and re-run on a fresh clone before touch
 
 ---
 
-## Task 2: Generate the conversion script
+## Task 2: Generate the conversion script — DONE (generator committed)
 
-**Files:** Create `backend/scripts/gen-utf8mb4-convert.sql` (the *generator* query) and its output
-`backend/scripts/out/convert-utf8mb4.sql` (gitignored — it's operational, like the seed dump).
+**Files:** `backend/scripts/gen-utf8mb4-convert.mjs` (committed, read-only generator) →
+`backend/scripts/out/convert-utf8mb4.sql` (gitignored — operational, like the seed dump).
 
-- [ ] **Step 1: Emit one CONVERT per table that has any non-target char column**
+Regenerate anytime with: `cd backend && npx tsx scripts/gen-utf8mb4-convert.mjs`
 
-Run this against `bom_prd` (read-only OK — it only SELECTs) to produce the body:
+The generator (read-only against `bom_prd`) does all of Tasks 3–6 automatically:
+- Header/footer guards + `ALTER DATABASE` (Task 3).
+- **Auto-decides the latin1 dictionary path** (Task 4) by checking UTF-8 validity of the stored
+  bytes: clean-UTF-8 everywhere → binary reinterpret; otherwise → plain lossless CONVERT. On the
+  current data it emits **plain CONVERT** (all 15 non-ASCII rows hold invalid/pre-corrupted UTF-8,
+  so the binary trick would error) and lists the affected ids for post-window review.
+- `bom_xtras_stats` drop/convert/re-add-prefix-index block (Task 5).
+- Column-aware blanket CONVERT for every other non-target table, ordered small→large (Task 6).
+- A table-default sweep for any char-less table with a stale default (none on current data).
 
-```sql
--- Column-aware: catches every table with >=1 char column not already 0900_ai_ci.
-SELECT DISTINCT CONCAT('ALTER TABLE `', TABLE_NAME,
-       '` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;') AS stmt
-FROM information_schema.COLUMNS
-WHERE TABLE_SCHEMA = 'bom_prd'
-  AND CHARACTER_SET_NAME IS NOT NULL
-  AND COLLATION_NAME <> 'utf8mb4_0900_ai_ci'
-  AND TABLE_NAME NOT IN ('bom_xtras_dictionary','bom_xtras_stats')  -- handled specially
-ORDER BY stmt;
-```
-
-- [ ] **Step 2: Also sweep table-level defaults** for tables whose columns are all-numeric but whose
-  default charset is still mb3 (cosmetic, keeps new columns correct):
-
-```sql
-SELECT CONCAT('ALTER TABLE `', TABLE_NAME, '` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;')
-FROM information_schema.TABLES
-WHERE TABLE_SCHEMA='bom_prd' AND ENGINE='InnoDB' AND TABLE_COLLATION <> 'utf8mb4_0900_ai_ci';
-```
-
-- [ ] **Step 3: Assemble `convert-utf8mb4.sql`** in this exact order (see Tasks 3–7 for the literal
-  blocks): header/guards → DB default → special-case prep (stats, dictionary) → blanket CONVERTs
-  (small→large so failures surface fast and the big rebuilds run last) → re-add stats indexes →
-  footer. Wrap the whole thing per Task 3.
+Output as generated 2026-06-10: 67 blanket tables + 2 special cases; dictionary verdict = plain
+CONVERT (15 rows flagged). Tasks 3–6 below document the literal blocks the generator emits; verify
+them in the produced file before the window.
 
 ---
 
