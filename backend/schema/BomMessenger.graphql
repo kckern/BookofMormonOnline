@@ -1,0 +1,153 @@
+type MessengerUser {
+  user_id: String!
+  nickname: String
+  profile_url: String
+  metadata: JSON
+  is_online: Boolean
+  last_seen_at: Float
+  is_bot: Boolean
+}
+
+type MessengerMember {
+  user_id: String!
+  nickname: String
+  profile_url: String
+  metadata: JSON
+  is_online: Boolean
+  role: String!
+  state: String!
+  is_muted: Boolean
+}
+
+type MessengerChannel {
+  channel_url: String!
+  name: String!
+  cover_url: String
+  custom_type: String!
+  data: String
+  metadata: JSON
+  members: [MessengerMember!]
+  member_count: Int
+  unread_message_count: Int
+  last_message: MessengerMessage
+  created_at: Float
+  lang: String
+}
+
+type MessengerMessage {
+  message_id: String!
+  channel_url: String!
+  user: MessengerUser
+  message_type: String!
+  message: String!
+  custom_type: String
+  data: String
+  parent_message_id: String
+  thread_info: MessengerThreadInfo
+  reactions: [MessengerReaction!]
+  created_at: Float!
+  updated_at: Float
+}
+
+type MessengerThreadInfo {
+  reply_count: Int!
+  most_replies: [MessengerUser!]
+}
+
+type MessengerReaction {
+  key: String!
+  user_ids: [String!]!
+}
+
+type MessengerHighlight {
+  id: String!
+  message_id: String!
+  ordinal: Int!
+  text: String!
+}
+
+input MessengerLinkInput {
+  type: String!
+  target: String!
+  aux: String
+}
+
+input MessengerPostMessageInput {
+  channelUrl: String!
+  userId: String!
+  message: String!
+  messageType: String
+  customType: String
+  link: MessengerLinkInput
+  highlights: [String!]
+  metadata: JSON
+  parentMessageId: String
+}
+
+input MessengerCreateChannelInput {
+  channelUrl: String
+  name: String!
+  customType: String!
+  userIds: [String!]!
+  operatorIds: [String!]!
+  coverUrl: String
+  description: String
+  metadata: JSON
+  lang: String
+}
+
+extend type Query {
+  """Get a user by ID"""
+  messengerUser(userId: String!): MessengerUser
+  """Get multiple users by IDs"""
+  messengerUsers(userIds: [String!]!): [MessengerUser!]!
+  """Get a channel by URL"""
+  messengerChannel(channelUrl: String!): MessengerChannel
+  """Get channels for the current user"""
+  messengerMyChannels(userId: String!, customTypes: [String!], limit: Int): [MessengerChannel!]!
+  """Get public/open channels for discovery"""
+  messengerPublicChannels(lang: String, customTypes: [String!], limit: Int): [MessengerChannel!]!
+  """Get messages for a channel"""
+  messengerMessages(channelUrl: String!, before: String, limit: Int): [MessengerMessage!]!
+  """Get a single message by ID"""
+  messengerMessage(channelUrl: String!, messageId: String!): MessengerMessage
+  """Get thread (replies) for a message"""
+  messengerThread(parentMessageId: String!): [MessengerMessage!]!
+  """Get channel members"""
+  messengerMembers(channelUrl: String!): [MessengerMember!]!
+  """Get unread count for a user in a channel"""
+  messengerUnreadCount(channelUrl: String!, userId: String!): Int!
+  """List bot users"""
+  messengerBots(lang: String): [MessengerUser!]!
+}
+
+extend type Mutation {
+  """Create or update a user"""
+  messengerUpsertUser(userId: String!, nickname: String, profileUrl: String, bomUserId: String, metadata: JSON, isBot: Boolean): MessengerUser!
+  """Update user nickname"""
+  messengerUpdateNickname(userId: String!, nickname: String!): Boolean!
+  """Update user profile URL"""
+  messengerUpdateProfileUrl(userId: String!, profileUrl: String!): Boolean!
+  """Update user metadata"""
+  messengerUpdateUserMetadata(userId: String!, metadata: JSON!): Boolean!
+  """Create a new channel"""
+  messengerCreateChannel(input: MessengerCreateChannelInput!): MessengerChannel!
+  """Add user to channel"""
+  messengerAddMember(channelUrl: String!, userId: String!, role: String): Boolean!
+  """Remove user from channel"""
+  messengerRemoveMember(channelUrl: String!, userId: String!): Boolean!
+  """Post a new message"""
+  messengerPostMessage(input: MessengerPostMessageInput!): MessengerMessage!
+  """Update a message"""
+  messengerUpdateMessage(channelUrl: String!, messageId: String!, message: String, customType: String, link: MessengerLinkInput, highlights: [String!], metadata: JSON): MessengerMessage
+  """Delete a message (soft delete)"""
+  messengerDeleteMessage(channelUrl: String!, messageId: String!): Boolean!
+  """Add reaction to a message"""
+  messengerAddReaction(messageId: String!, userId: String!, reactionKey: String!): Boolean!
+  """Remove reaction from a message"""
+  messengerRemoveReaction(messageId: String!, userId: String!, reactionKey: String!): Boolean!
+  """Mark channel as read"""
+  messengerMarkAsRead(channelUrl: String!, userId: String!): Boolean!
+  """Set user online/offline status"""
+  messengerSetOnline(userId: String!, isOnline: Boolean!): Boolean!
+}

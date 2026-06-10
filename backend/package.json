@@ -1,0 +1,42 @@
+{
+  "name": "bom-backend",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Green-field GraphQL backend for Book of Mormon Online (spec: docs/specs/2026-06-09-greenfield-backend.md)",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/src/index.js",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "codegen:db": "kysely-codegen --dialect mysql --out-file codegen/db.d.ts",
+    "codegen:graphql": "graphql-codegen --config codegen.ts"
+  },
+  "dependencies": {
+    "dataloader": "^2.2.3",
+    "dotenv": "^16.4.5",
+    "fastify": "^5.2.0",
+    "graphql": "^16.9.0",
+    "graphql-type-json": "^0.3.2",
+    "graphql-yoga": "^5.10.0",
+    "kysely": "^0.27.5",
+    "mysql2": "^3.11.5",
+    "pino": "^9.5.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@graphql-codegen/cli": "^5.0.3",
+    "@graphql-codegen/typescript": "^4.1.2",
+    "@graphql-codegen/typescript-resolvers": "^4.4.1",
+    "@types/node": "^22.10.2",
+    "kysely-codegen": "^0.17.0",
+    "pino-pretty": "^13.0.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

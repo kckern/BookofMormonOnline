@@ -25,7 +25,8 @@ email's prefix** when an email is supplied — `TEST_USERNAME` must equal the pa
 | Command | What it does |
 |---|---|
 | `TARGET=prod npm run test:gql` | verify prod against baselines (green + 24 prodStale skips) |
-| `TARGET=local npm run test:gql` | verify a local backend (`npm run dev:backend`) — the refactor gate |
+| `TARGET=local npm run test:gql` | verify the legacy local backend (`npm run dev:backend`) |
+| `TARGET=next npm run test:gql` | verify the green-field backend (`cd backend && npm run dev`, :5006) — the rebuild gate |
 | `TARGET=dev npm run test:gql` | verify dev (green since the 2026-06-09 proxy fix) |
 | `npm run test:gql:capture` | (re)capture baselines from prod; existing files skipped |
 | `RECAPTURE=1 npm run test:gql:capture` | force-overwrite baselines — only after intentional contract changes |

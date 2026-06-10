@@ -30,3 +30,7 @@ e2e/local-fixtures.json
 test-results/
 playwright-report/
 tests/.env.test
+
+# green-field backend
+backend/.env
+backend/dist/

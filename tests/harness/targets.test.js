@@ -28,6 +28,13 @@ describe('targets', () => {
     expect(urlFor(getTarget(), 'ko')).toBe('http://localhost:5005/ko');
   });
 
+  test('resolves next (green-field backend) as sandbox on :5006', () => {
+    process.env.TARGET = 'next';
+    const t = getTarget();
+    expect(t.base).toBe('http://localhost:5006');
+    expect(t.sandbox).toBe(true);
+  });
+
   test('rejects unknown targets', () => {
     process.env.TARGET = 'staging';
     expect(() => getTarget()).toThrow(/Unknown TARGET/);

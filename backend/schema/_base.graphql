@@ -1,0 +1,9 @@
+type Query {
+  _: Boolean
+}
+
+type Mutation {
+  _: Boolean
+}
+
+scalar JSON

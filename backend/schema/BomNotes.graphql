@@ -1,0 +1,130 @@
+extend type Query {
+  fax(filter: String): [Fax]
+  faxIndex(slug: String): FaxIndex
+  image(id: [String]): [Image]
+  commentary(id: [String]): [Commentary]
+  sources(id: [String]): [Source]
+  publications: [Source]
+  history(slug: [String], archive: String, principal: [String]): [HistoricalDocument]
+  chiasmus(id: [String]): [Chiasmus]
+  passagenotes(verse_ids: [Int], start_verse_id: Int, end_verse_id: Int): PassageNotes
+}
+
+type PassageNotes {
+  commentary: [Commentary]
+  sources: [Source]
+  chiasmus: [Chiasmus]
+  people: [People]
+  places: [Place]
+  objects: [Object]
+  images: [Image]
+  notes: [Note]
+  fax: [Fax]
+  mapstory: [MapStory]
+  refs: [Reference]
+}
+
+type Reference {
+  verse_id: Int
+  ref: String
+  type: String
+  significant: Int
+}
+
+type Chiasmus {
+  chiasmus_id: String
+  reference: String
+  scheme: String
+  title: String
+  lines: [ChiasmusLine]
+}
+
+type ChiasmusLine {
+  guid: String
+  line_key: String
+  line_text: String
+  highlights: String
+  label: String
+}
+
+type HistoricalDocument {
+  seq: Int
+  id: Int
+  slug: String
+  year: Int
+  date: String
+  link: String
+  type: String
+  source: String
+  author: String
+  document: String
+  pages: Int
+  citation: String
+  teaser: String
+  transcript: String
+  aspect: Float
+  archive: String
+  principal: String
+  event_year: Int
+  event_date: String
+}
+
+type Commentary {
+  id: String
+  verse_id: String
+  verse_range: String
+  reference: String
+  location: TextBlock
+  publication: Source
+  title: String
+  text: String
+  preview: String
+  slug: String
+}
+
+type Source {
+  source_id: String
+  source_rating: String
+  source_title: String
+  source_name: String
+  source_short: String
+  source_slug: String
+  source_url: String
+  source_description: String
+  source_publisher: String
+  source_year: Int
+  excerpt: String
+}
+
+type Fax {
+  hide: String
+  slug: String
+  code: String
+  title: String
+  pages: Int
+  pgoffset: Int
+  pgfirstVerse: Int
+  index: [String]
+  info: String
+  com: Int
+  fax: Int
+  format: String
+  indexRef: String
+  bgcolor: String
+}
+
+type FaxIndex {
+  slug: String
+  pages: [[Int]]
+}
+
+type Image {
+  id: String
+  file: String
+  title: String
+  artist: String
+  link: String
+  width: Int
+  height: Int
+  location: TextBlock
+}
