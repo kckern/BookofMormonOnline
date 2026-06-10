@@ -3,8 +3,8 @@
  *
  * Turns the Sendbird YAML export (/home/bom/sendbird/) into ONE manually-runnable
  * MySQL dump (backend/scripts/out/sendbird-seed.sql) that:
- *   A. CREATE TABLE bom_user_meta (the only schema change)
- *   B. TRUNCATEs the messenger_* test seed in FK order
+ *   A. CREATE TABLE bom_user_meta (the only schema change; DDL, outside the txn)
+ *   B. clears the messenger_* test seed (DELETE in FK order, inside the txn)
  *   C. seeds messenger_users (thin human rows + full bot/orphan rows)
  *   D. upserts bom_user_meta for human users (bookmark/active_group/soft metadata)
  *   E. messenger_channels (skip SENDBIRD_DESK_CHANNEL_CUSTOM_TYPE)
@@ -510,6 +510,10 @@ async function main() {
   out.push(`-- Generated: ${new Date().toISOString()}`);
   out.push('-- Source: /home/bom/sendbird (users/*.yml, channels/*.yml)');
   out.push('-- Idempotent (INSERT ... ON DUPLICATE KEY UPDATE). Safe to re-run.');
+  out.push('-- ATOMIC: clear + reload run in ONE transaction. If any statement errors,');
+  out.push('--   mysql stops before COMMIT and the connection close rolls the load back —');
+  out.push('--   the messenger_* tables are left exactly as they were. Run WITHOUT --force');
+  out.push('--   (default behaviour) so the client aborts on the first error.');
   out.push('-- Run manually:  mysql -h <host> -u <writer> -p <db> < sendbird-seed.sql');
   out.push('-- =====================================================================');
   out.push('SET NAMES utf8mb4;');
@@ -531,19 +535,30 @@ async function main() {
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`);
   out.push('');
 
-  // B. Clear test seed
+  // Open the atomic load. Everything from here to COMMIT is one transaction.
+  // CREATE TABLE above is DDL (implicitly commits), so it stays outside. FK checks
+  // are disabled for the duration so the clear order and the messages self-ref FK
+  // (parent_message_id) never trip mid-load; they are a session var, not rolled back,
+  // but the connection close on error rolls back the DML, which is what matters.
   out.push('-- ---------------------------------------------------------------------');
-  out.push('-- B. Clear the fabricated test seed (TRUNCATE in FK-safe order)');
+  out.push('-- Atomic load: clear + reload in a single transaction (rolls back on error)');
   out.push('-- ---------------------------------------------------------------------');
+  out.push('START TRANSACTION;');
   out.push('SET FOREIGN_KEY_CHECKS=0;');
-  out.push('TRUNCATE TABLE messenger_files;');
-  out.push('TRUNCATE TABLE messenger_reactions;');
-  out.push('TRUNCATE TABLE messenger_highlights;');
-  out.push('TRUNCATE TABLE messenger_messages;');
-  out.push('TRUNCATE TABLE messenger_members;');
-  out.push('TRUNCATE TABLE messenger_channels;');
-  out.push('TRUNCATE TABLE messenger_users;');
-  out.push('SET FOREIGN_KEY_CHECKS=1;');
+  out.push('');
+
+  // B. Clear test seed (DELETE, not TRUNCATE — TRUNCATE is DDL and auto-commits,
+  //    which would break the rollback guarantee. DELETE is transactional.)
+  out.push('-- ---------------------------------------------------------------------');
+  out.push('-- B. Clear the fabricated test seed (DELETE in FK-safe order, inside the txn)');
+  out.push('-- ---------------------------------------------------------------------');
+  out.push('DELETE FROM messenger_files;');
+  out.push('DELETE FROM messenger_reactions;');
+  out.push('DELETE FROM messenger_highlights;');
+  out.push('DELETE FROM messenger_messages;');
+  out.push('DELETE FROM messenger_members;');
+  out.push('DELETE FROM messenger_channels;');
+  out.push('DELETE FROM messenger_users;');
   out.push('');
 
   // C. messenger_users
@@ -656,6 +671,15 @@ async function main() {
     fileRows,
     'file_url=VALUES(file_url), file_name=VALUES(file_name), file_type=VALUES(file_type), file_size=VALUES(file_size)',
   );
+  out.push('');
+
+  // Close the atomic load. COMMIT is the final statement, so an error on any line
+  // above stops mysql before it runs and the open transaction rolls back on disconnect.
+  out.push('-- ---------------------------------------------------------------------');
+  out.push('-- Commit the load (last statement — never reached if anything above errored)');
+  out.push('-- ---------------------------------------------------------------------');
+  out.push('SET FOREIGN_KEY_CHECKS=1;');
+  out.push('COMMIT;');
   out.push('');
   out.push('-- ===================== END OF SEED ===================================');
 

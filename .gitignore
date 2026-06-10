@@ -34,3 +34,7 @@ tests/.env.test
 # green-field backend
 backend/.env
 backend/dist/
+
+# Generated Sendbird seed dump — contains REAL user chat content/PII; run manually,
+# never commit (repo is public). Regenerate locally with scripts/gen-sendbird-dump.mjs.
+backend/scripts/out/
