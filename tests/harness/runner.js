@@ -56,6 +56,10 @@ function defineSuite(types) {
       throw new Error(`Query type "${type}" missing from tests/matrix/inputs.json — re-run npm run test:gql:harvest`);
     }
 
+    if (def.prodStale && def.auth) {
+      throw new Error(`Type "${type}" is both prodStale and auth — token binding would target the wrong host; split the policy before running.`);
+    }
+
     describe(type, () => {
       let token = null;
       if (def.auth) {
