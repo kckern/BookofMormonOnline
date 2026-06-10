@@ -52,6 +52,19 @@ export const userauthResolvers: Resolvers = {
       const social = sendbird.loadUser(hashed_id, user.name ?? undefined, genUserAvatar(hashed_id));
       return asGql({ isSuccess: true, msg: 'Token Login Success', user, social });
     },
+
+    /**
+     * userprogress(token) — ProgressScore for the token's user (legacy BomUser.ts:331).
+     * Returns the scored object (never null for a valid token) so the homepage's
+     * completion callback can read .summary without crashing.
+     */
+    userprogress: async (_root, args, ctx: AppContext) => {
+      const token = (args.token ?? '') as string;
+      if (!token) return null;
+      const user = await findUserByToken(ctx.db, token);
+      if (!user) return null;
+      return asGql(await scoreProgressForUser(ctx.db, user.user, Number(user.finished ?? 0)));
+    },
   },
 
   Mutation: {

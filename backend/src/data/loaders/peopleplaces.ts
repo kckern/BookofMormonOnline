@@ -140,6 +140,29 @@ export function peopleplacesLoaders(db: Kysely<DB>, lang: string, core: Loaders)
     return rows as PlaceFullRow[];
   };
 
+  /** ALL people, weight-ordered (legacy person resolver returns the full list when no slug). */
+  const allPeople = async (): Promise<PeopleRow[]> => {
+    const rows = await db
+      .selectFrom('bom_people')
+      .select([
+        'slug', 'guid', 'name', 'title', 'classification', 'identification',
+        'unit', 'date', 'description', 'weight',
+      ])
+      .orderBy('weight', 'asc')
+      .execute();
+    return rows as PeopleRow[];
+  };
+
+  /** ALL places, weight-ordered (legacy place resolver returns the full list when no slug). */
+  const allPlaces = async (): Promise<PlaceFullRow[]> => {
+    const rows = await db
+      .selectFrom('bom_places')
+      .selectAll()
+      .orderBy('weight', 'asc')
+      .execute();
+    return rows as PlaceFullRow[];
+  };
+
   /**
    * Index rows for a given entity slug + type.
    * Legacy orders by verse_id ASC (via the indexSort = ['index','verse_id'] ordering
@@ -319,8 +342,10 @@ export function peopleplacesLoaders(db: Kysely<DB>, lang: string, core: Loaders)
   return {
     peopleBySlug,
     peopleBySlugs,
+    allPeople,
     placesBySlugLoader,
     placesBySlugs,
+    allPlaces,
     indexBySlug,
     getRelLabels,
     relationsBySlug,

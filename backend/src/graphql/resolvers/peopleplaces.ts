@@ -23,7 +23,8 @@ export const peopleplacesResolvers: Resolvers = {
       const slugs = (args.slug ?? [])
         .filter((s): s is string => s !== null)
         .map(getSlugTip);
-      if (!slugs.length) return [];
+      // No slug → full list (legacy returns all people; the homepage preloads them for popups).
+      if (!slugs.length) return ctx.loaders.allPeople() as unknown as never[];
       return ctx.loaders.peopleBySlugs(slugs) as unknown as never[];
     },
 
@@ -35,7 +36,8 @@ export const peopleplacesResolvers: Resolvers = {
       const slugs = (args.slug ?? [])
         .filter((s): s is string => s !== null)
         .map(getSlugTip);
-      if (!slugs.length) return [];
+      // No slug → full list (legacy returns all places).
+      if (!slugs.length) return ctx.loaders.allPlaces() as unknown as never[];
       return ctx.loaders.placesBySlugs(slugs) as unknown as never[];
     },
   },
