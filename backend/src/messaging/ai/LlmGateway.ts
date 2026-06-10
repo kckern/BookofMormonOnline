@@ -61,7 +61,12 @@ let _instance: LlmGateway | null = null;
  */
 export function getLlmGateway(): LlmGateway {
   if (!_instance) {
-    _instance = new OpenAiAdapter();
+    // STUB_LLM_REPLY: a deterministic fixed-reply gateway for tests/dev — lets
+    // the bot-reply integration test assert a known response without a real key.
+    const stub = process.env['STUB_LLM_REPLY'];
+    _instance = stub
+      ? { generate: async () => stub }
+      : new OpenAiAdapter();
   }
   return _instance;
 }
