@@ -169,9 +169,41 @@ export const resolvers: Resolvers = {
       return translated(ctx, t.guid, 'content', t.content);
     },
     quotes: (parent, _args, ctx) => ctx.loaders.quotesByText.load((parent as TextRow).guid),
-    people: () => [], // slice C
-    places: () => [], // slice C
-    refs: () => [], // slice D
-    notes: () => [], // slice D
+    people: (parent, _args, ctx) => {
+      const t = parent as TextRow;
+      return ctx.loaders.peopleByText.load({ guid: t.guid, narrationGuid: t.parent });
+    },
+    places: (parent, _args, ctx) => {
+      const t = parent as TextRow;
+      return ctx.loaders.placesByText.load({ guid: t.guid, narrationGuid: t.parent });
+    },
+    refs: (parent, _args, ctx) => ctx.loaders.refsByText.load((parent as TextRow).guid),
+    // English-only by legacy design (BomPage.ts:767-771)
+    notes: (parent, _args, ctx) =>
+      ctx.lang && ctx.lang !== 'en' ? [] : ctx.loaders.notesByText.load((parent as TextRow).guid),
+  },
+
+  People: {
+    // bom_people's PK is slug, so its translation rows key on the SLUG
+    // (legacy hasMany defaulted foreignKey 'guid' → source PK).
+    name: (parent, _args, ctx) => {
+      const p = parent as { slug: string; name: string | null };
+      return translated(ctx, p.slug, 'name', p.name);
+    },
+    title: (parent, _args, ctx) => {
+      const p = parent as { slug: string; title: string | null };
+      return translated(ctx, p.slug, 'title', p.title);
+    },
+  },
+
+  Place: {
+    name: (parent, _args, ctx) => {
+      const p = parent as { guid: string | null; slug: string; name: string | null };
+      return p.guid ? translated(ctx, p.guid, 'name', p.name) : (p.name ?? null);
+    },
+    info: (parent, _args, ctx) => {
+      const p = parent as { guid: string | null; slug: string; info: string | null };
+      return p.guid ? translated(ctx, p.guid, 'info', p.info) : (p.info ?? null);
+    },
   },
 };

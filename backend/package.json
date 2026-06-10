@@ -17,6 +17,7 @@
     "codegen:graphql": "graphql-codegen --config codegen.ts"
   },
   "dependencies": {
+    "@envelop/core": "^5.5.1",
     "dataloader": "^2.2.3",
     "dotenv": "^16.4.5",
     "fastify": "^5.2.0",

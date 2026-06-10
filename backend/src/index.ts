@@ -1,5 +1,7 @@
 import Fastify, { type FastifyReply, type FastifyRequest } from 'fastify';
 import { createYoga } from 'graphql-yoga';
+import { useEngine } from '@envelop/core';
+import { execute, parse, subscribe, validate } from 'graphql';
 import { env } from './config/env.js';
 import { getDb } from './data/db.js';
 import { buildSchema } from './graphql/schema.js';
@@ -23,6 +25,10 @@ const yoga = createYoga<{ lang: string }, AppContext>({
   logging: app.log,
   context: ({ lang }) => buildContext(db, lang),
   plugins: [
+    // COMPAT: pin the graphql-js executor — it builds response maps in
+    // selection order (spec); Yoga's default executor appends keys in
+    // resolver-completion order, which breaks byte-parity with legacy.
+    useEngine({ parse, validate, execute, subscribe }),
     {
       // COMPAT: legacy Apollo formatResponse stripped ''/null/[] keys from data
       onExecutionResult({ result }: { result: unknown }) {

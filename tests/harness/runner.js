@@ -77,18 +77,25 @@ function defineSuite(types) {
       // prodStale: prod's deployed schema predates this query surface, so prod can
       // neither produce baselines for it nor be verified against it. Capture pulls
       // from the local backend (current code, same DB); prod verify skips visibly.
-      const captureTarget = CAPTURE && def.prodStale ? { name: 'local', ...TARGETS.local } : target;
+      // nextTruth: the contract was deliberately re-pinned to the green-field
+      // backend (approved behavior change, e.g. quote reading order) — capture
+      // pulls from :5006 and only TARGET=next verifies; legacy targets skip.
+      const captureTarget = CAPTURE && def.nextTruth ? { name: 'next', ...TARGETS.next }
+        : CAPTURE && def.prodStale ? { name: 'local', ...TARGETS.local }
+        : target;
       const skipOnProd = !CAPTURE && def.prodStale && target.name === 'prod';
       // sandboxSkip: sandbox targets mangle this type's response structurally
       // (writes swallowed + Apollo null-stripping, or dev code ahead of the prod
       // deployment), so even shape comparison is meaningless there.
       const skipOnSandbox = !CAPTURE && def.sandboxSkip && target.sandbox;
+      const skipNextTruth = !CAPTURE && def.nextTruth && target.name !== 'next';
       const skipReason = skipOnProd ? ' (skipped: prod schema stale)'
-        : skipOnSandbox ? ' (skipped: sandbox target mangles response)' : '';
+        : skipOnSandbox ? ' (skipped: sandbox target mangles response)'
+        : skipNextTruth ? ' (skipped: next-truth contract)' : '';
 
       for (const lang of def.langs || ['en', 'ko']) {
         for (const [caseName, rawInput] of Object.entries(def.cases)) {
-          const testFn = skipOnProd || skipOnSandbox ? test.skip : test;
+          const testFn = skipOnProd || skipOnSandbox || skipNextTruth ? test.skip : test;
           testFn(`${type}.${caseName} [${lang}]${skipReason}`, async () => {
             const c = def.auth ? creds() : {};
             const input = fillPlaceholders(rawInput, {

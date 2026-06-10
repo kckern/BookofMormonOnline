@@ -116,7 +116,8 @@ async function main() {
     // prodStale: missing from the deployed prod schema — see spec "Prod schema drift"
     object:     { tier: 'exact', prodStale: true, cases: { single: [p('objects', 1)[0]], batch: p('objects', 4), missing: ['zz-no-such-object'] } },
     objectList: { tier: 'exact', prodStale: true, cases: { batch: p('objects', 4) } },
-    page:       { tier: 'exact', cases: { single: [p('pages', 1)[0]], batch: p('pages', 2) } },
+    // nextTruth: quote reading order deliberately fixed in the green-field backend
+    page:       { tier: 'exact', nextTruth: true, cases: { single: [p('pages', 1)[0]], batch: p('pages', 2) } },
     contents:   { tier: 'exact', cases: { single: [p('divisions', 1)[0]], batch: p('divisions', 2) } },
     divisionShell: { tier: 'exact', cases: { single: [p('divisions', 1)[0]] } },
     markdown:   pools.markdowns ? { tier: 'exact', cases: { single: [p('markdowns', 1)[0]] } } : undefined,
