@@ -1,12 +1,17 @@
-/** messenger* READ resolvers — task 3 of docs/plans/2026-06-10-messenger-graphql-surface.md */
+/**
+ * messenger* resolvers — tasks 3 + 4 of docs/plans/2026-06-10-messenger-graphql-surface.md
+ * Task 3: READ resolvers (Query block + field resolvers)
+ * Task 4: WRITE resolvers (Mutation block — channel/user/member ops with RealtimeBus fan-out)
+ */
 
 import type { Resolvers } from '../../../codegen/graphql.js';
 import type { AppContext } from '../context.js';
 import { md5 } from '../../auth/identity.js';
-import { getUser } from '../../messaging/users.js';
-import { getChannel, getMyChannels } from '../../messaging/channels.js';
-import { getChannelMembers } from '../../messaging/members.js';
+import { getUser, updateUserNickname, updateUserProfileUrl, updateUserMetadata } from '../../messaging/users.js';
+import { getChannel, getMyChannels, createChannel } from '../../messaging/channels.js';
+import { getChannelMembers, addUserToChannel, removeUserFromChannel } from '../../messaging/members.js';
 import { getMessages, getMessage, getThread } from '../../messaging/messages.js';
+import { getBus } from '../../realtime/RealtimeBus.js';
 import type { MessageDTO } from '../../messaging/dto.js';
 
 // ─── Auth helper ──────────────────────────────────────────────────────────────
@@ -221,6 +226,304 @@ export const messengerResolvers: Resolvers = {
       // The SDL field user_id should come from the message row itself.
       // assembleMessageDTO doesn't copy user_id to the DTO — use user.user_id.
       return msg.user_id ?? msg.user?.user_id ?? null;
+    },
+  },
+
+  // ─── Mutations ────────────────────────────────────────────────────────────────
+
+  Mutation: {
+    /**
+     * messengerCreateChannel — create a new channel with the acting user as operator.
+     * operatorIds: explicit list of user_ids to flag as operators (in addition to
+     * the acting user when available). userIds is seeded from operatorIds so all
+     * operators are added as members on creation.
+     * Returns the full ChannelDTO (null on failure — reader DB suppressed via catch).
+     */
+    messengerCreateChannel: async (_root, args, ctx: AppContext) => {
+      const { name, customType, description, coverUrl, operatorIds } = args as {
+        name?: string | null;
+        customType?: string | null;
+        description?: string | null;
+        coverUrl?: string | null;
+        operatorIds?: string[] | null;
+      };
+      if (!name) return null;
+
+      try {
+        const actingUserId = await resolveActingUserId(ctx);
+        const operators: string[] = operatorIds?.filter(Boolean) as string[] ?? [];
+        // Ensure acting user is included as operator when present
+        if (actingUserId && !operators.includes(actingUserId)) {
+          operators.push(actingUserId);
+        }
+
+        const validTypes = ['private', 'public', 'open', 'solo', 'DM'] as const;
+        const resolvedType = (validTypes.includes(customType as typeof validTypes[number])
+          ? customType
+          : 'private') as 'private' | 'public' | 'open' | 'solo' | 'DM';
+
+        return await createChannel(ctx.db, {
+          name,
+          customType: resolvedType,
+          description: description ?? undefined,
+          coverUrl: coverUrl ?? undefined,
+          userIds: operators, // seed members from the operator list
+          operatorIds: operators,
+        });
+      } catch (err) {
+        console.error('messengerCreateChannel error:', err);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return null as any;
+      }
+    },
+
+    /**
+     * messengerUpdateChannel — update name and/or description of an existing channel.
+     * Uses inline Kysely (no dedicated service export for partial updates).
+     * Returns the updated ChannelDTO (null on failure).
+     */
+    messengerUpdateChannel: async (_root, args, ctx: AppContext) => {
+      const { channelUrl, name, description } = args as {
+        channelUrl?: string | null;
+        name?: string | null;
+        description?: string | null;
+      };
+      if (!channelUrl) return null;
+
+      try {
+        // Build the update set only from supplied fields
+        const updates: Record<string, string> = {};
+        if (name != null) updates['name'] = name;
+        if (description != null) updates['description'] = description;
+
+        if (Object.keys(updates).length > 0) {
+          await ctx.db
+            .updateTable('messenger_channels')
+            .set(updates as { name?: string; description?: string })
+            .where('channel_url', '=', channelUrl)
+            .execute();
+        }
+
+        return await getChannel(ctx.db, channelUrl);
+      } catch (err) {
+        console.error('messengerUpdateChannel error:', err);
+        return null;
+      }
+    },
+
+    /**
+     * messengerUpdateUser — update nickname and/or profileUrl for a messenger user.
+     * Calls updateUserNickname + updateUserProfileUrl then re-fetches via getUser.
+     * Returns the updated UserDTO (null on failure).
+     */
+    messengerUpdateUser: async (_root, args, ctx: AppContext) => {
+      const { userId, nickname, profileUrl } = args as {
+        userId?: string | null;
+        nickname?: string | null;
+        profileUrl?: string | null;
+      };
+      const targetUserId = userId ?? (await resolveActingUserId(ctx));
+      if (!targetUserId) return null;
+
+      try {
+        if (nickname != null) {
+          await updateUserNickname(ctx.db, targetUserId, nickname);
+        }
+        if (profileUrl != null) {
+          await updateUserProfileUrl(ctx.db, targetUserId, profileUrl);
+        }
+        return await getUser(ctx.db, targetUserId);
+      } catch (err) {
+        console.error('messengerUpdateUser error:', err);
+        return null;
+      }
+    },
+
+    /**
+     * messengerUpdateUserMetadata — replace a user's metadata JSON.
+     * metadata arrives as a JSON string from the SDL (String scalar) — parse it here.
+     * Returns true on success, false on parse error or DB failure (reader suppressed).
+     */
+    messengerUpdateUserMetadata: async (_root, args, ctx: AppContext) => {
+      const { userId, metadata } = args as {
+        userId?: string | null;
+        metadata?: string | null;
+      };
+      const targetUserId = userId ?? (await resolveActingUserId(ctx));
+      if (!targetUserId || metadata == null) return false;
+
+      let parsed: Record<string, unknown>;
+      try {
+        parsed = JSON.parse(metadata) as Record<string, unknown>;
+      } catch {
+        console.error('messengerUpdateUserMetadata: invalid JSON in metadata arg');
+        return false;
+      }
+
+      try {
+        return await updateUserMetadata(ctx.db, targetUserId, parsed);
+      } catch (err) {
+        console.error('messengerUpdateUserMetadata error:', err);
+        return false;
+      }
+    },
+
+    /**
+     * messengerUpdateMemberRole — change a member's role in a channel.
+     * role is 'operator' | 'member'. Inline Kysely update on messenger_members.
+     * Emits membership_changed on the RealtimeBus.
+     * Returns true on success, false on failure.
+     */
+    messengerUpdateMemberRole: async (_root, args, ctx: AppContext) => {
+      const { channelUrl, userId, role } = args as {
+        channelUrl?: string | null;
+        userId?: string | null;
+        role?: string | null;
+      };
+      if (!channelUrl || !userId || !role) return false;
+
+      const validRoles = ['operator', 'member'] as const;
+      if (!validRoles.includes(role as typeof validRoles[number])) return false;
+
+      try {
+        const result = await ctx.db
+          .updateTable('messenger_members')
+          .set({ role: role as 'operator' | 'member' })
+          .where('channel_url', '=', channelUrl)
+          .where('user_id', '=', userId)
+          .executeTakeFirst();
+
+        const updated = Number(result.numUpdatedRows) > 0;
+        if (updated) {
+          getBus().emit('membership_changed', channelUrl, { channelUrl, userId, role });
+        }
+        return updated;
+      } catch (err) {
+        console.error('messengerUpdateMemberRole error:', err);
+        return false;
+      }
+    },
+
+    /**
+     * messengerRemoveMember — remove a user from a channel entirely.
+     * Delegates to removeUserFromChannel service.
+     * Emits membership_changed on the RealtimeBus.
+     * Returns true if a row was deleted, false otherwise.
+     */
+    messengerRemoveMember: async (_root, args, ctx: AppContext) => {
+      const { channelUrl, userId } = args as {
+        channelUrl?: string | null;
+        userId?: string | null;
+      };
+      if (!channelUrl || !userId) return false;
+
+      try {
+        const removed = await removeUserFromChannel(ctx.db, channelUrl, userId);
+        if (removed) {
+          getBus().emit('membership_changed', channelUrl, { channelUrl, userId });
+        }
+        return removed;
+      } catch (err) {
+        console.error('messengerRemoveMember error:', err);
+        return false;
+      }
+    },
+
+    /**
+     * messengerInviteMembers — insert membership rows with state='invited' for each userId.
+     * addUserToChannel() always sets state='joined', so we insert inline with state='invited'.
+     * Duplicate-key (already a member) is silently skipped per invitation semantics.
+     * Emits membership_changed once per invited user.
+     * Returns true if at least one invitation was recorded, false on complete failure.
+     */
+    messengerInviteMembers: async (_root, args, ctx: AppContext) => {
+      const { channelUrl, userIds } = args as {
+        channelUrl?: string | null;
+        userIds?: string[] | null;
+      };
+      if (!channelUrl || !userIds?.length) return false;
+
+      let anySuccess = false;
+      for (const userId of userIds) {
+        if (!userId) continue;
+        try {
+          await ctx.db
+            .insertInto('messenger_members')
+            .values({
+              channel_url: channelUrl,
+              user_id: userId,
+              role: 'member',
+              state: 'invited',
+            })
+            .execute();
+          anySuccess = true;
+          getBus().emit('membership_changed', channelUrl, { channelUrl, userId, state: 'invited' });
+        } catch {
+          // Duplicate-key: already a member/invited — skip silently
+        }
+      }
+      return anySuccess;
+    },
+
+    /**
+     * messengerAcceptInvitation — transition a member's state from 'invited' → 'joined'.
+     * Inline Kysely update. Falls back to acting user when userId arg matches the bearer.
+     * Emits user_joined + membership_changed on accept.
+     * Returns true on success, false on failure.
+     */
+    messengerAcceptInvitation: async (_root, args, ctx: AppContext) => {
+      const { channelUrl, userId } = args as {
+        channelUrl?: string | null;
+        userId?: string | null;
+      };
+      const targetUserId = userId ?? (await resolveActingUserId(ctx));
+      if (!channelUrl || !targetUserId) return false;
+
+      try {
+        const result = await ctx.db
+          .updateTable('messenger_members')
+          .set({ state: 'joined' })
+          .where('channel_url', '=', channelUrl)
+          .where('user_id', '=', targetUserId)
+          .where('state', '=', 'invited')
+          .executeTakeFirst();
+
+        const accepted = Number(result.numUpdatedRows) > 0;
+        if (accepted) {
+          getBus().emit('user_joined', channelUrl, { channelUrl, userId: targetUserId });
+          getBus().emit('membership_changed', channelUrl, { channelUrl, userId: targetUserId, state: 'joined' });
+        }
+        return accepted;
+      } catch (err) {
+        console.error('messengerAcceptInvitation error:', err);
+        return false;
+      }
+    },
+
+    /**
+     * messengerDeclineInvitation — remove the invited membership row.
+     * Delegates to removeUserFromChannel (removes regardless of state).
+     * Emits membership_changed on the RealtimeBus.
+     * Returns true if the row was removed, false otherwise.
+     */
+    messengerDeclineInvitation: async (_root, args, ctx: AppContext) => {
+      const { channelUrl, userId } = args as {
+        channelUrl?: string | null;
+        userId?: string | null;
+      };
+      const targetUserId = userId ?? (await resolveActingUserId(ctx));
+      if (!channelUrl || !targetUserId) return false;
+
+      try {
+        const removed = await removeUserFromChannel(ctx.db, channelUrl, targetUserId);
+        if (removed) {
+          getBus().emit('membership_changed', channelUrl, { channelUrl, userId: targetUserId });
+        }
+        return removed;
+      } catch (err) {
+        console.error('messengerDeclineInvitation error:', err);
+        return false;
+      }
     },
   },
 };
