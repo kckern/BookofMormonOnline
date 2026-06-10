@@ -31,6 +31,10 @@ import { getDb } from '../data/db.js';
 import { getRedis } from '../config/redis.js';
 import { setOnline, setOffline } from '../messaging/presence.js';
 import { setIo } from './RealtimeBus.js';
+import * as messageHandlers from './handlers/message.js';
+import * as reactionHandlers from './handlers/reaction.js';
+import * as typingHandlers from './handlers/typing.js';
+import * as readHandlers from './handlers/read.js';
 
 // ─── Token verification ───────────────────────────────────────────────────────
 
@@ -221,6 +225,12 @@ export async function initRealtime(httpServer: HttpServer): Promise<void> {
       console.error('[realtime] connection setup error:', err);
       // Don't disconnect — the socket still functions for future joins.
     }
+
+    // ── Live-write event handlers (task 2.3) ─────────────────────────────
+    messageHandlers.register(socket, io);
+    reactionHandlers.register(socket, io);
+    typingHandlers.register(socket, io);
+    readHandlers.register(socket, io);
 
     socket.on('disconnect', async (reason: string) => {
       console.info(`[realtime] disconnected: ${userId} (${reason})`);
