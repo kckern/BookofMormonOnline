@@ -113,17 +113,18 @@ async function main() {
     personList: { tier: 'exact', cases: { batch: p('people', 4) } },
     places:     { tier: 'exact', cases: { single: [p('places', 1)[0]], batch: p('places', 4), missing: ['zz-no-such-place'] } },
     placeList:  { tier: 'exact', cases: { batch: p('places', 4) } },
-    object:     { tier: 'exact', cases: { single: [p('objects', 1)[0]], batch: p('objects', 4), missing: ['zz-no-such-object'] } },
-    objectList: { tier: 'exact', cases: { batch: p('objects', 4) } },
+    // prodStale: missing from the deployed prod schema — see spec "Prod schema drift"
+    object:     { tier: 'exact', prodStale: true, cases: { single: [p('objects', 1)[0]], batch: p('objects', 4), missing: ['zz-no-such-object'] } },
+    objectList: { tier: 'exact', prodStale: true, cases: { batch: p('objects', 4) } },
     page:       { tier: 'exact', cases: { single: [p('pages', 1)[0]], batch: p('pages', 2) } },
     contents:   { tier: 'exact', cases: { single: [p('divisions', 1)[0]], batch: p('divisions', 2) } },
     divisionShell: { tier: 'exact', cases: { single: [p('divisions', 1)[0]] } },
     markdown:   pools.markdowns ? { tier: 'exact', cases: { single: [p('markdowns', 1)[0]] } } : undefined,
     about:      { tier: 'exact', cases: { all: true } },
     labels:     { tier: 'exact', cases: { all: true } },
-    passagenotes:   { tier: 'exact', cases: { single: [NEPHI1[0]], batch: NEPHI1 } },
-    passagenotes_0: { tier: 'exact', cases: { batch: NEPHI1 } },
-    passagenotes_7: { tier: 'exact', cases: { batch: NEPHI1 } },
+    passagenotes:   { tier: 'exact', prodStale: true, cases: { single: [NEPHI1[0]], batch: NEPHI1 } },
+    passagenotes_0: { tier: 'exact', prodStale: true, cases: { batch: NEPHI1 } },
+    passagenotes_7: { tier: 'exact', prodStale: true, cases: { batch: NEPHI1 } },
 
     // ---- scripture suite ----
     scripture: { tier: 'exact', cases: { verse: ['1 Nephi 3:7'], range: ['Mosiah 2:17-19'], chapter: ['3 Nephi 11'] } },
@@ -155,7 +156,7 @@ async function main() {
     search:    { tier: 'shape', cases: { word: ['faith'], phrase: ['sword of laban'], noresults: ['zzqxnoresults'] } },
     shortLink: { tier: 'exact', cases: { single: [shortlinkHash], missing: ['zzzzzz'] } },
     setShortLink: { tier: 'exact', langs: ['en'], cases: { fixed: ['/regression-suite-anchor'] } },
-    history:   { tier: 'exact', cases: {
+    history:   { tier: 'exact', prodStale: true, cases: {
       single: [p('histories', 1)[0]],
       archive: [{ archive: p('archives', 1)[0] }],
       principal: [{ principal: p('principals', 1)[0] }],

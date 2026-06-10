@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { prepareQueries } = require('../../frontend/webapp/src/models/GraphQLQueries');
 const { postQuery } = require('./client');
-const { getTarget, urlFor } = require('./targets');
+const { getTarget, urlFor, TARGETS } = require('./targets');
 const { normalize, shapeOf, shapesCompatible } = require('./normalize');
 const { saveBaseline, loadBaseline } = require('./baseline');
 const { ensureSignedIn, creds } = require('./auth');
@@ -64,16 +64,23 @@ function defineSuite(types) {
         });
       }
 
+      // prodStale: prod's deployed schema predates this query surface, so prod can
+      // neither produce baselines for it nor be verified against it. Capture pulls
+      // from the local backend (current code, same DB); prod verify skips visibly.
+      const captureTarget = CAPTURE && def.prodStale ? { name: 'local', ...TARGETS.local } : target;
+      const skipOnProd = !CAPTURE && def.prodStale && target.name === 'prod';
+
       for (const lang of def.langs || ['en', 'ko']) {
         for (const [caseName, rawInput] of Object.entries(def.cases)) {
-          test(`${type}.${caseName} [${lang}]`, async () => {
+          const testFn = skipOnProd ? test.skip : test;
+          testFn(`${type}.${caseName} [${lang}]${skipOnProd ? ' (skipped: prod schema stale)' : ''}`, async () => {
             const c = def.auth ? creds() : {};
             const input = fillPlaceholders(rawInput, {
               TOKEN: token, USER: c.username, PASS: c.password,
               NAME: c.name, EMAIL: c.email, ZIP: c.zip,
             });
             const query = buildQuery(type, input, token);
-            const body = await postQuery(urlFor(target, lang), query);
+            const body = await postQuery(urlFor(captureTarget, lang), query);
             const stored = normalize(body, def.tier); // capture-normalization, always per declared tier
 
             if (CAPTURE) {

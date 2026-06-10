@@ -58,6 +58,7 @@
   },
   "object": {
     "tier": "exact",
+    "prodStale": true,
     "cases": {
       "single": [
         "pillar-of-fire"
@@ -75,6 +76,7 @@
   },
   "objectList": {
     "tier": "exact",
+    "prodStale": true,
     "cases": {
       "batch": [
         "pillar-of-fire",
@@ -138,6 +140,7 @@
   },
   "passagenotes": {
     "tier": "exact",
+    "prodStale": true,
     "cases": {
       "single": [
         31103
@@ -153,6 +156,7 @@
   },
   "passagenotes_0": {
     "tier": "exact",
+    "prodStale": true,
     "cases": {
       "batch": [
         31103,
@@ -165,6 +169,7 @@
   },
   "passagenotes_7": {
     "tier": "exact",
+    "prodStale": true,
     "cases": {
       "batch": [
         31103,
@@ -456,6 +461,7 @@
   },
   "history": {
     "tier": "exact",
+    "prodStale": true,
     "cases": {
       "single": [
         "1829-06-26-just-about-in-this-particular-region"
