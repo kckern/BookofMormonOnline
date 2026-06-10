@@ -62,6 +62,9 @@ Scope a run: `TARGET=prod npx jest --config tests/jest.config.js -t "person."`
 - **dev `/ko` served English** — setupProxy mount-path strip; fixed, dev fully green.
 - **scripture-guide global language leak** — fixed in repo (lang per call); prod still
   runs the leaky build until the next deploy, so the runner's language primer stays.
+  **Until that deploy, `TARGET=prod` `[en]` cases with generated references (person,
+  places, chiasm…) can flake when live Korean traffic races the primer** — rerun, or
+  trust `TARGET=local`/`TARGET=dev`, which are deterministic-green on fixed code.
 - **object.index resolver crash** — fixed (missing include + null-safe slug); object
   baselines recaptured with clean data.
 - **frontend `shortLink` field mismatch** — fixed (selects `hash`/`string`); baselines

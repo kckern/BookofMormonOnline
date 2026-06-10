@@ -4,6 +4,8 @@ const SCRUB_KEYS = new Set([
   'access_token', 'token', 'time', 'timestamp', 'datetime', 'date',
   'lastseen', 'laststudied', 'last_seen_at', 'joined_ts', 'created_at',
   'duration', 'first', 'startdate', 'duedate',
+  // session counts grow with every run; cost: page item counts are masked too
+  'count',
 ]);
 
 function scrub(value) {
