@@ -1,4 +1,5 @@
 import { lang } from "moment";
+import { isMessengerEnabled } from './featureFlags';
 import MessengerController from "./MessengerController.js";
 import { clickyUser, determineLanguage, tokenImage } from "./Utils.js";
 import crypto from "crypto-browserify";
@@ -8,7 +9,7 @@ import { setPopDocTitle } from "src/views/_Common/PopUp.js";
 // Feature flag for using new Messenger system
 // OFF = messaging disabled (no data migrated yet)
 // ON = use new MessengerController
-const USE_MESSENGER = process.env.REACT_APP_USE_MESSENGER === 'true';
+const USE_MESSENGER = isMessengerEnabled();
 
 /**
  * Creates the appropriate chat controller based on feature flag
@@ -86,7 +87,7 @@ const checkQuota =  () => {
 
 export const appInit = () => {
   // Study mode requires messenger to be enabled
-  const messengerEnabled = process.env.REACT_APP_USE_MESSENGER === 'true';
+  const messengerEnabled = isMessengerEnabled();
   let studyMode = messengerEnabled && localStorage.getItem("studyModeOn") !== "false";
   const lang = determineLanguage();
   //Set Initial States

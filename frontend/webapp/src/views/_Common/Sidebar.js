@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { isMessengerEnabled } from '../../models/featureFlags';
 import { Link, NavLink, useHistory, useRouteMatch } from "react-router-dom";
 import { Nav, Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 import "./Sidebar.css";
@@ -106,7 +107,7 @@ export function loadMenu(){
   });
 
   // Feature flag - messaging disabled until Phase 5 data migration
-  const USE_MESSENGER = process.env.REACT_APP_USE_MESSENGER === 'true';
+  const USE_MESSENGER = isMessengerEnabled();
 
   return list.filter(i=>{
     // Filter by messenger requirement

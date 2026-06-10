@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { isMessengerEnabled } from '../../models/featureFlags';
 import { Link } from "react-router-dom";
 import { assetUrl } from "models/BoMOnlineAPI";
 import { isMobile, label, tokenImage } from "models/Utils.js";
@@ -14,7 +15,7 @@ import green from "src/views/User/svg/green.svg";
 import yellow from "src/views/User/svg/yellow.svg";
 
 // Feature flag - messaging disabled until Phase 5 data migration
-const USE_MESSENGER = process.env.REACT_APP_USE_MESSENGER === 'true';
+const USE_MESSENGER = isMessengerEnabled();
 
 function Header({ appController, isReady }) {
   let dynamicContent = null;

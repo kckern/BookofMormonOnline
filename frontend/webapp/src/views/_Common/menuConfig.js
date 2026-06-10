@@ -11,8 +11,10 @@
 // - requiresMessenger: Only show when REACT_APP_USE_MESSENGER is true
 //
 
-// Feature flag - messaging disabled until Phase 5 data migration
-const USE_MESSENGER = process.env.REACT_APP_USE_MESSENGER === 'true';
+import { isMessengerEnabled } from '../../models/featureFlags';
+
+// Feature flag — messaging gated by build flag OR staging subdomain (see featureFlags.js)
+const USE_MESSENGER = isMessengerEnabled();
 
 export const menuConfig = [
   {

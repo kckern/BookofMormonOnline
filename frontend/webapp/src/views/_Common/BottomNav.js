@@ -1,4 +1,5 @@
 import chat from './svg/chat.svg'
+import { isMessengerEnabled } from '../../models/featureFlags';
 import group_icon from './svg/group_icon.svg'
 import { label } from 'src/models/Utils'
 import { useRouteMatch, Link } from 'react-router-dom'
@@ -9,7 +10,7 @@ import MenuIcon from './Icons/MenuIcon'
 import StudyIcon from './Icons/StudyIcon'
 
 // Feature flag - messaging disabled until Phase 5 data migration
-const USE_MESSENGER = process.env.REACT_APP_USE_MESSENGER === 'true';
+const USE_MESSENGER = isMessengerEnabled();
 
 export function BottomMenu({ appController }) {
   const match = useRouteMatch()
