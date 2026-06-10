@@ -5,7 +5,15 @@
         "first": "number",
         "duration": "number",
         "count": "number"
-      }
+      },
+      "sessions": [
+        {
+          "datetime": "string",
+          "timestamp": "number",
+          "duration": "number",
+          "slug": "string"
+        }
+      ]
     }
   }
 }

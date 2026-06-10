@@ -4,12 +4,12 @@
       "isSuccess": true,
       "msg": "Token Login Success",
       "social": {
-        "user_id": "781ee7f46c8bd1a1838e67926bfdd85f",
+        "user_id": "69e7e4426457bdb82c7c566b1b6558f9",
         "nickname": "Regression Test",
-        "profile_url": "https://api.dicebear.com/7.x/thumbs/svg?seed=781ee&backgroundColor=99CCFF&shapeColor=003399&eyes=variant6W10,variant8W14,variant2W10&rotate=40&scale=70&mouth=variant3"
+        "profile_url": "https://api.dicebear.com/7.x/thumbs/svg?seed=69e7e&backgroundColor=CCFFCC&shapeColor=004700&eyes=variant6W10,variant8W14,variant2W10&rotate=340&scale=70&mouth=variant1"
       },
       "user": {
-        "user": "bomtest+regression",
+        "user": "bomtest+regressionr2",
         "email": "bomtest+regressionr2@kckern.com",
         "name": "Regression Test",
         "zip": "84604",

@@ -1,4 +1,4 @@
-const { scrub, shapeOf, shapesCompatible, normalize } = require('./normalize');
+const { scrub, shapeOf, shapesCompatible, normalize, stabilizeErrors } = require('./normalize');
 
 describe('scrub', () => {
   test('masks volatile keys recursively, preserves nulls', () => {
@@ -54,5 +54,33 @@ describe('normalize', () => {
     expect(normalize(body, 'exact')).toEqual(body);
     expect(normalize(body, 'scrubbed').data.x.timestamp).toBe('[SCRUBBED]');
     expect(normalize(body, 'shape')).toEqual({ data: { x: { timestamp: 'number', name: 'string' } } });
+  });
+});
+
+describe('stabilizeErrors', () => {
+  test('reduces errors to sorted deduplicated messages', () => {
+    const body = {
+      data: { x: 1 },
+      errors: [
+        { message: 'B crash', path: ['object', 1], extensions: { exception: { stacktrace: ['at /srv/app.js:1'] } } },
+        { message: 'A crash', path: ['object', 0] },
+        { message: 'B crash', path: ['object', 3] },
+      ],
+    };
+    expect(stabilizeErrors(body)).toEqual({
+      data: { x: 1 },
+      errors: [{ message: 'A crash' }, { message: 'B crash' }],
+    });
+  });
+
+  test('passes through bodies without errors', () => {
+    expect(stabilizeErrors({ data: { x: 1 } })).toEqual({ data: { x: 1 } });
+  });
+
+  test('normalize applies error stabilization at every tier', () => {
+    const body = { data: { v: 1 }, errors: [{ message: 'crash', extensions: { exception: { stacktrace: ['leak'] } } }] };
+    expect(normalize(body, 'exact').errors).toEqual([{ message: 'crash' }]);
+    expect(normalize(body, 'scrubbed').errors).toEqual([{ message: 'crash' }]);
+    expect(normalize(body, 'shape').errors).toEqual([{ message: 'string' }]);
   });
 });

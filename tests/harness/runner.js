@@ -10,6 +10,12 @@ const { ensureSignedIn, creds } = require('./auth');
 const MATRIX_PATH = path.resolve(__dirname, '..', 'matrix', 'inputs.json');
 const CAPTURE = process.env.CAPTURE === '1';
 
+// The backend keeps a process-global scripture-guide language that leaks across
+// requests (see docs/bugs/2026-06-09-scripture-guide-global-lang-leak.md). Prime
+// the target to this case's language right before each request so captures and
+// verifies see steady-state per-language behavior.
+const PRIMER_QUERY = 'scripture (ref: "1 Nephi 1:1"){ ref }';
+
 let matrixCache = null;
 function loadMatrix() {
   if (!matrixCache) {
@@ -84,6 +90,7 @@ function defineSuite(types) {
               NAME: c.name, EMAIL: c.email, ZIP: c.zip,
             });
             const query = buildQuery(type, input, token);
+            await postQuery(urlFor(captureTarget, lang), PRIMER_QUERY);
             const body = await postQuery(urlFor(captureTarget, lang), query);
             const stored = normalize(body, def.tier); // capture-normalization, always per declared tier
 

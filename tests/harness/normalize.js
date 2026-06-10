@@ -76,10 +76,21 @@ function shapesCompatible(expected, actual, path = '$', problems = []) {
   return problems;
 }
 
-function normalize(body, tier) {
-  if (tier === 'shape') return shapeOf(body);
-  if (tier === 'scrubbed') return scrub(body);
-  return body;
+// GraphQL error entries carry Apollo stacktraces (server filesystem paths — this
+// repo is public) and, for racing resolver crashes, unstable paths/indices.
+// Reduce every error to its sorted, deduplicated messages: deterministic and
+// leak-free, while still pinning the error contract.
+function stabilizeErrors(body) {
+  if (!body || !Array.isArray(body.errors)) return body;
+  const messages = [...new Set(body.errors.map((e) => (e && e.message ? e.message : JSON.stringify(e))))].sort();
+  return { ...body, errors: messages.map((message) => ({ message })) };
 }
 
-module.exports = { SCRUB_KEYS, scrub, shapeOf, mergeShapes, shapesCompatible, normalize };
+function normalize(body, tier) {
+  const stable = stabilizeErrors(body);
+  if (tier === 'shape') return shapeOf(stable);
+  if (tier === 'scrubbed') return scrub(stable);
+  return stable;
+}
+
+module.exports = { SCRUB_KEYS, scrub, shapeOf, mergeShapes, shapesCompatible, normalize, stabilizeErrors };

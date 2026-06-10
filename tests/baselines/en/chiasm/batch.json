@@ -3,7 +3,7 @@
     "chiasmus": [
       {
         "chiasmus_id": "9483b5fe2c",
-        "reference": "모로나이서 10장 4~5절",
+        "reference": "Moroni 10:4-5",
         "scheme": "ABBA",
         "title": "Truth Revealed",
         "lines": [
@@ -35,7 +35,7 @@
       },
       {
         "chiasmus_id": "9ca9af736d",
-        "reference": "니파이전서 1장 1~3절",
+        "reference": "1 Nephi 1:1-3",
         "scheme": "ABCDCBA",
         "title": "Record of Knowledge",
         "lines": [
@@ -85,7 +85,7 @@
       },
       {
         "chiasmus_id": "f74b2b5379",
-        "reference": "앨마서 13장 2~3절",
+        "reference": "Alma 13:2-3",
         "scheme": "ABCDDCBA",
         "title": "Preparatory Redemption",
         "lines": [
