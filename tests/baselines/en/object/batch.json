@@ -1,9 +1,4 @@
 {
-  "errors": [
-    {
-      "message": "Cannot read properties of undefined (reading 'getDataValue')"
-    }
-  ],
   "data": {
     "object": [
       {
@@ -22,26 +17,31 @@
         "verse_id": 31108,
         "index": [
           {
+            "slug": "lehites/3",
             "ref": "1 Nephi 1:6",
             "verse_id": "31108",
             "text": "Pillar of fire dwells on rock before Lehi"
           },
           {
+            "slug": "gadianton/50",
             "ref": "Helaman 5:23-24",
             "verse_id": "35686",
             "text": "Nephi and Lehi encircled by fire in prison"
           },
           {
+            "slug": "gadianton/64",
             "ref": "Helaman 5:43-44",
             "verse_id": "35706",
             "text": "Cloud disperses; all encircled by pillar of fire"
           },
           {
+            "slug": "gadianton/65",
             "ref": "Helaman 5:44",
             "verse_id": "35707",
             "text": "In midst of flaming fire, yet harm them not"
           },
           {
+            "slug": "jesus/157",
             "ref": "3 Nephi 19:14",
             "verse_id": "36577",
             "text": "Disciples encircled as if by fire; angels minister"
@@ -166,51 +166,67 @@
         "verse_id": 32976,
         "index": [
           {
+            "slug": "recolonization/117",
             "ref": "Mosiah 8:13",
             "verse_id": "32976",
             "text": "Defined: stones to translate ancient records; seer"
           },
           {
+            "slug": "recolonization/119",
             "ref": "Mosiah 8:19",
             "verse_id": "32982",
             "text": "Interpreters prepared to unfold mysteries to men"
           },
           {
+            "slug": "zarahemla/85",
             "ref": "Mosiah 28:13",
             "verse_id": "33523",
             "text": "Two stones fastened into the two rims of a bow"
           },
           {
+            "slug": "zarahemla/85",
             "ref": "Mosiah 28:14",
             "verse_id": "33524",
             "text": "Prepared from beginning for interpreting languages"
           },
           {
+            "slug": "zarahemla/89",
             "ref": "Mosiah 28:20",
             "verse_id": "33530",
             "text": "Mosiah confers interpreters upon Alma"
           },
           {
+            "slug": "reign-of-judges/helaman/19",
             "ref": "Alma 37:21",
             "verse_id": "34714",
             "text": "Preserve these interpreters with the records"
           },
           {
+            "slug": "reign-of-judges/helaman/20",
             "ref": "Alma 37:24",
             "verse_id": "34717",
             "text": "These interpreters were prepared by the Lord"
           },
           {
+            "slug": "jaredites/32",
             "ref": "Ether 3:23",
             "verse_id": "37201",
             "text": "Lord gives brother of Jared two stones, sealed up"
           },
           {
+            "slug": "jaredites/32",
             "ref": "Ether 3:24",
             "verse_id": "37202",
             "text": "Stones shall magnify the confounded language"
           },
           {
+            "slug": "downfall/117",
+            "ref": "Ether 4:5",
+            "verse_id": "37211",
+            "text": "Moroni seals up the interpreters per commandment"
+          },
+          {
+            "slug": "moroni/41",
             "ref": "Ether 4:5",
             "verse_id": "37211",
             "text": "Moroni seals up the interpreters per commandment"
@@ -364,11 +380,13 @@
         "verse_id": 37355,
         "index": [
           {
+            "slug": "jaredites/110",
             "ref": "Ether 10:6",
             "verse_id": "37355",
             "text": "Riplakish builds many prisons to detain non-paying or non-laboring subjects"
           },
           {
+            "slug": "jaredites/111",
             "ref": "Ether 10:7",
             "verse_id": "37356",
             "text": "Fine gold refined and fine workmanship wrought inside the prisons"
@@ -440,6 +458,7 @@
         "verse_id": 36618,
         "index": [
           {
+            "slug": "jesus-teachings/7",
             "ref": "3 Nephi 20:19",
             "verse_id": "36618",
             "text": "Make thy horn iron and thy hoofs brass"

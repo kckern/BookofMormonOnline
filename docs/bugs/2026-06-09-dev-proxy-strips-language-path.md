@@ -20,4 +20,5 @@ and is unaffected.
 **Regression test:** `TARGET=dev npm run test:gql` — the `[ko]` cases. They must pass
 once this is fixed; no suite changes needed.
 
-**Status:** open; fix is out of scope for the regression-suite task.
+**Status:** FIXED 2026-06-09 (commit 36852f7) — proxy mounted at root with a
+segment-aware `pathFilter`. All 46 `[ko]` dev cases green.

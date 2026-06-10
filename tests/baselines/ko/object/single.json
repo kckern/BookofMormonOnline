@@ -1,9 +1,4 @@
 {
-  "errors": [
-    {
-      "message": "Cannot read properties of undefined (reading 'getDataValue')"
-    }
-  ],
   "data": {
     "object": [
       {
@@ -22,26 +17,31 @@
         "verse_id": 31108,
         "index": [
           {
+            "slug": "lehites/3",
             "ref": "니파이전서 1장 6절",
             "verse_id": "31108",
             "text": "Pillar of fire dwells on rock before Lehi"
           },
           {
+            "slug": "gadianton/50",
             "ref": "힐라맨서 5장 23~24절",
             "verse_id": "35686",
             "text": "Nephi and Lehi encircled by fire in prison"
           },
           {
+            "slug": "gadianton/64",
             "ref": "힐라맨서 5장 43~44절",
             "verse_id": "35706",
             "text": "Cloud disperses; all encircled by pillar of fire"
           },
           {
+            "slug": "gadianton/65",
             "ref": "힐라맨서 5장 44절",
             "verse_id": "35707",
             "text": "In midst of flaming fire, yet harm them not"
           },
           {
+            "slug": "jesus/157",
             "ref": "제3니파이 19장 14절",
             "verse_id": "36577",
             "text": "Disciples encircled as if by fire; angels minister"

@@ -1,7 +1,3 @@
 {
-  "errors": [
-    {
-      "message": "Cannot query field \"shortLink\" on type \"Shortlinks\"."
-    }
-  ]
+  "data": {}
 }

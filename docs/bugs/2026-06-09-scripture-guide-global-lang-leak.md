@@ -39,4 +39,6 @@ steady-state responses without needing the primer).
 recurs in a form the primer can't mask, and the primer can be removed once the backend
 passes lang per call.
 
-**Status:** open; fix deferred to the resolver overhaul.
+**Status:** FIXED 2026-06-09 (commit 1c81d34) — lang passed per call, `setLang` removed
+repo-wide. Prod remains affected until the next deploy; the suite's language primer stays
+in place for prod verification.

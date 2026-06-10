@@ -18,5 +18,5 @@ for `shortLink/single` and `shortLink/missing` — it IS the current contract. W
 mismatch is fixed (either side), recapture:
 `RECAPTURE=1 CAPTURE=1 TARGET=prod npx jest --config tests/jest.config.js -t "shortLink."`.
 
-**Status:** open. Fix belongs with the frontend/backend overhaul; note the suite pins
-today's broken-but-stable behavior, so a frontend-side fix also requires recapture.
+**Status:** FIXED 2026-06-09 (commit 36852f7) — frontend selects `hash`/`string`; works
+against prod and local. Baselines recaptured.

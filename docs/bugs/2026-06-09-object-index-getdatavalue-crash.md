@@ -20,4 +20,6 @@ diff: recapture those cases deliberately with
 `RECAPTURE=1 CAPTURE=1 TARGET=prod npx jest --config tests/jest.config.js -t "object."`
 and commit the new baselines with the fix.
 
-**Status:** open; fix deferred to the resolver overhaul.
+**Status:** FIXED 2026-06-09 (commit 1c81d34) — `object.index` now loads the
+`text_guid → text` include and `Index.slug` is null-safe with the `'contents'` fallback.
+Baselines recaptured; `TARGET=local` green.

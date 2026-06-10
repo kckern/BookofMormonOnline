@@ -26,7 +26,7 @@ email's prefix** when an email is supplied — `TEST_USERNAME` must equal the pa
 |---|---|
 | `TARGET=prod npm run test:gql` | verify prod against baselines (green + 24 prodStale skips) |
 | `TARGET=local npm run test:gql` | verify a local backend (`npm run dev:backend`) — the refactor gate |
-| `TARGET=dev npm run test:gql` | verify dev; currently fails the 46 `[ko]` cases (known diff, below) |
+| `TARGET=dev npm run test:gql` | verify dev (green since the 2026-06-09 proxy fix) |
 | `npm run test:gql:capture` | (re)capture baselines from prod; existing files skipped |
 | `RECAPTURE=1 npm run test:gql:capture` | force-overwrite baselines — only after intentional contract changes |
 | `npm run test:gql:harvest` | regenerate the input matrix from prod (then recapture) |
@@ -57,17 +57,15 @@ Scope a run: `TARGET=prod npx jest --config tests/jest.config.js -t "person."`
   run), ordered: mutations → reads → `signout` last. Capture only runs against prod
   (plus local for prodStale) and is deterministic — proven by double-capture tree-hash.
 
-## Known diffs / open bugs surfaced by this suite
+## Bugs surfaced by this suite (all fixed 2026-06-09, write-ups in docs/bugs/)
 
-- **dev `/ko` serves English** — `setupProxy.js` strips the language mount path; all
-  `[ko]` cases fail on `TARGET=dev` until fixed.
-  `docs/bugs/2026-06-09-dev-proxy-strips-language-path.md`
-- **scripture-guide global language leak** — ko traffic poisons en references
-  process-wide. `docs/bugs/2026-06-09-scripture-guide-global-lang-leak.md`
-- **object.index resolver crash** — partial errors baselined as current contract.
-  `docs/bugs/2026-06-09-object-index-getdatavalue-crash.md`
-- **frontend `shortLink` field mismatch** — the query fails validation on every backend;
-  the error is the baseline. `docs/bugs/2026-06-09-shortlink-field-mismatch.md`
+- **dev `/ko` served English** — setupProxy mount-path strip; fixed, dev fully green.
+- **scripture-guide global language leak** — fixed in repo (lang per call); prod still
+  runs the leaky build until the next deploy, so the runner's language primer stays.
+- **object.index resolver crash** — fixed (missing include + null-safe slug); object
+  baselines recaptured with clean data.
+- **frontend `shortLink` field mismatch** — fixed (selects `hash`/`string`); baselines
+  recaptured with real data.
 
 ## Parked
 
