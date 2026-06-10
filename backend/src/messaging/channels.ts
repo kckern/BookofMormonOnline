@@ -27,6 +27,7 @@ import type { DB } from '../../codegen/db.js';
 import type { ChannelDTO } from './dto.js';
 import { getChannelMembers } from './members.js';
 import { getMessages } from './messages.js';
+import { getUnreadCount } from './readstate.js';
 
 // ─── Metadata helper ──────────────────────────────────────────────────────────
 
@@ -65,12 +66,16 @@ type RawChannel = {
 async function assembleChannelDTO(
   db: Kysely<DB>,
   row: RawChannel,
+  viewerUserId?: string,
 ): Promise<ChannelDTO> {
   const metadata = parseMetadata(row.metadata);
 
-  const [members, messages] = await Promise.all([
+  const [members, messages, unreadCount] = await Promise.all([
     getChannelMembers(db, row.channel_url),
     getMessages(db, row.channel_url, { limit: 1 }),
+    viewerUserId
+      ? getUnreadCount(db, row.channel_url, viewerUserId)
+      : Promise.resolve(0),
   ]);
 
   return {
@@ -82,7 +87,7 @@ async function assembleChannelDTO(
     metadata,
     members,
     member_count: members.length,
-    unread_message_count: 0, // stubbed — Task 1.5 (readstate)
+    unread_message_count: unreadCount,
     last_message: messages[0] ?? null,
     created_at: row.created_at ? new Date(row.created_at).getTime() : Date.now(),
     lang: row.lang ?? 'en',
@@ -94,10 +99,14 @@ async function assembleChannelDTO(
 /**
  * Fetch a single channel by channel_url and assemble the full ChannelDTO.
  * Returns null if the channel does not exist.
+ *
+ * `viewerUserId` is optional — when supplied, `unread_message_count` is
+ * computed for that user; when omitted it defaults to 0 (backward-compatible).
  */
 export async function getChannel(
   db: Kysely<DB>,
   channelUrl: string,
+  viewerUserId?: string,
 ): Promise<ChannelDTO | null> {
   const row = await db
     .selectFrom('messenger_channels')
@@ -106,12 +115,15 @@ export async function getChannel(
     .executeTakeFirst();
 
   if (!row) return null;
-  return assembleChannelDTO(db, row as RawChannel);
+  return assembleChannelDTO(db, row as RawChannel, viewerUserId);
 }
 
 /**
  * Return all channels a user has joined (state = 'joined').
  * Optionally filtered by custom_type. Limit defaults to 100.
+ *
+ * The requesting user's unread count is computed per-channel using `userId`
+ * as the viewer — no separate `viewerUserId` param needed here.
  */
 export async function getMyChannels(
   db: Kysely<DB>,
@@ -151,7 +163,7 @@ export async function getMyChannels(
 
   const rows = await query.execute();
 
-  return Promise.all(rows.map((r) => assembleChannelDTO(db, r as RawChannel)));
+  return Promise.all(rows.map((r) => assembleChannelDTO(db, r as RawChannel, userId)));
 }
 
 /**
