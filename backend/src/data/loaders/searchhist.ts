@@ -2,8 +2,373 @@
 import type { Kysely } from 'kysely';
 import type { DB } from '../../../codegen/db.js';
 import type { Loaders } from '../loaders.js';
+import { generateReference } from 'scripture-guide';
+
+export interface SearchResultRow {
+  reference: string | null;
+  text: string;
+  pageguid: string | null;
+  link: number | null;
+  page: string | null;
+  section: string | null;
+  narration: string | null;
+  speaker: string | null;
+  voice: string | null;
+  lang: string | null;
+  /** verse_id as string (bom_lookup.verse_id is a STRING column) */
+  verse_id: string;
+}
+
+export interface HistoryRow {
+  id: number | null;
+  slug: string;
+  seq: number;
+  year: number | null;
+  date: string | null;
+  link: string | null;
+  type: string | null;
+  source: string | null;
+  author: string | null;
+  document: string | null;
+  pages: number | null;
+  citation: string | null;
+  teaser: string | null;
+  transcript: string | null;
+  aspect: number | null;
+  archive: string | null;
+  principal: string | null;
+  event_year: number | null;
+  event_date: string | null;
+}
+
+/**
+ * Run the search query and return raw result rows.
+ * Shape tier: structure must match, values may churn.
+ *
+ * English: LIKE on lds_scriptures_verses.verse_scripture
+ * Korean (non-English): LIKE on lds_scriptures_translations.text WHERE lang=?
+ *
+ * Min length: 1 for Korean, 3 for English (legacy exact rule).
+ */
+export async function searchQuery(
+  db: Kysely<DB>,
+  query: string,
+  lang: string,
+): Promise<SearchResultRow[]> {
+  const isEnglish = !lang || lang === 'en' || lang === 'eng' || lang === 'dev';
+  const isKorean = lang === 'ko';
+  const minLen = isKorean ? 1 : 3;
+
+  if (!query || query.length < minLen) return [];
+
+  let verseIds: string[] = [];
+
+  if (isEnglish) {
+    const rows = await db
+      .selectFrom('lds_scriptures_verses')
+      .select('verse_id')
+      .where('verse_scripture', 'like', `%${query}%`)
+      .where('verse_id', '>=', 31103)
+      .where('verse_id', '<=', 37706)
+      .execute();
+    verseIds = rows.map((r) => String(r.verse_id));
+  } else {
+    const rows = await db
+      .selectFrom('lds_scriptures_translations')
+      .select('verse_id')
+      .where('text', 'like', `%${query}%`)
+      .where('lang', '=', lang)
+      .execute();
+    verseIds = rows.map((r) => String(r.verse_id));
+  }
+
+  if (!verseIds.length) return [];
+
+  // Fetch bom_lookup rows + joined text data
+  const lookupRows = await db
+    .selectFrom('bom_lookup as l')
+    .innerJoin('bom_text as t', 't.guid', 'l.text_guid')
+    .select([
+      'l.verse_id',
+      't.guid as text_guid',
+      't.link as text_link',
+      't.page as text_page',
+      't.section as text_section',
+      't.parent as text_parent',
+    ])
+    .where('l.verse_id', 'in', verseIds)
+    .execute();
+
+  if (!lookupRows.length) return [];
+
+  // Collect unique guids for batch translation
+  const pageGuids = [...new Set(lookupRows.map((r) => r.text_page).filter((g): g is string => !!g))];
+  const sectionGuids = [...new Set(lookupRows.map((r) => r.text_section).filter((g): g is string => !!g))];
+  const narrationGuids = [...new Set(lookupRows.map((r) => r.text_parent).filter((g): g is string => !!g))];
+
+  // Batch-fetch all page, section, narration data
+  const [pageRows, sectionRows, narrationRows, verseTextRows, translationVerseRows, speakerRows] =
+    await Promise.all([
+      pageGuids.length
+        ? db.selectFrom('bom_page').select(['guid', 'title']).where('guid', 'in', pageGuids).execute()
+        : [],
+      sectionGuids.length
+        ? db.selectFrom('bom_section').select(['guid', 'title']).where('guid', 'in', sectionGuids).execute()
+        : [],
+      narrationGuids.length
+        ? db.selectFrom('bom_narration').select(['guid', 'description']).where('guid', 'in', narrationGuids).execute()
+        : [],
+      // English: fetch verse text from lds_scriptures_verses
+      isEnglish && verseIds.length
+        ? db
+            .selectFrom('lds_scriptures_verses')
+            .select(['verse_id', 'verse_scripture'])
+            .where('verse_id', 'in', verseIds.map(Number))
+            .execute()
+        : [],
+      // Non-English: fetch verse text from lds_scriptures_translations
+      !isEnglish && verseIds.length
+        ? db
+            .selectFrom('lds_scriptures_translations')
+            .select(['verse_id', 'text'])
+            .where('verse_id', 'in', verseIds.map(Number))
+            .where('lang', '=', lang)
+            .execute()
+        : [],
+      // Speaker/voice from lds_scriptures_lines
+      verseIds.length
+        ? db
+            .selectFrom('lds_scriptures_lines')
+            .select(['verse_id', 'person_slug', 'voice'])
+            .where('verse_id', 'in', verseIds.map(Number))
+            .execute()
+        : [],
+    ]);
+
+  // Build lookup maps
+  const pageByGuid = new Map(pageRows.map((r) => [r.guid, r.title]));
+  const sectionByGuid = new Map(sectionRows.map((r) => [r.guid, r.title]));
+  const narrationByGuid = new Map(narrationRows.map((r) => [r.guid, r.description]));
+  const verseTextById = isEnglish
+    ? new Map((verseTextRows as { verse_id: number; verse_scripture: string }[]).map((r) => [String(r.verse_id), r.verse_scripture]))
+    : new Map((translationVerseRows as { verse_id: number; text: string }[]).map((r) => [String(r.verse_id), r.text]));
+  const speakerByVid = new Map(
+    speakerRows.map((r) => [String(r.verse_id), { person_slug: r.person_slug, voice: r.voice }]),
+  );
+
+  // For non-English: translate page titles, section titles, narration descriptions
+  let pageTitleMap = new Map<string, string>();
+  let sectionTitleMap = new Map<string, string>();
+  let narrationDescMap = new Map<string, string>();
+
+  if (!isEnglish && pageGuids.length) {
+    const rows = await db
+      .selectFrom('bom_translation')
+      .select(['guid', 'value'])
+      .where('lang', '=', lang)
+      .where('refkey', '=', 'title')
+      .where('guid', 'in', pageGuids)
+      .execute();
+    pageTitleMap = new Map(rows.map((r) => [r.guid, String(r.value)]));
+  }
+  if (!isEnglish && sectionGuids.length) {
+    const rows = await db
+      .selectFrom('bom_translation')
+      .select(['guid', 'value'])
+      .where('lang', '=', lang)
+      .where('refkey', '=', 'title')
+      .where('guid', 'in', sectionGuids)
+      .execute();
+    sectionTitleMap = new Map(rows.map((r) => [r.guid, String(r.value)]));
+  }
+  if (!isEnglish && narrationGuids.length) {
+    const rows = await db
+      .selectFrom('bom_translation')
+      .select(['guid', 'value'])
+      .where('lang', '=', lang)
+      .where('refkey', '=', 'description')
+      .where('guid', 'in', narrationGuids)
+      .execute();
+    narrationDescMap = new Map(rows.map((r) => [r.guid, String(r.value)]));
+  }
+
+  // Build slug paths for page guids
+  // We load these via slug resolution inline (no DataLoader here since this is a top-level query)
+  const slugPathMap = new Map<string, string>();
+  if (pageGuids.length) {
+    const slugRows = await db
+      .selectFrom('bom_slug as s')
+      .select(['s.guid', 's.slug', 's.parent', 's.link'])
+      .where('s.link', 'in', pageGuids)
+      .execute();
+
+    // Build ancestor paths (up to depth 10)
+    const byGuid = new Map(slugRows.map((r) => [r.guid, r]));
+    let parents = [...new Set(slugRows.map((r) => r.parent).filter((p) => p && !byGuid.has(p)))];
+    for (let depth = 0; parents.length && depth < 10; depth++) {
+      const ancestorRows = await db
+        .selectFrom('bom_slug')
+        .select(['guid', 'slug', 'parent', 'link'])
+        .where('guid', 'in', parents)
+        .execute();
+      for (const r of ancestorRows) byGuid.set(r.guid, r);
+      parents = [...new Set(ancestorRows.map((r) => r.parent).filter((p) => p && !byGuid.has(p)))];
+    }
+
+    const firstByLink = new Map<string, typeof slugRows[0]>();
+    for (const r of slugRows) if (!firstByLink.has(r.link)) firstByLink.set(r.link, r);
+
+    for (const pageGuid of pageGuids) {
+      const startRow = firstByLink.get(pageGuid);
+      if (!startRow) continue;
+      const segments = [startRow.slug];
+      let cursor = startRow.parent ? byGuid.get(startRow.parent) : undefined;
+      for (let depth = 0; cursor && depth < 10; depth++) {
+        segments.unshift(cursor.slug);
+        cursor = cursor.parent ? byGuid.get(cursor.parent) : undefined;
+      }
+      slugPathMap.set(pageGuid, segments.join('/'));
+    }
+  }
+
+  // Assemble results
+  const displayLang = (isEnglish ? 'en' : lang) as Parameters<typeof generateReference>[1];
+
+  return lookupRows.map((row) => {
+    const verseId = row.verse_id;
+    const pageGuid = row.text_page ?? null;
+    const sectionGuid = row.text_section ?? null;
+    const narrationGuid = row.text_parent ?? null;
+    const pageTitle = pageGuid
+      ? (pageTitleMap.get(pageGuid) ?? pageByGuid.get(pageGuid) ?? null)
+      : null;
+    const sectionTitle = sectionGuid
+      ? (sectionTitleMap.get(sectionGuid) ?? sectionByGuid.get(sectionGuid) ?? null)
+      : null;
+    const narrationDesc = narrationGuid
+      ? (narrationDescMap.get(narrationGuid) ?? narrationByGuid.get(narrationGuid) ?? null)
+      : null;
+
+    const verseIdNum = Number(verseId);
+    const reference = generateReference(verseIdNum, displayLang);
+    const speaker = speakerByVid.get(verseId);
+    const text = verseTextById.get(verseId) ?? null;
+    const pagePath = pageGuid ? (slugPathMap.get(pageGuid) ?? null) : null;
+    const slug = pagePath !== null && row.text_link !== null ? `${pagePath}/${row.text_link}` : null;
+
+    return {
+      reference,
+      text: text ?? '',
+      pageguid: pageGuid,
+      link: row.text_link,
+      page: pageTitle,
+      section: sectionTitle,
+      narration: narrationDesc,
+      speaker: speaker?.person_slug ?? null,
+      voice: speaker?.voice ?? null,
+      lang: `lang: ${lang} • isEnglish: ${isEnglish} • isKorean: ${isKorean}`,
+      verse_id: verseId,
+      _slug: slug,
+    } as unknown as SearchResultRow;
+  });
+}
+
+/**
+ * Fetch history documents.
+ * Translation key is `id` (sourceKey='id' in legacy Sequelize config).
+ * Translated fields: source, author, document, citation, teaser, transcript.
+ * Order by seq ASC.
+ */
+export async function historyQuery(
+  db: Kysely<DB>,
+  args: { slug?: (string | null)[] | null; archive?: string | null; principal?: (string | null)[] | null },
+  lang: string,
+): Promise<HistoryRow[]> {
+  let query = db
+    .selectFrom('bom_xtras_history')
+    .selectAll()
+    .orderBy('seq', 'asc');
+
+  const slugs = (args.slug ?? []).filter((s): s is string => s !== null && s !== undefined);
+  const principals = (args.principal ?? []).filter((p): p is string => p !== null && p !== undefined);
+
+  if (slugs.length === 1) {
+    query = query.where('slug', '=', slugs[0]!);
+  } else if (slugs.length > 1) {
+    query = query.where('slug', 'in', slugs);
+  }
+
+  if (args.archive) {
+    query = query.where('archive', '=', args.archive);
+  }
+
+  if (principals.length) {
+    query = query.where('principal', 'in', principals);
+  }
+
+  const rows = await query.execute();
+  if (!rows.length) return [];
+
+  // Translations use id (number) as the key in bom_translation.guid
+  const isEnglish = !lang || lang === 'en' || lang === 'eng' || lang === 'dev';
+  const idStrings = rows.map((r) => String(r.id)).filter((id) => id !== 'null');
+
+  // Translation maps by refkey
+  const translatable = ['source', 'author', 'document', 'citation', 'teaser', 'transcript'];
+  const transMaps = new Map<string, Map<string, string>>();
+
+  if (!isEnglish && idStrings.length) {
+    const transRows = await db
+      .selectFrom('bom_translation')
+      .select(['guid', 'refkey', 'value'])
+      .where('lang', '=', lang)
+      .where('refkey', 'in', translatable)
+      .where('guid', 'in', idStrings)
+      .execute();
+
+    for (const row of transRows) {
+      let map = transMaps.get(row.refkey);
+      if (!map) {
+        map = new Map();
+        transMaps.set(row.refkey, map);
+      }
+      map.set(row.guid, String(row.value));
+    }
+  }
+
+  return rows.map((r) => {
+    const idStr = String(r.id);
+    const t = (refkey: string, base: string | null): string | null => {
+      if (isEnglish) return base;
+      return transMaps.get(refkey)?.get(idStr) ?? base;
+    };
+
+    return {
+      id: r.id,
+      slug: r.slug,
+      seq: r.seq,
+      year: r.year,
+      date: r.date,
+      link: r.link,
+      type: r.type,
+      source: t('source', r.source),
+      author: t('author', r.author),
+      document: t('document', r.document),
+      pages: r.pages,
+      citation: t('citation', r.citation),
+      teaser: t('teaser', r.teaser),
+      transcript: t('transcript', r.transcript),
+      aspect: r.aspect,
+      archive: r.archive,
+      principal: r.principal,
+      event_year: r.event_year,
+      event_date: r.event_date,
+    };
+  });
+}
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function searchhistLoaders(db: Kysely<DB>, lang: string, core: Loaders) {
-  return {};
+  // Expose db so resolvers can call searchQuery/historyQuery directly
+  return { _db: db };
 }
