@@ -21,51 +21,7 @@ import { type Kysely } from 'kysely';
 import { nanoid } from 'nanoid';
 import type { DB } from '../../codegen/db.js';
 import type { MessageDTO, UserDTO, HighlightDTO } from './dto.js';
-
-// ─── Local user-load seam ─────────────────────────────────────────────────────
-// Avoids coupling to users.ts (Task 1.2). Replace with that module's getUser once
-// it exists and deduplication matters more than coupling.
-
-function rowToUserDTO(row: {
-  user_id: string;
-  nickname: string;
-  profile_url: string | null;
-  metadata: unknown;
-  is_bot: number | null;
-  is_online: number | null;
-  last_seen_at: Date | null;
-}): UserDTO {
-  let metadata: Record<string, unknown> | null = null;
-  if (row.metadata != null) {
-    if (typeof row.metadata === 'string') {
-      try {
-        metadata = JSON.parse(row.metadata) as Record<string, unknown>;
-      } catch {
-        metadata = null;
-      }
-    } else if (typeof row.metadata === 'object') {
-      metadata = row.metadata as Record<string, unknown>;
-    }
-  }
-  return {
-    user_id: row.user_id,
-    nickname: row.nickname ?? row.user_id,
-    profile_url: row.profile_url ?? '',
-    metadata,
-    is_online: Boolean(row.is_online),
-    last_seen_at: row.last_seen_at ? new Date(row.last_seen_at).getTime() : null,
-    is_bot: Boolean(row.is_bot),
-  };
-}
-
-async function loadUser(db: Kysely<DB>, userId: string): Promise<UserDTO | null> {
-  const row = await db
-    .selectFrom('messenger_users')
-    .selectAll()
-    .where('user_id', '=', userId)
-    .executeTakeFirst();
-  return row ? rowToUserDTO(row) : null;
-}
+import { getUsers } from './users.js';
 
 // ─── Data assembly helpers ────────────────────────────────────────────────────
 
@@ -106,44 +62,6 @@ function aggregateReactions(
   return Object.entries(map).map(([key, user_ids]) => ({ key, user_ids }));
 }
 
-// ─── getThreadInfo (internal) ─────────────────────────────────────────────────
-
-/**
- * Legacy behaviour: no is_deleted filter on replies (mirrors messenger.ts:549).
- * Returns null when the message has no replies.
- * most_replies: up to 3 unique users from the most-recent replies.
- */
-async function getThreadInfo(
-  db: Kysely<DB>,
-  messageId: string,
-): Promise<{ reply_count: number; most_replies: UserDTO[] } | null> {
-  const allReplies = await db
-    .selectFrom('messenger_messages')
-    .select(['user_id'])
-    .where('parent_message_id', '=', messageId)
-    .orderBy('created_at', 'asc')
-    .execute();
-
-  if (allReplies.length === 0) return null;
-
-  // Legacy reverses the ordered list, then takes the first 3 unique user_ids
-  const reversed = [...allReplies].reverse();
-  const seen = new Set<string>();
-  const uniqueRepliers: UserDTO[] = [];
-  for (const r of reversed) {
-    if (!seen.has(r.user_id) && uniqueRepliers.length < 3) {
-      seen.add(r.user_id);
-      const user = await loadUser(db, r.user_id);
-      if (user) uniqueRepliers.push(user);
-    }
-  }
-
-  return {
-    reply_count: allReplies.length,
-    most_replies: uniqueRepliers,
-  };
-}
-
 // ─── Internal row type ────────────────────────────────────────────────────────
 
 type RawMessage = {
@@ -163,41 +81,115 @@ type RawMessage = {
   updated_at: Date | null;
 };
 
-/** Fully assemble a MessageDTO from a raw DB row (loads user, highlights, reactions, thread). */
-async function assembleMessageDTO(
-  db: Kysely<DB>,
-  msg: RawMessage,
-): Promise<MessageDTO> {
-  const [user, highlights, reactions, threadInfo] = await Promise.all([
-    loadUser(db, msg.user_id),
+/**
+ * Assemble many MessageDTOs with a CONSTANT number of queries, no matter how many
+ * messages are passed: one bulk fetch each for highlights, reactions, and thread
+ * replies (all keyed by `message_id IN (...)`), plus a single getUsers() for every
+ * author + replier. The previous per-message assembler fired 4-7 of its OWN queries
+ * (user + highlights + reactions + thread-info, plus a loadUser per replier), which
+ * multiplied catastrophically when getMessages was called per-channel across a feed
+ * (~50 channels × 30 messages × ~7 ≈ 10k queries). This collapses that to ~5.
+ *
+ * Authors/repliers come from getUsers(), so human display names resolve from
+ * bom_user.name + the derived avatar (the thin-row coalesce) here too.
+ */
+async function assembleMessages(db: Kysely<DB>, msgs: RawMessage[]): Promise<MessageDTO[]> {
+  if (msgs.length === 0) return [];
+  const messageIds = msgs.map((m) => m.message_id);
+
+  const [highlightRows, reactionRows, replyRows] = await Promise.all([
     db
       .selectFrom('messenger_highlights')
-      .select(['id', 'message_id', 'ordinal', 'text'])
-      .where('message_id', '=', msg.message_id)
+      .select(['message_id', 'ordinal', 'text'])
+      .where('message_id', 'in', messageIds)
       .orderBy('ordinal', 'asc')
       .execute(),
     db
       .selectFrom('messenger_reactions')
-      .select(['reaction_key', 'user_id'])
-      .where('message_id', '=', msg.message_id)
+      .select(['message_id', 'reaction_key', 'user_id'])
+      .where('message_id', 'in', messageIds)
       .execute(),
-    getThreadInfo(db, msg.message_id),
+    // Thread replies: no is_deleted filter (mirrors legacy getThreadInfo), ordered chrono.
+    db
+      .selectFrom('messenger_messages')
+      .select(['parent_message_id', 'user_id'])
+      .where('parent_message_id', 'in', messageIds)
+      .orderBy('created_at', 'asc')
+      .execute(),
   ]);
 
-  return {
-    message_id: msg.message_id,
-    channel_url: msg.channel_url,
-    user,
-    message_type: msg.message_type,
-    message: msg.message,
-    custom_type: msg.custom_type ?? '',
-    data: buildDataString(msg.link_type, msg.link_target, msg.link_aux, highlights),
-    parent_message_id: msg.parent_message_id ?? null,
-    thread_info: threadInfo,
-    reactions: aggregateReactions(reactions),
-    created_at: msg.created_at ? new Date(msg.created_at).getTime() : Date.now(),
-    updated_at: msg.updated_at ? new Date(msg.updated_at).getTime() : Date.now(),
-  };
+  const highlightsByMsg = new Map<string, { ordinal: number; text: string }[]>();
+  for (const h of highlightRows) {
+    const arr = highlightsByMsg.get(h.message_id) ?? [];
+    arr.push({ ordinal: Number(h.ordinal), text: h.text });
+    highlightsByMsg.set(h.message_id, arr);
+  }
+
+  const reactionsByMsg = new Map<string, { reaction_key: string; user_id: string }[]>();
+  for (const r of reactionRows) {
+    const arr = reactionsByMsg.get(r.message_id) ?? [];
+    arr.push({ reaction_key: r.reaction_key, user_id: r.user_id });
+    reactionsByMsg.set(r.message_id, arr);
+  }
+
+  // Replies grouped by parent, preserving chronological order.
+  const repliersByParent = new Map<string, string[]>();
+  for (const r of replyRows) {
+    if (!r.parent_message_id) continue;
+    const arr = repliersByParent.get(r.parent_message_id) ?? [];
+    arr.push(r.user_id);
+    repliersByParent.set(r.parent_message_id, arr);
+  }
+
+  // most_replies = up to 3 unique repliers, reverse-chronological (legacy semantics).
+  const mostRepliersByParent = new Map<string, string[]>();
+  const userIds = new Set<string>();
+  for (const m of msgs) userIds.add(m.user_id);
+  for (const [parent, repliers] of repliersByParent) {
+    const seen = new Set<string>();
+    const top: string[] = [];
+    for (let i = repliers.length - 1; i >= 0 && top.length < 3; i--) {
+      const id = repliers[i]!;
+      if (!seen.has(id)) {
+        seen.add(id);
+        top.push(id);
+        userIds.add(id);
+      }
+    }
+    mostRepliersByParent.set(parent, top);
+  }
+
+  // Single batched user fetch (coalesces nickname/avatar from bom_user).
+  const users = await getUsers(db, [...userIds]);
+  const userMap = new Map(users.map((u) => [u.user_id, u]));
+
+  return msgs.map((m) => {
+    const highlights = highlightsByMsg.get(m.message_id) ?? [];
+    const repliers = repliersByParent.get(m.message_id);
+    const threadInfo =
+      repliers && repliers.length > 0
+        ? {
+            reply_count: repliers.length,
+            most_replies: (mostRepliersByParent.get(m.message_id) ?? [])
+              .map((id) => userMap.get(id))
+              .filter((u): u is UserDTO => !!u),
+          }
+        : null;
+    return {
+      message_id: m.message_id,
+      channel_url: m.channel_url,
+      user: userMap.get(m.user_id) ?? null,
+      message_type: m.message_type,
+      message: m.message,
+      custom_type: m.custom_type ?? '',
+      data: buildDataString(m.link_type, m.link_target, m.link_aux, highlights),
+      parent_message_id: m.parent_message_id ?? null,
+      thread_info: threadInfo,
+      reactions: aggregateReactions(reactionsByMsg.get(m.message_id) ?? []),
+      created_at: m.created_at ? new Date(m.created_at).getTime() : Date.now(),
+      updated_at: m.updated_at ? new Date(m.updated_at).getTime() : Date.now(),
+    };
+  });
 }
 
 // ─── getMessage ───────────────────────────────────────────────────────────────
@@ -221,7 +213,8 @@ export async function getMessage(
   // Treat is_deleted = 1 as gone; NULL or 0 = present
   if (!msg || msg.is_deleted === 1) return null;
 
-  return assembleMessageDTO(db, msg as RawMessage);
+  const [dto] = await assembleMessages(db, [msg as RawMessage]);
+  return dto ?? null;
 }
 
 // ─── postMessage ──────────────────────────────────────────────────────────────
@@ -329,7 +322,7 @@ export async function getMessages(
     .limit(options.limit ?? 30)
     .execute();
 
-  return Promise.all(rows.map((r) => assembleMessageDTO(db, r as RawMessage)));
+  return assembleMessages(db, rows as RawMessage[]);
 }
 
 // ─── getThread ────────────────────────────────────────────────────────────────
@@ -350,7 +343,7 @@ export async function getThread(
     .execute();
 
   // Thread replies don't get thread_info of their own (matches legacy: null)
-  return Promise.all(rows.map((r) => assembleMessageDTO(db, r as RawMessage)));
+  return assembleMessages(db, rows as RawMessage[]);
 }
 
 // ─── updateMessage ────────────────────────────────────────────────────────────
