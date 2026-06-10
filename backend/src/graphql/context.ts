@@ -12,6 +12,9 @@ import { mediaLoaders } from '../data/loaders/media.js';
 import { mediamiscLoaders } from '../data/loaders/mediamisc.js';
 import { feedsmiscLoaders } from '../data/loaders/feedsmisc.js';
 import { searchhistLoaders } from '../data/loaders/searchhist.js';
+import { userauthLoaders } from '../data/loaders/userauth.js';
+import { userprofileLoaders } from '../data/loaders/userprofile.js';
+import { useractivityLoaders } from '../data/loaders/useractivity.js';
 import { LabelsRepository } from '../data/labelsRepository.js';
 import { LabelsService } from '../services/labels.js';
 import { ContentsRepository } from '../data/contentsRepository.js';
@@ -36,17 +39,24 @@ export type AllLoaders = Loaders &
   ReturnType<typeof mediaLoaders> &
   ReturnType<typeof mediamiscLoaders> &
   ReturnType<typeof feedsmiscLoaders> &
-  ReturnType<typeof searchhistLoaders>;
+  ReturnType<typeof searchhistLoaders> &
+  ReturnType<typeof userauthLoaders> &
+  ReturnType<typeof userprofileLoaders> &
+  ReturnType<typeof useractivityLoaders>;
 
 export interface AppContext {
   lang: string;
   sandbox: boolean;
+  /** Per-request IP (legacy `log` stores it); resolved from headers in index.ts. */
+  ip: string;
+  /** Writable Kysely instance — wrap writes in runWrite() for sandbox safety. */
+  db: Kysely<DB>;
   services: Services;
   loaders: AllLoaders;
 }
 
 /** Per-request context: lang-bound services + loaders, no shared mutable language state. */
-export function buildContext(db: Kysely<DB>, lang: string): AppContext {
+export function buildContext(db: Kysely<DB>, lang: string, ip = ''): AppContext {
   const core = createLoaders(db, lang);
   const loaders: AllLoaders = {
     ...core,
@@ -60,10 +70,15 @@ export function buildContext(db: Kysely<DB>, lang: string): AppContext {
     ...mediamiscLoaders(db, lang, core),
     ...feedsmiscLoaders(db, lang, core),
     ...searchhistLoaders(db, lang, core),
+    ...userauthLoaders(db, lang, core),
+    ...userprofileLoaders(db, lang, core),
+    ...useractivityLoaders(db, lang, core),
   };
   return {
     lang,
     sandbox: env.SANDBOX,
+    ip,
+    db,
     services: {
       labels: new LabelsService(new LabelsRepository(db, core.translator)),
       contents: new ContentsService(new ContentsRepository(db)),

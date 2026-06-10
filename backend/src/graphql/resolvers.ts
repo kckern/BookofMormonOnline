@@ -18,6 +18,9 @@ import { mediaResolvers } from './resolvers/media.js';
 import { mediamiscResolvers } from './resolvers/mediamisc.js';
 import { feedsmiscResolvers } from './resolvers/feedsmisc.js';
 import { searchhistResolvers } from './resolvers/searchhist.js';
+import { userauthResolvers } from './resolvers/userauth.js';
+import { userprofileResolvers } from './resolvers/userprofile.js';
+import { useractivityResolvers } from './resolvers/useractivity.js';
 
 /** Shallow per-type merge: each domain contributes whole type maps; Query fields union. */
 function mergeResolverMaps(...maps: Resolvers[]): Resolvers {
@@ -245,4 +248,7 @@ export const resolvers: Resolvers = mergeResolverMaps(
   mediamiscResolvers,
   feedsmiscResolvers,
   searchhistResolvers,
+  userauthResolvers,
+  userprofileResolvers,
+  useractivityResolvers,
 );

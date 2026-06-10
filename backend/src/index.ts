@@ -15,7 +15,7 @@ const app = Fastify({
 
 const db = getDb();
 
-const yoga = createYoga<{ lang: string }, AppContext>({
+const yoga = createYoga<{ lang: string; ip: string }, AppContext>({
   schema: buildSchema(),
   graphqlEndpoint: '/graphql',
   landingPage: false,
@@ -23,7 +23,7 @@ const yoga = createYoga<{ lang: string }, AppContext>({
   // regression baselines pin them — Yoga's default masking would break parity.
   maskedErrors: false,
   logging: app.log,
-  context: ({ lang }) => buildContext(db, lang),
+  context: ({ lang, ip }) => buildContext(db, lang, ip),
   plugins: [
     // COMPAT: pin the graphql-js executor — it builds response maps in
     // selection order (spec); Yoga's default executor appends keys in
@@ -44,14 +44,16 @@ const yoga = createYoga<{ lang: string }, AppContext>({
 // ORIGINAL url; Fastify owns body parsing, Yoga gets a clean fetch Request.
 const graphqlHandler = async (req: FastifyRequest, reply: FastifyReply) => {
   const lang = resolveLang(req.headers.host, req.url);
+  const fwd = req.headers['x-forwarded-for'];
+  const ip = (Array.isArray(fwd) ? fwd[0] : fwd) || req.ip || '';
   const response = await yoga.fetch(
-    'http://yoga/graphql',
+    new URL('http://yoga/graphql'),
     {
       method: req.method,
       headers: { 'content-type': req.headers['content-type'] ?? 'application/json' },
       body: req.method === 'POST' ? JSON.stringify(req.body) : undefined,
     },
-    { lang },
+    { lang, ip },
   );
   reply.status(response.status);
   response.headers.forEach((value, key) => {
