@@ -109,9 +109,9 @@ async function main() {
 
   const matrix = {
     // ---- content suite (anonymous reads, en+ko) ----
-    person:     { tier: 'exact', cases: { single: [p('people', 1)[0]], batch: p('people', 4), missing: ['zz-no-such-person'] } },
+    person:     { tier: 'exact', nextTruth: true, cases: { single: [p('people', 1)[0]], batch: p('people', 4), missing: ['zz-no-such-person'] } },
     personList: { tier: 'exact', cases: { batch: p('people', 4) } },
-    places:     { tier: 'exact', cases: { single: [p('places', 1)[0]], batch: p('places', 4), missing: ['zz-no-such-place'] } },
+    places:     { tier: 'exact', nextTruth: true, cases: { single: [p('places', 1)[0]], batch: p('places', 4), missing: ['zz-no-such-place'] } },
     placeList:  { tier: 'exact', cases: { batch: p('places', 4) } },
     // prodStale: missing from the deployed prod schema — see spec "Prod schema drift"
     object:     { tier: 'exact', prodStale: true, cases: { single: [p('objects', 1)[0]], batch: p('objects', 4), missing: ['zz-no-such-object'] } },
@@ -148,7 +148,7 @@ async function main() {
     fax:      pools.faxes ? { tier: 'exact', cases: { all: true, single: [p('faxes', 1)[0]] } } : undefined,
     faxIndex: pools.faxes ? { tier: 'exact', cases: { single: [p('faxes', 1)[0]] } } : undefined,
     maplist:  { tier: 'exact', cases: { all: true } },
-    map:      { tier: 'exact', cases: { single: [p('maps', 1)[0]], batch: p('maps', 2) } },
+    map:      { tier: 'exact', nextTruth: true, cases: { single: [p('maps', 1)[0]], batch: p('maps', 2) } },
     mapstories: { tier: 'exact', cases: { single: [p('maps', 1)[0]] } },
     timeline: { tier: 'exact', cases: { all: true } },
     publications: { tier: 'exact', cases: { all: true } },

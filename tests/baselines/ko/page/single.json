@@ -8187,14 +8187,14 @@
                     ],
                     "places": [
                       {
-                        "slug": "plains-of-heshlon",
-                        "name": "헤실론 평지",
-                        "info": "코리앤툼 및 세이레드의 전투지"
-                      },
-                      {
                         "slug": "valley-of-gilgal",
                         "name": "길갈 골짜기",
                         "info": "야렛인들의 전투 지역"
+                      },
+                      {
+                        "slug": "plains-of-heshlon",
+                        "name": "헤실론 평지",
+                        "info": "코리앤툼 및 세이레드의 전투지"
                       }
                     ],
                     "refs": [

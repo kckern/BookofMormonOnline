@@ -9460,14 +9460,14 @@
                     ],
                     "places": [
                       {
-                        "slug": "plains-of-heshlon",
-                        "name": "Plains of Heshlon",
-                        "info": "Battlegroud of Coriantum and Shared"
-                      },
-                      {
                         "slug": "valley-of-gilgal",
                         "name": "Valley of Gilgal",
                         "info": "Jaredite battle region"
+                      },
+                      {
+                        "slug": "plains-of-heshlon",
+                        "name": "Plains of Heshlon",
+                        "info": "Battlegroud of Coriantum and Shared"
                       }
                     ],
                     "refs": [
@@ -19435,14 +19435,14 @@
                     ],
                     "places": [
                       {
-                        "slug": "promised-land",
-                        "name": "The Promised Land",
-                        "info": "Land inhabited by the Jaredites, Lehites, and Mulekites"
-                      },
-                      {
                         "slug": "zion",
                         "name": "Zion",
                         "info": "City of God"
+                      },
+                      {
+                        "slug": "promised-land",
+                        "name": "The Promised Land",
+                        "info": "Land inhabited by the Jaredites, Lehites, and Mulekites"
                       }
                     ],
                     "refs": [

@@ -8192,14 +8192,14 @@
                     ],
                     "places": [
                       {
-                        "slug": "plains-of-heshlon",
-                        "name": "헤실론 평지",
-                        "info": "코리앤툼 및 세이레드의 전투지"
-                      },
-                      {
                         "slug": "valley-of-gilgal",
                         "name": "길갈 골짜기",
                         "info": "야렛인들의 전투 지역"
+                      },
+                      {
+                        "slug": "plains-of-heshlon",
+                        "name": "헤실론 평지",
+                        "info": "코리앤툼 및 세이레드의 전투지"
                       }
                     ],
                     "refs": [
@@ -16808,14 +16808,14 @@
                     ],
                     "places": [
                       {
-                        "slug": "promised-land",
-                        "name": "약속의 땅",
-                        "info": "야렛인들, 리하이인들, 뮬레크인들이 거주하던 땅"
-                      },
-                      {
                         "slug": "zion",
                         "name": "시온",
                         "info": "하나님의 성"
+                      },
+                      {
+                        "slug": "promised-land",
+                        "name": "약속의 땅",
+                        "info": "야렛인들, 리하이인들, 뮬레크인들이 거주하던 땅"
                       }
                     ],
                     "refs": [

@@ -29,14 +29,15 @@ function mergeResolverMaps(...maps: Resolvers[]): Resolvers {
   }
   return out as Resolvers;
 }
-import type {
-  CapsulationRow,
-  ConnectionRow,
-  NarrationRow,
-  PageRow,
-  SectionRow,
-  SectionrowRow,
-  TextRow,
+import {
+  SKIP_HEADING_TRANSLATION,
+  type CapsulationRow,
+  type ConnectionRow,
+  type NarrationRow,
+  type PageRow,
+  type SectionRow,
+  type SectionrowRow,
+  type TextRow,
 } from '../data/loaders.js';
 import type { DivisionRow } from '../data/contentsRepository.js';
 
@@ -56,6 +57,9 @@ const translated = async (
  * error message and null heading, so the crash is replicated. COMPAT.
  */
 async function resolveHeading(t: TextRow, ctx: AppContext): Promise<string | null> {
+  // Domain modules tag rows whose legacy path skipped heading translation
+  // entirely (locations, lookup results) — raw heading, no prefix/crash rules.
+  if ((t as unknown as Record<symbol, unknown>)[SKIP_HEADING_TRANSLATION]) return t.heading ?? null;
   const own = await translated(ctx, t.guid, 'heading', t.heading);
   if (own !== null && HAS_DIGIT.test(own)) return own;
   const quotingGuid = t.parent ? await ctx.loaders.quotingGuidByGroup.load(t.parent) : null;

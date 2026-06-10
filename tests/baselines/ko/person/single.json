@@ -19,11 +19,11 @@
             }
           },
           {
-            "relation": "$1의 남편",
+            "relation": "$1의 형제",
             "person": {
-              "name": "니파이의 아내",
-              "slug": "wife-of-nephi",
-              "title": "이스마엘의 딸"
+              "name": "요셉2",
+              "slug": "joseph2",
+              "title": "리하이1의 아들"
             }
           },
           {
@@ -35,67 +35,11 @@
             }
           },
           {
-            "relation": "$1의 형제",
+            "relation": "$1의 남편",
             "person": {
-              "name": "요셉2",
-              "slug": "joseph2",
-              "title": "리하이1의 아들"
-            }
-          },
-          {
-            "relation": "$1의 형제",
-            "person": {
-              "name": "샘",
-              "slug": "sam",
-              "title": "리하이1의 셋째 아들"
-            }
-          },
-          {
-            "relation": "$1의 친구",
-            "person": {
-              "name": "조램1",
-              "slug": "zoram1",
-              "title": "라반의 종"
-            }
-          },
-          {
-            "relation": "$1의 전임자",
-            "person": {
-              "name": "니파이 왕",
-              "slug": "nephite-king",
-              "title": "니파이 땅의 두 번째 왕"
-            }
-          },
-          {
-            "relation": "$1의 아들",
-            "person": {
-              "name": "새라이아",
-              "slug": "sariah",
-              "title": "리하이1의 아내"
-            }
-          },
-          {
-            "relation": "$1의 살인자",
-            "person": {
-              "name": "라반",
-              "slug": "laban",
-              "title": "놋쇄판 관리인"
-            }
-          },
-          {
-            "relation": "$1의 아들",
-            "person": {
-              "name": "리하이1",
-              "slug": "lehi1",
-              "title": "자신의 추종자들을 약속의 땅으로 인도한 히브리 선지자"
-            }
-          },
-          {
-            "relation": "$1의 형제",
-            "person": {
-              "name": "레이맨1",
-              "slug": "laman1",
-              "title": "리하이1의 장남"
+              "name": "니파이의 아내",
+              "slug": "wife-of-nephi",
+              "title": "이스마엘의 딸"
             }
           },
           {
@@ -112,6 +56,62 @@
               "name": "니파이에게 온 천사들",
               "slug": "angels-to-nephi",
               "title": "니파이에게로 온 신성한 사자들"
+            }
+          },
+          {
+            "relation": "$1의 살인자",
+            "person": {
+              "name": "라반",
+              "slug": "laban",
+              "title": "놋쇄판 관리인"
+            }
+          },
+          {
+            "relation": "$1의 형제",
+            "person": {
+              "name": "레이맨1",
+              "slug": "laman1",
+              "title": "리하이1의 장남"
+            }
+          },
+          {
+            "relation": "$1의 아들",
+            "person": {
+              "name": "리하이1",
+              "slug": "lehi1",
+              "title": "자신의 추종자들을 약속의 땅으로 인도한 히브리 선지자"
+            }
+          },
+          {
+            "relation": "$1의 전임자",
+            "person": {
+              "name": "니파이 왕",
+              "slug": "nephite-king",
+              "title": "니파이 땅의 두 번째 왕"
+            }
+          },
+          {
+            "relation": "$1의 형제",
+            "person": {
+              "name": "샘",
+              "slug": "sam",
+              "title": "리하이1의 셋째 아들"
+            }
+          },
+          {
+            "relation": "$1의 아들",
+            "person": {
+              "name": "새라이아",
+              "slug": "sariah",
+              "title": "리하이1의 아내"
+            }
+          },
+          {
+            "relation": "$1의 친구",
+            "person": {
+              "name": "조램1",
+              "slug": "zoram1",
+              "title": "라반의 종"
             }
           }
         ],
@@ -332,7 +332,7 @@
             "text": "Is filled with power of God"
           },
           {
-            "slug": "lehites/158",
+            "slug": "lehites/159",
             "ref": "니파이전서 18장 1~4절",
             "text": "Is commanded to build ship"
           },
@@ -434,12 +434,12 @@
           {
             "slug": "land-of-nephi/5",
             "ref": "니파이후서 5장 18절",
-            "text": "He recommends no king"
+            "text": "People desire that Nephi be king"
           },
           {
             "slug": "land-of-nephi/5",
             "ref": "니파이후서 5장 18절",
-            "text": "People desire that Nephi be king"
+            "text": "He recommends no king"
           },
           {
             "slug": "land-of-nephi/7",

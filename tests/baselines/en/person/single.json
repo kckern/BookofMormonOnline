@@ -19,11 +19,11 @@
             }
           },
           {
-            "relation": "Husband of $1",
+            "relation": "Brother of $1",
             "person": {
-              "name": "Wife of Nephi",
-              "slug": "wife-of-nephi",
-              "title": "Daughter of Ishmael"
+              "name": "Joseph2",
+              "slug": "joseph2",
+              "title": "Son of Lehi1"
             }
           },
           {
@@ -35,67 +35,11 @@
             }
           },
           {
-            "relation": "Brother of $1",
+            "relation": "Husband of $1",
             "person": {
-              "name": "Joseph2",
-              "slug": "joseph2",
-              "title": "Son of Lehi1"
-            }
-          },
-          {
-            "relation": "Brother of $1",
-            "person": {
-              "name": "Sam",
-              "slug": "sam",
-              "title": "Third son of Lehi1"
-            }
-          },
-          {
-            "relation": "Friend of $1",
-            "person": {
-              "name": "Zoram1",
-              "slug": "zoram1",
-              "title": "Servant of Laban"
-            }
-          },
-          {
-            "relation": "Predecessor of $1",
-            "person": {
-              "name": "Nephite King",
-              "slug": "nephite-king",
-              "title": "Second king of the land of Nephi"
-            }
-          },
-          {
-            "relation": "Son of $1",
-            "person": {
-              "name": "Sariah",
-              "slug": "sariah",
-              "title": "Wife of Lehi"
-            }
-          },
-          {
-            "relation": "Killer of $1",
-            "person": {
-              "name": "Laban",
-              "slug": "laban",
-              "title": "Custodian of brass plates"
-            }
-          },
-          {
-            "relation": "Son of $1",
-            "person": {
-              "name": "Lehi1",
-              "slug": "lehi1",
-              "title": "Hebrew prophet who led his followers to promised land."
-            }
-          },
-          {
-            "relation": "Brother of $1",
-            "person": {
-              "name": "Laman1",
-              "slug": "laman1",
-              "title": "Eldest son of Lehi1"
+              "name": "Wife of Nephi",
+              "slug": "wife-of-nephi",
+              "title": "Daughter of Ishmael"
             }
           },
           {
@@ -112,6 +56,62 @@
               "name": "Angels to Nephi",
               "slug": "angels-to-nephi",
               "title": "Divine Messengers to Nephi"
+            }
+          },
+          {
+            "relation": "Killer of $1",
+            "person": {
+              "name": "Laban",
+              "slug": "laban",
+              "title": "Custodian of brass plates"
+            }
+          },
+          {
+            "relation": "Brother of $1",
+            "person": {
+              "name": "Laman1",
+              "slug": "laman1",
+              "title": "Eldest son of Lehi1"
+            }
+          },
+          {
+            "relation": "Son of $1",
+            "person": {
+              "name": "Lehi1",
+              "slug": "lehi1",
+              "title": "Hebrew prophet who led his followers to promised land."
+            }
+          },
+          {
+            "relation": "Predecessor of $1",
+            "person": {
+              "name": "Nephite King",
+              "slug": "nephite-king",
+              "title": "Second king of the land of Nephi"
+            }
+          },
+          {
+            "relation": "Brother of $1",
+            "person": {
+              "name": "Sam",
+              "slug": "sam",
+              "title": "Third son of Lehi1"
+            }
+          },
+          {
+            "relation": "Son of $1",
+            "person": {
+              "name": "Sariah",
+              "slug": "sariah",
+              "title": "Wife of Lehi"
+            }
+          },
+          {
+            "relation": "Friend of $1",
+            "person": {
+              "name": "Zoram1",
+              "slug": "zoram1",
+              "title": "Servant of Laban"
             }
           }
         ],
@@ -332,7 +332,7 @@
             "text": "Is filled with power of God"
           },
           {
-            "slug": "lehites/158",
+            "slug": "lehites/159",
             "ref": "1 Nephi 18:1-4",
             "text": "Is commanded to build ship"
           },
@@ -434,12 +434,12 @@
           {
             "slug": "land-of-nephi/5",
             "ref": "2 Nephi 5:18",
-            "text": "He recommends no king"
+            "text": "People desire that Nephi be king"
           },
           {
             "slug": "land-of-nephi/5",
             "ref": "2 Nephi 5:18",
-            "text": "People desire that Nephi be king"
+            "text": "He recommends no king"
           },
           {
             "slug": "land-of-nephi/7",

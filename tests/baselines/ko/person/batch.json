@@ -11,14 +11,6 @@
         "description": "<p>니파이는 리하이의 아들이자 니파이인들의 위대한 선지자이자 시조로 알려져 있습니다. 그는 훌륭한 부모로부터 태어났으며 어릴 적부터 부모님의 교육을 받아왔습니다. 삶의 여러 어려움을 겪으며 주님의 은혜를 크게 받았고 하나님의 선하심과 비밀을 많이 알게 되었습니다. 니파이는 주님과의 대화를 통해 마음을 부드럽게 하신 주님께 충실한 믿음을 갖게 되었습니다. 그는 자신의 형들과 달리 부모님의 가르침을 거스리지 않았으며 신앙으로 인해 복을 받았습니다. 주님의 계명을 지키면 번영하게 되며 약속의 땅으로 인도받게 될 것입니다. 니파이는 부친의 기록을 요약하고 자신의 경험을 덧붙여 기록을 작성했습니다. 그는 라반으로부터 놋쇠판을 얻기 위해 형들과 함께 여행을 떠났습니다. 어려움과 위험에 직면하며도 주님의 도움을 받아 라반을 쓰러뜨리고 놋쇠판을 얻어왔습니다. 체격이 크고 힘도 많이 갖춘 니파이는 성장하며 목표를 이루기 위해 노력하는 모범적인 인물입니다. 니파이는 리하이 성과 땅을 건설하고, 니파이인들을 인도하는 동안 위대한 지도자로서 선택되었습니다. 그의 열성적인 신앙과 행동은 다른 사람들에게 영감을 주었으며, 주님의 계명을 행하는 것을 통해 복을 받을 수 있다는 좋은 교훈을 전달했습니다.</p>",
         "relations": [
           {
-            "relation": "$1의 남편",
-            "person": {
-              "name": "니파이의 아내",
-              "slug": "wife-of-nephi",
-              "title": "이스마엘의 딸"
-            }
-          },
-          {
             "relation": "$1의 형제",
             "person": {
               "name": "야곱2",
@@ -43,35 +35,19 @@
             }
           },
           {
-            "relation": "$1의 친구",
+            "relation": "$1의 남편",
             "person": {
-              "name": "조램1",
-              "slug": "zoram1",
-              "title": "라반의 종"
+              "name": "니파이의 아내",
+              "slug": "wife-of-nephi",
+              "title": "이스마엘의 딸"
             }
           },
           {
-            "relation": "$1의 전임자",
+            "relation": "$1에 의해 방문된 사람",
             "person": {
-              "name": "니파이 왕",
-              "slug": "nephite-king",
-              "title": "니파이 땅의 두 번째 왕"
-            }
-          },
-          {
-            "relation": "$1의 아들",
-            "person": {
-              "name": "새라이아",
-              "slug": "sariah",
-              "title": "리하이1의 아내"
-            }
-          },
-          {
-            "relation": "$1의 형제",
-            "person": {
-              "name": "샘",
-              "slug": "sam",
-              "title": "리하이1의 셋째 아들"
+              "name": "니파이에게 온 천사",
+              "slug": "angel-to-nephi",
+              "title": "니파이에게 신의 교육자"
             }
           },
           {
@@ -83,11 +59,11 @@
             }
           },
           {
-            "relation": "$1에 의해 방문된 사람",
+            "relation": "$1의 살인자",
             "person": {
-              "name": "니파이에게 온 천사",
-              "slug": "angel-to-nephi",
-              "title": "니파이에게 신의 교육자"
+              "name": "라반",
+              "slug": "laban",
+              "title": "놋쇄판 관리인"
             }
           },
           {
@@ -107,11 +83,35 @@
             }
           },
           {
-            "relation": "$1의 살인자",
+            "relation": "$1의 전임자",
             "person": {
-              "name": "라반",
-              "slug": "laban",
-              "title": "놋쇄판 관리인"
+              "name": "니파이 왕",
+              "slug": "nephite-king",
+              "title": "니파이 땅의 두 번째 왕"
+            }
+          },
+          {
+            "relation": "$1의 형제",
+            "person": {
+              "name": "샘",
+              "slug": "sam",
+              "title": "리하이1의 셋째 아들"
+            }
+          },
+          {
+            "relation": "$1의 아들",
+            "person": {
+              "name": "새라이아",
+              "slug": "sariah",
+              "title": "리하이1의 아내"
+            }
+          },
+          {
+            "relation": "$1의 친구",
+            "person": {
+              "name": "조램1",
+              "slug": "zoram1",
+              "title": "라반의 종"
             }
           }
         ],
@@ -132,7 +132,7 @@
             "text": "Abridges father’s record, will add his own account"
           },
           {
-            "slug": "lehites/17",
+            "slug": "lehites/18",
             "ref": "니파이전서 2장 16절",
             "text": "Character of Nephi"
           },
@@ -233,13 +233,13 @@
           },
           {
             "slug": "lehites/13",
-            "ref": "니파이전서 9장 1~5절",
-            "text": "Makes two sets of plates"
+            "ref": "니파이전서 9장 1절",
+            "text": "Concludes father’s account"
           },
           {
             "slug": "lehites/13",
-            "ref": "니파이전서 9장 1절",
-            "text": "Concludes father’s account"
+            "ref": "니파이전서 9장 1~5절",
+            "text": "Makes two sets of plates"
           },
           {
             "slug": "promised-land/8",
@@ -262,7 +262,7 @@
             "text": "Wants to know about father’s vision"
           },
           {
-            "slug": "lehites/96",
+            "slug": "lehites/nephis-vision/1",
             "ref": "니파이전서 11장 ~14",
             "text": "Beholds father’s dream and vision of future of promised land"
           },
@@ -332,7 +332,7 @@
             "text": "Is filled with power of God"
           },
           {
-            "slug": "lehites/158",
+            "slug": "lehites/159",
             "ref": "니파이전서 18장 1~4절",
             "text": "Is commanded to build ship"
           },
@@ -434,12 +434,12 @@
           {
             "slug": "land-of-nephi/5",
             "ref": "니파이후서 5장 18절",
-            "text": "He recommends no king"
+            "text": "People desire that Nephi be king"
           },
           {
             "slug": "land-of-nephi/5",
             "ref": "니파이후서 5장 18절",
-            "text": "People desire that Nephi be king"
+            "text": "He recommends no king"
           },
           {
             "slug": "land-of-nephi/7",
@@ -598,19 +598,19 @@
             }
           },
           {
-            "relation": "$1의 형제",
-            "person": {
-              "name": "슐",
-              "slug": "shule",
-              "title": "초기 야렛인 왕"
-            }
-          },
-          {
             "relation": "$1의 아버지",
             "person": {
               "name": "노아2",
               "slug": "noah2",
               "title": "초기 야렛인이자 코리호어2의 아들"
+            }
+          },
+          {
+            "relation": "$1의 형제",
+            "person": {
+              "name": "슐",
+              "slug": "shule",
+              "title": "초기 야렛인 왕"
             }
           },
           {
@@ -624,7 +624,7 @@
         ],
         "index": [
           {
-            "slug": "jaredites/58",
+            "slug": "jaredites/59",
             "ref": "이더서 7장 3절",
             "text": "키브의 아들"
           },
@@ -667,19 +667,19 @@
             }
           },
           {
-            "relation": "$1의 자녀들",
-            "person": {
-              "name": "하나님",
-              "slug": "god",
-              "title": "창조자"
-            }
-          },
-          {
             "relation": "$1에게 봉사하는 사람",
             "person": {
               "name": "천사들",
               "slug": "angels",
               "title": "천군"
+            }
+          },
+          {
+            "relation": "$1의 자녀들",
+            "person": {
+              "name": "하나님",
+              "slug": "god",
+              "title": "창조자"
             }
           }
         ],
@@ -730,19 +730,19 @@
             "text": "Adam fell that men might be"
           },
           {
-            "slug": "promised-land/lehi/38",
+            "slug": "promised-land/lehi/39",
             "ref": "니파이후서 2장 27절",
             "text": "Men are free according to the flesh to choose life or death"
           },
           {
             "slug": "promised-land/46",
             "ref": "니파이후서 4장 17절",
-            "text": "My heart sorrows because of my flesh"
+            "text": "O wretched man that I am"
           },
           {
             "slug": "promised-land/46",
             "ref": "니파이후서 4장 17절",
-            "text": "O wretched man that I am"
+            "text": "My heart sorrows because of my flesh"
           },
           {
             "slug": "promised-land/51",
@@ -770,7 +770,7 @@
             "text": "Creator to become subject unto men in flesh"
           },
           {
-            "slug": "jacobs-two-day-sermon/42",
+            "slug": "jacobs-two-day-sermon/43",
             "ref": "니파이후서 9장 53절",
             "text": "Nephites’ seed shall not be utterly destroyed according to the flesh"
           },
@@ -857,12 +857,12 @@
           {
             "slug": "recolonization/108",
             "ref": "모사이야서 7장 27절",
-            "text": "Man was created after image of God"
+            "text": "Christ to take upon him image of man"
           },
           {
             "slug": "recolonization/108",
             "ref": "모사이야서 7장 27절",
-            "text": "Christ to take upon him image of man"
+            "text": "Man was created after image of God"
           },
           {
             "slug": "recolonization/108",
@@ -876,13 +876,13 @@
           },
           {
             "slug": "recolonization/abinadi/32",
-            "ref": "모사이야서 15장 2절",
-            "text": "The Son shall subject the flesh to will of Father"
+            "ref": "모사이야서 15장 2~3절",
+            "text": "Because the Lord dwells in flesh, he shall be called the Son"
           },
           {
             "slug": "recolonization/abinadi/32",
-            "ref": "모사이야서 15장 2~3절",
-            "text": "Because the Lord dwells in flesh, he shall be called the Son"
+            "ref": "모사이야서 15장 2절",
+            "text": "The Son shall subject the flesh to will of Father"
           },
           {
             "slug": "alma/20",
@@ -995,19 +995,19 @@
             "text": "Man was created of dust"
           },
           {
-            "slug": "jaredites/22",
+            "slug": "jaredites/23",
             "ref": "이더서 3장 6~9절",
             "text": "God will take upon him flesh and blood"
           },
           {
             "slug": "jaredites/30",
-            "ref": "이더서 3장 15절",
-            "text": "Never before has the Lord shown himself unto men"
+            "ref": "이더서 3장 15~16절",
+            "text": "Man was created after image of God"
           },
           {
             "slug": "jaredites/30",
-            "ref": "이더서 3장 15~16절",
-            "text": "Man was created after image of God"
+            "ref": "이더서 3장 15절",
+            "text": "Never before has the Lord shown himself unto men"
           },
           {
             "slug": "jaredites/30",

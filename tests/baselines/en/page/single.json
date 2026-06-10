@@ -9455,14 +9455,14 @@
                     ],
                     "places": [
                       {
-                        "slug": "plains-of-heshlon",
-                        "name": "Plains of Heshlon",
-                        "info": "Battlegroud of Coriantum and Shared"
-                      },
-                      {
                         "slug": "valley-of-gilgal",
                         "name": "Valley of Gilgal",
                         "info": "Jaredite battle region"
+                      },
+                      {
+                        "slug": "plains-of-heshlon",
+                        "name": "Plains of Heshlon",
+                        "info": "Battlegroud of Coriantum and Shared"
                       }
                     ],
                     "refs": [

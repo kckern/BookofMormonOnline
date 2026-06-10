@@ -117,7 +117,7 @@
             "text": "The Lord leads Lehites out of land of Jerusalem"
           },
           {
-            "slug": "promised-land/41",
+            "slug": "promised-land/lehi/1",
             "ref": "2 Nephi 1:4",
             "text": "Lehi1 sees in vision that Jerusalem is destroyed"
           },
@@ -222,7 +222,7 @@
             "text": "The Lord leads Lehites out of land of Jerusalem"
           },
           {
-            "slug": "zarahemla/1",
+            "slug": "zarahemla/6",
             "ref": "Omni 1:15",
             "text": "People of Zarahemla came from Jerusalem when Zedekiah was carried captive into Babylon"
           },
@@ -287,7 +287,7 @@
             "text": "The Lord leads Lehites out of land of Jerusalem"
           },
           {
-            "slug": "reign-of-judges/helaman/9",
+            "slug": "reign-of-judges/helaman/10",
             "ref": "Alma 36:29",
             "text": "The Lord leads Lehites out of land of Jerusalem"
           },
@@ -398,8 +398,8 @@
         "description": "<p>The Land of Zarahemla lay in the northern part of the land southward, along the [river Sidon|sidon-river], which ran by the land of Zarahemla (Alma 2:15). It was settled by the {Mulekites|mulekites}, who left [Jerusalem|jerusalem-1] about the time {Zedekiah|zedekiah1}, king of [Judah|judah], was carried captive to [Babylon|babylon] in the sixth century B.C. and crossed the great waters to their landing place (Omni 1:15, Alma 22:29-31). Around 200 B.C. {Mosiah<sup>1</sup>|mosiah1}, warned to flee [the land of Nephi|land-of-nephi], led his people through the wilderness and found the {people of Zarahemla|zarahemla-brethren}, named for their leader {Zarahemla|zarahemla}. The two peoples united and made {Mosiah|mosiah1} their king (Omni 1:12-19).</p><p>The temple at Zarahemla was the site of King {Benjamin|benjamin}’s great covenant convocation, in which the assembled multitude pitched their tents round about the temple, each with its door facing toward the temple, and {Benjamin|benjamin} preached from a tower because the crowd was too great to fit within the temple walls (Mosiah 1:18; 2:5-7). At the close of that assembly the people entered a covenant and were given a new name, being called “the children of Christ, his sons, and his daughters” (Mosiah 5:7).</p><p>Under king {Mosiah|mosiah2}’s reign {Alma<sup>1</sup>|alma1} established seven churches throughout the land of Zarahemla (Mosiah 25:15-23), and at the close of the monarchy {Alma<sup>2</sup>|alma2} became the first chief judge over the reign of judges seated there (Mosiah 29:42). {Samuel the Lamanite|samuel} came into the land of Zarahemla and preached repentance to its people (Hel. 13–16). The land changed hands repeatedly in war: dissenters under {Pachus|pachus} seized the city, set up a king, and allied with the {Lamanites|lamanites} until {Moroni|moroni1} and {Pahoran|pahoran1} retook it and {Pachus|pachus} was slain (Alma 61-62:9); the Lamanite-allied {Coriantumr|coriantumr3} stormed and took the city before {Moronihah|moronihah1} recovered it (Hel. 1:14-33); and dissenters with a Lamanite army held the land until {Moronihah|moronihah1} regained half of it (Hel. 4:1-17).</p><p>The [city of Zarahemla|zarahemla] took fire and its inhabitants were burned at the death of {Jesus Christ|jesus-christ} (3 Ne. 8:8, 24; 9:3). It was built again in the first century A.D. and was covered with buildings and people as numerous as the sand of the sea when {Mormon|mormon2} was carried there as a child of eleven (4 Ne. 1:8, Morm. 1:6-7). In the fourth century A.D. war broke out again in the borders of Zarahemla, by the [waters of Sidon|sidon-river] (Morm. 1:10).</p>",
         "maps": [
           {
-            "slug": "ces",
-            "name": "CES"
+            "slug": "africa",
+            "name": "Africa"
           },
           {
             "slug": "americas",
@@ -414,6 +414,10 @@
             "name": "Baja"
           },
           {
+            "slug": "ces",
+            "name": "CES"
+          },
+          {
             "slug": "costarica",
             "name": "Costa Rica"
           },
@@ -422,24 +426,12 @@
             "name": "Delmarva"
           },
           {
-            "slug": "africa",
-            "name": "Africa"
-          },
-          {
-            "slug": "srilanka",
-            "name": "Sri Lanka"
-          },
-          {
-            "slug": "sulawesi",
-            "name": "Sulawesi"
-          },
-          {
-            "slug": "malay",
-            "name": "Malay"
-          },
-          {
             "slug": "fullmer",
             "name": "Fullmer"
+          },
+          {
+            "slug": "heartland",
+            "name": "Heartland"
           },
           {
             "slug": "internal",
@@ -450,29 +442,37 @@
             "name": "Kamchatka"
           },
           {
-            "slug": "panama",
-            "name": "Panama"
-          },
-          {
-            "slug": "heartland",
-            "name": "Heartland"
+            "slug": "malay",
+            "name": "Malay"
           },
           {
             "slug": "mesoamerica",
             "name": "Tehuantepec"
           },
           {
-            "slug": "yucatan",
-            "name": "Yucatan"
+            "slug": "panama",
+            "name": "Panama"
+          },
+          {
+            "slug": "srilanka",
+            "name": "Sri Lanka"
+          },
+          {
+            "slug": "sulawesi",
+            "name": "Sulawesi"
           },
           {
             "slug": "virtualscriptures",
             "name": "BYU"
+          },
+          {
+            "slug": "yucatan",
+            "name": "Yucatan"
           }
         ],
         "index": [
           {
-            "slug": "land-of-nephi/77",
+            "slug": "zarahemla/5",
             "ref": "Omni 1:12-13",
             "text": "Mosiah1 made king over land of Zarahemla"
           },
@@ -658,36 +658,36 @@
         "description": "<p>Omner was a {Nephite|nephites} city on the east borders by the seashore, named in the account of {Amalickiah|amalickiah}’s invasion around 67 BC. It was one of the cities {Amalickiah|amalickiah} captured while {Moroni|moroni1} was occupied putting down the {king-men|king-men} and regulating his own people for war; {the Lamanites|lamanites} came into [the land of Moroni|moroni], drove {the Nephites|nephites} from [the city of Moroni|moroni], and {Amalickiah|amalickiah} went on taking city after city by the seashore (Alma 51:21-27). Omner is listed in this advance alongside [Nephihah|nephihah], [Lehi|lehi], [Morianton|morianton], [Gid|gid], and [Mulek|mulek], all on the east borders by the seashore, and all strongly fortified after the manner of {Moroni|moroni1}’s own fortifications, so that they afforded strongholds for {the Lamanites|lamanites} once taken (Alma 51:26).</p><p>The east-coast region had been settled and fortified at {Moroni|moroni1}’s direction: he drove {the Lamanites|lamanites} out of [the east wilderness|east-wilderness], sent inhabitants of [Zarahemla|zarahemla] to possess the land to the borders by the seashore, and had fortifications erected along the line between {Nephite|nephites} and {Lamanite|lamanites} lands (Alma 50:7-11). In the later {Nephite|nephites} recovery, {Moroni|moroni1} and {Pahoran|pahoran1} retook [Nephihah|nephihah] and pursued {the Lamanites|lamanites} from city to city down to the borders by the seashore, where they were met by {Lehi|lehi3} and {Teancum|teancum} (Alma 62:26-32).</p>",
         "maps": [
           {
-            "slug": "virtualscriptures",
-            "name": "BYU"
-          },
-          {
-            "slug": "mesoamerica",
-            "name": "Tehuantepec"
-          },
-          {
-            "slug": "malay",
-            "name": "Malay"
-          },
-          {
             "slug": "baja",
             "name": "Baja"
-          },
-          {
-            "slug": "heartland",
-            "name": "Heartland"
           },
           {
             "slug": "ces",
             "name": "CES"
           },
           {
+            "slug": "fullmer",
+            "name": "Fullmer"
+          },
+          {
+            "slug": "heartland",
+            "name": "Heartland"
+          },
+          {
             "slug": "internal",
             "name": "FARMS"
           },
           {
-            "slug": "fullmer",
-            "name": "Fullmer"
+            "slug": "malay",
+            "name": "Malay"
+          },
+          {
+            "slug": "mesoamerica",
+            "name": "Tehuantepec"
+          },
+          {
+            "slug": "virtualscriptures",
+            "name": "BYU"
           }
         ],
         "index": [
@@ -708,6 +708,10 @@
         "description": "<p>Moriantum was a Nephite location named in a letter from {Mormon|mormon1} to his son {Moroni|moroni2} late in Nephite history. {Mormon|mormon1} reports that the {Nephites|nephites} at Moriantum had taken many of the daughters of the {Lamanites|lamanites} prisoner and deprived them of their chastity and virtue. They then murdered the women, torturing their bodies to death, and devoured their flesh, which {Mormon|mormon1} says they did as a token of bravery. He writes that this abomination of his own people exceeded that of the {Lamanites|lamanites} (Moroni 9:9-10).</p>",
         "maps": [
           {
+            "slug": "heartland",
+            "name": "Heartland"
+          },
+          {
             "slug": "internal",
             "name": "FARMS"
           },
@@ -718,10 +722,6 @@
           {
             "slug": "mesoamerica",
             "name": "Tehuantepec"
-          },
-          {
-            "slug": "heartland",
-            "name": "Heartland"
           }
         ],
         "index": [

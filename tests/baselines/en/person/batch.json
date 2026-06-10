@@ -11,14 +11,6 @@
         "description": "<p>Nephi¹, son of {Lehi|lehi1} and {Sariah|sariah}, was born in [Jerusalem|jerusalem-1] around 615 B.C. and founded the Nephite people. He opens his record by stating he was “born of goodly parents,” taught in his father’s learning, and “highly favored of {the Lord|jesus-christ}” (1 Nephi 1:1). Though young, he was “large in stature,” and after he prayed {the Lord|jesus-christ} softened his heart so that he believed his father’s words and did not rebel as his brothers {Laman|laman1} and {Lemuel|lemuel} did (1 Nephi 2:16).</p><p>Sent with his brothers to obtain the brass plates from {Laban|laban} in [Jerusalem|jerusalem-1], Nephi¹ said he would go and do what {the Lord|jesus-christ} commanded, “for I know that {the Lord|jesus-christ} giveth no commandments unto the children of men, save he shall prepare a way” (1 Nephi 3:7). After two failed attempts, he killed {Laban|laban} with {Laban|laban}’s own sword at the prompting of {the Spirit|holy-spirit} and took the records (1 Nephi 4:18). {The Lord|jesus-christ} told him that if he kept the commandments he would be made “a ruler and a teacher” over his brethren, which set him at odds with {Laman|laman1} and {Lemuel|lemuel} (1 Nephi 2:22).</p><p>{The Lord|jesus-christ} commanded Nephi¹ to build a ship to carry the family across the sea to the [promised land|promised-land] (1 Nephi 17:8-9). He built it not after the manner of men but as {the Lord|jesus-christ} showed him; when it was finished his brothers acknowledged the workmanship was fine (1 Nephi 18:1-4). In the [promised land|promised-land] he built a temple modeled on {Solomon|solomon}’s temple, taught his people, and they “lived after the manner of happiness” (2 Nephi 5:16, 27).</p><p>Nephi¹ kept two sets of plates: a larger set recording the reign of the kings and the wars of his people, and the smaller set he was commanded to make for an account of the ministry and prophecies, made for a purpose {the Lord|jesus-christ} did not reveal to him (1 Nephi 9:1-6). His record includes a first-person vision of the birth, ministry, and death of {Christ|jesus-christ} and the future of his seed and the {house of Israel|israel} (1 Nephi 11-14). He formally named and set out “the doctrine of {Christ|jesus-christ}” — faith, repentance, baptism, {the Holy Ghost|holy-spirit}, and enduring to the end — and declared it the exclusive path to salvation: “this is the way; and there is none other way nor name given under heaven whereby man can be saved in the kingdom of {God|god}” (2 Nephi 31:2, 21). He closed by calling Jew and all the ends of the earth to believe in {Christ|jesus-christ}, declaring that his words would stand against the unbelieving at the judgment bar (2 Nephi 33:10-15). Later {Nephite|nephites} kings were called second Nephi, third Nephi, and so on, as the people kept his name in remembrance (Jacob 1:11).</p>",
         "relations": [
           {
-            "relation": "Husband of $1",
-            "person": {
-              "name": "Wife of Nephi",
-              "slug": "wife-of-nephi",
-              "title": "Daughter of Ishmael"
-            }
-          },
-          {
             "relation": "Brother of $1",
             "person": {
               "name": "Jacob2",
@@ -43,35 +35,19 @@
             }
           },
           {
-            "relation": "Friend of $1",
+            "relation": "Husband of $1",
             "person": {
-              "name": "Zoram1",
-              "slug": "zoram1",
-              "title": "Servant of Laban"
+              "name": "Wife of Nephi",
+              "slug": "wife-of-nephi",
+              "title": "Daughter of Ishmael"
             }
           },
           {
-            "relation": "Predecessor of $1",
+            "relation": "Visited by $1",
             "person": {
-              "name": "Nephite King",
-              "slug": "nephite-king",
-              "title": "Second king of the land of Nephi"
-            }
-          },
-          {
-            "relation": "Son of $1",
-            "person": {
-              "name": "Sariah",
-              "slug": "sariah",
-              "title": "Wife of Lehi"
-            }
-          },
-          {
-            "relation": "Brother of $1",
-            "person": {
-              "name": "Sam",
-              "slug": "sam",
-              "title": "Third son of Lehi1"
+              "name": "Angel to Nephi",
+              "slug": "angel-to-nephi",
+              "title": "Divine Instructor to Nephi"
             }
           },
           {
@@ -83,11 +59,11 @@
             }
           },
           {
-            "relation": "Visited by $1",
+            "relation": "Killer of $1",
             "person": {
-              "name": "Angel to Nephi",
-              "slug": "angel-to-nephi",
-              "title": "Divine Instructor to Nephi"
+              "name": "Laban",
+              "slug": "laban",
+              "title": "Custodian of brass plates"
             }
           },
           {
@@ -107,11 +83,35 @@
             }
           },
           {
-            "relation": "Killer of $1",
+            "relation": "Predecessor of $1",
             "person": {
-              "name": "Laban",
-              "slug": "laban",
-              "title": "Custodian of brass plates"
+              "name": "Nephite King",
+              "slug": "nephite-king",
+              "title": "Second king of the land of Nephi"
+            }
+          },
+          {
+            "relation": "Brother of $1",
+            "person": {
+              "name": "Sam",
+              "slug": "sam",
+              "title": "Third son of Lehi1"
+            }
+          },
+          {
+            "relation": "Son of $1",
+            "person": {
+              "name": "Sariah",
+              "slug": "sariah",
+              "title": "Wife of Lehi"
+            }
+          },
+          {
+            "relation": "Friend of $1",
+            "person": {
+              "name": "Zoram1",
+              "slug": "zoram1",
+              "title": "Servant of Laban"
             }
           }
         ],
@@ -132,7 +132,7 @@
             "text": "Abridges father’s record, will add his own account"
           },
           {
-            "slug": "lehites/17",
+            "slug": "lehites/18",
             "ref": "1 Nephi 2:16",
             "text": "Character of Nephi"
           },
@@ -233,13 +233,13 @@
           },
           {
             "slug": "lehites/13",
-            "ref": "1 Nephi 9:1-5",
-            "text": "Makes two sets of plates"
+            "ref": "1 Nephi 9:1",
+            "text": "Concludes father’s account"
           },
           {
             "slug": "lehites/13",
-            "ref": "1 Nephi 9:1",
-            "text": "Concludes father’s account"
+            "ref": "1 Nephi 9:1-5",
+            "text": "Makes two sets of plates"
           },
           {
             "slug": "promised-land/8",
@@ -262,7 +262,7 @@
             "text": "Wants to know about father’s vision"
           },
           {
-            "slug": "lehites/96",
+            "slug": "lehites/nephis-vision/1",
             "ref": "1 Nephi 11-14",
             "text": "Beholds father’s dream and vision of future of promised land"
           },
@@ -332,7 +332,7 @@
             "text": "Is filled with power of God"
           },
           {
-            "slug": "lehites/158",
+            "slug": "lehites/159",
             "ref": "1 Nephi 18:1-4",
             "text": "Is commanded to build ship"
           },
@@ -434,12 +434,12 @@
           {
             "slug": "land-of-nephi/5",
             "ref": "2 Nephi 5:18",
-            "text": "He recommends no king"
+            "text": "People desire that Nephi be king"
           },
           {
             "slug": "land-of-nephi/5",
             "ref": "2 Nephi 5:18",
-            "text": "People desire that Nephi be king"
+            "text": "He recommends no king"
           },
           {
             "slug": "land-of-nephi/7",
@@ -598,19 +598,19 @@
             }
           },
           {
-            "relation": "Brother of $1",
-            "person": {
-              "name": "Shule",
-              "slug": "shule",
-              "title": "Early Jaredite king"
-            }
-          },
-          {
             "relation": "Father of $1",
             "person": {
               "name": "Noah2",
               "slug": "noah2",
               "title": "Early Jaredite king, son of Corihor2"
+            }
+          },
+          {
+            "relation": "Brother of $1",
+            "person": {
+              "name": "Shule",
+              "slug": "shule",
+              "title": "Early Jaredite king"
             }
           },
           {
@@ -624,7 +624,7 @@
         ],
         "index": [
           {
-            "slug": "jaredites/58",
+            "slug": "jaredites/59",
             "ref": "Ether 7:3",
             "text": "Son of Kib"
           },
@@ -667,19 +667,19 @@
             }
           },
           {
-            "relation": "Children of $1",
-            "person": {
-              "name": "God",
-              "slug": "god",
-              "title": "A reference to diety, be it Yahweh (יהוה); Jesus, or God the Father."
-            }
-          },
-          {
             "relation": "Minister to $1",
             "person": {
               "name": "Angels",
               "slug": "angels",
               "title": "Heavenly Hosts"
+            }
+          },
+          {
+            "relation": "Children of $1",
+            "person": {
+              "name": "God",
+              "slug": "god",
+              "title": "A reference to diety, be it Yahweh (יהוה); Jesus, or God the Father."
             }
           }
         ],
@@ -730,19 +730,19 @@
             "text": "Adam fell that men might be"
           },
           {
-            "slug": "promised-land/lehi/38",
+            "slug": "promised-land/lehi/39",
             "ref": "2 Nephi 2:27",
             "text": "Men are free according to the flesh to choose life or death"
           },
           {
             "slug": "promised-land/46",
             "ref": "2 Nephi 4:17",
-            "text": "My heart sorrows because of my flesh"
+            "text": "O wretched man that I am"
           },
           {
             "slug": "promised-land/46",
             "ref": "2 Nephi 4:17",
-            "text": "O wretched man that I am"
+            "text": "My heart sorrows because of my flesh"
           },
           {
             "slug": "promised-land/51",
@@ -770,7 +770,7 @@
             "text": "Creator to become subject unto men in flesh"
           },
           {
-            "slug": "jacobs-two-day-sermon/42",
+            "slug": "jacobs-two-day-sermon/43",
             "ref": "2 Nephi 9:53",
             "text": "Nephites’ seed shall not be utterly destroyed according to the flesh"
           },
@@ -857,12 +857,12 @@
           {
             "slug": "recolonization/108",
             "ref": "Mosiah 7:27",
-            "text": "Man was created after image of God"
+            "text": "Christ to take upon him image of man"
           },
           {
             "slug": "recolonization/108",
             "ref": "Mosiah 7:27",
-            "text": "Christ to take upon him image of man"
+            "text": "Man was created after image of God"
           },
           {
             "slug": "recolonization/108",
@@ -876,13 +876,13 @@
           },
           {
             "slug": "recolonization/abinadi/32",
-            "ref": "Mosiah 15:2",
-            "text": "The Son shall subject the flesh to will of Father"
+            "ref": "Mosiah 15:2-3",
+            "text": "Because the Lord dwells in flesh, he shall be called the Son"
           },
           {
             "slug": "recolonization/abinadi/32",
-            "ref": "Mosiah 15:2-3",
-            "text": "Because the Lord dwells in flesh, he shall be called the Son"
+            "ref": "Mosiah 15:2",
+            "text": "The Son shall subject the flesh to will of Father"
           },
           {
             "slug": "alma/20",
@@ -995,19 +995,19 @@
             "text": "Man was created of dust"
           },
           {
-            "slug": "jaredites/22",
+            "slug": "jaredites/23",
             "ref": "Ether 3:6-9",
             "text": "God will take upon him flesh and blood"
           },
           {
             "slug": "jaredites/30",
-            "ref": "Ether 3:15",
-            "text": "Never before has the Lord shown himself unto men"
+            "ref": "Ether 3:15-16",
+            "text": "Man was created after image of God"
           },
           {
             "slug": "jaredites/30",
-            "ref": "Ether 3:15-16",
-            "text": "Man was created after image of God"
+            "ref": "Ether 3:15",
+            "text": "Never before has the Lord shown himself unto men"
           },
           {
             "slug": "jaredites/30",

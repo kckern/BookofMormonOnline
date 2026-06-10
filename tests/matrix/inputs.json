@@ -2,6 +2,7 @@
   "_warnings": [],
   "person": {
     "tier": "exact",
+    "nextTruth": true,
     "cases": {
       "single": [
         "nephi1"
@@ -30,6 +31,7 @@
   },
   "places": {
     "tier": "exact",
+    "nextTruth": true,
     "cases": {
       "single": [
         "jerusalem-1"
@@ -394,6 +396,7 @@
   },
   "map": {
     "tier": "exact",
+    "nextTruth": true,
     "cases": {
       "single": [
         "neareast"
