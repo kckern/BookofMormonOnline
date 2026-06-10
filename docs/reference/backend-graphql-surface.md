@@ -81,9 +81,13 @@ in `src/auth/identity.ts`; password hashing in `src/auth/password.ts`; sandbox w
   plus `User.history`/`User.networks` detail and the full progress scorer (summary + items).
   The duplicated lightweight scorers (`userauth.scoreProgressForUser`,
   `useractivity.computeUserProgress`) should consolidate into core here.
-- **Parked (Sendbird/OAuth):** `socialsignin`, `joinGroup`/`joinOpenGroup`/
-  `requestToJoinGroup`/`withdrawRequest`, `processRequest`, `addBot`/`removeBot`,
-  `homegroups`/`homefeed`/`homethread`, `requestedUsers`, `loadGroupsFromHash`, `botlist`.
+- **Community / messaging (BUILT — Sendbird replaced natively):** `homefeed`,
+  `homegroups`, `homethread`, `requestedUsers`, `loadGroupsFromHash`, `botlist` (reads);
+  `joinGroup`, `joinOpenGroup`, `requestToJoinGroup`, `withdrawRequest`, `processRequest`,
+  `addBot`, `removeBot` (mutations); plus the real-time socket.io surface. See
+  `docs/reference/messaging-platform.md`. (`leaderboard` is still unbuilt — DB-backed read,
+  belongs with the authed-read slice, not messaging.)
+- **Still parked (OAuth):** `socialsignin` (needs a live third-party social token).
 - **Non-GraphQL REST** (`/coords`, `/translate`, `/mapmarker`, …): out of scope —
   `docs/reference/non-graphql-endpoints.md`.
 
