@@ -10,12 +10,14 @@
  * Messaging is enabled when EITHER:
  *   1. the build flag REACT_APP_USE_MESSENGER === 'true' (force-on: local dev / a
  *      dedicated messaging build), OR
- *   2. the current hostname matches one of the messaging hosts — by default the
- *      `staging` subdomain, overridable with REACT_APP_MESSENGER_HOSTS (comma-separated
- *      host substrings, e.g. "staging,beta,localhost:3000").
+ *   2. the current hostname's first subdomain segment matches one of the messaging hosts
+ *      (default `staging`) — exactly OR as a `<host>-<lang>` prefix, so both
+ *      `staging.bookofmormon.online` AND `staging-ko.bookofmormon.online` /
+ *      `staging-{lang}.*` are covered. Override the host list with
+ *      REACT_APP_MESSENGER_HOSTS (comma-separated, e.g. "staging,beta").
  *
- * So: deploy one build, point a `staging.` subdomain at it, and messaging is live there
- * while the apex/prod domain stays off — no separate build, no rebuild to flip.
+ * So: deploy one build, point any `staging` / `staging-{lang}` subdomain at it, and
+ * messaging is live there while the apex/prod domain stays off — no separate build.
  */
 
 const BUILD_FLAG = process.env.REACT_APP_USE_MESSENGER === 'true';
@@ -30,7 +32,16 @@ export function isMessengerEnabled() {
   if (BUILD_FLAG) return true;
   const host = (typeof window !== 'undefined' && window.location && window.location.host) || '';
   if (!host) return false;
-  return MESSENGER_HOSTS.some((h) => host === h || host.startsWith(`${h}.`) || host.includes(h));
+  const subdomain = host.split('.')[0]; // "staging", "staging-ko", "ko", "localhost:3000"
+  return MESSENGER_HOSTS.some(
+    (h) =>
+      // bare subdomain entry ('staging'): exact, or a language-prefixed variant ('staging-ko')
+      subdomain === h ||
+      subdomain.startsWith(`${h}-`) ||
+      // full-host entry (e.g. 'messaging.bookofmormon.online'): exact or as a prefix
+      host === h ||
+      host.startsWith(`${h}.`),
+  );
 }
 
 /**
