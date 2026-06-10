@@ -1,5 +1,5 @@
 import { models as Models } from '../config/database';
-import { Op, includeTranslation, translatedValue } from './_common';
+import { Op, includeTranslation, translatedValue, includeModel } from './_common';
 import { lookupReference } from 'scripture-guide';
 
 const getRequestedFields = (info: any): string[] => {
@@ -60,6 +60,9 @@ export default {
       return await Models.BomIndex.findAll({
         where: { type: 'object', slug },
         order: [['verse_id', 'ASC']],
+        // Index.slug walks text_guid → text; without this include every row
+        // crashed with a getDataValue TypeError (docs/bugs/2026-06-09-object-index-getdatavalue-crash.md)
+        include: [includeModel(true, Models.BomLookup, 'text_guid', [includeModel(true, Models.BomText, 'text')])],
       });
     },
     xrels: async (item: any) => {

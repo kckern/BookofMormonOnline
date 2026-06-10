@@ -1,7 +1,7 @@
 import { Model, Sequelize } from 'sequelize';
 import { models, models as Models, sequelize, SQLQueryTypes } from '../config/database';
 import { getSlug, Op, includeTranslation, translatedValue, includeModel, queryWhere } from './_common';
-import {setLang, generateReference,lookupReference} from "scripture-guide";
+import {generateReference,lookupReference} from "scripture-guide";
 
 // Cache for relationship labels to avoid repeated database calls
 const labelsCache = new Map();
@@ -486,15 +486,12 @@ export default {
   },
   Index: {
     slug: async (item: any, args: any, { db, res }: any, info: any) => {
-      const guid = item
-        .getDataValue('text_guid')
-        .getDataValue('text')
-        .getDataValue('page');
+      // Null-safe: index rows without a bom_lookup/text row fall back like a
+      // missing page does, instead of crashing the whole response
+      const text = item.getDataValue('text_guid')?.getDataValue('text');
+      const guid = text?.getDataValue('page');
       if (!guid) return 'contents';
-      const num = item
-        .getDataValue('text_guid')
-        .getDataValue('text')
-        .getDataValue('link');
+      const num = text.getDataValue('link');
       return getSlug('link', guid).then(slug => slug + '/' + num);
     },
     ref: async (item: any, args: any, { lang }: any, info: any) => {
@@ -502,8 +499,7 @@ export default {
       const from =  parseInt(item.getDataValue('verse_id'));
       const to =  parseInt(item.getDataValue('verse_id_end'));
       const range = [...new Set(Array.from({length: to - from + 1}, (_, i) => from + i))];
-      if(lang !== 'en') setLang(lang);
-      const ref = generateReference(range);
+      const ref = generateReference(range, lang as any);
       return `${ref}`;
 
     },

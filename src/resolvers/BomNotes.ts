@@ -146,7 +146,7 @@ export default {
           }
           return versesIds
         }).flat().filter((x:any,i:any,a:any)=>a.indexOf(x) === i);
-        const reference = scripture.generateReference(uniqueVerseIds);
+        const reference = scripture.generateReference(uniqueVerseIds, lang);
         // title of first line 
         const firstLine = lines.find((x:any)=>x.chiasmus_id === chiasmus_id);
         if (!acc[chiasmus_id]) {
@@ -358,7 +358,7 @@ export default {
         const chiasmus_id = item.chiasmus_id;
         if (!acc[chiasmus_id]) {
           acc[chiasmus_id] = {
-            reference: scripture.generateReference([item.verse_id]),
+            reference: scripture.generateReference([item.verse_id], lang),
             title: item.getDataValue('title'),
             scheme: item.line_key,
             chiasmus_id,
@@ -417,13 +417,13 @@ export default {
     }
   },
   Commentary: {
-    reference: (item: any, args: any, { db, res }: any, info: any) => {
+    reference: (item: any, args: any, { db, res, lang }: any, info: any) => {
       let start: number = parseInt(item.getDataValue('verse_id'));
       let end: number = start - 1 + parseInt(item.getDataValue('verse_range'));
       let range: Array<number> = Array(end - start + 1)
         .fill(0)
         .map((_, idx) => start + idx);
-      return scripture.generateReference(range);
+      return scripture.generateReference(range, lang);
     },
     preview: (item: any, args: any, { db, res }: any, info: any) => {
       let text = item.getDataValue('text');

@@ -5,7 +5,7 @@ import { getSlug, Op, includeTranslation, translatedValue, includeModel, include
 import scripture from "../library/scripture"
 import { loadNotesFromTextGuid, loadPeopleFromTextGuid, loadPlacesFromTextGuid } from './BomPeoplePlace';
 import { getBlocksToQueue, getFirstTextBlockGuidFromSlug, organizeRelatedScriptures } from './lib';
-import { lookupReference,generateReference,setLanguage } from 'scripture-guide';
+import { lookupReference,generateReference } from 'scripture-guide';
 import { queryDB } from '../library/db';
 import { loadLines,  loadVerses } from './BomScripture';
 
@@ -234,9 +234,10 @@ queue: async (root: any, args: any, context: any, info: any) => {
 
     read: async (root, args, context, info) => {
       const lang = context.lang || null;
-      setLanguage(lang);
+      // lang passed per call — scripture-guide's setLanguage mutates a process-global
+      // that leaks across requests (docs/bugs/2026-06-09-scripture-guide-global-lang-leak.md)
       const { token } = args;
-      const { verse_ids, ref } = lookupReference(args.ref);
+      const { verse_ids, ref } = lookupReference(args.ref, lang);
       const lines = await loadLines(verse_ids, lang);
       const scripture = await loadVerses(verse_ids, lang);
       const meta = (await Models.LdsScripturesMeta
@@ -245,11 +246,11 @@ queue: async (root: any, args: any, context: any, info: any) => {
 
         console.log({meta})
 
-      const currentChapter = generateReference(verse_ids[0]).replace(/:\d+$/, '');
-      const currentChapterVerseIds = lookupReference(currentChapter).verse_ids;
+      const currentChapter = generateReference(verse_ids[0], lang).replace(/:\d+$/, '');
+      const currentChapterVerseIds = lookupReference(currentChapter, lang).verse_ids;
 
-      let prev_ref = generateReference(currentChapterVerseIds[0] - 1).replace(/:\d+$/, '');
-      let next_ref = generateReference(currentChapterVerseIds[currentChapterVerseIds.length - 1] + 1).replace(/:\d+$/, '');
+      let prev_ref = generateReference(currentChapterVerseIds[0] - 1, lang).replace(/:\d+$/, '');
+      let next_ref = generateReference(currentChapterVerseIds[currentChapterVerseIds.length - 1] + 1, lang).replace(/:\d+$/, '');
       if(currentChapterVerseIds[0] <= 31103) prev_ref = null;
       if(currentChapterVerseIds[currentChapterVerseIds.length - 1] >= 37706) next_ref = null;
 
@@ -291,7 +292,7 @@ queue: async (root: any, args: any, context: any, info: any) => {
         }
     
         const currentBlock = currentSection.blocks[currentSection.blocks.length - 1];
-        const lineRef = generateReference(lineVerseId);
+        const lineRef = generateReference(lineVerseId, lang);
     
         currentBlock.lines.push({
           ref: lineRef,
@@ -317,11 +318,11 @@ queue: async (root: any, args: any, context: any, info: any) => {
     
       sections.forEach(section => {
         section.blocks.forEach((block:any) => {
-          block.ref = generateReference(block.verse_ids);
+          block.ref = generateReference(block.verse_ids, lang);
         });
-    
+
         const verse_ids = Array.from(new Set(section.blocks.map((block:any) => block.verse_ids).flat())).sort((a: any, b: any) => a - b);
-        section.ref = generateReference(verse_ids as number[]);
+        section.ref = generateReference(verse_ids as number[], lang);
       });
     
       return {

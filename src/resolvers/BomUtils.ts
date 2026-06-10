@@ -1,7 +1,7 @@
 import { messenger } from '../library/messenger';
 import { models as Models } from '../config/database';
 import dotenv from 'dotenv';
-import { generateReference, setLang } from 'scripture-guide';
+import { generateReference } from 'scripture-guide';
 import logger from "../library/utils/logger";
 dotenv.config();
 const log = (msg:any,obj?:any) => obj ? logger.info(`utils ${msg} ${JSON.stringify(obj)}`) : logger.info(`utils ${msg}`);
@@ -140,8 +140,7 @@ export default {
 
         const verse_id = item['verse_translation.verse_id'] || item['verse.verse_id'];
         console.log = ()=>{};
-        setLang(isEnglish ? 'en' : lang);
-        const reference = generateReference(verse_id);
+        const reference = generateReference(verse_id, (isEnglish ? 'en' : lang) as any);
         const {person_slug, voice} = speakers.find((x:any)=>x.verse_id===verse_id) || {};
         return {
           pageguid:item['text.parent_page.guid'],

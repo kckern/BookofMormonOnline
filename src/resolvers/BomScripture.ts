@@ -1,5 +1,5 @@
 
-import {lookup, generateReference, setLang, LanguageCode} from "scripture-guide";
+import {lookup, generateReference, LanguageCode} from "scripture-guide";
 import { models as Models } from '../config/database';
 import logger from "../library/utils/logger";
 import { processPassages, loadHeadings } from './lib';
@@ -7,11 +7,13 @@ const log = (msg:any,obj?:any) => obj ? logger.info(`utils ${msg} ${JSON.stringi
 
 export const loadScripture = async (lang:string, reference:string, arg_verse_ids:any, version:string="LDS") => {
 
-    setLang((lang || "en") as LanguageCode);
-    const backupVerse_ids = lookup(reference)?.verse_ids;
+    // lang passed per call — scripture-guide's setLang mutates a process-global
+    // that leaks across requests (docs/bugs/2026-06-09-scripture-guide-global-lang-leak.md)
+    const langCode = (lang || "en") as LanguageCode;
+    const backupVerse_ids = lookup(reference, langCode)?.verse_ids;
     try{
 
-        let { verse_ids, ref } = arg_verse_ids ?   { verse_ids: arg_verse_ids, ref: generateReference(arg_verse_ids) }  : lookup(reference);
+        let { verse_ids, ref } = arg_verse_ids ?   { verse_ids: arg_verse_ids, ref: generateReference(arg_verse_ids, langCode) }  : lookup(reference, langCode);
         if(!verse_ids.length && backupVerse_ids.length) verse_ids = backupVerse_ids;
         const config = { raw:true, where: {  verse_id:verse_ids  } };
         const versedata = await Models.LdsScripturesVerses.findAll(config);
