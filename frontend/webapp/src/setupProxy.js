@@ -6,7 +6,7 @@ const BACKEND_URL = process.env.REACT_APP_LOCAL_BACKEND === 'true'
   : 'https://bookofmormon.online';
 
 const API_PATHS = [
-  '/graphql', '/api',
+  '/graphql', '/api', '/messenger', // /messenger = green-field socket.io (WS upgrade)
   '/en', '/es', '/fr', '/de', '/ko', '/vn', '/tr', '/ru', '/tgl', '/slv', '/swe',
 ];
 
@@ -25,6 +25,7 @@ module.exports = function(app) {
       target: BACKEND_URL,
       changeOrigin: true,
       secure: BACKEND_URL.startsWith('https'),
+      ws: true, // proxy the socket.io WebSocket upgrade on /messenger
       pathFilter: isApiPath,
     })
   );

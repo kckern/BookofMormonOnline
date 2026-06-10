@@ -79,8 +79,31 @@ bot-authored triggers) + per-channel in-flight debounce.
 
 ## Cutover
 
-The realtime server initializes on backend boot (no `MESSENGER_ENABLED` gate in the
-green-field — Sendbird is simply absent). To go live, point the client's messaging base
-URL at the green-field origin (:5006); the client's `/messenger` path + `{userId,token}`
-auth already match. File uploads (`messenger_files`) are deferred (reuse the profile-image
-S3 work when it lands).
+The realtime server initializes on backend boot (`MESSENGER_ENABLED=false` is the
+kill-switch → GraphQL-only). To go live, the app's `/graphql` and `/messenger` must reach
+the green-field backend (which serves the full read surface + community + `messenger*` +
+sockets).
+
+### Frontend wiring (done)
+
+- `MessengerController` connects socket.io to `window.location.origin` path `/messenger`
+  and POSTs `/graphql` with `Authorization: Bearer <token>` — all relative, no client URL
+  change needed; it follows wherever the app is served/proxied.
+- The `messenger*` GraphQL surface (`backend/schema/Messenger.graphql` +
+  `resolvers/messenger.ts`) matches the controller's selections verbatim; `_normalize*`
+  consume the shapes unchanged. The only controller edit was quoting string message IDs
+  (`before`/`messageId`/`parentMessageId` are nanoid `String`s).
+- `frontend/webapp/src/setupProxy.js` proxies `/messenger` (with `ws:true` for the
+  socket.io upgrade) and `/graphql` to `BACKEND_URL`. For the dev CRA server to hit the
+  green-field backend, point `BACKEND_URL`/`REACT_APP_LOCAL_BACKEND` at the green-field
+  origin (the green-field serves both the legacy community surface and `messenger*`, so no
+  per-operation split is needed — the whole backend flips together).
+
+### Backend
+
+`messenger*` resolvers identify the acting user from the `Authorization: Bearer <token>`
+header (wired into the GraphQL context). Single instance + in-process presence needs no
+Redis (set `REDIS_URL` only when scaling horizontally).
+
+File uploads (`messenger_files`) are deferred (reuse the profile-image S3 work when it
+lands).

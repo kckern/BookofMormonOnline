@@ -424,7 +424,7 @@ export default class MessengerController {
     
     try {
       const query = `query { 
-        messengerMessages(channelUrl: "${channelUrl}", before: ${id}, limit: ${limit}) { 
+        messengerMessages(channelUrl: "${channelUrl}", before: "${id}", limit: ${limit}) {
           message_id 
           channel_url 
           user_id
@@ -461,7 +461,7 @@ export default class MessengerController {
     
     try {
       const query = `query { 
-        messengerThreadMessages(parentMessageId: ${parentId}) {
+        messengerThreadMessages(parentMessageId: "${parentId}") {
           message_id 
           channel_url 
           user_id
@@ -1208,7 +1208,7 @@ export default class MessengerController {
       message: {
         getMessage: async (params) => {
           const query = `query {
-            messengerMessage(messageId: ${params.messageId}) {
+            messengerMessage(messageId: "${params.messageId}") {
               message_id
               channel_url
               user_id
