@@ -52,7 +52,12 @@ Schema was de-duplicated (dead `BomMessenger.graphql` removed). ✓
 
 ## Gaps & conformance issues (prioritized)
 
-### P1 — must resolve before a staging cutover
+> **Status 2026-06-10: P1 + P2 are DONE.** Socket layer verified fully wired (DB + event
+> bus, end-to-end). Shipped: reaction-sync contract fix (`05bcafc`), socket integration
+> tests (`d502b7a`), operator gates + unmasked writes + shortlink dedupe + user_left/
+> user_state (`f81ab79`). 170 backend tests green. Remaining: **P3 + production-readiness**.
+
+### P1 — DONE
 
 1. **Reaction-sync contract is unverified and likely broken.**
    - Backend `reaction_changed` payload = `{channelUrl, messageId, reactions: [{reaction_key, user_ids}]}`.
@@ -74,7 +79,7 @@ Schema was de-duplicated (dead `BomMessenger.graphql` removed). ✓
    any authenticated user can rename/redescribe any channel. Add an operator check like the
    other channel mutations. (Security.)
 
-### P2 — cleanup / consistency
+### P2 — DONE
 
 4. **`user_left` vs `membership_changed`.** Functionally redundant today (both call
    `refreshChannel`), so nothing is broken — but make it intentional: either emit `user_left`
