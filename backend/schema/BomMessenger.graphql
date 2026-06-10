@@ -110,7 +110,7 @@ extend type Query {
   """Get messages for a channel"""
   messengerMessages(channelUrl: String!, before: String, limit: Int): [MessengerMessage!]!
   """Get a single message by ID"""
-  messengerMessage(channelUrl: String!, messageId: String!): MessengerMessage
+  messengerMessage(channelUrl: String, messageId: String): MessengerMessage
   """Get thread (replies) for a message"""
   messengerThread(parentMessageId: String!): [MessengerMessage!]!
   """Get channel members"""

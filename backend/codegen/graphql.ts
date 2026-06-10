@@ -355,6 +355,7 @@ export type MessengerChannel = {
   created_at?: Maybe<Scalars['Float']['output']>;
   custom_type: Scalars['String']['output'];
   data?: Maybe<Scalars['String']['output']>;
+  description?: Maybe<Scalars['String']['output']>;
   lang?: Maybe<Scalars['String']['output']>;
   last_message?: Maybe<MessengerMessage>;
   member_count?: Maybe<Scalars['Int']['output']>;
@@ -408,6 +409,8 @@ export type MessengerMessage = {
   created_at: Scalars['Float']['output'];
   custom_type?: Maybe<Scalars['String']['output']>;
   data?: Maybe<Scalars['String']['output']>;
+  link_target?: Maybe<Scalars['String']['output']>;
+  link_type?: Maybe<Scalars['String']['output']>;
   message: Scalars['String']['output'];
   message_id: Scalars['String']['output'];
   message_type: Scalars['String']['output'];
@@ -416,6 +419,7 @@ export type MessengerMessage = {
   thread_info?: Maybe<MessengerThreadInfo>;
   updated_at?: Maybe<Scalars['Float']['output']>;
   user?: Maybe<MessengerUser>;
+  user_id?: Maybe<Scalars['String']['output']>;
 };
 
 export type MessengerPostMessageInput = {
@@ -433,6 +437,7 @@ export type MessengerPostMessageInput = {
 export type MessengerReaction = {
   __typename?: 'MessengerReaction';
   key: Scalars['String']['output'];
+  reaction_key?: Maybe<Scalars['String']['output']>;
   user_ids: Array<Scalars['String']['output']>;
 };
 
@@ -440,6 +445,13 @@ export type MessengerThreadInfo = {
   __typename?: 'MessengerThreadInfo';
   most_replies?: Maybe<Array<MessengerUser>>;
   reply_count: Scalars['Int']['output'];
+};
+
+export type MessengerUnreadDm = {
+  __typename?: 'MessengerUnreadDM';
+  channel_url?: Maybe<Scalars['String']['output']>;
+  other_user_id?: Maybe<Scalars['String']['output']>;
+  unread_count?: Maybe<Scalars['Int']['output']>;
 };
 
 export type MessengerUser = {
@@ -462,14 +474,17 @@ export type Mutation = {
   joinGroup?: Maybe<JoinedGroup>;
   joinOpenGroup?: Maybe<JoinedGroup>;
   log?: Maybe<LogResult>;
+  messengerAcceptInvitation?: Maybe<Scalars['Boolean']['output']>;
   /** Add user to channel */
   messengerAddMember: Scalars['Boolean']['output'];
   /** Add reaction to a message */
   messengerAddReaction: Scalars['Boolean']['output'];
   /** Create a new channel */
   messengerCreateChannel: MessengerChannel;
+  messengerDeclineInvitation?: Maybe<Scalars['Boolean']['output']>;
   /** Delete a message (soft delete) */
   messengerDeleteMessage: Scalars['Boolean']['output'];
+  messengerInviteMembers?: Maybe<Scalars['Boolean']['output']>;
   /** Mark channel as read */
   messengerMarkAsRead: Scalars['Boolean']['output'];
   /** Post a new message */
@@ -480,12 +495,15 @@ export type Mutation = {
   messengerRemoveReaction: Scalars['Boolean']['output'];
   /** Set user online/offline status */
   messengerSetOnline: Scalars['Boolean']['output'];
+  messengerUpdateChannel?: Maybe<MessengerChannel>;
+  messengerUpdateMemberRole?: Maybe<Scalars['Boolean']['output']>;
   /** Update a message */
   messengerUpdateMessage?: Maybe<MessengerMessage>;
   /** Update user nickname */
   messengerUpdateNickname: Scalars['Boolean']['output'];
   /** Update user profile URL */
   messengerUpdateProfileUrl: Scalars['Boolean']['output'];
+  messengerUpdateUser?: Maybe<MessengerUser>;
   /** Update user metadata */
   messengerUpdateUserMetadata: Scalars['Boolean']['output'];
   /** Create or update a user */
@@ -541,6 +559,12 @@ export type MutationLogArgs = {
 };
 
 
+export type MutationMessengerAcceptInvitationArgs = {
+  channelUrl?: InputMaybe<Scalars['String']['input']>;
+  userId?: InputMaybe<Scalars['String']['input']>;
+};
+
+
 export type MutationMessengerAddMemberArgs = {
   channelUrl: Scalars['String']['input'];
   role?: InputMaybe<Scalars['String']['input']>;
@@ -556,13 +580,30 @@ export type MutationMessengerAddReactionArgs = {
 
 
 export type MutationMessengerCreateChannelArgs = {
+  coverUrl?: InputMaybe<Scalars['String']['input']>;
+  customType?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
   input: MessengerCreateChannelInput;
+  name?: InputMaybe<Scalars['String']['input']>;
+  operatorIds?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type MutationMessengerDeclineInvitationArgs = {
+  channelUrl?: InputMaybe<Scalars['String']['input']>;
+  userId?: InputMaybe<Scalars['String']['input']>;
 };
 
 
 export type MutationMessengerDeleteMessageArgs = {
   channelUrl: Scalars['String']['input'];
   messageId: Scalars['String']['input'];
+};
+
+
+export type MutationMessengerInviteMembersArgs = {
+  channelUrl?: InputMaybe<Scalars['String']['input']>;
+  userIds?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
 };
 
 
@@ -578,8 +619,8 @@ export type MutationMessengerPostMessageArgs = {
 
 
 export type MutationMessengerRemoveMemberArgs = {
-  channelUrl: Scalars['String']['input'];
-  userId: Scalars['String']['input'];
+  channelUrl?: InputMaybe<Scalars['String']['input']>;
+  userId?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -593,6 +634,20 @@ export type MutationMessengerRemoveReactionArgs = {
 export type MutationMessengerSetOnlineArgs = {
   isOnline: Scalars['Boolean']['input'];
   userId: Scalars['String']['input'];
+};
+
+
+export type MutationMessengerUpdateChannelArgs = {
+  channelUrl?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type MutationMessengerUpdateMemberRoleArgs = {
+  channelUrl?: InputMaybe<Scalars['String']['input']>;
+  role?: InputMaybe<Scalars['String']['input']>;
+  userId?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -619,9 +674,16 @@ export type MutationMessengerUpdateProfileUrlArgs = {
 };
 
 
+export type MutationMessengerUpdateUserArgs = {
+  nickname?: InputMaybe<Scalars['String']['input']>;
+  profileUrl?: InputMaybe<Scalars['String']['input']>;
+  userId?: InputMaybe<Scalars['String']['input']>;
+};
+
+
 export type MutationMessengerUpdateUserMetadataArgs = {
-  metadata: Scalars['JSON']['input'];
-  userId: Scalars['String']['input'];
+  metadata?: InputMaybe<Scalars['String']['input']>;
+  userId?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -898,6 +960,7 @@ export type Query = {
   messengerBots: Array<MessengerUser>;
   /** Get a channel by URL */
   messengerChannel?: Maybe<MessengerChannel>;
+  messengerChannelOperators?: Maybe<Array<Maybe<MessengerUser>>>;
   /** Get channel members */
   messengerMembers: Array<MessengerMember>;
   /** Get a single message by ID */
@@ -910,8 +973,10 @@ export type Query = {
   messengerPublicChannels: Array<MessengerChannel>;
   /** Get thread (replies) for a message */
   messengerThread: Array<MessengerMessage>;
+  messengerThreadMessages?: Maybe<Array<Maybe<MessengerMessage>>>;
   /** Get unread count for a user in a channel */
   messengerUnreadCount: Scalars['Int']['output'];
+  messengerUnreadDMs?: Maybe<Array<Maybe<MessengerUnreadDm>>>;
   /** Get a user by ID */
   messengerUser?: Maybe<MessengerUser>;
   /** Get multiple users by IDs */
@@ -1075,7 +1140,12 @@ export type QueryMessengerBotsArgs = {
 
 
 export type QueryMessengerChannelArgs = {
-  channelUrl: Scalars['String']['input'];
+  channelUrl?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryMessengerChannelOperatorsArgs = {
+  channelUrl?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -1085,14 +1155,14 @@ export type QueryMessengerMembersArgs = {
 
 
 export type QueryMessengerMessageArgs = {
-  channelUrl: Scalars['String']['input'];
-  messageId: Scalars['String']['input'];
+  channelUrl?: InputMaybe<Scalars['String']['input']>;
+  messageId?: InputMaybe<Scalars['String']['input']>;
 };
 
 
 export type QueryMessengerMessagesArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
-  channelUrl: Scalars['String']['input'];
+  channelUrl?: InputMaybe<Scalars['String']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
 };
 
@@ -1100,7 +1170,7 @@ export type QueryMessengerMessagesArgs = {
 export type QueryMessengerMyChannelsArgs = {
   customTypes?: InputMaybe<Array<Scalars['String']['input']>>;
   limit?: InputMaybe<Scalars['Int']['input']>;
-  userId: Scalars['String']['input'];
+  userId?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -1116,14 +1186,24 @@ export type QueryMessengerThreadArgs = {
 };
 
 
+export type QueryMessengerThreadMessagesArgs = {
+  parentMessageId?: InputMaybe<Scalars['String']['input']>;
+};
+
+
 export type QueryMessengerUnreadCountArgs = {
   channelUrl: Scalars['String']['input'];
   userId: Scalars['String']['input'];
 };
 
 
+export type QueryMessengerUnreadDMsArgs = {
+  userId?: InputMaybe<Scalars['String']['input']>;
+};
+
+
 export type QueryMessengerUserArgs = {
-  userId: Scalars['String']['input'];
+  userId?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -1793,6 +1873,7 @@ export type ResolversTypes = {
   MessengerPostMessageInput: ResolverTypeWrapper<Partial<MessengerPostMessageInput>>;
   MessengerReaction: ResolverTypeWrapper<Partial<MessengerReaction>>;
   MessengerThreadInfo: ResolverTypeWrapper<Partial<MessengerThreadInfo>>;
+  MessengerUnreadDM: ResolverTypeWrapper<Partial<MessengerUnreadDm>>;
   MessengerUser: ResolverTypeWrapper<Partial<MessengerUser>>;
   Mutation: ResolverTypeWrapper<{}>;
   Narration: ResolverTypeWrapper<Partial<Narration>>;
@@ -1891,6 +1972,7 @@ export type ResolversParentTypes = {
   MessengerPostMessageInput: Partial<MessengerPostMessageInput>;
   MessengerReaction: Partial<MessengerReaction>;
   MessengerThreadInfo: Partial<MessengerThreadInfo>;
+  MessengerUnreadDM: Partial<MessengerUnreadDm>;
   MessengerUser: Partial<MessengerUser>;
   Mutation: {};
   Narration: Partial<Narration>;
@@ -2280,6 +2362,7 @@ export type MessengerChannelResolvers<ContextType = AppContext, ParentType exten
   created_at?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   custom_type?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   data?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   lang?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   last_message?: Resolver<Maybe<ResolversTypes['MessengerMessage']>, ParentType, ContextType>;
   member_count?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
@@ -2315,6 +2398,8 @@ export type MessengerMessageResolvers<ContextType = AppContext, ParentType exten
   created_at?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   custom_type?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   data?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  link_target?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  link_type?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   message_id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   message_type?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -2323,11 +2408,13 @@ export type MessengerMessageResolvers<ContextType = AppContext, ParentType exten
   thread_info?: Resolver<Maybe<ResolversTypes['MessengerThreadInfo']>, ParentType, ContextType>;
   updated_at?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   user?: Resolver<Maybe<ResolversTypes['MessengerUser']>, ParentType, ContextType>;
+  user_id?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type MessengerReactionResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['MessengerReaction'] = ResolversParentTypes['MessengerReaction']> = {
   key?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  reaction_key?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   user_ids?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
@@ -2335,6 +2422,13 @@ export type MessengerReactionResolvers<ContextType = AppContext, ParentType exte
 export type MessengerThreadInfoResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['MessengerThreadInfo'] = ResolversParentTypes['MessengerThreadInfo']> = {
   most_replies?: Resolver<Maybe<Array<ResolversTypes['MessengerUser']>>, ParentType, ContextType>;
   reply_count?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type MessengerUnreadDmResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['MessengerUnreadDM'] = ResolversParentTypes['MessengerUnreadDM']> = {
+  channel_url?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  other_user_id?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  unread_count?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -2357,19 +2451,25 @@ export type MutationResolvers<ContextType = AppContext, ParentType extends Resol
   joinGroup?: Resolver<Maybe<ResolversTypes['JoinedGroup']>, ParentType, ContextType, Partial<MutationJoinGroupArgs>>;
   joinOpenGroup?: Resolver<Maybe<ResolversTypes['JoinedGroup']>, ParentType, ContextType, Partial<MutationJoinOpenGroupArgs>>;
   log?: Resolver<Maybe<ResolversTypes['LogResult']>, ParentType, ContextType, RequireFields<MutationLogArgs, 'key' | 'token'>>;
+  messengerAcceptInvitation?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, Partial<MutationMessengerAcceptInvitationArgs>>;
   messengerAddMember?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationMessengerAddMemberArgs, 'channelUrl' | 'userId'>>;
   messengerAddReaction?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationMessengerAddReactionArgs, 'messageId' | 'reactionKey' | 'userId'>>;
   messengerCreateChannel?: Resolver<ResolversTypes['MessengerChannel'], ParentType, ContextType, RequireFields<MutationMessengerCreateChannelArgs, 'input'>>;
+  messengerDeclineInvitation?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, Partial<MutationMessengerDeclineInvitationArgs>>;
   messengerDeleteMessage?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationMessengerDeleteMessageArgs, 'channelUrl' | 'messageId'>>;
+  messengerInviteMembers?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, Partial<MutationMessengerInviteMembersArgs>>;
   messengerMarkAsRead?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationMessengerMarkAsReadArgs, 'channelUrl' | 'userId'>>;
   messengerPostMessage?: Resolver<ResolversTypes['MessengerMessage'], ParentType, ContextType, RequireFields<MutationMessengerPostMessageArgs, 'input'>>;
-  messengerRemoveMember?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationMessengerRemoveMemberArgs, 'channelUrl' | 'userId'>>;
+  messengerRemoveMember?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, Partial<MutationMessengerRemoveMemberArgs>>;
   messengerRemoveReaction?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationMessengerRemoveReactionArgs, 'messageId' | 'reactionKey' | 'userId'>>;
   messengerSetOnline?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationMessengerSetOnlineArgs, 'isOnline' | 'userId'>>;
+  messengerUpdateChannel?: Resolver<Maybe<ResolversTypes['MessengerChannel']>, ParentType, ContextType, Partial<MutationMessengerUpdateChannelArgs>>;
+  messengerUpdateMemberRole?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, Partial<MutationMessengerUpdateMemberRoleArgs>>;
   messengerUpdateMessage?: Resolver<Maybe<ResolversTypes['MessengerMessage']>, ParentType, ContextType, RequireFields<MutationMessengerUpdateMessageArgs, 'channelUrl' | 'messageId'>>;
   messengerUpdateNickname?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationMessengerUpdateNicknameArgs, 'nickname' | 'userId'>>;
   messengerUpdateProfileUrl?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationMessengerUpdateProfileUrlArgs, 'profileUrl' | 'userId'>>;
-  messengerUpdateUserMetadata?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationMessengerUpdateUserMetadataArgs, 'metadata' | 'userId'>>;
+  messengerUpdateUser?: Resolver<Maybe<ResolversTypes['MessengerUser']>, ParentType, ContextType, Partial<MutationMessengerUpdateUserArgs>>;
+  messengerUpdateUserMetadata?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, Partial<MutationMessengerUpdateUserMetadataArgs>>;
   messengerUpsertUser?: Resolver<ResolversTypes['MessengerUser'], ParentType, ContextType, RequireFields<MutationMessengerUpsertUserArgs, 'userId'>>;
   processRequest?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, Partial<MutationProcessRequestArgs>>;
   removeBot?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, Partial<MutationRemoveBotArgs>>;
@@ -2583,15 +2683,18 @@ export type QueryResolvers<ContextType = AppContext, ParentType extends Resolver
   markdown?: Resolver<Maybe<Array<Maybe<ResolversTypes['Markdown']>>>, ParentType, ContextType, Partial<QueryMarkdownArgs>>;
   menu?: Resolver<Maybe<Array<Maybe<ResolversTypes['Menu']>>>, ParentType, ContextType, Partial<QueryMenuArgs>>;
   messengerBots?: Resolver<Array<ResolversTypes['MessengerUser']>, ParentType, ContextType, Partial<QueryMessengerBotsArgs>>;
-  messengerChannel?: Resolver<Maybe<ResolversTypes['MessengerChannel']>, ParentType, ContextType, RequireFields<QueryMessengerChannelArgs, 'channelUrl'>>;
+  messengerChannel?: Resolver<Maybe<ResolversTypes['MessengerChannel']>, ParentType, ContextType, Partial<QueryMessengerChannelArgs>>;
+  messengerChannelOperators?: Resolver<Maybe<Array<Maybe<ResolversTypes['MessengerUser']>>>, ParentType, ContextType, Partial<QueryMessengerChannelOperatorsArgs>>;
   messengerMembers?: Resolver<Array<ResolversTypes['MessengerMember']>, ParentType, ContextType, RequireFields<QueryMessengerMembersArgs, 'channelUrl'>>;
-  messengerMessage?: Resolver<Maybe<ResolversTypes['MessengerMessage']>, ParentType, ContextType, RequireFields<QueryMessengerMessageArgs, 'channelUrl' | 'messageId'>>;
-  messengerMessages?: Resolver<Array<ResolversTypes['MessengerMessage']>, ParentType, ContextType, RequireFields<QueryMessengerMessagesArgs, 'channelUrl'>>;
-  messengerMyChannels?: Resolver<Array<ResolversTypes['MessengerChannel']>, ParentType, ContextType, RequireFields<QueryMessengerMyChannelsArgs, 'userId'>>;
+  messengerMessage?: Resolver<Maybe<ResolversTypes['MessengerMessage']>, ParentType, ContextType, Partial<QueryMessengerMessageArgs>>;
+  messengerMessages?: Resolver<Array<ResolversTypes['MessengerMessage']>, ParentType, ContextType, Partial<QueryMessengerMessagesArgs>>;
+  messengerMyChannels?: Resolver<Array<ResolversTypes['MessengerChannel']>, ParentType, ContextType, Partial<QueryMessengerMyChannelsArgs>>;
   messengerPublicChannels?: Resolver<Array<ResolversTypes['MessengerChannel']>, ParentType, ContextType, Partial<QueryMessengerPublicChannelsArgs>>;
   messengerThread?: Resolver<Array<ResolversTypes['MessengerMessage']>, ParentType, ContextType, RequireFields<QueryMessengerThreadArgs, 'parentMessageId'>>;
+  messengerThreadMessages?: Resolver<Maybe<Array<Maybe<ResolversTypes['MessengerMessage']>>>, ParentType, ContextType, Partial<QueryMessengerThreadMessagesArgs>>;
   messengerUnreadCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType, RequireFields<QueryMessengerUnreadCountArgs, 'channelUrl' | 'userId'>>;
-  messengerUser?: Resolver<Maybe<ResolversTypes['MessengerUser']>, ParentType, ContextType, RequireFields<QueryMessengerUserArgs, 'userId'>>;
+  messengerUnreadDMs?: Resolver<Maybe<Array<Maybe<ResolversTypes['MessengerUnreadDM']>>>, ParentType, ContextType, Partial<QueryMessengerUnreadDMsArgs>>;
+  messengerUser?: Resolver<Maybe<ResolversTypes['MessengerUser']>, ParentType, ContextType, Partial<QueryMessengerUserArgs>>;
   messengerUsers?: Resolver<Array<ResolversTypes['MessengerUser']>, ParentType, ContextType, RequireFields<QueryMessengerUsersArgs, 'userIds'>>;
   moregroups?: Resolver<Maybe<Array<Maybe<ResolversTypes['HomeGroup']>>>, ParentType, ContextType, Partial<QueryMoregroupsArgs>>;
   object?: Resolver<Maybe<Array<Maybe<ResolversTypes['Object']>>>, ParentType, ContextType, Partial<QueryObjectArgs>>;
@@ -3018,6 +3121,7 @@ export type Resolvers<ContextType = AppContext> = {
   MessengerMessage?: MessengerMessageResolvers<ContextType>;
   MessengerReaction?: MessengerReactionResolvers<ContextType>;
   MessengerThreadInfo?: MessengerThreadInfoResolvers<ContextType>;
+  MessengerUnreadDM?: MessengerUnreadDmResolvers<ContextType>;
   MessengerUser?: MessengerUserResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
   Narration?: NarrationResolvers<ContextType>;
