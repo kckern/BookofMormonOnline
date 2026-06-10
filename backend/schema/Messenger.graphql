@@ -1,0 +1,87 @@
+extend type Query {
+  messengerUser(userId: String): MessengerUser
+  messengerMyChannels(userId: String): [MessengerChannel]
+  messengerChannel(channelUrl: String): MessengerChannel
+  messengerChannelOperators(channelUrl: String): [MessengerUser]
+  messengerMessages(channelUrl: String, limit: Int, before: String): [MessengerMessage]
+  messengerMessage(messageId: String): MessengerMessage
+  messengerThreadMessages(parentMessageId: String): [MessengerMessage]
+  messengerUnreadDMs(userId: String): [MessengerUnreadDM]
+}
+
+extend type Mutation {
+  messengerCreateChannel(name: String, customType: String, description: String, coverUrl: String, operatorIds: [String]): MessengerChannel
+  messengerUpdateChannel(channelUrl: String, name: String, description: String): MessengerChannel
+  messengerUpdateUser(userId: String, nickname: String, profileUrl: String): MessengerUser
+  messengerUpdateUserMetadata(userId: String, metadata: String): Boolean
+  messengerUpdateMemberRole(channelUrl: String, userId: String, role: String): Boolean
+  messengerRemoveMember(channelUrl: String, userId: String): Boolean
+  messengerInviteMembers(channelUrl: String, userIds: [String]): Boolean
+  messengerAcceptInvitation(channelUrl: String, userId: String): Boolean
+  messengerDeclineInvitation(channelUrl: String, userId: String): Boolean
+}
+
+type MessengerUser {
+  user_id: String
+  nickname: String
+  profile_url: String
+  metadata: JSON
+  is_online: Boolean
+  is_bot: Boolean
+  last_seen_at: Float
+}
+
+type MessengerMember {
+  user_id: String
+  nickname: String
+  profile_url: String
+  role: String
+  state: String
+}
+
+type MessengerThreadInfo {
+  reply_count: Int
+}
+
+type MessengerReaction {
+  reaction_key: String
+  user_ids: [String]
+}
+
+type MessengerMessage {
+  message_id: String
+  channel_url: String
+  user_id: String
+  user: MessengerUser
+  message_type: String
+  message: String
+  custom_type: String
+  link_type: String
+  link_target: String
+  parent_message_id: String
+  thread_info: MessengerThreadInfo
+  reactions: [MessengerReaction]
+  created_at: Float
+  updated_at: Float
+}
+
+type MessengerChannel {
+  channel_url: String
+  name: String
+  cover_url: String
+  custom_type: String
+  description: String
+  metadata: JSON
+  member_count: Int
+  unread_message_count: Int
+  last_message: MessengerMessage
+  members: [MessengerMember]
+  created_at: Float
+  lang: String
+}
+
+type MessengerUnreadDM {
+  channel_url: String
+  other_user_id: String
+  unread_count: Int
+}

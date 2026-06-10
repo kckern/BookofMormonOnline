@@ -49,6 +49,8 @@ export interface AppContext {
   sandbox: boolean;
   /** Per-request IP (legacy `log` stores it); resolved from headers in index.ts. */
   ip: string;
+  /** Bearer token from the Authorization header — messenger* resolvers resolve the acting user from it. */
+  bearerToken?: string;
   /** Writable Kysely instance — wrap writes in runWrite() for sandbox safety. */
   db: Kysely<DB>;
   services: Services;
@@ -56,7 +58,7 @@ export interface AppContext {
 }
 
 /** Per-request context: lang-bound services + loaders, no shared mutable language state. */
-export function buildContext(db: Kysely<DB>, lang: string, ip = ''): AppContext {
+export function buildContext(db: Kysely<DB>, lang: string, ip = '', bearerToken?: string): AppContext {
   const core = createLoaders(db, lang);
   const loaders: AllLoaders = {
     ...core,
@@ -78,6 +80,7 @@ export function buildContext(db: Kysely<DB>, lang: string, ip = ''): AppContext 
     lang,
     sandbox: env.SANDBOX,
     ip,
+    bearerToken,
     db,
     services: {
       labels: new LabelsService(new LabelsRepository(db, core.translator)),

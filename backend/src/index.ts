@@ -16,7 +16,7 @@ const app = Fastify({
 
 const db = getDb();
 
-const yoga = createYoga<{ lang: string; ip: string }, AppContext>({
+const yoga = createYoga<{ lang: string; ip: string; bearerToken?: string }, AppContext>({
   schema: buildSchema(),
   graphqlEndpoint: '/graphql',
   landingPage: false,
@@ -24,7 +24,7 @@ const yoga = createYoga<{ lang: string; ip: string }, AppContext>({
   // regression baselines pin them — Yoga's default masking would break parity.
   maskedErrors: false,
   logging: app.log,
-  context: ({ lang, ip }) => buildContext(db, lang, ip),
+  context: ({ lang, ip, bearerToken }) => buildContext(db, lang, ip, bearerToken),
   plugins: [
     // COMPAT: pin the graphql-js executor — it builds response maps in
     // selection order (spec); Yoga's default executor appends keys in
@@ -47,6 +47,11 @@ const graphqlHandler = async (req: FastifyRequest, reply: FastifyReply) => {
   const lang = resolveLang(req.headers.host, req.url);
   const fwd = req.headers['x-forwarded-for'];
   const ip = (Array.isArray(fwd) ? fwd[0] : fwd) || req.ip || '';
+  // messenger* resolvers identify the acting user from the Bearer token (the
+  // frontend MessengerController's gqlRequest sends Authorization: Bearer <token>).
+  const authz = req.headers['authorization'];
+  const bearerToken =
+    typeof authz === 'string' && authz.startsWith('Bearer ') ? authz.slice(7) : undefined;
   const response = await yoga.fetch(
     new URL('http://yoga/graphql'),
     {
@@ -54,7 +59,7 @@ const graphqlHandler = async (req: FastifyRequest, reply: FastifyReply) => {
       headers: { 'content-type': req.headers['content-type'] ?? 'application/json' },
       body: req.method === 'POST' ? JSON.stringify(req.body) : undefined,
     },
-    { lang, ip },
+    { lang, ip, bearerToken },
   );
   reply.status(response.status);
   response.headers.forEach((value, key) => {
