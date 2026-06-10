@@ -143,6 +143,16 @@ Generated once by `harvest.mjs` against prod, then committed and stable. Per que
   - `fax`: filter input form vs `faxIndex` slug form
   - `search`: single-word, multi-word, no-results term
 
+## Language priming
+
+The backend mutates a process-global `scripture-guide` language per request and leaks it
+across requests (see `docs/bugs/2026-06-09-scripture-guide-global-lang-leak.md`), so an
+English response can contain Korean generated references depending on what the process
+served last. To make capture and verify deterministic, the runner POSTs a trivial
+scripture query to the target in the case's language immediately before every case,
+forcing the global to a known state. Baselines therefore freeze **steady-state
+per-language** behavior — which remains the correct expectation after the leak is fixed.
+
 ## Volatility tiers
 
 Declared per query in the matrix; normalization runs before capture and before compare,
