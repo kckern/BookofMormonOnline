@@ -4,7 +4,10 @@
  * Functions accept an explicit `db: Kysely<DB>` so tests can inject a real
  * connection and callers can pass the singleton from `getDb()`.
  *
- * is_online is NOT tracked here (presence is Task 2.x); it always returns false.
+ * is_online is resolved via the presence service (Redis-backed).  When Redis
+ * is unavailable, presence functions degrade to false / [] so behaviour is
+ * identical to the previous hardcoded-false implementation — existing tests
+ * remain green.
  * last_seen_at is stored as a DATETIME column; we return it as ms-epoch or null.
  * metadata is a JSON column — mysql2 may deliver it pre-parsed or as a string.
  * is_bot is a TINYINT(1); mysql2 may deliver 0/1 as a number — coerce to boolean.
@@ -13,6 +16,7 @@
 import type { Kysely } from 'kysely';
 import type { DB } from '../../codegen/db.js';
 import type { UserDTO } from './dto.js';
+import { isOnline, onlineUserIds } from './presence.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -41,13 +45,13 @@ function parseMetadata(raw: unknown): Record<string, unknown> | null {
   return null;
 }
 
-function toUserDTO(row: RawUser): UserDTO {
+function toUserDTO(row: RawUser, online = false): UserDTO {
   return {
     user_id: row.user_id,
     nickname: row.nickname || row.user_id,
     profile_url: row.profile_url ?? '',
     metadata: parseMetadata(row.metadata),
-    is_online: false, // presence is Task 2.x
+    is_online: online,
     last_seen_at: row.last_seen_at ? new Date(row.last_seen_at).getTime() : null,
     is_bot: Boolean(row.is_bot),
   };
@@ -68,7 +72,9 @@ export async function getUser(
     .where('user_id', '=', userId)
     .executeTakeFirst();
 
-  return row ? toUserDTO(row as RawUser) : null;
+  if (!row) return null;
+  const online = await isOnline(userId);
+  return toUserDTO(row as RawUser, online);
 }
 
 /** Get multiple users by IDs. Returns an array (empty if userIds is empty). */
@@ -77,13 +83,19 @@ export async function getUsers(
   userIds: string[],
 ): Promise<UserDTO[]> {
   if (userIds.length === 0) return [];
-  const rows = await db
-    .selectFrom('messenger_users')
-    .select(['user_id', 'nickname', 'profile_url', 'metadata', 'is_bot', 'last_seen_at'])
-    .where('user_id', 'in', userIds)
-    .execute();
 
-  return rows.map(r => toUserDTO(r as RawUser));
+  // Fetch DB rows and the full online set in parallel to avoid N+1 presence calls.
+  const [rows, onlineIds] = await Promise.all([
+    db
+      .selectFrom('messenger_users')
+      .select(['user_id', 'nickname', 'profile_url', 'metadata', 'is_bot', 'last_seen_at'])
+      .where('user_id', 'in', userIds)
+      .execute(),
+    onlineUserIds(),
+  ]);
+
+  const onlineSet = new Set(onlineIds);
+  return rows.map(r => toUserDTO(r as RawUser, onlineSet.has(r.user_id)));
 }
 
 /** Insert or update a user row. Returns the resulting UserDTO. */
