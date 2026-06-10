@@ -9,7 +9,7 @@ import type { AppContext } from '../context.js';
 import { md5 } from '../../auth/identity.js';
 import { getUser, updateUserNickname, updateUserProfileUrl, updateUserMetadata } from '../../messaging/users.js';
 import { getChannel, getMyChannels, createChannel } from '../../messaging/channels.js';
-import { getChannelMembers, addUserToChannel, removeUserFromChannel } from '../../messaging/members.js';
+import { getChannelMembers, addUserToChannel, removeUserFromChannel, setMemberMuted } from '../../messaging/members.js';
 import { getMessages, getMessage, getThread } from '../../messaging/messages.js';
 import { getBus } from '../../realtime/RealtimeBus.js';
 import { isDuplicateKeyError } from '../../data/errors.js';
@@ -418,6 +418,31 @@ export const messengerResolvers: Resolvers = {
         return updated;
       } catch (err) {
         console.error('messengerUpdateMemberRole error:', err);
+        return false;
+      }
+    },
+
+    /**
+     * messengerSetMute — operator mutes/unmutes a member. A muted member's
+     * send_message is rejected by the realtime handler. Emits membership_changed.
+     */
+    messengerSetMute: async (_root, args, ctx: AppContext) => {
+      const { channelUrl, userId, muted } = args as {
+        channelUrl?: string | null;
+        userId?: string | null;
+        muted?: boolean | null;
+      };
+      if (!channelUrl || !userId) return false;
+      if (!(await requireOperator(ctx, channelUrl))) return false;
+
+      try {
+        const ok = await setMemberMuted(ctx.db, channelUrl, userId, !!muted);
+        if (ok) {
+          getBus().emit('membership_changed', channelUrl, { channelUrl, userId, muted: !!muted });
+        }
+        return ok;
+      } catch (err) {
+        console.error('messengerSetMute error:', err);
         return false;
       }
     },

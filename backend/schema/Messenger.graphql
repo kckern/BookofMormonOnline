@@ -15,6 +15,7 @@ extend type Mutation {
   messengerUpdateUser(userId: String, nickname: String, profileUrl: String): MessengerUser
   messengerUpdateUserMetadata(userId: String, metadata: String): Boolean
   messengerUpdateMemberRole(channelUrl: String, userId: String, role: String): Boolean
+  messengerSetMute(channelUrl: String, userId: String, muted: Boolean): Boolean
   messengerRemoveMember(channelUrl: String, userId: String): Boolean
   messengerInviteMembers(channelUrl: String, userIds: [String]): Boolean
   messengerAcceptInvitation(channelUrl: String, userId: String): Boolean
@@ -37,6 +38,7 @@ type MessengerMember {
   profile_url: String
   role: String
   state: String
+  is_muted: Boolean
 }
 
 type MessengerThreadInfo {

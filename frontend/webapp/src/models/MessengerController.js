@@ -364,6 +364,7 @@ export default class MessengerController {
             nickname
             profile_url
             role
+            is_muted
           }
         } 
       }`;
@@ -760,15 +761,27 @@ export default class MessengerController {
   }
 
   async muteMember(channel, userId) {
-    // Mute functionality - placeholder
-    console.log('Messenger: muteMember not yet implemented');
-    return true;
+    const channelUrl = channel.channel_url || channel.url;
+    try {
+      return await this.gqlRequest(`mutation {
+        messengerSetMute(channelUrl: "${channelUrl}", userId: "${userId}", muted: true)
+      }`);
+    } catch (error) {
+      console.error('Messenger: muteMember error', error);
+      throw error;
+    }
   }
 
   async unMuteMember(channel, userId) {
-    // Unmute functionality - placeholder
-    console.log('Messenger: unMuteMember not yet implemented');
-    return true;
+    const channelUrl = channel.channel_url || channel.url;
+    try {
+      return await this.gqlRequest(`mutation {
+        messengerSetMute(channelUrl: "${channelUrl}", userId: "${userId}", muted: false)
+      }`);
+    } catch (error) {
+      console.error('Messenger: unMuteMember error', error);
+      throw error;
+    }
   }
 
   async makeAdmin(channel, userId) {
@@ -981,7 +994,8 @@ export default class MessengerController {
         userId: m.user_id,
         nickname: m.nickname || '',
         profileUrl: m.profile_url || '',
-        role: m.role || 'member'
+        role: m.role || 'member',
+        isMuted: !!m.is_muted
       })),
       memberCount: ch.member_count || 0,
       unreadMessageCount: ch.unread_message_count || 0,

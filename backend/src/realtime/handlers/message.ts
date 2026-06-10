@@ -30,6 +30,7 @@ import {
 } from '../../messaging/messages.js';
 import { getBus } from '../RealtimeBus.js';
 import { maybeBotReply } from '../botResponder.js';
+import { isMemberMuted } from '../../messaging/members.js';
 
 // ─── send_message ─────────────────────────────────────────────────────────────
 
@@ -82,6 +83,13 @@ export function register(socket: Socket, _io: Server): void {
         }
 
         const db = getDb();
+
+        // Muted members can't post.
+        if (await isMemberMuted(db, payload.channelUrl, user.userId)) {
+          ack?.({ success: false, error: 'You are muted in this channel' });
+          return;
+        }
+
         const msg = await postMessage(db, {
           channelUrl: payload.channelUrl,
           userId: user.userId,

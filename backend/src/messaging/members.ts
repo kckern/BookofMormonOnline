@@ -98,6 +98,37 @@ export async function getChannelMembersBulk(
   return result;
 }
 
+/** Set/unset a member's muted flag. Returns true if a row was updated. */
+export async function setMemberMuted(
+  db: Kysely<DB>,
+  channelUrl: string,
+  userId: string,
+  muted: boolean,
+): Promise<boolean> {
+  const result = await db
+    .updateTable('messenger_members')
+    .set({ is_muted: muted ? 1 : 0 })
+    .where('channel_url', '=', channelUrl)
+    .where('user_id', '=', userId)
+    .executeTakeFirst();
+  return Number(result.numUpdatedRows) > 0;
+}
+
+/** True when the member is currently muted in the channel. */
+export async function isMemberMuted(
+  db: Kysely<DB>,
+  channelUrl: string,
+  userId: string,
+): Promise<boolean> {
+  const row = await db
+    .selectFrom('messenger_members')
+    .select('is_muted')
+    .where('channel_url', '=', channelUrl)
+    .where('user_id', '=', userId)
+    .executeTakeFirst();
+  return Boolean(row?.is_muted);
+}
+
 /**
  * Add a user to a channel.
  * Returns false on duplicate-key (already a member) rather than throwing.
