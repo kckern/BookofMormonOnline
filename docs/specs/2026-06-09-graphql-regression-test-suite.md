@@ -1,7 +1,7 @@
 # GraphQL Regression Test Suite — Design Spec
 
 **Date:** 2026-06-09
-**Status:** Approved design, pre-implementation
+**Status:** Implemented 2026-06-09 — see `tests/README.md`
 **Motivation:** A full backend resolver overhaul (`src/resolvers/`) is planned, with concurrent
 frontend refactoring. The GraphQL surface consumed by
 `frontend/webapp/src/models/GraphQLQueries.js` must stay byte-identical through the overhaul.
