@@ -12,6 +12,7 @@ import { hashPassword, verifyPassword, needsRehash } from '../../auth/password.j
 import { md5 } from '../../auth/identity.js';
 import { runWrite } from '../../data/writes.js';
 import { getUserByToken } from '../../data/loaders/userprofile.js';
+import { uploadProfileImage as uploadProfileImageToS3 } from '../../media/s3.js';
 
 export const userprofileResolvers: Resolvers = {
   Mutation: {
@@ -134,20 +135,23 @@ export const userprofileResolvers: Resolvers = {
       const userHash = md5(userRow.user);
 
       if (ctx.sandbox) {
-        // Log intent without executing the write (mirrors legacy logInfo)
+        // Sandbox must not touch S3 — log intent and return the success shape.
         // eslint-disable-next-line no-console
-        console.log(`[sandbox] uploadProfileImage: user=${userRow.user} hash=${userHash} (write suppressed)`);
+        console.log(`[sandbox] uploadProfileImage: user=${userRow.user} hash=${userHash} (S3 write suppressed)`);
         return true;
       }
 
-      // Non-sandbox path: image write stub.
-      // To enable: port src/library/s3.ts → backend/src/library/s3.ts and call:
-      //   await uploadProfileImage(imageData, userHash);
-      // That function resizes via sharp (256×256 JPEG), PutObjects to S3_BUCKET at
-      // profiles/<hash>.jpg, optionally invalidates CloudFront, returns CDN URL.
-      // eslint-disable-next-line no-console
-      console.log(`[stub] uploadProfileImage: user=${userRow.user} hash=${userHash} imageData.length=${imageData.length} (S3 write not ported)`);
-      return true;
+      // Real upload: sharp resize 256² JPEG → S3 profiles/<hash>.jpg (+ CDN invalidation).
+      // The avatar is served by convention at {S3_PUBLIC_URL}/profiles/<hash>.jpg, so no
+      // DB write is needed — overwriting the key updates the image everywhere.
+      try {
+        await uploadProfileImageToS3(imageData, userHash);
+        return true;
+      } catch (err) {
+        throw new GraphQLError(err instanceof Error ? err.message : 'Profile image upload failed', {
+          extensions: { code: 'PROFILE_IMAGE_UPLOAD_FAILED' },
+        });
+      }
     },
   },
 };
