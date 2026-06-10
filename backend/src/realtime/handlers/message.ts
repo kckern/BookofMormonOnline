@@ -29,6 +29,7 @@ import {
   deleteMessage,
 } from '../../messaging/messages.js';
 import { getBus } from '../RealtimeBus.js';
+import { maybeBotReply } from '../botResponder.js';
 
 // ─── send_message ─────────────────────────────────────────────────────────────
 
@@ -93,6 +94,9 @@ export function register(socket: Socket, _io: Server): void {
 
         // Broadcast to channel room (including sender — legacy behaviour).
         getBus().emit('message_received', payload.channelUrl, msg);
+
+        // Fire-and-forget bot reply (no await — must not block the ack).
+        void maybeBotReply(db, payload.channelUrl, msg);
 
         ack?.({ success: true, message: msg });
       } catch (err: unknown) {
