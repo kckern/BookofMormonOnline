@@ -24,12 +24,26 @@ import { isOnline, onlineUserIds } from './presence.js';
 
 type RawUser = {
   user_id: string;
-  nickname: string;
+  nickname: string | null;
   profile_url: string | null;
   metadata: unknown;
   is_bot: number | boolean | null;
   last_seen_at: Date | null;
+  // joined from bom_user when the participant is a human (bom_user_id set).
+  // Thin human rows store nickname/profile_url NULL — display is coalesced from here.
+  bom_name?: string | null;
 };
+
+// Profile images live at {base}/profiles/{user_id}.jpg (the Sendbird→S3 migration
+// target; user_id IS md5(bom_user.user)). Humans' messenger_users.profile_url is NULL,
+// so derive it; the frontend UserAvatar falls back to a generated avatar on 404.
+const PROFILE_IMAGE_BASE = (
+  process.env['PROFILE_IMAGE_BASE_URL'] || 'https://assets.bookofmormon.online'
+).replace(/\/+$/, '');
+
+function deriveProfileUrl(userId: string): string {
+  return `${PROFILE_IMAGE_BASE}/profiles/${userId}.jpg`;
+}
 
 function parseMetadata(raw: unknown): Record<string, unknown> | null {
   if (raw === null || raw === undefined) return null;
@@ -46,10 +60,13 @@ function parseMetadata(raw: unknown): Record<string, unknown> | null {
 }
 
 function toUserDTO(row: RawUser, online = false): UserDTO {
+  // Coalesce display from bom_user for thin human rows; bots/orphans carry their own.
+  const nickname = row.nickname || row.bom_name || row.user_id;
+  const profile_url = row.profile_url || deriveProfileUrl(row.user_id);
   return {
     user_id: row.user_id,
-    nickname: row.nickname || row.user_id,
-    profile_url: row.profile_url ?? '',
+    nickname,
+    profile_url,
     metadata: parseMetadata(row.metadata),
     is_online: online,
     last_seen_at: row.last_seen_at ? new Date(row.last_seen_at).getTime() : null,
@@ -68,8 +85,17 @@ export async function getUser(
 ): Promise<UserDTO | null> {
   const row = await db
     .selectFrom('messenger_users')
-    .select(['user_id', 'nickname', 'profile_url', 'metadata', 'is_bot', 'last_seen_at'])
-    .where('user_id', '=', userId)
+    .leftJoin('bom_user', 'bom_user.user', 'messenger_users.bom_user_id')
+    .select([
+      'messenger_users.user_id as user_id',
+      'messenger_users.nickname as nickname',
+      'messenger_users.profile_url as profile_url',
+      'messenger_users.metadata as metadata',
+      'messenger_users.is_bot as is_bot',
+      'messenger_users.last_seen_at as last_seen_at',
+      'bom_user.name as bom_name',
+    ])
+    .where('messenger_users.user_id', '=', userId)
     .executeTakeFirst();
 
   if (!row) return null;
@@ -88,8 +114,17 @@ export async function getUsers(
   const [rows, onlineIds] = await Promise.all([
     db
       .selectFrom('messenger_users')
-      .select(['user_id', 'nickname', 'profile_url', 'metadata', 'is_bot', 'last_seen_at'])
-      .where('user_id', 'in', userIds)
+      .leftJoin('bom_user', 'bom_user.user', 'messenger_users.bom_user_id')
+      .select([
+        'messenger_users.user_id as user_id',
+        'messenger_users.nickname as nickname',
+        'messenger_users.profile_url as profile_url',
+        'messenger_users.metadata as metadata',
+        'messenger_users.is_bot as is_bot',
+        'messenger_users.last_seen_at as last_seen_at',
+        'bom_user.name as bom_name',
+      ])
+      .where('messenger_users.user_id', 'in', userIds)
       .execute(),
     onlineUserIds(),
   ]);
