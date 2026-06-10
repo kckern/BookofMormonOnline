@@ -1,8 +1,11 @@
 const { createProxyMiddleware } = require('http-proxy-middleware');
 
-// Use local backend if running via 'npm run dev' from root, otherwise use production
+// Use local backend if running via 'npm run dev' from root, otherwise use production.
+// Local target defaults to the GREEN-FIELD backend (:5006, GraphQL + /messenger socket.io).
+// Override with REACT_APP_LOCAL_BACKEND_PORT=5005 to fall back to the legacy backend.
+const LOCAL_PORT = process.env.REACT_APP_LOCAL_BACKEND_PORT || '5006';
 const BACKEND_URL = process.env.REACT_APP_LOCAL_BACKEND === 'true'
-  ? 'http://localhost:5005'
+  ? `http://localhost:${LOCAL_PORT}`
   : 'https://bookofmormon.online';
 
 const API_PATHS = [

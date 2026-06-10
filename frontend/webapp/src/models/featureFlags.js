@@ -22,7 +22,10 @@
 
 const BUILD_FLAG = process.env.REACT_APP_USE_MESSENGER === 'true';
 
-const MESSENGER_HOSTS = (process.env.REACT_APP_MESSENGER_HOSTS || 'staging')
+// Default-enabled hosts. 'staging' covers staging.* + staging-{lang}.*; 'bom' covers the
+// dev URL (bom.kckern.net) during the green-field cutover; 'localhost' covers local dev.
+// Prod apex (bookofmormon.online → subdomain 'bookofmormon') still does NOT match.
+const MESSENGER_HOSTS = (process.env.REACT_APP_MESSENGER_HOSTS || 'staging,bom,localhost')
   .split(',')
   .map((h) => h.trim())
   .filter(Boolean);
@@ -30,9 +33,10 @@ const MESSENGER_HOSTS = (process.env.REACT_APP_MESSENGER_HOSTS || 'staging')
 /** Runtime decision: build flag OR a hostname match. Safe outside the browser (SSR → false). */
 export function isMessengerEnabled() {
   if (BUILD_FLAG) return true;
-  const host = (typeof window !== 'undefined' && window.location && window.location.host) || '';
-  if (!host) return false;
-  const subdomain = host.split('.')[0]; // "staging", "staging-ko", "ko", "localhost:3000"
+  const rawHost = (typeof window !== 'undefined' && window.location && window.location.host) || '';
+  if (!rawHost) return false;
+  const host = rawHost.split(':')[0]; // strip port so 'localhost:8200' → 'localhost'
+  const subdomain = host.split('.')[0]; // "staging", "staging-ko", "bom", "localhost"
   return MESSENGER_HOSTS.some(
     (h) =>
       // bare subdomain entry ('staging'): exact, or a language-prefixed variant ('staging-ko')
