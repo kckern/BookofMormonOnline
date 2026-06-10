@@ -8,6 +8,7 @@ import { buildSchema } from './graphql/schema.js';
 import { buildContext, type AppContext } from './graphql/context.js';
 import { resolveLang } from './graphql/lang.js';
 import { stripEmptyDeep } from './compat/responseFilter.js';
+import { initRealtime } from './realtime/server.js';
 
 const app = Fastify({
   logger: { level: env.LOG_LEVEL },
@@ -76,7 +77,11 @@ process.on('SIGTERM', shutdown);
 
 app
   .listen({ port: env.PORT, host: '0.0.0.0' })
-  .then(() => app.log.info(`bom-backend listening on :${env.PORT}`))
+  .then(async () => {
+    app.log.info(`bom-backend listening on :${env.PORT}`);
+    // Attach socket.io to the underlying Node http.Server (available after listen).
+    await initRealtime(app.server);
+  })
   .catch((err) => {
     app.log.error(err);
     process.exit(1);
