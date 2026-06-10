@@ -182,6 +182,57 @@ describe('no-redis fallbacks (unconditional)', () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// In-process fallback round-trips — skipped when REDIS_URL is set
+// (these specifically exercise the module-level Set path, not Redis)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('in-process fallback round-trips (skipped when REDIS_URL is set)', () => {
+  it('setOnline → isOnline returns true (no Redis)', async () => {
+    if (hasRedis) {
+      console.warn('  ↳ SKIPPED (REDIS_URL present): in-process fallback test');
+      return;
+    }
+    const id = `u_test_${nanoid(8)}`;
+    await setOnline(id);
+    try {
+      expect(await isOnline(id)).toBe(true);
+    } finally {
+      // cleanup: setOffline may fail the DB write (read-only user) but must
+      // still remove from the in-memory Set — the try/catch in setOffline
+      // ensures this.
+      await setOffline(id).catch(() => {/* best-effort */});
+    }
+  });
+
+  it('onlineUserIds includes the user after setOnline (no Redis)', async () => {
+    if (hasRedis) {
+      console.warn('  ↳ SKIPPED (REDIS_URL present): in-process fallback test');
+      return;
+    }
+    const id = `u_test_${nanoid(8)}`;
+    await setOnline(id);
+    try {
+      expect(await onlineUserIds()).toContain(id);
+    } finally {
+      await setOffline(id).catch(() => {/* best-effort */});
+    }
+  });
+
+  it('setOffline → isOnline returns false (no Redis)', async () => {
+    if (hasRedis) {
+      console.warn('  ↳ SKIPPED (REDIS_URL present): in-process fallback test');
+      return;
+    }
+    const id = `u_test_${nanoid(8)}`;
+    await setOnline(id);
+    // setOffline DB write will fail (read-only user) but must NOT prevent the
+    // in-memory Set deletion — the existing try/catch in setOffline handles this.
+    await setOffline(id).catch(() => {/* DB write may fail; Set delete still happens */});
+    expect(await isOnline(id)).toBe(false);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // With-Redis round-trip tests — skipped when REDIS_URL unset
 // ─────────────────────────────────────────────────────────────────────────────
 

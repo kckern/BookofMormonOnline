@@ -11,9 +11,10 @@
  *
  * No-Redis fallback
  * -----------------
- * When getRedis() returns null every read returns the safe default (false / [])
- * and writes are no-ops — except setOffline which still writes last_seen_at to
- * the DB so the durable fallback is fresh.
+ * When getRedis() returns null, an in-process Set<string> is used to track
+ * online users.  This is process-local (correct for single-instance deployments;
+ * Redis remains the multi-instance path).  setOffline still writes last_seen_at
+ * to the DB (best-effort) regardless of Redis availability.
  *
  * last_seen_at
  * ------------
@@ -24,6 +25,13 @@
 
 import { getRedis } from '../config/redis.js';
 import { getDb } from '../data/db.js';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// In-process fallback (no-Redis path)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Module-level Set used only when Redis is unavailable (single-instance). */
+const inMemoryOnline = new Set<string>();
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Key constants
@@ -42,14 +50,16 @@ function heartbeatKey(userId: string): string {
 
 /**
  * Mark a user online.
- *  - Adds userId to the online SET.
- *  - Creates / renews the per-user TTL heartbeat key.
- *
- * No-op (no error) when Redis is unavailable.
+ *  - Redis available: adds userId to the online SET and creates/renews the
+ *    per-user TTL heartbeat key.
+ *  - Redis absent: adds userId to the in-process fallback Set.
  */
 export async function setOnline(userId: string): Promise<void> {
   const redis = await getRedis();
-  if (!redis) return;
+  if (!redis) {
+    inMemoryOnline.add(userId);
+    return;
+  }
 
   try {
     await Promise.all([
@@ -63,12 +73,14 @@ export async function setOnline(userId: string): Promise<void> {
 
 /**
  * Mark a user offline.
- *  - Removes userId from the online SET and deletes the heartbeat key.
- *  - Writes messenger_users.last_seen_at = NOW() via Kysely (always, even when
- *    Redis is unavailable) so the durable fallback is up-to-date.
+ *  - Redis available: removes userId from the online SET and deletes the
+ *    heartbeat key.
+ *  - Redis absent: removes userId from the in-process fallback Set.
+ *  - Always (best-effort): writes messenger_users.last_seen_at = NOW() via
+ *    Kysely so the durable fallback is up-to-date.
  */
 export async function setOffline(userId: string): Promise<void> {
-  // Always update the DB timestamp regardless of Redis availability.
+  // Always update the DB timestamp regardless of Redis availability (best-effort).
   try {
     const db = getDb();
     await db
@@ -81,7 +93,10 @@ export async function setOffline(userId: string): Promise<void> {
   }
 
   const redis = await getRedis();
-  if (!redis) return;
+  if (!redis) {
+    inMemoryOnline.delete(userId);
+    return;
+  }
 
   try {
     await Promise.all([
@@ -96,15 +111,15 @@ export async function setOffline(userId: string): Promise<void> {
 /**
  * Returns true when the user is currently online.
  *
- * Checks both the online SET (for membership) and the heartbeat key (TTL guard
- * against stale SET entries from a crash).  A user is online only when BOTH
- * conditions hold.
+ * Redis available: checks both the online SET (for membership) and the
+ * heartbeat key (TTL guard against stale SET entries from a crash).  A user
+ * is online only when BOTH conditions hold.
  *
- * Returns false when Redis is unavailable.
+ * Redis absent: checks the in-process fallback Set.
  */
 export async function isOnline(userId: string): Promise<boolean> {
   const redis = await getRedis();
-  if (!redis) return false;
+  if (!redis) return inMemoryOnline.has(userId);
 
   try {
     const [inSet, heartbeat] = await Promise.all([
@@ -121,14 +136,15 @@ export async function isOnline(userId: string): Promise<boolean> {
 /**
  * Returns the list of currently-online user IDs.
  *
- * Filters the online SET by the existence of the corresponding heartbeat key,
- * so any entries left behind by a crash (whose TTL has expired) are excluded.
+ * Redis available: filters the online SET by the existence of the
+ * corresponding heartbeat key, so any entries left behind by a crash (whose
+ * TTL has expired) are excluded.
  *
- * Returns [] when Redis is unavailable.
+ * Redis absent: returns a snapshot of the in-process fallback Set.
  */
 export async function onlineUserIds(): Promise<string[]> {
   const redis = await getRedis();
-  if (!redis) return [];
+  if (!redis) return [...inMemoryOnline];
 
   try {
     const members: string[] = await redis.sMembers(ONLINE_SET_KEY) as string[];
