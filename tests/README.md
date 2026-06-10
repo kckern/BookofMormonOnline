@@ -78,7 +78,9 @@ as 14 todos.
 
 ## After the overhaul changes behavior intentionally
 
-Recapture just the affected types and commit the diff — it documents the contract change:
+Recapture just the affected types and commit the diff — it documents the contract change
+(for `prodStale` types the local backend must be running — their capture pulls from
+`localhost:5005`):
 
 ```bash
 RECAPTURE=1 CAPTURE=1 TARGET=prod npx jest --config tests/jest.config.js -t "<type>."
