@@ -35,6 +35,7 @@ import * as messageHandlers from './handlers/message.js';
 import * as reactionHandlers from './handlers/reaction.js';
 import * as typingHandlers from './handlers/typing.js';
 import * as readHandlers from './handlers/read.js';
+import * as actionHandlers from './handlers/action.js';
 
 // ─── Token verification ───────────────────────────────────────────────────────
 
@@ -215,6 +216,7 @@ export async function initRealtime(httpServer: HttpServer): Promise<void> {
     try {
       // Join all of the user's channel rooms.
       const channelUrls = await getUserChannelUrls(userId);
+      socket.data['channels'] = channelUrls; // used by update_state fan-out
       if (channelUrls.length > 0) {
         socket.join(channelUrls);
       }
@@ -231,6 +233,7 @@ export async function initRealtime(httpServer: HttpServer): Promise<void> {
     reactionHandlers.register(socket, io);
     typingHandlers.register(socket, io);
     readHandlers.register(socket, io);
+    actionHandlers.register(socket, io); // study-group sync: fire_action/update_state
 
     socket.on('disconnect', async (reason: string) => {
       console.info(`[realtime] disconnected: ${userId} (${reason})`);

@@ -79,8 +79,14 @@ app
   .listen({ port: env.PORT, host: '0.0.0.0' })
   .then(async () => {
     app.log.info(`bom-backend listening on :${env.PORT}`);
-    // Attach socket.io to the underlying Node http.Server (available after listen).
-    await initRealtime(app.server);
+    // Cutover gate: messaging real-time is on by default; set MESSENGER_ENABLED=false
+    // to boot GraphQL-only (kill-switch). Attach socket.io to the underlying Node
+    // http.Server (available after listen).
+    if (process.env.MESSENGER_ENABLED !== 'false') {
+      await initRealtime(app.server);
+    } else {
+      app.log.info('messaging disabled (MESSENGER_ENABLED=false) — GraphQL only');
+    }
   })
   .catch((err) => {
     app.log.error(err);

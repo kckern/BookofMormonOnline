@@ -274,15 +274,17 @@ async function gql(queryString, { token } = {}) {
  *   itWrite('sends a message and receives message_received', async () => { ... });
  */
 function itWrite(name, fn) {
+  // Honestly SKIP (pending, not a vacuous pass) unless write tests are opted in —
+  // the flag is known synchronously at registration, so jest reports these as
+  // skipped rather than green. Set MESSAGING_WRITE_TESTS=1 (+ writable DB creds)
+  // to run the live write round-trips.
+  if (!process.env.MESSAGING_WRITE_TESTS) {
+    it.skip(`${name}  [needs MESSAGING_WRITE_TESTS=1 + writable DB]`, fn);
+    return;
+  }
   it(name, async () => {
     const ok = await probeWriteAccess();
-    if (!ok) {
-      console.warn(
-        `\n  ⚠  BLOCKED (no write access): ${name}\n` +
-        '     To run: set MESSAGING_WRITE_TESTS=1 + MYSQL_WRITE_USER + MYSQL_WRITE_PASSWORD\n'
-      );
-      return; // skip — not a failure
-    }
+    if (!ok) throw new Error(`${name}: MESSAGING_WRITE_TESTS set but DB is not writable`);
     await fn();
   });
 }
