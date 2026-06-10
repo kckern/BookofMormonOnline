@@ -108,6 +108,25 @@ Each case:
 One matrix file (`inputs.json`) drives both modes, so capture and verify cannot diverge.
 Network errors retry once; a second failure fails the case with the transport error attached.
 
+## Prod schema drift (`prodStale` types)
+
+Discovered during implementation: the deployed prod backend predates the current repo code.
+Prod's schema rejects parts of the current frontend surface with validation errors:
+no `object` root query, no `objects` field on `PassageNotes`, no `archive`/`principal`
+fields on `HistoricalDocument`. Affected types: `object`, `objectList`, `passagenotes`,
+`passagenotes_0`, `passagenotes_7`, `history`.
+
+The regression contract is the **current code's** behavior (that is what the resolver
+overhaul must preserve), so these types are marked `prodStale: true` in the matrix and:
+
+- **Capture** pulls them from the local backend (`http://localhost:5005`, current code,
+  same `bom_prd` database) instead of prod. All other types remain prod-captured.
+- **Verify vs prod** skips them visibly (Jest skip with reason) — prod cannot serve them.
+- **Verify vs dev/local** runs them normally.
+
+Acceptance criterion #2 is amended accordingly: `TARGET=prod npm run test:gql` passes 100%
+**with the prodStale cases reported as skipped**, not silently absent.
+
 ## Input matrix
 
 Generated once by `harvest.mjs` against prod, then committed and stable. Per query:
