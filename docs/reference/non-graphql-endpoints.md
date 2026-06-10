@@ -27,6 +27,29 @@ port and has **no regression baselines**. Catalogued here so it isn't lost at cu
 - SSR proxy (`PROXY_BOM_SSR`) + per-target reverse proxy (`apiProxy.web`).
 - Static file serving for `frontend/{webapp,game,welcome}/build` + SPA `index.html` catch-all.
 
+## Frontend invocations (`frontend/webapp/src`)
+
+Where each endpoint is actually called from. `ApiBaseUrl` is from
+`models/BoMOnlineAPI.js`; all calls are `axios` POSTs except where noted.
+
+| Endpoint | Call site | Trigger / purpose |
+|---|---|---|
+| `/coords` | `views/Map/MapPanel.js:291`, `:330` | Map editor: drag-saving a place's lat/lng/zoom (POST `{lat,lng,map,slug,…}` + `token` header). Map mounts at routes `/map*` (`models/Routes.js:243`, `views/Map/Map.js`). |
+| `/coords` | `views/Audit/Audit.js:229` (`updatePlaceCoords`, re-imported by `views/Map/MapContents.js`) | Same coordinate write from the audit/place-edit path. |
+| `/translate` | `views/Audit/Audit.js:127` `action:"list"` · `:213` `action:"audit"` (score) · `:243` `action:"update"` (value) · `:643` `action:"context"` | Translation review tool — the `/audit/:key*` route (`models/Routes.js:122`, lazy `views/Audit/Audit.js`). `list`/`context` read; `audit`/`update` **write** `bom_translation`. |
+| `/mapmarker/:id` | **not invoked by webapp** | Server-rendered SVG marker; consumed as an image URL by SSR/legacy map tooling, not the React app (no reference in `frontend/webapp/`). |
+| `/webhook`, `/studybuddy` | **not invoked by webapp** | Server-to-server (Sendbird → backend). |
+| `/ping`, `/network-check`, `/sphinx` | **not invoked by webapp** | Ops/diagnostics + SSR plumbing. |
+
+Note: the GraphQL `closetab` "exit beacon" (`models/BoMOnlineAPI.js:20`,
+`views/_Common/Main.js:46`) uses `navigator.sendBeacon(ApiBaseUrl, …)` with a GraphQL
+body — it's a GraphQL call, not part of this REST surface, listed only to avoid confusion.
+
+The two user-facing REST consumers — the **Map editor** and the **Audit/translation
+tool** — are admin/contributor tools, not the main reader flow. Any green-field
+replacement of these endpoints must also port these call sites (or keep them pointed at
+the legacy server).
+
 ## Files containing raw SQL (`sequelize.query` / `queryDB`) outside resolvers
 
 `src/api/`: `coords.ts`, `translate.ts`, `mapmarkers.ts`, `virtualgroup.ts`, `studybuddy.ts`.
