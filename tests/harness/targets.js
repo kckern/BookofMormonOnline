@@ -2,7 +2,7 @@ const TARGETS = {
   prod:  { base: 'https://bookofmormon.online', sandbox: false },
   dev:   { base: 'https://bom.kckern.net',      sandbox: true },
   local: { base: 'http://localhost:5005',       sandbox: true },
-  next:  { base: 'http://localhost:5006',       sandbox: true }, // green-field /backend
+  next:  { base: process.env.NEXT_BASE || 'http://localhost:5006', sandbox: true }, // green-field /backend
 };
 
 function getTarget() {

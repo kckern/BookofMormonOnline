@@ -8,6 +8,27 @@
  */
 import type { Resolvers } from '../../codegen/graphql.js';
 import type { AppContext } from './context.js';
+import { scriptureResolvers } from './resolvers/scripture.js';
+import { scripturereadResolvers } from './resolvers/scriptureread.js';
+import { scriptureextrasResolvers } from './resolvers/scriptureextras.js';
+import { peopleplacesResolvers } from './resolvers/peopleplaces.js';
+import { mapsResolvers } from './resolvers/maps.js';
+import { objectsResolvers } from './resolvers/objects.js';
+import { mediaResolvers } from './resolvers/media.js';
+import { mediamiscResolvers } from './resolvers/mediamisc.js';
+import { feedsmiscResolvers } from './resolvers/feedsmisc.js';
+import { searchhistResolvers } from './resolvers/searchhist.js';
+
+/** Shallow per-type merge: each domain contributes whole type maps; Query fields union. */
+function mergeResolverMaps(...maps: Resolvers[]): Resolvers {
+  const out: Record<string, Record<string, unknown>> = {};
+  for (const map of maps) {
+    for (const [typeName, fields] of Object.entries(map as Record<string, Record<string, unknown>>)) {
+      out[typeName] = { ...(out[typeName] ?? {}), ...fields };
+    }
+  }
+  return out as Resolvers;
+}
 import type {
   CapsulationRow,
   ConnectionRow,
@@ -50,7 +71,7 @@ async function resolveHeading(t: TextRow, ctx: AppContext): Promise<string | nul
   return `[${prefix}] ${own}`;
 }
 
-export const resolvers: Resolvers = {
+const coreResolvers: Resolvers = {
   Query: {
     labels: (_root, _args, ctx) => ctx.services.labels.list(),
     division: (_root, args, ctx) =>
@@ -207,3 +228,17 @@ export const resolvers: Resolvers = {
     },
   },
 };
+
+export const resolvers: Resolvers = mergeResolverMaps(
+  coreResolvers,
+  scriptureResolvers,
+  scripturereadResolvers,
+  scriptureextrasResolvers,
+  peopleplacesResolvers,
+  mapsResolvers,
+  objectsResolvers,
+  mediaResolvers,
+  mediamiscResolvers,
+  feedsmiscResolvers,
+  searchhistResolvers,
+);
