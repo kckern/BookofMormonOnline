@@ -11,10 +11,8 @@
 // - requiresMessenger: Only show when REACT_APP_USE_MESSENGER is true
 //
 
-import { isMessengerEnabled } from '../../models/featureFlags';
-
-// Feature flag — messaging gated by build flag OR staging subdomain (see featureFlags.js)
-const USE_MESSENGER = isMessengerEnabled();
+// Note: menu items carry `requiresMessenger`; the actual gate is applied by the
+// consumer (Sidebar) via isMessengerEnabled() — no flag needed in this config file.
 
 export const menuConfig = [
   {
