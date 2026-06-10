@@ -1,0 +1,763 @@
+{
+  "_warnings": [],
+  "person": {
+    "tier": "exact",
+    "cases": {
+      "single": [
+        "nephi1"
+      ],
+      "batch": [
+        "nephi1",
+        "amalickiahites",
+        "corihor1",
+        "humanity"
+      ],
+      "missing": [
+        "zz-no-such-person"
+      ]
+    }
+  },
+  "personList": {
+    "tier": "exact",
+    "cases": {
+      "batch": [
+        "nephi1",
+        "amalickiahites",
+        "corihor1",
+        "humanity"
+      ]
+    }
+  },
+  "places": {
+    "tier": "exact",
+    "cases": {
+      "single": [
+        "jerusalem-1"
+      ],
+      "batch": [
+        "jerusalem-1",
+        "land-of-zarahemla",
+        "omner",
+        "moriantum"
+      ],
+      "missing": [
+        "zz-no-such-place"
+      ]
+    }
+  },
+  "placeList": {
+    "tier": "exact",
+    "cases": {
+      "batch": [
+        "jerusalem-1",
+        "land-of-zarahemla",
+        "omner",
+        "moriantum"
+      ]
+    }
+  },
+  "object": {
+    "tier": "exact",
+    "cases": {
+      "single": [
+        "pillar-of-fire"
+      ],
+      "batch": [
+        "pillar-of-fire",
+        "interpreters",
+        "riplakishs-prisons",
+        "horn"
+      ],
+      "missing": [
+        "zz-no-such-object"
+      ]
+    }
+  },
+  "objectList": {
+    "tier": "exact",
+    "cases": {
+      "batch": [
+        "pillar-of-fire",
+        "interpreters",
+        "riplakishs-prisons",
+        "horn"
+      ]
+    }
+  },
+  "page": {
+    "tier": "exact",
+    "cases": {
+      "single": [
+        "jaredites"
+      ],
+      "batch": [
+        "jaredites",
+        "moroni"
+      ]
+    }
+  },
+  "contents": {
+    "tier": "exact",
+    "cases": {
+      "single": [
+        "jaredites"
+      ],
+      "batch": [
+        "jaredites",
+        "downfall"
+      ]
+    }
+  },
+  "divisionShell": {
+    "tier": "exact",
+    "cases": {
+      "single": [
+        "jaredites"
+      ]
+    }
+  },
+  "markdown": {
+    "tier": "exact",
+    "cases": {
+      "single": [
+        "privacy"
+      ]
+    }
+  },
+  "about": {
+    "tier": "exact",
+    "cases": {
+      "all": true
+    }
+  },
+  "labels": {
+    "tier": "exact",
+    "cases": {
+      "all": true
+    }
+  },
+  "passagenotes": {
+    "tier": "exact",
+    "cases": {
+      "single": [
+        31103
+      ],
+      "batch": [
+        31103,
+        31104,
+        31105,
+        31106,
+        31107
+      ]
+    }
+  },
+  "passagenotes_0": {
+    "tier": "exact",
+    "cases": {
+      "batch": [
+        31103,
+        31104,
+        31105,
+        31106,
+        31107
+      ]
+    }
+  },
+  "passagenotes_7": {
+    "tier": "exact",
+    "cases": {
+      "batch": [
+        31103,
+        31104,
+        31105,
+        31106,
+        31107
+      ]
+    }
+  },
+  "scripture": {
+    "tier": "exact",
+    "cases": {
+      "verse": [
+        "1 Nephi 3:7"
+      ],
+      "range": [
+        "Mosiah 2:17-19"
+      ],
+      "chapter": [
+        "3 Nephi 11"
+      ]
+    }
+  },
+  "verses": {
+    "tier": "exact",
+    "cases": {
+      "single": [
+        31103
+      ],
+      "batch": [
+        31103,
+        31104,
+        31105,
+        31106,
+        31107
+      ]
+    }
+  },
+  "read": {
+    "tier": "exact",
+    "cases": {
+      "chapter": [
+        "1 Nephi 1"
+      ],
+      "range": [
+        "Alma 17-18"
+      ]
+    }
+  },
+  "lookup": {
+    "tier": "exact",
+    "cases": {
+      "single": [
+        "1 Nephi 1:1"
+      ],
+      "batch": [
+        "Alma 32:21",
+        "Ether 12:6"
+      ]
+    }
+  },
+  "versehighlights": {
+    "tier": "exact",
+    "cases": {
+      "single": [
+        [
+          32018,
+          17687
+        ]
+      ],
+      "batch": [
+        [
+          32018,
+          17687
+        ],
+        [
+          32019,
+          17688
+        ],
+        [
+          32020,
+          17689
+        ],
+        [
+          32021,
+          17690
+        ],
+        [
+          32022,
+          17691
+        ]
+      ]
+    }
+  },
+  "chiasmus": {
+    "tier": "exact",
+    "cases": {
+      "all": true
+    }
+  },
+  "chiasm": {
+    "tier": "exact",
+    "cases": {
+      "single": [
+        "9ca9af736d"
+      ],
+      "batch": [
+        "9ca9af736d",
+        "f74b2b5379",
+        "9483b5fe2c"
+      ]
+    }
+  },
+  "image": {
+    "tier": "exact",
+    "cases": {
+      "single": [
+        "1028"
+      ],
+      "batch": [
+        "1028",
+        "2075",
+        "2624"
+      ],
+      "missing": [
+        99999999
+      ]
+    }
+  },
+  "imageInFeed": {
+    "tier": "exact",
+    "cases": {
+      "single": [
+        "1028"
+      ]
+    }
+  },
+  "imageLocations": {
+    "tier": "exact",
+    "cases": {
+      "batch": [
+        "1028",
+        "2075",
+        "2624"
+      ]
+    }
+  },
+  "commentary": {
+    "tier": "exact",
+    "cases": {
+      "single": [
+        "1000001101"
+      ],
+      "batch": [
+        "1000001101",
+        "1000018101",
+        "1000307101"
+      ],
+      "missing": [
+        99999999
+      ]
+    }
+  },
+  "commentaryInFeed": {
+    "tier": "exact",
+    "cases": {
+      "single": [
+        "1000001101"
+      ]
+    }
+  },
+  "commentaryLocations": {
+    "tier": "exact",
+    "cases": {
+      "batch": [
+        "1000001101",
+        "1000018101",
+        "1000307101"
+      ]
+    }
+  },
+  "textInFeed": {
+    "tier": "exact",
+    "cases": {
+      "single": [
+        "jaredites/1"
+      ]
+    }
+  },
+  "sectionInFeed": {
+    "tier": "exact",
+    "cases": {
+      "single": [
+        "jaredites/thirty-generations-of-jaredites"
+      ]
+    }
+  },
+  "fax": {
+    "tier": "exact",
+    "cases": {
+      "all": true,
+      "single": [
+        "printer"
+      ]
+    }
+  },
+  "faxIndex": {
+    "tier": "exact",
+    "cases": {
+      "single": [
+        "printer"
+      ]
+    }
+  },
+  "maplist": {
+    "tier": "exact",
+    "cases": {
+      "all": true
+    }
+  },
+  "map": {
+    "tier": "exact",
+    "cases": {
+      "single": [
+        "neareast"
+      ],
+      "batch": [
+        "neareast",
+        "africa"
+      ]
+    }
+  },
+  "mapstories": {
+    "tier": "exact",
+    "cases": {
+      "single": [
+        "neareast"
+      ]
+    }
+  },
+  "timeline": {
+    "tier": "exact",
+    "cases": {
+      "all": true
+    }
+  },
+  "publications": {
+    "tier": "exact",
+    "cases": {
+      "all": true
+    }
+  },
+  "search": {
+    "tier": "shape",
+    "cases": {
+      "word": [
+        "faith"
+      ],
+      "phrase": [
+        "sword of laban"
+      ],
+      "noresults": [
+        "zzqxnoresults"
+      ]
+    }
+  },
+  "shortLink": {
+    "tier": "exact",
+    "cases": {
+      "single": [
+        "OyTGx9WIH"
+      ],
+      "missing": [
+        "zzzzzz"
+      ]
+    }
+  },
+  "setShortLink": {
+    "tier": "exact",
+    "langs": [
+      "en"
+    ],
+    "cases": {
+      "fixed": [
+        "/regression-suite-anchor"
+      ]
+    }
+  },
+  "history": {
+    "tier": "exact",
+    "cases": {
+      "single": [
+        "1829-06-26-just-about-in-this-particular-region"
+      ],
+      "archive": [
+        {
+          "archive": "reception"
+        }
+      ],
+      "principal": [
+        {
+          "principal": "David Whitmer"
+        }
+      ],
+      "missing": [
+        "zz-no-such-history"
+      ]
+    }
+  },
+  "log": {
+    "tier": "scrubbed",
+    "auth": true,
+    "langs": [
+      "en"
+    ],
+    "cases": {
+      "bookmark": [
+        {
+          "token": "{{TOKEN}}",
+          "key": "bookmark",
+          "val": "jaredites/1"
+        }
+      ]
+    }
+  },
+  "editProfile": {
+    "tier": "scrubbed",
+    "auth": true,
+    "langs": [
+      "en"
+    ],
+    "cases": {
+      "same": [
+        {
+          "token": "{{TOKEN}}",
+          "name": "{{NAME}}",
+          "email": "{{EMAIL}}",
+          "zip": "{{ZIP}}"
+        }
+      ]
+    }
+  },
+  "changePassword": {
+    "tier": "scrubbed",
+    "auth": true,
+    "langs": [
+      "en"
+    ],
+    "cases": {
+      "same": [
+        {
+          "token": "{{TOKEN}}",
+          "password": "{{PASS}}"
+        }
+      ]
+    }
+  },
+  "uploadProfileImage": {
+    "tier": "shape",
+    "auth": true,
+    "langs": [
+      "en"
+    ],
+    "cases": {
+      "tiny": [
+        {
+          "token": "{{TOKEN}}",
+          "imageData": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+        }
+      ]
+    }
+  },
+  "tokenSignIn": {
+    "tier": "scrubbed",
+    "auth": true,
+    "cases": {
+      "single": [
+        "{{TOKEN}}"
+      ]
+    }
+  },
+  "signin": {
+    "tier": "scrubbed",
+    "auth": true,
+    "langs": [
+      "en"
+    ],
+    "cases": {
+      "valid": [
+        {
+          "username": "{{USER}}",
+          "password": "{{PASS}}",
+          "token": "{{TOKEN}}"
+        }
+      ],
+      "badpassword": [
+        {
+          "username": "{{USER}}",
+          "password": "wrong-password",
+          "token": "{{TOKEN}}"
+        }
+      ]
+    }
+  },
+  "studylog": {
+    "tier": "shape",
+    "auth": true,
+    "cases": {
+      "single": [
+        "{{TOKEN}}"
+      ]
+    }
+  },
+  "userdailyscores": {
+    "tier": "shape",
+    "auth": true,
+    "cases": {
+      "single": [
+        "{{TOKEN}}"
+      ]
+    }
+  },
+  "userprogress": {
+    "tier": "scrubbed",
+    "auth": true,
+    "cases": {
+      "single": [
+        "{{TOKEN}}"
+      ]
+    }
+  },
+  "divisionProgress": {
+    "tier": "scrubbed",
+    "auth": true,
+    "cases": {
+      "single": [
+        "jaredites"
+      ]
+    }
+  },
+  "divisionProgressDetails": {
+    "tier": "scrubbed",
+    "auth": true,
+    "cases": {
+      "single": [
+        "jaredites"
+      ]
+    }
+  },
+  "pageprogress": {
+    "tier": "scrubbed",
+    "auth": true,
+    "cases": {
+      "single": [
+        {
+          "token": "{{TOKEN}}",
+          "slug": [
+            "jaredites"
+          ]
+        }
+      ]
+    }
+  },
+  "pageinfoprogress": {
+    "tier": "scrubbed",
+    "auth": true,
+    "cases": {
+      "single": [
+        {
+          "token": "{{TOKEN}}",
+          "slug": [
+            "jaredites"
+          ]
+        }
+      ]
+    }
+  },
+  "readingplan": {
+    "tier": "exact",
+    "auth": true,
+    "cases": {
+      "unknown": [
+        {
+          "slug": "zz-no-such-plan",
+          "token": "{{TOKEN}}"
+        }
+      ]
+    }
+  },
+  "readingplansegment": {
+    "tier": "exact",
+    "auth": true,
+    "cases": {
+      "unknown": [
+        {
+          "guid": "zz-no-such-guid",
+          "token": "{{TOKEN}}"
+        }
+      ]
+    }
+  },
+  "queue": {
+    "tier": "scrubbed",
+    "auth": true,
+    "cases": {
+      "noitems": [
+        {
+          "token": "{{TOKEN}}",
+          "items": null
+        }
+      ],
+      "byslug": [
+        {
+          "token": "{{TOKEN}}",
+          "items": [
+            {
+              "slug": "jaredites/1"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "queuestatus": {
+    "tier": "scrubbed",
+    "auth": true,
+    "cases": {
+      "noitems": [
+        {
+          "token": "{{TOKEN}}",
+          "items": null
+        }
+      ]
+    }
+  },
+  "sourceUsage": {
+    "tier": "exact",
+    "auth": true,
+    "langs": [
+      "en"
+    ],
+    "cases": {
+      "single": [
+        {
+          "token": "{{TOKEN}}",
+          "source": "ces-manual-1996"
+        }
+      ]
+    }
+  },
+  "signout": {
+    "tier": "scrubbed",
+    "auth": true,
+    "langs": [
+      "en"
+    ],
+    "cases": {
+      "current": [
+        {
+          "token": "{{TOKEN}}"
+        }
+      ]
+    }
+  },
+  "signup": {
+    "tier": "scrubbed",
+    "auth": true,
+    "langs": [
+      "en"
+    ],
+    "cases": {
+      "duplicate": [
+        {
+          "token": "{{TOKEN}}",
+          "username": "{{USER}}",
+          "password": "{{PASS}}",
+          "name": "{{NAME}}",
+          "email": "{{EMAIL}}",
+          "zip": "{{ZIP}}"
+        }
+      ]
+    }
+  },
+  "leaderboard": {
+    "tier": "shape",
+    "auth": true,
+    "cases": {
+      "single": [
+        {
+          "token": "{{TOKEN}}"
+        }
+      ]
+    }
+  }
+}
