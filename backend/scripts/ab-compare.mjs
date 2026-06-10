@@ -25,7 +25,15 @@ async function post(base, lang) {
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ query }),
   });
-  return res.json();
+  const body = await res.json();
+  // Contract parity with the regression suite (tests/harness/normalize.js):
+  // GraphQL errors are reduced to sorted, deduplicated messages.
+  if (Array.isArray(body.errors)) {
+    body.errors = [...new Set(body.errors.map((e) => e?.message ?? JSON.stringify(e)))]
+      .sort()
+      .map((message) => ({ message }));
+  }
+  return body;
 }
 
 function diffPaths(a, b, path = '$', out = [], limit = 10) {

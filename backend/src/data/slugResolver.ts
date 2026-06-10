@@ -24,13 +24,22 @@ export class SlugResolver {
 
   /** link (entity guid) → full slug path, e.g. "jaredites/jared-at-the-tower". */
   async pathsForLinks(links: readonly string[]): Promise<Map<string, string>> {
-    const unique = [...new Set(links)].filter(Boolean);
+    return this.paths('link', links);
+  }
+
+  /** bom_slug row guid → full slug path (legacy getSlug('guid', ...) — used by Conn/Caps). */
+  async pathsForGuids(guids: readonly string[]): Promise<Map<string, string>> {
+    return this.paths('guid', guids);
+  }
+
+  private async paths(key: 'link' | 'guid', vals: readonly string[]): Promise<Map<string, string>> {
+    const unique = [...new Set(vals)].filter(Boolean);
     if (!unique.length) return new Map();
 
     const selfRows = (await this.db
       .selectFrom('bom_slug')
       .select(['guid', 'link', 'parent', 'slug'])
-      .where('link', 'in', unique)
+      .where(key, 'in', unique)
       .execute()) as SlugRow[];
 
     // Load ancestor generations breadth-first, batched.
@@ -46,12 +55,12 @@ export class SlugResolver {
       parents = [...new Set(rows.map((r) => r.parent).filter((p) => p && !byGuid.has(p)))];
     }
 
-    const firstByLink = new Map<string, SlugRow>();
-    for (const r of selfRows) if (!firstByLink.has(r.link)) firstByLink.set(r.link, r);
+    const firstByKey = new Map<string, SlugRow>();
+    for (const r of selfRows) if (!firstByKey.has(r[key])) firstByKey.set(r[key], r);
 
     const paths = new Map<string, string>();
-    for (const link of unique) {
-      const row = firstByLink.get(link);
+    for (const val of unique) {
+      const row = firstByKey.get(val);
       if (!row) continue;
       const segments = [row.slug];
       let cursor = row.parent ? byGuid.get(row.parent) : undefined;
@@ -59,7 +68,7 @@ export class SlugResolver {
         segments.unshift(cursor.slug);
         cursor = cursor.parent ? byGuid.get(cursor.parent) : undefined;
       }
-      paths.set(link, segments.join('/'));
+      paths.set(val, segments.join('/'));
     }
     return paths;
   }

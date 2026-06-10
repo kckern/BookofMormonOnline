@@ -17,6 +17,9 @@ const yoga = createYoga<{ lang: string }, AppContext>({
   schema: buildSchema(),
   graphqlEndpoint: '/graphql',
   landingPage: false,
+  // COMPAT: legacy Apollo exposes raw resolver error messages, and the
+  // regression baselines pin them — Yoga's default masking would break parity.
+  maskedErrors: false,
   logging: app.log,
   context: ({ lang }) => buildContext(db, lang),
   plugins: [
