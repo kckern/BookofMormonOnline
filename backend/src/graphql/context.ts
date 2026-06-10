@@ -51,6 +51,8 @@ export interface AppContext {
   ip: string;
   /** Bearer token from the Authorization header — messenger* resolvers resolve the acting user from it. */
   bearerToken?: string;
+  /** Per-request User-Agent (the ping analytics beacon forwards it to Clicky). */
+  ua?: string;
   /** Writable Kysely instance — wrap writes in runWrite() for sandbox safety. */
   db: Kysely<DB>;
   services: Services;
@@ -58,7 +60,7 @@ export interface AppContext {
 }
 
 /** Per-request context: lang-bound services + loaders, no shared mutable language state. */
-export function buildContext(db: Kysely<DB>, lang: string, ip = '', bearerToken?: string): AppContext {
+export function buildContext(db: Kysely<DB>, lang: string, ip = '', bearerToken?: string, ua?: string): AppContext {
   const core = createLoaders(db, lang);
   const loaders: AllLoaders = {
     ...core,
@@ -81,6 +83,7 @@ export function buildContext(db: Kysely<DB>, lang: string, ip = '', bearerToken?
     sandbox: env.SANDBOX,
     ip,
     bearerToken,
+    ua,
     db,
     services: {
       labels: new LabelsService(new LabelsRepository(db, core.translator)),

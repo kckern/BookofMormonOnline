@@ -12,6 +12,9 @@ extend type Query {
 
 extend type Mutation {
   shortlink(string: String): Shortlinks
+  # Analytics pageview beacon (replaces the legacy POST /ping Clicky forwarder).
+  # `data` is the base64 query-string payload the stats.js beacon builds.
+  ping(data: String): Boolean
 }
 
 type Label {

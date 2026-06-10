@@ -451,30 +451,27 @@ var clicky_obj = clicky_obj || (function() {
                     return;
                 }
                 
+                // The green-field backend replaced the legacy POST /ping forwarder with a
+                // GraphQL `ping(data)` mutation on /graphql (already proxied). Send there.
+                var gqlBody = JSON.stringify({
+                    query: 'mutation($d:String){ping(data:$d)}',
+                    variables: { d: encodedData }
+                });
                 if (type == 'beacon' && window.navigator.sendBeacon) {
-                    // Use sendBeacon for non-critical requests
-                    var formData = new FormData();
-                    formData.append('data', encodedData);
-                    navigator.sendBeacon(url, formData);
+                    navigator.sendBeacon('/graphql', new Blob([gqlBody], { type: 'application/json' }));
+                } else if (window.fetch) {
+                    fetch('/graphql', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: gqlBody
+                    }).catch(function() {
+                        // Silently handle errors
+                    });
                 } else {
-                    // Use fetch for other requests
-                    if (window.fetch) {
-                        fetch(url, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/x-www-form-urlencoded',
-                            },
-                            body: 'data=' + encodeURIComponent(encodedData)
-                        }).catch(function() {
-                            // Silently handle errors
-                        });
-                    } else {
-                        // Fallback to XMLHttpRequest for older browsers
-                        var xhr = new XMLHttpRequest();
-                        xhr.open('POST', url, true);
-                        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-                        xhr.send('data=' + encodeURIComponent(encodedData));
-                    }
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('POST', '/graphql', true);
+                    xhr.setRequestHeader('Content-Type', 'application/json');
+                    xhr.send(gqlBody);
                 }
             } catch (e) {
                 // Fallback to original GET method if base64 encoding fails

@@ -440,6 +440,7 @@ export type Mutation = {
   messengerUpdateMemberRole?: Maybe<Scalars['Boolean']['output']>;
   messengerUpdateUser?: Maybe<MessengerUser>;
   messengerUpdateUserMetadata?: Maybe<Scalars['Boolean']['output']>;
+  ping?: Maybe<Scalars['Boolean']['output']>;
   processRequest?: Maybe<Scalars['Boolean']['output']>;
   removeBot?: Maybe<Scalars['Boolean']['output']>;
   requestToJoinGroup?: Maybe<JoinedGroup>;
@@ -555,6 +556,11 @@ export type MutationMessengerUpdateUserArgs = {
 export type MutationMessengerUpdateUserMetadataArgs = {
   metadata?: InputMaybe<Scalars['String']['input']>;
   userId?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type MutationPingArgs = {
+  data?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -2247,6 +2253,7 @@ export type MutationResolvers<ContextType = AppContext, ParentType extends Resol
   messengerUpdateMemberRole?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, Partial<MutationMessengerUpdateMemberRoleArgs>>;
   messengerUpdateUser?: Resolver<Maybe<ResolversTypes['MessengerUser']>, ParentType, ContextType, Partial<MutationMessengerUpdateUserArgs>>;
   messengerUpdateUserMetadata?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, Partial<MutationMessengerUpdateUserMetadataArgs>>;
+  ping?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, Partial<MutationPingArgs>>;
   processRequest?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, Partial<MutationProcessRequestArgs>>;
   removeBot?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, Partial<MutationRemoveBotArgs>>;
   requestToJoinGroup?: Resolver<Maybe<ResolversTypes['JoinedGroup']>, ParentType, ContextType, Partial<MutationRequestToJoinGroupArgs>>;

@@ -6,6 +6,7 @@ import {
   resolveLogValue,
   scoreRecentBlockLogs,
 } from '../../data/loaders/useractivity.js';
+import { forwardPageview } from '../../media/ping.js';
 
 /**
  * Generate a random 9-character alphanumeric hash for new shortlinks.
@@ -130,6 +131,20 @@ export const useractivityResolvers: Resolvers = {
       );
 
       return { hash: newHash, string };
+    },
+
+    /**
+     * ping — analytics pageview beacon (replaces legacy POST /ping). Forwards the
+     * base64 payload to Clicky with the server-injected IP + UA. Fire-and-forget:
+     * returns immediately and never blocks/throws. Skipped under sandbox so dev
+     * testing doesn't pollute analytics (legacy /ping wasn't reachable on dev either).
+     */
+    ping: async (_root, args, ctx) => {
+      const data = (args.data ?? '') as string;
+      if (!data) return false;
+      if (ctx.sandbox) return true;
+      void forwardPageview(data, ctx.ip ?? '', ctx.ua ?? '');
+      return true;
     },
   },
 };

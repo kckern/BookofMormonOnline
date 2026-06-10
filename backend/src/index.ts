@@ -16,7 +16,7 @@ const app = Fastify({
 
 const db = getDb();
 
-const yoga = createYoga<{ lang: string; ip: string; bearerToken?: string }, AppContext>({
+const yoga = createYoga<{ lang: string; ip: string; bearerToken?: string; ua?: string }, AppContext>({
   schema: buildSchema(),
   graphqlEndpoint: '/graphql',
   landingPage: false,
@@ -24,7 +24,7 @@ const yoga = createYoga<{ lang: string; ip: string; bearerToken?: string }, AppC
   // regression baselines pin them — Yoga's default masking would break parity.
   maskedErrors: false,
   logging: app.log,
-  context: ({ lang, ip, bearerToken }) => buildContext(db, lang, ip, bearerToken),
+  context: ({ lang, ip, bearerToken, ua }) => buildContext(db, lang, ip, bearerToken, ua),
   plugins: [
     // COMPAT: pin the graphql-js executor — it builds response maps in
     // selection order (spec); Yoga's default executor appends keys in
@@ -52,6 +52,7 @@ const graphqlHandler = async (req: FastifyRequest, reply: FastifyReply) => {
   const authz = req.headers['authorization'];
   const bearerToken =
     typeof authz === 'string' && authz.startsWith('Bearer ') ? authz.slice(7) : undefined;
+  const ua = req.headers['user-agent'];
   const response = await yoga.fetch(
     new URL('http://yoga/graphql'),
     {
@@ -59,7 +60,7 @@ const graphqlHandler = async (req: FastifyRequest, reply: FastifyReply) => {
       headers: { 'content-type': req.headers['content-type'] ?? 'application/json' },
       body: req.method === 'POST' ? JSON.stringify(req.body) : undefined,
     },
-    { lang, ip, bearerToken },
+    { lang, ip, bearerToken, ua },
   );
   reply.status(response.status);
   response.headers.forEach((value, key) => {
