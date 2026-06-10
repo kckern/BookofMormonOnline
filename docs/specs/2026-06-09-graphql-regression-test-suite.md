@@ -202,7 +202,10 @@ In scope despite living in the community resolver: `leaderboard` (DB-backed, `sh
 
 - Transport failure: one retry, then fail with the axios error summarized.
 - GraphQL `errors` array in a response is **captured as part of the baseline** — error
-  behavior is contract too.
+  behavior is contract too. Before capture/compare, every error entry is reduced to its
+  **sorted, deduplicated messages**: Apollo stacktraces embed server filesystem paths
+  (this repo is public) and racing resolver crashes produce unstable error paths/indices,
+  so messages are the deterministic, leak-free part of the error contract.
 - Capture mode aborts (does not write) if the response is a transport-level failure.
 - Harvest script failures (e.g. a list endpoint empty) abort harvest with a clear message
   rather than writing a partial matrix.
