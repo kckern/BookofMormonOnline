@@ -25,9 +25,10 @@ import { nanoid } from 'nanoid';
 import type { Kysely } from 'kysely';
 import type { DB } from '../../codegen/db.js';
 import type { ChannelDTO } from './dto.js';
-import { getChannelMembers } from './members.js';
-import { getMessages } from './messages.js';
+import { getChannelMembers, getChannelMembersBulk } from './members.js';
+import { getMessages, getMessagesForChannels } from './messages.js';
 import { getUnreadCount } from './readstate.js';
+import type { MemberDTO, MessageDTO } from './dto.js';
 
 // ─── Metadata helper ──────────────────────────────────────────────────────────
 
@@ -92,6 +93,64 @@ async function assembleChannelDTO(
     created_at: row.created_at ? new Date(row.created_at).getTime() : Date.now(),
     lang: row.lang ?? 'en',
   };
+}
+
+/** Build a ChannelDTO from a row + already-fetched members/last-message/unread (no queries). */
+function buildChannelDTO(
+  row: RawChannel,
+  members: MemberDTO[],
+  lastMessage: MessageDTO | null,
+  unreadCount: number,
+): ChannelDTO {
+  const metadata = parseMetadata(row.metadata);
+  return {
+    channel_url: row.channel_url,
+    name: row.name,
+    cover_url: row.cover_url ?? '',
+    custom_type: row.custom_type,
+    data: JSON.stringify(metadata ?? {}),
+    metadata,
+    members,
+    member_count: members.length,
+    unread_message_count: unreadCount,
+    last_message: lastMessage,
+    created_at: row.created_at ? new Date(row.created_at).getTime() : Date.now(),
+    lang: row.lang ?? 'en',
+  };
+}
+
+/**
+ * Assemble MANY ChannelDTOs with a constant number of queries: bulk members
+ * (one query + one getUsers), bulk last-messages (one windowed query), and the
+ * viewer's unread counts in parallel. Replaces per-channel assembleChannelDTO
+ * fan-out in the channel-list / homefeed paths.
+ */
+async function assembleChannels(
+  db: Kysely<DB>,
+  rows: RawChannel[],
+  viewerUserId?: string,
+): Promise<ChannelDTO[]> {
+  if (rows.length === 0) return [];
+  const urls = rows.map((r) => r.channel_url);
+
+  const [membersByChannel, lastMsgByChannel, unreadByUrl] = await Promise.all([
+    getChannelMembersBulk(db, urls),
+    getMessagesForChannels(db, urls, 1),
+    viewerUserId
+      ? Promise.all(
+          urls.map((u) => getUnreadCount(db, u, viewerUserId).then((c) => [u, c] as const)),
+        ).then((entries) => new Map(entries))
+      : Promise.resolve(new Map<string, number>()),
+  ]);
+
+  return rows.map((r) =>
+    buildChannelDTO(
+      r,
+      membersByChannel.get(r.channel_url) ?? [],
+      lastMsgByChannel.get(r.channel_url)?.[0] ?? null,
+      unreadByUrl.get(r.channel_url) ?? 0,
+    ),
+  );
 }
 
 // ─── Public API ───────────────────────────────────────────────────────────────
@@ -163,7 +222,7 @@ export async function getMyChannels(
 
   const rows = await query.execute();
 
-  return Promise.all(rows.map((r) => assembleChannelDTO(db, r as RawChannel, userId)));
+  return assembleChannels(db, rows as RawChannel[], userId);
 }
 
 /**
@@ -198,7 +257,7 @@ export async function getPublicChannels(
   }
 
   const rows = await query.execute();
-  return Promise.all(rows.map((r) => assembleChannelDTO(db, r as RawChannel)));
+  return assembleChannels(db, rows as RawChannel[]);
 }
 
 /**

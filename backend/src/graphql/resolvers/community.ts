@@ -18,7 +18,7 @@ import type { AppContext } from '../context.js';
 import { md5 } from '../../auth/identity.js';
 import { getChannel, getMyChannels, getPublicChannels } from '../../messaging/channels.js';
 import { getChannelMembers, addUserToChannel, removeUserFromChannel } from '../../messaging/members.js';
-import { getMessages, getThread } from '../../messaging/messages.js';
+import { getMessages, getMessagesForChannels, getThread } from '../../messaging/messages.js';
 import { getUser, getUsers, listBotUsers } from '../../messaging/users.js';
 import { addBotToChannel, removeBotFromChannel } from '../../messaging/bots/registry.js';
 import type { ChannelDTO, MessageDTO, UserDTO } from '../../messaging/dto.js';
@@ -398,12 +398,14 @@ export const communityResolvers: Resolvers = {
           ...myChannels.filter((c) => !featuredUrls.has(c.channel_url)),
         ];
 
-        const [groups, allMessages] = await Promise.all([
+        const allUrls = allChannels.map((c) => c.channel_url);
+        const [groups, msgsByChannel] = await Promise.all([
           Promise.all(allChannels.map((c) => assembleHomeGroup(ctx, c, c.custom_type === 'public' || c.custom_type === 'open' ? 'featured_groups' : 'my_groups'))),
-          Promise.all(allChannels.map((c) => getMessages(ctx.db, c.channel_url, { limit: 30 }))),
+          // One windowed query for 30 messages × every channel, vs a getMessages() per channel.
+          getMessagesForChannels(ctx.db, allUrls, 30),
         ]);
 
-        const feed = feedAlgorithm(allMessages.flat(), myUserId);
+        const feed = feedAlgorithm([...msgsByChannel.values()].flat(), myUserId);
         return asGql({ groups, feed });
       } catch (err) {
         console.error('homefeed error:', err);

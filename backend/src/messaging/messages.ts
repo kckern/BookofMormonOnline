@@ -17,7 +17,7 @@
  * from './users.js'` once that module is available; the signature is identical.
  */
 
-import { type Kysely } from 'kysely';
+import { type Kysely, sql } from 'kysely';
 import { nanoid } from 'nanoid';
 import type { DB } from '../../codegen/db.js';
 import type { MessageDTO, UserDTO, HighlightDTO } from './dto.js';
@@ -323,6 +323,53 @@ export async function getMessages(
     .execute();
 
   return assembleMessages(db, rows as RawMessage[]);
+}
+
+// ─── getMessagesForChannels (batched, multi-channel) ──────────────────────────
+
+/**
+ * Fetch the latest `limitPerChannel` messages for MANY channels in ONE windowed
+ * query (ROW_NUMBER per channel), then assemble them all in a single batched pass.
+ * Returns a Map channel_url → MessageDTO[] (newest-first per channel).
+ *
+ * Replaces the homefeed/channel-list pattern of calling getMessages() once per
+ * channel (N round-trips → a single windowed query + ~5 bulk-assembly queries).
+ */
+export async function getMessagesForChannels(
+  db: Kysely<DB>,
+  channelUrls: string[],
+  limitPerChannel = 30,
+  includeReplies = false,
+): Promise<Map<string, MessageDTO[]>> {
+  const result = new Map<string, MessageDTO[]>();
+  if (channelUrls.length === 0) return result;
+
+  const replyFilter = includeReplies ? sql`` : sql`AND parent_message_id IS NULL`;
+  const rows = (
+    await sql<RawMessage>`
+      SELECT message_id, channel_url, user_id, message_type, message, custom_type,
+             link_type, link_target, link_aux, metadata, parent_message_id, is_deleted,
+             created_at, updated_at
+      FROM (
+        SELECT m.*, ROW_NUMBER() OVER (
+                 PARTITION BY channel_url ORDER BY created_at DESC, message_id DESC
+               ) AS rn
+        FROM messenger_messages m
+        WHERE channel_url IN (${sql.join(channelUrls)})
+          AND (is_deleted IS NULL OR is_deleted = 0) ${replyFilter}
+      ) ranked
+      WHERE rn <= ${limitPerChannel}
+    `.execute(db)
+  ).rows;
+
+  const dtos = await assembleMessages(db, rows as RawMessage[]); // ONE batched assembly for every channel
+  for (const d of dtos) {
+    const arr = result.get(d.channel_url) ?? [];
+    arr.push(d);
+    result.set(d.channel_url, arr);
+  }
+  // Preserve newest-first ordering per channel (ROW_NUMBER already ordered DESC).
+  return result;
 }
 
 // ─── getThread ────────────────────────────────────────────────────────────────

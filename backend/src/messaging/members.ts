@@ -64,6 +64,41 @@ export async function getChannelMembers(
 }
 
 /**
+ * Bulk variant of getChannelMembers for MANY channels: one members query +
+ * one getUsers() for every member across all channels. Returns a Map
+ * channel_url → MemberDTO[]. Eliminates the per-channel member N+1 in the
+ * channel-list / homefeed assembly.
+ */
+export async function getChannelMembersBulk(
+  db: Kysely<DB>,
+  channelUrls: string[],
+): Promise<Map<string, MemberDTO[]>> {
+  const result = new Map<string, MemberDTO[]>();
+  if (channelUrls.length === 0) return result;
+
+  const rows = (await db
+    .selectFrom('messenger_members')
+    .select(['channel_url', 'user_id', 'role', 'state', 'is_muted', 'last_read_at', 'created_at'])
+    .where('channel_url', 'in', channelUrls)
+    .execute()) as RawMember[];
+
+  if (rows.length === 0) return result;
+
+  const userIds = [...new Set(rows.map((r) => r.user_id))];
+  const users = await getUsers(db, userIds);
+  const userMap = new Map(users.map((u) => [u.user_id, u]));
+
+  for (const row of rows) {
+    const user = userMap.get(row.user_id);
+    if (!user) continue; // orphaned membership
+    const arr = result.get(row.channel_url) ?? [];
+    arr.push({ ...user, role: row.role, state: row.state, is_muted: Boolean(row.is_muted) });
+    result.set(row.channel_url, arr);
+  }
+  return result;
+}
+
+/**
  * Add a user to a channel.
  * Returns false on duplicate-key (already a member) rather than throwing.
  * state is always 'joined' when called directly (invitation flows are higher-level).
