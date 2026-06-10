@@ -1,0 +1,144 @@
+{
+  "data": {
+    "chiasmus": [
+      {
+        "chiasmus_id": "9483b5fe2c",
+        "reference": "모로나이서 10장 4~5절",
+        "scheme": "ABBA",
+        "title": "Truth Revealed",
+        "lines": [
+          {
+            "line_key": "A",
+            "line_text": "he will manifest the _truth_ of it unto you,",
+            "highlights": "[\"truth\"]",
+            "label": "manifest truth"
+          },
+          {
+            "line_key": "B",
+            "line_text": "by the _power of the Holy Ghost_.",
+            "highlights": "[\"power of the Holy Ghost\"]",
+            "label": "Holy Ghost power"
+          },
+          {
+            "line_key": "B",
+            "line_text": "And by the _power of the Holy Ghost_",
+            "highlights": "[\"power of the Holy Ghost\"]",
+            "label": "Holy Ghost power"
+          },
+          {
+            "line_key": "A",
+            "line_text": "ye may know the _truth_ of all things.",
+            "highlights": "[\"truth\"]",
+            "label": "know truth"
+          }
+        ]
+      },
+      {
+        "chiasmus_id": "9ca9af736d",
+        "reference": "니파이전서 1장 1~3절",
+        "scheme": "ABCDCBA",
+        "title": "Record of Knowledge",
+        "lines": [
+          {
+            "line_key": "A",
+            "line_text": "yea, having had a great _knowledge_ of the goodness and the mysteries of God,",
+            "highlights": "[\"knowledge\"]",
+            "label": "knowledge"
+          },
+          {
+            "line_key": "B",
+            "line_text": "therefore I make a _record_ of my proceedings in my days.",
+            "highlights": "[\"record\"]",
+            "label": "recording"
+          },
+          {
+            "line_key": "C",
+            "line_text": "Yea, I make a record in the _language_ of my father,",
+            "highlights": "[\"language\"]",
+            "label": "father's language"
+          },
+          {
+            "line_key": "D",
+            "line_text": "which consists of the _learning of the Jews_",
+            "highlights": "[\"learning of the Jews\"]",
+            "label": "Jews learning"
+          },
+          {
+            "line_key": "C",
+            "line_text": "and the _language_ of the Egyptians.",
+            "highlights": "[\"language\"]",
+            "label": "Egyptians' language"
+          },
+          {
+            "line_key": "B",
+            "line_text": "And I know that the _record_ which I make is true: and I make it with mine own hand:",
+            "highlights": "[\"record\"]",
+            "label": "authentic record"
+          },
+          {
+            "line_key": "A",
+            "line_text": "and I make it according to my knowledge.",
+            "highlights": "[\"knowledge\"]",
+            "label": "knowledge"
+          }
+        ]
+      },
+      {
+        "chiasmus_id": "f74b2b5379",
+        "reference": "앨마서 13장 2~3절",
+        "scheme": "ABCDDCBA",
+        "title": "Preparatory Redemption",
+        "lines": [
+          {
+            "line_key": "A",
+            "line_text": "to look forward to his Son for _redemption_.",
+            "highlights": "[\"redemption\"]",
+            "label": "redemption"
+          },
+          {
+            "line_key": "B",
+            "line_text": "And this is the manner after which they were ordained—being _called and prepared_ from the foundation of the world according to the foreknowledge of God,",
+            "highlights": "[\"called and prepared\"]",
+            "label": "ordained"
+          },
+          {
+            "line_key": "C",
+            "line_text": "on account of their _exceeding faith_ and good works;",
+            "highlights": "[\"exceeding faith\"]",
+            "label": "faith and works"
+          },
+          {
+            "line_key": "D",
+            "line_text": "in the first place being left to _choose good_ or evil;",
+            "highlights": "[\"choose good\"]",
+            "label": "choice"
+          },
+          {
+            "line_key": "D",
+            "line_text": "therefore they having _chosen good_,",
+            "highlights": "[\"chosen good\"]",
+            "label": "choice"
+          },
+          {
+            "line_key": "C",
+            "line_text": "and exercising _exceedingly great faith_,",
+            "highlights": "[\"exceedingly great faith\"]",
+            "label": "faith and works"
+          },
+          {
+            "line_key": "B",
+            "line_text": "are _called_ with a holy calling, yea, with that holy calling which was _prepared_ with,",
+            "highlights": "[\"called\",\"prepared\"]",
+            "label": "ordained"
+          },
+          {
+            "line_key": "A",
+            "line_text": "and according to, a preparatory _redemption_ for such.",
+            "highlights": "[\"redemption\"]",
+            "label": "redemption"
+          }
+        ]
+      }
+    ]
+  }
+}

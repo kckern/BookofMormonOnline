@@ -1,0 +1,26 @@
+{
+  "data": {
+    "commentary": [
+      {
+        "id": "1000001101",
+        "title": "A Record of Nephi’s People",
+        "reference": "1 Nephi 1:1",
+        "publication": {
+          "source_title": "Book of Mormon Student Manual (1996 Edition)",
+          "source_rating": "G",
+          "source_name": "Church Educational System",
+          "source_short": "CES Manual (1996)",
+          "source_slug": "ces-manual-1996",
+          "source_id": "11",
+          "source_url": "http://www.ldsces.org/manuals/book-of-mormon-institute-student-manual/index.asp",
+          "source_year": 1996,
+          "source_publisher": "The Church of Jesus Christ of Latter-day Saints"
+        },
+        "location": {
+          "slug": "promised-land/12"
+        },
+        "text": "Nephi wrote this record about thirty years after Lehi’s colony left Jerusalem and journeyed to the promised land (see 1 Nephi 19:1&#8211;5, 2 Nephi 5:28&#8211;31).</td></tr>"
+      }
+    ]
+  }
+}

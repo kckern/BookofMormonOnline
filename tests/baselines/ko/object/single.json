@@ -1,0 +1,363 @@
+{
+  "errors": [
+    {
+      "message": "Cannot read properties of undefined (reading 'getDataValue')",
+      "locations": [
+        {
+          "line": 16,
+          "column": 21
+        }
+      ],
+      "path": [
+        "object",
+        0,
+        "index",
+        0,
+        "slug"
+      ],
+      "extensions": {
+        "code": "INTERNAL_SERVER_ERROR",
+        "exception": {
+          "stacktrace": [
+            "TypeError: Cannot read properties of undefined (reading 'getDataValue')",
+            "    at Object.slug (/home/bom/BookofMormonOnline/src/resolvers/BomPeoplePlace.ts:424:17)",
+            "    at field.resolve (/home/bom/BookofMormonOnline/node_modules/apollo-server-core/src/utils/schemaInstrumentation.ts:106:18)",
+            "    at executeField (/home/bom/BookofMormonOnline/node_modules/graphql/execution/execute.js:492:20)",
+            "    at executeFields (/home/bom/BookofMormonOnline/node_modules/graphql/execution/execute.js:414:22)",
+            "    at completeObjectValue (/home/bom/BookofMormonOnline/node_modules/graphql/execution/execute.js:925:10)",
+            "    at completeValue (/home/bom/BookofMormonOnline/node_modules/graphql/execution/execute.js:646:12)",
+            "    at /home/bom/BookofMormonOnline/node_modules/graphql/execution/execute.js:707:25",
+            "    at Array.from (<anonymous>)",
+            "    at completeListValue (/home/bom/BookofMormonOnline/node_modules/graphql/execution/execute.js:687:34)",
+            "    at completeValue (/home/bom/BookofMormonOnline/node_modules/graphql/execution/execute.js:618:12)",
+            "    at /home/bom/BookofMormonOnline/node_modules/graphql/execution/execute.js:497:9",
+            "    at processTicksAndRejections (node:internal/process/task_queues:104:5)",
+            "    at async Promise.all (index 13)",
+            "    at async Promise.all (index 0)",
+            "    at async Promise.all (index 0)",
+            "    at async execute (/home/bom/BookofMormonOnline/node_modules/apollo-server-core/src/requestPipeline.ts:504:14)",
+            "    at async processGraphQLRequest (/home/bom/BookofMormonOnline/node_modules/apollo-server-core/src/requestPipeline.ts:410:22)",
+            "    at async processHTTPRequest (/home/bom/BookofMormonOnline/node_modules/apollo-server-core/src/runHttpQuery.ts:437:24)"
+          ]
+        }
+      }
+    },
+    {
+      "message": "Cannot read properties of undefined (reading 'getDataValue')",
+      "locations": [
+        {
+          "line": 16,
+          "column": 21
+        }
+      ],
+      "path": [
+        "object",
+        0,
+        "index",
+        1,
+        "slug"
+      ],
+      "extensions": {
+        "code": "INTERNAL_SERVER_ERROR",
+        "exception": {
+          "stacktrace": [
+            "TypeError: Cannot read properties of undefined (reading 'getDataValue')",
+            "    at Object.slug (/home/bom/BookofMormonOnline/src/resolvers/BomPeoplePlace.ts:424:17)",
+            "    at field.resolve (/home/bom/BookofMormonOnline/node_modules/apollo-server-core/src/utils/schemaInstrumentation.ts:106:18)",
+            "    at executeField (/home/bom/BookofMormonOnline/node_modules/graphql/execution/execute.js:492:20)",
+            "    at executeFields (/home/bom/BookofMormonOnline/node_modules/graphql/execution/execute.js:414:22)",
+            "    at completeObjectValue (/home/bom/BookofMormonOnline/node_modules/graphql/execution/execute.js:925:10)",
+            "    at completeValue (/home/bom/BookofMormonOnline/node_modules/graphql/execution/execute.js:646:12)",
+            "    at /home/bom/BookofMormonOnline/node_modules/graphql/execution/execute.js:707:25",
+            "    at Array.from (<anonymous>)",
+            "    at completeListValue (/home/bom/BookofMormonOnline/node_modules/graphql/execution/execute.js:687:34)",
+            "    at completeValue (/home/bom/BookofMormonOnline/node_modules/graphql/execution/execute.js:618:12)",
+            "    at /home/bom/BookofMormonOnline/node_modules/graphql/execution/execute.js:497:9",
+            "    at processTicksAndRejections (node:internal/process/task_queues:104:5)",
+            "    at async Promise.all (index 13)",
+            "    at async Promise.all (index 0)",
+            "    at async Promise.all (index 0)",
+            "    at async execute (/home/bom/BookofMormonOnline/node_modules/apollo-server-core/src/requestPipeline.ts:504:14)",
+            "    at async processGraphQLRequest (/home/bom/BookofMormonOnline/node_modules/apollo-server-core/src/requestPipeline.ts:410:22)",
+            "    at async processHTTPRequest (/home/bom/BookofMormonOnline/node_modules/apollo-server-core/src/runHttpQuery.ts:437:24)"
+          ]
+        }
+      }
+    },
+    {
+      "message": "Cannot read properties of undefined (reading 'getDataValue')",
+      "locations": [
+        {
+          "line": 16,
+          "column": 21
+        }
+      ],
+      "path": [
+        "object",
+        0,
+        "index",
+        2,
+        "slug"
+      ],
+      "extensions": {
+        "code": "INTERNAL_SERVER_ERROR",
+        "exception": {
+          "stacktrace": [
+            "TypeError: Cannot read properties of undefined (reading 'getDataValue')",
+            "    at Object.slug (/home/bom/BookofMormonOnline/src/resolvers/BomPeoplePlace.ts:424:17)",
+            "    at field.resolve (/home/bom/BookofMormonOnline/node_modules/apollo-server-core/src/utils/schemaInstrumentation.ts:106:18)",
+            "    at executeField (/home/bom/BookofMormonOnline/node_modules/graphql/execution/execute.js:492:20)",
+            "    at executeFields (/home/bom/BookofMormonOnline/node_modules/graphql/execution/execute.js:414:22)",
+            "    at completeObjectValue (/home/bom/BookofMormonOnline/node_modules/graphql/execution/execute.js:925:10)",
+            "    at completeValue (/home/bom/BookofMormonOnline/node_modules/graphql/execution/execute.js:646:12)",
+            "    at /home/bom/BookofMormonOnline/node_modules/graphql/execution/execute.js:707:25",
+            "    at Array.from (<anonymous>)",
+            "    at completeListValue (/home/bom/BookofMormonOnline/node_modules/graphql/execution/execute.js:687:34)",
+            "    at completeValue (/home/bom/BookofMormonOnline/node_modules/graphql/execution/execute.js:618:12)",
+            "    at /home/bom/BookofMormonOnline/node_modules/graphql/execution/execute.js:497:9",
+            "    at processTicksAndRejections (node:internal/process/task_queues:104:5)",
+            "    at async Promise.all (index 13)",
+            "    at async Promise.all (index 0)",
+            "    at async Promise.all (index 0)",
+            "    at async execute (/home/bom/BookofMormonOnline/node_modules/apollo-server-core/src/requestPipeline.ts:504:14)",
+            "    at async processGraphQLRequest (/home/bom/BookofMormonOnline/node_modules/apollo-server-core/src/requestPipeline.ts:410:22)",
+            "    at async processHTTPRequest (/home/bom/BookofMormonOnline/node_modules/apollo-server-core/src/runHttpQuery.ts:437:24)"
+          ]
+        }
+      }
+    },
+    {
+      "message": "Cannot read properties of undefined (reading 'getDataValue')",
+      "locations": [
+        {
+          "line": 16,
+          "column": 21
+        }
+      ],
+      "path": [
+        "object",
+        0,
+        "index",
+        3,
+        "slug"
+      ],
+      "extensions": {
+        "code": "INTERNAL_SERVER_ERROR",
+        "exception": {
+          "stacktrace": [
+            "TypeError: Cannot read properties of undefined (reading 'getDataValue')",
+            "    at Object.slug (/home/bom/BookofMormonOnline/src/resolvers/BomPeoplePlace.ts:424:17)",
+            "    at field.resolve (/home/bom/BookofMormonOnline/node_modules/apollo-server-core/src/utils/schemaInstrumentation.ts:106:18)",
+            "    at executeField (/home/bom/BookofMormonOnline/node_modules/graphql/execution/execute.js:492:20)",
+            "    at executeFields (/home/bom/BookofMormonOnline/node_modules/graphql/execution/execute.js:414:22)",
+            "    at completeObjectValue (/home/bom/BookofMormonOnline/node_modules/graphql/execution/execute.js:925:10)",
+            "    at completeValue (/home/bom/BookofMormonOnline/node_modules/graphql/execution/execute.js:646:12)",
+            "    at /home/bom/BookofMormonOnline/node_modules/graphql/execution/execute.js:707:25",
+            "    at Array.from (<anonymous>)",
+            "    at completeListValue (/home/bom/BookofMormonOnline/node_modules/graphql/execution/execute.js:687:34)",
+            "    at completeValue (/home/bom/BookofMormonOnline/node_modules/graphql/execution/execute.js:618:12)",
+            "    at /home/bom/BookofMormonOnline/node_modules/graphql/execution/execute.js:497:9",
+            "    at processTicksAndRejections (node:internal/process/task_queues:104:5)",
+            "    at async Promise.all (index 13)",
+            "    at async Promise.all (index 0)",
+            "    at async Promise.all (index 0)",
+            "    at async execute (/home/bom/BookofMormonOnline/node_modules/apollo-server-core/src/requestPipeline.ts:504:14)",
+            "    at async processGraphQLRequest (/home/bom/BookofMormonOnline/node_modules/apollo-server-core/src/requestPipeline.ts:410:22)",
+            "    at async processHTTPRequest (/home/bom/BookofMormonOnline/node_modules/apollo-server-core/src/runHttpQuery.ts:437:24)"
+          ]
+        }
+      }
+    },
+    {
+      "message": "Cannot read properties of undefined (reading 'getDataValue')",
+      "locations": [
+        {
+          "line": 16,
+          "column": 21
+        }
+      ],
+      "path": [
+        "object",
+        0,
+        "index",
+        4,
+        "slug"
+      ],
+      "extensions": {
+        "code": "INTERNAL_SERVER_ERROR",
+        "exception": {
+          "stacktrace": [
+            "TypeError: Cannot read properties of undefined (reading 'getDataValue')",
+            "    at Object.slug (/home/bom/BookofMormonOnline/src/resolvers/BomPeoplePlace.ts:424:17)",
+            "    at field.resolve (/home/bom/BookofMormonOnline/node_modules/apollo-server-core/src/utils/schemaInstrumentation.ts:106:18)",
+            "    at executeField (/home/bom/BookofMormonOnline/node_modules/graphql/execution/execute.js:492:20)",
+            "    at executeFields (/home/bom/BookofMormonOnline/node_modules/graphql/execution/execute.js:414:22)",
+            "    at completeObjectValue (/home/bom/BookofMormonOnline/node_modules/graphql/execution/execute.js:925:10)",
+            "    at completeValue (/home/bom/BookofMormonOnline/node_modules/graphql/execution/execute.js:646:12)",
+            "    at /home/bom/BookofMormonOnline/node_modules/graphql/execution/execute.js:707:25",
+            "    at Array.from (<anonymous>)",
+            "    at completeListValue (/home/bom/BookofMormonOnline/node_modules/graphql/execution/execute.js:687:34)",
+            "    at completeValue (/home/bom/BookofMormonOnline/node_modules/graphql/execution/execute.js:618:12)",
+            "    at /home/bom/BookofMormonOnline/node_modules/graphql/execution/execute.js:497:9",
+            "    at processTicksAndRejections (node:internal/process/task_queues:104:5)",
+            "    at async Promise.all (index 13)",
+            "    at async Promise.all (index 0)",
+            "    at async Promise.all (index 0)",
+            "    at async execute (/home/bom/BookofMormonOnline/node_modules/apollo-server-core/src/requestPipeline.ts:504:14)",
+            "    at async processGraphQLRequest (/home/bom/BookofMormonOnline/node_modules/apollo-server-core/src/requestPipeline.ts:410:22)",
+            "    at async processHTTPRequest (/home/bom/BookofMormonOnline/node_modules/apollo-server-core/src/runHttpQuery.ts:437:24)"
+          ]
+        }
+      }
+    }
+  ],
+  "data": {
+    "object": [
+      {
+        "slug": "pillar-of-fire",
+        "name": "Pillar of Fire",
+        "subtitle": "Theophanic column of flame in which God appears to prophets and protects his servants",
+        "category": "sacred-object",
+        "specificity": "specific",
+        "usage": "literal",
+        "era": "nephite",
+        "provenance": "divine",
+        "aliases": "pillar of fire, cloud of darkness",
+        "tags": "sacred-object",
+        "description": "<p>The pillar of fire is the Book of Mormon’s primary image of theophany, the visible glory in which God reveals himself directly to mortals. It opens the entire narrative: when Lehi pleads in behalf of Jerusalem, “there came a pillar of fire and dwelt upon a rock before him; and he saw and heard much; and because of the things which he saw and heard he did quake and tremble exceedingly” (1 Nephi 1:6). The image deliberately echoes the pillar of cloud and fire that led Israel out of Egypt, marking Lehi at the outset as a new Mosaic figure called to lead a remnant out of a doomed city.</p><p>The motif returns in the most arresting prison scene in the record. Nephi and Lehi, sons of Helaman, are cast into the prison of the land of Nephi by an unbelieving Lamanite multitude, but the brothers are “encircled about as if by fire, even insomuch that they durst not lay their hands upon them for fear lest they should be burned.” The flame does not consume the prophets but instead becomes the medium of their preaching, and when the cloud of darkness around the multitude finally disperses, they themselves stand encircled by the same protective fire (Helaman 5:23-24, 5:43-44). What had been a sign of judgment in Egypt becomes here a sign of grace.</p><p>At Bountiful the pattern peaks. Following the prayer of the disciples, the multitude beholds the children encircled “as if it were by fire,” with angels ministering to them out of heaven (3 Nephi 19:14). Across these episodes the pillar of fire functions both vertically and horizontally: it descends to mark a prophet, and it surrounds to shelter a community. Wherever it appears, it announces that the same God who spoke from Sinai is present, sanctifying ground, sealing testimony, and consuming nothing but unbelief.</p>",
+        "weight": 968892,
+        "verse_id": 31108,
+        "index": [
+          {
+            "ref": "니파이전서 1장 6절",
+            "verse_id": "31108",
+            "text": "Pillar of fire dwells on rock before Lehi"
+          },
+          {
+            "ref": "힐라맨서 5장 23~24절",
+            "verse_id": "35686",
+            "text": "Nephi and Lehi encircled by fire in prison"
+          },
+          {
+            "ref": "힐라맨서 5장 43~44절",
+            "verse_id": "35706",
+            "text": "Cloud disperses; all encircled by pillar of fire"
+          },
+          {
+            "ref": "힐라맨서 5장 44절",
+            "verse_id": "35707",
+            "text": "In midst of flaming fire, yet harm them not"
+          },
+          {
+            "ref": "제3니파이 19장 14절",
+            "verse_id": "36577",
+            "text": "Disciples encircled as if by fire; angels minister"
+          }
+        ],
+        "xrels": [
+          {
+            "rel": "typifies",
+            "srcweight": 10,
+            "dst_type": "people",
+            "dst_slug": "lord",
+            "dst_name": "lord",
+            "note": "Visible manifestation of divine presence (1 Nephi 1:6)",
+            "verse_id": 31108
+          },
+          {
+            "rel": "located-in",
+            "srcweight": 30,
+            "dst_type": "place",
+            "dst_slug": "jerusalem",
+            "dst_name": "jerusalem",
+            "note": "Appeared to Lehi outside Jerusalem (1 Nephi 1:6)",
+            "verse_id": 31108
+          },
+          {
+            "rel": "witnessed-by",
+            "srcweight": 45,
+            "dst_type": "people",
+            "dst_slug": "lehi",
+            "dst_name": "lehi",
+            "note": "Pillar of fire dwelt upon a rock before Lehi (1 Nephi 1:6)",
+            "verse_id": 31108
+          },
+          {
+            "rel": "located-in",
+            "srcweight": 30,
+            "dst_type": "people",
+            "dst_slug": "lehi2",
+            "dst_name": "Lehi2",
+            "dst_title": "Son of Zoram2, possibly same as Lehi3",
+            "note": "Lehi (son of Helaman) encircled in same prison (Helaman 5:23-24, 44)",
+            "verse_id": 35686
+          },
+          {
+            "rel": "located-in",
+            "srcweight": 30,
+            "dst_type": "people",
+            "dst_slug": "nephi-son-of-helaman",
+            "dst_name": "nephi-son-of-helaman",
+            "note": "Encircled about as if by fire in prison (Helaman 5:23-24, 43-44)",
+            "verse_id": 35686
+          },
+          {
+            "rel": "located-in",
+            "srcweight": 30,
+            "dst_type": "place",
+            "dst_slug": "prison-zarahemla",
+            "dst_name": "prison-zarahemla",
+            "note": "Filled the prison in land of Nephi (Helaman 5:23-24)",
+            "verse_id": 35686
+          },
+          {
+            "rel": "typifies",
+            "srcweight": 10,
+            "dst_type": "object",
+            "dst_slug": "cloud-of-darkness",
+            "dst_name": "cloud-of-darkness",
+            "note": "Contrasted with cloud of darkness that overshadowed unbelievers (Helaman 5:28)",
+            "verse_id": 35691
+          },
+          {
+            "rel": "witnessed-by",
+            "srcweight": 45,
+            "dst_type": "people",
+            "dst_slug": "aminadab",
+            "dst_name": "Aminadab",
+            "dst_title": "Nephite dissenter living among Lamanites",
+            "note": "Dissenter Nephite who explained the cloud and voice (Helaman 5:35-41)",
+            "verse_id": 35698
+          },
+          {
+            "rel": "witnessed-by",
+            "srcweight": 45,
+            "dst_type": "group",
+            "dst_slug": "lamanite-prisoners",
+            "dst_name": "lamanite-prisoners",
+            "note": "300 Lamanites overshadowed in prison (Helaman 5:43)",
+            "verse_id": 35706
+          },
+          {
+            "rel": "typifies",
+            "srcweight": 10,
+            "dst_type": "object",
+            "dst_slug": "holy-ghost",
+            "dst_name": "holy-ghost",
+            "note": "Accompanied baptism of fire experience (Helaman 5:45)",
+            "verse_id": 35708
+          },
+          {
+            "rel": "paired-with",
+            "srcweight": 50,
+            "dst_type": "object",
+            "dst_slug": "conversion-of-lamanites",
+            "dst_name": "conversion-of-lamanites",
+            "note": "Led to mass conversion of Lamanites (Helaman 5:49-50)",
+            "verse_id": 35712
+          }
+        ]
+      }
+    ]
+  }
+}

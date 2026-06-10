@@ -1,0 +1,3484 @@
+{
+  "data": {
+    "labels": [
+      {
+        "key": "roj",
+        "val": "Year $1 of the reign of the judges"
+      },
+      {
+        "key": "roj_plural",
+        "val": "Years $1 of the reign of the judges"
+      },
+      {
+        "key": "dfj",
+        "val": "Year $1 since the departure from Jerusalem"
+      },
+      {
+        "key": "dfj_plular",
+        "val": "Years $2 since the departure from Jerusalem"
+      },
+      {
+        "key": "rozf",
+        "val": "Year $1 since the start of Zeniff’s reign"
+      },
+      {
+        "key": "rozf_plular",
+        "val": "Years $1 since the start of Zeniff’s reign"
+      },
+      {
+        "key": "coc",
+        "val": "Year $1 since the coming of Christ"
+      },
+      {
+        "key": "coc_plural",
+        "val": "Years $1 since the coming of Christ"
+      },
+      {
+        "key": "jaredite_generation",
+        "val": "Generation $1 of the Jaredites ($2)"
+      },
+      {
+        "key": "jaredite_generation_plural",
+        "val": "Generations $1 of the Jaredites ($2)"
+      },
+      {
+        "key": "usage_metaphorical",
+        "val": "Symbolic"
+      },
+      {
+        "key": "vox_mormon",
+        "val": "Mormon"
+      },
+      {
+        "key": "vox_king_noah",
+        "val": "King Noah"
+      },
+      {
+        "key": "vox_sherem",
+        "val": "Sherem"
+      },
+      {
+        "key": "vox_giddianhi",
+        "val": "Giddianhi"
+      },
+      {
+        "key": "debug",
+        "val": "Debug"
+      },
+      {
+        "key": "vox_jesus_christ",
+        "val": "Jesus Christ"
+      },
+      {
+        "key": "vox_nephite_army_that_conquers_zemnarihah",
+        "val": "Zemnarihah conquerors"
+      },
+      {
+        "key": "vox_the_daughters_of_ishmael",
+        "val": "The daughters of Ishmael"
+      },
+      {
+        "key": "vox_people_of_mosiah",
+        "val": "People of Mosiah"
+      },
+      {
+        "key": "vox_moroni1",
+        "val": "Moroni"
+      },
+      {
+        "key": "era_jaredite",
+        "val": "Jaredite"
+      },
+      {
+        "key": "vox_servant_of_king_lamoni",
+        "val": "Servant of King Lamoni"
+      },
+      {
+        "key": "vox_the_lord",
+        "val": "The Lord"
+      },
+      {
+        "key": "vox_people-who-reject-samuel-the-lamanites-message",
+        "val": "Samuel‘s Rejectors"
+      },
+      {
+        "key": "vox_abinadom",
+        "val": "Abinadom"
+      },
+      {
+        "key": "vox_jacob",
+        "val": "Jacob"
+      },
+      {
+        "key": "vox_seraph_1",
+        "val": "Seraphà"
+      },
+      {
+        "key": "vox_pahoran",
+        "val": "Pahoran"
+      },
+      {
+        "key": "vox_unidentified_prophet_quoted_by_nephi",
+        "val": "Nephi’s Prophet"
+      },
+      {
+        "key": "object_axis_category",
+        "val": "Category"
+      },
+      {
+        "key": "vox_people_at_the_temple_in_bountiful",
+        "val": "Bountiful temple crowd"
+      },
+      {
+        "key": "vox_priests_of_king_noah",
+        "val": "Priests of King Noah"
+      },
+      {
+        "key": "vox_joshua",
+        "val": "Joshua"
+      },
+      {
+        "key": "vox_angel_to_amulek",
+        "val": "Angel to Amulek"
+      },
+      {
+        "key": "vox_joseph",
+        "val": "Joseph"
+      },
+      {
+        "key": "vox_omni",
+        "val": "Omni"
+      },
+      {
+        "key": "studying_now",
+        "val": "Studying Now"
+      },
+      {
+        "key": "era_timeless",
+        "val": "Timeless"
+      },
+      {
+        "key": "vox_sariah",
+        "val": "Sariah"
+      },
+      {
+        "key": "vox_a_cry_throughout_the_land_of_the_jaredites",
+        "val": "Jaredite cry"
+      },
+      {
+        "key": "vox_king_anti-nephi-lehi",
+        "val": "King Anti-Nephi-Lehi"
+      },
+      {
+        "key": "object_cat_tool",
+        "val": "Tool"
+      },
+      {
+        "key": "vox_the_unlearned",
+        "val": "The unlearned"
+      },
+      {
+        "key": "vox_multitude_at_the_prison",
+        "val": "Multitude at the prison"
+      },
+      {
+        "key": "vox_laman4",
+        "val": "Laman"
+      },
+      {
+        "key": "vox_zoramites",
+        "val": "Zoramites"
+      },
+      {
+        "key": "start_typing_to_search",
+        "val": "Start typing to search"
+      },
+      {
+        "key": "playback_music_volume",
+        "val": "Music Volume"
+      },
+      {
+        "key": "saved",
+        "val": "Saved"
+      },
+      {
+        "key": "vox_samuel_the_lamanite",
+        "val": "Samuel the Lamanite"
+      },
+      {
+        "key": "vox_zeniff",
+        "val": "Zeniff"
+      },
+      {
+        "key": "bom_presents",
+        "val": "Book of Mormon Online <small><em>presents</em></small>"
+      },
+      {
+        "key": "theater_covering_x",
+        "val": "covering $1"
+      },
+      {
+        "key": "theater_x_passages_from_y",
+        "val": "$1 passages from $2"
+      },
+      {
+        "key": "theater_up_next",
+        "val": "up next..."
+      },
+      {
+        "key": "theater_list_and",
+        "val": "and"
+      },
+      {
+        "key": "theater_press_play",
+        "val": "Play"
+      },
+      {
+        "key": "playback_rate",
+        "val": "Playback rate"
+      },
+      {
+        "key": "view_in_theater",
+        "val": "View in Theater"
+      },
+      {
+        "key": "playback_volume",
+        "val": "Volume"
+      },
+      {
+        "key": "background_music",
+        "val": "Music"
+      },
+      {
+        "key": "theater_finish_help",
+        "val": "You have reached the end of this session. You will be redirected to the user summary page, or you can choose to continue the reading."
+      },
+      {
+        "key": "theater_crossroads_help",
+        "val": "At this point, the story diverges into parallel narratives. You can continue with the current narrative, or you can take a detour to explore the concurrent narrative."
+      },
+      {
+        "key": "theater_contained_help",
+        "val": "There is a self-contained story within this section. You can step over it and continue with the main narrative, or you can step into it and explore the self-contained content."
+      },
+      {
+        "key": "era_nephite",
+        "val": "Nephite"
+      },
+      {
+        "key": "current_zoom",
+        "val": "Current zoom"
+      },
+      {
+        "key": "vox_people_of_king_noah",
+        "val": "People of King Noah"
+      },
+      {
+        "key": "object_cat_animal",
+        "val": "Animal"
+      },
+      {
+        "key": "vox_voice_of_the_people_in_alma_27",
+        "val": "The voice of the people"
+      },
+      {
+        "key": "delete",
+        "val": "Delete"
+      },
+      {
+        "key": "vox_disciples",
+        "val": "Disciples"
+      },
+      {
+        "key": "prov_generic",
+        "val": "Generic"
+      },
+      {
+        "key": "vox_people_of_ammonihah",
+        "val": "People of Ammonihah"
+      },
+      {
+        "key": "vox_people_of_alma1",
+        "val": "People of Alma"
+      },
+      {
+        "key": "vox_angel_to_king_benjamin",
+        "val": "Angel to King Benjamin"
+      },
+      {
+        "key": "string",
+        "val": "String"
+      },
+      {
+        "key": "usage_mixed",
+        "val": "Mixed"
+      },
+      {
+        "key": "vox_stripling_soldiers",
+        "val": "Stripling soldiers"
+      },
+      {
+        "key": "vox_angel_to_samuel_the_lamanite",
+        "val": "Angel to Samuel the Lamanite"
+      },
+      {
+        "key": "prov_israelite",
+        "val": "Israelite"
+      },
+      {
+        "key": "vox_gidgiddoni",
+        "val": "Gidgiddoni"
+      },
+      {
+        "key": "vox_alma1",
+        "val": "Alma"
+      },
+      {
+        "key": "vox_servant-of-helaman3",
+        "val": "Servant of Helaman"
+      },
+      {
+        "key": "vox_moroni2",
+        "val": "Moroni"
+      },
+      {
+        "key": "vox_angel_to_many_people",
+        "val": "Angel to many people"
+      },
+      {
+        "key": "prov_divine",
+        "val": "Divine"
+      },
+      {
+        "key": "vox_people_of_moronihah_lamenting_destruction",
+        "val": "Moronihah lamenters"
+      },
+      {
+        "key": "vox_amaleki",
+        "val": "Amaleki"
+      },
+      {
+        "key": "study_question_simpler",
+        "val": "Please restate in simpler terms."
+      },
+      {
+        "key": "vox_king_benjamin",
+        "val": "King Benjamin"
+      },
+      {
+        "key": "era_post_christ",
+        "val": "Post-Christ"
+      },
+      {
+        "key": "vox_brethren_in_the_land_of_zarahemla",
+        "val": "Zarahemla brethren"
+      },
+      {
+        "key": "vox_jared1",
+        "val": "Jared"
+      },
+      {
+        "key": "vox_sons_of_mosiah",
+        "val": "Sons of Mosiah"
+      },
+      {
+        "key": "vox_prophets_who_published_good_tidings",
+        "val": "Good-tidings prophets"
+      },
+      {
+        "key": "vox_amalekite",
+        "val": "Amalekite"
+      },
+      {
+        "key": "vox_malachi",
+        "val": "Malachi"
+      },
+      {
+        "key": "vox_isaiah",
+        "val": "Isaiah"
+      },
+      {
+        "key": "vox_jared2",
+        "val": "Jared"
+      },
+      {
+        "key": "era_lehite_departure",
+        "val": "Lehite Departure"
+      },
+      {
+        "key": "object_axis_era",
+        "val": "Era"
+      },
+      {
+        "key": "vox_spies_from_the_nephite_armies",
+        "val": "Nephite spies"
+      },
+      {
+        "key": "vox_others-who-were-at-nephi2s-trial",
+        "val": "Nephi’s-trial others"
+      },
+      {
+        "key": "search_for_a_place",
+        "val": "Search for a place"
+      },
+      {
+        "key": "place_on_map",
+        "val": "Place on map"
+      },
+      {
+        "key": "cross_reference",
+        "val": "Cross Reference"
+      },
+      {
+        "key": "vox_people_of_zarahemla_lamenting_destruction",
+        "val": "Zarahemla lamenters"
+      },
+      {
+        "key": "study_question_detail",
+        "val": "Please explain this in more detail."
+      },
+      {
+        "key": "likes",
+        "val": "Likes"
+      },
+      {
+        "key": "mapgroup_world",
+        "val": "World"
+      },
+      {
+        "key": "menu_home",
+        "val": "Community"
+      },
+      {
+        "key": "menu_contents",
+        "val": "Contents"
+      },
+      {
+        "key": "bot_added",
+        "val": "$1 has been plugged in"
+      },
+      {
+        "key": "menu_text",
+        "val": "Full Text"
+      },
+      {
+        "key": "menu_timeline",
+        "val": "Timeline"
+      },
+      {
+        "key": "menu_map",
+        "val": "Map"
+      },
+      {
+        "key": "menu_relationships",
+        "val": "Places"
+      },
+      {
+        "key": "menu_places",
+        "val": "Places"
+      },
+      {
+        "key": "menu_people",
+        "val": "People"
+      },
+      {
+        "key": "menu_network",
+        "val": "Relationships"
+      },
+      {
+        "key": "bot_select",
+        "val": "Plug me in"
+      },
+      {
+        "key": "menu_fax",
+        "val": "Facsimiles"
+      },
+      {
+        "key": "plugin_bot",
+        "val": "Plug in a Study Bot"
+      },
+      {
+        "key": "bot_info",
+        "val": "Bots are trained to answer questions about any given passage that you may be studying."
+      },
+      {
+        "key": "menu_about",
+        "val": "About"
+      },
+      {
+        "key": "menu_theater",
+        "val": "Theater"
+      },
+      {
+        "key": "bot_unplug",
+        "val": "Unplug me"
+      },
+      {
+        "key": "bot_plugging",
+        "val": "Plugging in..."
+      },
+      {
+        "key": "bot_unplugging",
+        "val": "Unplugging..."
+      },
+      {
+        "key": "bot_unplugged",
+        "val": "$1 has been unplugged"
+      },
+      {
+        "key": "menu_contact",
+        "val": "Contact"
+      },
+      {
+        "key": "menu_search",
+        "val": "Search"
+      },
+      {
+        "key": "audio_narration",
+        "val": "Audio narration"
+      },
+      {
+        "key": "box_annoations",
+        "val": "Annotations"
+      },
+      {
+        "key": "box_commentary",
+        "val": "Commentary"
+      },
+      {
+        "key": "box_image",
+        "val": "Image"
+      },
+      {
+        "key": "box_video",
+        "val": "Video"
+      },
+      {
+        "key": "bot_intro_x",
+        "val": "I am a bot named $1.  I am here to help you get the most of your studies.  I will reply to comments you make on scripture passages."
+      },
+      {
+        "key": "box_music",
+        "val": "Music"
+      },
+      {
+        "key": "select_book",
+        "val": "Select Book"
+      },
+      {
+        "key": "1_ne",
+        "val": "1 Nephi"
+      },
+      {
+        "key": "2_ne",
+        "val": "2 Nephi"
+      },
+      {
+        "key": "jacob",
+        "val": "Jacob"
+      },
+      {
+        "key": "enos",
+        "val": "Enos"
+      },
+      {
+        "key": "jarom",
+        "val": "Jarom"
+      },
+      {
+        "key": "omni",
+        "val": "Omni"
+      },
+      {
+        "key": "w_of_m",
+        "val": "Words of Mormon"
+      },
+      {
+        "key": "mosiah",
+        "val": "Mosiah"
+      },
+      {
+        "key": "alma",
+        "val": "Alma"
+      },
+      {
+        "key": "hel",
+        "val": "Helaman"
+      },
+      {
+        "key": "3_ne",
+        "val": "3 Nephi"
+      },
+      {
+        "key": "4_ne",
+        "val": "4 Nephi"
+      },
+      {
+        "key": "morm",
+        "val": "Mormon"
+      },
+      {
+        "key": "ether",
+        "val": "Ether"
+      },
+      {
+        "key": "moro",
+        "val": "Moroni"
+      },
+      {
+        "key": "js_chapter",
+        "val": "Chapter"
+      },
+      {
+        "key": "js_verse",
+        "val": "Verse"
+      },
+      {
+        "key": "short_title",
+        "val": "BkMrmn"
+      },
+      {
+        "key": "home_heading",
+        "val": "A Book of Mormon Study Resource"
+      },
+      {
+        "key": "home_title",
+        "val": "Book of Mormon Online"
+      },
+      {
+        "key": "lang_select",
+        "val": "Select Language"
+      },
+      {
+        "key": "home_subtitle",
+        "val": "A dynamic, social study resource for all students of the Book of Mormon"
+      },
+      {
+        "key": "js_chapter_num",
+        "val": "Chapter {#}"
+      },
+      {
+        "key": "js_verse_num",
+        "val": "Verse {#}"
+      },
+      {
+        "key": "user",
+        "val": "User"
+      },
+      {
+        "key": "progress",
+        "val": "Progress"
+      },
+      {
+        "key": "guest",
+        "val": "Guest"
+      },
+      {
+        "key": "not_started",
+        "val": "Not Started"
+      },
+      {
+        "key": "username",
+        "val": "Username"
+      },
+      {
+        "key": "password",
+        "val": "Password"
+      },
+      {
+        "key": "guest_user_progress",
+        "val": "Guest User Progress"
+      },
+      {
+        "key": "user_progress",
+        "val": "User Progress"
+      },
+      {
+        "key": "sign_up",
+        "val": "Sign Up"
+      },
+      {
+        "key": "user_login",
+        "val": "User Login"
+      },
+      {
+        "key": "progress_overview_and_breakdown",
+        "val": "Progress Overview and Breakdown"
+      },
+      {
+        "key": "clear_cache",
+        "val": "Clear Cache"
+      },
+      {
+        "key": "clearing_cache",
+        "val": "Clearing Cache..."
+      },
+      {
+        "key": "your_study_log",
+        "val": "Your Study Log"
+      },
+      {
+        "key": "total_time_studied",
+        "val": "Total Time Studied"
+      },
+      {
+        "key": "number_of_study_sessions",
+        "val": "Number of Study Sessions"
+      },
+      {
+        "key": "leader_board",
+        "val": "Leader Board"
+      },
+      {
+        "key": "most_time_spent",
+        "val": "Most Time Spent"
+      },
+      {
+        "key": "most_completed",
+        "val": "Most Completed"
+      },
+      {
+        "key": "recent_finishers",
+        "val": "Recent Finishers"
+      },
+      {
+        "key": "date",
+        "val": "Date"
+      },
+      {
+        "key": "sign_in",
+        "val": "Sign In"
+      },
+      {
+        "key": "sign_out",
+        "val": "Sign Out"
+      },
+      {
+        "key": "hours_min_format",
+        "val": "{#} hrs {#} mins"
+      },
+      {
+        "key": "hrs",
+        "val": "hrs"
+      },
+      {
+        "key": "mins",
+        "val": "mins"
+      },
+      {
+        "key": "completed_time",
+        "val": "Completed the Book of Mormon at {###}"
+      },
+      {
+        "key": "timeline_title",
+        "val": "Timeline"
+      },
+      {
+        "key": "table_of_contents",
+        "val": "Table of Contents"
+      },
+      {
+        "key": "timeline_event",
+        "val": "Timeline event"
+      },
+      {
+        "key": "db_places",
+        "val": "Book of Mormon Places"
+      },
+      {
+        "key": "db_people",
+        "val": "Book of Mormon People"
+      },
+      {
+        "key": "social_identification",
+        "val": "Social Identification"
+      },
+      {
+        "key": "biblical_israelite",
+        "val": "Biblical/Israelite"
+      },
+      {
+        "key": "jaredite",
+        "val": "Jaredite"
+      },
+      {
+        "key": "nephite",
+        "val": "Nephite"
+      },
+      {
+        "key": "lamanite",
+        "val": "Lamanite"
+      },
+      {
+        "key": "gadianton",
+        "val": "Gadianton"
+      },
+      {
+        "key": "other_unknown",
+        "val": "Other/Unknown"
+      },
+      {
+        "key": "social_classification",
+        "val": "Social Classification"
+      },
+      {
+        "key": "royalty",
+        "val": "Royalty"
+      },
+      {
+        "key": "priest_cleric",
+        "val": "Priest/Cleric"
+      },
+      {
+        "key": "record_keeper",
+        "val": "Record-Keeper"
+      },
+      {
+        "key": "warrior",
+        "val": "Warrior"
+      },
+      {
+        "key": "judge",
+        "val": "Judge"
+      },
+      {
+        "key": "time_ago_date_format",
+        "val": "ddd, D MMM YYYY [at] h:mma"
+      },
+      {
+        "key": "individual",
+        "val": "Individual"
+      },
+      {
+        "key": "group",
+        "val": "Group"
+      },
+      {
+        "key": "organization",
+        "val": "Organization"
+      },
+      {
+        "key": "society",
+        "val": "Society"
+      },
+      {
+        "key": "civilization",
+        "val": "Civilization"
+      },
+      {
+        "key": "select all",
+        "val": "Select All"
+      },
+      {
+        "key": "clear_all",
+        "val": "Clear All"
+      },
+      {
+        "key": "filters",
+        "val": "Filters"
+      },
+      {
+        "key": "results",
+        "val": "Results"
+      },
+      {
+        "key": "location_type",
+        "val": "Location Type"
+      },
+      {
+        "key": "nations",
+        "val": "Nations"
+      },
+      {
+        "key": "lands",
+        "val": "Lands"
+      },
+      {
+        "key": "cities",
+        "val": "Cities"
+      },
+      {
+        "key": "towns_and_places",
+        "val": "Towns and Places"
+      },
+      {
+        "key": "geographic features",
+        "val": "Geographic Features"
+      },
+      {
+        "key": "open",
+        "val": "Open"
+      },
+      {
+        "key": "private",
+        "val": "Private"
+      },
+      {
+        "key": "public",
+        "val": "Public"
+      },
+      {
+        "key": "members",
+        "val": "Members"
+      },
+      {
+        "key": "teaser",
+        "val": "A dynamic, interactive, web-friendly presentation of the Book of Mormon.  Create an account and track your progress."
+      },
+      {
+        "key": "greater_region",
+        "val": "Greater Region"
+      },
+      {
+        "key": "old_world",
+        "val": "Old World"
+      },
+      {
+        "key": "land_of_desolation",
+        "val": "Land of Desolation"
+      },
+      {
+        "key": "land_bountiful",
+        "val": "Land Bountiful"
+      },
+      {
+        "key": "land_of_zarahemla",
+        "val": "Land of Zarahemla"
+      },
+      {
+        "key": "land_of_nephi",
+        "val": "Land of Nephi"
+      },
+      {
+        "key": "leaderboard",
+        "val": "Leaderboard"
+      },
+      {
+        "key": "occupants",
+        "val": "Occupants"
+      },
+      {
+        "key": "israelites",
+        "val": "Israelites"
+      },
+      {
+        "key": "jaredites",
+        "val": "Jaredites"
+      },
+      {
+        "key": "mulekites",
+        "val": "Mulekites"
+      },
+      {
+        "key": "nephites",
+        "val": "Nephites"
+      },
+      {
+        "key": "lamanites",
+        "val": "Lamanites"
+      },
+      {
+        "key": "today",
+        "val": "Today"
+      },
+      {
+        "key": "relationship_network_visualization",
+        "val": "Relationship Network Visualization"
+      },
+      {
+        "key": "facsimiles_of_historic_book_of_mormon_editions",
+        "val": "Facsimiles of Historical Book of Mormon Editions"
+      },
+      {
+        "key": "commercial_editions",
+        "val": "Commercial Editions (No Facsimiles Available)"
+      },
+      {
+        "key": "about_bookofmormononline",
+        "val": "About Book of Mormon Online"
+      },
+      {
+        "key": "what_is_bookofmormononline",
+        "val": "What is Book of Mormon Online?"
+      },
+      {
+        "key": "what_is_the_book_of_mormon",
+        "val": "What is the Book of Mormon?"
+      },
+      {
+        "key": "who_created_bookofmormononline",
+        "val": "Who Created Book of Mormon Online?"
+      },
+      {
+        "key": "disclaimer",
+        "val": "Disclaimer"
+      },
+      {
+        "key": "menu_audit",
+        "val": "Translations"
+      },
+      {
+        "key": "contact_form",
+        "val": "Contact Form"
+      },
+      {
+        "key": "menu_more",
+        "val": "More"
+      },
+      {
+        "key": "title_more",
+        "val": "Additional Contents"
+      },
+      {
+        "key": "your_name",
+        "val": "Your Name"
+      },
+      {
+        "key": "your_email_address",
+        "val": "Your Email Address"
+      },
+      {
+        "key": "reason_for_contact",
+        "val": "Reason For Contact"
+      },
+      {
+        "key": "comment",
+        "val": "Comment"
+      },
+      {
+        "key": "question",
+        "val": "Question"
+      },
+      {
+        "key": "error_to_report",
+        "val": "Error to Report"
+      },
+      {
+        "key": "hate_mail",
+        "val": "Hate Mail"
+      },
+      {
+        "key": "js_please_enter_your_name",
+        "val": "Please enter your name."
+      },
+      {
+        "key": "js_please_a_message",
+        "val": "Please type a message."
+      },
+      {
+        "key": "js_please_enter_a_valid_email_address",
+        "val": "Please enter a valid email address'"
+      },
+      {
+        "key": "js_signing_up",
+        "val": "Signing Up…"
+      },
+      {
+        "key": "js_signing_in",
+        "val": "Signing In..."
+      },
+      {
+        "key": "js_please_fill_out_all_the_required_fields",
+        "val": "Please fill out all the required fields!"
+      },
+      {
+        "key": "yesterday",
+        "val": "Yesterday"
+      },
+      {
+        "key": "days_ago",
+        "val": "days ago"
+      },
+      {
+        "key": "study_log",
+        "val": "BookofMormonOnline.Net Study Log"
+      },
+      {
+        "key": "js_image",
+        "val": "Image"
+      },
+      {
+        "key": "js_video",
+        "val": "Video"
+      },
+      {
+        "key": "js_music",
+        "val": "Music"
+      },
+      {
+        "key": "js_view_event_on_timeline",
+        "val": "View Event on Timeline"
+      },
+      {
+        "key": "js_internal_chronological_marker",
+        "val": "Internal Chronological Marker"
+      },
+      {
+        "key": "maplist_building_map",
+        "val": "Building Map..."
+      },
+      {
+        "key": "maplist_imaging_terrain",
+        "val": "Imaging Terrain..."
+      },
+      {
+        "key": "maplist_making_labels",
+        "val": "Making Labels..."
+      },
+      {
+        "key": "maplist_measuring_distances",
+        "val": "Measuring Distances..."
+      },
+      {
+        "key": "maplist_calculating_route",
+        "val": "Calculating Route..."
+      },
+      {
+        "key": "maplist_picking_colors",
+        "val": "Picking Colors..."
+      },
+      {
+        "key": "maplist_chasing_lamanites",
+        "val": "Chasing Lamanites..."
+      },
+      {
+        "key": "maplist_tightening_dishes",
+        "val": "Tightening Dishes..."
+      },
+      {
+        "key": "maplist_herding_cureloms",
+        "val": "Herding Cureloms..."
+      },
+      {
+        "key": "maplist_locating_cities",
+        "val": "Locating Cities..."
+      },
+      {
+        "key": "my_progress",
+        "val": "My Progress"
+      },
+      {
+        "key": "complete",
+        "val": "Complete"
+      },
+      {
+        "key": "time_spent",
+        "val": "Time Spent"
+      },
+      {
+        "key": "sup_appen",
+        "val": "Supplement and Appendices"
+      },
+      {
+        "key": "up_incorrect",
+        "val": "Your username or password was incorrect."
+      },
+      {
+        "key": "progress_for",
+        "val": "User Progress for {user}"
+      },
+      {
+        "key": "incomplete",
+        "val": "Incomplete"
+      },
+      {
+        "key": "started",
+        "val": "Started"
+      },
+      {
+        "key": "min",
+        "val": "min"
+      },
+      {
+        "key": "hr",
+        "val": "hr"
+      },
+      {
+        "key": "menu_history",
+        "val": "History"
+      },
+      {
+        "key": "menu_analysis",
+        "val": "Analysis"
+      },
+      {
+        "key": "menu_study",
+        "val": "Study"
+      },
+      {
+        "key": "pasword_requirements",
+        "val": "Password must contain at least eight characters, at least one number, both lower and uppercase letters and at least one special characters."
+      },
+      {
+        "key": "action_cancel",
+        "val": "Cancel"
+      },
+      {
+        "key": "action_delete",
+        "val": "Delete"
+      },
+      {
+        "key": "action_edit",
+        "val": "Edit"
+      },
+      {
+        "key": "action_like",
+        "val": "Like"
+      },
+      {
+        "key": "action_reply",
+        "val": "Reply"
+      },
+      {
+        "key": "action_unlike",
+        "val": "Unlike"
+      },
+      {
+        "key": "cancel",
+        "val": "Cancel"
+      },
+      {
+        "key": "change_password",
+        "val": "Change Password"
+      },
+      {
+        "key": "coming_soon",
+        "val": "Coming Soon"
+      },
+      {
+        "key": "completed",
+        "val": "Completed"
+      },
+      {
+        "key": "completed_on",
+        "val": "completed on"
+      },
+      {
+        "key": "confirm_password",
+        "val": "Confirm Password"
+      },
+      {
+        "key": "connected_accounts",
+        "val": "Connected Accounts"
+      },
+      {
+        "key": "contact",
+        "val": "Contact"
+      },
+      {
+        "key": "copied_to_clipboard",
+        "val": "Copied to clipboard"
+      },
+      {
+        "key": "date_started",
+        "val": "Date started"
+      },
+      {
+        "key": "discussion",
+        "val": "Discussion"
+      },
+      {
+        "key": "tab_progress",
+        "val": "Progress"
+      },
+      {
+        "key": "tab_prefs",
+        "val": "Preferences"
+      },
+      {
+        "key": "tab_profile",
+        "val": "Profile"
+      },
+      {
+        "key": "edit_profile",
+        "val": "Edit Profile"
+      },
+      {
+        "key": "email",
+        "val": "Email"
+      },
+      {
+        "key": "facebook",
+        "val": "Facebook"
+      },
+      {
+        "key": "google",
+        "val": "Google"
+      },
+      {
+        "key": "instagram",
+        "val": "Instagram"
+      },
+      {
+        "key": "invite",
+        "val": "Invite"
+      },
+      {
+        "key": "last_seen",
+        "val": "Last seen:"
+      },
+      {
+        "key": "loading_groups",
+        "val": "Loading Groups..."
+      },
+      {
+        "key": "log_out",
+        "val": "Log out"
+      },
+      {
+        "key": "login",
+        "val": "Login"
+      },
+      {
+        "key": "message_thread",
+        "val": "Message Thread"
+      },
+      {
+        "key": "name",
+        "val": "Name"
+      },
+      {
+        "key": "new_password",
+        "val": "New password"
+      },
+      {
+        "key": "notebook",
+        "val": "Notebook"
+      },
+      {
+        "key": "notifications",
+        "val": "Notifications"
+      },
+      {
+        "key": "password_login",
+        "val": "Password login"
+      },
+      {
+        "key": "password_no_mach",
+        "val": "Passwords do not match"
+      },
+      {
+        "key": "object_cat_weapon",
+        "val": "Weapon"
+      },
+      {
+        "key": "vox_alma2",
+        "val": "Alma"
+      },
+      {
+        "key": "vox_servants_of_father_of_lamoni",
+        "val": "Servants of father of Lamoni"
+      },
+      {
+        "key": "vox_ammon1",
+        "val": "Ammon"
+      },
+      {
+        "key": "vox_king_of_the_lamanites_in_mosiah_20",
+        "val": "Lamanite King"
+      },
+      {
+        "key": "vox_amalickiah",
+        "val": "Amalickiah"
+      },
+      {
+        "key": "vox_chemish",
+        "val": "Chemish"
+      },
+      {
+        "key": "vox_the_learned",
+        "val": "The learned"
+      },
+      {
+        "key": "bot",
+        "val": "Bot"
+      },
+      {
+        "key": "vox_brother_of_jared1",
+        "val": "Brother of Jared"
+      },
+      {
+        "key": "vox_lamanite_guards",
+        "val": "Lamanite guards"
+      },
+      {
+        "key": "vox_the_spirit",
+        "val": "The Spirit"
+      },
+      {
+        "key": "vox_people_at_the_garden_of_nephi2",
+        "val": "People at the garden of Nephi"
+      },
+      {
+        "key": "era_old_world",
+        "val": "Old World"
+      },
+      {
+        "key": "prov_lehite",
+        "val": "Lehite"
+      },
+      {
+        "key": "vox_akish",
+        "val": "Akish"
+      },
+      {
+        "key": "upload_photo",
+        "val": "Upload image"
+      },
+      {
+        "key": "edit_image",
+        "val": "Edit image"
+      },
+      {
+        "key": "select_image",
+        "val": "Select image"
+      },
+      {
+        "key": "select_paste_drop_image",
+        "val": "Select, drop, or paste image"
+      },
+      {
+        "key": "img_limits",
+        "val": "A user’s profile image can be a JPG (.jpg), JPEG (.jpeg), or PNG (.png) file of up to 25 MB."
+      },
+      {
+        "key": "highlight_msg",
+        "val": "Highlighted content"
+      },
+      {},
+      {
+        "key": "victory_congrats",
+        "val": "Congratulations!"
+      },
+      {
+        "key": "victory_completed",
+        "val": "You have completed 100% of the Book of Mormon."
+      },
+      {
+        "key": "victory_started_x",
+        "val": "You started on $1"
+      },
+      {
+        "key": "victory_duration_x",
+        "val": "It took you $1"
+      },
+      {
+        "key": "victory_sessions_x",
+        "val": "It took you $1 sessions"
+      },
+      {
+        "key": "from_page",
+        "val": "From page"
+      },
+      {
+        "key": "from_section",
+        "val": "From section"
+      },
+      {
+        "key": "previous",
+        "val": "Previous"
+      },
+      {
+        "key": "next",
+        "val": "Next"
+      },
+      {
+        "key": "vox_enos",
+        "val": "Enos"
+      },
+      {
+        "key": "study_question_meaning",
+        "val": "What does this mean?"
+      },
+      {
+        "key": "mapgroup_internal",
+        "val": "Internal"
+      },
+      {
+        "key": "object_cat_metal",
+        "val": "Metal"
+      },
+      {
+        "key": "era_christ_era",
+        "val": "Christ Era"
+      },
+      {
+        "key": "Hide",
+        "val": "Hide"
+      },
+      {
+        "key": "prov_jaredite",
+        "val": "Jaredite"
+      },
+      {
+        "key": "menu_objects",
+        "val": "Objects"
+      },
+      {
+        "key": "vox_gentiles",
+        "val": "Gentiles"
+      },
+      {
+        "key": "passwords_no_match",
+        "val": "Passwords do not match"
+      },
+      {
+        "key": "patreon",
+        "val": "Patreon"
+      },
+      {
+        "key": "privacy_policy_review_x",
+        "val": "Please review the $1"
+      },
+      {
+        "key": "read_only",
+        "val": "Read-only mode"
+      },
+      {
+        "key": "reply_count_plural",
+        "val": "Replies"
+      },
+      {
+        "key": "reply_count_singular",
+        "val": "Reply"
+      },
+      {
+        "key": "save",
+        "val": "Save"
+      },
+      {
+        "key": "studygroup_invite",
+        "val": "$1 study group invitation"
+      },
+      {
+        "key": "share_group_link",
+        "val": "Share this secret link to invite others"
+      },
+      {
+        "key": "signup",
+        "val": "Sign-up"
+      },
+      {
+        "key": "social_login",
+        "val": "Social Login"
+      },
+      {
+        "key": "social_media",
+        "val": "Social Media"
+      },
+      {
+        "key": "study_hall",
+        "val": "Study Hall"
+      },
+      {
+        "key": "study_history",
+        "val": "Study History"
+      },
+      {
+        "key": "study_history_for",
+        "val": "Study History for $1"
+      },
+      {
+        "key": "study_progress",
+        "val": "Study Progress"
+      },
+      {
+        "key": "study_sessions",
+        "val": "Study sessions"
+      },
+      {
+        "key": "study_time",
+        "val": "Study time"
+      },
+      {
+        "key": "title_analysis",
+        "val": "Book of Mormon Analysis"
+      },
+      {
+        "key": "title_facsimilies",
+        "val": "Facsimiles of Historical Book of Mormon Editions"
+      },
+      {
+        "key": "title_history",
+        "val": "Historical Sources Relating to the Book of Mormon"
+      },
+      {
+        "key": "archived_document",
+        "val": "Archived document"
+      },
+      {
+        "key": "title_search_results",
+        "val": "Search Results for $1"
+      },
+      {
+        "key": "title_study_history",
+        "val": "Study History"
+      },
+      {
+        "key": "title_tos",
+        "val": "Book of Mormon Online—Terms of Service"
+      },
+      {
+        "key": "tooltip_admin",
+        "val": "Study group administration"
+      },
+      {
+        "key": "tooltip_discussion",
+        "val": "Study group discussion"
+      },
+      {
+        "key": "tooltip_notebook",
+        "val": "Study group Notebook"
+      },
+      {
+        "key": "tooltip_progress",
+        "val": "Study group progress"
+      },
+      {
+        "key": "tos_agree",
+        "val": "By signing up, you agree to the terms of service"
+      },
+      {
+        "key": "trophy_case",
+        "val": "Trophy Case"
+      },
+      {
+        "key": "twitter",
+        "val": "Twitter"
+      },
+      {
+        "key": "zip_code",
+        "val": "Zip Code"
+      },
+      {
+        "key": "vox_moroni1s-soldier",
+        "val": "Moroni’s soldier"
+      },
+      {
+        "key": "place_label",
+        "val": "Place label"
+      },
+      {
+        "key": "vox_gideon",
+        "val": "Gideon"
+      },
+      {
+        "key": "x_members",
+        "val": "$1 members"
+      },
+      {
+        "key": "x_member",
+        "val": "$1 member"
+      },
+      {
+        "key": "study_groups_are",
+        "val": "Study groups are a place for people to congregate and discuss their findings, insights, notes, and study progress."
+      },
+      {
+        "key": "need_an_account",
+        "val": "Need an account?"
+      },
+      {
+        "key": "create_or_join_groups",
+        "val": "You are not part of any study groups.  Join or create a new one."
+      },
+      {
+        "key": "account_required",
+        "val": "User account required to continue"
+      },
+      {
+        "key": "have_an_account",
+        "val": "Have an account?"
+      },
+      {
+        "key": "admin",
+        "val": "Administration"
+      },
+      {
+        "key": "x_is_writing",
+        "val": "$1 is writing a comment..."
+      },
+      {
+        "key": "remove_admin",
+        "val": "Revoke admin privileges"
+      },
+      {
+        "key": "logging_in",
+        "val": "Logging in..."
+      },
+      {
+        "key": "last_studied",
+        "val": "Last studied"
+      },
+      {
+        "key": "currently_studying",
+        "val": "Currently studying"
+      },
+      {
+        "key": "x_comment_in_y",
+        "val": "$1’s comment in $2"
+      },
+      {
+        "key": "send_dm",
+        "val": "Send direct message"
+      },
+      {
+        "key": "current_group",
+        "val": "Present group"
+      },
+      {
+        "key": "open_study_hall",
+        "val": "Open study hall"
+      },
+      {
+        "key": "start_call",
+        "val": "Start a call"
+      },
+      {
+        "key": "get_invite_link",
+        "val": "Get sharable invite link"
+      },
+      {
+        "key": "leave_group",
+        "val": "Leave study group"
+      },
+      {
+        "key": "loading_group_page_comments",
+        "val": "Loading study group comments"
+      },
+      {
+        "key": "commentary_on",
+        "val": "Commentary on $1"
+      },
+      {
+        "key": "commentary_on_x_by_y",
+        "val": "Commentary on $1 by $2"
+      },
+      {
+        "key": "art_on_x",
+        "val": "Illustration of $1"
+      },
+      {
+        "key": "loading_commentary",
+        "val": "Loading commentary..."
+      },
+      {
+        "key": "loading_x",
+        "val": "Loading $1..."
+      },
+      {
+        "key": "person",
+        "val": "person"
+      },
+      {
+        "key": "place",
+        "val": "place"
+      },
+      {
+        "key": "facsimile_of_x",
+        "val": "Facsimile of $1"
+      },
+      {
+        "key": "say_something",
+        "val": "Say something..."
+      },
+      {
+        "key": "go_to_last_msg",
+        "val": "Go to latest message"
+      },
+      {
+        "key": "join_call",
+        "val": "Join call"
+      },
+      {
+        "key": "no_notifications",
+        "val": "No notifications"
+      },
+      {
+        "key": "loading_previous_messages",
+        "val": "Loading previous messages"
+      },
+      {
+        "key": "dms_with_x",
+        "val": "Direct messages with $1"
+      },
+      {
+        "key": "study_groups",
+        "val": "Study groups"
+      },
+      {
+        "key": "invitation_not_found",
+        "val": "Invitation not found"
+      },
+      {
+        "key": "user_profile",
+        "val": "User profile"
+      },
+      {
+        "key": "login_for_history",
+        "val": "Sign-up for an account to see your study history"
+      },
+      {
+        "key": "x_came_online",
+        "val": "$1 is here"
+      },
+      {
+        "key": "x_went_offline",
+        "val": "$1 went away"
+      },
+      {
+        "key": "x_switched_groups",
+        "val": "$1 is studying elsewhere"
+      },
+      {
+        "key": "x_joined_a_call",
+        "val": "$1 joined a call"
+      },
+      {
+        "key": "loading_publications",
+        "val": "Loading publications..."
+      },
+      {
+        "key": "direct_messages",
+        "val": "Direct messages"
+      },
+      {
+        "key": "direct_message",
+        "val": "Direct message"
+      },
+      {
+        "key": "accept_inviting",
+        "val": "Accepting invitation"
+      },
+      {
+        "key": "could_not_change_password",
+        "val": "Failed to change password"
+      },
+      {
+        "key": "new_password_saved",
+        "val": "New password saved"
+      },
+      {
+        "key": "password_no_match",
+        "val": "Passwords do not match"
+      },
+      {
+        "key": "duration_format",
+        "val": "h [hrs] mm [mins]"
+      },
+      {
+        "key": "history_date_format_full",
+        "val": "D MMM YYYY"
+      },
+      {
+        "key": "history_date_format_year",
+        "val": "YYYY"
+      },
+      {
+        "key": "history_date_format_month",
+        "val": "MMM YYYY"
+      },
+      {
+        "key": "year_format",
+        "val": "$1"
+      },
+      {
+        "key": "could_not_login",
+        "val": "Could not login"
+      },
+      {
+        "key": "full_datetime",
+        "val": "ddd, D MMM YYYY h:mm A"
+      },
+      {
+        "key": "intl_date",
+        "val": "YYYY-MM-DD"
+      },
+      {
+        "key": "day_month",
+        "val": "ddd, D MMM"
+      },
+      {
+        "key": "time_format",
+        "val": "h:mm A"
+      },
+      {
+        "key": "current_bookmark",
+        "val": "Current Bookmark"
+      },
+      {
+        "key": "community",
+        "val": "Community"
+      },
+      {
+        "key": "my_groups",
+        "val": "My Groups"
+      },
+      {
+        "key": "group_i_follow",
+        "val": "Groups I Follow"
+      },
+      {
+        "key": "featured_groups",
+        "val": "Featured Groups"
+      },
+      {
+        "key": "controversial_commentaries",
+        "val": "Controversial Commentaries"
+      },
+      {
+        "key": "see_more",
+        "val": "See more..."
+      },
+      {
+        "key": "join",
+        "val": "Join"
+      },
+      {
+        "key": "request",
+        "val": "Apply"
+      },
+      {
+        "key": "study",
+        "val": "Study"
+      },
+      {
+        "key": "mine_groupd",
+        "val": "My Groups"
+      },
+      {
+        "key": "home",
+        "val": "featured_groups"
+      },
+      {
+        "key": "comment_count_plural",
+        "val": "$1 comments"
+      },
+      {
+        "key": "comment_count_singular",
+        "val": "$1 comment"
+      },
+      {
+        "key": "loading_comments",
+        "val": "Loading comments"
+      },
+      {
+        "key": "like",
+        "val": "Like"
+      },
+      {
+        "key": "and_x_others",
+        "val": "and $1 others"
+      },
+      {
+        "key": "like_this_singular",
+        "val": "likes this"
+      },
+      {
+        "key": "like_this_plural",
+        "val": "like this"
+      },
+      {
+        "key": "mine"
+      },
+      {
+        "key": "join_to_comment",
+        "val": "Join this group to comment"
+      },
+      {
+        "key": "join_group",
+        "val": "Join group"
+      },
+      {
+        "key": "apply_for_membership",
+        "val": "Apply for membership"
+      },
+      {
+        "key": "highlighted_text",
+        "val": "highlighted a passage"
+      },
+      {
+        "key": "commented_text",
+        "val": "commented on a passage"
+      },
+      {
+        "key": "highlighted_img",
+        "val": "highlighted a image"
+      },
+      {
+        "key": "commented_img",
+        "val": "commented on a image"
+      },
+      {
+        "key": "highlighted_fax",
+        "val": "highlighted a facsimile"
+      },
+      {
+        "key": "commented_fax",
+        "val": "commented on a facsimile"
+      },
+      {
+        "key": "recently_commented",
+        "val": "Recently commented on:"
+      },
+      {
+        "key": "are_you_sure",
+        "val": "Are you sure?"
+      },
+      {
+        "key": "highlighted_section",
+        "val": "highlighted on a section"
+      },
+      {
+        "key": "commented_section",
+        "val": "commented on a section"
+      },
+      {
+        "key": "liked",
+        "val": "Liked"
+      },
+      {
+        "key": "private_group",
+        "val": "Private Group"
+      },
+      {
+        "key": "public_group",
+        "val": "Public Group"
+      },
+      {
+        "key": "open_group",
+        "val": "Open Group"
+      },
+      {
+        "key": "honorific"
+      },
+      {
+        "key": "honorific_subject"
+      },
+      {
+        "key": "moment_locale",
+        "val": "en"
+      },
+      {
+        "key": "moment_future",
+        "val": "just now"
+      },
+      {
+        "key": "moment_past",
+        "val": "%s ago"
+      },
+      {
+        "key": "moment_s",
+        "val": "seconds"
+      },
+      {
+        "key": "moment_ss",
+        "val": "%ss"
+      },
+      {
+        "key": "moment_M",
+        "val": "1m"
+      },
+      {
+        "key": "moment_MM",
+        "val": "%dM"
+      },
+      {
+        "key": "moment_h",
+        "val": "1hr"
+      },
+      {
+        "key": "moment_hh",
+        "val": "%dh"
+      },
+      {
+        "key": "moment_d",
+        "val": "1d"
+      },
+      {
+        "key": "moment_dd",
+        "val": "%dd"
+      },
+      {
+        "key": "time",
+        "val": "moment_M"
+      },
+      {
+        "key": "moment_y",
+        "val": "1y"
+      },
+      {
+        "key": "moment_yy",
+        "val": "%dY"
+      },
+      {
+        "key": "and",
+        "val": "and"
+      },
+      {
+        "key": "open_studyhall",
+        "val": "Open study hall"
+      },
+      {
+        "key": "request_admission",
+        "val": "Request admission"
+      },
+      {
+        "key": "join_instantly",
+        "val": "Join instantly"
+      },
+      {
+        "key": "joining",
+        "val": "Joining..."
+      },
+      {
+        "key": "joined",
+        "val": "Joined"
+      },
+      {
+        "key": "applying",
+        "val": "Applying"
+      },
+      {
+        "key": "applied",
+        "val": "Applied"
+      },
+      {
+        "key": "join_failed",
+        "val": "Failed to join"
+      },
+      {
+        "key": "application_recieved",
+        "val": "Application received"
+      },
+      {
+        "key": "withdrawing",
+        "val": "Withdrawing"
+      },
+      {
+        "key": "no_relationships",
+        "val": "No relationships."
+      },
+      {
+        "key": "application_withdrawn",
+        "val": "Application withdrawn"
+      },
+      {
+        "key": "withdraw_failed",
+        "val": "Failed to withdraw"
+      },
+      {
+        "key": "apply",
+        "val": "Apply"
+      },
+      {
+        "key": "x_memebership_requests",
+        "val": "$1 membership requests"
+      },
+      {
+        "key": "approve",
+        "val": "Approve"
+      },
+      {
+        "key": "deny",
+        "val": "Deny"
+      },
+      {
+        "key": "approving",
+        "val": "Approving"
+      },
+      {
+        "key": "denying",
+        "val": "Denying"
+      },
+      {
+        "key": "location_profile",
+        "val": "Location Profile"
+      },
+      {
+        "key": "commentary_on_x",
+        "val": "Commentary on $1"
+      },
+      {
+        "key": "person_profile",
+        "val": "People Profile"
+      },
+      {
+        "key": "relationships",
+        "val": "Relationships"
+      },
+      {
+        "key": "references",
+        "val": "References"
+      },
+      {
+        "key": "view_on_map",
+        "val": "View on Map"
+      },
+      {
+        "key": "bom_maps",
+        "val": "Maps and Geography Models"
+      },
+      {
+        "key": "geo_model",
+        "val": "$1 geography model"
+      },
+      {
+        "key": "supplement",
+        "val": "saving"
+      },
+      {
+        "key": "x_added_y_highlight",
+        "val": "$1 highlighted some text."
+      },
+      {
+        "key": "x_added_y_highlights",
+        "val": "$1 added $2 highlights."
+      },
+      {
+        "key": "x_highlighted_image",
+        "val": "$1 highlighted an image."
+      },
+      {
+        "key": "x_highlighted_facsimile",
+        "val": "$1 highlighted a facsimile."
+      },
+      {
+        "key": "legal_notice",
+        "val": "Legal notice"
+      },
+      {
+        "key": "invite_link",
+        "val": "Share Invitation Link"
+      },
+      {
+        "key": "vox_priest_of_king_noah",
+        "val": "Priest of King Noah"
+      },
+      {
+        "key": "object_cat_record",
+        "val": "Record"
+      },
+      {
+        "key": "vox_servant",
+        "val": "Servant"
+      },
+      {
+        "key": "object_cat_treasure",
+        "val": "Treasure"
+      },
+      {
+        "key": "title_objects",
+        "val": "Objects in the Book of Mormon"
+      },
+      {
+        "key": "vox_one_foremost_among_poor_zoramites",
+        "val": "Foremost poor Zoramite"
+      },
+      {
+        "key": "user_history",
+        "val": "User History"
+      },
+      {
+        "key": "search_for_an_object",
+        "val": "Search for an object"
+      },
+      {
+        "key": "clear_filters",
+        "val": "Clear filters"
+      },
+      {
+        "key": "vox_many_of_the_people_of_ammonihah",
+        "val": "Ammonihah many"
+      },
+      {
+        "key": "vox_angel_to_nephi1",
+        "val": "Angel to Nephi"
+      },
+      {
+        "key": "study_question_understanding",
+        "val": "I don’t understand."
+      },
+      {
+        "key": "posted_comment",
+        "val": "posted a comment"
+      },
+      {
+        "key": "highlighted_com",
+        "val": "highlighted some commentary"
+      },
+      {
+        "key": "commented_com",
+        "val": "commented on some commentary"
+      },
+      {
+        "key": "usage_literal",
+        "val": "Literal"
+      },
+      {
+        "key": "vox_nephi2",
+        "val": "Nephi"
+      },
+      {
+        "key": "object_cat_money",
+        "val": "Money"
+      },
+      {
+        "key": "Show",
+        "val": "Show"
+      },
+      {
+        "key": "vox_nephi2_and_lehi2",
+        "val": "Nephi and Lehi"
+      },
+      {
+        "key": "unmute",
+        "val": "Unmute"
+      },
+      {
+        "key": "events",
+        "val": "Events"
+      },
+      {
+        "key": "study_question_main",
+        "val": "What is the main point?"
+      },
+      {
+        "key": "vox_daughter_of_jared2",
+        "val": "Daughter of Jared"
+      },
+      {
+        "key": "object_cat_building",
+        "val": "Building"
+      },
+      {
+        "key": "object_cat_apparel",
+        "val": "Apparel"
+      },
+      {
+        "key": "spec_specific",
+        "val": "Named"
+      },
+      {
+        "key": "object_axis_specificity",
+        "val": "Specificity"
+      },
+      {
+        "key": "vox_people_gathered_at_the_burial_of_seezoram",
+        "val": "Burial gathering"
+      },
+      {
+        "key": "prov_nephite",
+        "val": "Nephite"
+      },
+      {
+        "key": "spec_general",
+        "val": "Generic"
+      },
+      {
+        "key": "prov_mulekite",
+        "val": "Mulekite"
+      },
+      {
+        "key": "vox_nephites_who_make_covenant",
+        "val": "Nephites who make covenant"
+      },
+      {
+        "key": "vox_jesus_christ_-_whoso",
+        "val": "Whosoever"
+      },
+      {
+        "key": "vox_angel_to_alma2",
+        "val": "Angel to Alma"
+      },
+      {
+        "key": "error",
+        "val": "Error"
+      },
+      {
+        "key": "vox_zenock",
+        "val": "Zenock"
+      },
+      {
+        "key": "menu_read",
+        "val": "Read"
+      },
+      {
+        "key": "vox_korihor",
+        "val": "Korihor"
+      },
+      {
+        "key": "vox_ammoron",
+        "val": "Ammoron"
+      },
+      {
+        "key": "ane",
+        "val": "Ancient Near East"
+      },
+      {
+        "key": "fax_edition",
+        "val": "Digital Facsimile"
+      },
+      {
+        "key": "terms_of_service",
+        "val": "terms of service"
+      },
+      {
+        "key": "privacy_policy",
+        "val": "privacy policy"
+      },
+      {
+        "key": "save_highlight_singular",
+        "val": "Save highlight"
+      },
+      {
+        "key": "save_highlight_plural",
+        "val": "Save highlights"
+      },
+      {
+        "key": "highlight_image",
+        "val": "Highlight image"
+      },
+      {
+        "key": "highlight_facsimile",
+        "val": "Highlight facsimile"
+      },
+      {
+        "key": "write_a_comment",
+        "val": "Write a comment"
+      },
+      {
+        "key": "people_places",
+        "val": "People and Places"
+      },
+      {
+        "key": "related_scriptures",
+        "val": "Related Scriptures"
+      },
+      {
+        "key": "x_note",
+        "val": "$1 note"
+      },
+      {
+        "key": "x_people_and_x_places",
+        "val": "$1 people and $2 places"
+      },
+      {
+        "key": "x_person_and_x_places",
+        "val": "$1 person and $2 places"
+      },
+      {
+        "key": "x_people_and_x_place",
+        "val": "$1 people and $2 place"
+      },
+      {
+        "key": "x_person_and_x_place",
+        "val": "$1 person and $2 place"
+      },
+      {
+        "key": "x_people",
+        "val": "$1 people"
+      },
+      {
+        "key": "x_person",
+        "val": "$1 person"
+      },
+      {
+        "key": "x_places",
+        "val": "$1 places"
+      },
+      {
+        "key": "x_place",
+        "val": "$1 place"
+      },
+      {
+        "key": "x_facsimiles",
+        "val": "$1 facsimiles"
+      },
+      {
+        "key": "x_related_scriptures",
+        "val": "$1 related scriptures"
+      },
+      {
+        "key": "x_related_scripture",
+        "val": "$1 related scripture"
+      },
+      {
+        "key": "load_x_comments",
+        "val": "Load $1 comments"
+      },
+      {
+        "key": "loading_x_more_comments",
+        "val": "Loading $1 More Comments..."
+      },
+      {
+        "key": "view_x_more_comments",
+        "val": "View $1 More Comments"
+      },
+      {
+        "key": "x_notes",
+        "val": "$1 notes"
+      },
+      {
+        "key": "notes",
+        "val": "Passage Notes"
+      },
+      {
+        "key": "highlighting",
+        "val": "Highlighting..."
+      },
+      {
+        "key": "saving",
+        "val": "Saving..."
+      },
+      {
+        "key": "study_group",
+        "val": "add_a_comment"
+      },
+      {
+        "key": "add_a_comment",
+        "val": "Add a Comment"
+      },
+      {
+        "key": "send",
+        "val": "Send"
+      },
+      {
+        "key": "advanced_editor",
+        "val": "Advanced Editor"
+      },
+      {
+        "key": "study_mode",
+        "val": "Study Mode"
+      },
+      {
+        "key": "new_group",
+        "val": "New Group"
+      },
+      {
+        "key": "xs_study_groups",
+        "val": "$1’s Study Groups"
+      },
+      {
+        "key": "is_online",
+        "val": "Is Online"
+      },
+      {
+        "key": "online_count",
+        "val": "$1 Online"
+      },
+      {
+        "key": "member_plural",
+        "val": "$1 Members"
+      },
+      {
+        "key": "create_new_study_group",
+        "val": "Create New Study Group"
+      },
+      {
+        "key": "member_singular",
+        "val": "$1 Member"
+      },
+      {
+        "key": "optional",
+        "val": "Optional"
+      },
+      {
+        "key": "status_done",
+        "val": "Status Done"
+      },
+      {
+        "key": "creating_group",
+        "val": "Creating Group"
+      },
+      {
+        "key": "new_study_group_description",
+        "val": "New Study Group Description"
+      },
+      {
+        "key": "new_study_group_icon",
+        "val": "New Study Group Icon"
+      },
+      {
+        "key": "new_study_group_name",
+        "val": "New Study Group Name"
+      },
+      {
+        "key": "new_study_group_type",
+        "val": "New Study Group Type"
+      },
+      {
+        "key": "no_name",
+        "val": "No Name"
+      },
+      {
+        "key": "back",
+        "val": "Back"
+      },
+      {
+        "key": "who_group_for",
+        "val": "Who is this group for?"
+      },
+      {
+        "key": "group_type_private",
+        "val": "Private"
+      },
+      {
+        "key": "group_type_private_desc",
+        "val": "An invite-only group that only members can see."
+      },
+      {
+        "key": "group_type_public",
+        "val": "Public"
+      },
+      {
+        "key": "group_type_public_desc",
+        "val": "An invite-only group that anyone can see and follow."
+      },
+      {
+        "key": "group_type_solo",
+        "val": "Solo"
+      },
+      {
+        "key": "group_type_solo_desc",
+        "val": "A 1-person study space just for you."
+      },
+      {
+        "key": "group_type_open",
+        "val": "Open"
+      },
+      {
+        "key": "commentary_singular",
+        "val": "Commentary"
+      },
+      {
+        "key": "facsimiles_of_x",
+        "val": "Facsimiles of $1"
+      },
+      {
+        "key": "group_type_open_desc",
+        "val": "An open-invite group that anyone can join or follow."
+      },
+      {
+        "key": "message_x",
+        "val": "Message $1"
+      },
+      {
+        "key": "share_group_link_to_x",
+        "val": "Share link to $1"
+      },
+      {
+        "key": "commentary_plural",
+        "val": "Commentaries"
+      },
+      {
+        "key": "other",
+        "val": "Other"
+      },
+      {
+        "key": "prophet",
+        "val": "Prophet"
+      },
+      {
+        "key": "priest",
+        "val": "Minister"
+      },
+      {
+        "key": "israelite",
+        "val": "Israelite"
+      },
+      {
+        "key": "social_unit",
+        "val": "Social Unit"
+      },
+      {
+        "key": "spiritual",
+        "val": "Spiritual"
+      },
+      {
+        "key": "biblical",
+        "val": "Biblical"
+      },
+      {
+        "key": "off",
+        "val": "Off"
+      },
+      {
+        "key": "select_all",
+        "val": "Select All"
+      },
+      {
+        "key": "on",
+        "val": "On"
+      },
+      {
+        "key": "title_people",
+        "val": "People in the Book of Mormon"
+      },
+      {
+        "key": "search",
+        "val": "Search"
+      },
+      {
+        "key": "greater_locale",
+        "val": "Greater Locale"
+      },
+      {
+        "key": "land_of_first_Inheritance",
+        "val": "Land of First Inheritance"
+      },
+      {
+        "key": "geo_other",
+        "val": "Other"
+      },
+      {
+        "key": "mulekite",
+        "val": "Mulekite"
+      },
+      {
+        "key": "geo_type",
+        "val": "Geo Type"
+      },
+      {
+        "key": "nation",
+        "val": "Nation"
+      },
+      {
+        "key": "land",
+        "val": "Land"
+      },
+      {
+        "key": "city",
+        "val": "City"
+      },
+      {
+        "key": "continue",
+        "val": "Continue"
+      },
+      {
+        "key": "step_over",
+        "val": "Step Over"
+      },
+      {
+        "key": "detour",
+        "val": "Detour"
+      },
+      {
+        "key": "step_into",
+        "val": "Step Into"
+      },
+      {
+        "key": "continue_or_detour",
+        "val": "Continue or Detour?"
+      },
+      {
+        "key": "step_over_or_into",
+        "val": "Step Over or Into?"
+      },
+      {
+        "key": "crossroads",
+        "val": "Crossroads"
+      },
+      {
+        "key": "embedded",
+        "val": "Embedded Content"
+      },
+      {
+        "key": "finish_or_more",
+        "val": "Are you done for now?"
+      },
+      {
+        "key": "section_complete",
+        "val": "Reading Complete"
+      },
+      {
+        "key": "finish",
+        "val": "Finish"
+      },
+      {
+        "key": "finish_narration",
+        "val": "I’m done for now."
+      },
+      {
+        "key": "more_narration",
+        "val": "Let’s load another set."
+      },
+      {
+        "key": "loading_narration",
+        "val": "Loading..."
+      },
+      {
+        "key": "more",
+        "val": "More"
+      },
+      {
+        "key": "town",
+        "val": "Town"
+      },
+      {
+        "key": "geographic_feature",
+        "val": "Geographic Feature"
+      },
+      {
+        "key": "gadiantons",
+        "val": "Gadiantons"
+      },
+      {
+        "key": "clear",
+        "val": "Clear"
+      },
+      {
+        "key": "people_and_places",
+        "val": "People and Places"
+      },
+      {
+        "key": "title_places",
+        "val": "Places in the Book of Mormon"
+      },
+      {
+        "key": "selectors",
+        "val": "Selectors"
+      },
+      {
+        "key": "x_search_results_for_y",
+        "val": "$1 search results for “$2”"
+      },
+      {
+        "key": "short_month_labels",
+        "val": "Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec"
+      },
+      {
+        "key": "no_results_for_x",
+        "val": "No results for “$1”"
+      },
+      {
+        "key": "completed_on_x",
+        "val": "Completed on $1"
+      },
+      {
+        "key": "study_progress_for_x",
+        "val": "Study progress for $1"
+      },
+      {
+        "key": "tos_agree_x",
+        "val": "By signing up, you agree to the $1"
+      },
+      {
+        "key": "idbadge",
+        "val": "Idbadge"
+      },
+      {
+        "key": "no_groups",
+        "val": "No groups"
+      },
+      {
+        "key": "groups",
+        "val": "Groups"
+      },
+      {
+        "key": "menu",
+        "val": "Menu"
+      },
+      {
+        "key": "loading",
+        "val": "Loading..."
+      },
+      {
+        "key": "extracurricular_activities",
+        "val": "Extracurricular activities"
+      },
+      {
+        "key": "loading_user",
+        "val": "Loading user..."
+      },
+      {
+        "key": "never",
+        "val": "Never"
+      },
+      {
+        "key": "network_failure",
+        "val": "Network failure"
+      },
+      {
+        "key": "kakao",
+        "val": "Kakao"
+      },
+      {
+        "key": "naver",
+        "val": "Naver"
+      },
+      {
+        "key": "logging_out",
+        "val": "Logging out"
+      },
+      {
+        "key": "preferences",
+        "val": "Preferences"
+      },
+      {
+        "key": "audio",
+        "val": "Audio"
+      },
+      {
+        "key": "art",
+        "val": "Illustrations"
+      },
+      {
+        "key": "commentary",
+        "val": "Commentary"
+      },
+      {
+        "key": "inline_art",
+        "val": "Inline Art"
+      },
+      {
+        "key": "audio_on",
+        "val": "Audio narration is on"
+      },
+      {
+        "key": "audio_off",
+        "val": "Audio narration is off"
+      },
+      {
+        "key": "user_prefs",
+        "val": "User preferences"
+      },
+      {
+        "key": "sound_effects",
+        "val": "Sound effects"
+      },
+      {
+        "key": "lang_code",
+        "val": "en"
+      },
+      {
+        "key": "facsimiles",
+        "val": "Facsimiles"
+      },
+      {
+        "key": "auto_play",
+        "val": "Auto-play"
+      },
+      {
+        "key": "message_hints",
+        "val": "Message Hints"
+      },
+      {
+        "key": "group_name",
+        "val": "Study group name"
+      },
+      {
+        "key": "group_description",
+        "val": "Study group description"
+      },
+      {
+        "key": "edit_group_profile",
+        "val": "Edit group profile information"
+      },
+      {
+        "key": "manage_group_members",
+        "val": "Manage group members"
+      },
+      {
+        "key": "remove_from_group",
+        "val": "Remove from group"
+      },
+      {
+        "key": "ban_from_group",
+        "val": "Ban from group"
+      },
+      {
+        "key": "mute",
+        "val": "Mute"
+      },
+      {
+        "key": "make_group_admin",
+        "val": "Make group admin"
+      },
+      {
+        "key": "you_are_invited",
+        "val": "You are invited to join this study group:"
+      },
+      {
+        "key": "accept_invite",
+        "val": "Accept Invitation"
+      },
+      {
+        "key": "decline_invite",
+        "val": "Decline Invitation"
+      },
+      {
+        "key": "group_load_failed",
+        "val": "Group data failed to load"
+      },
+      {
+        "key": "group_preview",
+        "val": "Study group preview"
+      },
+      {
+        "key": "group_members",
+        "val": "Study group members"
+      },
+      {
+        "key": "recent_convo",
+        "val": "Recent discussion"
+      },
+      {
+        "key": "administrator",
+        "val": "Administrator"
+      },
+      {
+        "key": "controversial_commentaries_warning",
+        "val": "The perspectives presented in these commentaries may represent minority branches of the Restoriation or otherwise may not conform to the traditional teachings of the Church of Jesus Christ of Latter-day Saints. Reader discretion is advised."
+      },
+      {
+        "key": "zoom_levels",
+        "val": "Zoom levels"
+      },
+      {
+        "key": "vox_laban",
+        "val": "Laban"
+      },
+      {
+        "key": "no_objects_match",
+        "val": "No objects match these filters."
+      },
+      {
+        "key": "vox_zeram-amnor-manti-and-limher",
+        "val": "Zeram’s group"
+      },
+      {
+        "key": "vox_king_mosiah",
+        "val": "King Mosiah"
+      },
+      {
+        "key": "vox_ammon2",
+        "val": "Ammon"
+      },
+      {
+        "key": "vox_ammaron",
+        "val": "Ammaron"
+      },
+      {
+        "key": "muted",
+        "val": "Muted"
+      },
+      {
+        "key": "object_cat_plant",
+        "val": "Plant"
+      },
+      {
+        "key": "1_ne_first",
+        "val": "1"
+      },
+      {
+        "key": "vox_nine_nephite_disciples",
+        "val": "Nine Nephite disciples"
+      },
+      {
+        "key": "2_ne_first",
+        "val": "2"
+      },
+      {
+        "key": "vox_nephi1s-brethren",
+        "val": "Nephi’s brethren"
+      },
+      {
+        "key": "jacob_first",
+        "val": "J"
+      },
+      {
+        "key": "loading_facsimiles",
+        "val": "Loading Facsimiles"
+      },
+      {
+        "key": "History",
+        "val": "History"
+      },
+      {
+        "key": "object_profile",
+        "val": "Object Profile"
+      },
+      {
+        "key": "mapgroup_meso",
+        "val": "Meso"
+      },
+      {
+        "key": "enos_first",
+        "val": "E"
+      },
+      {
+        "key": "vox_moses",
+        "val": "Moses"
+      },
+      {
+        "key": "vox_zarahemnah",
+        "val": "Zarahemnah"
+      },
+      {
+        "key": "jarom_first",
+        "val": "J"
+      },
+      {
+        "key": "vox_servants_of_amalickiah",
+        "val": "Servants of Amalickiah"
+      },
+      {
+        "key": "omni_first",
+        "val": "O"
+      },
+      {
+        "key": "w_of_m_first",
+        "val": "W"
+      },
+      {
+        "key": "vox_limhi",
+        "val": "Limhi"
+      },
+      {
+        "key": "vox_jarom",
+        "val": "Jarom"
+      },
+      {
+        "key": "mosiah_first",
+        "val": "M"
+      },
+      {
+        "key": "vox_the_people_at_the_temple_in_bountiful",
+        "val": "Bountiful temple crowd"
+      },
+      {
+        "key": "vox_john_the_baptist",
+        "val": "John the Baptist"
+      },
+      {
+        "key": "alma_first",
+        "val": "A"
+      },
+      {
+        "key": "helaman_first",
+        "val": "H"
+      },
+      {
+        "key": "vox_people_speaking_to_gidgiddoni",
+        "val": "To Gidgiddoni"
+      },
+      {
+        "key": "3_ne_first",
+        "val": "3"
+      },
+      {
+        "key": "object_cat_sacred_object",
+        "val": "Sacred Object"
+      },
+      {
+        "key": "vox_unindentified_prophet_quoted_by_moroni2",
+        "val": "Moroni’s Prophet"
+      },
+      {
+        "key": "4_ne_first",
+        "val": "4"
+      },
+      {
+        "key": "mormon_first",
+        "val": "M"
+      },
+      {
+        "key": "status_ontrack",
+        "val": "On Track"
+      },
+      {
+        "key": "status_notstarted",
+        "val": "Not Started"
+      },
+      {
+        "key": "status_catchingup",
+        "val": "Catching Up"
+      },
+      {
+        "key": "status_fallenbehind",
+        "val": "Fallen Behind"
+      },
+      {
+        "key": "reading_plan",
+        "val": "Reading Plan"
+      },
+      {
+        "key": "study_question_about",
+        "val": "What is this about?"
+      },
+      {
+        "key": "ether_first",
+        "val": "E"
+      },
+      {
+        "key": "vox_ahaz",
+        "val": "Ahaz"
+      },
+      {
+        "key": "vox_multitude_listening_to_king_benjamin",
+        "val": "Benjamin’s multitude"
+      },
+      {
+        "key": "vox_zenos",
+        "val": "Zenos"
+      },
+      {
+        "key": "moroni_first",
+        "val": "M"
+      },
+      {
+        "key": "object_cat_armor",
+        "val": "Armor"
+      },
+      {
+        "key": "in_call",
+        "val": "In Call"
+      },
+      {
+        "key": "vox_father_of_lamoni",
+        "val": "Father of Lamoni"
+      },
+      {
+        "key": "vox_seraph_2",
+        "val": "Seraph 2"
+      },
+      {
+        "key": "vox_the_father",
+        "val": "The Father"
+      },
+      {
+        "key": "vox_king_lamoni",
+        "val": "King Lamoni"
+      },
+      {
+        "key": "vox_wife_of_lamoni",
+        "val": "Wife of Lamoni"
+      },
+      {
+        "key": "description",
+        "val": "Description"
+      },
+      {
+        "key": "prov_lamanite",
+        "val": "Lamanite"
+      },
+      {
+        "key": "vox_amulek",
+        "val": "Amulek"
+      },
+      {
+        "key": "vox_syria-ephraim-and-the-son-of-remaliah",
+        "val": "Syria–Ephraim–Remaliah’ Son"
+      },
+      {
+        "key": "object_cat_landscape",
+        "val": "Landscape"
+      },
+      {
+        "key": "vox_abinadi",
+        "val": "Abinadi"
+      },
+      {
+        "key": "vox_helaman3",
+        "val": "Helaman"
+      },
+      {
+        "key": "vox_ammon2_and_his_brethren",
+        "val": "Ammon and his brethren"
+      },
+      {
+        "key": "study_question_context",
+        "val": "I need some more context here."
+      },
+      {
+        "key": "study_question_explanation",
+        "val": "Explanation please."
+      },
+      {
+        "key": "disable",
+        "val": "Disable"
+      },
+      {
+        "key": "dark_mode",
+        "val": "Dark Mode"
+      },
+      {
+        "key": "vox_ether",
+        "val": "Ether"
+      },
+      {
+        "key": "vox_laman1",
+        "val": "Laman"
+      },
+      {
+        "key": "vox_amaron",
+        "val": "Amaron"
+      },
+      {
+        "key": "vox_people_pleading_because_of_the_famine",
+        "val": "Famine pleaders"
+      },
+      {
+        "key": "vox_zeezrom",
+        "val": "Zeezrom"
+      },
+      {
+        "key": "vox_people_who_harden_their_hearts_against_prophecies",
+        "val": "Hardhearted"
+      },
+      {
+        "key": "object_cat_food",
+        "val": "Food"
+      },
+      {
+        "key": "vox_some-who-said-the-time-was-past-for-christs-birth",
+        "val": "Time-past group"
+      },
+      {
+        "key": "object_axis_usage",
+        "val": "Usage"
+      },
+      {
+        "key": "vox_people_of_limhi",
+        "val": "People of Limhi"
+      },
+      {
+        "key": "vox_angel_to_laman1_and_lemuel",
+        "val": "Angel to Laman and Lemuel"
+      },
+      {
+        "key": "vox_helaman1",
+        "val": "Helaman"
+      },
+      {
+        "key": "vox_giddonah",
+        "val": "Giddonah"
+      },
+      {
+        "key": "online",
+        "val": "Online"
+      },
+      {
+        "key": "vox_judges_who_belonged_to_band_of_gadianton",
+        "val": "Gadianton judges"
+      },
+      {
+        "key": "study_button",
+        "val": "Study"
+      },
+      {
+        "key": "title_witnesses",
+        "val": "Title Witnesses"
+      },
+      {
+        "key": "vox_chief_judge_of_ammonihah",
+        "val": "Chief judge of Ammonihah"
+      },
+      {
+        "key": "object_cat_vehicle",
+        "val": "Vehicle"
+      },
+      {
+        "key": "fax_not_available",
+        "val": "Fax Not Available"
+      },
+      {
+        "key": "vox_angels_quoting_the_lord",
+        "val": "Angels quoting the Lord"
+      },
+      {
+        "key": "vox_aaron",
+        "val": "Aaron"
+      },
+      {
+        "key": "mapgroup_americas",
+        "val": "Americas"
+      },
+      {
+        "key": "no_results_found",
+        "val": "No results found"
+      },
+      {
+        "key": "vox_people_gathered_at_the_judgment_seat_of_seezoram",
+        "val": "Judgment-seat crowd"
+      },
+      {
+        "key": "vox_gid",
+        "val": "Gid"
+      },
+      {
+        "key": "vox_unidentified_person",
+        "val": "Unidentified person"
+      },
+      {
+        "key": "vox_lehi1",
+        "val": "Lehi"
+      },
+      {
+        "key": "study_question_scene",
+        "val": "What is going on here?"
+      },
+      {
+        "key": "vox_servants_of_king_lamoni",
+        "val": "Servants of King Lamoni"
+      },
+      {
+        "key": "vox_the_devil",
+        "val": "The devil"
+      },
+      {
+        "key": "vox_aminadab",
+        "val": "Aminadab"
+      },
+      {
+        "key": "vox_laman1_and_lemuel",
+        "val": "Laman and Lemuel"
+      },
+      {
+        "key": "vox_elders_and_priests",
+        "val": "Elders and priests"
+      },
+      {
+        "key": "vox_antionah",
+        "val": "Antionah"
+      },
+      {
+        "key": "vox_angel_quoted_in_2_nephi_6",
+        "val": "Angel quoted in  Nephi"
+      },
+      {
+        "key": "vox_lachoneus",
+        "val": "Lachoneus"
+      },
+      {
+        "key": "vox_five_men_sent_from_the_garden_of_nephi2",
+        "val": "Five from Nephi’s garden"
+      },
+      {
+        "key": "object_axis_provenance",
+        "val": "Provenance"
+      },
+      {
+        "key": "vox_lord_of_the_vineyard",
+        "val": "Lord of the vineyard"
+      },
+      {
+        "key": "object_cat_structure",
+        "val": "Structure"
+      },
+      {
+        "key": "vox_nephi1",
+        "val": "Nephi"
+      },
+      {
+        "key": "vox_other-lamanites-in-lamonis-house",
+        "val": "Lamoni’s others"
+      },
+      {
+        "key": "place_name",
+        "val": "Place name"
+      }
+    ]
+  }
+}

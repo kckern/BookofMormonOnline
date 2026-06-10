@@ -1,0 +1,233 @@
+{
+  "data": {
+    "maps": [
+      {
+        "slug": "neareast",
+        "name": "근동",
+        "desc": "몰몬경에 수록된 중동 지역 지도",
+        "centerx": 24.7,
+        "centery": 45.4,
+        "minzoom": 4,
+        "maxzoom": 10,
+        "zoom": 5,
+        "tiles": true
+      },
+      {
+        "slug": "internal",
+        "name": "내부 지도",
+        "desc": "존 소렌센(John Sorenson)의「몰몬의 지도」를 기반으로 그려진 약속의 땅 내부 관련 지도",
+        "group": "Internal",
+        "centerx": 18.517,
+        "centery": -97.157,
+        "minzoom": 6,
+        "maxzoom": 10,
+        "zoom": 7,
+        "tiles": true
+      },
+      {
+        "slug": "virtualscriptures",
+        "name": "BYU",
+        "desc": "BYU Virtual Scriptures’ artistic rendering that gives basic idea of approximate directions and theoretical relationships between various geographical features mentioned in the Book of Mormon.",
+        "group": "Internal",
+        "centerx": 17.605,
+        "centery": -90.374,
+        "minzoom": 6,
+        "maxzoom": 9,
+        "zoom": 7,
+        "tiles": true
+      },
+      {
+        "slug": "fullmer",
+        "name": "Fullmer",
+        "desc": "James Fullmer’s artistic rendering based on the scholarship of John L. Sorenson in “Mormon’s Map.”",
+        "group": "Internal",
+        "centerx": 17.3684,
+        "centery": -94.0869,
+        "minzoom": 6,
+        "maxzoom": 10,
+        "zoom": 7,
+        "tiles": true
+      },
+      {
+        "slug": "ces",
+        "name": "CES",
+        "desc": "Church Education System’s published possible relationships of sites in the Book of Mormon, based on internal evidence. No effort should be made to identify points on this map with any existing geographical location. The map spans Jaredite and Nephite/Lamanite periods during which settlements changed over time.\"",
+        "group": "Internal",
+        "centerx": 17.4407,
+        "centery": -93.2666,
+        "minzoom": 6,
+        "maxzoom": 10,
+        "zoom": 7,
+        "tiles": true
+      },
+      {
+        "slug": "mesoamerica",
+        "name": "중앙아메리카",
+        "desc": "BYU(브리검영 대학교)와 맥스웰 연구소(Maxwell Institute) 내 주류 후기성도 학자 대부분의 치우친 의견이 반영된 약속의 땅 중앙아메리카 가상 모형",
+        "group": "Meso",
+        "centerx": 17.11,
+        "centery": -92.61,
+        "minzoom": 7,
+        "maxzoom": 10,
+        "zoom": 7,
+        "tiles": true
+      },
+      {
+        "slug": "yucatan",
+        "name": "Yucatan",
+        "desc": "An alternative mesoamerican setting focusing on the Yucatan region.",
+        "group": "Meso",
+        "centerx": 17.2169,
+        "centery": -90.677,
+        "minzoom": 6,
+        "maxzoom": 10,
+        "zoom": 6,
+        "tiles": true
+      },
+      {
+        "slug": "costarica",
+        "name": "코스타리카",
+        "desc": "제임스 리 워(James Lee Warr)가 설계한 약속의 땅 코스타리카 가상 모형",
+        "group": "Meso",
+        "centerx": 11,
+        "centery": -84.1,
+        "minzoom": 6,
+        "maxzoom": 9,
+        "zoom": 7,
+        "tiles": true
+      },
+      {
+        "slug": "panama",
+        "name": "파나마",
+        "desc": "파나마의 “좁은 지협(narrow neck)”을 근거로 그려진 약속의 땅 파나마 가상 모형",
+        "group": "Meso",
+        "centerx": 7.2,
+        "centery": -78.1,
+        "minzoom": 6,
+        "maxzoom": 10,
+        "zoom": 7,
+        "tiles": true
+      },
+      {
+        "slug": "heartland",
+        "name": "미국 중서부",
+        "desc": "로드니 멜드럼(Rodney Meldrum)과 펌(F.I.R.M.) 재단이 옹호하는 약속의 땅 미국 중서부 가상 모형",
+        "group": "Americas",
+        "centerx": 37.3,
+        "centery": -85.1,
+        "minzoom": 4,
+        "maxzoom": 9,
+        "zoom": 5,
+        "tiles": true
+      },
+      {
+        "slug": "baja",
+        "name": "바하 반도",
+        "desc": "린(Lynn Rosenvall)과 데이비드(David Rosenvall) 부자에 의해 설계된 약속의 땅 멕시코 서해안 바하 반도 가상 모형",
+        "group": "Americas",
+        "centerx": 27.61,
+        "centery": -113.05,
+        "minzoom": 6,
+        "maxzoom": 9,
+        "zoom": 7,
+        "tiles": true
+      },
+      {
+        "slug": "andes",
+        "name": "안데스 산맥",
+        "desc": "델(Del)과 데본 다우델(Devon DowDell)의 옹호로 안데스 산맥에 초점을 맞춘 약속의 땅 남미 가상 모형",
+        "group": "Americas",
+        "centerx": -22.7798,
+        "centery": -58.2737,
+        "minzoom": 4,
+        "maxzoom": 9,
+        "zoom": 4,
+        "tiles": true
+      },
+      {
+        "slug": "delmarva",
+        "name": "Delmarva",
+        "desc": "Eastern United States mode centeround on the Delmarva Peninsula near the Chesapeake Bay area",
+        "group": "Americas",
+        "centerx": 38.8735,
+        "centery": -75.7625,
+        "minzoom": 7,
+        "maxzoom": 10,
+        "zoom": 8,
+        "tiles": true
+      },
+      {
+        "slug": "americas",
+        "name": "미대륙 전체",
+        "desc": "초기 후기 성도 대부분의 믿음을 바탕으로 북미와 남미에 걸친 지역을 지리적으로 가상한 약속의 땅 반구 모형",
+        "group": "Americas",
+        "centerx": 12,
+        "centery": -78,
+        "minzoom": 2,
+        "maxzoom": 5,
+        "zoom": 2,
+        "tiles": true
+      },
+      {
+        "slug": "malay",
+        "name": "말레이 반도",
+        "desc": "랄프 올슨(Ralph Olsen)에 의해 설계 및 발전된 약속의 땅 말레이 반도 가상 모형",
+        "group": "World",
+        "centerx": 7.03486,
+        "centery": 100.909,
+        "minzoom": 6,
+        "maxzoom": 10,
+        "zoom": 6,
+        "tiles": true
+      },
+      {
+        "slug": "sulawesi",
+        "name": "Sulawesi",
+        "desc": "Indonesian model focused on the Sulawesi island",
+        "group": "World",
+        "centerx": -2.29819,
+        "centery": 121.969,
+        "minzoom": 7,
+        "maxzoom": 10,
+        "zoom": 7,
+        "tiles": true
+      },
+      {
+        "slug": "srilanka",
+        "name": "스리랑카",
+        "desc": "‘아담의 다리(Adam’s Bridge)’의 좁은 지협을 근거로 그려진 약속의 땅 스리랑카 및 인도 남부 가상 모형",
+        "group": "World",
+        "centerx": 8.9,
+        "centery": 79.1,
+        "minzoom": 7,
+        "maxzoom": 10,
+        "zoom": 7,
+        "tiles": true
+      },
+      {
+        "slug": "kamchatka",
+        "name": "Kamchatka",
+        "desc": "A Russian geographic model centered around the Kamchatka peninsula",
+        "group": "World",
+        "centerx": 57.3111,
+        "centery": 161.966,
+        "minzoom": 5,
+        "maxzoom": 8,
+        "zoom": 5,
+        "tiles": true
+      },
+      {
+        "slug": "africa",
+        "name": "Africa",
+        "desc": "African settings for the Book of Moron advanced by Embaye Melekin",
+        "group": "World",
+        "centerx": 15.6468,
+        "centery": 25.986,
+        "minzoom": 4,
+        "maxzoom": 6,
+        "zoom": 4,
+        "tiles": true
+      }
+    ]
+  }
+}

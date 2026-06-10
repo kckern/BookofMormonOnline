@@ -1,0 +1,30 @@
+{
+  "data": {
+    "scripture": {
+      "ref": "Mosiah 2:17-19",
+      "passages": [
+        {
+          "reference": "Mosiah 2:17-19",
+          "heading": "Serving God",
+          "verses": [
+            {
+              "verse": 17,
+              "verse_id": 32827,
+              "text": "And behold, I tell you these things that ye may learn wisdom; that ye may learn that when ye are in the service of your fellow beings ye are only in the service of your God."
+            },
+            {
+              "verse": 18,
+              "verse_id": 32828,
+              "text": "Behold, ye have called me your king; and if I, whom ye call your king, do labor to serve you, then ought not ye to labor to serve one another?"
+            },
+            {
+              "verse": 19,
+              "verse_id": 32829,
+              "text": "And behold also, if I, whom ye call your king, who has spent his days in your service, and yet has been in the service of God, do merit any thanks from you, O how you ought to thank your heavenly King!"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

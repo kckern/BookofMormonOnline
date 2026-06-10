@@ -1,0 +1,10 @@
+{
+  "data": {
+    "editProfile": {
+      "user": "bomtest+regression",
+      "name": "Regression Test",
+      "email": "bomtest+regressionr2@kckern.com",
+      "zip": "84604"
+    }
+  }
+}

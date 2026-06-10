@@ -1,0 +1,30 @@
+{
+  "data": {
+    "section": [
+      {
+        "slug": "jaredites/thirty-generations-of-jaredites",
+        "title": "이더의 계보",
+        "page": {
+          "title": "야렛인 시대"
+        },
+        "rows": [
+          {
+            "narration": {
+              "description": "{이더|ether}는 {야렛인|jaredites}의 역사학자이다."
+            }
+          },
+          {
+            "narration": {
+              "description": "{이더|ether}는 {야렛|jared1}의 먼 직계자손이다. 서른 명의 사람들이 {야렛|jared1}과 {이더|ether} 사이에 기록되어 있다."
+            }
+          },
+          {
+            "narration": {
+              "description": "{야렛|jared1}은 사람들의 언어가 변해버렸을 무렵, '[위대한 탑|great-tower]' 근처에서 살고 있었다."
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

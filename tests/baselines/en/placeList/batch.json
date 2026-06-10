@@ -1,0 +1,42 @@
+{
+  "data": {
+    "placeList": [
+      {
+        "slug": "jerusalem-1",
+        "name": "Jerusalem1",
+        "label": "Jerusalem",
+        "info": "Capital of the kingdom of Judah",
+        "occupants": "I",
+        "type": "C",
+        "location": "W"
+      },
+      {
+        "slug": "land-of-zarahemla",
+        "name": "Land of Zarahemla",
+        "label": "Zarahemla",
+        "info": "A general reference to the area near the city of Zarahemla",
+        "occupants": "NM",
+        "type": "L",
+        "location": "Z"
+      },
+      {
+        "slug": "omner",
+        "name": "City of Omner",
+        "label": "Omner",
+        "info": "Nephite city by seashore on east borders",
+        "occupants": "N",
+        "type": "C",
+        "location": "Z"
+      },
+      {
+        "slug": "moriantum",
+        "name": "Moriantum",
+        "label": "Moriantum",
+        "info": "Nephite area",
+        "occupants": "N",
+        "type": "L",
+        "location": "D"
+      }
+    ]
+  }
+}

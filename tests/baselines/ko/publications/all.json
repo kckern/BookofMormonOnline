@@ -1,0 +1,38 @@
+{
+  "data": {
+    "publications": [
+      {
+        "source_id": "13",
+        "source_rating": "G",
+        "source_title": "몰몬경 학생 교재",
+        "source_name": "몰몬경 학생 교재 (2009)",
+        "source_short": "몰몬경 학생 교재",
+        "source_slug": "kr-ces-manual-2009",
+        "source_url": "https://store.churchofjesuschrist.org/kor/ko/%EB%AA%B0%EB%AA%AC%EA%B2%BD-%ED%95%99%EC%83%9D-%EA%B5%90%EC%9E%AC-32506320",
+        "source_publisher": "예수 그리스도 후기 성도 교회",
+        "source_description": "이 학생 교재는 여러분이 몰몬경을 읽고 공부할 때 보충 자료로 쓸 수 있으나 몰몬경을 대체해서는 안 된다. 이 교재에는 “모든 경전을 [자신]에게 비유하[는]”(니파이전서 19:23 ) 방법을 찾는 데 도움이 되는 선지자들의 통찰과 영감 받은 권고가 실려 있다. 여러분의 학습 습관을 평가하고, 여러분이 몰몬경을 읽고 학습할 때 어떻게 하면 이 교재를 가장 잘 활용할 수 있을지 생각해 본다. 가능한 학습 방법에는 (1) 읽으면서 교재 참조하기, (2) 몰몬경에서 몇 장(章)을 읽고 난 후 교재 읽기, 또는 (3) 경전을 읽기 전에 교재를 살펴보면서 지정된 장들에 대한 이해력 강화하기가 있다.",
+        "source_year": 2009
+      },
+      {
+        "source_id": "201",
+        "source_rating": "G",
+        "source_title": "몰몬경 세미나리",
+        "source_name": "몰몬경 학생 교재 (2009)",
+        "source_short": "몰몬경 학생 교재",
+        "source_slug": "kr-ces-manual-2009",
+        "source_publisher": "예수 그리스도 후기 성도 교회",
+        "source_year": 2023
+      },
+      {
+        "source_id": "202",
+        "source_rating": "G",
+        "source_title": "몰몬경 세미나리 2",
+        "source_name": "몰몬경 학생 교재 (2009)",
+        "source_short": "몰몬경 학생 교재",
+        "source_slug": "kr-ces-manual-2009",
+        "source_publisher": "예수 그리스도 후기 성도 교회",
+        "source_year": 2023
+      }
+    ]
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "data": {
+    "image": [
+      {
+        "id": "1028",
+        "title": "The Destruction of Jerusalem",
+        "artist": "Unknown Artist",
+        "width": 630,
+        "height": 370,
+        "location": {
+          "heading": "1 Nephi 1:18",
+          "slug": "lehites/9",
+          "imgIds": [
+            "1028",
+            "2623",
+            "2081",
+            "1252"
+          ],
+          "comIds": [
+            "1001616101",
+            "1001716101",
+            "1001709101",
+            "1001710101",
+            "1001704201",
+            "1001706101"
+          ],
+          "parent_page": {
+            "title": "Lehites in Jerusalem and Arabia"
+          },
+          "parent_section": {
+            "title": "Lehi’s Prophetic Call"
+          },
+          "narration": {
+            "description": "Having now become a prophet, {Lehi|lehi1} goes out and tells the citizens of the content of his vision."
+          }
+        }
+      }
+    ]
+  }
+}

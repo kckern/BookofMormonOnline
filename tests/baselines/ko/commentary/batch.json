@@ -1,0 +1,63 @@
+{
+  "data": {
+    "commentary": [
+      {
+        "id": "1000001101",
+        "title": "A Record of Nephi’s People",
+        "reference": "1 Nephi 1:1",
+        "publication": {
+          "source_title": "Book of Mormon Student Manual (1996 Edition)",
+          "source_rating": "G",
+          "source_name": "Church Educational System",
+          "source_short": "CES Manual (1996)",
+          "source_slug": "ces-manual-1996",
+          "source_id": "11",
+          "source_url": "http://www.ldsces.org/manuals/book-of-mormon-institute-student-manual/index.asp",
+          "source_year": 1996,
+          "source_publisher": "The Church of Jesus Christ of Latter-day Saints"
+        },
+        "location": {
+          "slug": "promised-land/12"
+        },
+        "text": "Nephi wrote this record about thirty years after Lehi’s colony left Jerusalem and journeyed to the promised land (see 1 Nephi 19:1&#8211;5, 2 Nephi 5:28&#8211;31).</td></tr>"
+      },
+      {
+        "id": "1000018101",
+        "title": "What does goodly mean?",
+        "reference": "1 Nephi 1:1",
+        "publication": {
+          "source_title": "The Book of Mormon Study Guide: Start to Finish",
+          "source_rating": "G",
+          "source_name": "Thomas R. Valletta",
+          "source_short": "Valletta",
+          "source_slug": "valletta-study-guide",
+          "source_id": "181",
+          "source_url": "https://www.amazon.com/dp/1629720976",
+          "source_year": 2015,
+          "source_publisher": "Deseret Book"
+        },
+        "text": "<p><em>Goodly</em> has a few definitions in the 1828 edition of Webster’s <em>American Dictionary of the English Language</em>. The first two definitions include the following:</p><p>1. “Being of a handsome form; beautiful; graceful; as a goodly person; goodly raiment; goodly houses.”</p><p>2. “Pleasant; agreeable; desirable; as goodly days.”</p>"
+      },
+      {
+        "id": "1000307101",
+        "title": "Lehi, Visionary Guide to the Promised Land",
+        "reference": "1 Nephi 1:4",
+        "publication": {
+          "source_title": "Commentaries and Insights on the Book of Mormon, Vol. 1",
+          "source_rating": "G",
+          "source_name": "Ed J. Pinegar, Richard J. Allen",
+          "source_short": "Pinegar-Allen Vol. 1",
+          "source_slug": "pinegar-allen-vol-1",
+          "source_id": "71",
+          "source_url": "https://www.goodreads.com/book/show/6085042",
+          "source_year": 2007,
+          "source_publisher": "Covenant Communications"
+        },
+        "location": {
+          "slug": "lehites/1"
+        },
+        "text": "<p>Lehi, a descendant of Joseph through the lineage of Manasseh (see Alma 10:3), is a prophet figure we come to know—as if through personal acquaintance—by reading and rereading the rich and detailed account of his final years just before and after his departure from Jerusalem en route to the promised land around 600 b.c. Lehi is a model of many admirable qualities: worthiness to commune with the Lord and receive through revelation a prophetic view of the divine plan of happiness for mankind, a solemn witness of the divinity of the Messiah, a powerful teacher of gospel principles, a devoted father and patriarch in his family circle, a proponent and herald of the covenant of the Lord concerning the promised land, and an exemplar of personal repentance (when he murmured while in the depths of tribulation—see 1 Nephi 16:20, 25). We esteem Lehi as a visionary guide who alerts us to the destructive consequences of wickedness and pride, and who encourages us to gather our own families to the “promised land,” the holy places of security and well-being—stakes, homes, and temples—appointed by God for the blessing of His sons and daughters.</p>"
+      }
+    ]
+  }
+}

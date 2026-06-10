@@ -1,0 +1,34 @@
+{
+  "data": {
+    "text": [
+      {
+        "slug": "jaredites/1",
+        "heading": "Ether 1:6",
+        "content": "<p>He that wrote this record was Ether, [c]1601316601[/c] [c]1601311101[/c] [c]1601313101[/c] and he was a descendant of Coriantor. [c]1601316604[/c] [c]1601316603[/c] [c]1601316602[/c] [c]1601304701[/c] [c]1601305401[/c] [c]1601302601[/c] [c]1601312101[/c] [c]1601309101[/c] [c]1601304101[/c] </p>",
+        "comIds": [
+          "1601316601",
+          "1601311101",
+          "1601313101",
+          "1601316604",
+          "1601316603",
+          "1601316602",
+          "1601304701",
+          "1601305401",
+          "1601302601",
+          "1601312101",
+          "1601309101",
+          "1601304101"
+        ],
+        "parent_page": {
+          "title": "Jaredite Era"
+        },
+        "parent_section": {
+          "title": "Thirty Generations of Jaredites"
+        },
+        "narration": {
+          "description": "{Ether|ether} is the historian of the {Jaredites|jaredites}."
+        }
+      }
+    ]
+  }
+}

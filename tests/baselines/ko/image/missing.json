@@ -1,0 +1,32 @@
+{
+  "errors": [
+    {
+      "message": "String cannot represent a non string value: 99999999",
+      "locations": [
+        {
+          "line": 1,
+          "column": 13
+        }
+      ],
+      "extensions": {
+        "code": "GRAPHQL_VALIDATION_FAILED",
+        "exception": {
+          "stacktrace": [
+            "GraphQLError: String cannot represent a non string value: 99999999",
+            "    at GraphQLScalarType.parseLiteral (/usr/src/app/node_modules/graphql/type/scalars.js:221:13)",
+            "    at isValidValueNode (/usr/src/app/node_modules/graphql/validation/rules/ValuesOfCorrectTypeRule.js:154:30)",
+            "    at Object.IntValue (/usr/src/app/node_modules/graphql/validation/rules/ValuesOfCorrectTypeRule.js:116:25)",
+            "    at Object.enter (/usr/src/app/node_modules/graphql/language/visitor.js:301:32)",
+            "    at Object.enter (/usr/src/app/node_modules/graphql/utilities/TypeInfo.js:391:27)",
+            "    at visit (/usr/src/app/node_modules/graphql/language/visitor.js:197:21)",
+            "    at validate (/usr/src/app/node_modules/graphql/validation/validate.js:91:24)",
+            "    at validate (/usr/src/app/node_modules/apollo-server-core/dist/requestPipeline.js:188:39)",
+            "    at processGraphQLRequest (/usr/src/app/node_modules/apollo-server-core/dist/requestPipeline.js:99:38)",
+            "    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)",
+            "    at async processHTTPRequest (/usr/src/app/node_modules/apollo-server-core/dist/runHttpQuery.js:222:30)"
+          ]
+        }
+      }
+    }
+  ]
+}

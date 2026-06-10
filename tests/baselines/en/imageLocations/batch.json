@@ -1,0 +1,21 @@
+{
+  "data": {
+    "image": [
+      {
+        "location": {
+          "slug": "lehites/9"
+        }
+      },
+      {
+        "location": {
+          "slug": "lehites/6"
+        }
+      },
+      {
+        "location": {
+          "slug": "lehites/10"
+        }
+      }
+    ]
+  }
+}

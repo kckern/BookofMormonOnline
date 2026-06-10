@@ -1,0 +1,30 @@
+{
+  "data": {
+    "section": [
+      {
+        "slug": "jaredites/thirty-generations-of-jaredites",
+        "title": "Thirty Generations of Jaredites",
+        "page": {
+          "title": "Jaredite Era"
+        },
+        "rows": [
+          {
+            "narration": {
+              "description": "{Ether|ether} is the historian of the {Jaredites|jaredites}."
+            }
+          },
+          {
+            "narration": {
+              "description": "{Ether|ether} is a distant but direct descendant of {Jared|jared1}. Thirty individuals (inclusive) are noted in the lineage between {Jared|jared1} and {Ether|ether}."
+            }
+          },
+          {
+            "narration": {
+              "description": "{Jared|jared1} originated near the “[Great Tower|great-tower],” at the time that the language of the people was being changed."
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,1046 @@
+{
+  "data": {
+    "person": [
+      {
+        "slug": "nephi1",
+        "name": "Nephi1",
+        "title": "Son of Lehi1, prophet and founder of Nephites",
+        "classification": "HPWR",
+        "unit": "I",
+        "date": "600 B.C.",
+        "description": "<p>Nephi¹, son of {Lehi|lehi1} and {Sariah|sariah}, was born in [Jerusalem|jerusalem-1] around 615 B.C. and founded the Nephite people. He opens his record by stating he was “born of goodly parents,” taught in his father’s learning, and “highly favored of {the Lord|jesus-christ}” (1 Nephi 1:1). Though young, he was “large in stature,” and after he prayed {the Lord|jesus-christ} softened his heart so that he believed his father’s words and did not rebel as his brothers {Laman|laman1} and {Lemuel|lemuel} did (1 Nephi 2:16).</p><p>Sent with his brothers to obtain the brass plates from {Laban|laban} in [Jerusalem|jerusalem-1], Nephi¹ said he would go and do what {the Lord|jesus-christ} commanded, “for I know that {the Lord|jesus-christ} giveth no commandments unto the children of men, save he shall prepare a way” (1 Nephi 3:7). After two failed attempts, he killed {Laban|laban} with {Laban|laban}’s own sword at the prompting of {the Spirit|holy-spirit} and took the records (1 Nephi 4:18). {The Lord|jesus-christ} told him that if he kept the commandments he would be made “a ruler and a teacher” over his brethren, which set him at odds with {Laman|laman1} and {Lemuel|lemuel} (1 Nephi 2:22).</p><p>{The Lord|jesus-christ} commanded Nephi¹ to build a ship to carry the family across the sea to the [promised land|promised-land] (1 Nephi 17:8-9). He built it not after the manner of men but as {the Lord|jesus-christ} showed him; when it was finished his brothers acknowledged the workmanship was fine (1 Nephi 18:1-4). In the [promised land|promised-land] he built a temple modeled on {Solomon|solomon}’s temple, taught his people, and they “lived after the manner of happiness” (2 Nephi 5:16, 27).</p><p>Nephi¹ kept two sets of plates: a larger set recording the reign of the kings and the wars of his people, and the smaller set he was commanded to make for an account of the ministry and prophecies, made for a purpose {the Lord|jesus-christ} did not reveal to him (1 Nephi 9:1-6). His record includes a first-person vision of the birth, ministry, and death of {Christ|jesus-christ} and the future of his seed and the {house of Israel|israel} (1 Nephi 11-14). He formally named and set out “the doctrine of {Christ|jesus-christ}” — faith, repentance, baptism, {the Holy Ghost|holy-spirit}, and enduring to the end — and declared it the exclusive path to salvation: “this is the way; and there is none other way nor name given under heaven whereby man can be saved in the kingdom of {God|god}” (2 Nephi 31:2, 21). He closed by calling Jew and all the ends of the earth to believe in {Christ|jesus-christ}, declaring that his words would stand against the unbelieving at the judgment bar (2 Nephi 33:10-15). Later {Nephite|nephites} kings were called second Nephi, third Nephi, and so on, as the people kept his name in remembrance (Jacob 1:11).</p>",
+        "relations": [
+          {
+            "relation": "Husband of $1",
+            "person": {
+              "name": "Wife of Nephi",
+              "slug": "wife-of-nephi",
+              "title": "Daughter of Ishmael"
+            }
+          },
+          {
+            "relation": "Brother of $1",
+            "person": {
+              "name": "Jacob2",
+              "slug": "jacob2",
+              "title": "Brother of Nephi, prophet and historian"
+            }
+          },
+          {
+            "relation": "Brother of $1",
+            "person": {
+              "name": "Joseph2",
+              "slug": "joseph2",
+              "title": "Son of Lehi1"
+            }
+          },
+          {
+            "relation": "Brother of $1",
+            "person": {
+              "name": "Lemuel",
+              "slug": "lemuel",
+              "title": "Second son of Lehi1"
+            }
+          },
+          {
+            "relation": "Friend of $1",
+            "person": {
+              "name": "Zoram1",
+              "slug": "zoram1",
+              "title": "Servant of Laban"
+            }
+          },
+          {
+            "relation": "Predecessor of $1",
+            "person": {
+              "name": "Nephite King",
+              "slug": "nephite-king",
+              "title": "Second king of the land of Nephi"
+            }
+          },
+          {
+            "relation": "Son of $1",
+            "person": {
+              "name": "Sariah",
+              "slug": "sariah",
+              "title": "Wife of Lehi"
+            }
+          },
+          {
+            "relation": "Brother of $1",
+            "person": {
+              "name": "Sam",
+              "slug": "sam",
+              "title": "Third son of Lehi1"
+            }
+          },
+          {
+            "relation": "Visited by $1",
+            "person": {
+              "name": "Angels to Nephi",
+              "slug": "angels-to-nephi",
+              "title": "Divine Messengers to Nephi"
+            }
+          },
+          {
+            "relation": "Visited by $1",
+            "person": {
+              "name": "Angel to Nephi",
+              "slug": "angel-to-nephi",
+              "title": "Divine Instructor to Nephi"
+            }
+          },
+          {
+            "relation": "Brother of $1",
+            "person": {
+              "name": "Laman1",
+              "slug": "laman1",
+              "title": "Eldest son of Lehi1"
+            }
+          },
+          {
+            "relation": "Son of $1",
+            "person": {
+              "name": "Lehi1",
+              "slug": "lehi1",
+              "title": "Hebrew prophet who led his followers to promised land."
+            }
+          },
+          {
+            "relation": "Killer of $1",
+            "person": {
+              "name": "Laban",
+              "slug": "laban",
+              "title": "Custodian of brass plates"
+            }
+          }
+        ],
+        "index": [
+          {
+            "slug": "promised-land/12",
+            "ref": "1 Nephi 1:1",
+            "text": "Born of goodly parents"
+          },
+          {
+            "slug": "promised-land/12",
+            "ref": "1 Nephi 1:2",
+            "text": "Makes record"
+          },
+          {
+            "slug": "promised-land/10",
+            "ref": "1 Nephi 1:16-17",
+            "text": "Abridges father’s record, will add his own account"
+          },
+          {
+            "slug": "lehites/17",
+            "ref": "1 Nephi 2:16",
+            "text": "Character of Nephi"
+          },
+          {
+            "slug": "lehites/20",
+            "ref": "1 Nephi 2:19-24",
+            "text": "The Lord speaks to Nephi"
+          },
+          {
+            "slug": "lehites/20",
+            "ref": "1 Nephi 2:19",
+            "text": "Is blessed because of faith"
+          },
+          {
+            "slug": "lehites/20",
+            "ref": "1 Nephi 2:20",
+            "text": "To be led to land of promise"
+          },
+          {
+            "slug": "lehites/20",
+            "ref": "1 Nephi 2:22",
+            "text": "Chosen to be a ruler"
+          },
+          {
+            "slug": "lehites/23",
+            "ref": "1 Nephi 3:7",
+            "text": "Will go and do things the Lord hath commanded"
+          },
+          {
+            "slug": "lehites/24",
+            "ref": "1 Nephi 3:9",
+            "text": "Returns to Jerusalem with brothers to obtain brass plates"
+          },
+          {
+            "slug": "lehites/34",
+            "ref": "1 Nephi 3:24",
+            "text": "Asks Laban for brass plates"
+          },
+          {
+            "slug": "lehites/36",
+            "ref": "1 Nephi 3:27",
+            "text": "Hides in cave with brothers"
+          },
+          {
+            "slug": "lehites/37",
+            "ref": "1 Nephi 3:28-29",
+            "text": "Is smitten by elder brothers, protected by an angel"
+          },
+          {
+            "slug": "lehites/49",
+            "ref": "1 Nephi 4:18",
+            "text": "Slays Laban"
+          },
+          {
+            "slug": "lehites/53",
+            "ref": "1 Nephi 4:24",
+            "text": "Obtains plates"
+          },
+          {
+            "slug": "lehites/56",
+            "ref": "1 Nephi 4:31",
+            "text": "Is large in stature"
+          },
+          {
+            "slug": "lehites/56",
+            "ref": "1 Nephi 4:32-35",
+            "text": "Convinces Zoram1 to join his family"
+          },
+          {
+            "slug": "promised-land/11",
+            "ref": "1 Nephi 6:2",
+            "text": "Is a descendant of Joseph1"
+          },
+          {
+            "slug": "lehites/66",
+            "ref": "1 Nephi 7:2-6",
+            "text": "Returns to Jerusalem for Ishmael1 and family"
+          },
+          {
+            "slug": "lehites/72",
+            "ref": "1 Nephi 7:16",
+            "text": "Is bound by brothers"
+          },
+          {
+            "slug": "lehites/77",
+            "ref": "1 Nephi 8:3",
+            "text": "Lehi1 rejoices because of Nephi"
+          },
+          {
+            "slug": "lehites/81",
+            "ref": "1 Nephi 8:14-16",
+            "text": "Is seen by Lehi1 in dream"
+          },
+          {
+            "slug": "lehites/86",
+            "ref": "1 Nephi 8:29",
+            "text": "Abridges father’s record, will add his own account"
+          },
+          {
+            "slug": "lehites/13",
+            "ref": "1 Nephi 9:1-5",
+            "text": "Makes two sets of plates"
+          },
+          {
+            "slug": "lehites/13",
+            "ref": "1 Nephi 9:1",
+            "text": "Concludes father’s account"
+          },
+          {
+            "slug": "promised-land/8",
+            "ref": "1 Nephi 9:2-3",
+            "text": "Records ministry and prophecies on small plates"
+          },
+          {
+            "slug": "promised-land/8",
+            "ref": "1 Nephi 9:2-4",
+            "text": "Records wars, contentions, and destructions on large plates"
+          },
+          {
+            "slug": "promised-land/6",
+            "ref": "1 Nephi 10:1",
+            "text": "Gives account of his reign and ministry"
+          },
+          {
+            "slug": "lehites/95",
+            "ref": "1 Nephi 10:17",
+            "text": "Wants to know about father’s vision"
+          },
+          {
+            "slug": "lehites/96",
+            "ref": "1 Nephi 11-14",
+            "text": "Beholds father’s dream and vision of future of promised land"
+          },
+          {
+            "slug": "lehites/nephis-vision/4",
+            "ref": "1 Nephi 11:6",
+            "text": "Is blessed for belief in Son"
+          },
+          {
+            "slug": "lehites/nephis-vision/18",
+            "ref": "1 Nephi 11:32-33",
+            "text": "In vision sees Christ crucified"
+          },
+          {
+            "slug": "lehites/nephis-vision/55",
+            "ref": "1 Nephi 14:28",
+            "text": "Is forbidden to write all he sees"
+          },
+          {
+            "slug": "lehites/102",
+            "ref": "1 Nephi 15:12",
+            "text": "Explains olivetree as symbol of house of Israel"
+          },
+          {
+            "slug": "lehites/102",
+            "ref": "1 Nephi 15:19-20",
+            "text": "Speaks concerning restoration of Jews and words of Isaiah1"
+          },
+          {
+            "slug": "lehites/111",
+            "ref": "1 Nephi 16:7",
+            "text": "Marries"
+          },
+          {
+            "slug": "lehites/118",
+            "ref": "1 Nephi 16:18-23",
+            "text": "Breaks bow, makes-another"
+          },
+          {
+            "slug": "lehites/120",
+            "ref": "1 Nephi 16:22",
+            "text": "Speaks much to brothers"
+          },
+          {
+            "slug": "lehites/130",
+            "ref": "1 Nephi 16:37",
+            "text": "Laman1 stirs the rebellious up to slay Lehi1 and Nephi"
+          },
+          {
+            "slug": "lehites/138",
+            "ref": "1 Nephi 17:8-16",
+            "text": "Is commanded to build ship"
+          },
+          {
+            "slug": "lehites/141",
+            "ref": "1 Nephi 17:15",
+            "text": "Keeps the commandments"
+          },
+          {
+            "slug": "lehites/142",
+            "ref": "1 Nephi 17:17",
+            "text": "Is mocked by brothers"
+          },
+          {
+            "slug": "lehites/156",
+            "ref": "1 Nephi 17:52-53",
+            "text": "Is filled with power of God"
+          },
+          {
+            "slug": "lehites/158",
+            "ref": "1 Nephi 18:1-4",
+            "text": "Is commanded to build ship"
+          },
+          {
+            "slug": "lehites/160",
+            "ref": "1 Nephi 18:3",
+            "text": "Goes oft to mount to pray, sees great things"
+          },
+          {
+            "slug": "lehites/163",
+            "ref": "1 Nephi 18:6-23",
+            "text": "Crosses ocean with Lehites"
+          },
+          {
+            "slug": "lehites/166",
+            "ref": "1 Nephi 18:11",
+            "text": "Is bound by brothers"
+          },
+          {
+            "slug": "lehites/172",
+            "ref": "1 Nephi 18:22",
+            "text": "Guides the ship"
+          },
+          {
+            "slug": "promised-land/4",
+            "ref": "1 Nephi 19:1-2",
+            "text": "Makes two sets of plates"
+          },
+          {
+            "slug": "promised-land/9",
+            "ref": "1 Nephi 19:3",
+            "text": "Records ministry and prophecies on small plates"
+          },
+          {
+            "slug": "promised-land/5",
+            "ref": "1 Nephi 19:4",
+            "text": "Records wars, contentions, and destructions on large plates"
+          },
+          {
+            "slug": "promised-land/20",
+            "ref": "1 Nephi 19:22",
+            "text": "Teaches from brass plates"
+          },
+          {
+            "slug": "promised-land/20",
+            "ref": "1 Nephi 19:23",
+            "text": "Reads Isaiah1 to persuade brethren of Christ"
+          },
+          {
+            "slug": "brass-plates/1",
+            "ref": "1 Nephi 20-21",
+            "text": "Quotes Isaiah1"
+          },
+          {
+            "slug": "promised-land/21",
+            "ref": "1 Nephi 22:1-26",
+            "text": "Expounds writings of Isaiah1"
+          },
+          {
+            "slug": "promised-land/34",
+            "ref": "1 Nephi 22:20-21",
+            "text": "Preaches about Christ"
+          },
+          {
+            "slug": "promised-land/lehi/6",
+            "ref": "2 Nephi 1:10",
+            "text": "Preaches about Christ"
+          },
+          {
+            "slug": "promised-land/lehi/12",
+            "ref": "2 Nephi 1:24",
+            "text": "Lehi1 exhorts sons not to rebel against Nephi"
+          },
+          {
+            "slug": "promised-land/52",
+            "ref": "2 Nephi 5:1",
+            "text": "Cries unto Lord because of brothers"
+          },
+          {
+            "slug": "promised-land/53",
+            "ref": "2 Nephi 5:6-7",
+            "text": "Flees from Laman1 and Lemuel, with many followers"
+          },
+          {
+            "slug": "land-of-nephi/1",
+            "ref": "2 Nephi 5:9",
+            "text": "Followers call themselves the people of Nephi"
+          },
+          {
+            "slug": "land-of-nephi/2",
+            "ref": "2 Nephi 5:12",
+            "text": "Brings plates, sword of Laban"
+          },
+          {
+            "slug": "land-of-nephi/3",
+            "ref": "2 Nephi 5:15-16",
+            "text": "Teaches people to work, builds temple"
+          },
+          {
+            "slug": "land-of-nephi/5",
+            "ref": "2 Nephi 5:18",
+            "text": "He recommends no king"
+          },
+          {
+            "slug": "land-of-nephi/5",
+            "ref": "2 Nephi 5:18",
+            "text": "People desire that Nephi be king"
+          },
+          {
+            "slug": "land-of-nephi/7",
+            "ref": "2 Nephi 11:2",
+            "text": "Writes more words of Isaiah1"
+          },
+          {
+            "slug": "isaiah/2",
+            "ref": "2 Nephi 12-24",
+            "text": "Quotes Isaiah 2-14"
+          },
+          {
+            "slug": "nephis-teachings/1",
+            "ref": "2 Nephi 25:1-6",
+            "text": "Comments on prophecies of Isaiah1"
+          },
+          {
+            "slug": "nephis-teachings/4",
+            "ref": "2 Nephi 25:7-31:21",
+            "text": "Gives his own prophecies"
+          },
+          {
+            "slug": "nephis-teachings/11",
+            "ref": "2 Nephi 25:23",
+            "text": "Preaches about Christ"
+          },
+          {
+            "slug": "nephis-teachings/14",
+            "ref": "2 Nephi 26:1",
+            "text": "Preaches about Christ"
+          },
+          {
+            "slug": "nephis-teachings/14",
+            "ref": "2 Nephi 26:1",
+            "text": "Teaches of Christ’s resurrection"
+          },
+          {
+            "slug": "nephis-teachings/30",
+            "ref": "2 Nephi 27:6-22",
+            "text": "Foretells coming forth of Book of Mormon"
+          },
+          {
+            "slug": "nephis-teachings/55",
+            "ref": "2 Nephi 29:14",
+            "text": "Prophesies all records to be gathered as one"
+          },
+          {
+            "slug": "nephis-teachings/56",
+            "ref": "2 Nephi 30:2",
+            "text": "Prophesies Gentiles to be numbered with covenant people"
+          },
+          {
+            "slug": "nephis-testimony/3",
+            "ref": "2 Nephi 31:4-9",
+            "text": "Explains why Christ will be baptized"
+          },
+          {
+            "slug": "nephis-testimony/12",
+            "ref": "2 Nephi 32:5",
+            "text": "Explains office of Holy Ghost"
+          },
+          {
+            "slug": "nephis-testimony/15",
+            "ref": "2 Nephi 33",
+            "text": "Parting testimony"
+          },
+          {
+            "slug": "land-of-nephi/9",
+            "ref": "Jacob 1:1",
+            "text": "Gives Jacob2 commandment concerning small plates"
+          },
+          {
+            "slug": "land-of-nephi/12",
+            "ref": "Jacob 1:12",
+            "text": "Dies"
+          },
+          {
+            "slug": "jacobs-address/1",
+            "ref": "Jacob 1:18",
+            "text": "Had consecrated Jacob2 and Joseph2 as priests"
+          },
+          {
+            "slug": "jacobs-address/19",
+            "ref": "Jacob 3:14",
+            "text": "Plates of Jacob made by Nephi"
+          },
+          {
+            "slug": "recolonization/17",
+            "ref": "Mosiah 10:13",
+            "text": "The Lord heard and answered prayers of Nephi"
+          },
+          {
+            "slug": "nephi/27",
+            "ref": "Helaman 8:22",
+            "text": "Had testified God was with Israel"
+          }
+        ]
+      },
+      {
+        "slug": "amalickiahites",
+        "name": "Amalickiahites",
+        "title": "Followers of Amalickiah",
+        "classification": "O",
+        "unit": "S",
+        "description": "<p>The Amalickiahites were a faction of Nephite dissenters who followed {Amalickiah|amalickiah} in {his|amalickiah} bid to be made king, active roughly between 73 BC and 65 BC. They were drawn largely from the lower judges of the land, who supported {Amalickiah|amalickiah} after {he|amalickiah} promised to make them rulers over the people, and many of them dissented from the church on the strength of {his|amalickiah} flattering words (Alma 46:1-10).</p><p>The group was named when {Moroni|moroni1} rent {his|moroni1} coat to make the title of liberty and prayed for the blessings of liberty on {his|moroni1} people (Alma 46:11-13). The record also notes in the same passage that those who were true believers in Christ took upon them, gladly, the name of Christ, or Christians, in direct contrast to those who had dissented (Alma 46:14-16). {Moroni|moroni1} then sent throughout the land and gathered all who wished to keep their liberty to stand against {Amalickiah|amalickiah} and those who had dissented, who were called Amalickiahites (Alma 46:28). When {Amalickiah|amalickiah} saw that {Moroni|moroni1}’s people were more numerous, and that {his|amalickiah} own people were doubtful about the justice of their cause, {he|amalickiah} took those who would follow {him|amalickiah} and departed into the [land of Nephi|land-of-nephi] (Alma 46:29). {Moroni|moroni1} put to death any of the remaining Amalickiahites who would not enter a covenant to support the cause of freedom, and few refused the covenant (Alma 46:35).</p><p>The Amalickiahites who left with their leader are later identified with the {Lamanite armies|lamanites}, who were astonished at the {Nephites|nephites}’ preparation for war (Alma 49:9).</p>",
+        "relations": [
+          {
+            "relation": "Followers of $1",
+            "person": {
+              "name": "Amalickiah",
+              "slug": "amalickiah",
+              "title": "Nephite traitor"
+            }
+          },
+          {
+            "relation": "Opponents of $1",
+            "person": {
+              "name": "Nephites",
+              "slug": "nephites",
+              "title": "Descendants of Nephi1 and his followers, later any person who accepts gospel"
+            }
+          }
+        ],
+        "index": [
+          {
+            "slug": "war/56",
+            "ref": "Alma 46:28",
+            "text": "Are dissenters"
+          },
+          {
+            "slug": "war/59",
+            "ref": "Alma 46:35",
+            "text": "Refuse covenant, put to death"
+          },
+          {
+            "slug": "war/71",
+            "ref": "Alma 49:9",
+            "text": "Astonished by Nephite preparation"
+          }
+        ]
+      },
+      {
+        "slug": "corihor1",
+        "name": "Corihor1",
+        "title": "Early Jaredite rebel",
+        "classification": "R",
+        "unit": "I",
+        "description": "<p>Corihor was a Jaredite, son of King {Kib|kib} and a descendant of {Jared|jared1} through {Orihah|orihah} (Ether 7:3). At thirty-two he rebelled against his father, leaving to dwell in the [land of Nehor|nehor], where he had sons and daughters who became “exceedingly fair,” and he drew away many people after him (Ether 7:4).</p><p>After raising an army, Corihor marched against the [land of Moron|moron], where the king dwelt, and took his father captive, which brought to pass {the brother of Jared|jareds-brother}’s saying that the people would be brought into captivity (Ether 7:5). {Kib|kib} remained in captivity under Corihor until he was very old (Ether 7:7).</p><p>Corihor’s brother {Shule|shule}, born to {Kib|kib} while still in captivity, made swords of steel from the [hill Ephraim|hill-ephraim], armed his followers, and gave battle to Corihor at the [city of Nehor|nehor], taking the kingdom and restoring it to their father {Kib|kib} (Ether 7:8-9). Corihor later repented of the evils he had done, and {Shule|shule}, now king, gave him power in the kingdom (Ether 7:13).</p><p>Corihor had many sons and daughters, among them {Noah|noah2}, who rebelled against {Shule|shule} and against Corihor and drew away his brother {Cohor|cohor1} (Ether 7:14-15). Both {Noah|noah2} and {Cohor|cohor1} are named again, with Corihor, among the fair sons and daughters who did not repent (Ether 13:17).</p>",
+        "relations": [
+          {
+            "relation": "Father of $1",
+            "person": {
+              "name": "Cohor1",
+              "slug": "cohor1",
+              "title": "Brother of Noah2"
+            }
+          },
+          {
+            "relation": "Brother of $1",
+            "person": {
+              "name": "Shule",
+              "slug": "shule",
+              "title": "Early Jaredite king"
+            }
+          },
+          {
+            "relation": "Father of $1",
+            "person": {
+              "name": "Noah2",
+              "slug": "noah2",
+              "title": "Early Jaredite king, son of Corihor2"
+            }
+          },
+          {
+            "relation": "Son of $1",
+            "person": {
+              "name": "Kib",
+              "slug": "kib",
+              "title": "Early Jaredite king"
+            }
+          }
+        ],
+        "index": [
+          {
+            "slug": "jaredites/58",
+            "ref": "Ether 7:3",
+            "text": "Son of Kib"
+          },
+          {
+            "slug": "jaredites/59",
+            "ref": "Ether 7:4",
+            "text": "Rebels against father"
+          },
+          {
+            "slug": "jaredites/60",
+            "ref": "Ether 7:5",
+            "text": "Takes father captive"
+          },
+          {
+            "slug": "jaredites/62",
+            "ref": "Ether 7:9",
+            "text": "Brother, Shule, restores kingdom to Kib"
+          },
+          {
+            "slug": "jaredites/64",
+            "ref": "Ether 7:13",
+            "text": "Repents and gains favor"
+          }
+        ]
+      },
+      {
+        "slug": "humanity",
+        "name": "Humanity",
+        "title": "The entirety of the human race",
+        "classification": "O",
+        "unit": "C",
+        "description": "<p>Humanity, in the Book of Mormon, is the whole progeny of {Adam|adam} and {Eve|eve}. {Lehi|lehi1} taught that the purpose of human existence is joy: “Adam fell that men might be; and men are, that they might have joy” (2 Nephi 2:25). The Book of Mormon teaches that all humanity was created in {God|god}’s image — {Christ|jesus-christ} told the {brother of Jared|jareds-brother}, “all men were created in the beginning after mine own image” (Ether 3:15-16). By {Adam|adam}’s transgression all mankind became a lost and fallen people, cut off from the presence of {God|god} (Alma 12:22). Each person is free to choose between good and evil, “to choose liberty and eternal life, through the great Mediator of all men, or to choose captivity and death” (2 Nephi 2:27).</p><p>The term “men” in the record covers both men and women, and {the Lord|jesus-christ} “esteemeth all flesh in one,” favoring the righteous (1 Nephi 17:35). To overcome the fallen state, a person must be reborn, putting off the natural man and becoming a saint through the atonement of {Christ|jesus-christ} (Mosiah 3:19). {Alma|alma2} asked his congregation, “have ye received his image in your countenances?” and “have ye experienced this mighty change in your hearts?” (Alma 5:14). Salvation comes through no name but {Christ|jesus-christ}’s, and each person’s standing at the last day turns on humbling himself, believing in {Christ|jesus-christ}’s atonement, and submitting to {God|god} (Mosiah 3:17-19).</p><p>The record traces a recurring pattern in which the {Nephites|nephites} and {Lamanites|lamanites}, when prospered, harden their hearts and forget {God|god}, and are brought back only through affliction (Helaman 12:1-3). The invitation given to all is to repent, be baptized in {Christ|jesus-christ}’s name, and be sanctified by {the Holy Ghost|holy-spirit} in order to stand spotless at the last day (3 Nephi 27:20).</p>",
+        "relations": [
+          {
+            "relation": "Descendants of $1",
+            "person": {
+              "name": "Adam",
+              "slug": "adam",
+              "title": "First human created from the earth"
+            }
+          },
+          {
+            "relation": "Children of $1",
+            "person": {
+              "name": "God",
+              "slug": "god",
+              "title": "A reference to diety, be it Yahweh (יהוה); Jesus, or God the Father."
+            }
+          },
+          {
+            "relation": "Minister to $1",
+            "person": {
+              "name": "Angels",
+              "slug": "angels",
+              "title": "Heavenly Hosts"
+            }
+          }
+        ],
+        "index": [
+          {
+            "slug": "lehites/nephis-vision/34",
+            "ref": "1 Nephi 13:12",
+            "text": "Nephi1 beholds man among Gentiles who goes forth upon waters"
+          },
+          {
+            "slug": "lehites/nephis-vision/53",
+            "ref": "1 Nephi 14:19",
+            "text": "Lehi1 sees man in white robe in vision"
+          },
+          {
+            "slug": "lehites/150",
+            "ref": "1 Nephi 17:35",
+            "text": "The Lord esteems all flesh in one"
+          },
+          {
+            "slug": "promised-land/33",
+            "ref": "1 Nephi 22:18",
+            "text": "Destruction comes unto men according to flesh if they harden hearts"
+          },
+          {
+            "slug": "promised-land/35",
+            "ref": "1 Nephi 22:22",
+            "text": "Kingdom of devil established among them which are in the flesh"
+          },
+          {
+            "slug": "promised-land/36",
+            "ref": "1 Nephi 22:23",
+            "text": "All who seek lusts of the flesh shall be brought low"
+          },
+          {
+            "slug": "promised-land/lehi/10",
+            "ref": "2 Nephi 1:21",
+            "text": "Arise, my sons, and be men"
+          },
+          {
+            "slug": "promised-land/lehi/20",
+            "ref": "2 Nephi 2:5",
+            "text": "By law no flesh is justified"
+          },
+          {
+            "slug": "promised-land/lehi/37",
+            "ref": "2 Nephi 2:25",
+            "text": "Adam fell that men might be"
+          },
+          {
+            "slug": "promised-land/lehi/38",
+            "ref": "2 Nephi 2:27",
+            "text": "Men are free according to the flesh to choose life or death"
+          },
+          {
+            "slug": "promised-land/46",
+            "ref": "2 Nephi 4:17",
+            "text": "My heart sorrows because of my flesh"
+          },
+          {
+            "slug": "promised-land/46",
+            "ref": "2 Nephi 4:17",
+            "text": "O wretched man that I am"
+          },
+          {
+            "slug": "promised-land/51",
+            "ref": "2 Nephi 4:34",
+            "text": "Cursed is he that puts trust in man"
+          },
+          {
+            "slug": "promised-land/51",
+            "ref": "2 Nephi 4:34",
+            "text": "I will not put trust in arm of flesh"
+          },
+          {
+            "slug": "jacobs-two-day-sermon/14",
+            "ref": "2 Nephi 8:7",
+            "text": "Fear not the reproach of men"
+          },
+          {
+            "slug": "jacobs-two-day-sermon/21",
+            "ref": "2 Nephi 9:4-7",
+            "text": "Flesh must waste away and die"
+          },
+          {
+            "slug": "jacobs-two-day-sermon/21",
+            "ref": "2 Nephi 9:5",
+            "text": "Creator to become subject unto men in flesh"
+          },
+          {
+            "slug": "jacobs-two-day-sermon/42",
+            "ref": "2 Nephi 9:53",
+            "text": "Nephites’ seed shall not be utterly destroyed according to the flesh"
+          },
+          {
+            "slug": "jacobs-two-day-sermon/51",
+            "ref": "2 Nephi 10:24",
+            "text": "Reconcile yourselves to will of God and not to will of devil and the flesh"
+          },
+          {
+            "slug": "isaiah/16",
+            "ref": "2 Nephi 14:1",
+            "text": "Seven women shall take hold of one man"
+          },
+          {
+            "slug": "isaiah/72",
+            "ref": "2 Nephi 23:12",
+            "text": "The Lord will make a man more precious than fine gold"
+          },
+          {
+            "slug": "nephis-teachings/17",
+            "ref": "2 Nephi 26:11",
+            "text": "Spirit of the Lord will not always strive with man"
+          },
+          {
+            "slug": "nephis-teachings/31",
+            "ref": "2 Nephi 27:9",
+            "text": "Book to be delivered to a man who will deliver it to another"
+          },
+          {
+            "slug": "nephis-teachings/35",
+            "ref": "2 Nephi 27:25",
+            "text": "Their fear toward God is taught by precepts of men"
+          },
+          {
+            "slug": "nephis-teachings/43",
+            "ref": "2 Nephi 28:14",
+            "text": "They err because they are taught by precepts of men"
+          },
+          {
+            "slug": "nephis-teachings/48",
+            "ref": "2 Nephi 28:26-31",
+            "text": "Wo unto him who hearkens to precepts of men"
+          },
+          {
+            "slug": "nephis-teachings/49",
+            "ref": "2 Nephi 28:31",
+            "text": "Cursed is he that puts trust in man"
+          },
+          {
+            "slug": "nephis-teachings/49",
+            "ref": "2 Nephi 28:31",
+            "text": "Cursed is he who makes flesh his arm"
+          },
+          {
+            "slug": "nephis-teachings/53",
+            "ref": "2 Nephi 29:7",
+            "text": "The Lord has created all men"
+          },
+          {
+            "slug": "jacobs-address/9",
+            "ref": "Jacob 2:21",
+            "text": "Pride is abominable unto him who created all flesh"
+          },
+          {
+            "slug": "jacobs-address/11",
+            "ref": "Jacob 2:27",
+            "text": "No man among men shall have more than one wife"
+          },
+          {
+            "slug": "land-of-nephi/21",
+            "ref": "Jacob 4:8",
+            "text": "No man knows God’s ways, save through revelation"
+          },
+          {
+            "slug": "land-of-nephi/22",
+            "ref": "Jacob 4:9",
+            "text": "God spoke, and man was created"
+          },
+          {
+            "slug": "benjamin/51",
+            "ref": "Mosiah 3:19",
+            "text": "Natural man is enemy to God"
+          },
+          {
+            "slug": "recolonization/108",
+            "ref": "Mosiah 7:27",
+            "text": "Man was created after image of God"
+          },
+          {
+            "slug": "recolonization/108",
+            "ref": "Mosiah 7:27",
+            "text": "Christ to take upon him image of man"
+          },
+          {
+            "slug": "recolonization/108",
+            "ref": "Mosiah 7:27",
+            "text": "God will take upon him flesh and blood"
+          },
+          {
+            "slug": "recolonization/118",
+            "ref": "Mosiah 8:16",
+            "text": "Man may have great power given him from God"
+          },
+          {
+            "slug": "recolonization/abinadi/32",
+            "ref": "Mosiah 15:2",
+            "text": "The Son shall subject the flesh to will of Father"
+          },
+          {
+            "slug": "recolonization/abinadi/32",
+            "ref": "Mosiah 15:2-3",
+            "text": "Because the Lord dwells in flesh, he shall be called the Son"
+          },
+          {
+            "slug": "alma/20",
+            "ref": "Mosiah 23:7",
+            "text": "Ye shall not esteem one flesh above another"
+          },
+          {
+            "slug": "zarahemla/80",
+            "ref": "Mosiah 28:3",
+            "text": "Sons of Mosiah2 cannot bear that any human soul should perish"
+          },
+          {
+            "slug": "reign-of-judges/2",
+            "ref": "Alma 1:4",
+            "text": "The Lord has created all men"
+          },
+          {
+            "slug": "reign-of-judges/29",
+            "ref": "Alma 2:30",
+            "text": "Alma2 a man of God"
+          },
+          {
+            "slug": "reign-of-judges/gideon/9",
+            "ref": "Alma 7:13",
+            "text": "Son suffers according to the flesh"
+          },
+          {
+            "slug": "ammon/52",
+            "ref": "Alma 18:34",
+            "text": "Man was created after image of God"
+          },
+          {
+            "slug": "aaron/24",
+            "ref": "Alma 22:12",
+            "text": "Man was created after image of God"
+          },
+          {
+            "slug": "ammon/147",
+            "ref": "Alma 26:21",
+            "text": "What natural man knows these things"
+          },
+          {
+            "slug": "reign-of-judges/korihor/2",
+            "ref": "Alma 30:11",
+            "text": "Law that all men should be on equal grounds"
+          },
+          {
+            "slug": "reign-of-judges/zoramites/almas-teachings/11",
+            "ref": "Alma 32:23",
+            "text": "God imparts his words not only to men, but to women also"
+          },
+          {
+            "slug": "reign-of-judges/zoramites/amuleks-teachings/8",
+            "ref": "Alma 34:10",
+            "text": "Great and last sacrifice shall not be human sacrifice"
+          },
+          {
+            "slug": "reign-of-judges/corianton/10",
+            "ref": "Alma 40:8",
+            "text": "Time is measured only unto men"
+          },
+          {
+            "slug": "reign-of-judges/corianton/23",
+            "ref": "Alma 41:11",
+            "text": "All men in natural, carnal state, are in gall of bitterness"
+          },
+          {
+            "slug": "nephi/67",
+            "ref": "Helaman 11:8-18",
+            "text": "Nephi2 is esteemed a man of God"
+          },
+          {
+            "slug": "jesus/43",
+            "ref": "3 Nephi 11:8",
+            "text": "Nephi1 to behold man descending out of heaven"
+          },
+          {
+            "slug": "jesus/96",
+            "ref": "3 Nephi 14:12",
+            "text": "Whatsoever ye would that men should do to you, do to them"
+          },
+          {
+            "slug": "jesus/143",
+            "ref": "3 Nephi 18:28-30",
+            "text": "Whoso eats and drinks Christ’s flesh and blood unworthily eats and drinks damnation to soul"
+          },
+          {
+            "slug": "jesus/217",
+            "ref": "3 Nephi 27:8",
+            "text": "Church called in name of man is church of man"
+          },
+          {
+            "slug": "jesus/225",
+            "ref": "3 Nephi 27:27",
+            "text": "What manner of men ought ye to be"
+          },
+          {
+            "slug": "jesus/245",
+            "ref": "3 Nephi 28:15-39",
+            "text": "Three Nephites are sanctified in flesh, transfigured from body of flesh into immortal state"
+          },
+          {
+            "slug": "mormon/75",
+            "ref": "Mormon 3:20",
+            "text": "Every soul who belongs to whole human family of Adam must stand before judgment-seat of Christ"
+          },
+          {
+            "slug": "moroni/24",
+            "ref": "Mormon 9:17",
+            "text": "Man was created of dust"
+          },
+          {
+            "slug": "jaredites/22",
+            "ref": "Ether 3:6-9",
+            "text": "God will take upon him flesh and blood"
+          },
+          {
+            "slug": "jaredites/30",
+            "ref": "Ether 3:15",
+            "text": "Never before has the Lord shown himself unto men"
+          },
+          {
+            "slug": "jaredites/30",
+            "ref": "Ether 3:15-16",
+            "text": "Man was created after image of God"
+          },
+          {
+            "slug": "jaredites/30",
+            "ref": "Ether 3:16",
+            "text": "The Lord has created man after body of his spirit"
+          },
+          {
+            "slug": "moroni/80",
+            "ref": "Ether 12:39",
+            "text": "Moroni2 has talked with Jesus as man talks with another"
+          },
+          {
+            "slug": "jaredites/213",
+            "ref": "Ether 15:34",
+            "text": "It matters not whether Ether is translated or suffers will of the Lord in flesh"
+          },
+          {
+            "slug": "moroni/93",
+            "ref": "Moroni 4-5",
+            "text": "Manner of administering Christ’s flesh and blood to church"
+          },
+          {
+            "slug": "downfall/56",
+            "ref": "Moroni 8:16",
+            "text": "Fear not what man can do"
+          },
+          {
+            "slug": "downfall/81",
+            "ref": "Moroni 9:8",
+            "text": "Nephite women are fed flesh of husbands"
+          }
+        ]
+      }
+    ]
+  }
+}

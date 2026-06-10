@@ -1,0 +1,233 @@
+{
+  "data": {
+    "maps": [
+      {
+        "slug": "neareast",
+        "name": "Near East",
+        "desc": "Map of the Middle Eastern locations featured in the Book of Mormon",
+        "centerx": 24.7,
+        "centery": 45.4,
+        "minzoom": 4,
+        "maxzoom": 10,
+        "zoom": 5,
+        "tiles": true
+      },
+      {
+        "slug": "internal",
+        "name": "FARMS",
+        "desc": "FARMS-published internal map of Promised Land geography based on John Sorenson's <em>Mormon Map</em>",
+        "group": "Internal",
+        "centerx": 18.517,
+        "centery": -97.157,
+        "minzoom": 6,
+        "maxzoom": 10,
+        "zoom": 7,
+        "tiles": true
+      },
+      {
+        "slug": "virtualscriptures",
+        "name": "BYU",
+        "desc": "BYU Virtual Scriptures’ artistic rendering that gives basic idea of approximate directions and theoretical relationships between various geographical features mentioned in the Book of Mormon.",
+        "group": "Internal",
+        "centerx": 17.605,
+        "centery": -90.374,
+        "minzoom": 6,
+        "maxzoom": 9,
+        "zoom": 7,
+        "tiles": true
+      },
+      {
+        "slug": "fullmer",
+        "name": "Fullmer",
+        "desc": "James Fullmer’s artistic rendering based on the scholarship of John L. Sorenson in “Mormon’s Map.”",
+        "group": "Internal",
+        "centerx": 17.3684,
+        "centery": -94.0869,
+        "minzoom": 6,
+        "maxzoom": 10,
+        "zoom": 7,
+        "tiles": true
+      },
+      {
+        "slug": "ces",
+        "name": "CES",
+        "desc": "Church Education System’s published possible relationships of sites in the Book of Mormon, based on internal evidence. No effort should be made to identify points on this map with any existing geographical location. The map spans Jaredite and Nephite/Lamanite periods during which settlements changed over time.\"",
+        "group": "Internal",
+        "centerx": 17.4407,
+        "centery": -93.2666,
+        "minzoom": 6,
+        "maxzoom": 10,
+        "zoom": 7,
+        "tiles": true
+      },
+      {
+        "slug": "mesoamerica",
+        "name": "Tehuantepec",
+        "desc": "A Mesoamerican setting for Promised Land geography, subscribed to by most mainstream LDS scholars at BYU and the Maxwell Institute",
+        "group": "Meso",
+        "centerx": 17.11,
+        "centery": -92.61,
+        "minzoom": 7,
+        "maxzoom": 10,
+        "zoom": 7,
+        "tiles": true
+      },
+      {
+        "slug": "yucatan",
+        "name": "Yucatan",
+        "desc": "An alternative mesoamerican setting focusing on the Yucatan region.",
+        "group": "Meso",
+        "centerx": 17.2169,
+        "centery": -90.677,
+        "minzoom": 6,
+        "maxzoom": 10,
+        "zoom": 6,
+        "tiles": true
+      },
+      {
+        "slug": "costarica",
+        "name": "Costa Rica",
+        "desc": "A Costa-Rican model for Promised Land geography advanced by James Lee Warr",
+        "group": "Meso",
+        "centerx": 11,
+        "centery": -84.1,
+        "minzoom": 6,
+        "maxzoom": 9,
+        "zoom": 7,
+        "tiles": true
+      },
+      {
+        "slug": "panama",
+        "name": "Panama",
+        "desc": "A Panamanian model for Promised Land geography relying on Panama as the 'narrow neck'",
+        "group": "Meso",
+        "centerx": 7.2,
+        "centery": -78.1,
+        "minzoom": 6,
+        "maxzoom": 10,
+        "zoom": 7,
+        "tiles": true
+      },
+      {
+        "slug": "heartland",
+        "name": "Heartland",
+        "desc": "A United-States-centric model championed by Rodney Meldrum and the “FIRM Foundation”",
+        "group": "Americas",
+        "centerx": 37.3,
+        "centery": -85.1,
+        "minzoom": 4,
+        "maxzoom": 9,
+        "zoom": 5,
+        "tiles": true
+      },
+      {
+        "slug": "baja",
+        "name": "Baja",
+        "desc": "A Baja Peninsula model for Promised Land geography developed by Lynn A. Rosenvall and David L. Rosenvall",
+        "group": "Americas",
+        "centerx": 27.61,
+        "centery": -113.05,
+        "minzoom": 6,
+        "maxzoom": 9,
+        "zoom": 7,
+        "tiles": true
+      },
+      {
+        "slug": "andes",
+        "name": "Andes",
+        "desc": "An Andes mountain range focused South American model advocated by Del and Devon DowDell",
+        "group": "Americas",
+        "centerx": -22.7798,
+        "centery": -58.2737,
+        "minzoom": 4,
+        "maxzoom": 9,
+        "zoom": 4,
+        "tiles": true
+      },
+      {
+        "slug": "delmarva",
+        "name": "Delmarva",
+        "desc": "Eastern United States mode centeround on the Delmarva Peninsula near the Chesapeake Bay area",
+        "group": "Americas",
+        "centerx": 38.8735,
+        "centery": -75.7625,
+        "minzoom": 7,
+        "maxzoom": 10,
+        "zoom": 8,
+        "tiles": true
+      },
+      {
+        "slug": "americas",
+        "name": "Hemispheric",
+        "desc": "A Hemispheric model for Promised Land geography spanning North and South America, subscribed to by many earlier Latter-day Saints",
+        "group": "Americas",
+        "centerx": 12,
+        "centery": -78,
+        "minzoom": 2,
+        "maxzoom": 5,
+        "zoom": 2,
+        "tiles": true
+      },
+      {
+        "slug": "malay",
+        "name": "Malay",
+        "desc": "A Malaysian Peninsula setting for Promised Land geography detailed by Ralph Olsen",
+        "group": "World",
+        "centerx": 7.03486,
+        "centery": 100.909,
+        "minzoom": 6,
+        "maxzoom": 10,
+        "zoom": 6,
+        "tiles": true
+      },
+      {
+        "slug": "sulawesi",
+        "name": "Sulawesi",
+        "desc": "Indonesian model focused on the Sulawesi island",
+        "group": "World",
+        "centerx": -2.29819,
+        "centery": 121.969,
+        "minzoom": 7,
+        "maxzoom": 10,
+        "zoom": 7,
+        "tiles": true
+      },
+      {
+        "slug": "srilanka",
+        "name": "Sri Lanka",
+        "desc": "A Sri-Lanka and Indian model for Promised Land geography relying on Adam's Bridge as the narrow neck of land",
+        "group": "World",
+        "centerx": 8.9,
+        "centery": 79.1,
+        "minzoom": 7,
+        "maxzoom": 10,
+        "zoom": 7,
+        "tiles": true
+      },
+      {
+        "slug": "kamchatka",
+        "name": "Kamchatka",
+        "desc": "A Russian geographic model centered around the Kamchatka peninsula",
+        "group": "World",
+        "centerx": 57.3111,
+        "centery": 161.966,
+        "minzoom": 5,
+        "maxzoom": 8,
+        "zoom": 5,
+        "tiles": true
+      },
+      {
+        "slug": "africa",
+        "name": "Africa",
+        "desc": "African settings for the Book of Moron advanced by Embaye Melekin",
+        "group": "World",
+        "centerx": 15.6468,
+        "centery": 25.986,
+        "minzoom": 4,
+        "maxzoom": 6,
+        "zoom": 4,
+        "tiles": true
+      }
+    ]
+  }
+}

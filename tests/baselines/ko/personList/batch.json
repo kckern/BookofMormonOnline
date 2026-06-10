@@ -1,0 +1,39 @@
+{
+  "data": {
+    "personList": [
+      {
+        "slug": "nephi1",
+        "name": "니파이1",
+        "title": "리하이1의 아들이자 니파이인들의 위대한 선지자이자 시조",
+        "classification": "HPWR",
+        "identification": "N",
+        "unit": "I",
+        "date": "600 B.C."
+      },
+      {
+        "slug": "amalickiahites",
+        "name": "아맬리카이아인",
+        "title": "아맬리카이아의 추종자들",
+        "classification": "O",
+        "identification": "NL",
+        "unit": "S"
+      },
+      {
+        "slug": "corihor1",
+        "name": "코리호어1",
+        "title": "초기 야렛인 반란군",
+        "classification": "R",
+        "identification": "J",
+        "unit": "I"
+      },
+      {
+        "slug": "humanity",
+        "name": "인간",
+        "title": "전 인류",
+        "classification": "O",
+        "identification": "O",
+        "unit": "C"
+      }
+    ]
+  }
+}

@@ -1,0 +1,201 @@
+{
+  "data": {
+    "mapstories": [
+      {
+        "slug": "lehite-travels",
+        "title": "Lehite Travels",
+        "description": "A recount of the journey Lehi and his family took, beginning from Jerusalem to the Promised Land, showcasing their trials, faith, and divine interventions.",
+        "moves": [
+          {
+            "guid": "ad74c146b",
+            "verse_ids": [
+              31126,
+              31128
+            ],
+            "seq": 1,
+            "travelers": "Lehi’s family",
+            "duration": "3 days",
+            "people": [
+              {
+                "slug": "lehi1",
+                "name": "Lehi1"
+              }
+            ],
+            "description": "Lehi escapes from Jerusalem with his family",
+            "startPlace": {
+              "slug": "jerusalem-1",
+              "lat": 35.42571865316152,
+              "lng": 31.74465685463447
+            },
+            "endPlace": {
+              "slug": "valley-of-lemuel",
+              "lat": 34.97421477813579,
+              "lng": 28.60206049184704
+            }
+          },
+          {
+            "guid": "c85918647",
+            "verse_ids": [
+              31155
+            ],
+            "seq": 2,
+            "travelers": "Lehi’s sons",
+            "description": "Nephi and his brothers travel to Jerusalem to get the brass plates",
+            "startPlace": {
+              "slug": "valley-of-lemuel",
+              "lat": 34.97421477813579,
+              "lng": 28.60206049184704
+            },
+            "endPlace": {
+              "slug": "jerusalem-1",
+              "lat": 35.42571865316152,
+              "lng": 31.74465685463447
+            }
+          },
+          {
+            "guid": "2f8e9fca1",
+            "verse_ids": [
+              31215
+            ],
+            "seq": 3,
+            "travelers": "Lehi’s sons with Zoram",
+            "description": "Nephi, his brothers, and Zoram return to the valley with the plates",
+            "startPlace": {
+              "slug": "jerusalem-1",
+              "lat": 35.42571865316152,
+              "lng": 31.74465685463447
+            },
+            "endPlace": {
+              "slug": "valley-of-lemuel",
+              "lat": 34.97421477813579,
+              "lng": 28.60206049184704
+            }
+          },
+          {
+            "guid": "2d734c0f8",
+            "verse_ids": [
+              31246
+            ],
+            "seq": 4,
+            "travelers": "Lehi’s sons with Zoram",
+            "description": "Nephi and his brothers, joined by Zoram, make a second trip to Jerusalem",
+            "startPlace": {
+              "slug": "valley-of-lemuel",
+              "lat": 34.97421477813579,
+              "lng": 28.60206049184704
+            },
+            "endPlace": {
+              "slug": "jerusalem-1",
+              "lat": 35.42571865316152,
+              "lng": 31.74465685463447
+            }
+          },
+          {
+            "guid": "cb9eed010",
+            "verse_ids": [
+              31248
+            ],
+            "seq": 5,
+            "travelers": "Lehi’s sons, and Ishamel’s family",
+            "description": "Ishmael and his family journey with Lehi’s family to the valley",
+            "startPlace": {
+              "slug": "jerusalem-1",
+              "lat": 35.42571865316152,
+              "lng": 31.74465685463447
+            },
+            "endPlace": {
+              "slug": "valley-of-lemuel",
+              "lat": 34.97421477813579,
+              "lng": 28.60206049184704
+            }
+          },
+          {
+            "guid": "edf05c63c",
+            "verse_ids": [
+              31511
+            ],
+            "seq": 6,
+            "travelers": "Lehites",
+            "duration": "4 days",
+            "description": "Lehi’s group travels from the valley of Lemuel to Shazer",
+            "startPlace": {
+              "slug": "valley-of-lemuel",
+              "lat": 34.97421477813579,
+              "lng": 28.60206049184704
+            },
+            "endPlace": {
+              "slug": "shazer",
+              "lat": 36.311644,
+              "lng": 27.11955
+            }
+          },
+          {
+            "guid": "a1b9db853",
+            "verse_ids": [
+              31512,
+              31513,
+              31514
+            ],
+            "seq": 7,
+            "travelers": "Lehites",
+            "duration": "many days",
+            "description": "The group hunts for food in the wilderness near Shazer",
+            "startPlace": {
+              "slug": "shazer",
+              "lat": 36.311644,
+              "lng": 27.11955
+            },
+            "endPlace": {
+              "slug": "fertile-wilderness",
+              "lat": 38.65309164625765,
+              "lng": 24.54466958818891
+            }
+          },
+          {
+            "guid": "1dd2559c1",
+            "verse_ids": [
+              31531,
+              31532
+            ],
+            "seq": 8,
+            "travelers": "Lehites",
+            "duration": "many days",
+            "description": "The travelers move from the fertile wilderness to Nahom",
+            "startPlace": {
+              "slug": "fertile-wilderness",
+              "lat": 38.65309164625765,
+              "lng": 24.54466958818891
+            },
+            "endPlace": {
+              "slug": "nahom",
+              "lat": 44.615,
+              "lng": 15.88
+            }
+          },
+          {
+            "guid": "b28376bba",
+            "verse_ids": [
+              31538,
+              31541,
+              31542
+            ],
+            "seq": 9,
+            "travelers": "Lehites without Ishmael",
+            "duration": "8 years",
+            "description": "The journey continues from Nahom to the land of Bountiful",
+            "startPlace": {
+              "slug": "nahom",
+              "lat": 44.615,
+              "lng": 15.88
+            },
+            "endPlace": {
+              "slug": "bountiful",
+              "lat": 53.32763671875,
+              "lng": 16.7624677179416
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

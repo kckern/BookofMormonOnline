@@ -1,0 +1,65 @@
+{
+  "data": {
+    "versehighlights": [
+      {
+        "isQuote": true,
+        "bom_verse_id": 32021,
+        "bible_verse_id": 17690,
+        "bom_highlight": [
+          "and he shall judge among the nations and shall rebuke many people and they shall beat their swords into plowshares and their spears into",
+          "shall not lift up sword against nation neither shall they learn war any more"
+        ],
+        "bible_highlight": [
+          "and he shall judge among the nations and shall rebuke many people and they shall beat their swords into plowshares and their spears into",
+          "shall not lift up sword against nation neither shall they learn war any more"
+        ]
+      },
+      {
+        "isQuote": true,
+        "bom_verse_id": 32019,
+        "bible_verse_id": 17688,
+        "bom_highlight": [
+          "the mountain of the lords house shall be established in the top of the mountains and shall be exalted above the hills and all nations shall flow unto it",
+          "and it shall come to pass in the last days"
+        ],
+        "bible_highlight": [
+          "the mountain of the lords house shall be established in the top of the mountains and shall be exalted above the hills and all nations shall flow unto it",
+          "and it shall come to pass in the last days"
+        ]
+      },
+      {
+        "isQuote": true,
+        "bom_verse_id": 32020,
+        "bible_verse_id": 17689,
+        "bom_highlight": [
+          "and many people shall go and say come ye and let us go up to the mountain of the lord to the house of the god of jacob and he will teach us of his ways and we will walk in his paths for out of zion shall go forth the law and the word of the lord from jerusalem"
+        ],
+        "bible_highlight": [
+          "and many people shall go and say come ye and let us go up to the mountain of the lord to the house of the god of jacob and he will teach us of his ways and we will walk in his paths for out of zion shall go forth the law and the word of the lord from jerusalem"
+        ]
+      },
+      {
+        "isQuote": true,
+        "bom_verse_id": 32022,
+        "bible_verse_id": 17691,
+        "bom_highlight": [
+          "o house of jacob come ye and let us walk in the light of the lord"
+        ],
+        "bible_highlight": [
+          "o house of jacob come ye and let us walk in the light of the lord"
+        ]
+      },
+      {
+        "isQuote": true,
+        "bom_verse_id": 32018,
+        "bible_verse_id": 17687,
+        "bom_highlight": [
+          "the word that isaiah the son of amoz saw concerning judah and jerusalem"
+        ],
+        "bible_highlight": [
+          "the word that isaiah the son of amoz saw concerning judah and jerusalem"
+        ]
+      }
+    ]
+  }
+}

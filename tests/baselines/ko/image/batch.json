@@ -1,0 +1,38 @@
+{
+  "data": {
+    "image": [
+      {
+        "id": "1028",
+        "title": "“예루살렘의 멸망”",
+        "artist": "Unknown Artist",
+        "width": 630,
+        "height": 370,
+        "location": {
+          "slug": "lehites/9"
+        }
+      },
+      {
+        "id": "2075",
+        "title": "“그는 하나님이 그의 보좌에 앉으신 것을 보았다”",
+        "artist": "Promised Land Publications",
+        "link": "http://www.goodreads.com/book/show/5966555-illustrated-stories-from-the-book-of-mormon",
+        "width": 515,
+        "height": 600,
+        "location": {
+          "slug": "lehites/6"
+        }
+      },
+      {
+        "id": "2624",
+        "title": "“유대인들이 그를 조롱했다”",
+        "artist": "Intellectual Reserve",
+        "link": "http://www.goodreads.com/book/show/3339637-book-of-mormon-reader",
+        "width": 700,
+        "height": 465,
+        "location": {
+          "slug": "lehites/10"
+        }
+      }
+    ]
+  }
+}

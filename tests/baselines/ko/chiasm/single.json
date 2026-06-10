@@ -1,0 +1,56 @@
+{
+  "data": {
+    "chiasmus": [
+      {
+        "chiasmus_id": "9ca9af736d",
+        "reference": "니파이전서 1장 1~3절",
+        "scheme": "ABCDCBA",
+        "title": "Record of Knowledge",
+        "lines": [
+          {
+            "line_key": "A",
+            "line_text": "yea, having had a great _knowledge_ of the goodness and the mysteries of God,",
+            "highlights": "[\"knowledge\"]",
+            "label": "knowledge"
+          },
+          {
+            "line_key": "B",
+            "line_text": "therefore I make a _record_ of my proceedings in my days.",
+            "highlights": "[\"record\"]",
+            "label": "recording"
+          },
+          {
+            "line_key": "C",
+            "line_text": "Yea, I make a record in the _language_ of my father,",
+            "highlights": "[\"language\"]",
+            "label": "father's language"
+          },
+          {
+            "line_key": "D",
+            "line_text": "which consists of the _learning of the Jews_",
+            "highlights": "[\"learning of the Jews\"]",
+            "label": "Jews learning"
+          },
+          {
+            "line_key": "C",
+            "line_text": "and the _language_ of the Egyptians.",
+            "highlights": "[\"language\"]",
+            "label": "Egyptians' language"
+          },
+          {
+            "line_key": "B",
+            "line_text": "And I know that the _record_ which I make is true: and I make it with mine own hand:",
+            "highlights": "[\"record\"]",
+            "label": "authentic record"
+          },
+          {
+            "line_key": "A",
+            "line_text": "and I make it according to my knowledge.",
+            "highlights": "[\"knowledge\"]",
+            "label": "knowledge"
+          }
+        ]
+      }
+    ]
+  }
+}

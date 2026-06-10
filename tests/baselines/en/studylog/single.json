@@ -1,0 +1,11 @@
+{
+  "data": {
+    "studylog": {
+      "summary": {
+        "first": "number",
+        "duration": "number",
+        "count": "number"
+      }
+    }
+  }
+}

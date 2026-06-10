@@ -1,0 +1,50 @@
+{
+  "data": {
+    "objectList": [
+      {
+        "slug": "pillar-of-fire",
+        "name": "Pillar of Fire",
+        "subtitle": "Theophanic column of flame in which God appears to prophets and protects his servants",
+        "category": "sacred-object",
+        "era": "nephite",
+        "provenance": "divine",
+        "specificity": "specific",
+        "usage": "literal",
+        "weight": 968892
+      },
+      {
+        "slug": "interpreters",
+        "name": "Interpreters",
+        "subtitle": "Two stones fastened in a bow by which seers translate sealed records",
+        "category": "sacred-object",
+        "era": "jaredite",
+        "provenance": "divine",
+        "specificity": "specific",
+        "usage": "literal",
+        "weight": 967024
+      },
+      {
+        "slug": "riplakishs-prisons",
+        "name": "Riplakish's Prisons",
+        "subtitle": "Jaredite forced-labor prisons built by king Riplakish to enforce taxes and refine fine gold",
+        "category": "building",
+        "era": "jaredite",
+        "provenance": "jaredite",
+        "specificity": "specific",
+        "usage": "literal",
+        "weight": 42
+      },
+      {
+        "slug": "horn",
+        "name": "Horn",
+        "subtitle": "Biblical emblem of strength, dominion, and covenant might promised to Israel",
+        "category": "sacred-object",
+        "era": "old-world",
+        "provenance": "israelite",
+        "specificity": "general",
+        "usage": "metaphorical",
+        "weight": -36618
+      }
+    ]
+  }
+}

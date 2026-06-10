@@ -1,0 +1,49 @@
+{
+  "data": {
+    "division": [
+      {
+        "title": "Jaredite Era",
+        "slug": "jaredites",
+        "description": "An ancient man named Jared, along with his brother, follow God’s directions in leading their followers away from a “Great Tower.” They wander through the wilderness for many years, and eventually are led by God to embark on a transoceanic journey to the Promised Land.  They establish a strong civilization, and their history chronicles the  rises and falls of their kingdoms. Prophets come among the Jaredites,  but they are often rejected. After a saga spanning over 30 generations, the Jaredites  annihilate themselves in a horrific civil war. The last surviving Jaredite  prophet, Ether, writes and compiles the record of his fallen people.",
+        "pages": [
+          {
+            "slug": "jaredites",
+            "title": "Jaredite Era",
+            "counts": [
+              3,
+              6,
+              5,
+              6,
+              16,
+              9,
+              6,
+              11,
+              11,
+              10,
+              8,
+              4,
+              9,
+              4,
+              4,
+              3,
+              4,
+              5,
+              5,
+              6,
+              5,
+              3,
+              5,
+              9,
+              12,
+              6,
+              15,
+              6,
+              17,
+              3
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

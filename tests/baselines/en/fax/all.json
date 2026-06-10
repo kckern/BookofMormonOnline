@@ -1,0 +1,148 @@
+{
+  "data": {
+    "fax": [
+      {
+        "slug": "printer",
+        "title": "1829 Printer's Manuscript",
+        "info": "Complete handwritten copy of the Printer’s Manuscript, copied by Oliver Cowdery and delivered to the printer.",
+        "code": "87724.2344399291",
+        "pages": 464,
+        "index": [
+          "0"
+        ],
+        "pgoffset": 0,
+        "pgfirstVerse": 1,
+        "indexRef": "printer"
+      },
+      {
+        "slug": "1830",
+        "title": "1830 Palmyra Edition",
+        "info": "First Edition, printed by E.B. Grandin in Palmyra, New York, based on the Printer’s Manuscript.",
+        "code": "130677.3840894249",
+        "pages": 590,
+        "index": [
+          "0"
+        ],
+        "pgoffset": 0,
+        "pgfirstVerse": 5,
+        "bgcolor": "#FFFFFF",
+        "indexRef": "1830"
+      },
+      {
+        "slug": "1837",
+        "title": "1837 Kirtland Edition",
+        "info": "Second Edition, printed in Kirtland, Ohio, revised from the first edition using the Printer’s Manuscript.",
+        "code": "87125.4023473508",
+        "pages": 621,
+        "index": [
+          "0"
+        ],
+        "pgoffset": 0,
+        "pgfirstVerse": 7,
+        "indexRef": "1837"
+      },
+      {
+        "slug": "1840",
+        "title": "1840 Nauvoo Edition",
+        "info": "Third Edition, printed in Nauvoo, revised by Joseph Smith comparing to the Original Manuscript.",
+        "code": "130897.1277074476",
+        "pages": 580,
+        "index": [
+          "0"
+        ],
+        "pgoffset": 0,
+        "pgfirstVerse": 7,
+        "indexRef": "1840"
+      },
+      {
+        "slug": "1841",
+        "title": "1841 Liverpool Edition",
+        "info": "First European Edition, reprint of the Second American Edition (1837) with British spellings, printed in Liverpool.",
+        "code": "130915.1052572609",
+        "pages": 649,
+        "index": [
+          "0"
+        ],
+        "pgoffset": 0,
+        "pgfirstVerse": 9,
+        "indexRef": "1841"
+      },
+      {
+        "slug": "1842",
+        "title": "1842 Nauvoo Edition",
+        "info": "Fourth American Edition, printed in Nauvoo with a low run of 640 copies, 1840 plates with a new title page.",
+        "pages": 573,
+        "index": [
+          "0"
+        ],
+        "pgoffset": 0,
+        "pgfirstVerse": 7,
+        "indexRef": "1840"
+      },
+      {
+        "slug": "1879",
+        "title": "1879 Salt Lake City Edition",
+        "info": "Deseret News Printing and Publishing Establishment, major LDS edition.",
+        "code": "132406.3401403008",
+        "pages": 623,
+        "index": [
+          "0"
+        ],
+        "pgoffset": 8,
+        "pgfirstVerse": 1,
+        "indexRef": "1879"
+      },
+      {
+        "slug": "1920",
+        "title": "1920 Salt Lake City Edition",
+        "info": "Edited by James E. Talmage; added introductions, double columns, chapter summaries, new footnotes, and paragraphing.",
+        "code": "132843.2774745187",
+        "pages": 568,
+        "index": [
+          "0"
+        ],
+        "pgoffset": 8,
+        "pgfirstVerse": 1,
+        "format": "png",
+        "indexRef": "1920"
+      },
+      {
+        "slug": "1981",
+        "title": "1981 Salt Lake City Edition",
+        "info": "Official version edited by committee led by Bruce R. McConkie; includes corrections and restorations.",
+        "code": "132850.2628559250",
+        "pages": 536,
+        "index": [
+          "0"
+        ],
+        "pgoffset": 9,
+        "pgfirstVerse": 1,
+        "format": "png",
+        "indexRef": "1981"
+      },
+      {
+        "slug": "2013",
+        "title": "2013 Salt Lake City (Current) Edition",
+        "info": "Official current version based on the format and pagination of the 1981 edition; includes amendments.",
+        "code": "132852.3788741961",
+        "pages": 536,
+        "index": [
+          "0"
+        ],
+        "pgoffset": 9,
+        "pgfirstVerse": 1,
+        "format": "png",
+        "indexRef": "2013"
+      },
+      {
+        "slug": "poetic",
+        "title": "Poetic Parallelisms in the Book of Mormon",
+        "info": "Poetic Parallelisms in the Book of Mormon: The Complete Text Reformatted arranges the text in their poetic form including 325 instances of chiasmus and hundreds of additional parallel structures.",
+        "index": [
+          "0"
+        ],
+        "pgfirstVerse": 1
+      }
+    ]
+  }
+}

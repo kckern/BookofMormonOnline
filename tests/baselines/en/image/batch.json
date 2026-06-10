@@ -1,0 +1,38 @@
+{
+  "data": {
+    "image": [
+      {
+        "id": "1028",
+        "title": "The Destruction of Jerusalem",
+        "artist": "Unknown Artist",
+        "width": 630,
+        "height": 370,
+        "location": {
+          "slug": "lehites/9"
+        }
+      },
+      {
+        "id": "2075",
+        "title": "“He Saw God Sitting Upon His Throne”",
+        "artist": "Promised Land Publications",
+        "link": "http://www.goodreads.com/book/show/5966555-illustrated-stories-from-the-book-of-mormon",
+        "width": 515,
+        "height": 600,
+        "location": {
+          "slug": "lehites/6"
+        }
+      },
+      {
+        "id": "2624",
+        "title": "“The Jews Did Mock Him”",
+        "artist": "Intellectual Reserve",
+        "link": "http://www.goodreads.com/book/show/3339637-book-of-mormon-reader",
+        "width": 700,
+        "height": 465,
+        "location": {
+          "slug": "lehites/10"
+        }
+      }
+    ]
+  }
+}

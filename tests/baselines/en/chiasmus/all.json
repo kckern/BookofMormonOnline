@@ -1,0 +1,2208 @@
+{
+  "data": {
+    "chiasmus": [
+      {
+        "chiasmus_id": "9ca9af736d",
+        "reference": "니파이전서 1장 1~3절",
+        "scheme": "ABCDCBA",
+        "title": "Record of Knowledge"
+      },
+      {
+        "chiasmus_id": "ba8252e6f3",
+        "reference": "니파이전서 1장 15~18절",
+        "scheme": "ABCaDbDcDdDdDcDbEaEaDbDcDcDbCaB𝛼B𝛃B𝛾B𝜹B𝜹B𝛾B𝛃A𝛼",
+        "title": "Visions and Prophecies"
+      },
+      {
+        "chiasmus_id": "a545c515fa",
+        "reference": "니파이전서 1장 20~2절:1절",
+        "scheme": "ABCCBA",
+        "title": "Divine Deliverance"
+      },
+      {
+        "chiasmus_id": "f2285eeab2",
+        "reference": "니파이전서 2장 2~4절",
+        "scheme": "ABCCBA",
+        "title": "Obedient Journey"
+      },
+      {
+        "chiasmus_id": "b0988066e7",
+        "reference": "니파이전서 2장 4~5절",
+        "scheme": "ABCDCBA",
+        "title": "Wilderness Journey"
+      },
+      {
+        "chiasmus_id": "3bc431c485",
+        "reference": "니파이전서 2장 11~12절",
+        "scheme": "ABCDEEDCBA",
+        "title": "Visionary Struggles"
+      },
+      {
+        "chiasmus_id": "250bd5a8f1",
+        "reference": "니파이전서 3장 3~12절",
+        "scheme": "AaAbAcBCDEFGGFEDCBAaAcAb",
+        "title": "Obedience and Providence"
+      },
+      {
+        "chiasmus_id": "304325c95a",
+        "reference": "니파이전서 3장 15~22절",
+        "scheme": "AaAbAcAdBCDDCBAaAbAcAd",
+        "title": "Preservation and Inheritance"
+      },
+      {
+        "chiasmus_id": "9939a33406",
+        "reference": "니파이전서 4장 5~12절; 4장 14~15절; 4장 17~24절",
+        "scheme": "ABCDEFFEDCBA",
+        "title": "Nephi and Laban"
+      },
+      {
+        "chiasmus_id": "f1c33b0ced",
+        "reference": "니파이전서 4장 33~35절",
+        "scheme": "ABCDEFFEDCBA",
+        "title": "Oath and Courage"
+      },
+      {
+        "chiasmus_id": "dec0b33c1f",
+        "reference": "니파이전서 4장 32절",
+        "scheme": "ABBA",
+        "title": "Hearken and Live"
+      },
+      {
+        "chiasmus_id": "335329594f",
+        "reference": "니파이전서 4장 38~5절:6절",
+        "scheme": "ABCDDaDbDaDbEaFbFcFaFbFcEDCBA",
+        "title": "Reunion and Relief"
+      },
+      {
+        "chiasmus_id": "1c50dc82d6",
+        "reference": "니파이전서 5장 7~9절",
+        "scheme": "ABCDDCBA",
+        "title": "Comforted and Joyful"
+      },
+      {
+        "chiasmus_id": "3a81cbe124",
+        "reference": "니파이전서 5장 14~16절",
+        "scheme": "AAaAbBCCBAAaAb",
+        "title": "Lehi's Lineage"
+      },
+      {
+        "chiasmus_id": "2cf3e05894",
+        "reference": "니파이전서 5장 17~20절",
+        "scheme": "ABCDDCBA",
+        "title": "Prophetic Legacy"
+      },
+      {
+        "chiasmus_id": "1fc9e1da29",
+        "reference": "니파이전서 6장 1~2절",
+        "scheme": "ABCDCBA",
+        "title": "Ancestral Sufficiency"
+      },
+      {
+        "chiasmus_id": "f862f1c331",
+        "reference": "니파이전서 7장 3~5절",
+        "scheme": "ABCDEDCBA",
+        "title": "Journey and Favor"
+      },
+      {
+        "chiasmus_id": "9e679498dd",
+        "reference": "니파이전서 7장 13절",
+        "scheme": "ABCBA",
+        "title": "Prophetic Fulfillment"
+      },
+      {
+        "chiasmus_id": "d2efc0e8ab",
+        "reference": "니파이전서 7장 16~17절; 7장 19절",
+        "scheme": "AaAbAcBCCBAaAbAc",
+        "title": "Liberation Through Faith"
+      },
+      {
+        "chiasmus_id": "ffe5e93ba8",
+        "reference": "니파이전서 8장 8~9절",
+        "scheme": "ABBA",
+        "title": "Merciful Prayer"
+      },
+      {
+        "chiasmus_id": "ecf786214d",
+        "reference": "니파이전서 8장 10~12절",
+        "scheme": "ABCDaDbDaDbCBA",
+        "title": "Fruit of Joy"
+      },
+      {
+        "chiasmus_id": "88c9285543",
+        "reference": "니파이전서 8장 22~23절",
+        "scheme": "ABCCBA",
+        "title": "Lost in Darkness"
+      },
+      {
+        "chiasmus_id": "c4f4bc2f2f",
+        "reference": "니파이전서 9장 2절; 9장 4~5절",
+        "scheme": "AaAbAcBdBeBfBaBbBcBdBeBfAaAbAc",
+        "title": "Divine Record"
+      },
+      {
+        "chiasmus_id": "29dbc01c43",
+        "reference": "니파이전서 11장 11절",
+        "scheme": "ABBA",
+        "title": "Divine Communication"
+      },
+      {
+        "chiasmus_id": "ce855b9ffe",
+        "reference": "니파이전서 11장 17~22절",
+        "scheme": "AaAbBCCBAaAb",
+        "title": "Condescension and Revelation"
+      },
+      {
+        "chiasmus_id": "2cb4ccd496",
+        "reference": "니파이전서 11장 32절",
+        "scheme": "ABBA",
+        "title": "Divine Judgment"
+      },
+      {
+        "chiasmus_id": "cb3feea77b",
+        "reference": "니파이전서 11장 34~35절",
+        "scheme": "ABBA",
+        "title": "Apostles Defended"
+      },
+      {
+        "chiasmus_id": "21a6a18ace",
+        "reference": "니파이전서 12장 19절",
+        "scheme": "ABBA",
+        "title": "Seed Strife"
+      },
+      {
+        "chiasmus_id": "cb2a8895e4",
+        "reference": "니파이전서 13장 16~19절",
+        "scheme": "AaAbBaBbAaAb",
+        "title": "Divine Deliverance"
+      },
+      {
+        "chiasmus_id": "2a303257f6",
+        "reference": "니파이전서 13장 26절",
+        "scheme": "ABBA",
+        "title": "Lost Covenants"
+      },
+      {
+        "chiasmus_id": "df5697f6ff",
+        "reference": "니파이전서 13장 29~30절",
+        "scheme": "ABCCBA",
+        "title": "Lost Plainness"
+      },
+      {
+        "chiasmus_id": "e3e2e86ce4",
+        "reference": "니파이전서 13장 39~42절",
+        "scheme": "ABCDEFGHHGFEDCBA",
+        "title": "Unity of Testimony"
+      },
+      {
+        "chiasmus_id": "e84a302a35",
+        "reference": "니파이전서 13장 42절",
+        "scheme": "ABBA",
+        "title": "Manifestation Sequence"
+      },
+      {
+        "chiasmus_id": "a642ebae0e",
+        "reference": "니파이전서 13장 42절",
+        "scheme": "ABBA",
+        "title": "First and Last"
+      },
+      {
+        "chiasmus_id": "6d94568a50",
+        "reference": "니파이전서 14장 15~16절",
+        "scheme": "ABCDDCBA",
+        "title": "Divine Wrath"
+      },
+      {
+        "chiasmus_id": "10deec5e54",
+        "reference": "니파이전서 14장 20~25절",
+        "scheme": "ABCDDCBA",
+        "title": "Prophetic Witness"
+      },
+      {
+        "chiasmus_id": "6a78e2ed70",
+        "reference": "니파이전서 15장 7~12절",
+        "scheme": "ABCDEFEDCBA",
+        "title": "Understanding Revelation"
+      },
+      {
+        "chiasmus_id": "16ca211eb5",
+        "reference": "니파이전서 15장 24절",
+        "scheme": "ABCCB",
+        "title": "Word and Resilience"
+      },
+      {
+        "chiasmus_id": "21a7282dbe",
+        "reference": "니파이전서 15장 25절",
+        "scheme": "ABBA",
+        "title": "Heed and Exhort"
+      },
+      {
+        "chiasmus_id": "251bcf2f4f",
+        "reference": "니파이전서 15장 33~34절",
+        "scheme": "ABCCBA",
+        "title": "Clean or Unclean"
+      },
+      {
+        "chiasmus_id": "e69a987ee4",
+        "reference": "니파이전서 16장 1~3절",
+        "scheme": "ABCDEEDCBA",
+        "title": "Truth's Edge"
+      },
+      {
+        "chiasmus_id": "e069703d3c",
+        "reference": "니파이전서 16장 13~14절",
+        "scheme": "ABCCBA",
+        "title": "Sustenance in Shazer"
+      },
+      {
+        "chiasmus_id": "77d634a404",
+        "reference": "니파이전서 16장 28~29절",
+        "scheme": "ABCDDCBA",
+        "title": "Guiding Faith"
+      },
+      {
+        "chiasmus_id": "be7c7b808d",
+        "reference": "니파이전서 17장 7절",
+        "scheme": "ABBA",
+        "title": "Mountain Revelation"
+      },
+      {
+        "chiasmus_id": "f9a21da2f6",
+        "reference": "니파이전서 17장 13절",
+        "scheme": "ABCCBA",
+        "title": "Guided by Light"
+      },
+      {
+        "chiasmus_id": "b396d89ae0",
+        "reference": "니파이전서 17장 17~19절",
+        "scheme": "ABCDaDbDaDbCBA",
+        "title": "Judgment and Construction"
+      },
+      {
+        "chiasmus_id": "45306d45a9",
+        "reference": "니파이전서 17장 31절",
+        "scheme": "ABBA",
+        "title": "Divine Action"
+      },
+      {
+        "chiasmus_id": "4dc5e4acf9",
+        "reference": "니파이전서 17장 38절",
+        "scheme": "ABBA",
+        "title": "Guidance and Consequence"
+      },
+      {
+        "chiasmus_id": "c11c1a197e",
+        "reference": "니파이전서 17장 46절",
+        "scheme": "ABBA",
+        "title": "Smooth and Rough"
+      },
+      {
+        "chiasmus_id": "fa85c73729",
+        "reference": "니파이전서 17장 48~52절",
+        "scheme": "ABCDEEDCBA",
+        "title": "Divine Empowerment"
+      },
+      {
+        "chiasmus_id": "326f080105",
+        "reference": "니파이전서 18장 24절",
+        "scheme": "ABBA",
+        "title": "Tilling and Planting"
+      },
+      {
+        "chiasmus_id": "d210f7b10e",
+        "reference": "니파이전서 20장 21절",
+        "scheme": "ABBA",
+        "title": "Living Waters"
+      },
+      {
+        "chiasmus_id": "2bc8c92bf5",
+        "reference": "니파이전서 19장 13~14절",
+        "scheme": "ABCDDCBA",
+        "title": "Divine Rejection"
+      },
+      {
+        "chiasmus_id": "243adbc6f3",
+        "reference": "니파이전서 21장 1절",
+        "scheme": "ABBA",
+        "title": "Divine Calling"
+      },
+      {
+        "chiasmus_id": "925d171360",
+        "reference": "니파이전서 21장 11절",
+        "scheme": "ABBA",
+        "title": "Mountains and Highways"
+      },
+      {
+        "chiasmus_id": "753a676aea",
+        "reference": "니파이전서 21장 24~25절",
+        "scheme": "ABCBA",
+        "title": "Delivered Captives"
+      },
+      {
+        "chiasmus_id": "7402ca1545",
+        "reference": "니파이전서 22장 1~3절",
+        "scheme": "ABCDDCBA",
+        "title": "Spiritual Understanding"
+      },
+      {
+        "chiasmus_id": "31ef240d75",
+        "reference": "니파이전서 22장 25절",
+        "scheme": "ABBA",
+        "title": "One Fold, One Shepherd"
+      },
+      {
+        "chiasmus_id": "82ceb04343",
+        "reference": "니파이전서 22장 26절",
+        "scheme": "ABCBA",
+        "title": "Righteous Dominion"
+      },
+      {
+        "chiasmus_id": "955e079c3a",
+        "reference": "니파이후서 1장 13~23절",
+        "scheme": "ABCDEFFaFbFaFbGGFFαFβFαFβEaEbEaEbDCBA",
+        "title": "Awake and Arise"
+      },
+      {
+        "chiasmus_id": "068a008dcd",
+        "reference": "니파이후서 1장 28~29절",
+        "scheme": "ABCBA",
+        "title": "Blessing Conditional"
+      },
+      {
+        "chiasmus_id": "5a65e1dc22",
+        "reference": "니파이후서 2장 7절",
+        "scheme": "ABCDDCBA",
+        "title": "Law and Heart"
+      },
+      {
+        "chiasmus_id": "aab5500a28",
+        "reference": "니파이후서 3장 1절",
+        "scheme": "ABBA",
+        "title": "Wilderness Birth"
+      },
+      {
+        "chiasmus_id": "cfdca4000c",
+        "reference": "니파이후서 5장 2~4절",
+        "scheme": "ABCDDCBA",
+        "title": "Conspired Sibling Rivalry"
+      },
+      {
+        "chiasmus_id": "2ef6320c11",
+        "reference": "니파이후서 5장 16절",
+        "scheme": "ABCCBA",
+        "title": "Temple Parallel"
+      },
+      {
+        "chiasmus_id": "72d6d68eb6",
+        "reference": "니파이후서 5장 25절",
+        "scheme": "ABCCBA",
+        "title": "Remembrance or Scourge"
+      },
+      {
+        "chiasmus_id": "29698ecb09",
+        "reference": "니파이후서 6장 13절",
+        "scheme": "ABBA",
+        "title": "Awaiting the Messiah"
+      },
+      {
+        "chiasmus_id": "e805177ffd",
+        "reference": "니파이후서 6장 14~15절",
+        "scheme": "ABBA",
+        "title": "Belief and Destiny"
+      },
+      {
+        "chiasmus_id": "1a960e7acd",
+        "reference": "니파이후서 6장 16~17절",
+        "scheme": "ABCBA",
+        "title": "Deliverance Promised"
+      },
+      {
+        "chiasmus_id": "c54e1bbca7",
+        "reference": "니파이후서 7장 1절",
+        "scheme": "ABBA",
+        "title": "Never Forsaken"
+      },
+      {
+        "chiasmus_id": "ff704bdc75",
+        "reference": "니파이후서 7장 1절",
+        "scheme": "ABA",
+        "title": "Divine Appeal"
+      },
+      {
+        "chiasmus_id": "490f11726d",
+        "reference": "니파이후서 8장 11절",
+        "scheme": "ABBA",
+        "title": "Everlasting Joy"
+      },
+      {
+        "chiasmus_id": "63715313ec",
+        "reference": "니파이후서 8장 15절",
+        "scheme": "ABA",
+        "title": "Lord of Hosts"
+      },
+      {
+        "chiasmus_id": "f332a1b128",
+        "reference": "니파이후서 8장 19절",
+        "scheme": "ABBA",
+        "title": "Desolation's Sorrow"
+      },
+      {
+        "chiasmus_id": "1113f30a39",
+        "reference": "니파이후서 9장 20절",
+        "scheme": "ABBA",
+        "title": "Omniscient God"
+      },
+      {
+        "chiasmus_id": "053b16cf84",
+        "reference": "니파이후서 9장 28절",
+        "scheme": "ABCCBA",
+        "title": "Learned Foolishness"
+      },
+      {
+        "chiasmus_id": "c81ba4941e",
+        "reference": "니파이후서 9장 38절",
+        "scheme": "ABBA",
+        "title": "Wo and Return"
+      },
+      {
+        "chiasmus_id": "435614aa63",
+        "reference": "니파이후서 9장 42절",
+        "scheme": "ABCDEDCBA",
+        "title": "Pride and Humility"
+      },
+      {
+        "chiasmus_id": "824857433f",
+        "reference": "니파이후서 9장 44~46절",
+        "scheme": "ABCDEEDCBA",
+        "title": "Judgment and Salvation"
+      },
+      {
+        "chiasmus_id": "656e034c13",
+        "reference": "니파이후서 11장 2~8절",
+        "scheme": "ABCaCbCaCbDEFGFEDCBA",
+        "title": "Witness and Word"
+      },
+      {
+        "chiasmus_id": "1538cff8b9",
+        "reference": "니파이후서 12장 3절",
+        "scheme": "ABBA",
+        "title": "Zion and Jerusalem"
+      },
+      {
+        "chiasmus_id": "464d5aa58a",
+        "reference": "니파이후서 12장 10~19절",
+        "scheme": "AaAbAcAdBaBbBcBaBbBcAaAbAcAd",
+        "title": "Pride and Fall"
+      },
+      {
+        "chiasmus_id": "a3025237e7",
+        "reference": "니파이후서 15장 7절",
+        "scheme": "ABBA",
+        "title": "Vineyard of Israel"
+      },
+      {
+        "chiasmus_id": "5d99a6044c",
+        "reference": "니파이후서 15장 20절",
+        "scheme": "ABBAABBAABBA",
+        "title": "Moral Inversion"
+      },
+      {
+        "chiasmus_id": "f7fa8862a4",
+        "reference": "니파이후서 15장 25절",
+        "scheme": "AaAbBCBAaAb",
+        "title": "Divine Retribution"
+      },
+      {
+        "chiasmus_id": "9b77bdbcfc",
+        "reference": "니파이후서 16장 10절",
+        "scheme": "ABCCBA",
+        "title": "Blinded Understanding"
+      },
+      {
+        "chiasmus_id": "751d6bf18f",
+        "reference": "니파이후서 17장 10~12절",
+        "scheme": "ABCCBA",
+        "title": "Signs Unasked"
+      },
+      {
+        "chiasmus_id": "3cd450f533",
+        "reference": "니파이후서 18장 17절",
+        "scheme": "ABA",
+        "title": "Waiting and Seeking"
+      },
+      {
+        "chiasmus_id": "4bf68dffd2",
+        "reference": "니파이후서 19장 21절",
+        "scheme": "ABBA",
+        "title": "Tribal Unity"
+      },
+      {
+        "chiasmus_id": "9799769b04",
+        "reference": "니파이후서 20장 20~21절",
+        "scheme": "ABCCBA",
+        "title": "Israel's Return"
+      },
+      {
+        "chiasmus_id": "5d65577444",
+        "reference": "니파이후서 20장 24절",
+        "scheme": "ABBA",
+        "title": "Facing Tyranny"
+      },
+      {
+        "chiasmus_id": "692e820a9f",
+        "reference": "니파이후서 21장 4절",
+        "scheme": "ABBA",
+        "title": "Divine Judgment"
+      },
+      {
+        "chiasmus_id": "05f96ef212",
+        "reference": "니파이후서 22장 2절",
+        "scheme": "ABBA",
+        "title": "Salvation and Strength"
+      },
+      {
+        "chiasmus_id": "42d8f6d654",
+        "reference": "니파이후서 24장 9~18절",
+        "scheme": "ABCDDaDbEcEdEdEcEbEaFGHGFEDCBA",
+        "title": "Fallen Pride"
+      },
+      {
+        "chiasmus_id": "ed38cea616",
+        "reference": "니파이후서 25장 4절",
+        "scheme": "ABBA",
+        "title": "Hearken and Hear"
+      },
+      {
+        "chiasmus_id": "17554f8258",
+        "reference": "니파이후서 25장 7절",
+        "scheme": "ABA",
+        "title": "Prophecy and Knowledge"
+      },
+      {
+        "chiasmus_id": "f39594549d",
+        "reference": "니파이후서 25장 15절",
+        "scheme": "ABA",
+        "title": "Scattered and Destroyed"
+      },
+      {
+        "chiasmus_id": "9854a105a8",
+        "reference": "니파이후서 25장 24~27절",
+        "scheme": "AaAbBaBbCDaDbEEEaDDaDbCBA",
+        "title": "Law and Faith"
+      },
+      {
+        "chiasmus_id": "6df8864587",
+        "reference": "니파이후서 26장 1~9절",
+        "scheme": "ABCDEFGHHGFEDCBA",
+        "title": "Signs and Judgment"
+      },
+      {
+        "chiasmus_id": "6b3a4f3025",
+        "reference": "니파이후서 27장 1~4절",
+        "scheme": "ABCDaDbDcDdDaDbDcDdCBAaAbAaAb",
+        "title": "Drunken with Iniquity"
+      },
+      {
+        "chiasmus_id": "92ff6e36e5",
+        "reference": "니파이후서 27장 5절",
+        "scheme": "ABBA",
+        "title": "Sight Rejected"
+      },
+      {
+        "chiasmus_id": "0185ab9621",
+        "reference": "니파이후서 28장 3절",
+        "scheme": "ABCCBA",
+        "title": "Divided Allegiance"
+      },
+      {
+        "chiasmus_id": "e8515fec05",
+        "reference": "니파이후서 28장 16~20절",
+        "scheme": "ABCDDCBA",
+        "title": "Goodness Attacked"
+      },
+      {
+        "chiasmus_id": "15c42682de",
+        "reference": "니파이후서 28장 21절",
+        "scheme": "ABCDDCBA",
+        "title": "Carnal Security"
+      },
+      {
+        "chiasmus_id": "0e771d093b",
+        "reference": "니파이후서 28장 32절",
+        "scheme": "ABCDCBA",
+        "title": "Lengthened Arm"
+      },
+      {
+        "chiasmus_id": "9b35c29307",
+        "reference": "니파이후서 29장 4~6절",
+        "scheme": "ABCDEGHHGEDCBA",
+        "title": "Bible and Folly"
+      },
+      {
+        "chiasmus_id": "8be8fd3bb1",
+        "reference": "니파이후서 29장 13절",
+        "scheme": "ABCCBA",
+        "title": "Scriptural Exchange"
+      },
+      {
+        "chiasmus_id": "5cf8a0176a",
+        "reference": "니파이후서 29장 13절",
+        "scheme": "ABCCBA",
+        "title": "Shared Words"
+      },
+      {
+        "chiasmus_id": "43e9f30814",
+        "reference": "니파이후서 30장 9절",
+        "scheme": "ABBA",
+        "title": "Divine Judgment"
+      },
+      {
+        "chiasmus_id": "6cb33a7bf5",
+        "reference": "니파이후서 32장 2절",
+        "scheme": "ABBA",
+        "title": "Angel's Tongue"
+      },
+      {
+        "chiasmus_id": "fd4070b23b",
+        "reference": "야곱서 1장 11절",
+        "scheme": "ABCCBA",
+        "title": "Nephi Legacy"
+      },
+      {
+        "chiasmus_id": "fca7f53d3b",
+        "reference": "야곱서 1장 14절",
+        "scheme": "ABBA",
+        "title": "Lamanites and Nephites"
+      },
+      {
+        "chiasmus_id": "594fae9607",
+        "reference": "야곱서 2장 6~10절",
+        "scheme": "ABCDFGHHGEDCBA",
+        "title": "Wounded Souls"
+      },
+      {
+        "chiasmus_id": "172da3c669",
+        "reference": "야곱서 3장 6절",
+        "scheme": "ABA",
+        "title": "Commandment Observance"
+      },
+      {
+        "chiasmus_id": "a0399b4e7f",
+        "reference": "야곱서 4장 9절",
+        "scheme": "ABBA",
+        "title": "Creation's Word"
+      },
+      {
+        "chiasmus_id": "7ce8aca048",
+        "reference": "야곱서 5장 7~9절",
+        "scheme": "AaAbAcAdBCCBAaAbAcAd",
+        "title": "Graft and Burn"
+      },
+      {
+        "chiasmus_id": "89dcd7738c",
+        "reference": "야곱서 5장 46~47절",
+        "scheme": "ABCDEFEDCBA",
+        "title": "Vineyard's Fate"
+      },
+      {
+        "chiasmus_id": "f90d2778a1",
+        "reference": "야곱서 5장 61~64절",
+        "scheme": "ABCaCbCcCdDDaDbDbDaDDaDbDbDaCaCdCcCbBA",
+        "title": "Last Pruning"
+      },
+      {
+        "chiasmus_id": "2409f1d085",
+        "reference": "야곱서 7장 19절",
+        "scheme": "ABCDDCBA",
+        "title": "Fear and Denial"
+      },
+      {
+        "chiasmus_id": "4a97af5fec",
+        "reference": "이노스서 1장 8~12절",
+        "scheme": "ABaBcBbCDDCBaBbBcA",
+        "title": "Faith and Diligence"
+      },
+      {
+        "chiasmus_id": "340142fc6e",
+        "reference": "이노스서 1장 13~16절",
+        "scheme": "AAaAbBCCBAaAb",
+        "title": "Records Preserved"
+      },
+      {
+        "chiasmus_id": "6785c93b34",
+        "reference": "예이롬서 1장 ",
+        "scheme": "AaAbAcAdBBaBbBbBaCDEEDCBAdAbAcAa",
+        "title": "Genealogical Stewardship"
+      },
+      {
+        "chiasmus_id": "5b0af47546",
+        "reference": "옴나이서 1장 5~7절",
+        "scheme": "ABCDDCBA",
+        "title": "Divine Consequences"
+      },
+      {
+        "chiasmus_id": "73f4dc0fa7",
+        "reference": "옴나이서 1장 12~13절",
+        "scheme": "ABCDEFEDCBA",
+        "title": "Guided Exodus"
+      },
+      {
+        "chiasmus_id": "971cb1eb40",
+        "reference": "옴나이서 1장 14절",
+        "scheme": "ABBA",
+        "title": "Joyful Zarahemla"
+      },
+      {
+        "chiasmus_id": "de427cf0c3",
+        "reference": "몰몬의 말씀 1장 3~5절; 1장 7~11절",
+        "scheme": "ABaBbBcBaBbBaBbBaBbCDEFFEDCBaBbBcA",
+        "title": "Prophetic Legacy"
+      },
+      {
+        "chiasmus_id": "1a39a5a42c",
+        "reference": "모사이야서 2장 5~6절",
+        "scheme": "ABCDDCBA",
+        "title": "Temple Gathering"
+      },
+      {
+        "chiasmus_id": "25b36e852a",
+        "reference": "모사이야서 2장 7~8절",
+        "scheme": "ABCDDCBA",
+        "title": "Amplified Reach"
+      },
+      {
+        "chiasmus_id": "61d73ec389",
+        "reference": "모사이야서 2장 15~16절",
+        "scheme": "ABBA",
+        "title": "Service and Conscience"
+      },
+      {
+        "chiasmus_id": "5d5dd78a9a",
+        "reference": "모사이야서 2장 25절",
+        "scheme": "ABBA",
+        "title": "Created from Dust"
+      },
+      {
+        "chiasmus_id": "6a62ab4f70",
+        "reference": "모사이야서 2장 26절",
+        "scheme": "ABBA",
+        "title": "Mortal Journey"
+      },
+      {
+        "chiasmus_id": "f31580b79d",
+        "reference": "모사이야서 3장 1~3절",
+        "scheme": "ABCDEFEDCBA",
+        "title": "Glad Tidings"
+      },
+      {
+        "chiasmus_id": "273fa62ed4",
+        "reference": "모사이야서 3장 11~16절",
+        "scheme": "AaAbAcAdBCCaCbCbCaBAdAcAbAa",
+        "title": "Atonement for All"
+      },
+      {
+        "chiasmus_id": "2d0df068c2",
+        "reference": "모사이야서 3장 18~19절",
+        "scheme": "ABCDEFFEDCBA",
+        "title": "Childlike Humility"
+      },
+      {
+        "chiasmus_id": "a2769c6423",
+        "reference": "모사이야서 4장 6~7절",
+        "scheme": "ABCDEEDCBA",
+        "title": "Salvific Trust"
+      },
+      {
+        "chiasmus_id": "141f69aac7",
+        "reference": "모사이야서 4장 11~12절",
+        "scheme": "AaAbBCaCbAaCbCBAaAb",
+        "title": "Divine Love and Humility"
+      },
+      {
+        "chiasmus_id": "be3364078f",
+        "reference": "모사이야서 4장 14~15절",
+        "scheme": "ABCDEEDCBA",
+        "title": "Teach and Love"
+      },
+      {
+        "chiasmus_id": "a43c00e800",
+        "reference": "모사이야서 4장 18~23절",
+        "scheme": "ABCDEFGGFEDCBA",
+        "title": "Dependence and Generosity"
+      },
+      {
+        "chiasmus_id": "b04d905a58",
+        "reference": "모사이야서 5장 8~9절",
+        "scheme": "ABCDDCBA",
+        "title": "Name of Christ"
+      },
+      {
+        "chiasmus_id": "3f9029c234",
+        "reference": "모사이야서 5장 10~12절",
+        "scheme": "ABCDEFFEDCBA",
+        "title": "Eternal Name"
+      },
+      {
+        "chiasmus_id": "9a327966d4",
+        "reference": "모사이야서 7장 4절",
+        "scheme": "ABBA",
+        "title": "Wandering Days"
+      },
+      {
+        "chiasmus_id": "1b5c42b363",
+        "reference": "모사이야서 7장 7~8절",
+        "scheme": "ABCCBA",
+        "title": "Imprisonment and Liberation"
+      },
+      {
+        "chiasmus_id": "a5fd9da53a",
+        "reference": "모사이야서 8장 17절",
+        "scheme": "ABBA",
+        "title": "Revealed Secrets"
+      },
+      {
+        "chiasmus_id": "4d10383e1e",
+        "reference": "모사이야서 10장 17절",
+        "scheme": "ABCDDCBA",
+        "title": "Hatred's Legacy"
+      },
+      {
+        "chiasmus_id": "01e24465a2",
+        "reference": "모사이야서 11장 20~25절",
+        "scheme": "ABCDEFGHHGFEDCBA",
+        "title": "Divine Ultimatum"
+      },
+      {
+        "chiasmus_id": "ab28e53cac",
+        "reference": "모사이야서 11장 28절",
+        "scheme": "ABCCBA",
+        "title": "Stirring Anger"
+      },
+      {
+        "chiasmus_id": "ec90efa642",
+        "reference": "모사이야서 12장 1~8절",
+        "scheme": "ABBaBbBbBaCDEFGHHGFEDCBA",
+        "title": "Divine Judgment"
+      },
+      {
+        "chiasmus_id": "5cb4c6e31e",
+        "reference": "모사이야서 12장 19절",
+        "scheme": "ABCBA",
+        "title": "Bold Confounding"
+      },
+      {
+        "chiasmus_id": "5c94cfc1bb",
+        "reference": "모사이야서 12장 24절",
+        "scheme": "ABBA",
+        "title": "Divine Revelation"
+      },
+      {
+        "chiasmus_id": "a2d1edd052",
+        "reference": "모사이야서 12장 25~27절",
+        "scheme": "ABCDDCBA",
+        "title": "Perverting Wisdom"
+      },
+      {
+        "chiasmus_id": "6785790148",
+        "reference": "모사이야서 14장 7절",
+        "scheme": "ABBA",
+        "title": "Silent Sacrifice"
+      },
+      {
+        "chiasmus_id": "a82f1ab0ff",
+        "reference": "모사이야서 15장 20~23절; 18장 1절",
+        "scheme": "ABCDEFGHIJJIHGFEDCBA",
+        "title": "Eternal Resurrection"
+      },
+      {
+        "chiasmus_id": "37d4634c4d",
+        "reference": "모사이야서 15장 26~27절",
+        "scheme": "ABCDDCBA",
+        "title": "Irredeemable Rebellion"
+      },
+      {
+        "chiasmus_id": "3ed4ed4486",
+        "reference": "모사이야서 15장 31절",
+        "scheme": "ABBA",
+        "title": "Divine Revelation"
+      },
+      {
+        "chiasmus_id": "9be0712434",
+        "reference": "모사이야서 16장 7~8절",
+        "scheme": "ABCCBA",
+        "title": "Victory Over Death"
+      },
+      {
+        "chiasmus_id": "e3bbc6c07f",
+        "reference": "모사이야서 18장 1~3절",
+        "scheme": "ABCDEEDCBA",
+        "title": "Resurrection and Redemption"
+      },
+      {
+        "chiasmus_id": "728447f14b",
+        "reference": "모사이야서 18장 21절",
+        "scheme": "ABCCBA",
+        "title": "United Faith"
+      },
+      {
+        "chiasmus_id": "54fc2f8ac5",
+        "reference": "모사이야서 23장 7절",
+        "scheme": "ABCCBA",
+        "title": "Equality Reigns"
+      },
+      {
+        "chiasmus_id": "f8ac0e6c41",
+        "reference": "모사이야서 24장 14~15절",
+        "scheme": "ABCDEFFEDCBA",
+        "title": "Burdens Lifted"
+      },
+      {
+        "chiasmus_id": "903b8e302f",
+        "reference": "모사이야서 24장 21절",
+        "scheme": "ABBA",
+        "title": "Bondage and Deliverance"
+      },
+      {
+        "chiasmus_id": "415f955d6c",
+        "reference": "모사이야서 26장 1~3절",
+        "scheme": "ABCaCbCaCbBA",
+        "title": "Unbelief and Misunderstanding"
+      },
+      {
+        "chiasmus_id": "40d2097d2d",
+        "reference": "모사이야서 26장 21~28절",
+        "scheme": "AaAbBCDaDbDaDbCBAaAb",
+        "title": "Hear and Receive"
+      },
+      {
+        "chiasmus_id": "7088a639b4",
+        "reference": "모사이야서 27장 24~25절",
+        "scheme": "ABCCBA",
+        "title": "Born Again"
+      },
+      {
+        "chiasmus_id": "086ca824d1",
+        "reference": "모사이야서 27장 34절",
+        "scheme": "ABBA",
+        "title": "Mosiah's Line"
+      },
+      {
+        "chiasmus_id": "c007ba73a6",
+        "reference": "모사이야서 28장 10~29절:1절",
+        "scheme": "ABCDEFFEDCBA",
+        "title": "Legacy and Leadership"
+      },
+      {
+        "chiasmus_id": "a797bba45e",
+        "reference": "모사이야서 29장 20절",
+        "scheme": "ABBA",
+        "title": "Humble Deliverance"
+      },
+      {
+        "chiasmus_id": "99162174e3",
+        "reference": "앨마서 1장 1절",
+        "scheme": "ABBA",
+        "title": "Laws Acknowledged"
+      },
+      {
+        "chiasmus_id": "37848e756f",
+        "reference": "앨마서 2장 22절",
+        "scheme": "ABBA",
+        "title": "Vigilant Watchers"
+      },
+      {
+        "chiasmus_id": "e41f6030f7",
+        "reference": "앨마서 3장 6~7절",
+        "scheme": "ABCDEEDCBA",
+        "title": "Curse and Mark"
+      },
+      {
+        "chiasmus_id": "09ae2fb6c4",
+        "reference": "앨마서 5장 7~9절",
+        "scheme": "ABCDEEDCBA",
+        "title": "Redeeming Light"
+      },
+      {
+        "chiasmus_id": "69cc95f8a9",
+        "reference": "앨마서 5장 11절",
+        "scheme": "ABCBA",
+        "title": "Prophetic Legacy"
+      },
+      {
+        "chiasmus_id": "84a9978279",
+        "reference": "앨마서 5장 20~25절",
+        "scheme": "ABCDEFFEDCBA",
+        "title": "Salvation and Stains"
+      },
+      {
+        "chiasmus_id": "4ee4efe518",
+        "reference": "앨마서 5장 44~49절",
+        "scheme": "ABCDEEDCBA",
+        "title": "Revelation and Testimony"
+      },
+      {
+        "chiasmus_id": "21a7fff652",
+        "reference": "앨마서 5장 62절",
+        "scheme": "ABBA",
+        "title": "Command and Invitation"
+      },
+      {
+        "chiasmus_id": "e430f47781",
+        "reference": "앨마서 6장 5절",
+        "scheme": "ABBA",
+        "title": "Universal Word"
+      },
+      {
+        "chiasmus_id": "dd414d0c0e",
+        "reference": "앨마서 7장 11~13절",
+        "scheme": "ABCDEFFEDCBA",
+        "title": "Divine Empathy"
+      },
+      {
+        "chiasmus_id": "c603aee31f",
+        "reference": "앨마서 7장 14~15절",
+        "scheme": "ABCDDCBA",
+        "title": "Born Again"
+      },
+      {
+        "chiasmus_id": "6dd3508d8f",
+        "reference": "앨마서 8장 4절",
+        "scheme": "ABBA",
+        "title": "Holy Teaching"
+      },
+      {
+        "chiasmus_id": "6e1d72b36e",
+        "reference": "앨마서 9장 12절",
+        "scheme": "ABBA",
+        "title": "Irreversible Wrath"
+      },
+      {
+        "chiasmus_id": "83d5772a04",
+        "reference": "앨마서 9장 31~32절",
+        "scheme": "ABBA",
+        "title": "Hard-Hearted Accusations"
+      },
+      {
+        "chiasmus_id": "b2b31c501c",
+        "reference": "앨마서 10장 6절",
+        "scheme": "ABCCBA",
+        "title": "Rebellion and Denial"
+      },
+      {
+        "chiasmus_id": "81523b259c",
+        "reference": "앨마서 11장 40절",
+        "scheme": "ABBA",
+        "title": "Eternal Exclusivity"
+      },
+      {
+        "chiasmus_id": "5c27daf49f",
+        "reference": "앨마서 12장 11~17절",
+        "scheme": "ABCDABBAEFGFEDCBA",
+        "title": "Captivity and Condemnation"
+      },
+      {
+        "chiasmus_id": "f74b2b5379",
+        "reference": "앨마서 13장 2~3절",
+        "scheme": "ABCDDCBA",
+        "title": "Preparatory Redemption"
+      },
+      {
+        "chiasmus_id": "4c23b3aeff",
+        "reference": "앨마서 13장 6~10절",
+        "scheme": "ABaBbBcCaCbCcCaCbCcBaBbBcA",
+        "title": "Eternal Priesthood"
+      },
+      {
+        "chiasmus_id": "10de4fe405",
+        "reference": "앨마서 14장 2~3절",
+        "scheme": "ABaBbCCBaBbA",
+        "title": "Seeking Silence"
+      },
+      {
+        "chiasmus_id": "c4fc14565b",
+        "reference": "앨마서 14장 29절",
+        "scheme": "ABA",
+        "title": "Fleeing Presence"
+      },
+      {
+        "chiasmus_id": "2b786be930",
+        "reference": "앨마서 15장 3절",
+        "scheme": "ABCDDCBA",
+        "title": "Tormented Conscience"
+      },
+      {
+        "chiasmus_id": "751d811362",
+        "reference": "앨마서 16장 1절",
+        "scheme": "ABCCBA",
+        "title": "Peaceful Times"
+      },
+      {
+        "chiasmus_id": "00052aa918",
+        "reference": "앨마서 17장 37~38절",
+        "scheme": "ABCDEDCBA",
+        "title": "Disarmed by Valor"
+      },
+      {
+        "chiasmus_id": "18ac71ee60",
+        "reference": "앨마서 18장 6절",
+        "scheme": "ABBA",
+        "title": "Scattered and Slain"
+      },
+      {
+        "chiasmus_id": "48859c5b4d",
+        "reference": "앨마서 18장 7절",
+        "scheme": "ABBA",
+        "title": "Plundering Ways"
+      },
+      {
+        "chiasmus_id": "f122b57f7e",
+        "reference": "앨마서 18장 12~14절",
+        "scheme": "ABCDDCBA",
+        "title": "Power and Titles"
+      },
+      {
+        "chiasmus_id": "4df286f4c4",
+        "reference": "앨마서 18장 16절",
+        "scheme": "ABCCBA",
+        "title": "Defense and Victory"
+      },
+      {
+        "chiasmus_id": "8becaab070",
+        "reference": "앨마서 18장 38절",
+        "scheme": "ABCCBA",
+        "title": "Rebellious Relations"
+      },
+      {
+        "chiasmus_id": "ff979d1654",
+        "reference": "앨마서 18장 39절",
+        "scheme": "ABBA",
+        "title": "Divine Revelation"
+      },
+      {
+        "chiasmus_id": "81c8120c22",
+        "reference": "앨마서 19장 6~7절",
+        "scheme": "ABCDEEDCBA",
+        "title": "Desire and Deliverance"
+      },
+      {
+        "chiasmus_id": "6bd12d50d2",
+        "reference": "앨마서 19장 13절",
+        "scheme": "ABBA",
+        "title": "Redeemer's Promise"
+      },
+      {
+        "chiasmus_id": "9363fb4ec1",
+        "reference": "앨마서 20장 4절",
+        "scheme": "AaBBA",
+        "title": "Friendship and Support"
+      },
+      {
+        "chiasmus_id": "b878b501aa",
+        "reference": "앨마서 20장 10~13절",
+        "scheme": "AaAbBCCBAaAb",
+        "title": "Lamoni's Defense"
+      },
+      {
+        "chiasmus_id": "bc2b0e55a3",
+        "reference": "앨마서 20장 26~27절",
+        "scheme": "ABCDEEDCBA",
+        "title": "Desire and Astonishment"
+      },
+      {
+        "chiasmus_id": "412783fa28",
+        "reference": "앨마서 25장 16절",
+        "scheme": "ABBA",
+        "title": "Law and Faith"
+      },
+      {
+        "chiasmus_id": "8f8785c601",
+        "reference": "앨마서 26장 29절",
+        "scheme": "ABBA",
+        "title": "Teaching Everywhere"
+      },
+      {
+        "chiasmus_id": "6d5a1387b4",
+        "reference": "앨마서 27장 22절",
+        "scheme": "ABCCBA",
+        "title": "Land Exchange"
+      },
+      {
+        "chiasmus_id": "6ede9cdf47",
+        "reference": "앨마서 29장 1~7절",
+        "scheme": "ABCCaCbCcCaCbCcCaCbCcBA",
+        "title": "Divine Allotment"
+      },
+      {
+        "chiasmus_id": "7e8e79894a",
+        "reference": "앨마서 29장 8~17절",
+        "scheme": "ABαBβBβBαBaBbBcBdBeBdBcBbBaCDaDbDcDdDbDcDaDbDcDdCBBaBbBcBcBbBaA",
+        "title": "Instrument of Joy"
+      },
+      {
+        "chiasmus_id": "9a66b7067e",
+        "reference": "앨마서 30장 4~5절",
+        "scheme": "ABBA",
+        "title": "Continual Peace"
+      },
+      {
+        "chiasmus_id": "79ecacd766",
+        "reference": "앨마서 30장 6~12절",
+        "scheme": "ABCDaDbDaDbDaDbDaDbDaDbDaDbCBA",
+        "title": "Belief and Judgment"
+      },
+      {
+        "chiasmus_id": "afd175f2a1",
+        "reference": "앨마서 30장 44절",
+        "scheme": "ABBA",
+        "title": "Divine Signature"
+      },
+      {
+        "chiasmus_id": "d09e62bde8",
+        "reference": "앨마서 30장 50~52절",
+        "scheme": "ABCDEDCBA",
+        "title": "Silenced by Conviction"
+      },
+      {
+        "chiasmus_id": "735ba1d661",
+        "reference": "앨마서 31장 16~23절",
+        "scheme": "ABCDEFFEDCBA",
+        "title": "Chosen Separatism"
+      },
+      {
+        "chiasmus_id": "5b851206d8",
+        "reference": "앨마서 31장 31~33절",
+        "scheme": "AaAbAcBCCBAaAbAc",
+        "title": "Strength and Comfort"
+      },
+      {
+        "chiasmus_id": "e9ac84d1ec",
+        "reference": "앨마서 32장 1절",
+        "scheme": "ABBA",
+        "title": "Street Preaching"
+      },
+      {
+        "chiasmus_id": "84ddb4c7d2",
+        "reference": "앨마서 32장 5절",
+        "scheme": "ABCCBA",
+        "title": "Faith Amidst Adversity"
+      },
+      {
+        "chiasmus_id": "2ebe1488d2",
+        "reference": "앨마서 32장 9~10절",
+        "scheme": "ABCBA",
+        "title": "Worship Everywhere"
+      },
+      {
+        "chiasmus_id": "ad821f1361",
+        "reference": "앨마서 32장 12절",
+        "scheme": "AaAbBBAaAb",
+        "title": "Humble Wisdom"
+      },
+      {
+        "chiasmus_id": "25f5659d25",
+        "reference": "앨마서 33장 11절",
+        "scheme": "ABCCBA",
+        "title": "Mercy and Joy"
+      },
+      {
+        "chiasmus_id": "dbe093aa81",
+        "reference": "앨마서 34장 9절",
+        "scheme": "ABCDDCBA",
+        "title": "Atonement's Necessity"
+      },
+      {
+        "chiasmus_id": "9f11ea8854",
+        "reference": "앨마서 34장 10절",
+        "scheme": "ABCCBA",
+        "title": "Infinite Sacrifice"
+      },
+      {
+        "chiasmus_id": "17143d2253",
+        "reference": "앨마서 34장 11~12절",
+        "scheme": "ABCCBA",
+        "title": "Infinite Atonement"
+      },
+      {
+        "chiasmus_id": "e60abb8dc9",
+        "reference": "앨마서 34장 13~14절",
+        "scheme": "ABCDDCBA",
+        "title": "Great and Last Sacrifice"
+      },
+      {
+        "chiasmus_id": "e617be2558",
+        "reference": "앨마서 34장 34절",
+        "scheme": "ABBA",
+        "title": "Irreversible Crisis"
+      },
+      {
+        "chiasmus_id": "3b9a7c7ed9",
+        "reference": "앨마서 34장 36절",
+        "scheme": "ABBA",
+        "title": "Holy Indwelling"
+      },
+      {
+        "chiasmus_id": "8a3e48ebb2",
+        "reference": "앨마서 35장 15절",
+        "scheme": "ABCDDCBA",
+        "title": "Grieved Messenger"
+      },
+      {
+        "chiasmus_id": "e09413bfe1",
+        "reference": "앨마서 36장 ",
+        "scheme": "ABDCAEFGGaGbGaGbHIJKKJIIaIbIcIaIbIcIHGGaGbGaGbFaFbFEDDaDbDcDaDbDcCaCbCaCbBBαBβBγBαBβBγA",
+        "title": "Divine Transformation"
+      },
+      {
+        "chiasmus_id": "41f86a84f8",
+        "reference": "앨마서 37장 1~10절; 37장 12~13절",
+        "scheme": "AAaAbAaAbBCDEEaEbEaEbFEDCBAAαAβAαAβ",
+        "title": "Preservation and Purpose"
+      },
+      {
+        "chiasmus_id": "790c89ff1e",
+        "reference": "앨마서 37장 21~26절",
+        "scheme": "ABCDEEDCBaBbBcBdBaBbBcBdA",
+        "title": "Darkness Revealed"
+      },
+      {
+        "chiasmus_id": "3c06cb65aa",
+        "reference": "앨마서 37장 35절",
+        "scheme": "ABBA",
+        "title": "Youthful Wisdom"
+      },
+      {
+        "chiasmus_id": "2ae3f9ef2f",
+        "reference": "앨마서 40장 23절",
+        "scheme": "ABBA",
+        "title": "Restoration"
+      },
+      {
+        "chiasmus_id": "ba9400fe85",
+        "reference": "앨마서 41장 10~12절",
+        "scheme": "ABCDEEDCBA",
+        "title": "Restoration and Contradiction"
+      },
+      {
+        "chiasmus_id": "72cde6be83",
+        "reference": "앨마서 42장 5~8절",
+        "scheme": "ABCDEEDCBA",
+        "title": "Salvation's Balance"
+      },
+      {
+        "chiasmus_id": "f0eede0eff",
+        "reference": "앨마서 42장 13절",
+        "scheme": "ABCDDCBA",
+        "title": "Justice and Mercy"
+      },
+      {
+        "chiasmus_id": "bcc29e774a",
+        "reference": "앨마서 42장 14절",
+        "scheme": "ABBA",
+        "title": "Fallen and Cut Off"
+      },
+      {
+        "chiasmus_id": "e06172b977",
+        "reference": "앨마서 42장 15절",
+        "scheme": "ABBA",
+        "title": "Atonement and Mercy"
+      },
+      {
+        "chiasmus_id": "1f4b9b8ce9",
+        "reference": "앨마서 43장 38절",
+        "scheme": "ABBA",
+        "title": "Shielded Vitality"
+      },
+      {
+        "chiasmus_id": "597c594253",
+        "reference": "앨마서 46장 15절",
+        "scheme": "ABBA",
+        "title": "Christians Identified"
+      },
+      {
+        "chiasmus_id": "11f40c4b8c",
+        "reference": "앨마서 46장 23~24절",
+        "scheme": "ABCBA",
+        "title": "Preservation and Liberty"
+      },
+      {
+        "chiasmus_id": "2b7b838f67",
+        "reference": "앨마서 46장 24절",
+        "scheme": "ABCCBA",
+        "title": "Preserved Remnant"
+      },
+      {
+        "chiasmus_id": "344ee0abc8",
+        "reference": "앨마서 49장 2~3절",
+        "scheme": "ABCDDCBA",
+        "title": "Defense and Rebuild"
+      },
+      {
+        "chiasmus_id": "60ebcd4469",
+        "reference": "앨마서 49장 18~19절",
+        "scheme": "ABCaCbCaCbBA",
+        "title": "Impenetrable Defenses"
+      },
+      {
+        "chiasmus_id": "8953c6a0c7",
+        "reference": "앨마서 49장 26~27절",
+        "scheme": "ABBA",
+        "title": "Anger and Frustration"
+      },
+      {
+        "chiasmus_id": "bf8fca6410",
+        "reference": "앨마서 50장 14절",
+        "scheme": "ABCCBA",
+        "title": "City Unity"
+      },
+      {
+        "chiasmus_id": "a82271ac24",
+        "reference": "앨마서 52장 3절",
+        "scheme": "AaAbBBAaAb",
+        "title": "Royal Succession"
+      },
+      {
+        "chiasmus_id": "817153b6fa",
+        "reference": "앨마서 52장 28~31절",
+        "scheme": "ABCDEDCBA",
+        "title": "Strategic Encirclement"
+      },
+      {
+        "chiasmus_id": "14a57166ef",
+        "reference": "앨마서 53장 1절",
+        "scheme": "ABBA",
+        "title": "Guarded Duty"
+      },
+      {
+        "chiasmus_id": "c961057556",
+        "reference": "앨마서 53장 8~9절",
+        "scheme": "ABCDDCBA",
+        "title": "Intrigue and Dissension"
+      },
+      {
+        "chiasmus_id": "0d586db9f9",
+        "reference": "앨마서 54장 12절",
+        "scheme": "ABBA",
+        "title": "Armies Afoot"
+      },
+      {
+        "chiasmus_id": "13999942e4",
+        "reference": "앨마서 56장 38절",
+        "scheme": "ABBA",
+        "title": "Night's Reprieve"
+      },
+      {
+        "chiasmus_id": "94d7f8c978",
+        "reference": "앨마서 57장 25~26절",
+        "scheme": "ABCCBA",
+        "title": "Preserved by Providence"
+      },
+      {
+        "chiasmus_id": "01bc2bf53b",
+        "reference": "앨마서 60장 15~16절",
+        "scheme": "ABCDEFFEDCBA",
+        "title": "Divided Loyalties"
+      },
+      {
+        "chiasmus_id": "fd1e48a5b2",
+        "reference": "앨마서 60장 22절; 61장 12~13절",
+        "scheme": "ABBAABBA",
+        "title": "Idleness and Subjection"
+      },
+      {
+        "chiasmus_id": "51e181cac0",
+        "reference": "앨마서 63장 11~13절",
+        "scheme": "ABCDEEDCBA",
+        "title": "Sacred Inheritance"
+      },
+      {
+        "chiasmus_id": "20f0de6714",
+        "reference": "힐라맨서 1장 3~4절",
+        "scheme": "AaAbBBAaAb",
+        "title": "Power Struggle"
+      },
+      {
+        "chiasmus_id": "8611739d65",
+        "reference": "힐라맨서 2장 1~2절",
+        "scheme": "ABCCBA",
+        "title": "Leadership Succession"
+      },
+      {
+        "chiasmus_id": "6c4b59fbad",
+        "reference": "힐라맨서 3장 13~15절",
+        "scheme": "ABCDEEDCBA",
+        "title": "Historical Breadth"
+      },
+      {
+        "chiasmus_id": "8be9e13ac1",
+        "reference": "힐라맨서 3장 24~26절",
+        "scheme": "ABCDEEDCBA",
+        "title": "Church Growth"
+      },
+      {
+        "chiasmus_id": "170ac23774",
+        "reference": "힐라맨서 4장 9~19절",
+        "scheme": "ABCDEFGHIIHGFaFbFcFaFbFcEDCBA",
+        "title": "Conquest and Consequence"
+      },
+      {
+        "chiasmus_id": "eb6a9566d2",
+        "reference": "힐라맨서 5장 48~50절",
+        "scheme": "ABCDDCBA",
+        "title": "Heavenly Ministration"
+      },
+      {
+        "chiasmus_id": "0f9206289a",
+        "reference": "힐라맨서 6장 7~13절",
+        "scheme": "ABaBbBcBaBbBcCDEaEbEcEdEeEeEdEcEbEaDCBαBβBαBβBA",
+        "title": "Peace and Prosperity"
+      },
+      {
+        "chiasmus_id": "2734b40f23",
+        "reference": "힐라맨서 6장 15절",
+        "scheme": "ABCDCBA",
+        "title": "Cycle of Violence"
+      },
+      {
+        "chiasmus_id": "a244b1099a",
+        "reference": "힐라맨서 6장 21~26절",
+        "scheme": "ABCDEFGHHGFEDCBA",
+        "title": "Covenants of Darkness"
+      },
+      {
+        "chiasmus_id": "9d78bb4a27",
+        "reference": "힐라맨서 7장 1~3절",
+        "scheme": "ABCCBA",
+        "title": "Rejected Prophet"
+      },
+      {
+        "chiasmus_id": "49d3274d49",
+        "reference": "힐라맨서 7장 6~9절",
+        "scheme": "ABCDEFFEDCBA",
+        "title": "Lost Virtue"
+      },
+      {
+        "chiasmus_id": "8fb49f06c5",
+        "reference": "힐라맨서 7장 29절",
+        "scheme": "ABCBA",
+        "title": "Divine Certainty"
+      },
+      {
+        "chiasmus_id": "3c9e59885f",
+        "reference": "힐라맨서 8장 20절",
+        "scheme": "ABBA",
+        "title": "Prophetic Fulfillment"
+      },
+      {
+        "chiasmus_id": "b7f13bb329",
+        "reference": "힐라맨서 8장 27절",
+        "scheme": "ABCDCBA",
+        "title": "Murder for Power"
+      },
+      {
+        "chiasmus_id": "3f7fe1a5ce",
+        "reference": "힐라맨서 10장 4~5절",
+        "scheme": "ABCDDCBA",
+        "title": "Eternal Diligence"
+      },
+      {
+        "chiasmus_id": "4fbc86165f",
+        "reference": "힐라맨서 10장 7절",
+        "scheme": "ABaBbBaBbA",
+        "title": "Seal and Loose"
+      },
+      {
+        "chiasmus_id": "b9fa1775cf",
+        "reference": "힐라맨서 10장 13~15절",
+        "scheme": "AaAbBCCBAaAb",
+        "title": "Repent or Destroy"
+      },
+      {
+        "chiasmus_id": "ae4f30bbf3",
+        "reference": "힐라맨서 11장 2절",
+        "scheme": "ABBA",
+        "title": "Enduring Conflict"
+      },
+      {
+        "chiasmus_id": "50399589e2",
+        "reference": "힐라맨서 11장 5~6절",
+        "scheme": "ABCBA",
+        "title": "Famine and Destruction"
+      },
+      {
+        "chiasmus_id": "73b873d9f8",
+        "reference": "힐라맨서 11장 21절",
+        "scheme": "ABCDDCBA",
+        "title": "Peace and Growth"
+      },
+      {
+        "chiasmus_id": "03f92f1d05",
+        "reference": "힐라맨서 12장 22~23절",
+        "scheme": "ABBA",
+        "title": "Salvation Through Repentance"
+      },
+      {
+        "chiasmus_id": "7f13dd9084",
+        "reference": "힐라맨서 13장 5~9절",
+        "scheme": "ABCDEaEbEaEbDCBA",
+        "title": "Justice or Mercy"
+      },
+      {
+        "chiasmus_id": "2f82b0033d",
+        "reference": "힐라맨서 13장 11절",
+        "scheme": "ABBA",
+        "title": "Repentance and Blessings"
+      },
+      {
+        "chiasmus_id": "114c6ecedc",
+        "reference": "힐라맨서 13장 20절",
+        "scheme": "ABBA",
+        "title": "Hidden Treasures"
+      },
+      {
+        "chiasmus_id": "2a2d4732d7",
+        "reference": "힐라맨서 13장 24~25절",
+        "scheme": "ABCDEEDCBA",
+        "title": "Hypocrisy Unveiled"
+      },
+      {
+        "chiasmus_id": "773c16fe71",
+        "reference": "힐라맨서 13장 27절",
+        "scheme": "ABCCBA",
+        "title": "Deceptive Comforts"
+      },
+      {
+        "chiasmus_id": "59e2a4e074",
+        "reference": "힐라맨서 14장 2~8절",
+        "scheme": "ABCDEFFEDCBA",
+        "title": "Signs of Redemption"
+      },
+      {
+        "chiasmus_id": "168d9f0bc8",
+        "reference": "힐라맨서 14장 15~17절",
+        "scheme": "ABCDEEDCBA",
+        "title": "Redemption and Resurrection"
+      },
+      {
+        "chiasmus_id": "83c336c926",
+        "reference": "힐라맨서 14장 21~22절",
+        "scheme": "AaAbBCDDCBAaAb",
+        "title": "Solid to Shattered"
+      },
+      {
+        "chiasmus_id": "563707b1dd",
+        "reference": "힐라맨서 14장 23절",
+        "scheme": "ABBA",
+        "title": "Mountains and Valleys"
+      },
+      {
+        "chiasmus_id": "c33978fa52",
+        "reference": "힐라맨서 15장 3절",
+        "scheme": "ABBA",
+        "title": "Love and Discipline"
+      },
+      {
+        "chiasmus_id": "433611a8bf",
+        "reference": "힐라맨서 15장 10~11절",
+        "scheme": "ABBA",
+        "title": "Blessed Longevity"
+      },
+      {
+        "chiasmus_id": "f43fab2223",
+        "reference": "힐라맨서 16장 1~3절",
+        "scheme": "ABCDCBA",
+        "title": "Belief and Baptism"
+      },
+      {
+        "chiasmus_id": "f3ddd05243",
+        "reference": "제3니파이 1장 15절",
+        "scheme": "ABCBA",
+        "title": "Eternal Light"
+      },
+      {
+        "chiasmus_id": "cd1b3e55f3",
+        "reference": "제3니파이 1장 25절",
+        "scheme": "ABaBbBaBbA",
+        "title": "Fulfilled Law"
+      },
+      {
+        "chiasmus_id": "441df924af",
+        "reference": "제3니파이 2장 8절",
+        "scheme": "ABaBbCBaBbA",
+        "title": "Prophetic Countdown"
+      },
+      {
+        "chiasmus_id": "c070514d36",
+        "reference": "제3니파이 2장 14~16절",
+        "scheme": "ABCCBA",
+        "title": "Unity and Change"
+      },
+      {
+        "chiasmus_id": "64965095a2",
+        "reference": "제3니파이 4장 15절",
+        "scheme": "ABBA",
+        "title": "Peaceful Years"
+      },
+      {
+        "chiasmus_id": "f0ee22e9af",
+        "reference": "제3니파이 4장 24~25절",
+        "scheme": "ABBA",
+        "title": "Night Ambush"
+      },
+      {
+        "chiasmus_id": "d135de5204",
+        "reference": "제3니파이 5장 8절",
+        "scheme": "ABCCBA",
+        "title": "Selective History"
+      },
+      {
+        "chiasmus_id": "a5a9b1fa28",
+        "reference": "제3니파이 5장 24~26절",
+        "scheme": "ABCDEEDCBA",
+        "title": "Covenant Fulfillment"
+      },
+      {
+        "chiasmus_id": "aa6359eada",
+        "reference": "제3니파이 6장 1~2절",
+        "scheme": "ABCCBA",
+        "title": "Restoration of Possessions"
+      },
+      {
+        "chiasmus_id": "e119b4a588",
+        "reference": "제3니파이 6장 13절",
+        "scheme": "ABCCBA",
+        "title": "Humble Resilience"
+      },
+      {
+        "chiasmus_id": "fe486acab3",
+        "reference": "제3니파이 6장 18절",
+        "scheme": "ABBA",
+        "title": "Wilful Rebellion"
+      },
+      {
+        "chiasmus_id": "6bddde2839",
+        "reference": "제3니파이 6장 20절",
+        "scheme": "ABCBA",
+        "title": "Bold Testimony"
+      },
+      {
+        "chiasmus_id": "f0089014d9",
+        "reference": "제3니파이 7장 2~4절",
+        "scheme": "ABCCBA",
+        "title": "Tribal Leadership"
+      },
+      {
+        "chiasmus_id": "157f01f6d7",
+        "reference": "제3니파이 8장 10절",
+        "scheme": "ABBA",
+        "title": "Earth Transformed"
+      },
+      {
+        "chiasmus_id": "66da98423b",
+        "reference": "제3니파이 8장 16절",
+        "scheme": "ABBA",
+        "title": "Mysterious Whirlwind"
+      },
+      {
+        "chiasmus_id": "6a2cbf0e8f",
+        "reference": "제3니파이 9장 16~17절",
+        "scheme": "ABCCBA",
+        "title": "Fulfillment and Redemption"
+      },
+      {
+        "chiasmus_id": "920c57e566",
+        "reference": "제3니파이 9장 19절",
+        "scheme": "ABBA",
+        "title": "Sacrificial End"
+      },
+      {
+        "chiasmus_id": "5a8755f968",
+        "reference": "제3니파이 10장 4~5절",
+        "scheme": "ABCDCBA",
+        "title": "Gathered and Fallen"
+      },
+      {
+        "chiasmus_id": "a7524e7e7e",
+        "reference": "제3니파이 10장 12절",
+        "scheme": "ABBA",
+        "title": "Righteous Spared"
+      },
+      {
+        "chiasmus_id": "68e33548f7",
+        "reference": "제3니파이 11장 5~8절",
+        "scheme": "ABCCBA",
+        "title": "Hearing the Divine"
+      },
+      {
+        "chiasmus_id": "e845f89527",
+        "reference": "제3니파이 11장 29절",
+        "scheme": "ABBA",
+        "title": "Contention's Source"
+      },
+      {
+        "chiasmus_id": "e3fa23f3e0",
+        "reference": "제3니파이 12장 10~12절",
+        "scheme": "ABCDDCBA",
+        "title": "Persecution and Blessing"
+      },
+      {
+        "chiasmus_id": "601fe3fec3",
+        "reference": "제3니파이 12장 19절",
+        "scheme": "ABCCBA",
+        "title": "Law and Commandments"
+      },
+      {
+        "chiasmus_id": "22d9c014fc",
+        "reference": "제3니파이 12장 23~24절",
+        "scheme": "ABCDCBA",
+        "title": "Reconcile and Receive"
+      },
+      {
+        "chiasmus_id": "66115ff30b",
+        "reference": "제3니파이 12장 42절",
+        "scheme": "ABBA",
+        "title": "Generosity Exemplified"
+      },
+      {
+        "chiasmus_id": "ede25891a8",
+        "reference": "제3니파이 13장 22절",
+        "scheme": "ABBA",
+        "title": "Singular Vision"
+      },
+      {
+        "chiasmus_id": "9c79499c29",
+        "reference": "제3니파이 13장 24절",
+        "scheme": "ABCCBA",
+        "title": "Divided Loyalties"
+      },
+      {
+        "chiasmus_id": "2377270f2a",
+        "reference": "제3니파이 13장 34절",
+        "scheme": "ABBA",
+        "title": "Thoughts of Tomorrow"
+      },
+      {
+        "chiasmus_id": "415187aa38",
+        "reference": "제3니파이 15장 5~9절",
+        "scheme": "ABCDDCBA",
+        "title": "Law and Fulfillment"
+      },
+      {
+        "chiasmus_id": "a08c78ed87",
+        "reference": "제3니파이 15장 17~21절",
+        "scheme": "AaAbAcAbAaBCDDCBAaAbAcAbAa",
+        "title": "One Fold"
+      },
+      {
+        "chiasmus_id": "ebd28c7e4f",
+        "reference": "제3니파이 16장 20절",
+        "scheme": "ABBA",
+        "title": "Divine Revelation"
+      },
+      {
+        "chiasmus_id": "27cddd6d57",
+        "reference": "제3니파이 17장 6~7절",
+        "scheme": "ABCDDCBA",
+        "title": "Compassion and Healing"
+      },
+      {
+        "chiasmus_id": "64837bb0f7",
+        "reference": "제3니파이 17장 12~13절",
+        "scheme": "ABCCBA",
+        "title": "Jesus Amidst Children"
+      },
+      {
+        "chiasmus_id": "257813d240",
+        "reference": "제3니파이 17장 24절",
+        "scheme": "ABCCBA",
+        "title": "Angelic Ministry"
+      },
+      {
+        "chiasmus_id": "d9ced42714",
+        "reference": "제3니파이 18장 22절",
+        "scheme": "ABBA",
+        "title": "Inclusive Assembly"
+      },
+      {
+        "chiasmus_id": "a8cb7bbdea",
+        "reference": "제3니파이 18장 27~32절; 18장 34~35절",
+        "scheme": "ABCaCbCcCbCaDEEDCBA",
+        "title": "Sacred Communion"
+      },
+      {
+        "chiasmus_id": "070905b36d",
+        "reference": "제3니파이 19장 2~3절",
+        "scheme": "ABCDCBA",
+        "title": "Jesus Revealed"
+      },
+      {
+        "chiasmus_id": "7fb23f97d3",
+        "reference": "제3니파이 20장 35절",
+        "scheme": "ABBA",
+        "title": "Holy Revelation"
+      },
+      {
+        "chiasmus_id": "a12ef15b35",
+        "reference": "제3니파이 23장 3절",
+        "scheme": "ABBA",
+        "title": "Eternal Words"
+      },
+      {
+        "chiasmus_id": "8f0bcb7c51",
+        "reference": "제3니파이 23장 6~14절",
+        "scheme": "AaAbAaAbBCDEEDCBaBbBbBaA",
+        "title": "Commanded Record"
+      },
+      {
+        "chiasmus_id": "7a6c215168",
+        "reference": "제3니파이 25장 1절",
+        "scheme": "ABCCBA",
+        "title": "Purifying Fire"
+      },
+      {
+        "chiasmus_id": "90cd816358",
+        "reference": "제3니파이 25장 5~6절",
+        "scheme": "ABCCBA",
+        "title": "Hearts United"
+      },
+      {
+        "chiasmus_id": "407cafdf32",
+        "reference": "제3니파이 26장 16~18절",
+        "scheme": "AaAbBCCBAaAb",
+        "title": "Unspeakable Revelations"
+      },
+      {
+        "chiasmus_id": "ff2542c379",
+        "reference": "제3니파이 27장 7~9절",
+        "scheme": "AaAbBCaCbCaCbBAaAb",
+        "title": "Divine Authority"
+      },
+      {
+        "chiasmus_id": "d63c8ed599",
+        "reference": "제3니파이 27장 13절",
+        "scheme": "ABBA",
+        "title": "Gospel Given"
+      },
+      {
+        "chiasmus_id": "a2605d543d",
+        "reference": "제3니파이 27장 19절",
+        "scheme": "ABBA",
+        "title": "Purity Required"
+      },
+      {
+        "chiasmus_id": "0897c6e756",
+        "reference": "제3니파이 28장 1~4절",
+        "scheme": "AaAbAcAdAeBaBbBcBaBbBcAaAbAcAdAe",
+        "title": "Eternal Desire"
+      },
+      {
+        "chiasmus_id": "ea8c02989b",
+        "reference": "제3니파이 28장 13~14절",
+        "scheme": "ABBA",
+        "title": "Unspeakable Revelations"
+      },
+      {
+        "chiasmus_id": "42f25f9eb0",
+        "reference": "제3니파이 28장 37~38절",
+        "scheme": "ABBA",
+        "title": "Immortal Change"
+      },
+      {
+        "chiasmus_id": "1a288a67e8",
+        "reference": "제4니파이 1장 31~34절",
+        "scheme": "AaAbBbBbBaBbAaAb",
+        "title": "Divine Protection"
+      },
+      {
+        "chiasmus_id": "c9dc77f3bd",
+        "reference": "제4니파이 1장 34절",
+        "scheme": "ABBA",
+        "title": "Nonviolent Faith"
+      },
+      {
+        "chiasmus_id": "31c33efab6",
+        "reference": "몰몬서 1장 16절",
+        "scheme": "ABBA",
+        "title": "Silenced Ministry"
+      },
+      {
+        "chiasmus_id": "8954a5c5b2",
+        "reference": "몰몬서 2장 8절",
+        "scheme": "ABBA",
+        "title": "Complete Revolution"
+      },
+      {
+        "chiasmus_id": "3888e8dd16",
+        "reference": "몰몬서 9장 10절",
+        "scheme": "ABBA",
+        "title": "Unchanging God"
+      },
+      {
+        "chiasmus_id": "4fa78e2342",
+        "reference": "몰몬서 9장 13절",
+        "scheme": "ABCCBA",
+        "title": "Eternal Awakening"
+      },
+      {
+        "chiasmus_id": "c38ce713b2",
+        "reference": "몰몬서 9장 15절",
+        "scheme": "ABBA",
+        "title": "Unceasing Miracles"
+      },
+      {
+        "chiasmus_id": "c96dff7612",
+        "reference": "몰몬서 9장 18절",
+        "scheme": "ABBA",
+        "title": "Miraculous Hands"
+      },
+      {
+        "chiasmus_id": "84e9564892",
+        "reference": "몰몬서 9장 19절",
+        "scheme": "ABCCBA",
+        "title": "Unchanging Miracles"
+      },
+      {
+        "chiasmus_id": "c61909d806",
+        "reference": "몰몬서 9장 32~33절",
+        "scheme": "ABCDDCBA",
+        "title": "Lost in Translation"
+      },
+      {
+        "chiasmus_id": "a840a536d5",
+        "reference": "제3니파이 6장 2절",
+        "scheme": "AaAbAaAb",
+        "title": "North and South"
+      },
+      {
+        "chiasmus_id": "6f6961faf3",
+        "reference": "이더서 1장 5절",
+        "scheme": "ABBA",
+        "title": "Partial Revelation"
+      },
+      {
+        "chiasmus_id": "d5cb4bfdc5",
+        "reference": "이더서 1장 35절",
+        "scheme": "ABBA",
+        "title": "Language Preserved"
+      },
+      {
+        "chiasmus_id": "f76183f20d",
+        "reference": "이더서 1장 38절",
+        "scheme": "ABBA",
+        "title": "Divine Guidance"
+      },
+      {
+        "chiasmus_id": "ffdb70bff5",
+        "reference": "이더서 3장 4~5절",
+        "scheme": "ABCCBA",
+        "title": "Divine Illumination"
+      },
+      {
+        "chiasmus_id": "7a26ab0926",
+        "reference": "이더서 3장 19~20절",
+        "scheme": "AaAbBaAbBaBbAaAb",
+        "title": "Knowledge and Faith"
+      },
+      {
+        "chiasmus_id": "d45552b936",
+        "reference": "이더서 6장 9절",
+        "scheme": "ABBA",
+        "title": "Unceasing Praise"
+      },
+      {
+        "chiasmus_id": "12ae7af2fe",
+        "reference": "이더서 6장 14~20절",
+        "scheme": "ABCDEEDCBA",
+        "title": "Generational Legacy"
+      },
+      {
+        "chiasmus_id": "0e22d9121c",
+        "reference": "이더서 10장 23절",
+        "scheme": "ABCCBA",
+        "title": "Metal Mastery"
+      },
+      {
+        "chiasmus_id": "9801612971",
+        "reference": "이더서 12장 7절",
+        "scheme": "ABCBA",
+        "title": "Faith Reveals"
+      },
+      {
+        "chiasmus_id": "becf4d2c40",
+        "reference": "이더서 12장 17절",
+        "scheme": "ABCBA",
+        "title": "Faith's Promise"
+      },
+      {
+        "chiasmus_id": "2a8ce03de1",
+        "reference": "이더서 12장 23~25절",
+        "scheme": "ABCDEEDCBA",
+        "title": "Word and Writing"
+      },
+      {
+        "chiasmus_id": "d59df90dc8",
+        "reference": "이더서 12장 32절",
+        "scheme": "ABBA",
+        "title": "Hope and Inheritance"
+      },
+      {
+        "chiasmus_id": "9b73cee5ad",
+        "reference": "이더서 13장 4~6절",
+        "scheme": "ABCDDCBA",
+        "title": "Jerusalem Reborn"
+      },
+      {
+        "chiasmus_id": "6652e2e7e0",
+        "reference": "이더서 13장 12절",
+        "scheme": "ABBA",
+        "title": "First and Last"
+      },
+      {
+        "chiasmus_id": "7d8c3365e3",
+        "reference": "모로나이서 1장 2~3절",
+        "scheme": "ABBA",
+        "title": "Unyielding Faith"
+      },
+      {
+        "chiasmus_id": "3fd910e0a8",
+        "reference": "모로나이서 1장 4절",
+        "scheme": "ABBA",
+        "title": "Continued Penmanship"
+      },
+      {
+        "chiasmus_id": "49a40eab49",
+        "reference": "모로나이서 2장 ",
+        "scheme": "AaAbAcBCCBAaAbAc",
+        "title": "Holy Empowerment"
+      },
+      {
+        "chiasmus_id": "50b834d86f",
+        "reference": "모로나이서 7장 11절",
+        "scheme": "ABCDDCBA",
+        "title": "Fountain's Nature"
+      },
+      {
+        "chiasmus_id": "e74572675c",
+        "reference": "모로나이서 7장 14절",
+        "scheme": "ABBA",
+        "title": "Discernment"
+      },
+      {
+        "chiasmus_id": "e43a740366",
+        "reference": "모로나이서 7장 27~29절",
+        "scheme": "ABCDDCBA",
+        "title": "Eternal Advocacy"
+      },
+      {
+        "chiasmus_id": "c455ab5ba7",
+        "reference": "모로나이서 9장 22절",
+        "scheme": "ABBA",
+        "title": "Repentance and Return"
+      },
+      {
+        "chiasmus_id": "9483b5fe2c",
+        "reference": "모로나이서 10장 4~5절",
+        "scheme": "ABBA",
+        "title": "Truth Revealed"
+      }
+    ]
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "data": {
+    "personList": [
+      {
+        "slug": "nephi1",
+        "name": "Nephi1",
+        "title": "Son of Lehi1, prophet and founder of Nephites",
+        "classification": "HPWR",
+        "identification": "N",
+        "unit": "I",
+        "date": "600 B.C."
+      },
+      {
+        "slug": "amalickiahites",
+        "name": "Amalickiahites",
+        "title": "Followers of Amalickiah",
+        "classification": "O",
+        "identification": "NL",
+        "unit": "S"
+      },
+      {
+        "slug": "corihor1",
+        "name": "Corihor1",
+        "title": "Early Jaredite rebel",
+        "classification": "R",
+        "identification": "J",
+        "unit": "I"
+      },
+      {
+        "slug": "humanity",
+        "name": "Humanity",
+        "title": "The entirety of the human race",
+        "classification": "O",
+        "identification": "O",
+        "unit": "C"
+      }
+    ]
+  }
+}

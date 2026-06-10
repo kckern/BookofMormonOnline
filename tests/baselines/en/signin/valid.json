@@ -1,0 +1,20 @@
+{
+  "data": {
+    "signin": {
+      "isSuccess": true,
+      "msg": "login_success",
+      "social": {
+        "user_id": "69e7e4426457bdb82c7c566b1b6558f9",
+        "nickname": "Regression Test",
+        "profile_url": "https://api.dicebear.com/7.x/thumbs/svg?seed=69e7e&backgroundColor=CCFFCC&shapeColor=004700&eyes=variant6W10,variant8W14,variant2W10&rotate=340&scale=70&mouth=variant1"
+      },
+      "user": {
+        "user": "bomtest+regressionr2",
+        "progress": {
+          "completed": 0,
+          "started": 0
+        }
+      }
+    }
+  }
+}

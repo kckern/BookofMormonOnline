@@ -1,0 +1,25 @@
+{
+  "data": {
+    "leaderboard": {
+      "recentFinishers": [
+        {
+          "nickname": "string",
+          "picture": "string",
+          "finished": [
+            "number"
+          ],
+          "isBot": "boolean"
+        }
+      ],
+      "currentProgress": [
+        {
+          "nickname": "string",
+          "picture": "string",
+          "progress": "number",
+          "lastseen": "number",
+          "isBot": "boolean"
+        }
+      ]
+    }
+  }
+}

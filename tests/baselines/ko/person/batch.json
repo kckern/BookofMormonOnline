@@ -1,0 +1,1046 @@
+{
+  "data": {
+    "person": [
+      {
+        "slug": "nephi1",
+        "name": "니파이1",
+        "title": "리하이1의 아들이자 니파이인들의 위대한 선지자이자 시조",
+        "classification": "HPWR",
+        "unit": "I",
+        "date": "600 B.C.",
+        "description": "<p>니파이는 리하이의 아들이자 니파이인들의 위대한 선지자이자 시조로 알려져 있습니다. 그는 훌륭한 부모로부터 태어났으며 어릴 적부터 부모님의 교육을 받아왔습니다. 삶의 여러 어려움을 겪으며 주님의 은혜를 크게 받았고 하나님의 선하심과 비밀을 많이 알게 되었습니다. 니파이는 주님과의 대화를 통해 마음을 부드럽게 하신 주님께 충실한 믿음을 갖게 되었습니다. 그는 자신의 형들과 달리 부모님의 가르침을 거스리지 않았으며 신앙으로 인해 복을 받았습니다. 주님의 계명을 지키면 번영하게 되며 약속의 땅으로 인도받게 될 것입니다. 니파이는 부친의 기록을 요약하고 자신의 경험을 덧붙여 기록을 작성했습니다. 그는 라반으로부터 놋쇠판을 얻기 위해 형들과 함께 여행을 떠났습니다. 어려움과 위험에 직면하며도 주님의 도움을 받아 라반을 쓰러뜨리고 놋쇠판을 얻어왔습니다. 체격이 크고 힘도 많이 갖춘 니파이는 성장하며 목표를 이루기 위해 노력하는 모범적인 인물입니다. 니파이는 리하이 성과 땅을 건설하고, 니파이인들을 인도하는 동안 위대한 지도자로서 선택되었습니다. 그의 열성적인 신앙과 행동은 다른 사람들에게 영감을 주었으며, 주님의 계명을 행하는 것을 통해 복을 받을 수 있다는 좋은 교훈을 전달했습니다.</p>",
+        "relations": [
+          {
+            "relation": "$1의 남편",
+            "person": {
+              "name": "니파이의 아내",
+              "slug": "wife-of-nephi",
+              "title": "이스마엘의 딸"
+            }
+          },
+          {
+            "relation": "$1의 형제",
+            "person": {
+              "name": "야곱2",
+              "slug": "jacob2",
+              "title": "니파이의 형제이자 선지자이자 역사가"
+            }
+          },
+          {
+            "relation": "$1의 형제",
+            "person": {
+              "name": "요셉2",
+              "slug": "joseph2",
+              "title": "리하이1의 아들"
+            }
+          },
+          {
+            "relation": "$1의 형제",
+            "person": {
+              "name": "레뮤엘",
+              "slug": "lemuel",
+              "title": "리하이1의 차남"
+            }
+          },
+          {
+            "relation": "$1의 친구",
+            "person": {
+              "name": "조램1",
+              "slug": "zoram1",
+              "title": "라반의 종"
+            }
+          },
+          {
+            "relation": "$1의 전임자",
+            "person": {
+              "name": "니파이 왕",
+              "slug": "nephite-king",
+              "title": "니파이 땅의 두 번째 왕"
+            }
+          },
+          {
+            "relation": "$1의 아들",
+            "person": {
+              "name": "새라이아",
+              "slug": "sariah",
+              "title": "리하이1의 아내"
+            }
+          },
+          {
+            "relation": "$1의 형제",
+            "person": {
+              "name": "샘",
+              "slug": "sam",
+              "title": "리하이1의 셋째 아들"
+            }
+          },
+          {
+            "relation": "$1에 의해 방문된 사람",
+            "person": {
+              "name": "니파이에게 온 천사들",
+              "slug": "angels-to-nephi",
+              "title": "니파이에게로 온 신성한 사자들"
+            }
+          },
+          {
+            "relation": "$1에 의해 방문된 사람",
+            "person": {
+              "name": "니파이에게 온 천사",
+              "slug": "angel-to-nephi",
+              "title": "니파이에게 신의 교육자"
+            }
+          },
+          {
+            "relation": "$1의 형제",
+            "person": {
+              "name": "레이맨1",
+              "slug": "laman1",
+              "title": "리하이1의 장남"
+            }
+          },
+          {
+            "relation": "$1의 아들",
+            "person": {
+              "name": "리하이1",
+              "slug": "lehi1",
+              "title": "자신의 추종자들을 약속의 땅으로 인도한 히브리 선지자"
+            }
+          },
+          {
+            "relation": "$1의 살인자",
+            "person": {
+              "name": "라반",
+              "slug": "laban",
+              "title": "놋쇄판 관리인"
+            }
+          }
+        ],
+        "index": [
+          {
+            "slug": "promised-land/12",
+            "ref": "니파이전서 1장 1절",
+            "text": "Born of goodly parents"
+          },
+          {
+            "slug": "promised-land/12",
+            "ref": "니파이전서 1장 2절",
+            "text": "Makes record"
+          },
+          {
+            "slug": "promised-land/10",
+            "ref": "니파이전서 1장 16~17절",
+            "text": "Abridges father’s record, will add his own account"
+          },
+          {
+            "slug": "lehites/17",
+            "ref": "니파이전서 2장 16절",
+            "text": "Character of Nephi"
+          },
+          {
+            "slug": "lehites/20",
+            "ref": "니파이전서 2장 19~24절",
+            "text": "The Lord speaks to Nephi"
+          },
+          {
+            "slug": "lehites/20",
+            "ref": "니파이전서 2장 19절",
+            "text": "Is blessed because of faith"
+          },
+          {
+            "slug": "lehites/20",
+            "ref": "니파이전서 2장 20절",
+            "text": "To be led to land of promise"
+          },
+          {
+            "slug": "lehites/20",
+            "ref": "니파이전서 2장 22절",
+            "text": "Chosen to be a ruler"
+          },
+          {
+            "slug": "lehites/23",
+            "ref": "니파이전서 3장 7절",
+            "text": "Will go and do things the Lord hath commanded"
+          },
+          {
+            "slug": "lehites/24",
+            "ref": "니파이전서 3장 9절",
+            "text": "Returns to Jerusalem with brothers to obtain brass plates"
+          },
+          {
+            "slug": "lehites/34",
+            "ref": "니파이전서 3장 24절",
+            "text": "Asks Laban for brass plates"
+          },
+          {
+            "slug": "lehites/36",
+            "ref": "니파이전서 3장 27절",
+            "text": "Hides in cave with brothers"
+          },
+          {
+            "slug": "lehites/37",
+            "ref": "니파이전서 3장 28~29절",
+            "text": "Is smitten by elder brothers, protected by an angel"
+          },
+          {
+            "slug": "lehites/49",
+            "ref": "니파이전서 4장 18절",
+            "text": "Slays Laban"
+          },
+          {
+            "slug": "lehites/53",
+            "ref": "니파이전서 4장 24절",
+            "text": "Obtains plates"
+          },
+          {
+            "slug": "lehites/56",
+            "ref": "니파이전서 4장 31절",
+            "text": "Is large in stature"
+          },
+          {
+            "slug": "lehites/56",
+            "ref": "니파이전서 4장 32~35절",
+            "text": "Convinces Zoram1 to join his family"
+          },
+          {
+            "slug": "promised-land/11",
+            "ref": "니파이전서 6장 2절",
+            "text": "Is a descendant of Joseph1"
+          },
+          {
+            "slug": "lehites/66",
+            "ref": "니파이전서 7장 2~6절",
+            "text": "Returns to Jerusalem for Ishmael1 and family"
+          },
+          {
+            "slug": "lehites/72",
+            "ref": "니파이전서 7장 16절",
+            "text": "Is bound by brothers"
+          },
+          {
+            "slug": "lehites/77",
+            "ref": "니파이전서 8장 3절",
+            "text": "Lehi1 rejoices because of Nephi"
+          },
+          {
+            "slug": "lehites/81",
+            "ref": "니파이전서 8장 14~16절",
+            "text": "Is seen by Lehi1 in dream"
+          },
+          {
+            "slug": "lehites/86",
+            "ref": "니파이전서 8장 29절",
+            "text": "Abridges father’s record, will add his own account"
+          },
+          {
+            "slug": "lehites/13",
+            "ref": "니파이전서 9장 1~5절",
+            "text": "Makes two sets of plates"
+          },
+          {
+            "slug": "lehites/13",
+            "ref": "니파이전서 9장 1절",
+            "text": "Concludes father’s account"
+          },
+          {
+            "slug": "promised-land/8",
+            "ref": "니파이전서 9장 2~3절",
+            "text": "Records ministry and prophecies on small plates"
+          },
+          {
+            "slug": "promised-land/8",
+            "ref": "니파이전서 9장 2~4절",
+            "text": "Records wars, contentions, and destructions on large plates"
+          },
+          {
+            "slug": "promised-land/6",
+            "ref": "니파이전서 10장 1절",
+            "text": "Gives account of his reign and ministry"
+          },
+          {
+            "slug": "lehites/95",
+            "ref": "니파이전서 10장 17절",
+            "text": "Wants to know about father’s vision"
+          },
+          {
+            "slug": "lehites/96",
+            "ref": "니파이전서 11장 ~14",
+            "text": "Beholds father’s dream and vision of future of promised land"
+          },
+          {
+            "slug": "lehites/nephis-vision/4",
+            "ref": "니파이전서 11장 6절",
+            "text": "Is blessed for belief in Son"
+          },
+          {
+            "slug": "lehites/nephis-vision/18",
+            "ref": "니파이전서 11장 32~33절",
+            "text": "In vision sees Christ crucified"
+          },
+          {
+            "slug": "lehites/nephis-vision/55",
+            "ref": "니파이전서 14장 28절",
+            "text": "Is forbidden to write all he sees"
+          },
+          {
+            "slug": "lehites/102",
+            "ref": "니파이전서 15장 12절",
+            "text": "Explains olivetree as symbol of house of Israel"
+          },
+          {
+            "slug": "lehites/102",
+            "ref": "니파이전서 15장 19~20절",
+            "text": "Speaks concerning restoration of Jews and words of Isaiah1"
+          },
+          {
+            "slug": "lehites/111",
+            "ref": "니파이전서 16장 7절",
+            "text": "Marries"
+          },
+          {
+            "slug": "lehites/118",
+            "ref": "니파이전서 16장 18~23절",
+            "text": "Breaks bow, makes-another"
+          },
+          {
+            "slug": "lehites/120",
+            "ref": "니파이전서 16장 22절",
+            "text": "Speaks much to brothers"
+          },
+          {
+            "slug": "lehites/130",
+            "ref": "니파이전서 16장 37절",
+            "text": "Laman1 stirs the rebellious up to slay Lehi1 and Nephi"
+          },
+          {
+            "slug": "lehites/138",
+            "ref": "니파이전서 17장 8~16절",
+            "text": "Is commanded to build ship"
+          },
+          {
+            "slug": "lehites/141",
+            "ref": "니파이전서 17장 15절",
+            "text": "Keeps the commandments"
+          },
+          {
+            "slug": "lehites/142",
+            "ref": "니파이전서 17장 17절",
+            "text": "Is mocked by brothers"
+          },
+          {
+            "slug": "lehites/156",
+            "ref": "니파이전서 17장 52~53절",
+            "text": "Is filled with power of God"
+          },
+          {
+            "slug": "lehites/158",
+            "ref": "니파이전서 18장 1~4절",
+            "text": "Is commanded to build ship"
+          },
+          {
+            "slug": "lehites/160",
+            "ref": "니파이전서 18장 3절",
+            "text": "Goes oft to mount to pray, sees great things"
+          },
+          {
+            "slug": "lehites/163",
+            "ref": "니파이전서 18장 6~23절",
+            "text": "Crosses ocean with Lehites"
+          },
+          {
+            "slug": "lehites/166",
+            "ref": "니파이전서 18장 11절",
+            "text": "Is bound by brothers"
+          },
+          {
+            "slug": "lehites/172",
+            "ref": "니파이전서 18장 22절",
+            "text": "Guides the ship"
+          },
+          {
+            "slug": "promised-land/4",
+            "ref": "니파이전서 19장 1~2절",
+            "text": "Makes two sets of plates"
+          },
+          {
+            "slug": "promised-land/9",
+            "ref": "니파이전서 19장 3절",
+            "text": "Records ministry and prophecies on small plates"
+          },
+          {
+            "slug": "promised-land/5",
+            "ref": "니파이전서 19장 4절",
+            "text": "Records wars, contentions, and destructions on large plates"
+          },
+          {
+            "slug": "promised-land/20",
+            "ref": "니파이전서 19장 22절",
+            "text": "Teaches from brass plates"
+          },
+          {
+            "slug": "promised-land/20",
+            "ref": "니파이전서 19장 23절",
+            "text": "Reads Isaiah1 to persuade brethren of Christ"
+          },
+          {
+            "slug": "brass-plates/1",
+            "ref": "니파이전서 20장 ~21",
+            "text": "Quotes Isaiah1"
+          },
+          {
+            "slug": "promised-land/21",
+            "ref": "니파이전서 22장 1~26절",
+            "text": "Expounds writings of Isaiah1"
+          },
+          {
+            "slug": "promised-land/34",
+            "ref": "니파이전서 22장 20~21절",
+            "text": "Preaches about Christ"
+          },
+          {
+            "slug": "promised-land/lehi/6",
+            "ref": "니파이후서 1장 10절",
+            "text": "Preaches about Christ"
+          },
+          {
+            "slug": "promised-land/lehi/12",
+            "ref": "니파이후서 1장 24절",
+            "text": "Lehi1 exhorts sons not to rebel against Nephi"
+          },
+          {
+            "slug": "promised-land/52",
+            "ref": "니파이후서 5장 1절",
+            "text": "Cries unto Lord because of brothers"
+          },
+          {
+            "slug": "promised-land/53",
+            "ref": "니파이후서 5장 6~7절",
+            "text": "Flees from Laman1 and Lemuel, with many followers"
+          },
+          {
+            "slug": "land-of-nephi/1",
+            "ref": "니파이후서 5장 9절",
+            "text": "Followers call themselves the people of Nephi"
+          },
+          {
+            "slug": "land-of-nephi/2",
+            "ref": "니파이후서 5장 12절",
+            "text": "Brings plates, sword of Laban"
+          },
+          {
+            "slug": "land-of-nephi/3",
+            "ref": "니파이후서 5장 15~16절",
+            "text": "Teaches people to work, builds temple"
+          },
+          {
+            "slug": "land-of-nephi/5",
+            "ref": "니파이후서 5장 18절",
+            "text": "He recommends no king"
+          },
+          {
+            "slug": "land-of-nephi/5",
+            "ref": "니파이후서 5장 18절",
+            "text": "People desire that Nephi be king"
+          },
+          {
+            "slug": "land-of-nephi/7",
+            "ref": "니파이후서 11장 2절",
+            "text": "Writes more words of Isaiah1"
+          },
+          {
+            "slug": "isaiah/2",
+            "ref": "니파이후서 12장 ~24",
+            "text": "Quotes Isaiah 2-14"
+          },
+          {
+            "slug": "nephis-teachings/1",
+            "ref": "니파이후서 25장 1~6절",
+            "text": "Comments on prophecies of Isaiah1"
+          },
+          {
+            "slug": "nephis-teachings/4",
+            "ref": "니파이후서 25장 7~31절:21절",
+            "text": "Gives his own prophecies"
+          },
+          {
+            "slug": "nephis-teachings/11",
+            "ref": "니파이후서 25장 23절",
+            "text": "Preaches about Christ"
+          },
+          {
+            "slug": "nephis-teachings/14",
+            "ref": "니파이후서 26장 1절",
+            "text": "Preaches about Christ"
+          },
+          {
+            "slug": "nephis-teachings/14",
+            "ref": "니파이후서 26장 1절",
+            "text": "Teaches of Christ’s resurrection"
+          },
+          {
+            "slug": "nephis-teachings/30",
+            "ref": "니파이후서 27장 6~22절",
+            "text": "Foretells coming forth of Book of Mormon"
+          },
+          {
+            "slug": "nephis-teachings/55",
+            "ref": "니파이후서 29장 14절",
+            "text": "Prophesies all records to be gathered as one"
+          },
+          {
+            "slug": "nephis-teachings/56",
+            "ref": "니파이후서 30장 2절",
+            "text": "Prophesies Gentiles to be numbered with covenant people"
+          },
+          {
+            "slug": "nephis-testimony/3",
+            "ref": "니파이후서 31장 4~9절",
+            "text": "Explains why Christ will be baptized"
+          },
+          {
+            "slug": "nephis-testimony/12",
+            "ref": "니파이후서 32장 5절",
+            "text": "Explains office of Holy Ghost"
+          },
+          {
+            "slug": "nephis-testimony/15",
+            "ref": "니파이후서 33장 ",
+            "text": "Parting testimony"
+          },
+          {
+            "slug": "land-of-nephi/9",
+            "ref": "야곱서 1장 1절",
+            "text": "Gives Jacob2 commandment concerning small plates"
+          },
+          {
+            "slug": "land-of-nephi/12",
+            "ref": "야곱서 1장 12절",
+            "text": "Dies"
+          },
+          {
+            "slug": "jacobs-address/1",
+            "ref": "야곱서 1장 18절",
+            "text": "Had consecrated Jacob2 and Joseph2 as priests"
+          },
+          {
+            "slug": "jacobs-address/19",
+            "ref": "야곱서 3장 14절",
+            "text": "Plates of Jacob made by Nephi"
+          },
+          {
+            "slug": "recolonization/17",
+            "ref": "모사이야서 10장 13절",
+            "text": "The Lord heard and answered prayers of Nephi"
+          },
+          {
+            "slug": "nephi/27",
+            "ref": "힐라맨서 8장 22절",
+            "text": "Had testified God was with Israel"
+          }
+        ]
+      },
+      {
+        "slug": "amalickiahites",
+        "name": "아맬리카이아인",
+        "title": "아맬리카이아의 추종자들",
+        "classification": "O",
+        "unit": "S",
+        "description": "<p>아맬리카이아인은 아맬리카이아의 추종자들을 일컫는 말로, 몰몬경의 앨마서에 등장합니다. 그들은 모로나이의 지시에 따라 자유를 지키기 위해 힘을 모으고, 아맬리카이아인을 대적하는 백성들을 모았습니다. 앨마서 46장 28절에서는 그들이 모로나이의 명령에 따라 아맬리카이아와 그 외 지역에 사람들을 파견하여 자유를 지키는 역할을 수행했음을 알 수 있습니다. 또한, 앨마서 46장 35절에서는 아맬리카이아인 중에서도 자유의 대의를 지키기 위해 언약을 거부하는 자는 사형에 처해졌다는 사실이 언급되었습니다. 그리고 앨마서 49장 9절에서는 아맬리카이아인들이 니파이인들의 전쟁 준비에 놀랐음을 알 수 있습니다. 그들은 니파이인들이 전쟁에 대비하기 위해 실시한 방식에 깊이 감동받았습니다. 아맬리카이아인은 자유와 정의를 위해 헌신적으로 싸웠고, 그들의 믿음과 힘은 이야기 속에서 빛을 발하였습니다.</p>",
+        "relations": [
+          {
+            "relation": "$1의 추종자들",
+            "person": {
+              "name": "아맬리카이아",
+              "slug": "amalickiah",
+              "title": "니파이인 반역자"
+            }
+          },
+          {
+            "relation": "$1의 반대자들",
+            "person": {
+              "name": "니파이인",
+              "slug": "nephites",
+              "title": "니파이1의 후손들이자 그의 추종자들, 나중에 복음을 받아들인 사람들 모두"
+            }
+          }
+        ],
+        "index": [
+          {
+            "slug": "war/56",
+            "ref": "앨마서 46장 28절",
+            "text": "반대자들이다"
+          },
+          {
+            "slug": "war/59",
+            "ref": "앨마서 46장 35절",
+            "text": "언약을 거부하고 죽임을 당한다"
+          },
+          {
+            "slug": "war/71",
+            "ref": "앨마서 49장 9절",
+            "text": "니파이인들이 준비한 것에 놀란다"
+          }
+        ]
+      },
+      {
+        "slug": "corihor1",
+        "name": "코리호어1",
+        "title": "초기 야렛인 반란군",
+        "classification": "R",
+        "unit": "I",
+        "description": "<p>코리호어는 초기 야렛인 반란군으로 몰몬경에 등장하는 인물입니다. 그는 키브의 아들로 태어나 노년에 키브를 낳았습니다. 그 후로 코리호어는 아버지를 모반하고 니허 땅으로 건너가 살았습니다. 그는 아들과 딸을 낳아 그들이 심히 아름다워지자 많은 백성을 이끌어내어 자기를 좇게 했습니다. 코리호어는 군대를 모아 왕이 거하는 모론 땅으로 올라가 아버지를 사로잡았으며, 야렛의 형제들의 예언이 이루어졌습니다. 그 후 코리호어는 에브라임 산으로 가서 강철로 칼을 만들어 그들을 무장시키고, 형제인 슐과의 전투를 통해 왕국을 얻었고 이를 부친 키브에게 회복시켰습니다. 그러나 코리호어는 자신의 행한 악을 회개하고 슐에게 권능을 받았습니다. 코리호어의 이야기를 통해 우리는 반란과 회개, 왕위 회복의 이야기를 배울 수 있습니다. 몰몬경에서 코리호어는 그의 독특한 역할과 중요성으로 기억됩니다.</p>",
+        "relations": [
+          {
+            "relation": "$1의 아버지",
+            "person": {
+              "name": "코호어",
+              "slug": "cohor1",
+              "title": "노아2의 형제"
+            }
+          },
+          {
+            "relation": "$1의 형제",
+            "person": {
+              "name": "슐",
+              "slug": "shule",
+              "title": "초기 야렛인 왕"
+            }
+          },
+          {
+            "relation": "$1의 아버지",
+            "person": {
+              "name": "노아2",
+              "slug": "noah2",
+              "title": "초기 야렛인이자 코리호어2의 아들"
+            }
+          },
+          {
+            "relation": "$1의 아들",
+            "person": {
+              "name": "키브",
+              "slug": "kib",
+              "title": "초기 야렛인 왕"
+            }
+          }
+        ],
+        "index": [
+          {
+            "slug": "jaredites/58",
+            "ref": "이더서 7장 3절",
+            "text": "키브의 아들"
+          },
+          {
+            "slug": "jaredites/59",
+            "ref": "이더서 7장 4절",
+            "text": "아버지에게 반역함"
+          },
+          {
+            "slug": "jaredites/60",
+            "ref": "이더서 7장 5절",
+            "text": "아버지를 사로잡음"
+          },
+          {
+            "slug": "jaredites/62",
+            "ref": "이더서 7장 9절",
+            "text": "형제 슐이 왕국을 키브에게 회복함"
+          },
+          {
+            "slug": "jaredites/64",
+            "ref": "이더서 7장 13절",
+            "text": "회개하고 은총을 얻음"
+          }
+        ]
+      },
+      {
+        "slug": "humanity",
+        "name": "인간",
+        "title": "전 인류",
+        "classification": "O",
+        "unit": "C",
+        "description": "<p>인간은 몰몬경에 등장하는 인물 중 가장 중요한 존재입니다. 몰몬경에는 여러 절에서 인간에 대한 언급이 있습니다. 우선, 니파이전서 13장에서는 이방인 가운데 한 사람을 보았다고 전해집니다. 그는 많은 물들을 사이에 두고 니파이 형제들의 자손들과는 떨어져 있었습니다. 그리고 하나님의 영이 내려와 그 사람에게 역사하셨는데, 그는 많은 물들을 건너 참으로 약속된 땅에 있는 니파이 형제들의 자손들에게 이르게 되었습니다. 이를 통해 인간은 여러 물리적 현실과 접촉하며 하나님의 뜻을 이행하는 존재로 묘사됩니다.</p><p>또한, 니파이전서 14장에서는 선지자 레히가 환상 속에서 흰 옷을 입은 한 사람을 보았습니다. 이 사람은 빛을 발하며, 신성한 존재로 묘사됩니다. 이는 인간의 신성한 부분과 높은 영적 상태를 상징적으로 나타내고 있습니다.</p><p>니파이전서 17장에서는 모든 육체가 하나로 존중받음을 알 수 있습니다. 이를 통해 인간은 서로 다른 인종, 국적, 문화 등에 속해 있더라도 하나님 앞에서 동등하게 중요한 존재로 여겨진다는 것을 배울 수 있습니다.</p><p>니파이전서 22장에서는 육체를 따라 사람들에게 임하는 재앙과 저주에 대한 경고가 전해집니다. 이를 통해 인간은 육체에 따라 행동하고 선택하는 중요성을 깨닫게 됩니다. 또한, 욕망과 육체적 욕구를 따르는 사람들은 낮아지게 되는 것을 알 수 있습니다.</p><p>니파이후서 1장에서는 니파이인들에게 일어나라, 나의 아들들이여, 사람이 되라고 부름이 있습니다. 이를 통해 인간은 더 높은 목표를 향해 성장하고, 성숙한 삶을 살아가야 한다는 동기부여를 받습니다.</p><p>니파이후서 2장에서는 육체에 의해서 아무도 의롭지 않다는 사실이 강조됩니다. 이를 통해 인간은 자신의 능력과 힘으로는 구원받을 수 없다는 것을 깨닫게 됩니다.</p>",
+        "relations": [
+          {
+            "relation": "$1의 후손들",
+            "person": {
+              "name": "아담",
+              "slug": "adam",
+              "title": "흙으로 창조된 최초의 인간"
+            }
+          },
+          {
+            "relation": "$1의 자녀들",
+            "person": {
+              "name": "하나님",
+              "slug": "god",
+              "title": "창조자"
+            }
+          },
+          {
+            "relation": "$1에게 봉사하는 사람",
+            "person": {
+              "name": "천사들",
+              "slug": "angels",
+              "title": "천군"
+            }
+          }
+        ],
+        "index": [
+          {
+            "slug": "lehites/nephis-vision/34",
+            "ref": "니파이전서 13장 12절",
+            "text": "Nephi1 beholds man among Gentiles who goes forth upon waters"
+          },
+          {
+            "slug": "lehites/nephis-vision/53",
+            "ref": "니파이전서 14장 19절",
+            "text": "Lehi1 sees man in white robe in vision"
+          },
+          {
+            "slug": "lehites/150",
+            "ref": "니파이전서 17장 35절",
+            "text": "The Lord esteems all flesh in one"
+          },
+          {
+            "slug": "promised-land/33",
+            "ref": "니파이전서 22장 18절",
+            "text": "Destruction comes unto men according to flesh if they harden hearts"
+          },
+          {
+            "slug": "promised-land/35",
+            "ref": "니파이전서 22장 22절",
+            "text": "Kingdom of devil established among them which are in the flesh"
+          },
+          {
+            "slug": "promised-land/36",
+            "ref": "니파이전서 22장 23절",
+            "text": "All who seek lusts of the flesh shall be brought low"
+          },
+          {
+            "slug": "promised-land/lehi/10",
+            "ref": "니파이후서 1장 21절",
+            "text": "Arise, my sons, and be men"
+          },
+          {
+            "slug": "promised-land/lehi/20",
+            "ref": "니파이후서 2장 5절",
+            "text": "By law no flesh is justified"
+          },
+          {
+            "slug": "promised-land/lehi/37",
+            "ref": "니파이후서 2장 25절",
+            "text": "Adam fell that men might be"
+          },
+          {
+            "slug": "promised-land/lehi/38",
+            "ref": "니파이후서 2장 27절",
+            "text": "Men are free according to the flesh to choose life or death"
+          },
+          {
+            "slug": "promised-land/46",
+            "ref": "니파이후서 4장 17절",
+            "text": "My heart sorrows because of my flesh"
+          },
+          {
+            "slug": "promised-land/46",
+            "ref": "니파이후서 4장 17절",
+            "text": "O wretched man that I am"
+          },
+          {
+            "slug": "promised-land/51",
+            "ref": "니파이후서 4장 34절",
+            "text": "Cursed is he that puts trust in man"
+          },
+          {
+            "slug": "promised-land/51",
+            "ref": "니파이후서 4장 34절",
+            "text": "I will not put trust in arm of flesh"
+          },
+          {
+            "slug": "jacobs-two-day-sermon/14",
+            "ref": "니파이후서 8장 7절",
+            "text": "Fear not the reproach of men"
+          },
+          {
+            "slug": "jacobs-two-day-sermon/21",
+            "ref": "니파이후서 9장 4~7절",
+            "text": "Flesh must waste away and die"
+          },
+          {
+            "slug": "jacobs-two-day-sermon/21",
+            "ref": "니파이후서 9장 5절",
+            "text": "Creator to become subject unto men in flesh"
+          },
+          {
+            "slug": "jacobs-two-day-sermon/42",
+            "ref": "니파이후서 9장 53절",
+            "text": "Nephites’ seed shall not be utterly destroyed according to the flesh"
+          },
+          {
+            "slug": "jacobs-two-day-sermon/51",
+            "ref": "니파이후서 10장 24절",
+            "text": "Reconcile yourselves to will of God and not to will of devil and the flesh"
+          },
+          {
+            "slug": "isaiah/16",
+            "ref": "니파이후서 14장 1절",
+            "text": "Seven women shall take hold of one man"
+          },
+          {
+            "slug": "isaiah/72",
+            "ref": "니파이후서 23장 12절",
+            "text": "The Lord will make a man more precious than fine gold"
+          },
+          {
+            "slug": "nephis-teachings/17",
+            "ref": "니파이후서 26장 11절",
+            "text": "Spirit of the Lord will not always strive with man"
+          },
+          {
+            "slug": "nephis-teachings/31",
+            "ref": "니파이후서 27장 9절",
+            "text": "Book to be delivered to a man who will deliver it to another"
+          },
+          {
+            "slug": "nephis-teachings/35",
+            "ref": "니파이후서 27장 25절",
+            "text": "Their fear toward God is taught by precepts of men"
+          },
+          {
+            "slug": "nephis-teachings/43",
+            "ref": "니파이후서 28장 14절",
+            "text": "They err because they are taught by precepts of men"
+          },
+          {
+            "slug": "nephis-teachings/48",
+            "ref": "니파이후서 28장 26~31절",
+            "text": "Wo unto him who hearkens to precepts of men"
+          },
+          {
+            "slug": "nephis-teachings/49",
+            "ref": "니파이후서 28장 31절",
+            "text": "Cursed is he that puts trust in man"
+          },
+          {
+            "slug": "nephis-teachings/49",
+            "ref": "니파이후서 28장 31절",
+            "text": "Cursed is he who makes flesh his arm"
+          },
+          {
+            "slug": "nephis-teachings/53",
+            "ref": "니파이후서 29장 7절",
+            "text": "The Lord has created all men"
+          },
+          {
+            "slug": "jacobs-address/9",
+            "ref": "야곱서 2장 21절",
+            "text": "Pride is abominable unto him who created all flesh"
+          },
+          {
+            "slug": "jacobs-address/11",
+            "ref": "야곱서 2장 27절",
+            "text": "No man among men shall have more than one wife"
+          },
+          {
+            "slug": "land-of-nephi/21",
+            "ref": "야곱서 4장 8절",
+            "text": "No man knows God’s ways, save through revelation"
+          },
+          {
+            "slug": "land-of-nephi/22",
+            "ref": "야곱서 4장 9절",
+            "text": "God spoke, and man was created"
+          },
+          {
+            "slug": "benjamin/51",
+            "ref": "모사이야서 3장 19절",
+            "text": "Natural man is enemy to God"
+          },
+          {
+            "slug": "recolonization/108",
+            "ref": "모사이야서 7장 27절",
+            "text": "Man was created after image of God"
+          },
+          {
+            "slug": "recolonization/108",
+            "ref": "모사이야서 7장 27절",
+            "text": "Christ to take upon him image of man"
+          },
+          {
+            "slug": "recolonization/108",
+            "ref": "모사이야서 7장 27절",
+            "text": "God will take upon him flesh and blood"
+          },
+          {
+            "slug": "recolonization/118",
+            "ref": "모사이야서 8장 16절",
+            "text": "Man may have great power given him from God"
+          },
+          {
+            "slug": "recolonization/abinadi/32",
+            "ref": "모사이야서 15장 2절",
+            "text": "The Son shall subject the flesh to will of Father"
+          },
+          {
+            "slug": "recolonization/abinadi/32",
+            "ref": "모사이야서 15장 2~3절",
+            "text": "Because the Lord dwells in flesh, he shall be called the Son"
+          },
+          {
+            "slug": "alma/20",
+            "ref": "모사이야서 23장 7절",
+            "text": "Ye shall not esteem one flesh above another"
+          },
+          {
+            "slug": "zarahemla/80",
+            "ref": "모사이야서 28장 3절",
+            "text": "Sons of Mosiah2 cannot bear that any human soul should perish"
+          },
+          {
+            "slug": "reign-of-judges/2",
+            "ref": "앨마서 1장 4절",
+            "text": "The Lord has created all men"
+          },
+          {
+            "slug": "reign-of-judges/29",
+            "ref": "앨마서 2장 30절",
+            "text": "Alma2 a man of God"
+          },
+          {
+            "slug": "reign-of-judges/gideon/9",
+            "ref": "앨마서 7장 13절",
+            "text": "Son suffers according to the flesh"
+          },
+          {
+            "slug": "ammon/52",
+            "ref": "앨마서 18장 34절",
+            "text": "Man was created after image of God"
+          },
+          {
+            "slug": "aaron/24",
+            "ref": "앨마서 22장 12절",
+            "text": "Man was created after image of God"
+          },
+          {
+            "slug": "ammon/147",
+            "ref": "앨마서 26장 21절",
+            "text": "What natural man knows these things"
+          },
+          {
+            "slug": "reign-of-judges/korihor/2",
+            "ref": "앨마서 30장 11절",
+            "text": "Law that all men should be on equal grounds"
+          },
+          {
+            "slug": "reign-of-judges/zoramites/almas-teachings/11",
+            "ref": "앨마서 32장 23절",
+            "text": "God imparts his words not only to men, but to women also"
+          },
+          {
+            "slug": "reign-of-judges/zoramites/amuleks-teachings/8",
+            "ref": "앨마서 34장 10절",
+            "text": "Great and last sacrifice shall not be human sacrifice"
+          },
+          {
+            "slug": "reign-of-judges/corianton/10",
+            "ref": "앨마서 40장 8절",
+            "text": "Time is measured only unto men"
+          },
+          {
+            "slug": "reign-of-judges/corianton/23",
+            "ref": "앨마서 41장 11절",
+            "text": "All men in natural, carnal state, are in gall of bitterness"
+          },
+          {
+            "slug": "nephi/67",
+            "ref": "힐라맨서 11장 8~18절",
+            "text": "Nephi2 is esteemed a man of God"
+          },
+          {
+            "slug": "jesus/43",
+            "ref": "제3니파이 11장 8절",
+            "text": "Nephi1 to behold man descending out of heaven"
+          },
+          {
+            "slug": "jesus/96",
+            "ref": "제3니파이 14장 12절",
+            "text": "Whatsoever ye would that men should do to you, do to them"
+          },
+          {
+            "slug": "jesus/143",
+            "ref": "제3니파이 18장 28~30절",
+            "text": "Whoso eats and drinks Christ’s flesh and blood unworthily eats and drinks damnation to soul"
+          },
+          {
+            "slug": "jesus/217",
+            "ref": "제3니파이 27장 8절",
+            "text": "Church called in name of man is church of man"
+          },
+          {
+            "slug": "jesus/225",
+            "ref": "제3니파이 27장 27절",
+            "text": "What manner of men ought ye to be"
+          },
+          {
+            "slug": "jesus/245",
+            "ref": "제3니파이 28장 15~39절",
+            "text": "Three Nephites are sanctified in flesh, transfigured from body of flesh into immortal state"
+          },
+          {
+            "slug": "mormon/75",
+            "ref": "몰몬서 3장 20절",
+            "text": "Every soul who belongs to whole human family of Adam must stand before judgment-seat of Christ"
+          },
+          {
+            "slug": "moroni/24",
+            "ref": "몰몬서 9장 17절",
+            "text": "Man was created of dust"
+          },
+          {
+            "slug": "jaredites/22",
+            "ref": "이더서 3장 6~9절",
+            "text": "God will take upon him flesh and blood"
+          },
+          {
+            "slug": "jaredites/30",
+            "ref": "이더서 3장 15절",
+            "text": "Never before has the Lord shown himself unto men"
+          },
+          {
+            "slug": "jaredites/30",
+            "ref": "이더서 3장 15~16절",
+            "text": "Man was created after image of God"
+          },
+          {
+            "slug": "jaredites/30",
+            "ref": "이더서 3장 16절",
+            "text": "The Lord has created man after body of his spirit"
+          },
+          {
+            "slug": "moroni/80",
+            "ref": "이더서 12장 39절",
+            "text": "Moroni2 has talked with Jesus as man talks with another"
+          },
+          {
+            "slug": "jaredites/213",
+            "ref": "이더서 15장 34절",
+            "text": "It matters not whether Ether is translated or suffers will of the Lord in flesh"
+          },
+          {
+            "slug": "moroni/93",
+            "ref": "모로나이서 4장 ~5",
+            "text": "Manner of administering Christ’s flesh and blood to church"
+          },
+          {
+            "slug": "downfall/56",
+            "ref": "모로나이서 8장 16절",
+            "text": "Fear not what man can do"
+          },
+          {
+            "slug": "downfall/81",
+            "ref": "모로나이서 9장 8절",
+            "text": "Nephite women are fed flesh of husbands"
+          }
+        ]
+      }
+    ]
+  }
+}

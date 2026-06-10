@@ -1,0 +1,737 @@
+{
+  "data": {
+    "place": [
+      {
+        "slug": "jerusalem-1",
+        "name": "예루살렘1",
+        "info": "유다 왕국의 수도",
+        "occupants": "I",
+        "type": "C",
+        "location": "W",
+        "description": "<p>Jerusalem, called the “great city” and the capital of the kingdom of [Judah|judah], is the place from which the record opens. {Lehi|lehi1} had dwelt there all his days when, in the first year of the reign of {Zedekiah|zedekiah1} king of [Judah|judah] (about 600 BC), many prophets came warning the people that they must repent or the city would be destroyed. {Lehi|lehi1} was among them, and he was commanded by {God|god} to take his family and flee (1 Nephi 1:4).</p><p>{Lehi|lehi1}’s departure became the record’s timeline marker: six hundred years from the time he left Jerusalem, {the Lord|jesus-christ} would raise up a {Messiah|jesus-christ}, a {Savior|jesus-christ} of the world, among {the Jews|jews} (1 Nephi 10:4). In vision, {Nephi|nephi1} saw the great city of Jerusalem and other cities, including [Nazareth|nazareth], where he beheld the virgin who would be the mother of {the Son of God|jesus-christ} (1 Nephi 11:13). {Nephi|nephi1} wrote of his own anguish of spirit for those who remained at Jerusalem, whom {the Lord|jesus-christ} had shown him would otherwise have perished (1 Nephi 19:20).</p><p>{Lehi|lehi1} told his sons he had seen a vision in which he knew Jerusalem was destroyed, and that had they stayed they too would have died (2 Nephi 1:4). {Nephi|nephi1} recorded the prophecy that those at Jerusalem would crucify {the God of Israel|jesus-christ} and be scourged by all people for it (1 Nephi 19:13), and that though the people were carried away, they would return and again possess the land of Jerusalem, their land of inheritance (2 Nephi 25:11).</p><p>The record also preserves an eschatological distinction about Jerusalem’s ultimate fate. {Moroni|moroni2}, abridging the vision of {Ether|ether}, records that the Jerusalem from which {Lehi|lehi1} came would, after its destruction, be built up again as a holy city of {the Lord|jesus-christ} — yet it could not be the New Jerusalem, for it was already ancient; a separate New Jerusalem would be built on the American continent for the remnant of the seed of {Joseph|joseph1} (Ether 13:5–6).</p>",
+        "maps": [
+          {
+            "slug": "neareast",
+            "name": "근동"
+          }
+        ],
+        "index": [
+          {
+            "slug": "lehites/1",
+            "ref": "니파이전서 1장 4~20절",
+            "text": "Lehi1 dwells at Jerusalem"
+          },
+          {
+            "slug": "lehites/1",
+            "ref": "니파이전서 1장 4~20절",
+            "text": "Destruction of Jerusalem"
+          },
+          {
+            "slug": "lehites/12",
+            "ref": "니파이전서 2장 4절",
+            "text": "Lehi1 and family leave Jerusalem"
+          },
+          {
+            "slug": "lehites/14",
+            "ref": "니파이전서 2장 11절",
+            "text": "The Lord leads Lehites out of land of Jerusalem"
+          },
+          {
+            "slug": "lehites/32",
+            "ref": "니파이전서 5장 4절",
+            "text": "Family of Lehi1 would have perished if they had remained at Jerusalem"
+          },
+          {
+            "slug": "lehites/32",
+            "ref": "니파이전서 5장 6절",
+            "text": "Sons of Lehi1 return to Jerusalem for records"
+          },
+          {
+            "slug": "lehites/66",
+            "ref": "니파이전서 7장 2절",
+            "text": "Sons of Lehi1 return to Jerusalem for records"
+          },
+          {
+            "slug": "lehites/67",
+            "ref": "니파이전서 7장 3~5절",
+            "text": "Sons of Lehi1 return to Jerusalem to get family of Ishmael1"
+          },
+          {
+            "slug": "lehites/70",
+            "ref": "니파이전서 7장 7~15절",
+            "text": "The rebellious desire to return to land of Jerusalem"
+          },
+          {
+            "slug": "lehites/91",
+            "ref": "니파이전서 10장 4절",
+            "text": "Messiah to come six hundred years after Lehi1 left Jerusalem"
+          },
+          {
+            "slug": "lehites/nephis-vision/8",
+            "ref": "니파이전서 11장 13절",
+            "text": "Nephi1 sees Jerusalem in vision"
+          },
+          {
+            "slug": "lehites/129",
+            "ref": "니파이전서 16장 35~36절",
+            "text": "The rebellious desire to return to land of Jerusalem"
+          },
+          {
+            "slug": "lehites/144",
+            "ref": "니파이전서 17장 20절",
+            "text": "Lehi1 and family leave Jerusalem"
+          },
+          {
+            "slug": "lehites/144",
+            "ref": "니파이전서 17장 20절",
+            "text": "The rebellious desire to return to land of Jerusalem"
+          },
+          {
+            "slug": "promised-land/2",
+            "ref": "니파이전서 18장 24절",
+            "text": "Lehites bring seeds from land of Jerusalem"
+          },
+          {
+            "slug": "promised-land/14",
+            "ref": "니파이전서 19장 8절",
+            "text": "Messiah to come six hundred years after Lehi1 left Jerusalem"
+          },
+          {
+            "slug": "promised-land/18",
+            "ref": "니파이전서 19장 13절",
+            "text": "Those at Jerusalem shall crucify God of Israel"
+          },
+          {
+            "slug": "promised-land/13",
+            "ref": "니파이전서 19장 20절",
+            "text": "Family of Lehi1 would have perished if they had remained at Jerusalem"
+          },
+          {
+            "slug": "promised-land/24",
+            "ref": "니파이전서 22장 4절",
+            "text": "Many already lost from knowledge of those at Jerusalem"
+          },
+          {
+            "slug": "promised-land/41",
+            "ref": "니파이후서 1장 1~3절",
+            "text": "The Lord leads Lehites out of land of Jerusalem"
+          },
+          {
+            "slug": "promised-land/41",
+            "ref": "니파이후서 1장 4절",
+            "text": "Lehi1 sees in vision that Jerusalem is destroyed"
+          },
+          {
+            "slug": "jacobs-two-day-sermon/4",
+            "ref": "니파이후서 6장 8절",
+            "text": "Lehi1 sees in vision that Jerusalem is destroyed"
+          },
+          {
+            "slug": "jacobs-two-day-sermon/17",
+            "ref": "니파이후서 8장 17절",
+            "text": "Jerusalem has drunk cup of the Lord’s fury"
+          },
+          {
+            "slug": "jacobs-two-day-sermon/19",
+            "ref": "니파이후서 8장 24절",
+            "text": "Put on thy beautiful garments, O Jerusalem, the holy city"
+          },
+          {
+            "slug": "jacobs-two-day-sermon/19",
+            "ref": "니파이후서 8장 25절",
+            "text": "Arise, sit down, O Jerusalem"
+          },
+          {
+            "slug": "jacobs-two-day-sermon/21",
+            "ref": "니파이후서 9장 5절",
+            "text": "God shall show himself to those at Jerusalem"
+          },
+          {
+            "slug": "jacobs-two-day-sermon/45",
+            "ref": "니파이후서 10장 5절",
+            "text": "Those at Jerusalem shall stiffen their necks"
+          },
+          {
+            "slug": "isaiah/2",
+            "ref": "니파이후서 12장 1절",
+            "text": "Word Isaiah1 saw concerning Judah and Jerusalem"
+          },
+          {
+            "slug": "isaiah/10",
+            "ref": "니파이후서 13장 1절",
+            "text": "The Lord takes away from Jerusalem the stay and the staff"
+          },
+          {
+            "slug": "isaiah/12",
+            "ref": "니파이후서 13장 8절",
+            "text": "Jerusalem is ruined"
+          },
+          {
+            "slug": "isaiah/17",
+            "ref": "니파이후서 14장 3절",
+            "text": "They who remain in Jerusalem shall be called holy"
+          },
+          {
+            "slug": "isaiah/35",
+            "ref": "니파이후서 17장 1절",
+            "text": "Kings of Syria and Israel went up toward Jerusalem to war against it"
+          },
+          {
+            "slug": "isaiah/48",
+            "ref": "니파이후서 18장 14절",
+            "text": "The Lord shall be for gin and snare to inhabitants of Jerusalem"
+          },
+          {
+            "slug": "isaiah/62",
+            "ref": "니파이후서 20장 32절",
+            "text": "The Lord shall shake hand against mount of daughter of Zion, the hill of Jerusalem"
+          },
+          {
+            "slug": "nephis-teachings/3",
+            "ref": "니파이후서 25장 6절",
+            "text": "Nephi1 has dwelt at Jerusalem"
+          },
+          {
+            "slug": "nephis-teachings/6",
+            "ref": "니파이후서 25장 11절",
+            "text": "Jews will return and possess land of Jerusalem"
+          },
+          {
+            "slug": "nephis-teachings/57",
+            "ref": "니파이후서 30장 4절",
+            "text": "Remnant of Nephites’ seed shall know they came from Jerusalem"
+          },
+          {
+            "slug": "jacobs-address/10",
+            "ref": "야곱서 2장 25~32절",
+            "text": "The Lord leads Lehites out of land of Jerusalem"
+          },
+          {
+            "slug": "jacobs-address/12",
+            "ref": "야곱서 2장 31절",
+            "text": "The Lord has heard mourning of his people in land of Jerusalem"
+          },
+          {
+            "slug": "land-of-nephi/42",
+            "ref": "야곱서 7장 26절",
+            "text": "Nephites a lonesome people, cast out from Jerusalem"
+          },
+          {
+            "slug": "land-of-nephi/73",
+            "ref": "옴나이서 1장 6절",
+            "text": "The Lord leads Lehites out of land of Jerusalem"
+          },
+          {
+            "slug": "zarahemla/1",
+            "ref": "옴나이서 1장 15절",
+            "text": "People of Zarahemla came from Jerusalem when Zedekiah was carried captive into Babylon"
+          },
+          {
+            "slug": "zarahemla/19",
+            "ref": "모사이야서 1장 6절",
+            "text": "Records contain sayings of fathers from time they came from Jerusalem"
+          },
+          {
+            "slug": "zarahemla/30",
+            "ref": "모사이야서 2장 4절",
+            "text": "The Lord leads Lehites out of land of Jerusalem"
+          },
+          {
+            "slug": "recolonization/103",
+            "ref": "모사이야서 7장 20절",
+            "text": "The Lord leads Lehites out of land of Jerusalem"
+          },
+          {
+            "slug": "recolonization/16",
+            "ref": "모사이야서 10장 12절",
+            "text": "Lamanites believe they were driven from land of Jerusalem because of fathers’ iniquities"
+          },
+          {
+            "slug": "recolonization/37",
+            "ref": "모사이야서 12장 23절",
+            "text": "The Lord has redeemed Jerusalem"
+          },
+          {
+            "slug": "recolonization/abinadi/46",
+            "ref": "모사이야서 15장 30절",
+            "text": "The Lord has redeemed Jerusalem"
+          },
+          {
+            "slug": "reign-of-judges/37",
+            "ref": "앨마서 3장 11절",
+            "text": "Brass plates brought out of land of Jerusalem"
+          },
+          {
+            "slug": "reign-of-judges/gideon/7",
+            "ref": "앨마서 7장 10절",
+            "text": "Son shall be born at Jerusalem"
+          },
+          {
+            "slug": "reign-of-judges/ammonihah/28",
+            "ref": "앨마서 9장 22절",
+            "text": "The Lord leads Lehites out of land of Jerusalem"
+          },
+          {
+            "slug": "reign-of-judges/ammonihah/39",
+            "ref": "앨마서 10장 3절",
+            "text": "Lehi1 and family leave Jerusalem"
+          },
+          {
+            "slug": "reign-of-judges/ammonihah/50",
+            "ref": "앨마서 10장 17절",
+            "text": "Brass plates brought out of land of Jerusalem"
+          },
+          {
+            "slug": "aaron/21",
+            "ref": "앨마서 22장 9절",
+            "text": "The Lord leads Lehites out of land of Jerusalem"
+          },
+          {
+            "slug": "reign-of-judges/helaman/9",
+            "ref": "앨마서 36장 29절",
+            "text": "The Lord leads Lehites out of land of Jerusalem"
+          },
+          {
+            "slug": "gadianton/38",
+            "ref": "힐라맨서 5장 6절",
+            "text": "Lehi1 and family leave Jerusalem"
+          },
+          {
+            "slug": "nephi/27",
+            "ref": "힐라맨서 8장 21절",
+            "text": "Lamanites believe they were driven from land of Jerusalem because of fathers’ iniquities"
+          },
+          {
+            "slug": "gadianton/152",
+            "ref": "제3니파이 4장 11절",
+            "text": "Greatest slaughter among people of Lehi1 since he left Jerusalem"
+          },
+          {
+            "slug": "mormon/51",
+            "ref": "제3니파이 5장 20절",
+            "text": "The Lord leads Lehites out of land of Jerusalem"
+          },
+          {
+            "slug": "jesus/32",
+            "ref": "제3니파이 10장 5절",
+            "text": "How oft would the Lord have gathered his people that dwell at Jerusalem"
+          },
+          {
+            "slug": "jesus/107",
+            "ref": "제3니파이 15장 14절",
+            "text": "Christ not commanded to tell those at Jerusalem about Nephites"
+          },
+          {
+            "slug": "jesus/111",
+            "ref": "제3니파이 16장 1절",
+            "text": "The Lord has other sheep not of this land or land of Jerusalem"
+          },
+          {
+            "slug": "jesus/112",
+            "ref": "제3니파이 16장 4절",
+            "text": "If those at Jerusalem do not ask Father, they must learn of other tribes from writings"
+          },
+          {
+            "slug": "jesus/115",
+            "ref": "제3니파이 16장 19절",
+            "text": "The Lord has redeemed Jerusalem"
+          },
+          {
+            "slug": "jesus/117",
+            "ref": "제3니파이 17장 8절",
+            "text": "Nephites desire that Christ show what he has done unto brethren at Jerusalem"
+          },
+          {
+            "slug": "jesus-teachings/14",
+            "ref": "제3니파이 20장 29절",
+            "text": "Land of Jerusalem is Israel’s promised land forever"
+          },
+          {
+            "slug": "jesus-teachings/24",
+            "ref": "제3니파이 20장 46절",
+            "text": "Jerusalem shall be inhabited again"
+          },
+          {
+            "slug": "jesus-teachings/37",
+            "ref": "제3니파이 21장 26절",
+            "text": "Work shall commence among tribes which Father led out of Jerusalem"
+          },
+          {
+            "slug": "downfall/17",
+            "ref": "제4니파이 1장 31절",
+            "text": "Those at Jerusalem shall crucify God of Israel"
+          },
+          {
+            "slug": "mormon/74",
+            "ref": "몰몬서 3장 18절",
+            "text": "Twelve tribes of Israel shall be judged by twelve disciples in land of Jerusalem"
+          },
+          {
+            "slug": "moroni/84",
+            "ref": "이더서 13장 7절",
+            "text": "The Lord leads Lehites out of land of Jerusalem"
+          },
+          {
+            "slug": "moroni/85",
+            "ref": "이더서 13장 8절",
+            "text": "Remnant of house of Joseph1 shall build holy city, like Jerusalem of old"
+          },
+          {
+            "slug": "moroni/86",
+            "ref": "이더서 13장 11절",
+            "text": "Then cometh the Jerusalem of old"
+          },
+          {
+            "slug": "moroni/115",
+            "ref": "모로나이서 10장 31절",
+            "text": "Awake and arise from dust O Jerusalem"
+          }
+        ]
+      },
+      {
+        "slug": "land-of-zarahemla",
+        "name": "제이라헤믈라 땅",
+        "info": "제이라헤믈라 인근 지역에 대한 일반적인 언급",
+        "occupants": "NM",
+        "type": "L",
+        "location": "Z",
+        "description": "<p>The Land of Zarahemla lay in the northern part of the land southward, along the [river Sidon|sidon-river], which ran by the land of Zarahemla (Alma 2:15). It was settled by the {Mulekites|mulekites}, who left [Jerusalem|jerusalem-1] about the time {Zedekiah|zedekiah1}, king of [Judah|judah], was carried captive to [Babylon|babylon] in the sixth century B.C. and crossed the great waters to their landing place (Omni 1:15, Alma 22:29-31). Around 200 B.C. {Mosiah<sup>1</sup>|mosiah1}, warned to flee [the land of Nephi|land-of-nephi], led his people through the wilderness and found the {people of Zarahemla|zarahemla-brethren}, named for their leader {Zarahemla|zarahemla}. The two peoples united and made {Mosiah|mosiah1} their king (Omni 1:12-19).</p><p>The temple at Zarahemla was the site of King {Benjamin|benjamin}’s great covenant convocation, in which the assembled multitude pitched their tents round about the temple, each with its door facing toward the temple, and {Benjamin|benjamin} preached from a tower because the crowd was too great to fit within the temple walls (Mosiah 1:18; 2:5-7). At the close of that assembly the people entered a covenant and were given a new name, being called “the children of Christ, his sons, and his daughters” (Mosiah 5:7).</p><p>Under king {Mosiah|mosiah2}’s reign {Alma<sup>1</sup>|alma1} established seven churches throughout the land of Zarahemla (Mosiah 25:15-23), and at the close of the monarchy {Alma<sup>2</sup>|alma2} became the first chief judge over the reign of judges seated there (Mosiah 29:42). {Samuel the Lamanite|samuel} came into the land of Zarahemla and preached repentance to its people (Hel. 13–16). The land changed hands repeatedly in war: dissenters under {Pachus|pachus} seized the city, set up a king, and allied with the {Lamanites|lamanites} until {Moroni|moroni1} and {Pahoran|pahoran1} retook it and {Pachus|pachus} was slain (Alma 61-62:9); the Lamanite-allied {Coriantumr|coriantumr3} stormed and took the city before {Moronihah|moronihah1} recovered it (Hel. 1:14-33); and dissenters with a Lamanite army held the land until {Moronihah|moronihah1} regained half of it (Hel. 4:1-17).</p><p>The [city of Zarahemla|zarahemla] took fire and its inhabitants were burned at the death of {Jesus Christ|jesus-christ} (3 Ne. 8:8, 24; 9:3). It was built again in the first century A.D. and was covered with buildings and people as numerous as the sand of the sea when {Mormon|mormon2} was carried there as a child of eleven (4 Ne. 1:8, Morm. 1:6-7). In the fourth century A.D. war broke out again in the borders of Zarahemla, by the [waters of Sidon|sidon-river] (Morm. 1:10).</p>",
+        "maps": [
+          {
+            "slug": "ces",
+            "name": "CES"
+          },
+          {
+            "slug": "americas",
+            "name": "미대륙 전체"
+          },
+          {
+            "slug": "andes",
+            "name": "안데스 산맥"
+          },
+          {
+            "slug": "baja",
+            "name": "바하 반도"
+          },
+          {
+            "slug": "costarica",
+            "name": "코스타리카"
+          },
+          {
+            "slug": "delmarva",
+            "name": "Delmarva"
+          },
+          {
+            "slug": "africa",
+            "name": "Africa"
+          },
+          {
+            "slug": "srilanka",
+            "name": "스리랑카"
+          },
+          {
+            "slug": "sulawesi",
+            "name": "Sulawesi"
+          },
+          {
+            "slug": "malay",
+            "name": "말레이 반도"
+          },
+          {
+            "slug": "fullmer",
+            "name": "Fullmer"
+          },
+          {
+            "slug": "internal",
+            "name": "내부 지도"
+          },
+          {
+            "slug": "kamchatka",
+            "name": "Kamchatka"
+          },
+          {
+            "slug": "panama",
+            "name": "파나마"
+          },
+          {
+            "slug": "heartland",
+            "name": "미국 중서부"
+          },
+          {
+            "slug": "mesoamerica",
+            "name": "중앙아메리카"
+          },
+          {
+            "slug": "yucatan",
+            "name": "Yucatan"
+          },
+          {
+            "slug": "virtualscriptures",
+            "name": "BYU"
+          }
+        ],
+        "index": [
+          {
+            "slug": "land-of-nephi/77",
+            "ref": "옴나이서 1장 12~13절",
+            "text": "Mosiah1 made king over land of Zarahemla"
+          },
+          {
+            "slug": "zarahemla/12",
+            "ref": "옴나이서 1장 24절",
+            "text": "Benjamin drives Lamanites from Zarahemla"
+          },
+          {
+            "slug": "zarahemla/12",
+            "ref": "옴나이서 1장 24절",
+            "text": "Expedition seeking land of Nephi returns to Zarahemla"
+          },
+          {
+            "slug": "recolonization/2",
+            "ref": "옴나이서 1장 28절",
+            "text": "Expedition seeking land of Nephi returns to Zarahemla"
+          },
+          {
+            "slug": "zarahemla/13",
+            "ref": "모사이야서 1장 1절",
+            "text": "No more contention in Zarahemla"
+          },
+          {
+            "slug": "zarahemla/28",
+            "ref": "모사이야서 1장 18절",
+            "text": "People are gathered in land of Zarahemla to hear Benjamin"
+          },
+          {
+            "slug": "zarahemla/30",
+            "ref": "모사이야서 2장 4절",
+            "text": "No more contention in Zarahemla"
+          },
+          {
+            "slug": "recolonization/96",
+            "ref": "모사이야서 7장 9절",
+            "text": "Zeniff came out of land of Zarahemla"
+          },
+          {
+            "slug": "recolonization/97",
+            "ref": "모사이야서 7장 13~14절",
+            "text": "Ammon1 comes from Zarahemla to inquire after people of Zeniff"
+          },
+          {
+            "slug": "recolonization/95",
+            "ref": "모사이야서 21장 24~26절",
+            "text": "Limhi’s expedition failed to find Zarahemla"
+          },
+          {
+            "slug": "recolonization/128",
+            "ref": "모사이야서 22장 11~13절",
+            "text": "Limhi’s people arrive in Zarahemla"
+          },
+          {
+            "slug": "alma/40",
+            "ref": "모사이야서 24장 25절",
+            "text": "Alma1 and his people arrive in Zarahemla"
+          },
+          {
+            "slug": "zarahemla/49",
+            "ref": "모사이야서 25장 19~23절",
+            "text": "Alma1 is permitted to establish churches throughout Zarahemla"
+          },
+          {
+            "slug": "zarahemla/68",
+            "ref": "모사이야서 27장 34~35절",
+            "text": "Sons of Mosiah2 preach throughout Zarahemla to repair injuries"
+          },
+          {
+            "slug": "zarahemla/105",
+            "ref": "모사이야서 29장 44절",
+            "text": "Reign of judges commences in Zarahemla"
+          },
+          {
+            "slug": "reign-of-judges/21",
+            "ref": "앨마서 2장 15~25절",
+            "text": "Lamanites and Nephites battle in Zarahemla"
+          },
+          {
+            "slug": "reign-of-judges/43",
+            "ref": "앨마서 4장 1절",
+            "text": "No contentions in Zarahemla"
+          },
+          {
+            "slug": "reign-of-judges/50",
+            "ref": "앨마서 5장 1절",
+            "text": "Alma2 begins his mission in Zarahemla"
+          },
+          {
+            "slug": "reign-of-judges/ammonihah/135",
+            "ref": "앨마서 15장 18절",
+            "text": "Alma2 returns to Zarahemla with Amulek"
+          },
+          {
+            "slug": "reign-of-judges/57",
+            "ref": "앨마서 16장 1절",
+            "text": "Peace continues in Zarahemla"
+          },
+          {
+            "slug": "mormon/23",
+            "ref": "앨마서 22장 32절",
+            "text": "Lands of Nephi and Zarahemla nearly surrounded by water"
+          },
+          {
+            "slug": "ammon/164",
+            "ref": "앨마서 27장 5~20절",
+            "text": "People of Anti-Nephi-Lehi come to Zarahemla"
+          },
+          {
+            "slug": "reign-of-judges/korihor/1",
+            "ref": "앨마서 30장 6~12절",
+            "text": "Korihor comes into Zarahemla"
+          },
+          {
+            "slug": "reign-of-judges/106",
+            "ref": "앨마서 35장 14절",
+            "text": "Alma2 and sons of Mosiah2 return to Zarahemla"
+          },
+          {
+            "slug": "war/east/59",
+            "ref": "앨마서 59장 4절",
+            "text": "Moroni1 sends epistle to Zarahemla"
+          },
+          {
+            "slug": "war/east/76",
+            "ref": "앨마서 60장 30절",
+            "text": "Moroni1 threatens to come to Zarahemla and smite leaders with sword"
+          },
+          {
+            "slug": "war/east/89",
+            "ref": "앨마서 62장 6~8절",
+            "text": "Moroni restores Pahoran to judgment-seat in Zarahemla"
+          },
+          {
+            "slug": "gadianton/20",
+            "ref": "힐라맨서 3장 31절",
+            "text": "Continual rejoicing in Zarahemla"
+          },
+          {
+            "slug": "gadianton/26",
+            "ref": "힐라맨서 4장 5절",
+            "text": "Lamanites capture Zarahemla"
+          },
+          {
+            "slug": "gadianton/46",
+            "ref": "힐라맨서 5장 16~19절",
+            "text": "Nephi2 and Lehi4 convert eight thousand Lamanites in Zarahemla"
+          },
+          {
+            "slug": "gadianton/72",
+            "ref": "힐라맨서 6장 4절",
+            "text": "Many converted Lamanites gather to Zarahemla"
+          },
+          {
+            "slug": "nephi/1",
+            "ref": "힐라맨서 7장 1절",
+            "text": "Nephi1 returns to Zarahemla"
+          },
+          {
+            "slug": "gadianton/97",
+            "ref": "힐라맨서 13장 2절",
+            "text": "Samuel the Lamanite preaches in Zarahemla"
+          },
+          {
+            "slug": "gadianton/144",
+            "ref": "제3니파이 3장 22~23절",
+            "text": "Zarahemla is appointed as place of gathering in defense against enemies"
+          },
+          {
+            "slug": "downfall/27",
+            "ref": "몰몬서 1장 6절",
+            "text": "Mormon2 is taken by his father to Zarahemla"
+          }
+        ]
+      },
+      {
+        "slug": "omner",
+        "name": "옴너 성",
+        "info": "동쪽 국경 해안가에 접해 있는 니파이인 도시",
+        "occupants": "N",
+        "type": "C",
+        "location": "Z",
+        "description": "<p>Omner was a {Nephite|nephites} city on the east borders by the seashore, named in the account of {Amalickiah|amalickiah}’s invasion around 67 BC. It was one of the cities {Amalickiah|amalickiah} captured while {Moroni|moroni1} was occupied putting down the {king-men|king-men} and regulating his own people for war; {the Lamanites|lamanites} came into [the land of Moroni|moroni], drove {the Nephites|nephites} from [the city of Moroni|moroni], and {Amalickiah|amalickiah} went on taking city after city by the seashore (Alma 51:21-27). Omner is listed in this advance alongside [Nephihah|nephihah], [Lehi|lehi], [Morianton|morianton], [Gid|gid], and [Mulek|mulek], all on the east borders by the seashore, and all strongly fortified after the manner of {Moroni|moroni1}’s own fortifications, so that they afforded strongholds for {the Lamanites|lamanites} once taken (Alma 51:26).</p><p>The east-coast region had been settled and fortified at {Moroni|moroni1}’s direction: he drove {the Lamanites|lamanites} out of [the east wilderness|east-wilderness], sent inhabitants of [Zarahemla|zarahemla] to possess the land to the borders by the seashore, and had fortifications erected along the line between {Nephite|nephites} and {Lamanite|lamanites} lands (Alma 50:7-11). In the later {Nephite|nephites} recovery, {Moroni|moroni1} and {Pahoran|pahoran1} retook [Nephihah|nephihah] and pursued {the Lamanites|lamanites} from city to city down to the borders by the seashore, where they were met by {Lehi|lehi3} and {Teancum|teancum} (Alma 62:26-32).</p>",
+        "maps": [
+          {
+            "slug": "virtualscriptures",
+            "name": "BYU"
+          },
+          {
+            "slug": "mesoamerica",
+            "name": "중앙아메리카"
+          },
+          {
+            "slug": "malay",
+            "name": "말레이 반도"
+          },
+          {
+            "slug": "baja",
+            "name": "바하 반도"
+          },
+          {
+            "slug": "heartland",
+            "name": "미국 중서부"
+          },
+          {
+            "slug": "ces",
+            "name": "CES"
+          },
+          {
+            "slug": "internal",
+            "name": "내부 지도"
+          },
+          {
+            "slug": "fullmer",
+            "name": "Fullmer"
+          }
+        ],
+        "index": [
+          {
+            "slug": "war/111",
+            "ref": "앨마서 51장 26절",
+            "text": "Possessed by Amalickiah"
+          }
+        ]
+      },
+      {
+        "slug": "moriantum",
+        "name": "모리앤툼",
+        "info": "니파이인 지역",
+        "occupants": "N",
+        "type": "L",
+        "location": "D",
+        "description": "<p>Moriantum was a Nephite location named in a letter from {Mormon|mormon1} to his son {Moroni|moroni2} late in Nephite history. {Mormon|mormon1} reports that the {Nephites|nephites} at Moriantum had taken many of the daughters of the {Lamanites|lamanites} prisoner and deprived them of their chastity and virtue. They then murdered the women, torturing their bodies to death, and devoured their flesh, which {Mormon|mormon1} says they did as a token of bravery. He writes that this abomination of his own people exceeded that of the {Lamanites|lamanites} (Moroni 9:9-10).</p>",
+        "maps": [
+          {
+            "slug": "internal",
+            "name": "내부 지도"
+          },
+          {
+            "slug": "malay",
+            "name": "말레이 반도"
+          },
+          {
+            "slug": "mesoamerica",
+            "name": "중앙아메리카"
+          },
+          {
+            "slug": "heartland",
+            "name": "미국 중서부"
+          }
+        ],
+        "index": [
+          {
+            "slug": "downfall/82",
+            "ref": "모로나이서 9장 9~10절",
+            "text": "People in Moriantum take Lamanite daughters prisoner, rape and murder them"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,3486 @@
+{
+  "data": {
+    "labels": [
+      {
+        "key": "roj",
+        "val": "판사들의 통치 $1년"
+      },
+      {
+        "key": "roj_plural",
+        "val": "판사들의 통치 $1년"
+      },
+      {
+        "key": "dfj",
+        "val": "예루살렘이 떠난 이후 $1년"
+      },
+      {
+        "key": "dfj_plular",
+        "val": "예루살렘이 떠난 이후 $2년"
+      },
+      {
+        "key": "rozf",
+        "val": "젠니프의 통치 시작 이후 $1년"
+      },
+      {
+        "key": "rozf_plular",
+        "val": "젠니프의 통치 시작 이후 $1년"
+      },
+      {
+        "key": "coc",
+        "val": "그리스도의 나심 이후 $1년"
+      },
+      {
+        "key": "coc_plural",
+        "val": "그리스도의 나심 이후 $1년"
+      },
+      {
+        "key": "jaredite_generation",
+        "val": "야렛인 $1 세대 ($2)"
+      },
+      {
+        "key": "jaredite_generation_plural",
+        "val": "야렛인 $1 세대 ($2)"
+      },
+      {
+        "key": "usage_metaphorical",
+        "val": "Symbolic"
+      },
+      {
+        "key": "vox_mormon",
+        "val": "Mormon"
+      },
+      {
+        "key": "vox_king_noah",
+        "val": "King Noah"
+      },
+      {
+        "key": "vox_sherem",
+        "val": "Sherem"
+      },
+      {
+        "key": "vox_giddianhi",
+        "val": "Giddianhi"
+      },
+      {
+        "key": "debug",
+        "val": "Debug"
+      },
+      {
+        "key": "vox_jesus_christ",
+        "val": "Jesus Christ"
+      },
+      {
+        "key": "vox_nephite_army_that_conquers_zemnarihah",
+        "val": "Zemnarihah conquerors"
+      },
+      {
+        "key": "vox_the_daughters_of_ishmael",
+        "val": "The daughters of Ishmael"
+      },
+      {
+        "key": "vox_people_of_mosiah",
+        "val": "People of Mosiah"
+      },
+      {
+        "key": "vox_moroni1",
+        "val": "Moroni"
+      },
+      {
+        "key": "era_jaredite",
+        "val": "Jaredite"
+      },
+      {
+        "key": "vox_servant_of_king_lamoni",
+        "val": "Servant of King Lamoni"
+      },
+      {
+        "key": "vox_the_lord",
+        "val": "The Lord"
+      },
+      {
+        "key": "vox_people-who-reject-samuel-the-lamanites-message",
+        "val": "Samuel‘s Rejectors"
+      },
+      {
+        "key": "vox_abinadom",
+        "val": "Abinadom"
+      },
+      {
+        "key": "vox_jacob",
+        "val": "Jacob"
+      },
+      {
+        "key": "vox_seraph_1",
+        "val": "Seraphà"
+      },
+      {
+        "key": "vox_pahoran",
+        "val": "Pahoran"
+      },
+      {
+        "key": "vox_unidentified_prophet_quoted_by_nephi",
+        "val": "Nephi’s Prophet"
+      },
+      {
+        "key": "object_axis_category",
+        "val": "Category"
+      },
+      {
+        "key": "vox_people_at_the_temple_in_bountiful",
+        "val": "Bountiful temple crowd"
+      },
+      {
+        "key": "vox_priests_of_king_noah",
+        "val": "Priests of King Noah"
+      },
+      {
+        "key": "vox_joshua",
+        "val": "Joshua"
+      },
+      {
+        "key": "vox_angel_to_amulek",
+        "val": "Angel to Amulek"
+      },
+      {
+        "key": "vox_joseph",
+        "val": "Joseph"
+      },
+      {
+        "key": "vox_omni",
+        "val": "Omni"
+      },
+      {
+        "key": "studying_now",
+        "val": "Studying Now"
+      },
+      {
+        "key": "era_timeless",
+        "val": "Timeless"
+      },
+      {
+        "key": "vox_sariah",
+        "val": "Sariah"
+      },
+      {
+        "key": "vox_a_cry_throughout_the_land_of_the_jaredites",
+        "val": "Jaredite cry"
+      },
+      {
+        "key": "vox_king_anti-nephi-lehi",
+        "val": "King Anti-Nephi-Lehi"
+      },
+      {
+        "key": "object_cat_tool",
+        "val": "Tool"
+      },
+      {
+        "key": "vox_the_unlearned",
+        "val": "The unlearned"
+      },
+      {
+        "key": "vox_multitude_at_the_prison",
+        "val": "Multitude at the prison"
+      },
+      {
+        "key": "vox_laman4",
+        "val": "Laman"
+      },
+      {
+        "key": "vox_zoramites",
+        "val": "Zoramites"
+      },
+      {
+        "key": "start_typing_to_search",
+        "val": "Start typing to search"
+      },
+      {
+        "key": "playback_music_volume",
+        "val": "Music Volume"
+      },
+      {
+        "key": "saved",
+        "val": "Saved"
+      },
+      {
+        "key": "vox_samuel_the_lamanite",
+        "val": "Samuel the Lamanite"
+      },
+      {
+        "key": "vox_zeniff",
+        "val": "Zeniff"
+      },
+      {
+        "key": "bom_presents",
+        "val": "몰몬경•KR <small><em>선보</em></small>"
+      },
+      {
+        "key": "theater_covering_x",
+        "val": "내용: $1"
+      },
+      {
+        "key": "theater_x_passages_from_y",
+        "val": "$2에서 나오는 $1가지 구절"
+      },
+      {
+        "key": "theater_up_next",
+        "val": "다음은..."
+      },
+      {
+        "key": "theater_list_and",
+        "val": "그리고"
+      },
+      {
+        "key": "theater_press_play",
+        "val": "재생"
+      },
+      {
+        "key": "playback_rate",
+        "val": "재생 속도"
+      },
+      {
+        "key": "view_in_theater",
+        "val": "극장에서 보기"
+      },
+      {
+        "key": "playback_volume",
+        "val": "볼륨"
+      },
+      {
+        "key": "background_music",
+        "val": "배경 음악"
+      },
+      {
+        "key": "theater_finish_help",
+        "val": "이 세션의 끝에 도달했습니다. 사용자 요약 페이지로 리디렉션될 것이거나, 계속해서 읽기를 선택할 수 있습니다."
+      },
+      {
+        "key": "theater_crossroads_help",
+        "val": "이 지점에서 이야기는 병렬 내러티브로 분기됩니다. 현재 내러티브를 계속할 수도 있고, 동시에 진행되는 다른 내러티브를 탐험할 수도 있습니다."
+      },
+      {
+        "key": "theater_contained_help",
+        "val": "이 섹션에는 독립적인 이야기가 있습니다. 주 이야기를 넘어서거나, 독립적인 콘텐츠를 탐색하기 위해 이야기에 진입할 수 있습니다."
+      },
+      {
+        "key": "era_nephite",
+        "val": "Nephite"
+      },
+      {
+        "key": "current_zoom",
+        "val": "Current zoom"
+      },
+      {
+        "key": "vox_people_of_king_noah",
+        "val": "People of King Noah"
+      },
+      {
+        "key": "object_cat_animal",
+        "val": "Animal"
+      },
+      {
+        "key": "vox_voice_of_the_people_in_alma_27",
+        "val": "The voice of the people"
+      },
+      {
+        "key": "delete",
+        "val": "Delete"
+      },
+      {
+        "key": "vox_disciples",
+        "val": "Disciples"
+      },
+      {
+        "key": "prov_generic",
+        "val": "Generic"
+      },
+      {
+        "key": "vox_people_of_ammonihah",
+        "val": "People of Ammonihah"
+      },
+      {
+        "key": "vox_people_of_alma1",
+        "val": "People of Alma"
+      },
+      {
+        "key": "vox_angel_to_king_benjamin",
+        "val": "Angel to King Benjamin"
+      },
+      {
+        "key": "string",
+        "val": "String"
+      },
+      {
+        "key": "usage_mixed",
+        "val": "Mixed"
+      },
+      {
+        "key": "vox_stripling_soldiers",
+        "val": "Stripling soldiers"
+      },
+      {
+        "key": "vox_angel_to_samuel_the_lamanite",
+        "val": "Angel to Samuel the Lamanite"
+      },
+      {
+        "key": "prov_israelite",
+        "val": "Israelite"
+      },
+      {
+        "key": "vox_gidgiddoni",
+        "val": "Gidgiddoni"
+      },
+      {
+        "key": "vox_alma1",
+        "val": "Alma"
+      },
+      {
+        "key": "vox_servant-of-helaman3",
+        "val": "Servant of Helaman"
+      },
+      {
+        "key": "vox_moroni2",
+        "val": "Moroni"
+      },
+      {
+        "key": "vox_angel_to_many_people",
+        "val": "Angel to many people"
+      },
+      {
+        "key": "prov_divine",
+        "val": "Divine"
+      },
+      {
+        "key": "vox_people_of_moronihah_lamenting_destruction",
+        "val": "Moronihah lamenters"
+      },
+      {
+        "key": "vox_amaleki",
+        "val": "Amaleki"
+      },
+      {
+        "key": "study_question_simpler",
+        "val": "더 간단한 말로 써주세요."
+      },
+      {
+        "key": "vox_king_benjamin",
+        "val": "King Benjamin"
+      },
+      {
+        "key": "era_post_christ",
+        "val": "Post-Christ"
+      },
+      {
+        "key": "vox_brethren_in_the_land_of_zarahemla",
+        "val": "Zarahemla brethren"
+      },
+      {
+        "key": "vox_jared1",
+        "val": "Jared"
+      },
+      {
+        "key": "vox_sons_of_mosiah",
+        "val": "Sons of Mosiah"
+      },
+      {
+        "key": "vox_prophets_who_published_good_tidings",
+        "val": "Good-tidings prophets"
+      },
+      {
+        "key": "vox_amalekite",
+        "val": "Amalekite"
+      },
+      {
+        "key": "vox_malachi",
+        "val": "Malachi"
+      },
+      {
+        "key": "vox_isaiah",
+        "val": "Isaiah"
+      },
+      {
+        "key": "vox_jared2",
+        "val": "Jared"
+      },
+      {
+        "key": "era_lehite_departure",
+        "val": "Lehite Departure"
+      },
+      {
+        "key": "object_axis_era",
+        "val": "Era"
+      },
+      {
+        "key": "vox_spies_from_the_nephite_armies",
+        "val": "Nephite spies"
+      },
+      {
+        "key": "vox_others-who-were-at-nephi2s-trial",
+        "val": "Nephi’s-trial others"
+      },
+      {
+        "key": "search_for_a_place",
+        "val": "Search for a place"
+      },
+      {
+        "key": "place_on_map",
+        "val": "Place on map"
+      },
+      {
+        "key": "cross_reference",
+        "val": "교차"
+      },
+      {
+        "key": "vox_people_of_zarahemla_lamenting_destruction",
+        "val": "Zarahemla lamenters"
+      },
+      {
+        "key": "study_question_detail",
+        "val": "자세하게 설명해주세요."
+      },
+      {
+        "key": "likes",
+        "val": "Likes"
+      },
+      {
+        "key": "mapgroup_world",
+        "val": "World"
+      },
+      {
+        "key": "menu_home",
+        "val": "홈"
+      },
+      {
+        "key": "menu_contents",
+        "val": "목차"
+      },
+      {
+        "key": "bot_added",
+        "val": "$1 연결되었습니다"
+      },
+      {
+        "key": "menu_text",
+        "val": "전체 내용"
+      },
+      {
+        "key": "menu_timeline",
+        "val": "연대표"
+      },
+      {
+        "key": "menu_map",
+        "val": "지도"
+      },
+      {
+        "key": "menu_relationships",
+        "val": "장소"
+      },
+      {
+        "key": "menu_places",
+        "val": "장소"
+      },
+      {
+        "key": "menu_people",
+        "val": "인물"
+      },
+      {
+        "key": "menu_network",
+        "val": "관계도"
+      },
+      {
+        "key": "bot_select",
+        "val": "연결하기"
+      },
+      {
+        "key": "menu_fax",
+        "val": "사본"
+      },
+      {
+        "key": "plugin_bot",
+        "val": "학습 봇을 연결하기"
+      },
+      {
+        "key": "bot_info",
+        "val": "봇은 주어진 구절에 대한 질문에 답하는 것을 훈련받았습니다."
+      },
+      {
+        "key": "menu_about",
+        "val": "소개"
+      },
+      {
+        "key": "menu_theater",
+        "val": "극장"
+      },
+      {
+        "key": "bot_unplug",
+        "val": "해제하기"
+      },
+      {
+        "key": "bot_plugging",
+        "val": "연결 중..."
+      },
+      {
+        "key": "bot_unplugging",
+        "val": "해제 중..."
+      },
+      {
+        "key": "bot_unplugged",
+        "val": "$1 연결 해제되었습니다"
+      },
+      {
+        "key": "menu_contact",
+        "val": "연락"
+      },
+      {
+        "key": "menu_search",
+        "val": "검색"
+      },
+      {
+        "key": "audio_narration",
+        "val": "음성"
+      },
+      {
+        "key": "box_annoations",
+        "val": "주석"
+      },
+      {
+        "key": "box_commentary",
+        "val": "해설"
+      },
+      {
+        "key": "box_image",
+        "val": "이미지"
+      },
+      {
+        "key": "box_video",
+        "val": "동영상"
+      },
+      {
+        "key": "bot_intro_x",
+        "val": "저는 $1라는 이름의 봇입니다. 여러분이 공부하는 데 도움을 주기 위해 여기 있습니다. 구절에 대한 여러분의 댓글에 답하겠습니다."
+      },
+      {
+        "key": "box_music",
+        "val": "음악"
+      },
+      {
+        "key": "select_book",
+        "val": "책을 선택"
+      },
+      {
+        "key": "1_ne",
+        "val": "니파이전서"
+      },
+      {
+        "key": "2_ne",
+        "val": "니파이후서"
+      },
+      {
+        "key": "jacob",
+        "val": "야곱서"
+      },
+      {
+        "key": "enos",
+        "val": "이노스서"
+      },
+      {
+        "key": "jarom",
+        "val": "예이롬서"
+      },
+      {
+        "key": "omni",
+        "val": "옴나이서"
+      },
+      {
+        "key": "w_of_m",
+        "val": "몰몬의 말씀"
+      },
+      {
+        "key": "mosiah",
+        "val": "모사이야서"
+      },
+      {
+        "key": "alma",
+        "val": "앨마서"
+      },
+      {
+        "key": "hel",
+        "val": "힐라맨서"
+      },
+      {
+        "key": "3_ne",
+        "val": "제3니파이"
+      },
+      {
+        "key": "4_ne",
+        "val": "제4니파이"
+      },
+      {
+        "key": "morm",
+        "val": "몰몬서"
+      },
+      {
+        "key": "ether",
+        "val": "이더서"
+      },
+      {
+        "key": "moro",
+        "val": "모로나이서"
+      },
+      {
+        "key": "js_chapter",
+        "val": "장"
+      },
+      {
+        "key": "js_verse",
+        "val": "절"
+      },
+      {
+        "key": "short_title",
+        "val": "몰몬경"
+      },
+      {
+        "key": "home_heading",
+        "val": "몰몬경 학습 자원"
+      },
+      {
+        "key": "home_title",
+        "val": "몰몬경·KR"
+      },
+      {
+        "key": "lang_select",
+        "val": "언어 선택하기"
+      },
+      {
+        "key": "home_subtitle",
+        "val": "몰몬경 통합 학습 지원"
+      },
+      {
+        "key": "js_chapter_num",
+        "val": "제 {#} 장"
+      },
+      {
+        "key": "js_verse_num",
+        "val": "{#} 절"
+      },
+      {
+        "key": "user",
+        "val": "유저"
+      },
+      {
+        "key": "progress",
+        "val": "진도"
+      },
+      {
+        "key": "guest",
+        "val": "게스트"
+      },
+      {
+        "key": "not_started",
+        "val": "시작되지 않음"
+      },
+      {
+        "key": "username",
+        "val": "아이디"
+      },
+      {
+        "key": "password",
+        "val": "비밀번호"
+      },
+      {
+        "key": "guest_user_progress",
+        "val": "유저 진척 (비회원)"
+      },
+      {
+        "key": "user_progress",
+        "val": "유저 진척"
+      },
+      {
+        "key": "sign_up",
+        "val": "회원 가입"
+      },
+      {
+        "key": "user_login",
+        "val": "로그인"
+      },
+      {
+        "key": "progress_overview_and_breakdown",
+        "val": "진척 개요 및 내역"
+      },
+      {
+        "key": "clear_cache",
+        "val": "캐시 지우기"
+      },
+      {
+        "key": "clearing_cache",
+        "val": "캐시를 지우는 중..."
+      },
+      {
+        "key": "your_study_log",
+        "val": "학습 기록"
+      },
+      {
+        "key": "total_time_studied",
+        "val": "총 학습 시간"
+      },
+      {
+        "key": "number_of_study_sessions",
+        "val": "학습 세션의 개수"
+      },
+      {
+        "key": "leader_board",
+        "val": "순위표"
+      },
+      {
+        "key": "most_time_spent",
+        "val": "접속 시간별 순위"
+      },
+      {
+        "key": "most_completed",
+        "val": "진척 상황 순위"
+      },
+      {
+        "key": "recent_finishers",
+        "val": "최근 수료자"
+      },
+      {
+        "key": "date",
+        "val": "날짜"
+      },
+      {
+        "key": "sign_in",
+        "val": "로그인"
+      },
+      {
+        "key": "sign_out",
+        "val": "로그아웃"
+      },
+      {
+        "key": "hours_min_format",
+        "val": "{#} 시간 {#} 분"
+      },
+      {
+        "key": "hrs",
+        "val": "시간"
+      },
+      {
+        "key": "mins",
+        "val": "분"
+      },
+      {
+        "key": "completed_time",
+        "val": "{###}에 몰몬경을 마쳤습니다"
+      },
+      {
+        "key": "timeline_title",
+        "val": "연대표"
+      },
+      {
+        "key": "table_of_contents",
+        "val": "목차"
+      },
+      {
+        "key": "timeline_event",
+        "val": "연대표의 사건"
+      },
+      {
+        "key": "db_places",
+        "val": "몰몬경에 나오는 모든 장소의 데이터베이스"
+      },
+      {
+        "key": "db_people",
+        "val": "몰몬경에 나오는 모든 인물 데이터베이스"
+      },
+      {
+        "key": "social_identification",
+        "val": "사회 식별"
+      },
+      {
+        "key": "biblical_israelite",
+        "val": "성경의 / 이스라엘인"
+      },
+      {
+        "key": "jaredite",
+        "val": "야렛인"
+      },
+      {
+        "key": "nephite",
+        "val": "니파이인"
+      },
+      {
+        "key": "lamanite",
+        "val": "레이맨인"
+      },
+      {
+        "key": "gadianton",
+        "val": "개다이앤톤"
+      },
+      {
+        "key": "other_unknown",
+        "val": "기타 / 알수없음"
+      },
+      {
+        "key": "social_classification",
+        "val": "사회 분류"
+      },
+      {
+        "key": "royalty",
+        "val": "왕족"
+      },
+      {
+        "key": "priest_cleric",
+        "val": "제사"
+      },
+      {
+        "key": "record_keeper",
+        "val": "기록 보관 인"
+      },
+      {
+        "key": "warrior",
+        "val": "전사"
+      },
+      {
+        "key": "judge",
+        "val": "판사"
+      },
+      {
+        "key": "time_ago_date_format",
+        "val": "YYYY년 M월 D일 hh:mm"
+      },
+      {
+        "key": "individual",
+        "val": "개인"
+      },
+      {
+        "key": "group",
+        "val": "그룹"
+      },
+      {
+        "key": "organization",
+        "val": "조직"
+      },
+      {
+        "key": "society",
+        "val": "사회"
+      },
+      {
+        "key": "civilization",
+        "val": "문명"
+      },
+      {
+        "key": "select all",
+        "val": "모두 선택"
+      },
+      {
+        "key": "clear_all",
+        "val": "모두 지우기"
+      },
+      {
+        "key": "filters",
+        "val": "필터"
+      },
+      {
+        "key": "results",
+        "val": "결과"
+      },
+      {
+        "key": "location_type",
+        "val": "위치 유형"
+      },
+      {
+        "key": "nations",
+        "val": "나라"
+      },
+      {
+        "key": "lands",
+        "val": "땅"
+      },
+      {
+        "key": "cities",
+        "val": "성"
+      },
+      {
+        "key": "towns_and_places",
+        "val": "마을 및 장소"
+      },
+      {
+        "key": "geographic features",
+        "val": "지리적 특징"
+      },
+      {
+        "key": "open",
+        "val": "오픈"
+      },
+      {
+        "key": "private",
+        "val": "비공개"
+      },
+      {
+        "key": "public",
+        "val": "공개"
+      },
+      {
+        "key": "members",
+        "val": "구성원"
+      },
+      {
+        "key": "teaser",
+        "val": "역동적이고 상호작용적이며 웹 친화적인 모르몬 서 프레젠테이션입니다. 계정을 만들고 진행 상황을 추적하세요."
+      },
+      {
+        "key": "greater_region",
+        "val": "광역 지역"
+      },
+      {
+        "key": "old_world",
+        "val": "구대륙"
+      },
+      {
+        "key": "land_of_desolation",
+        "val": "황무 땅"
+      },
+      {
+        "key": "land_bountiful",
+        "val": "풍요 땅"
+      },
+      {
+        "key": "land_of_zarahemla",
+        "val": "제이라헤믈라 땅"
+      },
+      {
+        "key": "land_of_nephi",
+        "val": "니파이의 땅"
+      },
+      {
+        "key": "leaderboard",
+        "val": "리더보드"
+      },
+      {
+        "key": "occupants",
+        "val": "거주자"
+      },
+      {
+        "key": "israelites",
+        "val": "이스라엘인"
+      },
+      {
+        "key": "jaredites",
+        "val": "야렛인"
+      },
+      {
+        "key": "mulekites",
+        "val": "뮬레크인"
+      },
+      {
+        "key": "nephites",
+        "val": "니파이인"
+      },
+      {
+        "key": "lamanites",
+        "val": "레이맨인"
+      },
+      {
+        "key": "today",
+        "val": "오늘"
+      },
+      {
+        "key": "relationship_network_visualization",
+        "val": "시각화 된 관계도"
+      },
+      {
+        "key": "facsimiles_of_historic_book_of_mormon_editions",
+        "val": "몰몬겨의 팩시밀리"
+      },
+      {
+        "key": "commercial_editions",
+        "val": "상업용"
+      },
+      {
+        "key": "about_bookofmormononline",
+        "val": "몰몰경·KR 소개"
+      },
+      {
+        "key": "what_is_bookofmormononline",
+        "val": "몰몰경·KR은 무엇인가?"
+      },
+      {
+        "key": "what_is_the_book_of_mormon",
+        "val": "몰몬경은 무엇인가?"
+      },
+      {
+        "key": "who_created_bookofmormononline",
+        "val": "몰몰경·KR를 만든 사람이 누군가?"
+      },
+      {
+        "key": "disclaimer",
+        "val": "부인 성명"
+      },
+      {
+        "key": "menu_audit",
+        "val": "번역"
+      },
+      {
+        "key": "contact_form",
+        "val": "문의 양식"
+      },
+      {
+        "key": "menu_more",
+        "val": "키타"
+      },
+      {
+        "key": "title_more",
+        "val": "추가 내용"
+      },
+      {
+        "key": "your_name",
+        "val": "이름"
+      },
+      {
+        "key": "your_email_address",
+        "val": "이메일 주소"
+      },
+      {
+        "key": "reason_for_contact",
+        "val": "연락 이유"
+      },
+      {
+        "key": "comment",
+        "val": "댓글"
+      },
+      {
+        "key": "question",
+        "val": "질문"
+      },
+      {
+        "key": "error_to_report",
+        "val": "경고할 오류"
+      },
+      {
+        "key": "hate_mail",
+        "val": "모욕적인 전자 메일"
+      },
+      {
+        "key": "js_please_enter_your_name",
+        "val": "이름을 입력하십시오."
+      },
+      {
+        "key": "js_please_a_message",
+        "val": "메시지를 입력하세요."
+      },
+      {
+        "key": "js_please_enter_a_valid_email_address",
+        "val": "올바른 이메일 주소를 입력하세요"
+      },
+      {
+        "key": "js_signing_up",
+        "val": "가입하는중 ..."
+      },
+      {
+        "key": "js_signing_in",
+        "val": "로그인중 ..."
+      },
+      {
+        "key": "js_please_fill_out_all_the_required_fields",
+        "val": "모든 필수 필드를 입력 해주세요!"
+      },
+      {
+        "key": "yesterday",
+        "val": "어제"
+      },
+      {
+        "key": "days_ago",
+        "val": "$1일 전"
+      },
+      {
+        "key": "study_log",
+        "val": "학습 일지"
+      },
+      {
+        "key": "js_image",
+        "val": "이미지"
+      },
+      {
+        "key": "js_video",
+        "val": "동영상"
+      },
+      {
+        "key": "js_music",
+        "val": "음악"
+      },
+      {
+        "key": "js_view_event_on_timeline",
+        "val": "타임라인에서 보기"
+      },
+      {
+        "key": "js_internal_chronological_marker",
+        "val": "연대순 표식"
+      },
+      {
+        "key": "maplist_building_map",
+        "val": "지도를 만드는중 ..."
+      },
+      {
+        "key": "maplist_imaging_terrain",
+        "val": "지형을 시각화중 ..."
+      },
+      {
+        "key": "maplist_making_labels",
+        "val": "라벨 만들는중 ..."
+      },
+      {
+        "key": "maplist_measuring_distances",
+        "val": "거리 측정중 ..."
+      },
+      {
+        "key": "maplist_calculating_route",
+        "val": "경로를 계산하는중 ..."
+      },
+      {
+        "key": "maplist_picking_colors",
+        "val": "색상을 선택하는중 ..."
+      },
+      {
+        "key": "maplist_chasing_lamanites",
+        "val": "레이맨인을 쫓는중 ..."
+      },
+      {
+        "key": "maplist_tightening_dishes",
+        "val": "접시를 물샐틈없애는중"
+      },
+      {
+        "key": "maplist_herding_cureloms",
+        "val": "쿠렐롬을 방목하는중 ..."
+      },
+      {
+        "key": "maplist_locating_cities",
+        "val": "도시를 찾는중 ..."
+      },
+      {
+        "key": "my_progress",
+        "val": "진척"
+      },
+      {
+        "key": "complete",
+        "val": "완성"
+      },
+      {
+        "key": "time_spent",
+        "val": "보낸 시간"
+      },
+      {
+        "key": "sup_appen",
+        "val": "보충 및 부록"
+      },
+      {
+        "key": "up_incorrect",
+        "val": "유저 이름 또는 암호가 잘못되었습니다."
+      },
+      {
+        "key": "progress_for",
+        "val": "{user}의 유저 진척"
+      },
+      {
+        "key": "incomplete",
+        "val": "미완료"
+      },
+      {
+        "key": "started",
+        "val": "시작"
+      },
+      {
+        "key": "min",
+        "val": "분"
+      },
+      {
+        "key": "hr",
+        "val": "시간"
+      },
+      {
+        "key": "menu_history",
+        "val": "역사"
+      },
+      {
+        "key": "menu_analysis",
+        "val": "분석"
+      },
+      {
+        "key": "menu_study",
+        "val": "학습"
+      },
+      {
+        "key": "pasword_requirements",
+        "val": "비밀번호는 최소 8자, 숫자 1자, 소문자 및 대문자, 특수 문자를 하나 이상 포함해야 합니다."
+      },
+      {
+        "key": "action_cancel",
+        "val": "취소"
+      },
+      {
+        "key": "action_delete",
+        "val": "삭제"
+      },
+      {
+        "key": "action_edit",
+        "val": "수정"
+      },
+      {
+        "key": "action_like",
+        "val": "좋아요"
+      },
+      {
+        "key": "action_reply",
+        "val": "답글 달기"
+      },
+      {
+        "key": "action_unlike",
+        "val": "좋아요 취소"
+      },
+      {
+        "key": "cancel",
+        "val": "취소"
+      },
+      {
+        "key": "change_password",
+        "val": "비밀번호 변경"
+      },
+      {
+        "key": "coming_soon",
+        "val": "근일 개봉"
+      },
+      {
+        "key": "completed",
+        "val": "완료"
+      },
+      {
+        "key": "completed_on",
+        "val": "완료"
+      },
+      {
+        "key": "confirm_password",
+        "val": "비밀번호 확인"
+      },
+      {
+        "key": "connected_accounts",
+        "val": "연결된 계정"
+      },
+      {
+        "key": "contact",
+        "val": "연락처"
+      },
+      {
+        "key": "copied_to_clipboard",
+        "val": "클립보드에 복사됨"
+      },
+      {
+        "key": "date_started",
+        "val": "가입 날짜"
+      },
+      {
+        "key": "discussion",
+        "val": "토론"
+      },
+      {
+        "key": "tab_progress",
+        "val": "진도"
+      },
+      {
+        "key": "tab_prefs",
+        "val": "설정"
+      },
+      {
+        "key": "tab_profile",
+        "val": "프로필"
+      },
+      {
+        "key": "edit_profile",
+        "val": "프로필 수정"
+      },
+      {
+        "key": "email",
+        "val": "이메일"
+      },
+      {
+        "key": "facebook",
+        "val": "페이스북"
+      },
+      {
+        "key": "google",
+        "val": "구글"
+      },
+      {
+        "key": "instagram",
+        "val": "인스타그램"
+      },
+      {
+        "key": "invite",
+        "val": "초대"
+      },
+      {
+        "key": "last_seen",
+        "val": "최근접속일시"
+      },
+      {
+        "key": "loading_groups",
+        "val": "스터디 그룹들 로딩중"
+      },
+      {
+        "key": "log_out",
+        "val": "로그아웃"
+      },
+      {
+        "key": "login",
+        "val": "로그인"
+      },
+      {
+        "key": "message_thread",
+        "val": "글타래"
+      },
+      {
+        "key": "name",
+        "val": "이름"
+      },
+      {
+        "key": "new_password",
+        "val": "새 비밀번호"
+      },
+      {
+        "key": "notebook",
+        "val": "메모장"
+      },
+      {
+        "key": "notifications",
+        "val": "알림"
+      },
+      {
+        "key": "password_login",
+        "val": "회원 로그인"
+      },
+      {
+        "key": "password_no_mach",
+        "val": "암호가 일치하지 않습니다."
+      },
+      {
+        "key": "object_cat_weapon",
+        "val": "Weapon"
+      },
+      {
+        "key": "vox_alma2",
+        "val": "Alma"
+      },
+      {
+        "key": "vox_servants_of_father_of_lamoni",
+        "val": "Servants of father of Lamoni"
+      },
+      {
+        "key": "vox_ammon1",
+        "val": "Ammon"
+      },
+      {
+        "key": "vox_king_of_the_lamanites_in_mosiah_20",
+        "val": "Lamanite King"
+      },
+      {
+        "key": "vox_amalickiah",
+        "val": "Amalickiah"
+      },
+      {
+        "key": "vox_chemish",
+        "val": "Chemish"
+      },
+      {
+        "key": "vox_the_learned",
+        "val": "The learned"
+      },
+      {
+        "key": "bot",
+        "val": "Bot"
+      },
+      {
+        "key": "vox_brother_of_jared1",
+        "val": "Brother of Jared"
+      },
+      {
+        "key": "vox_lamanite_guards",
+        "val": "Lamanite guards"
+      },
+      {
+        "key": "vox_the_spirit",
+        "val": "The Spirit"
+      },
+      {
+        "key": "vox_people_at_the_garden_of_nephi2",
+        "val": "People at the garden of Nephi"
+      },
+      {
+        "key": "era_old_world",
+        "val": "Old World"
+      },
+      {
+        "key": "prov_lehite",
+        "val": "Lehite"
+      },
+      {
+        "key": "vox_akish",
+        "val": "Akish"
+      },
+      {
+        "key": "upload_photo",
+        "val": "이미지 업로드"
+      },
+      {
+        "key": "edit_image",
+        "val": "이미지 수정"
+      },
+      {
+        "key": "select_image",
+        "val": "이미지 선택"
+      },
+      {
+        "key": "select_paste_drop_image",
+        "val": "이미지 선택, 삭제 또는 붙여넣기"
+      },
+      {
+        "key": "img_limits",
+        "val": "프로필 이미지는 최대 25MB의 JPG(.jpg), JPEG(.jpeg) 또는 PNG(.png) 파일일 수 있습니다."
+      },
+      {
+        "key": "highlight_msg",
+        "val": "강조 표시된 내용"
+      },
+      {},
+      {
+        "key": "victory_congrats",
+        "val": "축하합니다!"
+      },
+      {
+        "key": "victory_completed",
+        "val": "몰몬경을 처음부터 끝까지 읽으셨습니다!"
+      },
+      {
+        "key": "victory_started_x",
+        "val": "$1에 시작하셨습니다."
+      },
+      {
+        "key": "victory_duration_x",
+        "val": "$1 걸렸어요"
+      },
+      {
+        "key": "victory_sessions_x",
+        "val": "$1번의 학습 시간을 가지셨습니다."
+      },
+      {
+        "key": "from_page",
+        "val": "제목"
+      },
+      {
+        "key": "from_section",
+        "val": "소제목"
+      },
+      {
+        "key": "previous",
+        "val": "이전"
+      },
+      {
+        "key": "next",
+        "val": "다음"
+      },
+      {
+        "key": "vox_enos",
+        "val": "Enos"
+      },
+      {
+        "key": "study_question_meaning",
+        "val": "이게 무슨 의미인가요?"
+      },
+      {
+        "key": "mapgroup_internal",
+        "val": "Internal"
+      },
+      {
+        "key": "object_cat_metal",
+        "val": "Metal"
+      },
+      {
+        "key": "era_christ_era",
+        "val": "Christ Era"
+      },
+      {
+        "key": "Hide",
+        "val": "Hide"
+      },
+      {
+        "key": "prov_jaredite",
+        "val": "Jaredite"
+      },
+      {
+        "key": "menu_objects",
+        "val": "Objects"
+      },
+      {
+        "key": "vox_gentiles",
+        "val": "Gentiles"
+      },
+      {
+        "key": "passwords_no_match",
+        "val": "비밀번호가 일치하지 않습니다"
+      },
+      {
+        "key": "patreon",
+        "val": "파트레온"
+      },
+      {
+        "key": "privacy_policy_review_x",
+        "val": "$1을 검토하십시오."
+      },
+      {
+        "key": "read_only",
+        "val": "읽기 전용 모드"
+      },
+      {
+        "key": "reply_count_plural",
+        "val": "답글 1개"
+      },
+      {
+        "key": "reply_count_singular",
+        "val": "답글 $2개"
+      },
+      {
+        "key": "save",
+        "val": "저장"
+      },
+      {
+        "key": "studygroup_invite",
+        "val": "$1 그룹 초대장"
+      },
+      {
+        "key": "share_group_link",
+        "val": "이 비밀 링크를 공유하여 다른 사용자를 초대합니다."
+      },
+      {
+        "key": "signup",
+        "val": "가입"
+      },
+      {
+        "key": "social_login",
+        "val": "SNS 로그인"
+      },
+      {
+        "key": "social_media",
+        "val": "SNS"
+      },
+      {
+        "key": "study_hall",
+        "val": "학습실"
+      },
+      {
+        "key": "study_history",
+        "val": "학습 기록"
+      },
+      {
+        "key": "study_history_for",
+        "val": "$1님의 학습 기록"
+      },
+      {
+        "key": "study_progress",
+        "val": "학습 진행 상태"
+      },
+      {
+        "key": "study_sessions",
+        "val": "학습 횟수"
+      },
+      {
+        "key": "study_time",
+        "val": "총 학습 시간"
+      },
+      {
+        "key": "title_analysis",
+        "val": "몰몬경 분석서"
+      },
+      {
+        "key": "title_facsimilies",
+        "val": "몰몬경 전의 판 사본"
+      },
+      {
+        "key": "title_history",
+        "val": "몰몬경에 대한 역사적 출처"
+      },
+      {
+        "key": "archived_document",
+        "val": "역사적 문서"
+      },
+      {
+        "key": "title_search_results",
+        "val": "$1에 대한 검색 결과"
+      },
+      {
+        "key": "title_study_history",
+        "val": "학습 기록"
+      },
+      {
+        "key": "title_tos",
+        "val": "몰몬경.KR—서비스 약관"
+      },
+      {
+        "key": "tooltip_admin",
+        "val": "스터디 그룹 관리"
+      },
+      {
+        "key": "tooltip_discussion",
+        "val": "스터디 그룹 토론"
+      },
+      {
+        "key": "tooltip_notebook",
+        "val": "스터디 그룹 노트북"
+      },
+      {
+        "key": "tooltip_progress",
+        "val": "스터디 그룹 진행률"
+      },
+      {
+        "key": "tos_agree",
+        "val": "가입하면 $1 서비스 약관에 동의하는 것입니다."
+      },
+      {
+        "key": "trophy_case",
+        "val": "트로피 보관함"
+      },
+      {
+        "key": "twitter",
+        "val": "트위터"
+      },
+      {
+        "key": "zip_code",
+        "val": "우편번호"
+      },
+      {
+        "key": "vox_moroni1s-soldier",
+        "val": "Moroni’s soldier"
+      },
+      {
+        "key": "place_label",
+        "val": "Place label"
+      },
+      {
+        "key": "vox_gideon",
+        "val": "Gideon"
+      },
+      {
+        "key": "x_members",
+        "val": "$1명"
+      },
+      {
+        "key": "x_member",
+        "val": "$1명"
+      },
+      {
+        "key": "study_groups_are",
+        "val": "스터디 그룹은 사람들이 모여 자신들의 발견과 통찰, 노트 필기, 공부 진행 상황 등을 공유하고 토론하는 공간입니다."
+      },
+      {
+        "key": "need_an_account",
+        "val": "계정이 필요하나요?"
+      },
+      {
+        "key": "create_or_join_groups",
+        "val": "속하신 스터디 그룹은 없습니다. 그룹을 가입하거나 새로운 그룹 만드십시오."
+      },
+      {
+        "key": "account_required",
+        "val": "계속하려면 사용자 계정이 필요합니다."
+      },
+      {
+        "key": "have_an_account",
+        "val": "계정이 있나요?"
+      },
+      {
+        "key": "admin",
+        "val": "관리"
+      },
+      {
+        "key": "x_is_writing",
+        "val": "$1님이 댓글을 쓰고 있어요..."
+      },
+      {
+        "key": "remove_admin",
+        "val": "관리자 권한 정지"
+      },
+      {
+        "key": "logging_in",
+        "val": "로그인중"
+      },
+      {
+        "key": "last_studied",
+        "val": "최근 학습"
+      },
+      {
+        "key": "currently_studying",
+        "val": "현재 학습 지점"
+      },
+      {
+        "key": "x_comment_in_y",
+        "val": "$1님이 $2에서 남긴 댓글"
+      },
+      {
+        "key": "send_dm",
+        "val": "쪽지 보내기"
+      },
+      {
+        "key": "current_group",
+        "val": "현재 그룹"
+      },
+      {
+        "key": "open_study_hall",
+        "val": "학습실 열기"
+      },
+      {
+        "key": "start_call",
+        "val": "음성통화"
+      },
+      {
+        "key": "get_invite_link",
+        "val": "초대 링크 공유"
+      },
+      {
+        "key": "leave_group",
+        "val": "그룹 탈퇴"
+      },
+      {
+        "key": "loading_group_page_comments",
+        "val": "스터디 그룹 댓글 로딩중"
+      },
+      {
+        "key": "commentary_on",
+        "val": "$1에 대한 해설"
+      },
+      {
+        "key": "commentary_on_x_by_y",
+        "val": "$1에 대한 해설 • $2"
+      },
+      {
+        "key": "art_on_x",
+        "val": "$1에 대한 이미지"
+      },
+      {
+        "key": "loading_commentary",
+        "val": "해설 로딩중"
+      },
+      {
+        "key": "loading_x",
+        "val": "$1 로딩중"
+      },
+      {
+        "key": "person",
+        "val": "인물"
+      },
+      {
+        "key": "place",
+        "val": "장소"
+      },
+      {
+        "key": "facsimile_of_x",
+        "val": "$1의 사본 스캔"
+      },
+      {
+        "key": "say_something",
+        "val": "댓글을 입력하세요..."
+      },
+      {
+        "key": "go_to_last_msg",
+        "val": "최근 메시지"
+      },
+      {
+        "key": "join_call",
+        "val": "음성 대화 참여"
+      },
+      {
+        "key": "no_notifications",
+        "val": "알림 없음"
+      },
+      {
+        "key": "loading_previous_messages",
+        "val": "이전 메시지 로딩"
+      },
+      {
+        "key": "dms_with_x",
+        "val": "$1님과의 비공개 대화"
+      },
+      {
+        "key": "study_groups",
+        "val": "스터디 그룹"
+      },
+      {
+        "key": "invitation_not_found",
+        "val": "초대를 찾을 수 없습니다."
+      },
+      {
+        "key": "user_profile",
+        "val": "사용자 프로필"
+      },
+      {
+        "key": "login_for_history",
+        "val": "스터디 기록을 보려면 계정에 등록하십시오."
+      },
+      {
+        "key": "x_came_online",
+        "val": "$1님이 등장했습니다"
+      },
+      {
+        "key": "x_went_offline",
+        "val": "$1님이 나갔습니다"
+      },
+      {
+        "key": "x_switched_groups",
+        "val": "$1님이 다른 학습실에 들어갔습니다"
+      },
+      {
+        "key": "x_joined_a_call",
+        "val": "$1님이 통화에 들어갔습니다."
+      },
+      {
+        "key": "loading_publications",
+        "val": "출판물 로딩중"
+      },
+      {
+        "key": "direct_messages",
+        "val": "쪽지"
+      },
+      {
+        "key": "direct_message",
+        "val": "쪽지"
+      },
+      {
+        "key": "accept_inviting",
+        "val": "초대 수락중"
+      },
+      {
+        "key": "could_not_change_password",
+        "val": "비번 변경 실패"
+      },
+      {
+        "key": "new_password_saved",
+        "val": "비번 변경되었습니다"
+      },
+      {
+        "key": "password_no_match",
+        "val": "암호가 일치하지 않습니다"
+      },
+      {
+        "key": "duration_format",
+        "val": "h[시간] m[분]"
+      },
+      {
+        "key": "history_date_format_full",
+        "val": "YYYY년 M월 D일"
+      },
+      {
+        "key": "history_date_format_year",
+        "val": "YYYY년"
+      },
+      {
+        "key": "history_date_format_month",
+        "val": "YYYY년 M월"
+      },
+      {
+        "key": "year_format",
+        "val": "$1년"
+      },
+      {
+        "key": "could_not_login",
+        "val": "록인 실페"
+      },
+      {
+        "key": "full_datetime",
+        "val": "YYYY년 M월 D일 h:mm A"
+      },
+      {
+        "key": "intl_date",
+        "val": "YYYY년 M월 D일"
+      },
+      {
+        "key": "day_month",
+        "val": "YYYY년 M월 D일"
+      },
+      {
+        "key": "time_format",
+        "val": "A h[시] mm[분]"
+      },
+      {
+        "key": "current_bookmark",
+        "val": "책갈피"
+      },
+      {
+        "key": "community",
+        "val": "커뮤니티"
+      },
+      {
+        "key": "my_groups",
+        "val": "내가 속한 그룹"
+      },
+      {
+        "key": "group_i_follow",
+        "val": "내가 팔로우하는 그룹"
+      },
+      {
+        "key": "featured_groups",
+        "val": "추천 그룹"
+      },
+      {
+        "key": "controversial_commentaries",
+        "val": "논쟁의 여지가 있는 해설"
+      },
+      {
+        "key": "see_more",
+        "val": "더 보기"
+      },
+      {
+        "key": "join",
+        "val": "가입"
+      },
+      {
+        "key": "request",
+        "val": "신청"
+      },
+      {
+        "key": "study",
+        "val": "열기"
+      },
+      {
+        "key": "mine_groupd",
+        "val": "내 그룹"
+      },
+      {
+        "key": "home",
+        "val": "공개 그룹"
+      },
+      {
+        "key": "comment_count_plural",
+        "val": "댓글 $1개"
+      },
+      {
+        "key": "comment_count_singular",
+        "val": "댓글 $1개"
+      },
+      {
+        "key": "loading_comments",
+        "val": "댓글 로딩중"
+      },
+      {
+        "key": "like",
+        "val": "좋아요"
+      },
+      {
+        "key": "and_x_others",
+        "val": "외 $1명"
+      },
+      {
+        "key": "like_this_singular",
+        "val": "좋아합니다"
+      },
+      {
+        "key": "like_this_plural",
+        "val": "좋아합니다"
+      },
+      {
+        "key": "mine"
+      },
+      {
+        "key": "join_to_comment",
+        "val": "가입 필수"
+      },
+      {
+        "key": "join_group",
+        "val": "가입 필수"
+      },
+      {
+        "key": "apply_for_membership",
+        "val": "회원 가입 요청"
+      },
+      {
+        "key": "highlighted_text",
+        "val": "구절 일부를 표시했습니다."
+      },
+      {
+        "key": "commented_text",
+        "val": "구절에 댓글을 남겼습니다"
+      },
+      {
+        "key": "highlighted_img",
+        "val": "이미지를 표시했습니다"
+      },
+      {
+        "key": "commented_img",
+        "val": "이미지에 댓글을 남겼습니다"
+      },
+      {
+        "key": "highlighted_fax",
+        "val": "사본 스캔을 표시했습니다"
+      },
+      {
+        "key": "commented_fax",
+        "val": "사본 스캔에 댓글을 남겼습니다"
+      },
+      {
+        "key": "recently_commented",
+        "val": "최근 댓글:"
+      },
+      {
+        "key": "are_you_sure",
+        "val": "확실합니까?"
+      },
+      {
+        "key": "highlighted_section",
+        "val": "구간을 표시했습니다"
+      },
+      {
+        "key": "commented_section",
+        "val": "구간에 댓글을 남겼습니다"
+      },
+      {
+        "key": "liked",
+        "val": "좋아요"
+      },
+      {
+        "key": "private_group",
+        "val": "비공개 그룹"
+      },
+      {
+        "key": "public_group",
+        "val": "공개 그룹"
+      },
+      {
+        "key": "open_group",
+        "val": "오픈 그룹"
+      },
+      {
+        "key": "honorific",
+        "val": "님"
+      },
+      {
+        "key": "honorific_subject",
+        "val": "이"
+      },
+      {
+        "key": "moment_locale",
+        "val": "ko"
+      },
+      {
+        "key": "moment_future",
+        "val": "방금전"
+      },
+      {
+        "key": "moment_past",
+        "val": "%s 전"
+      },
+      {
+        "key": "moment_s",
+        "val": "초"
+      },
+      {
+        "key": "moment_ss",
+        "val": "%s처"
+      },
+      {
+        "key": "moment_M",
+        "val": "1분"
+      },
+      {
+        "key": "moment_MM",
+        "val": "%d분"
+      },
+      {
+        "key": "moment_h",
+        "val": "1시간"
+      },
+      {
+        "key": "moment_hh",
+        "val": "%d시간"
+      },
+      {
+        "key": "moment_d",
+        "val": "1일"
+      },
+      {
+        "key": "moment_dd",
+        "val": "%d일"
+      },
+      {
+        "key": "time",
+        "val": "1달"
+      },
+      {
+        "key": "moment_y",
+        "val": "1년"
+      },
+      {
+        "key": "moment_yy",
+        "val": "%d년"
+      },
+      {
+        "key": "and",
+        "val": "그리고"
+      },
+      {
+        "key": "open_studyhall",
+        "val": "학습실 바로가기"
+      },
+      {
+        "key": "request_admission",
+        "val": "수락요청"
+      },
+      {
+        "key": "join_instantly",
+        "val": "즉시 가입"
+      },
+      {
+        "key": "joining",
+        "val": "가입 중"
+      },
+      {
+        "key": "joined",
+        "val": "가입완료"
+      },
+      {
+        "key": "applying",
+        "val": "신청 중"
+      },
+      {
+        "key": "applied",
+        "val": "신청완료"
+      },
+      {
+        "key": "join_failed",
+        "val": "가입실패"
+      },
+      {
+        "key": "application_recieved",
+        "val": "수락요청 완료"
+      },
+      {
+        "key": "withdrawing",
+        "val": "철회 중"
+      },
+      {
+        "key": "no_relationships",
+        "val": "No relationships."
+      },
+      {
+        "key": "application_withdrawn",
+        "val": "철회완료"
+      },
+      {
+        "key": "withdraw_failed",
+        "val": "철회실패"
+      },
+      {
+        "key": "apply",
+        "val": "신청"
+      },
+      {
+        "key": "x_memebership_requests",
+        "val": "수락요청 $1개"
+      },
+      {
+        "key": "approve",
+        "val": "승인"
+      },
+      {
+        "key": "deny",
+        "val": "거절"
+      },
+      {
+        "key": "approving",
+        "val": "승인 중"
+      },
+      {
+        "key": "denying",
+        "val": "거절 중"
+      },
+      {
+        "key": "location_profile",
+        "val": "장소 프로필"
+      },
+      {
+        "key": "commentary_on_x",
+        "val": "$1에대한 해설"
+      },
+      {
+        "key": "person_profile",
+        "val": "인물 프로필"
+      },
+      {
+        "key": "relationships",
+        "val": "관계"
+      },
+      {
+        "key": "references",
+        "val": "언급구절"
+      },
+      {
+        "key": "view_on_map",
+        "val": "지도에 보기"
+      },
+      {
+        "key": "bom_maps",
+        "val": "지도 및 지리적 가설"
+      },
+      {
+        "key": "geo_model",
+        "val": "$1 가설"
+      },
+      {
+        "key": "supplement",
+        "val": "저장 중"
+      },
+      {
+        "key": "x_added_y_highlight",
+        "val": "$1님이 글을 표시했습니다"
+      },
+      {
+        "key": "x_added_y_highlights",
+        "val": "$1님이 표시를 $2개 추가했습니다"
+      },
+      {
+        "key": "x_highlighted_image",
+        "val": "$1님이 이미지를 표시했습니다"
+      },
+      {
+        "key": "x_highlighted_facsimile",
+        "val": "$1님이 사본 스캔을 표시했습니다"
+      },
+      {
+        "key": "legal_notice",
+        "val": "법률적고지"
+      },
+      {
+        "key": "invite_link",
+        "val": "공유 링크"
+      },
+      {
+        "key": "vox_priest_of_king_noah",
+        "val": "Priest of King Noah"
+      },
+      {
+        "key": "object_cat_record",
+        "val": "Record"
+      },
+      {
+        "key": "vox_servant",
+        "val": "Servant"
+      },
+      {
+        "key": "object_cat_treasure",
+        "val": "Treasure"
+      },
+      {
+        "key": "title_objects",
+        "val": "Objects in the Book of Mormon"
+      },
+      {
+        "key": "vox_one_foremost_among_poor_zoramites",
+        "val": "Foremost poor Zoramite"
+      },
+      {
+        "key": "user_history",
+        "val": "User History"
+      },
+      {
+        "key": "search_for_an_object",
+        "val": "Search for an object"
+      },
+      {
+        "key": "clear_filters",
+        "val": "Clear filters"
+      },
+      {
+        "key": "vox_many_of_the_people_of_ammonihah",
+        "val": "Ammonihah many"
+      },
+      {
+        "key": "vox_angel_to_nephi1",
+        "val": "Angel to Nephi"
+      },
+      {
+        "key": "study_question_understanding",
+        "val": "이해하지 못했습니다."
+      },
+      {
+        "key": "posted_comment",
+        "val": "댓글을 남겼습니다"
+      },
+      {
+        "key": "highlighted_com",
+        "val": "해설을 표시했습니다"
+      },
+      {
+        "key": "commented_com",
+        "val": "해설에 댓글을 남겼습니다"
+      },
+      {
+        "key": "usage_literal",
+        "val": "Literal"
+      },
+      {
+        "key": "vox_nephi2",
+        "val": "Nephi"
+      },
+      {
+        "key": "object_cat_money",
+        "val": "Money"
+      },
+      {
+        "key": "Show",
+        "val": "Show"
+      },
+      {
+        "key": "vox_nephi2_and_lehi2",
+        "val": "Nephi and Lehi"
+      },
+      {
+        "key": "unmute",
+        "val": "Unmute"
+      },
+      {
+        "key": "events",
+        "val": "Events"
+      },
+      {
+        "key": "study_question_main",
+        "val": "주요 포인트는 무엇인가요?"
+      },
+      {
+        "key": "vox_daughter_of_jared2",
+        "val": "Daughter of Jared"
+      },
+      {
+        "key": "object_cat_building",
+        "val": "Building"
+      },
+      {
+        "key": "object_cat_apparel",
+        "val": "Apparel"
+      },
+      {
+        "key": "spec_specific",
+        "val": "Named"
+      },
+      {
+        "key": "object_axis_specificity",
+        "val": "Specificity"
+      },
+      {
+        "key": "vox_people_gathered_at_the_burial_of_seezoram",
+        "val": "Burial gathering"
+      },
+      {
+        "key": "prov_nephite",
+        "val": "Nephite"
+      },
+      {
+        "key": "spec_general",
+        "val": "Generic"
+      },
+      {
+        "key": "prov_mulekite",
+        "val": "Mulekite"
+      },
+      {
+        "key": "vox_nephites_who_make_covenant",
+        "val": "Nephites who make covenant"
+      },
+      {
+        "key": "vox_jesus_christ_-_whoso",
+        "val": "Whosoever"
+      },
+      {
+        "key": "vox_angel_to_alma2",
+        "val": "Angel to Alma"
+      },
+      {
+        "key": "error",
+        "val": "Error"
+      },
+      {
+        "key": "vox_zenock",
+        "val": "Zenock"
+      },
+      {
+        "key": "menu_read",
+        "val": "Read"
+      },
+      {
+        "key": "vox_korihor",
+        "val": "Korihor"
+      },
+      {
+        "key": "vox_ammoron",
+        "val": "Ammoron"
+      },
+      {
+        "key": "ane",
+        "val": "고대 근동"
+      },
+      {
+        "key": "fax_edition",
+        "val": "사본 스캔"
+      },
+      {
+        "key": "terms_of_service",
+        "val": "서비스 약관"
+      },
+      {
+        "key": "privacy_policy",
+        "val": "개인 정보 보호 정책"
+      },
+      {
+        "key": "save_highlight_singular",
+        "val": "선택글 저장"
+      },
+      {
+        "key": "save_highlight_plural",
+        "val": "하이라이트 저장"
+      },
+      {
+        "key": "highlight_image",
+        "val": "이미지 강조 표시"
+      },
+      {
+        "key": "highlight_facsimile",
+        "val": "사본 강조 표시"
+      },
+      {
+        "key": "write_a_comment",
+        "val": "댓글을 입력하세요..."
+      },
+      {
+        "key": "people_places",
+        "val": "인물 및 장소"
+      },
+      {
+        "key": "related_scriptures",
+        "val": "관련된 구절"
+      },
+      {
+        "key": "x_note",
+        "val": "$1 메모"
+      },
+      {
+        "key": "x_people_and_x_places",
+        "val": "$1 인물들 • $2 장소들"
+      },
+      {
+        "key": "x_person_and_x_places",
+        "val": "$1 인물과 $2 장소들"
+      },
+      {
+        "key": "x_people_and_x_place",
+        "val": "$1 인물들 • $2 장소"
+      },
+      {
+        "key": "x_person_and_x_place",
+        "val": "$1 인물과 $2 장소"
+      },
+      {
+        "key": "x_people",
+        "val": "$1 인물들"
+      },
+      {
+        "key": "x_person",
+        "val": "$1 인물"
+      },
+      {
+        "key": "x_places",
+        "val": "$1 장소들"
+      },
+      {
+        "key": "x_place",
+        "val": "$1 장소"
+      },
+      {
+        "key": "x_facsimiles",
+        "val": "$1 원본복제본"
+      },
+      {
+        "key": "x_related_scriptures",
+        "val": "$1 관련된 구절"
+      },
+      {
+        "key": "x_related_scripture",
+        "val": "$1 관련된 구절"
+      },
+      {
+        "key": "load_x_comments",
+        "val": "$1 댓글 불러오기"
+      },
+      {
+        "key": "loading_x_more_comments",
+        "val": "댓글 $1개 로딩중"
+      },
+      {
+        "key": "view_x_more_comments",
+        "val": "댓글 $1개 더 보기"
+      },
+      {
+        "key": "x_notes",
+        "val": "$1 노트"
+      },
+      {
+        "key": "notes",
+        "val": "구절 메모"
+      },
+      {
+        "key": "highlighting",
+        "val": "선택 저장 중"
+      },
+      {
+        "key": "saving",
+        "val": "저장 중"
+      },
+      {
+        "key": "study_group",
+        "val": "댓글 입력"
+      },
+      {
+        "key": "add_a_comment",
+        "val": "댓글을 입력하세요..."
+      },
+      {
+        "key": "send",
+        "val": "보내기"
+      },
+      {
+        "key": "advanced_editor",
+        "val": "고급 편집기"
+      },
+      {
+        "key": "study_mode",
+        "val": "학습 모드"
+      },
+      {
+        "key": "new_group",
+        "val": "새 스터디 그룹"
+      },
+      {
+        "key": "xs_study_groups",
+        "val": "$1님의 스터디 그룹"
+      },
+      {
+        "key": "is_online",
+        "val": "접속중"
+      },
+      {
+        "key": "online_count",
+        "val": "온라인 $1 명"
+      },
+      {
+        "key": "member_plural",
+        "val": "회원 $1명"
+      },
+      {
+        "key": "create_new_study_group",
+        "val": "스터디 그룹만들기"
+      },
+      {
+        "key": "member_singular",
+        "val": "회원 $1명"
+      },
+      {
+        "key": "optional",
+        "val": "선택 사항"
+      },
+      {
+        "key": "status_done",
+        "val": "완료 상태"
+      },
+      {
+        "key": "creating_group",
+        "val": "그룹 만들기"
+      },
+      {
+        "key": "new_study_group_description",
+        "val": "스터디 그룹 설명"
+      },
+      {
+        "key": "new_study_group_icon",
+        "val": "스터디 그룹 아이콘"
+      },
+      {
+        "key": "new_study_group_name",
+        "val": "스터디 그룹 명칭"
+      },
+      {
+        "key": "new_study_group_type",
+        "val": "새 스터디 그룹"
+      },
+      {
+        "key": "no_name",
+        "val": "명칭 필수"
+      },
+      {
+        "key": "back",
+        "val": "이전"
+      },
+      {
+        "key": "who_group_for",
+        "val": "스터디 그룹 대상자 누굴까요?"
+      },
+      {
+        "key": "group_type_private",
+        "val": "비공개"
+      },
+      {
+        "key": "group_type_private_desc",
+        "val": "구성원만 볼 수 있는 초대 전용 스터디 그룹"
+      },
+      {
+        "key": "group_type_public",
+        "val": "공용"
+      },
+      {
+        "key": "group_type_public_desc",
+        "val": "모든 사용자가 보고 팔로우할 수 있는 초대 전용 스터디 그룹"
+      },
+      {
+        "key": "group_type_solo",
+        "val": "개인"
+      },
+      {
+        "key": "group_type_solo_desc",
+        "val": "본인을 위한 1인 학습 공간"
+      },
+      {
+        "key": "group_type_open",
+        "val": "오픈"
+      },
+      {
+        "key": "commentary_singular",
+        "val": "해설"
+      },
+      {
+        "key": "facsimiles_of_x",
+        "val": "$1의 사본"
+      },
+      {
+        "key": "group_type_open_desc",
+        "val": "누구나 보고 가입하고 참여할 수 있는 스터디 그룹"
+      },
+      {
+        "key": "message_x",
+        "val": "$1님에게 문자 보내기"
+      },
+      {
+        "key": "share_group_link_to_x",
+        "val": "$1에 대한 공유 링크"
+      },
+      {
+        "key": "commentary_plural",
+        "val": "해설들"
+      },
+      {
+        "key": "other",
+        "val": "기타"
+      },
+      {
+        "key": "prophet",
+        "val": "선지자"
+      },
+      {
+        "key": "priest",
+        "val": "성직자"
+      },
+      {
+        "key": "israelite",
+        "val": "이스라엘 사람"
+      },
+      {
+        "key": "social_unit",
+        "val": "사회 단위"
+      },
+      {
+        "key": "spiritual",
+        "val": "영적"
+      },
+      {
+        "key": "biblical",
+        "val": "성경의"
+      },
+      {
+        "key": "off",
+        "val": "꺼짐"
+      },
+      {
+        "key": "select_all",
+        "val": "모두 선택"
+      },
+      {
+        "key": "on",
+        "val": "켜짐"
+      },
+      {
+        "key": "title_people",
+        "val": "몰몬경에 나오는 인물"
+      },
+      {
+        "key": "search",
+        "val": "검색"
+      },
+      {
+        "key": "greater_locale",
+        "val": "더 큰 로케일"
+      },
+      {
+        "key": "land_of_first_Inheritance",
+        "val": "첫 번째 상속의 땅"
+      },
+      {
+        "key": "geo_other",
+        "val": "기타"
+      },
+      {
+        "key": "mulekite",
+        "val": "뮬카이트"
+      },
+      {
+        "key": "geo_type",
+        "val": "지역 유형"
+      },
+      {
+        "key": "nation",
+        "val": "국가"
+      },
+      {
+        "key": "land",
+        "val": "육지"
+      },
+      {
+        "key": "city",
+        "val": "도시"
+      },
+      {
+        "key": "continue",
+        "val": "계속하기"
+      },
+      {
+        "key": "step_over",
+        "val": "넘어가기"
+      },
+      {
+        "key": "detour",
+        "val": "우회하기"
+      },
+      {
+        "key": "step_into",
+        "val": "들어가기"
+      },
+      {
+        "key": "continue_or_detour",
+        "val": "계속하기 또는 우회하기?"
+      },
+      {
+        "key": "step_over_or_into",
+        "val": "넘어가기 또는 들어가기?"
+      },
+      {
+        "key": "crossroads",
+        "val": "분기점"
+      },
+      {
+        "key": "embedded",
+        "val": "내장된 내용"
+      },
+      {
+        "key": "finish_or_more",
+        "val": "지금으로서 충분히 끝나셨습니까?"
+      },
+      {
+        "key": "section_complete",
+        "val": "읽기 완료"
+      },
+      {
+        "key": "finish",
+        "val": "끝내기"
+      },
+      {
+        "key": "finish_narration",
+        "val": "지금은 그만둡니다."
+      },
+      {
+        "key": "more_narration",
+        "val": "새로운 세트를 로드합시다."
+      },
+      {
+        "key": "loading_narration",
+        "val": "로딩 중..."
+      },
+      {
+        "key": "more",
+        "val": "더 보기"
+      },
+      {
+        "key": "town",
+        "val": "마을"
+      },
+      {
+        "key": "geographic_feature",
+        "val": "지리적 특징"
+      },
+      {
+        "key": "gadiantons",
+        "val": "가디안톤스"
+      },
+      {
+        "key": "clear",
+        "val": "치우기"
+      },
+      {
+        "key": "people_and_places",
+        "val": "인물 및 장소"
+      },
+      {
+        "key": "title_places",
+        "val": "몰몬경에 나오는 장소"
+      },
+      {
+        "key": "selectors",
+        "val": "셀렉터"
+      },
+      {
+        "key": "x_search_results_for_y",
+        "val": "“$2”에 대한 검색 결과 $1개"
+      },
+      {
+        "key": "short_month_labels",
+        "val": "1월,2월,3월,4월,5월,6월,7월,8월,9월,10월,11월,12월"
+      },
+      {
+        "key": "no_results_for_x",
+        "val": "“$1”에 대한 검색 결과 없음"
+      },
+      {
+        "key": "completed_on_x",
+        "val": "$1에 왕성되었음"
+      },
+      {
+        "key": "study_progress_for_x",
+        "val": "$1님의 학습 진행률"
+      },
+      {
+        "key": "tos_agree_x",
+        "val": "가입하면 $1 서비스 약관에 동의하는 것입니다."
+      },
+      {
+        "key": "idbadge",
+        "val": "이드배지"
+      },
+      {
+        "key": "no_groups",
+        "val": "그룹 없음"
+      },
+      {
+        "key": "groups",
+        "val": "그룹"
+      },
+      {
+        "key": "menu",
+        "val": "메뉴"
+      },
+      {
+        "key": "loading",
+        "val": "로딩중"
+      },
+      {
+        "key": "extracurricular_activities",
+        "val": "과외 활동"
+      },
+      {
+        "key": "loading_user",
+        "val": "사용자 로딩중"
+      },
+      {
+        "key": "never",
+        "val": "없음"
+      },
+      {
+        "key": "network_failure",
+        "val": "네트워크 장애"
+      },
+      {
+        "key": "kakao",
+        "val": "카카오"
+      },
+      {
+        "key": "naver",
+        "val": "네이버"
+      },
+      {
+        "key": "logging_out",
+        "val": "로그아웃중"
+      },
+      {
+        "key": "preferences",
+        "val": "사용자 기본 설정"
+      },
+      {
+        "key": "audio",
+        "val": "오디오"
+      },
+      {
+        "key": "art",
+        "val": "삽화"
+      },
+      {
+        "key": "commentary",
+        "val": "해설"
+      },
+      {
+        "key": "inline_art",
+        "val": "삽화"
+      },
+      {
+        "key": "audio_on",
+        "val": "음성 켜져 있음"
+      },
+      {
+        "key": "audio_off",
+        "val": "음성 꺼져 있음"
+      },
+      {
+        "key": "user_prefs",
+        "val": "사용자 기본 설정"
+      },
+      {
+        "key": "sound_effects",
+        "val": "효과음"
+      },
+      {
+        "key": "lang_code",
+        "val": "ko"
+      },
+      {
+        "key": "facsimiles",
+        "val": "사본"
+      },
+      {
+        "key": "auto_play",
+        "val": "자동 재생"
+      },
+      {
+        "key": "message_hints",
+        "val": "메시지 힌트"
+      },
+      {
+        "key": "group_name",
+        "val": "그룹 명칭"
+      },
+      {
+        "key": "group_description",
+        "val": "그룹 설명"
+      },
+      {
+        "key": "edit_group_profile",
+        "val": "정보 수정"
+      },
+      {
+        "key": "manage_group_members",
+        "val": "회원 관리"
+      },
+      {
+        "key": "remove_from_group",
+        "val": "강제퇴장"
+      },
+      {
+        "key": "ban_from_group",
+        "val": "차단"
+      },
+      {
+        "key": "mute",
+        "val": "조용히"
+      },
+      {
+        "key": "make_group_admin",
+        "val": "관리자 권한 부여"
+      },
+      {
+        "key": "you_are_invited",
+        "val": "이 스터디 그룹에 초대되었습니다"
+      },
+      {
+        "key": "accept_invite",
+        "val": "수락"
+      },
+      {
+        "key": "decline_invite",
+        "val": "거절"
+      },
+      {
+        "key": "group_load_failed",
+        "val": "그룹 데이터 로딩에 실패했습니다"
+      },
+      {
+        "key": "group_preview",
+        "val": "스터디 그룹 둘러보기"
+      },
+      {
+        "key": "group_members",
+        "val": "그룹 구성원"
+      },
+      {
+        "key": "recent_convo",
+        "val": "최근 대화"
+      },
+      {
+        "key": "administrator",
+        "val": "관리자"
+      },
+      {
+        "key": "controversial_commentaries_warning",
+        "val": "논란이 있는 해설 경고"
+      },
+      {
+        "key": "zoom_levels",
+        "val": "Zoom levels"
+      },
+      {
+        "key": "vox_laban",
+        "val": "Laban"
+      },
+      {
+        "key": "no_objects_match",
+        "val": "No objects match these filters."
+      },
+      {
+        "key": "vox_zeram-amnor-manti-and-limher",
+        "val": "Zeram’s group"
+      },
+      {
+        "key": "vox_king_mosiah",
+        "val": "King Mosiah"
+      },
+      {
+        "key": "vox_ammon2",
+        "val": "Ammon"
+      },
+      {
+        "key": "vox_ammaron",
+        "val": "Ammaron"
+      },
+      {
+        "key": "muted",
+        "val": "Muted"
+      },
+      {
+        "key": "object_cat_plant",
+        "val": "Plant"
+      },
+      {
+        "key": "1_ne_first",
+        "val": "1"
+      },
+      {
+        "key": "vox_nine_nephite_disciples",
+        "val": "Nine Nephite disciples"
+      },
+      {
+        "key": "2_ne_first",
+        "val": "2"
+      },
+      {
+        "key": "vox_nephi1s-brethren",
+        "val": "Nephi’s brethren"
+      },
+      {
+        "key": "jacob_first",
+        "val": "J"
+      },
+      {
+        "key": "loading_facsimiles",
+        "val": "Loading Facsimiles"
+      },
+      {
+        "key": "History",
+        "val": "History"
+      },
+      {
+        "key": "object_profile",
+        "val": "Object Profile"
+      },
+      {
+        "key": "mapgroup_meso",
+        "val": "Meso"
+      },
+      {
+        "key": "enos_first",
+        "val": "E"
+      },
+      {
+        "key": "vox_moses",
+        "val": "Moses"
+      },
+      {
+        "key": "vox_zarahemnah",
+        "val": "Zarahemnah"
+      },
+      {
+        "key": "jarom_first",
+        "val": "J"
+      },
+      {
+        "key": "vox_servants_of_amalickiah",
+        "val": "Servants of Amalickiah"
+      },
+      {
+        "key": "omni_first",
+        "val": "O"
+      },
+      {
+        "key": "w_of_m_first",
+        "val": "W"
+      },
+      {
+        "key": "vox_limhi",
+        "val": "Limhi"
+      },
+      {
+        "key": "vox_jarom",
+        "val": "Jarom"
+      },
+      {
+        "key": "mosiah_first",
+        "val": "M"
+      },
+      {
+        "key": "vox_the_people_at_the_temple_in_bountiful",
+        "val": "Bountiful temple crowd"
+      },
+      {
+        "key": "vox_john_the_baptist",
+        "val": "John the Baptist"
+      },
+      {
+        "key": "alma_first",
+        "val": "A"
+      },
+      {
+        "key": "helaman_first",
+        "val": "H"
+      },
+      {
+        "key": "vox_people_speaking_to_gidgiddoni",
+        "val": "To Gidgiddoni"
+      },
+      {
+        "key": "3_ne_first",
+        "val": "3"
+      },
+      {
+        "key": "object_cat_sacred_object",
+        "val": "Sacred Object"
+      },
+      {
+        "key": "vox_unindentified_prophet_quoted_by_moroni2",
+        "val": "Moroni’s Prophet"
+      },
+      {
+        "key": "4_ne_first",
+        "val": "4"
+      },
+      {
+        "key": "mormon_first",
+        "val": "M"
+      },
+      {
+        "key": "status_ontrack",
+        "val": "제대로 진행"
+      },
+      {
+        "key": "status_notstarted",
+        "val": "대기중"
+      },
+      {
+        "key": "status_catchingup",
+        "val": "따라잡는 중"
+      },
+      {
+        "key": "status_fallenbehind",
+        "val": "고착된 진전"
+      },
+      {
+        "key": "reading_plan",
+        "val": "학습 계획"
+      },
+      {
+        "key": "study_question_about",
+        "val": "무슨 말이죠?"
+      },
+      {
+        "key": "ether_first",
+        "val": "E"
+      },
+      {
+        "key": "vox_ahaz",
+        "val": "Ahaz"
+      },
+      {
+        "key": "vox_multitude_listening_to_king_benjamin",
+        "val": "Benjamin’s multitude"
+      },
+      {
+        "key": "vox_zenos",
+        "val": "Zenos"
+      },
+      {
+        "key": "moroni_first",
+        "val": "M"
+      },
+      {
+        "key": "object_cat_armor",
+        "val": "Armor"
+      },
+      {
+        "key": "in_call",
+        "val": "In Call"
+      },
+      {
+        "key": "vox_father_of_lamoni",
+        "val": "Father of Lamoni"
+      },
+      {
+        "key": "vox_seraph_2",
+        "val": "Seraph 2"
+      },
+      {
+        "key": "vox_the_father",
+        "val": "The Father"
+      },
+      {
+        "key": "vox_king_lamoni",
+        "val": "King Lamoni"
+      },
+      {
+        "key": "vox_wife_of_lamoni",
+        "val": "Wife of Lamoni"
+      },
+      {
+        "key": "description",
+        "val": "Description"
+      },
+      {
+        "key": "prov_lamanite",
+        "val": "Lamanite"
+      },
+      {
+        "key": "vox_amulek",
+        "val": "Amulek"
+      },
+      {
+        "key": "vox_syria-ephraim-and-the-son-of-remaliah",
+        "val": "Syria–Ephraim–Remaliah’ Son"
+      },
+      {
+        "key": "object_cat_landscape",
+        "val": "Landscape"
+      },
+      {
+        "key": "vox_abinadi",
+        "val": "Abinadi"
+      },
+      {
+        "key": "vox_helaman3",
+        "val": "Helaman"
+      },
+      {
+        "key": "vox_ammon2_and_his_brethren",
+        "val": "Ammon and his brethren"
+      },
+      {
+        "key": "study_question_context",
+        "val": "더 많은 맥락이 요청드립니다."
+      },
+      {
+        "key": "study_question_explanation",
+        "val": "간단하게 설명 해주세요."
+      },
+      {
+        "key": "disable",
+        "val": "Disable"
+      },
+      {
+        "key": "dark_mode",
+        "val": "Dark Mode"
+      },
+      {
+        "key": "vox_ether",
+        "val": "Ether"
+      },
+      {
+        "key": "vox_laman1",
+        "val": "Laman"
+      },
+      {
+        "key": "vox_amaron",
+        "val": "Amaron"
+      },
+      {
+        "key": "vox_people_pleading_because_of_the_famine",
+        "val": "Famine pleaders"
+      },
+      {
+        "key": "vox_zeezrom",
+        "val": "Zeezrom"
+      },
+      {
+        "key": "vox_people_who_harden_their_hearts_against_prophecies",
+        "val": "Hardhearted"
+      },
+      {
+        "key": "object_cat_food",
+        "val": "Food"
+      },
+      {
+        "key": "vox_some-who-said-the-time-was-past-for-christs-birth",
+        "val": "Time-past group"
+      },
+      {
+        "key": "object_axis_usage",
+        "val": "Usage"
+      },
+      {
+        "key": "vox_people_of_limhi",
+        "val": "People of Limhi"
+      },
+      {
+        "key": "vox_angel_to_laman1_and_lemuel",
+        "val": "Angel to Laman and Lemuel"
+      },
+      {
+        "key": "vox_helaman1",
+        "val": "Helaman"
+      },
+      {
+        "key": "vox_giddonah",
+        "val": "Giddonah"
+      },
+      {
+        "key": "online",
+        "val": "Online"
+      },
+      {
+        "key": "vox_judges_who_belonged_to_band_of_gadianton",
+        "val": "Gadianton judges"
+      },
+      {
+        "key": "study_button",
+        "val": "Study"
+      },
+      {
+        "key": "title_witnesses",
+        "val": "Title Witnesses"
+      },
+      {
+        "key": "vox_chief_judge_of_ammonihah",
+        "val": "Chief judge of Ammonihah"
+      },
+      {
+        "key": "object_cat_vehicle",
+        "val": "Vehicle"
+      },
+      {
+        "key": "fax_not_available",
+        "val": "Fax Not Available"
+      },
+      {
+        "key": "vox_angels_quoting_the_lord",
+        "val": "Angels quoting the Lord"
+      },
+      {
+        "key": "vox_aaron",
+        "val": "Aaron"
+      },
+      {
+        "key": "mapgroup_americas",
+        "val": "Americas"
+      },
+      {
+        "key": "no_results_found",
+        "val": "No results found"
+      },
+      {
+        "key": "vox_people_gathered_at_the_judgment_seat_of_seezoram",
+        "val": "Judgment-seat crowd"
+      },
+      {
+        "key": "vox_gid",
+        "val": "Gid"
+      },
+      {
+        "key": "vox_unidentified_person",
+        "val": "Unidentified person"
+      },
+      {
+        "key": "vox_lehi1",
+        "val": "Lehi"
+      },
+      {
+        "key": "study_question_scene",
+        "val": "무슨 일이 일어나고 있는 건가요?"
+      },
+      {
+        "key": "vox_servants_of_king_lamoni",
+        "val": "Servants of King Lamoni"
+      },
+      {
+        "key": "vox_the_devil",
+        "val": "The devil"
+      },
+      {
+        "key": "vox_aminadab",
+        "val": "Aminadab"
+      },
+      {
+        "key": "vox_laman1_and_lemuel",
+        "val": "Laman and Lemuel"
+      },
+      {
+        "key": "vox_elders_and_priests",
+        "val": "Elders and priests"
+      },
+      {
+        "key": "vox_antionah",
+        "val": "Antionah"
+      },
+      {
+        "key": "vox_angel_quoted_in_2_nephi_6",
+        "val": "Angel quoted in  Nephi"
+      },
+      {
+        "key": "vox_lachoneus",
+        "val": "Lachoneus"
+      },
+      {
+        "key": "vox_five_men_sent_from_the_garden_of_nephi2",
+        "val": "Five from Nephi’s garden"
+      },
+      {
+        "key": "object_axis_provenance",
+        "val": "Provenance"
+      },
+      {
+        "key": "vox_lord_of_the_vineyard",
+        "val": "Lord of the vineyard"
+      },
+      {
+        "key": "object_cat_structure",
+        "val": "Structure"
+      },
+      {
+        "key": "vox_nephi1",
+        "val": "Nephi"
+      },
+      {
+        "key": "vox_other-lamanites-in-lamonis-house",
+        "val": "Lamoni’s others"
+      },
+      {
+        "key": "place_name",
+        "val": "Place name"
+      }
+    ]
+  }
+}
