@@ -525,17 +525,17 @@ async function main() {
   out.push('-- A. Schema: bom_user_meta (1:1 join-on metadata for bom_user)');
   out.push('-- ---------------------------------------------------------------------');
   out.push(`CREATE TABLE IF NOT EXISTS bom_user_meta (
-  -- 'user' MUST match bom_user.user exactly (utf8mb3_unicode_ci) or the FK errors 3780.
-  -- An FK requires identical charset+collation; it does NOT allow the implicit coercion
-  -- that a JOIN comparison would. The table default below is utf8mb4 for the other columns.
-  user VARCHAR(256) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL,
+  -- 'user' must match bom_user.user's charset+collation exactly or the FK errors 3780.
+  -- Since the 2026-06-10 utf8mb4 standardization, bom_user.user is utf8mb4_0900_ai_ci,
+  -- which is also this table's default below — so the column simply inherits it.
+  user VARCHAR(256) NOT NULL,
   bookmark JSON DEFAULT NULL,
   active_group VARCHAR(255) DEFAULT NULL,
   metadata JSON DEFAULT NULL,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (user),
   CONSTRAINT fk_bom_user_meta_user FOREIGN KEY (user) REFERENCES bom_user(user) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;`);
   out.push('');
 
   // Open the atomic load. Everything from here to COMMIT is one transaction.
