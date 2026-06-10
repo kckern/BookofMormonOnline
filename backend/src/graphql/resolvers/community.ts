@@ -20,6 +20,7 @@ import { getChannel, getMyChannels, getPublicChannels } from '../../messaging/ch
 import { getChannelMembers, addUserToChannel, removeUserFromChannel } from '../../messaging/members.js';
 import { getMessages, getThread } from '../../messaging/messages.js';
 import { getUser, getUsers, listBotUsers } from '../../messaging/users.js';
+import { addBotToChannel, removeBotFromChannel } from '../../messaging/bots/registry.js';
 import type { ChannelDTO, MessageDTO, UserDTO } from '../../messaging/dto.js';
 import { getBus } from '../../realtime/RealtimeBus.js';
 
@@ -753,6 +754,88 @@ export const communityResolvers: Resolvers = {
         return true;
       } catch (err) {
         console.error('processRequest error:', err);
+        return false;
+      }
+    },
+
+    /**
+     * addBot — add a bot user to a channel.
+     *
+     * Port of BomCommunity.ts addBot (~:544).
+     * The `bot` arg is the messenger user_id (already hashed; same value the
+     * legacy resolver passed directly to sendbird.addUserToChannel).
+     * Gate: the acting user must be an operator of the channel.
+     * Fires user_joined + membership_changed on the RealtimeBus on success.
+     * Returns Boolean per SDL.
+     */
+    addBot: async (_root, args, ctx: AppContext) => {
+      const token = args.token as string | null | undefined;
+      const channelArg = args.channel as string | null | undefined;
+      const botId = args.bot as string | null | undefined;
+
+      if (!token || !channelArg || !botId) return false;
+
+      try {
+        const myUserId = await resolveMessengerUserId(ctx, token);
+        if (!myUserId) return false;
+
+        // Gate: acting user must be an operator of the channel.
+        const members = await getChannelMembers(ctx.db, channelArg);
+        const isOperator = members.some(
+          (m) => m.user_id === myUserId && m.role === 'operator',
+        );
+        if (!isOperator) return false;
+
+        const success = await addBotToChannel(ctx.db, channelArg, botId);
+        if (!success) return false;
+
+        // Fan-out: same events as joinGroup/processRequest-grant.
+        const botDto = await getUser(ctx.db, botId);
+        const botShape = botDto ? assembleHomeUser(botDto) : null;
+        getBus().emit('user_joined', channelArg, { channelUrl: channelArg, user: botShape });
+        getBus().emit('membership_changed', channelArg, { channelUrl: channelArg, user: botId });
+
+        return true;
+      } catch (err) {
+        console.error('addBot error:', err);
+        return false;
+      }
+    },
+
+    /**
+     * removeBot — remove a bot user from a channel.
+     *
+     * Port of BomCommunity.ts removeBot (~:561).
+     * Gate: acting user must be an operator of the channel.
+     * Fires membership_changed on the RealtimeBus on success.
+     * Returns Boolean per SDL.
+     */
+    removeBot: async (_root, args, ctx: AppContext) => {
+      const token = args.token as string | null | undefined;
+      const channelArg = args.channel as string | null | undefined;
+      const botId = args.bot as string | null | undefined;
+
+      if (!token || !channelArg || !botId) return false;
+
+      try {
+        const myUserId = await resolveMessengerUserId(ctx, token);
+        if (!myUserId) return false;
+
+        // Gate: acting user must be an operator of the channel.
+        const members = await getChannelMembers(ctx.db, channelArg);
+        const isOperator = members.some(
+          (m) => m.user_id === myUserId && m.role === 'operator',
+        );
+        if (!isOperator) return false;
+
+        const success = await removeBotFromChannel(ctx.db, channelArg, botId);
+        if (!success) return false;
+
+        getBus().emit('membership_changed', channelArg, { channelUrl: channelArg, user: botId });
+
+        return true;
+      } catch (err) {
+        console.error('removeBot error:', err);
         return false;
       }
     },
