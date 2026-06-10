@@ -171,7 +171,7 @@ async function maybeWireRedisAdapter(io: Server): Promise<void> {
  * Attach a socket.io Server to `httpServer` and configure auth + rooms +
  * presence.  Call this once from index.ts after Fastify is listening.
  */
-export async function initRealtime(httpServer: HttpServer): Promise<void> {
+export async function initRealtime(httpServer: HttpServer): Promise<Server> {
   const io = new Server(httpServer, {
     cors: {
       origin: '*',
@@ -249,4 +249,5 @@ export async function initRealtime(httpServer: HttpServer): Promise<void> {
   setIo(io);
 
   console.info('[realtime] socket.io server initialised on path /messenger');
+  return io;
 }
