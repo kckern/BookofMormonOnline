@@ -7,3 +7,42 @@ import type { Loaders } from '../loaders.js';
 export function userprofileLoaders(db: Kysely<DB>, lang: string, core: Loaders) {
   return {};
 }
+
+/**
+ * Look up a bom_user row via its token in bom_user_token.
+ * Returns the user row or null if the token is invalid.
+ * Used by editProfile, changePassword, and uploadProfileImage.
+ */
+export async function getUserByToken(
+  db: Kysely<DB>,
+  token: string,
+): Promise<{
+  user: string;
+  email: string | null;
+  name: string | null;
+  zip: string | null;
+  complete: string | null;
+  started: string | null;
+  time: number | null;
+  finished: number | null;
+  pass: string;
+} | null> {
+  const row = await db
+    .selectFrom('bom_user as u')
+    .innerJoin('bom_user_token as t', 't.user', 'u.user')
+    .where('t.token', '=', token)
+    .select([
+      'u.user',
+      'u.email',
+      'u.name',
+      'u.zip',
+      'u.complete',
+      'u.started',
+      'u.time',
+      'u.finished',
+      'u.pass',
+    ])
+    .executeTakeFirst();
+
+  return row ?? null;
+}
