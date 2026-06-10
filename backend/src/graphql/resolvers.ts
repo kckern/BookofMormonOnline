@@ -18,6 +18,7 @@ import { mediaResolvers } from './resolvers/media.js';
 import { mediamiscResolvers } from './resolvers/mediamisc.js';
 import { feedsmiscResolvers } from './resolvers/feedsmisc.js';
 import { searchhistResolvers } from './resolvers/searchhist.js';
+import { communityResolvers } from './resolvers/community.js';
 import { userauthResolvers } from './resolvers/userauth.js';
 import { userprofileResolvers } from './resolvers/userprofile.js';
 import { useractivityResolvers } from './resolvers/useractivity.js';
@@ -248,6 +249,7 @@ export const resolvers: Resolvers = mergeResolverMaps(
   mediamiscResolvers,
   feedsmiscResolvers,
   searchhistResolvers,
+  communityResolvers,
   userauthResolvers,
   userprofileResolvers,
   useractivityResolvers,
