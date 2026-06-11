@@ -103,6 +103,23 @@ export function objectsLoaders(db: Kysely<DB>, lang: string, core: Loaders) {
   };
 
   /**
+   * Fetch the full object list (no slug filter), ordered by weight DESC.
+   * Legacy returns all objects when `object`/`objectList` is queried with no
+   * slug; the homepage preloads them for popup lookups. Returning [] here would
+   * leave the `objectList` key empty → stripEmptyDeep drops it → the frontend's
+   * positional response-keying (BoMOnlineAPI.structureResults) shifts and breaks
+   * tokenSignIn → the whole app falls into the "no-wifi" failure screen.
+   */
+  const allObjects = async (): Promise<ObjectRow[]> => {
+    const rows = await db
+      .selectFrom('bom_objects')
+      .selectAll()
+      .orderBy('weight', 'desc')
+      .execute();
+    return rows as unknown as ObjectRow[];
+  };
+
+  /**
    * Index entries for a given object slug.
    *
    * Legacy behaviour (BomObjects.ts index resolver): Sequelize does
@@ -277,6 +294,7 @@ export function objectsLoaders(db: Kysely<DB>, lang: string, core: Loaders) {
 
   return {
     objectsBySlugs,
+    allObjects,
     objectIndexBySlug,
     xrelsBySlug,
   };

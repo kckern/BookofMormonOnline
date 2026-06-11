@@ -10,6 +10,7 @@ import {
   type ReadLineRow,
 } from '../../data/loaders/scriptureread.js';
 import { SKIP_HEADING_TRANSLATION } from '../../data/loaders.js';
+import { getBlocksToQueue, type QueueItemInput } from '../../data/loaders/queue.js';
 
 /** Extract the db instance that scripturereadLoaders stashed in ctx.loaders. */
 function getDb(ctx: AppContext): Kysely<DB> {
@@ -23,6 +24,46 @@ export const scripturereadResolvers: Resolvers = {
       if (!ref) return null;
       const db = getDb(ctx);
       return fetchRead(db, ctx.lang, ref) as Promise<never>;
+    },
+
+    /**
+     * queue(token, items) — Theater playback queue (legacy BomPage.ts:153).
+     * getBlocksToQueue resolves an ordered [{slug, blocks}]; we then fetch the
+     * bom_text rows for each and return them (in block order) as TextRow[]. The
+     * core/media TextBlock field resolvers (content, narration, heading, slug,
+     * people, places, duration…) resolve off each row.
+     */
+    queue: async (_root, args, ctx: AppContext) => {
+      const db = getDb(ctx);
+      const token = (args.token ?? null) as string | null;
+      const items = (args.items ?? null) as QueueItemInput[] | null;
+      const slugBlocks = await getBlocksToQueue(db, token, items);
+      if (!slugBlocks.length) return [] as unknown as never;
+
+      const out: unknown[] = [];
+      for (const { slug, blocks } of slugBlocks) {
+        if (!blocks.length) continue;
+        const pageSlugTip = slug.split('/').pop() ?? slug;
+        const pageRow = await db
+          .selectFrom('bom_slug')
+          .select('link')
+          .where('slug', '=', pageSlugTip)
+          .where('type', '=', 'PG')
+          .executeTakeFirst();
+        if (!pageRow) continue;
+        const rows = await db
+          .selectFrom('bom_text')
+          .selectAll()
+          .where('page', '=', pageRow.link)
+          .where('link', 'in', blocks)
+          .execute();
+        const byLink = new Map(rows.map((r) => [r.link, r]));
+        for (const b of blocks) {
+          const row = byLink.get(b);
+          if (row) out.push(row);
+        }
+      }
+      return out as unknown as never;
     },
 
     lookup: async (_root, args, ctx: AppContext) => {

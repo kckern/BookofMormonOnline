@@ -33,6 +33,32 @@ type RawMember = {
  * Return all members of a channel as MemberDTOs.
  * Assembles the UserDTO portion via getUsers() from users.ts.
  */
+/**
+ * getPublicUserIds — of the given messenger user_ids, return the set that are
+ * "public": a joined member of at least one public/open channel.
+ *
+ * This is the live, code-owned definition of user visibility, replacing the
+ * read-only-and-unmaintained bom_user.visibility column. A user becomes public
+ * by being in a public group and stops being public when they leave it — which
+ * is the product's actual model. Used to decide leaderboard masking.
+ */
+export async function getPublicUserIds(
+  db: Kysely<DB>,
+  userIds: string[],
+): Promise<Set<string>> {
+  if (userIds.length === 0) return new Set();
+  const rows = await db
+    .selectFrom('messenger_members as m')
+    .innerJoin('messenger_channels as c', 'c.channel_url', 'm.channel_url')
+    .select('m.user_id as user_id')
+    .distinct()
+    .where('m.user_id', 'in', userIds)
+    .where('m.state', '=', 'joined')
+    .where('c.custom_type', 'in', ['public', 'open'])
+    .execute();
+  return new Set(rows.map((r) => r.user_id));
+}
+
 export async function getChannelMembers(
   db: Kysely<DB>,
   channelUrl: string,

@@ -25,7 +25,10 @@ export const objectsResolvers: Resolvers = {
       const slugs = (args.slug ?? [])
         .filter((s): s is string => s !== null)
         .map(getSlugTip);
-      if (!slugs.length) return [];
+      // No slug → full list (legacy returns all objects; the homepage preloads
+      // them for popups). Empty here would drop the objectList key and break the
+      // frontend's positional response-keying — see allObjects in the loader.
+      if (!slugs.length) return ctx.loaders.allObjects() as unknown as never[];
       return ctx.loaders.objectsBySlugs(slugs) as unknown as never[];
     },
   },

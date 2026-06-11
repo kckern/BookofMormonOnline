@@ -182,5 +182,23 @@ export const mediaResolvers: Resolvers = {
     comIds: (parent) => {
       return parseComIds((parent as TextRow).content);
     },
+    // Full image/commentary objects parsed from the block's [i]/[c] markers —
+    // used by the Theater (the page view uses imgIds/comIds + separate queries).
+    imgs: async (parent, _args, ctx) => {
+      const ids = parseImgIds((parent as TextRow).content)
+        .map((s) => Number(s))
+        .filter((n) => Number.isFinite(n));
+      if (!ids.length) return [] as any;
+      const rows = await (ctx as AppContext).loaders.imageById.loadMany(ids);
+      return rows.filter((r) => r && !(r instanceof Error)) as any;
+    },
+    coms: async (parent, _args, ctx) => {
+      const ids = (parseComIds((parent as TextRow).content) ?? [])
+        .map((s) => Number(s))
+        .filter((n) => Number.isFinite(n));
+      if (!ids.length) return [] as any;
+      const rows = await (ctx as AppContext).loaders.commentaryById.loadMany(ids);
+      return rows.filter((r) => r && !(r instanceof Error)) as any;
+    },
   },
 };

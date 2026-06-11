@@ -15,15 +15,16 @@
  */
 import type { Resolvers } from '../../../codegen/graphql.js';
 import type { AppContext } from '../context.js';
-import { md5 } from '../../auth/identity.js';
+import { md5, genUserAvatar } from '../../auth/identity.js';
 import { getChannel, getMyChannels, getPublicChannels } from '../../messaging/channels.js';
-import { getChannelMembers, addUserToChannel, removeUserFromChannel } from '../../messaging/members.js';
+import { getChannelMembers, addUserToChannel, removeUserFromChannel, getPublicUserIds } from '../../messaging/members.js';
 import { getMessages, getMessagesForChannels, getThread } from '../../messaging/messages.js';
 import { getUser, getUsers, listBotUsers } from '../../messaging/users.js';
 import { addBotToChannel, removeBotFromChannel } from '../../messaging/bots/registry.js';
 import type { ChannelDTO, MessageDTO, UserDTO } from '../../messaging/dto.js';
 import { getBus } from '../../realtime/RealtimeBus.js';
 import { isDuplicateKeyError } from '../../data/errors.js';
+import { loadReadingPlan } from '../../messaging/readingplan.js';
 
 // ─── Token → messenger user_id ───────────────────────────────────────────────
 
@@ -44,6 +45,23 @@ async function resolveMessengerUserId(ctx: AppContext, token: string | null | un
   return md5(row.username);
 }
 
+/**
+ * Resolve a token to the bom_user.user it belongs to (the raw username used to
+ * score bom_log credit). Falls back to the token itself for anon users, who log
+ * progress under their token — matches legacy readingplan queryBy.
+ */
+async function resolveUsername(ctx: AppContext, token: string | null | undefined): Promise<string> {
+  if (!token) return '';
+  const row = await ctx.db
+    .selectFrom('bom_user_token')
+    .innerJoin('bom_user', 'bom_user.user', 'bom_user_token.user')
+    .select('bom_user.user as username')
+    .where('bom_user_token.token', '=', token)
+    .limit(1)
+    .executeTakeFirst();
+  return row?.username ?? token;
+}
+
 // ─── HomeUser shape assembly ──────────────────────────────────────────────────
 
 /**
@@ -54,7 +72,7 @@ async function resolveMessengerUserId(ctx: AppContext, token: string | null | un
  *   bookmark, public, isBot
  *
  * progress / finished / lastseen come from bom_user when available (same as
- * legacy loadHomeUser); picture falls back to the dicebear personas avatar.
+ * legacy loadHomeUser); picture falls back to the neutral thumbs avatar.
  */
 interface BomUserProgress {
   user: string;
@@ -63,8 +81,14 @@ interface BomUserProgress {
   last_active: number | null;
 }
 
-function personasAvatar(userId: string): string {
-  return `https://api.dicebear.com/7.x/personas/svg?seed=${userId}&eyes=open,sunglasses,wink,happy&facialHair=beardMustache,goatee&facialHairProbability=20&hair=bobCut,curly,long,pigtails,shortCombover,buzzcut,beanie&mouth=smile,smirk,bigSmile&nose=smallRound,mediumRound&skinColor=d78774,b16a5b,eeb4a4,92594b`;
+/**
+ * Default avatar for a user with no usable profile image. Uses the canonical
+ * neutral `thumbs` generator (genUserAvatar) — NOT dicebear `personas`, which
+ * produces gendered avatars (facial hair, hairstyles) and is not acceptable for
+ * an unknown/anonymized user. Deterministic per user_id.
+ */
+function defaultAvatar(userId: string): string {
+  return genUserAvatar(userId || 'user');
 }
 
 function assembleHomeUser(
@@ -74,7 +98,14 @@ function assembleHomeUser(
   // Derive user_id: prefer userDto, fall back to md5 of bom username
   const user_id = userDto?.user_id ?? (progress ? md5(progress.user) : null);
 
-  const picture = userDto?.profile_url || personasAvatar(user_id ?? 'user');
+  // Dead-host guard: avatars.dicebear.com (dicebear v1) was decommissioned and
+  // now returns 410 Gone. Sendbird-migrated profile_urls still point at it for
+  // ~50 users. Treat those as empty so they fall back to a working avatar rather
+  // than render broken. (Live Sendbird-hosted images are left alone — they work
+  // until Sendbird is shut down; re-hosting them is a separate migration job.)
+  const rawProfile = userDto?.profile_url;
+  const isDeadProfile = !!rawProfile && /avatars\.dicebear\.com\//.test(rawProfile);
+  const picture = (rawProfile && !isDeadProfile) ? rawProfile : defaultAvatar(user_id ?? 'user');
 
   // Parse metadata from the messenger user (summary/bookmark packed as JSON strings)
   let summary: { completed?: number; finished?: number[] } = {};
@@ -142,6 +173,32 @@ function assembleHomeUser(
   };
 }
 
+// ─── Privacy masking (legacy maskNickname / maskUserPrivacy) ──────────────────
+
+/** Anonymize a nickname: first letter + block glyphs, keeping first/last 2 chars. */
+function maskNickname(nickname: string): string {
+  if (nickname.length < 4) return nickname.charAt(0).toUpperCase() + '██';
+  let masked = nickname.replace(/^(.{2}).*(.{2})$/, '$1████$2');
+  masked = masked.charAt(0).toUpperCase() + masked.slice(1);
+  return masked;
+}
+
+/**
+ * Mask a HomeUser for a non-public account: anonymize nickname + picture so a
+ * private user never surfaces by name on a public surface (e.g. leaderboard).
+ * Public users (`public: true`) pass through untouched. Mirrors legacy
+ * maskUserPrivacy (BomCommunity.ts:67).
+ */
+function maskUserPrivacy(u: Record<string, unknown>): Record<string, unknown> {
+  if (u.public) return u;
+  const seed = (u.user_id as string) || 'user';
+  return {
+    ...u,
+    nickname: maskNickname((u.nickname as string) ?? 'User'),
+    picture: defaultAvatar(seed),
+  };
+}
+
 // ─── HomeFeedItem shape assembly ──────────────────────────────────────────────
 
 /**
@@ -202,6 +259,7 @@ async function assembleHomeGroup(
   ctx: AppContext,
   channel: ChannelDTO,
   grouping: string,
+  viewerUserId: string | null = null,
 ): Promise<Record<string, unknown>> {
   let description: string | null = channel.data || null;
   let requests: string[] = [];
@@ -210,6 +268,13 @@ async function assembleHomeGroup(
     description = parsed.description ?? null;
     requests = parsed.requests ?? [];
   } catch { /* data is plain string description or empty */ }
+
+  // Pending join-requester ids are operator-only: don't broadcast who asked to
+  // join to every viewer of a (featured) group. Only an operator of THIS channel
+  // sees the request list; everyone else gets []. (Legacy shipped these to all.)
+  const isOperator =
+    !!viewerUserId && channel.members.some((m) => m.user_id === viewerUserId && m.role === 'operator');
+  if (!isOperator) requests = [];
 
   const latest = channel.last_message ? assembleHomeFeedItem(channel.last_message) : null;
 
@@ -290,6 +355,114 @@ const asGql = <T>(v: T): any => v;
 export const communityResolvers: Resolvers = {
   Query: {
     /**
+     * leaderboard — recent finishers + current-progress board (legacy
+     * BomCommunity.ts:132). currentProgress: bom_user active in the last 90 days
+     * (zip ≠ -1), ranked by `complete` DESC, top 50. recentFinishers: the last
+     * 10 bom_log `finished` events. Each row → HomeUser via assembleHomeUser,
+     * with non-public accounts anonymized (maskUserPrivacy). Bots are dropped.
+     *
+     * Privacy: a user is `public` (shown unmasked) iff they're a joined member
+     * of a public/open group — computed live via getPublicUserIds, NOT the stale
+     * bom_user.visibility column. Everyone else is anonymized. Legacy also
+     * surfaced private users sharing a group with the viewer, but its shim for
+     * that returned [] — so this is never less private than legacy.
+     */
+    leaderboard: async (_root, args, ctx: AppContext) => {
+      try {
+        const now = Math.floor(Date.now() / 1000);
+        const activeTimeFrame = now - 90 * 24 * 60 * 60;
+
+        const rankedUsers = await ctx.db
+          .selectFrom('bom_user')
+          .select(['user', 'complete', 'finished', 'last_active'])
+          .where('last_active', '>', activeTimeFrame)
+          .where('zip', '!=', '-1')
+          .orderBy('complete', 'desc')
+          .limit(100)
+          .execute();
+
+        const recentFinishes = await ctx.db
+          .selectFrom('bom_log')
+          .select(['timestamp', 'user'])
+          .where('type', '=', 'finished')
+          .orderBy('timestamp', 'desc')
+          .limit(10)
+          .execute();
+
+        // One batched messenger-user fetch for every username in play (md5 = user_id).
+        const usernames = [...new Set([...rankedUsers.map((u) => u.user), ...recentFinishes.map((f) => f.user)])];
+        const userIds = usernames.map((u) => md5(u));
+        const [dtos, publicSet] = await Promise.all([
+          getUsers(ctx.db, userIds),
+          // Live visibility: public iff joined to a public/open group (replaces the
+          // unmaintained bom_user.visibility column).
+          getPublicUserIds(ctx.db, userIds),
+        ]);
+        const dtoById = new Map(dtos.map((d) => [d.user_id, d]));
+
+        const buildHomeUser = (
+          username: string,
+          progress: BomUserProgress | null,
+        ): Record<string, unknown> => {
+          const dto = dtoById.get(md5(username)) ?? null;
+          const hu = assembleHomeUser(dto, progress);
+          hu.public = publicSet.has(md5(username));
+          return maskUserPrivacy(hu);
+        };
+
+        const currentProgress = rankedUsers
+          .slice(0, 50)
+          .map((u) =>
+            buildHomeUser(u.user, {
+              user: u.user,
+              complete: u.complete as unknown as number | null,
+              finished: u.finished,
+              last_active: u.last_active,
+            }),
+          )
+          .filter((u) => !u.isBot)
+          .sort((a, b) => (b.progress as number) - (a.progress as number));
+
+        const recentFinishers = recentFinishes
+          .map((f) => {
+            const hu = buildHomeUser(f.user, {
+              user: f.user,
+              complete: null,
+              finished: f.timestamp,
+              last_active: null,
+            });
+            // recentFinishers carries the finish timestamp as the finished value.
+            hu.finished = [f.timestamp];
+            return hu;
+          })
+          .filter((u) => !u.isBot);
+
+        return asGql({ recentFinishers, currentProgress });
+      } catch (error) {
+        console.error('leaderboard error:', error);
+        return asGql({ recentFinishers: [], currentProgress: [] });
+      }
+    },
+
+    /**
+     * readingplan(token, slug) — the reading-plan widget on /home (slug e.g.
+     * "cfm2024"). Scores the plan's segments against the user's completed
+     * blocks since the plan start. Legacy BomCommunity.ts:494. Returns null when
+     * the slug is unknown (frontend guards on planData).
+     */
+    readingplan: async (_root, args, ctx: AppContext) => {
+      const slug = (args.slug ?? '') as string;
+      if (!slug) return null;
+      try {
+        const queryBy = await resolveUsername(ctx, args.token as string | null | undefined);
+        return asGql(await loadReadingPlan(ctx.db, slug, { queryBy }, ctx.lang ?? null));
+      } catch (error) {
+        console.error('readingplan error:', error);
+        return null;
+      }
+    },
+
+    /**
      * loadGroupsFromHash — look up bom_shortlinks by hash[], then fetch
      * each referenced channel and return it as a StudyGroup shape.
      *
@@ -364,7 +537,7 @@ export const communityResolvers: Resolvers = {
             if (!isMember) return asGql({ groups: [], feed: [] });
           }
 
-          const groupObj = await assembleHomeGroup(ctx, channel, 'feed');
+          const groupObj = await assembleHomeGroup(ctx, channel, 'feed', myUserId);
 
           if (messageId) {
             // Specific-message mode: find the root message then return it
@@ -401,7 +574,7 @@ export const communityResolvers: Resolvers = {
 
         const allUrls = allChannels.map((c) => c.channel_url);
         const [groups, msgsByChannel] = await Promise.all([
-          Promise.all(allChannels.map((c) => assembleHomeGroup(ctx, c, c.custom_type === 'public' || c.custom_type === 'open' ? 'featured_groups' : 'my_groups'))),
+          Promise.all(allChannels.map((c) => assembleHomeGroup(ctx, c, c.custom_type === 'public' || c.custom_type === 'open' ? 'featured_groups' : 'my_groups', myUserId))),
           // One windowed query for 30 messages × every channel, vs a getMessages() per channel.
           getMessagesForChannels(ctx.db, allUrls, 30),
         ]);
@@ -463,10 +636,10 @@ export const communityResolvers: Resolvers = {
         }
 
         const myHomeGroups = await Promise.all(
-          myChannels.map((c) => assembleHomeGroup(ctx, c, 'my_groups')),
+          myChannels.map((c) => assembleHomeGroup(ctx, c, 'my_groups', myUserId)),
         );
         const featuredHomeGroups = await Promise.all(
-          featuredChannels.map((c) => assembleHomeGroup(ctx, c, 'featured_groups')),
+          featuredChannels.map((c) => assembleHomeGroup(ctx, c, 'featured_groups', myUserId)),
         );
 
         // Filter by grouping arg
