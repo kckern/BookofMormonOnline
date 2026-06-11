@@ -10,7 +10,6 @@ import { getCache, setCache } from "./Cache";
 import {Spinner} from "../views/_Common/Loader";
 import { ScripturePanelSingle } from "../views/Page/Narration";
 import { detectReferences, lookupReference, generateReference } from 'scripture-guide';
-import { recordDeepLinkEvent } from "src/utils/deepLinkInstrument";
 
 
 
@@ -382,52 +381,6 @@ export function findAncestor(el, sel) {
     !(el?.matches || el?.matchesSelector).call(el, sel)
   );
   return el;
-}
-
-const SCROLL_FALLBACK_MS = 2000;
-
-export function scrollTo(scrollHeight, callback) {
-  const fire = () => {
-    if (typeof callback === "function") {
-      recordDeepLinkEvent("scrollTo:callback", { scrollHeight });
-      callback();
-    }
-  };
-
-  if (scrollHeight === 0) {
-    recordDeepLinkEvent("scrollTo:noop", { scrollHeight });
-    fire();
-    return;
-  }
-  if (typeof scrollHeight !== "number" || !Number.isFinite(scrollHeight) || scrollHeight < 0) {
-    console.warn("scrollTo: invalid distance, skipping scroll", { scrollHeight });
-    recordDeepLinkEvent("scrollTo:failed", { scrollHeight });
-    fire();
-    return;
-  }
-
-  const reduced = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)")?.matches);
-  const behavior = callback === 0 || reduced ? "instant" : "smooth";
-
-  recordDeepLinkEvent("scrollTo:start", { scrollHeight, behavior });
-  window.scrollTo({ top: scrollHeight, behavior });
-
-  if (behavior === "instant") {
-    fire();
-    return;
-  }
-
-  let done = false;
-  const finish = () => {
-    if (done) return;
-    done = true;
-    window.removeEventListener("scrollend", onScrollEnd);
-    clearTimeout(fallback);
-    fire();
-  };
-  const onScrollEnd = () => finish();
-  window.addEventListener("scrollend", onScrollEnd, { once: true });
-  const fallback = setTimeout(finish, SCROLL_FALLBACK_MS);
 }
 
 export function newPost(num) {

@@ -120,8 +120,10 @@ export default function Page({ appController }) {
           if (!getTrigger()) return false;
           // Open first, then scroll to the opened content (the old order
           // centered the link, then the expansion pushed the content
-          // off-screen). The shared manager means a user-initiated scroll
-          // or the next deep-link campaign cancels this cleanly.
+          // off-screen). The anchor's click handler preventDefaults, so no
+          // navigation occurs — this campaign is the sole driver, and the
+          // shared manager lets user input or a later navigation supersede
+          // it cleanly.
           pageScrollManager.run([
             step.openAndAwait(getTrigger, {
               isOpen: () => isRefOpen(newSlug),

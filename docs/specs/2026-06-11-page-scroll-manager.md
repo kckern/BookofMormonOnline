@@ -1,7 +1,7 @@
 # Page Scroll Manager — Design Spec
 
 **Date:** 2026-06-11
-**Status:** Approved design (rip-and-replace of the Page view's scroll code)
+**Status:** Implemented (see docs/plans/2026-06-11-page-scroll-manager-implementation.md)
 **Sources:** `docs/audits/2026-06-11-page-autoscroll-audit.md` (10 findings), seven code-review finder angles (~35 candidates) over `views/Page/initPipeline.js`, `views/Page/Page.js`, `models/Utils.js`, `utils/awaitDomOpen.js`, and user-approved design decisions.
 
 ## 1. Decisions (locked)
