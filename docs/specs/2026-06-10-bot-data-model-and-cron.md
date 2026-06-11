@@ -14,19 +14,22 @@ bots post proactively (cron), with **placeholder** tables for future RAG resourc
 - **No scheduler.** Legacy posting was triggered by an external hit to `/virtualgrouptrigger`.
   Reactive replies (`botResponder`) already exist in green-field; proactive scheduled posting does not.
 
-## Design decision (revised): a bot-group IS a channel; bots get tags
-No separate "group" entity — a bot-driven group is just a `messenger_channel`. Bots are grouped by
-**tag** (e.g. `reformers`); a channel's bot config names the tag whose bots participate.
+## Design decision (final): reuse messenger_channels; minimal bot tables
+A bot-driven group **is** a `messenger_channel` (same class — no separate group/channel table). Bot
+grouping is a **JSON `tags` column** on `bom_bot` (no join table). Net: **3 new tables.**
 
 | Thing | Home |
 |---|---|
 | Bot identity (user_id, nickname, avatar) | `messenger_users` (exists) |
-| Bot **persona / system prompt** + model | **`bom_bot`** (new) |
-| Bot **grouping** (e.g. reformers) | **`bom_bot_tag`** (new) — bot_id ↔ tag |
-| Bot-channel config (cadence, LLM scaffolding, which tag) | **`bom_bot_channel`** (new, keyed by `channel_url`) |
+| Bot **persona / system prompt** + model + **tags** | **`bom_bot`** (new; `tags` JSON, e.g. `["reformers"]`) |
+| Bot-channel config (which tag, cadence, LLM `prompt_thread`, enabled) | **`messenger_channels.metadata.bot`** (existing JSON column) |
 | **Discussion prompts** (the questions) | `bom_virtualgroup_prompts` (exists; `group_id` == tag) |
-| **Schedule** (when a channel posts) — the cron | **`bom_bot_schedule`** (new, keyed by `channel_url`) |
+| **Schedule** (the cron) | **`bom_bot_schedule`** (new; keyed by `channel_url`, indexed on `(enabled, next_run_at)`) |
 | **RAG resources** (future) | **`bom_bot_rag`** (new, placeholder; bot/tag/channel) |
+
+`messenger_channels.metadata.bot` shape: `{ tag, comment_min, comment_max, prompt_thread, enabled }`.
+The scheduler joins a `bom_bot_schedule` row → its `channel_url` → that channel's `metadata.bot` for
+the config, and selects participating bots via `bom_bot.tags` containing the channel's `bot.tag`.
 
 All new tables: `ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci` (per the utf8mb4
 standardization). FK columns to `messenger_users.user_id` / `messenger_channels.channel_url` match
