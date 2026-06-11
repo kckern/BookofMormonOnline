@@ -72,3 +72,11 @@ test("awaitHeightSettled waits for height stability and the open check", async (
   await flushFrames(3); // stable now
   await expect(p).resolves.toBe("settled");
 });
+
+test("a scroll the browser never starts settles at the current position after the grace window", async () => {
+  // target far away, browser never moves: escape hatch accepts the
+  // (pre-clamped) current position once frames > GRACE_FRAMES.
+  const p = awaitScrollSettled(5000, { timeoutMs: 60_000 });
+  await flushFrames(12); // > GRACE_FRAMES(8) with stable >= 3
+  await expect(p).resolves.toBe("settled");
+});
