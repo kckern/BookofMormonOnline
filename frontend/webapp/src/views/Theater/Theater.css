@@ -271,7 +271,11 @@
 .theater-main-panel .theater-content-slider {
     width: 80%;
     position: absolute;
-    top: 30%; 
+    top: 30%;
+    /* Tween between the discrete progress steps coming from JS so the
+       scroll reads as continuous motion instead of 50ms jumps. */
+    transition: transform 0.25s linear, opacity 0.5s linear;
+    will-change: transform, opacity;
 }
 
 .theater-main-panel .theater-content-slider.playing{
@@ -1038,14 +1042,21 @@ span.pageTitle
     cursor:pointer;
     flex-grow: 1;
     border-radius: 1ex;
+    /* Clip the scaled inner bar inside the rounded corners */
+    overflow: hidden;
 }
 .theater-controls .progress-bar-inner
 {
     height: 100%;
+    width: 100%;
     background-color: #6bd09866;
     pointer-events: none;
-    border-right:1px solid #6bd098;
-
+    border-right: 1px solid #6bd098;
+    /* scaleX + transition = compositor-only animation (no layout/paint per
+       tick), tweened between progress steps. */
+    transform-origin: left center;
+    transition: transform 0.25s linear;
+    will-change: transform;
 }
 
 .theater-side-panel .theater-comment-panel

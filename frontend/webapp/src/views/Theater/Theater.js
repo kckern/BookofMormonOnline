@@ -1601,13 +1601,11 @@ function PlaybackSettings({setShowPlaybackSettings,theaterController}){
 }
 
 function ProgressBar({ percent }) {
-  //console.log(percent);
-
   return (
     <div className="progress-bar">
       <div
         className="progress-bar-inner"
-        style={{ width: `${percent}%` }}
+        style={{ transform: `scaleX(${(percent || 0) / 100})` }}
       ></div>
     </div>
   );
