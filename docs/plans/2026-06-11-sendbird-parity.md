@@ -562,3 +562,87 @@ done
 - Several verifications need the staff login (TEST_USER/TEST_PASS from `$XDG_RUNTIME_DIR/bom-dev.env`) and a study group with members — same setup as `e2e/study-userlist.spec.js`.
 - The cover-image upload (Task 3) and any backend mention-column migration are explicitly OUT of scope; both are noted as known limitations in commit messages.
 - After Task 7, run a final whole-plan review (subagent) over the full range before reporting done.
+
+---
+
+# Tasks 8–12: Realtime event-bus parity + websocket transport (from the realtime sweep)
+
+> Source: the realtime event-bus parity audit (recovered SendbirdController from `git show fd167514^:frontend/webapp/src/models/SendbirdController.js`; full wiring matrix in the sweep report). Directive: **polling is the wrong pattern — realtime community/study state rides websockets.** Backend restarts of `bom-dev` are AUTHORIZED at will (batch one per backend task; note each in the report); they bounce the public dev URL, which is accepted.
+>
+> Verified-working chains (do NOT touch): `message_received`/`message_updated` → addMessage/fireMessage/etc.; `typing` (consumer reads only `.userId` off typers — thin payload is sufficient); `channel_action` → `fireStudyGroupAction` (also covers user-state sync via the client's fire_action fallback).
+
+### Task 8 — Align membership event names (client-only)
+
+**Files:** Modify `frontend/webapp/src/models/MessengerController.js` (~lines 146-169)
+
+The server emits `member_joined`/`member_left` (socket.ts:456,464); the client's dead listeners are named `user_joined`/`user_left`/`membership_changed`. Rename the listeners to the server's names, keep their `refreshChannel(channel)` bodies (parity with old `onUserJoined`/`onUserLeft`). Drop the `membership_changed` listener (grep first: no server emit exists). Verify: jest suite green; two-client manual check (or a `test/socket.test.ts`-style assertion if cheap): client A joins a group → client B's roster refreshes without waiting for the 60s poll. Commit: `fix(messenger): subscribe to member_joined/member_left (names were mismatched) (parity 8)`.
+
+### Task 9 — Fix live remote reactions (client-only)
+
+**Files:** Modify `frontend/webapp/src/models/MessengerController.js` (~line 129)
+
+Triple defect; this task fixes the two client halves. Replace the single dead `reaction_changed` listener with:
+
+```js
+    const onReaction = (operation) => (data) => {
+      const event = new CustomEvent('reactTo' + data.messageId);
+      // Server sends {messageId, userId, reactionKey}; applyReactionEvent
+      // reads {key, userId, operation} — normalize here.
+      event.reactionEvent = {
+        messageId: data.messageId,
+        key: data.reactionKey ?? data.key,
+        userId: data.userId,
+        operation,
+      };
+      window.dispatchEvent(event);
+    };
+    this.socket.on('reaction_added', onReaction('add'));
+    this.socket.on('reaction_removed', onReaction('delete'));
+```
+
+Verify: two clients in one group; A reacts 👍 → B sees it live; A un-reacts → it disappears on B. Commit: `fix(messenger): receive remote reactions (name + payload normalization) (parity 9)`.
+
+### Task 10 — Scope reaction broadcasts to the channel (backend)
+
+**Files:** Modify `src/library/messenger.ts` (~lines 657, 672 — the `reactionAdded`/`reactionRemoved` emits), `src/socket.ts` (~lines 471-486)
+
+Today `io.emit` broadcasts every reaction globally to all connected clients. Include `channel_url` in the library's `reactionAdded`/`reactionRemoved` event payload (the reaction handlers have the message — look up its channel_url; if not already loaded, fetch by messageId), then in socket.ts change both `io.emit(...)` → `io.to(channelUrl).emit(...)` keeping the payload fields (plus channelUrl). TDD if `test/socket.test.ts` supports two-client scoping assertions (read it first); otherwise verify via the two-client manual check that reactions still arrive in-channel. **Restart `bom-dev` after committing** (authorized) and re-verify Task 9's two-client check against the restarted server. Commit: `fix(messenger): scope reaction broadcasts to the channel room (parity 10)`.
+
+### Task 11 — Emit `unread_count_changed`; retire the per-message GraphQL poll (backend + client)
+
+**Files:** Modify `src/socket.ts` (the `messageCreated` bridge ~line 437-442), `frontend/webapp/src/models/MessengerController.js` (`_handleMessageReceived` ~line 210)
+
+The client already listens for `unread_count_changed` (MessengerController.js:172 → `unreadMessageCountChanged` CustomEvent → StudyGroupBar badge); the server never emits it, and the gap is masked by `loadUnreadDMs()` firing a GraphQL query on EVERY inbound message — the app's chattiest path. In the `messageCreated` bridge, after the `message_received` emit, also `io.to(message.channel_url).emit('unread_count_changed', { channelUrl: message.channel_url })`. Then in `_handleMessageReceived`, DELETE the `loadUnreadDMs().then(setUnreadDMs)` call and instead move that refresh into the existing `unread_count_changed` listener (debounced ~500ms so a message burst coalesces into one fetch). Net: unread refresh is event-driven, one fetch per burst instead of one per message. **Restart `bom-dev`** (authorized; batch with Task 10's restart if executed back-to-back) and verify: send a DM from client A → B's unread badge updates. Commit: `perf(messenger): event-driven unread counts; drop per-message poll (parity 11)`.
+
+### Task 12 — Socket presence: wire `user_presence`, kill the 60s roster poll (client-only)
+
+**Files:** Modify `frontend/webapp/src/models/MessengerController.js`, `frontend/webapp/src/views/_Common/Study/StudyGroupBar.js` (~lines 244-252), `StudyHall.js`, `StudyGroupCall.js` (their polling intervals)
+
+SendBird never pushed presence (the 60s `createApplicationUserListQuery` poll was the original pattern) — per the websockets directive this is the upgrade that retires it. The server already emits `user_presence {channelUrl, userId, isOnline}` on connect/disconnect/join/leave (socket.ts:179,351,367):
+
+1. In `setupEventHandlers`, subscribe:
+
+```js
+    this.socket.on('user_presence', ({ channelUrl, userId, isOnline }) => {
+      // Patch the cached roster in place — presence rides the socket, not polls.
+      const channel = this.channels.get(channelUrl);
+      const member = channel?.members?.find((m) => m.userId === userId);
+      if (member) member.connectionStatus = isOnline ? 'online' : 'offline';
+      const event = new CustomEvent('memberPresenceChanged');
+      event.channelUrl = channelUrl;
+      event.userId = userId;
+      event.isOnline = isOnline;
+      window.dispatchEvent(event);
+    });
+```
+
+2. In StudyGroupBar (and StudyHall/StudyGroupCall where they poll): replace the 60s `setInterval(getLiveFreshUsers)` with a `memberPresenceChanged` window listener that re-runs `getLiveFreshUsers` (the initial 100ms-delayed fetch stays — GraphQL remains correct for the initial roster). Remove the interval entirely; keep effect cleanup removing the listener.
+3. Leave `user_state`/`read_receipt` unsubscribed (user_state is covered by the fire_action fallback; read receipts have no consumer) — note as accepted dead emits.
+
+Verify: jest green; e2e study-userlist green; two-client manual: B's presence dot flips when A disconnects/reconnects, with no 60s wait; grep confirms no `setInterval` polling remains in the three Study components. Commit: `perf(study): socket-pushed presence replaces the 60s roster poll (parity 12)`.
+
+### Backlog (out of this plan, recorded)
+
+- `messageReacters` index bug: `Study.js:1113-1127` maps `r.userIds.map((id, index) => memberMap[index])` — indexes members by reaction-array position instead of matching ids. Pre-existing, independent of the migration.
+- `read_receipt` subscription (would enable "seen" indicators — product decision).
+- Membership emits from the GraphQL mutation paths (admin add/remove via messengerAddMember/RemoveMember may not traverse the socket emit path — verify in Task 8's two-client check; if dead, a follow-up backend task mirrors Task 10's pattern).
