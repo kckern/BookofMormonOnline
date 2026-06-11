@@ -1,5 +1,12 @@
 // Campaign arbiter for all programmatic scrolling (see Task 2 for the rest).
 
+import {
+  awaitScrollSettled,
+  awaitHeightSettled,
+  prefersReducedMotion,
+  POSITION_TOLERANCE_PX,
+} from "./settle";
+
 // Tiny abort token (CRA's jest/jsdom predates AbortController; this also
 // gives us abort *reasons* without polyfills).
 export function createAbortToken() {
@@ -28,13 +35,6 @@ export function createAbortToken() {
   };
   return token;
 }
-
-import {
-  awaitScrollSettled,
-  awaitHeightSettled,
-  prefersReducedMotion,
-  POSITION_TOLERANCE_PX,
-} from "./settle";
 
 const DEFAULT_OFFSET_RATIO = 0.2;
 const SCROLL_TIMEOUT_MS = 3000;
@@ -124,6 +124,8 @@ export function createScrollManager({ onEvent } = {}) {
           emit("openClick", { index: i });
           el.click();
         }
+        // NOTE: container is resolved once; consumers whose DOM remounts on
+        // open (keyed containers) must pass a getContainer that survives it.
         const container = (s.getContainer && s.getContainer()) || el;
         const result = await awaitHeightSettled(container, {
           token,
