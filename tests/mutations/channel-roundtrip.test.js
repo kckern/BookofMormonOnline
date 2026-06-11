@@ -103,10 +103,8 @@ test('the channel surfaces through the read path (homegroups) with name/privacy/
   expect(g.name).toBe(spec.name);
   expect(g.privacy).toBe(spec.customType);
   expect(g.picture).toBe(spec.coverUrl);
-  // KNOWN GAP: homegroups reads description from the `data` JSON, but
-  // createChannel writes the `description` column → description does not surface.
-  // (Asserting the gap so a future fix flips this to spec.description.)
-  expect(g.description).not.toBe(spec.description);
+  // Fixed: assembleChannelDTO now merges the description column into data JSON.
+  expect(g.description).toBe(spec.description);
 });
 
 test('guarded teardown deletes the channel + members cleanly (no residue)', async () => {

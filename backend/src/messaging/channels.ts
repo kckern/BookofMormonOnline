@@ -84,7 +84,10 @@ async function assembleChannelDTO(
     name: row.name,
     cover_url: row.cover_url ?? '',
     custom_type: row.custom_type,
-    data: JSON.stringify(metadata ?? {}), // back-compat: mirrors legacy toChannelDTO
+    // Merge the description column into the data JSON: createChannel/updateChannel
+    // write the `description` column, but readers (assembleHomeGroup) parse
+    // data.description — without this, group descriptions never surfaced.
+    data: JSON.stringify({ ...(metadata ?? {}), ...(row.description != null ? { description: row.description } : {}) }), // back-compat: mirrors legacy toChannelDTO
     metadata,
     members,
     member_count: members.length,
@@ -108,7 +111,10 @@ function buildChannelDTO(
     name: row.name,
     cover_url: row.cover_url ?? '',
     custom_type: row.custom_type,
-    data: JSON.stringify(metadata ?? {}),
+    // Merge the description column into the data JSON: createChannel/updateChannel
+    // write the `description` column, but readers (assembleHomeGroup) parse
+    // data.description — without this, group descriptions never surfaced.
+    data: JSON.stringify({ ...(metadata ?? {}), ...(row.description != null ? { description: row.description } : {}) }),
     metadata,
     members,
     member_count: members.length,
