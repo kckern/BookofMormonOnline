@@ -94,7 +94,10 @@ function TheaterWrapper({ appController }) {
     +parseFloat(localStorage.getItem("playbackMusicVolume") || 0.1).toFixed(1)
   );
 	const [isMuted,setIsMuted] = useState((localStorage.getItem("playbackMuted")==='true'?true:false) || false);
-  const token = appController.states.user.token;
+  // Never log under a null token: fall back to the device token App.js always
+  // mints in localStorage. A null token would record progress under the shared
+  // "null" key and never merge into the account on login.
+  const token = appController.states.user.token || localStorage.getItem("token");
   const controls = {
     log: () => {
       BoMOnlineAPI(
@@ -658,7 +661,7 @@ function TheaterCrossRoadsButton({theaterController,config,optionalOverride,page
 
 
   useEffect(() => {
-    const token = theaterController.appController.states.user.token;
+    const token = theaterController.appController.states.user.token || localStorage.getItem("token");
     nextQueuePromiseRef.current = BoMOnlineAPI({ queue: { token, items } }, { useCache: false }).then(({ queue }) => queue)
   }, []);
 
@@ -912,7 +915,7 @@ function TheaterControls({ theaterController, visible }) {
   const updateQueueStatus = async () => {
 
     //get updated status
-    const token = theaterController.appController.states.user.token;
+    const token = theaterController.appController.states.user.token || localStorage.getItem("token");
     const queueitems = loadQueueItemsFromQueue(queue);
     const { queuestatus } = await BoMOnlineAPI(
       { queuestatus: { token, items: queueitems } },
@@ -930,7 +933,7 @@ function TheaterControls({ theaterController, visible }) {
   const logItem = async () => {
     const [number, slugEnd] = currentItem?.slug.split("/").reverse();
     const slug = `${slugEnd}/${number}`;
-    const token = theaterController.appController.states.user.token;
+    const token = theaterController.appController.states.user.token || localStorage.getItem("token");
     const progress = await BoMOnlineAPI(
       {
         log: {
