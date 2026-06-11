@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
+import React, { useState, useEffect, useRef, useLayoutEffect, useMemo } from "react";
 import Parser from "html-react-parser";
 import Loader from "../_Common/Loader";
 import { useRouteMatch, useHistory, Link } from "react-router-dom";
@@ -27,6 +27,7 @@ import { lookup } from "scripture-guide";
 
 
 import { determineLanguage, flattenDescription, playSound } from "../../models/Utils";
+import { buildCommentQueue } from "./theaterUtils";
 
 
 const loadQueueItemsFromQueue = items => {
@@ -872,6 +873,17 @@ function TheaterControls({ theaterController, visible }) {
   const currentItem = queue[cursorIndex] || null;
   useEffect(() => {
     if(!currentItem) return;
+    setCurrentProgress(0);
+    const wrapper = document.querySelector(".theater-wrapper");
+    if (wrapper) {
+      // Snap the progress visuals to 0 without animating the 100→0 sweep:
+      // disable their transitions for two frames around the reset.
+      wrapper.classList.add("progress-reset");
+      wrapper.style.setProperty("--progress", "0");
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => wrapper.classList.remove("progress-reset"))
+      );
+    }
     setPlayerCanPlay(false);
     const slug = currentItem?.slug || null;
     const title = `${currentItem?.heading} • ${currentItem?.parent_page?.title}`;
@@ -903,12 +915,26 @@ function TheaterControls({ theaterController, visible }) {
 
   const onListen = e => {
     const progress = (e / currentDuration) * 100;
-    setCurrentProgress(progress);
-    const player = document.getElementById("theater-audio-player");
-    if(!player) return;
-    player.playbackRate = theaterController.playbackRate;
 
-    //if progress is 60%  log item, but only once!
+    // Smooth movers (text slider, progress bar) read this CSS variable;
+    // updating it does not re-render anything.
+    document
+      .querySelector(".theater-wrapper")
+      ?.style.setProperty("--progress", `${progress}`);
+
+    // Discrete consumers (comment cursor, image index, people reveal,
+    // opacity fades) only need ~1% granularity. Returning the previous
+    // value bails out of the re-render, cutting renders from 20/s to ~1/s.
+    // Commit the first tick after a reset immediately (it clears the
+    // transition opacity-hold), then only on integer-percent changes.
+    setCurrentProgress(prev =>
+      (prev === 0 && progress > 0) ||
+      Math.floor(prev) !== Math.floor(progress)
+        ? progress
+        : prev
+    );
+
+    //if progress is 85% log item, but only once!
     if (progress > 85 && !currentItem?.updated) {
       currentItem.updated = true;
       updateQueueStatus();
@@ -1221,12 +1247,6 @@ function TheaterContent({ theaterController }) {
 
   //stip comment and image blocks: [c]1234[/c] and [i]1234[/i]
 
-  const computePosition = progress => {
-    return progress;
-  };
-
-  const yPosition = computePosition(currentProgress);
-
   const [transitioning, setTransitioning] = useState(true);
   useEffect(() => {
     if(transitioning && currentProgress>0) setTransitioning(false);
@@ -1260,7 +1280,7 @@ function TheaterContent({ theaterController }) {
       <TheaterMobileControls theaterController={theaterController} />
       <div
         className={`theater-content-slider ${state}`}
-        style={{ transform: `translateY(-${yPosition}%)`, opacity }}
+        style={{ opacity }}
       >
         {Parser(content)}
       </div>
@@ -1493,7 +1513,7 @@ function TheaterProgressBar({ theaterController }) {
         <img src={playpause} className="player-ui" onClick={playpauseFN} />
       </div>
       <div className="theater-progress-bar" onClick={seekTo}>
-        <ProgressBar percent={currentProgress} />
+        <ProgressBar />
       </div>
       <div className="theater-progress-bar-buttons right">
 				{showPlaybackSettings && <PlaybackSettings setShowPlaybackSettings={setShowPlaybackSettings} theaterController={theaterController}/>}
@@ -1600,13 +1620,10 @@ function PlaybackSettings({setShowPlaybackSettings,theaterController}){
 	)
 }
 
-function ProgressBar({ percent }) {
+function ProgressBar() {
   return (
     <div className="progress-bar">
-      <div
-        className="progress-bar-inner"
-        style={{ transform: `scaleX(${(percent || 0) / 100})` }}
-      ></div>
+      <div className="progress-bar-inner"></div>
     </div>
   );
 }
@@ -1751,8 +1768,10 @@ function TheaterImagePanel({ theaterController }) {
   if (currentTime > currentDuration - secondsBuffer)
     opacity = (currentDuration - currentTime) / secondsBuffer;
 
+  // keyed per image: remount gives each image a fresh zoom-from-start instead of tweening backwards from the previous image's end scale
   const imgEl = image ? (
-    <div className="img-element-container" 
+    <div className="img-element-container"
+    key={`${cursorIndex}-${imageIndex}`}
     style={{
       transform: `scale(${scale}) `,
       opacity
@@ -1780,7 +1799,6 @@ function TheaterCommentFeed({ theaterController }) {
   const filter = theaterController.appController.states.preferences.commentary.filter;
   const blacklist = (filter.type==="blacklist" ? filter?.sources : []) || [];
   const [comments, setComments] = useState(new Set());
-  const secondsBetweenComments = 5;
   const {
     queue,
     cursorIndex,
@@ -1790,20 +1808,14 @@ function TheaterCommentFeed({ theaterController }) {
   } = theaterController;
   const currentItem = queue[cursorIndex] || null;
   const coms = currentItem?.coms || [];
-  const filteredcoms = coms.filter(com => {
-    const noteSources = [192,193];
-    const sourceId = com.id.toString().substr(5, 3);
-    if (!com.preview?.trim()) return false;
-    if(noteSources.includes(parseInt(sourceId))) return true;
 
-    if ([...blacklist, 41, 161, 162, 163, 164, 165, 166].includes(parseInt(sourceId)))
-      return false;
-    return true;
-  }) // sort by length, short to long
-  .sort((a, b) => a.preview.length - b.preview.length);
-
-  const allowedMessageCount = currentDuration / secondsBetweenComments;
-  const queuedMessages = filteredcoms.slice(0, allowedMessageCount).sort(() => Math.random() - 0.5);
+  // Build (and shuffle) the queue once per item — previously this re-ran
+  // and re-randomized on every render, 20×/sec during playback.
+  // Note: currentItem must stay referentially stable per item (queue items are not cloned per render); blacklist changes mid-item take effect at the next item.
+  const queuedMessages = useMemo(
+    () => buildCommentQueue(coms, blacklist.map(Number), currentDuration),
+    [currentItem, currentDuration]
+  );
   const division = queuedMessages.length > 5 ? queuedMessages.length : 5; // this is for items with low comment count, so its coms dont'get skipped.
   const commentCursor = Math.floor(  (division * (currentProgress * 0.7)) / 100 );
   useEffect(async () => {
