@@ -87,7 +87,6 @@ export default function Page({ appController }) {
         audioPlaying: false,
         pageSlug: initOpen.pageSlug,
         textId: null,
-        touched: false,
         route: match,
         initOpen: initOpen,
         openRows: [],
@@ -165,9 +164,6 @@ export default function Page({ appController }) {
         },
         resetPage: (val) => {
           dispatch({ fn: "resetPage", val: val });
-        },
-        setTouched: (val) => {
-          dispatch({ fn: "setTouched", val: val });
         },
         setInitOpen: (val) => {
           dispatch({ fn: "setInitOpen", val: val });
@@ -259,6 +255,37 @@ export default function Page({ appController }) {
         })
     : null;
   const initPhase = usePageInit(pageController, { gateOpen, identityKey: initIdentityKey, onTail });
+
+  // Active-section tracking — enabled only once init has settled (the old
+  // window.onscroll spy attached mid-animation and leaked across views).
+  // Active-section tracking — enabled only once init has settled (the old
+  // window.onscroll spy attached mid-animation and leaked across views).
+  useEffect(() => {
+    if (initPhase !== "ready") return undefined;
+    // The IntersectionObserver fires immediately on mount for any section
+    // already in the viewport. Skip the very first callback to avoid
+    // replacing the just-established URL (popup, verse, etc.) before the
+    // user has actually scrolled anywhere.
+    let seenFirst = false;
+    const spy = createScrollSpy({
+      getSections: () => document.getElementsByClassName("pagesection"),
+      onActive: (el) => {
+        const slug = el.id;
+        const title = el.attributes?.titletext?.nodeValue || null;
+        if (!seenFirst) {
+          seenFirst = true;
+          // Pre-seed the active section so future callbacks only fire on change.
+          pageController.states.activeSection = slug;
+          return;
+        }
+        if (slug && slug !== pageController.states.activeSection) {
+          pageController.functions.setActiveSection({ slug, title });
+        }
+      },
+    });
+    spy.start();
+    return () => spy.stop();
+  }, [initPhase, pageController.states.pageSlug]);
 
   //Load Page Comments
   useEffect(() => {
@@ -536,7 +563,6 @@ export default function Page({ appController }) {
           (readyToScroll || !needToLoadComments ? "ready " : "notready ") +
           (stageClass ? stageClass : "")
         }
-        onMouseDown={() => pageController.functions.setTouched(true)}
       >
         <MuteButton pageController={pageController} />
         <Floaters pageController={pageController} />
@@ -574,42 +600,6 @@ function LoadingPageCommentsNotice({ commentState, setReadyToScroll }) {
 }
 //<pre>{commentState}</pre>
 
-function onScrollPage(pageController) {
-  var _sections = document.getElementsByClassName("pagesection");
-
-  window.onscroll = () => {
-    // find scroll top position and screen bottom position.
-    let scrollerTopPosition = window.scrollY,
-      // scrollerButtomPosition = scrollerTopPosition + window.innerHeight,
-      windowUpperSectionHeight =
-        scrollerTopPosition + (window.innerHeight * 20) / 100,
-      sectionId = null;
-
-    let slug,
-      title = null;
-    for (let i = 0; i < _sections.length; i++) {
-      //get section heighr
-      let _section = _sections[i],
-        elementTop = _section.offsetTop;
-      // elementButtom = elementTop + _section.offsetHeight;
-
-      //check section height is less then scrollTop height
-      if (scrollerTopPosition <= elementTop) {
-        if (windowUpperSectionHeight >= elementTop) {
-          slug = _section.id;
-          title = _section.attributes?.titletext?.nodeValue || "X?";
-
-          break;
-        }
-      }
-    }
-    //update Url
-    if (slug && slug !== pageController.states.activeSection) {
-      pageController.functions.setTouched(true);
-      pageController.functions.setActiveSection({ slug, title });
-    }
-  };
-}
 
 function loadAudioUrl(slug) {
   return `${assetUrl}/audio/${label("lang_code")}/${slug
@@ -727,12 +717,11 @@ function reducer(pageController, input) {
     case "setActiveSection":
       let { slug: sectionSlug, title: sectionTitle } = input.val;
       pageController.states.activeSection = sectionSlug;
-      if (pageController.states.init || true) {
-        document.title =
-          sectionTitle || pageController.pageData.title || label("home_title");
-        pageController.appController.functions.setSlug(sectionSlug);
-      }
-      //pageController.appController.functions.setSlug(input.val);
+      document.title =
+        sectionTitle || pageController.pageData.title || label("home_title");
+      // replace, not push: scrolling is not navigation — Back should leave
+      // the page in one press. (The old `|| true` made the init guard dead.)
+      pageController.appController.functions.setSlug(sectionSlug, { replace: true });
       break;
 
     case "setPageComments":
@@ -767,10 +756,6 @@ function reducer(pageController, input) {
     case "resetPage":
       pageController.states.initOpen.pageSlug = input.val;
       pageController.states.loading = null;
-      break;
-
-    case "setTouched":
-      pageController.states.touched = input.val;
       break;
 
     case "updateToPageComment":

@@ -99,7 +99,7 @@ function expectedTargetSelector({ initOpen, pageSlug }) {
     return `[id="${initOpen.pageSlug}/${initOpen.lastLeaf}"]`;
   return null; // no specific target — nothing to wait for
 }
-function awaitTargetPresent(selector, { token, timeoutMs = EXPECTED_TARGET_TIMEOUT_MS } = {}) {
+export function awaitTargetPresent(selector, { isDisposed, timeoutMs = EXPECTED_TARGET_TIMEOUT_MS } = {}) {
   return new Promise((resolve) => {
     if (!selector || document.querySelector(selector)) return resolve(true);
     let rafId = null;
@@ -108,17 +108,17 @@ function awaitTargetPresent(selector, { token, timeoutMs = EXPECTED_TARGET_TIMEO
     const finish = (v) => {
       if (done) return;
       done = true;
-      if (rafId) cancelAnimationFrame(rafId);
+      if (rafId) window.cancelAnimationFrame(rafId);
       if (timer) clearTimeout(timer);
       resolve(v);
     };
     const tick = () => {
-      if (token?.aborted) return finish(false);
+      if (isDisposed && isDisposed()) return finish(false);
       if (document.querySelector(selector)) return finish(true);
-      rafId = requestAnimationFrame(tick);
+      rafId = window.requestAnimationFrame(tick);
     };
     timer = setTimeout(() => finish(false), timeoutMs);
-    rafId = requestAnimationFrame(tick);
+    rafId = window.requestAnimationFrame(tick);
   });
 }
 
@@ -209,7 +209,7 @@ export function usePageInit(pageController, { gateOpen, identityKey, onTail }) {
     // Wait for the expected target row to render before building (it lands a
     // few frames after this effect wakes). No expected target → run now.
     const selector = expectedTargetSelector(pageController.states);
-    awaitTargetPresent(selector).then(runCampaign);
+    awaitTargetPresent(selector, { isDisposed: () => disposed }).then(runCampaign);
 
     return () => { disposed = true; };
   }, [gateOpen, identityKey, pageController.states.loading]);
