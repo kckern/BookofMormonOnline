@@ -1,6 +1,7 @@
 # Messenger Transport Audit — socket push vs GraphQL pull
 
 **Date:** 2026-06-11
+> **⚠️ ERRATUM (same day):** this audit's server-side facts were derived from the LEGACY backend (`src/socket.ts`, :5005). The dev frontend actually talks to the GREEN-FIELD backend (`backend/`, :5006 — see `frontend/webapp/src/setupProxy.js:4-6`), whose socket layer emits the names the client already listens for (`membership_changed`, `user_joined`/`user_left`, `unread_count_changed`, `reaction_changed`, …). The name-mismatch table below is therefore TRUE OF THE LEGACY BACKEND ONLY. The polling critique (§2) and the websockets-over-polling recommendation stand. A green-field re-grounding sweep supersedes this document for implementation facts.
 **Scope:** `src/socket.ts` (535 lines), `src/library/messenger.ts`, `frontend/webapp/src/models/MessengerController.js` — which messenger data flows ride which transport, and which are on the wrong one.
 **Trigger:** While verifying the SendBird-parity plan's backend assumptions, the socket layer turned out to be half-connected: the server broadcasts a richer event set than the client subscribes to, and the client polls GraphQL for data the server is already pushing.
 
