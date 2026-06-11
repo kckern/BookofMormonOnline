@@ -49,7 +49,32 @@ export const userauthResolvers: Resolvers = {
         return asGql({ isSuccess: false, msg: 'Token Login Failure', user: null, social: null });
       }
       const hashed_id = md5(user.user);
-      const social = sendbird.loadUser(hashed_id, user.name ?? undefined, genUserAvatar(hashed_id));
+      const avatar = genUserAvatar(hashed_id);
+
+      // Onboarding: provision the messenger identity on sign-in. messenger_members
+      // / messages / reactions / files all FK to messenger_users.user_id, so a
+      // post-Sendbird-migration user with no row silently can't join, post, react,
+      // or open a socket. Insert-if-missing (preserves any later nickname/avatar
+      // customisation; suppressed under sandbox on dev).
+      const hasMessengerRow = await ctx.db
+        .selectFrom('messenger_users')
+        .select('user_id')
+        .where('user_id', '=', hashed_id)
+        .executeTakeFirst();
+      if (!hasMessengerRow) {
+        await runWrite(
+          ctx,
+          ctx.db.insertInto('messenger_users').values({
+            user_id: hashed_id,
+            bom_user_id: user.user,
+            nickname: user.name ?? user.user,
+            profile_url: avatar,
+            is_bot: 0,
+          }) as Parameters<typeof runWrite>[1],
+        );
+      }
+
+      const social = sendbird.loadUser(hashed_id, user.name ?? undefined, avatar);
       return asGql({ isSuccess: true, msg: 'Token Login Success', user, social });
     },
 
