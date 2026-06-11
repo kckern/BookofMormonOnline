@@ -1039,9 +1039,35 @@ export default class MessengerController {
         this.fireStudyGroupAction(data.action ? { action: data.action } : data, ch);
         return data;
       },
-      createPreviousMessageListQuery: (params) => ({
-        load: () => this.loadGroupMessages(ch)
-      }),
+      createPreviousMessageListQuery: () => {
+        const self2 = this;
+        const query = {
+          limit: 20,
+          reverse: false,
+          customTypesFilter: null,
+          includeThreadInfo: false,
+          includeReactions: false,
+          includeReaction: false, // singular alias used by StudyGroupNotebook.js
+          hasMore: true,
+          load(callback) {
+            const p = self2.loadGroupMessages(channel).then((messages) => {
+              let out = messages;
+              if (Array.isArray(query.customTypesFilter) && query.customTypesFilter.length) {
+                out = out.filter((m) => query.customTypesFilter.includes(m.customType));
+              }
+              out = query.reverse ? [...out].reverse() : out;
+              if (query.limit) out = out.slice(0, query.limit);
+              query.hasMore = false; // one-shot: full history arrives in the first load
+              return out;
+            });
+            if (typeof callback === 'function') {
+              p.then((msgs) => callback(msgs, null)).catch((err) => callback(null, err));
+            }
+            return p;
+          },
+        };
+        return query;
+      },
       getMessagesByMessageId: (id, params, callback) => {
         const p = this.loadPreviousMessages({ group: ch, id, prevResultSize: params?.prevResultSize });
         if (typeof callback === 'function') {
@@ -1335,12 +1361,28 @@ export default class MessengerController {
       },
       disconnect: () => this.disconnect(),
       groupChannel: {
-        createMyGroupChannelListQuery: (params) => ({
+        createMyGroupChannelListQuery: (params = {}) => ({
           hasNext: true,
-          next: (callback) => this.getStudyGroups().then(channels => {
-            if (callback) return callback(channels, null);
-            return channels;
-          })
+          next: (callback) => {
+            const p = this.getStudyGroups().then((channels) => {
+              let out = channels;
+              if (Array.isArray(params.customTypesFilter) && params.customTypesFilter.length) {
+                out = out.filter((c) => params.customTypesFilter.includes(c.customType));
+              }
+              if (params.nicknameContainsFilter) {
+                const needle = String(params.nicknameContainsFilter).toLowerCase();
+                out = out.filter((c) =>
+                  (c.members || []).some((m) =>
+                    (m.nickname || '').toLowerCase().includes(needle)
+                  )
+                );
+              }
+              if (callback) return callback(out, null);
+              return out;
+            });
+            p.catch((err) => { if (callback) callback(null, err); });
+            return p;
+          },
         }),
         createChannel: (params) => this.createNewGroup(params, this.userId),
         getChannel: async (channelUrl, callback) => {
