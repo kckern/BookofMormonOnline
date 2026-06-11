@@ -23,6 +23,12 @@ import { messengerResolvers } from './resolvers/messenger.js';
 import { userauthResolvers } from './resolvers/userauth.js';
 import { userprofileResolvers } from './resolvers/userprofile.js';
 import { useractivityResolvers } from './resolvers/useractivity.js';
+// Ported legacy resolvers that were declared in the SDL but unimplemented
+// (audit: docs/audits/2026-06-11-missing-graphql-resolvers.md).
+import { portedUserResolvers } from './resolvers/ported_user.js';
+import { portedCommunityResolvers } from './resolvers/ported_community.js';
+import { portedMiscResolvers } from './resolvers/ported_misc.js';
+import { socialsigninResolvers } from './resolvers/socialsignin.js';
 
 /** Shallow per-type merge: each domain contributes whole type maps; Query fields union. */
 function mergeResolverMaps(...maps: Resolvers[]): Resolvers {
@@ -255,4 +261,8 @@ export const resolvers: Resolvers = mergeResolverMaps(
   userauthResolvers,
   userprofileResolvers,
   useractivityResolvers,
+  portedUserResolvers,
+  portedCommunityResolvers,
+  portedMiscResolvers,
+  socialsigninResolvers,
 );

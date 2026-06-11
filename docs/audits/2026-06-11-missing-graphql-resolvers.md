@@ -16,6 +16,31 @@ Diff every `type Query` / `extend type Query` field across `backend/schema/*.gra
 against every implemented `Query: {…}` resolver in `src/graphql/resolvers/*.ts`,
 then verify each candidate against the running backend and check frontend usage.
 
+## STATUS: ALL RESOLVED ✅ (2026-06-11)
+All 16 missing Query resolvers are now implemented and verified against the live
+backend (real data or the faithful legacy stub). New modules:
+`resolvers/ported_user.ts`, `ported_community.ts`, `ported_misc.ts`,
+`socialsignin.ts` + loaders `ported_user.ts`, `ported_community.ts`,
+`ported_misc.ts`, `standardizedScores.ts`, `socialsignin.ts`, `studylog.ts`.
+
+| Field | Result |
+|---|---|
+| studylog | real summary (staff: count 34) |
+| userdailyscores | real daily series (2021-12-27 → today, ramps to 100 on finishes) |
+| studygrouphistory | real per-user daily series |
+| pageprogress | per-slug ProgressScore (jaredites: completed 1.9, count 216) |
+| sourceUsage | Float (real usage) |
+| users | bom_user rows (user/name/email only — never pass/token) |
+| readingplansegment | real segment (Come Follow Me, 8 sections, 75 blocks) |
+| mapstory | all 8 map stories + moves (reuses maps.ts type resolvers) |
+| socialsignin | OAuth verify (google/facebook/naver/kakao) → find-or-create; rejects bad tokens |
+| generateToken | deterministic 32-char hex from seed |
+| closetab | best-effort presence beacon → [] |
+| books / menu | [null] (faithful legacy stub — real data via objects/preload) |
+| moregroups / postcomments | [] (faithful legacy stub) |
+| peoplenetwork | null (never implemented in legacy either) |
+| test | Test{} |
+
 ## Mutations: complete ✅
 All 26 SDL Mutation fields have resolvers. No gaps.
 

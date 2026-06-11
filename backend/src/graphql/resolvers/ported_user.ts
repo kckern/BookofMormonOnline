@@ -1,0 +1,156 @@
+/**
+ * ported_user resolvers — previously-unresolved BomUser / BomCommunity Query
+ * fields that were declared in the SDL but had no resolver (silently null).
+ *
+ * Faithful ports of the legacy resolvers in src/resolvers/BomUser.ts and
+ * src/resolvers/BomCommunity.ts. All read-only (sandbox-safe) and never throw —
+ * each catches and returns the legacy empty/fallback shape.
+ *
+ *   closetab(token)              — presence beacon on tab close; resolve user, return []
+ *   sourceUsage(token, source)   — commentary-source consumption fraction
+ *   pageprogress(token, slug[])  — per-page ProgressScore over the page's blocks
+ *   userdailyscores(token)       — { dates, progress } per-day cumulative %
+ *   studygrouphistory(token,id)  — hardcoded group history (legacy stub)
+ *   generateToken(seed)          — deterministic 32-char hex token (new)
+ *   users(user_ids[])            — public bom_user rows (new, minimal)
+ */
+import type { Resolvers } from '../../../codegen/graphql.js';
+import { findUserByToken, md5 } from '../../data/loaders/userauth.js';
+import {
+  getSourceUsage,
+  getPageProgress,
+  getUsersByIds,
+} from '../../data/loaders/ported_user.js';
+import { getStandardizedValuesFromUserList } from '../../data/loaders/standardizedScores.js';
+
+export const portedUserResolvers: Resolvers = {
+  Query: {
+    /**
+     * closetab — analytics/presence beacon fired by the frontend exitBeacon on
+     * tab close. Legacy BomUser.ts:156 resolves the user by token and calls
+     * sendbird.closeTab (a no-op shim returning {}). The green-field sendbird shim
+     * has no closeTab, so we replicate faithfully: resolve the user (best-effort)
+     * and return [] — the SDL return is [String] and the frontend fire-and-forgets.
+     */
+    closetab: async (_root, args, ctx) => {
+      try {
+        if (args.token) await findUserByToken(ctx.db, args.token);
+      } catch {
+        // never throw — beacon is fire-and-forget
+      }
+      return [];
+    },
+
+    /**
+     * sourceUsage — fraction of a commentary source consumed by the user.
+     * Legacy BomUser.ts:219. Returns 0 on missing token/source or DB error.
+     */
+    sourceUsage: async (_root, args, ctx) => {
+      try {
+        return await getSourceUsage(ctx.db, args.token, args.source);
+      } catch (error) {
+        console.error('Database error during sourceUsage:', error);
+        return 0;
+      }
+    },
+
+    /**
+     * pageprogress — per-page ProgressScore scoped to the requested slugs.
+     * Legacy BomUser.ts:317. One ProgressScore per requested slug.
+     */
+    pageprogress: async (_root, args, ctx) => {
+      try {
+        return (await getPageProgress(ctx.db, args.token, args.slug)) as unknown as never;
+      } catch (error) {
+        console.error('Database error during pageprogress:', error);
+        return [];
+      }
+    },
+
+    /**
+     * userdailyscores — { dates, progress } per-day cumulative progress % for the
+     * token's user. Legacy BomUser.ts:288 (getStandardizedValuesFromUserList on a
+     * single-user list). When the token is unknown, legacy falls back to using the
+     * raw token as the username (yields an empty series).
+     */
+    userdailyscores: async (_root, args, ctx) => {
+      try {
+        const tokenRow = args.token
+          ? await ctx.db
+              .selectFrom('bom_user_token')
+              .select('user')
+              .where('token', '=', args.token)
+              .executeTakeFirst()
+          : null;
+        const username = tokenRow?.user ?? args.token ?? '';
+        const values = await getStandardizedValuesFromUserList(ctx.db, [username]);
+        return {
+          dates: values.map((v) => v.date),
+          progress: values.map((v) => v.progress[username] ?? 0),
+        };
+      } catch (error) {
+        console.error('Database error during userdailyscores:', error);
+        return { dates: [], progress: [] };
+      }
+    },
+
+    /**
+     * studygrouphistory — per-user daily progress for a study group.
+     * Legacy BomCommunity.ts:231. The group membership is a hardcoded stub
+     * (['tytus','kckern']) with a fixed textMax=3520 and name 'My Group'. Kept
+     * verbatim, including the try/catch empty fallback.
+     */
+    studygrouphistory: async (_root, args, ctx) => {
+      const textMax = 3520;
+      const studyGroupID = args.studyGroupID;
+      const userList = ['tytus', 'kckern'];
+      try {
+        const values = await getStandardizedValuesFromUserList(ctx.db, userList);
+        return {
+          studyGroupID,
+          studyGroupName: 'My Group',
+          dates: values.map((v) => v.date),
+          userHistories: userList.map((user) => ({
+            user,
+            dates: values.map((v) => v.date),
+            completed: values.map((v) => {
+              const p = v.progress?.[user];
+              if (p === undefined || p === null) return 0;
+              return Math.round((p * 1000) / textMax) / 10;
+            }),
+          })),
+        };
+      } catch (error) {
+        console.error('Error during studygrouphistory:', error);
+        return {
+          studyGroupID,
+          studyGroupName: 'My Group',
+          dates: [],
+          userHistories: userList.map((user) => ({ user, dates: [], completed: [] })),
+        };
+      }
+    },
+
+    /**
+     * generateToken — deterministic token derived from a seed. Not implemented in
+     * legacy; minimal sensible version: md5 hex of the seed → 32-char hex string.
+     */
+    generateToken: (_root, args) => {
+      const seed = args.seed ?? 0;
+      return md5(`bom-token-seed:${seed}`);
+    },
+
+    /**
+     * users — public bom_user rows for the given ids (user/name/email only).
+     * Not implemented in legacy; minimal safe read. Empty/null ids → [].
+     */
+    users: async (_root, args, ctx) => {
+      try {
+        return (await getUsersByIds(ctx.db, args.user_ids)) as unknown as never;
+      } catch (error) {
+        console.error('Database error during users:', error);
+        return [];
+      }
+    },
+  },
+};
