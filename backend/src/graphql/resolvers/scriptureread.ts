@@ -40,26 +40,33 @@ export const scripturereadResolvers: Resolvers = {
       const slugBlocks = await getBlocksToQueue(db, token, items);
       if (!slugBlocks.length) return [] as unknown as never;
 
+      // Batch: resolve every page slug in ONE query and fetch every block in ONE
+      // query, instead of two sequential queries per slug (the legacy loop was an
+      // N+1 over the queue's pages). Rows are partitioned back per (page, link),
+      // preserving the queue's slug + block order.
+      const tipFor = (slug: string) => slug.split('/').pop() ?? slug;
+      const tips = [...new Set(slugBlocks.map((sb) => tipFor(sb.slug)))];
+      const pageRows = await db
+        .selectFrom('bom_slug')
+        .select(['slug', 'link'])
+        .where('slug', 'in', tips)
+        .where('type', '=', 'PG')
+        .execute();
+      const linkByTip = new Map(pageRows.map((p) => [p.slug, p.link]));
+
+      const pages = [...new Set([...linkByTip.values()])];
+      const allLinks = [...new Set(slugBlocks.flatMap((sb) => sb.blocks))];
+      const textRows = pages.length && allLinks.length
+        ? await db.selectFrom('bom_text').selectAll().where('page', 'in', pages).where('link', 'in', allLinks).execute()
+        : [];
+      const byPageLink = new Map(textRows.map((r) => [`${r.page}:${r.link}`, r]));
+
       const out: unknown[] = [];
       for (const { slug, blocks } of slugBlocks) {
-        if (!blocks.length) continue;
-        const pageSlugTip = slug.split('/').pop() ?? slug;
-        const pageRow = await db
-          .selectFrom('bom_slug')
-          .select('link')
-          .where('slug', '=', pageSlugTip)
-          .where('type', '=', 'PG')
-          .executeTakeFirst();
-        if (!pageRow) continue;
-        const rows = await db
-          .selectFrom('bom_text')
-          .selectAll()
-          .where('page', '=', pageRow.link)
-          .where('link', 'in', blocks)
-          .execute();
-        const byLink = new Map(rows.map((r) => [r.link, r]));
+        const pageLink = linkByTip.get(tipFor(slug));
+        if (pageLink == null) continue;
         for (const b of blocks) {
-          const row = byLink.get(b);
+          const row = byPageLink.get(`${pageLink}:${b}`);
           if (row) out.push(row);
         }
       }

@@ -38,6 +38,7 @@ interface BlockRow {
   section: string | null;
   page: string | null;
   link: number | null;
+  queue_weight?: string | null;
 }
 
 /** token → { queryBy, finished }. Anonymous users log under the raw token. */
@@ -77,14 +78,29 @@ async function loadCompletedBlocks(
 }
 
 /** Every text block (guid, section, page, link) in queue order. */
+// The block list (guid/section/page/link/weight) is STATIC content — identical
+// for every user, changing only when content is edited. Cache it process-wide on
+// a TTL so the theater queue doesn't re-scan + sort all of bom_text on every
+// request. The per-user parts (completed set, start section) are computed against
+// this cached list.
+let _allBlocksCache: { rows: BlockRow[]; at: number } | null = null;
+const ALL_BLOCKS_TTL_MS = 5 * 60 * 1000;
+
 async function loadAllBlocks(db: Kysely<DB>): Promise<BlockRow[]> {
-  const rows = await db
+  const now = Date.now();
+  if (_allBlocksCache && now - _allBlocksCache.at < ALL_BLOCKS_TTL_MS) {
+    return _allBlocksCache.rows;
+  }
+  // Load UNORDERED then sort in JS: `ORDER BY queue_weight + 0` can't use an index
+  // (queue_weight is a numeric-valued varchar, so the cast forces a filesort of
+  // every row — ~147ms). The unordered scan + JS numeric sort is ~5x faster.
+  const rows = (await db
     .selectFrom('bom_text')
-    .select(['guid', 'section', 'page', 'link'])
-    // queue_weight is a numeric-valued varchar; order numerically (legacy ORDER BY queue_weight).
-    .orderBy(sql`queue_weight + 0`, 'asc')
-    .execute();
-  return rows as unknown as BlockRow[];
+    .select(['guid', 'section', 'page', 'link', 'queue_weight'])
+    .execute()) as unknown as BlockRow[];
+  rows.sort((a, b) => Number(a.queue_weight) - Number(b.queue_weight));
+  _allBlocksCache = { rows, at: now };
+  return rows;
 }
 
 /** Group an ordered block list into [{ slug, blocks }] by page slug. */
@@ -117,9 +133,12 @@ async function buildQueueFromSection(
   sectionGuid: string | null,
   token: string | null | undefined,
   forceSection: boolean,
+  // Pre-resolved user (queryBy/finished) to avoid a redundant getUserForLog
+  // round-trip when the caller already looked the user up.
+  preUser?: { queryBy: string | null; finished: number },
 ): Promise<QueueSlugBlocks[]> {
   if (!sectionGuid) return [];
-  const { queryBy, finished } = await getUserForLog(db, token);
+  const { queryBy, finished } = preUser ?? (await getUserForLog(db, token));
   const allBlocks = await loadAllBlocks(db);
   const sectionOrder = [...new Set(allBlocks.map((b) => b.section).filter((s): s is string => !!s))];
   let sectionIndex = sectionOrder.findIndex((s) => s === sectionGuid);
@@ -263,7 +282,8 @@ async function getBlocksFromToken(
   db: Kysely<DB>,
   token: string,
 ): Promise<QueueSlugBlocks[]> {
-  const { queryBy, finished } = await getUserForLog(db, token);
+  const user = await getUserForLog(db, token);
+  const { queryBy, finished } = user;
   if (!queryBy) return getBlocksByDefault(db);
   const logEntry = await db
     .selectFrom('bom_log')
@@ -274,19 +294,17 @@ async function getBlocksFromToken(
     .orderBy('timestamp', 'desc')
     .executeTakeFirst();
   if (!logEntry) return getBlocksByDefault(db);
+  // Fetch the block's section directly and hand it (plus the already-resolved
+  // user) to buildQueueFromSection — the legacy path round-tripped through
+  // getBlocksFromTextBlock, which re-queried bom_slug + bom_text and re-resolved
+  // the user (3 redundant remote round-trips on the default theater entry).
   const textRow = await db
     .selectFrom('bom_text')
-    .select(['link', 'page'])
+    .select(['link', 'page', 'section'])
     .where('guid', '=', logEntry.value)
     .executeTakeFirst();
   if (!textRow?.page) return getBlocksByDefault(db);
-  const pageSlug = await db
-    .selectFrom('bom_slug')
-    .select('slug')
-    .where('link', '=', textRow.page)
-    .executeTakeFirst();
-  if (!pageSlug) return getBlocksByDefault(db);
-  return getBlocksFromTextBlock(db, `${pageSlug.slug}/${textRow.link}`, token, false);
+  return buildQueueFromSection(db, textRow.section, token, false, user);
 }
 
 /**
