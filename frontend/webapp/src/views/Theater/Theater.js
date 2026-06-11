@@ -1086,6 +1086,9 @@ function TheatherMusicPlayer({ theaterController }) {
     if(activeSide==="a"){
       document.getElementById(`theater-music-player-b`).volume = 0;
       setTrackB(newTrack);
+      // preload="none" defers the fetch; start it now that a crossfade
+      // is actually coming up (src updates on the next render).
+      setTimeout(() => document.getElementById(`theater-music-player-b`)?.load(), 0);
     }else{
       document.getElementById(`theater-music-player-a`).volume = 0;
       setTrackA(newTrack);
@@ -1159,6 +1162,7 @@ function TheatherMusicPlayer({ theaterController }) {
       src={`${assetUrl}/audio/music/${trackB}`}
       volume={playbackMusicVolume}
 			muted={isMuted}
+      preload="none"
       onCanPlay={()=>{
         const isPLaying = document.getElementById(`theater-music-player-a`)?.paused;
         if(isPLaying) return;
@@ -1756,11 +1760,15 @@ function TheaterImagePanel({ theaterController }) {
   const images = currentItem?.imgs || [];
 
   useEffect(() => {
-    //preload images
-    images.forEach(img => {
-      const image = new Image();
-      image.src = `${assetUrl}/art/${img.id}`;
-    });
+    // Preload upcoming art a few seconds in, after the narration stream
+    // has had the network to itself.
+    const t = setTimeout(() => {
+      images.forEach(img => {
+        const image = new Image();
+        image.src = `${assetUrl}/art/${img.id}`;
+      });
+    }, 4000);
+    return () => clearTimeout(t);
   }, [currentItem?.imgs]);
 
   //pick image based on currentProgress
