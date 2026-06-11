@@ -10,7 +10,16 @@
 
 **Working directory:** repo root `/home/bom/BookofMormonOnline`; branch `dev`, commit directly. Don't restart `bom-dev`; verify on `localhost:8200`.
 
-**Backend facts (verified; re-check only if an edit contradicts them):** `MessengerMember { user_id nickname profile_url metadata is_online role state is_muted }`; `MessengerMessage { message_id channel_url user message_type message custom_type data parent_message_id thread_info reactions created_at updated_at }`; `MessengerUser { user_id nickname profile_url metadata is_online last_seen_at is_bot }`; mutations include `messengerCreateChannel(input: { channelUrl name customType userIds operatorIds coverUrl description metadata lang })`, `messengerRemoveMember`, `messengerUpdateChannel` (used by `setGroupNameDescription`), `messengerMarkAsRead`. `messenger_members.state ∈ joined|invited|requested`. There is NO mentions column — mentions are carried in the message `data` JSON.
+**Backend facts (GREEN-FIELD — the backend the dev frontend actually uses: `backend/`, :5006, systemd `bom-greenfield`, plain `tsx` (NO watch — every backend edit needs `systemctl --user restart bom-greenfield`, which is authorized; it drops :5006 sockets but does not touch the frontend). SDL: `backend/schema/Messenger.graphql`; resolvers: `backend/src/graphql/resolvers/messenger.ts`; socket handlers: `backend/src/realtime/handlers/*`; fan-out: `RealtimeBus.emit → io.to(room)`. Logs: `journalctl --user -u bom-greenfield -f`.**
+
+- `MessengerMember { user_id nickname profile_url role state is_muted }` — SDL lacks `metadata/is_online/last_seen_at/is_bot`, but the resolver already returns them (MemberDTO extends UserDTO) → adding the SDL fields is purely additive (Task P2b).
+- `MessengerMessage { message_id channel_url user_id user message_type message custom_type link_type link_target parent_message_id thread_info reactions created_at updated_at }` — no `data` field on the GQL surface (socket DTO carries `data` instead of link_type/link_target).
+- `MessengerUser { user_id nickname profile_url metadata is_online is_bot last_seen_at }`.
+- `messengerCreateChannel(name, customType, description, coverUrl, operatorIds)` — FLAT args; no `input:` wrapper, no `userIds`/`channelUrl` exposed (the underlying service supports them). `messengerUpdateChannel(channelUrl, name, description)` exists. `messengerRemoveMember(channelUrl, userId)` exists (operator-or-self; emits `membership_changed` + `user_left`). There is NO `messengerMarkAsRead` mutation — read-marking is the socket `mark_read` event (the client already uses it).
+- Realtime emits use the client's listener names and are channel-scoped: `message_received/updated/deleted`, `typing`, `reaction_changed` (full `reactions[]` snapshot), `channel_action`, `membership_changed`/`user_joined`/`user_left` (including from GraphQL mutations), `unread_count_changed` (from `mark_read` only — unicast to the actor).
+- NO presence event is pushed on connect/disconnect; presence is Redis-backed and computed at read time (`getUsers` → `is_online`). `last_seen_at` is DB-durable.
+- `messenger_members.state ∈ joined|invited|requested`. No mentions column; green-field does not yet persist/round-trip a raw message `data` blob (Task 7 backend step).
+- The client `gqlRequest` takes a QUERY STRING ONLY (no variables argument) — inline args per the `createNewGroup` pattern.
 
 ---
 
@@ -444,16 +453,16 @@ Closes: #22 (`createPreviousMessageListQuery` ignores `limit/reverse/customTypes
 
 Closes: #20 — DirectMessages.js passes `{isDistinct, invitedUserIds, customType: "DM", channelUrl}`; the shim forwards to `createNewGroup` which reads none of those (sends `customType: "undefined"`).
 
-- [ ] **Step 1:** Replace the `createChannel` mapping with a SendBird-param-aware implementation:
+- [ ] **Step 0 (BACKEND, green-field):** the live mutation is FLAT — `messengerCreateChannel(name, customType, description, coverUrl, operatorIds)` — and exposes no `userIds`/`channelUrl`, so a DM's second member can't be seeded. Widen it additively: in `backend/schema/Messenger.graphql` (~line 13) add `userIds: [String!]` and `channelUrl: String` args; in `backend/src/graphql/resolvers/messenger.ts` (~lines 256-292) pass them through to the service `createChannel` (`channels.ts:277` already supports the full param set; keep the acting-user-forced-operator behavior). Restart `bom-greenfield` (authorized; note it). Verify with a curl that the new args validate.
+
+- [ ] **Step 1:** Replace the `createChannel` mapping in the `sb` getter with a SendBird-param-aware implementation using the FLAT mutation and INLINE args (the client `gqlRequest` takes a query string only — mirror the `createNewGroup` escaping pattern):
 
 ```js
         createChannel: async (params = {}, callback) => {
           try {
-            // DM-style creation: distinct channel per user set.
             if (params.invitedUserIds || params.isDistinct || params.customType) {
               const userIds = [...new Set([...(params.invitedUserIds || []), this.userId])];
               if (params.isDistinct) {
-                // Reuse an existing channel with the same custom type + member set.
                 const channels = await this.getStudyGroups();
                 const found = channels.find(
                   (c) =>
@@ -466,26 +475,22 @@ Closes: #20 — DirectMessages.js passes `{isDistinct, invitedUserIds, customTyp
                   return found;
                 }
               }
-              const mutation = `mutation CreateChannel($input: MessengerCreateChannelInput!) {
-                messengerCreateChannel(input: $input) { channel_url }
+              const esc = (v) => JSON.stringify(v ?? "");
+              const mutation = `mutation {
+                messengerCreateChannel(
+                  name: ${esc(params.name || userIds.join("-"))},
+                  customType: ${esc(params.customType || "DM")},
+                  operatorIds: [${esc(this.userId)}],
+                  userIds: ${JSON.stringify(userIds)}${params.channelUrl ? `,\n                  channelUrl: ${esc(params.channelUrl)}` : ""}
+                ) { channel_url }
               }`;
-              const result = await this.gqlRequest(mutation, {
-                input: {
-                  channelUrl: params.channelUrl || undefined,
-                  name: params.name || userIds.join("-"),
-                  customType: params.customType || "DM",
-                  userIds,
-                  operatorIds: [this.userId],
-                  coverUrl: params.coverUrl || undefined,
-                },
-              });
+              const result = await this.gqlRequest(mutation);
               const created = await this.sb.groupChannel.getChannel(
                 result.messengerCreateChannel.channel_url
               );
               if (callback) callback(created, null);
               return created;
             }
-            // Legacy study-group creation path unchanged.
             return this.createNewGroup(params, this.userId);
           } catch (error) {
             if (callback) callback(null, error);
@@ -493,8 +498,6 @@ Closes: #20 — DirectMessages.js passes `{isDistinct, invitedUserIds, customTyp
           }
         },
 ```
-
-NOTE: check `this.gqlRequest`'s signature first — if it only accepts a query string (no variables), inline the input via `JSON.stringify` per existing patterns in the file, with key quoting matching GraphQL input syntax (the `createNewGroup` method shows the established way; mirror it). Do not invent a new gql client.
 
 - [ ] **Step 2:** Verify: jest suite; manual — open Direct Messages with another user (test account → any member): a DM channel is created with `customType: "DM"`, and opening it again reuses the same channel (distinct semantics).
 - [ ] **Step 3: Commit** — `fix(messenger): SendBird-param DM channel creation with distinct reuse (parity 6/7)`.
@@ -523,24 +526,13 @@ Closes: #23 (mentions dropped), the dead-surface list, and locks the whole parit
 
 …and use `outData` wherever the implementation currently forwards `params.data` (both the socket emit and any GraphQL fallback). Round-trip is already handled: `shapeMessage` (Task 1) parses `data` and resolves `mentionedUsers`.
 
-**Step 1b (BACKEND — verified necessary):** the socket `send_message` handler (`src/socket.ts:219-229`) whitelists payload fields and currently DROPS `data`. Add it to the `messenger.postMessage` call:
+**Step 1b (BACKEND, green-field — verified necessary):** the socket `send_message` handler whitelists payload fields and has no `data` passthrough, and `postMessage` neither persists nor reads back a raw `data` blob. Three coordinated edits in `backend/`:
 
-```ts
-      const msg = await messenger.postMessage({
-        channelUrl: payload.channelUrl,
-        userId,
-        message: payload.message,
-        customType: payload.customType,
-        data: payload.data,
-        link: payload.link,
-        highlights: payload.highlights,
-        parentMessageId: payload.parentMessageId
-      });
-```
+1. `backend/src/realtime/handlers/message.ts` (~lines 37-44): add `data?: string` to `SendMessagePayload` and forward it into the `postMessage` call.
+2. `backend/src/messaging/messages.ts`: add a `data?` param to `postMessage` (~line 243) and persist it (the `messenger_messages` table has a JSON `metadata` column — store the raw data string there, or merge with the `buildDataString` output so link/highlights and mentions coexist in one JSON object; read the existing `buildDataString` logic first and merge rather than overwrite).
+3. `assembleMessages` (~line 183): read the persisted blob back into `MessageDTO.data` (merged with the link/highlights-derived data so existing consumers keep working).
 
-Then read `messenger.postMessage` (the messenger library module it imports) and confirm it persists `data` to `messenger_messages.data` and includes it in the broadcast payload — if it also whitelists, extend it the same way. Add `data?: string` to the `SendMessagePayload` type if one is declared. NOTE: the backend runs under ts-node via the `bom-dev` unit — backend edits require a service restart to take effect, which bounces the public dev URL; per project rules do NOT restart the service yourself. Verify the change with the backend test suite if it covers postMessage (`npm test -- messenger` from repo root; tests hit the DB directly), and flag the pending restart in your report.
-
-**Known backend gap (out of scope, do not fix):** no `user_left`/`membership_changed` emitter exists in socket.ts — member changes don't live-update other clients today; `leave()` (Task 3) inherits that pre-existing behavior. Tracked as follow-up debt.
+Run the backend tests from `backend/` (`npm test` — check what suites exist first). Then `systemctl --user restart bom-greenfield` (authorized; note it in the report) and verify a mention round-trips: send a message with `mentionedUserIds` from client A, reload client B, the mention survives.
 
 - [ ] **Step 2: Prune the dead compat surface** (sweep-verified zero consumers — re-grep each before deleting; if a grep finds a consumer, KEEP it and note): channel methods `inviteWithUserIds, declineInvitation, banUserWithUserId, muteUserWithUserId, unmuteUserWithUserId, addOperators, removeOperators, createOperatorListQuery, isGroupChannel, isOpenChannel, getCachedMetadata`.
 
@@ -565,84 +557,37 @@ done
 
 ---
 
-# Tasks 8–12: Realtime event-bus parity + websocket transport (from the realtime sweep)
+# Realtime tasks — RE-GROUNDED against the green-field backend (supersedes the deleted Tasks 8-10)
 
-> Source: the realtime event-bus parity audit (recovered SendbirdController from `git show fd167514^:frontend/webapp/src/models/SendbirdController.js`; full wiring matrix in the sweep report). Directive: **polling is the wrong pattern — realtime community/study state rides websockets.** Backend restarts of `bom-dev` are AUTHORIZED at will (batch one per backend task; note each in the report); they bounce the public dev URL, which is accepted.
->
-> Verified-working chains (do NOT touch): `message_received`/`message_updated` → addMessage/fireMessage/etc.; `typing` (consumer reads only `.userId` off typers — thin payload is sufficient); `channel_action` → `fireStudyGroupAction` (also covers user-state sync via the client's fire_action fallback).
+> The original Tasks 8-10 were derived from the LEGACY socket (`src/socket.ts`) and are **deleted**: the green-field backend already emits the client's exact listener names from both socket and GraphQL-mutation paths (`membership_changed`/`user_joined`/`user_left`), already broadcasts `reaction_changed` as a channel-scoped full-`reactions[]` snapshot the client's `applyReactionEvent` array branch consumes correctly, and has no global-emit leak. Verified working. What follows are the REAL remaining gaps.
 
-### Task 8 — Align membership event names (client-only)
+### Task P2b — Expose member fields the resolver already returns (backend, trivial)
 
-**Files:** Modify `frontend/webapp/src/models/MessengerController.js` (~lines 146-169)
+**Files:** Modify `backend/schema/Messenger.graphql` (~lines 35-42)
 
-The server emits `member_joined`/`member_left` (socket.ts:456,464); the client's dead listeners are named `user_joined`/`user_left`/`membership_changed`. Rename the listeners to the server's names, keep their `refreshChannel(channel)` bodies (parity with old `onUserJoined`/`onUserLeft`). Drop the `membership_changed` listener (grep first: no server emit exists). Verify: jest suite green; two-client manual check (or a `test/socket.test.ts`-style assertion if cheap): client A joins a group → client B's roster refreshes without waiting for the 60s poll. Commit: `fix(messenger): subscribe to member_joined/member_left (names were mismatched) (parity 8)`.
+Add to `type MessengerMember`: `metadata: JSON`, `is_online: Boolean`, `last_seen_at: Float`, `is_bot: Boolean`. No resolver change — `MemberDTO extends UserDTO` already populates all four (`backend/src/messaging/dto.ts:18`, `members.ts:62-90`). Then `systemctl --user restart bom-greenfield` (authorized; note it). Then in `frontend/webapp/src/models/MessengerController.js`, add `metadata is_online` to the two member selections Task 2 had to exclude (messengerMyChannels + messengerChannel). Verify: curl one query with the new fields (no validation errors, real values); jest 52/52; study-userlist e2e green; manual: study-bar presence dots/avatars now reflect real member state. Commit both repos' files together: `fix(messenger): expose member metadata/presence fields in green-field SDL (parity 2b)`.
 
-### Task 9 — Fix live remote reactions (client-only)
+### Task 11 (reduced) — Event-driven unread counts on inbound messages
 
-**Files:** Modify `frontend/webapp/src/models/MessengerController.js` (~line 129)
+**Files:** Modify `backend/src/realtime/handlers/message.ts` (~line 104), `frontend/webapp/src/models/MessengerController.js` (`_handleMessageReceived` ~line 210 + the `unread_count_changed` listener ~line 172)
 
-Triple defect; this task fixes the two client halves. Replace the single dead `reaction_changed` listener with:
+Today `unread_count_changed` is emitted only by `mark_read` (unicast to the actor); recipients' badges rely on `_handleMessageReceived` firing `loadUnreadDMs()` per inbound message. Backend: after the `message_received` emit in the send_message handler, add `getBus().emit('unread_count_changed', payload.channelUrl, { channelUrl: payload.channelUrl })`. Client: delete the per-message `loadUnreadDMs().then(setUnreadDMs)` from `_handleMessageReceived`; in the existing `unread_count_changed` listener, refresh via `loadUnreadDMs()` debounced ~500ms (a burst coalesces to one fetch) and keep dispatching the `unreadMessageCountChanged` CustomEvent. Restart `bom-greenfield`. Verify: DM from client A → client B's badge updates; a 5-message burst produces ≤2 unread fetches (watch the network panel). Commit: `perf(messenger): event-driven unread counts; drop per-message poll (parity 11)`.
 
-```js
-    const onReaction = (operation) => (data) => {
-      const event = new CustomEvent('reactTo' + data.messageId);
-      // Server sends {messageId, userId, reactionKey}; applyReactionEvent
-      // reads {key, userId, operation} — normalize here.
-      event.reactionEvent = {
-        messageId: data.messageId,
-        key: data.reactionKey ?? data.key,
-        userId: data.userId,
-        operation,
-      };
-      window.dispatchEvent(event);
-    };
-    this.socket.on('reaction_added', onReaction('add'));
-    this.socket.on('reaction_removed', onReaction('delete'));
-```
+### Task 12 (rewritten) — Presence push end-to-end; retire the 60s roster poll
 
-Verify: two clients in one group; A reacts 👍 → B sees it live; A un-reacts → it disappears on B. Commit: `fix(messenger): receive remote reactions (name + payload normalization) (parity 9)`.
+**Files:** Modify `backend/src/realtime/server.ts` (connect ~line 230, disconnect ~line 246), `frontend/webapp/src/models/MessengerController.js`, `frontend/webapp/src/views/_Common/Study/StudyGroupBar.js` (~lines 244-252) + `StudyHall.js` + `StudyGroupCall.js` (their polling intervals)
 
-### Task 10 — Scope reaction broadcasts to the channel (backend)
+Green-field pushes NO presence event (connect/disconnect only update Redis state). Per the websockets directive:
 
-**Files:** Modify `src/library/messenger.ts` (~lines 657, 672 — the `reactionAdded`/`reactionRemoved` emits), `src/socket.ts` (~lines 471-486)
+1. **Backend:** in `server.ts`, after `setOnline` on connect and after `setOffline` on disconnect, broadcast to the user's rooms (`socket.data.channels`): `io.to(channelUrl).emit('user_presence', { channelUrl, userId, isOnline })` for each. Check `backend/.env` `REDIS_URL` is set (single-instance fallback otherwise — note in the report which mode is live). Restart `bom-greenfield` (batch with Task 11's restart if back-to-back).
+2. **Client (MessengerController):** subscribe to `user_presence`; patch the cached channel's member `connectionStatus` in place; dispatch a `memberPresenceChanged` CustomEvent `{channelUrl, userId, isOnline}`.
+3. **Study components:** replace the 60s `setInterval(getLiveFreshUsers)` with a `memberPresenceChanged` window listener that re-runs `getLiveFreshUsers` (keep the initial fetch; remove the intervals entirely; effect cleanup removes listeners).
 
-Today `io.emit` broadcasts every reaction globally to all connected clients. Include `channel_url` in the library's `reactionAdded`/`reactionRemoved` event payload (the reaction handlers have the message — look up its channel_url; if not already loaded, fetch by messageId), then in socket.ts change both `io.emit(...)` → `io.to(channelUrl).emit(...)` keeping the payload fields (plus channelUrl). TDD if `test/socket.test.ts` supports two-client scoping assertions (read it first); otherwise verify via the two-client manual check that reactions still arrive in-channel. **Restart `bom-dev` after committing** (authorized) and re-verify Task 9's two-client check against the restarted server. Commit: `fix(messenger): scope reaction broadcasts to the channel room (parity 10)`.
+Verify: jest green; study-userlist e2e green; two-client manual: B's dot flips when A disconnects/reconnects with no 60s wait; `grep -rn "setInterval" frontend/webapp/src/views/_Common/Study | grep -i fresh` returns nothing. Commit: `perf(study): socket-pushed presence replaces the 60s roster poll (parity 12)`.
 
-### Task 11 — Emit `unread_count_changed`; retire the per-message GraphQL poll (backend + client)
+### Backlog (recorded, out of scope)
 
-**Files:** Modify `src/socket.ts` (the `messageCreated` bridge ~line 437-442), `frontend/webapp/src/models/MessengerController.js` (`_handleMessageReceived` ~line 210)
-
-The client already listens for `unread_count_changed` (MessengerController.js:172 → `unreadMessageCountChanged` CustomEvent → StudyGroupBar badge); the server never emits it, and the gap is masked by `loadUnreadDMs()` firing a GraphQL query on EVERY inbound message — the app's chattiest path. In the `messageCreated` bridge, after the `message_received` emit, also `io.to(message.channel_url).emit('unread_count_changed', { channelUrl: message.channel_url })`. Then in `_handleMessageReceived`, DELETE the `loadUnreadDMs().then(setUnreadDMs)` call and instead move that refresh into the existing `unread_count_changed` listener (debounced ~500ms so a message burst coalesces into one fetch). Net: unread refresh is event-driven, one fetch per burst instead of one per message. **Restart `bom-dev`** (authorized; batch with Task 10's restart if executed back-to-back) and verify: send a DM from client A → B's unread badge updates. Commit: `perf(messenger): event-driven unread counts; drop per-message poll (parity 11)`.
-
-### Task 12 — Socket presence: wire `user_presence`, kill the 60s roster poll (client-only)
-
-**Files:** Modify `frontend/webapp/src/models/MessengerController.js`, `frontend/webapp/src/views/_Common/Study/StudyGroupBar.js` (~lines 244-252), `StudyHall.js`, `StudyGroupCall.js` (their polling intervals)
-
-SendBird never pushed presence (the 60s `createApplicationUserListQuery` poll was the original pattern) — per the websockets directive this is the upgrade that retires it. The server already emits `user_presence {channelUrl, userId, isOnline}` on connect/disconnect/join/leave (socket.ts:179,351,367):
-
-1. In `setupEventHandlers`, subscribe:
-
-```js
-    this.socket.on('user_presence', ({ channelUrl, userId, isOnline }) => {
-      // Patch the cached roster in place — presence rides the socket, not polls.
-      const channel = this.channels.get(channelUrl);
-      const member = channel?.members?.find((m) => m.userId === userId);
-      if (member) member.connectionStatus = isOnline ? 'online' : 'offline';
-      const event = new CustomEvent('memberPresenceChanged');
-      event.channelUrl = channelUrl;
-      event.userId = userId;
-      event.isOnline = isOnline;
-      window.dispatchEvent(event);
-    });
-```
-
-2. In StudyGroupBar (and StudyHall/StudyGroupCall where they poll): replace the 60s `setInterval(getLiveFreshUsers)` with a `memberPresenceChanged` window listener that re-runs `getLiveFreshUsers` (the initial 100ms-delayed fetch stays — GraphQL remains correct for the initial roster). Remove the interval entirely; keep effect cleanup removing the listener.
-3. Leave `user_state`/`read_receipt` unsubscribed (user_state is covered by the fire_action fallback; read receipts have no consumer) — note as accepted dead emits.
-
-Verify: jest green; e2e study-userlist green; two-client manual: B's presence dot flips when A disconnects/reconnects, with no 60s wait; grep confirms no `setInterval` polling remains in the three Study components. Commit: `perf(study): socket-pushed presence replaces the 60s roster poll (parity 12)`.
-
-### Backlog (out of this plan, recorded)
-
-- `messageReacters` index bug: `Study.js:1113-1127` maps `r.userIds.map((id, index) => memberMap[index])` — indexes members by reaction-array position instead of matching ids. Pre-existing, independent of the migration.
-- `read_receipt` subscription (would enable "seen" indicators — product decision).
-- Membership emits from the GraphQL mutation paths (admin add/remove via messengerAddMember/RemoveMember may not traverse the socket emit path — verify in Task 8's two-client check; if dead, a follow-up backend task mirrors Task 10's pattern).
+- `messageReacters` index bug: `Study.js:1113-1127` indexes members by reaction-array position instead of matching ids. Pre-existing.
+- `read_receipt`-style "seen" indicators (no event exists on green-field; product decision).
+- `user_joined` payload field naming (`userId` vs client's destructured `user`) — cosmetic, client only uses `channelUrl`.
+- Legacy backend (`src/socket.ts`, :5005) drift — its socket vocabulary differs from green-field; if the legacy backend is ever revived, reconcile or retire it.
