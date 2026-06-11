@@ -125,7 +125,8 @@ export default function ReadScripture({ appController }) {
     const lastLoadedChapterCount = useRef(0); 
     const lastScrollY = useRef(0); 
     const nextChapterPreloaded = useRef(false); 
-    const lastContentLoadTime = useRef(0); 
+    const lastContentLoadTime = useRef(0);
+    const loadedChapterRefs = useRef(new Set()); // chapter refs currently mounted
 
     // ---------------------------------------------------------
     // Navigate to next/previous chapters - memoized
@@ -195,6 +196,7 @@ export default function ReadScripture({ appController }) {
                         lastContentLoadTime.current = Date.now();
                         return newChapters;
                     });
+                    loadedChapterRefs.current.add(nextChapterRef);
 
                     const { nextChapter } = getPrevNextChapter(nextChapterVerses);
                     setNextChapterRef(nextChapter || null);
@@ -235,34 +237,51 @@ export default function ReadScripture({ appController }) {
         nextChapterPreloaded.current = false;
         lastContentLoadTime.current = 0;
         window.scrollTo(0, 0);
+        // Force a reload even when the clicked chapter is the one already
+        // displayed (route params won't change, so the route effect won't
+        // fire) — otherwise the content nulled above is never refetched.
+        loadedChapterRefs.current = new Set();
+        setInitialLoad(true);
     }, [abortAllOperations]);
 
     // ---------------------------------------------------------
-    // Monitor changes to route - optimized with batching (React < 18 compatible)
+    // Monitor changes to route
     // ---------------------------------------------------------
     useEffect(() => {
-        // Batch state updates using setTimeout to prevent cascade re-renders
-        const batchedUpdate = () => {
-            setChapterRef(initChapterRef);
+        // Verse-level navigation within an already-mounted chapter (e.g. the
+        // user clicked a verse to highlight it): update highlight state only.
+        // A full reset would unmount the chapter, refetch it, and flash the
+        // skeleton and scrollbar.
+        if (loadedChapterRefs.current.has(initChapterRef)) {
             setActiveChapterRef(initChapterRef);
             setHighlightedVerses(initHighlightedVerses);
-            setNextChapterRef(initNextChapter);
-            setPrevChapterRef(initPrevChapter);
             setChapterVerseIds(initChapterVerseIds);
-            setInitialLoad(true);
-            setIsContentLoading(false);
-            
-            // Reset tracking values
-            hasUserScrolled.current = false;
-            lastLoadedChapterCount.current = 0;
-            lastScrollY.current = 0;
-            nextChapterPreloaded.current = false;
-            lastContentLoadTime.current = 0;
-        };
+            // Keep the header's prev button pointing at the chapter before the
+            // one being read. nextChapterRef is deliberately NOT touched: it
+            // tracks the infinite-scroll frontier, and overwriting it could
+            // re-append an already-mounted chapter (duplicate keys).
+            setPrevChapterRef(initPrevChapter);
+            return;
+        }
 
-        // Use setTimeout to batch updates and prevent flickering
-        const timeoutId = setTimeout(batchedUpdate, 0);
-        return () => clearTimeout(timeoutId);
+        // New chapter: full reset. setState inside an effect body is batched
+        // by React 17 — no deferral needed.
+        loadedChapterRefs.current = new Set();
+        setChapterRef(initChapterRef);
+        setActiveChapterRef(initChapterRef);
+        setHighlightedVerses(initHighlightedVerses);
+        setNextChapterRef(initNextChapter);
+        setPrevChapterRef(initPrevChapter);
+        setChapterVerseIds(initChapterVerseIds);
+        setInitialLoad(true);
+        setIsContentLoading(false);
+
+        // Reset tracking values
+        hasUserScrolled.current = false;
+        lastLoadedChapterCount.current = 0;
+        lastScrollY.current = 0;
+        nextChapterPreloaded.current = false;
+        lastContentLoadTime.current = 0;
     }, [initChapterRef, initHighlightedVerses, initNextChapter, initPrevChapter, initChapterVerseIds]);
 
     // ---------------------------------------------------------
@@ -406,6 +425,7 @@ export default function ReadScripture({ appController }) {
                         setInitialLoad(false);
                         lastContentLoadTime.current = Date.now();
                         localStorage.setItem("chapterRef", chapterRef);
+                        loadedChapterRefs.current = new Set([chapterRef]);
 
                         const currentSlug = window.location.pathname.replace(/^\/read\//, "");
                         const expectedSlug = slugify(chapterRef);
@@ -514,7 +534,7 @@ export default function ReadScripture({ appController }) {
                         <button className="btn btn-primary disabled" disabled>  ◀  </button>
                     )}
                     <h3 className="title lg-4 text-center">
-                        {chapterRef || label("menu_read")}
+                        {activeChapterRef || label("menu_read")}
                     </h3>
                     {nextChapterRef ? (
                         <button onClick={goToNextChapter} className="btn btn-primary">
