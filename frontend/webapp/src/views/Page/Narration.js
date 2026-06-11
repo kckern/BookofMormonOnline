@@ -891,6 +891,8 @@ export function ScripturePanelSingle({ scriptureData, closeButton, onClose, setP
     BoMOnlineAPI({scripture:ref}).then(({scripture})=> {
       clearTimeout(timer);
       setPassages(scripture[ref]?.passages || []);
+      const refSlug = ref.replace(/\s+/g, ".").replace(/:/g, ".").toLowerCase();
+      window.clicky?.log(`/lookup/${refSlug}`, `Lookup: ${ref}`, "pageview");
     })
 
   }, [ref]);

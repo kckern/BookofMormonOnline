@@ -14,41 +14,31 @@ import "../People/People.css";
 import { ObjectsFilter } from "./ObjectsFilter";
 import { categoryChips } from "./objectsFilterData";
 
-// Eager import of all 16 category SVGs so webpack bundles them.
-import animal       from "./svg/animal.svg";
-import building     from "./svg/building.svg";
-import weapon       from "./svg/weapon.svg";
-import food         from "./svg/food.svg";
-import sacredObject from "./svg/sacred-object.svg";
-import money        from "./svg/money.svg";
-import plant        from "./svg/plant.svg";
-import record_      from "./svg/record.svg";
-import metal        from "./svg/metal.svg";
-import tool         from "./svg/tool.svg";
-import apparel      from "./svg/apparel.svg";
-import structure    from "./svg/structure.svg";
-import vehicle      from "./svg/vehicle.svg";
-import landscape    from "./svg/landscape.svg";
-import armor        from "./svg/armor.svg";
-import treasure     from "./svg/treasure.svg";
+// djb2-ish hash → stable seed for slug-based gradients.
+const hashSlug = (slug) => {
+  let h = 0;
+  const s = slug || "";
+  for (let i = 0; i < s.length; i++) {
+    h = ((h << 5) - h) + s.charCodeAt(i);
+    h |= 0;
+  }
+  return Math.abs(h);
+};
 
-const categoryIcon = {
-  "animal": animal,
-  "building": building,
-  "weapon": weapon,
-  "food": food,
-  "sacred-object": sacredObject,
-  "money": money,
-  "plant": plant,
-  "record": record_,
-  "metal": metal,
-  "tool": tool,
-  "apparel": apparel,
-  "structure": structure,
-  "vehicle": vehicle,
-  "landscape": landscape,
-  "armor": armor,
-  "treasure": treasure,
+const slugGradient = (slug) => {
+  const h = hashSlug(slug);
+  const hue1 = h % 360;
+  const hue2 = (hue1 + 30 + ((h >> 8) % 50)) % 360;
+  const sat  = 45 + ((h >> 16) % 25);
+  return `linear-gradient(135deg, hsl(${hue1}, ${sat}%, 48%) 0%, hsl(${hue2}, ${sat}%, 26%) 100%)`;
+};
+
+const objectInitials = (name) => {
+  const cleaned = (name || "").replace(/[^\p{L}\s]/gu, " ").trim();
+  const parts = cleaned.split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  if (parts[0] && parts[0].length >= 2) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0]?.[0] || "?").toUpperCase();
 };
 
 function ObjectsComponent({ appController }) {
@@ -57,6 +47,7 @@ function ObjectsComponent({ appController }) {
   }, []);
 
   const [objectList, setObjectList] = useState(appController.preLoad?.objectList || null);
+  const [failedSlugs, setFailedSlugs] = useState(() => new Set());
 
   const emptyFilters = { category: new Set(), era: new Set(), provenance: new Set(), specificity: new Set(), usage: new Set(), search: null };
   const [objectFilters, setFilter] = useState(emptyFilters);
@@ -106,11 +97,13 @@ function ObjectsComponent({ appController }) {
     return true;
   };
 
-  const swapToFallback = (e, cat) => {
-    if (e.target.dataset.fallback === "1") return;
-    e.target.dataset.fallback = "1";
-    e.target.src = categoryIcon[cat] || categoryIcon["sacred-object"];
-    e.target.classList.add("category-fallback");
+  const markFailed = (slug) => {
+    setFailedSlugs((prev) => {
+      if (prev.has(slug)) return prev;
+      const next = new Set(prev);
+      next.add(slug);
+      return next;
+    });
   };
 
   if (!objectList) {
@@ -157,22 +150,36 @@ function ObjectsComponent({ appController }) {
                     <CardHeader className="text-center">
                       <h5>{processName(obj.name)}</h5>
                     </CardHeader>
-                    <CardBody
-                      className="objectInfo"
-                      style={{
-                        backgroundImage: `url(${assetUrl}/objects/${obj.slug})`,
-                      }}
-                    >
-                      <img
-                        alt=""
-                        src={`${assetUrl}/objects/${obj.slug}`}
-                        style={{ display: "none" }}
-                        onError={(e) => swapToFallback(e, obj.category)}
-                      />
-                      {obj.subtitle && (
-                        <div className="subtitle">{replaceNumbers(obj.subtitle)}</div>
-                      )}
-                    </CardBody>
+                    {failedSlugs.has(obj.slug) ? (
+                      <CardBody
+                        className="objectInfo objectFallback"
+                        style={{ background: slugGradient(obj.slug) }}
+                      >
+                        <span className="objectInitials" aria-hidden="true">
+                          {objectInitials(obj.name)}
+                        </span>
+                        {obj.subtitle && (
+                          <div className="subtitle">{replaceNumbers(obj.subtitle)}</div>
+                        )}
+                      </CardBody>
+                    ) : (
+                      <CardBody
+                        className="objectInfo"
+                        style={{
+                          backgroundImage: `url(${assetUrl}/objects/${obj.slug})`,
+                        }}
+                      >
+                        <img
+                          alt=""
+                          src={`${assetUrl}/objects/${obj.slug}`}
+                          style={{ display: "none" }}
+                          onError={() => markFailed(obj.slug)}
+                        />
+                        {obj.subtitle && (
+                          <div className="subtitle">{replaceNumbers(obj.subtitle)}</div>
+                        )}
+                      </CardBody>
+                    )}
                     <CardFooter className="text-center">
                       <div className="labels">
                         <span
