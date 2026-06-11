@@ -1042,8 +1042,13 @@ export default class MessengerController {
       createPreviousMessageListQuery: (params) => ({
         load: () => this.loadGroupMessages(ch)
       }),
-      getMessagesByMessageId: (id, params) => 
-        this.loadPreviousMessages({ group: ch, id, prevResultSize: params.prevResultSize }),
+      getMessagesByMessageId: (id, params, callback) => {
+        const p = this.loadPreviousMessages({ group: ch, id, prevResultSize: params?.prevResultSize });
+        if (typeof callback === 'function') {
+          p.then((messages) => callback(messages, null)).catch((err) => callback(null, err));
+        }
+        return p;
+      },
       getTypingUsers: () => [],
       
       // ─── SEND USER MESSAGE (Sendbird Builder Pattern) ───
@@ -1158,8 +1163,8 @@ export default class MessengerController {
       },
       
       // ─── REACTIONS ───
-      addReaction: (message, emojiKey) => {
-        return new Promise((resolve, reject) => {
+      addReaction: (message, emojiKey, callback) => {
+        const p = new Promise((resolve, reject) => {
           const messageId = message.messageId || message.message_id;
           this.socket.emit('add_reaction', {
             channelUrl: ch.channel_url,
@@ -1178,9 +1183,13 @@ export default class MessengerController {
             }
           });
         });
+        if (typeof callback === 'function') {
+          p.then((event) => callback(event, null)).catch((err) => callback(null, err));
+        }
+        return p;
       },
-      deleteReaction: (message, emojiKey) => {
-        return new Promise((resolve, reject) => {
+      deleteReaction: (message, emojiKey, callback) => {
+        const p = new Promise((resolve, reject) => {
           const messageId = message.messageId || message.message_id;
           this.socket.emit('remove_reaction', {
             channelUrl: ch.channel_url,
@@ -1199,6 +1208,10 @@ export default class MessengerController {
             }
           });
         });
+        if (typeof callback === 'function') {
+          p.then((event) => callback(event, null)).catch((err) => callback(null, err));
+        }
+        return p;
       },
       
       // ─── MESSAGE EDITING ───
