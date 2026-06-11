@@ -6,6 +6,7 @@ import {
   resolveLogValue,
   scoreRecentBlockLogs,
 } from '../../data/loaders/useractivity.js';
+import { getStudyLog } from '../../data/loaders/studylog.js';
 import { forwardPageview } from '../../media/ping.js';
 
 /**
@@ -22,6 +23,16 @@ function makeShortlinkHash(length: number): string {
 }
 
 export const useractivityResolvers: Resolvers = {
+  Query: {
+    /**
+     * studylog — the user's study sessions + summary, aggregated from bom_log.
+     * Legacy: BomUser.ts:259 (getLoggedTextItems → sessions → summary). Feeds the
+     * /user "date started / study time / study sessions" widgets. Read-only.
+     */
+    studylog: async (_root, args, ctx) => {
+      return getStudyLog(ctx.db, args.token) as unknown as never;
+    },
+  },
   Mutation: {
     /**
      * log — insert a bom_log row, score recent items, return progress.
