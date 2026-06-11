@@ -1,6 +1,14 @@
 /*font-family: 'Scripture', serif; */
 
-html {}
+html {
+    /* Reserve the vertical scrollbar gutter so the centered .container does
+       not shift horizontally when page height crosses the viewport threshold
+       (e.g. while Read-view content loads).
+       Do NOT switch this to `overflow-y: scroll`: that makes <html> the
+       scroll container and breaks the body.noscroll scroll lock used by
+       StudyGroupBar.js. */
+    scrollbar-gutter: stable;
+}
 
 .card
 {
