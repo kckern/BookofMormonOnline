@@ -681,7 +681,7 @@ function reducer(pageController, input) {
               { useCache: false },
             ).then((r) => {
               let saveMe = r.userprogress?.[token];
-              let summary = saveMe.summary;
+              let summary = saveMe?.summary;
               if (saveMe)
                 pageController.appController.functions.updateUserSummary({
                   ...saveMe,

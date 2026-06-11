@@ -21,7 +21,7 @@ import yellow from "../User/svg/yellow.svg";
 import blank from "../User/svg/blank.svg";
 import empty from "../User/svg/empty.svg";
 
-import { label } from "src/models/Utils";
+import { label, breakCache } from "src/models/Utils";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI.js";
 import {
   TabContent,
@@ -239,6 +239,7 @@ function RecentFinishers({ finishers }) {
             <img
               src={m.picture}
               alt={m.nickname}
+              onError={breakCache}
               style={privateStyle(m.nickname)}
             />
             <span className="trophies">
@@ -301,6 +302,7 @@ function LeaderBoard({ leaders }) {
               style={privateStyle(m.nickname)}
               src={m.picture}
               alt={m.nickname}
+              onError={breakCache}
             />
             <span className="trophies">
               {m.finished?.map((i) => (
@@ -371,7 +373,7 @@ function GroupCard({ groupData, appController, activeGroup, setActiveGroup }) {
             <div className="groupTitle">{groupData.name}</div>
             <div className="groupMessage">
               <div className="groupMessageAvatar">
-                <img src={groupData.latest.user.picture} />
+                <img src={groupData.latest.user.picture} onError={breakCache} />
               </div>
               <div className="groupMessageContent">
                 {" "}
@@ -390,7 +392,7 @@ function GroupCard({ groupData, appController, activeGroup, setActiveGroup }) {
             <div className="groupMembers">
               {visibleMembers?.map((m, i) => (
                 <div key={i}>
-                  <img src={m.picture} />
+                  <img src={m.picture} onError={breakCache} />
                 </div>
               ))}
             </div>
@@ -618,6 +620,7 @@ export function GroupLeaderBoard({ groupData }) {
                 style={privateStyle(m.nickname)}
                 src={m.picture}
                 alt={m.nickname}
+                onError={breakCache}
               />
               <span className="trophies">
                 {m.finished?.map((i) => (

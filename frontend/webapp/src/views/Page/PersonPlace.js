@@ -35,10 +35,17 @@ export const renderPersonPlaceHTML = (html, pageController, scriptureLinkClickHa
     "<a class='place'  slug='$2' label='$1'></a>",
   );
 
-  let className = html.match(/(?<=class=)'(.*?)'/g);
+  // Pair each person/place anchor's class WITH its slug from the same match, so
+  // the tooltip type can't drift. The old approach matched class and slug into
+  // two separate arrays and zipped them with className.shift(), which silently
+  // misaligned (a token would get the wrong "...List" type and resolve to null)
+  // whenever the anchors didn't line up 1:1 — that's why some people tooltips
+  // (lehi1, god, zedekiah1) came up empty while others worked.
+  const tokens = [
+    ...html.matchAll(/class='(person|place)'\s+slug='([^']*)'/g),
+  ].map((m) => ({ type: `${m[1]}List`, slug: m[2] }));
 
   html = html + "<span class='react-tooltip'></span>";
-  let slugs = html.match(/(?<=slug=)'(.*?)'/g);
 
   const options = {
     replace: (domNode) => {
@@ -70,33 +77,35 @@ export const renderPersonPlaceHTML = (html, pageController, scriptureLinkClickHa
         );
       }
       if (domNode.attribs && domNode.attribs.class === "react-tooltip") {
-        if (slugs === null) {
+        if (!tokens.length) {
           return <></>;
         }
+        // One tooltip per distinct token (dedupe: the same slug repeats many
+        // times across a page's rows, which otherwise emits dozens of duplicate
+        // same-id ReactTooltips).
+        const seen = new Set();
         return (
           <>
-            {slugs.map((slug, index) => {
-              const id = slug.replaceAll("'", "");
-              const typeName = className.shift().replaceAll("'", "") + "List";
-              return (
+            {tokens
+              .filter((t) => (seen.has(t.slug) ? false : seen.add(t.slug)))
+              .map((t, index) => (
                 <ReactTooltip
                   wrapper={"span"}
-                  id={id}
-                  key={("slug-", id, "-ind", index)}
+                  id={t.slug}
+                  key={`tt-${t.slug}-${index}`}
                   effect="solid"
                   backgroundColor={"#666"}
                   arrowColor={"#666"}
                 >
                   <NarrationToolTip
-                    id={id}
-                    type={typeName}
+                    id={t.slug}
+                    type={t.type}
                     appController={
                       pageController?.appController || pageController
                     }
                   />
                 </ReactTooltip>
-              );
-            })}
+              ))}
           </>
         );
       }
@@ -157,11 +166,16 @@ function PlaceLink({ label, id, pageController }) {
 }
 
 function NarrationToolTip({ type, id, appController }) {
-  if (appController === undefined) return null;
-  if (!appController.preLoad) return null;
-  if (appController.preLoad[type] === undefined) return null;
+  // Prefer the always-current global.preLoad over the appController prop: the
+  // narration captures appController at mount (see Page.js pageController init),
+  // so its preLoad is frozen at that moment — often before the full person/place
+  // list has loaded — leaving the prop's preLoad with only labels. global.preLoad
+  // is updated on every setPreLoadData (same pattern as global.dictionary).
+  const preLoad =
+    (typeof global !== "undefined" && global.preLoad) || appController?.preLoad;
+  if (!preLoad || preLoad[type] === undefined) return null;
 
-  let list = Object.values(appController.preLoad[type]);
+  let list = Object.values(preLoad[type]);
   let ttData = list.find((x) => x.slug === id);
   if (!ttData) return null;
   let info = ttData.title || ttData.info;

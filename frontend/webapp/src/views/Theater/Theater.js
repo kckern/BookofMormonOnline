@@ -944,7 +944,7 @@ function TheaterControls({ theaterController, visible }) {
     await updateQueueStatus();
     BoMOnlineAPI( {  userprogress: token, }, { useCache: false } ).then((r) => {
       let saveMe = r.userprogress?.[token];
-      let summary = saveMe.summary;
+      let summary = saveMe?.summary;
       const pagetitle = currentItem?.parent_page?.title || null;
       const heading = currentItem?.heading || null;
       const slug = currentItem?.slug || null;

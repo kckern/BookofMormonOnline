@@ -507,12 +507,13 @@ function Comments({ appController, comments, count, item, group, memberMap, sbCh
   } else {
     comments = Array.isArray(comments) ? comments : [];
     comments = [
-      ...comments.filter((m) => m.id !== itemId && !/^[\s•]+$/.test(m.msg)),
-      ...newMessages,
+      ...comments.filter((m) => m && m.id !== itemId && !/^[\s•]+$/.test(m.msg)),
+      ...newMessages.filter(Boolean),
     ];
-    //dedupe comments based on id
+    //dedupe comments based on id (skip any holes defensively)
     let seen = {};
     comments = comments.filter(function(item) {
+      if (!item) return false;
       return seen.hasOwnProperty(item.id) ? false : (seen[item.id] = true);
     });
     thread = comments.map((comment) => (

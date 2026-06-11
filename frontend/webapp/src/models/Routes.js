@@ -47,17 +47,19 @@ const routes = [
     component: (!lang || lang === "en") ? ReadScripture : ReadScripture,
   },
   {
+    // /home (the study-group activity feed) is always enabled — the feed renders
+    // for everyone; per-group join/post still gates on messaging being live.
     exact: true,
     path: "/home",
-    component: USE_MESSENGER ? Home : DisabledRedirect,
+    component: Home,
   },
   {
     path: "/home/:channelId/:messageId(\\d+)",
-    component: USE_MESSENGER ? Home : DisabledRedirect,
+    component: Home,
   },
   {
     path: "/home/:channelId",
-    component: USE_MESSENGER ? Home : DisabledRedirect,
+    component: Home,
   },
   {
     path: "/groups",

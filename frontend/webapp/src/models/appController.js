@@ -350,7 +350,7 @@ export const appFunctions = {
   setPreLoadData: (appController, input) => {
     let localToken = localStorage.getItem("token");
     if (!input.val) return appController;
-    if (input.val?.tokenSignIn?.[localToken].isSuccess) {
+    if (input.val?.tokenSignIn?.[localToken]?.isSuccess) {
       appController.states.user = input.val.tokenSignIn[localToken].user;
       appController.states.user.token = localToken;
       let response = input.val.tokenSignIn[Object.keys(input.val.tokenSignIn).pop()];
@@ -370,7 +370,10 @@ export const appFunctions = {
       }
 
       delete input.val.tokenSignIn;
-    } else {
+    } else if (input.val?.tokenSignIn !== undefined) {
+      // Only downgrade to guest when the full preload actually ran tokenSignIn
+      // and it failed. The labels-only fast path carries no tokenSignIn and must
+      // not touch user state (it races with the full path).
       appController.states.user = guestUser({ localToken });
     }
     if(!!input.val?.personList && !!input.val?.placeList && !!input.val?.objectList) appController.states.preloaded = true;
@@ -380,7 +383,16 @@ export const appFunctions = {
     // preload.fax = fax;
     if (typeof preload.fax === "object")
       preload.fax = Object.values(preload.fax);
-    appController.preLoad = preload;
+    // Merge, don't replace: the labels-only fast path and the full network
+    // preload race, and a replace lets whichever lands last wipe the other's
+    // keys (e.g. labels clobbering personList/placeList, breaking person/place
+    // tooltips). Merge so both contribute regardless of arrival order.
+    appController.preLoad = { ...appController.preLoad, ...preload };
+    // Also expose the merged preload globally (same pattern as global.dictionary
+    // for labels). Components like the narration person/place tooltips capture
+    // appController at mount and would otherwise read a stale preLoad that the
+    // reducer's per-dispatch cloning leaves behind; global.preLoad is always current.
+    global.preLoad = appController.preLoad;
 
     if (!localStorage.getItem("preferences")) {
       let pubs = input.val.publications || [];
@@ -723,7 +735,12 @@ export const appFunctions = {
   },
 
   updateUserProgress: (appController, input) => {
+    // input.val can be undefined when userprogress comes back null/unkeyed for a
+    // guest or unmatched token (callers read r.userprogress?.[token]); bail
+    // rather than crash the reducer. Mirrors updateUserSummary's guard.
+    if (!input.val) return appController;
     let inputData = input.val;
+    if (!appController.states.user.progress) appController.states.user.progress = {};
     appController.states.user.progress.completed = inputData.completed;
     appController.states.user.progress.started = inputData.started;
     return appController;
@@ -731,6 +748,7 @@ export const appFunctions = {
   updateUserSummary: (appController, input) => {
     if (!input.val) return appController;
     let inputData = input.val;
+    if (!appController.states.user.progress) appController.states.user.progress = {};
     appController.states.user.progress.completed = inputData.completed;
     appController.states.user.progress.started = inputData.started;
     let preExistingSummary = null;

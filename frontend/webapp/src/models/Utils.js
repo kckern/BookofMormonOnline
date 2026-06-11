@@ -64,7 +64,7 @@ const pickOneRamdomly = (arr) => {
   return arr[selectedIndex];
 }
 
-function genUserAvatar(user_id) {
+export function genUserAvatar(user_id) {
   const pallettes = [
     ["FF86F1", "FF00CC"], ["00FFFF", "000080"], ["99FFCC", "009933"],
     ["FF6699", "990033"], ["33CCFF", "003366"], ["00FF80", "004D40"],
@@ -695,10 +695,18 @@ export function formatText(message, setPanel, appController, isSection) {
   }
 }
 
+// Avatar load-failure fallback: when a profile image 404s (missing S3 upload,
+// retired Sendbird/dicebear-v1 host, etc.) swap to the canonical neutral
+// `thumbs` avatar (genUserAvatar) seeded by the user_id hash embedded in the
+// failed URL (profiles/<user_id>.jpg, <hash>.svg, …). NOT personas — that style
+// is gendered (facial hair/hairstyles). Idempotent + loop-guarded so a fallback
+// failure can't re-fire.
 export function breakCache({ currentTarget }) {
-  return `${assetUrl}/interface/blank`;
-  if (!currentTarget) return null;
-  getFwdUrl(currentTarget.src).then((url) => (currentTarget.src = url));
+  if (!currentTarget || currentTarget.dataset.avatarFallback) return;
+  currentTarget.dataset.avatarFallback = "1";
+  const match = /([0-9a-f]{8,})(?:\.\w+)?(?:[?#].*)?$/i.exec(currentTarget.src || "");
+  const seed = match ? match[1] : "user";
+  currentTarget.src = genUserAvatar(seed);
 }
 export async function getFwdUrl(url) {
   console.log("Url", url);

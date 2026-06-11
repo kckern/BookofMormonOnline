@@ -263,7 +263,9 @@ export function Profile({
 function ProfilePicture({ appController }) {
   const [openModal, setOpenModal] = useState(false);
   const [profileImage, setProfileImage] = useState(null);
-  const sb = appController.sendbird.sb;
+  // sendbird is null for guests / before the chat controller is created; this
+  // value is unused here, so guard rather than crash the render.
+  const sb = appController.sendbird?.sb;
   useEffect(() => {
     if (
       profileImage !== appController.states.user.social?.profile_url ||
