@@ -499,7 +499,10 @@ function TheaterQueueIntro({ theaterController }) {
   const currentItem = queue[cursorIndex] || null;
 
   const [initSFX] = useState(
-    new Audio(`${assetUrl}/interface/audio/theater`)
+    // Lazy initializer: the plain form constructed (and began fetching) a
+    // new Audio object on EVERY render — once per second during the
+    // countdown — not just on mount.
+    () => new Audio(`${assetUrl}/interface/audio/theater`)
 );
 
 
