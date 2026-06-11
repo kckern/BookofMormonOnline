@@ -1196,11 +1196,65 @@ export default class MessengerController {
     return channel;
   }
 
+  // SendBird-user shape expected by the Study components (getFreshUsers et
+  // al.): userId, nickname, profileUrl, metaData{isBot,activeGroup,summary},
+  // connectionStatus, lastSeenAt.
+  _normalizeUser(u) {
+    return {
+      userId: u.user_id,
+      nickname: u.nickname,
+      profileUrl: u.profile_url,
+      metaData: { ...(u.metadata || {}), ...(u.is_bot ? { isBot: true } : {}) },
+      connectionStatus: u.is_online ? 'online' : 'offline',
+      lastSeenAt: u.last_seen_at || null,
+    };
+  }
+
+  async getUsersByIds(userIds = []) {
+    const ids = (userIds || []).filter((id) => typeof id === 'string' && id.length);
+    if (!ids.length) return [];
+    const query = `query {
+      messengerUsers(userIds: ${JSON.stringify(ids)}) {
+        user_id
+        nickname
+        profile_url
+        metadata
+        is_online
+        last_seen_at
+        is_bot
+      }
+    }`;
+    const result = await this.gqlRequest(query);
+    return (result?.messengerUsers || []).map((u) => this._normalizeUser(u));
+  }
+
   // Expose sb property for compatibility with code that accesses appController.sendbird.sb
   get sb() {
     const self = this;
     return {
       currentUser: this._currentUser,
+      // SendBird-compat: the old SDK's user-list query, backed by our
+      // messengerUsers GraphQL query. The Study call sites only use
+      // userIdsFilter plus the hasNext/next() pager, so this is a one-shot
+      // pager (everything arrives in the first page).
+      createApplicationUserListQuery: (params = {}) => {
+        const userIds = params.userIdsFilter || [];
+        const pager = {
+          hasNext: true,
+          next: async (callback) => {
+            pager.hasNext = false;
+            try {
+              const users = await self.getUsersByIds(userIds);
+              if (callback) callback(users, null);
+              return users;
+            } catch (error) {
+              if (callback) callback(null, error);
+              throw error;
+            }
+          },
+        };
+        return pager;
+      },
       connect: (userId, token, callback) => {
         return this.connect(userId, token).then(user => {
           if (callback) callback(user, null);
