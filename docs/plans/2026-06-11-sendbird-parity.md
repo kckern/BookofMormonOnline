@@ -523,6 +523,25 @@ Closes: #23 (mentions dropped), the dead-surface list, and locks the whole parit
 
 …and use `outData` wherever the implementation currently forwards `params.data` (both the socket emit and any GraphQL fallback). Round-trip is already handled: `shapeMessage` (Task 1) parses `data` and resolves `mentionedUsers`.
 
+**Step 1b (BACKEND — verified necessary):** the socket `send_message` handler (`src/socket.ts:219-229`) whitelists payload fields and currently DROPS `data`. Add it to the `messenger.postMessage` call:
+
+```ts
+      const msg = await messenger.postMessage({
+        channelUrl: payload.channelUrl,
+        userId,
+        message: payload.message,
+        customType: payload.customType,
+        data: payload.data,
+        link: payload.link,
+        highlights: payload.highlights,
+        parentMessageId: payload.parentMessageId
+      });
+```
+
+Then read `messenger.postMessage` (the messenger library module it imports) and confirm it persists `data` to `messenger_messages.data` and includes it in the broadcast payload — if it also whitelists, extend it the same way. Add `data?: string` to the `SendMessagePayload` type if one is declared. NOTE: the backend runs under ts-node via the `bom-dev` unit — backend edits require a service restart to take effect, which bounces the public dev URL; per project rules do NOT restart the service yourself. Verify the change with the backend test suite if it covers postMessage (`npm test -- messenger` from repo root; tests hit the DB directly), and flag the pending restart in your report.
+
+**Known backend gap (out of scope, do not fix):** no `user_left`/`membership_changed` emitter exists in socket.ts — member changes don't live-update other clients today; `leave()` (Task 3) inherits that pre-existing behavior. Tracked as follow-up debt.
+
 - [ ] **Step 2: Prune the dead compat surface** (sweep-verified zero consumers — re-grep each before deleting; if a grep finds a consumer, KEEP it and note): channel methods `inviteWithUserIds, declineInvitation, banUserWithUserId, muteUserWithUserId, unmuteUserWithUserId, addOperators, removeOperators, createOperatorListQuery, isGroupChannel, isOpenChannel, getCachedMetadata`.
 
 ```bash
