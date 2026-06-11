@@ -38,6 +38,30 @@ const yoga = createYoga<{ lang: string; ip: string; bearerToken?: string; ua?: s
         if (r && typeof r === 'object' && r.data) stripEmptyDeep(r.data);
       },
     },
+    {
+      // Slow-operation logger: warn with the top-level fields + duration for any
+      // GraphQL operation over 1s. Logs field NAMES only (not args) so tokens
+      // never hit the log.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      onExecute({ args }: { args: any }) {
+        const start = Date.now();
+        return {
+          onExecuteDone() {
+            const ms = Date.now() - start;
+            if (ms > 1000) {
+              const fields = (args.document?.definitions ?? [])
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                .flatMap((d: any) => d.selectionSet?.selections ?? [])
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                .map((s: any) => s.name?.value)
+                .filter(Boolean)
+                .join(', ');
+              console.warn(`[slow-gql] ${ms}ms — fields: ${fields}`);
+            }
+          },
+        };
+      },
+    },
   ],
 });
 
