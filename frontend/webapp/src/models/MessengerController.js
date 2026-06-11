@@ -894,6 +894,11 @@ export default class MessengerController {
   // PUBLIC API - Channel Settings
   // ─────────────────────────────────────────────────────────────────
 
+  async refetchChannel(channelUrl) {
+    this.channels.delete(channelUrl);
+    return this.sb.groupChannel.getChannel(channelUrl); // re-fetches and re-caches
+  }
+
   async setGroupNameDescription(channel, newName, newDesc) {
     const channelUrl = channel.channel_url || channel.url;
     try {
@@ -908,15 +913,10 @@ export default class MessengerController {
           description
         }
       }`;
-      const result = await this.gqlRequest(mutation);
-      
-      // Update cache
-      if (result?.messengerUpdateChannel) {
-        const updated = this._normalizeChannel(result.messengerUpdateChannel);
-        this.channels.set(channelUrl, { ...this.channels.get(channelUrl), ...updated });
-      }
-      
-      return result?.messengerUpdateChannel;
+      await this.gqlRequest(mutation);
+
+      // Return the fresh normalized channel (so callers can chain .updateChannel() on it)
+      return this.refetchChannel(channelUrl);
     } catch (error) {
       console.error('Messenger: setGroupNameDescription error', error);
       throw error;
@@ -1118,8 +1118,36 @@ export default class MessengerController {
       createOperatorListQuery: () => ({
         next: () => this.fetchGroupOperators(ch).then(ids => ids.map(id => ({ userId: id })))
       }),
-      updateChannel: (params) => this.setGroupNameDescription(ch, params.name, 
-        JSON.parse(params.data || '{}').description),
+      // SendBird-compat: re-fetch this channel from the API and return the
+      // fresh channel object (admin actions and socket membership events
+      // call this to pick up membership changes).
+      refresh: () => this.refetchChannel(ch.channel_url),
+      // SendBird-compat: current user leaves the channel.
+      leave: async (callback) => {
+        try {
+          await this.removeMember(channel, this.userId);
+          this.channels.delete(ch.channel_url);
+          if (callback) callback(null, null);
+        } catch (error) {
+          if (callback) callback(null, error);
+          throw error;
+        }
+      },
+      updateChannel: (params) => {
+        if (params.coverImage) {
+          // Known limitation: the green-field backend messengerUpdateChannel
+          // mutation accepts only channelUrl/name/description — no file-upload
+          // path exists. Cover image changes are silently ignored for now.
+          console.warn('Messenger: cover image upload not yet supported; coverImage param ignored');
+        }
+        if (params.name !== undefined || params.data !== undefined) {
+          const desc = params.data ? JSON.parse(params.data || '{}').description : undefined;
+          return this.setGroupNameDescription(ch, params.name, desc);
+        }
+        // No update needed — return the channel itself (already fresh from
+        // setGroupNameDescription's refetchChannel call).
+        return Promise.resolve(channel);
+      },
       
       // ─── TYPING INDICATORS ───
       startTyping: () => {
