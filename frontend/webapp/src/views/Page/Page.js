@@ -115,13 +115,26 @@ export default function Page({ appController }) {
           let nextNum = parseInt(parts[0]) + 1;
           parts[0] = nextNum;
           let newSlug = parts.reverse().join("/");
-          let el = document.querySelectorAll(`a[href='/${newSlug}']`)[0];
-          el?.scrollIntoView({
-            behavior: "smooth",
-            block: "center",
-            inline: "center",
-          });
-          el?.click();
+          const getTrigger = () =>
+            document.querySelectorAll(`a[href='/${newSlug}']`)[0];
+          if (!getTrigger()) return false;
+          // Open first, then scroll to the opened content (the old order
+          // centered the link, then the expansion pushed the content
+          // off-screen). The shared manager means a user-initiated scroll
+          // or the next deep-link campaign cancels this cleanly.
+          pageScrollManager.run([
+            step.openAndAwait(getTrigger, {
+              isOpen: () => isRefOpen(newSlug),
+              getContainer: () =>
+                document.querySelector(`[textid="${newSlug}"]`)?.closest(".row") ||
+                getTrigger(),
+            }),
+            step.scrollToElement(
+              () =>
+                document.querySelector(`[textid="${newSlug}"]`)?.closest(".row") ||
+                getTrigger()
+            ),
+          ]);
         },
         setPageData: (val) => {
           dispatch({ fn: "setPageData", val: val });
@@ -256,8 +269,6 @@ export default function Page({ appController }) {
     : null;
   const initPhase = usePageInit(pageController, { gateOpen, identityKey: initIdentityKey, onTail });
 
-  // Active-section tracking — enabled only once init has settled (the old
-  // window.onscroll spy attached mid-animation and leaked across views).
   // Active-section tracking — enabled only once init has settled (the old
   // window.onscroll spy attached mid-animation and leaked across views).
   useEffect(() => {
