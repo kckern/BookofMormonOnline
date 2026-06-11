@@ -23,6 +23,23 @@ import type { DB } from '../../codegen/db.js';
 import type { MessageDTO, UserDTO, HighlightDTO } from './dto.js';
 import { getUsers } from './users.js';
 
+/**
+ * Numeric, monotonic message_id (ms-timestamp based, like the legacy Sendbird
+ * ids). MUST be numeric: the GraphQL HomeFeedItem.id is a Float and the frontend
+ * route is /home/:channelId/:messageId(\d+) — a nanoid string id breaks both, so
+ * a freshly-posted message/comment would throw on the feed/thread read.
+ * Monotonic bump guarantees uniqueness within the process.
+ */
+// message_id is varchar(11); existing ids are ≤10-digit numbers. Centiseconds
+// (Date.now()/100) is an 11-digit number that fits, stays numeric, and sorts
+// after the legacy ids. Monotonic bump guarantees uniqueness within the process.
+let _lastMessageTs = 0;
+function nextMessageId(): string {
+  const ts = Math.floor(Date.now() / 100);
+  _lastMessageTs = ts > _lastMessageTs ? ts : _lastMessageTs + 1;
+  return String(_lastMessageTs);
+}
+
 // ─── Data assembly helpers ────────────────────────────────────────────────────
 
 /**
@@ -237,7 +254,7 @@ export async function postMessage(
     parentMessageId?: string;
   },
 ): Promise<MessageDTO> {
-  const messageId = nanoid(11);
+  const messageId = nextMessageId();
 
   await db
     .insertInto('messenger_messages')
