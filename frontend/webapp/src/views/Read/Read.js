@@ -119,14 +119,51 @@ export default function ReadScripture({ appController }) {
     const [passageNotesLoading, setPassageNotesLoading] = useState(false);
 
     // Refs
-    const verseRefs = useRef(new Map()); 
-    const scrollTimeoutRef = useRef(null);
-    const hasUserScrolled = useRef(false); 
-    const lastLoadedChapterCount = useRef(0); 
-    const lastScrollY = useRef(0); 
-    const nextChapterPreloaded = useRef(false); 
+    const verseRefs = useRef(new Map());
+    const hasUserScrolled = useRef(false);
+    const lastScrollY = useRef(0);
+    const nextChapterPreloaded = useRef(false);
     const lastContentLoadTime = useRef(0);
     const loadedChapterRefs = useRef(new Set()); // chapter refs currently mounted
+    const lastScrolledHighlightKey = useRef(null);
+
+    // ---------------------------------------------------------
+    // Called when the user explicitly navigates to a new chapter
+    // ---------------------------------------------------------
+    const handleExplicitChapterNavigation = useCallback((targetRef) => {
+        abortAllOperations();
+        setContent(null);
+        setAllChapters([]);
+        setHighlightedVerses(null);
+        setIsContentLoading(false);
+        setPassageNotesData({});
+        setPassageNotesLoading(false);
+        hasUserScrolled.current = false;
+        lastScrollY.current = 0;
+        nextChapterPreloaded.current = false;
+        lastContentLoadTime.current = 0;
+        window.scrollTo(0, 0);
+        // Force a reload even when the clicked chapter is the one already
+        // displayed (route params won't change, so the route effect won't
+        // fire) — otherwise the content nulled above is never refetched.
+        // Also sync chapterRef to the target so the load effect hits the
+        // right chapter (it can be stale after fast-path navigation between
+        // mounted chapters). For cross-chapter clicks this also makes the
+        // single fetch correct instead of fetching the old chapter and aborting.
+        loadedChapterRefs.current = new Set();
+        if (targetRef) {
+            // Callers pass refs from two naming sources (ChapterNav builds
+            // "label(book) N" strings; everything else uses scripture-guide
+            // generated refs). Canonicalize so the same-URL reload path
+            // always fetches/looks up the generated form — the two can
+            // diverge in non-English locales (e.g. ko).
+            const canonical = memoizedGenerateReference(
+                memoizedLookupReference(targetRef).verse_ids
+            ).trim();
+            setChapterRef(canonical || targetRef);
+        }
+        setInitialLoad(true);
+    }, [abortAllOperations]);
 
     // ---------------------------------------------------------
     // Navigate to next/previous chapters - memoized
@@ -134,16 +171,18 @@ export default function ReadScripture({ appController }) {
     const goToNextChapter = useCallback(() => {
         const nextSlug = slugify(nextChapterRef);
         if (nextSlug) {
+            handleExplicitChapterNavigation(nextChapterRef);
             history.push(`/read/${nextSlug}`);
         }
-    }, [nextChapterRef, history]);
+    }, [nextChapterRef, history, handleExplicitChapterNavigation]);
 
     const goToPreviousChapter = useCallback(() => {
         const prevSlug = slugify(prevChapterRef);
         if (prevSlug) {
+            handleExplicitChapterNavigation(prevChapterRef);
             history.push(`/read/${prevSlug}`);
         }
-    }, [prevChapterRef, history]);
+    }, [prevChapterRef, history, handleExplicitChapterNavigation]);
 
     // ---------------------------------------------------------
     // Load the next chapter: can be called automatically or manually
@@ -192,7 +231,6 @@ export default function ReadScripture({ appController }) {
                                 verseIds: nextChapterVerses,
                             },
                         ];
-                        lastLoadedChapterCount.current = newChapters.length + 1;
                         lastContentLoadTime.current = Date.now();
                         return newChapters;
                     });
@@ -221,30 +259,6 @@ export default function ReadScripture({ appController }) {
     }, [nextChapterRef, isOperationRunning, executeOperation]);
 
     // ---------------------------------------------------------
-    // Called when the user explicitly navigates to a new chapter
-    // ---------------------------------------------------------
-    const handleExplicitChapterNavigation = useCallback(() => {
-        abortAllOperations();
-        setContent(null);
-        setAllChapters([]);
-        setHighlightedVerses(null);
-        setIsContentLoading(false);
-        setPassageNotesData({});
-        setPassageNotesLoading(false);
-        hasUserScrolled.current = false;
-        lastLoadedChapterCount.current = 0;
-        lastScrollY.current = 0;
-        nextChapterPreloaded.current = false;
-        lastContentLoadTime.current = 0;
-        window.scrollTo(0, 0);
-        // Force a reload even when the clicked chapter is the one already
-        // displayed (route params won't change, so the route effect won't
-        // fire) — otherwise the content nulled above is never refetched.
-        loadedChapterRefs.current = new Set();
-        setInitialLoad(true);
-    }, [abortAllOperations]);
-
-    // ---------------------------------------------------------
     // Monitor changes to route
     // ---------------------------------------------------------
     useEffect(() => {
@@ -261,6 +275,8 @@ export default function ReadScripture({ appController }) {
             // tracks the infinite-scroll frontier, and overwriting it could
             // re-append an already-mounted chapter (duplicate keys).
             setPrevChapterRef(initPrevChapter);
+            document.title = initChapterRef;
+            localStorage.setItem("chapterRef", initChapterRef);
             return;
         }
 
@@ -278,7 +294,6 @@ export default function ReadScripture({ appController }) {
 
         // Reset tracking values
         hasUserScrolled.current = false;
-        lastLoadedChapterCount.current = 0;
         lastScrollY.current = 0;
         nextChapterPreloaded.current = false;
         lastContentLoadTime.current = 0;
@@ -390,9 +405,6 @@ export default function ReadScripture({ appController }) {
         window.addEventListener("scroll", throttledScrollHandler, { passive: true });
         return () => {
             window.removeEventListener("scroll", throttledScrollHandler);
-            if (scrollTimeoutRef.current) {
-                clearTimeout(scrollTimeoutRef.current);
-            }
         };
     }, [throttledScrollHandler, loadNextChapter, isContentLoading]);
 
@@ -462,15 +474,19 @@ export default function ReadScripture({ appController }) {
     const debouncedHighlightedVerses = useDebounce(highlightedVerses, 300);
     
     useEffect(() => {
-        if (allChapters.length > 0) return;
-        if (debouncedHighlightedVerses?.length && !isContentLoading) {
-            const maxVerse = Math.max(...debouncedHighlightedVerses);
-            const verseElement = verseRefs.current.get(maxVerse);
-            if (verseElement) {
-                verseElement.scrollIntoView({ behavior: "smooth", block: "center" });
-            }
+        if (!debouncedHighlightedVerses?.length || isContentLoading) return;
+        // Only scroll when the highlight itself changed — appends used to
+        // be excluded via an allChapters.length guard that also blocked
+        // all multi-chapter highlight scrolling.
+        const key = debouncedHighlightedVerses.join(",");
+        if (lastScrolledHighlightKey.current === key) return;
+        const maxVerse = Math.max(...debouncedHighlightedVerses);
+        const verseElement = verseRefs.current.get(maxVerse);
+        if (verseElement) {
+            lastScrolledHighlightKey.current = key;
+            verseElement.scrollIntoView({ behavior: "smooth", block: "center" });
         }
-    }, [debouncedHighlightedVerses, allChapters.length, isContentLoading]);
+    }, [debouncedHighlightedVerses, isContentLoading]);
 
     // ---------------------------------------------------------
     // Pre-load short content - optimized
@@ -526,6 +542,7 @@ export default function ReadScripture({ appController }) {
             <div className="read-content">
                 {/* TOP NAV */}
                 <div className="read-header-nav">
+                    {/* Header prev/next = jump (full teardown via handleExplicitChapterNavigation); the footer next button = continue reading (appends). */}
                     {prevChapterRef ? (
                         <button onClick={goToPreviousChapter} className="btn btn-primary">
                             ◀ {prevChapterRef}

@@ -76,7 +76,7 @@ export const ChapterNav = memo(({ chapterRef, onChapterClick }) => {
                     e.preventDefault();
                     console.log('(1) Grid item clicked for chapter:', chapter);
                     if (onChapterClick) {
-                        onChapterClick();
+                        onChapterClick(chapter);
                     }
                     history.push(`/read/${slugify(chapter)}`);
                 };

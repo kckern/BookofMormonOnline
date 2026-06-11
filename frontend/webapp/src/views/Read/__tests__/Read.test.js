@@ -123,3 +123,44 @@ test("verse click in an appended chapter updates header without teardown", async
   expect(BoMOnlineAPI.mock.calls.length).toBe(callsAfterAppend);
   expect(screen.getByText("Alma 32 verse 1 text.")).toBeTruthy();
 });
+
+test("fast-path verse click into an appended chapter updates title and resume state", async () => {
+  renderRead("/read/alma.32");
+  await screen.findByText("Alma 32 verse 1 text.");
+  const nextButtons = screen.getAllByText(/Alma 33/);
+  userEvent.click(nextButtons[nextButtons.length - 1]);
+  await screen.findByText("Alma 33 verse 1 text.");
+
+  userEvent.click(screen.getByText("Alma 33 verse 5 text."));
+  await waitFor(() => {
+    expect(document.title).toBe("Alma 33");
+  });
+  expect(localStorage.getItem("chapterRef")).toBe("Alma 33");
+});
+
+test("header prev button performs a real navigation after appending chapters", async () => {
+  renderRead("/read/alma.32");
+  await screen.findByText("Alma 32 verse 1 text.");
+  // Append Alma 33, then navigate into it via verse click
+  const nextButtons = screen.getAllByText(/Alma 33/);
+  userEvent.click(nextButtons[nextButtons.length - 1]);
+  await screen.findByText("Alma 33 verse 1 text.");
+  userEvent.click(screen.getByText("Alma 33 verse 5 text."));
+  await waitFor(() =>
+    expect(screen.getByRole("heading", { level: 3 }).textContent).toContain("Alma 33")
+  );
+  const callsBefore = BoMOnlineAPI.mock.calls.length;
+
+  // Header ◀ button now reads "◀ Alma 32" — explicit nav must tear down
+  userEvent.click(screen.getByText(/◀/));
+
+  // Refetches the target chapter...
+  await waitFor(() =>
+    expect(BoMOnlineAPI.mock.calls.length).toBeGreaterThan(callsBefore)
+  );
+  // ...and unmounts the appended chapter (single-chapter view again)
+  await waitFor(() =>
+    expect(screen.queryByText("Alma 33 verse 1 text.")).toBeNull()
+  );
+  expect(await screen.findByText("Alma 32 verse 1 text.")).toBeTruthy();
+});
