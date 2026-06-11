@@ -9,6 +9,16 @@ export function md5(value: string): string {
   return createHash('md5').update(value, 'utf8').digest('hex');
 }
 
+// Clients sometimes interpolate a missing token into a query as the literal
+// string "null"/"undefined" (e.g. a guest whose localStorage token wasn't set
+// yet). Such a token must NEVER resolve to or create a user — historically it
+// collided: stale bom_user_token rows with token="null" meant any "null"-token
+// request acted as those real users (a security hole + cross-user log pollution).
+const JUNK_TOKENS = new Set(['', 'null', 'undefined', 'false', 'NaN', 'none']);
+export function isValidToken(token: unknown): token is string {
+  return typeof token === 'string' && token.length > 0 && !JUNK_TOKENS.has(token);
+}
+
 /**
  * Legacy cleanUsername (BomUser.ts:83): if an email is supplied, the stored
  * username is FORCED to the email's local-part — a real constraint (the

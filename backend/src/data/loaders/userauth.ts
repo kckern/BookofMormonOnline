@@ -2,7 +2,7 @@
 import { sql, type Kysely } from 'kysely';
 import type { DB } from '../../../codegen/db.js';
 import type { Loaders } from '../loaders.js';
-import { md5, cleanUsername, genUserAvatar } from '../../auth/identity.js';
+import { md5, cleanUsername, genUserAvatar, isValidToken } from '../../auth/identity.js';
 import { hashPassword, verifyPassword, needsRehash } from '../../auth/password.js';
 import { sendbird } from '../../auth/sendbirdShim.js';
 import { runWrite } from '../writes.js';
@@ -120,6 +120,11 @@ export async function upsertTokenAndRelinkLogs(
   token: string,
   username: string,
 ): Promise<void> {
+  // Never persist a junk token ("null"/""/"undefined") — that's how the
+  // bom_user_token rows with token="null" got created, causing every
+  // null-token guest to resolve to those real users.
+  if (!isValidToken(token)) return;
+
   // 1. Upsert the token row
   await runWrite(
     ctx,

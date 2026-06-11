@@ -28,6 +28,7 @@ import { Server, type Socket } from 'socket.io';
 import { createAdapter } from '@socket.io/redis-adapter';
 import { createClient } from 'redis';
 import { getDb } from '../data/db.js';
+import { isValidToken } from '../auth/identity.js';
 import { getRedis } from '../config/redis.js';
 import { setOnline, setOffline } from '../messaging/presence.js';
 import { setIo } from './RealtimeBus.js';
@@ -55,6 +56,10 @@ async function verifyToken(
   token: string,
 ): Promise<{ valid: true; bomUserId: string | null } | { valid: false }> {
   try {
+    // Reject junk tokens ("null"/""/...) up front — a stale bom_user_token row
+    // with that literal value must never authenticate a socket as a real user.
+    if (!isValidToken(token)) return { valid: false };
+
     const db = getDb();
 
     // Step 1: look up the messenger user row.
