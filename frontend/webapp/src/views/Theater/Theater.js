@@ -170,16 +170,6 @@ function TheaterWrapper({ appController }) {
       });
     },
 
-    cycleVolume: () => {
-      const player = document.getElementById("theater-audio-player");
-      const volume = player.volume;
-			console.log('Volume',volume);
-      if (volume === 0.2) player.volume = 0.4;
-      if (volume === 0.4) player.volume = 0.6;
-      if (volume === 0.6) player.volume = 0.8;
-      if (volume === 0.8) player.volume = 1;
-      if (volume === 1) player.volume = 0.2;
-    },
 		toggleMusic : ()=>{
 			setIsMuted(prev=>{
 					localStorage.setItem("playbackMuted", !prev);
@@ -897,7 +887,9 @@ function TheaterControls({ theaterController, visible }) {
     const slug = currentItem?.slug || null;
     const title = `${currentItem?.heading} • ${currentItem?.parent_page?.title}`;
     document.title = `${title}`;
-    history.push(`/theater/${slug}`);
+    // Queue advancement is not user navigation — don't grow history;
+    // Back should leave the theater, not replay every passage.
+    history.replace(`/theater/${slug}`);
 
     return () => {
       if (logTimerRef.current) {
@@ -1163,11 +1155,11 @@ function TheatherMusicPlayer({ theaterController }) {
       volume={playbackMusicVolume}
 			muted={isMuted}
       onCanPlay={()=>{
-        const isPLaying = document.getElementById(`theater-music-player-a`)?.paused;
-        if(isPLaying) return;
-        const isActive = activeSide==="a";
-        if(isActive) return;
-        playAudioElement("theater-music-player-a");
+        // If this side became ready while it is the active side and isn't
+        // playing yet, start it.
+        const player = document.getElementById("theater-music-player-a");
+        if (!player || activeSide !== "a") return;
+        if (player.paused) playAudioElement("theater-music-player-a");
       }}
     />
     <ReactAudioPlayer
@@ -1177,11 +1169,9 @@ function TheatherMusicPlayer({ theaterController }) {
 			muted={isMuted}
       preload="none"
       onCanPlay={()=>{
-        const isPLaying = document.getElementById(`theater-music-player-a`)?.paused;
-        if(isPLaying) return;
-        const isActive = activeSide==="a";
-        if(isActive) return;
-        playAudioElement("theater-music-player-a");
+        const player = document.getElementById("theater-music-player-b");
+        if (!player || activeSide !== "b") return;
+        if (player.paused) playAudioElement("theater-music-player-b");
       }}
     />
     </>
@@ -1582,11 +1572,11 @@ function PlaybackSettings({setShowPlaybackSettings,theaterController}){
 				setPlaybackMusicVolume(() => {
           const musicLabel = parseFloat(+e.target.value).toFixed(1)
           const musicVolume = parseFloat((musicLabel / 20).toFixed(3)) ;
-          console.log('musicVolume',musicVolume);
           localStorage.setItem("playbackMusicVolume",musicVolume);
-          if(!document.getElementById("theater-music-player-a") && !document.getElementById("theater-music-player-a")) return;
-          document.getElementById("theater-music-player-a").volume =musicVolume;
-          document.getElementById("theater-music-player-a").volume =musicVolume;
+          // Music plays at 1/20th of the displayed percentage so it sits
+          // under the narration; apply to whichever side is audible.
+          if (document.getElementById("theater-music-player-a")) document.getElementById("theater-music-player-a").volume = musicVolume;
+          if (document.getElementById("theater-music-player-b")) document.getElementById("theater-music-player-b").volume = musicVolume;
           return musicLabel; // keeping it in float with one decimal point
         });
 			}
