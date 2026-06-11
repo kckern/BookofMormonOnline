@@ -323,6 +323,59 @@ describe('data JSON assembly', () => {
     expect(data['highlights']).toEqual(['Alma 32:21']);
   });
 
+  itWrite('round-trips mentions from the raw client data blob', async () => {
+    const { channelUrl, userId } = await seedChannelAndUser();
+    const dto = await postMessage(db, {
+      channelUrl,
+      userId,
+      message: '@Nick hi',
+      data: JSON.stringify({ mentionedUserIds: ['u1', 'u2'], mentionType: 'users' }),
+    });
+    trackMessage(dto.message_id);
+
+    // Read back through a fresh query (not the in-memory insert).
+    const reloaded = await getMessage(db, channelUrl, dto.message_id);
+    const data = JSON.parse(reloaded!.data) as Record<string, unknown>;
+    expect(data['mentionedUserIds']).toEqual(['u1', 'u2']);
+    expect(data['mentionType']).toBe('users');
+  });
+
+  itWrite('mentions coexist with links and highlights in one data object', async () => {
+    const { channelUrl, userId } = await seedChannelAndUser();
+    const dto = await postMessage(db, {
+      channelUrl,
+      userId,
+      message: 'Rich + mentions',
+      link: { type: 'scripture', target: 'alma32:21' },
+      highlights: ['Alma 32:21'],
+      data: JSON.stringify({ mentionedUserIds: ['u1'], mentionType: 'users' }),
+    });
+    trackMessage(dto.message_id);
+
+    const reloaded = await getMessage(db, channelUrl, dto.message_id);
+    const data = JSON.parse(reloaded!.data) as Record<string, unknown>;
+    // Link/highlights stay authoritative (from their columns)…
+    expect((data['links'] as Record<string, string>)['scripture']).toBe('alma32:21');
+    expect(data['highlights']).toEqual(['Alma 32:21']);
+    // …and the mention keys ride alongside.
+    expect(data['mentionedUserIds']).toEqual(['u1']);
+  });
+
+  itWrite('a link-only message yields no mention keys (byte-compat)', async () => {
+    const { channelUrl, userId } = await seedChannelAndUser();
+    const dto = await postMessage(db, {
+      channelUrl,
+      userId,
+      message: 'link only',
+      link: { type: 'scripture', target: '1ne1:1' },
+    });
+    trackMessage(dto.message_id);
+
+    const reloaded = await getMessage(db, channelUrl, dto.message_id);
+    const data = JSON.parse(reloaded!.data) as Record<string, unknown>;
+    expect(Object.keys(data).sort()).toEqual(['links']);
+  });
+
   itWrite('persists highlights to messenger_highlights table', async () => {
     const { channelUrl, userId } = await seedChannelAndUser();
     const dto = await postMessage(db, {

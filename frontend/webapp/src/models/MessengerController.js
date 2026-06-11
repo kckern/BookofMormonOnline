@@ -1023,10 +1023,7 @@ export default class MessengerController {
       memberCount: ch.member_count || 0,
       unreadMessageCount: ch.unread_message_count || 0,
       lastMessage: ch.last_message ? this._normalizeMessage(ch.last_message) : null,
-      isGroupChannel: () => true,
-      isOpenChannel: () => ch.custom_type === 'open',
       // Compatibility methods
-      getCachedMetadata: () => ch.metadata || {},
       getMetaData: async (keys) => ch.metadata || {},
       updateMetaData: async (data, upsert) => {
         this.fireStudyGroupAction(data.action ? { action: data.action } : data, ch);
@@ -1083,8 +1080,18 @@ export default class MessengerController {
         let failCallback = null;
         
         // Parse params
-        const data = params.data ? JSON.parse(params.data) : {};
-        
+        let data = {};
+        try { data = params.data ? JSON.parse(params.data) : {}; } catch (e) {}
+
+        // Mentions: no dedicated column — persist them inside the data JSON
+        // (shapeMessage surfaces them back as mentionedUsers).
+        let outData = params.data;
+        if (params.mentionedUserIds?.length) {
+          data.mentionedUserIds = params.mentionedUserIds;
+          data.mentionType = params.mentionType || 'users';
+          outData = JSON.stringify(data);
+        }
+
         // Send via socket
         const promise = new Promise((resolve, reject) => {
           self.socket.emit('send_message', {
@@ -1095,6 +1102,7 @@ export default class MessengerController {
               target: Object.values(data.links)[0]
             } : undefined,
             highlights: data.highlights,
+            data: outData,
             customType: params.customType,
             parentMessageId: params.parentMessageId
           }, (response) => {
@@ -1130,25 +1138,8 @@ export default class MessengerController {
         self.socket.emit('mark_read', { channelUrl: ch.channel_url });
       },
       
-      inviteWithUserIds: (userIds, callback) => 
-        this.inviteMembers(ch, userIds).then(r => callback?.(r, null)).catch(e => callback?.(null, e)),
       acceptInvitation: (callback) =>
         this.acceptInvitation(ch).then(r => callback?.(r, null)).catch(e => callback?.(null, e)),
-      declineInvitation: (callback) =>
-        this.declineInvitation(ch).then(r => callback?.(r, null)).catch(e => callback?.(null, e)),
-      banUserWithUserId: (userId, seconds, desc, callback) =>
-        this.banMember(ch, userId).then(r => callback?.(r, null)).catch(e => callback?.(null, e)),
-      muteUserWithUserId: (userId, callback) =>
-        this.muteMember(ch, userId).then(r => callback?.(r, null)).catch(e => callback?.(null, e)),
-      unmuteUserWithUserId: (userId, callback) =>
-        this.unMuteMember(ch, userId).then(r => callback?.(r, null)).catch(e => callback?.(null, e)),
-      addOperators: (userIds, callback) =>
-        this.makeAdmin(ch, userIds[0]).then(r => callback?.(r, null)).catch(e => callback?.(null, e)),
-      removeOperators: (userIds, callback) =>
-        this.removeAdmin(ch, userIds[0]).then(r => callback?.(r, null)).catch(e => callback?.(null, e)),
-      createOperatorListQuery: () => ({
-        next: () => this.fetchGroupOperators(ch).then(ids => ids.map(id => ({ userId: id })))
-      }),
       // SendBird-compat: re-fetch this channel from the API and return the
       // fresh channel object (admin actions and socket membership events
       // call this to pick up membership changes).

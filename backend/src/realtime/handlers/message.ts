@@ -41,6 +41,8 @@ interface SendMessagePayload {
   highlights?: string[];
   customType?: string;
   parentMessageId?: string;
+  // Raw client `data` JSON string (SendBird passthrough — carries mentions).
+  data?: string;
 }
 
 // ─── edit_message ─────────────────────────────────────────────────────────────
@@ -97,6 +99,7 @@ export function register(socket: Socket, _io: Server): void {
           customType: payload.customType,
           link: payload.link,
           highlights: payload.highlights,
+          data: payload.data,
           parentMessageId: payload.parentMessageId,
         });
 

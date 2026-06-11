@@ -51,8 +51,24 @@ function buildDataString(
   linkTarget: string | null,
   linkAux: string | null,
   highlights: { ordinal: number; text: string }[],
+  metadata?: unknown,
 ): string {
+  // Start from the raw client `data` blob persisted in the metadata column
+  // (mentions and any other passthrough keys live here). Link/highlights, which
+  // have dedicated columns, are layered on top and win — so messages with no
+  // metadata produce a byte-identical string to before (links/highlights only).
   const obj: Record<string, unknown> = {};
+
+  const meta = parseMetadata(metadata);
+  if (meta) {
+    // Don't echo link/highlights out of metadata — those are owned by the
+    // columns below and re-derived authoritatively. Everything else (mentions,
+    // future passthrough) rides through.
+    for (const [k, v] of Object.entries(meta)) {
+      if (k === 'links' || k === 'highlights') continue;
+      obj[k] = v;
+    }
+  }
 
   if (linkType && linkTarget) {
     const linkValue = linkAux ? `${linkTarget}.${linkAux}` : linkTarget;
@@ -65,6 +81,27 @@ function buildDataString(
   }
 
   return JSON.stringify(obj);
+}
+
+/**
+ * Parse the messenger_messages.metadata column (mysql2 may hand back a JSON
+ * column already-parsed as an object, or as a string). Returns a plain object
+ * or null. Never throws.
+ */
+function parseMetadata(raw: unknown): Record<string, unknown> | null {
+  if (!raw) return null;
+  if (typeof raw === 'object') return raw as Record<string, unknown>;
+  if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw) as unknown;
+      return parsed && typeof parsed === 'object'
+        ? (parsed as Record<string, unknown>)
+        : null;
+    } catch {
+      return null;
+    }
+  }
+  return null;
 }
 
 /** Aggregate raw reaction rows into the MessageDTO.reactions shape. */
@@ -199,7 +236,7 @@ async function assembleMessages(db: Kysely<DB>, msgs: RawMessage[]): Promise<Mes
       message_type: m.message_type,
       message: m.message,
       custom_type: m.custom_type ?? '',
-      data: buildDataString(m.link_type, m.link_target, m.link_aux, highlights),
+      data: buildDataString(m.link_type, m.link_target, m.link_aux, highlights, m.metadata),
       parent_message_id: m.parent_message_id ?? null,
       thread_info: threadInfo,
       reactions: aggregateReactions(reactionsByMsg.get(m.message_id) ?? []),
@@ -251,10 +288,24 @@ export async function postMessage(
     link?: { type: string; target: string; aux?: string };
     highlights?: string[];
     metadata?: Record<string, unknown>;
+    /**
+     * Raw client `data` JSON string (SendBird sendUserMessage passthrough —
+     * carries mentions: { mentionedUserIds, mentionType }, plus any future keys).
+     * Persisted into the metadata column and merged back into MessageDTO.data on
+     * read. The link/highlights keys, if present here, are ignored on read-back
+     * (those are owned by the dedicated columns).
+     */
+    data?: string;
     parentMessageId?: string;
   },
 ): Promise<MessageDTO> {
   const messageId = nextMessageId();
+
+  // Fold the raw client `data` blob and the structured `metadata` param into one
+  // object stored in the metadata column (data first, metadata wins on conflict).
+  const metadataObj: Record<string, unknown> = { ...(parseMetadata(params.data) ?? {}) };
+  if (params.metadata) Object.assign(metadataObj, params.metadata);
+  const metadataJson = Object.keys(metadataObj).length ? JSON.stringify(metadataObj) : null;
 
   await db
     .insertInto('messenger_messages')
@@ -268,7 +319,7 @@ export async function postMessage(
       link_type: params.link?.type ?? null,
       link_target: params.link?.target ?? null,
       link_aux: params.link?.aux ?? null,
-      metadata: params.metadata ? JSON.stringify(params.metadata) : null,
+      metadata: metadataJson,
       parent_message_id: params.parentMessageId ?? null,
     })
     .execute();

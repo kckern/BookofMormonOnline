@@ -28,12 +28,21 @@ test("study user-list query works after staff login (SendBird port)", async ({ p
   test.setTimeout(90_000);
 
   const userListErrors = [];
+  // Broadened crashes-now guard: catch the whole compat-shim failure class —
+  // any `… is not a function` or `Cannot read properties of undefined` pageerror
+  // (covers createApplicationUserListQuery, channel.refresh/leave, sender.metaData
+  // destructures, mentionedUsers.length, etc.). One pre-existing exception is
+  // allowlisted: the /user Profile "Invalid language tag" crash (open bug,
+  // unrelated to the messenger shim; the spec never idles on /user).
+  const isShimCrash = (msg) =>
+    (/is not a function/.test(msg) || /Cannot read properties of undefined/.test(msg)) &&
+    !/Invalid language tag/.test(msg);
   let messengerUsersRequests = 0;
   page.on("pageerror", (e) => {
-    if (/createApplicationUserListQuery/.test(e.message)) userListErrors.push(e.message);
+    if (isShimCrash(e.message)) userListErrors.push(e.message);
   });
   page.on("console", (m) => {
-    if (m.type() === "error" && /createApplicationUserListQuery/.test(m.text())) userListErrors.push(m.text());
+    if (m.type() === "error" && isShimCrash(m.text())) userListErrors.push(m.text());
   });
   page.on("request", (req) => {
     if (req.method() === "POST" && /messengerUsers/.test(req.postData() || "")) messengerUsersRequests++;
