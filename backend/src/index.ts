@@ -9,6 +9,7 @@ import { buildContext, type AppContext } from './graphql/context.js';
 import { resolveLang } from './graphql/lang.js';
 import { stripEmptyDeep } from './compat/responseFilter.js';
 import { initRealtime } from './realtime/server.js';
+import { startBotScheduler } from './bots/scheduler.js';
 
 const app = Fastify({
   logger: { level: env.LOG_LEVEL },
@@ -92,6 +93,12 @@ app
       await initRealtime(app.server);
     } else {
       app.log.info('messaging disabled (MESSENGER_ENABLED=false) — GraphQL only');
+    }
+    // Bot cron (proactive bot posting). Off by default — opt in with
+    // BOT_SCHEDULER_ENABLED=true so it never auto-posts to live channels by
+    // accident. Requires a model provider (OPENAI_API_KEY or BOT_LLM_MOCK).
+    if (process.env.BOT_SCHEDULER_ENABLED === 'true') {
+      startBotScheduler();
     }
   })
   .catch((err) => {

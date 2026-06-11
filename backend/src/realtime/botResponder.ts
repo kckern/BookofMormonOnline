@@ -32,9 +32,8 @@
 import type { Kysely } from 'kysely';
 import type { DB } from '../../codegen/db.js';
 import type { MessageDTO } from '../messaging/dto.js';
-import { getPersona } from '../messaging/bots/personas.js';
 import { getMessages, postMessage } from '../messaging/messages.js';
-import { getLlmGateway } from '../messaging/ai/LlmGateway.js';
+import { generateBotReply, type BotTurn } from '../bots/generate.js';
 import { getBus } from './RealtimeBus.js';
 
 // ─── Config ───────────────────────────────────────────────────────────────────
@@ -107,35 +106,26 @@ export async function maybeBotReply(
       const bot = bots[0]!;
       const botId = bot.user_id;
 
-      // 4. Load persona.
-      const persona = await getPersona(db, botId, 'en');
-      if (!persona) {
-        console.warn(`[botResponder] persona lookup returned null for bot ${botId} — skipping`);
-        return;
-      }
-
-      // 5. Load recent channel history (top-level messages only, newest-first).
+      // 4. Load recent channel history (top-level messages only, newest-first).
       //    getMessages returns newest-first; we reverse to chronological order for
-      //    the LLM prompt.
+      //    the prompt.
       const rawHistory = await getMessages(db, channelUrl, { limit: HISTORY_LIMIT });
       const history = [...rawHistory].reverse();
 
-      // 6. Map history to LLM messages.
+      // 5. Map history to conversation turns.
       //    Messages authored by this bot → 'assistant'; all others → 'user'.
-      const llmMessages = history.map((msg) => ({
+      const convo: BotTurn[] = history.map((msg) => ({
         role: (msg.user?.user_id === botId ? 'assistant' : 'user') as 'assistant' | 'user',
         content: msg.message,
       }));
 
-      // 7. Generate reply via LlmGateway.
-      const reply = await getLlmGateway().generate({
-        system: persona.system,
-        messages: llmMessages,
-      });
+      // 6. Generate reply via the bot's Mastra agent (persona + tools + model
+      //    are resolved inside getBotAgent from bom_bot).
+      const reply = await generateBotReply(db, botId, convo);
 
-      // 8. Gateway returned null (no key, error, timeout) → silently return.
+      // 7. No agent / no model / empty generation → silently return.
       if (reply === null) {
-        console.warn(`[botResponder] LLM gateway returned null for channel ${channelUrl} — no reply`);
+        console.warn(`[botResponder] no Mastra reply for bot ${botId} in channel ${channelUrl} — skipping`);
         return;
       }
 

@@ -23,6 +23,44 @@ export type JsonPrimitive = boolean | number | string | null;
 
 export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
 
+export interface BomBot {
+  bot_id: string;
+  created_at: Generated<Date>;
+  display_name: string;
+  enabled: Generated<number>;
+  model: string | null;
+  persona: string | null;
+  tags: Json | null;
+  temperament: string | null;
+  updated_at: Generated<Date>;
+}
+
+export interface BomBotRag {
+  bot_id: string | null;
+  channel_url: string | null;
+  config: Json | null;
+  created_at: Generated<Date>;
+  enabled: Generated<number>;
+  id: Generated<number>;
+  resource_type: string;
+  tag: string | null;
+  updated_at: Generated<Date>;
+  uri: string | null;
+}
+
+export interface BomBotSchedule {
+  action: Generated<string>;
+  cadence_minutes: number | null;
+  channel_url: string;
+  created_at: Generated<Date>;
+  cron: string | null;
+  enabled: Generated<number>;
+  id: Generated<number>;
+  last_run_at: Date | null;
+  next_run_at: Date | null;
+  updated_at: Generated<Date>;
+}
+
 export interface BomCache {
   content: Json;
   hash: string;
@@ -409,6 +447,14 @@ export interface BomUser {
   zip: string | null;
 }
 
+export interface BomUserMeta {
+  active_group: string | null;
+  bookmark: Json | null;
+  metadata: Json | null;
+  updated_at: Generated<Date | null>;
+  user: string;
+}
+
 export interface BomUserSocial {
   id: Generated<number>;
   network: string;
@@ -429,7 +475,7 @@ export interface BomVirtualgroupPrompts {
   lang: string;
   prompt: string | null;
   reference: string;
-  thread_id: number | null;
+  thread_id: string | null;
 }
 
 export interface BomXrels {
@@ -879,6 +925,9 @@ export interface SocialPosts {
 }
 
 export interface DB {
+  bom_bot: BomBot;
+  bom_bot_rag: BomBotRag;
+  bom_bot_schedule: BomBotSchedule;
   bom_cache: BomCache;
   bom_capsulation: BomCapsulation;
   bom_connection: BomConnection;
@@ -916,6 +965,7 @@ export interface DB {
   bom_translation: BomTranslation;
   bom_translation_locked: BomTranslationLocked;
   bom_user: BomUser;
+  bom_user_meta: BomUserMeta;
   bom_user_social: BomUserSocial;
   bom_user_token: BomUserToken;
   bom_virtualgroup_prompts: BomVirtualgroupPrompts;

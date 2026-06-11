@@ -88,26 +88,21 @@ export async function getPersona(
   lang: string,
 ): Promise<Persona | null> {
   try {
-    // Fetch the requested lang + English fallback in a single query.
-    const rows = await db
-      .selectFrom('bom_virtualgroup_prompts')
-      .select(['lang', 'prompt'])
+    // Persona now lives in bom_bot.persona (the bot-specific table), repointed
+    // from the always-null bom_virtualgroup_prompts.bot_id. lang is reserved for
+    // future per-language personas.
+    void lang;
+    const row = await db
+      .selectFrom('bom_bot')
+      .select('persona')
       .where('bot_id', '=', botId)
-      .where((eb) =>
-        eb.or([eb('lang', '=', lang), eb('lang', '=', 'en')]),
-      )
-      .execute();
+      .executeTakeFirst();
 
-    // Prefer exact lang match; fall back to 'en'.
-    const exact = rows.find((r) => r.lang === lang);
-    const en = rows.find((r) => r.lang === 'en');
-    const row = exact ?? en ?? null;
-
-    if (row?.prompt && row.prompt.trim().length > 0) {
-      return { system: row.prompt.trim() };
+    if (row?.persona && row.persona.trim().length > 0) {
+      return { system: row.persona.trim() };
     }
 
-    // DB has no prompt — try seed constants.
+    // DB has no persona — try seed constants.
     const seed = SEED_PERSONAS[botId];
     if (seed) {
       return { system: seed };

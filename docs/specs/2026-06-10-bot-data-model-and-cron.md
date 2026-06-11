@@ -147,3 +147,46 @@ row — extracted from `virtualgroup.ts`. The 1330 `bom_virtualgroup_prompts` ro
 ## Rollout
 Phase 1 (now): create tables + seed reformers + repoint `getPersona` to `bom_bot`. Phase 2: the
 scheduler + post logic. Phase 3: admin GraphQL for prompt management; RAG wiring.
+
+---
+
+## Addendum — Mastra bot runtime (implemented 2026-06-10)
+
+The bots now run on **[Mastra](https://github.com/mastra-ai/mastra)** (`@mastra/core`). Each
+`bom_bot` row becomes a Mastra `Agent` (persona → instructions, `model`, a RAG tool); generation
+goes through `agent.generate()`, so persona/tools/model are applied uniformly. No bespoke prompt
+plumbing in callers.
+
+**Modules (`backend/src/bots/`):**
+- `mastra/model.ts` — `resolveBotModel()`: `OPENAI_API_KEY` → `@ai-sdk/openai`; `BOT_LLM_MOCK` → a
+  deterministic `MockLanguageModelV3` that still runs *through* the agent (lets the whole framework
+  be exercised without a key); neither → `null` (caller skips). `hasLlmProvider()` reports availability.
+- `mastra/rag.ts` — **STUB.** `createBotRagTool()` gives every agent a `bot_rag_retrieve` tool
+  (zod-typed `{query}` → `{chunks}`) that currently returns `[]`. `loadRagResources()` reads
+  `bom_bot_rag` (bot/tag/channel scoped). Only the `execute` body changes when the vector infra lands.
+- `mastra/agents.ts` — `getBotAgent(db, botId)`: builds + caches the `Agent` from `bom_bot`.
+  `clearBotAgentCache()` after a persona edit.
+- `generate.ts` — `generateBotReply(db, botId, turns)`: the single text-generation entry point;
+  returns `null` on no-agent/no-model/empty so callers degrade gracefully.
+
+**Callers:** `realtime/botResponder.ts` (reactive — reply to a human message) and `bots/scheduler.ts`
+(proactive cron) both call `generateBotReply`. The legacy `LlmGateway` + `getPersona` path is retired
+from `botResponder`.
+
+**Scheduler (`bots/scheduler.ts`):** `runNewPrompt(db, channelUrl)` posts one discussion round — an
+opener bot posts an unposted `bom_virtualgroup_prompts` row (`custom_type: bot_prompt`, sets
+`thread_id`), then `comment_min..max` tagged bots reply via their Mastra agents
+(`custom_type: bot_comment`, threaded). Exported for tests/admin. `startBotScheduler()` runs a 60s
+tick over due `bom_bot_schedule` rows, Redis-locked (`bots:scheduler:lock`) for multi-instance
+safety. **Gated off by default** — `index.ts` only starts it when `BOT_SCHEDULER_ENABLED=true`, so it
+never auto-posts to a live channel by accident.
+
+**Schema note:** `bom_virtualgroup_prompts.thread_id` was retyped `int` → `varchar(11)` to match
+`messenger_messages.message_id` (the 11-digit centisecond ids overflow `int`; the column had zero
+non-null values, so the change was lossless).
+
+**Reformers channel revival:** the 10 reformer bots (`is_bot=1`, `bom_bot.tags=["reformers"]`) are
+seeded, configured (`messenger_channels.metadata.bot`), scheduled, and joined as members of
+`36eddcfa954553c01a2b8bacb6ff86f4`. Verified end-to-end with `scripts/test-reformers-mastra.ts`
+(`BOT_LLM_MOCK=1`): an opener posts a real prompt, 3 reformer bots comment via their own Mastra
+agents, then the test deletes every posted message and un-threads the prompt (leave-no-trace).
