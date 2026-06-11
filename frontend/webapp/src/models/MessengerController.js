@@ -371,29 +371,40 @@ export default class MessengerController {
 
   async getStudyGroups() {
     try {
-      const query = `query { 
-        messengerMyChannels(userId: "${this.userId}") { 
-          channel_url 
-          name 
-          cover_url 
-          custom_type 
+      const query = `query {
+        messengerMyChannels(userId: "${this.userId}") {
+          channel_url
+          name
+          cover_url
+          custom_type
           description
-          metadata 
+          metadata
           member_count
           unread_message_count
           last_message {
             message_id
             message
+            message_type
+            custom_type
             created_at
+            user {
+              user_id
+              nickname
+              profile_url
+              metadata
+              is_bot
+              is_online
+            }
           }
           members {
             user_id
             nickname
             profile_url
             role
+            state
             is_muted
           }
-        } 
+        }
       }`;
       const result = await this.gqlRequest(query);
       
@@ -446,19 +457,22 @@ export default class MessengerController {
   async loadGroupMessages(group) {
     const channelUrl = group.channel_url || group.url;
     try {
-      const query = `query { 
-        messengerMessages(channelUrl: "${channelUrl}", limit: 30) { 
-          message_id 
-          channel_url 
+      const query = `query {
+        messengerMessages(channelUrl: "${channelUrl}", limit: 30) {
+          message_id
+          channel_url
           user_id
           user {
             user_id
             nickname
             profile_url
+            metadata
+            is_bot
+            is_online
           }
-          message_type 
-          message 
-          custom_type 
+          message_type
+          message
+          custom_type
           link_type
           link_target
           parent_message_id
@@ -466,7 +480,7 @@ export default class MessengerController {
           reactions { reaction_key user_ids }
           created_at
           updated_at
-        } 
+        }
       }`;
       const result = await this.gqlRequest(query);
       
@@ -486,19 +500,22 @@ export default class MessengerController {
     const limit = prevResultSize || 30;
     
     try {
-      const query = `query { 
+      const query = `query {
         messengerMessages(channelUrl: "${channelUrl}", before: "${id}", limit: ${limit}) {
-          message_id 
-          channel_url 
+          message_id
+          channel_url
           user_id
           user {
             user_id
             nickname
             profile_url
+            metadata
+            is_bot
+            is_online
           }
-          message_type 
-          message 
-          custom_type 
+          message_type
+          message
+          custom_type
           link_type
           link_target
           parent_message_id
@@ -506,7 +523,7 @@ export default class MessengerController {
           reactions { reaction_key user_ids }
           created_at
           updated_at
-        } 
+        }
       }`;
       const result = await this.gqlRequest(query);
       
@@ -523,23 +540,27 @@ export default class MessengerController {
     const parentId = parentMessage.messageId || parentMessage.message_id;
     
     try {
-      const query = `query { 
+      const query = `query {
         messengerThreadMessages(parentMessageId: "${parentId}") {
-          message_id 
-          channel_url 
+          message_id
+          channel_url
           user_id
           user {
             user_id
             nickname
             profile_url
+            metadata
+            is_bot
+            is_online
           }
-          message_type 
-          message 
+          message_type
+          message
           custom_type
           parent_message_id
           reactions { reaction_key user_ids }
           created_at
-        } 
+          updated_at
+        }
       }`;
       const result = await this.gqlRequest(query);
       
@@ -1299,6 +1320,8 @@ export default class MessengerController {
                   nickname
                   profile_url
                   role
+                  state
+                  is_muted
                 }
               }
             }`;
@@ -1329,11 +1352,22 @@ export default class MessengerController {
               message_id
               channel_url
               user_id
+              user {
+                user_id
+                nickname
+                profile_url
+                metadata
+                is_bot
+                is_online
+              }
+              message_type
               message
               custom_type
               parent_message_id
               thread_info { reply_count }
+              reactions { reaction_key user_ids }
               created_at
+              updated_at
             }
           }`;
           const result = await this.gqlRequest(query);
