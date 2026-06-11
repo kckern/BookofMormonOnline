@@ -293,6 +293,104 @@ p.heading a.heading + a.heading::before{
     margin: 1ex -1rem -1rem -1rem;
 }
 
+/* Skeleton Loader Styles
+   Recovered from d753acba (lost in merge 6a63b83c), pruned to the classes
+   SkeletonLoader.js renders. Per-line widths come from inline styles. */
+@keyframes skeleton-loading {
+    0% {
+        background-position: -200px 0;
+    }
+    100% {
+        background-position: calc(200px + 100%) 0;
+    }
+}
+
+.skeleton-section {
+    background-color: #FFF;
+    padding: 1rem;
+    margin-bottom: 2rem;
+    border-radius: 1rem;
+    margin-left: 1rem; /* Match real read-section margin */
+}
+
+.skeleton-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.skeleton-heading {
+    width: 250px; /* fallback; overridden by inline style */
+    height: 24px;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200px 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: 4px;
+}
+
+.skeleton-study-btn {
+    width: 100px;
+    height: 32px;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200px 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: 4px;
+}
+
+.skeleton-block {
+    display: flex;
+}
+
+.skeleton-gutter {
+    flex-grow: 0;
+    flex-shrink: 0;
+    width: 5rem;
+    padding: 0 1rem 1ex 0;
+    margin-left: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.skeleton-avatar {
+    width: 3.8rem;
+    height: 4rem;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200px 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: 50%;
+    margin-bottom: 0.5rem;
+}
+
+.skeleton-voice {
+    width: 3rem;
+    height: 1rem;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200px 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: 1ex;
+}
+
+.skeleton-content {
+    flex-grow: 1;
+    padding: 0 1rem 0 0;
+}
+
+.skeleton-paragraph {
+    margin-bottom: 2rem;
+}
+
+.skeleton-text-line {
+    height: 1.2rem;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200px 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: 4px;
+    margin-bottom: 0.8rem;
+    width: 100%;
+}
+
 @media only screen and (max-width: 900px) {
     
     .read-content, .read-content .read-section{
@@ -344,6 +442,28 @@ p.heading a.heading + a.heading::before{
     }
     .chapter-nav {
         margin-left: 0
+    }
+
+    /* Skeleton Loader Mobile Styles */
+    .skeleton-section {
+        margin: -0.6rem;
+        margin-top: 1.3rem;
+    }
+
+    .skeleton-gutter {
+        margin: 0;
+        width: 100%;
+        text-align: center;
+        display: flex;
+        justify-content: center;
+        flex-direction: row;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .skeleton-block {
+        flex-direction: column;
     }
   }
   
