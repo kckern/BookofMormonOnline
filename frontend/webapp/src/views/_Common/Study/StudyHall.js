@@ -135,21 +135,29 @@ function StudyGroupSideBar({
 					userIdsFilter:[...activeGroupMembers.filter(member=>member.userId !== mainUser.social.user_id).map(user=>user.userId)]
 				}
 				const query = appController.sendbird.sb.createApplicationUserListQuery(queryParams);
-		
+
 				const queryUsers = await query.next();
-		
+
 				let { users } = getFreshUsers(appController, queryUsers);
-		
+
 				setUsers(users);
 				}
 			}
 
-			const interval = setInterval(getLiveFreshUsers,60000);
+			// Debounced: a reconnect emits one user_presence per channel — coalesce
+			// the burst into a single roster fetch (still near-instant vs the old 60s poll).
+			let presenceDebounce;
+			const onPresenceChanged = () => {
+				clearTimeout(presenceDebounce);
+				presenceDebounce = setTimeout(getLiveFreshUsers, 1000);
+			};
+			window.addEventListener('memberPresenceChanged', onPresenceChanged);
 
 			setTimeout(getLiveFreshUsers,100);
 
 			return ()=>{
-				clearInterval(interval);
+				clearTimeout(presenceDebounce);
+				window.removeEventListener('memberPresenceChanged', onPresenceChanged);
 			}
 		},[group.members])
 

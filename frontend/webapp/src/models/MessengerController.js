@@ -170,15 +170,37 @@ export default class MessengerController {
 
     // Unread count changed
     this.socket.on('unread_count_changed', () => {
-      const event = new CustomEvent('unreadMessageCountChanged');
-      window.dispatchEvent(event);
       // Debounced refresh (~500ms trailing) — a burst of inbound messages
-      // coalesces into a single fetch instead of one per message.
+      // coalesces into a single fetch instead of one per message. The
+      // unreadMessageCountChanged CustomEvent is dispatched INSIDE the debounce
+      // (next to loadUnreadDMs) so listener-driven refetches (StudyGroupBar)
+      // coalesce too. Tradeoff: the badge can lag the inbound message by up to
+      // ~500ms; acceptable for an unread indicator.
       clearTimeout(this._unreadRefreshTimer);
       this._unreadRefreshTimer = setTimeout(() => {
+        const event = new CustomEvent('unreadMessageCountChanged');
+        window.dispatchEvent(event);
         this.loadUnreadDMs()
           .then((unreadCounts) => appController.functions.setUnreadDMs(unreadCounts));
       }, 500);
+    });
+
+    // Presence push (parity 12): backend broadcasts user_presence to every
+    // room a user joins/leaves on connect/disconnect. Patch the cached
+    // member's connectionStatus in place, then notify listeners so study
+    // rosters refresh without the old 60s poll.
+    this.socket.on('user_presence', ({ channelUrl, userId, isOnline }) => {
+      const channel = this.channels.get(channelUrl);
+      if (channel && Array.isArray(channel.members)) {
+        const member = channel.members.find((m) => m.userId === userId);
+        if (member) {
+          member.connectionStatus = isOnline ? 'online' : 'offline';
+        }
+      }
+      const event = new CustomEvent('memberPresenceChanged', {
+        detail: { channelUrl, userId, isOnline },
+      });
+      window.dispatchEvent(event);
     });
   }
 
@@ -410,11 +432,13 @@ export default class MessengerController {
             is_muted
             metadata
             is_online
+            last_seen_at
+            is_bot
           }
         }
       }`;
       const result = await this.gqlRequest(query);
-      
+
       const channels = (result?.messengerMyChannels || []).map(ch => this._normalizeChannel(ch));
       
       // Cache channels
@@ -1446,6 +1470,8 @@ export default class MessengerController {
                   is_muted
                   metadata
                   is_online
+                  last_seen_at
+                  is_bot
                 }
               }
             }`;

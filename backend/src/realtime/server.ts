@@ -31,7 +31,7 @@ import { getDb } from '../data/db.js';
 import { isValidToken } from '../auth/identity.js';
 import { getRedis } from '../config/redis.js';
 import { setOnline, setOffline } from '../messaging/presence.js';
-import { setIo } from './RealtimeBus.js';
+import { setIo, getBus } from './RealtimeBus.js';
 import * as messageHandlers from './handlers/message.js';
 import * as reactionHandlers from './handlers/reaction.js';
 import * as typingHandlers from './handlers/typing.js';
@@ -228,6 +228,13 @@ export async function initRealtime(httpServer: HttpServer): Promise<Server> {
 
       // Mark online in Redis presence.
       await setOnline(userId);
+
+      // Broadcast presence to every channel this user belongs to so other
+      // members' rosters flip without waiting on a poll. socket.data.channels
+      // was populated + joined just above.
+      for (const channelUrl of channelUrls) {
+        getBus().emit('user_presence', channelUrl, { channelUrl, userId, isOnline: true });
+      }
     } catch (err) {
       console.error('[realtime] connection setup error:', err);
       // Don't disconnect — the socket still functions for future joins.
@@ -244,6 +251,14 @@ export async function initRealtime(httpServer: HttpServer): Promise<Server> {
       console.info(`[realtime] disconnected: ${userId} (${reason})`);
       try {
         await setOffline(userId);
+
+        // Broadcast offline presence to the rooms this socket was in. Read
+        // socket.data.channels (set at connect) before socket.io tears the
+        // socket's room memberships down.
+        const channelUrls = (socket.data['channels'] as string[] | undefined) ?? [];
+        for (const channelUrl of channelUrls) {
+          getBus().emit('user_presence', channelUrl, { channelUrl, userId, isOnline: false });
+        }
       } catch (err) {
         console.error('[realtime] disconnect handler error:', err);
       }

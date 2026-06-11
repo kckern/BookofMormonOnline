@@ -241,16 +241,20 @@ useEffect(()=>{
 		setBots(bots);
 		}
 	}
-	const interval = setInterval(()=>{
-    if(users.length) return;
-    if(bots.length) return;
-		getLiveFreshUsers();
-	},60000)
+	// Debounced: a reconnect emits one user_presence per channel — coalesce
+	// the burst into a single roster fetch (still near-instant vs the old 60s poll).
+	let presenceDebounce;
+	const onPresenceChanged = () => {
+		clearTimeout(presenceDebounce);
+		presenceDebounce = setTimeout(getLiveFreshUsers, 1000);
+	};
+	window.addEventListener('memberPresenceChanged', onPresenceChanged);
 
 	setTimeout(getLiveFreshUsers,100);
 
 	return ()=>{
-		clearInterval(interval);
+		clearTimeout(presenceDebounce);
+		window.removeEventListener('memberPresenceChanged', onPresenceChanged);
 	}
 },[appController.states.studyGroup.activeGroup?.members])
 
