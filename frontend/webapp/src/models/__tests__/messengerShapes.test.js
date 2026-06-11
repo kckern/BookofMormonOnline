@@ -1,0 +1,106 @@
+import {
+  shapeUser,
+  shapeMember,
+  shapeMessage,
+  shapeChannelFields,
+} from "../messengerShapes";
+
+const gqlUser = {
+  user_id: "u1",
+  nickname: "Nick",
+  profile_url: "http://x/p.png",
+  metadata: { activeGroup: "g1", summary: "{}" },
+  is_online: true,
+  last_seen_at: 123,
+  is_bot: false,
+};
+
+test("shapeUser maps the full SendBird user shape (incl. snake_case alias)", () => {
+  const u = shapeUser(gqlUser);
+  expect(u).toMatchObject({
+    userId: "u1",
+    user_id: "u1", // legacy snake_case consumers (Sidebar.js)
+    nickname: "Nick",
+    profileUrl: "http://x/p.png",
+    plainProfileUrl: "http://x/p.png",
+    connectionStatus: "online",
+    lastSeenAt: 123,
+  });
+  expect(u.metaData).toEqual({ activeGroup: "g1", summary: "{}" });
+});
+
+test("shapeUser defaults: no metadata → {}, offline, bot flag folded in", () => {
+  const u = shapeUser({ user_id: "u2", is_bot: true });
+  expect(u.metaData).toEqual({ isBot: true });
+  expect(u.connectionStatus).toBe("offline");
+});
+
+test("shapeMember includes role/state/muted on top of the user shape", () => {
+  const m = shapeMember({ ...gqlUser, role: "operator", state: "joined", is_muted: true });
+  expect(m.role).toBe("operator");
+  expect(m.state).toBe("joined");
+  expect(m.isMuted).toBe(true);
+  expect(m.plainProfileUrl).toBe("http://x/p.png");
+  expect(m.metaData).toEqual(gqlUser.metadata);
+  expect(m.connectionStatus).toBe("online");
+});
+
+test("shapeMessage: sender + _sender alias, messageType, safe defaults", () => {
+  const msg = shapeMessage({
+    message_id: "10",
+    channel_url: "c1",
+    message: "hello",
+    message_type: "MESG",
+    user: gqlUser,
+    created_at: 5,
+  });
+  expect(msg.messageId).toBe("10");
+  expect(msg.messageType).toBe("user"); // MESG→user, ADMN→admin, FILE→file
+  expect(msg.sender.userId).toBe("u1");
+  expect(msg.sender.plainProfileUrl).toBe("http://x/p.png");
+  expect(msg.sender.metaData).toEqual(gqlUser.metadata);
+  expect(msg._sender).toBe(msg.sender); // legacy underscore consumers
+  expect(msg.mentionedUsers).toEqual([]); // never undefined (formatText does .length)
+});
+
+test("shapeMessage: missing user yields a null-safe sender", () => {
+  const msg = shapeMessage({ message_id: "11", message: "x", message_type: "ADMN" });
+  expect(msg.messageType).toBe("admin");
+  expect(msg.sender.metaData).toEqual({}); // Study.js destructures sender.metaData
+  expect(msg.mentionedUsers).toEqual([]);
+});
+
+test("shapeMessage: mentions stored in data JSON are surfaced as user-ish objects", () => {
+  const msg = shapeMessage(
+    {
+      message_id: "12",
+      message: "@Nick hi",
+      message_type: "MESG",
+      data: JSON.stringify({ mentionedUserIds: ["u1"], mentionType: "users" }),
+    },
+    { resolveUser: (id) => (id === "u1" ? shapeUser(gqlUser) : null) }
+  );
+  expect(msg.mentionedUsers.map((u) => u.userId)).toEqual(["u1"]);
+  expect(msg.mentionType).toBe("users");
+});
+
+test("shapeChannelFields: myRole/myMemberState/joinedMemberCount for the current user", () => {
+  const ch = {
+    channel_url: "c1",
+    members: [
+      { ...gqlUser, role: "operator", state: "joined" },
+      { user_id: "u9", role: "member", state: "invited" },
+    ],
+  };
+  const f = shapeChannelFields(ch, "u1");
+  expect(f.myRole).toBe("operator");
+  expect(f.myMemberState).toBe("joined");
+  expect(f.joinedMemberCount).toBe(1);
+  expect(f.members[0].plainProfileUrl).toBe("http://x/p.png");
+});
+
+test("shapeChannelFields: non-member viewer gets none/undefined gracefully", () => {
+  const f = shapeChannelFields({ members: [] }, "stranger");
+  expect(f.myRole).toBe("none");
+  expect(f.joinedMemberCount).toBe(0);
+});

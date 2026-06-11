@@ -10,6 +10,7 @@
 import { io } from 'socket.io-client';
 import crypto from 'crypto-browserify';
 import { refreshChannel, tokenImage } from './Utils';
+import { shapeUser, shapeMember, shapeMessage, shapeChannelFields } from './messengerShapes';
 
 // Helper for consistent user IDs (same as SendbirdController)
 export const md5 = (string) => {
@@ -240,55 +241,75 @@ export default class MessengerController {
   }
 
   /**
-   * Normalize message format to match Sendbird SDK structure
+   * Normalize message format to match Sendbird SDK structure.
+   * Delegates the core shape to shapeMessage() (messengerShapes.js), then
+   * layers on the reaction/threadInfo wiring and compat methods that need
+   * access to normalizeReactions and the controller instance.
    */
   _normalizeMessage(msg) {
-    return {
-      messageId: msg.message_id,
-      parentMessageId: msg.parent_message_id || 0,
-      channelUrl: msg.channel_url,
-      message: msg.message,
-      customType: msg.custom_type,
-      data: msg.data || JSON.stringify({
-        links: msg.link_type ? { [msg.link_type]: msg.link_target } : undefined,
-        highlights: msg.highlights || []
-      }),
-      sender: msg.user || {
-        userId: msg.user_id,
-        nickname: msg.nickname || '',
-        profileUrl: msg.profile_url || ''
-      },
-      createdAt: new Date(msg.created_at).getTime(),
-      updatedAt: msg.updated_at ? new Date(msg.updated_at).getTime() : 0,
-      reactions: normalizeReactions(msg.reactions),
-      threadInfo: msg.thread_info || { replyCount: 0 },
-      // Compatibility methods
-      applyThreadInfoUpdateEvent: () => {},
-      /**
-       * Apply a reaction event in-place (Sendbird SDK parity). Handles BOTH:
-       *   - full-array form: socket reaction_changed / message_received → { reactions: [...] }
-       *   - delta form: optimistic local add/delete → { key|reaction_key, userId, operation }
-       * Keeps this.reactions in the { key, userIds } shape messageReacters() reads.
-       */
-      applyReactionEvent(event) {
-        if (!event) return;
-        if (Array.isArray(event.reactions)) {
-          this.reactions = normalizeReactions(event.reactions);
-          return;
-        }
-        const key = event.key ?? event.reaction_key;
-        const userId = event.userId;
-        if (!key || !userId) return;
-        let r = this.reactions.find((x) => x.key === key);
-        if (event.operation === 'delete') {
-          if (r) r.userIds = r.userIds.filter((id) => id !== userId);
-          this.reactions = this.reactions.filter((x) => x.userIds.length > 0);
-        } else {
-          if (!r) { r = { key, userIds: [] }; this.reactions.push(r); }
-          if (!r.userIds.includes(userId)) r.userIds.push(userId);
-        }
+    // Merge link_type/link_target into data so legacy socket messages (which
+    // carry those fields instead of a JSON data blob) still surface correctly.
+    const rawData = msg.data || JSON.stringify({
+      links: msg.link_type ? { [msg.link_type]: msg.link_target } : undefined,
+      highlights: msg.highlights || []
+    });
+    const msgWithData = { ...msg, data: rawData };
+
+    const normalized = shapeMessage(msgWithData, {
+      resolveUser: (id) => this._findKnownUser(id),
+    });
+
+    // Override timestamps to match the previous normalizer's behaviour
+    // (millisecond getTime() for createdAt; 0 sentinel when updatedAt absent).
+    normalized.createdAt = new Date(msg.created_at).getTime();
+    normalized.updatedAt = msg.updated_at ? new Date(msg.updated_at).getTime() : 0;
+    // parentMessageId: preserve the 0 sentinel (shapeMessage passes through undefined).
+    normalized.parentMessageId = msg.parent_message_id || 0;
+
+    // Reactions / thread info
+    normalized.reactions = normalizeReactions(msg.reactions);
+    normalized.threadInfo = msg.thread_info || { replyCount: 0 };
+
+    // Compatibility methods
+    normalized.applyThreadInfoUpdateEvent = () => {};
+    /**
+     * Apply a reaction event in-place (Sendbird SDK parity). Handles BOTH:
+     *   - full-array form: socket reaction_changed / message_received → { reactions: [...] }
+     *   - delta form: optimistic local add/delete → { key|reaction_key, userId, operation }
+     * Keeps this.reactions in the { key, userIds } shape messageReacters() reads.
+     */
+    normalized.applyReactionEvent = function applyReactionEvent(event) {
+      if (!event) return;
+      if (Array.isArray(event.reactions)) {
+        this.reactions = normalizeReactions(event.reactions);
+        return;
+      }
+      const key = event.key ?? event.reaction_key;
+      const userId = event.userId;
+      if (!key || !userId) return;
+      let r = this.reactions.find((x) => x.key === key);
+      if (event.operation === 'delete') {
+        if (r) r.userIds = r.userIds.filter((id) => id !== userId);
+        this.reactions = this.reactions.filter((x) => x.userIds.length > 0);
+      } else {
+        if (!r) { r = { key, userIds: [] }; this.reactions.push(r); }
+        if (!r.userIds.includes(userId)) r.userIds.push(userId);
       }
     };
+
+    return normalized;
+  }
+
+  /**
+   * Look up a shaped user from any cached channel's member list.
+   * Used by _normalizeMessage to resolve mention IDs into user objects.
+   */
+  _findKnownUser(userId) {
+    for (const ch of this.channels.values()) {
+      const hit = (ch.members || []).find((m) => m.userId === userId);
+      if (hit) return hit;
+    }
+    return null;
   }
 
   // ─────────────────────────────────────────────────────────────────
@@ -952,40 +973,14 @@ export default class MessengerController {
   }
 
   /**
-   * Normalize user format to match Sendbird SDK structure
-   */
-  _normalizeUser(user) {
-    return {
-      userId: user.user_id,
-      nickname: user.nickname || '',
-      profileUrl: user.profile_url || '',
-      plainProfileUrl: user.profile_url || '',
-      metaData: user.metadata || {},
-      isOnline: user.is_online || false,
-      // Compatibility method
-      updateMetaData: async (data, upsert, callback) => {
-        try {
-          await this.gqlRequest(`mutation {
-            messengerUpdateUserMetadata(
-              userId: "${user.user_id}"
-              metadata: ${JSON.stringify(JSON.stringify(data))}
-            )
-          }`);
-          if (callback) callback(data, null);
-          return data;
-        } catch (error) {
-          if (callback) callback(null, error);
-          throw error;
-        }
-      }
-    };
-  }
-
-  /**
    * Normalize channel format to match Sendbird SDK structure
    */
   _normalizeChannel(ch) {
     const self = this;
+    // Compute member-derived fields (members, myRole, myMemberState, joinedMemberCount)
+    // using the pure shapeChannelFields helper so the shapes stay in sync with tests.
+    const channelShapedFields = shapeChannelFields(ch, this.userId);
+
     const channel = {
       url: ch.channel_url,
       channel_url: ch.channel_url,
@@ -996,13 +991,8 @@ export default class MessengerController {
       custom_type: ch.custom_type || '',
       data: JSON.stringify({ description: ch.description || '' }),
       description: ch.description || '',
-      members: (ch.members || []).map(m => ({
-        userId: m.user_id,
-        nickname: m.nickname || '',
-        profileUrl: m.profile_url || '',
-        role: m.role || 'member',
-        isMuted: !!m.is_muted
-      })),
+      // members, myRole, myMemberState, joinedMemberCount from shapeChannelFields
+      ...channelShapedFields,
       memberCount: ch.member_count || 0,
       unreadMessageCount: ch.unread_message_count || 0,
       lastMessage: ch.last_message ? this._normalizeMessage(ch.last_message) : null,
@@ -1197,17 +1187,28 @@ export default class MessengerController {
   }
 
   // SendBird-user shape expected by the Study components (getFreshUsers et
-  // al.): userId, nickname, profileUrl, metaData{isBot,activeGroup,summary},
-  // connectionStatus, lastSeenAt.
+  // al.): userId, user_id, nickname, profileUrl, plainProfileUrl,
+  // metaData{isBot,activeGroup,summary}, connectionStatus, lastSeenAt.
+  // Also attaches the updateMetaData compat method that some callers need.
   _normalizeUser(u) {
-    return {
-      userId: u.user_id,
-      nickname: u.nickname,
-      profileUrl: u.profile_url,
-      metaData: { ...(u.metadata || {}), ...(u.is_bot ? { isBot: true } : {}) },
-      connectionStatus: u.is_online ? 'online' : 'offline',
-      lastSeenAt: u.last_seen_at || null,
+    const shaped = shapeUser(u);
+    // Attach the compat updateMetaData method (needs controller `this`).
+    shaped.updateMetaData = async (data, upsert, callback) => {
+      try {
+        await this.gqlRequest(`mutation {
+          messengerUpdateUserMetadata(
+            userId: "${u.user_id}"
+            metadata: ${JSON.stringify(JSON.stringify(data))}
+          )
+        }`);
+        if (callback) callback(data, null);
+        return data;
+      } catch (error) {
+        if (callback) callback(null, error);
+        throw error;
+      }
     };
+    return shaped;
   }
 
   async getUsersByIds(userIds = []) {
