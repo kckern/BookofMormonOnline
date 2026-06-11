@@ -868,7 +868,8 @@ function TheaterControls({ theaterController, visible }) {
 
   const [playerCanPlay, setPlayerCanPlay] = useState(false);
 
-
+  const logTimerRef = useRef(null);
+  const loggedSlugsRef = useRef(new Set());
 
   const currentItem = queue[cursorIndex] || null;
   useEffect(() => {
@@ -890,6 +891,12 @@ function TheaterControls({ theaterController, visible }) {
     document.title = `${title}`;
     history.push(`/theater/${slug}`);
 
+    return () => {
+      if (logTimerRef.current) {
+        clearTimeout(logTimerRef.current);
+        logTimerRef.current = null;
+      }
+    };
   }, [currentItem]);
 
 
@@ -1018,8 +1025,15 @@ function TheaterControls({ theaterController, visible }) {
         onPlay={() => {
           theaterController.setIsPlaying(true);
           theaterController.setIsScrollingPanel(true);
-          logItem();
-        }}        
+          // Defer the log/status/progress API burst out of the playback-
+          // start window (it competed with audio buffering), and only log
+          // once per item (onPlay also fires on every pause→resume).
+          const slug = currentItem?.slug;
+          if (slug && !loggedSlugsRef.current.has(slug)) {
+            loggedSlugsRef.current.add(slug);
+            logTimerRef.current = setTimeout(logItem, 4000);
+          }
+        }}
         onError={() => {
           theaterController.next("auto",(hasNextContent || isLastItem) ? setSubCursorIndex : null);
          }}
