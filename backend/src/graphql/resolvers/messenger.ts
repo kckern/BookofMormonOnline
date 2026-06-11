@@ -254,12 +254,14 @@ export const messengerResolvers: Resolvers = {
      * Returns the full ChannelDTO (null on failure — reader DB suppressed via catch).
      */
     messengerCreateChannel: async (_root, args, ctx: AppContext) => {
-      const { name, customType, description, coverUrl, operatorIds } = args as {
+      const { name, customType, description, coverUrl, operatorIds, userIds: argUserIds, channelUrl: argChannelUrl } = args as {
         name?: string | null;
         customType?: string | null;
         description?: string | null;
         coverUrl?: string | null;
         operatorIds?: string[] | null;
+        userIds?: string[] | null;
+        channelUrl?: string | null;
       };
       if (!name) return null;
 
@@ -271,6 +273,10 @@ export const messengerResolvers: Resolvers = {
           operators.push(actingUserId);
         }
 
+        // Merge explicit userIds with operators — union of both, deduped
+        const extraUsers: string[] = argUserIds?.filter(Boolean) as string[] ?? [];
+        const allUserIds = [...new Set([...operators, ...extraUsers])];
+
         const validTypes = ['private', 'public', 'open', 'solo', 'DM'] as const;
         const resolvedType = (validTypes.includes(customType as typeof validTypes[number])
           ? customType
@@ -281,8 +287,9 @@ export const messengerResolvers: Resolvers = {
           customType: resolvedType,
           description: description ?? undefined,
           coverUrl: coverUrl ?? undefined,
-          userIds: operators, // seed members from the operator list
+          userIds: allUserIds,
           operatorIds: operators,
+          ...(argChannelUrl ? { channelUrl: argChannelUrl } : {}),
         });
       } catch (err) {
         console.error('messengerCreateChannel error:', err);

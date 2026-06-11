@@ -10,7 +10,7 @@ extend type Query {
 }
 
 extend type Mutation {
-  messengerCreateChannel(name: String, customType: String, description: String, coverUrl: String, operatorIds: [String]): MessengerChannel
+  messengerCreateChannel(name: String, customType: String, description: String, coverUrl: String, operatorIds: [String], userIds: [String!], channelUrl: String): MessengerChannel
   messengerUpdateChannel(channelUrl: String, name: String, description: String): MessengerChannel
   messengerUpdateUser(userId: String, nickname: String, profileUrl: String): MessengerUser
   messengerUpdateUserMetadata(userId: String, metadata: String): Boolean

@@ -1384,7 +1384,45 @@ export default class MessengerController {
             return p;
           },
         }),
-        createChannel: (params) => this.createNewGroup(params, this.userId),
+        createChannel: async (params = {}, callback) => {
+          try {
+            if (params.invitedUserIds || params.isDistinct || params.customType) {
+              const userIds = [...new Set([...(params.invitedUserIds || []), this.userId])];
+              if (params.isDistinct) {
+                const channels = await this.getStudyGroups();
+                const found = channels.find(
+                  (c) =>
+                    c.customType === (params.customType || 'DM') &&
+                    (c.members || []).length === userIds.length &&
+                    userIds.every((id) => (c.members || []).some((m) => m.userId === id))
+                );
+                if (found) {
+                  if (callback) callback(found, null);
+                  return found;
+                }
+              }
+              const esc = (v) => JSON.stringify(v ?? '');
+              const mutation = `mutation {
+                messengerCreateChannel(
+                  name: ${esc(params.name || userIds.join('-'))},
+                  customType: ${esc(params.customType || 'DM')},
+                  operatorIds: [${esc(this.userId)}],
+                  userIds: ${JSON.stringify(userIds)}${params.channelUrl ? `,\n                  channelUrl: ${esc(params.channelUrl)}` : ''}
+                ) { channel_url }
+              }`;
+              const result = await this.gqlRequest(mutation);
+              const created = await this.sb.groupChannel.getChannel(
+                result.messengerCreateChannel.channel_url
+              );
+              if (callback) callback(created, null);
+              return created;
+            }
+            return this.createNewGroup(params, this.userId);
+          } catch (error) {
+            if (callback) callback(null, error);
+            throw error;
+          }
+        },
         getChannel: async (channelUrl, callback) => {
           try {
             // Check cache first
