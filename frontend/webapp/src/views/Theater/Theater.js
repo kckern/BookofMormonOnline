@@ -256,20 +256,19 @@ function TheaterWrapper({ appController }) {
   const [isOutroActive, setIsOutroActive] = useState(false);
   theaterController.setIsOutroActive = setIsOutroActive;
   useEffect(() => {
-    if (isOutroActive) {
-      const playerA = document.getElementById("theater-music-player-a");
-      const playerB = document.getElementById("theater-music-player-b");
-      const player = playerA.volume > 0 ? playerA : playerB;
-      if (player && player.volume > 0) {
-        const fadeOutInterval = setInterval(() => {
-          player.volume -= 0.05;
-          if (player.volume <= 0) {
-            player.pause();
-            clearInterval(fadeOutInterval);
-          }
-        }, 200);
+    if (!isOutroActive) return;
+    const playerA = document.getElementById("theater-music-player-a");
+    const playerB = document.getElementById("theater-music-player-b");
+    const player = playerA?.volume > 0 ? playerA : playerB;
+    if (!player || player.volume <= 0) return;
+    const fadeOutInterval = setInterval(() => {
+      player.volume = Math.max(0, player.volume - 0.05);
+      if (player.volume <= 0) {
+        player.pause();
+        clearInterval(fadeOutInterval);
       }
-    }
+    }, 200);
+    return () => clearInterval(fadeOutInterval);
   }, [isOutroActive]);
 
   //Keyboard
@@ -513,13 +512,12 @@ function TheaterQueueIntro({ theaterController }) {
 
   useEffect(() => {
     if(!cursorIndex) playSound(initSFX);
-    setTimeout(()=>setPart(1),200);
-    setTimeout(()=>setPart(2),6000);
-    setTimeout(()=>setPart(3),12000);
+    const t1 = setTimeout(()=>setPart(1),200);
+    const t2 = setTimeout(()=>setPart(2),6000);
+    const t3 = setTimeout(()=>setPart(3),12000);
     const timer = setInterval(() => {
       setCountdown(previousCountdown => {
         if (previousCountdown === 1) {
-          // TODO: call setSubCursorIndex when countdown reaches 0
           theaterController.setSubCursorIndex(0);
           theaterController.setIsScrollingPanel(true);
           clearInterval(timer);
@@ -528,7 +526,11 @@ function TheaterQueueIntro({ theaterController }) {
         }
       });
     }, 1000);
-    return () => clearInterval(timer); // this will clear Timeout when component unmount like in willComponentUnmount
+    return () => {
+      [t1, t2, t3].forEach(clearTimeout);
+      clearInterval(timer);
+      initSFX.pause();
+    };
   }, []);
 
   const pageTitle = currentItem?.parent_page?.title || null;
@@ -603,16 +605,20 @@ function TheaterSectionIntro({ theaterController }) {
   }
 
   useEffect(() => {
-    setTimeout(() => {
+    const advance = setTimeout(() => {
       theaterController.setSubCursorIndex(0);
     }, secondsToShow * 1000);
 
-    //interval counddown
     const timer = setInterval(() => {
       const now = Date.now();
       const timeLeft = now - startTimestamp;
       setCountdown(parseInt((secondsToShow * 1000 - timeLeft) / 1000));
     }, 200);
+
+    return () => {
+      clearTimeout(advance);
+      clearInterval(timer);
+    };
   }, []);
 
   const narrationString = sectionNarrations.join(" • ");
@@ -635,9 +641,11 @@ function ButtonTimer({timerprogress}){
 
   const [isHidden, setIsHidden] = useState(false);
 
-  useEffect(() => { 
-    if(timerprogress===null) setTimeout(()=>setIsHidden(true),2500);
-  },[timerprogress]);
+  useEffect(() => {
+    if (timerprogress !== null) return;
+    const t = setTimeout(() => setIsHidden(true), 2500);
+    return () => clearTimeout(t);
+  }, [timerprogress]);
 
   return <div className={"timerContainer" + (isHidden ? " hidden" : "")}>
   {timerprogress && <div className="timerBand">
@@ -1066,6 +1074,7 @@ function TheatherMusicPlayer({ theaterController }) {
   const [activeSide, setActiveSide] = useState("a");
   const [trackA, setTrackA] = useState(makeSelection(currentSection));
   const [trackB, setTrackB] = useState(makeSelection(nextSection));
+  const fadeIntervalRef = useRef(null);
 
   // Init Player A on load
   const initPlayerA = () => {
@@ -1122,7 +1131,8 @@ function TheatherMusicPlayer({ theaterController }) {
     const fadeInterval = 50;
     const fadeSteps = fadeDuration*1000/fadeInterval;
     let fadeStep = 0;
-    const fadeOut = setInterval(()=>{
+    if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
+    fadeIntervalRef.current = setInterval(()=>{
       fadeStep++;
       const fadeInVolume = fadeStep/fadeSteps*targetVolume;
       const fadeOutVolume = targetVolume - fadeInVolume;
@@ -1130,12 +1140,15 @@ function TheatherMusicPlayer({ theaterController }) {
       playerToFadeOut.volume = fadeOutVolume;
       if(fadeStep>=fadeSteps){
         playerToFadeOut.pause();
-        clearInterval(fadeOut);
+        clearInterval(fadeIntervalRef.current);
+        fadeIntervalRef.current = null;
       }
     },fadeInterval);
-
-
   }
+
+  useEffect(() => () => {
+    if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
+  }, []);
 
   const volA = document.getElementById(`theater-music-player-a`)?.volume;
   const volB = document.getElementById(`theater-music-player-b`)?.volume;
