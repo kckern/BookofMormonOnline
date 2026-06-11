@@ -25,13 +25,8 @@ import { Alert } from "reactstrap";
 import loading_comments from "src/views/_Common/Study/svg/loading_comment.svg";
 import { MuteButton } from "./MuteButton";
 import { recordDeepLinkEvent } from "src/utils/deepLinkInstrument";
-import {
-  initPage,
-  initPageItem,
-  initPageImage,
-  initPageCommentary,
-  initPageFax,
-} from "./initPipeline";
+import { usePageInit, pageScrollManager, isRefOpen } from "./usePageInit";
+import { createScrollSpy, step } from "src/scroll";
 
 function prepareInitOpen(params) {
   let initOpen = {};
@@ -65,7 +60,11 @@ export default function Page({ appController }) {
 
   useEffect(() => {
     pageController.functions.setPageData(null);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    // Deep links position the viewport themselves; everything else resets
+    // instantly (a smooth scroll here raced the pipeline's scroll — whiplash).
+    const i = prepareInitOpen(match.params);
+    const hasScrollTarget = !!(i.textId || i.goToSection || i.commentaryId || i.imageId || i.faxVersion);
+    if (!hasScrollTarget) window.scrollTo({ top: 0, behavior: "auto" });
     pageController.functions.setLoading(true);
     if (match.params.imageId || match.params.commentaryId)
       getPageDataFromAPIViaNote(match.params);
@@ -109,7 +108,6 @@ export default function Page({ appController }) {
         },
         markAsInitiated: (val) => {
           dispatch({ fn: "markAsInitiated", val: val });
-          onScrollPage(pageController);
         },
         autoAdvance: () => {
           if (!pageController.appController.states.preferences.autoplay)
@@ -207,7 +205,6 @@ export default function Page({ appController }) {
 
   useEffect(() => {
     setReadyToScroll(false);
-    startInit(false);
     dispatch({ fn: "markAsInitiated", val: false });
     pageController.functions.resetAutoClicked();
     pageController.functions.setNotFound(null);
@@ -215,7 +212,6 @@ export default function Page({ appController }) {
     pageController.appController.functions.requestImageActivation(null);
     const newInitOpen = prepareInitOpen(match.params);
     pageController.functions.setInitOpen(newInitOpen);
-    handlePageInit();
   }, [routeKey]);
 
   const studyModeisOn =
@@ -225,7 +221,6 @@ export default function Page({ appController }) {
     .activeGroup?.url;
   const needToLoadComments = userIsLoggedIn && studyModeisOn && hasActiveGroup;
   const [readyToScroll, setReadyToScroll] = useState(false);
-  const [initStarted, startInit] = useState(false);
   const [stageClass, setStageClass] = useState(null);
 
   useEffect(() => {
@@ -236,35 +231,34 @@ export default function Page({ appController }) {
       setReadyToScroll(false);
   }, [pageController.appController.states.studyGroup.activeGroup?.url]);
 
-  //Init Page
-  const handlePageInit = () => {
-    //  console.log("handlePageInit",{initStarted,readyToScroll,d:document.querySelector(".content")})
-    if (initStarted) return false;
-    if (!readyToScroll) return false;
-    if (!document.querySelector(".content")) return false;
-
-    startInit(true);
-    if (pageController.states.initOpen.faxVersion)
-      return initPageFax(pageController);
-    if (pageController.states.initOpen.imageId)
-      return initPageImage(pageController);
-    if (pageController.states.initOpen.commentaryId)
-      return initPageCommentary(pageController);
-    if (pageController.states.pageSlug && pageController.states.initOpen.textId)
-      return initPageItem(pageController);
-    if (
-      pageController.states.initOpen.pageSlug === pageController.pageData?.slug
-    ) {
-      return initPage(pageController, pageController.states.initOpen.lastLeaf);
-    }
-  };
-
-  useEffect(handlePageInit, [
-    readyToScroll,
-    pageController.states.loading,
-    needToLoadComments,
-    document.querySelector(".content"),
-  ]);
+  // Deep-link / section positioning, gated on the study-mode comments load.
+  const gateOpen = !needToLoadComments || readyToScroll;
+  const initIdentityKey = [
+    pageController.states.initOpen.pageSlug || "",
+    pageController.states.initOpen.textId || "",
+    pageController.states.initOpen.goToSection || "",
+    // lastLeaf is exclusively the legacy (no-textId) fallback target. It is
+    // injected later than the rest of initOpen (setPageSlugId, after the API
+    // resolves), so folding it in unconditionally would re-key once it lands.
+    // Only the fallback path consumes it, so only the fallback path keys on it.
+    pageController.states.initOpen.textId ? "" : (pageController.states.initOpen.lastLeaf || ""),
+    pageController.states.initOpen.commentaryId || "",
+    pageController.states.initOpen.imageId || "",
+    pageController.states.initOpen.faxVersion || "",
+  ].join("|");
+  const onTail = pageController.states.initOpen.commentaryId
+    ? () =>
+        pageController.appController.functions.setPopUp({
+          type: "commentary",
+          ids: [pageController.states.initOpen.commentaryId],
+        })
+    : pageController.states.initOpen.imageId
+    ? () =>
+        pageController.appController.functions.requestImageActivation({
+          imageId: pageController.states.initOpen.imageId,
+        })
+    : null;
+  const initPhase = usePageInit(pageController, { gateOpen, identityKey: initIdentityKey, onTail });
 
   //Load Page Comments
   useEffect(() => {

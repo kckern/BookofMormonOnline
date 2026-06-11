@@ -54,7 +54,16 @@ export function buildInitSteps(pageController) {
   for (const slug of openSlugs) {
     steps.push(
       // Parity: TextContent tags opens as auto when the slug is in autoClicked.
-      step.call(() => autoClicked.add(slug)),
+      // We also emit itemOpened here (in DOM-ancestry order, before this slug's
+      // open settles but after every earlier slug's): a call-step is skipped
+      // once the campaign is interrupted/superseded, so this only fires for
+      // rows the campaign actually reaches, and always precedes the callback
+      // (the tail action runs after the final scroll). The deeplink specs
+      // assert this slug sequence and the itemOpened→callback ordering.
+      step.call(() => {
+        autoClicked.add(slug);
+        recordDeepLinkEvent("initPageItem:itemOpened", { slug });
+      }),
       step.openAndAwait(
         () => document.querySelector(`[textid="${slug}"] .reference a`),
         {
@@ -74,6 +83,43 @@ export function buildInitSteps(pageController) {
     )
   );
   return { steps };
+}
+
+// The verse rows (`[textid]`) render a few frames AFTER `loading` flips false
+// and AFTER the deep-link target (textId) resolves — the Page renders its
+// sections in a later commit than the one that wakes this effect. Building the
+// campaign immediately would measure an empty DOM and (wrongly) report
+// verseNotFound. So when a specific target is expected, poll for its element to
+// appear before building. Resolves true once present, false on timeout.
+const EXPECTED_TARGET_TIMEOUT_MS = 4000;
+function expectedTargetSelector({ initOpen, pageSlug }) {
+  if (initOpen.goToSection) return `[id="${pageSlug}/${initOpen.goToSection}"]`;
+  if (initOpen.textId) return `[textid="${pageSlug}/${initOpen.textId}"]`;
+  if (!initOpen.textId && initOpen.lastLeaf && initOpen.lastLeaf !== initOpen.pageSlug)
+    return `[id="${initOpen.pageSlug}/${initOpen.lastLeaf}"]`;
+  return null; // no specific target — nothing to wait for
+}
+function awaitTargetPresent(selector, { token, timeoutMs = EXPECTED_TARGET_TIMEOUT_MS } = {}) {
+  return new Promise((resolve) => {
+    if (!selector || document.querySelector(selector)) return resolve(true);
+    let rafId = null;
+    let timer = null;
+    let done = false;
+    const finish = (v) => {
+      if (done) return;
+      done = true;
+      if (rafId) cancelAnimationFrame(rafId);
+      if (timer) clearTimeout(timer);
+      resolve(v);
+    };
+    const tick = () => {
+      if (token?.aborted) return finish(false);
+      if (document.querySelector(selector)) return finish(true);
+      rafId = requestAnimationFrame(tick);
+    };
+    timer = setTimeout(() => finish(false), timeoutMs);
+    rafId = requestAnimationFrame(tick);
+  });
 }
 
 // phase: idle → waiting (comments gate) → positioning → ready
@@ -105,6 +151,17 @@ export function usePageInit(pageController, { gateOpen, identityKey, onTail }) {
       setPhase("waiting");
       return undefined;
     }
+    // /commentary/<id> and /image/<id> arrive with no textId/pageSlug; those
+    // resolve asynchronously (getPageDataFromAPIViaNote → setPageSlugId) and
+    // re-fire this effect with a richer identityKey. Don't run — and don't
+    // consume the identity or markAsInitiated — until the host target has been
+    // resolved, or the real campaign's identity would be pre-empted by this
+    // placeholder one.
+    const { initOpen } = pageController.states;
+    const targetPending =
+      (initOpen.commentaryId || initOpen.imageId) && !initOpen.textId;
+    if (targetPending) return undefined;
+
     // E-13: the same resolved target re-arriving via a URL rewrite (e.g.
     // /image/N → /art/N) must not re-run the pipeline.
     if (lastRunKey.current === identityKey) return undefined;
@@ -123,28 +180,37 @@ export function usePageInit(pageController, { gateOpen, identityKey, onTail }) {
       setPhase("ready");
     };
 
-    const built = buildInitSteps(pageController);
-    if (built.steps === null) {
-      if (built.reason === "verseNotFound" && pageController.states.initOpen.textId) {
-        pageController.functions.setInitWarning({
-          type: "verseNotFound",
-          slug: `${pageController.states.pageSlug}/${pageController.states.initOpen.textId}`,
-        });
+    const runCampaign = () => {
+      if (disposed) return;
+      const built = buildInitSteps(pageController);
+      if (built.steps === null) {
+        if (built.reason === "verseNotFound" && pageController.states.initOpen.textId) {
+          pageController.functions.setInitWarning({
+            type: "verseNotFound",
+            slug: `${pageController.states.pageSlug}/${pageController.states.initOpen.textId}`,
+          });
+        }
+        finish();
+        return;
       }
-      finish();
-      return undefined;
-    }
-    if (!built.steps.length || userWasReading) {
-      finish();
-      return undefined;
-    }
-    pageScrollManager.run(built.steps).then(({ status }) => {
-      if (!disposed && status === "completed" && onTail) {
-        recordDeepLinkEvent("initPageItem:callback");
-        onTail();
+      if (!built.steps.length || userWasReading) {
+        finish();
+        return;
       }
-      finish();
-    });
+      pageScrollManager.run(built.steps).then(({ status }) => {
+        if (!disposed && status === "completed" && onTail) {
+          recordDeepLinkEvent("initPageItem:callback");
+          onTail();
+        }
+        finish();
+      });
+    };
+
+    // Wait for the expected target row to render before building (it lands a
+    // few frames after this effect wakes). No expected target → run now.
+    const selector = expectedTargetSelector(pageController.states);
+    awaitTargetPresent(selector).then(runCampaign);
+
     return () => { disposed = true; };
   }, [gateOpen, identityKey, pageController.states.loading]);
 
