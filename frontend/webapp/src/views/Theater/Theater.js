@@ -91,9 +91,15 @@ function TheaterWrapper({ appController }) {
 	const [playbackVolume, setPlaybackVolume] = useState(
     +parseFloat(localStorage.getItem("playbackVolume") || 1).toFixed(1)
   );
-	const [playbackMusicVolume,setPlaybackMusicVolume] =useState(
-    +parseFloat(localStorage.getItem("playbackMusicVolume") || 0.1).toFixed(1)
-  );
+	const [playbackMusicVolume,setPlaybackMusicVolume] =useState(() => {
+    // State holds the slider label (0–1, displayed as a percentage). The
+    // actual element volume is label/20 so music sits under the narration.
+    // Legacy installs stored the /20 value; values ≤ 0.05 are migrated back.
+    const stored = parseFloat(localStorage.getItem("playbackMusicVolume"));
+    if (!Number.isFinite(stored) || stored <= 0) return 0.1;
+    const label = stored <= 0.05 ? stored * 20 : stored;
+    return +Math.min(1, label).toFixed(1);
+  });
 	const [isMuted,setIsMuted] = useState((localStorage.getItem("playbackMuted")==='true'?true:false) || false);
   // Never log under a null token: fall back to the device token App.js always
   // mints in localStorage. A null token would record progress under the shared
@@ -208,37 +214,32 @@ function TheaterWrapper({ appController }) {
 		setIsMuted,
   };
 
-  useEffect(async () => {
-    let items = slug ? [{slug}] : null; 
+  useEffect(() => {
+    const loadQueue = async () => {
+      let items = slug ? [{slug}] : null;
 
-    if(slugIsRef) items = [{reference:slug}];
-    const [plan,segment] = slug?.split("/") || [];
-    if(plan==="plan" && segment) items = [{plan:segment}];
-    //items = [{slug:"ammon",blocks:[4,5,6,7,8]}];
-    //items = [{plan:"12345"}];
-    const token = localStorage.getItem("token");
-    let { queue:loadedQueue } = await BoMOnlineAPI(
-      { queue: { token, items } },
-      { useCache: false }
-    );
-    if(!loadedQueue || !loadedQueue?.length || !loadedQueue?.[0]) return setLoadFailed(true);
-    loadedQueue = loadedQueue.map(item => {
-      if(!item?.coms) return item;
-      item.coms = (item?.coms || []).sort((a, b) => {
-        //random
-        return Math.random() - 0.5;
+      if(slugIsRef) items = [{reference:slug}];
+      const [plan,segment] = slug?.split("/") || [];
+      if(plan==="plan" && segment) items = [{plan:segment}];
+      const token = localStorage.getItem("token");
+      let { queue:loadedQueue } = await BoMOnlineAPI(
+        { queue: { token, items } },
+        { useCache: false }
+      );
+      if(!loadedQueue || !loadedQueue?.length || !loadedQueue?.[0]) return setLoadFailed(true);
+      loadedQueue = loadedQueue.map(item => {
+        if(!item?.coms) return item;
+        item.coms = [...(item?.coms || [])].sort(() => Math.random() - 0.5);
+        return item;
       });
-      return item;
-    });
-    setQueue(loadedQueue);
-    setQueueStatus((loadedQueue||[]).map(item => item?.status));
+      setQueue(loadedQueue);
+      setQueueStatus((loadedQueue||[]).map(item => item?.status));
+    };
+    loadQueue();
   }, []);
 
   useEffect(() => {
     //determine cursor
-    const firstIncompleteItem = queue.findIndex(
-      item => item?.status !== "completed"
-    );
     theaterController.goto(0, "auto");
     //TODO: are there cases when this is needed?
   }, [queue]);
@@ -314,8 +315,11 @@ function TheaterWrapper({ appController }) {
 
     //set current item status to prestarted ifnot complete
     if (!["completed", "started"].includes(queueStatus[cursorIndex])) {
-      queueStatus[cursorIndex] = "prestarted";
-      setQueueStatus([...queueStatus]);
+      setQueueStatus(prev => {
+        const next = [...prev];
+        next[cursorIndex] = "prestarted";
+        return next;
+      });
     }
     window.addEventListener("keydown", handleKeyDown);
 
@@ -1071,6 +1075,7 @@ function TheatherMusicPlayer({ theaterController }) {
   // Init Player A on load
   const initPlayerA = () => {
     const player = document.getElementById(`theater-music-player-a`);
+    player.volume = playbackMusicVolume / 20;
     playAudioElement("theater-music-player-a");
     player.removeEventListener("canplay",initPlayerA);
   }
@@ -1142,36 +1147,35 @@ function TheatherMusicPlayer({ theaterController }) {
     if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
   }, []);
 
-  const volA = document.getElementById(`theater-music-player-a`)?.volume;
-  const volB = document.getElementById(`theater-music-player-b`)?.volume;
-  const timeA = document.getElementById(`theater-music-player-a`)?.currentTime;
-  const timeB = document.getElementById(`theater-music-player-b`)?.currentTime;
-
   return (
     <>
     <ReactAudioPlayer
       id="theater-music-player-a"
       src={`${assetUrl}/audio/music/${trackA}`}
-      volume={playbackMusicVolume}
 			muted={isMuted}
       onCanPlay={()=>{
         // If this side became ready while it is the active side and isn't
         // playing yet, start it.
         const player = document.getElementById("theater-music-player-a");
         if (!player || activeSide !== "a") return;
-        if (player.paused) playAudioElement("theater-music-player-a");
+        if (player.paused) {
+          player.volume = playbackMusicVolume / 20;
+          playAudioElement("theater-music-player-a");
+        }
       }}
     />
     <ReactAudioPlayer
       id="theater-music-player-b"
       src={`${assetUrl}/audio/music/${trackB}`}
-      volume={playbackMusicVolume}
 			muted={isMuted}
       preload="none"
       onCanPlay={()=>{
         const player = document.getElementById("theater-music-player-b");
         if (!player || activeSide !== "b") return;
-        if (player.paused) playAudioElement("theater-music-player-b");
+        if (player.paused) {
+          player.volume = playbackMusicVolume / 20;
+          playAudioElement("theater-music-player-b");
+        }
       }}
     />
     </>
@@ -1516,7 +1520,6 @@ function TheaterProgressBar({ theaterController }) {
     cyclePlaybackSpeed
   } = theaterController;
   const seekTo = e => {
-    const barElement = document.querySelector(".theater-progress-bar");
     const percent = e.nativeEvent.offsetX / e.target.offsetWidth;
     document.getElementById("theater-audio-player").currentTime =
       percent * currentDuration;
@@ -1572,7 +1575,9 @@ function PlaybackSettings({setShowPlaybackSettings,theaterController}){
 				setPlaybackMusicVolume(() => {
           const musicLabel = parseFloat(+e.target.value).toFixed(1)
           const musicVolume = parseFloat((musicLabel / 20).toFixed(3)) ;
-          localStorage.setItem("playbackMusicVolume",musicVolume);
+          // Store the label (0–1 slider value), not the /20 actual volume,
+          // so the initializer reads it back at the correct scale on reload.
+          localStorage.setItem("playbackMusicVolume", musicLabel);
           // Music plays at 1/20th of the displayed percentage so it sits
           // under the narration; apply to whichever side is audible.
           if (document.getElementById("theater-music-player-a")) document.getElementById("theater-music-player-a").volume = musicVolume;
@@ -1843,16 +1848,15 @@ function TheaterCommentFeed({ theaterController }) {
   );
   const division = queuedMessages.length > 5 ? queuedMessages.length : 5; // this is for items with low comment count, so its coms dont'get skipped.
   const commentCursor = Math.floor(  (division * (currentProgress * 0.7)) / 100 );
-  useEffect(async () => {
-		if(!isPlaying) return;
-    //wait 1-3 seconds
-    await new Promise(resolve =>
-      setTimeout(resolve, 1000 + Math.random() * 2000)
-    );
-    if (!queuedMessages.length) return;
-    if (!queuedMessages[commentCursor]) return;
-    const onDeckComment = queuedMessages.filter((_,index)=>index <= commentCursor);
-    setComments(prev=>new Set([...prev, ...onDeckComment]));
+  useEffect(() => {
+    if(!isPlaying) return;
+    const t = setTimeout(() => {
+      if (!queuedMessages.length) return;
+      if (!queuedMessages[commentCursor]) return;
+      const onDeckComment = queuedMessages.filter((_,index)=>index <= commentCursor);
+      setComments(prev=>new Set([...prev, ...onDeckComment]));
+    }, 1000 + Math.random() * 2000);
+    return () => clearTimeout(t);
   }, [commentCursor,isPlaying]);
 
   return (
@@ -1910,7 +1914,7 @@ const CommentFeed = ({ comments, theaterController }) => {
   return (
     <div className="theater-comment-feed">
       {comments.map((com, index) => (
-        <Comment key={index} com={com} theaterController={theaterController} />
+        <Comment key={com.id} com={com} theaterController={theaterController} />
       ))}
     </div>
   );
