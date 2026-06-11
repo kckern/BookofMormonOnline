@@ -19,7 +19,7 @@
 
 Run:
 ```bash
-cd /Users/kckern/Documents/GitHub/BookofMormonOnline/.worktrees/profile-image-upload
+cd /path/to/BookofMormonOnline/.worktrees/profile-image-upload
 npm install sharp @aws-sdk/client-s3 @aws-sdk/client-cloudfront
 ```
 
@@ -125,7 +125,7 @@ export function getProfileImageUrl(userHash: string): string {
 
 **Step 2: Verify TypeScript compiles**
 
-Run: `cd /Users/kckern/Documents/GitHub/BookofMormonOnline/.worktrees/profile-image-upload && npx tsc src/library/s3.ts --noEmit --esModuleInterop --skipLibCheck`
+Run: `cd /path/to/BookofMormonOnline/.worktrees/profile-image-upload && npx tsc src/library/s3.ts --noEmit --esModuleInterop --skipLibCheck`
 Expected: No errors
 
 **Step 3: Commit**
@@ -226,7 +226,7 @@ Find the `Mutation:` object in the resolver (around line 470+). Add the followin
 
 **Step 3: Verify TypeScript compiles**
 
-Run: `cd /Users/kckern/Documents/GitHub/BookofMormonOnline/.worktrees/profile-image-upload && npx tsc --noEmit`
+Run: `cd /path/to/BookofMormonOnline/.worktrees/profile-image-upload && npx tsc --noEmit`
 Expected: No errors (or only pre-existing errors)
 
 **Step 4: Commit**
@@ -487,7 +487,7 @@ git commit -m "chore: remove dead sendbird code from editProfile"
 
 Run:
 ```bash
-cd /Users/kckern/Documents/GitHub/BookofMormonOnline/.worktrees/profile-image-upload
+cd /path/to/BookofMormonOnline/.worktrees/profile-image-upload
 npm run dev:backend
 ```
 
@@ -495,7 +495,7 @@ npm run dev:backend
 
 Run:
 ```bash
-cd /Users/kckern/Documents/GitHub/BookofMormonOnline/.worktrees/profile-image-upload/frontend/webapp
+cd /path/to/BookofMormonOnline/.worktrees/profile-image-upload/frontend/webapp
 npm start
 ```
 

@@ -33,8 +33,8 @@ const queryDB = async (sql, params = []) => {
 }
 
 
-const logPath = `/Users/kckern/Documents/GitHub/BookofMormonOnline/log.sql`;
-const resultsPath = `/Users/kckern/Documents/GitHub/BookofMormonOnline/test/results.md`;
+const logPath = `/path/to/BookofMormonOnline/log.sql`;
+const resultsPath = `/path/to/BookofMormonOnline/test/results.md`;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);

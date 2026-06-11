@@ -22,7 +22,7 @@
 
 **Step 1: Create API docs directory structure**
 
-Run: `mkdir -p /Users/kckern/Documents/GitHub/BookofMormonOnline/docs/api`
+Run: `mkdir -p /path/to/BookofMormonOnline/docs/api`
 
 **Step 2: Create API README**
 

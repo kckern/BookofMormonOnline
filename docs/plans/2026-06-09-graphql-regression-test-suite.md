@@ -129,7 +129,7 @@ TEST_USERNAME=regressiontest
 TEST_PASSWORD=<generate: openssl rand -hex 12>
 TEST_SESSION_TOKEN=<generate: openssl rand -hex 16>
 TEST_NAME=Regression Test
-TEST_EMAIL=bomtest+regression@kckern.com
+TEST_EMAIL=bomtest+regression@example.com
 TEST_ZIP=84604
 ```
 
@@ -663,7 +663,7 @@ const TEST_ENV = {
   TEST_PASSWORD: 'pw',
   TEST_SESSION_TOKEN: 'feedfacefeedfacefeedfacefeedface',
   TEST_NAME: 'Regression Test',
-  TEST_EMAIL: 'bomtest+regression@kckern.com',
+  TEST_EMAIL: 'bomtest+regression@example.com',
   TEST_ZIP: '84604',
 };
 

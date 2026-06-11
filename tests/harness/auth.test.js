@@ -5,7 +5,7 @@ const TEST_ENV = {
   TEST_PASSWORD: 'pw',
   TEST_SESSION_TOKEN: 'feedfacefeedfacefeedfacefeedface',
   TEST_NAME: 'Regression Test',
-  TEST_EMAIL: 'bomtest+regression@kckern.com',
+  TEST_EMAIL: 'bomtest+regression@example.com',
   TEST_ZIP: '84604',
 };
 

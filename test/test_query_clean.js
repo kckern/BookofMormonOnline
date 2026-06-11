@@ -4,7 +4,7 @@ const path = require('path');
 const { spawn, exec } = require('child_process');
 const yaml = require('js-yaml');
 
-const sqlLogPath = `/Users/kckern/Documents/GitHub/BookofMormonOnline/log.sql`;
+const sqlLogPath = `/path/to/BookofMormonOnline/log.sql`;
 
 
 

@@ -1,7 +1,7 @@
 // Volatile keys masked under the "scrubbed" tier. Applied ONLY to scrubbed-tier
 // queries, so e.g. stable content `duration` on text blocks (exact tier) is untouched.
 const SCRUB_KEYS = new Set([
-  'access_token', 'token', 'time', 'timestamp', 'datetime', 'date',
+  'access_token', 'token', 'time', 'timestamp', 'datetime', 'date', 'email',
   'lastseen', 'laststudied', 'last_seen_at', 'joined_ts', 'created_at',
   'duration', 'first', 'startdate', 'duedate',
   // session counts grow with every run; cost: page item counts are masked too

@@ -74,7 +74,7 @@ export const TEST_TOKENS = {
 };
 
 export const TEST_CREDENTIALS = {
-  username: 'kckern',
+  username: 'testuser',
   password: 'password1',
 };
 
