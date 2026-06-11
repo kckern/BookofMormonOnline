@@ -97,9 +97,12 @@ export const userauthResolvers: Resolvers = {
           .where('token', '=', token) as Parameters<typeof runWrite>[1],
       );
       if (!result.executed) return false; // sandbox suppressed
-      // Kysely deleteFrom().execute() returns DeleteResult[]; check numAffectedRows
-      const affected = result.rows as unknown as Array<{ numAffectedRows?: bigint }>;
-      return affected.length > 0 && (affected[0]?.numAffectedRows ?? 0n) >= 1n;
+      // Kysely deleteFrom().execute() returns DeleteResult[] whose row count is
+      // numDeletedRows (NOT numAffectedRows — that was always undefined → false,
+      // so signout reported failure even on a successful delete).
+      const affected = result.rows as unknown as Array<{ numDeletedRows?: bigint; numAffectedRows?: bigint }>;
+      const n = affected[0]?.numDeletedRows ?? affected[0]?.numAffectedRows ?? 0n;
+      return affected.length > 0 && n >= 1n;
     },
   },
 

@@ -49,6 +49,9 @@ const config = {
   // Operator = Staff (owner-authorized), member = regression throwaway.
   operatorToken: process.env.STAFF_TOKEN || process.env.MESSENGER_TEST_TOKEN || '',
   memberToken: process.env.MEMBER_TOKEN || dotTestEnv.TEST_SESSION_TOKEN || '',
+  // Regression account creds (for signout→signin round-trip; Staff has no password here).
+  memberUsername: process.env.MEMBER_USERNAME || dotTestEnv.TEST_USERNAME || '',
+  memberPassword: process.env.MEMBER_PASSWORD || dotTestEnv.TEST_PASSWORD || '',
 
   // RW DB creds for the guarded teardown (same as the backend's runtime creds).
   db: {
