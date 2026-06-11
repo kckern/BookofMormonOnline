@@ -98,6 +98,7 @@
     "e2e": "playwright test --config=e2e/playwright.config.js",
     "e2e:all": "playwright test --config=e2e/playwright.config.js",
     "e2e:unconditional": "playwright test --config=e2e/playwright.config.js e2e/deeplink-notfound.spec.js",
+    "e2e:community": "playwright test --config=e2e/community/playwright.config.js",
     "test:messenger": "jest messenger.test.ts --verbose",
     "test:regression": "jest test/regression --verbose",
     "test:all": "jest --verbose",

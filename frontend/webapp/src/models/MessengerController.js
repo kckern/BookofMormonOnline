@@ -47,7 +47,13 @@ export default class MessengerController {
     this.token = token;
     this.appController = appController;
     this.channels = new Map();
-    this._currentUser = null;
+    // Synchronous stub so `sb.currentUser` is never null during the boot race:
+    // connect() populates the real profile via a GraphQL roundtrip, but
+    // getStudyGroups()->setStudyGroups() can resolve first, and
+    // setActiveStudyGroup bails when currentUser is null — leaving any account
+    // WITH a group stuck (activeGroup never set, the whole StudyGroupBar dead).
+    // connect() overwrites this with the enriched user once it lands.
+    this._currentUser = this._normalizeUser({ user_id: this.userId, metadata: {} });
     this.groupCallMap = {}; // Compatibility with SendbirdController
     
     // Determine server URL
@@ -1006,6 +1012,13 @@ export default class MessengerController {
       getCachedMetadata: () => ch.metadata || {},
       getMetaData: async (keys) => ch.metadata || {},
       updateMetaData: async (data, upsert) => {
+        this.fireStudyGroupAction(data.action ? { action: data.action } : data, ch);
+        return data;
+      },
+      // SendBird exposed both create + update; the new-group flow (generateGroupHash)
+      // calls createMetaData. Alias it to updateMetaData so the post-create chain
+      // (set-active → open study hall → refresh list) isn't aborted by a missing fn.
+      createMetaData: async (data) => {
         this.fireStudyGroupAction(data.action ? { action: data.action } : data, ch);
         return data;
       },

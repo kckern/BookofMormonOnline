@@ -337,7 +337,7 @@ export const appFunctions = {
     if (appController.states.user.social?.user_id) {
       appController.sendbird = createChatController(
         appController.states.user.social?.user_id,
-        appController.states.user.social.access_token,
+        appController.states.user.token || appController.states.user.social.access_token,
         appController
       );
 
@@ -359,7 +359,7 @@ export const appFunctions = {
       if (appController.states.user.social?.user_id) {
         appController.sendbird = createChatController(
           appController.states.user.social?.user_id,
-          appController.states.user.social.access_token,
+          appController.states.user.token || appController.states.user.social.access_token,
           appController
         );
 
@@ -690,7 +690,7 @@ export const appFunctions = {
     if (user.social?.user_id)
       appController.sendbird = createChatController(
         user.social?.user_id,
-        user.social?.access_token,
+        user.token || user.social?.access_token,
         appController
       );
 
