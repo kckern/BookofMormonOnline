@@ -25,6 +25,9 @@ test.describe('login + study progress', () => {
   });
 
   test('/user loads the study-progress box for the logged-in user', async ({ authedPage: page }) => {
+    // Navigate to /user fresh (as a real user does) so the session-restore boot
+    // fully populates the profile — the in-place post-login render lags.
+    await page.goto(`${cfg.baseUrl}/user`, { waitUntil: 'domcontentloaded' });
     const box = page.locator('.ProgressBox').first();
     await expect(box).toBeVisible();
 
@@ -38,12 +41,12 @@ test.describe('login + study progress', () => {
     await expect(box).toContainText(/% Started/i);
   });
 
-  test('/user shows the date-started, study-time and study-sessions stat widgets', async ({ authedPage: page }) => {
+  test('/user shows the date-started, study-time and study-sessions stat widgets — and they RESOLVE', async ({ authedPage: page }) => {
+    await page.goto(`${cfg.baseUrl}/user`, { waitUntil: 'domcontentloaded' });
     const stats = page.locator('.quickstats');
     await expect(stats).toBeVisible();
 
-    // All three stat widgets render with their labels (the dashboard surface
-    // loads for the logged-in user).
+    // All three stat widgets render with their labels.
     const labels = stats.locator('.stat_label');
     await expect(labels).toHaveCount(3);
     const text = (await stats.innerText()).toLowerCase();
@@ -51,15 +54,11 @@ test.describe('login + study progress', () => {
     expect(text).toMatch(/time/);
     expect(text).toMatch(/sessions/);
 
-    // Values populate only when the account has a study log. The regression
-    // account has none (studylog returns empty), so the widgets sit on their
-    // loading state — that's a data condition, not a UI fault. Report which it is
-    // rather than failing, so the suite is honest about what loaded.
-    const spinning = await stats.locator('img.loading').count();
-    if (spinning > 0) {
-      console.log(`[study-stats] ${spinning}/3 widgets have no data (regression account has no study log) — structure loaded, values empty.`);
-    } else {
-      console.log(`[study-stats] all three widgets populated with data: "${text.replace(/\n/g, ' / ')}"`);
-    }
+    // HARD assertion: the widgets must RESOLVE, not spin forever. studylog
+    // resolves to the user's summary (or, for a no-log account, first=now /
+    // duration=0 / count=0) — either way no loading spinner should remain.
+    // (A regression test for the missing-studylog-resolver bug, which made these
+    // spin indefinitely.)
+    await expect(stats.locator('img.loading')).toHaveCount(0, { timeout: 20_000 });
   });
 });

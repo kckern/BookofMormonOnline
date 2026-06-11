@@ -2,10 +2,10 @@
 import type { Resolvers } from '../../../codegen/graphql.js';
 import { runWrite } from '../../data/writes.js';
 import {
-  computeUserProgress,
   resolveLogValue,
   scoreRecentBlockLogs,
 } from '../../data/loaders/useractivity.js';
+import { scoreProgressForUser } from '../../data/loaders/userauth.js';
 import { getStudyLog } from '../../data/loaders/studylog.js';
 import { forwardPageview } from '../../media/ping.js';
 
@@ -99,8 +99,9 @@ export const useractivityResolvers: Resolvers = {
       // 5. Score recent block logs (updates credit values for prior items)
       await scoreRecentBlockLogs(ctx.db, queryBy, (builder) => runWrite(ctx, builder));
 
-      // 6. Compute global progress (completed + started percentages)
-      const progress = await computeUserProgress(ctx.db, queryBy, lastcompleted);
+      // 6. Compute global progress via the single shared scorer (consolidated:
+      //    was the now-removed computeUserProgress, which double-implemented this).
+      const progress = await scoreProgressForUser(ctx.db, queryBy, lastcompleted);
 
       return { logged, progress };
     },

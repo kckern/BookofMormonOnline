@@ -17,7 +17,22 @@ export function getDb(): Kysely<DB> {
         user: env.MYSQL_USER,
         password: env.MYSQL_PASSWORD,
         database: env.MYSQL_DB,
-        connectionLimit: 10,
+        connectionLimit: 15,
+        // The DB is REMOTE (public host); idle TCP connections get silently
+        // dropped by NAT/firewall, and mysql2 hands those dead connections back
+        // out — queries on them hang until the OS socket timeout (minutes),
+        // which surfaces as the UI "spinning forever". TCP keepalive detects and
+        // evicts stale connections so the pool replaces them.
+        enableKeepAlive: true,
+        keepAliveInitialDelay: 10_000,
+        // Fail fast on a bad connect instead of hanging the request.
+        connectTimeout: 15_000,
+        // Recycle idle connections so stale ones don't accumulate.
+        maxIdle: 15,
+        idleTimeout: 60_000,
+        // Don't queue unbounded if the DB is unreachable — surface the error.
+        waitForConnections: true,
+        queueLimit: 0,
       }) as unknown as MysqlDialectConfig['pool'],
     });
     // SANDBOX (dev): suppress every query-builder write at the driver, so raw
