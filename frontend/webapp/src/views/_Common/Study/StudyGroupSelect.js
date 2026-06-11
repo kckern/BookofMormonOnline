@@ -402,7 +402,7 @@ function StudyGroupListItem({ group, appController }) {
       let slug =
         group.lastMessage.customType +
         "/" +
-        JSON.parse(group.lastMessage.data).links.text;
+        (JSON.parse(group.lastMessage.data || '{}')?.links?.text ?? '');
       history.push(`/${slug}`);
       parentMessage = group.lastMessage;
     } else {

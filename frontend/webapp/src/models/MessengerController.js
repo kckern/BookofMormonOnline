@@ -386,6 +386,7 @@ export default class MessengerController {
             message
             message_type
             custom_type
+            data
             created_at
             user {
               user_id
@@ -403,6 +404,8 @@ export default class MessengerController {
             role
             state
             is_muted
+            metadata
+            is_online
           }
         }
       }`;
@@ -473,6 +476,7 @@ export default class MessengerController {
           message_type
           message
           custom_type
+          data
           link_type
           link_target
           parent_message_id
@@ -483,7 +487,7 @@ export default class MessengerController {
         }
       }`;
       const result = await this.gqlRequest(query);
-      
+
       return (result?.messengerMessages || [])
         .map(msg => this._normalizeMessage(msg))
         .reverse(); // Sendbird returns newest first, UI expects oldest first
@@ -516,6 +520,7 @@ export default class MessengerController {
           message_type
           message
           custom_type
+          data
           link_type
           link_target
           parent_message_id
@@ -556,6 +561,7 @@ export default class MessengerController {
           message_type
           message
           custom_type
+          data
           parent_message_id
           reactions { reaction_key user_ids }
           created_at
@@ -1322,6 +1328,8 @@ export default class MessengerController {
                   role
                   state
                   is_muted
+                  metadata
+                  is_online
                 }
               }
             }`;
@@ -1363,6 +1371,7 @@ export default class MessengerController {
               message_type
               message
               custom_type
+              data
               parent_message_id
               thread_info { reply_count }
               reactions { reaction_key user_ids }

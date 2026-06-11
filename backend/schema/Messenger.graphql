@@ -39,6 +39,10 @@ type MessengerMember {
   role: String
   state: String
   is_muted: Boolean
+  metadata: JSON
+  is_online: Boolean
+  last_seen_at: Float
+  is_bot: Boolean
 }
 
 type MessengerThreadInfo {
@@ -58,6 +62,7 @@ type MessengerMessage {
   message_type: String
   message: String
   custom_type: String
+  data: String
   link_type: String
   link_target: String
   parent_message_id: String
