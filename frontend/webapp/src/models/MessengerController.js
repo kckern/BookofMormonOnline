@@ -172,6 +172,13 @@ export default class MessengerController {
     this.socket.on('unread_count_changed', () => {
       const event = new CustomEvent('unreadMessageCountChanged');
       window.dispatchEvent(event);
+      // Debounced refresh (~500ms trailing) — a burst of inbound messages
+      // coalesces into a single fetch instead of one per message.
+      clearTimeout(this._unreadRefreshTimer);
+      this._unreadRefreshTimer = setTimeout(() => {
+        this.loadUnreadDMs()
+          .then((unreadCounts) => appController.functions.setUnreadDMs(unreadCounts));
+      }, 500);
     });
   }
 
@@ -205,10 +212,6 @@ export default class MessengerController {
     fireEvent.message = this._normalizeMessage(message);
     fireEvent.channel = this.channels.get(message.channel_url);
     window.dispatchEvent(fireEvent);
-
-    // Update unread DMs
-    this.loadUnreadDMs()
-      .then((unreadCounts) => appController.functions.setUnreadDMs(unreadCounts));
 
     // Refresh channel
     const channel = this.channels.get(message.channel_url);
@@ -353,6 +356,7 @@ export default class MessengerController {
   }
 
   disconnect() {
+    clearTimeout(this._unreadRefreshTimer);
     this.socket.disconnect();
     this._currentUser = null;
   }

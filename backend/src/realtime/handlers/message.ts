@@ -106,6 +106,9 @@ export function register(socket: Socket, _io: Server): void {
         // Broadcast to channel room (including sender — legacy behaviour).
         getBus().emit('message_received', payload.channelUrl, msg);
 
+        // Notify all channel members that unread counts may have changed.
+        getBus().emit('unread_count_changed', payload.channelUrl, { channelUrl: payload.channelUrl });
+
         // Fire-and-forget bot reply (no await — must not block the ack).
         void maybeBotReply(db, payload.channelUrl, msg);
 
