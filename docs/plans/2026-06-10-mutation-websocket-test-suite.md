@@ -168,3 +168,39 @@ Guards: the suite refuses to start unless `SANDBOX=0` **and** `MYSQL_DB==='bom_p
 - **Log keys:** enumerate the `key` values `log` supports + their cascade from `useractivity.ts`
   (+ legacy `BomUser.log`) before asserting direction.
 - **Redis:** confirm `infisical-redis` reachable from the backend, else single-node fallback.
+
+---
+
+## 7. Built + passing (2026-06-10) — 10 suites, 47 tests, 0 residue
+
+| Suite | n | Covers |
+|---|---|---|
+| guards | 5 | teardown refuses real channels every way |
+| channel-roundtrip | 5 | full-field create (name/desc/cover/type/operator) → verify → delete |
+| realtime-pingpong | 4 | two sockets: send/react/delete witnessed live, both ways |
+| realtime-thread | 8 | **home-feed comment-on-a-post propagation**, homethread, edit, add/remove reaction, mark_read, typing, fire_action |
+| membership | 9 | join/request/process/withdraw/invite/accept/decline/role/mute/remove/hash + user_joined |
+| logging-cascade | 4 | log → progress %/last_active + log-row cleanup |
+| profile | 4 | editProfile/messengerUpdateUser/Metadata round-trips + signout→signin |
+| bots | 4 | addBot → trigger → **full bot reply** (STUB_LLM_REPLY) → removeBot |
+| channel-mgmt | 2 | messengerUpdateChannel, DM-type create |
+| misc | 2 | shortlink find-or-create, ping |
+
+**Excluded:** signup, changePassword (per directive), uploadProfileImage (S3/CloudFront side effects).
+
+### Issues found + REMEDIATED
+1. **Numeric message_id** (`messaging/messages.ts`): postMessage generated nanoid string ids, but
+   `HomeFeedItem.id` is `Float` and the frontend route is `:messageId(\d+)` → every freshly-posted
+   message/comment threw `Float cannot represent` on the feed/thread read. Now centisecond numeric ids.
+2. **signout return** (`userauth.ts`): deleted the token but always returned `false` (read
+   `numAffectedRows`; Kysely MySQL delete exposes `numDeletedRows`). Fixed.
+
+### Findings documented (read/onboarding — not mutation bugs)
+- `ChannelDTO` has no `description`, and `assembleHomeGroup` reads description from the `data` JSON
+  while `createChannel` writes the `description` column → group descriptions don't surface on reads.
+- No flow auto-creates a `messenger_users` row, so a first-time messaging user can't open a socket
+  (the suite seeds it). Likely a real onboarding gap.
+
+### Run
+`cd <repo> && ALLOW_PROD_WRITES=1 STAFF_TOKEN=<tok> [STUB_LLM_REPLY=<text> on backend] \`
+`  npx jest --config tests/jest.config.js tests/mutations/`  ·  cleanup: `node tests/mutations/cleanup.js`
