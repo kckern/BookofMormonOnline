@@ -66,6 +66,8 @@ const pickOneRamdomly = (arr) => {
 
 // Single avatar generator — canonical implementation lives in
 // components/UserAvatar.js (mirrored by backend/src/messaging/avatarAssets.ts).
+// Function declaration (not a const alias) on purpose: UserAvatar.js imports
+// md5hash from this module, so a const re-export would be cycle/TDZ-sensitive.
 export function genUserAvatar(user_id) {
   return generateAvatarUrl(user_id);
 }
