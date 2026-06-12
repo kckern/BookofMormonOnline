@@ -18,7 +18,7 @@ function toLangCode(lang: string): LanguageCode {
 
 // ─── Commentary.preview ───────────────────────────────────────────────────────
 
-function buildPreview(text: string, isNote: number): string | null {
+export function buildPreview(text: string, isNote: number): string | null {
   if ([-1, 1].includes(isNote)) {
     return text.replace(/(<([^>]+)>)/gi, '');
   }
@@ -34,8 +34,15 @@ function buildPreview(text: string, isNote: number): string | null {
   // queue runs this over every commentary (~617 per request), so it alone cost
   // ~1.9s. A lookbehind on sentence-ending punctuation is ~240x faster and gives
   // an equivalent 50-word preview after the citation-sentence filtering.
+  //
+  // The boundary must not fire at abbreviation periods ("Jeffrey R.",
+  // "Oct. 1999", "pp. 173"), or citation sentences fragment into pieces that
+  // individually slip past the junk filters below (dangling "Elder Jeffrey R.",
+  // leaked "1999, 6; or Ensign, Nov."). So: never split right after a
+  // single-letter initial, and only split where an uppercase letter
+  // (optionally behind an opening quote) starts the next sentence.
   const sentences = stripped
-    .split(/(?<=[.!?])\s+/)
+    .split(/(?<=[.!?]["”’']?)(?<!\b[A-Z]\.)\s+(?=["“‘']?[A-Z])/)
     .filter((x) => {
       if (/[()]/.test(x)) return false;
       if (/[\[\]]/.test(x)) return false;
