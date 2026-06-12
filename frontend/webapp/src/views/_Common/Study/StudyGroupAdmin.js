@@ -60,17 +60,22 @@ export default function StudyGroupAdmin({ appController }) {
   const saveProfileInfo = async (e) => {
     document.getElementById("group_name").disabled = true;
     document.getElementById("group_description").disabled = true;
+    document.getElementById("group_members_can_invite").disabled = true;
     let button = e.target;
     button.innerText = label("saving");
     button.disabled = true;
     let group_name = document.getElementById("group_name").value;
     let group_description = document.getElementById("group_description").value;
+    let members_can_invite = document.getElementById(
+      "group_members_can_invite",
+    ).checked;
 
     try {
       const groupChannel = await appController.sendbird.setGroupNameDescription(
         group,
         group_name,
         group_description,
+        members_can_invite,
       );
 
       const updateParams = {};
@@ -86,6 +91,7 @@ export default function StudyGroupAdmin({ appController }) {
 
     document.getElementById("group_name").disabled = false;
     document.getElementById("group_description").disabled = false;
+    document.getElementById("group_members_can_invite").disabled = false;
     button.disabled = false;
     button.innerText = label("saved");
     //setTimeout(()=>appController.functions.hotUpdateActiveCover(freshGroup.coverUrl),1000);
@@ -199,6 +205,18 @@ export default function StudyGroupAdmin({ appController }) {
                 type="text"
               />
             </InputGroup>
+            <label
+              htmlFor="group_members_can_invite"
+              style={{ display: "flex", alignItems: "center", gap: "0.5em", margin: "0.5em 0", cursor: "pointer" }}
+            >
+              <Input
+                id="group_members_can_invite"
+                type="checkbox"
+                style={{ position: "static", margin: 0 }}
+                defaultChecked={group.metadata?.membersCanInvite === true}
+              />
+              {label("members_can_invite_others")}
+            </label>
             <div style={{ textAlign: "right" }}>
               <Button onClick={saveProfileInfo}>{label("save")}</Button>
             </div>

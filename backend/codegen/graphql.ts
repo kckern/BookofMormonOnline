@@ -548,6 +548,7 @@ export type MutationMessengerSetMuteArgs = {
 export type MutationMessengerUpdateChannelArgs = {
   channelUrl?: InputMaybe<Scalars['String']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
+  membersCanInvite?: InputMaybe<Scalars['Boolean']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
 };
 

@@ -24,8 +24,8 @@ export type JsonPrimitive = boolean | number | string | null;
 export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
 
 export interface BomBot {
+  bot_class: Generated<"community" | "study">;
   bot_id: string;
-  bot_class: Generated<'study' | 'community'>;
   created_at: Generated<Date>;
   display_name: string;
   enabled: Generated<number>;
@@ -848,7 +848,7 @@ export interface MessengerMembers {
   is_muted: Generated<number | null>;
   last_read_at: Date | null;
   role: Generated<"member" | "operator">;
-  state: Generated<"invited" | "joined" | "requested">;
+  state: Generated<"banned" | "invited" | "joined" | "requested">;
   updated_at: Generated<Date | null>;
   user_id: string;
 }

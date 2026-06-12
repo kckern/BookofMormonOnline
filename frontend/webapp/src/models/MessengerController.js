@@ -967,18 +967,32 @@ export default class MessengerController {
     return this.sb.groupChannel.getChannel(channelUrl); // re-fetches and re-caches
   }
 
-  async setGroupNameDescription(channel, newName, newDesc) {
+  // membersCanInvite (optional boolean): when provided, merges the
+  // membersCanInvite flag into the channel metadata (spec §1 — lets joined
+  // members invite others). Omitted = unchanged.
+  async setGroupNameDescription(channel, newName, newDesc, membersCanInvite) {
     const channelUrl = channel.channel_url || channel.url;
+    // Only send the fields the caller supplied — an undefined name must not
+    // overwrite the channel name with the string "undefined".
+    const nameArg = typeof newName === 'string' ? `name: ${JSON.stringify(newName)}` : '';
+    const descArg = newName !== undefined || newDesc !== undefined
+      ? `description: ${JSON.stringify(newDesc || '')}`
+      : '';
+    const inviteArg = typeof membersCanInvite === 'boolean'
+      ? `membersCanInvite: ${membersCanInvite}`
+      : '';
     try {
       const mutation = `mutation {
         messengerUpdateChannel(
           channelUrl: "${channelUrl}"
-          name: "${newName}"
-          description: "${newDesc || ''}"
+          ${nameArg}
+          ${descArg}
+          ${inviteArg}
         ) {
           channel_url
           name
           description
+          metadata
         }
       }`;
       await this.gqlRequest(mutation);
@@ -1086,6 +1100,8 @@ export default class MessengerController {
       custom_type: ch.custom_type || '',
       data: JSON.stringify({ description: ch.description || '' }),
       description: ch.description || '',
+      // Channel metadata JSON (e.g. membersCanInvite) — surfaced for admin UI reads.
+      metadata: ch.metadata || {},
       // members, myRole, myMemberState, joinedMemberCount from shapeChannelFields
       ...channelShapedFields,
       memberCount: ch.member_count || 0,
@@ -1233,9 +1249,9 @@ export default class MessengerController {
           // path exists. Cover image changes are silently ignored for now.
           console.warn('Messenger: cover image upload not yet supported; coverImage param ignored');
         }
-        if (params.name !== undefined || params.data !== undefined) {
+        if (params.name !== undefined || params.data !== undefined || params.membersCanInvite !== undefined) {
           const desc = params.data ? JSON.parse(params.data || '{}').description : undefined;
-          return this.setGroupNameDescription(ch, params.name, desc);
+          return this.setGroupNameDescription(ch, params.name, desc, params.membersCanInvite);
         }
         // No update needed — return the channel itself (already fresh from
         // setGroupNameDescription's refetchChannel call).

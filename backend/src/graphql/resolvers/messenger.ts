@@ -8,8 +8,8 @@ import type { Resolvers } from '../../../codegen/graphql.js';
 import type { AppContext } from '../context.js';
 import { md5 } from '../../auth/identity.js';
 import { getUser, getUsers, updateUserNickname, updateUserProfileUrl, updateUserMetadata } from '../../messaging/users.js';
-import { getChannel, getMyChannels, getMyDMs, createChannel } from '../../messaging/channels.js';
-import { getChannelMembers, addUserToChannel, removeUserFromChannel, setMemberMuted } from '../../messaging/members.js';
+import { getChannel, getMyChannels, getMyDMs, createChannel, updateChannelMetadataKey } from '../../messaging/channels.js';
+import { getChannelMembers, addUserToChannel, removeUserFromChannel, setMemberMuted, canUserInvite } from '../../messaging/members.js';
 import { getMessages, getMessage, getThread } from '../../messaging/messages.js';
 import { getPageComments } from '../../messaging/pagecomments.js';
 import { getBus } from '../../realtime/RealtimeBus.js';
@@ -328,15 +328,18 @@ export const messengerResolvers: Resolvers = {
     },
 
     /**
-     * messengerUpdateChannel — update name and/or description of an existing channel.
-     * Uses inline Kysely (no dedicated service export for partial updates).
+     * messengerUpdateChannel — update name, description, and/or the
+     * membersCanInvite metadata flag of an existing channel.
+     * Uses inline Kysely (no dedicated service export for partial updates);
+     * membersCanInvite merges into the metadata JSON via updateChannelMetadataKey.
      * Returns the updated ChannelDTO (null on failure).
      */
     messengerUpdateChannel: async (_root, args, ctx: AppContext) => {
-      const { channelUrl, name, description } = args as {
+      const { channelUrl, name, description, membersCanInvite } = args as {
         channelUrl?: string | null;
         name?: string | null;
         description?: string | null;
+        membersCanInvite?: boolean | null;
       };
       if (!channelUrl) return null;
       // Operator-only: don't let any authenticated user rename a channel.
@@ -354,6 +357,10 @@ export const messengerResolvers: Resolvers = {
             .set(updates as { name?: string; description?: string })
             .where('channel_url', '=', channelUrl)
             .execute();
+        }
+
+        if (membersCanInvite != null) {
+          await updateChannelMetadataKey(ctx.db, channelUrl, 'membersCanInvite', !!membersCanInvite);
         }
 
         return await getChannel(ctx.db, channelUrl);
@@ -517,6 +524,8 @@ export const messengerResolvers: Resolvers = {
 
     /**
      * messengerInviteMembers — insert membership rows with state='invited' for each userId.
+     * Authorization (spec §1): operators may always invite; joined members only when
+     * channel metadata membersCanInvite === true; everyone else is rejected.
      * addUserToChannel() always sets state='joined', so we insert inline with state='invited'.
      * Duplicate-key (already a member) is silently skipped per invitation semantics.
      * Emits membership_changed once per invited user.
@@ -528,6 +537,10 @@ export const messengerResolvers: Resolvers = {
         userIds?: string[] | null;
       };
       if (!channelUrl || !userIds?.length) return false;
+
+      const actingUserId = await resolveActingUserId(ctx);
+      if (!actingUserId) return false;
+      if (!(await canUserInvite(ctx.db, channelUrl, actingUserId))) return false;
 
       let anySuccess = false;
       for (const userId of userIds) {

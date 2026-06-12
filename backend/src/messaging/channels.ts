@@ -365,3 +365,25 @@ export async function updateChannelMetadata(
 
   return Number(result.numUpdatedRows) > 0;
 }
+
+/**
+ * Merge a single key into a channel's metadata JSON (read-modify-write;
+ * preserves existing keys). Returns false when the channel does not exist.
+ */
+export async function updateChannelMetadataKey(
+  db: Kysely<DB>,
+  channelUrl: string,
+  key: string,
+  value: unknown,
+): Promise<boolean> {
+  const row = await db
+    .selectFrom('messenger_channels')
+    .select('metadata')
+    .where('channel_url', '=', channelUrl)
+    .executeTakeFirst();
+
+  if (!row) return false;
+  const metadata = parseMetadata(row.metadata) ?? {};
+  metadata[key] = value;
+  return updateChannelMetadata(db, channelUrl, metadata);
+}

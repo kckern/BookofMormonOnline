@@ -17,7 +17,7 @@ export interface UserDTO {
 
 export interface MemberDTO extends UserDTO {
   role: 'operator' | 'member';
-  state: 'joined' | 'invited' | 'requested';
+  state: 'joined' | 'invited' | 'requested' | 'banned';
   is_muted: boolean;
 }
 

@@ -21,11 +21,32 @@ type RawMember = {
   channel_url: string;
   user_id: string;
   role: 'operator' | 'member';
-  state: 'joined' | 'invited' | 'requested';
+  state: 'joined' | 'invited' | 'requested' | 'banned';
   is_muted: number | null;
   last_read_at: Date | null;
   created_at: Date | null;
 };
+
+/**
+ * Parse the messenger_channels.metadata JSON column. mysql2 may deliver it
+ * pre-parsed (object) or as a string — mirrors parseMetadata in channels.ts
+ * (kept local to avoid a members ⇄ channels import cycle).
+ */
+function parseChannelMetadata(raw: unknown): Record<string, unknown> | null {
+  if (raw === null || raw === undefined) return null;
+  if (typeof raw === 'object') return raw as Record<string, unknown>;
+  if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw) as unknown;
+      return parsed && typeof parsed === 'object'
+        ? (parsed as Record<string, unknown>)
+        : null;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
@@ -122,6 +143,41 @@ export async function getChannelMembersBulk(
     result.set(row.channel_url, arr);
   }
   return result;
+}
+
+/**
+ * canUserInvite — invite-authorization gate (spec §1, social hardening):
+ *   - operators may always invite;
+ *   - joined members may invite only when channel metadata
+ *     `membersCanInvite === true`;
+ *   - everyone else (non-members, invited/requested/banned rows) may not.
+ */
+export async function canUserInvite(
+  db: Kysely<DB>,
+  channelUrl: string,
+  userId: string,
+): Promise<boolean> {
+  if (!channelUrl || !userId) return false;
+
+  const member = await db
+    .selectFrom('messenger_members')
+    .select(['role', 'state'])
+    .where('channel_url', '=', channelUrl)
+    .where('user_id', '=', userId)
+    .executeTakeFirst();
+
+  if (!member) return false;
+  if (member.role === 'operator') return true;
+  if (member.state !== 'joined') return false;
+
+  const channel = await db
+    .selectFrom('messenger_channels')
+    .select('metadata')
+    .where('channel_url', '=', channelUrl)
+    .executeTakeFirst();
+
+  const metadata = parseChannelMetadata(channel?.metadata);
+  return metadata?.['membersCanInvite'] === true;
 }
 
 /** Set/unset a member's muted flag. Returns true if a row was updated. */
