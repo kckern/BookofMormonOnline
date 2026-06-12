@@ -13,6 +13,8 @@ import { md5 } from '../../auth/identity.js';
 import { runWrite } from '../../data/writes.js';
 import { getUserByToken } from '../../data/loaders/userprofile.js';
 import { uploadProfileImage as uploadProfileImageToS3 } from '../../media/s3.js';
+import { primeAvatarAsset } from '../../messaging/avatarAssets.js';
+import { PROFILE_IMAGE_BASE } from '../../messaging/users.js';
 
 export const userprofileResolvers: Resolvers = {
   Mutation: {
@@ -146,6 +148,10 @@ export const userprofileResolvers: Resolvers = {
       // DB write is needed — overwriting the key updates the image everywhere.
       try {
         await uploadProfileImageToS3(imageData, userHash);
+        // The existence cache may hold a negative entry from before the
+        // upload — mark the conventional URL as live so the avatar shows
+        // immediately instead of after the negative TTL.
+        primeAvatarAsset(`${PROFILE_IMAGE_BASE}/profiles/${userHash}.jpg`);
         return true;
       } catch (err) {
         throw new GraphQLError(err instanceof Error ? err.message : 'Profile image upload failed', {

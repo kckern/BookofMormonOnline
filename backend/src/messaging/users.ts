@@ -14,6 +14,7 @@
  */
 
 import { createHash } from 'node:crypto';
+import { resolveDerivedAvatars } from './avatarAssets.js';
 import type { Kysely } from 'kysely';
 import type { DB } from '../../codegen/db.js';
 import type { UserDTO } from './dto.js';
@@ -43,15 +44,42 @@ type RawUser = {
 // derive from md5(bom_user_id) — bom_user_id IS the username. Humans'
 // messenger_users.profile_url is NULL, so derive it; the frontend UserAvatar
 // falls back to a generated avatar on 404.
-const PROFILE_IMAGE_BASE = (
+export const PROFILE_IMAGE_BASE = (
   process.env['PROFILE_IMAGE_BASE_URL'] || 'https://assets.bookofmormon.online'
 ).replace(/\/+$/, '');
 
-function deriveProfileUrl(row: Pick<RawUser, 'user_id' | 'bom_user_id'>): string {
-  const key = row.bom_user_id
+function deriveProfileKey(row: Pick<RawUser, 'user_id' | 'bom_user_id'>): string {
+  return row.bom_user_id
     ? createHash('md5').update(row.bom_user_id).digest('hex')
     : row.user_id;
-  return `${PROFILE_IMAGE_BASE}/profiles/${key}.jpg`;
+}
+
+function deriveProfileUrl(row: Pick<RawUser, 'user_id' | 'bom_user_id'>): string {
+  return `${PROFILE_IMAGE_BASE}/profiles/${deriveProfileKey(row)}.jpg`;
+}
+
+/**
+ * Derived URLs are a convention — the asset may not exist (many migrated
+ * users never had an image). Swap unverified derived URLs for the dicebear
+ * fallback so the API never emits a 404 image URL. Stored profile_url values
+ * are explicit (upload/seed) and pass through untouched.
+ */
+async function verifyDerivedAvatars(rows: RawUser[], dtos: UserDTO[]): Promise<void> {
+  const derived: Array<{ url: string; seedKey: string }> = [];
+  rows.forEach((row, i) => {
+    const dto = dtos[i];
+    if (!row.profile_url && dto?.profile_url) {
+      derived.push({ url: dto.profile_url, seedKey: deriveProfileKey(row) });
+    }
+  });
+  if (derived.length === 0) return;
+  const resolved = await resolveDerivedAvatars(derived);
+  rows.forEach((row, i) => {
+    const dto = dtos[i];
+    if (!row.profile_url && dto?.profile_url) {
+      dto.profile_url = resolved.get(dto.profile_url) ?? dto.profile_url;
+    }
+  });
 }
 
 function parseMetadata(raw: unknown): Record<string, unknown> | null {
@@ -110,7 +138,9 @@ export async function getUser(
 
   if (!row) return null;
   const online = await isOnline(userId);
-  return toUserDTO(row as RawUser, online);
+  const dto = toUserDTO(row as RawUser, online);
+  await verifyDerivedAvatars([row as RawUser], [dto]);
+  return dto;
 }
 
 /** Get multiple users by IDs. Returns an array (empty if userIds is empty). */
@@ -141,7 +171,9 @@ export async function getUsers(
   ]);
 
   const onlineSet = new Set(onlineIds);
-  return rows.map(r => toUserDTO(r as RawUser, onlineSet.has(r.user_id)));
+  const dtos = rows.map(r => toUserDTO(r as RawUser, onlineSet.has(r.user_id)));
+  await verifyDerivedAvatars(rows as RawUser[], dtos);
+  return dtos;
 }
 
 /** Insert or update a user row. Returns the resulting UserDTO. */
