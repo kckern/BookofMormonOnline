@@ -701,15 +701,19 @@ export const communityResolvers: Resolvers = {
     },
 
     /**
-     * botlist — return all bot users as [Bot].
+     * botlist — return the pluggable bot users as [Bot].
      * Bot shape: { id, name, description, picture, enabled }
+     *
+     * The messenger_users seed flags dozens of non-selectable rows is_bot=1
+     * (legacy virtual users, 🟢-staging personas); a bot is offered in the
+     * picker iff it carries a `welcome` metadata payload.
      */
     botlist: async (_root, _args, ctx: AppContext) => {
       try {
         const bots = await listBotUsers(ctx.db, ctx.lang);
         return asGql(
           bots
-            .filter((b) => !!b.user_id)
+            .filter((b) => !!b.user_id && !!((b.metadata ?? {}) as Record<string, unknown>)['welcome'])
             .map((b) => {
               const meta = (b.metadata ?? {}) as Record<string, unknown>;
               return {
@@ -717,7 +721,7 @@ export const communityResolvers: Resolvers = {
                 name: b.nickname || 'Bot',
                 description: String(meta['description'] ?? 'A helpful bot'),
                 picture: b.profile_url || 'https://i.imgur.com/IwVZGhY.png',
-                enabled: !!(meta['welcome']),
+                enabled: true,
               };
             }),
         );

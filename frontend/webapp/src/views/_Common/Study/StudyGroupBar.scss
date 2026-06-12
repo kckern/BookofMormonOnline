@@ -981,3 +981,14 @@ h6.botHeader.dropdown-header
 {
   opacity: 0.8;
 }
+
+// Guardrail: the bot picker scrolls instead of outgrowing the viewport
+// (a long botlist once produced a ~4,700px menu that Popper flipped
+// off-screen — docs/bugs/2026-06-11-bot-plugin-dropdown-blowup.md).
+// Scoped to the bot menu: overflow would clip the caret pseudo-elements
+// the other .userStatus menus position outside their box.
+.userStatus .botPluginDropdown .dropdown-menu
+{
+  max-height: 70vh;
+  overflow-y: auto;
+}

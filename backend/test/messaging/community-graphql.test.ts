@@ -115,6 +115,19 @@ describe('botlist', () => {
       expect(typeof b['picture']).toBe('string'); // resolver guarantees a fallback avatar
     }
   });
+
+  it('returns only pluggable bots — welcome-bearing, never 🟢-staging rows', async () => {
+    // botlist feeds the "plug in a bot" picker. The messenger_users seed carries
+    // dozens of is_bot rows that are NOT pluggable (legacy virtual users, staging
+    // personas) — sending them blows the dropdown up to ~4,700px (see
+    // docs/bugs/2026-06-11-bot-plugin-dropdown-blowup.md). Only bots with a
+    // `welcome` metadata payload are real, selectable study bots.
+    const data = await exec(`query { botlist { id name enabled } }`);
+    const bots = data['botlist'] as Array<Record<string, unknown>>;
+    expect(bots.length).toBeGreaterThan(0);
+    expect(bots.every((b) => b['enabled'] === true)).toBe(true);
+    expect(bots.some((b) => /🟢/u.test(String(b['name'])))).toBe(false);
+  });
 });
 
 describe('homegroups (featured, no token)', () => {

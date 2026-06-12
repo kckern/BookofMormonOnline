@@ -85,14 +85,35 @@ and nearly all of it lands above the viewport. Also confirmed the legacy
 `avatars.dicebear.com` picture URLs in the list now return **HTTP 410 Gone**.
 `addBot` was deliberately NOT exercised (would mutate a real dev study group).
 
-## Suggested remediation (not applied)
+## Fix (2026-06-11, same day)
 
-1. **Data:** clean `messenger_users.is_bot` so only genuine bots carry the flag
-   (migration/SQL belongs in the private workspace repo).
-2. **Backend:** wire `Query.botlist` to `messenger.listBotUsers()` (or point the
-   frontend at `messengerBots`), and re-implement `addBot`/`removeBot` against
-   the green-field messenger instead of the dead shim. Filter to
-   `enabled`/welcome-bearing bots server-side.
-3. **Frontend:** drop the 🟢 hack, show only `enabled` bots, fix the sort
-   comparator, give `.userStatus .dropdown-menu` a `max-height` +
-   `overflow-y: auto` as a guardrail, track `addingBot` per bot id.
+Note: items 2–3 of the original remediation were already solved by the
+green-field backend (`backend/`) — its `botlist`/`addBot`/`removeBot` are real
+implementations. The fix applied targets what remained:
+
+1. **Backend (`backend/src/graphql/resolvers/community.ts`):** `botlist` now
+   returns only *pluggable* bots — rows carrying a `welcome` metadata payload.
+   The 🟢-staging personas and legacy virtual users are excluded server-side.
+   Test-first: `backend/test/messaging/community-graphql.test.ts` ("returns
+   only pluggable bots") failed against the unfiltered resolver, passes after.
+2. **Frontend (`StudyGroupBar.js`):** removed the `/🟢/` name hack and the
+   invalid sort comparator (both obsolete with server-side filtering);
+   `addingBot` is now per-bot (`addingBotId`) so only the clicked row shows
+   the "plugging in…" label and double-adds are blocked.
+3. **CSS (`StudyGroupBar.scss`):** `.botPluginDropdown .dropdown-menu` gets
+   `max-height: 70vh; overflow-y: auto` as a guardrail. Scoped to the bot menu
+   because the theme positions dropdown carets outside the box (`top: -12px`)
+   and overflow on the shared class would clip them on every user-circle menu.
+
+**Verified (Playwright, local green-field stack):** menu opens `bottom-start`,
+6 items / 6 enabled (KasulatanBot, SchriftStudierBot, Écritudiant, 스터디버디,
+StudyBuddy, BotHọcKinhThánh), 458px tall, fully on screen. Full backend suite:
+169 passed.
+
+## Remaining (data layer, private workspace scope)
+
+`messenger_users.is_bot` still flags ~74 non-bot rows. The resolver filter
+makes the UI correct regardless, but the flag should be cleaned so other
+`is_bot` consumers (`botResponder`, compat surface) don't trip on junk rows.
+Deciding which rows are genuinely bots (e.g. the 🟢 historical personas)
+needs domain review — SQL belongs in BoMOnlineWorkspace.

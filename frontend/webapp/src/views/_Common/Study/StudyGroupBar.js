@@ -417,7 +417,7 @@ function BotPlugin({ appController }) {
   const [isDroppedDown, setDroppedDown] = useState(false);
   const userId = "bot";
   const channel = appController.states.studyGroup.activeGroup?.url;
-  const [addingBot, setAddingBot] = useState(false);
+  const [addingBotId, setAddingBotId] = useState(null);
   const [bots, setBots] = useState([]);
 
   const [buttonPush] = useState(() => {
@@ -435,12 +435,12 @@ function BotPlugin({ appController }) {
   const addBot = async (bot) => {
     const { id, name, picture } = bot;
     let token = appController.states.user.token;
-    setAddingBot(true);
+    setAddingBotId(id);
     //play wentOffline
     if (buttonPush) playSound(buttonPush);
     await BoMOnlineAPI({ addBot: { token, channel, bot: id } });
     if (cameOnline) playSound(cameOnline);
-    setAddingBot(false);
+    setAddingBotId(null);
     toaster(appController, picture, "green", label("bot_added", [name]));
     const activeGroup = appController.states.studyGroup.activeGroup;
     const freshGroup = await activeGroup.refresh();
@@ -450,9 +450,7 @@ function BotPlugin({ appController }) {
   useEffect(() => {
     const getBots = async () => {
       let r = await BoMOnlineAPI({ botlist: null }, { useCache: false });
-      let botlist = r?.botlist || [];
-      botlist = botlist.sort((a, b) => (a.enabled ? -1 : 1));
-      setBots(botlist);
+      setBots(r?.botlist || []);
     };
     getBots();
   }, [appController.states.studyGroup.activeGroup?.url]);
@@ -490,37 +488,34 @@ function BotPlugin({ appController }) {
           </DropdownItem>
           {bots.map((bot, index) => {
             if (!bot?.id) return null;
-            //if has green circle emoji
-            if(/🟢/.test(bot?.name)) return null;
-            else
-              return (
-                <React.Fragment key={`bot-${index}`}>
-                  <DropdownItem divider />
-                  <DropdownItem
-                    className={`botItem ${
-                      bot?.enabled ? "enabled" : "disabled"
-                    }`}
-                    onClick={() => {
-                      if (bot?.enabled) addBot(bot);
-                    }}
-                  >
-                    <div className={`botInfo`}>
-                      <img src={bot?.picture} />
-                      <div className="botInfoText">
-                        <h6 className="botName">
-                          {bot?.name}
-                          <div className="botButton" disabled={addingBot}>
-                            {addingBot
-                              ? label("bot_plugging", [bot?.name])
-                              : label("bot_select")}
-                          </div>
-                        </h6>
-                        <div className="botDescription">{bot?.description}</div>
-                      </div>
+            return (
+              <React.Fragment key={`bot-${index}`}>
+                <DropdownItem divider />
+                <DropdownItem
+                  className={`botItem ${
+                    bot?.enabled ? "enabled" : "disabled"
+                  }`}
+                  onClick={() => {
+                    if (bot?.enabled && !addingBotId) addBot(bot);
+                  }}
+                >
+                  <div className={`botInfo`}>
+                    <img src={bot?.picture} />
+                    <div className="botInfoText">
+                      <h6 className="botName">
+                        {bot?.name}
+                        <div className="botButton" disabled={!!addingBotId}>
+                          {addingBotId === bot?.id
+                            ? label("bot_plugging", [bot?.name])
+                            : label("bot_select")}
+                        </div>
+                      </h6>
+                      <div className="botDescription">{bot?.description}</div>
                     </div>
-                  </DropdownItem>
-                </React.Fragment>
-              );
+                  </div>
+                </DropdownItem>
+              </React.Fragment>
+            );
           }).filter((x) => x)}
         </DropdownMenu>
       </Dropdown>
