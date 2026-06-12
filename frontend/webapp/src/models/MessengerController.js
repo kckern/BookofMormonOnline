@@ -553,6 +553,54 @@ export default class MessengerController {
     }
   }
 
+  // One-round-trip page comments (spec P1): page-scoped messages (SQL
+  // custom_type filter) + per-verse com/img counts resolved server-side.
+  // Returns { messages: normalized[], counts: object } — counts may be {}
+  // (the legacy response filter strips empty objects to absent).
+  async loadPageComments(group, pageSlug) {
+    const channelUrl = group.channel_url || group.url;
+    try {
+      const query = `query {
+        pagecomments(channelUrl: "${channelUrl}", pageSlug: ${JSON.stringify(pageSlug)}) {
+          counts
+          messages {
+            message_id
+            channel_url
+            user_id
+            user {
+              user_id
+              nickname
+              profile_url
+              metadata
+              is_bot
+              is_online
+            }
+            message_type
+            message
+            custom_type
+            data
+            link_type
+            link_target
+            parent_message_id
+            thread_info { reply_count }
+            reactions { reaction_key user_ids }
+            created_at
+            updated_at
+          }
+        }
+      }`;
+      const result = await this.gqlRequest(query);
+      const pc = result?.pagecomments || {};
+      return {
+        messages: (pc.messages || []).map((msg) => this._normalizeMessage(msg)),
+        counts: pc.counts || {},
+      };
+    } catch (error) {
+      console.error('Messenger: loadPageComments error', error);
+      return { messages: [], counts: {} };
+    }
+  }
+
   async loadPreviousMessages({ group, id, prevResultSize }) {
     if (!id) return [];
     

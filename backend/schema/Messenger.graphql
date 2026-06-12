@@ -97,5 +97,6 @@ type MessengerUnreadDM {
 
 type MessengerPageComments {
   messages: [MessengerMessage]
+  # { "<verseNum>": { "com": [Int], "img": [Int] } } — fax counts are client-side
   counts: JSON
 }

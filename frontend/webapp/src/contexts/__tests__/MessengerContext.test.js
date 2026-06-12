@@ -51,6 +51,7 @@ test("noopController has the legacy stub surface", async () => {
     parentMessage: null,
     threadedMessages: [],
   });
+  await expect(stub.loadPageComments()).resolves.toEqual({ messages: [], counts: {} });
 });
 
 const makeController = () => ({

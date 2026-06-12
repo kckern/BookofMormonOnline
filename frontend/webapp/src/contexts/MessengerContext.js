@@ -34,6 +34,7 @@ export const noopController = (userId) => ({
   updateTypingLocation: () => {},
   loadThreadedMessages: () =>
     Promise.resolve({ parentMessage: null, threadedMessages: [] }),
+  loadPageComments: () => Promise.resolve({ messages: [], counts: {} }),
   getCurrentUser: () => ({ userId, metaData: {} }),
   sb: { currentUser: { userId, metaData: {} } },
   _currentUser: { user_id: userId, nickname: "User" },
