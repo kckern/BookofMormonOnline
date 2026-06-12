@@ -82,8 +82,7 @@ export default class MessengerController {
     // WITH a group stuck (activeGroup never set, the whole StudyGroupBar dead).
     // connect() overwrites this with the enriched user once it lands.
     this._currentUser = this._normalizeUser({ user_id: this.userId, metadata: {} });
-    this.groupCallMap = {}; // Compatibility with SendbirdController
-    
+
     // Determine server URL
     const baseUrl = serverUrl || window.location.origin;
     
@@ -705,19 +704,17 @@ export default class MessengerController {
     return true;
   }
 
-  updateUserState({ channels, activeGroup, activeCall, key }) {
+  updateUserState({ channels, activeGroup, key }) {
     // Emit to socket for real-time sync
-    this.socket.emit('update_state', { 
-      activeGroup, 
-      activeCall 
+    this.socket.emit('update_state', {
+      activeGroup
     });
 
     // Update local user state
     if (this._currentUser) {
-      this._currentUser.metaData = { 
-        ...this._currentUser.metaData, 
-        activeGroup, 
-        activeCall 
+      this._currentUser.metaData = {
+        ...this._currentUser.metaData,
+        activeGroup
       };
     }
 
@@ -727,11 +724,11 @@ export default class MessengerController {
         this.fireStudyGroupAction({
           username: this.userId,
           key: key || 'updateUserState',
-          val: { activeGroup, activeCall }
+          val: { activeGroup }
         }, channel);
       });
     }
-    
+
     return true;
   }
 
@@ -1080,27 +1077,6 @@ export default class MessengerController {
       console.error('Messenger: updateCurrentUserInfo error', error);
       return null;
     }
-  }
-
-  // ─────────────────────────────────────────────────────────────────
-  // PUBLIC API - Room/Call (Stubs - calls not yet implemented)
-  // ─────────────────────────────────────────────────────────────────
-
-  async createNewRoom() {
-    // Voice/video calls not implemented in messenger yet
-    return null;
-  }
-
-  async fetchRoom(roomId) {
-    return null;
-  }
-
-  async fetchRoomFromGroup(group, src) {
-    return null;
-  }
-
-  async resetRoom(groupChannel) {
-    return null;
   }
 
   // ─────────────────────────────────────────────────────────────────

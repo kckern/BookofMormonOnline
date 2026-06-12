@@ -104,9 +104,6 @@ export const appInit = () => {
       isGroupListOpen: false,
       activeGroup: null,
       activeGroupOperators: [],
-      activeCall: null,
-      activeCallers: [],
-      mutedCallers: [],
       action: {},
       groupList: [],
       liveMessageQueue: {},
@@ -360,20 +357,13 @@ export const appFunctions = {
 
   updateListedStudyGroup: (appController, input) => {
     let group = input.val.group;
-    let room = input.val.room;
     if (!group) return appController;
-    if (room) {
-      group.room = room;
-      if (group.url === appController.states.studyGroup.activeGroup.url) {
-        appController.states.studyGroup.activeCall = room;
-      }
-    }
     let freshGroups = appController.states.studyGroup.groupList.map((old) =>
       old?.url === group?.url ? group : old
     );
     if (freshGroups.length > 0)
       appController.states.studyGroup.groupList = freshGroups;
-    if (group.url === appController.states.studyGroup.activeGroup.url)
+    if (group.url === appController.states.studyGroup.activeGroup?.url)
       appController.states.studyGroup.activeGroup = group;
     return appController;
   },
@@ -431,18 +421,9 @@ export const appFunctions = {
     appController.states.studyGroup.action = {};
     localStorage.setItem("activeGroup", newGroup?.url);
 
-    //CALL
-    appController.sendbird?.fetchRoomFromGroup(
-      appController.states.studyGroup.activeGroup,
-      "setActiveStudyGroup"
-    )
-      .then((room) => appController.functions.setActiveCall(room));
-    if (appController.states.studyGroup.activeCall?.localParticipant)
-      appController.states.studyGroup.activeCall.exit();
     // Update User Meta
     appController.sendbird?.updateUserState({
       channels: appController.states.studyGroup.groupList,
-      activeCall: "",
       activeGroup: appController.states.studyGroup.studyModeOn
         ? newGroup?.url
         : "",
@@ -455,11 +436,6 @@ export const appFunctions = {
   },
   setActiveGroupOperators: (appController, input) => {
     appController.states.studyGroup.activeGroupOperators = input.val;
-    return appController;
-  },
-  setActiveCall: (appController, input) => {
-    let call = input.val;
-    appController.states.studyGroup.activeCall = call;
     return appController;
   },
   openDrawer: (appController, input) => {
@@ -487,9 +463,8 @@ export const appFunctions = {
 
     appController.sendbird?.updateUserState({
       channels: appController.states.studyGroup.groupList,
-      activeCall: "",
       activeGroup: appController.states.studyGroup.studyModeOn ? appController.states.studyGroup.activeGroup.url : "",
-			
+
     });
 
     return appController;
@@ -590,22 +565,13 @@ export const appFunctions = {
       goOffline: (username, val) => { },
       enterStudyGroup: (username, val) => { },
       exitStudyGroup: (username, val) => { },
-      enterCall: (username, val) => { },
-      exitCall: (username, val) => { },
       updateTypingLocation: (username, val) => {
         appController.functions.setTypingLocations({ username, action: val });
       },
     };
 
     if (processors[key]) {
-      if (["enterCall", "exitCall", "updateUserState"].includes(key))
-        appController.sendbird?.fetchRoomFromGroup(channel).then((room) =>
-          appController.functions.updateListedStudyGroup({
-            group: channel,
-            room,
-          })
-        );
-      else appController.functions.updateListedStudyGroup({ group: channel });
+      appController.functions.updateListedStudyGroup({ group: channel });
       processors[key](username, val);
     }
 
@@ -624,16 +590,6 @@ export const appFunctions = {
     appController.states.editor.isEditorOpen = input.val.isOpen;
     appController.states.editor.value = input.val.value;
     return appController;
-  },
-  startCall: (appController, input) => {
-    let group = input.val;
-    let room = group.room;
-    appController.functions.setActiveStudyGroup(group);
-    appController.sendbird?.fetchRoomFromGroup(group, "startCall")
-      .then((room) => {
-        room.autostart = true;
-        appController.functions.setActiveCall(room);
-      });
   },
   processSignIn: (appController, input) => {
     let user = input.val.user;
@@ -669,7 +625,6 @@ export const appFunctions = {
       isGroupListOpen: false,
       isMobileChat: false,
       activeGroup: null,
-      activeCall: null,
       action: {},
       groupList: [],
     };

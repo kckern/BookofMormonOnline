@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import { assetUrl } from "src/models/BoMOnlineAPI";
-import { CallCircle } from "./StudyGroupCall";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -22,12 +21,11 @@ import { StudyGroupSelect } from "./StudyGroupSelect";
 import "./StudyGroupBar.scss";
 import { ActionBubble } from "./ActionBubble";
 import crypto from "crypto-browserify";
-import { breakCache, diffMap, label, md5, playSound } from "src/models/Utils";
+import { breakCache, diffMap, label, playSound } from "src/models/Utils";
 
 import green from "src/views/User/svg/green.svg";
 import yellow from "src/views/User/svg/yellow.svg";
 import grey from "src/views/User/svg/blank.svg";
-import blue from "src/views/User/svg/blue.svg";
 import socket from "src/views/User/svg/socket.svg";
 import count from "src/views/User/svg/count.svg";
 import cake from "src/views/User/svg/cake.svg";
@@ -109,20 +107,13 @@ export function StudyGroupBar({ appController }) {
 
 export function getFreshUsers(appController,queryUsers) {
   const determineColor = (userObject) =>
-    userObject.inCall
-      ? "blue"
-      : userObject.isInGroup
+    userObject.isInGroup
       ? "green"
       : userObject.isOnSite
       ? "yellow"
       : "grey";
   let group = appController.states.studyGroup.activeGroup;
   if (!group) return null;
-  let call = appController.states.studyGroup.activeCall;
-  let callers =
-    call?._participantCollection?._remoteParticipants?.map(
-      (p) => p.user?.userId,
-    ) || [];
 
   let users =
     queryUsers?.filter((m) => {
@@ -145,10 +136,6 @@ export function getFreshUsers(appController,queryUsers) {
     let thisGroup = group?.url;
     users[i].isInGroup =
       userGroup === thisGroup && users[i].connectionStatus === "online";
-    users[i].inCall =
-      callers.includes(users[i].userId) &&
-      userGroup === thisGroup &&
-      users[i].connectionStatus === "online";
     users[i].isOnSite =
       users[i].connectionStatus === "online" && userGroup !== ""; //TODO and study Mode On
     users[i].color = determineColor(users[i]);
@@ -169,8 +156,6 @@ export function getFreshUsers(appController,queryUsers) {
     let bcompleted = bsummary.completed || 0;
 
     let diff = bcompleted - acompleted;
-    if (a.inCall && !b.inCall) return -1;
-    if (b.inCall && !a.inCall) return 1;
     if (a.isInGroup && !b.isInGroup) return -1;
     if (b.isInGroup && !a.isInGroup) return 1;
     if (a.isOnSite && !b.isOnSite) return -1;
@@ -195,17 +180,6 @@ function StudyGroupStatus({ appController }) {
     sound.preload = "auto";
     return sound;
   });
-  const [enteredCall] = useState(() => {
-    let sound = new Audio(`${assetUrl}/interface/audio/caller-online`);
-    sound.preload = "auto";
-    return sound;
-  });
-  const [exitedCall] = useState(() => {
-    let sound = new Audio(`${assetUrl}/interface/audio/caller-offline`);
-    sound.preload = "auto";
-    return sound;
-  });
-
   const getColorMap = (users) => {
     let map = {};
     for (let i in users) map[users[i].userId] = users[i].color;
@@ -291,19 +265,6 @@ useEffect(()=>{
         let notificationHistory = [];
         const time = moment().unix();
 
-        if (newColor === "blue") {
-          if (sounds) playSound(enteredCall);
-          toaster(
-            appController,
-            user.profileUrl,
-            newColor,
-            label("x_joined_a_call", [user.nickname]),
-          );
-        }
-        if (["blue"].includes(oldColor) && ["green"].includes(newColor)) {
-          if (sounds) playSound(exitedCall);
-        }
-
         if (newColor === "green") {
           if (
             notificationHistory.find(
@@ -326,7 +287,7 @@ useEffect(()=>{
         }
 
         if (
-          ["blue", "green"].includes(oldColor) &&
+          oldColor === "green" &&
           ["yellow", "grey"].includes(newColor)
         ) {
           if (
@@ -376,8 +337,6 @@ useEffect(()=>{
   let activeLiveMessageSender =
     liveMessageQueue[activeLiveMessageId]?._sender?.userId;
 
-  let greenUsers = users?.filter((u) => u.color === "green") || [];
-
   return (
     <div
       className={
@@ -386,13 +345,6 @@ useEffect(()=>{
       }
     >
       <BotCircles bots={bots} appController={appController} />
-      {greenUsers?.length >= 1 ? (
-        <React.Fragment key={"callCircle"}>
-          <div className="divider"></div>
-          <CallCircle appController={appController} />
-        </React.Fragment>
-      ) : null}
-      <audio id="call_audio" autoPlay={true} />
       {users?.slice(0, 11).map((user) => (
         <StudyGroupUser
           color={userColors[user?.userId]}
@@ -546,7 +498,6 @@ export function getClassesFromUserObj(userObject, appController) {
     activeGroup.url
   ]?.includes(userObject.userId);
   let classes = ["userCircle", userObject.userId];
-  if (userObject.inCall) classes.push("inCall");
   if (userObject.isInGroup) classes.push("inGroup");
   else if (userObject.isOnSite) classes.push("onSite");
   if (isTyping) classes.push("isTyping");
@@ -573,25 +524,13 @@ export function StudyGroupUserCircle({ userObject, appController, isBot }) {
     </div>
   ) : null;
 
-  //Determin Green Yellow Grey Blue
+  //Determine Green Yellow Grey
 
   let completedPerc = parseFloat(summary.completed) || 0;
   let badgeVal = completedPerc + "%";
-  if (userObject.inCall) badgeVal = "📞  " + badgeVal;
 
   if (isBot) badgeVal = isTyping ? "..." : label("bot");
   if (isBot) classes.push("bot");
-
-  let num = (md5(userObject.userId) + "4").match(/[3-9]/)[0];
-  let inCallElements = userObject.inCall ? (
-    <>
-      <div
-        className={"userCircleOutline"}
-        style={{ animation: `rotate ${num}s linear infinite` }}
-      ></div>
-      <div className={"phoneCall"}></div>
-    </>
-  ) : null;
 
 	useEffect(()=>{
 		const getMessages = async()=>{
@@ -627,7 +566,6 @@ export function StudyGroupUserCircle({ userObject, appController, isBot }) {
           })
         }
       >
-        {inCallElements}
         {typingIndicator}
         <div className={"progressBadge"} onClick={()=>console.log('bageClick')}>{badgeVal}</div>
         {trophyIcons}
@@ -698,7 +636,6 @@ export function StudyGroupUser({
   let statusCircle = grey;
   if (classes.includes("onSite")) statusCircle = yellow;
   if (classes.includes("inGroup")) statusCircle = green;
-  if (classes.includes("inCall")) statusCircle = blue;
 
   if (bookmark.slug)
     linkToItems =
@@ -1046,10 +983,7 @@ export function StudyGroupUser({
 
   return (
     <React.Fragment key={userId}>
-      <div
-        className={"noselect divider " + (userObject.inCall ? "inCall" : "")}
-        key={userId}
-      ></div>
+      <div className={"noselect divider"} key={userId}></div>
       <Dropdown
         isOpen={isDroppedDown || !!liveMessage}
         onMouseEnter={() => {

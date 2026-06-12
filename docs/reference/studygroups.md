@@ -303,20 +303,18 @@ Additionally, *typing location* within a page is synced via `fire_action`
 (`updateTypingLocation`) so a groupmate's comment box shows "X is writing"
 under the same verse (`Study.js:288`).
 
-**Presence colors & sounds.** Member circles are colored by status: blue =
-in-call, green = online in this group, yellow = online elsewhere on the site,
-grey = offline (`getFreshUsers`, `StudyGroupBar.js:110`). Status transitions
-play sounds and pop toasts when study mode is on (`contacts-online`,
-`contacts-offline`, `caller-online`, `caller-offline` —
-`StudyGroupBar.js:184-368`), all gated by `preferences.sound`. Incoming live
+**Presence colors & sounds.** Member circles are colored by status: green =
+online in this group, yellow = online elsewhere on the site, grey = offline
+(`getFreshUsers`, `StudyGroupBar.js`). Status transitions play sounds and pop
+toasts when study mode is on (`contacts-online`, `contacts-offline` —
+`StudyGroupBar.js`), all gated by `preferences.sound`. Incoming live
 messages from groupmates surface as 8-second speech bubbles over the sender's
 circle (`liveMessageQueue` via the `fireMessage` event →
 `appController.firedMessage`, rendered by `ActionBubble.js`).
 
-**Calls.** `StudyGroupCall.js` survives from the SendBird Calls era, but the
-green-field controller stubs all room methods (`fetchRoomFromGroup` returns
-null — `MessengerController.js:1024-1039`), so voice calls are currently
-non-functional; the blue/call UI states are vestigial.
+**Calls.** Voice calls (a vestige of the SendBird Calls era, long stubbed to
+non-functional) were removed entirely on 2026-06-12 — UI, state, controller
+stubs, and call sounds are gone.
 
 ---
 

@@ -1,9 +1,4 @@
 
-$antlength: 5px;
-$antwidth: 2px;
-$antcolor: #6bd0a9;
-
-
 .StudyGroupBar {
   position: absolute;
   top: 0;
@@ -152,11 +147,6 @@ $antcolor: #6bd0a9;
 
 
 
-.StudyGroupBar .userStatus .userCircle.inCall .progressBadge
-{
-  background-color: #6ba8d0;
-}
-
 .StudyGroupBar .userStatus .userCircle.inGroup.isTyping
 {
   border-color: #FFFFFF;
@@ -217,44 +207,6 @@ $antcolor: #6bd0a9;
   text-transform: uppercase;
 }
 
-
-.StudyGroupBar .userStatus .userCircleOutline
-{
-  position: absolute;
-  left: -6.5px;
-  top: -7px;
-  height: 55px;
-  width: 55px;
-  border-radius: 50px;
-  border: 3px #6ba8d0;
-  border-style:dashed;
-  filter: saturate(1);
-  opacity: 1;
-}
-
-.StudyGroupBar .userStatus .phoneCall
-{
-  font-size: 1.5rem;
-  position: absolute;
-  left:-5px;
-  bottom: 5px;
-  transform: rotate(20deg);
-}
-
-
-.inCall .phoneCall{
-
-  animation: sway 10s infinite ease-in-out;
-}
-
-@keyframes rotate {
-  from {
-    -webkit-transform: rotate(0deg);
-  }
-  to {
-    -webkit-transform: rotate(360deg);
-  }
-}
 
 .studyGroupSelectContainer {
   float: right;
@@ -376,214 +328,10 @@ $antcolor: #6bd0a9;
   height: calc(100% - 4em);
 }
 
-/* CIRCLE */
-
-.userStatus .callCircle {
-  height: 50px;
-  width: 50px;
-  border-radius: 50px;
-  border: 4px solid #888;
-  background-position: center center;
-  background-size: cover;
-  cursor: pointer;
-  position: relative;
-  text-align: center;
-  line-height: 45px;
-  background-color: white;
-  font-size: 1.5rem;
-}
-
-.userStatus .callCircle.loading {
-  opacity: 0.5;
-}
-.userStatus .callCircle.limbo {
-  border-color: #6bd0a9;
-  font-weight: 800;
-  animation: spin 1s infinite ease-in-out;
-}
-
-.userStatus .callCircle.coolDown {
-  color: rgb(145, 67, 14);
-  font-weight: 800;
-  animation: spin 1s infinite ease-in-out;
-  cursor: none;
-  opacity: 0.2;
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0);
-  }
-  100% {
-    transform: rotate(180deg);
-  }
-}
-.callCircle.noCall {
-  opacity: 0.5;
-}
-
-.userStatus .callCircle.noCall:hover {
-  opacity: 1;
-  border-color: #6bd0a9;
-  font-size: 200%;
-}
-
-.userStatus .callCircle.isCall,
-.userStatus .callCircle.wasCall {
-  animation: bounce 1s infinite ease-in-out;
-  border-color: #6ba8d0;
-  background-color: #ffffff;
-  opacity: 1;
-}
-.userStatus .callCircle.wasCall {
-  animation: sway 10s infinite ease-in-out;
-}
-.userStatus .callCircle.wasCall:hover {
-  animation: bounce 1s infinite ease-in-out;
-}
-
-@keyframes sway {
-  0% {
-    transform: rotate(50deg);
-  }
-  25% {
-    transform: rotate(-25deg);
-  }
-  50% {
-    transform: rotate(50deg);
-  }
-  75% {
-    transform: rotate(-25deg);
-  }
-  100% {
-    transform: rotate(50deg);
-  }
-}
-
-@keyframes bounce {
-  0% {
-    transform: rotate(0);
-  }
-  10% {
-    transform: rotate(-25deg);
-  }
-  20% {
-    transform: rotate(25deg);
-  }
-  30% {
-    transform: rotate(-25deg);
-  }
-  40% {
-    transform: rotate(25deg);
-  }
-  50% {
-    transform: rotate(0);
-  }
-  100% {
-    transform: rotate(0);
-  }
-}
-
-.callCircle.inCall,
-.callCircle.warmUp {
-  border-color: #6ba8d0;
-}
-
-.callCircle.inCall:hover svg {
-  display: none;
-}
-.callCircle.inCall #hangup {
-  display: none;
-}
-.callCircle.inCall:hover {
-  border-color: #f44336;
-}
-
-.callCircle.inCall:hover .hangUp {
-  display: block;
-}
-.callCircle.inCall:hover .timer {
-  bottom: -1.5em;
-  background-color: #f44336;
-}
-.callCircle .timer {
-  position: absolute;
-  bottom: -0.5em;
-  left:-.6ex;
-  min-width: 5em;
-  height: 1.5em;
-  line-height: 1.5em;
-  background-color: #6ba8d0;
-  font-size: x-small;
-  padding-left: 0.5em;
-  padding-right: 0.5em;
-  border-radius: 0.5em;
-  font-weight: 800;
-}
-
-.hangUp {
-  display: none;
-}
-
-#wave {
-  height: 100%;
-  width: 100%;
-  position: relative;
-  top: -4px;
-  fill: #6ba8d0;
-}
-
-@for $i from 1 through 9 {
-  #Line_#{$i} {
-    animation: pulse 0.5s infinite;
-    animation-delay: $i * 0.2s;
-  }
-}
-
-@keyframes pulse {
-  0% {
-    transform: scaleY(1);
-    transform-origin: 50% 50%;
-  }
-
-  50% {
-    transform: scaleY(0.7);
-    transform-origin: 50% 50%;
-  }
-
-  100% {
-    transform: scaleY(1);
-    transform-origin: 50% 50%;
-  }
-}
-
 .divider
 {
 
   flex-grow: 1;
-}
-
-
-.divider.inCall
-{
-  position: relative;
-  top:18px;
-  margin-left: -1px;
-  height:1em;
-  background-color: #6ba8d0;
-  background-image: linear-gradient(90deg, $antcolor 50%, transparent 50%),
-      linear-gradient(90deg, $antcolor 50%, transparent 50%),
-      linear-gradient(0, $antcolor 50%, transparent 50%),
-      linear-gradient(0, $antcolor 50%, transparent 50%);
-  background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
-  background-size: $antlength $antwidth, $antlength $antwidth, 0 0, 0 0;
-  animation: marching-ants 1s infinite linear;
-}
-
-
-@keyframes marching-ants {
-    0%   {background-position: 0 0, $antlength 100%, 0 $antlength, 100% 0;}
-    100% {background-position: $antlength 0, 0 100%, 0 0, 100% $antlength;}
 }
 
 .userCircle .typing

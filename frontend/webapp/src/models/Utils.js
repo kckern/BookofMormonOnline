@@ -461,28 +461,20 @@ export function useWindowSize() {
 }
 
 export async function channelAtAGlance(channel) {
-  let room = channel.room;
   let onsite = [],
-    ingroup = [],
-    incall = [];
+    ingroup = [];
   channel.members.filter((m) => {
     if (m.connectionStatus === "online") {
       m.metaData.activeGroup && onsite.push(m);
       m.metaData.activeGroup === channel.url && ingroup.push(m);
-      m.metaData.activeCall === room?.roomId && incall.push(m);
     }
     return true;
   });
-  //console.log("channelAtAGlance",channel.name,{call:room?._participantCollection})
-  let incallNum =
-    (parseInt(room?._participantCollection?._remoteParticipants?.length) || 0) +
-    (room?.localParticipant ? 1 : 0);
   return {
     unread: channel.unreadMessageCount,
     members: channel.joinedMemberCount,
     onsite: onsite.length,
     ingroup: ingroup.length,
-    incall: incallNum,
     loaded: true,
   };
 }
@@ -546,16 +538,11 @@ export function refreshChannel(channel, appController) {
   if (channel.memberCount === 0) return;
   return channel.refresh().then((fresh) => {
     try {
-      appController.sendbird
-        ?.fetchRoomFromGroup(fresh, "refreshChannel")
-        .then((room) => {
-          fresh.room = room;
-          appController.functions.updateListedStudyGroup(fresh);
-          return fresh;
-        });
+      appController.functions.updateListedStudyGroup({ group: fresh });
     } catch (e) {
       console.log("refreshChannel", e);
     }
+    return fresh;
   });
 }
 

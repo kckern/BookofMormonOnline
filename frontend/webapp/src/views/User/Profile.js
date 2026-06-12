@@ -57,12 +57,9 @@ export function Profile({
           appController.sendbird
             ?.updateUserState({
               channels: appController.states.studyGroup.groupList,
-              activeCall: "",
               activeGroup: "",
             })
             .then((r) => {
-              if (appController.states.studyGroup.activeCall?.localParticipant)
-                appController.states.studyGroup.activeCall.exit();
               appController.functions.processSignOut();
               setProfileState("profile");
               setLoggingOut(false);

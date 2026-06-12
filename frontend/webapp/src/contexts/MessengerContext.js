@@ -27,7 +27,6 @@ export const noopController = (userId) => ({
   updateUserState: () => {},
   updateUserSummary: () => {},
   fireStudyGroupAction: () => {},
-  fetchRoomFromGroup: () => Promise.resolve(null),
   loadUnreadDMs: () => Promise.resolve({}),
   disconnect: () => {},
   updatePagePosition: () => {},

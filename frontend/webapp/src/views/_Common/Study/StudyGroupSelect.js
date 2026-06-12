@@ -32,9 +32,7 @@ import group from "./svg/group.svg";
 import dnd from "./svg/dnd.svg";
 import { toast } from "react-toastify";
 import usericon from "src/views/_Common/Study/svg/member.svg";
-import callicon from "src/views/_Common/Study/svg/call.svg";
 import groupicon from "src/views/User/svg/group.svg";
-import call from "src/views/User/svg/call.svg";
 import invite from "src/views/User/svg/invite.svg";
 import exit from "src/views/User/svg/exit.svg";
 
@@ -328,9 +326,7 @@ function StudyGroupListItem({ group, appController }) {
     members: 0,
     onsite: 0,
     ingroup: 0,
-    incall: 0,
   });
-  let [room, setRoom] = useState(group.room);
 
   const leave = async (s) => {
 		try {
@@ -349,15 +345,13 @@ function StudyGroupListItem({ group, appController }) {
   };
 
   useEffect(() => {
-    channelAtAGlance(group, room).then((groupNums) => setGroupNums(groupNums));
+    channelAtAGlance(group).then((groupNums) => setGroupNums(groupNums));
   }, []);
 
   //Keep Numbers Updated
   useEffect(() => {
-    channelAtAGlance(group, room).then((groupNums) => setGroupNums(groupNums));
+    channelAtAGlance(group).then((groupNums) => setGroupNums(groupNums));
   }, [
-    group.room?._participantCollection?._remoteParticipants?.length,
-    group.room?._participantCollection?.localParticipant,
     JSON.stringify(group.members),
     group.unreadMessageCount,
     group.joinedMemberCount,
@@ -427,20 +421,13 @@ function StudyGroupListItem({ group, appController }) {
         {groupNums.ingroup} {label("studying_now")}
       </span>
     ),
-    incall: (
-      <span>
-        {groupNums.incall} {label("in_call")}
-      </span>
-    ),
   };
 
-  if (!groupNums.incall) delete countItems.incall;
   if (!groupNums.onsite) delete countItems.onsite;
   if (groupNums.onsite === 1) delete countItems.onsite;
   if (!groupNums.ingroup) delete countItems.ingroup;
 
   if (groupNums.ingroup) delete countItems.onsite;
-  if (groupNums.incall) delete countItems.ingroup;
 
   let lastMessage = group.lastMessage?._sender ? (
     <>
@@ -461,15 +448,6 @@ function StudyGroupListItem({ group, appController }) {
           .replace(/^•$/, label("highlight_msg"))}
       </span>
     </>
-  ) : null;
-
-  let callBadge = groupNums?.incall ? (
-    <div className="groupCallContainer">
-      <div className="callerCount">
-        <img src={callicon} />
-        {groupNums?.incall}
-      </div>
-    </div>
   ) : null;
 
   const showInviteLink = () => {
@@ -544,7 +522,7 @@ function StudyGroupListItem({ group, appController }) {
             className="grouptype"
             src={typeIcons[group.customType.toLowerCase()]}
           />{" "}
-          {group.name} {callBadge}
+          {group.name}
         </div>
         <div className="lastMessage">{lastMessage}</div>
         <GroupMemberCircles circles={circles} greenCount={greenCount} />
@@ -580,16 +558,6 @@ function StudyGroupListItem({ group, appController }) {
             <DropdownItem onClick={() => handleGoToLastMsg()}>
               <img src={ffwd} />
               <div>{label("go_to_last_msg")}</div>
-            </DropdownItem>
-          )}
-          {!!greenCount && (
-            <DropdownItem
-              onClick={() => appController.functions.startCall(group)}
-            >
-              <img src={call} />
-              <div>
-                {groupNums.incall ? label("join_call") : label("start_call")}
-              </div>
             </DropdownItem>
           )}
           {["private", "public"].includes(group.customType) && (

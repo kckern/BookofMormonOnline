@@ -194,9 +194,6 @@
 .groupListItemMembers span.member {
   background-color: #aaa;
 }
-.groupListItemMembers span.inCall {
-  background-color: #6ba8d0;
-}
 .groupListItemMembers span.onSite {
   background-color: #fbc658;
 }
@@ -222,7 +219,6 @@
   border-radius: 2em;
   border: 1px solid #0006;
 }
-.callerCount,
 .memberCount {
   background-color: #eee;
   margin-left: 1ex;
@@ -245,20 +241,7 @@
   border: 1px solid #ddd;
 }
 
-.callerCount {
-  float: right;
-  margin: 0;
-  padding: 0 1ex 0 1ex;
-  margin-left: 1ex;
-  border: 1px solid #6ba8d0;
-  background-color: #e7f5ff;
-  color: #6ba8d0;
-  position: relative;
-  bottom: 0px;
-}
-
-.groupListItemContent .memberCount img,
-.groupListItemContent .callerCount img {
+.groupListItemContent .memberCount img {
   height: 1.5em;
   width: 1.5em;
   opacity: 0.5;
@@ -266,20 +249,10 @@
   margin-bottom: 0px;
   margin-left: -1ex;
 }
-.groupListItemContent .callerCount img {
-  opacity: 1;
-  margin-left: -0.5ex;
-}
-
 .groupItem:hover .memberCount {
   border-color: #000;
 }
 
-.groupCallContainer {
-  display: inline-block;
-}
-
-.groupCallContainer,
 .groupMembersContainer {
   display: flex;
 }
