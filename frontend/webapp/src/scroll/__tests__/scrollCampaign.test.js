@@ -99,6 +99,45 @@ test("missing target fails the campaign", async () => {
   expect(status).toBe("failed");
 });
 
+describe("waitForIdle", () => {
+  test("resolves immediately when no campaign is running", async () => {
+    const mgr = createScrollManager();
+    await expect(mgr.waitForIdle()).resolves.toBeUndefined();
+  });
+
+  test("resolves only after the running campaign ends", async () => {
+    // call-steps are fire-and-forget (runSteps doesn't await fn's return), so
+    // hold the campaign open the way the supersede/interrupt tests do: a
+    // browser fake that never moves, released by "arriving" at the target.
+    window.scrollTo = jest.fn();
+    const mgr = createScrollManager();
+    const run = mgr.run([step.scrollToElement(() => fakeEl(3000))]); // target 2800
+    let idle = false;
+    const wait = mgr.waitForIdle().then(() => (idle = true));
+    await flushFrames(2);
+    expect(idle).toBe(false); // campaign still running
+    setScrollY(2800); // browser reaches the target
+    await flushFrames(6);
+    expect((await run).status).toBe("completed");
+    await wait;
+    expect(idle).toBe(true);
+  });
+
+  test("waiters queued during a superseded campaign resolve when the replacement ends", async () => {
+    window.scrollTo = jest.fn(); // first campaign never settles
+    const mgr = createScrollManager();
+    const p1 = mgr.run([step.scrollToElement(() => fakeEl(3000))]);
+    await flushFrames(1);
+    let idle = false;
+    const wait = mgr.waitForIdle().then(() => (idle = true));
+    const p2 = mgr.run([]); // supersedes; empty campaign completes immediately
+    expect((await p1).status).toBe("superseded");
+    expect((await p2).status).toBe("completed");
+    await wait;
+    expect(idle).toBe(true);
+  });
+});
+
 test("openAndAwait clicks only when closed and waits for height stability", async () => {
   const trigger = fakeEl(100);
   let open = false;

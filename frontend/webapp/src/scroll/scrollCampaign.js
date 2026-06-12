@@ -68,6 +68,7 @@ export const step = {
 export function createScrollManager({ onEvent } = {}) {
   const emitBase = typeof onEvent === "function" ? onEvent : () => {};
   let current = null;
+  const idleWaiters = [];
 
   function attachInputListeners(token) {
     const onInput = (e) => {
@@ -141,6 +142,15 @@ export function createScrollManager({ onEvent } = {}) {
 
   return {
     isRunning: () => !!current,
+    /**
+     * Resolves when no campaign is running (immediately if idle). Used to
+     * defer non-urgent DOM placement (e.g. page-comment paint) out of an
+     * active campaign — data may arrive at any time; layout work may not.
+     */
+    waitForIdle() {
+      if (!current) return Promise.resolve();
+      return new Promise((resolve) => idleWaiters.push(resolve));
+    },
     cancel(reason = "superseded") {
       if (current) current.token.abort(reason);
     },
@@ -159,7 +169,12 @@ export function createScrollManager({ onEvent } = {}) {
         return { status };
       } finally {
         detach();
-        if (current === mine) current = null;
+        // Only the run that still owns `current` flips the manager idle; a
+        // superseded run's finally must not flush waiters under its successor.
+        if (current === mine) {
+          current = null;
+          idleWaiters.splice(0).forEach((fn) => fn());
+        }
       }
     },
   };
