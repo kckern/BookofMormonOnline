@@ -69,6 +69,7 @@ export function MessengerProvider({ appController, children, createController = 
 
     if (!USE_MESSENGER) {
       app.sendbird = noopController(socialUserId);
+      app.functions.messengerBridgeChanged?.();
       return undefined;
     }
 
@@ -77,6 +78,7 @@ export function MessengerProvider({ appController, children, createController = 
     const ctrl = createController(socialUserId, token, app);
     app.sendbird = ctrl; // compatibility bridge for the 84 legacy references
     setController(ctrl);
+    app.functions.messengerBridgeChanged?.();
 
     // Sign-in bootstrap, moved out of socialSignIn / setPreLoadData /
     // processSignIn — they are pure state updates now.
@@ -99,6 +101,7 @@ export function MessengerProvider({ appController, children, createController = 
       // sendbird === null.
       appRef.current.sendbird = noopController(socialUserId);
       setController(null);
+      appRef.current.functions.messengerBridgeChanged?.();
     };
     // createController is intentionally omitted: a stable factory is part of
     // the provider contract (tests pass a constant; prod uses defaultFactory).

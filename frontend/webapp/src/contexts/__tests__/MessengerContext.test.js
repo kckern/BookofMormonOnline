@@ -9,7 +9,7 @@ import {
 // Minimal appController fixture. social: null = guest.
 const makeApp = ({ social = null, token = "tok-1", user = null } = {}) => ({
   states: { user: { user, token, social } },
-  functions: { setStudyGroups: jest.fn() },
+  functions: { setStudyGroups: jest.fn(), messengerBridgeChanged: jest.fn() },
 });
 
 // Probe component records what useMessenger() returns each render.
@@ -146,4 +146,17 @@ test("unmount disconnects", () => {
   const { unmount } = renderProvider(app, jest.fn(() => ctrl));
   unmount();
   expect(ctrl.disconnect).toHaveBeenCalledTimes(1);
+});
+
+test("bridge changes are announced via messengerBridgeChanged dispatch", () => {
+  const app = makeApp({ social: { user_id: "abc123" }, user: "kc" });
+  const factory = jest.fn(() => makeController());
+  const { rerender } = renderProvider(app, factory);
+  // create
+  expect(app.functions.messengerBridgeChanged).toHaveBeenCalledTimes(1);
+
+  const guest = makeApp(); // sign-out
+  rerenderWith(rerender, guest, factory);
+  // cleanup announces on the appController live at teardown
+  expect(guest.functions.messengerBridgeChanged).toHaveBeenCalledTimes(1);
 });

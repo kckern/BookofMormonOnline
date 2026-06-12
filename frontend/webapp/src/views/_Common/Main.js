@@ -122,35 +122,6 @@ function Main(props) {
   let debug = null;
   // if (window.location.host !== "staging.bookofmormon.online") debug = <pre>APP CONTROLLER: {JSON.stringify(appController.states, null, 2)}</pre>;
 
-  let main = (
-    <div className="main-panel" id="main-panel">
-      {/* /SHOW LOADER IN CASE DATA ARE FETCHING */}
-      {!appController.preLoad || appController.sendbird === null ? (
-        <Loader />
-      ) : (
-        <>
-          <PopUp appController={appController} />
-          <Suspense fallback={<Loader />}>
-            <Switch>
-              {routes.map((x, i) => (
-                <Route
-                  key={i}
-                  exact={x.exact}
-                  path={x.path}
-                  render={(props) => (
-                    <x.component {...props} appController={appController} />
-                  )}
-                />
-              ))}
-            </Switch>
-          </Suspense>
-            <BottomMenu appController={appController}/>
-        </>
-      )}
-    </div>
-  );
-  //if (window.location.host !== "beta.bookofmormon.online")  main = null;
-
   if (apiFailure)
     return (
       <div className="body">

@@ -213,6 +213,10 @@ export const appFunctions = {
     appController.pageData = input.val;
     return appController;
   },
+  // Re-render notifier for the MessengerProvider bridge: the provider mutates
+  // appController.sendbird outside the reducer, so Main's Loader gate (which
+  // reads the bridge during render) needs a dispatch to re-evaluate.
+  messengerBridgeChanged: (appController) => appController,
   updatePrefs: (appController, input) => {
     appController.states.preferences = input.val;
     localStorage.setItem(
@@ -669,7 +673,6 @@ export const appFunctions = {
       action: {},
       groupList: [],
     };
-    appController.sendbird?.disconnect();
     return appController;
   },
 
