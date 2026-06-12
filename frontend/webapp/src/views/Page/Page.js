@@ -530,10 +530,18 @@ export default function Page({ appController }) {
         // fax counts derive from the index client-side, com/img came from
         // the server.
         setCommentState("placing");
-        pageController.functions.setPageComments({
-          groupId,
-          index,
-          counts: mergeCounts(counts, countFaxFromIndex(index)),
+        // Zero-layout-shift by construction (badges/bubbles are absolute,
+        // notice is fixed) — but defer the React paint out of any active
+        // scroll campaign so render work never competes with the animation.
+        // Deep-link inits gate the campaign on readyToScroll, so this is
+        // instant there; it only waits on autoAdvance/fallback overlaps.
+        pageScrollManager.waitForIdle().then(() => {
+          recordDeepLinkEvent("pageComments:placed");
+          pageController.functions.setPageComments({
+            groupId,
+            index,
+            counts: mergeCounts(counts, countFaxFromIndex(index)),
+          });
         });
       })
       .catch((error) => {
