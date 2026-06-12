@@ -17,6 +17,7 @@ import "./ToolTip.css";
 import "src/views/_Common/ScripturePanel.css";
 import Loader from "src/views/_Common/Loader";
 import { appControllerReducer, appInit } from "src/models/appController";
+import { MessengerProvider } from "src/contexts/MessengerContext";
 import nowifi from "./svg/no-wifi.svg";
 //
 import "./BottomNav.css";
@@ -164,50 +165,52 @@ function Main(props) {
   const isDarkMode = !!appController.states.preferences.darkMode;
 
   return (
-    <div className={"body"+(lang ? " "+lang: "") + (isDev ? " dev" : "") + (isDarkMode ? " dark" : "")}>
-      {debug}
-      <Header {...props} appController={appController} isReady={true} />
-      {/* <Navbar user={user} showSideNav={showSideNav} manageLayout={manageLayout} toggleSideNav={toggleSideNav} /> */}
-      <Sidebar
-        {...props}
-        appController={appController}
-        routes={links}
-        bgColor={"1a1d20"}
-        activeColor={"red"}
-      />
-      <div
-        className="main-panel"
-        id="main-panel"
-        onClick={(e) => {
-          appController.states.studyGroup.isDrawerOpen &&
-            appController.functions.openDrawer(false);
-          appController.states.notification.isNotificationOpen &&
-            appController.functions.openNotification(false);
-          appController.states.studyGroup.isGroupListOpen &&
-            appController.functions.openGroupList(false);
-        }}
-      >
-        {/* /SHOW LOADER IN CASE DATA ARE FETCHING */}
-        {!appController.preLoad ||
-          (appController.states.user.user && appController.sendbird === null) ? (
-          <Loader />
-        ) : (
-          <>
-            <PopUp appController={appController} />
-            <Suspense fallback={<Loader />}>
-              <Switch>
-                {routes.map((x, i) => (
-                  <Route key={i}  keyProp={i} exact={x.exact} path={x.path}>
-                    <x.component appController={appController} />
-                  </Route>
-                ))}
-              </Switch>
-            </Suspense>
-            <BottomMenu appController={appController}/>
-          </>
-        )}
+    <MessengerProvider appController={appController}>
+      <div className={"body"+(lang ? " "+lang: "") + (isDev ? " dev" : "") + (isDarkMode ? " dark" : "")}>
+        {debug}
+        <Header {...props} appController={appController} isReady={true} />
+        {/* <Navbar user={user} showSideNav={showSideNav} manageLayout={manageLayout} toggleSideNav={toggleSideNav} /> */}
+        <Sidebar
+          {...props}
+          appController={appController}
+          routes={links}
+          bgColor={"1a1d20"}
+          activeColor={"red"}
+        />
+        <div
+          className="main-panel"
+          id="main-panel"
+          onClick={(e) => {
+            appController.states.studyGroup.isDrawerOpen &&
+              appController.functions.openDrawer(false);
+            appController.states.notification.isNotificationOpen &&
+              appController.functions.openNotification(false);
+            appController.states.studyGroup.isGroupListOpen &&
+              appController.functions.openGroupList(false);
+          }}
+        >
+          {/* /SHOW LOADER IN CASE DATA ARE FETCHING */}
+          {!appController.preLoad ||
+            (appController.states.user.user && appController.sendbird === null) ? (
+            <Loader />
+          ) : (
+            <>
+              <PopUp appController={appController} />
+              <Suspense fallback={<Loader />}>
+                <Switch>
+                  {routes.map((x, i) => (
+                    <Route key={i}  keyProp={i} exact={x.exact} path={x.path}>
+                      <x.component appController={appController} />
+                    </Route>
+                  ))}
+                </Switch>
+              </Suspense>
+              <BottomMenu appController={appController}/>
+            </>
+          )}
+        </div>
       </div>
-    </div>
+    </MessengerProvider>
   );
 }
 

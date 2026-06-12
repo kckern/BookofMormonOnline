@@ -1,6 +1,5 @@
 import { lang } from "moment";
 import { isMessengerEnabled } from './featureFlags';
-import MessengerController from "./MessengerController.js";
 import { clickyUser, determineLanguage, tokenImage } from "./Utils.js";
 import crypto from "crypto-browserify";
 import { history } from "./routeHistory.js";
@@ -10,53 +9,6 @@ import { setPopDocTitle } from "src/views/_Common/PopUp.js";
 // OFF = messaging disabled (no data migrated yet)
 // ON = use new MessengerController
 const USE_MESSENGER = isMessengerEnabled();
-
-/**
- * Creates the appropriate chat controller based on feature flag
- */
-const createChatController = (userId, accessToken, appController) => {
-  // Tear down any previous controller first. All three sign-in paths
-  // (preload tokensignin, socialSignIn, processSignIn) replace
-  // appController.sendbird; an undisposed instance keeps a live socket —
-  // a "shadow websocket" that re-dispatches every message_received, so
-  // each inbound message renders once per leaked instance.
-  try {
-    appController?.sendbird?.disconnect?.();
-  } catch (e) {
-    console.warn('Messenger: previous controller teardown failed', e);
-  }
-  if (USE_MESSENGER) {
-    console.log('Using MessengerController (custom backend)');
-    return new MessengerController(
-      process.env.REACT_APP_API_URL || window.location.origin,
-      userId,
-      accessToken,
-      appController
-    );
-  } else {
-    // Messaging disabled - return no-op controller
-    console.log('Messaging disabled until data migration');
-    return {
-      connect: () => Promise.resolve({ user_id: userId, nickname: 'User' }),
-      getStudyGroups: () => Promise.resolve([]),
-      loadGroupMessages: () => Promise.resolve([]),
-      loadPreviousMessages: () => Promise.resolve([]),
-      sendUserMessage: () => Promise.reject(new Error('Messaging coming soon')),
-      updateUserState: () => {},
-      updateUserSummary: () => {},
-      fireStudyGroupAction: () => {},
-      fetchRoomFromGroup: () => Promise.resolve(null),
-      loadUnreadDMs: () => Promise.resolve({}),
-      disconnect: () => {},
-      updatePagePosition: () => {},
-      updateTypingLocation: () => {},
-      loadThreadedMessages: () => Promise.resolve({ parentMessage: null, threadedMessages: [] }),
-      getCurrentUser: () => ({ userId, metaData: {} }),
-      sb: { currentUser: { userId, metaData: {} } },
-      _currentUser: { user_id: userId, nickname: 'User' }
-    };
-  }
-};
 
 const checkQuota =  () => {
   // Check if 'timestamp' exists in localStorage
@@ -344,16 +296,9 @@ export const appFunctions = {
     appController.states.user.social = input.val.social;
     appController.states.user.token = localToken;
 
-    if (appController.states.user.social?.user_id) {
-      appController.sendbird = createChatController(
-        appController.states.user.social?.user_id,
-        appController.states.user.token || appController.states.user.social.access_token,
-        appController
-      );
-
-      appController.sendbird?.getStudyGroups()
-        .then((list) => appController.functions.setStudyGroups(list));
-    }
+    // Controller creation + getStudyGroups bootstrap now live in
+    // MessengerProvider (src/contexts/MessengerContext.js), reacting to the
+    // user.social state set above.
     return appController;
   },
 
@@ -367,16 +312,8 @@ export const appFunctions = {
       appController.states.user.social = response?.user?.social || response?.social;
 
       if (appController.states.user.social?.user_id) {
-        appController.sendbird = createChatController(
-          appController.states.user.social?.user_id,
-          appController.states.user.token || appController.states.user.social.access_token,
-          appController
-        );
-
+        // Controller creation + bootstrap moved to MessengerProvider.
         clickyUser({ userid: appController.states.user.user, username: appController.states.user.social?.nickname })
-
-        appController.sendbird?.getStudyGroups()
-          .then((list) => appController.functions.setStudyGroups(list));
       }
 
       delete input.val.tokenSignIn;
@@ -697,15 +634,7 @@ export const appFunctions = {
   processSignIn: (appController, input) => {
     let user = input.val.user;
     user.social = input.val.social || user.social;
-    if (user.social?.user_id)
-      appController.sendbird = createChatController(
-        user.social?.user_id,
-        user.token || user.social?.access_token,
-        appController
-      );
-
-    appController.sendbird?.getStudyGroups()
-      .then((list) => appController.functions.setStudyGroups(list));
+    // Controller creation + bootstrap moved to MessengerProvider.
 
     appController.states.user.user = user.user.user;
     appController.states.user.progress = user.progress || {};
