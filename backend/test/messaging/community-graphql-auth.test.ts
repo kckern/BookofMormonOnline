@@ -184,6 +184,30 @@ describeAuth('homefeed (token-gated, includes own channels)', () => {
               // b0c4b5 is in many (lots of DMs), so it is legitimately slow for a heavy user.
 });
 
+describeAuth('tokensignin avatar SSoT', () => {
+  it('social.profile_url equals the messenger record for the same user', async () => {
+    const data = await exec(
+      `query ($t: String) {
+         tokensignin(token: $t) { isSuccess social { user_id profile_url } }
+       }`,
+      { t: TOKEN },
+    );
+    const signin = data['tokensignin'] as Record<string, unknown>;
+    expect(signin['isSuccess']).toBe(true);
+    const social = signin['social'] as Record<string, string>;
+    expect(social['user_id']).toBeTruthy();
+
+    // The messenger record is the single source of truth for the avatar — the
+    // signin payload must hand back the SAME url messengerUser reports.
+    const userData = await exec(
+      `query ($id: String) { messengerUser(userId: $id) { profile_url } }`,
+      { id: social['user_id'] },
+    );
+    const stored = (userData['messengerUser'] as Record<string, string>)['profile_url'];
+    expect(social['profile_url']).toBe(stored);
+  });
+});
+
 // ─── Membership / bot MUTATIONS ───────────────────────────────────────────────
 // Dual-mode: when the DB is writable, assert the happy path + self-clean. When the
 // connection is read-only (the `reader` user), the write throws inside the resolver
