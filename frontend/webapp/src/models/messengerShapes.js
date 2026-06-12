@@ -83,6 +83,25 @@ export function shapeThreadInfo(ti) {
   };
 }
 
+// Resolve reaction userIds to member display objects BY ID — the legacy
+// version indexed the members array by loop position, so every reaction
+// displayed as whoever happened to sit at that index (e.g. members[0]).
+// Unknown ids (member left the group) fall back to the raw id.
+export function shapeReacters(reactions, members) {
+  const byId = {};
+  for (const m of members || []) byId[m.userId] = m;
+  const reacters = {};
+  for (const r of reactions || []) {
+    reacters[r.key] = (r.userIds || [])
+      .map((id) => ({
+        userId: id,
+        nickname: byId[id]?.nickname || id,
+      }))
+      .reverse();
+  }
+  return reacters;
+}
+
 // Channel DATA fields only (methods live on the controller's channel object).
 export function shapeChannelFields(ch = {}, currentUserId) {
   const members = (ch.members || []).map(shapeMember);

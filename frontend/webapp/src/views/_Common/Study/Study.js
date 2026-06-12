@@ -12,6 +12,7 @@ import ReactTooltip from "react-tooltip";
 import TagList from "./TagList";
 import "views/_Common/Study/Study.css";
 import UserAvatar from "src/components/UserAvatar";
+import { shapeReacters } from "src/models/messengerShapes";
 import {
   timeAgoString,
   moveCaretToEnd,
@@ -1110,20 +1111,8 @@ function MessageFooter({
   );
 }
 
-function messageReacters(message, memberMap) {
-  let reacters = {};
-  for (let i in message.reactions) {
-    let r = message.reactions[i];
-    reacters[r.key] = r.userIds
-      .map((id, index) => {
-        return {
-          userId: memberMap[index]?.userId,
-          nickname: memberMap[index]?.nickname,
-        };
-      })
-      .reverse();
-  }
-  return reacters;
+function messageReacters(message, members) {
+  return shapeReacters(message.reactions, members);
 }
 
 export function LikeButton({ type, message, appController }) {

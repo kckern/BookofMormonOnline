@@ -4,6 +4,7 @@ import {
   shapeMessage,
   shapeChannelFields,
   shapeThreadInfo,
+  shapeReacters,
 } from "../messengerShapes";
 
 const gqlUser = {
@@ -128,4 +129,24 @@ test("shapeThreadInfo passes through an already-camelCase event payload", () => 
     replyCount: 2,
     mostRepliedUsers: [],
   });
+});
+
+// Reaction display: userIds must resolve to the matching member, NOT by
+// array position (the legacy bug showed members[0] as the reacter).
+test("shapeReacters resolves reacting users by id with id fallback", () => {
+  const members = [
+    { userId: "kip", nickname: "Kip Orth" },
+    { userId: "staff", nickname: "Staff" },
+  ];
+  const reactions = [{ key: "like", userIds: ["staff", "ghost"] }];
+  const out = shapeReacters(reactions, members);
+  expect(out.like).toEqual([
+    { userId: "ghost", nickname: "ghost" }, // unknown id falls back to the id
+    { userId: "staff", nickname: "Staff" }, // reversed order preserved
+  ]);
+});
+
+test("shapeReacters handles empty inputs", () => {
+  expect(shapeReacters([], [])).toEqual({});
+  expect(shapeReacters(undefined, undefined)).toEqual({});
 });
