@@ -63,6 +63,23 @@
   color: #666;
 }
 
+/* The composer reserves a 35px gutter (textarea margin-left above); keep the
+   avatar inside it. The img must be block-level or the inline baseline gap
+   stretches the gray .avatar wrapper taller than it is wide. */
+.study .mycomment .avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.study .mycomment .avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .edit-commment .mycomment textarea {
   margin-left: 3em;
   width: calc(100% - 3em);
