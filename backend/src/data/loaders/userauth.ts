@@ -5,6 +5,7 @@ import type { Loaders } from '../loaders.js';
 import { md5, cleanUsername, genUserAvatar, isValidToken } from '../../auth/identity.js';
 import { hashPassword, verifyPassword, needsRehash } from '../../auth/password.js';
 import { sendbird } from '../../auth/sendbirdShim.js';
+import { resolveSigninAvatar } from '../../messaging/users.js';
 import { runWrite } from '../writes.js';
 import axios from 'axios';
 
@@ -300,7 +301,7 @@ export async function doSignin(
   await upsertTokenAndRelinkLogs(ctx, token, user.user);
 
   const hashed_id = md5(user.user);
-  const social = sendbird.loadUser(hashed_id, user.name ?? undefined, genUserAvatar(hashed_id));
+  const social = sendbird.loadUser(hashed_id, user.name ?? undefined, await resolveSigninAvatar(ctx.db, hashed_id));
 
   return {
     isSuccess: true,
