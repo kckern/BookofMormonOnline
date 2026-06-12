@@ -29,7 +29,12 @@ import { buildSchema } from '../../src/graphql/schema.js';
 import { buildContext } from '../../src/graphql/context.js';
 
 const TOKEN = process.env['MESSENGER_TEST_TOKEN'] ?? ''; // a real member token; see .env
-const describeAuth = TOKEN ? describe : describe.skip;
+const TEST_CHANNEL = process.env['MESSENGER_TEST_CHANNEL'] ?? ''; // a channel the token's user belongs to
+// These suites exercise mutations with a REAL token — only run them when the
+// sandbox driver is suppressing writes, or they would mutate live data (e.g.
+// changePassword would really change the test account's password).
+const SANDBOX_ON = process.env['SANDBOX'] !== '0';
+const describeAuth = TOKEN && SANDBOX_ON ? describe : describe.skip;
 
 const db = getDb();
 const yoga = createYoga({
@@ -219,13 +224,16 @@ describeAuth('messenger mutations — valid input under sandbox (no persistence,
     expect(r.data?.['messengerUpdateUser']).toBeTruthy();
   });
 
-  it('messengerInviteMembers returns true (write suppressed at the driver, no error)', async () => {
-    const r = await exec(
-      `mutation ($c: String) { messengerInviteMembers(channelUrl: $c, userIds: ["sandbox_invitee"]) }`,
-      { c: '08e1a6987e4d8dab52919b6191f279aa' },
-      TOKEN,
-    );
-    expectNoServerError(r);
-    expect(r.data?.['messengerInviteMembers']).toBe(true);
-  });
+  it.skipIf(!TEST_CHANNEL)(
+    'messengerInviteMembers returns true (write suppressed at the driver, no error)',
+    async () => {
+      const r = await exec(
+        `mutation ($c: String) { messengerInviteMembers(channelUrl: $c, userIds: ["sandbox_invitee"]) }`,
+        { c: TEST_CHANNEL },
+        TOKEN,
+      );
+      expectNoServerError(r);
+      expect(r.data?.['messengerInviteMembers']).toBe(true);
+    },
+  );
 });
