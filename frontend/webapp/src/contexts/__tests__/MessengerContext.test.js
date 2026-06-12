@@ -87,5 +87,13 @@ test("guest → sign-in transition creates the controller", () => {
     </MessengerProvider>,
   );
   expect(factory).toHaveBeenCalledTimes(1);
+  expect(factory).toHaveBeenCalledWith("abc123", "tok-1", signedIn);
   expect(signedIn.sendbird).toBe(ctrl);
+});
+
+test("falls back to social.access_token when user token is absent", () => {
+  const app = makeApp({ social: { user_id: "abc123", access_token: "at-9" }, token: null });
+  const factory = jest.fn(() => makeController());
+  renderProvider(app, factory);
+  expect(factory).toHaveBeenCalledWith("abc123", "at-9", app);
 });

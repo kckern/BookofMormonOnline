@@ -59,6 +59,8 @@ export function MessengerProvider({ appController, children, createController = 
   appRef.current = appController;
 
   const socialUserId = appController.states.user.social?.user_id || null;
+  // Legacy parity: social sign-ins can carry only social.access_token before
+  // a session token is minted — all three legacy call sites had this fallback.
   const token = appController.states.user.token || appController.states.user.social?.access_token || null;
 
   useEffect(() => {
@@ -70,6 +72,8 @@ export function MessengerProvider({ appController, children, createController = 
       return undefined;
     }
 
+    let cancelled = false;
+
     const ctrl = createController(socialUserId, token, app);
     app.sendbird = ctrl; // compatibility bridge for the 84 legacy references
     setController(ctrl);
@@ -78,9 +82,14 @@ export function MessengerProvider({ appController, children, createController = 
     // processSignIn — they are pure state updates now.
     ctrl
       .getStudyGroups()
-      .then((list) => appRef.current.functions.setStudyGroups(list));
+      .then((list) => {
+        if (cancelled) return; // teardown raced the bootstrap — drop stale groups
+        appRef.current.functions.setStudyGroups(list);
+      })
+      .catch((e) => console.warn("Messenger: study-group bootstrap failed", e));
 
     return () => {
+      cancelled = true;
       try {
         ctrl.disconnect();
       } catch (e) {
