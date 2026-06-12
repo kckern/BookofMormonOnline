@@ -35,6 +35,12 @@
 .sidebar .nav.sidebar-menu > li > a img {
   /* img height must stay within parent height even when parent is 6%, no hardcoding */
   margin-right: 1ex;
+  /* Fixed footprint before the SVG loads — without it each label jolts
+     rightward as its icon arrives (horizontal layout shift). em-based so it
+     still scales with the row font-size. */
+  width: 1.2em;
+  height: 1.2em;
+  object-fit: contain;
 }
 /* if screen is less than 650 height */
 @media (max-height: 650px) {
@@ -45,6 +51,7 @@
   }
   .sidebar .nav li img{
     height: 3vh!important;
+    width: 3vh!important;
   }
 }
 
@@ -64,6 +71,8 @@
 
 .sidebar .nav li.menuitem img {
   height: 1.2em;
+  width: 1.2em; /* fixed pre-load footprint — no horizontal shift */
+  object-fit: contain;
   position: relative;
   bottom: 2px;
   margin-right: 1ex;
