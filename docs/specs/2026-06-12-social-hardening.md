@@ -1,7 +1,10 @@
 # Social hardening: invite authorization, real bans, poll cleanup, call gutting, replier faces
 
 **Date:** 2026-06-12
-**Status:** Approved (KC, in-session — directives verbatim)
+**Status:** Implemented 2026-06-12 — §1 invites `82a0f74f`; §2 bans `d076ae4e` +
+security fix `62c9d7fa`; §3 feed poll removal `094041a9`; §4 call gutting
+`26b51d0b` (+ logout fix it surfaced, `84edb4d0`); §6 replier faces `31fbfa5e`.
+Deviations noted inline per section.
 **Source:** findings recorded in `docs/reference/studygroups.md` (2026-06-11 audit)
 
 ## 1. Invite authorization (best practice)
@@ -23,7 +26,8 @@ anyone into any channel. New behavior:
 
 `banMember` currently aliases remove. New model:
 
-- `messenger_members.state` gains the value **`banned`** (column is a varchar — no DDL).
+- `messenger_members.state` gains the value **`banned`**. *(As-built: the column
+  is an ENUM, not a varchar — extended with an instant `ALTER` in `82a0f74f`.)*
   Ban = upsert membership row with `state='banned'`, `role='member'`; the user is
   excluded from member lists/rosters/counts (state filters already exclude non-`joined`
   members everywhere display happens — verify) and **cannot re-enter**:
@@ -35,6 +39,17 @@ anyone into any channel. New behavior:
 - Community-side `banMember` resolver (legacy alias) delegates to the real ban.
 - Admin UI: member row action shows Ban (and Unban for banned members, listed in a
   separate "Banned" section).
+
+*As-built extras (`d076ae4e`/`62c9d7fa`):* ban also demotes `role` to `member`
+(operator gates check role without state); promotion refuses non-joined rows;
+operator kick and unban are the **only** paths that delete a banned row — every
+self-service delete (leave, declineInvitation, withdrawRequest, deny-request) is
+state-scoped. That same scoping closed a *pre-existing* hole: `messengerDeclineInvitation`
+took an arbitrary `userId` and deleted regardless of state, doubling as an
+unauthenticated member-removal backdoor; it now deletes `state='invited'` rows only.
+Banned-roster admin retrieval is the new operator-gated query
+`messengerChannelBannedMembers`. (No backend community `banMember` resolver existed —
+the legacy alias was frontend-side and now calls the real ban.)
 
 ## 3. Poll cleanup
 
@@ -66,7 +81,9 @@ Remains a stub. No work.
 show replier faces (home-feed items do, via the community SDL). New behavior:
 
 - Backend: thread assembly (`assembleMessages`) additionally collects, per parent, up
-  to 5 **distinct most-recent replier user_ids**, resolved through the same bulk
+  to 5 **distinct most-recent replier user_ids** *(as-built: cap stays at the existing
+  3 — the DTO already assembled `most_replies` with legacy 3-replier semantics, and
+  `31fbfa5e` exposed it rather than rewriting a working query)*, resolved through the same bulk
   `getUsers` pass (no extra N+1) → `thread_info.most_replied_users: [MessengerUser]`.
   SDL `MessengerThreadInfo` gains the field.
 - Frontend: query selections add `thread_info { reply_count most_replied_users { user_id nickname profile_url is_bot } }`

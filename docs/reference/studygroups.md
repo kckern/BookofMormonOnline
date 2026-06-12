@@ -101,7 +101,7 @@ also the live definition of a *public user* for leaderboard masking
 | Field | Values | Notes |
 |---|---|---|
 | `role` | `operator` \| `member` | Operators get the admin panel and pass `requireOperator` gates |
-| `state` | `joined` \| `invited` \| `requested` | Only `joined` members are in socket rooms / channel lists |
+| `state` | `joined` \| `invited` \| `requested` \| `banned` | Only `joined` members are in socket rooms / channel lists; `banned` rows are excluded from every roster/count (`getChannelMembers` defaults to `state != 'banned'`) and block all re-entry |
 | `is_muted` | 0/1 | Muted members' `send_message` is rejected server-side |
 | `last_read_at` | datetime | Drives unread counts (`backend/src/messaging/readstate.ts`) |
 
@@ -137,11 +137,27 @@ also the live definition of a *public user* for leaderboard masking
   (`StudyGroupSelect.js:335`, `MessengerController.js:1219`) →
   `messengerRemoveMember(self)`.
 - **Removal / roles / muting (operator).** `StudyGroupAdmin.js` panel:
-  remove/ban (`messengerRemoveMember` — `banMember` is currently an alias for
-  remove, `MessengerController.js:880`), promote/demote
-  (`messengerUpdateMemberRole` with role `operator`/`member`), mute/unmute
-  (`messengerSetMute`). The mute is enforced in the realtime `send_message`
-  handler (`backend/src/realtime/handlers/message.ts:90`).
+  remove (kick — `messengerRemoveMember`, row deleted, may rejoin),
+  promote/demote (`messengerUpdateMemberRole` with role `operator`/`member` —
+  scoped to `state='joined'`, so banned/invited/requested rows can't be
+  promoted), mute/unmute (`messengerSetMute`). The mute is enforced in the
+  realtime `send_message` handler (`backend/src/realtime/handlers/message.ts:90`).
+- **Ban / unban (operator, 2026-06-12).** Real bans, distinct from kick:
+  `messengerBanMember` upserts the membership row to `state='banned'` AND
+  demotes `role` to `member` (operator gates check role without state, so a
+  banned ex-operator would otherwise keep admin rights —
+  `banUserFromChannel`, `backend/src/messaging/members.ts`). Banned users are
+  excluded from all rosters/member counts and **every re-entry path refuses**:
+  `addUserToChannel` (covers `joinGroup` invite links, `joinOpenGroup`, direct
+  adds), `messengerAcceptInvitation`, `requestToJoinGroup`, and
+  `processRequest` grants. The only escape paths are operator-initiated:
+  `messengerUnbanMember` (deletes the row only where `state='banned'`; user may
+  then rejoin) or an operator kick — every self-service delete (leave,
+  decline-invitation, withdraw-request) is state-scoped so a banned user cannot
+  delete their own ban row and rejoin. The admin panel's member-row Ban action
+  performs the real ban, and a "Banned members" section (fed by the
+  operator-gated `messengerChannelBannedMembers` query) lists banned users with
+  an Unban button.
 
 ### Group UI surfaces
 
@@ -189,16 +205,27 @@ joins directly, including private groups. That is the design: the link *is* the
 invitation.
 
 **Invitation rows.** `messengerInviteMembers(channelUrl, userIds)` inserts
-members with `state='invited'` (`backend/src/graphql/resolvers/messenger.ts:526`);
-`messengerAcceptInvitation` flips `invited → joined` (`:566`),
-`messengerDeclineInvitation` deletes the row (`:601`). The client auto-accepts
-when a user opens a chat for a channel where `myMemberState === "invited"`
-(`views/_Common/Study/StudyChat.js:499`). There is currently **no dedicated UI
-that calls `inviteMembers`** (the controller method exists at
-`MessengerController.js:825`); the invite-link flow is what users actually use.
-Also note: `messengerInviteMembers` has **no operator/membership gate** in the
-resolver — any authenticated caller can create invited rows (the other admin
-mutations are operator-gated; see §13).
+members with `state='invited'` (`backend/src/graphql/resolvers/messenger.ts`);
+`messengerAcceptInvitation` flips `invited → joined` (via
+`acceptChannelInvitation` — the `WHERE state='invited'` scope means banned rows
+never transition), `messengerDeclineInvitation` deletes the row — scoped to
+`state='invited'` only, so it can't double as a member-removal backdoor or a
+ban escape. The client auto-accepts when a user opens a chat for a channel
+where `myMemberState === "invited"` (`views/_Common/Study/StudyChat.js:499`).
+There is currently **no dedicated UI that calls `inviteMembers`** (the
+controller method exists at `MessengerController.js:825`); the invite-link flow
+is what users actually use.
+
+**Invite authorization (2026-06-12).** `messengerInviteMembers` is gated by
+`canUserInvite(db, channelUrl, userId)` (`backend/src/messaging/members.ts`):
+**operators may always invite**; a *joined* member may invite only when the
+channel metadata flag **`membersCanInvite === true`** is set; non-members and
+non-joined states (invited/requested/banned) are refused. Operators toggle the
+flag via the `membersCanInvite: Boolean` arg on `messengerUpdateChannel`
+(operator-gated; merged into channel metadata with `updateChannelMetadataKey`,
+a read-modify-write that preserves other keys), surfaced in the admin panel as
+the "Members can invite others" checkbox in the group profile card
+(`StudyGroupAdmin.js`, saved through the existing Save flow).
 
 ---
 
@@ -250,8 +277,12 @@ comments"). Members get a reply box that posts through the *channel* object
 (`sendUserMessage` with `parentMessageId` — `Feed.js:720`) and a Like button
 that adds/removes a `like` reaction (`Feed.js:545`). Non-members see a disabled
 "join to comment" textarea plus the group's join CTA (`Feed.js:695`).
-(Residual wart: after posting a feed reply the client polls `homethread` every
-5s — `Feed.js:763` — contrary to the no-polling directive.)
+A posted reply is appended to component state optimistically (`setNewMessages`)
+— the old post-reply 5s `homethread` poll was deleted 2026-06-12. Note the feed
+has **no socket path for other viewers' replies**: comments load lazily on
+visibility (`homethread`), so another user's new reply only appears after a
+visibility-triggered refresh — a candidate for the realtime pass (see
+`docs/reference/messenger-backlog.md`).
 
 **Guests** see featured groups, the masked leaderboard, the feed, and sign-in
 CTAs in place of join/comment actions. The reading-plan widget
@@ -404,10 +435,16 @@ fetched separately.
   socket `send_message` with `parentMessageId` → persisted, then
   `message_received` is routed to `addMessageToThread<parentId>` because the
   payload carries `parent_message_id` (`MessengerController.js:247`).
-- Caveat: the SDL only exposes `thread_info { reply_count }` — the client's
-  `shapeThreadInfo` therefore always renders `mostRepliedUsers: []` for
-  fetched messages (`models/messengerShapes.js:77`); replier faces only appear
-  on home-feed items (which use the community SDL's `repliers`).
+- **Replier faces (2026-06-12).** The SDL exposes
+  `thread_info { reply_count most_replied_users }` — `most_replied_users` is
+  the DTO's `most_replies` (up to 3 distinct repliers, reverse-chronological,
+  resolved through the same bulk `getUsers` pass as authors) renamed by a
+  `MessengerThreadInfo` field resolver. `MESSAGE_FIELDS` selects it on every
+  parent-message query, `shapeThreadInfo` maps it via `shapeUser`
+  (`models/messengerShapes.js`), so collapsed threads show replier avatars on
+  **all** messenger-fetched messages (page comments, chat, DMs) — previously
+  only home-feed items had faces (via the community SDL's `repliers`, same
+  cap of 3).
 
 ---
 
@@ -595,7 +632,7 @@ this replaced the 60s roster poll (parity task 12).
 | `typing_start` / `typing_stop` | `{channelUrl}` | `handlers/typing.ts` (broadcast, sender excluded) |
 | `mark_read` | `{channelUrl}` | `handlers/read.ts` (stamps `last_read_at`) |
 | `fire_action` | `{channelUrl, action}` | `handlers/action.ts` (pure broadcast, sender excluded) |
-| `update_state` | `{activeGroup, activeCall}` | persists user metadata; no broadcast |
+| `update_state` | `{activeGroup}` | persists user metadata; no broadcast (`activeCall` gone with voice calls, 2026-06-12) |
 
 | Server → client | Scope | Client effect (`MessengerController.setupEventHandlers`) |
 |---|---|---|
@@ -623,10 +660,13 @@ leaks, where a shadow socket would double-render every inbound message.
 `MessengerContext.js:67-110`).
 
 **No-polling directive (KC).** Live community/study state must arrive via
-socket push with in-place cache patching, not polling. Status: the 60s roster
-poll and the per-message unread poll are gone; survivors are the
-`StudyGroupCall` 1s call-state poll (vestigial; backlog #5) and the home-feed
-post-reply 5s `homethread` poll (`Feed.js:763`).
+socket push with in-place cache patching, not polling. Status (2026-06-12):
+**no known polls remain in study surfaces.** The 60s roster poll and the
+per-message unread poll were replaced by socket push (parity effort); the
+`StudyGroupCall` 1s call-state poll vanished with the voice-call feature (§5);
+the home-feed post-reply 5s `homethread` poll was replaced by optimistic local
+append. Remaining gap (not a poll): the feed has no socket delivery for
+*other* viewers' replies — comments refresh only on visibility (§4; backlog).
 
 ---
 
@@ -669,13 +709,18 @@ applied in `backend/src/data/loaders/socialsignin.ts:91`).
 
 **Authorization gates.** `requireOperator` protects channel-admin mutations:
 `messengerUpdateChannel`, `messengerUpdateMemberRole`, `messengerSetMute`,
-`messengerRemoveMember` (unless removing self), plus `addBot`/`removeBot`,
-`processRequest`, and the `requestedUsers` query. Gaps to be aware of:
-`messengerInviteMembers` and `messengerAcceptInvitation`/`Decline` accept an
-arbitrary `userId` arg without verifying it matches the bearer, and
-`messengerUpdateUser`/`messengerUpdateUserMetadata` likewise act on the passed
-`userId`. Socket writes authenticate the *connection* but `send_message` does
-not verify channel membership beyond the mute check.
+`messengerRemoveMember` (unless removing self), `messengerBanMember`,
+`messengerUnbanMember`, plus `addBot`/`removeBot`, `processRequest`, the
+`requestedUsers` query, and the `messengerChannelBannedMembers` query.
+`messengerInviteMembers` is gated by `canUserInvite` (operator, or joined
+member when the channel's `membersCanInvite` metadata flag is set — §3).
+Gaps to be aware of: `messengerAcceptInvitation`/`Decline` accept an arbitrary
+`userId` arg without verifying it matches the bearer (mitigated: both are now
+scoped to `state='invited'` rows, so decline can no longer remove joined
+members or banned rows), and `messengerUpdateUser`/`messengerUpdateUserMetadata`
+likewise act on the passed `userId`. Socket writes authenticate the
+*connection* but `send_message` does not verify channel membership beyond the
+mute check.
 
 **What guests see.** The home feed and featured groups (names, covers,
 member avatars/progress, latest messages of public/open channels), the masked
