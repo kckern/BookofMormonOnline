@@ -982,13 +982,53 @@ h6.botHeader.dropdown-header
   opacity: 0.8;
 }
 
-// Guardrail: the bot picker scrolls instead of outgrowing the viewport
-// (a long botlist once produced a ~4,700px menu that Popper flipped
-// off-screen — docs/bugs/2026-06-11-bot-plugin-dropdown-blowup.md).
-// Scoped to the bot menu: overflow would clip the caret pseudo-elements
-// the other .userStatus menus position outside their box.
+// No scrolling in the bot picker, vertical or horizontal: text wraps, then
+// truncates. The old ~4,700px menu blowup
+// (docs/bugs/2026-06-11-bot-plugin-dropdown-blowup.md) is now prevented at
+// the data layer — botlist returns only the study bots for the current
+// language (≤3 rows), so the overflow-y guardrail is no longer needed.
 .userStatus .botPluginDropdown .dropdown-menu
 {
-  max-height: 70vh;
-  overflow-y: auto;
+  max-width: min(22em, 90vw)!important;
+  min-width: min(22em, 90vw);
+  overflow: hidden;
+}
+
+// Bootstrap's .dropdown-item defaults to white-space:nowrap, which forces
+// rows wider than the fixed-width menu (the horizontal scrollbar).
+.userStatus .botPluginDropdown .dropdown-menu .dropdown-item
+{
+  white-space: normal;
+}
+
+// Let the text column shrink inside the flex row instead of overflowing.
+.userStatus .dropdown-menu .botInfo .botInfoText
+{
+  min-width: 0;
+}
+
+// Name wraps if it must; the plug-in button never shrinks or clips.
+.userStatus .dropdown-menu .botInfo .botName
+{
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1ex;
+  overflow-wrap: anywhere;
+}
+
+.userStatus .dropdown-menu .botInfo .botName .botButton
+{
+  float: none;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+// Description wraps to two lines, then truncates with an ellipsis.
+.userStatus .dropdown-menu .botInfo .botDescription
+{
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
