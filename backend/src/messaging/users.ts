@@ -13,6 +13,7 @@
  * is_bot is a TINYINT(1); mysql2 may deliver 0/1 as a number — coerce to boolean.
  */
 
+import { createHash } from 'node:crypto';
 import type { Kysely } from 'kysely';
 import type { DB } from '../../codegen/db.js';
 import type { UserDTO } from './dto.js';
@@ -32,17 +33,25 @@ type RawUser = {
   // joined from bom_user when the participant is a human (bom_user_id set).
   // Thin human rows store nickname/profile_url NULL — display is coalesced from here.
   bom_name?: string | null;
+  // bom_user_id IS the bom_user.user username; md5(username) keys the profile image.
+  bom_user_id?: string | null;
 };
 
-// Profile images live at {base}/profiles/{user_id}.jpg (the Sendbird→S3 migration
-// target; user_id IS md5(bom_user.user)). Humans' messenger_users.profile_url is NULL,
-// so derive it; the frontend UserAvatar falls back to a generated avatar on 404.
+// Profile images live at {base}/profiles/{md5(bom_user.user)}.jpg (the
+// Sendbird→S3 migration target). Modern human rows have user_id === that md5,
+// but SendBird-migrated legacy rows carry handle-style ids, so for linked rows
+// derive from md5(bom_user_id) — bom_user_id IS the username. Humans'
+// messenger_users.profile_url is NULL, so derive it; the frontend UserAvatar
+// falls back to a generated avatar on 404.
 const PROFILE_IMAGE_BASE = (
   process.env['PROFILE_IMAGE_BASE_URL'] || 'https://assets.bookofmormon.online'
 ).replace(/\/+$/, '');
 
-function deriveProfileUrl(userId: string): string {
-  return `${PROFILE_IMAGE_BASE}/profiles/${userId}.jpg`;
+function deriveProfileUrl(row: Pick<RawUser, 'user_id' | 'bom_user_id'>): string {
+  const key = row.bom_user_id
+    ? createHash('md5').update(row.bom_user_id).digest('hex')
+    : row.user_id;
+  return `${PROFILE_IMAGE_BASE}/profiles/${key}.jpg`;
 }
 
 function parseMetadata(raw: unknown): Record<string, unknown> | null {
@@ -59,10 +68,10 @@ function parseMetadata(raw: unknown): Record<string, unknown> | null {
   return null;
 }
 
-function toUserDTO(row: RawUser, online = false): UserDTO {
+export function toUserDTO(row: RawUser, online = false): UserDTO {
   // Coalesce display from bom_user for thin human rows; bots/orphans carry their own.
   const nickname = row.nickname || row.bom_name || row.user_id;
-  const profile_url = row.profile_url || deriveProfileUrl(row.user_id);
+  const profile_url = row.profile_url || deriveProfileUrl(row);
   return {
     user_id: row.user_id,
     nickname,
@@ -93,6 +102,7 @@ export async function getUser(
       'messenger_users.metadata as metadata',
       'messenger_users.is_bot as is_bot',
       'messenger_users.last_seen_at as last_seen_at',
+      'messenger_users.bom_user_id as bom_user_id',
       'bom_user.name as bom_name',
     ])
     .where('messenger_users.user_id', '=', userId)
@@ -122,6 +132,7 @@ export async function getUsers(
         'messenger_users.metadata as metadata',
         'messenger_users.is_bot as is_bot',
         'messenger_users.last_seen_at as last_seen_at',
+        'messenger_users.bom_user_id as bom_user_id',
         'bom_user.name as bom_name',
       ])
       .where('messenger_users.user_id', 'in', userIds)
