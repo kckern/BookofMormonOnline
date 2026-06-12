@@ -73,7 +73,16 @@ export default class MessengerController {
       reconnectionAttempts: 10,
       transports: ['websocket', 'polling']
     });
-    
+
+    // Singleton guard: exactly one live messenger socket per page. Catches
+    // every leak path (sign-in re-init replacing appController.sendbird, HMR
+    // module re-evaluation) — a shadow socket re-dispatches message_received,
+    // so each inbound message renders once per leaked instance.
+    if (window.__messengerSocket && window.__messengerSocket !== this.socket) {
+      try { window.__messengerSocket.disconnect(); } catch (e) { /* already dead */ }
+    }
+    window.__messengerSocket = this.socket;
+
     // Set up event handlers
     this.setupEventHandlers();
     

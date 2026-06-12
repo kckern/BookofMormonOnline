@@ -15,6 +15,16 @@ const USE_MESSENGER = isMessengerEnabled();
  * Creates the appropriate chat controller based on feature flag
  */
 const createChatController = (userId, accessToken, appController) => {
+  // Tear down any previous controller first. All three sign-in paths
+  // (preload tokensignin, socialSignIn, processSignIn) replace
+  // appController.sendbird; an undisposed instance keeps a live socket —
+  // a "shadow websocket" that re-dispatches every message_received, so
+  // each inbound message renders once per leaked instance.
+  try {
+    appController?.sendbird?.disconnect?.();
+  } catch (e) {
+    console.warn('Messenger: previous controller teardown failed', e);
+  }
   if (USE_MESSENGER) {
     console.log('Using MessengerController (custom backend)');
     return new MessengerController(
