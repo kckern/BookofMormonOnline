@@ -16,7 +16,7 @@
 import type { Resolvers } from '../../../codegen/graphql.js';
 import type { AppContext } from '../context.js';
 import { md5, genUserAvatar } from '../../auth/identity.js';
-import { getChannel, getMyChannels, getPublicChannels } from '../../messaging/channels.js';
+import { getChannel, getMyStudyGroups, getPublicChannels } from '../../messaging/channels.js';
 import { getChannelMembers, addUserToChannel, removeUserFromChannel, getPublicUserIds } from '../../messaging/members.js';
 import { getMessages, getMessagesForChannels, getThread } from '../../messaging/messages.js';
 import { getUser, getUsers, listStudyBots } from '../../messaging/users.js';
@@ -563,7 +563,8 @@ export const communityResolvers: Resolvers = {
 
         let myChannels: ChannelDTO[] = [];
         if (myUserId) {
-          myChannels = await getMyChannels(ctx.db, myUserId);
+          // Study groups only — DM messages don't belong in the home feed.
+          myChannels = await getMyStudyGroups(ctx.db, myUserId);
         }
 
         // Merge, deduplicate, resolve groups
@@ -632,7 +633,7 @@ export const communityResolvers: Resolvers = {
 
         let myChannels: ChannelDTO[] = [];
         if (myUserId) {
-          myChannels = await getMyChannels(ctx.db, myUserId);
+          myChannels = await getMyStudyGroups(ctx.db, myUserId);
         }
 
         const myHomeGroups = await Promise.all(

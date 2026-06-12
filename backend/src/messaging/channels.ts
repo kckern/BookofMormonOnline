@@ -232,6 +232,32 @@ export async function getMyChannels(
 }
 
 /**
+ * Channel custom_types that are study groups. DMs are conversations, not
+ * groups — group-facing surfaces (home groups list, home feed, group
+ * browsers) must never include them. Callers should reach for
+ * getMyStudyGroups()/getMyDMs() rather than re-deriving this split.
+ */
+export const GROUP_TYPES = ['open', 'private', 'public', 'solo'] as const;
+
+/** All study-group channels a user has joined (excludes DM channels). */
+export async function getMyStudyGroups(
+  db: Kysely<DB>,
+  userId: string,
+  options: { limit?: number } = {},
+): Promise<ChannelDTO[]> {
+  return getMyChannels(db, userId, { ...options, customTypes: [...GROUP_TYPES] });
+}
+
+/** All DM channels a user has joined. */
+export async function getMyDMs(
+  db: Kysely<DB>,
+  userId: string,
+  options: { limit?: number } = {},
+): Promise<ChannelDTO[]> {
+  return getMyChannels(db, userId, { ...options, customTypes: ['DM'] });
+}
+
+/**
  * Return discoverable channels (public/open by default).
  * Optionally filtered by lang. Limit defaults to 100.
  */

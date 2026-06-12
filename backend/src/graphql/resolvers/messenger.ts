@@ -8,7 +8,7 @@ import type { Resolvers } from '../../../codegen/graphql.js';
 import type { AppContext } from '../context.js';
 import { md5 } from '../../auth/identity.js';
 import { getUser, getUsers, updateUserNickname, updateUserProfileUrl, updateUserMetadata } from '../../messaging/users.js';
-import { getChannel, getMyChannels, createChannel } from '../../messaging/channels.js';
+import { getChannel, getMyChannels, getMyDMs, createChannel } from '../../messaging/channels.js';
 import { getChannelMembers, addUserToChannel, removeUserFromChannel, setMemberMuted } from '../../messaging/members.js';
 import { getMessages, getMessage, getThread } from '../../messaging/messages.js';
 import { getPageComments } from '../../messaging/pagecomments.js';
@@ -205,8 +205,7 @@ export const messengerResolvers: Resolvers = {
       const userId = args.userId ?? (await resolveActingUserId(ctx));
       if (!userId) return [];
 
-      const channels = await getMyChannels(ctx.db, userId);
-      const dmChannels = channels.filter((ch) => ch.custom_type === 'DM');
+      const dmChannels = await getMyDMs(ctx.db, userId);
 
       return dmChannels
         .filter((ch) => ch.unread_message_count > 0)
