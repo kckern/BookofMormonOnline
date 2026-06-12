@@ -341,7 +341,7 @@ function LeaderBoard({ leaders }) {
 }
 
 function GroupCard({ groupData, appController, activeGroup, setActiveGroup }) {
-  groupData.members = groupData.members.filter(
+  groupData.members = (groupData.members || []).filter(
     (m) => m.nickname !== "StudyBuddy",
   ); //TODO get metadata variables
 
@@ -371,17 +371,21 @@ function GroupCard({ groupData, appController, activeGroup, setActiveGroup }) {
           </div>
           <div className="groupText">
             <div className="groupTitle">{groupData.name}</div>
-            <div className="groupMessage">
-              <div className="groupMessageAvatar">
-                <img src={groupData.latest.user.picture} onError={breakCache} />
+            {/* latest is absent for groups with no messages yet (the legacy
+                response filter strips null keys entirely). */}
+            {groupData.latest?.user ? (
+              <div className="groupMessage">
+                <div className="groupMessageAvatar">
+                  <img src={groupData.latest.user.picture} onError={breakCache} />
+                </div>
+                <div className="groupMessageContent">
+                  {" "}
+                  {groupData.latest.msg
+                    ?.replace(/<[^>]*>/gi, "")
+                    ?.replace(/^•$/, label("highlight_msg"))}
+                </div>
               </div>
-              <div className="groupMessageContent">
-                {" "}
-                {groupData.latest.msg
-                  ?.replace(/<[^>]*>/gi, "")
-                  ?.replace(/^•$/, label("highlight_msg"))}
-              </div>
-            </div>
+            ) : null}
           </div>
           <div className="groupMembership">
             {groupData.members.length > 4 ? (
@@ -569,7 +573,7 @@ export function GroupCallToAction({ appController, groupData, joinlabel }) {
 }
 
 export function groupToolTipHtml(groupData) {
-  groupData.members = groupData.members.filter(
+  groupData.members = (groupData.members || []).filter(
     (m) => m.nickname !== "StudyBuddy",
   ); //TODO get metadata variables
 
@@ -603,7 +607,7 @@ export function groupToolTipHtml(groupData) {
 }
 
 export function GroupLeaderBoard({ groupData }) {
-  groupData.members = groupData.members.filter(
+  groupData.members = (groupData.members || []).filter(
     (m) => m.nickname !== "StudyBuddy",
   ); //TODO get metadata variables
   const sortedMembers = groupData.members.sort(
