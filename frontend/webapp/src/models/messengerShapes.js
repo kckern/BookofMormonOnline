@@ -70,10 +70,10 @@ export function shapeMessage(msg = {}, opts = {}) {
   };
 }
 
-// thread_info arrives snake_case ({ reply_count } only — the SDL has no
-// most_replied_users), and the legacy response filter strips null/empty
-// keys. Always emit the full SendBird ThreadInfo shape: ThreadedMessages
-// maps mostRepliedUsers unconditionally.
+// thread_info arrives snake_case ({ reply_count, most_replied_users }),
+// and the legacy response filter strips null/empty keys. Always emit the
+// full SendBird ThreadInfo shape: ThreadedMessages maps mostRepliedUsers
+// unconditionally (replier faces).
 export function shapeThreadInfo(ti) {
   return {
     replyCount: ti?.reply_count ?? ti?.replyCount ?? 0,

@@ -721,4 +721,86 @@ describe('getThread + thread_info', () => {
       expect(refreshed!.thread_info!.most_replies[0]!.user_id).toBe(userId);
     },
   );
+
+  itWrite(
+    'thread_info.most_replied_users surfaces distinct repliers through the GraphQL layer',
+    async () => {
+      // Replier faces (social-hardening §6): the DTO already assembles
+      // most_replies; this asserts the SDL exposes it under the client-facing
+      // name most_replied_users via the MessengerThreadInfo field resolver.
+      const { createYoga } = await import('graphql-yoga');
+      const { buildSchema } = await import('../../src/graphql/schema.js');
+      const { buildContext } = await import('../../src/graphql/context.js');
+
+      const { channelUrl, userId } = await seedChannelAndUser();
+      const userB = newUserId();
+      await db
+        .insertInto('messenger_users')
+        .values({ user_id: userB, nickname: 'Replier B' })
+        .execute();
+
+      const parent = await postMessage(db, { channelUrl, userId, message: 'Thread parent' });
+      trackMessage(parent.message_id);
+      const r1 = await postMessage(db, {
+        channelUrl,
+        userId,
+        message: 'Reply from A',
+        parentMessageId: parent.message_id,
+      });
+      trackMessage(r1.message_id);
+      const r2 = await postMessage(db, {
+        channelUrl,
+        userId: userB,
+        message: 'Reply from B',
+        parentMessageId: parent.message_id,
+      });
+      trackMessage(r2.message_id);
+
+      // Service level: distinct repliers, reverse-chronological.
+      const refreshed = await getMessage(db, channelUrl, parent.message_id);
+      const ids = refreshed!.thread_info!.most_replies.map((u) => u.user_id);
+      expect(ids).toEqual([userB, userId]);
+
+      // GraphQL level: messengerMessages → thread_info.most_replied_users.
+      const yoga = createYoga({
+        schema: buildSchema(),
+        context: () => buildContext(db, 'en'),
+      });
+      const res = await yoga.fetch('http://localhost/graphql', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', accept: 'application/json' },
+        body: JSON.stringify({
+          query: `query { messengerMessages(channelUrl: "${channelUrl}", limit: 30) {
+            message_id
+            thread_info { reply_count most_replied_users { user_id nickname profile_url is_bot } }
+          } }`,
+        }),
+      });
+      const json = (await res.json()) as {
+        data?: {
+          messengerMessages?: Array<{
+            message_id: string;
+            thread_info: {
+              reply_count: number;
+              most_replied_users: Array<{ user_id: string }>;
+            } | null;
+          }>;
+        };
+        errors?: Array<{ message: string }>;
+      };
+      if (json.errors?.length) {
+        throw new Error(`GraphQL errors: ${json.errors.map((e) => e.message).join('; ')}`);
+      }
+      const gqlParent = json.data?.messengerMessages?.find(
+        (m) => m.message_id === parent.message_id,
+      );
+      expect(gqlParent).toBeDefined();
+      expect(gqlParent!.thread_info).not.toBeNull();
+      expect(gqlParent!.thread_info!.reply_count).toBe(2);
+      expect(gqlParent!.thread_info!.most_replied_users.map((u) => u.user_id)).toEqual([
+        userB,
+        userId,
+      ]);
+    },
+  );
 });

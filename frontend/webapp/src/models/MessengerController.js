@@ -63,7 +63,7 @@ const MESSAGE_FIELDS = `
   link_type
   link_target
   parent_message_id
-  thread_info { reply_count }
+  thread_info { reply_count most_replied_users { user_id nickname profile_url is_bot } }
   reactions { reaction_key user_ids }
   created_at
   updated_at

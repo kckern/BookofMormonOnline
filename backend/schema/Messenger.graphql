@@ -52,6 +52,7 @@ type MessengerMember {
 
 type MessengerThreadInfo {
   reply_count: Int
+  most_replied_users: [MessengerUser]
 }
 
 type MessengerReaction {

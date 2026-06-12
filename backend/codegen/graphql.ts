@@ -411,6 +411,7 @@ export type MessengerReaction = {
 
 export type MessengerThreadInfo = {
   __typename?: 'MessengerThreadInfo';
+  most_replied_users?: Maybe<Array<Maybe<MessengerUser>>>;
   reply_count?: Maybe<Scalars['Int']['output']>;
 };
 
@@ -2275,6 +2276,7 @@ export type MessengerReactionResolvers<ContextType = AppContext, ParentType exte
 };
 
 export type MessengerThreadInfoResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['MessengerThreadInfo'] = ResolversParentTypes['MessengerThreadInfo']> = {
+  most_replied_users?: Resolver<Maybe<Array<Maybe<ResolversTypes['MessengerUser']>>>, ParentType, ContextType>;
   reply_count?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };

@@ -107,16 +107,34 @@ test("shapeChannelFields: non-member viewer gets none/undefined gracefully", () 
   expect(f.joinedMemberCount).toBe(0);
 });
 
-// thread_info arrives snake_case from the green-field backend (reply_count
-// only — no most_replied_users field exists in the SDL), and the legacy
-// response filter strips null/empty keys. The SendBird-compat shape must
-// always carry camelCase replyCount and an array mostRepliedUsers, or
-// ThreadedMessages crashes mapping over undefined.
+// thread_info arrives snake_case from the green-field backend
+// ({ reply_count, most_replied_users }), and the legacy response filter
+// strips null/empty keys. The SendBird-compat shape must always carry
+// camelCase replyCount and an array mostRepliedUsers, or ThreadedMessages
+// crashes mapping over undefined.
 test("shapeThreadInfo maps reply_count and defaults mostRepliedUsers", () => {
   expect(shapeThreadInfo({ reply_count: 3 })).toEqual({
     replyCount: 3,
     mostRepliedUsers: [],
   });
+});
+
+test("shapeThreadInfo maps most_replied_users through shapeUser (replier faces)", () => {
+  const shaped = shapeThreadInfo({
+    reply_count: 2,
+    most_replied_users: [
+      { user_id: "u1", nickname: "Alice", profile_url: "http://x/a.png", is_bot: false },
+      { user_id: "u2", nickname: "Bot", profile_url: "http://x/b.png", is_bot: true },
+    ],
+  });
+  expect(shaped.replyCount).toBe(2);
+  expect(shaped.mostRepliedUsers).toHaveLength(2);
+  expect(shaped.mostRepliedUsers[0]).toMatchObject({
+    userId: "u1",
+    nickname: "Alice",
+    plainProfileUrl: "http://x/a.png", // ThreadedMessages reads plainProfileUrl
+  });
+  expect(shaped.mostRepliedUsers[1].metaData.isBot).toBe(true);
 });
 
 test("shapeThreadInfo handles absent/null thread_info", () => {

@@ -296,6 +296,21 @@ export const messengerResolvers: Resolvers = {
     },
   },
 
+  // ─── MessengerThreadInfo field resolvers ───────────────────────────────────
+
+  MessengerThreadInfo: {
+    /**
+     * most_replied_users — the DTO names this `most_replies` (legacy service
+     * shape); the SDL/client contract is `most_replied_users` (what
+     * shapeThreadInfo on the frontend reads). Rename here, like reactions'
+     * key → reaction_key above.
+     */
+    most_replied_users: (parent) => {
+      const ti = parent as unknown as NonNullable<MessageDTO['thread_info']>;
+      return ti.most_replies ?? [];
+    },
+  },
+
   // ─── Mutations ────────────────────────────────────────────────────────────────
 
   Mutation: {
