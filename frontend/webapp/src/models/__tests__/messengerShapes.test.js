@@ -3,6 +3,7 @@ import {
   shapeMember,
   shapeMessage,
   shapeChannelFields,
+  shapeThreadInfo,
 } from "../messengerShapes";
 
 const gqlUser = {
@@ -103,4 +104,28 @@ test("shapeChannelFields: non-member viewer gets none/undefined gracefully", () 
   const f = shapeChannelFields({ members: [] }, "stranger");
   expect(f.myRole).toBe("none");
   expect(f.joinedMemberCount).toBe(0);
+});
+
+// thread_info arrives snake_case from the green-field backend (reply_count
+// only — no most_replied_users field exists in the SDL), and the legacy
+// response filter strips null/empty keys. The SendBird-compat shape must
+// always carry camelCase replyCount and an array mostRepliedUsers, or
+// ThreadedMessages crashes mapping over undefined.
+test("shapeThreadInfo maps reply_count and defaults mostRepliedUsers", () => {
+  expect(shapeThreadInfo({ reply_count: 3 })).toEqual({
+    replyCount: 3,
+    mostRepliedUsers: [],
+  });
+});
+
+test("shapeThreadInfo handles absent/null thread_info", () => {
+  expect(shapeThreadInfo(null)).toEqual({ replyCount: 0, mostRepliedUsers: [] });
+  expect(shapeThreadInfo(undefined)).toEqual({ replyCount: 0, mostRepliedUsers: [] });
+});
+
+test("shapeThreadInfo passes through an already-camelCase event payload", () => {
+  expect(shapeThreadInfo({ replyCount: 2 })).toEqual({
+    replyCount: 2,
+    mostRepliedUsers: [],
+  });
 });

@@ -70,6 +70,19 @@ export function shapeMessage(msg = {}, opts = {}) {
   };
 }
 
+// thread_info arrives snake_case ({ reply_count } only — the SDL has no
+// most_replied_users), and the legacy response filter strips null/empty
+// keys. Always emit the full SendBird ThreadInfo shape: ThreadedMessages
+// maps mostRepliedUsers unconditionally.
+export function shapeThreadInfo(ti) {
+  return {
+    replyCount: ti?.reply_count ?? ti?.replyCount ?? 0,
+    mostRepliedUsers: Array.isArray(ti?.most_replied_users)
+      ? ti.most_replied_users.map(shapeUser)
+      : [],
+  };
+}
+
 // Channel DATA fields only (methods live on the controller's channel object).
 export function shapeChannelFields(ch = {}, currentUserId) {
   const members = (ch.members || []).map(shapeMember);

@@ -10,7 +10,7 @@
 import { io } from 'socket.io-client';
 import crypto from 'crypto-browserify';
 import { refreshChannel, tokenImage } from './Utils';
-import { shapeUser, shapeMember, shapeMessage, shapeChannelFields } from './messengerShapes';
+import { shapeUser, shapeMember, shapeMessage, shapeChannelFields, shapeThreadInfo } from './messengerShapes';
 
 // Helper for consistent user IDs (same as SendbirdController)
 export const md5 = (string) => {
@@ -293,7 +293,7 @@ export default class MessengerController {
 
     // Reactions / thread info
     normalized.reactions = normalizeReactions(msg.reactions);
-    normalized.threadInfo = msg.thread_info || { replyCount: 0 };
+    normalized.threadInfo = shapeThreadInfo(msg.thread_info);
 
     // Compatibility methods
     normalized.applyThreadInfoUpdateEvent = () => {};
