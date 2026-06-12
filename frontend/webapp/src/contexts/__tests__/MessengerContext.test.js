@@ -52,3 +52,40 @@ test("noopController has the legacy stub surface", async () => {
     threadedMessages: [],
   });
 });
+
+const makeController = () => ({
+  disconnect: jest.fn(),
+  getStudyGroups: jest.fn().mockResolvedValue([{ url: "g1" }]),
+});
+
+test("sign-in: creates controller, bridges appController.sendbird, bootstraps groups", async () => {
+  const app = makeApp({ social: { user_id: "abc123" }, user: "kc" });
+  const ctrl = makeController();
+  const factory = jest.fn(() => ctrl);
+  renderProvider(app, factory);
+
+  expect(factory).toHaveBeenCalledWith("abc123", "tok-1", app);
+  expect(app.sendbird).toBe(ctrl);
+  expect(lastCtx).toBe(ctrl);
+  // bootstrap (getStudyGroups → setStudyGroups) moved here from the dispatch fns
+  await act(async () => {});
+  expect(ctrl.getStudyGroups).toHaveBeenCalled();
+  expect(app.functions.setStudyGroups).toHaveBeenCalledWith([{ url: "g1" }]);
+});
+
+test("guest → sign-in transition creates the controller", () => {
+  const app = makeApp();
+  const ctrl = makeController();
+  const factory = jest.fn(() => ctrl);
+  const { rerender } = renderProvider(app, factory);
+  expect(factory).not.toHaveBeenCalled();
+
+  const signedIn = makeApp({ social: { user_id: "abc123" }, user: "kc" });
+  rerender(
+    <MessengerProvider appController={signedIn} createController={factory}>
+      <Probe />
+    </MessengerProvider>,
+  );
+  expect(factory).toHaveBeenCalledTimes(1);
+  expect(signedIn.sendbird).toBe(ctrl);
+});

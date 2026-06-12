@@ -8,12 +8,11 @@
  * compatibility bridge for existing consumers (including non-React code).
  * New code should consume useMessenger() instead of the bridge.
  */
-import React, { createContext, useContext, useRef, useState } from "react"; // eslint-disable-line no-unused-vars
+import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 import MessengerController from "src/models/MessengerController";
 import { isMessengerEnabled } from "src/models/featureFlags";
 
-// eslint-disable-next-line no-unused-vars
-const USE_MESSENGER = isMessengerEnabled(); // used in Task 2
+const USE_MESSENGER = isMessengerEnabled();
 
 // Signed-out / messaging-disabled stub. Same surface the legacy
 // createChatController no-op branch exposed; also the bridge's value after
@@ -40,8 +39,7 @@ export const noopController = (userId) => ({
   _currentUser: { user_id: userId, nickname: "User" },
 });
 
-// eslint-disable-next-line no-unused-vars
-const defaultFactory = (userId, accessToken, appController) => // used in Task 2
+const defaultFactory = (userId, accessToken, appController) =>
   new MessengerController(
     process.env.REACT_APP_API_URL || window.location.origin,
     userId,
@@ -53,19 +51,50 @@ export const MessengerContext = createContext(null);
 export const useMessenger = () => useContext(MessengerContext);
 
 export function MessengerProvider({ appController, children, createController = defaultFactory }) {
-  const [controller, setController] = useState(null); // eslint-disable-line no-unused-vars
+  const [controller, setController] = useState(null);
 
   // The appController object is recreated by spread on every dispatch; keep a
   // ref so the effect always bridges onto the live object without re-running.
-  const appRef = useRef(appController); // eslint-disable-line no-unused-vars
+  const appRef = useRef(appController);
   appRef.current = appController;
 
-  // eslint-disable-next-line no-unused-vars
-  const socialUserId = appController.states.user.social?.user_id || null; // used in Task 2
-  // eslint-disable-next-line no-unused-vars
-  const token = appController.states.user.token || null; // used in Task 2
+  const socialUserId = appController.states.user.social?.user_id || null;
+  const token = appController.states.user.token || appController.states.user.social?.access_token || null;
 
-  // Lifecycle effect added in Task 2.
+  useEffect(() => {
+    if (!socialUserId) return undefined;
+    const app = appRef.current;
+
+    if (!USE_MESSENGER) {
+      app.sendbird = noopController(socialUserId);
+      return undefined;
+    }
+
+    const ctrl = createController(socialUserId, token, app);
+    app.sendbird = ctrl; // compatibility bridge for the 84 legacy references
+    setController(ctrl);
+
+    // Sign-in bootstrap, moved out of socialSignIn / setPreLoadData /
+    // processSignIn — they are pure state updates now.
+    ctrl
+      .getStudyGroups()
+      .then((list) => appRef.current.functions.setStudyGroups(list));
+
+    return () => {
+      try {
+        ctrl.disconnect();
+      } catch (e) {
+        console.warn("Messenger: controller teardown failed", e);
+      }
+      // Never null: Main.js shows a Loader while user is set and
+      // sendbird === null.
+      appRef.current.sendbird = noopController(socialUserId);
+      setController(null);
+    };
+    // createController is intentionally omitted: a stable factory is part of
+    // the provider contract (tests pass a constant; prod uses defaultFactory).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [socialUserId, token]);
 
   return (
     <MessengerContext.Provider value={controller}>
