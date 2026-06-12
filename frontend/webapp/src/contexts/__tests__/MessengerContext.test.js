@@ -97,3 +97,50 @@ test("falls back to social.access_token when user token is absent", () => {
   renderProvider(app, factory);
   expect(factory).toHaveBeenCalledWith("abc123", "at-9", app);
 });
+
+const rerenderWith = (rerender, app, factory) =>
+  rerender(
+    <MessengerProvider appController={app} createController={factory}>
+      <Probe />
+    </MessengerProvider>,
+  );
+
+test("identity change: disconnect old, create new", () => {
+  const appA = makeApp({ social: { user_id: "userA" }, user: "a" });
+  const ctrlA = makeController();
+  const ctrlB = makeController();
+  const factory = jest.fn().mockReturnValueOnce(ctrlA).mockReturnValueOnce(ctrlB);
+  const { rerender } = renderProvider(appA, factory);
+
+  const appB = makeApp({ social: { user_id: "userB" }, user: "b" });
+  rerenderWith(rerender, appB, factory);
+
+  expect(ctrlA.disconnect).toHaveBeenCalledTimes(1);
+  expect(factory).toHaveBeenCalledTimes(2);
+  expect(appB.sendbird).toBe(ctrlB);
+});
+
+test("sign-out: disconnect, bridge resets to no-op stub (never null), context null", () => {
+  const app = makeApp({ social: { user_id: "userA" }, user: "a" });
+  const ctrl = makeController();
+  const factory = jest.fn(() => ctrl);
+  const { rerender } = renderProvider(app, factory);
+
+  const guest = makeApp(); // processSignOut clears social
+  rerenderWith(rerender, guest, factory);
+
+  expect(ctrl.disconnect).toHaveBeenCalledTimes(1);
+  expect(lastCtx).toBeNull();
+  // cleanup bridges the stub onto the appController live at cleanup time
+  expect(guest.sendbird).toBeDefined();
+  expect(guest.sendbird).not.toBeNull();
+  expect(guest.sendbird.disconnect).toBeInstanceOf(Function);
+});
+
+test("unmount disconnects", () => {
+  const app = makeApp({ social: { user_id: "userA" }, user: "a" });
+  const ctrl = makeController();
+  const { unmount } = renderProvider(app, jest.fn(() => ctrl));
+  unmount();
+  expect(ctrl.disconnect).toHaveBeenCalledTimes(1);
+});
