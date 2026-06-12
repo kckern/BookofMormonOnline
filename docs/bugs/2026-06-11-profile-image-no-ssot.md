@@ -72,21 +72,21 @@ order can't rescue it.
 Plan: `docs/plans/2026-06-11-profile-image-ssot.md`. `messenger_users.profile_url`
 is now the single source of truth at read time; generators are last-resort only.
 
-1. **`resolveSigninAvatar` helper** (`ac03906`) — canonical avatar lookup for
+1. **`resolveSigninAvatar` helper** (`ca1897a`) — canonical avatar lookup for
    sign-in in `backend/src/messaging/users.ts`: stored `profile_url` first,
    generated avatar only when nothing is on file. TDD in
    `backend/test/messaging/users.test.ts`.
-2. **Password signin** (`17faa0a`) — `backend/src/data/loaders/userauth.ts` now
+2. **Password signin** (`b064eb0`) — `backend/src/data/loaders/userauth.ts` now
    serves `resolveSigninAvatar` instead of minting a fresh dicebear per request.
-3. **Token signin** (`8cbd975`) — `backend/src/graphql/resolvers/userauth.ts`
+3. **Token signin** (`9bd49dd`) — `backend/src/graphql/resolvers/userauth.ts`
    uses the canonical avatar; newly provisioned rows persist `NULL profile_url`
    rather than freezing a generated URL into the DB.
-4. **Gated e2e** (`1875181`) — `backend/test/messaging/community-graphql-auth.test.ts`:
+4. **Gated e2e** (`86b2fbc`) — `backend/test/messaging/community-graphql-auth.test.ts`:
    tokensignin's `social.profile_url` must match the messenger record.
-5. **Dead-host guard** (`c0be4dd`) — `backend/src/messaging/avatarAssets.ts` +
+5. **Dead-host guard** (`62cf478`) — `backend/src/messaging/avatarAssets.ts` +
    `users.ts`: stored URLs on the retired `avatars.dicebear.com` v1 host
    (HTTP 410) are treated as absent so the fallback chain can rescue them.
-6. **Frontend single generator** (`325c624`) — `frontend/webapp/src/models/Utils.js`
+6. **Frontend single generator** (`85ad2f4`) — `frontend/webapp/src/models/Utils.js`
    drops its drifted copy and delegates `genUserAvatar` to
    `components/UserAvatar.js`'s `generateAvatarUrl`.
 
