@@ -58,6 +58,13 @@ const makeController = () => ({
   getStudyGroups: jest.fn().mockResolvedValue([{ url: "g1" }]),
 });
 
+const rerenderWith = (rerender, app, factory) =>
+  rerender(
+    <MessengerProvider appController={app} createController={factory}>
+      <Probe />
+    </MessengerProvider>,
+  );
+
 test("sign-in: creates controller, bridges appController.sendbird, bootstraps groups", async () => {
   const app = makeApp({ social: { user_id: "abc123" }, user: "kc" });
   const ctrl = makeController();
@@ -98,13 +105,6 @@ test("falls back to social.access_token when user token is absent", () => {
   expect(factory).toHaveBeenCalledWith("abc123", "at-9", app);
 });
 
-const rerenderWith = (rerender, app, factory) =>
-  rerender(
-    <MessengerProvider appController={app} createController={factory}>
-      <Probe />
-    </MessengerProvider>,
-  );
-
 test("identity change: disconnect old, create new", () => {
   const appA = makeApp({ social: { user_id: "userA" }, user: "a" });
   const ctrlA = makeController();
@@ -135,6 +135,9 @@ test("sign-out: disconnect, bridge resets to no-op stub (never null), context nu
   expect(guest.sendbird).toBeDefined();
   expect(guest.sendbird).not.toBeNull();
   expect(guest.sendbird.disconnect).toBeInstanceOf(Function);
+  // Teardown writes through appRef.current (the appController live at cleanup
+  // time = guest); the original app keeps its bridged controller untouched.
+  expect(app.sendbird).toBe(ctrl);
 });
 
 test("unmount disconnects", () => {
