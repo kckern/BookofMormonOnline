@@ -19,7 +19,7 @@ import { md5, genUserAvatar } from '../../auth/identity.js';
 import { getChannel, getMyChannels, getPublicChannels } from '../../messaging/channels.js';
 import { getChannelMembers, addUserToChannel, removeUserFromChannel, getPublicUserIds } from '../../messaging/members.js';
 import { getMessages, getMessagesForChannels, getThread } from '../../messaging/messages.js';
-import { getUser, getUsers, listBotUsers } from '../../messaging/users.js';
+import { getUser, getUsers, listStudyBots } from '../../messaging/users.js';
 import { addBotToChannel, removeBotFromChannel } from '../../messaging/bots/registry.js';
 import type { ChannelDTO, MessageDTO, UserDTO } from '../../messaging/dto.js';
 import { getBus } from '../../realtime/RealtimeBus.js';
@@ -701,19 +701,20 @@ export const communityResolvers: Resolvers = {
     },
 
     /**
-     * botlist — return the pluggable bot users as [Bot].
+     * botlist — return the pluggable study bots as [Bot].
      * Bot shape: { id, name, description, picture, enabled }
      *
-     * The messenger_users seed flags dozens of non-selectable rows is_bot=1
-     * (legacy virtual users, 🟢-staging personas); a bot is offered in the
-     * picker iff it carries a `welcome` metadata payload.
+     * Registration in bom_bot (bot_class='study') is what makes a bot
+     * pickable; community bots and the dozens of junk is_bot=1 rows in
+     * messenger_users never appear. Study bots are scoped to the request
+     * language (bom_bot.lang, NULL = every language).
      */
     botlist: async (_root, _args, ctx: AppContext) => {
       try {
-        const bots = await listBotUsers(ctx.db, ctx.lang);
+        const bots = await listStudyBots(ctx.db, ctx.lang);
         return asGql(
           bots
-            .filter((b) => !!b.user_id && !!((b.metadata ?? {}) as Record<string, unknown>)['welcome'])
+            .filter((b) => !!b.user_id)
             .map((b) => {
               const meta = (b.metadata ?? {}) as Record<string, unknown>;
               return {

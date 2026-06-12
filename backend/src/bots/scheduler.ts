@@ -71,6 +71,7 @@ export async function runNewPrompt(db: Kysely<DB>, channelUrl: string): Promise<
     .selectFrom('bom_bot')
     .select(['bot_id', 'display_name'])
     .where('enabled', '=', 1)
+    .where('bot_class', '=', 'community')
     .where(sql<boolean>`JSON_CONTAINS(tags, ${JSON.stringify(cfg.tag)})`)
     .execute();
   if (!bots.length) return { posted: 0, reason: 'no-bots' };

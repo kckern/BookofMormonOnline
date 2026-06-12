@@ -70,6 +70,20 @@ function newChannelUrl(): string {
   return url;
 }
 
+/**
+ * Register a fixture bot in bom_bot. Pluggability now requires a study
+ * registry row (bot_class='study', enabled=1) in addition to is_bot=1.
+ */
+async function registerBot(
+  botId: string,
+  botClass: 'study' | 'community' = 'study',
+): Promise<void> {
+  await db
+    .insertInto('bom_bot')
+    .values({ bot_id: botId, display_name: botId, bot_class: botClass })
+    .execute();
+}
+
 async function cleanup(): Promise<void> {
   if (!canWrite) return;
   // Remove members first (FK: channel_url / user_id refs the user rows).
@@ -85,6 +99,10 @@ async function cleanup(): Promise<void> {
     trackedChannelUrls.length = 0;
   }
   if (trackedUserIds.length) {
+    await db
+      .deleteFrom('bom_bot')
+      .where('bot_id', 'in', [...trackedUserIds])
+      .execute();
     await db
       .deleteFrom('messenger_users')
       .where('user_id', 'in', [...trackedUserIds])
@@ -208,13 +226,37 @@ describe('addBotToChannel', () => {
     expect(success).toBe(false);
   });
 
-  itWrite('adds a bot to a channel and returns true', async () => {
+  itWrite('returns false when the bot is not registered in bom_bot', async () => {
+    const botId = newBotId();
+    const channelUrl = newChannelUrl();
+    await Promise.all([
+      db.insertInto('messenger_users').values({ user_id: botId, nickname: 'UnregisteredBot', is_bot: 1 }).execute(),
+      db.insertInto('messenger_channels').values({ channel_url: channelUrl, name: 'Test Channel', custom_type: 'open' }).execute(),
+    ]);
+    const success = await addBotToChannel(db, channelUrl, botId);
+    expect(success).toBe(false);
+  });
+
+  itWrite('returns false when the bot is registered as community', async () => {
+    const botId = newBotId();
+    const channelUrl = newChannelUrl();
+    await Promise.all([
+      db.insertInto('messenger_users').values({ user_id: botId, nickname: 'CommunityBot', is_bot: 1 }).execute(),
+      db.insertInto('messenger_channels').values({ channel_url: channelUrl, name: 'Test Channel', custom_type: 'open' }).execute(),
+    ]);
+    await registerBot(botId, 'community');
+    const success = await addBotToChannel(db, channelUrl, botId);
+    expect(success).toBe(false);
+  });
+
+  itWrite('adds a registered study bot to a channel and returns true', async () => {
     const botId = newBotId();
     const channelUrl = newChannelUrl();
     await Promise.all([
       db.insertInto('messenger_users').values({ user_id: botId, nickname: 'MyBot', is_bot: 1 }).execute(),
       db.insertInto('messenger_channels').values({ channel_url: channelUrl, name: 'Test Channel', custom_type: 'open' }).execute(),
     ]);
+    await registerBot(botId);
 
     const success = await addBotToChannel(db, channelUrl, botId);
     expect(success).toBe(true);
@@ -238,6 +280,7 @@ describe('addBotToChannel', () => {
       db.insertInto('messenger_users').values({ user_id: botId, nickname: 'DupBot', is_bot: 1 }).execute(),
       db.insertInto('messenger_channels').values({ channel_url: channelUrl, name: 'Test Channel', custom_type: 'open' }).execute(),
     ]);
+    await registerBot(botId);
 
     const first = await addBotToChannel(db, channelUrl, botId);
     expect(first).toBe(true);
@@ -254,6 +297,7 @@ describe('removeBotFromChannel', () => {
       db.insertInto('messenger_users').values({ user_id: botId, nickname: 'RemoveBot', is_bot: 1 }).execute(),
       db.insertInto('messenger_channels').values({ channel_url: channelUrl, name: 'Test Channel', custom_type: 'open' }).execute(),
     ]);
+    await registerBot(botId);
     // Add first, then remove
     await addBotToChannel(db, channelUrl, botId);
 

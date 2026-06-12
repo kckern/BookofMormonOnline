@@ -353,3 +353,43 @@ export async function listBotUsers(
   scrubDeadAvatars(rows as RawUser[]);
   return rows.map(r => toUserDTO(r as RawUser));
 }
+
+/**
+ * English-edition site languages (plain, rlds, …) read English study bots;
+ * everything else matches its own code exactly.
+ */
+const ENGLISH_EDITIONS = new Set(['rlds', 'covoc', 'str', 'plain', 'easy', 'concise']);
+
+export function normalizeBotLang(lang?: string | null): string {
+  const l = (lang || 'en').toLowerCase();
+  return ENGLISH_EDITIONS.has(l) ? 'en' : l;
+}
+
+/**
+ * Return the pluggable study bots for a site language.
+ *
+ * A bot is offered in the picker iff it is registered in bom_bot with
+ * bot_class='study' and enabled=1, and its lang matches the (normalized)
+ * site language — or is NULL, meaning the bot serves every language.
+ * Community bots (scheduled persona conversations) and unregistered
+ * is_bot rows never appear.
+ */
+export async function listStudyBots(
+  db: Kysely<DB>,
+  lang?: string | null,
+): Promise<UserDTO[]> {
+  const l = normalizeBotLang(lang);
+  const rows = await db
+    .selectFrom('messenger_users as u')
+    .innerJoin('bom_bot as b', 'b.bot_id', 'u.user_id')
+    .select(['u.user_id', 'u.nickname', 'u.profile_url', 'u.metadata', 'u.is_bot', 'u.last_seen_at'])
+    .where('u.is_bot', '=', 1)
+    .where('b.bot_class', '=', 'study')
+    .where('b.enabled', '=', 1)
+    .where((eb) => eb.or([eb('b.lang', '=', l), eb('b.lang', 'is', null)]))
+    .orderBy('u.nickname')
+    .execute();
+
+  scrubDeadAvatars(rows as RawUser[]);
+  return rows.map(r => toUserDTO(r as RawUser));
+}

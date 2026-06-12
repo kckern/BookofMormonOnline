@@ -25,9 +25,11 @@ export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
 
 export interface BomBot {
   bot_id: string;
+  bot_class: Generated<'study' | 'community'>;
   created_at: Generated<Date>;
   display_name: string;
   enabled: Generated<number>;
+  lang: string | null;
   model: string | null;
   persona: string | null;
   tags: Json | null;

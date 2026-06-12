@@ -7,9 +7,11 @@
  *   - `bot` arg arriving from GraphQL is already the messenger user_id (the
  *     same md5-hashed string passed directly to sendbird.addUserToChannel in
  *     the legacy resolver — no further lookup needed).
- *   - A bot is just a messenger_users row with is_bot = 1.  Membership ops
- *     delegate to members.ts (addUserToChannel / removeUserFromChannel) since
- *     bots are ordinary members from the schema's perspective.
+ *   - A bot is a messenger_users row with is_bot = 1; to be *pluggable* it
+ *     must also be registered in bom_bot as bot_class='study' (enabled).
+ *     Membership ops delegate to members.ts (addUserToChannel /
+ *     removeUserFromChannel) since bots are ordinary members from the
+ *     schema's perspective.
  *   - Role: 'member' (matches legacy — the legacy call passes no role override).
  *
  * All functions accept `db: Kysely<DB>` for explicit injection (consistent with
@@ -43,6 +45,17 @@ export async function addBotToChannel(
   // Validate: the user must exist and be flagged as a bot.
   const user = await getBotUser(db, botId);
   if (!user) return false;
+
+  // Only registered study bots are pluggable — community bots (scheduled
+  // persona conversations) and unregistered is_bot rows are rejected.
+  const registered = await db
+    .selectFrom('bom_bot')
+    .select('bot_id')
+    .where('bot_id', '=', botId)
+    .where('bot_class', '=', 'study')
+    .where('enabled', '=', 1)
+    .executeTakeFirst();
+  if (!registered) return false;
 
   return addUserToChannel(db, channelUrl, botId, 'member');
 }
