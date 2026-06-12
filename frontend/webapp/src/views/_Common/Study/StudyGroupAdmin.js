@@ -18,7 +18,7 @@ import {
 import PictureWithOverlay from "../../User/PictureWithOverlay";
 
 import "./StudyGroupAdmin.css";
-import { label, testJSON } from "src/models/Utils";
+import { breakCache, label, testJSON } from "src/models/Utils";
 
 import flag from "./svg/flag.svg";
 import info from "./svg/info.svg";
@@ -249,7 +249,7 @@ export default function StudyGroupAdmin({ appController }) {
                       </ContextMenuTrigger>
                     </CardHeader>
                     <CardBody>
-                      <img src={member.plainProfileUrl} />
+                      <img src={member.plainProfileUrl} onError={breakCache} />
                     </CardBody>
                     <CardFooter>
                       {isAdmin ? (
@@ -376,7 +376,7 @@ function Requester({ appController, userObj }) {
           justifycontent: "center",
         }}
       >
-        <img src={picture} />
+        <img src={picture} onError={breakCache} />
       </CardBody>
       <CardFooter>
         <Button color="success" onClick={() => grantRequest(true)}>
