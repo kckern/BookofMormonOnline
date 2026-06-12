@@ -42,6 +42,33 @@ const normalizeReactions = (raw) =>
     userIds: r.userIds ?? r.user_ids ?? [],
   }));
 
+// Shared MessengerMessage field selection — three queries select the same
+// shape; loadThreadedMessages deliberately selects fewer fields.
+const MESSAGE_FIELDS = `
+  message_id
+  channel_url
+  user_id
+  user {
+    user_id
+    nickname
+    profile_url
+    metadata
+    is_bot
+    is_online
+  }
+  message_type
+  message
+  custom_type
+  data
+  link_type
+  link_target
+  parent_message_id
+  thread_info { reply_count }
+  reactions { reaction_key user_ids }
+  created_at
+  updated_at
+`;
+
 export default class MessengerController {
   constructor(serverUrl, userId, token, appController) {
     this.userId = md5(userId);
@@ -518,28 +545,7 @@ export default class MessengerController {
     try {
       const query = `query {
         messengerMessages(channelUrl: "${channelUrl}", limit: ${limit}${typesArg}) {
-          message_id
-          channel_url
-          user_id
-          user {
-            user_id
-            nickname
-            profile_url
-            metadata
-            is_bot
-            is_online
-          }
-          message_type
-          message
-          custom_type
-          data
-          link_type
-          link_target
-          parent_message_id
-          thread_info { reply_count }
-          reactions { reaction_key user_ids }
-          created_at
-          updated_at
+          ${MESSAGE_FIELDS}
         }
       }`;
       const result = await this.gqlRequest(query);
@@ -564,28 +570,7 @@ export default class MessengerController {
         pagecomments(channelUrl: "${channelUrl}", pageSlug: ${JSON.stringify(pageSlug)}) {
           counts
           messages {
-            message_id
-            channel_url
-            user_id
-            user {
-              user_id
-              nickname
-              profile_url
-              metadata
-              is_bot
-              is_online
-            }
-            message_type
-            message
-            custom_type
-            data
-            link_type
-            link_target
-            parent_message_id
-            thread_info { reply_count }
-            reactions { reaction_key user_ids }
-            created_at
-            updated_at
+            ${MESSAGE_FIELDS}
           }
         }
       }`;
@@ -610,28 +595,7 @@ export default class MessengerController {
     try {
       const query = `query {
         messengerMessages(channelUrl: "${channelUrl}", before: "${id}", limit: ${limit}) {
-          message_id
-          channel_url
-          user_id
-          user {
-            user_id
-            nickname
-            profile_url
-            metadata
-            is_bot
-            is_online
-          }
-          message_type
-          message
-          custom_type
-          data
-          link_type
-          link_target
-          parent_message_id
-          thread_info { reply_count }
-          reactions { reaction_key user_ids }
-          created_at
-          updated_at
+          ${MESSAGE_FIELDS}
         }
       }`;
       const result = await this.gqlRequest(query);
