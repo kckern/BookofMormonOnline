@@ -1,7 +1,7 @@
 # MessengerProvider: context-owned messenger lifecycle (appController migration, step 1)
 
 **Date:** 2026-06-11
-**Status:** Approved (KC, in-session)
+**Status:** Implemented (6229e2a1..f28d9a9f) — plus review-driven additions: bootstrap cancellation guard, access_token fallback + test, `messengerBridgeChanged` dispatch so Main's Loader gate re-evaluates after post-commit bridge mutation, processSignOut's redundant disconnect removed.
 **Scope decision:** Lifecycle + bridge only — zero consumer migration in this step.
 
 ## Why
