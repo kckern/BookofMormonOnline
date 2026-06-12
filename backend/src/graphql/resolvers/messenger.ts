@@ -7,7 +7,7 @@
 import type { Resolvers } from '../../../codegen/graphql.js';
 import type { AppContext } from '../context.js';
 import { md5 } from '../../auth/identity.js';
-import { getUser, updateUserNickname, updateUserProfileUrl, updateUserMetadata } from '../../messaging/users.js';
+import { getUser, getUsers, updateUserNickname, updateUserProfileUrl, updateUserMetadata } from '../../messaging/users.js';
 import { getChannel, getMyChannels, createChannel } from '../../messaging/channels.js';
 import { getChannelMembers, addUserToChannel, removeUserFromChannel, setMemberMuted } from '../../messaging/members.js';
 import { getMessages, getMessage, getThread } from '../../messaging/messages.js';
@@ -108,13 +108,27 @@ export const messengerResolvers: Resolvers = {
     },
 
     /**
-     * messengerMyChannels(userId) — all joined channels for a user, with
-     * unread_message_count, last_message, and members pre-assembled by the service.
+     * messengerUsers(userIds) — bulk user lookup with presence resolved in one
+     * round trip (backs the SendBird-compat user-list query and the Study
+     * presence roster on the frontend).
+     */
+    messengerUsers: async (_root, args, ctx: AppContext) => {
+      const userIds = (args.userIds ?? []).filter((id): id is string => typeof id === 'string' && id.length > 0);
+      if (!userIds.length) return [];
+      return getUsers(ctx.db, userIds);
+    },
+
+    /**
+     * messengerMyChannels(userId, customTypes) — all joined channels for a user,
+     * with unread_message_count, last_message, and members pre-assembled by the
+     * service. customTypes narrows by channel custom_type (e.g. the study-group
+     * list excludes 'DM' channels — DMs are not study groups).
      */
     messengerMyChannels: async (_root, args, ctx: AppContext) => {
       const userId = args.userId ?? (await resolveActingUserId(ctx));
       if (!userId) return [];
-      return getMyChannels(ctx.db, userId);
+      const customTypes = (args.customTypes ?? []).filter((t): t is string => typeof t === 'string' && t.length > 0);
+      return getMyChannels(ctx.db, userId, customTypes.length ? { customTypes } : {});
     },
 
     /**

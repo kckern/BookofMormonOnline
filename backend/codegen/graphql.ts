@@ -366,7 +366,11 @@ export type MessengerChannel = {
 
 export type MessengerMember = {
   __typename?: 'MessengerMember';
+  is_bot?: Maybe<Scalars['Boolean']['output']>;
   is_muted?: Maybe<Scalars['Boolean']['output']>;
+  is_online?: Maybe<Scalars['Boolean']['output']>;
+  last_seen_at?: Maybe<Scalars['Float']['output']>;
+  metadata?: Maybe<Scalars['JSON']['output']>;
   nickname?: Maybe<Scalars['String']['output']>;
   profile_url?: Maybe<Scalars['String']['output']>;
   role?: Maybe<Scalars['String']['output']>;
@@ -379,6 +383,7 @@ export type MessengerMessage = {
   channel_url?: Maybe<Scalars['String']['output']>;
   created_at?: Maybe<Scalars['Float']['output']>;
   custom_type?: Maybe<Scalars['String']['output']>;
+  data?: Maybe<Scalars['String']['output']>;
   link_target?: Maybe<Scalars['String']['output']>;
   link_type?: Maybe<Scalars['String']['output']>;
   message?: Maybe<Scalars['String']['output']>;
@@ -499,11 +504,13 @@ export type MutationMessengerAcceptInvitationArgs = {
 
 
 export type MutationMessengerCreateChannelArgs = {
+  channelUrl?: InputMaybe<Scalars['String']['input']>;
   coverUrl?: InputMaybe<Scalars['String']['input']>;
   customType?: InputMaybe<Scalars['String']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   operatorIds?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  userIds?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 
@@ -831,6 +838,7 @@ export type Query = {
   messengerThreadMessages?: Maybe<Array<Maybe<MessengerMessage>>>;
   messengerUnreadDMs?: Maybe<Array<Maybe<MessengerUnreadDm>>>;
   messengerUser?: Maybe<MessengerUser>;
+  messengerUsers?: Maybe<Array<Maybe<MessengerUser>>>;
   moregroups?: Maybe<Array<Maybe<HomeGroup>>>;
   object?: Maybe<Array<Maybe<Object>>>;
   page?: Maybe<Array<Maybe<Page>>>;
@@ -1007,6 +1015,7 @@ export type QueryMessengerMessagesArgs = {
 
 
 export type QueryMessengerMyChannelsArgs = {
+  customTypes?: InputMaybe<Array<Scalars['String']['input']>>;
   userId?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -1023,6 +1032,11 @@ export type QueryMessengerUnreadDMsArgs = {
 
 export type QueryMessengerUserArgs = {
   userId?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryMessengerUsersArgs = {
+  userIds?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 
@@ -2179,7 +2193,11 @@ export type MessengerChannelResolvers<ContextType = AppContext, ParentType exten
 };
 
 export type MessengerMemberResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['MessengerMember'] = ResolversParentTypes['MessengerMember']> = {
+  is_bot?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   is_muted?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  is_online?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  last_seen_at?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  metadata?: Resolver<Maybe<ResolversTypes['JSON']>, ParentType, ContextType>;
   nickname?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   profile_url?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   role?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -2192,6 +2210,7 @@ export type MessengerMessageResolvers<ContextType = AppContext, ParentType exten
   channel_url?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   created_at?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   custom_type?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  data?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   link_target?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   link_type?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -2473,6 +2492,7 @@ export type QueryResolvers<ContextType = AppContext, ParentType extends Resolver
   messengerThreadMessages?: Resolver<Maybe<Array<Maybe<ResolversTypes['MessengerMessage']>>>, ParentType, ContextType, Partial<QueryMessengerThreadMessagesArgs>>;
   messengerUnreadDMs?: Resolver<Maybe<Array<Maybe<ResolversTypes['MessengerUnreadDM']>>>, ParentType, ContextType, Partial<QueryMessengerUnreadDMsArgs>>;
   messengerUser?: Resolver<Maybe<ResolversTypes['MessengerUser']>, ParentType, ContextType, Partial<QueryMessengerUserArgs>>;
+  messengerUsers?: Resolver<Maybe<Array<Maybe<ResolversTypes['MessengerUser']>>>, ParentType, ContextType, Partial<QueryMessengerUsersArgs>>;
   moregroups?: Resolver<Maybe<Array<Maybe<ResolversTypes['HomeGroup']>>>, ParentType, ContextType, Partial<QueryMoregroupsArgs>>;
   object?: Resolver<Maybe<Array<Maybe<ResolversTypes['Object']>>>, ParentType, ContextType, Partial<QueryObjectArgs>>;
   page?: Resolver<Maybe<Array<Maybe<ResolversTypes['Page']>>>, ParentType, ContextType, Partial<QueryPageArgs>>;

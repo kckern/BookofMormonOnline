@@ -395,10 +395,21 @@ export default class MessengerController {
   // PUBLIC API - Channels/Groups
   // ─────────────────────────────────────────────────────────────────
 
+  // Study groups are everything except DMs — the backend filters by
+  // custom_type so DM channels never reach the .groupListItem UI.
   async getStudyGroups() {
+    return this.getMyChannels(["open", "private", "public", "solo"]);
+  }
+
+  // customTypes: optional custom_type include-list, filtered server-side.
+  // Omit/empty for all joined channels (the sb-compat pager's default).
+  async getMyChannels(customTypes = []) {
     try {
+      const typesArg = Array.isArray(customTypes) && customTypes.length
+        ? `, customTypes: ${JSON.stringify(customTypes)}`
+        : "";
       const query = `query {
-        messengerMyChannels(userId: "${this.userId}") {
+        messengerMyChannels(userId: "${this.userId}"${typesArg}) {
           channel_url
           name
           cover_url
@@ -446,7 +457,7 @@ export default class MessengerController {
       
       return channels;
     } catch (error) {
-      console.error('Messenger: getStudyGroups error', error);
+      console.error('Messenger: getMyChannels error', error);
       return [];
     }
   }
@@ -1383,11 +1394,10 @@ export default class MessengerController {
         createMyGroupChannelListQuery: (params = {}) => ({
           hasNext: true,
           next: (callback) => {
-            const p = this.getStudyGroups().then((channels) => {
+            // customTypesFilter goes to the backend (getStudyGroups excludes
+            // DMs, so the DM panel's ["DM"] filter must not run over it).
+            const p = this.getMyChannels(params.customTypesFilter || []).then((channels) => {
               let out = channels;
-              if (Array.isArray(params.customTypesFilter) && params.customTypesFilter.length) {
-                out = out.filter((c) => params.customTypesFilter.includes(c.customType));
-              }
               if (params.nicknameContainsFilter) {
                 const needle = String(params.nicknameContainsFilter).toLowerCase();
                 out = out.filter((c) =>
