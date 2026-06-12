@@ -14,7 +14,7 @@
  */
 
 import { createHash } from 'node:crypto';
-import { resolveDerivedAvatars } from './avatarAssets.js';
+import { generateAvatarUrl, resolveDerivedAvatars } from './avatarAssets.js';
 import type { Kysely } from 'kysely';
 import type { DB } from '../../codegen/db.js';
 import type { UserDTO } from './dto.js';
@@ -174,6 +174,22 @@ export async function getUsers(
   const dtos = rows.map(r => toUserDTO(r as RawUser, onlineSet.has(r.user_id)));
   await verifyDerivedAvatars(rows as RawUser[], dtos);
   return dtos;
+}
+
+/**
+ * Avatar for a sign-in response — the ONE answer for "what picture does this
+ * user have". Delegates to getUser (stored profile_url → asset-verified
+ * derived URL → dicebear); a user with no messenger row yet gets the same
+ * deterministic dicebear the frontend would draw.
+ * Replaces ad-hoc genUserAvatar() calls in signin/tokensignin
+ * (docs/bugs/2026-06-11-profile-image-no-ssot.md).
+ */
+export async function resolveSigninAvatar(
+  db: Kysely<DB>,
+  userId: string,
+): Promise<string> {
+  const user = await getUser(db, userId);
+  return user?.profile_url || generateAvatarUrl(userId);
 }
 
 /** Insert or update a user row. Returns the resulting UserDTO. */

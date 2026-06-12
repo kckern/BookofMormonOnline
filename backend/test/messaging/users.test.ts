@@ -29,7 +29,9 @@ import {
   getUserMetadata,
   setUserOnline,
   listBotUsers,
+  resolveSigninAvatar,
 } from '../../src/messaging/users.js';
+import { generateAvatarUrl } from '../../src/messaging/avatarAssets.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Write-capable Kysely instance (separate from singleton, so tests can tear
@@ -327,5 +329,25 @@ describe('listBotUsers', () => {
     expect(returnedIds).toContain(botId);
     expect(returnedIds).not.toContain(humanId);
     bots.forEach(b => expect(b.is_bot).toBe(true));
+  });
+});
+
+describe('resolveSigninAvatar', () => {
+  it('returns the messenger profile_url for a user with a stored avatar', async () => {
+    // Discover any row with an explicit stored avatar (upload/seed).
+    const row = await db
+      .selectFrom('messenger_users')
+      .select(['user_id', 'profile_url'])
+      .where('profile_url', 'like', 'https://assets.bookofmormon.online/%')
+      .executeTakeFirst();
+    if (!row) return; // seed drift — nothing to assert against
+    const url = await resolveSigninAvatar(db, row.user_id);
+    expect(url).toBe(row.profile_url);
+  });
+
+  it('falls back to the deterministic dicebear for an unknown user_id', async () => {
+    const ghost = 'ffffffffffffffffffffffffffffffff';
+    const url = await resolveSigninAvatar(db, ghost);
+    expect(url).toBe(generateAvatarUrl(ghost));
   });
 });
