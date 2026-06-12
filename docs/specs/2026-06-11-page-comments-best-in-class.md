@@ -1,7 +1,7 @@
 # Best-in-class study-group page comments: loading, placement, freshness
 
 **Date:** 2026-06-11
-**Status:** Proposed (P0 shipped)
+**Status:** P0+P1 shipped; P2-P4 in progress
 **Goal (KC):** excellent UX — not wasteful, no UI thrash, no conflicts with concurrent scrolling.
 
 ## Baseline (after today's P0)
@@ -19,7 +19,7 @@ placement can land mid-scroll.
 vs the handful inside the old 30-message window) and stops assembling users/reactions/
 threads for messages that were discarded client-side.
 
-## P1 — One round trip, one paint
+## P1 — One round trip, one paint (SHIPPED)
 
 1. **Server-side counts join.** New field `pagecomments(channelUrl, pageSlug)` returning
    `{ messages: [MessengerMessage], counts: [{ verse, com, img }] }`. The backend already
