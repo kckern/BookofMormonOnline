@@ -4,6 +4,7 @@ extend type Query {
   messengerMyChannels(userId: String, customTypes: [String!]): [MessengerChannel]
   messengerChannel(channelUrl: String): MessengerChannel
   messengerChannelOperators(channelUrl: String): [MessengerUser]
+  messengerChannelBannedMembers(channelUrl: String): [MessengerMember]
   messengerMessages(channelUrl: String, limit: Int, before: String, customTypes: [String!]): [MessengerMessage]
   messengerMessage(messageId: String): MessengerMessage
   messengerThreadMessages(parentMessageId: String): [MessengerMessage]
@@ -19,6 +20,8 @@ extend type Mutation {
   messengerUpdateMemberRole(channelUrl: String, userId: String, role: String): Boolean
   messengerSetMute(channelUrl: String, userId: String, muted: Boolean): Boolean
   messengerRemoveMember(channelUrl: String, userId: String): Boolean
+  messengerBanMember(channelUrl: String, userId: String): Boolean
+  messengerUnbanMember(channelUrl: String, userId: String): Boolean
   messengerInviteMembers(channelUrl: String, userIds: [String]): Boolean
   messengerAcceptInvitation(channelUrl: String, userId: String): Boolean
   messengerDeclineInvitation(channelUrl: String, userId: String): Boolean

@@ -83,12 +83,20 @@ export async function getPublicUserIds(
 export async function getChannelMembers(
   db: Kysely<DB>,
   channelUrl: string,
+  options: { includeBanned?: boolean } = {},
 ): Promise<MemberDTO[]> {
-  const rows = await db
+  let query = db
     .selectFrom('messenger_members')
     .select(['channel_url', 'user_id', 'role', 'state', 'is_muted', 'last_read_at', 'created_at'])
-    .where('channel_url', '=', channelUrl)
-    .execute();
+    .where('channel_url', '=', channelUrl);
+
+  // Banned rows are hidden from every normal roster/count/operator-gate by
+  // default (spec §2). Only the admin Banned section opts in.
+  if (!options.includeBanned) {
+    query = query.where('state', '!=', 'banned');
+  }
+
+  const rows = await query.execute();
 
   if (rows.length === 0) return [];
 
@@ -123,10 +131,12 @@ export async function getChannelMembersBulk(
   const result = new Map<string, MemberDTO[]>();
   if (channelUrls.length === 0) return result;
 
+  // Banned rows hidden by default — same contract as getChannelMembers.
   const rows = (await db
     .selectFrom('messenger_members')
     .select(['channel_url', 'user_id', 'role', 'state', 'is_muted', 'last_read_at', 'created_at'])
     .where('channel_url', 'in', channelUrls)
+    .where('state', '!=', 'banned')
     .execute()) as RawMember[];
 
   if (rows.length === 0) return result;
@@ -213,7 +223,9 @@ export async function isMemberMuted(
 
 /**
  * Add a user to a channel.
- * Returns false on duplicate-key (already a member) rather than throwing.
+ * Returns false when a membership row already exists in ANY state — including
+ * 'banned' (re-entry guard, spec §2: a banned row must never be overwritten by
+ * a join) — rather than throwing.
  * state is always 'joined' when called directly (invitation flows are higher-level).
  */
 export async function addUserToChannel(
@@ -222,6 +234,17 @@ export async function addUserToChannel(
   userId: string,
   role: 'operator' | 'member' = 'member',
 ): Promise<boolean> {
+  // Explicit pre-check: an existing row (joined/invited/requested/banned)
+  // blocks the join. The PK would reject the insert anyway, but the explicit
+  // check documents the banned re-entry guard and never mutates the row.
+  const existing = await db
+    .selectFrom('messenger_members')
+    .select('state')
+    .where('channel_url', '=', channelUrl)
+    .where('user_id', '=', userId)
+    .executeTakeFirst();
+  if (existing) return false;
+
   try {
     await db
       .insertInto('messenger_members')
@@ -235,8 +258,96 @@ export async function addUserToChannel(
     return true;
   } catch {
     // Duplicate-key constraint (channel_url + user_id PK) → already a member
+    // (race between the pre-check and the insert)
     return false;
   }
+}
+
+/**
+ * Ban a user from a channel (spec §2). Upserts the membership row to
+ * state='banned' AND role='member' in one statement — the role demotion is
+ * mandatory: requireOperator and canUserInvite check role without state, so a
+ * banned former operator would otherwise retain admin/invite rights.
+ * Returns false when the messenger user does not exist (FK) or the write fails.
+ */
+export async function banUserFromChannel(
+  db: Kysely<DB>,
+  channelUrl: string,
+  userId: string,
+): Promise<boolean> {
+  try {
+    await db
+      .insertInto('messenger_members')
+      .values({
+        channel_url: channelUrl,
+        user_id: userId,
+        role: 'member',
+        state: 'banned',
+      })
+      .onDuplicateKeyUpdate({ role: 'member', state: 'banned' })
+      .execute();
+    return true;
+  } catch (err) {
+    console.error('banUserFromChannel error:', err);
+    return false;
+  }
+}
+
+/**
+ * Unban a user: delete the membership row ONLY when state='banned'.
+ * (Never deletes a joined/invited/requested row — unban is not a kick.)
+ * Returns true when a banned row was removed; the user may then rejoin.
+ */
+export async function unbanUserFromChannel(
+  db: Kysely<DB>,
+  channelUrl: string,
+  userId: string,
+): Promise<boolean> {
+  const result = await db
+    .deleteFrom('messenger_members')
+    .where('channel_url', '=', channelUrl)
+    .where('user_id', '=', userId)
+    .where('state', '=', 'banned')
+    .executeTakeFirst();
+  return Number(result.numDeletedRows) > 0;
+}
+
+/** True when the user has a state='banned' membership row in the channel. */
+export async function isUserBanned(
+  db: Kysely<DB>,
+  channelUrl: string,
+  userId: string,
+): Promise<boolean> {
+  const row = await db
+    .selectFrom('messenger_members')
+    .select('state')
+    .where('channel_url', '=', channelUrl)
+    .where('user_id', '=', userId)
+    .executeTakeFirst();
+  return row?.state === 'banned';
+}
+
+/**
+ * Accept a channel invitation: transition state 'invited' → 'joined'.
+ * The WHERE state='invited' clause is the explicit re-entry guard — a
+ * 'banned' (or 'requested'/'joined') row never transitions (spec §2:
+ * acceptInvitation is an UPDATE path, so the duplicate-key skip that protects
+ * the insert paths does not apply here).
+ * Returns true when an invited row was transitioned.
+ */
+export async function acceptChannelInvitation(
+  db: Kysely<DB>,
+  channelUrl: string,
+  userId: string,
+): Promise<boolean> {
+  const result = await db
+    .updateTable('messenger_members')
+    .set({ state: 'joined' })
+    .where('channel_url', '=', channelUrl)
+    .where('user_id', '=', userId)
+    .where('state', '=', 'invited')
+    .executeTakeFirst();
+  return Number(result.numUpdatedRows) > 0;
 }
 
 /**

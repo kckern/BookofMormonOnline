@@ -9,7 +9,16 @@ import type { AppContext } from '../context.js';
 import { md5 } from '../../auth/identity.js';
 import { getUser, getUsers, updateUserNickname, updateUserProfileUrl, updateUserMetadata } from '../../messaging/users.js';
 import { getChannel, getMyChannels, getMyDMs, createChannel, updateChannelMetadataKey } from '../../messaging/channels.js';
-import { getChannelMembers, addUserToChannel, removeUserFromChannel, setMemberMuted, canUserInvite } from '../../messaging/members.js';
+import {
+  getChannelMembers,
+  addUserToChannel,
+  removeUserFromChannel,
+  setMemberMuted,
+  canUserInvite,
+  banUserFromChannel,
+  unbanUserFromChannel,
+  acceptChannelInvitation,
+} from '../../messaging/members.js';
 import { getMessages, getMessage, getThread } from '../../messaging/messages.js';
 import { getPageComments } from '../../messaging/pagecomments.js';
 import { getBus } from '../../realtime/RealtimeBus.js';
@@ -150,6 +159,19 @@ export const messengerResolvers: Resolvers = {
       if (!args.channelUrl) return [];
       const members = await getChannelMembers(ctx.db, args.channelUrl);
       return members.filter((m) => m.role === 'operator');
+    },
+
+    /**
+     * messengerChannelBannedMembers(channelUrl) — the channel's banned rows,
+     * for the admin "Banned" section ONLY. Banned rows are excluded from every
+     * normal member list/count (getChannelMembers default); this is the single
+     * opt-in surface, gated on the caller being an operator.
+     */
+    messengerChannelBannedMembers: async (_root, args, ctx: AppContext) => {
+      if (!args.channelUrl) return [];
+      if (!(await requireOperator(ctx, args.channelUrl))) return [];
+      const members = await getChannelMembers(ctx.db, args.channelUrl, { includeBanned: true });
+      return members.filter((m) => m.state === 'banned');
     },
 
     /**
@@ -523,6 +545,60 @@ export const messengerResolvers: Resolvers = {
     },
 
     /**
+     * messengerBanMember — operator bans a user (spec §2). Upserts the
+     * membership row to state='banned' + role='member' (banUserFromChannel);
+     * the banned user disappears from all rosters/counts and every re-entry
+     * path (join, invite-link, acceptInvitation, open/public joins) refuses.
+     * Emits membership_changed + user_left (the user is gone from the roster,
+     * symmetric with messengerRemoveMember).
+     */
+    messengerBanMember: async (_root, args, ctx: AppContext) => {
+      const { channelUrl, userId } = args as {
+        channelUrl?: string | null;
+        userId?: string | null;
+      };
+      if (!channelUrl || !userId) return false;
+      if (!(await requireOperator(ctx, channelUrl))) return false;
+
+      try {
+        const banned = await banUserFromChannel(ctx.db, channelUrl, userId);
+        if (banned) {
+          getBus().emit('membership_changed', channelUrl, { channelUrl, userId, state: 'banned' });
+          getBus().emit('user_left', channelUrl, { channelUrl, user: userId });
+        }
+        return banned;
+      } catch (err) {
+        console.error('messengerBanMember error:', err);
+        return false;
+      }
+    },
+
+    /**
+     * messengerUnbanMember — operator lifts a ban (spec §2). Deletes the
+     * membership row only when state='banned'; the user may then rejoin.
+     * Emits membership_changed on success.
+     */
+    messengerUnbanMember: async (_root, args, ctx: AppContext) => {
+      const { channelUrl, userId } = args as {
+        channelUrl?: string | null;
+        userId?: string | null;
+      };
+      if (!channelUrl || !userId) return false;
+      if (!(await requireOperator(ctx, channelUrl))) return false;
+
+      try {
+        const unbanned = await unbanUserFromChannel(ctx.db, channelUrl, userId);
+        if (unbanned) {
+          getBus().emit('membership_changed', channelUrl, { channelUrl, userId });
+        }
+        return unbanned;
+      } catch (err) {
+        console.error('messengerUnbanMember error:', err);
+        return false;
+      }
+    },
+
+    /**
      * messengerInviteMembers — insert membership rows with state='invited' for each userId.
      * Authorization (spec §1): operators may always invite; joined members only when
      * channel metadata membersCanInvite === true; everyone else is rejected.
@@ -571,7 +647,10 @@ export const messengerResolvers: Resolvers = {
 
     /**
      * messengerAcceptInvitation — transition a member's state from 'invited' → 'joined'.
-     * Inline Kysely update. Falls back to acting user when userId arg matches the bearer.
+     * Delegates to acceptChannelInvitation, whose WHERE state='invited' clause
+     * explicitly refuses 'banned' rows (re-entry guard, spec §2 — this is an
+     * UPDATE path, so the duplicate-key skip on the insert paths doesn't apply).
+     * Falls back to acting user when userId arg matches the bearer.
      * Emits user_joined + membership_changed on accept.
      * Returns true on success, false on failure.
      */
@@ -584,15 +663,7 @@ export const messengerResolvers: Resolvers = {
       if (!channelUrl || !targetUserId) return false;
 
       try {
-        const result = await ctx.db
-          .updateTable('messenger_members')
-          .set({ state: 'joined' })
-          .where('channel_url', '=', channelUrl)
-          .where('user_id', '=', targetUserId)
-          .where('state', '=', 'invited')
-          .executeTakeFirst();
-
-        const accepted = Number(result.numUpdatedRows) > 0;
+        const accepted = await acceptChannelInvitation(ctx.db, channelUrl, targetUserId);
         if (accepted) {
           getBus().emit('user_joined', channelUrl, { channelUrl, userId: targetUserId });
           getBus().emit('membership_changed', channelUrl, { channelUrl, userId: targetUserId, state: 'joined' });

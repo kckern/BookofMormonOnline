@@ -878,8 +878,53 @@ export default class MessengerController {
   }
 
   async banMember(channel, userId) {
-    // For now, just remove the member (ban functionality can be added later)
-    return this.removeMember(channel, userId);
+    const channelUrl = channel.channel_url || channel.url;
+    try {
+      const mutation = `mutation {
+        messengerBanMember(channelUrl: "${channelUrl}", userId: "${userId}")
+      }`;
+      return await this.gqlRequest(mutation);
+    } catch (error) {
+      console.error('Messenger: banMember error', error);
+      throw error;
+    }
+  }
+
+  async unbanMember(channel, userId) {
+    const channelUrl = channel.channel_url || channel.url;
+    try {
+      const mutation = `mutation {
+        messengerUnbanMember(channelUrl: "${channelUrl}", userId: "${userId}")
+      }`;
+      return await this.gqlRequest(mutation);
+    } catch (error) {
+      console.error('Messenger: unbanMember error', error);
+      throw error;
+    }
+  }
+
+  // Admin-only: banned rows are excluded from normal member lists/counts;
+  // this is the single opt-in surface (operator-gated server-side).
+  async fetchBannedMembers(channel) {
+    const channelUrl = channel.channel_url || channel.url;
+    try {
+      const query = `query {
+        messengerChannelBannedMembers(channelUrl: "${channelUrl}") {
+          user_id
+          nickname
+          profile_url
+          role
+          state
+          metadata
+          is_bot
+        }
+      }`;
+      const result = await this.gqlRequest(query);
+      return (result?.messengerChannelBannedMembers || []).map(shapeMember);
+    } catch (error) {
+      console.error('Messenger: fetchBannedMembers error', error);
+      return [];
+    }
   }
 
   async muteMember(channel, userId) {

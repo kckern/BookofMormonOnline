@@ -17,7 +17,7 @@ import type { Resolvers } from '../../../codegen/graphql.js';
 import type { AppContext } from '../context.js';
 import { md5, genUserAvatar } from '../../auth/identity.js';
 import { getChannel, getMyStudyGroups, getPublicChannels } from '../../messaging/channels.js';
-import { getChannelMembers, addUserToChannel, removeUserFromChannel, getPublicUserIds } from '../../messaging/members.js';
+import { getChannelMembers, addUserToChannel, removeUserFromChannel, getPublicUserIds, isUserBanned } from '../../messaging/members.js';
 import { getMessages, getMessagesForChannels, getThread } from '../../messaging/messages.js';
 import { getUser, getUsers, listStudyBots } from '../../messaging/users.js';
 import { addBotToChannel, removeBotFromChannel } from '../../messaging/bots/registry.js';
@@ -832,6 +832,12 @@ export const communityResolvers: Resolvers = {
         if (!channel) return asGql({ isSuccess: false, msg: 'Group not found', channel: null, user: null });
         if (channel.custom_type !== 'public') return asGql({ isSuccess: false, msg: 'Group is not public', channel: null, user: null });
 
+        // Re-entry guard (spec §2): a banned row would dup-key below and be
+        // masked as success — refuse explicitly instead.
+        if (await isUserBanned(ctx.db, url, myUserId)) {
+          return asGql({ isSuccess: false, msg: 'Cannot join this group', channel: null, user: null });
+        }
+
         // Insert with state='requested'. A duplicate-key (already requested/joined) is
         // success; a genuine write failure must NOT be masked as success.
         try {
@@ -922,6 +928,9 @@ export const communityResolvers: Resolvers = {
         if (!isOperator) return false;
 
         if (grant) {
+          // Re-entry guard (spec §2): never let a grant delete a banned row and
+          // re-admit the user — unban is the only path out of 'banned'.
+          if (await isUserBanned(ctx.db, channelArg, targetUserId)) return false;
           // Remove the requested row first so addUserToChannel doesn't hit a dup-key
           await removeUserFromChannel(ctx.db, channelArg, targetUserId);
           const added = await addUserToChannel(ctx.db, channelArg, targetUserId, 'member');

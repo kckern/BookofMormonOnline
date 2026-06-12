@@ -104,7 +104,7 @@ export default function StudyGroupAdmin({ appController }) {
     setGroup(freshGroup);
   };
   const banMember = async (e, data) => {
-    await appController.sendbird.removeMember(group, data.userId);
+    await appController.sendbird.banMember(group, data.userId);
     let freshGroup = await group.refresh();
     appController.functions.setActiveStudyGroup(freshGroup);
     setGroup(freshGroup);
@@ -319,8 +319,70 @@ export default function StudyGroupAdmin({ appController }) {
               })}
           </div>
         </CardBody>
+        <BannedMembers
+          appController={appController}
+          group={group}
+          setGroup={setGroup}
+        />
       </Card>
     </div>
+  );
+}
+
+function BannedMembers({ appController, group, setGroup }) {
+  const [bannedMembers, setBannedMembers] = useState([]);
+
+  // Re-fetch whenever the group object changes (a ban/refresh produces a fresh
+  // group object, so a freshly banned member appears here without a reload).
+  useEffect(() => {
+    appController.sendbird
+      ?.fetchBannedMembers(group)
+      .then((members) => setBannedMembers(members || []));
+  }, [group]);
+
+  const unbanMember = async (userId) => {
+    const success = await appController.sendbird.unbanMember(group, userId);
+    if (!success) return toast.warn(label("error"));
+    setBannedMembers((prev) => prev.filter((m) => m.userId !== userId));
+    let freshGroup = await group.refresh();
+    appController.functions.setActiveStudyGroup(freshGroup);
+    setGroup(freshGroup);
+  };
+
+  if (!bannedMembers.length) return null;
+  return (
+    <>
+      <CardHeader>
+        <h5 className={"title"}>
+          <img src={ban} /> {label("banned_members")}
+        </h5>
+      </CardHeader>
+      <CardBody>
+        <div className="userAdminBoxes">
+          {bannedMembers.map((member) => (
+            <Card className={"userAdminBox"} key={member.userId}>
+              <CardHeader>
+                <h5 className={"title"}>
+                  <img src={membericon} />
+                  {member.nickname}
+                </h5>
+              </CardHeader>
+              <CardBody>
+                <img src={member.plainProfileUrl} onError={breakCache} />
+              </CardBody>
+              <CardFooter>
+                <Button
+                  color="success"
+                  onClick={() => unbanMember(member.userId)}
+                >
+                  {label("unban")}
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      </CardBody>
+    </>
   );
 }
 
