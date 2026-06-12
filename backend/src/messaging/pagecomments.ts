@@ -144,10 +144,8 @@ export async function getPageComments(
       const m = slug.match(/(.*?)\/(\d+)$/);
       if (!m || m[1] !== pageSlug || !m[2]) continue; // located on a different page
       const verse: string = m[2];
-      counts[verse] ??= {};
-      const entry = counts[verse] as Record<string, number[]>;
-      entry[kind] ??= [];
-      entry[kind]!.push(id);
+      const bucket = (counts[verse] ??= {}) as { com?: number[]; img?: number[] };
+      (bucket[kind] ??= []).push(id);
     }
   };
   tally(comSlugs, 'com');

@@ -11,6 +11,7 @@ import { getUser, getUsers, updateUserNickname, updateUserProfileUrl, updateUser
 import { getChannel, getMyChannels, createChannel } from '../../messaging/channels.js';
 import { getChannelMembers, addUserToChannel, removeUserFromChannel, setMemberMuted } from '../../messaging/members.js';
 import { getMessages, getMessage, getThread } from '../../messaging/messages.js';
+import { getPageComments } from '../../messaging/pagecomments.js';
 import { getBus } from '../../realtime/RealtimeBus.js';
 import { isDuplicateKeyError } from '../../data/errors.js';
 import type { MessageDTO } from '../../messaging/dto.js';
@@ -217,6 +218,17 @@ export const messengerResolvers: Resolvers = {
             unread_count: ch.unread_message_count,
           };
         });
+    },
+
+    /**
+     * pagecomments(channelUrl, pageSlug) — page-scoped study comments plus
+     * per-verse com/img counts resolved server-side (spec P1): one round trip
+     * where the client previously needed messages + commentaryLocations/
+     * imageLocations.
+     */
+    pagecomments: async (_root, args, ctx: AppContext) => {
+      if (!args.channelUrl || !args.pageSlug) return null;
+      return getPageComments(ctx.db, args.channelUrl, args.pageSlug);
     },
   },
 

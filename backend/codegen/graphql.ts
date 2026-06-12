@@ -397,6 +397,12 @@ export type MessengerMessage = {
   user_id?: Maybe<Scalars['String']['output']>;
 };
 
+export type MessengerPageComments = {
+  __typename?: 'MessengerPageComments';
+  counts?: Maybe<Scalars['JSON']['output']>;
+  messages?: Maybe<Array<Maybe<MessengerMessage>>>;
+};
+
 export type MessengerReaction = {
   __typename?: 'MessengerReaction';
   reaction_key?: Maybe<Scalars['String']['output']>;
@@ -842,6 +848,7 @@ export type Query = {
   moregroups?: Maybe<Array<Maybe<HomeGroup>>>;
   object?: Maybe<Array<Maybe<Object>>>;
   page?: Maybe<Array<Maybe<Page>>>;
+  pagecomments?: Maybe<MessengerPageComments>;
   pageprogress?: Maybe<Array<Maybe<ProgressScore>>>;
   passagenotes?: Maybe<PassageNotes>;
   people?: Maybe<Array<Maybe<People>>>;
@@ -1054,6 +1061,12 @@ export type QueryObjectArgs = {
 
 export type QueryPageArgs = {
   slug?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type QueryPagecommentsArgs = {
+  channelUrl?: InputMaybe<Scalars['String']['input']>;
+  pageSlug?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -1696,6 +1709,7 @@ export type ResolversTypes = {
   MessengerChannel: ResolverTypeWrapper<Partial<MessengerChannel>>;
   MessengerMember: ResolverTypeWrapper<Partial<MessengerMember>>;
   MessengerMessage: ResolverTypeWrapper<Partial<MessengerMessage>>;
+  MessengerPageComments: ResolverTypeWrapper<Partial<MessengerPageComments>>;
   MessengerReaction: ResolverTypeWrapper<Partial<MessengerReaction>>;
   MessengerThreadInfo: ResolverTypeWrapper<Partial<MessengerThreadInfo>>;
   MessengerUnreadDM: ResolverTypeWrapper<Partial<MessengerUnreadDm>>;
@@ -1791,6 +1805,7 @@ export type ResolversParentTypes = {
   MessengerChannel: Partial<MessengerChannel>;
   MessengerMember: Partial<MessengerMember>;
   MessengerMessage: Partial<MessengerMessage>;
+  MessengerPageComments: Partial<MessengerPageComments>;
   MessengerReaction: Partial<MessengerReaction>;
   MessengerThreadInfo: Partial<MessengerThreadInfo>;
   MessengerUnreadDM: Partial<MessengerUnreadDm>;
@@ -2226,6 +2241,12 @@ export type MessengerMessageResolvers<ContextType = AppContext, ParentType exten
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type MessengerPageCommentsResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['MessengerPageComments'] = ResolversParentTypes['MessengerPageComments']> = {
+  counts?: Resolver<Maybe<ResolversTypes['JSON']>, ParentType, ContextType>;
+  messages?: Resolver<Maybe<Array<Maybe<ResolversTypes['MessengerMessage']>>>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type MessengerReactionResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['MessengerReaction'] = ResolversParentTypes['MessengerReaction']> = {
   reaction_key?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   user_ids?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
@@ -2497,6 +2518,7 @@ export type QueryResolvers<ContextType = AppContext, ParentType extends Resolver
   moregroups?: Resolver<Maybe<Array<Maybe<ResolversTypes['HomeGroup']>>>, ParentType, ContextType, Partial<QueryMoregroupsArgs>>;
   object?: Resolver<Maybe<Array<Maybe<ResolversTypes['Object']>>>, ParentType, ContextType, Partial<QueryObjectArgs>>;
   page?: Resolver<Maybe<Array<Maybe<ResolversTypes['Page']>>>, ParentType, ContextType, Partial<QueryPageArgs>>;
+  pagecomments?: Resolver<Maybe<ResolversTypes['MessengerPageComments']>, ParentType, ContextType, Partial<QueryPagecommentsArgs>>;
   pageprogress?: Resolver<Maybe<Array<Maybe<ResolversTypes['ProgressScore']>>>, ParentType, ContextType, Partial<QueryPageprogressArgs>>;
   passagenotes?: Resolver<Maybe<ResolversTypes['PassageNotes']>, ParentType, ContextType, Partial<QueryPassagenotesArgs>>;
   people?: Resolver<Maybe<Array<Maybe<ResolversTypes['People']>>>, ParentType, ContextType, Partial<QueryPeopleArgs>>;
@@ -2916,6 +2938,7 @@ export type Resolvers<ContextType = AppContext> = {
   MessengerChannel?: MessengerChannelResolvers<ContextType>;
   MessengerMember?: MessengerMemberResolvers<ContextType>;
   MessengerMessage?: MessengerMessageResolvers<ContextType>;
+  MessengerPageComments?: MessengerPageCommentsResolvers<ContextType>;
   MessengerReaction?: MessengerReactionResolvers<ContextType>;
   MessengerThreadInfo?: MessengerThreadInfoResolvers<ContextType>;
   MessengerUnreadDM?: MessengerUnreadDmResolvers<ContextType>;

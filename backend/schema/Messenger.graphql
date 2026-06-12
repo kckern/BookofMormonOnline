@@ -8,6 +8,7 @@ extend type Query {
   messengerMessage(messageId: String): MessengerMessage
   messengerThreadMessages(parentMessageId: String): [MessengerMessage]
   messengerUnreadDMs(userId: String): [MessengerUnreadDM]
+  pagecomments(channelUrl: String, pageSlug: String): MessengerPageComments
 }
 
 extend type Mutation {
@@ -92,4 +93,9 @@ type MessengerUnreadDM {
   channel_url: String
   other_user_id: String
   unread_count: Int
+}
+
+type MessengerPageComments {
+  messages: [MessengerMessage]
+  counts: JSON
 }
