@@ -597,7 +597,6 @@ function Comments({ appController, comments, count, item, group, memberMap, sbCh
   const mycomment =
     !comments !== -1 ? (
       <MyComment
-        fetchComments={fetchComments}
         setNewMessages={setNewMessages}
         appController={appController}
         sbChannel={sbChannel}
@@ -681,7 +680,6 @@ function MyComment({
   setNewMessages,
   sbChannel,
   trophy,
-  fetchComments,
 }) {
   let tokenImg = tokenImage();
 
@@ -760,19 +758,6 @@ function MyComment({
     channel.endTyping();
   };
 
-  const pollForComments = async () => {
-    let message = itemId;
-    let channel = sbChannel.url;
-    let token = appController.states.user.token;
-    let comments = await BoMOnlineAPI(
-      { homethread: { token, channel, message } },
-      { useCache: false },
-    );
-    fetchComments(comments.homethread);
-    //sleep 5
-    setTimeout(pollForComments, 5000);
-  };
-
   return (
     <div className="commentThreadItem">
       <div className="imagebox noselect">
@@ -789,9 +774,6 @@ function MyComment({
           onKeyPress={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               sendMessage(e.target, itemId);
-              //fetchcomments messages every 5 seconds
-              pollForComments();
-
               e.preventDefault();
             }
           }}
