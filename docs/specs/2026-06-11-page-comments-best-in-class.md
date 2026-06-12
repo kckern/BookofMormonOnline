@@ -1,7 +1,7 @@
 # Best-in-class study-group page comments: loading, placement, freshness
 
 **Date:** 2026-06-11
-**Status:** P0+P1 shipped; P2-P4 in progress
+**Status:** P0+P1+P2 shipped; P3-P4 in progress
 **Goal (KC):** excellent UX — not wasteful, no UI thrash, no conflicts with concurrent scrolling.
 
 ## Baseline (after today's P0)
@@ -33,24 +33,43 @@ threads for messages that were discarded client-side.
 Acceptance: cold load = exactly 1 GraphQL request; React profiler shows one
 comments-driven commit per page load.
 
-## P2 — Layout stability under concurrent scrolling
+## P2 — Layout stability under concurrent scrolling (SHIPPED)
 
 Principle: **data may arrive at any time; layout change may not.**
 
-1. **Reserved-space rendering.** Comment badges/bubbles render into space that exists
-   before data arrives (fixed-size verse gutter / absolutely-positioned badges), so late
-   counts change pixels, not geometry. Target: comments contribute 0 to layout shift.
-2. **Scroll-manager gating for anything that must reflow.** If a placement genuinely
-   changes document height, apply it through `src/scroll/` (campaign arbiter + settle
-   detection): defer DOM placement while a scroll campaign is active or velocity is
-   nonzero; flush on settle. Data loading stays concurrent — only the paint defers.
-3. **Anchor compensation fallback.** For unavoidable shifts above the viewport, measure
-   the delta and adjust scrollTop in the same frame (manual scroll anchoring), so the
-   user's reading position is pixel-stable.
+**Audit conclusion (2026-06-11):** every comments-driven UI surface is ALREADY out of
+document flow — comment arrival causes zero layout shift by construction, so items 1
+and 3 below required no code:
+
+- `.scripture .comments` (verse count badge) — `position: absolute`,
+  `frontend/webapp/src/views/Page/TextContent.css:511`
+- `.annotation` (commentary gutter badge) — `position: absolute`,
+  `frontend/webapp/src/views/Page/TextContent.css:328`
+- `.art_bubble` (artwork gutter bubble) — `position: absolute`,
+  `frontend/webapp/src/views/Page/TextContent.css:252`
+- `.alert.pageInfo` (loading notice) — `position: fixed`,
+  `frontend/webapp/src/views/Page/Page.css:52`
+
+All four reveal via opacity fade (`fadedIn`), not geometry change. The deliverable
+therefore narrowed to item 2: the success dispatch could still land mid-campaign
+(autoAdvance / fallback-timer overlaps), spending React render work during a smooth
+scroll. Shipped as `pageScrollManager.waitForIdle()` (`src/scroll/scrollCampaign.js`)
+with Page.js routing the `setPageComments` success dispatch through it, plus a
+`pageComments:placed` deep-link instrumentation event at the moment of placement.
+Data loading stays concurrent — only the paint defers; on deep-link loads no campaign
+runs before the readyToScroll gate opens, so the deferral is a no-op there.
+
+1. **Reserved-space rendering.** ALREADY HELD (audit above) — no change needed.
+2. **Scroll-manager gating.** SHIPPED — `waitForIdle()` + deferred dispatch +
+   `pageComments:placed` event.
+3. **Anchor compensation fallback.** NOT NEEDED — no comments-driven shifts exist.
 
 Acceptance: deep-link scroll campaigns (the `usePageInit` flows) complete to the correct
 target with comments loading concurrently; no scroll-position jumps attributable to
-comment placement (verifiable with the scroll e2e fixtures).
+comment placement. Covered by jest (`src/scroll/__tests__/scrollCampaign.test.js`
+waitForIdle suite). **Deferred follow-up:** an automated scroll-stability Playwright
+spec needs an authenticated-study-group e2e fixture (comments only load in study mode);
+filed as part of the P3/P4 verification work.
 
 ## P3 — Zero-waste freshness (cache + socket patching)
 

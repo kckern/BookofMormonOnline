@@ -20,7 +20,7 @@
 - Modify: `frontend/webapp/src/scroll/scrollCampaign.js` (inside `createScrollManager`)
 - Test: `frontend/webapp/src/scroll/__tests__/scrollCampaign.test.js` (append; read the file first to reuse its helpers/mocks)
 
-- [ ] **Step 1: Failing test** (append; adapt helper usage to the file's existing patterns — it already constructs managers and runs campaigns with fake steps):
+- [x] **Step 1: Failing test** (append; adapt helper usage to the file's existing patterns — it already constructs managers and runs campaigns with fake steps):
 
 ```js
 describe("waitForIdle", () => {
@@ -48,9 +48,9 @@ describe("waitForIdle", () => {
 
 (If `step.call`'s executor doesn't await returned promises, check the `call` runner in scrollCampaign.js — if `call` steps are fire-and-forget, swap the gate step for whatever the existing tests use to hold a campaign open; the file's tests already simulate long-running steps.)
 
-- [ ] **Step 2: Run** `CI=true npx react-scripts test --testPathPattern 'scrollCampaign'` — new tests FAIL (`waitForIdle is not a function`).
+- [x] **Step 2: Run** `CI=true npx react-scripts test --testPathPattern 'scrollCampaign'` — new tests FAIL (`waitForIdle is not a function`).
 
-- [ ] **Step 3: Implement** — inside `createScrollManager`'s returned object add:
+- [x] **Step 3: Implement** — inside `createScrollManager`'s returned object add:
 
 ```js
     /**
@@ -70,9 +70,9 @@ with module-scope-per-manager `const idleWaiters = [];` and, at the point where 
       idleWaiters.splice(0).forEach((fn) => fn());
 ```
 
-- [ ] **Step 4: Run** — scrollCampaign suite all green (existing + 2 new).
+- [x] **Step 4: Run** — scrollCampaign suite all green (existing + 2 new).
 
-- [ ] **Step 5: Commit** `feat(scroll): waitForIdle — defer non-urgent placement out of active campaigns`
+- [x] **Step 5: Commit** `feat(scroll): waitForIdle — defer non-urgent placement out of active campaigns`
 
 ---
 
@@ -81,9 +81,9 @@ with module-scope-per-manager `const idleWaiters = [];` and, at the point where 
 **Files:**
 - Modify: `frontend/webapp/src/views/Page/Page.js` (the `loadPageComments` success `.then`, ~line 525-540)
 
-- [ ] **Step 1: Import** `pageScrollManager` (already exported from `./usePageInit` — verify the import path used elsewhere in Page.js; usePageInit is in the same directory) and `recordDeepLinkEvent` (already imported in Page.js — verify).
+- [x] **Step 1: Import** `pageScrollManager` (already exported from `./usePageInit` — verify the import path used elsewhere in Page.js; usePageInit is in the same directory) and `recordDeepLinkEvent` (already imported in Page.js — verify).
 
-- [ ] **Step 2: Wrap the success dispatch**: replace the success `.then` body's dispatch portion
+- [x] **Step 2: Wrap the success dispatch**: replace the success `.then` body's dispatch portion
 
 ```js
         setCommentState("placing");
@@ -115,13 +115,13 @@ with:
 
 IMPORTANT semantic check before committing: `readyToScroll` flips via the `pageController.pageComments` effect (Page.js ~238) — with the dispatch deferred, confirm the deep-link gate (`gateOpen = !needToLoadComments || readyToScroll`) cannot deadlock: the deep-link campaign only STARTS after readyToScroll, and readyToScroll now waits for the dispatch which waits for idle. On a deep-link load no campaign is running before the gate opens, so `waitForIdle()` resolves immediately — no deadlock. The autoAdvance path runs campaigns while comments load; there the deferral is exactly the desired behavior. Run the e2e ordering reasoning past the reviewer in your report.
 
-- [ ] **Step 3: Verify** — full frontend suite (`--watchAll=false`, all pass), webpack compiled clean, `curl -s -o /dev/null -w "%{http_code}" http://localhost:8200/` → 200.
+- [x] **Step 3: Verify** — full frontend suite (`--watchAll=false`, all pass), webpack compiled clean, `curl -s -o /dev/null -w "%{http_code}" http://localhost:8200/` → 200.
 
-- [ ] **Step 4: Commit** `feat(page): defer comment paint until scroll campaigns settle (P2)`
+- [x] **Step 4: Commit** `feat(page): defer comment paint until scroll campaigns settle (P2)`
 
 ---
 
 ### Task 3: Spec + audit record
 
-- [ ] Update `docs/specs/2026-06-11-page-comments-best-in-class.md` §P2: mark SHIPPED; record the audit conclusion (all comments UI already out-of-flow — list the four CSS surfaces with file:line) and that the deliverable narrowed to dispatch deferral + the `pageComments:placed` instrumentation event. Note the deferred follow-up: an authenticated-study-group e2e fixture is required before a scroll-stability Playwright spec can assert the invariant automatically; filed as part of P3/P4 verification work.
-- [ ] Commit `docs(specs): page comments P2 shipped — audit + dispatch deferral`
+- [x] Update `docs/specs/2026-06-11-page-comments-best-in-class.md` §P2: mark SHIPPED; record the audit conclusion (all comments UI already out-of-flow — list the four CSS surfaces with file:line) and that the deliverable narrowed to dispatch deferral + the `pageComments:placed` instrumentation event. Note the deferred follow-up: an authenticated-study-group e2e fixture is required before a scroll-stability Playwright spec can assert the invariant automatically; filed as part of P3/P4 verification work.
+- [x] Commit `docs(specs): page comments P2 shipped — audit + dispatch deferral`
