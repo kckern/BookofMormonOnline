@@ -8,9 +8,9 @@ import {
   findNetworksByUser,
   scoreProgressForUser,
   md5,
-  genUserAvatar,
   type UserAuthRow,
 } from '../../data/loaders/userauth.js';
+import { resolveSigninAvatar } from '../../messaging/users.js';
 import { sendbird } from '../../auth/sendbirdShim.js';
 import { runWrite } from '../../data/writes.js';
 
@@ -49,13 +49,14 @@ export const userauthResolvers: Resolvers = {
         return asGql({ isSuccess: false, msg: 'Token Login Failure', user: null, social: null });
       }
       const hashed_id = md5(user.user);
-      const avatar = genUserAvatar(hashed_id);
 
       // Onboarding: provision the messenger identity on sign-in. messenger_members
       // / messages / reactions / files all FK to messenger_users.user_id, so a
       // post-Sendbird-migration user with no row silently can't join, post, react,
-      // or open a socket. Insert-if-missing (preserves any later nickname/avatar
-      // customisation; suppressed under sandbox on dev).
+      // or open a socket. Insert-if-missing (suppressed under sandbox on dev).
+      // profile_url stays NULL — generated avatars are never persisted; the read
+      // path (getUser → avatarAssets) derives and verifies on demand, so an S3
+      // upload or social refresh wins automatically.
       const hasMessengerRow = await ctx.db
         .selectFrom('messenger_users')
         .select('user_id')
@@ -68,13 +69,17 @@ export const userauthResolvers: Resolvers = {
             user_id: hashed_id,
             bom_user_id: user.user,
             nickname: user.name ?? user.user,
-            profile_url: avatar,
+            profile_url: null,
             is_bot: 0,
           }) as Parameters<typeof runWrite>[1],
         );
       }
 
-      const social = sendbird.loadUser(hashed_id, user.name ?? undefined, avatar);
+      const social = sendbird.loadUser(
+        hashed_id,
+        user.name ?? undefined,
+        await resolveSigninAvatar(ctx.db, hashed_id),
+      );
       return asGql({ isSuccess: true, msg: 'Token Login Success', user, social });
     },
 
