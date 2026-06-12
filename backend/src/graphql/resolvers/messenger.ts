@@ -13,6 +13,8 @@ import {
   getChannelMembers,
   addUserToChannel,
   removeUserFromChannel,
+  removeUserFromChannelUnlessBanned,
+  deleteMembershipRowInState,
   setMemberMuted,
   canUserInvite,
   banUserFromChannel,
@@ -451,7 +453,11 @@ export const messengerResolvers: Resolvers = {
 
     /**
      * messengerUpdateMemberRole — change a member's role in a channel.
-     * role is 'operator' | 'member'. Inline Kysely update on messenger_members.
+     * role is 'operator' | 'member'. Inline Kysely update on messenger_members,
+     * scoped to state='joined' — defense in depth (spec §2): a banned (or
+     * merely invited/requested) target must not be promotable; requireOperator
+     * checks role without state, so a banned row holding role='operator' would
+     * pass every operator gate.
      * Emits membership_changed on the RealtimeBus.
      * Returns true on success, false on failure.
      */
@@ -474,6 +480,7 @@ export const messengerResolvers: Resolvers = {
           .set({ role: role as 'operator' | 'member' })
           .where('channel_url', '=', channelUrl)
           .where('user_id', '=', userId)
+          .where('state', '=', 'joined')
           .executeTakeFirst();
 
         const updated = Number(result.numUpdatedRows) > 0;
@@ -514,7 +521,12 @@ export const messengerResolvers: Resolvers = {
 
     /**
      * messengerRemoveMember — remove a user from a channel entirely.
-     * Delegates to removeUserFromChannel service.
+     * Two paths with different delete scopes (ban-escape guard, spec §2):
+     *   - SELF-removal ("leave"): removeUserFromChannelUnlessBanned — a banned
+     *     user leaving must not delete their own ban row and rejoin.
+     *   - operator-initiated removal (kick): removeUserFromChannel — full
+     *     delete regardless of state; the operator kick (and unban) are the
+     *     only ways a banned row dies.
      * Emits membership_changed on the RealtimeBus.
      * Returns true if a row was deleted, false otherwise.
      */
@@ -527,10 +539,13 @@ export const messengerResolvers: Resolvers = {
       // Allow an operator to remove anyone, OR a user to remove themselves (leave).
       const actingUserId = await resolveActingUserId(ctx);
       if (!actingUserId) return false;
-      if (actingUserId !== userId && !(await requireOperator(ctx, channelUrl))) return false;
+      const isSelf = actingUserId === userId;
+      if (!isSelf && !(await requireOperator(ctx, channelUrl))) return false;
 
       try {
-        const removed = await removeUserFromChannel(ctx.db, channelUrl, userId);
+        const removed = isSelf
+          ? await removeUserFromChannelUnlessBanned(ctx.db, channelUrl, userId)
+          : await removeUserFromChannel(ctx.db, channelUrl, userId);
         if (removed) {
           // Emit both: membership_changed (channel refresh) + user_left (symmetry with
           // user_joined; the client listens for both).
@@ -677,9 +692,13 @@ export const messengerResolvers: Resolvers = {
 
     /**
      * messengerDeclineInvitation — remove the invited membership row.
-     * Delegates to removeUserFromChannel (removes regardless of state).
+     * Deletes WHERE state='invited' ONLY (deleteMembershipRowInState): a
+     * banned row must survive (ban-escape guard, spec §2), and since the
+     * userId arg lets a caller target an arbitrary user, the state scope is
+     * also what stops decline from doubling as a member-removal backdoor for
+     * joined rows.
      * Emits membership_changed on the RealtimeBus.
-     * Returns true if the row was removed, false otherwise.
+     * Returns true if an invited row was removed, false otherwise.
      */
     messengerDeclineInvitation: async (_root, args, ctx: AppContext) => {
       const { channelUrl, userId } = args as {
@@ -690,7 +709,7 @@ export const messengerResolvers: Resolvers = {
       if (!channelUrl || !targetUserId) return false;
 
       try {
-        const removed = await removeUserFromChannel(ctx.db, channelUrl, targetUserId);
+        const removed = await deleteMembershipRowInState(ctx.db, channelUrl, targetUserId, 'invited');
         if (removed) {
           getBus().emit('membership_changed', channelUrl, { channelUrl, userId: targetUserId });
         }

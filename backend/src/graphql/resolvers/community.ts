@@ -17,7 +17,7 @@ import type { Resolvers } from '../../../codegen/graphql.js';
 import type { AppContext } from '../context.js';
 import { md5, genUserAvatar } from '../../auth/identity.js';
 import { getChannel, getMyStudyGroups, getPublicChannels } from '../../messaging/channels.js';
-import { getChannelMembers, addUserToChannel, removeUserFromChannel, getPublicUserIds, isUserBanned } from '../../messaging/members.js';
+import { getChannelMembers, addUserToChannel, deleteMembershipRowInState, getPublicUserIds, isUserBanned } from '../../messaging/members.js';
 import { getMessages, getMessagesForChannels, getThread } from '../../messaging/messages.js';
 import { getUser, getUsers, listStudyBots } from '../../messaging/users.js';
 import { addBotToChannel, removeBotFromChannel } from '../../messaging/bots/registry.js';
@@ -869,7 +869,9 @@ export const communityResolvers: Resolvers = {
 
     /**
      * withdrawRequest — cancel a pending join request on a public channel.
-     * Validates custom_type === 'public'; removes the membership row (regardless of state).
+     * Validates custom_type === 'public'; deletes the membership row WHERE
+     * state='requested' ONLY — a banned (or joined/invited) row survives, or a
+     * banned user could withdraw their own ban row and rejoin (spec §2).
      * Fires membership_changed on the RealtimeBus.
      */
     withdrawRequest: async (_root, args, ctx: AppContext) => {
@@ -887,7 +889,7 @@ export const communityResolvers: Resolvers = {
         if (!channel) return asGql({ isSuccess: false, msg: 'Group not found', channel: null, user: null });
         if (channel.custom_type !== 'public') return asGql({ isSuccess: false, msg: 'Group is not public', channel: null, user: null });
 
-        await removeUserFromChannel(ctx.db, url, myUserId);
+        await deleteMembershipRowInState(ctx.db, url, myUserId, 'requested');
 
         getBus().emit('membership_changed', url, { channelUrl: url, user: myUserId });
 
@@ -901,10 +903,12 @@ export const communityResolvers: Resolvers = {
     /**
      * processRequest — operator grants or denies a pending join request.
      * Caller must be an operator on the channel; target user_id must exist.
-     * grant=true  → addUserToChannel (state=joined) + remove the requested row first
+     * grant=true  → addUserToChannel (state=joined) + delete the requested row first
      *             → fires user_joined + membership_changed
-     * grant=false → removeUserFromChannel (deletes the requested row)
-     *             → fires membership_changed
+     * grant=false → delete the requested row → fires membership_changed
+     * Both deletes are scoped WHERE state='requested' (deleteMembershipRowInState):
+     * denying a since-banned user must NOT delete the ban row (deny is not an
+     * unban, spec §2), and a joined/invited row is never collateral either.
      * Returns Boolean per SDL.
      */
     processRequest: async (_root, args, ctx: AppContext) => {
@@ -932,7 +936,7 @@ export const communityResolvers: Resolvers = {
           // re-admit the user — unban is the only path out of 'banned'.
           if (await isUserBanned(ctx.db, channelArg, targetUserId)) return false;
           // Remove the requested row first so addUserToChannel doesn't hit a dup-key
-          await removeUserFromChannel(ctx.db, channelArg, targetUserId);
+          await deleteMembershipRowInState(ctx.db, channelArg, targetUserId, 'requested');
           const added = await addUserToChannel(ctx.db, channelArg, targetUserId, 'member');
           if (!added) return false;
 
@@ -942,8 +946,9 @@ export const communityResolvers: Resolvers = {
           getBus().emit('user_joined', channelArg, { channelUrl: channelArg, user: userShape });
           getBus().emit('membership_changed', channelArg, { channelUrl: channelArg, user: targetUserId });
         } else {
-          // Deny: remove the requested membership row
-          await removeUserFromChannel(ctx.db, channelArg, targetUserId);
+          // Deny: remove the requested membership row ONLY — a banned row must
+          // survive (deny of a since-banned user is not an unban).
+          await deleteMembershipRowInState(ctx.db, channelArg, targetUserId, 'requested');
           getBus().emit('membership_changed', channelArg, { channelUrl: channelArg, user: targetUserId });
         }
 

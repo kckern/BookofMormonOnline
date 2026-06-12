@@ -877,16 +877,21 @@ export default class MessengerController {
     }
   }
 
+  // banMember/unbanMember return the mutation BOOLEAN (not the gqlRequest data
+  // object, which is truthy even when the mutation returned false) — callers
+  // branch on it (StudyGroupAdmin only drops the banned row / refetches when
+  // the unban really happened). Errors resolve to false for the same reason.
   async banMember(channel, userId) {
     const channelUrl = channel.channel_url || channel.url;
     try {
       const mutation = `mutation {
         messengerBanMember(channelUrl: "${channelUrl}", userId: "${userId}")
       }`;
-      return await this.gqlRequest(mutation);
+      const result = await this.gqlRequest(mutation);
+      return result?.messengerBanMember === true;
     } catch (error) {
       console.error('Messenger: banMember error', error);
-      throw error;
+      return false;
     }
   }
 
@@ -896,10 +901,11 @@ export default class MessengerController {
       const mutation = `mutation {
         messengerUnbanMember(channelUrl: "${channelUrl}", userId: "${userId}")
       }`;
-      return await this.gqlRequest(mutation);
+      const result = await this.gqlRequest(mutation);
+      return result?.messengerUnbanMember === true;
     } catch (error) {
       console.error('Messenger: unbanMember error', error);
-      throw error;
+      return false;
     }
   }
 

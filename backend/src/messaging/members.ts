@@ -351,7 +351,15 @@ export async function acceptChannelInvitation(
 }
 
 /**
- * Remove a user from a channel.
+ * Remove a user from a channel — deletes the row REGARDLESS OF STATE,
+ * including 'banned'.
+ *
+ * This is the OPERATOR KICK path only (messengerRemoveMember with an operator
+ * actor). It and unbanUserFromChannel must stay the only ways a banned row
+ * dies: every self-service delete (leave, decline-invitation, withdraw-request,
+ * deny-request) must use the state-scoped variants below, or a banned user
+ * could delete their own ban row and simply rejoin (spec §2 ban escape).
+ *
  * Returns true if a row was deleted, false if the user was not a member.
  */
 export async function removeUserFromChannel(
@@ -363,6 +371,48 @@ export async function removeUserFromChannel(
     .deleteFrom('messenger_members')
     .where('channel_url', '=', channelUrl)
     .where('user_id', '=', userId)
+    .executeTakeFirst();
+
+  return Number(result.numDeletedRows) > 0;
+}
+
+/**
+ * Self-service "leave": delete the membership row UNLESS it is banned.
+ * A banned user leaving must NOT delete the ban row — that would be a ban
+ * escape (delete + rejoin). Returns true when a non-banned row was deleted.
+ */
+export async function removeUserFromChannelUnlessBanned(
+  db: Kysely<DB>,
+  channelUrl: string,
+  userId: string,
+): Promise<boolean> {
+  const result = await db
+    .deleteFrom('messenger_members')
+    .where('channel_url', '=', channelUrl)
+    .where('user_id', '=', userId)
+    .where('state', '!=', 'banned')
+    .executeTakeFirst();
+
+  return Number(result.numDeletedRows) > 0;
+}
+
+/**
+ * Delete the membership row ONLY when it is in the given state — the
+ * state-scoped delete for single-purpose paths: declineInvitation ('invited'),
+ * withdrawRequest / processRequest-deny ('requested'). A row in any other
+ * state — banned above all — survives. Returns true when a row was deleted.
+ */
+export async function deleteMembershipRowInState(
+  db: Kysely<DB>,
+  channelUrl: string,
+  userId: string,
+  state: 'joined' | 'invited' | 'requested' | 'banned',
+): Promise<boolean> {
+  const result = await db
+    .deleteFrom('messenger_members')
+    .where('channel_url', '=', channelUrl)
+    .where('user_id', '=', userId)
+    .where('state', '=', state)
     .executeTakeFirst();
 
   return Number(result.numDeletedRows) > 0;

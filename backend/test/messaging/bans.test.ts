@@ -35,8 +35,14 @@ import {
   getChannelMembersBulk,
   isUserBanned,
   unbanUserFromChannel,
+  removeUserFromChannelUnlessBanned,
+  deleteMembershipRowInState,
 } from '../../src/messaging/members.js';
 import { getChannel } from '../../src/messaging/channels.js';
+import { buildContext, type AppContext } from '../../src/graphql/context.js';
+import { messengerResolvers } from '../../src/graphql/resolvers/messenger.js';
+import { communityResolvers } from '../../src/graphql/resolvers/community.js';
+import { md5 } from '../../src/auth/identity.js';
 
 // ─── Write-capable DB instance (mirrors messages.test.ts) ─────────────────────
 
@@ -70,6 +76,7 @@ let canWrite = false;
 
 const trackedChannels: string[] = [];
 const trackedUsers: string[] = [];
+const trackedBomUsers: string[] = [];
 
 function newChannelUrl(): string {
   const url = `test_ch_${nanoid(12)}`;
@@ -106,18 +113,31 @@ async function cleanup(): Promise<void> {
       .catch(() => undefined);
     trackedUsers.length = 0;
   }
+  if (trackedBomUsers.length) {
+    await db
+      .deleteFrom('bom_user_token')
+      .where('user', 'in', [...trackedBomUsers])
+      .execute()
+      .catch(() => undefined);
+    await db
+      .deleteFrom('bom_user')
+      .where('user', 'in', [...trackedBomUsers])
+      .execute()
+      .catch(() => undefined);
+    trackedBomUsers.length = 0;
+  }
 }
 
 // ─── Seed helpers ─────────────────────────────────────────────────────────────
 
-async function seedChannel(): Promise<string> {
+async function seedChannel(customType: 'private' | 'public' | 'open' = 'private'): Promise<string> {
   const channelUrl = newChannelUrl();
   await db
     .insertInto('messenger_channels')
     .values({
       channel_url: channelUrl,
       name: 'Bans Test Channel',
-      custom_type: 'private',
+      custom_type: customType,
     })
     .execute();
   return channelUrl;
@@ -142,6 +162,43 @@ async function addMemberRow(
     .insertInto('messenger_members')
     .values({ channel_url: channelUrl, user_id: userId, role, state })
     .execute();
+}
+
+/**
+ * Seed an AUTHENTICATED messenger user: a bom_user + bom_user_token pair plus
+ * the messenger_users row (user_id = md5(username)). The token authenticates
+ * resolver calls — bearer header for messenger* mutations, token arg for the
+ * community mutations. All three rows are tracked for cleanup.
+ */
+async function seedAuthedUser(): Promise<{ userId: string; token: string }> {
+  const username = `test_bu_${nanoid(10)}`;
+  trackedBomUsers.push(username);
+  const token = `test_tok_${nanoid(20)}`;
+  await db.insertInto('bom_user').values({ user: username, pass: 'x' }).execute();
+  await db.insertInto('bom_user_token').values({ token, user: username }).execute();
+  const userId = md5(username);
+  trackedUsers.push(userId);
+  await db
+    .insertInto('messenger_users')
+    .values({ user_id: userId, nickname: 'BanEscapeTester' })
+    .execute();
+  return { userId, token };
+}
+
+// ─── Direct resolver invocation (no HTTP; mirrors the yoga wiring) ───────────
+
+type ResolverFn = (root: unknown, args: Record<string, unknown>, ctx: AppContext) => Promise<unknown>;
+
+function mutationOf(resolvers: object, name: string): ResolverFn {
+  const block = (resolvers as { Mutation: Record<string, ResolverFn> }).Mutation;
+  const fn = block[name];
+  if (!fn) throw new Error(`Mutation resolver not found: ${name}`);
+  return fn;
+}
+
+/** AppContext with the bearer token set (messenger* resolvers resolve the actor from it). */
+function ctxFor(bearerToken?: string): AppContext {
+  return buildContext(db, 'en', '', bearerToken);
 }
 
 async function getMemberRow(
@@ -377,5 +434,224 @@ describe('roster filtering (banned hidden by default)', () => {
     const channel = await getChannel(db, channelUrl);
     expect(channel?.member_count).toBe(2);
     expect(channel?.members.map((m) => m.user_id).sort()).toEqual([a, b].sort());
+  });
+});
+
+// ─── State-scoped delete services ─────────────────────────────────────────────
+
+describe('state-scoped delete services', () => {
+  itWrite('removeUserFromChannelUnlessBanned deletes joined/invited/requested but never banned', async () => {
+    const channelUrl = await seedChannel();
+    const joined = await seedUser();
+    const banned = await seedUser();
+    await addMemberRow(channelUrl, joined, 'member', 'joined');
+    await addMemberRow(channelUrl, banned, 'member', 'banned');
+
+    expect(await removeUserFromChannelUnlessBanned(db, channelUrl, joined)).toBe(true);
+    expect(await getMemberRow(channelUrl, joined)).toBeUndefined();
+
+    expect(await removeUserFromChannelUnlessBanned(db, channelUrl, banned)).toBe(false);
+    expect((await getMemberRow(channelUrl, banned))?.state).toBe('banned');
+  });
+
+  itWrite('deleteMembershipRowInState deletes only the matching state', async () => {
+    const channelUrl = await seedChannel();
+    const invited = await seedUser();
+    const banned = await seedUser();
+    await addMemberRow(channelUrl, invited, 'member', 'invited');
+    await addMemberRow(channelUrl, banned, 'member', 'banned');
+
+    // Mismatched state → no-op
+    expect(await deleteMembershipRowInState(db, channelUrl, banned, 'requested')).toBe(false);
+    expect((await getMemberRow(channelUrl, banned))?.state).toBe('banned');
+    expect(await deleteMembershipRowInState(db, channelUrl, invited, 'requested')).toBe(false);
+    expect((await getMemberRow(channelUrl, invited))?.state).toBe('invited');
+
+    // Matching state → deleted
+    expect(await deleteMembershipRowInState(db, channelUrl, invited, 'invited')).toBe(true);
+    expect(await getMemberRow(channelUrl, invited)).toBeUndefined();
+  });
+});
+
+// ─── Ban-escape regression: every self-service DELETE path must be state-scoped
+//     (a banned user must NOT be able to delete their own ban row; the operator
+//     kick — messengerRemoveMember by an operator — and unbanUserFromChannel are
+//     the ONLY ways a banned row dies). ─────────────────────────────────────────
+
+describe('ban-escape: self-leave (messengerRemoveMember on self)', () => {
+  const removeMember = mutationOf(messengerResolvers, 'messengerRemoveMember');
+
+  itWrite('a banned user leaving the channel does NOT delete the ban row', async () => {
+    const channelUrl = await seedChannel();
+    const { userId, token } = await seedAuthedUser();
+    await addMemberRow(channelUrl, userId, 'member', 'banned');
+
+    const result = await removeMember(null, { channelUrl, userId }, ctxFor(token));
+
+    expect(result).toBe(false);
+    expect((await getMemberRow(channelUrl, userId))?.state).toBe('banned');
+  });
+
+  itWrite('a joined member can still leave (positive control)', async () => {
+    const channelUrl = await seedChannel();
+    const { userId, token } = await seedAuthedUser();
+    await addMemberRow(channelUrl, userId, 'member', 'joined');
+
+    const result = await removeMember(null, { channelUrl, userId }, ctxFor(token));
+
+    expect(result).toBe(true);
+    expect(await getMemberRow(channelUrl, userId)).toBeUndefined();
+  });
+
+  itWrite('an OPERATOR removing a banned user still deletes the row (kick is the operator path)', async () => {
+    const channelUrl = await seedChannel();
+    const { userId: opId, token: opToken } = await seedAuthedUser();
+    await addMemberRow(channelUrl, opId, 'operator', 'joined');
+    const banned = await seedUser();
+    await addMemberRow(channelUrl, banned, 'member', 'banned');
+
+    const result = await removeMember(null, { channelUrl, userId: banned }, ctxFor(opToken));
+
+    expect(result).toBe(true);
+    expect(await getMemberRow(channelUrl, banned)).toBeUndefined();
+  });
+});
+
+describe('ban-escape: messengerDeclineInvitation', () => {
+  const decline = mutationOf(messengerResolvers, 'messengerDeclineInvitation');
+
+  itWrite('declining on a BANNED row does NOT delete it', async () => {
+    const channelUrl = await seedChannel();
+    const { userId, token } = await seedAuthedUser();
+    await addMemberRow(channelUrl, userId, 'member', 'banned');
+
+    const result = await decline(null, { channelUrl }, ctxFor(token));
+
+    expect(result).toBe(false);
+    expect((await getMemberRow(channelUrl, userId))?.state).toBe('banned');
+  });
+
+  itWrite('declining does NOT delete a JOINED row (decline is invited-only, not a member-removal backdoor)', async () => {
+    const channelUrl = await seedChannel();
+    const { token } = await seedAuthedUser();
+    const joined = await seedUser();
+    await addMemberRow(channelUrl, joined, 'member', 'joined');
+
+    // The userId arg lets any authenticated caller target an arbitrary member —
+    // the state='invited' scope is what makes that harmless.
+    const result = await decline(null, { channelUrl, userId: joined }, ctxFor(token));
+
+    expect(result).toBe(false);
+    expect((await getMemberRow(channelUrl, joined))?.state).toBe('joined');
+  });
+
+  itWrite('declining an INVITED row removes it (positive control)', async () => {
+    const channelUrl = await seedChannel();
+    const { userId, token } = await seedAuthedUser();
+    await addMemberRow(channelUrl, userId, 'member', 'invited');
+
+    const result = await decline(null, { channelUrl }, ctxFor(token));
+
+    expect(result).toBe(true);
+    expect(await getMemberRow(channelUrl, userId)).toBeUndefined();
+  });
+});
+
+describe('ban-escape: withdrawRequest', () => {
+  const withdraw = mutationOf(communityResolvers, 'withdrawRequest');
+
+  itWrite('withdrawing on a BANNED row does NOT delete it', async () => {
+    const channelUrl = await seedChannel('public');
+    const { userId, token } = await seedAuthedUser();
+    await addMemberRow(channelUrl, userId, 'member', 'banned');
+
+    await withdraw(null, { token, url: channelUrl }, ctxFor());
+
+    expect((await getMemberRow(channelUrl, userId))?.state).toBe('banned');
+  });
+
+  itWrite('withdrawing a REQUESTED row removes it (positive control)', async () => {
+    const channelUrl = await seedChannel('public');
+    const { userId, token } = await seedAuthedUser();
+    await addMemberRow(channelUrl, userId, 'member', 'requested');
+
+    await withdraw(null, { token, url: channelUrl }, ctxFor());
+
+    expect(await getMemberRow(channelUrl, userId)).toBeUndefined();
+  });
+});
+
+describe('ban-escape: processRequest deny', () => {
+  const processRequest = mutationOf(communityResolvers, 'processRequest');
+
+  itWrite('denying a since-BANNED user does NOT delete the ban row (deny must not unban)', async () => {
+    const channelUrl = await seedChannel('public');
+    const { userId: opId, token: opToken } = await seedAuthedUser();
+    await addMemberRow(channelUrl, opId, 'operator', 'joined');
+    const banned = await seedUser();
+    await addMemberRow(channelUrl, banned, 'member', 'banned');
+
+    await processRequest(
+      null,
+      { token: opToken, channel: channelUrl, user_id: banned, grant: false },
+      ctxFor(),
+    );
+
+    expect((await getMemberRow(channelUrl, banned))?.state).toBe('banned');
+  });
+
+  itWrite('denying a REQUESTED row removes it (positive control)', async () => {
+    const channelUrl = await seedChannel('public');
+    const { userId: opId, token: opToken } = await seedAuthedUser();
+    await addMemberRow(channelUrl, opId, 'operator', 'joined');
+    const requester = await seedUser();
+    await addMemberRow(channelUrl, requester, 'member', 'requested');
+
+    const result = await processRequest(
+      null,
+      { token: opToken, channel: channelUrl, user_id: requester, grant: false },
+      ctxFor(),
+    );
+
+    expect(result).toBe(true);
+    expect(await getMemberRow(channelUrl, requester)).toBeUndefined();
+  });
+});
+
+describe('ban-escape (defense-in-depth): messengerUpdateMemberRole', () => {
+  const updateRole = mutationOf(messengerResolvers, 'messengerUpdateMemberRole');
+
+  itWrite('refuses to promote a BANNED member (role stays member, state stays banned)', async () => {
+    const channelUrl = await seedChannel();
+    const { userId: opId, token: opToken } = await seedAuthedUser();
+    await addMemberRow(channelUrl, opId, 'operator', 'joined');
+    const banned = await seedUser();
+    await addMemberRow(channelUrl, banned, 'member', 'banned');
+
+    const result = await updateRole(
+      null,
+      { channelUrl, userId: banned, role: 'operator' },
+      ctxFor(opToken),
+    );
+
+    expect(result).toBe(false);
+    expect(await getMemberRow(channelUrl, banned)).toEqual({ role: 'member', state: 'banned' });
+  });
+
+  itWrite('still promotes a JOINED member (positive control)', async () => {
+    const channelUrl = await seedChannel();
+    const { userId: opId, token: opToken } = await seedAuthedUser();
+    await addMemberRow(channelUrl, opId, 'operator', 'joined');
+    const member = await seedUser();
+    await addMemberRow(channelUrl, member, 'member', 'joined');
+
+    const result = await updateRole(
+      null,
+      { channelUrl, userId: member, role: 'operator' },
+      ctxFor(opToken),
+    );
+
+    expect(result).toBe(true);
+    expect((await getMemberRow(channelUrl, member))?.role).toBe('operator');
   });
 });
