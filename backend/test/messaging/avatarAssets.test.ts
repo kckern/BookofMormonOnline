@@ -12,6 +12,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   resolveDerivedAvatars,
   generateAvatarUrl,
+  isDeadAvatarHost,
   primeAvatarAsset,
   shouldRefreshStoredAvatar,
   _resetAvatarCache,
@@ -104,6 +105,18 @@ describe('shouldRefreshStoredAvatar', () => {
 
   it('does nothing without a fresh URL', () => {
     expect(shouldRefreshStoredAvatar({ fresh: '', stored: null, s3Exists: false })).toBe(false);
+  });
+});
+
+describe('isDeadAvatarHost', () => {
+  it('flags the retired dicebear v1 host', () => {
+    expect(isDeadAvatarHost('https://avatars.dicebear.com/api/female/abc.svg')).toBe(true);
+  });
+  it('passes current hosts through', () => {
+    expect(isDeadAvatarHost('https://assets.bookofmormon.online/profiles/x.jpg')).toBe(false);
+    expect(isDeadAvatarHost('https://api.dicebear.com/7.x/thumbs/svg?seed=x')).toBe(false);
+    expect(isDeadAvatarHost(null)).toBe(false);
+    expect(isDeadAvatarHost('not a url')).toBe(false);
   });
 });
 

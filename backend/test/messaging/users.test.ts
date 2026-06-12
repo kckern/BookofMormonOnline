@@ -332,6 +332,19 @@ describe('listBotUsers', () => {
   });
 });
 
+describe('dead-host avatar guard', () => {
+  it('getUser never returns an avatars.dicebear.com URL', async () => {
+    const legacy = await db
+      .selectFrom('messenger_users')
+      .select(['user_id'])
+      .where('profile_url', 'like', 'https://avatars.dicebear.com/%')
+      .executeTakeFirst();
+    if (!legacy) return; // data already cleaned — guard is moot
+    const dto = await getUser(db, legacy.user_id);
+    expect(dto?.profile_url ?? '').not.toContain('avatars.dicebear.com');
+  });
+});
+
 describe('resolveSigninAvatar', () => {
   it('returns the messenger profile_url for a user with a stored avatar', async () => {
     // Discover any row with an explicit stored avatar (upload/seed).

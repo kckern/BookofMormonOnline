@@ -108,6 +108,19 @@ export async function avatarAssetExists(url: string): Promise<boolean> {
   return urlExists(url, defaultFetcher);
 }
 
+/** Hosts that no longer serve images (dicebear v1 returns HTTP 410). Stored
+ *  profile_url values on these hosts are treated as absent by the read path. */
+const DEAD_AVATAR_HOSTS = new Set(['avatars.dicebear.com']);
+
+export function isDeadAvatarHost(url: string | null | undefined): boolean {
+  if (!url) return false;
+  try {
+    return DEAD_AVATAR_HOSTS.has(new URL(url).host);
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Policy for persisting a fresh social-provider avatar URL at sign-in.
  * Priority: explicit S3 upload / migrated assets-host mirror > provider URL.

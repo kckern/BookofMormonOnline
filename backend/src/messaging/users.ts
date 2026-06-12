@@ -14,7 +14,7 @@
  */
 
 import { createHash } from 'node:crypto';
-import { generateAvatarUrl, resolveDerivedAvatars } from './avatarAssets.js';
+import { generateAvatarUrl, isDeadAvatarHost, resolveDerivedAvatars } from './avatarAssets.js';
 import type { Kysely } from 'kysely';
 import type { DB } from '../../codegen/db.js';
 import type { UserDTO } from './dto.js';
@@ -82,6 +82,17 @@ async function verifyDerivedAvatars(rows: RawUser[], dtos: UserDTO[]): Promise<v
   });
 }
 
+/** Stored URLs on retired hosts (dicebear v1 → HTTP 410) are treated as
+ *  absent so the derive+verify path replaces them. Must run on the RAW rows
+ *  before toUserDTO/verifyDerivedAvatars — both key off `row.profile_url`.
+ *  (The data cleanup itself is workspace scope.) */
+function scrubDeadAvatars<T extends { profile_url: string | null }>(rows: T[]): T[] {
+  for (const r of rows) {
+    if (isDeadAvatarHost(r.profile_url)) r.profile_url = null;
+  }
+  return rows;
+}
+
 function parseMetadata(raw: unknown): Record<string, unknown> | null {
   if (raw === null || raw === undefined) return null;
   if (typeof raw === 'object') return raw as Record<string, unknown>;
@@ -137,6 +148,7 @@ export async function getUser(
     .executeTakeFirst();
 
   if (!row) return null;
+  scrubDeadAvatars([row as RawUser]);
   const online = await isOnline(userId);
   const dto = toUserDTO(row as RawUser, online);
   await verifyDerivedAvatars([row as RawUser], [dto]);
@@ -171,6 +183,7 @@ export async function getUsers(
   ]);
 
   const onlineSet = new Set(onlineIds);
+  scrubDeadAvatars(rows as RawUser[]);
   const dtos = rows.map(r => toUserDTO(r as RawUser, onlineSet.has(r.user_id)));
   await verifyDerivedAvatars(rows as RawUser[], dtos);
   return dtos;
@@ -235,6 +248,7 @@ export async function upsertUser(
     .where('user_id', '=', userId)
     .executeTakeFirstOrThrow();
 
+  scrubDeadAvatars([row as RawUser]);
   return toUserDTO(row as RawUser);
 }
 
@@ -336,5 +350,6 @@ export async function listBotUsers(
     .where('is_bot', '=', 1)
     .execute();
 
+  scrubDeadAvatars(rows as RawUser[]);
   return rows.map(r => toUserDTO(r as RawUser));
 }
