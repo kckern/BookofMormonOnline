@@ -6,6 +6,7 @@ import { label } from "src/models/Utils";
 import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
 import { toast } from "react-toastify";
 import "./Theater.css";
+import { deriveNarrationList } from "./narrationList";
 import {Alert} from "reactstrap";
 import ReactAudioPlayer from "react-audio-player";
 import canAutoplay from 'can-autoplay';
@@ -1153,6 +1154,7 @@ function TheatherMusicPlayer({ theaterController }) {
       id="theater-music-player-a"
       src={`${assetUrl}/audio/music/${trackA}`}
 			muted={isMuted}
+      volume={playbackMusicVolume / 20}
       onCanPlay={()=>{
         // If this side became ready while it is the active side and isn't
         // playing yet, start it.
@@ -1168,6 +1170,7 @@ function TheatherMusicPlayer({ theaterController }) {
       id="theater-music-player-b"
       src={`${assetUrl}/audio/music/${trackB}`}
 			muted={isMuted}
+      volume={playbackMusicVolume / 20}
       preload="none"
       onCanPlay={()=>{
         const player = document.getElementById("theater-music-player-b");
@@ -1192,13 +1195,7 @@ function TheaterNarration({ theaterController }) {
       });
   }
 
-  const allNarrations = (queue||[]).map(item => item?.narration?.description || null);
-  const uniqueNarrations = [...new Set(allNarrations)];
-  const narrationMap = {};
-  allNarrations.forEach((_,i)=>{
-    const matchIndex = uniqueNarrations.indexOf(allNarrations[i]);
-    narrationMap[i] = matchIndex;
-  });
+  const { allNarrations, uniqueNarrations, narrationMap } = deriveNarrationList(queue);
 
   const narrationIndex = narrationMap[cursorIndex];
 
