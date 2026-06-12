@@ -809,9 +809,16 @@ export function StudyGroupUser({
     setUnplugging(true);
     let token = appController.states.user.token;
     if (buttonPush) playSound(buttonPush);
-    await BoMOnlineAPI({
+    const result = await BoMOnlineAPI({
       removeBot: { token, channel: activeChannel, bot: userId },
     });
+    setUnplugging(false);
+    // The mutation returns false (not an error) when the acting user is not
+    // an operator or the token/channel is stale — don't report success then.
+    if (!result?.removeBot) {
+      toast.warn(label("error"));
+      return;
+    }
     if (wentOffline) playSound(wentOffline);
     toaster(
       appController,
