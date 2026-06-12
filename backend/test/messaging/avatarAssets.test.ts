@@ -13,6 +13,7 @@ import {
   resolveDerivedAvatars,
   generateAvatarUrl,
   primeAvatarAsset,
+  shouldRefreshStoredAvatar,
   _resetAvatarCache,
 } from '../../src/messaging/avatarAssets.js';
 
@@ -71,6 +72,38 @@ describe('resolveDerivedAvatars', () => {
       fetcher,
     );
     expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('shouldRefreshStoredAvatar', () => {
+  const ASSETS = 'https://assets.bookofmormon.online/profiles/feedfacefeedfacefeedfacefeedface.jpg';
+  const GOOGLE = 'https://lh3.googleusercontent.com/a/fresh';
+
+  it('refreshes when nothing is stored and no S3 asset exists', () => {
+    expect(shouldRefreshStoredAvatar({ fresh: GOOGLE, stored: null, s3Exists: false })).toBe(true);
+    expect(shouldRefreshStoredAvatar({ fresh: GOOGLE, stored: '', s3Exists: false })).toBe(true);
+  });
+
+  it('refreshes a stale external provider URL', () => {
+    expect(
+      shouldRefreshStoredAvatar({
+        fresh: GOOGLE,
+        stored: 'https://lh3.googleusercontent.com/a/old',
+        s3Exists: false,
+      }),
+    ).toBe(true);
+  });
+
+  it('never overwrites the migrated assets-host mirror', () => {
+    expect(shouldRefreshStoredAvatar({ fresh: GOOGLE, stored: ASSETS, s3Exists: false })).toBe(false);
+  });
+
+  it('never shadows an explicit S3 upload (conventional asset exists)', () => {
+    expect(shouldRefreshStoredAvatar({ fresh: GOOGLE, stored: null, s3Exists: true })).toBe(false);
+  });
+
+  it('does nothing without a fresh URL', () => {
+    expect(shouldRefreshStoredAvatar({ fresh: '', stored: null, s3Exists: false })).toBe(false);
   });
 });
 

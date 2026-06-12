@@ -103,6 +103,34 @@ export async function resolveDerivedAvatars(
   return out;
 }
 
+/** Check a single asset URL (cached). Exposed for sign-in avatar refresh. */
+export async function avatarAssetExists(url: string): Promise<boolean> {
+  return urlExists(url, defaultFetcher);
+}
+
+/**
+ * Policy for persisting a fresh social-provider avatar URL at sign-in.
+ * Priority: explicit S3 upload / migrated assets-host mirror > provider URL.
+ * Refresh only fills gaps or replaces a stale external provider URL.
+ */
+export function shouldRefreshStoredAvatar(args: {
+  fresh: string | null | undefined;
+  stored: string | null | undefined;
+  s3Exists: boolean;
+}): boolean {
+  const { fresh, stored, s3Exists } = args;
+  if (!fresh) return false;
+  if (s3Exists) return false;
+  if (stored) {
+    try {
+      if (new URL(stored).host.endsWith('bookofmormon.online')) return false;
+    } catch {
+      // unparseable stored value — treat as replaceable
+    }
+  }
+  return true;
+}
+
 /**
  * Deterministic dicebear avatar — port of frontend
  * components/UserAvatar.js generateAvatarUrl. Keep the two in sync.

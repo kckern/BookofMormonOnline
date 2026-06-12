@@ -12,6 +12,8 @@ import type { Kysely } from 'kysely';
 import axios from 'axios';
 import type { DB } from '../../../codegen/db.js';
 import { md5, cleanUsername, genUserAvatar } from '../../auth/identity.js';
+import { avatarAssetExists, shouldRefreshStoredAvatar } from '../../messaging/avatarAssets.js';
+import { PROFILE_IMAGE_BASE } from '../../messaging/users.js';
 import { hashPassword } from '../../auth/password.js';
 import { sendbird } from '../../auth/sendbirdShim.js';
 import { runWrite } from '../writes.js';
@@ -86,6 +88,43 @@ async function freeUsername(db: Kysely<DB>, name: string, email: string): Promis
 }
 
 /**
+ * Persist the provider's fresh avatar URL to messenger_users at sign-in, so
+ * social avatars stay current without any by-id re-fetch API (Google has
+ * none). Policy lives in avatarAssets.shouldRefreshStoredAvatar: an explicit
+ * S3 upload or the migrated assets-host mirror always wins; only gaps and
+ * stale external provider URLs are refreshed. No-op when the messenger row
+ * doesn't exist yet — tokensignin provisions it on the next call.
+ */
+async function refreshMessengerAvatar(ctx: Ctx, username: string, freshUrl: string) {
+  if (!freshUrl) return;
+  // Never persist provider access tokens (the FB picture URL embeds one and
+  // expires with it; the bare edge URL serves the photo publicly).
+  try {
+    const u = new URL(freshUrl);
+    u.searchParams.delete('access_token');
+    freshUrl = u.toString();
+  } catch {
+    return;
+  }
+  const userId = md5(username);
+  const row = await ctx.db
+    .selectFrom('messenger_users')
+    .select(['profile_url'])
+    .where('user_id', '=', userId)
+    .executeTakeFirst();
+  if (!row) return;
+  const s3Exists = await avatarAssetExists(`${PROFILE_IMAGE_BASE}/profiles/${userId}.jpg`);
+  if (!shouldRefreshStoredAvatar({ fresh: freshUrl, stored: row.profile_url, s3Exists })) return;
+  await runWrite(
+    ctx,
+    ctx.db
+      .updateTable('messenger_users')
+      .set({ profile_url: freshUrl })
+      .where('user_id', '=', userId) as Parameters<typeof runWrite>[1],
+  );
+}
+
+/**
  * Find-or-create the user for a verified social profile + mint the session token.
  * Three paths (mirrors legacy processSocialUser): create new, link to an existing
  * email account, or plain login for a known social id.
@@ -108,6 +147,7 @@ export async function processSocialUser(ctx: Ctx, profile: SocialProfile, token:
   // ── Plain login: known social id ──────────────────────────────────────────
   if (existingSocial) {
     await upsertTokenAndRelinkLogs(ctx, token, existingSocial.user);
+    await refreshMessengerAvatar(ctx, existingSocial.user, profile_url);
     const userRow = await ctx.db.selectFrom('bom_user').selectAll().where('user', '=', existingSocial.user).executeTakeFirst();
     const social = sendbird.loadUser(md5(existingSocial.user), userRow?.name ?? name, profile_url || genUserAvatar(md5(existingSocial.user)));
     return { isSuccess: true, msg: `${network} login success`, user: userRow ?? null, social, profile_url };
@@ -116,6 +156,7 @@ export async function processSocialUser(ctx: Ctx, profile: SocialProfile, token:
   // ── Link: email already has an account, no social link yet ────────────────
   if (existingEmailUser) {
     await upsertTokenAndRelinkLogs(ctx, token, existingEmailUser.user);
+    await refreshMessengerAvatar(ctx, existingEmailUser.user, profile_url);
     await runWrite(ctx, ctx.db.insertInto('bom_user_social').values({ user: existingEmailUser.user, network, social_id }) as Parameters<typeof runWrite>[1]);
     const social = sendbird.loadUser(md5(existingEmailUser.user), existingEmailUser.name ?? name, profile_url || genUserAvatar(md5(existingEmailUser.user)));
     return { isSuccess: true, msg: `${network} link account success`, user: existingEmailUser, social, profile_url };
