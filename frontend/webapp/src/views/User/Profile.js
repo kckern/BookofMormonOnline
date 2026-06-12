@@ -54,16 +54,15 @@ export function Profile({
     BoMOnlineAPI({ signout: { token: appController.states.user.token } }).then(
       (results) => {
         if (results.signout) {
-          appController.sendbird
-            ?.updateUserState({
-              channels: appController.states.studyGroup.groupList,
-              activeGroup: "",
-            })
-            .then((r) => {
-              appController.functions.processSignOut();
-              setProfileState("profile");
-              setLoggingOut(false);
-            });
+          // updateUserState is synchronous (returns boolean) — chaining .then()
+          // on it threw and silently skipped processSignOut, breaking logout.
+          appController.sendbird?.updateUserState({
+            channels: appController.states.studyGroup.groupList,
+            activeGroup: "",
+          });
+          appController.functions.processSignOut();
+          setProfileState("profile");
+          setLoggingOut(false);
         } else {
           //TODO Failed Logout
         }
