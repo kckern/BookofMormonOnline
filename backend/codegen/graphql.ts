@@ -1010,6 +1010,7 @@ export type QueryMessengerMessageArgs = {
 export type QueryMessengerMessagesArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   channelUrl?: InputMaybe<Scalars['String']['input']>;
+  customTypes?: InputMaybe<Array<Scalars['String']['input']>>;
   limit?: InputMaybe<Scalars['Int']['input']>;
 };
 

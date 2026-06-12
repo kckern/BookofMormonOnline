@@ -158,9 +158,13 @@ export const messengerResolvers: Resolvers = {
      */
     messengerMessages: async (_root, args, ctx: AppContext) => {
       if (!args.channelUrl) return [];
+      const customTypes = (args.customTypes ?? []).filter(
+        (t): t is string => typeof t === 'string' && t.length > 0,
+      );
       return getMessages(ctx.db, args.channelUrl, {
         limit: args.limit ?? 30,
         before: args.before ?? undefined,
+        ...(customTypes.length ? { customTypes } : {}),
       });
     },
 

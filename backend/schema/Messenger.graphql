@@ -4,7 +4,7 @@ extend type Query {
   messengerMyChannels(userId: String, customTypes: [String!]): [MessengerChannel]
   messengerChannel(channelUrl: String): MessengerChannel
   messengerChannelOperators(channelUrl: String): [MessengerUser]
-  messengerMessages(channelUrl: String, limit: Int, before: String): [MessengerMessage]
+  messengerMessages(channelUrl: String, limit: Int, before: String, customTypes: [String!]): [MessengerMessage]
   messengerMessage(messageId: String): MessengerMessage
   messengerThreadMessages(parentMessageId: String): [MessengerMessage]
   messengerUnreadDMs(userId: String): [MessengerUnreadDM]

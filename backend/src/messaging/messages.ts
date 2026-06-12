@@ -362,6 +362,10 @@ export async function getMessages(
     before?: string;
     limit?: number;
     includeReplies?: boolean;
+    /** Filter by custom_type in SQL (e.g. page-scoped study comments keyed by
+     *  page slug). Without this, page comments older than the channel's most
+     *  recent `limit` messages are unreachable. */
+    customTypes?: string[];
   } = {},
 ): Promise<MessageDTO[]> {
   let query = db
@@ -372,6 +376,10 @@ export async function getMessages(
 
   if (!options.includeReplies) {
     query = query.where('parent_message_id', 'is', null);
+  }
+
+  if (options.customTypes && options.customTypes.length > 0) {
+    query = query.where('custom_type', 'in', options.customTypes);
   }
 
   if (options.before) {

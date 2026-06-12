@@ -505,11 +505,19 @@ export default class MessengerController {
   // PUBLIC API - Messages
   // ─────────────────────────────────────────────────────────────────
 
-  async loadGroupMessages(group) {
+  // opts.customTypes: server-side custom_type filter (page-scoped study
+  // comments are keyed by page slug). Filtering client-side was both wasteful
+  // and WRONG: page comments older than the channel's most recent `limit`
+  // messages were unreachable.
+  async loadGroupMessages(group, opts = {}) {
     const channelUrl = group.channel_url || group.url;
+    const limit = opts.limit || 30;
+    const typesArg = Array.isArray(opts.customTypes) && opts.customTypes.length
+      ? `, customTypes: ${JSON.stringify(opts.customTypes)}`
+      : "";
     try {
       const query = `query {
-        messengerMessages(channelUrl: "${channelUrl}", limit: 30) {
+        messengerMessages(channelUrl: "${channelUrl}", limit: ${limit}${typesArg}) {
           message_id
           channel_url
           user_id
@@ -1095,16 +1103,19 @@ export default class MessengerController {
           includeReaction: false, // singular alias used by StudyGroupNotebook.js
           hasMore: true,
           load(callback) {
-            const p = self2.loadGroupMessages(channel).then((messages) => {
-              let out = messages;
-              if (Array.isArray(query.customTypesFilter) && query.customTypesFilter.length) {
-                out = out.filter((m) => query.customTypesFilter.includes(m.customType));
-              }
-              out = query.reverse ? [...out].reverse() : out;
-              if (query.limit) out = out.slice(0, query.limit);
-              query.hasMore = false; // one-shot: full history arrives in the first load
-              return out;
-            });
+            // customTypesFilter and limit go to the backend: SQL-side
+            // custom_type filtering is the only way page-scoped comments
+            // older than the channel's recent chatter stay reachable.
+            const p = self2
+              .loadGroupMessages(channel, {
+                customTypes: query.customTypesFilter || undefined,
+                limit: query.limit,
+              })
+              .then((messages) => {
+                let out = query.reverse ? [...messages].reverse() : messages;
+                query.hasMore = false; // one-shot: the first load returns up to `limit`
+                return out;
+              });
             if (typeof callback === 'function') {
               p.then((msgs) => callback(msgs, null)).catch((err) => callback(null, err));
             }

@@ -612,6 +612,22 @@ describe('getMessages', () => {
     expect(ids.indexOf(m2.message_id)).toBeLessThan(ids.indexOf(m1.message_id));
   });
 
+  itWrite('filters by customTypes server-side (page-scoped comments)', async () => {
+    const { channelUrl, userId } = await seedChannelAndUser();
+    const chat = await postMessage(db, { channelUrl, userId, message: 'chat noise', customType: '' });
+    trackMessage(chat.message_id);
+    const pageA = await postMessage(db, { channelUrl, userId, message: 'on alma-32', customType: 'alma-32' });
+    trackMessage(pageA.message_id);
+    const pageB = await postMessage(db, { channelUrl, userId, message: 'on enos-1', customType: 'enos-1' });
+    trackMessage(pageB.message_id);
+
+    const msgs = await getMessages(db, channelUrl, { customTypes: ['alma-32'] });
+    const ids = msgs.map((m) => m.message_id);
+    expect(ids).toContain(pageA.message_id);
+    expect(ids).not.toContain(chat.message_id);
+    expect(ids).not.toContain(pageB.message_id);
+  });
+
   itWrite(
     'excludes replies by default (parent_message_id != null)',
     async () => {
