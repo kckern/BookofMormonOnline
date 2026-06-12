@@ -30,12 +30,20 @@ const MESSENGER_HOSTS = (process.env.REACT_APP_MESSENGER_HOSTS || 'staging,bom,l
   .map((h) => h.trim())
   .filter(Boolean);
 
+// Loopback and RFC1918 private-network hosts — always-on so LAN access to a
+// dev box (e.g. http://10.0.0.x:8200) gets the full feature set without
+// needing a hostname or build-flag override.
+const PRIVATE_HOST = /^(localhost$|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|169\.254\.|::1$)/;
+
 /** Runtime decision: build flag OR a hostname match. Safe outside the browser (SSR → false). */
 export function isMessengerEnabled() {
   if (BUILD_FLAG) return true;
   const rawHost = (typeof window !== 'undefined' && window.location && window.location.host) || '';
   if (!rawHost) return false;
-  const host = rawHost.split(':')[0]; // strip port so 'localhost:8200' → 'localhost'
+  const host = rawHost.startsWith('[')
+    ? rawHost.slice(1, rawHost.indexOf(']')) // bracketed IPv6: '[::1]:8200' → '::1'
+    : rawHost.split(':')[0]; // strip port so 'localhost:8200' → 'localhost'
+  if (PRIVATE_HOST.test(host)) return true;
   const subdomain = host.split('.')[0]; // "staging", "staging-ko", "bom", "localhost"
   return MESSENGER_HOSTS.some(
     (h) =>
