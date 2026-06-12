@@ -864,12 +864,14 @@ function countPageComments(commentsIndex, pageController, setCommentState) {
   return BoMOnlineAPI(q).then((r) => {
     setCommentState("counting commentary");
     for (let x in r.commentaryLocations) {
-      let num = parseInt(
-        r.commentaryLocations[x].location.slug.match(/(.*?)\/(\d+)$/)[2],
-      );
-      let pageSlug = r.commentaryLocations[x].location.slug.match(
+      // location can be absent: items without a location row arrive without
+      // the key (the legacy response filter strips null keys).
+      const match = r.commentaryLocations[x]?.location?.slug?.match(
         /(.*?)\/(\d+)$/,
-      )[1];
+      );
+      if (!match) continue;
+      let num = parseInt(match[2]);
+      let pageSlug = match[1];
       if (pageSlug !== pageController.pageData?.slug) continue;
       if (counts[num] === undefined) counts[num] = {};
       if (counts[num].com === undefined) counts[num].com = [];
@@ -877,13 +879,13 @@ function countPageComments(commentsIndex, pageController, setCommentState) {
     }
     setCommentState("counting images");
     for (let x in r.imageLocations) {
-      let num = parseInt(
-        r.imageLocations[x].location.slug.match(/(.*?)\/(\d+)$/)[2],
-      );
-      let pageSlug = r.imageLocations[x].location.slug.match(
+      const match = r.imageLocations[x]?.location?.slug?.match(
         /(.*?)\/(\d+)$/,
-      )[1];
-      if (pageSlug !== pageController.pageData.slug) continue;
+      );
+      if (!match) continue;
+      let num = parseInt(match[2]);
+      let pageSlug = match[1];
+      if (pageSlug !== pageController.pageData?.slug) continue;
       if (counts[num] === undefined) counts[num] = {};
       if (counts[num].img === undefined) counts[num].img = [];
       counts[num]["img"].push(parseInt(x));
