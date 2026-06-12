@@ -26,6 +26,7 @@ import loading_comments from "src/views/_Common/Study/svg/loading_comment.svg";
 import { MuteButton } from "./MuteButton";
 import { recordDeepLinkEvent } from "src/utils/deepLinkInstrument";
 import { usePageInit, pageScrollManager, isRefOpen } from "./usePageInit";
+import { countFaxFromIndex, mergeCounts } from "./pageCommentCounts";
 import { createScrollSpy, step } from "src/scroll";
 
 function prepareInitOpen(params) {
@@ -505,51 +506,41 @@ export default function Page({ appController }) {
     );
 
     setCommentState("set Listeners");
-    if (!group || !group.createPreviousMessageListQuery) {
-      setReadyToScroll(true);
-      return false;
-    }
     let groupId = group.url;
-    var listQuery = group.createPreviousMessageListQuery();
-    listQuery.limit = 100;
-    listQuery.reverse = false;
-    listQuery.includeThreadInfo = true; // Retrieve a list of messages along with their metaarrays.
-    listQuery.includeReactions = true; // Retrieve a list of messages along with their reactions.
-    listQuery.customTypesFilter = [pageController.pageData?.slug];
-    setCommentState("made  query");
     const COMMENTS_FALLBACK_MS = 2500;
     const fallbackTimer = setTimeout(() => {
       recordDeepLinkEvent("loadPageComments:fallback");
       setReadyToScroll(true);
     }, COMMENTS_FALLBACK_MS);
 
-    try {
-      listQuery.load().then((messages) => {
+    const sendbird = pageController.appController.sendbird;
+    if (!sendbird?.loadPageComments) {
+      clearTimeout(fallbackTimer);
+      setReadyToScroll(true);
+      return false;
+    }
+    setCommentState("made query");
+    sendbird
+      .loadPageComments(group, pageController.pageData?.slug)
+      .then(({ messages, counts }) => {
         clearTimeout(fallbackTimer);
         setCommentState("indexing");
-        let index = indexPageComments(messages);
-        setCommentState("counting");
+        const index = indexPageComments(messages);
+        // Single paint: index AND counts land in one dispatch (spec P1) —
+        // fax counts derive from the index client-side, com/img came from
+        // the server.
+        setCommentState("placing");
         pageController.functions.setPageComments({
           groupId,
           index,
-          counts: null,
+          counts: mergeCounts(counts, countFaxFromIndex(index)),
         });
-        countPageComments(index, pageController, setCommentState).then(
-          (counts) => {
-            setCommentState("placing");
-            pageController.functions.setPageComments({
-              groupId,
-              index,
-              counts,
-            });
-          },
-        );
+      })
+      .catch((error) => {
+        clearTimeout(fallbackTimer);
+        console.log({ error });
+        setReadyToScroll(true);
       });
-    } catch (error) {
-      clearTimeout(fallbackTimer);
-      console.log({ error });
-      return false;
-    }
   };
 
   if(!appController.states.preloaded) return <Loader />;
@@ -841,58 +832,6 @@ function reducer(pageController, input) {
       break;
   }
   return { ...pageController };
-}
-
-function countPageComments(commentsIndex, pageController, setCommentState) {
-  //Fax
-  let counts = {};
-  for (let index in commentsIndex.fax) {
-    let parts = index.split(".");
-    let [num, ver] = parts;
-    if (counts[num] === undefined) counts[num] = {};
-    if (counts[num].fax === undefined) counts[num].fax = [];
-
-    counts[num]["fax"].push(ver);
-  }
-
-  let q = {};
-  if (commentsIndex.com)
-    q["commentaryLocations"] = Object.keys(commentsIndex.com);
-  if (commentsIndex.img) q["imageLocations"] = Object.keys(commentsIndex.img);
-
-  setCommentState("starting img/com query");
-  return BoMOnlineAPI(q).then((r) => {
-    setCommentState("counting commentary");
-    for (let x in r.commentaryLocations) {
-      // location can be absent: items without a location row arrive without
-      // the key (the legacy response filter strips null keys).
-      const match = r.commentaryLocations[x]?.location?.slug?.match(
-        /(.*?)\/(\d+)$/,
-      );
-      if (!match) continue;
-      let num = parseInt(match[2]);
-      let pageSlug = match[1];
-      if (pageSlug !== pageController.pageData?.slug) continue;
-      if (counts[num] === undefined) counts[num] = {};
-      if (counts[num].com === undefined) counts[num].com = [];
-      counts[num]["com"].push(parseInt(x));
-    }
-    setCommentState("counting images");
-    for (let x in r.imageLocations) {
-      const match = r.imageLocations[x]?.location?.slug?.match(
-        /(.*?)\/(\d+)$/,
-      );
-      if (!match) continue;
-      let num = parseInt(match[2]);
-      let pageSlug = match[1];
-      if (pageSlug !== pageController.pageData?.slug) continue;
-      if (counts[num] === undefined) counts[num] = {};
-      if (counts[num].img === undefined) counts[num].img = [];
-      counts[num]["img"].push(parseInt(x));
-    }
-    setCommentState("counted");
-    return counts;
-  });
 }
 
 function indexPageComments(array) {
