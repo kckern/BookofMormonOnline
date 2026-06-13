@@ -59,7 +59,6 @@ export interface TimelineRow {
   grid_col?: number | null;
   grid_w?: number | null;
   grid_h?: number | null;
-  grid_kind?: string | null;
   grid_bg?: string | null;
 }
 

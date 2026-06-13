@@ -143,13 +143,13 @@ type Event {
   grid: EventGrid
 }
 
-"""Tile-grid placement for the timeline (null until backfilled)."""
+"""Event grid placement for the tile-grid timeline (null until backfilled).
+Only events are placed here; pins/bands/dates are the frontend canvas."""
 type EventGrid {
   row: Int
   col: Int
   rowSpan: Int
   colSpan: Int
-  kind: String
   bg: String
 }
 

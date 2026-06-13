@@ -133,13 +133,15 @@ export type Event = {
   z?: Maybe<Scalars['Float']['output']>;
 };
 
-/** Tile-grid placement for the timeline (null until backfilled). */
+/**
+ * Event grid placement for the tile-grid timeline (null until backfilled).
+ * Only events are placed here; pins/bands/dates are the frontend canvas.
+ */
 export type EventGrid = {
   __typename?: 'EventGrid';
   bg?: Maybe<Scalars['String']['output']>;
   col?: Maybe<Scalars['Int']['output']>;
   colSpan?: Maybe<Scalars['Int']['output']>;
-  kind?: Maybe<Scalars['String']['output']>;
   row?: Maybe<Scalars['Int']['output']>;
   rowSpan?: Maybe<Scalars['Int']['output']>;
 };
@@ -2013,7 +2015,6 @@ export type EventGridResolvers<ContextType = AppContext, ParentType extends Reso
   bg?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   col?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   colSpan?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  kind?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   row?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   rowSpan?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;

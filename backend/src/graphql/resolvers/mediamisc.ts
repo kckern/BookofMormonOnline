@@ -157,7 +157,6 @@ export const mediamiscResolvers: Resolvers = {
         col: t.grid_col,
         rowSpan: t.grid_h,
         colSpan: t.grid_w,
-        kind: t.grid_kind,
         bg: t.grid_bg,
       };
     },
