@@ -115,14 +115,18 @@
   pointer-events: none;
 }
 
-/* Event tiles are <button> when clickable, <div> when not — reset button UA. */
-.tg-event {
-  padding: 0 5px;
+/* Event/place tiles are <button> when clickable, <div> when not — reset UA. */
+.tg-event,
+.tg-place {
   margin: 0;
   border: none;
+  background: none;
   font: inherit;
-  text-align: left;
   appearance: none;
+}
+.tg-event {
+  padding: 0 5px;
+  text-align: left;
 }
 .tg-event-label {
   font-weight: 700;
@@ -131,23 +135,28 @@
   text-shadow: -0.6px -0.6px 0 rgba(0, 0, 0, 0.5), 0.6px -0.6px 0 rgba(0, 0, 0, 0.5),
     -0.6px 0.6px 0 rgba(0, 0, 0, 0.5), 0.6px 0.6px 0 rgba(0, 0, 0, 0.5);
 }
-.tg-event.is-clickable {
+
+/* clickable interactivity (events AND places that have a linked entry) */
+.tg-anchor.is-clickable {
   pointer-events: auto;
   cursor: pointer;
 }
-.tg-event.is-clickable:hover {
+.tg-anchor.is-clickable:hover {
   filter: brightness(1.12);
   z-index: 5;
 }
-.tg-event.is-clickable:focus-visible {
-  outline: 2px solid #1e63d0;
-  outline-offset: 1px;
+/* box-shadow rings (not outline) — outlines clip under the scroller's overflow */
+.tg-anchor.is-clickable:focus-visible {
+  box-shadow: 0 0 0 2px #1e63d0;
   z-index: 6;
 }
-.tg-event.is-selected {
-  outline: 2px solid #ffd54a;
-  outline-offset: 1px;
+.tg-anchor.is-selected {
+  box-shadow: 0 0 0 2px #ffd54a;
   z-index: 6;
+}
+/* non-interactive labels: no pointer affordance */
+.tg-anchor.is-static {
+  cursor: default;
 }
 
 .tg-place {
@@ -158,9 +167,15 @@
   font-size: calc(10px * var(--scale));
   font-weight: 700;
   color: #5a4a1f;
-  /* same outline as event labels so place names stay legible over bands */
+  /* light outline so place names stay legible over bands */
   text-shadow: -0.6px -0.6px 0 rgba(255, 255, 255, 0.7), 0.6px -0.6px 0 rgba(255, 255, 255, 0.7),
     -0.6px 0.6px 0 rgba(255, 255, 255, 0.7), 0.6px 0.6px 0 rgba(255, 255, 255, 0.7);
+}
+
+/* Zoomed-out: labels would collide into noise — hide them, keep the bands. */
+.tg-compact .tg-event-label,
+.tg-compact .tg-place > span {
+  display: none;
 }
 
 /* Decorative battle marker — sits in a colored chip, not a white box */
@@ -280,8 +295,14 @@
 .tg-infobox-link:hover {
   text-decoration: underline;
 }
+.tg-infobox-link:focus-visible,
+.tg-infobox-close:focus-visible {
+  outline: 2px solid #1e63d0;
+  outline-offset: 2px;
+}
 
 .sidebar-wrapper li.active.timeline_link > a:not([data-toggle="collapse"]):before,
 .sidebar-wrapper li.active.timeline_link > a:not([data-toggle="collapse"]):after {
   border-right-color: #2b2b2b !important;
 }
+
