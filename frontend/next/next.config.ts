@@ -14,10 +14,6 @@ const config: NextConfig = {
     ],
   },
 
-  // Expose the backend URL to server components as an env var
-  env: {
-    GRAPHQL_URL: process.env.GRAPHQL_URL ?? 'http://localhost:5006/graphql',
-  },
 }
 
 export default config

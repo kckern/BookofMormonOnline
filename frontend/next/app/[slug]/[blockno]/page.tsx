@@ -72,10 +72,13 @@ export default async function ScripturePage({ params }: Props) {
           ))}
         </section>
       ))}
-      <nav>
-        {block.prev_ref && <a href={`/${block.prev_ref}`}>← {block.prev_ref}</a>}
-        {block.next_ref && <a href={`/${block.next_ref}`}>{block.next_ref} →</a>}
-      </nav>
+      {/* TODO Phase 2: wire prev/next once backend returns URL-safe refs */}
+      {(block.prev_ref || block.next_ref) && (
+        <nav aria-label="Chapter navigation">
+          {block.prev_ref && <span>← {block.prev_ref}</span>}
+          {block.next_ref && <span>{block.next_ref} →</span>}
+        </nav>
+      )}
     </main>
   )
 }

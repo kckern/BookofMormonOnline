@@ -20,10 +20,11 @@ export function middleware(request: NextRequest) {
   const segments = pathname.split('/').filter(Boolean)
   const lang = LANG_PREFIXES.includes(segments[0]) ? segments[0] : 'en'
 
-  // Pass language to server components via response header
-  const response = NextResponse.next()
-  response.headers.set('x-lang', lang)
-  return response
+  // Pass language to server components via request header
+  // (Response headers are not visible to headers() in server components)
+  const requestHeaders = new Headers(request.headers)
+  requestHeaders.set('x-lang', lang)
+  return NextResponse.next({ request: { headers: requestHeaders } })
 }
 
 export const config = {

@@ -1,6 +1,7 @@
 // Base GraphQL fetcher. All lib/* modules call this.
-// GRAPHQL_URL is set by next.config.ts env block → http://localhost:5006/graphql
-const GRAPHQL_URL = process.env.GRAPHQL_URL!
+// GRAPHQL_URL must be set in the runtime environment (e.g. via Infisical/systemd).
+// Falls back to localhost:5006 for local development.
+const GRAPHQL_URL = process.env.GRAPHQL_URL ?? 'http://localhost:5006/graphql'
 
 export async function gql<T>(
   query: string,
