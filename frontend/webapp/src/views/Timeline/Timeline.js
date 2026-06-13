@@ -2,8 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from "react"
 import Parser from "html-react-parser"
-import { Link, useRouteMatch } from "react-router-dom"
-import { history } from "../../models/routeHistory"
+import { Link, useRouteMatch, useHistory } from "react-router-dom"
 import { assetUrl } from "src/models/BoMOnlineAPI"
 import BoMOnlineAPI from "src/models/BoMOnlineAPI"
 import Loader from "../_Common/Loader"
@@ -51,6 +50,8 @@ function TimeLine() {
     typeof window !== "undefined" && window.innerWidth <= 640 ? 0.6 : 1
   )
   const match = useRouteMatch()
+  const routerHistory = useHistory()
+  const markerSlug = (match.params && match.params.markerSlug) || null
   const cellRefs = useRef({})
 
   const zoomBy = (f) => setZoom((z) => Math.min(2, Math.max(0.4, +(z * f).toFixed(2))))
@@ -67,24 +68,19 @@ function TimeLine() {
     return m
   }, [timeline])
 
-  // Deep link: /timeline/:markerSlug opens its info box and scrolls to it.
+  // Selection is derived from the URL so browser Back/Forward stay in sync.
+  // (Navigate via the Router's own history; a second history instance would
+  // not update match.params.)
   useEffect(() => {
-    const slug = match.params && match.params.markerSlug
-    if (!slug || !timeline) return
-    setSelected(slug)
-    const node = cellRefs.current[slug]
-    if (node) node.scrollIntoView({ block: "center", inline: "center" })
-  }, [match.params, timeline])
+    setSelected(markerSlug)
+    if (markerSlug && timeline) {
+      const node = cellRefs.current[markerSlug]
+      if (node) node.scrollIntoView({ block: "center", inline: "center" })
+    }
+  }, [markerSlug, timeline])
 
-  const openInfo = (slug) => {
-    if (!slug) return
-    setSelected(slug)
-    history.push(`/timeline/${slug}`)
-  }
-  const closeInfo = () => {
-    setSelected(null)
-    history.push(`/timeline`)
-  }
+  const openInfo = (slug) => slug && routerHistory.push(`/timeline/${slug}`)
+  const closeInfo = () => routerHistory.push(`/timeline`)
 
   // Modal a11y: Escape to close, focus into the dialog on open, trap Tab,
   // and restore focus to the opener on close.

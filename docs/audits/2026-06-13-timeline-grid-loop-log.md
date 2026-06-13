@@ -39,3 +39,9 @@ Started 2026-06-13 09:08 on branch feat/timeline-grid.
 - MAJOR: Jaredite era had no scale (void above 600s BC) → synthetic accurate anchor "~3100 BC" at the top of dateAxis.
 - MINOR: CSS `zoom` was fragile with sticky → zoom now drives a `--scale` custom prop scaling cells + fonts (layout-correct, sticky-safe).
 - MINOR: zoom control overlapped row 1 → grid padding-top 52px.
+
+## Iteration 5 → 6
+**Adversarial pass 5 (CDP DOM measurement):** verified ALL pass-1..4 fixes hold (sticky gutter masking, --scale zoom of cells+fonts, mobile 0.6 default, row alignment, full modal a11y, no column-shift regressions). One material issue:
+- MAJOR M1: browser Back/Forward didn't close the modal — app has two `createBrowserHistory()` instances, so in-app `history.push` didn't update the Router's `match.params`.
+**Fix applied (iteration 6):** Timeline now uses the Router's own `useHistory()` and derives modal state from the URL (`markerSlug`), so Back/Forward sync automatically. Removed the second-history-instance import.
+**Remaining after fix:** only nits (N1 gutter divider doesn't extend into the 52px top padding — purely cosmetic; N2 untestable-via-synthetic-events note).
