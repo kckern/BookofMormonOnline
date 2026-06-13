@@ -45,3 +45,12 @@ Started 2026-06-13 09:08 on branch feat/timeline-grid.
 - MAJOR M1: browser Back/Forward didn't close the modal — app has two `createBrowserHistory()` instances, so in-app `history.push` didn't update the Router's `match.params`.
 **Fix applied (iteration 6):** Timeline now uses the Router's own `useHistory()` and derives modal state from the URL (`markerSlug`), so Back/Forward sync automatically. Removed the second-history-instance import.
 **Remaining after fix:** only nits (N1 gutter divider doesn't extend into the 52px top padding — purely cosmetic; N2 untestable-via-synthetic-events note).
+
+## Iteration 7 — CONVERGED (loop stop)
+**Adversarial final convergence pass (CDP):** MATERIAL ISSUES REMAINING: **no**.
+- Verified Back→closes, Forward→re-opens, ×/Escape close + update URL (9/9 checks pass).
+- Regression sanity: 105 button events w/ aria, 38 battle chips, sticky gutter + "~3100 BC" anchor, --scale zoom (mobile 0.6, clamps 0.4–2), deep-link modal — all hold.
+- Only remaining note: the unrelated pre-existing CRA 400 dev overlay (another app query; timeline data still renders). Out of scope.
+
+**Loop result:** stopped early at iteration 7 of 10 — adversarial agent found no material issues.
+Commits: 3ae92c5, c28bdfa, 8ff8848, 74079ee, 8ebeea6 (on feat/timeline-grid).
