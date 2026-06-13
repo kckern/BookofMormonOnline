@@ -111,6 +111,30 @@ Verified visually by generating a static preview from `gridTiles.json` and scree
 (headless Chrome) against the original `Sheet1.html` render — bands, corners, white bars,
 labels, and markers match.
 
+## Backend grid cutover sequence (why the API grid is staged, not live)
+
+The backend now exposes `Event.grid` and a `bom_timeline` grid migration exists,
+but **nothing consumes it yet** — by design. The frontend still reads event
+placement from the static `gridTiles.json`, and its GraphQL call deliberately
+does NOT request `grid`. Wiring it prematurely would break production: the CRA
+app proxies to prod (`bookofmormon.online`), which runs the old schema — querying
+an unknown `grid` field would error and blank the timeline.
+
+Correct activation order (each step gated on the previous):
+1. **Deploy** the backend with `Event.grid` to prod. (`grid` resolves to `null`
+   safely — `selectAll()` omits the not-yet-existent columns.)
+2. **Apply** `BoMOnlineWorkspace/sql/migrations/2026-06-13_bom_timeline_grid.sql`
+   (one-shot; down-migration included) and run `npm run codegen:db` to regenerate
+   `codegen/db.d.ts` for real (then the optional `grid_*` in `TimelineRow` can
+   become required-nullable).
+3. **Wire** the frontend: add `grid { row col rowSpan colSpan kind bg }` to the
+   timeline query and render event placement from the API, keeping only the band
+   fills / date-axis chrome in `gridTiles.json`.
+4. **Retire** `x/y/w/h/z/o` and the static event coordinates.
+
+Until step 3, the API grid + DB columns are intentionally dormant. `placements.json`
+keeps the static and DB representations from drifting in the meantime.
+
 ## Implementation order
 
 1. **Reconciliation script** (this artifact's output gates everything else). ← starting here

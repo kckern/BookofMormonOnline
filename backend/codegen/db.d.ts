@@ -395,12 +395,6 @@ export interface BomText {
 export interface BomTimeline {
   date: string;
   file: string;
-  grid_bg: string | null;
-  grid_col: number | null;
-  grid_h: number | null;
-  grid_kind: string | null;
-  grid_row: number | null;
-  grid_w: number | null;
   h: number;
   heading: string;
   html: string;

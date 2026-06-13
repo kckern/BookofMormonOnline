@@ -50,13 +50,17 @@ export interface TimelineRow {
   narr: string;
   html: string;
   heading: string;
-  // Tile-grid placement (null until the bom_timeline grid backfill is applied).
-  grid_row: number | null;
-  grid_col: number | null;
-  grid_w: number | null;
-  grid_h: number | null;
-  grid_kind: string | null;
-  grid_bg: string | null;
+  // Tile-grid placement. Optional because the grid_* columns + this row shape
+  // only exist after the bom_timeline grid migration is applied (and
+  // codegen/db.d.ts regenerated). Pre-migration, selectAll() omits them and
+  // these read as undefined — the Event.grid resolver treats that as "no grid".
+  // Keeping them optional avoids hand-editing the generated codegen/db.d.ts.
+  grid_row?: number | null;
+  grid_col?: number | null;
+  grid_w?: number | null;
+  grid_h?: number | null;
+  grid_kind?: string | null;
+  grid_bg?: string | null;
 }
 
 export interface MarkdownRow {
