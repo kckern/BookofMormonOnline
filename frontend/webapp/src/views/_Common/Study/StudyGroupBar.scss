@@ -742,6 +742,12 @@ h6.botHeader.dropdown-header
   overflow: hidden;
 }
 
+.userStatus .botPluginDropdown .dropdown-menu::before,
+.userStatus .botPluginDropdown .dropdown-menu::after
+{
+  right: calc(7.5em + 25px - 0.8ex) !important;
+}
+
 // Bootstrap's .dropdown-item defaults to white-space:nowrap, which forces
 // rows wider than the fixed-width menu (the horizontal scrollbar).
 .userStatus .botPluginDropdown .dropdown-menu .dropdown-item

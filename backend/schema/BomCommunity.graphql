@@ -10,7 +10,7 @@ extend type Query {
   leaderboard(token: String): LeaderBoard
   readingplan(token: String, slug: String): ReadingPlan
   readingplansegment(token: String, guid: String): ReadingPlanSegment
-  botlist: [Bot]
+  botlist(channel: String): [Bot]
 }
 
 extend type Mutation {

@@ -367,6 +367,7 @@ function BotPlugin({ appController }) {
   const iAmOperator =
     appController.states.studyGroup.activeGroup?.myRole === "operator";
   const [isDroppedDown, setDroppedDown] = useState(false);
+  const closeTimer = useRef(null);
   const userId = "bot";
   const channel = appController.states.studyGroup.activeGroup?.url;
   const [addingBotId, setAddingBotId] = useState(null);
@@ -401,7 +402,7 @@ function BotPlugin({ appController }) {
 
   useEffect(() => {
     const getBots = async () => {
-      let r = await BoMOnlineAPI({ botlist: null }, { useCache: false });
+      let r = await BoMOnlineAPI({ botlist: channel }, { useCache: false });
       setBots(r?.botlist || []);
     };
     getBots();
@@ -415,10 +416,13 @@ function BotPlugin({ appController }) {
       <Dropdown
         isOpen={isDroppedDown}
         onMouseEnter={() => {
+          if (closeTimer.current) clearTimeout(closeTimer.current);
           if (!appController.states.studyGroup.isDrawerOpen)
             setDroppedDown(true);
         }}
-        onMouseLeave={() => setDroppedDown(false)}
+        onMouseLeave={() => {
+          closeTimer.current = setTimeout(() => setDroppedDown(false), 200);
+        }}
         toggle={() => {}}
         className="botPluginDropdown"
       >
@@ -602,6 +606,7 @@ export function StudyGroupUser({
   });
 
   const [isDroppedDown, setDroppedDown] = useState(false);
+  const closeTimer = useRef(null);
   const [speechBubbleOpen, setSpeechBubbleOpen] = useState(true);
   const [unplugging, setUnplugging] = useState(false);
 
@@ -987,10 +992,13 @@ export function StudyGroupUser({
       <Dropdown
         isOpen={isDroppedDown || !!liveMessage}
         onMouseEnter={() => {
+          if (closeTimer.current) clearTimeout(closeTimer.current);
           if (!appController.states.studyGroup.isDrawerOpen)
             setDroppedDown(true);
         }}
-        onMouseLeave={() => setDroppedDown(false)}
+        onMouseLeave={() => {
+          closeTimer.current = setTimeout(() => setDroppedDown(false), 200);
+        }}
         toggle={() => {}}
       >
         <DropdownToggle

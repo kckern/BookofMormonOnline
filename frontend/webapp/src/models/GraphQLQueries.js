@@ -1792,13 +1792,14 @@ const queries = {
     }
   },  
 
-  botlist: () => {
+  botlist: (channel) => {
+    channel = Array.isArray(channel) ? channel[0] : channel;
     return {
       type: "botlist",
       key: "botlist",
       val: false,
       query:
-        ` botlist {
+        ` botlist${channel ? `(channel: "${channel}")` : ''} {
               name
               description
               picture

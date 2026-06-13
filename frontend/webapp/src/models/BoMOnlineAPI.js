@@ -123,7 +123,7 @@ function structureResults(queries, apiResults) {
                 let dbIndex = results[j] ? results[j][queryKey] : query.val[j]; // Updated
                 if (dbIndex === undefined) dbIndex = query.val[j];
                 if (dbIndex === undefined) resultObj[query.type] = results[j];
-                else resultObj[query.type][dbIndex] = results[j];
+                else resultObj[query.type][dbIndex] = results[j] ?? null;
             }
         }
     }

@@ -194,6 +194,36 @@ function Person({ appController }) {
   };
   let person = appController.popUpData[appController.states.popUp.activeId];
   if (person === undefined) return <pre>{appController.popUp}</pre>;
+  if (person === null) {
+    const activeId = appController.states.popUp.activeId;
+    const candidates = (appController.preLoad?.personList || [])
+      .filter(p => p.slug.startsWith(activeId));
+    if (candidates.length === 1) {
+      appController.functions.setPopUp({ type: "people", ids: [candidates[0].slug], underSlug: "people" });
+      return <Loading type="Person" appController={appController} />;
+    }
+    return (
+      <div id="popUp" className="card popupwindow" style={{ top: appController.states.popUp.top }}>
+        <div className="card-header">
+          <div className="person_head">{label("person_profile")}</div>
+          <ul className="source_tabs souce_tab_list_0">
+            <li className="close" onClick={appController.functions.closePopUp}>×</li>
+          </ul>
+        </div>
+        <div className="card-body">
+          <div className="ppbody" style={{ flexDirection: "column", gap: "0.5em" }}>
+            {candidates.length > 1 ? candidates.map(c => (
+              <div key={c.slug} className="related_row" style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "0.75em", padding: "0.5em" }}
+                onClick={() => appController.functions.setPopUp({ type: "people", ids: [c.slug], underSlug: "people" })}>
+                <div className="related_avatar"><img src={`${assetUrl}/people/${c.slug}`} alt={c.name} /></div>
+                <div><strong>{processName(c.name)}</strong>{c.title && <div><small>{replaceNumbers(c.title)}</small></div>}</div>
+              </div>
+            )) : <div style={{ padding: "2em", textAlign: "center", color: "#888" }}>{processName(activeId)}</div>}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   let ofs = {
     Possibly: " ",
@@ -279,7 +309,7 @@ function Place({ appController }) {
   const [showMapsDropDown, showMapsDropDownSet] = useState(false),
     { push } = useHistory();
 
-  if (!appController.popUpData[appController.states.popUp.activeId]) {
+  if (appController.popUpData[appController.states.popUp.activeId] === undefined) {
     BoMOnlineAPI({ places: appController.states.popUp.ids }).then(
       (response) => {
         appController.functions.setPopUp({
@@ -306,6 +336,36 @@ function Place({ appController }) {
   
   let place = appController.popUpData[appController.states.popUp.activeId];
   if (place === undefined) return <pre>{appController.popUp}</pre>;
+  if (place === null) {
+    const activeId = appController.states.popUp.activeId;
+    const candidates = (appController.preLoad?.placeList || [])
+      .filter(p => p.slug.startsWith(activeId));
+    if (candidates.length === 1) {
+      appController.functions.setPopUp({ type: "places", ids: [candidates[0].slug], underSlug: "places" });
+      return <Loading type="Place" appController={appController} />;
+    }
+    return (
+      <div id="popUp" className="card popupwindow" style={{ top: appController.states.popUp.top, left: appController.states.popUp.left }}>
+        <div className="card-header">
+          <div className="place_head">{label("location_profile")}</div>
+          <ul className="source_tabs souce_tab_list_0">
+            <li className="close" onClick={appController.functions.closePopUp}>×</li>
+          </ul>
+        </div>
+        <div className="card-body">
+          <div className="ppbody" style={{ flexDirection: "column", gap: "0.5em" }}>
+            {candidates.length > 1 ? candidates.map(c => (
+              <div key={c.slug} className="related_row" style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "0.75em", padding: "0.5em" }}
+                onClick={() => appController.functions.setPopUp({ type: "places", ids: [c.slug], underSlug: "places" })}>
+                <div className="related_avatar"><img src={`${assetUrl}/places/${c.slug}`} alt={c.name} /></div>
+                <div><strong>{c.name}</strong>{c.info && <div><small>{c.info}</small></div>}</div>
+              </div>
+            )) : <div style={{ padding: "2em", textAlign: "center", color: "#888" }}>{activeId}</div>}
+          </div>
+        </div>
+      </div>
+    );
+  }
   //console.log(place.maps);
   return (
     <Draggable handle=".card-header">
@@ -426,6 +486,35 @@ function ObjectPopUp({ appController }) {
   }
 
   const obj = appController.popUpData[activeId];
+  if (obj === null) {
+    const candidates = (appController.preLoad?.objectList || [])
+      .filter(o => o.slug.startsWith(activeId));
+    if (candidates.length === 1) {
+      appController.functions.setPopUp({ type: "object", ids: [candidates[0].slug], underSlug: "objects" });
+      return <Loading type="Object" appController={appController} />;
+    }
+    return (
+      <div id="popUp" className="card popupwindow" style={{ top: appController.states.popUp.top, left: appController.states.popUp.left }}>
+        <div className="card-header">
+          <div className="person_head">{label("object_profile") || "Object"}</div>
+          <ul className="source_tabs souce_tab_list_0">
+            <li className="close" onClick={appController.functions.closePopUp}>×</li>
+          </ul>
+        </div>
+        <div className="card-body">
+          <div className="ppbody" style={{ flexDirection: "column", gap: "0.5em" }}>
+            {candidates.length > 1 ? candidates.map(c => (
+              <div key={c.slug} className="related_row" style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "0.75em", padding: "0.5em" }}
+                onClick={() => appController.functions.setPopUp({ type: "object", ids: [c.slug], underSlug: "objects" })}>
+                <div className="related_avatar"><img src={`${assetUrl}/objects/${c.slug}`} alt={c.name} /></div>
+                <div><strong>{processName(c.name)}</strong>{c.subtitle && <div><small>{c.subtitle}</small></div>}</div>
+              </div>
+            )) : <div style={{ padding: "2em", textAlign: "center", color: "#888" }}>{processName(activeId)}</div>}
+          </div>
+        </div>
+      </div>
+    );
+  }
   if (!obj) return <pre>{appController.popUp}</pre>;
 
   const handleXrelClick = (xrel, e) => {

@@ -710,9 +710,21 @@ export const communityResolvers: Resolvers = {
      * messenger_users never appear. Study bots are scoped to the request
      * language (bom_bot.lang, NULL = every language).
      */
-    botlist: async (_root, _args, ctx: AppContext) => {
+    botlist: async (_root, args, ctx: AppContext) => {
+      const channel = args.channel as string | null | undefined;
       try {
         const bots = await listStudyBots(ctx.db, ctx.lang);
+
+        let channelBotIds = new Set<string>();
+        if (channel) {
+          const members = await ctx.db
+            .selectFrom('messenger_members')
+            .select('user_id')
+            .where('channel_url', '=', channel)
+            .execute();
+          channelBotIds = new Set(members.map((m) => m.user_id));
+        }
+
         return asGql(
           bots
             .filter((b) => !!b.user_id)
@@ -723,7 +735,7 @@ export const communityResolvers: Resolvers = {
                 name: b.nickname || 'Bot',
                 description: String(meta['description'] ?? 'A helpful bot'),
                 picture: b.profile_url || 'https://i.imgur.com/IwVZGhY.png',
-                enabled: true,
+                enabled: !channelBotIds.has(b.user_id!),
               };
             }),
         );
