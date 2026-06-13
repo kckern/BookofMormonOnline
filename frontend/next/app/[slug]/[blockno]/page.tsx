@@ -1,84 +1,81 @@
-import { headers } from 'next/headers'
 import type { Metadata } from 'next'
-import { getReadBlock, scripturePreview } from '@/lib/scripture'
 import { notFound } from 'next/navigation'
+import { getTextBlock, contentBody } from '@/lib/text'
+import { buildMetadata, stripMarkup } from '@/lib/seo'
 
 interface Props {
   params: Promise<{ slug: string; blockno: string }>
 }
 
-// Convert URL slug + block number to a ref the backend understands.
-// e.g. slug="1-nephi", blockno="1" → ref="1-nephi-1"
-// The backend's lookupReference accepts all-dash format (1-nephi-1) but not slash (1-nephi/1).
-function toRef(slug: string, blockno: string) {
-  return `${slug}-${blockno}`
-}
-
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug, blockno } = await params
-  const h = await headers()
-  const lang = h.get('x-lang') ?? 'en'
-  const ref = toRef(slug, blockno)
-  const block = await getReadBlock(ref, lang)
+  const id = Number(blockno)
+  if (!Number.isInteger(id)) return {}
+  const block = await getTextBlock(slug, id)
   if (!block) return {}
 
-  const heading = block.sections[0]?.heading ?? ref
-  const desc = scripturePreview(block)
-  const host = h.get('host') ?? 'bookofmormon.online'
-  const ogUrl = `https://${host}/og?${new URLSearchParams({ title: heading, desc, lang })}`
-
-  return {
-    title: heading,
-    description: desc,
-    openGraph: {
-      title: heading,
-      description: desc,
-      images: [{ url: ogUrl, width: 1200, height: 630 }],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: heading,
-      description: desc,
-      images: [ogUrl],
-    },
-  }
+  return buildMetadata({
+    title: `${block.heading} | ${block.sectionTitle}`,
+    description: stripMarkup(block.content),
+    path: `/${slug}/${blockno}`,
+    ogSub: block.sectionTitle,
+  })
 }
 
-export default async function ScripturePage({ params }: Props) {
+export default async function TextBlockPage({ params }: Props) {
   const { slug, blockno } = await params
-  const h = await headers()
-  const lang = h.get('x-lang') ?? 'en'
-  const ref = toRef(slug, blockno)
-  const block = await getReadBlock(ref, lang)
+  const id = Number(blockno)
+  if (!Number.isInteger(id)) notFound()
+  const block = await getTextBlock(slug, id)
   if (!block) notFound()
 
-  const heading = block.sections[0]?.heading ?? ref
+  const here = `/${slug}/${blockno}`
 
   return (
-    <main>
-      <h1>{heading}</h1>
-      {block.sections.map((section, si) => (
-        <section key={si}>
-          {section.heading && si > 0 && <h2>{section.heading}</h2>}
-          {section.blocks.map((unit, ui) => (
-            <p key={ui}>
-              {unit.lines.map((line, li) => (
-                <span key={li} data-verse={line.verse_num}>
-                  <sup>{line.verse_num}</sup>
-                  {line.text}{' '}
-                </span>
-              ))}
-            </p>
-          ))}
-        </section>
-      ))}
-      {/* TODO Phase 2: wire prev/next once backend returns URL-safe refs */}
-      {(block.prev_ref || block.next_ref) && (
-        <nav aria-label="Chapter navigation">
-          {block.prev_ref && <span>← {block.prev_ref}</span>}
-          {block.next_ref && <span>{block.next_ref} →</span>}
-        </nav>
+    <>
+      <h1>
+        <a href={here}>{block.heading}</a>
+      </h1>
+      <section dangerouslySetInnerHTML={{ __html: contentBody(block.content) }} />
+      {block.sectionTitle && (
+        <h2>
+          From section: <a href={`/${block.sectionSlug}`}>{block.sectionTitle}</a>
+        </h2>
       )}
-    </main>
+      {block.pageTitle && (
+        <h3>
+          From page: <a href={`/${block.pageSlug}`}>{block.pageTitle}</a>
+        </h3>
+      )}
+      {block.coms.length > 0 && (
+        <>
+          <h4>Commentary</h4>
+          <ul>
+            {block.coms.map((c) => (
+              <li key={c.id}>
+                <a href={`/commentary/${c.id}`}>{c.title}</a>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+      {(block.prev || block.next) && (
+        <>
+          <hr />
+          <ul className="prevnext">
+            {block.prev && (
+              <li>
+                Previous: <a href={`/${block.prev.slug}`}>{block.prev.heading}</a>
+              </li>
+            )}
+            {block.next && (
+              <li>
+                Next: <a href={`/${block.next.slug}`}>{block.next.heading}</a>
+              </li>
+            )}
+          </ul>
+        </>
+      )}
+    </>
   )
 }

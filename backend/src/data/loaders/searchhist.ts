@@ -284,10 +284,13 @@ export async function historyQuery(
   args: { slug?: (string | null)[] | null; archive?: string | null; principal?: (string | null)[] | null },
   lang: string,
 ): Promise<HistoryRow[]> {
+  // Order by `date` to match the legacy /history page (MySQL filesort: NULL
+  // dates first in physical/PK order, then date ASC). This is the order the
+  // SSR parity benchmark renders the full collection in.
   let query = db
     .selectFrom('bom_xtras_history')
     .selectAll()
-    .orderBy('seq', 'asc');
+    .orderBy('date', 'asc');
 
   const slugs = (args.slug ?? []).filter((s): s is string => s !== null && s !== undefined);
   const principals = (args.principal ?? []).filter((p): p is string => p !== null && p !== undefined);

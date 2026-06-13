@@ -21,8 +21,14 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(url, 301)
   }
 
+  // --- Crawler/SEO assets: always served by Next, regardless of UA ---
+  // robots.txt, sitemap.xml, and OG images are fetched by scrapers that may not
+  // send a bot UA, and are not CRA routes — never proxy them to the React app.
+  const isSeoAsset =
+    pathname === '/robots.txt' || pathname === '/sitemap.xml' || pathname === '/og' || pathname.startsWith('/og/')
+
   // --- Human visitor: proxy transparently to CRA ---
-  if (!BOT_RE.test(ua)) {
+  if (!isSeoAsset && !BOT_RE.test(ua)) {
     const target = new URL(CRA_ORIGIN + pathname + request.nextUrl.search)
     return NextResponse.rewrite(target)
   }

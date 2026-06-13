@@ -38,7 +38,7 @@ export async function GET(request: Request) {
         { name: 'RobotoCondensed', data: robotoCondensedBold,  weight: 700, style: 'normal' },
         { name: 'RobotoCondensed', data: robotoCondensedLight, weight: 300, style: 'normal' },
         ...(isKorean
-          ? [{ name: 'RobotoCondensed', data: ibmPlexSansKR, weight: 400, style: 'normal' as const }]
+          ? [{ name: 'RobotoCondensed', data: ibmPlexSansKR, weight: 400 as const, style: 'normal' as const }]
           : []),
       ],
     }

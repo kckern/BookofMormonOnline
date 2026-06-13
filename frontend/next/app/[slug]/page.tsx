@@ -1,41 +1,47 @@
-import { headers } from 'next/headers'
+import { Fragment } from 'react'
 import type { Metadata } from 'next'
-import { getPage } from '@/lib/pages'
-import { notFound } from 'next/navigation'
+import { getPageContent } from '@/lib/pages'
+import { buildMetadata, defaultMetadata } from '@/lib/seo'
+import { DefaultShell } from '../_components/DefaultShell'
 
 interface Props { params: Promise<{ slug: string }> }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
-  const page = await getPage(slug)
-  if (!page) return {}
+  const page = await getPageContent(slug)
+  // Unknown single-segment slug → generic shell metadata (PHP-box behavior).
+  if (!page) return defaultMetadata(`/${slug}`)
 
-  const h = await headers()
-  const lang = h.get('x-lang') ?? 'en'
-  const host = h.get('host') ?? 'bookofmormon.online'
-  const desc = `${page.title} — Book of Mormon`
-  const ogUrl = `https://${host}/og?${new URLSearchParams({ title: page.title, desc, lang })}`
-
-  return {
-    title: page.title,
-    description: desc,
-    openGraph: {
-      title: page.title,
-      description: desc,
-      images: [{ url: ogUrl, width: 1200, height: 630 }],
-    },
-    twitter: { card: 'summary_large_image', title: page.title, description: desc, images: [ogUrl] },
-  }
+  // PHP box: description = section titles joined by '. '.
+  const description = page.sections.map((s) => s.title).join('. ')
+  return buildMetadata({ title: page.title, description, path: `/${slug}` })
 }
 
 export default async function PageRoute({ params }: Props) {
   const { slug } = await params
-  const page = await getPage(slug)
-  if (!page) notFound()
+  const page = await getPageContent(slug)
+  if (!page) return <DefaultShell />
 
   return (
-    <main>
+    <>
       <h1>{page.title}</h1>
-    </main>
+      {page.sections.map((section) => (
+        <Fragment key={section.slug}>
+          <h2>
+            <a href={`/${section.slug}`}>{section.title}</a>
+          </h2>
+          <dl>
+            {section.rows.map((row) => (
+              <Fragment key={row.link}>
+                <dt>
+                  <a href={`/${page.slug}/${row.link}`}>{row.heading}</a>
+                </dt>
+                <dd>{`${row.description} `}</dd>
+              </Fragment>
+            ))}
+          </dl>
+        </Fragment>
+      ))}
+    </>
   )
 }

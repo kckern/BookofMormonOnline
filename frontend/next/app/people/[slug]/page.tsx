@@ -1,7 +1,8 @@
-import { headers } from 'next/headers'
 import type { Metadata } from 'next'
-import { getPerson } from '@/lib/people'
 import { notFound } from 'next/navigation'
+import { getPerson } from '@/lib/people'
+import { buildMetadata, stripMarkup } from '@/lib/seo'
+import { superscript, wikiToHtml, wikiToText } from '@/lib/entity'
 
 interface Props { params: Promise<{ slug: string }> }
 
@@ -10,23 +11,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const person = await getPerson(slug)
   if (!person) return {}
 
-  const h = await headers()
-  const lang = h.get('x-lang') ?? 'en'
-  const host = h.get('host') ?? 'bookofmormon.online'
-  const title = person.title ? `${person.name} — ${person.title}` : person.name
-  const desc = person.description ?? `${person.name} in the Book of Mormon`
-  const ogUrl = `https://${host}/og?${new URLSearchParams({ title: person.name, sub: 'People', desc, lang })}`
-
-  return {
-    title,
-    description: desc,
-    openGraph: {
-      title,
-      description: desc,
-      images: [{ url: ogUrl, width: 1200, height: 630 }],
-    },
-    twitter: { card: 'summary_large_image', title, description: desc, images: [ogUrl] },
-  }
+  const name = superscript(person.name)
+  return buildMetadata({
+    title: name,
+    description: stripMarkup(wikiToText(person.description ?? '')),
+    path: `/people/${slug}`,
+    ogSub: superscript(person.title ?? ''),
+  })
 }
 
 export default async function PeoplePage({ params }: Props) {
@@ -34,12 +25,25 @@ export default async function PeoplePage({ params }: Props) {
   const person = await getPerson(slug)
   if (!person) notFound()
 
+  const name = superscript(person.name)
+
   return (
-    <main>
-      <h1>{person.name}</h1>
-      {person.title && <p><em>{person.title}</em></p>}
-      {person.classification && <p>Classification: {person.classification}</p>}
-      {person.description && <p>{person.description}</p>}
-    </main>
+    <>
+      <h1>{name}</h1>
+      <h2>{superscript(person.title ?? '')}</h2>
+      <p>
+        <a href="/people">❮ Back</a>
+      </p>
+      <img
+        className="thumb"
+        alt={name}
+        title={name}
+        src={`https://media.bookofmormon.online/people/${slug}`}
+      />
+      <p dangerouslySetInnerHTML={{ __html: wikiToHtml(person.description ?? '') }} />
+      <p>
+        <a href="/people">❮ Back</a>
+      </p>
+    </>
   )
 }

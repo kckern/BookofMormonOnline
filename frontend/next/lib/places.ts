@@ -1,6 +1,7 @@
 import { cache } from 'react'
 import { gql } from './graphql'
 
+export interface PlaceMap { slug: string; name: string }
 export interface Place {
   slug: string
   name: string
@@ -8,6 +9,7 @@ export interface Place {
   description: string | null
   type: string | null
   location: string | null
+  maps: PlaceMap[]
 }
 
 const PLACE_QUERY = `
@@ -19,6 +21,7 @@ const PLACE_QUERY = `
       description
       type
       location
+      maps { slug name }
     }
   }
 `
