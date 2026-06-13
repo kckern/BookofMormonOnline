@@ -4,8 +4,8 @@ import { gql } from './graphql'
 export interface PageData {
   slug: string
   title: string
-  description: string | null
   ref: string | null
+  parent: string | null
 }
 
 const PAGE_QUERY = `
@@ -13,8 +13,8 @@ const PAGE_QUERY = `
     page(slug: $slug) {
       slug
       title
-      description
       ref
+      parent
     }
   }
 `
