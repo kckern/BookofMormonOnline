@@ -65,3 +65,11 @@ Commits: 3ae92c5, c28bdfa, 8ff8848, 74079ee, 8ebeea6 (on feat/timeline-grid).
 - MINOR: 9 dead non-clickable events incl. major figures → wired "Lehi and Sariah" → `lehite-family` (override 16,6); truly label-less ones (Jared/Shiz/Sam/East/West) stay non-interactive.
 - MAJOR (fidelity): dropped world-history gutter context column → documented as intentional v1 scope-cut (open-questions #10), consistent with BoM-only scope.
 **Praised (no action):** band color palette matches reference exactly (13 colors); corner-radius is a cleaner reinterpretation of the glyphs; no label overlaps at default zoom; invalid-slug deep-link degrades gracefully.
+
+## Iteration R2-2 — CONVERGED (loop run 2 stop)
+**Adversarial verification pass:** MATERIAL ISSUES REMAINING: **no**.
+- Verified: no Zarahelma/Remant/"lead by" in JSON or DOM (correct forms render).
+- Verified: static grid renders even though the timeline API 400s in dev (3054 fills, 36 date cells, 32 places, 106 clickable events) — no full-screen loader gating; unknown slug → no modal, grid intact.
+- Verified: "Lehi and Sariah" → clickable button → opens modal ("Lehi's Family", slug lehite-family).
+**Loop run 2 result:** stopped early at R2-2 — no material issues. Raised-bar pass improved fidelity (typos), UX (instant grid), and content (wired dead tile).
+Run-2 commits: 4b9af6b, + info-box loading style.
