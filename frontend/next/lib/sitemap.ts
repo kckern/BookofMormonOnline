@@ -112,25 +112,46 @@ async function mapUrls(): Promise<SitemapUrl[]> {
   return urls
 }
 
+// ── superset additions (NOT in the legacy box's sitemap) ─────────────────────
+// Crawlable content pages the PHP box server-rendered but never listed in its
+// sitemap. We list them so ours is a deliberate superset. Priorities follow the
+// box's own conventions: index/list pages 0.7, detail items 0.5, static info 0.5.
+// (Art & commentary are intentionally NOT enumerated — link-only, reachable only
+// from the text items that embed them.)
+const TIMELINE_QUERY = `query SitemapTimeline { timeline { slug } }`
+async function timelineUrls(): Promise<SitemapUrl[]> {
+  const d = await gql<{ timeline: { slug: string }[] }>(TIMELINE_QUERY, {}, { revalidate: 3600 })
+  const slugs = new Set((d.timeline ?? []).map((t) => t.slug).filter(Boolean))
+  return [...slugs].map((slug) => ({ path: `/timeline/${slug}`, priority: '0.5' }))
+}
+
 // ── full URL list ────────────────────────────────────────────────────────────
 export const getSitemapUrls = cache(async (): Promise<SitemapUrl[]> => {
-  const [content, people, places, history, fax, maps] = await Promise.all([
+  const [content, people, places, history, fax, maps, timeline] = await Promise.all([
     contentTreeUrls(),
     peopleUrls(),
     placeUrls(),
     historyUrls(),
     faxUrls(),
     mapUrls(),
+    timelineUrls(),
   ])
 
-  // Static + section-index pages, in the benchmark's leading order.
+  // Static + section-index pages. The first five match the benchmark's leading
+  // order; the rest are our superset index/static pages.
   const statics: SitemapUrl[] = [
     { path: '/', priority: '1.0' },
     { path: '/contents', priority: '0.9' },
     { path: '/history', priority: '0.7' },
     { path: '/fax', priority: '0.7' },
     { path: '/map', priority: '0.7' },
+    // superset:
+    { path: '/people', priority: '0.7' },
+    { path: '/places', priority: '0.7' },
+    { path: '/timeline', priority: '0.7' },
+    { path: '/about', priority: '0.5' },
+    { path: '/studyedition', priority: '0.5' },
   ]
 
-  return [...statics, ...content, ...people, ...places, ...history, ...fax, ...maps]
+  return [...statics, ...content, ...people, ...places, ...history, ...fax, ...maps, ...timeline]
 })
