@@ -129,35 +129,35 @@ def main():
                     slug = cands[0][1]["slug"]
                     entry = cands[0][1]
 
-        tile = {"r": cell["r"] - min_r + 1, "c": cell["c"] - min_c + 1,
-                "w": cell["cs"], "h": cell["rs"], "k": kind}
-        if bg:
-            tile["bg"] = bg
-        if s.get("fg") and s["fg"] not in WHITE and s["fg"] != bg:
-            tile["fg"] = s["fg"]
-        if rd:
-            tile["rd"] = rd
-        if label_text:
-            tile["t"] = fix_typos(label_text)
-        if slug:
-            tile["slug"] = slug
-            # nc = "no content": the linked entry has no heading (bare place /
-            # label). The frontend renders these as static, non-interactive
-            # labels (a click would open an empty modal) — synchronous, so no
-            # affordance flip once the API loads. Still placed in the DB.
-            if entry is None or not entry.get("heading"):
-                tile["nc"] = 1
-        tiles.append(tile)
+        r1, c1 = cell["r"] - min_r + 1, cell["c"] - min_c + 1
 
-        # Record a DB placement for EVENT tiles only. Per the architecture:
-        # bom_timeline holds event grid placement; pins/places, band fills, the
-        # date axis and battles are the hardcoded frontend canvas, not the DB.
-        if kind == "event" and slug and entry is not None and "x" in entry and "y" in entry:
+        # Record a DB placement for every tile that maps to a bom_timeline row —
+        # events (p=1) AND locations (p=0, e.g. land-of-first-inheritance). These
+        # render from the backend (Event.grid + Event.label).
+        if kind in ("event", "place") and slug and entry is not None and "x" in entry and "y" in entry:
             placements.append({
                 "slug": slug, "x": entry["x"], "y": entry["y"],
-                "row": tile["r"], "col": tile["c"], "w": tile["w"], "h": tile["h"],
-                "bg": bg,
+                "row": r1, "col": c1, "w": cell["cs"], "h": cell["rs"],
+                "bg": bg, "kind": kind,
             })
+
+        # gridTiles.json is the hardcoded CANVAS only: band fills, the date axis,
+        # battle markers, and pins that have NO bom_timeline row. Anything backed
+        # by a DB row comes from the API: an event cell becomes a plain band FILL
+        # here (keeps the band solid), and a location pin with a slug is omitted
+        # (the API renders it). Only label-less pins stay as canvas tiles.
+        if kind == "place" and slug:
+            continue
+        out_kind = "fill" if kind == "event" else kind
+        tile = {"r": r1, "c": c1, "w": cell["cs"], "h": cell["rs"], "k": out_kind}
+        if bg:
+            tile["bg"] = bg
+        if rd:
+            tile["rd"] = rd
+        if out_kind != "fill":
+            if label_text:
+                tile["t"] = fix_typos(label_text)
+        tiles.append(tile)
 
     # date axis: rebased to the tile grid's rows, rendered as a sticky gutter
     date_axis = [{"r": c["r"] - min_r + 1, "t": c["text"]}

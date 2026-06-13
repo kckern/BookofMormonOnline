@@ -156,7 +156,63 @@ function TimeLine() {
     [tiles]
   )
 
+  // Canvas marks (hardcoded): location pins + battle icons. No events here.
   const marks = useMemo(() => tiles.filter((t) => t.k !== "fill"), [tiles])
+
+  // Events AND location pins come from the backend (Event.grid placement +
+  // Event.label translated text). p distinguishes them: p=true → event tile,
+  // p=false → location pin (📍). Clickable when the row has real content.
+  const eventEls = useMemo(
+    () =>
+      (timeline || [])
+        .filter((e) => e.grid && e.slug)
+        .map((e) => {
+          const g = e.grid
+          const isPlace = !e.p
+          const label = e.label || e.heading || e.slug
+          const clickable = !!(e.heading || e.html)
+          const pos = {
+            gridColumn: `${g.col + 1} / span ${g.colSpan}`,
+            gridRow: `${g.row} / span ${g.rowSpan}`,
+          }
+          const ref = (n) => {
+            if (n) cellRefs.current[e.slug] = n
+          }
+          const cls =
+            "tg-anchor " +
+            (isPlace ? "tg-place" : "tg-event") +
+            (clickable ? " is-clickable" : " is-static") +
+            (selected === e.slug ? " is-selected" : "")
+          const inner = isPlace ? (
+            <span>📍 {label}</span>
+          ) : (
+            <span className="tg-event-label">{label}</span>
+          )
+          const style = isPlace ? pos : { ...pos, background: g.bg || "#5a5a5a", color: textOn(g.bg) }
+          if (!clickable) {
+            return (
+              <div key={`e-${e.slug}-${g.row}-${g.col}`} ref={ref} className={cls} style={style}>
+                {inner}
+              </div>
+            )
+          }
+          return (
+            <button
+              key={`e-${e.slug}-${g.row}-${g.col}`}
+              type="button"
+              ref={ref}
+              className={cls}
+              style={style}
+              onClick={() => openInfo(e.slug)}
+              aria-label={e.date ? `${label}, ${e.date}` : label}
+              title={e.date ? `${label} — ${e.date}` : label}
+            >
+              {inner}
+            </button>
+          )
+        }),
+    [timeline, selected, openInfo]
+  )
 
   if (!tiles || !tiles.length) return <Loader />
 
@@ -249,6 +305,9 @@ function TimeLine() {
               </button>
             )
           })}
+
+          {/* events + location pins from the backend (Event.grid + Event.label) */}
+          {eventEls}
         </div>
       </div>
 
