@@ -140,6 +140,19 @@ type Event {
   narr: String
   html: String
   heading: String
+  grid: EventGrid
+}
+
+"""Tile-grid placement for the timeline (null until backfilled)."""
+type EventGrid {
+  row: Int
+  col: Int
+  rowSpan: Int
+  colSpan: Int
+  kind: String
+  bg: String
+  fg: String
+  round: [String]
 }
 
 input QueueInput {

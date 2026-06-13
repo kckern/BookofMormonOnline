@@ -115,6 +115,7 @@ export type Event = {
   __typename?: 'Event';
   date?: Maybe<Scalars['String']['output']>;
   file?: Maybe<Scalars['String']['output']>;
+  grid?: Maybe<EventGrid>;
   h?: Maybe<Scalars['Float']['output']>;
   heading?: Maybe<Scalars['String']['output']>;
   html?: Maybe<Scalars['String']['output']>;
@@ -130,6 +131,19 @@ export type Event = {
   x?: Maybe<Scalars['Float']['output']>;
   y?: Maybe<Scalars['Float']['output']>;
   z?: Maybe<Scalars['Float']['output']>;
+};
+
+/** Tile-grid placement for the timeline (null until backfilled). */
+export type EventGrid = {
+  __typename?: 'EventGrid';
+  bg?: Maybe<Scalars['String']['output']>;
+  col?: Maybe<Scalars['Int']['output']>;
+  colSpan?: Maybe<Scalars['Int']['output']>;
+  fg?: Maybe<Scalars['String']['output']>;
+  kind?: Maybe<Scalars['String']['output']>;
+  round?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
+  row?: Maybe<Scalars['Int']['output']>;
+  rowSpan?: Maybe<Scalars['Int']['output']>;
 };
 
 export type Fax = {
@@ -1706,6 +1720,7 @@ export type ResolversTypes = {
   ContentLink: ResolverTypeWrapper<Partial<ContentLink>>;
   Division: ResolverTypeWrapper<Partial<Division>>;
   Event: ResolverTypeWrapper<Partial<Event>>;
+  EventGrid: ResolverTypeWrapper<Partial<EventGrid>>;
   Fax: ResolverTypeWrapper<Partial<Fax>>;
   FaxIndex: ResolverTypeWrapper<Partial<FaxIndex>>;
   Float: ResolverTypeWrapper<Partial<Scalars['Float']['output']>>;
@@ -1802,6 +1817,7 @@ export type ResolversParentTypes = {
   ContentLink: Partial<ContentLink>;
   Division: Partial<Division>;
   Event: Partial<Event>;
+  EventGrid: Partial<EventGrid>;
   Fax: Partial<Fax>;
   FaxIndex: Partial<FaxIndex>;
   Float: Partial<Scalars['Float']['output']>;
@@ -1976,6 +1992,7 @@ export type DivisionResolvers<ContextType = AppContext, ParentType extends Resol
 export type EventResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['Event'] = ResolversParentTypes['Event']> = {
   date?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   file?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  grid?: Resolver<Maybe<ResolversTypes['EventGrid']>, ParentType, ContextType>;
   h?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   heading?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   html?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -1991,6 +2008,18 @@ export type EventResolvers<ContextType = AppContext, ParentType extends Resolver
   x?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   y?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   z?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type EventGridResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['EventGrid'] = ResolversParentTypes['EventGrid']> = {
+  bg?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  col?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  colSpan?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  fg?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  kind?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  round?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
+  row?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  rowSpan?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -2941,6 +2970,7 @@ export type Resolvers<ContextType = AppContext> = {
   ContentLink?: ContentLinkResolvers<ContextType>;
   Division?: DivisionResolvers<ContextType>;
   Event?: EventResolvers<ContextType>;
+  EventGrid?: EventGridResolvers<ContextType>;
   Fax?: FaxResolvers<ContextType>;
   FaxIndex?: FaxIndexResolvers<ContextType>;
   HistoricalDocument?: HistoricalDocumentResolvers<ContextType>;

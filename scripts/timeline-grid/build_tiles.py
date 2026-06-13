@@ -77,6 +77,7 @@ def main():
     max_c = max(c["c"] + c["cs"] for c in cells)
 
     tiles = []
+    placements = []  # per-event grid coords keyed to the source entry's x/y (→ DB id)
     for cell in cells:
         txt = cell["text"]
         s = styles.get(next((x for x in cell["classes"] if re.fullmatch(r"s\d+", x)), ""), {})
@@ -108,16 +109,19 @@ def main():
             bg = None
 
         # match event tiles to a slug (overrides win, else fuzzy)
+        entry = None  # the matched labels.json row (carries x/y → DB id)
         if kind in ("event", "place"):
             key = f"{cell['r']},{cell['c']}"
             if key in overrides:
                 ov = overrides[key]
-                slug = None if ov == "SKIP" else ov
+                if ov != "SKIP":
+                    slug = ov
+                    entry = slug_lookup.get(ov)
             else:
                 cands = match_cell(cell, headed)
                 if cands and cands[0][0] >= STRONG:
-                    dup_block = txt in ("",)  # placeholder; dup handled in reconcile
                     slug = cands[0][1]["slug"]
+                    entry = cands[0][1]
 
         tile = {"r": cell["r"] - min_r + 1, "c": cell["c"] - min_c + 1,
                 "w": cell["cs"], "h": cell["rs"], "k": kind}
@@ -133,6 +137,15 @@ def main():
             tile["slug"] = slug
         tiles.append(tile)
 
+        # record a DB placement for matched content tiles (keyed by source x/y)
+        if slug and entry is not None and "x" in entry and "y" in entry:
+            placements.append({
+                "slug": slug, "x": entry["x"], "y": entry["y"],
+                "row": tile["r"], "col": tile["c"], "w": tile["w"], "h": tile["h"],
+                "kind": kind, "bg": bg, "fg": tile.get("fg"),
+                "round": ",".join(rd) if rd else None,
+            })
+
     # date axis: rebased to the tile grid's rows, rendered as a sticky gutter
     date_axis = [{"r": c["r"] - min_r + 1, "t": c["text"]}
                  for c in date_cells if 1 <= c["r"] - min_r + 1 <= max_r - min_r + 1]
@@ -147,11 +160,26 @@ def main():
     with open(args.out, "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
 
+    # Dedupe placements by source (x,y) — one DB row per entry; keep the
+    # largest-footprint tile when a slug repeats across band tiles.
+    by_xy = {}
+    for p in placements:
+        k = (p["x"], p["y"])
+        cur = by_xy.get(k)
+        if not cur or p["w"] * p["h"] > cur["w"] * cur["h"]:
+            by_xy[k] = p
+    deduped = sorted(by_xy.values(), key=lambda p: (p["y"], p["x"]))
+    # placements feed the DB migration (workspace generator reads this)
+    placements_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "placements.json")
+    with open(placements_path, "w", encoding="utf-8") as f:
+        json.dump(deduped, f, ensure_ascii=False, indent=2)
+
     from collections import Counter
     kc = Counter(t["k"] for t in tiles)
     ev_slug = sum(1 for t in tiles if t["k"] == "event" and t.get("slug"))
     print(f"tiles: {len(tiles)}  grid {out['cols']}x{out['rows']}  kinds={dict(kc)}")
     print(f"  event tiles with slug: {ev_slug} / {kc['event']}  dateAxis: {len(date_axis)}")
+    print(f"  placements (deduped by x,y): {len(deduped)}")
     print(f"  out -> {args.out}")
 
 

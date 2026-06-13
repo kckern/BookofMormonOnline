@@ -146,6 +146,26 @@ export const mediamiscResolvers: Resolvers = {
     },
 
     /**
+     * grid: tile-grid placement for the new Timeline UI. Null until the
+     * bom_timeline grid backfill is applied (grid_row IS NULL → no placement).
+     * grid_round is a CSV ("tl,tr") in the DB → exposed as [String].
+     */
+    grid: (parent) => {
+      const t = parent as unknown as TimelineRow;
+      if (t.grid_row == null) return null;
+      return {
+        row: t.grid_row,
+        col: t.grid_col,
+        rowSpan: t.grid_h,
+        colSpan: t.grid_w,
+        kind: t.grid_kind,
+        bg: t.grid_bg,
+        fg: t.grid_fg,
+        round: t.grid_round ? t.grid_round.split(',') : [],
+      };
+    },
+
+    /**
      * text: resolves the bom_text row referenced by bom_timeline.reference.
      * When reference is empty, no text exists → return null.
      * The slug field on the returned TextBlock is resolved by the core
