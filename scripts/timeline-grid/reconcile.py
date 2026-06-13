@@ -10,21 +10,24 @@ Maps the hand-authored spreadsheet layout (Sheet1.html) onto the GraphQL
 
 Design: docs/plans/2026-06-13-timeline-grid-migration-design.md
 
+This script now emits ONLY the human audit report; the tile grid + placement
+data the app/DB use are built by build_tiles.py (which imports the parser and
+matcher helpers from here, so the two never drift).
+
+Design: docs/plans/2026-06-13-timeline-grid-migration-design.md
+
 Usage:
   python3 scripts/timeline-grid/reconcile.py \
       --sheet "~/Downloads/Timeline Grid/Sheet1.html" \
       --labels "~/Downloads/Timeline Grid/labels.json" \
-      --out-map frontend/webapp/src/views/Timeline/gridPlacements.json \
       --out-report docs/audits/2026-06-13-timeline-grid-reconciliation.md
 """
 import argparse, html, json, os, re, sys, difflib
-from collections import Counter, defaultdict
+from collections import defaultdict
 
 # --- thresholds ---
 STRONG = 0.82   # accept automatically
 MAYBE  = 0.60   # surface as ambiguous below this is "unmatched"
-
-BOX_GLYPHS = {"◜", "◝", "◟", "◞", ""}
 ARROWS = "▷◁◀▶◃▹➤➔→←"
 
 # ---------------------------------------------------------------- parsing
@@ -150,7 +153,6 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--sheet", default="~/Downloads/Timeline Grid/Sheet1.html")
     ap.add_argument("--labels", default="~/Downloads/Timeline Grid/labels.json")
-    ap.add_argument("--out-map", default="frontend/webapp/src/views/Timeline/gridPlacements.json")
     ap.add_argument("--out-report", default="docs/audits/2026-06-13-timeline-grid-reconciliation.md")
     ap.add_argument("--overrides", default="scripts/timeline-grid/overrides.json")
     args = ap.parse_args()
@@ -251,8 +253,7 @@ def main():
         else:
             unmatched_cells.append((cell, cands))
 
-    # places: join by slug/heading against p=false (or any) entries
-    place_entries = [e for e in labels if not e.get("p")]
+    # places: join by slug/heading against any entry
     for cell in places:
         cands = sorted(((score(cell["text"], e), e) for e in labels),
                        key=lambda x: x[0], reverse=True)[:3]
@@ -285,10 +286,10 @@ def main():
 
     unmatched_entries = [e for e in headed if e["slug"] not in matched_slugs]
 
-    # ---------- write placement map ----------
-    os.makedirs(os.path.dirname(args.out_map), exist_ok=True)
-    with open(args.out_map, "w", encoding="utf-8") as f:
-        json.dump(confident, f, ensure_ascii=False, indent=2)
+    # NOTE: this script now produces ONLY the human audit report. The placement
+    # map / tile grid the frontend consumes is built by build_tiles.py
+    # (gridTiles.json + placements.json). reconcile.py shares its parser/matcher
+    # helpers with build_tiles and emits this report so the two never drift.
 
     # ---------- write report ----------
     os.makedirs(os.path.dirname(args.out_report), exist_ok=True)
@@ -338,9 +339,8 @@ def main():
     with open(args.out_report, "w", encoding="utf-8") as f:
         f.write("\n".join(L) + "\n")
 
-    print(f"placements: {len(confident)} confident, {len(ambiguous)} ambiguous, "
+    print(f"reconciliation: {len(confident)} confident, {len(ambiguous)} ambiguous, "
           f"{len(unmatched_cells)} unmatched cells, {len(unmatched_entries)} unplaced entries")
-    print(f"  map    -> {args.out_map}")
     print(f"  report -> {args.out_report}")
 
 

@@ -13,10 +13,10 @@ Reuses parsing/matching from reconcile.py.
 Output: frontend/webapp/src/views/Timeline/gridTiles.json
 Design:  docs/plans/2026-06-13-timeline-grid-migration-design.md
 """
-import argparse, html, json, os, re, sys
+import argparse, json, os, re, sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from reconcile import (parse_table, extract_styles, classify, clean, norm,
+from reconcile import (parse_table, extract_styles, clean,
                        build_label_index, match_cell, WORLDHIST_COLS, STRONG)
 
 # glyph -> rounded corners (band color already lives on the cell)
@@ -160,15 +160,17 @@ def main():
     with open(args.out, "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
 
-    # Dedupe placements by source (x,y) — one DB row per entry; keep the
-    # largest-footprint tile when a slug repeats across band tiles.
-    by_xy = {}
+    # Dedupe placements by (slug, x, y) — one DB row per entry; keep the
+    # largest-footprint tile when a slug repeats across band tiles. Keying on
+    # (slug,x,y) (not just x,y) avoids silently dropping two different slugs
+    # that happen to share a coordinate.
+    by_key = {}
     for p in placements:
-        k = (p["x"], p["y"])
-        cur = by_xy.get(k)
+        k = (p["slug"], p["x"], p["y"])
+        cur = by_key.get(k)
         if not cur or p["w"] * p["h"] > cur["w"] * cur["h"]:
-            by_xy[k] = p
-    deduped = sorted(by_xy.values(), key=lambda p: (p["y"], p["x"]))
+            by_key[k] = p
+    deduped = sorted(by_key.values(), key=lambda p: (p["y"], p["x"]))
     # placements feed the DB migration (workspace generator reads this)
     placements_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "placements.json")
     with open(placements_path, "w", encoding="utf-8") as f:

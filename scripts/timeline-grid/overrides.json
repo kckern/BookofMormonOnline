@@ -15,6 +15,10 @@
   "_round2_wire_dead_major_figure": "make a major-figure tile clickable (was non-interactive)",
   "16,6": "lehite-family",
 
+  "_round3_reject_wrong_fuzzy_matches": "matcher force-fit wrong slugs (>0.82 on weak overlap); SKIP rather than link to the wrong event",
+  "20,20": "SKIP",
+  "59,28": "SKIP",
+
   "_genuinely_missing_no_label": "no labels.json entry exists for these sheet cells — dropped",
   "4,6": "SKIP",
   "19,20": "SKIP",
