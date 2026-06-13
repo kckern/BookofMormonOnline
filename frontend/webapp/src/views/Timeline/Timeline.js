@@ -27,7 +27,7 @@ function textOn(bg) {
 
 // border-radius from the tile's rounded-corner list (◜◝◟◞/◗ glyphs)
 function cornerRadius(rd) {
-  if (!rd || !rd.length) return undefined
+  if (!rd || !rd.length) return {}
   return {
     borderTopLeftRadius: rd.includes("tl") ? RADIUS : 0,
     borderTopRightRadius: rd.includes("tr") ? RADIUS : 0,
@@ -77,6 +77,16 @@ function TimeLine() {
     history.push(`/timeline`)
   }
 
+  // Modal a11y: Escape to close, and move focus into the dialog on open.
+  const closeBtnRef = useRef(null)
+  useEffect(() => {
+    if (!selected) return
+    const onKey = (e) => e.key === "Escape" && closeInfo()
+    document.addEventListener("keydown", onKey)
+    if (closeBtnRef.current) closeBtnRef.current.focus()
+    return () => document.removeEventListener("keydown", onKey)
+  }, [selected]) // eslint-disable-line react-hooks/exhaustive-deps
+
   if (!timeline) return <Loader />
 
   const { cols, rows, tiles } = tilesData
@@ -120,13 +130,14 @@ function TimeLine() {
               )
             }
             if (t.k === "battle") {
+              // Decorative marker — no label/slug in the data, so no false
+              // affordance (non-interactive, no pointer/hover).
               return (
                 <div
                   key={"m" + i}
                   className="tg-anchor tg-battle"
                   style={pos}
-                  onClick={() => openInfo(t.slug)}
-                  title={t.slug && bySlug[t.slug] ? bySlug[t.slug].heading : "Battle"}
+                  aria-hidden="true"
                 >
                   <span>💥</span>
                 </div>
@@ -136,28 +147,38 @@ function TimeLine() {
             const data = t.slug ? bySlug[t.slug] : null
             const heading = data && data.heading ? data.heading : t.t
             const clickable = !!t.slug
+            const evStyle = {
+              ...pos,
+              background: t.bg,
+              color: t.fg || textOn(t.bg),
+              ...cornerRadius(t.rd),
+            }
+            const labelEl = <span className="tg-event-label">{replaceNumbers(heading)}</span>
+            if (!clickable) {
+              return (
+                <div key={"m" + i} className="tg-anchor tg-event" style={evStyle}>
+                  {labelEl}
+                </div>
+              )
+            }
             return (
-              <div
+              <button
                 key={"m" + i}
+                type="button"
                 ref={(n) => {
-                  if (n && t.slug) cellRefs.current[t.slug] = n
+                  if (n) cellRefs.current[t.slug] = n
                 }}
                 className={
-                  "tg-anchor tg-event" +
-                  (clickable ? " is-clickable" : "") +
-                  (selected && selected === t.slug ? " is-selected" : "")
+                  "tg-anchor tg-event is-clickable" +
+                  (selected === t.slug ? " is-selected" : "")
                 }
-                style={{
-                  ...pos,
-                  background: t.bg,
-                  color: t.fg || textOn(t.bg),
-                  ...cornerRadius(t.rd),
-                }}
-                onClick={() => clickable && openInfo(t.slug)}
+                style={evStyle}
+                onClick={() => openInfo(t.slug)}
+                aria-label={data && data.date ? `${heading}, ${data.date}` : heading}
                 title={data && data.date ? `${heading} — ${data.date}` : heading}
               >
-                <span className="tg-event-label">{replaceNumbers(heading)}</span>
-              </div>
+                {labelEl}
+              </button>
             )
           })}
         </div>
@@ -165,12 +186,23 @@ function TimeLine() {
 
       {info && (
         <div className="tg-infobox-backdrop" onClick={closeInfo}>
-          <div className="tg-infobox" onClick={(e) => e.stopPropagation()}>
-            <button className="tg-infobox-close" onClick={closeInfo} aria-label="Close">
+          <div
+            className="tg-infobox"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="tg-infobox-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="tg-infobox-close"
+              onClick={closeInfo}
+              aria-label="Close"
+              ref={closeBtnRef}
+            >
               ×
             </button>
             <div className="tg-infobox-head">
-              <h2>{replaceNumbers(info.heading || selected)}</h2>
+              <h2 id="tg-infobox-title">{replaceNumbers(info.heading || selected)}</h2>
               {info.date && <span className="tg-infobox-date">{info.date}</span>}
             </div>
             <div

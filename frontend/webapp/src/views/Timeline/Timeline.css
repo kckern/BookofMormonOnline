@@ -12,7 +12,7 @@
   bottom: 0;
   left: 0;
   right: 0;
-  background: #f4f4f2;
+  background: #fff;
 }
 
 .timeline-grid-scroller {
@@ -20,6 +20,9 @@
   height: 100%;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
+  /* inset edge shadows hint the canvas scrolls beyond the viewport */
+  box-shadow: inset -18px 0 14px -14px rgba(0, 0, 0, 0.28),
+    inset 0 -18px 14px -14px rgba(0, 0, 0, 0.22);
 }
 
 .timeline-grid {
@@ -41,7 +44,8 @@
   height: 100%;
 }
 
-/* Anchored label/icon: occupies its tile but text is NOT clipped to it. */
+/* Anchored label/icon: occupies its tile but text is NOT clipped to it.
+   Non-interactive by default; clickable events re-enable pointer events. */
 .tg-anchor {
   position: relative;
   z-index: 2;
@@ -52,24 +56,35 @@
   line-height: 1;
   pointer-events: none;
 }
-.tg-anchor > span {
-  pointer-events: auto;
-}
 
+/* Event tiles are <button> when clickable, <div> when not — reset button UA. */
 .tg-event {
   padding: 0 5px;
+  margin: 0;
+  border: none;
+  font: inherit;
+  text-align: left;
+  appearance: none;
 }
 .tg-event-label {
   font-weight: 700;
   font-size: 11px;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.35);
+  /* thin dark outline so labels stay legible when they overflow onto white */
+  text-shadow: -0.6px -0.6px 0 rgba(0, 0, 0, 0.5), 0.6px -0.6px 0 rgba(0, 0, 0, 0.5),
+    -0.6px 0.6px 0 rgba(0, 0, 0, 0.5), 0.6px 0.6px 0 rgba(0, 0, 0, 0.5);
 }
 .tg-event.is-clickable {
+  pointer-events: auto;
   cursor: pointer;
 }
 .tg-event.is-clickable:hover {
   filter: brightness(1.12);
   z-index: 5;
+}
+.tg-event.is-clickable:focus-visible {
+  outline: 2px solid #1e63d0;
+  outline-offset: 1px;
+  z-index: 6;
 }
 .tg-event.is-selected {
   outline: 2px solid #ffd54a;
@@ -87,14 +102,20 @@
   color: #6b5a2a;
 }
 
+/* Decorative battle marker — sits in a colored chip, not a white box */
 .tg-battle {
   justify-content: center;
-  font-size: 13px;
-  cursor: pointer;
+  font-size: 11px;
 }
-.tg-battle > span:hover {
-  transform: scale(1.25);
-  display: inline-block;
+.tg-battle > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #b3261e;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
 /* Info box (replaces the Leaflet popup) */
