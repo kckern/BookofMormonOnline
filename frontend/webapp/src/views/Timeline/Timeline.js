@@ -1,201 +1,193 @@
 /** @format */
 
-import React, { useState, useEffect, useRef, useCallback } from "react"
-import ReactDOMServer from 'react-dom/server';
-import Parser from "html-react-parser";
-import leaflet from "leaflet"
-import { Link, useRouteMatch, BrowserRouter as Router } from "react-router-dom"
-// BROWSER HISTORY
+import React, { useState, useEffect, useMemo, useRef } from "react"
+import Parser from "html-react-parser"
+import { Link, useRouteMatch } from "react-router-dom"
 import { history } from "../../models/routeHistory"
-// media base url of BookOfMormon
-import { assetUrl } from 'src/models/BoMOnlineAPI';
-// COMPONENTS
-import Loader from "../_Common/Loader"
+import { assetUrl } from "src/models/BoMOnlineAPI"
 import BoMOnlineAPI from "src/models/BoMOnlineAPI"
-// CSS
+import Loader from "../_Common/Loader"
+import { replaceNumbers, label } from "src/models/Utils"
+import tilesData from "./gridTiles.json"
 import "./Timeline.css"
-import {
-  snapSelectionToWord,
-  replaceNumbers,
-  processName,
-  label,
-} from "src/models/Utils";
 
+const RADIUS = "10px"
 
-function TimeLine(props) {
-  useEffect(()=>document.title = label("menu_timeline") + " | " + label("home_title"),[])
-  const [timelineData, setTimelineData] = useState(null),
-    map = useRef(null),
-    match = useRouteMatch()
-
-  
-
-  useEffect(() => {
-    BoMOnlineAPI({ timeline: true }).then((result) => {
-      setTimelineData(result.timeline)
-    })
-  }, [])
-
-  // if map initialie then remove map first and bind again
-  const checkMapInitialie = () => {
-    if (!map.current) leafletMap()
-  }
-
-  //set timeline map
-  const leafletMap = () => {
-    var mapMinZoom = 2,
-      mapMaxZoom = 5,
-      defalutZoom = window.innerWidth < 800 ? 3 : 4
-
-    map.current = leaflet.map("timeline", {
-      maxZoom: mapMaxZoom,
-      minZoom: mapMinZoom,
-      zoomControl: false,
-      crs: leaflet.CRS.Simple,
-    }).setView([-25.4375, 19.1875], defalutZoom)
-
-    new leaflet.Control.Zoom({ position: "topright" }).addTo(map.current)
-
-    var mapBounds = new leaflet.LatLngBounds(
-      map.current.unproject([0, 5888], mapMaxZoom),
-      map.current.unproject([1536, 0], mapMaxZoom)
-    )
-
-    // get tile from Api "z,x,y" (z is get zoom and x,y get lat,log) it is work on that you set "mapMinZoom,mapMaxZoom"
-    leaflet.tileLayer(`${assetUrl}/timeline/{z}/{x}/{y}`, {
-      minZoom: mapMinZoom,
-      maxZoom: mapMaxZoom,
-      bounds: mapBounds,
-      attribution: "",
-      noWrap: true,
-    }).addTo(map.current)
-
-    var markers = timelineData.map((mark, i) => {
-
-      // get marker icon 
-      var markerIcon = leaflet.icon({
-        iconUrl: `${assetUrl}/timeline/markers/${mark.file}`,
-        iconSize: [mark.w, mark.h],
-        iconAnchor: [mark.w / 2, mark.h / 2],
-      })
-      //set marker (pass perameter lat, lang, icon, and z "z is user for contsol the zoom level")
-      var marker = leaflet.marker([mark.x, mark.y], {
-        icon: markerIcon,
-        zoom: mark.z,
-        opacity: mark.o,
-      })
-
-      mark.slug && mark.p &&
-        marker.bindPopup(ReactDOMServer.renderToString(renderMarker(mark)))
-
-      marker.on("click", (e) => {
-        mark.p && onClickMarker(mark.slug)
-      });
-
-      mark.date &&
-        marker
-          .bindTooltip(mark.date, { direction: "bottom", sticky: false })
-          .openTooltip()
-      return marker
-    })
-
-    // show zoom level when time line is bind
-    showZoomlevel(map.current, markers)
-    // show zoom level on maxZoom and minZoom
-    map.current.on("zoom", (e) => {
-      showZoomlevel(map.current, markers)
-    })
-    // create and open coustem marker
-    if (match.params && match.params.markerSlug) {
-      openDefaultInfowWindow(timelineData)
-    }
-  }
-  
-  const renderMarker = (mark) => {
-
-
-
-    console.log(mark);
-    return (
-      <Router>
-        <div className="leaflet-marker-container">
-          <Link className="heading-link" to={`/${mark.text?.slug}`}>
-            <div className="heading">{replaceNumbers(mark.heading)}</div>
-            <div className="date">{mark.date}</div>
-          </Link>
-          <div className="bgImageBox">
-            <Link className="bgImage" style={{
-              backgroundImage: `url(${assetUrl}/timeline/art/${mark.slug})`
-            }}
-              to={`/${mark.text?.slug}`} />
-          </div>
-          <div className="text">{Parser(mark?.html || "")}</div>
-          
-        </div>
-      </Router>
-    )
-  }
-
-  // create coustom marker and open infow window
-  const openDefaultInfowWindow = (timelineData) => {
-    let markerInfo = timelineData.filter(
-      (x) => x.slug === match.params.markerSlug
-    )
-    if (markerInfo.length) {
-      markerInfo = markerInfo[0]
-      var markerIcon = leaflet.icon({
-        iconUrl: `${assetUrl}/timeline/markers/${markerInfo.slug}`,
-        iconSize: [markerInfo.w, markerInfo.h],
-        iconAnchor: [markerInfo.w / 2, markerInfo.h / 2],
-      })
-      // map.current.setZoom(markerInfo.z)
-      map.current.setView([markerInfo.x, markerInfo.y], markerInfo.z + 1)
-      let marker = leaflet.marker([markerInfo.x, markerInfo.y], {
-        icon: markerIcon,
-        zoom: markerInfo.z,
-      })
-      
-      markerInfo.slug &&
-        marker.bindPopup(
-          ReactDOMServer.renderToString(renderMarker(markerInfo))
-        )
-
-      marker.addTo(map.current).openPopup()
-      //set popup model top position
-      map.current.panTo([markerInfo.x + 10, markerInfo.y], { animate: true })
-      marker
-        .addTo(map.current)
-        .on("click", () => onClickMarker(markerInfo.slug))
-    }
-  }
-
-  // control zoom and show or hide the markers
-  const showZoomlevel = (map, markers) => {
-    var zoom = map.getZoom() // get current zoom
-    for (var i in markers) {
-      map.removeLayer(markers[i]) // remove all marker
-      //check for match zoom level with current zoom and set marker
-      if (markers[i].options.zoom <= zoom) markers[i].addTo(map)
-    }
-  }
-
-  const onClickMarker = (markerslug) => {
-    history.push(`/timeline/${markerslug}`) // update Url
-  }
-
-  return (
-    <div className='map-container'>
-      <div
-        id='timeline'
-        className='leaflet-container leaflet-fade-anim timeline-map'
-      >
-        {timelineData ? checkMapInitialie() : <Loader />}
-      </div>
-    </div>
-  )
-
+// Black/white text for legibility over a band color (the sheet's per-cell fg
+// is unreliable — often equal to its bg — so we derive contrast).
+function textOn(bg) {
+  if (!bg) return "#222"
+  const h = bg.replace("#", "")
+  const n = h.length === 3 ? h.split("").map((c) => c + c).join("") : h
+  const r = parseInt(n.slice(0, 2), 16),
+    g = parseInt(n.slice(2, 4), 16),
+    b = parseInt(n.slice(4, 6), 16)
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.6 ? "#222" : "#fff"
 }
 
-export default TimeLine;
+// border-radius from the tile's rounded-corner list (◜◝◟◞/◗ glyphs)
+function cornerRadius(rd) {
+  if (!rd || !rd.length) return undefined
+  return {
+    borderTopLeftRadius: rd.includes("tl") ? RADIUS : 0,
+    borderTopRightRadius: rd.includes("tr") ? RADIUS : 0,
+    borderBottomLeftRadius: rd.includes("bl") ? RADIUS : 0,
+    borderBottomRightRadius: rd.includes("br") ? RADIUS : 0,
+  }
+}
 
+function TimeLine() {
+  useEffect(() => {
+    document.title = label("menu_timeline") + " | " + label("home_title")
+  }, [])
 
+  const [timeline, setTimeline] = useState(null)
+  const [selected, setSelected] = useState(null)
+  const match = useRouteMatch()
+  const cellRefs = useRef({})
+
+  useEffect(() => {
+    BoMOnlineAPI({ timeline: true })
+      .then((r) => setTimeline((r && r.timeline) || []))
+      .catch(() => setTimeline([]))
+  }, [])
+
+  const bySlug = useMemo(() => {
+    const m = {}
+    for (const t of timeline || []) m[t.slug] = t
+    return m
+  }, [timeline])
+
+  // Deep link: /timeline/:markerSlug opens its info box and scrolls to it.
+  useEffect(() => {
+    const slug = match.params && match.params.markerSlug
+    if (!slug || !timeline) return
+    setSelected(slug)
+    const node = cellRefs.current[slug]
+    if (node) node.scrollIntoView({ block: "center", inline: "center" })
+  }, [match.params, timeline])
+
+  const openInfo = (slug) => {
+    if (!slug) return
+    setSelected(slug)
+    history.push(`/timeline/${slug}`)
+  }
+  const closeInfo = () => {
+    setSelected(null)
+    history.push(`/timeline`)
+  }
+
+  if (!timeline) return <Loader />
+
+  const { cols, rows, tiles } = tilesData
+  const info = selected ? bySlug[selected] : null
+
+  // Two visual layers in one CSS grid: fills (bands) first, then anchored
+  // labels/icons (which overflow their tile) on top.
+  const fills = tiles.filter((t) => t.k === "fill")
+  const marks = tiles.filter((t) => t.k !== "fill")
+
+  return (
+    <div className="timeline-grid-wrap">
+      <div className="timeline-grid-scroller">
+        <div
+          className="timeline-grid"
+          style={{ "--cols": cols, "--rows": rows }}
+        >
+          {fills.map((t, i) => (
+            <div
+              key={"f" + i}
+              className="tg-fill"
+              style={{
+                gridColumn: `${t.c} / span ${t.w}`,
+                gridRow: `${t.r} / span ${t.h}`,
+                background: t.bg,
+                ...cornerRadius(t.rd),
+              }}
+            />
+          ))}
+
+          {marks.map((t, i) => {
+            const pos = {
+              gridColumn: `${t.c} / span ${t.w}`,
+              gridRow: `${t.r} / span ${t.h}`,
+            }
+            if (t.k === "place") {
+              return (
+                <div key={"m" + i} className="tg-anchor tg-place" style={pos}>
+                  <span>📍 {t.t}</span>
+                </div>
+              )
+            }
+            if (t.k === "battle") {
+              return (
+                <div
+                  key={"m" + i}
+                  className="tg-anchor tg-battle"
+                  style={pos}
+                  onClick={() => openInfo(t.slug)}
+                  title={t.slug && bySlug[t.slug] ? bySlug[t.slug].heading : "Battle"}
+                >
+                  <span>💥</span>
+                </div>
+              )
+            }
+            // event
+            const data = t.slug ? bySlug[t.slug] : null
+            const heading = data && data.heading ? data.heading : t.t
+            const clickable = !!t.slug
+            return (
+              <div
+                key={"m" + i}
+                ref={(n) => {
+                  if (n && t.slug) cellRefs.current[t.slug] = n
+                }}
+                className={
+                  "tg-anchor tg-event" +
+                  (clickable ? " is-clickable" : "") +
+                  (selected && selected === t.slug ? " is-selected" : "")
+                }
+                style={{
+                  ...pos,
+                  background: t.bg,
+                  color: t.fg || textOn(t.bg),
+                  ...cornerRadius(t.rd),
+                }}
+                onClick={() => clickable && openInfo(t.slug)}
+                title={data && data.date ? `${heading} — ${data.date}` : heading}
+              >
+                <span className="tg-event-label">{replaceNumbers(heading)}</span>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {info && (
+        <div className="tg-infobox-backdrop" onClick={closeInfo}>
+          <div className="tg-infobox" onClick={(e) => e.stopPropagation()}>
+            <button className="tg-infobox-close" onClick={closeInfo} aria-label="Close">
+              ×
+            </button>
+            <div className="tg-infobox-head">
+              <h2>{replaceNumbers(info.heading || selected)}</h2>
+              {info.date && <span className="tg-infobox-date">{info.date}</span>}
+            </div>
+            <div
+              className="tg-infobox-art"
+              style={{ backgroundImage: `url(${assetUrl}/timeline/art/${info.slug})` }}
+            />
+            {info.html && <div className="tg-infobox-body">{Parser(info.html)}</div>}
+            {info.text && info.text.slug && (
+              <Link className="tg-infobox-link" to={`/${info.text.slug}`}>
+                Read in the Book of Mormon →
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default TimeLine

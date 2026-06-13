@@ -1,0 +1,20 @@
+{
+  "_doc": "Manual reconciliation overrides keyed by '<row>,<col>' (the r/c shown in the report). Value = labels.json slug, or 'SKIP' to drop the cell. Persists across re-runs.",
+  "_confident_picks": "matcher ranked these too low or there's a clear winner",
+  "79,26": "coriantumr-army",
+  "72,26": "amalickiahs-army",
+  "52,35": "alma-2",
+  "62,24": "sons-of-mosiah",
+  "90,26": "lamanites-and-nephites",
+  "14,16": "lehites",
+
+  "_dup_heading_judgment_calls": "two slugs share a heading — picked the earlier/likelier; confirm",
+  "94,22": "lamanite-recruits",
+  "52,28": "amalekites",
+
+  "_genuinely_missing_no_label": "no labels.json entry exists for these sheet cells — dropped",
+  "4,6": "SKIP",
+  "19,20": "SKIP",
+  "40,6": "SKIP",
+  "77,26": "SKIP"
+}
