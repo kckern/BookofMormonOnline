@@ -12,6 +12,7 @@ test.describe('Robots /robots.txt', () => {
 
   test('allows all user agents by default', async ({ request }) => {
     const body = await (await request.get('/robots.txt')).text()
-    expect(body).toContain('User-agent: *')
+    // Next.js renders "User-Agent" (capital A); both casings are valid per the robots.txt spec
+    expect(body.toLowerCase()).toContain('user-agent: *')
   })
 })
