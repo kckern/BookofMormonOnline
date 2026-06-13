@@ -73,3 +73,28 @@ Commits: 3ae92c5, c28bdfa, 8ff8848, 74079ee, 8ebeea6 (on feat/timeline-grid).
 - Verified: "Lehi and Sariah" → clickable button → opens modal ("Lehi's Family", slug lehite-family).
 **Loop run 2 result:** stopped early at R2-2 — no material issues. Raised-bar pass improved fidelity (typos), UX (instant grid), and content (wired dead tile).
 Run-2 commits: 4b9af6b, + info-box loading style.
+
+# Loop run 3 (max-aggression, multi-surface: frontend + backend/SQL + data pipeline)
+
+3 ruthless reviewers per round over independent surfaces; fixes applied + committed each round.
+
+## Round 3a → fixes
+- DATA: two tiles linked to the WRONG event (fuzzy over-accept) — "Zoram"→cezoram, "Lamanites and Zoramite"→amlicities → SKIP.
+- TOOLING: reconcile.py footgun (wrote dead gridPlacements.json + clobbered the committed report) → report-only, no orphan; placement dedup keyed (slug,x,y); dead imports removed.
+- BACKEND/SQL: dropped always-null grid_fg/grid_round; grid_kind→ENUM; grid_bg NULL not '#ffffff'; generator ORDER BY id + fail-closed on unmatched; idempotency doc + down-migration; stopped hand-editing codegen (TimelineRow grid_* optional); documented the deploy→migrate→wire cutover.
+- FRONTEND: memoized ~3054 fills; document.title " | " bug; replaceNumbers heading mangling; modal scroll-lock; grid role=region; art role=img; box-shadow focus rings (outlines clipped); clickable places; is-static labels; hide labels when zoomed <0.55; stable keys; named constants.
+
+## Round 3b → fixes
+- PERF (real): Timeline was TWO routes → unmount/remount on every modal toggle, defeating the memo. Collapsed to one route (path array) like Map. Proven via CDP: grid node + 3054 fills persist across open/close/back/forward.
+- DATA: more roman-ordinal collisions — "Amos I"→amos-2, "Mosiah I"→mosiah-ii → pinned to amos-1 / mosiah1 (were unplaced).
+- title effect deps []; reconcile.py drop dead `sys`; log wording.
+
+## Round 3c → fixes
+- DATA: place tiles matched only `headed` → 📍 Desolation→mormons-army (event!), Land of First Inheritance unplaced → match places against ALL labels. Era-disambiguated Lamanite Jerusalem / Zeniff-era Land of Nephi.
+- FRONTEND: place clickability gated on content.
+
+## Round 3d → fixes + CONVERGED
+- DATA: pool-trap headingless labels (waters-of-mormon/east/west) placed for DB completeness + a build-time `nc` flag → rendered static (no empty modal), synchronous (removes the place static→clickable flip).
+- **Final audits: MATERIAL ISSUES REMAINING = no on all three surfaces.** Migration now 112 rows, 0 unmatched, 112 distinct ids. Frontend route remount fixed & verified. No wrong slug links remain.
+
+**Loop run 3 result: converged — best-in-class across frontend, backend, SQL, and the data pipeline.**
