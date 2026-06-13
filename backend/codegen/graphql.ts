@@ -120,6 +120,11 @@ export type Event = {
   heading?: Maybe<Scalars['String']['output']>;
   html?: Maybe<Scalars['String']['output']>;
   id?: Maybe<Scalars['String']['output']>;
+  /**
+   * Translated short display label for the grid tile, routed by label_category:
+   * people/place reuse the entity's translated name; event uses heading.
+   */
+  label?: Maybe<Scalars['String']['output']>;
   link?: Maybe<Scalars['String']['output']>;
   narr?: Maybe<Scalars['String']['output']>;
   o?: Maybe<Scalars['Float']['output']>;
@@ -1997,6 +2002,7 @@ export type EventResolvers<ContextType = AppContext, ParentType extends Resolver
   heading?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   html?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  label?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   link?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   narr?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   o?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;

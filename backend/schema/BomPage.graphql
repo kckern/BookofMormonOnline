@@ -141,6 +141,9 @@ type Event {
   html: String
   heading: String
   grid: EventGrid
+  """Translated short display label for the grid tile, routed by label_category:
+  people/place reuse the entity's translated name; event uses heading."""
+  label: String
 }
 
 """Event grid placement for the tile-grid timeline (null until backfilled).
