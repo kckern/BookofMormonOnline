@@ -17,7 +17,7 @@ export default defineConfig({
   ],
   webServer: {
     command: 'npm run dev -- --port 3001',
-    url: 'http://localhost:3001',
+    url: 'http://localhost:3001/og',
     timeout: 120_000,
     reuseExistingServer: !process.env.CI,
     env: {
