@@ -182,6 +182,19 @@
     "round": null
   },
   {
+    "slug": "waters-of-mormon",
+    "x": -55.4375,
+    "y": 13.4375,
+    "row": 36,
+    "col": 9,
+    "w": 2,
+    "h": 1,
+    "kind": "event",
+    "bg": "#85200c",
+    "fg": null,
+    "round": null
+  },
+  {
     "slug": "alma-1",
     "x": -57.25,
     "y": 14,
@@ -1053,6 +1066,19 @@
     "round": null
   },
   {
+    "slug": "west",
+    "x": -101.062,
+    "y": 30.6875,
+    "row": 72,
+    "col": 34,
+    "w": 2,
+    "h": 1,
+    "kind": "event",
+    "bg": "#38761d",
+    "fg": null,
+    "round": null
+  },
+  {
     "slug": "nephihah",
     "x": -76.3125,
     "y": 30.75,
@@ -1331,6 +1357,19 @@
     "y": 34.625,
     "row": 83,
     "col": 35,
+    "w": 2,
+    "h": 1,
+    "kind": "event",
+    "bg": "#38761d",
+    "fg": null,
+    "round": null
+  },
+  {
+    "slug": "east",
+    "x": -101.125,
+    "y": 34.8125,
+    "row": 72,
+    "col": 30,
     "w": 2,
     "h": 1,
     "kind": "event",

@@ -211,9 +211,11 @@ function TimeLine() {
             const heading = (data && data.heading) || t.t
             const isPlace = t.k === "place"
             const inner = isPlace ? `📍 ${t.t}` : heading
-            // Events open on their slug; places only when the linked entry has
-            // real content (bare geographic markers stay static — no empty modal).
-            const clickable = isPlace ? !!(data && data.heading) : !!t.slug
+            // Clickable iff it has a slug AND real content (t.nc, set at build
+            // time for headingless labels, marks the empty-modal cases). Using
+            // the build-time flag keeps this synchronous — no affordance flip
+            // when the API resolves.
+            const clickable = !!t.slug && !t.nc
 
             if (!clickable) {
               return (

@@ -141,6 +141,12 @@ def main():
             tile["t"] = fix_typos(label_text)
         if slug:
             tile["slug"] = slug
+            # nc = "no content": the linked entry has no heading (bare place /
+            # label). The frontend renders these as static, non-interactive
+            # labels (a click would open an empty modal) — synchronous, so no
+            # affordance flip once the API loads. Still placed in the DB.
+            if entry is None or not entry.get("heading"):
+                tile["nc"] = 1
         tiles.append(tile)
 
         # record a DB placement for matched content tiles (keyed by source x/y)

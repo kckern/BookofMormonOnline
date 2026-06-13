@@ -27,6 +27,11 @@
   "52,19": "lamanite-jersualem",
   "35,18": "land-of-nephi-lamanite",
 
+  "_round3d_pool_trap_labels": "event-kind tiles whose true match is a headingless label, excluded from the event match pool; pin for DB placement (rendered as content-less static labels, not clickable).",
+  "37,11": "waters-of-mormon",
+  "73,32": "east",
+  "73,36": "west",
+
   "_genuinely_missing_no_label": "no labels.json entry exists for these sheet cells — dropped",
   "4,6": "SKIP",
   "19,20": "SKIP",
