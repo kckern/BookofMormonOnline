@@ -226,6 +226,11 @@ export async function initRealtime(httpServer: HttpServer): Promise<Server> {
         socket.join(channelUrls);
       }
 
+      // Join a personal room so per-user pushes (notifications) reach this user
+      // on every device without going through a channel room. Room key matches
+      // userRoom() in notifications push helpers.
+      socket.join(`user:${userId}`);
+
       // Mark online in Redis presence.
       await setOnline(userId);
 

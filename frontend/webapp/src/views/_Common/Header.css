@@ -103,6 +103,98 @@
     background-color: #DDD;
 }
 
+/* ── Notification bell badge ── */
+.headerButton.notificationBell{
+    position: relative;
+}
+.notificationBadge{
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    box-sizing: border-box;
+    background-color: #e03131;
+    color: #fff;
+    border-radius: 9px;
+    font-size: 11px;
+    line-height: 18px;
+    font-weight: 700;
+    text-align: center;
+}
+
+/* ── Notification dropdown header + mark-all control ── */
+.NotificationList-header{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 .75em;
+}
+.NotificationList-header h5{
+    margin: 0;
+    flex: 1;
+    text-align: left;
+}
+.NotificationList-markAll{
+    background: none;
+    border: none;
+    color: #1971c2;
+    font-size: .8em;
+    cursor: pointer;
+    padding: .25em;
+    white-space: nowrap;
+}
+.NotificationList-markAll:hover{
+    text-decoration: underline;
+}
+
+/* ── Notification items ── */
+.NotificationList li{
+    padding: 0; /* the inner button owns the padding now */
+}
+.NotificationList-item{
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: .75em 1em;
+    background: none;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
+    color: inherit;
+}
+.NotificationList-item:hover,
+.NotificationList-item:focus-visible{
+    background-color: #eee;
+    outline: none;
+}
+.NotificationList li.unread .NotificationList-item{
+    background-color: #f1f8ff;
+    font-weight: 600;
+}
+.NotificationList-item img{
+    height: 1.4em;
+    margin-right: 1ex;
+    opacity: 0.5;
+}
+.NotificationList-text{
+    flex: 1;
+}
+.NotificationList-dot{
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #1971c2;
+    margin-left: .5ex;
+    flex: 0 0 auto;
+}
+.NotificationList-empty{
+    color: #777;
+    text-align: center;
+}
+
 
 .heading-bar.mobile 
 {

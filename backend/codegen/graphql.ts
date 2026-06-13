@@ -442,6 +442,8 @@ export type Mutation = {
   joinGroup?: Maybe<JoinedGroup>;
   joinOpenGroup?: Maybe<JoinedGroup>;
   log?: Maybe<LogResult>;
+  markAllNotificationsRead?: Maybe<Scalars['Boolean']['output']>;
+  markNotificationRead?: Maybe<Scalars['Boolean']['output']>;
   messengerAcceptInvitation?: Maybe<Scalars['Boolean']['output']>;
   messengerBanMember?: Maybe<Scalars['Boolean']['output']>;
   messengerCreateChannel?: Maybe<MessengerChannel>;
@@ -506,6 +508,11 @@ export type MutationLogArgs = {
 };
 
 
+export type MutationMarkNotificationReadArgs = {
+  notificationId?: InputMaybe<Scalars['String']['input']>;
+};
+
+
 export type MutationMessengerAcceptInvitationArgs = {
   channelUrl?: InputMaybe<Scalars['String']['input']>;
   userId?: InputMaybe<Scalars['String']['input']>;
@@ -523,6 +530,7 @@ export type MutationMessengerCreateChannelArgs = {
   coverUrl?: InputMaybe<Scalars['String']['input']>;
   customType?: InputMaybe<Scalars['String']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
+  isDistinct?: InputMaybe<Scalars['Boolean']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   operatorIds?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
   userIds?: InputMaybe<Array<Scalars['String']['input']>>;
@@ -676,6 +684,18 @@ export type Note = {
   id?: Maybe<Scalars['String']['output']>;
   text?: Maybe<Scalars['String']['output']>;
   title?: Maybe<Scalars['String']['output']>;
+};
+
+export type Notification = {
+  __typename?: 'Notification';
+  actor?: Maybe<MessengerUser>;
+  channel_url?: Maybe<Scalars['String']['output']>;
+  created_at?: Maybe<Scalars['Float']['output']>;
+  id?: Maybe<Scalars['String']['output']>;
+  is_read?: Maybe<Scalars['Boolean']['output']>;
+  message_id?: Maybe<Scalars['String']['output']>;
+  text?: Maybe<Scalars['String']['output']>;
+  type?: Maybe<Scalars['String']['output']>;
 };
 
 export type Object = {
@@ -863,6 +883,8 @@ export type Query = {
   messengerUser?: Maybe<MessengerUser>;
   messengerUsers?: Maybe<Array<Maybe<MessengerUser>>>;
   moregroups?: Maybe<Array<Maybe<HomeGroup>>>;
+  notificationUnreadCount?: Maybe<Scalars['Int']['output']>;
+  notifications?: Maybe<Array<Maybe<Notification>>>;
   object?: Maybe<Array<Maybe<Object>>>;
   page?: Maybe<Array<Maybe<Page>>>;
   pagecomments?: Maybe<MessengerPageComments>;
@@ -905,6 +927,11 @@ export type Query = {
 
 export type QueryBooksArgs = {
   seed?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryBotlistArgs = {
+  channel?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -1741,6 +1768,7 @@ export type ResolversTypes = {
   NarrativePath: ResolverTypeWrapper<Partial<NarrativePath>>;
   Network: ResolverTypeWrapper<Partial<Network>>;
   Note: ResolverTypeWrapper<Partial<Note>>;
+  Notification: ResolverTypeWrapper<Partial<Notification>>;
   Object: ResolverTypeWrapper<Partial<Object>>;
   Page: ResolverTypeWrapper<Partial<Page>>;
   Passage: ResolverTypeWrapper<Partial<Passage>>;
@@ -1837,6 +1865,7 @@ export type ResolversParentTypes = {
   NarrativePath: Partial<NarrativePath>;
   Network: Partial<Network>;
   Note: Partial<Note>;
+  Notification: Partial<Notification>;
   Object: Partial<Object>;
   Page: Partial<Page>;
   Passage: Partial<Passage>;
@@ -2307,6 +2336,8 @@ export type MutationResolvers<ContextType = AppContext, ParentType extends Resol
   joinGroup?: Resolver<Maybe<ResolversTypes['JoinedGroup']>, ParentType, ContextType, Partial<MutationJoinGroupArgs>>;
   joinOpenGroup?: Resolver<Maybe<ResolversTypes['JoinedGroup']>, ParentType, ContextType, Partial<MutationJoinOpenGroupArgs>>;
   log?: Resolver<Maybe<ResolversTypes['LogResult']>, ParentType, ContextType, RequireFields<MutationLogArgs, 'key' | 'token'>>;
+  markAllNotificationsRead?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  markNotificationRead?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, Partial<MutationMarkNotificationReadArgs>>;
   messengerAcceptInvitation?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, Partial<MutationMessengerAcceptInvitationArgs>>;
   messengerBanMember?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, Partial<MutationMessengerBanMemberArgs>>;
   messengerCreateChannel?: Resolver<Maybe<ResolversTypes['MessengerChannel']>, ParentType, ContextType, Partial<MutationMessengerCreateChannelArgs>>;
@@ -2360,6 +2391,18 @@ export type NoteResolvers<ContextType = AppContext, ParentType extends Resolvers
   id?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   text?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   title?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type NotificationResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['Notification'] = ResolversParentTypes['Notification']> = {
+  actor?: Resolver<Maybe<ResolversTypes['MessengerUser']>, ParentType, ContextType>;
+  channel_url?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  created_at?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  id?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  is_read?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  message_id?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  text?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  type?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -2509,7 +2552,7 @@ export type ProgressScoreResolvers<ContextType = AppContext, ParentType extends 
 export type QueryResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
   _?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   books?: Resolver<Maybe<Array<Maybe<ResolversTypes['Book']>>>, ParentType, ContextType, Partial<QueryBooksArgs>>;
-  botlist?: Resolver<Maybe<Array<Maybe<ResolversTypes['Bot']>>>, ParentType, ContextType>;
+  botlist?: Resolver<Maybe<Array<Maybe<ResolversTypes['Bot']>>>, ParentType, ContextType, Partial<QueryBotlistArgs>>;
   chiasmus?: Resolver<Maybe<Array<Maybe<ResolversTypes['Chiasmus']>>>, ParentType, ContextType, Partial<QueryChiasmusArgs>>;
   closetab?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType, Partial<QueryClosetabArgs>>;
   commentary?: Resolver<Maybe<Array<Maybe<ResolversTypes['Commentary']>>>, ParentType, ContextType, Partial<QueryCommentaryArgs>>;
@@ -2542,6 +2585,8 @@ export type QueryResolvers<ContextType = AppContext, ParentType extends Resolver
   messengerUser?: Resolver<Maybe<ResolversTypes['MessengerUser']>, ParentType, ContextType, Partial<QueryMessengerUserArgs>>;
   messengerUsers?: Resolver<Maybe<Array<Maybe<ResolversTypes['MessengerUser']>>>, ParentType, ContextType, Partial<QueryMessengerUsersArgs>>;
   moregroups?: Resolver<Maybe<Array<Maybe<ResolversTypes['HomeGroup']>>>, ParentType, ContextType, Partial<QueryMoregroupsArgs>>;
+  notificationUnreadCount?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  notifications?: Resolver<Maybe<Array<Maybe<ResolversTypes['Notification']>>>, ParentType, ContextType>;
   object?: Resolver<Maybe<Array<Maybe<ResolversTypes['Object']>>>, ParentType, ContextType, Partial<QueryObjectArgs>>;
   page?: Resolver<Maybe<Array<Maybe<ResolversTypes['Page']>>>, ParentType, ContextType, Partial<QueryPageArgs>>;
   pagecomments?: Resolver<Maybe<ResolversTypes['MessengerPageComments']>, ParentType, ContextType, Partial<QueryPagecommentsArgs>>;
@@ -2974,6 +3019,7 @@ export type Resolvers<ContextType = AppContext> = {
   NarrativePath?: NarrativePathResolvers<ContextType>;
   Network?: NetworkResolvers<ContextType>;
   Note?: NoteResolvers<ContextType>;
+  Notification?: NotificationResolvers<ContextType>;
   Object?: ObjectResolvers<ContextType>;
   Page?: PageResolvers<ContextType>;
   Passage?: PassageResolvers<ContextType>;

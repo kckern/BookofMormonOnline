@@ -10,10 +10,12 @@ extend type Query {
   messengerThreadMessages(parentMessageId: String): [MessengerMessage]
   messengerUnreadDMs(userId: String): [MessengerUnreadDM]
   pagecomments(channelUrl: String, pageSlug: String): MessengerPageComments
+  notifications: [Notification]
+  notificationUnreadCount: Int
 }
 
 extend type Mutation {
-  messengerCreateChannel(name: String, customType: String, description: String, coverUrl: String, operatorIds: [String], userIds: [String!], channelUrl: String): MessengerChannel
+  messengerCreateChannel(name: String, customType: String, description: String, coverUrl: String, operatorIds: [String], userIds: [String!], channelUrl: String, isDistinct: Boolean): MessengerChannel
   messengerUpdateChannel(channelUrl: String, name: String, description: String, membersCanInvite: Boolean): MessengerChannel
   messengerUpdateUser(userId: String, nickname: String, profileUrl: String): MessengerUser
   messengerUpdateUserMetadata(userId: String, metadata: String): Boolean
@@ -25,6 +27,8 @@ extend type Mutation {
   messengerInviteMembers(channelUrl: String, userIds: [String]): Boolean
   messengerAcceptInvitation(channelUrl: String, userId: String): Boolean
   messengerDeclineInvitation(channelUrl: String, userId: String): Boolean
+  markNotificationRead(notificationId: String): Boolean
+  markAllNotificationsRead: Boolean
 }
 
 type MessengerUser {
@@ -103,4 +107,17 @@ type MessengerPageComments {
   messages: [MessengerMessage]
   # { "<verseNum>": { "com": [Int], "img": [Int] } } — fax counts are client-side
   counts: JSON
+}
+
+# Derived per-user notification (no backing table — assembled from replies,
+# reactions, and group invites). See backend/src/messaging/notifications.ts.
+type Notification {
+  id: String
+  type: String           # 'reply' | 'reaction' | 'invite'
+  actor: MessengerUser
+  channel_url: String
+  message_id: String
+  text: String
+  created_at: Float
+  is_read: Boolean
 }

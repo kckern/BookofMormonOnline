@@ -82,7 +82,7 @@ function MobileHeader({ appController }) {
 
   let startedString = (completed > started) ? "" : 
   <span>
-    <img src={yellow}/>
+    <img src={yellow} alt="" />
     {(started?.toFixed(1) || 0) + "% "}
   </span>
 
@@ -112,20 +112,21 @@ function MobileHeader({ appController }) {
       className="heading-bar mobile noselect"
     >
       <div className="logoheader">
-        <img src={`${assetUrl}/interface/logo`} />
+        <img src={`${assetUrl}/interface/logo`} alt="" />
         <div>{label("home_title")}</div>
       </div>
       <div className="userheader">
         <div>
           <div className="progresslist">
             <div className="progress_text">
-              <img src={green}/> {completed?.toFixed(1) || 0}% 
+              <img src={green} alt="" /> {completed?.toFixed(1) || 0}%
               {startedString}
             </div>
             <div className="progress">
               <div
                 className={"progress-bar progress-bar-success"}
                 role="progressbar"
+                aria-label={label("completed") || "Completed"}
                 style={{
                   width: (completed > 0 && completed < 2 ? 2 : completed) + "%",
                 }}
@@ -136,6 +137,7 @@ function MobileHeader({ appController }) {
               <div
                 className={"progress-bar progress-bar-warning"}
                 role="progressbar"
+                aria-label={label("started") || "Started"}
                 style={{
                   width: (started > 0 && started < 2 ? 2 : started) + "%",
                 }}
@@ -157,30 +159,111 @@ function MobileHeader({ appController }) {
 
 function Notifications({ appController }) {
   const notificationOpen = appController.states.notification.isNotificationOpen;
+  const unreadCount = appController.states.notification.unreadCount || 0;
+  const baseLabel = label("notifications") || "Notifications";
+  const ariaLabel =
+    unreadCount > 0
+      ? `${baseLabel} (${unreadCount} ${label("unread") || "unread"})`
+      : baseLabel;
   return (
     <>
-      {notificationOpen ? <NotificationList /> : null}
-      <div
-        className="headerButton"
+      {notificationOpen ? (
+        <NotificationList appController={appController} />
+      ) : null}
+      <button
+        type="button"
+        className="headerButton notificationBell"
+        aria-label={ariaLabel}
+        aria-haspopup="true"
+        aria-expanded={notificationOpen}
         onClick={() =>
           appController.functions.openNotification(!notificationOpen)
         }
       >
-        <img src={bell} />
-      </div>
+        <img src={bell} alt="" />
+        {unreadCount > 0 ? (
+          <span className="notificationBadge" aria-hidden="true">
+            {unreadCount > 99 ? "99+" : unreadCount}
+          </span>
+        ) : null}
+      </button>
     </>
   );
 }
 
-function NotificationList() {
+function NotificationList({ appController }) {
+  const { items = [], loading } = appController.states.notification;
+  const hasUnread = items.some((n) => !n.is_read);
+
+  // Esc closes the dropdown (keyboard operability).
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === "Escape") appController.functions.openNotification(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [appController.functions]);
+
+  // Navigate to the notification target, mark it read, and close the dropdown.
+  const handleClick = (n) => {
+    appController.functions.markNotificationRead(n.id);
+    let slug = null;
+    if (n.channel_url && n.message_id) {
+      slug = `group/${n.channel_url}/${n.message_id}`;
+    } else if (n.channel_url) {
+      slug = `group/${n.channel_url}`;
+    }
+    if (slug) appController.functions.setSlug(slug);
+    appController.functions.openNotification(false);
+  };
+
   return (
-    <div className="NotificationList">
-      <h5>{label("notifications")}</h5>
+    <div className="NotificationList" role="dialog" aria-label={label("notifications") || "Notifications"}>
+      <div className="NotificationList-header">
+        <h5>{label("notifications") || "Notifications"}</h5>
+        {hasUnread ? (
+          <button
+            type="button"
+            className="NotificationList-markAll"
+            onClick={() => appController.functions.markAllNotificationsRead()}
+          >
+            {label("mark_all_read") || "Mark all read"}
+          </button>
+        ) : null}
+      </div>
       <ul>
-        <li>
-          <img src={none} />
-          {label("no_notifications")}
-        </li>
+        {loading && items.length === 0 ? (
+          <li className="NotificationList-empty">{label("loading") || "Loading…"}</li>
+        ) : items.length === 0 ? (
+          <li className="NotificationList-empty">
+            <img src={none} alt="" />
+            {label("no_notifications")}
+          </li>
+        ) : (
+          items.map((n) => (
+            <li key={n.id} className={n.is_read ? "read" : "unread"}>
+              <button
+                type="button"
+                className="NotificationList-item"
+                onClick={() => handleClick(n)}
+              >
+                {n.actor?.profile_url ? (
+                  <UserAvatar
+                    userId={n.actor.user_id}
+                    profileUrl={n.actor.profile_url}
+                    size={28}
+                  />
+                ) : (
+                  <img src={bell} alt="" />
+                )}
+                <span className="NotificationList-text">{n.text}</span>
+                {!n.is_read ? (
+                  <span className="NotificationList-dot" aria-hidden="true" />
+                ) : null}
+              </button>
+            </li>
+          ))
+        )}
       </ul>
     </div>
   );

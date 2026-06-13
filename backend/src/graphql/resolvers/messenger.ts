@@ -23,6 +23,12 @@ import {
 } from '../../messaging/members.js';
 import { getMessages, getMessage, getThread } from '../../messaging/messages.js';
 import { getPageComments } from '../../messaging/pagecomments.js';
+import {
+  getNotifications,
+  getUnreadNotificationCount,
+  markNotificationRead,
+  markAllNotificationsRead,
+} from '../../messaging/notifications.js';
 import { getBus } from '../../realtime/RealtimeBus.js';
 import { isDuplicateKeyError } from '../../data/errors.js';
 import type { MessageDTO } from '../../messaging/dto.js';
@@ -253,6 +259,26 @@ export const messengerResolvers: Resolvers = {
       if (!args.channelUrl || !args.pageSlug) return null;
       return getPageComments(ctx.db, args.channelUrl, args.pageSlug);
     },
+
+    /**
+     * notifications — the acting user's derived notification feed (replies to /
+     * reactions on their messages, plus pending group invites). Auth-only: an
+     * unauthenticated caller gets an empty list. See notifications.ts.
+     */
+    notifications: async (_root, _args, ctx: AppContext) => {
+      const userId = await resolveActingUserId(ctx);
+      if (!userId) return [];
+      return getNotifications(ctx.db, userId);
+    },
+
+    /**
+     * notificationUnreadCount — unread count for the bell badge.
+     */
+    notificationUnreadCount: async (_root, _args, ctx: AppContext) => {
+      const userId = await resolveActingUserId(ctx);
+      if (!userId) return 0;
+      return getUnreadNotificationCount(ctx.db, userId);
+    },
   },
 
   // ─── MessengerMessage field resolvers ──────────────────────────────────────
@@ -322,7 +348,7 @@ export const messengerResolvers: Resolvers = {
      * Returns the full ChannelDTO (null on failure — reader DB suppressed via catch).
      */
     messengerCreateChannel: async (_root, args, ctx: AppContext) => {
-      const { name, customType, description, coverUrl, operatorIds, userIds: argUserIds, channelUrl: argChannelUrl } = args as {
+      const { name, customType, description, coverUrl, operatorIds, userIds: argUserIds, channelUrl: argChannelUrl, isDistinct } = args as {
         name?: string | null;
         customType?: string | null;
         description?: string | null;
@@ -330,6 +356,7 @@ export const messengerResolvers: Resolvers = {
         operatorIds?: string[] | null;
         userIds?: string[] | null;
         channelUrl?: string | null;
+        isDistinct?: boolean | null;
       };
       if (!name) return null;
 
@@ -357,7 +384,10 @@ export const messengerResolvers: Resolvers = {
           coverUrl: coverUrl ?? undefined,
           userIds: allUserIds,
           operatorIds: operators,
-          ...(argChannelUrl ? { channelUrl: argChannelUrl } : {}),
+          isDistinct: !!isDistinct,
+          // A distinct channel (1:1 DM) must dedupe by member set — ignore any
+          // client-forced channelUrl so the existing conversation is reused.
+          ...(argChannelUrl && !isDistinct ? { channelUrl: argChannelUrl } : {}),
         });
       } catch (err) {
         console.error('messengerCreateChannel error:', err);
@@ -731,6 +761,36 @@ export const messengerResolvers: Resolvers = {
         return removed;
       } catch (err) {
         console.error('messengerDeclineInvitation error:', err);
+        return false;
+      }
+    },
+
+    /**
+     * markNotificationRead — mark a single derived notification read for the
+     * acting user (persisted in messenger_users.metadata). Auth-only.
+     */
+    markNotificationRead: async (_root, args, ctx: AppContext) => {
+      const { notificationId } = args as { notificationId?: string | null };
+      const userId = await resolveActingUserId(ctx);
+      if (!userId || !notificationId) return false;
+      try {
+        return await markNotificationRead(ctx.db, userId, notificationId);
+      } catch (err) {
+        console.error('markNotificationRead error:', err);
+        return false;
+      }
+    },
+
+    /**
+     * markAllNotificationsRead — advance the acting user's read watermark to NOW().
+     */
+    markAllNotificationsRead: async (_root, _args, ctx: AppContext) => {
+      const userId = await resolveActingUserId(ctx);
+      if (!userId) return false;
+      try {
+        return await markAllNotificationsRead(ctx.db, userId);
+      } catch (err) {
+        console.error('markAllNotificationsRead error:', err);
         return false;
       }
     },

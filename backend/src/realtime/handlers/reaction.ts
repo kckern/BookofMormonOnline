@@ -21,6 +21,7 @@ import type { Server, Socket } from 'socket.io';
 import { getDb } from '../../data/db.js';
 import { addReaction, removeReaction, getReactions } from '../../messaging/reactions.js';
 import { getBus } from '../RealtimeBus.js';
+import { pushNotificationForEvent } from '../../messaging/notifications.js';
 
 // ─── Shared payload type ──────────────────────────────────────────────────────
 
@@ -62,6 +63,15 @@ export function register(socket: Socket, _io: Server): void {
 
       // Broadcast updated reaction snapshot to the channel room.
       await broadcastReactionChanged(payload.channelUrl, payload.messageId);
+
+      // Notify the reacted-to message's author (per-user push). Fire-and-forget;
+      // self-reactions are filtered downstream.
+      void pushNotificationForEvent(db, {
+        type: 'reaction',
+        targetMessageId: payload.messageId,
+        actorId: user.userId,
+        reactionKey: payload.reactionKey,
+      });
 
       ack?.({ success: true });
     } catch (err: unknown) {

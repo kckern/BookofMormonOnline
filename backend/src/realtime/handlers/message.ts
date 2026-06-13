@@ -31,6 +31,7 @@ import {
 import { getBus } from '../RealtimeBus.js';
 import { maybeBotReply } from '../botResponder.js';
 import { isMemberMuted } from '../../messaging/members.js';
+import { pushNotificationForEvent } from '../../messaging/notifications.js';
 
 // ─── send_message ─────────────────────────────────────────────────────────────
 
@@ -111,6 +112,16 @@ export function register(socket: Socket, _io: Server): void {
 
         // Fire-and-forget bot reply (no await — must not block the ack).
         void maybeBotReply(db, payload.channelUrl, msg);
+
+        // A reply notifies the parent message's author (per-user push, in-place
+        // bell patch). Fire-and-forget; self-replies are filtered downstream.
+        if (payload.parentMessageId) {
+          void pushNotificationForEvent(db, {
+            type: 'reply',
+            targetMessageId: payload.parentMessageId,
+            actorId: user.userId,
+          });
+        }
 
         ack?.({ success: true, message: msg });
       } catch (err: unknown) {

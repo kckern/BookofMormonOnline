@@ -133,6 +133,9 @@ export const appInit = () => {
     },
     notification: {
       isNotificationOpen: false,
+      items: [],
+      unreadCount: 0,
+      loading: false,
     },
     editor: {
       isEditorOpen: false,
@@ -387,7 +390,15 @@ export const appFunctions = {
         localStorage.getItem("activeGroup");
       let groupToSet = list.filter((g) => g.url === url)[0];
       if (!groupToSet) groupToSet = list[0];
-      appController.functions.setActiveStudyGroup(groupToSet);
+      // Apply the active-group selection in-place within THIS reducer pass.
+      // The previous `appController.functions.setActiveStudyGroup(...)` re-
+      // dispatched into Main's reducer; React re-invokes reducers during
+      // render, so that nested dispatch fired a Main setState mid-render
+      // ("Cannot update a component (Main) while rendering ..."). Calling the
+      // sibling reducer directly mutates the same draft synchronously (no
+      // nested dispatch) — its only React state update (setUnreadDMs) stays
+      // async in a .then, so it lands after this pass.
+      appFunctions.setActiveStudyGroup(appController, { val: groupToSet });
     }
 
     if (list.length > 0) appController.states.studyGroup.groupList = list;
@@ -578,7 +589,61 @@ export const appFunctions = {
     return appController;
   },
   openNotification: (appController, input) => {
-    appController.states.notification.isNotificationOpen = input.val;
+    const open = input.val;
+    appController.states.notification.isNotificationOpen = open;
+    // Fetch the feed on open (no polling — refreshed on open + on socket push).
+    if (open && appController.sendbird?.loadNotifications) {
+      appController.states.notification.loading = true;
+      appController.sendbird.loadNotifications().then((items) => {
+        appController.functions.setNotifications(items);
+      });
+    }
+    return appController;
+  },
+  setNotifications: (appController, input) => {
+    const items = Array.isArray(input.val) ? input.val : [];
+    appController.states.notification.items = items;
+    appController.states.notification.unreadCount = items.filter((n) => !n.is_read).length;
+    appController.states.notification.loading = false;
+    return appController;
+  },
+  setNotificationUnreadCount: (appController, input) => {
+    appController.states.notification.unreadCount = Number(input.val) || 0;
+    return appController;
+  },
+  // Realtime in-place patch: prepend a pushed notification and bump the badge.
+  addNotification: (appController, input) => {
+    const notif = input.val;
+    if (!notif || !notif.id) return appController;
+    const items = appController.states.notification.items || [];
+    if (items.some((n) => n.id === notif.id)) return appController; // dedupe
+    appController.states.notification.items = [notif, ...items];
+    appController.states.notification.unreadCount =
+      (appController.states.notification.unreadCount || 0) + (notif.is_read ? 0 : 1);
+    return appController;
+  },
+  // Mark a single notification read in place (badge -1).
+  markNotificationRead: (appController, input) => {
+    const id = input.val;
+    const items = appController.states.notification.items || [];
+    let changed = false;
+    appController.states.notification.items = items.map((n) => {
+      if (n.id === id && !n.is_read) { changed = true; return { ...n, is_read: true }; }
+      return n;
+    });
+    if (changed) {
+      appController.states.notification.unreadCount =
+        Math.max(0, (appController.states.notification.unreadCount || 0) - 1);
+      appController.sendbird?.markNotificationRead?.(id);
+    }
+    return appController;
+  },
+  // Mark all read in place (badge 0).
+  markAllNotificationsRead: (appController, input) => {
+    const items = appController.states.notification.items || [];
+    appController.states.notification.items = items.map((n) => ({ ...n, is_read: true }));
+    appController.states.notification.unreadCount = 0;
+    appController.sendbird?.markAllNotificationsRead?.();
     return appController;
   },
   setParentMessage: (appController, input) => {

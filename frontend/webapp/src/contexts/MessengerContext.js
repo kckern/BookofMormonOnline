@@ -28,6 +28,10 @@ export const noopController = (userId) => ({
   updateUserSummary: () => {},
   fireStudyGroupAction: () => {},
   loadUnreadDMs: () => Promise.resolve({}),
+  loadNotifications: () => Promise.resolve([]),
+  loadNotificationUnreadCount: () => Promise.resolve(0),
+  markNotificationRead: () => Promise.resolve(null),
+  markAllNotificationsRead: () => Promise.resolve(null),
   disconnect: () => {},
   updatePagePosition: () => {},
   updateTypingLocation: () => {},
@@ -89,6 +93,17 @@ export function MessengerProvider({ appController, children, createController = 
         appRef.current.functions.setStudyGroups(list);
       })
       .catch((e) => console.warn("Messenger: study-group bootstrap failed", e));
+
+    // Seed the bell badge with the unread notification count (one fetch on
+    // boot; thereafter the badge is patched in place by socket pushes — no
+    // polling). The full feed is loaded lazily when the bell is opened.
+    ctrl
+      .loadNotificationUnreadCount()
+      .then((count) => {
+        if (cancelled) return;
+        appRef.current.functions.setNotificationUnreadCount(count);
+      })
+      .catch((e) => console.warn("Messenger: notification count bootstrap failed", e));
 
     return () => {
       cancelled = true;
