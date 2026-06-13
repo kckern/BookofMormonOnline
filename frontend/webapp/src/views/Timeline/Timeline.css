@@ -255,6 +255,20 @@
   text-align: justify;
 }
 
+.tg-infobox-loading {
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.tg-infobox-loading h2 {
+  font-size: 16px;
+  color: #777;
+  margin: 0;
+}
+
 .tg-infobox-link {
   display: inline-block;
   margin-top: 12px;
