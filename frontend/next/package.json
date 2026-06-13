@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --port 3000",
+    "dev": "next dev --port 8200",
     "build": "next build",
-    "start": "next start --port 3000",
+    "start": "next start --port 8200",
     "test": "playwright test",
     "test:ui": "playwright test --ui",
     "fonts": "node scripts/download-fonts.mjs"
