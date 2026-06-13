@@ -6,7 +6,11 @@ const LANG_PREFIXES = ['ko', 'fr', 'de', 'es', 'pt', 'ja', 'zh']
 
 // Crawlers and social-preview fetchers get SSR HTML.
 // Everyone else gets proxied to the React app (CRA) on port 8201.
-const BOT_RE = /bot|crawl|spider|slurp|google|bing|baidu|yandex|duckduck|facebook|twitter|linkedin|whatsapp|telegram|slack|discord|preview|curl|python-requests/i
+// Korean bots matter for this site (ko content + sharing): Naver's crawler is
+// "Yeti" (UA: naver.me/bot), Daum's is "Daumoa", and KakaoTalk/KakaoStory link
+// previews send "kakaotalk-scrap"/"kakaostory-og-reader" — none reliably carry
+// "bot"/"crawl", so they're matched explicitly by yeti|naver|daum|kakao.
+const BOT_RE = /bot|crawl|spider|slurp|google|bing|baidu|yandex|duckduck|facebook|twitter|linkedin|whatsapp|telegram|slack|discord|preview|curl|python-requests|yeti|naver|daum|kakao/i
 
 const CRA_ORIGIN = 'http://localhost:8201'
 
