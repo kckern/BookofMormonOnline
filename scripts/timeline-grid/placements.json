@@ -338,6 +338,19 @@
     "round": null
   },
   {
+    "slug": "lamanite-jersualem",
+    "x": -73.5625,
+    "y": 17.25,
+    "row": 51,
+    "col": 17,
+    "w": 1,
+    "h": 1,
+    "kind": "place",
+    "bg": "#85200c",
+    "fg": null,
+    "round": null
+  },
+  {
     "slug": "lamanite-recruits",
     "x": -131.625,
     "y": 17.8125,
@@ -360,6 +373,19 @@
     "h": 1,
     "kind": "event",
     "bg": "#bf9000",
+    "fg": null,
+    "round": null
+  },
+  {
+    "slug": "land-of-nephi-lamanite",
+    "x": -78.5,
+    "y": 18.3125,
+    "row": 34,
+    "col": 16,
+    "w": 2,
+    "h": 1,
+    "kind": "place",
+    "bg": "#85200c",
     "fg": null,
     "round": null
   },

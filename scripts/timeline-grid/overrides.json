@@ -23,6 +23,10 @@
   "115,26": "amos-1",
   "32,35": "mosiah1",
 
+  "_round3c_place_era_disambiguation": "same-named places that exact-match the Old-World slug but sit in a Lamanite-era lineage; pin to the era-correct entry (otherwise the Lamanite city/land rows stay unplaced).",
+  "52,19": "lamanite-jersualem",
+  "35,18": "land-of-nephi-lamanite",
+
   "_genuinely_missing_no_label": "no labels.json entry exists for these sheet cells — dropped",
   "4,6": "SKIP",
   "19,20": "SKIP",
