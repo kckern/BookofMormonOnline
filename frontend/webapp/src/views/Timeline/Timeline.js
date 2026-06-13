@@ -45,7 +45,11 @@ function TimeLine() {
 
   const [timeline, setTimeline] = useState(null)
   const [selected, setSelected] = useState(null)
-  const [zoom, setZoom] = useState(1) // map-style zoom (CSS zoom on the grid)
+  // Map-style zoom via a --scale custom prop (layout-correct + sticky-safe,
+  // unlike CSS `zoom`). Start zoomed-out on small screens.
+  const [zoom, setZoom] = useState(() =>
+    typeof window !== "undefined" && window.innerWidth <= 640 ? 0.6 : 1
+  )
   const match = useRouteMatch()
   const cellRefs = useRef({})
 
@@ -133,8 +137,14 @@ function TimeLine() {
       <div className="timeline-grid-scroller">
         <div
           className="timeline-grid"
-          style={{ "--cols": cols, "--rows": rows, zoom }}
+          style={{ "--cols": cols, "--rows": rows, "--scale": zoom }}
         >
+          {/* opaque, continuous sticky backing so the gutter masks content on
+              every row during horizontal scroll (not just dated rows) */}
+          <div
+            className="tg-gutter-bg"
+            style={{ gridColumn: 1, gridRow: `1 / ${rows + 1}` }}
+          />
           {dateAxis.map((d, i) => (
             <div
               key={"d" + i}

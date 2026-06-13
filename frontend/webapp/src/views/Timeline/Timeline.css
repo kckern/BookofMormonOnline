@@ -56,30 +56,32 @@
   outline-offset: -2px;
 }
 
-/* Narrow screens: start more zoomed-out via smaller base cells */
-@media (max-width: 640px) {
-  .timeline-grid {
-    --col-w: 18px;
-    --row-h: 16px;
-    --date-w: 48px;
-  }
-}
 
 .timeline-grid {
-  --col-w: 26px;
-  --row-h: 20px;
-  --date-w: 64px;
+  --scale: 1; /* map-style zoom; set inline by the zoom control */
+  --col-w: calc(26px * var(--scale));
+  --row-h: calc(20px * var(--scale));
+  --date-w: calc(64px * var(--scale));
   position: relative;
   display: grid;
   grid-template-columns: var(--date-w) repeat(var(--cols), var(--col-w));
   grid-auto-rows: var(--row-h);
   gap: 0;
   width: max-content;
-  padding: 24px 24px 24px 0;
+  padding: 52px 24px 24px 0;
   font-family: "Roboto Condensed", "Arial Narrow", sans-serif;
 }
 
-/* Sticky date/era gutter (the time scale) — stays put on horizontal scroll */
+/* Continuous opaque backing for the sticky gutter (covers every row) */
+.tg-gutter-bg {
+  position: sticky;
+  left: 0;
+  z-index: 7;
+  background: #fff;
+  border-right: 1px solid #e2e2e2;
+}
+
+/* Sticky date/era gutter labels (the time scale) — stay put on h-scroll */
 .tg-date {
   position: sticky;
   left: 0;
@@ -88,11 +90,9 @@
   align-items: center;
   justify-content: flex-end;
   padding: 0 8px 0 12px;
-  font-size: 10px;
+  font-size: calc(10px * var(--scale));
   font-weight: 700;
   color: #555;
-  background: #fff;
-  border-right: 1px solid #e2e2e2;
   white-space: nowrap;
 }
 
@@ -126,7 +126,7 @@
 }
 .tg-event-label {
   font-weight: 700;
-  font-size: 11px;
+  font-size: calc(11px * var(--scale));
   /* thin dark outline so labels stay legible when they overflow onto white */
   text-shadow: -0.6px -0.6px 0 rgba(0, 0, 0, 0.5), 0.6px -0.6px 0 rgba(0, 0, 0, 0.5),
     -0.6px 0.6px 0 rgba(0, 0, 0, 0.5), 0.6px 0.6px 0 rgba(0, 0, 0, 0.5);
@@ -155,7 +155,7 @@
   padding: 0 4px;
 }
 .tg-place > span {
-  font-size: 10px;
+  font-size: calc(10px * var(--scale));
   font-weight: 700;
   color: #5a4a1f;
   /* same outline as event labels so place names stay legible over bands */

@@ -129,6 +129,10 @@ def main():
     # date axis: rebased to the tile grid's rows, rendered as a sticky gutter
     date_axis = [{"r": c["r"] - min_r + 1, "t": c["text"]}
                  for c in date_cells if 1 <= c["r"] - min_r + 1 <= max_r - min_r + 1]
+    # The Jaredite era sits above the first dated row (600s BC); anchor it so
+    # the top of the gutter isn't a blank void.
+    if date_axis and min(d["r"] for d in date_axis) > 3:
+        date_axis.insert(0, {"r": 2, "t": "~3100 BC"})
 
     out = {"cols": max_c - min_c + 1, "rows": max_r - min_r + 1,
            "tiles": tiles, "dateAxis": date_axis}

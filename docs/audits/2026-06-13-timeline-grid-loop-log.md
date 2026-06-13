@@ -30,3 +30,12 @@ Started 2026-06-13 09:08 on branch feat/timeline-grid.
 - MAJOR (mobile + right-edge clipping): added map-style **zoom controls** (CSS `zoom` on the grid, −/reset/+; clamp 0.4–2) + `touch-action: pan-x pan-y` + a `max-width:640px` media query with smaller base cells. Lets users zoom out to see the whole timeline / zoom in for detail on any device.
 - NIT: modal now traps Tab within the dialog and restores focus to the opener on close.
 - NIT: "Jersualem"→"Jerusalem" (and "Abinadai"→"Abinadi") via TYPO_FIX in build_tiles.py.
+
+## Iteration 4
+**Adversarial verdict (pass 3):** MATERIAL ISSUES REMAINING: yes — two pass-3 additions were broken.
+**Fixes applied:**
+- MAJOR: mobile media query was dead (placed before base rule, equal specificity) → replaced CSS media query with JS initial zoom (`window.innerWidth<=640 ? 0.6 : 1`).
+- MAJOR: date gutter wasn't a continuous opaque column (only ~35 dated rows had a cell) → added a single sticky full-height `.tg-gutter-bg` backing (grid-row 1/-1) so column 1 masks content on every row during h-scroll; covers the Jaredite top too.
+- MAJOR: Jaredite era had no scale (void above 600s BC) → synthetic accurate anchor "~3100 BC" at the top of dateAxis.
+- MINOR: CSS `zoom` was fragile with sticky → zoom now drives a `--scale` custom prop scaling cells + fonts (layout-correct, sticky-safe).
+- MINOR: zoom control overlapped row 1 → grid padding-top 52px.
