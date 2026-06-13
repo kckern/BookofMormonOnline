@@ -59,7 +59,7 @@
 
 .scripture .highlight button {
     background-color: #DDD;
-    color: #999;
+    color: #595959;
     float: right;
 }
 
@@ -84,7 +84,7 @@
 
 .page .card .scripture .reference {
     font-weight: bold;
-    background-color: #999;
+    background-color: #6c757d;
     padding: 0 0 0 .5em;
     overflow: hidden;
     height: 1.6rem;

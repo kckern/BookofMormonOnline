@@ -126,7 +126,7 @@ function Main(props) {
     return (
       <div className="body">
         <div className="fail">
-          <img src={nowifi} />
+          <img src={nowifi} alt="" />
           {label("network_failure")}
         </div>
       </div>
@@ -148,7 +148,7 @@ function Main(props) {
           bgColor={"1a1d20"}
           activeColor={"red"}
         />
-        <div
+        <main
           className="main-panel"
           id="main-panel"
           onClick={(e) => {
@@ -179,7 +179,7 @@ function Main(props) {
               <BottomMenu appController={appController}/>
             </>
           )}
-        </div>
+        </main>
       </div>
     </MessengerProvider>
   );

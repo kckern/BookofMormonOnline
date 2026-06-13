@@ -7,8 +7,8 @@
 
 .PlaceList .IdBadge
 {
-    border:1px solid #999;
-    color:#999;
+    border:1px solid #6c6c6c;
+    color:#4d4d4d;
     font-size: .7em;
     letter-spacing: -.5px;
     padding: 0 .5em 0 .5em;
@@ -26,35 +26,35 @@
 .PlaceList .IdBadge.N
 {
     background-color:#b9e2cf;
-    color:#198754;
-    border-color:#198754;
+    color:#0f5132;
+    border-color:#0f5132;
 }
 
 .PlaceList .IdBadge.L
 {
     background-color:#c3dbff;
-    color:#0d6efd;
-    border-color:#0d6efd;
+    color:#084298;
+    border-color:#084298;
 }
 .PlaceList .IdBadge.M
 {
     background-color:rgb(255, 208, 177);
-    color:rgb(104, 55, 0);
-    border-color:rgb(104, 55, 0);
+    color:#5c3000;
+    border-color:#5c3000;
 }
 
 .PlaceList .IdBadge.J
 {
     background-color:#fef1ca;
-    color:#906c00;
-    border-color:#906c00;
+    color:#6b5200;
+    border-color:#6b5200;
 }
 
 .PlaceList .IdBadge.B
 {
     background-color:#DDD;
-    color:#555;
-    border-color:rgb(152, 152, 152);
+    color:#454545;
+    border-color:#767676;
 }
 
 .PlaceList .IdBadge.G

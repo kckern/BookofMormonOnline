@@ -291,9 +291,9 @@ export default function TextContent({ content, narrationController, isQuote }) {
           💬
         </span>
       ) : null}
-      <div role="tablist" aria-multiselectable="true" className="card-collapse">
+      <div className="card-collapse">
         <Card className="card-plain textblock">
-          <CardHeader role="tab" className={"reference" + openClass}>
+          <CardHeader className={"reference" + openClass}>
             <a
               href={"/"+textContentController.data.slug?.toString() || ""}
               aria-expanded={
@@ -317,14 +317,14 @@ export default function TextContent({ content, narrationController, isQuote }) {
             >
               {cardWithoutNestedBlocks ? (
                 <>
-                  <span className="triangle"><img src={triangle}/></span>
+                  <span className="triangle"><img src={triangle} alt="" /></span>
                   {textContentController.data &&
                     textContentController.data.heading}
                   
                 </>
               ) : (
                 <>
-                <span className="triangle"><img src={triangle}/></span>
+                <span className="triangle"><img src={triangle} alt="" /></span>
                   {narrationController?.data &&
                     narrationController?.data?.text?.heading}
                   
@@ -439,17 +439,17 @@ function TextItemCounters({narrationController})
           
     {!!peopleCount && <span className="item_counter people" 
       data-tip={ ppLabel(peopleCount,placeCount) } data-for={tooltipId} onClick={setPeoplePlaces}>
-      <img src={peopleCount ? peopleSVG : placesSVG}/>{peopleCount + placeCount}</span>}
+      <img src={peopleCount ? peopleSVG : placesSVG} alt={ppLabel(peopleCount,placeCount)}/>{peopleCount + placeCount}</span>}
 
     {!!appController.states.preferences.facsimiles.on && !!faxCount && <span className="item_counter fax"         onClick={setFaxVisible}
-    data-tip={label(`x_facsimiles`,faxCount)} data-for={tooltipId} ><img src={faxSVG}/>{faxCount || ""}</span>}
+    data-tip={label(`x_facsimiles`,faxCount)} data-for={tooltipId} ><img src={faxSVG} alt={label(`x_facsimiles`,faxCount)}/>{faxCount || ""}</span>}
 
     {!!refCount && <span className="item_counter refs"        onClick={setScriptures}
     data-tip={refCount===1 ? label(`x_related_scripture`,refCount) : label(`x_related_scriptures`,refCount)}
-    data-for={tooltipId}><img src={studySVG}/>{refCount}</span>}
+    data-for={tooltipId}><img src={studySVG} alt={refCount===1 ? label(`x_related_scripture`,refCount) : label(`x_related_scriptures`,refCount)}/>{refCount}</span>}
 
     {!!notes?.length && <span className="item_counter notes"       onClick={setNotes}
-    data-tip={label(noteCount===1 ? `x_note` : `x_notes` ,noteCount)} data-for={tooltipId}><img src={notesSVG}/>{notes?.length}</span>}
+    data-tip={label(noteCount===1 ? `x_note` : `x_notes` ,noteCount)} data-for={tooltipId}><img src={notesSVG} alt={label(noteCount===1 ? `x_note` : `x_notes` ,noteCount)}/>{notes?.length}</span>}
 
   </div></>
 }

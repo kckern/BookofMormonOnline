@@ -106,12 +106,12 @@ function PlacesComponent({ appController }) {
   }
   const typeIcon = (string) => {
     var reps = {
-      C: (key) => <img key={key} src={city} />,
-      G: (key) => <img key={key} src={geographic_feature} />,
-      L: (key) => <img key={key} src={land} />,
-      T: (key) => <img key={key} src={town} />,
-      N: (key) => <img key={key} src={nation} />,
-      O: (key) => <img key={key} src={geo_other} />,
+      C: (key) => <img key={key} src={city} alt={label("city")} />,
+      G: (key) => <img key={key} src={geographic_feature} alt={label("geographic_feature")} />,
+      L: (key) => <img key={key} src={land} alt={label("land")} />,
+      T: (key) => <img key={key} src={town} alt={label("town")} />,
+      N: (key) => <img key={key} src={nation} alt={label("nation")} />,
+      O: (key) => <img key={key} src={geo_other} alt={label("geo_other")} />,
     }
     return string?.split("")?.map((l, index) => reps[l]?.(index) || l)
   }
@@ -218,26 +218,26 @@ export function PlaceFilters({ appController, setFilter, placeFilters })
       title: label("occupants"),
       key: "occupants",
       filters: [
-        { label: <span><img className="dot" src={grey} /> {label("biblical_israelite")}</span>, tag: "I" },
-        { label: <span><img className="dot" src={yellow} /> {label("jaredite")}</span>, tag: "J" },
-        { label: <span><img className="dot" src={green} /> {label("nephite")}</span>, tag: "N" },
-        { label: <span><img className="dot" src={blue} /> {label("lamanite")}</span>, tag: "L" },
-        { label: <span><img className="dot" src={orange} /> {label("mulekite")}</span>, tag: "M" },
-        { label: <span><img className="dot" src={red} /> {label("gadianton")}</span>, tag: "G" },
-        { label: <span><img className="dot" src={black} /> {label("other")}</span>, tag: "O" }
+        { label: <span><img className="dot" src={grey} alt="" /> {label("biblical_israelite")}</span>, tag: "I" },
+        { label: <span><img className="dot" src={yellow} alt="" /> {label("jaredite")}</span>, tag: "J" },
+        { label: <span><img className="dot" src={green} alt="" /> {label("nephite")}</span>, tag: "N" },
+        { label: <span><img className="dot" src={blue} alt="" /> {label("lamanite")}</span>, tag: "L" },
+        { label: <span><img className="dot" src={orange} alt="" /> {label("mulekite")}</span>, tag: "M" },
+        { label: <span><img className="dot" src={red} alt="" /> {label("gadianton")}</span>, tag: "G" },
+        { label: <span><img className="dot" src={black} alt="" /> {label("other")}</span>, tag: "O" }
       ]
     },
     location: {
       title: label("greater_locale"),
       key: "location",
       filters: [
-        { label: <span><img className="dot" src={brown} /> {label("land_of_first_Inheritance")}</span>, tag: "F" },
-        { label: <span><img className="dot" src={red} /> {label("land_of_nephi")}</span>, tag: "N" },
-        { label: <span><img className="dot" src={blue} /> {label("land_of_zarahemla")}</span>, tag: "Z" },
-        { label: <span><img className="dot" src={green} /> {label("land_bountiful")}</span>, tag: "B" },
-        { label: <span><img className="dot" src={yellow} /> {label("land_of_desolation")}</span>, tag: "D" },
-        { label: <span><img className="dot" src={grey} /> {label("old_world")}</span>, tag: "W" },
-        { label: <span><img className="dot" src={black} /> {label("geo_other")}</span>, tag: "O" }
+        { label: <span><img className="dot" src={brown} alt="" /> {label("land_of_first_Inheritance")}</span>, tag: "F" },
+        { label: <span><img className="dot" src={red} alt="" /> {label("land_of_nephi")}</span>, tag: "N" },
+        { label: <span><img className="dot" src={blue} alt="" /> {label("land_of_zarahemla")}</span>, tag: "Z" },
+        { label: <span><img className="dot" src={green} alt="" /> {label("land_bountiful")}</span>, tag: "B" },
+        { label: <span><img className="dot" src={yellow} alt="" /> {label("land_of_desolation")}</span>, tag: "D" },
+        { label: <span><img className="dot" src={grey} alt="" /> {label("old_world")}</span>, tag: "W" },
+        { label: <span><img className="dot" src={black} alt="" /> {label("geo_other")}</span>, tag: "O" }
       ]
     },
     type: {
@@ -245,12 +245,12 @@ export function PlaceFilters({ appController, setFilter, placeFilters })
       key: "type",
       filters: [
 
-        { label: <span><img src={nation} />{label("nation")}</span>, tag: "N" },
-        { label: <span><img src={land} />{label("land")}</span>, tag: "L" },
-        { label: <span><img src={city} />{label("city")}</span>, tag: "C" },
-        { label: <span><img src={town} />{label("town")}</span>, tag: "T" },
-        { label: <span><img src={geographic_feature} />{label("geographic_feature")}</span>, tag: "G" },
-        { label: <span><img src={geo_other} />{label("geo_other")}</span>, tag: "O" },
+        { label: <span><img src={nation} alt="" />{label("nation")}</span>, tag: "N" },
+        { label: <span><img src={land} alt="" />{label("land")}</span>, tag: "L" },
+        { label: <span><img src={city} alt="" />{label("city")}</span>, tag: "C" },
+        { label: <span><img src={town} alt="" />{label("town")}</span>, tag: "T" },
+        { label: <span><img src={geographic_feature} alt="" />{label("geographic_feature")}</span>, tag: "G" },
+        { label: <span><img src={geo_other} alt="" />{label("geo_other")}</span>, tag: "O" },
       ],
     },
   };

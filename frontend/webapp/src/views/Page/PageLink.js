@@ -39,12 +39,10 @@ export default function PageLink({ rowData, pageController }) {
         </div>
         <Col md={6} className="scripture capsulation">
           <div
-            role="tablist"
-            aria-multiselectable="true"
             className="card-collapse"
           >
             <Card className="card-plain">
-              <CardHeader role="tab" className="reference link">
+              <CardHeader className="reference link">
                 <Link to={`/${slug}`} onClick={handleClick} data-toggle="collapse">
                   <span className={"square"}>■</span> {reference}
                 </Link>

@@ -84,24 +84,24 @@ function PeopleComponent({ appController }) {
 
   const personIcons = (string) => {
     var reps = {
-      R: (key) => <img key={key} src={royalty} />, //Royalty
-      P: (key) => <img key={key} src={prophet} />, //Prophet
-      I: (key) => <img key={key} src={priest} />, //Prophet
-      W: (key) => <img key={key} src={warrior} />,
-      J: (key) => <img key={key} src={judge} />,
-      O: (key) => <img key={key} src={other} />,
-      H: (key) => <img key={key} src={record_keeper} />,
+      R: (key) => <img key={key} src={royalty} alt={label("royalty")} />, //Royalty
+      P: (key) => <img key={key} src={prophet} alt={label("prophet")} />, //Prophet
+      I: (key) => <img key={key} src={priest} alt={label("priest")} />, //Prophet
+      W: (key) => <img key={key} src={warrior} alt={label("warrior")} />,
+      J: (key) => <img key={key} src={judge} alt={label("judge")} />,
+      O: (key) => <img key={key} src={other} alt={label("other")} />,
+      H: (key) => <img key={key} src={record_keeper} alt={label("record_keeper")} />,
     };
     return string?.split("")?.map((i, index) => reps[i]?.(index));
   };
 
   const unitIcons = (string) => {
     var reps = {
-      I: (key) => <img key={key} src={individual} />, //Royalty
-      G: (key) => <img key={key} src={group} />, //Prophet
-      O: (key) => <img key={key} src={organization} />, //Prophet
-      S: (key) => <img key={key} src={society} />,
-      C: (key) => <img key={key} src={civilization} />
+      I: (key) => <img key={key} src={individual} alt={label("individual")} />, //Royalty
+      G: (key) => <img key={key} src={group} alt={label("group")} />, //Prophet
+      O: (key) => <img key={key} src={organization} alt={label("organization")} />, //Prophet
+      S: (key) => <img key={key} src={society} alt={label("society")} />,
+      C: (key) => <img key={key} src={civilization} alt={label("civilization")} />
     };
     return string?.split("")?.map((i, index) => reps[i]?.(index))[0];
   };
@@ -189,38 +189,38 @@ export function PeopleFilters({ appController, setFilter, peopleFilters }) {
       title: label("social_identification"),
       key: "identification",
       filters: [
-        { label: <span><img className="dot" src={grey} /> {label("biblical_israelite")}</span>, tag: "B" },
-        { label: <span><img className="dot" src={yellow} /> {label("jaredite")}</span>, tag: "J" },
-        { label: <span><img className="dot" src={green} /> {label("nephite")}</span>, tag: "N" },
-        { label: <span><img className="dot" src={blue} /> {label("lamanite")}</span>, tag: "L" },
-        { label: <span><img className="dot" src={orange} /> {label("mulekite")}</span>, tag: "M" },
-        { label: <span><img className="dot" src={red} /> {label("gadianton")}</span>, tag: "G" },
-        { label: <span><img className="dot" src={black} /> {label("other")}</span>, tag: "O" }
+        { label: <span><img className="dot" src={grey} alt="" /> {label("biblical_israelite")}</span>, tag: "B" },
+        { label: <span><img className="dot" src={yellow} alt="" /> {label("jaredite")}</span>, tag: "J" },
+        { label: <span><img className="dot" src={green} alt="" /> {label("nephite")}</span>, tag: "N" },
+        { label: <span><img className="dot" src={blue} alt="" /> {label("lamanite")}</span>, tag: "L" },
+        { label: <span><img className="dot" src={orange} alt="" /> {label("mulekite")}</span>, tag: "M" },
+        { label: <span><img className="dot" src={red} alt="" /> {label("gadianton")}</span>, tag: "G" },
+        { label: <span><img className="dot" src={black} alt="" /> {label("other")}</span>, tag: "O" }
       ]
     },
     classification: {
       title: label("social_classification"),
       key: "classification",
       filters: [
-        { label: <span><img src={royalty} />{label("royalty")}</span>, tag: "R" },
-        { label: <span><img src={prophet} />{label("prophet")}</span>, tag: "P" },
-        { label: <span><img src={priest} />{label("priest")}</span>, tag: "I" },
-        { label: <span><img src={record_keeper} />{label("record_keeper")}</span>, tag: "H" },
-        { label: <span><img src={warrior} />{label("warrior")}</span>, tag: "W" },
-        { label: <span><img src={judge} />{label("judge")}</span>, tag: "J" },
-        { label: <span><img src={other} />{label("other")}</span>, tag: "O" },
+        { label: <span><img src={royalty} alt="" />{label("royalty")}</span>, tag: "R" },
+        { label: <span><img src={prophet} alt="" />{label("prophet")}</span>, tag: "P" },
+        { label: <span><img src={priest} alt="" />{label("priest")}</span>, tag: "I" },
+        { label: <span><img src={record_keeper} alt="" />{label("record_keeper")}</span>, tag: "H" },
+        { label: <span><img src={warrior} alt="" />{label("warrior")}</span>, tag: "W" },
+        { label: <span><img src={judge} alt="" />{label("judge")}</span>, tag: "J" },
+        { label: <span><img src={other} alt="" />{label("other")}</span>, tag: "O" },
       ]
     },
     unit: {
       title: label("social_unit"),
       key: "unit",
       filters: [
-        { label: <span><img src={individual} />{label("individual")}</span>, tag: "I" },
-        { label: <span><img src={group} />{label("group")}</span>, tag: "G" },
-        { label: <span><img src={organization} />{label("organization")}</span>, tag: "O" },
-        { label: <span><img src={society} />{label("society")}</span>, tag: "S" },
-        { label: <span><img src={civilization} />{label("civilization")}</span>, tag: "C" },
-        { label: <span><img src={other} />{label("other")}</span>, tag: "X" },
+        { label: <span><img src={individual} alt="" />{label("individual")}</span>, tag: "I" },
+        { label: <span><img src={group} alt="" />{label("group")}</span>, tag: "G" },
+        { label: <span><img src={organization} alt="" />{label("organization")}</span>, tag: "O" },
+        { label: <span><img src={society} alt="" />{label("society")}</span>, tag: "S" },
+        { label: <span><img src={civilization} alt="" />{label("civilization")}</span>, tag: "C" },
+        { label: <span><img src={other} alt="" />{label("other")}</span>, tag: "X" },
       ]
     }
   };

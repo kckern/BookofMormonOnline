@@ -46,7 +46,7 @@ export function FaxBubbleContainer({ textContentController, isQuote }) {
         onClick={textContentController.narrationController.functions.toggleFax}
         className={"fax " + (faxVisible ? "visible" : "")}
       >
-        <img src={oldbook}/>{commentIcon}
+        <img src={oldbook} alt="" />{commentIcon}
       </div>
 
       <ReactTooltip id={tooltip_id} effect="solid" />

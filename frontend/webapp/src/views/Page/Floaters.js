@@ -23,7 +23,7 @@ export function Floaters({ pageController }) {
 
       let activeGroupUrl = pageController.appController.states.studyGroup.activeGroup.url;
       let isTyping = pageController.appController.states.studyGroup?.typers?.[activeGroupUrl]?.includes(member.userId);
-      let typingIndicator = (isTyping) ? <div className={"typing"}><img src={typing}/></div> : null;
+      let typingIndicator = (isTyping) ? <div className={"typing"}><img src={typing} alt="" /></div> : null;
       let summary = {};
       try { summary = JSON.parse(member?.metaData?.summary) } catch (e) { }
         return <div

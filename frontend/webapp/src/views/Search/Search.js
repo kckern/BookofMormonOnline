@@ -53,10 +53,12 @@ function SearchComponent({ appController }) {
   }
 
   const searchBox = <div className="searchboxWrapper">
-    <input type="text" 
+    <input type="text"
     autoFocus
-    onKeyUp={(e) => { 
-      if (e.key === "Enter" && e.target.value.trim() !== "") searchFor(e.target.value) 
+    aria-label={label("search") || "Search"}
+    placeholder={label("search") || "Search"}
+    onKeyUp={(e) => {
+      if (e.key === "Enter" && e.target.value.trim() !== "") searchFor(e.target.value)
     }}
     className="onpage searchbox" />
     <button onClick={(e) => {

@@ -315,7 +315,7 @@ function LanguageSelect() {
     <div className="languageSelect">
       <Dropdown isOpen={dropdownOpen} toggle={toggle}>
         <DropdownToggle >
-          <img src={langs[currentLang]?.icon} />
+          <img src={langs[currentLang]?.icon} alt="" />
            {langs[currentLang].label}
             </DropdownToggle>
         <DropdownMenu container={'.sidebar-wrapper'} className="languageDropdown">
@@ -327,7 +327,7 @@ function LanguageSelect() {
                 onClick={() => selectLanguage(lang)}
                 disabled={currentLang === lang}  // Add this line
               >
-                <img src={langs[lang]?.icon} />
+                <img src={langs[lang]?.icon} alt="" />
                 {langs[lang].label}
               </DropdownItem>
             );
@@ -422,6 +422,7 @@ function UserInfo({ appController, setActivePath, activePath }) {
               <div
                 className={"progress-bar progress-bar-success"}
                 role="progressbar"
+                aria-label={label("completed") || "Completed"}
                 style={{
                   width: (completed > 0 && completed < 2 ? 2 : completed) + "%",
                 }}
@@ -432,6 +433,7 @@ function UserInfo({ appController, setActivePath, activePath }) {
               <div
                 className={"progress-bar progress-bar-warning"}
                 role="progressbar"
+                aria-label={label("started") || "Started"}
                 style={{
                   width: (started > 0 && started < 2 ? 2 : started) + "%",
                 }}
@@ -454,10 +456,10 @@ function UserInfo({ appController, setActivePath, activePath }) {
               opacity="0.5"
               id="text-only-tooltip"
             />
-            <img onClick={toggleSound} data-tip={(appController.states?.preferences.audio ? label("audio_on") : label("audio_off"))} src={appController.states?.preferences.audio ? soundOn : soundOff} />
-            <Link to={"/user/preferences"}><img data-tip={label("user_prefs")} src={settings} /></Link>
-            {!notLoggedIn && <NavLink to={"/user/history"}>
-              <img data-tip={label("user_history")} src={loghistory} />
+            <img onClick={toggleSound} role="button" tabIndex={0} onKeyDown={(e)=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggleSound();}}} data-tip={(appController.states?.preferences.audio ? label("audio_on") : label("audio_off"))} src={appController.states?.preferences.audio ? soundOn : soundOff} alt={(appController.states?.preferences.audio ? label("audio_on") : label("audio_off"))} />
+            <Link to={"/user/preferences"} aria-label={label("user_prefs")}><img data-tip={label("user_prefs")} src={settings} alt={label("user_prefs")} /></Link>
+            {!notLoggedIn && <NavLink to={"/user/history"} aria-label={label("user_history")}>
+              <img data-tip={label("user_history")} src={loghistory} alt={label("user_history")} />
             </NavLink>}
           </div>
       </li>

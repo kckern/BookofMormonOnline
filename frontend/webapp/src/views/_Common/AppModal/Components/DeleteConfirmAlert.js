@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import SweetAlert from "react-bootstrap-sweetalert";
 import { label } from "src/models/Utils";
+import useModalA11y from "../useModalA11y";
 // :- TODOS
 // * call/dispatch "showDeleteAlert" is listener to show/hide model
 // * set "deleteMessage" listener from you want to delete message
@@ -21,6 +22,8 @@ export default function DeleteConfirmAlert() {
       window.removeEventListener("showDeleteAlert", toggleDeleteAlert, false);
     };
   }, [toggleDeleteAlert]);
+
+  useModalA11y(show, { onClose: toggleDeleteAlert, label: label("are_you_sure") });
 
   const deleteMessage = () => {
     let event = new CustomEvent("deleteMessage");
