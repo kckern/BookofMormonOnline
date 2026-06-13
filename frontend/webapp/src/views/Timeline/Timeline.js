@@ -211,9 +211,11 @@ function TimeLine() {
             const heading = (data && data.heading) || t.t
             const isPlace = t.k === "place"
             const inner = isPlace ? `📍 ${t.t}` : heading
+            // Events open on their slug; places only when the linked entry has
+            // real content (bare geographic markers stay static — no empty modal).
+            const clickable = isPlace ? !!(data && data.heading) : !!t.slug
 
-            if (!t.slug) {
-              // No linked event — render as a static, non-interactive label.
+            if (!clickable) {
               return (
                 <div
                   key={key}

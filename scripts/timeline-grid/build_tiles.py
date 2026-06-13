@@ -118,7 +118,13 @@ def main():
                     slug = ov
                     entry = slug_lookup.get(ov)
             else:
-                cands = match_cell(cell, headed)
+                # Events match against headed entries; PLACES match against ALL
+                # labels — place slugs (land-of-first-inheritance, desolation,
+                # jerusalem…) have empty headings and are absent from `headed`,
+                # so restricting places to headed makes a 📍 tile mis-grab a
+                # same-word event (e.g. Desolation → "Gathering in Desolation").
+                pool = headed if kind == "event" else labels
+                cands = match_cell(cell, pool)
                 if cands and cands[0][0] >= STRONG:
                     slug = cands[0][1]["slug"]
                     entry = cands[0][1]

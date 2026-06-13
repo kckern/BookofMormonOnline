@@ -1,5 +1,18 @@
 [
   {
+    "slug": "land-of-first-inheritance",
+    "x": -23.875,
+    "y": 6.625,
+    "row": 13,
+    "col": 3,
+    "w": 2,
+    "h": 1,
+    "kind": "place",
+    "bg": "#ffffff",
+    "fg": null,
+    "round": null
+  },
+  {
     "slug": "lehite-family",
     "x": -28.4375,
     "y": 6.875,
@@ -325,19 +338,6 @@
     "round": null
   },
   {
-    "slug": "lamanite-jersualem",
-    "x": -73.5625,
-    "y": 17.25,
-    "row": 1,
-    "col": 33,
-    "w": 2,
-    "h": 1,
-    "kind": "place",
-    "bg": "#ffffff",
-    "fg": null,
-    "round": null
-  },
-  {
     "slug": "lamanite-recruits",
     "x": -131.625,
     "y": 17.8125,
@@ -585,6 +585,19 @@
     "round": null
   },
   {
+    "slug": "jersualem",
+    "x": -21.75,
+    "y": 23.25,
+    "row": 1,
+    "col": 33,
+    "w": 2,
+    "h": 1,
+    "kind": "place",
+    "bg": "#ffffff",
+    "fg": null,
+    "round": null
+  },
+  {
     "slug": "nephite-defectors",
     "x": -114.938,
     "y": 23.375,
@@ -819,6 +832,19 @@
     "round": null
   },
   {
+    "slug": "zarahemla",
+    "x": -160.688,
+    "y": 26.125,
+    "row": 13,
+    "col": 33,
+    "w": 2,
+    "h": 1,
+    "kind": "place",
+    "bg": "#ffffff",
+    "fg": null,
+    "round": null
+  },
+  {
     "slug": "mormon",
     "x": -161.625,
     "y": 26.1875,
@@ -978,12 +1004,12 @@
     "slug": "mormons-army",
     "x": -164.625,
     "y": 30.375,
-    "row": 38,
-    "col": 37,
-    "w": 2,
+    "row": 121,
+    "col": 29,
+    "w": 1,
     "h": 1,
-    "kind": "place",
-    "bg": "#ffffff",
+    "kind": "event",
+    "bg": "#38761d",
     "fg": null,
     "round": null
   },
@@ -1069,12 +1095,12 @@
     "slug": "zarahemla",
     "x": -38.5,
     "y": 32,
-    "row": 13,
+    "row": 29,
     "col": 33,
     "w": 2,
     "h": 1,
-    "kind": "place",
-    "bg": "#ffffff",
+    "kind": "event",
+    "bg": "#bf9000",
     "fg": null,
     "round": null
   },
@@ -1257,6 +1283,19 @@
     "h": 1,
     "kind": "event",
     "bg": "#38761d",
+    "fg": null,
+    "round": null
+  },
+  {
+    "slug": "desolation",
+    "x": -163.625,
+    "y": 34.5625,
+    "row": 38,
+    "col": 37,
+    "w": 2,
+    "h": 1,
+    "kind": "place",
+    "bg": "#ffffff",
     "fg": null,
     "round": null
   },
