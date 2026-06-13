@@ -114,10 +114,14 @@ function TimeLine() {
     }
   }, [selected]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (!timeline) return <Loader />
-
+  // The grid is static (tilesData) — render it immediately; only the modal's
+  // content needs the GraphQL call, so don't gate the whole feature on it.
   const { cols, rows, tiles, dateAxis = [] } = tilesData
-  const info = selected ? bySlug[selected] : null
+  const loading = timeline === null
+  const info = selected && !loading ? bySlug[selected] : null
+  // Show the modal when an event is selected and we either have its data or
+  // are still loading it; a loaded-but-unknown slug renders nothing (graceful).
+  const showModal = !!selected && (info || loading)
 
   // Column 1 is the sticky date gutter; content tiles are shifted +1 column.
   const fills = tiles.filter((t) => t.k === "fill")
@@ -231,7 +235,7 @@ function TimeLine() {
         </div>
       </div>
 
-      {info && (
+      {showModal && (
         <div className="tg-infobox-backdrop" onClick={closeInfo}>
           <div
             className="tg-infobox"
@@ -249,19 +253,28 @@ function TimeLine() {
             >
               ×
             </button>
-            <div className="tg-infobox-head">
-              <h2 id="tg-infobox-title">{replaceNumbers(info.heading || selected)}</h2>
-              {info.date && <span className="tg-infobox-date">{info.date}</span>}
-            </div>
-            <div
-              className="tg-infobox-art"
-              style={{ backgroundImage: `url(${assetUrl}/timeline/art/${info.slug})` }}
-            />
-            {info.html && <div className="tg-infobox-body">{Parser(info.html)}</div>}
-            {info.text && info.text.slug && (
-              <Link className="tg-infobox-link" to={`/${info.text.slug}`}>
-                Read in the Book of Mormon →
-              </Link>
+            {info ? (
+              <>
+                <div className="tg-infobox-head">
+                  <h2 id="tg-infobox-title">{replaceNumbers(info.heading || selected)}</h2>
+                  {info.date && <span className="tg-infobox-date">{info.date}</span>}
+                </div>
+                <div
+                  className="tg-infobox-art"
+                  style={{ backgroundImage: `url(${assetUrl}/timeline/art/${info.slug})` }}
+                />
+                {info.html && <div className="tg-infobox-body">{Parser(info.html)}</div>}
+                {info.text && info.text.slug && (
+                  <Link className="tg-infobox-link" to={`/${info.text.slug}`}>
+                    Read in the Book of Mormon →
+                  </Link>
+                )}
+              </>
+            ) : (
+              <div className="tg-infobox-loading">
+                <h2 id="tg-infobox-title">Loading…</h2>
+                <Loader />
+              </div>
             )}
           </div>
         </div>

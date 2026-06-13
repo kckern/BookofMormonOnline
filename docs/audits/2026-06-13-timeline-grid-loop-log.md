@@ -54,3 +54,14 @@ Started 2026-06-13 09:08 on branch feat/timeline-grid.
 
 **Loop result:** stopped early at iteration 7 of 10 — adversarial agent found no material issues.
 Commits: 3ae92c5, c28bdfa, 8ff8848, 74079ee, 8ebeea6 (on feat/timeline-grid).
+
+# Loop run 2 (raised bar: fidelity / polish / perf / content)
+
+## Iteration R2-1
+**Adversarial (deeper bar) verdict:** MATERIAL ISSUES REMAINING: yes
+**Findings → fixes:**
+- MAJOR: visible "Zarahelma" typo on a place marker (place labels render JSON text with no GraphQL override) → added Zarahelma→Zarahemla, Remant→Remnant, "lead by"→"led by" to TYPO_FIX.
+- MAJOR: static grid gated behind a full-screen `<Loader/>` on every load incl. deep-links → grid now renders immediately from static `tilesData`; only the modal waits on the API (shows an in-modal loader; loaded-but-unknown slug renders nothing).
+- MINOR: 9 dead non-clickable events incl. major figures → wired "Lehi and Sariah" → `lehite-family` (override 16,6); truly label-less ones (Jared/Shiz/Sam/East/West) stay non-interactive.
+- MAJOR (fidelity): dropped world-history gutter context column → documented as intentional v1 scope-cut (open-questions #10), consistent with BoM-only scope.
+**Praised (no action):** band color palette matches reference exactly (13 colors); corner-radius is a cleaner reinterpretation of the glyphs; no label overlaps at default zoom; invalid-slug deep-link degrades gracefully.

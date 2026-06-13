@@ -12,6 +12,9 @@
   "94,22": "lamanite-recruits",
   "52,28": "amalekites",
 
+  "_round2_wire_dead_major_figure": "make a major-figure tile clickable (was non-interactive)",
+  "16,6": "lehite-family",
+
   "_genuinely_missing_no_label": "no labels.json entry exists for these sheet cells — dropped",
   "4,6": "SKIP",
   "19,20": "SKIP",

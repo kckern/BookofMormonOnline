@@ -63,3 +63,10 @@ applies `border-radius`. Verified against the `Sheet1.html` render. Open sub-ite
 Cols 1–2 of `Sheet1.html` and all of `Sheet2.html` (Egypt/Assyria/Babylon/Persia/Greece) are
 out of v1 scope and were filtered out. Future: a parallel secular band needs its own data
 source.
+
+## 10. World-history gutter context column — intentional v1 scope-cut
+Round-2 adversarial flagged that the reference's left gutter pairs each BC/AD date with
+an Old-World event ("Rome overtakes Greece", "Maccabean Revolt", etc.). The implementation's
+`dateAxis` carries only the dates. This is the same **BoM-events-only v1 scope** decision as
+item 9 (the secular track has no `labels.json` backing). Deferred deliberately; a future pass
+can add a `context` field to `dateAxis` rows for a second gutter line.

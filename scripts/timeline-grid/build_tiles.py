@@ -23,8 +23,15 @@ from reconcile import (parse_table, extract_styles, classify, clean, norm,
 CORNERS = {"◜": ["tl"], "◝": ["tr"], "◟": ["bl"], "◞": ["br"],
            "◗": ["tr", "br"], "◖": ["tl", "bl"], "◣": ["bl"]}
 
-# Spelling fixes for known typos in the source spreadsheet labels.
-TYPO_FIX = {"Jersualem": "Jerusalem", "Abinadai": "Abinadi"}
+# Spelling fixes for known typos in the source spreadsheet labels. Place labels
+# render this text directly (no GraphQL heading override), so fixes matter here.
+TYPO_FIX = {
+    "Jersualem": "Jerusalem",
+    "Abinadai": "Abinadi",
+    "Zarahelma": "Zarahemla",
+    "Remant": "Remnant",
+    "lead by": "led by",
+}
 
 
 def fix_typos(text):
