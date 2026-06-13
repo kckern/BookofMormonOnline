@@ -1748,69 +1748,38 @@ git commit -m "feat(next): systemd unit for bom-nextjs"
 
 ---
 
-## Task 17: Nginx routing for Phase 1 paths
+## Task 17: Switch NPM proxy host to Next.js `:3000`
 
-This task updates the Nginx config (managed through Nginx Proxy Manager on the host) to route Phase 1 paths to Next.js `:3000` while everything else continues to hit CRA `:8200`.
+NPM handles domain → backend proxying only (no path-based routing). Path routing is done by Next.js's `rewrites` fallback in `next.config.ts`, which proxies unmigrated routes to CRA `:8200`.
 
-**Note:** Nginx Proxy Manager stores config in `/data/nginx/`. Edit the proxy host for `bookofmormon.online` and add the advanced config below.
+- [ ] **Step 1: In Nginx Proxy Manager, change the proxy host for `bookofmormon.online`**
 
-- [ ] **Step 1: Add Phase 1 location blocks to the Nginx proxy host config**
+Update the upstream from `localhost:8200` → `localhost:3000`.
 
-In Nginx Proxy Manager → proxy host `bookofmormon.online` → Advanced tab, add:
+That's it — Next.js's `rewrites.fallback` in `next.config.ts` proxies any route it doesn't know about to CRA `:8200`. Phase 1 routes (scripture, people, place, OG, sitemap, robots) are served by Next.js. Everything else falls through to CRA transparently.
 
-```nginx
-# Phase 1 — Next.js handles these routes
-upstream nextjs_phase1 { server 127.0.0.1:3000; }
+- [ ] **Step 2: Free port 3000 (stale next-server process)**
 
-location ~ "^/[a-z0-9-]+/[0-9]+" {
-    proxy_pass http://nextjs_phase1;
-    proxy_set_header Host $host;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-}
-location /people/ {
-    proxy_pass http://nextjs_phase1;
-    proxy_set_header Host $host;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-}
-location /place/ {
-    proxy_pass http://nextjs_phase1;
-    proxy_set_header Host $host;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-}
-location /og {
-    proxy_pass http://nextjs_phase1;
-    proxy_set_header Host $host;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-}
-location /sitemap.xml {
-    proxy_pass http://nextjs_phase1;
-    proxy_set_header Host $host;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-}
-location /robots.txt {
-    proxy_pass http://nextjs_phase1;
-    proxy_set_header Host $host;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-}
-```
-
-- [ ] **Step 2: Test the Nginx config and reload**
+A stale `next-server (v16.2.4)` process (PID 20534, owned by user `kckern`) is holding `:3000`. Kill it as that user, then start the new unit:
 
 ```bash
-sudo nginx -t && sudo nginx -s reload
+# as kckern:
+kill 20534
+# then as bom:
+systemctl --user start bom-nextjs
 ```
 
-- [ ] **Step 3: Smoke-test a Phase 1 route through the public URL**
+- [ ] **Step 3: Smoke-test**
 
 ```bash
-curl -I https://bookofmormon.online/1-nephi/1
+curl -I http://localhost:3000/1-nephi/1     # Next.js route → 200
+curl -I http://localhost:3000/home          # CRA proxied route → 200
+curl -I http://localhost:3000/og?title=Test # OG image → 200, content-type: image/png
 ```
 
-Expected: `HTTP/2 200` with `x-powered-by: Next.js` header.
+- [ ] **Step 4: Phase 4 cleanup (future)**
 
-- [ ] **Step 4: Document the Nginx change in the reference doc**
-
-Update `docs/reference/non-graphql-endpoints.md` or create `docs/reference/nginx-phase1-routing.md` with the location blocks above. No commit needed for Nginx config (managed externally), but document it.
+When all routes are migrated, remove the `rewrites.fallback` block from `next.config.ts` and retire `frontend/webapp/`.
 
 ---
 
