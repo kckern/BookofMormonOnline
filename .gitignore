@@ -39,3 +39,9 @@ backend/dist/
 # never commit (repo is public). Regenerate locally with scripts/gen-sendbird-dump.mjs.
 backend/scripts/out/
 *.swp
+
+# Adversarial QA artifacts — contain REAL user data/PII (names, avatars, chat,
+# user_ids, channel relationships). Repo is public — never commit. Local-only.
+docs/audits/study-group-loop-screenshots/
+docs/audits/a11y-screenshots/
+docs/audits/dm-cleanup-backup-2026-06-13.json
