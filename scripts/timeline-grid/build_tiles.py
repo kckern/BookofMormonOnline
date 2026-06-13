@@ -46,6 +46,11 @@ def main():
     styles = extract_styles(src)
     headed, _ = build_label_index(labels)
 
+    # The world-history rail's col 2 is the date/era axis — capture it before
+    # dropping the rail, to render as a sticky left gutter (the time scale).
+    date_cells = [c for c in cells if c["c"] == 2 and c["r"] >= 2
+                  and c["text"] and any(ch.isalnum() for ch in c["text"])]
+
     # keep real content: drop rulers (row<2, col<1) and the world-history rail
     cells = [c for c in cells if c["r"] >= 2 and c["c"] >= 1
              and c["c"] not in WORLDHIST_COLS]
@@ -112,7 +117,12 @@ def main():
             tile["slug"] = slug
         tiles.append(tile)
 
-    out = {"cols": max_c - min_c + 1, "rows": max_r - min_r + 1, "tiles": tiles}
+    # date axis: rebased to the tile grid's rows, rendered as a sticky gutter
+    date_axis = [{"r": c["r"] - min_r + 1, "t": c["text"]}
+                 for c in date_cells if 1 <= c["r"] - min_r + 1 <= max_r - min_r + 1]
+
+    out = {"cols": max_c - min_c + 1, "rows": max_r - min_r + 1,
+           "tiles": tiles, "dateAxis": date_axis}
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
     with open(args.out, "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
@@ -121,7 +131,7 @@ def main():
     kc = Counter(t["k"] for t in tiles)
     ev_slug = sum(1 for t in tiles if t["k"] == "event" and t.get("slug"))
     print(f"tiles: {len(tiles)}  grid {out['cols']}x{out['rows']}  kinds={dict(kc)}")
-    print(f"  event tiles with slug: {ev_slug} / {kc['event']}")
+    print(f"  event tiles with slug: {ev_slug} / {kc['event']}  dateAxis: {len(date_axis)}")
     print(f"  out -> {args.out}")
 
 

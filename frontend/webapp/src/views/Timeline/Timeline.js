@@ -38,7 +38,9 @@ function cornerRadius(rd) {
 
 function TimeLine() {
   useEffect(() => {
-    document.title = label("menu_timeline") + " | " + label("home_title")
+    const t = label("menu_timeline") || "Timeline"
+    const home = label("home_title") || "Book of Mormon Online"
+    document.title = `${t} | ${home}`
   }, [])
 
   const [timeline, setTimeline] = useState(null)
@@ -89,11 +91,10 @@ function TimeLine() {
 
   if (!timeline) return <Loader />
 
-  const { cols, rows, tiles } = tilesData
+  const { cols, rows, tiles, dateAxis = [] } = tilesData
   const info = selected ? bySlug[selected] : null
 
-  // Two visual layers in one CSS grid: fills (bands) first, then anchored
-  // labels/icons (which overflow their tile) on top.
+  // Column 1 is the sticky date gutter; content tiles are shifted +1 column.
   const fills = tiles.filter((t) => t.k === "fill")
   const marks = tiles.filter((t) => t.k !== "fill")
 
@@ -104,12 +105,22 @@ function TimeLine() {
           className="timeline-grid"
           style={{ "--cols": cols, "--rows": rows }}
         >
+          {dateAxis.map((d, i) => (
+            <div
+              key={"d" + i}
+              className="tg-date"
+              style={{ gridColumn: 1, gridRow: `${d.r} / span 1` }}
+            >
+              {d.t}
+            </div>
+          ))}
+
           {fills.map((t, i) => (
             <div
               key={"f" + i}
               className="tg-fill"
               style={{
-                gridColumn: `${t.c} / span ${t.w}`,
+                gridColumn: `${t.c + 1} / span ${t.w}`,
                 gridRow: `${t.r} / span ${t.h}`,
                 background: t.bg,
                 ...cornerRadius(t.rd),
@@ -119,7 +130,7 @@ function TimeLine() {
 
           {marks.map((t, i) => {
             const pos = {
-              gridColumn: `${t.c} / span ${t.w}`,
+              gridColumn: `${t.c + 1} / span ${t.w}`,
               gridRow: `${t.r} / span ${t.h}`,
             }
             if (t.k === "place") {

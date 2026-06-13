@@ -28,14 +28,32 @@
 .timeline-grid {
   --col-w: 26px;
   --row-h: 20px;
+  --date-w: 64px;
   position: relative;
   display: grid;
-  grid-template-columns: repeat(var(--cols), var(--col-w));
+  grid-template-columns: var(--date-w) repeat(var(--cols), var(--col-w));
   grid-auto-rows: var(--row-h);
   gap: 0;
   width: max-content;
-  padding: 24px;
+  padding: 24px 24px 24px 0;
   font-family: "Roboto Condensed", "Arial Narrow", sans-serif;
+}
+
+/* Sticky date/era gutter (the time scale) — stays put on horizontal scroll */
+.tg-date {
+  position: sticky;
+  left: 0;
+  z-index: 8;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 8px 0 12px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #555;
+  background: #fff;
+  border-right: 1px solid #e2e2e2;
+  white-space: nowrap;
 }
 
 /* Band fill tile */
@@ -97,9 +115,12 @@
   padding: 0 4px;
 }
 .tg-place > span {
-  font-size: 9px;
-  font-weight: 600;
-  color: #6b5a2a;
+  font-size: 10px;
+  font-weight: 700;
+  color: #5a4a1f;
+  /* same outline as event labels so place names stay legible over bands */
+  text-shadow: -0.6px -0.6px 0 rgba(255, 255, 255, 0.7), 0.6px -0.6px 0 rgba(255, 255, 255, 0.7),
+    -0.6px 0.6px 0 rgba(255, 255, 255, 0.7), 0.6px 0.6px 0 rgba(255, 255, 255, 0.7);
 }
 
 /* Decorative battle marker — sits in a colored chip, not a white box */

@@ -14,3 +14,13 @@ Started 2026-06-13 09:08 on branch feat/timeline-grid.
 - NIT: `cornerRadius` returned `undefined` → returns `{}`.
 
 **Deferred:** mobile/responsive strategy (MAJOR #6), ~3238 DOM nodes perf (MINOR #9), "Jersualem" data typo (NIT), browser back/forward selection sync (NIT).
+
+## Iteration 2
+**Adversarial verdict:** verified all 7 pass-1 fixes landed (no regressions). MATERIAL ISSUES REMAINING: yes
+**Top findings → fixes applied:**
+- MAJOR: no visible time axis — rows had no meaning → added a **sticky date/era gutter** (col 2 of the sheet extracted to `dateAxis`; 35 entries 600s BC→420s AD), rendered as a sticky left column; content tiles shifted +1 col.
+- MINOR: `document.title` was " | " (empty label lookups) → literal fallbacks ("Timeline | Book of Mormon Online").
+- MINOR: place labels tiny brown 9px, no outline over bands → 10px, darker (#5a4a1f), white text-outline.
+
+**Deferred (still):** mobile responsiveness + narrow-width label collisions; ~3238 DOM perf; modal focus-trap/restore (NIT); "Jersualem" data typo (NIT).
+**Note:** adversarial flagged my color legend wording (maroon=Lamanites, blue=Nephites) — rendering uses the sheet's actual colors regardless.
