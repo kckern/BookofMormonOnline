@@ -57,8 +57,6 @@ export interface TimelineRow {
   grid_h: number | null;
   grid_kind: string | null;
   grid_bg: string | null;
-  grid_fg: string | null;
-  grid_round: string | null;
 }
 
 export interface MarkdownRow {

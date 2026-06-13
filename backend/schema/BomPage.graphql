@@ -151,8 +151,6 @@ type EventGrid {
   colSpan: Int
   kind: String
   bg: String
-  fg: String
-  round: [String]
 }
 
 input QueueInput {

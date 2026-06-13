@@ -148,7 +148,6 @@ export const mediamiscResolvers: Resolvers = {
     /**
      * grid: tile-grid placement for the new Timeline UI. Null until the
      * bom_timeline grid backfill is applied (grid_row IS NULL → no placement).
-     * grid_round is a CSV ("tl,tr") in the DB → exposed as [String].
      */
     grid: (parent) => {
       const t = parent as unknown as TimelineRow;
@@ -160,8 +159,6 @@ export const mediamiscResolvers: Resolvers = {
         colSpan: t.grid_w,
         kind: t.grid_kind,
         bg: t.grid_bg,
-        fg: t.grid_fg,
-        round: t.grid_round ? t.grid_round.split(',') : [],
       };
     },
 

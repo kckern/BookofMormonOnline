@@ -139,9 +139,7 @@ export type EventGrid = {
   bg?: Maybe<Scalars['String']['output']>;
   col?: Maybe<Scalars['Int']['output']>;
   colSpan?: Maybe<Scalars['Int']['output']>;
-  fg?: Maybe<Scalars['String']['output']>;
   kind?: Maybe<Scalars['String']['output']>;
-  round?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
   row?: Maybe<Scalars['Int']['output']>;
   rowSpan?: Maybe<Scalars['Int']['output']>;
 };
@@ -2015,9 +2013,7 @@ export type EventGridResolvers<ContextType = AppContext, ParentType extends Reso
   bg?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   col?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   colSpan?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  fg?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   kind?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  round?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
   row?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   rowSpan?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
