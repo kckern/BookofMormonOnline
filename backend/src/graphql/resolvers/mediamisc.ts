@@ -146,6 +146,57 @@ export const mediamiscResolvers: Resolvers = {
     },
 
     /**
+     * grid: tile-grid placement for the new Timeline UI. Null until the
+     * bom_timeline grid backfill is applied (grid_row IS NULL → no placement).
+     */
+    grid: (parent) => {
+      const t = parent as unknown as TimelineRow;
+      if (t.grid_row == null) return null;
+      return {
+        row: t.grid_row,
+        col: t.grid_col,
+        rowSpan: t.grid_h,
+        colSpan: t.grid_w,
+        bg: t.grid_bg,
+      };
+    },
+
+    /**
+     * label: translated short display label for the grid tile, routed by
+     * label_category — reusing existing people/place translations:
+     *   people → bom_people.name, translated by slug   (refkey 'name')
+     *   place  → bom_places.name, translated by guid   (refkey 'name')
+     *   event  → bom_timeline.heading, translated by id (refkey 'heading')
+     * Falls back to the base value (and to heading) when nothing translated.
+     */
+    label: async (parent, _args, ctx) => {
+      const t = parent as unknown as TimelineRow;
+      const c = ctx as AppContext;
+      const base = t.heading;
+      if (t.label_category === 'people' && t.slug) {
+        const p = await c.loaders.peopleBySlug.load(t.slug);
+        return (
+          (await c.loaders.translation.load({ guid: t.slug, refkey: 'name' })) ??
+          (p && p.name) ??
+          base
+        );
+      }
+      if (t.label_category === 'place' && t.slug) {
+        const pl = await c.loaders.placesBySlugLoader.load(t.slug);
+        if (pl && pl.guid) {
+          return (
+            (await c.loaders.translation.load({ guid: pl.guid, refkey: 'name' })) ??
+            pl.name ??
+            base
+          );
+        }
+        return (pl && pl.name) ?? base;
+      }
+      // event (or uncategorized) → translated heading, keyed by the row id
+      return (await c.loaders.translation.load({ guid: t.id, refkey: 'heading' })) ?? base;
+    },
+
+    /**
      * text: resolves the bom_text row referenced by bom_timeline.reference.
      * When reference is empty, no text exists → return null.
      * The slug field on the returned TextBlock is resolved by the core

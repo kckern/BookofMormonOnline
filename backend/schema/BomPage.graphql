@@ -140,6 +140,20 @@ type Event {
   narr: String
   html: String
   heading: String
+  grid: EventGrid
+  """Translated short display label for the grid tile, routed by label_category:
+  people/place reuse the entity's translated name; event uses heading."""
+  label: String
+}
+
+"""Event grid placement for the tile-grid timeline (null until backfilled).
+Only events are placed here; pins/bands/dates are the frontend canvas."""
+type EventGrid {
+  row: Int
+  col: Int
+  rowSpan: Int
+  colSpan: Int
+  bg: String
 }
 
 input QueueInput {

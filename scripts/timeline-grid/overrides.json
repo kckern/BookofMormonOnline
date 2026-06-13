@@ -1,0 +1,40 @@
+{
+  "_doc": "Manual reconciliation overrides keyed by '<row>,<col>' (the r/c shown in the report). Value = labels.json slug, or 'SKIP' to drop the cell. Persists across re-runs.",
+  "_confident_picks": "matcher ranked these too low or there's a clear winner",
+  "79,26": "coriantumr-army",
+  "72,26": "amalickiahs-army",
+  "52,35": "alma-2",
+  "62,24": "sons-of-mosiah",
+  "90,26": "lamanites-and-nephites",
+  "14,16": "lehites",
+
+  "_dup_heading_judgment_calls": "two slugs share a heading — picked the earlier/likelier; confirm",
+  "94,22": "lamanite-recruits",
+  "52,28": "amalekites",
+
+  "_round2_wire_dead_major_figure": "make a major-figure tile clickable (was non-interactive)",
+  "16,6": "lehite-family",
+
+  "_round3_reject_wrong_fuzzy_matches": "matcher force-fit wrong slugs (>0.82 on weak overlap); SKIP rather than link to the wrong event",
+  "20,20": "SKIP",
+  "59,28": "SKIP",
+
+  "_round3b_fix_ordinal_misfits": "'Amos I'→amos-2 and 'Mosiah I'→mosiah-ii: roman-ordinal siblings fuzzy-collided; pin the firsts to their real entries (amos-1, mosiah1).",
+  "115,26": "amos-1",
+  "32,35": "mosiah1",
+
+  "_round3c_place_era_disambiguation": "same-named places that exact-match the Old-World slug but sit in a Lamanite-era lineage; pin to the era-correct entry (otherwise the Lamanite city/land rows stay unplaced).",
+  "52,19": "lamanite-jersualem",
+  "35,18": "land-of-nephi-lamanite",
+
+  "_round3d_pool_trap_labels": "event-kind tiles whose true match is a headingless label, excluded from the event match pool; pin for DB placement (rendered as content-less static labels, not clickable).",
+  "37,11": "waters-of-mormon",
+  "73,32": "east",
+  "73,36": "west",
+
+  "_genuinely_missing_no_label": "no labels.json entry exists for these sheet cells — dropped",
+  "4,6": "SKIP",
+  "19,20": "SKIP",
+  "40,6": "SKIP",
+  "77,26": "SKIP"
+}

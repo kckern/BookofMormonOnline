@@ -222,11 +222,11 @@ const routes = [
     component: Objects,
   },
   {
-    path: "/timeline/:markerSlug",
-    component: TimeLine,
-  },
-  {
-    path: "/timeline",
+    // Single Route (path array, specific first) so <Switch> never unmounts
+    // TimeLine when opening/closing the info-box (/timeline ↔ /timeline/:slug).
+    // Otherwise the whole grid remounts on every modal toggle, discarding the
+    // memoized fill layer and scroll position.
+    path: ["/timeline/:markerSlug", "/timeline"],
     component: TimeLine,
   },
   {

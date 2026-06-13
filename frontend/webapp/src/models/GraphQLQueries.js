@@ -1005,6 +1005,8 @@ const queries = {
         o
         z
         p
+        label
+        grid { row col rowSpan colSpan bg }
       }`,
     }
   },
