@@ -149,13 +149,14 @@ def main():
                 tile["nc"] = 1
         tiles.append(tile)
 
-        # record a DB placement for matched content tiles (keyed by source x/y)
-        if slug and entry is not None and "x" in entry and "y" in entry:
+        # Record a DB placement for EVENT tiles only. Per the architecture:
+        # bom_timeline holds event grid placement; pins/places, band fills, the
+        # date axis and battles are the hardcoded frontend canvas, not the DB.
+        if kind == "event" and slug and entry is not None and "x" in entry and "y" in entry:
             placements.append({
                 "slug": slug, "x": entry["x"], "y": entry["y"],
                 "row": tile["r"], "col": tile["c"], "w": tile["w"], "h": tile["h"],
-                "kind": kind, "bg": bg, "fg": tile.get("fg"),
-                "round": ",".join(rd) if rd else None,
+                "bg": bg,
             })
 
     # date axis: rebased to the tile grid's rows, rendered as a sticky gutter

@@ -1,18 +1,5 @@
 [
   {
-    "slug": "land-of-first-inheritance",
-    "x": -23.875,
-    "y": 6.625,
-    "row": 13,
-    "col": 3,
-    "w": 2,
-    "h": 1,
-    "kind": "place",
-    "bg": "#ffffff",
-    "fg": null,
-    "round": null
-  },
-  {
     "slug": "lehite-family",
     "x": -28.4375,
     "y": 6.875,
@@ -20,23 +7,7 @@
     "col": 4,
     "w": 2,
     "h": 1,
-    "kind": "event",
-    "bg": "#351c75",
-    "fg": null,
-    "round": null
-  },
-  {
-    "slug": "great-tower",
-    "x": -11.3125,
-    "y": 7.125,
-    "row": 1,
-    "col": 3,
-    "w": 2,
-    "h": 1,
-    "kind": "place",
-    "bg": "#ffffff",
-    "fg": null,
-    "round": null
+    "bg": "#351c75"
   },
   {
     "slug": "laman-lemuel",
@@ -46,10 +17,7 @@
     "col": 4,
     "w": 2,
     "h": 1,
-    "kind": "event",
-    "bg": "#85200c",
-    "fg": null,
-    "round": null
+    "bg": "#85200c"
   },
   {
     "slug": "jaredites",
@@ -59,10 +27,7 @@
     "col": 33,
     "w": 2,
     "h": 1,
-    "kind": "event",
-    "bg": "#134f5c",
-    "fg": null,
-    "round": null
+    "bg": "#134f5c"
   },
   {
     "slug": "lamanites",
@@ -72,23 +37,17 @@
     "col": 4,
     "w": 2,
     "h": 1,
-    "kind": "event",
-    "bg": "#85200c",
-    "fg": null,
-    "round": null
+    "bg": "#85200c"
   },
   {
     "slug": "amulon",
     "x": -59.375,
     "y": 9.125,
-    "row": 37,
+    "row": 38,
     "col": 4,
     "w": 2,
     "h": 1,
-    "kind": "place",
-    "bg": "#85200c",
-    "fg": null,
-    "round": null
+    "bg": "#073763"
   },
   {
     "slug": "lamanite-king",
@@ -98,10 +57,7 @@
     "col": 14,
     "w": 1,
     "h": 1,
-    "kind": "event",
-    "bg": "#85200c",
-    "fg": null,
-    "round": null
+    "bg": "#85200c"
   },
   {
     "slug": "abish",
@@ -111,10 +67,7 @@
     "col": 10,
     "w": 2,
     "h": 1,
-    "kind": "event",
-    "bg": "#bf9000",
-    "fg": null,
-    "round": null
+    "bg": "#bf9000"
   },
   {
     "slug": "lamoni",
@@ -124,10 +77,7 @@
     "col": 10,
     "w": 2,
     "h": 1,
-    "kind": "event",
-    "bg": "#bf9000",
-    "fg": null,
-    "round": null
+    "bg": "#bf9000"
   },
   {
     "slug": "ammon",
@@ -137,10 +87,7 @@
     "col": 10,
     "w": 2,
     "h": 1,
-    "kind": "event",
-    "bg": "#bf9000",
-    "fg": null,
-    "round": null
+    "bg": "#bf9000"
   },
   {
     "slug": "helam",
@@ -150,10 +97,7 @@
     "col": 9,
     "w": 2,
     "h": 1,
-    "kind": "event",
-    "bg": "#b45f06",
-    "fg": null,
-    "round": null
+    "bg": "#b45f06"
   },
   {
     "slug": "tubaloth",
@@ -163,23 +107,7 @@
     "col": 14,
     "w": 1,
     "h": 1,
-    "kind": "event",
-    "bg": "#85200c",
-    "fg": null,
-    "round": null
-  },
-  {
-    "slug": "ishmael",
-    "x": -73.5,
-    "y": 13.4375,
-    "row": 51,
-    "col": 10,
-    "w": 1,
-    "h": 1,
-    "kind": "place",
-    "bg": "#85200c",
-    "fg": null,
-    "round": null
+    "bg": "#85200c"
   },
   {
     "slug": "waters-of-mormon",
@@ -189,10 +117,7 @@
     "col": 9,
     "w": 2,
     "h": 1,
-    "kind": "event",
-    "bg": "#85200c",
-    "fg": null,
-    "round": null
+    "bg": "#85200c"
   },
   {
     "slug": "alma-1",
@@ -202,10 +127,7 @@
     "col": 33,
     "w": 2,
     "h": 1,
-    "kind": "event",
-    "bg": "#274e13",
-    "fg": null,
-    "round": null
+    "bg": "#274e13"
   },
   {
     "slug": "nephites",
@@ -215,10 +137,7 @@
     "col": 11,
     "w": 1,
     "h": 1,
-    "kind": "event",
-    "bg": "#1c4587",
-    "fg": null,
-    "round": null
+    "bg": "#1c4587"
   },
   {
     "slug": "lehites",
@@ -228,23 +147,7 @@
     "col": 14,
     "w": 2,
     "h": 1,
-    "kind": "event",
-    "bg": "#351c75",
-    "fg": null,
-    "round": null
-  },
-  {
-    "slug": "lamanite-prison",
-    "x": -125.125,
-    "y": 14.9375,
-    "row": 87,
-    "col": 14,
-    "w": 1,
-    "h": 1,
-    "kind": "place",
-    "bg": "#85200c",
-    "fg": null,
-    "round": null
+    "bg": "#351c75"
   },
   {
     "slug": "aminadab",
@@ -254,10 +157,7 @@
     "col": 14,
     "w": 1,
     "h": 1,
-    "kind": "event",
-    "bg": "#85200c",
-    "fg": null,
-    "round": null
+    "bg": "#85200c"
   },
   {
     "slug": "lehonti",
@@ -267,10 +167,7 @@
     "col": 15,
     "w": 1,
     "h": 1,
-    "kind": "event",
-    "bg": "#85200c",
-    "fg": null,
-    "round": null
+    "bg": "#85200c"
   },
   {
     "slug": "lamanites-vs-omni",
@@ -280,10 +177,7 @@
     "col": 18,
     "w": 2,
     "h": 1,
-    "kind": "event",
-    "bg": "#1c4587",
-    "fg": null,
-    "round": null
+    "bg": "#1c4587"
   },
   {
     "slug": "lamanites-vs-enos",
@@ -293,10 +187,7 @@
     "col": 18,
     "w": 2,
     "h": 1,
-    "kind": "event",
-    "bg": "#1c4587",
-    "fg": null,
-    "round": null
+    "bg": "#1c4587"
   },
   {
     "slug": "lamanites-vs-jarom",
@@ -306,10 +197,7 @@
     "col": 18,
     "w": 2,
     "h": 1,
-    "kind": "event",
-    "bg": "#1c4587",
-    "fg": null,
-    "round": null
+    "bg": "#1c4587"
   },
   {
     "slug": "lamanites-vs-amaron",
@@ -319,10 +207,7 @@
     "col": 18,
     "w": 2,
     "h": 1,
-    "kind": "event",
-    "bg": "#1c4587",
-    "fg": null,
-    "round": null
+    "bg": "#1c4587"
   },
   {
     "slug": "lamanites-vs-nephi",
@@ -332,10 +217,7 @@
     "col": 18,
     "w": 2,
     "h": 1,
-    "kind": "event",
-    "bg": "#1c4587",
-    "fg": null,
-    "round": null
+    "bg": "#1c4587"
   },
   {
     "slug": "lamanites-vs-abinadom",
@@ -345,23 +227,7 @@
     "col": 18,
     "w": 2,
     "h": 1,
-    "kind": "event",
-    "bg": "#1c4587",
-    "fg": null,
-    "round": null
-  },
-  {
-    "slug": "lamanite-jersualem",
-    "x": -73.5625,
-    "y": 17.25,
-    "row": 51,
-    "col": 17,
-    "w": 1,
-    "h": 1,
-    "kind": "place",
-    "bg": "#85200c",
-    "fg": null,
-    "round": null
+    "bg": "#1c4587"
   },
   {
     "slug": "lamanite-recruits",
@@ -371,10 +237,7 @@
     "col": 20,
     "w": 1,
     "h": 1,
-    "kind": "event",
-    "bg": "#85200c",
-    "fg": null,
-    "round": null
+    "bg": "#85200c"
   },
   {
     "slug": "aaron",
@@ -384,23 +247,7 @@
     "col": 16,
     "w": 2,
     "h": 1,
-    "kind": "event",
-    "bg": "#bf9000",
-    "fg": null,
-    "round": null
-  },
-  {
-    "slug": "land-of-nephi-lamanite",
-    "x": -78.5,
-    "y": 18.3125,
-    "row": 34,
-    "col": 16,
-    "w": 2,
-    "h": 1,
-    "kind": "place",
-    "bg": "#85200c",
-    "fg": null,
-    "round": null
+    "bg": "#bf9000"
   },
   {
     "slug": "lamonis-father",
@@ -410,23 +257,7 @@
     "col": 16,
     "w": 2,
     "h": 1,
-    "kind": "event",
-    "bg": "#bf9000",
-    "fg": null,
-    "round": null
-  },
-  {
-    "slug": "middoni",
-    "x": -76.1875,
-    "y": 18.375,
-    "row": 54,
-    "col": 16,
-    "w": 2,
-    "h": 1,
-    "kind": "place",
-    "bg": "#bf9000",
-    "fg": null,
-    "round": null
+    "bg": "#bf9000"
   },
   {
     "slug": "limhi",
@@ -436,10 +267,7 @@
     "col": 16,
     "w": 2,
     "h": 1,
-    "kind": "event",
-    "bg": "#3c78d8",
-    "fg": null,
-    "round": null
+    "bg": "#3c78d8"
   },
   {
     "slug": "abinadi",
@@ -449,10 +277,7 @@
     "col": 16,
     "w": 2,
     "h": 1,
-    "kind": "event",
-    "bg": "#3c78d8",
-    "fg": null,
-    "round": null
+    "bg": "#3c78d8"
   },
   {
     "slug": "noah",
@@ -462,10 +287,7 @@
     "col": 16,
     "w": 2,
     "h": 1,
-    "kind": "event",
-    "bg": "#3c78d8",
-    "fg": null,
-    "round": null
+    "bg": "#3c78d8"
   },
   {
     "slug": "zeniff",
@@ -475,23 +297,7 @@
     "col": 16,
     "w": 2,
     "h": 1,
-    "kind": "event",
-    "bg": "#3c78d8",
-    "fg": null,
-    "round": null
-  },
-  {
-    "slug": "land-of-nephi",
-    "x": -31.125,
-    "y": 19.625,
-    "row": 16,
-    "col": 18,
-    "w": 2,
-    "h": 1,
-    "kind": "place",
-    "bg": "#ffffff",
-    "fg": null,
-    "round": null
+    "bg": "#3c78d8"
   },
   {
     "slug": "lamanite-remnant",
@@ -501,23 +307,7 @@
     "col": 18,
     "w": 1,
     "h": 1,
-    "kind": "event",
-    "bg": "#85200c",
-    "fg": null,
-    "round": null
-  },
-  {
-    "slug": "bountiful",
-    "x": -149.781,
-    "y": 21.375,
-    "row": 82,
-    "col": 35,
-    "w": 2,
-    "h": 1,
-    "kind": "place",
-    "bg": "#38761d",
-    "fg": null,
-    "round": null
+    "bg": "#85200c"
   },
   {
     "slug": "jesus-christ",
@@ -527,10 +317,7 @@
     "col": 19,
     "w": 1,
     "h": 1,
-    "kind": "event",
-    "bg": "#fff2cc",
-    "fg": null,
-    "round": null
+    "bg": "#fff2cc"
   },
   {
     "slug": "twelve-disciples",
@@ -540,10 +327,7 @@
     "col": 19,
     "w": 1,
     "h": 1,
-    "kind": "event",
-    "bg": "#fff2cc",
-    "fg": null,
-    "round": null
+    "bg": "#fff2cc"
   },
   {
     "slug": "people-of-christ",
@@ -553,10 +337,7 @@
     "col": 19,
     "w": 1,
     "h": 1,
-    "kind": "event",
-    "bg": "#fff2cc",
-    "fg": null,
-    "round": null
+    "bg": "#fff2cc"
   },
   {
     "slug": "sons-of-mosiah",
@@ -566,10 +347,7 @@
     "col": 26,
     "w": 1,
     "h": 1,
-    "kind": "event",
-    "bg": "#bf9000",
-    "fg": null,
-    "round": null
+    "bg": "#bf9000"
   },
   {
     "slug": "destruction",
@@ -579,10 +357,7 @@
     "col": 19,
     "w": 1,
     "h": 1,
-    "kind": "event",
-    "bg": "#000000",
-    "fg": null,
-    "round": null
+    "bg": "#000000"
   },
   {
     "slug": "coriantumr-army",
@@ -592,10 +367,7 @@
     "col": 24,
     "w": 1,
     "h": 1,
-    "kind": "event",
-    "bg": "#85200c",
-    "fg": null,
-    "round": null
+    "bg": "#85200c"
   },
   {
     "slug": "ammon-and-the-people-of-limhi",
@@ -605,36 +377,7 @@
     "col": 26,
     "w": 1,
     "h": 1,
-    "kind": "event",
-    "bg": "#3c78d8",
-    "fg": null,
-    "round": null
-  },
-  {
-    "slug": "mulek",
-    "x": -24.3125,
-    "y": 23.1875,
-    "row": 87,
-    "col": 35,
-    "w": 2,
-    "h": 1,
-    "kind": "place",
-    "bg": "#38761d",
-    "fg": null,
-    "round": null
-  },
-  {
-    "slug": "jersualem",
-    "x": -21.75,
-    "y": 23.25,
-    "row": 1,
-    "col": 33,
-    "w": 2,
-    "h": 1,
-    "kind": "place",
-    "bg": "#ffffff",
-    "fg": null,
-    "round": null
+    "bg": "#3c78d8"
   },
   {
     "slug": "nephite-defectors",
@@ -644,10 +387,7 @@
     "col": 23,
     "w": 1,
     "h": 1,
-    "kind": "event",
-    "bg": "#85200c",
-    "fg": null,
-    "round": null
+    "bg": "#85200c"
   },
   {
     "slug": "amalickiah",
@@ -657,10 +397,7 @@
     "col": 24,
     "w": 1,
     "h": 1,
-    "kind": "event",
-    "bg": "#85200c",
-    "fg": null,
-    "round": null
+    "bg": "#85200c"
   },
   {
     "slug": "lamanites-and-nephites",
@@ -670,10 +407,7 @@
     "col": 24,
     "w": 1,
     "h": 1,
-    "kind": "event",
-    "bg": "#38761d",
-    "fg": null,
-    "round": null
+    "bg": "#38761d"
   },
   {
     "slug": "zerahemnah",
@@ -683,10 +417,7 @@
     "col": 24,
     "w": 1,
     "h": 1,
-    "kind": "event",
-    "bg": "#85200c",
-    "fg": null,
-    "round": null
+    "bg": "#85200c"
   },
   {
     "slug": "jacob",
@@ -696,10 +427,7 @@
     "col": 18,
     "w": 2,
     "h": 1,
-    "kind": "event",
-    "bg": "#1c4587",
-    "fg": null,
-    "round": null
+    "bg": "#1c4587"
   },
   {
     "slug": "kishkumen",
@@ -709,10 +437,7 @@
     "col": 23,
     "w": 2,
     "h": 1,
-    "kind": "event",
-    "bg": "#6fa8dc",
-    "fg": null,
-    "round": null
+    "bg": "#6fa8dc"
   },
   {
     "slug": "gadianton",
@@ -722,10 +447,7 @@
     "col": 23,
     "w": 2,
     "h": 1,
-    "kind": "event",
-    "bg": "#6fa8dc",
-    "fg": null,
-    "round": null
+    "bg": "#6fa8dc"
   },
   {
     "slug": "lamanite-servants",
@@ -735,10 +457,7 @@
     "col": 24,
     "w": 1,
     "h": 1,
-    "kind": "event",
-    "bg": "#38761d",
-    "fg": null,
-    "round": null
+    "bg": "#38761d"
   },
   {
     "slug": "nephi-ii-and-lehi-ii-travel",
@@ -748,10 +467,7 @@
     "col": 31,
     "w": 1,
     "h": 1,
-    "kind": "event",
-    "bg": "#38761d",
-    "fg": null,
-    "round": null
+    "bg": "#38761d"
   },
   {
     "slug": "colonial-expedition",
@@ -761,10 +477,7 @@
     "col": 26,
     "w": 1,
     "h": 1,
-    "kind": "event",
-    "bg": "#3c78d8",
-    "fg": null,
-    "round": null
+    "bg": "#3c78d8"
   },
   {
     "slug": "amos-2",
@@ -774,10 +487,7 @@
     "col": 25,
     "w": 1,
     "h": 1,
-    "kind": "event",
-    "bg": "#38761d",
-    "fg": null,
-    "round": null
+    "bg": "#38761d"
   },
   {
     "slug": "amos-1",
@@ -787,10 +497,7 @@
     "col": 24,
     "w": 1,
     "h": 1,
-    "kind": "event",
-    "bg": "#38761d",
-    "fg": null,
-    "round": null
+    "bg": "#38761d"
   },
   {
     "slug": "lamanites-and-amlicities",
@@ -800,10 +507,7 @@
     "col": 26,
     "w": 1,
     "h": 1,
-    "kind": "event",
-    "bg": "#85200c",
-    "fg": null,
-    "round": null
+    "bg": "#85200c"
   },
   {
     "slug": "amalickiahs-army",
@@ -813,10 +517,7 @@
     "col": 24,
     "w": 1,
     "h": 1,
-    "kind": "event",
-    "bg": "#85200c",
-    "fg": null,
-    "round": null
+    "bg": "#85200c"
   },
   {
     "slug": "amalekites",
@@ -826,10 +527,7 @@
     "col": 26,
     "w": 1,
     "h": 1,
-    "kind": "event",
-    "bg": "#85200c",
-    "fg": null,
-    "round": null
+    "bg": "#85200c"
   },
   {
     "slug": "explorers",
@@ -839,10 +537,7 @@
     "col": 26,
     "w": 1,
     "h": 1,
-    "kind": "event",
-    "bg": "#ffffff",
-    "fg": null,
-    "round": null
+    "bg": "#ffffff"
   },
   {
     "slug": "ill-fated-expedition",
@@ -852,10 +547,7 @@
     "col": 26,
     "w": 1,
     "h": 1,
-    "kind": "event",
-    "bg": "#3c78d8",
-    "fg": null,
-    "round": null
+    "bg": "#3c78d8"
   },
   {
     "slug": "lamanites-with-nephite-defectors",
@@ -865,23 +557,7 @@
     "col": 24,
     "w": 1,
     "h": 1,
-    "kind": "event",
-    "bg": "#85200c",
-    "fg": null,
-    "round": null
-  },
-  {
-    "slug": "zarahemla",
-    "x": -160.688,
-    "y": 26.125,
-    "row": 13,
-    "col": 33,
-    "w": 2,
-    "h": 1,
-    "kind": "place",
-    "bg": "#ffffff",
-    "fg": null,
-    "round": null
+    "bg": "#85200c"
   },
   {
     "slug": "mormon",
@@ -891,10 +567,7 @@
     "col": 26,
     "w": 2,
     "h": 1,
-    "kind": "event",
-    "bg": "#38761d",
-    "fg": null,
-    "round": null
+    "bg": "#38761d"
   },
   {
     "slug": "people-of-alma",
@@ -904,10 +577,7 @@
     "col": 26,
     "w": 1,
     "h": 1,
-    "kind": "event",
-    "bg": "#b45f06",
-    "fg": null,
-    "round": null
+    "bg": "#b45f06"
   },
   {
     "slug": "nephite-army",
@@ -917,10 +587,7 @@
     "col": 26,
     "w": 1,
     "h": 1,
-    "kind": "event",
-    "bg": "#38761d",
-    "fg": null,
-    "round": null
+    "bg": "#38761d"
   },
   {
     "slug": "lamanite-missionaries",
@@ -930,10 +597,7 @@
     "col": 24,
     "w": 1,
     "h": 1,
-    "kind": "event",
-    "bg": "#85200c",
-    "fg": null,
-    "round": null
+    "bg": "#85200c"
   },
   {
     "slug": "gidgiddoni",
@@ -943,10 +607,7 @@
     "col": 26,
     "w": 1,
     "h": 1,
-    "kind": "event",
-    "bg": "#38761d",
-    "fg": null,
-    "round": null
+    "bg": "#38761d"
   },
   {
     "slug": "mosiah1",
@@ -956,10 +617,7 @@
     "col": 33,
     "w": 2,
     "h": 1,
-    "kind": "event",
-    "bg": "#274e13",
-    "fg": null,
-    "round": null
+    "bg": "#274e13"
   },
   {
     "slug": "nephite-recruits",
@@ -969,10 +627,7 @@
     "col": 27,
     "w": 1,
     "h": 1,
-    "kind": "event",
-    "bg": "#38761d",
-    "fg": null,
-    "round": null
+    "bg": "#38761d"
   },
   {
     "slug": "gadianton-robbers",
@@ -982,10 +637,7 @@
     "col": 29,
     "w": 1,
     "h": 1,
-    "kind": "event",
-    "bg": "#6fa8dc",
-    "fg": null,
-    "round": null
+    "bg": "#6fa8dc"
   },
   {
     "slug": "samuel",
@@ -995,10 +647,7 @@
     "col": 30,
     "w": 1,
     "h": 1,
-    "kind": "event",
-    "bg": "#85200c",
-    "fg": null,
-    "round": null
+    "bg": "#85200c"
   },
   {
     "slug": "giddianhi",
@@ -1008,10 +657,7 @@
     "col": 29,
     "w": 1,
     "h": 1,
-    "kind": "event",
-    "bg": "#6fa8dc",
-    "fg": null,
-    "round": null
+    "bg": "#6fa8dc"
   },
   {
     "slug": "nephi-3",
@@ -1021,10 +667,7 @@
     "col": 30,
     "w": 1,
     "h": 1,
-    "kind": "event",
-    "bg": "#38761d",
-    "fg": null,
-    "round": null
+    "bg": "#38761d"
   },
   {
     "slug": "zemnarihah",
@@ -1034,10 +677,7 @@
     "col": 29,
     "w": 1,
     "h": 1,
-    "kind": "event",
-    "bg": "#6fa8dc",
-    "fg": null,
-    "round": null
+    "bg": "#6fa8dc"
   },
   {
     "slug": "mormons-army",
@@ -1047,10 +687,7 @@
     "col": 29,
     "w": 1,
     "h": 1,
-    "kind": "event",
-    "bg": "#38761d",
-    "fg": null,
-    "round": null
+    "bg": "#38761d"
   },
   {
     "slug": "helaman-west",
@@ -1060,10 +697,7 @@
     "col": 30,
     "w": 2,
     "h": 1,
-    "kind": "event",
-    "bg": "#85200c",
-    "fg": null,
-    "round": null
+    "bg": "#85200c"
   },
   {
     "slug": "west",
@@ -1073,10 +707,7 @@
     "col": 34,
     "w": 2,
     "h": 1,
-    "kind": "event",
-    "bg": "#38761d",
-    "fg": null,
-    "round": null
+    "bg": "#38761d"
   },
   {
     "slug": "nephihah",
@@ -1086,10 +717,7 @@
     "col": 32,
     "w": 2,
     "h": 1,
-    "kind": "event",
-    "bg": "#38761d",
-    "fg": null,
-    "round": null
+    "bg": "#38761d"
   },
   {
     "slug": "alma-2",
@@ -1099,10 +727,7 @@
     "col": 33,
     "w": 2,
     "h": 1,
-    "kind": "event",
-    "bg": "#38761d",
-    "fg": null,
-    "round": null
+    "bg": "#38761d"
   },
   {
     "slug": "benjamin",
@@ -1112,10 +737,7 @@
     "col": 33,
     "w": 2,
     "h": 1,
-    "kind": "event",
-    "bg": "#274e13",
-    "fg": null,
-    "round": null
+    "bg": "#274e13"
   },
   {
     "slug": "mulekites",
@@ -1125,10 +747,7 @@
     "col": 21,
     "w": 2,
     "h": 1,
-    "kind": "event",
-    "bg": "#bf9000",
-    "fg": null,
-    "round": null
+    "bg": "#bf9000"
   },
   {
     "slug": "mosiah-ii",
@@ -1138,10 +757,7 @@
     "col": 33,
     "w": 2,
     "h": 1,
-    "kind": "event",
-    "bg": "#274e13",
-    "fg": null,
-    "round": null
+    "bg": "#274e13"
   },
   {
     "slug": "zarahemla",
@@ -1151,23 +767,7 @@
     "col": 33,
     "w": 2,
     "h": 1,
-    "kind": "event",
-    "bg": "#bf9000",
-    "fg": null,
-    "round": null
-  },
-  {
-    "slug": "land-northward",
-    "x": -12.9688,
-    "y": 32.0625,
-    "row": 78,
-    "col": 37,
-    "w": 2,
-    "h": 1,
-    "kind": "place",
-    "bg": "#ffffff",
-    "fg": null,
-    "round": null
+    "bg": "#bf9000"
   },
   {
     "slug": "zeezrom",
@@ -1177,10 +777,7 @@
     "col": 31,
     "w": 2,
     "h": 1,
-    "kind": "event",
-    "bg": "#38761d",
-    "fg": null,
-    "round": null
+    "bg": "#38761d"
   },
   {
     "slug": "jaredite-kings",
@@ -1190,10 +787,7 @@
     "col": 33,
     "w": 2,
     "h": 1,
-    "kind": "event",
-    "bg": "#134f5c",
-    "fg": null,
-    "round": null
+    "bg": "#134f5c"
   },
   {
     "slug": "amulek",
@@ -1203,23 +797,7 @@
     "col": 31,
     "w": 2,
     "h": 1,
-    "kind": "event",
-    "bg": "#38761d",
-    "fg": null,
-    "round": null
-  },
-  {
-    "slug": "ammonihah",
-    "x": -80.3125,
-    "y": 32.3125,
-    "row": 55,
-    "col": 31,
-    "w": 2,
-    "h": 1,
-    "kind": "place",
-    "bg": "#38761d",
-    "fg": null,
-    "round": null
+    "bg": "#38761d"
   },
   {
     "slug": "nephi-2-and-lehi-2",
@@ -1229,10 +807,7 @@
     "col": 32,
     "w": 2,
     "h": 1,
-    "kind": "event",
-    "bg": "#38761d",
-    "fg": null,
-    "round": null
+    "bg": "#38761d"
   },
   {
     "slug": "pahoran",
@@ -1242,10 +817,7 @@
     "col": 32,
     "w": 2,
     "h": 1,
-    "kind": "event",
-    "bg": "#38761d",
-    "fg": null,
-    "round": null
+    "bg": "#38761d"
   },
   {
     "slug": "helaman-2",
@@ -1255,10 +827,7 @@
     "col": 32,
     "w": 2,
     "h": 1,
-    "kind": "event",
-    "bg": "#38761d",
-    "fg": null,
-    "round": null
+    "bg": "#38761d"
   },
   {
     "slug": "zoramites",
@@ -1268,36 +837,7 @@
     "col": 33,
     "w": 2,
     "h": 1,
-    "kind": "event",
-    "bg": "#38761d",
-    "fg": null,
-    "round": null
-  },
-  {
-    "slug": "gideon-sermon",
-    "x": -78.3125,
-    "y": 33.875,
-    "row": 56,
-    "col": 35,
-    "w": 2,
-    "h": 1,
-    "kind": "place",
-    "bg": "#38761d",
-    "fg": null,
-    "round": null
-  },
-  {
-    "slug": "melek",
-    "x": -79.3125,
-    "y": 33.9375,
-    "row": 57,
-    "col": 35,
-    "w": 2,
-    "h": 1,
-    "kind": "place",
-    "bg": "#38761d",
-    "fg": null,
-    "round": null
+    "bg": "#38761d"
   },
   {
     "slug": "cezoram",
@@ -1307,23 +847,7 @@
     "col": 34,
     "w": 1,
     "h": 1,
-    "kind": "event",
-    "bg": "#38761d",
-    "fg": null,
-    "round": null
-  },
-  {
-    "slug": "antionum",
-    "x": -89.6875,
-    "y": 34.125,
-    "row": 61,
-    "col": 33,
-    "w": 2,
-    "h": 1,
-    "kind": "place",
-    "bg": "#38761d",
-    "fg": null,
-    "round": null
+    "bg": "#38761d"
   },
   {
     "slug": "lachoneus",
@@ -1333,23 +857,7 @@
     "col": 34,
     "w": 1,
     "h": 1,
-    "kind": "event",
-    "bg": "#38761d",
-    "fg": null,
-    "round": null
-  },
-  {
-    "slug": "desolation",
-    "x": -163.625,
-    "y": 34.5625,
-    "row": 38,
-    "col": 37,
-    "w": 2,
-    "h": 1,
-    "kind": "place",
-    "bg": "#ffffff",
-    "fg": null,
-    "round": null
+    "bg": "#38761d"
   },
   {
     "slug": "moronihah",
@@ -1359,10 +867,7 @@
     "col": 35,
     "w": 2,
     "h": 1,
-    "kind": "event",
-    "bg": "#38761d",
-    "fg": null,
-    "round": null
+    "bg": "#38761d"
   },
   {
     "slug": "east",
@@ -1372,23 +877,7 @@
     "col": 30,
     "w": 2,
     "h": 1,
-    "kind": "event",
-    "bg": "#38761d",
-    "fg": null,
-    "round": null
-  },
-  {
-    "slug": "gid",
-    "x": -121.812,
-    "y": 35.25,
-    "row": 86,
-    "col": 35,
-    "w": 2,
-    "h": 1,
-    "kind": "place",
-    "bg": "#38761d",
-    "fg": null,
-    "round": null
+    "bg": "#38761d"
   },
   {
     "slug": "coriantumr",
@@ -1398,10 +887,7 @@
     "col": 36,
     "w": 1,
     "h": 1,
-    "kind": "event",
-    "bg": "#134f5c",
-    "fg": null,
-    "round": null
+    "bg": "#134f5c"
   },
   {
     "slug": "nephite-pilgrims",
@@ -1411,10 +897,7 @@
     "col": 37,
     "w": 1,
     "h": 1,
-    "kind": "event",
-    "bg": "#38761d",
-    "fg": null,
-    "round": null
+    "bg": "#38761d"
   },
   {
     "slug": "moroni",
@@ -1424,23 +907,7 @@
     "col": 32,
     "w": 2,
     "h": 1,
-    "kind": "event",
-    "bg": "#38761d",
-    "fg": null,
-    "round": null
-  },
-  {
-    "slug": "cumorah",
-    "x": -168.25,
-    "y": 36.625,
-    "row": 124,
-    "col": 34,
-    "w": 1,
-    "h": 1,
-    "kind": "place",
-    "bg": "#38761d",
-    "fg": null,
-    "round": null
+    "bg": "#38761d"
   },
   {
     "slug": "hagoth",
@@ -1450,9 +917,6 @@
     "col": 37,
     "w": 1,
     "h": 1,
-    "kind": "event",
-    "bg": "#38761d",
-    "fg": null,
-    "round": null
+    "bg": "#38761d"
   }
 ]
