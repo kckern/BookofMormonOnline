@@ -181,7 +181,7 @@ def main():
     ev_slug = sum(1 for t in tiles if t["k"] == "event" and t.get("slug"))
     print(f"tiles: {len(tiles)}  grid {out['cols']}x{out['rows']}  kinds={dict(kc)}")
     print(f"  event tiles with slug: {ev_slug} / {kc['event']}  dateAxis: {len(date_axis)}")
-    print(f"  placements (deduped by x,y): {len(deduped)}")
+    print(f"  placements (deduped by slug,x,y): {len(deduped)}")
     print(f"  out -> {args.out}")
 
 

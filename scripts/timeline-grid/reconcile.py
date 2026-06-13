@@ -1,18 +1,12 @@
 #!/usr/bin/env python3
 """
-Timeline grid reconciliation (one-time migration tool).
+Timeline grid reconciliation — human audit report (one-time migration tool).
 
 Maps the hand-authored spreadsheet layout (Sheet1.html) onto the GraphQL
-`timeline` payload (labels.json), producing:
-
-  1. a placement map      slug -> {row,col,rowSpan,colSpan,kind,colorLane}
-  2. a reconciliation report (confident / ambiguous / unmatched both ways)
-
-Design: docs/plans/2026-06-13-timeline-grid-migration-design.md
-
-This script now emits ONLY the human audit report; the tile grid + placement
-data the app/DB use are built by build_tiles.py (which imports the parser and
-matcher helpers from here, so the two never drift).
+`timeline` payload (labels.json) and emits a reconciliation report
+(confident / ambiguous / unmatched both ways). It does NOT produce the tile
+grid or placement data the app/DB consume — build_tiles.py does that, importing
+the parser and matcher helpers from here so the two never drift.
 
 Design: docs/plans/2026-06-13-timeline-grid-migration-design.md
 
@@ -22,7 +16,7 @@ Usage:
       --labels "~/Downloads/Timeline Grid/labels.json" \
       --out-report docs/audits/2026-06-13-timeline-grid-reconciliation.md
 """
-import argparse, html, json, os, re, sys, difflib
+import argparse, html, json, os, re, difflib
 from collections import defaultdict
 
 # --- thresholds ---

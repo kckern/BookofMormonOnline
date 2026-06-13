@@ -19,6 +19,10 @@
   "20,20": "SKIP",
   "59,28": "SKIP",
 
+  "_round3b_fix_ordinal_misfits": "'Amos I'→amos-2 and 'Mosiah I'→mosiah-ii: roman-ordinal siblings fuzzy-collided; pin the firsts to their real entries (amos-1, mosiah1).",
+  "115,26": "amos-1",
+  "32,35": "mosiah1",
+
   "_genuinely_missing_no_label": "no labels.json entry exists for these sheet cells — dropped",
   "4,6": "SKIP",
   "19,20": "SKIP",

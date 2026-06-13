@@ -58,7 +58,7 @@ function TimeLine() {
       "home_title",
       "Book of Mormon Online"
     )}`
-  })
+  }, [])
 
   const [timeline, setTimeline] = useState(null)
   const [zoom, setZoom] = useState(() =>
