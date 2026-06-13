@@ -79,6 +79,18 @@ function bodyDigest(html) {
     .slice(0, 400)
 }
 
+// Single-pass HTML-entity decode: compares the characters a crawler reads.
+// PHP emits raw `'`/`&`; Next.js escapes to &#x27;/&amp;c — one decode makes
+// those equal. But a genuine mismatch (our &amp;ldquo; vs PHP's &ldquo;, which
+// render as different characters) is left flagged, not masked by re-decoding.
+const NAMED = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ', ldquo: '“', rdquo: '”', lsquo: '‘', rsquo: '’', mdash: '—', ndash: '–', hellip: '…' }
+function decodeEntities(s) {
+  return s
+    .replace(/&#x([0-9a-f]+);/gi, (_m, h) => String.fromCodePoint(parseInt(h, 16)))
+    .replace(/&#(\d+);/g, (_m, d) => String.fromCodePoint(parseInt(d, 10)))
+    .replace(/&([a-z]+);/gi, (m, n) => (n.toLowerCase() in NAMED ? NAMED[n.toLowerCase()] : m))
+}
+
 // Host-insensitive compare for url fields: compare path + query only.
 const pathOf = (u) => { try { const x = new URL(u); return x.pathname + x.search } catch { return u } }
 
@@ -110,9 +122,10 @@ for (const path of paths) {
     if (f === 'ogUrl' || f === 'canonical') {
       match = pathOf(bv ?? '') === pathOf(ov ?? '')
     } else {
-      // Normalize whitespace: the PHP box emits raw CR/newlines in meta values
-      // that Cloudflare minify (and crawlers) collapse — immaterial for parity.
-      const ws = (s) => (s ?? '').replace(/\s+/g, ' ').trim()
+      // Compare what a crawler actually reads: entity-decode both sides (PHP
+      // emits raw `'`/`&`; Next.js HTML-escapes them to &#x27;/&amp;) and
+      // normalize whitespace (PHP raw CR/newlines that Cloudflare minify collapses).
+      const ws = (s) => decodeEntities(s ?? '').replace(/\s+/g, ' ').trim()
       match = ws(bv) === ws(ov)
     }
     if (match) { totalMatch++; continue }
