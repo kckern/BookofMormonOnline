@@ -45,8 +45,11 @@ function TimeLine() {
 
   const [timeline, setTimeline] = useState(null)
   const [selected, setSelected] = useState(null)
+  const [zoom, setZoom] = useState(1) // map-style zoom (CSS zoom on the grid)
   const match = useRouteMatch()
   const cellRefs = useRef({})
+
+  const zoomBy = (f) => setZoom((z) => Math.min(2, Math.max(0.4, +(z * f).toFixed(2))))
 
   useEffect(() => {
     BoMOnlineAPI({ timeline: true })
@@ -79,14 +82,36 @@ function TimeLine() {
     history.push(`/timeline`)
   }
 
-  // Modal a11y: Escape to close, and move focus into the dialog on open.
+  // Modal a11y: Escape to close, focus into the dialog on open, trap Tab,
+  // and restore focus to the opener on close.
   const closeBtnRef = useRef(null)
+  const dialogRef = useRef(null)
   useEffect(() => {
     if (!selected) return
-    const onKey = (e) => e.key === "Escape" && closeInfo()
+    const opener = document.activeElement
+    const onKey = (e) => {
+      if (e.key === "Escape") return closeInfo()
+      if (e.key !== "Tab" || !dialogRef.current) return
+      const f = dialogRef.current.querySelectorAll(
+        'a[href],button,[tabindex]:not([tabindex="-1"])'
+      )
+      if (!f.length) return
+      const first = f[0],
+        last = f[f.length - 1]
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault()
+        last.focus()
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault()
+        first.focus()
+      }
+    }
     document.addEventListener("keydown", onKey)
     if (closeBtnRef.current) closeBtnRef.current.focus()
-    return () => document.removeEventListener("keydown", onKey)
+    return () => {
+      document.removeEventListener("keydown", onKey)
+      if (opener && opener.focus) opener.focus()
+    }
   }, [selected]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!timeline) return <Loader />
@@ -100,10 +125,15 @@ function TimeLine() {
 
   return (
     <div className="timeline-grid-wrap">
+      <div className="tg-zoom" role="group" aria-label="Zoom timeline">
+        <button type="button" onClick={() => zoomBy(1 / 1.2)} aria-label="Zoom out">−</button>
+        <button type="button" onClick={() => setZoom(1)} aria-label="Reset zoom">⤢</button>
+        <button type="button" onClick={() => zoomBy(1.2)} aria-label="Zoom in">+</button>
+      </div>
       <div className="timeline-grid-scroller">
         <div
           className="timeline-grid"
-          style={{ "--cols": cols, "--rows": rows }}
+          style={{ "--cols": cols, "--rows": rows, zoom }}
         >
           {dateAxis.map((d, i) => (
             <div
@@ -202,6 +232,7 @@ function TimeLine() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="tg-infobox-title"
+            ref={dialogRef}
             onClick={(e) => e.stopPropagation()}
           >
             <button

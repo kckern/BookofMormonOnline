@@ -20,9 +20,49 @@
   height: 100%;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
   /* inset edge shadows hint the canvas scrolls beyond the viewport */
   box-shadow: inset -18px 0 14px -14px rgba(0, 0, 0, 0.28),
     inset 0 -18px 14px -14px rgba(0, 0, 0, 0.22);
+}
+
+/* Map-style zoom controls */
+.tg-zoom {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  z-index: 20;
+  display: flex;
+  gap: 1px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
+}
+.tg-zoom button {
+  width: 34px;
+  height: 34px;
+  border: none;
+  background: #fff;
+  color: #333;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+.tg-zoom button:hover {
+  background: #eef2f7;
+}
+.tg-zoom button:focus-visible {
+  outline: 2px solid #1e63d0;
+  outline-offset: -2px;
+}
+
+/* Narrow screens: start more zoomed-out via smaller base cells */
+@media (max-width: 640px) {
+  .timeline-grid {
+    --col-w: 18px;
+    --row-h: 16px;
+    --date-w: 48px;
+  }
 }
 
 .timeline-grid {

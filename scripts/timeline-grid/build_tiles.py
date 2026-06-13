@@ -22,6 +22,15 @@ from reconcile import (parse_table, extract_styles, classify, clean, norm,
 # glyph -> rounded corners (band color already lives on the cell)
 CORNERS = {"◜": ["tl"], "◝": ["tr"], "◟": ["bl"], "◞": ["br"],
            "◗": ["tr", "br"], "◖": ["tl", "bl"], "◣": ["bl"]}
+
+# Spelling fixes for known typos in the source spreadsheet labels.
+TYPO_FIX = {"Jersualem": "Jerusalem", "Abinadai": "Abinadi"}
+
+
+def fix_typos(text):
+    for bad, good in TYPO_FIX.items():
+        text = text.replace(bad, good)
+    return text
 ARROW_GLYPHS = set("◂◃▸▹▷◁◀▶➤➔→←")
 WHITE = ("#ffffff", "#fff", None)
 
@@ -112,7 +121,7 @@ def main():
         if rd:
             tile["rd"] = rd
         if label_text:
-            tile["t"] = label_text
+            tile["t"] = fix_typos(label_text)
         if slug:
             tile["slug"] = slug
         tiles.append(tile)

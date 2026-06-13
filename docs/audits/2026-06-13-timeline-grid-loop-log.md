@@ -24,3 +24,9 @@ Started 2026-06-13 09:08 on branch feat/timeline-grid.
 
 **Deferred (still):** mobile responsiveness + narrow-width label collisions; ~3238 DOM perf; modal focus-trap/restore (NIT); "Jersualem" data typo (NIT).
 **Note:** adversarial flagged my color legend wording (maroon=Lamanites, blue=Nephites) — rendering uses the sheet's actual colors regardless.
+
+## Iteration 3 (proactive: cleared deferred items, then review)
+**Fixes applied:**
+- MAJOR (mobile + right-edge clipping): added map-style **zoom controls** (CSS `zoom` on the grid, −/reset/+; clamp 0.4–2) + `touch-action: pan-x pan-y` + a `max-width:640px` media query with smaller base cells. Lets users zoom out to see the whole timeline / zoom in for detail on any device.
+- NIT: modal now traps Tab within the dialog and restores focus to the opener on close.
+- NIT: "Jersualem"→"Jerusalem" (and "Abinadai"→"Abinadi") via TYPO_FIX in build_tiles.py.
