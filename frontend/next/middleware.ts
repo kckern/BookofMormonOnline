@@ -2,32 +2,39 @@ export const runtime = 'nodejs'
 
 import { NextRequest, NextResponse } from 'next/server'
 
-// Language codes that can appear as URL path prefixes (e.g. /ko/1-nephi/1)
 const LANG_PREFIXES = ['ko', 'fr', 'de', 'es', 'pt', 'ja', 'zh']
+
+// Crawlers and social-preview fetchers get SSR HTML.
+// Everyone else gets proxied to the React app (CRA) on port 8201.
+const BOT_RE = /bot|crawl|spider|slurp|google|bing|baidu|yandex|duckduck|facebook|twitter|linkedin|whatsapp|telegram|slack|discord|preview|curl|python-requests/i
+
+const CRA_ORIGIN = 'http://localhost:8201'
 
 export function middleware(request: NextRequest) {
   const { pathname, hostname } = request.nextUrl
+  const ua = request.headers.get('user-agent') ?? ''
 
   // --- Host redirect: www.* → bare domain ---
   if (hostname.startsWith('www.')) {
-    const bare = hostname.slice(4)
     const url = request.nextUrl.clone()
-    url.hostname = bare
+    url.hostname = hostname.slice(4)
     return NextResponse.redirect(url, 301)
   }
 
-  // --- Language detection from path prefix ---
+  // --- Human visitor: proxy transparently to CRA ---
+  if (!BOT_RE.test(ua)) {
+    const target = new URL(CRA_ORIGIN + pathname + request.nextUrl.search)
+    return NextResponse.rewrite(target)
+  }
+
+  // --- Bot/crawler: serve Next.js SSR with lang header ---
   const segments = pathname.split('/').filter(Boolean)
   const lang = LANG_PREFIXES.includes(segments[0]) ? segments[0] : 'en'
-
-  // Pass language to server components via request header
-  // (Response headers are not visible to headers() in server components)
   const requestHeaders = new Headers(request.headers)
   requestHeaders.set('x-lang', lang)
   return NextResponse.next({ request: { headers: requestHeaders } })
 }
 
 export const config = {
-  // Run middleware on every route except Next.js internals and static files
   matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 }
