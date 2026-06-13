@@ -130,6 +130,9 @@
 .study .comment .commentfooter div.delete {
   font-weight: bold;
   cursor: pointer;
+  /* The Like/Reply/Edit/Delete actions inherited the footer's #aaa (~2.3:1).
+     #595959 on white = 7:1 (WCAG AA, even at this small bold size). */
+  color: #595959;
 }
 
 .study .comment .commentfooter div.response:hover,
@@ -151,11 +154,47 @@
   margin-bottom: 0.5em;
   font-size: 0.8em;
   color: #999;
+  display: flex;
+  align-items: center;
+  gap: 0.35em;
+}
+
+.study .comment .commentreactions .reactionEmoji {
+  font-size: 1.1em;
+  line-height: 1;
+}
+
+.study .comment .commentreactions .reactionFaces {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* overlap the avatar faces slightly, like a stacked reactor row */
+.study .comment .commentreactions .reactionFaceWrap {
+  display: inline-flex;
+  margin-left: -6px;
+}
+
+.study .comment .commentreactions .reactionFaceWrap:first-child {
+  margin-left: 0;
+}
+
+.study .comment .commentreactions .reactionFace {
+  border: 1.5px solid #fff;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.study .comment .commentreactions .reactionCount {
+  color: #999;
+  font-weight: 600;
 }
 
 .study .comment .timestamp a {
   font-weight: 400;
-  color: #aaa;
+  /* #6b6b6b on the #f8f8f9 comment background = 4.6:1 (WCAG AA);
+     was #aaa (~2.3:1). */
+  color: #6b6b6b;
 }
 
 .study .comment .timestamp a:hover {
@@ -298,7 +337,9 @@ div.study > div.mycomment.form-group > textarea {
 .study .viewMoreComments {
   margin-left: 2.7em;
   margin-bottom: 1em;
-  color: #aaa;
+  /* #6b6b6b on the #f8f8f9 comment background = 4.6:1 (WCAG AA);
+     was #aaa (~2.2:1). */
+  color: #6b6b6b;
   font-weight: 400;
   cursor: pointer;
 }
@@ -335,4 +376,12 @@ div.study > div.mycomment.form-group > textarea {
   background-color: rgb(186, 184, 184);
   border-radius: 5px;
   padding: 2px;
+}
+
+/* A11y: inside study comments the global .scripture_link uses #323b4daa
+   (~0.67 alpha) which fails WCAG AA. Scope a full-opacity #323b4d here
+   (~9.4:1 on white) so scripture links in comments meet AA without altering
+   the chip elsewhere in the app. */
+.study div a.scripture_link {
+  color: #323b4d;
 }

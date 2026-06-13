@@ -3,6 +3,7 @@ import crypto from "crypto-browserify";
 import date from "date-and-time";
 import axios from "axios";
 import Parser, {domToReact} from "html-react-parser";
+import DOMPurify from "dompurify";
 import moment from "moment";
 import "moment/locale/ko";
 import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
@@ -574,7 +575,10 @@ export function playSound(sound) {
 export function formatText(message, setPanel, appController, isSection) {
   if (message.length === 0) return false;
   if (message.mentionedUsers.length > 0) {
-    let newText = message.message;
+    // Sanitize the untrusted message body to plain text before injecting the
+    // trusted @mention anchors below (this branch renders via Parser directly,
+    // bypassing ParseMessage's sanitize, so it needs its own defense).
+    let newText = sanitizeUserText(message.message);
     message.mentionedUsers.forEach((mentionUser) => {
       newText = newText.replaceAll(
         "@" + mentionUser.nickname,
@@ -657,15 +661,16 @@ export function ParseMessage(string,appController) {
       if (name === 'a' && attribs.classname === 'scripture_link') {
         const ref = domToReact(children, options);
         const refIndex = scriptures.indexOf(ref);
-        //replace classname with class
-        attribs.class = attribs.classname;
-        delete attribs.classname;
+        // html-react-parser lower-cases the raw `class` attribute to `classname`;
+        // re-emit it as React's `className` (not `class`, which React rejects as
+        // an invalid DOM prop and silently drops, killing the link styling).
+        const { classname, ...rest } = attribs;
         const isActive = activeRef === refIndex;
-        if (isActive) attribs.class += " active";
+        const className = "scripture_link" + (isActive ? " active" : "");
         const activateRef = () => {
           setActiveRef(refIndex);
         }
-        return <a {...attribs} onClick={activateRef}>{ref}</a>;
+        return <a {...rest} className={className} onClick={activateRef}>{ref}</a>;
       }
     }
   };
@@ -730,7 +735,7 @@ function CommentaryPreview({url,appController}){
 
 
   return <div className="commentaryPreview" onClick={popUpCommentary}>
-    <img src={`${assetUrl}/source/cover/${source_id}`} />
+    <img src={`${assetUrl}/source/cover/${source_id}`} alt={source_title || source_name || ""} />
     <div className="commentaryPreviewContent">
       <div className="commentaryPreviewContentTitle">{title}</div>
       <div className="commentaryPreviewContentText">{text}</div>
@@ -791,7 +796,7 @@ function LinkPreview({ url,appController }) {
       <div className="linkPreview">
         {linkData.image && hasImage && (
           <div className="linkPreviewImg">
-            <img onError={() => setHasImage(false)} src={linkData.image} />
+            <img onError={() => setHasImage(false)} src={linkData.image} alt={linkData.title || ""} />
           </div>
         )}
         <div className="linkPreviewText">
@@ -808,8 +813,40 @@ function LinkPreview({ url,appController }) {
   );
 }
 
+// Defense-in-depth: user comment/message text is untrusted and must NEVER be
+// able to inject executable markup, regardless of which component renders it or
+// whether html-react-parser's incidental neutralization changes in a future
+// version/refactor. Comments support NO user-authored HTML formatting — the only
+// markup ParseMessage emits is the URL / scripture / @mention anchors WE generate
+// downstream. So the tightest correct treatment is to strip ALL tags from the
+// raw text first (DOMPurify `ALLOWED_TAGS: []`), leaving only the text content,
+// then decorate it with our own trusted anchors. This neutralizes <script>,
+// <img onerror=…>, javascript: URLs, event-handler attributes, etc. at the
+// render trust boundary while preserving legitimate scripture links / URLs.
+// Maximum length (characters) of a user comment / chat message. The DB column is
+// TEXT (65535 bytes) so this is an abuse/robustness UI cap, not a storage limit.
+// Enforced at every send site (Study.js verse composer, StudyChat.js hall/DM
+// composer) and server-side in postMessage as the clean trust boundary.
+export const MAX_MESSAGE_LENGTH = 2000;
+
+export function sanitizeUserText(text) {
+  if (typeof text !== "string") return text;
+  return DOMPurify.sanitize(text, {
+    ALLOWED_TAGS: [],
+    ALLOWED_ATTR: [],
+    // strip the element AND its contents for dangerous tags so e.g.
+    // "<script>alert(1)</script>" leaves nothing behind, not the inner text.
+    FORBID_CONTENTS: ["script", "style"],
+    KEEP_CONTENT: true,
+  });
+}
+
 function replaceURLWithHTMLLinks(text) {
   if (typeof text.replace !== "function") return text;
+  // Sanitize the untrusted input to plain text BEFORE we inject our own trusted
+  // anchor markup (URL / scripture links), so user-supplied markup can never be
+  // parsed into live DOM by html-react-parser below.
+  text = sanitizeUserText(text);
   const exp = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;$]*[-A-Z0-9+&@#\/%=~_|])/gi;
   let html = text.replace(
     exp,

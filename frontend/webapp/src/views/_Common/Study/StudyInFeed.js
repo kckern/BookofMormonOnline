@@ -316,13 +316,14 @@ export function ImageInFeed({ appController, imageData, hasStar }) {
 
 function Placeholder({ classname }) {
   const [gaveUp, giveUp] = useState(false);
-  useEffect(
-    () =>
-      setTimeout(() => {
-        giveUp(true);
-      }, 5000),
-    []
-  );
+  useEffect(() => {
+    // Clear the timer on unmount so giveUp() can't fire on an unmounted
+    // component (rapid panel switching unmounts the placeholder before 5s).
+    const t = setTimeout(() => {
+      giveUp(true);
+    }, 5000);
+    return () => clearTimeout(t);
+  }, []);
 
   return (
     <div className={"itemInFeedContainer noselect " + (gaveUp ? "hidden" : "")}>

@@ -12,6 +12,14 @@
   margin-top: 3em;
 }
 
+/* The page title (.title) is a thin Scripture serif at 3em; at weight 400 it
+   reads as a faint, washed-out watermark (esp. while the content loads with the
+   .notready dim). Pin a solid dark color + heavier weight so it stays legible. */
+.page h3.title {
+  color: #1f1f1f;
+  font-weight: 600;
+}
+
 .page h4 {
   margin-bottom: 3em;
 }

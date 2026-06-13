@@ -1,7 +1,8 @@
 .groupList {
   position: absolute;
-  width: 25vw;
-  min-width: 400px;
+  width: 32vw;
+  min-width: 480px;
+  max-width: 560px;
   background-color: white;
   color: black;
   top: 70px;
@@ -54,8 +55,14 @@
 .groupList .close {
   position: absolute;
   right: 0.4em;
+  /* Reset the UA <button> chrome now that this is a real button (was a span). */
+  background: none;
+  border: 0;
+  padding: 0;
+  line-height: 1;
   font-family: monospace;
-  color: #aaa;
+  /* #767676 on white = 4.54:1 (WCAG AA), was #aaa (~2.3:1). */
+  color: #767676;
   cursor: pointer;
   font-weight: 800;
   font-size: 2.5em;
@@ -63,6 +70,32 @@
 
 .groupList .close:hover {
   color: black;
+}
+
+/* Keyboard focus must be visible on the dropdown controls. */
+.StudyGroupSelect:focus-visible,
+.groupList .close:focus-visible,
+.groupListItem .threedots:focus-visible {
+  outline: 3px solid #3a7253;
+  outline-offset: 2px;
+}
+
+/* The .threedots toggle is now a real <button>; strip the UA chrome so it still
+   looks like the bare ⋮ glyph it did as a div. */
+.groupListItem .threedots {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+/* The close button must remain operable even when study mode is off (the
+   disabled rule above hides/blocks generic buttons). */
+.groupList.disabled button.close {
+  pointer-events: auto;
+  cursor: pointer;
+  opacity: 1;
 }
 
 .groupList h5 {
@@ -86,7 +119,9 @@
   cursor: pointer;
 
   border: 1px solid top;
-  padding: 1ex;
+  padding: 0.9em 1em;
+  min-height: 4.5em;
+  align-items: center;
   border-top: 1px solid #ddd;
 
   display: flex;
@@ -98,14 +133,17 @@
   font-weight: 800;
   float: right;
   text-align: right;
-  color: #aaa;
+  /* #949494 = 3.03:1 on white — AA for this large (3em) ⋮ glyph (was #aaa). */
+  color: #949494;
   width: 1ex;
   float: right;
 }
 
 .groupListItemContent .lastMessage {
   font-size: small;
-  color: #ccc;
+  /* #666 = 4.6:1 even on the tinted #f0faf5 active-row background (WCAG AA);
+     was #ccc (~1.6:1). */
+  color: #666;
   height: 1.6em;
   overflow: hidden;
   letter-spacing: -0.5px;
@@ -149,7 +187,15 @@
 
 .groupListItemContent .groupName {
   display: flex;
+  align-items: center;
   justify-content: left;
+  font-weight: 600;
+  font-size: 1.05em;
+  line-height: 1.2em;
+  /* Show the full group name (wrap up to 2 lines) instead of truncating it. */
+  white-space: normal;
+  overflow: visible;
+  word-break: break-word;
 }
 
 .noGroups {
@@ -227,7 +273,8 @@
   padding-right: 1ex;
   border-radius: 1ex;
   font-size: x-small;
-  color: #aaa;
+  /* #595959 on the #eee badge = 4.6:1 (WCAG AA), was #aaa (~1.9:1). */
+  color: #595959;
   position: relative;
   bottom: 0.3ex;
   margin-right: 1em;
@@ -571,7 +618,7 @@ button.create {
   background-color: #ddd;
   height: 2em;
   line-height: 0.5ex;
-  color: #777;
+  color: #595959; /* 4.6:1 on #ddd (WCAG AA), was #777 (3.3:1) */
   margin-top: 0;
 }
 
@@ -596,7 +643,7 @@ button.create {
   background-color: #ddd;
   height: 2em;
   line-height: 0.5ex;
-  color: #777;
+  color: #595959; /* 4.6:1 on #ddd (WCAG AA), was #777 (3.3:1) */
   margin-top: 0;
 }
 

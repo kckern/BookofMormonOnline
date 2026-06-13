@@ -49,10 +49,12 @@ function Message({message})
 
 
 
-function Movement({message})
+function Movement()
 {
+  // Movement bubbles render nothing (the body is shown only for message actions
+  // via <Message/>). Previously had unreachable debug JSON output below a
+  // `return null;` — removed.
   return null;
-  return  <pre>{JSON.stringify(message,null,2)}</pre>
 }
 
 

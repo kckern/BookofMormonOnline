@@ -1,155 +1,73 @@
+import "./StudyGroupProgress.css";
 
-import Highcharts from 'highcharts'
-import HighchartsReact from 'highcharts-react-official'
-import { useState } from 'react';
-import { generateFakeProgressData } from "src/models/Utils"
-import "./StudyGroupProgress.css"
+/**
+ * Per-member study progress panel.
+ *
+ * NOTE: there is no backend endpoint for per-member *historical* progress
+ * (a time-series), so the previous Highcharts spline was populated entirely by
+ * `generateFakeProgressData()` — fabricated random numbers. That has been
+ * removed: this panel now shows only REAL data we actually have on the client,
+ * namely each member's current completion percentage (from the member's
+ * `metaData.summary.completed`, the same field the group bar / leaderboard use),
+ * and is explicit that a progress-over-time chart is not yet available.
+ *
+ * When a real per-member progress-history endpoint exists, restore the chart
+ * here and bind its series to that data.
+ */
+
+function parseSummary(member) {
+	try {
+		return JSON.parse(member?.metaData?.summary) || {};
+	} catch (e) {
+		return {};
+	}
+}
 
 export default function StudyGroupProgress({ appController }) {
+	const activeGroup = appController.states.studyGroup.activeGroup;
+	const members = activeGroup?.members || [];
+	const memberMap = activeGroup?.memberMap || {};
 
-	const [groupProgressData, setData] = useState(null);
-	const [highlightedUserId, highlightUserId] = useState(null);
-	const [highlightedTime, highlightTime] = useState(null);
-	const userIds = appController.states.studyGroup.activeGroup.members.map(u => u.userId);
-	const memberMap = appController.states.studyGroup.activeGroup.memberMap;
-	if (!groupProgressData) {
-
-		generateFakeProgressData(userIds).then(data => setData(data));
-		return (
-			<div className={"StudyGroupChatPanel "} >
-
-				Loading....
-			</div>
-		);
-
-	}
-	const mouseOverPoint = (e) => {
-
-		let userId = e.target.series.name;
-		let time = e.target.x;
-		//let progress = e.target.y;
-		highlightUserId(userId);
-		highlightTime(time);
-
-	}
-	const mouseOverSeries = (e) => {
-
-		let userId = e.target.name;
-		highlightUserId(userId);
-
-	}
-	const options = {
-		chart: {
-			width: 700,
-			backgroundColor: "#EEE",
-			marginTop: "40",
-			marginRight: "60",
-			style: { fontFamily: "'Roboto Condensed', 'Arial Narrow', sans-serif" },
-			events:
-			{
-				load: (e) => {
-
-					let chart = e.target;
-					chart.series.map(series => {
-						var l = series.points.length;
-						var p = series.points[l - 1];
-						p.update({
-							marker: {
-								enabled: true,
-								//symbol: "plus",
-								symbol: 'url(' + memberMap[series?.name]?.profileUrl + ')',
-								height: 10,
-								width: 10,
-								lineColor: "red"
-							}
-						});
-					});
-				}
-			}
-		},
-		credits: {
-			enabled: false
-		},
-		title: {
-			text: null
-		},
-		legend: {
-			enabled: false
-		},
-		yAxis: {
-			tickInterval: 10,
-			labels: {
-				formatter: function () {
-					return this.value + "%";
-				}
-			},
-			title: {
-				text: null
-			},
-			max: 100,
-			gridLineWidth: 1
-		}, xAxis: {
-			type: "datetime",
-			labels: {
-				formatter: function () {
-					return Highcharts.dateFormat('%b %e', this.value);
-				}
-			}
-		},
-		plotOptions: {
-		},
-		series: groupProgressData.map(userData => {
+	const rows = members
+		.map((member) => {
+			const summary = parseSummary(member);
+			const mapped = memberMap[member.userId] || {};
 			return {
-				type: "spline",
-				marker: { enabled: false, symbol: "circle" },
-				events: {
-					click: mouseOverSeries
-				},
-				name: memberMap[userData.user_id]?.userId,
-				nickname: memberMap[userData.user_id]?.nickname,
-				data: userData.progress,
-
-				tooltip: {
-					headerFormat: '',
-					userHTML: true,
-					pointFormatter: function(){
-						let nickname = memberMap[this.series.name]?.nickname;
-						return `<div><b>${nickname}</b><br/>${new Date(this.x).toISOString().slice(0,10)}: <b>${this.y}%</b><div>`;
-					} 
-				}
-			}
+				userId: member.userId,
+				nickname: member.nickname || mapped.nickname,
+				profileUrl: member.profileUrl || mapped.profileUrl,
+				completed: parseFloat(summary.completed) || 0,
+			};
 		})
-
-
-	}
-
-
-	let userData = memberMap[highlightedUserId];
-
-
+		.filter((row) => !!row.userId)
+		.sort((a, b) => b.completed - a.completed);
 
 	return (
-		<div className={"StudyGroupChatPanel progress"} >
-
-			<HighchartsReact
-				highcharts={Highcharts}
-				options={options}
-			/>
-			<div className={"details"}>
-				<h3>Details</h3>
-
-
-				<div
-					className={"userCircle online"}
-					style={{ backgroundImage: `url(${userData?.profileUrl})` }}
-				>
-					<div className={"progressBadge"}>{userData?.metaData?.completed}%</div>
-				</div>
-				{userData?.nickname}
-				{userData?.userId}
-
+		<div className={"StudyGroupChatPanel progress"}>
+			<div className={"progressNotice"}>
+				Per-member progress history is not available yet. Showing current
+				completion.
+			</div>
+			<div className={"progressList"}>
+				{rows.map((row) => (
+					<div className={"progressRow"} key={row.userId}>
+						<div
+							className={"userCircle"}
+							style={{ backgroundImage: `url(${row.profileUrl})` }}
+						/>
+						<div className={"progressMeta"}>
+							<div className={"nickname"}>{row.nickname}</div>
+							<div className={"progressBar"}>
+								<div
+									className={"progressBarFill"}
+									style={{ width: `${Math.min(100, row.completed)}%` }}
+								/>
+								<span className={"progressBadge"}>{row.completed}%</span>
+							</div>
+						</div>
+					</div>
+				))}
 			</div>
 		</div>
 	);
-
 }

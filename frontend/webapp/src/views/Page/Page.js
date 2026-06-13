@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useReducer, useEffect, useState } from "react";
+import React, { useReducer, useEffect, useState, useRef } from "react";
 import ReactTooltip from "react-tooltip";
 // BROWSER HISTORY
 // API ACTIONS
@@ -28,6 +28,17 @@ import { recordDeepLinkEvent } from "src/utils/deepLinkInstrument";
 import { usePageInit, pageScrollManager, isRefOpen } from "./usePageInit";
 import { countFaxFromIndex, mergeCounts } from "./pageCommentCounts";
 import { createScrollSpy, step } from "src/scroll";
+import { appFunctions } from "src/models/appController";
+
+// Apply a Main slug change from inside the Page reducer WITHOUT a nested React
+// dispatch. The reducer is replayed by React during render; the old
+// `appController.functions.setSlug(...)` re-dispatched into Main's reducer on
+// every replay, firing "Cannot update a component (Main) while rendering Page".
+// Calling the sibling reducer directly mutates the same draft + drives
+// history navigation, but schedules no Main setState during render.
+function applySlug(appController, slug, opts) {
+  appFunctions.setSlug(appController, { val: slug, replace: opts?.replace === true });
+}
 
 function prepareInitOpen(params) {
   let initOpen = {};
@@ -235,9 +246,26 @@ export default function Page({ appController }) {
   const [readyToScroll, setReadyToScroll] = useState(false);
   const [stageClass, setStageClass] = useState(null);
 
+  // Guards async setState in loadPageComments (.then/.catch/setTimeout/
+  // waitForIdle) from firing after the user navigates away — was the source of
+  // "Can't perform a React state update on an unmounted component" in Page.
+  const isMounted = useRef(true);
+  useEffect(() => {
+    isMounted.current = true;
+    return () => { isMounted.current = false; };
+  }, []);
+
   useEffect(() => {
     if (pageController.pageComments) setReadyToScroll(true);
   }, [pageController.pageComments]);
+  // Expose this page's comment controller to Main for PopUp/Commentary/Study/
+  // Sidebar (was dispatched from the setPageComments reducer case — impure, so
+  // it leaked a Main setState into Page's render phase).
+  useEffect(() => {
+    pageController.appController.functions.setActiveLeafCursorController(
+      pageController,
+    );
+  }, [pageController.pageComments, pageController.pageCommentCounts]);
   useEffect(() => {
     if (pageController.appController.states.studyGroup.studyModeOn)
       setReadyToScroll(false);
@@ -336,6 +364,10 @@ export default function Page({ appController }) {
       { useCache: ["page"] },
     );
 
+    // Navigated away while the page fetch was in flight — bail before
+    // dispatching, or these updates warn "update on an unmounted component".
+    if (!isMounted.current) return;
+
     //Update Page via Controller
     let index = pageSlug;
     let keys = Object.keys(response?.page || {});
@@ -376,6 +408,7 @@ export default function Page({ appController }) {
       let { pageSlug, textId } = false;
       if (params.imageId) {
         let response = await BoMOnlineAPI({ image: params.imageId });
+        if (!isMounted.current) return;
         let image = response?.image?.[params.imageId];
         if (!image?.location?.slug) {
           pageController.functions.setNotFound({ type: "image", id: params.imageId });
@@ -386,6 +419,7 @@ export default function Page({ appController }) {
       }
       if (params.commentaryId) {
         let response = await BoMOnlineAPI({ commentary: params.commentaryId });
+        if (!isMounted.current) return;
         let commentary = response?.commentary?.[params.commentaryId];
         if (!commentary?.location?.slug) {
           pageController.functions.setNotFound({ type: "commentary", id: params.commentaryId });
@@ -510,7 +544,7 @@ export default function Page({ appController }) {
     const COMMENTS_FALLBACK_MS = 2500;
     const fallbackTimer = setTimeout(() => {
       recordDeepLinkEvent("loadPageComments:fallback");
-      setReadyToScroll(true);
+      if (isMounted.current) setReadyToScroll(true);
     }, COMMENTS_FALLBACK_MS);
 
     const sendbird = pageController.appController.sendbird;
@@ -524,6 +558,10 @@ export default function Page({ appController }) {
       .loadPageComments(group, pageController.pageData?.slug)
       .then(({ messages, counts }) => {
         clearTimeout(fallbackTimer);
+        // Bail if the page unmounted (navigated away) while the fetch was in
+        // flight — these setState/dispatch calls would warn "update on an
+        // unmounted component".
+        if (!isMounted.current) return;
         setCommentState("indexing");
         const index = indexPageComments(messages);
         // Single paint: index AND counts land in one dispatch (spec P1) —
@@ -536,6 +574,7 @@ export default function Page({ appController }) {
         // Deep-link inits gate the campaign on readyToScroll, so this is
         // instant there; it only waits on autoAdvance/fallback overlaps.
         pageScrollManager.waitForIdle().then(() => {
+          if (!isMounted.current) return;
           recordDeepLinkEvent("pageComments:placed");
           pageController.functions.setPageComments({
             groupId,
@@ -547,7 +586,7 @@ export default function Page({ appController }) {
       .catch((error) => {
         clearTimeout(fallbackTimer);
         console.log({ error });
-        setReadyToScroll(true);
+        if (isMounted.current) setReadyToScroll(true);
       });
   };
 
@@ -602,7 +641,7 @@ function LoadingPageCommentsNotice({ commentState, setReadyToScroll }) {
   //commentState
   return (
     <Alert className="pageInfo" color="info">
-      <img src={loading_comments} />
+      <img src={loading_comments} alt="" />
       {label("loading_group_page_comments")}
       <span className="x" onClick={() => setReadyToScroll(true)}>
         ×
@@ -637,7 +676,7 @@ function reducer(pageController, input) {
       if (pageController.appController.states.preferences.audio)
         playSound(pageController.states.activeAudio); //.play();
       document.title = heading + " | " + label("home_title");
-      pageController.appController.functions.setSlug(slug, { replace: auto === true });
+      applySlug(pageController.appController, slug, { replace: auto === true });
       if (auto === true) pageController.states.autoClicked.delete(slug);
 
       localStorage.setItem("studybookmark", slug);
@@ -698,7 +737,7 @@ function reducer(pageController, input) {
       });
 
       if (pageController.states.init) {
-        pageController.appController.functions.setSlug(slug, { replace: auto === true });
+        applySlug(pageController.appController, slug, { replace: auto === true });
         if (auto === true) pageController.states.autoClicked.delete(slug);
       }
       break;
@@ -708,7 +747,8 @@ function reducer(pageController, input) {
     case "removeOpenRow":
       // MODIFY BY ME
       document.title = pageController.pageData.title || label("home_title");
-      pageController.appController.functions.setSlug(
+      applySlug(
+        pageController.appController,
         pageController.states.activeSection || pageController.states.pageSlug,
       );
       pageController.states.openRows = pageController.states.openRows.filter(
@@ -733,16 +773,18 @@ function reducer(pageController, input) {
         sectionTitle || pageController.pageData.title || label("home_title");
       // replace, not push: scrolling is not navigation — Back should leave
       // the page in one press. (The old `|| true` made the init guard dead.)
-      pageController.appController.functions.setSlug(sectionSlug, { replace: true });
+      applySlug(pageController.appController, sectionSlug, { replace: true });
       break;
 
     case "setPageComments":
       pageController.pageComments = input.val.index;
       pageController.pageCommentCounts = input.val.counts;
       pageController.states.commentGroupId = input.val.groupId;
-      pageController.appController.functions.setActiveLeafCursorController(
-        pageController,
-      );
+      // NOTE: exposing this pageController to Main (setActiveLeafCursorController)
+      // is a side effect and must NOT live in the reducer — React re-invokes
+      // reducers during render, which fired a Main setState mid-Page-render
+      // ("Cannot update a component (Main) while rendering Page"). Done in an
+      // effect instead (see the effect keyed on pageController.pageComments).
       break;
     case "setPageSlug":
       pageController.states.pageSlug = input.val.index;

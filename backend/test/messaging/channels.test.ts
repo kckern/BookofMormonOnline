@@ -24,6 +24,7 @@ import {
   getMyChannels,
   getPublicChannels,
   createChannel,
+  findDistinctChannel,
   updateChannelMetadata,
 } from '../../src/messaging/channels.js';
 import {
@@ -340,6 +341,88 @@ describe('createChannel', () => {
     });
 
     expect(dto.channel_url).toBe(customUrl);
+  });
+
+  itWrite('isDistinct reuses an existing DM for the same member pair', async () => {
+    const u1 = await seedUser('DM-A');
+    const u2 = await seedUser('DM-B');
+
+    const first = await createChannel(db, {
+      name: 'DM A-B',
+      customType: 'DM',
+      userIds: [u1, u2],
+      operatorIds: [u1],
+      isDistinct: true,
+    });
+    trackedChannels.push(first.channel_url);
+
+    // A second distinct create for the same pair must NOT mint a new channel.
+    const second = await createChannel(db, {
+      name: 'DM A-B again',
+      customType: 'DM',
+      userIds: [u1, u2],
+      operatorIds: [u1],
+      isDistinct: true,
+    });
+
+    expect(second.channel_url).toBe(first.channel_url);
+
+    // Only one DM channel should exist for the pair.
+    const dms = await getMyChannels(db, u1, { customTypes: ['DM'] });
+    const pairDms = dms.filter(
+      (c) =>
+        c.members.length === 2 &&
+        c.members.some((m) => m.user_id === u2),
+    );
+    expect(pairDms).toHaveLength(1);
+  });
+
+  itWrite('isDistinct ignores a forced channelUrl and dedupes anyway', async () => {
+    const u1 = await seedUser('DM-C');
+    const u2 = await seedUser('DM-D');
+
+    const first = await createChannel(db, {
+      name: 'DM C-D',
+      customType: 'DM',
+      userIds: [u1, u2],
+      operatorIds: [u1],
+      isDistinct: true,
+    });
+    trackedChannels.push(first.channel_url);
+
+    const second = await createChannel(db, {
+      channelUrl: `test_forced_${nanoid(8)}`,
+      name: 'DM C-D forced',
+      customType: 'DM',
+      userIds: [u1, u2],
+      operatorIds: [u1],
+      isDistinct: true,
+    });
+
+    expect(second.channel_url).toBe(first.channel_url);
+  });
+
+  itWrite('findDistinctChannel matches only on the exact member set', async () => {
+    const u1 = await seedUser('DM-E');
+    const u2 = await seedUser('DM-F');
+    const u3 = await seedUser('DM-G');
+
+    const pair = await createChannel(db, {
+      name: 'DM E-F',
+      customType: 'DM',
+      userIds: [u1, u2],
+      operatorIds: [u1],
+      isDistinct: true,
+    });
+    trackedChannels.push(pair.channel_url);
+
+    // Same pair (order-independent) → match.
+    const match = await findDistinctChannel(db, 'DM', [u2, u1]);
+    expect(match?.channel_url).toBe(pair.channel_url);
+
+    // Different member set (adds u3) → no match.
+    const noMatch = await findDistinctChannel(db, 'DM', [u1, u2, u3]);
+    expect(noMatch).toBeNull();
   });
 });
 

@@ -1,19 +1,96 @@
 .StudyHall .StudyGroupChatPanel.progress
 {
-    border:1px solid black;
     height: 100%;
+    overflow-y: auto;
+    padding: 1em;
+    /* The shared .StudyGroupChatPanel rule sets display:flex (row); stack the
+       notice + member list vertically and let each be full width. */
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
 }
 
-.StudyHall .StudyGroupChatPanel.progress .details
+.StudyHall .StudyGroupChatPanel.progress .progressNotice,
+.StudyHall .StudyGroupChatPanel.progress .progressList
 {
-    width: calc(100% - 700px);
-    border:1px solid black;
+    flex: 0 0 auto;
+    width: 100%;
 }
-image.highcharts-point {
-    outline: 4px double #AAA;
-    width: 3rem;
-    height: 3rem;
+
+.StudyHall .StudyGroupChatPanel.progress .progressNotice
+{
+    font-size: 0.85em;
+    color: #555;
+    background: #f2f4f6;
+    border: 1px solid #dde2e6;
+    border-radius: 0.4em;
+    padding: 0.5em 0.75em;
+    margin-bottom: 1em;
+}
+
+.StudyHall .StudyGroupChatPanel.progress .progressList
+{
+    display: flex;
+    flex-direction: column;
+    gap: 0.6em;
+}
+
+.StudyHall .StudyGroupChatPanel.progress .progressRow
+{
+    display: flex;
+    align-items: center;
+    gap: 0.75em;
+}
+
+.StudyHall .StudyGroupChatPanel.progress .userCircle
+{
+    width: 2.5em;
+    height: 2.5em;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    background-size: cover;
+    background-position: center;
+    background-color: #ccc;
+}
+
+.StudyHall .StudyGroupChatPanel.progress .progressMeta
+{
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.StudyHall .StudyGroupChatPanel.progress .progressMeta .nickname
+{
+    font-weight: 600;
+    font-size: 0.9em;
+    margin-bottom: 0.2em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.StudyHall .StudyGroupChatPanel.progress .progressBar
+{
     position: relative;
-    left: -3em;
-    transform: translate(4px,-3.2rem);
+    height: 1.1em;
+    background: #e6e9ec;
+    border-radius: 0.55em;
+    overflow: hidden;
+}
+
+.StudyHall .StudyGroupChatPanel.progress .progressBarFill
+{
+    height: 100%;
+    background: #55a579;
+    border-radius: 0.55em 0 0 0.55em;
+}
+
+.StudyHall .StudyGroupChatPanel.progress .progressBadge
+{
+    position: absolute;
+    top: 0;
+    right: 0.5em;
+    line-height: 1.1em;
+    font-size: 0.75em;
+    color: #333;
 }

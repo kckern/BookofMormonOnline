@@ -23,8 +23,18 @@ import {
   breakCache,
   isMobile,
   ParseMessage,
+  MAX_MESSAGE_LENGTH,
 } from "src/models/Utils";
 import Parser from "html-react-parser";
+
+// Fire a click-equivalent handler on Enter/Space so role="button" divs are
+// operable by keyboard. preventDefault on Space stops the page from scrolling.
+const activateOnKey = (handler) => (e) => {
+  if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
+    e.preventDefault();
+    handler(e);
+  }
+};
 
 export default function Comments({
   isOpen,
@@ -75,6 +85,13 @@ export default function Comments({
 
   const sendMessage = async (textbox, parentMessageId) => {
     let text = textbox.value;
+    // Cap message length (abuse/robustness — DB column is TEXT but we never want
+    // to accept walls of text). Truncate rather than silently drop so the user
+    // keeps their content; the composer also enforces maxLength on the textarea.
+    if (typeof text === "string" && text.length > MAX_MESSAGE_LENGTH) {
+      text = text.slice(0, MAX_MESSAGE_LENGTH);
+      textbox.value = text;
+    }
     textbox.classList.add("sending");
     textbox.disabled = true;
     let channel = appController?.states?.studyGroup?.activeGroup;
@@ -258,7 +275,7 @@ export default function Comments({
   }
 
   return (
-    <div className="study" threadhash={threadHash}>
+    <div className="study">
       {highlightButton}
       <MessageList
         parentMessage={firstComment}
@@ -458,7 +475,9 @@ export function CommentInput({
       <Textarea
         id={threadHash}
         ref={inputRef}
+        maxLength={MAX_MESSAGE_LENGTH}
         className="form-control textarea commentInput"
+        aria-label={label("say_something")}
         placeholder={label("say_something")}
         onChange={(e) => {
           setTypingLocation({ fn: "add", locationHash });
@@ -466,17 +485,14 @@ export function CommentInput({
         }}
         onBlur={() => setTypingLocation({ fn: "remove", locationHash })}
         onKeyDown={(e) => {
-          if (showTagList) {
-            return setShowTagList(false);
-          }
+          // While the @mention list is open, TagList owns the navigation keys
+          // (Arrow/Enter/Tab/Esc) via a capture-phase listener and will have
+          // already stopped propagation; let typing fall through to filter.
           typingIndicator();
-          if (e.key === "Backspace" || e.key === "Escape") {
-            if (showTagList) setShowTagList(false);
-          }
           if (e.key === "@") {
             setShowTagList(true);
           }
-          if (e.key === "Enter" && !e.shiftKey) {
+          if (!showTagList && e.key === "Enter" && !e.shiftKey) {
             sendMessage(e.target, parentMessageId);
             e.preventDefault();
             setThreadInputVal("");
@@ -587,20 +603,24 @@ function ThreadedMessages({
   pageController,
 }) {
   const [expanded, expand] = useState(false);
-  const [needsToFetch, setNeedsToFetch] = useState(true);
   const [threadedMessages, setThreadMessages] = useState([]);
+  // one-shot guard for the initial thread load; a ref (not state) so flipping it
+  // does not re-trigger / self-cancel the load effect.
+  const hasFetchedRef = useRef(false);
 
   //Listener Callbacks
+  // Plain add (optimistic post + socket echo): append the ONE new message in
+  // place, deduped by messageId. Do NOT refetch the whole thread — refetching
+  // re-maps every reply into fresh objects and tears the list down (the
+  // commentAdds/removes:19 flash). Dedup is done inside the functional updater
+  // against the latest list so the optimistic append and the socket echo of the
+  // same messageId can't both land (stale-closure double-append → duplicate keys).
   const addMessageToThread = (e) => {
-    !expanded && expand(true);
-    if (threadedMessages.find((x) => x.messageId === e.message.messageId))
-      return false;
-    if (!parentMessage.threadInfo) {
-      appController.sendbird.loadThreadedMessages(parentMessage).then((r) => {
-        pageController.functions.addToPageComments(r.parentMessage);
-      });
-    }
-    setThreadMessages((messages) => [...messages, e.message]);
+    setThreadMessages((messages) => {
+      if (messages.find((x) => x.messageId === e.message.messageId))
+        return messages;
+      return [...messages, e.message];
+    });
   };
   const updateMessageInThread = (e) => {
     !expanded && expand(true);
@@ -655,6 +675,41 @@ function ThreadedMessages({
     };
   }, [parentMessage.messageId]);
 
+  // Auto-expand short threads (was a render-body `expand(true)`; moved into an
+  // effect so it is render-safe).
+  const renderReplyCount =
+    threadedMessages.length || parentMessage.threadInfo?.replyCount || 0;
+  useEffect(() => {
+    if (renderReplyCount && renderReplyCount < 3 && !expanded) expand(true);
+  }, [renderReplyCount, expanded]);
+
+  // One-time initial thread load: runs once, when the thread is first expanded.
+  // Merges the fetched replies into whatever is already in state (deduped by
+  // messageId) rather than replacing the array, so an optimistic append that
+  // landed before this resolved isn't clobbered or duplicated. After this load,
+  // new replies are appended in place by addMessageToThread — we never refetch
+  // the whole thread on a plain add (this was a render-body fetch that, by
+  // re-mapping every reply into fresh objects, caused the teardown/rebuild flash).
+  useEffect(() => {
+    if (!expanded || hasFetchedRef.current) return;
+    hasFetchedRef.current = true;
+    let cancelled = false;
+    appController.sendbird.loadThreadedMessages(parentMessage).then((r) => {
+      if (cancelled) return;
+      const fetched = r.threadedMessages || [];
+      setThreadMessages((messages) => {
+        const seen = new Set(fetched.map((m) => m.messageId));
+        // keep any optimistic/echoed message not in the fetched set, in order
+        const extras = messages.filter((m) => !seen.has(m.messageId));
+        return [...fetched, ...extras];
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expanded]);
+
   if (!parentMessage.threadInfo) return null;
 
   let replyCount = parentMessage.threadInfo.replyCount;
@@ -675,35 +730,29 @@ function ThreadedMessages({
   }
 
   if (!replyCount) return null;
-  if (replyCount < 3 && !expanded) expand(true);
 
   if (expanded) {
     if (threadedMessages.length > 0) {
       const messages = threadedMessages.map((m, index) => {
+        // key must live on the outermost node the map returns; the redundant
+        // <></> wrapper swallowed it, leaving the list keyless (React warning).
         return (
-          <>
-            <SingleComment
-              key={m.messageId}
-              message={m}
-              index={index}
-              pageController={pageController}
-              replyToMessage={replyToMessage}
-              threadHash={threadHash}
-              setCommentHighlights={setCommentHighlights}
-              appController={appController}
-            />
-          </>
+          <SingleComment
+            key={m.messageId}
+            message={m}
+            index={index}
+            pageController={pageController}
+            replyToMessage={replyToMessage}
+            threadHash={threadHash}
+            setCommentHighlights={setCommentHighlights}
+            appController={appController}
+          />
         );
       });
       return messages;
     }
 
-    if (needsToFetch) {
-      setNeedsToFetch(false);
-      appController.sendbird.loadThreadedMessages(parentMessage).then((r) => {
-        setThreadMessages(r.threadedMessages);
-      });
-    }
+    // Initial load is kicked off by the fetch-once effect above (render-safe).
     return (
       <div className="viewMoreComments">
         {faces} <div>💬 {label("loading_x_more_comments", [replyCount])}</div>
@@ -725,7 +774,6 @@ function SingleComment({
   threadHash,
   pageController,
   isQuote,
-  key,
   appController,
 }) {
   let data = useMemo(() => {
@@ -801,13 +849,13 @@ function SingleComment({
   };
 
   if (message.length === 0) return false;
-  const { isBot } = message?.sender?.metaData;
+  // Guard: socket-normalized messages can arrive without sender.metaData;
+  // an unguarded destructure here threw a pageerror.
+  const { isBot } = message?.sender?.metaData || {};
 
   return (
     <div
       className={"comment" + (isBot ? " botComment" : "")}
-      key={key || message.messageId}
-      threadHash={threadHash}
       author={message?.sender?.nickname}
       id={message.messageId}
       onMouseEnter={handleMouseEnter}
@@ -971,21 +1019,18 @@ export function EditComment({
           className={"form-control textarea editMessage" + message.messageId}
           autoFocus={!isMobile()}
           ref={inputRef}
+          aria-label={label("action_edit")}
           placeholder={label("say_something")}
           onKeyDown={(e) => {
-            if (showTagList) {
-              return setShowTagList(false);
-            }
-            if (e.key === "Backspace" || e.key === "Escape") {
-              if (showTagList) setShowTagList(false);
-            }
+            // TagList owns nav keys (Arrow/Enter/Tab/Esc) while open; let
+            // other keystrokes through so the user can keep typing to filter.
             if (e.key === "@") {
               setShowTagList(true);
             }
           }}
           onClick={() => setShowTagList(false)}
           onKeyPress={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
+            if (!showTagList && e.key === "Enter" && !e.shiftKey) {
               updateComment(e.target);
               e.preventDefault();
             }
@@ -1057,7 +1102,13 @@ function MessageFooter({
   if (isEdit) {
     messageActions = (
       <>
-        <div className="edit" onClick={handleEditComment}>
+        <div
+          className="edit"
+          role="button"
+          tabIndex={0}
+          onClick={handleEditComment}
+          onKeyDown={activateOnKey(handleEditComment)}
+        >
           {label("action_cancel")}
         </div>
       </>
@@ -1065,19 +1116,35 @@ function MessageFooter({
   } else if (isSelf) {
     let deleteActions = true ? ( // message.parentMessageId
       <>
-        <div className="delete" onClick={onClickDelete}>
+        <div
+          className="delete"
+          role="button"
+          tabIndex={0}
+          onClick={onClickDelete}
+          onKeyDown={activateOnKey(onClickDelete)}
+        >
           {label("action_delete")}
         </div>
-        <div className="dot">•</div>
+        <div className="dot" aria-hidden="true">
+          •
+        </div>
       </>
     ) : null;
 
     messageActions = (
       <>
-        <div className="edit" onClick={handleEditComment}>
+        <div
+          className="edit"
+          role="button"
+          tabIndex={0}
+          onClick={handleEditComment}
+          onKeyDown={activateOnKey(handleEditComment)}
+        >
           {label("action_edit")}
         </div>
-        <div className="dot">•</div>
+        <div className="dot" aria-hidden="true">
+          •
+        </div>
         {deleteActions}
       </>
     );
@@ -1085,11 +1152,21 @@ function MessageFooter({
     messageActions = (
       <>
         {likeObj.button}
-        <div className="dot">•</div>
-        <div className="reply" onClick={replyToMessage}>
+        <div className="dot" aria-hidden="true">
+          •
+        </div>
+        <div
+          className="reply"
+          role="button"
+          tabIndex={0}
+          onClick={replyToMessage}
+          onKeyDown={activateOnKey(replyToMessage)}
+        >
           {label("action_reply")}
         </div>
-        <div className="dot">•</div>
+        <div className="dot" aria-hidden="true">
+          •
+        </div>
       </>
     );
   }
@@ -1151,7 +1228,24 @@ export function LikeButton({ type, message, appController }) {
   if (reacters.like && reacters.like.length > 0) {
     reactions = (
       <div className="commentreactions">
-        <span>👍 {reacters.like.map((u) => u.nickname).join(", ")}</span>{" "}
+        <span className="reactionEmoji">👍</span>
+        <span className="reactionFaces">
+          {reacters.like.map((u) => (
+            <span
+              key={u.userId}
+              className="reactionFaceWrap"
+              title={u.nickname}
+            >
+              <UserAvatar
+                userId={u.userId}
+                profileUrl={u.profileUrl}
+                size={20}
+                className="reactionFace"
+              />
+            </span>
+          ))}
+        </span>
+        <span className="reactionCount">{reacters.like.length}</span>
       </div>
     );
   }
@@ -1200,7 +1294,14 @@ export function LikeButton({ type, message, appController }) {
     return {
       reactions: reactions,
       button: (
-        <div className="response" onClick={() => toggleReaction("like")}>
+        <div
+          className="response"
+          role="button"
+          tabIndex={0}
+          aria-pressed={liked}
+          onClick={() => toggleReaction("like")}
+          onKeyDown={activateOnKey(() => toggleReaction("like"))}
+        >
           {liked ? label("action_unlike") : label("action_like")}
         </div>
       ),
@@ -1209,7 +1310,15 @@ export function LikeButton({ type, message, appController }) {
   if (type === "chat") {
     if (likeCount === 0)
       return (
-        <span className="likeCount" onClick={() => toggleReaction("like")}>
+        <span
+          className="likeCount"
+          role="button"
+          tabIndex={0}
+          aria-label={label("action_like")}
+          aria-pressed={false}
+          onClick={() => toggleReaction("like")}
+          onKeyDown={activateOnKey(() => toggleReaction("like"))}
+        >
           👍 {label("action_like")}
         </span>
       );
@@ -1217,9 +1326,14 @@ export function LikeButton({ type, message, appController }) {
       <>
         <span
           className={"likeCount hasCount " + (selfLiked ? "self" : "")}
+          role="button"
+          tabIndex={0}
+          aria-label={label("action_like")}
+          aria-pressed={selfLiked ? true : false}
           data-tip={reacters.like.map((u) => u.nickname).join(", ")}
           data-for={tooltip_id}
           onClick={() => toggleReaction("like")}
+          onKeyDown={activateOnKey(() => toggleReaction("like"))}
         >
           👍 {likeCount}
         </span>

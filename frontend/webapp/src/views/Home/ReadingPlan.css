@@ -36,7 +36,7 @@
     justify-content: center;
     align-items: center;
     align-content: center;
-    color: #00000077;
+    color: #1f1f1f;
 }
 
 .segmentListItem.complete{
@@ -51,8 +51,9 @@
 }
 
 .segmentListItem.notStarted{
-    /* not started segment is red */
-    background-color: #7e7e7e;
+    /* not started segment is grey */
+    background-color: #595959;
+    color: #ffffff;
 }
 
 .segmentListItem.current.notStarted{
@@ -257,7 +258,7 @@
     background-color: #fb8358;
   }
   .readingplan .badge.gray{
-    background-color: #00000066;
+    background-color: #6c757d;
   }
 
   .readingplan .progress-bar.green{
@@ -313,7 +314,7 @@
     justify-content: center;
     align-items: center;
     align-content: center;
-    color: #00000077;
+    color: #1f1f1f;
 }
 
 .segmentListItem.complete{
@@ -328,8 +329,9 @@
 }
 
 .segmentListItem.notStarted{
-    /* not started segment is red */
-    background-color: #7e7e7e;
+    /* not started segment is grey */
+    background-color: #595959;
+    color: #ffffff;
 }
 
 .segmentListItem.current.notStarted{

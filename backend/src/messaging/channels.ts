@@ -84,6 +84,10 @@ async function assembleChannelDTO(
     name: row.name,
     cover_url: row.cover_url ?? '',
     custom_type: row.custom_type,
+    // Top-level description: the GraphQL schema declares MessengerChannel.description
+    // and every client selects it; omitting it from the DTO returned null, so the
+    // admin "Edit profile" form never prefilled the saved description.
+    description: row.description ?? '',
     // Merge the description column into the data JSON: createChannel/updateChannel
     // write the `description` column, but readers (assembleHomeGroup) parse
     // data.description — without this, group descriptions never surfaced.
@@ -111,6 +115,9 @@ function buildChannelDTO(
     name: row.name,
     cover_url: row.cover_url ?? '',
     custom_type: row.custom_type,
+    // Top-level description: see assembleChannelDTO — schema declares it and clients
+    // select it, so it must be populated here too (bulk channel-list/homefeed path).
+    description: row.description ?? '',
     // Merge the description column into the data JSON: createChannel/updateChannel
     // write the `description` column, but readers (assembleHomeGroup) parse
     // data.description — without this, group descriptions never surfaced.
@@ -293,8 +300,75 @@ export async function getPublicChannels(
 }
 
 /**
+ * Find an existing channel of the given custom_type whose joined-member set is
+ * EXACTLY `userIds` (same membership, no more, no less). Used to dedupe
+ * "distinct" channels (e.g. a 1:1 DM): re-opening a conversation must reuse the
+ * existing channel rather than mint a new orphan every time.
+ *
+ * Returns the assembled ChannelDTO of the match, or null if none exists.
+ */
+export async function findDistinctChannel(
+  db: Kysely<DB>,
+  customType: 'private' | 'public' | 'open' | 'solo' | 'DM',
+  userIds: string[],
+): Promise<ChannelDTO | null> {
+  const wanted = [...new Set(userIds)];
+  const anchorUser = wanted[0];
+  if (!anchorUser) return null;
+
+  // Candidate channels of this type that one of the members has joined.
+  const memberRows = await db
+    .selectFrom('messenger_members')
+    .select('channel_url')
+    .where('user_id', '=', anchorUser)
+    .where('state', '=', 'joined')
+    .execute();
+  if (memberRows.length === 0) return null;
+
+  const candidateUrls = [...new Set(memberRows.map((r) => r.channel_url))];
+
+  const channelRows = await db
+    .selectFrom('messenger_channels')
+    .select('channel_url')
+    .where('channel_url', 'in', candidateUrls)
+    .where('custom_type', '=', customType)
+    .execute();
+  if (channelRows.length === 0) return null;
+
+  // Compare full joined-member sets for each candidate.
+  const allMembers = await db
+    .selectFrom('messenger_members')
+    .select(['channel_url', 'user_id'])
+    .where('channel_url', 'in', channelRows.map((c) => c.channel_url))
+    .where('state', '=', 'joined')
+    .execute();
+
+  const byChannel = new Map<string, Set<string>>();
+  for (const m of allMembers) {
+    if (!byChannel.has(m.channel_url)) byChannel.set(m.channel_url, new Set());
+    byChannel.get(m.channel_url)!.add(m.user_id);
+  }
+
+  const wantedSet = new Set(wanted);
+  for (const [url, members] of byChannel) {
+    if (
+      members.size === wantedSet.size &&
+      [...wantedSet].every((id) => members.has(id))
+    ) {
+      return getChannel(db, url);
+    }
+  }
+  return null;
+}
+
+/**
  * Create a new channel with initial members.
  * Returns the fully assembled ChannelDTO.
+ *
+ * When `isDistinct` is set, an existing channel of the same custom_type with the
+ * EXACT same member set is reused instead of creating a duplicate (the
+ * distinct-DM dedup contract). This is enforced server-side so it holds even
+ * when a client fires several concurrent creates for the same conversation.
  *
  * Note: Kysely (mysql2) doesn't support BEGIN/COMMIT in the same way as
  * Sequelize; we use sequential inserts. The channel is created first, then
@@ -312,8 +386,20 @@ export async function createChannel(
     description?: string;
     metadata?: Record<string, unknown>;
     lang?: string;
+    isDistinct?: boolean;
   },
 ): Promise<ChannelDTO> {
+  // Distinct channels (1:1 DMs etc.) must never duplicate: reuse an existing
+  // channel with the same member set rather than orphaning history.
+  if (params.isDistinct) {
+    const existing = await findDistinctChannel(
+      db,
+      params.customType,
+      params.userIds,
+    );
+    if (existing) return existing;
+  }
+
   const channelUrl = params.channelUrl ?? nanoid(11);
 
   await db

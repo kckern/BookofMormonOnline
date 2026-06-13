@@ -15,6 +15,17 @@ function Contents() {
   const [contents, setContents] = useState([]);
   useEffect(()=>document.title = label("table_of_contents") + " | " + label("home_title"),[])
 
+  // Load the table of contents once, guarded against setState after unmount
+  // (was called directly in the render body — both a render-phase setState and
+  // an unmounted-component update when the user navigated away mid-fetch).
+  useEffect(() => {
+    let cancelled = false;
+    BoMOnlineAPI({ contents: null }).then((r) => {
+      if (!cancelled) setContents(r.contents);
+    });
+    return () => { cancelled = true; };
+  }, []);
+
   const contentsUI = () => {
     const breakpointColumnsObj = {
       default: 3,
@@ -51,20 +62,22 @@ function Contents() {
                   <CardBody>
                     {chapter.pages.map((page, i) => (
                       <ul key={i}>
-                        <Link to={`/${page.slug}`}>{page.title}</Link>
-                        <ul>
-                          {page.sections.map((section, i) =>
-                            section.slug ? (
-                              <li key={i}>
-                                <Link to={`/${section.slug}`}>
-                                  {section.title}
-                                </Link>
-                              </li>
-                            ) : (
-                              ""
-                            )
-                          )}
-                        </ul>
+                        <li>
+                          <Link to={`/${page.slug}`}>{page.title}</Link>
+                          <ul>
+                            {page.sections.map((section, i) =>
+                              section.slug ? (
+                                <li key={i}>
+                                  <Link to={`/${section.slug}`}>
+                                    {section.title}
+                                  </Link>
+                                </li>
+                              ) : (
+                                ""
+                              )
+                            )}
+                          </ul>
+                        </li>
                       </ul>
                     ))}
                   </CardBody>
@@ -76,8 +89,6 @@ function Contents() {
       </>
     );
   };
-  if (!contents.length)
-    BoMOnlineAPI({ contents: null }).then((r) => setContents(r.contents));
   return contents?.length ? (
     <div className="container" style={{ display: "block" }}>
       {contentsUI()}

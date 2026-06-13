@@ -14,6 +14,7 @@ import {
   ParseMessage,
   testJSON,
   timeAgoString,
+  MAX_MESSAGE_LENGTH,
 } from "src/models/Utils";
 import { LikeButton, CommentInput } from "./Study.js";
 import ReactTooltip from "react-tooltip";
@@ -98,7 +99,15 @@ export function StudyGroupChatInput({ appController, channel }) {
       params.mentionedUserIds = mentionUsers;
     }
 
-    if (!params.message) return false;
+    // Reject empty / whitespace-only and cap length (abuse/robustness).
+    if (!params.message || !params.message.trim()) {
+      textbox.classList.remove("sending");
+      textbox.disabled = false;
+      return false;
+    }
+    if (params.message.length > MAX_MESSAGE_LENGTH) {
+      params.message = params.message.slice(0, MAX_MESSAGE_LENGTH);
+    }
 
     // setTimeout(channel.endTyping,1000);
 
@@ -167,23 +176,19 @@ export function StudyGroupChatInput({ appController, channel }) {
           type="text"
           id="inputGroupChat"
           ref={inputRef}
+          maxLength={MAX_MESSAGE_LENGTH}
+          aria-label={label("say_something")}
           placeholder={label("say_something")}
-          onKeyDown={(e) => {
-            if (e.key === "Backspace" || e.key === "Escape") {
-              if (showTagList) setShowTagList(false);
-            }
-          }}
           onKeyPress={(e) => {
-            if (showTagList) {
-              return setShowTagList(false);
-            }
+            // TagList owns nav keys (Arrow/Enter/Tab/Esc) while open via a
+            // capture-phase listener; let other keys through to filter.
             if (e.key === "@") {
               setShowTagList(true);
             }
             auto_grow(e.target);
             typingIndicator();
 
-            if (e.key === "Enter" && !e.shiftKey) {
+            if (!showTagList && e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
               e.stopPropagation();
               setTyping(false);
@@ -207,8 +212,15 @@ export function StudyGroupChatInput({ appController, channel }) {
           toggle={() => setOpen(!isOpen)}
         >
           <ButtonGroup className="send-btn-group">
-            <Button onClick={sendMessage}>
-              <img src={sendicon} />
+            <Button
+              onClick={sendMessage}
+              aria-label={
+                label("action_send") === "action_send"
+                  ? "Send"
+                  : label("action_send")
+              }
+            >
+              <img src={sendicon} alt="" />
             </Button>
             <DropdownToggle caret className="carret" />
           </ButtonGroup>
@@ -244,15 +256,7 @@ export function StudyGroupChatInput({ appController, channel }) {
         <ReactQuill
           placeholder=""
           value={appController.states.editor.value || ""}
-          onKeyDown={(e) => {
-            if (e.key === "Backspace" || e.key === "Escape") {
-              if (showTagList) setShowTagList(false);
-            }
-          }}
           onKeyPress={(e) => {
-            if (showTagList) {
-              return setShowTagList(false);
-            }
             if (e.key === "@") {
               if (appController.states.editor.value) {
                 setShowTagList(true);
@@ -309,7 +313,7 @@ export function StudyGroupChatInput({ appController, channel }) {
             <div>{label("Cancel")} ×</div>
           </Button>
           <Button className="advancedSend" onClick={sendMessage}>
-            <div>{label("send")}</div> <img src={sendicon} />
+            <div>{label("send")}</div> <img src={sendicon} alt="" />
           </Button>
         </div>
       </div>
@@ -394,6 +398,16 @@ export function StudyGroupChat({
   const [lastElement, setLastElement] = useState(null);
   const [myLastRead, setMyLastRead] = useState(channel.myLastRead);
   const history = useHistory();
+  // Guard against setState after unmount: rapid panel switching (Discussion →
+  // DM → Progress → Admin) unmounts this component while the async message
+  // loaders below are still in flight. Each post-await setState checks this ref.
+  const isMounted = useRef(true);
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
   useEffect(() => {
     if (lastElement === null) return;
     const callback = (entries, observer) => {
@@ -406,6 +420,7 @@ export function StudyGroupChat({
               id: messages[messages.length - 1].messageId,
             })
             .then((data) => {
+              if (!isMounted.current) return;
               const messageList = data.slice(1, data.length - 1);
               setMessages((prev) => [...prev, ...messageList]);
               setLastElement(document.querySelector(".last"));
@@ -443,6 +458,7 @@ export function StudyGroupChat({
     window.addEventListener("deleteChatMessage", deleteChatMessage, false);
     // Load Previous Messages
     appController.sendbird.loadGroupMessages(channel).then((loadedMessages) => {
+      if (!isMounted.current) return;
       setMessages(loadedMessages);
       setLastElement(document.querySelector(".last"));
     });
@@ -455,7 +471,12 @@ export function StudyGroupChat({
   }, [parentMessage]);
 
   const appendMessage = (e) => {
-    setMessages((messages) => [e.message, ...messages]);
+    setMessages((messages) => {
+      // dedup by messageId: optimistic append + socket echo can collide
+      if (messages.find((m) => m.messageId === e.message.messageId))
+        return messages;
+      return [e.message, ...messages];
+    });
   };
 
   const deleteChatMessage = (e) => {
@@ -485,6 +506,7 @@ export function StudyGroupChat({
     setLastMessageId(messages[0].messageId);
     setFirstMessageId(messages[messages.length - 1].messageId);
     BoMOnlineAPI(query).then((r) => {
+      if (!isMounted.current) return;
       setLoading(false);
       let newContent = { ...linkedContent.chatLinkedContent };
       for (let kind in r) {
@@ -515,6 +537,22 @@ export function StudyGroupChat({
       <TypingIndicators appController={appController} channel={channel} />
       {loading ? (
         <Loader />
+      ) : messages.length === 0 ? (
+        <div className="emptyHall">
+          <h4>
+            {/* label() returns the key itself when the dictionary lacks it —
+                fall back to English so a missing translation never shows a raw
+                snake_case key. */}
+            {label("start_the_conversation") === "start_the_conversation"
+              ? "Start the conversation"
+              : label("start_the_conversation")}
+          </h4>
+          <p>
+            {label("empty_hall_prompt") === "empty_hall_prompt"
+              ? "No messages yet — share a thought, a question, or a verse to get your group going."
+              : label("empty_hall_prompt")}
+          </p>
+        </div>
       ) : (
         messages.map((message, i) => {
           if (message && messages[i + 1] && messages[i + 1]?.sender)
@@ -532,7 +570,7 @@ export function StudyGroupChat({
             <div
               messageid={messages.length - 1 === i ? message.messageId : null}
               className={classes.join(" ")}
-              key={messages.messageId}
+              key={message.messageId}
             >
               <BaseMessage
                 isSameSender={isSameSender}
@@ -588,7 +626,7 @@ function TypingIndicators({ appController, channel }) {
           {typers.map((user) => user.nickname).join(", ")}
         </span>
         <div className={`messageBody typing`}>
-          <img src={typing} />
+          <img src={typing} alt="" />
         </div>
       </div>
     </div>
@@ -796,6 +834,14 @@ function ThreadedMessages({
 }) {
   const [needsToLoad, setNeedsToLoad] = useState(true);
   const [messages, setMessages] = useState([]);
+  // Guard async setState against unmount (panel/thread switching).
+  const isMounted = useRef(true);
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     window.addEventListener("deleteThreadChatMessage", deleteMessage, false);
@@ -829,7 +875,12 @@ function ThreadedMessages({
 
   const addMessage = ({ message }) => {
     if (parentMessage.messageId === message.parentMessageId)
-      setMessages((messages) => [...messages, message]);
+      setMessages((messages) => {
+        // dedup by messageId: optimistic append + socket echo can collide
+        if (messages.find((m) => m.messageId === message.messageId))
+          return messages;
+        return [...messages, message];
+      });
   };
 
   const updateMessage = (e) => {
@@ -855,6 +906,7 @@ function ThreadedMessages({
   const loadThreadedMessages = useCallback(
     (needsToLoad) => {
       appController.sendbird.loadThreadedMessages(parentMessage).then((r) => {
+        if (!isMounted.current) return;
         setMessages([...r.threadedMessages]);
       });
     },
@@ -915,7 +967,7 @@ function BaseMessage({
     if (message.threadInfo && message.threadInfo.replyCount) {
       let replyCount = message.threadInfo.replyCount;
       let faces = message.threadInfo.mostRepliedUsers.map((u, i) => (
-        <img key={i} src={u.plainProfileUrl} onError={breakCache} />
+        <img key={i} src={u.plainProfileUrl} alt={u.nickname || u.name || ""} onError={breakCache} />
       ));
       let names = message.threadInfo.mostRepliedUsers.map((u) => u.nickname);
       return { replyCount, faces, names, messageId: message.messageId };
@@ -958,7 +1010,7 @@ function BaseMessage({
       let faces = prevState && prevState.faces ? prevState.faces : [];
       if (names.indexOf(e.message?.sender?.nickname) < 0) {
         names.push(e.message?.sender?.nickname);
-        faces.push(<img src={e.message?.sender?.plainProfileUrl} />);
+        faces.push(<img src={e.message?.sender?.plainProfileUrl} alt={e.message?.sender?.nickname || ""} />);
       }
       return { ...prevState, replyCount, faces, names };
     });
@@ -973,7 +1025,7 @@ function BaseMessage({
         if (message.threadInfo && message.threadInfo.replyCount) {
           let replyCount = message.threadInfo.replyCount;
           let faces = message.threadInfo.mostRepliedUsers.map((u) => (
-            <img src={u.plainProfileUrl} />
+            <img src={u.plainProfileUrl} alt={u.nickname || u.name || ""} />
           ));
           let names = message.threadInfo.mostRepliedUsers.map(
             (u) => u.nickname,
@@ -994,7 +1046,7 @@ function BaseMessage({
       if (names.indexOf(message?.sender?.nickname) < 0) {
         names.push(message?.sender?.nickname);
         faces.push(
-          <img src={message?.sender?.plainProfileUrl} onError={breakCache} />,
+          <img src={message?.sender?.plainProfileUrl} alt={message?.sender?.nickname || ""} onError={breakCache} />,
         );
       }
       return { ...prevState, replyCount, faces, names };
@@ -1705,15 +1757,7 @@ function Message({
     >
       <ReactQuill
         value={editorData}
-        onKeyDown={(e) => {
-          if (e.key === "Backspace" || e.key === "Escape") {
-            if (showTagList) setShowTagList(false);
-          }
-        }}
         onKeyPress={(e) => {
-          if (showTagList) {
-            return setShowTagList(false);
-          }
           if (e.key === "@") {
             setShowTagList(true);
           }
@@ -1757,15 +1801,7 @@ function Message({
           placeholder="Update your comment"
           autoFocus={!isMobile()}
           ref={inputRef}
-          onKeyDown={(e) => {
-            if (e.key === "Backspace" || e.key === "Escape") {
-              if (showTagList) setShowTagList(false);
-            }
-          }}
           onKeyPress={(e) => {
-            if (showTagList) {
-              return setShowTagList(false);
-            }
             if (e.key === "@") {
               setShowTagList(true);
             }
@@ -1774,7 +1810,8 @@ function Message({
             showTagList && setShowTagList(false);
           }}
           onKeyUp={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) updateMessage();
+            if (!showTagList && e.key === "Enter" && !e.shiftKey)
+              updateMessage();
           }}
         />
         {showTagList && (

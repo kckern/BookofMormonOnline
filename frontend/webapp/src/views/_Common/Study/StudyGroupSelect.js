@@ -42,6 +42,8 @@ import soloIcon from "src/views/_Common/Study/svg/solo.svg";
 import privateIcon from "src/views/_Common/Study/svg/private.svg";
 import publicIcon from "src/views/_Common/Study/svg/public.svg";
 import moment from "moment";
+import SweetAlert from "react-bootstrap-sweetalert";
+import useModalA11y from "../AppModal/useModalA11y";
 import { history } from "src/models/routeHistory";
 
 // Messenger feature flag
@@ -73,6 +75,22 @@ const typeIcons = {
   open: openIcon,
 };
 
+// Fire a click-equivalent handler on Enter/Space so div/span "buttons" are
+// operable by keyboard. preventDefault on Space stops the page from scrolling.
+const activateOnKey = (handler) => (e) => {
+  if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
+    e.preventDefault();
+    handler(e);
+  }
+};
+
+// label() returns the raw key when a translation is missing, which is useless
+// as an accessible name. Fall back to a readable English default in that case.
+const a11yLabel = (key, fallback) => {
+  const v = label(key);
+  return !v || v === key || v.trim() === "" ? fallback : v;
+};
+
 export function StudyGroupSelect({ appController }) {
   const setGroups = () => {
     // COMMENT BY ME
@@ -91,6 +109,21 @@ export function StudyGroupSelect({ appController }) {
     appController.states.studyGroup.groupList,
   ]);
 
+  // Close the drawer when the group list opens. This MUST run as an effect, not
+  // in the render body: openDrawer() dispatches into Main's reducer, and calling
+  // it during StudyGroupSelect's render triggers React's "Cannot update a
+  // component (`Main`) while rendering `StudyGroupSelect`" warning.
+  useEffect(() => {
+    if (
+      appController.states.studyGroup.isGroupListOpen &&
+      appController.states.studyGroup.isDrawerOpen
+    )
+      appController.functions.openDrawer(false);
+  }, [
+    appController.states.studyGroup.isGroupListOpen,
+    appController.states.studyGroup.isDrawerOpen,
+  ]);
+
   //LOADING SENDBIRD
   if (!appController.sendbird)
     return (
@@ -102,6 +135,7 @@ export function StudyGroupSelect({ appController }) {
         <img
           src={appController.states.studyGroup.studyModeOn ? group : dnd}
           className="generic"
+          alt=""
         />
       </div>
     );
@@ -123,6 +157,7 @@ export function StudyGroupSelect({ appController }) {
           <img
             src={appController.states.studyGroup.studyModeOn ? group : dnd}
             className="generic"
+            alt=""
           />
         </div>
       </>
@@ -137,27 +172,31 @@ export function StudyGroupSelect({ appController }) {
         ) : null}
         <div
           className={"StudyGroupSelect"}
-          tabIndex={-1}
+          role="button"
+          tabIndex={0}
+          aria-label={label("study_groups")}
+          aria-haspopup="true"
+          aria-expanded={appController.states.studyGroup.isGroupListOpen}
           onClick={() => {
             appController.functions.openGroupList(
               !appController.states.studyGroup.isGroupListOpen,
             );
           }}
+          onKeyDown={activateOnKey(() =>
+            appController.functions.openGroupList(
+              !appController.states.studyGroup.isGroupListOpen,
+            ),
+          )}
         >
           <img
             src={appController.states.studyGroup.studyModeOn ? group : dnd}
             className="generic"
+            alt=""
           />
         </div>
       </>
     );
   }
-  if (
-    appController.states.studyGroup.isGroupListOpen &&
-    appController.states.studyGroup.isDrawerOpen
-  )
-    appController.functions.openDrawer(false);
-
   let imgurl = appController.states.studyGroup.activeGroup.coverUrl;
   if (!appController.states.studyGroup.studyModeOn) {
     imgurl = dnd;
@@ -182,12 +221,27 @@ export function StudyGroupSelect({ appController }) {
       ) : null}
       <div
         className={"StudyGroupSelect"}
-        tabIndex={-1}
+        role="button"
+        tabIndex={0}
+        aria-label={
+          appController.states.studyGroup.activeGroup?.name
+            ? label("xs_study_groups", [
+                appController.states.studyGroup.activeGroup.name,
+              ])
+            : label("study_groups")
+        }
+        aria-haspopup="true"
+        aria-expanded={appController.states.studyGroup.isGroupListOpen}
         onClick={() => {
           appController.functions.openGroupList(
             !appController.states.studyGroup.isGroupListOpen,
           );
         }}
+        onKeyDown={activateOnKey(() =>
+          appController.functions.openGroupList(
+            !appController.states.studyGroup.isGroupListOpen,
+          ),
+        )}
         style={{ backgroundImage: `url('${imgurl}')` }}
       >
         {counter}
@@ -198,6 +252,16 @@ export function StudyGroupSelect({ appController }) {
 
 export function StudyGroupList({ appController }) {
   const [contentTag, setContentTag] = useState("list");
+  const containerRef = React.useRef(null);
+
+  const closeList = () => appController.functions.openGroupList(false);
+
+  // When the dropdown opens, move keyboard focus into it so keyboard-only users
+  // land inside the panel; Esc returns control by closing it (focus falls back
+  // to the toggle, which is now focusable). Mouse behaviour is unchanged.
+  useEffect(() => {
+    containerRef.current?.focus();
+  }, []);
 
   const [studyModeOn] = useState(() => {
     let sound = new Audio(`${assetUrl}/interface/audio/studymode-on`);
@@ -271,20 +335,37 @@ export function StudyGroupList({ appController }) {
 
   return (
     <div
-      tabIndex="1"
+      tabIndex={-1}
+      ref={containerRef}
       id="dropdown"
+      role="dialog"
+      aria-label={
+        nickname
+          ? label("xs_study_groups", [nickname])
+          : label("study_groups")
+      }
+      onKeyDown={(e) => {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          closeList();
+        }
+      }}
       className={
         "groupList noselect" +
         (appController.states.studyGroup.studyModeOn ? "" : " disabled")
       }
     >
-      <span className="arrow">▲</span>
-      <span
+      <span className="arrow" aria-hidden="true">
+        ▲
+      </span>
+      <button
+        type="button"
         className="close"
-        onClick={() => appController.functions.openGroupList(false)}
+        aria-label={a11yLabel("close", "Close")}
+        onClick={closeList}
       >
         ×
-      </span>
+      </button>
       <h5>
         {nickname
           ? label("xs_study_groups", [nickname])
@@ -327,17 +408,22 @@ function StudyGroupListItem({ group, appController }) {
     onsite: 0,
     ingroup: 0,
   });
+  // Guard the destructive leave action behind a confirmation (one mis-click in
+  // the ⋮ menu used to drop you out of the group with no undo).
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  useModalA11y(showLeaveConfirm, { onClose: () => setShowLeaveConfirm(false), label: label("leave_group") });
 
   const leave = async (s) => {
+		setShowLeaveConfirm(false);
 		try {
 			await group.leave();
 			appController.functions.setActiveStudyGroup(null);
 			appController.sendbird?.getStudyGroups()
-			.then((list) =>{ 
+			.then((list) =>{
         const [group] = list || [];
         if(group) appController.functions.setActiveStudyGroup(group);
         appController.functions.setStudyGroups(list)
-      });	
+      });
 		} catch (error) {
 			console.log('Error',error);
 			return false;
@@ -345,12 +431,24 @@ function StudyGroupListItem({ group, appController }) {
   };
 
   useEffect(() => {
-    channelAtAGlance(group).then((groupNums) => setGroupNums(groupNums));
+    let mounted = true;
+    channelAtAGlance(group).then((groupNums) => {
+      if (mounted) setGroupNums(groupNums);
+    });
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   //Keep Numbers Updated
   useEffect(() => {
-    channelAtAGlance(group).then((groupNums) => setGroupNums(groupNums));
+    let mounted = true;
+    channelAtAGlance(group).then((groupNums) => {
+      if (mounted) setGroupNums(groupNums);
+    });
+    return () => {
+      mounted = false;
+    };
   }, [
     JSON.stringify(group.members),
     group.unreadMessageCount,
@@ -434,6 +532,7 @@ function StudyGroupListItem({ group, appController }) {
       <img
         onError={breakCache}
         src={group.lastMessage._sender.plainProfileUrl}
+        alt=""
       />
       <span className="speaker">
         {truncate(group.lastMessage._sender.nickname, 5, 5, 20)}
@@ -486,9 +585,14 @@ function StudyGroupListItem({ group, appController }) {
     }
     return {
       color: color,
+      userId: m.userId,
       components: (
-        <div className={color}>
-          <img onError={breakCache} src={m.profileUrl} />
+        <div key={m.userId} className={color}>
+          <img
+            onError={breakCache}
+            src={m.profileUrl}
+            alt={m.nickname || ""}
+          />
           <div className="dot"></div>
         </div>
       ),
@@ -521,6 +625,7 @@ function StudyGroupListItem({ group, appController }) {
           <img
             className="grouptype"
             src={typeIcons[group.customType.toLowerCase()]}
+            alt={label("group_type_" + group.customType.toLowerCase()) || ""}
           />{" "}
           {group.name}
         </div>
@@ -538,7 +643,12 @@ function StudyGroupListItem({ group, appController }) {
           setDropDown(!dropDown);
         }}
       >
-        <DropdownToggle tag="div" className="threedots">
+        <DropdownToggle
+          tag="button"
+          type="button"
+          className="threedots"
+          aria-label={a11yLabel("group_options", "Group options")}
+        >
           ⋮
         </DropdownToggle>
         <DropdownMenu>
@@ -551,27 +661,55 @@ function StudyGroupListItem({ group, appController }) {
               appController.functions.openDrawer(true);
             }}
           >
-            <img src={groupicon} />
+            <img src={groupicon} alt="" />
             <div>{label("open_study_hall")}</div>
           </DropdownItem>
           {lastMessage && (
             <DropdownItem onClick={() => handleGoToLastMsg()}>
-              <img src={ffwd} />
+              <img src={ffwd} alt="" />
               <div>{label("go_to_last_msg")}</div>
             </DropdownItem>
           )}
           {["private", "public"].includes(group.customType) && (
             <DropdownItem onClick={showInviteLink}>
-              <img src={invite} />
+              <img src={invite} alt="" />
               <div>{label("get_invite_link")}</div>
             </DropdownItem>
           )}
-          <DropdownItem onClick={leave}>
-            <img src={exit} />
+          <DropdownItem
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setShowLeaveConfirm(true);
+            }}
+          >
+            <img src={exit} alt="" />
             <div>{label("leave_group")}</div>
           </DropdownItem>
         </DropdownMenu>
       </Dropdown>
+      <SweetAlert
+        title={label("leave_group")}
+        customClass={"custom-alert"}
+        show={showLeaveConfirm}
+        onConfirm={leave}
+        onCancel={() => setShowLeaveConfirm(false)}
+        confirmBtnBsStyle="danger"
+        cancelBtnBsStyle="default"
+        confirmBtnText={label("leave_group")}
+        cancelBtnText={label("cancel")}
+        showCancel
+        btnSize=""
+      >
+        {() => (
+          <div className="custom-alert-container">
+            <div>{label("are_you_sure")}</div>
+            <div>
+              <strong>{group.name}</strong>
+            </div>
+          </div>
+        )}
+      </SweetAlert>
     </li>
   );
 }
@@ -581,7 +719,7 @@ export function GroupMemberCircles({ circles, greenCount }) {
   return (
     <div className="groupMembersContainer">
       <div className="memberCount">
-        <img src={usericon} />
+        <img src={usericon} alt="" />
         {greenCount ? greenCount + "/" : null}
         {circles.length + 1}
       </div>
@@ -730,7 +868,7 @@ function NewStudyGroup({ appController }) {
                 <FormGroup className="mb-0">
                   <Label>
                     <Input type="radio" name="group-radio" value="solo" />
-                    <img src={soloIcon} />
+                    <img src={soloIcon} alt="" />
                     <span className="iconLabel">
                       {label("group_type_solo")}
                     </span>
@@ -738,7 +876,7 @@ function NewStudyGroup({ appController }) {
                   </Label>
                   <Label>
                     <Input type="radio" name="group-radio" value="private" />
-                    <img src={privateIcon} />
+                    <img src={privateIcon} alt="" />
                     <span className="iconLabel">
                       {label("group_type_private")}
                     </span>
@@ -751,7 +889,7 @@ function NewStudyGroup({ appController }) {
                       value="public"
                       className="publicgroup"
                     />
-                    <img src={publicIcon} />
+                    <img src={publicIcon} alt="" />
                     <span className="iconLabel">
                       {label("group_type_public")}
                     </span>
@@ -759,7 +897,7 @@ function NewStudyGroup({ appController }) {
                   </Label>
                   <Label>
                     <Input type="radio" name="group-radio" value="open" />
-                    <img src={openIcon} />
+                    <img src={openIcon} alt="" />
                     <span className="iconLabel">
                       {label("group_type_open")}
                     </span>

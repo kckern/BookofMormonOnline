@@ -115,6 +115,9 @@ function GroupBrowser({ appController, activeGroup, setActiveGroup }) {
   const isFiltered = !!queryFilter.grouping;
 
   useEffect(() => {
+    // Guard against setState after unmount: GroupBrowser can be torn down (route
+    // change to /study) before the homegroups/leaderboard request resolves.
+    let cancelled = false;
     setData([]);
     BoMOnlineAPI(
       {
@@ -123,11 +126,15 @@ function GroupBrowser({ appController, activeGroup, setActiveGroup }) {
       },
       { useCache: false },
     ).then((r) => {
+      if (cancelled) return;
       setData(r.homegroups);
       setLeaders(r.leaderboard[0].currentProgress);
       setFinishers(r.leaderboard[0].recentFinishers || []);
       setSeeMoreLabel(label("see_more"));
     });
+    return () => {
+      cancelled = true;
+    };
   }, [appController.states.user.user, queryFilter?.grouping]);
 
   let groupcount = groupListData
@@ -244,7 +251,7 @@ function RecentFinishers({ finishers }) {
             />
             <span className="trophies">
               {m.finished?.map((i) => (
-                <img src={trophy} key={i} />
+                <img src={trophy} key={i} alt="" />
               ))}
             </span>
           </div>
@@ -306,7 +313,7 @@ function LeaderBoard({ leaders }) {
             />
             <span className="trophies">
               {m.finished?.map((i) => (
-                <img src={trophy} key={i} />
+                <img src={trophy} key={i} alt="" />
               ))}
             </span>
           </div>
@@ -367,7 +374,7 @@ function GroupCard({ groupData, appController, activeGroup, setActiveGroup }) {
       <Link to={`/home/${groupData.url}`}>
         <div className="groupContent" onClick={() => ReactTooltip.hide()}>
           <div className="groupImage">
-            <img src={groupData.picture} />
+            <img src={groupData.picture} alt={groupData.name || ""} />
           </div>
           <div className="groupText">
             <div className="groupTitle">{groupData.name}</div>
@@ -376,7 +383,7 @@ function GroupCard({ groupData, appController, activeGroup, setActiveGroup }) {
             {groupData.latest?.user ? (
               <div className="groupMessage">
                 <div className="groupMessageAvatar">
-                  <img src={groupData.latest.user.picture} onError={breakCache} />
+                  <img src={groupData.latest.user.picture} onError={breakCache} alt={groupData.latest.user.nickname || ""} />
                 </div>
                 <div className="groupMessageContent">
                   {" "}
@@ -396,7 +403,7 @@ function GroupCard({ groupData, appController, activeGroup, setActiveGroup }) {
             <div className="groupMembers">
               {visibleMembers?.map((m, i) => (
                 <div key={i}>
-                  <img src={m.picture} onError={breakCache} />
+                  <img src={m.picture} onError={breakCache} alt={m.nickname || ""} />
                 </div>
               ))}
             </div>
@@ -584,7 +591,7 @@ export function groupToolTipHtml(groupData) {
   return `<div class='cardTip'>
   <div>
     <div class='groupimg'>
-      <img src=${groupData.picture} />
+      <img src=${groupData.picture} alt='' />
     </div>
     <div class='titledesc'>
       <h4>${groupData.name}</h4>
@@ -595,7 +602,7 @@ export function groupToolTipHtml(groupData) {
     ${sortedMembers
       .map(
         (m, i) => ` <li key=${i}>
-      <img src=${m.picture} />
+      <img src=${m.picture} alt='' />
       <div class='tip-progress'>
         <div>${m.progress}%</div>
       </div>
@@ -628,7 +635,7 @@ export function GroupLeaderBoard({ groupData }) {
               />
               <span className="trophies">
                 {m.finished?.map((i) => (
-                  <img src={trophy} key={i} />
+                  <img src={trophy} key={i} alt="" />
                 ))}
               </span>
             </div>

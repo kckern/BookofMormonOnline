@@ -154,10 +154,15 @@ export default function StudyGroupAdmin({ appController }) {
     e.target.dispatchEvent(evt);
   };
 
-  let description = null;
-  try {
-    description = JSON.parse(group.data)?.description;
-  } catch (e) {}
+  // Prefill the saved description. The backend now returns it both as a
+  // top-level `description` and merged into `data` JSON; read whichever is set
+  // so the edit form is populated on open (not the empty placeholder).
+  let description = group.description || "";
+  if (!description) {
+    try {
+      description = JSON.parse(group.data)?.description || "";
+    } catch (e) {}
+  }
 
   return (
     <div className={"StudyGroupChatPanel admin noselect"}>
@@ -247,7 +252,7 @@ export default function StudyGroupAdmin({ appController }) {
                 const {completed} = summary;
 
                 return (
-                  <Card className={"userAdminBox"}>
+                  <Card className={"userAdminBox"} key={member.userId}>
                     <CardHeader>
                       <ContextMenuTrigger
                         id={`${member.userId}_contextmenu`}
@@ -412,7 +417,11 @@ function RequestManagement({ appController }) {
       </CardHeader>
       <CardBody className="membershipRequests">
         {requesters.map((userObj) => (
-          <Requester userObj={userObj} appController={appController} />
+          <Requester
+            key={userObj.user_id}
+            userObj={userObj}
+            appController={appController}
+          />
         ))}
       </CardBody>
     </>

@@ -86,6 +86,23 @@ export const useConcurrentOperations = () => {
         abortControllers.current.clear();
     }, []);
 
+    // Abort every in-flight operation when the consuming component unmounts.
+    // Without this, an awaited operation resolves after unmount and its
+    // callback (which only short-circuits on signal.aborted, not on unmount)
+    // calls setState — "update on an unmounted component". Aborting on unmount
+    // sets signal.aborted, so those existing guards now also cover unmount.
+    useEffect(() => {
+        const controllers = abortControllers.current;
+        const operations = activeOperations.current;
+        return () => {
+            for (const controller of controllers.values()) {
+                controller.abort();
+            }
+            operations.clear();
+            controllers.clear();
+        };
+    }, []);
+
     return {
         executeOperation,
         isOperationRunning,

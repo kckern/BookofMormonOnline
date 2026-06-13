@@ -3,6 +3,7 @@ import SweetAlert from "react-bootstrap-sweetalert";
 import { label } from "src/models/Utils";
 import { generateGroupHash } from "../../Study/StudyGroupSelect";
 import QRCode from "react-qr-code";
+import useModalA11y from "../useModalA11y";
 // CSS
 import "../Style.scss";
 import { Alert } from "reactstrap";
@@ -23,6 +24,8 @@ export default function InviteLinkModal({  }) {
         setVisible(true);
     };
 
+    useModalA11y(visible, { onClose: () => setVisible(false), label: label("invite_link") });
+
     useEffect(() => {
         window.addEventListener("showInviteLink", toggleInviteLink, false);
         return () => {
@@ -30,10 +33,15 @@ export default function InviteLinkModal({  }) {
         };
     }, []);
 
-    useEffect(async () => {
-        const {hash} =( await studyGroup?.getMetaData(["hash"]) || {});
-        if(!hash || hash === "null") generateGroupHash(studyGroup, (response) => setHash(response.hash));
-        else setHash(hash);
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            const {hash} =( await studyGroup?.getMetaData(["hash"]) || {});
+            if (cancelled) return;
+            if(!hash || hash === "null") generateGroupHash(studyGroup, (response) => { if (!cancelled) setHash(response.hash); });
+            else setHash(hash);
+        })();
+        return () => { cancelled = true; };
     }, [studyGroup])
 
     const handleCopyTxt = useCallback(() => {

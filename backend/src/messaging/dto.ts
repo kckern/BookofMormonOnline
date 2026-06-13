@@ -44,7 +44,8 @@ export interface ChannelDTO {
   name: string;
   cover_url: string;
   custom_type: string;
-  data: string; // JSON string (back-compat)
+  description: string; // group description; schema declares MessengerChannel.description and every client selects it
+  data: string; // JSON string (back-compat — also mirrors description)
   metadata: Record<string, unknown> | null;
   members: MemberDTO[];
   member_count: number;

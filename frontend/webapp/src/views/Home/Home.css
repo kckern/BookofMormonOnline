@@ -175,7 +175,7 @@ margin: 0;
     word-break: break-all;
     height: calc(.7rem * 3);
     overflow: hidden;
-    color: #888;
+    color: #5c636a;
 }
 
 .Community  .groupCard .groupText
@@ -424,7 +424,7 @@ div.toolTipNickname
 
     text-align: right;
     cursor: pointer;
-    color:#AAA;
+    color:#6c757d;
 }
 
 .Community  .seeMore:hover{
@@ -624,7 +624,7 @@ img.groupAvatar
 
 .homeFeedHeader .timestamp,
 .homeFeedHeader .timestamp a{
-    color: #AAA;
+    color: #696969;
     white-space: nowrap;
     font-weight: 400;
     font-size: .8rem;
@@ -646,7 +646,7 @@ img.groupAvatar
 }
 .homeFeedHeader div.topLine .groupName.open
 {
-    background-color: #19875499
+    background-color: #198754
 }
 
 .homeFeedHeader span.feedAction
@@ -678,11 +678,11 @@ img.groupAvatar
 {
     display: flex;
     padding-bottom: 1em;
-    color:#888;
+    color:#6c757d;
     border-bottom: 1px solid #EEE;
 
 }
-.study .commentCount 
+.study .commentCount
 {
     text-align: right;
 }
@@ -718,7 +718,7 @@ img.groupAvatar
      font-weight: 800;
      font-size: 1em;
      text-align: center;
-     color:#888;
+     color:#6c757d;
 }
 .study .countRow .button:hover
 {
@@ -890,16 +890,16 @@ img.groupAvatar
     line-height: 1.3em;
 }
 
-.homeFeedHeader .progress.bot{  
+.homeFeedHeader .progress.bot{
       background-color: #d3e1ea;
-    color: #0006;
+    color: #333a40;
 }
 
 .homeFeedHeader .progress,
 .commentThreadItem .progress{
-    
-    color: #40805e;
-    border: 1px solid #40805e;
+
+    color: #2c5a42;
+    border: 1px solid #2c5a42;
     background-color: #b9e7cb;
 
     display: flex;
@@ -1315,7 +1315,7 @@ span.groupName,
 .leaderboard .lastseen
 {
     font-size: xx-small;
-    color: #888;
+    color: #595959;
     font-weight: 400;
     margin-top: .5ex;
 }

@@ -24,6 +24,18 @@ import type { MessageDTO, UserDTO, HighlightDTO } from './dto.js';
 import { getUsers } from './users.js';
 
 /**
+ * Max length (characters) of a stored message body. The column is TEXT (65535
+ * bytes) so this is an abuse/robustness cap at the trust boundary, mirroring the
+ * frontend composer cap (MAX_MESSAGE_LENGTH in frontend/webapp/src/models/Utils.js).
+ * Server-side defense-in-depth: a non-browser client (mobile/native/script) that
+ * bypasses the frontend cap is still bounded here. We truncate rather than reject
+ * so a slightly-over message still posts. NOTE: message text is stored RAW (not
+ * HTML-escaped) by design — the frontend renderer (ParseMessage) sanitizes at
+ * render via DOMPurify; escaping here would double-process and mangle display.
+ */
+export const MAX_MESSAGE_LENGTH = 2000;
+
+/**
  * Numeric, monotonic message_id (ms-timestamp based, like the legacy Sendbird
  * ids). MUST be numeric: the GraphQL HomeFeedItem.id is a Float and the frontend
  * route is /home/:channelId/:messageId(\d+) — a nanoid string id breaks both, so
@@ -299,6 +311,15 @@ export async function postMessage(
     parentMessageId?: string;
   },
 ): Promise<MessageDTO> {
+  // Server-side trust boundary: reject empty/whitespace-only bodies and cap
+  // length (defense-in-depth for non-browser clients that skip the UI cap).
+  if (typeof params.message !== 'string' || params.message.trim().length === 0) {
+    throw new Error('postMessage: message body must be a non-empty string');
+  }
+  if (params.message.length > MAX_MESSAGE_LENGTH) {
+    params.message = params.message.slice(0, MAX_MESSAGE_LENGTH);
+  }
+
   const messageId = nextMessageId();
 
   // Fold the raw client `data` blob and the structured `metadata` param into one

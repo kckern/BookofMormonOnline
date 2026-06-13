@@ -64,7 +64,7 @@ const toaster = (appController, src, color, val) => {
   toast.dismiss();
   toast.info(
     <div className={"toastBox " + color}>
-      <img src={src} onError={breakCache} />
+      <img src={src} alt="" onError={breakCache} />
       <div>{val}</div>
     </div>,
     { position: toast.POSITION.BOTTOM_LEFT, autoClose: 6000 },
@@ -85,8 +85,8 @@ export function StudyGroupBar({ appController }) {
     : "";
 
   return (
-    <div tabIndex={1} className={"StudyGroupBar" + isDrawerOpenClass}>
-      <div tabIndex={2}>
+    <div tabIndex={0} className={"StudyGroupBar" + isDrawerOpenClass}>
+      <div tabIndex={0}>
         <StudyGroupDrawer
           isOpen={appController.states.studyGroup.isDrawerOpen}
           appController={appController}
@@ -193,6 +193,7 @@ function StudyGroupStatus({ appController }) {
   const [userColors, setUserColors] = useState(getColorMap(users));
 
 useEffect(()=>{
+	let mounted = true;
 	const getLiveFreshUsers = async()=>{
 		const activeGroupMembers = appController.states.studyGroup.activeGroup?.members;
 		if(activeGroupMembers!==undefined && activeGroupMembers?.length !== 1){
@@ -211,6 +212,9 @@ useEffect(()=>{
 
 		let { users, bots } = getFreshUsers(appController, queryUsers);
 
+		// Guard against setState after unmount — the awaited pager can resolve
+		// after the component is gone (memory-leak warning).
+		if (!mounted) return;
 		setUsers(users);
 		setBots(bots);
 		}
@@ -224,9 +228,11 @@ useEffect(()=>{
 	};
 	window.addEventListener('memberPresenceChanged', onPresenceChanged);
 
-	setTimeout(getLiveFreshUsers,100);
+	const initialFetch = setTimeout(getLiveFreshUsers,100);
 
 	return ()=>{
+		mounted = false;
+		clearTimeout(initialFetch);
 		clearTimeout(presenceDebounce);
 		window.removeEventListener('memberPresenceChanged', onPresenceChanged);
 	}
@@ -428,12 +434,14 @@ function BotPlugin({ appController }) {
       >
         <DropdownToggle
           tag="div"
+          role="button"
+          aria-label={label("study_bots") || "Study bots"}
           className="DropdownToggleContainer"
           onClick={() => {}}
           key={userId}
         >
           <div className="botPlugin">
-            <img src={socket} />
+            <img src={socket} alt="" />
           </div>
         </DropdownToggle>
         <DropdownMenu className="dropdownMenu" key={`bot-${userId}`}>
@@ -456,7 +464,7 @@ function BotPlugin({ appController }) {
                   }}
                 >
                   <div className={`botInfo`}>
-                    <img src={bot?.picture} />
+                    <img src={bot?.picture} alt={bot?.nickname || ""} />
                     <div className="botInfoText">
                       <h6 className="botName">
                         {bot?.name}
@@ -515,7 +523,7 @@ export function StudyGroupUserCircle({ userObject, appController, isBot }) {
 
   let typingIndicator = isTyping ? (
     <div className={"typing"}>
-      <img src={typing} onError={(event) => (event.target.src = "")} />
+      <img src={typing} alt="" onError={(event) => (event.target.src = "")} />
     </div>
   ) : null;
   let summary = {};
@@ -524,7 +532,7 @@ export function StudyGroupUserCircle({ userObject, appController, isBot }) {
   } catch (e) {}
   let trophyIcons = summary.finished ? (
     <div className="trophyIcons">
-      <img src={trophy} />
+      <img src={trophy} alt="" />
     </div>
   ) : null;
 
@@ -537,23 +545,28 @@ export function StudyGroupUserCircle({ userObject, appController, isBot }) {
   if (isBot) classes.push("bot");
 
 	useEffect(()=>{
+		let mounted = true;
 		const getMessages = async()=>{
 			const groupParams = {
 				customTypesFilter:["DM"],
 				nicknameContainsFilter:userObject.nickname
 			}
 			const query = await appController.sendbird.sb.groupChannel.createMyGroupChannelListQuery(groupParams);
-			
+
 			const channels = await query.next();
-			if(channels.length > 0) {
+			// Guard against setState after unmount — the awaited query can resolve late.
+			if(mounted && channels.length > 0) {
 				setUnreadMessageCount(channels[0].unreadMessageCount);
 			}
 		}
 
 		window.addEventListener("unreadMessageCountChanged",getMessages);
 
-		return ()=>window.removeEventListener('unreadMessageCountChanged',getMessages);
-		
+		return ()=>{
+			mounted = false;
+			window.removeEventListener('unreadMessageCountChanged',getMessages);
+		};
+
 	},[appController.sendbird.sb.groupChannel])
 	
   return (
@@ -651,7 +664,7 @@ export function StudyGroupUser({
         >
           <Link to={"/" + bookmark.slug}>
             <div className="statRow">
-              <img src={crosshairs} />
+              <img src={crosshairs} alt="" />
               <div>{label("currently_studying")}:</div>
               <div></div>
             </div>
@@ -673,7 +686,7 @@ export function StudyGroupUser({
         >
           <Link to={"/" + bookmark.slug}>
             <div className="statRow">
-              <img src={bookmarkicon} />
+              <img src={bookmarkicon} alt="" />
               <div>{label("last_studied")}:</div>
               <div>
                 {bookmark.latest
@@ -709,7 +722,7 @@ export function StudyGroupUser({
         }}
       >
         <div className="statRow">
-          <img src={otherGroup.coverUrl} />
+          <img src={otherGroup.coverUrl} alt={otherGroup.name || ""} />
           <div>{label("current_group")}:</div>
           <div></div>
         </div>
@@ -728,7 +741,7 @@ export function StudyGroupUser({
       <DropdownItem disabled className="statBox">
         {summary.finished.map((t) => (
           <div className="statRow" key={t}>
-            <img src={trophy} />
+            <img src={trophy} alt="" />
             <div>
               {label("completed_on_x", [
                 moment.unix(t).format(label("history_date_format_full")),
@@ -771,13 +784,14 @@ export function StudyGroupUser({
   let dropDownContent = (
     <DropdownMenu>
       <DropdownItem header>
-        <img src={statusCircle} />
+        <img src={statusCircle} alt="" />
         {userObject.nickname}
         <div className="progresslist">
           <div className="progress">
             <div
               className={"progress-bar progress-bar-success"}
               role="progressbar"
+              aria-label={label("completed") || "Completed"}
               style={{
                 width:
                   (completedPerc > 0 && completedPerc < 2 ? 2 : completedPerc) +
@@ -790,6 +804,7 @@ export function StudyGroupUser({
             <div
               className={"progress-bar progress-bar-warning"}
               role="progressbar"
+              aria-label={label("started") || "Started"}
               style={{
                 width: (started > 0 && started < 2 ? 2 : started) + "%",
               }}
@@ -812,7 +827,7 @@ export function StudyGroupUser({
       <DropdownItem divider />
       <DropdownItem disabled className="statBox">
         <div className="statRow">
-          <img src={cake} />
+          <img src={cake} alt="" />
           <div>{label("date_started")}</div>
           <div>
             {summary.first
@@ -823,7 +838,7 @@ export function StudyGroupUser({
           </div>
         </div>
         <div className="statRow">
-          <img src={parkingmeter} />
+          <img src={parkingmeter} alt="" />
           <div>{label("study_time")}</div>
           <div>
             {summary.duration
@@ -834,7 +849,7 @@ export function StudyGroupUser({
           </div>
         </div>
         <div className="statRow">
-          <img src={count} />
+          <img src={count} alt="" />
           <div>{label("study_sessions")}</div>
           <div>{summary.count}</div>
         </div>
@@ -845,7 +860,7 @@ export function StudyGroupUser({
       <DropdownItem divider />
       <DropdownItem onClick={() => appController.functions.openDrawer(true)}>
         <div className="statRow">
-          <img src={groupicon} />
+          <img src={groupicon} alt="" />
           <div>{label("open_study_hall")}</div>
           <div> </div>
         </div>
@@ -860,7 +875,7 @@ export function StudyGroupUser({
         }
       >
         <div className="statRow">
-          <img src={chat} />
+          <img src={chat} alt="" />
           <div>{label("direct_messages")}</div>
           <div>
             <UnreadDMCount
@@ -879,7 +894,7 @@ export function StudyGroupUser({
     dropDownContent = (
       <DropdownMenu>
         <DropdownItem header className="botHeader">
-          <img src={green} />
+          <img src={green} alt="" />
           <div className="botNickname">{userObject.nickname}</div>
           {iAmOperator && (
             <Button
@@ -907,7 +922,7 @@ export function StudyGroupUser({
             <DropdownItem>
               <Link to={"/" + bookmark.slug}>
                 <div className="statRow">
-                  <img src={crosshairs} />
+                  <img src={crosshairs} alt="" />
                   <div>{label("recently_commented")}</div>
                   <div></div>
                 </div>
@@ -943,9 +958,9 @@ export function StudyGroupUser({
     dropDownContent = isBot ? null : (
       <DropdownMenu className="liveMessage">
         <DropdownItem header>
-          <img src={statusCircle} />
+          <img src={statusCircle} alt="" />
           {userObject.nickname}
-          <img src={messageicon} className="chatIcon" />
+          <img src={messageicon} className="chatIcon" alt="" />
         </DropdownItem>
 
         {liveMessage.channel.customType === "DM" ? (
@@ -966,7 +981,7 @@ export function StudyGroupUser({
         <DropdownItem>
           <Link to={"/" + bookmark.slug}>
             <div className="statRow">
-              <img src={crosshairs} />
+              <img src={crosshairs} alt="" />
               <div>{label("currently_studying")}:</div>
               <div></div>
             </div>
@@ -1003,6 +1018,8 @@ export function StudyGroupUser({
       >
         <DropdownToggle
           tag="div"
+          role="button"
+          aria-label={userObject?.nickname || label("group_member") || "Group member"}
           className="DropdownToggleContainer"
           onClick={handleClick}
           key={userId}

@@ -1,7 +1,7 @@
 
 
 import BoMOnlineAPI, { assetUrl } from 'src/models/BoMOnlineAPI';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Loader from 'src/views/_Common/Loader';
 import "./StudyGroupNotebook.css"
 import { normalizeUnits } from 'moment';
@@ -12,30 +12,35 @@ export default function StudyGroupNotebook({ appController }) {
     const [activeDivision, setActiveDivision] = useState("lehites");
     const [activeLeafCursors, setActiveLeafCursors] = useState(null);
     const [activeNotes, setActiveNotes] = useState(null);
-    if (!contents.length) {
-        BoMOnlineAPI({ contents: null }).then((r) => setContents(r.contents));
-        return (
-            <Loader />
-        )
-    }
 
+    // Load the table of contents once (was a setState-during-render).
+    useEffect(() => {
+        let cancelled = false;
+        BoMOnlineAPI({ contents: null }).then((r) => {
+            if (!cancelled) setContents(r.contents);
+        });
+        return () => {
+            cancelled = true;
+        };
+    }, []);
 
-    if(!activeLeafCursors && activeDivision)
-    {
-        //get page slugs
-        for(let i in contents)
-        {
-            let item = contents[i];
-            if(item.slug===activeDivision)
-            {
-                setActiveLeafCursors(item.pages.map(page=>page.slug.split("/").reverse().shift()));
-            }
-        }
-    }
+    // Derive the page-slug cursors for the active division (was a
+    // setState-during-render: a for-loop calling setActiveLeafCursors in the
+    // render body).
+    useEffect(() => {
+        if (!contents.length || !activeDivision) return;
+        const item = contents.find((c) => c.slug === activeDivision);
+        if (!item) return;
+        setActiveLeafCursors(
+            item.pages.map((page) => page.slug.split("/").reverse().shift())
+        );
+    }, [contents, activeDivision]);
 
-
-    if(activeLeafCursors && !activeNotes)
-    {
+    // Load notes for the active cursors (was a setState-during-render: a
+    // listQuery.load(...) called directly in the render body).
+    useEffect(() => {
+        if (!activeLeafCursors || activeNotes) return;
+        let cancelled = false;
 
         let group = appController.states.studyGroup.activeGroup;
 
@@ -49,21 +54,29 @@ export default function StudyGroupNotebook({ appController }) {
           if (error) {
               console.log(error)
           }
-          setActiveNotes(notes);
+          if (!cancelled) setActiveNotes(notes);
         });
-    
-    }
 
+        return () => {
+            cancelled = true;
+        };
+    }, [activeLeafCursors, activeNotes]);
+
+    if (!contents.length) {
+        return (
+            <Loader />
+        )
+    }
 
 
     return <div className={"StudyGroupChatPanel Notebook"} >
         <div>
-            <div className="topTabs">{contents.map(item =>  <div className={activeDivision===item.slug ? "active" : ""}>{item.title} <span className={"badge"}>{5}</span></div> )}</div>
+            <div className="topTabs">{contents.map(item =>  <div key={item.slug} className={activeDivision===item.slug ? "active" : ""} onClick={() => { if (activeDivision !== item.slug) { setActiveDivision(item.slug); setActiveLeafCursors(null); setActiveNotes(null); } }}>{item.title} <span className={"badge"}>{5}</span></div> )}</div>
             <div className="noteList">
                 {activeNotes?.length}
                 {activeNotes?.map(note=>{
                     let dateObj = (new Date(note.createdAt));
-                    return (<div className="note">
+                    return (<div className="note" key={note.messageId}>
                         <h4>1 Nephi 4:3</h4>
                         <b>{note?._sender?.nickname}</b>
                         <i>{dateObj.toLocaleDateString("en-US")}</i>

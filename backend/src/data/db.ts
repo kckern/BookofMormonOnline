@@ -17,6 +17,14 @@ export function getDb(): Kysely<DB> {
         user: env.MYSQL_USER,
         password: env.MYSQL_PASSWORD,
         database: env.MYSQL_DB,
+        // The DB stores DATETIME columns (e.g. messenger_messages.created_at) in
+        // UTC wall-clock (DB server time_zone = SYSTEM = UTC; CURRENT_TIMESTAMP
+        // writes UTC). mysql2 defaults timezone:'local', so it reads those UTC
+        // strings back as if they were in the Node process's local zone
+        // (America/Los_Angeles here, UTC-7), producing Date objects shifted +7h
+        // into the future — every comment rendered "in 7 hours" via fromNow().
+        // Pin the driver to UTC so DATETIME round-trips faithfully.
+        timezone: 'Z',
         connectionLimit: 15,
         // The DB is REMOTE (public host); idle TCP connections get silently
         // dropped by NAT/firewall, and mysql2 hands those dead connections back

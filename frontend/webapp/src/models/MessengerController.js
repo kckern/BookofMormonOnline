@@ -220,6 +220,14 @@ export default class MessengerController {
       }, 500);
     });
 
+    // Notification push: the backend emits notification_received to the
+    // recipient's personal room (user:<userId>) when someone replies to or
+    // reacts on their message. Patch the bell in place — no polling, no refetch.
+    this.socket.on('notification_received', (notification) => {
+      if (!notification) return;
+      appController.functions.addNotification(notification);
+    });
+
     // Presence push (parity 12): backend broadcasts user_presence to every
     // room a user joins/leaves on connect/disconnect. Patch the cached
     // member's connectionStatus in place, then notify listeners so study
@@ -514,11 +522,25 @@ export default class MessengerController {
         }
       }`;
       const result = await this.gqlRequest(mutation);
-      
+
       if (result?.messengerCreateChannel) {
-        const channel = this._normalizeChannel(result.messengerCreateChannel);
-        this.channels.set(channel.url, channel);
-        return { groupChannel: channel, room: null };
+        // The create mutation returns only channel_url/name/cover_url/custom_type
+        // — NO members — so shapeChannelFields() would compute myRole="none" and
+        // the creator's operator-only UI (Admin tab + invite controls) would
+        // never appear until a reload. Re-fetch the full channel (members
+        // included) so myRole hydrates to "operator" immediately. getChannel
+        // also caches it, so the post-create set-active flow gets the hydrated
+        // object. Fall back to the thin channel if the re-fetch fails.
+        const channelUrl = result.messengerCreateChannel.channel_url;
+        try {
+          const channel = await this.sb.groupChannel.getChannel(channelUrl);
+          return { groupChannel: channel, room: null };
+        } catch (e) {
+          console.warn('Messenger: createNewGroup re-fetch failed, using thin channel', e);
+          const channel = this._normalizeChannel(result.messengerCreateChannel);
+          this.channels.set(channel.url, channel);
+          return { groupChannel: channel, room: null };
+        }
       }
       return null;
     } catch (error) {
@@ -812,6 +834,65 @@ export default class MessengerController {
     } catch (error) {
       console.error('Messenger: loadUnreadDMs error', error);
       return {};
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // PUBLIC API - Notifications
+  // ─────────────────────────────────────────────────────────────────
+
+  // Derived per-user notification feed (replies/reactions on the user's
+  // messages + pending group invites). Auth is via the Bearer token, so no
+  // userId arg is needed (the resolver uses the acting user).
+  async loadNotifications() {
+    try {
+      const query = `query {
+        notifications {
+          id
+          type
+          channel_url
+          message_id
+          text
+          created_at
+          is_read
+          actor { user_id nickname profile_url is_bot }
+        }
+      }`;
+      const result = await this.gqlRequest(query);
+      return result?.notifications || [];
+    } catch (error) {
+      console.error('Messenger: loadNotifications error', error);
+      return [];
+    }
+  }
+
+  async loadNotificationUnreadCount() {
+    try {
+      const result = await this.gqlRequest(`query { notificationUnreadCount }`);
+      return result?.notificationUnreadCount || 0;
+    } catch (error) {
+      console.error('Messenger: loadNotificationUnreadCount error', error);
+      return 0;
+    }
+  }
+
+  async markNotificationRead(notificationId) {
+    try {
+      return await this.gqlRequest(
+        `mutation { markNotificationRead(notificationId: ${JSON.stringify(notificationId)}) }`,
+      );
+    } catch (error) {
+      console.error('Messenger: markNotificationRead error', error);
+      return null;
+    }
+  }
+
+  async markAllNotificationsRead() {
+    try {
+      return await this.gqlRequest(`mutation { markAllNotificationsRead }`);
+    } catch (error) {
+      console.error('Messenger: markAllNotificationsRead error', error);
+      return null;
     }
   }
 
@@ -1492,11 +1573,17 @@ export default class MessengerController {
           try {
             if (params.invitedUserIds || params.isDistinct || params.customType) {
               const userIds = [...new Set([...(params.invitedUserIds || []), this.userId])];
+              const customType = params.customType || 'DM';
               if (params.isDistinct) {
-                const channels = await this.getStudyGroups();
+                // Look up over the SAME channel class we're creating (DMs are
+                // excluded from getStudyGroups, so that list could never match a
+                // DM and the dedup silently no-op'd). This is the fast path; the
+                // backend also enforces isDistinct dedup as the race-proof
+                // authority.
+                const channels = await this.getMyChannels([customType]);
                 const found = channels.find(
                   (c) =>
-                    c.customType === (params.customType || 'DM') &&
+                    c.customType === customType &&
                     (c.members || []).length === userIds.length &&
                     userIds.every((id) => (c.members || []).some((m) => m.userId === id))
                 );
@@ -1506,12 +1593,15 @@ export default class MessengerController {
                 }
               }
               const esc = (v) => JSON.stringify(v ?? '');
+              // For distinct channels, do NOT forward a client channelUrl — let
+              // the server reuse/create the canonical channel for the member set.
+              const includeUrl = params.channelUrl && !params.isDistinct;
               const mutation = `mutation {
                 messengerCreateChannel(
                   name: ${esc(params.name || userIds.join('-'))},
-                  customType: ${esc(params.customType || 'DM')},
+                  customType: ${esc(customType)},
                   operatorIds: [${esc(this.userId)}],
-                  userIds: ${JSON.stringify(userIds)}${params.channelUrl ? `,\n                  channelUrl: ${esc(params.channelUrl)}` : ''}
+                  userIds: ${JSON.stringify(userIds)}${params.isDistinct ? `,\n                  isDistinct: true` : ''}${includeUrl ? `,\n                  channelUrl: ${esc(params.channelUrl)}` : ''}
                 ) { channel_url }
               }`;
               const result = await this.gqlRequest(mutation);

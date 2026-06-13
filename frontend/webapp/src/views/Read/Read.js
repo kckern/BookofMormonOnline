@@ -251,7 +251,9 @@ export default function ReadScripture({ appController }) {
 
                     return nextChapterData;
                 } finally {
-                    setIsContentLoading(false);
+                    // finally runs even on abort/unmount; guard the setState so
+                    // it can't fire on an unmounted component.
+                    if (!signal.aborted) setIsContentLoading(false);
                 }
             },
             { allowMultiple: false }
@@ -456,12 +458,14 @@ export default function ReadScripture({ appController }) {
                             }
                         }
                         if (!signal.aborted) setPassageNotesLoading(false);
-                    } else {
+                    } else if (!signal.aborted) {
                         setPassageNotesLoading(false);
                     }
                     return chapterData;
                 } finally {
-                    setIsContentLoading(false);
+                    // finally runs even on abort/unmount; guard the setState so
+                    // it can't fire on an unmounted component.
+                    if (!signal.aborted) setIsContentLoading(false);
                 }
             },
             { abortPrevious: true }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, useHistory, Link, useRouteMatch } from "react-router-dom";
 import crypto from "crypto-browserify";
 import ProgressBox from "../User/ProgressBox.js";
@@ -35,6 +35,7 @@ import { prepareQuery } from "../_Common/Study/StudyChat.js";
 import like from "../_Common/Study/svg/like.svg";
 import comment from "../_Common/Study/svg/comment.svg";
 import SweetAlert from "react-bootstrap-sweetalert";
+import useModalA11y from "../_Common/AppModal/useModalA11y";
 import Parser from "html-react-parser";
 
 import soloIcon from "src/views/_Common/Study/svg/solo.svg";
@@ -56,44 +57,67 @@ export function HomeFeed({
   const [homeGroups, setHomeGroups] = useState([]);
   const [loader, setLoader] = useState(null);
   const [linkedContent, setLinkedContent] = useState({});
+  // Incremental reveal: build the DOM a page at a time instead of mounting all
+  // ~200+ feed cards up-front. Each card still lazy-loads its own comments via
+  // VisibilitySensor; this just caps how many cards exist at once.
+  const FEED_PAGE_SIZE = 20;
+  const [visibleCount, setVisibleCount] = useState(FEED_PAGE_SIZE);
 
-  useEffect(async () => {
-    let token = appController.states.user.token;
-    setLoader(null);
-    let r = await BoMOnlineAPI(
-      { homefeed: { token, channel: activeGroup, message: messageId } },
-      { useCache: false },
-    );
-    let items = r.homefeed[0]?.feed || [];
-    let q = prepareQuery(items);
-
-    let linkedContent = await BoMOnlineAPI(q);
-    console.log({ q,linkedContent });
-    setLinkedContent(linkedContent);
-    setHomeItems(items);
-    setHomeGroups(r.homefeed[0]?.groups || []);
-    setLoader(null);
-
-    const tx = document.getElementsByTagName("textarea");
-    for (let i = 0; i < tx.length; i++) {
-      tx[i].setAttribute(
-        "style",
-        "height:" + tx[i].scrollHeight + "px;overflow-y:hidden;",
-      );
-      tx[i].addEventListener("input", OnInput, false);
-    }
+  useEffect(() => {
+    // Guard against setState after unmount / stale activeGroup change: an
+    // async effect body can't return a cleanup, so run the work in an inner
+    // fn and short-circuit every setState once `cancelled` flips.
+    let cancelled = false;
 
     function OnInput() {
       this.style.height = "auto";
       this.style.height = this.scrollHeight + "px";
     }
+
+    const load = async () => {
+      let token = appController.states.user.token;
+      setLoader(null);
+      let r = await BoMOnlineAPI(
+        { homefeed: { token, channel: activeGroup, message: messageId } },
+        { useCache: false },
+      );
+      if (cancelled) return;
+      let items = r.homefeed[0]?.feed || [];
+      let q = prepareQuery(items);
+
+      let linkedContent = await BoMOnlineAPI(q);
+      if (cancelled) return;
+      setLinkedContent(linkedContent);
+      setHomeItems(items);
+      setHomeGroups(r.homefeed[0]?.groups || []);
+      setVisibleCount(FEED_PAGE_SIZE);
+      setLoader(null);
+
+      const tx = document.getElementsByTagName("textarea");
+      for (let i = 0; i < tx.length; i++) {
+        tx[i].setAttribute(
+          "style",
+          "height:" + tx[i].scrollHeight + "px;overflow-y:hidden;",
+        );
+        tx[i].addEventListener("input", OnInput, false);
+      }
+    };
+
+    load();
+
+    return () => {
+      cancelled = true;
+    };
   }, [activeGroup]);
 
   if (loader) return loader;
   let bannerGroup = activeGroup
     ? homeGroups?.filter((g) => g.url === activeGroup).shift()
     : null;
-  let items = homeItems.map((item, seq) => (
+  const hasMore = visibleCount < homeItems.length;
+  const revealMore = () =>
+    setVisibleCount((c) => Math.min(c + FEED_PAGE_SIZE, homeItems.length));
+  let items = homeItems.slice(0, visibleCount).map((item, seq) => (
     <HomeFeedItem
       appController={appController}
       seq={seq}
@@ -131,7 +155,38 @@ export function HomeFeed({
         html
       />
       {items}
+      {hasMore && <FeedLoadMore key={visibleCount} onReveal={revealMore} />}
     </>
+  );
+}
+
+// Reveals the next page when the sentinel scrolls near the viewport. Uses a
+// native IntersectionObserver (with a generous rootMargin) so it works no
+// matter which ancestor (.rightPanelScroll, window, etc.) actually scrolls —
+// react-visibility-sensor misses custom scroll containers here.
+function FeedLoadMore({ onReveal }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const node = ref.current;
+    if (!node || typeof IntersectionObserver === "undefined") {
+      // Fallback: no IO support → reveal immediately so content isn't stuck.
+      onReveal();
+      return undefined;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) onReveal();
+      },
+      { rootMargin: "600px" },
+    );
+    io.observe(node);
+    return () => io.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return (
+    <div ref={ref} className="feedLoadMoreSentinel" aria-hidden="true">
+      <Loader />
+    </div>
   );
 }
 
@@ -145,7 +200,7 @@ function HomeFeedBanner({ appController, bannerGroup, setActiveGroup }) {
     <Card className="homeBannerCard">
       <CardBody className="homeBanner">
         <div className="homeBannerImg">
-          <img src={bannerGroup.picture} />
+          <img src={bannerGroup.picture} alt={bannerGroup.name || ""} />
           <GroupCallToAction
             appController={appController}
             groupData={bannerGroup}
@@ -187,9 +242,18 @@ function HomeFeedItem({
     appController.states.studyGroup?.groupList.map((g) => g.url) || [];
   const [comments, fetchComments] = useState([]);
   const [fetching, setFetching] = useState(false);
+  // Track mount so the post-await setState in loadCommentsFromAPI can't fire
+  // after the feed item scrolls out / the feed reloads (unmounted-setState warn).
+  const isMounted = useRef(true);
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   //load comments from api immediate if seq==1
-  useEffect(async () => {
+  useEffect(() => {
     if (seq === 0) {
       loadCommentsFromAPI();
     }
@@ -222,6 +286,7 @@ function HomeFeedItem({
     let channel = item.channel_url;
     let token = appController.states.user.token;
     let comments = await BoMOnlineAPI({ homethread: { token, channel, message } }, { useCache: false })
+    if (!isMounted.current) return;
     fetchComments(comments.homethread);
     setFetching(false);
   }
@@ -233,8 +298,10 @@ function HomeFeedItem({
     }
   };
   let finished = item.user.finished;
-  const trophyImg = finished ? <img className="trophy" src={trophy} /> : null;
-  const statusBox = item.user.isBot ? 
+  const trophyImg = finished ? (
+    <img className="trophy" src={trophy} alt={label("finished") || "Finished"} />
+  ) : null;
+  const statusBox = item.user.isBot ?
   <div className="progress bot">BOT</div> :
   <div className="progress">{item.user.progress}%</div>;
   return (
@@ -250,7 +317,8 @@ function HomeFeedItem({
               data-arrow-color={""}
               className={"groupName " + group.privacy}
             >
-              <img src={privacyIcon} /> {group.name}
+              <img src={privacyIcon} alt={label(group.privacy + "_group") || ""} />{" "}
+              {group.name}
             </span>
           </div>
 
@@ -261,7 +329,11 @@ function HomeFeedItem({
         <CardHeader className="homeFeedHeader noselect">
           <div className="imagebox">
             {trophyImg}
-            <img src={item.user.picture} onError={breakCache} />
+            <img
+              src={item.user.picture}
+              onError={breakCache}
+              alt={item.user.nickname || ""}
+            />
             {statusBox}
           </div>
           <h5>
@@ -278,7 +350,7 @@ function HomeFeedItem({
             className="groupAvatar"
             onClick={() => setActiveGroup(group.url)}
             src={group.picture}
-            alt={group.url}
+            alt={group.name || group.url || ""}
           />
         </CardHeader>
         <CardBody className="homeFeedBody">
@@ -391,20 +463,20 @@ function LikeUI({ likes, memberMap }) {
   if (likes.length === 0)
     return (
       <>
-        <img src={like} className="like" /> 0 {label("likes")}
+        <img src={like} className="like" alt="" /> 0 {label("likes")}
       </>
     );
 
   let html = `<ul>${likeObjs
     .map(
       (i) =>
-        `<li><img src='${i?.picture}'><span class='progress'>${i?.progress}%</span> ${i?.nickname}</li>`,
+        `<li><img src='${i?.picture}' alt=''><span class='progress'>${i?.progress}%</span> ${i?.nickname}</li>`,
     )
     .join("")}</ul>`;
 
   return (
     <span data-tip={html} data-for={"likeTip"}>
-      <img src={like} className="like" />
+      <img src={like} className="like" alt="" />
       <b>
         {namedlikes
           ?.map((u) => u?.nickname)
@@ -467,7 +539,7 @@ function MessageMedia({ item }) {
     if(!mediaSize) return null;
 
   return <div className="messageMedia" onClick={popUpImage}  id={componendId}>
-    <img src={imageUrl} />
+    <img src={imageUrl} alt="" />
     {mediaSize}
     {parentElementWidth}
   </div>
@@ -478,6 +550,7 @@ function Comments({ appController, comments, count, item, group, memberMap, sbCh
 
 
   const [alertOn, setAlert] = useState(false);
+  useModalA11y(alertOn, { onClose: () => setAlert(false), label: "Members only" });
 
   const [newMessages, setNewMessages] = useState([]);
   let myUserId = appController.states.user.user;
@@ -537,7 +610,7 @@ function Comments({ appController, comments, count, item, group, memberMap, sbCh
 
   let countRow = <div className="countRow noselect">
     <div className="likeCount"><LikeUI item={itemState} likes={likes} memberMap={memberMap} /></div>
-    <div className="commentCount"><img src={comment} className="commentimg" />{label(comlabel, [count || "..."])} </div>
+    <div className="commentCount"><img src={comment} className="commentimg" alt="" />{label(comlabel, [count || "..."])} </div>
   </div>;
 
   if (!likes.length && !count) countRow = null;
@@ -585,11 +658,11 @@ function Comments({ appController, comments, count, item, group, memberMap, sbCh
   let buttonRow = (
     <div className={"buttonRow " + (!sbChannel ? "disabledrow" : "")}>
       <Button disabled={!sbChannel} onClick={handleLike}>
-        <img src={like} className="like" />{" "}
+        <img src={like} className="like" alt="" />{" "}
         {label(likes.includes(myUserId) ? "unlike" : "like")}{" "}
       </Button>
       <Button disabled={!sbChannel} onClick={handleComment}>
-        <img src={comment} className="commentimg" /> {label("comment")}
+        <img src={comment} className="commentimg" alt="" /> {label("comment")}
       </Button>
     </div>
   );
@@ -641,7 +714,9 @@ function Comment({ comment }) {
   let finished = comment.user.finished;
   const isBot = comment.user.nickname === "StudyBuddy" || comment.user.isBot;
   const botBadge = isBot ? <span className="botBadge">BOT</span> : null;
-  const trophyImg = finished ? <img className="trophy" src={trophy} /> : null;
+  const trophyImg = finished ? (
+    <img className="trophy" src={trophy} alt={label("finished") || "Finished"} />
+  ) : null;
   let timeAgo = timeAgoString(comment.timestamp / 1000);
   return (
     <div
@@ -652,7 +727,11 @@ function Comment({ comment }) {
     >
       <div className="imagebox noselect">
         {trophyImg}
-        <img src={comment.user.picture} onError={breakCache} />
+        <img
+          src={comment.user.picture}
+          onError={breakCache}
+          alt={comment.user.nickname || ""}
+        />
         {!isBot && (
           <div className="progress">{comment.user.progress || 0}%</div>
         )}
@@ -688,14 +767,17 @@ function MyComment({
   let joinlabel =
     group.privacy === "open" ? "join_group" : "apply_for_membership";
   let finished = appController.states.user.finished;
-  let trophyComp = finished ? <img className="trophy" src={trophy} /> : null;
+  let trophyComp = finished ? (
+    <img className="trophy" src={trophy} alt={label("finished") || "Finished"} />
+  ) : null;
+  const myName = appController.states.user.social?.nickname || "";
 
   if (!sbChannel)
     return (
       <div className="commentThreadItem">
         <div className="imagebox noselect">
           {trophyComp}
-          <img src={img} onError={breakCache} />
+          <img src={img} onError={breakCache} alt={myName} />
           <div className="progress">
             {appController.states.user.progress.completed || 0}%
           </div>
@@ -761,7 +843,7 @@ function MyComment({
   return (
     <div className="commentThreadItem">
       <div className="imagebox noselect">
-        <img src={img} onError={breakCache} />
+        <img src={img} onError={breakCache} alt={myName} />
         <div className="progress">
           {appController.states.user.progress.completed || 0}%
         </div>

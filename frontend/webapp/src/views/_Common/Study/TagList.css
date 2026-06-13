@@ -16,6 +16,7 @@
   cursor: pointer;
 }
 
-.tagListItem:hover {
+.tagListItem:hover,
+.tagListItem.active {
   background: rgb(196, 196, 196);
 }

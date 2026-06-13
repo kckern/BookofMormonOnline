@@ -96,6 +96,8 @@ export function shapeReacters(reactions, members) {
       .map((id) => ({
         userId: id,
         nickname: byId[id]?.nickname || id,
+        // carry the avatar so reaction UIs can render faces, not just names
+        profileUrl: byId[id]?.profileUrl || byId[id]?.plainProfileUrl || null,
       }))
       .reverse();
   }

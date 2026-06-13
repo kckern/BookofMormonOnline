@@ -22,7 +22,6 @@ import {
 } from "src/models/Utils"
 import DirectMessages from "./DirectMessages"
 import StudyGroupProgress from "./StudyGroupProgress"
-import StudyGroupNotebook from "./StudyGroupNotebook"
 import StudyGroupAdmin from "./StudyGroupAdmin"
 import { getFreshUsers } from "./StudyGroupBar"
 
@@ -34,7 +33,6 @@ import admin from "src/views/User/svg/admin.svg"
 import adduser from "src/views/_Common/Study/svg/adduser.svg"
 import discussion from "src/views/User/svg/discussion.svg"
 import progress from "src/views/User/svg/progress.svg"
-import notebook from "src/views/User/svg/notebook.svg"
 import loadingicon from "src/views/User/svg/loading.svg"
 import dmicon from "src/views/User/svg/chat.svg"
 import moment from "moment"
@@ -51,9 +49,13 @@ export function StudyHall({ appController }) {
 
   let studyGroup = appController.states.studyGroup.activeGroup
 
+  // One-shot "opening" animation flag. Run once on mount with a cleared timer
+  // so an unmount within 50ms (quick hall open/close) doesn't setState on an
+  // unmounted component. (Was: no deps + no cleanup → leaked on every render.)
   useEffect(() => {
-    setTimeout(() => setOpening(false), 50)
-  })
+    const t = setTimeout(() => setOpening(false), 50)
+    return () => clearTimeout(t)
+  }, [])
   if (!studyGroup || studyGroup === -1) return null
   return (
     <div className={"StudyHall" + (opening ? " opening" : "")}>
@@ -102,7 +104,7 @@ export function InviteButton({ studyGroup }) {
   return (
     <Button onClick={showInviteLink} className="invite">
       {" "}
-      <img src={adduser} /> {label("invite")}
+      <img src={adduser} alt="" /> {label("invite")}
     </Button>
   )
 }
@@ -127,6 +129,7 @@ function StudyGroupSideBar({
     : 0
 
 		useEffect(()=>{
+			let mounted = true;
 			const getLiveFreshUsers = async()=>{
 				const activeGroupMembers = group.members;
 				if(activeGroupMembers!==undefined && activeGroupMembers?.length !== 1){
@@ -140,6 +143,9 @@ function StudyGroupSideBar({
 
 				let { users } = getFreshUsers(appController, queryUsers);
 
+				// Guard against setState after unmount — the awaited query can
+				// resolve after a quick hall open/close has torn the bar down.
+				if (!mounted) return;
 				setUsers(users);
 				}
 			}
@@ -153,9 +159,11 @@ function StudyGroupSideBar({
 			};
 			window.addEventListener('memberPresenceChanged', onPresenceChanged);
 
-			setTimeout(getLiveFreshUsers,100);
+			const initialFetch = setTimeout(getLiveFreshUsers,100);
 
 			return ()=>{
+				mounted = false;
+				clearTimeout(initialFetch);
 				clearTimeout(presenceDebounce);
 				window.removeEventListener('memberPresenceChanged', onPresenceChanged);
 			}
@@ -179,7 +187,7 @@ function StudyGroupSideBar({
             data-tip={label("tooltip_admin")}
             data-for={tooltip_id}
           >
-            <img className="icon" src={admin} />
+            <img className="icon" src={admin} alt="" />
             {requests ? <span className="requestCount">{requests}</span> : null}
             <div className="label">{label("admin")}</div>
           </li>
@@ -198,32 +206,27 @@ function StudyGroupSideBar({
               }}
             />
           </>
-          <img className="icon" src={discussion} />
+          <img className="icon" src={discussion} alt="" />
           <div className="label">{label("discussion")}</div>
           <UnreadDMCount count={unread} />
         </li>
-        {false ? (
-          <>
-            <li
-              className={isActive("notebook")}
-              onClick={() => setPanel({ key: "notebook" })}
-              data-tip={label("tooltip_notebook")}
-              data-for={tooltip_id}
-            >
-              <img className="icon" src={notebook} />
-              <div className="label">{label("notebook")}</div>
-            </li>
-            <li
-              className={isActive("progress")}
-              onClick={() => setPanel({ key: "progress" })}
-              data-tip={label("tooltip_progress")}
-              data-for={tooltip_id}
-            >
-              <img className="icon" src={progress} />
-              <div className="label">{label("progress")}</div>
-            </li>
-          </>
-        ) : null}
+        {/*
+          Progress is enabled: StudyGroupProgress renders real per-member
+          completion data (render-safe, no fake data — see StudyGroupProgress.js).
+          Notebook stays out of the sidebar: its panel still renders hardcoded
+          placeholder content (a fixed "1 Nephi 4:3" heading + fake badges), so
+          shipping it would show fabricated data. Re-add a notebook <li> here once
+          StudyGroupNotebook derives real per-note references from the backend.
+        */}
+        <li
+          className={isActive("progress")}
+          onClick={() => setPanel({ key: "progress" })}
+          data-tip={label("tooltip_progress")}
+          data-for={tooltip_id}
+        >
+          <img className="icon" src={progress} alt="" />
+          <div className="label">{label("progress")}</div>
+        </li>
         {users.map((u) => (
           <UserSideBarItem
             key={u.userId}
@@ -242,8 +245,6 @@ function StudyGroupSideBar({
 export function StudyGroupMainPanel({ appController, activePanel, setPanel }) {
   if (activePanel?.key === "admin")
     return <StudyGroupAdmin appController={appController} />
-  if (activePanel?.key === "notebook")
-    return <StudyGroupNotebook appController={appController} />
   if (activePanel?.key === "progress")
     return <StudyGroupProgress appController={appController} />
   if (activePanel?.key === "message")
@@ -306,13 +307,13 @@ export function StudyGroupChatPanel({ appController, channel, setPanel }) {
       <div className={parentMessage ? "nexttothread" : "withoutthread"}>
         {loader && (
           <div className="PrevMessageLoader">
-            <img src={loadingicon} /> {label("loading_previous_messages")}
+            <img src={loadingicon} alt="" /> {label("loading_previous_messages")}
           </div>
         )}
 
         {!loader && channel.customType === "DM" && (
           <div className={"dmTitle"}>
-            <img src={dmicon} />{" "}
+            <img src={dmicon} alt="" />{" "}
             {label("dms_with_x", [
               channel.members
                 .filter(
@@ -381,7 +382,7 @@ function UserSideBarItem({
       userCircleClasses.includes("onSite") ? (
         <Link to={"/" + bookmark.slug}>
           <div className="statRow">
-            <img src={crosshairs} />
+            <img src={crosshairs} alt="" />
             <div>{label("currently_studying")}</div>
           </div>
           <div className="statRow link">
@@ -397,7 +398,7 @@ function UserSideBarItem({
       ) : (
         <Link to={"/" + bookmark.slug}>
           <div className="statRow">
-            <img src={bookmarkicon} />
+            <img src={bookmarkicon} alt="" />
             <div>{label("last_studied")}</div>
             <div className="fromNow">
               {bookmark.latest ? moment.unix(bookmark.latest).fromNow() : null}

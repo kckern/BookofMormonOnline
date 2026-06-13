@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { md5 } from "src/models/Utils";
+import { useState, useEffect, useRef } from "react";
 import Loader from "../Loader";
 import { StudyGroupChatPanel } from "./StudyHall";
 
@@ -8,28 +7,49 @@ export default function DirectMessages({ appController, userId }) {
   const theirId = userId;
 
   const [channel, setChannel] = useState(null);
-  if (
-    channel === null ||
-    !channel?.members.find((member) => member.userId === theirId)
-  ) {
-    //https://sendbird.com/docs/chat/v3/javascript/guides/group-channel#2-create-a-channel
+  // Guard against setState after unmount: rapid panel switching can unmount this
+  // component while createChannel() is still resolving.
+  const isMounted = useRef(true);
 
-    var params = {};
-    params.isDistinct = true;
-    params.invitedUserIds = [myId, theirId];
-    params.name = `DM between ${myId} and ${theirId}`;
-    params.customType = "DM";
-    params.channelUrl = md5(); // In a group channel, you can create a new channel by specifying its unique channel URL in a 'GroupChannelParams' object.
-		console.log('params',params);
-    try {
-      appController.sendbird.sb.groupChannel
-        .createChannel(params)
-        .then((groupChannel) => {
-          setChannel(groupChannel);
-        });
-    } catch (error) {
-      console.log("createChannelWithUserIds.ERROR", { error });
+  // Resolve (find-or-create) the 1:1 DM channel for this member pair exactly
+  // once per pair. Doing this in render (as before) re-fired createChannel on
+  // every render until setChannel resolved, minting 3-4 orphan channels per
+  // open. isDistinct + no forced channelUrl lets the backend reuse the existing
+  // DM channel, so history persists across open/close/reopen.
+  useEffect(() => {
+    isMounted.current = true;
+    // Already have the right channel for this pair — nothing to do.
+    if (channel?.members?.find((member) => member.userId === theirId)) {
+      return () => {
+        isMounted.current = false;
+      };
     }
+
+    const params = {
+      isDistinct: true,
+      invitedUserIds: [myId, theirId],
+      name: `DM between ${myId} and ${theirId}`,
+      customType: "DM",
+    };
+
+    appController.sendbird.sb.groupChannel
+      .createChannel(params)
+      .then((groupChannel) => {
+        if (!isMounted.current) return;
+        setChannel(groupChannel);
+      })
+      .catch((error) => {
+        console.error("DirectMessages.createChannel.ERROR", { error });
+      });
+
+    return () => {
+      isMounted.current = false;
+    };
+    // Re-resolve only when the conversation partner changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [theirId]);
+
+  if (!channel?.members?.find((member) => member.userId === theirId)) {
     return (
       <div className={"StudyGroupChatPanel "}>
         <Loader />

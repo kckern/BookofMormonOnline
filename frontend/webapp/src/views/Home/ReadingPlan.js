@@ -25,10 +25,14 @@ export function ReadingPlan({appController,slug}){
 
     useEffect(() => {
         if(planData) return;
+        // Guard against setState after unmount (ReadingPlan tears down when the
+        // user switches into a group feed before the plan request resolves).
+        let cancelled = false;
         BoMOnlineAPI(
             { readingplan: { token, slug } },
             { useCache: false })
             .then((data) => {
+                if (cancelled) return;
                 setPlanData(data.readingplan[0]);
                 const today = moment();
                 const activeSegmentIndex = data.readingplan[0].segments.findIndex((segment) => {
@@ -36,6 +40,9 @@ export function ReadingPlan({appController,slug}){
                 });
                 setActiveSegment(activeSegmentIndex);
             });
+        return () => {
+            cancelled = true;
+        };
     }, []);
 
     const today = moment();
@@ -188,13 +195,18 @@ function ReadingPlanSegmentSections({guid, token}){
     const [sectionData, setSectionData] = useState(null);
     useEffect(() => {
         if(sectionData?.guid === guid) return;
+        let cancelled = false;
         setSectionData(null);
         BoMOnlineAPI(
             { readingplansegment: { token, guid } },
             { useCache: false })
             .then((data) => {
+                if (cancelled) return;
                 setSectionData(data.readingplansegment?.[0] || {});
             });
+        return () => {
+            cancelled = true;
+        };
     }, [guid]);
     if(!sectionData) return <div className="spinnerBox" key={guid}>
         <img src={loading} />
