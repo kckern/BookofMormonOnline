@@ -101,10 +101,14 @@ The workspace generators (`BoMOnlineWorkspace/sql/migrations/gen_*.mjs`) turn
 1. **Deploy the legacy backend** — `dev` has the frontend requesting
    `grid`/`label`; the live grid stays blank until the `src/` backend ships.
    Frontend + backend must deploy together.
-2. **Label polish (rest of #3)** — dense rows still have label overlap at
-   default zoom. The raw-slug fallback is handled (humanized above), but adding a
-   real `bom_places` row for `land-of-first-inheritance` is still cleaner than
-   the client humanize.
+2. **Label polish (rest of #3)** — hover/focus now lifts a label into a
+   high-contrast ink chip above its neighbours (`.tg-event-label` hover rule), so
+   colliding labels in dense eras (e.g. the ~30 BC Nephi/Lehi missions) are
+   readable on interaction; full text is also in the click modal. The *resting*
+   overlap remains — a true fix means spreading those events across more rows in
+   the grid data (`placements.json` → `build_tiles.py`), not CSS. Also: the
+   raw-slug fallback is humanized client-side, but a real `bom_places` row for
+   `land-of-first-inheritance` is still cleaner.
 3. **Translations** — non-EN event labels need `bom_translation` rows
    (`refkey='heading'`, keyed by `bom_timeline.id`); people/place reuse already
    covers the overlapping ~73.

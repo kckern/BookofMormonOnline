@@ -195,6 +195,21 @@
 .tg-event.is-clickable:hover {
   box-shadow: 0 2px 8px rgba(50, 30, 10, 0.3);
 }
+/* Dense clusters: lift the hovered/focused label into a high-contrast ink chip
+   so it reads clearly above its neighbours. Sparse areas keep plain overflow
+   text; full text is always in the click-through modal. */
+.tg-event.is-clickable:hover .tg-event-label,
+.tg-event.is-clickable:focus-visible .tg-event-label {
+  position: relative;
+  z-index: 7;
+  padding: 2px 7px;
+  margin: 0 -4px;
+  border-radius: 6px;
+  background: rgba(36, 22, 7, 0.94);
+  color: #fdf6e6 !important;
+  text-shadow: none !important;
+  box-shadow: 0 2px 9px rgba(28, 16, 4, 0.5);
+}
 /* box-shadow rings (not outline) — outlines clip under the scroller's overflow */
 .tg-anchor.is-clickable:focus-visible {
   box-shadow: 0 0 0 2px #fffdf6, 0 0 0 4px #9c6b1f;
