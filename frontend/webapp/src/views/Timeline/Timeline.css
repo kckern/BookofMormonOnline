@@ -339,36 +339,6 @@
   transition: filter 0.12s ease;
 }
 
-/* Band-on-band rounded corner: the revealed band color sits in an R×R corner
-   box behind a rounded base, so the bite shows that band, not the parchment. */
-.tg-fill-wrap {
-  position: relative;
-}
-.tg-fill-base {
-  position: absolute;
-  inset: 0;
-}
-.tg-cb {
-  position: absolute;
-  width: var(--rad);
-  height: var(--rad);
-}
-.tg-cb-tl {
-  top: 0;
-  left: 0;
-}
-.tg-cb-tr {
-  top: 0;
-  right: 0;
-}
-.tg-cb-bl {
-  bottom: 0;
-  left: 0;
-}
-.tg-cb-br {
-  bottom: 0;
-  right: 0;
-}
 
 /* Hover discovery: hovering anywhere on a band lights up every tile of that
    lineage (fills + its events + battles). One declaration, one selector per

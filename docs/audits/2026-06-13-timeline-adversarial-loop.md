@@ -239,3 +239,46 @@ where peoples merge (Lamanites + Nephites → Gadianton era / post-Christ unity)
 data doesn't encode merge zones, and the visual treatment is subjective, so this
 needs KC's specifics (which transitions fade + the look) before implementing — doing
 it blind risks building the wrong thing.
+
+---
+
+## Round 9 — KC: corner over-correction + a heuristic standard; and :8200
+
+KC: "we're overcorrecting on the rounded corners ... screenshot prod and put together
+a heuristic flowchart of what conditions rounded corners are warranted vs not, then
+cross-check." The R8 band-on-band reveal over-rounded (the R9 critic confirmed: 10
+mis-colored corner bites — 8 black, 2 parchment; orphan-island rounding; parchment
+slivers between vertically-stacked bands).
+
+**Done:**
+- **Heuristic doc** `docs/reference/timeline-corner-rounding.md` — derived from prod
+  (discrete rounded-rect segments, background in the gaps; underlying-band reveal
+  only for true overlaps like battle tabs). Rule: **round a corner iff both
+  orthogonal neighbours ≠ this band AND the diagonal is empty parchment** → reveal
+  parchment. Square at edges (orthogonal == own) and at junctions/intersections
+  (diagonal is another band / handoffs).
+- **Reverted R8's two-layer reveal** (`.tg-fill-wrap`/`.tg-cb`) back to single-div
+  `cornerStyle()` per the heuristic. Cross-checked: no black/parchment bite notches,
+  no orphan-island rounding, no slivers between stacked bands; outer perimeters and
+  open-diagonal protrusions round; handoffs square.
+
+**:8200 (Next front door) "never gql's the timeline" — REAL root cause + fix:**
+KC corrected my first wrong guess. Next is **SEO-only** (bots→SSR, humans→CRA via
+`middleware.ts` rewrite). Two real bugs on the human path:
+1. **Locale page routes:** the CRA uses bare routes (`/timeline`; language by
+   subdomain). A human hitting `/en/timeline` was rewritten transparently to the
+   CRA keeping `/en/timeline` in the browser → the CRA client router found no match
+   → timeline never mounted (only the app-shell queries fired — exactly KC's "only
+   2 gql calls on /en"). Fix: middleware now **redirects** locale-prefixed **GET**
+   page URLs to the bare path (`/en/timeline` → `/timeline`).
+2. **GraphQL endpoint collision:** the GraphQL API is **POSTed to `/{lang}`** (e.g.
+   `POST /en`; setupProxy treats `/en`,`/ko`,… as API paths). My first redirect
+   caught `/en` for *all* methods, so it redirected the GraphQL **POST /en → /** →
+   `404` (KC's console: `POST http://10.0.0.10:8200/ 404`). Fix: the redirect is
+   gated to **`GET` only**; API POSTs fall through to the CRA rewrite → backend.
+Verified: human `/timeline`, `/en/timeline`, `/ko/timeline` all load 104 events
+with no API errors; bots still get SSR.
+
+**Open / noted from R9 critic (not yet done):** layers dropdown doesn't close on
+outside-click; date-axis honesty + "1s AD/5s BC" seam labels; mobile legibility +
+zoom controls dropped on narrow widths; deep-link highlight after modal close.

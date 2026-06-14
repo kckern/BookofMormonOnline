@@ -87,36 +87,31 @@ const RAD = `var(--rad)` // corner radius; --rad set on the grid, scales with zo
 // band continuing) sits against that edge, the corner stays square — that's a
 // junction/connector. Net effect: bands read as rounded ribbons with square
 // joins, no hard corners except at intersections.
-const RADPROP = {
-  tl: "borderTopLeftRadius",
-  tr: "borderTopRightRadius",
-  bl: "borderBottomLeftRadius",
-  br: "borderBottomRightRadius",
-}
-
-// Which corners of a band tile are convex (round them) and, for each, what color
-// is revealed in the rounded bite. A corner is convex when BOTH its orthogonal
-// neighbours differ from this band — whether parchment OR another band. The
-// reveal is the diagonal neighbour's color (the cell the bite opens toward): if
-// it's another band the rounding looks like this band curving on top of that one
-// (KC: "rounded corner … on top of a segment"); if it's parchment the bite is
-// just the page. Interior edges (an orthogonal neighbour is the same band) stay
-// square — those are the junctions/connectors.
-function cornerData(t, colorAt) {
+// Corner rounding — see docs/reference/timeline-corner-rounding.md.
+// Round a corner IFF both orthogonal neighbours differ from this band AND the
+// diagonal is empty parchment. That rounds true outer-perimeter corners and
+// open-diagonal protrusions (revealing the parchment background, like prod's
+// inter-segment gaps), while keeping junctions/intersections square: where the
+// band continues (orthogonal == own) or where another band meets diagonally
+// (handoff / ≥2 lineages). Reveal is always parchment — no underlying-band layer.
+function cornerStyle(t, colorAt) {
   const own = t.bg
   const top = t.r,
     left = t.c,
     right = t.c + (t.w || 1) - 1,
     bottom = t.r + (t.h || 1) - 1
-  const out = []
-  const add = (key, oa, ob, dg) => {
-    if (oa !== own && ob !== own) out.push({ key, reveal: dg && dg !== own ? dg : null })
+  const round = (oh, ov, od) => oh !== own && ov !== own && od === null
+  const tl = round(colorAt(top, left - 1), colorAt(top - 1, left), colorAt(top - 1, left - 1))
+  const tr = round(colorAt(top, right + 1), colorAt(top - 1, right), colorAt(top - 1, right + 1))
+  const bl = round(colorAt(bottom, left - 1), colorAt(bottom + 1, left), colorAt(bottom + 1, left - 1))
+  const br = round(colorAt(bottom, right + 1), colorAt(bottom + 1, right), colorAt(bottom + 1, right + 1))
+  if (!(tl || tr || bl || br)) return undefined
+  return {
+    borderTopLeftRadius: tl ? RAD : 0,
+    borderTopRightRadius: tr ? RAD : 0,
+    borderBottomLeftRadius: bl ? RAD : 0,
+    borderBottomRightRadius: br ? RAD : 0,
   }
-  add("tl", colorAt(top, left - 1), colorAt(top - 1, left), colorAt(top - 1, left - 1))
-  add("tr", colorAt(top, right + 1), colorAt(top - 1, right), colorAt(top - 1, right + 1))
-  add("bl", colorAt(bottom, left - 1), colorAt(bottom + 1, left), colorAt(bottom + 1, left - 1))
-  add("br", colorAt(bottom, right + 1), colorAt(bottom + 1, right), colorAt(bottom + 1, right + 1))
-  return out
 }
 
 // Verified color → lineage mapping, derived from each event's grid_bg (the
@@ -344,39 +339,14 @@ function TimeLine() {
     () =>
       tiles
         .filter((t) => t.k === "fill" && t.bg !== "#ffffff") // drop the stray white artifact cell
-        .map((t) => {
-          const corners = cornerData(t, colorAt)
-          const radii = {}
-          for (const c of corners) radii[RADPROP[c.key]] = RAD
-          const backings = corners.filter((c) => c.reveal)
-          const lin = linKey(t.bg)
-          // Simple case: no rounding, or rounding only against parchment — a
-          // single div whose own rounded corners reveal the page.
-          if (!backings.length) {
-            return (
-              <div
-                key={`f${t.r}-${t.c}`}
-                className="tg-fill"
-                data-lin={lin}
-                style={{ ...gridPos(t), background: fixBg(t.bg), ...radii }}
-              />
-            )
-          }
-          // Band-on-band corner(s): layer the revealed band color behind a
-          // rounded base so the bite shows that band instead of parchment.
-          return (
-            <div key={`f${t.r}-${t.c}`} className="tg-fill tg-fill-wrap" data-lin={lin} style={gridPos(t)}>
-              {backings.map((c) => (
-                <span
-                  key={c.key}
-                  className={`tg-cb tg-cb-${c.key}`}
-                  style={{ background: fixBg(c.reveal) }}
-                />
-              ))}
-              <span className="tg-fill-base" style={{ background: fixBg(t.bg), ...radii }} />
-            </div>
-          )
-        }),
+        .map((t) => (
+          <div
+            key={`f${t.r}-${t.c}`}
+            className="tg-fill"
+            data-lin={linKey(t.bg)}
+            style={{ ...gridPos(t), background: fixBg(t.bg), ...cornerStyle(t, colorAt) }}
+          />
+        )),
     [tiles, colorAt]
   )
 
