@@ -148,6 +148,32 @@ const gridPos = (t) => ({
   gridRow: `${t.r} / span ${t.h}`,
 })
 
+// Dominant surrounding band color for a marker cell (which has no fill of its
+// own). Used to detect a battle that is an *incursion* into another people's
+// territory (e.g. a Lamanite battle inside Nephite lands).
+function dominantNeighbor(t, colorAt) {
+  const ns = [
+    colorAt(t.r - 1, t.c),
+    colorAt(t.r + 1, t.c),
+    colorAt(t.r, t.c - 1),
+    colorAt(t.r, t.c + 1),
+    colorAt(t.r, t.c - 2),
+    colorAt(t.r, t.c + 2),
+  ].filter(Boolean)
+  if (!ns.length) return null
+  const count = {}
+  let best = null,
+    bestN = 0
+  for (const c of ns) {
+    count[c] = (count[c] || 0) + 1
+    if (count[c] > bestN) {
+      bestN = count[c]
+      best = c
+    }
+  }
+  return best
+}
+
 function TimeLine() {
   useEffect(() => {
     document.title = `${labelOr("menu_timeline", "Timeline")} | ${labelOr(
@@ -257,14 +283,32 @@ function TimeLine() {
   }, [showModal, closeInfo])
 
   // Band occupancy map (cell → raw color) drives the corner-rounding algorithm.
-  const colorAt = useMemo(() => {
-    const m = new Map()
+  // Battle cells are folded in with their *effective* band color so the national
+  // area stays continuous beneath them (no parchment notches rounding around the
+  // battle): a home battle counts as its own band; an incursion counts as the
+  // territory it sits in (the attacker chip is drawn on top).
+  const { colorAt, battleInfo } = useMemo(() => {
+    const fill = new Map()
     for (const t of tiles) {
       if (t.k !== "fill" || t.bg === "#ffffff") continue
       for (let dr = 0; dr < (t.h || 1); dr++)
-        for (let dc = 0; dc < (t.w || 1); dc++) m.set(`${t.r + dr},${t.c + dc}`, t.bg)
+        for (let dc = 0; dc < (t.w || 1); dc++) fill.set(`${t.r + dr},${t.c + dc}`, t.bg)
     }
-    return (r, c) => m.get(`${r},${c}`) || null
+    const fillAt = (r, c) => fill.get(`${r},${c}`) || null
+    const combined = new Map(fill)
+    const info = new Map()
+    for (const t of tiles) {
+      if (t.k !== "battle") continue
+      const surround = dominantNeighbor(t, fillAt)
+      const incursion = !!(surround && surround !== t.bg)
+      const eff = incursion ? surround : t.bg
+      info.set(`${t.r},${t.c}`, { incursion, eff })
+      combined.set(`${t.r},${t.c}`, eff)
+    }
+    return {
+      colorAt: (r, c) => combined.get(`${r},${c}`) || null,
+      battleInfo: (t) => info.get(`${t.r},${t.c}`) || { incursion: false, eff: t.bg },
+    }
   }, [tiles])
 
   // Fill tiles (lineage bands) never depend on selection/zoom — memoize so a
@@ -450,20 +494,31 @@ function TimeLine() {
             const pos = gridPos(t)
 
             if (t.k === "battle") {
-              // Marker only — there is no per-battle record to open, so it is
-              // intentionally non-interactive, but it IS announced/tooltipped as
-              // "Battle" (legend keys the icon) rather than silent decoration.
+              // Marker only — no per-battle record to open; non-interactive but
+              // announced/tooltipped as "Battle". A battle whose own color differs
+              // from the surrounding band is an *incursion* (e.g. Lamanites into
+              // Nephite land): fill the cell with the territory color (so the band
+              // reads continuous) and lay the attacker color as a rounded chip on
+              // top. Otherwise it's a home-territory battle on its own band color.
+              const { incursion, eff } = battleInfo(t)
+              const cellBg = fixBg(eff)
               return (
                 <div
                   key={key}
-                  className="tg-anchor tg-battle"
-                  style={{ ...pos, background: fixBg(t.bg) }}
-                  data-lin={linKey(t.bg)}
+                  className={"tg-anchor tg-battle" + (incursion ? " tg-battle-inc" : "")}
+                  style={{ ...pos, background: cellBg }}
+                  data-lin={linKey(eff)}
                   role="img"
                   aria-label="Battle"
                   title="Battle"
                 >
-                  <span className="tg-battle-medallion">{SWORDS}</span>
+                  {incursion ? (
+                    <span className="tg-battle-chip" style={{ background: fixBg(t.bg) }}>
+                      {SWORDS}
+                    </span>
+                  ) : (
+                    <span className="tg-battle-medallion">{SWORDS}</span>
+                  )}
                 </div>
               )
             }

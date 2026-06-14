@@ -164,3 +164,29 @@ open; trailing empty grid rows — open.
 as a self-contained red rounded chip on the blue band (two-layer cell: band color
 behind + rounded attacker chip + icon on top). Plus the remaining critic items
 (axis compression break, deep-link highlight, modal art aria, trailing rows).
+
+---
+
+## Round 6 — KC grid-internals backlog (battles) + live KC feedback
+
+**Done:**
+- **Incursion battle chips:** a battle whose own color differs from its dominant
+  surrounding band is an incursion (20/38, mostly Lamanite into Nephite/Judges
+  land). It renders as the territory color filling the cell + a self-contained
+  rounded attacker-color chip (`.tg-battle-chip`, pill) with white swords on top.
+  Home-territory battles keep the gold medallion on their own band color.
+  `dominantNeighbor()` resolves territory vs attacker.
+- **Battles folded into the occupancy map** (KC: "chips … live ON TOP of the
+  national areas that have the rounded corners; not transparent backgrounds").
+  Battle cells now count toward band occupancy with their effective color (home →
+  own band; incursion → territory), so the national area stays **continuous**
+  beneath a battle instead of the corner algorithm rounding *around* the battle
+  hole and leaving parchment notches. `colorAt`/`battleInfo` computed together.
+- **Opaque medallion:** the gold coin's near-parchment cream center (`#fdf5dc`)
+  read as a hole punched to the background; replaced with a richer fully-opaque
+  struck gold so battles clearly sit *on top* of the band.
+
+KC's grid-internals backlog (corners R5, hover R5, battles R4+R6) is now complete.
+
+**Still open:** axis compression break / honesty; deep-link highlight visible after
+modal close; modal art aria duplicates title; trailing empty grid rows.
