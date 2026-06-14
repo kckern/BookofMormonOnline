@@ -10,7 +10,27 @@ import { label } from "src/models/Utils"
 import tilesData from "./gridTiles.json"
 import "./Timeline.css"
 
-const RADIUS = "10px"
+const RADIUS = "13px"
+
+// Crossed-swords battle marker. currentColor lets the medallion theme it.
+const SWORDS = (
+  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <g
+      stroke="currentColor"
+      strokeWidth="2.3"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      fill="none"
+    >
+      <line x1="6" y1="18" x2="18" y2="6" />
+      <line x1="18" y1="18" x2="6" y2="6" />
+    </g>
+    <g stroke="currentColor" strokeWidth="1.7" strokeLinecap="round">
+      <line x1="3.5" y1="13.5" x2="9" y2="19" />
+      <line x1="15" y1="19" x2="20.5" y2="13.5" />
+    </g>
+  </svg>
+)
 const ZOOM_MIN = 0.4
 const ZOOM_MAX = 2
 const ZOOM_STEP = 1.2
@@ -23,6 +43,17 @@ const LABEL_HIDE_BELOW = 0.55
 // label() returns a single space when the i18n dictionary isn't loaded yet;
 // treat blank as missing so the literal fallbacks apply.
 const labelOr = (key, fallback) => (label(key) || "").trim() || fallback
+
+// Fallback for entries with no translated label/heading: turn a kebab slug into
+// a readable title (small words stay lowercase unless they lead).
+const MINOR = new Set(["of", "the", "and", "vs", "in", "to", "a", "for"])
+const humanize = (slug) =>
+  (slug || "")
+    .replace(/[-_]+/g, " ")
+    .trim()
+    .replace(/\S+/g, (w, i) =>
+      i > 0 && MINOR.has(w.toLowerCase()) ? w.toLowerCase() : w.charAt(0).toUpperCase() + w.slice(1)
+    )
 
 // Black/white text for legibility over a band color (the sheet's per-cell fg is
 // unreliable, so we derive contrast from the background).
@@ -169,7 +200,7 @@ function TimeLine() {
         .map((e) => {
           const g = e.grid
           const isPlace = !e.p
-          const label = e.label || e.heading || e.slug
+          const label = e.label || e.heading || humanize(e.slug)
           const clickable = !!(e.heading || e.html)
           const pos = {
             gridColumn: `${g.col + 1} / span ${g.colSpan}`,
@@ -178,9 +209,11 @@ function TimeLine() {
           const ref = (n) => {
             if (n) cellRefs.current[e.slug] = n
           }
+          const tcol = textOn(g.bg)
           const cls =
             "tg-anchor " +
             (isPlace ? "tg-place" : "tg-event") +
+            (isPlace ? "" : tcol === "#fff" ? " tg-on-dark" : " tg-on-light") +
             (clickable ? " is-clickable" : " is-static") +
             (selected === e.slug ? " is-selected" : "")
           const inner = isPlace ? (
@@ -188,7 +221,7 @@ function TimeLine() {
           ) : (
             <span className="tg-event-label">{label}</span>
           )
-          const style = isPlace ? pos : { ...pos, background: g.bg || "#5a5a5a", color: textOn(g.bg) }
+          const style = isPlace ? pos : { ...pos, background: g.bg || "#5a5a5a", color: tcol }
           if (!clickable) {
             return (
               <div key={`e-${e.slug}-${g.row}-${g.col}`} ref={ref} className={cls} style={style}>
@@ -258,7 +291,7 @@ function TimeLine() {
               // Decorative marker — no content; non-interactive, hidden from AT.
               return (
                 <div key={key} className="tg-anchor tg-battle" style={pos} aria-hidden="true">
-                  <span>💥</span>
+                  <span className="tg-battle-medallion">{SWORDS}</span>
                 </div>
               )
             }
@@ -273,12 +306,15 @@ function TimeLine() {
             // when the API resolves.
             const clickable = !!t.slug && !t.nc
 
+            const tcol = textOn(t.bg)
+            const tone = isPlace ? "" : tcol === "#fff" ? " tg-on-dark" : " tg-on-light"
+
             if (!clickable) {
               return (
                 <div
                   key={key}
-                  className={`tg-anchor ${isPlace ? "tg-place" : "tg-event"} is-static`}
-                  style={isPlace ? pos : { ...pos, background: t.bg, color: textOn(t.bg) }}
+                  className={`tg-anchor ${isPlace ? "tg-place" : "tg-event"}${tone} is-static`}
+                  style={isPlace ? pos : { ...pos, background: t.bg, color: tcol }}
                 >
                   <span className={isPlace ? undefined : "tg-event-label"}>{inner}</span>
                 </div>
@@ -293,10 +329,10 @@ function TimeLine() {
                   if (n) cellRefs.current[t.slug] = n
                 }}
                 className={
-                  `tg-anchor ${isPlace ? "tg-place" : "tg-event"} is-clickable` +
+                  `tg-anchor ${isPlace ? "tg-place" : "tg-event"}${tone} is-clickable` +
                   (selected === t.slug ? " is-selected" : "")
                 }
-                style={isPlace ? pos : { ...pos, background: t.bg, color: textOn(t.bg) }}
+                style={isPlace ? pos : { ...pos, background: t.bg, color: tcol }}
                 onClick={() => openInfo(t.slug)}
                 aria-label={data && data.date ? `${heading}, ${data.date}` : heading}
                 title={data && data.date ? `${heading} — ${data.date}` : heading}

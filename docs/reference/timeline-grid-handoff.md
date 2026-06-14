@@ -73,21 +73,42 @@ The frontend dev proxy: `frontend/webapp/src/setupProxy.js` →
 The workspace generators (`BoMOnlineWorkspace/sql/migrations/gen_*.mjs`) turn
 `placements.json` into the SQL.
 
+## Done since this handoff was written
+
+- **Visual overhaul (was #2)** — `Timeline.css` + `Timeline.js` redesigned to an
+  aged-parchment "illuminated manuscript" canvas:
+  - Background: warm parchment gradient + faint SVG paper-grain (multiply) +
+    top vignette. The band gaps now read as intentional negative space, not the
+    former stark-white "duration bars".
+  - Battle markers: the red 💥 emoji chip replaced by a struck-gold medallion
+    with an inline crossed-swords SVG (`SWORDS` const, `currentColor`-themed).
+  - Corners: ribbon-end radius 10→13px.
+  - Centering: grid `margin: 0 auto` in a plain block scroller (verified equal
+    L/R margins; left edge stays scroll-reachable when zoomed wider than the
+    viewport — deliberately NOT flex centering, which traps the overflow).
+  - Labels: heavy 4-way black outline replaced by tone-adaptive halos
+    (`.tg-on-dark`/`.tg-on-light`, set from `textOn(bg)` in both render paths).
+  - Gutter / date axis / place names / zoom controls / info-box modal all
+    re-themed sepia-on-parchment; era + heading text now use the app's serif
+    (`Nanum Myeongjo`). Verified via headless screenshots at `localhost:8201`
+    (NOT `bom.kckern.net` — Cloudflare edge-caches the bundle 4h).
+- **Label humanize (part of #3)** — events/locations with no translated
+  `label`/`heading` now humanize the slug client-side (`humanize()` in
+  `Timeline.js`), so `land-of-first-inheritance` → "Land of First Inheritance".
+
 ## Remaining work (NOT done)
 
 1. **Deploy the legacy backend** — `dev` has the frontend requesting
    `grid`/`label`; the live grid stays blank until the `src/` backend ships.
    Frontend + backend must deploy together.
-2. **Visual overhaul (requested, not started)** — bg colour, the glyph-driven
-   rounded corners, and the battle markers all look crude; needs a real design
-   pass. The grid only became judge-able once labels render.
-3. **Label polish** — `land-of-first-inheritance` (headingless, not in
-   `bom_places`) falls back to its raw slug; humanize or add a `bom_places` row.
-   Dense rows have label overlap.
-4. **Translations** — non-EN event labels need `bom_translation` rows
+2. **Label polish (rest of #3)** — dense rows still have label overlap at
+   default zoom. The raw-slug fallback is handled (humanized above), but adding a
+   real `bom_places` row for `land-of-first-inheritance` is still cleaner than
+   the client humanize.
+3. **Translations** — non-EN event labels need `bom_translation` rows
    (`refkey='heading'`, keyed by `bom_timeline.id`); people/place reuse already
    covers the overlapping ~73.
-5. **Retire `x/y/w/h/z/o`** once the grid columns are trusted.
+4. **Retire `x/y/w/h/z/o`** once the grid columns are trusted.
 
 ## Key files
 - Frontend: `frontend/webapp/src/views/Timeline/{Timeline.js,Timeline.css,gridTiles.json}`, `models/GraphQLQueries.js`

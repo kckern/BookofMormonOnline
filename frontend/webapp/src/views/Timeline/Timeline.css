@@ -2,8 +2,8 @@
 
 /* Tile-grid timeline (replaces the former Leaflet map).
    Two layers in one CSS grid: color-fill tiles (lineage bands) + anchored
-   labels/icons that OVERFLOW their tile. White bars are the light page
-   background showing through gaps in the bands.
+   labels/icons that OVERFLOW their tile. The band gaps are the parchment
+   canvas showing through — intentional negative space, not "white bars".
    Design: docs/plans/2026-06-13-timeline-grid-migration-design.md */
 
 .timeline-grid-wrap {
@@ -12,76 +12,111 @@
   bottom: 0;
   left: 0;
   right: 0;
-  background: #fff;
+  /* warm aged-parchment canvas: the lineage bands read as illuminated ribbons
+     floating on paper, and the band gaps become intentional negative space */
+  background:
+    radial-gradient(140% 90% at 50% -10%, #f8f1dd 0%, #f0e6c8 52%, #e6d6b0 100%);
+  overflow: hidden;
+}
+/* faint paper grain over the canvas (multiply so it darkens, never washes out) */
+.timeline-grid-wrap::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.05;
+  mix-blend-mode: multiply;
+}
+/* soft top vignette to seat the canvas under the app header */
+.timeline-grid-wrap::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 70px;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgba(90, 66, 26, 0.1), rgba(90, 66, 26, 0));
 }
 
 .timeline-grid-scroller {
+  position: relative;
+  z-index: 1;
   width: 100%;
   height: 100%;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-x pan-y;
-  /* inset edge shadows hint the canvas scrolls beyond the viewport */
-  box-shadow: inset -18px 0 14px -14px rgba(0, 0, 0, 0.28),
-    inset 0 -18px 14px -14px rgba(0, 0, 0, 0.22);
+  /* the grid centers itself via margin:0 auto (a plain block scroller keeps the
+     left edge reachable when the canvas is wider than the viewport) */
+  /* inset sepia edge shadows hint the canvas scrolls beyond the viewport */
+  box-shadow: inset -16px 0 14px -14px rgba(70, 48, 16, 0.22),
+    inset 0 -16px 14px -14px rgba(70, 48, 16, 0.18);
 }
 
-/* Map-style zoom controls */
+/* Map-style zoom controls — parchment-toned to match the canvas */
 .tg-zoom {
   position: absolute;
-  top: 12px;
-  right: 14px;
+  top: 14px;
+  right: 16px;
   z-index: 20;
   display: flex;
   gap: 1px;
-  border-radius: 8px;
+  border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(120, 90, 40, 0.35);
+  box-shadow: 0 2px 10px rgba(60, 40, 15, 0.28);
 }
 .tg-zoom button {
   width: 34px;
   height: 34px;
   border: none;
-  background: #fff;
-  color: #333;
+  background: #fbf5e4;
+  color: #5a4a2a;
   font-size: 18px;
   line-height: 1;
   cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
 }
 .tg-zoom button:hover {
-  background: #eef2f7;
+  background: #fff;
+  color: #3a2e16;
 }
 .tg-zoom button:focus-visible {
-  outline: 2px solid #1e63d0;
+  outline: 2px solid #9c6b1f;
   outline-offset: -2px;
 }
-
 
 .timeline-grid {
   --scale: 1; /* map-style zoom; set inline by the zoom control */
   --col-w: calc(26px * var(--scale));
   --row-h: calc(20px * var(--scale));
-  --date-w: calc(64px * var(--scale));
+  --date-w: calc(70px * var(--scale));
   position: relative;
+  z-index: 1;
   display: grid;
   grid-template-columns: var(--date-w) repeat(var(--cols), var(--col-w));
   grid-auto-rows: var(--row-h);
   gap: 0;
+  /* equal margins on both sides when the canvas fits; collapses to scroll when
+     it overflows */
   width: max-content;
-  padding: 52px 24px 24px 0;
+  margin: 0 auto;
+  padding: 56px 40px 40px 0;
   font-family: "Roboto Condensed", "Arial Narrow", sans-serif;
 }
 
-/* Continuous opaque backing for the sticky gutter (covers every row) */
+/* Continuous parchment backing for the sticky gutter (covers every row) */
 .tg-gutter-bg {
   position: sticky;
   left: 0;
   z-index: 7;
-  background: #fff;
-  border-right: 1px solid #e2e2e2;
+  background: linear-gradient(to right, #f0e6c8 78%, rgba(240, 230, 200, 0));
+  border-right: 1px solid rgba(120, 90, 40, 0.25);
 }
 
-/* Sticky date/era gutter labels (the time scale) — stay put on h-scroll */
+/* Sticky date/era gutter labels (the time scale) — serif, sepia ink */
 .tg-date {
   position: sticky;
   left: 0;
@@ -89,14 +124,17 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  padding: 0 8px 0 12px;
-  font-size: calc(10px * var(--scale));
+  padding: 0 12px 0 14px;
+  font-family: "Nanum Myeongjo", "Scripture", Georgia, serif;
+  font-size: calc(11px * var(--scale));
   font-weight: 700;
-  color: #555;
+  letter-spacing: 0.2px;
+  color: #6a5326;
   white-space: nowrap;
 }
 
-/* Band fill tile */
+/* Band fill tile — flat lineage color (depth comes from the parchment canvas
+   and rounded ribbon ends, not per-tile shadows that would seam the bands) */
 .tg-fill {
   width: 100%;
   height: 100%;
@@ -125,33 +163,45 @@
   appearance: none;
 }
 .tg-event {
-  padding: 0 5px;
+  padding: 0 6px;
   text-align: left;
+  border-radius: 4px;
 }
 .tg-event-label {
-  font-weight: 700;
+  font-weight: 600;
   font-size: calc(11px * var(--scale));
-  /* thin dark outline so labels stay legible when they overflow onto white */
-  text-shadow: -0.6px -0.6px 0 rgba(0, 0, 0, 0.5), 0.6px -0.6px 0 rgba(0, 0, 0, 0.5),
-    -0.6px 0.6px 0 rgba(0, 0, 0, 0.5), 0.6px 0.6px 0 rgba(0, 0, 0, 0.5);
+  letter-spacing: 0.2px;
+}
+/* Legibility halos tuned to the text color, since labels overflow their band
+   onto the light parchment. White labels get a dark halo; dark labels get a
+   light one. */
+.tg-on-dark .tg-event-label {
+  text-shadow: 0 0 3px rgba(40, 24, 6, 0.55), 0 1px 1px rgba(40, 24, 6, 0.6);
+}
+.tg-on-light .tg-event-label {
+  text-shadow: 0 0 3px rgba(255, 250, 235, 0.85), 0 1px 0 rgba(255, 250, 235, 0.9);
 }
 
 /* clickable interactivity (events AND places that have a linked entry) */
 .tg-anchor.is-clickable {
   pointer-events: auto;
   cursor: pointer;
+  transition: filter 0.12s ease, transform 0.12s ease;
 }
 .tg-anchor.is-clickable:hover {
-  filter: brightness(1.12);
+  filter: brightness(1.1) saturate(1.05);
   z-index: 5;
+}
+.tg-event.is-clickable:hover {
+  box-shadow: 0 2px 8px rgba(50, 30, 10, 0.3);
 }
 /* box-shadow rings (not outline) — outlines clip under the scroller's overflow */
 .tg-anchor.is-clickable:focus-visible {
-  box-shadow: 0 0 0 2px #1e63d0;
+  box-shadow: 0 0 0 2px #fffdf6, 0 0 0 4px #9c6b1f;
   z-index: 6;
 }
 .tg-anchor.is-selected {
-  box-shadow: 0 0 0 2px #ffd54a;
+  box-shadow: 0 0 0 2px #fffdf6, 0 0 0 4px #e0a528;
   z-index: 6;
 }
 /* non-interactive labels: no pointer affordance */
@@ -161,15 +211,19 @@
 
 .tg-place {
   justify-content: flex-start;
-  padding: 0 4px;
+  padding: 0 5px;
+  gap: 2px;
 }
 .tg-place > span {
+  font-family: "Nanum Myeongjo", "Scripture", Georgia, serif;
   font-size: calc(10px * var(--scale));
   font-weight: 700;
-  color: #5a4a1f;
+  font-style: italic;
+  color: #5a4015;
   /* light outline so place names stay legible over bands */
-  text-shadow: -0.6px -0.6px 0 rgba(255, 255, 255, 0.7), 0.6px -0.6px 0 rgba(255, 255, 255, 0.7),
-    -0.6px 0.6px 0 rgba(255, 255, 255, 0.7), 0.6px 0.6px 0 rgba(255, 255, 255, 0.7);
+  text-shadow: -0.6px -0.6px 0 rgba(255, 251, 238, 0.85),
+    0.6px -0.6px 0 rgba(255, 251, 238, 0.85), -0.6px 0.6px 0 rgba(255, 251, 238, 0.85),
+    0.6px 0.6px 0 rgba(255, 251, 238, 0.85);
 }
 
 /* Zoomed-out: labels would collide into noise — hide them, keep the bands. */
@@ -178,27 +232,34 @@
   display: none;
 }
 
-/* Decorative battle marker — sits in a colored chip, not a white box */
+/* Battle marker — a small struck-gold medallion with crossed swords */
 .tg-battle {
   justify-content: center;
-  font-size: 11px;
 }
-.tg-battle > span {
+.tg-battle-medallion {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 18px;
-  height: 18px;
+  width: calc(18px * var(--scale));
+  height: calc(18px * var(--scale));
   border-radius: 50%;
-  background: #b3261e;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  color: #7c1d13; /* swords (currentColor) */
+  background: radial-gradient(circle at 34% 28%, #fdf5dc 0%, #f3e0ad 70%, #e6c97f 100%);
+  border: 1px solid rgba(124, 29, 19, 0.55);
+  box-shadow: 0 1px 3px rgba(60, 28, 8, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.45);
+}
+.tg-battle-medallion svg {
+  width: 64%;
+  height: 64%;
+  display: block;
 }
 
-/* Info box (replaces the Leaflet popup) */
+/* Info box (replaces the Leaflet popup) — parchment card */
 .tg-infobox-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(35, 24, 8, 0.55);
+  backdrop-filter: blur(2px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -207,29 +268,31 @@
 
 .tg-infobox {
   position: relative;
-  width: 340px;
+  width: 360px;
   max-width: calc(100vw - 32px);
   max-height: calc(100vh - 64px);
   overflow: auto;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-  padding: 18px 20px 20px;
+  background: linear-gradient(180deg, #fdf8ec 0%, #f7efd9 100%);
+  border: 1px solid rgba(120, 90, 40, 0.35);
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(40, 26, 8, 0.5);
+  padding: 22px 22px 24px;
 }
 
 .tg-infobox-close {
   position: absolute;
-  top: 8px;
-  right: 10px;
+  top: 10px;
+  right: 12px;
   border: none;
   background: transparent;
-  font-size: 22px;
+  font-size: 24px;
   line-height: 1;
-  color: #999;
+  color: #a98f5e;
   cursor: pointer;
+  transition: color 0.12s ease;
 }
 .tg-infobox-close:hover {
-  color: #555;
+  color: #5a4015;
 }
 
 .tg-infobox-head {
@@ -237,36 +300,40 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 8px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   padding-right: 18px;
 }
 .tg-infobox-head h2 {
-  font-size: 18px;
+  font-family: "Nanum Myeongjo", "Scripture", Georgia, serif;
+  font-size: 20px;
   font-weight: 700;
   margin: 0;
-  color: #222;
+  color: #3a2c12;
 }
 .tg-infobox-date {
   flex-shrink: 0;
+  font-family: "Nanum Myeongjo", "Scripture", Georgia, serif;
   font-size: 12px;
-  color: #999;
+  font-style: italic;
+  color: #9c7e45;
 }
 
 .tg-infobox-art {
   width: 100%;
-  height: 150px;
-  border-radius: 6px;
-  background-color: #555;
+  height: 160px;
+  border-radius: 8px;
+  background-color: #e6d6b0;
   background-size: cover;
   background-position: center;
-  border: 1px solid #ddd;
-  margin-bottom: 12px;
+  border: 1px solid rgba(120, 90, 40, 0.3);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+  margin-bottom: 14px;
 }
 
 .tg-infobox-body {
-  font-size: 13px;
-  line-height: 1.4;
-  color: #444;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: #4a3c22;
   text-align: justify;
 }
 
@@ -279,17 +346,19 @@
   gap: 8px;
 }
 .tg-infobox-loading h2 {
+  font-family: "Nanum Myeongjo", "Scripture", Georgia, serif;
   font-size: 16px;
-  color: #777;
+  color: #9c7e45;
   margin: 0;
 }
 
 .tg-infobox-link {
   display: inline-block;
-  margin-top: 12px;
-  font-size: 13px;
+  margin-top: 14px;
+  font-family: "Nanum Myeongjo", "Scripture", Georgia, serif;
+  font-size: 13.5px;
   font-weight: 700;
-  color: #2b6cb0;
+  color: #8a5a16;
   text-decoration: none;
 }
 .tg-infobox-link:hover {
@@ -297,7 +366,7 @@
 }
 .tg-infobox-link:focus-visible,
 .tg-infobox-close:focus-visible {
-  outline: 2px solid #1e63d0;
+  outline: 2px solid #9c6b1f;
   outline-offset: 2px;
 }
 
@@ -305,4 +374,3 @@
 .sidebar-wrapper li.active.timeline_link > a:not([data-toggle="collapse"]):after {
   border-right-color: #2b2b2b !important;
 }
-
