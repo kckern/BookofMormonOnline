@@ -150,6 +150,16 @@ export default gql`
     narr: String
     html: String
     heading: String
+    grid: EventGrid
+    label: String
+}
+
+  type EventGrid {
+    row: Int
+    col: Int
+    rowSpan: Int
+    colSpan: Int
+    bg: String
 }
 
 

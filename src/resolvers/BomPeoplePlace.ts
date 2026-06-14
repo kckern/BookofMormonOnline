@@ -212,31 +212,44 @@ export default {
     },
     timeline: async (root: any, args: any, context: any, info: any) => {
       const lang = context.lang ? context.lang : null;
-      if ('slug' in args)
-        return Models.BomTimeline.findAll({
-          nest: false,
-          where: {
-            slug: args.slug
-          },
-          include: [
-            {
-              model: Models.BomText,
-              as: 'text',
-              required: false
-            }
-          ],
-          order: ['y']
+      const include: any[] = [
+        { model: Models.BomText, as: 'text', required: false },
+        includeTranslation('heading', lang), // event labels translate by heading
+      ].filter(x => !!x);
+      const query: any = { include, order: ['y'] };
+      if ('slug' in args) { query.nest = false; query.where = { slug: args.slug }; }
+      const rows = await Models.BomTimeline.findAll(query);
+
+      // Grid label is routed by label_category, reusing existing people/place
+      // translations; only 'event' rows translate their own heading.
+      const slugsOf = (cat: string) => rows
+        .filter((r: any) => r.getDataValue('label_category') === cat && r.getDataValue('slug'))
+        .map((r: any) => r.getDataValue('slug'));
+      const nameMap = async (model: any, slugs: string[]) => {
+        const m = new Map<string, string>();
+        if (!slugs.length) return m;
+        const found = await model.findAll({
+          where: { slug: slugs },
+          include: [includeTranslation('name', lang)].filter(x => !!x),
         });
-      return Models.BomTimeline.findAll({
-        include: [
-          {
-            model: Models.BomText,
-            as: 'text',
-            required: false
-          }
-        ],
-        order: ['y']
-      });
+        for (const e of found) m.set(e.getDataValue('slug'), translatedValue(e, 'name'));
+        return m;
+      };
+      const [people, places] = await Promise.all([
+        nameMap(Models.BomPeople, slugsOf('people')),
+        nameMap(Models.BomPlaces, slugsOf('place')),
+      ]);
+      for (const r of rows) {
+        const cat = r.getDataValue('label_category');
+        const slug = r.getDataValue('slug');
+        const heading = translatedValue(r, 'heading');
+        const label =
+          cat === 'people' ? (people.get(slug) || heading)
+          : cat === 'place' ? (places.get(slug) || heading)
+          : heading;
+        r.setDataValue('label', label);
+      }
+      return rows;
     },
     mapstory: async (root: any, args: any, context: any, info: any) => {
 
@@ -434,6 +447,24 @@ export default {
   Event: {
     heading: async (item: any, args: any, { db, res }: any, info: any) => {
       return translatedValue(item, 'heading');
+    },
+    // Tile-grid placement (null until the bom_timeline grid backfill is applied).
+    grid: (item: any) => {
+      const row = item.getDataValue('grid_row');
+      if (row === null || row === undefined) return null;
+      return {
+        row,
+        col: item.getDataValue('grid_col'),
+        rowSpan: item.getDataValue('grid_h'),
+        colSpan: item.getDataValue('grid_w'),
+        bg: item.getDataValue('grid_bg'),
+      };
+    },
+    // Translated display label, precomputed in the timeline resolver (people/
+    // place reuse + event heading); fall back to heading.
+    label: (item: any) => {
+      const l = item.getDataValue('label');
+      return (l !== null && l !== undefined) ? l : translatedValue(item, 'heading');
     },
     html: async (item: any, args: any, { db, res }: any, info: any) => {
       return translatedValue(item, 'html');

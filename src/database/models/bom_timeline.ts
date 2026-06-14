@@ -70,7 +70,13 @@ export default class _bom_timeline extends ModelBase {
         heading: {
           type: DataTypes.STRING(255),
           allowNull: false
-        }
+        },
+        grid_row: { type: DataTypes.INTEGER, allowNull: true },
+        grid_col: { type: DataTypes.INTEGER, allowNull: true },
+        grid_w: { type: DataTypes.INTEGER, allowNull: true },
+        grid_h: { type: DataTypes.INTEGER, allowNull: true },
+        grid_bg: { type: DataTypes.STRING(7), allowNull: true },
+        label_category: { type: DataTypes.STRING(8), allowNull: true }
       }, {
       sequelize,
       tableName: 'bom_timeline',
