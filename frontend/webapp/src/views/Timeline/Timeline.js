@@ -241,7 +241,11 @@ function TimeLine() {
   const scale = +(zoom * fitScale).toFixed(3)
 
   useEffect(() => {
-    BoMOnlineAPI({ timeline: true })
+    // Bypass the IndexedDB cache: a copy cached before the grid migration has no
+    // `grid` field, so eventEls would filter every event out (no labels) and the
+    // cache hit means no server refetch ever happens. The timeline is small and
+    // its grid placement is essential, so always fetch it fresh.
+    BoMOnlineAPI({ timeline: true }, { useCache: false })
       .then((r) => setTimeline((r && r.timeline) || []))
       .catch(() => setTimeline([]))
   }, [])
