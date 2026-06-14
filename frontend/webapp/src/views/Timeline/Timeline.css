@@ -88,6 +88,108 @@
   outline-offset: -2px;
 }
 
+/* Legend / "how to read" — fixed overlay (does not scroll with the canvas) */
+.tg-legend {
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  z-index: 19;
+  width: 232px;
+  max-width: calc(100% - 32px);
+  background: linear-gradient(180deg, #fdf8ec 0%, #f5ecd6 100%);
+  border: 1px solid rgba(120, 90, 40, 0.4);
+  border-radius: 10px;
+  box-shadow: 0 2px 14px rgba(60, 40, 15, 0.28);
+  font-family: "Roboto Condensed", "Arial Narrow", sans-serif;
+  color: #4a3c22;
+  overflow: hidden;
+}
+.tg-legend-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  background: rgba(154, 107, 31, 0.12);
+  color: #5a4015;
+  cursor: pointer;
+  font: inherit;
+}
+.tg-legend-toggle:hover {
+  background: rgba(154, 107, 31, 0.2);
+}
+.tg-legend-toggle:focus-visible {
+  outline: 2px solid #9c6b1f;
+  outline-offset: -2px;
+}
+.tg-legend-title {
+  font-family: "Nanum Myeongjo", "Scripture", Georgia, serif;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.3px;
+}
+.tg-legend-body {
+  padding: 10px 12px 12px;
+}
+.tg-legend-note {
+  margin: 0 0 10px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #6a5836;
+}
+.tg-legend-keys,
+.tg-legend-icons {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.tg-legend-keys li,
+.tg-legend-icons li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
+  line-height: 1.25;
+  padding: 1.5px 0;
+}
+.tg-legend-sw {
+  width: 15px;
+  height: 11px;
+  flex: 0 0 auto;
+  border-radius: 3px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18);
+}
+.tg-legend-icons {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(120, 90, 40, 0.25);
+}
+.tg-legend-pin {
+  width: 15px;
+  text-align: center;
+  flex: 0 0 auto;
+  font-size: 11px;
+}
+.tg-legend-mini {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #7c1d13;
+  background: radial-gradient(circle at 34% 28%, #fdf5dc 0%, #f3e0ad 70%, #e6c97f 100%);
+  border: 1px solid rgba(124, 29, 19, 0.55);
+}
+.tg-legend-mini svg {
+  width: 64%;
+  height: 64%;
+  display: block;
+}
+
 .timeline-grid {
   --scale: 1; /* map-style zoom; set inline by the zoom control */
   --col-w: calc(26px * var(--scale));

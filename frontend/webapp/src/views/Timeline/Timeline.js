@@ -78,6 +78,24 @@ function cornerRadius(rd) {
   }
 }
 
+// Verified color → lineage mapping, derived from each event's grid_bg (the
+// migration design doc's mapping was wrong — e.g. maroon is Lamanites, not
+// Nephites). Drives the legend. Ordered roughly by first appearance.
+const LINEAGES = [
+  { c: "#134f5c", t: "Jaredites" },
+  { c: "#351c75", t: "Lehi’s family" },
+  { c: "#1c4587", t: "Nephites (Land of Nephi)" },
+  { c: "#85200c", t: "Lamanites" },
+  { c: "#3c78d8", t: "Zeniff’s colony" },
+  { c: "#b45f06", t: "Alma’s people" },
+  { c: "#274e13", t: "Nephite kings (Zarahemla)" },
+  { c: "#bf9000", t: "Mulekites · missions" },
+  { c: "#38761d", t: "Reign of the judges" },
+  { c: "#6fa8dc", t: "Gadianton robbers" },
+  { c: "#000000", t: "The Great Destruction" },
+  { c: "#fff2cc", t: "After Christ" },
+]
+
 const gridPos = (t) => ({
   gridColumn: `${t.c + 1} / span ${t.w}`, // +1: column 1 is the date gutter
   gridRow: `${t.r} / span ${t.h}`,
@@ -92,6 +110,7 @@ function TimeLine() {
   }, [])
 
   const [timeline, setTimeline] = useState(null)
+  const [legendOpen, setLegendOpen] = useState(true)
   const [zoom, setZoom] = useState(() =>
     typeof window !== "undefined" && window.innerWidth <= MOBILE_BREAKPOINT
       ? MOBILE_ZOOM
@@ -252,15 +271,57 @@ function TimeLine() {
   return (
     <div className="timeline-grid-wrap">
       <div className="tg-zoom" role="group" aria-label="Zoom timeline">
-        <button type="button" onClick={() => zoomBy(1 / ZOOM_STEP)} aria-label="Zoom out">
+        <button type="button" onClick={() => zoomBy(1 / ZOOM_STEP)} aria-label="Zoom out" title="Zoom out">
           −
         </button>
-        <button type="button" onClick={() => setZoom(1)} aria-label="Reset zoom">
+        <button type="button" onClick={() => setZoom(1)} aria-label="Reset zoom" title="Reset zoom">
           ⤢
         </button>
-        <button type="button" onClick={() => zoomBy(ZOOM_STEP)} aria-label="Zoom in">
+        <button type="button" onClick={() => zoomBy(ZOOM_STEP)} aria-label="Zoom in" title="Zoom in">
           +
         </button>
+      </div>
+
+      <div className={"tg-legend" + (legendOpen ? "" : " is-collapsed")}>
+        <button
+          type="button"
+          className="tg-legend-toggle"
+          onClick={() => setLegendOpen((o) => !o)}
+          aria-expanded={legendOpen}
+        >
+          <span className="tg-legend-title">How to read this</span>
+          <span aria-hidden="true">{legendOpen ? "▾" : "▸"}</span>
+        </button>
+        {legendOpen && (
+          <div className="tg-legend-body">
+            <p className="tg-legend-note">
+              Time runs <strong>top → bottom</strong> (dates at left, approximate). Columns group
+              the peoples &amp; lands of the record.
+            </p>
+            <ul className="tg-legend-keys">
+              {LINEAGES.map((l) => (
+                <li key={l.c}>
+                  <span className="tg-legend-sw" style={{ background: l.c }} aria-hidden="true" />
+                  {l.t}
+                </li>
+              ))}
+            </ul>
+            <ul className="tg-legend-icons">
+              <li>
+                <span className="tg-legend-pin" aria-hidden="true">
+                  📍
+                </span>
+                Place / land
+              </li>
+              <li>
+                <span className="tg-legend-mini" aria-hidden="true">
+                  {SWORDS}
+                </span>
+                Battle
+              </li>
+            </ul>
+          </div>
+        )}
       </div>
       <div className="timeline-grid-scroller">
         <div
