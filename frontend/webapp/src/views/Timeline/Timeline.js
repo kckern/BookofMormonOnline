@@ -124,6 +124,25 @@ const LINEAGES = [
   { c: "#e6cf8c", t: "After Christ" },
 ]
 
+// Hover discovery: raw band color (as stored in the data, pre-fixBg) → name.
+// Keyed without the leading "#" so it doubles as the data-lin attribute value.
+const COLOR_NAMES = {
+  "134f5c": "Jaredites",
+  "351c75": "Lehi’s family",
+  "1c4587": "Nephites (Land of Nephi)",
+  "073763": "Nephite lands",
+  "85200c": "Lamanites",
+  "3c78d8": "Zeniff’s colony",
+  "b45f06": "Alma’s people",
+  "274e13": "Nephite kings (Zarahemla)",
+  "bf9000": "Mulekites · missions",
+  "38761d": "Reign of the judges",
+  "6fa8dc": "Gadianton robbers",
+  "000000": "Cataclysmic Destruction",
+  "fff2cc": "After Christ",
+}
+const linKey = (bg) => (bg ? bg.replace("#", "") : null)
+
 const gridPos = (t) => ({
   gridColumn: `${t.c + 1} / span ${t.w}`, // +1: column 1 is the date gutter
   gridRow: `${t.r} / span ${t.h}`,
@@ -139,6 +158,7 @@ function TimeLine() {
 
   const [timeline, setTimeline] = useState(null)
   const [infoOpen, setInfoOpen] = useState(false)
+  const [hoverLin, setHoverLin] = useState(null) // band key currently hovered
   const [zoom, setZoom] = useState(1)
   // Responsive base: shrink the whole grid to fit the viewport width (keeping the
   // cell aspect ratio) so we never need a horizontal scrollbar at rest; capped at
@@ -257,6 +277,7 @@ function TimeLine() {
           <div
             key={`f${t.r}-${t.c}`}
             className="tg-fill"
+            data-lin={linKey(t.bg)}
             style={{ ...gridPos(t), background: fixBg(t.bg), ...cornerStyle(t, colorAt) }}
           />
         )),
@@ -287,6 +308,7 @@ function TimeLine() {
           }
           const bg = fixBg(g.bg)
           const tcol = textOn(bg)
+          const linAttr = isPlace ? null : { "data-lin": linKey(g.bg) }
           const cls =
             "tg-anchor " +
             (isPlace ? "tg-place" : "tg-event") +
@@ -307,6 +329,7 @@ function TimeLine() {
                 className={cls}
                 style={style}
                 title={e.date ? `${label} — ${e.date}` : label}
+                {...linAttr}
               >
                 {inner}
               </div>
@@ -319,6 +342,7 @@ function TimeLine() {
               ref={ref}
               className={cls}
               style={style}
+              {...linAttr}
               onClick={() => openInfo(e.slug)}
               aria-label={e.date ? `${label}, ${e.date}` : label}
               title={e.date ? `${label} — ${e.date}` : label}
@@ -400,6 +424,12 @@ function TimeLine() {
           role="region"
           aria-label="Book of Mormon timeline — events by lineage and date. Use Tab to move between events."
           style={{ "--cols": cols, "--rows": rows, "--scale": scale }}
+          data-hover={hoverLin || undefined}
+          onMouseOver={(e) => {
+            const el = e.target.closest("[data-lin]")
+            setHoverLin(el ? el.getAttribute("data-lin") : null)
+          }}
+          onMouseLeave={() => setHoverLin(null)}
         >
           {/* opaque continuous backing so the gutter masks content on every row */}
           <div className="tg-gutter-bg" style={{ gridColumn: 1, gridRow: `1 / ${rows + 1}` }} />
@@ -428,6 +458,7 @@ function TimeLine() {
                   key={key}
                   className="tg-anchor tg-battle"
                   style={{ ...pos, background: fixBg(t.bg) }}
+                  data-lin={linKey(t.bg)}
                   role="img"
                   aria-label="Battle"
                   title="Battle"
@@ -491,6 +522,17 @@ function TimeLine() {
           {eventEls}
         </div>
       </div>
+
+      {hoverLin && COLOR_NAMES[hoverLin] && (
+        <div className="tg-statusbar" aria-live="polite">
+          <span
+            className="tg-status-sw"
+            style={{ background: fixBg("#" + hoverLin) }}
+            aria-hidden="true"
+          />
+          {COLOR_NAMES[hoverLin]}
+        </div>
+      )}
 
       {showModal && (
         <div className="tg-infobox-backdrop" onClick={closeInfo}>

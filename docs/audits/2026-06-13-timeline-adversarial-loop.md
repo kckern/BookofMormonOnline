@@ -140,3 +140,27 @@ junctions, battle icons on the band color.
 — open; `#073763` is a fill-only band with no events (name it during the hover work);
 deep-link highlight invisible behind modal — open; modal art aria duplicates title —
 open; trailing empty grid rows — open.
+
+---
+
+## Round 5 — KC grid-internals backlog (cont.)
+
+**Done:**
+- **Corner-rounding algorithm** (commit `7ffa17e0`): replaced the sparse static `rd`
+  glyph data with rounding computed from band occupancy. A corner rounds only when
+  both its orthogonal neighbour cells are empty parchment (true outer-perimeter
+  corner of a self-contained band); any edge touching another band stays square (a
+  junction). Bands now read as rounded ribbons with square joins — matches the prod
+  model. Implemented as `colorAt` occupancy map + `cornerStyle(t, colorAt)`, radius
+  scales via `calc(13px * var(--scale))`.
+- **Hover-highlight + status bar** (this commit): dropped the persistent legend
+  reliance — hovering anywhere on a band now lights up every tile of that lineage
+  (`filter: brightness(1.15)`) and a bottom-left status bar names it. Delegated
+  `onMouseOver` reads the nearest `data-lin`; `data-hover` on the grid + 13
+  per-color CSS rules drive the highlight (no re-render of the ~3,200 tiles).
+  `#073763` (the unkeyed fill-only band) named "Nephite lands" in `COLOR_NAMES`.
+
+**Still open (next round):** incursion battle chips — Lamanite-into-Nephite battles
+as a self-contained red rounded chip on the blue band (two-layer cell: band color
+behind + rounded attacker chip + icon on top). Plus the remaining critic items
+(axis compression break, deep-link highlight, modal art aria, trailing rows).
