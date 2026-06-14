@@ -160,6 +160,18 @@
   width: 64%;
   height: 64%;
 }
+.tg-layers-text {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Roboto Condensed", "Arial Narrow", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: #6a5326;
+}
 
 /* ── Expandable how-to-read panel (replaces the floating legend) ── */
 .tg-infopanel {

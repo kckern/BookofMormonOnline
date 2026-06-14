@@ -193,7 +193,7 @@ function TimeLine() {
   const [timeline, setTimeline] = useState(null)
   const [infoOpen, setInfoOpen] = useState(false)
   const [layersOpen, setLayersOpen] = useState(false)
-  const [layers, setLayers] = useState({ battles: true })
+  const [layers, setLayers] = useState({ battles: true, labels: true })
   const [hoverLin, setHoverLin] = useState(null) // band key currently hovered
   const [zoom, setZoom] = useState(1)
   // Responsive base: shrink the whole grid to fit the viewport width (keeping the
@@ -536,6 +536,17 @@ function TimeLine() {
                 </span>
                 Battles
               </label>
+              <label className="tg-layers-item">
+                <input
+                  type="checkbox"
+                  checked={layers.labels}
+                  onChange={(e) => setLayers((l) => ({ ...l, labels: e.target.checked }))}
+                />
+                <span className="tg-layers-text" aria-hidden="true">
+                  Aa
+                </span>
+                Labels
+              </label>
             </div>
           )}
         </div>
@@ -586,7 +597,9 @@ function TimeLine() {
         <div
           id="tg-grid"
           tabIndex={-1}
-          className={"timeline-grid" + (scale < LABEL_HIDE_BELOW ? " tg-compact" : "")}
+          className={
+            "timeline-grid" + (scale < LABEL_HIDE_BELOW || !layers.labels ? " tg-compact" : "")
+          }
           role="region"
           aria-label="Book of Mormon timeline — events by lineage and date. Use Tab to move between events."
           style={{ "--cols": cols, "--rows": rows, "--scale": scale }}
