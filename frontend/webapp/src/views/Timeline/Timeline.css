@@ -430,9 +430,9 @@
 .tg-infobox-date {
   flex-shrink: 0;
   font-family: "Nanum Myeongjo", "Scripture", Georgia, serif;
-  font-size: 12px;
-  font-style: italic;
-  color: #9c7e45;
+  font-size: 13px;
+  font-weight: 700;
+  color: #7a5a1c;
 }
 
 .tg-infobox-art {

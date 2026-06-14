@@ -55,6 +55,17 @@ const humanize = (slug) =>
       i > 0 && MINOR.has(w.toLowerCase()) ? w.toLowerCase() : w.charAt(0).toUpperCase() + w.slice(1)
     )
 
+// A few source band colors don't render well: post-Christ cream (#fff2cc) is
+// ~invisible on the parchment canvas. Remap at render time (also used for the
+// legend swatch so the key matches the band).
+const BG_FIX = { "#fff2cc": "#e6cf8c" }
+const fixBg = (c) => (c && BG_FIX[c]) || c
+
+// Source names occasionally carry a disambiguation digit glued to a word
+// ("Land of Bountiful1"); strip it for display. Roman numerals (Mosiah II) and
+// leading book numbers (1 Nephi) are untouched.
+const cleanLabel = (s) => (s || "").replace(/([A-Za-z])\d+\b/g, "$1")
+
 // Black/white text for legibility over a band color (the sheet's per-cell fg is
 // unreliable, so we derive contrast from the background).
 function textOn(bg) {
@@ -92,8 +103,8 @@ const LINEAGES = [
   { c: "#bf9000", t: "Mulekites · missions" },
   { c: "#38761d", t: "Reign of the judges" },
   { c: "#6fa8dc", t: "Gadianton robbers" },
-  { c: "#000000", t: "The Great Destruction" },
-  { c: "#fff2cc", t: "After Christ" },
+  { c: "#000000", t: "Cataclysmic Destruction" },
+  { c: "#e6cf8c", t: "After Christ" },
 ]
 
 const gridPos = (t) => ({
@@ -110,7 +121,9 @@ function TimeLine() {
   }, [])
 
   const [timeline, setTimeline] = useState(null)
-  const [legendOpen, setLegendOpen] = useState(true)
+  const [legendOpen, setLegendOpen] = useState(
+    () => typeof window === "undefined" || window.innerWidth > MOBILE_BREAKPOINT
+  )
   const [zoom, setZoom] = useState(() =>
     typeof window !== "undefined" && window.innerWidth <= MOBILE_BREAKPOINT
       ? MOBILE_ZOOM
@@ -200,7 +213,7 @@ function TimeLine() {
           <div
             key={`f${t.r}-${t.c}`}
             className="tg-fill"
-            style={{ ...gridPos(t), background: t.bg, ...cornerRadius(t.rd) }}
+            style={{ ...gridPos(t), background: fixBg(t.bg), ...cornerRadius(t.rd) }}
           />
         )),
     [tiles]
@@ -219,7 +232,7 @@ function TimeLine() {
         .map((e) => {
           const g = e.grid
           const isPlace = !e.p
-          const label = e.label || e.heading || humanize(e.slug)
+          const label = cleanLabel(e.label || e.heading || humanize(e.slug))
           const clickable = !!(e.heading || e.html)
           const pos = {
             gridColumn: `${g.col + 1} / span ${g.colSpan}`,
@@ -228,7 +241,8 @@ function TimeLine() {
           const ref = (n) => {
             if (n) cellRefs.current[e.slug] = n
           }
-          const tcol = textOn(g.bg)
+          const bg = fixBg(g.bg)
+          const tcol = textOn(bg)
           const cls =
             "tg-anchor " +
             (isPlace ? "tg-place" : "tg-event") +
@@ -240,10 +254,16 @@ function TimeLine() {
           ) : (
             <span className="tg-event-label">{label}</span>
           )
-          const style = isPlace ? pos : { ...pos, background: g.bg || "#5a5a5a", color: tcol }
+          const style = isPlace ? pos : { ...pos, background: bg || "#5a5a5a", color: tcol }
           if (!clickable) {
             return (
-              <div key={`e-${e.slug}-${g.row}-${g.col}`} ref={ref} className={cls} style={style}>
+              <div
+                key={`e-${e.slug}-${g.row}-${g.col}`}
+                ref={ref}
+                className={cls}
+                style={style}
+                title={e.date ? `${label} — ${e.date}` : label}
+              >
                 {inner}
               </div>
             )
@@ -349,25 +369,37 @@ function TimeLine() {
             const pos = gridPos(t)
 
             if (t.k === "battle") {
-              // Decorative marker — no content; non-interactive, hidden from AT.
+              // Marker only — there is no per-battle record to open, so it is
+              // intentionally non-interactive, but it IS announced/tooltipped as
+              // "Battle" (legend keys the icon) rather than silent decoration.
               return (
-                <div key={key} className="tg-anchor tg-battle" style={pos} aria-hidden="true">
+                <div
+                  key={key}
+                  className="tg-anchor tg-battle"
+                  style={pos}
+                  role="img"
+                  aria-label="Battle"
+                  title="Battle"
+                >
                   <span className="tg-battle-medallion">{SWORDS}</span>
                 </div>
               )
             }
 
             const data = t.slug ? bySlug[t.slug] : null
-            const heading = (data && data.heading) || t.t
+            const heading = cleanLabel((data && data.heading) || t.t)
             const isPlace = t.k === "place"
-            const inner = isPlace ? `📍 ${t.t}` : heading
+            const placeName = cleanLabel(t.t)
+            const inner = isPlace ? `📍 ${placeName}` : heading
+            const tipText = isPlace ? placeName : heading
             // Clickable iff it has a slug AND real content (t.nc, set at build
             // time for headingless labels, marks the empty-modal cases). Using
             // the build-time flag keeps this synchronous — no affordance flip
             // when the API resolves.
             const clickable = !!t.slug && !t.nc
 
-            const tcol = textOn(t.bg)
+            const bg = fixBg(t.bg)
+            const tcol = textOn(bg)
             const tone = isPlace ? "" : tcol === "#fff" ? " tg-on-dark" : " tg-on-light"
 
             if (!clickable) {
@@ -375,7 +407,8 @@ function TimeLine() {
                 <div
                   key={key}
                   className={`tg-anchor ${isPlace ? "tg-place" : "tg-event"}${tone} is-static`}
-                  style={isPlace ? pos : { ...pos, background: t.bg, color: tcol }}
+                  style={isPlace ? pos : { ...pos, background: bg, color: tcol }}
+                  title={tipText}
                 >
                   <span className={isPlace ? undefined : "tg-event-label"}>{inner}</span>
                 </div>
@@ -393,10 +426,10 @@ function TimeLine() {
                   `tg-anchor ${isPlace ? "tg-place" : "tg-event"}${tone} is-clickable` +
                   (selected === t.slug ? " is-selected" : "")
                 }
-                style={isPlace ? pos : { ...pos, background: t.bg, color: tcol }}
+                style={isPlace ? pos : { ...pos, background: bg, color: tcol }}
                 onClick={() => openInfo(t.slug)}
-                aria-label={data && data.date ? `${heading}, ${data.date}` : heading}
-                title={data && data.date ? `${heading} — ${data.date}` : heading}
+                aria-label={data && data.date ? `${tipText}, ${data.date}` : tipText}
+                title={data && data.date ? `${tipText} — ${data.date}` : tipText}
               >
                 <span className={isPlace ? undefined : "tg-event-label"}>{inner}</span>
               </button>
@@ -429,13 +462,13 @@ function TimeLine() {
             {info ? (
               <>
                 <div className="tg-infobox-head">
-                  <h2 id="tg-infobox-title">{info.heading || selected}</h2>
+                  <h2 id="tg-infobox-title">{cleanLabel(info.heading) || selected}</h2>
                   {info.date && <span className="tg-infobox-date">{info.date}</span>}
                 </div>
                 <div
                   className="tg-infobox-art"
                   role="img"
-                  aria-label={info.heading || selected}
+                  aria-label={cleanLabel(info.heading) || selected}
                   style={{ backgroundImage: `url(${assetUrl}/timeline/art/${info.slug})` }}
                 />
                 {info.html && <div className="tg-infobox-body">{Parser(info.html)}</div>}
