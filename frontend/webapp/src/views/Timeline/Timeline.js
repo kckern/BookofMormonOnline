@@ -309,7 +309,7 @@ function TimeLine() {
   // area stays continuous beneath them (no parchment notches rounding around the
   // battle): a home battle counts as its own band; an incursion counts as the
   // territory it sits in (the attacker chip is drawn on top).
-  const { colorAt, battleInfo } = useMemo(() => {
+  const { colorAt, battleInfo, holePatches } = useMemo(() => {
     const fill = new Map()
     for (const t of tiles) {
       if (t.k !== "fill" || t.bg === "#ffffff") continue
@@ -327,28 +327,98 @@ function TimeLine() {
       info.set(`${t.r},${t.c}`, { incursion, eff })
       combined.set(`${t.r},${t.c}`, eff)
     }
+
+    // Fill enclosed single-color holes (e.g. the Helam band's interior gap) so
+    // they don't render as parchment notches/rectangles inside a band. A hole is
+    // an interior empty region not connected to the outside; fill it ONLY when it
+    // borders exactly one band color (duration-bar gaps border 2+ colors and are
+    // left alone). Filling also stops the corner algorithm rounding into the hole.
+    const rows = tilesData.rows,
+      cols = tilesData.cols
+    const isEmpty = (r, c) => !combined.has(`${r},${c}`)
+    const outside = new Set()
+    const st = []
+    for (let c = 0; c <= cols + 1; c++) st.push([0, c], [rows + 1, c])
+    for (let r = 0; r <= rows + 1; r++) st.push([r, 0], [r, cols + 1])
+    while (st.length) {
+      const [r, c] = st.pop()
+      if (r < 0 || r > rows + 1 || c < 0 || c > cols + 1) continue
+      const k = `${r},${c}`
+      if (outside.has(k) || !isEmpty(r, c)) continue
+      outside.add(k)
+      st.push([r + 1, c], [r - 1, c], [r, c + 1], [r, c - 1])
+    }
+    const holePatches = []
+    const seen = new Set()
+    for (let r = 1; r <= rows; r++)
+      for (let c = 1; c <= cols; c++) {
+        const k = `${r},${c}`
+        if (!isEmpty(r, c) || outside.has(k) || seen.has(k)) continue
+        const comp = []
+        const colors = new Set()
+        const q = [[r, c]]
+        seen.add(k)
+        while (q.length) {
+          const [rr, cc] = q.pop()
+          comp.push([rr, cc])
+          for (const [dr, dc] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+            const nr = rr + dr,
+              nc = cc + dc,
+              nk = `${nr},${nc}`
+            const nv = combined.get(nk)
+            if (nv) colors.add(nv)
+            else if (isEmpty(nr, nc) && !outside.has(nk) && !seen.has(nk)) {
+              seen.add(nk)
+              q.push([nr, nc])
+            }
+          }
+        }
+        if (colors.size === 1) {
+          const col = [...colors][0]
+          for (const [rr, cc] of comp) {
+            combined.set(`${rr},${cc}`, col)
+            holePatches.push({ r: rr, c: cc, bg: col })
+          }
+        }
+      }
+
     return {
       colorAt: (r, c) => combined.get(`${r},${c}`) || null,
       battleInfo: (t) => info.get(`${t.r},${t.c}`) || { incursion: false, eff: t.bg },
+      holePatches,
     }
   }, [tiles])
 
   // Fill tiles (lineage bands) never depend on selection/zoom — memoize so a
   // selection change doesn't re-render ~3,000 nodes.
-  const fillEls = useMemo(
-    () =>
-      tiles
-        .filter((t) => t.k === "fill" && t.bg !== "#ffffff") // drop the stray white artifact cell
-        .map((t) => (
-          <div
-            key={`f${t.r}-${t.c}`}
-            className="tg-fill"
-            data-lin={linKey(t.bg)}
-            style={{ ...gridPos(t), background: fixBg(t.bg), ...cornerStyle(t, colorAt) }}
-          />
-        )),
-    [tiles, colorAt]
-  )
+  const fillEls = useMemo(() => {
+    const els = tiles
+      .filter((t) => t.k === "fill" && t.bg !== "#ffffff") // drop the stray white artifact cell
+      .map((t) => (
+        <div
+          key={`f${t.r}-${t.c}`}
+          className="tg-fill"
+          data-lin={linKey(t.bg)}
+          style={{ ...gridPos(t), background: fixBg(t.bg), ...cornerStyle(t, colorAt) }}
+        />
+      ))
+    // enclosed single-color holes patched to the band color (interior, no rounding)
+    for (const p of holePatches) {
+      els.push(
+        <div
+          key={`hp${p.r}-${p.c}`}
+          className="tg-fill"
+          data-lin={linKey(p.bg)}
+          style={{
+            gridColumn: `${p.c + 1} / span 1`,
+            gridRow: `${p.r} / span 1`,
+            background: fixBg(p.bg),
+          }}
+        />
+      )
+    }
+    return els
+  }, [tiles, colorAt, holePatches])
 
   // Canvas marks (hardcoded): location pins + battle icons. No events here.
   const marks = useMemo(() => tiles.filter((t) => t.k !== "fill"), [tiles])
@@ -564,12 +634,16 @@ function TimeLine() {
               // corners (TR+BR) rounded, revealing the territory behind, with the
               // battle medallion on top. Home battle: just the medallion on the band.
               const cellBg = fixBg(eff)
+              // Layered cell: the base carries the territory color (data-lin = eff)
+              // so highlighting the territory band ALSO lights up this cell; the
+              // attacker tab is its own layer (data-lin = t.bg) that lights up with
+              // the attacker band.
               return (
                 <div
                   key={key}
                   className={"tg-anchor tg-battle" + (incursion ? " tg-battle-inc" : "")}
                   style={{ ...pos, background: cellBg }}
-                  data-lin={linKey(incursion ? t.bg : eff)}
+                  data-lin={linKey(eff)}
                   role="img"
                   aria-label="Battle"
                   title="Battle"
@@ -578,6 +652,7 @@ function TimeLine() {
                     <span
                       className="tg-battle-tab"
                       aria-hidden="true"
+                      data-lin={linKey(t.bg)}
                       style={{
                         background: fixBg(t.bg),
                         borderTopRightRadius: RAD,

@@ -282,3 +282,28 @@ with no API errors; bots still get SSR.
 **Open / noted from R9 critic (not yet done):** layers dropdown doesn't close on
 outside-click; date-axis honesty + "1s AD/5s BC" seam labels; mobile legibility +
 zoom controls dropped on narrow widths; deep-link highlight after modal close.
+
+---
+
+## Round 10 (final) — closing QA + KC layering note
+
+**R10 critic** confirmed the corner heuristic now reads right (no notches/islands/
+slivers at junctions; perimeters + protrusions round) — one HIGH issue left: the
+**Helam** orange band showed parchment notches + a parchment rectangle from a real
+interior **hole** in the tile data (`r40 c9-10`, enclosed by orange).
+
+**Done:**
+- **Enclosed-hole fill:** the occupancy memo now flood-fills interior empty regions
+  not connected to the outside, filling ONLY those bordered by a single band color
+  (the Helam hole + ~10 other 1-2-cell holes). Duration-bar gaps border 2+ colors
+  (maroon+blue) so they're untouched. Fixes both the parchment rectangle and the
+  notches (the corner algorithm no longer rounds into a now-filled hole). Patches
+  render as plain interior fills.
+- **Incursion cells are now a layer (KC):** the incursion cell's base carries the
+  *territory* color (`data-lin = eff`, e.g. Nephite blue) and the attacker tab is
+  its own layer (`data-lin = attacker`). So highlighting the blue band now also
+  lights up the cell where red encroaches into blue — they behave as a layered
+  unit, not separate painted areas.
+
+Verified: 104 events, no runtime errors, Helam solid, hover propagates to incursion
+cells. **Loop complete (10/10).**
