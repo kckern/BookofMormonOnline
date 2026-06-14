@@ -12,11 +12,14 @@
   bottom: 0;
   left: 0;
   right: 0;
+  display: flex;
+  flex-direction: column;
   /* warm aged-parchment canvas: the lineage bands read as illuminated ribbons
      floating on paper, and the band gaps become intentional negative space */
   background:
     radial-gradient(140% 90% at 50% -10%, #f8f1dd 0%, #f0e6c8 52%, #e6d6b0 100%);
   overflow: hidden;
+  font-family: "Roboto Condensed", "Arial Narrow", sans-serif;
 }
 /* faint paper grain over the canvas (multiply so it darkens, never washes out) */
 .timeline-grid-wrap::before {
@@ -43,8 +46,11 @@
 .timeline-grid-scroller {
   position: relative;
   z-index: 1;
+  flex: 1 1 auto;
+  min-height: 0;
   width: 100%;
-  height: 100%;
+  /* responsive scale keeps the grid within width, so x-overflow only appears when
+     the user zooms in past fit; y always scrolls */
   overflow: auto;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-x pan-y;
@@ -55,12 +61,123 @@
     inset 0 -16px 14px -14px rgba(70, 48, 16, 0.18);
 }
 
-/* Map-style zoom controls — parchment-toned to match the canvas */
-.tg-zoom {
-  position: absolute;
-  top: 14px;
-  right: 16px;
+/* ── Title bar: compact H1 + how-to-read toggle + zoom controls ── */
+.tg-titlebar {
+  position: relative;
+  z-index: 21;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 16px;
+  background: linear-gradient(180deg, rgba(247, 239, 217, 0.96), rgba(240, 230, 200, 0.96));
+  border-bottom: 1px solid rgba(120, 90, 40, 0.28);
+  box-shadow: 0 1px 8px rgba(70, 48, 16, 0.12);
+}
+.tg-title {
+  margin: 0;
+  font-family: "Roboto Condensed", "Arial Narrow", sans-serif;
+  font-weight: 700;
+  font-size: 21px;
+  letter-spacing: 0.4px;
+  color: #4a3a18;
+  white-space: nowrap;
+}
+.tg-info-toggle {
+  flex: 0 0 auto;
+  border: 1px solid rgba(120, 90, 40, 0.4);
+  background: #fbf5e4;
+  color: #6a5326;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 5px 11px;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.tg-info-toggle:hover,
+.tg-info-toggle[aria-expanded="true"] {
+  background: #9c6b1f;
+  color: #fff;
+  border-color: #9c6b1f;
+}
+.tg-info-toggle:focus-visible {
+  outline: 2px solid #9c6b1f;
+  outline-offset: 2px;
+}
+.tg-titlebar .tg-zoom {
+  margin-left: auto;
+}
+
+/* ── Expandable how-to-read panel (replaces the floating legend) ── */
+.tg-infopanel {
+  position: relative;
   z-index: 20;
+  flex: 0 0 auto;
+  max-height: 38vh;
+  overflow: auto;
+  padding: 12px 18px 14px;
+  background: linear-gradient(180deg, #fdf8ec, #f5ecd6);
+  border-bottom: 1px solid rgba(120, 90, 40, 0.28);
+  box-shadow: inset 0 -6px 8px -8px rgba(70, 48, 16, 0.25);
+  color: #4a3c22;
+}
+.tg-infopanel-note {
+  margin: 0 0 10px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #5f4c25;
+  max-width: 720px;
+}
+.tg-infopanel-keys {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 4px 18px;
+}
+.tg-infopanel-keys li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  line-height: 1.3;
+}
+.tg-key-sw {
+  width: 16px;
+  height: 12px;
+  flex: 0 0 auto;
+  border-radius: 3px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18);
+}
+.tg-key-pin {
+  width: 16px;
+  text-align: center;
+  flex: 0 0 auto;
+}
+.tg-key-mini {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #7c1d13;
+  background: radial-gradient(circle at 34% 28%, #fdf5dc 0%, #f3e0ad 70%, #e6c97f 100%);
+  border: 1px solid rgba(124, 29, 19, 0.55);
+}
+.tg-key-mini svg {
+  width: 64%;
+  height: 64%;
+  display: block;
+}
+
+/* Zoom controls — parchment-toned, now docked in the title bar */
+.tg-zoom {
+  flex: 0 0 auto;
   display: flex;
   gap: 1px;
   border-radius: 10px;
@@ -116,107 +233,6 @@
   outline: none;
 }
 
-/* Legend / "how to read" — fixed overlay (does not scroll with the canvas) */
-.tg-legend {
-  position: absolute;
-  top: 14px;
-  left: 16px;
-  z-index: 19;
-  width: 232px;
-  max-width: calc(100% - 32px);
-  background: linear-gradient(180deg, #fdf8ec 0%, #f5ecd6 100%);
-  border: 1px solid rgba(120, 90, 40, 0.4);
-  border-radius: 10px;
-  box-shadow: 0 2px 14px rgba(60, 40, 15, 0.28);
-  font-family: "Roboto Condensed", "Arial Narrow", sans-serif;
-  color: #4a3c22;
-  overflow: hidden;
-}
-.tg-legend-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
-  padding: 8px 12px;
-  border: none;
-  background: rgba(154, 107, 31, 0.12);
-  color: #5a4015;
-  cursor: pointer;
-  font: inherit;
-}
-.tg-legend-toggle:hover {
-  background: rgba(154, 107, 31, 0.2);
-}
-.tg-legend-toggle:focus-visible {
-  outline: 2px solid #9c6b1f;
-  outline-offset: -2px;
-}
-.tg-legend-title {
-  font-family: "Nanum Myeongjo", "Scripture", Georgia, serif;
-  font-weight: 700;
-  font-size: 13px;
-  letter-spacing: 0.3px;
-}
-.tg-legend-body {
-  padding: 10px 12px 12px;
-}
-.tg-legend-note {
-  margin: 0 0 10px;
-  font-size: 11px;
-  line-height: 1.4;
-  color: #6a5836;
-}
-.tg-legend-keys,
-.tg-legend-icons {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-.tg-legend-keys li,
-.tg-legend-icons li {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 11.5px;
-  line-height: 1.25;
-  padding: 1.5px 0;
-}
-.tg-legend-sw {
-  width: 15px;
-  height: 11px;
-  flex: 0 0 auto;
-  border-radius: 3px;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18);
-}
-.tg-legend-icons {
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid rgba(120, 90, 40, 0.25);
-}
-.tg-legend-pin {
-  width: 15px;
-  text-align: center;
-  flex: 0 0 auto;
-  font-size: 11px;
-}
-.tg-legend-mini {
-  width: 16px;
-  height: 16px;
-  flex: 0 0 auto;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: #7c1d13;
-  background: radial-gradient(circle at 34% 28%, #fdf5dc 0%, #f3e0ad 70%, #e6c97f 100%);
-  border: 1px solid rgba(124, 29, 19, 0.55);
-}
-.tg-legend-mini svg {
-  width: 64%;
-  height: 64%;
-  display: block;
-}
 
 .timeline-grid {
   --scale: 1; /* map-style zoom; set inline by the zoom control */
@@ -255,7 +271,7 @@
   align-items: center;
   justify-content: flex-end;
   padding: 0 12px 0 14px;
-  font-family: "Nanum Myeongjo", "Scripture", Georgia, serif;
+  font-family: "Roboto Condensed", "Arial Narrow", sans-serif;
   font-size: calc(11px * var(--scale));
   font-weight: 700;
   letter-spacing: 0.2px;
@@ -372,7 +388,7 @@
   gap: 2px;
 }
 .tg-place > span {
-  font-family: "Nanum Myeongjo", "Scripture", Georgia, serif;
+  font-family: "Roboto Condensed", "Arial Narrow", sans-serif;
   font-size: calc(10px * var(--scale));
   font-weight: 700;
   font-style: italic;
@@ -466,7 +482,7 @@
   padding-right: 18px;
 }
 .tg-infobox-head h2 {
-  font-family: "Nanum Myeongjo", "Scripture", Georgia, serif;
+  font-family: "Roboto Condensed", "Arial Narrow", sans-serif;
   font-size: 20px;
   font-weight: 700;
   margin: 0;
@@ -474,7 +490,7 @@
 }
 .tg-infobox-date {
   flex-shrink: 0;
-  font-family: "Nanum Myeongjo", "Scripture", Georgia, serif;
+  font-family: "Roboto Condensed", "Arial Narrow", sans-serif;
   font-size: 13px;
   font-weight: 700;
   color: #7a5a1c;
@@ -508,7 +524,7 @@
   gap: 8px;
 }
 .tg-infobox-loading h2 {
-  font-family: "Nanum Myeongjo", "Scripture", Georgia, serif;
+  font-family: "Roboto Condensed", "Arial Narrow", sans-serif;
   font-size: 16px;
   color: #9c7e45;
   margin: 0;
@@ -517,7 +533,7 @@
 .tg-infobox-link {
   display: inline-block;
   margin-top: 14px;
-  font-family: "Nanum Myeongjo", "Scripture", Georgia, serif;
+  font-family: "Roboto Condensed", "Arial Narrow", sans-serif;
   font-size: 13.5px;
   font-weight: 700;
   color: #8a5a16;

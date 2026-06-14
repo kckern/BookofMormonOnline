@@ -34,9 +34,7 @@ const SWORDS = (
 const ZOOM_MIN = 0.4
 const ZOOM_MAX = 2
 const ZOOM_STEP = 1.2
-const MOBILE_BREAKPOINT = 640
-const MOBILE_ZOOM = 0.6
-// Below this zoom, labels collide into an unreadable mass — hide them and let
+// Below this effective scale, labels collide into an unreadable mass — hide them and let
 // the colored bands carry the structure (click/zoom-in to read).
 const LABEL_HIDE_BELOW = 0.55
 
@@ -125,23 +123,39 @@ function TimeLine() {
   }, [])
 
   const [timeline, setTimeline] = useState(null)
-  const [legendOpen, setLegendOpen] = useState(
-    () => typeof window === "undefined" || window.innerWidth > MOBILE_BREAKPOINT
-  )
-  const [zoom, setZoom] = useState(() =>
-    typeof window !== "undefined" && window.innerWidth <= MOBILE_BREAKPOINT
-      ? MOBILE_ZOOM
-      : 1
-  )
+  const [infoOpen, setInfoOpen] = useState(false)
+  const [zoom, setZoom] = useState(1)
+  // Responsive base: shrink the whole grid to fit the viewport width (keeping the
+  // cell aspect ratio) so we never need a horizontal scrollbar at rest; capped at
+  // 1 so we honor the natural max-width when there's room. zoom multiplies this.
+  const [fitScale, setFitScale] = useState(1)
   const match = useRouteMatch()
   const routerHistory = useHistory()
   const markerSlug = (match.params && match.params.markerSlug) || null
   const cellRefs = useRef({})
   const closeBtnRef = useRef(null)
   const dialogRef = useRef(null)
+  const scrollerRef = useRef(null)
 
   const zoomBy = (f) =>
     setZoom((z) => Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, +(z * f).toFixed(2))))
+
+  // Natural (scale-1) grid width: date gutter + cols × col width (must match CSS).
+  const naturalW = 70 + (tilesData.cols || 0) * 26
+  useEffect(() => {
+    const el = scrollerRef.current
+    if (!el || typeof ResizeObserver === "undefined") return
+    const recompute = () => {
+      const avail = el.clientWidth - 40 // grid right padding
+      setFitScale(Math.min(1, Math.max(0.2, avail / naturalW)))
+    }
+    recompute()
+    const ro = new ResizeObserver(recompute)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [naturalW])
+
+  const scale = +(zoom * fitScale).toFixed(3)
 
   useEffect(() => {
     BoMOnlineAPI({ timeline: true })
@@ -212,7 +226,7 @@ function TimeLine() {
   const fillEls = useMemo(
     () =>
       tiles
-        .filter((t) => t.k === "fill")
+        .filter((t) => t.k === "fill" && t.bg !== "#ffffff") // drop the stray white artifact cell
         .map((t) => (
           <div
             key={`f${t.r}-${t.c}`}
@@ -297,67 +311,69 @@ function TimeLine() {
       <a className="tg-skip" href="#tg-grid">
         Skip to timeline
       </a>
-      <div className="tg-zoom" role="group" aria-label="Zoom timeline">
-        <button type="button" onClick={() => zoomBy(1 / ZOOM_STEP)} aria-label="Zoom out" title="Zoom out">
-          −
-        </button>
-        <button type="button" onClick={() => setZoom(1)} aria-label="Reset zoom" title="Reset zoom">
-          ⤢
-        </button>
-        <button type="button" onClick={() => zoomBy(ZOOM_STEP)} aria-label="Zoom in" title="Zoom in">
-          +
-        </button>
-      </div>
 
-      <div className={"tg-legend" + (legendOpen ? "" : " is-collapsed")}>
+      <header className="tg-titlebar">
+        <h1 className="tg-title">Book of Mormon Timeline</h1>
         <button
           type="button"
-          className="tg-legend-toggle"
-          onClick={() => setLegendOpen((o) => !o)}
-          aria-expanded={legendOpen}
+          className="tg-info-toggle"
+          onClick={() => setInfoOpen((o) => !o)}
+          aria-expanded={infoOpen}
+          aria-controls="tg-infopanel"
         >
-          <span className="tg-legend-title">How to read this</span>
-          <span aria-hidden="true">{legendOpen ? "▾" : "▸"}</span>
+          <span aria-hidden="true">ⓘ</span> How to read
         </button>
-        {legendOpen && (
-          <div className="tg-legend-body">
-            <p className="tg-legend-note">
-              Time runs <strong>top → bottom</strong> (dates at left, approximate). Columns group
-              the peoples &amp; lands of the record.
-            </p>
-            <ul className="tg-legend-keys">
-              {LINEAGES.map((l) => (
-                <li key={l.c}>
-                  <span className="tg-legend-sw" style={{ background: l.c }} aria-hidden="true" />
-                  {l.t}
-                </li>
-              ))}
-            </ul>
-            <ul className="tg-legend-icons">
-              <li>
-                <span className="tg-legend-pin" aria-hidden="true">
-                  📍
-                </span>
-                Place / land
+        <div className="tg-zoom" role="group" aria-label="Zoom timeline">
+          <button type="button" onClick={() => zoomBy(1 / ZOOM_STEP)} aria-label="Zoom out" title="Zoom out">
+            −
+          </button>
+          <button type="button" onClick={() => setZoom(1)} aria-label="Reset zoom" title="Reset zoom">
+            ⤢
+          </button>
+          <button type="button" onClick={() => zoomBy(ZOOM_STEP)} aria-label="Zoom in" title="Zoom in">
+            +
+          </button>
+        </div>
+      </header>
+
+      {infoOpen && (
+        <div className="tg-infopanel" id="tg-infopanel">
+          <p className="tg-infopanel-note">
+            Time runs <strong>top → bottom</strong> (dates at left, approximate). Each column band
+            is a people or land of the record. Hover a band to highlight it; click an event for
+            details.
+          </p>
+          <ul className="tg-infopanel-keys">
+            {LINEAGES.map((l) => (
+              <li key={l.c}>
+                <span className="tg-key-sw" style={{ background: l.c }} aria-hidden="true" />
+                {l.t}
               </li>
-              <li>
-                <span className="tg-legend-mini" aria-hidden="true">
-                  {SWORDS}
-                </span>
-                Battle
-              </li>
-            </ul>
-          </div>
-        )}
-      </div>
-      <div className="timeline-grid-scroller">
+            ))}
+            <li>
+              <span className="tg-key-pin" aria-hidden="true">
+                📍
+              </span>
+              Place / land
+            </li>
+            <li>
+              <span className="tg-key-mini" aria-hidden="true">
+                {SWORDS}
+              </span>
+              Battle
+            </li>
+          </ul>
+        </div>
+      )}
+
+      <div className="timeline-grid-scroller" ref={scrollerRef}>
         <div
           id="tg-grid"
           tabIndex={-1}
-          className={"timeline-grid" + (zoom < LABEL_HIDE_BELOW ? " tg-compact" : "")}
+          className={"timeline-grid" + (scale < LABEL_HIDE_BELOW ? " tg-compact" : "")}
           role="region"
           aria-label="Book of Mormon timeline — events by lineage and date. Use Tab to move between events."
-          style={{ "--cols": cols, "--rows": rows, "--scale": zoom }}
+          style={{ "--cols": cols, "--rows": rows, "--scale": scale }}
         >
           {/* opaque continuous backing so the gutter masks content on every row */}
           <div className="tg-gutter-bg" style={{ gridColumn: 1, gridRow: `1 / ${rows + 1}` }} />
@@ -385,7 +401,7 @@ function TimeLine() {
                 <div
                   key={key}
                   className="tg-anchor tg-battle"
-                  style={pos}
+                  style={{ ...pos, background: fixBg(t.bg) }}
                   role="img"
                   aria-label="Battle"
                   title="Battle"

@@ -95,3 +95,48 @@ honestly-coarse time axis (compression break for the 3100→600 BC void); deeper
 mobile grid reflow; hiding the global "% Completed" pill on the timeline route.
 (Not changing: horizontal centering / equal side margins — that was an explicit
 earlier request, not a bug.)
+
+---
+
+## Round 4 — DIRECTED BY KC (supersedes the round-4 critic list)
+
+Mid-loop, KC gave concrete direction (4 messages). This round did the **layout /
+chrome cluster**; the harder **grid-internals cluster** (corner-rounding algorithm,
+incursion battle chips, hover-highlight + status bar) is the explicit next round.
+
+**KC's direction (full backlog):**
+1. *Corners:* round only the outer perimeter of self-contained band units; square at
+   junctions/connectors; a rounded corner must reveal the **underlying band color**,
+   not parchment. Case-by-case, not blanket. (→ next round)
+2. *Battles:* each battle sits on its underlying layer's color (Jaredite=teal,
+   Mulekite=gold…); Lamanite-into-Nephite incursions = a self-contained red rounded
+   chip (rounded top+bottom) on the blue band with the icon on top. (simple case
+   done this round; incursion chips → next round)
+3. *Legend → hover:* drop the floating legend; hovering a band lights it up (~10%
+   brighter / outline) + a status bar names it. (floating legend removed this
+   round; hover-highlight + status bar → next round)
+4. *Responsive:* never need a horizontal scrollbar — shrink cells proportionally to
+   fit; honor max-width when wider. (done)
+5. *Font:* restore Roboto Condensed, no serif anywhere. (done)
+6. *Title:* compact H1 "Book of Mormon Timeline"; an expandable info box under it
+   (next to title) houses the how-to-read + legend. (done)
+
+Reference: KC pointed at the live prod timeline (http://bookofmormon.online/timeline,
+the old Leaflet design) as a model — rounded self-contained segments, square
+junctions, battle icons on the band color.
+
+**Done this round:**
+- Removed all serif (Nanum Myeongjo) → Roboto Condensed throughout.
+- Compact title bar: H1 "Book of Mormon Timeline" + "ⓘ How to read" toggle + zoom
+  controls, all docked in one bar. Wrap is now a flex column (titlebar + scroller).
+- Removed the floating legend; its content now lives in the expandable "How to
+  read" info panel under the title (multi-column key grid).
+- Responsive scale-to-fit via ResizeObserver: `scale = zoom × fitScale`,
+  `fitScale = min(1, avail/naturalW)`. Verified no x-overflow at 1600/1000/700px.
+- Battles render on their underlying band color (`background: fixBg(t.bg)`).
+- Dropped the stray white `#ffffff` artifact fill cell.
+
+**Round-4 critic findings folded in / still open:** axis honesty (compression break)
+— open; `#073763` is a fill-only band with no events (name it during the hover work);
+deep-link highlight invisible behind modal — open; modal art aria duplicates title —
+open; trailing empty grid rows — open.
