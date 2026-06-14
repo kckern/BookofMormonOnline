@@ -10,8 +10,6 @@ import { label } from "src/models/Utils"
 import tilesData from "./gridTiles.json"
 import "./Timeline.css"
 
-const RADIUS = "13px"
-
 // Crossed-swords battle marker. currentColor lets the medallion theme it.
 const SWORDS = (
   <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -80,14 +78,31 @@ function textOn(bg) {
   return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.6 ? "#222" : "#fff"
 }
 
-// border-radius from a fill tile's rounded-corner list (◜◝◟◞/◗ glyphs).
-function cornerRadius(rd) {
-  if (!rd || !rd.length) return undefined
+const RAD = `calc(13px * var(--scale))` // scales with zoom/fit
+
+// Per-tile corner rounding computed from band occupancy (replaces the sparse,
+// unreliable static `rd` glyph data). A corner is rounded ONLY when both of its
+// orthogonal neighbour cells are empty parchment — i.e. it's a true outer
+// perimeter corner of a self-contained band. Where another band (or the same
+// band continuing) sits against that edge, the corner stays square — that's a
+// junction/connector. Net effect: bands read as rounded ribbons with square
+// joins, no hard corners except at intersections.
+function cornerStyle(t, colorAt) {
+  const top = t.r,
+    left = t.c,
+    right = t.c + (t.w || 1) - 1,
+    bottom = t.r + (t.h || 1) - 1
+  const free = (r, c) => colorAt(r, c) === null // empty parchment
+  const tl = free(top - 1, left) && free(top, left - 1)
+  const tr = free(top - 1, right) && free(top, right + 1)
+  const bl = free(bottom + 1, left) && free(bottom, left - 1)
+  const br = free(bottom + 1, right) && free(bottom, right + 1)
+  if (!(tl || tr || bl || br)) return undefined
   return {
-    borderTopLeftRadius: rd.includes("tl") ? RADIUS : 0,
-    borderTopRightRadius: rd.includes("tr") ? RADIUS : 0,
-    borderBottomLeftRadius: rd.includes("bl") ? RADIUS : 0,
-    borderBottomRightRadius: rd.includes("br") ? RADIUS : 0,
+    borderTopLeftRadius: tl ? RAD : 0,
+    borderTopRightRadius: tr ? RAD : 0,
+    borderBottomLeftRadius: bl ? RAD : 0,
+    borderBottomRightRadius: br ? RAD : 0,
   }
 }
 
@@ -221,6 +236,17 @@ function TimeLine() {
     }
   }, [showModal, closeInfo])
 
+  // Band occupancy map (cell → raw color) drives the corner-rounding algorithm.
+  const colorAt = useMemo(() => {
+    const m = new Map()
+    for (const t of tiles) {
+      if (t.k !== "fill" || t.bg === "#ffffff") continue
+      for (let dr = 0; dr < (t.h || 1); dr++)
+        for (let dc = 0; dc < (t.w || 1); dc++) m.set(`${t.r + dr},${t.c + dc}`, t.bg)
+    }
+    return (r, c) => m.get(`${r},${c}`) || null
+  }, [tiles])
+
   // Fill tiles (lineage bands) never depend on selection/zoom — memoize so a
   // selection change doesn't re-render ~3,000 nodes.
   const fillEls = useMemo(
@@ -231,10 +257,10 @@ function TimeLine() {
           <div
             key={`f${t.r}-${t.c}`}
             className="tg-fill"
-            style={{ ...gridPos(t), background: fixBg(t.bg), ...cornerRadius(t.rd) }}
+            style={{ ...gridPos(t), background: fixBg(t.bg), ...cornerStyle(t, colorAt) }}
           />
         )),
-    [tiles]
+    [tiles, colorAt]
   )
 
   // Canvas marks (hardcoded): location pins + battle icons. No events here.
