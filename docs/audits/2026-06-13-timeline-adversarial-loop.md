@@ -218,3 +218,24 @@ rounded" (round outer-perimeter corners even where they abut another band, revea
 the underlying band color, not just against parchment) AND "fading area borders"
 (gradient transitions where peoples merge, e.g. Lamanites + Nephites merging into
 the Gadianton era) — a genuinely new visual feature needing a focused design pass.
+
+---
+
+## Round 8 — KC msg #1 (corner rounding, part 1)
+
+**Done — band-on-band corner rounding with reveal:** rewrote the corner logic so a
+corner rounds whenever BOTH its orthogonal neighbours differ from the band (parchment
+OR another band), not just parchment. For a corner that bites toward another band, the
+revealed (diagonal-neighbour) band color is layered behind a rounded base
+(`.tg-fill-wrap` > corner backings `.tg-cb-*` + `.tg-fill-base`), so the rounding
+looks like this band curving on top of the one beneath — never a parchment notch.
+`cornerData()` replaces `cornerStyle()`; `--rad` drives both the base radius and the
+backing box size. 208 band-junction tiles now layer correctly; outer perimeter
+corners still reveal parchment. Verified no parchment notches at purple→blue→maroon
+junctions.
+
+**STILL OPEN (KC msg #1, part 2):** "fading area borders" — gradient transitions
+where peoples merge (Lamanites + Nephites → Gadianton era / post-Christ unity). The
+data doesn't encode merge zones, and the visual treatment is subjective, so this
+needs KC's specifics (which transitions fade + the look) before implementing — doing
+it blind risks building the wrong thing.
