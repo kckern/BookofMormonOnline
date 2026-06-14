@@ -110,6 +110,57 @@
   margin-left: auto;
 }
 
+/* Layers dropdown */
+.tg-layers {
+  position: relative;
+  flex: 0 0 auto;
+}
+.tg-layers-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 30;
+  min-width: 150px;
+  padding: 8px;
+  background: #fdf8ec;
+  border: 1px solid rgba(120, 90, 40, 0.4);
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(60, 40, 15, 0.3);
+}
+.tg-layers-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 6px;
+  font-size: 13px;
+  color: #4a3c22;
+  cursor: pointer;
+  border-radius: 6px;
+}
+.tg-layers-item:hover {
+  background: rgba(154, 107, 31, 0.12);
+}
+.tg-layers-item input {
+  cursor: pointer;
+  accent-color: #9c6b1f;
+}
+.tg-layers-mini {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #5a1410;
+  background: radial-gradient(circle at 35% 30%, #f5d985 0%, #d9ad44 62%, #b8862c 100%);
+  border: 1px solid rgba(90, 60, 14, 0.7);
+}
+.tg-layers-mini svg {
+  width: 64%;
+  height: 64%;
+}
+
 /* ── Expandable how-to-read panel (replaces the floating legend) ── */
 .tg-infopanel {
   position: relative;
@@ -477,25 +528,18 @@
   display: block;
 }
 
-/* Incursion battle: a self-contained rounded attacker-color chip sitting on the
-   (continuous) territory band, crossed swords on top. */
-.tg-battle-inc {
-  align-items: center;
-}
-.tg-battle-chip {
+/* Incursion battle: the attacker's land encroaches one cell into the defender's
+   territory. The territory color is the cell background (revealed at the tab's
+   rounded right corners); the attacker tab fills the cell with TR+BR rounding;
+   the medallion sits on top. */
+.tg-battle-tab {
   position: absolute;
-  inset: 2px 2px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999px;
-  color: #fff; /* swords (currentColor) */
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+  inset: 0;
+  z-index: 0;
 }
-.tg-battle-chip svg {
-  width: 60%;
-  height: 60%;
-  display: block;
+.tg-battle .tg-battle-medallion {
+  position: relative;
+  z-index: 1;
 }
 
 /* Info box (replaces the Leaflet popup) — parchment card */

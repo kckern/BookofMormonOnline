@@ -184,6 +184,8 @@ function TimeLine() {
 
   const [timeline, setTimeline] = useState(null)
   const [infoOpen, setInfoOpen] = useState(false)
+  const [layersOpen, setLayersOpen] = useState(false)
+  const [layers, setLayers] = useState({ battles: true })
   const [hoverLin, setHoverLin] = useState(null) // band key currently hovered
   const [zoom, setZoom] = useState(1)
   // Responsive base: shrink the whole grid to fit the viewport width (keeping the
@@ -429,6 +431,32 @@ function TimeLine() {
         >
           <span aria-hidden="true">ⓘ</span> How to read
         </button>
+        <div className="tg-layers">
+          <button
+            type="button"
+            className="tg-info-toggle"
+            onClick={() => setLayersOpen((o) => !o)}
+            aria-expanded={layersOpen}
+            aria-controls="tg-layers-menu"
+          >
+            <span aria-hidden="true">⧉</span> Layers
+          </button>
+          {layersOpen && (
+            <div className="tg-layers-menu" id="tg-layers-menu" role="group" aria-label="Layers">
+              <label className="tg-layers-item">
+                <input
+                  type="checkbox"
+                  checked={layers.battles}
+                  onChange={(e) => setLayers((l) => ({ ...l, battles: e.target.checked }))}
+                />
+                <span className="tg-layers-mini" aria-hidden="true">
+                  {SWORDS}
+                </span>
+                Battles
+              </label>
+            </div>
+          )}
+        </div>
         <div className="tg-zoom" role="group" aria-label="Zoom timeline">
           <button type="button" onClick={() => zoomBy(1 / ZOOM_STEP)} aria-label="Zoom out" title="Zoom out">
             −
@@ -506,31 +534,50 @@ function TimeLine() {
             const pos = gridPos(t)
 
             if (t.k === "battle") {
-              // Marker only — no per-battle record to open; non-interactive but
-              // announced/tooltipped as "Battle". A battle whose own color differs
-              // from the surrounding band is an *incursion* (e.g. Lamanites into
-              // Nephite land): fill the cell with the territory color (so the band
-              // reads continuous) and lay the attacker color as a rounded chip on
-              // top. Otherwise it's a home-territory battle on its own band color.
               const { incursion, eff } = battleInfo(t)
+              // Battles layer off: keep the band continuous (territory fill) but
+              // drop the marker — no parchment hole where the battle cell was.
+              if (!layers.battles) {
+                return (
+                  <div
+                    key={key}
+                    className="tg-fill"
+                    style={{ ...pos, background: fixBg(eff) }}
+                    data-lin={linKey(eff)}
+                  />
+                )
+              }
+              // Marker — non-interactive, announced/tooltipped as "Battle". A
+              // battle whose own color differs from the surrounding band is an
+              // *incursion* (Lamanites into Nephite land): the attacker land
+              // encroaches one cell with TR+BR rounding, medallion on top.
+              // Incursion: the attacker's land encroaches ONE cell into the
+              // defender's territory — a tab of attacker color with its right
+              // corners (TR+BR) rounded, revealing the territory behind, with the
+              // battle medallion on top. Home battle: just the medallion on the band.
               const cellBg = fixBg(eff)
               return (
                 <div
                   key={key}
                   className={"tg-anchor tg-battle" + (incursion ? " tg-battle-inc" : "")}
                   style={{ ...pos, background: cellBg }}
-                  data-lin={linKey(eff)}
+                  data-lin={linKey(incursion ? t.bg : eff)}
                   role="img"
                   aria-label="Battle"
                   title="Battle"
                 >
-                  {incursion ? (
-                    <span className="tg-battle-chip" style={{ background: fixBg(t.bg) }}>
-                      {SWORDS}
-                    </span>
-                  ) : (
-                    <span className="tg-battle-medallion">{SWORDS}</span>
+                  {incursion && (
+                    <span
+                      className="tg-battle-tab"
+                      aria-hidden="true"
+                      style={{
+                        background: fixBg(t.bg),
+                        borderTopRightRadius: RAD,
+                        borderBottomRightRadius: RAD,
+                      }}
+                    />
                   )}
+                  <span className="tg-battle-medallion">{SWORDS}</span>
                 </div>
               )
             }

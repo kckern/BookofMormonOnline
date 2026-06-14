@@ -190,3 +190,31 @@ KC's grid-internals backlog (corners R5, hover R5, battles R4+R6) is now complet
 
 **Still open:** axis compression break / honesty; deep-link highlight visible after
 modal close; modal art aria duplicates title; trailing empty grid rows.
+
+---
+
+## Round 7 — live KC feedback (5 messages, supersedes the R7 critic)
+
+**CRITICAL fix (commit `1e12f869`):** the fit-to-width ResizeObserver mutated layout
+inside its own callback → "ResizeObserver loop completed with undelivered
+notifications", which CRA shows as a fatal full-screen overlay → the user saw NO
+timeline/labels ("labels from db still not showing AT ALL"). Fixed by deferring the
+recompute to requestAnimationFrame + an epsilon guard. (KC msgs #3 + #4, same root
+cause — verified labels render and no error after hammering resizes.)
+
+**Incursion pattern redo (KC msg #2):** the 580–200 BC Lamanite-vs-Nephite battles
+(and similar elsewhere) now follow KC's exact spec — the attacker's land encroaches
+ONE cell into the defender's territory as a tab of attacker color with TR+BR
+rounding (territory revealed at the rounded corners), and the gold battle medallion
+sits on top. Replaced the earlier inset red pill (`.tg-battle-chip` → `.tg-battle-tab`).
+
+**Layers panel (KC msg #5):** a "⧉ Layers" dropdown in the title bar with a Battles
+checkbox (extensible `layers` state). Toggling battles off keeps the band continuous
+(renders the battle cell as a plain territory fill, no parchment hole) and removes
+the markers.
+
+**STILL OPEN (KC msg #1 — next round):** "many square corners that should be
+rounded" (round outer-perimeter corners even where they abut another band, revealing
+the underlying band color, not just against parchment) AND "fading area borders"
+(gradient transitions where peoples merge, e.g. Lamanites + Nephites merging into
+the Gadianton era) — a genuinely new visual feature needing a focused design pass.
