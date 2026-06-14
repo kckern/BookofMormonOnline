@@ -58,7 +58,11 @@ const humanize = (slug) =>
 // A few source band colors don't render well: post-Christ cream (#fff2cc) is
 // ~invisible on the parchment canvas. Remap at render time (also used for the
 // legend swatch so the key matches the band).
-const BG_FIX = { "#fff2cc": "#e6cf8c" }
+const BG_FIX = {
+  "#fff2cc": "#e6cf8c", // post-Christ cream: ~invisible on the parchment canvas
+  "#274e13": "#2f6f4f", // Nephite-kings green: too close to the judges green
+  "#6fa8dc": "#7d8596", // Gadianton blue: too close to Zeniff's blue
+}
 const fixBg = (c) => (c && BG_FIX[c]) || c
 
 // Source names occasionally carry a disambiguation digit glued to a word
@@ -99,10 +103,10 @@ const LINEAGES = [
   { c: "#85200c", t: "Lamanites" },
   { c: "#3c78d8", t: "Zeniff’s colony" },
   { c: "#b45f06", t: "Alma’s people" },
-  { c: "#274e13", t: "Nephite kings (Zarahemla)" },
+  { c: "#2f6f4f", t: "Nephite kings (Zarahemla)" },
   { c: "#bf9000", t: "Mulekites · missions" },
   { c: "#38761d", t: "Reign of the judges" },
-  { c: "#6fa8dc", t: "Gadianton robbers" },
+  { c: "#7d8596", t: "Gadianton robbers" },
   { c: "#000000", t: "Cataclysmic Destruction" },
   { c: "#e6cf8c", t: "After Christ" },
 ]
@@ -290,6 +294,9 @@ function TimeLine() {
 
   return (
     <div className="timeline-grid-wrap">
+      <a className="tg-skip" href="#tg-grid">
+        Skip to timeline
+      </a>
       <div className="tg-zoom" role="group" aria-label="Zoom timeline">
         <button type="button" onClick={() => zoomBy(1 / ZOOM_STEP)} aria-label="Zoom out" title="Zoom out">
           −
@@ -345,9 +352,11 @@ function TimeLine() {
       </div>
       <div className="timeline-grid-scroller">
         <div
+          id="tg-grid"
+          tabIndex={-1}
           className={"timeline-grid" + (zoom < LABEL_HIDE_BELOW ? " tg-compact" : "")}
           role="region"
-          aria-label="Book of Mormon timeline — events by lineage and date"
+          aria-label="Book of Mormon timeline — events by lineage and date. Use Tab to move between events."
           style={{ "--cols": cols, "--rows": rows, "--scale": zoom }}
         >
           {/* opaque continuous backing so the gutter masks content on every row */}

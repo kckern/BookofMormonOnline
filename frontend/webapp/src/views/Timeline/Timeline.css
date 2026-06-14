@@ -88,6 +88,34 @@
   outline-offset: -2px;
 }
 
+/* Skip-link: first focusable element so keyboard users jump straight into the
+   grid instead of tabbing through the whole site nav. Hidden until focused. */
+.tg-skip {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  z-index: 40;
+  transform: translateY(-160%);
+  background: #3a2c12;
+  color: #fdf6e6;
+  padding: 9px 16px;
+  border-radius: 8px;
+  font-family: "Roboto Condensed", "Arial Narrow", sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  text-decoration: none;
+  box-shadow: 0 3px 12px rgba(40, 26, 8, 0.4);
+  transition: transform 0.15s ease;
+}
+.tg-skip:focus {
+  transform: translateY(0);
+  outline: 2px solid #e0a528;
+  outline-offset: 2px;
+}
+#tg-grid:focus {
+  outline: none;
+}
+
 /* Legend / "how to read" — fixed overlay (does not scroll with the canvas) */
 .tg-legend {
   position: absolute;
@@ -290,6 +318,18 @@
   cursor: pointer;
   transition: filter 0.12s ease, transform 0.12s ease;
 }
+/* Enlarge the touch/click target to clear the WCAG 2.2 24px floor without
+   shifting layout (rows are only 20px tall). Invisible, sits behind the label. */
+.tg-anchor.is-clickable::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: -3px;
+  bottom: -3px;
+  left: -3px;
+  right: -3px;
+  min-width: 24px;
+}
 .tg-anchor.is-clickable:hover {
   filter: brightness(1.1) saturate(1.05);
   z-index: 5;
@@ -398,8 +438,13 @@
 
 .tg-infobox-close {
   position: absolute;
-  top: 10px;
-  right: 12px;
+  top: 4px;
+  right: 4px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border: none;
   background: transparent;
   font-size: 24px;
@@ -448,10 +493,10 @@
 }
 
 .tg-infobox-body {
-  font-size: 13.5px;
-  line-height: 1.5;
-  color: #4a3c22;
-  text-align: justify;
+  font-size: 15px;
+  line-height: 1.55;
+  color: #43361e;
+  text-align: left;
 }
 
 .tg-infobox-loading {

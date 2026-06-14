@@ -61,3 +61,37 @@ two blues in the legend are mutually indistinguishable; faint modal date.
 skip-link & arrow-key grid navigation; to-scale/ordinal axis treatment; deeper
 mobile grid layout; label truncation (conflicts with the intentional overflow
 "duration bar" design).
+
+---
+
+## Round 3
+
+**Critic verdict:** R1-2 fixes hold; now "a mouse-only sighted-desktop artifact in
+an accessibility costume." Findings: grid not keyboard-reachable (137 nav stops
+before any cell, no skip-link/arrow nav); hit targets 52×20 / 26×20 px (below WCAG
+2.2 24px); axis advertises false decade precision while compressing 2,500 yr into
+one row; legend occludes live data; "Mosiah1" leaked into modal *body* prose; the
+two greens (1.73:1) and two blues (1.71:1) still fused; mobile illegible; modal
+close 23px / body 13.5px; stray "0.0% Completed" pill.
+
+**Acted on:**
+- **Palette separation:** remapped the fused pairs via `BG_FIX` — Nephite-kings
+  `#274e13`→`#2f6f4f` (teal-green, distinct from the grass-green judges) and
+  Gadianton `#6fa8dc`→`#7d8596` (slate, distinct from Zeniff's blue). Legend
+  swatches updated to match.
+- **Data-layer name fix:** "Mosiah1"→"Mosiah I" in the Zarahemla event's `html`
+  body (R2's strip only covered titles/labels; now the body is clean too).
+- **Hit targets:** clickable anchors get an invisible `::before` that expands the
+  target to ≥24px tall/wide without shifting the 20px-row layout.
+- **Skip-link** ("Skip to timeline") + focusable grid region (`#tg-grid`).
+  Honest limitation: the global sidebar nav precedes this view in the DOM, so a
+  per-component skip-link can't be the *first* focusable element — a true fix needs
+  an app-shell-level skip link and/or roving-tabindex arrow navigation.
+- **Modal polish:** close button now a 40px hit area; body text 13.5→15px, darker,
+  left-aligned.
+
+**Deferred:** roving-tabindex arrow-key grid nav + app-level skip link; to-scale or
+honestly-coarse time axis (compression break for the 3100→600 BC void); deeper
+mobile grid reflow; hiding the global "% Completed" pill on the timeline route.
+(Not changing: horizontal centering / equal side margins — that was an explicit
+earlier request, not a bug.)
