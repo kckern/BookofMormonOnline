@@ -101,14 +101,21 @@ The workspace generators (`BoMOnlineWorkspace/sql/migrations/gen_*.mjs`) turn
 1. **Deploy the legacy backend** — `dev` has the frontend requesting
    `grid`/`label`; the live grid stays blank until the `src/` backend ships.
    Frontend + backend must deploy together.
-2. **Label polish (rest of #3)** — hover/focus now lifts a label into a
-   high-contrast ink chip above its neighbours (`.tg-event-label` hover rule), so
-   colliding labels in dense eras (e.g. the ~30 BC Nephi/Lehi missions) are
-   readable on interaction; full text is also in the click modal. The *resting*
-   overlap remains — a true fix means spreading those events across more rows in
-   the grid data (`placements.json` → `build_tiles.py`), not CSS. Also: the
-   raw-slug fallback is humanized client-side, but a real `bom_places` row for
-   `land-of-first-inheritance` is still cleaner.
+2. **Label polish (rest of #3)** — largely addressed:
+   - Hover/focus lifts a label into a high-contrast ink chip above its
+     neighbours (`.tg-event-label` hover rule); full text is also in the modal.
+   - The one *significant* resting collision (the 48-char "Nephi II and Lehi II
+     Travel to the Land of Nephi" overflowing into "City of Gid") was fixed by
+     moving it `grid_row 86 → 88` — a clear row whose 24 BC band also matches the
+     event's own date better than r86's 28 BC band. Applied in **prod
+     `bom_timeline`** (`id=f4949dbcb5335`; revert = set `grid_row` back to 86)
+     AND mirrored in `placements.json`.
+   - Two <10px near-touches remain by design (Shilom/Land of Nephi r34;
+     Nephi II and Lehi II/Bountiful r82): both are barely touching and readable;
+     every adjacent row either misdates the event (r80 = 50 BC vs the ~30 BC
+     ministry) or creates a new collision, so moving them is strictly worse.
+   - Raw-slug fallback is humanized client-side; a real `bom_places` row for
+     `land-of-first-inheritance` is still cleaner.
 3. **Translations** — non-EN event labels need `bom_translation` rows
    (`refkey='heading'`, keyed by `bom_timeline.id`); people/place reuse already
    covers the overlapping ~73.
