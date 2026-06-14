@@ -206,14 +206,26 @@ function TimeLine() {
   useEffect(() => {
     const el = scrollerRef.current
     if (!el || typeof ResizeObserver === "undefined") return
+    let raf = 0
     const recompute = () => {
       const avail = el.clientWidth - 40 // grid right padding
-      setFitScale(Math.min(1, Math.max(0.2, avail / naturalW)))
+      const next = Math.min(1, Math.max(0.2, avail / naturalW))
+      // epsilon guard avoids re-render thrash from scrollbar width flips
+      setFitScale((prev) => (Math.abs(next - prev) < 0.005 ? prev : next))
     }
-    recompute()
-    const ro = new ResizeObserver(recompute)
+    // Defer to the next frame so the observer callback never mutates layout in
+    // the same tick — that's what throws "ResizeObserver loop completed with
+    // undelivered notifications" (which CRA surfaces as a fatal overlay).
+    const ro = new ResizeObserver(() => {
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(recompute)
+    })
     ro.observe(el)
-    return () => ro.disconnect()
+    recompute()
+    return () => {
+      cancelAnimationFrame(raf)
+      ro.disconnect()
+    }
   }, [naturalW])
 
   const scale = +(zoom * fitScale).toFixed(3)
