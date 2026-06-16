@@ -3,6 +3,9 @@ import type { Kysely } from 'kysely';
 import type { DB } from '../../../codegen/db.js';
 import type { Loaders } from '../loaders.js';
 import { generateReference } from 'scripture-guide';
+import { getSearchConfig } from '../../search/config.js';
+import { searchContent } from '../../search/retrieve.js';
+import { hitsToRankedVerseIds } from '../../search/points.js';
 
 export interface SearchResultRow {
   reference: string | null;
@@ -70,6 +73,69 @@ export function dedupeByVerseKeepFirstLink<
   return order.map((verseId) => byVerse.get(verseId)!);
 }
 
+/** Stable reorder of hydrated rows to follow a ranked verse_id list; unranked rows keep original order, last. */
+export function rankRowsByCandidateOrder<T extends { verse_id: string }>(rows: T[], order: string[]): T[] {
+  if (!order.length) return rows;
+  const rank = new Map(order.map((id, i) => [id, i]));
+  return rows
+    .map((row, i) => ({ row, i }))
+    .sort((a, b) => {
+      const ra = rank.get(a.row.verse_id) ?? Number.POSITIVE_INFINITY;
+      const rb = rank.get(b.row.verse_id) ?? Number.POSITIVE_INFINITY;
+      return ra === rb ? a.i - b.i : ra - rb;
+    })
+    .map(({ row }) => row);
+}
+
+/** The legacy LIKE candidate generation, extracted verbatim. */
+export async function getCandidateVerseIds(
+  db: Kysely<DB>,
+  query: string,
+  lang: string,
+  isEnglish: boolean,
+): Promise<string[]> {
+  if (isEnglish) {
+    const rows = await db
+      .selectFrom('lds_scriptures_verses')
+      .select('verse_id')
+      .where('verse_scripture', 'like', `%${query}%`)
+      .where('verse_id', '>=', 31103)
+      .where('verse_id', '<=', 37706)
+      .execute();
+    return rows.map((r) => String(r.verse_id));
+  }
+  const rows = await db
+    .selectFrom('lds_scriptures_translations')
+    .select('verse_id')
+    .where('text', 'like', `%${query}%`)
+    .where('lang', '=', lang)
+    .execute();
+  return rows.map((r) => String(r.verse_id));
+}
+
+/**
+ * Resolve ranked candidate verse_ids. Uses Qdrant when SEARCH_BACKEND=qdrant
+ * (returns { ids, ranked:true }); on any failure, or when backend=like, falls
+ * back to the legacy LIKE (ranked:false → downstream keeps legacy ordering).
+ */
+export async function resolveCandidates(
+  db: Kysely<DB>,
+  query: string,
+  lang: string,
+  isEnglish: boolean,
+): Promise<{ ids: string[]; ranked: boolean }> {
+  if (getSearchConfig().backend === 'qdrant') {
+    try {
+      const hits = await searchContent({ query, types: ['verse'], lang });
+      const ids = hitsToRankedVerseIds(hits);
+      if (ids.length) return { ids, ranked: true };
+    } catch {
+      // fall through to LIKE
+    }
+  }
+  return { ids: await getCandidateVerseIds(db, query, lang, isEnglish), ranked: false };
+}
+
 /**
  * Run the search query and return raw result rows.
  * Shape tier: structure must match, values may churn.
@@ -90,26 +156,7 @@ export async function searchQuery(
 
   if (!query || query.length < minLen) return [];
 
-  let verseIds: string[] = [];
-
-  if (isEnglish) {
-    const rows = await db
-      .selectFrom('lds_scriptures_verses')
-      .select('verse_id')
-      .where('verse_scripture', 'like', `%${query}%`)
-      .where('verse_id', '>=', 31103)
-      .where('verse_id', '<=', 37706)
-      .execute();
-    verseIds = rows.map((r) => String(r.verse_id));
-  } else {
-    const rows = await db
-      .selectFrom('lds_scriptures_translations')
-      .select('verse_id')
-      .where('text', 'like', `%${query}%`)
-      .where('lang', '=', lang)
-      .execute();
-    verseIds = rows.map((r) => String(r.verse_id));
-  }
+  const { ids: verseIds, ranked } = await resolveCandidates(db, query, lang, isEnglish);
 
   if (!verseIds.length) return [];
 
@@ -266,7 +313,7 @@ export async function searchQuery(
   // Assemble results
   const displayLang = (isEnglish ? 'en' : lang) as Parameters<typeof generateReference>[1];
 
-  return dedupedRows.map((row) => {
+  const results = dedupedRows.map((row) => {
     const verseId = row.verse_id;
     const pageGuid = row.text_page ?? null;
     const sectionGuid = row.text_section ?? null;
@@ -303,6 +350,7 @@ export async function searchQuery(
       _slug: slug,
     } as unknown as SearchResultRow;
   });
+  return ranked ? rankRowsByCandidateOrder(results, verseIds) : results;
 }
 
 /**
