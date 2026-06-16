@@ -42,6 +42,35 @@ export interface HistoryRow {
 }
 
 /**
+ * Collapse lookup rows so each verse appears once.
+ *
+ * A single verse can be mapped into multiple study segments (multiple bom_lookup
+ * rows -> multiple text_link values). We keep the row with the LOWEST text_link
+ * (the "first" study link). A null text_link sorts last, so a real link always
+ * wins over a null one; a lone null-link row is still kept.
+ *
+ * First-appearance order of verses is preserved (today this is scriptural order).
+ */
+export function dedupeByVerseKeepFirstLink<
+  T extends { verse_id: string; text_link: number | null },
+>(rows: T[]): T[] {
+  const byVerse = new Map<string, T>();
+  const order: string[] = [];
+  for (const row of rows) {
+    const existing = byVerse.get(row.verse_id);
+    if (!existing) {
+      byVerse.set(row.verse_id, row);
+      order.push(row.verse_id);
+      continue;
+    }
+    const existingLink = existing.text_link ?? Number.POSITIVE_INFINITY;
+    const candidateLink = row.text_link ?? Number.POSITIVE_INFINITY;
+    if (candidateLink < existingLink) byVerse.set(row.verse_id, row);
+  }
+  return order.map((verseId) => byVerse.get(verseId)!);
+}
+
+/**
  * Run the search query and return raw result rows.
  * Shape tier: structure must match, values may churn.
  *
