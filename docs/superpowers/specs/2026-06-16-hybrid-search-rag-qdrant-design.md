@@ -80,7 +80,7 @@ Both consumers call only this. It encapsulates: embedding the query, building th
 Single collection `bom_content`:
 
 - **Dense vector:** named `dense`, size 1536, cosine distance (OpenAI `text-embedding-3-small`).
-- **Sparse vector:** named `sparse`, keyword/BM25-like (tokenized terms → weights).
+- **Sparse vector:** named `keywords`, keyword/BM25-like (tokenized terms → weights; FNV-1a hashed term indices, weight 1, shared by index + query via `textToSparse`).
 - **Payload:** `{ type, entity_id, ref, slug, lang, version, text }`, with payload indexes on `type`, `lang`, `version` for fast filtering.
 - **Point ID:** deterministic, derived from `type:entity_id:chunk_index` (verses have a single chunk, index 0). Deterministic IDs make reindex idempotent (upsert overwrites, no dupes).
 
