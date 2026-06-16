@@ -10,6 +10,8 @@ import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 import type { Kysely } from 'kysely';
 import type { DB } from '../../../codegen/db.js';
+import { searchContent } from '../../search/retrieve.js';
+import type { SearchHit } from '../../search/types.js';
 
 export interface RagResource {
   id: number;
@@ -34,24 +36,39 @@ export async function loadRagResources(
   return rows as unknown as RagResource[];
 }
 
+/** Retrieve grounding chunk texts for a query. Never throws — returns [] on failure. */
+export async function retrieveChunks(
+  query: string,
+  retriever: (q: string) => Promise<SearchHit[]> = (q) => searchContent({ query: q, limit: 8 }),
+): Promise<string[]> {
+  try {
+    const hits = await retriever(query);
+    return hits.map((h) => h.text).filter((t) => t.length > 0);
+  } catch {
+    return [];
+  }
+}
+
 /**
- * createBotRagTool — the retrieval tool given to each bot agent. STUB: returns no
- * chunks until the vector infra is built. The signature + wiring are final so
- * only the `execute` body changes later.
+ * createBotRagTool — the retrieval tool given to each bot agent. Delegates to
+ * retrieveChunks → searchContent (hybrid dense+sparse Qdrant search). Never
+ * throws so the bot continues even when the vector store is unavailable.
+ *
+ * Phase 2: filter by loadRagResources(db, { botId }) resource types.
  */
 export function createBotRagTool(db: Kysely<DB>, botId: string) {
   return createTool({
     id: 'bot_rag_retrieve',
     description:
       'Retrieve reference material (the bot\'s own works, sources) relevant to a query. ' +
-      'Returns grounding passages. (RAG infrastructure pending — currently returns nothing.)',
+      'Returns grounding passages.',
     inputSchema: z.object({ query: z.string().describe('what to look up') }),
     outputSchema: z.object({ chunks: z.array(z.string()) }),
-    execute: async () => {
-      // TODO(rag): loadRagResources(db, { botId }) → embed query → vector search → top-k chunks.
+    execute: async (inputData) => {
+      // Phase 2: loadRagResources(db, { botId }) → filter by resource types.
       void db;
       void botId;
-      return { chunks: [] };
+      return { chunks: await retrieveChunks(inputData.query) };
     },
   });
 }
