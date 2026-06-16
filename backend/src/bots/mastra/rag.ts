@@ -1,10 +1,11 @@
 /**
- * Bot RAG retrieval — STUB.
+ * Bot RAG retrieval.
  *
- * A Mastra tool the bot agents are wired with now, so the retrieval interface
- * exists before the infra does. Future work: read the bot's `bom_bot_rag` rows
- * (resource_type / uri / config) and query a vector store (pgvector / Mastra
- * RAG) to return grounding chunks. For now it returns nothing.
+ * `loadRagResources` reads a bot's configured `bom_bot_rag` rows. The Mastra
+ * tool from `createBotRagTool` retrieves grounding chunks for a query via the
+ * shared `searchContent` seam (Qdrant hybrid search). Retrieval never throws —
+ * it returns no chunks on failure so a bot turn can't be broken by search being
+ * down. Phase 2: filter retrieval by the bot's `loadRagResources` resource types.
  */
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
@@ -44,7 +45,9 @@ export async function retrieveChunks(
   try {
     const hits = await retriever(query);
     return hits.map((h) => h.text).filter((t) => t.length > 0);
-  } catch {
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.warn('[rag] retrieval failed; returning no chunks:', err instanceof Error ? err.message : err);
     return [];
   }
 }
