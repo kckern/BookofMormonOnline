@@ -4,9 +4,12 @@ import { reindexVerses } from '../src/search/indexer.js';
 
 async function main() {
   const db = getDb();
-  const n = await reindexVerses(db);
-  // eslint-disable-next-line no-console
-  console.log(`Reindexed ${n} verses into Qdrant.`);
-  await closeDb();
+  try {
+    const n = await reindexVerses(db);
+    // eslint-disable-next-line no-console
+    console.log(`Reindexed ${n} verses into Qdrant.`);
+  } finally {
+    await closeDb();
+  }
 }
 main().catch((e) => { console.error(e); process.exit(1); });

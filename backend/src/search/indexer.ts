@@ -51,6 +51,9 @@ export async function reindexVerses(db: Kysely<DB>, batchSize = 128): Promise<nu
   for (let i = 0; i < rows.length; i += batchSize) {
     const batch = rows.slice(i, i + batchSize);
     const vectors = await embedBatch(batch.map((r) => r.verse_scripture));
+    if (vectors.length !== batch.length) {
+      throw new Error(`embedBatch returned ${vectors.length} vectors for ${batch.length} inputs`);
+    }
     const points = batch.map((r, j) => verseToPoint(r, vectors[j]!, 'en'));
     await upsertPoints(points);
     count += points.length;
