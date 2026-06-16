@@ -17,7 +17,6 @@ describe('Qdrant collection bootstrap', () => {
   it('ensureCollection is idempotent', async () => {
     if (!up) return;
     await ensureCollection();
-    await ensureCollection(); // must not throw
-    expect(true).toBe(true);
+    await expect(ensureCollection()).resolves.toBeUndefined(); // second call must not throw
   });
 });

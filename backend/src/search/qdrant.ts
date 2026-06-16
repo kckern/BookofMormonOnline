@@ -29,13 +29,16 @@ export async function ensureCollection(): Promise<void> {
 
 /** True if the configured Qdrant answers within the timeout. */
 export async function qdrantReachable(timeoutMs = 1500): Promise<boolean> {
+  let timerId: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, rej) => {
+    timerId = setTimeout(() => rej(new Error('timeout')), timeoutMs);
+  });
   try {
-    await Promise.race([
-      getQdrant().getCollections(),
-      new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), timeoutMs)),
-    ]);
+    await Promise.race([getQdrant().getCollections(), timeout]);
     return true;
   } catch {
     return false;
+  } finally {
+    clearTimeout(timerId);
   }
 }
