@@ -130,10 +130,13 @@ export async function searchQuery(
 
   if (!lookupRows.length) return [];
 
+  // One result per verse: keep the lowest-link study segment (see helper doc).
+  const dedupedRows = dedupeByVerseKeepFirstLink(lookupRows);
+
   // Collect unique guids for batch translation
-  const pageGuids = [...new Set(lookupRows.map((r) => r.text_page).filter((g): g is string => !!g))];
-  const sectionGuids = [...new Set(lookupRows.map((r) => r.text_section).filter((g): g is string => !!g))];
-  const narrationGuids = [...new Set(lookupRows.map((r) => r.text_parent).filter((g): g is string => !!g))];
+  const pageGuids = [...new Set(dedupedRows.map((r) => r.text_page).filter((g): g is string => !!g))];
+  const sectionGuids = [...new Set(dedupedRows.map((r) => r.text_section).filter((g): g is string => !!g))];
+  const narrationGuids = [...new Set(dedupedRows.map((r) => r.text_parent).filter((g): g is string => !!g))];
 
   // Batch-fetch all page, section, narration data
   const [pageRows, sectionRows, narrationRows, verseTextRows, translationVerseRows, speakerRows] =
@@ -263,7 +266,7 @@ export async function searchQuery(
   // Assemble results
   const displayLang = (isEnglish ? 'en' : lang) as Parameters<typeof generateReference>[1];
 
-  return lookupRows.map((row) => {
+  return dedupedRows.map((row) => {
     const verseId = row.verse_id;
     const pageGuid = row.text_page ?? null;
     const sectionGuid = row.text_section ?? null;
