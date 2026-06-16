@@ -13,6 +13,7 @@ export interface IndexPoint {
   lang: string;
   version: string | null;
   dense: number[];       // embedding vector
+  sparse: { indices: number[]; values: number[] }; // keyword sparse vector
 }
 
 /** A ranked retrieval hit returned by searchContent. */

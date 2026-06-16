@@ -12,5 +12,7 @@ describe('verseToPoint', () => {
     expect(p.text).toBe('I Nephi having been born');
     expect(p.lang).toBe('en');
     expect(p.dense).toEqual([0.1, 0.2]);
+    expect(p.sparse.indices.length).toBe(p.sparse.values.length);
+    expect(p.sparse.indices.length).toBeGreaterThan(0);
   });
 });

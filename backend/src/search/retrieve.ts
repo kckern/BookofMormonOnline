@@ -1,6 +1,7 @@
 import type { SearchContentArgs, SearchHit, ContentType } from './types.js';
 import { embedOne } from './embed.js';
 import { getQdrant, COLLECTION } from './qdrant.js';
+import { textToSparse } from './sparse.js';
 
 /** Build a Qdrant payload filter from the args, or undefined when no filters apply. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -13,17 +14,9 @@ export function buildFilter(args: SearchContentArgs): any | undefined {
   return must.length ? { must } : undefined;
 }
 
-/** Hash a token to a stable 32-bit sparse-vector index. */
-function tokenIndex(token: string): number {
-  let h = 2166136261;
-  for (let i = 0; i < token.length; i++) { h ^= token.charCodeAt(i); h = Math.imul(h, 16777619); }
-  return h >>> 0;
-}
-
-/** Deterministic keyword sparse vector: one entry per distinct lowercased term. */
+/** Deterministic keyword sparse vector for a query (see textToSparse). */
 export function queryToSparse(query: string): { indices: number[]; values: number[] } {
-  const terms = [...new Set(query.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [])];
-  return { indices: terms.map(tokenIndex), values: terms.map(() => 1) };
+  return textToSparse(query);
 }
 
 /** The shared retrieval seam. Throws if Qdrant/embeddings are unavailable (caller falls back). */

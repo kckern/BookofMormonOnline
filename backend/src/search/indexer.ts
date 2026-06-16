@@ -4,6 +4,7 @@ import type { IndexPoint } from './types.js';
 import { pointId } from './points.js';
 import { embedBatch } from './embed.js';
 import { getQdrant, ensureCollection, COLLECTION } from './qdrant.js';
+import { textToSparse } from './sparse.js';
 
 export interface VerseRow { verse_id: number; verse_scripture: string }
 
@@ -21,17 +22,18 @@ export function verseToPoint(row: VerseRow, dense: number[], lang: string): Inde
     lang,
     version: 'LDS',
     dense,
+    sparse: textToSparse(row.verse_scripture),
   };
 }
 
-/** Upsert points into Qdrant (dense vectors + payload). Sparse vectors are added at query time in Phase 1. */
+/** Upsert points into Qdrant (dense + sparse keyword vectors + payload). */
 export async function upsertPoints(points: IndexPoint[]): Promise<void> {
   if (!points.length) return;
   await getQdrant().upsert(COLLECTION, {
     wait: true,
     points: points.map((p) => ({
       id: p.id,
-      vector: { dense: p.dense },
+      vector: { dense: p.dense, keywords: p.sparse },
       payload: { type: p.type, entity_id: p.entity_id, ref: p.ref, slug: p.slug, lang: p.lang, version: p.version, text: p.text },
     })),
   });
