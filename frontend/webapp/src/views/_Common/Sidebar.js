@@ -4,6 +4,7 @@ import { Link, NavLink, useHistory, useRouteMatch } from "react-router-dom";
 import { Nav, Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 import "./Sidebar.css";
 import { breakCache, determineLanguage, label, tokenImage } from "src/models/Utils.js";
+import { getSearchSlug } from "src/models/searchSlug";
 import crypto from "crypto-browserify";
 import UserAvatar from "src/components/UserAvatar";
 
@@ -143,10 +144,7 @@ function SearchBox({appController,setActivePath}) {
       appController.activeLeafCursorController?.states?.activeAudio?.pause();
       appController.functions.closePopUp(); 
       setActivePath("/search");
-      let searchSlug = e.target.value
-        .toLowerCase()
-        .replace(/[,;.]+/gi, ".")
-        .replace(/(^\.|\.$)/g, "");
+      let searchSlug = getSearchSlug(e.target.value);
       history.push("/search/" + searchSlug);
       e.preventDefault();
     }

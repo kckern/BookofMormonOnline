@@ -4,14 +4,10 @@ import Parser from "html-react-parser";
 import Loader from "../_Common/Loader";
 import { useRouteMatch, useHistory, Link } from "react-router-dom";
 import { label } from "src/models/Utils";
+import { getSearchSlug, getSearchValue } from "src/models/searchSlug";
 import BoMOnlineAPI, {assetUrl} from "src/models/BoMOnlineAPI";
 import { toast } from "react-toastify";
 import "./Search.css";
-
-const getSearchValue = (value) => {
-  value =value?.replace(/[.]/ig, " ");
-  return value || "";
-}
 
 
 function SearchComponent({ appController }) {
@@ -47,7 +43,7 @@ function SearchComponent({ appController }) {
 
   const searchFor = (keyword) => {
     if (keyword.trim() === "") return;
-    history.push("/search/" + keyword);
+    history.push("/search/" + getSearchSlug(keyword));
     document.querySelector(".nav .searchbox input").value = keyword;
 
   }

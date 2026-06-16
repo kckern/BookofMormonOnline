@@ -11,6 +11,7 @@ import "./TextContent.css";
 import { snapSelectionToWord, chronoLabel } from "src/models/Utils";
 import { SRLWrapper } from "simple-react-lightbox";
 import { label } from "src/models/Utils";
+import { getSearchSlug } from "src/models/searchSlug";
 import fullscreen from "src/views/Page/svg/fullscreen.png";
 import {Spinner} from "../_Common/Loader";
 import { determineLanguage } from "../../models/Utils";
@@ -908,7 +909,7 @@ export function ScripturePanelSingle({ scriptureData, closeButton, onClose, setP
     const buttons = (
       <div className="buttons">
         {isBoM && (
-          <Link to={`/search/${reference.replace(/\s+/g,".").toLowerCase()}`} >
+          <Link to={`/search/${getSearchSlug(reference)}`} >
             <button className="btn btn-sm btn-outline-secondary" >Study</button>
           </Link>
         )}
