@@ -125,12 +125,18 @@ export async function resolveCandidates(
   isEnglish: boolean,
 ): Promise<{ ids: string[]; ranked: boolean }> {
   if (getSearchConfig().backend === 'qdrant') {
+    // English verses are indexed under lang 'en'; normalize the English aliases
+    // ('', 'eng', 'dev') so the Qdrant lang filter matches indexed points.
+    const searchLang = isEnglish ? 'en' : lang;
     try {
-      const hits = await searchContent({ query, types: ['verse'], lang });
+      const hits = await searchContent({ query, types: ['verse'], lang: searchLang });
       const ids = hitsToRankedVerseIds(hits);
       if (ids.length) return { ids, ranked: true };
-    } catch {
-      // fall through to LIKE
+      // Qdrant reachable but no hits → fall through to the LIKE path below.
+    } catch (err) {
+      // Qdrant/embeddings unavailable → degrade to LIKE (search must never break).
+      // eslint-disable-next-line no-console
+      console.warn('[search] Qdrant candidate lookup failed; falling back to LIKE:', err instanceof Error ? err.message : err);
     }
   }
   return { ids: await getCandidateVerseIds(db, query, lang, isEnglish), ranked: false };
