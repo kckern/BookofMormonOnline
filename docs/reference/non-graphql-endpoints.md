@@ -66,3 +66,12 @@ the legacy server).
 
 **Scope:** out of the current green-field GraphQL effort entirely. Separate phase if ever
 undertaken.
+
+## Search backend (2026-06)
+
+GraphQL `search` now resolves candidate verse_ids through `backend/src/search/`
+(`searchContent` → Qdrant hybrid dense+sparse) when `SEARCH_BACKEND=qdrant`,
+falling back to the legacy MySQL `LIKE` when unset or when Qdrant/embeddings are
+unavailable. The same `searchContent` seam backs the Mastra bot RAG tool
+(`src/bots/mastra/rag.ts`). Index with `npx tsx scripts/reindex-search.ts`.
+The old Sphinx `/sphinx` endpoint remains deprecated (in `_deprecated/`).
