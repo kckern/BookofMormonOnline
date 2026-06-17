@@ -528,6 +528,24 @@ const queries = {
           }`,
     }
   },
+  searchAll: (query) => {
+    return {
+      type: "searchAll",
+      key: "query",
+      val: query,
+      query:
+        q("searchAll", "query", query) +
+        `{
+            verses { reference text slug page section narration speaker voice }
+            people { slug title snippet ref score }
+            places { slug title snippet ref score }
+            commentary { slug title snippet ref score }
+            narration { slug title snippet ref score }
+            pages { slug title snippet ref score }
+            events { slug title snippet ref score }
+          }`,
+    }
+  },
   contents: (ids) => {
     return {
       type: "contents",

@@ -7,6 +7,7 @@ import { label } from "src/models/Utils";
 import { getSearchSlug, getSearchValue } from "src/models/searchSlug";
 import BoMOnlineAPI, {assetUrl} from "src/models/BoMOnlineAPI";
 import { toast } from "react-toastify";
+import ResultGroup from "./ResultGroup";
 import "./Search.css";
 
 
@@ -64,7 +65,7 @@ function SearchComponent({ appController }) {
   </div>
 
   useEffect(() => {
-    const apiInput = (keyword.match(/\d/)) ? { lookup: keyword } : { search: keyword };
+    const apiInput = (keyword.match(/\d/)) ? { lookup: keyword } : { searchAll: keyword };
     BoMOnlineAPI(apiInput, { useCache: false }).then(r => {
 
       if (r?.lookup) {
@@ -74,11 +75,12 @@ function SearchComponent({ appController }) {
       } else {
         if(!keyword || keyword.length===1) return setContent(<div>
           <h3 className="title lg-4 text-center">{label("search")}</h3>{searchBox}</div>);
-        if (!r?.search?.map) return setContent(<div><h3 className="title lg-4 text-center">{label("no_results_for_x", [<span>{keyword}</span>])}</h3>{searchBox}</div>);
+        if (!r?.searchAll) return setContent(<div><h3 className="title lg-4 text-center">{label("no_results_for_x", [<span>{keyword}</span>])}</h3>{searchBox}</div>);
 
-        let count = r?.search?.length;
+        const verses = r.searchAll.verses || [];
+        let count = verses.length;
         setContent(<div><h3 className="title lg-4 text-center">{label("x_search_results_for_y", [count,<span>{keyword}</span>])}</h3>
-          {r?.search?.map(item => {
+          {verses.map(item => {
             const { reference, text, slug, page, section, speaker, voice } = item;
 
             const handleReadClick = (e,ref) => {
@@ -117,6 +119,12 @@ function SearchComponent({ appController }) {
                 </div>
               </div></Link>
           })}
+          <ResultGroup label={label("menu_people") || "People"} cards={r.searchAll.people} kind="person" />
+          <ResultGroup label={label("menu_places") || "Places"} cards={r.searchAll.places} kind="place" />
+          <ResultGroup label="Commentary" cards={r.searchAll.commentary} kind="commentary" />
+          <ResultGroup label="Narration" cards={r.searchAll.narration} kind="narration" />
+          <ResultGroup label="Pages" cards={r.searchAll.pages} kind="page" />
+          <ResultGroup label="Events" cards={r.searchAll.events} kind="event" />
         </div>);
       }
     })
