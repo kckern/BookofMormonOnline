@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { hitToCard, GROUP_TYPES } from '../../src/search/grouped.js';
+import { hitToCard, GROUP_TYPES, searchGroups } from '../../src/search/grouped.js';
 import type { SearchHit } from '../../src/search/types.js';
 
 const hit = (o: Partial<SearchHit>): SearchHit => ({ type: 'person', entity_id: 'x', score: 0.5, text: '', title: null, ref: null, slug: null, version: null, ...o });
@@ -18,5 +18,12 @@ describe('hitToCard', () => {
   test('maps a commentary hit (snippet from text)', () => {
     const c = hitToCard(hit({ type: 'commentary', entity_id: 'c1', title: null, text: 'a note', slug: 'x', score: 0.7 }));
     expect(c).toMatchObject({ slug: 'x', snippet: 'a note', score: 0.7 });
+  });
+});
+
+describe('searchGroups resilience', () => {
+  test('degrades to all-empty groups when the embed fails (never throws)', async () => {
+    const out = await searchGroups('x', 'en', 8, async () => { throw new Error('embed down'); });
+    expect(out).toEqual({ person: [], place: [], commentary: [], narration: [], page: [], event: [] });
   });
 });

@@ -3,6 +3,7 @@ import type { Resolvers } from '../../../codegen/graphql.js';
 import type { AppContext } from '../context.js';
 import { searchQuery, historyQuery } from '../../data/loaders/searchhist.js';
 import type { SearchResultRow, HistoryRow } from '../../data/loaders/searchhist.js';
+import { searchGroups } from '../../search/grouped.js';
 
 /** getSlugTip: incoming slug args may be paths — take the last segment. */
 function getSlugTip(slug: string): string {
@@ -86,7 +87,7 @@ const baseResolvers: Resolvers = {
 };
 
 // searchAll is not yet in the codegen snapshot (schema-first; generated types lag
-// new SDL fields). Injected as a typed async function and merged via Object.assign
+// new SDL fields). Injected as a typed async function by direct property assignment
 // so the rest of the resolver map retains full codegen types.
 async function searchAllResolver(
   _root: unknown,
@@ -96,7 +97,6 @@ async function searchAllResolver(
   const lang = ctx.lang ?? 'en';
   const query = args.query ?? '';
   const db = (ctx.loaders as unknown as DbAccessor)._db;
-  const { searchGroups } = await import('../../search/grouped.js');
   const [verses, groups] = await Promise.all([
     searchQuery(db, query, lang),
     searchGroups(query, lang),
