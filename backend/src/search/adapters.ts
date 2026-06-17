@@ -27,7 +27,7 @@ export function personRowToSource(r: {
   return {
     entity_id: r.slug,
     title: clean(r.name) || r.slug,
-    text: join(r.name, r.title),
+    text: join(r.name, r.title, r.classification, r.identification),
     slug: `people/${r.slug}`,
     ref: null,
   };
@@ -45,8 +45,8 @@ export const loadPeople = async (db: Kysely<DB>): Promise<SourceRow[]> => {
 
 export function placeRowToSource(r: {
   slug: string;
-  name: string | null;
-  aka: string | null;
+  name: string;
+  aka: string;
 }): SourceRow {
   return {
     entity_id: r.slug,
@@ -61,7 +61,7 @@ export const loadPlaces = async (db: Kysely<DB>): Promise<SourceRow[]> => {
   const rows = (await db
     .selectFrom('bom_places')
     .select(['slug', 'name', 'aka'])
-    .execute()) as Array<{ slug: string; name: string | null; aka: string | null }>;
+    .execute()) as Array<{ slug: string; name: string; aka: string }>;
   return rows.map((r) => placeRowToSource(r));
 };
 
