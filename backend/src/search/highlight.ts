@@ -1,7 +1,11 @@
+import { embedOne, embedBatch } from './embed.js';
+
 /** A span of text with its char offsets into the ORIGINAL string. */
 export interface Span { text: string; start: number; end: number }
 /** Char-offset range returned to clients. */
 export interface HighlightRange { start: number; end: number }
+
+type SpanEmbedder = (texts: string[]) => Promise<number[][]>;
 
 /** Trim whitespace from [start,end); return the adjusted span or null if empty. */
 function trimmedSpan(text: string, start: number, end: number): Span | null {
@@ -62,4 +66,48 @@ export function hasKeywordOverlap(query: string, text: string): boolean {
   const toks = query.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [];
   const hay = text.toLowerCase();
   return toks.some((t) => t.length >= 3 && hay.includes(t));
+}
+
+/**
+ * For each input text, compute the best highlight span (or null when the text is empty
+ * or shares a keyword with the query). All eligible spans across all texts are embedded
+ * in ONE batch. Returns ranges parallel to `texts`.
+ */
+export async function computeHighlights(
+  query: string,
+  queryVec: number[],
+  texts: (string | null)[],
+  embedSpans: SpanEmbedder = embedBatch,
+): Promise<(HighlightRange | null)[]> {
+  const perText: (Span[] | null)[] = texts.map((text) => {
+    if (!text || hasKeywordOverlap(query, text)) return null;
+    const spans = candidateSpans(splitClauses(text), text);
+    return spans.length ? spans : null;
+  });
+
+  const flat: string[] = [];
+  for (const spans of perText) if (spans) for (const s of spans) flat.push(s.text);
+  if (!flat.length) return texts.map(() => null);
+
+  const vecs = await embedSpans(flat);
+  let k = 0;
+  return perText.map((spans) => {
+    if (!spans) return null;
+    const sliceVecs = vecs.slice(k, k + spans.length);
+    k += spans.length;
+    return bestSpanByCosine(queryVec, spans, sliceVecs);
+  });
+}
+
+/** Lazy single-text highlight: embed the query, then compute for one text. */
+export async function highlightText(
+  query: string,
+  text: string,
+  embedQuery: (q: string) => Promise<number[]> = embedOne,
+  embedSpans: SpanEmbedder = embedBatch,
+): Promise<HighlightRange | null> {
+  if (!text || hasKeywordOverlap(query, text)) return null;
+  const qVec = await embedQuery(query);
+  const [range] = await computeHighlights(query, qVec, [text], embedSpans);
+  return range ?? null;
 }

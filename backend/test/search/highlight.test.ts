@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { splitClauses, candidateSpans, bestSpanByCosine, hasKeywordOverlap } from '../../src/search/highlight.js';
+import { splitClauses, candidateSpans, bestSpanByCosine, hasKeywordOverlap, computeHighlights, highlightText } from '../../src/search/highlight.js';
 
 describe('splitClauses', () => {
   test('splits on punctuation and keeps correct offsets', () => {
@@ -43,5 +43,45 @@ describe('hasKeywordOverlap', () => {
   });
   test('false for purely semantic match (no shared token)', () => {
     expect(hasKeywordOverlap('afterlife', 'a space betwixt the time of death and the resurrection')).toBe(false);
+  });
+});
+
+describe('computeHighlights', () => {
+  test('batches spans across texts and picks best per text; gates on keyword overlap & empties', async () => {
+    const query = 'afterlife';
+    const qVec = [1, 0];
+    const texts = [
+      'a space betwixt death, and the resurrection',
+      'afterlife is mentioned here',
+      '',
+    ];
+    const embedSpans = async (arr: string[]) => arr.map((s) => (/resurrection/.test(s) ? [1, 0] : [0, 1]));
+    const out = await computeHighlights(query, qVec, texts, embedSpans);
+    expect(out[1]).toBeNull();
+    expect(out[2]).toBeNull();
+    expect(out[0]).not.toBeNull();
+    expect(texts[0].slice(out[0]!.start, out[0]!.end)).toMatch(/resurrection/);
+  });
+  test('all-ineligible → all null without calling the embedder', async () => {
+    let called = false;
+    const out = await computeHighlights('faith', [1, 0], ['faith is here', ''], async (a: string[]) => { called = true; return a.map(() => [0, 1]); });
+    expect(out).toEqual([null, null]);
+    expect(called).toBe(false);
+  });
+});
+
+describe('highlightText', () => {
+  test('embeds the query then delegates to computeHighlights for one text', async () => {
+    const r = await highlightText(
+      'afterlife',
+      'the soul, and the resurrection',
+      async () => [1, 0],
+      async (arr: string[]) => arr.map((s) => (/resurrection/.test(s) ? [1, 0] : [0, 1])),
+    );
+    expect(r).not.toBeNull();
+  });
+  test('returns null when the query token appears literally (keyword overlap)', async () => {
+    const r = await highlightText('resurrection', 'the resurrection of the dead', async () => [1,0], async (a: string[]) => a.map(()=>[1,0]));
+    expect(r).toBeNull();
   });
 });
