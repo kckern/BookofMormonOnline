@@ -4,6 +4,7 @@ import type { ContentType, IndexPoint } from './types.js';
 import { pointId } from './points.js';
 import { embedBatch } from './embed.js';
 import { getQdrant, ensureCollection, COLLECTION } from './qdrant.js';
+import { withRetry } from './retry.js';
 import { textToSparse } from './sparse.js';
 import { chunkText } from './chunk.js';
 
@@ -80,13 +81,14 @@ export function unitToPoint(unit: IndexUnit, dense: number[], lang: string): Ind
 /** Upsert points into Qdrant (dense + sparse keyword vectors + payload). */
 export async function upsertPoints(points: IndexPoint[]): Promise<void> {
   if (!points.length) return;
-  await getQdrant().upsert(COLLECTION, {
-    wait: true,
+  const body = {
+    wait: true as const,
     points: points.map((p) => {
       const { id, dense, sparse, ...payload } = p;
       return { id, vector: { dense, keywords: sparse }, payload };
     }),
-  });
+  };
+  await withRetry(() => getQdrant().upsert(COLLECTION, body), { attempts: 4, delayMs: 500 });
 }
 
 /** Full reindex of BoM verses from MySQL → Qdrant, batched. */
