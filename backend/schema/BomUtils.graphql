@@ -102,6 +102,7 @@ type ResultCard {
 
 type SearchAllResult {
   verses: [SearchResult!]!
+  semantic: Boolean
   people: [ResultCard!]!
   places: [ResultCard!]!
   commentary: [ResultCard!]!

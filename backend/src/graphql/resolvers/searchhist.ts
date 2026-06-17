@@ -4,8 +4,7 @@ import type { AppContext } from '../context.js';
 import { searchQuery, historyQuery } from '../../data/loaders/searchhist.js';
 import type { SearchResultRow, HistoryRow } from '../../data/loaders/searchhist.js';
 import { searchGroups } from '../../search/grouped.js';
-import { computeHighlights, highlightText } from '../../search/highlight.js';
-import { embedOne } from '../../search/embed.js';
+import { highlightText } from '../../search/highlight.js';
 
 /** getSlugTip: incoming slug args may be paths — take the last segment. */
 function getSlugTip(slug: string): string {
@@ -20,7 +19,7 @@ const baseResolvers: Resolvers = {
       const lang = ctx.lang ?? 'en';
       const query = args.query ?? '';
       const db = (ctx.loaders as unknown as DbAccessor)._db;
-      return searchQuery(db, query, lang) as unknown as never[];
+      return (await searchQuery(db, query, lang)).verses as unknown as never[];
     },
 
     shortlink: async (_root, args, ctx: AppContext) => {
@@ -104,32 +103,17 @@ async function searchAllResolver(
   const lang = ctx.lang ?? 'en';
   const query = args.query ?? '';
   const db = (ctx.loaders as unknown as DbAccessor)._db;
-  const [verses, groups] = await Promise.all([
-    searchQuery(db, query, lang),
-    searchGroups(query, lang),
-  ]);
+  const { verses, semantic } = await searchQuery(db, query, lang);
 
-  // Eager semantic highlights for the top-N prose results (best-effort; never breaks searchAll).
-  try {
-    const commentary = (groups.commentary ?? []) as Array<{ snippet: string; highlight?: unknown }>;
-    const narration = (groups.narration ?? []) as Array<{ snippet: string; highlight?: unknown }>;
-    const verseRows = verses as unknown as Array<{ text: string; highlight?: unknown }>;
-    const targets = [
-      ...verseRows.slice(0, 10).map((v) => ({ obj: v, text: v.text })),
-      ...commentary.slice(0, 3).map((c) => ({ obj: c, text: c.snippet })),
-      ...narration.slice(0, 3).map((c) => ({ obj: c, text: c.snippet })),
-    ];
-    if (query && targets.length) {
-      const qVec = await embedOne(query);
-      const ranges = await computeHighlights(query, qVec, targets.map((t) => t.text));
-      targets.forEach((t, i) => { (t.obj as { highlight?: unknown }).highlight = ranges[i] ?? null; });
-    }
-  } catch {
-    // best-effort
-  }
+  // Entity groups + semantic highlighting are the FALLBACK experience: only when the
+  // keyword tier found nothing and we went semantic. Keyword searches return verses only.
+  const groups = semantic
+    ? await searchGroups(query, lang)
+    : { person: [], place: [], commentary: [], narration: [], page: [], event: [] };
 
   return {
     verses,
+    semantic,
     people: groups.person ?? [],
     places: groups.place ?? [],
     commentary: groups.commentary ?? [],
