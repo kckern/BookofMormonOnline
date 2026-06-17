@@ -11,7 +11,7 @@ function getSlugTip(slug: string): string {
 
 type DbAccessor = { _db: Parameters<typeof searchQuery>[0] };
 
-export const searchhistResolvers: Resolvers = {
+const baseResolvers: Resolvers = {
   Query: {
     search: async (_root, args, ctx: AppContext) => {
       const lang = ctx.lang ?? 'en';
@@ -84,3 +84,35 @@ export const searchhistResolvers: Resolvers = {
     event_date: (parent) => (parent as unknown as HistoryRow).event_date ?? null,
   },
 };
+
+// searchAll is not yet in the codegen snapshot (schema-first; generated types lag
+// new SDL fields). Injected as a typed async function and merged via Object.assign
+// so the rest of the resolver map retains full codegen types.
+async function searchAllResolver(
+  _root: unknown,
+  args: { query: string },
+  ctx: AppContext,
+): Promise<unknown> {
+  const lang = ctx.lang ?? 'en';
+  const query = args.query ?? '';
+  const db = (ctx.loaders as unknown as DbAccessor)._db;
+  const { searchGroups } = await import('../../search/grouped.js');
+  const [verses, groups] = await Promise.all([
+    searchQuery(db, query, lang),
+    searchGroups(query, lang),
+  ]);
+  return {
+    verses,
+    people: groups.person ?? [],
+    places: groups.place ?? [],
+    commentary: groups.commentary ?? [],
+    narration: groups.narration ?? [],
+    pages: groups.page ?? [],
+    events: groups.event ?? [],
+  };
+}
+
+// Merge searchAll into Query without widening the overall Resolvers type.
+(baseResolvers.Query as Record<string, unknown>).searchAll = searchAllResolver;
+
+export const searchhistResolvers: Resolvers = baseResolvers;
