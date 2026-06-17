@@ -19,17 +19,29 @@ export function queryToSparse(query: string): { indices: number[]; values: numbe
   return textToSparse(query);
 }
 
-/** The shared retrieval seam. Throws if Qdrant/embeddings are unavailable (caller falls back). */
-export async function searchContent(args: SearchContentArgs): Promise<SearchHit[]> {
-  const limit = args.limit ?? 50;
-  const dense = await embedOne(args.query);
-  const sparse = queryToSparse(args.query);
-  const filter = buildFilter(args);
+/** Dense + sparse vectors for a single query string. */
+export interface QueryVectors {
+  dense: number[];
+  sparse: { indices: number[]; values: number[] };
+}
 
+/** Build dense+sparse vectors for a query (embeds dense once). Injectable embedder for tests. */
+export async function searchVectors(
+  query: string,
+  embedder: (q: string) => Promise<number[]> = embedOne,
+): Promise<QueryVectors> {
+  const dense = await embedder(query);
+  return { dense, sparse: queryToSparse(query) };
+}
+
+/** Hybrid Qdrant query with prebuilt vectors + the args' filters. */
+export async function queryWithVectors(vectors: QueryVectors, args: SearchContentArgs): Promise<SearchHit[]> {
+  const limit = args.limit ?? 50;
+  const filter = buildFilter(args);
   const res = await getQdrant().query(COLLECTION, {
     prefetch: [
-      { query: dense, using: 'dense', limit, filter },
-      { query: { indices: sparse.indices, values: sparse.values }, using: 'keywords', limit, filter },
+      { query: vectors.dense, using: 'dense', limit, filter },
+      { query: { indices: vectors.sparse.indices, values: vectors.sparse.values }, using: 'keywords', limit, filter },
     ],
     query: { fusion: 'rrf' },
     limit,
@@ -42,8 +54,15 @@ export async function searchContent(args: SearchContentArgs): Promise<SearchHit[
     entity_id: String(p.payload?.entity_id ?? ''),
     score: p.score ?? 0,
     text: String(p.payload?.text ?? ''),
+    title: (p.payload?.title ?? null) as string | null,
     ref: (p.payload?.ref ?? null) as string | null,
     slug: (p.payload?.slug ?? null) as string | null,
     version: (p.payload?.version ?? null) as string | null,
   }));
+}
+
+/** The shared retrieval seam. Throws if Qdrant/embeddings are unavailable (caller falls back). */
+export async function searchContent(args: SearchContentArgs): Promise<SearchHit[]> {
+  const vectors = await searchVectors(args.query);
+  return queryWithVectors(vectors, args);
 }

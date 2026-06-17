@@ -23,6 +23,7 @@ export interface SearchHit {
   entity_id: string;
   score: number;
   text: string;
+  title: string | null;
   ref: string | null;
   slug: string | null;
   version: string | null;

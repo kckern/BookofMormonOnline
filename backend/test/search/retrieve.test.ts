@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { buildFilter, queryToSparse } from '../../src/search/retrieve.js';
+import { buildFilter, queryToSparse, searchVectors } from '../../src/search/retrieve.js';
 
 describe('buildFilter', () => {
   test('no filters → undefined', () => {
@@ -29,5 +29,14 @@ describe('queryToSparse', () => {
   });
   test('empty query → empty sparse', () => {
     expect(queryToSparse('   ')).toEqual({ indices: [], values: [] });
+  });
+});
+
+describe('searchVectors', () => {
+  test('returns dense + sparse for a query (sparse from queryToSparse)', async () => {
+    const v = await searchVectors('faith hope', async () => [1, 2, 3]); // injected dense embedder
+    expect(v.dense).toEqual([1, 2, 3]);
+    expect(v.sparse.indices.length).toBe(v.sparse.values.length);
+    expect(v.sparse.indices.length).toBe(2); // faith, hope
   });
 });
