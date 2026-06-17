@@ -1,5 +1,32 @@
 import { describe, expect, test } from 'vitest';
-import { rankRowsByCandidateOrder } from '../../src/data/loaders/searchhist.js';
+import { rankRowsByCandidateOrder, resolveCandidates } from '../../src/data/loaders/searchhist.js';
+
+describe('resolveCandidates (keyword-first)', () => {
+  const db = {} as never;
+  test('keyword hits → semantic:false and the semantic lookup is NOT called', async () => {
+    let semCalled = false;
+    const r = await resolveCandidates(db, 'charity', 'en', true, {
+      keyword: async () => ['101', '102'],
+      semantic: async () => { semCalled = true; return ['999']; },
+    });
+    expect(r).toEqual({ ids: ['101', '102'], semantic: false });
+    expect(semCalled).toBe(false);
+  });
+  test('zero keyword → semantic fallback runs and returns semantic:true', async () => {
+    const r = await resolveCandidates(db, 'afterlife', 'en', true, {
+      keyword: async () => [], semantic: async () => ['200', '201'],
+    });
+    expect(r).toEqual({ ids: ['200', '201'], semantic: true });
+  });
+  test('zero keyword + zero semantic → empty, semantic:false', async () => {
+    const r = await resolveCandidates(db, 'zzz', 'en', true, { keyword: async () => [], semantic: async () => [] });
+    expect(r).toEqual({ ids: [], semantic: false });
+  });
+  test('zero keyword + semantic throws → empty, never throws', async () => {
+    const r = await resolveCandidates(db, 'x', 'en', true, { keyword: async () => [], semantic: async () => { throw new Error('down'); } });
+    expect(r).toEqual({ ids: [], semantic: false });
+  });
+});
 
 describe('rankRowsByCandidateOrder', () => {
   test('reorders rows to match the candidate verse_id order', () => {

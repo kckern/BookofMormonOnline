@@ -3,7 +3,6 @@ import type { Kysely } from 'kysely';
 import type { DB } from '../../../codegen/db.js';
 import type { Loaders } from '../loaders.js';
 import { generateReference } from 'scripture-guide';
-import { getSearchConfig } from '../../search/config.js';
 import { searchContent } from '../../search/retrieve.js';
 import { hitsToRankedVerseIds } from '../../search/points.js';
 
@@ -114,32 +113,40 @@ export async function getCandidateVerseIds(
 }
 
 /**
- * Resolve ranked candidate verse_ids. Uses Qdrant when SEARCH_BACKEND=qdrant
- * (returns { ids, ranked:true }); on any failure, or when backend=like, falls
- * back to the legacy LIKE (ranked:false → downstream keeps legacy ordering).
+ * Resolve candidate verse_ids, keyword-first. Tier 1: literal LIKE. Tier 2 (only when Tier 1
+ * is empty): semantic Qdrant vector search. `semantic` is true only when the vector tier
+ * produced the result (downstream then applies relevance ordering). Never throws.
  */
 export async function resolveCandidates(
   db: Kysely<DB>,
   query: string,
   lang: string,
   isEnglish: boolean,
-): Promise<{ ids: string[]; ranked: boolean }> {
-  if (getSearchConfig().backend === 'qdrant') {
-    // English verses are indexed under lang 'en'; normalize the English aliases
-    // ('', 'eng', 'dev') so the Qdrant lang filter matches indexed points.
-    const searchLang = isEnglish ? 'en' : lang;
-    try {
-      const hits = await searchContent({ query, types: ['verse'], lang: searchLang });
-      const ids = hitsToRankedVerseIds(hits);
-      if (ids.length) return { ids, ranked: true };
-      // Qdrant reachable but no hits → fall through to the LIKE path below.
-    } catch (err) {
-      // Qdrant/embeddings unavailable → degrade to LIKE (search must never break).
-      // eslint-disable-next-line no-console
-      console.warn('[search] Qdrant candidate lookup failed; falling back to LIKE:', err instanceof Error ? err.message : err);
-    }
+  deps: {
+    keyword?: (q: string) => Promise<string[]>;
+    semantic?: (q: string) => Promise<string[]>;
+  } = {},
+): Promise<{ ids: string[]; semantic: boolean }> {
+  const keyword = deps.keyword ?? ((q: string) => getCandidateVerseIds(db, q, lang, isEnglish));
+  const semantic =
+    deps.semantic ??
+    (async (q: string) => {
+      const searchLang = isEnglish ? 'en' : lang;
+      const hits = await searchContent({ query: q, types: ['verse'], lang: searchLang });
+      return hitsToRankedVerseIds(hits);
+    });
+
+  const keywordIds = await keyword(query);
+  if (keywordIds.length) return { ids: keywordIds, semantic: false };
+
+  try {
+    const ids = await semantic(query);
+    if (ids.length) return { ids, semantic: true };
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.warn('[search] semantic fallback failed:', err instanceof Error ? err.message : err);
   }
-  return { ids: await getCandidateVerseIds(db, query, lang, isEnglish), ranked: false };
+  return { ids: [], semantic: false };
 }
 
 /**
@@ -155,16 +162,16 @@ export async function searchQuery(
   db: Kysely<DB>,
   query: string,
   lang: string,
-): Promise<SearchResultRow[]> {
+): Promise<{ verses: SearchResultRow[]; semantic: boolean }> {
   const isEnglish = !lang || lang === 'en' || lang === 'eng' || lang === 'dev';
   const isKorean = lang === 'ko';
   const minLen = isKorean ? 1 : 3;
 
-  if (!query || query.length < minLen) return [];
+  if (!query || query.length < minLen) return { verses: [], semantic: false };
 
-  const { ids: verseIds, ranked } = await resolveCandidates(db, query, lang, isEnglish);
+  const { ids: verseIds, semantic } = await resolveCandidates(db, query, lang, isEnglish);
 
-  if (!verseIds.length) return [];
+  if (!verseIds.length) return { verses: [], semantic };
 
   // Fetch bom_lookup rows + joined text data
   const lookupRows = await db
@@ -181,7 +188,7 @@ export async function searchQuery(
     .where('l.verse_id', 'in', verseIds)
     .execute();
 
-  if (!lookupRows.length) return [];
+  if (!lookupRows.length) return { verses: [], semantic };
 
   // One result per verse: keep the lowest-link study segment (see helper doc).
   const dedupedRows = dedupeByVerseKeepFirstLink(lookupRows);
@@ -356,7 +363,7 @@ export async function searchQuery(
       _slug: slug,
     } as unknown as SearchResultRow;
   });
-  return ranked ? rankRowsByCandidateOrder(results, verseIds) : results;
+  return { verses: semantic ? rankRowsByCandidateOrder(results, verseIds) : results, semantic };
 }
 
 /**
