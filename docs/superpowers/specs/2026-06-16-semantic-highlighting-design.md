@@ -62,6 +62,21 @@ Types: `HighlightRange { start: number; end: number }`.
 - **Lazy results** fetch `highlight(query, text)` when the card **scrolls into view (IntersectionObserver) or on hover**, debounced, and cached per result (each computed at most once). While pending, show the keyword/plain text; swap in the emphasis when it resolves.
 - Applies to the verse card and the commentary/narration `ResultGroup` cards.
 
+### Concrete changes by file
+
+**Backend / API:**
+- `backend/src/search/highlight.ts` (new) — the shared core + `attachHighlights`.
+- `backend/schema/BomUtils.graphql` — add `type HighlightRange { start: Int, end: Int }`; add `highlight: HighlightRange` to `SearchResult` and `ResultCard`; add `extend type Query { highlight(query: String!, text: String!): HighlightRange }`.
+- `backend/src/graphql/resolvers/searchhist.ts` — `searchAll` attaches eager highlights to the top-N; new `highlight` query resolver (lazy).
+
+**Frontend (`frontend/webapp/src/`):**
+- `models/GraphQLQueries.js` — add `highlight { start end }` to the `searchAll` template's `verses`, `commentary`, and `narration` selections; add a new `highlight: (vars) => {…}` query template for the lazy call (`highlight(query, text){ start end }`).
+- `models/BoMOnlineAPI.js` — register `"highlight"` as a passthrough type (like `searchAll`).
+- `views/Search/highlight.js` (new) — `renderHighlighted(text, range, keyword)`.
+- `views/Search/Search.js` — verse card uses `renderHighlighted(text, item.highlight, keyword)`; non-top-N verse rows lazy-fetch.
+- `views/Search/cards.js` — `ContentCard` uses `renderHighlighted(card.snippet, card.highlight, keyword)` and, when `card.highlight` is absent, **becomes stateful** (`useState` + `useEffect` + IntersectionObserver) to lazy-fetch `highlight(query, text)` on viewport-enter, cached per card.
+- `views/Search/Search.css` — `.semantic-hl` emphasis styling (distinct from keyword `<em>` if desired).
+
 ## Data flow
 
 - **Eager:** query → `searchVectors` (dense vector) → rank → for top-N prose results without keyword overlap: clause-split → candidate spans → one `embedBatch` → cosine → `highlight` offsets in the response.
