@@ -82,11 +82,10 @@ export async function upsertPoints(points: IndexPoint[]): Promise<void> {
   if (!points.length) return;
   await getQdrant().upsert(COLLECTION, {
     wait: true,
-    points: points.map((p) => ({
-      id: p.id,
-      vector: { dense: p.dense, keywords: p.sparse },
-      payload: { type: p.type, entity_id: p.entity_id, ref: p.ref, slug: p.slug, lang: p.lang, version: p.version, text: p.text, title: p.title },
-    })),
+    points: points.map((p) => {
+      const { id, dense, sparse, ...payload } = p;
+      return { id, vector: { dense, keywords: sparse }, payload };
+    }),
   });
 }
 

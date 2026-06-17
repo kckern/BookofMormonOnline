@@ -14,6 +14,7 @@ describe('verseToPoint', () => {
     expect(p.dense).toEqual([0.1, 0.2]);
     expect(p.sparse.indices.length).toBe(p.sparse.values.length);
     expect(p.sparse.indices.length).toBeGreaterThan(0);
+    expect(p.title).toBeNull();
   });
 });
 
