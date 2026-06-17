@@ -9,6 +9,7 @@ extend type Query {
   scripture(ref: String, verse_ids: [Int], version: String): ScriptureResults
   verses(verse_ids: [Int]): [Scripture]
   versehighlights(verse_pairs: [[Int]]): [ScriptureHighlights]
+  highlight(query: String!, text: String!): HighlightRange
 }
 
 extend type Mutation {
@@ -55,6 +56,8 @@ type ScriptureHighlights {
   isQuote: Boolean
 }
 
+type HighlightRange { start: Int, end: Int }
+
 type SearchResult {
   reference: String
   text: String
@@ -65,6 +68,7 @@ type SearchResult {
   speaker: String
   voice: String
   lang: String
+  highlight: HighlightRange
 }
 
 type Markdown {
@@ -93,6 +97,7 @@ type ResultCard {
   snippet: String
   ref: String
   score: Float
+  highlight: HighlightRange
 }
 
 type SearchAllResult {

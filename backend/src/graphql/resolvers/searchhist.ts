@@ -4,6 +4,8 @@ import type { AppContext } from '../context.js';
 import { searchQuery, historyQuery } from '../../data/loaders/searchhist.js';
 import type { SearchResultRow, HistoryRow } from '../../data/loaders/searchhist.js';
 import { searchGroups } from '../../search/grouped.js';
+import { computeHighlights, highlightText } from '../../search/highlight.js';
+import { embedOne } from '../../search/embed.js';
 
 /** getSlugTip: incoming slug args may be paths — take the last segment. */
 function getSlugTip(slug: string): string {
@@ -63,6 +65,7 @@ const baseResolvers: Resolvers = {
     lang: (parent) => (parent as unknown as SearchResultRow).lang ?? null,
   },
 
+
   HistoricalDocument: {
     id: (parent) => (parent as unknown as HistoryRow).id ?? null,
     slug: (parent) => (parent as unknown as HistoryRow).slug ?? null,
@@ -86,6 +89,10 @@ const baseResolvers: Resolvers = {
   },
 };
 
+// highlight field is not yet in the codegen snapshot; inject via direct property assignment.
+(baseResolvers.SearchResult as Record<string, unknown>).highlight =
+  (parent: { highlight?: unknown }) => (parent as { highlight?: unknown }).highlight ?? null;
+
 // searchAll is not yet in the codegen snapshot (schema-first; generated types lag
 // new SDL fields). Injected as a typed async function by direct property assignment
 // so the rest of the resolver map retains full codegen types.
@@ -101,6 +108,26 @@ async function searchAllResolver(
     searchQuery(db, query, lang),
     searchGroups(query, lang),
   ]);
+
+  // Eager semantic highlights for the top-N prose results (best-effort; never breaks searchAll).
+  try {
+    const commentary = (groups.commentary ?? []) as Array<{ snippet: string; highlight?: unknown }>;
+    const narration = (groups.narration ?? []) as Array<{ snippet: string; highlight?: unknown }>;
+    const verseRows = verses as unknown as Array<{ text: string; highlight?: unknown }>;
+    const targets = [
+      ...verseRows.slice(0, 10).map((v) => ({ obj: v, text: v.text })),
+      ...commentary.slice(0, 3).map((c) => ({ obj: c, text: c.snippet })),
+      ...narration.slice(0, 3).map((c) => ({ obj: c, text: c.snippet })),
+    ];
+    if (query && targets.length) {
+      const qVec = await embedOne(query);
+      const ranges = await computeHighlights(query, qVec, targets.map((t) => t.text));
+      targets.forEach((t, i) => { (t.obj as { highlight?: unknown }).highlight = ranges[i] ?? null; });
+    }
+  } catch {
+    // best-effort
+  }
+
   return {
     verses,
     people: groups.person ?? [],
@@ -114,5 +141,14 @@ async function searchAllResolver(
 
 // Merge searchAll into Query without widening the overall Resolvers type.
 (baseResolvers.Query as Record<string, unknown>).searchAll = searchAllResolver;
+
+async function highlightResolver(_root: unknown, args: { query: string; text: string }): Promise<unknown> {
+  try {
+    return await highlightText(args.query ?? '', args.text ?? '');
+  } catch {
+    return null;
+  }
+}
+(baseResolvers.Query as Record<string, unknown>).highlight = highlightResolver;
 
 export const searchhistResolvers: Resolvers = baseResolvers;
