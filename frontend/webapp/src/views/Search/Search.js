@@ -8,6 +8,7 @@ import { getSearchSlug, getSearchValue } from "src/models/searchSlug";
 import BoMOnlineAPI, {assetUrl} from "src/models/BoMOnlineAPI";
 import { toast } from "react-toastify";
 import ResultGroup from "./ResultGroup";
+import VerseResult from "./VerseResult";
 import { renderHighlighted } from "./highlight";
 import "./Search.css";
 
@@ -40,7 +41,7 @@ function SearchComponent({ appController }) {
 
     setContent(<Loader/>);
     setKeyWord(getSearchValue(match.params?.value));
-    
+
   }, [match?.params?.value])
 
   const searchFor = (keyword) => {
@@ -79,6 +80,7 @@ function SearchComponent({ appController }) {
         if (!r?.searchAll) return setContent(<div><h3 className="title lg-4 text-center">{label("no_results_for_x", [<span>{keyword}</span>])}</h3>{searchBox}</div>);
 
         const sa = r.searchAll;
+        const semantic = !!sa.semantic;
         const verses = sa.verses || [];
         const groupCount = [sa.people, sa.places, sa.commentary, sa.narration, sa.pages, sa.events]
           .reduce((acc, g) => acc + (g?.length || 0), 0);
@@ -87,51 +89,16 @@ function SearchComponent({ appController }) {
         if (count === 0) return setContent(<div><h3 className="title lg-4 text-center">{label("no_results_for_x", [<span>{keyword}</span>])}</h3>{searchBox}</div>);
 
         setContent(<div><h3 className="title lg-4 text-center">{label("x_search_results_for_y", [count,<span>{keyword}</span>])}</h3>
-          {verses.map(item => {
-            const { reference, text, slug, page, section, speaker, voice } = item;
-
-            const handleReadClick = (e,ref) => {
-              e.preventDefault();
-              e.stopPropagation();
-              const chapterSlug = ref.split(":")[0];
-              const verse = ref.split(":")[1];
-              history.push("/read/" + chapterSlug + "/" + verse);
-            }
-
-            const handleImgClick = (e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              appController.functions.setPopUp({ type: "people", ids: [speaker], underSlug: `search/${keyword}` });
-            }
-
-
-            return <Link to={"/" + slug}>
-              <div className="resultItem">
-                <div className="reference-speaker noselect">
-                <div className="reference noselect">{reference}</div>
-                <div className="speaker noselect">
-                  <img alt={label(voice)} src={assetUrl + `/people/${speaker}`} onClick={handleImgClick} />
-                  <div className="read-voice"
-                      onClick={handleImgClick}
-                  >{label(voice)}</div>
-                </div>
-                </div>
-                <div className="text">
-                  <h5 className="noselect">{section} <span>{page}</span>
-                  <button onClick={(e)=>handleReadClick(e,reference)} >{label("menu_read")}</button>
-                  <button>{label("menu_study")}</button>
-                  </h5>
-                  <p className="scripture"
-                  >{renderHighlighted(text, item.highlight, keyword, (t) => highlight(keyword, t))}</p>
-                </div>
-              </div></Link>
-          })}
-          <ResultGroup label={label("menu_people") || "People"} cards={r.searchAll.people} kind="person" query={keyword} />
-          <ResultGroup label={label("menu_places") || "Places"} cards={r.searchAll.places} kind="place" query={keyword} />
-          <ResultGroup label="Commentary" cards={r.searchAll.commentary} kind="commentary" query={keyword} />
-          <ResultGroup label="Narration" cards={r.searchAll.narration} kind="narration" query={keyword} />
-          <ResultGroup label="Pages" cards={r.searchAll.pages} kind="page" query={keyword} />
-          <ResultGroup label="Events" cards={r.searchAll.events} kind="event" query={keyword} />
+          {verses.map((item, i) => (
+            <VerseResult key={item.slug || i} item={item} keyword={keyword} semantic={semantic}
+              appController={appController} keywordRender={(t) => highlight(keyword, t)} />
+          ))}
+          <ResultGroup label={label("menu_people") || "People"} cards={r.searchAll.people} kind="person" query={keyword} semantic={semantic} />
+          <ResultGroup label={label("menu_places") || "Places"} cards={r.searchAll.places} kind="place" query={keyword} semantic={semantic} />
+          <ResultGroup label="Commentary" cards={r.searchAll.commentary} kind="commentary" query={keyword} semantic={semantic} />
+          <ResultGroup label="Narration" cards={r.searchAll.narration} kind="narration" query={keyword} semantic={semantic} />
+          <ResultGroup label="Pages" cards={r.searchAll.pages} kind="page" query={keyword} semantic={semantic} />
+          <ResultGroup label="Events" cards={r.searchAll.events} kind="event" query={keyword} semantic={semantic} />
         </div>);
       }
     })

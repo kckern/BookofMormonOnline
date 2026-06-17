@@ -1,7 +1,7 @@
-import React, { useEffect, useRef, useState } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
 import { assetUrl } from "src/models/BoMOnlineAPI";
-import { fetchHighlightRange } from "./highlightApi";
+import { useHighlightRange } from "./highlightApi";
 import { renderHighlighted } from "./highlight";
 
 // Wrap in a Link only when there's a slug; otherwise a non-clickable div (null slug = no destination).
@@ -20,27 +20,12 @@ export function PersonChip({ card }) {
 export function PlaceChip({ card }) {
   return <Wrap slug={card.slug} className="result-chip place"><span>{card.title}</span></Wrap>;
 }
-export function ContentCard({ card, query }) {
-  const [range, setRange] = useState(card.highlight || null);
-  const ref = useRef(null);
-  const fetched = useRef(!!card.highlight || !card.snippet || !query);
-  useEffect(() => {
-    if (fetched.current) return;
-    const el = ref.current;
-    if (!el || typeof IntersectionObserver === "undefined") return;
-    const io = new IntersectionObserver((entries) => {
-      if (entries.some((e) => e.isIntersecting) && !fetched.current) {
-        fetched.current = true;
-        fetchHighlightRange(query, card.snippet).then((r) => { if (r) setRange(r); });
-        io.disconnect();
-      }
-    });
-    io.observe(el);
-    return () => io.disconnect();
-  }, [query, card.snippet]);
+export function ContentCard({ card, query, semantic }) {
+  const eager = card.highlight || null;
+  const [range, ref] = useHighlightRange(query, card.snippet, !!semantic && !eager);
   return <Wrap slug={card.slug} className="result-card content" innerRef={ref}>
     {card.title && <h6>{card.title}</h6>}
-    {card.snippet && <p>{renderHighlighted(card.snippet, range, query)}</p>}
+    {card.snippet && <p>{renderHighlighted(card.snippet, eager || range, query)}</p>}
   </Wrap>;
 }
 export function EventCard({ card }) {

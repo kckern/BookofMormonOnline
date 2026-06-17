@@ -536,6 +536,7 @@ const queries = {
       query:
         q("searchAll", "query", query) +
         `{
+            semantic
             verses { reference text slug page section narration speaker voice highlight { start end } }
             people { slug title snippet ref score }
             places { slug title snippet ref score }
