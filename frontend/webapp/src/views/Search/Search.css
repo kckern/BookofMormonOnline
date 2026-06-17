@@ -218,3 +218,5 @@
         display: none;
     }
 }
+
+.semantic-hl { background: rgba(255, 214, 102, 0.5); font-style: normal; border-radius: 2px; }

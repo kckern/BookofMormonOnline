@@ -8,6 +8,7 @@ import { getSearchSlug, getSearchValue } from "src/models/searchSlug";
 import BoMOnlineAPI, {assetUrl} from "src/models/BoMOnlineAPI";
 import { toast } from "react-toastify";
 import ResultGroup from "./ResultGroup";
+import { renderHighlighted } from "./highlight";
 import "./Search.css";
 
 
@@ -121,16 +122,16 @@ function SearchComponent({ appController }) {
                   <button>{label("menu_study")}</button>
                   </h5>
                   <p className="scripture"
-                  >{highlight(keyword, text)}</p>
+                  >{renderHighlighted(text, item.highlight, keyword, (t) => highlight(keyword, t))}</p>
                 </div>
               </div></Link>
           })}
-          <ResultGroup label={label("menu_people") || "People"} cards={r.searchAll.people} kind="person" />
-          <ResultGroup label={label("menu_places") || "Places"} cards={r.searchAll.places} kind="place" />
-          <ResultGroup label="Commentary" cards={r.searchAll.commentary} kind="commentary" />
-          <ResultGroup label="Narration" cards={r.searchAll.narration} kind="narration" />
-          <ResultGroup label="Pages" cards={r.searchAll.pages} kind="page" />
-          <ResultGroup label="Events" cards={r.searchAll.events} kind="event" />
+          <ResultGroup label={label("menu_people") || "People"} cards={r.searchAll.people} kind="person" query={keyword} />
+          <ResultGroup label={label("menu_places") || "Places"} cards={r.searchAll.places} kind="place" query={keyword} />
+          <ResultGroup label="Commentary" cards={r.searchAll.commentary} kind="commentary" query={keyword} />
+          <ResultGroup label="Narration" cards={r.searchAll.narration} kind="narration" query={keyword} />
+          <ResultGroup label="Pages" cards={r.searchAll.pages} kind="page" query={keyword} />
+          <ResultGroup label="Events" cards={r.searchAll.events} kind="event" query={keyword} />
         </div>);
       }
     })
