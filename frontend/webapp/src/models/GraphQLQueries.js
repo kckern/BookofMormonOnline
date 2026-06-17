@@ -546,15 +546,6 @@ const queries = {
           }`,
     }
   },
-  highlight: (vars) => {
-    // vars: { query, text }
-    return {
-      type: "highlight",
-      key: "query",
-      val: vars,
-      query: `highlight(query: ${JSON.stringify(vars.query)}, text: ${JSON.stringify(vars.text)}) { start end }`,
-    }
-  },
   contents: (ids) => {
     return {
       type: "contents",

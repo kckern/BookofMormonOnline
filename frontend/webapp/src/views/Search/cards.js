@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { assetUrl } from "src/models/BoMOnlineAPI";
-import BoMOnlineAPI from "src/models/BoMOnlineAPI";
+import { fetchHighlightRange } from "./highlightApi";
 import { renderHighlighted } from "./highlight";
 
 // Wrap in a Link only when there's a slug; otherwise a non-clickable div (null slug = no destination).
@@ -31,9 +31,7 @@ export function ContentCard({ card, query }) {
     const io = new IntersectionObserver((entries) => {
       if (entries.some((e) => e.isIntersecting) && !fetched.current) {
         fetched.current = true;
-        BoMOnlineAPI({ highlight: { query, text: card.snippet } }, { useCache: true })
-          .then((r) => { if (r?.highlight) setRange(r.highlight); })
-          .catch(() => {});
+        fetchHighlightRange(query, card.snippet).then((r) => { if (r) setRange(r); });
         io.disconnect();
       }
     });
