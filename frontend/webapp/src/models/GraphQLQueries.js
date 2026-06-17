@@ -536,14 +536,23 @@ const queries = {
       query:
         q("searchAll", "query", query) +
         `{
-            verses { reference text slug page section narration speaker voice }
+            verses { reference text slug page section narration speaker voice highlight { start end } }
             people { slug title snippet ref score }
             places { slug title snippet ref score }
-            commentary { slug title snippet ref score }
-            narration { slug title snippet ref score }
+            commentary { slug title snippet ref score highlight { start end } }
+            narration { slug title snippet ref score highlight { start end } }
             pages { slug title snippet ref score }
             events { slug title snippet ref score }
           }`,
+    }
+  },
+  highlight: (vars) => {
+    // vars: { query, text }
+    return {
+      type: "highlight",
+      key: "query",
+      val: vars,
+      query: `highlight(query: ${JSON.stringify(vars.query)}, text: ${JSON.stringify(vars.text)}) { start end }`,
     }
   },
   contents: (ids) => {

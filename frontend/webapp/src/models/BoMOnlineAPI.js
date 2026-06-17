@@ -111,7 +111,7 @@ function structureResults(queries, apiResults) {
         if (!query.val) {
             resultObj[query.type] = results
         }
-        else if(["lookup","search","searchAll","mapstories","verses","verse_highlights"].includes(query.type))
+        else if(["lookup","search","searchAll","highlight","mapstories","verses","verse_highlights"].includes(query.type))
         {
             resultObj[query.type] = apiResults[query.type];
         }
