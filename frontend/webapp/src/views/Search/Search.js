@@ -77,8 +77,14 @@ function SearchComponent({ appController }) {
           <h3 className="title lg-4 text-center">{label("search")}</h3>{searchBox}</div>);
         if (!r?.searchAll) return setContent(<div><h3 className="title lg-4 text-center">{label("no_results_for_x", [<span>{keyword}</span>])}</h3>{searchBox}</div>);
 
-        const verses = r.searchAll.verses || [];
-        let count = verses.length;
+        const sa = r.searchAll;
+        const verses = sa.verses || [];
+        const groupCount = [sa.people, sa.places, sa.commentary, sa.narration, sa.pages, sa.events]
+          .reduce((acc, g) => acc + (g?.length || 0), 0);
+        const count = verses.length + groupCount;
+
+        if (count === 0) return setContent(<div><h3 className="title lg-4 text-center">{label("no_results_for_x", [<span>{keyword}</span>])}</h3>{searchBox}</div>);
+
         setContent(<div><h3 className="title lg-4 text-center">{label("x_search_results_for_y", [count,<span>{keyword}</span>])}</h3>
           {verses.map(item => {
             const { reference, text, slug, page, section, speaker, voice } = item;
