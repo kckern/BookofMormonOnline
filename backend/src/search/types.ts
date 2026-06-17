@@ -8,6 +8,7 @@ export interface IndexPoint {
   entity_id: string;     // e.g. verse_id as string
   chunkIndex: number;
   text: string;
+  title: string | null;   // display title (entity name, page/section title); null for verses
   ref: string | null;
   slug: string | null;
   lang: string;
