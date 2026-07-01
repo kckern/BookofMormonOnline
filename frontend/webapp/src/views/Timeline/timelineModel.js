@@ -60,7 +60,9 @@ const stamp = (map, r0, c0, w, h, bg) => {
 // ONE occupancy model for every colored layer. Rendering + corner logic + battle
 // territory + label contrast all consume this — no layer guesses what's behind it.
 // Layers bottom→top: BAND (canvas fills) < BAR (event tiles) < tab < marker < label.
-export function buildComposite(tilesData, events) {
+// markers: ICON-EVENTS ({r,c,bg} descriptors) supplied by the caller — battles today,
+// ships/"?" later; from legacy canvas battle tiles now, from DB rows with grid.icon later.
+export function buildComposite(tilesData, events, markers = []) {
   const { rows, cols, tiles } = tilesData
   const band = new Map()
   const bar = new Map()
@@ -71,28 +73,28 @@ export function buildComposite(tilesData, events) {
     if (t.k === 'event' && t.bg) stamp(bar, t.r, t.c, t.w, t.h, t.bg)
   }
   for (const e of events || []) {
-    if (!e.grid || !e.p || !e.grid.bg) continue
+    // a marker is a point event, not a bar — it must never become its own territory
+    if (!e.grid || !e.p || !e.grid.bg || e.grid.icon) continue
     stamp(bar, e.grid.row, e.grid.col, e.grid.colSpan, e.grid.rowSpan, e.grid.bg)
   }
   const fillAt = (r, c) => band.get(`${r},${c}`) || null
   const barAt = (r, c) => bar.get(`${r},${c}`) || null
   const surfaceAt = (r, c) => barAt(r, c) || fillAt(r, c)
 
-  // Battle territory = what is genuinely beneath the cell (bar first, then band),
+  // Marker territory = what is genuinely beneath the cell (bar first, then band),
   // falling back to the dominant neighbour only for band-edge notch cells.
-  const battles = new Map()
+  const markersMap = new Map()
   const combined = new Map(band)
-  for (const t of tiles) {
-    if (t.k !== 'battle') continue
-    const beneath = surfaceAt(t.r, t.c)
-    const territory = beneath || dominantNeighbor(t, surfaceAt)
-    battles.set(`${t.r},${t.c}`, {
+  for (const m of markers) {
+    const beneath = surfaceAt(m.r, m.c)
+    const territory = beneath || dominantNeighbor(m, surfaceAt)
+    markersMap.set(`${m.r},${m.c}`, {
       territory,
-      attacker: t.bg || null,
-      incursion: !!(territory && t.bg && territory !== t.bg),
+      attacker: m.bg || null,
+      incursion: !!(territory && m.bg && territory !== m.bg),
       hasSurface: !!beneath,
     })
-    if (territory) combined.set(`${t.r},${t.c}`, territory)
+    if (territory) combined.set(`${m.r},${m.c}`, territory)
   }
 
   // Enclosed single-color holes → patch to the band color (no parchment notches
@@ -147,19 +149,19 @@ export function buildComposite(tilesData, events) {
     barAt,
     surfaceAt,
     bandAt: (r, c) => combined.get(`${r},${c}`) || null,
-    battleFor: (t) =>
-      battles.get(`${t.r},${t.c}`) ||
+    markerFor: (t) =>
+      markersMap.get(`${t.r},${t.c}`) ||
       { territory: t.bg || null, attacker: t.bg || null, incursion: false, hasSurface: false },
     holePatches,
   }
 }
 
-// What background (if any) a battle CELL should paint. null = paint nothing —
+// What background (if any) a marker CELL should paint. null = paint nothing —
 // the surface beneath (band fill or event bar) already provides the territory.
 // Only a genuine band-edge notch (no surface beneath) gets the inferred color,
 // which keeps the band silhouette continuous under the marker.
-export function battleCellPaint(comp, t) {
-  const b = comp.battleFor(t)
+export function markerCellPaint(comp, t) {
+  const b = comp.markerFor(t)
   return b.hasSurface ? null : b.territory
 }
 

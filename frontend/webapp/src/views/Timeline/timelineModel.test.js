@@ -1,6 +1,6 @@
 import {
   fixBg, textOn, humanize, cleanLabel, cornerRadii, dominantNeighbor,
-  buildComposite, battleCellPaint,
+  buildComposite, markerCellPaint,
 } from './timelineModel'
 
 describe('color + text utils', () => {
@@ -67,15 +67,14 @@ describe('buildComposite', () => {
     tiles: [
       { r: 2, c: 2, w: 3, h: 3, k: 'fill', bg: '#111111' },   // band A
       { r: 5, c: 2, w: 3, h: 1, k: 'fill', bg: '#222222' },   // band B below A
-      { r: 3, c: 6, w: 1, h: 1, k: 'battle', bg: '#333333' }, // battle in open space next to bar
-      { r: 2, c: 3, w: 1, h: 1, k: 'battle', bg: '#444444' }, // battle ON band A (incursion)
     ],
   }
   const events = [
     // API bar crossing open parchment at row 3, cols 5..8
     { slug: 'exp', p: true, grid: { row: 3, col: 5, rowSpan: 1, colSpan: 4, bg: '#555555' } },
   ]
-  const comp = buildComposite(tilesData, events)
+  const markers = [{ r: 3, c: 6, bg: '#333333' }, { r: 2, c: 3, bg: '#444444' }]
+  const comp = buildComposite(tilesData, events, markers)
 
   it('stamps band and bar layers separately', () => {
     expect(comp.fillAt(2, 2)).toBe('#111111')
@@ -83,19 +82,24 @@ describe('buildComposite', () => {
     expect(comp.fillAt(3, 6)).toBe(null)
   })
   it('battle on an API bar takes the BAR as territory (not parchment)', () => {
-    const b = comp.battleFor({ r: 3, c: 6 })
+    const b = comp.markerFor({ r: 3, c: 6 })
     expect(b.territory).toBe('#555555')
     expect(b.incursion).toBe(true) // attacker #333333 ≠ territory #555555
   })
   it('battle cell over an existing surface paints NO background of its own', () => {
-    expect(battleCellPaint(comp, { r: 3, c: 6 })).toBe(null)  // bar beneath
-    expect(battleCellPaint(comp, { r: 2, c: 3 })).toBe(null)  // band beneath
+    expect(markerCellPaint(comp, { r: 3, c: 6 })).toBe(null)  // bar beneath
+    expect(markerCellPaint(comp, { r: 2, c: 3 })).toBe(null)  // band beneath
   })
   it('battle in a genuine band-edge notch paints the inferred territory', () => {
     // battle at (2,5): outside band A (cols 2..4) but adjacent — no surface beneath
-    const t2 = { ...tilesData, tiles: [...tilesData.tiles, { r: 2, c: 5, w: 1, h: 1, k: 'battle', bg: '#999999' }] }
-    const c2 = buildComposite(t2, [])
-    expect(battleCellPaint(c2, { r: 2, c: 5 })).toBe('#111111')
+    const c2 = buildComposite(tilesData, [], [...markers, { r: 2, c: 5, bg: '#999999' }])
+    expect(markerCellPaint(c2, { r: 2, c: 5 })).toBe('#111111')
+  })
+  it('icon-events never stamp the bar layer (they are markers, not bars)', () => {
+    const ci = buildComposite(tilesData, [
+      { slug: 'b1', p: true, grid: { row: 7, col: 7, rowSpan: 1, colSpan: 1, bg: '#666666', icon: 'battle' } },
+    ], [])
+    expect(ci.barAt(7, 7)).toBe(null)
   })
   it('bandAt folds battle cells into the band so corners stay continuous', () => {
     expect(comp.bandAt(2, 3)).toBe('#111111')
