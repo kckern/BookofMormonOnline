@@ -2,13 +2,39 @@
 // Pure logic for the Timeline tile grid. No React, no DOM — everything here is
 // unit-tested in timelineModel.test.js. Rendering lives in Timeline.js.
 
-// A few source band colors don't render well on the parchment canvas.
-export const BG_FIX = {
-  '#fff2cc': '#e6cf8c', // post-Christ cream (revised again in Task 14)
-  '#274e13': '#2f6f4f', // Nephite-kings green: too close to judges green
-  '#6fa8dc': '#7d8596', // Gadianton blue: too close to Zeniff's blue
+// ── Color tokens (KC: colors are tokens, not values) ─────────────────────────
+// Source-data hexes are identity KEYS from the sheet; painting resolves through
+// CSS vars so themes swap wholesale. Order/names mirror the legend.
+export const COLOR_TOKENS = {
+  '#134f5c': 'jaredites',
+  '#351c75': 'lehi',
+  '#1c4587': 'nephites',
+  '#073763': 'nephilands',
+  '#85200c': 'lamanites',
+  '#3c78d8': 'zeniff',
+  '#b45f06': 'alma',
+  '#274e13': 'kings',
+  '#bf9000': 'mulek',
+  '#38761d': 'judges',
+  '#6fa8dc': 'gadianton',
+  '#000000': 'destruction',
+  '#fff2cc': 'unity',
 }
-export const fixBg = (c) => (c && BG_FIX[c]) || c
+export const tokenOf = (hex) => COLOR_TOKENS[hex] || null
+export const bandVar = (hex) => {
+  const t = tokenOf(hex)
+  return t ? `var(--c-${t}, ${hex})` : hex
+}
+
+// Parchment-theme resolved values, for contrast math only (must mirror the CSS).
+// These are the DISPLAYED hex values under the parchment theme — used by textOn()
+// so ink choice is always computed against a real hex, never a var(...) string.
+export const RESOLVED = {
+  '#274e13': '#2f6f4f',
+  '#6fa8dc': '#7d8596',
+  '#fff2cc': '#c9c2b0',
+}
+export const resolvedHex = (hex) => RESOLVED[hex] || hex
 
 // Black/white ink for legibility over a band color.
 export function textOn(bg) {

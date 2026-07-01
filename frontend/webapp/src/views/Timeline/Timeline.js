@@ -10,7 +10,7 @@ import { label } from "src/models/Utils"
 import tilesData from "./gridTiles.json"
 import "./Timeline.css"
 import {
-  fixBg, textOn, humanize, cleanLabel, cornerStyleFor, buildComposite, markerCellPaint,
+  bandVar, resolvedHex, textOn, humanize, cleanLabel, cornerStyleFor, buildComposite, markerCellPaint,
 } from './timelineModel'
 
 // Legacy canvas battle tiles → icon-event marker descriptors. This is a
@@ -61,15 +61,15 @@ const LINEAGES = [
   { c: "#85200c", t: "Lamanites" },
   { c: "#3c78d8", t: "Zeniff’s colony" },
   { c: "#b45f06", t: "Alma’s people" },
-  { c: "#2f6f4f", t: "Nephite kings (Zarahemla)" },
+  { c: "#274e13", t: "Nephite kings (Zarahemla)" },
   { c: "#bf9000", t: "Mulekites · missions" },
   { c: "#38761d", t: "Reign of the judges" },
-  { c: "#7d8596", t: "Gadianton robbers" },
+  { c: "#6fa8dc", t: "Gadianton robbers" },
   { c: "#000000", t: "Cataclysmic Destruction" },
-  { c: "#e6cf8c", t: "After Christ" },
+  { c: "#fff2cc", t: "After Christ" },
 ]
 
-// Hover discovery: raw band color (as stored in the data, pre-fixBg) → name.
+// Hover discovery: raw band color (sheet hex, identity key) → name.
 // Keyed without the leading "#" so it doubles as the data-lin attribute value.
 const COLOR_NAMES = {
   "134f5c": "Jaredites",
@@ -108,6 +108,7 @@ function TimeLine() {
   const [layers, setLayers] = useState({ battles: true, labels: true })
   const [hoverLin, setHoverLin] = useState(null) // band key currently hovered
   const [zoom, setZoom] = useState(1)
+  const [theme, setTheme] = useState('parchment')
   // Responsive base: shrink the whole grid to fit the viewport width (keeping the
   // cell aspect ratio) so we never need a horizontal scrollbar at rest; capped at
   // 1 so we honor the natural max-width when there's room. zoom multiplies this.
@@ -238,7 +239,7 @@ function TimeLine() {
           key={`f${t.r}-${t.c}`}
           className="tg-fill"
           data-lin={linKey(t.bg)}
-          style={{ ...gridPos(t), background: fixBg(t.bg), ...cornerStyleFor(t, ba) }}
+          style={{ ...gridPos(t), background: bandVar(t.bg), ...cornerStyleFor(t, ba) }}
         />
       ))
     // enclosed single-color holes patched to the band color (interior, no rounding)
@@ -251,7 +252,7 @@ function TimeLine() {
           style={{
             gridColumn: `${p.c + 1} / span 1`,
             gridRow: `${p.r} / span 1`,
-            background: fixBg(p.bg),
+            background: bandVar(p.bg),
           }}
         />
       )
@@ -282,8 +283,8 @@ function TimeLine() {
           const ref = (n) => {
             if (n) cellRefs.current[e.slug] = n
           }
-          const bg = fixBg(g.bg)
-          const tcol = textOn(bg)
+          const rawBg = g.bg
+          const tcol = textOn(resolvedHex(rawBg))
           const linAttr = isPlace ? null : { "data-lin": linKey(g.bg) }
           const cls =
             "tg-anchor " +
@@ -297,8 +298,8 @@ function TimeLine() {
             <span className="tg-event-label">{label}</span>
           )
           const rect = { r: g.row, c: g.col, w: g.colSpan, h: g.rowSpan }
-          const capStyle = bg ? cornerStyleFor(rect, comp.barAt) : undefined
-          const style = isPlace ? pos : { ...pos, background: bg || "#5a5a5a", color: tcol, ...capStyle }
+          const capStyle = rawBg ? cornerStyleFor(rect, comp.barAt) : undefined
+          const style = isPlace ? pos : { ...pos, background: rawBg ? bandVar(rawBg) : "#5a5a5a", color: tcol, ...capStyle }
           if (!clickable) {
             return (
               <div
@@ -335,7 +336,7 @@ function TimeLine() {
   if (!tiles || !tiles.length) return <Loader />
 
   return (
-    <div className="timeline-grid-wrap">
+    <div className={'timeline-grid-wrap' + (theme === 'dark' ? ' tg-theme-dark' : '')}>
       <a className="tg-skip" href="#tg-grid">
         Skip to timeline
       </a>
@@ -385,6 +386,12 @@ function TimeLine() {
                 </span>
                 Labels
               </label>
+              <label className="tg-layers-item">
+                <input type="checkbox" checked={theme === 'dark'}
+                  onChange={(e) => setTheme(e.target.checked ? 'dark' : 'parchment')} />
+                <span className="tg-layers-text" aria-hidden="true">◐</span>
+                Dark canvas
+              </label>
             </div>
           )}
         </div>
@@ -411,7 +418,7 @@ function TimeLine() {
           <ul className="tg-infopanel-keys">
             {LINEAGES.map((l) => (
               <li key={l.c}>
-                <span className="tg-key-sw" style={{ background: l.c }} aria-hidden="true" />
+                <span className="tg-key-sw" style={{ background: bandVar(l.c) }} aria-hidden="true" />
                 {l.t}
               </li>
             ))}
@@ -478,8 +485,7 @@ function TimeLine() {
             // when the API resolves.
             const clickable = !!t.slug && !t.nc
 
-            const bg = fixBg(t.bg)
-            const tcol = textOn(bg)
+            const tcol = textOn(resolvedHex(t.bg))
             const tone = isPlace ? "" : tcol === "#fff" ? " tg-on-dark" : " tg-on-light"
 
             if (!clickable) {
@@ -487,7 +493,7 @@ function TimeLine() {
                 <div
                   key={key}
                   className={`tg-anchor ${isPlace ? "tg-place" : "tg-event"}${tone} is-static`}
-                  style={isPlace ? pos : { ...pos, background: bg, color: tcol }}
+                  style={isPlace ? pos : { ...pos, background: bandVar(t.bg), color: tcol }}
                   title={tipText}
                 >
                   <span className={isPlace ? undefined : "tg-event-label"}>{inner}</span>
@@ -506,7 +512,7 @@ function TimeLine() {
                   `tg-anchor ${isPlace ? "tg-place" : "tg-event"}${tone} is-clickable` +
                   (selected === t.slug ? " is-selected" : "")
                 }
-                style={isPlace ? pos : { ...pos, background: bg, color: tcol }}
+                style={isPlace ? pos : { ...pos, background: bandVar(t.bg), color: tcol }}
                 onClick={() => openInfo(t.slug)}
                 aria-label={data && data.date ? `${tipText}, ${data.date}` : tipText}
                 title={data && data.date ? `${tipText} — ${data.date}` : tipText}
@@ -530,7 +536,7 @@ function TimeLine() {
                 key={`mk-${m.r}-${m.c}`}
                 className={'tg-anchor tg-battle' + (incursion ? ' tg-battle-inc' : '')}
                 style={paint
-                  ? { gridColumn: `${m.c + 1} / span 1`, gridRow: `${m.r} / span 1`, background: fixBg(paint) }
+                  ? { gridColumn: `${m.c + 1} / span 1`, gridRow: `${m.r} / span 1`, background: bandVar(paint) }
                   : { gridColumn: `${m.c + 1} / span 1`, gridRow: `${m.r} / span 1` }}
                 data-lin={territory ? linKey(territory) : undefined}
                 role="img"
@@ -543,7 +549,7 @@ function TimeLine() {
                     aria-hidden="true"
                     data-lin={linKey(attacker)}
                     style={{
-                      background: fixBg(attacker),
+                      background: bandVar(attacker),
                       borderTopRightRadius: 'calc(10px * var(--scale))',
                       borderBottomRightRadius: 'calc(10px * var(--scale))',
                     }}
@@ -563,7 +569,7 @@ function TimeLine() {
                 style={{
                   gridColumn: `${m.c + 1} / span 1`,
                   gridRow: `${m.r} / span 1`,
-                  background: fixBg(paint),
+                  background: bandVar(paint),
                 }}
               />
             ) : null
@@ -578,7 +584,7 @@ function TimeLine() {
         <div className="tg-statusbar" aria-live="polite">
           <span
             className="tg-status-sw"
-            style={{ background: fixBg("#" + hoverLin) }}
+            style={{ background: bandVar('#' + hoverLin) }}
             aria-hidden="true"
           />
           {COLOR_NAMES[hoverLin]}

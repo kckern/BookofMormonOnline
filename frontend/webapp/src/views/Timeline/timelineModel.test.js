@@ -1,13 +1,30 @@
 import {
-  fixBg, textOn, humanize, cleanLabel, cornerRadii, dominantNeighbor,
+  tokenOf, bandVar, resolvedHex,
+  textOn, humanize, cleanLabel, cornerRadii, dominantNeighbor,
   buildComposite, markerCellPaint, radiusFor, cornerStyleFor,
 } from './timelineModel'
 
+describe('color tokens', () => {
+  it('maps every source hex to its semantic token', () => {
+    expect(tokenOf('#134f5c')).toBe('jaredites')
+    expect(tokenOf('#351c75')).toBe('lehi')
+    expect(tokenOf('#85200c')).toBe('lamanites')
+    expect(tokenOf('#fff2cc')).toBe('unity')
+    expect(tokenOf('#000000')).toBe('destruction')
+  })
+  it('passes unknown hexes through as-is (fallback paint)', () => {
+    expect(tokenOf('#abcdef')).toBe(null)
+    expect(bandVar('#abcdef')).toBe('#abcdef')
+  })
+  it('bandVar resolves known hexes to a css var with hex fallback', () => {
+    expect(bandVar('#134f5c')).toBe('var(--c-jaredites, #134f5c)')
+  })
+})
+
 describe('color + text utils', () => {
-  it('remaps problem band colors, passes others through', () => {
-    expect(fixBg('#274e13')).toBe('#2f6f4f')
-    expect(fixBg('#134f5c')).toBe('#134f5c')
-    expect(fixBg(null)).toBe(null)
+  it('resolvedHex mirrors the parchment theme for contrast math', () => {
+    expect(resolvedHex('#fff2cc')).toBe('#c9c2b0')
+    expect(resolvedHex('#134f5c')).toBe('#134f5c')
   })
   it('picks contrast ink from luminance', () => {
     expect(textOn('#000000')).toBe('#fff')

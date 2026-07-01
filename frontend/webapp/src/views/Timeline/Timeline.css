@@ -6,6 +6,39 @@
    canvas showing through — intentional negative space, not "white bars".
    Design: docs/plans/2026-06-13-timeline-grid-migration-design.md */
 
+/* ══ COLOR SCHEMA — the only place swatch values live ══════════════════════
+   Identity = semantic token. Data hexes resolve here via bandVar()/var().
+   Default theme: parchment. Alternates swap the whole palette in one class. */
+.timeline-grid-wrap {
+  --c-jaredites: #134f5c;
+  --c-lehi: #351c75;
+  --c-nephites: #1c4587;
+  --c-nephilands: #073763;
+  --c-lamanites: #85200c;
+  --c-zeniff: #3c78d8;
+  --c-alma: #b45f06;
+  --c-kings: #2f6f4f;      /* sheet #274e13 remapped for parchment readability */
+  --c-mulek: #bf9000;
+  --c-judges: #38761d;
+  --c-gadianton: #7d8596;  /* sheet #6fa8dc remapped for parchment readability */
+  --c-destruction: #000000;
+  --c-unity: #c9c2b0;      /* gray family per source artwork (measures ~#8f9490
+                              there); tuned lighter for parchment contrast —
+                              adjust HERE only, at the Task 14 visual check */
+  --canvas-bg: radial-gradient(140% 90% at 50% -10%, #f8f1dd 0%, #f0e6c8 52%, #e6d6b0 100%);
+  --gutter-bg: #f0e6c8;
+  --ink: #4a3a18;
+}
+/* dark theme = the legacy charcoal canvas; band swatches stay closer to sheet */
+.timeline-grid-wrap.tg-theme-dark {
+  --c-kings: #274e13;
+  --c-gadianton: #6fa8dc;
+  --c-unity: #b8b2a6;
+  --canvas-bg: radial-gradient(140% 90% at 50% -10%, #35322e 0%, #2b2926 60%, #221f1c 100%);
+  --gutter-bg: #2b2926;
+  --ink: #d8cdb4;
+}
+
 .timeline-grid-wrap {
   position: absolute;
   top: 60px;
@@ -16,8 +49,7 @@
   flex-direction: column;
   /* warm aged-parchment canvas: the lineage bands read as illuminated ribbons
      floating on paper, and the band gaps become intentional negative space */
-  background:
-    radial-gradient(140% 90% at 50% -10%, #f8f1dd 0%, #f0e6c8 52%, #e6d6b0 100%);
+  background: var(--canvas-bg);
   overflow: hidden;
   font-family: "Roboto Condensed", "Arial Narrow", sans-serif;
 }
@@ -80,7 +112,7 @@
   font-weight: 700;
   font-size: 21px;
   letter-spacing: 0.4px;
-  color: #4a3a18;
+  color: var(--ink);
   white-space: nowrap;
 }
 .tg-info-toggle {
@@ -322,7 +354,7 @@
   position: sticky;
   left: 0;
   z-index: 7;
-  background: linear-gradient(to right, #f0e6c8 78%, rgba(240, 230, 200, 0));
+  background: linear-gradient(to right, var(--gutter-bg) 78%, transparent);
   border-right: 1px solid rgba(120, 90, 40, 0.25);
 }
 
@@ -339,7 +371,7 @@
   font-size: calc(11px * var(--scale));
   font-weight: 700;
   letter-spacing: 0.2px;
-  color: #6a5326;
+  color: var(--ink);
   white-space: nowrap;
 }
 
