@@ -15,9 +15,10 @@ tiles = {
 mapping = json.loads((ROOT / "frontend/webapp/src/views/Timeline/battleSlugs.json").read_text())
 out = ["-- battle placements from battleSlugs.json (gen_battle_placements.py)",
        "-- Apply to bom_prd via BoMOnlineWorkspace. Idempotent (grid_row IS NULL guard).",
-       "-- PRECONDITION: the frontend BATTLE_BOUND suppression (plan Task 7 Step 0)",
-       "-- must be deployed FIRST, or these rows render duplicate chips and kill",
-       "-- incursion detection. ROLLBACK: the paired _rollback.sql below.",
+       "-- PRECONDITIONS (plan Task 7 reconciliation, icon-event architecture):",
+       "-- 1. Task 12's label_params DDL applied first (creates grid_icon).",
+       "-- 2. Frontend with icon-event rendering (grid.icon -> marker path) deployed.",
+       "-- ROLLBACK: the paired _rollback.sql below.",
        "-- ALSO at apply time: delete the k='battle' tiles from frontend/webapp/src/views/Timeline/gridTiles.json (see plan Task 7 reconciliation) and deploy that frontend change in the same window."]
 rollback = ["-- rollback: clear the battle placements applied by the paired file"]
 for key, slug in sorted(mapping.items()):
