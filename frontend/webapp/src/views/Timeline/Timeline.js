@@ -8,6 +8,7 @@ import BoMOnlineAPI from "src/models/BoMOnlineAPI"
 import Loader from "../_Common/Loader"
 import { label } from "src/models/Utils"
 import tilesData from "./gridTiles.json"
+import battleSlugs from './battleSlugs.json'
 import "./Timeline.css"
 import {
   bandVar, resolvedHex, textOn, humanize, cleanLabel, cornerStyleFor, buildComposite, markerCellPaint,
@@ -531,17 +532,29 @@ function TimeLine() {
           {layers.battles && canvasMarkers.map((m) => {
             const { incursion, territory, attacker } = markerFor(m)
             const paint = markerCellPaint(comp, m) // null when a real surface is beneath
+            const slug = battleSlugs[`${m.r},${m.c}`] || null
+            const data = slug ? bySlug[slug] : null
+            const clickable = !!(data && (data.heading || data.html))
+            const battleLabel = clickable
+              ? `Battle: ${cleanLabel(data.heading) || humanize(slug)}${data.date ? `, ${data.date}` : ''}`
+              : 'Battle'
+            const Cell = clickable ? 'button' : 'div'
             return (
-              <div
+              <Cell
                 key={`mk-${m.r}-${m.c}`}
-                className={'tg-anchor tg-battle' + (incursion ? ' tg-battle-inc' : '')}
+                {...(clickable
+                  ? { type: 'button', onClick: () => openInfo(slug), 'aria-label': battleLabel,
+                      ref: (n) => { if (n) cellRefs.current[slug] = n } }
+                  : { role: 'img', 'aria-label': 'Battle' })}
+                className={
+                  'tg-anchor tg-battle' + (incursion ? ' tg-battle-inc' : '') +
+                  (clickable ? ' is-clickable' : '') + (selected === slug ? ' is-selected' : '')
+                }
                 style={paint
                   ? { gridColumn: `${m.c + 1} / span 1`, gridRow: `${m.r} / span 1`, background: bandVar(paint) }
                   : { gridColumn: `${m.c + 1} / span 1`, gridRow: `${m.r} / span 1` }}
                 data-lin={territory ? linKey(territory) : undefined}
-                role="img"
-                aria-label="Battle"
-                title="Battle"
+                title={battleLabel}
               >
                 {incursion && (
                   <span
@@ -556,7 +569,7 @@ function TimeLine() {
                   />
                 )}
                 <span className="tg-battle-medallion">{SWORDS}</span>
-              </div>
+              </Cell>
             )
           })}
           {!layers.battles && canvasMarkers.map((m) => {

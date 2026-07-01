@@ -550,8 +550,15 @@
 }
 
 /* Battle marker — a small struck-gold medallion with crossed swords */
+/* battle cells render as <button> when bound — reset UA chrome like tg-event */
 .tg-battle {
   justify-content: center;
+  margin: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  appearance: none;
+  padding: 0;
 }
 .tg-battle-medallion {
   display: inline-flex;
@@ -586,6 +593,15 @@
   position: relative;
   z-index: 1;
 }
+
+/* clickable battles: medallion lifts on hover/focus */
+.tg-battle.is-clickable { pointer-events: auto; cursor: pointer; }
+.tg-battle.is-clickable:hover .tg-battle-medallion,
+.tg-battle.is-clickable:focus-visible .tg-battle-medallion {
+  transform: scale(1.18);
+  box-shadow: 0 2px 6px rgba(60, 28, 8, 0.55), inset 0 0 0 1px rgba(255, 255, 255, 0.45);
+}
+.tg-battle-medallion { transition: transform 0.12s ease, box-shadow 0.12s ease; }
 
 /* Info box (replaces the Leaflet popup) — parchment card */
 .tg-infobox-backdrop {
