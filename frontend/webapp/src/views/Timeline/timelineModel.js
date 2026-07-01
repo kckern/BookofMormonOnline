@@ -88,6 +88,7 @@ export function buildComposite(tilesData, events, markers = []) {
   for (const m of markers) {
     const beneath = surfaceAt(m.r, m.c)
     const territory = beneath || dominantNeighbor(m, surfaceAt)
+    // last marker wins on cell collision — callers must dedupe if that matters
     markersMap.set(`${m.r},${m.c}`, {
       territory,
       attacker: m.bg || null,
@@ -118,26 +119,26 @@ export function buildComposite(tilesData, events, markers = []) {
     for (let c = 1; c <= cols; c++) {
       const k = `${r},${c}`
       if (!isEmpty(r, c) || outside.has(k) || seen.has(k)) continue
-      const comp = []
+      const cells = []
       const colors = new Set()
-      const q = [[r, c]]
+      const stack = [[r, c]]
       seen.add(k)
-      while (q.length) {
-        const [rr, cc] = q.pop()
-        comp.push([rr, cc])
+      while (stack.length) {
+        const [rr, cc] = stack.pop()
+        cells.push([rr, cc])
         for (const [dr, dc] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
           const nr = rr + dr, nc = cc + dc, nk = `${nr},${nc}`
           const nv = combined.get(nk)
           if (nv) colors.add(nv)
           else if (isEmpty(nr, nc) && !outside.has(nk) && !seen.has(nk)) {
             seen.add(nk)
-            q.push([nr, nc])
+            stack.push([nr, nc])
           }
         }
       }
       if (colors.size === 1) {
         const col = [...colors][0]
-        for (const [rr, cc] of comp) {
+        for (const [rr, cc] of cells) {
           combined.set(`${rr},${cc}`, col)
           holePatches.push({ r: rr, c: cc, bg: col })
         }
@@ -148,9 +149,12 @@ export function buildComposite(tilesData, events, markers = []) {
     fillAt,
     barAt,
     surfaceAt,
+    // bandAt: band-silhouette only (bars excluded by design — event overlays
+    // don't define band corners; do NOT substitute surfaceAt into cornerRadii)
     bandAt: (r, c) => combined.get(`${r},${c}`) || null,
     markerFor: (t) =>
       markersMap.get(`${t.r},${t.c}`) ||
+      // non-marker tile: territory = its own color (not an incursion into itself)
       { territory: t.bg || null, attacker: t.bg || null, incursion: false, hasSurface: false },
     holePatches,
   }

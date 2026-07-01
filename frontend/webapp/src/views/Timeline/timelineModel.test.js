@@ -123,4 +123,23 @@ describe('buildComposite', () => {
     expect(c3.holePatches).toEqual([{ r: 3, c: 3, bg: '#111111' }])
     expect(c3.bandAt(3, 3)).toBe('#111111')
   })
+  it('leaves multi-color-border holes unpatched (duration gaps)', () => {
+    const t4 = {
+      rows: 6, cols: 6,
+      tiles: [
+        { r: 2, c: 2, w: 3, h: 1, k: 'fill', bg: '#111111' }, // top #111111
+        { r: 4, c: 2, w: 3, h: 1, k: 'fill', bg: '#222222' }, // bottom #222222
+        { r: 3, c: 2, w: 1, h: 1, k: 'fill', bg: '#111111' },
+        { r: 3, c: 4, w: 1, h: 1, k: 'fill', bg: '#222222' },
+      ],
+    }
+    const c4 = buildComposite(t4, [])
+    expect(c4.holePatches).toEqual([])
+    expect(c4.bandAt(3, 3)).toBe(null)
+  })
+  it('markerFor falls back safely for a cell never registered as a marker', () => {
+    const f = comp.markerFor({ r: 9, c: 9, bg: '#777777' })
+    expect(f).toEqual({ territory: '#777777', attacker: '#777777', incursion: false, hasSurface: false })
+    expect(markerCellPaint(comp, { r: 9, c: 9, bg: '#777777' })).toBe('#777777')
+  })
 })
