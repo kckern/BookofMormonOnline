@@ -41,5 +41,5 @@ Kept only: (1) |tile_year − event_year| ≤ 8, (2) slug contains a battle-like
 - `75,32` → `amalickiah-vs-nephites-2` ("Amalickiah’s Invasion", 72 BC) — **far-date**: delta=12.7yr (tile=-59.3, event=-72)
 - `92,32` → `nephi-2-and-lehi-2-north` ("Nephi II and Lehi II Trave Northward", 25 BC) — **not-battle-like**: slug has no battle terms (heading='Nephi II and Lehi II Trave Northward')
 
-**22 tiles unmatched** in the draft: stay decorative until KC reviews the 9 unmatched slugs
+**16 tiles unmatched** in the draft: stay decorative until KC reviews the 9 unmatched slugs
 and confirms correct tile assignments or adds date data for undated events.
