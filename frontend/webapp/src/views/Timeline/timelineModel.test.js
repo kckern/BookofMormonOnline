@@ -1,5 +1,6 @@
 import {
   fixBg, textOn, humanize, cleanLabel, cornerRadii, dominantNeighbor,
+  buildComposite, battleCellPaint,
 } from './timelineModel'
 
 describe('color + text utils', () => {
@@ -57,5 +58,65 @@ describe('dominantNeighbor', () => {
   it('returns the most common surrounding color', () => {
     const world = (r, c) => (r === 4 ? '#aa0000' : c === 4 ? '#00aa00' : null)
     expect(dominantNeighbor({ r: 5, c: 5 }, world)).toBe('#aa0000')
+  })
+})
+
+describe('buildComposite', () => {
+  const tilesData = {
+    rows: 10, cols: 10,
+    tiles: [
+      { r: 2, c: 2, w: 3, h: 3, k: 'fill', bg: '#111111' },   // band A
+      { r: 5, c: 2, w: 3, h: 1, k: 'fill', bg: '#222222' },   // band B below A
+      { r: 3, c: 6, w: 1, h: 1, k: 'battle', bg: '#333333' }, // battle in open space next to bar
+      { r: 2, c: 3, w: 1, h: 1, k: 'battle', bg: '#444444' }, // battle ON band A (incursion)
+    ],
+  }
+  const events = [
+    // API bar crossing open parchment at row 3, cols 5..8
+    { slug: 'exp', p: true, grid: { row: 3, col: 5, rowSpan: 1, colSpan: 4, bg: '#555555' } },
+  ]
+  const comp = buildComposite(tilesData, events)
+
+  it('stamps band and bar layers separately', () => {
+    expect(comp.fillAt(2, 2)).toBe('#111111')
+    expect(comp.barAt(3, 6)).toBe('#555555')
+    expect(comp.fillAt(3, 6)).toBe(null)
+  })
+  it('battle on an API bar takes the BAR as territory (not parchment)', () => {
+    const b = comp.battleFor({ r: 3, c: 6 })
+    expect(b.territory).toBe('#555555')
+    expect(b.incursion).toBe(true) // attacker #333333 ≠ territory #555555
+  })
+  it('battle cell over an existing surface paints NO background of its own', () => {
+    expect(battleCellPaint(comp, { r: 3, c: 6 })).toBe(null)  // bar beneath
+    expect(battleCellPaint(comp, { r: 2, c: 3 })).toBe(null)  // band beneath
+  })
+  it('battle in a genuine band-edge notch paints the inferred territory', () => {
+    // battle at (2,5): outside band A (cols 2..4) but adjacent — no surface beneath
+    const t2 = { ...tilesData, tiles: [...tilesData.tiles, { r: 2, c: 5, w: 1, h: 1, k: 'battle', bg: '#999999' }] }
+    const c2 = buildComposite(t2, [])
+    expect(battleCellPaint(c2, { r: 2, c: 5 })).toBe('#111111')
+  })
+  it('bandAt folds battle cells into the band so corners stay continuous', () => {
+    expect(comp.bandAt(2, 3)).toBe('#111111')
+  })
+  it('stacked bands stay flush (junction square) via bandAt', () => {
+    // BL corner of band A: band B abuts the bottom edge → junction → square
+    expect(cornerRadii({ r: 2, c: 2, w: 3, h: 3 }, comp.bandAt).bl).toBe(false)
+  })
+  it('fills enclosed single-color holes', () => {
+    const t3 = {
+      rows: 6, cols: 6,
+      tiles: [
+        // ring of #111111 around an empty center at (3,3)
+        { r: 2, c: 2, w: 3, h: 1, k: 'fill', bg: '#111111' },
+        { r: 4, c: 2, w: 3, h: 1, k: 'fill', bg: '#111111' },
+        { r: 3, c: 2, w: 1, h: 1, k: 'fill', bg: '#111111' },
+        { r: 3, c: 4, w: 1, h: 1, k: 'fill', bg: '#111111' },
+      ],
+    }
+    const c3 = buildComposite(t3, [])
+    expect(c3.holePatches).toEqual([{ r: 3, c: 3, bg: '#111111' }])
+    expect(c3.bandAt(3, 3)).toBe('#111111')
   })
 })

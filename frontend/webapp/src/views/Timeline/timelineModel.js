@@ -52,6 +52,117 @@ export function dominantNeighbor(t, colorAt) {
   return best
 }
 
+const stamp = (map, r0, c0, w, h, bg) => {
+  for (let dr = 0; dr < (h || 1); dr++)
+    for (let dc = 0; dc < (w || 1); dc++) map.set(`${r0 + dr},${c0 + dc}`, bg)
+}
+
+// ONE occupancy model for every colored layer. Rendering + corner logic + battle
+// territory + label contrast all consume this — no layer guesses what's behind it.
+// Layers bottom→top: BAND (canvas fills) < BAR (event tiles) < tab < marker < label.
+export function buildComposite(tilesData, events) {
+  const { rows, cols, tiles } = tilesData
+  const band = new Map()
+  const bar = new Map()
+  for (const t of tiles) {
+    if (t.k === 'fill' && t.bg !== '#ffffff') stamp(band, t.r, t.c, t.w, t.h, t.bg)
+    // future-proofing: no k:'event' canvas tiles exist in today's data
+    // (fill/battle/place only) — this line is inert until one is authored
+    if (t.k === 'event' && t.bg) stamp(bar, t.r, t.c, t.w, t.h, t.bg)
+  }
+  for (const e of events || []) {
+    if (!e.grid || !e.p || !e.grid.bg) continue
+    stamp(bar, e.grid.row, e.grid.col, e.grid.colSpan, e.grid.rowSpan, e.grid.bg)
+  }
+  const fillAt = (r, c) => band.get(`${r},${c}`) || null
+  const barAt = (r, c) => bar.get(`${r},${c}`) || null
+  const surfaceAt = (r, c) => barAt(r, c) || fillAt(r, c)
+
+  // Battle territory = what is genuinely beneath the cell (bar first, then band),
+  // falling back to the dominant neighbour only for band-edge notch cells.
+  const battles = new Map()
+  const combined = new Map(band)
+  for (const t of tiles) {
+    if (t.k !== 'battle') continue
+    const beneath = surfaceAt(t.r, t.c)
+    const territory = beneath || dominantNeighbor(t, surfaceAt)
+    battles.set(`${t.r},${t.c}`, {
+      territory,
+      attacker: t.bg || null,
+      incursion: !!(territory && t.bg && territory !== t.bg),
+      hasSurface: !!beneath,
+    })
+    if (territory) combined.set(`${t.r},${t.c}`, territory)
+  }
+
+  // Enclosed single-color holes → patch to the band color (no parchment notches
+  // inside a band; also stops corner logic rounding into the hole).
+  const isEmpty = (r, c) => !combined.has(`${r},${c}`)
+  const outside = new Set()
+  const st = []
+  for (let c = 0; c <= cols + 1; c++) st.push([0, c], [rows + 1, c])
+  for (let r = 0; r <= rows + 1; r++) st.push([r, 0], [r, cols + 1])
+  while (st.length) {
+    const [r, c] = st.pop()
+    if (r < 0 || r > rows + 1 || c < 0 || c > cols + 1) continue
+    const k = `${r},${c}`
+    if (outside.has(k) || !isEmpty(r, c)) continue
+    outside.add(k)
+    st.push([r + 1, c], [r - 1, c], [r, c + 1], [r, c - 1])
+  }
+  const holePatches = []
+  const seen = new Set()
+  for (let r = 1; r <= rows; r++)
+    for (let c = 1; c <= cols; c++) {
+      const k = `${r},${c}`
+      if (!isEmpty(r, c) || outside.has(k) || seen.has(k)) continue
+      const comp = []
+      const colors = new Set()
+      const q = [[r, c]]
+      seen.add(k)
+      while (q.length) {
+        const [rr, cc] = q.pop()
+        comp.push([rr, cc])
+        for (const [dr, dc] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const nr = rr + dr, nc = cc + dc, nk = `${nr},${nc}`
+          const nv = combined.get(nk)
+          if (nv) colors.add(nv)
+          else if (isEmpty(nr, nc) && !outside.has(nk) && !seen.has(nk)) {
+            seen.add(nk)
+            q.push([nr, nc])
+          }
+        }
+      }
+      if (colors.size === 1) {
+        const col = [...colors][0]
+        for (const [rr, cc] of comp) {
+          combined.set(`${rr},${cc}`, col)
+          holePatches.push({ r: rr, c: cc, bg: col })
+        }
+      }
+    }
+
+  return {
+    fillAt,
+    barAt,
+    surfaceAt,
+    bandAt: (r, c) => combined.get(`${r},${c}`) || null,
+    battleFor: (t) =>
+      battles.get(`${t.r},${t.c}`) ||
+      { territory: t.bg || null, attacker: t.bg || null, incursion: false, hasSurface: false },
+    holePatches,
+  }
+}
+
+// What background (if any) a battle CELL should paint. null = paint nothing —
+// the surface beneath (band fill or event bar) already provides the territory.
+// Only a genuine band-edge notch (no surface beneath) gets the inferred color,
+// which keeps the band silhouette continuous under the marker.
+export function battleCellPaint(comp, t) {
+  const b = comp.battleFor(t)
+  return b.hasSurface ? null : b.territory
+}
+
 // Corner rounding — RULE v2 (supersedes docs/reference/timeline-corner-rounding.md v1).
 // Round a corner IFF all three neighbour cells at that corner (both orthogonals
 // AND the diagonal) are empty parchment — a corner only rounds into fully open
