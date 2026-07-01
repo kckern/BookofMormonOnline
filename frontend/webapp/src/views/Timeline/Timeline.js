@@ -13,6 +13,7 @@ import "./Timeline.css"
 import {
   bandVar, resolvedHex, textOn, humanize, cleanLabel, cornerStyleFor, buildComposite, markerCellPaint,
 } from './timelineModel'
+import { SWORDS, PIN } from './icons'
 
 // Legacy canvas battle tiles → icon-event marker descriptors. This is a
 // STOPGAP data source: when bom_timeline rows gain grid placements +
@@ -21,26 +22,6 @@ import {
 const canvasMarkers = tilesData.tiles
   .filter((t) => t.k === 'battle')
   .map((t) => ({ r: t.r, c: t.c, bg: t.bg, icon: 'battle' }))
-
-// Crossed-swords battle marker. currentColor lets the medallion theme it.
-const SWORDS = (
-  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-    <g
-      stroke="currentColor"
-      strokeWidth="2.3"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      fill="none"
-    >
-      <line x1="6" y1="18" x2="18" y2="6" />
-      <line x1="18" y1="18" x2="6" y2="6" />
-    </g>
-    <g stroke="currentColor" strokeWidth="1.7" strokeLinecap="round">
-      <line x1="3.5" y1="13.5" x2="9" y2="19" />
-      <line x1="15" y1="19" x2="20.5" y2="13.5" />
-    </g>
-  </svg>
-)
 const ZOOM_MIN = 0.4
 const ZOOM_MAX = 2
 const ZOOM_STEP = 1.2
@@ -294,7 +275,7 @@ function TimeLine() {
             (clickable ? " is-clickable" : " is-static") +
             (selected === e.slug ? " is-selected" : "")
           const inner = isPlace ? (
-            <span>📍 {label}</span>
+            <span><span className="tg-pin" aria-hidden="true">{PIN}</span> {label}</span>
           ) : (
             <span className="tg-event-label">{label}</span>
           )
@@ -424,9 +405,7 @@ function TimeLine() {
               </li>
             ))}
             <li>
-              <span className="tg-key-pin" aria-hidden="true">
-                📍
-              </span>
+              <span className="tg-key-pin" aria-hidden="true">{PIN}</span>
               Place / land
             </li>
             <li>
@@ -478,7 +457,9 @@ function TimeLine() {
             const heading = cleanLabel((data && data.heading) || t.t)
             const isPlace = t.k === "place"
             const placeName = cleanLabel(t.t)
-            const inner = isPlace ? `📍 ${placeName}` : heading
+            const inner = isPlace ? (
+              <><span className="tg-pin" aria-hidden="true">{PIN}</span> {placeName}</>
+            ) : heading
             const tipText = isPlace ? placeName : heading
             // Clickable iff it has a slug AND real content (t.nc, set at build
             // time for headingless labels, marks the empty-modal cases). Using

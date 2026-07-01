@@ -728,3 +728,16 @@
 .sidebar-wrapper li.active.timeline_link > a:not([data-toggle="collapse"]):after {
   border-right-color: #2b2b2b !important;
 }
+
+/* ── SVG pin icon (replaces 📍 emoji — audit §2.3 quiet-layer) ─────────────
+   var(--scale, 1) fallback: the legend sits in .timeline-grid-wrap but NOT
+   inside .timeline-grid where --scale is set, so the fallback prevents a
+   zero-width pin in the infopanel key list. */
+.tg-pin {
+  display: inline-flex;
+  width: calc(11px * var(--scale, 1));
+  height: calc(11px * var(--scale, 1));
+  flex: 0 0 auto;
+  color: #8a6a2f; /* muted sepia — places are the QUIET layer (audit §2.3) */
+}
+.tg-pin svg { width: 100%; height: 100%; display: block; }
