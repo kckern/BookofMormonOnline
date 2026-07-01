@@ -10,8 +10,16 @@ import { label } from "src/models/Utils"
 import tilesData from "./gridTiles.json"
 import "./Timeline.css"
 import {
-  fixBg, textOn, humanize, cleanLabel, cornerRadii, dominantNeighbor,
+  fixBg, textOn, humanize, cleanLabel, cornerRadii, buildComposite, markerCellPaint,
 } from './timelineModel'
+
+// Legacy canvas battle tiles → icon-event marker descriptors. This is a
+// STOPGAP data source: when bom_timeline rows gain grid placements +
+// grid_icon='battle' (plan Task 7 gate), these tiles retire and DB icon-events
+// feed the same marker path.
+const canvasMarkers = tilesData.tiles
+  .filter((t) => t.k === 'battle')
+  .map((t) => ({ r: t.r, c: t.c, bg: t.bg, icon: 'battle' }))
 
 // Crossed-swords battle marker. currentColor lets the medallion theme it.
 const SWORDS = (
@@ -225,94 +233,17 @@ function TimeLine() {
     }
   }, [showModal, closeInfo])
 
-  // Band occupancy map (cell → raw color) drives the corner-rounding algorithm.
-  // Battle cells are folded in with their *effective* band color so the national
-  // area stays continuous beneath them (no parchment notches rounding around the
-  // battle): a home battle counts as its own band; an incursion counts as the
-  // territory it sits in (the attacker chip is drawn on top).
-  const { colorAt, battleInfo, holePatches } = useMemo(() => {
-    const fill = new Map()
-    for (const t of tiles) {
-      if (t.k !== "fill" || t.bg === "#ffffff") continue
-      for (let dr = 0; dr < (t.h || 1); dr++)
-        for (let dc = 0; dc < (t.w || 1); dc++) fill.set(`${t.r + dr},${t.c + dc}`, t.bg)
-    }
-    const fillAt = (r, c) => fill.get(`${r},${c}`) || null
-    const combined = new Map(fill)
-    const info = new Map()
-    for (const t of tiles) {
-      if (t.k !== "battle") continue
-      const surround = dominantNeighbor(t, fillAt)
-      const incursion = !!(surround && surround !== t.bg)
-      const eff = incursion ? surround : t.bg
-      info.set(`${t.r},${t.c}`, { incursion, eff })
-      combined.set(`${t.r},${t.c}`, eff)
-    }
-
-    // Fill enclosed single-color holes (e.g. the Helam band's interior gap) so
-    // they don't render as parchment notches/rectangles inside a band. A hole is
-    // an interior empty region not connected to the outside; fill it ONLY when it
-    // borders exactly one band color (duration-bar gaps border 2+ colors and are
-    // left alone). Filling also stops the corner algorithm rounding into the hole.
-    const rows = tilesData.rows,
-      cols = tilesData.cols
-    const isEmpty = (r, c) => !combined.has(`${r},${c}`)
-    const outside = new Set()
-    const st = []
-    for (let c = 0; c <= cols + 1; c++) st.push([0, c], [rows + 1, c])
-    for (let r = 0; r <= rows + 1; r++) st.push([r, 0], [r, cols + 1])
-    while (st.length) {
-      const [r, c] = st.pop()
-      if (r < 0 || r > rows + 1 || c < 0 || c > cols + 1) continue
-      const k = `${r},${c}`
-      if (outside.has(k) || !isEmpty(r, c)) continue
-      outside.add(k)
-      st.push([r + 1, c], [r - 1, c], [r, c + 1], [r, c - 1])
-    }
-    const holePatches = []
-    const seen = new Set()
-    for (let r = 1; r <= rows; r++)
-      for (let c = 1; c <= cols; c++) {
-        const k = `${r},${c}`
-        if (!isEmpty(r, c) || outside.has(k) || seen.has(k)) continue
-        const comp = []
-        const colors = new Set()
-        const q = [[r, c]]
-        seen.add(k)
-        while (q.length) {
-          const [rr, cc] = q.pop()
-          comp.push([rr, cc])
-          for (const [dr, dc] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-            const nr = rr + dr,
-              nc = cc + dc,
-              nk = `${nr},${nc}`
-            const nv = combined.get(nk)
-            if (nv) colors.add(nv)
-            else if (isEmpty(nr, nc) && !outside.has(nk) && !seen.has(nk)) {
-              seen.add(nk)
-              q.push([nr, nc])
-            }
-          }
-        }
-        if (colors.size === 1) {
-          const col = [...colors][0]
-          for (const [rr, cc] of comp) {
-            combined.set(`${rr},${cc}`, col)
-            holePatches.push({ r: rr, c: cc, bg: col })
-          }
-        }
-      }
-
-    return {
-      colorAt: (r, c) => combined.get(`${r},${c}`) || null,
-      battleInfo: (t) => info.get(`${t.r},${t.c}`) || { incursion: false, eff: t.bg },
-      holePatches,
-    }
-  }, [tiles])
+  // Unified occupancy/compositing model — see timelineModel.buildComposite.
+  // Depends on `timeline` (API bars are a layer) — rebuilds once data arrives.
+  const comp = useMemo(() => buildComposite(tilesData, timeline || [], canvasMarkers), [timeline])
+  const { bandAt, markerFor, holePatches } = comp
 
   // Fill tiles (lineage bands) never depend on selection/zoom — memoize so a
   // selection change doesn't re-render ~3,000 nodes.
   const fillEls = useMemo(() => {
+    // Access via comp.* so eslint sees comp as the only external dep (bandAt and
+    // holePatches are stable derivations of comp — listing comp covers them).
+    const { bandAt: ba, holePatches: hp } = comp
     const els = tiles
       .filter((t) => t.k === "fill" && t.bg !== "#ffffff") // drop the stray white artifact cell
       .map((t) => (
@@ -320,11 +251,11 @@ function TimeLine() {
           key={`f${t.r}-${t.c}`}
           className="tg-fill"
           data-lin={linKey(t.bg)}
-          style={{ ...gridPos(t), background: fixBg(t.bg), ...cornerStyle(t, colorAt) }}
+          style={{ ...gridPos(t), background: fixBg(t.bg), ...cornerStyle(t, ba) }}
         />
       ))
     // enclosed single-color holes patched to the band color (interior, no rounding)
-    for (const p of holePatches) {
+    for (const p of hp) {
       els.push(
         <div
           key={`hp${p.r}-${p.c}`}
@@ -339,10 +270,11 @@ function TimeLine() {
       )
     }
     return els
-  }, [tiles, colorAt, holePatches])
+  }, [tiles, comp])
 
-  // Canvas marks (hardcoded): location pins + battle icons. No events here.
-  const marks = useMemo(() => tiles.filter((t) => t.k !== "fill"), [tiles])
+  // Canvas marks (hardcoded): location pins only. Battles are now icon-events
+  // fed through canvasMarkers → the markerFor/markerCellPaint compositor path.
+  const marks = useMemo(() => tiles.filter((t) => t.k !== "fill" && t.k !== "battle"), [tiles])
 
   // Events AND location pins come from the backend (Event.grid placement +
   // Event.label translated text). p distinguishes them: p=true → event tile,
@@ -545,60 +477,6 @@ function TimeLine() {
             const key = `${t.k}-${t.r}-${t.c}`
             const pos = gridPos(t)
 
-            if (t.k === "battle") {
-              const { incursion, eff } = battleInfo(t)
-              // Battles layer off: keep the band continuous (territory fill) but
-              // drop the marker — no parchment hole where the battle cell was.
-              if (!layers.battles) {
-                return (
-                  <div
-                    key={key}
-                    className="tg-fill"
-                    style={{ ...pos, background: fixBg(eff) }}
-                    data-lin={linKey(eff)}
-                  />
-                )
-              }
-              // Marker — non-interactive, announced/tooltipped as "Battle". A
-              // battle whose own color differs from the surrounding band is an
-              // *incursion* (Lamanites into Nephite land): the attacker land
-              // encroaches one cell with TR+BR rounding, medallion on top.
-              // Incursion: the attacker's land encroaches ONE cell into the
-              // defender's territory — a tab of attacker color with its right
-              // corners (TR+BR) rounded, revealing the territory behind, with the
-              // battle medallion on top. Home battle: just the medallion on the band.
-              const cellBg = fixBg(eff)
-              // Layered cell: the base carries the territory color (data-lin = eff)
-              // so highlighting the territory band ALSO lights up this cell; the
-              // attacker tab is its own layer (data-lin = t.bg) that lights up with
-              // the attacker band.
-              return (
-                <div
-                  key={key}
-                  className={"tg-anchor tg-battle" + (incursion ? " tg-battle-inc" : "")}
-                  style={{ ...pos, background: cellBg }}
-                  data-lin={linKey(eff)}
-                  role="img"
-                  aria-label="Battle"
-                  title="Battle"
-                >
-                  {incursion && (
-                    <span
-                      className="tg-battle-tab"
-                      aria-hidden="true"
-                      data-lin={linKey(t.bg)}
-                      style={{
-                        background: fixBg(t.bg),
-                        borderTopRightRadius: RAD,
-                        borderBottomRightRadius: RAD,
-                      }}
-                    />
-                  )}
-                  <span className="tg-battle-medallion">{SWORDS}</span>
-                </div>
-              )
-            }
-
             const data = t.slug ? bySlug[t.slug] : null
             const heading = cleanLabel((data && data.heading) || t.t)
             const isPlace = t.k === "place"
@@ -647,6 +525,59 @@ function TimeLine() {
                 <span className={isPlace ? undefined : "tg-event-label"}>{inner}</span>
               </button>
             )
+          })}
+
+          {/* Battle markers — rendered through the unified compositor path.
+              When layers.battles is ON: render the icon marker (with attacker tab
+              for incursions). The cell background is only set for notch cells
+              (paint non-null) — battles over a real surface never paint parchment.
+              When layers.battles is OFF: only notch cells get a territory patch to
+              keep band continuity; cells over real surfaces render nothing. */}
+          {layers.battles && canvasMarkers.map((m) => {
+            const { incursion, territory, attacker } = markerFor(m)
+            const paint = markerCellPaint(comp, m) // null when a real surface is beneath
+            return (
+              <div
+                key={`mk-${m.r}-${m.c}`}
+                className={'tg-anchor tg-battle' + (incursion ? ' tg-battle-inc' : '')}
+                style={paint
+                  ? { gridColumn: `${m.c + 1} / span 1`, gridRow: `${m.r} / span 1`, background: fixBg(paint) }
+                  : { gridColumn: `${m.c + 1} / span 1`, gridRow: `${m.r} / span 1` }}
+                data-lin={territory ? linKey(territory) : undefined}
+                role="img"
+                aria-label="Battle"
+                title="Battle"
+              >
+                {incursion && (
+                  <span
+                    className="tg-battle-tab"
+                    aria-hidden="true"
+                    data-lin={linKey(attacker)}
+                    style={{
+                      background: fixBg(attacker),
+                      borderTopRightRadius: RAD,
+                      borderBottomRightRadius: RAD,
+                    }}
+                  />
+                )}
+                <span className="tg-battle-medallion">{SWORDS}</span>
+              </div>
+            )
+          })}
+          {!layers.battles && canvasMarkers.map((m) => {
+            const paint = markerCellPaint(comp, m)
+            return paint ? (
+              <div
+                key={`mkp-${m.r}-${m.c}`}
+                className="tg-fill"
+                data-lin={linKey(paint)}
+                style={{
+                  gridColumn: `${m.c + 1} / span 1`,
+                  gridRow: `${m.r} / span 1`,
+                  background: fixBg(paint),
+                }}
+              />
+            ) : null
           })}
 
           {/* events + location pins from the backend (Event.grid + Event.label) */}
