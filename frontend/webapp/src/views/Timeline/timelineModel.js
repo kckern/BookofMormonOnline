@@ -169,6 +169,28 @@ export function markerCellPaint(comp, t) {
   return b.hasSurface ? null : b.territory
 }
 
+// Natural (scale-1) cell metrics — must match Timeline.css --col-w/--row-h.
+export const COL_W = 26
+export const ROW_H = 20
+const RADIUS_BASE = 13
+
+// Radius respects tile size: a 1-row bar gets a stadium cap (h/2), a 40-row
+// band gets the base radius — prod's hand-drawn corners scaled the same way.
+export const radiusFor = (w, h) =>
+  Math.min(RADIUS_BASE, ((h || 1) * ROW_H) / 2, ((w || 1) * COL_W) / 2)
+
+export function cornerStyleFor(rect, colorAt) {
+  const k = cornerRadii(rect, colorAt)
+  if (!(k.tl || k.tr || k.bl || k.br)) return undefined
+  const rad = `calc(${radiusFor(rect.w, rect.h)}px * var(--scale))`
+  return {
+    borderTopLeftRadius: k.tl ? rad : 0,
+    borderTopRightRadius: k.tr ? rad : 0,
+    borderBottomLeftRadius: k.bl ? rad : 0,
+    borderBottomRightRadius: k.br ? rad : 0,
+  }
+}
+
 // Corner rounding — RULE v2 (supersedes docs/reference/timeline-corner-rounding.md v1).
 // Round a corner IFF all three neighbour cells at that corner (both orthogonals
 // AND the diagonal) are empty parchment — a corner only rounds into fully open

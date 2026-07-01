@@ -1,6 +1,6 @@
 import {
   fixBg, textOn, humanize, cleanLabel, cornerRadii, dominantNeighbor,
-  buildComposite, markerCellPaint,
+  buildComposite, markerCellPaint, radiusFor, cornerStyleFor,
 } from './timelineModel'
 
 describe('color + text utils', () => {
@@ -141,5 +141,23 @@ describe('buildComposite', () => {
     const f = comp.markerFor({ r: 9, c: 9, bg: '#777777' })
     expect(f).toEqual({ territory: '#777777', attacker: '#777777', incursion: false, hasSurface: false })
     expect(markerCellPaint(comp, { r: 9, c: 9, bg: '#777777' })).toBe('#777777')
+  })
+})
+
+describe('radiusFor', () => {
+  it('caps at the base radius for big tiles', () => expect(radiusFor(6, 4)).toBe(13))
+  it('halves against the short side for thin bars', () => expect(radiusFor(4, 1)).toBe(10)) // h=1 → 20px/2
+  it('handles 1×1', () => expect(radiusFor(1, 1)).toBe(10))
+})
+
+describe('cornerStyleFor', () => {
+  const lone = (r, c) => (r === 5 && c === 5 ? '#111111' : null)
+  it('emits scale-aware radii for rounded corners only', () => {
+    const s = cornerStyleFor({ r: 5, c: 5, w: 1, h: 1 }, lone)
+    expect(s.borderTopLeftRadius).toBe('calc(10px * var(--scale))')
+  })
+  it('returns undefined when no corner rounds', () => {
+    const world = (r, c) => (r >= 4 && r <= 6 && c >= 4 && c <= 6 ? '#111111' : null)
+    expect(cornerStyleFor({ r: 5, c: 5, w: 1, h: 1 }, world)).toBeUndefined()
   })
 })

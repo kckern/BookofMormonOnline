@@ -19,6 +19,7 @@ const OUT = args.out || '/tmp/tl-verify'
   await d.goto(URL, { waitUntil: 'networkidle', timeout: 60000 })
   await d.waitForTimeout(5000)
   const sc = await d.$('.timeline-grid-scroller')
+  if (!sc) { console.error('ERROR: .timeline-grid-scroller not found — is the app running at ' + URL + '?'); await browser.close(); process.exit(1) }
   for (const [name, frac] of [['strip1', 0], ['strip2', 0.5], ['strip3', 1]]) {
     await sc.evaluate((el, f) => { el.scrollTop = (el.scrollHeight - el.clientHeight) * f }, frac)
     await d.waitForTimeout(400)

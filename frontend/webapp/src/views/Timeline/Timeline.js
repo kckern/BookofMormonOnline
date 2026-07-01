@@ -10,7 +10,7 @@ import { label } from "src/models/Utils"
 import tilesData from "./gridTiles.json"
 import "./Timeline.css"
 import {
-  fixBg, textOn, humanize, cleanLabel, cornerRadii, buildComposite, markerCellPaint,
+  fixBg, textOn, humanize, cleanLabel, cornerStyleFor, buildComposite, markerCellPaint,
 } from './timelineModel'
 
 // Legacy canvas battle tiles → icon-event marker descriptors. This is a
@@ -50,19 +50,6 @@ const LABEL_HIDE_BELOW = 0.55
 // label() returns a single space when the i18n dictionary isn't loaded yet;
 // treat blank as missing so the literal fallbacks apply.
 const labelOr = (key, fallback) => (label(key) || "").trim() || fallback
-
-const RAD = `var(--rad)`
-// Thin adapter: cornerStyle(t, colorAt) keeps the existing call sites working.
-function cornerStyle(t, colorAt) {
-  const k = cornerRadii(t, colorAt)
-  if (!(k.tl || k.tr || k.bl || k.br)) return undefined
-  return {
-    borderTopLeftRadius: k.tl ? RAD : 0,
-    borderTopRightRadius: k.tr ? RAD : 0,
-    borderBottomLeftRadius: k.bl ? RAD : 0,
-    borderBottomRightRadius: k.br ? RAD : 0,
-  }
-}
 
 // Verified color → lineage mapping, derived from each event's grid_bg (the
 // migration design doc's mapping was wrong — e.g. maroon is Lamanites, not
@@ -236,7 +223,7 @@ function TimeLine() {
   // Unified occupancy/compositing model — see timelineModel.buildComposite.
   // Depends on `timeline` (API bars are a layer) — rebuilds once data arrives.
   const comp = useMemo(() => buildComposite(tilesData, timeline || [], canvasMarkers), [timeline])
-  const { bandAt, markerFor, holePatches } = comp
+  const { markerFor } = comp
 
   // Fill tiles (lineage bands) never depend on selection/zoom — memoize so a
   // selection change doesn't re-render ~3,000 nodes.
@@ -251,7 +238,7 @@ function TimeLine() {
           key={`f${t.r}-${t.c}`}
           className="tg-fill"
           data-lin={linKey(t.bg)}
-          style={{ ...gridPos(t), background: fixBg(t.bg), ...cornerStyle(t, ba) }}
+          style={{ ...gridPos(t), background: fixBg(t.bg), ...cornerStyleFor(t, ba) }}
         />
       ))
     // enclosed single-color holes patched to the band color (interior, no rounding)
@@ -309,7 +296,9 @@ function TimeLine() {
           ) : (
             <span className="tg-event-label">{label}</span>
           )
-          const style = isPlace ? pos : { ...pos, background: bg || "#5a5a5a", color: tcol }
+          const rect = { r: g.row, c: g.col, w: g.colSpan, h: g.rowSpan }
+          const capStyle = bg ? cornerStyleFor(rect, comp.barAt) : undefined
+          const style = isPlace ? pos : { ...pos, background: bg || "#5a5a5a", color: tcol, ...capStyle }
           if (!clickable) {
             return (
               <div
@@ -340,7 +329,7 @@ function TimeLine() {
             </button>
           )
         }),
-    [timeline, selected, openInfo]
+    [timeline, selected, openInfo, comp]
   )
 
   if (!tiles || !tiles.length) return <Loader />
@@ -555,8 +544,8 @@ function TimeLine() {
                     data-lin={linKey(attacker)}
                     style={{
                       background: fixBg(attacker),
-                      borderTopRightRadius: RAD,
-                      borderBottomRightRadius: RAD,
+                      borderTopRightRadius: 'calc(10px * var(--scale))',
+                      borderBottomRightRadius: 'calc(10px * var(--scale))',
                     }}
                   />
                 )}

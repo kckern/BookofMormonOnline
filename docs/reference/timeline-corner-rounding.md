@@ -65,3 +65,16 @@ Render, then for each band sample its silhouette corners against this table; spo
 black/parchment notches (should be none), stacked-band slivers (none), and rounded
 enclosed islands (none). Verify true outer corners and open-diagonal protrusions are
 rounded.
+
+## Rule v2 (2026-07) — SUPERSEDES the flowchart above
+
+**Round a corner IFF both orthogonals AND the diagonal are empty parchment.**
+(`timelineModel.cornerRadii`.) v1 still rounded flush handoffs whose edges align
+exactly (other band on ONE orthogonal, diagonal empty), producing junction
+notches observed in the 2026-07-01 dev captures. Ribbon ends and true
+protrusions into fully open space keep rounding. Trade-off: v2 squares the
+"band tip sliding alongside another band" case v1 deliberately rounded — KC
+gate at plan Task 4. Radius is now size-aware: `min(13, h·20/2, w·26/2)` px
+pre-scale (`radiusFor`), so 1-row bars get stadium caps instead of oversized
+pills. Event bars round against the BAR layer only (caps at free ends; reveals
+show whatever is genuinely beneath).
