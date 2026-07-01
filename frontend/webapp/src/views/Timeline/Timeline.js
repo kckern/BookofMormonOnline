@@ -9,6 +9,9 @@ import Loader from "../_Common/Loader"
 import { label } from "src/models/Utils"
 import tilesData from "./gridTiles.json"
 import "./Timeline.css"
+import {
+  fixBg, textOn, humanize, cleanLabel, cornerRadii, dominantNeighbor,
+} from './timelineModel'
 
 // Crossed-swords battle marker. currentColor lets the medallion theme it.
 const SWORDS = (
@@ -40,77 +43,16 @@ const LABEL_HIDE_BELOW = 0.55
 // treat blank as missing so the literal fallbacks apply.
 const labelOr = (key, fallback) => (label(key) || "").trim() || fallback
 
-// Fallback for entries with no translated label/heading: turn a kebab slug into
-// a readable title (small words stay lowercase unless they lead).
-const MINOR = new Set(["of", "the", "and", "vs", "in", "to", "a", "for"])
-const humanize = (slug) =>
-  (slug || "")
-    .replace(/[-_]+/g, " ")
-    .trim()
-    .replace(/\S+/g, (w, i) =>
-      i > 0 && MINOR.has(w.toLowerCase()) ? w.toLowerCase() : w.charAt(0).toUpperCase() + w.slice(1)
-    )
-
-// A few source band colors don't render well: post-Christ cream (#fff2cc) is
-// ~invisible on the parchment canvas. Remap at render time (also used for the
-// legend swatch so the key matches the band).
-const BG_FIX = {
-  "#fff2cc": "#e6cf8c", // post-Christ cream: ~invisible on the parchment canvas
-  "#274e13": "#2f6f4f", // Nephite-kings green: too close to the judges green
-  "#6fa8dc": "#7d8596", // Gadianton blue: too close to Zeniff's blue
-}
-const fixBg = (c) => (c && BG_FIX[c]) || c
-
-// Source names occasionally carry a disambiguation digit glued to a word
-// ("Land of Bountiful1"); strip it for display. Roman numerals (Mosiah II) and
-// leading book numbers (1 Nephi) are untouched.
-const cleanLabel = (s) => (s || "").replace(/([A-Za-z])\d+\b/g, "$1")
-
-// Black/white text for legibility over a band color (the sheet's per-cell fg is
-// unreliable, so we derive contrast from the background).
-function textOn(bg) {
-  if (!bg) return "#222"
-  const h = bg.replace("#", "")
-  const n = h.length === 3 ? h.split("").map((c) => c + c).join("") : h
-  const r = parseInt(n.slice(0, 2), 16),
-    g = parseInt(n.slice(2, 4), 16),
-    b = parseInt(n.slice(4, 6), 16)
-  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.6 ? "#222" : "#fff"
-}
-
-const RAD = `var(--rad)` // corner radius; --rad set on the grid, scales with zoom/fit
-
-// Per-tile corner rounding computed from band occupancy (replaces the sparse,
-// unreliable static `rd` glyph data). A corner is rounded ONLY when both of its
-// orthogonal neighbour cells are empty parchment — i.e. it's a true outer
-// perimeter corner of a self-contained band. Where another band (or the same
-// band continuing) sits against that edge, the corner stays square — that's a
-// junction/connector. Net effect: bands read as rounded ribbons with square
-// joins, no hard corners except at intersections.
-// Corner rounding — see docs/reference/timeline-corner-rounding.md.
-// Round a corner IFF both orthogonal neighbours differ from this band AND the
-// diagonal is empty parchment. That rounds true outer-perimeter corners and
-// open-diagonal protrusions (revealing the parchment background, like prod's
-// inter-segment gaps), while keeping junctions/intersections square: where the
-// band continues (orthogonal == own) or where another band meets diagonally
-// (handoff / ≥2 lineages). Reveal is always parchment — no underlying-band layer.
+const RAD = `var(--rad)`
+// Thin adapter: cornerStyle(t, colorAt) keeps the existing call sites working.
 function cornerStyle(t, colorAt) {
-  const own = t.bg
-  const top = t.r,
-    left = t.c,
-    right = t.c + (t.w || 1) - 1,
-    bottom = t.r + (t.h || 1) - 1
-  const round = (oh, ov, od) => oh !== own && ov !== own && od === null
-  const tl = round(colorAt(top, left - 1), colorAt(top - 1, left), colorAt(top - 1, left - 1))
-  const tr = round(colorAt(top, right + 1), colorAt(top - 1, right), colorAt(top - 1, right + 1))
-  const bl = round(colorAt(bottom, left - 1), colorAt(bottom + 1, left), colorAt(bottom + 1, left - 1))
-  const br = round(colorAt(bottom, right + 1), colorAt(bottom + 1, right), colorAt(bottom + 1, right + 1))
-  if (!(tl || tr || bl || br)) return undefined
+  const k = cornerRadii(t, colorAt)
+  if (!(k.tl || k.tr || k.bl || k.br)) return undefined
   return {
-    borderTopLeftRadius: tl ? RAD : 0,
-    borderTopRightRadius: tr ? RAD : 0,
-    borderBottomLeftRadius: bl ? RAD : 0,
-    borderBottomRightRadius: br ? RAD : 0,
+    borderTopLeftRadius: k.tl ? RAD : 0,
+    borderTopRightRadius: k.tr ? RAD : 0,
+    borderBottomLeftRadius: k.bl ? RAD : 0,
+    borderBottomRightRadius: k.br ? RAD : 0,
   }
 }
 
@@ -156,31 +98,6 @@ const gridPos = (t) => ({
   gridRow: `${t.r} / span ${t.h}`,
 })
 
-// Dominant surrounding band color for a marker cell (which has no fill of its
-// own). Used to detect a battle that is an *incursion* into another people's
-// territory (e.g. a Lamanite battle inside Nephite lands).
-function dominantNeighbor(t, colorAt) {
-  const ns = [
-    colorAt(t.r - 1, t.c),
-    colorAt(t.r + 1, t.c),
-    colorAt(t.r, t.c - 1),
-    colorAt(t.r, t.c + 1),
-    colorAt(t.r, t.c - 2),
-    colorAt(t.r, t.c + 2),
-  ].filter(Boolean)
-  if (!ns.length) return null
-  const count = {}
-  let best = null,
-    bestN = 0
-  for (const c of ns) {
-    count[c] = (count[c] || 0) + 1
-    if (count[c] > bestN) {
-      bestN = count[c]
-      best = c
-    }
-  }
-  return best
-}
 
 function TimeLine() {
   useEffect(() => {
