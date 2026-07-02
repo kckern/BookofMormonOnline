@@ -18,9 +18,10 @@ import TimelinePopover from './TimelinePopover'
 
 // R2a green-field: all timeline data is baked into timelineData.json (generated
 // by scripts/timeline-grid/gen_timeline_data.py — GQL dump + battle icon-events
-// + overlay). No runtime fetch. Battles render from the 38 icon-events here, at
-// the same cells the retired k:'battle' canvas tiles occupied; 16 carry content
-// (clickable), 22 are synthetic decorative markers.
+// + overlay). No runtime fetch. Battles render from icon-events (grid.icon) at
+// the cells the retired k:'battle' canvas tiles occupied; markers with content
+// are clickable, the rest decorative. Counts live in the generator summary —
+// do not hardcode them here (they drift with the overlay).
 const timeline = timelineData.events
 
 // bySlug resolves popover content. A slug can appear on several rows (a place
