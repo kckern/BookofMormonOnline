@@ -19,6 +19,7 @@ export const COLOR_TOKENS = {
   '#6fa8dc': 'gadianton',
   '#000000': 'destruction',
   '#fff2cc': 'unity',
+  '#20123f': 'schism', // Lehi-schism dark endpoint (grad-only, no band of its own)
 }
 export const tokenOf = (hex) => COLOR_TOKENS[hex] || null
 export const bandVar = (hex) => {
@@ -83,6 +84,41 @@ const stamp = (map, r0, c0, w, h, bg) => {
     for (let dc = 0; dc < (w || 1); dc++) map.set(`${r0 + dr},${c0 + dc}`, bg)
 }
 
+// ── Shape-language tiles (docs/reference/timeline-source-design-language.md) ──
+// bevel: right triangle, right angle at the named corner (diagonal drift/schism)
+export const BEVEL_CLIP = {
+  tl: 'polygon(0 0, 100% 0, 0 100%)',
+  tr: 'polygon(0 0, 100% 0, 100% 100%)',
+  bl: 'polygon(0 0, 0 100%, 100% 100%)',
+  br: 'polygon(100% 0, 100% 100%, 0 100%)',
+}
+// fillet: concave inner-elbow. GEOMETRY, read carefully before authoring `dir`:
+// a full-cell ellipse centered at the named corner is transparent; ONLY the
+// concave sliver at the OPPOSITE corner is painted. So `dir` names the OPEN
+// (parchment) corner, and the painted material hugs the diagonally-opposite
+// corner — for an elbow whose band is below+right, the fillet cell's open
+// corner is 'tl'. (ellipse: % radii are valid CSS and match the 26×20 cell.)
+// Fixes wedding-cake width transitions the way the source artwork does.
+const FILLET_AT = { tl: '0% 0%', tr: '100% 0%', bl: '0% 100%', br: '100% 100%' }
+export const FILLET_BG = (dir, bg) =>
+  `radial-gradient(ellipse 100% 100% at ${FILLET_AT[dir]}, transparent calc(100% - 1px), ${bg} 100%)`
+// grad: succession/assimilation dissolve; fade: the record ends, the people go on.
+// `resolve` maps an identity hex → its paint value (bandVar in the renderer);
+// the default identity keeps the model pure/unit-testable.
+const GRAD_DEG = { v: '180deg', h: '90deg' }
+export function shapeTileStyle(t, resolve = (c) => c) {
+  if (t.k === 'grad')
+    return { background: `linear-gradient(${GRAD_DEG[t.dir || 'v']}, ${resolve(t.from)}, ${resolve(t.to)})` }
+  if (t.k === 'fade')
+    return { background: `linear-gradient(${GRAD_DEG[t.dir || 'v']}, ${resolve(t.bg)}, transparent)` }
+  if (t.k === 'fillet') return { background: FILLET_BG(t.dir, resolve(t.bg)) }
+  if (t.k === 'bevel') return { background: resolve(t.bg), clipPath: BEVEL_CLIP[t.dir] }
+  return undefined
+}
+// Shape tiles that stamp the band layer with a solid color so neighbours stay
+// square against them (grad stamps its `from`, handled separately below).
+export const SHAPE_KINDS = new Set(['fill', 'bevel', 'fillet', 'fade'])
+
 // ONE occupancy model for every colored layer. Rendering + corner logic + battle
 // territory + label contrast all consume this — no layer guesses what's behind it.
 // Layers bottom→top: BAND (canvas fills) < BAR (event tiles) < tab < marker < label.
@@ -93,7 +129,13 @@ export function buildComposite(tilesData, events, markers = []) {
   const band = new Map()
   const bar = new Map()
   for (const t of tiles) {
-    if (t.k === 'fill' && t.bg !== '#ffffff') stamp(band, t.r, t.c, t.w, t.h, t.bg)
+    // pass-under tiles (u:1) paint BENEATH band fills in the renderer — they are
+    // beneath everything, so they must never stamp band OR bar territory.
+    if (t.u) continue
+    // fill + solid shape kinds (bevel/fillet/fade) stamp the band so neighbours
+    // stay square against them; grad stamps its `from` color.
+    if (SHAPE_KINDS.has(t.k) && t.bg && t.bg !== '#ffffff') stamp(band, t.r, t.c, t.w, t.h, t.bg)
+    if (t.k === 'grad') stamp(band, t.r, t.c, t.w, t.h, t.from)
     // future-proofing: no k:'event' canvas tiles exist in today's data
     // (fill/battle/place only) — this line is inert until one is authored
     if (t.k === 'event' && t.bg) stamp(bar, t.r, t.c, t.w, t.h, t.bg)

@@ -5,6 +5,7 @@ import {
   anchorOf, chipBg, tierOf, tierVisible,
   formatAxisTick, isCenturyTick, apiMarkers,
   popoverPlace,
+  BEVEL_CLIP, FILLET_BG, shapeTileStyle,
 } from './timelineModel'
 
 describe('color tokens', () => {
@@ -161,6 +162,57 @@ describe('buildComposite', () => {
     const f = comp.markerFor({ r: 9, c: 9, bg: '#777777' })
     expect(f).toEqual({ territory: '#777777', attacker: '#777777', incursion: false, hasSurface: false })
     expect(markerCellPaint(comp, { r: 9, c: 9, bg: '#777777' })).toBe('#777777')
+  })
+})
+
+describe('shape tiles', () => {
+  it('bevel: clip-path per right-angle corner', () => {
+    expect(BEVEL_CLIP.tl).toBe('polygon(0 0, 100% 0, 0 100%)')
+    expect(BEVEL_CLIP.br).toBe('polygon(100% 0, 100% 100%, 0 100%)')
+  })
+  it('fillet: paints the cell except a parchment quarter-ellipse at the open corner', () => {
+    expect(FILLET_BG('tl', '#111111')).toBe(
+      'radial-gradient(ellipse 100% 100% at 0% 0%, transparent calc(100% - 1px), #111111 100%)'
+    )
+  })
+  it('grad + fade: linear-gradient styles by direction', () => {
+    expect(shapeTileStyle({ k: 'grad', from: '#111111', to: '#222222', dir: 'v' }).background)
+      .toBe('linear-gradient(180deg, #111111, #222222)')
+    expect(shapeTileStyle({ k: 'fade', bg: '#111111', dir: 'v' }).background)
+      .toBe('linear-gradient(180deg, #111111, transparent)')
+  })
+  it('all shape cells count as filled so neighbours stay square against them', () => {
+    const comp = buildComposite({
+      rows: 8, cols: 8,
+      tiles: [
+        { r: 3, c: 3, w: 1, h: 1, k: 'fill', bg: '#111111' },
+        { r: 4, c: 4, w: 1, h: 1, k: 'bevel', dir: 'tl', bg: '#111111' },
+        { r: 5, c: 4, w: 1, h: 1, k: 'grad', from: '#111111', to: '#222222', dir: 'v' },
+        { r: 6, c: 4, w: 1, h: 1, k: 'fillet', dir: 'tl', bg: '#222222' },
+        { r: 7, c: 4, w: 1, h: 1, k: 'fade', bg: '#222222', dir: 'v' },
+      ],
+    }, [])
+    expect(comp.bandAt(4, 4)).toBe('#111111')
+    expect(comp.bandAt(5, 4)).toBe('#111111') // grad stamps its `from` color
+    expect(comp.bandAt(6, 4)).toBe('#222222')
+    expect(comp.bandAt(7, 4)).toBe('#222222')
+  })
+  it('shapeTileStyle applies a color resolver (renderer paints through bandVar)', () => {
+    const up = (c) => `var(${c})`
+    expect(shapeTileStyle({ k: 'grad', from: '#111111', to: '#222222', dir: 'h' }, up).background)
+      .toBe('linear-gradient(90deg, var(#111111), var(#222222))')
+    expect(shapeTileStyle({ k: 'bevel', dir: 'tl', bg: '#111111' }, up).background)
+      .toBe('var(#111111)')
+  })
+  it('pass-under (u:1) tiles are painted beneath and never stamp any layer', () => {
+    const comp = buildComposite({
+      rows: 6, cols: 6,
+      tiles: [
+        { r: 3, c: 3, w: 1, h: 1, k: 'fill', u: 1, bg: '#111111' },
+      ],
+    }, [])
+    expect(comp.fillAt(3, 3)).toBe(null)
+    expect(comp.bandAt(3, 3)).toBe(null)
   })
 })
 

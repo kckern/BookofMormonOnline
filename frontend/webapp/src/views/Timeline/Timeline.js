@@ -13,6 +13,7 @@ import "./Timeline.css"
 import {
   bandVar, resolvedHex, textOn, humanize, cleanLabel, cornerStyleFor, buildComposite, markerCellPaint,
   anchorOf, chipBg, tierOf, tierVisible, formatAxisTick, isCenturyTick, apiMarkers, popoverPlace,
+  shapeTileStyle,
 } from './timelineModel'
 import { SWORDS, PIN, CHEV_L, CHEV_R } from './icons'
 import TimelinePopover from './TimelinePopover'
@@ -73,6 +74,13 @@ const gridPos = (t) => ({
   gridColumn: `${t.c + 1} / span ${t.w}`, // +1: column 1 is the date gutter
   gridRow: `${t.r} / span ${t.h}`,
 })
+
+// Shape-language canvas tiles (docs/reference/timeline-source-design-language.md).
+const SHAPE_TILE_KINDS = new Set(["bevel", "grad", "fillet", "fade"])
+// Canvas mark kinds rendered as label chips/pins. Battles go through the dedicated
+// markers path (icon medallions) — including them here would double-render empty
+// chips over the medallions. Allow-list form so shape/break/fill can't leak in.
+const CANVAS_MARK_KINDS = new Set(["place"])
 
 
 function TimeLine() {
@@ -238,16 +246,44 @@ function TimeLine() {
     // Access via comp.* so eslint sees comp as the only external dep (bandAt and
     // holePatches are stable derivations of comp — listing comp covers them).
     const { bandAt: ba, holePatches: hp } = comp
-    const els = tiles
-      .filter((t) => t.k === "fill" && t.bg !== "#ffffff") // drop the stray white artifact cell
-      .map((t) => (
-        <div
-          key={`f${t.r}-${t.c}`}
-          className="tg-fill"
-          data-lin={linKey(t.bg)}
-          style={{ ...gridPos(t), background: bandVar(t.bg), ...cornerStyleFor(t, ba) }}
-        />
-      ))
+    const els = []
+    for (const t of tiles) {
+      if (t.u) continue // pass-under tiles paint in underEls, beneath the bands
+      if (t.k === "fill" && t.bg !== "#ffffff") {
+        // plain lineage band tile (drop the stray white artifact cell)
+        els.push(
+          <div
+            key={`f${t.r}-${t.c}`}
+            className="tg-fill"
+            data-lin={linKey(t.bg)}
+            style={{ ...gridPos(t), background: bandVar(t.bg), ...cornerStyleFor(t, ba) }}
+          />
+        )
+      } else if (SHAPE_TILE_KINDS.has(t.k)) {
+        // shape-language tile (bevel/grad/fillet/fade) — paints through bandVar so
+        // themes swap wholesale; data-lin (identity hex) drives band-hover highlight.
+        els.push(
+          <div
+            key={`sh${t.r}-${t.c}`}
+            className="tg-fill tg-shape"
+            data-lin={linKey(t.bg || t.from)}
+            style={{ ...gridPos(t), ...shapeTileStyle(t, bandVar) }}
+          />
+        )
+      } else if (t.k === "break") {
+        // era-void break glyph (~squiggle) — the cheap alternative to variable rows
+        els.push(
+          <div key={`bk${t.r}-${t.c}`} className="tg-break" style={gridPos(t)} aria-hidden="true">
+            <svg viewBox="0 0 60 20">
+              <path
+                d="M2 7 Q 12 1, 22 7 T 42 7 T 58 7 M2 14 Q 12 8, 22 14 T 42 14 T 58 14"
+                fill="none" stroke="rgba(120,90,40,0.45)" strokeWidth="2" strokeLinecap="round"
+              />
+            </svg>
+          </div>
+        )
+      }
+    }
     // enclosed single-color holes patched to the band color (interior, no rounding)
     for (const p of hp) {
       els.push(
@@ -268,7 +304,31 @@ function TimeLine() {
 
   // Canvas marks (hardcoded): location pins only. Battles are now icon-events
   // fed through canvasMarkers → the markerFor/markerCellPaint compositor path.
-  const marks = useMemo(() => tiles.filter((t) => t.k !== "fill" && t.k !== "battle"), [tiles])
+  const marks = useMemo(() => tiles.filter((t) => CANVAS_MARK_KINDS.has(t.k)), [tiles])
+
+  // Pass-under ribbons/bars (u:1): painted BENEATH the band fills so a journey
+  // through another people's territory disappears and re-emerges naturally where
+  // the band ends — no masking. Corner rounding uses a colorAt built from the
+  // under-tiles alone (they are intentionally absent from the band composite).
+  const underEls = useMemo(() => {
+    const uTiles = tiles.filter((t) => t.u)
+    if (!uTiles.length) return null
+    const umap = new Map()
+    for (const t of uTiles)
+      for (let dr = 0; dr < (t.h || 1); dr++)
+        for (let dc = 0; dc < (t.w || 1); dc++)
+          umap.set(`${t.r + dr},${t.c + dc}`, t.bg || t.from || "#000000")
+    const uAt = (r, c) => umap.get(`${r},${c}`) || null
+    return uTiles.map((t) =>
+      SHAPE_TILE_KINDS.has(t.k) ? (
+        <div key={`u${t.r}-${t.c}`} className="tg-fill tg-shape tg-under"
+          data-lin={linKey(t.bg || t.from)} style={{ ...gridPos(t), ...shapeTileStyle(t, bandVar) }} />
+      ) : (
+        <div key={`u${t.r}-${t.c}`} className="tg-fill tg-under" data-lin={linKey(t.bg)}
+          style={{ ...gridPos(t), background: bandVar(t.bg), ...cornerStyleFor(t, uAt) }} />
+      )
+    )
+  }, [tiles])
 
   // Events AND location pins come from the backend (Event.grid placement +
   // Event.label translated text). p distinguishes them: p=true → event tile,
@@ -476,6 +536,8 @@ function TimeLine() {
               )}
             </React.Fragment>
           ))}
+
+          {underEls}
 
           {fillEls}
 

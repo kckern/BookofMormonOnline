@@ -22,6 +22,7 @@
   --c-judges: #38761d;
   --c-gadianton: #7d8596;  /* sheet #6fa8dc remapped for parchment readability */
   --c-destruction: #000000;
+  --c-schism: #20123f;     /* Lehi-schism dark grad endpoint (purple→dark) */
   --c-unity: #c9c2b0;      /* gray family per source artwork (measures ~#8f9490
                               there); tuned lighter for parchment contrast —
                               adjust HERE only, at the Task 14 visual check */
@@ -396,6 +397,13 @@
 
 /* Light bands get a sepia hairline so their silhouette reads on parchment */
 .tg-fill[data-lin='fff2cc'] { box-shadow: inset 0 0 0 1px rgba(120, 90, 40, 0.35); }
+
+/* Shape-language tiles carry their own gradient/clip geometry — no square-corner
+   override from cornerStyleFor applies, but keep them from inheriting radii. */
+.tg-shape { border-radius: 0 !important; }
+/* Break glyph — the era-void squiggle centered in its cells */
+.tg-break { display: flex; align-items: center; justify-content: center; }
+.tg-break svg { width: calc(52px * var(--scale)); }
 
 /* Hover discovery: hovering anywhere on a band lights up every tile of that
    lineage (fills + its events + battles). One declaration, one selector per
