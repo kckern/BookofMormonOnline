@@ -218,10 +218,13 @@ export function cornerStyleFor(rect, colorAt) {
 }
 
 const ANCHORS = new Set(['center', 'start', 'end', 'above', 'below'])
-// Label anchoring is a data param (bom_timeline.label_anchor). Default CENTER (KC directive).
+// Label anchoring is a data param (bom_timeline.label_anchor). Defaults:
+// events CENTER (KC directive); places START (quiet pin-led captions — the
+// tg-a-center justify-content would defeat .tg-place's flex-start).
 export const anchorOf = (e) => {
   const a = e && e.grid && e.grid.anchor
-  return ANCHORS.has(a) ? a : 'center'
+  if (ANCHORS.has(a)) return a
+  return e && e.p ? 'center' : 'start'
 }
 
 // Chip background for events with no grid_bg: the surface genuinely beneath the

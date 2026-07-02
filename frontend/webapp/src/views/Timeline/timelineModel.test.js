@@ -181,12 +181,14 @@ describe('cornerStyleFor', () => {
 })
 
 describe('anchorOf', () => {
-  it('defaults to center (KC directive)', () =>
-    expect(anchorOf({ grid: { row: 1, col: 1 } })).toBe('center'))
+  it('defaults to center for events (KC directive)', () =>
+    expect(anchorOf({ p: true, grid: { row: 1, col: 1 } })).toBe('center'))
+  it('defaults to start for places (quiet captions)', () =>
+    expect(anchorOf({ p: false, grid: { row: 1, col: 1 } })).toBe('start'))
   it('honors an explicit anchor', () =>
     expect(anchorOf({ grid: { anchor: 'start' } })).toBe('start'))
-  it('rejects unknown values back to center', () =>
-    expect(anchorOf({ grid: { anchor: 'bogus' } })).toBe('center'))
+  it('rejects unknown values back to the kind default', () =>
+    expect(anchorOf({ p: true, grid: { anchor: 'bogus' } })).toBe('center'))
 })
 
 describe('chipBg', () => {
