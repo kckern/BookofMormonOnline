@@ -551,10 +551,32 @@
   text-shadow: 0 0 3px rgba(255, 250, 235, 0.9), 0 0 6px rgba(255, 250, 235, 0.7);
 }
 
-/* Zoomed-out: labels would collide into noise — hide them, keep the bands. */
+/* Zoomed-out: labels-layer toggle (Layers › Labels) hides everything. */
 .tg-compact .tg-event-label,
 .tg-compact .tg-place > span {
   display: none;
+}
+
+/* LOD tier hiding: per-element zoom threshold (replaces the global binary gate).
+   Tier 1 (band names) = always visible. Tier 2 (events) = hidden below scale 0.55.
+   Tier 3 (places, detail) = hidden below scale 0.85. Threshold logic lives in
+   tierVisible() in timelineModel.js; only the display:none lives here. */
+.tg-lod-hidden .tg-event-label,
+.tg-lod-hidden > span { display: none; }
+
+/* Type ramp per tier: band names larger + serif (prod's display layer) */
+.tg-tier-1 .tg-event-label {
+  font-family: 'Nanum Myeongjo', Georgia, serif;
+  font-size: calc(13px * var(--scale));
+  letter-spacing: 0.5px;
+}
+.tg-tier-3 .tg-event-label { font-size: calc(10px * var(--scale)); font-weight: 600; }
+/* Hover ink chip only relieves dense layers — not tier-1 wayfinding labels */
+.tg-tier-1.tg-event.is-clickable:hover .tg-event-label {
+  background: none;
+  box-shadow: none;
+  padding: 0;
+  margin: 0;
 }
 
 /* Battle marker — a small struck-gold medallion with crossed swords */

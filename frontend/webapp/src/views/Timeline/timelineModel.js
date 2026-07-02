@@ -232,6 +232,15 @@ export const anchorOf = (e) => {
 export const chipBg = (g, comp) =>
   g.bg || comp.surfaceAt(g.row, g.col) || '#6a5326'
 
+// Zoom LOD: tier 1 = band/era names (always visible — the wayfinding layer),
+// tier 2 = major events, tier 3 = detail (places, rosters). Data override via
+// bom_timeline.grid_tier; defaults by kind.
+export const TIER_MIN_SCALE = { 1: 0, 2: 0.55, 3: 0.85 }
+export const tierOf = (e) =>
+  (e && e.grid && e.grid.tier) || (e && e.p ? 2 : 3)
+export const tierVisible = (tier, scale) =>
+  scale >= (TIER_MIN_SCALE[tier] !== undefined ? TIER_MIN_SCALE[tier] : 0)
+
 // Corner rounding — RULE v2 (supersedes docs/reference/timeline-corner-rounding.md v1).
 // Round a corner IFF all three neighbour cells at that corner (both orthogonals
 // AND the diagonal) are empty parchment — a corner only rounds into fully open

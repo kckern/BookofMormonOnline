@@ -2,7 +2,7 @@ import {
   tokenOf, bandVar, resolvedHex,
   textOn, humanize, cleanLabel, cornerRadii, dominantNeighbor,
   buildComposite, markerCellPaint, radiusFor, cornerStyleFor,
-  anchorOf, chipBg,
+  anchorOf, chipBg, tierOf, tierVisible,
 } from './timelineModel'
 
 describe('color tokens', () => {
@@ -199,4 +199,19 @@ describe('chipBg', () => {
     expect(chipBg({ row: 3, col: 1, bg: null }, comp)).toBe('#111111'))
   it('falls back to themed sepia ink, never grey', () =>
     expect(chipBg({ row: 9, col: 1, bg: null }, comp)).toBe('#6a5326'))
+})
+
+describe('LOD tiers', () => {
+  it('defaults: events tier 2, places tier 3, explicit tier wins', () => {
+    expect(tierOf({ p: true, grid: {} })).toBe(2)
+    expect(tierOf({ p: false, grid: {} })).toBe(3)
+    expect(tierOf({ p: true, grid: { tier: 1 } })).toBe(1)
+  })
+  it('tier 1 (band names) never hides; 2 hides <0.55; 3 hides <0.85', () => {
+    expect(tierVisible(1, 0.2)).toBe(true)
+    expect(tierVisible(2, 0.5)).toBe(false)
+    expect(tierVisible(2, 0.6)).toBe(true)
+    expect(tierVisible(3, 0.7)).toBe(false)
+    expect(tierVisible(3, 0.9)).toBe(true)
+  })
 })

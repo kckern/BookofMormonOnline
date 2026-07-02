@@ -12,7 +12,7 @@ import battleSlugs from './battleSlugs.json'
 import "./Timeline.css"
 import {
   bandVar, resolvedHex, textOn, humanize, cleanLabel, cornerStyleFor, buildComposite, markerCellPaint,
-  anchorOf, chipBg,
+  anchorOf, chipBg, tierOf, tierVisible,
 } from './timelineModel'
 import { SWORDS, PIN } from './icons'
 
@@ -26,9 +26,6 @@ const canvasMarkers = tilesData.tiles
 const ZOOM_MIN = 0.4
 const ZOOM_MAX = 2
 const ZOOM_STEP = 1.2
-// Below this effective scale, labels collide into an unreadable mass — hide them and let
-// the colored bands carry the structure (click/zoom-in to read).
-const LABEL_HIDE_BELOW = 0.55
 
 // label() returns a single space when the i18n dictionary isn't loaded yet;
 // treat blank as missing so the literal fallbacks apply.
@@ -270,11 +267,14 @@ function TimeLine() {
           const rawBg = chipBg(g, comp)            // identity hex (sheet value or sepia fallback)
           const tcol = textOn(resolvedHex(rawBg))  // contrast math needs a concrete hex, never a var()
           const linAttr = isPlace ? null : { "data-lin": linKey(g.bg) }
+          const tier = tierOf(e)
           const cls =
             'tg-anchor ' + (isPlace ? 'tg-place' : 'tg-event') + ` tg-a-${anchor}` +
+            ` tg-tier-${tier}` +
             (isPlace ? '' : tcol === '#fff' ? ' tg-on-dark' : ' tg-on-light') +
             (clickable ? ' is-clickable' : ' is-static') +
-            (selected === e.slug ? ' is-selected' : '')
+            (selected === e.slug ? ' is-selected' : '') +
+            (tierVisible(tier, scale) ? '' : ' tg-lod-hidden')
           const inner = isPlace ? (
             <span><span className="tg-pin" aria-hidden="true">{PIN}</span> {label}</span>
           ) : (
@@ -313,7 +313,7 @@ function TimeLine() {
             </button>
           )
         }),
-    [timeline, selected, openInfo, comp]
+    [timeline, selected, openInfo, comp, scale]
   )
 
   if (!tiles || !tiles.length) return <Loader />
@@ -423,9 +423,7 @@ function TimeLine() {
         <div
           id="tg-grid"
           tabIndex={-1}
-          className={
-            "timeline-grid" + (scale < LABEL_HIDE_BELOW || !layers.labels ? " tg-compact" : "")
-          }
+          className={"timeline-grid" + (!layers.labels ? " tg-compact" : "")}
           role="region"
           aria-label="Book of Mormon timeline — events by lineage and date. Use Tab to move between events."
           style={{ "--cols": cols, "--rows": rows, "--scale": scale }}
@@ -475,7 +473,7 @@ function TimeLine() {
               return (
                 <div
                   key={key}
-                  className={`tg-anchor ${isPlace ? "tg-place" : "tg-event"}${isPlace ? " tg-a-above" : ""}${tone} is-static`}
+                  className={`tg-anchor ${isPlace ? "tg-place" : "tg-event"}${isPlace ? " tg-a-above" : ""}${tone} tg-tier-3 is-static${tierVisible(3, scale) ? '' : ' tg-lod-hidden'}`}
                   style={isPlace ? pos : { ...pos, background: bandVar(t.bg), color: tcol }}
                   title={tipText}
                 >
@@ -492,8 +490,9 @@ function TimeLine() {
                   if (n) cellRefs.current[t.slug] = n
                 }}
                 className={
-                  `tg-anchor ${isPlace ? "tg-place" : "tg-event"}${isPlace ? " tg-a-above" : ""}${tone} is-clickable` +
-                  (selected === t.slug ? " is-selected" : "")
+                  `tg-anchor ${isPlace ? "tg-place" : "tg-event"}${isPlace ? " tg-a-above" : ""}${tone} tg-tier-3 is-clickable` +
+                  (selected === t.slug ? " is-selected" : "") +
+                  (tierVisible(3, scale) ? '' : ' tg-lod-hidden')
                 }
                 style={isPlace ? pos : { ...pos, background: bandVar(t.bg), color: tcol }}
                 onClick={() => openInfo(t.slug)}
