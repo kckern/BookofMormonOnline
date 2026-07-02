@@ -255,6 +255,12 @@ export function isCenturyTick(t) {
   return !!m && +m[1] % 100 === 0
 }
 
+// DB icon-events (grid.icon set) render via the marker path, not as chips/bars.
+export const apiMarkers = (events) =>
+  (events || [])
+    .filter((e) => e.grid && e.grid.icon)
+    .map((e) => ({ r: e.grid.row, c: e.grid.col, bg: e.grid.bg, icon: e.grid.icon, slug: e.slug }))
+
 // Corner rounding — RULE v2 (supersedes docs/reference/timeline-corner-rounding.md v1).
 // Round a corner IFF all three neighbour cells at that corner (both orthogonals
 // AND the diagonal) are empty parchment — a corner only rounds into fully open

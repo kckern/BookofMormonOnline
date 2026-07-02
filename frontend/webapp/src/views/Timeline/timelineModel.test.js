@@ -3,7 +3,7 @@ import {
   textOn, humanize, cleanLabel, cornerRadii, dominantNeighbor,
   buildComposite, markerCellPaint, radiusFor, cornerStyleFor,
   anchorOf, chipBg, tierOf, tierVisible,
-  formatAxisTick, isCenturyTick,
+  formatAxisTick, isCenturyTick, apiMarkers,
 } from './timelineModel'
 
 describe('color tokens', () => {
@@ -235,5 +235,16 @@ describe('isCenturyTick', () => {
     expect(isCenturyTick('600s BC')).toBe(true)
     expect(isCenturyTick('90s BC')).toBe(false)
     expect(isCenturyTick('545s BC')).toBe(false)
+  })
+})
+
+describe('apiMarkers', () => {
+  it('extracts marker descriptors from icon-events only', () => {
+    const evs = [
+      { slug: 'a', grid: { row: 1, col: 2, bg: '#111111', icon: 'battle' } },
+      { slug: 'b', grid: { row: 3, col: 4, bg: '#222222' } },
+      { slug: 'c', grid: null },
+    ]
+    expect(apiMarkers(evs)).toEqual([{ r: 1, c: 2, bg: '#111111', icon: 'battle', slug: 'a' }])
   })
 })

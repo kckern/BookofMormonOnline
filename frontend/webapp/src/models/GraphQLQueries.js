@@ -1025,7 +1025,7 @@ const queries = {
         z
         p
         label
-        grid { row col rowSpan colSpan bg }
+        grid { row col rowSpan colSpan bg anchor tier dir icon }
       }`,
     }
   },

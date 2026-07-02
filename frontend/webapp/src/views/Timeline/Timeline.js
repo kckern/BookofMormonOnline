@@ -12,9 +12,9 @@ import battleSlugs from './battleSlugs.json'
 import "./Timeline.css"
 import {
   bandVar, resolvedHex, textOn, humanize, cleanLabel, cornerStyleFor, buildComposite, markerCellPaint,
-  anchorOf, chipBg, tierOf, tierVisible, formatAxisTick, isCenturyTick,
+  anchorOf, chipBg, tierOf, tierVisible, formatAxisTick, isCenturyTick, apiMarkers,
 } from './timelineModel'
-import { SWORDS, PIN } from './icons'
+import { SWORDS, PIN, CHEV_L, CHEV_R } from './icons'
 
 // Legacy canvas battle tiles → icon-event marker descriptors. This is a
 // STOPGAP data source: when bom_timeline rows gain grid placements +
@@ -201,9 +201,14 @@ function TimeLine() {
     }
   }, [showModal, closeInfo])
 
+  // Merge canvas battle markers (from gridTiles.json) with any DB icon-events
+  // arriving through the API. DB markers carry their own slug; canvas markers
+  // fall back to the battleSlugs binding file in the render loop below.
+  const markers = useMemo(() => [...canvasMarkers, ...apiMarkers(timeline || [])], [timeline])
+
   // Unified occupancy/compositing model — see timelineModel.buildComposite.
   // Depends on `timeline` (API bars are a layer) — rebuilds once data arrives.
-  const comp = useMemo(() => buildComposite(tilesData, timeline || [], canvasMarkers), [timeline])
+  const comp = useMemo(() => buildComposite(tilesData, timeline || [], markers), [timeline, markers])
   const { markerFor } = comp
 
   // Fill tiles (lineage bands) never depend on selection/zoom — memoize so a
@@ -250,7 +255,7 @@ function TimeLine() {
   const eventEls = useMemo(
     () =>
       (timeline || [])
-        .filter((e) => e.grid && e.slug)
+        .filter((e) => e.grid && e.slug && !e.grid.icon)
         .map((e) => {
           const g = e.grid
           const isPlace = !e.p
@@ -278,7 +283,11 @@ function TimeLine() {
           const inner = isPlace ? (
             <span><span className="tg-pin" aria-hidden="true">{PIN}</span> {label}</span>
           ) : (
-            <span className="tg-event-label">{label}</span>
+            <span className="tg-event-label">
+              {g.dir === 'l' && <span className="tg-chev" aria-hidden="true">{CHEV_L}</span>}
+              {label}
+              {g.dir === 'r' && <span className="tg-chev" aria-hidden="true">{CHEV_R}</span>}
+            </span>
           )
           const rect = { r: g.row, c: g.col, w: g.colSpan, h: g.rowSpan }
           const capStyle = cornerStyleFor(rect, comp.barAt)
@@ -512,10 +521,10 @@ function TimeLine() {
               (paint non-null) — battles over a real surface never paint parchment.
               When layers.battles is OFF: only notch cells get a territory patch to
               keep band continuity; cells over real surfaces render nothing. */}
-          {layers.battles && canvasMarkers.map((m) => {
+          {layers.battles && markers.map((m) => {
             const { incursion, territory, attacker } = markerFor(m)
             const paint = markerCellPaint(comp, m) // null when a real surface is beneath
-            const slug = battleSlugs[`${m.r},${m.c}`] || null
+            const slug = m.slug || battleSlugs[`${m.r},${m.c}`] || null
             const data = slug ? bySlug[slug] : null
             const clickable = !!(data && (data.heading || data.html))
             const battleLabel = clickable
@@ -555,7 +564,7 @@ function TimeLine() {
               </Cell>
             )
           })}
-          {!layers.battles && canvasMarkers.map((m) => {
+          {!layers.battles && markers.map((m) => {
             const paint = markerCellPaint(comp, m)
             return paint ? (
               <div

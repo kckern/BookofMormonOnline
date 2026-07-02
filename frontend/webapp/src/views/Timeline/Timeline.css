@@ -489,6 +489,17 @@
   text-shadow: 0 0 3px rgba(255, 250, 235, 0.85), 0 1px 0 rgba(255, 250, 235, 0.9);
 }
 
+/* Direction chevrons on event chips — rendered when grid.dir is 'l' or 'r'.
+   Dark launch: no DB rows carry dir yet; no chevrons appear in the live grid. */
+.tg-chev {
+  display: inline-flex;
+  width: calc(9px * var(--scale));
+  height: calc(9px * var(--scale));
+  vertical-align: -1px;
+  margin: 0 2px;
+}
+.tg-chev svg { width: 100%; height: 100%; }
+
 /* clickable interactivity (events AND places that have a linked entry) */
 .tg-anchor.is-clickable {
   pointer-events: auto;
