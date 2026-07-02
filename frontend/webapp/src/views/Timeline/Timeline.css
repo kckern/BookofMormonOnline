@@ -375,6 +375,13 @@
   white-space: nowrap;
 }
 
+.tg-century-rule {
+  align-self: start;
+  height: 0;
+  border-top: 1px dashed rgba(120, 90, 40, 0.16);
+  pointer-events: none;
+}
+
 /* Band fill tile — flat lineage color (depth comes from the parchment canvas
    and rounded ribbon ends, not per-tile shadows that would seam the bands) */
 .tg-fill {

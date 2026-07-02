@@ -241,6 +241,20 @@ export const tierOf = (e) =>
 export const tierVisible = (tier, scale) =>
   scale >= (TIER_MIN_SCALE[tier] !== undefined ? TIER_MIN_SCALE[tier] : 0)
 
+// The source sheet glues a plural "s" onto arbitrary years ("545s BC"). Keep the
+// s only for genuine decades/centuries; otherwise show the exact year.
+export function formatAxisTick(t) {
+  const m = /^(~?)(\d+)s? (BC|AD)$/.exec(t || '')
+  if (!m) return t
+  const n = +m[2]
+  const isRange = /s /.test(t) && n % 10 === 0
+  return `${m[1]}${n}${isRange ? 's' : ''} ${m[3]}`
+}
+export function isCenturyTick(t) {
+  const m = /^~?(\d+)s? (BC|AD)$/.exec(t || '')
+  return !!m && +m[1] % 100 === 0
+}
+
 // Corner rounding — RULE v2 (supersedes docs/reference/timeline-corner-rounding.md v1).
 // Round a corner IFF all three neighbour cells at that corner (both orthogonals
 // AND the diagonal) are empty parchment — a corner only rounds into fully open

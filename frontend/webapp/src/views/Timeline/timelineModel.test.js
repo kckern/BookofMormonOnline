@@ -3,6 +3,7 @@ import {
   textOn, humanize, cleanLabel, cornerRadii, dominantNeighbor,
   buildComposite, markerCellPaint, radiusFor, cornerStyleFor,
   anchorOf, chipBg, tierOf, tierVisible,
+  formatAxisTick, isCenturyTick,
 } from './timelineModel'
 
 describe('color tokens', () => {
@@ -213,5 +214,26 @@ describe('LOD tiers', () => {
     expect(tierVisible(2, 0.6)).toBe(true)
     expect(tierVisible(3, 0.7)).toBe(false)
     expect(tierVisible(3, 0.9)).toBe(true)
+  })
+})
+
+describe('formatAxisTick', () => {
+  it('strips the bogus plural from non-decades', () => {
+    expect(formatAxisTick('545s BC')).toBe('545 BC')
+    expect(formatAxisTick('75s BC')).toBe('75 BC')
+  })
+  it('keeps real decades/centuries and approximations', () => {
+    expect(formatAxisTick('600s BC')).toBe('600s BC')
+    expect(formatAxisTick('90s BC')).toBe('90s BC')
+    expect(formatAxisTick('~3100 BC')).toBe('~3100 BC')
+  })
+  it('passes through anything unparsable', () => expect(formatAxisTick('AD 34')).toBe('AD 34'))
+})
+
+describe('isCenturyTick', () => {
+  it('true only for century multiples', () => {
+    expect(isCenturyTick('600s BC')).toBe(true)
+    expect(isCenturyTick('90s BC')).toBe(false)
+    expect(isCenturyTick('545s BC')).toBe(false)
   })
 })

@@ -12,7 +12,7 @@ import battleSlugs from './battleSlugs.json'
 import "./Timeline.css"
 import {
   bandVar, resolvedHex, textOn, humanize, cleanLabel, cornerStyleFor, buildComposite, markerCellPaint,
-  anchorOf, chipBg, tierOf, tierVisible,
+  anchorOf, chipBg, tierOf, tierVisible, formatAxisTick, isCenturyTick,
 } from './timelineModel'
 import { SWORDS, PIN } from './icons'
 
@@ -437,13 +437,15 @@ function TimeLine() {
           {/* opaque continuous backing so the gutter masks content on every row */}
           <div className="tg-gutter-bg" style={{ gridColumn: 1, gridRow: `1 / ${rows + 1}` }} />
           {dateAxis.map((d) => (
-            <div
-              key={`dt${d.r}`}
-              className="tg-date"
-              style={{ gridColumn: 1, gridRow: `${d.r} / span 1` }}
-            >
-              {d.t}
-            </div>
+            <React.Fragment key={`dt${d.r}`}>
+              <div className="tg-date" style={{ gridColumn: 1, gridRow: `${d.r} / span 1` }}>
+                {formatAxisTick(d.t)}
+              </div>
+              {isCenturyTick(d.t) && (
+                <div className="tg-century-rule" aria-hidden="true"
+                     style={{ gridColumn: `2 / ${cols + 2}`, gridRow: `${d.r} / span 1` }} />
+              )}
+            </React.Fragment>
           ))}
 
           {fillEls}
