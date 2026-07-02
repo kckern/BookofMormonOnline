@@ -248,7 +248,7 @@ function TimeLine() {
             key={`f${t.r}-${t.c}`}
             className="tg-fill"
             data-lin={linKey(t.bg)}
-            style={{ ...gridPos(t), background: bandVar(t.bg), ...cornerStyleFor(t, ba) }}
+            style={{ ...gridPos(t), background: bandVar(t.bg), ...cornerStyleFor(t, ba, { rd: t.rd, sq: t.sq }) }}
           />
         )
       } else if (SHAPE_TILE_KINDS.has(t.k)) {

@@ -46,17 +46,20 @@ describe('color + text utils', () => {
   })
 })
 
-describe('cornerRadii (corner rule v2 — see step note below)', () => {
+describe('cornerRadii (corner rule v2.1 — round iff both orthogonals empty)', () => {
   // 3×3 world: single cell of color C at (5,5), everything else empty
   const lone = (r, c) => (r === 5 && c === 5 ? '#111111' : null)
   it('rounds all four corners of an isolated cell', () => {
     expect(cornerRadii({ r: 5, c: 5, w: 1, h: 1 }, lone))
       .toEqual({ tl: true, tr: true, bl: true, br: true })
   })
-  it('keeps a junction corner square when another band sits diagonally', () => {
+  it('rounds a corner whose both edges face open space, even with a diagonal neighbor (v2.1)', () => {
+    // A band touches ONLY diagonally at the tl corner (both orthogonals empty).
+    // v2 squared this (diagonal occupied); v2.1 rounds it — prod tolerates the
+    // diagonal pinch point and reads fine at 13px radii (KC: over-squared protrusion).
     const world = (r, c) =>
       r === 5 && c === 5 ? '#111111' : r === 4 && c === 4 ? '#222222' : null
-    expect(cornerRadii({ r: 5, c: 5, w: 1, h: 1 }, world).tl).toBe(false)
+    expect(cornerRadii({ r: 5, c: 5, w: 1, h: 1 }, world).tl).toBe(true)
   })
   it('keeps an edge square where the band continues', () => {
     const world = (r, c) => (r === 5 && (c === 5 || c === 6) ? '#111111' : null)
@@ -239,6 +242,18 @@ describe('cornerStyleFor', () => {
   it('returns undefined when no corner rounds', () => {
     const world = (r, c) => (r >= 4 && r <= 6 && c >= 4 && c <= 6 ? '#111111' : null)
     expect(cornerStyleFor({ r: 5, c: 5, w: 1, h: 1 }, world)).toBeUndefined()
+  })
+  it('rd override force-rounds a buried cell corner the algorithm squares', () => {
+    // fully-enclosed cell: algorithm squares every corner; rd forces tl round
+    const world = (r, c) => (r >= 4 && r <= 6 && c >= 4 && c <= 6 ? '#111111' : null)
+    const s = cornerStyleFor({ r: 5, c: 5, w: 1, h: 1 }, world, { rd: ['tl'] })
+    expect(s.borderTopLeftRadius).toBe('calc(10px * var(--scale))')
+    expect(s.borderTopRightRadius).toBe(0)
+  })
+  it('sq override force-squares an isolated cell corner the algorithm rounds', () => {
+    const s = cornerStyleFor({ r: 5, c: 5, w: 1, h: 1 }, lone, { sq: ['tl'] })
+    expect(s.borderTopLeftRadius).toBe(0)
+    expect(s.borderTopRightRadius).toBe('calc(10px * var(--scale))')
   })
 })
 

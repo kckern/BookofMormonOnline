@@ -78,3 +78,44 @@ gate at plan Task 4. Radius is now size-aware: `min(13, h·20/2, w·26/2)` px
 pre-scale (`radiusFor`), so 1-row bars get stadium caps instead of oversized
 pills. Event bars round against the BAR layer only (caps at free ends; reveals
 show whatever is genuinely beneath).
+
+## Rule v2.1 (2026-07, Round 2) — SUPERSEDES v2
+
+**Round a corner IFF BOTH orthogonal neighbours are empty parchment. The
+diagonal is IGNORED.** (`timelineModel.cornerRadii`.)
+
+v2 additionally required the diagonal empty. That over-squared **protrusion
+corners** — a corner facing open space on both its edges but touching another
+band only *diagonally*. Prod ROUNDS those: the diagonal gap is a pinch point
+prod tolerates and it reads fine at 13px radii. KC flagged the v2 result as
+"lots of square corners that should be rounded." Dropping the diagonal
+condition restores the rounding.
+
+The sliver bug v2 actually fixed was the **orthogonal flush handoff** (another
+band sharing a full edge). v2.1 still keeps those SQUARE: a shared edge means
+one orthogonal is occupied, so "both empty" fails and the corner squares. So:
+
+- diagonal-only touch (both edges open) → **ROUND** (v2 wrongly squared this)
+- edge-flush handoff (band shares an orthogonal edge) → **SQUARE** (unchanged)
+
+Same-color staircases self-heal: between two cells of the same band that share
+an edge, that orthogonal is occupied → the interior seam stays square → no
+pinch notch appears *between* a band's own cells. Only the true convex step
+corners (both edges facing parchment) round.
+
+### Per-tile `rd` / `sq` overrides (data escape hatch)
+
+`cornerStyleFor(rect, colorAt, {rd, sq})` merges data over the algorithm, JSON
+wins: corners listed in `rd` force-round, in `sq` force-square, applied to fill
+tiles in `gridTiles.json`. Use where the artwork rounds/squares a corner the
+algorithm can't express (concave color-junction segment reveals the artwork
+shows as discrete rounded ribbons — v2.1 squares those as junctions).
+
+**Legacy-rd audit (Round 2):** the legacy build left 49 `rd` glyphs in
+gridTiles.json (dormant since Task 1). Enabling them under v2.1: 18 are no-ops
+(v2.1 rounds them anyway), 28 are valid color-junction segment reveals that
+match the artwork (kept), and **5 were stripped** — they rounded a corner where
+the SAME band continues along an orthogonal edge, biting a notch into the
+band's own body (mid-ribbon): (4,7)/br, (4,31)/tl, (45,31)/bl, (47,31)/bl,
+(61,30)/bl. Rule: never `rd` a corner whose orthogonal edge continues in the
+same color.

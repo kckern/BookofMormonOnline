@@ -257,8 +257,14 @@ const RADIUS_BASE = 13
 export const radiusFor = (w, h) =>
   Math.min(RADIUS_BASE, ((h || 1) * ROW_H) / 2, ((w || 1) * COL_W) / 2)
 
-export function cornerStyleFor(rect, colorAt) {
+export function cornerStyleFor(rect, colorAt, overrides) {
   const k = cornerRadii(rect, colorAt)
+  // Per-tile data escape hatch: `rd` force-rounds, `sq` force-squares — JSON wins
+  // over the algorithm (the corner artwork carries cases v2.1 cannot express).
+  if (overrides) {
+    for (const corner of overrides.rd || []) if (corner in k) k[corner] = true
+    for (const corner of overrides.sq || []) if (corner in k) k[corner] = false
+  }
   if (!(k.tl || k.tr || k.bl || k.br)) return undefined
   const rad = `calc(${radiusFor(rect.w, rect.h)}px * var(--scale))`
   return {
@@ -327,25 +333,25 @@ export function popoverPlace(anchor, pop, canvas) {
   return { side, left: Math.max(PAD, left), top, tailTop }
 }
 
-// Corner rounding — RULE v2 (supersedes docs/reference/timeline-corner-rounding.md v1).
-// Round a corner IFF all three neighbour cells at that corner (both orthogonals
-// AND the diagonal) are empty parchment — a corner only rounds into fully open
-// space. Rationale: v1 ("orthogonals ≠ own ∧ D empty") still rounds flush
-// handoffs whose edges align exactly (other band on ONE orthogonal, diagonal
-// empty) — a junction notch observed in the 2026-07-01 dev captures at
-// band-join seams. CAUTION: v2 also squares the "band tip sliding alongside
-// another band" case that v1 deliberately rounded per KC (corner doc v1,
-// "consequences" §3) — this trade is KC-GATED at the Task 4 visual review.
-// Ribbon ends and true protrusions into open space still round under v2.
+// Corner rounding — RULE v2.1 (2026-07, Round 2; supersedes v2 and doc v1).
+// Round a corner IFF BOTH orthogonal neighbour cells are empty parchment; the
+// diagonal is IGNORED. Rationale: v2 additionally required the diagonal empty,
+// which over-squared protrusion corners that only TOUCH another band diagonally
+// — prod ROUNDS those (a corner facing open space on both edges reads fine at
+// 13px radii even with a diagonal pinch point; KC flagged the over-squaring).
+// The actual sliver bug v2 fixed was the ORTHOGONAL flush handoff (other band
+// sharing a full edge) — that still stays square here (one orthogonal occupied
+// → not both empty → square). So: diagonal-only touch rounds; edge-flush handoff
+// squares. `d` (diagonal) retained in the signature for call-site clarity.
 export function cornerRadii(rect, colorAt) {
   const top = rect.r, left = rect.c
   const right = rect.c + (rect.w || 1) - 1
   const bottom = rect.r + (rect.h || 1) - 1
-  const round = (oh, ov, od) => oh === null && ov === null && od === null
+  const round = (oh, ov) => oh === null && ov === null
   return {
-    tl: round(colorAt(top, left - 1), colorAt(top - 1, left), colorAt(top - 1, left - 1)),
-    tr: round(colorAt(top, right + 1), colorAt(top - 1, right), colorAt(top - 1, right + 1)),
-    bl: round(colorAt(bottom, left - 1), colorAt(bottom + 1, left), colorAt(bottom + 1, left - 1)),
-    br: round(colorAt(bottom, right + 1), colorAt(bottom + 1, right), colorAt(bottom + 1, right + 1)),
+    tl: round(colorAt(top, left - 1), colorAt(top - 1, left)),
+    tr: round(colorAt(top, right + 1), colorAt(top - 1, right)),
+    bl: round(colorAt(bottom, left - 1), colorAt(bottom + 1, left)),
+    br: round(colorAt(bottom, right + 1), colorAt(bottom + 1, right)),
   }
 }
