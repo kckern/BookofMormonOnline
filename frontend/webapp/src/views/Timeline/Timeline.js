@@ -4,11 +4,10 @@ import React, { useState, useEffect, useLayoutEffect, useMemo, useRef, useCallba
 import Parser from "html-react-parser"
 import { Link, useRouteMatch, useHistory } from "react-router-dom"
 import { assetUrl } from "src/models/BoMOnlineAPI"
-import BoMOnlineAPI from "src/models/BoMOnlineAPI"
 import Loader from "../_Common/Loader"
 import { label } from "src/models/Utils"
 import tilesData from "./gridTiles.json"
-import battleSlugs from './battleSlugs.json'
+import timelineData from "./timelineData.json"
 import "./Timeline.css"
 import {
   bandVar, resolvedHex, textOn, humanize, cleanLabel, cornerStyleFor, buildComposite, markerCellPaint,
@@ -18,13 +17,29 @@ import {
 import { SWORDS, PIN, CHEV_L, CHEV_R } from './icons'
 import TimelinePopover from './TimelinePopover'
 
-// Legacy canvas battle tiles → icon-event marker descriptors. This is a
-// STOPGAP data source: when bom_timeline rows gain grid placements +
-// grid_icon='battle' (plan Task 7 gate), these tiles retire and DB icon-events
-// feed the same marker path.
-const canvasMarkers = tilesData.tiles
-  .filter((t) => t.k === 'battle')
-  .map((t) => ({ r: t.r, c: t.c, bg: t.bg, icon: 'battle' }))
+// R2a green-field: all timeline data is baked into timelineData.json (generated
+// by scripts/timeline-grid/gen_timeline_data.py — GQL dump + battle icon-events
+// + overlay). No runtime fetch. Battles render from the 38 icon-events here, at
+// the same cells the retired k:'battle' canvas tiles occupied; 16 carry content
+// (clickable), 22 are synthetic decorative markers.
+const timeline = timelineData.events
+
+// bySlug resolves popover content. A slug can appear on several rows (a place
+// recurring at multiple cells; content split from placement) — prefer the entry
+// that actually carries content so deep-links open a populated modal.
+const bySlug = (() => {
+  const m = {}
+  for (const e of timeline) {
+    const cur = m[e.slug]
+    if (!cur || ((e.heading || e.html) && !(cur.heading || cur.html))) m[e.slug] = e
+  }
+  return m
+})()
+
+// All 38 battle markers (icon-events) — synthetic ones carry a slug but no
+// content, so bySlug lookup yields no heading/html and they render non-clickable.
+const markers = apiMarkers(timeline)
+
 const ZOOM_MIN = 0.4
 const ZOOM_MAX = 2
 const ZOOM_STEP = 1.2
@@ -91,7 +106,6 @@ function TimeLine() {
     )}`
   }, [])
 
-  const [timeline, setTimeline] = useState(null)
   const [infoOpen, setInfoOpen] = useState(false)
   const [layersOpen, setLayersOpen] = useState(false)
   const [layers, setLayers] = useState({ battles: true, labels: true })
@@ -142,30 +156,14 @@ function TimeLine() {
 
   const scale = +(zoom * fitScale).toFixed(3)
 
-  useEffect(() => {
-    // Bypass the IndexedDB cache: a copy cached before the grid migration has no
-    // `grid` field, so eventEls would filter every event out (no labels) and the
-    // cache hit means no server refetch ever happens. The timeline is small and
-    // its grid placement is essential, so always fetch it fresh.
-    BoMOnlineAPI({ timeline: true }, { useCache: false })
-      .then((r) => setTimeline((r && r.timeline) || []))
-      .catch(() => setTimeline([]))
-  }, [])
-
-  const bySlug = useMemo(() => {
-    const m = {}
-    for (const t of timeline || []) m[t.slug] = t
-    return m
-  }, [timeline])
-
   // Selection is derived from the URL so browser Back/Forward stay in sync.
   const selected = markerSlug
   useEffect(() => {
-    if (markerSlug && timeline) {
+    if (markerSlug) {
       const node = cellRefs.current[markerSlug]
       if (node) node.scrollIntoView({ block: "center", inline: "center" })
     }
-  }, [markerSlug, timeline])
+  }, [markerSlug])
 
   const openInfo = useCallback(
     (slug) => slug && routerHistory.push(`/timeline/${slug}`),
@@ -174,9 +172,9 @@ function TimeLine() {
   const closeInfo = useCallback(() => routerHistory.push(`/timeline`), [routerHistory])
 
   const { cols, rows, tiles, dateAxis = [] } = tilesData
-  const loading = timeline === null
-  const info = selected && !loading ? bySlug[selected] : null
-  const showModal = !!selected && (info || loading)
+  // Data is synchronous now — no loading state. Unknown slug → no modal.
+  const info = selected ? bySlug[selected] : null
+  const showModal = !!selected && !!info
 
   const isNarrow = () =>
     typeof window !== 'undefined' && window.matchMedia('(max-width: 640px)').matches
@@ -195,8 +193,8 @@ function TimeLine() {
         { w: grid.scrollWidth, h: grid.scrollHeight }
       )
     )
-    // timeline: refs exist only after data renders; scale: zoom moves the anchor
-  }, [showModal, selected, timeline, scale])
+    // scale: zoom moves the anchor
+  }, [showModal, selected, scale])
 
   // Modal a11y: Escape, focus-in + trap, focus-restore, and background scroll-lock.
   useEffect(() => {
@@ -230,14 +228,9 @@ function TimeLine() {
     }
   }, [showModal, closeInfo])
 
-  // Merge canvas battle markers (from gridTiles.json) with any DB icon-events
-  // arriving through the API. DB markers carry their own slug; canvas markers
-  // fall back to the battleSlugs binding file in the render loop below.
-  const markers = useMemo(() => [...canvasMarkers, ...apiMarkers(timeline || [])], [timeline])
-
   // Unified occupancy/compositing model — see timelineModel.buildComposite.
-  // Depends on `timeline` (API bars are a layer) — rebuilds once data arrives.
-  const comp = useMemo(() => buildComposite(tilesData, timeline || [], markers), [timeline, markers])
+  // timeline + markers are baked constants now, so this runs once.
+  const comp = useMemo(() => buildComposite(tilesData, timeline, markers), [])
   const { markerFor } = comp
 
   // Fill tiles (lineage bands) never depend on selection/zoom — memoize so a
@@ -303,7 +296,7 @@ function TimeLine() {
   }, [tiles, comp])
 
   // Canvas marks (hardcoded): location pins only. Battles are now icon-events
-  // fed through canvasMarkers → the markerFor/markerCellPaint compositor path.
+  // (from timelineData.json) → the markerFor/markerCellPaint compositor path.
   const marks = useMemo(() => tiles.filter((t) => CANVAS_MARK_KINDS.has(t.k)), [tiles])
 
   // Pass-under ribbons/bars (u:1): painted BENEATH the band fills so a journey
@@ -335,7 +328,7 @@ function TimeLine() {
   // p=false → location pin (📍). Clickable when the row has real content.
   const eventEls = useMemo(
     () =>
-      (timeline || [])
+      timeline
         .filter((e) => e.grid && e.slug && !e.grid.icon)
         .map((e) => {
           const g = e.grid
@@ -402,7 +395,7 @@ function TimeLine() {
             </button>
           )
         }),
-    [timeline, selected, openInfo, comp, scale]
+    [selected, openInfo, comp, scale]
   )
 
   if (!tiles || !tiles.length) return <Loader />
@@ -606,7 +599,7 @@ function TimeLine() {
           {layers.battles && markers.map((m) => {
             const { incursion, territory, attacker } = markerFor(m)
             const paint = markerCellPaint(comp, m) // null when a real surface is beneath
-            const slug = m.slug || battleSlugs[`${m.r},${m.c}`] || null
+            const slug = m.slug || null
             const data = slug ? bySlug[slug] : null
             const clickable = !!(data && (data.heading || data.html))
             const battleLabel = clickable
@@ -665,7 +658,7 @@ function TimeLine() {
           {eventEls}
 
           {place && (
-            <TimelinePopover place={place} info={info} slug={selected} loading={loading}
+            <TimelinePopover place={place} info={info} slug={selected} loading={false}
               onClose={closeInfo} dialogRef={dialogRef} closeBtnRef={closeBtnRef} />
           )}
         </div>

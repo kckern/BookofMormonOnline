@@ -1,3 +1,4 @@
+-- SUPERSEDED 2026-07-01 (Round 2): timeline data baked into frontend timelineData.json; apply only if/when the view is re-API-ified.
 -- 2026-07-01_bom_timeline_label_params.sql
 -- Label/LOD params for the tile-grid timeline (audit §5). All nullable —
 -- frontend defaults apply when NULL (anchor=center, tier by kind, no dir).

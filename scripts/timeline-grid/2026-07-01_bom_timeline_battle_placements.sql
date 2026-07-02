@@ -1,3 +1,4 @@
+-- SUPERSEDED 2026-07-01 (Round 2): timeline data baked into frontend timelineData.json; apply only if/when the view is re-API-ified.
 -- battle placements from battleSlugs.json (gen_battle_placements.py)
 -- Apply to bom_prd via BoMOnlineWorkspace. Idempotent (grid_row IS NULL guard).
 -- PRECONDITIONS (plan Task 7 reconciliation, icon-event architecture):
