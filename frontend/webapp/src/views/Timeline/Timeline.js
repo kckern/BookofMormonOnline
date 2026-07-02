@@ -4,7 +4,6 @@ import React, { useState, useEffect, useLayoutEffect, useMemo, useRef, useCallba
 import Parser from "html-react-parser"
 import { Link, useRouteMatch, useHistory } from "react-router-dom"
 import { assetUrl } from "src/models/BoMOnlineAPI"
-import Loader from "../_Common/Loader"
 import { label } from "src/models/Utils"
 import tilesData from "./gridTiles.json"
 import timelineData from "./timelineData.json"
@@ -12,7 +11,7 @@ import "./Timeline.css"
 import {
   bandVar, resolvedHex, textOn, humanize, cleanLabel, cornerStyleFor, buildComposite, markerCellPaint,
   anchorOf, chipBg, tierOf, tierVisible, formatAxisTick, isCenturyTick, apiMarkers, popoverPlace,
-  shapeTileStyle,
+  shapeTileStyle, barPaint,
 } from './timelineModel'
 import { SWORDS, PIN, CHEV_L, CHEV_R } from './icons'
 import TimelinePopover from './TimelinePopover'
@@ -323,18 +322,20 @@ function TimeLine() {
     )
   }, [tiles])
 
-  // Events AND location pins come from the backend (Event.grid placement +
-  // Event.label translated text). p distinguishes them: p=true → event tile,
-  // p=false → location pin (📍). Clickable when the row has real content.
+  // Events, location pins, and person-roster labels (Event.grid placement +
+  // translated label text). p distinguishes event tiles from location pins (📍);
+  // kind:'label' is a pure text overlay (person rosters) — never clickable, no
+  // popover, no tooltip, no pointer affordance. Clickable events carry content.
   const eventEls = useMemo(
     () =>
       timeline
         .filter((e) => e.grid && e.slug && !e.grid.icon)
         .map((e) => {
           const g = e.grid
-          const isPlace = !e.p
+          const isLabel = e.kind === 'label'
+          const isPlace = !e.p && !isLabel
           const label = cleanLabel(e.label || e.heading || humanize(e.slug))
-          const clickable = !!(e.heading || e.html)
+          const clickable = !isLabel && !!(e.heading || e.html)
           const pos = {
             gridColumn: `${g.col + 1} / span ${g.colSpan}`,
             gridRow: `${g.row} / span ${g.rowSpan}`,
@@ -345,10 +346,11 @@ function TimeLine() {
           const anchor = anchorOf(e)
           const rawBg = chipBg(g, comp)            // identity hex (sheet value or sepia fallback)
           const tcol = textOn(resolvedHex(rawBg))  // contrast math needs a concrete hex, never a var()
-          const linAttr = isPlace ? null : { "data-lin": linKey(g.bg) }
+          const linAttr = isPlace || isLabel ? null : { "data-lin": linKey(g.bg) }
           const tier = tierOf(e)
           const cls =
-            'tg-anchor ' + (isPlace ? 'tg-place' : 'tg-event') + ` tg-a-${anchor}` +
+            'tg-anchor ' + (isLabel ? 'tg-event tg-label' : isPlace ? 'tg-place' : 'tg-event') +
+            ` tg-a-${anchor}` +
             ` tg-tier-${tier}` +
             (isPlace ? '' : tcol === '#fff' ? ' tg-on-dark' : ' tg-on-light') +
             (clickable ? ' is-clickable' : ' is-static') +
@@ -365,7 +367,14 @@ function TimeLine() {
           )
           const rect = { r: g.row, c: g.col, w: g.colSpan, h: g.rowSpan }
           const capStyle = cornerStyleFor(rect, comp.barAt)
-          const style = isPlace ? pos : { ...pos, background: bandVar(rawBg), color: tcol, ...capStyle }
+          // labels: transparent overlay (band beneath shows through); events with
+          // a grid bg paint through barPaint (flat OR along-bar gradient via bgTo);
+          // no-bg events fall back to the chipBg surface/sepia paint.
+          const style = isPlace
+            ? pos
+            : isLabel
+              ? { ...pos, color: tcol }
+              : { ...pos, background: g.bgTo ? barPaint(g, bandVar) : bandVar(rawBg), color: tcol, ...capStyle }
           if (!clickable) {
             return (
               <div
@@ -373,7 +382,7 @@ function TimeLine() {
                 ref={ref}
                 className={cls}
                 style={style}
-                title={e.date ? `${label} — ${e.date}` : label}
+                title={isLabel ? undefined : e.date ? `${label} — ${e.date}` : label}
                 {...linAttr}
               >
                 {inner}
@@ -397,8 +406,6 @@ function TimeLine() {
         }),
     [selected, openInfo, comp, scale]
   )
-
-  if (!tiles || !tiles.length) return <Loader />
 
   return (
     <div className={'timeline-grid-wrap' + (theme === 'dark' ? ' tg-theme-dark' : '')}>
@@ -654,7 +661,7 @@ function TimeLine() {
             ) : null
           })}
 
-          {/* events + location pins from the backend (Event.grid + Event.label) */}
+          {/* events, location pins, and person-roster labels */}
           {eventEls}
 
           {place && (
@@ -693,30 +700,23 @@ function TimeLine() {
             >
               ×
             </button>
-            {info ? (
-              <>
-                <div className="tg-infobox-head">
-                  <h2 id="tg-infobox-title">{cleanLabel(info.heading) || selected}</h2>
-                  {info.date && <span className="tg-infobox-date">{info.date}</span>}
-                </div>
-                <div
-                  className="tg-infobox-art"
-                  role="img"
-                  aria-label={cleanLabel(info.heading) || selected}
-                  style={{ backgroundImage: `url(${assetUrl}/timeline/art/${info.slug})` }}
-                />
-                {info.html && <div className="tg-infobox-body">{Parser(info.html)}</div>}
-                {info.text && info.text.slug && (
-                  <Link className="tg-infobox-link" to={`/${info.text.slug}`}>
-                    Read in the Book of Mormon →
-                  </Link>
-                )}
-              </>
-            ) : (
-              <div className="tg-infobox-loading">
-                <h2 id="tg-infobox-title">Loading…</h2>
-                <Loader />
-              </div>
+            {/* info is guaranteed by showModal (= selected && bySlug hit) — data
+                is synchronous, so there is no loading state to render. */}
+            <div className="tg-infobox-head">
+              <h2 id="tg-infobox-title">{cleanLabel(info.heading) || selected}</h2>
+              {info.date && <span className="tg-infobox-date">{info.date}</span>}
+            </div>
+            <div
+              className="tg-infobox-art"
+              role="img"
+              aria-label={cleanLabel(info.heading) || selected}
+              style={{ backgroundImage: `url(${assetUrl}/timeline/art/${info.slug})` }}
+            />
+            {info.html && <div className="tg-infobox-body">{Parser(info.html)}</div>}
+            {info.text && info.text.slug && (
+              <Link className="tg-infobox-link" to={`/${info.text.slug}`}>
+                Read in the Book of Mormon →
+              </Link>
             )}
           </div>
         </div>

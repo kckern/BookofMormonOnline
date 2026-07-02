@@ -1,1 +1,697 @@
-{}
+{
+  "+new": [
+    {
+      "date": null,
+      "grid": {
+        "anchor": "center",
+        "col": 19,
+        "colSpan": 2,
+        "row": 17,
+        "rowSpan": 1,
+        "tier": 3
+      },
+      "heading": "Nephi",
+      "html": null,
+      "kind": "label",
+      "p": true,
+      "slug": "label-nephi",
+      "text": null,
+      "textSlug": null
+    },
+    {
+      "date": null,
+      "grid": {
+        "anchor": "center",
+        "col": 19,
+        "colSpan": 2,
+        "row": 18,
+        "rowSpan": 1,
+        "tier": 3
+      },
+      "heading": "Sam",
+      "html": null,
+      "kind": "label",
+      "p": true,
+      "slug": "label-sam",
+      "text": null,
+      "textSlug": null
+    },
+    {
+      "date": null,
+      "grid": {
+        "anchor": "center",
+        "col": 19,
+        "colSpan": 2,
+        "row": 19,
+        "rowSpan": 1,
+        "tier": 3
+      },
+      "heading": "Zoram",
+      "html": null,
+      "kind": "label",
+      "p": true,
+      "slug": "label-zoram",
+      "text": null,
+      "textSlug": null
+    },
+    {
+      "date": null,
+      "grid": {
+        "anchor": "center",
+        "col": 19,
+        "colSpan": 2,
+        "row": 20,
+        "rowSpan": 1,
+        "tier": 3
+      },
+      "heading": "Jacob",
+      "html": null,
+      "kind": "label",
+      "p": true,
+      "slug": "label-jacob",
+      "text": null,
+      "textSlug": null
+    },
+    {
+      "date": null,
+      "grid": {
+        "anchor": "center",
+        "col": 19,
+        "colSpan": 2,
+        "row": 21,
+        "rowSpan": 1,
+        "tier": 3
+      },
+      "heading": "Enos",
+      "html": null,
+      "kind": "label",
+      "p": true,
+      "slug": "label-enos",
+      "text": null,
+      "textSlug": null
+    },
+    {
+      "date": null,
+      "grid": {
+        "anchor": "center",
+        "col": 19,
+        "colSpan": 2,
+        "row": 23,
+        "rowSpan": 1,
+        "tier": 3
+      },
+      "heading": "Jarom",
+      "html": null,
+      "kind": "label",
+      "p": true,
+      "slug": "label-jarom",
+      "text": null,
+      "textSlug": null
+    },
+    {
+      "date": null,
+      "grid": {
+        "anchor": "center",
+        "col": 19,
+        "colSpan": 2,
+        "row": 25,
+        "rowSpan": 1,
+        "tier": 3
+      },
+      "heading": "Omni",
+      "html": null,
+      "kind": "label",
+      "p": true,
+      "slug": "label-omni",
+      "text": null,
+      "textSlug": null
+    },
+    {
+      "date": null,
+      "grid": {
+        "anchor": "center",
+        "col": 19,
+        "colSpan": 2,
+        "row": 27,
+        "rowSpan": 1,
+        "tier": 3
+      },
+      "heading": "Amaron",
+      "html": null,
+      "kind": "label",
+      "p": true,
+      "slug": "label-amaron",
+      "text": null,
+      "textSlug": null
+    },
+    {
+      "date": null,
+      "grid": {
+        "anchor": "center",
+        "col": 19,
+        "colSpan": 2,
+        "row": 29,
+        "rowSpan": 1,
+        "tier": 3
+      },
+      "heading": "Abinadom",
+      "html": null,
+      "kind": "label",
+      "p": true,
+      "slug": "label-abinadom",
+      "text": null,
+      "textSlug": null
+    },
+    {
+      "date": null,
+      "grid": {
+        "anchor": "center",
+        "col": 19,
+        "colSpan": 2,
+        "row": 30,
+        "rowSpan": 1,
+        "tier": 3
+      },
+      "heading": "Amaleki",
+      "html": null,
+      "kind": "label",
+      "p": true,
+      "slug": "label-amaleki",
+      "text": null,
+      "textSlug": null
+    },
+    {
+      "date": null,
+      "grid": {
+        "anchor": "start",
+        "bg": "#3c78d8",
+        "col": 22,
+        "colSpan": 2,
+        "row": 33,
+        "rowSpan": 1
+      },
+      "heading": "Shilom",
+      "html": null,
+      "kind": "place",
+      "p": false,
+      "slug": "place-shilom",
+      "text": null,
+      "textSlug": null
+    },
+    {
+      "date": null,
+      "grid": {
+        "anchor": "above",
+        "bg": "#38761d",
+        "col": 33,
+        "colSpan": 2,
+        "row": 50,
+        "rowSpan": 1
+      },
+      "heading": "Reign of Judges",
+      "html": null,
+      "kind": "place",
+      "p": false,
+      "slug": "place-reign-of-judges",
+      "text": null,
+      "textSlug": null
+    }
+  ],
+  "aarons-army": {
+    "grid": {
+      "bg": "#38761d",
+      "col": 27,
+      "colSpan": 1,
+      "row": 119,
+      "rowSpan": 1
+    },
+    "r2b_flag": "auto-placed"
+  },
+  "almas-people-in-slavery": {
+    "grid": {
+      "bg": "#b45f06",
+      "col": 10,
+      "colSpan": 1,
+      "row": 46,
+      "rowSpan": 1
+    },
+    "r2b_flag": "auto-placed"
+  },
+  "amalekites": {
+    "grid": {
+      "bg": "#38761d",
+      "bgTo": "#85200c",
+      "dir": "l",
+      "gradDeg": 270
+    }
+  },
+  "amalickiah-vs-nephites-1": {
+    "grid": {
+      "bg": "#85200c",
+      "col": 15,
+      "colSpan": 1,
+      "row": 65,
+      "rowSpan": 1
+    },
+    "r2b_flag": "auto-placed"
+  },
+  "amalickiah-vs-nephites-2": {
+    "grid": {
+      "bg": "#85200c",
+      "col": 11,
+      "colSpan": 1,
+      "row": 65,
+      "rowSpan": 1
+    },
+    "r2b_flag": "auto-placed"
+  },
+  "amlicites": {
+    "grid": {
+      "bg": "#85200c",
+      "col": 6,
+      "colSpan": 1,
+      "row": 52,
+      "rowSpan": 1
+    },
+    "r2b_flag": "auto-placed"
+  },
+  "ammon-and-the-people-of-limhi": {
+    "grid": {
+      "bgTo": "#274e13",
+      "dir": "r",
+      "gradDeg": 90
+    }
+  },
+  "ammon-in-middoni": {
+    "grid": {
+      "bg": "#85200c",
+      "col": 10,
+      "colSpan": 1,
+      "row": 50,
+      "rowSpan": 1
+    },
+    "r2b_flag": "auto-placed"
+  },
+  "ammon-search-party": {
+    "grid": {
+      "bg": "#85200c",
+      "col": 16,
+      "colSpan": 1,
+      "row": 46,
+      "rowSpan": 1
+    },
+    "r2b_flag": "auto-placed"
+  },
+  "ammonites-anti-nephi-lehites": {
+    "grid": {
+      "bg": "#85200c",
+      "col": 16,
+      "colSpan": 1,
+      "row": 60,
+      "rowSpan": 1
+    },
+    "r2b_flag": "auto-placed"
+  },
+  "ammoron": {
+    "grid": {
+      "bg": "#85200c",
+      "col": 10,
+      "colSpan": 1,
+      "row": 70,
+      "rowSpan": 1
+    },
+    "r2b_flag": "auto-placed"
+  },
+  "attack-on-converts": {
+    "grid": {
+      "bg": "#85200c",
+      "col": 6,
+      "colSpan": 1,
+      "row": 54,
+      "rowSpan": 1
+    },
+    "r2b_flag": "auto-placed"
+  },
+  "captain-moroni": {
+    "grid": {
+      "bg": "#38761d",
+      "col": 33,
+      "colSpan": 1,
+      "row": 64,
+      "rowSpan": 1
+    },
+    "r2b_flag": "auto-placed"
+  },
+  "colonial-expedition": {
+    "grid": {
+      "dir": "l"
+    }
+  },
+  "convert-massacre": {
+    "grid": {
+      "bg": "#85200c",
+      "col": 2,
+      "colSpan": 1,
+      "row": 54,
+      "rowSpan": 1
+    },
+    "r2b_flag": "auto-placed"
+  },
+  "convert-relocation": {
+    "grid": {
+      "bg": "#85200c",
+      "col": 12,
+      "colSpan": 1,
+      "row": 60,
+      "rowSpan": 1
+    },
+    "r2b_flag": "auto-placed"
+  },
+  "discovery-of-desolation": {
+    "grid": {
+      "bg": "#274e13",
+      "col": 34,
+      "colSpan": 1,
+      "row": 48,
+      "rowSpan": 1
+    },
+    "r2b_flag": "auto-placed"
+  },
+  "eastern-war": {
+    "grid": {
+      "bg": "#38761d",
+      "col": 30,
+      "colSpan": 1,
+      "row": 69,
+      "rowSpan": 1
+    },
+    "r2b_flag": "auto-placed"
+  },
+  "explorers": {
+    "grid": {
+      "bg": "#3c78d8",
+      "dir": "r"
+    }
+  },
+  "gadianton-assaults": {
+    "grid": {
+      "bg": "#6fa8dc",
+      "col": 24,
+      "colSpan": 1,
+      "row": 98,
+      "rowSpan": 1
+    },
+    "r2b_flag": "auto-placed"
+  },
+  "gadianton-surrender": {
+    "grid": {
+      "bg": "#6fa8dc",
+      "col": 24,
+      "colSpan": 1,
+      "row": 104,
+      "rowSpan": 1
+    },
+    "r2b_flag": "auto-placed"
+  },
+  "ill-fated-expedition": {
+    "grid": {
+      "dir": "r"
+    }
+  },
+  "jacob": {
+    "grid": {
+      "bg": "#38761d",
+      "col": 35,
+      "colSpan": 1,
+      "row": 105,
+      "rowSpan": 1
+    },
+    "r2b_flag": "auto-placed"
+  },
+  "jacob-and-his-followers": {
+    "grid": {
+      "bg": "#38761d",
+      "col": 31,
+      "colSpan": 1,
+      "row": 105,
+      "rowSpan": 1
+    },
+    "r2b_flag": "auto-placed"
+  },
+  "jaredite-battle": {
+    "grid": {
+      "bg": "#134f5c",
+      "col": 34,
+      "colSpan": 1,
+      "row": 12,
+      "rowSpan": 1
+    },
+    "r2b_flag": "auto-placed"
+  },
+  "jaredite-voyage": {
+    "grid": {
+      "bg": "#134f5c",
+      "col": 5,
+      "colSpan": 1,
+      "row": 2,
+      "rowSpan": 1
+    },
+    "r2b_flag": "auto-placed"
+  },
+  "jaredites": {
+    "grid": {
+      "tier": 1
+    }
+  },
+  "king-laman-i": {
+    "grid": {
+      "bg": "#85200c",
+      "col": 7,
+      "colSpan": 1,
+      "row": 30,
+      "rowSpan": 1
+    },
+    "r2b_flag": "auto-placed"
+  },
+  "king-laman-ii": {
+    "grid": {
+      "bg": "#85200c",
+      "col": 10,
+      "colSpan": 1,
+      "row": 33,
+      "rowSpan": 1
+    },
+    "r2b_flag": "auto-placed"
+  },
+  "lamanite-occupation-of-zarahemla": {
+    "grid": {
+      "bg": "#85200c",
+      "col": 10,
+      "colSpan": 1,
+      "row": 83,
+      "rowSpan": 1
+    },
+    "r2b_flag": "auto-placed"
+  },
+  "lamanite-recruits": {
+    "grid": {
+      "bgTo": "#6fa8dc",
+      "dir": "r",
+      "gradDeg": 90
+    }
+  },
+  "lamanite-recruits-2": {
+    "grid": {
+      "bg": "#6fa8dc",
+      "col": 25,
+      "colSpan": 1,
+      "row": 101,
+      "rowSpan": 1
+    },
+    "r2b_flag": "auto-placed"
+  },
+  "lamanite-troops": {
+    "grid": {
+      "bg": "#85200c",
+      "col": 20,
+      "colSpan": 1,
+      "row": 46,
+      "rowSpan": 1
+    },
+    "r2b_flag": "auto-placed"
+  },
+  "lamanites": {
+    "grid": {
+      "tier": 1
+    }
+  },
+  "lamanites-vs-nephi": {
+    "grid": {
+      "bg": "#85200c",
+      "col": 16,
+      "colSpan": 1,
+      "icon": "battle",
+      "rowSpan": 1
+    }
+  },
+  "lamanites-with-nephite-defectors": {
+    "grid": {
+      "dir": "r"
+    }
+  },
+  "lehite-family": {
+    "grid": {
+      "tier": 1
+    }
+  },
+  "limhis-revolts": {
+    "grid": {
+      "bg": "#3c78d8",
+      "col": 17,
+      "colSpan": 1,
+      "row": 38,
+      "rowSpan": 1
+    },
+    "r2b_flag": "auto-placed"
+  },
+  "mormon-vs-aaron": {
+    "grid": {
+      "bg": "#38761d",
+      "col": 25,
+      "colSpan": 1,
+      "row": 117,
+      "rowSpan": 1
+    },
+    "r2b_flag": "auto-placed"
+  },
+  "moroni-east": {
+    "grid": {
+      "bg": "#38761d",
+      "col": 34,
+      "colSpan": 1,
+      "row": 69,
+      "rowSpan": 1
+    },
+    "r2b_flag": "auto-placed"
+  },
+  "mulekites": {
+    "grid": {
+      "tier": 1
+    }
+  },
+  "nephi-2-and-lehi-2-north": {
+    "grid": {
+      "bg": "#38761d",
+      "col": 34,
+      "colSpan": 1,
+      "row": 91,
+      "rowSpan": 1
+    },
+    "r2b_flag": "auto-placed"
+  },
+  "nephi-2-preaching": {
+    "grid": {
+      "bg": "#85200c",
+      "col": 10,
+      "colSpan": 1,
+      "row": 92,
+      "rowSpan": 1
+    },
+    "r2b_flag": "auto-placed"
+  },
+  "nephite-counterstrike": {
+    "grid": {
+      "bg": "#38761d",
+      "col": 34,
+      "colSpan": 1,
+      "row": 103,
+      "rowSpan": 1
+    },
+    "r2b_flag": "auto-placed"
+  },
+  "nephite-defectors": {
+    "grid": {
+      "bg": "#38761d",
+      "bgTo": "#85200c",
+      "dir": "l",
+      "gradDeg": 270
+    }
+  },
+  "nephite-recruits": {
+    "grid": {
+      "bgTo": "#6fa8dc",
+      "dir": "l",
+      "gradDeg": 270
+    }
+  },
+  "nephites": {
+    "grid": {
+      "tier": 1
+    }
+  },
+  "noah-vs-lamanites": {
+    "grid": {
+      "bg": "#3c78d8",
+      "col": 23,
+      "colSpan": 1,
+      "row": 39,
+      "rowSpan": 1
+    },
+    "r2b_flag": "auto-placed"
+  },
+  "people-of-alma": {
+    "grid": {
+      "bgTo": "#274e13",
+      "dir": "r",
+      "gradDeg": 90
+    }
+  },
+  "reclaiming-nephite-land": {
+    "grid": {
+      "bg": "#38761d",
+      "col": 35,
+      "colSpan": 1,
+      "row": 84,
+      "rowSpan": 1
+    },
+    "r2b_flag": "auto-placed"
+  },
+  "sons-of-mosiah": {
+    "grid": {
+      "dir": "l"
+    }
+  },
+  "war-in-zarahemla": {
+    "grid": {
+      "bg": "#38761d",
+      "col": 29,
+      "colSpan": 1,
+      "row": 117,
+      "rowSpan": 1
+    },
+    "r2b_flag": "auto-placed"
+  },
+  "zarahemla-sermon": {
+    "grid": {
+      "bg": "#38761d",
+      "col": 36,
+      "colSpan": 1,
+      "row": 54,
+      "rowSpan": 1
+    },
+    "r2b_flag": "auto-placed"
+  },
+  "zoramite-defection": {
+    "grid": {
+      "bg": "#38761d",
+      "bgTo": "#85200c",
+      "col": 19,
+      "colSpan": 1,
+      "dir": "l",
+      "gradDeg": 270,
+      "row": 65,
+      "rowSpan": 1
+    },
+    "r2b_flag": "auto-placed"
+  }
+}

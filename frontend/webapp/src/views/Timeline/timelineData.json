@@ -38,10 +38,31 @@
       "date": "3000 BC",
       "grid": {
         "bg": "#134f5c",
+        "col": 5,
+        "colSpan": 1,
+        "row": 2,
+        "rowSpan": 1
+      },
+      "heading": "Jaredite Voyage",
+      "html": "<p>The Jaredites load their provisions and livestock on the barges, and launch into the ocean.&nbsp;The Lord causes a furious wind to blow them towards the promised land.&nbsp;Their boat trip lasts for 344 days, and they finally land at the promised land, where they weep for joy and praise the Lord.</p>",
+      "kind": "event",
+      "p": true,
+      "r2b_flag": "auto-placed",
+      "slug": "jaredite-voyage",
+      "text": {
+        "slug": "jaredites/38"
+      },
+      "textSlug": "jaredites/38"
+    },
+    {
+      "date": "3000 BC",
+      "grid": {
+        "bg": "#134f5c",
         "col": 33,
         "colSpan": 2,
         "row": 5,
-        "rowSpan": 1
+        "rowSpan": 1,
+        "tier": 1
       },
       "heading": "Jaredites",
       "html": "<p>At the time that the language of the people was being changed near the \"Great Tower,\" Jared tells his brother to plead with the Lord not to change their language.&nbsp;God grants Jared and Jared&rsquo;s brothers wish, and tells Jared&rsquo;s brother to gather his friends, family, and livestock, and travel to northward&mdash;a promised land of inheritance is in store for them.</p>",
@@ -108,6 +129,26 @@
       "textSlug": "jaredites/214"
     },
     {
+      "date": "685 BC",
+      "grid": {
+        "bg": "#134f5c",
+        "col": 34,
+        "colSpan": 1,
+        "row": 12,
+        "rowSpan": 1
+      },
+      "heading": "The Final Jaredite Battle",
+      "html": "<p>The Jaredies, represented in two armies, armies march towards each other, initiate a battle, and fight for many days. &nbsp;The battle ends when the two survivors, Shiz and Coriantumr, fight one-on-one. &nbsp;Coriantumr decapitates Shiz, and faints. &nbsp;The Jaredite civilization effective comes to and end.</p>",
+      "kind": "event",
+      "p": true,
+      "r2b_flag": "auto-placed",
+      "slug": "jaredite-battle",
+      "text": {
+        "slug": "jaredites/197"
+      },
+      "textSlug": "jaredites/197"
+    },
+    {
       "date": "590 BC",
       "grid": {
         "col": 3,
@@ -149,7 +190,8 @@
         "col": 21,
         "colSpan": 2,
         "row": 13,
-        "rowSpan": 1
+        "rowSpan": 1,
+        "tier": 1
       },
       "heading": "Mulekites",
       "html": "<p>The Mulekite colony establishes itself in the Northern Lands, meets Coriantumr, and develop as an independent civilization.</p>",
@@ -184,7 +226,8 @@
         "col": 4,
         "colSpan": 2,
         "row": 15,
-        "rowSpan": 1
+        "rowSpan": 1,
+        "tier": 1
       },
       "heading": "Lehi’s Family",
       "html": "<p>In the promised land, specifically the southern region known as the \"Land of First Inheritance,\" the Lehi's family becomes industrious, Nephi makes records, and an aging Lehi blesses his family members. &nbsp;After Lehi's death, the tensions between Laman and Nephi increase, and a schism becomes imminent.</p>",
@@ -219,7 +262,8 @@
         "col": 11,
         "colSpan": 1,
         "row": 17,
-        "rowSpan": 1
+        "rowSpan": 1,
+        "tier": 1
       },
       "heading": "The Nephites",
       "html": "<p>&nbsp;Despite Nephi&rsquo;s prayers, Laman and Lemuel&rsquo;s dissenting view only deepen, and the want to kill Nephi.The Lord warns Nephi, and instructs him to leave&mdash;Nephi warns his followers.&nbsp;Nephi and his followers (Nephites) leave the settlement and the Lamanites (followers of Laman and Lemuel) behind.&nbsp;</p>",
@@ -234,9 +278,10 @@
     {
       "date": "570 BC",
       "grid": {
-        "bg": "#1c4587",
-        "col": 18,
-        "colSpan": 2,
+        "bg": "#85200c",
+        "col": 16,
+        "colSpan": 1,
+        "icon": "battle",
         "row": 17,
         "rowSpan": 1
       },
@@ -251,13 +296,32 @@
       "textSlug": "land-of-nephi/11"
     },
     {
+      "date": null,
+      "grid": {
+        "anchor": "center",
+        "col": 19,
+        "colSpan": 2,
+        "row": 17,
+        "rowSpan": 1,
+        "tier": 3
+      },
+      "heading": "Nephi",
+      "html": null,
+      "kind": "label",
+      "p": true,
+      "slug": "label-nephi",
+      "text": null,
+      "textSlug": null
+    },
+    {
       "date": "570 BC",
       "grid": {
         "bg": "#85200c",
         "col": 4,
         "colSpan": 2,
         "row": 18,
-        "rowSpan": 1
+        "rowSpan": 1,
+        "tier": 1
       },
       "heading": "The Lamanites",
       "html": "<p>Separated from the Nephites, the Lamanites become cursed, and become cut off from God&rsquo;s influence.&nbsp;The Lamanite culture becomes degenerate, and&nbsp;want to kill the Nephites.&nbsp;Despite the missionary efforts of the Nephites, the Lamanites remain a godless civilization, all the while&nbsp;multiplying and expanding its territories.</p>",
@@ -268,6 +332,24 @@
         "slug": "promised-land/56"
       },
       "textSlug": "promised-land/56"
+    },
+    {
+      "date": null,
+      "grid": {
+        "anchor": "center",
+        "col": 19,
+        "colSpan": 2,
+        "row": 18,
+        "rowSpan": 1,
+        "tier": 3
+      },
+      "heading": "Sam",
+      "html": null,
+      "kind": "label",
+      "p": true,
+      "slug": "label-sam",
+      "text": null,
+      "textSlug": null
     },
     {
       "date": "570 BC",
@@ -311,6 +393,24 @@
     {
       "date": null,
       "grid": {
+        "anchor": "center",
+        "col": 19,
+        "colSpan": 2,
+        "row": 19,
+        "rowSpan": 1,
+        "tier": 3
+      },
+      "heading": "Zoram",
+      "html": null,
+      "kind": "label",
+      "p": true,
+      "slug": "label-zoram",
+      "text": null,
+      "textSlug": null
+    },
+    {
+      "date": null,
+      "grid": {
         "bg": "#bf9000",
         "col": 34,
         "colSpan": 1,
@@ -327,48 +427,30 @@
       "textSlug": null
     },
     {
-      "date": "25 AD",
-      "grid": {
-        "bg": "#1c4587",
-        "col": 18,
-        "colSpan": 2,
-        "row": 20,
-        "rowSpan": 1
-      },
-      "heading": "Jacob",
-      "html": "<p>As Nephite society begins to disntigrate, a corrupt organization appoints a leader, Jacob, to be their king, with a sworn oath to destroy all governmental order.</p>",
-      "kind": "event",
-      "p": true,
-      "slug": "jacob",
-      "text": {
-        "slug": "gadianton/179"
-      },
-      "textSlug": "gadianton/179"
-    },
-    {
       "date": null,
       "grid": {
-        "bg": "#85200c",
-        "col": 16,
-        "colSpan": 1,
-        "icon": "battle",
-        "row": 21,
-        "rowSpan": 1
+        "anchor": "center",
+        "col": 19,
+        "colSpan": 2,
+        "row": 20,
+        "rowSpan": 1,
+        "tier": 3
       },
-      "heading": null,
+      "heading": "Jacob",
       "html": null,
-      "kind": "event",
+      "kind": "label",
       "p": true,
-      "slug": "battle-r21-c16",
+      "slug": "label-jacob",
       "text": null,
       "textSlug": null
     },
     {
       "date": "500 BC",
       "grid": {
-        "bg": "#1c4587",
-        "col": 18,
-        "colSpan": 2,
+        "bg": "#85200c",
+        "col": 16,
+        "colSpan": 1,
+        "icon": "battle",
         "row": 21,
         "rowSpan": 1
       },
@@ -385,27 +467,28 @@
     {
       "date": null,
       "grid": {
-        "bg": "#85200c",
-        "col": 16,
-        "colSpan": 1,
-        "icon": "battle",
-        "row": 23,
-        "rowSpan": 1
+        "anchor": "center",
+        "col": 19,
+        "colSpan": 2,
+        "row": 21,
+        "rowSpan": 1,
+        "tier": 3
       },
-      "heading": null,
+      "heading": "Enos",
       "html": null,
-      "kind": "event",
+      "kind": "label",
       "p": true,
-      "slug": "battle-r23-c16",
+      "slug": "label-enos",
       "text": null,
       "textSlug": null
     },
     {
       "date": "420 BC",
       "grid": {
-        "bg": "#1c4587",
-        "col": 18,
-        "colSpan": 2,
+        "bg": "#85200c",
+        "col": 16,
+        "colSpan": 1,
+        "icon": "battle",
         "row": 23,
         "rowSpan": 1
       },
@@ -422,27 +505,28 @@
     {
       "date": null,
       "grid": {
-        "bg": "#85200c",
-        "col": 16,
-        "colSpan": 1,
-        "icon": "battle",
-        "row": 25,
-        "rowSpan": 1
+        "anchor": "center",
+        "col": 19,
+        "colSpan": 2,
+        "row": 23,
+        "rowSpan": 1,
+        "tier": 3
       },
-      "heading": null,
+      "heading": "Jarom",
       "html": null,
-      "kind": "event",
+      "kind": "label",
       "p": true,
-      "slug": "battle-r25-c16",
+      "slug": "label-jarom",
       "text": null,
       "textSlug": null
     },
     {
       "date": "361 BC",
       "grid": {
-        "bg": "#1c4587",
-        "col": 18,
-        "colSpan": 2,
+        "bg": "#85200c",
+        "col": 16,
+        "colSpan": 1,
+        "icon": "battle",
         "row": 25,
         "rowSpan": 1
       },
@@ -459,27 +543,28 @@
     {
       "date": null,
       "grid": {
-        "bg": "#85200c",
-        "col": 16,
-        "colSpan": 1,
-        "icon": "battle",
-        "row": 27,
-        "rowSpan": 1
+        "anchor": "center",
+        "col": 19,
+        "colSpan": 2,
+        "row": 25,
+        "rowSpan": 1,
+        "tier": 3
       },
-      "heading": null,
+      "heading": "Omni",
       "html": null,
-      "kind": "event",
+      "kind": "label",
       "p": true,
-      "slug": "battle-r27-c16",
+      "slug": "label-omni",
       "text": null,
       "textSlug": null
     },
     {
       "date": "279 BC",
       "grid": {
-        "bg": "#1c4587",
-        "col": 18,
-        "colSpan": 2,
+        "bg": "#85200c",
+        "col": 16,
+        "colSpan": 1,
+        "icon": "battle",
         "row": 27,
         "rowSpan": 1
       },
@@ -496,27 +581,28 @@
     {
       "date": null,
       "grid": {
-        "bg": "#85200c",
-        "col": 16,
-        "colSpan": 1,
-        "icon": "battle",
-        "row": 29,
-        "rowSpan": 1
+        "anchor": "center",
+        "col": 19,
+        "colSpan": 2,
+        "row": 27,
+        "rowSpan": 1,
+        "tier": 3
       },
-      "heading": null,
+      "heading": "Amaron",
       "html": null,
-      "kind": "event",
+      "kind": "label",
       "p": true,
-      "slug": "battle-r29-c16",
+      "slug": "label-amaron",
       "text": null,
       "textSlug": null
     },
     {
       "date": "250 BC",
       "grid": {
-        "bg": "#1c4587",
-        "col": 18,
-        "colSpan": 2,
+        "bg": "#85200c",
+        "col": 16,
+        "colSpan": 1,
+        "icon": "battle",
         "row": 29,
         "rowSpan": 1
       },
@@ -529,6 +615,24 @@
         "slug": "land-of-nephi/76"
       },
       "textSlug": "land-of-nephi/76"
+    },
+    {
+      "date": null,
+      "grid": {
+        "anchor": "center",
+        "col": 19,
+        "colSpan": 2,
+        "row": 29,
+        "rowSpan": 1,
+        "tier": 3
+      },
+      "heading": "Abinadom",
+      "html": null,
+      "kind": "label",
+      "p": true,
+      "slug": "label-abinadom",
+      "text": null,
+      "textSlug": null
     },
     {
       "date": null,
@@ -548,6 +652,44 @@
         "slug": "zarahemla/6"
       },
       "textSlug": "zarahemla/6"
+    },
+    {
+      "date": "200 BC",
+      "grid": {
+        "bg": "#85200c",
+        "col": 7,
+        "colSpan": 1,
+        "row": 30,
+        "rowSpan": 1
+      },
+      "heading": "King Laman I",
+      "html": "<p>King Laman I peacefully moves his people out of the land of Nephi, and allows Zeniff's colony to move in. &nbsp;He ultimately has the intention of enslaving Zeniff's people.</p>",
+      "kind": "event",
+      "p": true,
+      "r2b_flag": "auto-placed",
+      "slug": "king-laman-i",
+      "text": {
+        "slug": "recolonization/4"
+      },
+      "textSlug": "recolonization/4"
+    },
+    {
+      "date": null,
+      "grid": {
+        "anchor": "center",
+        "col": 19,
+        "colSpan": 2,
+        "row": 30,
+        "rowSpan": 1,
+        "tier": 3
+      },
+      "heading": "Amaleki",
+      "html": null,
+      "kind": "label",
+      "p": true,
+      "slug": "label-amaleki",
+      "text": null,
+      "textSlug": null
     },
     {
       "date": "279 BC-200 BC",
@@ -571,6 +713,26 @@
     {
       "date": "178 BC",
       "grid": {
+        "bg": "#85200c",
+        "col": 10,
+        "colSpan": 1,
+        "row": 33,
+        "rowSpan": 1
+      },
+      "heading": "King Laman II",
+      "html": "<p>King Laman II succeeds his father, and plans for war against Zeniff's colony.</p>",
+      "kind": "event",
+      "p": true,
+      "r2b_flag": "auto-placed",
+      "slug": "king-laman-ii",
+      "text": {
+        "slug": "recolonization/10"
+      },
+      "textSlug": "recolonization/10"
+    },
+    {
+      "date": "178 BC",
+      "grid": {
         "bg": "#3c78d8",
         "col": 19,
         "colSpan": 1,
@@ -589,11 +751,30 @@
       "textSlug": "recolonization/22"
     },
     {
+      "date": null,
+      "grid": {
+        "anchor": "start",
+        "bg": "#3c78d8",
+        "col": 22,
+        "colSpan": 2,
+        "row": 33,
+        "rowSpan": 1
+      },
+      "heading": "Shilom",
+      "html": null,
+      "kind": "place",
+      "p": false,
+      "slug": "place-shilom",
+      "text": null,
+      "textSlug": null
+    },
+    {
       "date": "200 BC",
       "grid": {
         "bg": "#3c78d8",
         "col": 26,
         "colSpan": 1,
+        "dir": "r",
         "row": 33,
         "rowSpan": 1
       },
@@ -651,6 +832,7 @@
         "bg": "#3c78d8",
         "col": 26,
         "colSpan": 1,
+        "dir": "l",
         "row": 35,
         "rowSpan": 1
       },
@@ -817,6 +999,26 @@
       "textSlug": "recolonization/75"
     },
     {
+      "date": "140 BC",
+      "grid": {
+        "bg": "#3c78d8",
+        "col": 17,
+        "colSpan": 1,
+        "row": 38,
+        "rowSpan": 1
+      },
+      "heading": "Limhi’s Revolts",
+      "html": "<p>Limhi&rsquo;s people attempt three separate violent revolutions against the Lamanites, but fail each time. A period of repentance and humility follows.</p>",
+      "kind": "event",
+      "p": true,
+      "r2b_flag": "auto-placed",
+      "slug": "limhis-revolts",
+      "text": {
+        "slug": "recolonization/85"
+      },
+      "textSlug": "recolonization/85"
+    },
+    {
       "date": null,
       "grid": {
         "col": 37,
@@ -852,6 +1054,26 @@
       "textSlug": "recolonization/72"
     },
     {
+      "date": "145 BC",
+      "grid": {
+        "bg": "#3c78d8",
+        "col": 23,
+        "colSpan": 1,
+        "row": 39,
+        "rowSpan": 1
+      },
+      "heading": "Lamanite Siege",
+      "html": "<p>Noah sees a Lamanite army approaching the land of Nephi. &nbsp;He flees the city with his followers, including his priests, leaving behind women and children. &nbsp;His followers become disgruntled, and burn him at the stake. &nbsp;Seeing the defenseless women and children, the Lamanites stop attacking, and instead impose a heavy tax on the people.</p>",
+      "kind": "event",
+      "p": true,
+      "r2b_flag": "auto-placed",
+      "slug": "noah-vs-lamanites",
+      "text": {
+        "slug": "recolonization/58"
+      },
+      "textSlug": "recolonization/58"
+    },
+    {
       "date": null,
       "grid": {
         "bg": "#3c78d8",
@@ -872,8 +1094,10 @@
     {
       "date": "120 BC",
       "grid": {
+        "bg": "#3c78d8",
         "col": 26,
         "colSpan": 1,
+        "dir": "r",
         "row": 40,
         "rowSpan": 1
       },
@@ -910,8 +1134,11 @@
       "date": "121 BC",
       "grid": {
         "bg": "#3c78d8",
+        "bgTo": "#274e13",
         "col": 26,
         "colSpan": 1,
+        "dir": "r",
+        "gradDeg": 90,
         "row": 45,
         "rowSpan": 1
       },
@@ -929,8 +1156,71 @@
       "date": "121 BC",
       "grid": {
         "bg": "#b45f06",
+        "col": 10,
+        "colSpan": 1,
+        "row": 46,
+        "rowSpan": 1
+      },
+      "heading": "Alma’s People in Slavery",
+      "html": "<p>Noah's priests (inclduing Amulon) and the lost Lamanite troops stumble upon Alma's people in Helam, and forecully occupy the land. &nbsp;Alma's people are enslaved, and work for their captors.</p>",
+      "kind": "event",
+      "p": true,
+      "r2b_flag": "auto-placed",
+      "slug": "almas-people-in-slavery",
+      "text": {
+        "slug": "alma/24"
+      },
+      "textSlug": "alma/24"
+    },
+    {
+      "date": "121 BC",
+      "grid": {
+        "bg": "#85200c",
+        "col": 16,
+        "colSpan": 1,
+        "row": 46,
+        "rowSpan": 1
+      },
+      "heading": "Ammon’s Search Party",
+      "html": "<p>Mosiah sends a search party (composed of 16 men, lead by a man named Ammon) out to locate the group of people that left for the land of Nephi some time earlier.&nbsp;Not knowing the way, the search party wanders around for 40 days, but finally are successful in locating the land of Nephi, where they meet Limhi's people</p>",
+      "kind": "event",
+      "p": true,
+      "r2b_flag": "auto-placed",
+      "slug": "ammon-search-party",
+      "text": {
+        "slug": "zarahemla/search-party/1"
+      },
+      "textSlug": "zarahemla/search-party/1"
+    },
+    {
+      "date": "121 BC",
+      "grid": {
+        "bg": "#85200c",
+        "col": 20,
+        "colSpan": 1,
+        "row": 46,
+        "rowSpan": 1
+      },
+      "heading": "Lamanite Troops",
+      "html": "<p>Lamanite troops that had been tasked with tracking down the people of Limhi stumble upon the community of Amulon and Noah's Priests. &nbsp;Amulon's people and the Lamanite troops form an alliance, and set out to find the land of Nephi.</p>",
+      "kind": "event",
+      "p": true,
+      "r2b_flag": "auto-placed",
+      "slug": "lamanite-troops",
+      "text": {
+        "slug": "noahs-priests/7"
+      },
+      "textSlug": "noahs-priests/7"
+    },
+    {
+      "date": "121 BC",
+      "grid": {
+        "bg": "#b45f06",
+        "bgTo": "#274e13",
         "col": 26,
         "colSpan": 1,
+        "dir": "r",
+        "gradDeg": 90,
         "row": 47,
         "rowSpan": 1
       },
@@ -964,11 +1254,32 @@
       "textSlug": "alma/1"
     },
     {
+      "date": "120 BC",
+      "grid": {
+        "bg": "#274e13",
+        "col": 34,
+        "colSpan": 1,
+        "row": 48,
+        "rowSpan": 1
+      },
+      "heading": "Discovery of Desolation",
+      "html": "<p>Limhi's search team stumbles upon a ruined city filled with dry bones, which they assume was Zarahemla, but is in fact the former lands of the Jaredites. They unearth a record, 24 engraven plates, which they are unable to read. &nbsp;They return to Limhi in the Land of Nephi with the records.</p>",
+      "kind": "event",
+      "p": true,
+      "r2b_flag": "auto-placed",
+      "slug": "discovery-of-desolation",
+      "text": {
+        "slug": "recolonization/89"
+      },
+      "textSlug": "recolonization/89"
+    },
+    {
       "date": "91 BC",
       "grid": {
         "bg": "#bf9000",
         "col": 26,
         "colSpan": 1,
+        "dir": "l",
         "row": 49,
         "rowSpan": 1
       },
@@ -981,6 +1292,44 @@
         "slug": "zarahemla/84"
       },
       "textSlug": "zarahemla/84"
+    },
+    {
+      "date": "91 BC - 77 BC",
+      "grid": {
+        "bg": "#85200c",
+        "col": 10,
+        "colSpan": 1,
+        "row": 50,
+        "rowSpan": 1
+      },
+      "heading": "Trip to Middoni",
+      "html": "<p>The Lord informs Ammon that his brothers are in prison in Middoni, and are in need of deliverance. On their way to Middoni, Lamoni and Ammon unexpectdly cross paths with Lamoni&rsquo;s father, with whom they have a tense encounter.</p>\r\n<p>Ammon and Lamoni go to Middoni, and are successful in negotiating Ammon&rsquo;s brothers&rsquo; release. Ammon meets his brothers, who are battered and beaten from abuse in prison&mdash;they had not had the good fortunes Ammon had enjoyed in his preaching.</p>\r\n<p>Ammon and Lamoni leave Aaron and his brothers, and return to Ishmael.</p>",
+      "kind": "event",
+      "p": true,
+      "r2b_flag": "auto-placed",
+      "slug": "ammon-in-middoni",
+      "text": {
+        "slug": "ammon/102"
+      },
+      "textSlug": "ammon/102"
+    },
+    {
+      "date": null,
+      "grid": {
+        "anchor": "above",
+        "bg": "#38761d",
+        "col": 33,
+        "colSpan": 2,
+        "row": 50,
+        "rowSpan": 1
+      },
+      "heading": "Reign of Judges",
+      "html": null,
+      "kind": "place",
+      "p": false,
+      "slug": "place-reign-of-judges",
+      "text": null,
+      "textSlug": null
     },
     {
       "date": "91 BC - 77 BC",
@@ -1023,9 +1372,12 @@
     {
       "date": "87 BC",
       "grid": {
-        "bg": "#85200c",
+        "bg": "#38761d",
+        "bgTo": "#85200c",
         "col": 26,
         "colSpan": 1,
+        "dir": "l",
+        "gradDeg": 270,
         "row": 51,
         "rowSpan": 1
       },
@@ -1057,6 +1409,26 @@
         "slug": "zarahemla/104"
       },
       "textSlug": "zarahemla/104"
+    },
+    {
+      "date": "87 BC",
+      "grid": {
+        "bg": "#85200c",
+        "col": 6,
+        "colSpan": 1,
+        "row": 52,
+        "rowSpan": 1
+      },
+      "heading": "Amlicite Defection",
+      "html": "<p>The Amlicites who survive the battle integrate with the Lamanites.</p>",
+      "kind": "event",
+      "p": true,
+      "r2b_flag": "auto-placed",
+      "slug": "amlicites",
+      "text": {
+        "slug": "reign-of-judges/35"
+      },
+      "textSlug": "reign-of-judges/35"
     },
     {
       "date": "91 BC - 77 BC",
@@ -1136,6 +1508,46 @@
       "textSlug": "reign-of-judges/21"
     },
     {
+      "date": "81 BC",
+      "grid": {
+        "bg": "#85200c",
+        "col": 2,
+        "colSpan": 1,
+        "row": 54,
+        "rowSpan": 1
+      },
+      "heading": "Convert Massacre in Ammonihah",
+      "html": "<p>Zeezrom is expelled from the city, and Alma and Amulek are imprisoned. &nbsp;Those that believed Alma and Amulek are thrown into a fire. &nbsp;Alma and Amulek break their ropes, the prison crumbles, and they leave the city.</p>",
+      "kind": "event",
+      "p": true,
+      "r2b_flag": "auto-placed",
+      "slug": "convert-massacre",
+      "text": {
+        "slug": "reign-of-judges/ammonihah/103"
+      },
+      "textSlug": "reign-of-judges/ammonihah/103"
+    },
+    {
+      "date": "81 BC",
+      "grid": {
+        "bg": "#85200c",
+        "col": 6,
+        "colSpan": 1,
+        "row": 54,
+        "rowSpan": 1
+      },
+      "heading": "Revolt, Attack, and Conversion",
+      "html": "<p>The unconverted Lamanites begin a coup against the converted king and his subjects. The converts, having made an oath not to fight, helplessly fall to the ground and are massacred by the insurgents.</p>\r\n<p>Many insurgent soldiers, upon seeing the how the believers sacrifice themselves unresisted, are deeply moved, and cease the strike. Guilt&ndash;ridden by their merciless acts of war, the soldiers repent, and decide to join the converts.</p>\r\n<p>Over a thousand soldiers follow suit, and the number of soldier converts exceeds the number of casualties. The most hardened warriors were the Amalekites and the Amulonites (Nephite dissenters) who do not join the converts.</p>",
+      "kind": "event",
+      "p": true,
+      "r2b_flag": "auto-placed",
+      "slug": "attack-on-converts",
+      "text": {
+        "slug": "ammon/119"
+      },
+      "textSlug": "ammon/119"
+    },
+    {
       "date": "91 BC - 77 BC",
       "grid": {
         "bg": "#bf9000",
@@ -1191,6 +1603,26 @@
         "slug": "reign-of-judges/48"
       },
       "textSlug": "reign-of-judges/48"
+    },
+    {
+      "date": "83 BC",
+      "grid": {
+        "bg": "#38761d",
+        "col": 36,
+        "colSpan": 1,
+        "row": 54,
+        "rowSpan": 1
+      },
+      "heading": "Alma’s Sermon in Zarahemla",
+      "html": "<p>The first stop on Alma's preching circuit is Zarahemla, where he teaches about repentance and salvation.</p>",
+      "kind": "event",
+      "p": true,
+      "r2b_flag": "auto-placed",
+      "slug": "zarahemla-sermon",
+      "text": {
+        "slug": "reign-of-judges/50"
+      },
+      "textSlug": "reign-of-judges/50"
     },
     {
       "date": "91 BC - 77 BC",
@@ -1366,6 +1798,46 @@
       "textSlug": "ammon/163"
     },
     {
+      "date": "77 BC",
+      "grid": {
+        "bg": "#85200c",
+        "col": 12,
+        "colSpan": 1,
+        "row": 60,
+        "rowSpan": 1
+      },
+      "heading": "Lamanite Convert Relocation",
+      "html": "<p>Ammon and the missionaries have a sizable group of converts&nbsp; who want to immigrate to Zarahemla to escape persecution, so the chief judge holds a referendum to get the Nephite public opinion as to what should be done with them.&nbsp;The public states that the eastern city of Jershon will be designated for the converts, and agrees to provide military protection for them, since the converts had covenanted not to fight anymore.&nbsp;</p>\r\n<p>Ammon brings Alma to his converts, who are camping out in the wilderness&mdash;Ammon tells them they are welcome to inhabit the city of Jershon.&nbsp;</p>",
+      "kind": "event",
+      "p": true,
+      "r2b_flag": "auto-placed",
+      "slug": "convert-relocation",
+      "text": {
+        "slug": "reign-of-judges/80"
+      },
+      "textSlug": "reign-of-judges/80"
+    },
+    {
+      "date": "77 BC",
+      "grid": {
+        "bg": "#85200c",
+        "col": 16,
+        "colSpan": 1,
+        "row": 60,
+        "rowSpan": 1
+      },
+      "heading": "People of Ammon",
+      "html": "<p>The converts travel to Jershon and establish themselves there.&nbsp;Previously knows as Anti&ndash;Nephi&ndash;Lehites, they now call themselves the people of Ammon (Ammonites).</p>",
+      "kind": "event",
+      "p": true,
+      "r2b_flag": "auto-placed",
+      "slug": "ammonites-anti-nephi-lehites",
+      "text": {
+        "slug": "reign-of-judges/81"
+      },
+      "textSlug": "reign-of-judges/81"
+    },
+    {
       "date": "74 BC",
       "grid": {
         "bg": "#bf9000",
@@ -1422,6 +1894,89 @@
         "slug": "reign-of-judges/zoramites/1"
       },
       "textSlug": "reign-of-judges/zoramites/1"
+    },
+    {
+      "date": "74 BC",
+      "grid": {
+        "bg": "#38761d",
+        "col": 33,
+        "colSpan": 1,
+        "row": 64,
+        "rowSpan": 1
+      },
+      "heading": "Captain Moroni",
+      "html": "<p>A young military leader named Moroni takes control of the Nephite military resistance.</p>",
+      "kind": "event",
+      "p": true,
+      "r2b_flag": "auto-placed",
+      "slug": "captain-moroni",
+      "text": {
+        "slug": "war/6"
+      },
+      "textSlug": "war/6"
+    },
+    {
+      "date": "72 BC",
+      "grid": {
+        "bg": "#85200c",
+        "col": 11,
+        "colSpan": 1,
+        "row": 65,
+        "rowSpan": 1
+      },
+      "heading": "Amalickiah’s Invasion",
+      "html": "<p>Amalickiah strikes again, beginning at the city of Moroni, and continuing on to occupy many Nephite cities and lands. &nbsp;The war then expands into a multi-front campaign. Amalickiah is killed by Teancum. Amalickiah's brother Ammron takes control of the Lamanite army.</p>",
+      "kind": "event",
+      "p": true,
+      "r2b_flag": "auto-placed",
+      "slug": "amalickiah-vs-nephites-2",
+      "text": {
+        "slug": "war/109"
+      },
+      "textSlug": "war/109"
+    },
+    {
+      "date": "73 BC",
+      "grid": {
+        "bg": "#85200c",
+        "col": 15,
+        "colSpan": 1,
+        "row": 65,
+        "rowSpan": 1
+      },
+      "heading": "Amalickiah’s Initial Strikes",
+      "html": "<p>Amalickiah leads his army to the cities of Ammonihah and Noah, where they are repelled, and fail to capture any lands. The Nephites fortify their lands and subsequently enjoy a brief period of peace and prosperity.</p>",
+      "kind": "event",
+      "p": true,
+      "r2b_flag": "auto-placed",
+      "slug": "amalickiah-vs-nephites-1",
+      "text": {
+        "slug": "war/70"
+      },
+      "textSlug": "war/70"
+    },
+    {
+      "date": "72 BC",
+      "grid": {
+        "bg": "#38761d",
+        "bgTo": "#85200c",
+        "col": 19,
+        "colSpan": 1,
+        "dir": "l",
+        "gradDeg": 270,
+        "row": 65,
+        "rowSpan": 1
+      },
+      "heading": "Zoramite Defection",
+      "html": "<p>After expelling the converts from Antionum, the remaining Zoramites become Lamanites, and begin forming alliances in preparation for war.</p>",
+      "kind": "event",
+      "p": true,
+      "r2b_flag": "auto-placed",
+      "slug": "zoramite-defection",
+      "text": {
+        "slug": "war/1"
+      },
+      "textSlug": "war/1"
     },
     {
       "date": "74 BC",
@@ -1554,6 +2109,66 @@
         "slug": "amalickiah/25"
       },
       "textSlug": "amalickiah/25"
+    },
+    {
+      "date": "67 BC - 61 BC",
+      "grid": {
+        "bg": "#38761d",
+        "col": 30,
+        "colSpan": 1,
+        "row": 69,
+        "rowSpan": 1
+      },
+      "heading": "War on the Eastern Front",
+      "html": "<p>The eastern war covers Manti, Bountiful, Nephihah, and Lehi. &nbsp;Moroni wonders why the central government is not supporting him, and Teancum dies after killing Ammoron.</p>",
+      "kind": "event",
+      "p": true,
+      "r2b_flag": "auto-placed",
+      "slug": "eastern-war",
+      "text": {
+        "slug": "war/east/54"
+      },
+      "textSlug": "war/east/54"
+    },
+    {
+      "date": "67 BC - 61 BC",
+      "grid": {
+        "bg": "#38761d",
+        "col": 34,
+        "colSpan": 1,
+        "row": 69,
+        "rowSpan": 1
+      },
+      "heading": "Moroni on the Eastern Front",
+      "html": "<p>Moroni, joined by Teancum, leads the defense of eastern lands</p>",
+      "kind": "event",
+      "p": true,
+      "r2b_flag": "auto-placed",
+      "slug": "moroni-east",
+      "text": {
+        "slug": "war/east/1"
+      },
+      "textSlug": "war/east/1"
+    },
+    {
+      "date": "66 BC",
+      "grid": {
+        "bg": "#85200c",
+        "col": 10,
+        "colSpan": 1,
+        "row": 70,
+        "rowSpan": 1
+      },
+      "heading": "Ammoron",
+      "html": "<p>Ammoron, Amalickiah's brother, takes control of the Lamanite army after Teancum kills Amalickiah.</p>",
+      "kind": "event",
+      "p": true,
+      "r2b_flag": "auto-placed",
+      "slug": "ammoron",
+      "text": {
+        "slug": "war/116"
+      },
+      "textSlug": "war/116"
     },
     {
       "date": "73 BC",
@@ -1914,9 +2529,12 @@
     {
       "date": "36 BC",
       "grid": {
-        "bg": "#85200c",
+        "bg": "#38761d",
+        "bgTo": "#85200c",
         "col": 23,
         "colSpan": 1,
+        "dir": "l",
+        "gradDeg": 270,
         "row": 82,
         "rowSpan": 1
       },
@@ -1991,6 +2609,26 @@
     {
       "date": "34 BC",
       "grid": {
+        "bg": "#85200c",
+        "col": 10,
+        "colSpan": 1,
+        "row": 83,
+        "rowSpan": 1
+      },
+      "heading": "Lamanite Occupation of Zarahemla",
+      "html": "<p>The Lamanite strike was succesful in occupying the entirety of the land of Zarahemla, all the way up the the land of Bountiful.</p>",
+      "kind": "event",
+      "p": true,
+      "r2b_flag": "auto-placed",
+      "slug": "lamanite-occupation-of-zarahemla",
+      "text": {
+        "slug": "gadianton/26"
+      },
+      "textSlug": "gadianton/26"
+    },
+    {
+      "date": "34 BC",
+      "grid": {
         "bg": "#38761d",
         "col": 35,
         "colSpan": 2,
@@ -2013,6 +2651,7 @@
         "bg": "#85200c",
         "col": 24,
         "colSpan": 1,
+        "dir": "r",
         "row": 84,
         "rowSpan": 1
       },
@@ -2043,6 +2682,26 @@
       "slug": "battle-r84-c32",
       "text": null,
       "textSlug": null
+    },
+    {
+      "date": "31 BC",
+      "grid": {
+        "bg": "#38761d",
+        "col": 35,
+        "colSpan": 1,
+        "row": 84,
+        "rowSpan": 1
+      },
+      "heading": "Reclaiming Nephite Lands",
+      "html": "<p>Moronihah, Nephi, and Lehi join forces in preaching repentance to the Nephites; as the people repent, Moronihah is able to regain one half of their original land.&nbsp;</p>",
+      "kind": "event",
+      "p": true,
+      "r2b_flag": "auto-placed",
+      "slug": "reclaiming-nephite-land",
+      "text": {
+        "slug": "gadianton/30"
+      },
+      "textSlug": "gadianton/30"
     },
     {
       "date": null,
@@ -2215,6 +2874,46 @@
       "textSlug": "gadianton/90"
     },
     {
+      "date": "25 BC",
+      "grid": {
+        "bg": "#38761d",
+        "col": 34,
+        "colSpan": 1,
+        "row": 91,
+        "rowSpan": 1
+      },
+      "heading": "Nephi II and Lehi II Trave Northward",
+      "html": "<p>Nephi and Lehi travel to the northern lands to preach to those who migrated there previously.</p>",
+      "kind": "event",
+      "p": true,
+      "r2b_flag": "auto-placed",
+      "slug": "nephi-2-and-lehi-2-north",
+      "text": {
+        "slug": "gadianton/73"
+      },
+      "textSlug": "gadianton/73"
+    },
+    {
+      "date": "24 BC",
+      "grid": {
+        "bg": "#85200c",
+        "col": 10,
+        "colSpan": 1,
+        "row": 92,
+        "rowSpan": 1
+      },
+      "heading": "Nephi Preaching to the Lamanites",
+      "html": "<p>Nephi preaches in the Lamanite-occupied lands, and baptizes thousands.</p>",
+      "kind": "event",
+      "p": true,
+      "r2b_flag": "auto-placed",
+      "slug": "nephi-2-preaching",
+      "text": {
+        "slug": "gadianton/48"
+      },
+      "textSlug": "gadianton/48"
+    },
+    {
       "date": null,
       "grid": {
         "bg": "#38761d",
@@ -2236,8 +2935,11 @@
       "date": "10 BC",
       "grid": {
         "bg": "#85200c",
+        "bgTo": "#6fa8dc",
         "col": 20,
         "colSpan": 1,
+        "dir": "r",
+        "gradDeg": 90,
         "row": 93,
         "rowSpan": 1
       },
@@ -2255,8 +2957,11 @@
       "date": "10 BC",
       "grid": {
         "bg": "#38761d",
+        "bgTo": "#6fa8dc",
         "col": 27,
         "colSpan": 1,
+        "dir": "l",
+        "gradDeg": 270,
         "row": 93,
         "rowSpan": 1
       },
@@ -2327,6 +3032,26 @@
         "slug": "gadianton/91"
       },
       "textSlug": "gadianton/91"
+    },
+    {
+      "date": "9 BC",
+      "grid": {
+        "bg": "#6fa8dc",
+        "col": 24,
+        "colSpan": 1,
+        "row": 98,
+        "rowSpan": 1
+      },
+      "heading": "Gadianton Assaults",
+      "html": "<p>Gadianton attacks kill many, and capture others, including women and children.</p>",
+      "kind": "event",
+      "p": true,
+      "r2b_flag": "auto-placed",
+      "slug": "gadianton-assaults",
+      "text": {
+        "slug": "gadianton/94"
+      },
+      "textSlug": "gadianton/94"
     },
     {
       "date": "5 BC",
@@ -2404,6 +3129,26 @@
       "textSlug": null
     },
     {
+      "date": "4 AD",
+      "grid": {
+        "bg": "#6fa8dc",
+        "col": 25,
+        "colSpan": 1,
+        "row": 101,
+        "rowSpan": 1
+      },
+      "heading": "Lamanites Join Gadianton",
+      "html": "<p>Some more Lamanites continue to defect and join the Gadianton band.</p>",
+      "kind": "event",
+      "p": true,
+      "r2b_flag": "auto-placed",
+      "slug": "lamanite-recruits-2",
+      "text": {
+        "slug": "gadianton/122"
+      },
+      "textSlug": "gadianton/122"
+    },
+    {
       "date": "16 AD",
       "grid": {
         "bg": "#6fa8dc",
@@ -2462,6 +3207,46 @@
       "textSlug": "gadianton/155"
     },
     {
+      "date": "13 AD",
+      "grid": {
+        "bg": "#38761d",
+        "col": 34,
+        "colSpan": 1,
+        "row": 103,
+        "rowSpan": 1
+      },
+      "heading": "Nephite Counterstrike",
+      "html": "<p>The Nephites fight against the Gadianton robbers, are are able to regain some of their territory.</p>",
+      "kind": "event",
+      "p": true,
+      "r2b_flag": "auto-placed",
+      "slug": "nephite-counterstrike",
+      "text": {
+        "slug": "gadianton/129"
+      },
+      "textSlug": "gadianton/129"
+    },
+    {
+      "date": "19 AD",
+      "grid": {
+        "bg": "#6fa8dc",
+        "col": 24,
+        "colSpan": 1,
+        "row": 104,
+        "rowSpan": 1
+      },
+      "heading": "Gadianton Surrender",
+      "html": "<p>Seeing his efforts against Gidgiddoni are futile, Zemnarihah orders a withdrawal, and he begins to lead his people to the land northward.&nbsp;Gidgiddoni plans an ambush, and the next day, Zemnarihah is met in the front and rear by Nephite troops.&nbsp;The Gadianton robbers surrender, Zemnarihah is executed.</p>",
+      "kind": "event",
+      "p": true,
+      "r2b_flag": "auto-placed",
+      "slug": "gadianton-surrender",
+      "text": {
+        "slug": "gadianton/156"
+      },
+      "textSlug": "gadianton/156"
+    },
+    {
       "date": null,
       "grid": {
         "bg": "#6fa8dc",
@@ -2497,6 +3282,46 @@
         "slug": "gadianton/156"
       },
       "textSlug": "gadianton/156"
+    },
+    {
+      "date": "25 AD",
+      "grid": {
+        "bg": "#38761d",
+        "col": 31,
+        "colSpan": 1,
+        "row": 105,
+        "rowSpan": 1
+      },
+      "heading": "Jacob and his Followers",
+      "html": "<p>Seeing that his faction was not as powerful as other Nephite tribes, Jacob leads his people to the land northward, in an attempt to gather recruits and strengthen his forces.</p>",
+      "kind": "event",
+      "p": true,
+      "r2b_flag": "auto-placed",
+      "slug": "jacob-and-his-followers",
+      "text": {
+        "slug": "gadianton/180"
+      },
+      "textSlug": "gadianton/180"
+    },
+    {
+      "date": "25 AD",
+      "grid": {
+        "bg": "#38761d",
+        "col": 35,
+        "colSpan": 1,
+        "row": 105,
+        "rowSpan": 1
+      },
+      "heading": "Jacob",
+      "html": "<p>As Nephite society begins to disntigrate, a corrupt organization appoints a leader, Jacob, to be their king, with a sworn oath to destroy all governmental order.</p>",
+      "kind": "event",
+      "p": true,
+      "r2b_flag": "auto-placed",
+      "slug": "jacob",
+      "text": {
+        "slug": "gadianton/179"
+      },
+      "textSlug": "gadianton/179"
     },
     {
       "date": "34 AD",
@@ -2613,6 +3438,46 @@
       "textSlug": "downfall/12"
     },
     {
+      "date": "330 AD",
+      "grid": {
+        "bg": "#38761d",
+        "col": 25,
+        "colSpan": 1,
+        "row": 117,
+        "rowSpan": 1
+      },
+      "heading": "Mormon vs. Aaron",
+      "html": "<p>&nbsp;Mormon manages to beat Aaron&rsquo;s army.</p>",
+      "kind": "event",
+      "p": true,
+      "r2b_flag": "auto-placed",
+      "slug": "mormon-vs-aaron",
+      "text": {
+        "slug": "downfall/36"
+      },
+      "textSlug": "downfall/36"
+    },
+    {
+      "date": "321 AD",
+      "grid": {
+        "bg": "#38761d",
+        "col": 29,
+        "colSpan": 1,
+        "row": 117,
+        "rowSpan": 1
+      },
+      "heading": "War in Zarahemla",
+      "html": "<p>A war breaks out near Zarahemla between the Nephite allies and Lamanites allies. The Nephites, assemble an army of 30,000 solders, are able to repel the Lamanites and restore peace.</p>",
+      "kind": "event",
+      "p": true,
+      "r2b_flag": "auto-placed",
+      "slug": "war-in-zarahemla",
+      "text": {
+        "slug": "downfall/28"
+      },
+      "textSlug": "downfall/28"
+    },
+    {
       "date": "320 AD",
       "grid": {
         "bg": "#38761d",
@@ -2650,6 +3515,26 @@
         "slug": "downfall/65"
       },
       "textSlug": "downfall/65"
+    },
+    {
+      "date": "326 AD",
+      "grid": {
+        "bg": "#38761d",
+        "col": 27,
+        "colSpan": 1,
+        "row": 119,
+        "rowSpan": 1
+      },
+      "heading": "Aaron’s Army",
+      "html": "<p>A Lamanite army of 44,000 , led by a king named Aaron, come against Mormon&rsquo;s army of 42,000.</p>",
+      "kind": "event",
+      "p": true,
+      "r2b_flag": "auto-placed",
+      "slug": "aarons-army",
+      "text": {
+        "slug": "downfall/36"
+      },
+      "textSlug": "downfall/36"
     },
     {
       "date": null,
@@ -2819,32 +3704,6 @@
       "textSlug": "mormon/90"
     },
     {
-      "date": "326 AD",
-      "grid": null,
-      "heading": "Aaron’s Army",
-      "html": "<p>A Lamanite army of 44,000 , led by a king named Aaron, come against Mormon&rsquo;s army of 42,000.</p>",
-      "kind": "event",
-      "p": true,
-      "slug": "aarons-army",
-      "text": {
-        "slug": "downfall/36"
-      },
-      "textSlug": "downfall/36"
-    },
-    {
-      "date": "121 BC",
-      "grid": null,
-      "heading": "Alma’s People in Slavery",
-      "html": "<p>Noah's priests (inclduing Amulon) and the lost Lamanite troops stumble upon Alma's people in Helam, and forecully occupy the land. &nbsp;Alma's people are enslaved, and work for their captors.</p>",
-      "kind": "event",
-      "p": true,
-      "slug": "almas-people-in-slavery",
-      "text": {
-        "slug": "alma/24"
-      },
-      "textSlug": "alma/24"
-    },
-    {
       "date": null,
       "grid": null,
       "heading": "Amaleki",
@@ -2856,45 +3715,6 @@
         "slug": "zarahemla/9"
       },
       "textSlug": "zarahemla/9"
-    },
-    {
-      "date": "73 BC",
-      "grid": null,
-      "heading": "Amalickiah’s Initial Strikes",
-      "html": "<p>Amalickiah leads his army to the cities of Ammonihah and Noah, where they are repelled, and fail to capture any lands. The Nephites fortify their lands and subsequently enjoy a brief period of peace and prosperity.</p>",
-      "kind": "event",
-      "p": true,
-      "slug": "amalickiah-vs-nephites-1",
-      "text": {
-        "slug": "war/70"
-      },
-      "textSlug": "war/70"
-    },
-    {
-      "date": "72 BC",
-      "grid": null,
-      "heading": "Amalickiah’s Invasion",
-      "html": "<p>Amalickiah strikes again, beginning at the city of Moroni, and continuing on to occupy many Nephite cities and lands. &nbsp;The war then expands into a multi-front campaign. Amalickiah is killed by Teancum. Amalickiah's brother Ammron takes control of the Lamanite army.</p>",
-      "kind": "event",
-      "p": true,
-      "slug": "amalickiah-vs-nephites-2",
-      "text": {
-        "slug": "war/109"
-      },
-      "textSlug": "war/109"
-    },
-    {
-      "date": "87 BC",
-      "grid": null,
-      "heading": "Amlicite Defection",
-      "html": "<p>The Amlicites who survive the battle integrate with the Lamanites.</p>",
-      "kind": "event",
-      "p": true,
-      "slug": "amlicites",
-      "text": {
-        "slug": "reign-of-judges/35"
-      },
-      "textSlug": "reign-of-judges/35"
     },
     {
       "date": "305 AD",
@@ -2910,58 +3730,6 @@
       "textSlug": "downfall/23"
     },
     {
-      "date": "91 BC - 77 BC",
-      "grid": null,
-      "heading": "Trip to Middoni",
-      "html": "<p>The Lord informs Ammon that his brothers are in prison in Middoni, and are in need of deliverance. On their way to Middoni, Lamoni and Ammon unexpectdly cross paths with Lamoni&rsquo;s father, with whom they have a tense encounter.</p>\r\n<p>Ammon and Lamoni go to Middoni, and are successful in negotiating Ammon&rsquo;s brothers&rsquo; release. Ammon meets his brothers, who are battered and beaten from abuse in prison&mdash;they had not had the good fortunes Ammon had enjoyed in his preaching.</p>\r\n<p>Ammon and Lamoni leave Aaron and his brothers, and return to Ishmael.</p>",
-      "kind": "event",
-      "p": true,
-      "slug": "ammon-in-middoni",
-      "text": {
-        "slug": "ammon/102"
-      },
-      "textSlug": "ammon/102"
-    },
-    {
-      "date": "121 BC",
-      "grid": null,
-      "heading": "Ammon’s Search Party",
-      "html": "<p>Mosiah sends a search party (composed of 16 men, lead by a man named Ammon) out to locate the group of people that left for the land of Nephi some time earlier.&nbsp;Not knowing the way, the search party wanders around for 40 days, but finally are successful in locating the land of Nephi, where they meet Limhi's people</p>",
-      "kind": "event",
-      "p": true,
-      "slug": "ammon-search-party",
-      "text": {
-        "slug": "zarahemla/search-party/1"
-      },
-      "textSlug": "zarahemla/search-party/1"
-    },
-    {
-      "date": "77 BC",
-      "grid": null,
-      "heading": "People of Ammon",
-      "html": "<p>The converts travel to Jershon and establish themselves there.&nbsp;Previously knows as Anti&ndash;Nephi&ndash;Lehites, they now call themselves the people of Ammon (Ammonites).</p>",
-      "kind": "event",
-      "p": true,
-      "slug": "ammonites-anti-nephi-lehites",
-      "text": {
-        "slug": "reign-of-judges/81"
-      },
-      "textSlug": "reign-of-judges/81"
-    },
-    {
-      "date": "66 BC",
-      "grid": null,
-      "heading": "Ammoron",
-      "html": "<p>Ammoron, Amalickiah's brother, takes control of the Lamanite army after Teancum kills Amalickiah.</p>",
-      "kind": "event",
-      "p": true,
-      "slug": "ammoron",
-      "text": {
-        "slug": "war/116"
-      },
-      "textSlug": "war/116"
-    },
-    {
       "date": "600 BC - 592 BC",
       "grid": null,
       "heading": "Arabian Wilderness",
@@ -2973,19 +3741,6 @@
         "slug": "lehites/112"
       },
       "textSlug": "lehites/112"
-    },
-    {
-      "date": "81 BC",
-      "grid": null,
-      "heading": "Revolt, Attack, and Conversion",
-      "html": "<p>The unconverted Lamanites begin a coup against the converted king and his subjects. The converts, having made an oath not to fight, helplessly fall to the ground and are massacred by the insurgents.</p>\r\n<p>Many insurgent soldiers, upon seeing the how the believers sacrifice themselves unresisted, are deeply moved, and cease the strike. Guilt&ndash;ridden by their merciless acts of war, the soldiers repent, and decide to join the converts.</p>\r\n<p>Over a thousand soldiers follow suit, and the number of soldier converts exceeds the number of casualties. The most hardened warriors were the Amalekites and the Amulonites (Nephite dissenters) who do not join the converts.</p>",
-      "kind": "event",
-      "p": true,
-      "slug": "attack-on-converts",
-      "text": {
-        "slug": "ammon/119"
-      },
-      "textSlug": "ammon/119"
     },
     {
       "date": "91 BC - 77 BC",
@@ -3010,71 +3765,6 @@
       "textSlug": null
     },
     {
-      "date": "74 BC",
-      "grid": null,
-      "heading": "Captain Moroni",
-      "html": "<p>A young military leader named Moroni takes control of the Nephite military resistance.</p>",
-      "kind": "event",
-      "p": true,
-      "slug": "captain-moroni",
-      "text": {
-        "slug": "war/6"
-      },
-      "textSlug": "war/6"
-    },
-    {
-      "date": "81 BC",
-      "grid": null,
-      "heading": "Convert Massacre in Ammonihah",
-      "html": "<p>Zeezrom is expelled from the city, and Alma and Amulek are imprisoned. &nbsp;Those that believed Alma and Amulek are thrown into a fire. &nbsp;Alma and Amulek break their ropes, the prison crumbles, and they leave the city.</p>",
-      "kind": "event",
-      "p": true,
-      "slug": "convert-massacre",
-      "text": {
-        "slug": "reign-of-judges/ammonihah/103"
-      },
-      "textSlug": "reign-of-judges/ammonihah/103"
-    },
-    {
-      "date": "77 BC",
-      "grid": null,
-      "heading": "Lamanite Convert Relocation",
-      "html": "<p>Ammon and the missionaries have a sizable group of converts&nbsp; who want to immigrate to Zarahemla to escape persecution, so the chief judge holds a referendum to get the Nephite public opinion as to what should be done with them.&nbsp;The public states that the eastern city of Jershon will be designated for the converts, and agrees to provide military protection for them, since the converts had covenanted not to fight anymore.&nbsp;</p>\r\n<p>Ammon brings Alma to his converts, who are camping out in the wilderness&mdash;Ammon tells them they are welcome to inhabit the city of Jershon.&nbsp;</p>",
-      "kind": "event",
-      "p": true,
-      "slug": "convert-relocation",
-      "text": {
-        "slug": "reign-of-judges/80"
-      },
-      "textSlug": "reign-of-judges/80"
-    },
-    {
-      "date": "120 BC",
-      "grid": null,
-      "heading": "Discovery of Desolation",
-      "html": "<p>Limhi's search team stumbles upon a ruined city filled with dry bones, which they assume was Zarahemla, but is in fact the former lands of the Jaredites. They unearth a record, 24 engraven plates, which they are unable to read. &nbsp;They return to Limhi in the Land of Nephi with the records.</p>",
-      "kind": "event",
-      "p": true,
-      "slug": "discovery-of-desolation",
-      "text": {
-        "slug": "recolonization/89"
-      },
-      "textSlug": "recolonization/89"
-    },
-    {
-      "date": "67 BC - 61 BC",
-      "grid": null,
-      "heading": "War on the Eastern Front",
-      "html": "<p>The eastern war covers Manti, Bountiful, Nephihah, and Lehi. &nbsp;Moroni wonders why the central government is not supporting him, and Teancum dies after killing Ammoron.</p>",
-      "kind": "event",
-      "p": true,
-      "slug": "eastern-war",
-      "text": {
-        "slug": "war/east/54"
-      },
-      "textSlug": "war/east/54"
-    },
-    {
       "date": "279 BC-200 BC",
       "grid": null,
       "heading": "Fate of the Nephites",
@@ -3088,32 +3778,6 @@
       "textSlug": "land-of-nephi/78"
     },
     {
-      "date": "9 BC",
-      "grid": null,
-      "heading": "Gadianton Assaults",
-      "html": "<p>Gadianton attacks kill many, and capture others, including women and children.</p>",
-      "kind": "event",
-      "p": true,
-      "slug": "gadianton-assaults",
-      "text": {
-        "slug": "gadianton/94"
-      },
-      "textSlug": "gadianton/94"
-    },
-    {
-      "date": "19 AD",
-      "grid": null,
-      "heading": "Gadianton Surrender",
-      "html": "<p>Seeing his efforts against Gidgiddoni are futile, Zemnarihah orders a withdrawal, and he begins to lead his people to the land northward.&nbsp;Gidgiddoni plans an ambush, and the next day, Zemnarihah is met in the front and rear by Nephite troops.&nbsp;The Gadianton robbers surrender, Zemnarihah is executed.</p>",
-      "kind": "event",
-      "p": true,
-      "slug": "gadianton-surrender",
-      "text": {
-        "slug": "gadianton/156"
-      },
-      "textSlug": "gadianton/156"
-    },
-    {
       "date": "200 BC",
       "grid": null,
       "heading": "Expedition Conflict",
@@ -3125,110 +3789,6 @@
         "slug": "recolonization/2"
       },
       "textSlug": "recolonization/2"
-    },
-    {
-      "date": "25 AD",
-      "grid": null,
-      "heading": "Jacob and his Followers",
-      "html": "<p>Seeing that his faction was not as powerful as other Nephite tribes, Jacob leads his people to the land northward, in an attempt to gather recruits and strengthen his forces.</p>",
-      "kind": "event",
-      "p": true,
-      "slug": "jacob-and-his-followers",
-      "text": {
-        "slug": "gadianton/180"
-      },
-      "textSlug": "gadianton/180"
-    },
-    {
-      "date": "685 BC",
-      "grid": null,
-      "heading": "The Final Jaredite Battle",
-      "html": "<p>The Jaredies, represented in two armies, armies march towards each other, initiate a battle, and fight for many days. &nbsp;The battle ends when the two survivors, Shiz and Coriantumr, fight one-on-one. &nbsp;Coriantumr decapitates Shiz, and faints. &nbsp;The Jaredite civilization effective comes to and end.</p>",
-      "kind": "event",
-      "p": true,
-      "slug": "jaredite-battle",
-      "text": {
-        "slug": "jaredites/197"
-      },
-      "textSlug": "jaredites/197"
-    },
-    {
-      "date": "3000 BC",
-      "grid": null,
-      "heading": "Jaredite Voyage",
-      "html": "<p>The Jaredites load their provisions and livestock on the barges, and launch into the ocean.&nbsp;The Lord causes a furious wind to blow them towards the promised land.&nbsp;Their boat trip lasts for 344 days, and they finally land at the promised land, where they weep for joy and praise the Lord.</p>",
-      "kind": "event",
-      "p": true,
-      "slug": "jaredite-voyage",
-      "text": {
-        "slug": "jaredites/38"
-      },
-      "textSlug": "jaredites/38"
-    },
-    {
-      "date": "200 BC",
-      "grid": null,
-      "heading": "King Laman I",
-      "html": "<p>King Laman I peacefully moves his people out of the land of Nephi, and allows Zeniff's colony to move in. &nbsp;He ultimately has the intention of enslaving Zeniff's people.</p>",
-      "kind": "event",
-      "p": true,
-      "slug": "king-laman-i",
-      "text": {
-        "slug": "recolonization/4"
-      },
-      "textSlug": "recolonization/4"
-    },
-    {
-      "date": "178 BC",
-      "grid": null,
-      "heading": "King Laman II",
-      "html": "<p>King Laman II succeeds his father, and plans for war against Zeniff's colony.</p>",
-      "kind": "event",
-      "p": true,
-      "slug": "king-laman-ii",
-      "text": {
-        "slug": "recolonization/10"
-      },
-      "textSlug": "recolonization/10"
-    },
-    {
-      "date": "34 BC",
-      "grid": null,
-      "heading": "Lamanite Occupation of Zarahemla",
-      "html": "<p>The Lamanite strike was succesful in occupying the entirety of the land of Zarahemla, all the way up the the land of Bountiful.</p>",
-      "kind": "event",
-      "p": true,
-      "slug": "lamanite-occupation-of-zarahemla",
-      "text": {
-        "slug": "gadianton/26"
-      },
-      "textSlug": "gadianton/26"
-    },
-    {
-      "date": "4 AD",
-      "grid": null,
-      "heading": "Lamanites Join Gadianton",
-      "html": "<p>Some more Lamanites continue to defect and join the Gadianton band.</p>",
-      "kind": "event",
-      "p": true,
-      "slug": "lamanite-recruits-2",
-      "text": {
-        "slug": "gadianton/122"
-      },
-      "textSlug": "gadianton/122"
-    },
-    {
-      "date": "121 BC",
-      "grid": null,
-      "heading": "Lamanite Troops",
-      "html": "<p>Lamanite troops that had been tasked with tracking down the people of Limhi stumble upon the community of Amulon and Noah's Priests. &nbsp;Amulon's people and the Lamanite troops form an alliance, and set out to find the land of Nephi.</p>",
-      "kind": "event",
-      "p": true,
-      "slug": "lamanite-troops",
-      "text": {
-        "slug": "noahs-priests/7"
-      },
-      "textSlug": "noahs-priests/7"
     },
     {
       "date": "185 BC",
@@ -3305,45 +3865,6 @@
       "textSlug": "lehites/164"
     },
     {
-      "date": "140 BC",
-      "grid": null,
-      "heading": "Limhi’s Revolts",
-      "html": "<p>Limhi&rsquo;s people attempt three separate violent revolutions against the Lamanites, but fail each time. A period of repentance and humility follows.</p>",
-      "kind": "event",
-      "p": true,
-      "slug": "limhis-revolts",
-      "text": {
-        "slug": "recolonization/85"
-      },
-      "textSlug": "recolonization/85"
-    },
-    {
-      "date": "330 AD",
-      "grid": null,
-      "heading": "Mormon vs. Aaron",
-      "html": "<p>&nbsp;Mormon manages to beat Aaron&rsquo;s army.</p>",
-      "kind": "event",
-      "p": true,
-      "slug": "mormon-vs-aaron",
-      "text": {
-        "slug": "downfall/36"
-      },
-      "textSlug": "downfall/36"
-    },
-    {
-      "date": "67 BC - 61 BC",
-      "grid": null,
-      "heading": "Moroni on the Eastern Front",
-      "html": "<p>Moroni, joined by Teancum, leads the defense of eastern lands</p>",
-      "kind": "event",
-      "p": true,
-      "slug": "moroni-east",
-      "text": {
-        "slug": "war/east/1"
-      },
-      "textSlug": "war/east/1"
-    },
-    {
       "date": null,
       "grid": null,
       "heading": "Mulekite Voyage",
@@ -3355,45 +3876,6 @@
         "slug": "zarahemla/1"
       },
       "textSlug": "zarahemla/1"
-    },
-    {
-      "date": "25 BC",
-      "grid": null,
-      "heading": "Nephi II and Lehi II Trave Northward",
-      "html": "<p>Nephi and Lehi travel to the northern lands to preach to those who migrated there previously.</p>",
-      "kind": "event",
-      "p": true,
-      "slug": "nephi-2-and-lehi-2-north",
-      "text": {
-        "slug": "gadianton/73"
-      },
-      "textSlug": "gadianton/73"
-    },
-    {
-      "date": "24 BC",
-      "grid": null,
-      "heading": "Nephi Preaching to the Lamanites",
-      "html": "<p>Nephi preaches in the Lamanite-occupied lands, and baptizes thousands.</p>",
-      "kind": "event",
-      "p": true,
-      "slug": "nephi-2-preaching",
-      "text": {
-        "slug": "gadianton/48"
-      },
-      "textSlug": "gadianton/48"
-    },
-    {
-      "date": "13 AD",
-      "grid": null,
-      "heading": "Nephite Counterstrike",
-      "html": "<p>The Nephites fight against the Gadianton robbers, are are able to regain some of their territory.</p>",
-      "kind": "event",
-      "p": true,
-      "slug": "nephite-counterstrike",
-      "text": {
-        "slug": "gadianton/129"
-      },
-      "textSlug": "gadianton/129"
     },
     {
       "date": "570-279 BC",
@@ -3409,32 +3891,6 @@
       "textSlug": "land-of-nephi/5"
     },
     {
-      "date": "145 BC",
-      "grid": null,
-      "heading": "Lamanite Siege",
-      "html": "<p>Noah sees a Lamanite army approaching the land of Nephi. &nbsp;He flees the city with his followers, including his priests, leaving behind women and children. &nbsp;His followers become disgruntled, and burn him at the stake. &nbsp;Seeing the defenseless women and children, the Lamanites stop attacking, and instead impose a heavy tax on the people.</p>",
-      "kind": "event",
-      "p": true,
-      "slug": "noah-vs-lamanites",
-      "text": {
-        "slug": "recolonization/58"
-      },
-      "textSlug": "recolonization/58"
-    },
-    {
-      "date": "31 BC",
-      "grid": null,
-      "heading": "Reclaiming Nephite Lands",
-      "html": "<p>Moronihah, Nephi, and Lehi join forces in preaching repentance to the Nephites; as the people repent, Moronihah is able to regain one half of their original land.&nbsp;</p>",
-      "kind": "event",
-      "p": true,
-      "slug": "reclaiming-nephite-land",
-      "text": {
-        "slug": "gadianton/30"
-      },
-      "textSlug": "gadianton/30"
-    },
-    {
       "date": "28 BC",
       "grid": null,
       "heading": "Mulek",
@@ -3448,19 +3904,6 @@
       "textSlug": "gadianton/46"
     },
     {
-      "date": "321 AD",
-      "grid": null,
-      "heading": "War in Zarahemla",
-      "html": "<p>A war breaks out near Zarahemla between the Nephite allies and Lamanites allies. The Nephites, assemble an army of 30,000 solders, are able to repel the Lamanites and restore peace.</p>",
-      "kind": "event",
-      "p": true,
-      "slug": "war-in-zarahemla",
-      "text": {
-        "slug": "downfall/28"
-      },
-      "textSlug": "downfall/28"
-    },
-    {
       "date": "34 BC",
       "grid": null,
       "heading": null,
@@ -3470,32 +3913,6 @@
       "slug": "zarahemla",
       "text": null,
       "textSlug": null
-    },
-    {
-      "date": "83 BC",
-      "grid": null,
-      "heading": "Alma’s Sermon in Zarahemla",
-      "html": "<p>The first stop on Alma's preching circuit is Zarahemla, where he teaches about repentance and salvation.</p>",
-      "kind": "event",
-      "p": true,
-      "slug": "zarahemla-sermon",
-      "text": {
-        "slug": "reign-of-judges/50"
-      },
-      "textSlug": "reign-of-judges/50"
-    },
-    {
-      "date": "72 BC",
-      "grid": null,
-      "heading": "Zoramite Defection",
-      "html": "<p>After expelling the converts from Antionum, the remaining Zoramites become Lamanites, and begin forming alliances in preparation for war.</p>",
-      "kind": "event",
-      "p": true,
-      "slug": "zoramite-defection",
-      "text": {
-        "slug": "war/1"
-      },
-      "textSlug": "war/1"
     }
   ]
 }

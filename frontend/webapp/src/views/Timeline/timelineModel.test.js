@@ -5,7 +5,7 @@ import {
   anchorOf, chipBg, tierOf, tierVisible,
   formatAxisTick, isCenturyTick, apiMarkers,
   popoverPlace,
-  BEVEL_CLIP, FILLET_BG, shapeTileStyle,
+  BEVEL_CLIP, FILLET_BG, shapeTileStyle, barPaint,
 } from './timelineModel'
 
 describe('color tokens', () => {
@@ -197,6 +197,14 @@ describe('shape tiles', () => {
     expect(comp.bandAt(6, 4)).toBe('#222222')
     expect(comp.bandAt(7, 4)).toBe('#222222')
   })
+  it('barPaint: flat bg when no bgTo, gradient (default 90deg) when bgTo present', () => {
+    const up = (c) => `var(${c})`
+    expect(barPaint({ bg: '#111111' }, up)).toBe('var(#111111)')
+    expect(barPaint({ bg: '#111111', bgTo: '#222222' }, up))
+      .toBe('linear-gradient(90deg, var(#111111), var(#222222))')
+    expect(barPaint({ bg: '#111111', bgTo: '#222222', gradDeg: 270 }, up))
+      .toBe('linear-gradient(270deg, var(#111111), var(#222222))')
+  })
   it('shapeTileStyle applies a color resolver (renderer paints through bandVar)', () => {
     const up = (c) => `var(${c})`
     expect(shapeTileStyle({ k: 'grad', from: '#111111', to: '#222222', dir: 'h' }, up).background)
@@ -260,6 +268,10 @@ describe('LOD tiers', () => {
     expect(tierOf({ p: true, grid: {} })).toBe(2)
     expect(tierOf({ p: false, grid: {} })).toBe(3)
     expect(tierOf({ p: true, grid: { tier: 1 } })).toBe(1)
+  })
+  it('labels default to tier 3; explicit tier still wins', () => {
+    expect(tierOf({ kind: 'label', p: true, grid: {} })).toBe(3)
+    expect(tierOf({ kind: 'label', p: true, grid: { tier: 1 } })).toBe(1)
   })
   it('tier 1 (band names) never hides; 2 hides <0.55; 3 hides <0.85', () => {
     expect(tierVisible(1, 0.2)).toBe(true)

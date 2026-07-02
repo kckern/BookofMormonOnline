@@ -115,6 +115,16 @@ export function shapeTileStyle(t, resolve = (c) => c) {
   if (t.k === 'bevel') return { background: resolve(t.bg), clipPath: BEVEL_CLIP[t.dir] }
   return undefined
 }
+// Event-bar paint: a flat band color, OR an along-bar gradient when the row
+// carries a `bgTo` (defection/join/assimilation bars — one people becoming
+// another over the bar's length). `gradDeg` names the travel direction: 90 =
+// rightward (origin left → dest right), 270 = leftward. `resolve` maps identity
+// hex → paint value (bandVar in the renderer); default identity keeps it pure.
+export const barPaint = (g, resolve = (c) => c) =>
+  g.bgTo
+    ? `linear-gradient(${g.gradDeg || 90}deg, ${resolve(g.bg)}, ${resolve(g.bgTo)})`
+    : resolve(g.bg)
+
 // Shape tiles that stamp the band layer with a solid color so neighbours stay
 // square against them (grad stamps its `from`, handled separately below).
 export const SHAPE_KINDS = new Set(['fill', 'bevel', 'fillet', 'fade'])
@@ -279,7 +289,8 @@ export const chipBg = (g, comp) =>
 // bom_timeline.grid_tier; defaults by kind.
 export const TIER_MIN_SCALE = { 1: 0, 2: 0.55, 3: 0.85 }
 export const tierOf = (e) =>
-  (e && e.grid && e.grid.tier) || (e && e.p ? 2 : 3)
+  (e && e.grid && e.grid.tier) ||
+  (e && e.kind === 'label' ? 3 : e && e.p ? 2 : 3)
 export const tierVisible = (tier, scale) =>
   scale >= (TIER_MIN_SCALE[tier] !== undefined ? TIER_MIN_SCALE[tier] : 0)
 
