@@ -1936,26 +1936,6 @@
       "textSlug": "war/109"
     },
     {
-      "date": "73 BC",
-      "grid": {
-        "bg": "#85200c",
-        "col": 15,
-        "colSpan": 1,
-        "row": 65,
-        "rowSpan": 1
-      },
-      "heading": "Amalickiah’s Initial Strikes",
-      "html": "<p>Amalickiah leads his army to the cities of Ammonihah and Noah, where they are repelled, and fail to capture any lands. The Nephites fortify their lands and subsequently enjoy a brief period of peace and prosperity.</p>",
-      "kind": "event",
-      "p": true,
-      "r2b_flag": "auto-placed",
-      "slug": "amalickiah-vs-nephites-1",
-      "text": {
-        "slug": "war/70"
-      },
-      "textSlug": "war/70"
-    },
-    {
       "date": "72 BC",
       "grid": {
         "bg": "#38761d",
@@ -2033,6 +2013,27 @@
         "slug": "downfall/50"
       },
       "textSlug": "downfall/50"
+    },
+    {
+      "date": "73 BC",
+      "grid": {
+        "bg": "#85200c",
+        "col": 15,
+        "colSpan": 1,
+        "row": 66,
+        "rowSpan": 1
+      },
+      "heading": "Amalickiah’s Initial Strikes",
+      "html": "<p>Amalickiah leads his army to the cities of Ammonihah and Noah, where they are repelled, and fail to capture any lands. The Nephites fortify their lands and subsequently enjoy a brief period of peace and prosperity.</p>",
+      "kind": "event",
+      "p": true,
+      "r2b_flag": "auto-placed",
+      "r2e_note": "nudged +1 row from 65 to avoid tight truncation with amalickiah-vs-nephites-2 at col 11 r65",
+      "slug": "amalickiah-vs-nephites-1",
+      "text": {
+        "slug": "war/70"
+      },
+      "textSlug": "war/70"
     },
     {
       "date": "73 BC",

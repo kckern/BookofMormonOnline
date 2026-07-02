@@ -250,10 +250,11 @@
       "bg": "#85200c",
       "col": 15,
       "colSpan": 1,
-      "row": 65,
+      "row": 66,
       "rowSpan": 1
     },
-    "r2b_flag": "auto-placed"
+    "r2b_flag": "auto-placed",
+    "r2e_note": "nudged +1 row from 65 to avoid tight truncation with amalickiah-vs-nephites-2 at col 11 r65"
   },
   "amalickiah-vs-nephites-2": {
     "grid": {

@@ -590,7 +590,6 @@ function TimeLine() {
                 style={isPlace ? pos : { ...pos, background: bandVar(t.bg), color: tcol }}
                 onClick={() => openInfo(t.slug)}
                 aria-label={data && data.date ? `${tipText}, ${data.date}` : tipText}
-                title={data && data.date ? `${tipText} — ${data.date}` : tipText}
               >
                 <span className={isPlace ? undefined : "tg-event-label"}>{inner}</span>
               </button>

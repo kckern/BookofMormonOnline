@@ -73,3 +73,31 @@ with no `grid` placement on dev. `p` false = place pin; `content` = has heading+
 | zoramite-defection | event | 72 BC | yes | Zoramite Defection |
 
 **Duplicate-slug rows in prod data (5):** bountiful, desolation, land-northward, land-of-nephi, zarahemla
+
+---
+
+## Resolution (2026-07-01 Round 2)
+
+**R2b auto-placed (37 rows):** placed via `scripts/timeline-grid/data-overrides.json`, each
+flagged `r2b_flag: "auto-placed"`. These cover the events with clear date + lineage signals
+that the original pipeline missed. Total placed after R2b: 193 of 210 entries.
+
+**12 rows retired-with-reason (not placed, not a gap):**
+
+| slug | reason |
+|---|---|
+| amaleki | no date — cannot anchor on the time axis |
+| mulekite-voyage | no date — cannot anchor on the time axis |
+| ammaron | lineage unclear — does not map cleanly to a band column |
+| arabia | lineage unclear — old-world locale; no band covers the Arabian peninsula |
+| ill-fated-expedition-conflict | lineage unclear; story carried by the expedition bar |
+| lehite-voyage | lineage unclear — ocean crossing; candidate for future ship icon-event |
+| land-of-nephi | no band room at the target date/column |
+| nephite-followers | no band room at the target date/column |
+| teaching-mulek | too crowded at the target cell |
+| fate-of-the-nephites | too crowded at the target cell |
+| lamanites-vs-zeniff | no battle tile at that cell; avoids clutter — candidate for future battle marker |
+| lamanites-vs-benjamin | no battle tile at that cell; avoids clutter — candidate for future battle marker |
+
+**5 unplaced place-pins** (data-cleanup candidates): `bang`, `bountiful`, `land-northward` (×2), `zarahemla` —
+duplicate-slug rows in prod; need deduplication before a place-pin placement pass.
