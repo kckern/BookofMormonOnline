@@ -36,22 +36,19 @@ applied to prod.** Source: `BoMOnlineWorkspace/sql/migrations/`
 Derived from the placement's tile-kind (NOT raw slug overlap, which mis-tags
 events like "King Noah's Reign" that share a slug with a city).
 
-## Backends — IMPORTANT
+## Backends — IMPORTANT (updated 2026-07-01)
 
-There are **two** backends and both now serve the grid:
-- **Legacy `src/` (Apollo + Sequelize)** — this is what runs **dev (`:5005`) and
-  prod**. `Event.grid`/`Event.label` added here (model, typedef, resolver). This
-  is the one that matters for the live site.
-- **New `backend/` (Yoga + Kysely, `:5006`)** — green-field; also has
-  `Event.grid`/`Event.label`. Not currently the deployed server.
+**Dev runs `backend/` (Yoga + Kysely) on `:5006`** — systemd unit
+`bom-greenfield`. The legacy `src/` Apollo server was retired to
+`_deprecated/src/` (2026-06-16) and no longer exists at the repo root; the
+timeline GraphQL surface (`Event.grid` incl. `anchor/tier/dir/icon`,
+`Event.label`) lives ONLY in `backend/`.
 
-If you touch timeline GraphQL, change **both** or you'll get the "labels missing"
-failure (frontend requests `grid`/`label`; a backend without them errors the
-whole query → blank grid).
-
-`tsconfig.json` now sets `ts-node.transpileOnly` so `npm start` / `npm run dev`
-actually boot — the legacy codebase has long-standing implicit-any errors that
-otherwise abort ts-node's type-check.
+**Prod caveat:** prod historically ran the legacy server. The frontend now
+queries `grid { … anchor tier dir icon }`; a backend without those fields
+errors the whole query → blank grid (the "labels missing" failure). **Do not
+deploy this frontend to prod until prod is confirmed on `backend/`** (KC gate
+#4 below).
 
 ## Running dev
 
