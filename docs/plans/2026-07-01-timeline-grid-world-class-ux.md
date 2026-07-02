@@ -270,6 +270,23 @@ git commit -m "refactor(timeline): extract pure grid logic into tested timelineM
 
 ### Task 2: `buildComposite` — one occupancy model for fills, bars, battles
 
+> **AMENDED 2026-07-01 (KC directive: "battle is not a primitive").** Battles —
+> and the artwork's other markers (ship crossings, the "?" circle) — are
+> **events with an `icon` attribute**, not a special tile kind. Consequences for
+> this task's API (the code blocks below predate the amendment; the amendment
+> wins):
+> - `buildComposite(tilesData, events, markers)` — third param: an array of
+>   marker descriptors `{r, c, bg}` (today derived from the legacy canvas
+>   `k:'battle'` tiles; later from DB icon-events). The compositor no longer
+>   scans tiles for `k:'battle'` itself.
+> - `battleFor` → **`markerFor(m)`**, `battleCellPaint` → **`markerCellPaint`**
+>   (same semantics: territory from the surface genuinely beneath, incursion
+>   when attacker ≠ territory, paint only for notch cells).
+> - Bar stamping skips icon-events: `if (!e.grid || !e.p || !e.grid.bg ||
+>   e.grid.icon) continue` — a marker is a point event, not a bar, and must
+>   never become its own territory. (This replaces Task 7's original
+>   `BATTLE_BOUND` suppression mechanism.)
+
 **Files:**
 - Modify: `frontend/webapp/src/views/Timeline/timelineModel.js`
 - Modify: `frontend/webapp/src/views/Timeline/timelineModel.test.js`
@@ -479,9 +496,16 @@ git commit -m "feat(timeline): unified layer compositor (bands+bars+battles, cor
 
 ### Task 3: Wire the compositor into `Timeline.js` + screenshot harness
 
-**Files:**
-- Modify: `frontend/webapp/src/views/Timeline/Timeline.js`
-- Create: `scripts/timeline-grid/screenshot.js`
+> **AMENDED 2026-07-01 (icon-event architecture).** Battles render through ONE
+> marker path fed by descriptors, not a bespoke `k:'battle'` branch:
+> - At module scope, derive the marker list from the legacy canvas tiles:
+>   `const canvasMarkers = tilesData.tiles.filter(t => t.k === 'battle').map(t => ({ r: t.r, c: t.c, bg: t.bg, icon: 'battle' }))`
+> - `buildComposite(tilesData, timeline || [], canvasMarkers)` (third param).
+> - The `marks.map` battle branch becomes a render over `canvasMarkers` using
+>   `markerFor(m)` / `markerCellPaint(comp, m)` — same JSX as the code below,
+>   with `battleFor`/`battleCellPaint` renamed accordingly. When DB icon-events
+>   land (Task 12/13), rows with `grid.icon` render through THIS SAME path and
+>   the canvas tiles retire (Task 7 gate).
 
 - [ ] **Step 1: Replace the occupancy `useMemo` (lines ~316–394) with the compositor**
 
@@ -1006,6 +1030,13 @@ git commit -m "feat(timeline): battle tile → slug binding (draft matcher + rev
 
 ### Task 6: Clickable battles
 
+> **AMENDED 2026-07-01 (icon-event architecture).** The code below operates on
+> the Task 3 marker path (`canvasMarkers` + `markerFor`/`markerCellPaint`), not
+> a `k:'battle'` tile branch — apply the same JSX with `m` (marker descriptor)
+> in place of `t`, and the marker list entry keyed `${m.r},${m.c}`. When DB
+> icon-events land (Task 13 Step 1b), they arrive through this same renderer
+> already clickable, and the canvas mapping retires at the Task 7 gate.
+
 **Files:**
 - Modify: `frontend/webapp/src/views/Timeline/Timeline.js`
 - Modify: `frontend/webapp/src/views/Timeline/Timeline.css`
@@ -1100,39 +1131,24 @@ git commit -m "feat(timeline): battles with bound slugs are clickable content"
 - Modify: `frontend/webapp/src/views/Timeline/timelineModel.js` (reconciliation)
 - Output artifact: `scripts/timeline-grid/2026-07-XX_bom_timeline_battle_placements.sql`
 
-**Reconciliation policy (MANDATORY, ships BEFORE the SQL is applied):** once a
-battle row gains a grid placement, it would (a) render a duplicate API event
-chip on top of its canvas battle tile, and (b) stamp the bar layer at the
-battle's own cell, making `battleFor` see `territory === attacker` — killing
-every incursion tab. Both are prevented by treating `battleSlugs.json` as the
-single renderer for bound slugs:
+**Reconciliation policy (AMENDED 2026-07-01 — icon-event architecture):**
+`BATTLE_BOUND` suppression is RETIRED. The principled mechanism:
 
-- [ ] **Step 0: Suppress bound battle rows in the event pipeline**
+- An event whose `grid.icon` is set is a **marker**, not a bar/chip: the
+  compositor's bar stamping already skips it (Task 2 amendment), and `eventEls`
+  routes it to the marker renderer (Task 3's path) instead of the chip renderer
+  (wired in Task 13 when `icon` reaches the query).
+- The dupe hazard (canvas tile + DB row rendering twice) is resolved **at the
+  SQL gate**: the same change that applies the placements ALSO deletes the
+  `k:'battle'` tiles from `gridTiles.json` (they are fully redundant — same
+  cell, same attacker color, and `canvasMarkers` is derived from them). One
+  renderer, one data source, no suppression set.
+- Until the gate, DB rows stay unplaced and canvas tiles render — no overlap
+  window exists on dev because bom_prd is the live dev DB.
 
-In `timelineModel.js`:
-
-```js
-import battleSlugs from './battleSlugs.json'
-// Slugs whose renderer is the canvas battle tile — the API row provides content
-// (heading/html/date) but must NOT render an event chip or stamp the bar layer.
-export const BATTLE_BOUND = new Set(Object.values(battleSlugs))
-```
-
-In `buildComposite`, skip them when stamping bars:
-
-```js
-    if (!e.grid || !e.p || !e.grid.bg || BATTLE_BOUND.has(e.slug)) continue
-```
-
-In `Timeline.js` `eventEls`, extend the filter:
-
-```js
-      .filter((e) => e.grid && e.slug && !BATTLE_BOUND.has(e.slug))
-```
-
-Add a model test: a bound slug's event is absent from `barAt` even with a grid
-placement (assert `comp.barAt(row, col)` is null for a placement whose slug is
-in `BATTLE_BOUND`).
+Add a model test: an event with `grid.icon` present does NOT stamp the bar
+layer (assert `comp.barAt(row, col)` is null for a placement with
+`icon: 'battle'`).
 
 - [ ] **Step 1: Write the generator**
 
@@ -1167,12 +1183,16 @@ for key, slug in sorted(mapping.items()):
     out.append(
         "UPDATE bom_timeline SET "
         f"grid_row={r}, grid_col={c}, grid_w=1, grid_h=1, grid_bg='{bg}', "
-        f"label_category='event' WHERE slug='{slug}' AND grid_row IS NULL LIMIT 1;"
+        f"grid_icon='battle', label_category='event' "
+        f"WHERE slug='{slug}' AND grid_row IS NULL LIMIT 1;"
         # LIMIT 1: prod has 5 duplicated slugs (audit §3.1); place only one row
+        # grid_icon: battles are EVENTS WITH AN ICON (KC directive), rendered by
+        # the marker path — requires Task 12's DDL to be applied first
     )
     rollback.append(
         "UPDATE bom_timeline SET grid_row=NULL, grid_col=NULL, grid_w=NULL, "
-        f"grid_h=NULL, grid_bg=NULL WHERE slug='{slug}' AND grid_row={r} AND grid_col={c};"
+        f"grid_h=NULL, grid_bg=NULL, grid_icon=NULL "
+        f"WHERE slug='{slug}' AND grid_row={r} AND grid_col={c};"
     )
 stamp = datetime.date.today().isoformat()
 dest = ROOT / "scripts/timeline-grid" / f"{stamp}_bom_timeline_battle_placements.sql"
@@ -1185,7 +1205,7 @@ print(f"{len(mapping)} updates → {dest} (+ rollback)")
 
 - [ ] **Step 3: HUMAN GATE — apply + residue triage**
 
-Hand the `.sql` to KC for application via `BoMOnlineWorkspace/sql/migrations/` (prod `bom_prd`, same process as the 2026-06-13 grid migrations). Then re-run the audit diff to size the residue:
+Hand the `.sql` to KC for application via `BoMOnlineWorkspace/sql/migrations/` (prod `bom_prd`, same process as the 2026-06-13 grid migrations). **Apply ORDER: Task 12's `label_params` DDL first (it creates `grid_icon`), then this file; in the SAME change, delete the `k:'battle'` tiles from `gridTiles.json` (the DB icon-events replace them — see the reconciliation policy above).** Then re-run the audit diff to size the residue:
 
 ```bash
 curl -s http://localhost:5006/graphql -H 'Content-Type: application/json' \
@@ -1578,7 +1598,11 @@ git commit -m "feat(timeline): normalized axis ticks + century hairlines"
 ALTER TABLE bom_timeline
   ADD COLUMN label_anchor ENUM('center','start','end','above','below') NULL DEFAULT NULL AFTER label_category,
   ADD COLUMN grid_tier TINYINT NULL DEFAULT NULL AFTER label_anchor,
-  ADD COLUMN grid_dir ENUM('l','r') NULL DEFAULT NULL AFTER grid_tier;
+  ADD COLUMN grid_dir ENUM('l','r') NULL DEFAULT NULL AFTER grid_tier,
+  -- KC directive: battles are events with an ICON, not a primitive tile kind.
+  -- VARCHAR (not ENUM): the artwork also has ship crossings and a "?" marker —
+  -- future icons must not need DDL.
+  ADD COLUMN grid_icon VARCHAR(24) NULL DEFAULT NULL AFTER grid_dir;
 
 -- Seed tier 1 (always-visible band names) for the main lineage-name rows.
 -- Band-name rows are the people-category placements spanning wide/tall tiles;
@@ -1616,16 +1640,16 @@ describe('Event.grid resolver', () => {
     expect(
       grid({
         grid_row: 5, grid_col: 3, grid_w: 2, grid_h: 1, grid_bg: '#123456',
-        label_anchor: 'start', grid_tier: 1, grid_dir: 'r',
+        label_anchor: 'start', grid_tier: 1, grid_dir: 'r', grid_icon: 'battle',
       })
     ).toEqual({
       row: 5, col: 3, rowSpan: 1, colSpan: 2, bg: '#123456',
-      anchor: 'start', tier: 1, dir: 'r',
+      anchor: 'start', tier: 1, dir: 'r', icon: 'battle',
     });
   });
   it('nulls the new fields when columns are absent (pre-migration)', () => {
     expect(grid({ grid_row: 5, grid_col: 3, grid_w: 1, grid_h: 1, grid_bg: null }))
-      .toEqual({ row: 5, col: 3, rowSpan: 1, colSpan: 1, bg: null, anchor: null, tier: null, dir: null });
+      .toEqual({ row: 5, col: 3, rowSpan: 1, colSpan: 1, bg: null, anchor: null, tier: null, dir: null, icon: null });
   });
   it('returns null with no placement', () => {
     expect(grid({ grid_row: null })).toBeNull();
@@ -1650,6 +1674,10 @@ type EventGrid {
   tier: Int
   """Movement direction for migration/expedition bars: l|r. Null → none."""
   dir: String
+  """Marker icon (battle|ship|question, extensible). Non-null → the event renders
+  as a marker medallion via the marker path, NOT as a chip/bar, and never stamps
+  the compositor bar layer."""
+  icon: String
 }
 ```
 
@@ -1661,6 +1689,7 @@ type EventGrid {
   label_anchor?: 'center' | 'start' | 'end' | 'above' | 'below' | null;
   grid_tier?: number | null;
   grid_dir?: 'l' | 'r' | null;
+  grid_icon?: string | null;
 ```
 
 `backend/src/graphql/resolvers/mediamisc.ts` — `Event.grid` return becomes:
@@ -1675,6 +1704,7 @@ type EventGrid {
         anchor: t.label_anchor ?? null,
         tier: t.grid_tier ?? null,
         dir: t.grid_dir ?? null,
+        icon: t.grid_icon ?? null,
       };
 ```
 
@@ -1722,8 +1752,17 @@ Verify with the team before any prod deploy that includes this commit.
 - [ ] **Step 1: Query** — in `GraphQLQueries.js` line 1028:
 
 ```
-        grid { row col rowSpan colSpan bg anchor tier dir }
+        grid { row col rowSpan colSpan bg anchor tier dir icon }
 ```
+
+- [ ] **Step 1b: Route icon-events to the marker path** — in `eventEls`, an
+event with `g.icon` renders through the marker renderer (Task 3's path, same
+JSX as canvas markers: medallion + incursion tab from `markerFor`), NOT as a
+chip/bar; it is clickable (it has a slug + content). The compositor already
+skips icon-events when stamping bars (Task 2 amendment). Until the Task 7 SQL
+gate applies, no DB row has `icon`, so this path ships dark — verify with a
+hand-crafted mock in the model test (an event with `grid.icon` yields no
+`barAt` stamp) rather than live data.
 
 - [ ] **Step 2: Chevrons from `dir`** — in `eventEls` inner span:
 
@@ -2267,7 +2306,7 @@ git commit -m "feat(timeline): shape-language tiles (bevel/grad/fillet/fade) + p
 - Modify: `docs/reference/timeline-grid-handoff.md`
 - Output: `/tmp/tl-final/*` screenshots reviewed against the checklist
 
-- [ ] **Step 1: Run everything**
+- [x] **Step 1: Run everything** — 52 frontend (2 files) + 3 backend PASS; `tsc --noEmit` clean; screenshots in `/tmp/tl-final`.
 
 ```bash
 cd /home/bom/BookofMormonOnline/frontend/webapp && CI=true npm test -- --watchAll=false --testPathPattern=Timeline
@@ -2277,7 +2316,7 @@ cd /home/bom/BookofMormonOnline && node scripts/timeline-grid/screenshot.js --ou
 
 Expected: all suites PASS; screenshots captured.
 
-- [ ] **Step 2: Walk the audit checklist against `/tmp/tl-final`**
+- [x] **Step 2: Walk the audit checklist against `/tmp/tl-final`** — all lines PASS or DEFERRED-with-reason (see handoff KC gates); no in-scope failures found.
 
 Every line must pass (each maps to an audit finding):
 
@@ -2297,9 +2336,9 @@ Every line must pass (each maps to an audit finding):
 
 Fix anything that fails before proceeding (bugs found here are in-scope for this plan).
 
-- [ ] **Step 3: Update the handoff doc** — in `docs/reference/timeline-grid-handoff.md`: move the delivered items into "Done", record retired slugs + bevel pilot outcome, and note the two standing HUMAN GATES if still pending (label-params DDL; battle-placements SQL). Add a pointer to this plan and the audit.
+- [x] **Step 3: Update the handoff doc** — in `docs/reference/timeline-grid-handoff.md`: move the delivered items into "Done", record retired slugs + bevel pilot outcome, and note the two standing HUMAN GATES if still pending (label-params DDL; battle-placements SQL). Add a pointer to this plan and the audit.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add docs/reference/timeline-grid-handoff.md
