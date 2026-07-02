@@ -144,11 +144,23 @@ export type Event = {
  */
 export type EventGrid = {
   __typename?: 'EventGrid';
+  /** Label anchor within/around the tile: center|start|end|above|below. Null → center. */
+  anchor?: Maybe<Scalars['String']['output']>;
   bg?: Maybe<Scalars['String']['output']>;
   col?: Maybe<Scalars['Int']['output']>;
   colSpan?: Maybe<Scalars['Int']['output']>;
+  /** Movement direction for migration/expedition bars: l|r. Null → none. */
+  dir?: Maybe<Scalars['String']['output']>;
+  /**
+   * Marker icon (battle|ship|question, extensible). Non-null → the event renders
+   * as a marker medallion via the marker path, NOT as a chip/bar, and never stamps
+   * the compositor bar layer.
+   */
+  icon?: Maybe<Scalars['String']['output']>;
   row?: Maybe<Scalars['Int']['output']>;
   rowSpan?: Maybe<Scalars['Int']['output']>;
+  /** Zoom LOD tier: 1 band names (always visible) · 2 major · 3 detail. Null → by kind. */
+  tier?: Maybe<Scalars['Int']['output']>;
 };
 
 export type Fax = {
@@ -173,6 +185,12 @@ export type FaxIndex = {
   __typename?: 'FaxIndex';
   pages?: Maybe<Array<Maybe<Array<Maybe<Scalars['Int']['output']>>>>>;
   slug?: Maybe<Scalars['String']['output']>;
+};
+
+export type HighlightRange = {
+  __typename?: 'HighlightRange';
+  end?: Maybe<Scalars['Int']['output']>;
+  start?: Maybe<Scalars['Int']['output']>;
 };
 
 export type HistoricalDocument = {
@@ -877,6 +895,7 @@ export type Query = {
   fax?: Maybe<Array<Maybe<Fax>>>;
   faxIndex?: Maybe<FaxIndex>;
   generateToken?: Maybe<Scalars['String']['output']>;
+  highlight?: Maybe<HighlightRange>;
   history?: Maybe<Array<Maybe<HistoricalDocument>>>;
   homefeed?: Maybe<HomeFeed>;
   homegroups?: Maybe<Array<Maybe<HomeGroup>>>;
@@ -923,6 +942,7 @@ export type Query = {
   requestedUsers?: Maybe<Array<Maybe<HomeUser>>>;
   scripture?: Maybe<ScriptureResults>;
   search?: Maybe<Array<Maybe<SearchResult>>>;
+  searchAll: SearchAllResult;
   section?: Maybe<Array<Maybe<Section>>>;
   shortlink?: Maybe<Shortlinks>;
   signin?: Maybe<SignIn>;
@@ -986,6 +1006,12 @@ export type QueryFaxIndexArgs = {
 
 export type QueryGenerateTokenArgs = {
   seed?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryHighlightArgs = {
+  query: Scalars['String']['input'];
+  text: Scalars['String']['input'];
 };
 
 
@@ -1219,6 +1245,11 @@ export type QuerySearchArgs = {
 };
 
 
+export type QuerySearchAllArgs = {
+  query: Scalars['String']['input'];
+};
+
+
 export type QuerySectionArgs = {
   slug?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
 };
@@ -1409,6 +1440,16 @@ export type Relation = {
   relation?: Maybe<Scalars['String']['output']>;
 };
 
+export type ResultCard = {
+  __typename?: 'ResultCard';
+  highlight?: Maybe<HighlightRange>;
+  ref?: Maybe<Scalars['String']['output']>;
+  score?: Maybe<Scalars['Float']['output']>;
+  slug?: Maybe<Scalars['String']['output']>;
+  snippet?: Maybe<Scalars['String']['output']>;
+  title?: Maybe<Scalars['String']['output']>;
+};
+
 export type Row = {
   __typename?: 'Row';
   capsulation?: Maybe<Caps>;
@@ -1448,8 +1489,21 @@ export type ScriptureResults = {
   verses?: Maybe<Array<Maybe<Scripture>>>;
 };
 
+export type SearchAllResult = {
+  __typename?: 'SearchAllResult';
+  commentary: Array<ResultCard>;
+  events: Array<ResultCard>;
+  narration: Array<ResultCard>;
+  pages: Array<ResultCard>;
+  people: Array<ResultCard>;
+  places: Array<ResultCard>;
+  semantic?: Maybe<Scalars['Boolean']['output']>;
+  verses: Array<SearchResult>;
+};
+
 export type SearchResult = {
   __typename?: 'SearchResult';
+  highlight?: Maybe<HighlightRange>;
   lang?: Maybe<Scalars['String']['output']>;
   narration?: Maybe<Scalars['String']['output']>;
   page?: Maybe<Scalars['String']['output']>;
@@ -1756,6 +1810,7 @@ export type ResolversTypes = {
   Fax: ResolverTypeWrapper<Partial<Fax>>;
   FaxIndex: ResolverTypeWrapper<Partial<FaxIndex>>;
   Float: ResolverTypeWrapper<Partial<Scalars['Float']['output']>>;
+  HighlightRange: ResolverTypeWrapper<Partial<HighlightRange>>;
   HistoricalDocument: ResolverTypeWrapper<Partial<HistoricalDocument>>;
   HomeFeed: ResolverTypeWrapper<Partial<HomeFeed>>;
   HomeFeedItem: ResolverTypeWrapper<Partial<HomeFeedItem>>;
@@ -1810,10 +1865,12 @@ export type ResolversTypes = {
   ReadingPlanSegment: ResolverTypeWrapper<Partial<ReadingPlanSegment>>;
   Reference: ResolverTypeWrapper<Partial<Reference>>;
   Relation: ResolverTypeWrapper<Partial<Relation>>;
+  ResultCard: ResolverTypeWrapper<Partial<ResultCard>>;
   Row: ResolverTypeWrapper<Partial<Row>>;
   Scripture: ResolverTypeWrapper<Partial<Scripture>>;
   ScriptureHighlights: ResolverTypeWrapper<Partial<ScriptureHighlights>>;
   ScriptureResults: ResolverTypeWrapper<Partial<ScriptureResults>>;
+  SearchAllResult: ResolverTypeWrapper<Partial<SearchAllResult>>;
   SearchResult: ResolverTypeWrapper<Partial<SearchResult>>;
   Section: ResolverTypeWrapper<Partial<Section>>;
   SectionMeta: ResolverTypeWrapper<Partial<SectionMeta>>;
@@ -1854,6 +1911,7 @@ export type ResolversParentTypes = {
   Fax: Partial<Fax>;
   FaxIndex: Partial<FaxIndex>;
   Float: Partial<Scalars['Float']['output']>;
+  HighlightRange: Partial<HighlightRange>;
   HistoricalDocument: Partial<HistoricalDocument>;
   HomeFeed: Partial<HomeFeed>;
   HomeFeedItem: Partial<HomeFeedItem>;
@@ -1908,10 +1966,12 @@ export type ResolversParentTypes = {
   ReadingPlanSegment: Partial<ReadingPlanSegment>;
   Reference: Partial<Reference>;
   Relation: Partial<Relation>;
+  ResultCard: Partial<ResultCard>;
   Row: Partial<Row>;
   Scripture: Partial<Scripture>;
   ScriptureHighlights: Partial<ScriptureHighlights>;
   ScriptureResults: Partial<ScriptureResults>;
+  SearchAllResult: Partial<SearchAllResult>;
   SearchResult: Partial<SearchResult>;
   Section: Partial<Section>;
   SectionMeta: Partial<SectionMeta>;
@@ -2047,11 +2107,15 @@ export type EventResolvers<ContextType = AppContext, ParentType extends Resolver
 };
 
 export type EventGridResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['EventGrid'] = ResolversParentTypes['EventGrid']> = {
+  anchor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   bg?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   col?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   colSpan?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  dir?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  icon?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   row?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   rowSpan?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  tier?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -2076,6 +2140,12 @@ export type FaxResolvers<ContextType = AppContext, ParentType extends ResolversP
 export type FaxIndexResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['FaxIndex'] = ResolversParentTypes['FaxIndex']> = {
   pages?: Resolver<Maybe<Array<Maybe<Array<Maybe<ResolversTypes['Int']>>>>>, ParentType, ContextType>;
   slug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type HighlightRangeResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['HighlightRange'] = ResolversParentTypes['HighlightRange']> = {
+  end?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  start?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -2592,6 +2662,7 @@ export type QueryResolvers<ContextType = AppContext, ParentType extends Resolver
   fax?: Resolver<Maybe<Array<Maybe<ResolversTypes['Fax']>>>, ParentType, ContextType, Partial<QueryFaxArgs>>;
   faxIndex?: Resolver<Maybe<ResolversTypes['FaxIndex']>, ParentType, ContextType, Partial<QueryFaxIndexArgs>>;
   generateToken?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, Partial<QueryGenerateTokenArgs>>;
+  highlight?: Resolver<Maybe<ResolversTypes['HighlightRange']>, ParentType, ContextType, RequireFields<QueryHighlightArgs, 'query' | 'text'>>;
   history?: Resolver<Maybe<Array<Maybe<ResolversTypes['HistoricalDocument']>>>, ParentType, ContextType, Partial<QueryHistoryArgs>>;
   homefeed?: Resolver<Maybe<ResolversTypes['HomeFeed']>, ParentType, ContextType, Partial<QueryHomefeedArgs>>;
   homegroups?: Resolver<Maybe<Array<Maybe<ResolversTypes['HomeGroup']>>>, ParentType, ContextType, Partial<QueryHomegroupsArgs>>;
@@ -2638,6 +2709,7 @@ export type QueryResolvers<ContextType = AppContext, ParentType extends Resolver
   requestedUsers?: Resolver<Maybe<Array<Maybe<ResolversTypes['HomeUser']>>>, ParentType, ContextType, Partial<QueryRequestedUsersArgs>>;
   scripture?: Resolver<Maybe<ResolversTypes['ScriptureResults']>, ParentType, ContextType, Partial<QueryScriptureArgs>>;
   search?: Resolver<Maybe<Array<Maybe<ResolversTypes['SearchResult']>>>, ParentType, ContextType, Partial<QuerySearchArgs>>;
+  searchAll?: Resolver<ResolversTypes['SearchAllResult'], ParentType, ContextType, RequireFields<QuerySearchAllArgs, 'query'>>;
   section?: Resolver<Maybe<Array<Maybe<ResolversTypes['Section']>>>, ParentType, ContextType, Partial<QuerySectionArgs>>;
   shortlink?: Resolver<Maybe<ResolversTypes['Shortlinks']>, ParentType, ContextType, Partial<QueryShortlinkArgs>>;
   signin?: Resolver<Maybe<ResolversTypes['SignIn']>, ParentType, ContextType, Partial<QuerySigninArgs>>;
@@ -2751,6 +2823,16 @@ export type RelationResolvers<ContextType = AppContext, ParentType extends Resol
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type ResultCardResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['ResultCard'] = ResolversParentTypes['ResultCard']> = {
+  highlight?: Resolver<Maybe<ResolversTypes['HighlightRange']>, ParentType, ContextType>;
+  ref?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  score?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  slug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  snippet?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  title?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type RowResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['Row'] = ResolversParentTypes['Row']> = {
   capsulation?: Resolver<Maybe<ResolversTypes['Caps']>, ParentType, ContextType>;
   connection?: Resolver<Maybe<ResolversTypes['Conn']>, ParentType, ContextType>;
@@ -2790,7 +2872,20 @@ export type ScriptureResultsResolvers<ContextType = AppContext, ParentType exten
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type SearchAllResultResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['SearchAllResult'] = ResolversParentTypes['SearchAllResult']> = {
+  commentary?: Resolver<Array<ResolversTypes['ResultCard']>, ParentType, ContextType>;
+  events?: Resolver<Array<ResolversTypes['ResultCard']>, ParentType, ContextType>;
+  narration?: Resolver<Array<ResolversTypes['ResultCard']>, ParentType, ContextType>;
+  pages?: Resolver<Array<ResolversTypes['ResultCard']>, ParentType, ContextType>;
+  people?: Resolver<Array<ResolversTypes['ResultCard']>, ParentType, ContextType>;
+  places?: Resolver<Array<ResolversTypes['ResultCard']>, ParentType, ContextType>;
+  semantic?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  verses?: Resolver<Array<ResolversTypes['SearchResult']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type SearchResultResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['SearchResult'] = ResolversParentTypes['SearchResult']> = {
+  highlight?: Resolver<Maybe<ResolversTypes['HighlightRange']>, ParentType, ContextType>;
   lang?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   narration?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   page?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -3021,6 +3116,7 @@ export type Resolvers<ContextType = AppContext> = {
   EventGrid?: EventGridResolvers<ContextType>;
   Fax?: FaxResolvers<ContextType>;
   FaxIndex?: FaxIndexResolvers<ContextType>;
+  HighlightRange?: HighlightRangeResolvers<ContextType>;
   HistoricalDocument?: HistoricalDocumentResolvers<ContextType>;
   HomeFeed?: HomeFeedResolvers<ContextType>;
   HomeFeedItem?: HomeFeedItemResolvers<ContextType>;
@@ -3073,10 +3169,12 @@ export type Resolvers<ContextType = AppContext> = {
   ReadingPlanSegment?: ReadingPlanSegmentResolvers<ContextType>;
   Reference?: ReferenceResolvers<ContextType>;
   Relation?: RelationResolvers<ContextType>;
+  ResultCard?: ResultCardResolvers<ContextType>;
   Row?: RowResolvers<ContextType>;
   Scripture?: ScriptureResolvers<ContextType>;
   ScriptureHighlights?: ScriptureHighlightsResolvers<ContextType>;
   ScriptureResults?: ScriptureResultsResolvers<ContextType>;
+  SearchAllResult?: SearchAllResultResolvers<ContextType>;
   SearchResult?: SearchResultResolvers<ContextType>;
   Section?: SectionResolvers<ContextType>;
   SectionMeta?: SectionMetaResolvers<ContextType>;

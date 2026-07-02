@@ -61,6 +61,10 @@ export interface TimelineRow {
   grid_h?: number | null;
   grid_bg?: string | null;
   label_category?: "people" | "place" | "event" | null;
+  label_anchor?: 'center' | 'start' | 'end' | 'above' | 'below' | null;
+  grid_tier?: number | null;
+  grid_dir?: 'l' | 'r' | null;
+  grid_icon?: string | null;
 }
 
 export interface MarkdownRow {

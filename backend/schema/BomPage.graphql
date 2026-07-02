@@ -154,6 +154,16 @@ type EventGrid {
   rowSpan: Int
   colSpan: Int
   bg: String
+  """Label anchor within/around the tile: center|start|end|above|below. Null → center."""
+  anchor: String
+  """Zoom LOD tier: 1 band names (always visible) · 2 major · 3 detail. Null → by kind."""
+  tier: Int
+  """Movement direction for migration/expedition bars: l|r. Null → none."""
+  dir: String
+  """Marker icon (battle|ship|question, extensible). Non-null → the event renders
+  as a marker medallion via the marker path, NOT as a chip/bar, and never stamps
+  the compositor bar layer."""
+  icon: String
 }
 
 input QueueInput {
