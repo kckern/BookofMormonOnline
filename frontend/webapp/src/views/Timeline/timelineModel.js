@@ -261,6 +261,19 @@ export const apiMarkers = (events) =>
     .filter((e) => e.grid && e.grid.icon)
     .map((e) => ({ r: e.grid.row, c: e.grid.col, bg: e.grid.bg, icon: e.grid.icon, slug: e.slug }))
 
+// Google-Maps-style callout placement, all in grid-content coordinates.
+// anchor: the tile's offset rect; pop: {w,h}; canvas: grid {w,h}.
+export function popoverPlace(anchor, pop, canvas) {
+  const GAP = 14, PAD = 8
+  const rightLeft = anchor.left + anchor.width + GAP
+  const side = rightLeft + pop.w <= canvas.w - PAD ? 'right' : 'left'
+  const left = side === 'right' ? rightLeft : anchor.left - pop.w - GAP
+  const midY = anchor.top + anchor.height / 2
+  const top = Math.min(Math.max(midY - pop.h / 3, PAD), Math.max(PAD, canvas.h - pop.h - PAD))
+  const tailTop = Math.min(Math.max(midY - top, 12), pop.h - 12)
+  return { side, left: Math.max(PAD, left), top, tailTop }
+}
+
 // Corner rounding — RULE v2 (supersedes docs/reference/timeline-corner-rounding.md v1).
 // Round a corner IFF all three neighbour cells at that corner (both orthogonals
 // AND the diagonal) are empty parchment — a corner only rounds into fully open

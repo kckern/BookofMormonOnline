@@ -4,6 +4,7 @@ import {
   buildComposite, markerCellPaint, radiusFor, cornerStyleFor,
   anchorOf, chipBg, tierOf, tierVisible,
   formatAxisTick, isCenturyTick, apiMarkers,
+  popoverPlace,
 } from './timelineModel'
 
 describe('color tokens', () => {
@@ -246,5 +247,30 @@ describe('apiMarkers', () => {
       { slug: 'c', grid: null },
     ]
     expect(apiMarkers(evs)).toEqual([{ r: 1, c: 2, bg: '#111111', icon: 'battle', slug: 'a' }])
+  })
+})
+
+describe('popoverPlace', () => {
+  const pop = { w: 340, h: 420 }
+  const canvas = { w: 1200, h: 2600 }
+  it('prefers the right side of the anchor', () => {
+    const p = popoverPlace({ left: 100, top: 500, width: 60, height: 20 }, pop, canvas)
+    expect(p.side).toBe('right')
+    expect(p.left).toBe(100 + 60 + 14)
+  })
+  it('flips left when the right edge would overflow', () => {
+    const p = popoverPlace({ left: 1000, top: 500, width: 60, height: 20 }, pop, canvas)
+    expect(p.side).toBe('left')
+    expect(p.left).toBe(1000 - 340 - 14)
+  })
+  it('clamps vertically inside the canvas', () => {
+    const p = popoverPlace({ left: 100, top: 10, width: 60, height: 20 }, pop, canvas)
+    expect(p.top).toBeGreaterThanOrEqual(8)
+    const q = popoverPlace({ left: 100, top: 2590, width: 60, height: 20 }, pop, canvas)
+    expect(q.top + pop.h).toBeLessThanOrEqual(canvas.h - 8)
+  })
+  it('reports the tail offset so it stays pointed at the anchor', () => {
+    const p = popoverPlace({ left: 100, top: 10, width: 60, height: 20 }, pop, canvas)
+    expect(p.tailTop).toBe(10 + 10 - p.top) // anchor mid-Y − popover top
   })
 })

@@ -1,6 +1,6 @@
 /** @format */
 
-import React, { useState, useEffect, useMemo, useRef, useCallback } from "react"
+import React, { useState, useEffect, useLayoutEffect, useMemo, useRef, useCallback } from "react"
 import Parser from "html-react-parser"
 import { Link, useRouteMatch, useHistory } from "react-router-dom"
 import { assetUrl } from "src/models/BoMOnlineAPI"
@@ -12,9 +12,10 @@ import battleSlugs from './battleSlugs.json'
 import "./Timeline.css"
 import {
   bandVar, resolvedHex, textOn, humanize, cleanLabel, cornerStyleFor, buildComposite, markerCellPaint,
-  anchorOf, chipBg, tierOf, tierVisible, formatAxisTick, isCenturyTick, apiMarkers,
+  anchorOf, chipBg, tierOf, tierVisible, formatAxisTick, isCenturyTick, apiMarkers, popoverPlace,
 } from './timelineModel'
 import { SWORDS, PIN, CHEV_L, CHEV_R } from './icons'
+import TimelinePopover from './TimelinePopover'
 
 // Legacy canvas battle tiles → icon-event marker descriptors. This is a
 // STOPGAP data source: when bom_timeline rows gain grid placements +
@@ -169,12 +170,32 @@ function TimeLine() {
   const info = selected && !loading ? bySlug[selected] : null
   const showModal = !!selected && (info || loading)
 
+  const isNarrow = () =>
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 640px)').matches
+
+  const [place, setPlace] = useState(null)
+  useLayoutEffect(() => {
+    if (!showModal || isNarrow()) return setPlace(null)
+    const node = cellRefs.current[selected]
+    const grid = document.getElementById('tg-grid')
+    if (!node || !grid) return setPlace(null)
+    setPlace(
+      popoverPlace(
+        { left: node.offsetLeft, top: node.offsetTop,
+          width: node.offsetWidth, height: node.offsetHeight },
+        { w: 340, h: 420 },
+        { w: grid.scrollWidth, h: grid.scrollHeight }
+      )
+    )
+    // timeline: refs exist only after data renders; scale: zoom moves the anchor
+  }, [showModal, selected, timeline, scale])
+
   // Modal a11y: Escape, focus-in + trap, focus-restore, and background scroll-lock.
   useEffect(() => {
     if (!showModal) return
     const opener = document.activeElement
     const prevOverflow = document.body.style.overflow
-    document.body.style.overflow = "hidden"
+    if (isNarrow()) document.body.style.overflow = "hidden"
     const onKey = (e) => {
       if (e.key === "Escape") return closeInfo()
       if (e.key !== "Tab" || !dialogRef.current) return
@@ -316,7 +337,6 @@ function TimeLine() {
               {...linAttr}
               onClick={() => openInfo(e.slug)}
               aria-label={e.date ? `${label}, ${e.date}` : label}
-              title={e.date ? `${label} — ${e.date}` : label}
             >
               {inner}
             </button>
@@ -537,7 +557,7 @@ function TimeLine() {
                 {...(clickable
                   ? { type: 'button', onClick: () => openInfo(slug), 'aria-label': battleLabel,
                       ref: (n) => { if (n) cellRefs.current[slug] = n } }
-                  : { role: 'img', 'aria-label': 'Battle' })}
+                  : { role: 'img', 'aria-label': 'Battle', title: battleLabel })}
                 className={
                   'tg-anchor tg-battle' + (incursion ? ' tg-battle-inc' : '') +
                   (clickable ? ' is-clickable' : '') + (selected === slug ? ' is-selected' : '')
@@ -546,7 +566,6 @@ function TimeLine() {
                   ? { gridColumn: `${m.c + 1} / span 1`, gridRow: `${m.r} / span 1`, background: bandVar(paint) }
                   : { gridColumn: `${m.c + 1} / span 1`, gridRow: `${m.r} / span 1` }}
                 data-lin={territory ? linKey(territory) : undefined}
-                title={battleLabel}
               >
                 {incursion && (
                   <span
@@ -582,6 +601,11 @@ function TimeLine() {
 
           {/* events + location pins from the backend (Event.grid + Event.label) */}
           {eventEls}
+
+          {place && (
+            <TimelinePopover place={place} info={info} slug={selected} loading={loading}
+              onClose={closeInfo} dialogRef={dialogRef} closeBtnRef={closeBtnRef} />
+          )}
         </div>
       </div>
 
@@ -596,7 +620,7 @@ function TimeLine() {
         </div>
       )}
 
-      {showModal && (
+      {showModal && !place && (
         <div className="tg-infobox-backdrop" onClick={closeInfo}>
           <div
             className="tg-infobox"

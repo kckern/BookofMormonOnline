@@ -794,4 +794,30 @@
   flex: 0 0 auto;
   color: #8a6a2f; /* muted sepia — places are the QUIET layer (audit §2.3) */
 }
+
+/* Anchored callout — parchment speech bubble with a tail toward the tile */
+.tg-popover {
+  position: absolute;
+  z-index: 40;
+  width: 340px;
+  max-height: 440px;
+  overflow: auto;
+  background: linear-gradient(180deg, #fdf8ec 0%, #f7efd9 100%);
+  border: 1px solid rgba(120, 90, 40, 0.35);
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(40, 26, 8, 0.45);
+  padding: 20px 20px 22px;
+}
+.tg-popover::before {
+  content: '';
+  position: absolute;
+  top: var(--tail-top);
+  width: 14px;
+  height: 14px;
+  transform: rotate(45deg);
+  background: #fdf8ec;
+  border: 1px solid rgba(120, 90, 40, 0.35);
+}
+.tg-popover-right::before { left: -8px; border-right: none; border-top: none; }
+.tg-popover-left::before  { right: -8px; border-left: none; border-bottom: none; }
 .tg-pin svg { width: 100%; height: 100%; display: block; }
