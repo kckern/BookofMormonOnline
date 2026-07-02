@@ -349,13 +349,17 @@
   font-family: "Roboto Condensed", "Arial Narrow", sans-serif;
 }
 
-/* Continuous parchment backing for the sticky gutter (covers every row) */
+/* Continuous parchment backing for the sticky gutter. OPAQUE: band tiles
+   scrolling beneath must never bleed through (the old 78%→transparent gradient
+   smeared band colors into a brown smudge — audit §3.4). The soft edge is a
+   shadow ON TOP of the solid backing instead. */
 .tg-gutter-bg {
   position: sticky;
   left: 0;
   z-index: 7;
-  background: linear-gradient(to right, var(--gutter-bg) 78%, transparent);
-  border-right: 1px solid rgba(120, 90, 40, 0.25);
+  background: var(--gutter-bg); /* opaque token (Task 4b) — themes follow */
+  border-right: 1px solid rgba(120, 90, 40, 0.35);
+  box-shadow: 4px 0 10px -4px rgba(70, 48, 16, 0.28);
 }
 
 /* Sticky date/era gutter labels (the time scale) — serif, sepia ink */
@@ -390,6 +394,8 @@
   transition: filter 0.12s ease;
 }
 
+/* Light bands get a sepia hairline so their silhouette reads on parchment */
+.tg-fill[data-lin='fff2cc'] { box-shadow: inset 0 0 0 1px rgba(120, 90, 40, 0.35); }
 
 /* Hover discovery: hovering anywhere on a band lights up every tile of that
    lineage (fills + its events + battles). One declaration, one selector per
