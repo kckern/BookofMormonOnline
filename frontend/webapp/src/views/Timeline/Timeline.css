@@ -455,8 +455,18 @@
 }
 .tg-event {
   padding: 0 6px;
-  text-align: left;
+  width: max-content;
+  min-width: 100%;
 }
+/* Anchor variants — justify-self places the (possibly overflowing) chip within
+   the grid area; text-align covers multi-line fallback. Default: CENTER. */
+.tg-anchor.tg-a-center { justify-self: center; justify-content: center; text-align: center; }
+.tg-anchor.tg-a-start  { justify-self: start;  justify-content: flex-start; text-align: left; }
+.tg-anchor.tg-a-end    { justify-self: end;    justify-content: flex-end; text-align: right; }
+/* above/below: captions that sit OUTSIDE the anchor row (places, band captions) */
+.tg-anchor.tg-a-above  { transform: translateY(-100%); }
+.tg-anchor.tg-a-below  { transform: translateY(100%); }
+
 .tg-event-label {
   font-weight: 600;
   font-size: calc(11px * var(--scale));
@@ -536,11 +546,9 @@
   font-size: calc(10px * var(--scale));
   font-weight: 700;
   font-style: italic;
-  color: #5a4015;
-  /* light outline so place names stay legible over bands */
-  text-shadow: -0.6px -0.6px 0 rgba(255, 251, 238, 0.85),
-    0.6px -0.6px 0 rgba(255, 251, 238, 0.85), -0.6px 0.6px 0 rgba(255, 251, 238, 0.85),
-    0.6px 0.6px 0 rgba(255, 251, 238, 0.85);
+  color: #6d5423;
+  /* single soft halo — the 4-way ±0.6px shadow left dirty ticks at glyph corners (audit §3.5) */
+  text-shadow: 0 0 3px rgba(255, 250, 235, 0.9), 0 0 6px rgba(255, 250, 235, 0.7);
 }
 
 /* Zoomed-out: labels would collide into noise — hide them, keep the bands. */

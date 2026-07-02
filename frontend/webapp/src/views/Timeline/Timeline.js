@@ -12,6 +12,7 @@ import battleSlugs from './battleSlugs.json'
 import "./Timeline.css"
 import {
   bandVar, resolvedHex, textOn, humanize, cleanLabel, cornerStyleFor, buildComposite, markerCellPaint,
+  anchorOf, chipBg,
 } from './timelineModel'
 import { SWORDS, PIN } from './icons'
 
@@ -265,23 +266,23 @@ function TimeLine() {
           const ref = (n) => {
             if (n) cellRefs.current[e.slug] = n
           }
-          const rawBg = g.bg
-          const tcol = textOn(resolvedHex(rawBg))
+          const anchor = anchorOf(e)
+          const rawBg = chipBg(g, comp)            // identity hex (sheet value or sepia fallback)
+          const tcol = textOn(resolvedHex(rawBg))  // contrast math needs a concrete hex, never a var()
           const linAttr = isPlace ? null : { "data-lin": linKey(g.bg) }
           const cls =
-            "tg-anchor " +
-            (isPlace ? "tg-place" : "tg-event") +
-            (isPlace ? "" : tcol === "#fff" ? " tg-on-dark" : " tg-on-light") +
-            (clickable ? " is-clickable" : " is-static") +
-            (selected === e.slug ? " is-selected" : "")
+            'tg-anchor ' + (isPlace ? 'tg-place' : 'tg-event') + ` tg-a-${anchor}` +
+            (isPlace ? '' : tcol === '#fff' ? ' tg-on-dark' : ' tg-on-light') +
+            (clickable ? ' is-clickable' : ' is-static') +
+            (selected === e.slug ? ' is-selected' : '')
           const inner = isPlace ? (
             <span><span className="tg-pin" aria-hidden="true">{PIN}</span> {label}</span>
           ) : (
             <span className="tg-event-label">{label}</span>
           )
           const rect = { r: g.row, c: g.col, w: g.colSpan, h: g.rowSpan }
-          const capStyle = rawBg ? cornerStyleFor(rect, comp.barAt) : undefined
-          const style = isPlace ? pos : { ...pos, background: rawBg ? bandVar(rawBg) : "#5a5a5a", color: tcol, ...capStyle }
+          const capStyle = cornerStyleFor(rect, comp.barAt)
+          const style = isPlace ? pos : { ...pos, background: bandVar(rawBg), color: tcol, ...capStyle }
           if (!clickable) {
             return (
               <div
@@ -474,7 +475,7 @@ function TimeLine() {
               return (
                 <div
                   key={key}
-                  className={`tg-anchor ${isPlace ? "tg-place" : "tg-event"}${tone} is-static`}
+                  className={`tg-anchor ${isPlace ? "tg-place" : "tg-event"}${isPlace ? " tg-a-above" : ""}${tone} is-static`}
                   style={isPlace ? pos : { ...pos, background: bandVar(t.bg), color: tcol }}
                   title={tipText}
                 >
@@ -491,7 +492,7 @@ function TimeLine() {
                   if (n) cellRefs.current[t.slug] = n
                 }}
                 className={
-                  `tg-anchor ${isPlace ? "tg-place" : "tg-event"}${tone} is-clickable` +
+                  `tg-anchor ${isPlace ? "tg-place" : "tg-event"}${isPlace ? " tg-a-above" : ""}${tone} is-clickable` +
                   (selected === t.slug ? " is-selected" : "")
                 }
                 style={isPlace ? pos : { ...pos, background: bandVar(t.bg), color: tcol }}

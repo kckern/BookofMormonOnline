@@ -2,6 +2,7 @@ import {
   tokenOf, bandVar, resolvedHex,
   textOn, humanize, cleanLabel, cornerRadii, dominantNeighbor,
   buildComposite, markerCellPaint, radiusFor, cornerStyleFor,
+  anchorOf, chipBg,
 } from './timelineModel'
 
 describe('color tokens', () => {
@@ -177,4 +178,23 @@ describe('cornerStyleFor', () => {
     const world = (r, c) => (r >= 4 && r <= 6 && c >= 4 && c <= 6 ? '#111111' : null)
     expect(cornerStyleFor({ r: 5, c: 5, w: 1, h: 1 }, world)).toBeUndefined()
   })
+})
+
+describe('anchorOf', () => {
+  it('defaults to center (KC directive)', () =>
+    expect(anchorOf({ grid: { row: 1, col: 1 } })).toBe('center'))
+  it('honors an explicit anchor', () =>
+    expect(anchorOf({ grid: { anchor: 'start' } })).toBe('start'))
+  it('rejects unknown values back to center', () =>
+    expect(anchorOf({ grid: { anchor: 'bogus' } })).toBe('center'))
+})
+
+describe('chipBg', () => {
+  const comp = { surfaceAt: (r, c) => (r === 3 ? '#111111' : null) }
+  it('uses the placement bg when present', () =>
+    expect(chipBg({ row: 3, col: 1, bg: '#222222' }, comp)).toBe('#222222'))
+  it('falls back to the surface beneath', () =>
+    expect(chipBg({ row: 3, col: 1, bg: null }, comp)).toBe('#111111'))
+  it('falls back to themed sepia ink, never grey', () =>
+    expect(chipBg({ row: 9, col: 1, bg: null }, comp)).toBe('#6a5326'))
 })

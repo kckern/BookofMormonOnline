@@ -217,6 +217,18 @@ export function cornerStyleFor(rect, colorAt) {
   }
 }
 
+const ANCHORS = new Set(['center', 'start', 'end', 'above', 'below'])
+// Label anchoring is a data param (bom_timeline.label_anchor). Default CENTER (KC directive).
+export const anchorOf = (e) => {
+  const a = e && e.grid && e.grid.anchor
+  return ANCHORS.has(a) ? a : 'center'
+}
+
+// Chip background for events with no grid_bg: the surface genuinely beneath the
+// tile, else themed sepia ink. Never an off-palette grey.
+export const chipBg = (g, comp) =>
+  g.bg || comp.surfaceAt(g.row, g.col) || '#6a5326'
+
 // Corner rounding — RULE v2 (supersedes docs/reference/timeline-corner-rounding.md v1).
 // Round a corner IFF all three neighbour cells at that corner (both orthogonals
 // AND the diagonal) are empty parchment — a corner only rounds into fully open
