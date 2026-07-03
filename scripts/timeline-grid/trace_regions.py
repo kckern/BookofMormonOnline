@@ -123,6 +123,13 @@ def absorb_islands(cell, maxsize=12, frac=0.5):
                 changed = True
 
 
+# Colors that are LAND WASHES, not people-lines — no timeline event ever paints
+# with them (e.g. --c-nephilands #073763, "Nephite-controlled land" shading left in
+# the bitmap). They must never surface as their own layer; merge them into the
+# surrounding territory regardless of size.
+WASH_COLORS = {"#073763"}
+
+
 def absorb_enclosed(cell, maxsize=35, ext_max=0.1):
     """Absorb a small foreign block that is fully ENCLOSED inside other regions
     (little/no exterior exposure) into its dominant bordering neighbour. These are
@@ -134,7 +141,8 @@ def absorb_enclosed(cell, maxsize=35, ext_max=0.1):
     while changed:
         changed = False
         for color, cells in components(cell):
-            if len(cells) > maxsize:
+            wash = color in WASH_COLORS
+            if len(cells) > maxsize and not wash:      # washes merge at any size
                 continue
             cset = set(cells)
             edge = collections.Counter()
@@ -150,7 +158,7 @@ def absorb_enclosed(cell, maxsize=35, ext_max=0.1):
                         edge[v] += 1
                     else:
                         ext += 1
-            if per and edge and ext / per < ext_max:
+            if per and edge and (wash or ext / per < ext_max):
                 top = edge.most_common(1)[0][0]
                 for p in cells:
                     cell[p] = top
