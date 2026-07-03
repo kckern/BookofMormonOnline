@@ -113,6 +113,41 @@ data-integrity tests added (69 timeline tests pass); timeline a11y clean (axe se
 critical violations are all pre-existing app-shell chrome); perf 4962 DOM nodes / smooth
 scroll; responsive with no overflow at 390/768px.
 
+## Object/layer SVG rewrite — final parity (2026-07-03)
+
+The flat cell-grid renderer (each cell one color, boundaries traced between all of
+them) was replaced by a **stacked-layer SVG model** (`scripts/timeline-grid/trace_regions.py`
+→ `scene.json`, rendered by `Timeline.js` as `<path>` layers). KC's decisive feedback:
+"the red region covers all of that and everything else overlays on top — you're still
+forcing the grid, causing perforations where corners don't match."
+
+**Model:** regions are opaque shapes stacked by z. `layer_regions()` classifies each
+region as a BASE (fronts the backdrop, exterior exposure ≥ ~15%) or an ENCLAVE (almost
+fully enclosed → sits on its largest-area neighbour, whose fill is extended beneath it).
+The red Lamanite territory is one continuous base under Amulon/Zeniff/Ammon/record-keepers;
+a rounded corner or gap on any enclave reveals the layer **beneath** (red), never the
+parchment void. Sibling bases (red|green) abut and stay independent.
+
+**Corner rule (kills junction cream):** `rounded_loop` rounds a convex corner only into
+open backdrop or a layer drawn *before* it (revealed legitimately); it squares corners
+that abut a region drawn *after* (higher z), so the pair meets flush instead of both
+receding and baring parchment.
+
+**Cleanups (tracer):** `apply_solidify` (weld authored weave bodies), `absorb_islands`
+(merge weave slivers), `fill_enclosed_holes` (patch enclosed gaps incl. small multi-colour),
+`despur` (trim 1-cell edge protrusions), `absorb_enclosed` (drop stray unlabeled incursion
+blocks; `WASH_COLORS` like `--c-nephilands #073763` merge at any size — they are land
+shading, never a people-line). Markers dropped their legacy cell-grid backing (the heavy
+red incursion "tab" pills behind record-keeper medallions).
+
+**Final adversarial sign-off: all four dimensions PASS, zero blocking findings** (design
+system / layout / presentation / data completion, sonnet judges vs the 4 dark-theme
+reference screenshots in `BoMOnlineWorkspace/content/timeline`). 16 regions, interior
+cream perforations eliminated (full-scene scan clean above the label band), 70 timeline
+tests pass. Deferred non-blocking residuals: Ammon hexagon diamond-notch shape variety,
+Helaman/Pahoran hollow-ring war-council motif, Hagoth westward loop bump, longer/softer
+integration fades. Commits `3f3de27`→`f8ecf88`.
+
 ## Verification setup
 
 - Local dev: `cd frontend/webapp && BROWSER=none PORT=8201 npm start` (needed `npm install` — `dompurify` was missing post-pull; app-shell XHR 400s are unrelated to the baked-JSON timeline).
