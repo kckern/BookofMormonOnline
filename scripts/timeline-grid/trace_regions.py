@@ -34,11 +34,16 @@ def build_cellmap(tiles):
     return cell
 
 
-def fill_enclosed_holes(cell, rows, cols):
-    """Single-color enclosed holes inside a region are NOT negative space — they
-    read as blank parchment pills. Fill them with the surrounding color (the
-    classic hole-patcher). Multi-color gaps (backdrop between separate peoples)
-    are reachable from outside or border 2+ colors → left as intentional space."""
+def fill_enclosed_holes(cell, rows, cols, small=8):
+    """Enclosed holes (not reachable from the canvas border) are NOT negative
+    space — they read as blank parchment cracks. Fill them:
+      - any size when a SINGLE color borders them (classic pill hole-patcher);
+      - up to `small` cells when SEVERAL colors border them (the thin 1-row gaps
+        the bitmap left between stacked defection/escape bars — filled with the
+        dominant bordering color so the bars abut cleanly).
+    Larger multi-color enclosed cutouts (e.g. the intentional Ammon diamond notch)
+    exceed `small` and are preserved. Backdrop between separate peoples is border-
+    reachable → in `outside` → never touched."""
     outside = set()
     st = [(0, c) for c in range(cols + 2)] + [(rows + 1, c) for c in range(cols + 2)]
     st += [(r, 0) for r in range(rows + 2)] + [(r, cols + 1) for r in range(rows + 2)]
@@ -54,7 +59,7 @@ def fill_enclosed_holes(cell, rows, cols):
             if (r, c) in cell or (r, c) in outside or (r, c) in seen:
                 continue
             comp = []
-            colors = set()
+            edge = collections.Counter()
             stack = [(r, c)]
             seen.add((r, c))
             while stack:
@@ -63,12 +68,12 @@ def fill_enclosed_holes(cell, rows, cols):
                 for dr, dc in ((1, 0), (-1, 0), (0, 1), (0, -1)):
                     n = (rr + dr, cc + dc)
                     if n in cell:
-                        colors.add(cell[n])
+                        edge[cell[n]] += 1
                     elif n not in outside and n not in seen:
                         seen.add(n)
                         stack.append(n)
-            if len(colors) == 1:
-                col = next(iter(colors))
+            if len(edge) == 1 or (edge and len(comp) <= small):
+                col = edge.most_common(1)[0][0]
                 for p in comp:
                     cell[p] = col
 
@@ -116,6 +121,33 @@ def absorb_islands(cell, maxsize=12, frac=0.5):
                 for p in cells:
                     cell[p] = top
                 changed = True
+
+
+def despur(cell, passes=2):
+    """Trim lone single-cell spurs: a cell with <=1 same-color orthogonal
+    neighbour and >=3 neighbours of one OTHER color is a 1-cell protrusion the
+    bitmap left poking into the adjacent territory (e.g. a bar's ragged right
+    edge alternating one cell in/out). At the seam-seal stroke width these read
+    as stray colored slivers/outlines floating in the neighbour. Recolor them to
+    that dominant neighbour so bar edges land clean. Two passes only, so genuine
+    thin arms lose at most a stray tip, never their whole body."""
+    for _ in range(passes):
+        change = {}
+        for (r, c), cur in list(cell.items()):
+            nb = collections.Counter()
+            same = 0
+            for dr, dc in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                v = cell.get((r + dr, c + dc))
+                if v == cur:
+                    same += 1
+                elif v:
+                    nb[v] += 1
+            if same <= 1 and nb:
+                top, n = nb.most_common(1)[0]
+                if n >= 3:
+                    change[(r, c)] = top
+        for p, v in change.items():
+            cell[p] = v
 
 
 def components(cell):
@@ -260,6 +292,7 @@ def main():
     apply_solidify(cell)                                # weld authored weave bodies
     absorb_islands(cell)                                # merge stranded weave slivers
     fill_enclosed_holes(cell, grid["rows"], grid["cols"])
+    despur(cell)                                        # trim 1-cell edge protrusions
     regions = []
     for color, cells in components(cell):
         loops = trace_loops(cells)
