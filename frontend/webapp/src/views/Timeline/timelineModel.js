@@ -112,17 +112,31 @@ export function shapeTileStyle(t, resolve = (c) => c) {
   if (t.k === 'fade')
     return { background: `linear-gradient(${GRAD_DEG[t.dir || 'v']}, ${resolve(t.bg)}, transparent)` }
   if (t.k === 'fillet') return { background: FILLET_BG(t.dir, resolve(t.bg)) }
-  if (t.k === 'bevel') return { background: resolve(t.bg), clipPath: BEVEL_CLIP[t.dir] }
+  if (t.k === 'bevel') {
+    // Two-color diagonal: a hard-stop gradient splits the cell along the diagonal
+    // so one territory color meets another CLEANLY — no parchment wedge shows in
+    // the cut (the clip-path form left the cut half transparent → cream bleed).
+    // `dir` names the right-angle corner the `bg` triangle fills; `to` is the
+    // color behind it. Without `to`, fall back to the clip (bg over whatever).
+    if (t.to) return { background: `linear-gradient(${BEVEL_DEG[t.dir]}, ${resolve(t.bg)} 0 49.6%, ${resolve(t.to)} 50.4% 100%)` }
+    return { background: resolve(t.bg), clipPath: BEVEL_CLIP[t.dir] }
+  }
   return undefined
 }
-// Event-bar paint: a flat band color, OR an along-bar gradient when the row
+// Gradient angle whose split line is the cell diagonal, with `bg` on the side of
+// the named right-angle corner. tl/br split on the ╲ diagonal; tr/bl on the ╱.
+const BEVEL_DEG = { tl: '45deg', br: '225deg', tr: '135deg', bl: '315deg' }
+// Event-bar paint: a flat band color, OR an along-bar dissolve when the row
 // carries a `bgTo` (defection/join/assimilation bars — one people becoming
 // another over the bar's length). `gradDeg` names the travel direction: 90 =
-// rightward (origin left → dest right), 270 = leftward. `resolve` maps identity
-// hex → paint value (bandVar in the renderer); default identity keeps it pure.
+// rightward (origin left → dest right), 270 = leftward. The source artwork's
+// grammar: the bar reads as the ORIGIN color for most of its run, then
+// dissolves into the destination over the arrival tail — never a full-length
+// 50/50 blend (which on a short bar collapses into a smudge). `resolve` maps
+// identity hex → paint value (bandVar in the renderer); default keeps it pure.
 export const barPaint = (g, resolve = (c) => c) =>
   g.bgTo
-    ? `linear-gradient(${g.gradDeg || 90}deg, ${resolve(g.bg)}, ${resolve(g.bgTo)})`
+    ? `linear-gradient(${g.gradDeg || 90}deg, ${resolve(g.bg)} 0%, ${resolve(g.bg)} 55%, ${resolve(g.bgTo)} 100%)`
     : resolve(g.bg)
 
 // Shape tiles that stamp the band layer with a solid color so neighbours stay
@@ -257,8 +271,8 @@ const RADIUS_BASE = 13
 export const radiusFor = (w, h) =>
   Math.min(RADIUS_BASE, ((h || 1) * ROW_H) / 2, ((w || 1) * COL_W) / 2)
 
-export function cornerStyleFor(rect, colorAt, overrides) {
-  const k = cornerRadii(rect, colorAt)
+export function cornerStyleFor(rect, colorAt, overrides, strict) {
+  const k = cornerRadii(rect, colorAt, strict)
   // Per-tile data escape hatch: `rd` force-rounds, `sq` force-squares — JSON wins
   // over the algorithm (the corner artwork carries cases v2.1 cannot express).
   if (overrides) {
@@ -273,6 +287,57 @@ export function cornerStyleFor(rect, colorAt, overrides) {
     borderBottomLeftRadius: k.bl ? rad : 0,
     borderBottomRightRadius: k.br ? rad : 0,
   }
+}
+
+// Wedge backing color: what a rounded band corner should REVEAL beneath it (the
+// territory it sits on) instead of falling through to the cream canvas. The
+// strict rule only rounds a corner when its immediate neighbours are empty, so
+// the intended fill is the nearest band along each rounded corner's diagonal —
+// scan outward up to 3 cells. Returns null when the corner faces genuine open
+// canvas (no band nearby) — there cream IS correct (an outer ribbon edge).
+export function wedgeColor(rect, colorAt, overrides) {
+  // Explicit data override wins: `wedge` is the hex to reveal (or 'none'/null for
+  // cream). Lets the artwork force a corner's reveal color the heuristic can't
+  // infer (e.g. the "top color" of a band that emerged from the one above it).
+  if (rect.wedge !== undefined) return rect.wedge === 'none' ? null : rect.wedge
+  const k = cornerRadii(rect, colorAt, true)
+  if (overrides) {
+    for (const cn of overrides.rd || []) if (cn in k) k[cn] = true
+    for (const cn of overrides.sq || []) if (cn in k) k[cn] = false
+  }
+  if (!(k.tl || k.tr || k.bl || k.br)) return null
+  const r = rect.r, c = rect.c, w = rect.w || 1, h = rect.h || 1, own = rect.bg
+  // Nearest band along a ray (distance + color); null if only cream/own within 3.
+  const ray = (sr, sc, dr, dc) => {
+    for (let i = 1; i <= 3; i++) {
+      const v = colorAt(sr + dr * i, sc + dc * i)
+      if (v) return v === own ? null : { d: i, v }
+    }
+    return null
+  }
+  // A corner reveals a band ONLY if that band WRAPS it — appears in ≥2 of the
+  // corner's 3 outward directions (diagonal + both orthogonals). One direction
+  // means the band is merely nearby (a floating card over canvas with a band off
+  // to one side) → the corner reveals cream, not the stray band.
+  const cornerReveal = (sr, sc, vr, hc) => {
+    const rays = [ray(sr, sc, vr, 0), ray(sr, sc, 0, hc), ray(sr, sc, vr, hc)].filter(Boolean)
+    const byColor = {}
+    for (const g of rays) (byColor[g.v] = byColor[g.v] || []).push(g.d)
+    let best = null, bd = 99
+    for (const col in byColor) {
+      if (byColor[col].length < 2) continue           // not wrapping → ignore
+      const d = Math.min(...byColor[col])
+      if (d < bd) { bd = d; best = col }
+    }
+    return best ? { v: best, d: bd } : null
+  }
+  const reveals = []
+  if (k.tl) reveals.push(cornerReveal(r, c, -1, -1))
+  if (k.tr) reveals.push(cornerReveal(r, c + w - 1, -1, 1))
+  if (k.bl) reveals.push(cornerReveal(r + h - 1, c, 1, -1))
+  if (k.br) reveals.push(cornerReveal(r + h - 1, c + w - 1, 1, 1))
+  const hits = reveals.filter(Boolean).sort((a, b) => a.d - b.d)
+  return hits.length ? hits[0].v : null
 }
 
 const ANCHORS = new Set(['center', 'start', 'end', 'above', 'below'])
@@ -315,10 +380,22 @@ export function isCenturyTick(t) {
 }
 
 // DB icon-events (grid.icon set) render via the marker path, not as chips/bars.
+// w/h (from colSpan/rowSpan) let a single major battle occupy several cells —
+// the source artwork scales its starburst to the event's weight (Cumorah is
+// huge); the medallion sizes to the spanned area in the renderer.
 export const apiMarkers = (events) =>
   (events || [])
     .filter((e) => e.grid && e.grid.icon)
-    .map((e) => ({ r: e.grid.row, c: e.grid.col, bg: e.grid.bg, icon: e.grid.icon, slug: e.slug }))
+    .map((e) => ({
+      r: e.grid.row, c: e.grid.col,
+      w: e.grid.colSpan || 1, h: e.grid.rowSpan || 1,
+      bg: e.grid.bg, icon: e.grid.icon, slug: e.slug,
+    }))
+
+// Medallion diameter (px, pre-scale) for a marker spanning w×h cells: fill the
+// spanned area's short side, floored at the classic 18px single-cell size.
+export const markerIconSize = (w, h) =>
+  Math.max(18, Math.min((w || 1) * COL_W, (h || 1) * ROW_H) - 2)
 
 // Google-Maps-style callout placement, all in grid-content coordinates.
 // anchor: the tile's offset rect; pop: {w,h}; canvas: grid {w,h}.
@@ -343,15 +420,18 @@ export function popoverPlace(anchor, pop, canvas) {
 // sharing a full edge) — that still stays square here (one orthogonal occupied
 // → not both empty → square). So: diagonal-only touch rounds; edge-flush handoff
 // squares. `d` (diagonal) retained in the signature for call-site clarity.
-export function cornerRadii(rect, colorAt) {
+export function cornerRadii(rect, colorAt, strict) {
   const top = rect.r, left = rect.c
   const right = rect.c + (rect.w || 1) - 1
   const bottom = rect.r + (rect.h || 1) - 1
-  const round = (oh, ov) => oh === null && ov === null
+  // strict also requires the DIAGONAL neighbour empty — squares band-to-band
+  // junction corners (which otherwise round and expose a cream sliver) while
+  // still rounding true outer ribbon corners that face open parchment.
+  const round = (oh, ov, od) => oh === null && ov === null && (!strict || od === null)
   return {
-    tl: round(colorAt(top, left - 1), colorAt(top - 1, left)),
-    tr: round(colorAt(top, right + 1), colorAt(top - 1, right)),
-    bl: round(colorAt(bottom, left - 1), colorAt(bottom + 1, left)),
-    br: round(colorAt(bottom, right + 1), colorAt(bottom + 1, right)),
+    tl: round(colorAt(top, left - 1), colorAt(top - 1, left), colorAt(top - 1, left - 1)),
+    tr: round(colorAt(top, right + 1), colorAt(top - 1, right), colorAt(top - 1, right + 1)),
+    bl: round(colorAt(bottom, left - 1), colorAt(bottom + 1, left), colorAt(bottom + 1, left - 1)),
+    br: round(colorAt(bottom, right + 1), colorAt(bottom + 1, right), colorAt(bottom + 1, right + 1)),
   }
 }

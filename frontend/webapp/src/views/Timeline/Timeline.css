@@ -26,8 +26,11 @@
   --c-unity: #c9c2b0;      /* gray family per source artwork (measures ~#8f9490
                               there); tuned lighter for parchment contrast —
                               adjust HERE only, at the Task 14 visual check */
-  --canvas-bg: radial-gradient(140% 90% at 50% -10%, #f8f1dd 0%, #f0e6c8 52%, #e6d6b0 100%);
-  --gutter-bg: #f0e6c8;
+  /* deeper aged-tan canvas so the negative space RECEDES and the saturated bands
+     read as raised illuminated ribbons (figure/ground — the model gets this free
+     from its dark canvas; parchment must earn it by not being bright cream). */
+  --canvas-bg: radial-gradient(150% 95% at 50% -8%, #e7d9b6 0%, #dccca2 55%, #ceba8c 100%);
+  --gutter-bg: #dccca2;
   --ink: #4a3a18;
 }
 /* dark theme = the legacy charcoal canvas; band swatches stay closer to sheet */
@@ -395,64 +398,12 @@
   transition: opacity 0.12s ease, filter 0.12s ease;
 }
 
-/* Light bands get a sepia hairline so their silhouette reads on parchment */
-.tg-fill[data-lin='fff2cc'] { box-shadow: inset 0 0 0 1px rgba(120, 90, 40, 0.35); }
-
 /* Shape-language tiles carry their own gradient/clip geometry — no square-corner
    override from cornerStyleFor applies, but keep them from inheriting radii. */
 .tg-shape { border-radius: 0 !important; }
 /* Break glyph — the era-void squiggle centered in its cells */
 .tg-break { display: flex; align-items: center; justify-content: center; }
 .tg-break svg { width: calc(52px * var(--scale)); }
-
-/* Hover discovery: hovering a band DIMS every other lineage; the hovered one
-   stays untouched (gradients/dissolves keep their exact colors — brightness
-   filters on mixed-color tiles read as patchy). Anything without data-lin
-   (axis, labels-on-parchment, popover) is unaffected. */
-.timeline-grid[data-hover] [data-lin] {
-  transition: opacity 0.12s ease, filter 0.12s ease;
-}
-.timeline-grid[data-hover="134f5c"] [data-lin]:not([data-lin="134f5c"]) { opacity: 0.45; filter: saturate(0.55); }
-.timeline-grid[data-hover="351c75"] [data-lin]:not([data-lin="351c75"]) { opacity: 0.45; filter: saturate(0.55); }
-.timeline-grid[data-hover="1c4587"] [data-lin]:not([data-lin="1c4587"]) { opacity: 0.45; filter: saturate(0.55); }
-.timeline-grid[data-hover="073763"] [data-lin]:not([data-lin="073763"]) { opacity: 0.45; filter: saturate(0.55); }
-.timeline-grid[data-hover="85200c"] [data-lin]:not([data-lin="85200c"]) { opacity: 0.45; filter: saturate(0.55); }
-.timeline-grid[data-hover="3c78d8"] [data-lin]:not([data-lin="3c78d8"]) { opacity: 0.45; filter: saturate(0.55); }
-.timeline-grid[data-hover="b45f06"] [data-lin]:not([data-lin="b45f06"]) { opacity: 0.45; filter: saturate(0.55); }
-.timeline-grid[data-hover="274e13"] [data-lin]:not([data-lin="274e13"]) { opacity: 0.45; filter: saturate(0.55); }
-.timeline-grid[data-hover="bf9000"] [data-lin]:not([data-lin="bf9000"]) { opacity: 0.45; filter: saturate(0.55); }
-.timeline-grid[data-hover="38761d"] [data-lin]:not([data-lin="38761d"]) { opacity: 0.45; filter: saturate(0.55); }
-.timeline-grid[data-hover="6fa8dc"] [data-lin]:not([data-lin="6fa8dc"]) { opacity: 0.45; filter: saturate(0.55); }
-.timeline-grid[data-hover="000000"] [data-lin]:not([data-lin="000000"]) { opacity: 0.45; filter: saturate(0.55); }
-.timeline-grid[data-hover="fff2cc"] [data-lin]:not([data-lin="fff2cc"]) { opacity: 0.45; filter: saturate(0.55); }
-
-/* Status bar naming the hovered band (replaces a persistent floating legend) */
-.tg-statusbar {
-  position: absolute;
-  left: 16px;
-  bottom: 14px;
-  z-index: 22;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 14px;
-  background: rgba(58, 44, 18, 0.93);
-  color: #fdf6e6;
-  border-radius: 18px;
-  font-family: "Roboto Condensed", "Arial Narrow", sans-serif;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.2px;
-  box-shadow: 0 2px 12px rgba(40, 26, 8, 0.45);
-  pointer-events: none;
-}
-.tg-status-sw {
-  width: 14px;
-  height: 14px;
-  border-radius: 3px;
-  flex: 0 0 auto;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
-}
 
 /* Anchored label/icon: occupies its tile but text is NOT clipped to it.
    Non-interactive by default; clickable events re-enable pointer events. */
@@ -480,6 +431,15 @@
   padding: 0 6px;
   width: max-content;
   min-width: 100%;
+}
+/* Floating labels (person rosters + all non-card events): text floats over the
+   territory, sized to content only — it never forces the colored path's width
+   (KC directive). No background; the halo carries legibility. */
+.tg-event.tg-float {
+  width: max-content;
+  min-width: 0;
+  padding: 0 4px;
+  background: none;
 }
 /* Anchor variants — justify-self places the (possibly overflowing) chip within
    the grid area; text-align covers multi-line fallback. Default: CENTER. */
@@ -555,13 +515,11 @@
   text-shadow: none !important;
   box-shadow: 0 2px 9px rgba(28, 16, 4, 0.5);
 }
-/* box-shadow rings (not outline) — outlines clip under the scroller's overflow */
+/* Keyboard focus keeps a ring for a11y, but SELECTION does not — a rectangular
+   ring boxes bars/labels and reads as an artifact (KC). Selection is conveyed by
+   the open popover instead. */
 .tg-anchor.is-clickable:focus-visible {
   box-shadow: 0 0 0 2px #fffdf6, 0 0 0 4px #9c6b1f;
-  z-index: 6;
-}
-.tg-anchor.is-selected {
-  box-shadow: 0 0 0 2px #fffdf6, 0 0 0 4px #e0a528;
   z-index: 6;
 }
 /* non-interactive labels: no pointer affordance */
@@ -582,6 +540,30 @@
   color: #6d5423;
   /* single soft halo — the 4-way ±0.6px shadow left dirty ticks at glyph corners (audit §3.5) */
   text-shadow: 0 0 3px rgba(255, 250, 235, 0.9), 0 0 6px rgba(255, 250, 235, 0.7);
+}
+
+/* Place caption over a DARK band: flip to parchment ink + dark halo (the
+   default sepia italic vanishes on saturated fills). Class set from the
+   composite surface in Timeline.js. */
+.tg-place-dark > span {
+  color: #f2e8cf;
+  text-shadow: 0 0 3px rgba(40, 24, 6, 0.75), 0 1px 1px rgba(40, 24, 6, 0.6);
+}
+.tg-place-dark .tg-pin { color: #e8d9a8; }
+
+/* chip:'none' labels floating on light dissolve regions get the reference's
+   luminous halo (e.g. "Jesus Christ" on the unity fade). Dark-band cases keep
+   the standard dark halo from .tg-on-dark. */
+.tg-chip-none.tg-on-light .tg-event-label {
+  text-shadow: 0 0 5px rgba(255, 252, 240, 0.95), 0 0 12px rgba(255, 250, 235, 0.85),
+    0 1px 0 rgba(255, 250, 235, 0.9);
+}
+
+/* Cataclysmic Destruction: give the black monolith the same material depth as
+   the rest of the parchment language (soft top light, heavy base). */
+.tg-fill[data-lin='000000'] {
+  box-shadow: inset 0 3px 8px -2px rgba(255, 255, 255, 0.18),
+    inset 0 -4px 10px -3px rgba(0, 0, 0, 0.6);
 }
 
 /* Zoomed-out: labels-layer toggle (Layers › Labels) hides everything. */
@@ -671,9 +653,6 @@
 .tg-battle.is-selected { box-shadow: none; }
 .tg-battle.is-clickable:focus-visible .tg-battle-medallion {
   box-shadow: 0 0 0 2px #fffdf6, 0 0 0 4px #9c6b1f, 0 1px 3px rgba(60, 28, 8, 0.45);
-}
-.tg-battle.is-selected .tg-battle-medallion {
-  box-shadow: 0 0 0 2px #fffdf6, 0 0 0 4px #e0a528, 0 1px 3px rgba(60, 28, 8, 0.45);
 }
 
 /* Info box (replaces the Leaflet popup) — parchment card */

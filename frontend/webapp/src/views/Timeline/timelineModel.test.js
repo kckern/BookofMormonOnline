@@ -200,13 +200,13 @@ describe('shape tiles', () => {
     expect(comp.bandAt(6, 4)).toBe('#222222')
     expect(comp.bandAt(7, 4)).toBe('#222222')
   })
-  it('barPaint: flat bg when no bgTo, gradient (default 90deg) when bgTo present', () => {
+  it('barPaint: flat bg when no bgTo; solid-origin + arrival-tail dissolve when bgTo present', () => {
     const up = (c) => `var(${c})`
     expect(barPaint({ bg: '#111111' }, up)).toBe('var(#111111)')
     expect(barPaint({ bg: '#111111', bgTo: '#222222' }, up))
-      .toBe('linear-gradient(90deg, var(#111111), var(#222222))')
+      .toBe('linear-gradient(90deg, var(#111111) 0%, var(#111111) 55%, var(#222222) 100%)')
     expect(barPaint({ bg: '#111111', bgTo: '#222222', gradDeg: 270 }, up))
-      .toBe('linear-gradient(270deg, var(#111111), var(#222222))')
+      .toBe('linear-gradient(270deg, var(#111111) 0%, var(#111111) 55%, var(#222222) 100%)')
   })
   it('shapeTileStyle applies a color resolver (renderer paints through bandVar)', () => {
     const up = (c) => `var(${c})`
@@ -325,7 +325,7 @@ describe('apiMarkers', () => {
       { slug: 'b', grid: { row: 3, col: 4, bg: '#222222' } },
       { slug: 'c', grid: null },
     ]
-    expect(apiMarkers(evs)).toEqual([{ r: 1, c: 2, bg: '#111111', icon: 'battle', slug: 'a' }])
+    expect(apiMarkers(evs)).toEqual([{ r: 1, c: 2, w: 1, h: 1, bg: '#111111', icon: 'battle', slug: 'a' }])
   })
 })
 

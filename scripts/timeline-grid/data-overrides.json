@@ -215,32 +215,164 @@
       "slug": "place-reign-of-judges",
       "text": null,
       "textSlug": null
+    },
+    {
+      "date": null,
+      "grid": {
+        "col": 19,
+        "colSpan": 2,
+        "row": 12,
+        "rowSpan": 1
+      },
+      "heading": "Jerusalem",
+      "html": null,
+      "kind": "place",
+      "label": null,
+      "p": false,
+      "slug": "jerusalem-mulek",
+      "text": null,
+      "textSlug": null
+    },
+    {
+      "date": null,
+      "grid": {
+        "col": 36,
+        "colSpan": 2,
+        "row": 90,
+        "rowSpan": 1
+      },
+      "heading": "Land Northward",
+      "html": null,
+      "kind": "place",
+      "label": null,
+      "p": false,
+      "slug": "land-northward-2",
+      "text": null,
+      "textSlug": null
+    },
+    {
+      "date": null,
+      "grid": {
+        "bg": "#3c78d8",
+        "col": 38,
+        "colSpan": 1,
+        "icon": "skull",
+        "row": 39,
+        "rowSpan": 1
+      },
+      "heading": null,
+      "html": null,
+      "kind": "event",
+      "label": null,
+      "p": true,
+      "slug": "desolation-skull",
+      "text": null,
+      "textSlug": null
+    },
+    {
+      "date": null,
+      "grid": {
+        "anchor": "center",
+        "col": 15,
+        "colSpan": 15,
+        "dir": "r",
+        "row": 61,
+        "rowSpan": 1,
+        "tier": 2
+      },
+      "heading": "Sons of Mosiah and the Lamanite Converts",
+      "html": null,
+      "kind": "label",
+      "label": null,
+      "p": false,
+      "slug": "sons-of-mosiah-return",
+      "text": null,
+      "textSlug": null
+    },
+    {
+      "date": null,
+      "grid": {
+        "anchor": "start",
+        "col": 2,
+        "colSpan": 6,
+        "row": 16,
+        "rowSpan": 1,
+        "tier": 3
+      },
+      "heading": "Lehi · Sariah · Laman · Lemuel · Sam · Nephi",
+      "html": null,
+      "kind": "label",
+      "label": null,
+      "p": false,
+      "slug": "label-lehi-roster",
+      "text": null,
+      "textSlug": null
+    },
+    {
+      "date": null,
+      "grid": {
+        "bg": "#85200c",
+        "col": 15,
+        "colSpan": 1,
+        "icon": "query",
+        "row": 30,
+        "rowSpan": 1
+      },
+      "heading": "Disputed Geography",
+      "html": "<p>The exact geography of the Nephite/Lamanite lands is debated.</p>",
+      "kind": "event",
+      "label": null,
+      "p": true,
+      "slug": "schism-question",
+      "text": null,
+      "textSlug": null
     }
   ],
+  "aaron": {
+    "label": "Aaron"
+  },
   "aarons-army": {
     "grid": {
-      "bg": "#38761d",
-      "col": 27,
-      "colSpan": 1,
+      "anchor": "center",
+      "bg": "#85200c",
+      "col": 9,
+      "colSpan": 16,
+      "dir": "r",
       "row": 119,
       "rowSpan": 1
     },
     "r2b_flag": "auto-placed"
   },
+  "abinadi": {
+    "label": "Abinadi"
+  },
+  "abish": {
+    "label": "Abish"
+  },
+  "alma-1": {
+    "label": "Alma I"
+  },
+  "alma-2": {
+    "label": "Alma II"
+  },
   "almas-people-in-slavery": {
     "grid": {
+      "anchor": "end",
       "bg": "#b45f06",
       "col": 10,
       "colSpan": 1,
       "row": 46,
       "rowSpan": 1
     },
+    "label": "Alma's People",
     "r2b_flag": "auto-placed"
   },
   "amalekites": {
     "grid": {
       "bg": "#38761d",
       "bgTo": "#85200c",
+      "col": 18,
+      "colSpan": 9,
       "dir": "l",
       "gradDeg": 270
     }
@@ -253,6 +385,7 @@
       "row": 66,
       "rowSpan": 1
     },
+    "label": "Amalickiah",
     "r2b_flag": "auto-placed",
     "r2e_note": "nudged +1 row from 65 to avoid tight truncation with amalickiah-vs-nephites-2 at col 11 r65"
   },
@@ -264,21 +397,39 @@
       "row": 65,
       "rowSpan": 1
     },
+    "label": "Amalickiah",
     "r2b_flag": "auto-placed"
+  },
+  "amalickiahs-army": {
+    "grid": {
+      "anchor": "center",
+      "bg": "#85200c",
+      "col": 16,
+      "colSpan": 16,
+      "dir": "r"
+    }
   },
   "amlicites": {
     "grid": {
-      "bg": "#85200c",
-      "col": 6,
-      "colSpan": 1,
+      "bg": "#38761d",
+      "bgTo": "#85200c",
+      "col": 22,
+      "colSpan": 6,
+      "dir": "l",
+      "gradDeg": 270,
       "row": 52,
       "rowSpan": 1
     },
     "r2b_flag": "auto-placed"
   },
+  "ammon": {
+    "label": "Ammon"
+  },
   "ammon-and-the-people-of-limhi": {
     "grid": {
       "bgTo": "#274e13",
+      "col": 20,
+      "colSpan": 12,
       "dir": "r",
       "gradDeg": 90
     }
@@ -291,20 +442,27 @@
       "row": 50,
       "rowSpan": 1
     },
+    "label": "Middoni",
     "r2b_flag": "auto-placed"
   },
   "ammon-search-party": {
     "grid": {
-      "bg": "#85200c",
+      "anchor": "center",
+      "bg": "#274e13",
       "col": 16,
-      "colSpan": 1,
+      "colSpan": 15,
+      "dir": "l",
       "row": 46,
       "rowSpan": 1
     },
     "r2b_flag": "auto-placed"
   },
+  "ammonihah": {
+    "label": "Alma"
+  },
   "ammonites-anti-nephi-lehites": {
     "grid": {
+      "anchor": "start",
       "bg": "#85200c",
       "col": 16,
       "colSpan": 1,
@@ -323,15 +481,48 @@
     },
     "r2b_flag": "auto-placed"
   },
+  "amos-1": {
+    "label": "Amos I"
+  },
+  "amulek": {
+    "grid": {
+      "anchor": "start",
+      "col": 33
+    }
+  },
+  "amulon": {
+    "label": "Amulon"
+  },
+  "antionum": {
+    "kind": "place",
+    "p": false
+  },
+  "arabia": {
+    "grid": {
+      "col": 6,
+      "colSpan": 2,
+      "row": 14,
+      "rowSpan": 1
+    },
+    "kind": "place",
+    "label": "Arabia",
+    "p": false
+  },
   "attack-on-converts": {
     "grid": {
+      "anchor": "end",
       "bg": "#85200c",
       "col": 6,
       "colSpan": 1,
+      "icon": "battle",
       "row": 54,
       "rowSpan": 1
     },
     "r2b_flag": "auto-placed"
+  },
+  "bountiful": {
+    "kind": "place",
+    "p": false
   },
   "captain-moroni": {
     "grid": {
@@ -345,28 +536,60 @@
   },
   "colonial-expedition": {
     "grid": {
+      "anchor": "center",
+      "bg": "#3c78d8",
+      "col": 16,
+      "colSpan": 13,
       "dir": "l"
     }
   },
   "convert-massacre": {
     "grid": {
       "bg": "#85200c",
-      "col": 2,
+      "col": 31,
       "colSpan": 1,
-      "row": 54,
+      "icon": "battle",
+      "row": 56,
       "rowSpan": 1
     },
+    "heading": "Convert Massacre",
     "r2b_flag": "auto-placed"
   },
   "convert-relocation": {
     "grid": {
+      "anchor": "end",
       "bg": "#85200c",
       "col": 12,
       "colSpan": 1,
       "row": 60,
       "rowSpan": 1
     },
+    "label": "Relocation",
     "r2b_flag": "auto-placed"
+  },
+  "coriantumr": {
+    "grid": {
+      "anchor": "start"
+    }
+  },
+  "coriantumr-army": {
+    "grid": {
+      "anchor": "center",
+      "bg": "#85200c",
+      "col": 16,
+      "colSpan": 13,
+      "dir": "r"
+    }
+  },
+  "cumorah-battle": {
+    "grid": {
+      "bg": "#85200c",
+      "col": 32,
+      "colSpan": 4,
+      "icon": "battle",
+      "row": 124,
+      "rowSpan": 3
+    }
   },
   "discovery-of-desolation": {
     "grid": {
@@ -376,22 +599,30 @@
       "row": 48,
       "rowSpan": 1
     },
+    "label": "Desolation",
     "r2b_flag": "auto-placed"
+  },
+  "east": {
+    "grid": {
+      "col": 34
+    }
   },
   "eastern-war": {
     "grid": {
+      "anchor": "end",
       "bg": "#38761d",
       "col": 30,
       "colSpan": 1,
       "row": 69,
       "rowSpan": 1
     },
+    "label": "War (East)",
     "r2b_flag": "auto-placed"
   },
   "explorers": {
     "grid": {
       "bg": "#3c78d8",
-      "dir": "r"
+      "dir": "lr"
     }
   },
   "gadianton-assaults": {
@@ -399,10 +630,18 @@
       "bg": "#6fa8dc",
       "col": 24,
       "colSpan": 1,
+      "icon": "battle",
       "row": 98,
       "rowSpan": 1
     },
     "r2b_flag": "auto-placed"
+  },
+  "gadianton-robbers": {
+    "grid": {
+      "colSpan": 1,
+      "icon": "battle",
+      "rowSpan": 1
+    }
   },
   "gadianton-surrender": {
     "grid": {
@@ -414,10 +653,51 @@
     },
     "r2b_flag": "auto-placed"
   },
-  "ill-fated-expedition": {
+  "gid": {
+    "kind": "place",
+    "p": false
+  },
+  "giddianhi": {
+    "grid": {
+      "anchor": "start"
+    },
+    "label": "Giddianhi"
+  },
+  "gideon-sermon": {
+    "label": "Gideon"
+  },
+  "hagoth": {
     "grid": {
       "dir": "r"
     }
+  },
+  "helam": {
+    "label": "Alma's People"
+  },
+  "helaman-west": {
+    "label": "Helaman"
+  },
+  "ill-fated-expedition": {
+    "grid": {
+      "anchor": "center",
+      "bg": "#3c78d8",
+      "col": 19,
+      "colSpan": 11,
+      "dir": "l"
+    }
+  },
+  "ill-fated-expedition-conflict": {
+    "grid": {
+      "bg": "#85200c",
+      "col": 20,
+      "colSpan": 1,
+      "icon": "battle",
+      "row": 33,
+      "rowSpan": 1
+    }
+  },
+  "ishmael": {
+    "label": "Land of Ishmael"
   },
   "jacob": {
     "grid": {
@@ -431,9 +711,11 @@
   },
   "jacob-and-his-followers": {
     "grid": {
-      "bg": "#38761d",
-      "col": 31,
-      "colSpan": 1,
+      "anchor": "center",
+      "bg": "#6fa8dc",
+      "col": 16,
+      "colSpan": 16,
+      "dir": "r",
       "row": 105,
       "rowSpan": 1
     },
@@ -443,9 +725,10 @@
     "grid": {
       "bg": "#134f5c",
       "col": 34,
-      "colSpan": 1,
-      "row": 12,
-      "rowSpan": 1
+      "colSpan": 2,
+      "icon": "battle",
+      "row": 10,
+      "rowSpan": 3
     },
     "r2b_flag": "auto-placed"
   },
@@ -454,6 +737,7 @@
       "bg": "#134f5c",
       "col": 5,
       "colSpan": 1,
+      "icon": "voyage",
       "row": 2,
       "rowSpan": 1
     },
@@ -462,6 +746,19 @@
   "jaredites": {
     "grid": {
       "tier": 1
+    }
+  },
+  "jersualem": {
+    "grid": {
+      "col": 13,
+      "colSpan": 2,
+      "row": 12
+    },
+    "label": "Jerusalem"
+  },
+  "jesus-christ": {
+    "grid": {
+      "chip": "none"
     }
   },
   "king-laman-i": {
@@ -484,6 +781,29 @@
     },
     "r2b_flag": "auto-placed"
   },
+  "label-amaleki": {
+    "grid": {
+      "col": 33,
+      "row": 32
+    }
+  },
+  "lamanite-jersualem": {
+    "grid": {
+      "anchor": "end",
+      "row": 50
+    },
+    "kind": "place",
+    "p": false
+  },
+  "lamanite-missionaries": {
+    "grid": {
+      "anchor": "center",
+      "bg": "#85200c",
+      "col": 16,
+      "colSpan": 13,
+      "dir": "r"
+    }
+  },
   "lamanite-occupation-of-zarahemla": {
     "grid": {
       "bg": "#85200c",
@@ -492,31 +812,56 @@
       "row": 83,
       "rowSpan": 1
     },
+    "label": "Occupation",
     "r2b_flag": "auto-placed"
+  },
+  "lamanite-prison": {
+    "kind": "place",
+    "p": false
   },
   "lamanite-recruits": {
     "grid": {
       "bgTo": "#6fa8dc",
+      "col": 19,
+      "colSpan": 3,
       "dir": "r",
       "gradDeg": 90
     }
   },
   "lamanite-recruits-2": {
     "grid": {
+      "anchor": "end",
       "bg": "#6fa8dc",
       "col": 25,
       "colSpan": 1,
+      "icon": "battle",
       "row": 101,
       "rowSpan": 1
     },
     "r2b_flag": "auto-placed"
   },
+  "lamanite-remnant": {
+    "grid": {
+      "chip": "none",
+      "row": 127
+    }
+  },
+  "lamanite-servants": {
+    "grid": {
+      "anchor": "center",
+      "bg": "#85200c",
+      "col": 16,
+      "colSpan": 9,
+      "dir": "r"
+    }
+  },
   "lamanite-troops": {
     "grid": {
+      "anchor": "start",
       "bg": "#85200c",
       "col": 20,
       "colSpan": 1,
-      "row": 46,
+      "row": 44,
       "rowSpan": 1
     },
     "r2b_flag": "auto-placed"
@@ -526,24 +871,109 @@
       "tier": 1
     }
   },
-  "lamanites-vs-nephi": {
+  "lamanites-and-amlicities": {
+    "grid": {
+      "colSpan": 1,
+      "icon": "battle",
+      "rowSpan": 1
+    }
+  },
+  "lamanites-and-nephites": {
+    "grid": {
+      "anchor": "center",
+      "bg": "#38761d",
+      "col": 16,
+      "colSpan": 14,
+      "dir": "lr"
+    }
+  },
+  "lamanites-vs-benjamin": {
     "grid": {
       "bg": "#85200c",
+      "col": 31,
+      "colSpan": 1,
+      "icon": "battle",
+      "row": 37,
+      "rowSpan": 1
+    }
+  },
+  "lamanites-vs-nephi": {
+    "grid": {
+      "bg": null,
       "col": 16,
       "colSpan": 1,
       "icon": "battle",
       "rowSpan": 1
     }
   },
+  "lamanites-vs-noah": {
+    "grid": {
+      "col": 19,
+      "row": 36
+    }
+  },
+  "lamanites-vs-zeniff": {
+    "grid": {
+      "bg": "#85200c",
+      "col": 14,
+      "colSpan": 1,
+      "icon": "battle",
+      "row": 35,
+      "rowSpan": 1
+    }
+  },
+  "lamanites-vs-zeniff-2": {
+    "grid": {
+      "col": 14,
+      "row": 37
+    }
+  },
   "lamanites-with-nephite-defectors": {
     "grid": {
+      "anchor": "center",
+      "bg": "#85200c",
+      "col": 12,
+      "colSpan": 19,
       "dir": "r"
     }
+  },
+  "lamoni": {
+    "grid": {
+      "anchor": "start"
+    },
+    "label": "Lamoni"
+  },
+  "lamonis-father": {
+    "label": "Lamoni's Father"
+  },
+  "land-northward": {
+    "grid": {
+      "col": 33,
+      "colSpan": 3,
+      "row": 4,
+      "rowSpan": 1
+    },
+    "kind": "place",
+    "label": "Land Northward",
+    "p": false
   },
   "lehite-family": {
     "grid": {
       "tier": 1
     }
+  },
+  "lehite-voyage": {
+    "grid": {
+      "bg": "#351c75",
+      "col": 11,
+      "colSpan": 1,
+      "icon": "voyage",
+      "row": 14,
+      "rowSpan": 1
+    }
+  },
+  "limhi": {
+    "label": "Limhi"
   },
   "limhis-revolts": {
     "grid": {
@@ -555,25 +985,78 @@
     },
     "r2b_flag": "auto-placed"
   },
+  "melek": {
+    "label": "Melek"
+  },
+  "middoni": {
+    "kind": "place",
+    "p": false
+  },
   "mormon-vs-aaron": {
     "grid": {
       "bg": "#38761d",
       "col": 25,
       "colSpan": 1,
+      "icon": "battle",
       "row": 117,
       "rowSpan": 1
     },
     "r2b_flag": "auto-placed"
   },
+  "mormons-army": {
+    "label": "Mormon's Army"
+  },
+  "moroni": {
+    "grid": {
+      "bg": "#38761d",
+      "col": 33,
+      "colSpan": 2,
+      "row": 122
+    }
+  },
   "moroni-east": {
     "grid": {
+      "anchor": "start",
       "bg": "#38761d",
       "col": 34,
       "colSpan": 1,
       "row": 69,
       "rowSpan": 1
     },
+    "label": "Moroni",
     "r2b_flag": "auto-placed"
+  },
+  "mosiah1": {
+    "grid": {
+      "anchor": "center",
+      "bg": "#1c4587",
+      "col": 18,
+      "colSpan": 16,
+      "dir": "r",
+      "rd": [
+        "tr"
+      ],
+      "sq": [
+        "tl",
+        "bl",
+        "br"
+      ]
+    },
+    "label": "Mosiah I"
+  },
+  "mulek": {
+    "kind": "place",
+    "p": false
+  },
+  "mulekite-voyage": {
+    "grid": {
+      "bg": "#bf9000",
+      "col": 25,
+      "colSpan": 1,
+      "icon": "voyage",
+      "row": 14,
+      "rowSpan": 1
+    }
   },
   "mulekites": {
     "grid": {
@@ -582,12 +1065,15 @@
   },
   "nephi-2-and-lehi-2-north": {
     "grid": {
+      "anchor": "center",
       "bg": "#38761d",
-      "col": 34,
-      "colSpan": 1,
+      "col": 31,
+      "colSpan": 6,
+      "dir": "r",
       "row": 91,
       "rowSpan": 1
     },
+    "heading": "Nephi II and Lehi II Travel Northward",
     "r2b_flag": "auto-placed"
   },
   "nephi-2-preaching": {
@@ -598,13 +1084,37 @@
       "row": 92,
       "rowSpan": 1
     },
+    "label": "Nephi",
     "r2b_flag": "auto-placed"
+  },
+  "nephi-ii-and-lehi-ii-travel": {
+    "grid": {
+      "anchor": "center",
+      "bg": "#38761d",
+      "col": 16,
+      "colSpan": 16,
+      "dir": "l"
+    },
+    "label": "Nephi II and Lehi II"
+  },
+  "nephihah": {
+    "grid": {
+      "anchor": "end"
+    }
+  },
+  "nephite-army": {
+    "grid": {
+      "colSpan": 1,
+      "icon": "battle",
+      "rowSpan": 1
+    }
   },
   "nephite-counterstrike": {
     "grid": {
       "bg": "#38761d",
       "col": 34,
       "colSpan": 1,
+      "icon": "battle",
       "row": 103,
       "rowSpan": 1
     },
@@ -614,13 +1124,22 @@
     "grid": {
       "bg": "#38761d",
       "bgTo": "#85200c",
+      "col": 19,
+      "colSpan": 10,
       "dir": "l",
       "gradDeg": 270
+    }
+  },
+  "nephite-pilgrims": {
+    "grid": {
+      "dir": "r"
     }
   },
   "nephite-recruits": {
     "grid": {
       "bgTo": "#6fa8dc",
+      "col": 26,
+      "colSpan": 3,
       "dir": "l",
       "gradDeg": 270
     }
@@ -630,21 +1149,35 @@
       "tier": 1
     }
   },
+  "noah": {
+    "label": "Noah"
+  },
   "noah-vs-lamanites": {
     "grid": {
       "bg": "#3c78d8",
       "col": 23,
       "colSpan": 1,
+      "icon": "battle",
       "row": 39,
       "rowSpan": 1
     },
     "r2b_flag": "auto-placed"
   },
+  "pahoran": {
+    "label": "Pahoran"
+  },
   "people-of-alma": {
     "grid": {
       "bgTo": "#274e13",
+      "col": 12,
+      "colSpan": 20,
       "dir": "r",
       "gradDeg": 90
+    }
+  },
+  "people-of-christ": {
+    "grid": {
+      "chip": "none"
     }
   },
   "reclaiming-nephite-land": {
@@ -655,11 +1188,30 @@
       "row": 84,
       "rowSpan": 1
     },
+    "label": "Reclaiming Lands",
     "r2b_flag": "auto-placed"
+  },
+  "samuel": {
+    "grid": {
+      "anchor": "center",
+      "bg": "#85200c",
+      "col": 16,
+      "colSpan": 15,
+      "dir": "r"
+    }
   },
   "sons-of-mosiah": {
     "grid": {
+      "anchor": "center",
+      "bg": "#bf9000",
+      "col": 11,
+      "colSpan": 18,
       "dir": "l"
+    }
+  },
+  "twelve-disciples": {
+    "grid": {
+      "chip": "none"
     }
   },
   "war-in-zarahemla": {
@@ -670,29 +1222,52 @@
       "row": 117,
       "rowSpan": 1
     },
+    "label": "War in Zarahemla",
     "r2b_flag": "auto-placed"
+  },
+  "west": {
+    "grid": {
+      "col": 30
+    }
   },
   "zarahemla-sermon": {
     "grid": {
+      "anchor": "start",
       "bg": "#38761d",
       "col": 36,
       "colSpan": 1,
       "row": 54,
       "rowSpan": 1
     },
+    "label": "Zarahemla",
     "r2b_flag": "auto-placed"
+  },
+  "zeniff": {
+    "grid": {
+      "anchor": "start",
+      "col": 17
+    },
+    "label": "Zeniff"
+  },
+  "zerahemnah": {
+    "grid": {
+      "dir": "r"
+    }
   },
   "zoramite-defection": {
     "grid": {
       "bg": "#38761d",
       "bgTo": "#85200c",
       "col": 19,
-      "colSpan": 1,
+      "colSpan": 11,
       "dir": "l",
       "gradDeg": 270,
-      "row": 65,
+      "row": 64,
       "rowSpan": 1
     },
     "r2b_flag": "auto-placed"
+  },
+  "zoramites": {
+    "label": "Zoramites"
   }
 }

@@ -11,9 +11,13 @@ import "./Timeline.css"
 import {
   bandVar, resolvedHex, textOn, humanize, cleanLabel, cornerStyleFor, buildComposite, markerCellPaint,
   anchorOf, chipBg, tierOf, tierVisible, formatAxisTick, isCenturyTick, apiMarkers, popoverPlace,
-  shapeTileStyle, barPaint,
+  shapeTileStyle, barPaint, markerIconSize, wedgeColor,
 } from './timelineModel'
-import { SWORDS, PIN, CHEV_L, CHEV_R } from './icons'
+import { SWORDS, SHIP, SKULL, QUERY, PIN, CHEV_L, CHEV_R } from './icons'
+
+// Marker iconography by grid.icon value (battle medallions, voyage ships,
+// desolation skull, disputed "?" events). Unknown values fall back to swords.
+const MARKER_ICONS = { battle: SWORDS, voyage: SHIP, skull: SKULL, query: QUERY }
 import TimelinePopover from './TimelinePopover'
 
 // R2a green-field: all timeline data is baked into timelineData.json (generated
@@ -66,23 +70,9 @@ const LINEAGES = [
   { c: "#fff2cc", t: "After Christ" },
 ]
 
-// Hover discovery: raw band color (sheet hex, identity key) → name.
-// Keyed without the leading "#" so it doubles as the data-lin attribute value.
-const COLOR_NAMES = {
-  "134f5c": "Jaredites",
-  "351c75": "Lehi’s family",
-  "1c4587": "Nephites (Land of Nephi)",
-  "073763": "Nephite lands",
-  "85200c": "Lamanites",
-  "3c78d8": "Zeniff’s colony",
-  "b45f06": "Alma’s people",
-  "274e13": "Nephite kings (Zarahemla)",
-  "bf9000": "Mulekites · missions",
-  "38761d": "Reign of the judges",
-  "6fa8dc": "Gadianton robbers",
-  "000000": "Cataclysmic Destruction",
-  "fff2cc": "After Christ",
-}
+// data-lin: raw band color (sheet hex) as an identity attribute — retained for
+// QA/debug selectors even though band-hover dimming is gone (KC: hover effects
+// belong to labels only, never to area fills).
 const linKey = (bg) => (bg ? bg.replace("#", "") : null)
 
 const gridPos = (t) => ({
@@ -109,7 +99,6 @@ function TimeLine() {
   const [infoOpen, setInfoOpen] = useState(false)
   const [layersOpen, setLayersOpen] = useState(false)
   const [layers, setLayers] = useState({ battles: true, labels: true })
-  const [hoverLin, setHoverLin] = useState(null) // band key currently hovered
   const [zoom, setZoom] = useState(1)
   const [theme, setTheme] = useState('parchment')
   // Responsive base: shrink the whole grid to fit the viewport width (keeping the
@@ -244,12 +233,24 @@ function TimeLine() {
       if (t.u) continue // pass-under tiles paint in underEls, beneath the bands
       if (t.k === "fill" && t.bg !== "#ffffff") {
         // plain lineage band tile (drop the stray white artifact cell)
+        const ov = { rd: t.rd, sq: t.sq }
+        const cstyle = cornerStyleFor(t, ba, ov, true)
+        // Rounded corner → paint a same-cell backing of the territory it sits on
+        // so the rounded-off wedge reveals that color, not the cream canvas.
+        const wedge = cstyle ? wedgeColor(t, ba, ov) : null
+        if (wedge)
+          els.push(
+            <div key={`fw${t.r}-${t.c}`} className="tg-fill" data-lin={linKey(wedge)}
+              style={{ ...gridPos(t), background: bandVar(wedge) }} />
+          )
         els.push(
           <div
             key={`f${t.r}-${t.c}`}
             className="tg-fill"
             data-lin={linKey(t.bg)}
-            style={{ ...gridPos(t), background: bandVar(t.bg), ...cornerStyleFor(t, ba, { rd: t.rd, sq: t.sq }) }}
+            // Bands keep rounded ribbon corners; strict rounding squares only the
+            // band-to-band junction corners so no cream sliver leaks between them.
+            style={{ ...gridPos(t), background: bandVar(t.bg), ...cstyle }}
           />
         )
       } else if (SHAPE_TILE_KINDS.has(t.k)) {
@@ -288,6 +289,7 @@ function TimeLine() {
             gridColumn: `${p.c + 1} / span 1`,
             gridRow: `${p.r} / span 1`,
             background: bandVar(p.bg),
+            "--tg-bg": bandVar(p.bg),
           }}
         />
       )
@@ -312,15 +314,22 @@ function TimeLine() {
         for (let dc = 0; dc < (t.w || 1); dc++)
           umap.set(`${t.r + dr},${t.c + dc}`, t.bg || t.from || "#000000")
     const uAt = (r, c) => umap.get(`${r},${c}`) || null
-    return uTiles.map((t) =>
-      SHAPE_TILE_KINDS.has(t.k) ? (
-        <div key={`u${t.r}-${t.c}`} className="tg-fill tg-shape tg-under"
-          data-lin={linKey(t.bg || t.from)} style={{ ...gridPos(t), ...shapeTileStyle(t, bandVar) }} />
-      ) : (
-        <div key={`u${t.r}-${t.c}`} className="tg-fill tg-under" data-lin={linKey(t.bg)}
-          style={{ ...gridPos(t), background: bandVar(t.bg), ...cornerStyleFor(t, uAt) }} />
-      )
-    )
+    const out = []
+    for (const t of uTiles) {
+      if (SHAPE_TILE_KINDS.has(t.k)) {
+        out.push(<div key={`u${t.r}-${t.c}`} className="tg-fill tg-shape tg-under"
+          data-lin={linKey(t.bg || t.from)} style={{ ...gridPos(t), ...shapeTileStyle(t, bandVar) }} />)
+        continue
+      }
+      const cstyle = cornerStyleFor(t, uAt, undefined, true)
+      const wedge = cstyle ? wedgeColor(t, uAt) : null
+      if (wedge)
+        out.push(<div key={`uw${t.r}-${t.c}`} className="tg-fill tg-under" data-lin={linKey(wedge)}
+          style={{ ...gridPos(t), background: bandVar(wedge) }} />)
+      out.push(<div key={`u${t.r}-${t.c}`} className="tg-fill tg-under" data-lin={linKey(t.bg)}
+        style={{ ...gridPos(t), background: bandVar(t.bg), ...cstyle }} />)
+    }
+    return out
   }, [tiles])
 
   // Events, location pins, and person-roster labels (Event.grid placement +
@@ -345,14 +354,35 @@ function TimeLine() {
             if (n) cellRefs.current[e.slug] = n
           }
           const anchor = anchorOf(e)
-          const rawBg = chipBg(g, comp)            // identity hex (sheet value or sepia fallback)
-          const tcol = textOn(resolvedHex(rawBg))  // contrast math needs a concrete hex, never a var()
-          const linAttr = isPlace || isLabel ? null : { "data-lin": linKey(g.bg) }
           const tier = tierOf(e)
+          const surf = comp.surfaceAt(g.row, g.col)
+          // Only overlay CARDS (tier-1 band titles) and BARS (bgTo gradients,
+          // colSpan-defined) paint a colored rectangle. Every other event label
+          // FLOATS as text over the territory beneath it — it never sizes or
+          // constrains the colored path (KC directive). chip:'none' floats too.
+          // Cards (tier-1 titles), gradient bars (bgTo), and directional movement
+          // BARS (a chevron over a multi-cell span — armies, expeditions, missions)
+          // paint their colored path. Point labels (people/places) float as text.
+          const isCard = e.p && !isLabel && g.chip !== 'none' &&
+            (tier === 1 || !!g.bgTo || (!!g.dir && (g.colSpan || 1) >= 2))
+          const floats = !isPlace && !isCard
+          const rawBg = chipBg(g, comp)            // identity hex (sheet value or sepia fallback)
+          // floating labels take contrast from the surface they float over, not
+          // from their own (now unpainted) bg.
+          const tcol = textOn(resolvedHex(floats ? (surf || rawBg) : rawBg))
+          const linAttr = isPlace || isLabel ? null : { "data-lin": linKey(g.bg) }
+          // place captions over a dark band flip to parchment ink + dark halo —
+          // the default sepia italic disappears on saturated fills (audit §P8)
+          const placeDark =
+            isPlace && !!surf && textOn(resolvedHex(surf)) === '#fff'
           const cls =
-            'tg-anchor ' + (isLabel ? 'tg-event tg-label' : isPlace ? 'tg-place' : 'tg-event') +
+            'tg-anchor ' + (isPlace ? 'tg-place' : 'tg-event') +
+            (floats ? ' tg-float' : '') +
+            (isLabel ? ' tg-label' : '') +
             ` tg-a-${anchor}` +
             ` tg-tier-${tier}` +
+            (placeDark ? ' tg-place-dark' : '') +
+            (g.chip === 'none' ? ' tg-chip-none' : '') +
             (isPlace ? '' : tcol === '#fff' ? ' tg-on-dark' : ' tg-on-light') +
             (clickable ? ' is-clickable' : ' is-static') +
             (selected === e.slug ? ' is-selected' : '') +
@@ -361,48 +391,64 @@ function TimeLine() {
             <span><span className="tg-pin" aria-hidden="true">{PIN}</span> {label}</span>
           ) : (
             <span className="tg-event-label">
-              {g.dir === 'l' && <span className="tg-chev" aria-hidden="true">{CHEV_L}</span>}
+              {(g.dir === 'l' || g.dir === 'lr') && <span className="tg-chev" aria-hidden="true">{CHEV_L}</span>}
               {label}
-              {g.dir === 'r' && <span className="tg-chev" aria-hidden="true">{CHEV_R}</span>}
+              {(g.dir === 'r' || g.dir === 'lr') && <span className="tg-chev" aria-hidden="true">{CHEV_R}</span>}
             </span>
           )
           const rect = { r: g.row, c: g.col, w: g.colSpan, h: g.rowSpan }
-          const capStyle = cornerStyleFor(rect, comp.barAt)
-          // labels: transparent overlay (band beneath shows through); events with
-          // a grid bg paint through barPaint (flat OR along-bar gradient via bgTo);
-          // no-bg events fall back to the chipBg surface/sepia paint.
-          const style = isPlace
-            ? pos
-            : isLabel
-              ? { ...pos, color: tcol }
-              : { ...pos, background: g.bgTo ? barPaint(g, bandVar) : bandVar(rawBg), color: tcol, ...capStyle }
+          // Overlay cards/bars get ROUNDED corners (KC: overlay rounds, territory
+          // stays square). A bar end flush against a like-colored surface stays
+          // square via surfaceAt so no bracket sliver peeks past the rounded cap.
+          // Bars round via surfaceAt, but grid.rd/sq force specific corners — e.g.
+          // the Mosiah bar force-rounds its top-right so it reveals the Zarahemla
+          // gold it encroaches under (the corner would otherwise square shut).
+          const capOv = { rd: g.rd, sq: g.sq }
+          const capStyle = isCard ? cornerStyleFor(rect, comp.surfaceAt, capOv) : undefined
+          // A rounded overlay BAR reveals the band it covers at its corners (e.g.
+          // the Mosiah bar over Zarahemla reveals gold), so the covered band does
+          // not abruptly stop. Backing uses the band layer beneath (bandAt).
+          const barWedge = isCard && capStyle ? wedgeColor({ ...rect, bg: g.bg, wedge: g.wedge }, comp.bandAt, capOv) : null
+          const backing = barWedge ? (
+            <div className="tg-fill" data-lin={linKey(barWedge)}
+              style={{ ...pos, background: bandVar(barWedge) }} />
+          ) : null
+          // floats (labels + non-card events): transparent, text floats over the
+          // band beneath (halo carries legibility). cards/bars paint their color.
+          const style = isPlace || floats
+            ? { ...pos, color: isPlace ? undefined : tcol }
+            : { ...pos, background: g.bgTo ? barPaint(g, bandVar) : bandVar(rawBg), color: tcol, ...capStyle }
           if (!clickable) {
             return (
-              <div
-                key={`e-${e.slug}-${g.row}-${g.col}`}
-                ref={ref}
-                className={cls}
-                style={style}
-                title={isLabel ? undefined : e.date ? `${label} — ${e.date}` : label}
-                {...linAttr}
-              >
-                {inner}
-              </div>
+              <React.Fragment key={`e-${e.slug}-${g.row}-${g.col}`}>
+                {backing}
+                <div
+                  ref={ref}
+                  className={cls}
+                  style={style}
+                  title={isLabel ? undefined : e.date ? `${label} — ${e.date}` : label}
+                  {...linAttr}
+                >
+                  {inner}
+                </div>
+              </React.Fragment>
             )
           }
           return (
-            <button
-              key={`e-${e.slug}-${g.row}-${g.col}`}
-              type="button"
-              ref={ref}
-              className={cls}
-              style={style}
-              {...linAttr}
-              onClick={() => openInfo(e.slug)}
-              aria-label={e.date ? `${label}, ${e.date}` : label}
-            >
-              {inner}
-            </button>
+            <React.Fragment key={`e-${e.slug}-${g.row}-${g.col}`}>
+              {backing}
+              <button
+                type="button"
+                ref={ref}
+                className={cls}
+                style={style}
+                {...linAttr}
+                onClick={() => openInfo(e.slug)}
+                aria-label={e.date ? `${label}, ${e.date}` : label}
+              >
+                {inner}
+              </button>
+            </React.Fragment>
           )
         }),
     [selected, openInfo, comp, scale]
@@ -517,12 +563,6 @@ function TimeLine() {
           role="region"
           aria-label="Book of Mormon timeline — events by lineage and date. Use Tab to move between events."
           style={{ "--cols": cols, "--rows": rows, "--scale": scale }}
-          data-hover={hoverLin || undefined}
-          onMouseOver={(e) => {
-            const el = e.target.closest("[data-lin]")
-            setHoverLin(el ? el.getAttribute("data-lin") : null)
-          }}
-          onMouseLeave={() => setHoverLin(null)}
         >
           {/* opaque continuous backing so the gutter masks content on every row */}
           <div className="tg-gutter-bg" style={{ gridColumn: 1, gridRow: `1 / ${rows + 1}` }} />
@@ -613,6 +653,11 @@ function TimeLine() {
               ? `Battle: ${cleanLabel(data.heading) || humanize(slug)}${data.date ? `, ${data.date}` : ''}`
               : 'Battle'
             const Cell = clickable ? 'button' : 'div'
+            const iconPx = markerIconSize(m.w, m.h)
+            const pos = {
+              gridColumn: `${m.c + 1} / span ${m.w || 1}`,
+              gridRow: `${m.r} / span ${m.h || 1}`,
+            }
             return (
               <Cell
                 key={`mk-${m.r}-${m.c}`}
@@ -624,9 +669,7 @@ function TimeLine() {
                   'tg-anchor tg-battle' + (incursion ? ' tg-battle-inc' : '') +
                   (clickable ? ' is-clickable' : '') + (selected === slug ? ' is-selected' : '')
                 }
-                style={paint
-                  ? { gridColumn: `${m.c + 1} / span 1`, gridRow: `${m.r} / span 1`, background: bandVar(paint) }
-                  : { gridColumn: `${m.c + 1} / span 1`, gridRow: `${m.r} / span 1` }}
+                style={paint ? { ...pos, background: bandVar(paint) } : pos}
                 data-lin={territory ? linKey(territory) : undefined}
               >
                 {incursion && (
@@ -641,7 +684,12 @@ function TimeLine() {
                     }}
                   />
                 )}
-                <span className="tg-battle-medallion">{SWORDS}</span>
+                <span
+                  className="tg-battle-medallion"
+                  style={iconPx !== 18
+                    ? { width: `calc(${iconPx}px * var(--scale))`, height: `calc(${iconPx}px * var(--scale))` }
+                    : undefined}
+                >{MARKER_ICONS[m.icon] || SWORDS}</span>
               </Cell>
             )
           })}
@@ -670,17 +718,6 @@ function TimeLine() {
           )}
         </div>
       </div>
-
-      {hoverLin && COLOR_NAMES[hoverLin] && (
-        <div className="tg-statusbar" aria-live="polite">
-          <span
-            className="tg-status-sw"
-            style={{ background: bandVar('#' + hoverLin) }}
-            aria-hidden="true"
-          />
-          {COLOR_NAMES[hoverLin]}
-        </div>
-      )}
 
       {showModal && !place && (
         <div className="tg-infobox-backdrop" onClick={closeInfo}>
