@@ -3,6 +3,44 @@
     {
       "date": null,
       "grid": {
+        "bg": "#85200c",
+        "col": 8,
+        "colSpan": 1,
+        "icon": "battle",
+        "row": 30,
+        "rowSpan": 1
+      },
+      "heading": "King Laman I",
+      "html": null,
+      "kind": "event",
+      "label": null,
+      "p": false,
+      "slug": "king-laman-i-battle",
+      "text": null,
+      "textSlug": null
+    },
+    {
+      "date": null,
+      "grid": {
+        "bg": "#85200c",
+        "col": 11,
+        "colSpan": 1,
+        "icon": "battle",
+        "row": 33,
+        "rowSpan": 1
+      },
+      "heading": "King Laman II",
+      "html": null,
+      "kind": "event",
+      "label": null,
+      "p": false,
+      "slug": "king-laman-ii-battle",
+      "text": null,
+      "textSlug": null
+    },
+    {
+      "date": null,
+      "grid": {
         "anchor": "center",
         "col": 19,
         "colSpan": 2,
@@ -332,7 +370,7 @@
       "grid": {
         "col": 33,
         "colSpan": 2,
-        "row": 54,
+        "row": 53,
         "rowSpan": 1
       },
       "heading": "Ammonihah",

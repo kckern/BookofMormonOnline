@@ -73,6 +73,51 @@ def fill_enclosed_holes(cell, rows, cols):
                     cell[p] = col
 
 
+# Editorial weave overrides (design doc §"per-crossing weave"): where a people
+# genuinely occupies a continuous body but the single-color bitmap interleaved it
+# with the territory it wove through (each cell holds only the *topmost* color), the
+# on-top body reads as beads-on-a-string. Solidify its core so it renders as one
+# region; the interleaved cells become absorbed slivers (see absorb_islands).
+# Each entry: (color, row0, row1, col0, col1) inclusive — the body's core rectangle.
+SOLIDIFY = [
+    ("#6fa8dc", 80, 108, 21, 26),   # Gadianton robber band (weaves Lamanite/Nephite)
+]
+
+
+def apply_solidify(cell):
+    for color, r0, r1, c0, c1 in SOLIDIFY:
+        for r in range(r0, r1 + 1):
+            for c in range(c0, c1 + 1):
+                cell[(r, c)] = color
+
+
+def absorb_islands(cell, maxsize=12, frac=0.5):
+    """Weave leaves tiny single-color slivers stranded inside another region — the
+    'orphaned floating pills' the parity review flagged. A small component (<= maxsize
+    cells) whose border is >= `frac` one color is show-through of the region on top of
+    it: recolor it to that dominant neighbor so it merges cleanly instead of floating.
+    Large components (labeled war-band arms, era-separated bodies) are left alone."""
+    changed = True
+    while changed:
+        changed = False
+        for color, cells in components(cell):
+            if len(cells) > maxsize:
+                continue
+            edge = collections.Counter()
+            for (r, c) in cells:
+                for dr, dc in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                    v = cell.get((r + dr, c + dc))
+                    if v and v != color:
+                        edge[v] += 1
+            if not edge:
+                continue
+            top, n = edge.most_common(1)[0]
+            if n / sum(edge.values()) >= frac:
+                for p in cells:
+                    cell[p] = top
+                changed = True
+
+
 def components(cell):
     """Connected same-color components (4-neighbour flood)."""
     seen = set()
@@ -166,12 +211,17 @@ def _f(v):
 
 
 def rounded_loop(lp, radius=0.45):
-    """Emit a path for one loop with every corner rounded by up to `radius` grid
-    units (clamped to half the shorter adjacent edge, so short arms/notches keep
-    proportional rounding). Grid-strict: corners are offsets along grid edges."""
+    """Emit a path for one loop, rounding only CONVEX corners. Concave (reflex)
+    corners stay sharp: rounding a concave corner pulls the silhouette inward and —
+    because each cell holds a single color, so nothing is drawn beneath — exposes the
+    parchment backdrop as a triangular 'cream leak' (the systemic defect the parity
+    review flagged). A convex corner bulges outward over its own body, so it rounds
+    safely. Convexity is measured relative to the loop's own orientation, so hole
+    loops round correctly too. Radius is clamped to half the shorter adjacent edge."""
     n = len(lp)
     if n < 3:
         return ""
+    orient = 1 if signed_area(lp) > 0 else -1
     pts = []
     for i in range(n):
         a, b, c = lp[i - 1], lp[i], lp[(i + 1) % n]
@@ -179,19 +229,23 @@ def rounded_loop(lp, radius=0.45):
         dout = (c[0] - b[0], c[1] - b[1])
         lin = (abs(din[0]) + abs(din[1])) or 1        # rectilinear -> manhattan = length
         lout = (abs(dout[0]) + abs(dout[1])) or 1
-        r = min(radius, lin / 2, lout / 2)
+        cross = din[0] * dout[1] - din[1] * dout[0]    # turn direction
+        convex = cross * orient > 0
+        r = min(radius, lin / 2, lout / 2) if convex else 0
         uin = (din[0] / lin, din[1] / lin)
         uout = (dout[0] / lout, dout[1] / lout)
         entry = (b[0] - uin[0] * r, b[1] - uin[1] * r)
         exit_ = (b[0] + uout[0] * r, b[1] + uout[1] * r)
-        pts.append((entry, b, exit_))
+        pts.append((entry, b, exit_, r))
     d = f"M{_f(pts[0][0][0])} {_f(pts[0][0][1])}"
     for i in range(n):
-        entry, corner, exit_ = pts[i]
-        # line to this corner's entry, quadratic around the corner to its exit
+        entry, corner, exit_, r = pts[i]
         if i > 0:
             d += f" L{_f(entry[0])} {_f(entry[1])}"
-        d += f" Q{_f(corner[0])} {_f(corner[1])} {_f(exit_[0])} {_f(exit_[1])}"
+        if r > 0:                                       # arc the convex corner
+            d += f" Q{_f(corner[0])} {_f(corner[1])} {_f(exit_[0])} {_f(exit_[1])}"
+        else:                                           # sharp concave corner
+            d += f" L{_f(corner[0])} {_f(corner[1])}"
     d += " Z"
     return d
 
@@ -203,6 +257,8 @@ def path_d(loops):
 def main():
     grid = json.load(open(GRID))
     cell = build_cellmap(grid["tiles"])
+    apply_solidify(cell)                                # weld authored weave bodies
+    absorb_islands(cell)                                # merge stranded weave slivers
     fill_enclosed_holes(cell, grid["rows"], grid["cols"])
     regions = []
     for color, cells in components(cell):

@@ -484,7 +484,13 @@ function TimeLine() {
             style={{ gridColumn: `2 / span ${cols}`, gridRow: `1 / span ${rows}`, width: "100%", height: "100%" }}
           >
             {scene.regions.map((r, i) => (
-              <path key={i} d={r.d} data-lin={linKey(r.color)} style={{ fill: bandVar(r.color) }} />
+              <path
+                key={i}
+                d={r.d}
+                data-lin={linKey(r.color)}
+                vectorEffect="non-scaling-stroke"
+                style={{ fill: bandVar(r.color), stroke: bandVar(r.color), strokeWidth: 1.3, strokeLinejoin: "round" }}
+              />
             ))}
           </svg>
 
