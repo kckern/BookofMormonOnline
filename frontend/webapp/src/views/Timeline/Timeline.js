@@ -219,7 +219,6 @@ function TimeLine() {
   // Unified occupancy/compositing model — see timelineModel.buildComposite.
   // timeline + markers are baked constants now, so this runs once.
   const comp = useMemo(() => buildComposite(tilesData, timeline, markers), [])
-  const { markerFor } = comp
 
   // Canvas marks (hardcoded): location pins only. Battles are now icon-events
   // (from timelineData.json) → the markerFor/markerCellPaint compositor path.
@@ -489,7 +488,7 @@ function TimeLine() {
                 d={r.d}
                 data-lin={linKey(r.color)}
                 vectorEffect="non-scaling-stroke"
-                style={{ fill: bandVar(r.color), stroke: bandVar(r.color), strokeWidth: 2.4, strokeLinejoin: "round" }}
+                style={{ fill: bandVar(r.color), stroke: bandVar(r.color), strokeWidth: 1, strokeLinejoin: "round" }}
               />
             ))}
           </svg>
@@ -556,8 +555,11 @@ function TimeLine() {
               When layers.battles is OFF: only notch cells get a territory patch to
               keep band continuity; cells over real surfaces render nothing. */}
           {layers.battles && markers.map((m) => {
-            const { incursion, territory, attacker } = markerFor(m)
-            const paint = markerCellPaint(comp, m) // null when a real surface is beneath
+            // The SVG region layer now paints the correct territory (and the base
+            // beneath it) under every marker, so markers no longer paint a cell
+            // background or an "incursion tab" pill — the medallion just floats on
+            // the layered scene. (Old cell-grid backing removed; it produced the
+            // heavy red pills behind the record-keeper battle icons.)
             const slug = m.slug || null
             const data = slug ? bySlug[slug] : null
             const clickable = !!(data && (data.heading || data.html))
@@ -578,24 +580,11 @@ function TimeLine() {
                       ref: (n) => { if (n) cellRefs.current[slug] = n } }
                   : { role: 'img', 'aria-label': 'Battle', title: battleLabel })}
                 className={
-                  'tg-anchor tg-battle' + (incursion ? ' tg-battle-inc' : '') +
+                  'tg-anchor tg-battle' +
                   (clickable ? ' is-clickable' : '') + (selected === slug ? ' is-selected' : '')
                 }
-                style={paint ? { ...pos, background: bandVar(paint) } : pos}
-                data-lin={territory ? linKey(territory) : undefined}
+                style={pos}
               >
-                {incursion && (
-                  <span
-                    className="tg-battle-tab"
-                    aria-hidden="true"
-                    data-lin={linKey(attacker)}
-                    style={{
-                      background: bandVar(attacker),
-                      borderTopRightRadius: 'calc(10px * var(--scale))',
-                      borderBottomRightRadius: 'calc(10px * var(--scale))',
-                    }}
-                  />
-                )}
                 <span
                   className="tg-battle-medallion"
                   style={iconPx !== 18

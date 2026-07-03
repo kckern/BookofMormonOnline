@@ -282,6 +282,63 @@ def rounded_loop(lp, radius=0.45):
     return d
 
 
+def outer_loop(loops):
+    """The single outer boundary of a component (largest |area|). We render regions
+    SOLID (outer only, holes dropped) so a base layer fills continuously BENEATH the
+    enclaves stacked on top of it — a rounded corner or gap on an upper layer then
+    reveals the base beneath, never the parchment void. This is the object/layer
+    model: peoples are opaque shapes stacked by z, not a flat cell partition."""
+    return max(loops, key=lambda l: abs(signed_area(l)))
+
+
+NEIGH = ((1, 0), (-1, 0), (0, 1), (0, -1))
+
+
+def layer_regions(comps):
+    """Turn connected components into stacked LAYERS. An enclave (a region whose
+    boundary is mostly against one LARGER region) sits ON that region: the base's
+    fill is extended to cover the enclave's cells, so the base shows through the
+    enclave's rounded corners / gaps. Sibling bases that merely abut (each touches
+    the other on only part of its border) stay independent and reveal the backdrop
+    between them. Returns regions with a solid fill footprint + z (base drawn first)."""
+    info = []
+    owner = {}
+    for color, cells in comps:
+        i = len(info)
+        s = set(cells)
+        info.append({"color": color, "cells": s, "area": len(s)})
+        for p in s:
+            owner[p] = i
+    # border adjacency: how many boundary edges each region shares with each other
+    for i, rg in enumerate(info):
+        adj = collections.Counter()
+        for (r, c) in rg["cells"]:
+            for dr, dc in NEIGH:
+                j = owner.get((r + dr, c + dc))
+                if j is not None and j != i:
+                    adj[j] += 1
+        rg["adj"] = adj
+        rg["border"] = sum(adj.values())
+    # each region sits on its dominant neighbour when that neighbour is LARGER and
+    # owns a majority of this region's border (i.e. it's embedded, not just abutting)
+    for rg in info:
+        base = None
+        if rg["border"]:
+            j, cnt = rg["adj"].most_common(1)[0]
+            if info[j]["area"] > rg["area"] and cnt / rg["border"] >= 0.5:
+                base = j
+        rg["base"] = base
+    # push each enclave's footprint down onto its base (smallest first → chains fold)
+    fill = [set(rg["cells"]) for rg in info]
+    for i in sorted(range(len(info)), key=lambda i: info[i]["area"]):
+        b = info[i]["base"]
+        if b is not None:
+            fill[b] |= fill[i]
+    for i, rg in enumerate(info):
+        rg["fill"] = fill[i]
+    return info
+
+
 def path_d(loops):
     return "".join(rounded_loop(lp) for lp in loops if len(lp) >= 3)
 
@@ -293,20 +350,21 @@ def main():
     absorb_islands(cell)                                # merge stranded weave slivers
     fill_enclosed_holes(cell, grid["rows"], grid["cols"])
     despur(cell)                                        # trim 1-cell edge protrusions
+    layers = layer_regions(components(cell))
     regions = []
-    for color, cells in components(cell):
-        loops = trace_loops(cells)
+    for rg in layers:
+        loops = trace_loops(rg["fill"])          # solid footprint (own + enclaves on it)
         if not loops:
             continue
-        # outer loop = largest |area|; keep all (holes render via nonzero/evenodd)
-        area = sum(abs(signed_area(l)) for l in loops)
+        d = rounded_loop(outer_loop(loops))      # solid: outer boundary only, no holes
         regions.append({
-            "color": color,
-            "cells": len(cells),
-            "area": area,
-            "d": path_d(loops),
+            "color": rg["color"],
+            "cells": len(rg["cells"]),
+            "area": len(rg["fill"]),
+            "d": d,
         })
-    # z-order heuristic: larger regions sit lower (background), smaller/arms on top
+    # z-order: a layer with a larger solid footprint sits lower (a base others stack
+    # on); smaller footprints draw last, on top, revealing the base at their corners
     regions.sort(key=lambda r: -r["area"])
     for z, r in enumerate(regions):
         r["z"] = z
