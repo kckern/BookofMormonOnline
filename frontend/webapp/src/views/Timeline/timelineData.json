@@ -102,7 +102,7 @@
         "col": 34,
         "colSpan": 2,
         "icon": "battle",
-        "iconScale": 1.9,
+        "iconScale": 1.4,
         "row": 10,
         "rowSpan": 3
       },
@@ -3996,7 +3996,7 @@
         "col": 32,
         "colSpan": 4,
         "icon": "battle",
-        "iconScale": 1.7,
+        "iconScale": 2.3,
         "row": 124,
         "rowSpan": 3
       },
