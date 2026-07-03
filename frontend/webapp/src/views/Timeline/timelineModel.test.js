@@ -6,6 +6,7 @@ import {
   formatAxisTick, isCenturyTick, apiMarkers,
   popoverPlace,
   BEVEL_CLIP, FILLET_BG, shapeTileStyle, barPaint,
+  wedgeColor, markerIconSize,
 } from './timelineModel'
 
 describe('color tokens', () => {
@@ -351,5 +352,59 @@ describe('popoverPlace', () => {
   it('reports the tail offset so it stays pointed at the anchor', () => {
     const p = popoverPlace({ left: 100, top: 10, width: 60, height: 20 }, pop, canvas)
     expect(p.tailTop).toBe(10 + 10 - p.top) // anchor mid-Y − popover top
+  })
+})
+
+describe('wedgeColor (rounded-corner reveal)', () => {
+  const grid = (map) => (r, c) => map[`${r},${c}`] || null
+  it('reveals the wrapping band when a color appears in >=2 of a corner\'s 3 directions', () => {
+    // tile (5,5) own=blue; immediate neighbours empty so tl rounds (strict), red
+    // sits 2 cells up AND 2 cells left -> the tl corner is wrapped -> reveal red.
+    const at = grid({ '3,5': '#85200c', '5,3': '#85200c' })
+    expect(wedgeColor({ r: 5, c: 5, w: 1, h: 1, bg: '#1c4587' }, at)).toBe('#85200c')
+  })
+  it('returns null (cream) for a floating card: a band on only one side', () => {
+    const at = grid({ '3,5': '#85200c' }) // red 2 up only -> one direction, not wrapping
+    expect(wedgeColor({ r: 5, c: 5, w: 1, h: 1, bg: '#1c4587' }, at)).toBe(null)
+  })
+  it('returns null when no corner rounds (fully enclosed)', () => {
+    const at = grid({ '4,5': '#111', '6,5': '#111', '5,4': '#111', '5,6': '#111' })
+    expect(wedgeColor({ r: 5, c: 5, w: 1, h: 1, bg: '#1c4587' }, at)).toBe(null)
+  })
+  it('honors an explicit wedge override', () => {
+    expect(wedgeColor({ r: 5, c: 5, w: 1, h: 1, bg: '#1c4587', wedge: '#bf9000' }, () => null)).toBe('#bf9000')
+    expect(wedgeColor({ r: 5, c: 5, w: 1, h: 1, bg: '#1c4587', wedge: 'none' }, () => '#85200c')).toBe(null)
+  })
+})
+
+describe('markerIconSize (apex battle scaling)', () => {
+  it('floors at 18 for a single cell', () => {
+    expect(markerIconSize(1, 1)).toBe(18)
+  })
+  it('scales to the spanned area short side (minus 2)', () => {
+    expect(markerIconSize(4, 3)).toBe(58) // min(4*26, 3*20) - 2
+    expect(markerIconSize(2, 3)).toBe(50) // min(2*26, 3*20) - 2
+  })
+})
+
+describe('cornerRadii strict mode', () => {
+  it('strict additionally requires the diagonal empty (squares junction corners)', () => {
+    const at = (r, c) => (r === 4 && c === 4 ? '#111' : null) // diagonal occupied at tl
+    expect(cornerRadii({ r: 5, c: 5, w: 1, h: 1 }, at).tl).toBe(true)        // loose: rounds
+    expect(cornerRadii({ r: 5, c: 5, w: 1, h: 1 }, at, true).tl).toBe(false) // strict: squares
+  })
+})
+
+describe('two-color bevel', () => {
+  it('renders a hard-stop diagonal gradient between bg and to', () => {
+    const up = (c) => `var(${c})`
+    const s = shapeTileStyle({ k: 'bevel', dir: 'tr', bg: '#111', to: '#222' }, up).background
+    expect(s).toContain('var(#111)')
+    expect(s).toContain('var(#222)')
+    expect(s).toContain('deg')
+  })
+  it('falls back to a clip when no `to` color is given', () => {
+    const st = shapeTileStyle({ k: 'bevel', dir: 'tl', bg: '#111' }, (c) => c)
+    expect(st.clipPath).toBe(BEVEL_CLIP.tl)
   })
 })
