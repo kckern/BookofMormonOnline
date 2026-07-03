@@ -309,23 +309,37 @@ def layer_regions(comps):
         info.append({"color": color, "cells": s, "area": len(s)})
         for p in s:
             owner[p] = i
-    # border adjacency: how many boundary edges each region shares with each other
+    # perimeter analysis: edges against other regions (adj) vs the exterior void.
+    # An ENCLAVE is mostly ENCLOSED by one larger region; a BASE has lots of its
+    # perimeter open to the backdrop (or is split among many neighbours) and must
+    # stay independent even if it happens to abut a bigger region (e.g. Jaredites
+    # touch the Mulekite gold but front open backdrop on every other side).
     for i, rg in enumerate(info):
         adj = collections.Counter()
+        perim = ext = 0
         for (r, c) in rg["cells"]:
             for dr, dc in NEIGH:
-                j = owner.get((r + dr, c + dc))
-                if j is not None and j != i:
+                n = (r + dr, c + dc)
+                j = owner.get(n)
+                if j == i:
+                    continue
+                perim += 1                       # any edge not against self is perimeter
+                if j is None:
+                    ext += 1                     # edge against the exterior void/backdrop
+                else:
                     adj[j] += 1
         rg["adj"] = adj
-        rg["border"] = sum(adj.values())
-    # each region sits on its dominant neighbour when that neighbour is LARGER and
-    # owns a majority of this region's border (i.e. it's embedded, not just abutting)
+        rg["ext"] = ext / perim if perim else 1.0
+    # A region is an ENCLAVE only if it is almost fully enclosed by other regions
+    # (little exterior exposure) — then it sits ON its largest-area neighbour and
+    # that base fills beneath it. A region that fronts the backdrop is a BASE, even
+    # if it abuts a bigger region (Jaredites touch Mulekite gold but are otherwise
+    # open). Largest-area (not most-bordering) neighbour avoids mutual-embed cycles.
     for rg in info:
         base = None
-        if rg["border"]:
-            j, cnt = rg["adj"].most_common(1)[0]
-            if info[j]["area"] > rg["area"] and cnt / rg["border"] >= 0.5:
+        if rg["ext"] < 0.15 and rg["adj"]:
+            j = max(rg["adj"], key=lambda k: info[k]["area"])
+            if info[j]["area"] > rg["area"]:
                 base = j
         rg["base"] = base
     # push each enclave's footprint down onto its base (smallest first → chains fold)
