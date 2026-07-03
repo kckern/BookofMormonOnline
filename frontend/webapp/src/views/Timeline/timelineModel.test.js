@@ -205,9 +205,9 @@ describe('shape tiles', () => {
     const up = (c) => `var(${c})`
     expect(barPaint({ bg: '#111111' }, up)).toBe('var(#111111)')
     expect(barPaint({ bg: '#111111', bgTo: '#222222' }, up))
-      .toBe('linear-gradient(90deg, var(#111111) 0%, var(#111111) 55%, var(#222222) 100%)')
+      .toBe('linear-gradient(90deg, var(#111111) 0%, var(#111111) 68%, var(#222222) 82%, var(#222222) 100%)')
     expect(barPaint({ bg: '#111111', bgTo: '#222222', gradDeg: 270 }, up))
-      .toBe('linear-gradient(270deg, var(#111111) 0%, var(#111111) 55%, var(#222222) 100%)')
+      .toBe('linear-gradient(270deg, var(#111111) 0%, var(#111111) 68%, var(#222222) 82%, var(#222222) 100%)')
   })
   it('shapeTileStyle applies a color resolver (renderer paints through bandVar)', () => {
     const up = (c) => `var(${c})`
@@ -384,6 +384,11 @@ describe('markerIconSize (apex battle scaling)', () => {
   it('scales to the spanned area short side (minus 2)', () => {
     expect(markerIconSize(4, 3)).toBe(58) // min(4*26, 3*20) - 2
     expect(markerIconSize(2, 3)).toBe(50) // min(2*26, 3*20) - 2
+  })
+  it('applies an iconScale multiplier for narrative-apex battles', () => {
+    expect(markerIconSize(4, 3, 1.7)).toBeCloseTo(58 * 1.7) // Cumorah dominates
+    expect(markerIconSize(2, 3, 1.9)).toBeCloseTo(50 * 1.9) // Final Jaredite Battle
+    expect(markerIconSize(4, 3)).toBe(58) // omitted scale defaults to 1x
   })
 })
 

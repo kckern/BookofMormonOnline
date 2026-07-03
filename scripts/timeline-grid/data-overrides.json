@@ -679,6 +679,7 @@
       "col": 32,
       "colSpan": 4,
       "icon": "battle",
+      "iconScale": 1.7,
       "row": 124,
       "rowSpan": 3
     }
@@ -826,6 +827,7 @@
       "col": 34,
       "colSpan": 2,
       "icon": "battle",
+      "iconScale": 1.9,
       "row": 10,
       "rowSpan": 3
     },

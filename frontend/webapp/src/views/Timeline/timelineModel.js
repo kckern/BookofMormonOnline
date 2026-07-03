@@ -134,9 +134,14 @@ const BEVEL_DEG = { tl: '45deg', br: '225deg', tr: '135deg', bl: '315deg' }
 // dissolves into the destination over the arrival tail — never a full-length
 // 50/50 blend (which on a short bar collapses into a smudge). `resolve` maps
 // identity hex → paint value (bandVar in the renderer); default keeps it pure.
+// The handoff is a NARROW crossfade (68%→82%), not a wide dissolve: two dark
+// saturated lineage colors (e.g. Lamanite maroon → judges green) interpolate
+// through a muddy brown-black, so a long blend zone reads as a low-contrast
+// smear. Keeping origin solid to 68% and landing solid destination by 82%
+// compresses the mud to a thin seam and lets each end read as its true color.
 export const barPaint = (g, resolve = (c) => c) =>
   g.bgTo
-    ? `linear-gradient(${g.gradDeg || 90}deg, ${resolve(g.bg)} 0%, ${resolve(g.bg)} 55%, ${resolve(g.bgTo)} 100%)`
+    ? `linear-gradient(${g.gradDeg || 90}deg, ${resolve(g.bg)} 0%, ${resolve(g.bg)} 68%, ${resolve(g.bgTo)} 82%, ${resolve(g.bgTo)} 100%)`
     : resolve(g.bg)
 
 // Shape tiles that stamp the band layer with a solid color so neighbours stay
@@ -390,12 +395,16 @@ export const apiMarkers = (events) =>
       r: e.grid.row, c: e.grid.col,
       w: e.grid.colSpan || 1, h: e.grid.rowSpan || 1,
       bg: e.grid.bg, icon: e.grid.icon, slug: e.slug,
+      ...(e.grid.iconScale ? { iconScale: e.grid.iconScale } : {}),
     }))
 
 // Medallion diameter (px, pre-scale) for a marker spanning w×h cells: fill the
-// spanned area's short side, floored at the classic 18px single-cell size.
-export const markerIconSize = (w, h) =>
-  Math.max(18, Math.min((w || 1) * COL_W, (h || 1) * ROW_H) - 2)
+// spanned area's short side, floored at the classic 18px single-cell size. An
+// `iconScale` multiplier lets the two narrative-apex battles (Cumorah, the Final
+// Jaredite Battle) render dramatically larger than routine skirmishes, matching
+// the reference's oversized climax starbursts.
+export const markerIconSize = (w, h, scale = 1) =>
+  Math.max(18, (Math.min((w || 1) * COL_W, (h || 1) * ROW_H) - 2) * (scale || 1))
 
 // Google-Maps-style callout placement, all in grid-content coordinates.
 // anchor: the tile's offset rect; pop: {w,h}; canvas: grid {w,h}.

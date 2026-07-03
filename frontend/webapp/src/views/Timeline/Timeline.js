@@ -565,7 +565,7 @@ function TimeLine() {
               ? `Battle: ${cleanLabel(data.heading) || humanize(slug)}${data.date ? `, ${data.date}` : ''}`
               : 'Battle'
             const Cell = clickable ? 'button' : 'div'
-            const iconPx = markerIconSize(m.w, m.h)
+            const iconPx = markerIconSize(m.w, m.h, m.iconScale)
             const pos = {
               gridColumn: `${m.c + 1} / span ${m.w || 1}`,
               gridRow: `${m.r} / span ${m.h || 1}`,

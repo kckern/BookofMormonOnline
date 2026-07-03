@@ -619,6 +619,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  /* flex:none so an apex medallion (Cumorah/Coriantumr) wider than its own grid
+     cell keeps its explicit square size and overflows as a full circle instead
+     of being shrunk to the cell width (which distorted it into an oval). */
+  flex: none;
   width: calc(18px * var(--scale));
   height: calc(18px * var(--scale));
   border-radius: 50%;
