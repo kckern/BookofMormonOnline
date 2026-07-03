@@ -489,7 +489,7 @@ function TimeLine() {
                 d={r.d}
                 data-lin={linKey(r.color)}
                 vectorEffect="non-scaling-stroke"
-                style={{ fill: bandVar(r.color), stroke: bandVar(r.color), strokeWidth: 1.3, strokeLinejoin: "round" }}
+                style={{ fill: bandVar(r.color), stroke: bandVar(r.color), strokeWidth: 2.4, strokeLinejoin: "round" }}
               />
             ))}
           </svg>
