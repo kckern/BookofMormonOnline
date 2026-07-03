@@ -757,6 +757,7 @@
     {
       "date": "200 BC",
       "grid": {
+        "anchor": "end",
         "bg": "#85200c",
         "col": 7,
         "colSpan": 1,
@@ -845,6 +846,24 @@
     {
       "date": null,
       "grid": {
+        "anchor": "start",
+        "bg": "#3c78d8",
+        "col": 22,
+        "colSpan": 2,
+        "row": 32,
+        "rowSpan": 1
+      },
+      "heading": "Shilom",
+      "html": null,
+      "kind": "place",
+      "p": false,
+      "slug": "place-shilom",
+      "text": null,
+      "textSlug": null
+    },
+    {
+      "date": null,
+      "grid": {
         "anchor": "center",
         "col": 33,
         "colSpan": 2,
@@ -863,6 +882,7 @@
     {
       "date": "178 BC",
       "grid": {
+        "anchor": "end",
         "bg": "#85200c",
         "col": 10,
         "colSpan": 1,
@@ -939,24 +959,6 @@
         "slug": "recolonization/2"
       },
       "textSlug": "recolonization/2"
-    },
-    {
-      "date": null,
-      "grid": {
-        "anchor": "start",
-        "bg": "#3c78d8",
-        "col": 22,
-        "colSpan": 2,
-        "row": 33,
-        "rowSpan": 1
-      },
-      "heading": "Shilom",
-      "html": null,
-      "kind": "place",
-      "p": false,
-      "slug": "place-shilom",
-      "text": null,
-      "textSlug": null
     },
     {
       "date": "91 BC - 77 BC",
@@ -3669,25 +3671,6 @@
       "textSlug": null
     },
     {
-      "date": "19 AD",
-      "grid": {
-        "bg": "#38761d",
-        "col": 26,
-        "colSpan": 1,
-        "row": 105,
-        "rowSpan": 1
-      },
-      "heading": "Gidgiddoni",
-      "html": "<p>Gidgiddoni, the Nephite military commander,&nbsp;dispatches troops to eliminate Gadianton robbers.</p>",
-      "kind": "event",
-      "p": true,
-      "slug": "gidgiddoni",
-      "text": {
-        "slug": "gadianton/156"
-      },
-      "textSlug": "gadianton/156"
-    },
-    {
       "date": "25 AD",
       "grid": {
         "bg": "#38761d",
@@ -3706,6 +3689,26 @@
         "slug": "gadianton/179"
       },
       "textSlug": "gadianton/179"
+    },
+    {
+      "date": "19 AD",
+      "grid": {
+        "anchor": "start",
+        "bg": "#38761d",
+        "col": 26,
+        "colSpan": 1,
+        "row": 106,
+        "rowSpan": 1
+      },
+      "heading": "Gidgiddoni",
+      "html": "<p>Gidgiddoni, the Nephite military commander,&nbsp;dispatches troops to eliminate Gadianton robbers.</p>",
+      "kind": "event",
+      "p": true,
+      "slug": "gidgiddoni",
+      "text": {
+        "slug": "gadianton/156"
+      },
+      "textSlug": "gadianton/156"
     },
     {
       "date": "34 AD",

@@ -225,7 +225,7 @@
         "bg": "#3c78d8",
         "col": 22,
         "colSpan": 2,
-        "row": 33,
+        "row": 32,
         "rowSpan": 1
       },
       "heading": "Shilom",
@@ -755,6 +755,13 @@
     },
     "label": "Giddianhi"
   },
+  "gidgiddoni": {
+    "grid": {
+      "anchor": "start",
+      "col": 26,
+      "row": 106
+    }
+  },
   "gideon-sermon": {
     "label": "Gideon"
   },
@@ -855,6 +862,7 @@
   },
   "king-laman-i": {
     "grid": {
+      "anchor": "end",
       "bg": "#85200c",
       "col": 7,
       "colSpan": 1,
@@ -865,6 +873,7 @@
   },
   "king-laman-ii": {
     "grid": {
+      "anchor": "end",
       "bg": "#85200c",
       "col": 10,
       "colSpan": 1,
