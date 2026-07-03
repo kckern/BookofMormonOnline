@@ -392,6 +392,16 @@
 
 /* Band fill tile — flat lineage color (depth comes from the parchment canvas
    and rounded ribbon ends, not per-tile shadows that would seam the bands) */
+/* SVG region layer — the object-model backdrop of territory shapes. Sits below
+   the label/marker layer, above the canvas gutter. Grid-snapped via viewBox. */
+.tg-regions {
+  position: relative;
+  z-index: 1;
+  pointer-events: none;
+  display: block;
+}
+.tg-regions path { shape-rendering: geometricPrecision; }
+
 .tg-fill {
   width: 100%;
   height: 100%;

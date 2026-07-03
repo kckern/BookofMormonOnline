@@ -7,6 +7,7 @@ import { assetUrl } from "src/models/BoMOnlineAPI"
 import { label } from "src/models/Utils"
 import tilesData from "./gridTiles.json"
 import timelineData from "./timelineData.json"
+import scene from "./scene.json"
 import "./Timeline.css"
 import {
   bandVar, resolvedHex, textOn, humanize, cleanLabel, cornerStyleFor, buildComposite, markerCellPaint,
@@ -578,9 +579,22 @@ function TimeLine() {
             </React.Fragment>
           ))}
 
-          {underEls}
-
-          {fillEls}
+          {/* OBJECT MODEL: territories are SVG region paths (grid-strict, one
+              shape per connected people-component, z-ordered) instead of ~3700
+              cell divs. viewBox in grid units; preserveAspectRatio:none stretches
+              it to the exact data-cell area so every vertex stays grid-snapped.
+              Corner rounding / bevels / fades layer on top of this base. */}
+          <svg
+            className="tg-regions"
+            viewBox={`1 1 ${cols} ${rows}`}
+            preserveAspectRatio="none"
+            aria-hidden="true"
+            style={{ gridColumn: `2 / span ${cols}`, gridRow: `1 / span ${rows}`, width: "100%", height: "100%" }}
+          >
+            {scene.regions.map((r, i) => (
+              <path key={i} d={r.d} data-lin={linKey(r.color)} style={{ fill: bandVar(r.color) }} />
+            ))}
+          </svg>
 
           {marks.map((t) => {
             const key = `${t.k}-${t.r}-${t.c}`
