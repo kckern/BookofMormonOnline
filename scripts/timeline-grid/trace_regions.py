@@ -34,6 +34,45 @@ def build_cellmap(tiles):
     return cell
 
 
+def fill_enclosed_holes(cell, rows, cols):
+    """Single-color enclosed holes inside a region are NOT negative space — they
+    read as blank parchment pills. Fill them with the surrounding color (the
+    classic hole-patcher). Multi-color gaps (backdrop between separate peoples)
+    are reachable from outside or border 2+ colors → left as intentional space."""
+    outside = set()
+    st = [(0, c) for c in range(cols + 2)] + [(rows + 1, c) for c in range(cols + 2)]
+    st += [(r, 0) for r in range(rows + 2)] + [(r, cols + 1) for r in range(rows + 2)]
+    while st:
+        r, c = st.pop()
+        if not (0 <= r <= rows + 1 and 0 <= c <= cols + 1) or (r, c) in outside or (r, c) in cell:
+            continue
+        outside.add((r, c))
+        st += [(r + 1, c), (r - 1, c), (r, c + 1), (r, c - 1)]
+    seen = set()
+    for r in range(1, rows + 1):
+        for c in range(1, cols + 1):
+            if (r, c) in cell or (r, c) in outside or (r, c) in seen:
+                continue
+            comp = []
+            colors = set()
+            stack = [(r, c)]
+            seen.add((r, c))
+            while stack:
+                rr, cc = stack.pop()
+                comp.append((rr, cc))
+                for dr, dc in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                    n = (rr + dr, cc + dc)
+                    if n in cell:
+                        colors.add(cell[n])
+                    elif n not in outside and n not in seen:
+                        seen.add(n)
+                        stack.append(n)
+            if len(colors) == 1:
+                col = next(iter(colors))
+                for p in comp:
+                    cell[p] = col
+
+
 def components(cell):
     """Connected same-color components (4-neighbour flood)."""
     seen = set()
@@ -164,6 +203,7 @@ def path_d(loops):
 def main():
     grid = json.load(open(GRID))
     cell = build_cellmap(grid["tiles"])
+    fill_enclosed_holes(cell, grid["rows"], grid["cols"])
     regions = []
     for color, cells in components(cell):
         loops = trace_loops(cells)

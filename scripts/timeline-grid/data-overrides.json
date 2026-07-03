@@ -326,6 +326,60 @@
       "slug": "schism-question",
       "text": null,
       "textSlug": null
+    },
+    {
+      "date": null,
+      "grid": {
+        "col": 33,
+        "colSpan": 2,
+        "row": 54,
+        "rowSpan": 1
+      },
+      "heading": "Ammonihah",
+      "html": null,
+      "kind": "place",
+      "label": "Ammonihah",
+      "p": false,
+      "slug": "ammonihah-place",
+      "text": null,
+      "textSlug": null
+    },
+    {
+      "date": null,
+      "grid": {
+        "col": 16,
+        "colSpan": 2,
+        "row": 56,
+        "rowSpan": 1
+      },
+      "heading": "City of Nephi",
+      "html": null,
+      "kind": "place",
+      "label": "City of Nephi",
+      "p": false,
+      "slug": "city-of-nephi",
+      "text": null,
+      "textSlug": null
+    },
+    {
+      "date": null,
+      "grid": {
+        "anchor": "center",
+        "col": 13,
+        "colSpan": 3,
+        "dir": "lr",
+        "row": 54,
+        "rowSpan": 1,
+        "tier": 2
+      },
+      "heading": "Ammon among the Lamanites",
+      "html": null,
+      "kind": "label",
+      "label": "Ammon",
+      "p": false,
+      "slug": "ammon-mission",
+      "text": null,
+      "textSlug": null
     }
   ],
   "aaron": {
