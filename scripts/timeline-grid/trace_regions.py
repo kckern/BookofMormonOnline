@@ -123,6 +123,40 @@ def absorb_islands(cell, maxsize=12, frac=0.5):
                 changed = True
 
 
+def absorb_enclosed(cell, maxsize=35, ext_max=0.1):
+    """Absorb a small foreign block that is fully ENCLOSED inside other regions
+    (little/no exterior exposure) into its dominant bordering neighbour. These are
+    the bitmap's stray unlabeled incursion rectangles (e.g. the red blocks stranded
+    inside Zeniff's blue colony and Alma's orange band) that read as artifacts, not
+    story. Large war-band arms and labeled enclaves (Amulon, Ammon) exceed maxsize
+    and survive. Runs after the other cleanups so components are settled."""
+    changed = True
+    while changed:
+        changed = False
+        for color, cells in components(cell):
+            if len(cells) > maxsize:
+                continue
+            cset = set(cells)
+            edge = collections.Counter()
+            ext = per = 0
+            for (r, c) in cells:
+                for dr, dc in NEIGH:
+                    n = (r + dr, c + dc)
+                    if n in cset:
+                        continue
+                    per += 1
+                    v = cell.get(n)
+                    if v:
+                        edge[v] += 1
+                    else:
+                        ext += 1
+            if per and edge and ext / per < ext_max:
+                top = edge.most_common(1)[0][0]
+                for p in cells:
+                    cell[p] = top
+                changed = True
+
+
 def despur(cell, passes=2):
     """Trim lone single-cell spurs: a cell with <=1 same-color orthogonal
     neighbour and >=3 neighbours of one OTHER color is a 1-cell protrusion the
@@ -242,7 +276,7 @@ def _f(v):
     return f"{v:.3f}".rstrip("0").rstrip(".")
 
 
-def rounded_loop(lp, radius=0.45):
+def rounded_loop(lp, radius=0.45, sharp_at=None):
     """Emit a path for one loop, rounding only CONVEX corners. Concave (reflex)
     corners stay sharp: rounding a concave corner pulls the silhouette inward and —
     because each cell holds a single color, so nothing is drawn beneath — exposes the
@@ -263,6 +297,11 @@ def rounded_loop(lp, radius=0.45):
         lout = (abs(dout[0]) + abs(dout[1])) or 1
         cross = din[0] * dout[1] - din[1] * dout[0]    # turn direction
         convex = cross * orient > 0
+        # square a convex corner that abuts a sibling/overlying region (rounding it
+        # would leave a cream gap between them); only round into open backdrop or a
+        # layer strictly beneath (whose fill the reveal legitimately shows).
+        if convex and sharp_at and sharp_at(b):
+            convex = False
         r = min(radius, lin / 2, lout / 2) if convex else 0
         uin = (din[0] / lin, din[1] / lin)
         uout = (dout[0] / lout, dout[1] / lout)
@@ -353,8 +392,8 @@ def layer_regions(comps):
     return info
 
 
-def path_d(loops):
-    return "".join(rounded_loop(lp) for lp in loops if len(lp) >= 3)
+def path_d(loops, sharp_at=None):
+    return "".join(rounded_loop(lp, sharp_at=sharp_at) for lp in loops if len(lp) >= 3)
 
 
 def main():
@@ -364,25 +403,47 @@ def main():
     absorb_islands(cell)                                # merge stranded weave slivers
     fill_enclosed_holes(cell, grid["rows"], grid["cols"])
     despur(cell)                                        # trim 1-cell edge protrusions
+    absorb_enclosed(cell)                               # drop stray unlabeled incursion blocks
     layers = layer_regions(components(cell))
+    # z by solid-footprint size: base (largest) first, enclaves on top. Assign z now
+    # so corner-rounding can consult it, and map every OWN cell to its owner's z.
+    layers.sort(key=lambda rg: -len(rg["fill"]))
+    owner_z = {}
+    for z, rg in enumerate(layers):
+        rg["z"] = z
+        for p in rg["cells"]:
+            owner_z[p] = z
+
+    def make_sharp(myz, myfill):
+        # (x=col, y=row) vertex touches cells (y-1,x-1),(y-1,x),(y,x-1),(y,x). Round
+        # a corner only into open backdrop or a layer drawn BEFORE us (lower z, which
+        # sits beneath — the reveal legitimately shows it). Square it when an outer
+        # cell belongs to a region drawn AFTER us (higher z): that sibling rounds its
+        # own corner away too, so both receding would bare the parchment between them
+        # — squaring ours fills the gap flush instead.
+        def sharp(v):
+            x, y = v
+            for (r, c) in ((y - 1, x - 1), (y - 1, x), (y, x - 1), (y, x)):
+                if (r, c) in myfill:
+                    continue
+                oz = owner_z.get((r, c))
+                if oz is not None and oz > myz:
+                    return True
+            return False
+        return sharp
+
     regions = []
     for rg in layers:
         loops = trace_loops(rg["fill"])          # solid footprint (own + enclaves on it)
         if not loops:
             continue
-        d = rounded_loop(outer_loop(loops))      # solid: outer boundary only, no holes
+        d = rounded_loop(outer_loop(loops), sharp_at=make_sharp(rg["z"], rg["fill"]))
         regions.append({
             "color": rg["color"],
             "cells": len(rg["cells"]),
-            "area": len(rg["fill"]),
+            "z": rg["z"],
             "d": d,
         })
-    # z-order: a layer with a larger solid footprint sits lower (a base others stack
-    # on); smaller footprints draw last, on top, revealing the base at their corners
-    regions.sort(key=lambda r: -r["area"])
-    for z, r in enumerate(regions):
-        r["z"] = z
-        del r["area"]
     scene = {"cols": grid["cols"], "rows": grid["rows"],
              "dateAxis": grid.get("dateAxis", []), "regions": regions}
     json.dump(scene, open(OUT, "w"), separators=(",", ":"))
