@@ -76,6 +76,43 @@ Residual minors the judges flagged, then resolved in a final pass:
 
 Remaining taste-level minors (non-blocking, deferred): "Lamanite Servants"/"War on the Eastern Front" share one bar a touch tightly; a couple of italic captions sit mid-color-boundary; no Old-World Arabia caption (reference presence uncertain; the ~ wave glyph stands in for the crossing).
 
+## Final sign-off (2026-07-02)
+
+**All four adversarial dimensions PASS with zero blocking findings** (sonnet judges,
+each cross-checking the parchment build's `full.png` + 5 detail strips against the
+legacy dark-theme model bundle, pixel-cropping every joint/merge/end-cap):
+
+- **design-system** — pass. Rounded corners reveal the wrapping territory (not cream),
+  clean two-color diagonals, colored movement bars with chevrons→medallions, apex-scaled
+  Coriantumr/Cumorah, Mosiah I bar reveals gold + green below.
+- **layout** — pass. Full chronological/geographic parity; no collisions or truncations.
+- **presentation** — pass. No cream holes in bands, solid figure/ground on the deeper
+  aged-tan canvas, no orphan artifacts.
+- **data-completion** — pass. Full rosters, all captions (Jerusalem ×2, Arabia, Land
+  Northward, Bountiful, Desolation+skull, Cumorah, Zarahemla), 3 voyage ships, "?" glyph,
+  short timeline labels vs full popup headings.
+
+The convergence took several rounds; the decisive systemic fix was filling ~181 interior
+negative-space cells (leftover from the bitmap conversion) with their territory color plus
+closing the ~380-year gold Zarahemla void — parchment makes cream "holes" read as defects
+where the dark model let them recede.
+
+### Residual minors (non-blocking, deferred)
+- Record-keeper connector lines (model draws a thin line seam→medallion; build seats
+  medallions on the seam). Decorative.
+- Two Helaman West/East medallions touch at ~65 BC — a few px separation would polish.
+- Christ peace-era band shows more cream at the unity-gradient top than other bands —
+  likely intentional (light/unity); a design call for KC.
+- Applied: "The Nephites ▶" chevron (5.3); battle medallions already carry title/aria-label (5.4).
+
+### Production readiness
+See `docs/plans/2026-07-02-timeline-production-ready.md` and
+`docs/reference/timeline-data-pipeline.md`. Status: pipeline source-of-truth documented
+(gridTiles frozen, timelineData via overrides, regen-stability guard passing); model +
+data-integrity tests added (69 timeline tests pass); timeline a11y clean (axe serious/
+critical violations are all pre-existing app-shell chrome); perf 4962 DOM nodes / smooth
+scroll; responsive with no overflow at 390/768px.
+
 ## Verification setup
 
 - Local dev: `cd frontend/webapp && BROWSER=none PORT=8201 npm start` (needed `npm install` — `dompurify` was missing post-pull; app-shell XHR 400s are unrelated to the baked-JSON timeline).

@@ -247,6 +247,7 @@
         "bg": "#1c4587",
         "col": 11,
         "colSpan": 1,
+        "dir": "r",
         "row": 17,
         "rowSpan": 1,
         "tier": 1

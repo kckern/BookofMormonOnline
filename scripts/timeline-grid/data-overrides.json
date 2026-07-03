@@ -1146,6 +1146,7 @@
   },
   "nephites": {
     "grid": {
+      "dir": "r",
       "tier": 1
     }
   },

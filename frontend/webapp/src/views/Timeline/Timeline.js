@@ -14,11 +14,11 @@ import {
   shapeTileStyle, barPaint, markerIconSize, wedgeColor,
 } from './timelineModel'
 import { SWORDS, SHIP, SKULL, QUERY, PIN, CHEV_L, CHEV_R } from './icons'
+import TimelinePopover from './TimelinePopover'
 
 // Marker iconography by grid.icon value (battle medallions, voyage ships,
 // desolation skull, disputed "?" events). Unknown values fall back to swords.
 const MARKER_ICONS = { battle: SWORDS, voyage: SHIP, skull: SKULL, query: QUERY }
-import TimelinePopover from './TimelinePopover'
 
 // R2a green-field: all timeline data is baked into timelineData.json (generated
 // by scripts/timeline-grid/gen_timeline_data.py — GQL dump + battle icon-events
