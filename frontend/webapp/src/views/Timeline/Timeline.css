@@ -1,835 +1,660 @@
 /** @format */
 
-/* Tile-grid timeline (replaces the former Leaflet map).
-   Two layers in one CSS grid: color-fill tiles (lineage bands) + anchored
-   labels/icons that OVERFLOW their tile. The band gaps are the parchment
-   canvas showing through — intentional negative space, not "white bars".
-   Design: docs/plans/2026-06-13-timeline-grid-migration-design.md */
-
-/* ══ COLOR SCHEMA — the only place swatch values live ══════════════════════
-   Identity = semantic token. Data hexes resolve here via bandVar()/var().
-   Default theme: parchment. Alternates swap the whole palette in one class. */
-.timeline-grid-wrap {
-  --c-jaredites: #134f5c;
-  --c-lehi: #351c75;
-  --c-nephites: #1c4587;
-  --c-nephilands: #073763;
-  --c-lamanites: #85200c;
-  --c-zeniff: #3c78d8;
-  --c-alma: #b45f06;
-  --c-kings: #2f6f4f;      /* sheet #274e13 remapped for parchment readability */
-  --c-mulek: #bf9000;
-  --c-judges: #38761d;
-  --c-gadianton: #7d8596;  /* sheet #6fa8dc remapped for parchment readability */
-  --c-destruction: #000000;
-  --c-schism: #20123f;     /* Lehi-schism dark grad endpoint (purple→dark) */
-  --c-unity: #c9c2b0;      /* gray family per source artwork (measures ~#8f9490
-                              there); tuned lighter for parchment contrast —
-                              adjust HERE only, at the Task 14 visual check */
-  /* deeper aged-tan canvas so the negative space RECEDES and the saturated bands
-     read as raised illuminated ribbons (figure/ground — the model gets this free
-     from its dark canvas; parchment must earn it by not being bright cream). */
-  --canvas-bg: radial-gradient(150% 95% at 50% -8%, #e7d9b6 0%, #dccca2 55%, #ceba8c 100%);
-  --gutter-bg: #dccca2;
-  --ink: #4a3a18;
-}
-/* dark theme = the legacy charcoal canvas; band swatches stay closer to sheet */
-.timeline-grid-wrap.tg-theme-dark {
-  --c-kings: #274e13;
-  --c-gadianton: #6fa8dc;
-  --c-unity: #b8b2a6;
-  --canvas-bg: radial-gradient(140% 90% at 50% -10%, #35322e 0%, #2b2926 60%, #221f1c 100%);
-  --gutter-bg: #2b2926;
-  --ink: #d8cdb4;
+.leaflet-container
+{
+ 
+  font-family: 'Roboto Condensed', 'Arial Narrow', 'sans-serif';
 }
 
-.timeline-grid-wrap {
-  position: absolute;
-  top: 60px;
+.leaflet-container img {
+  border-radius: 0;
+}
+
+.leaflet-tooltip-bottom {
+  margin-top: 18px;
+  background: #636161;
+  color: #ffffff;
+  border: none;
+  box-shadow: none;
+  opacity: unset;
+}
+
+.leaflet-tooltip-bottom::before {
+  border-bottom-color: #6361;
+}
+
+.leaflet-tooltip-top::before {
   bottom: 0;
+  margin-bottom: -12px;
+  border-top-color: #6361;
+}
+
+.leaflet-container {
+  background: #2b2b2b;
+}
+
+.leaflet-map-pane,
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow,
+.leaflet-tile-pane,
+.leaflet-tile-container,
+.leaflet-overlay-pane,
+.leaflet-shadow-pane,
+.leaflet-marker-pane,
+.leaflet-popup-pane,
+.leaflet-overlay-pane svg,
+.leaflet-zoom-box,
+.leaflet-image-layer,
+.leaflet-layer {
+  position: absolute;
   left: 0;
-  right: 0;
-  display: flex;
-  flex-direction: column;
-  /* warm aged-parchment canvas: the lineage bands read as illuminated ribbons
-     floating on paper, and the band gaps become intentional negative space */
-  background: var(--canvas-bg);
+  top: 0;
+}
+
+.leaflet-container {
   overflow: hidden;
-  font-family: "Roboto Condensed", "Arial Narrow", sans-serif;
-}
-/* faint paper grain over the canvas (multiply so it darkens, never washes out) */
-.timeline-grid-wrap::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  opacity: 0.05;
-  mix-blend-mode: multiply;
-}
-/* soft top vignette to seat the canvas under the app header */
-.timeline-grid-wrap::after {
-  content: "";
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 70px;
-  z-index: 0;
-  pointer-events: none;
-  background: linear-gradient(to bottom, rgba(90, 66, 26, 0.1), rgba(90, 66, 26, 0));
 }
 
-.timeline-grid-scroller {
-  position: relative;
-  z-index: 1;
-  flex: 1 1 auto;
-  min-height: 0;
-  width: 100%;
-  /* responsive scale keeps the grid within width, so x-overflow only appears when
-     the user zooms in past fit; y always scrolls */
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
-  touch-action: pan-x pan-y;
-  /* the grid centers itself via margin:0 auto (a plain block scroller keeps the
-     left edge reachable when the canvas is wider than the viewport) */
-  /* inset sepia edge shadows hint the canvas scrolls beyond the viewport */
-  box-shadow: inset -16px 0 14px -14px rgba(70, 48, 16, 0.22),
-    inset 0 -16px 14px -14px rgba(70, 48, 16, 0.18);
-}
-
-/* ── Title bar: compact H1 + how-to-read toggle + zoom controls ── */
-.tg-titlebar {
-  position: relative;
-  z-index: 21;
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 8px 16px;
-  background: linear-gradient(180deg, rgba(247, 239, 217, 0.96), rgba(240, 230, 200, 0.96));
-  border-bottom: 1px solid rgba(120, 90, 40, 0.28);
-  box-shadow: 0 1px 8px rgba(70, 48, 16, 0.12);
-}
-.tg-title {
-  margin: 0;
-  font-family: "Roboto Condensed", "Arial Narrow", sans-serif;
-  font-weight: 700;
-  font-size: 21px;
-  letter-spacing: 0.4px;
-  color: var(--ink);
-  white-space: nowrap;
-}
-.tg-info-toggle {
-  flex: 0 0 auto;
-  border: 1px solid rgba(120, 90, 40, 0.4);
-  background: #fbf5e4;
-  color: #6a5326;
-  font: inherit;
-  font-size: 13px;
-  font-weight: 700;
-  padding: 5px 11px;
-  border-radius: 16px;
-  cursor: pointer;
-  transition: background 0.12s ease, color 0.12s ease;
-}
-.tg-info-toggle:hover,
-.tg-info-toggle[aria-expanded="true"] {
-  background: #9c6b1f;
-  color: #fff;
-  border-color: #9c6b1f;
-}
-.tg-info-toggle:focus-visible {
-  outline: 2px solid #9c6b1f;
-  outline-offset: 2px;
-}
-.tg-titlebar .tg-zoom {
-  margin-left: auto;
-}
-
-/* Layers dropdown */
-.tg-layers {
-  position: relative;
-  flex: 0 0 auto;
-}
-.tg-layers-menu {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  z-index: 30;
-  min-width: 150px;
-  padding: 8px;
-  background: #fdf8ec;
-  border: 1px solid rgba(120, 90, 40, 0.4);
-  border-radius: 10px;
-  box-shadow: 0 4px 16px rgba(60, 40, 15, 0.3);
-}
-.tg-layers-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 5px 6px;
-  font-size: 13px;
-  color: #4a3c22;
-  cursor: pointer;
-  border-radius: 6px;
-}
-.tg-layers-item:hover {
-  background: rgba(154, 107, 31, 0.12);
-}
-.tg-layers-item input {
-  cursor: pointer;
-  accent-color: #9c6b1f;
-}
-.tg-layers-mini {
-  width: 16px;
-  height: 16px;
-  flex: 0 0 auto;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: #5a1410;
-  background: radial-gradient(circle at 35% 30%, #f5d985 0%, #d9ad44 62%, #b8862c 100%);
-  border: 1px solid rgba(90, 60, 14, 0.7);
-}
-.tg-layers-mini svg {
-  width: 64%;
-  height: 64%;
-}
-.tg-layers-text {
-  width: 16px;
-  height: 16px;
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-family: "Roboto Condensed", "Arial Narrow", sans-serif;
-  font-size: 12px;
-  font-weight: 700;
-  color: #6a5326;
-}
-
-/* ── Expandable how-to-read panel (replaces the floating legend) ── */
-.tg-infopanel {
-  position: relative;
-  z-index: 20;
-  flex: 0 0 auto;
-  max-height: 38vh;
-  overflow: auto;
-  padding: 12px 18px 14px;
-  background: linear-gradient(180deg, #fdf8ec, #f5ecd6);
-  border-bottom: 1px solid rgba(120, 90, 40, 0.28);
-  box-shadow: inset 0 -6px 8px -8px rgba(70, 48, 16, 0.25);
-  color: #4a3c22;
-}
-.tg-infopanel-note {
-  margin: 0 0 10px;
-  font-size: 13px;
-  line-height: 1.45;
-  color: #5f4c25;
-  max-width: 720px;
-}
-.tg-infopanel-keys {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 4px 18px;
-}
-.tg-infopanel-keys li {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12.5px;
-  line-height: 1.3;
-}
-.tg-key-sw {
-  width: 16px;
-  height: 12px;
-  flex: 0 0 auto;
-  border-radius: 3px;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18);
-}
-.tg-key-pin {
-  width: 16px;
-  text-align: center;
-  flex: 0 0 auto;
-}
-.tg-key-mini {
-  width: 16px;
-  height: 16px;
-  flex: 0 0 auto;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: #5a1410;
-  background: radial-gradient(circle at 35% 30%, #f5d985 0%, #d9ad44 62%, #b8862c 100%);
-  border: 1px solid rgba(90, 60, 14, 0.7);
-}
-.tg-key-mini svg {
-  width: 64%;
-  height: 64%;
+.leaflet-marker-icon,
+.leaflet-marker-shadow {
   display: block;
 }
 
-/* Zoom controls — parchment-toned, now docked in the title bar */
-.tg-zoom {
-  flex: 0 0 auto;
+.leaflet-marker-container {
+  padding-bottom:10px
+}
+.leaflet-marker-container .heading-link {
+  cursor:pointer; color:#4c4c4c;
   display: flex;
-  gap: 1px;
-  border-radius: 10px;
-  overflow: hidden;
-  border: 1px solid rgba(120, 90, 40, 0.35);
-  box-shadow: 0 2px 10px rgba(60, 40, 15, 0.28);
-}
-.tg-zoom button {
-  width: 34px;
-  height: 34px;
-  border: none;
-  background: #fbf5e4;
-  color: #5a4a2a;
-  font-size: 18px;
-  line-height: 1;
-  cursor: pointer;
-  transition: background 0.12s ease, color 0.12s ease;
-}
-.tg-zoom button:hover {
-  background: #fff;
-  color: #3a2e16;
-}
-.tg-zoom button:focus-visible {
-  outline: 2px solid #9c6b1f;
-  outline-offset: -2px;
-}
-
-/* Skip-link: first focusable element so keyboard users jump straight into the
-   grid instead of tabbing through the whole site nav. Hidden until focused. */
-.tg-skip {
-  position: absolute;
-  left: 12px;
-  top: 12px;
-  z-index: 40;
-  transform: translateY(-160%);
-  background: #3a2c12;
-  color: #fdf6e6;
-  padding: 9px 16px;
-  border-radius: 8px;
-  font-family: "Roboto Condensed", "Arial Narrow", sans-serif;
-  font-weight: 700;
-  font-size: 14px;
-  text-decoration: none;
-  box-shadow: 0 3px 12px rgba(40, 26, 8, 0.4);
-  transition: transform 0.15s ease;
-}
-.tg-skip:focus {
-  transform: translateY(0);
-  outline: 2px solid #e0a528;
-  outline-offset: 2px;
-}
-#tg-grid:focus {
-  outline: none;
-}
-
-
-.timeline-grid {
-  --scale: 1; /* map-style zoom; set inline by the zoom control */
-  --col-w: calc(26px * var(--scale));
-  --row-h: calc(20px * var(--scale));
-  --date-w: calc(70px * var(--scale));
-  --rad: calc(13px * var(--scale)); /* band corner radius */
-  position: relative;
-  z-index: 1;
-  display: grid;
-  grid-template-columns: var(--date-w) repeat(var(--cols), var(--col-w));
-  grid-auto-rows: var(--row-h);
-  gap: 0;
-  /* equal margins on both sides when the canvas fits; collapses to scroll when
-     it overflows */
-  width: max-content;
-  margin: 0 auto;
-  padding: 56px 40px 40px 0;
-  font-family: "Roboto Condensed", "Arial Narrow", sans-serif;
-}
-
-/* Continuous parchment backing for the sticky gutter. OPAQUE: band tiles
-   scrolling beneath must never bleed through (the old 78%→transparent gradient
-   smeared band colors into a brown smudge — audit §3.4). The soft edge is a
-   shadow ON TOP of the solid backing instead. */
-.tg-gutter-bg {
-  position: sticky;
-  left: 0;
-  z-index: 7;
-  background: var(--gutter-bg); /* opaque token (Task 4b) — themes follow */
-  border-right: 1px solid rgba(120, 90, 40, 0.35);
-  box-shadow: 4px 0 10px -4px rgba(70, 48, 16, 0.28);
-}
-
-/* Sticky date/era gutter labels (the time scale) — serif, sepia ink */
-.tg-date {
-  position: sticky;
-  left: 0;
-  z-index: 8;
-  display: flex;
+  width: 100%;
   align-items: center;
-  justify-content: flex-end;
-  padding: 0 12px 0 14px;
-  font-family: "Roboto Condensed", "Arial Narrow", sans-serif;
-  font-size: calc(11px * var(--scale));
-  font-weight: 700;
-  letter-spacing: 0.2px;
-  color: var(--ink);
-  white-space: nowrap;
+
+}
+.leaflet-marker-container .heading {
+  color: black;
+  flex: 1;
+  font-size: 2em;
+  font-weight: bold;
+  line-height: 1em;
+}
+.leaflet-marker-container .date {
+  flex-shrink: 1;
+  float: right;
+  line-height: 3em;
+  margin-right: 1em;
+}
+.leaflet-marker-container .text {
+  font-size: .6rem;
+}
+.leaflet-marker-container .bgImageBox {
+width:295px;height:140px;
+margin-bottom: 1ex;
+}
+.leaflet-marker-container .bgImageBox .bgImage {
+  width:290px;background-size:290px;
+  padding: 0px 292px 121px 0px;
+  cursor:pointer;background-position:center;
+  height:140px;background-color:#555;
+  border:1px solid #888;border-radius:5px;
+  }
+
+.leaflet-container img {
+  max-width: none;
 }
 
-.tg-century-rule {
-  align-self: start;
+.leaflet-container .leaflet-image-layer {
+  max-width: 15000px;
+}
+
+.leaflet-tile {
+  /* filter: inherit; */
+  visibility: hidden;
+}
+
+.leaflet-tile-loaded {
+  visibility: inherit;
+}
+
+.leaflet-zoom-box {
+  width: 0;
   height: 0;
-  border-top: 1px dashed rgba(120, 90, 40, 0.16);
-  pointer-events: none;
 }
 
-/* Band fill tile — flat lineage color (depth comes from the parchment canvas
-   and rounded ribbon ends, not per-tile shadows that would seam the bands) */
-/* SVG region layer — the object-model backdrop of territory shapes. Sits below
-   the label/marker layer, above the canvas gutter. Grid-snapped via viewBox. */
-.tg-regions {
-  position: relative;
-  z-index: 1;
-  pointer-events: none;
-  display: block;
-}
-.tg-regions path { shape-rendering: geometricPrecision; }
-
-.tg-fill {
-  width: 100%;
-  height: 100%;
-  transition: opacity 0.12s ease, filter 0.12s ease;
-}
-
-/* Shape-language tiles carry their own gradient/clip geometry — no square-corner
-   override from cornerStyleFor applies, but keep them from inheriting radii. */
-.tg-shape { border-radius: 0 !important; }
-/* Break glyph — the era-void squiggle centered in its cells */
-.tg-break { display: flex; align-items: center; justify-content: center; }
-.tg-break svg { width: calc(52px * var(--scale)); }
-
-/* Anchored label/icon: occupies its tile but text is NOT clipped to it.
-   Non-interactive by default; clickable events re-enable pointer events. */
-.tg-anchor {
-  position: relative;
+.leaflet-tile-pane {
   z-index: 2;
-  display: flex;
-  align-items: center;
-  overflow: visible;
-  white-space: nowrap;
-  line-height: 1;
-  pointer-events: none;
 }
 
-/* Event/place tiles are <button> when clickable, <div> when not — reset UA. */
-.tg-event,
-.tg-place {
-  margin: 0;
-  border: none;
-  background: none;
-  font: inherit;
-  appearance: none;
-}
-.tg-event {
-  padding: 0 6px;
-  width: max-content;
-  min-width: 100%;
-}
-/* Floating labels (person rosters + all non-card events): text floats over the
-   territory, sized to content only — it never forces the colored path's width
-   (KC directive). No background; the halo carries legibility. */
-.tg-event.tg-float {
-  width: max-content;
-  min-width: 0;
-  padding: 0 4px;
-  background: none;
-}
-/* Anchor variants — justify-self places the (possibly overflowing) chip within
-   the grid area; text-align covers multi-line fallback. Default: CENTER. */
-.tg-anchor.tg-a-center { justify-self: center; justify-content: center; text-align: center; }
-.tg-anchor.tg-a-start  { justify-self: start;  justify-content: flex-start; text-align: left; }
-.tg-anchor.tg-a-end    { justify-self: end;    justify-content: flex-end; text-align: right; }
-/* above/below: captions that sit OUTSIDE the anchor row (places, band captions) */
-.tg-anchor.tg-a-above  { transform: translateY(-100%); }
-.tg-anchor.tg-a-below  { transform: translateY(100%); }
-
-.tg-event-label {
-  font-weight: 600;
-  font-size: calc(11px * var(--scale));
-  letter-spacing: 0.2px;
-}
-/* Legibility halos tuned to the text color, since labels overflow their band
-   onto the light parchment. White labels get a dark halo; dark labels get a
-   light one. */
-.tg-on-dark .tg-event-label {
-  text-shadow: 0 0 3px rgba(40, 24, 6, 0.55), 0 1px 1px rgba(40, 24, 6, 0.6);
-}
-.tg-on-light .tg-event-label {
-  text-shadow: 0 0 3px rgba(255, 250, 235, 0.85), 0 1px 0 rgba(255, 250, 235, 0.9);
+.leaflet-objects-pane {
+  z-index: 3;
 }
 
-/* Direction chevrons on event chips — rendered when grid.dir is 'l' or 'r'.
-   Dark launch: no DB rows carry dir yet; no chevrons appear in the live grid. */
-.tg-chev {
-  display: inline-flex;
-  width: calc(9px * var(--scale));
-  height: calc(9px * var(--scale));
-  vertical-align: -1px;
-  margin: 0 2px;
+.leaflet-overlay-pane {
+  z-index: 4;
 }
-.tg-chev svg { width: 100%; height: 100%; }
 
-/* clickable interactivity (events AND places that have a linked entry) */
-.tg-anchor.is-clickable {
-  pointer-events: auto;
-  cursor: pointer;
-  transition: box-shadow 0.12s ease, transform 0.12s ease;
-}
-/* Enlarge the touch/click target to clear the WCAG 2.2 24px floor without
-   shifting layout (rows are only 20px tall). Invisible, sits behind the label. */
-.tg-anchor.is-clickable::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  top: -3px;
-  bottom: -3px;
-  left: -3px;
-  right: -3px;
-  min-width: 24px;
-}
-.tg-anchor.is-clickable:hover {
+.leaflet-shadow-pane {
   z-index: 5;
 }
-.tg-event.is-clickable:hover {
-  box-shadow: 0 2px 8px rgba(50, 30, 10, 0.3);
-}
-/* Dense clusters: lift the hovered/focused label into a high-contrast ink chip
-   so it reads clearly above its neighbours. Sparse areas keep plain overflow
-   text; full text is always in the click-through modal. */
-.tg-event.is-clickable:hover .tg-event-label,
-.tg-event.is-clickable:focus-visible .tg-event-label {
-  position: relative;
-  z-index: 7;
-  padding: 2px 7px;
-  margin: 0 -4px;
-  border-radius: 6px;
-  background: rgba(36, 22, 7, 0.94);
-  color: #fdf6e6 !important;
-  text-shadow: none !important;
-  box-shadow: 0 2px 9px rgba(28, 16, 4, 0.5);
-}
-/* Keyboard focus keeps a ring for a11y, but SELECTION does not — a rectangular
-   ring boxes bars/labels and reads as an artifact (KC). Selection is conveyed by
-   the open popover instead. */
-.tg-anchor.is-clickable:focus-visible {
-  box-shadow: 0 0 0 2px #fffdf6, 0 0 0 4px #9c6b1f;
+
+.leaflet-marker-pane {
   z-index: 6;
 }
-/* non-interactive labels: no pointer affordance */
-.tg-anchor.is-static {
+
+.leaflet-popup-pane {
+  z-index: 7;
+}
+
+.leaflet-control {
+  position: relative;
+  z-index: 7;
+  pointer-events: auto;
+}
+
+.leaflet-top,
+.leaflet-bottom {
+  position: absolute;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.leaflet-top {
+  top: 0;
+}
+
+.leaflet-right {
+  right: 0;
+}
+
+.leaflet-bottom {
+  bottom: 0;
+}
+
+.leaflet-left {
+  left: 0;
+}
+
+.leaflet-control {
+  float: left;
+  clear: both;
+}
+
+.leaflet-right .leaflet-control {
+  float: right;
+}
+
+.leaflet-top .leaflet-control {
+  margin-top: 20px;
+}
+
+.leaflet-bottom .leaflet-control {
+  margin-bottom: 10px;
+}
+
+.leaflet-left .leaflet-control {
+  margin-left: 10px;
+}
+
+.leaflet-right .leaflet-control {
+  margin-right: 10px;
+}
+
+.leaflet-fade-anim .leaflet-tile,
+.leaflet-fade-anim .leaflet-popup {
+  transition: opacity 0.2s linear;
+  opacity: 0;
+}
+
+.leaflet-fade-anim .leaflet-tile-loaded,
+.leaflet-fade-anim .leaflet-map-pane .leaflet-popup {
+  opacity: 1;
+}
+
+.leaflet-zoom-anim .leaflet-zoom-animated {
+  transition: transform 0.25s cubic-bezier(0, 0, 0.25, 1);
+}
+
+.leaflet-zoom-anim .leaflet-tile,
+.leaflet-pan-anim .leaflet-tile,
+.leaflet-touching .leaflet-zoom-animated {
+  transition: none;
+}
+
+.leaflet-zoom-anim .leaflet-zoom-hide {
+  visibility: hidden;
+}
+
+.leaflet-clickable {
+  cursor: pointer;
+}
+
+.leaflet-popup-pane,
+.leaflet-control {
+  cursor: auto;
+}
+
+.leaflet-dragging,
+.leaflet-dragging .leaflet-clickable,
+.leaflet-dragging .leaflet-container {
+  cursor: move;
+}
+
+.leaflet-container .leaflet-active {
+  outline: 2px solid orange;
+}
+
+.leaflet-zoom-box {
+  border: 2px dotted #05f;
+  background: white;
+  opacity: 0.5;
+}
+
+.leaflet-bar {
+  /* -webkit-border-radius: 4px; */
+  box-shadow: 0 1px 7px rgba(0, 0, 0, 0.65);
+  border-radius: 4px;
+}
+
+.leaflet-bar a,
+.leaflet-bar a:hover {
+  box-sizing: border-box;
+  background-color: #fff;
+  border-bottom: 1px solid #ccc;
+  width: 26px;
+  height: 26px;
+  line-height: 26px;
+  display: block;
+  text-align: center;
+  text-decoration: none;
+  color: black;
+}
+
+.leaflet-bar a,
+.leaflet-control-layers-toggle {
+  background-position: 50% 50%;
+  background-repeat: no-repeat;
+  display: block;
+}
+
+.leaflet-bar a:hover {
+  background-color: #f4f4f4;
+}
+
+.leaflet-bar a:first-child {
+  /* -webkit-border-top-left-radius: 4px;
+-webkit-border-top-right-radius: 4px; */
+  border-top-right-radius: 4px;
+  border-top-left-radius: 4px;
+}
+
+.leaflet-bar a:last-child {
+  /* -webkit-border-bottom-left-radius: 4px;
+-webkit-border-bottom-right-radius: 4px; */
+  border-bottom-right-radius: 4px;
+  border-bottom-left-radius: 4px;
+  border-bottom: none;
+}
+
+.leaflet-bar .leaflet-disabled {
   cursor: default;
+  background-color: #f4f4f4;
+  color: #bbb;
 }
 
-.tg-place {
-  justify-content: flex-start;
-  padding: 0 5px;
-  gap: 2px;
-}
-.tg-place > span {
-  font-family: "Roboto Condensed", "Arial Narrow", sans-serif;
-  font-size: calc(10px * var(--scale));
-  font-weight: 700;
-  font-style: italic;
-  color: #6d5423;
-  /* single soft halo — the 4-way ±0.6px shadow left dirty ticks at glyph corners (audit §3.5) */
-  text-shadow: 0 0 3px rgba(255, 250, 235, 0.9), 0 0 6px rgba(255, 250, 235, 0.7);
+.leaflet-touch .leaflet-bar {
+  /* -webkit-border-radius: 10px; */
+  border-radius: 10px;
 }
 
-/* Place caption over a DARK band: flip to parchment ink + dark halo (the
-   default sepia italic vanishes on saturated fills). Class set from the
-   composite surface in Timeline.js. */
-.tg-place-dark > span {
-  color: #f2e8cf;
-  text-shadow: 0 0 3px rgba(40, 24, 6, 0.75), 0 1px 1px rgba(40, 24, 6, 0.6);
-}
-.tg-place-dark .tg-pin { color: #e8d9a8; }
-
-/* chip:'none' labels floating on light dissolve regions get the reference's
-   luminous halo (e.g. "Jesus Christ" on the unity fade). Dark-band cases keep
-   the standard dark halo from .tg-on-dark. */
-.tg-chip-none.tg-on-light .tg-event-label {
-  text-shadow: 0 0 5px rgba(255, 252, 240, 0.95), 0 0 12px rgba(255, 250, 235, 0.85),
-    0 1px 0 rgba(255, 250, 235, 0.9);
+.leaflet-touch .leaflet-bar a {
+  width: 30px;
+  height: 30px;
 }
 
-/* Cataclysmic Destruction: give the black monolith the same material depth as
-   the rest of the parchment language (soft top light, heavy base). */
-.tg-fill[data-lin='000000'] {
-  box-shadow: inset 0 3px 8px -2px rgba(255, 255, 255, 0.18),
-    inset 0 -4px 10px -3px rgba(0, 0, 0, 0.6);
+.leaflet-touch .leaflet-bar a:first-child {
+  /* -webkit-border-top-left-radius: 7px;
+-webkit-border-top-right-radius: 7px; */
+  border-top-left-radius: 7px;
+  border-top-right-radius: 7px;
 }
 
-/* Zoomed-out: labels-layer toggle (Layers › Labels) hides everything. */
-.tg-compact .tg-event-label,
-.tg-compact .tg-place > span {
+.leaflet-touch .leaflet-bar a:last-child {
+  /* -webkit-border-bottom-left-radius: 7px;
+-webkit-border-bottom-right-radius: 7px; */
+  border-bottom-left-radius: 7px;
+  border-bottom-right-radius: 7px;
+  border-bottom: none;
+}
+
+/* zoom control */
+
+.leaflet-control-zoom-in {
+  font: bold 18px "Lucida Console", Monaco, monospace;
+}
+
+.leaflet-control-zoom-out {
+  font: bold 22px "Lucida Console", Monaco, monospace;
+}
+
+.leaflet-touch .leaflet-control-zoom-in {
+  font-size: 22px;
+  line-height: 30px;
+}
+
+.leaflet-touch .leaflet-control-zoom-out {
+  font-size: 28px;
+  line-height: 30px;
+}
+
+/* layers control */
+
+.leaflet-control-layers {
+  box-shadow: 0 1px 7px rgba(0, 0, 0, 0.4);
+  background: #f8f8f9;
+  /* -webkit-border-radius: 5px; */
+  border-radius: 5px;
+}
+
+.leaflet-control-layers-toggle {
+  width: 36px;
+  height: 36px;
+}
+
+.leaflet-retina .leaflet-control-layers-toggle {
+  background-size: 26px 26px;
+}
+
+.leaflet-touch .leaflet-control-layers-toggle {
+  width: 44px;
+  height: 44px;
+}
+
+.leaflet-control-layers .leaflet-control-layers-list,
+.leaflet-control-layers-expanded .leaflet-control-layers-toggle {
   display: none;
 }
 
-/* LOD tier hiding: per-element zoom threshold (replaces the global binary gate).
-   Tier 1 (band names) = always visible. Tier 2 (events) = hidden below scale 0.55.
-   Tier 3 (places, detail) = hidden below scale 0.85. Threshold logic lives in
-   tierVisible() in timelineModel.js; only the display:none lives here. */
-.tg-lod-hidden .tg-event-label,
-.tg-lod-hidden > span { display: none; }
-
-/* Type ramp per tier: band names larger + serif (prod's display layer) */
-.tg-tier-1 .tg-event-label {
-  font-family: 'Nanum Myeongjo', Georgia, serif;
-  font-size: calc(13px * var(--scale));
-  letter-spacing: 0.5px;
-}
-.tg-tier-3 .tg-event-label { font-size: calc(10px * var(--scale)); font-weight: 600; }
-/* Hover ink chip only relieves dense layers — not tier-1 wayfinding labels */
-.tg-tier-1.tg-event.is-clickable:hover .tg-event-label {
-  background: none;
-  box-shadow: none;
-  padding: 0;
-  margin: 0;
+.leaflet-control-layers-expanded .leaflet-control-layers-list {
+  display: block;
+  position: relative;
 }
 
-/* Battle marker — a small struck-gold medallion with crossed swords */
-/* battle cells render as <button> when bound — reset UA chrome like tg-event */
-.tg-battle {
-  justify-content: center;
-  margin: 0;
-  border: none;
-  background: none;
-  font: inherit;
-  appearance: none;
-  padding: 0;
+.leaflet-control-layers-expanded {
+  padding: 6px 10px 6px 6px;
+  color: #323b4d;
+  background: #fff;
 }
-.tg-battle-medallion {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  /* flex:none so an apex medallion (Cumorah/Coriantumr) wider than its own grid
-     cell keeps its explicit square size and overflows as a full circle instead
-     of being shrunk to the cell width (which distorted it into an oval). */
-  flex: none;
-  width: calc(18px * var(--scale));
-  height: calc(18px * var(--scale));
-  border-radius: 50%;
-  color: #5a1410; /* swords (currentColor) */
-  /* richer, fully-opaque struck gold — no near-parchment cream that would read
-     as a hole punched through to the background */
-  background: radial-gradient(circle at 35% 30%, #f5d985 0%, #d9ad44 62%, #b8862c 100%);
-  border: 1px solid rgba(90, 60, 14, 0.7);
-  box-shadow: 0 1px 3px rgba(60, 28, 8, 0.45), inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+
+.leaflet-control-layers-selector {
+  margin-top: 2px;
+  position: relative;
+  top: 1px;
 }
-.tg-battle-medallion svg {
-  width: 64%;
-  height: 64%;
+
+.leaflet-control-layers label {
   display: block;
 }
 
-/* Incursion battle: the attacker's land encroaches one cell into the defender's
-   territory. The territory color is the cell background (revealed at the tab's
-   rounded right corners); the attacker tab fills the cell with TR+BR rounding;
-   the medallion sits on top. */
-.tg-battle-tab {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-}
-.tg-battle .tg-battle-medallion {
-  position: relative;
-  z-index: 1;
+.leaflet-control-layers-separator {
+  box-sizing: border-box;
+  height: 0;
+  border-top: 1px solid #ddd;
+  margin: 5px -10px 5px -6px;
 }
 
-/* clickable battles: medallion lifts on hover */
-.tg-battle.is-clickable { pointer-events: auto; cursor: pointer; }
-.tg-battle.is-clickable:hover .tg-battle-medallion {
-  transform: scale(1.18);
-  box-shadow: 0 2px 6px rgba(60, 28, 8, 0.55), inset 0 0 0 1px rgba(255, 255, 255, 0.45);
-}
-.tg-battle-medallion { transition: transform 0.12s ease, box-shadow 0.12s ease; }
+/* attribution and scale controls */
 
-/* Battle cells: ring on the ROUND medallion, not the square anchor cell.
-   Overrides the generic .tg-anchor ring so the indicator matches the icon shape. */
-.tg-battle.is-clickable:focus-visible,
-.tg-battle.is-selected { box-shadow: none; }
-.tg-battle.is-clickable:focus-visible .tg-battle-medallion {
-  box-shadow: 0 0 0 2px #fffdf6, 0 0 0 4px #9c6b1f, 0 1px 3px rgba(60, 28, 8, 0.45);
-}
-
-/* Info box (replaces the Leaflet popup) — parchment card */
-.tg-infobox-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(35, 24, 8, 0.55);
-  backdrop-filter: blur(2px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.tg-infobox {
-  position: relative;
-  width: 360px;
-  max-width: calc(100vw - 32px);
-  max-height: calc(100vh - 64px);
-  overflow: auto;
-  background: linear-gradient(180deg, #fdf8ec 0%, #f7efd9 100%);
-  border: 1px solid rgba(120, 90, 40, 0.35);
-  border-radius: 14px;
-  box-shadow: 0 12px 40px rgba(40, 26, 8, 0.5);
-  padding: 22px 22px 24px;
-}
-
-.tg-infobox-close {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: transparent;
-  font-size: 24px;
-  line-height: 1;
-  color: #a98f5e;
-  cursor: pointer;
-  transition: color 0.12s ease;
-}
-.tg-infobox-close:hover {
-  color: #5a4015;
-}
-
-.tg-infobox-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 12px;
-  padding-right: 18px;
-}
-.tg-infobox-head h2 {
-  font-family: "Roboto Condensed", "Arial Narrow", sans-serif;
-  font-size: 20px;
-  font-weight: 700;
+.leaflet-container .leaflet-control-attribution {
+  background-color: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 0 5px #bbb;
   margin: 0;
-  color: #3a2c12;
-}
-.tg-infobox-date {
-  flex-shrink: 0;
-  font-family: "Roboto Condensed", "Arial Narrow", sans-serif;
-  font-size: 13px;
-  font-weight: 700;
-  color: #7a5a1c;
+  display: none;
 }
 
-.tg-infobox-art {
-  width: 100%;
-  height: 160px;
-  border-radius: 8px;
-  background-color: #e6d6b0;
-  background-size: cover;
-  background-position: center;
-  border: 1px solid rgba(120, 90, 40, 0.3);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3);
-  margin-bottom: 14px;
+.leaflet-control-attribution,
+.leaflet-control-scale-line {
+  padding: 0 5px;
+  color: #323b4d;
 }
 
-.tg-infobox-body {
-  font-size: 15px;
-  line-height: 1.55;
-  color: #43361e;
-  text-align: left;
+.leaflet-container .leaflet-control-attribution,
+.leaflet-container .leaflet-control-scale {
+  font-size: 11px;
 }
 
-.tg-infobox-loading {
-  min-height: 140px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-.tg-infobox-loading h2 {
-  font-family: "Roboto Condensed", "Arial Narrow", sans-serif;
-  font-size: 16px;
-  color: #9c7e45;
-  margin: 0;
+.leaflet-left .leaflet-control-scale {
+  margin-left: 5px;
 }
 
-.tg-infobox-link {
-  display: inline-block;
-  margin-top: 14px;
-  font-family: "Roboto Condensed", "Arial Narrow", sans-serif;
-  font-size: 13.5px;
-  font-weight: 700;
-  color: #8a5a16;
+.leaflet-bottom .leaflet-control-scale {
+  margin-bottom: 5px;
+}
+
+.leaflet-control-scale-line {
+  border: 2px solid #777;
+  border-top: none;
+  color: black;
+  line-height: 1.1;
+  padding: 2px 5px 1px;
+  font-size: 11px;
+  text-shadow: 1px 1px 1px #fff;
+  background-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 -1px 5px rgba(0, 0, 0, 0.2);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.leaflet-control-scale-line:not(:first-child) {
+  border-top: 2px solid #777;
+  border-bottom: none;
+  margin-top: -2px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.leaflet-control-scale-line:not(:first-child):not(:last-child) {
+  border-bottom: 2px solid #777;
+}
+
+.leaflet-touch .leaflet-control-attribution,
+.leaflet-touch .leaflet-control-layers,
+.leaflet-touch .leaflet-bar {
+  box-shadow: none;
+}
+
+.leaflet-touch .leaflet-control-layers,
+.leaflet-touch .leaflet-bar {
+  border: 4px solid rgba(0, 0, 0, 0.3);
+}
+
+.leaflet-popup {
+  position: absolute;
+  text-align: center;
+}
+
+.leaflet-popup * div {
+  text-decoration: none;
+  vertical-align: middle;
+}
+
+.leaflet-popup .date {
+  color: #999;
+  font-size: 11px;
+}
+
+.leaflet-popup a {
+  color: #555;
   text-decoration: none;
 }
-.tg-infobox-link:hover {
-  text-decoration: underline;
-}
-.tg-infobox-link:focus-visible,
-.tg-infobox-close:focus-visible {
-  outline: 2px solid #9c6b1f;
-  outline-offset: 2px;
+
+.leaflet-popup-content-wrapper {
+  /* -webkit-border-radius: 12px; */
+  padding: 1px;
+  text-align: left;
+  border-radius: 12px;
 }
 
-.sidebar-wrapper li.active.timeline_link > a:not([data-toggle="collapse"]):before,
-.sidebar-wrapper li.active.timeline_link > a:not([data-toggle="collapse"]):after {
-  border-right-color: #2b2b2b !important;
+.leaflet-popup-content {
+  margin: 13px 19px;
 }
 
-/* ── SVG pin icon (replaces 📍 emoji — audit §2.3 quiet-layer) ─────────────
-   var(--scale, 1) fallback: the legend sits in .timeline-grid-wrap but NOT
-   inside .timeline-grid where --scale is set, so the fallback prevents a
-   zero-width pin in the infopanel key list. */
-.tg-pin {
-  display: inline-flex;
-  width: calc(11px * var(--scale, 1));
-  height: calc(11px * var(--scale, 1));
-  flex: 0 0 auto;
-  color: #8a6a2f; /* muted sepia — places are the QUIET layer (audit §2.3) */
+.leaflet-popup-content div {
+  padding-bottom: 10px;
 }
 
-/* Anchored callout — parchment speech bubble with a tail toward the tile */
-.tg-popover {
-  position: absolute;
-  z-index: 40;
-  width: 340px;
-  max-height: 440px;
-  overflow: auto;
-  background: linear-gradient(180deg, #fdf8ec 0%, #f7efd9 100%);
-  border: 1px solid rgba(120, 90, 40, 0.35);
-  border-radius: 14px;
-  box-shadow: 0 12px 40px rgba(40, 26, 8, 0.45);
-  padding: 20px 20px 22px;
+.leaflet-popup-content div a {
+  cursor: pointer;
+  color: #4c4c4c;
 }
-.tg-popover::before {
-  content: '';
-  position: absolute;
-  top: var(--tail-top);
-  width: 14px;
-  height: 14px;
+
+.leaflet-popup-content .image {
+  width: 295px;
+  height: 140px;
+}
+
+.leaflet-popup-content h2 {
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.leaflet-popup-content p {
+  text-align: justify;
+  font-size: 0.8rem;
+  line-height: 0.8rem;
+  margin: 0;
+  color: #888;
+}
+
+.leaflet-popup-tip-container {
+  width: 40px;
+  height: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.leaflet-popup-tip {
+  box-sizing: border-box;
+  width: 17px;
+  height: 17px;
+  padding: 1px;
   transform: rotate(45deg);
-  background: #fdf8ec;
-  border: 1px solid rgba(120, 90, 40, 0.35);
 }
-.tg-popover-right::before { left: -8px; border-right: none; border-top: none; }
-.tg-popover-left::before  { right: -8px; border-left: none; border-bottom: none; }
-.tg-pin svg { width: 100%; height: 100%; display: block; }
+
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: white;
+  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.4);
+}
+
+.leaflet-popup-content-wrapper {
+  position: relative;
+  bottom: -1px;
+}
+
+.leaflet-container a.leaflet-popup-close-button {
+  box-sizing: border-box;
+  position: absolute;
+  top: 1ex;
+  right: 1ex;
+  padding: 8px 6px 0 0;
+  text-align: center;
+  width: 18px;
+  height: 14px;
+  color: #c3c3c3;
+  text-decoration: none;
+  font-weight: bold;
+  background: transparent;
+  z-index: 99;
+}
+
+.leaflet-container a.leaflet-popup-close-button:hover {
+  color: #999;
+}
+
+.leaflet-popup-scrolled {
+  overflow: auto;
+  border-bottom: 1px solid #ddd;
+  border-top: 1px solid #ddd;
+}
+
+.leaflet-div-icon {
+  background: #fff;
+  border: 1px solid #1a1d20;
+}
+
+.leaflet-editing-icon {
+  /* -webkit-border-radius: 2px; */
+  border-radius: 2px;
+}
+
+
+.sidebar-wrapper li.active.timeline_link > a:not([data-toggle="collapse"]):before ,
+.sidebar-wrapper li.active.timeline_link > a:not([data-toggle="collapse"]):after 
+{
+  border-right-color: #2b2b2b!important;
+}
+
+
+.timeline-map {
+  position: absolute;
+  background-color: rgb(43, 43, 43);
+  top: 60px;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  width: auto;
+  height: auto;
+}
+
+.timeline-data {
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  background-color: rgb(76, 97, 113);
+}
+
+.timelinemap {
+  height: 700px;
+}
+
+.timelinemap .header {
+  top: 25px;
+}
+
+.timeline-header-posigion {
+  top: 24px;
+}
+
+.timelinemap .close {
+  width: 16px;
+  height: 16px;
+}
+
+.timeline-infow-window-image {
+  box-sizing: border-box;
+  width: 290px;
+  background-size: 290px;
+  padding: 10px 292px 121px 0;
+  cursor: pointer;
+  background-position: center;
+  height: 140px;
+  background-color: #555;
+  border: 1px solid #888;
+  border-radius: 5px;
+}
+
+
+/* TimeLIne PopUP */
+
+.timeline-popup-bg-img {
+  box-sizing: border-box;
+  width: 290px;
+  background-size: 290px;
+  padding: 10px 292px 121px 0;
+}
+
+.timeline-popup {
+  width: 295px;
+  height: 140px;
+}
