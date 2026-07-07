@@ -297,6 +297,50 @@ function HomeFeedItem({
       loadCommentsFromAPI();
     }
   };
+
+  // Live replies (backlog #12): the controller dispatches
+  // addMessageToThread<parentId> for every socket-delivered thread reply, so
+  // other users' comments appear in place instead of waiting for a
+  // visibility-triggered refetch. Comments dedupes by id downstream, so the
+  // sender's own optimistic copy never doubles. Ref mirror keeps the handler
+  // reading current state without re-binding the listener every render.
+  const liveReplyCtx = useRef({});
+  liveReplyCtx.current = { comments, loadCommentsFromAPI, replycount: item.replycount };
+  useEffect(() => {
+    const eventName = "addMessageToThread" + item.id;
+    const onLiveReply = (e) => {
+      const msg = e.message;
+      if (!msg || !isMounted.current) return;
+      const ctx = liveReplyCtx.current;
+      // Thread never loaded but has history: pull the whole thread (the new
+      // reply is already persisted server-side) so older replies aren't
+      // orphaned behind the live one.
+      if (!ctx.comments?.length && ctx.replycount) return ctx.loadCommentsFromAPI();
+      let progress = 0;
+      try {
+        const summary = msg._sender?.metaData?.summary;
+        const parsed = typeof summary === "string" ? JSON.parse(summary) : summary;
+        progress = parsed?.completed || 0;
+      } catch (err) {}
+      const shaped = {
+        timestamp: msg.createdAt,
+        msg: msg.message,
+        id: msg.messageId,
+        channel_url: msg.channelUrl,
+        user: {
+          picture: msg._sender?.plainProfileUrl,
+          nickname: msg._sender?.nickname,
+          user_id: msg._sender?.userId,
+          progress,
+          isBot: !!msg._sender?.metaData?.isBot,
+        },
+      };
+      fetchComments((prev) => (Array.isArray(prev) ? [...prev, shaped] : [shaped]));
+    };
+    window.addEventListener(eventName, onLiveReply, false);
+    return () => window.removeEventListener(eventName, onLiveReply, false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [item.id]);
   let finished = item.user.finished;
   const trophyImg = finished ? (
     <img className="trophy" src={trophy} alt={label("finished") || "Finished"} />

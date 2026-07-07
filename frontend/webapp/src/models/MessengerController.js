@@ -197,6 +197,15 @@ export default class MessengerController {
 
     // User left
     this.socket.on('user_left', ({ channelUrl, user }) => {
+      // Live kick: if I was removed/banned (ban also emits user_left), drop
+      // the group from my list now — the server has already evicted my
+      // sockets from the channel room, so no further live traffic arrives.
+      if (user && user === this.userId) {
+        this.getStudyGroups()
+          .then((list) => appController.functions.setStudyGroups(list))
+          .catch(() => {});
+        return;
+      }
       const channel = this.channels.get(channelUrl);
       if (channel) {
         refreshChannel(channel, appController);

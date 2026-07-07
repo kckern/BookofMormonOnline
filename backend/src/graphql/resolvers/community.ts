@@ -777,6 +777,9 @@ export const communityResolvers: Resolvers = {
         const userDto = await getUser(ctx.db, myUserId);
         const userShape = userDto ? assembleHomeUser(userDto) : null;
 
+        // Room sync first so the joiner's own live sockets hear this channel
+        // from the very first event (no reconnect required).
+        getBus().joinRoom(myUserId, channelUrl);
         getBus().emit('user_joined', channelUrl, { channelUrl, user: userShape });
         getBus().emit('membership_changed', channelUrl, { channelUrl, user: myUserId });
 
@@ -813,6 +816,7 @@ export const communityResolvers: Resolvers = {
         const userDto = await getUser(ctx.db, myUserId);
         const userShape = userDto ? assembleHomeUser(userDto) : null;
 
+        getBus().joinRoom(myUserId, url);
         getBus().emit('user_joined', url, { channelUrl: url, user: userShape });
         getBus().emit('membership_changed', url, { channelUrl: url, user: myUserId });
 
@@ -955,6 +959,7 @@ export const communityResolvers: Resolvers = {
           const userDto = await getUser(ctx.db, targetUserId);
           const userShape = userDto ? assembleHomeUser(userDto) : null;
 
+          getBus().joinRoom(targetUserId, channelArg);
           getBus().emit('user_joined', channelArg, { channelUrl: channelArg, user: userShape });
           getBus().emit('membership_changed', channelArg, { channelUrl: channelArg, user: targetUserId });
         } else {
@@ -1002,7 +1007,9 @@ export const communityResolvers: Resolvers = {
         const success = await addBotToChannel(ctx.db, channelArg, botId);
         if (!success) return false;
 
-        // Fan-out: same events as joinGroup/processRequest-grant.
+        // Fan-out: same events as joinGroup/processRequest-grant. Bots hold
+        // live sockets too (MESSENGER_BOT_TOKEN) — sync their room membership.
+        getBus().joinRoom(botId, channelArg);
         const botDto = await getUser(ctx.db, botId);
         const botShape = botDto ? assembleHomeUser(botDto) : null;
         getBus().emit('user_joined', channelArg, { channelUrl: channelArg, user: botShape });
@@ -1045,6 +1052,7 @@ export const communityResolvers: Resolvers = {
         if (!success) return false;
 
         getBus().emit('membership_changed', channelArg, { channelUrl: channelArg, user: botId });
+        getBus().leaveRoom(botId, channelArg);
 
         return true;
       } catch (err) {

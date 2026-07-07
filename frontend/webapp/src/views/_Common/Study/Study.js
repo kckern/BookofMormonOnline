@@ -1199,27 +1199,22 @@ export function LikeButton({ type, message, appController }) {
     messageReacters(message, memberMap),
   );
 
-  const [init, setInit] = useState(false);
   const [tooltip_id] = useState(crypto.randomBytes(20).toString("hex"));
 
-  const reactToMessage = (e) => {
-    message.applyReactionEvent(e.reactionEvent);
-    updateReacters(messageReacters(message, memberMap));
-    setInit(true);
-  };
-
-  if (!init) {
-    window.removeEventListener(
-      "reactTo" + message.messageId,
-      reactToMessage,
-      false,
-    );
-    window.addEventListener(
-      "reactTo" + message.messageId,
-      reactToMessage,
-      false,
-    );
-  }
+  // Live reaction updates. Registered in an effect (NOT the render body — the
+  // old render-body pattern stacked a fresh duplicate listener on every render
+  // and never removed any of them on unmount). Keyed on memberMap too so the
+  // handler re-binds with fresh members after a channel refresh.
+  useEffect(() => {
+    const eventName = "reactTo" + message.messageId;
+    const reactToMessage = (e) => {
+      message.applyReactionEvent(e.reactionEvent);
+      updateReacters(messageReacters(message, memberMap));
+    };
+    window.addEventListener(eventName, reactToMessage, false);
+    return () => window.removeEventListener(eventName, reactToMessage, false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [message.messageId, memberMap]);
 
   let reactions = null;
   let liked = false;

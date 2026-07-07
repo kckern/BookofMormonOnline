@@ -23,6 +23,7 @@ import { io as ioClient, type Socket as ClientSocket } from 'socket.io-client';
 import type { Server as IoServer } from 'socket.io';
 import { sql } from 'kysely';
 import { initRealtime } from '../../src/realtime/server.js';
+import { getBus } from '../../src/realtime/RealtimeBus.js';
 import { getDb, closeDb } from '../../src/data/db.js';
 import { md5 } from '../../src/auth/identity.js';
 
@@ -165,5 +166,44 @@ describeSocket('socket /messenger — acked handlers', () => {
     expect(typeof ack.success).toBe('boolean');
     const payload = await unread;
     expect(payload.channelUrl).toBe(channelUrl);
+  });
+});
+
+describeSocket('socket /messenger — mid-session room sync (Bus.joinRoom/leaveRoom)', () => {
+  // Membership mutations call joinRoom/leaveRoom so live sockets track channel
+  // membership WITHOUT a reconnect (new group/DM must not be deaf; a banned
+  // user must stop receiving). Uses a probe event + synthetic room so nothing
+  // collides with real channel broadcasts from the other suites.
+  const room = 'room-sync-probe-channel';
+
+  it('joinRoom adds all of a user\'s connected sockets to a room mid-session', async () => {
+    const a = await connectReady({ userId: uid, token: TOKEN });
+    await delay(300); // connect-time room joins settle
+
+    // Baseline: not in the room, so a room broadcast must NOT arrive.
+    const before = waitFor(a, 'room_sync_probe', 500).then(() => 'received', () => 'timeout');
+    getBus().emit('room_sync_probe', room, { channelUrl: room, n: 1 });
+    expect(await before).toBe('timeout');
+
+    getBus().joinRoom(uid, room);
+    await delay(100);
+
+    const after = waitFor<{ channelUrl: string }>(a, 'room_sync_probe');
+    getBus().emit('room_sync_probe', room, { channelUrl: room, n: 2 });
+    expect((await after).channelUrl).toBe(room);
+  });
+
+  it('leaveRoom evicts the user\'s sockets from the room', async () => {
+    const a = await connectReady({ userId: uid, token: TOKEN });
+    await delay(300);
+    getBus().joinRoom(uid, room);
+    await delay(100);
+
+    getBus().leaveRoom(uid, room);
+    await delay(100);
+
+    const result = waitFor(a, 'room_sync_probe', 500).then(() => 'received', () => 'timeout');
+    getBus().emit('room_sync_probe', room, { channelUrl: room, n: 3 });
+    expect(await result).toBe('timeout');
   });
 });

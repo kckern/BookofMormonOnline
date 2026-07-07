@@ -37,6 +37,19 @@ export function setIo(io: Server): void {
 /** The bus interface exposed to GraphQL resolvers and other consumers. */
 export interface Bus {
   emit(event: string, room: string, payload: unknown): void;
+  joinRoom(userId: string, channelUrl: string): void;
+  leaveRoom(userId: string, channelUrl: string): void;
+}
+
+function noIo(): boolean {
+  if (!_io) {
+    if (!_warnedOnce) {
+      console.warn('[RealtimeBus] called before setIo — no-op (this warning fires once)');
+      _warnedOnce = true;
+    }
+    return true;
+  }
+  return false;
 }
 
 /**
@@ -46,14 +59,25 @@ export interface Bus {
 export function getBus(): Bus {
   return {
     emit(event: string, room: string, payload: unknown): void {
-      if (!_io) {
-        if (!_warnedOnce) {
-          console.warn('[RealtimeBus] emit called before setIo — no-op (this warning fires once)');
-          _warnedOnce = true;
-        }
-        return;
-      }
-      _io.to(room).emit(event, payload);
+      if (noIo()) return;
+      _io!.to(room).emit(event, payload);
+    },
+
+    // Room-membership sync. Channel rooms are seeded at connect from the
+    // membership table (server.ts); these keep live sockets in step when
+    // membership changes MID-SESSION — otherwise a user who joins/creates a
+    // channel is deaf to its realtime until reconnect, and a banned/removed
+    // user keeps receiving room traffic. socketsJoin/socketsLeave address all
+    // of the user's current sockets via their personal room and work across
+    // instances under the redis adapter.
+    joinRoom(userId: string, channelUrl: string): void {
+      if (noIo() || !userId || !channelUrl) return;
+      _io!.in(`user:${userId}`).socketsJoin(channelUrl);
+    },
+
+    leaveRoom(userId: string, channelUrl: string): void {
+      if (noIo() || !userId || !channelUrl) return;
+      _io!.in(`user:${userId}`).socketsLeave(channelUrl);
     },
   };
 }

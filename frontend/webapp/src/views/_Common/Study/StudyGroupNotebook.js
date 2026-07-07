@@ -73,14 +73,13 @@ export default function StudyGroupNotebook({ appController }) {
         <div>
             <div className="topTabs">{contents.map(item =>  <div key={item.slug} className={activeDivision===item.slug ? "active" : ""} onClick={() => { if (activeDivision !== item.slug) { setActiveDivision(item.slug); setActiveLeafCursors(null); setActiveNotes(null); } }}>{item.title} <span className={"badge"}>{5}</span></div> )}</div>
             <div className="noteList">
-                {activeNotes?.length}
                 {activeNotes?.map(note=>{
                     let dateObj = (new Date(note.createdAt));
                     return (<div className="note" key={note.messageId}>
                         <h4>1 Nephi 4:3</h4>
                         <b>{note?._sender?.nickname}</b>
                         <i>{dateObj.toLocaleDateString("en-US")}</i>
-                        <blockquote>{note.message}<span className={"badge"}>{note.threadInfo.replyCount}</span></blockquote>
+                        <blockquote>{note.message}<span className={"badge"}>{note.threadInfo?.replyCount ?? 0}</span></blockquote>
                         <pre>{note.data}</pre>
                         
                         </div>)

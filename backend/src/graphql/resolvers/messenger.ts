@@ -377,7 +377,7 @@ export const messengerResolvers: Resolvers = {
           ? customType
           : 'private') as 'private' | 'public' | 'open' | 'solo' | 'DM';
 
-        return await createChannel(ctx.db, {
+        const channel = await createChannel(ctx.db, {
           name,
           customType: resolvedType,
           description: description ?? undefined,
@@ -389,6 +389,13 @@ export const messengerResolvers: Resolvers = {
           // client-forced channelUrl so the existing conversation is reused.
           ...(argChannelUrl && !isDistinct ? { channelUrl: argChannelUrl } : {}),
         });
+
+        // Room sync: every member's live sockets must hear this channel NOW —
+        // without this a freshly created DM is silent for the recipient (and
+        // the creator's own new group is deaf) until they reconnect.
+        for (const id of allUserIds) getBus().joinRoom(id, channel.channel_url);
+
+        return channel;
       } catch (err) {
         console.error('messengerCreateChannel error:', err);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -593,9 +600,11 @@ export const messengerResolvers: Resolvers = {
           : await removeUserFromChannel(ctx.db, channelUrl, userId);
         if (removed) {
           // Emit both: membership_changed (channel refresh) + user_left (symmetry with
-          // user_joined; the client listens for both).
+          // user_joined; the client listens for both). Emit BEFORE leaveRoom so the
+          // removed user's own sockets still receive the event (their live kick).
           getBus().emit('membership_changed', channelUrl, { channelUrl, userId });
           getBus().emit('user_left', channelUrl, { channelUrl, user: userId });
+          getBus().leaveRoom(userId, channelUrl);
         }
         return removed;
       } catch (err) {
@@ -625,6 +634,10 @@ export const messengerResolvers: Resolvers = {
         if (banned) {
           getBus().emit('membership_changed', channelUrl, { channelUrl, userId, state: 'banned' });
           getBus().emit('user_left', channelUrl, { channelUrl, user: userId });
+          // Emits first (so the banned user's sockets get their live kick),
+          // then evict them from the room — a banned user must not keep
+          // receiving the channel's live traffic for the rest of their session.
+          getBus().leaveRoom(userId, channelUrl);
         }
         return banned;
       } catch (err) {
@@ -725,6 +738,9 @@ export const messengerResolvers: Resolvers = {
       try {
         const accepted = await acceptChannelInvitation(ctx.db, channelUrl, targetUserId);
         if (accepted) {
+          // Room sync BEFORE the emits so the accepter's own sockets are in the
+          // room and receive their first membership events live.
+          getBus().joinRoom(targetUserId, channelUrl);
           getBus().emit('user_joined', channelUrl, { channelUrl, userId: targetUserId });
           getBus().emit('membership_changed', channelUrl, { channelUrl, userId: targetUserId, state: 'joined' });
         }

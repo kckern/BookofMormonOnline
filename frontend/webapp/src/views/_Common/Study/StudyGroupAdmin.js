@@ -45,17 +45,26 @@ export default function StudyGroupAdmin({ appController }) {
   });
   const [openModal, setOpenModal] = useState(false);
 
+  // Live membership: membership_changed → refreshChannel → activeGroup is
+  // replaced with a fresh object. Key on a roster signature (not the object)
+  // so per-message channel refreshes don't retrigger; on a real roster change
+  // re-sync the local group (BannedMembers re-fetches off it) and re-fetch
+  // operators.
+  const activeGroup = appController.states.studyGroup.activeGroup;
+  const rosterKey = (activeGroup.members || [])
+    .map((m) => `${m.userId}:${m.role}:${m.isMuted ? 1 : 0}`)
+    .join("|");
+
   useEffect(() => {
-    if (appController.states.studyGroup.activeGroup.myRole !== "operator")
-      return null;
-    if (!appController.states.studyGroup.activeGroupOperators?.length) {
-      appController.sendbird
-        ?.fetchGroupOperators(appController.states.studyGroup.activeGroup)
-        .then((operators) => {
-          appController.functions.setActiveGroupOperators(operators);
-        });
-    }
-  }, []);
+    setGroup(activeGroup);
+    if (activeGroup.myRole !== "operator") return;
+    appController.sendbird
+      ?.fetchGroupOperators(activeGroup)
+      .then((operators) => {
+        appController.functions.setActiveGroupOperators(operators);
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rosterKey]);
 
   const saveProfileInfo = async (e) => {
     document.getElementById("group_name").disabled = true;
@@ -235,7 +244,7 @@ export default function StudyGroupAdmin({ appController }) {
         </CardHeader>
         <CardBody>
           <div className="userAdminBoxes">
-            {appController.states.studyGroup.activeGroup.members
+            {(activeGroup.members || [])
               .sort(sortFn)
               .map((member) => {
                 let isAdmin = member.role === "operator";
