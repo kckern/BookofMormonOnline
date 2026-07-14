@@ -17,7 +17,6 @@ import {Spinner} from "../_Common/Loader";
 import { determineLanguage } from "../../models/Utils";
 import { Link } from "react-router-dom";
 import ReactTooltip from "react-tooltip";
-import classNames from "classnames";
 import { generateReference, detectReferences, lookupReference } from 'scripture-guide';
 import { usePageController } from "src/contexts/PageControllerContext";
 import { useMessenger } from "src/contexts/MessengerContext";
@@ -37,18 +36,6 @@ function ChronoRow({ chrono }) {
 
 function reducer(narrationController, input) {
   switch (input.fn) {
-    case "toggleOpenClose":
-      if (narrationController.states.isOpen)
-        narrationController.pageController.functions.removeOpenRow(
-          narrationController.data.text.slug,
-        );
-      else
-        narrationController.pageController.functions.setActiveRow({
-          slug: narrationController.data.text.slug,
-          duration: narrationController.data.text.duration,
-        });
-      narrationController.states.isOpen = !narrationController.states.isOpen;
-      break;
     case "setPanelImageIds":
       narrationController.states.panelImageIds = input.val;
       break;
@@ -224,7 +211,6 @@ function Narration({ rowData, addHighlight }) {
       if (typeof faxData === "object") faxData = Object.values(faxData);
 
       var states = {
-        isOpen: false,
         showFax: false,
         faxList: faxData?.map((i) => i.slug),
         faxData: faxData,
@@ -237,10 +223,6 @@ function Narration({ rowData, addHighlight }) {
 
       //Define all Row-level functions
       let functions = {
-        toggleOpenClose: (e) => {
-          e.preventDefault();
-          dispatch({ fn: "toggleOpenClose" });
-        },
         setPanelImageIds: (ids) => {
           dispatch({ fn: "setPanelImageIds", val: ids });
         },
@@ -678,11 +660,6 @@ function PeoplePlacePanel() {
     narrationController.functions.setPeoplePlaces({});
   }
 
-  useEffect(() => {
-    //Preload People and Places
-
-  }, [narrationController.states.peoplePlaces]);
-
   if(items.length === 0) return null;
 
   const replaceNumbers = (str) => {
@@ -948,7 +925,6 @@ function FacsimilePanel() {
   const [imgHW, setHW] = useState({ h: 0, w: 0 });
   const [position, setPosition] = useState("center center");
   useEffect(() => {
-    // if (narrationController.states.isOpen) debugger;
     if (narrationController.states.faxData === undefined) {
       return null;
     }
