@@ -172,7 +172,7 @@ function GroupBrowser({ appController, activeGroup, setActiveGroup }) {
         effect="solid"
         className="card-tip"
         backgroundColor={isDarkTheme() ? "#444444" : "#EEEEEE"}
-        arrowColor={isDarkTheme() ? "#444444" : "#EEEEEE"}
+        arrowColor={isDarkTheme() ? "#444444" : "#666666"}
         html
       />
       <CardBody>

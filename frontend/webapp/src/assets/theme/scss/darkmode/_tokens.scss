@@ -23,6 +23,7 @@
   --overlay: rgba(0, 0, 0, 0.5);
   --shadow: rgba(0, 0, 0, 0.15);
   --slider-fill: #3f51b5;
+  --slider-rail: #d3d3d3;
 }
 
 html[data-theme="dark"] {
@@ -49,4 +50,5 @@ html[data-theme="dark"] {
   --overlay: rgba(0, 0, 0, 0.65);
   --shadow: rgba(0, 0, 0, 0.4);
   --slider-fill: #7986cb;
+  --slider-rail: #444444;
 }
