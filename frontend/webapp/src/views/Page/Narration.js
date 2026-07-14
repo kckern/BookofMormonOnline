@@ -3,12 +3,12 @@ import React, { useState, useEffect, useReducer } from "react";
 import TextContent from "./TextContent";
 import Comments from "../_Common/Study/Study";
 // media Url
-import { renderPersonPlaceHTML, formatNameNumbers } from "./PersonPlace";
+import { renderPersonPlaceHTML } from "./PersonPlace";
 import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
 import Parser, { domToReact } from "html-react-parser";
 import "./Narration.css";
 import "./TextContent.css";
-import { snapSelectionToWord, chronoLabel } from "src/models/Utils";
+import { snapSelectionToWord, chronoLabel, replaceNumbers } from "src/models/Utils";
 import { SRLWrapper } from "simple-react-lightbox";
 import { label } from "src/models/Utils";
 import { getSearchSlug } from "src/models/searchSlug";
@@ -629,10 +629,10 @@ function PeoplePlacePanel() {
         return <div key={item.name} className="item" onClick={()=>popUpPerson(item.slug,item.type)}>
 
           <div className="name">
-            {formatNameNumbers(item.name)}
+            {replaceNumbers(item.name)}
           </div>
           <img src={`${assetUrl}/${item.type}/${item.slug}`} alt={item.name} />
-          <div className="info">{formatNameNumbers(item.title || item.info)}</div>
+          <div className="info">{replaceNumbers(item.title || item.info)}</div>
 
             </div>;
       })}
