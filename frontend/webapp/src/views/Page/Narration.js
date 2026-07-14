@@ -429,7 +429,7 @@ function LightBox({ setOpenLightBox, imgClicker }) {
     if (activeImg && !isOpen) {
       setTimeout(() => {
         activeImg.click();
-      }, [100]);
+      }, 100);
     }
   }, [activeImageId, activeImg]);
 

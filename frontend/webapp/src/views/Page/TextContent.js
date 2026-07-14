@@ -277,8 +277,7 @@ export default function TextContent({ content, isQuote }) {
     }
   }
 
-  if(textContentController.data?.heading)
-  textContentController.data.heading = textContentController.data.heading?.replace(/^\[.*?\]/, "").trim();
+  const displayHeading = textContentController.data?.heading?.replace(/^\[.*?\]/, "").trim();
 
   let openClass =  (textContentController.states.isOpen || textContentController.states.isHeaderOpen) ? " open" : "";
   return (
@@ -323,15 +322,13 @@ export default function TextContent({ content, isQuote }) {
               {cardWithoutNestedBlocks ? (
                 <>
                   <span className="triangle"><img src={triangle} alt="" /></span>
-                  {textContentController.data &&
-                    textContentController.data.heading}
+                  {displayHeading}
                   
                 </>
               ) : (
                 <>
                 <span className="triangle"><img src={triangle} alt="" /></span>
-                  {narrationController?.data &&
-                    narrationController?.data?.text?.heading}
+                  {narrationController?.data?.text?.heading?.replace(/^\[.*?\]/, "").trim()}
                   
                 </>
               )}

@@ -93,7 +93,7 @@ function Section({ sectionData, sectionIndex }) {
                   rowData={rowData}
                 />
               );
-            } else return rowData;
+            } else return null;
           })}
         </div>
 

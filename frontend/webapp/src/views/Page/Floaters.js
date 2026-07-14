@@ -18,9 +18,8 @@ export function Floaters() {
         let member = group?.memberMap[u];
         if (me === u) return null;
         if(member.metaData?.activeGroup!==group.url) return null;
-        let topVal = document.querySelector(`div[textid=${pageSlug}\\/${list[u]}]`)?.offsetTop + "px";
-
-        if (!topVal) topVal = "-50px";
+        const rowEl = document.querySelector(`div[textid=${pageSlug}\\/${list[u]}]`);
+        const topVal = rowEl ? rowEl.offsetTop + "px" : "-50px";
 
 
       let activeGroupUrl = pageController.appController.states.studyGroup.activeGroup.url;
@@ -29,6 +28,7 @@ export function Floaters() {
       let summary = {};
       try { summary = JSON.parse(member?.metaData?.summary) } catch (e) { }
         return <div
+          key={u}
           className={"userCircle online " + u}
           style={{
             position: "absolute",
