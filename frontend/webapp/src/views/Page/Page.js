@@ -29,6 +29,7 @@ import { usePageInit, pageScrollManager, isRefOpen } from "./usePageInit";
 import { countFaxFromIndex, mergeCounts } from "./pageCommentCounts";
 import { createScrollSpy, step } from "src/scroll";
 import { appFunctions } from "src/models/appController";
+import { useAppController } from "src/contexts/AppControllerContext";
 
 // Apply a Main slug change from inside the Page reducer WITHOUT a nested React
 // dispatch. The reducer is replayed by React during render; the old
@@ -54,7 +55,8 @@ function prepareInitOpen(params) {
   return initOpen;
 }
 
-export default function Page({ appController }) {
+export default function Page() {
+  const appController = useAppController();
   const match = useRouteMatch();
   if (match.params.pageSlug === "study") {
     let parts = localStorage

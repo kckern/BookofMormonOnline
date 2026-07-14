@@ -4,6 +4,7 @@ import ReactTooltip from "react-tooltip";
 import { Link } from "react-router-dom";
 import { detectScriptures } from "scripture-guide";
 import { assetUrl } from "src/models/BoMOnlineAPI";
+import { useAppController } from "src/contexts/AppControllerContext";
 
 // Slugs like "mormon2" inside {Mormon|mormon2} otherwise read as the scripture
 // reference "Mormon 2" and corrupt the slug capture before token parsing.
@@ -100,9 +101,6 @@ export const renderPersonPlaceHTML = (html, pageController, scriptureLinkClickHa
                   <NarrationToolTip
                     id={t.slug}
                     type={t.type}
-                    appController={
-                      pageController?.appController || pageController
-                    }
                   />
                 </ReactTooltip>
               ))}
@@ -165,7 +163,8 @@ function PlaceLink({ label, id, pageController }) {
   );
 }
 
-function NarrationToolTip({ type, id, appController }) {
+function NarrationToolTip({ type, id }) {
+  const appController = useAppController();
   // Prefer the always-current global.preLoad over the appController prop: the
   // narration captures appController at mount (see Page.js pageController init),
   // so its preLoad is frozen at that moment — often before the full person/place

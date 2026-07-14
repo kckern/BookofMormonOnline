@@ -14,8 +14,10 @@ import MapContents from "./MapContents"
 import {MapPanel,getPlaceInfo} from "./MapPanel.js"
 import {  assetUrl } from "../../models/BoMOnlineAPI"
 import { SearchPopUp } from "../_Common/SearchPopUp.js"
-function MapContainer({ appController }) {
+import { useAppController } from "src/contexts/AppControllerContext";
+function MapContainer() {
 
+  const appController = useAppController();
   const params = useParams(),
     [currentMap, setCurrentMap] = useState(null),
     [mapName, setMapName] = useState(""),

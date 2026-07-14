@@ -29,6 +29,7 @@ import { lookup } from "scripture-guide";
 
 import { determineLanguage, flattenDescription, playSound } from "../../models/Utils";
 import { buildCommentQueue } from "./theaterUtils";
+import { useAppController } from "src/contexts/AppControllerContext";
 
 
 const loadQueueItemsFromQueue = items => {
@@ -62,8 +63,9 @@ const playAudioElement = (id) => {
 
 }
 
-function TheaterWrapper({ appController }) {
+function TheaterWrapper() {
 
+  const appController = useAppController();
   let match = useRouteMatch();
   let slug = match?.params?.slug || null;
 
