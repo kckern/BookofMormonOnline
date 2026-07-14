@@ -14,6 +14,7 @@
   --hm-death: #c62828;
   --hm-death-dark: #b71c1c;
   --hm-text: #555555;
+  --hm-hover-text: #333333;
   --hm-text-soft: #777777;
   --hm-text-muted: #888888;
   --hm-text-faint: #999999;
@@ -50,6 +51,7 @@ html[data-theme="dark"] .witness-life-heatmap {
   --hm-death: #e57373;
   --hm-death-dark: #ef5350;
   --hm-text: #cccccc;
+  --hm-hover-text: #cccccc;
   --hm-text-soft: #aaaaaa;
   --hm-text-muted: #8a8a8a;
   --hm-text-faint: #888888;
@@ -243,6 +245,7 @@ html[data-theme="dark"] .witness-life-heatmap {
 
 .witness-life-heatmap-compressed-note {
     color: var(--hm-text-soft);
+    font-style: italic;
 }
 
 .witness-life-heatmap-hover .hover-era.era-compressed { color: var(--hm-text-soft); font-style: italic; }
@@ -259,7 +262,7 @@ html[data-theme="dark"] .witness-life-heatmap {
     border: 1px solid var(--hm-hover-border);
     border-radius: 4px;
     font-size: 0.75rem;
-    color: var(--hm-text);
+    color: var(--hm-hover-text);
     min-height: 1.5em;
     display: flex;
     flex-wrap: wrap;
