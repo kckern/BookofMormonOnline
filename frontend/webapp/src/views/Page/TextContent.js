@@ -20,6 +20,7 @@ import faxSVG from "src/views/User/svg/oldbook.svg";
 import { determineLanguage, label } from "../../models/Utils";
 import { useNarration } from "src/contexts/NarrationContext";
 import { TextContentProvider } from "src/contexts/TextContentContext";
+import { compileHighlightRegex } from "./highlightPattern";
 
 /* ------------------------------------------- */
 /* -------------- STATE CHANGES  ------------- */
@@ -134,8 +135,8 @@ export default function TextContent({ content, isQuote }) {
     let highlighted = "";
     for (var i in narrationController.states.highlights) {
       let highlight = narrationController.states.highlights[i];
-      var re = new RegExp("(" + highlight.string + ")", "gi");
-      if (highlighted.match(re)) continue;
+      var re = compileHighlightRegex(highlight.string);
+      if (!re || highlighted.match(re)) continue;
       highlighted += highlight.string;
       content = content.replace(re, (string) => {
         return (
