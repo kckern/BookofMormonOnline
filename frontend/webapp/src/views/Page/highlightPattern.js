@@ -15,6 +15,14 @@ function isIntentionalPattern(str) {
   return /\[\^/.test(str);
 }
 
+// Titles become tolerant regexes: edge punctuation stripped, every non-letter
+// run matches punctuation OR markup so highlights survive inline tags.
+export function titleToHighlightPattern(title) {
+  return String(title)
+    .replace(/^[^a-z\d]*|[^a-z\d]*$/gi, "")
+    .replace(/[^a-z]+/gi, "([^a-z]|<[^>]*>)+?");
+}
+
 export function compileHighlightRegex(string) {
   if (isIntentionalPattern(string)) {
     // Intentional regex pattern built by setHighlights — compile as-is to

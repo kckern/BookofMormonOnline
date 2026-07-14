@@ -22,6 +22,7 @@ import { usePageController } from "src/contexts/PageControllerContext";
 import { useMessenger } from "src/contexts/MessengerContext";
 import { NarrationProvider, useNarration } from "src/contexts/NarrationContext";
 import { extractTagIds } from "./tagIds";
+import { titleToHighlightPattern } from "./highlightPattern";
 
 function ChronoRow({ chrono }) {
   chrono = chronoLabel(chrono);
@@ -134,52 +135,26 @@ function Narration({ rowData, addHighlight }) {
   };
 
   const setHighlights = (activeId, previewIds, commentHighlights) => {
-    const rowImageData = narrationController.supplement.image;
-    const rowCommentaryData = narrationController.supplement.commentary;
-    var highlights = [];
-    if (rowImageData !== undefined) {
-      for (let i in rowImageData) {
-        if (rowImageData[i].id === activeId) {
-          highlights.push({
-            class: "primary",
-            string: rowImageData[i].title
-              .replace(/^[^a-z\d]*|[^a-z\d]*$/gi, "")
-              .replace(/[^a-z]+/gi, "([^a-z]|<[^>]*>)+?"),
-          });
-        } else if (previewIds.includes(rowImageData[i].id)) {
-          highlights.push({
-            class: "secondary",
-            string: rowImageData[i].title
-              .replace(/^[^a-z\d]*|[^a-z\d]*$/gi, "")
-              .replace(/[^a-z]+/gi, "([^a-z]|<[^>]*>)+?"),
-          });
-        }
+    const highlights = [];
+    const pushMatches = (collection) => {
+      for (const entry of Object.values(collection || {})) {
+        if (!entry?.title) continue;
+        const cls =
+          entry.id === activeId
+            ? "primary"
+            : previewIds.includes(entry.id)
+            ? "secondary"
+            : null;
+        if (cls)
+          highlights.push({ class: cls, string: titleToHighlightPattern(entry.title) });
       }
-    }
-    if (rowCommentaryData !== undefined) {
-      for (let i in rowCommentaryData) {
-        if (rowCommentaryData[i] === undefined) return;
-        if (rowCommentaryData[i].id === activeId) {
-          highlights.push({
-            class: "primary",
-            string: rowCommentaryData[i]?.title
-              .replace(/^[^a-z\d]*|[^a-z\d]*$/gi, "")
-              .replace(/[^a-z]+/gi, "([^a-z]|<[^>]*>)+?"),
-          });
-        } else if (previewIds.includes(rowCommentaryData[i]?.id)) {
-          highlights.push({
-            class: "secondary",
-            string: rowCommentaryData[i]?.title
-              .replace(/^[^a-z\d]*|[^a-z\d]*$/gi, "")
-              .replace(/[^a-z]+/gi, "([^a-z]|<[^>]*>)+?"),
-          });
-        }
-      }
-    }
+    };
+    pushMatches(narrationController.supplement.image);
+    pushMatches(narrationController.supplement.commentary);
 
     if (commentHighlights) {
-      for (let i in commentHighlights) {
-        highlights.push({ class: "commented", string: commentHighlights[i] });
+      for (const h of commentHighlights) {
+        highlights.push({ class: "commented", string: h });
       }
     }
 
