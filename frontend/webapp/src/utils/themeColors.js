@@ -21,7 +21,7 @@ export const chartTheme = () =>
         legend: { itemStyle: { color: "#dddddd" }, itemHoverStyle: { color: "#ffffff" } },
         xAxis: { labels: { style: { color: "#aaaaaa" } }, lineColor: "#555555", tickColor: "#555555", gridLineColor: "#333333" },
         yAxis: { labels: { style: { color: "#aaaaaa" } }, lineColor: "#555555", tickColor: "#555555", gridLineColor: "#333333" },
-        tooltip: { backgroundColor: "#333333", style: { color: "#ffffff" } },
+        tooltip: { backgroundColor: "#333333", borderColor: "#555555", style: { color: "#ffffff" } },
       }
     : {
         chart: { backgroundColor: "#FFFFFF" },
