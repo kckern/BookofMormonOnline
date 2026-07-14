@@ -6,6 +6,26 @@ import { history } from "src/models/routeHistory";
 import { useNarration } from "src/contexts/NarrationContext";
 import { useTextContent } from "src/contexts/TextContentContext";
 
+// Study-mode 💬 badge inputs shared by both bubble kinds.
+function countStudyComments({ counts, num, ids, type, studyModeOn }) {
+  if (!studyModeOn || !counts || !num || !counts[num]?.[type] || !ids)
+    return { count: 0, idsWith: [] };
+  const idsWith = counts[num][type];
+  return {
+    count: ids.map((i) => parseInt(i)).filter((i) => idsWith.includes(i)).length,
+    idsWith,
+  };
+}
+
+function useFadeIn(delayMs = 500) {
+  const [fadeClass, setFadeClass] = useState("");
+  useEffect(() => {
+    const t = setTimeout(() => setFadeClass(" fadedIn"), delayMs);
+    return () => clearTimeout(t);
+  }, [delayMs]);
+  return fadeClass;
+}
+
 export function CommentaryBubbles() {
   const textContentController = useTextContent();
   if(!textContentController.pageController.appController.states.preferences.commentary.on) return null;
@@ -33,30 +53,17 @@ function CommentaryBubble({
 }) {
   const textContentController = useTextContent();
   const narrationController = useNarration();
-  let counts = narrationController.pageController.pageCommentCounts;
-  let num = textContentController.data.slug.replace(/\D+/, "");
-  let studycommentcount = 0;
-  let coms_with_comments = [];
-  if (
-    counts &&
-    num &&
-    counts[num] &&
-    item.ids &&
-    counts[num].com &&
-    narrationController.appController.states.studyGroup.studyModeOn
-  ) {
-    coms_with_comments = counts[num].com;
-    studycommentcount = item.ids
-      .map((i) => parseInt(i))
-      .filter((i) => coms_with_comments.includes(i)).length;
-  }
-
-  const [fadeClass, makeFadeIn] = useState("");
+  const { count: studycommentcount, idsWith: coms_with_comments } =
+    countStudyComments({
+      counts: narrationController.pageController.pageCommentCounts,
+      num: textContentController.data.slug.replace(/\D+/, ""),
+      ids: item.ids,
+      type: "com",
+      studyModeOn:
+        narrationController.appController.states.studyGroup.studyModeOn,
+    });
+  const fadeClass = useFadeIn();
   const [isHover, setHover] = useState(false);
-
-  useEffect(() => {
-    setTimeout(() => makeFadeIn(" fadedIn"), 500);
-  });
 
   const handleMouserEnter = () => {
     setHover(true);
@@ -177,31 +184,20 @@ export function ImageBubbles() {
 function ImageBubble({ item }) {
   const textContentController = useTextContent();
   const narrationController = useNarration();
-  let counts = narrationController.pageController.pageCommentCounts;
-  let num = textContentController.data.slug.replace(/\D+/, "");
-  let studycommentcount = 0;
-  if (
-    counts &&
-    num &&
-    counts[num] &&
-    item.ids &&
-    counts[num].img &&
-    narrationController.appController.states.studyGroup.studyModeOn
-  ) {
-    let imgs_with_comments = counts[num].img;
-    studycommentcount = item.ids
-      .map((i) => parseInt(i))
-      .filter((i) => imgs_with_comments.includes(i)).length;
-  }
-
-  const [fadeClass, makeFadeIn] = useState("");
+  const { count: studycommentcount } = countStudyComments({
+    counts: narrationController.pageController.pageCommentCounts,
+    num: textContentController.data.slug.replace(/\D+/, ""),
+    ids: item.ids,
+    type: "img",
+    studyModeOn:
+      narrationController.appController.states.studyGroup.studyModeOn,
+  });
+  const fadeClass = useFadeIn();
   const [cycleIndex, setCycleIndex] = useState(0);
   const [autoCyle, setAutoCyle] = useState(true);
   let cycleTimer = useRef(null);
 
   useEffect(() => {
-
-    if (fadeClass !== " fadedIn") setTimeout(() => makeFadeIn(" fadedIn"), 500);
     const req = narrationController.pageController.appController.states.imageActivationRequest;
     const urlOpenImageId = req?.imageId;
     if (
@@ -217,7 +213,6 @@ function ImageBubble({ item }) {
       narrationController.pageController.appController.functions.requestImageActivation(null);
     }
   }, [
-    fadeClass,
     item.ids,
     narrationController.functions,
     narrationController.pageController.appController.states.imageActivationRequest,
