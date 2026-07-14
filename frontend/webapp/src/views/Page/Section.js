@@ -12,6 +12,7 @@ import theater from "../_Common/svg/theater.svg";
 import { Link } from "react-router-dom/cjs/react-router-dom.min";
 import { label } from "../../models/Utils";
 import ReactTooltip from "react-tooltip";
+import { tooltipTheme } from "src/utils/themeColors";
 
 function Section({ sectionData, pageController, setPageSlug }) {
   let preConnection = null;
@@ -49,7 +50,8 @@ function Section({ sectionData, pageController, setPageSlug }) {
 		<ReactTooltip
 			effect="solid"
       place="left"
-			backgroundColor="#666"
+			backgroundColor={tooltipTheme().backgroundColor}
+			textColor={tooltipTheme().textColor}
 			id="page-info-tooltip"
 		/>
 	</>

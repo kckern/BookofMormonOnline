@@ -1,6 +1,7 @@
 import React from "react";
 import Parser from "html-react-parser";
 import ReactTooltip from "react-tooltip";
+import { tooltipTheme } from "src/utils/themeColors";
 import { Link } from "react-router-dom";
 import { detectScriptures } from "scripture-guide";
 import { assetUrl } from "src/models/BoMOnlineAPI";
@@ -94,8 +95,9 @@ export const renderPersonPlaceHTML = (html, pageController, scriptureLinkClickHa
                   id={t.slug}
                   key={`tt-${t.slug}-${index}`}
                   effect="solid"
-                  backgroundColor={"#666"}
-                  arrowColor={"#666"}
+                  backgroundColor={tooltipTheme().backgroundColor}
+                  arrowColor={tooltipTheme().backgroundColor}
+                  textColor={tooltipTheme().textColor}
                 >
                   <NarrationToolTip
                     id={t.slug}
