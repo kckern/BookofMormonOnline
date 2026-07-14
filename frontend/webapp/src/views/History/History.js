@@ -27,9 +27,11 @@ import Parser from "html-react-parser";
 import moment from 'moment';
 import ReactMarkdown from "react-markdown";
 import { history } from 'src/models/routeHistory';
+import { useAppController } from "src/contexts/AppControllerContext";
 
 
-function History({ appController }) {
+function History() {
+  const appController = useAppController();
 
 
   useEffect(()=>document.title = label("menu_history") + " | " + label("home_title"),[])

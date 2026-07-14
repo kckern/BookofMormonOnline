@@ -35,9 +35,11 @@ import grey from "./svg/grey.svg";
 import orange from "./svg/orange.svg";
 import red from "./svg/red.svg";
 import { SearchPopUp } from "../_Common/SearchPopUp";
+import { useAppController } from "src/contexts/AppControllerContext";
 
 
-function PeopleComponent({ appController }) {
+function PeopleComponent() {
+  const appController = useAppController();
 
   useEffect(() => document.title = label("menu_people") + " | " + label("home_title"), [])
   const [peopleList, setPersonList] = useState(null);
@@ -141,7 +143,7 @@ function PeopleComponent({ appController }) {
     <div className="container noselect" style={{ display: 'block' }}>
       <div id="page" >
         <h3 className="title lg-4 text-center">{label("title_people")}</h3>
-        <PeopleFilters setFilter={setFilter} peopleFilters={peopleFilters}  appController={appController}/>
+        <PeopleFilters setFilter={setFilter} peopleFilters={peopleFilters} />
         <div className="peopleList">
           <Masonry
             breakpointCols={breakpointColumnsObj}
@@ -177,7 +179,8 @@ function PeopleComponent({ appController }) {
 
 
 
-export function PeopleFilters({ appController, setFilter, peopleFilters }) {
+export function PeopleFilters({ setFilter, peopleFilters }) {
+  const appController = useAppController();
 
   const [isOpen,setIsOpen] = useState(false);
   const [initSearchString,setInitSearchString] = useState('')

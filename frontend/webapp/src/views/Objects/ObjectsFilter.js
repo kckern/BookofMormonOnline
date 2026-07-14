@@ -6,8 +6,10 @@ import BootstrapSwitchButton from "bootstrap-switch-button-react";
 import { isMobile, label } from "src/models/Utils";
 import { SearchPopUp } from "../_Common/SearchPopUp";
 import { filterAxes } from "./objectsFilterData";
+import { useAppController } from "src/contexts/AppControllerContext";
 
-export function ObjectsFilter({ appController, objectFilters, setFilter, objectList }) {
+export function ObjectsFilter({ objectFilters, setFilter, objectList }) {
+  const appController = useAppController();
   const [isOpen, setIsOpen] = useState(false);
   const [initSearchString, setInitSearchString] = useState("");
 

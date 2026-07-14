@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { assetUrl } from '../../../models/BoMOnlineAPI';
 import { slugify, getEnglishReference, verseIdToSlug } from '../../../utils/scriptureUtils';
 import { label } from '../../../models/Utils';
+import { useAppController } from "src/contexts/AppControllerContext";
 import PassageNotes from '../PassageNotes';
 
 // Feature flag: PassageNotes panels are still under perf/design work.
@@ -38,7 +39,6 @@ export const ChapterContent = memo(({
     hoveredVerse,
     setHoveredVerse,
     activeChapterRef,
-    appController,
     DEBUG_SKELETON,
     passageNotesData,
     passageNotesLoading,
@@ -74,7 +74,6 @@ export const ChapterContent = memo(({
                                 hoveredVerse={hoveredVerse}
                                 setHoveredVerse={setHoveredVerse}
                                 activeChapterRef={activeChapterRef}
-                                appController={appController}
                             />
                         ))}
                         {PASSAGE_NOTES_ENABLED && (
@@ -95,14 +94,14 @@ export const ChapterContent = memo(({
 /**
  * Individual scripture block component
  */
-const ScriptureBlock = memo(({ 
-    block, 
-    highlightedVerses, 
-    hoveredVerse, 
-    setHoveredVerse, 
-    activeChapterRef, 
-    appController 
+const ScriptureBlock = memo(({
+    block,
+    highlightedVerses,
+    hoveredVerse,
+    setHoveredVerse,
+    activeChapterRef
 }) => {
+    const appController = useAppController();
     const blockLineWordCount = block.lines.reduce((acc, line) => {
         return acc + (line.text?.split(" ").length || 0);
     }, 0);

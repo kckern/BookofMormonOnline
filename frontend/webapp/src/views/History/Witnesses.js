@@ -7,6 +7,7 @@ import { label } from '../../models/Utils';
 import BoMOnlineAPI, { assetUrl } from 'src/models/BoMOnlineAPI';
 import moment from 'moment';
 import WitnessLifeHeatmap, { matchesYearMonth } from './WitnessLifeHeatmap';
+import { useAppController } from "src/contexts/AppControllerContext";
 const data = {
     "three-witnesses": [
         { "slug": "martin-harris",      "name": "Martin Harris",      "birthday": "1783-05-18", "deathday": "1875-07-10", "excommunication": "1837-12-27", "bio": "", "principalNames": ["Martin Harris", "Three Witnesses"] },
@@ -104,7 +105,8 @@ const WitnessBreadcrumbs = ({ witness }) => {
     );
 };
 
-const SingleWitness = ({ witness, sourceSlug, appController }) => {
+const SingleWitness = ({ witness, sourceSlug }) => {
+    const appController = useAppController();
 
     const [sources, setSources] = useState(null);
     const [selectedYearMonth, setSelectedYearMonth] = useState(null);
@@ -246,7 +248,7 @@ const SingleWitness = ({ witness, sourceSlug, appController }) => {
 };
 
 
-const Witnesses = ({ appController }) => {
+const Witnesses = () => {
 
     const dateofWitness = `1829-06-28`;
 
@@ -255,7 +257,7 @@ const Witnesses = ({ appController }) => {
         const dataKeys = Object.keys(data);
         const witnessData = dataKeys.map(key => data[key].find(w => w.slug === witness)).find(w => w);
         if (!witnessData) return <div className="container"><div id="page"><Link to='/history/witnesses' className='btn btn-primary'>Back</Link><p>Witness not found.</p></div></div>;
-        return <SingleWitness witness={witnessData} sourceSlug={source} appController={appController} />;
+        return <SingleWitness witness={witnessData} sourceSlug={source} />;
     }
     return (
         <div className="container " style={{ display: 'block' }}>

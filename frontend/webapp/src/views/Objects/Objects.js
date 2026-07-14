@@ -13,6 +13,7 @@ import "../People/People.css";
 
 import { ObjectsFilter } from "./ObjectsFilter";
 import { categoryChips } from "./objectsFilterData";
+import { useAppController } from "src/contexts/AppControllerContext";
 
 // djb2-ish hash → stable seed for slug-based gradients.
 const hashSlug = (slug) => {
@@ -41,7 +42,8 @@ const objectInitials = (name) => {
   return (parts[0]?.[0] || "?").toUpperCase();
 };
 
-function ObjectsComponent({ appController }) {
+function ObjectsComponent() {
+  const appController = useAppController();
   useEffect(() => {
     document.title = label("menu_objects") + " | " + label("home_title");
   }, []);
@@ -121,7 +123,6 @@ function ObjectsComponent({ appController }) {
       <div id="page">
         <h3 className="title lg-4 text-center">{label("title_objects")}</h3>
         <ObjectsFilter
-          appController={appController}
           objectFilters={objectFilters}
           setFilter={setFilter}
           objectList={objectList}

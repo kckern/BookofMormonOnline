@@ -6,7 +6,7 @@ import { label } from 'src/models/Utils';
 import "./Names.css";
 import names from "./data.js";
 
-function Container({ appController }) {
+function Container() {
   const [nameControls, setNameControls] = useState({});
 
   useEffect(()=>document.title = "Names | " + label("home_title"),[])
@@ -22,7 +22,7 @@ function Container({ appController }) {
          <div className="alert alert-warning" role="alert" style={{textAlign: "center"}}>
          🚧 Under Construction 🚧
         </div>
-      <NameControls appController={appController} />
+      <NameControls />
       <div className="nameAnalysisList">
         {(names||[]).map((name, i) => (
           <div key={i} className="nameAnalysisItem" style={{
