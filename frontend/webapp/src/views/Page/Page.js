@@ -23,6 +23,7 @@ import { MuteButton } from "./MuteButton";
 import { usePageInit, pageScrollManager, isRefOpen } from "./usePageInit";
 import { addToPageCommentIndex, updateToPageComment, deleteToPageComments } from "./commentIndex";
 import { usePageComments } from "./usePageComments";
+import { setBaseDocTitle, pushDocTitle, popDocTitle } from "./docTitle";
 import { createScrollSpy, step } from "src/scroll";
 import { appFunctions } from "src/models/appController";
 import { useAppController } from "src/contexts/AppControllerContext";
@@ -493,7 +494,7 @@ function reducer(pageController, input) {
 
       if (pageController.appController.states.preferences.audio)
         playSound(pageController.states.activeAudio); //.play();
-      document.title = heading + " | " + label("home_title");
+      pushDocTitle("row", heading + " | " + label("home_title"));
       applySlug(pageController.appController, slug, { replace: auto === true });
       if (auto === true) pageController.states.autoClicked.delete(slug);
 
@@ -558,7 +559,7 @@ function reducer(pageController, input) {
       pageController.states.openRows.push(input.val);
       break;
     case "removeOpenRow":
-      document.title = pageController.pageData.title || label("home_title");
+      popDocTitle("row");
       applySlug(
         pageController.appController,
         pageController.states.activeSection || pageController.states.pageSlug,
@@ -576,8 +577,9 @@ function reducer(pageController, input) {
     case "setActiveSection":
       let { slug: sectionSlug, title: sectionTitle } = input.val;
       pageController.states.activeSection = sectionSlug;
-      document.title =
-        sectionTitle || pageController.pageData.title || label("home_title");
+      setBaseDocTitle(
+        sectionTitle || pageController.pageData.title || label("home_title"),
+      );
       // replace, not push: scrolling is not navigation — Back should leave
       // the page in one press. (The old `|| true` made the init guard dead.)
       applySlug(pageController.appController, sectionSlug, { replace: true });
@@ -647,7 +649,7 @@ function reducer(pageController, input) {
 
     case "setPageData":
       pageController.pageData = input.val;
-      document.title = pageController.pageData?.title || label("home_title");
+      setBaseDocTitle(pageController.pageData?.title || label("home_title"));
       break;
     case "setNotFound":
       pageController.states.notFound = input.val;
