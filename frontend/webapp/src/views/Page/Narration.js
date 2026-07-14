@@ -5,7 +5,6 @@ import Comments from "../_Common/Study/Study";
 // media Url
 import { renderPersonPlaceHTML } from "./PersonPlace";
 import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
-import Parser, { domToReact } from "html-react-parser";
 import "./Narration.css";
 import "./TextContent.css";
 import { snapSelectionToWord, chronoLabel, replaceNumbers } from "src/models/Utils";
@@ -662,41 +661,38 @@ function NotesPanel() {
   </div>
 }
 
-function SingleNoteItem({item}) {
-
+function SingleNoteItem({ item }) {
   const [activeScripture, setActiveScripture] = useState(null);
 
   const scriptureLinks = (scripture) => {
-    return `<a className="scripture_link">${scripture}</a>`
-  }
-  const parserOptions =  {
-    replace: ({ name, attribs, children }) => {
-      if (name === 'a' && attribs.classname === 'scripture_link') {
-        const ref = domToReact(children,parserOptions);
-        //replace classname with class
-        attribs.class = attribs.classname;
-        delete attribs.classname;
-        const activateRef = () => {
-          setActiveScripture(ref);
-        }
-        return <a {...attribs} onClick={activateRef}>{ref}</a>;
-      }
-    }
+    return `<a className="scripture_link">${scripture}</a>`;
   };
 
-  item.text = item.text.replace(/<\/*p.*?>/g,"");
-  return <><div key={item.id} className="noteItem">
-  <div className="noteSource"><img src={`${assetUrl}/source/cover/${item.id.substr(5,3)}`} alt="Note Source" /></div>
-    <div className="noteText">
-      <span>
-        {item.title && <><em className="focusQuote">{item.title}</em> • </>}
-        {Parser(detectReferences(item.text,scriptureLinks),parserOptions)}
-      </span>
-    </div>
-  </div>
-  <ScripturePanelSingle scriptureData={{ref:activeScripture}}/>
-  </>
-
+  const text = item.text.replace(/<\/*p.*?>/g, "");
+  return (
+    <>
+      <div key={item.id} className="noteItem">
+        <div className="noteSource">
+          <img src={`${assetUrl}/source/cover/${item.id.substr(5, 3)}`} alt="Note Source" />
+        </div>
+        <div className="noteText">
+          <span>
+            {item.title && (
+              <>
+                <em className="focusQuote">{item.title}</em> •{" "}
+              </>
+            )}
+            {renderPersonPlaceHTML(
+              detectReferences(text, scriptureLinks),
+              null,
+              (ref) => setActiveScripture(ref)
+            )}
+          </span>
+        </div>
+      </div>
+      <ScripturePanelSingle scriptureData={{ ref: activeScripture }} />
+    </>
+  );
 }
 
 function ScripturePanel() {
