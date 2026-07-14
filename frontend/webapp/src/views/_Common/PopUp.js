@@ -218,7 +218,7 @@ function Person({ appController }) {
                 <div className="related_avatar"><img src={`${assetUrl}/people/${c.slug}`} alt={c.name} /></div>
                 <div><strong>{processName(c.name)}</strong>{c.title && <div><small>{replaceNumbers(c.title)}</small></div>}</div>
               </div>
-            )) : <div style={{ padding: "2em", textAlign: "center", color: "#888" }}>{processName(activeId)}</div>}
+            )) : <div className="emptyState" style={{ padding: "2em", textAlign: "center" }}>{processName(activeId)}</div>}
           </div>
         </div>
       </div>
@@ -360,7 +360,7 @@ function Place({ appController }) {
                 <div className="related_avatar"><img src={`${assetUrl}/places/${c.slug}`} alt={c.name} /></div>
                 <div><strong>{c.name}</strong>{c.info && <div><small>{c.info}</small></div>}</div>
               </div>
-            )) : <div style={{ padding: "2em", textAlign: "center", color: "#888" }}>{activeId}</div>}
+            )) : <div className="emptyState" style={{ padding: "2em", textAlign: "center" }}>{activeId}</div>}
           </div>
         </div>
       </div>
@@ -509,7 +509,7 @@ function ObjectPopUp({ appController }) {
                 <div className="related_avatar"><img src={`${assetUrl}/objects/${c.slug}`} alt={c.name} /></div>
                 <div><strong>{processName(c.name)}</strong>{c.subtitle && <div><small>{c.subtitle}</small></div>}</div>
               </div>
-            )) : <div style={{ padding: "2em", textAlign: "center", color: "#888" }}>{processName(activeId)}</div>}
+            )) : <div className="emptyState" style={{ padding: "2em", textAlign: "center" }}>{processName(activeId)}</div>}
           </div>
         </div>
       </div>

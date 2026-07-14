@@ -46,3 +46,9 @@ html[data-theme="dark"] {
   .tagList { background: var(--surface-2); border: 1px solid var(--border); color: var(--text-secondary); }
   .tagListItem:hover { background: var(--surface-3); }
 }
+
+/* Theme-aware classes replacing former inline styles (Task 9) */
+.chatSurface { background-color: #ffffff; }
+html[data-theme="dark"] .chatSurface { background-color: var(--surface-3); }
+.emptyState { color: #888888; }
+html[data-theme="dark"] .emptyState { color: var(--text-faint); }

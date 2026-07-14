@@ -101,7 +101,7 @@ function FacsimileViewer({ item, volumeOrder, currentVolumeIndex }) {
         <Link id="fax_back" to={displayLeaf ? `/fax/${item.slug}` : "/fax"} aria-label="Back to facsimiles">
           <img src={backIcon} alt="Back" style={{ width: 20, height: 20 }} />
         </Link>
-        <span style={{ flexGrow: 1, color: "black" }}>{title}</span>
+        <span style={{ flexGrow: 1 }}>{title}</span>
       </h1>
       {isGridMode ?
         <FacsimileGridViewer item={item} leafIndex={leafIndex} /> :

@@ -283,9 +283,7 @@ export function StudyGroupChatInput({ appController, channel }) {
           theme="snow"
           modules={modules}
           formats={formats}
-          style={{
-            backgroundColor: "white",
-          }}
+          className="chatSurface"
         />
         {appController.states.editor.isEditorOpen && showTagList && (
           <TagList
@@ -1773,9 +1771,7 @@ function Message({
         theme="snow"
         modules={modules}
         formats={formats}
-        style={{
-          backgroundColor: "white",
-        }}
+        className="chatSurface"
       />
       {showTagList && (
         <TagList
