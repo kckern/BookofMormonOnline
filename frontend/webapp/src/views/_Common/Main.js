@@ -18,6 +18,7 @@ import "src/views/_Common/ScripturePanel.css";
 import Loader from "src/views/_Common/Loader";
 import { appControllerReducer, appInit } from "src/models/appController";
 import { MessengerProvider } from "src/contexts/MessengerContext";
+import { AppControllerProvider } from "src/contexts/AppControllerContext";
 import nowifi from "./svg/no-wifi.svg";
 //
 import "./BottomNav.css";
@@ -136,6 +137,7 @@ function Main(props) {
   const isDarkMode = !!appController.states.preferences.darkMode;
 
   return (
+    <AppControllerProvider appController={appController}>
     <MessengerProvider appController={appController}>
       <div className={"body"+(lang ? " "+lang: "") + (isDev ? " dev" : "") + (isDarkMode ? " dark" : "")}>
         {debug}
@@ -182,6 +184,7 @@ function Main(props) {
         </main>
       </div>
     </MessengerProvider>
+    </AppControllerProvider>
   );
 }
 
