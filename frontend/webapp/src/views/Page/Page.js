@@ -553,10 +553,6 @@ function reducer(pageController, input) {
         }, parseInt(duration) * 900);
       });
 
-      if (pageController.states.init) {
-        applySlug(pageController.appController, slug, { replace: auto === true });
-        if (auto === true) pageController.states.autoClicked.delete(slug);
-      }
       break;
     case "addOpenRow":
       pageController.states.openRows.push(input.val);
