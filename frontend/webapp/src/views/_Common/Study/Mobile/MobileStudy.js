@@ -8,8 +8,10 @@ import groupicon from "src/views/User/svg/group.svg";
 import { history } from "src/models/routeHistory";
 import { useParams, useHistory, useRouteMatch, Link } from "react-router-dom";
 import { useAppController } from "src/contexts/AppControllerContext";
+import { useMessenger } from "src/contexts/MessengerContext";
 export default function MobileStudy() {
     const appController = useAppController();
+    const messenger = useMessenger();
 
     const match = useRouteMatch();
     const params = match.params;
@@ -41,7 +43,7 @@ export default function MobileStudy() {
             const id = parseInt(params.messageId);
             const prevResultSize = 1;
             console.log({ group, id, prevResultSize })
-            appController.sendbird.loadPreviousMessages( { group, id, prevResultSize }).then(r=>{
+            messenger.loadPreviousMessages( { group, id, prevResultSize }).then(r=>{
                 appController.functions.setPopUp({
                     type: `group/${params.channelId}`,
                     ids: [`${params.messageId}`],

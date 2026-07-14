@@ -38,6 +38,7 @@ import dmicon from "src/views/User/svg/chat.svg"
 import moment from "moment"
 import { Button } from "reactstrap"
 import { useAppController } from "src/contexts/AppControllerContext"
+import { useMessenger } from "src/contexts/MessengerContext"
 
 export function StudyHall() {
   const appController = useAppController()
@@ -114,6 +115,7 @@ function StudyGroupSideBar({
   activePanel,
 }) {
   const appController = useAppController()
+  const messenger = useMessenger()
 	const [users,setUsers] = useState([]);
   const tooltip_id = "SideBar" + studyGroup.url
 
@@ -136,7 +138,7 @@ function StudyGroupSideBar({
 				const queryParams = {
 					userIdsFilter:[...activeGroupMembers.filter(member=>member.userId !== mainUser.social.user_id).map(user=>user.userId)]
 				}
-				const query = appController.sendbird.sb.createApplicationUserListQuery(queryParams);
+				const query = messenger.sb.createApplicationUserListQuery(queryParams);
 
 				const queryUsers = await query.next();
 
@@ -264,6 +266,7 @@ export function StudyGroupMainPanel({ activePanel, setPanel }) {
 
 export function StudyGroupChatPanel({ channel, setPanel }) {
   const appController = useAppController()
+  const messenger = useMessenger()
   const params = useParams()
   const [chatLinkedContent, setChatLinkedContent] = useState({})
   const [loader, setLoader] = useState(false)
@@ -272,8 +275,8 @@ export function StudyGroupChatPanel({ channel, setPanel }) {
 
   useEffect(() => {
     if (channel.lastMessage?.parentMessageId && !params.messageId) {
-      appController.sendbird
-        ?.loadPreviousMessages({
+      messenger
+        .loadPreviousMessages({
           group: channel,
           id: channel.lastMessage?.parentMessageId,
           prevResultSize: 1,
@@ -317,7 +320,7 @@ export function StudyGroupChatPanel({ channel, setPanel }) {
               channel.members
                 .filter(
                   (u) =>
-                    u.userId !== appController.sendbird.sb?.currentUser?.userId,
+                    u.userId !== messenger.sb?.currentUser?.userId,
                 )
                 .map((u) => u.nickname)
                 .join(", "),

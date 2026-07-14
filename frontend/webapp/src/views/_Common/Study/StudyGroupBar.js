@@ -53,6 +53,7 @@ import { history } from "src/models/routeHistory";
 import { Switch } from "react-router-dom/cjs/react-router-dom.min";
 import BoMOnlineAPI from "../../../models/BoMOnlineAPI";
 import { useAppController } from "src/contexts/AppControllerContext";
+import { useMessenger } from "src/contexts/MessengerContext";
 momentDurationFormatSetup(moment);
 
 toast.configure({
@@ -168,6 +169,7 @@ export function getFreshUsers(appController,queryUsers) {
 
 function StudyGroupStatus() {
   const appController = useAppController();
+  const messenger = useMessenger();
 
   let playSounds = appController.states.preferences.sound;
 
@@ -203,7 +205,7 @@ useEffect(()=>{
 			userIdsFilter:[...activeGroupMembers.filter(member=>member.userId !== mainUser.social.user_id).map(user=>user.userId)]
 		}
     let allUsers = [];
-    let query = appController.sendbird.sb.createApplicationUserListQuery(queryParams);
+    let query = messenger.sb.createApplicationUserListQuery(queryParams);
 
     while(query.hasNext) {
         let queryUsers = await query.next();
@@ -518,6 +520,7 @@ export function getClassesFromUserObj(userObject, appController) {
 
 export function StudyGroupUserCircle({ userObject, isBot }) {
   const appController = useAppController();
+  const messenger = useMessenger();
 	const [unreadMessageCount,setUnreadMessageCount] = useState(0);
   let classes = getClassesFromUserObj(userObject, appController);
   const isTyping = classes.includes("isTyping");
@@ -552,7 +555,7 @@ export function StudyGroupUserCircle({ userObject, isBot }) {
 				customTypesFilter:["DM"],
 				nicknameContainsFilter:userObject.nickname
 			}
-			const query = await appController.sendbird.sb.groupChannel.createMyGroupChannelListQuery(groupParams);
+			const query = await messenger.sb.groupChannel.createMyGroupChannelListQuery(groupParams);
 
 			const channels = await query.next();
 			// Guard against setState after unmount — the awaited query can resolve late.
@@ -568,7 +571,7 @@ export function StudyGroupUserCircle({ userObject, isBot }) {
 			window.removeEventListener('unreadMessageCountChanged',getMessages);
 		};
 
-	},[appController.sendbird.sb.groupChannel])
+	},[messenger.sb.groupChannel])
 	
   return (
     <React.Fragment key={userObject.userId}>
@@ -1117,10 +1120,11 @@ export function UnreadDMCount({ userId, count }) {
 
 function StudyGroupDrawer({ isOpen }) {
   const appController = useAppController();
+  const messenger = useMessenger();
   useEffect(() => {
     appController.functions?.clearMessageFromQueue();
-    appController.sendbird
-      ?.loadUnreadDMs()
+    messenger
+      .loadUnreadDMs()
       .then((unreadCounts) =>
         appController.functions.setUnreadDMs(unreadCounts),
       );
