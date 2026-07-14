@@ -11,6 +11,7 @@ import { getCache, setCache } from "./Cache";
 import {Spinner} from "../views/_Common/Loader";
 import { ScripturePanelSingle } from "../views/Page/Narration";
 import { makeScriptureLinkReplacer } from "../views/_Common/scriptureLinkReplacer";
+import { ScriptureRefGrid } from "../views/_Common/ScriptureRefGrid";
 import { detectReferences, lookupReference, generateReference } from 'scripture-guide';
 import { generateAvatarUrl } from "src/components/UserAvatar";
 import { useAppController } from "src/contexts/AppControllerContext";
@@ -685,10 +686,13 @@ function ScripturesContainer({ scriptures, setActiveRef, activeRef }) {
   scriptures = scriptures.map(scripture => lookupReference(scripture, lang).verse_ids).map(verse_ids => generateReference(verse_ids, lang));
   scriptures = [...new Set(scriptures)];
   return <div className="scriptureContainerWrapper">
-    {(scriptures.length > 1) && <div className="scripturePanel">
-      {scriptures.map((scripture, i) =>
-      <div key={i} className={"scriptureItem" + (activeRef === i ? " active" : "")} onClick={() => setActiveRef(i)}>{scripture}</div>)}
-    </div>}
+    {scriptures.length > 1 && (
+      <ScriptureRefGrid
+        items={scriptures}
+        activeIndex={activeRef}
+        onSelect={setActiveRef}
+      />
+    )}
     <ScripturePanelSingle scriptureData={{ref:scriptures[activeRef]}}/>
   </div>
 }

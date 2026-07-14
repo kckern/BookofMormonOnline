@@ -21,6 +21,7 @@ import { NarrationProvider, useNarration } from "src/contexts/NarrationContext";
 import { extractTagIds } from "./tagIds";
 import { titleToHighlightPattern } from "./highlightPattern";
 import { pushDocTitle, popDocTitle } from "./docTitle";
+import { ScriptureRefGrid } from "../_Common/ScriptureRefGrid";
 
 function ChronoRow({ chrono }) {
   chrono = chronoLabel(chrono);
@@ -775,15 +776,13 @@ function ScripturePanel() {
   <h5 className="noselect">{label("related_scriptures")}
     <span onClick={closePanel}> × </span>
   </h5>
-    <div className="scripturePanel noselect">
-      {textRefs.map(({ref},i)=> {
-        return <div key={ref + "_" + i} className={"scriptureItem" + (activeRef===i?" active":"")} onClick={()=>setActiveRef(i)}>
-          <div className="ref">{ref}</div>
-          <div>
-        </div>
-        </div>
-      })}
-    </div>
+    <ScriptureRefGrid
+      items={textRefs.map(({ ref }) => ref)}
+      activeIndex={activeRef}
+      onSelect={setActiveRef}
+      className="noselect"
+      renderItemContent={(ref) => <div className="ref">{ref}</div>}
+    />
     <ScripturePanelSingle  scriptureData={textRefs[activeRef]}/>
   </div>
 }
