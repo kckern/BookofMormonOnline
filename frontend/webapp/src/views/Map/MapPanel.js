@@ -31,6 +31,7 @@ import { ScripturePanelSingle } from "../Page/Narration";
 import { getHtmlScriptureLinkParserOptions } from "../_Common/ViewUtils";
 import RangeSlider from "./RangeSlider";
 import { computeRuns, colorForRun, buildPanelItems } from './colors';
+import { useMapController } from "src/contexts/MapContext";
 
 const metersToMiles = (meters) => Math.round(meters * 0.000621371192 * 1) / 1;
 
@@ -41,7 +42,8 @@ export function getPlaceInfo(slug, appController) {
     return key ? appController.preLoad.placeList[key] : {};
   }
 
-export function MapPanel({mapController}) {
+export function MapPanel() {
+  const mapController = useMapController();
   const [activeTab, setActiveTab] = useState("1");
   const [scripture, setScripture] = useState(null);
   const parserOptions = getHtmlScriptureLinkParserOptions(setScripture);
@@ -228,7 +230,7 @@ useEffect(()=>{
 },[currentMap?.slug])
 
 
-if(selectedStory) return <MapStoryPanel mapController={mapController}  />
+if(selectedStory) return <MapStoryPanel  />
 
 
 const zoomRange = currentMap?.maxzoom - currentMap?.minzoom;
@@ -454,8 +456,9 @@ if(isMobile()) return null;
 }
 
 
-function MapStoryPanel({mapController})
+function MapStoryPanel()
 {
+    const mapController = useMapController();
     const {selectedStory, moveSeq, currentMap, panelContents} = mapController;
     const [scripture, setScripture] = useState(null);
 	  const parserOptions = getHtmlScriptureLinkParserOptions(setScripture);

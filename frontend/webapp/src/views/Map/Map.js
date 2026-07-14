@@ -15,6 +15,7 @@ import {MapPanel,getPlaceInfo} from "./MapPanel.js"
 import {  assetUrl } from "../../models/BoMOnlineAPI"
 import { SearchPopUp } from "../_Common/SearchPopUp.js"
 import { useAppController } from "src/contexts/AppControllerContext";
+import { MapProvider, useMapController } from "src/contexts/MapContext";
 function MapContainer() {
 
   const appController = useAppController();
@@ -158,13 +159,13 @@ function MapContainer() {
 }
 
 
-  return (  <>
+  return (  <MapProvider mapController={mapController}>
       <div className={`mappanel_wrapper ${!!panelContents.slug ? "open" : ""}`}>
-        <MapTypes getMap={getMap} mapName={mapName} mapController={mapController} />
-        <MapPanel mapController={mapController}   />
-        <MapToolTip {...mapController} />
+        <MapTypes getMap={getMap} mapName={mapName} />
+        <MapPanel   />
+        <MapToolTip />
         {placeList && currentMap?.places ? <>
-          <MapContents  mapController={mapController}  />
+          <MapContents />
           <SearchPopUp
           placeholder="search_for_a_place"
           preLoadData={placeList}
@@ -177,12 +178,14 @@ function MapContainer() {
           </>   : <Loader />  }
 
       </div>
-    </>
+    </MapProvider>
   )
 }
 
 
-function MapToolTip({ tooltip, appController, panelContents }) {
+function MapToolTip() {
+  const mapController = useMapController();
+  const { tooltip, appController, panelContents } = mapController;
   const { x, y, w,h, slug, moving } = tooltip;
   if(!slug || moving) return null;
   const placeInfo = getPlaceInfo(slug, appController);
