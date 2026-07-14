@@ -53,7 +53,7 @@ export default function Group({ isReady }) {
 
 
       if(isMobile()) return <MobileStudy/>
-      return <Home appController={appController}/>
+      return <Home/>
 
 
 }

@@ -862,7 +862,6 @@ function NewStudyGroup() {
                 imgUrl={groupImage.img}
                 setOpenModal={setOpenModal}
                 openModal={openModal}
-                appController={appController}
                 isGroup={true}
                 setProfileImage={setGroupImage}
               />
