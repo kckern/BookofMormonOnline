@@ -1,0 +1,54 @@
+// Semantic theme tokens. Dark overrides must use these vars, never raw hex.
+:root {
+  --surface-0: #ffffff;   // page background
+  --surface-1: #f8f8f8;   // raised card
+  --surface-2: #f0f0f0;   // panel / header strip
+  --surface-3: #e4e4e4;   // inset / well
+  --surface-4: #dddddd;   // control resting bg
+  --control: #eeeeee;     // buttons, chips
+  --control-hover: #dddddd;
+  --text-primary: #212529;
+  --text-secondary: #444444;
+  --text-muted: #777777;
+  --text-faint: #999999;
+  --border: #dddddd;
+  --border-strong: #bbbbbb;
+  --link: #345496;
+  --link-hover: #1a3a7a;
+  --accent-green: #5cb85c;
+  --accent-green-soft: #7cb87c;
+  --accent-amber: #f0ad4e;
+  --accent-red: #d9534f;
+  --highlight: #fff3b0;   // text highlight / selection wash
+  --overlay: rgba(0, 0, 0, 0.5);
+  --shadow: rgba(0, 0, 0, 0.15);
+  --slider-fill: #3f51b5;
+  --slider-rail: #d3d3d3;
+}
+
+html[data-theme="dark"] {
+  --surface-0: #1a1a1a;
+  --surface-1: #222222;
+  --surface-2: #2a2a2a;
+  --surface-3: #333333;
+  --surface-4: #444444;
+  --control: #555555;
+  --control-hover: #666666;
+  --text-primary: #ffffff;
+  --text-secondary: #dddddd;
+  --text-muted: #aaaaaa;
+  --text-faint: #888888;
+  --border: #555555;
+  --border-strong: #666666;
+  --link: #a8c7fa;
+  --link-hover: #ffffff;
+  --accent-green: #5cb85c;
+  --accent-green-soft: #7cb87c;
+  --accent-amber: #f0ad4e;
+  --accent-red: #d9534f;
+  --highlight: #55502a;
+  --overlay: rgba(0, 0, 0, 0.65);
+  --shadow: rgba(0, 0, 0, 0.4);
+  --slider-fill: #7986cb;
+  --slider-rail: #444444;
+}

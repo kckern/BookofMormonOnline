@@ -13,6 +13,7 @@ import { useAppController } from "src/contexts/AppControllerContext";
 import { useMessenger } from "src/contexts/MessengerContext";
 
 import ReactTooltip from "react-tooltip";
+import { tooltipTheme, isDarkTheme } from "src/utils/themeColors";
 import "./StudyGroupFeed.css";
 import "./Home.css";
 import "./Home.m.css";
@@ -161,16 +162,17 @@ function GroupBrowser({ activeGroup, setActiveGroup }) {
         id="button-tip"
         place="left"
         effect="solid"
-        backgroundColor={"#666"}
-        arrowColor={"#666"}
+        backgroundColor={tooltipTheme().backgroundColor}
+        arrowColor={tooltipTheme().backgroundColor}
+        textColor={tooltipTheme().textColor}
       />
       <ReactTooltip
         id="card-tip"
         place="right"
         effect="solid"
         className="card-tip"
-        backgroundColor={"#EEE"}
-        arrowColor={"#666"}
+        backgroundColor={isDarkTheme() ? "#444444" : "#EEEEEE"}
+        arrowColor={isDarkTheme() ? "#444444" : "#666666"}
         html
       />
       <CardBody>

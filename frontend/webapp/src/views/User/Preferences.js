@@ -225,7 +225,7 @@ export default function User() {
                             onText={label("on")}
                             offText={label("off")}
                             onChange={toggleDarkMode}
-                            value={appController.states.preferences.dark_mode}
+                            value={appController.states.preferences.darkMode}
                             onColor="default"
                             offColor="default"
                         />
