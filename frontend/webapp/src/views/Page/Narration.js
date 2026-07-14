@@ -721,7 +721,7 @@ function ScripturePanel() {
   useEffect(() => {
 
     //on activeRef change update the url via react router
-    if(activeRef === null) return false;
+    if (activeRef === null || !refs?.length) return undefined;
     const {ref} = textRefs[activeRef] || {ref:null};
     //slugify lowercast
     const slugRef = ref.replace(/[\s:]+/g,".").toLowerCase();
@@ -775,7 +775,7 @@ function ScripturePanel() {
     };
 
 
-  }, [activeRef]); // Re-run the effect when activeRef changes
+  }, [activeRef, refs]); // Re-run the effect when activeRef or refs changes
 
   if(!refs?.length) return null;
   return <div className="scripturePanelWrapper">
