@@ -45,6 +45,7 @@ import slv from "./svg/flags/slv.svg";
 import tr from "./svg/flags/tr.svg";
 import { menuConfig } from "./menuConfig";
 import { isMobile } from "../../models/Utils";
+import { useAppController } from "src/contexts/AppControllerContext";
 
 
 // Icon mapping for menu items
@@ -135,8 +136,9 @@ export function loadMenu(){
 
 }
 
-function SearchBox({appController,setActivePath}) {
+function SearchBox({setActivePath}) {
 
+  const appController = useAppController();
   const history = useHistory();
 
   const handleKeyDown = (e) => {
@@ -160,6 +162,7 @@ function SearchBox({appController,setActivePath}) {
 }
 
 function Sidebar(props) {
+  const appController = useAppController();
   const match = useRouteMatch();
 
   const menu = loadMenu();
@@ -190,23 +193,22 @@ function Sidebar(props) {
       data-color={props.bgColor}
       data-active-color={props.activeColor}
       onClick={(e) => {
-        props.appController.states?.studyGroup.isDrawerOpen &&
-          props.appController.functions.openDrawer(false);
-        props.appController.states?.notification.isNotificationOpen &&
-          props.appController.functions.openNotification(false);
-        props.appController.states?.studyGroup.isGroupListOpen &&
-          props.appController.functions.openGroupList(false);
+        appController.states?.studyGroup.isDrawerOpen &&
+          appController.functions.openDrawer(false);
+        appController.states?.notification.isNotificationOpen &&
+          appController.functions.openNotification(false);
+        appController.states?.studyGroup.isGroupListOpen &&
+          appController.functions.openGroupList(false);
       }}
     >
 
       <div className="sidebar-wrapper">
         <UserInfo
-          appController={props.appController}
           setActivePath={setActivePath}
           activePath={activePath}
         />
         <Nav className="sidebar-menu">
-          <SearchBox appController={props.appController} setActivePath={setActivePath} />
+          <SearchBox setActivePath={setActivePath} />
           {menu.map((r,index) => {
             let isActive = activePath.match(new RegExp("^/" + r.slug));
             let activeClass = isActive ? "active" : "";
@@ -217,8 +219,8 @@ function Sidebar(props) {
                   to={"/" + r.slug}
                   activeClassName=""
                   onClick={() => {
-                    props.appController.activeLeafCursorController?.states?.activeAudio?.pause();
-                    props.appController.functions.closePopUp(); 
+                    appController.activeLeafCursorController?.states?.activeAudio?.pause();
+                    appController.functions.closePopUp();
                     setActivePath("/" + r.slug)}}
                 >
                   <span className="sidebar-normal">{r.jsx} {betaBadge}</span>
@@ -338,8 +340,9 @@ function LanguageSelect() {
 
 export default Sidebar;
 
-function UserInfo({ appController, setActivePath, activePath }) {
+function UserInfo({ setActivePath, activePath }) {
 
+  const appController = useAppController();
   let tokenImg = tokenImage();
   let loadingImg = `${assetUrl}/interface/gif/circleload`;
 

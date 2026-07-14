@@ -5,10 +5,12 @@ import { useParams, useHistory, useRouteMatch, Link } from "react-router-dom";
 import { isMobile } from "src/models/Utils";
 import Home from "../Home/Home";
 import MobileStudy from "./Study/Mobile/MobileStudy";
+import { useAppController } from "src/contexts/AppControllerContext";
 
 
-export default function Group({ appController, isReady }) {
+export default function Group({ isReady }) {
 
+    const appController = useAppController();
     const match = useRouteMatch();
     const params = match.params;
     const base = match.url.split("/")[1];
@@ -50,7 +52,7 @@ export default function Group({ appController, isReady }) {
 
 
 
-      if(isMobile()) return <MobileStudy appController={appController}/>
+      if(isMobile()) return <MobileStudy/>
       return <Home appController={appController}/>
 
 

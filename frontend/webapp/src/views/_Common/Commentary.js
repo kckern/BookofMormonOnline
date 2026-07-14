@@ -16,10 +16,12 @@ import { ATVHeader } from "./ATV";
 import { getHtmlScriptureLinkParserOptions } from "./ViewUtils";
 import SweetAlert from "react-bootstrap-sweetalert";
 import { Link } from "react-router-dom/cjs/react-router-dom.min";
+import { useAppController } from "src/contexts/AppControllerContext";
 //
 
-export default function Commentary({ appController }) {
+export default function Commentary() {
 
+  const appController = useAppController();
   const [PopUpRef,setPopUpRef] = useState(null)
   const [commentaryHighlights, setCommentaryHighlights] = useState([]);
   const [callingAPI, setAPICallStatus] = useState(false);
@@ -130,7 +132,6 @@ export default function Commentary({ appController }) {
     return (
       <Loading
         type="Commentary"
-        appController={appController}
         callingAPI={callingAPI}
       />
     );
@@ -415,7 +416,6 @@ export default function Commentary({ appController }) {
 
                 <div id="bodytext" onMouseUp={handleSelection}>
                   <LegalNotice
-                    appController={appController}
                     commentaryData={commentaryData}
                     showLegal={showLegal}
                   />

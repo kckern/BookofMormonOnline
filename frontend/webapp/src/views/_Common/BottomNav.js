@@ -8,11 +8,13 @@ import HomeIcon from './Icons/HomeIcon'
 import UserIcon from './Icons/UserIcon'
 import MenuIcon from './Icons/MenuIcon'
 import StudyIcon from './Icons/StudyIcon'
+import { useAppController } from "src/contexts/AppControllerContext";
 
 // Feature flag - messaging disabled until Phase 5 data migration
 const USE_MESSENGER = isMessengerEnabled();
 
-export function BottomMenu({ appController }) {
+export function BottomMenu() {
+  const appController = useAppController();
   const match = useRouteMatch()
 
   const determineSelection = () => {
