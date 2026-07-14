@@ -1,0 +1,48 @@
+html[data-theme="dark"] {
+
+  /* StudyGroupSelect.css — white dropdown list */
+  .groupList {
+    background-color: var(--surface-2); color: var(--text-secondary);
+    ul { border-bottom-color: var(--border); }
+    li:hover { background-color: var(--surface-3); }
+    h5 { color: var(--text-primary); }
+    .newgroupbutton { background-color: var(--surface-4); color: var(--text-secondary); }
+    .studymode { color: var(--text-muted); }
+  }
+  .groupListItem { border-top-color: var(--border); }
+  .groupListItem.active { background-color: rgba(107, 208, 152, 0.15); }
+  .groupListItemContent .lastMessage { color: var(--text-muted); }
+  .memberCount { background-color: var(--surface-4); color: var(--text-secondary); }
+  .groupMembers span { background-color: var(--surface-4); color: var(--text-muted); }
+  .goToStudyHall { background-color: var(--control); color: var(--text-primary); &:hover { background-color: var(--control-hover); } }
+
+  /* StudyGroupBar.scss */
+  .StudyGroupBar .StudyGroupDrawer .StudyGroupContents { background-color: var(--surface-2); }
+  .studyGroupSelect { background-color: var(--surface-3); color: var(--text-secondary); }
+  .studyGroupTickerItem .message { color: var(--text-muted); }
+  .CreateGroupInput h5 { color: var(--text-secondary); }
+  .CreateGroupInput .optional { color: var(--text-muted); }
+  .messageBox { color: var(--text-primary); }
+  .userStatus .dropdown-menu .botInfo img { background-color: var(--surface-4); }
+  .dropdown-menu .statRow div { color: var(--text-muted); }
+
+  /* Study.css */
+  .study .botComment .name > span { background-color: #2d3f4e; color: var(--text-secondary); }
+  .study .contenttext { background-color: var(--surface-3); color: var(--text-secondary); }
+  .study .mycomment textarea { color: var(--text-primary); }
+  .study .notification, .study .warning { background-color: var(--surface-3); color: var(--text-secondary); border-color: var(--border); }
+
+  /* StudyInFeed.css */
+  .itemInFeed { color: var(--text-secondary); &:hover { color: var(--text-primary); } }
+  .itemInFeed h5 { background-color: var(--surface-4); color: var(--text-primary); }
+  .itemInFeed .caption { background-color: var(--surface-4); color: var(--text-secondary); }
+  .textInFeed .scripture { background-color: var(--surface-3); color: var(--text-secondary); }
+  .sectionItems ul { border-left-color: var(--border); }
+  .highlightInFeed { background-color: var(--highlight); }
+  .contentPaceholder { background-color: var(--surface-4); }
+  .itemPlaceholder .blankWord { background-color: var(--surface-4); }
+
+  /* TagList.css:4 — white floating tag list */
+  .tagList { background: var(--surface-2); border: 1px solid var(--border); color: var(--text-secondary); }
+  .tagListItem:hover { background: var(--surface-3); }
+}
