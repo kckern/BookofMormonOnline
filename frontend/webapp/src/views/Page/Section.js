@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-// import ReactTooltip from 'react-tooltip';
 // MEDIA URL
 // CHILD
 import Narration from "./Narration";
@@ -11,10 +10,8 @@ import { addHighlightTagSelectively } from "./TextContent";
 import theater from "../_Common/svg/theater.svg";
 import { Link } from "react-router-dom/cjs/react-router-dom.min";
 import { label } from "../../models/Utils";
-import ReactTooltip from "react-tooltip";
-import { tooltipTheme } from "src/utils/themeColors";
 
-function Section({ sectionData, setPageSlug }) {
+function Section({ sectionData, sectionIndex }) {
   let preConnection = null;
   if (sectionData.rows[0].weight < 0) {
     preConnection = (
@@ -42,25 +39,17 @@ function Section({ sectionData, setPageSlug }) {
   };
   const slugTip = sectionData.slug.split("/").pop();
 
-	const theaterLink = <>
+	const theaterLink = (
 		<Link to={`/theater/${slugTip}`} className="theater-link" data-tip={label("view_in_theater")} data-for="page-info-tooltip">
     	<img src={theater} alt="theater" />
   	</Link>
-		<ReactTooltip
-			effect="solid"
-      place="left"
-			backgroundColor={tooltipTheme().backgroundColor}
-			textColor={tooltipTheme().textColor}
-			id="page-info-tooltip"
-		/>
-	</>
+	);
   return (
     <>
       {preConnection}
       <div
         className="pagesection card"
         id={sectionData.slug}
-        key={sectionData.sectionIndex}
         titletext={sectionData.title}
       >
         <div className="card-header" style={{ margin: 0 }}>
@@ -74,7 +63,7 @@ function Section({ sectionData, setPageSlug }) {
             if (rowData.type === "N") {
               return (
                 <Narration
-                  key={`row-n-${sectionData.sectionIndex}-${rowIndex}`}
+                  key={`row-n-${sectionIndex}-${rowIndex}`}
                   rowData={rowData}
                   addHighlight={addHighlight}
                 />
@@ -82,20 +71,19 @@ function Section({ sectionData, setPageSlug }) {
             } else if (rowData.type === "O") {
               return (
                 <PageLink
-                  key={`row-o-${sectionData.sectionIndex}-${rowIndex}`}
+                  key={`row-o-${sectionIndex}-${rowIndex}`}
                   rowData={rowData}
-                  setPageSlug={setPageSlug}
                 />
               );
             } else if (rowData.type === "C") {
               if (rowData.weight < 0) return false;
               return (
                 <Connection
-                  key={`row-c-${sectionData.sectionIndex}-${rowIndex}`}
+                  key={`row-c-${sectionIndex}-${rowIndex}`}
                   rowData={rowData}
                 />
               );
-            } else return rowData;
+            } else return null;
           })}
         </div>
 

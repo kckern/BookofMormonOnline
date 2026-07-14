@@ -8,7 +8,7 @@ import stringSimilarity from "string-similarity";
 import Parser from "html-react-parser";
 import "./TextContent.css";
 import Comments from "../_Common/Study/Study";
-import { snapSelectionToWord } from "src/models/Utils";
+import { snapSelectionToWord, determineLanguage, label } from "src/models/Utils";
 import triangle from "./triangle.svg";
 import ReactTooltip from "react-tooltip";
 import { tooltipTheme } from "src/utils/themeColors";
@@ -17,9 +17,9 @@ import placesSVG from "../_Common/svg/places.svg";
 import studySVG from "../_Common/svg/study.svg";
 import notesSVG from "../_Common/svg/notes.svg";
 import faxSVG from "src/views/User/svg/oldbook.svg";
-import { determineLanguage, label } from "../../models/Utils";
 import { useNarration } from "src/contexts/NarrationContext";
 import { TextContentProvider } from "src/contexts/TextContentContext";
+import { compileHighlightRegex } from "./highlightPattern";
 
 /* ------------------------------------------- */
 /* -------------- STATE CHANGES  ------------- */
@@ -27,42 +27,27 @@ import { TextContentProvider } from "src/contexts/TextContentContext";
 
 function reducer(textContentController, input) {
   switch (input.fn) {
-    case "toggleOpenClose":
-      if (textContentController.states.isOpen)
+    case "toggleOpenClose": {
+      const field = input.header ? "isHeaderOpen" : "isOpen";
+      if (textContentController.states[field])
         textContentController.pageController.functions.removeOpenRow(
           textContentController.data.slug
         );
       else
-        textContentController.pageController.functions.setActiveRow(
-          {
-            slug:textContentController.data.slug,
-            duration:textContentController.data.duration,
-            pagetitle: textContentController.narrationController.pageController.pageData.title,
-            heading: textContentController.data.heading,
-            auto: textContentController.pageController.states.autoClicked?.has(textContentController.data.slug) === true,
-          }
-        );
-      textContentController.states.isOpen =
-        !textContentController.states.isOpen;
+        textContentController.pageController.functions.setActiveRow({
+          slug: textContentController.data.slug,
+          duration: textContentController.data.duration,
+          pagetitle:
+            textContentController.narrationController.pageController.pageData.title,
+          heading: textContentController.data.heading,
+          auto:
+            textContentController.pageController.states.autoClicked?.has(
+              textContentController.data.slug
+            ) === true,
+        });
+      textContentController.states[field] = !textContentController.states[field];
       break;
-    case "toggleOpenCloseHeader":
-      if (textContentController.states.isHeaderOpen)
-        textContentController.pageController.functions.removeOpenRow(
-          textContentController.data.slug
-        );
-      else
-        textContentController.pageController.functions.setActiveRow(
-          {
-            slug:textContentController.data.slug,
-            duration:textContentController.data.duration,
-            pagetitle: textContentController.narrationController.pageController.pageData.title,
-            heading: textContentController.data.heading,
-            auto: textContentController.pageController.states.autoClicked?.has(textContentController.data.slug) === true,
-          }
-        );
-      textContentController.states.isHeaderOpen =
-        !textContentController.states.isHeaderOpen;
-      break;
+    }
     default:
       break;
   }
@@ -134,8 +119,8 @@ export default function TextContent({ content, isQuote }) {
     let highlighted = "";
     for (var i in narrationController.states.highlights) {
       let highlight = narrationController.states.highlights[i];
-      var re = new RegExp("(" + highlight.string + ")", "gi");
-      if (highlighted.match(re)) continue;
+      var re = compileHighlightRegex(highlight.string);
+      if (!re || highlighted.match(re)) continue;
       highlighted += highlight.string;
       content = content.replace(re, (string) => {
         return (
@@ -198,11 +183,11 @@ export default function TextContent({ content, isQuote }) {
       let functions = {
         toggleOpenClose: (e) => {
           e.preventDefault();
-          dispatch({ fn: "toggleOpenClose" });
+          dispatch({ fn: "toggleOpenClose", header: false });
         },
         toggleOpenCloseHeader: (e) => {
           e.preventDefault();
-          dispatch({ fn: "toggleOpenCloseHeader" });
+          dispatch({ fn: "toggleOpenClose", header: true });
         },
       };
 
@@ -216,18 +201,6 @@ export default function TextContent({ content, isQuote }) {
         narrationController: narrationController,
       };
 
-      //Extract Image and Commentary Values
-      let imageIds =
-        initTextContentController.data.content?.match(/\[i\](\d+)\[\/i\]/gi);
-      imageIds = imageIds && imageIds.map((i) => i.replace(/\D+/g, ""));
-      let commentaryIds =
-        initTextContentController.data.content?.match(/\[c\]((\d+))\[\/c\]/gi);
-      commentaryIds =
-        commentaryIds && commentaryIds.map((i) => i.replace(/\D+/g, ""));
-      initTextContentController.data.imageIds =
-        imageIds && imageIds.length ? imageIds : [];
-      initTextContentController.data.commentaryIds =
-        commentaryIds && commentaryIds.length ? commentaryIds : [];
       return initTextContentController;
     })()
   );
@@ -276,8 +249,7 @@ export default function TextContent({ content, isQuote }) {
     }
   }
 
-  if(textContentController.data?.heading)
-  textContentController.data.heading = textContentController.data.heading?.replace(/^\[.*?\]/, "").trim();
+  const displayHeading = textContentController.data?.heading?.replace(/^\[.*?\]/, "").trim();
 
   let openClass =  (textContentController.states.isOpen || textContentController.states.isHeaderOpen) ? " open" : "";
   return (
@@ -322,15 +294,13 @@ export default function TextContent({ content, isQuote }) {
               {cardWithoutNestedBlocks ? (
                 <>
                   <span className="triangle"><img src={triangle} alt="" /></span>
-                  {textContentController.data &&
-                    textContentController.data.heading}
+                  {displayHeading}
                   
                 </>
               ) : (
                 <>
                 <span className="triangle"><img src={triangle} alt="" /></span>
-                  {narrationController?.data &&
-                    narrationController?.data?.text?.heading}
+                  {narrationController?.data?.text?.heading?.replace(/^\[.*?\]/, "").trim()}
                   
                 </>
               )}

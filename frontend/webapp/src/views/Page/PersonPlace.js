@@ -7,6 +7,7 @@ import { detectScriptures } from "scripture-guide";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import { useAppController } from "src/contexts/AppControllerContext";
 import { usePageController } from "src/contexts/PageControllerContext";
+import { replaceNumbers } from "src/models/Utils";
 
 // Slugs like "mormon2" inside {Mormon|mormon2} otherwise read as the scripture
 // reference "Mormon 2" and corrupt the slug capture before token parsing.
@@ -63,7 +64,8 @@ export const renderPersonPlaceHTML = (html, pageController, scriptureLinkClickHa
 
       if (domNode.attribs && domNode.attribs.class === "person") {
         return (
-          <PersonLink
+          <PersonPlaceLink
+            type="person"
             controller={pageController}
             label={domNode.attribs.label}
             id={domNode.attribs.slug}
@@ -72,7 +74,8 @@ export const renderPersonPlaceHTML = (html, pageController, scriptureLinkClickHa
       }
       if (domNode.attribs && domNode.attribs.class === "place") {
         return (
-          <PlaceLink
+          <PersonPlaceLink
+            type="place"
             controller={pageController}
             label={domNode.attribs.label}
             id={domNode.attribs.slug}
@@ -115,61 +118,33 @@ export const renderPersonPlaceHTML = (html, pageController, scriptureLinkClickHa
   return Parser(html, options);
 };
 
-function PersonLink({ label, id, controller }) {
+const PERSON_PLACE_LINK = {
+  person: { popType: "people", path: "/people/" },
+  place: { popType: "places", path: "/place/" },
+};
+
+function PersonPlaceLink({ type, label, id, controller }) {
   // Out-of-tree callers (Drawer, Map InfowindowContent, PopUp person/place
   // descriptions) render this via renderPersonPlaceHTML with an appController
   // passed as the controller arg and NO PageControllerProvider above them —
-  // so we resolve via the Task-17 override mechanism, not a bare context read.
+  // so we resolve via the usePageController override, not a bare context read.
   const pageController = usePageController(controller);
+  const { popType, path } = PERSON_PLACE_LINK[type];
   const handleClick = (e) => {
     e.preventDefault();
     const appController = pageController?.appController || pageController;
-    appController.functions.setPopUp({
-      type: "people",
-      ids: [id],
-      popUpData: pageController.preLoad?.peoplePlaces?.person,
-    });
+    appController.functions.setPopUp({ type: popType, ids: [id] });
   };
-
   return (
-    <>
-      <Link
-        to={"/people/" + id}
-        data-tip
-        data-for={id}
-        onClick={handleClick}
-        className={"person"}
-      >
-        <strong>{label}</strong>
-      </Link>
-    </>
-  );
-}
-function PlaceLink({ label, id, controller }) {
-  // See PersonLink: override mechanism for out-of-tree (Drawer/Map/PopUp) callers.
-  const pageController = usePageController(controller);
-  const handleClick = (e) => {
-    e.preventDefault();
-    const appController = pageController?.appController || pageController;
-    appController.functions.setPopUp({
-      type: "places",
-      ids: [id],
-      popUpData: pageController.preLoad?.peoplePlaces?.place,
-    });
-  };
-
-  return (
-    <>
-      <Link
-        to={"/place/" + id}
-        data-tip
-        data-for={id}
-        onClick={handleClick}
-        className={"place"}
-      >
-        <strong>{label}</strong>
-      </Link>
-    </>
+    <Link
+      to={path + id}
+      data-tip
+      data-for={id}
+      onClick={handleClick}
+      className={type}
+    >
+      <strong>{label}</strong>
+    </Link>
   );
 }
 
@@ -195,18 +170,10 @@ function NarrationToolTip({ type, id }) {
     <div className="ppToolTip">
       <img src={`${assetUrl}/${linkType}/${id}`} alt={linkType} />
       <div>
-        <div className="ppToolTipName">{numberFormat(name)}</div>
-        <div className="ppToolTipInfo">{numberFormat(info)}</div>
+        <div className="ppToolTipName">{replaceNumbers(name)}</div>
+        <div className="ppToolTipInfo">{replaceNumbers(info)}</div>
       </div>
     </div>
   );
 }
 
-function numberFormat(string) {
-  if (!string) return null;
-  string = string.replace("1", "₁");
-  string = string.replace("2", "₂");
-  string = string.replace("3", "₃");
-  string = string.replace("4", "₄");
-  return string;
-}

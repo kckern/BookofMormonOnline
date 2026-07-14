@@ -1,7 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useReducer, useEffect, useState, useRef } from "react";
-import ReactTooltip from "react-tooltip";
-// BROWSER HISTORY
 // API ACTIONS
 // COMPONENTS
 import Loader from "../_Common/Loader";
@@ -9,14 +7,12 @@ import Loader from "../_Common/Loader";
 import Section from "./Section";
 import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
 import "./Page.css";
-// import Comments from '../_Common/Study/Study';
 import {
-  testJSON,
   label,
   playSound,
   isMobile,
 } from "src/models/Utils";
-import { useRouteMatch } from "react-router-dom";
+import { useRouteMatch, useHistory } from "react-router-dom";
 
 import { Floaters } from "./Floaters";
 import PageNotFound from "./PageNotFound";
@@ -24,14 +20,15 @@ import InitWarning from "./InitWarning";
 import { Alert } from "reactstrap";
 import loading_comments from "src/views/_Common/Study/svg/loading_comment.svg";
 import { MuteButton } from "./MuteButton";
-import { recordDeepLinkEvent } from "src/utils/deepLinkInstrument";
 import { usePageInit, pageScrollManager, isRefOpen } from "./usePageInit";
-import { countFaxFromIndex, mergeCounts } from "./pageCommentCounts";
+import { addToPageCommentIndex, updateToPageComment, deleteToPageComments } from "./commentIndex";
+import { usePageComments } from "./usePageComments";
 import { createScrollSpy, step } from "src/scroll";
 import { appFunctions } from "src/models/appController";
 import { useAppController } from "src/contexts/AppControllerContext";
-import { useMessenger } from "src/contexts/MessengerContext";
 import { PageControllerProvider } from "src/contexts/PageControllerContext";
+import ReactTooltip from "react-tooltip";
+import { tooltipTheme } from "src/utils/themeColors";
 
 // Apply a Main slug change from inside the Page reducer WITHOUT a nested React
 // dispatch. The reducer is replayed by React during render; the old
@@ -59,36 +56,38 @@ function prepareInitOpen(params) {
 
 export default function Page() {
   const appController = useAppController();
-  const messenger = useMessenger();
   const match = useRouteMatch();
-  if (match.params.pageSlug === "study") {
+  const history = useHistory();
+  let routeParams = match.params;
+  if (routeParams.pageSlug === "study") {
     let parts = localStorage
       .getItem("studybookmark")
       ?.split("/")
       .slice(-2) || [null, null];
-    match.params.pageSlug = parts[0] || "lehites";
-    match.params.textId = parts[1] || 1;
+    routeParams = {
+      ...routeParams,
+      pageSlug: parts[0] || "lehites",
+      textId: parts[1] || 1,
+    };
   }
 
-  let initOpen = prepareInitOpen(match.params);
+  let initOpen = prepareInitOpen(routeParams);
 
-  const routeKey = `${match.params.pageSlug || ""}|${match.params.textId || ""}|${match.params.commentaryId || ""}|${match.params.imageId || ""}|${match.params.faxVersion || ""}`;
-  const pageIdentityKey = `${match.params.pageSlug || ""}|${match.params.commentaryId || ""}|${match.params.imageId || ""}`;
+  const routeKey = `${routeParams.pageSlug || ""}|${routeParams.textId || ""}|${routeParams.commentaryId || ""}|${routeParams.imageId || ""}|${routeParams.faxVersion || ""}`;
+  const pageIdentityKey = `${routeParams.pageSlug || ""}|${routeParams.commentaryId || ""}|${routeParams.imageId || ""}`;
 
   useEffect(() => {
     pageController.functions.setPageData(null);
     // Deep links position the viewport themselves; everything else resets
     // instantly (a smooth scroll here raced the pipeline's scroll — whiplash).
-    const i = prepareInitOpen(match.params);
+    const i = prepareInitOpen(routeParams);
     const hasScrollTarget = !!(i.textId || i.goToSection || i.commentaryId || i.imageId || i.faxVersion);
     if (!hasScrollTarget) window.scrollTo({ top: 0, behavior: "auto" });
     pageController.functions.setLoading(true);
-    if (match.params.imageId || match.params.commentaryId)
-      getPageDataFromAPIViaNote(match.params);
-    else getPageDataFromAPI(match.params.pageSlug);
+    if (routeParams.imageId || routeParams.commentaryId)
+      getPageDataFromAPIViaNote(routeParams);
+    else getPageDataFromAPI(routeParams.pageSlug);
   }, [pageIdentityKey]);
-
-  let [commentState, setCommentState] = useState("init");
 
   const [pageController, dispatch] = useReducer(
     reducer,
@@ -101,10 +100,8 @@ export default function Page() {
         activeRow: null,
         activeAudio: null,
         commentGroupId: null,
-        audioPlaying: false,
         pageSlug: initOpen.pageSlug,
         textId: null,
-        route: match,
         initOpen: initOpen,
         openRows: [],
         studyBuddies: {},
@@ -112,10 +109,6 @@ export default function Page() {
         autoClicked: new Set(),
         notFound: null,  // { type: "commentary" | "image", id: string } when set
         initWarning: null,  // { type: "verseNotFound", slug?: string } when set
-      };
-      let preLoad = {
-        peoplePlaceToolTipData: {},
-        peoplePlaces: {},
       };
       //Define all Row-level functions
       let functions = {
@@ -194,14 +187,8 @@ export default function Page() {
         setInitWarning: (val) => {
           dispatch({ fn: "setInitWarning", val: val });
         },
-        resetPage: (val) => {
-          dispatch({ fn: "resetPage", val: val });
-        },
         setInitOpen: (val) => {
           dispatch({ fn: "setInitOpen", val: val });
-        },
-        setOpenRows: (val) => {
-          dispatch({ fn: "setOpenRows", val: val });
         },
         moveStudyBuddies: (val) => {
           dispatch({ fn: "moveStudyBuddies", val: val });
@@ -213,7 +200,6 @@ export default function Page() {
       //Create Initial Controller
       let initPageController = {
         states: states,
-        preLoad: preLoad,
         pageData: null,
         pageComments: null,
         pageCommentCounts: null,
@@ -238,31 +224,24 @@ export default function Page() {
     pageController.functions.setNotFound(null);
     pageController.functions.setInitWarning(null);
     pageController.appController.functions.requestImageActivation(null);
-    const newInitOpen = prepareInitOpen(match.params);
+    const newInitOpen = prepareInitOpen(routeParams);
     pageController.functions.setInitOpen(newInitOpen);
   }, [routeKey]);
 
-  const studyModeisOn =
-    pageController.appController.states.studyGroup.studyModeOn;
-  const userIsLoggedIn = !!pageController.appController.states.user.user;
-  const hasActiveGroup = !!pageController.appController.states.studyGroup
-    .activeGroup?.url;
-  const needToLoadComments = userIsLoggedIn && studyModeisOn && hasActiveGroup;
-  const [readyToScroll, setReadyToScroll] = useState(false);
   const [stageClass, setStageClass] = useState(null);
 
-  // Guards async setState in loadPageComments (.then/.catch/setTimeout/
-  // waitForIdle) from firing after the user navigates away — was the source of
-  // "Can't perform a React state update on an unmounted component" in Page.
+  // Guards async setState in getPageDataFromAPI(ViaNote) from firing after the
+  // user navigates away — was the source of "Can't perform a React state update
+  // on an unmounted component" in Page.
   const isMounted = useRef(true);
   useEffect(() => {
     isMounted.current = true;
     return () => { isMounted.current = false; };
   }, []);
 
-  useEffect(() => {
-    if (pageController.pageComments) setReadyToScroll(true);
-  }, [pageController.pageComments]);
+  const { commentState, readyToScroll, setReadyToScroll, needToLoadComments } =
+    usePageComments(pageController);
+
   // Expose this page's comment controller to Main for PopUp/Commentary/Study/
   // Sidebar (was dispatched from the setPageComments reducer case — impure, so
   // it leaked a Main setState into Page's render phase).
@@ -271,10 +250,6 @@ export default function Page() {
       pageController,
     );
   }, [pageController.pageComments, pageController.pageCommentCounts]);
-  useEffect(() => {
-    if (pageController.appController.states.studyGroup.studyModeOn)
-      setReadyToScroll(false);
-  }, [pageController.appController.states.studyGroup.activeGroup?.url]);
 
   // Deep-link / section positioning, gated on the study-mode comments load.
   const gateOpen = !needToLoadComments || readyToScroll;
@@ -334,16 +309,6 @@ export default function Page() {
     return () => spy.stop();
   }, [initPhase, pageController.states.pageSlug]);
 
-  //Load Page Comments
-  useEffect(() => {
-    if (!pageController.pageData) return false;
-    loadPageComments(pageController, setReadyToScroll);
-  }, [
-    pageController.appController.states.studyGroup.activeGroup?.url,
-    pageController.states.pageSlug,
-    pageController.pageData,
-  ]);
-
   //Audio Settings Changed
   useEffect(() => {
     if (!pageController.appController.states.preferences.audio) {
@@ -392,8 +357,8 @@ export default function Page() {
     }
 
     if (!response.page[index].sections) {
-      return document.querySelector(".contents_link a").click();
-    } //TODO history.push("/contents");
+      return history.push("/contents");
+    }
 
     pageController.functions.setPageSlugId({
       pageSlug,
@@ -442,158 +407,6 @@ export default function Page() {
     }
   };
 
-  const processStudyGroupEventOnPage = (e) => {
-    let action = {};
-    try {
-      action = JSON.parse(e.action);
-    } catch (e) {
-      return false;
-    }
-    let { username, key, val } = action;
-    if (username === pageController.appController.states.user.user)
-      return false;
-
-    //console.log({ key, username, val });
-
-    let processors = {
-      updatePagePosition: (username, val) => {
-        let { pageSlug, location } = val;
-        if (pageSlug === pageController.states.pageSlug)
-          pageController.functions.moveStudyBuddies({ username, location });
-      },
-      exitStudyGroup: (username, val) => {
-        if (
-          pageController.appController.states.studyGroup.activeGroup.url === val
-        ) {
-          pageController.functions.moveStudyBuddies({
-            username,
-            location: null,
-          });
-        }
-      },
-      updateTypingLocation: (username, val) => {
-        pageController.appController.functions.setTypingLocations({
-          username,
-          action: val,
-        });
-      },
-    };
-
-    if (processors[key]) processors[key](username, val);
-  };
-
-  const loadPageComments = (pageController, setReadyToScroll) => {
-    setCommentState("started loading");
-    let group = pageController.appController.states.studyGroup.activeGroup;
-
-    let newPageLoad =
-      group && pageController.pageData && !pageController.pageComments;
-
-    let switchToOtherGroup =
-      group &&
-      pageController.pageData &&
-      pageController.states.commentGroupId !== group.url;
-
-    const addMessageToPage = (e) => {
-      pageController.functions.addToPageComments(e.message);
-    };
-    const updateMessageToPage = (e) => {
-      pageController.functions.updateToPageComment(e.message);
-    };
-
-    if (!newPageLoad && !switchToOtherGroup) {
-      setReadyToScroll(true);
-      return false;
-    }
-
-    pageController.functions.setPageComments({
-      groupId: null,
-      index: null,
-      counts: null,
-    });
-
-    window.removeEventListener(
-      "addMessageToPage-" + pageController.states.pageSlug,
-      addMessageToPage,
-      false,
-    );
-    window.addEventListener(
-      "addMessageToPage-" + pageController.states.pageSlug,
-      addMessageToPage,
-      false,
-    );
-    window.removeEventListener(
-      "updateMessageToPage-" + pageController.states.pageSlug,
-      updateMessageToPage,
-      false,
-    );
-    window.addEventListener(
-      "updateMessageToPage-" + pageController.states.pageSlug,
-      updateMessageToPage,
-      false,
-    );
-
-    window.removeEventListener(
-      "fireStudyGroupAction",
-      processStudyGroupEventOnPage,
-      false,
-    );
-    window.addEventListener(
-      "fireStudyGroupAction",
-      processStudyGroupEventOnPage,
-      false,
-    );
-
-    setCommentState("set Listeners");
-    let groupId = group.url;
-    const COMMENTS_FALLBACK_MS = 2500;
-    const fallbackTimer = setTimeout(() => {
-      recordDeepLinkEvent("loadPageComments:fallback");
-      if (isMounted.current) setReadyToScroll(true);
-    }, COMMENTS_FALLBACK_MS);
-
-    if (!messenger?.loadPageComments) {
-      clearTimeout(fallbackTimer);
-      setReadyToScroll(true);
-      return false;
-    }
-    setCommentState("made query");
-    messenger
-      .loadPageComments(group, pageController.pageData?.slug)
-      .then(({ messages, counts }) => {
-        clearTimeout(fallbackTimer);
-        // Bail if the page unmounted (navigated away) while the fetch was in
-        // flight — these setState/dispatch calls would warn "update on an
-        // unmounted component".
-        if (!isMounted.current) return;
-        setCommentState("indexing");
-        const index = indexPageComments(messages);
-        // Single paint: index AND counts land in one dispatch (spec P1) —
-        // fax counts derive from the index client-side, com/img came from
-        // the server.
-        setCommentState("placing");
-        // Zero-layout-shift by construction (badges/bubbles are absolute,
-        // notice is fixed) — but defer the React paint out of any active
-        // scroll campaign so render work never competes with the animation.
-        // Deep-link inits gate the campaign on readyToScroll, so this is
-        // instant there; it only waits on autoAdvance/fallback overlaps.
-        pageScrollManager.waitForIdle().then(() => {
-          if (!isMounted.current) return;
-          recordDeepLinkEvent("pageComments:placed");
-          pageController.functions.setPageComments({
-            groupId,
-            index,
-            counts: mergeCounts(counts, countFaxFromIndex(index)),
-          });
-        });
-      })
-      .catch((error) => {
-        clearTimeout(fallbackTimer);
-        console.log({ error });
-        if (isMounted.current) setReadyToScroll(true);
-      });
-  };
-
   if(!appController.states.preloaded) return <Loader />;
   if (pageController.states.notFound) {
     return <PageNotFound type={pageController.states.notFound.type} id={pageController.states.notFound.id} />;
@@ -625,16 +438,20 @@ export default function Page() {
           {pageController.pageData?.title}
         </h3>
 
-        {pageController.pageData?.sections.map((sectionData, sectionIndex) => {
-          sectionData.sectionIndex = sectionIndex;
-          return (
-            <Section
-              key={sectionIndex}
-              sectionData={sectionData}
-              rowIndex={sectionData}
-            />
-          );
-        })}
+        {pageController.pageData?.sections.map((sectionData, sectionIndex) => (
+          <Section
+            key={sectionIndex}
+            sectionData={sectionData}
+            sectionIndex={sectionIndex}
+          />
+        ))}
+        <ReactTooltip
+          effect="solid"
+          place="left"
+          backgroundColor={tooltipTheme().backgroundColor}
+          textColor={tooltipTheme().textColor}
+          id="page-info-tooltip"
+        />
       </div>
     </PageControllerProvider>
   );
@@ -652,8 +469,6 @@ function LoadingPageCommentsNotice({ commentState, setReadyToScroll }) {
     </Alert>
   );
 }
-//<pre>{commentState}</pre>
-
 
 function loadAudioUrl(slug) {
   return `${assetUrl}/audio/${label("lang_code")}/${slug
@@ -736,19 +551,13 @@ function reducer(pageController, input) {
             });
           });
         }, parseInt(duration) * 900);
-        // pageController.appController.functions.updateUserSummary({ ...r.log.progress, ...{ slug, pagetitle, heading } })
       });
 
-      if (pageController.states.init) {
-        applySlug(pageController.appController, slug, { replace: auto === true });
-        if (auto === true) pageController.states.autoClicked.delete(slug);
-      }
       break;
     case "addOpenRow":
       pageController.states.openRows.push(input.val);
       break;
     case "removeOpenRow":
-      // MODIFY BY ME
       document.title = pageController.pageData.title || label("home_title");
       applySlug(
         pageController.appController,
@@ -757,11 +566,6 @@ function reducer(pageController, input) {
       pageController.states.openRows = pageController.states.openRows.filter(
         (x) => x !== input.val,
       );
-      // for (let i in pageController.states.openRows) {
-      //     if (pageController.states.openRows[i] === input.val) {
-      //         pageController.states.openRows.splice(i, 1);
-      //     }
-      // }
 
       if (input.val === pageController.states.activeRow) {
         if (pageController.states.activeAudio)
@@ -789,16 +593,12 @@ function reducer(pageController, input) {
       // ("Cannot update a component (Main) while rendering Page"). Done in an
       // effect instead (see the effect keyed on pageController.pageComments).
       break;
-    case "setPageSlug":
-      pageController.states.pageSlug = input.val.index;
-      break;
 
     case "addToPageComments":
       pageController.pageComments = addToPageCommentIndex(
         pageController.pageComments,
         input.val,
       );
-      // pageController.appController.functions.setActiveLeafCursorController(pageController);
       break;
 
     case "moveStudyBuddies":
@@ -810,17 +610,11 @@ function reducer(pageController, input) {
       if (!location) delete pageController.states.studyBuddies[username];
       break;
 
-    case "resetPage":
-      pageController.states.initOpen.pageSlug = input.val;
-      pageController.states.loading = null;
-      break;
-
     case "updateToPageComment":
       pageController.pageComments = updateToPageComment(
         pageController.pageComments,
         input.val,
       );
-      // pageController.appController.functions.setActiveLeafCursorController(pageController);
       break;
 
     case "deleteToPageComments":
@@ -828,7 +622,6 @@ function reducer(pageController, input) {
         pageController.pageComments,
         input.val,
       );
-      // pageController.appController.functions.setActiveLeafCursorController(pageController);
       break;
 
     case "setPageSlugId":
@@ -866,15 +659,6 @@ function reducer(pageController, input) {
     case "setLoading":
       pageController.states.loading = input.val;
       break;
-    case "startAudio":
-      pageController.states.audioPlaying = true;
-      break;
-    case "pauseAudio":
-      pageController.states.audioPlaying = false;
-      break;
-    case "setTooltip":
-      pageController.states.toolTip = true;
-      break;
     case "markAsInitiated":
       pageController.states.init = input.val || true;
       break;
@@ -887,64 +671,3 @@ function reducer(pageController, input) {
   return { ...pageController };
 }
 
-function indexPageComments(array) {
-  let comments = {};
-  for (let i in array) {
-    let item = array[i];
-    if (!testJSON(item.data)) continue;
-    let meta = JSON.parse(item.data);
-    if (meta.links === undefined) continue;
-    let keys = Object.keys(meta.links);
-    for (let k in keys) {
-      let key = keys[k];
-      if (comments[key] === undefined) comments[key] = {};
-      comments[key][meta.links[key]] = item;
-    }
-  }
-  return comments;
-}
-
-function addToPageCommentIndex(comments, item) {
-  if (!comments) comments = {};
-  if (!testJSON(item.data)) return comments;
-  let meta = JSON.parse(item.data);
-  if (!meta.links) return comments;
-  let keys = Object.keys(meta.links);
-  for (let k in keys) {
-    let key = keys[k];
-    if (!key) continue;
-    if (!comments[key]) comments[key] = {};
-    if (!Array.isArray(comments[key][meta[key]]))
-      comments[key][meta.links[key]] = [];
-    comments[key][meta.links[key]] = item;
-  }
-  return comments;
-}
-
-function updateToPageComment(comments, item) {
-  if (!testJSON(item.data)) return comments;
-  let meta = JSON.parse(item.data);
-  if (meta.links === undefined) return comments;
-  let keys = Object.keys(meta.links);
-  for (let k in keys) {
-    let key = keys[k];
-    // if (comments[key] === undefined) comments[key] = {};
-    // if (!Array.isArray(comments[key][meta.links[key]])) comments[key][meta.links[key]] = [];
-    comments[key][meta.links[key]] = item;
-  }
-  return comments;
-}
-
-function deleteToPageComments(comments, item) {
-  if (!testJSON(item.data)) return comments;
-  let meta = JSON.parse(item.data);
-  if (meta.links === undefined) return comments;
-  let keys = Object.keys(meta.links);
-  for (let k in keys) {
-    let key = keys[k];
-    // if (comments[key] === undefined) comments[key] = {};
-    // if (!Array.isArray(comments[key][meta.links[key]])) comments[key][meta.links[key]] = [];
-    comments[key][meta.links[key]] = [];
-  }
-  return comments;
-}
