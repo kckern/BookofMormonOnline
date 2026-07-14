@@ -1,7 +1,12 @@
 # Page View — Structural Follow-ups (Scoping)
 
 **Date:** 2026-07-14
-**Status:** Scoping — not yet planned or approved for implementation.
+**Status:** DECIDED & PLANNED (2026-07-14). KC's decisions: **C1 → Option 1** (openRows is the single truth) and **D → Option 2** (migrate the three controllers to real state management; implemented as immutable per-instance reducers — Redux verified non-operational, see the WP-D plan's decision record). Implementation plans:
+- WP-A → `docs/plans/2026-07-14-page-wp-a-cleanups.md`
+- WP-B (B2+B3; B1 skipped per recommendation) → `docs/plans/2026-07-14-page-wp-b-scripture-convergence.md`
+- WP-C1 → `docs/plans/2026-07-14-openrows-single-truth.md`
+- WP-C2 + WP-D → `docs/plans/2026-07-15-controller-state-migration.md` (C2 absorbed into its Task 3.3)
+Execution order: WP-A → WP-C1 → WP-D; WP-B independent (any time after WP-A).
 **Origin:** Deferred items from `docs/audits/2026-07-14-page-view-audit.md`. The 21-task remediation (`docs/plans/2026-07-14-page-view-remediation.md`, merged to `dev` as `ea3087ee`) intentionally left these out because each is either an architectural decision, a cross-layer change, or hostage to a third-party API. This document scopes them so a future phase can be planned and approved deliberately.
 
 All file:line references are against `dev` at/after the remediation merge; grep to confirm before editing (they drift).
