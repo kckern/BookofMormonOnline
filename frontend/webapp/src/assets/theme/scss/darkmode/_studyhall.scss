@@ -1,0 +1,67 @@
+html[data-theme="dark"] {
+
+  /* StudyHall.css */
+  .StudyHall .StudyHallContents { color: var(--text-secondary); }
+  .StudyHall .StudyGroupHeader { background-color: var(--surface-2); color: var(--text-primary); }
+  .StudyGroupHeader .Share { background-color: var(--control); &:hover { background-color: var(--control-hover); } }
+  .StudyHall .StudyGroupBody > div.StudyGroupSideBar { background-color: var(--surface-2); }
+  .StudyHall .StudyGroupBody > div.StudyGroupChatPanel { background-color: var(--surface-1); }
+  .StudyHall .StudyGroupBody .StudyGroupChatPanel .PrevMessageLoader { background-color: var(--surface-3); color: var(--text-secondary); }
+  .StudyHall .StudyGroupSideBar ul { background-color: var(--surface-2); }
+  .StudyHall .StudyGroupSideBar li {
+    border-bottom-color: var(--border);
+    &:hover { background-color: var(--surface-3); }
+    &.active { background-color: var(--surface-4); }
+  }
+  .StudyHall .StudyGroupSideBar .userInfo .userLink a { color: var(--text-muted); }
+  .StudyHall .StudyGroupSideBar .recentContent { color: var(--text-muted); }
+  .StudyHall .StudyGroupChatPanel .unreadMsg { border-top-color: var(--border-strong); }
+  #inputGroupChat { border-color: var(--border); background-color: var(--surface-4); color: var(--text-primary); }
+  .StudyGroupChatInput { background-color: var(--surface-3); border-top-color: var(--border); }
+  .StudyGroupChatInput .topRow button.btn-primary { background-color: var(--control-hover); }
+  .StudyHall .StudyGroupChatPanel .thread { border-left-color: var(--border); }
+  .StudyHall .StudyGroupChatPanel .thread h3.threadHeader { background-color: var(--surface-4); color: var(--text-primary); }
+  .StudyHall .likeCount, .DrawerStudyGroupThread .likeCount {
+    background-color: var(--surface-4); color: var(--text-secondary);
+    &:hover { background-color: var(--control-hover); color: var(--text-primary); }
+    &.hasCount { background-color: var(--control-hover); color: var(--text-primary); }
+  }
+  .StudyHall .thread textarea { color: var(--text-primary); }
+  .send-btn-group .btn { background-color: var(--control); &:hover { background-color: var(--control-hover); } }
+  .Message a { color: var(--link); &:hover { color: var(--link-hover); } }
+
+  /* StudyGroupProgress.css */
+  .StudyHall .StudyGroupChatPanel.progress .progressNotice {
+    color: var(--text-secondary); background: var(--surface-3); border-color: var(--border);
+  }
+  .StudyHall .StudyGroupChatPanel.progress .userCircle { background-color: var(--surface-4); }
+  .StudyHall .StudyGroupChatPanel.progress .progressBar { background: var(--surface-4); }
+  .StudyHall .StudyGroupChatPanel.progress .progressBadge { color: var(--text-secondary); }
+
+  /* StudyGroupNotebook.css */
+  .topTabs div { background-color: var(--surface-4); color: var(--text-primary); }
+  .noteList { border-color: var(--border); }
+  .noteList .note { border-color: var(--border); }
+  .noteList .note h4 { background-color: var(--surface-3); color: var(--text-primary); }
+  .noteList .note blockquote { color: var(--text-secondary); }
+
+  /* StudyGroupAdmin.css (context menu handled in _framework) */
+  .StudyGroupChatPanel.admin .input-group-text { background-color: var(--surface-3); }
+  .membershipRequests .userId { color: var(--text-muted); }
+  .userAdminBox .completed { background-color: var(--surface-4); }
+  .actions { color: var(--text-muted); }
+
+  /* ActionBubble.css:19 — white bubble */
+  .StudyGroupBar .userStatus .userCircle .actionBubble {
+    background-color: var(--surface-2); color: var(--text-primary);
+    border: 1px solid var(--border);
+  }
+  .actionBubble .messageText { color: var(--text-secondary); }
+
+  /* Mobile/MobileStudy.css */
+  .mobilestudy .StudyGroupChatInput { border-bottom-color: var(--surface-3); }
+  .MobileChatHeader { background: var(--surface-2); color: var(--text-primary); }
+  .MobileChatHeaderMembers { color: var(--text-muted); }
+  .LeaderBoardDrawer .GroupLeaderBoard .leaderBoardItem { border-bottom-color: var(--border); }
+  .LeaderBoardDrawer .LeaderBoardDrawerHeader { border-bottom-color: var(--border); background-color: var(--surface-2); color: var(--text-primary); }
+}
