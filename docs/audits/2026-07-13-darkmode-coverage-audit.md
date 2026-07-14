@@ -1,5 +1,10 @@
 # Dark Mode Coverage Audit — frontend/webapp
 
+> **Status 2026-07-13 — RESOLVED by branch `feat/darkmode-overhaul`** (plan: `docs/plans/2026-07-13-darkmode-overhaul.md`).
+> §1 architectural defects fixed: theme rescoped to `html[data-theme="dark"]` (portals + native UI now inherit); dead `color-scheme` rule hoisted; `darkMode` preference key unified with migration + OS default; pre-paint FOUC guard added. §2 coverage: dark styling moved to 12 token-based SCSS partials under `src/assets/theme/scss/darkmode/`; framework widgets, Study Hall/chat, Read/Page, Home/User, People/Places/Objects, History/Witnesses (+ variable-driven heatmap), Map/Timeline Leaflet chrome, and content pages all themed. §3 JS-level theming: `src/utils/themeColors.js` powers Highcharts + react-tooltip; ReactQuill editor themed (gap the audit missed); dark logo variant added. Automated verification: 9/9 unit tests pass, full SCSS compile clean, dev server builds (no errors).
+>
+> **Deferred to visual QA / follow-up (not blockers):** Leaflet illustrated map tiles left un-filtered (invert would corrupt custom tiles); the darkest `cat-*` object IdBadges under the blanket brightness filter (still WCAG-AA); the mobile remote logo asset (`${assetUrl}/interface/logo`); migrating the legacy ~1180-line block in `darkmode.scss` to tokens. Chart/tooltip theme flips on next render (toggle lives on a separate route, so not co-visible).
+
 **Date:** 2026-07-13
 **Scope:** `frontend/webapp/src/` (CRA app). All dark-mode styling lives in one file, `src/assets/theme/scss/darkmode.scss` (~1,185 lines), scoped under `.body.dark`. The app has **182 stylesheets**; the override file reaches only a fraction of them.
 **Method:** 5 parallel read-only audit agents (Read/Page/Search, _Common + Study, Home/User/social, content pages, theme/infra/3rd-party), with manual verification of the architectural claims.
