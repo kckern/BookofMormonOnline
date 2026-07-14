@@ -1,5 +1,6 @@
 @import "./darkmode/tokens";
 @import "./darkmode/framework";
+@import "./darkmode/chrome";
 
 html[data-theme="dark"] {
     color-scheme: dark;

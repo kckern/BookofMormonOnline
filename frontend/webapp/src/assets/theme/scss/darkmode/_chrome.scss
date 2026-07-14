@@ -1,0 +1,42 @@
+html[data-theme="dark"] {
+
+  /* BottomNav.css:13 — white mobile nav */
+  .bottom-nav {
+    background-color: var(--surface-2);
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -2px 8px var(--shadow);
+  }
+  .bottom-nav-item p { color: var(--text-muted); }
+  .bottom-nav-item.active p { color: var(--text-primary); }
+  .bottom-nav-item img { filter: invert(1) brightness(0.85); }
+
+  /* Header.css:63 — white notification popup */
+  .NotificationList {
+    background-color: var(--surface-2);
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    box-shadow: 0 4px 12px var(--shadow);
+    li { border-top-color: var(--border); }
+    li.unread { background-color: #26313d; }
+  }
+  .NotificationList-item:hover { background-color: var(--surface-3); }
+
+  /* MobileMenu.css:10 — light menu cards */
+  .mobilemenu > a {
+    background-color: var(--surface-3);
+    color: var(--text-secondary);
+    &:hover { background-color: var(--surface-4); }
+    > div > div > span { color: var(--text-secondary); }
+  }
+
+  /* Sidebar.css */
+  .sidebar .progress_text { color: var(--text-secondary); }
+  .sidebar .userNav { border-bottom-color: var(--border-strong); }
+
+  /* AppModal/Style.scss:54 — copy modal */
+  .copy-modal { background: var(--surface-3); color: var(--text-secondary); }
+  .sweet-alert-modal code {
+    color: var(--text-muted);
+    &:hover { color: var(--text-primary); background-color: var(--surface-4); }
+  }
+}
