@@ -16,8 +16,10 @@ import study from "../_Common/svg/study.svg";
 import { Spinner } from "../_Common/Loader";
 import loading from  "../_Common/svg/loadbar.svg"
 import { label } from "../../models/Utils";
-export function ReadingPlan({appController,slug}){
+import { useAppController } from "src/contexts/AppControllerContext";
+export function ReadingPlan({slug}){
 
+    const appController = useAppController();
     const token = appController.states.user.token;
 
     const [planData, setPlanData] = useState(null);

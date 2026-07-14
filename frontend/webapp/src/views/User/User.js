@@ -26,7 +26,9 @@ import { Col, Row } from "reactstrap";
 import { useRouteMatch } from "react-router";
 import MobileUser from "./MobileUser";
 import { Spinner } from "../_Common/Loader";
-export default function User({ appController }) {
+import { useAppController } from "src/contexts/AppControllerContext";
+export default function User() {
+  const appController = useAppController();
   let name = appController.states.user.social?.nickname;
   useEffect(
     () =>
@@ -69,7 +71,7 @@ export default function User({ appController }) {
     }
   }, [match.params.value, studyLog]);
 
-  if (isMobile()) return <MobileUser appController={appController} />;
+  if (isMobile()) return <MobileUser />;
 
   return (
     <div className="container">
@@ -78,27 +80,24 @@ export default function User({ appController }) {
           <Row>
             <Col md="8">
               {viewPrefs ? (
-                <Preferences appController={appController} />
+                <Preferences />
               ) : viewHistory ? (
                 <HistoryList
                   studyLog={studyLog}
                   progressList={progressList}
-                  appController={appController}
                   setHistoryView={setHistoryView}
                 />
               ) : (
-                <ProgressBox appController={appController} />
+                <ProgressBox />
               )}
             </Col>
             <Col md="4">
               <ProfileItems
-                appController={appController}
                 studySummary={studySummary}
                 setHistoryView={setHistoryView}
               />
               <StudyHistory
                 setHistoryView={setHistoryView}
-                appController={appController}
                 setStudyLog={setStudyLog}
                 setStudySummary={setStudySummary}
                 studyLog={studyLog}
@@ -113,7 +112,8 @@ export default function User({ appController }) {
   );
 }
 
-export function ProfileItems({ appController, studySummary, setHistoryView }) {
+export function ProfileItems({ studySummary, setHistoryView }) {
+  const appController = useAppController();
   const [profileState, setProfileState] = useState("profile");
   const [loading, setLoading] = useState(false);
 
@@ -126,7 +126,6 @@ export function ProfileItems({ appController, studySummary, setHistoryView }) {
         <CardBody>
           <SignIn
             setProfileState={setProfileState}
-            appController={appController}
             setLoading={setLoading}
           />
         </CardBody>
@@ -136,19 +135,16 @@ export function ProfileItems({ appController, studySummary, setHistoryView }) {
   return profileState === "edit" ? (
     <EditProfile
       setProfileState={setProfileState}
-      appController={appController}
     />
   ) : profileState === "profile" ? (
     <Profile
       setProfileState={setProfileState}
       studySummary={studySummary}
       setHistoryView={setHistoryView}
-      appController={appController}
     />
   ) : profileState === "password" ? (
     <ChangePassword
       setProfileState={setProfileState}
-      appController={appController}
     />
   ) : null;
 }

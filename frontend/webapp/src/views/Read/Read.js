@@ -69,7 +69,7 @@ const fetchPassageNotesForSections = async (sectionVerseIdsMap, signal) => {
     }
 };
 
-export default function ReadScripture({ appController }) {
+export default function ReadScripture() {
     const match = useRouteMatch();
     const history = useHistory();
 
@@ -581,7 +581,6 @@ export default function ReadScripture({ appController }) {
                         hoveredVerse={hoveredVerse}
                         setHoveredVerse={setHoveredVerse}
                         activeChapterRef={activeChapterRef}
-                        appController={appController}
                         DEBUG_SKELETON={DEBUG_SKELETON}
                         verseRefs={verseRefs}
                         passageNotesData={passageNotesData}
@@ -634,7 +633,6 @@ export default function ReadScripture({ appController }) {
         handleExplicitChapterNavigation,
         highlightedVerses,
         hoveredVerse,
-        appController,
         isContentLoading,
         isOperationRunning,
         loadNextChapter,

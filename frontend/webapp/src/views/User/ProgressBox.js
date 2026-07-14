@@ -23,6 +23,7 @@ import empty from "./svg/empty.svg";
 import loading from "./svg/loading.svg";
 import { label } from "src/models/Utils";
 import { history } from "src/models/routeHistory";
+import { useAppController } from "src/contexts/AppControllerContext";
 
 const makeBlankSections = (counts, id) => {
   if (!counts) return {};
@@ -36,7 +37,8 @@ const makeBlankSections = (counts, id) => {
     };
   });
 };
-export default function ProgressBox({ appController }) {
+export default function ProgressBox() {
+  const appController = useAppController();
   useEffect(() => history.push("/user"), []);
 
   let tokenToLoad = appController.states.user.token;
@@ -94,7 +96,6 @@ export default function ProgressBox({ appController }) {
       <CardBody>
         <ProgressDetails
           progressData={ProgressBoxData.progressData}
-          appController={appController}
         />
       </CardBody>
     </Card>
@@ -146,7 +147,7 @@ export function progressShell(appController) {
   return progressData;
 }
 
-function ProgressDetails({ progressData, appController, whois }) {
+function ProgressDetails({ progressData, whois }) {
   const [activeItem, setActiveItem] = useState("lehites");
   if (!progressData) return null;
   if (!Array.isArray(progressData)) progressData = Object.values(progressData);
@@ -202,7 +203,6 @@ function ProgressDetails({ progressData, appController, whois }) {
                 <ProgressPanel
                   key={"progressData" + i}
                   item={item}
-                  appController={appController}
                   whois={whois}
                 />
               ))}
@@ -318,7 +318,8 @@ export function ProgressDetailsCircles({ progressPages, callBack }) {
   );
 }
 
-function ProgressPanel({ item, appController }) {
+function ProgressPanel({ item }) {
+  const appController = useAppController();
   let tokenToLoad = appController.states.user.token;
   let userToLoad = appController.states.user.user;
   let queryBy = userToLoad || tokenToLoad;

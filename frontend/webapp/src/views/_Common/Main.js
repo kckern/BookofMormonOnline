@@ -18,6 +18,7 @@ import "src/views/_Common/ScripturePanel.css";
 import Loader from "src/views/_Common/Loader";
 import { appControllerReducer, appInit } from "src/models/appController";
 import { MessengerProvider } from "src/contexts/MessengerContext";
+import { AppControllerProvider } from "src/contexts/AppControllerContext";
 import nowifi from "./svg/no-wifi.svg";
 //
 import "./BottomNav.css";
@@ -136,14 +137,14 @@ function Main(props) {
   const isDarkMode = !!appController.states.preferences.darkMode;
 
   return (
+    <AppControllerProvider appController={appController}>
     <MessengerProvider appController={appController}>
       <div className={"body"+(lang ? " "+lang: "") + (isDev ? " dev" : "") + (isDarkMode ? " dark" : "")}>
         {debug}
-        <Header {...props} appController={appController} isReady={true} />
+        <Header {...props} isReady={true} />
         {/* <Navbar user={user} showSideNav={showSideNav} manageLayout={manageLayout} toggleSideNav={toggleSideNav} /> */}
         <Sidebar
           {...props}
-          appController={appController}
           routes={links}
           bgColor={"1a1d20"}
           activeColor={"red"}
@@ -166,22 +167,23 @@ function Main(props) {
             <Loader />
           ) : (
             <>
-              <PopUp appController={appController} />
+              <PopUp />
               <Suspense fallback={<Loader />}>
                 <Switch>
                   {routes.map((x, i) => (
                     <Route key={i}  keyProp={i} exact={x.exact} path={x.path}>
-                      <x.component appController={appController} />
+                      <x.component />
                     </Route>
                   ))}
                 </Switch>
               </Suspense>
-              <BottomMenu appController={appController}/>
+              <BottomMenu />
             </>
           )}
         </main>
       </div>
     </MessengerProvider>
+    </AppControllerProvider>
   );
 }
 

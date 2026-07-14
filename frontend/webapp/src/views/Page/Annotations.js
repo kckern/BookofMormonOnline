@@ -1,60 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
-import ReactTooltip from "react-tooltip";
-import crypto from "crypto-browserify";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import { label } from "src/models/Utils";
-import oldbook from "src/views/User/svg/oldbook.svg";
 import { history } from "src/models/routeHistory";
+import { useNarration } from "src/contexts/NarrationContext";
+import { useTextContent } from "src/contexts/TextContentContext";
 
-export function FaxBubbleContainer({ textContentController, isQuote }) {
-  const [faxVisible, setFaxVisible] = useState(false);
-  const [tooltip_id] = useState( crypto.randomBytes(20).toString("hex"));
-  useEffect(() => {
-    if (!textContentController.states.isOpen) setFaxVisible(false);
-    else
-      setTimeout(() => setFaxVisible(textContentController.states.isOpen), 500);
-  }, [textContentController.states.isOpen]);
-  if (isQuote) return null;
-
-  let counts =
-    textContentController.narrationController.pageController.pageCommentCounts;
-  let num = textContentController.data.slug.replace(/\D+/, "");
-
-  let commentIcon = null;
-  if (
-    counts &&
-    num &&
-    counts[num] &&
-    counts[num].fax &&
-    textContentController.narrationController.appController.states.studyGroup
-      .studyModeOn
-  ) {
-    commentIcon = <span className="comment">💬</span>;
-  }
-
-  if(!textContentController.narrationController.appController.states.preferences.facsimiles.on) return null;
-
-  return (
-    <>
-      <div
-        data-tip={label("facsimiles_of_x",[textContentController.data.heading]) }
-        data-for={tooltip_id}
-        onMouseEnter={
-          textContentController.narrationController.functions.preloadFax
-        }
-        onClick={textContentController.narrationController.functions.toggleFax}
-        className={"fax " + (faxVisible ? "visible" : "")}
-      >
-        <img src={oldbook} alt="" />{commentIcon}
-      </div>
-
-      <ReactTooltip id={tooltip_id} effect="solid" />
-    </>
-  );
-}
-
-export function CommentaryBubbles({ textContentController }) {
+export function CommentaryBubbles() {
+  const textContentController = useTextContent();
   if(!textContentController.pageController.appController.states.preferences.commentary.on) return null;
   let narrationController = textContentController.narrationController;
   let blacklist = narrationController.appController.states.preferences.commentary.filter.sources.map(id=>id.toString().padStart(3,0));
@@ -93,18 +46,16 @@ export function CommentaryBubbles({ textContentController }) {
       <CommentaryBubble
         key={"bubble" + item.id + i.toString()}
         item={item}
-        narrationController={narrationController}
-        textContentController={textContentController}
       />
     );
   });
 }
 
 function CommentaryBubble({
-  narrationController,
-  textContentController,
   item,
 }) {
+  const textContentController = useTextContent();
+  const narrationController = useNarration();
   let counts = narrationController.pageController.pageCommentCounts;
   let num = textContentController.data.slug.replace(/\D+/, "");
   let studycommentcount = 0;
@@ -233,7 +184,8 @@ export function gatherImages(slug) {
   return items;
 }
 
-export function ImageBubbles({ textContentController }) {
+export function ImageBubbles() {
+  const textContentController = useTextContent();
   if(!textContentController.pageController.appController.states.preferences.art) return null;
 
 
@@ -246,14 +198,14 @@ export function ImageBubbles({ textContentController }) {
       <ImageBubble
         key={item.ids[0] + "-img"}
         item={item}
-        narrationController={narrationController}
-        textContentController={textContentController}
       />
     );
   });
 }
 
-function ImageBubble({ narrationController, textContentController, item }) {
+function ImageBubble({ item }) {
+  const textContentController = useTextContent();
+  const narrationController = useNarration();
   let counts = narrationController.pageController.pageCommentCounts;
   let num = textContentController.data.slug.replace(/\D+/, "");
   let studycommentcount = 0;

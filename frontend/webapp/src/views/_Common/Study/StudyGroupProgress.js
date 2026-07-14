@@ -1,4 +1,5 @@
 import "./StudyGroupProgress.css";
+import { useAppController } from "src/contexts/AppControllerContext";
 
 /**
  * Per-member study progress panel.
@@ -23,7 +24,8 @@ function parseSummary(member) {
 	}
 }
 
-export default function StudyGroupProgress({ appController }) {
+export default function StudyGroupProgress() {
+	const appController = useAppController();
 	const activeGroup = appController.states.studyGroup.activeGroup;
 	const members = activeGroup?.members || [];
 	const memberMap = activeGroup?.memberMap || {};

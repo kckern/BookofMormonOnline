@@ -5,6 +5,7 @@ import { MemoryRouter, Route } from "react-router-dom";
 import { lookupReference } from "scripture-guide";
 import ReadScripture from "../Read";
 import BoMOnlineAPI from "../../../models/BoMOnlineAPI";
+import { AppControllerProvider } from "src/contexts/AppControllerContext";
 
 jest.mock("../../../models/BoMOnlineAPI", () => ({
   __esModule: true,
@@ -42,11 +43,13 @@ const appController = { functions: { setPopUp: jest.fn() } };
 
 const renderRead = (path) =>
   render(
-    <MemoryRouter initialEntries={[path]}>
-      <Route path="/read/:bookCh?/:verseNum?">
-        <ReadScripture appController={appController} />
-      </Route>
-    </MemoryRouter>
+    <AppControllerProvider appController={appController}>
+      <MemoryRouter initialEntries={[path]}>
+        <Route path="/read/:bookCh?/:verseNum?">
+          <ReadScripture />
+        </Route>
+      </MemoryRouter>
+    </AppControllerProvider>
   );
 
 beforeEach(() => {

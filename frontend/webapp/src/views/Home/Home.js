@@ -9,6 +9,7 @@ import trophy from "../User/svg/trophy.svg";
 import { loadHomeFeed } from "src/models/dummyData/study";
 import { ImageInFeed } from "src/views/_Common/Study/StudyInFeed";
 import { HomeFeed } from "./Feed.js";
+import { useAppController } from "src/contexts/AppControllerContext";
 
 import ReactTooltip from "react-tooltip";
 import "./StudyGroupFeed.css";
@@ -60,7 +61,7 @@ const privateStyle = (nickname) => {
   };
 };
 
-function Home({ appController }) {
+function Home() {
   const match = useRouteMatch();
   const params = match.params;
   const base = match.url.split("/")[1];
@@ -80,20 +81,17 @@ function Home({ appController }) {
 
   useEffect(() => (document.title = label("home_title")), []);
 
-  //{(appController.states.user.user) ? <ProgressPanel appController={appController} /> : <HomeSignIn appController={appController} />}
   return false ? null : (
     <div className="home container">
       <div className="leftPanelScroll noselect">
         <GroupBrowser
-          appController={appController}
           activeGroup={activeGroup}
           setActiveGroup={setActiveGroup}
         />
       </div>
       <div className="rightPanelScroll">
-        {!activeGroup && <ReadingPlan appController={appController} slug={"cfm2024"}/>}
+        {!activeGroup && <ReadingPlan slug={"cfm2024"}/>}
         <HomeFeed
-          appController={appController}
           activeGroup={activeGroup}
           messageId={activeMessage}
           setActiveGroup={setActiveGroup}
@@ -104,7 +102,8 @@ function Home({ appController }) {
   );
 }
 
-function GroupBrowser({ appController, activeGroup, setActiveGroup }) {
+function GroupBrowser({ activeGroup, setActiveGroup }) {
+  const appController = useAppController();
   const [groupListData, setData] = useState([]);
   const [leaders, setLeaders] = useState([]);
   const [finishers, setFinishers] = useState([]);
@@ -193,7 +192,6 @@ function GroupBrowser({ appController, activeGroup, setActiveGroup }) {
                     <h3>{label(item.grouping)}</h3>
                   ) : null}
                   <GroupCard
-                    appController={appController}
                     groupData={item}
                     activeGroup={activeGroup}
                     setActiveGroup={setActiveGroup}
@@ -347,7 +345,7 @@ function LeaderBoard({ leaders }) {
   );
 }
 
-function GroupCard({ groupData, appController, activeGroup, setActiveGroup }) {
+function GroupCard({ groupData, activeGroup, setActiveGroup }) {
   groupData.members = (groupData.members || []).filter(
     (m) => m.nickname !== "StudyBuddy",
   ); //TODO get metadata variables
@@ -408,7 +406,6 @@ function GroupCard({ groupData, appController, activeGroup, setActiveGroup }) {
               ))}
             </div>
             <GroupCallToAction
-              appController={appController}
               groupData={groupData}
             />
           </div>
@@ -418,7 +415,8 @@ function GroupCard({ groupData, appController, activeGroup, setActiveGroup }) {
   );
 }
 
-export function GroupCallToAction({ appController, groupData, joinlabel }) {
+export function GroupCallToAction({ groupData, joinlabel }) {
+  const appController = useAppController();
   const myId = appController.states.user.user;
   const list = appController.states.studyGroup.groupList.map((c) => c.url);
   const amMember = list.includes(groupData.url);

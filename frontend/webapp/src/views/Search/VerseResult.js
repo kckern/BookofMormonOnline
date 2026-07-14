@@ -4,8 +4,10 @@ import { assetUrl } from "src/models/BoMOnlineAPI";
 import { label } from "src/models/Utils";
 import { renderHighlighted } from "./highlight";
 import { useHighlightRange } from "./highlightApi";
+import { useAppController } from "src/contexts/AppControllerContext";
 
-export default function VerseResult({ item, keyword, semantic, appController, keywordRender }) {
+export default function VerseResult({ item, keyword, semantic, keywordRender }) {
+  const appController = useAppController();
   const history = useHistory();
   const { reference, text, slug, page, section, speaker, voice } = item;
   const [range, ref] = useHighlightRange(keyword, text, !!semantic);

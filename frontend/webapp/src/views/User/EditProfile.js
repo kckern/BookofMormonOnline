@@ -13,9 +13,10 @@ import {
 } from "reactstrap";
 import { label } from "src/models/Utils";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
+import { useAppController } from "src/contexts/AppControllerContext";
 
-export default function EditProfile({ setProfileState, appController }) {
-
+export default function EditProfile({ setProfileState }) {
+    const appController = useAppController();
 
     const editProfile = ()=>{
 

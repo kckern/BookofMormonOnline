@@ -37,8 +37,10 @@ import town from "../People/svg/town.svg";
 import geographic_feature from "../People/svg/geographic_feature.svg";
 import geo_other from "../People/svg/other.svg";
 import { SearchPopUp } from "../_Common/SearchPopUp"
+import { useAppController } from "src/contexts/AppControllerContext";
 
-function PlacesComponent({ appController }) {
+function PlacesComponent() {
+  const appController = useAppController();
   useEffect(() => document.title = label("menu_places") + " | " + label("home_title"), [])
   const [PlaceList, setPlaceList] = useState(null)
 
@@ -152,7 +154,7 @@ function PlacesComponent({ appController }) {
     <div className='container noselect' style={{ display: "block" }}>
       <div id='page'>
         <h3 className='title lg-4 text-center'>{label("title_places")}</h3>
-        <PlaceFilters  setFilter={setFilter} placeFilters={placeFilters} appController={appController}/>
+        <PlaceFilters  setFilter={setFilter} placeFilters={placeFilters} />
         <div className='PlaceList'>
           <Masonry
             breakpointCols={breakpointColumnsObj}
@@ -207,8 +209,9 @@ function PlacesComponent({ appController }) {
 
 export default PlacesComponent
 
-export function PlaceFilters({ appController, setFilter, placeFilters })
+export function PlaceFilters({ setFilter, placeFilters })
 {
+  const appController = useAppController();
 
   const [isOpen,setIsOpen] = useState(false);
   const [initSearchString,setInitSearchString] = useState('')

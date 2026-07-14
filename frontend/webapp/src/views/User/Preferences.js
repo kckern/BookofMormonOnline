@@ -16,12 +16,14 @@ import illustrations from "src/views/_Common/svg/illustrations.svg"
 import preferences from "src/views/_Common/svg/preferences.svg"
 import sound from "src/views/_Common/svg/sound.svg"
 import facsimiles from "src/views/_Common/svg/fax.svg"
+import { useAppController } from "src/contexts/AppControllerContext";
 
 // Feature flag - messaging disabled until Phase 5 data migration
 const USE_MESSENGER = isMessengerEnabled();
 
 
-export default function User({ appController }) {
+export default function User() {
+    const appController = useAppController();
 
     useEffect(()=>document.title = label("preferences") + " | " + label("home_title"),[])
 
@@ -260,7 +262,7 @@ export default function User({ appController }) {
                 </h5>
 
 
-                <Publications appController={appController} pubs={pubs} toggleCommentary={toggleCommentary} toggleControversialCommentary={toggleControversialCommentary}/>
+                <Publications pubs={pubs} toggleCommentary={toggleCommentary} toggleControversialCommentary={toggleControversialCommentary}/>
 
                 {(!lang || lang==="en") && <><hr/><h5 className="title">
                     <Label className="fax_select"><img src={facsimiles} />
@@ -286,7 +288,8 @@ export default function User({ appController }) {
 }
 
 
-function Publications({appController,pubs,toggleControversialCommentary,toggleCommentary}){
+function Publications({pubs,toggleControversialCommentary,toggleCommentary}){
+    const appController = useAppController();
 
     if(!pubs) return false;
 

@@ -14,8 +14,11 @@ import MapContents from "./MapContents"
 import {MapPanel,getPlaceInfo} from "./MapPanel.js"
 import {  assetUrl } from "../../models/BoMOnlineAPI"
 import { SearchPopUp } from "../_Common/SearchPopUp.js"
-function MapContainer({ appController }) {
+import { useAppController } from "src/contexts/AppControllerContext";
+import { MapProvider, useMapController } from "src/contexts/MapContext";
+function MapContainer() {
 
+  const appController = useAppController();
   const params = useParams(),
     [currentMap, setCurrentMap] = useState(null),
     [mapName, setMapName] = useState(""),
@@ -26,6 +29,7 @@ function MapContainer({ appController }) {
     [mapCenter, setMapCenter] = useState([0,0]),
     [searching,setSearching] = useState(null),
     [initSearchLetter, setInitSearchLetter] = useState(null),
+    [selectedStory, setSelectedStory] = useState(null),
     [panelContents, setPanelContents] = useState({});
 
 
@@ -121,6 +125,8 @@ function MapContainer({ appController }) {
   const mapController = {
     setPanelContents,
     panelContents,
+    selectedStory,
+    setSelectedStory,
     getMap,
     mapName,
     placeList,
@@ -153,13 +159,13 @@ function MapContainer({ appController }) {
 }
 
 
-  return (  <>
+  return (  <MapProvider mapController={mapController}>
       <div className={`mappanel_wrapper ${!!panelContents.slug ? "open" : ""}`}>
-        <MapTypes getMap={getMap} mapName={mapName} mapController={mapController} />
-        <MapPanel mapController={mapController}   />
-        <MapToolTip {...mapController} />
+        <MapTypes getMap={getMap} mapName={mapName} />
+        <MapPanel   />
+        <MapToolTip />
         {placeList && currentMap?.places ? <>
-          <MapContents  mapController={mapController}  />
+          <MapContents />
           <SearchPopUp
           placeholder="search_for_a_place"
           preLoadData={placeList}
@@ -172,12 +178,14 @@ function MapContainer({ appController }) {
           </>   : <Loader />  }
 
       </div>
-    </>
+    </MapProvider>
   )
 }
 
 
-function MapToolTip({ tooltip, appController, panelContents }) {
+function MapToolTip() {
+  const mapController = useMapController();
+  const { tooltip, appController, panelContents } = mapController;
   const { x, y, w,h, slug, moving } = tooltip;
   if(!slug || moving) return null;
   const placeInfo = getPlaceInfo(slug, appController);

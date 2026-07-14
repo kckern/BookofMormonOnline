@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { assetUrl } from "models/BoMOnlineAPI";
 import { isMobile, label, tokenImage } from "models/Utils.js";
 import UserAvatar from "src/components/UserAvatar";
+import { useAppController } from "src/contexts/AppControllerContext";
 
 import "./Header.css";
 import { StudyGroupBar } from "./Study/StudyGroupBar.js";
@@ -17,7 +18,8 @@ import yellow from "src/views/User/svg/yellow.svg";
 // Feature flag - messaging disabled until Phase 5 data migration
 const USE_MESSENGER = isMessengerEnabled();
 
-function Header({ appController, isReady }) {
+function Header({ isReady }) {
+  const appController = useAppController();
   let dynamicContent = null;
   let homeLink = (
     <div className="headerTitle">
@@ -27,14 +29,14 @@ function Header({ appController, isReady }) {
   if (isReady && appController.states?.user?.user) {
     dynamicContent = (
       <>
-        <Notifications appController={appController} />
-        {USE_MESSENGER && <StudyGroupBar appController={appController} />}
+        <Notifications />
+        {USE_MESSENGER && <StudyGroupBar />}
       </>
     );
     homeLink = USE_MESSENGER ? <Link to="/home">{homeLink}</Link> : homeLink;
   }
 
-  if (isMobile() && appController) return <MobileHeader appController={appController} />
+  if (isMobile() && appController) return <MobileHeader />
 
   return (
     <div
@@ -64,7 +66,8 @@ function Header({ appController, isReady }) {
 export default Header;
 
 
-function MobileHeader({ appController }) {
+function MobileHeader() {
+  const appController = useAppController();
   let tokenImg = tokenImage();
    let loadingImg = `${assetUrl}/interface/gif/circleload`;
 
@@ -157,7 +160,8 @@ function MobileHeader({ appController }) {
   )
 }
 
-function Notifications({ appController }) {
+function Notifications() {
+  const appController = useAppController();
   const notificationOpen = appController.states.notification.isNotificationOpen;
   const unreadCount = appController.states.notification.unreadCount || 0;
   const baseLabel = label("notifications") || "Notifications";
@@ -168,7 +172,7 @@ function Notifications({ appController }) {
   return (
     <>
       {notificationOpen ? (
-        <NotificationList appController={appController} />
+        <NotificationList />
       ) : null}
       <button
         type="button"
@@ -191,7 +195,8 @@ function Notifications({ appController }) {
   );
 }
 
-function NotificationList({ appController }) {
+function NotificationList() {
+  const appController = useAppController();
   const { items = [], loading } = appController.states.notification;
   const hasUnread = items.some((n) => !n.is_read);
 

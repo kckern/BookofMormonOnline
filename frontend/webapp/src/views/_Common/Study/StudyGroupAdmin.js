@@ -34,8 +34,10 @@ import ban from "src/views/_Common/Study/svg/ban.svg";
 import { generateGroupHash } from "./StudyGroupSelect";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import { toast } from "react-toastify";
+import { useAppController } from "src/contexts/AppControllerContext";
 
-export default function StudyGroupAdmin({ appController }) {
+export default function StudyGroupAdmin() {
+  const appController = useAppController();
   const [group, setGroup] = useState(
     appController.states.studyGroup.activeGroup,
   );
@@ -185,7 +187,6 @@ export default function StudyGroupAdmin({ appController }) {
               imgUrl={groupImage.img}
               setOpenModal={setOpenModal}
               openModal={openModal}
-              appController={appController}
               isGroup={true}
               setProfileImage={setGroupImage}
             />
@@ -236,7 +237,7 @@ export default function StudyGroupAdmin({ appController }) {
             </div>
           </div>
         </CardBody>
-        <RequestManagement appController={appController} />
+        <RequestManagement />
         <CardHeader>
           <h5 className={"title"}>
             <img src={members} /> {label("manage_group_members")}
@@ -334,7 +335,6 @@ export default function StudyGroupAdmin({ appController }) {
           </div>
         </CardBody>
         <BannedMembers
-          appController={appController}
           group={group}
           setGroup={setGroup}
         />
@@ -343,7 +343,8 @@ export default function StudyGroupAdmin({ appController }) {
   );
 }
 
-function BannedMembers({ appController, group, setGroup }) {
+function BannedMembers({ group, setGroup }) {
+  const appController = useAppController();
   const [bannedMembers, setBannedMembers] = useState([]);
 
   // Re-fetch whenever the group object changes (a ban/refresh produces a fresh
@@ -400,7 +401,8 @@ function BannedMembers({ appController, group, setGroup }) {
   );
 }
 
-function RequestManagement({ appController }) {
+function RequestManagement() {
+  const appController = useAppController();
   const token = appController.states.user.token;
   const group = appController.states.studyGroup.activeGroup;
   const data = testJSON(group.data) ? JSON.parse(group.data) : { requests: [] };
@@ -429,7 +431,6 @@ function RequestManagement({ appController }) {
           <Requester
             key={userObj.user_id}
             userObj={userObj}
-            appController={appController}
           />
         ))}
       </CardBody>
@@ -437,7 +438,8 @@ function RequestManagement({ appController }) {
   );
 }
 
-function Requester({ appController, userObj }) {
+function Requester({ userObj }) {
+  const appController = useAppController();
   const [exits, setExists] = useState(true);
   const [waiting, setWaiting] = useState(false);
 

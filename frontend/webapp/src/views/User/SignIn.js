@@ -19,13 +19,13 @@ import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import SocialSignIn from "./SocialSignIn";
 import "./SignIn.css"
 import { Spinner } from "../_Common/Loader";
+import { useAppController } from "src/contexts/AppControllerContext";
 
 
 
 
-export default function SignIn({  appController }) {
-
-
+export default function SignIn() {
+  const appController = useAppController();
 
   const [signUp, setSignUp] = useState(false);
   const [message, setMessage] = useState(null);
@@ -57,7 +57,7 @@ export default function SignIn({  appController }) {
     });
   }
 
-  if (signUp) return (<div className="signUpWrapper"><SignUp username={signUp} cancel={() => setSignUp(false)} appController={appController} /></div>)
+  if (signUp) return (<div className="signUpWrapper"><SignUp username={signUp} cancel={() => setSignUp(false)} /></div>)
   if(loading) return <Spinner/>
   return <>
       <div className="loginGroup">
@@ -96,6 +96,6 @@ export default function SignIn({  appController }) {
         {message ? <Alert color="danger" fade={true}>⚠️ {label(message)}</Alert> : null}
       </div>
 
-    <SocialSignIn appController={appController} cancel={() => { }} setLoading={setLoading} /></>
+    <SocialSignIn cancel={() => { }} setLoading={setLoading} /></>
 }
 //{process.env.GOOGLE_CLIENTID}  {process.env.FACEBOOK_APPID}

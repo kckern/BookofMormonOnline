@@ -13,7 +13,7 @@ import Bible from "./Bible/Bible.js"
 import Chiasmus from "./Chiasmus/Chiasmus.js"
 import Names from "./Names/Names.js"
 
-function Analysis({appController}) {
+function Analysis() {
 
 
     const match = useRouteMatch();
@@ -24,7 +24,7 @@ function Analysis({appController}) {
     if(match.params.value?.startsWith("caractors")) return <Caractors/>;
     if(match.params.value?.startsWith("bible")) return <Bible/>;
     if(match.params.value?.startsWith("chiasmus")) return <Chiasmus/>;
-    if(match.params.value?.startsWith("names")) return <Names appController={appController}/>;
+    if(match.params.value?.startsWith("names")) return <Names/>;
 
     const breakpointColumnsObj = {
         default: 4,

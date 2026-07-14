@@ -13,7 +13,7 @@ import { renderHighlighted } from "./highlight";
 import "./Search.css";
 
 
-function SearchComponent({ appController }) {
+function SearchComponent() {
 
   const history = useHistory();
   const match = useRouteMatch();
@@ -91,7 +91,7 @@ function SearchComponent({ appController }) {
         setContent(<div><h3 className="title lg-4 text-center">{label("x_search_results_for_y", [count,<span>{keyword}</span>])}</h3>
           {verses.map((item, i) => (
             <VerseResult key={item.slug || i} item={item} keyword={keyword} semantic={semantic}
-              appController={appController} keywordRender={(t) => highlight(keyword, t)} />
+              keywordRender={(t) => highlight(keyword, t)} />
           ))}
           <ResultGroup label={label("menu_people") || "People"} cards={r.searchAll.people} kind="person" query={keyword} semantic={semantic} />
           <ResultGroup label={label("menu_places") || "Places"} cards={r.searchAll.places} kind="place" query={keyword} semantic={semantic} />

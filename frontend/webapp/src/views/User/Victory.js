@@ -22,8 +22,10 @@ import {
 } from "reactstrap";
 
 import "./Victory.css"
+import { useAppController } from "src/contexts/AppControllerContext";
 momentDurationFormatSetup(moment);
-export function Victory({ appController, context }) {
+export function Victory({ context }) {
+    const appController = useAppController();
     const { width, height } = useWindowSize();
 
     const [show, setShow] = useState(true);

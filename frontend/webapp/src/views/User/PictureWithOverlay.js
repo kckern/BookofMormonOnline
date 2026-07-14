@@ -4,15 +4,16 @@ import ImageChanger from "./ImageChanger";
 import "./PictureWithOverlay.css";
 import { label } from "src/models/Utils";
 import UserAvatar from "src/components/UserAvatar";
+import { useAppController } from "src/contexts/AppControllerContext";
 
 function PictureWithOverlay({
   imgUrl,
   setOpenModal,
   openModal,
-  appController,
   isGroup,
   setProfileImage,
 }) {
+  const appController = useAppController();
   const [showOverlay, setShowOverlay] = useState(false);
   const userId = appController.states?.user?.user;
   
@@ -38,7 +39,6 @@ function PictureWithOverlay({
       </div>
       {openModal && (
         <ImageChanger
-          appController={appController}
           setOpenModal={setOpenModal}
           setShowOverlay={setShowOverlay}
           isGroup={isGroup}

@@ -17,6 +17,8 @@ import studySVG from "../_Common/svg/study.svg";
 import notesSVG from "../_Common/svg/notes.svg";
 import faxSVG from "src/views/User/svg/oldbook.svg";
 import { determineLanguage, label } from "../../models/Utils";
+import { useNarration } from "src/contexts/NarrationContext";
+import { TextContentProvider } from "src/contexts/TextContentContext";
 
 /* ------------------------------------------- */
 /* -------------- STATE CHANGES  ------------- */
@@ -82,7 +84,8 @@ export function addHighlightTagSelectively(newString,tagArray)
 }
 
 
-export default function TextContent({ content, narrationController, isQuote }) {
+export default function TextContent({ content, isQuote }) {
+  const narrationController = useNarration();
   const [textContentHighlights, setTextContentHighlights] = useState([]);
   const [quoteContentHighlights, setQuoteContentHighlights] = useState([]);
   const addHighlight = (string, isQuote) => {
@@ -161,7 +164,6 @@ export default function TextContent({ content, narrationController, isQuote }) {
                   <TextContent
                     key={quote.slug}
                     content={quote}
-                    narrationController={narrationController}
                     isQuote={true}
                   />
                 );
@@ -260,8 +262,8 @@ export default function TextContent({ content, narrationController, isQuote }) {
     textContentController
   );
   let isOpen = textContentController.states.isOpen || textContentController.states.isHeaderOpen;
-  let CommentaryBubblesContainer = isOpen && !isQuote && <CommentaryBubbles textContentController={textContentController} /> || null;
-  let ImageBubblesContainer = isOpen && !isQuote &&   <ImageBubbles textContentController={textContentController} /> || null;
+  let CommentaryBubblesContainer = isOpen && !isQuote && <CommentaryBubbles /> || null;
+  let ImageBubblesContainer = isOpen && !isQuote &&   <ImageBubbles /> || null;
 
 
   let cardWithoutNestedBlocks = true;
@@ -278,6 +280,7 @@ export default function TextContent({ content, narrationController, isQuote }) {
 
   let openClass =  (textContentController.states.isOpen || textContentController.states.isHeaderOpen) ? " open" : "";
   return (
+    <TextContentProvider textContentController={textContentController}>
     <Col
       md={isQuote ? 12 : 6}
       textid={textContentController.data.slug}
@@ -331,7 +334,7 @@ export default function TextContent({ content, narrationController, isQuote }) {
                 </>
               )}
             </a>
-            <TextItemCounters narrationController={narrationController}/>
+            <TextItemCounters />
           </CardHeader>
           <Collapse
             role="tabpanel"
@@ -352,7 +355,6 @@ export default function TextContent({ content, narrationController, isQuote }) {
           </Collapse>
           <Comments
             isOpen={textContentController.states.isOpen}
-            pageController={narrationController.pageController}
             setCommentHighlights={
               narrationController.functions.setCommentHighlights
             }
@@ -366,12 +368,14 @@ export default function TextContent({ content, narrationController, isQuote }) {
         </Card>
       </div>
     </Col>
+    </TextContentProvider>
   );
 }
 
 
-function TextItemCounters({narrationController})
+function TextItemCounters()
 {
+  const narrationController = useNarration();
   let appController = narrationController?.pageController?.appController;
   const {text} = narrationController?.data;
 	const {faxData} = narrationController?.states;

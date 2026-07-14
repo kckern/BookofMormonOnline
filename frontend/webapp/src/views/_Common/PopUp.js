@@ -32,8 +32,10 @@ import { addHighlightTagSelectively } from "../Page/TextContent";
 import Commentary from "./Commentary";
 import { ScripturePanelSingle } from "../Page/Narration";
 import { determineLanguage } from "../../models/Utils";
+import { useAppController } from "src/contexts/AppControllerContext";
 
-export function Loading({ type, appController, callingAPI }) {
+export function Loading({ type, callingAPI }) {
+  const appController = useAppController();
   return (
     <div
       id="popUp"
@@ -66,7 +68,8 @@ function CommentsPlaceholder() {
   return null;
 }
 
-function PopUp({ appController }) {
+function PopUp() {
+  const appController = useAppController();
   // if (appController.states.popUp.open !== true) return (<></>);
   const [currentKeyVal, setCurrentKeyVal] = useState(null);
 
@@ -94,31 +97,32 @@ function PopUp({ appController }) {
   }, [appController.states.popUp.type, appController.states.popUp.activeId]);
   if (!appController.popUpData) appController.popUpData = {};
 
-  if (isMobile()) return <MobileDrawer appController={appController} />;
+  if (isMobile()) return <MobileDrawer />;
   if (!appController.states.popUp.open) return null;
 
   if (appController.states.popUp.type === "commentary")
-    return <Commentary appController={appController} />;
+    return <Commentary />;
   if (appController.states.popUp.type === "people")
-    return <Person appController={appController} />;
+    return <Person />;
   if (
     appController.states.popUp.type === "places" ||
     appController.states.popUp.type === "place"
   )
-    return <Place appController={appController} />;
+    return <Place />;
   if (appController.states.popUp.type === "object")
-    return <ObjectPopUp appController={appController} />;
+    return <ObjectPopUp />;
   if (appController.states.popUp.type === "victory")
-    return <Victory appController={appController} />;
+    return <Victory />;
   if (appController.states.popUp.type === "history")
-    return <History appController={appController} />;
+    return <History />;
 
   return <></>;
 }
 
 export default PopUp;
 
-export function LegalNotice({ appController, commentaryData, showLegal }) {
+export function LegalNotice({ commentaryData, showLegal }) {
+  const appController = useAppController();
   const [markdown, setMarkdown] = useState(null);
   useEffect(() => {
     BoMOnlineAPI(
@@ -160,8 +164,9 @@ export function LegalNotice({ appController, commentaryData, showLegal }) {
   );
 }
 
-function Person({ appController }) {
+function Person() {
 
+  const appController = useAppController();
   const [PopUpRef,setPopUpRef] = useState(null)
 
   if (
@@ -185,7 +190,7 @@ function Person({ appController }) {
           .map((i) => i.person.slug) || [];
       BoMOnlineAPI({ person: slugs }, { useCache: ["person"] });
     });
-    return <Loading type="Person" appController={appController} />;
+    return <Loading type="Person" />;
   }
 
   const handleClick = (id, e) => {
@@ -200,7 +205,7 @@ function Person({ appController }) {
       .filter(p => p.slug.startsWith(activeId));
     if (candidates.length === 1) {
       appController.functions.setPopUp({ type: "people", ids: [candidates[0].slug], underSlug: "people" });
-      return <Loading type="Person" appController={appController} />;
+      return <Loading type="Person" />;
     }
     return (
       <div id="popUp" className="card popupwindow" style={{ top: appController.states.popUp.top }}>
@@ -283,11 +288,10 @@ function Person({ appController }) {
                 </div>
 
                 <h4>{label("relationships")}</h4>
-                <Relationships data={person?.relations} appController={appController}/>
+                <Relationships data={person?.relations} />
                 <ReferenceList
                   index={person.index}
                   setPopupRef={setPopUpRef}
-                  appController={appController}
                 />
               </div>
             </div>
@@ -302,8 +306,9 @@ function Person({ appController }) {
 
 
 
-function Place({ appController }) {
+function Place() {
 
+  const appController = useAppController();
   const [showOptions, setShowOptions] = useState(false);
   const [PopUpRef,setPopUpRef] = useState(null)
   const [showMapsDropDown, showMapsDropDownSet] = useState(false),
@@ -320,7 +325,7 @@ function Place({ appController }) {
         setPopUpRef(null);
       },
     );
-    return <Loading type="Place" appController={appController} />;
+    return <Loading type="Place" />;
   }
 
   const onSelectMapType = (e, map, place) => {
@@ -342,7 +347,7 @@ function Place({ appController }) {
       .filter(p => p.slug.startsWith(activeId));
     if (candidates.length === 1) {
       appController.functions.setPopUp({ type: "places", ids: [candidates[0].slug], underSlug: "places" });
-      return <Loading type="Place" appController={appController} />;
+      return <Loading type="Place" />;
     }
     return (
       <div id="popUp" className="card popupwindow" style={{ top: appController.states.popUp.top, left: appController.states.popUp.left }}>
@@ -445,7 +450,6 @@ function Place({ appController }) {
 
               <ReferenceList
                 index={place.index}
-                appController={appController}
                 setPopupRef={setPopUpRef}
               />
             </div>
@@ -458,7 +462,8 @@ function Place({ appController }) {
   );
 }
 
-function ObjectPopUp({ appController }) {
+function ObjectPopUp() {
+  const appController = useAppController();
   const [PopUpRef, setPopUpRef] = useState(null);
   const activeId = appController.states.popUp.activeId;
 
@@ -482,7 +487,7 @@ function ObjectPopUp({ appController }) {
       }
       setPopUpRef(null);
     });
-    return <Loading type="Object" appController={appController} />;
+    return <Loading type="Object" />;
   }
 
   const obj = appController.popUpData[activeId];
@@ -491,7 +496,7 @@ function ObjectPopUp({ appController }) {
       .filter(o => o.slug.startsWith(activeId));
     if (candidates.length === 1) {
       appController.functions.setPopUp({ type: "object", ids: [candidates[0].slug], underSlug: "objects" });
-      return <Loading type="Object" appController={appController} />;
+      return <Loading type="Object" />;
     }
     return (
       <div id="popUp" className="card popupwindow" style={{ top: appController.states.popUp.top, left: appController.states.popUp.left }}>
@@ -608,7 +613,6 @@ function ObjectPopUp({ appController }) {
               <ReferenceList
                 index={obj.index}
                 setPopupRef={setPopUpRef}
-                appController={appController}
               />
             </div>
           </div>
@@ -620,7 +624,8 @@ function ObjectPopUp({ appController }) {
   );
 }
 
-function Relationships({ data,appController }) {
+function Relationships({ data }) {
+  const appController = useAppController();
   const personRow = (person, i) => {
     //determine split
     const namePosition = person.relation.indexOf("$1") ? "back" : "front";
@@ -689,7 +694,7 @@ function Relationships({ data,appController }) {
   );
 }
 
-function ReferenceList({ index, appController,setPopupRef }) {
+function ReferenceList({ index, setPopupRef }) {
   setPopupRef || (setPopupRef = ()=>{})
   return (
     <>
@@ -729,7 +734,8 @@ export const displayDate = (date) => {
   );
 };
 
-function History({ appController }) {
+function History() {
+  const appController = useAppController();
   const [doc, setData] = useState(null);
 
   let slug = appController.states.popUp.ids;
@@ -749,7 +755,7 @@ function History({ appController }) {
     });
   }, [slug]);
 
-  if (!doc) return <Loading appController={appController} type="history" />;
+  if (!doc) return <Loading type="history" />;
 
   return (
     <div

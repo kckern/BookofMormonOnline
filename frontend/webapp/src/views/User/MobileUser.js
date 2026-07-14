@@ -20,8 +20,10 @@ import { numericLoad, ProgressBar, progressShell } from "./ProgressBox.js";
 import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
 import { CircularProgressbar } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
+import { useAppController } from "src/contexts/AppControllerContext";
 
-export default function MobileUser({ appController }) {
+export default function MobileUser() {
+  const appController = useAppController();
   let tokenToLoad = appController.states.user.token;
   const [activeTab, setActiveTab] = useState(
     appController.states.user.social ? "2" : "1",
@@ -77,17 +79,16 @@ export default function MobileUser({ appController }) {
           <TabPane tabId="1">
             <Row>
               <ProfileItems
-                appController={appController}
                 studySummary={studySummary}
                 setHistoryView={() => {}}
               />
             </Row>
           </TabPane>
           <TabPane tabId="2">
-            <MobileProgressBox appController={appController} />
+            <MobileProgressBox />
           </TabPane>
           <TabPane tabId="3">
-            <Preferences appController={appController} />
+            <Preferences />
           </TabPane>
         </TabContent>
       </div>
@@ -95,7 +96,8 @@ export default function MobileUser({ appController }) {
   );
 }
 
-function MobileProgressBox({ appController }) {
+function MobileProgressBox() {
+  const appController = useAppController();
   let tokenToLoad = appController.states.user.token;
   let userToLoad = appController.states.user.user;
   let queryBy = userToLoad || tokenToLoad;

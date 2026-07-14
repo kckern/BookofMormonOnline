@@ -19,6 +19,8 @@ import { Link } from "react-router-dom";
 import ReactTooltip from "react-tooltip";
 import classNames from "classnames";
 import { generateReference, detectReferences, lookupReference } from 'scripture-guide';
+import { usePageController } from "src/contexts/PageControllerContext";
+import { NarrationProvider, useNarration } from "src/contexts/NarrationContext";
 
 function ChronoRow({ chrono }) {
   chrono = chronoLabel(chrono);
@@ -112,7 +114,8 @@ function reducer(narrationController, input) {
   return { ...narrationController };
 }
 
-function Narration({ rowData, pageController, addHighlight }) {
+function Narration({ rowData, addHighlight }) {
+  const pageController = usePageController();
   const preLoadFax = () => {
     if (narrationController.states.faxList === undefined) return false;
     let m = narrationController.data.text.slug.match(/([a-z-]+)\/(\d+)$/);
@@ -392,26 +395,25 @@ function Narration({ rowData, pageController, addHighlight }) {
   if (!pageController?.states?.progress?.count) progress = "unknown";
 
   return (
-    <div className="card-body">
-      {/* CONTENT ROW */}
-      <ChronoRow chrono={narrationController.data.text.chrono} />
-      <div className="row" onMouseEnter={handleLocationChange}>
-        <div className="col-sm-6 narration">
-          <div onMouseUp={handleSelection} className={progress + " narration_item"}>
-            {narrationController.components.description}
+    <NarrationProvider narrationController={narrationController}>
+      <div className="card-body">
+        {/* CONTENT ROW */}
+        <ChronoRow chrono={narrationController.data.text.chrono} />
+        <div className="row" onMouseEnter={handleLocationChange}>
+          <div className="col-sm-6 narration">
+            <div onMouseUp={handleSelection} className={progress + " narration_item"}>
+              {narrationController.components.description}
+            </div>
+            <ImagePanel />
+            <FacsimilePanel />
+            <PeoplePlacePanel />
+            <NotesPanel />
+            <ScripturePanel />
           </div>
-          <ImagePanel narrationController={narrationController} />
-          <FacsimilePanel narrationController={narrationController} />
-          <PeoplePlacePanel narrationController={narrationController} />
-          <NotesPanel narrationController={narrationController} />
-          <ScripturePanel narrationController={narrationController} />
+          <TextContent content={narrationController.data.text} />
         </div>
-        <TextContent
-          content={narrationController.data.text}
-          narrationController={narrationController}
-        />
       </div>
-    </div>
+    </NarrationProvider>
   );
 }
 
@@ -432,7 +434,8 @@ function idsWithComments(type, narrationController) {
   return idsWithComments;
 }
 
-function LightBox({ narrationController, setOpenLightBox, imgClicker }) {
+function LightBox({ setOpenLightBox, imgClicker }) {
+  const narrationController = useNarration();
   const activeImageId = narrationController.states.activeImageId;
   const activeImg = document.querySelector(`.img-${activeImageId}`);
   const [isOpen, setIsOpen] = useState(false);
@@ -510,7 +513,8 @@ function LightBox({ narrationController, setOpenLightBox, imgClicker }) {
   );
 }
 
-function ImagePanel({ narrationController }) {
+function ImagePanel() {
+  const narrationController = useNarration();
   const [openLightBox, setOpenLightBox] = useState(false);
   const [marginTop, setMarginTop] = useState(0);
   useEffect(() => {
@@ -636,12 +640,10 @@ function ImagePanel({ narrationController }) {
         </a>
       </div>
       <Comments
-        pageController={narrationController.pageController}
         linkData={{ img: narrationController.states.activeImageId }}
       />
       {openLightBox && (
         <LightBox
-          narrationController={narrationController}
           setOpenLightBox={setOpenLightBox}
           imgClicker={imgClicker}
         />
@@ -650,7 +652,8 @@ function ImagePanel({ narrationController }) {
   );
 }
 
-function PeoplePlacePanel({ narrationController }) {
+function PeoplePlacePanel() {
+  const narrationController = useNarration();
   const states = narrationController.states;
   const peoplePlaces = states.peoplePlaces || {};
 
@@ -717,7 +720,8 @@ function PeoplePlacePanel({ narrationController }) {
 }
 
 
-function NotesPanel({ narrationController }) {
+function NotesPanel() {
+  const narrationController = useNarration();
   const states = narrationController.states;
   const notes = states.notes || [];
 
@@ -773,8 +777,8 @@ function SingleNoteItem({item}) {
 
 }
 
-function ScripturePanel({ narrationController }) {
-
+function ScripturePanel() {
+  const narrationController = useNarration();
   const states = narrationController.states;
   const {refs} = states?.scriptures || {refs:[]};
 
@@ -940,7 +944,8 @@ export function ScripturePanelSingle({ scriptureData, closeButton, onClose, setP
   );
 }
 
-function FacsimilePanel({ narrationController }) {
+function FacsimilePanel() {
+  const narrationController = useNarration();
   const [imgHW, setHW] = useState({ h: 0, w: 0 });
   const [position, setPosition] = useState("center center");
   useEffect(() => {
@@ -1090,7 +1095,6 @@ function FacsimilePanel({ narrationController }) {
         alt="fax"
       ></div>
       <Comments
-        pageController={narrationController.pageController}
         linkData={{ fax: num + "." + narrationController.states.activeFax }}
       />
     </div>

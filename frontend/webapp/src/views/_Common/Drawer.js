@@ -22,9 +22,11 @@ import { StudyGroupThread } from "./Study/StudyChat";
 import { getDetectedScripturesHtml, getHtmlScriptureLinkParserOptions, useIsMounted, useTimeouts } from "./ViewUtils";
 import { ScripturePanelSingle } from "../Page/Narration";
 import { findAncestor } from "../../models/Utils";
+import { useAppController } from "src/contexts/AppControllerContext";
 
 
-export function MobileDrawer({ appController }) {
+export function MobileDrawer() {
+    const appController = useAppController();
     const [localOpen, setLocalOpen] = useState(appController.states.popUp.open);
 
     const setSwipe = () => {
@@ -70,39 +72,41 @@ export function MobileDrawer({ appController }) {
                 setTimeout(appController.functions.closePopUp, 500);
             }}
         >
-            <DrawerContent appController={appController} setLocalOpen={setLocalOpen} />
+            <DrawerContent setLocalOpen={setLocalOpen} />
         </Drawer>
     )
 }
 
-function DrawerContent({ appController, setLocalOpen }) {
+function DrawerContent({ setLocalOpen }) {
+    const appController = useAppController();
     const type = appController.states.popUp.type;
     const id = appController.states.popUp.activeId;
     if (type === "commentary")
-        return <CommentaryDrawer appController={appController} />;
+        return <CommentaryDrawer />;
     if (type === "user/progress")
-        return <ProgressDrawer appController={appController} setLocalOpen={setLocalOpen} />;
+        return <ProgressDrawer setLocalOpen={setLocalOpen} />;
     if (type === "history")
-        return <HistoryDrawer appController={appController} />;
+        return <HistoryDrawer />;
     if (type === "places")
-        return <Place appController={appController} setLocalOpen={setLocalOpen} />;
+        return <Place setLocalOpen={setLocalOpen} />;
     if (type === "people")
-        return <Person appController={appController} setLocalOpen={setLocalOpen} />;
+        return <Person setLocalOpen={setLocalOpen} />;
     if (type === "victory")
-        return <Victory appController={appController} context="drawer" />;
+        return <Victory context="drawer" />;
     if (type === "pFilter")
-        return <PFilter appController={appController} context="drawer" />;
+        return <PFilter context="drawer" />;
     if (/group\/[0-9a-f]{32}$/.test(type) && id ==="leaderboard")
-        return <LeaderBoard appController={appController} context="drawer" />;
+        return <LeaderBoard context="drawer" />;
     if (/group\/[0-9a-f]{32}$/.test(type))
-        return <MobileChatThread appController={appController} context="drawer" />;
+        return <MobileChatThread context="drawer" />;
 
     //return null;
     return <pre>{type}</pre>
 }
 
 
-function MobileChatThread({ appController }) {
+function MobileChatThread() {
+    const appController = useAppController();
     const setPanel = () => { };
     const [chatLinkedContent, setChatLinkedContent] = useState({});
     const [parentMessage, setThreadMessage] = useState(appController.popUpData);
@@ -110,7 +114,6 @@ function MobileChatThread({ appController }) {
 
     return <div className="DrawerStudyGroupThread">
         <StudyGroupThread
-            appController={appController}
             setThreadMessage={setThreadMessage}
             linkedContent={{ chatLinkedContent, setChatLinkedContent }}
             parentMessage={parentMessage}
@@ -121,7 +124,8 @@ function MobileChatThread({ appController }) {
 
 
 
-function LeaderBoard({ appController }) {
+function LeaderBoard() {
+    const appController = useAppController();
     const group = appController.states.studyGroup.activeGroup;
     const count = group.members.length;
     const groupData = {
@@ -156,12 +160,14 @@ function LeaderBoard({ appController }) {
     </div>
 }
 
-function PFilter({ appController }) {
+function PFilter() {
+    const appController = useAppController();
     const data = appController.popUpData
     return data.filterBox;
 }
 
-function Person({ appController, setLocalOpen }) {
+function Person({ setLocalOpen }) {
+    const appController = useAppController();
     const slug = appController.states.popUp.activeId;
     const [person, setPersonData] = useState(null);
     const [activeScriptureReference, setActiveScriptureReference] = useState(null);
@@ -210,7 +216,8 @@ function Person({ appController, setLocalOpen }) {
   );
 }
 
-function Place({ appController, setLocalOpen }) {
+function Place({ setLocalOpen }) {
+    const appController = useAppController();
     const slug = appController.states.popUp.activeId;
     const [place, setPlaceData] = useState(null);
     const [activeScriptureReference, setActiveScriptureReference] = useState(null);
@@ -259,7 +266,8 @@ function Place({ appController, setLocalOpen }) {
 	);
 }
 
-function HistoryDrawer({ appController }) {
+function HistoryDrawer() {
+    const appController = useAppController();
     const slug = appController.states.popUp.activeId;
     const [doc, setHistoryData] = useState(null);
     useEffect(() => {
@@ -284,7 +292,8 @@ function HistoryDrawer({ appController }) {
     </div>
 }
 
-function ProgressDrawer({ appController, setLocalOpen }) {
+function ProgressDrawer({ setLocalOpen }) {
+    const appController = useAppController();
     const tokenToLoad = appController.states.user.token;
     const userToLoad = appController.states.user.user;
     const queryBy = (userToLoad || tokenToLoad);
@@ -324,7 +333,8 @@ function ProgressDrawer({ appController, setLocalOpen }) {
     </div>
 }
 
-function CommentaryDrawer({ appController }) {
+function CommentaryDrawer() {
+    const appController = useAppController();
     const isMounted = useIsMounted();
     const timeouts = useTimeouts();
     const [commentaryData, setCommentaryData] = useState(appController.popUpData[appController.states.popUp.activeId]);
@@ -415,7 +425,7 @@ function CommentaryDrawer({ appController }) {
                 </div>
                 <div class="row align-items-start">
                     {!showLegal ? <div className="setLegal" onClick={() => setLegal(true)} >⚖️ {label("legal_notice")}</div> : null}
-                    <LegalNotice appController={appController} commentaryData={commentaryData} showLegal={showLegal} />
+                    <LegalNotice commentaryData={commentaryData} showLegal={showLegal} />
                 </div>
             </div>
         </div>

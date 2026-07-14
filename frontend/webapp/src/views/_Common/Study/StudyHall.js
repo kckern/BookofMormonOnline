@@ -37,8 +37,10 @@ import loadingicon from "src/views/User/svg/loading.svg"
 import dmicon from "src/views/User/svg/chat.svg"
 import moment from "moment"
 import { Button } from "reactstrap"
+import { useAppController } from "src/contexts/AppControllerContext"
 
-export function StudyHall({ appController }) {
+export function StudyHall() {
+  const appController = useAppController()
   let isDrawerOpen = appController.states.studyGroup.isDrawerOpen
   const [opening, setOpening] = useState(true)
   const [activePanel, setPanel] = useState(
@@ -62,17 +64,14 @@ export function StudyHall({ appController }) {
       <div className={"StudyHallContents "}>
         <StudyGroupHeader
           studyGroup={studyGroup}
-          appController={appController}
         />
         <div className="StudyGroupBody">
           <StudyGroupSideBar
             studyGroup={studyGroup}
-            appController={appController}
             setPanel={setPanel}
             activePanel={activePanel}
           />
           <StudyGroupMainPanel
-            appController={appController}
             activePanel={activePanel}
             setPanel={setPanel}
           />
@@ -82,7 +81,7 @@ export function StudyHall({ appController }) {
   )
 }
 
-function StudyGroupHeader({ studyGroup, appController }) {
+function StudyGroupHeader({ studyGroup }) {
   return (
     <div className={"StudyGroupHeader"}>
       <div className={"GroupName"}>{studyGroup.name}</div>
@@ -111,10 +110,10 @@ export function InviteButton({ studyGroup }) {
 
 function StudyGroupSideBar({
   studyGroup,
-  appController,
   setPanel,
   activePanel,
 }) {
+  const appController = useAppController()
 	const [users,setUsers] = useState([]);
   const tooltip_id = "SideBar" + studyGroup.url
 
@@ -230,7 +229,6 @@ function StudyGroupSideBar({
         {users.map((u) => (
           <UserSideBarItem
             key={u.userId}
-            appController={appController}
             u={u}
             tooltip_id={tooltip_id}
             setPanel={setPanel}
@@ -242,19 +240,19 @@ function StudyGroupSideBar({
   )
 }
 
-export function StudyGroupMainPanel({ appController, activePanel, setPanel }) {
+export function StudyGroupMainPanel({ activePanel, setPanel }) {
+  const appController = useAppController()
   if (activePanel?.key === "admin")
-    return <StudyGroupAdmin appController={appController} />
+    return <StudyGroupAdmin />
   if (activePanel?.key === "progress")
-    return <StudyGroupProgress appController={appController} />
+    return <StudyGroupProgress />
   if (activePanel?.key === "message")
     return (
-      <DirectMessages appController={appController} userId={activePanel?.val} />
+      <DirectMessages userId={activePanel?.val} />
     )
   if (activePanel?.key === "chat") {
     return (
       <StudyGroupChatPanel
-        appController={appController}
         channel={appController.states.studyGroup.activeGroup}
         setPanel={setPanel}
       />
@@ -264,7 +262,8 @@ export function StudyGroupMainPanel({ appController, activePanel, setPanel }) {
   return <div>{JSON.stringify({ activePanel })}</div>
 }
 
-export function StudyGroupChatPanel({ appController, channel, setPanel }) {
+export function StudyGroupChatPanel({ channel, setPanel }) {
+  const appController = useAppController()
   const params = useParams()
   const [chatLinkedContent, setChatLinkedContent] = useState({})
   const [loader, setLoader] = useState(false)
@@ -326,7 +325,6 @@ export function StudyGroupChatPanel({ appController, channel, setPanel }) {
           </div>
         )}
         <StudyGroupChat
-          appController={appController}
           setThreadMessage={setThreadMessage}
           linkedContent={{ chatLinkedContent, setChatLinkedContent }}
           setPrevLoader={setLoader}
@@ -334,11 +332,10 @@ export function StudyGroupChatPanel({ appController, channel, setPanel }) {
           channel={channel}
           setPanel={setPanel}
         />
-        <StudyGroupChatInput appController={appController} channel={channel} />
+        <StudyGroupChatInput channel={channel} />
       </div>
       {parentMessage && !isMobile() ? (
         <StudyGroupThread
-          appController={appController}
           setThreadMessage={setThreadMessage}
           linkedContent={{ chatLinkedContent, setChatLinkedContent }}
           parentMessage={parentMessage}
@@ -351,12 +348,12 @@ export function StudyGroupChatPanel({ appController, channel, setPanel }) {
 }
 
 function UserSideBarItem({
-  appController,
   u,
   tooltip_id,
   setPanel,
   activePanel,
 }) {
+  const appController = useAppController()
   let lastSeen = timeAgoString(0)
   let classes = ["userSideBarItem"]
   if (u.connectionStatus !== "online") classes.push("offline")
@@ -426,7 +423,7 @@ function UserSideBarItem({
       data-tip={label("message_x", [u.nickname])}
       data-for={tooltip_id}
     >
-      <StudyGroupUserCircle userObject={u} appController={appController} />
+      <StudyGroupUserCircle userObject={u} />
       <div className="userInfo">
         <div className={"nickname"}>{u.nickname}</div>
         <div className={"userLink"}>{linkToItems}</div>

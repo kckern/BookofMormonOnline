@@ -15,7 +15,9 @@ import {
 import { label } from "src/models/Utils";
 import { toast } from "react-toastify";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
-export function ChangePassword({ setProfileState, appController }) {
+import { useAppController } from "src/contexts/AppControllerContext";
+export function ChangePassword({ setProfileState }) {
+    const appController = useAppController();
 
     const pwRegEx = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*{};.,'_-]).{8,}$/;
 

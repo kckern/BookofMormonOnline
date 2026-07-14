@@ -12,6 +12,7 @@ import {Spinner} from "../views/_Common/Loader";
 import { ScripturePanelSingle } from "../views/Page/Narration";
 import { detectReferences, lookupReference, generateReference } from 'scripture-guide';
 import { generateAvatarUrl } from "src/components/UserAvatar";
+import { useAppController } from "src/contexts/AppControllerContext";
 
 
 
@@ -679,7 +680,7 @@ export function ParseMessage(string,appController) {
     <>
       {Parser(html, options)}
       <ScripturesContainer scriptures={scriptures} setActiveRef={setActiveRef} activeRef={activeRef} />
-      <LinkPreviewContainer urls={urls} appController={appController} />
+      <LinkPreviewContainer urls={urls} />
     </>
   );
 }
@@ -699,14 +700,15 @@ function ScripturesContainer({ scriptures, setActiveRef, activeRef }) {
   </div>
 }
 
-function LinkPreviewContainer({ urls,appController }) {
+function LinkPreviewContainer({ urls }) {
   if (!urls) return null;
 
-  return urls.map((url) => <LinkPreview key={url} url={url} appController={appController}/>);
+  return urls.map((url) => <LinkPreview key={url} url={url} />);
 }
 
 
-function CommentaryPreview({url,appController}){
+function CommentaryPreview({url}){
+  const appController = useAppController();
   const commentaryId = url.split("/").pop();
   const [commentary, setCommentary] = useState(null);
   const [error,setError] = useState(null);
@@ -745,7 +747,7 @@ function CommentaryPreview({url,appController}){
 }
 
 
-function LinkPreview({ url,appController }) {
+function LinkPreview({ url }) {
   const fetcher = async (url) => {
     const apikey = "1ac77035736dd239dee7958f10930622";
     const hash = "link." + md5hash(url);
@@ -779,7 +781,7 @@ function LinkPreview({ url,appController }) {
   }, []);
 
   //check if commentary. TODO: Check domain
-  if(/commentary\/\d+$/.test(url)) return <CommentaryPreview url={url} appController={appController} />
+  if(/commentary\/\d+$/.test(url)) return <CommentaryPreview url={url} />
 
 
 

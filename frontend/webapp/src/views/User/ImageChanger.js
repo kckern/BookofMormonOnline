@@ -9,13 +9,14 @@ import { label } from "src/models/Utils";
 import { toast } from "react-toastify";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import { getProfileImageUrl } from "src/components/UserAvatar";
+import { useAppController } from "src/contexts/AppControllerContext";
 function ImageChanger({
   setOpenModal,
-  appController,
   setShowOverlay,
   isGroup,
   setProfileImage,
 }) {
+  const appController = useAppController();
   const fileTypes = ["JPG", "PNG", "JPEG"];
   const [file, setFile] = useState(null);
   const [cropData, setCropData] = useState(null);

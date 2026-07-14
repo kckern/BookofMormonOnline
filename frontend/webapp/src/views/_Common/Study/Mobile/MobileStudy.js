@@ -7,7 +7,9 @@ import back from "./back.svg";
 import groupicon from "src/views/User/svg/group.svg";
 import { history } from "src/models/routeHistory";
 import { useParams, useHistory, useRouteMatch, Link } from "react-router-dom";
-export default function MobileStudy({ appController }) {
+import { useAppController } from "src/contexts/AppControllerContext";
+export default function MobileStudy() {
+    const appController = useAppController();
 
     const match = useRouteMatch();
     const params = match.params;
@@ -71,12 +73,11 @@ export default function MobileStudy({ appController }) {
 
     const setPanel = () => { }
     const contents = appController.states.studyGroup.isMobileChat ?
-        <><MobileChatHeader appController={appController} />
+        <><MobileChatHeader />
             <StudyGroupChatPanel
-                appController={appController}
                 channel={appController.states.studyGroup.activeGroup}
                 setPanel={setPanel}
-            /></> : <StudyGroupList appController={appController} />
+            /></> : <StudyGroupList />
 
     if (!appController?.states?.studyGroup?.activeGroup) return null;
     return <div className="content mobilestudy">
@@ -85,7 +86,8 @@ export default function MobileStudy({ appController }) {
 }
 
 
-function MobileChatHeader({ appController }) {
+function MobileChatHeader() {
+    const appController = useAppController();
     const group = appController.states.studyGroup.activeGroup;
     const count = group?.memberCount || 0;
 

@@ -23,10 +23,12 @@ import ReactPixel from 'react-facebook-pixel';
 import BoMOnlineAPI, { fbPixel } from "src/models/BoMOnlineAPI";
 import "./SignIn.css"
 import { error } from "src/models/alertMessageService";
+import { useAppController } from "src/contexts/AppControllerContext";
 
 
 
-export default function SocialSignIn({appController, setLoading}) {
+export default function SocialSignIn({setLoading}) {
+    const appController = useAppController();
 
     const login = useGoogleLogin({
         onSuccess: tokenResponse => console.log(tokenResponse),

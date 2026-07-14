@@ -21,6 +21,7 @@ import { Button, Card, CardBody, CardHeader, Nav, NavItem } from "reactstrap";
 import { determineLanguage } from "../../models/Utils";
 import { ApiBaseUrl, assetUrl } from "../../models/BoMOnlineAPI";
 import SignIn from "../User/SignIn";
+import { useAppController } from "src/contexts/AppControllerContext";
 
 //"bom_map name gpt-4" "bom_map desc gpt-4" "bom_division description gpt-4" "bom_page title gpt-4" "bom_section title  gpt-4" "bom_connection text  gpt-4" "bom_capsulation description  gpt-4" "bom_label label_text" "bom_people title" "bom_places info" "bom_text heading" "bom_markdown markdown gpt-4"
 const bom_types = [
@@ -135,8 +136,9 @@ async function loadItems(table,refkey,user) {
 }
 
 
-export default function  Audit({appController})
+export default function  Audit()
 {
+    const appController = useAppController();
 
     const {user} = appController.states.user;
     const history = useHistory();
@@ -187,7 +189,7 @@ export default function  Audit({appController})
             
       <Card className="card-login">
         <CardBody>
-            <SignIn appController={appController} />
+            <SignIn />
         </CardBody>
         </Card>
         </div>

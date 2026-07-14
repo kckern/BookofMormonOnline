@@ -4,6 +4,7 @@ import ReactTooltip from 'react-tooltip';
 import { assetUrl } from 'src/models/BoMOnlineAPI';
 import BoMOnlineAPI from "src/models/BoMOnlineAPI"
 import { label } from '../../models/Utils';
+import { useMapController } from "src/contexts/MapContext";
 
 
 function MapGroup({mapGroup, handleClickMapType})
@@ -32,7 +33,8 @@ function SingleMapMenuItem({map,handleClickMapType})
         </div>
 }
 
-export default function MapTypes({ getMap, mapName, mapController }) {
+export default function MapTypes({ getMap, mapName }) {
+    const mapController = useMapController();
     const [isShow, setIsShow] = useState(false),
         [mapList, setMapList] = useState(null),
         activeMap = mapList?.find(map => map.name === mapName);

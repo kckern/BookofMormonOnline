@@ -52,6 +52,7 @@ import { Link } from "react-router-dom";
 import { history } from "src/models/routeHistory";
 import { Switch } from "react-router-dom/cjs/react-router-dom.min";
 import BoMOnlineAPI from "../../../models/BoMOnlineAPI";
+import { useAppController } from "src/contexts/AppControllerContext";
 momentDurationFormatSetup(moment);
 
 toast.configure({
@@ -71,7 +72,8 @@ const toaster = (appController, src, color, val) => {
   );
 };
 
-export function StudyGroupBar({ appController }) {
+export function StudyGroupBar() {
+  const appController = useAppController();
   useEffect(() => {
     if (appController.states.studyGroup.isDrawerOpen)
       document.querySelector("body").classList.add("noscroll");
@@ -89,12 +91,10 @@ export function StudyGroupBar({ appController }) {
       <div tabIndex={0}>
         <StudyGroupDrawer
           isOpen={appController.states.studyGroup.isDrawerOpen}
-          appController={appController}
         />
       </div>
-      <StudyGroupSelect appController={appController} />
+      <StudyGroupSelect />
       <StudyGroupStatus
-        appController={appController}
         onClick={() => {
           appController.functions.openDrawer(
             !appController.states.studyGroup.isDrawerOpen,
@@ -166,7 +166,8 @@ export function getFreshUsers(appController,queryUsers) {
   return { users: userlist, bots };
 }
 
-function StudyGroupStatus({ appController }) {
+function StudyGroupStatus() {
+  const appController = useAppController();
 
   let playSounds = appController.states.preferences.sound;
 
@@ -350,13 +351,12 @@ useEffect(()=>{
         (appController.states.studyGroup.isDrawerOpen ? " hidden" : "")
       }
     >
-      <BotCircles bots={bots} appController={appController} />
+      <BotCircles bots={bots} />
       {users?.slice(0, 11).map((user) => (
         <StudyGroupUser
           color={userColors[user?.userId]}
           key={user?.userId}
           userObject={user}
-          appController={appController}
           liveMessage={
             user?.userId === activeLiveMessageSender
               ? liveMessageQueue[activeLiveMessageId]
@@ -369,7 +369,8 @@ useEffect(()=>{
   );
 }
 
-function BotPlugin({ appController }) {
+function BotPlugin() {
+  const appController = useAppController();
   const iAmOperator =
     appController.states.studyGroup.activeGroup?.myRole === "operator";
   const [isDroppedDown, setDroppedDown] = useState(false);
@@ -487,16 +488,15 @@ function BotPlugin({ appController }) {
   );
 }
 
-function BotCircles({ bots, appController }) {
+function BotCircles({ bots }) {
   bots = bots?.length ? bots : [];
 
-  if (!bots.length) return <BotPlugin appController={appController} key={0} />;
+  if (!bots.length) return <BotPlugin key={0} />;
 
   return bots.map((bot, index) => (
     <StudyGroupUser
       key={bot.userId || `bot-${index}`}
       userObject={bot}
-      appController={appController}
       isBot={true}
     />
   ));
@@ -516,7 +516,8 @@ export function getClassesFromUserObj(userObject, appController) {
   return classes;
 }
 
-export function StudyGroupUserCircle({ userObject, appController, isBot }) {
+export function StudyGroupUserCircle({ userObject, isBot }) {
+  const appController = useAppController();
 	const [unreadMessageCount,setUnreadMessageCount] = useState(0);
   let classes = getClassesFromUserObj(userObject, appController);
   const isTyping = classes.includes("isTyping");
@@ -587,17 +588,17 @@ export function StudyGroupUserCircle({ userObject, appController, isBot }) {
         <div className={"progressBadge"} onClick={()=>console.log('bageClick')}>{badgeVal}</div>
         {trophyIcons}
       </div>
-      <UnreadDMCount appController={appController} userId={userObject.userId} count={unreadMessageCount > 0?unreadMessageCount:''}/>
+      <UnreadDMCount userId={userObject.userId} count={unreadMessageCount > 0?unreadMessageCount:''}/>
     </React.Fragment>
   );
 }
 
 export function StudyGroupUser({
   userObject,
-  appController,
   liveMessage,
   isBot,
 }) {
+  const appController = useAppController();
   const [switchSound] = useState(() => {
     let sound = new Audio(`${assetUrl}/interface/audio/switch`);
     sound.preload = "auto";
@@ -880,7 +881,6 @@ export function StudyGroupUser({
           <div>
             <UnreadDMCount
               userId={userObject.userId}
-              appController={appController}
             />
           </div>
         </div>
@@ -913,7 +913,6 @@ export function StudyGroupUser({
             label("bot_intro_x", userObject.nickname)
           }
           bookmark={bookmark}
-          appController={appController}
         />
 
         {bookmark.slug && bookmark.channel === activeChannel ? (
@@ -967,13 +966,11 @@ export function StudyGroupUser({
           <LiveMessageDM
             liveMessage={liveMessage}
             userObject={userObject}
-            appController={appController}
           />
         ) : (
           <LiveMessageStudy
             liveMessage={liveMessage}
             bookmark={bookmark}
-            appController={appController}
           />
         )}
 
@@ -1027,7 +1024,6 @@ export function StudyGroupUser({
           <StudyGroupUserCircle
             isBot={isBot}
             userObject={userObject}
-            appController={appController}
             summary={summary}
             key={userId}
           />
@@ -1038,7 +1034,8 @@ export function StudyGroupUser({
   );
 }
 
-function LiveMessageDM({ liveMessage, userObject, appController }) {
+function LiveMessageDM({ liveMessage, userObject }) {
+  const appController = useAppController();
   const handleClick = (e) => {
     e.stopPropagation();
     appController.functions.clearMessageFromQueue(liveMessage.messageId);
@@ -1068,8 +1065,8 @@ function LiveMessageStudy({
   liveMessage,
   clickHandler,
   bookmark,
-  appController,
 }) {
+  const appController = useAppController();
   if (typeof liveMessage === "string") liveMessage = { message: liveMessage };
 
   const [soundEffect] = useState(() => {
@@ -1109,7 +1106,8 @@ function LiveMessageStudy({
     );
 }
 
-export function UnreadDMCount({ userId, appController, count }) {
+export function UnreadDMCount({ userId, count }) {
+  const appController = useAppController();
   if (count === 0) return null;
   if (count) return <span className="unreadDMCount">{count}</span>;
   let data = appController.states.studyGroup.unreadDMs?.[userId];
@@ -1117,7 +1115,8 @@ export function UnreadDMCount({ userId, appController, count }) {
   return <span className="unreadDMCount">{data.unread}</span>;
 }
 
-function StudyGroupDrawer({ isOpen, appController }) {
+function StudyGroupDrawer({ isOpen }) {
+  const appController = useAppController();
   useEffect(() => {
     appController.functions?.clearMessageFromQueue();
     appController.sendbird
@@ -1133,7 +1132,7 @@ function StudyGroupDrawer({ isOpen, appController }) {
 
   let contents = null;
 
-  if (isOpen) contents = <StudyHall appController={appController} />;
+  if (isOpen) contents = <StudyHall />;
   return (
     <div
       className={"StudyGroupDrawer" + (isOpen ? " open" : " closed")}

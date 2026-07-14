@@ -26,6 +26,8 @@ import {
   MAX_MESSAGE_LENGTH,
 } from "src/models/Utils";
 import Parser from "html-react-parser";
+import { useAppController } from "src/contexts/AppControllerContext";
+import { usePageController, PageControllerProvider } from "src/contexts/PageControllerContext";
 
 // Fire a click-equivalent handler on Enter/Space so role="button" divs are
 // operable by keyboard. preventDefault on Space stops the page from scrolling.
@@ -38,14 +40,15 @@ const activateOnKey = (handler) => (e) => {
 
 export default function Comments({
   isOpen,
-  pageController,
-  appController,
+  pageController: pageControllerProp,
   linkData,
   highlights,
   removeHighlight,
   setCommentHighlights,
   isQuote = false,
 }) {
+  const appController = useAppController();
+  const pageController = usePageController(pageControllerProp);
   const inputRef = useRef(null);
   useEffect(() => {
     if ((!highlights || highlights.length) === 0 && setAddComments)
@@ -71,7 +74,6 @@ export default function Comments({
       setAddComments(true);
   }, [document.getElementById(threadHash)?.value.length]);
 
-  if (!appController) appController = pageController?.appController;
   if (!appController?.states?.studyGroup?.studyModeOn) return null;
 
   let firstComment = loadFirstMessage(pageController, linkData);
@@ -198,10 +200,8 @@ export default function Comments({
         parentMessage={firstComment}
         channel={channel}
         locationHash={locationHash}
-        pageController={pageController}
         threadInputVal={threadInputVal}
         setThreadInputVal={setThreadInputVal}
-        appController={appController}
         inputRef={inputRef}
       />
     </>
@@ -274,36 +274,39 @@ export default function Comments({
       );
   }
 
+  // RE-PROVIDE the resolved pageController to Comments' children. In-tree this
+  // re-echoes Page's provider value; out-of-tree (Commentary/PopUp History, which
+  // pass appController.activeLeafCursorController as the override prop and have NO
+  // provider above them) this carries the override down so children can safely
+  // read it via a bare usePageController(). Mirrors Theater's MainPanel re-provide.
   return (
-    <div className="study">
-      {highlightButton}
-      <MessageList
-        parentMessage={firstComment}
-        pageController={pageController}
-        appController={appController}
-        replyToMessage={replyToMessage}
-        threadHash={threadHash}
-        isQuote={isQuote}
-        removeHighlight={removeHighlight}
-        setCommentHighlights={setCommentHighlights}
-      />
-      <MyComment
-        appController={appController}
-        highlights={highlights}
-        removeHighlight={removeHighlight}
-        threadHash={threadHash}
-        isQuote={isQuote}
-        channel={channel}
-        locationHash={locationHash}
-        bottomItem={bottomItem}
-        inputRef={inputRef}
-      />
-    </div>
+    <PageControllerProvider pageController={pageController}>
+      <div className="study">
+        {highlightButton}
+        <MessageList
+          parentMessage={firstComment}
+          replyToMessage={replyToMessage}
+          threadHash={threadHash}
+          isQuote={isQuote}
+          removeHighlight={removeHighlight}
+          setCommentHighlights={setCommentHighlights}
+        />
+        <MyComment
+          highlights={highlights}
+          removeHighlight={removeHighlight}
+          threadHash={threadHash}
+          isQuote={isQuote}
+          channel={channel}
+          locationHash={locationHash}
+          bottomItem={bottomItem}
+          inputRef={inputRef}
+        />
+      </div>
+    </PageControllerProvider>
   );
 }
 
 export function MyComment({
-  appController,
   highlights,
   removeHighlight,
   isQuote,
@@ -312,6 +315,7 @@ export function MyComment({
   bottomItem,
   inputRef,
 }) {
+  const appController = useAppController();
   let realtime = null;
   let typingLocations = channel.typingLocations || {};
   if (Object.values(typingLocations).includes(locationHash)) {
@@ -366,13 +370,13 @@ export function CommentInput({
   threadHash,
   parentMessage,
   channel,
-  pageController,
   locationHash,
   setThreadInputVal,
   threadInputVal,
-  appController,
   inputRef,
 }) {
+  const appController = useAppController();
+  const pageController = usePageController();
   //useEffect(()=>document.getElementById(threadHash).focus(),[]);
   const [showTagList, setShowTagList] = useState(false);
   let parentMessageId = parentMessage?.messageId || null;
@@ -505,7 +509,6 @@ export function CommentInput({
       {cannedResponses}
       {showTagList && (
         <TagList
-          appController={appController}
           setShowTagList={setShowTagList}
           inputRef={inputRef}
         />
@@ -557,11 +560,9 @@ function locateMessageData(pageController, key, val) {
 
 function MessageList({
   parentMessage,
-  appController,
   replyToMessage,
   threadHash,
   setCommentHighlights,
-  pageController,
   removeHighlight,
   isQuote,
 }) {
@@ -571,10 +572,8 @@ function MessageList({
     <>
       <SingleComment
         key={parentMessage.messageId}
-        pageController={pageController}
         message={parentMessage}
         threadHash={threadHash}
-        appController={appController}
         removeHighlight={removeHighlight}
         setCommentHighlights={setCommentHighlights}
         replyToMessage={replyToMessage}
@@ -583,9 +582,7 @@ function MessageList({
       <>
         <ThreadedMessages
           parentMessage={parentMessage}
-          pageController={pageController}
           threadHash={threadHash}
-          appController={appController}
           replyToMessage={replyToMessage}
           setCommentHighlights={setCommentHighlights}
         />
@@ -596,12 +593,12 @@ function MessageList({
 
 function ThreadedMessages({
   parentMessage,
-  appController,
   replyToMessage,
   threadHash,
   setCommentHighlights,
-  pageController,
 }) {
+  const appController = useAppController();
+  const pageController = usePageController();
   const [expanded, expand] = useState(false);
   const [threadedMessages, setThreadMessages] = useState([]);
   // one-shot guard for the initial thread load; a ref (not state) so flipping it
@@ -741,11 +738,9 @@ function ThreadedMessages({
             key={m.messageId}
             message={m}
             index={index}
-            pageController={pageController}
             replyToMessage={replyToMessage}
             threadHash={threadHash}
             setCommentHighlights={setCommentHighlights}
-            appController={appController}
           />
         );
       });
@@ -772,10 +767,9 @@ function SingleComment({
   index,
   replyToMessage,
   threadHash,
-  pageController,
   isQuote,
-  appController,
 }) {
+  const appController = useAppController();
   let data = useMemo(() => {
     return message.data ? JSON.parse(message.data) : { links: {} };
   }, [message.data]);
@@ -877,10 +871,8 @@ function SingleComment({
           removeHighlight={removeHighlight}
           highlights={highlights}
           setCommentHighlights={setCommentHighlights}
-          pageController={pageController}
           editComment={true}
           isQuote={isQuote}
-          appController={appController}
         />
       ) : (
         <div className="commentcontainer">
@@ -897,7 +889,6 @@ function SingleComment({
         message={message}
         index={index}
         threadHash={threadHash}
-        appController={pageController.appController}
         replyToMessage={replyToMessage}
         isEdit={isEditMessage}
         handleEditComment={handleEditComment}
@@ -910,11 +901,11 @@ export function EditComment({
   message,
   index,
   handleEditComment,
-  pageController,
   linkData,
-  appController,
   isQuote,
 }) {
+  const appController = useAppController();
+  const pageController = usePageController();
   const [showTagList, setShowTagList] = useState(false);
   const inputRef = useRef(null);
   const [commentMessage, setCommentMessage] = useState(message.message);
@@ -1040,7 +1031,6 @@ export function EditComment({
         />
         {showTagList && (
           <TagList
-            appController={appController}
             setShowTagList={setShowTagList}
             setCommentMessage={setCommentMessage}
             inputRef={inputRef}
@@ -1054,19 +1044,19 @@ export function EditComment({
 function MessageFooter({
   message,
   index,
-  appController,
   replyToMessage,
   threadHash,
   handleEditComment,
   isEdit,
 }) {
+  const appController = useAppController();
   let isSelf =
     appController.states.user.social?.user_id === message?.sender?.userId;
 
   let timestamp = timeAgoString(message.createdAt / 1000);
   let link = "/group/" + message.channelUrl + "/" + message.messageId;
 
-  let likeObj = LikeButton({ type: "page", message, appController });
+  let likeObj = LikeButton({ type: "page", message });
 
   const deleteMessage = async (e) => {
     window.removeEventListener("deleteMessage", deleteMessage, false);
@@ -1192,7 +1182,8 @@ function messageReacters(message, members) {
   return shapeReacters(message.reactions, members);
 }
 
-export function LikeButton({ type, message, appController }) {
+export function LikeButton({ type, message }) {
+  const appController = useAppController();
   let memberMap = appController.states.studyGroup.activeGroup.members;
 
   const [reacters, updateReacters] = useState(

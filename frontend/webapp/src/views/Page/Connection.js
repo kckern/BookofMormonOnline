@@ -2,8 +2,9 @@ import React, { useEffect, useState } from "react";
 
 import { Link } from "react-router-dom";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import { usePageController } from "src/contexts/PageControllerContext";
 
-export default function Connection({ index, rowData, pageController }) {
+export default function Connection({ index, rowData }) {
   const [pageAnimation, setPageAnimation] = useState({
     connectionType: "rightconnection",
     image: "right-image",
@@ -65,13 +66,14 @@ export default function Connection({ index, rowData, pageController }) {
   return (
     <div className="row" type={rowData.connection.type}>
       <div style={{ width: "100%" }}>
-        <ConnectionLink rowData={rowData} pageAnimation={pageAnimation} pageController={pageController} />
+        <ConnectionLink rowData={rowData} pageAnimation={pageAnimation} />
       </div>
     </div>
   );
 }
 
-const ConnectionLink = ({ rowData, pageAnimation, pageController }) => {
+const ConnectionLink = ({ rowData, pageAnimation }) => {
+  const pageController = usePageController();
   const history = useHistory();
   const {setStageClass} = pageController.appController?.functions || {};
   const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));

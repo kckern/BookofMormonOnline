@@ -24,8 +24,10 @@ import LineString from 'ol/geom/LineString';
 import Modify from 'ol/interaction/Modify';
 import * as OL from "ol";
 import { STORY_RUN_COLORS, computeRuns } from './colors';
+import { useMapController } from "src/contexts/MapContext";
 
-const MapContents = ({mapController}) => {
+const MapContents = () => {
+    const mapController = useMapController();
     const mapElement = useRef(); // This ref will point to the map container
     const map = useRef(); // This ref will store the initialized map
     const segmentLayerRef = useRef(null);
