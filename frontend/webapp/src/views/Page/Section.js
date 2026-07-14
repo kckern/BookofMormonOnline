@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-// import ReactTooltip from 'react-tooltip';
 // MEDIA URL
 // CHILD
 import Narration from "./Narration";
@@ -11,8 +10,6 @@ import { addHighlightTagSelectively } from "./TextContent";
 import theater from "../_Common/svg/theater.svg";
 import { Link } from "react-router-dom/cjs/react-router-dom.min";
 import { label } from "../../models/Utils";
-import ReactTooltip from "react-tooltip";
-import { tooltipTheme } from "src/utils/themeColors";
 
 function Section({ sectionData, sectionIndex }) {
   let preConnection = null;
@@ -42,18 +39,11 @@ function Section({ sectionData, sectionIndex }) {
   };
   const slugTip = sectionData.slug.split("/").pop();
 
-	const theaterLink = <>
+	const theaterLink = (
 		<Link to={`/theater/${slugTip}`} className="theater-link" data-tip={label("view_in_theater")} data-for="page-info-tooltip">
     	<img src={theater} alt="theater" />
   	</Link>
-		<ReactTooltip
-			effect="solid"
-      place="left"
-			backgroundColor={tooltipTheme().backgroundColor}
-			textColor={tooltipTheme().textColor}
-			id="page-info-tooltip"
-		/>
-	</>
+	);
   return (
     <>
       {preConnection}

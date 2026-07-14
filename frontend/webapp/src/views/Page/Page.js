@@ -27,6 +27,8 @@ import { createScrollSpy, step } from "src/scroll";
 import { appFunctions } from "src/models/appController";
 import { useAppController } from "src/contexts/AppControllerContext";
 import { PageControllerProvider } from "src/contexts/PageControllerContext";
+import ReactTooltip from "react-tooltip";
+import { tooltipTheme } from "src/utils/themeColors";
 
 // Apply a Main slug change from inside the Page reducer WITHOUT a nested React
 // dispatch. The reducer is replayed by React during render; the old
@@ -443,6 +445,13 @@ export default function Page() {
             sectionIndex={sectionIndex}
           />
         ))}
+        <ReactTooltip
+          effect="solid"
+          place="left"
+          backgroundColor={tooltipTheme().backgroundColor}
+          textColor={tooltipTheme().textColor}
+          id="page-info-tooltip"
+        />
       </div>
     </PageControllerProvider>
   );

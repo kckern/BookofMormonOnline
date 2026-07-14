@@ -64,7 +64,8 @@ export const renderPersonPlaceHTML = (html, pageController, scriptureLinkClickHa
 
       if (domNode.attribs && domNode.attribs.class === "person") {
         return (
-          <PersonLink
+          <PersonPlaceLink
+            type="person"
             controller={pageController}
             label={domNode.attribs.label}
             id={domNode.attribs.slug}
@@ -73,7 +74,8 @@ export const renderPersonPlaceHTML = (html, pageController, scriptureLinkClickHa
       }
       if (domNode.attribs && domNode.attribs.class === "place") {
         return (
-          <PlaceLink
+          <PersonPlaceLink
+            type="place"
             controller={pageController}
             label={domNode.attribs.label}
             id={domNode.attribs.slug}
@@ -116,59 +118,33 @@ export const renderPersonPlaceHTML = (html, pageController, scriptureLinkClickHa
   return Parser(html, options);
 };
 
-function PersonLink({ label, id, controller }) {
+const PERSON_PLACE_LINK = {
+  person: { popType: "people", path: "/people/" },
+  place: { popType: "places", path: "/place/" },
+};
+
+function PersonPlaceLink({ type, label, id, controller }) {
   // Out-of-tree callers (Drawer, Map InfowindowContent, PopUp person/place
   // descriptions) render this via renderPersonPlaceHTML with an appController
   // passed as the controller arg and NO PageControllerProvider above them —
-  // so we resolve via the Task-17 override mechanism, not a bare context read.
+  // so we resolve via the usePageController override, not a bare context read.
   const pageController = usePageController(controller);
+  const { popType, path } = PERSON_PLACE_LINK[type];
   const handleClick = (e) => {
     e.preventDefault();
     const appController = pageController?.appController || pageController;
-    appController.functions.setPopUp({
-      type: "people",
-      ids: [id],
-    });
+    appController.functions.setPopUp({ type: popType, ids: [id] });
   };
-
   return (
-    <>
-      <Link
-        to={"/people/" + id}
-        data-tip
-        data-for={id}
-        onClick={handleClick}
-        className={"person"}
-      >
-        <strong>{label}</strong>
-      </Link>
-    </>
-  );
-}
-function PlaceLink({ label, id, controller }) {
-  // See PersonLink: override mechanism for out-of-tree (Drawer/Map/PopUp) callers.
-  const pageController = usePageController(controller);
-  const handleClick = (e) => {
-    e.preventDefault();
-    const appController = pageController?.appController || pageController;
-    appController.functions.setPopUp({
-      type: "places",
-      ids: [id],
-    });
-  };
-
-  return (
-    <>
-      <Link
-        to={"/place/" + id}
-        data-tip
-        data-for={id}
-        onClick={handleClick}
-        className={"place"}
-      >
-        <strong>{label}</strong>
-      </Link>
-    </>
+    <Link
+      to={path + id}
+      data-tip
+      data-for={id}
+      onClick={handleClick}
+      className={type}
+    >
+      <strong>{label}</strong>
+    </Link>
   );
 }
 
