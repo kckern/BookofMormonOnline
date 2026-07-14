@@ -51,9 +51,9 @@ function Main(props) {
     toast.clearWaitingQueue();
     let activeGroupUrl = appController.states.studyGroup.activeGroup?.url;
     if (document.visibilityState === 'visible') {
-      appController.sendbird?.updateUserState({ channels: appController.states.studyGroup.groupList,  activeGroup: activeGroupUrl });
+      appController.messenger?.updateUserState({ channels: appController.states.studyGroup.groupList,  activeGroup: activeGroupUrl });
     } else {
-      appController.sendbird?.updateUserState({ channels: appController.states.studyGroup.groupList,  activeGroup: "" });
+      appController.messenger?.updateUserState({ channels: appController.states.studyGroup.groupList,  activeGroup: "" });
     }
   }
 
@@ -163,7 +163,7 @@ function Main(props) {
         >
           {/* /SHOW LOADER IN CASE DATA ARE FETCHING */}
           {!appController.preLoad ||
-            (appController.states.user.user && appController.sendbird === null) ? (
+            (appController.states.user.user && appController.messenger === null) ? (
             <Loader />
           ) : (
             <>

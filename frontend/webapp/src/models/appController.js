@@ -152,7 +152,7 @@ export const appInit = () => {
     // functions: functions,
     functions: appDispatch(),
     // functions: AppFunctions1(),
-    sendbird: null,
+    messenger: null,
   };
 
   //Return the Row Controller
@@ -214,7 +214,7 @@ export const appFunctions = {
     return appController;
   },
   // Re-render notifier for the MessengerProvider bridge: the provider mutates
-  // appController.sendbird outside the reducer, so Main's Loader gate (which
+  // appController.messenger outside the reducer, so Main's Loader gate (which
   // reads the bridge during render) needs a dispatch to re-evaluate.
   messengerBridgeChanged: (appController) => appController,
   updatePrefs: (appController, input) => {
@@ -381,12 +381,12 @@ export const appFunctions = {
     }
 
     if (
-      !appController.sendbird.sb.currentUser?.metaData?.activeGroup ||
+      !appController.messenger.sb.currentUser?.metaData?.activeGroup ||
       !appController.states.studyGroup.activeGroup
     ) {
       let url =
         appController.states.studyGroup.activeGroup?.url ||
-        appController.sendbird.sb.currentUser?.metaData?.activeGroup ||
+        appController.messenger.sb.currentUser?.metaData?.activeGroup ||
         localStorage.getItem("activeGroup");
       let groupToSet = list.filter((g) => g.url === url)[0];
       if (!groupToSet) groupToSet = list[0];
@@ -421,7 +421,7 @@ export const appFunctions = {
     return appController;
   },
   setActiveStudyGroup: (appController, input) => {
-    var user = appController.sendbird.sb.currentUser;
+    var user = appController.messenger.sb.currentUser;
     if (!user) return appController;
     let oldGroup = appController.states.studyGroup.activeGroup;
     let newGroup = input.val;
@@ -433,14 +433,14 @@ export const appFunctions = {
     localStorage.setItem("activeGroup", newGroup?.url);
 
     // Update User Meta
-    appController.sendbird?.updateUserState({
+    appController.messenger?.updateUserState({
       channels: appController.states.studyGroup.groupList,
       activeGroup: appController.states.studyGroup.studyModeOn
         ? newGroup?.url
         : "",
     });
 
-    appController.sendbird.loadUnreadDMs().then((unreadCounts) => {
+    appController.messenger.loadUnreadDMs().then((unreadCounts) => {
       appController.functions.setUnreadDMs(unreadCounts);
     });
     return appController;
@@ -472,7 +472,7 @@ export const appFunctions = {
 		
     appController.functions.setActiveStudyGroup(appController.states.studyGroup.activeGroup)
 
-    appController.sendbird?.updateUserState({
+    appController.messenger?.updateUserState({
       channels: appController.states.studyGroup.groupList,
       activeGroup: appController.states.studyGroup.studyModeOn ? appController.states.studyGroup.activeGroup.url : "",
 
@@ -530,7 +530,7 @@ export const appFunctions = {
     if (message.channelUrl === appController.states.studyGroup.activeGroup?.url) actionNeeded = true;
 
     //OVERRIDES
-    if (message._sender?.userId === appController.sendbird.sb.currentUser?.userId) actionNeeded = false;
+    if (message._sender?.userId === appController.messenger.sb.currentUser?.userId) actionNeeded = false;
     if (appController.states.studyGroup.isDrawerOpen) actionNeeded = false;
     if (!!appController.activeLeafCursorController?.states?.studyBuddies?.[message?._sender?.userId]) actionNeeded = false;
     if (!actionNeeded) return appController;
@@ -592,9 +592,9 @@ export const appFunctions = {
     const open = input.val;
     appController.states.notification.isNotificationOpen = open;
     // Fetch the feed on open (no polling — refreshed on open + on socket push).
-    if (open && appController.sendbird?.loadNotifications) {
+    if (open && appController.messenger?.loadNotifications) {
       appController.states.notification.loading = true;
-      appController.sendbird.loadNotifications().then((items) => {
+      appController.messenger.loadNotifications().then((items) => {
         appController.functions.setNotifications(items);
       });
     }
@@ -634,7 +634,7 @@ export const appFunctions = {
     if (changed) {
       appController.states.notification.unreadCount =
         Math.max(0, (appController.states.notification.unreadCount || 0) - 1);
-      appController.sendbird?.markNotificationRead?.(id);
+      appController.messenger?.markNotificationRead?.(id);
     }
     return appController;
   },
@@ -643,7 +643,7 @@ export const appFunctions = {
     const items = appController.states.notification.items || [];
     appController.states.notification.items = items.map((n) => ({ ...n, is_read: true }));
     appController.states.notification.unreadCount = 0;
-    appController.sendbird?.markAllNotificationsRead?.();
+    appController.messenger?.markAllNotificationsRead?.();
     return appController;
   },
   setParentMessage: (appController, input) => {
@@ -716,7 +716,7 @@ export const appFunctions = {
     let preExistingSummary = null;
     try {
       preExistingSummary = JSON.parse(
-        appController.sendbird?.sb.currentUser.metaData.summary
+        appController.messenger?.sb.currentUser.metaData.summary
       );
     } catch (e) { }
     let summaryData = inputData.summary || preExistingSummary || {};
@@ -727,7 +727,7 @@ export const appFunctions = {
     }
     summaryData.latest = Math.round(Date.now() / 1000);
     if (Object.keys(summaryData).length > 0)
-      appController.sendbird?.updateUserSummary({
+      appController.messenger?.updateUserSummary({
         channels: appController.states.studyGroup.groupList,
         summaryData: summaryData,
       });

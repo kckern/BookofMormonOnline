@@ -4,7 +4,7 @@
  * Step 1 of the appController→context migration (see
  * docs/specs/2026-06-11-messenger-context-provider.md). The provider creates
  * the controller when sign-in state appears, disconnects it on identity
- * change / sign-out / unmount, and assigns appController.sendbird as a
+ * change / sign-out / unmount, and assigns appController.messenger as a
  * compatibility bridge for existing consumers (including non-React code).
  * New code should consume useMessenger() instead of the bridge.
  */
@@ -16,7 +16,7 @@ const USE_MESSENGER = isMessengerEnabled();
 
 // Signed-out / messaging-disabled stub. Same surface the legacy
 // createChatController no-op branch exposed; also the bridge's value after
-// teardown — Main.js shows a Loader when sendbird === null, so the bridge
+// teardown — Main.js shows a Loader when messenger === null, so the bridge
 // must never be null.
 export const noopController = (userId) => ({
   connect: () => Promise.resolve({ user_id: userId, nickname: "User" }),
@@ -72,7 +72,7 @@ export function MessengerProvider({ appController, children, createController = 
     const app = appRef.current;
 
     if (!USE_MESSENGER) {
-      app.sendbird = noopController(socialUserId);
+      app.messenger = noopController(socialUserId);
       app.functions.messengerBridgeChanged?.();
       return undefined;
     }
@@ -80,7 +80,7 @@ export function MessengerProvider({ appController, children, createController = 
     let cancelled = false;
 
     const ctrl = createController(socialUserId, token, app);
-    app.sendbird = ctrl; // compatibility bridge for the 84 legacy references
+    app.messenger = ctrl; // compatibility bridge for the non-React / above-provider references
     setController(ctrl);
     app.functions.messengerBridgeChanged?.();
 
@@ -113,8 +113,8 @@ export function MessengerProvider({ appController, children, createController = 
         console.warn("Messenger: controller teardown failed", e);
       }
       // Never null: Main.js shows a Loader while user is set and
-      // sendbird === null.
-      appRef.current.sendbird = noopController(socialUserId);
+      // messenger === null.
+      appRef.current.messenger = noopController(socialUserId);
       setController(null);
       appRef.current.functions.messengerBridgeChanged?.();
     };

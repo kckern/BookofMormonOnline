@@ -101,7 +101,7 @@ export default class MessengerController {
     });
 
     // Singleton guard: exactly one live messenger socket per page. Catches
-    // every leak path (sign-in re-init replacing appController.sendbird, HMR
+    // every leak path (sign-in re-init replacing appController.messenger, HMR
     // module re-evaluation) — a shadow socket re-dispatches message_received,
     // so each inbound message renders once per leaked instance.
     if (window.__messengerSocket && window.__messengerSocket !== this.socket) {
@@ -1518,7 +1518,7 @@ export default class MessengerController {
     return (result?.messengerUsers || []).map((u) => this._normalizeUser(u));
   }
 
-  // Expose sb property for compatibility with code that accesses appController.sendbird.sb
+  // Expose sb property for compatibility with code that accesses appController.messenger.sb
   get sb() {
     const self = this;
     return {
