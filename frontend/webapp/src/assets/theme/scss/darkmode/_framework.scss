@@ -78,34 +78,6 @@ html[data-theme="dark"] {
   .alert-warning { background-color: #453718; border-color: #6a5424; color: #f2d59a; }
   .alert-info    { background-color: #1c333f; border-color: #2b4d5f; color: #a9d3e6; }
 
-  /* ---- react-select (v1 classes, per _plugin-react-select.scss) ---- */
-  .Select-control, .Select.is-open > .Select-control, .Select.is-focused > .Select-control {
-    background-color: var(--surface-4); border-color: var(--border); color: var(--text-primary);
-  }
-  .Select-menu-outer { background-color: var(--surface-2); border-color: var(--border); }
-  .Select-option {
-    background-color: var(--surface-2); color: var(--text-secondary);
-    &.is-focused { background-color: var(--surface-3); color: var(--text-primary); }
-    &.is-selected { background-color: var(--surface-4); color: var(--text-primary); }
-  }
-  .Select-placeholder { color: var(--text-faint); }
-  .Select-value-label, .Select--single > .Select-control .Select-value .Select-value-label {
-    color: var(--text-primary) !important;
-  }
-  .Select-arrow { border-top-color: var(--text-muted); }
-
-  /* ---- Datetime picker (react-datetime) ---- */
-  .rdtPicker {
-    background-color: var(--surface-2); border: 1px solid var(--border); color: var(--text-secondary);
-    th, td { color: var(--text-secondary); }
-    td.rdtDay:hover, td.rdtHour:hover, td.rdtMinute:hover, th.rdtSwitch:hover, th.rdtNext:hover, th.rdtPrev:hover {
-      background-color: var(--surface-3);
-    }
-    td.rdtActive, td.rdtActive:hover { background-color: var(--accent-green); color: #fff; }
-    td.rdtOld, td.rdtNew { color: var(--text-faint); }
-    th { border-bottom-color: var(--border); }
-  }
-
   /* ---- react-toastify (portal) ---- */
   .Toastify__toast { background-color: var(--surface-2); color: var(--text-primary); box-shadow: 0 4px 12px var(--shadow); }
   .Toastify__close-button { color: var(--text-muted); }
