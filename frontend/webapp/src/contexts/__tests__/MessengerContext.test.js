@@ -30,12 +30,15 @@ beforeEach(() => {
   lastCtx = undefined;
 });
 
-test("guest mount: no controller created, context is null, bridge untouched", () => {
+test("guest mount: no controller created, context is the noop stub, bridge untouched", () => {
   const app = makeApp();
   const factory = jest.fn();
   renderProvider(app, factory);
   expect(factory).not.toHaveBeenCalled();
-  expect(lastCtx).toBeNull();
+  // useMessenger() is never null: with no controller it falls back to the noop
+  // stub so consumers can call it unconditionally (drop-in for the bridge).
+  expect(lastCtx).not.toBeNull();
+  expect(typeof lastCtx.getStudyGroups).toBe("function");
   expect(app.sendbird).toBeUndefined();
 });
 
@@ -147,6 +150,16 @@ test("unmount disconnects", () => {
   const { unmount } = renderProvider(app, jest.fn(() => ctrl));
   unmount();
   expect(ctrl.disconnect).toHaveBeenCalledTimes(1);
+});
+
+test("signed-out mount: useMessenger() returns the noop stub, never null", () => {
+  const app = makeApp({ token: null }); // social null + token null = fully signed out
+  const factory = jest.fn();
+  renderProvider(app, factory);
+  expect(factory).not.toHaveBeenCalled(); // no controller created
+  expect(lastCtx).not.toBeNull();
+  expect(typeof lastCtx.getStudyGroups).toBe("function");
+  expect(typeof lastCtx.disconnect).toBe("function");
 });
 
 test("bridge changes are announced via messengerBridgeChanged dispatch", () => {

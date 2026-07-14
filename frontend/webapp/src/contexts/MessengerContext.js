@@ -124,7 +124,7 @@ export function MessengerProvider({ appController, children, createController = 
   }, [socialUserId, token]);
 
   return (
-    <MessengerContext.Provider value={controller}>
+    <MessengerContext.Provider value={controller || noopController(socialUserId)}>
       {children}
     </MessengerContext.Provider>
   );
