@@ -1,15 +1,10 @@
-.body.dark{
-    :root {
-        color-scheme: dark;
-      }
-      
-
+html[data-theme="dark"] {
+    color-scheme: dark;
+    background-color: #1a1a1a;
 
     .main-panel{
         background-color: #1a1a1a;
         color: #fff;
-        /* make scrollbars dark */
-
     }
 
     .sidebar .sidebar-wrapper li.active > a:not([data-toggle=collapse]):before,

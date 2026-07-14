@@ -122,6 +122,13 @@ function Main(props) {
   let debug = null;
   // if (window.location.host !== "staging.bookofmormon.online") debug = <pre>APP CONTROLLER: {JSON.stringify(appController.states, null, 2)}</pre>;
 
+  const isDarkMode = !!appController.states.preferences.darkMode;
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", isDarkMode ? "dark" : "light");
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute("content", isDarkMode ? "#1a1a1a" : "#323b4d");
+  }, [isDarkMode]);
+
   if (apiFailure)
     return (
       <div className="body">
@@ -133,7 +140,6 @@ function Main(props) {
     );
 
   const isDev =  /^dev\.|^localhost/.test(window.location.host);
-  const isDarkMode = !!appController.states.preferences.darkMode;
 
   return (
     <MessengerProvider appController={appController}>
