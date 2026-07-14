@@ -20,6 +20,7 @@ import { useMessenger } from "src/contexts/MessengerContext";
 import { NarrationProvider, useNarration } from "src/contexts/NarrationContext";
 import { extractTagIds } from "./tagIds";
 import { titleToHighlightPattern } from "./highlightPattern";
+import { pushDocTitle, popDocTitle } from "./docTitle";
 
 function ChronoRow({ chrono }) {
   chrono = chronoLabel(chrono);
@@ -471,12 +472,16 @@ function ImagePanel() {
       setMarginTop(0);
     }
 
+  }, [marginTop, narrationController.states.activeImageId]);
+
+  useEffect(() => {
     const activeId = narrationController.states.activeImageId;
+    if (!activeId) return undefined;
     const caption =
       narrationController.supplement.image?.[activeId]?.title || "Artwork";
-    if (caption)
-      document.title = "Art: " + caption + " | " + label("home_title");
-  }, [marginTop, narrationController.states.activeImageId]);
+    pushDocTitle("image", "Art: " + caption + " | " + label("home_title"));
+    return () => popDocTitle("image");
+  }, [narrationController.states.activeImageId]);
 
   if (narrationController.states.showFax) return null;
   let imgsWithComments = idsWithComments("img", narrationController);
@@ -723,7 +728,7 @@ function ScripturePanel() {
     // format: pageSlug/link_num/scripture/ref
     const newSlug = narrationController.pageController.states.activeRow + "/scripture/" + slugRef;
     narrationController.appController.functions.setSlug(newSlug);
-    document.title = `${ref} | ${label("cross_reference")}`;
+    pushDocTitle("scripture", `${ref} | ${label("cross_reference")}`);
 
     const handleKeyDown = (event) => {
       const length = textRefs.length;
@@ -766,6 +771,7 @@ function ScripturePanel() {
     // Cleanup: remove the event listener when the component is unmounted
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
+      popDocTitle("scripture");
     };
 
 
@@ -886,15 +892,15 @@ function FacsimilePanel() {
   ]);
 
   useEffect(() => {
+    if (!narrationController.states.showFax) return undefined;
     const version = narrationController.states.activeFax;
-    document.title =
-      "Facsimile: " +
-      version +
-      "—" +
-      narrationController.data.text.heading +
-      " | " +
-      label("home_title");
-  }, [narrationController.states.activeFax]);
+    pushDocTitle(
+      "fax",
+      "Facsimile: " + version + "—" +
+        narrationController.data.text.heading + " | " + label("home_title"),
+    );
+    return () => popDocTitle("fax");
+  }, [narrationController.states.activeFax, narrationController.states.showFax]);
 
   if (narrationController.states.faxData === undefined) {
     return null;
