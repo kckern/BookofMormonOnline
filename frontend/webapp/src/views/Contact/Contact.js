@@ -18,7 +18,7 @@ import instagram from "./img/instagram.png";
 import patreon from "./img/patreon.png";
 import { label } from "src/models/Utils";
 
-function Contact({ appController }) {
+function Contact() {
   const breakpointColumnsObj = {
     default: 2,
     1200: 1,

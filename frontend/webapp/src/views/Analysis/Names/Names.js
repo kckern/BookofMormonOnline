@@ -37,7 +37,7 @@ function Container({ appController }) {
   );
 }
 
-function NameControls({ appController }) {
+function NameControls() {
   return (
     <div className="nameControls">
       <NamesForm />
