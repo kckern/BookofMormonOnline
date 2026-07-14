@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import crypto from "crypto-browserify";
 import date from "date-and-time";
 import axios from "axios";
-import Parser, {domToReact} from "html-react-parser";
+import Parser from "html-react-parser";
 import DOMPurify from "dompurify";
 import moment from "moment";
 import "moment/locale/ko";
@@ -10,6 +10,7 @@ import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
 import { getCache, setCache } from "./Cache";
 import {Spinner} from "../views/_Common/Loader";
 import { ScripturePanelSingle } from "../views/Page/Narration";
+import { makeScriptureLinkReplacer } from "../views/_Common/scriptureLinkReplacer";
 import { detectReferences, lookupReference, generateReference } from 'scripture-guide';
 import { generateAvatarUrl } from "src/components/UserAvatar";
 import { useAppController } from "src/contexts/AppControllerContext";
@@ -657,23 +658,15 @@ export function ParseMessage(string,appController) {
   const [{ html, urls, scriptures }] = useState(replaceURLWithHTMLLinks(string,appController));
   const [activeRef, setActiveRef] = useState(null);
   if (typeof string !== "string") return string;
+  // Active-ref selection layered on the shared replacer: index lookup drives
+  // both the " active" class and the click-to-select behavior.
   const options = {
-    replace: ({ name, attribs, children }) => {
-      if (name === 'a' && attribs.classname === 'scripture_link') {
-        const ref = domToReact(children, options);
-        const refIndex = scriptures.indexOf(ref);
-        // html-react-parser lower-cases the raw `class` attribute to `classname`;
-        // re-emit it as React's `className` (not `class`, which React rejects as
-        // an invalid DOM prop and silently drops, killing the link styling).
-        const { classname, ...rest } = attribs;
-        const isActive = activeRef === refIndex;
-        const className = "scripture_link" + (isActive ? " active" : "");
-        const activateRef = () => {
-          setActiveRef(refIndex);
-        }
-        return <a {...rest} className={className} onClick={activateRef}>{ref}</a>;
-      }
-    }
+    replace: makeScriptureLinkReplacer({
+      onClick: (ref) => setActiveRef(scriptures.indexOf(ref)),
+      getClassName: (ref) =>
+        "scripture_link" +
+        (activeRef === scriptures.indexOf(ref) ? " active" : ""),
+    }),
   };
 
   return (
