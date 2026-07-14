@@ -667,13 +667,10 @@ function PeoplePlacePanel() {
   }) || [];
   const items = [...people, ...places];
 
-  const popUpPerson = (slug,type) => {
-    ///    appController.functions.setPopUp({ type: "places", ids: [id], popUpData: pageController.preLoad?.peoplePlaces?.place });
-
+  const popUpPerson = (slug, type) => {
     narrationController.appController.functions.setPopUp({
       type: type,
       ids: [slug],
-      popUpData: narrationController.appController.preLoad?.peoplePlaces?.[type==="people"?"people":"place"],
     });
   }
 

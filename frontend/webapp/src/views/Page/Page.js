@@ -110,10 +110,6 @@ export default function Page() {
         notFound: null,  // { type: "commentary" | "image", id: string } when set
         initWarning: null,  // { type: "verseNotFound", slug?: string } when set
       };
-      let preLoad = {
-        peoplePlaceToolTipData: {},
-        peoplePlaces: {},
-      };
       //Define all Row-level functions
       let functions = {
         setLoading: (val) => {
@@ -204,7 +200,6 @@ export default function Page() {
       //Create Initial Controller
       let initPageController = {
         states: states,
-        preLoad: preLoad,
         pageData: null,
         pageComments: null,
         pageCommentCounts: null,

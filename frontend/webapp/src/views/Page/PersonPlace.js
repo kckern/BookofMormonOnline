@@ -127,7 +127,6 @@ function PersonLink({ label, id, controller }) {
     appController.functions.setPopUp({
       type: "people",
       ids: [id],
-      popUpData: pageController.preLoad?.peoplePlaces?.person,
     });
   };
 
@@ -154,7 +153,6 @@ function PlaceLink({ label, id, controller }) {
     appController.functions.setPopUp({
       type: "places",
       ids: [id],
-      popUpData: pageController.preLoad?.peoplePlaces?.place,
     });
   };
 
