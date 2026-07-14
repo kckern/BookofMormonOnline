@@ -27,6 +27,7 @@ import {
 } from "src/models/Utils";
 import Parser from "html-react-parser";
 import { useAppController } from "src/contexts/AppControllerContext";
+import { useMessenger } from "src/contexts/MessengerContext";
 import { usePageController, PageControllerProvider } from "src/contexts/PageControllerContext";
 
 // Fire a click-equivalent handler on Enter/Space so role="button" divs are
@@ -48,6 +49,7 @@ export default function Comments({
   isQuote = false,
 }) {
   const appController = useAppController();
+  const messenger = useMessenger();
   const pageController = usePageController(pageControllerProp);
   const inputRef = useRef(null);
   useEffect(() => {
@@ -82,7 +84,7 @@ export default function Comments({
 
   let pageSlug = pageController.pageData.slug;
 
-  if (!appController?.sendbird?.sb?.currentUser) return null;
+  if (!messenger.sb?.currentUser) return null;
   if (!appController?.states?.studyGroup?.activeGroup) return null;
 
   const sendMessage = async (textbox, parentMessageId) => {
@@ -106,21 +108,21 @@ export default function Comments({
       textbox.innerText = label("saving");
       data.description = label(
         "x_added_y_highlight" + (highlights.length > 1 ? "s" : ""),
-        [appController.sendbird.sb.currentUser.nickname, highlights.length],
+        [messenger.sb.currentUser.nickname, highlights.length],
       );
     }
     if (text === "" && linkData.img) {
       text = "•";
       textbox.innerText = "⭐ " + label("highlighting");
       data.description = label("x_highlighted_image", [
-        appController.sendbird.sb.currentUser.nickname,
+        messenger.sb.currentUser.nickname,
       ]);
     }
     if (text === "" && linkData.fax) {
       text = "•";
       textbox.innerText = "⭐ " + label("highlighting");
       data.description = label("x_highlighted_facsimile", [
-        appController.sendbird.sb.currentUser.nickname,
+        messenger.sb.currentUser.nickname,
       ]);
     }
     const params = {};
@@ -376,6 +378,7 @@ export function CommentInput({
   inputRef,
 }) {
   const appController = useAppController();
+  const messenger = useMessenger();
   const pageController = usePageController();
   //useEffect(()=>document.getElementById(threadHash).focus(),[]);
   const [showTagList, setShowTagList] = useState(false);
@@ -396,7 +399,7 @@ export function CommentInput({
   };
 
   const setTypingLocation = (action) => {
-    pageController?.appController.sendbird.updateTypingLocation({
+    messenger.updateTypingLocation({
       channel,
       action,
       username: pageController.appController.states.user.user,
@@ -598,6 +601,7 @@ function ThreadedMessages({
   setCommentHighlights,
 }) {
   const appController = useAppController();
+  const messenger = useMessenger();
   const pageController = usePageController();
   const [expanded, expand] = useState(false);
   const [threadedMessages, setThreadMessages] = useState([]);
@@ -630,7 +634,7 @@ function ThreadedMessages({
   };
   const deleteMessageFromThread = (e) => {
     !expanded && expand(true);
-    appController.sendbird.loadThreadedMessages(parentMessage).then((r) => {
+    messenger.loadThreadedMessages(parentMessage).then((r) => {
       pageController.functions.addToPageComments(r.parentMessage);
       setThreadMessages(r.threadedMessages);
     });
@@ -691,7 +695,7 @@ function ThreadedMessages({
     if (!expanded || hasFetchedRef.current) return;
     hasFetchedRef.current = true;
     let cancelled = false;
-    appController.sendbird.loadThreadedMessages(parentMessage).then((r) => {
+    messenger.loadThreadedMessages(parentMessage).then((r) => {
       if (cancelled) return;
       const fetched = r.threadedMessages || [];
       setThreadMessages((messages) => {
@@ -905,6 +909,7 @@ export function EditComment({
   isQuote,
 }) {
   const appController = useAppController();
+  const messenger = useMessenger();
   const pageController = usePageController();
   const [showTagList, setShowTagList] = useState(false);
   const inputRef = useRef(null);
@@ -954,7 +959,7 @@ export function EditComment({
         text = "•";
         textbox.innerText = label("saving");
         data.description =
-          pageController.appController.sendbird.sb.currentUser.nickname +
+          messenger.sb.currentUser.nickname +
           " added " +
           highlights.length +
           " highlight" +
@@ -964,7 +969,7 @@ export function EditComment({
         text = "•";
         textbox.innerText = label("highlighting");
         data.description =
-          pageController.appController.sendbird.sb.currentUser.nickname +
+          messenger.sb.currentUser.nickname +
           " highlighted this image.";
       }
 
@@ -1184,6 +1189,7 @@ function messageReacters(message, members) {
 
 export function LikeButton({ type, message }) {
   const appController = useAppController();
+  const messenger = useMessenger();
   let memberMap = appController.states.studyGroup.activeGroup.members;
 
   const [reacters, updateReacters] = useState(
@@ -1245,7 +1251,7 @@ export function LikeButton({ type, message }) {
       });
 
   const toggleReaction = async (emojiKey) => {
-    let channel = await appController.sendbird.sb.groupChannel.getChannel(
+    let channel = await messenger.sb.groupChannel.getChannel(
       message.channelUrl,
     );
     if (!liked) {

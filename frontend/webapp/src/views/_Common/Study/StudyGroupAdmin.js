@@ -35,9 +35,11 @@ import { generateGroupHash } from "./StudyGroupSelect";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import { toast } from "react-toastify";
 import { useAppController } from "src/contexts/AppControllerContext";
+import { useMessenger } from "src/contexts/MessengerContext";
 
 export default function StudyGroupAdmin() {
   const appController = useAppController();
+  const messenger = useMessenger();
   const [group, setGroup] = useState(
     appController.states.studyGroup.activeGroup,
   );
@@ -60,8 +62,8 @@ export default function StudyGroupAdmin() {
   useEffect(() => {
     setGroup(activeGroup);
     if (activeGroup.myRole !== "operator") return;
-    appController.sendbird
-      ?.fetchGroupOperators(activeGroup)
+    messenger
+      .fetchGroupOperators(activeGroup)
       .then((operators) => {
         appController.functions.setActiveGroupOperators(operators);
       });
@@ -82,7 +84,7 @@ export default function StudyGroupAdmin() {
     ).checked;
 
     try {
-      const groupChannel = await appController.sendbird.setGroupNameDescription(
+      const groupChannel = await messenger.setGroupNameDescription(
         group,
         group_name,
         group_description,
@@ -109,38 +111,38 @@ export default function StudyGroupAdmin() {
   };
 
   const removeMember = async (e, data) => {
-    await appController.sendbird.removeMember(group, data.userId);
+    await messenger.removeMember(group, data.userId);
     let freshGroup = await group.refresh();
     appController.functions.setActiveStudyGroup(freshGroup);
     setGroup(freshGroup);
   };
   const banMember = async (e, data) => {
-    await appController.sendbird.banMember(group, data.userId);
+    await messenger.banMember(group, data.userId);
     let freshGroup = await group.refresh();
     appController.functions.setActiveStudyGroup(freshGroup);
     setGroup(freshGroup);
   };
 
   const makeAdmin = async (e, data) => {
-    await appController.sendbird.makeAdmin(group, data.userId);
+    await messenger.makeAdmin(group, data.userId);
     let freshGroup = await group.refresh();
     appController.functions.setActiveStudyGroup(freshGroup);
     setGroup(freshGroup);
   };
   const removeAdmin = async (e, data) => {
-    await appController.sendbird.removeAdmin(group, data.userId);
+    await messenger.removeAdmin(group, data.userId);
     let freshGroup = await group.refresh();
     appController.functions.setActiveStudyGroup(freshGroup);
     setGroup(freshGroup);
   };
   const muteMember = async (e, data) => {
-    await appController.sendbird.muteMember(group, data.userId);
+    await messenger.muteMember(group, data.userId);
     let freshGroup = await group.refresh();
     appController.functions.setActiveStudyGroup(freshGroup);
     setGroup(freshGroup);
   };
   const unMuteMember = async (e, data) => {
-    await appController.sendbird.unMuteMember(group, data.userId);
+    await messenger.unMuteMember(group, data.userId);
     let freshGroup = await group.refresh();
     appController.functions.setActiveStudyGroup(freshGroup);
     setGroup(freshGroup);
@@ -345,18 +347,19 @@ export default function StudyGroupAdmin() {
 
 function BannedMembers({ group, setGroup }) {
   const appController = useAppController();
+  const messenger = useMessenger();
   const [bannedMembers, setBannedMembers] = useState([]);
 
   // Re-fetch whenever the group object changes (a ban/refresh produces a fresh
   // group object, so a freshly banned member appears here without a reload).
   useEffect(() => {
-    appController.sendbird
-      ?.fetchBannedMembers(group)
+    messenger
+      .fetchBannedMembers(group)
       .then((members) => setBannedMembers(members || []));
   }, [group]);
 
   const unbanMember = async (userId) => {
-    const success = await appController.sendbird.unbanMember(group, userId);
+    const success = await messenger.unbanMember(group, userId);
     if (!success) return toast.warn(label("error"));
     setBannedMembers((prev) => prev.filter((m) => m.userId !== userId));
     let freshGroup = await group.refresh();

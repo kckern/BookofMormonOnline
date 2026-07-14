@@ -15,10 +15,12 @@ import {MapPanel,getPlaceInfo} from "./MapPanel.js"
 import {  assetUrl } from "../../models/BoMOnlineAPI"
 import { SearchPopUp } from "../_Common/SearchPopUp.js"
 import { useAppController } from "src/contexts/AppControllerContext";
+import { useMessenger } from "src/contexts/MessengerContext";
 import { MapProvider, useMapController } from "src/contexts/MapContext";
 function MapContainer() {
 
   const appController = useAppController();
+  const messenger = useMessenger();
   const params = useParams(),
     [currentMap, setCurrentMap] = useState(null),
     [mapName, setMapName] = useState(""),
@@ -33,7 +35,7 @@ function MapContainer() {
     [panelContents, setPanelContents] = useState({});
 
 
-  const userMetadata = appController.sendbird?.getCurrentUser()?.metaData
+  const userMetadata = messenger.getCurrentUser()?.metaData
   const metaKeys = Object.keys(userMetadata || {});
   const isAdmin = ["isAdmin", "isMapper"].some((key) => metaKeys.includes(key));
 

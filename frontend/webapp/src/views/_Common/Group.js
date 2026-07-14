@@ -6,11 +6,13 @@ import { isMobile } from "src/models/Utils";
 import Home from "../Home/Home";
 import MobileStudy from "./Study/Mobile/MobileStudy";
 import { useAppController } from "src/contexts/AppControllerContext";
+import { useMessenger } from "src/contexts/MessengerContext";
 
 
 export default function Group({ isReady }) {
 
     const appController = useAppController();
+    const messenger = useMessenger();
     const match = useRouteMatch();
     const params = match.params;
     const base = match.url.split("/")[1];
@@ -30,7 +32,7 @@ export default function Group({ isReady }) {
             !appController.states.studyGroup.isDrawerOpen
           );
           setTimeout(() => {
-            appController.sendbird.loadPreviousMessages({
+            messenger.loadPreviousMessages({
                 group: appController.states.studyGroup.activeGroup,
                 id: Number(params.messageId),
               }).then((data) => {

@@ -9,7 +9,11 @@ import {
 // Minimal appController fixture. social: null = guest.
 const makeApp = ({ social = null, token = "tok-1", user = null } = {}) => ({
   states: { user: { user, token, social } },
-  functions: { setStudyGroups: jest.fn(), messengerBridgeChanged: jest.fn() },
+  functions: {
+    setStudyGroups: jest.fn(),
+    setNotificationUnreadCount: jest.fn(),
+    messengerBridgeChanged: jest.fn(),
+  },
 });
 
 // Probe component records what useMessenger() returns each render.
@@ -30,13 +34,16 @@ beforeEach(() => {
   lastCtx = undefined;
 });
 
-test("guest mount: no controller created, context is null, bridge untouched", () => {
+test("guest mount: no controller created, context is the noop stub, bridge untouched", () => {
   const app = makeApp();
   const factory = jest.fn();
   renderProvider(app, factory);
   expect(factory).not.toHaveBeenCalled();
-  expect(lastCtx).toBeNull();
-  expect(app.sendbird).toBeUndefined();
+  // useMessenger() is never null: with no controller it falls back to the noop
+  // stub so consumers can call it unconditionally (drop-in for the bridge).
+  expect(lastCtx).not.toBeNull();
+  expect(typeof lastCtx.getStudyGroups).toBe("function");
+  expect(app.messenger).toBeUndefined();
 });
 
 test("noopController has the legacy stub surface", async () => {
@@ -57,6 +64,7 @@ test("noopController has the legacy stub surface", async () => {
 const makeController = () => ({
   disconnect: jest.fn(),
   getStudyGroups: jest.fn().mockResolvedValue([{ url: "g1" }]),
+  loadNotificationUnreadCount: jest.fn().mockResolvedValue(0),
 });
 
 const rerenderWith = (rerender, app, factory) =>
@@ -66,14 +74,14 @@ const rerenderWith = (rerender, app, factory) =>
     </MessengerProvider>,
   );
 
-test("sign-in: creates controller, bridges appController.sendbird, bootstraps groups", async () => {
+test("sign-in: creates controller, bridges appController.messenger, bootstraps groups", async () => {
   const app = makeApp({ social: { user_id: "abc123" }, user: "kc" });
   const ctrl = makeController();
   const factory = jest.fn(() => ctrl);
   renderProvider(app, factory);
 
   expect(factory).toHaveBeenCalledWith("abc123", "tok-1", app);
-  expect(app.sendbird).toBe(ctrl);
+  expect(app.messenger).toBe(ctrl);
   expect(lastCtx).toBe(ctrl);
   // bootstrap (getStudyGroups → setStudyGroups) moved here from the dispatch fns
   await act(async () => {});
@@ -96,7 +104,7 @@ test("guest → sign-in transition creates the controller", () => {
   );
   expect(factory).toHaveBeenCalledTimes(1);
   expect(factory).toHaveBeenCalledWith("abc123", "tok-1", signedIn);
-  expect(signedIn.sendbird).toBe(ctrl);
+  expect(signedIn.messenger).toBe(ctrl);
 });
 
 test("falls back to social.access_token when user token is absent", () => {
@@ -118,10 +126,10 @@ test("identity change: disconnect old, create new", () => {
 
   expect(ctrlA.disconnect).toHaveBeenCalledTimes(1);
   expect(factory).toHaveBeenCalledTimes(2);
-  expect(appB.sendbird).toBe(ctrlB);
+  expect(appB.messenger).toBe(ctrlB);
 });
 
-test("sign-out: disconnect, bridge resets to no-op stub (never null), context null", () => {
+test("sign-out: disconnect, bridge resets to no-op stub (never null), context is the no-op stub", () => {
   const app = makeApp({ social: { user_id: "userA" }, user: "a" });
   const ctrl = makeController();
   const factory = jest.fn(() => ctrl);
@@ -131,14 +139,16 @@ test("sign-out: disconnect, bridge resets to no-op stub (never null), context nu
   rerenderWith(rerender, guest, factory);
 
   expect(ctrl.disconnect).toHaveBeenCalledTimes(1);
-  expect(lastCtx).toBeNull();
+  // Task 1 contract: the context value is never null — after disconnect it is
+  // the noopController stub (see the two sibling never-null assertions below).
+  expect(lastCtx).not.toBeNull();
   // cleanup bridges the stub onto the appController live at cleanup time
-  expect(guest.sendbird).toBeDefined();
-  expect(guest.sendbird).not.toBeNull();
-  expect(guest.sendbird.disconnect).toBeInstanceOf(Function);
+  expect(guest.messenger).toBeDefined();
+  expect(guest.messenger).not.toBeNull();
+  expect(guest.messenger.disconnect).toBeInstanceOf(Function);
   // Teardown writes through appRef.current (the appController live at cleanup
   // time = guest); the original app keeps its bridged controller untouched.
-  expect(app.sendbird).toBe(ctrl);
+  expect(app.messenger).toBe(ctrl);
 });
 
 test("unmount disconnects", () => {
@@ -147,6 +157,16 @@ test("unmount disconnects", () => {
   const { unmount } = renderProvider(app, jest.fn(() => ctrl));
   unmount();
   expect(ctrl.disconnect).toHaveBeenCalledTimes(1);
+});
+
+test("signed-out mount: useMessenger() returns the noop stub, never null", () => {
+  const app = makeApp({ token: null }); // social null + token null = fully signed out
+  const factory = jest.fn();
+  renderProvider(app, factory);
+  expect(factory).not.toHaveBeenCalled(); // no controller created
+  expect(lastCtx).not.toBeNull();
+  expect(typeof lastCtx.getStudyGroups).toBe("function");
+  expect(typeof lastCtx.disconnect).toBe("function");
 });
 
 test("bridge changes are announced via messengerBridgeChanged dispatch", () => {

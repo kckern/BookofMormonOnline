@@ -39,6 +39,7 @@ import padlock from "./svg/padlock.svg";
 import moment from "moment";
 import momentDurationFormatSetup from "moment-duration-format";
 import { useAppController } from "src/contexts/AppControllerContext";
+import { useMessenger } from "src/contexts/MessengerContext";
 momentDurationFormatSetup(moment);
 moment.locale(label("moment_locale"));
 
@@ -48,6 +49,7 @@ export function Profile({
   setHistoryView,
 }) {
   const appController = useAppController();
+  const messenger = useMessenger();
   const [menuOn, setMenu] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const processLogout = () => {
@@ -57,7 +59,7 @@ export function Profile({
         if (results.signout) {
           // updateUserState is synchronous (returns boolean) — chaining .then()
           // on it threw and silently skipped processSignOut, breaking logout.
-          appController.sendbird?.updateUserState({
+          messenger.updateUserState({
             channels: appController.states.studyGroup.groupList,
             activeGroup: "",
           });
@@ -259,11 +261,12 @@ export function Profile({
 
 function ProfilePicture() {
   const appController = useAppController();
+  const messenger = useMessenger();
   const [openModal, setOpenModal] = useState(false);
   const [profileImage, setProfileImage] = useState(null);
-  // sendbird is null for guests / before the chat controller is created; this
+  // sb is undefined for guests / before the chat controller connects; this
   // value is unused here, so guard rather than crash the render.
-  const sb = appController.sendbird?.sb;
+  const sb = messenger.sb;
   useEffect(() => {
     if (
       profileImage !== appController.states.user.social?.profile_url ||

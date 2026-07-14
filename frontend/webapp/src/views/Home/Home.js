@@ -10,6 +10,7 @@ import { loadHomeFeed } from "src/models/dummyData/study";
 import { ImageInFeed } from "src/views/_Common/Study/StudyInFeed";
 import { HomeFeed } from "./Feed.js";
 import { useAppController } from "src/contexts/AppControllerContext";
+import { useMessenger } from "src/contexts/MessengerContext";
 
 import ReactTooltip from "react-tooltip";
 import "./StudyGroupFeed.css";
@@ -417,6 +418,7 @@ function GroupCard({ groupData, activeGroup, setActiveGroup }) {
 
 export function GroupCallToAction({ groupData, joinlabel }) {
   const appController = useAppController();
+  const messenger = useMessenger();
   const myId = appController.states.user.user;
   const list = appController.states.studyGroup.groupList.map((c) => c.url);
   const amMember = list.includes(groupData.url);
@@ -517,14 +519,14 @@ export function GroupCallToAction({ groupData, joinlabel }) {
     if (results?.joinOpenGroup?.isSuccess) {
       let channel_url = results.joinOpenGroup.channel;
       try {
-        const groupChannel = await appController.sendbird.sb.groupChannel.getChannel(
+        const groupChannel = await messenger.sb.groupChannel.getChannel(
           channel_url,
         );
         appController.functions.setActiveStudyGroup(groupChannel);
         appController.functions.setStudyMode(true);
         appController.functions.openDrawer(true);
-        appController.sendbird
-          ?.getStudyGroups()
+        messenger
+          .getStudyGroups()
           .then((list) => appController.functions.setStudyGroups(list));
         //TODO: Refresh Home
         return true;

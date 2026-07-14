@@ -2,9 +2,11 @@ import { useState, useEffect, useRef } from "react";
 import Loader from "../Loader";
 import { StudyGroupChatPanel } from "./StudyHall";
 import { useAppController } from "src/contexts/AppControllerContext";
+import { useMessenger } from "src/contexts/MessengerContext";
 
 export default function DirectMessages({ userId }) {
   const appController = useAppController();
+  const messenger = useMessenger();
   const myId = appController.states.user.social?.user_id;
   const theirId = userId;
 
@@ -34,7 +36,7 @@ export default function DirectMessages({ userId }) {
       customType: "DM",
     };
 
-    appController.sendbird.sb.groupChannel
+    messenger.sb.groupChannel
       .createChannel(params)
       .then((groupChannel) => {
         if (!isMounted.current) return;

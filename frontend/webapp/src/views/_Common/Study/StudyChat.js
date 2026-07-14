@@ -41,6 +41,7 @@ import {
 import Parser from "html-react-parser";
 import Loader from "../Loader/index.js";
 import { useAppController } from "src/contexts/AppControllerContext";
+import { useMessenger } from "src/contexts/MessengerContext";
 
 const modules = {
   toolbar: [
@@ -391,6 +392,7 @@ export function StudyGroupChat({
   setPanel,
 }) {
   const appController = useAppController();
+  const messenger = useMessenger();
   const [loading, setLoading] = useState(true);
   const [lastMessageId, setLastMessageId] = useState(0);
   const [firstMessageId, setFirstMessageId] = useState(0);
@@ -414,8 +416,8 @@ export function StudyGroupChat({
       entries.forEach(async (entry) => {
         if (entry.isIntersecting) {
           setPrevLoader(true);
-          appController.sendbird
-            ?.loadPreviousMessages({
+          messenger
+            .loadPreviousMessages({
               group: channel,
               id: messages[messages.length - 1].messageId,
             })
@@ -425,8 +427,8 @@ export function StudyGroupChat({
               setMessages((prev) => [...prev, ...messageList]);
               setLastElement(document.querySelector(".last"));
               setPrevLoader(false);
-              appController.sendbird
-                ?.loadUnreadDMs()
+              messenger
+                .loadUnreadDMs()
                 .then((unreadCounts) =>
                   appController.functions.setUnreadDMs(unreadCounts),
                 );
@@ -457,7 +459,7 @@ export function StudyGroupChat({
     window.addEventListener("updateMessage", updateMessage, false);
     window.addEventListener("deleteChatMessage", deleteChatMessage, false);
     // Load Previous Messages
-    appController.sendbird.loadGroupMessages(channel).then((loadedMessages) => {
+    messenger.loadGroupMessages(channel).then((loadedMessages) => {
       if (!isMounted.current) return;
       setMessages(loadedMessages);
       setLastElement(document.querySelector(".last"));
@@ -827,6 +829,7 @@ function ThreadedMessages({
   setPanel,
 }) {
   const appController = useAppController();
+  const messenger = useMessenger();
   const [needsToLoad, setNeedsToLoad] = useState(true);
   const [messages, setMessages] = useState([]);
   // Guard async setState against unmount (panel/thread switching).
@@ -900,7 +903,7 @@ function ThreadedMessages({
 
   const loadThreadedMessages = useCallback(
     (needsToLoad) => {
-      appController.sendbird.loadThreadedMessages(parentMessage).then((r) => {
+      messenger.loadThreadedMessages(parentMessage).then((r) => {
         if (!isMounted.current) return;
         setMessages([...r.threadedMessages]);
       });
