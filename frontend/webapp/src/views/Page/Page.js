@@ -1,6 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useReducer, useEffect, useState, useRef } from "react";
-import { history } from "src/models/routeHistory";
 // API ACTIONS
 // COMPONENTS
 import Loader from "../_Common/Loader";
@@ -13,7 +12,7 @@ import {
   playSound,
   isMobile,
 } from "src/models/Utils";
-import { useRouteMatch } from "react-router-dom";
+import { useRouteMatch, useHistory } from "react-router-dom";
 
 import { Floaters } from "./Floaters";
 import PageNotFound from "./PageNotFound";
@@ -59,6 +58,7 @@ export default function Page() {
   const appController = useAppController();
   const messenger = useMessenger();
   const match = useRouteMatch();
+  const history = useHistory();
   let routeParams = match.params;
   if (routeParams.pageSlug === "study") {
     let parts = localStorage
