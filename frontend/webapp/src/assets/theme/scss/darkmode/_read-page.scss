@@ -36,7 +36,9 @@ html[data-theme="dark"] {
   .noteItem { background-color: var(--surface-3); color: var(--text-secondary); }
 
   /* Page.css:328 mobile alternating rows */
-  .card-body:nth-child(even) { background-color: var(--surface-2); }
+  @media only screen and (max-width: 900px) {
+    .card-body:nth-child(even) { background-color: var(--surface-2); }
+  }
 
   /* ScripturePanel.css */
   .scriptureContainerWrapper { background-color: var(--surface-2); }
