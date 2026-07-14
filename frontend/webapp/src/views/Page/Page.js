@@ -127,7 +127,7 @@ export default function Page() {
           parts[0] = nextNum;
           let newSlug = parts.reverse().join("/");
           const getTrigger = () =>
-            document.querySelectorAll(`a[href='/${newSlug}']`)[0];
+            document.querySelector(`[textid="${newSlug}"] .reference a`);
           if (!getTrigger()) return false;
           // Open first, then scroll to the opened content (the old order
           // centered the link, then the expansion pushed the content
