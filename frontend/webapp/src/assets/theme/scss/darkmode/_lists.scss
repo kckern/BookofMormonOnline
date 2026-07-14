@@ -25,5 +25,5 @@ html[data-theme="dark"] {
   .card-body.placeInfo div.location { color: rgba(255, 255, 255, 0.75); }
 
   /* Objects.css era badges */
-  .ObjectList .IdBadge[class*="era-"] { background-color: var(--surface-4) !important; color: var(--text-secondary); }
+  .ObjectList .IdBadge[class*="era-"] { background-color: var(--surface-4) !important; color: var(--text-secondary) !important; }
 }
