@@ -9,7 +9,6 @@ import Section from "./Section";
 import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
 import "./Page.css";
 import {
-  testJSON,
   label,
   playSound,
   isMobile,
@@ -25,6 +24,7 @@ import { MuteButton } from "./MuteButton";
 import { recordDeepLinkEvent } from "src/utils/deepLinkInstrument";
 import { usePageInit, pageScrollManager, isRefOpen } from "./usePageInit";
 import { countFaxFromIndex, mergeCounts } from "./pageCommentCounts";
+import { indexPageComments, addToPageCommentIndex, updateToPageComment, deleteToPageComments } from "./commentIndex";
 import { createScrollSpy, step } from "src/scroll";
 import { appFunctions } from "src/models/appController";
 import { useAppController } from "src/contexts/AppControllerContext";
@@ -841,64 +841,3 @@ function reducer(pageController, input) {
   return { ...pageController };
 }
 
-function indexPageComments(array) {
-  let comments = {};
-  for (let i in array) {
-    let item = array[i];
-    if (!testJSON(item.data)) continue;
-    let meta = JSON.parse(item.data);
-    if (meta.links === undefined) continue;
-    let keys = Object.keys(meta.links);
-    for (let k in keys) {
-      let key = keys[k];
-      if (comments[key] === undefined) comments[key] = {};
-      comments[key][meta.links[key]] = item;
-    }
-  }
-  return comments;
-}
-
-function addToPageCommentIndex(comments, item) {
-  if (!comments) comments = {};
-  if (!testJSON(item.data)) return comments;
-  let meta = JSON.parse(item.data);
-  if (!meta.links) return comments;
-  let keys = Object.keys(meta.links);
-  for (let k in keys) {
-    let key = keys[k];
-    if (!key) continue;
-    if (!comments[key]) comments[key] = {};
-    if (!Array.isArray(comments[key][meta[key]]))
-      comments[key][meta.links[key]] = [];
-    comments[key][meta.links[key]] = item;
-  }
-  return comments;
-}
-
-function updateToPageComment(comments, item) {
-  if (!testJSON(item.data)) return comments;
-  let meta = JSON.parse(item.data);
-  if (meta.links === undefined) return comments;
-  let keys = Object.keys(meta.links);
-  for (let k in keys) {
-    let key = keys[k];
-    // if (comments[key] === undefined) comments[key] = {};
-    // if (!Array.isArray(comments[key][meta.links[key]])) comments[key][meta.links[key]] = [];
-    comments[key][meta.links[key]] = item;
-  }
-  return comments;
-}
-
-function deleteToPageComments(comments, item) {
-  if (!testJSON(item.data)) return comments;
-  let meta = JSON.parse(item.data);
-  if (meta.links === undefined) return comments;
-  let keys = Object.keys(meta.links);
-  for (let k in keys) {
-    let key = keys[k];
-    // if (comments[key] === undefined) comments[key] = {};
-    // if (!Array.isArray(comments[key][meta.links[key]])) comments[key][meta.links[key]] = [];
-    comments[key][meta.links[key]] = [];
-  }
-  return comments;
-}
