@@ -28,6 +28,7 @@ function MapContainer() {
     [mapCenter, setMapCenter] = useState([0,0]),
     [searching,setSearching] = useState(null),
     [initSearchLetter, setInitSearchLetter] = useState(null),
+    [selectedStory, setSelectedStory] = useState(null),
     [panelContents, setPanelContents] = useState({});
 
 
@@ -123,6 +124,8 @@ function MapContainer() {
   const mapController = {
     setPanelContents,
     panelContents,
+    selectedStory,
+    setSelectedStory,
     getMap,
     mapName,
     placeList,

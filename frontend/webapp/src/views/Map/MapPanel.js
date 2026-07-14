@@ -46,8 +46,7 @@ export function MapPanel({mapController}) {
   const [scripture, setScripture] = useState(null);
   const parserOptions = getHtmlScriptureLinkParserOptions(setScripture);
   const [prevMapType, setPrevMapType] = useState(null);
-  const [selectedStory, setSelectedStory] = useState(null);
-  const {panelContents, zoomLevel, currentMap, mapCenter, setPanelContents,mapFunctions, isAdmin, placeList} = mapController;
+  const {panelContents, zoomLevel, currentMap, mapCenter, setPanelContents,mapFunctions, isAdmin, placeList, selectedStory, setSelectedStory} = mapController;
   const {slug} = panelContents || {};
   const placeInfo = getPlaceInfo(slug, mapController.appController);
   const title = placeInfo?.name;
@@ -228,9 +227,6 @@ useEffect(()=>{
   //clear panel setPanelContents(false);
 },[currentMap?.slug])
 
-
-mapController.selectedStory = selectedStory;
-mapController.setSelectedStory = setSelectedStory;
 
 if(selectedStory) return <MapStoryPanel mapController={mapController}  />
 
