@@ -30,6 +30,7 @@ import { countFaxFromIndex, mergeCounts } from "./pageCommentCounts";
 import { createScrollSpy, step } from "src/scroll";
 import { appFunctions } from "src/models/appController";
 import { useAppController } from "src/contexts/AppControllerContext";
+import { PageControllerProvider } from "src/contexts/PageControllerContext";
 
 // Apply a Main slug change from inside the Page reducer WITHOUT a nested React
 // dispatch. The reducer is replayed by React during render; the old
@@ -599,7 +600,7 @@ export default function Page() {
   if (pageController.states.loading !== false) return <Loader />;
   pageController.appController.functions['setStageClass'] = setStageClass;
   return (
-    <>
+    <PageControllerProvider pageController={pageController}>
       {!readyToScroll && needToLoadComments ? (
         <LoadingPageCommentsNotice
           commentState={commentState}
@@ -635,7 +636,7 @@ export default function Page() {
           );
         })}
       </div>
-    </>
+    </PageControllerProvider>
   );
 }
 

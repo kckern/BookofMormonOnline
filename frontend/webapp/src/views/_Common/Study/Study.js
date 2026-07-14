@@ -27,6 +27,7 @@ import {
 } from "src/models/Utils";
 import Parser from "html-react-parser";
 import { useAppController } from "src/contexts/AppControllerContext";
+import { usePageController } from "src/contexts/PageControllerContext";
 
 // Fire a click-equivalent handler on Enter/Space so role="button" divs are
 // operable by keyboard. preventDefault on Space stops the page from scrolling.
@@ -39,7 +40,7 @@ const activateOnKey = (handler) => (e) => {
 
 export default function Comments({
   isOpen,
-  pageController,
+  pageController: pageControllerProp,
   linkData,
   highlights,
   removeHighlight,
@@ -47,6 +48,7 @@ export default function Comments({
   isQuote = false,
 }) {
   const appController = useAppController();
+  const pageController = usePageController(pageControllerProp);
   const inputRef = useRef(null);
   useEffect(() => {
     if ((!highlights || highlights.length) === 0 && setAddComments)
