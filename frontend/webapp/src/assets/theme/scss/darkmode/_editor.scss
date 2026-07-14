@@ -1,0 +1,51 @@
+html[data-theme="dark"] {
+  /* ReactQuill "snow" theme (StudyChat editor). quill.snow.css ships light
+     defaults; these token overrides win via the html[data-theme] prefix. */
+
+  .ql-toolbar.ql-snow { background-color: var(--surface-2); border-color: var(--border); }
+  .ql-container.ql-snow { border-color: var(--border); }
+  .ql-editor { background-color: var(--surface-3); color: var(--text-primary); }
+  .ql-editor.ql-blank::before { color: var(--text-faint); }
+  .ql-snow .ql-editor blockquote { border-left-color: var(--border-strong); }
+  .ql-snow .ql-editor a { color: var(--link); }
+
+  /* Toolbar icons (SVG stroke / fill) */
+  .ql-snow .ql-stroke { stroke: var(--text-secondary); }
+  .ql-snow .ql-stroke-miter { stroke: var(--text-secondary); }
+  .ql-snow .ql-fill, .ql-snow .ql-stroke.ql-fill { fill: var(--text-secondary); }
+
+  /* Toolbar hover / active accent */
+  .ql-snow.ql-toolbar button:hover .ql-stroke,
+  .ql-snow.ql-toolbar button.ql-active .ql-stroke { stroke: var(--accent-green); }
+  .ql-snow.ql-toolbar button:hover .ql-fill,
+  .ql-snow.ql-toolbar button.ql-active .ql-fill { fill: var(--accent-green); }
+  .ql-snow.ql-toolbar button:hover,
+  .ql-snow.ql-toolbar button.ql-active,
+  .ql-snow .ql-picker-label:hover,
+  .ql-snow .ql-picker-item:hover,
+  .ql-snow .ql-picker-item.ql-selected { color: var(--accent-green); }
+
+  /* Picker-label hover / active SVG arrows */
+  .ql-snow.ql-toolbar .ql-picker-label:hover .ql-stroke,
+  .ql-snow.ql-toolbar .ql-picker-label:hover .ql-stroke-miter,
+  .ql-snow.ql-toolbar .ql-picker-label.ql-active .ql-stroke,
+  .ql-snow.ql-toolbar .ql-picker-label.ql-active .ql-stroke-miter { stroke: var(--accent-green); }
+  .ql-snow.ql-toolbar .ql-picker-label:hover .ql-fill,
+  .ql-snow.ql-toolbar .ql-picker-label.ql-active .ql-fill { fill: var(--accent-green); }
+
+  /* Picker (dropdown) labels + menus */
+  .ql-snow .ql-picker { color: var(--text-secondary); }
+  .ql-snow .ql-picker-options { background-color: var(--surface-2); border-color: var(--border); }
+  .ql-snow .ql-picker.ql-expanded .ql-picker-label { border-color: var(--border); color: var(--text-primary); }
+  .ql-snow .ql-picker.ql-expanded .ql-picker-options { border-color: var(--border); }
+
+  /* Link tooltip editor */
+  .ql-snow .ql-tooltip {
+    background-color: var(--surface-2); color: var(--text-secondary);
+    border-color: var(--border); box-shadow: 0 2px 8px var(--shadow);
+  }
+  .ql-snow .ql-tooltip input[type=text] {
+    background-color: var(--surface-4); color: var(--text-primary); border-color: var(--border);
+  }
+  .ql-snow .ql-tooltip a { color: var(--link); }
+}

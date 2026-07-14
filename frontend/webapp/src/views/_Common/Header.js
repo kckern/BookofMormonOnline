@@ -11,6 +11,7 @@ import { StudyGroupBar } from "./Study/StudyGroupBar.js";
 import bell from "src/views/_Common/svg/bell.svg";
 import none from "src/views/_Common/svg/none.svg";
 import logo from "src/views/_Common/svg/logo.svg";
+import logoDark from "src/views/_Common/svg/logo-dark.svg";
 import green from "src/views/User/svg/green.svg";
 import yellow from "src/views/User/svg/yellow.svg";
 
@@ -50,7 +51,7 @@ function Header({ appController, isReady }) {
       }}
     >
       <div className="header-logo-image">
-        <img src={logo} alt="logo" />
+        <img src={appController?.states?.preferences?.darkMode ? logoDark : logo} alt="logo" />
       </div>
       <div className="header-nav-icon">
         <i className="fa fa-bars"></i>

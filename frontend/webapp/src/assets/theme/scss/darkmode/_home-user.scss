@@ -1,0 +1,43 @@
+html[data-theme="dark"] {
+
+  /* Home.css leftovers */
+  .Community .groupCard .groupMessage .groupMessageAvatar img { background-color: var(--surface-4); }
+  .Community .groupCard .groupMembers { background-color: var(--surface-4); }
+  .cardTip li img { background-color: var(--text-secondary); }
+  .cardTip li div.tip-progress div { color: var(--accent-green-soft); background-color: rgba(107, 208, 152, 0.35); }
+
+  /* StudyGroupFeed.css placeholders */
+  .homeFeedHeader .blankWord { color: var(--surface-4); background-color: var(--surface-4); }
+
+  /* Profile.css */
+  .profileImage { background-color: var(--surface-3); border-color: var(--border); }
+  .profileCard .threedots:hover { background-color: var(--surface-3); }
+  .profileDropdown .dropdown-menu.show { border-color: var(--border); }
+
+  /* Preferences.css:68 */
+  .publicationCard .card-header .source_publisher { color: var(--text-muted); }
+
+  /* PictureWithOverlay.css:65 — white uploader modal */
+  .imageUploaderWrapper { background: var(--surface-2); color: var(--text-secondary); }
+
+  /* SignIn.css / User.css: input prepend + study history headers */
+  .input-group-prepend { background-color: var(--surface-3); }
+  .studyYear > h2 { background-color: var(--surface-3); color: var(--text-primary); }
+  .studyMonth > h2 { border-bottom-color: var(--border); }
+
+  /* react-calendar-heatmap (SVG fills; CSS beats presentation attributes) */
+  .react-calendar-heatmap .color-scale-null { fill: var(--surface-3); }
+  .tab-pane .react-calendar-heatmap rect.color-empty { fill: var(--surface-3); }
+  .react-calendar-heatmap text { fill: var(--text-muted); }
+
+  /* ProgressBox.css */
+  .ProgressBox .nav-tabs .nav-item:hover a { color: var(--text-primary); background-color: var(--surface-3); }
+  .nav-tabs-navigation.verical-navs { border-right-color: var(--border); }
+  .ProgressBoxPane .sectionBox { background-color: var(--surface-3); color: var(--text-muted); }
+  .ProgressBoxPane .sectionDots { border-right-color: var(--border-strong); }
+
+  /* MobileUser.css CircularProgressbar (SVG) */
+  .divisionProgressItem .CircularProgressbar .CircularProgressbar-path { stroke: var(--accent-green); }
+  .divisionProgressItem .CircularProgressbar .CircularProgressbar-trail { stroke: var(--surface-4); }
+  .divisionProgressItem .CircularProgressbar .CircularProgressbar-text { fill: var(--text-primary); }
+}

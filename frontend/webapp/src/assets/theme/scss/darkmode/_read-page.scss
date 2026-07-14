@@ -1,0 +1,73 @@
+html[data-theme="dark"] {
+
+  /* CategoryPanels.scss + BasePanel.scss */
+  .base-panel { background: var(--surface-2); color: var(--text-secondary); }
+  .category-panel-header { background: var(--surface-3); border-bottom-color: var(--border); color: var(--text-primary); }
+  .close-button:hover { background: var(--surface-4); }
+  .category-data { background: var(--surface-3); border-color: var(--border); }
+  .panel-header { background-color: var(--surface-3); border-bottom-color: var(--border); }
+
+  /* PassageNotes(.new).scss */
+  .passage-notes .category-tabs { background: var(--surface-2); border-top-color: var(--border); }
+  .category-tabs .category-tab {
+    background: var(--surface-3); color: var(--text-secondary); border-color: var(--border);
+    &.active { background: var(--surface-4); color: var(--text-primary); }
+  }
+
+  /* Read.scss skeleton loaders */
+  .skeleton-section { background-color: var(--surface-2); }
+  .skeleton-heading, .skeleton-study-btn, .skeleton-avatar, .skeleton-voice, .skeleton-text-line {
+    background: linear-gradient(90deg, #2e2e2e 25%, #3a3a3a 50%, #2e2e2e 75%);
+    background-size: 200% 100%;
+  }
+
+  /* TextContent.css art bubbles */
+  .art_bubble {
+    background-color: var(--surface-2); border-color: var(--border); color: var(--text-muted);
+    &:hover { outline-color: rgba(255, 255, 255, 0.25); }
+    &.active { outline-color: rgba(240, 173, 78, 0.4); }
+  }
+
+  /* Narration.css panels */
+  .narration .images { background-color: var(--surface-3); }
+  .thumb_tabs li { background-color: var(--surface-3); &.active { background-color: var(--surface-4); } }
+  .peoplePlacePanelWrapper, .notesPanelWrapper, .scripturePanelWrapper { background-color: var(--surface-2); }
+  .peoplePlacePanel, .scripturePanel { background-color: var(--surface-3); color: var(--text-secondary); }
+  .noteItem { background-color: var(--surface-3); color: var(--text-secondary); }
+
+  /* Page.css:328 mobile alternating rows */
+  @media only screen and (max-width: 900px) {
+    .card-body:nth-child(even) { background-color: var(--surface-2); }
+  }
+
+  /* ScripturePanel.css */
+  .scriptureContainerWrapper { background-color: var(--surface-2); }
+  .scripturePanelSingle h5 { background-color: var(--surface-3); color: var(--text-secondary); }
+  .scripturePanelSingle .text { background-color: var(--surface-2); color: var(--text-secondary); }
+  .scripturePanelSingle .scriptureTextHeader .btn { background-color: var(--control); color: var(--text-primary); }
+
+  /* Commentary.css */
+  .atv { background-color: var(--surface-3); color: var(--text-muted); }
+  .atv-string { background-color: var(--surface-2); color: var(--text-primary); }
+  .commentary_hide_button.show_button { background-color: rgba(255, 255, 255, 0.15); }
+
+  /* PopUp.css */
+  .popupwindow { background-color: var(--surface-2); color: var(--text-secondary); }
+  .popupwindow h3 { border-bottom-color: var(--border-strong); }
+  .notice { background-color: rgba(240, 173, 78, 0.12); border-color: rgba(240, 173, 78, 0.4); color: var(--text-secondary); }
+  .xrels .xrel { border-bottom-color: var(--border); }
+  .xrels .xrel .rel-verb { background: var(--surface-3); a { color: var(--text-secondary); } }
+
+  /* SearchPopUp.css */
+  .search-popup {
+    background-color: var(--surface-2); color: var(--text-secondary);
+    .card-header { border-bottom-color: var(--border); }
+    .card-header input { background-color: var(--surface-4); color: var(--text-primary); border-color: var(--border); }
+    .search-result.selected { background-color: rgba(147, 198, 239, 0.15); }
+    .search-result-info { color: var(--text-muted); }
+    .highlight { background-color: var(--highlight); color: var(--text-primary); }
+  }
+
+  /* Search.css:98 */
+  .search .searchboxWrapper { background-color: var(--surface-2); border: 1px solid var(--border); }
+}

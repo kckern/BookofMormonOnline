@@ -1,5 +1,6 @@
 import { lang } from "moment";
 import { isMessengerEnabled } from './featureFlags';
+import { migratePreferences } from "./preferenceMigration";
 import { clickyUser, determineLanguage, tokenImage } from "./Utils.js";
 import crypto from "crypto-browserify";
 import { history } from "./routeHistory.js";
@@ -54,6 +55,11 @@ export const appInit = () => {
   const lang = determineLanguage();
   //Set Initial States
 
+  const osPrefersDark =
+    typeof window !== "undefined" &&
+    window.matchMedia &&
+    window.matchMedia("(prefers-color-scheme: dark)").matches;
+
   let preferences = localStorage.getItem("preferences");
   if (preferences) preferences = JSON.parse(preferences);
   else
@@ -61,7 +67,6 @@ export const appInit = () => {
       lang: lang,
       audio: false,
       canned_responses: true,
-      dark_mode: false,
       autoplay: false,
       sound: true,
       art: true,
@@ -81,6 +86,7 @@ export const appInit = () => {
         },
       },
     };
+  preferences = migratePreferences(preferences, osPrefersDark);
 
   var states = {
     slug: "/home",

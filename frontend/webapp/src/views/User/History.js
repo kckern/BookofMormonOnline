@@ -20,6 +20,7 @@ import { label, getDaysArray } from "src/models/Utils";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
+import { chartTheme } from "src/utils/themeColors";
 import calendar from "./svg/calendar.svg";
 import growth from "./svg/growth.svg";
 
@@ -87,6 +88,8 @@ export function StudyHistory({
   if (monthLabels.length < 12)
     monthLabels = Array.from(Array(13).keys()).slice(1);
   if (!studyLog) return null;
+
+  const chartColors = chartTheme();
 
   return (
     <Card className="historySide" onClick={() => setHistoryView(true)}> 
@@ -247,7 +250,7 @@ export function StudyHistory({
                   renderTo: "container",
                   width: 300,
                   height: 300,
-                  backgroundColor: "#FFF",
+                  backgroundColor: chartColors.chart.backgroundColor,
                   marginTop: "20",
                   paddingTop: "20",
                   style: {
@@ -263,6 +266,7 @@ export function StudyHistory({
                 },
                 title: {
                   text: null,
+                  style: chartColors.title.style,
                 },
                 legend: {
                   enabled: false,
@@ -273,12 +277,16 @@ export function StudyHistory({
                     formatter: function() {
                       return this.value + "%";
                     },
+                    style: chartColors.yAxis.labels.style,
                   },
                   title: {
                     text: null,
                   },
                   max: maxValue,
                   gridLineWidth: 1,
+                  lineColor: chartColors.yAxis.lineColor,
+                  tickColor: chartColors.yAxis.tickColor,
+                  gridLineColor: chartColors.yAxis.gridLineColor,
                 },
                 xAxis: {
                   type: "datetime",
@@ -292,8 +300,13 @@ export function StudyHistory({
                         this.value,
                       );
                     },
+                    style: chartColors.xAxis.labels.style,
                   },
+                  lineColor: chartColors.xAxis.lineColor,
+                  tickColor: chartColors.xAxis.tickColor,
+                  gridLineColor: chartColors.xAxis.gridLineColor,
                 },
+                tooltip: chartColors.tooltip,
                 series: seriesData,
               }}
             />

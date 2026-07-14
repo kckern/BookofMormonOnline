@@ -11,6 +11,7 @@ import Comments from "../_Common/Study/Study";
 import { snapSelectionToWord } from "src/models/Utils";
 import triangle from "./triangle.svg";
 import ReactTooltip from "react-tooltip";
+import { tooltipTheme } from "src/utils/themeColors";
 import peopleSVG from "../_Common/svg/people.svg";
 import placesSVG from "../_Common/svg/places.svg";
 import studySVG from "../_Common/svg/study.svg";
@@ -428,7 +429,8 @@ function TextItemCounters({narrationController})
   return <>
   <ReactTooltip
       effect="solid"
-      backgroundColor="#666"
+      backgroundColor={tooltipTheme().backgroundColor}
+      textColor={tooltipTheme().textColor}
       id={tooltipId}
       getContent={(text) => {
         return (

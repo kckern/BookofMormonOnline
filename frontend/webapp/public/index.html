@@ -11,6 +11,19 @@
      <!--PWA-->
      <link rel="manifest" href="/manifest.json">
      <meta name="theme-color" content="#323b4d">
+    <meta name="color-scheme" content="light dark" />
+    <script>
+      (function () {
+        try {
+          var p = JSON.parse(localStorage.getItem("preferences") || "{}");
+          var dark =
+            p.darkMode !== undefined ? !!p.darkMode :
+            p.dark_mode !== undefined ? !!p.dark_mode :
+            window.matchMedia("(prefers-color-scheme: dark)").matches;
+          document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+        } catch (e) {}
+      })();
+    </script>
      <meta name="apple-mobile-web-app-capable" content="yes">
      <meta name="apple-mobile-web-app-status-bar-style" content="default">
      <meta name="apple-mobile-web-app-title" content="Book of Mormon">

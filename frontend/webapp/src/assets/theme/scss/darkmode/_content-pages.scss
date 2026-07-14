@@ -1,0 +1,49 @@
+html[data-theme="dark"] {
+
+  /* Facsimiles.scss / FacsimilePageViewer.scss */
+  .card .card-body.faxInfo { border-color: var(--border); }
+  .faxGridViewer .faxPage { outline-color: var(--border); }
+  .facsimile-navigation { background: var(--surface-2); }
+  .facsimile-navigation .nav-button {
+    background: var(--surface-3); color: var(--text-secondary);
+    &:hover { background: var(--surface-4); }
+  }
+  .custom-slider { background: var(--surface-4); }
+  .custom-slider::-webkit-slider-thumb { background: var(--text-secondary); }
+  .custom-tooltip { background: var(--surface-3); border-color: var(--border); color: var(--text-secondary); }
+  .seekBlocks { outline-color: var(--border); border-color: var(--border); }
+  .stack-tooltip-content { background: var(--surface-2); border-color: var(--border); color: var(--text-secondary); }
+  .pageReferences h6 { color: var(--text-muted); }
+
+  /* About.css / KRSEB.css */
+  .about .card-body a { color: var(--link); &:hover { color: var(--link-hover); } }
+  .about .card-body img { opacity: 0.85; }
+  .KRSEBDesc .description h2 { color: var(--text-primary); }
+
+  /* Contact.css */
+  .contact .btn { background-color: var(--control); color: var(--text-primary); &:hover { background-color: var(--control-hover); } }
+  .dragField { border-color: var(--border-strong); }
+  .contact .imageUploaderWrapper { background: var(--surface-2); }
+
+  /* Contents.css */
+  div.toc ul:not(:first-of-type) { border-color: var(--border); background-color: rgba(255, 255, 255, 0.03); }
+  .divImg div { background-color: rgba(0, 0, 0, 0.6); }
+
+  /* Audit.css */
+  .keyboardLabel { background-color: rgba(255, 255, 255, 0.12); color: var(--text-secondary); }
+  .bomtypes li { background-color: rgba(255, 255, 255, 0.08); }
+  .context-card h3 { border-color: var(--border); }
+
+  /* Analysis.css */
+  .notready { filter: brightness(0.5) contrast(0.5); }
+
+  /* Theater.css */
+  .theater-meta-content-narration li { color: var(--text-muted); }
+  .theater-meta-content-narration li.active { background-color: var(--surface-4); color: var(--text-primary); }
+  .theater-main-panel .theater-progress-bar-buttons .playbackRateIcon { background-color: var(--surface-4); color: var(--text-primary); }
+  .theater-main-panel .theater-config { background-color: var(--surface-2); color: var(--text-secondary); }
+  .theater-config-value { background-color: var(--surface-3); color: var(--text-secondary); }
+  .theater-comment-feed .comment-text { background-color: var(--surface-3); color: var(--text-secondary); }
+  .theater-comment-feed .comment:hover .comment-text { background-color: var(--surface-4); }
+  .theater-comment-feed .comment .triangle { color: var(--surface-3); border-right-color: var(--surface-3); }
+}
