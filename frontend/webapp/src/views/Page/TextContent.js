@@ -18,6 +18,7 @@ import notesSVG from "../_Common/svg/notes.svg";
 import faxSVG from "src/views/User/svg/oldbook.svg";
 import { determineLanguage, label } from "../../models/Utils";
 import { useNarration } from "src/contexts/NarrationContext";
+import { TextContentProvider } from "src/contexts/TextContentContext";
 
 /* ------------------------------------------- */
 /* -------------- STATE CHANGES  ------------- */
@@ -261,8 +262,8 @@ export default function TextContent({ content, isQuote }) {
     textContentController
   );
   let isOpen = textContentController.states.isOpen || textContentController.states.isHeaderOpen;
-  let CommentaryBubblesContainer = isOpen && !isQuote && <CommentaryBubbles textContentController={textContentController} /> || null;
-  let ImageBubblesContainer = isOpen && !isQuote &&   <ImageBubbles textContentController={textContentController} /> || null;
+  let CommentaryBubblesContainer = isOpen && !isQuote && <CommentaryBubbles /> || null;
+  let ImageBubblesContainer = isOpen && !isQuote &&   <ImageBubbles /> || null;
 
 
   let cardWithoutNestedBlocks = true;
@@ -279,6 +280,7 @@ export default function TextContent({ content, isQuote }) {
 
   let openClass =  (textContentController.states.isOpen || textContentController.states.isHeaderOpen) ? " open" : "";
   return (
+    <TextContentProvider textContentController={textContentController}>
     <Col
       md={isQuote ? 12 : 6}
       textid={textContentController.data.slug}
@@ -366,6 +368,7 @@ export default function TextContent({ content, isQuote }) {
         </Card>
       </div>
     </Col>
+    </TextContentProvider>
   );
 }
 

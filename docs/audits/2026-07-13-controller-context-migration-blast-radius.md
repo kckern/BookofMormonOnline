@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-13
 **Scope:** `frontend/webapp/src` — replacing `appController` (and `pageController`, `narrationController`, `textContentController`, `theaterController`, `mapController`) prop drilling with a context-based pattern.
-**Status:** analysis only; no migration code written.
+**Status:** MIGRATED — all six controllers moved to React Context; see docs/plans/2026-07-13-controller-context-migration.md
 
 ---
 
