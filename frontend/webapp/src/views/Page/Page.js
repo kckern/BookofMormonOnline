@@ -1,6 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useReducer, useEffect, useState, useRef } from "react";
-import ReactTooltip from "react-tooltip";
 // BROWSER HISTORY
 // API ACTIONS
 // COMPONENTS
@@ -9,7 +8,6 @@ import Loader from "../_Common/Loader";
 import Section from "./Section";
 import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
 import "./Page.css";
-// import Comments from '../_Common/Study/Study';
 import {
   testJSON,
   label,
@@ -101,7 +99,6 @@ export default function Page() {
         activeRow: null,
         activeAudio: null,
         commentGroupId: null,
-        audioPlaying: false,
         pageSlug: initOpen.pageSlug,
         textId: null,
         route: match,
@@ -194,14 +191,8 @@ export default function Page() {
         setInitWarning: (val) => {
           dispatch({ fn: "setInitWarning", val: val });
         },
-        resetPage: (val) => {
-          dispatch({ fn: "resetPage", val: val });
-        },
         setInitOpen: (val) => {
           dispatch({ fn: "setInitOpen", val: val });
-        },
-        setOpenRows: (val) => {
-          dispatch({ fn: "setOpenRows", val: val });
         },
         moveStudyBuddies: (val) => {
           dispatch({ fn: "moveStudyBuddies", val: val });
@@ -652,8 +643,6 @@ function LoadingPageCommentsNotice({ commentState, setReadyToScroll }) {
     </Alert>
   );
 }
-//<pre>{commentState}</pre>
-
 
 function loadAudioUrl(slug) {
   return `${assetUrl}/audio/${label("lang_code")}/${slug
@@ -736,7 +725,6 @@ function reducer(pageController, input) {
             });
           });
         }, parseInt(duration) * 900);
-        // pageController.appController.functions.updateUserSummary({ ...r.log.progress, ...{ slug, pagetitle, heading } })
       });
 
       if (pageController.states.init) {
@@ -748,7 +736,6 @@ function reducer(pageController, input) {
       pageController.states.openRows.push(input.val);
       break;
     case "removeOpenRow":
-      // MODIFY BY ME
       document.title = pageController.pageData.title || label("home_title");
       applySlug(
         pageController.appController,
@@ -757,11 +744,6 @@ function reducer(pageController, input) {
       pageController.states.openRows = pageController.states.openRows.filter(
         (x) => x !== input.val,
       );
-      // for (let i in pageController.states.openRows) {
-      //     if (pageController.states.openRows[i] === input.val) {
-      //         pageController.states.openRows.splice(i, 1);
-      //     }
-      // }
 
       if (input.val === pageController.states.activeRow) {
         if (pageController.states.activeAudio)
@@ -789,16 +771,12 @@ function reducer(pageController, input) {
       // ("Cannot update a component (Main) while rendering Page"). Done in an
       // effect instead (see the effect keyed on pageController.pageComments).
       break;
-    case "setPageSlug":
-      pageController.states.pageSlug = input.val.index;
-      break;
 
     case "addToPageComments":
       pageController.pageComments = addToPageCommentIndex(
         pageController.pageComments,
         input.val,
       );
-      // pageController.appController.functions.setActiveLeafCursorController(pageController);
       break;
 
     case "moveStudyBuddies":
@@ -810,17 +788,11 @@ function reducer(pageController, input) {
       if (!location) delete pageController.states.studyBuddies[username];
       break;
 
-    case "resetPage":
-      pageController.states.initOpen.pageSlug = input.val;
-      pageController.states.loading = null;
-      break;
-
     case "updateToPageComment":
       pageController.pageComments = updateToPageComment(
         pageController.pageComments,
         input.val,
       );
-      // pageController.appController.functions.setActiveLeafCursorController(pageController);
       break;
 
     case "deleteToPageComments":
@@ -828,7 +800,6 @@ function reducer(pageController, input) {
         pageController.pageComments,
         input.val,
       );
-      // pageController.appController.functions.setActiveLeafCursorController(pageController);
       break;
 
     case "setPageSlugId":
@@ -865,15 +836,6 @@ function reducer(pageController, input) {
       break;
     case "setLoading":
       pageController.states.loading = input.val;
-      break;
-    case "startAudio":
-      pageController.states.audioPlaying = true;
-      break;
-    case "pauseAudio":
-      pageController.states.audioPlaying = false;
-      break;
-    case "setTooltip":
-      pageController.states.toolTip = true;
       break;
     case "markAsInitiated":
       pageController.states.init = input.val || true;
