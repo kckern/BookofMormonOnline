@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { usePageController } from "src/contexts/PageControllerContext";
 
-export default function Connection({ index, rowData }) {
+export default function Connection({ rowData }) {
   const [pageAnimation, setPageAnimation] = useState({
     connectionType: "rightconnection",
     image: "right-image",
@@ -38,30 +38,6 @@ export default function Connection({ index, rowData }) {
         break;
     }
   }, [rowData.connection.type]);
-
-  // ** NOT IS USE
-  // redirect page to other page using slug
-  // const pageRedirect = (slug, connectionType, isPage) => {
-  //     let animationType = checkConnectionType(connectionType);
-  //     document.getElementById("page").classList.add(animationType);
-  //     setTimeout(() => {
-  //         document.getElementById("page").classList.remove(animationType)
-  //         onClickConnection(slug, animationType, isPage)
-  //     }, 950)
-  // }
-
-  // const checkConnectionType = (connectionType) => {
-  //     switch (connectionType) {
-  //         case "rightconnection":
-  //             return "center-to-left"
-  //         case "fromconnection":
-  //             return "center-to-left"
-  //         default:
-  //             return "center-to-right"
-  //     }
-  // }
-
-
 
   return (
     <div className="row" type={rowData.connection.type}>
