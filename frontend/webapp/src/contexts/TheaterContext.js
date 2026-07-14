@@ -22,7 +22,8 @@ export const useTheater = () => {
   if (!theaterController)
     throw new Error(
       "useTheater() called outside <TheaterProvider>. " +
-        "The provider is mounted in views/Theater/Theater.js."
+        "The provider is mounted in views/Theater/Theater.js; in tests, wrap " +
+        "your component with <TheaterProvider theaterController={fixture}>."
     );
   return theaterController;
 };

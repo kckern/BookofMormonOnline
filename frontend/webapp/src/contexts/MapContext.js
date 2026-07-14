@@ -21,7 +21,8 @@ export const useMapController = () => {
   if (!mapController)
     throw new Error(
       "useMapController() called outside <MapProvider>. " +
-        "The provider is mounted in views/Map/Map.js."
+        "The provider is mounted in views/Map/Map.js; in tests, wrap " +
+        "your component with <MapProvider mapController={fixture}>."
     );
   return mapController;
 };
