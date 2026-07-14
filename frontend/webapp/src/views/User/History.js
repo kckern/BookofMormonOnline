@@ -22,18 +22,17 @@ import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 import calendar from "./svg/calendar.svg";
 import growth from "./svg/growth.svg";
+import { useAppController } from "src/contexts/AppControllerContext";
 
 export function StudyHistory({
   setHistoryView,
-  appController,
   setStudyLog,
   setStudySummary,
   studyLog,
   setProgressList,
   progressList,
 }) {
-
-
+  const appController = useAppController();
 
   const [horizontalTabs, setHorizontalTabs] = useState(
     new Date().getFullYear().toString(),

@@ -92,7 +92,7 @@ function DrawerContent({ setLocalOpen }) {
     if (type === "people")
         return <Person setLocalOpen={setLocalOpen} />;
     if (type === "victory")
-        return <Victory appController={appController} context="drawer" />;
+        return <Victory context="drawer" />;
     if (type === "pFilter")
         return <PFilter context="drawer" />;
     if (/group\/[0-9a-f]{32}$/.test(type) && id ==="leaderboard")

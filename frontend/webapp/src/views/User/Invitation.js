@@ -37,8 +37,10 @@ import moment from "moment";
 import Loader from "../_Common/Loader";
 import SocialSignIn from "./SocialSignIn";
 import { history } from "src/models/routeHistory";
+import { useAppController } from "src/contexts/AppControllerContext";
 
-export default function Invitation({ appController }) {
+export default function Invitation() {
+  const appController = useAppController();
 
   const match = useRouteMatch();
   const history = useHistory();
@@ -225,12 +227,12 @@ export default function Invitation({ appController }) {
     </CardBody>,
     signUp: <div className="signUpWrapper">
       <a onClick={() => setContentState("guestAccept")}>⬅</a>
-      <SocialSignIn appController={appController} cancel={() => { }} setLoading={setLoading} />
-      <SignUp appController={appController} cancel={null} />
+      <SocialSignIn cancel={() => { }} setLoading={setLoading} />
+      <SignUp cancel={null} />
     </div>,
     signIn: <div className="signInWrapper">
       <a onClick={() => setContentState("guestAccept")}>⬅</a>
-      <SignIn appController={appController}  setLoading={setLoading} />
+      <SignIn setLoading={setLoading} />
     </div>,
   }
   return <div id="page" className="invitation">

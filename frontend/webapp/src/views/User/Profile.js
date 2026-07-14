@@ -38,15 +38,16 @@ import edit from "./svg/edit.svg";
 import padlock from "./svg/padlock.svg";
 import moment from "moment";
 import momentDurationFormatSetup from "moment-duration-format";
+import { useAppController } from "src/contexts/AppControllerContext";
 momentDurationFormatSetup(moment);
 moment.locale(label("moment_locale"));
 
 export function Profile({
   setProfileState,
-  appController,
   studySummary,
   setHistoryView,
 }) {
+  const appController = useAppController();
   const [menuOn, setMenu] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const processLogout = () => {
@@ -105,7 +106,7 @@ export function Profile({
     <>
       <Card className="card-user">
         <CardBody className="profileCard">
-          <ProfilePicture appController={appController} />
+          <ProfilePicture />
           <div className="profileText">
             {menu}
             <h5>
@@ -256,7 +257,8 @@ export function Profile({
   );
 }
 
-function ProfilePicture({ appController }) {
+function ProfilePicture() {
+  const appController = useAppController();
   const [openModal, setOpenModal] = useState(false);
   const [profileImage, setProfileImage] = useState(null);
   // sendbird is null for guests / before the chat controller is created; this
@@ -275,7 +277,6 @@ function ProfilePicture({ appController }) {
       onError={breakCache}
       setOpenModal={setOpenModal}
       openModal={openModal}
-      appController={appController}
       isGroup={false}
     />
   );

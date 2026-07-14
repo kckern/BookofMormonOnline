@@ -112,7 +112,7 @@ function PopUp() {
   if (appController.states.popUp.type === "object")
     return <ObjectPopUp />;
   if (appController.states.popUp.type === "victory")
-    return <Victory appController={appController} />;
+    return <Victory />;
   if (appController.states.popUp.type === "history")
     return <History />;
 

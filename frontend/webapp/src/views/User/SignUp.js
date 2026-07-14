@@ -14,11 +14,12 @@ import {
 import { label } from "src/models/Utils";
 import BoMOnlineAPI, { fbPixel } from "src/models/BoMOnlineAPI";
 import ReactPixel from 'react-facebook-pixel';
+import { useAppController } from "src/contexts/AppControllerContext";
 const pwRegEx = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*{};.,'_-]).{8,}$/;
 const emailRegEx = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/
 
-export function SignUp({ username, cancel, callback, appController }) {
-
+export function SignUp({ username, cancel, callback }) {
+  const appController = useAppController();
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
