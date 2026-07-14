@@ -1,0 +1,29 @@
+html[data-theme="dark"] {
+
+  /* Shared card-footer pattern (People.css:263, Places.css:119, Objects.css:113) */
+  .peopleList .card-footer, .PlaceList .card-footer, .ObjectList .card-footer {
+    background-color: var(--surface-3);
+    border-color: var(--border);
+    color: var(--text-secondary);
+  }
+
+  /* IdBadges: keep hue identity, normalize for dark. Blanket base then rely on
+     existing per-category colors only where they're mid-tone enough to survive. */
+  .peopleList .IdBadge, .PlaceList .IdBadge, .ObjectList .IdBadge {
+    filter: brightness(0.85) saturate(0.9);
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  }
+
+  /* People.css */
+  h5.ppFiltersHeading { color: var(--text-secondary); }
+  .lifoot .btn { background-color: var(--control); border-color: var(--border-strong); color: var(--text-primary); }
+  .personIcons img { opacity: 0.75; filter: invert(1); }
+
+  /* Places.css */
+  .PlaceList h7 { color: var(--text-muted); }
+  .card-body.placeInfo div.location { color: rgba(255, 255, 255, 0.75); }
+
+  /* Objects.css era badges */
+  .ObjectList .IdBadge[class*="era-"] { background-color: var(--surface-4) !important; color: var(--text-secondary); }
+}
