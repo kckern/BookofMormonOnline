@@ -84,7 +84,7 @@ html[data-theme="dark"] {
   .Toastify__progress-bar--default { background: var(--accent-green); }
 
   /* ---- react-modern-drawer (portal) ---- */
-  .EZDrawer .EZDrawer__container { background-color: var(--surface-1) !important; color: var(--text-secondary); }
+  .EZDrawer .EZDrawer__container { background-color: var(--surface-1) !important; color: var(--text-secondary) !important; }
 
   /* ---- react-contextmenu (portal; overrides StudyGroupAdmin.css:107) ---- */
   .react-contextmenu {
