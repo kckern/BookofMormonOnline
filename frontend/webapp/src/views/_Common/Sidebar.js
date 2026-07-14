@@ -46,6 +46,7 @@ import tr from "./svg/flags/tr.svg";
 import { menuConfig } from "./menuConfig";
 import { isMobile } from "../../models/Utils";
 import { useAppController } from "src/contexts/AppControllerContext";
+import { useMessenger } from "src/contexts/MessengerContext";
 
 
 // Icon mapping for menu items
@@ -343,6 +344,7 @@ export default Sidebar;
 function UserInfo({ setActivePath, activePath }) {
 
   const appController = useAppController();
+  const messenger = useMessenger();
   let tokenImg = tokenImage();
   let loadingImg = `${assetUrl}/interface/gif/circleload`;
 
@@ -382,9 +384,9 @@ function UserInfo({ setActivePath, activePath }) {
     label("loading_user")
   ]);
 
-  if (name === label("loading_user") && appController.sendbird?.sb.currentUser?.user_id) {
-    setName(appController.sendbird.sb.currentUser.nickname);
-    setImg(appController.sendbird.sb.currentUser.plainProfileUrl );
+  if (name === label("loading_user") && messenger.sb?.currentUser?.user_id) {
+    setName(messenger.sb.currentUser.nickname);
+    setImg(messenger.sb.currentUser.plainProfileUrl );
   }
 
   const toggleSound = (e) => {

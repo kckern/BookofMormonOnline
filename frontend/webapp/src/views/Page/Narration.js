@@ -20,6 +20,7 @@ import ReactTooltip from "react-tooltip";
 import classNames from "classnames";
 import { generateReference, detectReferences, lookupReference } from 'scripture-guide';
 import { usePageController } from "src/contexts/PageControllerContext";
+import { useMessenger } from "src/contexts/MessengerContext";
 import { NarrationProvider, useNarration } from "src/contexts/NarrationContext";
 
 function ChronoRow({ chrono }) {
@@ -116,6 +117,7 @@ function reducer(narrationController, input) {
 
 function Narration({ rowData, addHighlight }) {
   const pageController = usePageController();
+  const messenger = useMessenger();
   const preLoadFax = () => {
     if (narrationController.states.faxList === undefined) return false;
     let m = narrationController.data.text.slug.match(/([a-z-]+)\/(\d+)$/);
@@ -371,7 +373,7 @@ function Narration({ rowData, addHighlight }) {
     let pageSlug = pageController.pageData.slug;
     let channel = pageController.appController.states.studyGroup.activeGroup;
 
-    pageController.appController.sendbird?.updatePagePosition({
+    messenger.updatePagePosition({
       channel,
       pageSlug,
       location,

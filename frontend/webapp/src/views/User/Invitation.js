@@ -38,9 +38,11 @@ import Loader from "../_Common/Loader";
 import SocialSignIn from "./SocialSignIn";
 import { history } from "src/models/routeHistory";
 import { useAppController } from "src/contexts/AppControllerContext";
+import { useMessenger } from "src/contexts/MessengerContext";
 
 export default function Invitation() {
   const appController = useAppController();
+  const messenger = useMessenger();
 
   const match = useRouteMatch();
   const history = useHistory();
@@ -64,9 +66,9 @@ export default function Invitation() {
   }, [])
 
   useEffect(() => {
-    if (appController.sendbird?.sb?.currentUser) return null;
+    if (messenger.sb?.currentUser) return null;
     if (contentState === "signIn" || contentState === "signUp") handleAccept();
-  }, [appController.sendbird?.sb?.currentUser]);
+  }, [messenger.sb?.currentUser]);
 
 
   const handleAccept = async () => {
@@ -76,7 +78,7 @@ export default function Invitation() {
     const {channel_url, group, results} = await joinGroupFromHash(hash, userToken); //.then((group) => {
       console.log({channel_url,group, results});
       if(!channel_url || !group) return;
-      appController.sendbird.getStudyGroups().then((list) =>{
+      messenger.getStudyGroups().then((list) =>{
         appController.functions.setStudyGroups(list);
         appController.functions.setStudyMode(true);
         appController.functions.setActiveStudyGroup(group);
@@ -109,7 +111,7 @@ export default function Invitation() {
         let channel_url = results.joinGroup.channel;
   
         const groupChannel = await new Promise((resolve, reject) =>
-          appController.sendbird.sb.GroupChannel.getChannel(channel_url, (groupChannel, error) =>
+          messenger.sb.GroupChannel.getChannel(channel_url, (groupChannel, error) =>
             error ? reject(error) : resolve(groupChannel)
           )
         );

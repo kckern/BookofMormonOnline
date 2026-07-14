@@ -30,6 +30,7 @@ import { countFaxFromIndex, mergeCounts } from "./pageCommentCounts";
 import { createScrollSpy, step } from "src/scroll";
 import { appFunctions } from "src/models/appController";
 import { useAppController } from "src/contexts/AppControllerContext";
+import { useMessenger } from "src/contexts/MessengerContext";
 import { PageControllerProvider } from "src/contexts/PageControllerContext";
 
 // Apply a Main slug change from inside the Page reducer WITHOUT a nested React
@@ -58,6 +59,7 @@ function prepareInitOpen(params) {
 
 export default function Page() {
   const appController = useAppController();
+  const messenger = useMessenger();
   const match = useRouteMatch();
   if (match.params.pageSlug === "study") {
     let parts = localStorage
@@ -550,7 +552,7 @@ export default function Page() {
       if (isMounted.current) setReadyToScroll(true);
     }, COMMENTS_FALLBACK_MS);
 
-    const sendbird = pageController.appController.sendbird;
+    const sendbird = messenger;
     if (!sendbird?.loadPageComments) {
       clearTimeout(fallbackTimer);
       setReadyToScroll(true);
