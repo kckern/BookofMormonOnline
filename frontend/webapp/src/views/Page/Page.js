@@ -20,14 +20,12 @@ import InitWarning from "./InitWarning";
 import { Alert } from "reactstrap";
 import loading_comments from "src/views/_Common/Study/svg/loading_comment.svg";
 import { MuteButton } from "./MuteButton";
-import { recordDeepLinkEvent } from "src/utils/deepLinkInstrument";
 import { usePageInit, pageScrollManager, isRefOpen } from "./usePageInit";
-import { countFaxFromIndex, mergeCounts } from "./pageCommentCounts";
-import { indexPageComments, addToPageCommentIndex, updateToPageComment, deleteToPageComments } from "./commentIndex";
+import { addToPageCommentIndex, updateToPageComment, deleteToPageComments } from "./commentIndex";
+import { usePageComments } from "./usePageComments";
 import { createScrollSpy, step } from "src/scroll";
 import { appFunctions } from "src/models/appController";
 import { useAppController } from "src/contexts/AppControllerContext";
-import { useMessenger } from "src/contexts/MessengerContext";
 import { PageControllerProvider } from "src/contexts/PageControllerContext";
 
 // Apply a Main slug change from inside the Page reducer WITHOUT a nested React
@@ -56,7 +54,6 @@ function prepareInitOpen(params) {
 
 export default function Page() {
   const appController = useAppController();
-  const messenger = useMessenger();
   const match = useRouteMatch();
   const history = useHistory();
   let routeParams = match.params;
@@ -89,8 +86,6 @@ export default function Page() {
       getPageDataFromAPIViaNote(routeParams);
     else getPageDataFromAPI(routeParams.pageSlug);
   }, [pageIdentityKey]);
-
-  let [commentState, setCommentState] = useState("init");
 
   const [pageController, dispatch] = useReducer(
     reducer,
@@ -231,27 +226,20 @@ export default function Page() {
     pageController.functions.setInitOpen(newInitOpen);
   }, [routeKey]);
 
-  const studyModeisOn =
-    pageController.appController.states.studyGroup.studyModeOn;
-  const userIsLoggedIn = !!pageController.appController.states.user.user;
-  const hasActiveGroup = !!pageController.appController.states.studyGroup
-    .activeGroup?.url;
-  const needToLoadComments = userIsLoggedIn && studyModeisOn && hasActiveGroup;
-  const [readyToScroll, setReadyToScroll] = useState(false);
   const [stageClass, setStageClass] = useState(null);
 
-  // Guards async setState in loadPageComments (.then/.catch/setTimeout/
-  // waitForIdle) from firing after the user navigates away — was the source of
-  // "Can't perform a React state update on an unmounted component" in Page.
+  // Guards async setState in getPageDataFromAPI(ViaNote) from firing after the
+  // user navigates away — was the source of "Can't perform a React state update
+  // on an unmounted component" in Page.
   const isMounted = useRef(true);
   useEffect(() => {
     isMounted.current = true;
     return () => { isMounted.current = false; };
   }, []);
 
-  useEffect(() => {
-    if (pageController.pageComments) setReadyToScroll(true);
-  }, [pageController.pageComments]);
+  const { commentState, readyToScroll, setReadyToScroll, needToLoadComments } =
+    usePageComments(pageController);
+
   // Expose this page's comment controller to Main for PopUp/Commentary/Study/
   // Sidebar (was dispatched from the setPageComments reducer case — impure, so
   // it leaked a Main setState into Page's render phase).
@@ -260,10 +248,6 @@ export default function Page() {
       pageController,
     );
   }, [pageController.pageComments, pageController.pageCommentCounts]);
-  useEffect(() => {
-    if (pageController.appController.states.studyGroup.studyModeOn)
-      setReadyToScroll(false);
-  }, [pageController.appController.states.studyGroup.activeGroup?.url]);
 
   // Deep-link / section positioning, gated on the study-mode comments load.
   const gateOpen = !needToLoadComments || readyToScroll;
@@ -322,16 +306,6 @@ export default function Page() {
     spy.start();
     return () => spy.stop();
   }, [initPhase, pageController.states.pageSlug]);
-
-  //Load Page Comments
-  useEffect(() => {
-    if (!pageController.pageData) return false;
-    loadPageComments(pageController, setReadyToScroll);
-  }, [
-    pageController.appController.states.studyGroup.activeGroup?.url,
-    pageController.states.pageSlug,
-    pageController.pageData,
-  ]);
 
   //Audio Settings Changed
   useEffect(() => {
@@ -429,158 +403,6 @@ export default function Page() {
       const id = params.imageId || params.commentaryId;
       pageController.functions.setNotFound({ type, id });
     }
-  };
-
-  const processStudyGroupEventOnPage = (e) => {
-    let action = {};
-    try {
-      action = JSON.parse(e.action);
-    } catch (e) {
-      return false;
-    }
-    let { username, key, val } = action;
-    if (username === pageController.appController.states.user.user)
-      return false;
-
-    //console.log({ key, username, val });
-
-    let processors = {
-      updatePagePosition: (username, val) => {
-        let { pageSlug, location } = val;
-        if (pageSlug === pageController.states.pageSlug)
-          pageController.functions.moveStudyBuddies({ username, location });
-      },
-      exitStudyGroup: (username, val) => {
-        if (
-          pageController.appController.states.studyGroup.activeGroup.url === val
-        ) {
-          pageController.functions.moveStudyBuddies({
-            username,
-            location: null,
-          });
-        }
-      },
-      updateTypingLocation: (username, val) => {
-        pageController.appController.functions.setTypingLocations({
-          username,
-          action: val,
-        });
-      },
-    };
-
-    if (processors[key]) processors[key](username, val);
-  };
-
-  const loadPageComments = (pageController, setReadyToScroll) => {
-    setCommentState("started loading");
-    let group = pageController.appController.states.studyGroup.activeGroup;
-
-    let newPageLoad =
-      group && pageController.pageData && !pageController.pageComments;
-
-    let switchToOtherGroup =
-      group &&
-      pageController.pageData &&
-      pageController.states.commentGroupId !== group.url;
-
-    const addMessageToPage = (e) => {
-      pageController.functions.addToPageComments(e.message);
-    };
-    const updateMessageToPage = (e) => {
-      pageController.functions.updateToPageComment(e.message);
-    };
-
-    if (!newPageLoad && !switchToOtherGroup) {
-      setReadyToScroll(true);
-      return false;
-    }
-
-    pageController.functions.setPageComments({
-      groupId: null,
-      index: null,
-      counts: null,
-    });
-
-    window.removeEventListener(
-      "addMessageToPage-" + pageController.states.pageSlug,
-      addMessageToPage,
-      false,
-    );
-    window.addEventListener(
-      "addMessageToPage-" + pageController.states.pageSlug,
-      addMessageToPage,
-      false,
-    );
-    window.removeEventListener(
-      "updateMessageToPage-" + pageController.states.pageSlug,
-      updateMessageToPage,
-      false,
-    );
-    window.addEventListener(
-      "updateMessageToPage-" + pageController.states.pageSlug,
-      updateMessageToPage,
-      false,
-    );
-
-    window.removeEventListener(
-      "fireStudyGroupAction",
-      processStudyGroupEventOnPage,
-      false,
-    );
-    window.addEventListener(
-      "fireStudyGroupAction",
-      processStudyGroupEventOnPage,
-      false,
-    );
-
-    setCommentState("set Listeners");
-    let groupId = group.url;
-    const COMMENTS_FALLBACK_MS = 2500;
-    const fallbackTimer = setTimeout(() => {
-      recordDeepLinkEvent("loadPageComments:fallback");
-      if (isMounted.current) setReadyToScroll(true);
-    }, COMMENTS_FALLBACK_MS);
-
-    if (!messenger?.loadPageComments) {
-      clearTimeout(fallbackTimer);
-      setReadyToScroll(true);
-      return false;
-    }
-    setCommentState("made query");
-    messenger
-      .loadPageComments(group, pageController.pageData?.slug)
-      .then(({ messages, counts }) => {
-        clearTimeout(fallbackTimer);
-        // Bail if the page unmounted (navigated away) while the fetch was in
-        // flight — these setState/dispatch calls would warn "update on an
-        // unmounted component".
-        if (!isMounted.current) return;
-        setCommentState("indexing");
-        const index = indexPageComments(messages);
-        // Single paint: index AND counts land in one dispatch (spec P1) —
-        // fax counts derive from the index client-side, com/img came from
-        // the server.
-        setCommentState("placing");
-        // Zero-layout-shift by construction (badges/bubbles are absolute,
-        // notice is fixed) — but defer the React paint out of any active
-        // scroll campaign so render work never competes with the animation.
-        // Deep-link inits gate the campaign on readyToScroll, so this is
-        // instant there; it only waits on autoAdvance/fallback overlaps.
-        pageScrollManager.waitForIdle().then(() => {
-          if (!isMounted.current) return;
-          recordDeepLinkEvent("pageComments:placed");
-          pageController.functions.setPageComments({
-            groupId,
-            index,
-            counts: mergeCounts(counts, countFaxFromIndex(index)),
-          });
-        });
-      })
-      .catch((error) => {
-        clearTimeout(fallbackTimer);
-        console.log({ error });
-        if (isMounted.current) setReadyToScroll(true);
-      });
   };
 
   if(!appController.states.preloaded) return <Loader />;
