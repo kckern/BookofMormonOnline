@@ -928,21 +928,20 @@ function FacsimilePanel() {
       return null;
     }
 
-    let initOpenVersion =
-      narrationController.pageController.states.initOpen.faxVersion;
-    let fromURL =
-      narrationController.pageController.states.route.params.pageSlug +
-      "/" +
-      narrationController.pageController.states.route.params.textId;
+    const { initOpen, pageSlug } = narrationController.pageController.states;
+    let initOpenVersion = initOpen.faxVersion;
+    let fromURL = pageSlug + "/" + initOpen.textId;
     if (narrationController.data.text.slug !== fromURL) return false;
     if (
       narrationController.states.faxList?.includes(initOpenVersion)
-      //&& !narrationController.pageController.states.init
     ) {
       narrationController.functions.setActiveFax(initOpenVersion);
-      //narrationController.pageController.functions.markAsInitiated()
     }
-  }, [narrationController.states]);
+  }, [
+    narrationController.states.faxList,
+    narrationController.pageController.states.initOpen.faxVersion,
+    narrationController.pageController.states.initOpen.textId,
+  ]);
 
   useEffect(() => {
     const version = narrationController.states.activeFax;

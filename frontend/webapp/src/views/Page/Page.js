@@ -105,7 +105,6 @@ export default function Page() {
         commentGroupId: null,
         pageSlug: initOpen.pageSlug,
         textId: null,
-        route: match,
         initOpen: initOpen,
         openRows: [],
         studyBuddies: {},
