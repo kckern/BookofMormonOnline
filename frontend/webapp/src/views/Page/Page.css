@@ -142,11 +142,6 @@
   transition: 0.6s transform;
 }
 
-.right-image.leftconnection:hover::before {
-  transform: rotate(-180deg);
-  transition: 0.6s transform;
-}
-
 .left-image.fromconnection::after {
   content: "";
   position: absolute;
@@ -321,17 +316,10 @@ a.theater-link img:hover
     padding-top: 0.5em;
   }
 
-  .card .scripture .reference {
-  }
-
   .card-body:nth-child(even) {
     background-color: #eee;
   }
 
-  .faxbox 
-  .faxbox .thumb_tabs li {
-    width: 3em;
-  }
   .faxbox.images {
     margin-left: 4em;
   }
@@ -423,13 +411,6 @@ a.theater-link img:hover
 	justify-content:space-between;
   margin-right: 2rem;
 }
-
-.theater-link{
-	display:inline-block;
-  display: flex;
-  align-items: center;
-}
-
 
 .cannedResponses
 {

@@ -399,7 +399,6 @@
 
 .annotation:not(.fadedIn),
 .imgcom:not(.fadedIn),
-.imgcom:not(.fadedIn),
 .annotation:not(.fadedIn) .comcom,
 .art_bubble:not(.fadedIn) {
     opacity: 0;
