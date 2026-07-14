@@ -352,7 +352,6 @@ export default function TextContent({ content, narrationController, isQuote }) {
           </Collapse>
           <Comments
             isOpen={textContentController.states.isOpen}
-            pageController={narrationController.pageController}
             setCommentHighlights={
               narrationController.functions.setCommentHighlights
             }

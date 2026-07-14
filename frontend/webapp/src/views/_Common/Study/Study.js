@@ -27,7 +27,7 @@ import {
 } from "src/models/Utils";
 import Parser from "html-react-parser";
 import { useAppController } from "src/contexts/AppControllerContext";
-import { usePageController } from "src/contexts/PageControllerContext";
+import { usePageController, PageControllerProvider } from "src/contexts/PageControllerContext";
 
 // Fire a click-equivalent handler on Enter/Space so role="button" divs are
 // operable by keyboard. preventDefault on Space stops the page from scrolling.
@@ -200,7 +200,6 @@ export default function Comments({
         parentMessage={firstComment}
         channel={channel}
         locationHash={locationHash}
-        pageController={pageController}
         threadInputVal={threadInputVal}
         setThreadInputVal={setThreadInputVal}
         inputRef={inputRef}
@@ -275,29 +274,35 @@ export default function Comments({
       );
   }
 
+  // RE-PROVIDE the resolved pageController to Comments' children. In-tree this
+  // re-echoes Page's provider value; out-of-tree (Commentary/PopUp History, which
+  // pass appController.activeLeafCursorController as the override prop and have NO
+  // provider above them) this carries the override down so children can safely
+  // read it via a bare usePageController(). Mirrors Theater's MainPanel re-provide.
   return (
-    <div className="study">
-      {highlightButton}
-      <MessageList
-        parentMessage={firstComment}
-        pageController={pageController}
-        replyToMessage={replyToMessage}
-        threadHash={threadHash}
-        isQuote={isQuote}
-        removeHighlight={removeHighlight}
-        setCommentHighlights={setCommentHighlights}
-      />
-      <MyComment
-        highlights={highlights}
-        removeHighlight={removeHighlight}
-        threadHash={threadHash}
-        isQuote={isQuote}
-        channel={channel}
-        locationHash={locationHash}
-        bottomItem={bottomItem}
-        inputRef={inputRef}
-      />
-    </div>
+    <PageControllerProvider pageController={pageController}>
+      <div className="study">
+        {highlightButton}
+        <MessageList
+          parentMessage={firstComment}
+          replyToMessage={replyToMessage}
+          threadHash={threadHash}
+          isQuote={isQuote}
+          removeHighlight={removeHighlight}
+          setCommentHighlights={setCommentHighlights}
+        />
+        <MyComment
+          highlights={highlights}
+          removeHighlight={removeHighlight}
+          threadHash={threadHash}
+          isQuote={isQuote}
+          channel={channel}
+          locationHash={locationHash}
+          bottomItem={bottomItem}
+          inputRef={inputRef}
+        />
+      </div>
+    </PageControllerProvider>
   );
 }
 
@@ -365,13 +370,13 @@ export function CommentInput({
   threadHash,
   parentMessage,
   channel,
-  pageController,
   locationHash,
   setThreadInputVal,
   threadInputVal,
   inputRef,
 }) {
   const appController = useAppController();
+  const pageController = usePageController();
   //useEffect(()=>document.getElementById(threadHash).focus(),[]);
   const [showTagList, setShowTagList] = useState(false);
   let parentMessageId = parentMessage?.messageId || null;
@@ -558,7 +563,6 @@ function MessageList({
   replyToMessage,
   threadHash,
   setCommentHighlights,
-  pageController,
   removeHighlight,
   isQuote,
 }) {
@@ -568,7 +572,6 @@ function MessageList({
     <>
       <SingleComment
         key={parentMessage.messageId}
-        pageController={pageController}
         message={parentMessage}
         threadHash={threadHash}
         removeHighlight={removeHighlight}
@@ -579,7 +582,6 @@ function MessageList({
       <>
         <ThreadedMessages
           parentMessage={parentMessage}
-          pageController={pageController}
           threadHash={threadHash}
           replyToMessage={replyToMessage}
           setCommentHighlights={setCommentHighlights}
@@ -594,9 +596,9 @@ function ThreadedMessages({
   replyToMessage,
   threadHash,
   setCommentHighlights,
-  pageController,
 }) {
   const appController = useAppController();
+  const pageController = usePageController();
   const [expanded, expand] = useState(false);
   const [threadedMessages, setThreadMessages] = useState([]);
   // one-shot guard for the initial thread load; a ref (not state) so flipping it
@@ -736,7 +738,6 @@ function ThreadedMessages({
             key={m.messageId}
             message={m}
             index={index}
-            pageController={pageController}
             replyToMessage={replyToMessage}
             threadHash={threadHash}
             setCommentHighlights={setCommentHighlights}
@@ -766,7 +767,6 @@ function SingleComment({
   index,
   replyToMessage,
   threadHash,
-  pageController,
   isQuote,
 }) {
   const appController = useAppController();
@@ -871,7 +871,6 @@ function SingleComment({
           removeHighlight={removeHighlight}
           highlights={highlights}
           setCommentHighlights={setCommentHighlights}
-          pageController={pageController}
           editComment={true}
           isQuote={isQuote}
         />
@@ -902,11 +901,11 @@ export function EditComment({
   message,
   index,
   handleEditComment,
-  pageController,
   linkData,
   isQuote,
 }) {
   const appController = useAppController();
+  const pageController = usePageController();
   const [showTagList, setShowTagList] = useState(false);
   const inputRef = useRef(null);
   const [commentMessage, setCommentMessage] = useState(message.message);

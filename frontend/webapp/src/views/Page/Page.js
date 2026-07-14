@@ -618,8 +618,8 @@ export default function Page() {
           (stageClass ? stageClass : "")
         }
       >
-        <MuteButton pageController={pageController} />
-        <Floaters pageController={pageController} />
+        <MuteButton />
+        <Floaters />
         <h3 className="title lg-4 text-center">
           {pageController.pageData?.title}
         </h3>
@@ -631,7 +631,6 @@ export default function Page() {
               key={sectionIndex}
               sectionData={sectionData}
               rowIndex={sectionData}
-              pageController={pageController}
             />
           );
         })}

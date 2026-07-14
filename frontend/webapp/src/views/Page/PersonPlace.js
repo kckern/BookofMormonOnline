@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { detectScriptures } from "scripture-guide";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import { useAppController } from "src/contexts/AppControllerContext";
+import { usePageController } from "src/contexts/PageControllerContext";
 
 // Slugs like "mormon2" inside {Mormon|mormon2} otherwise read as the scripture
 // reference "Mormon 2" and corrupt the slug capture before token parsing.
@@ -62,7 +63,7 @@ export const renderPersonPlaceHTML = (html, pageController, scriptureLinkClickHa
       if (domNode.attribs && domNode.attribs.class === "person") {
         return (
           <PersonLink
-            pageController={pageController}
+            controller={pageController}
             label={domNode.attribs.label}
             id={domNode.attribs.slug}
           />
@@ -71,7 +72,7 @@ export const renderPersonPlaceHTML = (html, pageController, scriptureLinkClickHa
       if (domNode.attribs && domNode.attribs.class === "place") {
         return (
           <PlaceLink
-            pageController={pageController}
+            controller={pageController}
             label={domNode.attribs.label}
             id={domNode.attribs.slug}
           />
@@ -112,7 +113,12 @@ export const renderPersonPlaceHTML = (html, pageController, scriptureLinkClickHa
   return Parser(html, options);
 };
 
-function PersonLink({ label, id, pageController }) {
+function PersonLink({ label, id, controller }) {
+  // Out-of-tree callers (Drawer, Map InfowindowContent, PopUp person/place
+  // descriptions) render this via renderPersonPlaceHTML with an appController
+  // passed as the controller arg and NO PageControllerProvider above them —
+  // so we resolve via the Task-17 override mechanism, not a bare context read.
+  const pageController = usePageController(controller);
   const handleClick = (e) => {
     e.preventDefault();
     const appController = pageController?.appController || pageController;
@@ -137,7 +143,9 @@ function PersonLink({ label, id, pageController }) {
     </>
   );
 }
-function PlaceLink({ label, id, pageController }) {
+function PlaceLink({ label, id, controller }) {
+  // See PersonLink: override mechanism for out-of-tree (Drawer/Map/PopUp) callers.
+  const pageController = usePageController(controller);
   const handleClick = (e) => {
     e.preventDefault();
     const appController = pageController?.appController || pageController;

@@ -2,9 +2,11 @@ import React, { useEffect, useState } from "react";
 import { Link, useHistory } from "react-router-dom";
 import { Card, CardHeader, Col } from "reactstrap";
 import { renderPersonPlaceHTML } from "./PersonPlace";
+import { usePageController } from "src/contexts/PageControllerContext";
 
-export default function PageLink({ rowData, pageController }) {
+export default function PageLink({ rowData }) {
 
+  const pageController = usePageController();
   const history = useHistory();
   const { setStageClass } = pageController.appController?.functions || {};
   const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));

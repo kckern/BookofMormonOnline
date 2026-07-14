@@ -1,7 +1,9 @@
 
 import typing from "src/views/_Common/Study/svg/typing.svg";
+import { usePageController } from "src/contexts/PageControllerContext";
 
-export function Floaters({ pageController }) {
+export function Floaters() {
+  const pageController = usePageController();
   if (!pageController.appController.states.user.user) return null
   let list = pageController.states.studyBuddies;
   if (!list) return null;

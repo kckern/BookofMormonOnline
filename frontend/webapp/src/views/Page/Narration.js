@@ -19,6 +19,7 @@ import { Link } from "react-router-dom";
 import ReactTooltip from "react-tooltip";
 import classNames from "classnames";
 import { generateReference, detectReferences, lookupReference } from 'scripture-guide';
+import { usePageController } from "src/contexts/PageControllerContext";
 
 function ChronoRow({ chrono }) {
   chrono = chronoLabel(chrono);
@@ -112,7 +113,8 @@ function reducer(narrationController, input) {
   return { ...narrationController };
 }
 
-function Narration({ rowData, pageController, addHighlight }) {
+function Narration({ rowData, addHighlight }) {
+  const pageController = usePageController();
   const preLoadFax = () => {
     if (narrationController.states.faxList === undefined) return false;
     let m = narrationController.data.text.slug.match(/([a-z-]+)\/(\d+)$/);
@@ -636,7 +638,6 @@ function ImagePanel({ narrationController }) {
         </a>
       </div>
       <Comments
-        pageController={narrationController.pageController}
         linkData={{ img: narrationController.states.activeImageId }}
       />
       {openLightBox && (
@@ -1090,7 +1091,6 @@ function FacsimilePanel({ narrationController }) {
         alt="fax"
       ></div>
       <Comments
-        pageController={narrationController.pageController}
         linkData={{ fax: num + "." + narrationController.states.activeFax }}
       />
     </div>

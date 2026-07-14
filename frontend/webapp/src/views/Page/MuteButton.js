@@ -3,9 +3,11 @@
 import soundOn from "src/views/User/svg/sound-on.svg"
 import soundOff from "src/views/User/svg/sound-off.svg"
 import { isMobile, label } from "src/models/Utils";
+import { usePageController } from "src/contexts/PageControllerContext";
 
-export function MuteButton({pageController})
+export function MuteButton()
 {
+    const pageController = usePageController();
     if(!isMobile()) return null;
     if(!pageController?.states.activeRow) return null;
     const toggleSound = (e) => {

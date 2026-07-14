@@ -13,13 +13,12 @@ import { Link } from "react-router-dom/cjs/react-router-dom.min";
 import { label } from "../../models/Utils";
 import ReactTooltip from "react-tooltip";
 
-function Section({ sectionData, pageController, setPageSlug }) {
+function Section({ sectionData, setPageSlug }) {
   let preConnection = null;
   if (sectionData.rows[0].weight < 0) {
     preConnection = (
       <Connection
         rowData={sectionData.rows[0]}
-        pageController={pageController}
       />
     );
   }
@@ -75,7 +74,6 @@ function Section({ sectionData, pageController, setPageSlug }) {
                 <Narration
                   key={`row-n-${sectionData.sectionIndex}-${rowIndex}`}
                   rowData={rowData}
-                  pageController={pageController}
                   addHighlight={addHighlight}
                 />
               );
@@ -84,7 +82,6 @@ function Section({ sectionData, pageController, setPageSlug }) {
                 <PageLink
                   key={`row-o-${sectionData.sectionIndex}-${rowIndex}`}
                   rowData={rowData}
-                  pageController={pageController}
                   setPageSlug={setPageSlug}
                 />
               );
@@ -94,7 +91,6 @@ function Section({ sectionData, pageController, setPageSlug }) {
                 <Connection
                   key={`row-c-${sectionData.sectionIndex}-${rowIndex}`}
                   rowData={rowData}
-                  pageController={pageController}
                 />
               );
             } else return rowData;
@@ -102,7 +98,6 @@ function Section({ sectionData, pageController, setPageSlug }) {
         </div>
 
         <Comments
-          pageController={pageController}
           linkData={{ section: sectionData.slug.match(/[^/]+$/)[0] }}
           highlights={sectionHighlights}
           removeHighlight={removeHighlight}
