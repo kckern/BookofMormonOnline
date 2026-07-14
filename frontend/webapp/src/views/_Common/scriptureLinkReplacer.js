@@ -1,8 +1,11 @@
 // The one scripture_link → clickable-anchor transform. detectReferences emits
-// `<a className="scripture_link">Ref</a>`; html-react-parser lowercases the
-// attribute to `classname`. Previously duplicated in renderPersonPlaceHTML
-// (PersonPlace.js) and ParseMessage (models/Utils.js) — the ParseMessage
-// variant's active-ref behavior is expressed through the two callbacks.
+// `<a className="scripture_link">Ref</a>`; html-react-parser runs with
+// lowerCaseAttributeNames:false, so the attribute is stored verbatim as
+// `className` (capital N) — NOT lowercased to `classname`. (The pre-existing
+// `attribs.classname` checks in PersonPlace.js / Utils.js / ViewUtils.js never
+// matched, so scripture links were silently non-clickable; this replacer,
+// keyed on `className`, fixes that.) Consumers layer active-ref behavior via
+// the onClick/getClassName callbacks.
 import React from "react";
 
 export function makeScriptureLinkReplacer({ onClick, getClassName } = {}) {
