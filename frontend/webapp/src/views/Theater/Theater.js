@@ -30,6 +30,7 @@ import { lookup } from "scripture-guide";
 import { determineLanguage, flattenDescription, playSound } from "../../models/Utils";
 import { buildCommentQueue } from "./theaterUtils";
 import { useAppController } from "src/contexts/AppControllerContext";
+import { TheaterProvider, useTheater } from "src/contexts/TheaterContext";
 
 
 const loadQueueItemsFromQueue = items => {
@@ -345,13 +346,16 @@ function TheaterWrapper() {
 
   return (
     <div className="theater-wrapper">
-      <TheaterMainPanel theaterController={theaterController} />
-      <TheaterSidePanel theaterController={theaterController} />
+      <TheaterProvider theaterController={theaterController}>
+        <TheaterMainPanel />
+        <TheaterSidePanel />
+      </TheaterProvider>
     </div>
   );
 }
 
-function TheaterMobileControls({ theaterController }) {
+function TheaterMobileControls() {
+  const theaterController = useTheater();
 
   const isPlaying = theaterController.isPlaying;
   const img = isPlaying ? pause : play;
@@ -362,7 +366,8 @@ function TheaterMobileControls({ theaterController }) {
   </div>
 
 }
-function TheaterMainPanel({ theaterController }) {
+function TheaterMainPanel() {
+  const theaterController = useTheater();
   const { queue, cursorIndex,cursorChangeWasManual } = theaterController;
   const currentItem = queue[cursorIndex] || null;
 
@@ -392,7 +397,7 @@ function TheaterMainPanel({ theaterController }) {
       canAutoplay.audio().then(({result}) => {result ? setCanAutoPlay(true) : setCanAutoPlay(false);} );
   },[cursorIndex])
 
-  theaterController = {
+  const augmentedController = {
     ...theaterController,
     subCursorIndex,
     setSubCursorIndex,
@@ -402,49 +407,51 @@ function TheaterMainPanel({ theaterController }) {
   };
 
   const showStatic = subCursorIndex !== 0;
-  
-  if(!canAutoPlayState) return <div className="theater-main-panel">
-    <TheaterQueueIndicator theaterController={theaterController} />
-    <TheaterStaticContent theaterController={theaterController} type="idle" />
-  </div>
 
   return (
     <div className="theater-main-panel">
-    <TheatherMusicPlayer theaterController={theaterController} />
-    <TheaterQueueIndicator theaterController={theaterController} />
-      {canAutoPlayState && showStatic ? (
-        <TheaterStaticContent
-          theaterController={theaterController}
-          type={subCursorIndex < 0 ? pretype : posttype}
-        />
-      ) : (
-        <>
-          <TheaterContent theaterController={theaterController} />
-        </>
-      )}
-          <TheaterMeta theaterController={theaterController} visible={!showStatic}/>
-          <TheaterControls theaterController={theaterController} visible={!showStatic} />
+      <TheaterProvider theaterController={augmentedController}>
+        {!canAutoPlayState ? (
+          <>
+            <TheaterQueueIndicator />
+            <TheaterStaticContent type="idle" />
+          </>
+        ) : (
+          <>
+            <TheatherMusicPlayer />
+            <TheaterQueueIndicator />
+            {showStatic ? (
+              <TheaterStaticContent type={subCursorIndex < 0 ? pretype : posttype} />
+            ) : (
+              <TheaterContent />
+            )}
+            <TheaterMeta visible={!showStatic} />
+            <TheaterControls visible={!showStatic} />
+          </>
+        )}
+      </TheaterProvider>
     </div>
   );
 }
 
-function TheaterStaticContent({ theaterController, type }) {
+function TheaterStaticContent({ type }) {
   switch (type) {
     case "intro":
-      return <TheaterQueueIntro theaterController={theaterController} />;
+      return <TheaterQueueIntro />;
     case "section":
-      return <TheaterSectionIntro theaterController={theaterController} />;
+      return <TheaterSectionIntro />;
     case "crossroads":
-      return <TheaterCrossRoads theaterController={theaterController} />;
+      return <TheaterCrossRoads />;
     case "outro":
-      return <TheaterQueueOutro theaterController={theaterController} />;
+      return <TheaterQueueOutro />;
     case "idle":
-      return <TheaterIdle theaterController={theaterController} />;
+      return <TheaterIdle />;
     default:
       return <pre>NO TYPE</pre>;
   }
 }
-function TheaterIdle({ theaterController }) {
+function TheaterIdle() {
+  const theaterController = useTheater();
   const {setCanAutoPlay } = theaterController;
 
   //listen for enter or space keys
@@ -486,12 +493,13 @@ function TheaterIdle({ theaterController }) {
 }
 
 
-function TheaterQueueOutro({ theaterController }) {
+function TheaterQueueOutro() {
 
-  return <TheaterCrossRoads theaterController={theaterController} />;
+  return <TheaterCrossRoads />;
 
 }
-function TheaterQueueIntro({ theaterController }) {
+function TheaterQueueIntro() {
+  const theaterController = useTheater();
   const { queue, cursorIndex } = theaterController;
   const currentItem = queue[cursorIndex] || null;
 
@@ -573,7 +581,8 @@ function TheaterQueueIntro({ theaterController }) {
   );
 }
 
-function TheaterSectionIntro({ theaterController }) {
+function TheaterSectionIntro() {
+  const theaterController = useTheater();
   const secondsToShow = 10;
   const { queue, cursorIndex } = theaterController;
   const currentItem = queue[cursorIndex] || null;
@@ -653,7 +662,8 @@ function ButtonTimer({timerprogress}){
 }
 
 
-function TheaterCrossRoadsButton({theaterController,config,optionalOverride,page,narration,slug,onClick,index,setSelectedIndex,selectedIndex,timerprogress}) {
+function TheaterCrossRoadsButton({config,optionalOverride,page,narration,slug,onClick,index,setSelectedIndex,selectedIndex,timerprogress}) {
+  const theaterController = useTheater();
   narration = flattenDescription(narration);
 
   const setQueueStatus = theaterController.setQueueStatus;
@@ -704,7 +714,8 @@ return (
 
 
 
-function TheaterCrossRoads({ theaterController }) {
+function TheaterCrossRoads() {
+  const theaterController = useTheater();
   const { queue, cursorIndex } = theaterController;
   const currentItem = queue[cursorIndex] || null;
   const { next } = currentItem || {};
@@ -799,10 +810,10 @@ function TheaterCrossRoads({ theaterController }) {
   
 
 
-  const finishButton = <TheaterCrossRoadsButton config={{finish:true}} timerprogress={timerprogress} selectedIndex={selectedIndex} setSelectedIndex={setSelectedIndex} theaterController={theaterController} index={0} />;
-  const moreButton = <TheaterCrossRoadsButton config={{more:true}}  isLast={true} isMore={true} selectedIndex={selectedIndex} setSelectedIndex={setSelectedIndex} theaterController={theaterController} index={1} />;
-  const nextButton = <TheaterCrossRoadsButton timerprogress={timerprogress}  selectedIndex={selectedIndex} setSelectedIndex={setSelectedIndex} theaterController={theaterController} page={page} narration={narration} />;
-  const divergeButtons = !next?.length ? null : <>{next.map((n,i) => <TheaterCrossRoadsButton key={`diverge_${i}`} optionalOverride={optionalOverride}  selectedIndex={selectedIndex} setSelectedIndex={setSelectedIndex} theaterController={theaterController} {...n} index={i+1} />)}</>;
+  const finishButton = <TheaterCrossRoadsButton config={{finish:true}} timerprogress={timerprogress} selectedIndex={selectedIndex} setSelectedIndex={setSelectedIndex} index={0} />;
+  const moreButton = <TheaterCrossRoadsButton config={{more:true}}  isLast={true} isMore={true} selectedIndex={selectedIndex} setSelectedIndex={setSelectedIndex} index={1} />;
+  const nextButton = <TheaterCrossRoadsButton timerprogress={timerprogress}  selectedIndex={selectedIndex} setSelectedIndex={setSelectedIndex} page={page} narration={narration} />;
+  const divergeButtons = !next?.length ? null : <>{next.map((n,i) => <TheaterCrossRoadsButton key={`diverge_${i}`} optionalOverride={optionalOverride}  selectedIndex={selectedIndex} setSelectedIndex={setSelectedIndex} {...n} index={i+1} />)}</>;
 
   const defaultButton = isLast ? finishButton : nextButton;
   const optionalButtons = isLast ? moreButton : divergeButtons;
@@ -831,30 +842,31 @@ function TheaterCrossRoads({ theaterController }) {
 
 
 
-function TheaterSidePanel({ theaterController }) {
+function TheaterSidePanel() {
   return (
     <div className="theater-side-panel">
-      <TheaterPeoplePlacePanel theaterController={theaterController} />
+      <TheaterPeoplePlacePanel />
       <div className="theater-image-comment-panel">
-      <TheaterImagePanel theaterController={theaterController} />
-      <TheaterCommentFeed theaterController={theaterController} />
+      <TheaterImagePanel />
+      <TheaterCommentFeed />
       </div>
     </div>
   );
 }
 
-function TheaterMeta({ theaterController, visible }) {
+function TheaterMeta({ visible }) {
 
 
 
   return (
     <div className={"theater-meta" + (visible ? " visible" : "")}>
-      <TheaterMetaContent theaterController={theaterController} />
+      <TheaterMetaContent />
     </div>
   );
 }
 
-function TheaterControls({ theaterController, visible }) {
+function TheaterControls({ visible }) {
+  const theaterController = useTheater();
 
   const {
     queue,
@@ -1021,7 +1033,7 @@ function TheaterControls({ theaterController, visible }) {
 
   return (
     <div className={"theater-controls"+(visible ? " visible" : "")}>
-      <TheaterProgressBar theaterController={theaterController} />
+      <TheaterProgressBar />
       <ReactAudioPlayer
         id="theater-audio-player"
         src={url}
@@ -1053,7 +1065,8 @@ function TheaterControls({ theaterController, visible }) {
   );
 }
 
-function TheatherMusicPlayer({ theaterController }) {
+function TheatherMusicPlayer() {
+  const theaterController = useTheater();
 
   const { queue, cursorIndex,playbackVolume,playbackMusicVolume, isMuted } = theaterController;
   const currentItem = queue[cursorIndex] || null;
@@ -1187,7 +1200,8 @@ function TheatherMusicPlayer({ theaterController }) {
   );
 }
 
-function TheaterNarration({ theaterController }) {
+function TheaterNarration() {
+  const theaterController = useTheater();
   const { queue, cursorIndex } = theaterController;
   const currentItem = queue[cursorIndex] || null;
 
@@ -1238,7 +1252,8 @@ const prepareContent = (content)=>{
 
 }
 
-function TheaterContent({ theaterController }) {
+function TheaterContent() {
+  const theaterController = useTheater();
   const {
     queue,
     cursorIndex,
@@ -1301,7 +1316,7 @@ function TheaterContent({ theaterController }) {
   return (
     <div className={`theater-content-frame ${state}`} 
     style={{backgroundImage:`url(${assetUrl}/${backgroundImage})`}}>
-      <TheaterMobileControls theaterController={theaterController} />
+      <TheaterMobileControls />
       <div
         className={`theater-content-slider ${state}`}
         style={{ opacity }}
@@ -1328,7 +1343,8 @@ function TheaterContent({ theaterController }) {
   );
 }
 
-function TheaterMetaContent({ theaterController }) {
+function TheaterMetaContent() {
+  const theaterController = useTheater();
   const { queue, cursorIndex, queueStatus } = theaterController;
   const currentItem = queue[cursorIndex] || null;
   if (!currentItem) return null;
@@ -1350,13 +1366,14 @@ function TheaterMetaContent({ theaterController }) {
         <div className="theater-super-title">{page}</div>
       </div>
       <div className="theater-meta-content-right">
-        <TheaterNarration theaterController={theaterController} />
+        <TheaterNarration />
       </div>
     </div>
   );
 }
 
-function TheaterQueueIndicator({ theaterController }) {
+function TheaterQueueIndicator() {
+  const theaterController = useTheater();
   let { queue, cursorIndex, queueStatus } = theaterController;
   queue = Array.isArray(queue) ? queue : [];
   
@@ -1510,7 +1527,8 @@ function TheaterQueueIndicator({ theaterController }) {
   );
 }
 
-function TheaterProgressBar({ theaterController }) {
+function TheaterProgressBar() {
+  const theaterController = useTheater();
   const {
     currentProgress,
     currentDuration,
@@ -1539,7 +1557,7 @@ function TheaterProgressBar({ theaterController }) {
         <ProgressBar />
       </div>
       <div className="theater-progress-bar-buttons right">
-				{showPlaybackSettings && <PlaybackSettings setShowPlaybackSettings={setShowPlaybackSettings} theaterController={theaterController}/>}
+				{showPlaybackSettings && <PlaybackSettings setShowPlaybackSettings={setShowPlaybackSettings}/>}
         <div>
           <div className="playbackRateIcon" onClick={cyclePlaybackSpeed}>
             {rateString}
@@ -1551,7 +1569,8 @@ function TheaterProgressBar({ theaterController }) {
   );
 }
 
-function PlaybackSettings({setShowPlaybackSettings,theaterController}){
+function PlaybackSettings({setShowPlaybackSettings}){
+	const theaterController = useTheater();
 	const {playbackRate,setPlaybackRate,playbackVolume,setPlaybackVolume,playbackMusicVolume,setPlaybackMusicVolume,toggleMusic,isMuted}=theaterController;
 	const inputRef = useRef(null);
 	const handleInput = (e)=>{
@@ -1653,7 +1672,8 @@ function ProgressBar() {
   );
 }
 
-function TheaterPeoplePlacePanel({ theaterController }) {
+function TheaterPeoplePlacePanel() {
+  const theaterController = useTheater();
   const {
     queue,
     cursorIndex,
@@ -1754,7 +1774,8 @@ function TheaterPeoplePlacePanel({ theaterController }) {
   );
 }
 
-function TheaterImagePanel({ theaterController }) {
+function TheaterImagePanel() {
+  const theaterController = useTheater();
   const {
     queue,
     cursorIndex,
@@ -1823,7 +1844,8 @@ function TheaterImagePanel({ theaterController }) {
   );
 }
 
-function TheaterCommentFeed({ theaterController }) {
+function TheaterCommentFeed() {
+  const theaterController = useTheater();
 
   const filter = theaterController.appController.states.preferences.commentary.filter;
   const blacklist = (filter.type==="blacklist" ? filter?.sources : []) || [];
@@ -1861,12 +1883,13 @@ function TheaterCommentFeed({ theaterController }) {
   return (
     <div className="theater-comment-panel">
       <h4>{label("commentary")}</h4>
-      <CommentFeed comments={[...comments]} theaterController={theaterController} />
+      <CommentFeed comments={[...comments]} />
     </div>
   );
 }
 
-const Comment = ({ com, theaterController }) => {
+const Comment = ({ com }) => {
+  const theaterController = useTheater();
   const { appController } = theaterController;
   const [addedAt] = useState(Date.now());
   // size between 50% and 70%
@@ -1908,12 +1931,12 @@ const Comment = ({ com, theaterController }) => {
   );
 };
 
-const CommentFeed = ({ comments, theaterController }) => {
+const CommentFeed = ({ comments }) => {
   if (!comments?.length) return null;
   return (
     <div className="theater-comment-feed">
       {comments.map((com, index) => (
-        <Comment key={com.id} com={com} theaterController={theaterController} />
+        <Comment key={com.id} com={com} />
       ))}
     </div>
   );
