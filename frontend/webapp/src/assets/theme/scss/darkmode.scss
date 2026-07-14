@@ -1,4 +1,5 @@
 @import "./darkmode/tokens";
+@import "./darkmode/framework";
 
 html[data-theme="dark"] {
     color-scheme: dark;
