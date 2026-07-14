@@ -141,11 +141,10 @@ function Main(props) {
     <MessengerProvider appController={appController}>
       <div className={"body"+(lang ? " "+lang: "") + (isDev ? " dev" : "") + (isDarkMode ? " dark" : "")}>
         {debug}
-        <Header {...props} appController={appController} isReady={true} />
+        <Header {...props} isReady={true} />
         {/* <Navbar user={user} showSideNav={showSideNav} manageLayout={manageLayout} toggleSideNav={toggleSideNav} /> */}
         <Sidebar
           {...props}
-          appController={appController}
           routes={links}
           bgColor={"1a1d20"}
           activeColor={"red"}
@@ -168,17 +167,17 @@ function Main(props) {
             <Loader />
           ) : (
             <>
-              <PopUp appController={appController} />
+              <PopUp />
               <Suspense fallback={<Loader />}>
                 <Switch>
                   {routes.map((x, i) => (
                     <Route key={i}  keyProp={i} exact={x.exact} path={x.path}>
-                      <x.component appController={appController} />
+                      <x.component />
                     </Route>
                   ))}
                 </Switch>
               </Suspense>
-              <BottomMenu appController={appController}/>
+              <BottomMenu />
             </>
           )}
         </main>
