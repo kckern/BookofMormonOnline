@@ -939,8 +939,10 @@ function FacsimilePanel() {
     }
   }, [
     narrationController.states.faxList,
+    narrationController.pageController.states.pageSlug,
     narrationController.pageController.states.initOpen.faxVersion,
     narrationController.pageController.states.initOpen.textId,
+    narrationController.data.text.slug,
   ]);
 
   useEffect(() => {
