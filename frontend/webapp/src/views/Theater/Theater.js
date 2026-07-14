@@ -1004,7 +1004,7 @@ function TheaterControls({ theaterController, visible }) {
       if(summary?.completed >= 100)
       {
         //pause theater
-        theaterController.controls.pause();
+        theaterController.pause();
         document.getElementById(`theater-music-player-a`)?.pause();
         document.getElementById(`theater-music-player-b`)?.pause();
         theaterController.appController.functions.setPopUp({
