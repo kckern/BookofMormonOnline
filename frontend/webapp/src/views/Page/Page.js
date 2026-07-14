@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useReducer, useEffect, useState, useRef } from "react";
-// BROWSER HISTORY
+import { history } from "src/models/routeHistory";
 // API ACTIONS
 // COMPONENTS
 import Loader from "../_Common/Loader";
@@ -59,31 +59,35 @@ export default function Page() {
   const appController = useAppController();
   const messenger = useMessenger();
   const match = useRouteMatch();
-  if (match.params.pageSlug === "study") {
+  let routeParams = match.params;
+  if (routeParams.pageSlug === "study") {
     let parts = localStorage
       .getItem("studybookmark")
       ?.split("/")
       .slice(-2) || [null, null];
-    match.params.pageSlug = parts[0] || "lehites";
-    match.params.textId = parts[1] || 1;
+    routeParams = {
+      ...routeParams,
+      pageSlug: parts[0] || "lehites",
+      textId: parts[1] || 1,
+    };
   }
 
-  let initOpen = prepareInitOpen(match.params);
+  let initOpen = prepareInitOpen(routeParams);
 
-  const routeKey = `${match.params.pageSlug || ""}|${match.params.textId || ""}|${match.params.commentaryId || ""}|${match.params.imageId || ""}|${match.params.faxVersion || ""}`;
-  const pageIdentityKey = `${match.params.pageSlug || ""}|${match.params.commentaryId || ""}|${match.params.imageId || ""}`;
+  const routeKey = `${routeParams.pageSlug || ""}|${routeParams.textId || ""}|${routeParams.commentaryId || ""}|${routeParams.imageId || ""}|${routeParams.faxVersion || ""}`;
+  const pageIdentityKey = `${routeParams.pageSlug || ""}|${routeParams.commentaryId || ""}|${routeParams.imageId || ""}`;
 
   useEffect(() => {
     pageController.functions.setPageData(null);
     // Deep links position the viewport themselves; everything else resets
     // instantly (a smooth scroll here raced the pipeline's scroll — whiplash).
-    const i = prepareInitOpen(match.params);
+    const i = prepareInitOpen(routeParams);
     const hasScrollTarget = !!(i.textId || i.goToSection || i.commentaryId || i.imageId || i.faxVersion);
     if (!hasScrollTarget) window.scrollTo({ top: 0, behavior: "auto" });
     pageController.functions.setLoading(true);
-    if (match.params.imageId || match.params.commentaryId)
-      getPageDataFromAPIViaNote(match.params);
-    else getPageDataFromAPI(match.params.pageSlug);
+    if (routeParams.imageId || routeParams.commentaryId)
+      getPageDataFromAPIViaNote(routeParams);
+    else getPageDataFromAPI(routeParams.pageSlug);
   }, [pageIdentityKey]);
 
   let [commentState, setCommentState] = useState("init");
@@ -224,7 +228,7 @@ export default function Page() {
     pageController.functions.setNotFound(null);
     pageController.functions.setInitWarning(null);
     pageController.appController.functions.requestImageActivation(null);
-    const newInitOpen = prepareInitOpen(match.params);
+    const newInitOpen = prepareInitOpen(routeParams);
     pageController.functions.setInitOpen(newInitOpen);
   }, [routeKey]);
 
@@ -378,8 +382,8 @@ export default function Page() {
     }
 
     if (!response.page[index].sections) {
-      return document.querySelector(".contents_link a").click();
-    } //TODO history.push("/contents");
+      return history.push("/contents");
+    }
 
     pageController.functions.setPageSlugId({
       pageSlug,

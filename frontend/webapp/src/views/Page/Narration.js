@@ -797,7 +797,6 @@ function ScripturePanel() {
 
       switch (event.key) {
         case 'ArrowRight':
-        case 'Tab':
           setActiveRef(rightIndex);
           event.preventDefault();
           break;
