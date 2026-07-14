@@ -12,35 +12,12 @@ export function CommentaryBubbles() {
   let narrationController = textContentController.narrationController;
   let blacklist = narrationController.appController.states.preferences.commentary.filter.sources.map(id=>id.toString().padStart(3,0));
 
-  let paddingTop = 30;
-  const gatherCommentary = () => {
-    var items = [];
-    var anchor_items = document.querySelectorAll(  `[textid="${narrationController.data.text.slug}"]  a.c` );
-    var container_y = document .querySelector(`[textid="${narrationController.data.text.slug}"] .content`) ?.getBoundingClientRect().top;
-    var cursor = 0;
-    var groups = {};
-    for (var i in anchor_items) {
-      var anchor = anchor_items[i];
-      if (anchor.className !== "c") continue;
-      let id = anchor.attributes.contentid.value;
-      var source = id.substring(5, 8);
-      if(blacklist.includes(source)) continue;
-      let y = anchor?.getBoundingClientRect().top;
-      if (y === 0 || !y) continue;
-      y = paddingTop + y - container_y;
-
-      if (y - cursor > paddingTop) cursor = y;
-
-      if (groups[cursor] === undefined)
-        groups[cursor] = { y: cursor + "px", count: 0, ids: [] };
-      groups[cursor].count++;
-      groups[cursor].ids.push(id);
-    }
-    for (var g in groups) items.push(groups[g]);
-    return items;
-  };
-
-  var items = gatherCommentary();
+  const items = gatherAnchorGroups(
+    narrationController.data.text.slug,
+    "c",
+    30,
+    (id) => !blacklist.includes(id.substring(5, 8))
+  );
   return items.map((item, i) => {
     return (
       <CommentaryBubble
@@ -151,37 +128,31 @@ function CommentaryBubble({
   );
 }
 
-export function gatherImages(slug) {
-  let paddingTop = 30;
-  let height = 25;
-  var items = [];
-  var anchor_items = document.querySelectorAll(`[textid="${slug}"] a.i`);
-  var container_y = document.querySelector(`[textid="${slug}"] .content`)?.getBoundingClientRect().top;
-
-  var cursor = 0;
-  var groups = {};
-  for (var i in anchor_items) {
-    var anchor = anchor_items[i];
-    if (anchor.className !== "i") continue;
-    let id = anchor.attributes.contentid.value;
-    let y = anchor?.getBoundingClientRect().top;
-    if (y === 0 || !y) continue;
+// Groups inline anchors (a.c commentary refs / a.i art refs) into vertically
+// clustered bubbles. `spacing` is the min px gap before a new cluster starts;
+// `keepId` filters ids out BEFORE grouping (blacklisted commentary sources
+// must not affect cluster positions).
+function gatherAnchorGroups(slug, anchorClass, spacing, keepId = () => true) {
+  const paddingTop = 30;
+  const container_y = document
+    .querySelector(`[textid="${slug}"] .content`)
+    ?.getBoundingClientRect().top;
+  const anchors = document.querySelectorAll(`[textid="${slug}"] a.${anchorClass}`);
+  let cursor = 0;
+  const groups = {};
+  for (const anchor of anchors) {
+    if (anchor.className !== anchorClass) continue;
+    const id = anchor.attributes.contentid.value;
+    if (!keepId(id)) continue;
+    let y = anchor.getBoundingClientRect().top;
+    if (!y) continue;
     y = paddingTop + y - container_y;
-
-    if (y - cursor > height) cursor = y;
-
-    if (groups[cursor] === undefined)
-      groups[cursor] = {
-        y: cursor + "px",
-        count: 0,
-        ids: [],
-      };
-
+    if (y - cursor > spacing) cursor = y;
+    if (!groups[cursor]) groups[cursor] = { y: cursor + "px", count: 0, ids: [] };
     groups[cursor].count++;
     groups[cursor].ids.push(id);
   }
-  for (var g in groups) items.push(groups[g]);
-  return items;
+  return Object.values(groups);
 }
 
 export function ImageBubbles() {
@@ -191,7 +162,7 @@ export function ImageBubbles() {
 
   let narrationController = textContentController.narrationController;
 
-  var items = gatherImages(narrationController.data.text.slug) || [];
+  const items = gatherAnchorGroups(narrationController.data.text.slug, "i", 25);
 
   return items.map((item) => {
     return (
