@@ -6,6 +6,8 @@ html[data-theme="dark"] {
   .ql-container.ql-snow { border-color: var(--border); }
   .ql-editor { background-color: var(--surface-3); color: var(--text-primary); }
   .ql-editor.ql-blank::before { color: var(--text-faint); }
+  .ql-snow .ql-editor blockquote { border-left-color: var(--border-strong); }
+  .ql-snow .ql-editor a { color: var(--link); }
 
   /* Toolbar icons (SVG stroke / fill) */
   .ql-snow .ql-stroke { stroke: var(--text-secondary); }
@@ -22,6 +24,14 @@ html[data-theme="dark"] {
   .ql-snow .ql-picker-label:hover,
   .ql-snow .ql-picker-item:hover,
   .ql-snow .ql-picker-item.ql-selected { color: var(--accent-green); }
+
+  /* Picker-label hover / active SVG arrows */
+  .ql-snow.ql-toolbar .ql-picker-label:hover .ql-stroke,
+  .ql-snow.ql-toolbar .ql-picker-label:hover .ql-stroke-miter,
+  .ql-snow.ql-toolbar .ql-picker-label.ql-active .ql-stroke,
+  .ql-snow.ql-toolbar .ql-picker-label.ql-active .ql-stroke-miter { stroke: var(--accent-green); }
+  .ql-snow.ql-toolbar .ql-picker-label:hover .ql-fill,
+  .ql-snow.ql-toolbar .ql-picker-label.ql-active .ql-fill { fill: var(--accent-green); }
 
   /* Picker (dropdown) labels + menus */
   .ql-snow .ql-picker { color: var(--text-secondary); }
