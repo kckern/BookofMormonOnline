@@ -611,16 +611,13 @@ export default function Page() {
           {pageController.pageData?.title}
         </h3>
 
-        {pageController.pageData?.sections.map((sectionData, sectionIndex) => {
-          sectionData.sectionIndex = sectionIndex;
-          return (
-            <Section
-              key={sectionIndex}
-              sectionData={sectionData}
-              rowIndex={sectionData}
-            />
-          );
-        })}
+        {pageController.pageData?.sections.map((sectionData, sectionIndex) => (
+          <Section
+            key={sectionIndex}
+            sectionData={sectionData}
+            sectionIndex={sectionIndex}
+          />
+        ))}
       </div>
     </PageControllerProvider>
   );

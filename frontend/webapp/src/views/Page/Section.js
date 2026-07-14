@@ -14,7 +14,7 @@ import { label } from "../../models/Utils";
 import ReactTooltip from "react-tooltip";
 import { tooltipTheme } from "src/utils/themeColors";
 
-function Section({ sectionData, setPageSlug }) {
+function Section({ sectionData, sectionIndex }) {
   let preConnection = null;
   if (sectionData.rows[0].weight < 0) {
     preConnection = (
@@ -60,7 +60,6 @@ function Section({ sectionData, setPageSlug }) {
       <div
         className="pagesection card"
         id={sectionData.slug}
-        key={sectionData.sectionIndex}
         titletext={sectionData.title}
       >
         <div className="card-header" style={{ margin: 0 }}>
@@ -74,7 +73,7 @@ function Section({ sectionData, setPageSlug }) {
             if (rowData.type === "N") {
               return (
                 <Narration
-                  key={`row-n-${sectionData.sectionIndex}-${rowIndex}`}
+                  key={`row-n-${sectionIndex}-${rowIndex}`}
                   rowData={rowData}
                   addHighlight={addHighlight}
                 />
@@ -82,16 +81,15 @@ function Section({ sectionData, setPageSlug }) {
             } else if (rowData.type === "O") {
               return (
                 <PageLink
-                  key={`row-o-${sectionData.sectionIndex}-${rowIndex}`}
+                  key={`row-o-${sectionIndex}-${rowIndex}`}
                   rowData={rowData}
-                  setPageSlug={setPageSlug}
                 />
               );
             } else if (rowData.type === "C") {
               if (rowData.weight < 0) return false;
               return (
                 <Connection
-                  key={`row-c-${sectionData.sectionIndex}-${rowIndex}`}
+                  key={`row-c-${sectionIndex}-${rowIndex}`}
                   rowData={rowData}
                 />
               );
