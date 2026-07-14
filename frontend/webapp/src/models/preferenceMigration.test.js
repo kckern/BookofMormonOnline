@@ -13,6 +13,11 @@ describe("migratePreferences", () => {
     expect(result.darkMode).toBe(true);
   });
 
+  it("does not clobber an explicit darkMode:false with a truthy dark_mode", () => {
+    const result = migratePreferences({ darkMode: false, dark_mode: true });
+    expect(result.darkMode).toBe(false);
+  });
+
   it("falls back to the OS preference when neither key exists", () => {
     expect(migratePreferences({}, true).darkMode).toBe(true);
     expect(migratePreferences({}, false).darkMode).toBe(false);
