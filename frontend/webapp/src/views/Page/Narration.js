@@ -3,7 +3,7 @@ import React, { useState, useEffect, useReducer } from "react";
 import TextContent from "./TextContent";
 import Comments from "../_Common/Study/Study";
 // media Url
-import { renderPersonPlaceHTML } from "./PersonPlace";
+import { renderPersonPlaceHTML, formatNameNumbers } from "./PersonPlace";
 import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
 import Parser, { domToReact } from "html-react-parser";
 import "./Narration.css";
@@ -615,13 +615,6 @@ function PeoplePlacePanel() {
 
   if(items.length === 0) return null;
 
-  const replaceNumbers = (str) => {
-    return str.replace(/[1-4]/g, function(match) {
-      const superscripts = { '1': '¹', '2': '²', '3': '³', '4': '⁴' };
-      return superscripts[match];
-    });
-  }
-
   const peopleCount = people.length;
   const placesCount = places.length;
 
@@ -636,10 +629,10 @@ function PeoplePlacePanel() {
         return <div key={item.name} className="item" onClick={()=>popUpPerson(item.slug,item.type)}>
 
           <div className="name">
-            {item.name.replace(/[1-4]/g, replaceNumbers)}
+            {formatNameNumbers(item.name)}
           </div>
           <img src={`${assetUrl}/${item.type}/${item.slug}`} alt={item.name} />
-          <div className="info">{(item.title || item.info).replace(/[1-4]/g, replaceNumbers)}</div>
+          <div className="info">{formatNameNumbers(item.title || item.info)}</div>
 
             </div>;
       })}

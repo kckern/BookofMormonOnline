@@ -193,18 +193,18 @@ function NarrationToolTip({ type, id }) {
     <div className="ppToolTip">
       <img src={`${assetUrl}/${linkType}/${id}`} alt={linkType} />
       <div>
-        <div className="ppToolTipName">{numberFormat(name)}</div>
-        <div className="ppToolTipInfo">{numberFormat(info)}</div>
+        <div className="ppToolTipName">{formatNameNumbers(name)}</div>
+        <div className="ppToolTipInfo">{formatNameNumbers(info)}</div>
       </div>
     </div>
   );
 }
 
-function numberFormat(string) {
+const SUPERSCRIPT_DIGITS = { 1: "¹", 2: "²", 3: "³", 4: "⁴" };
+// Scripture homonyms are disambiguated with trailing digits (lehi1, alma2);
+// render them as superscripts everywhere. Canonicalized 2026-07-14 — the old
+// tooltip formatter used subscripts and only converted the first occurrence.
+export function formatNameNumbers(string) {
   if (!string) return null;
-  string = string.replace("1", "₁");
-  string = string.replace("2", "₂");
-  string = string.replace("3", "₃");
-  string = string.replace("4", "₄");
-  return string;
+  return String(string).replace(/[1-4]/g, (d) => SUPERSCRIPT_DIGITS[d]);
 }
