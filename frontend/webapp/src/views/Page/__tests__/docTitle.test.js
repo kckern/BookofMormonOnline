@@ -46,3 +46,11 @@ test("changing the base while an entry is pushed applies after pop", () => {
   popDocTitle("row");
   expect(document.title).toBe("Mulekites");
 });
+
+test("pushing a falsy title is coerced to empty string, never 'undefined'", () => {
+  setBaseDocTitle("Lehites");
+  pushDocTitle("panel", undefined);
+  expect(document.title).toBe(""); // coerced, not the string "undefined"
+  popDocTitle("panel");
+  expect(document.title).toBe("Lehites");
+});

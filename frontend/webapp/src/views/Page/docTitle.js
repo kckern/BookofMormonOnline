@@ -21,7 +21,7 @@ export function setBaseDocTitle(title) {
 
 export function pushDocTitle(key, title) {
   removeKey(key);
-  stack.push({ key, title });
+  stack.push({ key, title: title || "" });
   apply();
 }
 
