@@ -552,14 +552,13 @@ export default function Page() {
       if (isMounted.current) setReadyToScroll(true);
     }, COMMENTS_FALLBACK_MS);
 
-    const sendbird = messenger;
-    if (!sendbird?.loadPageComments) {
+    if (!messenger?.loadPageComments) {
       clearTimeout(fallbackTimer);
       setReadyToScroll(true);
       return false;
     }
     setCommentState("made query");
-    sendbird
+    messenger
       .loadPageComments(group, pageController.pageData?.slug)
       .then(({ messages, counts }) => {
         clearTimeout(fallbackTimer);
