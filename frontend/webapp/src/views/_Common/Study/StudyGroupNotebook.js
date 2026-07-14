@@ -5,7 +5,9 @@ import React, { useState, useEffect } from 'react';
 import Loader from 'src/views/_Common/Loader';
 import "./StudyGroupNotebook.css"
 import { normalizeUnits } from 'moment';
-export default function StudyGroupNotebook({ appController }) {
+import { useAppController } from "src/contexts/AppControllerContext";
+export default function StudyGroupNotebook() {
+    const appController = useAppController();
 
 
     const [contents, setContents] = useState([]);

@@ -45,6 +45,7 @@ import moment from "moment";
 import SweetAlert from "react-bootstrap-sweetalert";
 import useModalA11y from "../AppModal/useModalA11y";
 import { history } from "src/models/routeHistory";
+import { useAppController } from "src/contexts/AppControllerContext";
 
 // Messenger feature flag
 const USE_MESSENGER = isMessengerEnabled();
@@ -91,7 +92,8 @@ const a11yLabel = (key, fallback) => {
   return !v || v === key || v.trim() === "" ? fallback : v;
 };
 
-export function StudyGroupSelect({ appController }) {
+export function StudyGroupSelect() {
+  const appController = useAppController();
   const setGroups = () => {
     // COMMENT BY ME
     // console.log('StudyGroupSelect .....')
@@ -168,7 +170,7 @@ export function StudyGroupSelect({ appController }) {
     return (
       <>
         {appController.states.studyGroup.isGroupListOpen ? (
-          <StudyGroupList appController={appController} />
+          <StudyGroupList />
         ) : null}
         <div
           className={"StudyGroupSelect"}
@@ -217,7 +219,7 @@ export function StudyGroupSelect({ appController }) {
   return (
     <>
       {appController.states.studyGroup.isGroupListOpen ? (
-        <StudyGroupList appController={appController} />
+        <StudyGroupList />
       ) : null}
       <div
         className={"StudyGroupSelect"}
@@ -250,7 +252,8 @@ export function StudyGroupSelect({ appController }) {
   );
 }
 
-export function StudyGroupList({ appController }) {
+export function StudyGroupList() {
+  const appController = useAppController();
   const [contentTag, setContentTag] = useState("list");
   const containerRef = React.useRef(null);
 
@@ -325,12 +328,12 @@ export function StudyGroupList({ appController }) {
           ➕ {label("new_group")}
         </Button>
       </div>
-      <StudyGroupListItems appController={appController} />
+      <StudyGroupListItems />
     </>
   );
 
   if (contentTag === "new")
-    contents = <NewStudyGroup appController={appController} />;
+    contents = <NewStudyGroup />;
   let nickname = appController.sendbird.sb.currentUser?.nickname || null;
 
   return (
@@ -376,7 +379,8 @@ export function StudyGroupList({ appController }) {
   );
 }
 
-function StudyGroupListItems({ appController }) {
+function StudyGroupListItems() {
+  const appController = useAppController();
   useEffect(() => {}, [appController.states.studyGroup.groupList.length]);
   if (appController.states.studyGroup.groupList.length === 0) {
     return <div className="noGroups">{label("create_or_join_groups")}</div>;
@@ -388,7 +392,6 @@ function StudyGroupListItems({ appController }) {
           <StudyGroupListItem
             key={group.url}
             group={group}
-            appController={appController}
           />
         ) : null,
       )}
@@ -396,7 +399,8 @@ function StudyGroupListItems({ appController }) {
   );
 }
 
-function StudyGroupListItem({ group, appController }) {
+function StudyGroupListItem({ group }) {
+  const appController = useAppController();
   const [switchSound] = useState(() => {
     let sound = new Audio(`${assetUrl}/interface/audio/switch`);
     sound.preload = "auto";
@@ -748,7 +752,8 @@ const groupCoverUrl = (group_name) => {
     return newURL;
 }
 
-function NewStudyGroup({ appController }) {
+function NewStudyGroup() {
+  const appController = useAppController();
   const [openModal, setOpenModal] = useState(false);
   const [name, setName] = useState("");
   const [buttonLabel, setButtonLabel] = useState(

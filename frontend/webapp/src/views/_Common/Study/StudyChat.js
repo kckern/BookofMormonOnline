@@ -40,6 +40,7 @@ import {
 
 import Parser from "html-react-parser";
 import Loader from "../Loader/index.js";
+import { useAppController } from "src/contexts/AppControllerContext";
 
 const modules = {
   toolbar: [
@@ -70,7 +71,8 @@ const formats = [
   "image",
 ];
 
-export function StudyGroupChatInput({ appController, channel }) {
+export function StudyGroupChatInput({ channel }) {
+  const appController = useAppController();
   const [showTagList, setShowTagList] = useState(false);
   const [editorBounds, setEditorBounds] = useState(null);
   const inputRef = useRef(null);
@@ -201,7 +203,6 @@ export function StudyGroupChatInput({ appController, channel }) {
         />
         {!appController.states.editor.isEditorOpen && showTagList && (
           <TagList
-            appController={appController}
             setShowTagList={setShowTagList}
             inputRef={inputRef}
           />
@@ -289,7 +290,6 @@ export function StudyGroupChatInput({ appController, channel }) {
         />
         {appController.states.editor.isEditorOpen && showTagList && (
           <TagList
-            appController={appController}
             setShowTagList={setShowTagList}
             editorBounds={editorBounds}
             isEditor={true}
@@ -383,7 +383,6 @@ export function prepareQuery(messages) {
 }
 
 export function StudyGroupChat({
-  appController,
   setThreadMessage,
   linkedContent,
   setPrevLoader,
@@ -391,6 +390,7 @@ export function StudyGroupChat({
   channel,
   setPanel,
 }) {
+  const appController = useAppController();
   const [loading, setLoading] = useState(true);
   const [lastMessageId, setLastMessageId] = useState(0);
   const [firstMessageId, setFirstMessageId] = useState(0);
@@ -534,7 +534,7 @@ export function StudyGroupChat({
   let max_i = messages.length - 1;
   return (
     <div className={"StudyGroupChat"} key={channel.url}>
-      <TypingIndicators appController={appController} channel={channel} />
+      <TypingIndicators channel={channel} />
       {loading ? (
         <Loader />
       ) : messages.length === 0 ? (
@@ -579,7 +579,6 @@ export function StudyGroupChat({
                 inThread={false}
                 id={message.messageId}
                 setThreadMessage={setThreadMessage}
-                appController={appController}
                 message={message}
                 inStudyGroupChat={true}
                 chatLinkedContent={linkedContent.chatLinkedContent}
@@ -594,7 +593,8 @@ export function StudyGroupChat({
   );
 }
 
-function TypingIndicators({ appController, channel }) {
+function TypingIndicators({ channel }) {
+  const appController = useAppController();
   let groupUrl = channel.url;
   let typerIds = appController.states.studyGroup?.typers?.[groupUrl];
   let lastMessageTime =
@@ -636,13 +636,13 @@ function TypingIndicators({ appController, channel }) {
 }
 
 export function StudyGroupThread({
-  appController,
   setThreadMessage,
   parentMessage,
   linkedContent,
   channel,
   setPanel,
 }) {
+  const appController = useAppController();
   const inputRef = useRef(null);
   useEffect(() => {
     window.addEventListener("updateMessage", updateParentMessage, false);
@@ -737,7 +737,6 @@ export function StudyGroupThread({
         {label("message_thread")} {close}
       </h3>
       <ThreadMessages
-        appController={appController}
         parentMessage={parentMessage}
         setThreadMessage={setThreadMessage}
         chatLinkedContent={linkedContent.chatLinkedContent}
@@ -752,7 +751,6 @@ export function StudyGroupThread({
           threadInputVal={threadInputVal}
           setThreadInputVal={setThreadInputVal}
           channel={channel}
-          appController={appController}
           inputRef={inputRef}
         />
         <img
@@ -766,7 +764,6 @@ export function StudyGroupThread({
 }
 
 function ThreadMessages({
-  appController,
   parentMessage,
   setThreadMessage,
   chatLinkedContent,
@@ -794,7 +791,6 @@ function ThreadMessages({
   //TODO: Keep count current with realtime updates;
   let messages = (
     <ThreadedMessages
-      appController={appController}
       parentMessage={parentMessage}
       setHighlights={setHighlights}
       chatLinkedContent={chatLinkedContent}
@@ -810,7 +806,6 @@ function ThreadMessages({
         inThread={true}
         isParent={true}
         setThreadMessage={setThreadMessage}
-        appController={appController}
         message={parentMessage}
         highlights={highlights}
         chatLinkedContent={chatLinkedContent}
@@ -824,7 +819,6 @@ function ThreadMessages({
 }
 
 function ThreadedMessages({
-  appController,
   parentMessage,
   chatLinkedContent,
   setHighlights,
@@ -832,6 +826,7 @@ function ThreadedMessages({
   channel,
   setPanel,
 }) {
+  const appController = useAppController();
   const [needsToLoad, setNeedsToLoad] = useState(true);
   const [messages, setMessages] = useState([]);
   // Guard async setState against unmount (panel/thread switching).
@@ -933,7 +928,6 @@ function ThreadedMessages({
         isSameSender={isSameSender}
         inThread={true}
         isParent={false}
-        appController={appController}
         message={message}
         chatLinkedContent={chatLinkedContent}
         setHighlights={setHighlights}
@@ -945,7 +939,6 @@ function ThreadedMessages({
 }
 
 function BaseMessage({
-  appController,
   message,
   index,
   chatLinkedContent,
@@ -960,6 +953,7 @@ function BaseMessage({
   channel,
   setPanel,
 }) {
+  const appController = useAppController();
   const [isEdit, setIsEdit] = useState(false);
   const inputRef = useRef(null);
   const [tooltip_id] = useState(crypto.randomBytes(20).toString("hex"));
@@ -1107,7 +1101,7 @@ function BaseMessage({
 
   let likes = (
     <>
-      <LikeButton type="chat" message={message} appController={appController} />
+      <LikeButton type="chat" message={message} />
       {replyBubble}
     </>
   );
@@ -1309,7 +1303,6 @@ function BaseMessage({
         {messageActions}
         <div className={`messageBody ${isEdit ? "edit" : ""}`}>
           <MessageTypes
-            appController={appController}
             index={index}
             isEdit={isEdit}
             inThread={inThread}
@@ -1331,7 +1324,6 @@ function BaseMessage({
 }
 
 function MessageTypes({
-  appController,
   message,
   index,
   chatLinkedContent,
@@ -1346,7 +1338,6 @@ function MessageTypes({
   if (!testJSON(message.data) || message.parentMessageId)
     return (
       <Message
-        appController={appController}
         isEdit={isEdit}
         message={message}
         likes={likes}
@@ -1363,7 +1354,6 @@ function MessageTypes({
     case "img":
       return (
         <ImageComment
-          appController={appController}
           message={message}
           likes={likes}
           chatLinkedContent={chatLinkedContent}
@@ -1373,7 +1363,6 @@ function MessageTypes({
     case "com":
       return (
         <CommentaryComment
-          appController={appController}
           message={message}
           likes={likes}
           chatLinkedContent={chatLinkedContent}
@@ -1384,7 +1373,6 @@ function MessageTypes({
     case "fax":
       return (
         <FaxComment
-          appController={appController}
           message={message}
           likes={likes}
           chatLinkedContent={chatLinkedContent}
@@ -1394,7 +1382,6 @@ function MessageTypes({
     case "text":
       return (
         <TextComment
-          appController={appController}
           isEdit={isEdit}
           message={message}
           likes={likes}
@@ -1406,7 +1393,6 @@ function MessageTypes({
     case "section":
       return (
         <SectionComment
-          appController={appController}
           isEdit={isEdit}
           message={message}
           likes={likes}
@@ -1418,7 +1404,6 @@ function MessageTypes({
     default:
       return (
         <Message
-          appController={appController}
           isEdit={isEdit}
           message={message}
           likes={likes}
@@ -1431,7 +1416,6 @@ function MessageTypes({
 }
 
 function TextComment({
-  appController,
   isEdit,
   message,
   chatLinkedContent,
@@ -1473,7 +1457,6 @@ function TextComment({
       <TextInFeed
         textData={textData}
         hasStar={true}
-        appController={appController}
         highlights={activeHighlights}
       />
     </div>
@@ -1497,7 +1480,6 @@ function TextComment({
 }
 
 function CommentaryComment({
-  appController,
   message,
   chatLinkedContent,
   likes,
@@ -1525,7 +1507,6 @@ function CommentaryComment({
       <CommentaryInFeed
         comData={comData}
         hasStar={true}
-        appController={appController}
         highlights={activeHighlights}
       />
     </div>
@@ -1533,7 +1514,6 @@ function CommentaryComment({
 }
 
 function SectionComment({
-  appController,
   message,
   chatLinkedContent,
   likes,
@@ -1575,7 +1555,6 @@ function SectionComment({
       <SectionInFeed
         sectionData={sectionData}
         hasStar={true}
-        appController={appController}
         highlights={activeHighlights}
       />
     </div>
@@ -1599,7 +1578,6 @@ function SectionComment({
 }
 
 function ImageComment({
-  appController,
   message,
   chatLinkedContent,
   likes,
@@ -1623,14 +1601,12 @@ function ImageComment({
       <ImageInFeed
         imageData={imageData}
         hasStar={true}
-        appController={appController}
       />
     </div>
   );
 }
 
 function FaxComment({
-  appController,
   message,
   chatLinkedContent,
   likes,
@@ -1662,7 +1638,6 @@ function FaxComment({
         textData={textData}
         version={version}
         hasStar={true}
-        appController={appController}
       />
     </div>
   );
@@ -1675,7 +1650,6 @@ function FaxComment({
 // }
 
 function Message({
-  appController,
   message,
   index,
   inThread,
@@ -1779,7 +1753,6 @@ function Message({
       />
       {showTagList && (
         <TagList
-          appController={appController}
           setShowTagList={setShowTagList}
           editorBounds={editorBounds}
           isEditor={true}
@@ -1816,7 +1789,6 @@ function Message({
         />
         {showTagList && (
           <TagList
-            appController={appController}
             setShowTagList={setShowTagList}
             inputRef={inputRef}
           />

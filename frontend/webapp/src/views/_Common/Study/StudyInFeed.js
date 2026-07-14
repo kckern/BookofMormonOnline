@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import "./StudyInFeed.css";
 import { BlankParagraph } from "src/models/Utils";
 import { assetUrl } from "src/models/BoMOnlineAPI";
+import { useAppController } from "src/contexts/AppControllerContext";
 
 function ImageBox({ imageIds }) {
   const [currentIndex, setIndex] = useState(0);
@@ -30,7 +31,8 @@ function ImageBox({ imageIds }) {
   return <div className="imgBox" style={style}></div>;
 }
 
-export function TextInFeed({ appController, textData, highlights }) {
+export function TextInFeed({ textData, highlights }) {
+  const appController = useAppController();
   if (!textData) return <Placeholder classname="text" />;
 
   //if(!textData.narration) debugger;
@@ -62,7 +64,8 @@ export function TextInFeed({ appController, textData, highlights }) {
   );
 }
 
-export function SectionInFeed({ appController, sectionData, highlights }) {
+export function SectionInFeed({ sectionData, highlights }) {
+  const appController = useAppController();
   if (!sectionData) return <Placeholder classname="sectionholder" />;
   return (
     <Link
@@ -103,7 +106,8 @@ export function SectionInFeed({ appController, sectionData, highlights }) {
     </Link>
   );
 }
-export function CommentaryInFeed({ appController, comData, highlights }) {
+export function CommentaryInFeed({ comData, highlights }) {
+  const appController = useAppController();
 
   if (!comData) return null;//<Placeholder classname="com" />;
   if(!comData.location?.narration?.description) {} // Nested location have no narration
@@ -158,7 +162,8 @@ export function CommentaryInFeed({ appController, comData, highlights }) {
   );
 }
 
-export function FaxInFeed({ appController, textData, version, hasStar }) {
+export function FaxInFeed({ textData, version, hasStar }) {
+  const appController = useAppController();
   const [imgHW, setHW] = useState({ h: 0, w: 0 });
   const [position, setPosition] = useState("center center");
 
@@ -239,7 +244,8 @@ export function FaxInFeed({ appController, textData, version, hasStar }) {
   );
 }
 
-export function ImageInFeed({ appController, imageData, hasStar }) {
+export function ImageInFeed({ imageData, hasStar }) {
+  const appController = useAppController();
   useEffect(() => {
     if (!imageData || imageData.width) return false;
     let viewerRatio =

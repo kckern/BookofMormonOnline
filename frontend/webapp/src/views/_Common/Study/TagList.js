@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { position } from "caret-pos";
+import { useAppController } from "src/contexts/AppControllerContext";
 import "./TagList.css";
 
 // Returns the active "@token" the caret is sitting in (for a plain textarea),
@@ -25,7 +26,6 @@ function getActiveMentionToken(value, caret) {
 }
 
 export default function TagList({
-  appController,
   setShowTagList,
   setCommentMessage,
   inputRef,
@@ -35,6 +35,7 @@ export default function TagList({
   setEditorData,
   inThread,
 }) {
+  const appController = useAppController();
   const textbox = isEditor
     ? document.querySelector(`${inThread ? ".editThread " : ""}.ql-editor`)
     : inputRef.current;

@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import "./ActionBubble.css";
-export function ActionBubble({ appController,userData, action, link }) {
+import { useAppController } from "src/contexts/AppControllerContext";
+export function ActionBubble({ userData, action, link }) {
+  const appController = useAppController();
   let message = action;
   const [showElement, setShowElement] = useState(true);
   useEffect(() => {
