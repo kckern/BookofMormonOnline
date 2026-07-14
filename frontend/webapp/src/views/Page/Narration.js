@@ -21,6 +21,7 @@ import { generateReference, detectReferences, lookupReference } from 'scripture-
 import { usePageController } from "src/contexts/PageControllerContext";
 import { useMessenger } from "src/contexts/MessengerContext";
 import { NarrationProvider, useNarration } from "src/contexts/NarrationContext";
+import { extractTagIds } from "./tagIds";
 
 function ChronoRow({ chrono }) {
   chrono = chronoLabel(chrono);
@@ -276,43 +277,20 @@ function Narration({ rowData, addHighlight }) {
       };
 
       //Extract Image and Commentary Values
-      let imageIds = [];
       initNarrationController.data.text = initNarrationController.data.text || {};
-      imageIds = imageIds.concat(
-        initNarrationController.data.text.content?.match(/\[i\](\d+)\[\/i\]/gi),
+      const quoteContents = (initNarrationController.data.text.quotes || []).map(
+        (q) => q.content
       );
-      if (initNarrationController.data.text.quotes)
-        imageIds = imageIds.concat(
-          initNarrationController.data.text.quotes
-            .map((q) => q.content.match(/\[i\](\d+)\[\/i\]/gi))
-            .filter(Boolean)
-            .flat(),
-        );
-      imageIds =
-        imageIds &&
-        [...new Set(imageIds.filter((x) => x !== null).map((i) => i?.replace(/\D+/g, "")))];
-      let commentaryIds = [];
-      commentaryIds = commentaryIds.concat(
-        initNarrationController.data.text.content?.match(
-          /\[c\]((\d+))\[\/c\]/gi,
-        ),
+      initNarrationController.data.imageIds = extractTagIds(
+        "i",
+        initNarrationController.data.text.content,
+        ...quoteContents
       );
-      if (initNarrationController.data.text.quotes)
-        commentaryIds = commentaryIds.concat(
-          initNarrationController.data.text.quotes
-            .map((q) => q.content.match(/\[c\]((\d+))\[\/c\]/gi))
-            .filter(Boolean)
-            .flat(),
-        );
-      commentaryIds =
-        commentaryIds &&
-        [...new Set(commentaryIds
-          .filter((x) => x !== null)
-          .map((i) => i?.replace(/\D+/g, "")))];
-      initNarrationController.data.imageIds =
-        imageIds && imageIds.length ? imageIds : [];
-      initNarrationController.data.commentaryIds =
-        commentaryIds && commentaryIds.length ? commentaryIds : [];
+      initNarrationController.data.commentaryIds = extractTagIds(
+        "c",
+        initNarrationController.data.text.content,
+        ...quoteContents
+      );
       let personIds = initNarrationController.data.description?.match(
         /\|([^\]}]+?)}/g,
       );

@@ -217,18 +217,6 @@ export default function TextContent({ content, isQuote }) {
         narrationController: narrationController,
       };
 
-      //Extract Image and Commentary Values
-      let imageIds =
-        initTextContentController.data.content?.match(/\[i\](\d+)\[\/i\]/gi);
-      imageIds = imageIds && imageIds.map((i) => i.replace(/\D+/g, ""));
-      let commentaryIds =
-        initTextContentController.data.content?.match(/\[c\]((\d+))\[\/c\]/gi);
-      commentaryIds =
-        commentaryIds && commentaryIds.map((i) => i.replace(/\D+/g, ""));
-      initTextContentController.data.imageIds =
-        imageIds && imageIds.length ? imageIds : [];
-      initTextContentController.data.commentaryIds =
-        commentaryIds && commentaryIds.length ? commentaryIds : [];
       return initTextContentController;
     })()
   );
