@@ -159,8 +159,9 @@ test("shapeReacters resolves reacting users by id with id fallback", () => {
   const reactions = [{ key: "like", userIds: ["staff", "ghost"] }];
   const out = shapeReacters(reactions, members);
   expect(out.like).toEqual([
-    { userId: "ghost", nickname: "ghost" }, // unknown id falls back to the id
-    { userId: "staff", nickname: "Staff" }, // reversed order preserved
+    // unknown id falls back to the id; profileUrl carried for reaction faces
+    { userId: "ghost", nickname: "ghost", profileUrl: null },
+    { userId: "staff", nickname: "Staff", profileUrl: null }, // reversed order preserved
   ]);
 });
 
