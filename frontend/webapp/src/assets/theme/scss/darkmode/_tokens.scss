@@ -22,6 +22,7 @@
   --highlight: #fff3b0;   // text highlight / selection wash
   --overlay: rgba(0, 0, 0, 0.5);
   --shadow: rgba(0, 0, 0, 0.15);
+  --slider-fill: #3f51b5;
 }
 
 html[data-theme="dark"] {
@@ -47,4 +48,5 @@ html[data-theme="dark"] {
   --highlight: #55502a;
   --overlay: rgba(0, 0, 0, 0.65);
   --shadow: rgba(0, 0, 0, 0.4);
+  --slider-fill: #7986cb;
 }

@@ -84,13 +84,13 @@ $thumb-size: 16px;
   transform: translateY(-50%);
   height: 6px;
   border-radius: 3px;
-  background: lightgrey;
+  background: var(--surface-4);
 }
 
 .inner-rail {
   position: absolute;
   height: 100%;
-  background: #3f51b5;
+  background: var(--slider-fill);
   opacity: 0.5;
 }
 
@@ -99,7 +99,7 @@ $thumb-size: 16px;
   height: $thumb-size;
   border-radius: 50%;
   position: absolute;
-  background: #3f51b5;
+  background: var(--slider-fill);
   top: 50%;
   margin-left: calc(#{$thumb-size} / -2);
   transform: translate3d(0, -50%, 0);

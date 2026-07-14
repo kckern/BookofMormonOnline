@@ -1,0 +1,33 @@
+html[data-theme="dark"] {
+
+  /* Map.css */
+  #map { background-color: #22303c; }
+  #map .ol-viewport { border-color: var(--border); }
+  .mapPanel select, .mapPanel input { border-color: var(--border); background-color: var(--surface-4); color: var(--text-primary); }
+  .mapPanel h5 { color: var(--text-primary); }
+  .map-type-active { background-color: var(--surface-4); color: var(--text-primary); }
+  .map-place-brief-info, .map-place-info { color: var(--text-secondary); }
+  .mapTooltip {
+    background-color: var(--surface-3); border-color: var(--border-strong); color: var(--text-secondary);
+    &::after { border-top-color: var(--surface-3); }
+  }
+  .closePanelButton { color: var(--text-muted); &:hover { color: var(--text-primary); } }
+  .mapPanel .nav-tabs .nav-item { color: var(--text-muted); &:hover { color: var(--text-primary); } }
+  .mapPanel .nav-tabs .nav-item.active { color: var(--text-primary); border-color: var(--border); }
+  .mapPanel .place_refs .ref { color: var(--text-muted); }
+  .mapPanel .counter { background-color: var(--control); color: var(--text-primary); &.active { color: var(--text-primary); background-color: var(--control-hover); } }
+  .mapPanel .mapPanelScripture { background-color: rgba(255, 255, 255, 0.06); }
+  .map-story { background: var(--surface-3); color: var(--text-secondary); &:hover { background: var(--surface-4); border-color: var(--border-strong); } }
+  .rangeSliderContainer span { color: var(--text-muted); }
+
+  /* Leaflet chrome (Timeline + any Leaflet map). Tiles intentionally left untouched. */
+  .leaflet-bar a { background-color: var(--surface-3); color: var(--text-primary); border-bottom-color: var(--border); &:hover { background-color: var(--surface-4); } }
+  .leaflet-popup-content-wrapper, .leaflet-popup-tip { background: var(--surface-2); color: var(--text-secondary); }
+  .leaflet-popup-content h2 { color: var(--text-primary); }
+  .leaflet-popup-content p { color: var(--text-muted); }
+  .leaflet-popup-content a { color: var(--link); }
+  .leaflet-container .leaflet-control-attribution { background: rgba(26, 26, 26, 0.7); color: var(--text-muted); }
+  .leaflet-marker-container .heading-link { color: var(--text-secondary); }
+  .leaflet-marker-container .heading { color: var(--text-primary); }
+  .leaflet-tooltip { background-color: var(--surface-3); border-color: var(--border); color: var(--text-primary); }
+}
