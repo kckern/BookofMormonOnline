@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useReducer } from "react";
+import React, { useState, useEffect, useLayoutEffect, useReducer, useRef } from "react";
 // CHILD
 import TextContent from "./TextContent";
 import Comments from "../_Common/Study/Study";
@@ -451,28 +451,20 @@ function LightBox({ setOpenLightBox, imgClicker }) {
 function ImagePanel() {
   const narrationController = useNarration();
   const [openLightBox, setOpenLightBox] = useState(false);
+  const panelRef = useRef(null);
   const [marginTop, setMarginTop] = useState(0);
-  useEffect(() => {
-    if (
-      !document.getElementsByClassName(
-        "ii" + narrationController.states.activeImageId,
-      )[0]
-    )
-      return false;
-    let distanceOffScreen =
-      marginTop -
-      document
-        .getElementsByClassName(
-          "ii" + narrationController.states.activeImageId,
-        )[0]
-        .getBoundingClientRect().y;
-    if (distanceOffScreen > 0) {
-      setMarginTop(distanceOffScreen + 100);
-    } else {
-      setMarginTop(0);
-    }
-
-  }, [marginTop, narrationController.states.activeImageId]);
+  // Measure once per image: the panel's natural top is (current rect.y minus
+  // whatever margin is already applied). If that natural top is above the
+  // viewport, push the panel down into view; otherwise no offset. Reading and
+  // writing in one layout pass — the old version depended on its own output
+  // (marginTop) and re-ran to a fixpoint (audit follow-ups WP-A2).
+  useLayoutEffect(() => {
+    const el = panelRef.current;
+    if (!el) return;
+    const naturalTop = el.getBoundingClientRect().y - marginTop;
+    setMarginTop(naturalTop < 0 ? -naturalTop + 100 : 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [narrationController.states.activeImageId]);
 
   useEffect(() => {
     const activeId = narrationController.states.activeImageId;
@@ -549,6 +541,7 @@ function ImagePanel() {
   const imgClicker = document.querySelector(".fullscreen-image");
   return (
     <div
+      ref={panelRef}
       className={"images ii" + narrationController.states.activeImageId}
       style={{ marginTop: marginTop + "px" }}
     >
