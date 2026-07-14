@@ -17,6 +17,7 @@ import studySVG from "../_Common/svg/study.svg";
 import notesSVG from "../_Common/svg/notes.svg";
 import faxSVG from "src/views/User/svg/oldbook.svg";
 import { determineLanguage, label } from "../../models/Utils";
+import { useNarration } from "src/contexts/NarrationContext";
 
 /* ------------------------------------------- */
 /* -------------- STATE CHANGES  ------------- */
@@ -82,7 +83,8 @@ export function addHighlightTagSelectively(newString,tagArray)
 }
 
 
-export default function TextContent({ content, narrationController, isQuote }) {
+export default function TextContent({ content, isQuote }) {
+  const narrationController = useNarration();
   const [textContentHighlights, setTextContentHighlights] = useState([]);
   const [quoteContentHighlights, setQuoteContentHighlights] = useState([]);
   const addHighlight = (string, isQuote) => {
@@ -161,7 +163,6 @@ export default function TextContent({ content, narrationController, isQuote }) {
                   <TextContent
                     key={quote.slug}
                     content={quote}
-                    narrationController={narrationController}
                     isQuote={true}
                   />
                 );
@@ -331,7 +332,7 @@ export default function TextContent({ content, narrationController, isQuote }) {
                 </>
               )}
             </a>
-            <TextItemCounters narrationController={narrationController}/>
+            <TextItemCounters />
           </CardHeader>
           <Collapse
             role="tabpanel"
@@ -369,8 +370,9 @@ export default function TextContent({ content, narrationController, isQuote }) {
 }
 
 
-function TextItemCounters({narrationController})
+function TextItemCounters()
 {
+  const narrationController = useNarration();
   let appController = narrationController?.pageController?.appController;
   const {text} = narrationController?.data;
 	const {faxData} = narrationController?.states;

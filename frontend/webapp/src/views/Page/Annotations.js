@@ -6,6 +6,7 @@ import { assetUrl } from "src/models/BoMOnlineAPI";
 import { label } from "src/models/Utils";
 import oldbook from "src/views/User/svg/oldbook.svg";
 import { history } from "src/models/routeHistory";
+import { useNarration } from "src/contexts/NarrationContext";
 
 export function FaxBubbleContainer({ textContentController, isQuote }) {
   const [faxVisible, setFaxVisible] = useState(false);
@@ -93,7 +94,6 @@ export function CommentaryBubbles({ textContentController }) {
       <CommentaryBubble
         key={"bubble" + item.id + i.toString()}
         item={item}
-        narrationController={narrationController}
         textContentController={textContentController}
       />
     );
@@ -101,10 +101,10 @@ export function CommentaryBubbles({ textContentController }) {
 }
 
 function CommentaryBubble({
-  narrationController,
   textContentController,
   item,
 }) {
+  const narrationController = useNarration();
   let counts = narrationController.pageController.pageCommentCounts;
   let num = textContentController.data.slug.replace(/\D+/, "");
   let studycommentcount = 0;
@@ -246,14 +246,14 @@ export function ImageBubbles({ textContentController }) {
       <ImageBubble
         key={item.ids[0] + "-img"}
         item={item}
-        narrationController={narrationController}
         textContentController={textContentController}
       />
     );
   });
 }
 
-function ImageBubble({ narrationController, textContentController, item }) {
+function ImageBubble({ textContentController, item }) {
+  const narrationController = useNarration();
   let counts = narrationController.pageController.pageCommentCounts;
   let num = textContentController.data.slug.replace(/\D+/, "");
   let studycommentcount = 0;
