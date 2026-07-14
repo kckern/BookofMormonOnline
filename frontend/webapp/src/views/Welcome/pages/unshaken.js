@@ -6,7 +6,7 @@ import BoMOnlineAPI, { assetUrl } from 'src/models/BoMOnlineAPI';
 import { Link ,useHistory} from "react-router-dom/cjs/react-router-dom.min";
 
 
-export default function WelcomeUnShaken({appController})
+export default function WelcomeUnShaken()
 {
 
     const groupId = "163262f02963f4437e3085c12996090e";
@@ -14,7 +14,7 @@ export default function WelcomeUnShaken({appController})
         <HeroBanner />
         <div  className="welcome-content" >
             <ShowCasePanels />
-            <CommunityFeed groupId={groupId} appController={appController} />
+            <CommunityFeed groupId={groupId} />
         </div>
     </div>
 
@@ -36,7 +36,7 @@ function HeroBanner()
     </div>
 }
 
-function CommunityFeed({groupId, appController})
+function CommunityFeed({groupId})
 {
     return <div className="community-feed" >
         <Card>
@@ -51,7 +51,7 @@ function CommunityFeed({groupId, appController})
 
             </CardBody>
         </Card>
-        <HomeFeed appController={appController} activeGroup={groupId} />
+        <HomeFeed activeGroup={groupId} />
     </div>
 }
 

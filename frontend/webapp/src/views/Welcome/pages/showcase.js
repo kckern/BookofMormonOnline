@@ -8,14 +8,14 @@ import { ReadingPlan } from "../../Home/ReadingPlan";
 import logo from "src/views/_Common/svg/logo.svg";
 
 
-export default function WelcomeUnShaken({appController})
+export default function WelcomeUnShaken()
 {
 
     return   <div id="page" className="welcome">
         <HeroBanner />
         <div  className="welcome-content" >
             <ShowCasePanels />
-            <CommunityFeed appController={appController} />
+            <CommunityFeed />
         </div>
     </div>
 
@@ -37,10 +37,10 @@ function HeroBanner()
     </div>
 }
 
-function CommunityFeed({ appController})
+function CommunityFeed()
 {
     return <div className="community-feed" >
-        <ReadingPlan appController={appController} slug={"cfm2024"} />
+        <ReadingPlan slug={"cfm2024"} />
     </div>
 }
 

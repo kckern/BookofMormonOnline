@@ -46,13 +46,14 @@ import ReactTooltip from "react-tooltip";
 import trophy from "src/views/User/svg/trophy.svg";
 import { GroupCallToAction, GroupLeaderBoard } from "./Home.js";
 import { md5 } from "../../models/Utils.js";
+import { useAppController } from "src/contexts/AppControllerContext";
 
 export function HomeFeed({
-  appController,
   activeGroup,
   messageId,
   setActiveGroup,
 }) {
+  const appController = useAppController();
   const [homeItems, setHomeItems] = useState([]);
   const [homeGroups, setHomeGroups] = useState([]);
   const [loader, setLoader] = useState(null);
@@ -119,7 +120,6 @@ export function HomeFeed({
     setVisibleCount((c) => Math.min(c + FEED_PAGE_SIZE, homeItems.length));
   let items = homeItems.slice(0, visibleCount).map((item, seq) => (
     <HomeFeedItem
-      appController={appController}
       seq={seq}
       item={item}
       homeGroups={homeGroups}
@@ -131,7 +131,6 @@ export function HomeFeed({
   return (
     <>
       <HomeFeedBanner
-        appController={appController}
         bannerGroup={bannerGroup}
         setActiveGroup={setActiveGroup}
       />
@@ -190,7 +189,7 @@ function FeedLoadMore({ onReveal }) {
   );
 }
 
-function HomeFeedBanner({ appController, bannerGroup, setActiveGroup }) {
+function HomeFeedBanner({ bannerGroup, setActiveGroup }) {
   useEffect(() => {
     ReactTooltip.rebuild();
   }, []);
@@ -202,7 +201,6 @@ function HomeFeedBanner({ appController, bannerGroup, setActiveGroup }) {
         <div className="homeBannerImg">
           <img src={bannerGroup.picture} alt={bannerGroup.name || ""} />
           <GroupCallToAction
-            appController={appController}
             groupData={bannerGroup}
           />
         </div>
@@ -224,13 +222,13 @@ function HomeFeedBanner({ appController, bannerGroup, setActiveGroup }) {
 }
 
 function HomeFeedItem({
-  appController,
   seq,
   item,
   homeGroups,
   linkedContent,
   setActiveGroup,
 }) {
+  const appController = useAppController();
   const typeIcons = {
     public: publicIcon,
     private: privateIcon,
@@ -405,13 +403,11 @@ function HomeFeedItem({
           <ContentInFeed
             item={item}
             linkedContent={linkedContent}
-            appController={appController}
           />
         </CardBody>
         <Comments
 					loadCommentsFromAPI={loadCommentsFromAPI}
           fetchComments={fetchComments}
-          appController={appController}
           comments={comments}
           item={item}
           group={group}
@@ -433,7 +429,7 @@ function determinAction(item) {
   return "posted_comment";
 }
 
-function ContentInFeed({ item, linkedContent, appController }) {
+function ContentInFeed({ item, linkedContent }) {
   if (!linkedContent || !item) return null;
   const link = item?.link;
   let map = {
@@ -453,7 +449,6 @@ function ContentInFeed({ item, linkedContent, appController }) {
         <TextInFeed
           textData={content}
           highlights={item.highlights}
-          appController={appController}
         />
       );
     case "sectionInFeed":
@@ -461,19 +456,17 @@ function ContentInFeed({ item, linkedContent, appController }) {
         <SectionInFeed
           sectionData={content}
           highlights={[]}
-          appController={appController}
         />
       );
     case "commentaryInFeed":
       return (
         <CommentaryInFeed
           comData={content}
-          appController={appController}
           highlights={item.highlights}
         />
       );
     case "imageInFeed":
-      return <ImageInFeed imageData={content} appController={appController} />;
+      return <ImageInFeed imageData={content} />;
     case "faxInFeed":
       let pieces = val.split(".");
       let version = pieces.pop();
@@ -484,7 +477,6 @@ function ContentInFeed({ item, linkedContent, appController }) {
           textData={content}
           item={item}
           version={version}
-          appController={appController}
         />
       );
     default:
@@ -590,9 +582,9 @@ function MessageMedia({ item }) {
 
 }
 
-function Comments({ appController, comments, count, item, group, memberMap, sbChannel, fetchComments,fetching,loadCommentsFromAPI}) {
+function Comments({ comments, count, item, group, memberMap, sbChannel, fetchComments,fetching,loadCommentsFromAPI}) {
 
-
+  const appController = useAppController();
   const [alertOn, setAlert] = useState(false);
   useModalA11y(alertOn, { onClose: () => setAlert(false), label: "Members only" });
 
@@ -634,7 +626,7 @@ function Comments({ appController, comments, count, item, group, memberMap, sbCh
       return seen.hasOwnProperty(item.id) ? false : (seen[item.id] = true);
     });
     thread = comments.map((comment) => (
-      <Comment comment={{...comment,appController}} key={comment.id} appController={appController} />
+      <Comment comment={comment} key={comment.id} />
     ));
   }
 
@@ -715,7 +707,6 @@ function Comments({ appController, comments, count, item, group, memberMap, sbCh
     !comments !== -1 ? (
       <MyComment
         setNewMessages={setNewMessages}
-        appController={appController}
         sbChannel={sbChannel}
         group={group}
         itemId={itemId}
@@ -751,10 +742,10 @@ function Comments({ appController, comments, count, item, group, memberMap, sbCh
 }
 
 function Comment({ comment }) {
+  const appController = useAppController();
   const match = useRouteMatch();
   const urlMatch = parseInt(match.params?.messageId || 0) || 0;
   if (!comment) return null;
-  const appController = comment.appController;
   let finished = comment.user.finished;
   const isBot = comment.user.nickname === "StudyBuddy" || comment.user.isBot;
   const botBadge = isBot ? <span className="botBadge">BOT</span> : null;
@@ -797,13 +788,13 @@ function Comment({ comment }) {
 }
 
 function MyComment({
-  appController,
   group,
   itemId,
   setNewMessages,
   sbChannel,
   trophy,
 }) {
+  const appController = useAppController();
   let tokenImg = tokenImage();
 
   let img = appController.states.user.social?.profile_url || tokenImg;
@@ -833,7 +824,6 @@ function MyComment({
             placeholder={label("join_to_comment")}
           />
           <GroupCallToAction
-            appController={appController}
             groupData={group}
             joinlabel={label(joinlabel)}
           />

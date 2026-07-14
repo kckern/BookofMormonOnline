@@ -4,7 +4,7 @@ import { useRouteMatch, useHistory } from "react-router-dom";
 import validWelcomes from "./_list.js";
 import "./Welcome.css";
 
-export default function  Welcome({appController})
+export default function  Welcome()
 {
     const history = useHistory();
     const match = useRouteMatch();
@@ -16,7 +16,7 @@ export default function  Welcome({appController})
     return <div className="container" style={{ display: 'block' }}>
 
     <Suspense fallback={<Loader />}>
-        <Item appController={appController} />
+        <Item />
     </Suspense>
 
 </div>
