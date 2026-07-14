@@ -143,7 +143,7 @@ function Main(props) {
 
   return (
     <MessengerProvider appController={appController}>
-      <div className={"body"+(lang ? " "+lang: "") + (isDev ? " dev" : "") + (isDarkMode ? " dark" : "")}>
+      <div className={"body"+(lang ? " "+lang: "") + (isDev ? " dev" : "")}>
         {debug}
         <Header {...props} appController={appController} isReady={true} />
         {/* <Navbar user={user} showSideNav={showSideNav} manageLayout={manageLayout} toggleSideNav={toggleSideNav} /> */}

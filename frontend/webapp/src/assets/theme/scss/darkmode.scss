@@ -1,6 +1,6 @@
 html[data-theme="dark"] {
     color-scheme: dark;
-    background-color: #1a1a1a;
+    background-color: #1a1a1a; /* fills viewport edges outside .main-panel */
 
     .main-panel{
         background-color: #1a1a1a;
