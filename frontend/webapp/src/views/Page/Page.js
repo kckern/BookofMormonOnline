@@ -285,6 +285,7 @@ export default function Page() {
   if (!cursorFacadeRef.current) {
     cursorFacadeRef.current = {
       get states() { return refs.current.states; },
+      get activeAudio() { return activeAudioRef.current; },
       get pageData() { return refs.current.states.pageData; },
       get pageComments() { return refs.current.states.pageComments; },
       get pageCommentCounts() { return refs.current.states.pageCommentCounts; },
