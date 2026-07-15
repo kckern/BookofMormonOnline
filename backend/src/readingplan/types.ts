@@ -47,6 +47,10 @@ export function parsePlanConfig(raw: string): PlanConfig | null {
     const c = JSON.parse(raw) as PlanConfig;
     if (!c?.scope?.type || !c?.pacing?.type || !c?.segmentation?.type) return null;
     if (c.credit !== 'fresh' && c.credit !== 'alltime') return null;
+    if (
+      c.segmentation.type === 'even' &&
+      (!Number.isInteger(c.segmentation.parts) || c.segmentation.parts < 1)
+    ) return null;
     return c;
   } catch { return null; }
 }

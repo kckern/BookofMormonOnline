@@ -36,6 +36,8 @@ export function sliceSections(
     const chunk: ScopedSection[] = [sections[idx]!];
     let size = sections[idx]!.blocks;
     idx++;
+    // Greedy: absorb the next section while it doesn't overshoot the target
+    // (ties resolved by absorbing — front chunks may run one section long).
     while (
       idx < sections.length &&
       sections.length - idx > partsLeft - 1 &&

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { sliceSections } from '../../src/readingplan/slice.js';
+import { parsePlanConfig } from '../../src/readingplan/types.js';
 import type { ScopedSection } from '../../src/readingplan/types.js';
 
 const sec = (guid: string, blocks: number, page = 'pg1', v = 0): ScopedSection =>
@@ -51,5 +52,32 @@ describe('sliceSections', () => {
     const { chunks, warnings } = sliceSections([], { type: 'even', parts: 3 });
     expect(chunks).toEqual([]);
     expect(warnings).toEqual([{ code: 'EMPTY_SCOPE' }]);
+  });
+
+  it('even: parts=1 returns one chunk covering all sections', () => {
+    const sections = [sec('a', 5), sec('b', 10), sec('c', 3)];
+    const { chunks, warnings } = sliceSections(sections, { type: 'even', parts: 1 });
+    expect(warnings).toEqual([]);
+    expect(chunks).toHaveLength(1);
+    expect(chunks[0].map((s) => s.guid)).toEqual(['a', 'b', 'c']);
+  });
+
+  it('even: parts=sections.length gives one section per chunk, no clamp warning', () => {
+    const sections = [sec('a', 5), sec('b', 10), sec('c', 3)];
+    const { chunks, warnings } = sliceSections(sections, { type: 'even', parts: 3 });
+    expect(warnings).toEqual([]);
+    expect(chunks.map((c) => c.map((s) => s.guid))).toEqual([['a'], ['b'], ['c']]);
+  });
+});
+
+describe('parsePlanConfig parts guard', () => {
+  const base = { scope: { type: 'range', start: 1, end: 10 }, pacing: { type: 'selfpaced' }, credit: 'fresh' };
+  it('rejects even parts < 1', () => {
+    expect(parsePlanConfig(JSON.stringify({ ...base, segmentation: { type: 'even', parts: 0 } }))).toBeNull();
+    expect(parsePlanConfig(JSON.stringify({ ...base, segmentation: { type: 'even', parts: -3 } }))).toBeNull();
+  });
+  it('accepts even parts >= 1 and non-even segmentations', () => {
+    expect(parsePlanConfig(JSON.stringify({ ...base, segmentation: { type: 'even', parts: 5 } }))).not.toBeNull();
+    expect(parsePlanConfig(JSON.stringify({ ...base, segmentation: { type: 'section' } }))).not.toBeNull();
   });
 });
