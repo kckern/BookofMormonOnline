@@ -94,7 +94,8 @@ function SegmentDetail({ segment, token }) {
         if (cancelled) return;
         const raw = d?.readingplansegment;
         setSectionData((Array.isArray(raw) ? raw[0] : (raw && Object.values(raw)[0])) || { sections: [] });
-      });
+      })
+      .catch(() => { if (!cancelled) setSectionData({ sections: [] }); });
     return () => { cancelled = true; };
   }, [segment.guid, token]);
   if (!sectionData) return <div className="spinnerBox"><img src={loading} alt="" /></div>;
