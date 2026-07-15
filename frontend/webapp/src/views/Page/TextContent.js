@@ -1,4 +1,4 @@
-import React, { useState, useReducer } from "react";
+import React, { useState } from "react";
 import { Card, CardHeader, CardBody, Collapse, Col } from "reactstrap";
 import {
   CommentaryBubbles,
@@ -8,7 +8,7 @@ import stringSimilarity from "string-similarity";
 import Parser from "html-react-parser";
 import "./TextContent.css";
 import Comments from "../_Common/Study/Study";
-import { snapSelectionToWord } from "src/models/Utils";
+import { snapSelectionToWord, determineLanguage, label } from "src/models/Utils";
 import triangle from "./triangle.svg";
 import ReactTooltip from "react-tooltip";
 import { tooltipTheme } from "src/utils/themeColors";
@@ -17,58 +17,13 @@ import placesSVG from "../_Common/svg/places.svg";
 import studySVG from "../_Common/svg/study.svg";
 import notesSVG from "../_Common/svg/notes.svg";
 import faxSVG from "src/views/User/svg/oldbook.svg";
-import { determineLanguage, label } from "../../models/Utils";
 import { useNarration } from "src/contexts/NarrationContext";
 import { TextContentProvider } from "src/contexts/TextContentContext";
+import { compileHighlightRegex } from "./highlightPattern";
 
 /* ------------------------------------------- */
 /* -------------- STATE CHANGES  ------------- */
 /* ------------------------------------------- */
-
-function reducer(textContentController, input) {
-  switch (input.fn) {
-    case "toggleOpenClose":
-      if (textContentController.states.isOpen)
-        textContentController.pageController.functions.removeOpenRow(
-          textContentController.data.slug
-        );
-      else
-        textContentController.pageController.functions.setActiveRow(
-          {
-            slug:textContentController.data.slug,
-            duration:textContentController.data.duration,
-            pagetitle: textContentController.narrationController.pageController.pageData.title,
-            heading: textContentController.data.heading,
-            auto: textContentController.pageController.states.autoClicked?.has(textContentController.data.slug) === true,
-          }
-        );
-      textContentController.states.isOpen =
-        !textContentController.states.isOpen;
-      break;
-    case "toggleOpenCloseHeader":
-      if (textContentController.states.isHeaderOpen)
-        textContentController.pageController.functions.removeOpenRow(
-          textContentController.data.slug
-        );
-      else
-        textContentController.pageController.functions.setActiveRow(
-          {
-            slug:textContentController.data.slug,
-            duration:textContentController.data.duration,
-            pagetitle: textContentController.narrationController.pageController.pageData.title,
-            heading: textContentController.data.heading,
-            auto: textContentController.pageController.states.autoClicked?.has(textContentController.data.slug) === true,
-          }
-        );
-      textContentController.states.isHeaderOpen =
-        !textContentController.states.isHeaderOpen;
-      break;
-    default:
-      break;
-  }
-  return { ...textContentController };
-}
-
 
 export function addHighlightTagSelectively(newString,tagArray)
 {
@@ -134,8 +89,8 @@ export default function TextContent({ content, isQuote }) {
     let highlighted = "";
     for (var i in narrationController.states.highlights) {
       let highlight = narrationController.states.highlights[i];
-      var re = new RegExp("(" + highlight.string + ")", "gi");
-      if (highlighted.match(re)) continue;
+      var re = compileHighlightRegex(highlight.string);
+      if (!re || highlighted.match(re)) continue;
       highlighted += highlight.string;
       content = content.replace(re, (string) => {
         return (
@@ -181,56 +136,36 @@ export default function TextContent({ content, isQuote }) {
   /* -------------- TextController ------------- */
   /* ------------------------------------------- */
 
-  // This is the main row Controller
-  const [textContentController, dispatch] = useReducer(
-    reducer,
-    (() => {
-      //Set Initial States
-      var states = {
-        isOpen:
-          narrationController.pageController.states.openRows.indexOf(
-            content.slug
-          ) >= 0,
-        isHeaderOpen: false,
-      };
-
-      //Define all Row-level functions
-      let functions = {
-        toggleOpenClose: (e) => {
-          e.preventDefault();
-          dispatch({ fn: "toggleOpenClose" });
-        },
-        toggleOpenCloseHeader: (e) => {
-          e.preventDefault();
-          dispatch({ fn: "toggleOpenCloseHeader" });
-        },
-      };
-
-      //Create Initial Controller
-      var initTextContentController = {
-        data: content,
-        renderedTextContent: null,
-        states: states,
-        functions: functions,
-        pageController: narrationController.pageController,
-        narrationController: narrationController,
-      };
-
-      //Extract Image and Commentary Values
-      let imageIds =
-        initTextContentController.data.content?.match(/\[i\](\d+)\[\/i\]/gi);
-      imageIds = imageIds && imageIds.map((i) => i.replace(/\D+/g, ""));
-      let commentaryIds =
-        initTextContentController.data.content?.match(/\[c\]((\d+))\[\/c\]/gi);
-      commentaryIds =
-        commentaryIds && commentaryIds.map((i) => i.replace(/\D+/g, ""));
-      initTextContentController.data.imageIds =
-        imageIds && imageIds.length ? imageIds : [];
-      initTextContentController.data.commentaryIds =
-        commentaryIds && commentaryIds.length ? commentaryIds : [];
-      return initTextContentController;
-    })()
-  );
+  // Row-open state lives on pageController.states.openRows (single source of
+  // truth, 2026-07-14). With no local state left, this controller is a plain
+  // per-render object: toggling dispatches to the PAGE reducer, whose commit
+  // re-renders this subtree with the fresh `open` value.
+  // NOTE: `open` recomputes only because this component re-renders whenever its
+  // parent Narration (a context consumer) does. Do NOT wrap TextContent in
+  // React.memo without first subscribing it to openRows (e.g. usePageController)
+  // — memoizing would freeze `open` on a stale value.
+  const pageController = narrationController.pageController;
+  const toggleOpenClose = (e) => {
+    e.preventDefault();
+    const slug = content.slug;
+    if (pageController.functions.isRowOpen(slug)) {
+      pageController.functions.removeOpenRow(slug);
+    } else {
+      pageController.functions.setActiveRow({
+        slug,
+        duration: content.duration,
+        pagetitle: pageController.pageData.title,
+        heading: content.heading,
+        auto: pageController.functions.isAutoClicked(slug) === true,
+      });
+    }
+  };
+  const textContentController = {
+    data: content,
+    functions: { toggleOpenClose },
+    pageController,
+    narrationController,
+  };
 
   const handleSelection = (e, isQuote) => {
     if (e.target.tagName === "BUTTON") return;
@@ -246,8 +181,6 @@ export default function TextContent({ content, isQuote }) {
 
   if (textContentController.data === undefined) return null;
 
-  textContentController.pageController = narrationController.pageController;
-
   let num = parseInt(textContentController.data.slug?.replace(/\D+/g, "") || "0");
 
   let counts = null;
@@ -258,28 +191,27 @@ export default function TextContent({ content, isQuote }) {
   )
     counts = textContentController.pageController.pageCommentCounts?.[num] || 0;
 
-  textContentController.renderedTextContent = renderTextContent(
+  const renderedTextContent = renderTextContent(
     textContentController.data.content,
     textContentController
   );
-  let isOpen = textContentController.states.isOpen || textContentController.states.isHeaderOpen;
-  let CommentaryBubblesContainer = isOpen && !isQuote && <CommentaryBubbles /> || null;
-  let ImageBubblesContainer = isOpen && !isQuote &&   <ImageBubbles /> || null;
+  const open = pageController.functions.isRowOpen(textContentController.data.slug);
+  let CommentaryBubblesContainer = open && !isQuote && <CommentaryBubbles /> || null;
+  let ImageBubblesContainer = open && !isQuote && <ImageBubbles /> || null;
 
 
   let cardWithoutNestedBlocks = true;
-  if (Array.isArray(textContentController.renderedTextContent)) {
-    for (let item of textContentController.renderedTextContent) {
+  if (Array.isArray(renderedTextContent)) {
+    for (let item of renderedTextContent) {
       if (typeof item.type === "symbol") {
         cardWithoutNestedBlocks = false;
       }
     }
   }
 
-  if(textContentController.data?.heading)
-  textContentController.data.heading = textContentController.data.heading?.replace(/^\[.*?\]/, "").trim();
+  const displayHeading = textContentController.data?.heading?.replace(/^\[.*?\]/, "").trim();
 
-  let openClass =  (textContentController.states.isOpen || textContentController.states.isHeaderOpen) ? " open" : "";
+  const openClass = open ? " open" : "";
   return (
     <TextContentProvider textContentController={textContentController}>
     <Col
@@ -300,18 +232,10 @@ export default function TextContent({ content, isQuote }) {
           <CardHeader className={"reference" + openClass}>
             <a
               href={"/"+textContentController.data.slug?.toString() || ""}
-              aria-expanded={
-                cardWithoutNestedBlocks
-                  ? textContentController.states.isOpen
-                  : textContentController.states.isHeaderOpen
-              }
+              aria-expanded={open}
               data-toggle="collapse"
               className={"refheader noselect"+openClass}
-              onClick={
-                cardWithoutNestedBlocks
-                  ? textContentController.functions.toggleOpenClose
-                  : textContentController.functions.toggleOpenCloseHeader
-              }
+              onClick={textContentController.functions.toggleOpenClose}
               onMouseEnter={() => {
                 narrationController.functions.preLoadSupplement(
                   narrationController
@@ -322,15 +246,13 @@ export default function TextContent({ content, isQuote }) {
               {cardWithoutNestedBlocks ? (
                 <>
                   <span className="triangle"><img src={triangle} alt="" /></span>
-                  {textContentController.data &&
-                    textContentController.data.heading}
+                  {displayHeading}
                   
                 </>
               ) : (
                 <>
                 <span className="triangle"><img src={triangle} alt="" /></span>
-                  {narrationController?.data &&
-                    narrationController?.data?.text?.heading}
+                  {narrationController?.data?.text?.heading?.replace(/^\[.*?\]/, "").trim()}
                   
                 </>
               )}
@@ -339,11 +261,7 @@ export default function TextContent({ content, isQuote }) {
           </CardHeader>
           <Collapse
             role="tabpanel"
-            isOpen={
-              cardWithoutNestedBlocks
-                ? textContentController.states.isOpen
-                : textContentController.states.isHeaderOpen
-            }
+            isOpen={open}
           >
             <CardBody
               className="content"
@@ -351,11 +269,11 @@ export default function TextContent({ content, isQuote }) {
             >
               {ImageBubblesContainer}
               {CommentaryBubblesContainer}
-              {textContentController.renderedTextContent}
+              {renderedTextContent}
             </CardBody>
           </Collapse>
           <Comments
-            isOpen={textContentController.states.isOpen}
+            isOpen={open}
             setCommentHighlights={
               narrationController.functions.setCommentHighlights
             }

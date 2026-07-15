@@ -1,15 +1,19 @@
-import React, { lazy, Suspense, useEffect } from "react";
+import React from "react";
 import { Router } from 'react-router';
 import { Route } from 'react-router-dom';
 import { toast, ToastContainer } from "react-toastify";
 import { createBrowserHistory } from 'history';
 import Cookies from 'js-cookie';
 
-import Header from "./views/_Common/Header";
 import "react-toastify/dist/ReactToastify.css";
 import "bootstrap/dist/css/bootstrap.css";
 import "./assets/theme/scss/paper-dashboard.scss";
 import "./assets/theme/scss/darkmode.scss";
+// Imported AFTER the global stylesheets above so the app-shell CSS (Header/Sidebar
+// nav, imported transitively by Main) loads last and wins the cascade — matching
+// the order that held when MainLayout was a lazy chunk. Importing it before these
+// sheets lets bootstrap/paper-dashboard/darkmode override the nav styling.
+import MainLayout from "./views/_Common/Main";
 //import Cohere from "cohere-js";
 import crypto from "crypto-browserify";
 import { AppModal } from "./views/_Common/AppModal";
@@ -22,7 +26,6 @@ const  REACT_APP_GOOGLE_CLIENT_ID  = process.env.REACT_APP_GOOGLE_CLIENT_ID || b
 
 const history = createBrowserHistory();
 
-const MainLayout = lazy(() => import("./views/_Common/Main"));
 const containerStyle = {
   zIndex: 1999,
   top: "15%",
@@ -44,11 +47,9 @@ export default function App() {
       <ToastContainer autoClose={3000} style={containerStyle} limit={1} position={toast.POSITION.BOTTOM_LEFT} />
       <AppModal />
     <GoogleOAuthProvider clientId={REACT_APP_GOOGLE_CLIENT_ID}>
-      <Suspense fallback={<Header />}>
         <Router history={history}>
           <MainLayout />
         </Router>
-      </Suspense>
       </GoogleOAuthProvider>
     </>
   );

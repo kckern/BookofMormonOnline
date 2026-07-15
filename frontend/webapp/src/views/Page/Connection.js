@@ -1,68 +1,17 @@
-import React, { useEffect, useState } from "react";
-
+import React from "react";
 import { Link } from "react-router-dom";
-import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
-import { usePageController } from "src/contexts/PageControllerContext";
+import { useStageTransition } from "./useStageTransition";
 
-export default function Connection({ index, rowData }) {
-  const [pageAnimation, setPageAnimation] = useState({
-    connectionType: "rightconnection",
-    image: "right-image",
-  });
+const CONNECTION_ANIMATION = {
+  left: { connectionType: "leftconnection", image: "right-image" },
+  from: { connectionType: "fromconnection", image: "left-image" },
+  back: { connectionType: "backconnection", image: "left-image" },
+  right: { connectionType: "rightconnection", image: "right-image" },
+};
 
-  useEffect(() => {
-    switch (rowData.connection.type) {
-      case "left":
-        setPageAnimation({
-          connectionType: "leftconnection",
-          image: "right-image",
-        });
-        break;
-      case "from":
-        setPageAnimation({
-          connectionType: "fromconnection",
-          image: "left-image",
-        });
-        break;
-      case "back":
-        setPageAnimation({
-          connectionType: "backconnection",
-          image: "left-image",
-        });
-        break;
-      default:
-        setPageAnimation({
-          connectionType: "rightconnection",
-          image: "right-image",
-        });
-        break;
-    }
-  }, [rowData.connection.type]);
-
-  // ** NOT IS USE
-  // redirect page to other page using slug
-  // const pageRedirect = (slug, connectionType, isPage) => {
-  //     let animationType = checkConnectionType(connectionType);
-  //     document.getElementById("page").classList.add(animationType);
-  //     setTimeout(() => {
-  //         document.getElementById("page").classList.remove(animationType)
-  //         onClickConnection(slug, animationType, isPage)
-  //     }, 950)
-  // }
-
-  // const checkConnectionType = (connectionType) => {
-  //     switch (connectionType) {
-  //         case "rightconnection":
-  //             return "center-to-left"
-  //         case "fromconnection":
-  //             return "center-to-left"
-  //         default:
-  //             return "center-to-right"
-  //     }
-  // }
-
-
-
+export default function Connection({ rowData }) {
+  const pageAnimation =
+    CONNECTION_ANIMATION[rowData.connection.type] || CONNECTION_ANIMATION.right;
   return (
     <div className="row" type={rowData.connection.type}>
       <div style={{ width: "100%" }}>
@@ -73,32 +22,16 @@ export default function Connection({ index, rowData }) {
 }
 
 const ConnectionLink = ({ rowData, pageAnimation }) => {
-  const pageController = usePageController();
-  const history = useHistory();
-  const {setStageClass} = pageController.appController?.functions || {};
-  const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-  const {slug, type:linkType} = rowData.connection;
-  const [first,second] = linkType !== "right" ?["stageRight","stageLeft"]:["stageLeft","stageRight"];
-
-  const handleClick = async (event) => {
-    if(!setStageClass) return;
-    event.preventDefault();
-    setStageClass(first);
-    await wait(400);
-    setStageClass(second + " "  + first);
-    await wait(10);
-    setStageClass(second);
-    history.push(`/${slug}`);
-    await wait(500);
-    while (!document.querySelector(".content.ready"))  await wait(50);
-    setStageClass(null);
-  };
-
+  const stageTransition = useStageTransition();
+  const { slug, type: linkType } = rowData.connection;
+  // Historical mapping: every non-"right" connection played the reverse sweep.
+  const direction = linkType !== "right" ? "back" : "forward";
   return (
-    <Link to={`/${slug}`} onClick={handleClick}>
+    <Link to={`/${slug}`} onClick={stageTransition(slug, direction)}>
       <div>
         <div
-          className={`${pageAnimation.image} ${pageAnimation.connectionType} connection`} >
+          className={`${pageAnimation.image} ${pageAnimation.connectionType} connection`}
+        >
           {rowData.connection.text}
         </div>
       </div>

@@ -84,7 +84,7 @@
 
 .page .card .scripture .reference {
     font-weight: bold;
-    background-color: #6c757d;
+    background-color: #999;
     padding: 0 0 0 .5em;
     overflow: hidden;
     height: 1.6rem;
@@ -398,7 +398,6 @@
 }
 
 .annotation:not(.fadedIn),
-.imgcom:not(.fadedIn),
 .imgcom:not(.fadedIn),
 .annotation:not(.fadedIn) .comcom,
 .art_bubble:not(.fadedIn) {

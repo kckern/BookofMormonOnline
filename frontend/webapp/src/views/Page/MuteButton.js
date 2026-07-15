@@ -13,9 +13,8 @@ export function MuteButton()
     const toggleSound = (e) => {
         e.stopPropagation();
         e.preventDefault();
-        let prefs = pageController.appController.states?.preferences;
-        prefs.audio = !prefs.audio;
-        pageController.appController.functions.updatePrefs(prefs);
+        const prefs = pageController.appController.states?.preferences || {};
+        pageController.appController.functions.updatePrefs({ ...prefs, audio: !prefs.audio });
       }
 
     const audioOn = pageController.appController.states?.preferences.audio;

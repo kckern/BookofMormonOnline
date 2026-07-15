@@ -6,41 +6,38 @@ import { history } from "src/models/routeHistory";
 import { useNarration } from "src/contexts/NarrationContext";
 import { useTextContent } from "src/contexts/TextContentContext";
 
+// Study-mode 💬 badge inputs shared by both bubble kinds.
+function countStudyComments({ counts, num, ids, type, studyModeOn }) {
+  if (!studyModeOn || !counts || !num || !counts[num]?.[type] || !ids)
+    return { count: 0, idsWith: [] };
+  const idsWith = counts[num][type];
+  return {
+    count: ids.map((i) => parseInt(i)).filter((i) => idsWith.includes(i)).length,
+    idsWith,
+  };
+}
+
+function useFadeIn(delayMs = 500) {
+  const [fadeClass, setFadeClass] = useState("");
+  useEffect(() => {
+    const t = setTimeout(() => setFadeClass(" fadedIn"), delayMs);
+    return () => clearTimeout(t);
+  }, [delayMs]);
+  return fadeClass;
+}
+
 export function CommentaryBubbles() {
   const textContentController = useTextContent();
   if(!textContentController.pageController.appController.states.preferences.commentary.on) return null;
   let narrationController = textContentController.narrationController;
   let blacklist = narrationController.appController.states.preferences.commentary.filter.sources.map(id=>id.toString().padStart(3,0));
 
-  let paddingTop = 30;
-  const gatherCommentary = () => {
-    var items = [];
-    var anchor_items = document.querySelectorAll(  `[textid="${narrationController.data.text.slug}"]  a.c` );
-    var container_y = document .querySelector(`[textid="${narrationController.data.text.slug}"] .content`) ?.getBoundingClientRect().top;
-    var cursor = 0;
-    var groups = {};
-    for (var i in anchor_items) {
-      var anchor = anchor_items[i];
-      if (anchor.className !== "c") continue;
-      let id = anchor.attributes.contentid.value;
-      var source = id.substring(5, 8);
-      if(blacklist.includes(source)) continue;
-      let y = anchor?.getBoundingClientRect().top;
-      if (y === 0 || !y) continue;
-      y = paddingTop + y - container_y;
-
-      if (y - cursor > paddingTop) cursor = y;
-
-      if (groups[cursor] === undefined)
-        groups[cursor] = { y: cursor + "px", count: 0, ids: [] };
-      groups[cursor].count++;
-      groups[cursor].ids.push(id);
-    }
-    for (var g in groups) items.push(groups[g]);
-    return items;
-  };
-
-  var items = gatherCommentary();
+  const items = gatherAnchorGroups(
+    narrationController.data.text.slug,
+    "c",
+    30,
+    (id) => !blacklist.includes(id.substring(5, 8))
+  );
   return items.map((item, i) => {
     return (
       <CommentaryBubble
@@ -56,30 +53,17 @@ function CommentaryBubble({
 }) {
   const textContentController = useTextContent();
   const narrationController = useNarration();
-  let counts = narrationController.pageController.pageCommentCounts;
-  let num = textContentController.data.slug.replace(/\D+/, "");
-  let studycommentcount = 0;
-  let coms_with_comments = [];
-  if (
-    counts &&
-    num &&
-    counts[num] &&
-    item.ids &&
-    counts[num].com &&
-    narrationController.appController.states.studyGroup.studyModeOn
-  ) {
-    coms_with_comments = counts[num].com;
-    studycommentcount = item.ids
-      .map((i) => parseInt(i))
-      .filter((i) => coms_with_comments.includes(i)).length;
-  }
-
-  const [fadeClass, makeFadeIn] = useState("");
+  const { count: studycommentcount, idsWith: coms_with_comments } =
+    countStudyComments({
+      counts: narrationController.pageController.pageCommentCounts,
+      num: textContentController.data.slug.replace(/\D+/, ""),
+      ids: item.ids,
+      type: "com",
+      studyModeOn:
+        narrationController.appController.states.studyGroup.studyModeOn,
+    });
+  const fadeClass = useFadeIn();
   const [isHover, setHover] = useState(false);
-
-  useEffect(() => {
-    setTimeout(() => makeFadeIn(" fadedIn"), 500);
-  });
 
   const handleMouserEnter = () => {
     setHover(true);
@@ -151,37 +135,31 @@ function CommentaryBubble({
   );
 }
 
-export function gatherImages(slug) {
-  let paddingTop = 30;
-  let height = 25;
-  var items = [];
-  var anchor_items = document.querySelectorAll(`[textid="${slug}"] a.i`);
-  var container_y = document.querySelector(`[textid="${slug}"] .content`)?.getBoundingClientRect().top;
-
-  var cursor = 0;
-  var groups = {};
-  for (var i in anchor_items) {
-    var anchor = anchor_items[i];
-    if (anchor.className !== "i") continue;
-    let id = anchor.attributes.contentid.value;
-    let y = anchor?.getBoundingClientRect().top;
-    if (y === 0 || !y) continue;
+// Groups inline anchors (a.c commentary refs / a.i art refs) into vertically
+// clustered bubbles. `spacing` is the min px gap before a new cluster starts;
+// `keepId` filters ids out BEFORE grouping (blacklisted commentary sources
+// must not affect cluster positions).
+function gatherAnchorGroups(slug, anchorClass, spacing, keepId = () => true) {
+  const paddingTop = 30;
+  const container_y = document
+    .querySelector(`[textid="${slug}"] .content`)
+    ?.getBoundingClientRect().top;
+  const anchors = document.querySelectorAll(`[textid="${slug}"] a.${anchorClass}`);
+  let cursor = 0;
+  const groups = {};
+  for (const anchor of anchors) {
+    if (anchor.className !== anchorClass) continue;
+    const id = anchor.attributes.contentid.value;
+    if (!keepId(id)) continue;
+    let y = anchor.getBoundingClientRect().top;
+    if (!y) continue;
     y = paddingTop + y - container_y;
-
-    if (y - cursor > height) cursor = y;
-
-    if (groups[cursor] === undefined)
-      groups[cursor] = {
-        y: cursor + "px",
-        count: 0,
-        ids: [],
-      };
-
+    if (y - cursor > spacing) cursor = y;
+    if (!groups[cursor]) groups[cursor] = { y: cursor + "px", count: 0, ids: [] };
     groups[cursor].count++;
     groups[cursor].ids.push(id);
   }
-  for (var g in groups) items.push(groups[g]);
-  return items;
+  return Object.values(groups);
 }
 
 export function ImageBubbles() {
@@ -191,7 +169,7 @@ export function ImageBubbles() {
 
   let narrationController = textContentController.narrationController;
 
-  var items = gatherImages(narrationController.data.text.slug) || [];
+  const items = gatherAnchorGroups(narrationController.data.text.slug, "i", 25);
 
   return items.map((item) => {
     return (
@@ -206,31 +184,20 @@ export function ImageBubbles() {
 function ImageBubble({ item }) {
   const textContentController = useTextContent();
   const narrationController = useNarration();
-  let counts = narrationController.pageController.pageCommentCounts;
-  let num = textContentController.data.slug.replace(/\D+/, "");
-  let studycommentcount = 0;
-  if (
-    counts &&
-    num &&
-    counts[num] &&
-    item.ids &&
-    counts[num].img &&
-    narrationController.appController.states.studyGroup.studyModeOn
-  ) {
-    let imgs_with_comments = counts[num].img;
-    studycommentcount = item.ids
-      .map((i) => parseInt(i))
-      .filter((i) => imgs_with_comments.includes(i)).length;
-  }
-
-  const [fadeClass, makeFadeIn] = useState("");
+  const { count: studycommentcount } = countStudyComments({
+    counts: narrationController.pageController.pageCommentCounts,
+    num: textContentController.data.slug.replace(/\D+/, ""),
+    ids: item.ids,
+    type: "img",
+    studyModeOn:
+      narrationController.appController.states.studyGroup.studyModeOn,
+  });
+  const fadeClass = useFadeIn();
   const [cycleIndex, setCycleIndex] = useState(0);
   const [autoCyle, setAutoCyle] = useState(true);
   let cycleTimer = useRef(null);
 
   useEffect(() => {
-
-    if (fadeClass !== " fadedIn") setTimeout(() => makeFadeIn(" fadedIn"), 500);
     const req = narrationController.pageController.appController.states.imageActivationRequest;
     const urlOpenImageId = req?.imageId;
     if (
@@ -246,7 +213,6 @@ function ImageBubble({ item }) {
       narrationController.pageController.appController.functions.requestImageActivation(null);
     }
   }, [
-    fadeClass,
     item.ids,
     narrationController.functions,
     narrationController.pageController.appController.states.imageActivationRequest,

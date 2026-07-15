@@ -12,12 +12,12 @@
   margin-top: 3em;
 }
 
-/* The page title (.title) is a thin Scripture serif at 3em; at weight 400 it
-   reads as a faint, washed-out watermark (esp. while the content loads with the
-   .notready dim). Pin a solid dark color + heavier weight so it stays legible. */
+/* The page title (.title) is a thin Scripture serif at 3em. Pin a solid dark
+   color so it stays legible in light mode; keep the normal (non-bold) weight.
+   Dark mode overrides the color to white (see darkmode.scss). */
 .page h3.title {
   color: #1f1f1f;
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .page h4 {
@@ -139,11 +139,6 @@
   height: 1.8rem;
   width: 1.8rem;
   background: url(../_Common/svg/right.svg) no-repeat;
-  transition: 0.6s transform;
-}
-
-.right-image.leftconnection:hover::before {
-  transform: rotate(-180deg);
   transition: 0.6s transform;
 }
 
@@ -321,17 +316,10 @@ a.theater-link img:hover
     padding-top: 0.5em;
   }
 
-  .card .scripture .reference {
-  }
-
   .card-body:nth-child(even) {
     background-color: #eee;
   }
 
-  .faxbox 
-  .faxbox .thumb_tabs li {
-    width: 3em;
-  }
   .faxbox.images {
     margin-left: 4em;
   }
@@ -423,13 +411,6 @@ a.theater-link img:hover
 	justify-content:space-between;
   margin-right: 2rem;
 }
-
-.theater-link{
-	display:inline-block;
-  display: flex;
-  align-items: center;
-}
-
 
 .cannedResponses
 {

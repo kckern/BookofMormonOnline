@@ -30,7 +30,6 @@ import activityfeed from "src/views/_Common/svg/activityfeed.svg";
 import { label, ParseMessage } from "src/models/Utils";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI.js";
 import VisibilitySensor from "react-visibility-sensor";
-import Loader from "../_Common/Loader/index.js";
 import { prepareQuery } from "../_Common/Study/StudyChat.js";
 import like from "../_Common/Study/svg/like.svg";
 import comment from "../_Common/Study/svg/comment.svg";
@@ -184,7 +183,13 @@ function FeedLoadMore({ onReveal }) {
   }, []);
   return (
     <div ref={ref} className="feedLoadMoreSentinel" aria-hidden="true">
-      <Loader />
+      {/* Inline spinner only — NOT <Loader />, whose .loadBar is position:absolute
+          top:20vh (a page-level overlay). Inside this sentinel that collapsed the
+          div to 0px and pinned the spinner floating over the feed the whole time
+          hasMore was true. A plain inline <img> flows normally, gives the sentinel
+          real height (a solid IntersectionObserver target), and scrolls away with
+          the feed once the next page reveals. */}
+      <img src={faceload} alt="" className="feedLoadMoreSpinner" />
     </div>
   );
 }

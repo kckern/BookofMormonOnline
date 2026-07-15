@@ -146,8 +146,8 @@ function SearchBox({setActivePath}) {
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
-      appController.activeLeafCursorController?.states?.activeAudio?.pause();
-      appController.functions.closePopUp(); 
+      appController.activeLeafCursorController?.activeAudio?.pause();
+      appController.functions.closePopUp();
       setActivePath("/search");
       let searchSlug = getSearchSlug(e.target.value);
       history.push("/search/" + searchSlug);
@@ -222,7 +222,7 @@ function Sidebar(props) {
                   to={"/" + r.slug}
                   activeClassName=""
                   onClick={() => {
-                    appController.activeLeafCursorController?.states?.activeAudio?.pause();
+                    appController.activeLeafCursorController?.activeAudio?.pause();
                     appController.functions.closePopUp();
                     setActivePath("/" + r.slug)}}
                 >
@@ -408,7 +408,7 @@ function UserInfo({ setActivePath, activePath }) {
       <li className={activeClass}>
         <NavLink to={"/user"} onClick={() => {
           
-          appController.activeLeafCursorController?.states?.activeAudio?.pause();
+          appController.activeLeafCursorController?.activeAudio?.pause();
           appController.functions.closePopUp();
 
           setActivePath("/user");
