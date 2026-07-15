@@ -40,7 +40,7 @@ export interface SegmentDraft {
   sectionGuids: string[];
 }
 
-export interface GenWarning { code: 'PARTS_CLAMPED' | 'EMPTY_SCOPE'; detail?: number }
+export interface GenWarning { code: 'PARTS_CLAMPED' | 'EMPTY_SCOPE' | 'INVALID_DUE' | 'DUE_TOO_SOON'; detail?: number }
 
 export function parsePlanConfig(raw: string): PlanConfig | null {
   try {
