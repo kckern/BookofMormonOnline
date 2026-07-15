@@ -5,7 +5,7 @@ import { toast, ToastContainer } from "react-toastify";
 import { createBrowserHistory } from 'history';
 import Cookies from 'js-cookie';
 
-import Header from "./views/_Common/Header";
+import Loader from "./views/_Common/Loader";
 import "react-toastify/dist/ReactToastify.css";
 import "bootstrap/dist/css/bootstrap.css";
 import "./assets/theme/scss/paper-dashboard.scss";
@@ -44,7 +44,7 @@ export default function App() {
       <ToastContainer autoClose={3000} style={containerStyle} limit={1} position={toast.POSITION.BOTTOM_LEFT} />
       <AppModal />
     <GoogleOAuthProvider clientId={REACT_APP_GOOGLE_CLIENT_ID}>
-      <Suspense fallback={<Header />}>
+      <Suspense fallback={<Loader />}>
         <Router history={history}>
           <MainLayout />
         </Router>

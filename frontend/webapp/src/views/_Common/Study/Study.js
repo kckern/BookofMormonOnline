@@ -78,6 +78,12 @@ export default function Comments({
 
   if (!appController?.states?.studyGroup?.studyModeOn) return null;
 
+  // Out-of-tree <Comments/> (person/place/object popups render it with no
+  // pageController prop and no PageControllerProvider above them) resolve to a
+  // null controller via usePageController — there is no page verse to thread
+  // comments against, so render nothing rather than deref a null controller.
+  if (!pageController) return null;
+
   let firstComment = loadFirstMessage(pageController, linkData);
 
   if (linkData?.text && !isOpen && !firstComment) return null;
