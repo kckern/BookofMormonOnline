@@ -121,3 +121,15 @@ The shell maps the registry, skips not-ready tiles (grid reflows, no holes), and
 - Sampler shown to everyone; `/welcome` untouched. (KC)
 - Community tile is a rotating spotlight (group / finishers / leaders). (KC)
 - Framework must be extensible for future tile types — registry + sampler map. (KC)
+
+### Implementation refinements (during build, 2026-07-15)
+
+- **`HomeSampler` carries only the seeded content samples** (`people`, `places`, `fax`, `commentary`, `contents`). The `spotlight`, `activity`, and `readingplan` tiles are assembled client-side (`Sampler.js` `assemblePayload`) from the existing `homegroups` / `leaderboard` / `readingplan` queries, which `BoMOnlineAPI` batches into the same single POST — the one-round-trip property is preserved without duplicating community resolver logic.
+- **Two backend dependencies were missing from the manifest** and are now declared: `scripture-guide` and `axios`. They were imported by `src/` (lang, auth loaders, etc.) but absent from `package.json`, which broke `buildSchema()`/`buildContext()` at module load and prevented all yoga-based integration tests (7 files) from collecting. Adding them fixed the entire integration-test baseline, not just the new tests.
+- **Deterministic sampling uses `ORDER BY MD5(CONCAT(col, ':', seed))`**, not MySQL `RAND(seed)` (whose order depends on scan order). The fax sampler additionally stable-sorts by slug before its modulo pick (the fax loader's own order is weight-only, no tiebreak). The commentary filter uses `CHAR_LENGTH(text) > 500` (aligned to what the client renders), not the stored `length` column.
+- **Generated seed is bounded to the GraphQL `Int` domain** (`Math.floor(Math.random() * (2 ** 31 - 1)) + 1`) on both backend and the frontend session-seed generator, so an echoed seed can never overflow `Int`.
+- **Dark mode uses `html[data-theme="dark"]`** (set on `document.documentElement` in `Main.js`), NOT `body.dark` — the design's original `body.dark` assumption was wrong and matched nothing.
+- **The facsimile tile links to `/fax/:slug`** (the real route), not `/facsimiles`; its thumbnail uses `${assetUrl}/fax/thumb/${slug}/001.<fmt>` per the Facsimiles convention.
+- **Activity timestamps are converted ms → s** before `timeAgoString` (which expects UNIX seconds), matching how `Feed.js` handles the same `latest.timestamp`.
+- **Graceful degradation covers timeouts:** `BoMOnlineAPI` resolves (not rejects) on a request timeout, returning an `{error}` sentinel. The shell detects a response lacking the `homesampler` slice and routes it through the same retry-then-`SamplerFallback` path as a hard rejection, so a slow backend shows the fallback rather than a near-empty page.
+- **New UI label keys** (`latest_activity`, `members`, `menu_community`, plus `community`/`contents` to verify) are inventoried in `docs/reference/sampler-label-keys.md`; they must be inserted into the labels DB table by someone with write access (the dev DB user is read-only). Until then they render as the raw key.
