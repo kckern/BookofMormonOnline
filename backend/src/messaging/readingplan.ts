@@ -225,7 +225,13 @@ export async function loadReadingPlan(
   // Auto-complete on read (spec: no cron). Only for a live user plan.
   let status = plan.status ?? null;
   if (progress >= 100 && status === 'active') {
-    await db.updateTable('bom_readingplan').set({ status: 'completed', enddate: new Date() }).where('slug', '=', planSlug).execute();
+    // Best-effort auto-complete (spec: no cron). A write failure must not hide
+    // the already-computed plan — mark completed in the response regardless.
+    try {
+      await db.updateTable('bom_readingplan').set({ status: 'completed', enddate: new Date() }).where('slug', '=', planSlug).execute();
+    } catch (err) {
+      console.error('loadReadingPlan: auto-complete write failed', err);
+    }
     status = 'completed';
   }
 
