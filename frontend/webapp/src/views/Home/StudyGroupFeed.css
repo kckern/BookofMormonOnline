@@ -30,3 +30,19 @@
         padding-top: 0.1rem;
     }
 }
+
+/* Infinite-reveal sentinel at the bottom of the feed. Needs real height so it is
+   a reliable IntersectionObserver target, and centers its inline spinner in normal
+   flow (the spinner scrolls with the feed and disappears once no pages remain). */
+.feedLoadMoreSentinel {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 80px;
+    padding: 1.5em 0;
+}
+.feedLoadMoreSentinel .feedLoadMoreSpinner {
+    width: 140px;
+    max-width: 60%;
+    opacity: 0.55;
+}
