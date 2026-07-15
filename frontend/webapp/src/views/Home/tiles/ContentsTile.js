@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import { label } from "src/models/Utils";
 import { clampWords } from "./textUtils";
+import ExpandableText from "./ExpandableText";
 
 /**
  * One sampled division rendered like a single /contents entry: banner, title,
@@ -26,7 +27,12 @@ export default function ContentsTile({ data }) {
         />
         <div className="contentsTileTitle">{data.title}</div>
         {data.description ? (
-          <p className="contentsTileDesc">{clampWords(data.description, 48)}</p>
+          <ExpandableText
+            className="contentsTileDesc"
+            full={data.description}
+            clamped={clampWords(data.description, 48)}
+            truncated={clampWords(data.description, 48) !== data.description}
+          />
         ) : null}
       </Link>
       {data.pages?.length ? (

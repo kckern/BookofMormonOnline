@@ -634,10 +634,6 @@ html[data-theme="dark"] .contentsTileTitle { color: #f0f0f0; }
   font-size: 0.78rem;
   line-height: 1.4;
   color: #555;
-  display: -webkit-box;
-  -webkit-line-clamp: 4;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
 }
 html[data-theme="dark"] .contentsTileDesc { color: #c4c4c4; }
 .contentsTileHead {
@@ -1303,3 +1299,17 @@ html[data-theme="dark"] .communityInvite { color: #93c6ef; }
 }
 .placesMosaicCaption { margin-top: 0.25rem; }
 .faxRefPill { align-self: center; }
+
+/* inline expander for clamped prose */
+.readMoreBtn {
+  background: none;
+  border: none;
+  padding: 0 0 0 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #345496;
+  cursor: pointer;
+}
+.readMoreBtn:hover { color: #1a3a7a; }
+html[data-theme="dark"] .readMoreBtn { color: #93c6ef; }
+html[data-theme="dark"] .readMoreBtn:hover { color: #c2ddf5; }

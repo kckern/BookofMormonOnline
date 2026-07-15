@@ -1,11 +1,22 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI.js";
+import { lookup } from "scripture-guide";
 import { label } from "src/models/Utils";
+
+/** Canonicalize abbreviated refs ("ps 67:2" → "Psalm 67:2") — index data uses
+ * short forms the scripture query doesn't parse. */
+const canonical = (ref) => {
+  try {
+    return lookup(ref)?.ref || ref;
+  } catch {
+    return ref;
+  }
+};
 
 /** Any sampler tile opens a ref via this — one popup instance lives in Sampler. */
 export const openScripture = (ref) =>
-  window.dispatchEvent(new CustomEvent("samplerScripture", { detail: ref }));
+  window.dispatchEvent(new CustomEvent("samplerScripture", { detail: canonical(ref) }));
 
 /** /read deep link: "Alma 17:7" → /read/alma-17/7 (first verse for ranges). */
 const readPath = (ref) => {

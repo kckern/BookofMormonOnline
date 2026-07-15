@@ -6,6 +6,7 @@ import { label, replaceNumbers } from "src/models/Utils";
 import { getDetectedScripturesHtml, getHtmlScriptureLinkParserOptions } from "src/views/_Common/ViewUtils";
 import { openScripture } from "./ScripturePopup";
 import RefPill from "./RefPill";
+import ExpandableText from "./ExpandableText";
 
 import { flatten, clampWords, supDigits } from "./textUtils";
 
@@ -17,20 +18,10 @@ import { flatten, clampWords, supDigits } from "./textUtils";
  */
 export default function PeopleTile({ data, seed = 0, payload }) {
   const [featured, ...rest] = data;
-  const bio = clampWords(flatten(featured.description), 70);
+  const bio = flatten(featured.description);
+  const bioClamped = clampWords(bio, 70);
   const faces = rest.slice(0, 11);
   const mosaic = rest.slice(11, 20);
-  // Dedupe index entries by annotation text, merging their refs
-  // ("Deceives Zeniff — Mosiah 7:21 · 9:10", not two near-identical rows).
-  const indexRows = [];
-  for (const i of (featured.index || []).filter((x) => x?.ref)) {
-    const text = flatten(i.text);
-    const existing = indexRows.find((r) => r.text === text);
-    if (existing) existing.refs.push(i.ref);
-    else indexRows.push({ text, refs: [i.ref] });
-  }
-  // a ref already inline in the bio would render twice 8px apart — skip it
-  const refs = indexRows.filter((r) => !r.refs.some((x) => bio.includes(x))).slice(0, 2);
   const scriptureOpts = getHtmlScriptureLinkParserOptions((ref) => openScripture(ref));
   
   return (
@@ -55,17 +46,12 @@ export default function PeopleTile({ data, seed = 0, payload }) {
             {featured.title ? <span className="peopleFeatureTitle">{supDigits(featured.title)}</span> : null}
           </Link>
           {bio ? (
-            <div className="peopleFeatureDesc">{Parser(getDetectedScripturesHtml(bio), scriptureOpts)}</div>
-          ) : null}
-          {refs.length ? (
-            <div className="peopleFeatureRefs">
-              {refs.map((r) => (
-                <span className="peopleIndexItem" key={r.refs[0]}>
-                  <RefPill refText={r.refs[0]} />
-                  <span className="peopleIndexText">{r.text}</span>
-                </span>
-              ))}
-            </div>
+            <ExpandableText
+              className="peopleFeatureDesc"
+              full={Parser(getDetectedScripturesHtml(bio), scriptureOpts)}
+              clamped={Parser(getDetectedScripturesHtml(bioClamped), scriptureOpts)}
+              truncated={bioClamped !== bio}
+            />
           ) : null}
         </div>
       </div>
