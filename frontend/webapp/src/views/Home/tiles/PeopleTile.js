@@ -4,20 +4,32 @@ import Parser from "html-react-parser";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import { label, replaceNumbers } from "src/models/Utils";
 import { getDetectedScripturesHtml, getHtmlScriptureLinkParserOptions } from "src/views/_Common/ViewUtils";
+import { openScripture } from "./ScripturePopup";
+
+const SUPS = { 1: "¹", 2: "²", 3: "³", 4: "⁴" };
 
 // Bios use the app's internal {Name|slug} / [Name|slug] link syntax — flatten
-// to display names BEFORE anything else renders them.
+// to display names BEFORE anything else renders them; disambiguation digits
+// attached to names (Mosiah1) render as the app's superscript convention.
 const flatten = (html) =>
   (html || "")
     .replace(/{(.*?)\|(.*?)}/g, "$1")
     .replace(/\[(.*?)\|(.*?)\]/g, "$1")
     .replace(/<[^>]*>/gi, " ")
+    .replace(/([A-Za-z])([1-4])\b/g, (m, a, d) => a + SUPS[d])
     .replace(/\s+/g, " ")
     .trim();
 
+// Truncate at a sentence boundary when one lands in the back half; NEVER end
+// inside an open parenthetical citation.
 const clampWords = (text, words) => {
   const parts = (text || "").split(" ");
-  return parts.slice(0, words).join(" ") + (parts.length > words ? "…" : "");
+  if (parts.length <= words) return text;
+  let cut = parts.slice(0, words).join(" ");
+  const lastEnd = Math.max(cut.lastIndexOf(". "), cut.lastIndexOf("; "));
+  if (lastEnd > cut.length * 0.5) return cut.slice(0, lastEnd + 1).trim();
+  cut = cut.replace(/\s*\([^)]*$/, "").trim();
+  return cut + "…";
 };
 
 /**
@@ -27,7 +39,6 @@ const clampWords = (text, words) => {
  * 3×3 mosaic of yet more faces — the "there is much more" signal — into /people.
  */
 export default function PeopleTile({ data, seed = 0 }) {
-  const history = useHistory();
   const [featured, ...rest] = data;
   const faces = rest.slice(0, 7);
   const mosaic = rest.slice(7, 16);
@@ -41,7 +52,7 @@ export default function PeopleTile({ data, seed = 0 }) {
     else indexRows.push({ text, refs: [i.ref] });
   }
   const refs = indexRows.slice(0, 2);
-  const scriptureOpts = getHtmlScriptureLinkParserOptions((ref) => history.push(`/search/${ref}`));
+  const scriptureOpts = getHtmlScriptureLinkParserOptions((ref) => openScripture(ref));
   const bio = clampWords(flatten(featured.description), 70);
 
   return (
@@ -71,10 +82,17 @@ export default function PeopleTile({ data, seed = 0 }) {
           {refs.length ? (
             <div className="peopleFeatureRefs">
               {refs.map((r) => (
-                <Link className="peopleIndexItem" key={r.refs[0]} to={`/search/${r.refs[0]}`}>
-                  <span className="peopleIndexText">{r.text}</span>
+                <span
+                  className="peopleIndexItem"
+                  key={r.refs[0]}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => openScripture(r.refs[0])}
+                  onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && openScripture(r.refs[0])}
+                >
                   <span className="refChip">{r.refs.slice(0, 2).join(" · ")}</span>
-                </Link>
+                  <span className="peopleIndexText">{r.text}</span>
+                </span>
               ))}
             </div>
           ) : null}
@@ -86,36 +104,50 @@ export default function PeopleTile({ data, seed = 0 }) {
           const item = idx.length ? idx[(seed + i) % idx.length] : null;
           return (
             <Link to={`/people/${p.slug}`} key={p.slug} className="peopleFaceCard" title={p.title || p.name}>
-              <img
-                src={`${assetUrl}/people/${p.slug}`}
-                alt={p.name || ""}
-                loading="lazy"
-                onError={(e) => (e.target.style.visibility = "hidden")}
-              />
-              <div className="peopleFaceName">{replaceNumbers(p.name)}</div>
-              {p.title ? <div className="peopleFaceTitle">{p.title}</div> : null}
+              <div className="peopleFaceImgWrap">
+                <img
+                  className="peopleFaceImg"
+                  src={`${assetUrl}/people/${p.slug}`}
+                  alt={p.name || ""}
+                  loading="lazy"
+                  onError={(e) => (e.target.style.visibility = "hidden")}
+                />
+                <span className="peopleFaceName">{replaceNumbers(p.name)}</span>
+                {p.title ? <span className="peopleFaceTitle">{p.title}</span> : null}
+              </div>
               {item ? (
-                <div className="peopleFaceIndex">
-                  <span className="peopleFaceIndexText">{flatten(item.text)}</span>
-                  <span className="peopleFaceRef">{item.ref}</span>
+                <div className="peopleFaceBody">
+                  <span className="peopleFaceIndexText">
+                    <span
+                      className="peopleFaceRef"
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => { e.preventDefault(); openScripture(item.ref); }}
+                      onKeyDown={(e) => (e.key === "Enter") && (e.preventDefault(), openScripture(item.ref))}
+                    >{item.ref}</span>
+                    {" — "}
+                    {flatten(item.text)}
+                  </span>
                 </div>
               ) : null}
             </Link>
           );
         })}
         <Link to="/people" className="peopleFaceCard viewAllCard" title={label("view_all")}>
-          <div className="viewAllMosaic">
-            {mosaic.map((p) => (
-              <img
-                key={p.slug}
-                src={`${assetUrl}/people/${p.slug}`}
-                alt=""
-                loading="lazy"
-                onError={(e) => (e.target.style.visibility = "hidden")}
-              />
-            ))}
+          <div className="peopleFaceImgWrap">
+            <div className="viewAllMosaic">
+              {mosaic.map((p) => (
+                <img
+                  key={p.slug}
+                  src={`${assetUrl}/people/${p.slug}`}
+                  alt=""
+                  loading="lazy"
+                  onError={(e) => (e.target.style.visibility = "hidden")}
+                />
+              ))}
+            </div>
+            <span className="peopleFaceName viewAllOverlay">{label("view_all")} →</span>
           </div>
-          <div className="peopleFaceName">{label("view_all")}</div>
         </Link>
       </div>
     </div>

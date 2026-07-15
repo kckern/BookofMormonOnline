@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import { label, replaceNumbers } from "src/models/Utils";
 import pin from "src/views/_Common/svg/maps.svg";
+import { openScripture } from "./ScripturePopup";
 
 /**
  * Three place cards (thumb, name, info line, one index ref, map deep-link)
@@ -37,7 +38,15 @@ export default function PlacesTile({ data, seed = 0 }) {
                 </Link>
               </div>
               {p.info ? <div className="placesTileInfo">{p.info}</div> : null}
-              {ref ? <div className="placesTileRef">{ref}</div> : null}
+              {ref ? (
+                <div
+                  className="placesTileRef"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => openScripture(ref)}
+                  onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && openScripture(ref)}
+                >{ref}</div>
+              ) : null}
             </div>
           );
         })}

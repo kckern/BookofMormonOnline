@@ -45,22 +45,39 @@
 html[data-theme="dark"] .samplerResample { background: #2c2c2c; border-color: #4a4a4a; color: #bbb; }
 html[data-theme="dark"] .samplerResample:hover { color: #fff; border-color: #999; }
 
-/* ---------- bento grid ---------- */
+/* ---------- layout: left rail + main grid ---------- */
+/* The left rail (narration + contents) flex-splits EXACTLY the height the main
+   grid produces — no dead zone is structurally possible; both scroll inside. */
+.samplerColumns {
+  display: flex;
+  gap: 0.7rem;
+  align-items: flex-start;
+}
+.samplerLeftRail {
+  flex: 0 0 calc(33.333% - 0.35rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  min-width: 0;
+}
+/* right-sized = content-sized: narration and contents render IN FULL (no
+   scroll traps, no fade cuts) — the page grows vertically instead */
+.samplerLeftRail .tile { flex: 0 0 auto; }
 .samplerGrid {
+  flex: 1;
+  min-width: 0;
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   grid-auto-rows: minmax(min-content, auto);
   grid-auto-flow: dense;
   gap: 0.7rem;
   align-items: stretch;
+  align-content: start;
 }
 
-/* span footprints — keys match tileRegistry span classes. Fixed arrangement:
-   narration + contents pin the LEFT column (cols 1-2, tall), people spans the
-   top center/right (cols 3-6); the rest pack beneath via dense flow. */
-.tile-narration   { grid-column: 1 / 3; grid-row: span 3; max-height: 30rem; }
-.tile-contents    { grid-column: 1 / 3; grid-row: span 3; max-height: 30rem; }
-.tile-people      { grid-column: 3 / 7; }
+/* span footprints — keys match tileRegistry span classes. People spans the
+   grid's full width (top); the rest pack beneath, two per row. */
+.tile-people      { grid-column: span 4; }
 .tile-places      { grid-column: span 2; }
 .tile-readingplan { grid-column: span 2; }
 .tile-fax         { grid-column: span 2; }
@@ -252,11 +269,12 @@ html[data-theme="dark"] .peopleIndexText { color: #9a9a9a; }
 html[data-theme="dark"] .peopleIndexItem:hover .peopleIndexText { color: #ddd; }
 .peopleIndexItem .refChip { flex-shrink: 0; margin: 0; }
 
-/* face strip: the other 7 samples + a view-all end cell, small and tight */
+/* face cards: the other 7 samples + a view-all mosaic — proper vertical cards
+   (portrait on top, name/title/index in a padded body), 4-up */
 .peopleFaceRow {
   display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  gap: 0.45rem;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.55rem;
   margin-top: 0.6rem;
 }
 /* view-all end cells (people face strip + places grid) */
@@ -280,69 +298,104 @@ html[data-theme="dark"] .viewAllCard:hover .viewAllBox { border-color: #ddd; col
 .peopleFaceCard {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
   color: inherit;
   text-decoration: none;
-  border-radius: 0.45rem;
-  padding: 0.15rem;
-  transition: background 0.15s ease;
+  border-radius: 0.55rem;
+  border: 1px solid #e6e6e6;
+  background: #fbfbfb;
+  overflow: hidden;
   min-width: 0;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
-.peopleFaceCard:hover { background: rgba(0, 0, 0, 0.04); }
-html[data-theme="dark"] .peopleFaceCard:hover { background: rgba(255, 255, 255, 0.06); }
-.peopleFaceCard img {
+.peopleFaceCard:hover {
+  transform: translateY(-2px);
+  border-color: #c9c9c9;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+html[data-theme="dark"] .peopleFaceCard { background: #262626; border-color: #3a3a3a; }
+html[data-theme="dark"] .peopleFaceCard:hover { border-color: #555; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5); }
+/* portrait with NAME overlaid top-left and TITLE bottom-left; the index item
+   lives in the card chrome below */
+.peopleFaceImgWrap {
+  position: relative;
   width: 100%;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 4 / 3;
+  background: #e2e2e2;
+  overflow: hidden;
+}
+html[data-theme="dark"] .peopleFaceImgWrap { background: #333; }
+.peopleFaceImg {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
   object-position: top;
-  border-radius: 0.4rem;
-  background: #e2e2e2;
-  border: 1px solid #dcdcdc;
+  display: block;
 }
-html[data-theme="dark"] .peopleFaceCard img { background: #333; border-color: #444; }
+.peopleFaceCard .viewAllMosaic {
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+  aspect-ratio: auto;
+}
 .peopleFaceName {
-  margin-top: 0.25rem;
+  position: absolute;
+  top: 0.35rem;
+  left: 0.35rem;
+  max-width: calc(100% - 0.7rem);
+  padding: 0.15rem 0.45rem;
+  border-radius: 0.35rem;
+  background: rgba(15, 18, 24, 0.62);
+  color: #fff;
   font-weight: 700;
-  font-size: 0.64rem;
-  line-height: 1.1;
-  color: #2a2a2a;
-  width: 100%;
+  font-size: 0.72rem;
+  line-height: 1.2;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
-html[data-theme="dark"] .peopleFaceName { color: #f0f0f0; }
 .peopleFaceTitle {
-  font-size: 0.58rem;
-  line-height: 1.15;
-  color: #888;
-  width: 100%;
+  position: absolute;
+  bottom: 0.35rem;
+  left: 0.35rem;
+  max-width: calc(100% - 0.7rem);
+  padding: 0.12rem 0.45rem;
+  border-radius: 0.35rem;
+  background: rgba(15, 18, 24, 0.55);
+  color: #e8e8e8;
+  font-size: 0.6rem;
+  line-height: 1.2;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
-html[data-theme="dark"] .peopleFaceTitle { color: #9a9a9a; }
-.peopleFaceIndex { width: 100%; }
+.viewAllOverlay {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.8rem;
+}
+.peopleFaceBody {
+  padding: 0.4rem 0.5rem 0.45rem;
+  min-width: 0;
+  flex: 1;
+}
+.peopleFaceIndex { margin-top: 0.15rem; }
 .peopleFaceIndexText {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  font-size: 0.56rem;
-  line-height: 1.25;
+  font-size: 0.62rem;
+  line-height: 1.3;
   color: #777;
-  text-align: center;
 }
 html[data-theme="dark"] .peopleFaceIndexText { color: #9a9a9a; }
 .peopleFaceRef {
-  display: block;
-  font-size: 0.56rem;
+  display: inline;
+  font-size: 0.62rem;
+  font-weight: 700;
   color: #345496;
-  width: 100%;
-  overflow: hidden;
   white-space: nowrap;
-  text-overflow: ellipsis;
 }
 html[data-theme="dark"] .peopleFaceRef { color: #93c6ef; }
 /* 3×3 "there is much more" mosaic inside the view-all end cells */
@@ -505,13 +558,11 @@ html[data-theme="dark"] .commentaryTileTitle { color: #f0f0f0; }
 .commentaryTileExcerpt {
   margin: 0.35rem 0 0.4rem;
   font-size: 0.8rem;
-  line-height: 1.4;
+  line-height: 1.45;
   color: #555;
-  font-family: "Scripture", serif;
-  display: -webkit-box;
-  -webkit-line-clamp: 7;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  max-height: 15rem;
+  overflow-y: auto;
+  scrollbar-width: thin;
 }
 html[data-theme="dark"] .commentaryTileExcerpt { color: #c4c4c4; }
 .commentaryTileSource {
@@ -566,9 +617,6 @@ html[data-theme="dark"] .contentsTileDesc { color: #c4c4c4; }
   padding-top: 0.5rem;
   border-top: 1px solid #ececec;
   flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  scrollbar-width: thin;
 }
 html[data-theme="dark"] .contentsOutline { border-top-color: #3a3a3a; }
 .contentsOutlinePage { margin-bottom: 0.45rem; }
@@ -845,9 +893,6 @@ html[data-theme="dark"] .narrationNextTitle { border-top-color: #3a3a3a; }
 .narrationTile { min-height: 0; }
 .narrationTileList {
   flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  scrollbar-width: thin;
 }
 /* seeded strip of the section's art, under the provenance line */
 .narrationArtRow {
@@ -939,6 +984,85 @@ html[data-theme="dark"] .historyTileMeta { color: #a0a0a0; }
   overflow: hidden;
 }
 html[data-theme="dark"] .historyTileTeaser { color: #c4c4c4; }
+
+/* ================================================================
+   SCRIPTURE POPUP — mini reader for any ref clicked on the sampler
+   ================================================================ */
+.samplerScripturePopup {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.samplerScriptureCard {
+  width: min(34rem, 94vw);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 0.7rem;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+html[data-theme="dark"] .samplerScriptureCard { background: #262626; color: #e4e4e4; }
+.samplerScriptureHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid #ececec;
+  font-size: 1rem;
+}
+html[data-theme="dark"] .samplerScriptureHead { border-bottom-color: #3a3a3a; }
+.samplerScriptureHead button {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: #888;
+  cursor: pointer;
+}
+.samplerScriptureHead button:hover { color: #333; }
+html[data-theme="dark"] .samplerScriptureHead button:hover { color: #fff; }
+.samplerScriptureBody {
+  padding: 0.8rem 1rem;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  min-height: 4rem;
+}
+.samplerScripturePassage p {
+  margin: 0.3rem 0 0.8rem;
+  font-family: "Scripture", serif;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: #333;
+}
+html[data-theme="dark"] .samplerScripturePassage p { color: #d6d6d6; }
+.samplerScripturePassage sup { color: #999; margin-right: 0.15rem; }
+.samplerScriptureHeading {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.samplerScriptureLoading { color: #999; text-align: center; padding: 1rem; }
+.samplerScriptureReadLink {
+  display: block;
+  text-align: center;
+  padding: 0.6rem;
+  border-top: 1px solid #ececec;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #345496;
+  text-decoration: none;
+}
+.samplerScriptureReadLink:hover { background: rgba(52, 84, 150, 0.06); text-decoration: none; }
+html[data-theme="dark"] .samplerScriptureReadLink { border-top-color: #3a3a3a; color: #93c6ef; }
 
 /* ================================================================
    LIGHTBOX — click-away/Esc dismissable image overlay

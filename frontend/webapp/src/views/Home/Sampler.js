@@ -4,6 +4,7 @@ import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import { useAppController } from "src/contexts/AppControllerContext";
 import { label } from "src/models/Utils";
 import { tileRegistry } from "./tiles/registry";
+import ScripturePopup from "./tiles/ScripturePopup";
 import "./Sampler.css";
 import "./Sampler.m.css";
 
@@ -107,6 +108,22 @@ export default function Sampler() {
 
   if (failed) return <SamplerFallback />;
 
+  const renderTile = ({ key, component: Tile, span, isReady }) => {
+    if (!payload) return <div key={key} className={`tile skeleton ${span}`} />;
+    if (!isReady(payload)) return null;
+    return (
+      <div key={key} className={`tile ${span}`}>
+        <Tile data={payload[key]} next={payload[`${key}Next`]} seed={payload.seed} />
+      </div>
+    );
+  };
+
+  // Narration + contents live in a flex LEFT RAIL that exactly splits the
+  // height the main grid produces — structurally no dead zone is possible.
+  const LEFT_KEYS = ["section", "contents"];
+  const leftTiles = tiles.filter((t) => LEFT_KEYS.includes(t.key));
+  const mainTiles = tiles.filter((t) => !LEFT_KEYS.includes(t.key));
+
   return (
     <div className="sampler container">
       <div className="samplerBar noselect">
@@ -119,17 +136,11 @@ export default function Sampler() {
           ↻ <span>{label("resample")}</span>
         </button>
       </div>
-      <div className="samplerGrid">
-        {tiles.map(({ key, component: Tile, span, isReady }) => {
-          if (!payload) return <div key={key} className={`tile skeleton ${span}`} />;
-          if (!isReady(payload)) return null;
-          return (
-            <div key={key} className={`tile ${span}`}>
-              <Tile data={payload[key]} next={payload[`${key}Next`]} seed={payload.seed} />
-            </div>
-          );
-        })}
+      <div className="samplerColumns">
+        <div className="samplerLeftRail">{leftTiles.map(renderTile)}</div>
+        <div className="samplerGrid">{mainTiles.map(renderTile)}</div>
       </div>
+      <ScripturePopup />
     </div>
   );
 }

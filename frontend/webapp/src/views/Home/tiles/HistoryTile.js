@@ -3,8 +3,14 @@ import { Link } from "react-router-dom";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import { label } from "src/models/Utils";
 
+// Strip markup AND the "Key Points:" structured tail — flattened bullet lists
+// read as an unpunctuated run-on in a teaser.
 const stripTags = (html) =>
-  (html || "").replace(/<[^>]*>/gi, " ").replace(/\s+/g, " ").trim();
+  (html || "")
+    .replace(/<[^>]*>/gi, " ")
+    .replace(/\s+/g, " ")
+    .split(/key points:/i)[0]
+    .trim();
 
 /** One featured historical document: thumb, title, provenance line, teaser. */
 export default function HistoryTile({ data }) {

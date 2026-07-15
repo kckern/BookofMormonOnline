@@ -3,7 +3,10 @@
 @media only screen and (max-width: 900px) {
   .sampler.container { padding: 0.75rem 0.6rem 2rem; }
 
-  /* grid collapses to two columns; big tiles span both */
+  /* columns stack; the left rail's tall tiles get bounded heights */
+  .samplerColumns { flex-direction: column; }
+  .samplerLeftRail { flex: 0 0 auto; }
+  .samplerLeftRail .tile { flex: 0 0 auto; max-height: 24rem; }
   .samplerGrid { grid-template-columns: 1fr 1fr; gap: 0.6rem; }
   .samplerGrid .tile { grid-column: span 2 !important; }
   .samplerGrid .tile-places,

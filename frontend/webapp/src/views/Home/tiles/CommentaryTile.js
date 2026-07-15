@@ -3,18 +3,13 @@ import { Link } from "react-router-dom";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import { label } from "src/models/Utils";
 
-const excerpt = (c, words = 50) => {
-  const stripped = (c.preview || c.text || "")
-    .replace(/<[^>]*>/gi, "")
-    .trim();
-  if (!stripped) return "";
-  const parts = stripped.split(/\s+/);
-  return parts.slice(0, words).join(" ") + (parts.length > words ? "…" : "");
-};
+const stripTags = (html) =>
+  (html || "").replace(/<[^>]*>/gi, " ").replace(/\s+/g, " ").trim();
 
 export default function CommentaryTile({ data }) {
   if (!data?.id) return null;
   const pub = data.publication || {};
+  const author = [pub.source_name, pub.source_title].filter(Boolean).join(" — ");
   return (
     <Link to={`/commentary/${data.id}`} className="samplerTileInner commentaryTile">
       <h3 className="tileHeading">{label("commentary")}</h3>
@@ -31,10 +26,9 @@ export default function CommentaryTile({ data }) {
         <div className="commentaryTileMain">
           {data.reference ? <span className="refChip">{data.reference}</span> : null}
           <div className="commentaryTileTitle">{data.title}</div>
-          <p className="commentaryTileExcerpt">{excerpt(data)}</p>
-          {pub.source_title ? (
-            <div className="commentaryTileSource">— {pub.source_title}</div>
-          ) : null}
+          {/* full text, scrolling when long — no excerpt truncation */}
+          <p className="commentaryTileExcerpt">{stripTags(data.text || data.preview)}</p>
+          {author ? <div className="commentaryTileSource">— {author}</div> : null}
         </div>
       </div>
     </Link>
