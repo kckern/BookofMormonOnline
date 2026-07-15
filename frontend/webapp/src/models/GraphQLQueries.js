@@ -1731,11 +1731,13 @@ const queries = {
       val: false,
       query: `homesampler${seedArg} {
         seed
-        people { slug guid name title date description index { ref slug } }
-        places { slug name info }
+        people { slug guid name title date description index { ref slug text } }
+        places { slug name info index { ref slug } }
         fax { slug title pages info format }
         commentary { id title text preview reference publication { source_id source_title source_name source_slug } }
-        contents { slug title description }
+        contents { slug title description pages { title slug sections { title slug } } }
+        section { title slug page { title slug } rows { guid narration { guid description text { slug heading status(token:"${input.token || ""}") } } } }
+        sectionNext { title slug rows { guid narration { guid description text { slug heading status(token:"${input.token || ""}") } } } }
       }`,
     }
   },

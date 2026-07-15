@@ -12,8 +12,10 @@ import { sql } from 'kysely';
 import type { Resolvers } from '../../../codegen/graphql.js';
 import type { AppContext } from '../context.js';
 
-const PEOPLE_COUNT = 8;
-const PLACES_COUNT = 5;
+// 17 people = 1 featured + 7 face cards + 9 view-all mosaic thumbs;
+// 12 places = 3 cards + 9 mosaic thumbs.
+const PEOPLE_COUNT = 17;
+const PLACES_COUNT = 12;
 const MIN_COMMENTARY_CHARS = 500;
 const MIN_PERSON_DESC_CHARS = 40;
 
@@ -47,7 +49,9 @@ const sampleFax = async (ctx: AppContext, seed: number) => {
   // ROBUSTNESS: the loader's order is weight-only with no tiebreak and is NOT
   // stable across calls; sort by slug so the modulo pick is deterministic.
   const sorted = rows
-    .filter((r) => !r.hide)
+    // pages>0 filters out metadata-only entries (e.g. 'poetic') whose page
+    // assets don't exist — an imageless facsimile tile is dead weight.
+    .filter((r) => !r.hide && Number(r.pages) > 0)
     .sort((a, b) => String(a.slug).localeCompare(String(b.slug)));
   return sorted.length ? sorted[seed % sorted.length] : null;
 };
@@ -70,12 +74,43 @@ const sampleContents = async (ctx: AppContext, seed: number) => {
   return divisions.length ? divisions[seed % divisions.length] : null;
 };
 
+// One random section, served as a Section parent — the existing Section field
+// resolvers (slug, rows→narration) do the rest. Powers the narration tile.
+const sampleSection = async (ctx: AppContext, seed: number) => {
+  const rows = await ctx.db
+    .selectFrom('bom_section')
+    .selectAll()
+    .where('title', 'is not', null)
+    .orderBy(seededOrder('guid', seed))
+    .limit(1)
+    .execute();
+  return rows[0] ?? null;
+};
+
+// The sampled section's next sibling (same page, next weight) — the narration
+// tile appends it when the first section leaves room.
+const sampleSectionNext = async (ctx: AppContext, seed: number) => {
+  const current = (await sampleSection(ctx, seed)) as { parent: string | null; weight: number | null } | null;
+  if (!current?.parent || current.weight == null) return null;
+  const rows = await ctx.db
+    .selectFrom('bom_section')
+    .selectAll()
+    .where('parent', '=', current.parent)
+    .where('weight', '>', current.weight)
+    .orderBy('weight', 'asc')
+    .limit(1)
+    .execute();
+  return rows[0] ?? null;
+};
+
 const samplers: Record<string, (ctx: AppContext, seed: number) => Promise<unknown>> = {
   people: samplePeople,
   places: samplePlaces,
   fax: sampleFax,
   commentary: sampleCommentary,
   contents: sampleContents,
+  section: sampleSection,
+  sectionNext: sampleSectionNext,
 };
 
 export const homesamplerResolvers: Resolvers = {

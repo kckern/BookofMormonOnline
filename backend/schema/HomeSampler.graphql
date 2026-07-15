@@ -12,4 +12,6 @@ type HomeSampler {
   fax: Fax
   commentary: Commentary
   contents: Division
+  section: Section
+  sectionNext: Section
 }

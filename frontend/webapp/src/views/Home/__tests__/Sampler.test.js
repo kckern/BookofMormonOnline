@@ -123,7 +123,7 @@ describe("Sampler shell rendering", () => {
 });
 
 describe("assemblePayload derivations", () => {
-  test("activity picks the newest group's latest and carries its channel url", () => {
+  test("activity lists the freshest messages (newest first) with channel urls", () => {
     const out = assemblePayload({
       homesampler: [{ seed: 1 }],
       homegroups: [
@@ -132,18 +132,25 @@ describe("assemblePayload derivations", () => {
       ],
       leaderboard: [{ currentProgress: [], recentFinishers: [] }],
     });
-    expect(out.activity.msg).toBe("new");
-    expect(out.activity.channel).toBe("new");
+    expect(out.activity).toHaveLength(2);
+    expect(out.activity[0].msg).toBe("new");
+    expect(out.activity[0].channel).toBe("new");
+    expect(out.activity[1].msg).toBe("old");
   });
 
-  test("spotlight is a valid flavor when groups + leaderboard are present", () => {
+  test("spotlight combines a group with a deduped user list", () => {
     const out = assemblePayload({
       homesampler: [{ seed: 1 }],
-      homegroups: [{ url: "g1", latest: { timestamp: 1, msg: "hi" } }],
-      leaderboard: [{ currentProgress: [{ nickname: "Sam", progress: 5 }], recentFinishers: [{ nickname: "Jo" }] }],
+      homegroups: [{ url: "g1", name: "G", latest: { timestamp: 1, msg: "hi" } }],
+      leaderboard: [{
+        currentProgress: [{ nickname: "Sam", progress: 5 }, { nickname: "Sam", progress: 5 }, { nickname: "Jo", progress: 9 }],
+        recentFinishers: [],
+      }],
     });
     expect(out.spotlight).toBeTruthy();
-    expect(["group", "finishers", "leaders"]).toContain(out.spotlight.flavor);
+    expect(out.spotlight.group.url).toBe("g1");
+    expect(out.spotlight.users.map((u) => u.nickname)).toEqual(["Sam", "Jo"]); // deduped
+    expect(out.spotlight.usersLabel).toBe("leader_board");
   });
 
   test("empty inputs yield null activity and spotlight without throwing", () => {

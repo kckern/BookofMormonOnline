@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import { label } from "src/models/Utils";
 
-const excerpt = (c, words = 34) => {
+const excerpt = (c, words = 50) => {
   const stripped = (c.preview || c.text || "")
     .replace(/<[^>]*>/gi, "")
     .trim();

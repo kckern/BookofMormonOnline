@@ -17,6 +17,13 @@ const labels = {
   // legacy value was "Community" from when /home WAS the community view; the
   // sampler now owns /home, so the nav entry must say Home again.
   menu_home: 'Home',
+  narration: 'Narration',
+  view_all: 'View all',
+  start_reading: 'Start Reading',
+  resample: 'Show me something else',
+  map: 'Map',
+  sampler_value_prop:
+    'Every person, place, and passage of the Book of Mormon — annotated, illustrated, and connected.',
 };
 
 (async () => {

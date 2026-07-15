@@ -257,6 +257,8 @@ export type HomeSampler = {
   fax?: Maybe<Fax>;
   people?: Maybe<Array<Maybe<People>>>;
   places?: Maybe<Array<Maybe<Place>>>;
+  section?: Maybe<Section>;
+  sectionNext?: Maybe<Section>;
   seed?: Maybe<Scalars['Int']['output']>;
 };
 
@@ -2357,6 +2359,8 @@ export type HomeSamplerResolvers<ContextType = AppContext, ParentType extends Re
   fax?: Resolver<Maybe<ResolversTypes['Fax']>, ParentType, ContextType>;
   people?: Resolver<Maybe<Array<Maybe<ResolversTypes['People']>>>, ParentType, ContextType>;
   places?: Resolver<Maybe<Array<Maybe<ResolversTypes['Place']>>>, ParentType, ContextType>;
+  section?: Resolver<Maybe<ResolversTypes['Section']>, ParentType, ContextType>;
+  sectionNext?: Resolver<Maybe<ResolversTypes['Section']>, ParentType, ContextType>;
   seed?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
