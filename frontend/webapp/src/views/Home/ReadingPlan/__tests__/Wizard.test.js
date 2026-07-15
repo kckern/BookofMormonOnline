@@ -4,7 +4,6 @@ import '@testing-library/jest-dom';
 jest.mock('src/models/BoMOnlineAPI', () => ({ __esModule: true, default: jest.fn(), ApiBaseUrl: 'http://t' }));
 jest.mock('src/models/Utils', () => ({ label: (k) => k }));
 jest.mock('react-toastify', () => ({ toast: { error: jest.fn() } }));
-jest.mock('scripture-guide', () => ({ lookup: () => ({ verse_ids: [31103, 31122] }) }));
 import BoMOnlineAPI from 'src/models/BoMOnlineAPI';
 import Wizard from '../Wizard';
 
@@ -63,4 +62,20 @@ test('shows clamp warning from preview', async () => {
   fireEvent.click(screen.getByText(/rp_pace_daily/));
   fireEvent.click(screen.getByText(/rp_next/));
   await waitFor(() => expect(screen.getByText(/rp_clamped/)).toBeInTheDocument());
+});
+
+test('books tab compiles a canonical verse range (hardcoded, no lookup freeze)', async () => {
+  const onStarted = jest.fn();
+  render(<Wizard token="tkn" onClose={jest.fn()} onStarted={onStarted} />);
+  await waitFor(() => screen.getByText(/rp_tab_books/));
+  fireEvent.click(screen.getByText(/rp_tab_books/));
+  fireEvent.click(screen.getByLabelText(/Mosiah/));
+  fireEvent.click(screen.getByText(/rp_next/));
+  fireEvent.click(screen.getByText(/rp_pace_daily/));
+  fireEvent.click(screen.getByText(/rp_next/));
+  await waitFor(() => screen.getByText(/rp_start_plan/));
+  fireEvent.click(screen.getByText(/rp_start_plan/));
+  await waitFor(() => expect(onStarted).toHaveBeenCalled());
+  const cfg = JSON.parse(BoMOnlineAPI.mock.calls.find((c) => c[0].startReadingPlan)[0].startReadingPlan.config);
+  expect(cfg.scope).toEqual({ type: 'range', start: 32793, end: 33577 }); // Mosiah
 });

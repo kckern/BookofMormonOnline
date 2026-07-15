@@ -7,24 +7,37 @@ import SweetAlert from "react-bootstrap-sweetalert";
 import { Button } from "reactstrap";
 import { toast } from "react-toastify";
 import { label } from "src/models/Utils";
-import { lookup } from "scripture-guide";
-
 const BOOKS = ["1 Nephi", "2 Nephi", "Jacob", "Enos", "Jarom", "Omni", "Words of Mormon",
   "Mosiah", "Alma", "Helaman", "3 Nephi", "4 Nephi", "Mormon", "Ether", "Moroni"];
 
-// Whole-book verse range from a book name, via its first+last chapter (bare book
-// names return []). We approximate the book span using chapter 1..~60 probing:
-// scripture-guide caps arrays at 1000, so union the min/max of a coarse chapter sweep.
+// Fixed canonical verse-id ranges per book (contiguous, verified 31103..37706).
+// Hardcoded because the sweep-via-lookup approach was both a ~9.6s main-thread
+// freeze and buggy (out-of-range chapter lookups produced overlapping ranges).
+const BOOK_RANGES = {
+  "1 Nephi": { start: 31103, end: 31720 },
+  "2 Nephi": { start: 31721, end: 32499 },
+  "Jacob": { start: 32500, end: 32702 },
+  "Enos": { start: 32703, end: 32729 },
+  "Jarom": { start: 32730, end: 32744 },
+  "Omni": { start: 32745, end: 32774 },
+  "Words of Mormon": { start: 32775, end: 32792 },
+  "Mosiah": { start: 32793, end: 33577 },
+  "Alma": { start: 33578, end: 35552 },
+  "Helaman": { start: 35553, end: 36049 },
+  "3 Nephi": { start: 36050, end: 36834 },
+  "4 Nephi": { start: 36835, end: 36883 },
+  "Mormon": { start: 36884, end: 37110 },
+  "Ether": { start: 37111, end: 37543 },
+  "Moroni": { start: 37544, end: 37706 },
+};
+
+// NOTE (v1 limitation): non-contiguous picks (e.g. "1 Nephi" + "Moroni") compile
+// to the min..max SPAN, which includes the books in between. The server preview
+// (step 3) shows the true resulting segments, so the user sees exactly what they get.
 function bookRange(names) {
-  const ids = [];
-  names.forEach((n) => {
-    for (let ch = 1; ch <= 63; ch++) {
-      const v = lookup(`${n} ${ch}`).verse_ids;
-      if (v && v.length) { ids.push(v[0], v[v.length - 1]); }
-    }
-  });
-  if (!ids.length) return { type: "range", start: 0, end: 0 };
-  return { type: "range", start: Math.min(...ids), end: Math.max(...ids) };
+  const valid = names.map((n) => BOOK_RANGES[n]).filter(Boolean);
+  if (!valid.length) return { type: "range", start: 0, end: 0 };
+  return { type: "range", start: Math.min(...valid.map((r) => r.start)), end: Math.max(...valid.map((r) => r.end)) };
 }
 
 export default function Wizard({ token, onClose, onStarted }) {
@@ -70,9 +83,14 @@ export default function Wizard({ token, onClose, onStarted }) {
     if (step === 0 && scopeEmpty) return setErr(label("rp_empty_scope"));
     if (step === 1) {
       if (!pace) return setErr(label("rp_wizard_pace"));
-      const r = await BoMOnlineAPI({ readingplanpreview: { config: JSON.stringify(config) } }, { useCache: false });
-      const raw = r?.readingplanpreview;
-      setPreview((Array.isArray(raw) ? raw[0] : (raw && Object.values(raw)[0])) || null);
+      if (pace === "bydate" && !due) return setErr(label("rp_wizard_pace"));
+      try {
+        const r = await BoMOnlineAPI({ readingplanpreview: { config: JSON.stringify(config) } }, { useCache: false });
+        const raw = r?.readingplanpreview;
+        setPreview((Array.isArray(raw) ? raw[0] : (raw && Object.values(raw)[0])) || null);
+      } catch {
+        return setErr(label("rp_error_loading"));
+      }
     }
     setStep(step + 1);
   };
@@ -132,7 +150,7 @@ export default function Wizard({ token, onClose, onStarted }) {
               <h5>{label("rp_wizard_pace")}</h5>
               {[["daily", "rp_pace_daily"], ["weekly", "rp_pace_weekly"], ["bydate", "rp_pace_bydate"], ["selfpaced", "rp_pace_selfpaced"]].map(([k, lbl]) => (
                 <div key={k} role="button" tabIndex={0} className={`paceOption ${pace === k ? "selected" : ""}`}
-                  onClick={() => setPace(k)} onKeyDown={(e) => e.key === "Enter" && setPace(k)}>
+                  onClick={() => setPace(k)} onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && setPace(k)}>
                   {label(lbl)}
                   {pace === k && (k === "daily" || k === "weekly") && (
                     <input type="number" min="1" max="365" value={count}
