@@ -21,8 +21,9 @@ export default function FaxTile({ data, seed = 0 }) {
   const windowStart = total > 6
     ? Math.floor(total * 0.2) + (seed % Math.max(1, Math.floor(total * 0.6)))
     : 1;
-  const first = Math.min(Math.max(1, windowStart), Math.max(1, total - 2));
-  const pageNums = [first, first + 1, first + 2].filter((n) => n <= total);
+  const first = Math.min(Math.max(1, windowStart), Math.max(1, total - 1));
+  // Two LARGER samples beat three illegible ones at tile width.
+  const pageNums = [first, first + 1].filter((n) => n <= total);
   return (
     <div className="samplerTileInner faxTile">
       <h3 className="tileHeading">

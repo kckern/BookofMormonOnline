@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import { label } from "src/models/Utils";
+import { clampWords } from "./textUtils";
 
 /**
  * One sampled division rendered like a single /contents entry: banner, title,
@@ -25,7 +26,7 @@ export default function ContentsTile({ data }) {
         />
         <div className="contentsTileTitle">{data.title}</div>
         {data.description ? (
-          <p className="contentsTileDesc">{data.description}</p>
+          <p className="contentsTileDesc">{clampWords(data.description, 48)}</p>
         ) : null}
       </Link>
       {data.pages?.length ? (

@@ -26,9 +26,12 @@ export default function CommentaryTile({ data }) {
         <div className="commentaryTileMain">
           {data.reference ? <span className="refChip">{data.reference}</span> : null}
           <div className="commentaryTileTitle">{data.title}</div>
-          {/* full text, scrolling when long — no excerpt truncation */}
-          <p className="commentaryTileExcerpt">{stripTags(data.text || data.preview)}</p>
+          {/* full text, scrolling when long — the fade + cue signal continuation */}
+          <div className="commentaryTileScroll">
+            <p className="commentaryTileExcerpt">{stripTags(data.text || data.preview)}</p>
+          </div>
           {author ? <div className="commentaryTileSource">— {author}</div> : null}
+          <div className="commentaryTileMore">{label("view_all")} →</div>
         </div>
       </div>
     </Link>

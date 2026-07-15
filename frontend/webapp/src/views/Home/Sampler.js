@@ -118,9 +118,9 @@ export default function Sampler() {
     );
   };
 
-  // Narration + contents live in a flex LEFT RAIL that exactly splits the
-  // height the main grid produces — structurally no dead zone is possible.
-  const LEFT_KEYS = ["section", "contents"];
+  // The left rail: narration + contents anchor it; community + activity fill
+  // its tail so the column bottoms land together (no dead zone).
+  const LEFT_KEYS = ["section", "contents", "spotlight", "activity"];
   const leftTiles = tiles.filter((t) => LEFT_KEYS.includes(t.key));
   const mainTiles = tiles.filter((t) => !LEFT_KEYS.includes(t.key));
 

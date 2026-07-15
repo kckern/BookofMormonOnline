@@ -6,18 +6,7 @@ import green from "src/views/User/svg/green.svg";
 import yellow from "src/views/User/svg/yellow.svg";
 import blank from "src/views/User/svg/blank.svg";
 
-const SUPS = { 1: "¹", 2: "²", 3: "³", 4: "⁴" };
-
-// Narration text uses the app's internal {Name|slug} / [Name|slug] link syntax;
-// name-attached disambiguation digits render as superscripts.
-const flatten = (text) =>
-  (text || "")
-    .replace(/{(.*?)\|(.*?)}/g, "$1")
-    .replace(/\[(.*?)\|(.*?)\]/g, "$1")
-    .replace(/<[^>]*>/gi, " ")
-    .replace(/([A-Za-z])([1-4])\b/g, (m, a, d) => a + SUPS[d])
-    .replace(/\s+/g, " ")
-    .trim();
+import { flatten } from "./textUtils";
 
 const statusDot = { completed: green, started: yellow };
 

@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { label, breakCache } from "src/models/Utils";
+import { clampWords } from "./textUtils";
 
 /** Compact relative age: "3h" / "5d" / "7w" / "2y". */
 const shortAgo = (ms) => {
@@ -26,9 +27,10 @@ export default function ActivityTile({ data }) {
         <Link to="/community">{label("latest_activity")}</Link>
       </h3>
       {items.map((m) => {
-        const text = (m.msg || "")
-          .replace(/<[^>]*>/gi, "")
-          .replace(/^•$/, label("highlight_msg"));
+        const text = clampWords(
+          (m.msg || "").replace(/<[^>]*>/gi, "").replace(/^•$/, label("highlight_msg")),
+          28,
+        );
         return (
           <Link key={`${m.channel}-${m.id}`} to={`/community/${m.channel}/${m.id}`} className="activityTileMsg">
             <img src={m.user?.picture} alt="" onError={breakCache} />

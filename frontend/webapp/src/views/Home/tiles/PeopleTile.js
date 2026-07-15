@@ -1,36 +1,12 @@
 import React from "react";
-import { Link, useHistory } from "react-router-dom";
+import { Link } from "react-router-dom";
 import Parser from "html-react-parser";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import { label, replaceNumbers } from "src/models/Utils";
 import { getDetectedScripturesHtml, getHtmlScriptureLinkParserOptions } from "src/views/_Common/ViewUtils";
 import { openScripture } from "./ScripturePopup";
 
-const SUPS = { 1: "¹", 2: "²", 3: "³", 4: "⁴" };
-
-// Bios use the app's internal {Name|slug} / [Name|slug] link syntax — flatten
-// to display names BEFORE anything else renders them; disambiguation digits
-// attached to names (Mosiah1) render as the app's superscript convention.
-const flatten = (html) =>
-  (html || "")
-    .replace(/{(.*?)\|(.*?)}/g, "$1")
-    .replace(/\[(.*?)\|(.*?)\]/g, "$1")
-    .replace(/<[^>]*>/gi, " ")
-    .replace(/([A-Za-z])([1-4])\b/g, (m, a, d) => a + SUPS[d])
-    .replace(/\s+/g, " ")
-    .trim();
-
-// Truncate at a sentence boundary when one lands in the back half; NEVER end
-// inside an open parenthetical citation.
-const clampWords = (text, words) => {
-  const parts = (text || "").split(" ");
-  if (parts.length <= words) return text;
-  let cut = parts.slice(0, words).join(" ");
-  const lastEnd = Math.max(cut.lastIndexOf(". "), cut.lastIndexOf("; "));
-  if (lastEnd > cut.length * 0.5) return cut.slice(0, lastEnd + 1).trim();
-  cut = cut.replace(/\s*\([^)]*$/, "").trim();
-  return cut + "…";
-};
+import { flatten, clampWords, supDigits } from "./textUtils";
 
 /**
  * Sampling, not a mosaic: the seeded-first person is FEATURED — portrait,
@@ -74,7 +50,7 @@ export default function PeopleTile({ data, seed = 0 }) {
           <Link to={`/people/${featured.slug}`} className="peopleFeatureNameLink">
             {/* replaceNumbers: disambiguation digits render as superscripts (Heth2 → Heth²) */}
             <span className="peopleFeatureName">{replaceNumbers(featured.name)}</span>
-            {featured.title ? <span className="peopleFeatureTitle">{featured.title}</span> : null}
+            {featured.title ? <span className="peopleFeatureTitle">{supDigits(featured.title)}</span> : null}
           </Link>
           {bio ? (
             <div className="peopleFeatureDesc">{Parser(getDetectedScripturesHtml(bio), scriptureOpts)}</div>
@@ -113,7 +89,7 @@ export default function PeopleTile({ data, seed = 0 }) {
                   onError={(e) => (e.target.style.visibility = "hidden")}
                 />
                 <span className="peopleFaceName">{replaceNumbers(p.name)}</span>
-                {p.title ? <span className="peopleFaceTitle">{p.title}</span> : null}
+                {p.title ? <span className="peopleFaceTitle">{supDigits(p.title)}</span> : null}
               </div>
               {item ? (
                 <div className="peopleFaceBody">
@@ -126,7 +102,7 @@ export default function PeopleTile({ data, seed = 0 }) {
                       onKeyDown={(e) => (e.key === "Enter") && (e.preventDefault(), openScripture(item.ref))}
                     >{item.ref}</span>
                     {" — "}
-                    {flatten(item.text)}
+                    {clampWords(flatten(item.text), 14)}
                   </span>
                 </div>
               ) : null}

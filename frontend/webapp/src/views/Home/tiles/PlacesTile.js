@@ -4,6 +4,7 @@ import { assetUrl } from "src/models/BoMOnlineAPI";
 import { label, replaceNumbers } from "src/models/Utils";
 import pin from "src/views/_Common/svg/maps.svg";
 import { openScripture } from "./ScripturePopup";
+import { clampWords } from "./textUtils";
 
 /**
  * Three place cards (thumb, name, info line, one index ref, map deep-link)
@@ -37,32 +38,40 @@ export default function PlacesTile({ data, seed = 0 }) {
                   <img src={pin} alt={label("map")} />
                 </Link>
               </div>
-              {p.info ? <div className="placesTileInfo">{p.info}</div> : null}
-              {ref ? (
-                <div
-                  className="placesTileRef"
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => openScripture(ref)}
-                  onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && openScripture(ref)}
-                >{ref}</div>
+              {/* ref-first, matching the people-card pattern: "Alma 2:15 — info" */}
+              {ref || p.info ? (
+                <div className="placesTileInfo">
+                  {ref ? (
+                    <span
+                      className="placesTileRef"
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => openScripture(ref)}
+                      onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && openScripture(ref)}
+                    >{ref}</span>
+                  ) : null}
+                  {ref && p.info ? " — " : ""}
+                  {p.info ? clampWords(p.info, 10) : ""}
+                </div>
               ) : null}
             </div>
           );
         })}
         <Link to="/places" className="placesTileCard viewAllCard" title={label("view_all")}>
-          <div className="viewAllMosaic placesMosaic">
-            {mosaic.map((p) => (
-              <img
-                key={p.slug}
-                src={`${assetUrl}/places/${p.slug}`}
-                alt=""
-                loading="lazy"
-                onError={(e) => (e.target.style.visibility = "hidden")}
-              />
-            ))}
+          <div className="placesMosaicWrap">
+            <div className="viewAllMosaic placesMosaic">
+              {mosaic.map((p) => (
+                <img
+                  key={p.slug}
+                  src={`${assetUrl}/places/${p.slug}`}
+                  alt=""
+                  loading="lazy"
+                  onError={(e) => (e.target.style.visibility = "hidden")}
+                />
+              ))}
+            </div>
+            <span className="peopleFaceName viewAllOverlay">{label("view_all")} →</span>
           </div>
-          <div className="placesTileName">{label("view_all")}</div>
         </Link>
       </div>
     </div>
