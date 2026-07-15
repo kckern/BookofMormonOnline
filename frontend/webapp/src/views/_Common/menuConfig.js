@@ -18,6 +18,10 @@ export const menuConfig = [
   {
     slug: "home",
     labelKey: "menu_home",
+  },
+  {
+    slug: "community",
+    labelKey: "menu_community",
     requiresMessenger: true,
   },
   {
