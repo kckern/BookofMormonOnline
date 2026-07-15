@@ -44,4 +44,23 @@ describe('assignPacing', () => {
     expect(typeof drafts[0]!.ref).toBe('string');
     expect(drafts[0]!.ref.length).toBeGreaterThan(0);
   });
+
+  it('calendar n=1: single chunk lands on or after the due date', () => {
+    const one = [[sec('a', 1, 20)]];
+    const drafts = assignPacing(one, { type: 'calendar', due: '2026-07-20' }, '2026-07-15');
+    expect(drafts).toHaveLength(1);
+    expect(drafts[0]!.duedate).toBe('2026-07-20');
+  });
+
+  it('calendar with too-short window: floor extends past due (documented fallback; generator rejects upstream)', () => {
+    // due is only 2 days out but 3 chunks — floor gives >=1 day/segment, ending past due.
+    const drafts = assignPacing(chunks, { type: 'calendar', due: '2026-07-17' }, '2026-07-15');
+    expect(drafts.map((d) => d.duedate)).toEqual(['2026-07-16', '2026-07-17', '2026-07-18']);
+  });
+
+  it('calendar dates are monotonic non-decreasing', () => {
+    const drafts = assignPacing(chunks, { type: 'calendar', due: '2026-08-01' }, '2026-07-15');
+    const dates = drafts.map((d) => d.duedate);
+    for (let i = 1; i < dates.length; i++) expect(dates[i]! >= dates[i - 1]!).toBe(true);
+  });
 });

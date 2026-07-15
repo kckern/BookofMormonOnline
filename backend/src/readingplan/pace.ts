@@ -34,6 +34,11 @@ export function assignPacing(
       duedate = addDays(startdate, (i + 1) * step);
       period = `${pacing.unit === 'week' ? 'Week' : 'Day'} ${i + 1}`;
     } else if (pacing.type === 'calendar') {
+      // PRECONDITION: `due` is after `startdate` with room for `n` segments.
+      // The generator/mutation layer validates this and rejects past-or-too-soon
+      // due dates before calling (this pure fn has no warning channel). The
+      // Math.max(n, ...) floor is a last-resort guard guaranteeing >=1 day per
+      // segment; when the window is shorter than n the plan will extend past `due`.
       const span = Math.max(n, daysBetween(startdate, pacing.due));
       duedate = addDays(startdate, Math.round((span * (i + 1)) / n));
       period = `Part ${i + 1}`;
