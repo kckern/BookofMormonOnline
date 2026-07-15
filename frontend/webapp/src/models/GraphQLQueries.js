@@ -1628,6 +1628,7 @@ const queries = {
           privacy
           picture
           latest {
+            id
             timestamp
             msg
             user {
@@ -1672,7 +1673,7 @@ const queries = {
         seed
         people { slug guid name title }
         places { slug name info }
-        fax { slug title pages info }
+        fax { slug title pages info format }
         commentary { id title text preview publication { source_title } }
         contents { slug title description }
       }`,
