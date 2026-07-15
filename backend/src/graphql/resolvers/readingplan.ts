@@ -29,61 +29,78 @@ function configToString(config: unknown): string {
 export const readingplanResolvers: Resolvers = {
   Query: {
     readingplanprograms: async (_root, _args, ctx: AppContext) => {
-      const rows = await ctx.db
-        .selectFrom('bom_readingplan_program')
-        .selectAll()
-        .where('active', '=', 1)
-        .orderBy('sort')
-        .execute();
-      return rows.map((r) => {
-        const raw = configToString(r.config);
-        const cfg = parsePlanConfig(raw);
-        const pacing = cfg?.pacing;
-        const durationLabel =
-          pacing?.type === 'cadence' ? `${pacing.count} ${pacing.unit}s` :
-          pacing?.type === 'calendar' ? `by ${pacing.due}` : 'self-paced';
-        const scopeLabel =
-          cfg?.scope.type === 'range' ? 'scripture range' :
-          cfg?.scope.type === 'pages' ? `${cfg.scope.slugs.length} page(s)` : 'custom selection';
-        return {
-          slug: r.slug, title: r.title, description: r.description,
-          config: raw, scopeLabel, durationLabel,
-        };
-      });
+      try {
+        const rows = await ctx.db
+          .selectFrom('bom_readingplan_program')
+          .selectAll()
+          .where('active', '=', 1)
+          .orderBy('sort')
+          .execute();
+        return rows.map((r) => {
+          const raw = configToString(r.config);
+          const cfg = parsePlanConfig(raw);
+          const pacing = cfg?.pacing;
+          const durationLabel =
+            pacing?.type === 'cadence' ? `${pacing.count} ${pacing.unit}s` :
+            pacing?.type === 'calendar' ? `by ${pacing.due}` : 'self-paced';
+          const scopeLabel =
+            cfg?.scope.type === 'range' ? 'scripture range' :
+            cfg?.scope.type === 'pages' ? `${cfg.scope.slugs.length} page(s)` : 'custom selection';
+          return {
+            slug: r.slug, title: r.title, description: r.description,
+            config: raw, scopeLabel, durationLabel,
+          };
+        });
+      } catch (err) {
+        console.error('readingplanprograms error:', err);
+        return [];
+      }
     },
 
     readingplanpreview: async (_root, args, ctx: AppContext) => {
       const config = parsePlanConfig(args.config as string);
       if (!config) return { parts: 0, enddate: null, warnings: [{ code: 'INVALID_CONFIG', detail: null }], segments: [] };
       const startdate = (args.startdate as string | undefined) ?? todayISO();
-      const { segments, warnings } = await generatePlanSegments(ctx.db, config, startdate);
-      return {
-        parts: segments.length,
-        enddate: segments.length ? segments[segments.length - 1]!.duedate : null,
-        warnings: warnings.map((w) => ({ code: w.code, detail: w.detail ?? null })),
-        segments: segments.map((s) => ({
-          period: s.period, ref: s.ref, duedate: s.duedate,
-          blocks: s.sectionGuids.length,
-        })),
-      };
+      try {
+        const { segments, warnings } = await generatePlanSegments(ctx.db, config, startdate);
+        return {
+          parts: segments.length,
+          enddate: segments.length ? segments[segments.length - 1]!.duedate : null,
+          warnings: warnings.map((w) => ({ code: w.code, detail: w.detail ?? null })),
+          segments: segments.map((s) => ({
+            period: s.period, ref: s.ref, duedate: s.duedate,
+            blocks: s.sectionGuids.length,
+          })),
+        };
+      } catch (err) {
+        console.error('readingplanpreview error:', err);
+        return { parts: 0, enddate: null, warnings: [{ code: 'GENERATION_FAILED', detail: null }], segments: [] };
+      }
     },
 
     readingplanhistory: async (_root, args, ctx: AppContext) => {
       const username = await resolveUsername(ctx, args.token as string);
       if (!username) return [];
-      const rows = await ctx.db
-        .selectFrom('bom_readingplan')
-        .select(['slug', 'title', 'status', 'startdate', 'enddate'])
-        .where('owner', '=', username)
-        .where('status', 'in', ['completed', 'abandoned'])
-        .orderBy('enddate', 'desc')
-        .execute();
-      return rows.map((r) => ({
-        slug: r.slug, title: r.title, status: r.status,
-        startdate: r.startdate ? new Date(r.startdate).toISOString().slice(0, 10) : null,
-        enddate: r.enddate ? new Date(r.enddate).toISOString().slice(0, 10) : null,
-        progress: null,
-      }));
+      try {
+        const rows = await ctx.db
+          .selectFrom('bom_readingplan')
+          .select(['slug', 'title', 'status', 'startdate', 'enddate'])
+          .where('owner', '=', username)
+          .where('status', 'in', ['completed', 'abandoned'])
+          .orderBy('enddate', 'desc')
+          .execute();
+        return rows.map((r) => ({
+          slug: r.slug, title: r.title, status: r.status,
+          startdate: r.startdate ? new Date(r.startdate).toISOString().slice(0, 10) : null,
+          enddate: r.enddate ? new Date(r.enddate).toISOString().slice(0, 10) : null,
+          // progress: null — history list omits per-plan progress to avoid N+1;
+          // the active plan's progress comes from the readingplan query instead.
+          progress: null,
+        }));
+      } catch (err) {
+        console.error('readingplanhistory error:', err);
+        return [];
+      }
     },
   },
 };
