@@ -6,7 +6,8 @@ import green from "src/views/User/svg/green.svg";
 import yellow from "src/views/User/svg/yellow.svg";
 import blank from "src/views/User/svg/blank.svg";
 
-import { flatten, enDash } from "./textUtils";
+import { flatten } from "./textUtils";
+import RefPill from "./RefPill";
 
 const statusDot = { completed: green, started: yellow };
 
@@ -35,7 +36,7 @@ function NarrationList({ section }) {
       <img src={statusDot[n.text?.status] || blank} alt="" className="narrationDot" />
       <span className="narrationText">
         {flatten(n.description)}
-        {n.text?.heading ? <span className="narrationRef"> {enDash(n.text.heading)}</span> : null}
+        {n.text?.heading ? <RefPill refText={n.text.heading} className="refChipSm" /> : null}
       </span>
     </Link>
   ));
@@ -65,7 +66,7 @@ export default function NarrationTile({ data, next, seed = 0 }) {
         <Link to={`/${data.slug}`} className="narrationTileTitle">{data.title}</Link>
       </div>
       {art.length ? (
-        <Link to={`/${data.slug}`} className="narrationArtRow">
+        <Link to={`/${data.slug}`} className={`narrationArtRow${art.length === 1 ? " single" : ""}`}>
           {art.map((id) => (
             <img
               key={id}

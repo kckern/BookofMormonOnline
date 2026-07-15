@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import { label, replaceNumbers } from "src/models/Utils";
 import pin from "src/views/_Common/svg/maps.svg";
-import { openScripture } from "./ScripturePopup";
+import RefPill from "./RefPill";
 import { clampWords, flatten } from "./textUtils";
 
 /**
@@ -12,8 +12,8 @@ import { clampWords, flatten } from "./textUtils";
  * index line in the chrome. End cell = 3×3 "much more" mosaic → /places.
  */
 export default function PlacesTile({ data, seed = 0, payload }) {
-  const cards = data.slice(0, 3);
-  const mosaic = data.slice(3, 12);
+  const cards = data.slice(0, 5);
+  const mosaic = data.slice(5, 12);
   return (
     <div className="samplerTileInner placesTile">
       <h3 className="tileHeading">
@@ -50,14 +50,8 @@ export default function PlacesTile({ data, seed = 0, payload }) {
               </div>
               {ref ? (
                 <div className="placesTileInfo">
-                  <span
-                    className="placesTileRef"
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => openScripture(ref)}
-                    onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && openScripture(ref)}
-                  >{ref}</span>
-                  {item?.text ? <> — {clampWords(flatten(item.text), 12)}</> : null}
+                  <RefPill refText={ref} className="refChipSm" />
+                  {item?.text ? <> {clampWords(flatten(item.text), 12)}</> : null}
                 </div>
               ) : null}
             </div>
@@ -77,6 +71,9 @@ export default function PlacesTile({ data, seed = 0, payload }) {
               ))}
             </div>
             <span className="peopleFaceName viewAllOverlay">{payload?.placesCount ? `+${payload.placesCount - data.length} ${label("places")}` : label("view_more")}</span>
+          </div>
+          <div className="placesTileInfo placesMosaicCaption">
+            {mosaic.slice(0, 2).map((m) => m.name).join(", ")}…
           </div>
         </Link>
       </div>

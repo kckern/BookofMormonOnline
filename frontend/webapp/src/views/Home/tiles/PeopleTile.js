@@ -5,8 +5,9 @@ import { assetUrl } from "src/models/BoMOnlineAPI";
 import { label, replaceNumbers } from "src/models/Utils";
 import { getDetectedScripturesHtml, getHtmlScriptureLinkParserOptions } from "src/views/_Common/ViewUtils";
 import { openScripture } from "./ScripturePopup";
+import RefPill from "./RefPill";
 
-import { flatten, clampWords, supDigits, enDash } from "./textUtils";
+import { flatten, clampWords, supDigits } from "./textUtils";
 
 /**
  * Sampling, not a mosaic: the seeded-first person is FEATURED — portrait,
@@ -59,15 +60,8 @@ export default function PeopleTile({ data, seed = 0, payload }) {
           {refs.length ? (
             <div className="peopleFeatureRefs">
               {refs.map((r) => (
-                <span
-                  className="peopleIndexItem"
-                  key={r.refs[0]}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => openScripture(r.refs[0])}
-                  onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && openScripture(r.refs[0])}
-                >
-                  <span className="refChip">{enDash(r.refs.slice(0, 2).join(" · "))}</span>
+                <span className="peopleIndexItem" key={r.refs[0]}>
+                  <RefPill refText={r.refs[0]} />
                   <span className="peopleIndexText">{r.text}</span>
                 </span>
               ))}
@@ -96,14 +90,8 @@ export default function PeopleTile({ data, seed = 0, payload }) {
               {item ? (
                 <div className="peopleFaceBody">
                   <span className="peopleFaceIndexText">
-                    <span
-                      className="peopleFaceRef"
-                      role="button"
-                      tabIndex={0}
-                      onClick={(e) => { e.preventDefault(); openScripture(item.ref); }}
-                      onKeyDown={(e) => (e.key === "Enter") && (e.preventDefault(), openScripture(item.ref))}
-                    >{item.ref}</span>
-                    {" — "}
+                    <RefPill refText={item.ref} className="refChipSm" />
+                    {" "}
                     {clampWords(flatten(item.text), 14)}
                   </span>
                 </div>
@@ -125,6 +113,12 @@ export default function PeopleTile({ data, seed = 0, payload }) {
               ))}
             </div>
             <span className="peopleFaceName viewAllOverlay">{payload?.peopleCount ? `+${payload.peopleCount - data.length} ${label("people")}` : label("view_more")}</span>
+          </div>
+          <div className="peopleFaceBody">
+            <span className="peopleFaceIndexText">
+              {mosaic.slice(0, 2).map((m) => m.name).join(", ")}
+              {payload?.peopleCount ? `, +${payload.peopleCount - data.length + mosaic.length - 2}…` : "…"}
+            </span>
           </div>
         </Link>
       </div>

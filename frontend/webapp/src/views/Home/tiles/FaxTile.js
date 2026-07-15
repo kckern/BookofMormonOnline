@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import { label } from "src/models/Utils";
-import { enDash } from "./textUtils";
+import RefPill from "./RefPill";
 
 /**
  * Two pages sampled from the facsimile's scripture-reference index, each
@@ -30,7 +30,7 @@ export default function FaxTile({ data, payload }) {
                   loading="lazy"
                   onError={(e) => (e.target.style.display = "none")}
                 />
-                <span className="faxTilePageRef">{enDash(p.ref)}</span>
+                <RefPill refText={p.ref} className="refChipSm faxRefPill" />
               </Link>
             );
           })}

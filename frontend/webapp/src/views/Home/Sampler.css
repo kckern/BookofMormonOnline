@@ -231,20 +231,32 @@ html[data-theme="dark"] .peopleFeatureTitle { color: #a0a0a0; }
   color: #555;
 }
 html[data-theme="dark"] .peopleFeatureDesc { color: #c4c4c4; }
-/* live scripture links inside sampled prose */
-.peopleFeatureDesc .scripture_link,
+/* detected inline scripture links share THE pill (RefPill) look + behavior */
 .sampler .scripture_link {
-  color: #345496;
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0.18rem 0.45rem;
+  border-radius: 0.8rem;
+  background: rgba(50, 59, 77, 0.08);
+  border: 1px solid rgba(50, 59, 77, 0.18);
+  color: #323b4d;
   cursor: pointer;
   text-decoration: none;
-  border-bottom: 1px dotted rgba(52, 84, 150, 0.5);
+  white-space: nowrap;
+  vertical-align: baseline;
 }
-.sampler .scripture_link:hover { border-bottom-style: solid; }
-html[data-theme="dark"] .sampler .scripture_link,
-html[data-theme="dark"] .peopleFeatureDesc .scripture_link {
-  color: #93c6ef;
-  border-bottom-color: rgba(147, 198, 239, 0.5);
+.sampler .scripture_link:hover,
+.sampler .refChip:hover { background: rgba(50, 59, 77, 0.16); }
+html[data-theme="dark"] .sampler .scripture_link {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #cfd6e4;
 }
+/* compact pill variant for dense card rows */
+.refChipSm { font-size: 0.6rem; padding: 0.14rem 0.4rem; margin: 0 0.25rem 0 0; }
+.refChip { cursor: pointer; }
 .peopleFeatureRefs { margin-top: auto; }
 a.refChip:hover { background: rgba(50, 59, 77, 0.16); text-decoration: none; }
 /* index entries: annotation text + its reference, one row each */
@@ -432,7 +444,7 @@ html[data-theme="dark"] .peopleFaceRef { color: #93c6ef; }
    ================================================================ */
 .placesTileGrid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 0.5rem;
 }
 .placesTileCard {
@@ -496,7 +508,7 @@ html[data-theme="dark"] .placesTileInfo { color: #9a9a9a; }
 }
 
 html[data-theme="dark"] .placesTileRef { color: #93c6ef; }
-.placesMosaicWrap { position: relative; aspect-ratio: 16 / 9; border-radius: 0.45rem; overflow: hidden; }
+.placesMosaicWrap { position: relative; aspect-ratio: 1 / 1; border-radius: 0.45rem; overflow: hidden; }
 .placesMosaicWrap .viewAllMosaic { width: 100%; height: 100%; aspect-ratio: auto; border-radius: 0; }
 
 /* ================================================================
@@ -602,7 +614,8 @@ html[data-theme="dark"] .commentaryTileSource { color: #a0a0a0; }
    ================================================================ */
 .contentsTile img {
   width: 100%;
-  max-height: 6rem;
+  aspect-ratio: 16 / 9;
+  height: auto;
   object-fit: cover;
   border-radius: 0.45rem;
   background: #eee;
@@ -924,6 +937,8 @@ html[data-theme="dark"] .narrationNextTitle { border-top-color: #3a3a3a; }
   gap: 0.35rem;
   margin: 0.15rem 0 0.5rem;
 }
+.narrationArtRow.single { justify-content: center; }
+.narrationArtRow.single img { flex: 0 1 auto; max-width: 100%; height: auto; max-height: 9rem; object-fit: contain; }
 .narrationArtRow img {
   flex: 1 1 0;
   min-width: 0;
@@ -976,16 +991,31 @@ html[data-theme="dark"] .narrationRef { color: #93c6ef; }
 .historyTileBody { display: flex; gap: 0.7rem; min-height: 0; flex: 1; }
 .historyTileThumb {
   width: 7.5rem;
+  height: auto;
   object-fit: cover;
-  object-position: top;
   border-radius: 0.35rem;
   border: 1px solid #ddd;
   background: #f4f1ea;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
   flex-shrink: 0;
-  /* anchors the full card height — no void below the content */
-  align-self: stretch;
-  max-height: none;
+  align-self: flex-start;
+}
+.historyTileArchive {
+  display: inline-block;
+  align-self: flex-start;
+  font-size: 0.64rem;
+  font-weight: 700;
+  padding: 0.15rem 0.45rem;
+  margin-bottom: 0.35rem;
+  border-radius: 0.6rem;
+  background: rgba(163, 116, 44, 0.12);
+  border: 1px solid rgba(163, 116, 44, 0.3);
+  color: #8a6428;
+}
+html[data-theme="dark"] .historyTileArchive {
+  background: rgba(214, 168, 96, 0.14);
+  border-color: rgba(214, 168, 96, 0.35);
+  color: #d6a860;
 }
 html[data-theme="dark"] .historyTileThumb {
   background: #2c2c2c;
@@ -1154,7 +1184,7 @@ html[data-theme="dark"] .samplerScriptureReadLink { border-top-color: #3a3a3a; c
 /* places: people-convention overlays on a 16:9 image */
 .placesImgWrap {
   position: relative;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 1 / 1;
   border-radius: 0.45rem;
   overflow: hidden;
   background: #e2e2e2;
@@ -1188,9 +1218,9 @@ html[data-theme="dark"] .placesImgWrap { background: #333; }
 /* info overlay = the bottom band (people-title convention) */
 .placesInfoOverlay { pointer-events: none; }
 
-/* text tile: the feed card centers in its slot */
-.textTile { align-items: center; }
-.textTile .itemInFeedContainer { margin: 0 auto; }
+/* text tile: the feed card centers in its slot, both axes — no blank interior */
+.textTile { align-items: center; justify-content: center; }
+.textTile .itemInFeedContainer { margin: 0 auto; max-width: 46rem; }
 
 /* fax pages: ref-captioned, deep-linking into the viewer at that page */
 .faxTilePage { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 0.25rem; text-decoration: none; }
@@ -1262,3 +1292,14 @@ html[data-theme="dark"] .communityFinishers { color: #c4c4c4; }
 .communityFinisherNames { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .communityInvite { font-weight: 700; font-size: 0.85rem; color: #345496; text-decoration: none; padding: 0.6rem 0; }
 html[data-theme="dark"] .communityInvite { color: #93c6ef; }
+
+/* community is WIDTH-AWARE via container queries: narrow slots show fewer
+   group cards and drop message snippets to keep rows breathable */
+.tile-community { container-type: inline-size; }
+@container (max-width: 460px) {
+  .communityGroupCard:nth-child(n + 3) { display: none; }
+  .communityMsgText { display: none; }
+  .communityGroupStrip { flex-wrap: wrap; }
+}
+.placesMosaicCaption { margin-top: 0.25rem; }
+.faxRefPill { align-self: center; }

@@ -21,22 +21,17 @@ const parseTeaser = (html) => {
 export default function HistoryTile({ data }) {
   if (!data?.id) return null;
   const to = data.slug ? `/history/${data.slug}` : "/history";
-  const meta = [data.year, data.source || data.archive, data.author].filter(Boolean).join(" · ");
+  const meta = [data.year, data.source, data.author].filter(Boolean).join(" · ");
+  const aspect = parseFloat(data.aspect) || null; // stored as height/width
   const { lead, bullets } = parseTeaser(data.teaser);
   return (
     <Link to={to} className="samplerTileInner historyTile">
       <h3 className="tileHeading">{label("history")}</h3>
       <div className="historyTileBody">
-        <img
-          className="historyTileThumb"
-          src={`${assetUrl}/history/thumbs/${String(data.id).padStart(4, "0")}`}
-          alt={data.document || ""}
-          loading="lazy"
-          onError={(e) => (e.target.style.display = "none")}
-        />
         <div className="historyTileMain">
           <div className="historyTileTitle">{data.document}</div>
           {meta ? <div className="historyTileMeta">{meta}</div> : null}
+          {data.archive ? <div className="historyTileArchive">{flatten(data.archive)}</div> : null}
           {lead ? <p className="historyTileTeaser">{lead}</p> : null}
           {bullets.length ? (
             <ul className="historyTileBullets">
@@ -47,6 +42,14 @@ export default function HistoryTile({ data }) {
           ) : null}
           {data.citation ? <div className="historyTileCitation">{flatten(data.citation)}</div> : null}
         </div>
+        <img
+          className="historyTileThumb"
+          style={aspect ? { aspectRatio: `1 / ${aspect}` } : undefined}
+          src={`${assetUrl}/history/thumbs/${String(data.id).padStart(4, "0")}`}
+          alt={data.document || ""}
+          loading="lazy"
+          onError={(e) => (e.target.style.display = "none")}
+        />
       </div>
     </Link>
   );

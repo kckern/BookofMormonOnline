@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import { label } from "src/models/Utils";
 import { enDash } from "./textUtils";
+import RefPill from "./RefPill";
 
 const stripTags = (html) =>
   (html || "").replace(/<[^>]*>/gi, " ").replace(/\s+/g, " ").trim();
@@ -28,14 +29,14 @@ export default function CommentaryTile({ data }) {
           />
         ) : null}
         <div className="commentaryTileMain">
-          {data.reference && !titleHasRef ? <span className="refChip">{enDash(data.reference)}</span> : null}
+          {data.reference && !titleHasRef ? <RefPill refText={data.reference} /> : null}
           <div className="commentaryTileTitle">{enDash(data.title)}</div>
           {/* full text, scrolling when long — the fade + cue signal continuation */}
           <div className="commentaryTileScroll">
             <p className="commentaryTileExcerpt">{stripTags(data.text || data.preview)}</p>
           </div>
           {author ? <div className="commentaryTileSource">— {author}</div> : null}
-          <div className="commentaryTileMore">{label("view_all")} →</div>
+          <div className="commentaryTileMore">{label("view_more")}</div>
         </div>
       </div>
     </Link>

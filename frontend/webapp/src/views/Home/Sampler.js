@@ -184,12 +184,16 @@ export default function Sampler() {
     gridVars.push(t);
     rightH += est(t.key) / 2;
   }
-  // text width: pairs with an odd span-2 neighbor, else takes its own full row
-  const span2InGrid = gridVars.filter((t) => t.key !== "text").length;
-  const textSpan = span2InGrid % 2 === 1 ? "tile-text tile-text-half" : "tile-text";
+  // The text tile CLOSES the grid as a full-width row — a wide final band
+  // absorbs sub-column height rag so the page never ends on a corner hole.
+  const textSpan = "tile-text";
+  const orderedGrid = [
+    ...gridVars.filter((t) => t.key !== "text"),
+    ...gridVars.filter((t) => t.key === "text"),
+  ];
   const mainTiles = [
     ...FIXED_TOP.map((k) => tileRegistry.find((t) => t.key === k)).filter(Boolean),
-    ...gridVars,
+    ...orderedGrid,
   ];
 
   return (
