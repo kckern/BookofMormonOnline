@@ -65,9 +65,10 @@ export function awaitScrollSettled(targetY, { token, timeoutMs = 3000 } = {}) {
   });
 }
 
-// Height stability for expanding boxes: the `open` class lands ~300ms before
-// the Collapse animation finishes, so class-presence alone measures short.
-// extraCheck (e.g. "is the open class present") must also hold.
+// Height stability for expanding boxes: the row's open state / `open` class
+// lands ~300ms before the Collapse animation finishes, so that signal alone
+// measures short. extraCheck (e.g. "is the row marked open in state") must
+// also hold alongside height stability.
 export function awaitHeightSettled(el, { token, timeoutMs = 2500, extraCheck } = {}) {
   return new Promise((resolve) => {
     let stable = 0;
