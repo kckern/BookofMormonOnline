@@ -5,11 +5,15 @@ import { toast, ToastContainer } from "react-toastify";
 import { createBrowserHistory } from 'history';
 import Cookies from 'js-cookie';
 
-import MainLayout from "./views/_Common/Main";
 import "react-toastify/dist/ReactToastify.css";
 import "bootstrap/dist/css/bootstrap.css";
 import "./assets/theme/scss/paper-dashboard.scss";
 import "./assets/theme/scss/darkmode.scss";
+// Imported AFTER the global stylesheets above so the app-shell CSS (Header/Sidebar
+// nav, imported transitively by Main) loads last and wins the cascade — matching
+// the order that held when MainLayout was a lazy chunk. Importing it before these
+// sheets lets bootstrap/paper-dashboard/darkmode override the nav styling.
+import MainLayout from "./views/_Common/Main";
 //import Cohere from "cohere-js";
 import crypto from "crypto-browserify";
 import { AppModal } from "./views/_Common/AppModal";
