@@ -556,7 +556,24 @@
     left:0;
     right:0;
 }
-.segment .miniprogress .progressBar{ 
+.segment .miniprogress .progressBar{
     background-color: #6bd098;
     right: auto;
 }
+
+/* Gallery / wizard / error additions (custom reading plans) */
+.rpError { text-align: center; padding: 2em; }
+.rpComplete { text-align: center; padding: 2em; font-size: 1.2em; }
+.rpAbandon { float: right; cursor: pointer; opacity: 0.3; font-weight: 400; }
+.rpAbandon:hover { opacity: 1; }
+.programGallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 1em; }
+.programCard { border: 1px solid #ddd; border-radius: 0.5em; padding: 1em; cursor: pointer; }
+.programCard:hover { border-color: #6bd098; box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+.programCard .duration { color: #888; font-size: 0.85em; }
+.rpWizard .stepDots { text-align: center; letter-spacing: 0.5em; margin-bottom: 1em; }
+.rpWizard .previewRail { border-top: 2px solid #ccc; margin-top: 1em; padding-top: 0.6em; font-size: 0.9em; display: flex; justify-content: space-between; align-items: center; }
+.rpWizard .scopeList { max-height: 40vh; overflow-y: auto; text-align: left; }
+.rpWizard .scopeList label { display: block; padding: 0.3em 0.5em; cursor: pointer; }
+.rpWizard .scopeList .sizeBadge { color: #888; font-size: 0.85em; margin-left: 0.5ex; }
+.rpWizard .paceOption { display: block; padding: 0.5em; border: 1px solid #ddd; border-radius: 0.4em; margin: 0.4em 0; cursor: pointer; text-align: left; }
+.rpWizard .paceOption.selected { border-color: #6bd098; background: rgba(107, 208, 152, 0.08); }

@@ -45,7 +45,7 @@ import { toast } from "react-toastify";
 import Loader, { Spinner } from "../_Common/Loader/index.js";
 import { md5 } from "../../models/MessengerController.js";
 import { timeAgoString } from "../../models/Utils.js";
-import { ReadingPlan } from "./ReadingPlan.js";
+import { ReadingPlan } from "./ReadingPlan";
 
 const privateStyle = (nickname) => {
   if (!/[█]/gu.test(nickname)) return {};
@@ -92,7 +92,7 @@ function Home() {
         />
       </div>
       <div className="rightPanelScroll">
-        {!activeGroup && <ReadingPlan slug={"cfm2024"}/>}
+        {!activeGroup && <ReadingPlan />}
         <HomeFeed
           activeGroup={activeGroup}
           messageId={activeMessage}

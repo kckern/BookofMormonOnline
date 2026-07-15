@@ -40,7 +40,7 @@ function HeroBanner()
 function CommunityFeed()
 {
     return <div className="community-feed" >
-        <ReadingPlan slug={"cfm2024"} />
+        <ReadingPlan />
     </div>
 }
 
