@@ -45,3 +45,6 @@ backend/scripts/out/
 docs/audits/study-group-loop-screenshots/
 docs/audits/a11y-screenshots/
 docs/audits/dm-cleanup-backup-2026-06-13.json
+
+# Brainstorming visual-companion sessions (superpowers plugin)
+.superpowers/
