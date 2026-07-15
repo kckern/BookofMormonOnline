@@ -1,0 +1,87 @@
+# Reading plans: user-created plans + program catalog (docs/specs/2026-07-15-custom-reading-plans.md)
+extend type Query {
+  readingplan(token: String, slug: String): ReadingPlan
+  readingplansegment(token: String, guid: String): ReadingPlanSegment
+  readingplanprograms(token: String): [ReadingPlanProgram]
+  readingplanpreview(token: String, config: String!, startdate: String): ReadingPlanPreview
+  readingplanhistory(token: String): [ReadingPlanSummary]
+}
+
+extend type Mutation {
+  startReadingPlan(token: String!, input: StartPlanInput!): ReadingPlanResult
+  updateReadingPlan(token: String!, input: UpdatePlanInput!): ReadingPlanResult
+  endReadingPlan(token: String!, action: PlanEndAction!): ReadingPlanResult
+}
+
+input StartPlanInput {
+  programSlug: String
+  title: String
+  config: String
+  startdate: String
+  credit: String
+}
+
+input UpdatePlanInput {
+  config: String!
+}
+
+enum PlanEndAction { COMPLETE ABANDON }
+
+type ReadingPlanResult {
+  isSuccess: Boolean
+  msg: String
+  plan: ReadingPlan
+}
+
+type ReadingPlanProgram {
+  slug: String
+  title: String
+  description: String
+  config: String
+  scopeLabel: String
+  durationLabel: String
+}
+
+type ReadingPlanPreview {
+  parts: Int
+  enddate: String
+  warnings: [PlanWarning]
+  segments: [PreviewSegment]
+}
+type PlanWarning { code: String, detail: Int }
+type PreviewSegment { period: String, ref: String, duedate: String, blocks: Int }
+
+type ReadingPlanSummary {
+  slug: String
+  title: String
+  status: String
+  startdate: String
+  enddate: String
+  progress: Float
+}
+
+type ReadingPlan {
+  guid: String
+  slug: String
+  title: String
+  startdate: String
+  duedate: String
+  progress: Float
+  status: String
+  config: String
+  current: Int
+  segments: [ReadingPlanSegment]
+}
+
+type ReadingPlanSegment {
+  guid: String
+  period: String
+  ref: String
+  url: String
+  title: String
+  duedate: String
+  progress: Float
+  start: Int
+  end: Int
+  sections: [Section]
+}

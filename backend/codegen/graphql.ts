@@ -476,6 +476,7 @@ export type Mutation = {
   addBot?: Maybe<Scalars['Boolean']['output']>;
   changePassword?: Maybe<Scalars['Boolean']['output']>;
   editProfile?: Maybe<User>;
+  endReadingPlan?: Maybe<ReadingPlanResult>;
   joinGroup?: Maybe<JoinedGroup>;
   joinOpenGroup?: Maybe<JoinedGroup>;
   log?: Maybe<LogResult>;
@@ -500,6 +501,8 @@ export type Mutation = {
   shortlink?: Maybe<Shortlinks>;
   signout?: Maybe<Scalars['Boolean']['output']>;
   signup?: Maybe<SignIn>;
+  startReadingPlan?: Maybe<ReadingPlanResult>;
+  updateReadingPlan?: Maybe<ReadingPlanResult>;
   uploadProfileImage?: Maybe<Scalars['Boolean']['output']>;
   withdrawRequest?: Maybe<JoinedGroup>;
 };
@@ -523,6 +526,12 @@ export type MutationEditProfileArgs = {
   name?: InputMaybe<Scalars['String']['input']>;
   token?: InputMaybe<Scalars['String']['input']>;
   zip?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type MutationEndReadingPlanArgs = {
+  action: PlanEndAction;
+  token: Scalars['String']['input'];
 };
 
 
@@ -676,6 +685,18 @@ export type MutationSignupArgs = {
   token?: InputMaybe<Scalars['String']['input']>;
   username?: InputMaybe<Scalars['String']['input']>;
   zip?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type MutationStartReadingPlanArgs = {
+  input: StartPlanInput;
+  token: Scalars['String']['input'];
+};
+
+
+export type MutationUpdateReadingPlanArgs = {
+  input: UpdatePlanInput;
+  token: Scalars['String']['input'];
 };
 
 
@@ -871,6 +892,25 @@ export type Place = {
   w?: Maybe<Scalars['Int']['output']>;
 };
 
+export enum PlanEndAction {
+  Abandon = 'ABANDON',
+  Complete = 'COMPLETE'
+}
+
+export type PlanWarning = {
+  __typename?: 'PlanWarning';
+  code?: Maybe<Scalars['String']['output']>;
+  detail?: Maybe<Scalars['Int']['output']>;
+};
+
+export type PreviewSegment = {
+  __typename?: 'PreviewSegment';
+  blocks?: Maybe<Scalars['Int']['output']>;
+  duedate?: Maybe<Scalars['String']['output']>;
+  period?: Maybe<Scalars['String']['output']>;
+  ref?: Maybe<Scalars['String']['output']>;
+};
+
 export type ProgressScore = {
   __typename?: 'ProgressScore';
   active_items?: Maybe<Array<Maybe<Scalars['Float']['output']>>>;
@@ -938,6 +978,9 @@ export type Query = {
   queue?: Maybe<Array<Maybe<TextBlock>>>;
   read?: Maybe<ReadBlock>;
   readingplan?: Maybe<ReadingPlan>;
+  readingplanhistory?: Maybe<Array<Maybe<ReadingPlanSummary>>>;
+  readingplanpreview?: Maybe<ReadingPlanPreview>;
+  readingplanprograms?: Maybe<Array<Maybe<ReadingPlanProgram>>>;
   readingplansegment?: Maybe<ReadingPlanSegment>;
   requestedUsers?: Maybe<Array<Maybe<HomeUser>>>;
   scripture?: Maybe<ScriptureResults>;
@@ -1221,6 +1264,23 @@ export type QueryReadingplanArgs = {
 };
 
 
+export type QueryReadingplanhistoryArgs = {
+  token?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryReadingplanpreviewArgs = {
+  config: Scalars['String']['input'];
+  startdate?: InputMaybe<Scalars['String']['input']>;
+  token?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryReadingplanprogramsArgs = {
+  token?: InputMaybe<Scalars['String']['input']>;
+};
+
+
 export type QueryReadingplansegmentArgs = {
   guid?: InputMaybe<Scalars['String']['input']>;
   token?: InputMaybe<Scalars['String']['input']>;
@@ -1403,13 +1463,41 @@ export type ReadUnit = {
 
 export type ReadingPlan = {
   __typename?: 'ReadingPlan';
+  config?: Maybe<Scalars['String']['output']>;
+  current?: Maybe<Scalars['Int']['output']>;
   duedate?: Maybe<Scalars['String']['output']>;
   guid?: Maybe<Scalars['String']['output']>;
   progress?: Maybe<Scalars['Float']['output']>;
   segments?: Maybe<Array<Maybe<ReadingPlanSegment>>>;
   slug?: Maybe<Scalars['String']['output']>;
   startdate?: Maybe<Scalars['String']['output']>;
+  status?: Maybe<Scalars['String']['output']>;
   title?: Maybe<Scalars['String']['output']>;
+};
+
+export type ReadingPlanPreview = {
+  __typename?: 'ReadingPlanPreview';
+  enddate?: Maybe<Scalars['String']['output']>;
+  parts?: Maybe<Scalars['Int']['output']>;
+  segments?: Maybe<Array<Maybe<PreviewSegment>>>;
+  warnings?: Maybe<Array<Maybe<PlanWarning>>>;
+};
+
+export type ReadingPlanProgram = {
+  __typename?: 'ReadingPlanProgram';
+  config?: Maybe<Scalars['String']['output']>;
+  description?: Maybe<Scalars['String']['output']>;
+  durationLabel?: Maybe<Scalars['String']['output']>;
+  scopeLabel?: Maybe<Scalars['String']['output']>;
+  slug?: Maybe<Scalars['String']['output']>;
+  title?: Maybe<Scalars['String']['output']>;
+};
+
+export type ReadingPlanResult = {
+  __typename?: 'ReadingPlanResult';
+  isSuccess?: Maybe<Scalars['Boolean']['output']>;
+  msg?: Maybe<Scalars['String']['output']>;
+  plan?: Maybe<ReadingPlan>;
 };
 
 export type ReadingPlanSegment = {
@@ -1424,6 +1512,16 @@ export type ReadingPlanSegment = {
   start?: Maybe<Scalars['Int']['output']>;
   title?: Maybe<Scalars['String']['output']>;
   url?: Maybe<Scalars['String']['output']>;
+};
+
+export type ReadingPlanSummary = {
+  __typename?: 'ReadingPlanSummary';
+  enddate?: Maybe<Scalars['String']['output']>;
+  progress?: Maybe<Scalars['Float']['output']>;
+  slug?: Maybe<Scalars['String']['output']>;
+  startdate?: Maybe<Scalars['String']['output']>;
+  status?: Maybe<Scalars['String']['output']>;
+  title?: Maybe<Scalars['String']['output']>;
 };
 
 export type Reference = {
@@ -1596,6 +1694,14 @@ export type Source = {
   source_year?: Maybe<Scalars['Int']['output']>;
 };
 
+export type StartPlanInput = {
+  config?: InputMaybe<Scalars['String']['input']>;
+  credit?: InputMaybe<Scalars['String']['input']>;
+  programSlug?: InputMaybe<Scalars['String']['input']>;
+  startdate?: InputMaybe<Scalars['String']['input']>;
+  title?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type StudyGroup = {
   __typename?: 'StudyGroup';
   channel_url?: Maybe<Scalars['String']['output']>;
@@ -1662,6 +1768,10 @@ export type TextBlock = {
 
 export type TextBlockStatusArgs = {
   token?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpdatePlanInput = {
+  config: Scalars['String']['input'];
 };
 
 export type User = {
@@ -1853,6 +1963,9 @@ export type ResolversTypes = {
   PeopleNetwork: ResolverTypeWrapper<Partial<PeopleNetwork>>;
   PeopleNode: ResolverTypeWrapper<Partial<PeopleNode>>;
   Place: ResolverTypeWrapper<Partial<Place>>;
+  PlanEndAction: ResolverTypeWrapper<Partial<PlanEndAction>>;
+  PlanWarning: ResolverTypeWrapper<Partial<PlanWarning>>;
+  PreviewSegment: ResolverTypeWrapper<Partial<PreviewSegment>>;
   ProgressScore: ResolverTypeWrapper<Partial<ProgressScore>>;
   Query: ResolverTypeWrapper<{}>;
   QueueInput: ResolverTypeWrapper<Partial<QueueInput>>;
@@ -1862,7 +1975,11 @@ export type ResolversTypes = {
   ReadSection: ResolverTypeWrapper<Partial<ReadSection>>;
   ReadUnit: ResolverTypeWrapper<Partial<ReadUnit>>;
   ReadingPlan: ResolverTypeWrapper<Partial<ReadingPlan>>;
+  ReadingPlanPreview: ResolverTypeWrapper<Partial<ReadingPlanPreview>>;
+  ReadingPlanProgram: ResolverTypeWrapper<Partial<ReadingPlanProgram>>;
+  ReadingPlanResult: ResolverTypeWrapper<Partial<ReadingPlanResult>>;
   ReadingPlanSegment: ResolverTypeWrapper<Partial<ReadingPlanSegment>>;
+  ReadingPlanSummary: ResolverTypeWrapper<Partial<ReadingPlanSummary>>;
   Reference: ResolverTypeWrapper<Partial<Reference>>;
   Relation: ResolverTypeWrapper<Partial<Relation>>;
   ResultCard: ResolverTypeWrapper<Partial<ResultCard>>;
@@ -1880,12 +1997,14 @@ export type ResolversTypes = {
   SignIn: ResolverTypeWrapper<Partial<SignIn>>;
   Social: ResolverTypeWrapper<Partial<Social>>;
   Source: ResolverTypeWrapper<Partial<Source>>;
+  StartPlanInput: ResolverTypeWrapper<Partial<StartPlanInput>>;
   String: ResolverTypeWrapper<Partial<Scalars['String']['output']>>;
   StudyGroup: ResolverTypeWrapper<Partial<StudyGroup>>;
   StudyGroupHistory: ResolverTypeWrapper<Partial<StudyGroupHistory>>;
   StudyLog: ResolverTypeWrapper<Partial<StudyLog>>;
   Test: ResolverTypeWrapper<Partial<Test>>;
   TextBlock: ResolverTypeWrapper<Partial<TextBlock>>;
+  UpdatePlanInput: ResolverTypeWrapper<Partial<UpdatePlanInput>>;
   User: ResolverTypeWrapper<Partial<User>>;
   UserDailyScore: ResolverTypeWrapper<Partial<UserDailyScore>>;
   UserHistory: ResolverTypeWrapper<Partial<UserHistory>>;
@@ -1954,6 +2073,8 @@ export type ResolversParentTypes = {
   PeopleNetwork: Partial<PeopleNetwork>;
   PeopleNode: Partial<PeopleNode>;
   Place: Partial<Place>;
+  PlanWarning: Partial<PlanWarning>;
+  PreviewSegment: Partial<PreviewSegment>;
   ProgressScore: Partial<ProgressScore>;
   Query: {};
   QueueInput: Partial<QueueInput>;
@@ -1963,7 +2084,11 @@ export type ResolversParentTypes = {
   ReadSection: Partial<ReadSection>;
   ReadUnit: Partial<ReadUnit>;
   ReadingPlan: Partial<ReadingPlan>;
+  ReadingPlanPreview: Partial<ReadingPlanPreview>;
+  ReadingPlanProgram: Partial<ReadingPlanProgram>;
+  ReadingPlanResult: Partial<ReadingPlanResult>;
   ReadingPlanSegment: Partial<ReadingPlanSegment>;
+  ReadingPlanSummary: Partial<ReadingPlanSummary>;
   Reference: Partial<Reference>;
   Relation: Partial<Relation>;
   ResultCard: Partial<ResultCard>;
@@ -1981,12 +2106,14 @@ export type ResolversParentTypes = {
   SignIn: Partial<SignIn>;
   Social: Partial<Social>;
   Source: Partial<Source>;
+  StartPlanInput: Partial<StartPlanInput>;
   String: Partial<Scalars['String']['output']>;
   StudyGroup: Partial<StudyGroup>;
   StudyGroupHistory: Partial<StudyGroupHistory>;
   StudyLog: Partial<StudyLog>;
   Test: Partial<Test>;
   TextBlock: Partial<TextBlock>;
+  UpdatePlanInput: Partial<UpdatePlanInput>;
   User: Partial<User>;
   UserDailyScore: Partial<UserDailyScore>;
   UserHistory: Partial<UserHistory>;
@@ -2435,6 +2562,7 @@ export type MutationResolvers<ContextType = AppContext, ParentType extends Resol
   addBot?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, Partial<MutationAddBotArgs>>;
   changePassword?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, Partial<MutationChangePasswordArgs>>;
   editProfile?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType, Partial<MutationEditProfileArgs>>;
+  endReadingPlan?: Resolver<Maybe<ResolversTypes['ReadingPlanResult']>, ParentType, ContextType, RequireFields<MutationEndReadingPlanArgs, 'action' | 'token'>>;
   joinGroup?: Resolver<Maybe<ResolversTypes['JoinedGroup']>, ParentType, ContextType, Partial<MutationJoinGroupArgs>>;
   joinOpenGroup?: Resolver<Maybe<ResolversTypes['JoinedGroup']>, ParentType, ContextType, Partial<MutationJoinOpenGroupArgs>>;
   log?: Resolver<Maybe<ResolversTypes['LogResult']>, ParentType, ContextType, RequireFields<MutationLogArgs, 'key' | 'token'>>;
@@ -2459,6 +2587,8 @@ export type MutationResolvers<ContextType = AppContext, ParentType extends Resol
   shortlink?: Resolver<Maybe<ResolversTypes['Shortlinks']>, ParentType, ContextType, Partial<MutationShortlinkArgs>>;
   signout?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, Partial<MutationSignoutArgs>>;
   signup?: Resolver<Maybe<ResolversTypes['SignIn']>, ParentType, ContextType, Partial<MutationSignupArgs>>;
+  startReadingPlan?: Resolver<Maybe<ResolversTypes['ReadingPlanResult']>, ParentType, ContextType, RequireFields<MutationStartReadingPlanArgs, 'input' | 'token'>>;
+  updateReadingPlan?: Resolver<Maybe<ResolversTypes['ReadingPlanResult']>, ParentType, ContextType, RequireFields<MutationUpdateReadingPlanArgs, 'input' | 'token'>>;
   uploadProfileImage?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, RequireFields<MutationUploadProfileImageArgs, 'imageData' | 'token'>>;
   withdrawRequest?: Resolver<Maybe<ResolversTypes['JoinedGroup']>, ParentType, ContextType, Partial<MutationWithdrawRequestArgs>>;
 };
@@ -2639,6 +2769,20 @@ export type PlaceResolvers<ContextType = AppContext, ParentType extends Resolver
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type PlanWarningResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['PlanWarning'] = ResolversParentTypes['PlanWarning']> = {
+  code?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  detail?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type PreviewSegmentResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['PreviewSegment'] = ResolversParentTypes['PreviewSegment']> = {
+  blocks?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  duedate?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  period?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  ref?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type ProgressScoreResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['ProgressScore'] = ResolversParentTypes['ProgressScore']> = {
   active_items?: Resolver<Maybe<Array<Maybe<ResolversTypes['Float']>>>, ParentType, ContextType>;
   completed?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
@@ -2705,6 +2849,9 @@ export type QueryResolvers<ContextType = AppContext, ParentType extends Resolver
   queue?: Resolver<Maybe<Array<Maybe<ResolversTypes['TextBlock']>>>, ParentType, ContextType, Partial<QueryQueueArgs>>;
   read?: Resolver<Maybe<ResolversTypes['ReadBlock']>, ParentType, ContextType, Partial<QueryReadArgs>>;
   readingplan?: Resolver<Maybe<ResolversTypes['ReadingPlan']>, ParentType, ContextType, Partial<QueryReadingplanArgs>>;
+  readingplanhistory?: Resolver<Maybe<Array<Maybe<ResolversTypes['ReadingPlanSummary']>>>, ParentType, ContextType, Partial<QueryReadingplanhistoryArgs>>;
+  readingplanpreview?: Resolver<Maybe<ResolversTypes['ReadingPlanPreview']>, ParentType, ContextType, RequireFields<QueryReadingplanpreviewArgs, 'config'>>;
+  readingplanprograms?: Resolver<Maybe<Array<Maybe<ResolversTypes['ReadingPlanProgram']>>>, ParentType, ContextType, Partial<QueryReadingplanprogramsArgs>>;
   readingplansegment?: Resolver<Maybe<ResolversTypes['ReadingPlanSegment']>, ParentType, ContextType, Partial<QueryReadingplansegmentArgs>>;
   requestedUsers?: Resolver<Maybe<Array<Maybe<ResolversTypes['HomeUser']>>>, ParentType, ContextType, Partial<QueryRequestedUsersArgs>>;
   scripture?: Resolver<Maybe<ResolversTypes['ScriptureResults']>, ParentType, ContextType, Partial<QueryScriptureArgs>>;
@@ -2785,13 +2932,41 @@ export type ReadUnitResolvers<ContextType = AppContext, ParentType extends Resol
 };
 
 export type ReadingPlanResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['ReadingPlan'] = ResolversParentTypes['ReadingPlan']> = {
+  config?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  current?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   duedate?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   guid?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   progress?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   segments?: Resolver<Maybe<Array<Maybe<ResolversTypes['ReadingPlanSegment']>>>, ParentType, ContextType>;
   slug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   startdate?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  status?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   title?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ReadingPlanPreviewResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['ReadingPlanPreview'] = ResolversParentTypes['ReadingPlanPreview']> = {
+  enddate?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  parts?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  segments?: Resolver<Maybe<Array<Maybe<ResolversTypes['PreviewSegment']>>>, ParentType, ContextType>;
+  warnings?: Resolver<Maybe<Array<Maybe<ResolversTypes['PlanWarning']>>>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ReadingPlanProgramResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['ReadingPlanProgram'] = ResolversParentTypes['ReadingPlanProgram']> = {
+  config?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  durationLabel?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  scopeLabel?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  slug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  title?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ReadingPlanResultResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['ReadingPlanResult'] = ResolversParentTypes['ReadingPlanResult']> = {
+  isSuccess?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  msg?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  plan?: Resolver<Maybe<ResolversTypes['ReadingPlan']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -2806,6 +2981,16 @@ export type ReadingPlanSegmentResolvers<ContextType = AppContext, ParentType ext
   start?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   title?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   url?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ReadingPlanSummaryResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['ReadingPlanSummary'] = ResolversParentTypes['ReadingPlanSummary']> = {
+  enddate?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  progress?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  slug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  startdate?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  status?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  title?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -3158,6 +3343,8 @@ export type Resolvers<ContextType = AppContext> = {
   PeopleNetwork?: PeopleNetworkResolvers<ContextType>;
   PeopleNode?: PeopleNodeResolvers<ContextType>;
   Place?: PlaceResolvers<ContextType>;
+  PlanWarning?: PlanWarningResolvers<ContextType>;
+  PreviewSegment?: PreviewSegmentResolvers<ContextType>;
   ProgressScore?: ProgressScoreResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
   ReadBlock?: ReadBlockResolvers<ContextType>;
@@ -3166,7 +3353,11 @@ export type Resolvers<ContextType = AppContext> = {
   ReadSection?: ReadSectionResolvers<ContextType>;
   ReadUnit?: ReadUnitResolvers<ContextType>;
   ReadingPlan?: ReadingPlanResolvers<ContextType>;
+  ReadingPlanPreview?: ReadingPlanPreviewResolvers<ContextType>;
+  ReadingPlanProgram?: ReadingPlanProgramResolvers<ContextType>;
+  ReadingPlanResult?: ReadingPlanResultResolvers<ContextType>;
   ReadingPlanSegment?: ReadingPlanSegmentResolvers<ContextType>;
+  ReadingPlanSummary?: ReadingPlanSummaryResolvers<ContextType>;
   Reference?: ReferenceResolvers<ContextType>;
   Relation?: RelationResolvers<ContextType>;
   ResultCard?: ResultCardResolvers<ContextType>;
