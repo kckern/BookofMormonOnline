@@ -1533,12 +1533,18 @@ const queries = {
       type: "readingplan",
       key: "token",
       val: false,
-      query: `readingplan(slug:"${input.slug}", token:"${input.token}") {
+      query:
+        `readingplan(token:"${input.token || ""}"` +
+        (input.slug ? `, slug:"${input.slug}"` : ``) + `) {
+        guid
         slug
         title
         startdate
         duedate
         progress
+        status
+        config
+        current
         segments {
           guid
           period
@@ -1549,6 +1555,60 @@ const queries = {
           start
           end
         }
+      }`,
+    }
+  },
+
+  readingplanprograms: () => ({
+    type: "readingplanprograms",
+    key: "slug",
+    val: false,
+    query: `readingplanprograms { slug title description config scopeLabel durationLabel }`,
+  }),
+  readingplanpreview: (input) => {
+    input = input.shift();
+    return {
+      type: "readingplanpreview",
+      key: 0,
+      val: input,
+      query:
+        `readingplanpreview(config:${JSON.stringify(input.config)}` +
+        (input.startdate ? `, startdate:"${input.startdate}"` : ``) + `) {
+        parts
+        enddate
+        warnings { code detail }
+        segments { period ref duedate blocks }
+      }`,
+    }
+  },
+  startReadingPlan: (input) => {
+    input = input.shift();
+    return {
+      type: "startReadingPlan",
+      key: 0,
+      val: input,
+      query: `mutation {
+        startReadingPlan(
+          token:"${input.token}"
+          input: {
+            ${input.programSlug ? `programSlug:"${input.programSlug}"` : ``}
+            ${input.title ? `title:${JSON.stringify(input.title)}` : ``}
+            ${input.config ? `config:${JSON.stringify(input.config)}` : ``}
+            ${input.startdate ? `startdate:"${input.startdate}"` : ``}
+            ${input.credit ? `credit:"${input.credit}"` : ``}
+          }
+        ) { isSuccess msg plan { slug } }
+      }`,
+    }
+  },
+  endReadingPlan: (input) => {
+    input = input.shift();
+    return {
+      type: "endReadingPlan",
+      key: 0,
+      val: input,
+      query: `mutation {
+        endReadingPlan(token:"${input.token}", action:${input.action}) { isSuccess msg }
       }`,
     }
   },
