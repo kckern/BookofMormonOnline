@@ -686,8 +686,8 @@ html[data-theme="dark"] .contentsOutlineDot { color: #555; }
 }
 .guestPlanTitle { font-size: 0.9rem; color: #444; }
 html[data-theme="dark"] .guestPlanTitle { color: #ddd; }
-.guestPlanMeta { font-size: 0.7rem; color: #999; margin: 0.1rem 0 0.4rem; }
-html[data-theme="dark"] .guestPlanMeta { color: #888; }
+.guestPlanMeta { font-size: 0.7rem; color: #737373; margin: 0.1rem 0 0.4rem; } /* ≥4.5:1 on white */
+html[data-theme="dark"] .guestPlanMeta { color: #a3a3a3; } /* ≥4.5:1 on #222 */
 /* the program's real segment cells (all not-started) — structure, not slogans */
 .guestSegmentList { margin-bottom: 0.2rem; }
 .valuePropText {

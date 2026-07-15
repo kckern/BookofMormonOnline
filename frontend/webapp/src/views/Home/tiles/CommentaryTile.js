@@ -9,7 +9,7 @@ const stripTags = (html) =>
 export default function CommentaryTile({ data }) {
   if (!data?.id) return null;
   const pub = data.publication || {};
-  const author = [pub.source_name, pub.source_title].filter(Boolean).join(" — ");
+  const author = [pub.source_name, pub.source_title].filter(Boolean).join(", ");
   return (
     <Link to={`/commentary/${data.id}`} className="samplerTileInner commentaryTile">
       <h3 className="tileHeading">{label("commentary")}</h3>

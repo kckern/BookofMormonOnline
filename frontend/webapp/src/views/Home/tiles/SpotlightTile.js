@@ -15,7 +15,8 @@ export default function SpotlightTile({ data }) {
           <div>
             <div className="spotlightGroupName">{group.name}</div>
             <div className="spotlightGroupMeta">
-              {(group.members || []).length} {label("members")}
+              {(group.members || []).length}{" "}
+              {label((group.members || []).length === 1 ? "member" : "members")}
             </div>
           </div>
         </div>
