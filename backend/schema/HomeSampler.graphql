@@ -1,0 +1,15 @@
+# HomeSampler — aggregate seeded random samples for the /home sampler page.
+# New surface (post-legacy contract). Design: docs/plans/2026-07-15-home-sampler-redesign-design.md
+# Adding a tile type: add a field here + a sampler fn in src/graphql/resolvers/homesampler.ts.
+extend type Query {
+  homesampler(seed: Int): HomeSampler
+}
+
+type HomeSampler {
+  seed: Int
+  people: [People]
+  places: [Place]
+  fax: Fax
+  commentary: Commentary
+  contents: Division
+}

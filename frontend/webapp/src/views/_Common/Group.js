@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useHistory, useRouteMatch, Link } from "react-router-dom";
 import { isMobile } from "src/models/Utils";
-import Home from "../Home/Home";
+import Home from "../Home/Community";
 import MobileStudy from "./Study/Mobile/MobileStudy";
 import { useAppController } from "src/contexts/AppControllerContext";
 import { useMessenger } from "src/contexts/MessengerContext";

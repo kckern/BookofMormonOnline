@@ -19,6 +19,7 @@ import { mediamiscResolvers } from './resolvers/mediamisc.js';
 import { feedsmiscResolvers } from './resolvers/feedsmisc.js';
 import { searchhistResolvers } from './resolvers/searchhist.js';
 import { communityResolvers } from './resolvers/community.js';
+import { homesamplerResolvers } from './resolvers/homesampler.js';
 import { messengerResolvers } from './resolvers/messenger.js';
 import { userauthResolvers } from './resolvers/userauth.js';
 import { userprofileResolvers } from './resolvers/userprofile.js';
@@ -258,6 +259,7 @@ export const resolvers: Resolvers = mergeResolverMaps(
   feedsmiscResolvers,
   searchhistResolvers,
   communityResolvers,
+  homesamplerResolvers,
   messengerResolvers,
   userauthResolvers,
   userprofileResolvers,

@@ -1688,6 +1688,7 @@ const queries = {
           privacy
           picture
           latest {
+            id
             timestamp
             msg
             user {
@@ -1718,7 +1719,26 @@ const queries = {
           }
         }`,
     }
-  },  
+  },
+
+  homesampler: (input) => {
+    input = input.shift() || {};
+    const seed = parseInt(input.seed, 10);
+    const seedArg = seed > 0 ? `(seed: ${seed})` : "";
+    return {
+      type: "homesampler",
+      key: "token",
+      val: false,
+      query: `homesampler${seedArg} {
+        seed
+        people { slug guid name title }
+        places { slug name info }
+        fax { slug title pages info format }
+        commentary { id title text preview publication { source_title } }
+        contents { slug title description }
+      }`,
+    }
+  },
 
   queuestatus: (input) => {
     input = input.shift();

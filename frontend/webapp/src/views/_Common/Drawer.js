@@ -15,7 +15,7 @@ import { ProgressDetailsCircles } from "../User/ProgressBox";
 import { displayDate, LegalNotice } from "./PopUp";
 import { renderPersonPlaceHTML } from "../Page/PersonPlace";
 import { Victory } from "../User/Victory";
-import { GroupLeaderBoard } from "../Home/Home";
+import { GroupLeaderBoard } from "../Home/Community";
 import { InviteButton } from "./Study/StudyHall";
 import groupIcon from "src/views/User/svg/group.svg";
 import { StudyGroupThread } from "./Study/StudyChat";

@@ -9,9 +9,10 @@
  * main-site parity gaps the full cutover surfaced.
  *
  * Detail-page params are real slugs/ids from the seed (person nephi1, place
- * jerusalem-1, object akishs-prison, commentary 1007619201). Messaging routes
- * (/home) need a member token: set E2E_TOKEN (or MESSENGER_TEST_TOKEN); without
- * it those are skipped (the flag/route redirects to / anyway).
+ * jerusalem-1, object akishs-prison, commentary 1007619201). The sampler home
+ * (/home) renders for everyone. Messaging routes (/community) need a member
+ * token: set E2E_TOKEN (or MESSENGER_TEST_TOKEN); without it those are skipped
+ * (the flag/route redirects to / anyway).
  *
  * Run: cd e2e && E2E_TOKEN=<token> npx playwright test route-walk
  */
@@ -42,7 +43,8 @@ const ROUTES = [
   { name: 'commentary detail', path: '/commentary/1007619201' },
   { name: 'read deep (1 Nephi 1)', path: '/read/1-nephi-1' },
   { name: 'facsimiles', path: '/fax' },
-  { name: 'study feed (/home)', path: '/home', login: true },
+  { name: 'sampler (/home)', path: '/home' },
+  { name: 'community (/community)', path: '/community', login: true },
 ];
 
 for (const route of ROUTES) {

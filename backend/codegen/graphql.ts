@@ -250,6 +250,16 @@ export type HomeGroup = {
   url?: Maybe<Scalars['String']['output']>;
 };
 
+export type HomeSampler = {
+  __typename?: 'HomeSampler';
+  commentary?: Maybe<Commentary>;
+  contents?: Maybe<Division>;
+  fax?: Maybe<Fax>;
+  people?: Maybe<Array<Maybe<People>>>;
+  places?: Maybe<Array<Maybe<Place>>>;
+  seed?: Maybe<Scalars['Int']['output']>;
+};
+
 export type HomeUser = {
   __typename?: 'HomeUser';
   bookmark?: Maybe<Scalars['String']['output']>;
@@ -939,6 +949,7 @@ export type Query = {
   history?: Maybe<Array<Maybe<HistoricalDocument>>>;
   homefeed?: Maybe<HomeFeed>;
   homegroups?: Maybe<Array<Maybe<HomeGroup>>>;
+  homesampler?: Maybe<HomeSampler>;
   homethread?: Maybe<Array<Maybe<HomeFeedItem>>>;
   image?: Maybe<Array<Maybe<Image>>>;
   labels?: Maybe<Array<Maybe<Label>>>;
@@ -1075,6 +1086,11 @@ export type QueryHomefeedArgs = {
 export type QueryHomegroupsArgs = {
   grouping?: InputMaybe<Scalars['String']['input']>;
   token?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryHomesamplerArgs = {
+  seed?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -1925,6 +1941,7 @@ export type ResolversTypes = {
   HomeFeed: ResolverTypeWrapper<Partial<HomeFeed>>;
   HomeFeedItem: ResolverTypeWrapper<Partial<HomeFeedItem>>;
   HomeGroup: ResolverTypeWrapper<Partial<HomeGroup>>;
+  HomeSampler: ResolverTypeWrapper<Partial<HomeSampler>>;
   HomeUser: ResolverTypeWrapper<Partial<HomeUser>>;
   Image: ResolverTypeWrapper<Partial<Image>>;
   Index: ResolverTypeWrapper<Partial<Index>>;
@@ -2035,6 +2052,7 @@ export type ResolversParentTypes = {
   HomeFeed: Partial<HomeFeed>;
   HomeFeedItem: Partial<HomeFeedItem>;
   HomeGroup: Partial<HomeGroup>;
+  HomeSampler: Partial<HomeSampler>;
   HomeUser: Partial<HomeUser>;
   Image: Partial<Image>;
   Index: Partial<Index>;
@@ -2330,6 +2348,16 @@ export type HomeGroupResolvers<ContextType = AppContext, ParentType extends Reso
   privacy?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   requests?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
   url?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type HomeSamplerResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['HomeSampler'] = ResolversParentTypes['HomeSampler']> = {
+  commentary?: Resolver<Maybe<ResolversTypes['Commentary']>, ParentType, ContextType>;
+  contents?: Resolver<Maybe<ResolversTypes['Division']>, ParentType, ContextType>;
+  fax?: Resolver<Maybe<ResolversTypes['Fax']>, ParentType, ContextType>;
+  people?: Resolver<Maybe<Array<Maybe<ResolversTypes['People']>>>, ParentType, ContextType>;
+  places?: Resolver<Maybe<Array<Maybe<ResolversTypes['Place']>>>, ParentType, ContextType>;
+  seed?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -2810,6 +2838,7 @@ export type QueryResolvers<ContextType = AppContext, ParentType extends Resolver
   history?: Resolver<Maybe<Array<Maybe<ResolversTypes['HistoricalDocument']>>>, ParentType, ContextType, Partial<QueryHistoryArgs>>;
   homefeed?: Resolver<Maybe<ResolversTypes['HomeFeed']>, ParentType, ContextType, Partial<QueryHomefeedArgs>>;
   homegroups?: Resolver<Maybe<Array<Maybe<ResolversTypes['HomeGroup']>>>, ParentType, ContextType, Partial<QueryHomegroupsArgs>>;
+  homesampler?: Resolver<Maybe<ResolversTypes['HomeSampler']>, ParentType, ContextType, Partial<QueryHomesamplerArgs>>;
   homethread?: Resolver<Maybe<Array<Maybe<ResolversTypes['HomeFeedItem']>>>, ParentType, ContextType, Partial<QueryHomethreadArgs>>;
   image?: Resolver<Maybe<Array<Maybe<ResolversTypes['Image']>>>, ParentType, ContextType, Partial<QueryImageArgs>>;
   labels?: Resolver<Maybe<Array<Maybe<ResolversTypes['Label']>>>, ParentType, ContextType>;
@@ -3306,6 +3335,7 @@ export type Resolvers<ContextType = AppContext> = {
   HomeFeed?: HomeFeedResolvers<ContextType>;
   HomeFeedItem?: HomeFeedItemResolvers<ContextType>;
   HomeGroup?: HomeGroupResolvers<ContextType>;
+  HomeSampler?: HomeSamplerResolvers<ContextType>;
   HomeUser?: HomeUserResolvers<ContextType>;
   Image?: ImageResolvers<ContextType>;
   Index?: IndexResolvers<ContextType>;

@@ -43,7 +43,7 @@ import publicIcon from "src/views/_Common/Study/svg/public.svg";
 import openIcon from "src/views/_Common/Study/svg/open.svg";
 import ReactTooltip from "react-tooltip";
 import trophy from "src/views/User/svg/trophy.svg";
-import { GroupCallToAction, GroupLeaderBoard } from "./Home.js";
+import { GroupCallToAction, GroupLeaderBoard } from "./Community.js";
 import { md5 } from "../../models/Utils.js";
 import { useAppController } from "src/contexts/AppControllerContext";
 
@@ -370,7 +370,7 @@ function HomeFeedItem({
           </div>
 
           <div className="timestamp">
-            <Link to={`/home/${group.url}/${item.id}`}>{timeAgo}</Link>
+            <Link to={`/community/${group.url}/${item.id}`}>{timeAgo}</Link>
           </div>
         </CardHeader>
         <CardHeader className="homeFeedHeader noselect">
@@ -781,7 +781,7 @@ function Comment({ comment }) {
           {comment.user.nickname} {botBadge}{" "}
           <span>
             •{" "}
-            <Link to={`/home/${comment.channel_url}/${comment.id}`}>
+            <Link to={`/community/${comment.channel_url}/${comment.id}`}>
               {timeAgo}
             </Link>
           </span>
