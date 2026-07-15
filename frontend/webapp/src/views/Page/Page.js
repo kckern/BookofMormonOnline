@@ -31,12 +31,9 @@ import { PageControllerProvider } from "src/contexts/PageControllerContext";
 import ReactTooltip from "react-tooltip";
 import { tooltipTheme } from "src/utils/themeColors";
 
-// Apply a Main slug change from inside the Page reducer WITHOUT a nested React
-// dispatch. The reducer is replayed by React during render; the old
-// `appController.functions.setSlug(...)` re-dispatched into Main's reducer on
-// every replay, firing "Cannot update a component (Main) while rendering Page".
-// Calling the sibling reducer directly mutates the same draft + drives
-// history navigation, but schedules no Main setState during render.
+// Thin helper: applies a Main slug change via appFunctions.setSlug, called
+// from Page handlers (not the reducer). The replay-hazard narrative is history
+// — see docs/audits/2026-07-15-controller-state-migration-blast-radius.md.
 function applySlug(appController, slug, opts) {
   appFunctions.setSlug(appController, { val: slug, replace: opts?.replace === true });
 }
@@ -292,6 +289,9 @@ export default function Page() {
       get appController() { return refs.current.appController; },
     };
   }
+  // functions is stable (useMemo, [] deps) — this reassignment is a no-op
+  // after render 1, but runs here so the facade is fully populated before
+  // the first useEffect fires.
   cursorFacadeRef.current.functions = functions;
 
   // Plain per-render controller. Identity changes each render (expected — the
