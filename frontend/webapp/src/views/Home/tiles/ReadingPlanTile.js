@@ -17,7 +17,7 @@ export default function ReadingPlanTile() {
   }
   return (
     <div className="samplerTileInner readingPlanTile">
-      <ReadingPlan slug={"cfm2024"} />
+      <ReadingPlan />
     </div>
   );
 }
