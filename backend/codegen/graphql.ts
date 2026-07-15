@@ -255,6 +255,7 @@ export type HomeSampler = {
   commentary?: Maybe<Commentary>;
   contents?: Maybe<Division>;
   fax?: Maybe<Fax>;
+  history?: Maybe<HistoricalDocument>;
   people?: Maybe<Array<Maybe<People>>>;
   places?: Maybe<Array<Maybe<Place>>>;
   section?: Maybe<Section>;
@@ -2357,6 +2358,7 @@ export type HomeSamplerResolvers<ContextType = AppContext, ParentType extends Re
   commentary?: Resolver<Maybe<ResolversTypes['Commentary']>, ParentType, ContextType>;
   contents?: Resolver<Maybe<ResolversTypes['Division']>, ParentType, ContextType>;
   fax?: Resolver<Maybe<ResolversTypes['Fax']>, ParentType, ContextType>;
+  history?: Resolver<Maybe<ResolversTypes['HistoricalDocument']>, ParentType, ContextType>;
   people?: Resolver<Maybe<Array<Maybe<ResolversTypes['People']>>>, ParentType, ContextType>;
   places?: Resolver<Maybe<Array<Maybe<ResolversTypes['Place']>>>, ParentType, ContextType>;
   section?: Resolver<Maybe<ResolversTypes['Section']>, ParentType, ContextType>;

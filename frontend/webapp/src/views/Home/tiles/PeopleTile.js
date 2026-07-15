@@ -31,7 +31,16 @@ export default function PeopleTile({ data, seed = 0 }) {
   const [featured, ...rest] = data;
   const faces = rest.slice(0, 7);
   const mosaic = rest.slice(7, 16);
-  const refs = (featured.index || []).filter((i) => i?.ref).slice(0, 3);
+  // Dedupe index entries by annotation text, merging their refs
+  // ("Deceives Zeniff — Mosiah 7:21 · 9:10", not two near-identical rows).
+  const indexRows = [];
+  for (const i of (featured.index || []).filter((x) => x?.ref)) {
+    const text = flatten(i.text);
+    const existing = indexRows.find((r) => r.text === text);
+    if (existing) existing.refs.push(i.ref);
+    else indexRows.push({ text, refs: [i.ref] });
+  }
+  const refs = indexRows.slice(0, 2);
   const scriptureOpts = getHtmlScriptureLinkParserOptions((ref) => history.push(`/search/${ref}`));
   const bio = clampWords(flatten(featured.description), 70);
 
@@ -61,10 +70,10 @@ export default function PeopleTile({ data, seed = 0 }) {
           ) : null}
           {refs.length ? (
             <div className="peopleFeatureRefs">
-              {refs.slice(0, 2).map((r) => (
-                <Link className="peopleIndexItem" key={r.ref} to={`/search/${r.ref}`}>
-                  <span className="peopleIndexText">{flatten(r.text)}</span>
-                  <span className="refChip">{r.ref}</span>
+              {refs.map((r) => (
+                <Link className="peopleIndexItem" key={r.refs[0]} to={`/search/${r.refs[0]}`}>
+                  <span className="peopleIndexText">{r.text}</span>
+                  <span className="refChip">{r.refs.slice(0, 2).join(" · ")}</span>
                 </Link>
               ))}
             </div>
@@ -74,7 +83,7 @@ export default function PeopleTile({ data, seed = 0 }) {
       <div className="peopleFaceRow">
         {faces.map((p, i) => {
           const idx = (p.index || []).filter((x) => x?.ref);
-          const ref = idx.length ? idx[(seed + i) % idx.length].ref : null;
+          const item = idx.length ? idx[(seed + i) % idx.length] : null;
           return (
             <Link to={`/people/${p.slug}`} key={p.slug} className="peopleFaceCard" title={p.title || p.name}>
               <img
@@ -85,7 +94,12 @@ export default function PeopleTile({ data, seed = 0 }) {
               />
               <div className="peopleFaceName">{replaceNumbers(p.name)}</div>
               {p.title ? <div className="peopleFaceTitle">{p.title}</div> : null}
-              {ref ? <div className="peopleFaceRef">{ref}</div> : null}
+              {item ? (
+                <div className="peopleFaceIndex">
+                  <span className="peopleFaceIndexText">{flatten(item.text)}</span>
+                  <span className="peopleFaceRef">{item.ref}</span>
+                </div>
+              ) : null}
             </Link>
           );
         })}

@@ -17,25 +17,16 @@ const getSessionSeed = () => {
   return seed;
 };
 
-/** Fisher–Yates; fresh arrangement every mount (content stays seed-stable). */
-const shuffle = (arr) => {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-};
-
 /** Merge the compound API response into one payload keyed by registry tile key. */
 export const assemblePayload = (r) => {
   const sampler = r?.homesampler?.[0] || {};
   const groups = r?.homegroups || [];
   const board = r?.leaderboard?.[0] || {};
   // activity: the freshest few messages across groups (a one-item feed reads
-  // as a dead community — see the adversarial home review).
+  // as a dead community — see the adversarial home review). Membership system
+  // events ("x joined.") are filtered HERE so isReady stays truthful.
   const activity = groups
-    .filter((g) => g?.latest?.timestamp)
+    .filter((g) => g?.latest?.timestamp && !/\b(joined|left)\.?\s*$/i.test((g.latest.msg || "").trim()))
     .sort((a, b) => b.latest.timestamp - a.latest.timestamp)
     .slice(0, 3)
     .map((g) => ({ ...g.latest, channel: g.url, groupName: g.name }));
@@ -69,16 +60,15 @@ export default function Sampler() {
   const [payload, setPayload] = useState(null);
   const [failed, setFailed] = useState(false);
   const [seed, setSeed] = useState(getSessionSeed);
-  // Order randomizes every load; grid-auto-flow:dense packs the mixed spans.
-  const [tiles, setTiles] = useState(() => shuffle(tileRegistry));
+  // Fixed arrangement (registry order); dense flow packs the mixed spans.
+  const tiles = tileRegistry;
 
-  // Break the session-stable seed on demand: fresh content + fresh arrangement.
+  // Break the session-stable seed on demand: fresh content, same layout.
   const resample = () => {
     const next = Math.floor(Math.random() * (2 ** 31 - 1)) + 1;
     sessionStorage.setItem("samplerSeed", String(next));
     setPayload(null);
     setFailed(false);
-    setTiles(shuffle(tileRegistry));
     setSeed(next);
   };
 
@@ -119,14 +109,16 @@ export default function Sampler() {
 
   return (
     <div className="sampler container">
-      <button
-        className="samplerResample noselect"
-        onClick={resample}
-        title={label("resample")}
-        aria-label={label("resample")}
-      >
-        ↻
-      </button>
+      <div className="samplerBar noselect">
+        <button
+          className="samplerResample"
+          onClick={resample}
+          title={label("resample")}
+          aria-label={label("resample")}
+        >
+          ↻ <span>{label("resample")}</span>
+        </button>
+      </div>
       <div className="samplerGrid">
         {tiles.map(({ key, component: Tile, span, isReady }) => {
           if (!payload) return <div key={key} className={`tile skeleton ${span}`} />;

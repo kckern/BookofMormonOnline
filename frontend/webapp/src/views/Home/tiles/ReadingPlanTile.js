@@ -6,29 +6,48 @@ import { label } from "src/models/Utils";
 import { ReadingPlan } from "../ReadingPlan";
 
 /**
- * Guest slot: a real reading-plan preview, not a bare sign-in box — the first
- * seeded program with a 0% progress bar (their journey, not yet started), the
- * one-line value prop, and Start Reading / Sign In entry points.
+ * Guest slot: the default program rendered as a REAL plan preview — its actual
+ * segment cells (all not-started) via the server-side preview generator, plus
+ * Start Reading / Sign In entry points. Structure over slogans.
  */
 function GuestPlanPreview() {
   const [program, setProgram] = useState(null);
+  const [segments, setSegments] = useState([]);
   useEffect(() => {
     let c = false;
     BoMOnlineAPI({ readingplanprograms: null })
-      .then((r) => { if (!c) setProgram(Object.values(r?.readingplanprograms || {})[0] || null); })
-      .catch(() => {});
+      .then(async (r) => {
+        const prog = Object.values(r?.readingplanprograms || {})[0] || null;
+        if (c || !prog) return;
+        setProgram(prog);
+        const pv = await BoMOnlineAPI({ readingplanpreview: { config: prog.config } }, { useCache: false });
+        const raw = pv?.readingplanpreview;
+        // key:0 queries resolve to the object itself; array/keyed shapes are fallbacks.
+        const p = raw?.segments || raw?.parts !== undefined ? raw
+          : Array.isArray(raw) ? raw[0] : Object.values(raw || {})[0];
+        if (!c) setSegments(p?.segments || []);
+      })
+      .catch((e) => console.warn("guestPlanPreview:", e?.message || e));
     return () => { c = true; };
   }, []);
   return (
     <div className="samplerTileInner valuePropTile">
+      <h3 className="tileHeading">{label("reading_plan")}</h3>
       {program ? (
         <div className="guestPlanPreview">
-          <div className="guestPlanTitle">{label("reading_plan")}: <b>{program.title}</b></div>
-          <div className="guestPlanBar"><div style={{ width: "0%" }} /></div>
+          <div className="guestPlanTitle"><b>{program.title}</b></div>
           <div className="guestPlanMeta">0% · {program.durationLabel}</div>
+          {segments.length ? (
+            <div className="segmentList guestSegmentList">
+              {segments.map((s, i) => (
+                <div key={i} className="segmentListItem future notStarted" title={s.ref}>
+                  {i + 1}
+                </div>
+              ))}
+            </div>
+          ) : null}
         </div>
       ) : null}
-      <div className="valuePropText">{label("sampler_value_prop")}</div>
       <div className="valuePropCtas">
         <Link className="valuePropPrimary" to="/contents">{label("start_reading")}</Link>
         <Link className="valuePropSecondary" to="/user/signin">{label("sign_in")}</Link>

@@ -9,13 +9,20 @@ import Lightbox from "./Lightbox";
  * placeholder slots). Clicking a page opens it full-size in a lightbox; the
  * title links through to the full facsimile viewer.
  */
-export default function FaxTile({ data }) {
+export default function FaxTile({ data, seed = 0 }) {
   const [lightbox, setLightbox] = useState(null); // "NNN" page id or null
   if (!data?.slug) return null;
   // Facsimiles.js builds page assets as `${assetUrl}/fax/pages/${slug}/NNN.<fmt>`
   // and derives the thumbnail by swapping "pages" → "thumb".
   const format = data.format || "jpg";
-  const pageNums = [1, 2, 3].filter((n) => n <= (data.pages || 1));
+  // Sample a run from the MIDDLE of the document (front pages are covers and
+  // flyleaves — featureless); seeded so the pick is session-stable.
+  const total = data.pages || 1;
+  const windowStart = total > 6
+    ? Math.floor(total * 0.2) + (seed % Math.max(1, Math.floor(total * 0.6)))
+    : 1;
+  const first = Math.min(Math.max(1, windowStart), Math.max(1, total - 2));
+  const pageNums = [first, first + 1, first + 2].filter((n) => n <= total);
   return (
     <div className="samplerTileInner faxTile">
       <h3 className="tileHeading">

@@ -103,6 +103,19 @@ const sampleSectionNext = async (ctx: AppContext, seed: number) => {
   return rows[0] ?? null;
 };
 
+// One featured historical document (must have a teaser + a renderable thumb).
+const sampleHistory = async (ctx: AppContext, seed: number) => {
+  const rows = await ctx.db
+    .selectFrom('bom_xtras_history')
+    .selectAll()
+    .where(sql<boolean>`teaser IS NOT NULL AND CHAR_LENGTH(teaser) > 30`)
+    .where('aspect', 'is not', null)
+    .orderBy(seededOrder('id', seed))
+    .limit(1)
+    .execute();
+  return rows[0] ?? null;
+};
+
 const samplers: Record<string, (ctx: AppContext, seed: number) => Promise<unknown>> = {
   people: samplePeople,
   places: samplePlaces,
@@ -111,6 +124,7 @@ const samplers: Record<string, (ctx: AppContext, seed: number) => Promise<unknow
   contents: sampleContents,
   section: sampleSection,
   sectionNext: sampleSectionNext,
+  history: sampleHistory,
 };
 
 export const homesamplerResolvers: Resolvers = {

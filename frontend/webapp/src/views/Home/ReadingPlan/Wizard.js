@@ -87,7 +87,10 @@ export default function Wizard({ token, onClose, onStarted }) {
       try {
         const r = await BoMOnlineAPI({ readingplanpreview: { config: JSON.stringify(config) } }, { useCache: false });
         const raw = r?.readingplanpreview;
-        setPreview((Array.isArray(raw) ? raw[0] : (raw && Object.values(raw)[0])) || null);
+        // key:0 queries resolve to the object itself; array/keyed shapes are fallbacks.
+        const p = raw?.segments || raw?.parts !== undefined ? raw
+          : Array.isArray(raw) ? raw[0] : (raw && Object.values(raw)[0]);
+        setPreview(p || null);
       } catch {
         return setErr(label("rp_error_loading"));
       }

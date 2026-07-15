@@ -1,10 +1,24 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { label, breakCache, timeAgoString } from "src/models/Utils";
+import { label, breakCache } from "src/models/Utils";
+
+/** Compact relative age: "3h" / "5d" / "7w" / "2y". */
+const shortAgo = (ms) => {
+  const s = Math.max(0, (Date.now() - ms) / 1000);
+  if (s < 3600) return `${Math.max(1, Math.floor(s / 60))}m`;
+  if (s < 86400) return `${Math.floor(s / 3600)}h`;
+  if (s < 86400 * 7) return `${Math.floor(s / 86400)}d`;
+  if (s < 86400 * 365) return `${Math.floor(s / (86400 * 7))}w`;
+  return `${Math.floor(s / (86400 * 365))}y`;
+};
+
+// Membership system events ("x joined.") arrive authored by whoever triggered
+// them — rendering them as chat misattributes; skip them.
+const isSystemMsg = (msg) => /\b(joined|left)\.?\s*$/i.test((msg || "").trim());
 
 /** The freshest few community messages — a feed with a pulse, not one stale row. */
 export default function ActivityTile({ data }) {
-  const items = Array.isArray(data) ? data : data ? [data] : [];
+  const items = (Array.isArray(data) ? data : data ? [data] : []).filter((m) => !isSystemMsg(m.msg));
   if (!items.length) return null;
   return (
     <div className="samplerTileInner activityTile">
@@ -22,8 +36,7 @@ export default function ActivityTile({ data }) {
               <div className="activityTileUser">
                 {m.user?.nickname}
                 {m.timestamp ? (
-                  // latest.timestamp is milliseconds (see Feed.js); timeAgoString expects seconds.
-                  <span className="activityTileTime">{timeAgoString(m.timestamp / 1000)}</span>
+                  <span className="activityTileTime">{shortAgo(m.timestamp)}</span>
                 ) : null}
               </div>
               <p>{text}</p>
