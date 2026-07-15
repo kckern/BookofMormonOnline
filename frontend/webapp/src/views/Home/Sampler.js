@@ -118,9 +118,10 @@ export default function Sampler() {
     );
   };
 
-  // The left rail: narration + contents anchor it; community + activity fill
-  // its tail so the column bottoms land together (no dead zone).
-  const LEFT_KEYS = ["section", "contents", "spotlight", "activity"];
+  // The left rail: the reading plan leads (the regular's first intent), then
+  // narration + contents anchor it; community + activity fill its tail so the
+  // column bottoms land together (no dead zone).
+  const LEFT_KEYS = ["readingplan", "section", "contents", "spotlight", "activity"];
   const leftTiles = tiles.filter((t) => LEFT_KEYS.includes(t.key));
   const mainTiles = tiles.filter((t) => !LEFT_KEYS.includes(t.key));
 

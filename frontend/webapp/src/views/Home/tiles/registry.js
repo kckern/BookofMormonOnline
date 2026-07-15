@@ -21,6 +21,7 @@ import ActivityTile from "./ActivityTile";
  * rest pairs beneath (text-with-text, visual-with-visual for balanced rows).
  */
 export const tileRegistry = [
+  { key: "readingplan", component: ReadingPlanTile, span: "tile-readingplan", isReady: () => true },
   { key: "section",     component: NarrationTile,   span: "tile-narration",   isReady: (p) => p?.section?.rows?.some?.((r) => r?.narration) },
   { key: "contents",    component: ContentsTile,    span: "tile-contents",    isReady: (p) => !!p?.contents },
   { key: "spotlight",   component: SpotlightTile,   span: "tile-spotlight",   isReady: (p) => !!p?.spotlight },
@@ -30,5 +31,4 @@ export const tileRegistry = [
   { key: "history",     component: HistoryTile,     span: "tile-history",     isReady: (p) => !!p?.history },
   { key: "fax",         component: FaxTile,         span: "tile-fax",         isReady: (p) => !!p?.fax },
   { key: "places",      component: PlacesTile,      span: "tile-places",      isReady: (p) => p?.places?.length > 0 },
-  { key: "readingplan", component: ReadingPlanTile, span: "tile-readingplan", isReady: () => true },
 ];
