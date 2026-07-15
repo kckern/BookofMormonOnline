@@ -37,3 +37,8 @@ test("renderItemContent customizes inner markup; className extends the wrapper",
   );
   expect(container.querySelectorAll(".scriptureItem .ref")).toHaveLength(2);
 });
+
+test("clicking with no onSelect provided does not throw", () => {
+  render(<ScriptureRefGrid items={["Alma 5:2"]} activeIndex={0} />);
+  expect(() => fireEvent.click(screen.getByText("Alma 5:2"))).not.toThrow();
+});

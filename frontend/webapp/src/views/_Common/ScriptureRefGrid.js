@@ -8,20 +8,20 @@ import React from "react";
 export function ScriptureRefGrid({
   items,
   activeIndex = null,
-  onSelect,
+  onSelect = () => {},
   className = "",
-  renderItemContent = (ref) => ref,
+  renderItemContent = (item) => item,
 }) {
   if (!items?.length) return null;
   return (
     <div className={("scripturePanel " + className).trim()}>
-      {items.map((ref, i) => (
+      {items.map((item, i) => (
         <div
-          key={ref + "_" + i}
+          key={item + "_" + i}
           className={"scriptureItem" + (activeIndex === i ? " active" : "")}
           onClick={() => onSelect(i)}
         >
-          {renderItemContent(ref)}
+          {renderItemContent(item)}
         </div>
       ))}
     </div>
