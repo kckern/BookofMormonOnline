@@ -167,12 +167,14 @@ export default function Page() {
         setActiveRow: (val) => {
           dispatch({ fn: "setActiveRow", val: val });
         },
-        addOpenRow: (val) => {
-          dispatch({ fn: "addOpenRow", val: val });
-        },
         removeOpenRow: (val) => {
           dispatch({ fn: "removeOpenRow", val: val });
         },
+        // THE row-open read API (single source of truth, decision 2026-07-14).
+        // A plain closure over the controller: the current reducer mutates
+        // states in place, so this is live mid-campaign. A later migration
+        // re-implements it against a state ref — consumers won't change.
+        isRowOpen: (slug) => pageController.states.openRows.includes(slug),
         setActiveSection: (val) => {
           dispatch({ fn: "setActiveSection", val: val });
         },
@@ -483,7 +485,8 @@ function reducer(pageController, input) {
     case "setActiveRow":
       let { slug, duration, pagetitle, heading, auto } = input.val;
       pageController.states.activeRow = slug;
-      pageController.states.openRows.push(slug);
+      if (!pageController.states.openRows.includes(slug))
+        pageController.states.openRows.push(slug);
       if (pageController.states.activeAudio)
         pageController.states.activeAudio?.pause();
       pageController.states.activeAudio = new Audio(loadAudioUrl(slug));
@@ -554,9 +557,6 @@ function reducer(pageController, input) {
         }, parseInt(duration) * 900);
       });
 
-      break;
-    case "addOpenRow":
-      pageController.states.openRows.push(input.val);
       break;
     case "removeOpenRow":
       popDocTitle("row");
