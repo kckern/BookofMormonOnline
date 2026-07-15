@@ -94,6 +94,7 @@ export default function Page() {
   // replayed by React and must stay side-effect-free, so audio create/pause/play
   // happens in the functions handlers, which reach it through this ref.
   const activeAudioRef = useRef(null);
+  const pageDataRef = useRef(null);
 
   const [pageController, dispatch] = useReducer(
     reducer,
@@ -195,7 +196,7 @@ export default function Page() {
             pageController.functions.setPageProgress(progress);
             setTimeout(() => {
               BoMOnlineAPI(
-                { pageprogress: { token: pageController.appController.states.user.token, slug: [pageController.pageData.slug] } },
+                { pageprogress: { token: pageController.appController.states.user.token, slug: [pageDataRef.current.slug] } },
                 { useCache: false },
               ).then((response) => {
                 pageController.functions.setPageProgress(response.pageprogress);
@@ -228,7 +229,7 @@ export default function Page() {
         // re-implements it against a state ref — consumers won't change.
         isRowOpen: (slug) => pageController.states.openRows.includes(slug),
         setActiveSection: (val) => {
-          setBaseDocTitle(val.title || pageController.pageData.title || label("home_title"));
+          setBaseDocTitle(val.title || pageDataRef.current?.title || label("home_title"));
           // replace, not push: scrolling is not navigation — Back should leave
           // the page in one press.
           applySlug(pageController.appController, val.slug, { replace: true });
@@ -271,6 +272,9 @@ export default function Page() {
       return initPageController;
     })(),
   );
+
+  // keep pageData live for the stable function handlers (they capture render-1's pageController)
+  pageDataRef.current = pageController.pageData;
 
   useEffect(() => {
     return () => {
