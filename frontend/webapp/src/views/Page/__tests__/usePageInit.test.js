@@ -10,7 +10,10 @@ const controller = (initOpen, pageSlug = "lehites") => {
   const states = { initOpen, pageSlug, autoClicked: new Set(), openRows: [] };
   return {
     states,
-    functions: { isRowOpen: (slug) => states.openRows.includes(slug) },
+    functions: {
+      isRowOpen: (slug) => states.openRows.includes(slug),
+      markAutoClicked: (slug) => states.autoClicked.add(slug),
+    },
   };
 };
 
@@ -123,7 +126,10 @@ test("buildInitSteps: call step (itemOpened) comes before its paired openAndAwai
   const autoClicked = new Set();
   const { steps } = buildInitSteps({
     states: { initOpen: { textId: "5" }, pageSlug: "lehites", autoClicked, openRows: [] },
-    functions: { isRowOpen: () => false },
+    functions: {
+      isRowOpen: () => false,
+      markAutoClicked: (slug) => autoClicked.add(slug),
+    },
   });
   // Find the first call+openAndAwait pair for the parent slug
   const types = steps.map((s) => s.type);

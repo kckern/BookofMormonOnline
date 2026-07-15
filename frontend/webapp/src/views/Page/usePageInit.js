@@ -25,7 +25,7 @@ export function buildOpenList(pageSlug, textId) {
 
 // Pure-ish builder (reads the DOM, mutates nothing): initOpen → campaign steps.
 export function buildInitSteps(pageController) {
-  const { initOpen, pageSlug, autoClicked } = pageController.states;
+  const { initOpen, pageSlug } = pageController.states;
 
   if (initOpen.goToSection) {
     const id = `${pageSlug}/${initOpen.goToSection}`;
@@ -56,7 +56,7 @@ export function buildInitSteps(pageController) {
       // (the tail action runs after the final scroll). The deeplink specs
       // assert this slug sequence and the itemOpened→callback ordering.
       step.call(() => {
-        autoClicked.add(slug);
+        pageController.functions.markAutoClicked(slug);
         recordDeepLinkEvent("initPageItem:itemOpened", { slug });
       }),
       step.openAndAwait(

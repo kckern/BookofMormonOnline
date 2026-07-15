@@ -156,7 +156,7 @@ export default function TextContent({ content, isQuote }) {
         duration: content.duration,
         pagetitle: pageController.pageData.title,
         heading: content.heading,
-        auto: pageController.states.autoClicked?.has(slug) === true,
+        auto: pageController.functions.isAutoClicked(slug) === true,
       });
     }
   };

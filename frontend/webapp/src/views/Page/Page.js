@@ -90,6 +90,11 @@ export default function Page() {
     else getPageDataFromAPI(routeParams.pageSlug);
   }, [pageIdentityKey]);
 
+  // Active narration audio lives in a ref (not reducer state): the reducer is
+  // replayed by React and must stay side-effect-free, so audio create/pause/play
+  // happens in the functions handlers, which reach it through this ref.
+  const activeAudioRef = useRef(null);
+
   const [pageController, dispatch] = useReducer(
     reducer,
     (() => {
@@ -99,7 +104,6 @@ export default function Page() {
         init: false,
         activeSection: null,
         activeRow: null,
-        activeAudio: null,
         commentGroupId: null,
         pageSlug: initOpen.pageSlug,
         textId: null,
@@ -150,7 +154,8 @@ export default function Page() {
           ]);
         },
         setPageData: (val) => {
-          dispatch({ fn: "setPageData", val: val });
+          setBaseDocTitle(val?.title || label("home_title"));
+          dispatch({ fn: "setPageData", val });
         },
         setPageComments: (val) => {
           dispatch({ fn: "setPageComments", val: val });
@@ -165,10 +170,57 @@ export default function Page() {
           dispatch({ fn: "deleteToPageComments", val: val });
         },
         setActiveRow: (val) => {
-          dispatch({ fn: "setActiveRow", val: val });
+          const { slug, duration, pagetitle, heading, auto } = val;
+          activeAudioRef.current?.pause();
+          const audio = new Audio(loadAudioUrl(slug));
+          audio.addEventListener("ended", () => pageController.functions.autoAdvance());
+          activeAudioRef.current = audio;
+          if (pageController.appController.states.preferences.audio) playSound(audio);
+          pushDocTitle("row", heading + " | " + label("home_title"));
+          // Apply a Main slug change without a nested React dispatch — see
+          // applySlug's note. auto opens replace (they're campaign-driven, not
+          // user navigation) so Back leaves the page in one press.
+          applySlug(pageController.appController, slug, { replace: auto === true });
+          localStorage.setItem("studybookmark", slug);
+          dispatch({ fn: "setActiveRow", val: { slug, auto } });
+          BoMOnlineAPI(
+            { log: { token: pageController.appController.states.user.token, key: "block", val: slug } },
+            { useCache: false },
+          ).then(() => {
+            const link_index = parseInt(slug.match(/\d+$/).shift());
+            const progress = { ...(pageController.states.progress || {}) };
+            progress.started_items = [...(progress.started_items || [])];
+            if (!progress.completed_items?.includes(link_index))
+              progress.started_items.push(link_index);
+            pageController.functions.setPageProgress(progress);
+            setTimeout(() => {
+              BoMOnlineAPI(
+                { pageprogress: { token: pageController.appController.states.user.token, slug: [pageController.pageData.slug] } },
+                { useCache: false },
+              ).then((response) => {
+                pageController.functions.setPageProgress(response.pageprogress);
+                const token = pageController.appController.states.user.token;
+                BoMOnlineAPI({ userprogress: token }, { useCache: false }).then((r) => {
+                  const saveMe = r.userprogress?.[token];
+                  const summary = saveMe?.summary;
+                  if (saveMe)
+                    pageController.appController.functions.updateUserSummary({ ...saveMe, ...{ slug, pagetitle, heading } });
+                  window.clicky?.goal("read");
+                  if (summary?.completed >= 100)
+                    pageController.appController.functions.setPopUp({ type: "victory", popupData: summary, vhtop: 10 });
+                });
+              });
+            }, parseInt(duration) * 900);
+          });
         },
         removeOpenRow: (val) => {
-          dispatch({ fn: "removeOpenRow", val: val });
+          popDocTitle("row");
+          applySlug(
+            pageController.appController,
+            pageController.states.activeSection || pageController.states.pageSlug,
+          );
+          if (val === pageController.states.activeRow) activeAudioRef.current?.pause();
+          dispatch({ fn: "removeOpenRow", val });
         },
         // THE row-open read API (single source of truth, decision 2026-07-14).
         // A plain closure over the controller: the current reducer mutates
@@ -176,7 +228,11 @@ export default function Page() {
         // re-implements it against a state ref — consumers won't change.
         isRowOpen: (slug) => pageController.states.openRows.includes(slug),
         setActiveSection: (val) => {
-          dispatch({ fn: "setActiveSection", val: val });
+          setBaseDocTitle(val.title || pageController.pageData.title || label("home_title"));
+          // replace, not push: scrolling is not navigation — Back should leave
+          // the page in one press.
+          applySlug(pageController.appController, val.slug, { replace: true });
+          dispatch({ fn: "setActiveSection", val });
         },
         setPageSlugId: (val) => {
           dispatch({ fn: "setPageSlugId", val: val });
@@ -184,6 +240,8 @@ export default function Page() {
         resetAutoClicked: () => {
           dispatch({ fn: "resetAutoClicked" });
         },
+        markAutoClicked: (slug) => dispatch({ fn: "markAutoClicked", val: slug }),
+        isAutoClicked: (slug) => pageController.states.autoClicked.has(slug),
         setNotFound: (val) => {
           dispatch({ fn: "setNotFound", val: val });
         },
@@ -216,7 +274,7 @@ export default function Page() {
 
   useEffect(() => {
     return () => {
-      pageController.states.activeAudio?.pause(); // Pause Audio if navigate from another page
+      activeAudioRef.current?.pause(); // Pause Audio if navigate from another page
     };
   }, []);
 
@@ -315,17 +373,17 @@ export default function Page() {
   //Audio Settings Changed
   useEffect(() => {
     if (!pageController.appController.states.preferences.audio) {
-      pageController.states.activeAudio?.pause();
+      activeAudioRef.current?.pause();
     } else {
-      playSound(pageController.states.activeAudio);
-      // pageController.states.activeAudio?.play();
+      playSound(activeAudioRef.current);
+      // activeAudioRef.current?.play();
     }
   }, [pageController.appController.states.preferences.audio]);
 
   const getPageDataFromAPI = async (pageSlug, textId) => {
     //API Call
     //console.log("getPageDataFromAPI",{pageSlug});
-    pageController.states.activeAudio?.pause();
+    activeAudioRef.current?.pause();
     let response = await BoMOnlineAPI(
       {
         page: pageSlug,
@@ -483,106 +541,19 @@ function loadAudioUrl(slug) {
 function reducer(pageController, input) {
   switch (input.fn) {
     case "setActiveRow":
-      let { slug, duration, pagetitle, heading, auto } = input.val;
-      pageController.states.activeRow = slug;
-      if (!pageController.states.openRows.includes(slug))
-        pageController.states.openRows.push(slug);
-      if (pageController.states.activeAudio)
-        pageController.states.activeAudio?.pause();
-      pageController.states.activeAudio = new Audio(loadAudioUrl(slug));
-
-      pageController.states.activeAudio?.addEventListener("ended", (event) => {
-        pageController.functions.autoAdvance();
-      });
-
-      if (pageController.appController.states.preferences.audio)
-        playSound(pageController.states.activeAudio); //.play();
-      pushDocTitle("row", heading + " | " + label("home_title"));
-      applySlug(pageController.appController, slug, { replace: auto === true });
-      if (auto === true) pageController.states.autoClicked.delete(slug);
-
-      localStorage.setItem("studybookmark", slug);
-      BoMOnlineAPI(
-        {
-          log: {
-            token: pageController.appController.states.user.token,
-            key: "block",
-            val: slug,
-          },
-        },
-        { useCache: false },
-      ).then((r) => {
-        let link_index = parseInt(slug.match(/\d+$/).shift());
-        let progress = pageController.states.progress || {};
-        if (!progress?.started_items) progress["started_items"] = [];
-        if (!progress?.completed_items?.includes(link_index))
-          progress?.started_items.push(link_index);
-        pageController.functions.setPageProgress(progress);
-        setTimeout(() => {
-          BoMOnlineAPI(
-            {
-              pageprogress: {
-                token: pageController.appController.states.user.token,
-                slug: [pageController.pageData.slug],
-              },
-            },
-            { useCache: false },
-          ).then((response) => {
-            pageController.functions.setPageProgress(response.pageprogress);
-
-            let token = pageController.appController.states.user.token;
-            BoMOnlineAPI(
-              {
-                userprogress: token,
-              },
-              { useCache: false },
-            ).then((r) => {
-              let saveMe = r.userprogress?.[token];
-              let summary = saveMe?.summary;
-              if (saveMe)
-                pageController.appController.functions.updateUserSummary({
-                  ...saveMe,
-                  ...{ slug, pagetitle, heading },
-                });
-              window.clicky?.goal("read");
-              // if 100% then show confetti
-              if (summary?.completed >= 100)
-                pageController.appController.functions.setPopUp({
-                  type: "victory",
-                  popupData: summary,
-                  vhtop: 10,
-                });
-            });
-          });
-        }, parseInt(duration) * 900);
-      });
-
+      pageController.states.activeRow = input.val.slug;
+      if (!pageController.states.openRows.includes(input.val.slug))
+        pageController.states.openRows.push(input.val.slug);
+      if (input.val.auto === true)
+        pageController.states.autoClicked.delete(input.val.slug);
       break;
     case "removeOpenRow":
-      popDocTitle("row");
-      applySlug(
-        pageController.appController,
-        pageController.states.activeSection || pageController.states.pageSlug,
-      );
       pageController.states.openRows = pageController.states.openRows.filter(
         (x) => x !== input.val,
       );
-
-      if (input.val === pageController.states.activeRow) {
-        if (pageController.states.activeAudio)
-          pageController.states.activeAudio?.pause();
-      }
-
       break;
     case "setActiveSection":
-      let { slug: sectionSlug, title: sectionTitle } = input.val;
-      pageController.states.activeSection = sectionSlug;
-      setBaseDocTitle(
-        sectionTitle || pageController.pageData.title || label("home_title"),
-      );
-      // replace, not push: scrolling is not navigation — Back should leave
-      // the page in one press. (The old `|| true` made the init guard dead.)
-      applySlug(pageController.appController, sectionSlug, { replace: true });
+      pageController.states.activeSection = input.val.slug;
       break;
 
     case "setPageComments":
@@ -643,13 +614,16 @@ function reducer(pageController, input) {
       pageController.states.autoClicked = new Set();
       break;
 
+    case "markAutoClicked":
+      pageController.states.autoClicked.add(input.val);
+      break;
+
     case "setInitOpen":
       pageController.states.initOpen = input.val;
       break;
 
     case "setPageData":
       pageController.pageData = input.val;
-      setBaseDocTitle(pageController.pageData?.title || label("home_title"));
       break;
     case "setNotFound":
       pageController.states.notFound = input.val;
