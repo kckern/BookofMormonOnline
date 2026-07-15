@@ -316,12 +316,25 @@ export interface BomQuote {
 }
 
 export interface BomReadingplan {
+  config: Json | null;
   duedate: Date | null;
+  enddate: Date | null;
   guid: string | null;
   owner: string | null;
   slug: string | null;
   startdate: Date | null;
+  status: "abandoned" | "active" | "completed" | null;
   title: string | null;
+}
+
+export interface BomReadingplanProgram {
+  active: Generated<number>;
+  config: Json;
+  description: string | null;
+  guid: string;
+  slug: string;
+  sort: Generated<number>;
+  title: string;
 }
 
 export interface BomReadingplanSeg {
@@ -962,6 +975,7 @@ export interface DB {
   bom_prdbom_people_rels: BomPrdbomPeopleRels;
   bom_quote: BomQuote;
   bom_readingplan: BomReadingplan;
+  bom_readingplan_program: BomReadingplanProgram;
   bom_readingplan_seg: BomReadingplanSeg;
   bom_references: BomReferences;
   bom_section: BomSection;
