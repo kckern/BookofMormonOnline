@@ -16,4 +16,12 @@ type HomeSampler {
   sectionNext: Section
   history: HistoricalDocument
   text: TextBlock
+  faxPages: [FaxPageRef]
+  peopleCount: Int
+  placesCount: Int
+}
+
+type FaxPageRef {
+  page: Int
+  ref: String
 }

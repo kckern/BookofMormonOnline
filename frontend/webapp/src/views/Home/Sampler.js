@@ -39,15 +39,6 @@ export const assemblePayload = (r) => {
   const sampler = r?.homesampler?.[0] || {};
   const groups = r?.homegroups || [];
   const board = r?.leaderboard?.[0] || {};
-  // activity: the freshest few messages across groups (a one-item feed reads
-  // as a dead community — see the adversarial home review). Membership system
-  // events ("x joined.") are filtered HERE so isReady stays truthful.
-  const activity = groups
-    .filter((g) => g?.latest?.timestamp && !/\b(joined|left)\.?\s*$/i.test((g.latest.msg || "").trim()))
-    .sort((a, b) => b.latest.timestamp - a.latest.timestamp)
-    .slice(0, 3)
-    .map((g) => ({ ...g.latest, channel: g.url, groupName: g.name }));
-  // spotlight: featured group AND a deduped user list together.
   const dedupe = (users) => {
     const seen = new Set();
     return (users || []).filter((u) => {
@@ -57,18 +48,28 @@ export const assemblePayload = (r) => {
       return true;
     });
   };
-  const finishers = dedupe(board.recentFinishers);
-  const leaders = dedupe(board.currentProgress);
-  const group = groups.length ? groups[Math.floor(Math.random() * groups.length)] : null;
-  const users = finishers.length >= 2 ? finishers : leaders;
-  const spotlight = group || users.length
-    ? { group, users: users.slice(0, 4), usersLabel: finishers.length >= 2 ? "recent_finishers" : "leader_board" }
+  // ONE merged community payload (design review): liveliest groups first,
+  // fresh messages under group chips, one finisher row. Membership system
+  // events are filtered; stale timestamps degrade to reading-progress rows.
+  const FRESH_MS = 90 * 86400 * 1000;
+  const sorted = groups
+    .filter((g) => g?.url)
+    .sort((a, b) => (b.latest?.timestamp || 0) - (a.latest?.timestamp || 0));
+  const messages = sorted
+    .filter((g) => g.latest?.timestamp && !/\b(joined|left)\.?\s*$/i.test((g.latest.msg || "").trim()))
+    .slice(0, 3)
+    .map((g) => ({
+      ...g.latest,
+      channel: g.url,
+      groupName: g.name,
+      fresh: g.latest.timestamp > Date.now() - FRESH_MS,
+    }));
+  const finishers = dedupe(board.recentFinishers).slice(0, 4);
+  const reading = dedupe(board.currentProgress).slice(0, 3);
+  const community = sorted.length || finishers.length
+    ? { groups: sorted.slice(0, 3), moreGroups: Math.max(0, sorted.length - 3), messages, reading, finishers }
     : null;
-  return {
-    ...sampler,
-    activity: activity.length ? activity : null,
-    spotlight,
-  };
+  return { ...sampler, community };
 };
 
 export default function Sampler() {
@@ -126,21 +127,58 @@ export default function Sampler() {
 
   if (failed) return <SamplerFallback />;
 
-  const renderTile = ({ key, component: Tile, span, isReady }) => {
+  const renderTile = ({ key, component: Tile, span, isReady }, spanOverride) => {
     if (!payload) return <div key={key} className={`tile skeleton ${span}`} />;
     if (!isReady(payload)) return null;
     return (
-      <div key={key} className={`tile ${span}`}>
-        <Tile data={payload[key]} next={payload[`${key}Next`]} seed={payload.seed} />
+      <div key={key} className={`tile ${spanOverride || span}`}>
+        <Tile data={payload[key]} next={payload[`${key}Next`]} seed={payload.seed} payload={payload} />
       </div>
     );
   };
 
-  // Fixed left rail (registry order) + fixed top (people) + shuffled variables.
+  // ---- balanced binning ---------------------------------------------------
+  // Estimate each tile's height (rem) from the payload, then greedily assign
+  // variable tiles to the currently-shorter side. Ragged bottoms are fine;
+  // lopsided columns are not. Variable tiles may spill under contents.
+  const est = (key) => {
+    if (!payload) return 14;
+    switch (key) {
+      case "readingplan": return 15;
+      case "section": {
+        const beats = (payload.section?.rows || []).filter((r) => r?.narration).length;
+        const nextBeats = beats < 6 ? (payload.sectionNext?.rows || []).length : 0;
+        return 8 + (beats + nextBeats) * 2.4;
+      }
+      case "contents": return 12 + ((payload.contents?.pages || []).length || 5) * 2.6;
+      case "people": return 46;
+      case "text": return 20;
+      case "commentary": return 18;
+      case "history": return 16;
+      case "fax": return 15;
+      case "places": return 17;
+      case "community": return 8 + (payload.community?.groups?.length || 0) * 4 + (payload.community?.messages?.length || 0) * 2.5;
+      default: return 14;
+    }
+  };
   const leftTiles = FIXED_LEFT.map((k) => tileRegistry.find((t) => t.key === k)).filter(Boolean);
+  const railExtra = [];
+  const gridVars = [];
+  let leftH = leftTiles.reduce((a, t) => a + est(t.key), 0);
+  let rightH = est("people");
+  for (const t of variableTiles) {
+    if (!payload || !t.isReady(payload)) { gridVars.push(t); continue; }
+    const e = est(t.key);
+    // span-2 tiles pair up in the grid → amortized half height per tile
+    if (leftH + e < rightH + e / 2) { railExtra.push(t); leftH += e; }
+    else { gridVars.push(t); rightH += e / 2; }
+  }
+  // text width: pairs with an odd span-2 neighbor, else takes its own full row
+  const span2InGrid = gridVars.filter((t) => t.key !== "text").length;
+  const textSpan = span2InGrid % 2 === 1 ? "tile-text tile-text-half" : "tile-text";
   const mainTiles = [
     ...FIXED_TOP.map((k) => tileRegistry.find((t) => t.key === k)).filter(Boolean),
-    ...variableTiles,
+    ...gridVars,
   ];
 
   return (
@@ -156,8 +194,13 @@ export default function Sampler() {
         </button>
       </div>
       <div className="samplerColumns">
-        <div className="samplerLeftRail">{leftTiles.map(renderTile)}</div>
-        <div className="samplerGrid">{mainTiles.map(renderTile)}</div>
+        <div className="samplerLeftRail">
+          {leftTiles.map((t) => renderTile(t))}
+          {railExtra.map((t) => renderTile(t))}
+        </div>
+        <div className="samplerGrid">
+          {mainTiles.map((t) => renderTile(t, t.key === "text" ? textSpan : undefined))}
+        </div>
       </div>
       <ScripturePopup />
     </div>

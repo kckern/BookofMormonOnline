@@ -1732,13 +1732,16 @@ const queries = {
       query: `homesampler${seedArg} {
         seed
         people { slug guid name title date description index { ref slug text } }
-        places { slug name info index { ref slug } }
+        places { slug name info index { ref slug text } }
+        peopleCount
+        placesCount
         fax { slug title pages info format }
+        faxPages { page ref }
         commentary { id title text preview reference publication { source_id source_title source_name source_slug } }
         contents { slug title description pages { title slug sections { title slug } } }
         section { title slug page { title slug } rows { guid narration { guid description text { slug heading imgIds status(token:"${input.token || ""}") } } } }
         sectionNext { title slug rows { guid narration { guid description text { slug heading status(token:"${input.token || ""}") } } } }
-        history { id slug year date source archive author document teaser aspect }
+        history { id slug year date source archive author document teaser citation aspect }
         text { slug heading content imgIds parent_page { title } parent_section { title } narration { description } }
       }`,
     }

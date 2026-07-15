@@ -14,7 +14,7 @@ import { flatten, clampWords, supDigits } from "./textUtils";
  * as face cards (name + title + one index ref each), and the end cell is a
  * 3×3 mosaic of yet more faces — the "there is much more" signal — into /people.
  */
-export default function PeopleTile({ data, seed = 0 }) {
+export default function PeopleTile({ data, seed = 0, payload }) {
   const [featured, ...rest] = data;
   const faces = rest.slice(0, 7);
   const mosaic = rest.slice(7, 16);
@@ -123,7 +123,7 @@ export default function PeopleTile({ data, seed = 0 }) {
                 />
               ))}
             </div>
-            <span className="peopleFaceName viewAllOverlay">{label("view_all")} →</span>
+            <span className="peopleFaceName viewAllOverlay">{payload?.peopleCount ? `+${payload.peopleCount - data.length} ${label("people")}` : label("view_more")}</span>
           </div>
         </Link>
       </div>

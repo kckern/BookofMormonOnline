@@ -7,8 +7,7 @@ import CommentaryTile from "./CommentaryTile";
 import ContentsTile from "./ContentsTile";
 import NarrationTile from "./NarrationTile";
 import ReadingPlanTile from "./ReadingPlanTile";
-import SpotlightTile from "./SpotlightTile";
-import ActivityTile from "./ActivityTile";
+import CommunityTile from "./CommunityTile";
 
 /**
  * Sampler tile registry. Adding a tile type:
@@ -25,8 +24,7 @@ export const tileRegistry = [
   { key: "readingplan", component: ReadingPlanTile, span: "tile-readingplan", isReady: () => true },
   { key: "section",     component: NarrationTile,   span: "tile-narration",   isReady: (p) => p?.section?.rows?.some?.((r) => r?.narration) },
   { key: "contents",    component: ContentsTile,    span: "tile-contents",    isReady: (p) => !!p?.contents },
-  { key: "spotlight",   component: SpotlightTile,   span: "tile-spotlight",   isReady: (p) => !!p?.spotlight },
-  { key: "activity",    component: ActivityTile,    span: "tile-activity",    isReady: (p) => p?.activity?.length > 0 },
+  { key: "community",   component: CommunityTile,   span: "tile-community",   isReady: (p) => !!p?.community },
   { key: "people",      component: PeopleTile,      span: "tile-people",      isReady: (p) => p?.people?.length > 0 },
   { key: "text",        component: TextTile,        span: "tile-text",        isReady: (p) => !!p?.text },
   { key: "commentary",  component: CommentaryTile,  span: "tile-commentary",  isReady: (p) => !!p?.commentary },

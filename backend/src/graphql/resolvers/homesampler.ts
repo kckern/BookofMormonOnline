@@ -9,6 +9,7 @@
  * run codegen — nothing else changes.
  */
 import { sql } from 'kysely';
+import { generateReference } from 'scripture-guide';
 import type { Resolvers } from '../../../codegen/graphql.js';
 import type { AppContext } from '../context.js';
 
@@ -46,14 +47,50 @@ const samplePlaces = (ctx: AppContext, seed: number) =>
 
 const sampleFax = async (ctx: AppContext, seed: number) => {
   const rows = await ctx.loaders.faxByFilter.load('');
+  // Only versions present in bom_xtras_fax_index — those have per-page
+  // scripture references (and therefore meaningful pages to show).
+  const indexed = await ctx.db
+    .selectFrom('bom_xtras_fax_index')
+    .select('version')
+    .distinct()
+    .execute();
+  const indexedSlugs = new Set(indexed.map((r) => String(r.version)));
   // ROBUSTNESS: the loader's order is weight-only with no tiebreak and is NOT
   // stable across calls; sort by slug so the modulo pick is deterministic.
   const sorted = rows
-    // pages>0 filters out metadata-only entries (e.g. 'poetic') whose page
-    // assets don't exist — an imageless facsimile tile is dead weight.
-    .filter((r) => !r.hide && Number(r.pages) > 0)
+    .filter((r) => !r.hide && Number(r.pages) > 0 && indexedSlugs.has(String(r.slug)))
     .sort((a, b) => String(a.slug).localeCompare(String(b.slug)));
   return sorted.length ? sorted[seed % sorted.length] : null;
+};
+
+// Two seeded pages OF THE SAMPLED FAX that carry scripture references, each
+// captioned with its first verse's reference.
+const sampleFaxPages = async (ctx: AppContext, seed: number) => {
+  const fax = (await sampleFax(ctx, seed)) as { slug?: string } | null;
+  if (!fax?.slug) return [];
+  const rows = await ctx.db
+    .selectFrom('bom_xtras_fax_index')
+    .select(({ fn }) => ['page', fn.min<string>('verse_id').as('firstVerse')])
+    .where('version', '=', String(fax.slug))
+    .groupBy('page')
+    .orderBy('page')
+    .execute();
+  if (!rows.length) return [];
+  const start = seed % rows.length;
+  const picks = [rows[start], rows[(start + 1) % rows.length]]
+    .filter((r, i, a) => r && a.findIndex((x) => x?.page === r.page) === i);
+  return picks.map((r) => ({
+    page: Number(r!.page),
+    ref: generateReference([Number(r!.firstVerse)]),
+  }));
+};
+
+const countRows = (table: 'bom_people' | 'bom_places') => async (ctx: AppContext) => {
+  const r = await ctx.db
+    .selectFrom(table)
+    .select(({ fn }) => fn.countAll<number>().as('n'))
+    .executeTakeFirst();
+  return Number(r?.n ?? 0);
 };
 
 const sampleCommentary = async (ctx: AppContext, seed: number) => {
@@ -140,6 +177,9 @@ const samplers: Record<string, (ctx: AppContext, seed: number) => Promise<unknow
   sectionNext: sampleSectionNext,
   history: sampleHistory,
   text: sampleText,
+  faxPages: sampleFaxPages,
+  peopleCount: countRows('bom_people'),
+  placesCount: countRows('bom_places'),
 };
 
 export const homesamplerResolvers: Resolvers = {

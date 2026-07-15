@@ -122,40 +122,40 @@ describe("Sampler shell rendering", () => {
   });
 });
 
-describe("assemblePayload derivations", () => {
-  test("activity lists the freshest messages (newest first) with channel urls", () => {
+describe("assemblePayload community derivation", () => {
+  test("liveliest group leads; fresh messages carry group chips; finishers dedupe", () => {
+    const now = Date.now();
     const out = assemblePayload({
       homesampler: [{ seed: 1 }],
       homegroups: [
-        { url: "old", latest: { timestamp: 100, msg: "old" } },
-        { url: "new", latest: { timestamp: 200, msg: "new" } },
+        { url: "old", name: "Old", latest: { timestamp: now - 1000, msg: "hello" } },
+        { url: "new", name: "New", latest: { timestamp: now, msg: "newest" } },
       ],
-      leaderboard: [{ currentProgress: [], recentFinishers: [] }],
+      leaderboard: [{ currentProgress: [], recentFinishers: [{ nickname: "Jo" }, { nickname: "Jo" }, { nickname: "Sam" }] }],
     });
-    expect(out.activity).toHaveLength(2);
-    expect(out.activity[0].msg).toBe("new");
-    expect(out.activity[0].channel).toBe("new");
-    expect(out.activity[1].msg).toBe("old");
+    expect(out.community.groups[0].url).toBe("new");
+    expect(out.community.messages[0].msg).toBe("newest");
+    expect(out.community.messages[0].groupName).toBe("New");
+    expect(out.community.messages[0].fresh).toBe(true);
+    expect(out.community.finishers.map((u) => u.nickname)).toEqual(["Jo", "Sam"]);
   });
 
-  test("spotlight combines a group with a deduped user list", () => {
+  test("stale messages are unfresh; membership system events filtered; reading fallback kept", () => {
     const out = assemblePayload({
       homesampler: [{ seed: 1 }],
-      homegroups: [{ url: "g1", name: "G", latest: { timestamp: 1, msg: "hi" } }],
-      leaderboard: [{
-        currentProgress: [{ nickname: "Sam", progress: 5 }, { nickname: "Sam", progress: 5 }, { nickname: "Jo", progress: 9 }],
-        recentFinishers: [],
-      }],
+      homegroups: [
+        { url: "g", name: "G", latest: { timestamp: 1000, msg: "old msg" } },
+        { url: "j", name: "J", latest: { timestamp: Date.now(), msg: "bob joined." } },
+      ],
+      leaderboard: [{ currentProgress: [{ nickname: "Sam", progress: 5 }], recentFinishers: [] }],
     });
-    expect(out.spotlight).toBeTruthy();
-    expect(out.spotlight.group.url).toBe("g1");
-    expect(out.spotlight.users.map((u) => u.nickname)).toEqual(["Sam", "Jo"]); // deduped
-    expect(out.spotlight.usersLabel).toBe("leader_board");
+    expect(out.community.messages).toHaveLength(1);
+    expect(out.community.messages[0].fresh).toBe(false);
+    expect(out.community.reading[0].nickname).toBe("Sam");
   });
 
-  test("empty inputs yield null activity and spotlight without throwing", () => {
+  test("empty inputs yield null community without throwing", () => {
     const out = assemblePayload({ homesampler: [{ seed: 1 }], homegroups: [], leaderboard: [] });
-    expect(out.activity).toBeNull();
-    expect(out.spotlight).toBeNull();
+    expect(out.community).toBeNull();
   });
 });
