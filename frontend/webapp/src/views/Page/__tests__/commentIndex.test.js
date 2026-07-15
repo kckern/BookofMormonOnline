@@ -46,3 +46,29 @@ test("delete/update tolerate garbage data", () => {
   expect(deleteToPageComments({ a: {} }, { data: "x" })).toEqual({ a: {} });
   expect(updateToPageComment({ a: {} }, { data: "x" })).toEqual({ a: {} });
 });
+
+test("add/update/delete do not mutate the input index (copy-on-write)", () => {
+  const before = indexPageComments([msg({ text: 3 })]);
+  const beforeTextBucket = before.text;
+  const added = addToPageCommentIndex(before, msg({ text: 4 }, "m2"));
+  expect(before.text[4]).toBeUndefined();       // input untouched
+  expect(added).not.toBe(before);               // new top-level object
+  expect(added.text).not.toBe(beforeTextBucket); // touched bucket copied
+  const deleted = deleteToPageComments(added, msg({ text: 3 }));
+  expect(added.text[3]).toBeDefined();          // input untouched
+  expect(deleted.text[3]).toBeUndefined();
+});
+
+test("copy-on-write shares untouched buckets by reference", () => {
+  const before = indexPageComments([msg({ text: 3, img: 7 })]);
+  const added = addToPageCommentIndex(before, msg({ text: 4 }, "m2"));
+  expect(added.text).not.toBe(before.text); // touched bucket copied
+  expect(added.img).toBe(before.img);       // untouched bucket shared by reference
+});
+
+test("delete returns the same reference when the id is absent (no-op)", () => {
+  const index = indexPageComments([msg({ text: 3 })]);
+  // Bucket 'text' exists, but id 9 is not in it → nothing to remove.
+  const out = deleteToPageComments(index, msg({ text: 9 }));
+  expect(out).toBe(index); // no copy made when nothing deleted
+});

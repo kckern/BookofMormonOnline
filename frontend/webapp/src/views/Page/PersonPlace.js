@@ -8,6 +8,7 @@ import { assetUrl } from "src/models/BoMOnlineAPI";
 import { useAppController } from "src/contexts/AppControllerContext";
 import { usePageController } from "src/contexts/PageControllerContext";
 import { replaceNumbers } from "src/models/Utils";
+import { makeScriptureLinkReplacer } from "../_Common/scriptureLinkReplacer";
 
 // Slugs like "mormon2" inside {Mormon|mormon2} otherwise read as the scripture
 // reference "Mormon 2" and corrupt the slug capture before token parsing.
@@ -51,16 +52,14 @@ export const renderPersonPlaceHTML = (html, pageController, scriptureLinkClickHa
 
   html = html + "<span class='react-tooltip'></span>";
 
+  const scriptureReplacer = makeScriptureLinkReplacer({
+    onClick: (ref) => scriptureLinkClickHandler?.(ref),
+  });
+
   const options = {
     replace: (domNode) => {
-      const attribs = { ...domNode.attribs };
-      if (attribs?.classname === 'scripture_link') {
-        const ref = domNode.children[0].data;
-        // TODO: figure out why not a regular class here insead of className (reparsed?)
-        attribs.className = attribs.classname;
-        delete attribs.classname;
-        return <a {...attribs} onClick={()=>scriptureLinkClickHandler(ref)}>{ref}</a>;
-      }
+      const scriptureEl = scriptureReplacer(domNode);
+      if (scriptureEl !== undefined) return scriptureEl;
 
       if (domNode.attribs && domNode.attribs.class === "person") {
         return (

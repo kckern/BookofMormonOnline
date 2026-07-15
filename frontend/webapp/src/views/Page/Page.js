@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useReducer, useEffect, useState, useRef } from "react";
+import React, { useReducer, useEffect, useState, useRef, useMemo } from "react";
 // API ACTIONS
 // COMPONENTS
 import Loader from "../_Common/Loader";
@@ -20,9 +20,10 @@ import InitWarning from "./InitWarning";
 import { Alert } from "reactstrap";
 import loading_comments from "src/views/_Common/Study/svg/loading_comment.svg";
 import { MuteButton } from "./MuteButton";
-import { usePageInit, pageScrollManager, isRefOpen } from "./usePageInit";
+import { usePageInit, pageScrollManager } from "./usePageInit";
 import { addToPageCommentIndex, updateToPageComment, deleteToPageComments } from "./commentIndex";
 import { usePageComments } from "./usePageComments";
+import { setBaseDocTitle, pushDocTitle, popDocTitle } from "./docTitle";
 import { createScrollSpy, step } from "src/scroll";
 import { appFunctions } from "src/models/appController";
 import { useAppController } from "src/contexts/AppControllerContext";
@@ -30,12 +31,9 @@ import { PageControllerProvider } from "src/contexts/PageControllerContext";
 import ReactTooltip from "react-tooltip";
 import { tooltipTheme } from "src/utils/themeColors";
 
-// Apply a Main slug change from inside the Page reducer WITHOUT a nested React
-// dispatch. The reducer is replayed by React during render; the old
-// `appController.functions.setSlug(...)` re-dispatched into Main's reducer on
-// every replay, firing "Cannot update a component (Main) while rendering Page".
-// Calling the sibling reducer directly mutates the same draft + drives
-// history navigation, but schedules no Main setState during render.
+// Thin helper: applies a Main slug change via appFunctions.setSlug, called
+// from Page handlers (not the reducer). The replay-hazard narrative is history
+// — see docs/audits/2026-07-15-controller-state-migration-blast-radius.md.
 function applySlug(appController, slug, opts) {
   appFunctions.setSlug(appController, { val: slug, replace: opts?.replace === true });
 }
@@ -89,131 +87,229 @@ export default function Page() {
     else getPageDataFromAPI(routeParams.pageSlug);
   }, [pageIdentityKey]);
 
-  const [pageController, dispatch] = useReducer(
-    reducer,
-    (() => {
-      //Set Initial States
-      let states = {
-        loading: null,
-        init: false,
-        activeSection: null,
-        activeRow: null,
-        activeAudio: null,
-        commentGroupId: null,
-        pageSlug: initOpen.pageSlug,
-        textId: null,
-        initOpen: initOpen,
-        openRows: [],
-        studyBuddies: {},
-        progress: {},
-        autoClicked: new Set(),
-        notFound: null,  // { type: "commentary" | "image", id: string } when set
-        initWarning: null,  // { type: "verseNotFound", slug?: string } when set
-      };
-      //Define all Row-level functions
-      let functions = {
-        setLoading: (val) => {
-          dispatch({ fn: "setLoading", val: val });
-        },
-        markAsInitiated: (val) => {
-          dispatch({ fn: "markAsInitiated", val: val });
-        },
-        autoAdvance: () => {
-          if (!pageController.appController.states.preferences.autoplay)
-            return false;
-          let parts = pageController.states.activeRow.split("/").reverse();
-          let nextNum = parseInt(parts[0]) + 1;
-          parts[0] = nextNum;
-          let newSlug = parts.reverse().join("/");
-          const getTrigger = () =>
-            document.querySelectorAll(`a[href='/${newSlug}']`)[0];
-          if (!getTrigger()) return false;
-          // Open first, then scroll to the opened content (the old order
-          // centered the link, then the expansion pushed the content
-          // off-screen). The anchor's click handler preventDefaults, so no
-          // navigation occurs — this campaign is the sole driver, and the
-          // shared manager lets user input or a later navigation supersede
-          // it cleanly.
-          pageScrollManager.run([
-            step.openAndAwait(getTrigger, {
-              isOpen: () => isRefOpen(newSlug),
-              getContainer: () =>
-                document.querySelector(`[textid="${newSlug}"]`)?.closest(".row") ||
-                getTrigger(),
-            }),
-            step.scrollToElement(
-              () =>
-                document.querySelector(`[textid="${newSlug}"]`)?.closest(".row") ||
-                getTrigger()
-            ),
-          ]);
-        },
-        setPageData: (val) => {
-          dispatch({ fn: "setPageData", val: val });
-        },
-        setPageComments: (val) => {
-          dispatch({ fn: "setPageComments", val: val });
-        },
-        addToPageComments: (val) => {
-          dispatch({ fn: "addToPageComments", val: val });
-        },
-        updateToPageComment: (val) => {
-          dispatch({ fn: "updateToPageComment", val: val });
-        },
-        deleteToPageComments: (val) => {
-          dispatch({ fn: "deleteToPageComments", val: val });
-        },
-        setActiveRow: (val) => {
-          dispatch({ fn: "setActiveRow", val: val });
-        },
-        addOpenRow: (val) => {
-          dispatch({ fn: "addOpenRow", val: val });
-        },
-        removeOpenRow: (val) => {
-          dispatch({ fn: "removeOpenRow", val: val });
-        },
-        setActiveSection: (val) => {
-          dispatch({ fn: "setActiveSection", val: val });
-        },
-        setPageSlugId: (val) => {
-          dispatch({ fn: "setPageSlugId", val: val });
-        },
-        resetAutoClicked: () => {
-          dispatch({ fn: "resetAutoClicked" });
-        },
-        setNotFound: (val) => {
-          dispatch({ fn: "setNotFound", val: val });
-        },
-        setInitWarning: (val) => {
-          dispatch({ fn: "setInitWarning", val: val });
-        },
-        setInitOpen: (val) => {
-          dispatch({ fn: "setInitOpen", val: val });
-        },
-        moveStudyBuddies: (val) => {
-          dispatch({ fn: "moveStudyBuddies", val: val });
-        },
-        setPageProgress: (val) => {
-          dispatch({ fn: "setPageProgress", val: val });
-        },
-      };
-      //Create Initial Controller
-      let initPageController = {
-        states: states,
-        pageData: null,
-        pageComments: null,
-        pageCommentCounts: null,
-        functions: functions,
-        appController: appController,
-      };
-      //Return the Row Controller
-      return initPageController;
-    })(),
-  );
+  // Active narration audio lives in a ref (not reducer state): the reducer is
+  // replayed by React and must stay side-effect-free, so audio create/pause/play
+  // happens in the functions handlers, which reach it through this ref.
+  const activeAudioRef = useRef(null);
+
+  // Stage-swap transition class. Declared here (before the functions memo) so
+  // the memoized setStageClass handler can close over the stable setter.
+  const [stageClass, setStageClass] = useState(null);
+
+  const initialPageState = {
+    loading: null,
+    init: false,
+    activeSection: null,
+    activeRow: null,
+    commentGroupId: null,
+    pageSlug: initOpen.pageSlug,
+    textId: null,
+    initOpen: initOpen,
+    openRows: [],
+    studyBuddies: {},
+    progress: {},
+    autoClicked: new Set(),
+    notFound: null,  // { type: "commentary" | "image", id: string } when set
+    initWarning: null,  // { type: "verseNotFound", slug?: string } when set
+    pageData: null,
+    pageComments: null,
+    pageCommentCounts: null,
+  };
+  const [states, dispatch] = useReducer(pageReducer, initialPageState);
+
+  // Live window: stable function closures + async campaign callbacks read
+  // CURRENT state through this ref, never a render snapshot.
+  const refs = useRef({});
+  refs.current = { states, appController };
+
+  const functions = useMemo(() => {
+    // Build as `fns` so sibling handlers (e.g. the audio `ended` listener
+    // calling autoAdvance) can reference one another through this stable table.
+    const fns = {
+      setLoading: (val) => {
+        dispatch({ fn: "setLoading", val: val });
+      },
+      markAsInitiated: (val) => {
+        dispatch({ fn: "markAsInitiated", val: val });
+      },
+      autoAdvance: () => {
+        if (!refs.current.appController.states.preferences.autoplay)
+          return false;
+        let parts = refs.current.states.activeRow.split("/").reverse();
+        let nextNum = parseInt(parts[0]) + 1;
+        parts[0] = nextNum;
+        let newSlug = parts.reverse().join("/");
+        const getTrigger = () =>
+          document.querySelector(`[textid="${newSlug}"] .reference a`);
+        if (!getTrigger()) return false;
+        // Open first, then scroll to the opened content (the old order
+        // centered the link, then the expansion pushed the content
+        // off-screen). The anchor's click handler preventDefaults, so no
+        // navigation occurs — this campaign is the sole driver, and the
+        // shared manager lets user input or a later navigation supersede
+        // it cleanly.
+        pageScrollManager.run([
+          step.openAndAwait(getTrigger, {
+            isOpen: () => fns.isRowOpen(newSlug),
+            getContainer: () =>
+              document.querySelector(`[textid="${newSlug}"]`)?.closest(".row") ||
+              getTrigger(),
+          }),
+          step.scrollToElement(
+            () =>
+              document.querySelector(`[textid="${newSlug}"]`)?.closest(".row") ||
+              getTrigger()
+          ),
+        ]);
+      },
+      setPageData: (val) => {
+        setBaseDocTitle(val?.title || label("home_title"));
+        dispatch({ fn: "setPageData", val });
+      },
+      setPageComments: (val) => {
+        dispatch({ fn: "setPageComments", val: val });
+      },
+      addToPageComments: (val) => {
+        dispatch({ fn: "addToPageComments", val: val });
+      },
+      updateToPageComment: (val) => {
+        dispatch({ fn: "updateToPageComment", val: val });
+      },
+      deleteToPageComments: (val) => {
+        dispatch({ fn: "deleteToPageComments", val: val });
+      },
+      setActiveRow: (val) => {
+        const { slug, duration, pagetitle, heading, auto } = val;
+        activeAudioRef.current?.pause();
+        const audio = new Audio(loadAudioUrl(slug));
+        audio.addEventListener("ended", () => fns.autoAdvance());
+        activeAudioRef.current = audio;
+        if (refs.current.appController.states.preferences.audio) playSound(audio);
+        pushDocTitle("row", heading + " | " + label("home_title"));
+        // Apply a Main slug change without a nested React dispatch — see
+        // applySlug's note. auto opens replace (they're campaign-driven, not
+        // user navigation) so Back leaves the page in one press.
+        applySlug(refs.current.appController, slug, { replace: auto === true });
+        localStorage.setItem("studybookmark", slug);
+        dispatch({ fn: "setActiveRow", val: { slug, auto } });
+        BoMOnlineAPI(
+          { log: { token: refs.current.appController.states.user.token, key: "block", val: slug } },
+          { useCache: false },
+        ).then(() => {
+          const link_index = parseInt(slug.match(/\d+$/).shift());
+          const progress = { ...(refs.current.states.progress || {}) };
+          progress.started_items = [...(progress.started_items || [])];
+          if (!progress.completed_items?.includes(link_index))
+            progress.started_items.push(link_index);
+          fns.setPageProgress(progress);
+          setTimeout(() => {
+            BoMOnlineAPI(
+              { pageprogress: { token: refs.current.appController.states.user.token, slug: [refs.current.states.pageData.slug] } },
+              { useCache: false },
+            ).then((response) => {
+              fns.setPageProgress(response.pageprogress);
+              const token = refs.current.appController.states.user.token;
+              BoMOnlineAPI({ userprogress: token }, { useCache: false }).then((r) => {
+                const saveMe = r.userprogress?.[token];
+                const summary = saveMe?.summary;
+                if (saveMe)
+                  refs.current.appController.functions.updateUserSummary({ ...saveMe, ...{ slug, pagetitle, heading } });
+                window.clicky?.goal("read");
+                if (summary?.completed >= 100)
+                  refs.current.appController.functions.setPopUp({ type: "victory", popupData: summary, vhtop: 10 });
+              });
+            });
+          }, parseInt(duration) * 900);
+        });
+      },
+      removeOpenRow: (val) => {
+        popDocTitle("row");
+        applySlug(
+          refs.current.appController,
+          refs.current.states.activeSection || refs.current.states.pageSlug,
+        );
+        if (val === refs.current.states.activeRow) activeAudioRef.current?.pause();
+        dispatch({ fn: "removeOpenRow", val });
+      },
+      // THE row-open read API (single source of truth, decision 2026-07-14).
+      // Reads live state through refs.current, so it is accurate mid-campaign
+      // even though it is a stable closure.
+      isRowOpen: (slug) => refs.current.states.openRows.includes(slug),
+      setActiveSection: (val) => {
+        setBaseDocTitle(val.title || refs.current.states.pageData?.title || label("home_title"));
+        // replace, not push: scrolling is not navigation — Back should leave
+        // the page in one press.
+        applySlug(refs.current.appController, val.slug, { replace: true });
+        dispatch({ fn: "setActiveSection", val });
+      },
+      setPageSlugId: (val) => {
+        dispatch({ fn: "setPageSlugId", val: val });
+      },
+      resetAutoClicked: () => {
+        dispatch({ fn: "resetAutoClicked" });
+      },
+      markAutoClicked: (slug) => dispatch({ fn: "markAutoClicked", val: slug }),
+      isAutoClicked: (slug) => refs.current.states.autoClicked.has(slug),
+      setNotFound: (val) => {
+        dispatch({ fn: "setNotFound", val: val });
+      },
+      setInitWarning: (val) => {
+        dispatch({ fn: "setInitWarning", val: val });
+      },
+      setInitOpen: (val) => {
+        dispatch({ fn: "setInitOpen", val: val });
+      },
+      moveStudyBuddies: (val) => {
+        // Environment I/O guard lives in the handler, not the pure reducer.
+        if (isMobile()) return;
+        dispatch({ fn: "moveStudyBuddies", val });
+      },
+      setPageProgress: (val) => {
+        dispatch({ fn: "setPageProgress", val: val });
+      },
+      setStageClass,
+    };
+    return fns;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Out-of-tree consumers (Sidebar/PopUp/Commentary/Study via
+  // activeLeafCursorController and the usePageController override) hold this
+  // reference across renders; getters keep their reads live now that state
+  // snapshots are immutable (audit 2026-07-15: without this, socket-driven
+  // comment updates stop appearing in open PopUp/Commentary panels).
+  const cursorFacadeRef = useRef(null);
+  if (!cursorFacadeRef.current) {
+    cursorFacadeRef.current = {
+      get states() { return refs.current.states; },
+      get activeAudio() { return activeAudioRef.current; },
+      get pageData() { return refs.current.states.pageData; },
+      get pageComments() { return refs.current.states.pageComments; },
+      get pageCommentCounts() { return refs.current.states.pageCommentCounts; },
+      get appController() { return refs.current.appController; },
+    };
+  }
+  // functions is stable (useMemo, [] deps) — this reassignment is a no-op
+  // after render 1, but runs here so the facade is fully populated before
+  // the first useEffect fires.
+  cursorFacadeRef.current.functions = functions;
+
+  // Plain per-render controller. Identity changes each render (expected — the
+  // contexts re-provide it and consumers read fresh). pageData/pageComments/
+  // pageCommentCounts live in state and are mirrored as top-level fields so
+  // consumers reading pageController.pageData keep working.
+  const pageController = {
+    states,
+    pageData: states.pageData,
+    pageComments: states.pageComments,
+    pageCommentCounts: states.pageCommentCounts,
+    functions,
+    appController,
+  };
 
   useEffect(() => {
     return () => {
-      pageController.states.activeAudio?.pause(); // Pause Audio if navigate from another page
+      activeAudioRef.current?.pause(); // Pause Audio if navigate from another page
     };
   }, []);
 
@@ -227,8 +323,6 @@ export default function Page() {
     const newInitOpen = prepareInitOpen(routeParams);
     pageController.functions.setInitOpen(newInitOpen);
   }, [routeKey]);
-
-  const [stageClass, setStageClass] = useState(null);
 
   // Guards async setState in getPageDataFromAPI(ViaNote) from firing after the
   // user navigates away — was the source of "Can't perform a React state update
@@ -246,9 +340,7 @@ export default function Page() {
   // Sidebar (was dispatched from the setPageComments reducer case — impure, so
   // it leaked a Main setState into Page's render phase).
   useEffect(() => {
-    pageController.appController.functions.setActiveLeafCursorController(
-      pageController,
-    );
+    appController.functions.setActiveLeafCursorController(cursorFacadeRef.current);
   }, [pageController.pageComments, pageController.pageCommentCounts]);
 
   // Deep-link / section positioning, gated on the study-mode comments load.
@@ -289,6 +381,9 @@ export default function Page() {
     // replacing the just-established URL (popup, verse, etc.) before the
     // user has actually scrolled anywhere.
     let seenFirst = false;
+    // Pre-seed tracking locally — the reducer is now immutable, so a write to
+    // pageController.states.activeSection would be a lost mutation.
+    let lastSeenSection = pageController.states.activeSection;
     const spy = createScrollSpy({
       getSections: () => document.getElementsByClassName("pagesection"),
       onActive: (el) => {
@@ -296,11 +391,11 @@ export default function Page() {
         const title = el.attributes?.titletext?.nodeValue || null;
         if (!seenFirst) {
           seenFirst = true;
-          // Pre-seed the active section so future callbacks only fire on change.
-          pageController.states.activeSection = slug;
+          lastSeenSection = slug;
           return;
         }
-        if (slug && slug !== pageController.states.activeSection) {
+        if (slug && slug !== lastSeenSection) {
+          lastSeenSection = slug;
           pageController.functions.setActiveSection({ slug, title });
         }
       },
@@ -312,17 +407,17 @@ export default function Page() {
   //Audio Settings Changed
   useEffect(() => {
     if (!pageController.appController.states.preferences.audio) {
-      pageController.states.activeAudio?.pause();
+      activeAudioRef.current?.pause();
     } else {
-      playSound(pageController.states.activeAudio);
-      // pageController.states.activeAudio?.play();
+      playSound(activeAudioRef.current);
+      // activeAudioRef.current?.play();
     }
   }, [pageController.appController.states.preferences.audio]);
 
   const getPageDataFromAPI = async (pageSlug, textId) => {
     //API Call
     //console.log("getPageDataFromAPI",{pageSlug});
-    pageController.states.activeAudio?.pause();
+    activeAudioRef.current?.pause();
     let response = await BoMOnlineAPI(
       {
         page: pageSlug,
@@ -412,7 +507,6 @@ export default function Page() {
     return <PageNotFound type={pageController.states.notFound.type} id={pageController.states.notFound.id} />;
   }
   if (pageController.states.loading !== false) return <Loader />;
-  pageController.appController.functions['setStageClass'] = setStageClass;
   return (
     <PageControllerProvider pageController={pageController}>
       {!readyToScroll && needToLoadComments ? (
@@ -477,197 +571,86 @@ function loadAudioUrl(slug) {
     .join("-")}`;
 }
 
-function reducer(pageController, input) {
+// Pure immutable reducer. Every case returns a NEW state object — no mutation,
+// no side effects (side effects live in the functions handlers). Action shape
+// stays { fn, val }.
+function pageReducer(state, input) {
   switch (input.fn) {
-    case "setActiveRow":
-      let { slug, duration, pagetitle, heading, auto } = input.val;
-      pageController.states.activeRow = slug;
-      pageController.states.openRows.push(slug);
-      if (pageController.states.activeAudio)
-        pageController.states.activeAudio?.pause();
-      pageController.states.activeAudio = new Audio(loadAudioUrl(slug));
-
-      pageController.states.activeAudio?.addEventListener("ended", (event) => {
-        pageController.functions.autoAdvance();
-      });
-
-      if (pageController.appController.states.preferences.audio)
-        playSound(pageController.states.activeAudio); //.play();
-      document.title = heading + " | " + label("home_title");
-      applySlug(pageController.appController, slug, { replace: auto === true });
-      if (auto === true) pageController.states.autoClicked.delete(slug);
-
-      localStorage.setItem("studybookmark", slug);
-      BoMOnlineAPI(
-        {
-          log: {
-            token: pageController.appController.states.user.token,
-            key: "block",
-            val: slug,
-          },
-        },
-        { useCache: false },
-      ).then((r) => {
-        let link_index = parseInt(slug.match(/\d+$/).shift());
-        let progress = pageController.states.progress || {};
-        if (!progress?.started_items) progress["started_items"] = [];
-        if (!progress?.completed_items?.includes(link_index))
-          progress?.started_items.push(link_index);
-        pageController.functions.setPageProgress(progress);
-        setTimeout(() => {
-          BoMOnlineAPI(
-            {
-              pageprogress: {
-                token: pageController.appController.states.user.token,
-                slug: [pageController.pageData.slug],
-              },
-            },
-            { useCache: false },
-          ).then((response) => {
-            pageController.functions.setPageProgress(response.pageprogress);
-
-            let token = pageController.appController.states.user.token;
-            BoMOnlineAPI(
-              {
-                userprogress: token,
-              },
-              { useCache: false },
-            ).then((r) => {
-              let saveMe = r.userprogress?.[token];
-              let summary = saveMe?.summary;
-              if (saveMe)
-                pageController.appController.functions.updateUserSummary({
-                  ...saveMe,
-                  ...{ slug, pagetitle, heading },
-                });
-              window.clicky?.goal("read");
-              // if 100% then show confetti
-              if (summary?.completed >= 100)
-                pageController.appController.functions.setPopUp({
-                  type: "victory",
-                  popupData: summary,
-                  vhtop: 10,
-                });
-            });
-          });
-        }, parseInt(duration) * 900);
-      });
-
-      break;
-    case "addOpenRow":
-      pageController.states.openRows.push(input.val);
-      break;
-    case "removeOpenRow":
-      document.title = pageController.pageData.title || label("home_title");
-      applySlug(
-        pageController.appController,
-        pageController.states.activeSection || pageController.states.pageSlug,
-      );
-      pageController.states.openRows = pageController.states.openRows.filter(
-        (x) => x !== input.val,
-      );
-
-      if (input.val === pageController.states.activeRow) {
-        if (pageController.states.activeAudio)
-          pageController.states.activeAudio?.pause();
+    case "setActiveRow": {
+      const { slug, auto } = input.val;
+      const openRows = state.openRows.includes(slug)
+        ? state.openRows
+        : [...state.openRows, slug];
+      let autoClicked = state.autoClicked;
+      if (auto === true && autoClicked.has(slug)) {
+        autoClicked = new Set(autoClicked);
+        autoClicked.delete(slug);
       }
-
-      break;
+      return { ...state, activeRow: slug, openRows, autoClicked };
+    }
+    case "removeOpenRow":
+      return { ...state, openRows: state.openRows.filter((x) => x !== input.val) };
     case "setActiveSection":
-      let { slug: sectionSlug, title: sectionTitle } = input.val;
-      pageController.states.activeSection = sectionSlug;
-      document.title =
-        sectionTitle || pageController.pageData.title || label("home_title");
-      // replace, not push: scrolling is not navigation — Back should leave
-      // the page in one press. (The old `|| true` made the init guard dead.)
-      applySlug(pageController.appController, sectionSlug, { replace: true });
-      break;
-
-    case "setPageComments":
-      pageController.pageComments = input.val.index;
-      pageController.pageCommentCounts = input.val.counts;
-      pageController.states.commentGroupId = input.val.groupId;
-      // NOTE: exposing this pageController to Main (setActiveLeafCursorController)
-      // is a side effect and must NOT live in the reducer — React re-invokes
-      // reducers during render, which fired a Main setState mid-Page-render
-      // ("Cannot update a component (Main) while rendering Page"). Done in an
-      // effect instead (see the effect keyed on pageController.pageComments).
-      break;
-
-    case "addToPageComments":
-      pageController.pageComments = addToPageCommentIndex(
-        pageController.pageComments,
-        input.val,
-      );
-      break;
-
-    case "moveStudyBuddies":
-      if (isMobile()) break;
-      let { username, location } = input?.val;
-      if (!username) break; //ingnore missing info
-      if (pageController.states.studyBuddies[username] === location) break; //ignore non-motion
-      pageController.states.studyBuddies[username] = location;
-      if (!location) delete pageController.states.studyBuddies[username];
-      break;
-
-    case "updateToPageComment":
-      pageController.pageComments = updateToPageComment(
-        pageController.pageComments,
-        input.val,
-      );
-      break;
-
-    case "deleteToPageComments":
-      pageController.pageComments = deleteToPageComments(
-        pageController.pageComments,
-        input.val,
-      );
-      break;
-
-    case "setPageSlugId":
-      pageController.states.pageSlug = input.val.pageSlug;
-      if (input.val.textId)
-        pageController.states.initOpen.textId = input.val.textId;
-      if (input.val.textId) pageController.states.textId = input.val.textId;
-      if (input.val.pageSlug)
-        pageController.states.initOpen.pageSlug = input.val.pageSlug;
-      if (input.val.pageSlug)
-        pageController.states.pageSlug = input.val.pageSlug;
-      if (input.val.lastLeaf)
-        pageController.states.initOpen.lastLeaf = input.val.lastLeaf;
-      break;
-
+      return { ...state, activeSection: input.val.slug };
+    case "markAutoClicked": {
+      if (state.autoClicked.has(input.val)) return state;
+      const autoClicked = new Set(state.autoClicked);
+      autoClicked.add(input.val);
+      return { ...state, autoClicked };
+    }
     case "resetAutoClicked":
-      pageController.states.autoClicked = new Set();
-      break;
-
+      return { ...state, autoClicked: new Set() };
+    case "setPageComments":
+      return {
+        ...state,
+        pageComments: input.val.index,
+        pageCommentCounts: input.val.counts,
+        commentGroupId: input.val.groupId,
+      };
+    case "addToPageComments":
+      return { ...state, pageComments: addToPageCommentIndex(state.pageComments, input.val) };
+    case "updateToPageComment":
+      return { ...state, pageComments: updateToPageComment(state.pageComments, input.val) };
+    case "deleteToPageComments":
+      return { ...state, pageComments: deleteToPageComments(state.pageComments, input.val) };
+    case "moveStudyBuddies": {
+      const { username, location } = input?.val || {};
+      if (!username) return state;
+      if (state.studyBuddies[username] === location) return state;
+      const studyBuddies = { ...state.studyBuddies };
+      if (location) studyBuddies[username] = location;
+      else delete studyBuddies[username];
+      return { ...state, studyBuddies };
+    }
+    case "setPageSlugId": {
+      const next = { ...state, initOpen: { ...state.initOpen } };
+      if (input.val.pageSlug) {
+        next.pageSlug = input.val.pageSlug;
+        next.initOpen.pageSlug = input.val.pageSlug;
+      }
+      if (input.val.textId) {
+        next.textId = input.val.textId;
+        next.initOpen.textId = input.val.textId;
+      }
+      if (input.val.lastLeaf) next.initOpen.lastLeaf = input.val.lastLeaf;
+      return next;
+    }
     case "setInitOpen":
-      pageController.states.initOpen = input.val;
-      break;
-
+      return { ...state, initOpen: input.val };
     case "setPageData":
-      pageController.pageData = input.val;
-      document.title = pageController.pageData?.title || label("home_title");
-      break;
-    case "setNotFound":
-      pageController.states.notFound = input.val;
-      pageController.states.loading = false;
-      break;
-    case "setInitWarning":
-      pageController.states.initWarning = input.val;
-      break;
-    case "setLoading":
-      pageController.states.loading = input.val;
-      break;
-    case "markAsInitiated":
-      pageController.states.init = input.val || true;
-      break;
+      return { ...state, pageData: input.val };
     case "setPageProgress":
-      pageController.states.progress = input.val;
-      break;
+      return { ...state, progress: input.val };
+    case "setNotFound":
+      return { ...state, notFound: input.val, loading: false };
+    case "setInitWarning":
+      return { ...state, initWarning: input.val };
+    case "setLoading":
+      return { ...state, loading: input.val };
+    case "markAsInitiated":
+      return { ...state, init: input.val || true };
     default:
-      break;
+      return state;
   }
-  return { ...pageController };
 }
 

@@ -70,8 +70,11 @@ export function usePageComments(pageController) {
   }, [group?.url]);
 
   // Live-update listeners, one registration per (page, group), cleaned up on
-  // unmount/change. pageController's inner objects are mutated in place by the
-  // reducer, so these closures observe current state even across re-renders.
+  // unmount/change. The handlers call the STABLE memoized functions table
+  // (addToPageComments/updateToPageComment — same identity every render), and
+  // read only values in this effect's dependency array (pageSlug, group.url),
+  // so they stay correct under immutable state snapshots — the old
+  // in-place-mutation guarantee is gone (controller migration 2026-07).
   useEffect(() => {
     if (!group || !pageController.pageData) return undefined;
     const pageSlug = pageController.states.pageSlug;

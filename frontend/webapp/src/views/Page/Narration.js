@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useReducer } from "react";
+import React, { useState, useEffect, useLayoutEffect, useMemo, useReducer, useRef } from "react";
 // CHILD
 import TextContent from "./TextContent";
 import Comments from "../_Common/Study/Study";
@@ -20,6 +20,8 @@ import { useMessenger } from "src/contexts/MessengerContext";
 import { NarrationProvider, useNarration } from "src/contexts/NarrationContext";
 import { extractTagIds } from "./tagIds";
 import { titleToHighlightPattern } from "./highlightPattern";
+import { pushDocTitle, popDocTitle } from "./docTitle";
+import { ScriptureRefGrid } from "../_Common/ScriptureRefGrid";
 
 function ChronoRow({ chrono }) {
   chrono = chronoLabel(chrono);
@@ -33,263 +35,181 @@ function ChronoRow({ chrono }) {
   );
 }
 
-function reducer(narrationController, input) {
-  switch (input.fn) {
+// Pure state transitions only. Side effects (setSlug URL writes, supplement
+// fetch, highlight recompute) live in the handlers — a reducer may be replayed
+// by React and must be idempotent.
+function narrationReducer(state, action) {
+  switch (action.type) {
     case "setPanelImageIds":
-      narrationController.states.panelImageIds = input.val;
-      break;
+      return { ...state, panelImageIds: action.ids };
     case "setActiveImageId":
-      narrationController.states.activeImageId = input.val;
-      let newSlug = "art/" + input.val;
-      if (!input.val)
-        newSlug = narrationController.pageController.states.activeRow;
-      narrationController.appController.functions.setSlug(newSlug);
-      break;
+      return { ...state, activeImageId: action.id };
     case "setActiveFax":
-      narrationController.states.showFax = true;
-      narrationController.states.activeFax = input.val;
-      narrationController.appController.functions.setSlug(
-        narrationController.data.text.slug + "/fax/" + input.val,
-      );
-
-      break;
-    case "toggleFax":
-      narrationController.states.showFax = !narrationController.states.showFax;
-      if (narrationController.states.showFax) {
-        narrationController.appController.functions.setSlug(
-          narrationController.data.text.slug +
-            "/fax/" +
-            narrationController.states.activeFax,
-        );
-      } else {
-        narrationController.appController.functions.setSlug(
-          narrationController.data.text.slug,
-        );
-        narrationController.functions.setActiveImageId(0);
-      }
-      break;
-    case "preLoadSupplement":
-      narrationController.supplement = input.val;
-      break;
-    case "setTextContent":
-      narrationController.components.textContent = input.val;
-      break;
+      return { ...state, showFax: true, activeFax: action.id };
+    case "setShowFax":
+      return { ...state, showFax: action.on };
+    case "setSupplement":
+      return { ...state, supplement: action.supplement };
     case "setHighlights":
-      narrationController.states.highlights = input.val;
-      break;
-    //add setPeoplePlaceSlugs and setScriptures
-    case "setPeoplePlaceSlugs":
-      narrationController.states.peoplePlaces = input.val;
-      break;
+      return { ...state, highlights: action.highlights };
+    case "setPeoplePlaces":
+      return { ...state, peoplePlaces: action.val };
     case "setScriptures":
-      narrationController.states.scriptures = input.val;
-      break;
+      return { ...state, scriptures: action.val };
     case "setNotes":
-      narrationController.states.notes = input.val;
-      break;
+      return { ...state, notes: action.val };
     case "clearAllPanels":
-        narrationController.states.showFax = false;
-        narrationController.states.peoplePlaces = {};
-        narrationController.states.scriptures = [];
-        narrationController.states.panelImageIds = [];
-        narrationController.states.notes = [];
-     break;
-
+      return { ...state, showFax: false, peoplePlaces: {}, scriptures: [], panelImageIds: [], notes: [] };
     default:
-      break;
+      return state;
   }
-  return { ...narrationController };
+}
+
+function initNarrationStates(faxData) {
+  return {
+    showFax: false,
+    faxList: faxData?.map((i) => i.slug),
+    faxData,
+    activeFax: "1830",
+    panelImageIds: [],
+    activeImageId: 0,
+    highlights: [],
+    notes: [],
+    peoplePlaces: {},
+    scriptures: [],
+    supplement: {},
+  };
+}
+
+function loadNumsFromText(text) {
+  if (!text || !text.slug) return [];
+  let nums = [];
+  let slugMatch = text.slug.match(/\d+$/);
+  if (slugMatch) nums.push(parseInt(slugMatch[0]));
+  for (let i in text.quotes) {
+    let quote = text.quotes[i];
+    let quoteMatch = quote.slug.match(/\d+$/);
+    if (quoteMatch) nums.push(parseInt(quoteMatch[0]));
+  }
+  return nums;
+}
+
+function buildNarrationData(rowData, pageController) {
+  const narration = rowData.narration || {};
+  const text = narration.text || {};
+  const quoteContents = (text.quotes || []).map((q) => q.content);
+  const personIds = (narration.description?.match(/\|([^\]}]+?)}/g) || []).map((i) => i.replace(/[|}]/g, ""));
+  const placeIds = (narration.description?.match(/\|([^\]}]+?)\]/g) || []).map((i) => i.replace(/[|\]]/g, ""));
+  const data = {
+    ...narration,
+    text,
+    imageIds: extractTagIds("i", text.content, ...quoteContents),
+    commentaryIds: extractTagIds("c", text.content, ...quoteContents),
+    personIds,
+    placeIds,
+  };
+  return {
+    data,
+    nums: loadNumsFromText(text),
+    description: renderPersonPlaceHTML(narration.description, pageController),
+  };
 }
 
 function Narration({ rowData, addHighlight }) {
   const pageController = usePageController();
   const messenger = useMessenger();
-  const preLoadFax = () => {
-    if (narrationController.states.faxList === undefined) return false;
-    let m = narrationController.data.text.slug.match(/([a-z-]+)\/(\d+)$/);
-    if (!m) return false;
-    return narrationController.states.faxList.forEach((version) => {
-      const img1 = new Image();
-      img1.src = `${assetUrl}/fax/text/${version}/${m[1]}-${m[2]}`;
-      const img2 = new Image();
-      img2.src = `${assetUrl}/fax/tabs/${version}`;
-    });
-  };
 
-  const preLoadSupplement = (narrationController) => {
-    if (Object.keys(narrationController.supplement).length > 0) return false;
-    if (
-      narrationController.data.commentaryIds.length === 0 &&
-      narrationController.data.imageIds.length === 0
-    )
-      return false;
-    BoMOnlineAPI({
-      commentary: narrationController.data.commentaryIds,
-      image: narrationController.data.imageIds,
-    }).then((response) => {
-      dispatch({ fn: "preLoadSupplement", val: response });
-    });
-  };
+  const faxDataRaw = pageController.appController.preLoad.fax;
+  const faxData = typeof faxDataRaw === "object" ? Object.values(faxDataRaw) : faxDataRaw;
+  const [states, dispatch] = useReducer(narrationReducer, faxData, initNarrationStates);
 
-  const setHighlights = (activeId, previewIds, commentHighlights) => {
-    const highlights = [];
-    const pushMatches = (collection) => {
-      for (const entry of Object.values(collection || {})) {
-        if (!entry?.title) continue;
-        const cls =
-          entry.id === activeId
-            ? "primary"
-            : previewIds.includes(entry.id)
-            ? "secondary"
-            : null;
-        if (cls)
-          highlights.push({ class: cls, string: titleToHighlightPattern(entry.title) });
-      }
-    };
-    pushMatches(narrationController.supplement.image);
-    pushMatches(narrationController.supplement.commentary);
-
-    if (commentHighlights) {
-      for (const h of commentHighlights) {
-        highlights.push({ class: "commented", string: h });
-      }
-    }
-
-    dispatch({ fn: "setHighlights", val: highlights });
-  };
-
-  const loadNumsFromText = (text) => {
-    if (!text || !text.slug) return [];
-    let nums = [];
-    let slugMatch = text.slug.match(/\d+$/);
-    if (slugMatch) nums.push(parseInt(slugMatch[0]));
-    for (let i in text.quotes) {
-      let quote = text.quotes[i];
-      let quoteMatch = quote.slug.match(/\d+$/);
-      if (quoteMatch) nums.push(parseInt(quoteMatch[0]));
-    }
-    return nums;
-  };
-
-  const getSupplement = () => {
-    return { ...narrationController.supplement };
-  };
-
-  // This is the main row Controller
-  const [narrationController, dispatch] = useReducer(
-    reducer,
-    (() => {
-      //Set Initial States
-      let faxData = pageController.appController.preLoad.fax;
-      if (typeof faxData === "object") faxData = Object.values(faxData);
-
-      var states = {
-        showFax: false,
-        faxList: faxData?.map((i) => i.slug),
-        faxData: faxData,
-        activeFax: "1830",
-        panelImageIds: [],
-        activeImageId: 0,
-        highlights: [],
-        notes: [],
-      };
-
-      //Define all Row-level functions
-      let functions = {
-        setPanelImageIds: (ids) => {
-          dispatch({ fn: "setPanelImageIds", val: ids });
-        },
-        setActiveImageId: (id) => {
-          dispatch({ fn: "setActiveImageId", val: id });
-          setHighlights(id, []);
-        },
-        setPreviewImageIds: (ids) => {
-          setHighlights(narrationController.states.activeImageId, ids);
-        },
-        setPreviewCommentaryIds: (ids) => {
-          setHighlights(null, ids);
-        },
-        setActiveFax: (id) => {
-          dispatch({ fn: "setActiveFax", val: id });
-        },
-        toggleFax: (id) => {
-          dispatch({ fn: "toggleFax", val: id });
-        },
-        setPeoplePlaces: (slugs) => {
-          dispatch({ fn: "setPeoplePlaceSlugs", val: slugs });
-        },
-        setScriptures: (verse_ids) => {
-          dispatch({ fn: "setScriptures", val: verse_ids });
-        },
-        setNotes: (notes) => {
-          dispatch({ fn: "setNotes", val: notes });
-        },
-        clearAllPanels: () => {
-          dispatch({ fn: "clearAllPanels" });
-        },
-        preloadFax: preLoadFax,
-        preLoadSupplement: preLoadSupplement,
-        getSupplement: getSupplement,
-        setCommentHighlights: (items) => {
-          setHighlights(null, [], items);
-        },
-      };
-
-      rowData.narration = rowData.narration || {};
-      //Create Initial Controller
-      var initNarrationController = {
-        data: rowData.narration,
-        nums: loadNumsFromText(rowData.narration.text),
-        states: states,
-        supplement: {},
-        components: {},
-        functions: functions,
-        pageController: pageController,
-        appController: pageController.appController,
-      };
-
-      //Extract Image and Commentary Values
-      initNarrationController.data.text = initNarrationController.data.text || {};
-      const quoteContents = (initNarrationController.data.text.quotes || []).map(
-        (q) => q.content
-      );
-      initNarrationController.data.imageIds = extractTagIds(
-        "i",
-        initNarrationController.data.text.content,
-        ...quoteContents
-      );
-      initNarrationController.data.commentaryIds = extractTagIds(
-        "c",
-        initNarrationController.data.text.content,
-        ...quoteContents
-      );
-      let personIds = initNarrationController.data.description?.match(
-        /\|([^\]}]+?)}/g,
-      );
-      let placeIds = initNarrationController.data.description?.match(
-        /\|([^\]}]+?)\]/g,
-      );
-      initNarrationController.data.personIds =
-        personIds && personIds.length
-          ? personIds.map((i) => i.replace(/[|}]/g, ""))
-          : [];
-      initNarrationController.data.placeIds =
-        placeIds && placeIds.length
-          ? placeIds.map((i) => i.replace(/[|\]]/g, ""))
-          : [];
-
-
-      //Render React Components from plain text
-      initNarrationController.components.description = renderPersonPlaceHTML(
-        initNarrationController.data.description,
-        pageController,
-      );
-      //Return the Row Controller
-      return initNarrationController;
-    })(),
+  const derived = useMemo(
+    () => buildNarrationData(rowData, pageController),
+    [rowData, pageController]
   );
 
-  narrationController.pageController = pageController;
+  // Live window for async/stable closures: the memoized functions and any
+  // deferred work must see CURRENT values, not render snapshots.
+  const refs = useRef({});
+  refs.current = { states, derived, pageController, appController: pageController.appController };
+
+  const functions = useMemo(() => {
+    const setSlug = (slug) => refs.current.appController.functions.setSlug(slug);
+    const slugOf = () => refs.current.derived.data.text.slug;
+    const setHighlightsFor = (activeId, previewIds, commentHighlights) => {
+      const highlights = [];
+      const pushMatches = (collection) => {
+        for (const entry of Object.values(collection || {})) {
+          if (!entry?.title) continue;
+          const cls = entry.id === activeId ? "primary" : previewIds.includes(entry.id) ? "secondary" : null;
+          if (cls) highlights.push({ class: cls, string: titleToHighlightPattern(entry.title) });
+        }
+      };
+      const supplement = refs.current.states.supplement;
+      pushMatches(supplement.image);
+      pushMatches(supplement.commentary);
+      if (commentHighlights)
+        for (const h of commentHighlights) highlights.push({ class: "commented", string: h });
+      dispatch({ type: "setHighlights", highlights });
+    };
+    const fns = {
+      setPanelImageIds: (ids) => dispatch({ type: "setPanelImageIds", ids }),
+      setActiveImageId: (id) => {
+        dispatch({ type: "setActiveImageId", id });
+        setSlug(id ? "art/" + id : refs.current.pageController.states.activeRow);
+        setHighlightsFor(id, []);
+      },
+      setPreviewImageIds: (ids) => setHighlightsFor(refs.current.states.activeImageId, ids),
+      setPreviewCommentaryIds: (ids) => setHighlightsFor(null, ids),
+      setCommentHighlights: (items) => setHighlightsFor(null, [], items),
+      setActiveFax: (id) => {
+        dispatch({ type: "setActiveFax", id });
+        setSlug(slugOf() + "/fax/" + id);
+      },
+      toggleFax: () => {
+        const next = !refs.current.states.showFax;
+        dispatch({ type: "setShowFax", on: next });
+        if (next) setSlug(slugOf() + "/fax/" + refs.current.states.activeFax);
+        else fns.setActiveImageId(0);
+      },
+      setPeoplePlaces: (slugs) => dispatch({ type: "setPeoplePlaces", val: slugs }),
+      setScriptures: (verse_ids) => dispatch({ type: "setScriptures", val: verse_ids }),
+      setNotes: (notes) => dispatch({ type: "setNotes", val: notes }),
+      clearAllPanels: () => dispatch({ type: "clearAllPanels" }),
+      preloadFax: () => {
+        const { faxList } = refs.current.states;
+        if (faxList === undefined) return false;
+        const m = slugOf().match(/([a-z-]+)\/(\d+)$/);
+        if (!m) return false;
+        faxList.forEach((version) => {
+          new Image().src = `${assetUrl}/fax/text/${version}/${m[1]}-${m[2]}`;
+          new Image().src = `${assetUrl}/fax/tabs/${version}`;
+        });
+      },
+      preLoadSupplement: () => {
+        const s = refs.current;
+        if (Object.keys(s.states.supplement).length > 0) return false;
+        if (s.derived.data.commentaryIds.length === 0 && s.derived.data.imageIds.length === 0) return false;
+        BoMOnlineAPI({ commentary: s.derived.data.commentaryIds, image: s.derived.data.imageIds })
+          .then((supplement) => dispatch({ type: "setSupplement", supplement }));
+      },
+      getSupplement: () => ({ ...refs.current.states.supplement }),
+    };
+    return fns;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const narrationController = {
+    data: derived.data,
+    nums: derived.nums,
+    states,
+    supplement: states.supplement, // compat alias — consumers read controller.supplement.image
+    components: { description: derived.description },
+    functions,
+    pageController,
+    appController: pageController.appController,
+  };
+
   const handleSelection = () => {
     snapSelectionToWord();
     let selection = window.getSelection().toString();
@@ -450,33 +370,29 @@ function LightBox({ setOpenLightBox, imgClicker }) {
 function ImagePanel() {
   const narrationController = useNarration();
   const [openLightBox, setOpenLightBox] = useState(false);
+  const panelRef = useRef(null);
   const [marginTop, setMarginTop] = useState(0);
-  useEffect(() => {
-    if (
-      !document.getElementsByClassName(
-        "ii" + narrationController.states.activeImageId,
-      )[0]
-    )
-      return false;
-    let distanceOffScreen =
-      marginTop -
-      document
-        .getElementsByClassName(
-          "ii" + narrationController.states.activeImageId,
-        )[0]
-        .getBoundingClientRect().y;
-    if (distanceOffScreen > 0) {
-      setMarginTop(distanceOffScreen + 100);
-    } else {
-      setMarginTop(0);
-    }
+  // Measure once per image: the panel's natural top is (current rect.y minus
+  // whatever margin is already applied). If that natural top is above the
+  // viewport, push the panel down into view; otherwise no offset. Reading and
+  // writing in one layout pass — the old version depended on its own output
+  // (marginTop) and re-ran to a fixpoint (audit follow-ups WP-A2).
+  useLayoutEffect(() => {
+    const el = panelRef.current;
+    if (!el) return;
+    const naturalTop = el.getBoundingClientRect().y - marginTop;
+    setMarginTop(naturalTop < 0 ? -naturalTop + 100 : 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [narrationController.states.activeImageId]);
 
+  useEffect(() => {
     const activeId = narrationController.states.activeImageId;
+    if (!activeId) return undefined;
     const caption =
       narrationController.supplement.image?.[activeId]?.title || "Artwork";
-    if (caption)
-      document.title = "Art: " + caption + " | " + label("home_title");
-  }, [marginTop, narrationController.states.activeImageId]);
+    pushDocTitle("image", "Art: " + caption + " | " + label("home_title"));
+    return () => popDocTitle("image");
+  }, [narrationController.states.activeImageId]);
 
   if (narrationController.states.showFax) return null;
   let imgsWithComments = idsWithComments("img", narrationController);
@@ -544,6 +460,7 @@ function ImagePanel() {
   const imgClicker = document.querySelector(".fullscreen-image");
   return (
     <div
+      ref={panelRef}
       className={"images ii" + narrationController.states.activeImageId}
       style={{ marginTop: marginTop + "px" }}
     >
@@ -716,14 +633,14 @@ function ScripturePanel() {
   useEffect(() => {
 
     //on activeRef change update the url via react router
-    if(activeRef === null) return false;
+    if (activeRef === null || !refs?.length) return undefined;
     const {ref} = textRefs[activeRef] || {ref:null};
     //slugify lowercast
     const slugRef = ref.replace(/[\s:]+/g,".").toLowerCase();
     // format: pageSlug/link_num/scripture/ref
     const newSlug = narrationController.pageController.states.activeRow + "/scripture/" + slugRef;
     narrationController.appController.functions.setSlug(newSlug);
-    document.title = `${ref} | ${label("cross_reference")}`;
+    pushDocTitle("scripture", `${ref} | ${label("cross_reference")}`);
 
     const handleKeyDown = (event) => {
       const length = textRefs.length;
@@ -766,25 +683,24 @@ function ScripturePanel() {
     // Cleanup: remove the event listener when the component is unmounted
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
+      popDocTitle("scripture");
     };
 
 
-  }, [activeRef]); // Re-run the effect when activeRef changes
+  }, [activeRef, refs]); // Re-run the effect when activeRef or refs changes
 
   if(!refs?.length) return null;
   return <div className="scripturePanelWrapper">
   <h5 className="noselect">{label("related_scriptures")}
     <span onClick={closePanel}> × </span>
   </h5>
-    <div className="scripturePanel noselect">
-      {textRefs.map(({ref},i)=> {
-        return <div key={ref + "_" + i} className={"scriptureItem" + (activeRef===i?" active":"")} onClick={()=>setActiveRef(i)}>
-          <div className="ref">{ref}</div>
-          <div>
-        </div>
-        </div>
-      })}
-    </div>
+    <ScriptureRefGrid
+      items={textRefs.map(({ ref }) => ref)}
+      activeIndex={activeRef}
+      onSelect={setActiveRef}
+      className="noselect"
+      renderItemContent={(ref) => <div className="ref">{ref}</div>}
+    />
     <ScripturePanelSingle  scriptureData={textRefs[activeRef]}/>
   </div>
 }
@@ -886,15 +802,15 @@ function FacsimilePanel() {
   ]);
 
   useEffect(() => {
+    if (!narrationController.states.showFax) return undefined;
     const version = narrationController.states.activeFax;
-    document.title =
-      "Facsimile: " +
-      version +
-      "—" +
-      narrationController.data.text.heading +
-      " | " +
-      label("home_title");
-  }, [narrationController.states.activeFax]);
+    pushDocTitle(
+      "fax",
+      "Facsimile: " + version + "—" +
+        narrationController.data.text.heading + " | " + label("home_title"),
+    );
+    return () => popDocTitle("fax");
+  }, [narrationController.states.activeFax, narrationController.states.showFax]);
 
   if (narrationController.states.faxData === undefined) {
     return null;

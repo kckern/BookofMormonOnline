@@ -35,7 +35,7 @@ export function useStageTransition() {
   const pageController = usePageController();
   const history = useHistory();
   return (slug, direction) => async (event) => {
-    const { setStageClass } = pageController.appController?.functions || {};
+    const { setStageClass } = pageController?.functions || {};
     if (!setStageClass) return;
     event.preventDefault();
     await runStageTransition({

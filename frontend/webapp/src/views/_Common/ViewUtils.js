@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { detectScriptures } from "scripture-guide";
 import { Collapse } from 'bootstrap';
 import { determineLanguage } from '../../models/Utils';
+import { makeScriptureLinkReplacer } from "./scriptureLinkReplacer";
 
 // a react hook for detecting if a component is mounted
 export function useIsMounted() {
@@ -56,20 +57,16 @@ export function useTimeouts() {
 }
 
 
-export function getHtmlScriptureLinkParserOptions(clickHandler, additionalAttribs = {}) {
+// Was a broken duplicate — the `attribs.classname` (lowercase) check never
+// matched (html-react-parser preserves the emitted `className` casing), so
+// scripture links in Map/Drawer/Commentary were silently non-clickable. Now
+// keyed on `className` via the shared replacer. The old `additionalAttribs`
+// param was dead (no caller ever passed it) and is dropped.
+export function getHtmlScriptureLinkParserOptions(clickHandler) {
     return {
-        replace: (domNode) => {
-          let {attribs} = domNode;
-            if (attribs?.classname === 'scripture_link') {
-                const ref = domNode.children[0].data;
-                attribs.class = attribs.classname;
-                delete attribs.classname;
-                attribs = {...attribs, ...additionalAttribs};
-                return <a {...attribs} onClick={()=>clickHandler(ref)}>{ref}</a>;
-            }
-        }
-    }
-};
+        replace: makeScriptureLinkReplacer({ onClick: clickHandler }),
+    };
+}
 
 export function getDetectedScripturesHtml(html) {
     return detectScriptures(html, (scripture) => {

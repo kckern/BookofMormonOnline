@@ -6,7 +6,7 @@ Book of Mormon Online - an interactive scripture study platform for the Book of 
 ## Architecture
 
 ### Frontend (`/frontend/webapp/`)
-- React 17 with Redux state management
+- React 17; view state via per-view controllers (immutable useReducer + React context — see docs/plans/2026-07-15-controller-state-migration.md). NOTE: the `redux`/`react-redux` packages are still in package.json but are NOT wired up (no store/Provider); only About/Tos import them and those imports are dead — see docs/bugs/2026-07-14-about-tos-dead-react-redux.md
 - Bootstrap 5 + Sass for styling
 - Socket.io for real-time features
 - Rich text editors (CKEditor, TinyMCE), maps (Leaflet), charts (Highcharts)
