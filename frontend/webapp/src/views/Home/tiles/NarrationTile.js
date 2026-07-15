@@ -6,7 +6,7 @@ import green from "src/views/User/svg/green.svg";
 import yellow from "src/views/User/svg/yellow.svg";
 import blank from "src/views/User/svg/blank.svg";
 
-import { flatten } from "./textUtils";
+import { flatten, enDash } from "./textUtils";
 
 const statusDot = { completed: green, started: yellow };
 
@@ -35,7 +35,7 @@ function NarrationList({ section }) {
       <img src={statusDot[n.text?.status] || blank} alt="" className="narrationDot" />
       <span className="narrationText">
         {flatten(n.description)}
-        {n.text?.heading ? <span className="narrationRef"> {n.text.heading}</span> : null}
+        {n.text?.heading ? <span className="narrationRef"> {enDash(n.text.heading)}</span> : null}
       </span>
     </Link>
   ));

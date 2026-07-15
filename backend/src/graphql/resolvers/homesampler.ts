@@ -13,9 +13,9 @@ import { generateReference } from 'scripture-guide';
 import type { Resolvers } from '../../../codegen/graphql.js';
 import type { AppContext } from '../context.js';
 
-// 17 people = 1 featured + 7 face cards + 9 view-all mosaic thumbs;
+// 21 people = 1 featured + 11 face cards + 9 view-all mosaic thumbs;
 // 12 places = 3 cards + 9 mosaic thumbs.
-const PEOPLE_COUNT = 17;
+const PEOPLE_COUNT = 21;
 const PLACES_COUNT = 12;
 const MIN_COMMENTARY_CHARS = 500;
 const MIN_PERSON_DESC_CHARS = 40;

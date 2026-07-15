@@ -270,11 +270,11 @@ html[data-theme="dark"] .peopleIndexText { color: #9a9a9a; }
 html[data-theme="dark"] .peopleIndexItem:hover .peopleIndexText { color: #ddd; }
 .peopleIndexItem .refChip { flex-shrink: 0; margin: 0; }
 
-/* face cards: the other 7 samples + a view-all mosaic — proper vertical cards
-   (portrait on top, name/title/index in a padded body), 4-up */
+/* face cards: the other 9 samples + a view-all mosaic — proper vertical cards
+   (3:4 portrait on top, name/title/index in a padded body), 6-up */
 .peopleFaceRow {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: 0.55rem;
   margin-top: 0.6rem;
 }
@@ -320,7 +320,7 @@ html[data-theme="dark"] .peopleFaceCard:hover { border-color: #555; box-shadow: 
 .peopleFaceImgWrap {
   position: relative;
   width: 100%;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 3 / 4;
   background: #e2e2e2;
   overflow: hidden;
 }

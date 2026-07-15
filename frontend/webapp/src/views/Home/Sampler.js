@@ -169,9 +169,20 @@ export default function Sampler() {
   for (const t of variableTiles) {
     if (!payload || !t.isReady(payload)) { gridVars.push(t); continue; }
     const e = est(t.key);
-    // span-2 tiles pair up in the grid → amortized half height per tile
-    if (leftH + e < rightH + e / 2) { railExtra.push(t); leftH += e; }
+    // The text tile is designed for width — never strand it in the narrow rail
+    // (round-6 review: a rail-binned scripture tile ended the page on a
+    // viewport-scale void). Rail assignment is strict: only when the rail
+    // stays at or below the grid even after adding the full tile.
+    if (t.key !== "text" && leftH + e <= rightH) { railExtra.push(t); leftH += e; }
     else { gridVars.push(t); rightH += e / 2; }
+  }
+  // Correction pass: if the rail overshot the grid anyway, pull tiles back
+  // until the column-end delta is within one small tile (~12rem).
+  while (railExtra.length && leftH > rightH + 12) {
+    const t = railExtra.pop();
+    leftH -= est(t.key);
+    gridVars.push(t);
+    rightH += est(t.key) / 2;
   }
   // text width: pairs with an odd span-2 neighbor, else takes its own full row
   const span2InGrid = gridVars.filter((t) => t.key !== "text").length;

@@ -22,6 +22,9 @@ export const flatten = (html) =>
     .replace(/\s+\)/g, ")")
     .trim();
 
+/** Typographic verse ranges: hyphens between digits render as en-dashes. */
+export const enDash = (s) => (s || "").replace(/(\d)\s*-\s*(\d)/g, "$1–$2");
+
 /**
  * Word-budget truncation that prefers a sentence boundary in the back half,
  * NEVER cuts mid-word, and never strands an open parenthetical.

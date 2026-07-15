@@ -6,7 +6,7 @@ import { label, replaceNumbers } from "src/models/Utils";
 import { getDetectedScripturesHtml, getHtmlScriptureLinkParserOptions } from "src/views/_Common/ViewUtils";
 import { openScripture } from "./ScripturePopup";
 
-import { flatten, clampWords, supDigits } from "./textUtils";
+import { flatten, clampWords, supDigits, enDash } from "./textUtils";
 
 /**
  * Sampling, not a mosaic: the seeded-first person is FEATURED — portrait,
@@ -16,8 +16,9 @@ import { flatten, clampWords, supDigits } from "./textUtils";
  */
 export default function PeopleTile({ data, seed = 0, payload }) {
   const [featured, ...rest] = data;
-  const faces = rest.slice(0, 7);
-  const mosaic = rest.slice(7, 16);
+  const bio = clampWords(flatten(featured.description), 70);
+  const faces = rest.slice(0, 11);
+  const mosaic = rest.slice(11, 20);
   // Dedupe index entries by annotation text, merging their refs
   // ("Deceives Zeniff — Mosiah 7:21 · 9:10", not two near-identical rows).
   const indexRows = [];
@@ -27,10 +28,10 @@ export default function PeopleTile({ data, seed = 0, payload }) {
     if (existing) existing.refs.push(i.ref);
     else indexRows.push({ text, refs: [i.ref] });
   }
-  const refs = indexRows.slice(0, 2);
+  // a ref already inline in the bio would render twice 8px apart — skip it
+  const refs = indexRows.filter((r) => !r.refs.some((x) => bio.includes(x))).slice(0, 2);
   const scriptureOpts = getHtmlScriptureLinkParserOptions((ref) => openScripture(ref));
-  const bio = clampWords(flatten(featured.description), 70);
-
+  
   return (
     <div className="samplerTileInner peopleTile">
       <h3 className="tileHeading">
@@ -66,7 +67,7 @@ export default function PeopleTile({ data, seed = 0, payload }) {
                   onClick={() => openScripture(r.refs[0])}
                   onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && openScripture(r.refs[0])}
                 >
-                  <span className="refChip">{r.refs.slice(0, 2).join(" · ")}</span>
+                  <span className="refChip">{enDash(r.refs.slice(0, 2).join(" · "))}</span>
                   <span className="peopleIndexText">{r.text}</span>
                 </span>
               ))}
