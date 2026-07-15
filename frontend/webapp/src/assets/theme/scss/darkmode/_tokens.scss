@@ -1,5 +1,11 @@
 // Semantic theme tokens. Dark overrides must use these vars, never raw hex.
 :root {
+  // Pin form controls (and other UA system colors like `field`) to the light
+  // scheme in light mode. The <meta name="color-scheme" content="light dark">
+  // otherwise lets a dark OS preference bleed into bare <input>s even when the
+  // app is toggled light, rendering them rgb(59,59,59). The html[data-theme="dark"]
+  // block below sets `color-scheme: dark`, so dark mode is unaffected.
+  color-scheme: light;
   --surface-0: #ffffff;   // page background
   --surface-1: #f8f8f8;   // raised card
   --surface-2: #f0f0f0;   // panel / header strip
