@@ -20,7 +20,7 @@ import InitWarning from "./InitWarning";
 import { Alert } from "reactstrap";
 import loading_comments from "src/views/_Common/Study/svg/loading_comment.svg";
 import { MuteButton } from "./MuteButton";
-import { usePageInit, pageScrollManager, isRefOpen } from "./usePageInit";
+import { usePageInit, pageScrollManager } from "./usePageInit";
 import { addToPageCommentIndex, updateToPageComment, deleteToPageComments } from "./commentIndex";
 import { usePageComments } from "./usePageComments";
 import { setBaseDocTitle, pushDocTitle, popDocTitle } from "./docTitle";
@@ -137,7 +137,7 @@ export default function Page() {
           // it cleanly.
           pageScrollManager.run([
             step.openAndAwait(getTrigger, {
-              isOpen: () => isRefOpen(newSlug),
+              isOpen: () => pageController.functions.isRowOpen(newSlug),
               getContainer: () =>
                 document.querySelector(`[textid="${newSlug}"]`)?.closest(".row") ||
                 getTrigger(),

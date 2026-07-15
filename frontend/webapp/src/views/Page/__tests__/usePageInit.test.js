@@ -6,9 +6,13 @@ import { recordDeepLinkEvent } from "src/utils/deepLinkInstrument";
 
 const dom = (html) => { document.body.innerHTML = html; };
 
-const controller = (initOpen, pageSlug = "lehites") => ({
-  states: { initOpen, pageSlug, autoClicked: new Set() },
-});
+const controller = (initOpen, pageSlug = "lehites") => {
+  const states = { initOpen, pageSlug, autoClicked: new Set(), openRows: [] };
+  return {
+    states,
+    functions: { isRowOpen: (slug) => states.openRows.includes(slug) },
+  };
+};
 
 afterEach(() => { document.body.innerHTML = ""; });
 
@@ -55,6 +59,16 @@ test("buildOpenList filters non-string parent slugs", () => {
   dom(`<div class="row"><div textid="lehites/2"><span class="reference"><a>2</a></span></div></div>`);
   const { openSlugs } = buildOpenList("lehites", "2");
   expect(openSlugs).toEqual(["lehites/2"]);
+});
+
+test("openAndAwait isOpen reads openRows membership — state is the truth, not the DOM class", () => {
+  dom(`<div class="row"><div textid="lehites/7"><span class="reference"><a>7</a></span></div></div>`);
+  const c = controller({ textId: "7" });
+  const { steps } = buildInitSteps(c);
+  const open = steps.find((s) => s.type === "openAndAwait");
+  expect(open.isOpen()).toBe(false);
+  c.states.openRows.push("lehites/7");
+  expect(open.isOpen()).toBe(true);
 });
 
 // ── awaitTargetPresent tests ──────────────────────────────────────────────────

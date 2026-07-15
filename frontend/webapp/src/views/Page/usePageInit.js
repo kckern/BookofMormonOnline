@@ -9,11 +9,6 @@ export const pageScrollManager = createScrollManager({
   onEvent: (e) => recordDeepLinkEvent(`scrollManager:${e.name}`, e),
 });
 
-export const isRefOpen = (slug) =>
-  !!document
-    .querySelector(`[textid="${slug}"] .reference`)
-    ?.classList.contains("open");
-
 export function buildOpenList(pageSlug, textId) {
   const textSlug = `${pageSlug}/${textId}`;
   const el = document.querySelector(`[textid="${textSlug}"]`);
@@ -67,7 +62,7 @@ export function buildInitSteps(pageController) {
       step.openAndAwait(
         () => document.querySelector(`[textid="${slug}"] .reference a`),
         {
-          isOpen: () => isRefOpen(slug),
+          isOpen: () => pageController.functions.isRowOpen(slug),
           getContainer: () =>
             document.querySelector(`[textid="${slug}"]`)?.closest(".row"),
         }
