@@ -272,6 +272,18 @@ html[data-theme="dark"] {
         color: #ddd;
     }
 
+    /* custom-plans additions: gallery, wizard, error/complete states */
+    .programCard {
+        border-color: #555;
+        background-color: #2a2a2a;
+        .duration { color: #999; }
+        &:hover { border-color: #5cb85c; }
+    }
+    .rpWizard .paceOption { border-color: #555; &.selected { border-color: #5cb85c; background: rgba(92, 184, 92, 0.12); } }
+    .rpWizard .previewRail { border-top-color: #555; }
+    .rpWizard .scopeList .sizeBadge { color: #999; }
+    .rpError, .rpComplete { color: #ddd; }
+
     /* ============================================
        HOME FEED DARK MODE STYLES
        ============================================ */

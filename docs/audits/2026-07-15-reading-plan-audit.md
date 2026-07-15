@@ -114,3 +114,15 @@ Theater: /theater/plan/:guid ─▶ Theater.js:226 ─▶ queue items [{plan: gu
 ## Recommendation snapshot
 
 Fix-in-place is not enough: items 1-5 stem from the same root (a single hardcoded calendar plan with no lifecycle). The component rewrite should ride along with the custom-plans design rather than patching the dead-plan math first. Design work is tracked separately (spec to follow in `docs/specs/`).
+
+---
+
+## Resolved
+
+All findings in this audit are addressed by the custom reading-plans implementation on branch `feat/custom-reading-plans` (plan: `docs/plans/2026-07-15-custom-reading-plans.md`).
+
+- **P0 items 1-5** (dead plan, 0% display, empty footer, broken resume, no error states): replaced by a full widget state machine (`index.js`), gallery (`Gallery.js`), and active-plan renderer (`ActivePlan.js`) that supports multiple user-created plans with live progress, error/complete/abandon states, and correct current-segment logic.
+- **P1 items 6-9** (frontend progress recompute, strict equality, date mismatch, no refetch): backend is now the single source of truth for progress; frontend does not recompute. `slug` dependency is dynamic; plan is refetched on user change.
+- **P2 items 10-16** (random keys, prop mutation, tooltip duplication, dead imports, XSS, a11y, CSS duplication): addressed in the rewritten components; CSS consolidated in `ReadingPlan.css`.
+- **Expansion blockers 1-8**: write path added (`startReadingPlan`, `updateReadingPlan`, `endReadingPlan`); program catalog (`readingplanprograms`) and preview (`readingplanpreview`) queries implemented; history query (`readingplanhistory`) added; per-user plan rows tracked in `bom_readingplan` with `owner` column populated.
+- **Dark mode**: gallery/wizard/error/complete surfaces covered in `darkmode.scss` (T16).

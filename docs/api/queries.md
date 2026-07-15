@@ -1936,6 +1936,99 @@ query {
 
 ---
 
+### readingplanprograms
+
+Retrieves the catalog of curated reading programs available to start.
+
+```graphql
+readingplanprograms(token: String): [ReadingPlanProgram]
+```
+
+**Arguments:**
+| Argument | Type | Description |
+|----------|------|-------------|
+| `token` | `String` | User authentication token (optional) |
+
+**Example:**
+```graphql
+query {
+  readingplanprograms(token: "user-token") {
+    slug
+    title
+    description
+    config
+    scopeLabel
+    durationLabel
+  }
+}
+```
+
+**Returns:** Array of `ReadingPlanProgram` objects (slug, title, description, encoded config, scope/duration display labels).
+
+---
+
+### readingplanpreview
+
+Generates a dry-run segment list for a plan configuration without persisting anything.
+
+```graphql
+readingplanpreview(token: String, config: String!, startdate: String): ReadingPlanPreview
+```
+
+**Arguments:**
+| Argument | Type | Description |
+|----------|------|-------------|
+| `token` | `String` | User authentication token (optional) |
+| `config` | `String!` | JSON-encoded plan config (scope, pace, paceUnit) |
+| `startdate` | `String` | Override start date (YYYY-MM-DD); defaults to today |
+
+**Example:**
+```graphql
+query {
+  readingplanpreview(config: "{\"scope\":\"full\",\"pace\":3,\"paceUnit\":\"day\"}") {
+    parts
+    enddate
+    warnings { code detail }
+    segments { period ref duedate blocks }
+  }
+}
+```
+
+**Returns:** `ReadingPlanPreview` with segment count, projected end date, any warnings (e.g. TOO_LONG), and a preview segment list.
+
+---
+
+### readingplanhistory
+
+Retrieves the authenticated user's completed and abandoned reading plan history.
+
+```graphql
+readingplanhistory(token: String): [ReadingPlanSummary]
+```
+
+**Arguments:**
+| Argument | Type | Description |
+|----------|------|-------------|
+| `token` | `String` | User authentication token |
+
+**Example:**
+```graphql
+query {
+  readingplanhistory(token: "user-token") {
+    slug
+    title
+    status
+    startdate
+    enddate
+    progress
+  }
+}
+```
+
+**Returns:** Array of `ReadingPlanSummary` objects for plans the user has completed or abandoned.
+
+---
+
 ### botlist
 
 Retrieves available study group bots.

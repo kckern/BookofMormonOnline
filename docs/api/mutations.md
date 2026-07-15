@@ -964,6 +964,115 @@ mutation {
 
 ---
 
+## Reading Plan Mutations
+
+Mutations for creating, updating, and ending user reading plans.
+
+### startReadingPlan
+
+Creates and activates a new reading plan for the authenticated user.
+
+```graphql
+mutation startReadingPlan($token: String!, $input: StartPlanInput!): ReadingPlanResult
+```
+
+**Arguments:**
+| Argument | Type | Required | Description |
+|----------|------|----------|-------------|
+| `token` | `String!` | Yes | User authentication token |
+| `input` | `StartPlanInput!` | Yes | Plan configuration |
+
+`StartPlanInput` fields:
+| Field | Type | Description |
+|-------|------|-------------|
+| `programSlug` | `String` | Slug of a curated program to use as template |
+| `title` | `String` | Custom title (required if not using a program) |
+| `config` | `String` | JSON-encoded plan config (scope, pace, paceUnit) |
+| `startdate` | `String` | Start date override (YYYY-MM-DD) |
+| `credit` | `String` | Credit mode: `"new"` (only new reads) or `"any"` |
+
+**Returns:** `ReadingPlanResult` (isSuccess, msg, plan)
+
+**Example:**
+```graphql
+mutation {
+  startReadingPlan(
+    token: "user-token"
+    input: { programSlug: "bom-year", startdate: "2026-01-01" }
+  ) {
+    isSuccess
+    msg
+    plan { guid slug title startdate duedate }
+  }
+}
+```
+
+---
+
+### updateReadingPlan
+
+Re-paces the user's active reading plan with a new configuration.
+
+```graphql
+mutation updateReadingPlan($token: String!, $input: UpdatePlanInput!): ReadingPlanResult
+```
+
+**Arguments:**
+| Argument | Type | Required | Description |
+|----------|------|----------|-------------|
+| `token` | `String!` | Yes | User authentication token |
+| `input` | `UpdatePlanInput!` | Yes | New config |
+
+`UpdatePlanInput` fields:
+| Field | Type | Description |
+|-------|------|-------------|
+| `config` | `String!` | JSON-encoded plan config (scope, pace, paceUnit) |
+
+**Returns:** `ReadingPlanResult` (isSuccess, msg, plan)
+
+**Example:**
+```graphql
+mutation {
+  updateReadingPlan(
+    token: "user-token"
+    input: { config: "{\"scope\":\"full\",\"pace\":5,\"paceUnit\":\"day\"}" }
+  ) {
+    isSuccess
+    plan { guid duedate }
+  }
+}
+```
+
+---
+
+### endReadingPlan
+
+Marks the user's active reading plan as completed or abandoned.
+
+```graphql
+mutation endReadingPlan($token: String!, $action: PlanEndAction!): ReadingPlanResult
+```
+
+**Arguments:**
+| Argument | Type | Required | Description |
+|----------|------|----------|-------------|
+| `token` | `String!` | Yes | User authentication token |
+| `action` | `PlanEndAction!` | Yes | `COMPLETE` or `ABANDON` |
+
+**Returns:** `ReadingPlanResult` (isSuccess, msg)
+
+**Example:**
+```graphql
+mutation {
+  endReadingPlan(token: "user-token", action: ABANDON) {
+    isSuccess
+    msg
+  }
+}
+```
+
+---
+
 ## Return Types Reference
 
 ### LogResult
