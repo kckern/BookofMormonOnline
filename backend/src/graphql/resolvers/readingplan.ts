@@ -32,10 +32,10 @@ function configToString(config: unknown): string {
 }
 
 interface CreateArgs { programSlug?: string | null; title?: string | null; config?: string | null; startdate?: string | null; credit?: string | null }
-interface CreateResult { isSuccess: boolean; msg: string; slug?: string }
+interface PlanMutationResult { isSuccess: boolean; msg: string; slug?: string }
 
 /** Testable core: create a plan for a resolved username. Enforces one active plan (spec D2). */
-export async function createPlanForUser(db: Kysely<DB>, username: string, args: CreateArgs): Promise<CreateResult> {
+export async function createPlanForUser(db: Kysely<DB>, username: string, args: CreateArgs): Promise<PlanMutationResult> {
   let rawConfig = args.config ?? null;
   let title = args.title ?? null;
   if (args.programSlug) {
@@ -53,38 +53,40 @@ export async function createPlanForUser(db: Kysely<DB>, username: string, args: 
     .where('owner', '=', username).where('status', '=', 'active').executeTakeFirst();
   if (active) return { isSuccess: false, msg: 'ACTIVE_PLAN_EXISTS' };
 
-  const startdate = args.startdate ?? new Date().toISOString().slice(0, 10);
+  const startdate = args.startdate ?? todayISO();
   const gen = await generatePlanSegments(db, config, startdate);
   if (!gen.segments.length) return { isSuccess: false, msg: 'EMPTY_SCOPE' };
 
   const slug = `rp-${nanoid(10)}`;
   const last = gen.segments[gen.segments.length - 1]!;
-  await db.insertInto('bom_readingplan').values({
-    guid: randomBytes(16).toString('hex'),
-    slug,
-    title: title ?? 'Reading Plan',
-    owner: username,
-    startdate: new Date(`${startdate}T00:00:00Z`),
-    duedate: last.duedate ? new Date(`${last.duedate}T00:00:00Z`) : null,
-    status: 'active',
-    config: JSON.stringify(config),
-  }).execute();
-  await db.insertInto('bom_readingplan_seg').values(gen.segments.map((s) => ({
-    guid: randomBytes(16).toString('hex'),
-    plan: slug,
-    period: s.period,
-    ref: s.ref,
-    title: null,
-    duedate: s.duedate ? new Date(`${s.duedate}T00:00:00Z`) : null,
-    start: s.start,
-    end: s.end,
-    sectionGuids: JSON.stringify(s.sectionGuids),
-  }))).execute();
+  await db.transaction().execute(async (trx) => {
+    await trx.insertInto('bom_readingplan').values({
+      guid: randomBytes(16).toString('hex'),
+      slug,
+      title: title ?? 'Reading Plan',
+      owner: username,
+      startdate: new Date(`${startdate}T00:00:00Z`),
+      duedate: last.duedate ? new Date(`${last.duedate}T00:00:00Z`) : null,
+      status: 'active',
+      config: JSON.stringify(config),
+    }).execute();
+    await trx.insertInto('bom_readingplan_seg').values(gen.segments.map((s) => ({
+      guid: randomBytes(16).toString('hex'),
+      plan: slug,
+      period: s.period,
+      ref: s.ref,
+      title: null,
+      duedate: s.duedate ? new Date(`${s.duedate}T00:00:00Z`) : null,
+      start: s.start,
+      end: s.end,
+      sectionGuids: JSON.stringify(s.sectionGuids),
+    }))).execute();
+  });
   return { isSuccess: true, msg: 'OK', slug };
 }
 
 /** Testable core: end the active plan. */
-export async function endPlanForUser(db: Kysely<DB>, username: string, action: 'COMPLETE' | 'ABANDON'): Promise<CreateResult> {
+export async function endPlanForUser(db: Kysely<DB>, username: string, action: 'COMPLETE' | 'ABANDON'): Promise<PlanMutationResult> {
   const active = await db.selectFrom('bom_readingplan').select(['guid', 'slug'])
     .where('owner', '=', username).where('status', '=', 'active').executeTakeFirst();
   if (!active) return { isSuccess: false, msg: 'NO_ACTIVE_PLAN' };
@@ -175,31 +177,25 @@ export const readingplanResolvers: Resolvers = {
 
   Mutation: {
     startReadingPlan: async (_root, args, ctx: AppContext) => {
-      try {
-        const username = await resolveUsername(ctx, args.token as string);
-        if (!username) return { isSuccess: false, msg: 'NOT_AUTHENTICATED', plan: null };
-        const input = args.input as CreateArgs;
-        const res = await createPlanForUser(ctx.db, username, input);
-        if (!res.isSuccess) return { isSuccess: false, msg: res.msg, plan: null };
-        const plan = await loadReadingPlan(ctx.db, res.slug!, { queryBy: username }, ctx.lang);
-        return { isSuccess: true, msg: 'OK', plan };
-      } catch (err) {
-        console.error('startReadingPlan error:', err);
-        return { isSuccess: false, msg: 'INVALID_CONFIG', plan: null };
-      }
+      const username = await resolveUsername(ctx, args.token as string);
+      if (!username) return { isSuccess: false, msg: 'NOT_AUTHENTICATED', plan: null };
+      const res = await createPlanForUser(ctx.db, username, args.input as CreateArgs);
+      if (!res.isSuccess) return { isSuccess: false, msg: res.msg, plan: null };
+      // Plan is committed; a reload failure must not report failure to the client.
+      let plan: Awaited<ReturnType<typeof loadReadingPlan>> | null = null;
+      try { plan = await loadReadingPlan(ctx.db, res.slug!, { queryBy: username }, ctx.lang); }
+      catch (err) { console.error('startReadingPlan: post-create reload failed', err); }
+      return { isSuccess: true, msg: 'OK', plan };
     },
     endReadingPlan: async (_root, args, ctx: AppContext) => {
-      try {
-        const username = await resolveUsername(ctx, args.token as string);
-        if (!username) return { isSuccess: false, msg: 'NOT_AUTHENTICATED', plan: null };
-        const res = await endPlanForUser(ctx.db, username, args.action as 'COMPLETE' | 'ABANDON');
-        if (!res.isSuccess) return { isSuccess: false, msg: res.msg, plan: null };
-        const plan = await loadReadingPlan(ctx.db, res.slug!, { queryBy: username }, ctx.lang);
-        return { isSuccess: true, msg: 'OK', plan };
-      } catch (err) {
-        console.error('endReadingPlan error:', err);
-        return { isSuccess: false, msg: 'NO_ACTIVE_PLAN', plan: null };
-      }
+      const username = await resolveUsername(ctx, args.token as string);
+      if (!username) return { isSuccess: false, msg: 'NOT_AUTHENTICATED', plan: null };
+      const res = await endPlanForUser(ctx.db, username, args.action as 'COMPLETE' | 'ABANDON');
+      if (!res.isSuccess) return { isSuccess: false, msg: res.msg, plan: null };
+      let plan: Awaited<ReturnType<typeof loadReadingPlan>> | null = null;
+      try { plan = await loadReadingPlan(ctx.db, res.slug!, { queryBy: username }, ctx.lang); }
+      catch (err) { console.error('endReadingPlan: post-end reload failed', err); }
+      return { isSuccess: true, msg: 'OK', plan };
     },
   },
 };
