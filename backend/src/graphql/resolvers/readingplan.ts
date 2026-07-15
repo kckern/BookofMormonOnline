@@ -10,6 +10,16 @@ import { generatePlanSegments } from '../../readingplan/generate.js';
 import { parsePlanConfig } from '../../readingplan/types.js';
 import { loadReadingPlan } from '../../messaging/readingplan.js';
 
+/** Stable JSON serialization with sorted object keys — needed because MySQL normalises JSON key order on storage. */
+function stableJSON(v: unknown): string {
+  if (Array.isArray(v)) return '[' + v.map(stableJSON).join(',') + ']';
+  if (v !== null && typeof v === 'object') {
+    const keys = Object.keys(v as Record<string, unknown>).sort();
+    return '{' + keys.map((k) => `${JSON.stringify(k)}:${stableJSON((v as Record<string, unknown>)[k]!)}`).join(',') + '}';
+  }
+  return JSON.stringify(v);
+}
+
 /** token → bom_user.user username (the plain username stored in bom_readingplan.owner). Null when anonymous. */
 export async function resolveUsername(ctx: AppContext, token: string | null | undefined): Promise<string | null> {
   if (!token) return null;
@@ -83,6 +93,36 @@ export async function createPlanForUser(db: Kysely<DB>, username: string, args: 
     }))).execute();
   });
   return { isSuccess: true, msg: 'OK', slug };
+}
+
+/** Testable core: re-pace an active plan (change pacing/segmentation). Scope is IMMUTABLE. */
+export async function updatePlanForUser(db: Kysely<DB>, username: string, rawConfig: string): Promise<PlanMutationResult> {
+  const active = await db.selectFrom('bom_readingplan').selectAll()
+    .where('owner', '=', username).where('status', '=', 'active').executeTakeFirst();
+  if (!active) return { isSuccess: false, msg: 'NO_ACTIVE_PLAN' };
+  const next = parsePlanConfig(rawConfig);
+  if (!next) return { isSuccess: false, msg: 'INVALID_CONFIG' };
+  const prev = parsePlanConfig(typeof active.config === 'string' ? active.config : JSON.stringify(active.config));
+  if (!prev || stableJSON(prev.scope) !== stableJSON(next.scope)) {
+    return { isSuccess: false, msg: 'SCOPE_IMMUTABLE' }; // spec: scope changes are a new plan
+  }
+  const startdate = new Date(active.startdate as unknown as string | Date).toISOString().slice(0, 10);
+  const gen = await generatePlanSegments(db, next, startdate);
+  if (!gen.segments.length) return { isSuccess: false, msg: 'EMPTY_SCOPE' };
+  const last = gen.segments[gen.segments.length - 1]!;
+  await db.transaction().execute(async (trx) => {
+    await trx.deleteFrom('bom_readingplan_seg').where('plan', '=', active.slug!).execute();
+    await trx.insertInto('bom_readingplan_seg').values(gen.segments.map((s) => ({
+      guid: randomBytes(16).toString('hex'), plan: active.slug!, period: s.period, ref: s.ref, title: null,
+      duedate: s.duedate ? new Date(`${s.duedate}T00:00:00Z`) : null, start: s.start, end: s.end,
+      sectionGuids: JSON.stringify(s.sectionGuids),
+    }))).execute();
+    await trx.updateTable('bom_readingplan')
+      .set({ config: JSON.stringify(next), duedate: last.duedate ? new Date(`${last.duedate}T00:00:00Z`) : null })
+      .where('guid', '=', active.guid!)
+      .execute();
+  });
+  return { isSuccess: true, msg: 'OK', slug: active.slug ?? undefined };
 }
 
 /** Testable core: end the active plan. */
@@ -195,6 +235,16 @@ export const readingplanResolvers: Resolvers = {
       let plan: Awaited<ReturnType<typeof loadReadingPlan>> | null = null;
       try { plan = await loadReadingPlan(ctx.db, res.slug!, { queryBy: username }, ctx.lang); }
       catch (err) { console.error('endReadingPlan: post-end reload failed', err); }
+      return { isSuccess: true, msg: 'OK', plan };
+    },
+    updateReadingPlan: async (_root, args, ctx: AppContext) => {
+      const username = await resolveUsername(ctx, args.token as string);
+      if (!username) return { isSuccess: false, msg: 'NOT_AUTHENTICATED', plan: null };
+      const res = await updatePlanForUser(ctx.db, username, (args.input as { config: string }).config);
+      if (!res.isSuccess) return { isSuccess: false, msg: res.msg, plan: null };
+      let plan = null;
+      try { plan = await loadReadingPlan(ctx.db, res.slug!, { queryBy: username }, ctx.lang); }
+      catch (err) { console.error('updateReadingPlan: post-update reload failed', err); }
       return { isSuccess: true, msg: 'OK', plan };
     },
   },

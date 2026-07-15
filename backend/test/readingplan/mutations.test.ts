@@ -4,7 +4,7 @@ import { nanoid } from 'nanoid';
 import { Kysely, MysqlDialect, type MysqlDialectConfig } from 'kysely';
 import { createPool } from 'mysql2';
 import type { DB } from '../../codegen/db.js';
-import { createPlanForUser, endPlanForUser } from '../../src/graphql/resolvers/readingplan.js';
+import { createPlanForUser, endPlanForUser, updatePlanForUser } from '../../src/graphql/resolvers/readingplan.js';
 
 function buildWriteDb(): Kysely<DB> {
   return new Kysely<DB>({
@@ -68,6 +68,19 @@ describe('plan lifecycle', () => {
     expect(res.isSuccess).toBe(true);
     const all = await db.selectFrom('bom_readingplan').select(['status']).where('owner', '=', testUser).execute();
     expect(all.map((r) => r.status).sort()).toEqual(['abandoned', 'active']);
+  });
+
+  it('re-paces: replaces segments, scope immutable', async () => {
+    // active plan exists from the abandon test above (5 daily parts, range 31103..31602)
+    const rePace = { ...CONFIG, pacing: { type: 'cadence', unit: 'day', count: 3 }, segmentation: { type: 'even', parts: 3 } };
+    const ok = await updatePlanForUser(db, testUser, JSON.stringify(rePace));
+    expect(ok.isSuccess).toBe(true);
+    const segs = await db.selectFrom('bom_readingplan_seg').selectAll().where('plan', '=', ok.slug!).execute();
+    expect(segs).toHaveLength(3);
+
+    const newScope = { ...CONFIG, scope: { type: 'range', start: 31103, end: 31200 } };
+    const bad = await updatePlanForUser(db, testUser, JSON.stringify(newScope));
+    expect(bad.msg).toBe('SCOPE_IMMUTABLE');
   });
 
   it('rejects invalid config and empty scope', async () => {
