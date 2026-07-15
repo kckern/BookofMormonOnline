@@ -1,0 +1,17 @@
+/* Sampler.css — bento grid for /home. Dark mode via body.dark overrides. Full pass: Task 9. */
+.sampler.container { padding: 1rem 0 3rem; }
+.samplerGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+.tile { border-radius: 0.75rem; overflow: hidden; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.12); }
+body.dark .tile { background: #2a2a2a; }
+.tile.skeleton { min-height: 10rem; animation: samplerShimmer 1.2s infinite; background: #eee; }
+body.dark .tile.skeleton { background: #333; }
+@keyframes samplerShimmer { 50% { opacity: 0.5; } }
+.tile-people { grid-column: span 4; }
+.tile-places { grid-column: span 4; }
+.tile-readingplan { grid-column: span 2; }
+.tile-fax { grid-column: span 2; }
+.tile-commentary { grid-column: span 2; }
+.tile-contents { grid-column: span 2; }
+.tile-spotlight { grid-column: span 2; }
+.tile-activity { grid-column: span 2; }
+.samplerFooter { display: flex; gap: 1rem; justify-content: center; margin-top: 2rem; flex-wrap: wrap; }

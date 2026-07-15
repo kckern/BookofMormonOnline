@@ -1,0 +1,5 @@
+/* Sampler.m.css — mobile overrides; 900px is the app's established breakpoint. */
+@media only screen and (max-width: 900px) {
+  .samplerGrid { grid-template-columns: 1fr; }
+  .samplerGrid .tile { grid-column: span 1 !important; }
+}
