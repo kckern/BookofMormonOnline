@@ -170,7 +170,7 @@ function Narration({ rowData, addHighlight }) {
         const next = !refs.current.states.showFax;
         dispatch({ type: "setShowFax", on: next });
         if (next) setSlug(slugOf() + "/fax/" + refs.current.states.activeFax);
-        else { setSlug(slugOf()); dispatch({ type: "setActiveImageId", id: 0 }); }
+        else fns.setActiveImageId(0);
       },
       setPeoplePlaces: (slugs) => dispatch({ type: "setPeoplePlaces", val: slugs }),
       setScriptures: (verse_ids) => dispatch({ type: "setScriptures", val: verse_ids }),
