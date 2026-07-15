@@ -5,9 +5,13 @@ import { sql, type Kysely } from 'kysely';
 import type { DB } from '../../codegen/db.js';
 import type { ScopeConfig, ScopedSection } from './types.js';
 
-async function aggregateSections(db: Kysely<DB>, sectionGuids: string[]): Promise<ScopedSection[]> {
+async function aggregateSections(
+  db: Kysely<DB>,
+  sectionGuids: string[],
+  range?: { start: number; end: number },
+): Promise<ScopedSection[]> {
   if (!sectionGuids.length) return [];
-  const rows = await db
+  let q = db
     .selectFrom('bom_text')
     .innerJoin('bom_lookup', 'bom_lookup.text_guid', 'bom_text.guid')
     .innerJoin('bom_section', (join) => join.onRef('bom_section.guid', '=', 'bom_text.section'))
@@ -18,7 +22,11 @@ async function aggregateSections(db: Kysely<DB>, sectionGuids: string[]): Promis
       fn.min<number>('bom_lookup.verse_id').as('minVerse'),
       fn.max<number>('bom_lookup.verse_id').as('maxVerse'),
     ])
-    .where('bom_text.section', 'in', sectionGuids)
+    .where('bom_text.section', 'in', sectionGuids);
+  if (range) {
+    q = q.where(sql<boolean>`bom_lookup.verse_id BETWEEN ${range.start} AND ${range.end}`);
+  }
+  const rows = await q
     .groupBy(['bom_section.guid', 'bom_section.parent'])
     .orderBy(sql`MIN(bom_lookup.verse_id + 0)`, 'asc')
     .execute();
@@ -45,6 +53,7 @@ export async function resolveScope(db: Kysely<DB>, scope: ScopeConfig): Promise<
     return aggregateSections(
       db,
       rows.map((r) => r.section).filter((s): s is string => !!s),
+      { start: scope.start, end: scope.end },
     );
   }
 

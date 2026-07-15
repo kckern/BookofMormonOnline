@@ -33,4 +33,16 @@ describe('resolveScope (live DB, read-only)', () => {
   it('empty input returns empty', async () => {
     expect(await resolveScope(db, { type: 'sections', guids: [] })).toEqual([]);
   });
+
+  it('range: section extents are CLAMPED to the scope (thematic cross-book sections do not leak)', async () => {
+    // Mosiah range — some sections here are thematic and span into other books
+    // globally; their extents must be clamped to Mosiah (32793..33577).
+    const sections = await resolveScope(db, { type: 'range', start: 32793, end: 33577 });
+    expect(sections.length).toBeGreaterThan(0);
+    for (const s of sections) {
+      expect(s.minVerse).toBeGreaterThanOrEqual(32793);
+      expect(s.maxVerse).toBeLessThanOrEqual(33577);
+      expect(s.blocks).toBeGreaterThan(0);
+    }
+  });
 });
