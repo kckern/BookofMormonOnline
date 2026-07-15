@@ -1,13 +1,19 @@
 import { lazy } from "react";
 import { isMessengerEnabled } from './featureFlags';
 import { determineLanguage } from "./Utils.js";
-import { Redirect } from "react-router-dom";
+import { Redirect, useParams } from "react-router-dom";
 
 // Feature flag - messaging disabled until Phase 5 data migration
 const USE_MESSENGER = isMessengerEnabled();
 
 // Redirect component for disabled routes
 const DisabledRedirect = () => <Redirect to="/" />;
+
+// Legacy /home/:channelId(/:messageId) deep links now live under /community.
+const HomeChannelRedirect = () => {
+  const { channelId, messageId } = useParams();
+  return <Redirect to={`/community/${channelId}${messageId ? `/${messageId}` : ""}`} />;
+};
 
 // COMPONENTS
 const About = lazy(() => import("../views/About/About.js"));
@@ -23,7 +29,8 @@ const PeopleNetWork = lazy(() => import("../views/People/PeopleNetwork.js"));
 const TimeLine = lazy(() => import("../views/Timeline/Timeline.js"));
 const Contents = lazy(() => import("../views/Contents/Contents.js"));
 const SearchComponent = lazy(() => import("../views/Search/Search.js"));
-const Home = lazy(() => import("../views/Home/Community.js"));
+const Sampler = lazy(() => import("../views/Home/Sampler.js"));
+const Community = lazy(() => import("../views/Home/Community.js"));
 const Page = lazy(() => import("../views/Page/Page.js"));
 const Analysis = lazy(() => import("../views/Analysis/Analysis.js"));
 const History = lazy(() => import("../views/History/History.js"));
@@ -47,19 +54,31 @@ const routes = [
     component: (!lang || lang === "en") ? ReadScripture : ReadScripture,
   },
   {
-    // /home (the study-group activity feed) is always enabled — the feed renders
-    // for everyone; per-group join/post still gates on messaging being live.
+    // /home — the tile "sampler" explore page (design: docs/plans/2026-07-15-home-sampler-redesign-design.md)
     exact: true,
     path: "/home",
-    component: Home,
+    component: Sampler,
   },
   {
     path: "/home/:channelId/:messageId(\\d+)",
-    component: Home,
+    component: HomeChannelRedirect,
   },
   {
     path: "/home/:channelId",
-    component: Home,
+    component: HomeChannelRedirect,
+  },
+  {
+    exact: true,
+    path: "/community",
+    component: Community,
+  },
+  {
+    path: "/community/:channelId/:messageId(\\d+)",
+    component: Community,
+  },
+  {
+    path: "/community/:channelId",
+    component: Community,
   },
   {
     path: "/groups",
