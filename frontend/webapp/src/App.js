@@ -1,11 +1,11 @@
-import React, { lazy, Suspense, useEffect } from "react";
+import React from "react";
 import { Router } from 'react-router';
 import { Route } from 'react-router-dom';
 import { toast, ToastContainer } from "react-toastify";
 import { createBrowserHistory } from 'history';
 import Cookies from 'js-cookie';
 
-import Loader from "./views/_Common/Loader";
+import MainLayout from "./views/_Common/Main";
 import "react-toastify/dist/ReactToastify.css";
 import "bootstrap/dist/css/bootstrap.css";
 import "./assets/theme/scss/paper-dashboard.scss";
@@ -22,7 +22,6 @@ const  REACT_APP_GOOGLE_CLIENT_ID  = process.env.REACT_APP_GOOGLE_CLIENT_ID || b
 
 const history = createBrowserHistory();
 
-const MainLayout = lazy(() => import("./views/_Common/Main"));
 const containerStyle = {
   zIndex: 1999,
   top: "15%",
@@ -44,11 +43,9 @@ export default function App() {
       <ToastContainer autoClose={3000} style={containerStyle} limit={1} position={toast.POSITION.BOTTOM_LEFT} />
       <AppModal />
     <GoogleOAuthProvider clientId={REACT_APP_GOOGLE_CLIENT_ID}>
-      <Suspense fallback={<Loader />}>
         <Router history={history}>
           <MainLayout />
         </Router>
-      </Suspense>
       </GoogleOAuthProvider>
     </>
   );
