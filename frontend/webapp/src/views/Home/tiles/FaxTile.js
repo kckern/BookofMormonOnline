@@ -16,7 +16,7 @@ export default function FaxTile({ data }) {
         src={thumb}
         alt=""
         loading="lazy"
-        onError={(e) => (e.target.style.visibility = "hidden")}
+        onError={(e) => (e.target.style.display = "none")}
       />
       <div className="faxTileTitle">{data.title}</div>
       {data.pages ? <div className="faxTileMeta">{data.pages} pp.</div> : null}
