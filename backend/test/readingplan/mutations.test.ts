@@ -91,4 +91,14 @@ describe('plan lifecycle', () => {
     });
     expect(empty.msg).toBe('EMPTY_SCOPE');
   });
+
+  it('loadReadingPlan: no-slug resolves active plan; current is never -1; new fields present', async () => {
+    const { loadReadingPlan } = await import('../../src/messaging/readingplan.js');
+    const plan = await loadReadingPlan(db, null, { queryBy: testUser }, 'en');
+    expect(plan).toBeTruthy();
+    expect(plan!.status).toBe('active');
+    expect(typeof plan!.current).toBe('number');
+    expect(plan!.current).toBeGreaterThanOrEqual(0);
+    expect(String(plan!.config)).toContain('"scope"');
+  });
 });

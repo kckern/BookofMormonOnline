@@ -15,6 +15,7 @@ import type { Kysely } from 'kysely';
 import { sql } from 'kysely';
 import type { DB } from '../../../codegen/db.js';
 import { SlugResolver } from '../slugResolver.js';
+import { parsePlanConfig } from '../../readingplan/types.js';
 
 const COMPLETE_THRESHOLD = Number(process.env.PERCENT_TO_COUNT_AS_COMPLETE ?? 40);
 
@@ -28,6 +29,7 @@ interface SegmentMeta {
   start: number | null;
   end: number | null;
   plan_start: Date | string | null;
+  plan_config: unknown;
 }
 
 /** Row shape of the big completion query (legacy `sql`). */
@@ -114,15 +116,17 @@ export async function loadReadingPlanSegment(
         's.start as start',
         's.end as end',
         'p.startdate as plan_start',
+        'p.config as plan_config',
       ])
       .where('s.guid', '=', guid)
       .executeTakeFirst()) as SegmentMeta | undefined;
     if (!segmentData) return null;
 
-    const { plan_start, duedate, start, end } = segmentData;
+    const { plan_start, plan_config, duedate, start, end } = segmentData;
     const planStartTimestamp = plan_start
       ? Math.floor((plan_start instanceof Date ? plan_start : new Date(plan_start)).getTime() / 1000)
       : 0;
+    const creditFloor = parsePlanConfig(typeof plan_config === 'string' ? plan_config : JSON.stringify(plan_config ?? ''))?.credit === 'alltime' ? 0 : (planStartTimestamp || 0);
 
     // Use the requested lang only for translation overrides (legacy passed lang
     // straight into bom_translation joins; en/null/dev have no rows so they no-op).
@@ -143,7 +147,7 @@ export async function loadReadingPlanSegment(
         FROM bom_text
         LEFT JOIN (
             SELECT value as guid, MAX(credit) as credit FROM bom_log
-            WHERE type = "block" AND user = ${queryBy} AND timestamp > ${sql.lit(planStartTimestamp || 0)}
+            WHERE type = "block" AND user = ${queryBy} AND timestamp > ${sql.lit(creditFloor)}
             GROUP BY guid
             ) bom_log ON bom_text.guid = bom_log.guid
             LEFT JOIN bom_translation ON bom_text.guid = bom_translation.guid

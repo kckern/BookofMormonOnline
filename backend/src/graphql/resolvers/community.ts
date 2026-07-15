@@ -451,10 +451,9 @@ export const communityResolvers: Resolvers = {
      * the slug is unknown (frontend guards on planData).
      */
     readingplan: async (_root, args, ctx: AppContext) => {
-      const slug = (args.slug ?? '') as string;
-      if (!slug) return null;
       try {
         const queryBy = await resolveUsername(ctx, args.token as string | null | undefined);
+        const slug = (args.slug as string | null | undefined) || null;
         return asGql(await loadReadingPlan(ctx.db, slug, { queryBy }, ctx.lang ?? null));
       } catch (error) {
         console.error('readingplan error:', error);

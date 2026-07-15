@@ -9,7 +9,8 @@
  */
 import type { Kysely } from 'kysely';
 import { sql } from 'kysely';
-import type { DB } from '../../codegen/db.js';
+import type { DB, JsonValue } from '../../codegen/db.js';
+import { parsePlanConfig } from '../readingplan/types.js';
 
 const COMPLETE_THRESHOLD = Number(process.env.PERCENT_TO_COUNT_AS_COMPLETE ?? 40);
 
@@ -24,6 +25,9 @@ interface PlanRow {
   title: string | null;
   startdate: Date | string | null;
   duedate: Date | string | null;
+  status: string | null;
+  config: JsonValue | null;
+  enddate: Date | string | null;
 }
 
 interface SegmentRow {
@@ -75,7 +79,7 @@ async function completedGuids(db: Kysely<DB>, queryBy: string, cutOff: number): 
 async function loadPlanData(db: Kysely<DB>, slug: string): Promise<{ plan: PlanRow; segments: SegmentRow[] } | null> {
   const plan = await db
     .selectFrom('bom_readingplan')
-    .select(['guid', 'slug', 'title', 'startdate', 'duedate'])
+    .select(['guid', 'slug', 'title', 'startdate', 'duedate', 'status', 'config', 'enddate'])
     .where('slug', '=', slug)
     .executeTakeFirst();
   if (!plan) return null;
@@ -142,18 +146,28 @@ function scoreSegment(
  */
 export async function loadReadingPlan(
   db: Kysely<DB>,
-  slug: string,
+  slug: string | null,
   userInfo: ReadingPlanUserInfo,
   lang: string | null,
 ): Promise<Record<string, unknown> | null> {
-  const data = await loadPlanData(db, slug);
+  let planSlug = slug;
+  if (!planSlug) {
+    if (!userInfo.queryBy) return null;
+    const active = await db.selectFrom('bom_readingplan').select('slug')
+      .where('owner', '=', userInfo.queryBy).where('status', '=', 'active').limit(1).executeTakeFirst();
+    if (!active?.slug) return null;
+    planSlug = active.slug;
+  }
+  const data = await loadPlanData(db, planSlug);
   if (!data) return null;
   const { plan, segments: planSegments } = data;
 
+  const cfg = plan.config ? parsePlanConfig(typeof plan.config === 'string' ? plan.config : JSON.stringify(plan.config)) : null;
   const startUnix = plan.startdate
     ? Math.floor((plan.startdate instanceof Date ? plan.startdate : new Date(plan.startdate)).getTime() / 1000)
     : 0;
-  const completed = new Set(await completedGuids(db, userInfo.queryBy, startUnix));
+  const creditFloor = cfg?.credit === 'alltime' ? 0 : startUnix;
+  const completed = new Set(await completedGuids(db, userInfo.queryBy, creditFloor));
 
   const allTextBlocks = await db.selectFrom('bom_text').select(['guid', 'section']).execute();
 
@@ -197,13 +211,34 @@ export async function loadReadingPlan(
 
   const progress = toDateItems ? Math.round((toDateCompleted / toDateItems) * 10000) / 100 : 0;
 
+  // Server-authoritative active-segment index (frontend does no date math).
+  const hasDates = segments.some((s) => !!s.duedate);
+  let current: number;
+  if (hasDates) {
+    const idx = segments.findIndex((s) => s.duedate && s.duedate >= todayStr);
+    current = idx === -1 ? Math.max(0, segments.length - 1) : idx; // plan over → last, never -1
+  } else {
+    const idx = segments.findIndex((s) => Number(s.progress) < 100);
+    current = idx === -1 ? Math.max(0, segments.length - 1) : idx; // all done → last
+  }
+
+  // Auto-complete on read (spec: no cron). Only for a live user plan.
+  let status = plan.status ?? null;
+  if (progress >= 100 && status === 'active') {
+    await db.updateTable('bom_readingplan').set({ status: 'completed', enddate: new Date() }).where('slug', '=', planSlug).execute();
+    status = 'completed';
+  }
+
   return {
     guid: plan.guid,
-    slug,
+    slug: planSlug,
     title: tr(plan.guid, 'title') ?? plan.title,
     startdate: fmtDate(plan.startdate),
     duedate: fmtDate(plan.duedate),
     progress,
+    status,
+    config: plan.config ? (typeof plan.config === 'string' ? plan.config : JSON.stringify(plan.config)) : null,
+    current,
     segments,
   };
 }
