@@ -7,8 +7,9 @@ import { openScripture } from "./ScripturePopup";
 import { clampWords } from "./textUtils";
 
 /**
- * Three place cards (thumb, name, info line, one index ref, map deep-link)
- * plus a 3×3 mosaic end cell of more places — the "much more" signal → /places.
+ * Place cards follow the people-card convention: name overlaid on the 16:9
+ * image, a corner map icon deep-linking to the internal map, and the ref-first
+ * index line in the chrome. End cell = 3×3 "much more" mosaic → /places.
  */
 export default function PlacesTile({ data, seed = 0 }) {
   const cards = data.slice(0, 3);
@@ -24,21 +25,25 @@ export default function PlacesTile({ data, seed = 0 }) {
           const ref = idx.length ? idx[(seed + i) % idx.length].ref : null;
           return (
             <div className="placesTileCard" key={p.slug}>
-              <Link to={`/places/${p.slug}`}>
-                <img
-                  src={`${assetUrl}/places/${p.slug}`}
-                  alt={p.name || ""}
-                  loading="lazy"
-                  onError={(e) => (e.target.style.visibility = "hidden")}
-                />
-              </Link>
-              <div className="placesTileNameRow">
-                <Link to={`/places/${p.slug}`} className="placesTileName">{replaceNumbers(p.name)}</Link>
-                <Link to={`/map/internal/place/${p.slug}`} className="placesTileMapLink" title={label("map")}>
-                  <img src={pin} alt={label("map")} />
+              <div className="placesImgWrap">
+                <Link to={`/places/${p.slug}`}>
+                  <img
+                    src={`${assetUrl}/places/${p.slug}`}
+                    alt={p.name || ""}
+                    loading="lazy"
+                    onError={(e) => (e.target.style.visibility = "hidden")}
+                  />
+                </Link>
+                <span className="peopleFaceName placesNameOverlay">{replaceNumbers(p.name)}</span>
+                <Link
+                  to={`/map/internal/place/${p.slug}`}
+                  className="placesMapBtn"
+                  title={label("map")}
+                  aria-label={label("map")}
+                >
+                  <img src={pin} alt="" />
                 </Link>
               </div>
-              {/* ref-first, matching the people-card pattern: "Alma 2:15 — info" */}
               {ref || p.info ? (
                 <div className="placesTileInfo">
                   {ref ? (

@@ -1739,6 +1739,7 @@ const queries = {
         section { title slug page { title slug } rows { guid narration { guid description text { slug heading imgIds status(token:"${input.token || ""}") } } } }
         sectionNext { title slug rows { guid narration { guid description text { slug heading status(token:"${input.token || ""}") } } } }
         history { id slug year date source archive author document teaser aspect }
+        text { slug heading content imgIds parent_page { title } parent_section { title } narration { description } }
       }`,
     }
   },

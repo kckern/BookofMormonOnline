@@ -261,6 +261,7 @@ export type HomeSampler = {
   section?: Maybe<Section>;
   sectionNext?: Maybe<Section>;
   seed?: Maybe<Scalars['Int']['output']>;
+  text?: Maybe<TextBlock>;
 };
 
 export type HomeUser = {
@@ -2364,6 +2365,7 @@ export type HomeSamplerResolvers<ContextType = AppContext, ParentType extends Re
   section?: Resolver<Maybe<ResolversTypes['Section']>, ParentType, ContextType>;
   sectionNext?: Resolver<Maybe<ResolversTypes['Section']>, ParentType, ContextType>;
   seed?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  text?: Resolver<Maybe<ResolversTypes['TextBlock']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 

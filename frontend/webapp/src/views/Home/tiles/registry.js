@@ -1,4 +1,5 @@
 import PeopleTile from "./PeopleTile";
+import TextTile from "./TextTile";
 import PlacesTile from "./PlacesTile";
 import FaxTile from "./FaxTile";
 import HistoryTile from "./HistoryTile";
@@ -27,6 +28,7 @@ export const tileRegistry = [
   { key: "spotlight",   component: SpotlightTile,   span: "tile-spotlight",   isReady: (p) => !!p?.spotlight },
   { key: "activity",    component: ActivityTile,    span: "tile-activity",    isReady: (p) => p?.activity?.length > 0 },
   { key: "people",      component: PeopleTile,      span: "tile-people",      isReady: (p) => p?.people?.length > 0 },
+  { key: "text",        component: TextTile,        span: "tile-text",        isReady: (p) => !!p?.text },
   { key: "commentary",  component: CommentaryTile,  span: "tile-commentary",  isReady: (p) => !!p?.commentary },
   { key: "history",     component: HistoryTile,     span: "tile-history",     isReady: (p) => !!p?.history },
   { key: "fax",         component: FaxTile,         span: "tile-fax",         isReady: (p) => !!p?.fax },

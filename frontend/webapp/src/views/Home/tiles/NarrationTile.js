@@ -33,8 +33,10 @@ function NarrationList({ section }) {
     // heading = that bom_text block's heading, NOT the cross-reference list.
     <Link to={`/${n.text?.slug || section.slug}`} key={n.guid} className="narrationItem">
       <img src={statusDot[n.text?.status] || blank} alt="" className="narrationDot" />
-      <span className="narrationText">{flatten(n.description)}</span>
-      {n.text?.heading ? <span className="narrationRef">{n.text.heading}</span> : null}
+      <span className="narrationText">
+        {flatten(n.description)}
+        {n.text?.heading ? <span className="narrationRef"> {n.text.heading}</span> : null}
+      </span>
     </Link>
   ));
 }

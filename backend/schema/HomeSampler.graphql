@@ -15,4 +15,5 @@ type HomeSampler {
   section: Section
   sectionNext: Section
   history: HistoricalDocument
+  text: TextBlock
 }

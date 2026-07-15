@@ -18,6 +18,22 @@ const getSessionSeed = () => {
   return seed;
 };
 
+/** Fisher–Yates: the VARIABLE tiles refit randomly each load (fixed ones don't). */
+const shuffle = (arr) => {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+};
+
+// FIXED tiles hold anchored slots: the left rail (reading plan → narration →
+// contents) and people at the top of the main grid. Everything else is
+// VARIABLE — shuffled per load and bin-packed by grid-auto-flow: dense.
+const FIXED_LEFT = ["readingplan", "section", "contents"];
+const FIXED_TOP = ["people"];
+
 /** Merge the compound API response into one payload keyed by registry tile key. */
 export const assemblePayload = (r) => {
   const sampler = r?.homesampler?.[0] || {};
@@ -61,15 +77,17 @@ export default function Sampler() {
   const [payload, setPayload] = useState(null);
   const [failed, setFailed] = useState(false);
   const [seed, setSeed] = useState(getSessionSeed);
-  // Fixed arrangement (registry order); dense flow packs the mixed spans.
-  const tiles = tileRegistry;
+  const [variableTiles, setVariableTiles] = useState(() =>
+    shuffle(tileRegistry.filter((t) => !FIXED_LEFT.includes(t.key) && !FIXED_TOP.includes(t.key))),
+  );
 
-  // Break the session-stable seed on demand: fresh content, same layout.
+  // Break the session-stable seed on demand: fresh content + refitted variables.
   const resample = () => {
     const next = Math.floor(Math.random() * (2 ** 31 - 1)) + 1;
     sessionStorage.setItem("samplerSeed", String(next));
     setPayload(null);
     setFailed(false);
+    setVariableTiles(shuffle(tileRegistry.filter((t) => !FIXED_LEFT.includes(t.key) && !FIXED_TOP.includes(t.key))));
     setSeed(next);
   };
 
@@ -118,12 +136,12 @@ export default function Sampler() {
     );
   };
 
-  // The left rail: the reading plan leads (the regular's first intent), then
-  // narration + contents anchor it; community + activity fill its tail so the
-  // column bottoms land together (no dead zone).
-  const LEFT_KEYS = ["readingplan", "section", "contents", "spotlight", "activity"];
-  const leftTiles = tiles.filter((t) => LEFT_KEYS.includes(t.key));
-  const mainTiles = tiles.filter((t) => !LEFT_KEYS.includes(t.key));
+  // Fixed left rail (registry order) + fixed top (people) + shuffled variables.
+  const leftTiles = FIXED_LEFT.map((k) => tileRegistry.find((t) => t.key === k)).filter(Boolean);
+  const mainTiles = [
+    ...FIXED_TOP.map((k) => tileRegistry.find((t) => t.key === k)).filter(Boolean),
+    ...variableTiles,
+  ];
 
   return (
     <div className="sampler container">

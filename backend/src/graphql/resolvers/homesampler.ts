@@ -116,6 +116,20 @@ const sampleHistory = async (ctx: AppContext, seed: number) => {
   return rows[0] ?? null;
 };
 
+// One full text block (scripture + narration + page/section context — the
+// feed's TextInFeed shape). Substantive content only.
+const sampleText = async (ctx: AppContext, seed: number) => {
+  const rows = await ctx.db
+    .selectFrom('bom_text')
+    .selectAll()
+    .where('heading', 'is not', null)
+    .where(sql<boolean>`CHAR_LENGTH(content) > 300`)
+    .orderBy(seededOrder('guid', seed))
+    .limit(1)
+    .execute();
+  return rows[0] ?? null;
+};
+
 const samplers: Record<string, (ctx: AppContext, seed: number) => Promise<unknown>> = {
   people: samplePeople,
   places: samplePlaces,
@@ -125,6 +139,7 @@ const samplers: Record<string, (ctx: AppContext, seed: number) => Promise<unknow
   section: sampleSection,
   sectionNext: sampleSectionNext,
   history: sampleHistory,
+  text: sampleText,
 };
 
 export const homesamplerResolvers: Resolvers = {

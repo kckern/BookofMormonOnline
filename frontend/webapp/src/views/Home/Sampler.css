@@ -85,6 +85,7 @@ html[data-theme="dark"] .samplerResample:hover { color: #fff; border-color: #999
 .tile-spotlight   { grid-column: span 2; }
 .tile-activity    { grid-column: span 2; }
 .tile-history     { grid-column: span 2; }
+.tile-text        { grid-column: span 4; }
 
 /* ---------- tile card ---------- */
 .tile {
@@ -207,7 +208,7 @@ html[data-theme="dark"] .tile.skeleton { background: #2c2c2c; border-color: #3a3
 html[data-theme="dark"] .peopleFeatureImg { background: #333; border-color: #444; }
 .peopleFeatureBody { min-width: 0; display: flex; flex-direction: column; }
 .peopleFeatureNameLink { color: inherit; text-decoration: none; margin-bottom: 0.35rem; }
-.peopleFeatureNameLink:hover .peopleFeatureName { text-decoration: underline; }
+
 .peopleFeatureName {
   font-weight: 800;
   font-size: 1.05rem;
@@ -355,12 +356,14 @@ html[data-theme="dark"] .peopleFaceImgWrap { background: #333; }
 }
 .peopleFaceTitle {
   position: absolute;
-  bottom: 0.35rem;
-  left: 0.35rem;
-  max-width: calc(100% - 0.7rem);
-  padding: 0.12rem 0.45rem;
-  border-radius: 0.35rem;
-  background: rgba(15, 18, 24, 0.55);
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  text-align: center;
+  padding: 0.18rem 0.45rem;
+  border-radius: 0;
+  background: rgba(15, 18, 24, 0.62);
   color: #e8e8e8;
   font-size: 0.6rem;
   line-height: 1.25;
@@ -441,7 +444,8 @@ html[data-theme="dark"] .peopleFaceRef { color: #93c6ef; }
 .placesTileCard > a > img,
 .placesTileCard img.placesThumb {
   width: 100%;
-  height: 4.4rem;
+  aspect-ratio: 16 / 9;
+  height: auto;
   object-fit: cover;
   border-radius: 0.45rem;
   background: #e2e2e2;
@@ -468,7 +472,7 @@ html[data-theme="dark"] .placesTileCard > a > img { background: #333; border-col
   text-decoration: none;
   min-width: 0;
 }
-a.placesTileName:hover { text-decoration: underline; color: inherit; }
+a.placesTileName:hover { color: inherit; }
 html[data-theme="dark"] .placesTileName { color: #f0f0f0; }
 .placesTileMapLink { flex-shrink: 0; line-height: 0; opacity: 0.55; }
 .placesTileMapLink:hover { opacity: 1; }
@@ -490,9 +494,9 @@ html[data-theme="dark"] .placesTileInfo { color: #9a9a9a; }
   cursor: pointer;
   white-space: nowrap;
 }
-.placesTileRef:hover { text-decoration: underline; }
+
 html[data-theme="dark"] .placesTileRef { color: #93c6ef; }
-.placesMosaicWrap { position: relative; height: 4.4rem; border-radius: 0.45rem; overflow: hidden; }
+.placesMosaicWrap { position: relative; aspect-ratio: 16 / 9; border-radius: 0.45rem; overflow: hidden; }
 .placesMosaicWrap .viewAllMosaic { width: 100%; height: 100%; aspect-ratio: auto; border-radius: 0; }
 
 /* ================================================================
@@ -517,7 +521,7 @@ html[data-theme="dark"] .placesTileRef { color: #93c6ef; }
 .faxTilePages img:hover { transform: scale(1.03); }
 html[data-theme="dark"] .faxTilePages img { border-color: #444; }
 .faxTileTitleLink { color: inherit; text-decoration: none; }
-.faxTileTitleLink:hover .faxTileTitle { text-decoration: underline; }
+
 .faxTileTitle {
   font-weight: 800;
   font-size: 0.92rem;
@@ -628,7 +632,7 @@ html[data-theme="dark"] .contentsTileDesc { color: #c4c4c4; }
   text-decoration: none;
   display: block;
 }
-.contentsTileHead:hover .contentsTileTitle { text-decoration: underline; }
+
 /* the sampled division's page/section outline — a /contents entry in miniature.
    Flex-fills the tall tile (no fixed cap → no mid-glyph clip, no orphan void). */
 .contentsTile { min-height: 0; }
@@ -647,7 +651,7 @@ html[data-theme="dark"] .contentsOutline { border-top-color: #3a3a3a; }
   color: #2a2a2a;
   text-decoration: none;
 }
-.contentsOutlinePageLink:hover { text-decoration: underline; }
+
 html[data-theme="dark"] .contentsOutlinePageLink { color: #f0f0f0; }
 .contentsOutlineSections {
   font-size: 0.7rem;
@@ -658,7 +662,7 @@ html[data-theme="dark"] .contentsOutlinePageLink { color: #f0f0f0; }
   color: #777;
   text-decoration: none;
 }
-.contentsOutlineSections a:hover { color: #323b4d; text-decoration: underline; }
+.contentsOutlineSections a:hover { color: #323b4d; }
 html[data-theme="dark"] .contentsOutlineSections { color: #9a9a9a; }
 html[data-theme="dark"] .contentsOutlineSections a { color: #9a9a9a; }
 html[data-theme="dark"] .contentsOutlineSections a:hover { color: #fff; }
@@ -894,7 +898,7 @@ html[data-theme="dark"] .samplerFooterLink:hover {
   color: #888;
 }
 .narrationCrumbs a { color: #666; text-decoration: none; }
-.narrationCrumbs a:hover { text-decoration: underline; }
+
 html[data-theme="dark"] .narrationCrumbs { color: #9a9a9a; }
 html[data-theme="dark"] .narrationCrumbs a { color: #b8b8b8; }
 .narrationCrumbSep { margin: 0 0.15rem; color: #bbb; }
@@ -957,12 +961,12 @@ html[data-theme="dark"] .narrationItem:hover { background: rgba(255, 255, 255, 0
 }
 html[data-theme="dark"] .narrationText { color: #c4c4c4; }
 .narrationRef {
-  flex-shrink: 0;
-  font-size: 0.66rem;
+  display: inline;
+  font-size: 0.68rem;
   font-weight: 700;
   color: #345496;
   white-space: nowrap;
-  margin-top: 0.15rem;
+  margin-left: 0.25rem;
 }
 html[data-theme="dark"] .narrationRef { color: #93c6ef; }
 
@@ -1138,3 +1142,45 @@ html[data-theme="dark"] .samplerScriptureReadLink { border-top-color: #3a3a3a; c
   justify-content: center;
 }
 .samplerFallback .samplerFooter { border-top: none; margin-top: 0; }
+
+/* ================================================================
+   TEXT — one full bom_text block via the feed's TextInFeed renderer.
+   The feed's speech-bubble notch has no anchor to point at here.
+   ================================================================ */
+.textTile .notch { display: none; }
+.textTile .itemInFeedContainer { margin: 0; }
+.textTile .itemInFeed { margin: 0; }
+
+/* places: people-convention overlays on a 16:9 image */
+.placesImgWrap {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  border-radius: 0.45rem;
+  overflow: hidden;
+  background: #e2e2e2;
+}
+html[data-theme="dark"] .placesImgWrap { background: #333; }
+.placesImgWrap > a > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border: none;
+  border-radius: 0;
+}
+.placesNameOverlay { pointer-events: none; }
+.placesMapBtn {
+  position: absolute;
+  top: 0.3rem;
+  right: 0.3rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 0.35rem;
+  background: rgba(15, 18, 24, 0.62);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.85;
+}
+.placesMapBtn:hover { opacity: 1; background: rgba(15, 18, 24, 0.85); }
+.placesMapBtn img { width: 0.9rem; height: 0.9rem; filter: invert(1); }
