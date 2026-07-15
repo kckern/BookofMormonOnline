@@ -89,7 +89,8 @@ export default function PeopleTile({ data, seed = 0 }) {
                   onError={(e) => (e.target.style.visibility = "hidden")}
                 />
                 <span className="peopleFaceName">{replaceNumbers(p.name)}</span>
-                {p.title ? <span className="peopleFaceTitle">{supDigits(p.title)}</span> : null}
+                {/* word-budgeted so the CSS ellipsis never engages mid-word */}
+                {p.title ? <span className="peopleFaceTitle">{clampWords(supDigits(p.title), 5)}</span> : null}
               </div>
               {item ? (
                 <div className="peopleFaceBody">

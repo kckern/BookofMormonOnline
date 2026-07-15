@@ -6,7 +6,7 @@ import { label } from "src/models/Utils";
 import { flatten, clampWords } from "./textUtils";
 
 // The "Key Points:" structured tail reads as an unpunctuated run-on in a teaser.
-const teaserText = (html) => clampWords(flatten(html).split(/key points:/i)[0].trim(), 60);
+const teaserText = (html) => clampWords(flatten(html).split(/key points:/i)[0].trim(), 120);
 
 /** One featured historical document: thumb, title, provenance line, teaser. */
 export default function HistoryTile({ data }) {
@@ -28,6 +28,7 @@ export default function HistoryTile({ data }) {
           <div className="historyTileTitle">{data.document}</div>
           {meta ? <div className="historyTileMeta">{meta}</div> : null}
           {data.teaser ? <p className="historyTileTeaser">{teaserText(data.teaser)}</p> : null}
+          <div className="historyTileMore">{label("view_all")} →</div>
         </div>
       </div>
     </Link>
