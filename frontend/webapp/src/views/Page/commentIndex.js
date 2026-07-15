@@ -13,17 +13,17 @@ function linkEntries(item) {
 function setItem(comments, item) {
   const entries = linkEntries(item);
   if (!entries) return comments;
+  const next = { ...(comments || {}) };
   for (const [type, id] of entries) {
     if (!type) continue;
-    if (!comments[type]) comments[type] = {};
-    comments[type][id] = item;
+    next[type] = { ...(next[type] || {}), [id]: item };
   }
-  return comments;
+  return next;
 }
 
 export function indexPageComments(messages) {
-  const comments = {};
-  for (const item of messages || []) setItem(comments, item);
+  let comments = {};
+  for (const item of messages || []) comments = setItem(comments, item);
   return comments;
 }
 
@@ -38,8 +38,14 @@ export function updateToPageComment(comments, item) {
 export function deleteToPageComments(comments, item) {
   const entries = linkEntries(item);
   if (!entries || !comments) return comments;
+  let next = comments;
   for (const [type, id] of entries) {
-    if (comments[type]) delete comments[type][id];
+    if (next[type] && id in next[type]) {
+      if (next === comments) next = { ...comments };
+      const bucket = { ...next[type] };
+      delete bucket[id];
+      next[type] = bucket;
+    }
   }
-  return comments;
+  return next;
 }
