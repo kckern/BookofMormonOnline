@@ -85,7 +85,7 @@ export const homesamplerResolvers: Resolvers = {
       const seed =
         typeof argSeed === 'number' && Number.isInteger(argSeed) && argSeed > 0
           ? argSeed
-          : Math.floor(Math.random() * 2 ** 31) + 1;
+          : Math.floor(Math.random() * (2 ** 31 - 1)) + 1;
 
       const entries = await Promise.all(
         Object.entries(samplers).map(async ([key, fn]) => {

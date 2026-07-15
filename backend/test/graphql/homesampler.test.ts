@@ -32,11 +32,14 @@ import { buildContext } from '../../src/graphql/context.js';
 const db = getDb();
 let yoga: ReturnType<typeof createYoga>;
 
-beforeAll(() => {
+beforeAll(async () => {
   yoga = createYoga({
     schema: buildSchema(),
     context: () => buildContext(db, 'en'),
   });
+  // Prime the mysql2 pool so the first parallel timed assertion runs warm
+  // (a cold pool can exceed vitest's 5s default on "varies across seeds").
+  await db.selectFrom('bom_people').select('slug').limit(1).execute();
 });
 
 afterAll(async () => {
