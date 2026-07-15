@@ -44,7 +44,7 @@ import publicIcon from "src/views/_Common/Study/svg/public.svg";
 import openIcon from "src/views/_Common/Study/svg/open.svg";
 import ReactTooltip from "react-tooltip";
 import trophy from "src/views/User/svg/trophy.svg";
-import { GroupCallToAction, GroupLeaderBoard } from "./Home.js";
+import { GroupCallToAction, GroupLeaderBoard } from "./Community.js";
 import { md5 } from "../../models/Utils.js";
 import { useAppController } from "src/contexts/AppControllerContext";
 

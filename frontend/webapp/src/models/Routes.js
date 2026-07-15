@@ -23,7 +23,7 @@ const PeopleNetWork = lazy(() => import("../views/People/PeopleNetwork.js"));
 const TimeLine = lazy(() => import("../views/Timeline/Timeline.js"));
 const Contents = lazy(() => import("../views/Contents/Contents.js"));
 const SearchComponent = lazy(() => import("../views/Search/Search.js"));
-const Home = lazy(() => import("../views/Home/Home.js"));
+const Home = lazy(() => import("../views/Home/Community.js"));
 const Page = lazy(() => import("../views/Page/Page.js"));
 const Analysis = lazy(() => import("../views/Analysis/Analysis.js"));
 const History = lazy(() => import("../views/History/History.js"));

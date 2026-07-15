@@ -63,25 +63,25 @@ const privateStyle = (nickname) => {
   };
 };
 
-function Home() {
+function Community() {
   const match = useRouteMatch();
   const params = match.params;
   const base = match.url.split("/")[1];
 
-  let urlFeedGroup = base === "home" ? params.channelId : null;
-  let urlFeedMessage = base === "home" ? params.messageId : null;
+  let urlFeedGroup = base === "community" ? params.channelId : null;
+  let urlFeedMessage = base === "community" ? params.messageId : null;
 
   const [activeGroup, setActiveGroup] = useState(urlFeedGroup);
   const [activeMessage, setActiveMessage] = useState(urlFeedMessage);
 
   useEffect(() => {
-    let urlFeedGroup = base === "home" ? params.channelId : null;
-    let urlFeedMessage = base === "home" ? params.messageId : null;
+    let urlFeedGroup = base === "community" ? params.channelId : null;
+    let urlFeedMessage = base === "community" ? params.messageId : null;
     setActiveGroup(urlFeedGroup);
     setActiveMessage(urlFeedMessage);
   }, [params]);
 
-  useEffect(() => (document.title = label("home_title")), []);
+  useEffect(() => (document.title = label("community")), []);
 
   return false ? null : (
     <div className="home container">
@@ -372,7 +372,7 @@ function GroupCard({ groupData, activeGroup, setActiveGroup }) {
       data-tip={cardTipHtml}
       data-for={"card-tip"}
     >
-      <Link to={`/home/${groupData.url}`}>
+      <Link to={`/community/${groupData.url}`}>
         <div className="groupContent" onClick={() => ReactTooltip.hide()}>
           <div className="groupImage">
             <img src={groupData.picture} alt={groupData.name || ""} />
@@ -660,4 +660,4 @@ export function GroupLeaderBoard({ groupData }) {
   );
 }
 
-export default Home;
+export default Community;
