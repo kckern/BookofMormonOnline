@@ -1731,10 +1731,10 @@ const queries = {
       val: false,
       query: `homesampler${seedArg} {
         seed
-        people { slug guid name title }
+        people { slug guid name title date description index { ref slug } }
         places { slug name info }
         fax { slug title pages info format }
-        commentary { id title text preview publication { source_title } }
+        commentary { id title text preview reference publication { source_id source_title source_name source_slug } }
         contents { slug title description }
       }`,
     }

@@ -1,29 +1,36 @@
 /* Sampler.m.css — mobile overrides; 900px is the app's established breakpoint.
  * Dark mode uses html[data-theme="dark"] (see Sampler.css header note). */
 @media only screen and (max-width: 900px) {
-  .sampler.container { padding: 1rem 0.75rem 2.5rem; }
+  .sampler.container { padding: 0.75rem 0.6rem 2rem; }
 
-  /* grid collapses to a single column; every tile spans it */
-  .samplerGrid { grid-template-columns: 1fr; gap: 0.85rem; }
-  .samplerGrid .tile { grid-column: span 1 !important; }
+  /* grid collapses to two columns; big tiles span both */
+  .samplerGrid { grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+  .samplerGrid .tile { grid-column: span 2 !important; }
+  .samplerGrid .tile-places,
+  .samplerGrid .tile-spotlight,
+  .samplerGrid .tile-activity { grid-column: span 1 !important; }
 
   /* skeletons keep sensible heights without the desktop span sizing */
-  .tile.skeleton { min-height: 9rem; }
-  .tile.skeleton.tile-people { min-height: 16rem; }
+  .tile.skeleton { min-height: 8rem; }
+  .tile.skeleton.tile-people { min-height: 14rem; }
   .tile.skeleton.tile-places { min-height: 10rem; }
 
-  /* people hero: portrait grid drops from 4 to 3 columns */
-  .peopleTileGrid { grid-template-columns: repeat(3, 1fr); gap: 0.6rem; }
+  /* featured person: smaller portrait, tighter body */
+  .peopleFeatureImg { width: 6rem; }
+  .peopleFeatureDesc { -webkit-line-clamp: 3; }
 
-  /* places strip stays horizontally scrollable (no change needed, kept explicit) */
-  .placesTileStrip { gap: 0.6rem; }
+  /* face strip drops to 4-up (2 rows of the remaining 7) */
+  .peopleFaceRow { grid-template-columns: repeat(4, 1fr); }
 
   /* footer wraps comfortably */
-  .samplerFooter { gap: 0.5rem; margin-top: 2rem; }
-  .samplerFooterLink { padding: 0.45rem 0.9rem; font-size: 0.85rem; }
+  .samplerFooter { gap: 0.5rem; margin-top: 1.5rem; }
+  .samplerFooterLink { padding: 0.4rem 0.85rem; font-size: 0.8rem; }
 }
 
-/* very narrow phones: people grid to 2 columns */
+/* very narrow phones: everything single-column, faces 4-up stays */
 @media only screen and (max-width: 480px) {
-  .peopleTileGrid { grid-template-columns: repeat(2, 1fr); }
+  .samplerGrid .tile-places,
+  .samplerGrid .tile-spotlight,
+  .samplerGrid .tile-activity { grid-column: span 2 !important; }
+  .placesTileGrid { grid-template-columns: 1fr 1fr; }
 }

@@ -1,4 +1,8 @@
-/* Sampler.css — bento grid for /home. Full styling pass: Task 9.
+/* Sampler.css — dense bento grid for /home.
+ *
+ * Layout: 6-column grid. Row 1: people (span 4, featured sample + face strip)
+ * beside places (span 2, 2×2). Rows 2-3: three span-2 tiles each — the whole
+ * page reads as a compact multi-column board, not a stacked stream.
  *
  * Dark mode: the app toggles theme via html[data-theme="dark"] (set in
  * views/_Common/Main.js and read by utils/themeColors.js). That is the real,
@@ -7,22 +11,23 @@
 
 /* ---------- page shell ---------- */
 .sampler.container {
-  padding: 1.5rem 1rem 3rem;
-  max-width: 1100px;
+  padding: 1rem 1rem 2.5rem;
+  max-width: 1240px;
 }
 
 /* ---------- bento grid ---------- */
 .samplerGrid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   grid-auto-rows: minmax(min-content, auto);
-  gap: 1rem;
+  grid-auto-flow: dense;
+  gap: 0.7rem;
   align-items: stretch;
 }
 
 /* span footprints — keys match tileRegistry span classes */
 .tile-people      { grid-column: span 4; }
-.tile-places      { grid-column: span 4; }
+.tile-places      { grid-column: span 2; }
 .tile-readingplan { grid-column: span 2; }
 .tile-fax         { grid-column: span 2; }
 .tile-commentary  { grid-column: span 2; }
@@ -33,7 +38,7 @@
 /* ---------- tile card ---------- */
 .tile {
   position: relative;
-  border-radius: 0.85rem;
+  border-radius: 0.7rem;
   overflow: hidden;
   background: #fff;
   border: 1px solid #e6e6e6;
@@ -61,7 +66,7 @@ html[data-theme="dark"] .tile:hover {
   display: flex;
   flex-direction: column;
   width: 100%;
-  padding: 1rem;
+  padding: 0.75rem 0.85rem;
   color: inherit;
   text-decoration: none;
 }
@@ -76,12 +81,12 @@ a.samplerTileInner { cursor: pointer; }
 
 /* ---------- heading shared by every tile ---------- */
 .tileHeading {
-  font-size: 0.72rem;
+  font-size: 0.62rem;
   font-weight: 800;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
   color: #8a8a8a;
-  margin: 0 0 0.65rem;
+  margin: 0 0 0.45rem;
 }
 .tileHeading a {
   color: inherit;
@@ -91,15 +96,35 @@ a.samplerTileInner { cursor: pointer; }
 html[data-theme="dark"] .tileHeading { color: #9a9a9a; }
 html[data-theme="dark"] .tileHeading a:hover { color: #fff; }
 
+/* ---------- scripture-reference chip (people feature + commentary) ---------- */
+.refChip {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0.22rem 0.5rem;
+  margin: 0 0.3rem 0.3rem 0;
+  border-radius: 0.8rem;
+  background: rgba(50, 59, 77, 0.08);
+  border: 1px solid rgba(50, 59, 77, 0.18);
+  color: #323b4d;
+  white-space: nowrap;
+}
+html[data-theme="dark"] .refChip {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #cfd6e4;
+}
+
 /* ---------- skeleton (sized to match real tiles → no layout shift) ---------- */
 .tile.skeleton {
-  min-height: 11rem;
+  min-height: 9rem;
   background: #ededed;
   border-color: #e6e6e6;
   animation: samplerShimmer 1.3s ease-in-out infinite;
 }
-.tile.skeleton.tile-people { min-height: 20rem; }
-.tile.skeleton.tile-places { min-height: 12rem; }
+.tile.skeleton.tile-people { min-height: 15rem; }
+.tile.skeleton.tile-places { min-height: 15rem; }
 .tile.skeleton:hover { transform: none; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08); }
 html[data-theme="dark"] .tile.skeleton { background: #2c2c2c; border-color: #3a3a3a; }
 @keyframes samplerShimmer {
@@ -108,86 +133,137 @@ html[data-theme="dark"] .tile.skeleton { background: #2c2c2c; border-color: #3a3
 }
 
 /* ================================================================
-   PEOPLE — hero tile, 4-column portrait grid (8 people = 4×2)
+   PEOPLE — featured sample (portrait + index taste + ref chips)
+   over a compact face strip. Sampling, not a mosaic.
    ================================================================ */
-.peopleTileGrid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0.75rem;
+.peopleFeature {
+  display: flex;
+  gap: 0.85rem;
+  color: inherit;
+  text-decoration: none;
+  border-radius: 0.6rem;
+  padding: 0.25rem;
+  transition: background 0.15s ease;
 }
-.peopleTileCard {
+.peopleFeature:hover { background: rgba(0, 0, 0, 0.04); }
+html[data-theme="dark"] .peopleFeature:hover { background: rgba(255, 255, 255, 0.06); }
+.peopleFeatureImg {
+  width: 8rem;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  border-radius: 0.55rem;
+  background: #e2e2e2;
+  border: 1px solid #dcdcdc;
+  flex-shrink: 0;
+}
+html[data-theme="dark"] .peopleFeatureImg { background: #333; border-color: #444; }
+.peopleFeatureBody { min-width: 0; display: flex; flex-direction: column; }
+.peopleFeatureName {
+  font-weight: 800;
+  font-size: 1.05rem;
+  line-height: 1.15;
+  color: #2a2a2a;
+}
+html[data-theme="dark"] .peopleFeatureName { color: #f0f0f0; }
+.peopleFeatureTitle {
+  font-size: 0.75rem;
+  color: #888;
+  line-height: 1.2;
+  margin-bottom: 0.35rem;
+}
+html[data-theme="dark"] .peopleFeatureTitle { color: #a0a0a0; }
+.peopleFeatureDesc {
+  margin: 0 0 0.45rem;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: #555;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+html[data-theme="dark"] .peopleFeatureDesc { color: #c4c4c4; }
+.peopleFeatureRefs { margin-top: auto; }
+
+/* face strip: the other 7 samples, small and tight */
+.peopleFaceRow {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.45rem;
+  margin-top: 0.6rem;
+}
+.peopleFaceCard {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
   color: inherit;
   text-decoration: none;
-  border-radius: 0.6rem;
-  padding: 0.4rem;
+  border-radius: 0.45rem;
+  padding: 0.15rem;
   transition: background 0.15s ease;
+  min-width: 0;
 }
-.peopleTileCard:hover { background: rgba(0, 0, 0, 0.04); }
-html[data-theme="dark"] .peopleTileCard:hover { background: rgba(255, 255, 255, 0.06); }
-.peopleTileCard img {
+.peopleFaceCard:hover { background: rgba(0, 0, 0, 0.04); }
+html[data-theme="dark"] .peopleFaceCard:hover { background: rgba(255, 255, 255, 0.06); }
+.peopleFaceCard img {
   width: 100%;
-  aspect-ratio: 3 / 4;
+  aspect-ratio: 1 / 1;
   object-fit: cover;
-  border-radius: 0.5rem;
+  object-position: top;
+  border-radius: 0.4rem;
   background: #e2e2e2;
   border: 1px solid #dcdcdc;
 }
-html[data-theme="dark"] .peopleTileCard img { background: #333; border-color: #444; }
-.peopleTileName {
-  margin-top: 0.4rem;
+html[data-theme="dark"] .peopleFaceCard img { background: #333; border-color: #444; }
+.peopleFaceName {
+  margin-top: 0.25rem;
   font-weight: 700;
-  font-size: 0.85rem;
-  line-height: 1.15;
+  font-size: 0.64rem;
+  line-height: 1.1;
   color: #2a2a2a;
+  width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
-html[data-theme="dark"] .peopleTileName { color: #f0f0f0; }
-.peopleTileTitle {
-  font-size: 0.72rem;
-  color: #888;
-  line-height: 1.15;
-}
-html[data-theme="dark"] .peopleTileTitle { color: #a0a0a0; }
+html[data-theme="dark"] .peopleFaceName { color: #f0f0f0; }
 
 /* ================================================================
-   PLACES — horizontal scroll strip of landscape thumbnails
+   PLACES — compact 2×2 thumbnail grid
    ================================================================ */
-.placesTileStrip {
-  display: flex;
-  gap: 0.75rem;
-  overflow-x: auto;
-  padding-bottom: 0.4rem;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
+.placesTileGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
 }
 .placesTileCard {
-  flex: 0 0 auto;
-  width: 9.5rem;
   color: inherit;
   text-decoration: none;
-  border-radius: 0.6rem;
+  border-radius: 0.5rem;
   transition: transform 0.15s ease;
+  min-width: 0;
 }
 .placesTileCard:hover { transform: translateY(-2px); }
 .placesTileCard img {
-  width: 9.5rem;
-  height: 6rem;
+  width: 100%;
+  height: 4.4rem;
   object-fit: cover;
-  border-radius: 0.55rem;
+  border-radius: 0.45rem;
   background: #e2e2e2;
   border: 1px solid #dcdcdc;
   display: block;
 }
 html[data-theme="dark"] .placesTileCard img { background: #333; border-color: #444; }
 .placesTileName {
-  margin-top: 0.35rem;
+  margin-top: 0.25rem;
   font-weight: 700;
-  font-size: 0.82rem;
-  line-height: 1.2;
+  font-size: 0.72rem;
+  line-height: 1.15;
   color: #2a2a2a;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 html[data-theme="dark"] .placesTileName { color: #f0f0f0; }
 
@@ -196,48 +272,70 @@ html[data-theme="dark"] .placesTileName { color: #f0f0f0; }
    ================================================================ */
 .faxTile img {
   width: 100%;
-  max-height: 9rem;
+  max-height: 6.5rem;
   object-fit: contain;
-  border-radius: 0.5rem;
+  border-radius: 0.45rem;
   background: #f2f2f2;
-  margin-bottom: 0.6rem;
+  margin-bottom: 0.45rem;
 }
 html[data-theme="dark"] .faxTile img { background: #2c2c2c; }
 .faxTileTitle {
   font-weight: 800;
-  font-size: 1rem;
+  font-size: 0.92rem;
   line-height: 1.2;
   color: #2a2a2a;
 }
 html[data-theme="dark"] .faxTileTitle { color: #f0f0f0; }
 .faxTileMeta {
-  margin-top: 0.25rem;
-  font-size: 0.78rem;
+  margin-top: 0.2rem;
+  font-size: 0.74rem;
   color: #888;
 }
 html[data-theme="dark"] .faxTileMeta { color: #a0a0a0; }
 
 /* ================================================================
-   COMMENTARY — title + excerpt + source
+   COMMENTARY — source cover + reference chip + excerpt + source
    ================================================================ */
+.commentaryTileBody {
+  display: flex;
+  gap: 0.7rem;
+  min-height: 0;
+}
+.commentaryTileCover {
+  width: 4.4rem;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  border-radius: 0.35rem;
+  background: #eee;
+  border: 1px solid #ddd;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+  flex-shrink: 0;
+  align-self: flex-start;
+}
+html[data-theme="dark"] .commentaryTileCover { background: #2c2c2c; border-color: #444; }
+.commentaryTileMain { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; }
 .commentaryTileTitle {
   font-weight: 800;
-  font-size: 1.05rem;
+  font-size: 0.92rem;
   line-height: 1.25;
   color: #2a2a2a;
 }
 html[data-theme="dark"] .commentaryTileTitle { color: #f0f0f0; }
 .commentaryTileExcerpt {
-  margin: 0.5rem 0 0.6rem;
-  font-size: 0.88rem;
+  margin: 0.35rem 0 0.4rem;
+  font-size: 0.8rem;
   line-height: 1.4;
   color: #555;
   font-family: "Scripture", serif;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 html[data-theme="dark"] .commentaryTileExcerpt { color: #c4c4c4; }
 .commentaryTileSource {
   margin-top: auto;
-  font-size: 0.8rem;
+  font-size: 0.74rem;
   font-style: italic;
   color: #888;
 }
@@ -248,25 +346,29 @@ html[data-theme="dark"] .commentaryTileSource { color: #a0a0a0; }
    ================================================================ */
 .contentsTile img {
   width: 100%;
-  max-height: 9rem;
+  max-height: 6rem;
   object-fit: cover;
-  border-radius: 0.5rem;
+  border-radius: 0.45rem;
   background: #eee;
-  margin-bottom: 0.6rem;
+  margin-bottom: 0.45rem;
 }
 html[data-theme="dark"] .contentsTile img { background: #2c2c2c; }
 .contentsTileTitle {
   font-weight: 800;
-  font-size: 1.05rem;
+  font-size: 0.92rem;
   line-height: 1.25;
   color: #2a2a2a;
 }
 html[data-theme="dark"] .contentsTileTitle { color: #f0f0f0; }
 .contentsTileDesc {
-  margin: 0.5rem 0 0;
-  font-size: 0.86rem;
+  margin: 0.35rem 0 0;
+  font-size: 0.78rem;
   line-height: 1.4;
   color: #555;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 html[data-theme="dark"] .contentsTileDesc { color: #c4c4c4; }
 
@@ -287,14 +389,14 @@ html[data-theme="dark"] .contentsTileDesc { color: #c4c4c4; }
   align-items: center;
   justify-content: center;
   text-align: center;
-  gap: 0.75rem;
-  min-height: 11rem;
+  gap: 0.6rem;
+  min-height: 9rem;
   color: #2a2a2a;
 }
 html[data-theme="dark"] .signinTile { color: #f0f0f0; }
-.signinTile img { width: 3rem; height: 3rem; opacity: 0.8; }
+.signinTile img { width: 2.6rem; height: 2.6rem; opacity: 0.8; }
 html[data-theme="dark"] .signinTile img { filter: invert(0.85); }
-.signinTile div { font-weight: 800; font-size: 1.05rem; }
+.signinTile div { font-weight: 800; font-size: 0.95rem; }
 
 /* ================================================================
    SPOTLIGHT — community group card OR leaderboard/finishers list
@@ -304,12 +406,12 @@ html[data-theme="dark"] .signinTile img { filter: invert(0.85); }
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 0.35rem;
+  gap: 0.3rem;
 }
 .spotlightGroup img {
-  width: 4rem;
-  height: 4rem;
-  border-radius: 0.6rem;
+  width: 3.4rem;
+  height: 3.4rem;
+  border-radius: 0.5rem;
   object-fit: cover;
   border: 1px solid #ddd;
   background: #eee;
@@ -317,32 +419,32 @@ html[data-theme="dark"] .signinTile img { filter: invert(0.85); }
 html[data-theme="dark"] .spotlightGroup img { border-color: #444; background: #333; }
 .spotlightGroupName {
   font-weight: 800;
-  font-size: 1rem;
+  font-size: 0.92rem;
   color: #2a2a2a;
 }
 html[data-theme="dark"] .spotlightGroupName { color: #f0f0f0; }
-.spotlightGroupMeta { font-size: 0.8rem; color: #888; }
+.spotlightGroupMeta { font-size: 0.74rem; color: #888; }
 html[data-theme="dark"] .spotlightGroupMeta { color: #a0a0a0; }
 
 .spotlightUsers h4 {
-  font-size: 0.9rem;
+  font-size: 0.82rem;
   font-weight: 800;
-  margin: 0 0 0.5rem;
+  margin: 0 0 0.4rem;
   color: #2a2a2a;
 }
 html[data-theme="dark"] .spotlightUsers h4 { color: #f0f0f0; }
 .spotlightUser {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.4rem;
-  font-size: 0.88rem;
+  gap: 0.45rem;
+  margin-bottom: 0.3rem;
+  font-size: 0.8rem;
   color: #444;
 }
 html[data-theme="dark"] .spotlightUser { color: #d0d0d0; }
 .spotlightUser img {
-  width: 1.8rem;
-  height: 1.8rem;
+  width: 1.5rem;
+  height: 1.5rem;
   border-radius: 50%;
   object-fit: cover;
   border: 1px solid #ddd;
@@ -359,11 +461,11 @@ html[data-theme="dark"] .spotlightUser img { border-color: #444; background: #33
 .spotlightProgress {
   flex-shrink: 0;
   font-weight: 700;
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   color: #40805e;
   background: rgba(107, 208, 152, 0.35);
   border-radius: 0.5rem;
-  padding: 0.05rem 0.5rem;
+  padding: 0.05rem 0.45rem;
 }
 html[data-theme="dark"] .spotlightProgress { color: #8fe0b3; background: rgba(64, 128, 94, 0.4); }
 
@@ -372,12 +474,12 @@ html[data-theme="dark"] .spotlightProgress { color: #8fe0b3; background: rgba(64
    ================================================================ */
 .activityTileMsg {
   display: flex;
-  gap: 0.65rem;
+  gap: 0.55rem;
   align-items: flex-start;
 }
 .activityTileMsg > img {
-  width: 2.6rem;
-  height: 2.6rem;
+  width: 2.1rem;
+  height: 2.1rem;
   border-radius: 50%;
   object-fit: cover;
   border: 1px solid #ddd;
@@ -388,20 +490,20 @@ html[data-theme="dark"] .activityTileMsg > img { border-color: #444; background:
 .activityTileMsg > div { min-width: 0; }
 .activityTileUser {
   font-weight: 800;
-  font-size: 0.9rem;
+  font-size: 0.82rem;
   color: #2a2a2a;
 }
 html[data-theme="dark"] .activityTileUser { color: #f0f0f0; }
 .activityTileTime {
-  margin-left: 0.5rem;
+  margin-left: 0.4rem;
   font-weight: 400;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: #999;
 }
 html[data-theme="dark"] .activityTileTime { color: #888; }
 .activityTileMsg p {
   margin: 0.2rem 0 0;
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   line-height: 1.35;
   color: #555;
   display: -webkit-box;
@@ -416,23 +518,23 @@ html[data-theme="dark"] .activityTileMsg p { color: #c4c4c4; }
    ================================================================ */
 .samplerFooter {
   display: flex;
-  gap: 0.75rem;
+  gap: 0.6rem;
   justify-content: center;
   flex-wrap: wrap;
-  margin-top: 2.5rem;
-  padding-top: 1.5rem;
+  margin-top: 1.4rem;
+  padding-top: 1rem;
   border-top: 1px solid #e6e6e6;
 }
 html[data-theme="dark"] .samplerFooter { border-top-color: #3a3a3a; }
 .samplerFooterLink {
   display: inline-block;
-  padding: 0.5rem 1.1rem;
+  padding: 0.4rem 1rem;
   border-radius: 2rem;
   border: 1px solid #d5d5d5;
   background: #f6f6f6;
   color: #444;
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   text-decoration: none;
   text-transform: capitalize;
   transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;

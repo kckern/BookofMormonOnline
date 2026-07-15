@@ -9,8 +9,8 @@ export default function PlacesTile({ data }) {
       <h3 className="tileHeading">
         <Link to="/places">{label("places")}</Link>
       </h3>
-      <div className="placesTileStrip">
-        {data.map((p) => (
+      <div className="placesTileGrid">
+        {data.slice(0, 4).map((p) => (
           <Link to={`/places/${p.slug}`} key={p.slug} className="placesTileCard">
             <img
               src={`${assetUrl}/places/${p.slug}`}
