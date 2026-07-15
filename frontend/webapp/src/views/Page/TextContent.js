@@ -140,6 +140,10 @@ export default function TextContent({ content, isQuote }) {
   // truth, 2026-07-14). With no local state left, this controller is a plain
   // per-render object: toggling dispatches to the PAGE reducer, whose commit
   // re-renders this subtree with the fresh `open` value.
+  // NOTE: `open` recomputes only because this component re-renders whenever its
+  // parent Narration (a context consumer) does. Do NOT wrap TextContent in
+  // React.memo without first subscribing it to openRows (e.g. usePageController)
+  // — memoizing would freeze `open` on a stale value.
   const pageController = narrationController.pageController;
   const toggleOpenClose = (e) => {
     e.preventDefault();
