@@ -1,10 +1,18 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { assetUrl } from "src/models/BoMOnlineAPI";
-import { label } from "src/models/Utils";
+import { label, replaceNumbers } from "src/models/Utils";
 
+// Bios use the app's internal {Name|slug} / [Name|slug] link syntax — flatten
+// to the display name (same regexes as Utils.flattenDescription) BEFORE the
+// tag strip, or the raw braces render to the user.
 const stripTags = (html, words = 42) => {
-  const text = (html || "").replace(/<[^>]*>/gi, " ").replace(/\s+/g, " ").trim();
+  const text = (html || "")
+    .replace(/{(.*?)\|(.*?)}/g, "$1")
+    .replace(/\[(.*?)\|(.*?)\]/g, "$1")
+    .replace(/<[^>]*>/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
   if (!text) return "";
   const parts = text.split(" ");
   return parts.slice(0, words).join(" ") + (parts.length > words ? "…" : "");
@@ -32,7 +40,8 @@ export default function PeopleTile({ data }) {
           onError={(e) => (e.target.style.visibility = "hidden")}
         />
         <div className="peopleFeatureBody">
-          <div className="peopleFeatureName">{featured.name}</div>
+          {/* replaceNumbers: disambiguation digits render as superscripts (Heth2 → Heth²) */}
+          <div className="peopleFeatureName">{replaceNumbers(featured.name)}</div>
           {featured.title ? <div className="peopleFeatureTitle">{featured.title}</div> : null}
           {featured.description ? (
             <p className="peopleFeatureDesc">{stripTags(featured.description)}</p>
@@ -55,7 +64,7 @@ export default function PeopleTile({ data }) {
               loading="lazy"
               onError={(e) => (e.target.style.visibility = "hidden")}
             />
-            <div className="peopleFaceName">{p.name}</div>
+            <div className="peopleFaceName">{replaceNumbers(p.name)}</div>
           </Link>
         ))}
       </div>

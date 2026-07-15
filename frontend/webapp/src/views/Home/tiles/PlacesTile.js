@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { assetUrl } from "src/models/BoMOnlineAPI";
-import { label } from "src/models/Utils";
+import { label, replaceNumbers } from "src/models/Utils";
 
 export default function PlacesTile({ data }) {
   return (
@@ -18,7 +18,7 @@ export default function PlacesTile({ data }) {
               loading="lazy"
               onError={(e) => (e.target.style.visibility = "hidden")}
             />
-            <div className="placesTileName">{p.name}</div>
+            <div className="placesTileName">{replaceNumbers(p.name)}</div>
           </Link>
         ))}
       </div>
