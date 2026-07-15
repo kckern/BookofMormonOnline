@@ -30,6 +30,8 @@ export const assemblePayload = (r) => {
     board.recentFinishers?.length && { flavor: "finishers", users: board.recentFinishers },
     board.currentProgress?.length && { flavor: "leaders", users: board.currentProgress },
   ].filter(Boolean);
+  // activity & spotlight are intentionally per-visit ("what's happening now"),
+  // NOT seed-stable like the sampler slices — they resample every mount.
   return {
     ...sampler,
     activity: latestGroup ? { ...latestGroup.latest, channel: latestGroup.url } : null,
@@ -42,7 +44,7 @@ export default function Sampler() {
   const token = appController.states.user.token;
   const [payload, setPayload] = useState(null);
   const [failed, setFailed] = useState(false);
-  const seed = getSessionSeed();
+  const [seed] = useState(getSessionSeed);
 
   useEffect(() => {
     document.title = label("home_title");
@@ -55,7 +57,17 @@ export default function Sampler() {
         { homesampler: { seed }, homegroups: { token }, leaderboard: { token } },
         { useCache: false },
       )
-        .then((r) => !cancelled && setPayload(assemblePayload(r)))
+        .then((r) => {
+          if (cancelled) return;
+          // BoMOnlineAPI does not reject on request timeout — it resolves the
+          // {error} sentinel (BoMOnlineAPI.js:43). Treat that, or any response
+          // missing the homesampler singleton, as a failure so it routes
+          // through the same retry-then-fallback path as a hard rejection.
+          if (r?.error || !Array.isArray(r?.homesampler)) {
+            throw new Error("homesampler unavailable");
+          }
+          setPayload(assemblePayload(r));
+        })
         .catch(() => {
           if (cancelled) return;
           if (attempt < 1) load(attempt + 1);

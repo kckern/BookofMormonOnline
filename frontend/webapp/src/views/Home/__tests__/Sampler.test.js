@@ -2,7 +2,7 @@ import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { AppControllerProvider } from "src/contexts/AppControllerContext";
-import Sampler from "../Sampler";
+import Sampler, { assemblePayload } from "../Sampler";
 import { tileRegistry } from "../tiles/registry";
 
 jest.mock("src/models/BoMOnlineAPI", () => ({
@@ -105,5 +105,50 @@ describe("Sampler shell rendering", () => {
         tileRegistry.length
       );
     });
+  });
+
+  test("shows the fallback (footer, no data tiles) when the API returns the timeout sentinel", async () => {
+    // BoMOnlineAPI resolves (not rejects) an {error} sentinel on timeout; both
+    // the initial attempt and the single retry hit it → SamplerFallback.
+    BoMOnlineAPI.mockResolvedValue({ error: { data: null } });
+    renderSampler();
+
+    await waitFor(() => {
+      expect(document.querySelector(".samplerFallback")).toBeTruthy();
+    });
+    expect(document.querySelector(".samplerFooter")).toBeTruthy();
+    expect(document.querySelector(".tile-people")).toBeNull();
+    expect(document.querySelectorAll(".tile").length).toBe(0);
+  });
+});
+
+describe("assemblePayload derivations", () => {
+  test("activity picks the newest group's latest and carries its channel url", () => {
+    const out = assemblePayload({
+      homesampler: [{ seed: 1 }],
+      homegroups: [
+        { url: "old", latest: { timestamp: 100, msg: "old" } },
+        { url: "new", latest: { timestamp: 200, msg: "new" } },
+      ],
+      leaderboard: [{ currentProgress: [], recentFinishers: [] }],
+    });
+    expect(out.activity.msg).toBe("new");
+    expect(out.activity.channel).toBe("new");
+  });
+
+  test("spotlight is a valid flavor when groups + leaderboard are present", () => {
+    const out = assemblePayload({
+      homesampler: [{ seed: 1 }],
+      homegroups: [{ url: "g1", latest: { timestamp: 1, msg: "hi" } }],
+      leaderboard: [{ currentProgress: [{ nickname: "Sam", progress: 5 }], recentFinishers: [{ nickname: "Jo" }] }],
+    });
+    expect(out.spotlight).toBeTruthy();
+    expect(["group", "finishers", "leaders"]).toContain(out.spotlight.flavor);
+  });
+
+  test("empty inputs yield null activity and spotlight without throwing", () => {
+    const out = assemblePayload({ homesampler: [{ seed: 1 }], homegroups: [], leaderboard: [] });
+    expect(out.activity).toBeNull();
+    expect(out.spotlight).toBeNull();
   });
 });
