@@ -276,6 +276,23 @@ export default function Page() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Out-of-tree consumers (Sidebar/PopUp/Commentary/Study via
+  // activeLeafCursorController and the usePageController override) hold this
+  // reference across renders; getters keep their reads live now that state
+  // snapshots are immutable (audit 2026-07-15: without this, socket-driven
+  // comment updates stop appearing in open PopUp/Commentary panels).
+  const cursorFacadeRef = useRef(null);
+  if (!cursorFacadeRef.current) {
+    cursorFacadeRef.current = {
+      get states() { return refs.current.states; },
+      get pageData() { return refs.current.states.pageData; },
+      get pageComments() { return refs.current.states.pageComments; },
+      get pageCommentCounts() { return refs.current.states.pageCommentCounts; },
+      get appController() { return refs.current.appController; },
+    };
+  }
+  cursorFacadeRef.current.functions = functions;
+
   // Plain per-render controller. Identity changes each render (expected — the
   // contexts re-provide it and consumers read fresh). pageData/pageComments/
   // pageCommentCounts live in state and are mirrored as top-level fields so
@@ -322,9 +339,7 @@ export default function Page() {
   // Sidebar (was dispatched from the setPageComments reducer case — impure, so
   // it leaked a Main setState into Page's render phase).
   useEffect(() => {
-    pageController.appController.functions.setActiveLeafCursorController(
-      pageController,
-    );
+    appController.functions.setActiveLeafCursorController(cursorFacadeRef.current);
   }, [pageController.pageComments, pageController.pageCommentCounts]);
 
   // Deep-link / section positioning, gated on the study-mode comments load.
