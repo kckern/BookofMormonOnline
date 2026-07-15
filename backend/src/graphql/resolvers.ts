@@ -29,6 +29,7 @@ import { portedUserResolvers } from './resolvers/ported_user.js';
 import { portedCommunityResolvers } from './resolvers/ported_community.js';
 import { portedMiscResolvers } from './resolvers/ported_misc.js';
 import { socialsigninResolvers } from './resolvers/socialsignin.js';
+import { readingplanResolvers } from './resolvers/readingplan.js';
 
 /** Shallow per-type merge: each domain contributes whole type maps; Query fields union. */
 function mergeResolverMaps(...maps: Resolvers[]): Resolvers {
@@ -265,4 +266,5 @@ export const resolvers: Resolvers = mergeResolverMaps(
   portedCommunityResolvers,
   portedMiscResolvers,
   socialsigninResolvers,
+  readingplanResolvers,
 );
