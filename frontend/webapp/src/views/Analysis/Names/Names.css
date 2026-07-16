@@ -1,127 +1,563 @@
+/* ============================================================
+   Names — "The Onomasticon"
+   A philologist's specimen ledger: warm paper, engraved rules,
+   1830-style serif headwords, rubricated initials, and morphemes
+   annotated in scholarly ink colors.
+   Dark theme overrides live in assets/theme/scss/darkmode/_names.scss
+   and only re-declare the --names-* custom properties below.
+   ============================================================ */
+
 .namesView{
-    --names-border: #ccc;
-    --names-muted: #666;
-    --names-hover: #f1f1f1;
-}
+    /* paper & ink */
+    --names-paper: #f6f1e4;
+    --names-card: #fbf8ee;
+    --names-ink: #2b2418;
+    --names-muted: #7c7157;
+    --names-rule: #d3c8ac;
+    --names-rule-strong: #97896a;
+    --names-hover: rgba(43, 36, 24, 0.055);
+    --names-accent: #8c2f24;          /* madder red — rubrication */
+    --names-accent-soft: rgba(140, 47, 36, 0.12);
+    /* morpheme inks */
+    --names-prefix: #7d4a9e;          /* violet ink   */
+    --names-stem:   #1f5f8b;          /* Prussian blue */
+    --names-affix:  #b3591b;          /* burnt sienna  */
+    --names-suffix: #2e6e4e;          /* verdigris     */
+    --names-prefix-bg: rgba(125, 74, 158, 0.14);
+    --names-stem-bg:   rgba(31, 95, 139, 0.14);
+    --names-affix-bg:  rgba(179, 89, 27, 0.14);
+    --names-suffix-bg: rgba(46, 110, 78, 0.14);
+    --names-grain-blend: multiply;
+    --names-grain-opacity: 0.5;
+    --names-shadow: rgba(43, 36, 24, 0.45);
 
-.nameAnalysisList{
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(6rem, 1fr));
-    grid-column-gap: 0.5ex;
-    /* 1em spacing between rows */
-    grid-row-gap: 0.5ex;
-    padding-bottom: 2rem;
-}
-
-.nameAnalysisList .nameAnalysisItem{
-    align-items: center;
-    border: 1px solid var(--names-border, #ccc);
-    border-radius: 5px;
-    text-align: center;
-    cursor: pointer;
-    /* tiles are <button>s — neutralize UA styles */
-    background: transparent;
-    font: inherit;
-    color: inherit;
-}
-.nameAnalysisList .nameAnalysisItem:hover{
-    background-color: var(--names-hover, #f1f1f1);
     position: relative;
-    bottom: 1px;
-    border-bottom: 2px solid var(--names-border, #ccc);
-    margin-bottom: -1px;
-
+    background: var(--names-paper);
+    border: 1px solid var(--names-rule);
+    box-shadow: 0 18px 40px -30px var(--names-shadow);
+    color: var(--names-ink);
+    font-family: 'Scripture', Georgia, 'Times New Roman', serif;
+    padding: 0 2.4rem 2.6rem;
+    margin-top: 1.2rem;
+    margin-bottom: 2.5rem;
 }
 
-.nameform{
-    width: 100%;
+/* faint paper grain */
+.namesView::before{
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: var(--names-grain-opacity);
+    mix-blend-mode: var(--names-grain-blend);
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="140" height="140"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter><rect width="140" height="140" filter="url(%23n)" opacity="0.05"/></svg>');
+}
+.namesView > *{ position: relative; z-index: 1; }
+
+/* ---------- masthead ---------- */
+
+.namesMasthead{
+    text-align: center;
+    padding: 2rem 0 0.4rem;
+    animation: namesRise 0.55s ease both;
 }
 
-.nameform td{
-    padding:0
+.namesMastheadRule{
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    color: var(--names-rule-strong);
+    font-size: 1.05rem;
+}
+.namesMastheadRule::before,
+.namesMastheadRule::after{
+    content: "";
+    flex: 1;
+    border-top: 3px double var(--names-rule-strong);
+    transform-origin: center;
+    animation: namesRuleDraw 0.8s ease both;
+}
+
+.namesView h3.title.namesTitle{
+    font-family: 'Scripture', Georgia, serif;
+    font-size: clamp(2.3rem, 4.5vw, 3.3rem);
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    line-height: 1.1;
+    white-space: normal;
+    color: var(--names-ink);
+    margin: 1rem 0 0.3rem;
+    padding: 0;
+}
+
+.namesSubtitle{
+    font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.34em;
+    text-indent: 0.34em; /* re-center letterspaced text */
+    text-transform: uppercase;
+    color: var(--names-accent);
+    margin-bottom: 1rem;
+}
+
+.namesIntro{
+    font-style: italic;
+    font-size: 1.06rem;
+    line-height: 1.55;
+    color: var(--names-muted);
+    max-width: 44rem;
+    margin: 0 auto 1.4rem;
+}
+
+/* ---------- filter apparatus ---------- */
+
+.nameFilters{
+    background: var(--names-card);
+    border: 1px solid var(--names-rule-strong);
+    outline: 1px solid var(--names-rule);
+    outline-offset: 4px;
+    padding: 0.75rem 1.2rem 0.9rem;
+    margin: 0.6rem 0.25rem 0;
+    animation: namesRise 0.55s 0.08s ease both;
 }
 
 .nameFiltersSummary{
-    display: none;
-    font-weight: 800;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 0.6ex;
     cursor: pointer;
-    padding: 0.4rem 0;
+    user-select: none;
+    font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--names-muted);
+    padding: 0.15rem 0 0.4rem;
+}
+.nameFiltersSummary::-webkit-details-marker{ display: none; }
+.nameFiltersSummary:hover{ color: var(--names-accent); }
+.nameFiltersMark{
+    display: inline-block;
+    transition: transform 0.2s ease;
+    transform: rotate(-90deg);
+    font-size: 0.85em;
+}
+.nameFilters[open] .nameFiltersMark{ transform: none; }
+
+.nameform{
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.9rem;
 }
 
-@media (max-width: 767px){
-    .nameFiltersSummary{ display: list-item; }
-    .nameform, .nameform thead, .nameform tbody, .nameform tr, .nameform th, .nameform td{
-        display: block;
-        text-align: left;
-    }
-    .nameform th{ font-size: 0.9rem; margin-top: 0.4rem; }
-    .namesView h3.title{ white-space: normal; font-size: 1.7rem; }
+.nameFacet .form-group{ margin: 0; }
+
+.facetHeader{
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6ex;
+    font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--names-ink);
+    margin-bottom: 0.3rem;
+    cursor: help;
+}
+.facetInk{
+    width: 0.62em;
+    height: 0.62em;
+    border-radius: 50%;
+    display: inline-block;
+}
+.facetInk-prefix{ background: var(--names-prefix); }
+.facetInk-stem{   background: var(--names-stem); }
+.facetInk-affix{  background: var(--names-affix); }
+.facetInk-suffix{ background: var(--names-suffix); }
+.facetHelpMark{
+    color: var(--names-muted);
+    font-weight: 400;
+    letter-spacing: 0;
 }
 
-.nameDetail{ border:1px solid var(--names-border,#ccc); border-radius:8px; padding:0.75rem 1rem; margin-bottom:1rem; }
-.nameDetailHeader{ display:flex; justify-content:space-between; align-items:baseline; }
-.nameDetailName{ font-size:1.6rem; font-weight:700; }
-.nameDetailName .morpheme{ background:none; border:none; padding:0; font:inherit; cursor:pointer; }
-.nameDetailName .morpheme:focus-visible{ outline:2px solid #2c7fb8; outline-offset:1px; }
-.nameDetailClose{ background:none; border:none; font-size:1.4rem; cursor:pointer; line-height:1; }
-.nameDetailBadges{ display:flex; gap:0.4ex; flex-wrap:wrap; margin:0.3rem 0; align-items:center; }
-.nameTypeBadge, .nameDetail .IdBadge.lang{ border:1px solid var(--names-border,#ccc); border-radius:4px; padding:0 0.4em; font-size:0.75rem; }
-.nameDetailNote{ margin:0.3rem 0 0.5rem; color:var(--names-muted,#555); font-style:italic; }
-.nameDetailLinks{ display:flex; gap:0.5ex; }
+/* react-multi-select-component — apparatus styling */
+.namesView .rmsc{
+    --rmsc-bg: var(--names-card);
+    --rmsc-border: var(--names-rule);
+    --rmsc-hover: var(--names-hover);
+    --rmsc-selected: var(--names-accent-soft);
+    --rmsc-gray: var(--names-muted);
+    --rmsc-main: var(--names-accent);
+    --rmsc-radius: 2px;
+    font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
+    font-size: 0.9rem;
+    color: var(--names-ink);
+}
+.namesView .rmsc .dropdown-container:focus-within{
+    box-shadow: var(--names-accent) 0 0 0 1px;
+}
 
-/* IdBadge affiliation colors — copied from People.css, scoped to the detail panel */
-.nameDetail .IdBadge{ border:1px solid #6c6c6c; color:#4d4d4d; font-size:.7em; letter-spacing:-.5px; padding:0 .5em; border-radius:.5em; }
-.nameDetail .IdBadge.N{ background-color:#b9e2cf; color:#0f5132; border-color:#0f5132; }
-.nameDetail .IdBadge.L{ background-color:#c3dbff; color:#084298; border-color:#084298; }
-.nameDetail .IdBadge.M{ background-color:rgb(255,208,177); color:#5c3000; border-color:#5c3000; }
-.nameDetail .IdBadge.J{ background-color:#fef1ca; color:#6b5200; border-color:#6b5200; }
+/* ---------- culture & type chips ---------- */
 
-.nameAnalysisItem.selected{ border-color:#2c7fb8; box-shadow:0 0 0 1px #2c7fb8 inset; }
-.nameAnalysisItem:focus-visible{ outline:2px solid #2c7fb8; outline-offset:1px; }
+.nameChipRow{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45ex;
+    align-items: baseline;
+    margin: 0.55rem 0 0;
+}
+.nameChipRowLabel{
+    font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    min-width: 4.6rem;
+    cursor: help;
+}
+.nameChip{
+    font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
+    font-size: 0.78rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    border: 1px solid var(--names-rule);
+    border-radius: 2px;
+    background: transparent;
+    color: var(--names-ink);
+    padding: 0.06rem 0.55rem;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.nameChip:hover:not(:disabled){
+    border-color: var(--names-rule-strong);
+    background: var(--names-hover);
+}
+.nameChip.active{
+    background: var(--names-ink);
+    border-color: var(--names-ink);
+    color: var(--names-paper);
+}
+.nameChip:disabled{ opacity: 0.32; cursor: default; }
+.nameChip:focus-visible{ outline: 2px solid var(--names-accent); outline-offset: 2px; }
+.nameChipCount{ opacity: 0.6; font-size: 0.85em; }
 
-/* Morpheme structure — role hues: prefix purple, stem blue, affix orange, suffix green */
-.nameAnalysisItem .morpheme-prefix, .morphemeLegend .morpheme-prefix{ box-shadow:inset 0 -2px 0 #8e6cc3; }
-.nameAnalysisItem .morpheme-stem, .morphemeLegend .morpheme-stem{ box-shadow:inset 0 -2px 0 #2c7fb8; }
-.nameAnalysisItem .morpheme-affix, .morphemeLegend .morpheme-affix{ box-shadow:inset 0 -2px 0 #d95f0e; }
-.nameAnalysisItem .morpheme-suffix, .morphemeLegend .morpheme-suffix{ box-shadow:inset 0 -2px 0 #38875f; }
-.nameDetail .morpheme-prefix{ background:rgba(142,108,195,.18); }
-.nameDetail .morpheme-stem{ background:rgba(44,127,184,.18); }
-.nameDetail .morpheme-affix{ background:rgba(217,95,14,.18); }
-.nameDetail .morpheme-suffix{ background:rgba(56,135,95,.18); }
-.morphemeLegend{ display:inline-flex; gap:0.8ex; font-size:0.75rem; }
-.morphemeLegend span{ padding:0 0.3em; }
-.structureToggle{ display:inline-flex; gap:0.5ex; align-items:center; font-size:0.85rem; cursor:pointer; margin:0; }
-.nameFilterStatusRight{ display:inline-flex; gap:1.2ex; align-items:center; flex-wrap:wrap; }
-
-.nameChipRow{ display:flex; flex-wrap:wrap; gap:0.4ex; align-items:center; margin:0.4rem 0; }
-.nameChipRowLabel{ font-weight:800; font-size:0.9rem; margin-right:0.5ex; min-width:4.5rem; }
-.nameChip{ border:1px solid var(--names-border,#ccc); border-radius:999px; background:transparent; padding:0.1rem 0.7rem; font-size:0.85rem; cursor:pointer; }
-.nameChip.active{ background:#2c7fb8; border-color:#2c7fb8; color:#fff; }
-.nameChip:disabled{ opacity:0.35; cursor:default; }
-.nameChip:focus-visible{ outline:2px solid #2c7fb8; outline-offset:2px; }
-.nameChipCount{ opacity:0.65; font-size:0.75rem; }
+/* ---------- status line ---------- */
 
 .nameFilterStatus{
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin: 0.5rem 0 1rem;
-    color: var(--names-muted, #666);
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    margin: 1.1rem 0.25rem 0.4rem;
+    padding-bottom: 0.45rem;
+    border-bottom: 1px solid var(--names-rule);
+    font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
+    font-size: 0.8rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--names-muted);
+}
+.nameFilterStatusRight{
+    display: inline-flex;
+    gap: 1.4ex;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.structureToggle{
+    display: inline-flex;
+    gap: 0.55ex;
+    align-items: center;
+    cursor: pointer;
+    margin: 0;
+    font-size: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    color: inherit;
+}
+.structureToggle input{ accent-color: var(--names-accent); }
+
+.morphemeLegend{ display: inline-flex; gap: 1.1ex; font-size: 0.72rem; }
+.morphemeLegend span{
+    letter-spacing: 0.08em;
+    text-decoration-line: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.25em;
+}
+.morphemeLegend .morpheme-prefix{ text-decoration-color: var(--names-prefix); }
+.morphemeLegend .morpheme-stem{   text-decoration-color: var(--names-stem); }
+.morphemeLegend .morpheme-affix{  text-decoration-color: var(--names-affix); }
+.morphemeLegend .morpheme-suffix{ text-decoration-color: var(--names-suffix); }
+
+.nameClearFilters{
+    font-family: inherit;
+    font-size: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    background: none;
+    border: none;
+    border-bottom: 1px solid transparent;
+    color: var(--names-accent);
+    cursor: pointer;
+    padding: 0 0 1px;
+}
+.nameClearFilters:hover{ border-bottom-color: var(--names-accent); }
+.nameClearFilters:focus-visible{ outline: 2px solid var(--names-accent); outline-offset: 2px; }
+
+/* ---------- specimen index ---------- */
+
+.nameAnalysisList{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(8.6rem, 1fr));
+    gap: 0.05rem 1.1rem;
+    padding-bottom: 1.5rem;
+    animation: namesRise 0.55s 0.16s ease both;
+}
+
+.nameLetterRule{
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: baseline;
+    gap: 0.8rem;
+    margin: 1rem 0 0.15rem;
+}
+.nameLetterRule span{
+    font-family: 'Scripture', Georgia, serif;
+    font-size: 1.7rem;
+    line-height: 1;
+    color: var(--names-accent);
+}
+.nameLetterRule::after{
+    content: "";
+    flex: 1;
+    border-top: 1px solid var(--names-rule);
 }
 
 .nameAnalysisList .nameAnalysisItem{
-    padding: 0.25rem 0.5rem;
+    font-family: 'Scripture', Georgia, serif;
+    font-size: 1.14rem;
+    line-height: 1.35;
+    text-align: left;
+    background: transparent;
+    border: none;
+    border-radius: 2px;
+    color: inherit;
+    cursor: pointer;
+    padding: 0.22rem 0.45rem;
+    transition: background 0.12s ease, color 0.12s ease;
 }
+.nameAnalysisList .nameAnalysisItem:hover{
+    background: var(--names-hover);
+    color: var(--names-accent);
+}
+.nameAnalysisItem.selected{
+    background: var(--names-accent-soft);
+    color: var(--names-accent);
+}
+.nameAnalysisItem.selected::before{
+    content: "☞ ";
+    font-size: 0.85em;
+}
+.nameAnalysisItem:focus-visible{ outline: 2px solid var(--names-accent); outline-offset: 1px; }
+
+/* morpheme structure on tiles — fine ink underrules, offset like
+   a philologist's pencil marks rather than hyperlink underlines */
+.nameAnalysisItem [class^="morpheme-"]{
+    text-decoration-line: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.22em;
+}
+.nameAnalysisItem .morpheme-sep{ text-decoration-line: none; }
+.nameAnalysisItem .morpheme-prefix{ text-decoration-color: var(--names-prefix); }
+.nameAnalysisItem .morpheme-stem{   text-decoration-color: var(--names-stem); }
+.nameAnalysisItem .morpheme-affix{  text-decoration-color: var(--names-affix); }
+.nameAnalysisItem .morpheme-suffix{ text-decoration-color: var(--names-suffix); }
 
 .nameAnalysisEmpty{
     grid-column: 1 / -1;
     text-align: center;
-    color: var(--names-muted, #888);
-    padding: 2rem 0;
+    font-style: italic;
+    color: var(--names-muted);
+    padding: 2.5rem 0;
+}
+.nameAnalysisEmptyMark{
+    display: block;
+    font-style: normal;
+    font-size: 1.6rem;
+    color: var(--names-rule-strong);
+    margin-bottom: 0.4rem;
 }
 
-.nameform th{
-    text-align: center;
-    font-weight: 800;
-    font-size: 1.2rem;
+/* ---------- lexicon entry card ---------- */
+
+.nameDetail{
+    position: relative;
+    background: var(--names-card);
+    border: 1px solid var(--names-rule-strong);
+    outline: 1px solid var(--names-rule);
+    outline-offset: 4px;
+    box-shadow: 0 16px 34px -24px var(--names-shadow);
+    padding: 1rem 1.4rem 1.1rem;
+    margin: 1.3rem 0.25rem 1.5rem;
+    animation: namesCardIn 0.28s ease both;
+}
+.nameDetail::after{
+    content: "❦";
+    position: absolute;
+    right: 1rem;
+    bottom: 0.55rem;
+    font-size: 1.05rem;
+    color: var(--names-rule-strong);
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.nameDetailHeader{
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+}
+.nameDetailName{
+    font-family: 'Scripture', Georgia, serif;
+    font-size: clamp(1.9rem, 3.5vw, 2.5rem);
+    font-weight: 400;
+    line-height: 1.15;
+}
+.nameDetailName .morpheme{
+    background: none;
+    border: none;
+    padding: 0 0.02em;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: background 0.15s ease;
+}
+.nameDetailName .morpheme-prefix{ border-bottom-color: var(--names-prefix); }
+.nameDetailName .morpheme-stem{   border-bottom-color: var(--names-stem); }
+.nameDetailName .morpheme-affix{  border-bottom-color: var(--names-affix); }
+.nameDetailName .morpheme-suffix{ border-bottom-color: var(--names-suffix); }
+.nameDetailName .morpheme-prefix:hover{ background: var(--names-prefix-bg); }
+.nameDetailName .morpheme-stem:hover{   background: var(--names-stem-bg); }
+.nameDetailName .morpheme-affix:hover{  background: var(--names-affix-bg); }
+.nameDetailName .morpheme-suffix:hover{ background: var(--names-suffix-bg); }
+.nameDetailName .morpheme:focus-visible{ outline: 2px solid var(--names-accent); outline-offset: 1px; }
+
+.nameDetailClose{
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    line-height: 1;
+    color: var(--names-muted);
+    cursor: pointer;
+    transition: color 0.15s ease, transform 0.15s ease;
+}
+.nameDetailClose:hover{ color: var(--names-accent); transform: rotate(90deg); }
+.nameDetailClose:focus-visible{ outline: 2px solid var(--names-accent); outline-offset: 2px; }
+
+.nameDetailBadges{
+    display: flex;
+    gap: 0.6ex;
+    flex-wrap: wrap;
+    margin: 0.45rem 0 0.2rem;
+    align-items: center;
+}
+
+/* culture stamps — transparent ground, inked border & text */
+.nameDetail .IdBadge{
+    font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    background: transparent;
+    border: 1px solid var(--names-muted);
+    border-radius: 2px;
+    color: var(--names-muted);
+    padding: 0.02em 0.55em;
+}
+.nameDetail .IdBadge.N{ color: var(--names-suffix); border-color: var(--names-suffix); background: transparent; }
+.nameDetail .IdBadge.L{ color: var(--names-stem);   border-color: var(--names-stem);   background: transparent; }
+.nameDetail .IdBadge.M{ color: var(--names-affix);  border-color: var(--names-affix);  background: transparent; }
+.nameDetail .IdBadge.J{ color: #8a6d1a;             border-color: #8a6d1a;             background: transparent; }
+.nameDetail .IdBadge.I{ color: var(--names-prefix); border-color: var(--names-prefix); background: transparent; }
+
+/* types — dictionary part-of-speech style */
+.nameTypeBadge{
+    font-family: 'Scripture', Georgia, serif;
+    font-style: italic;
+    font-size: 0.95rem;
+    color: var(--names-muted);
+}
+.nameTypeBadge + .nameTypeBadge::before{ content: "· "; }
+
+.nameDetailNote{
+    font-style: italic;
+    font-size: 1.02rem;
+    line-height: 1.5;
+    color: var(--names-muted);
+    border-left: 2px solid var(--names-rule);
+    padding-left: 0.8rem;
+    margin: 0.55rem 0 0.6rem;
+}
+
+.nameDetailLinks{ display: flex; gap: 1.6ex; }
+.nameDetailLink{
+    font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    background: none;
+    border: none;
+    border-bottom: 1px solid var(--names-rule-strong);
+    color: var(--names-ink);
+    cursor: pointer;
+    padding: 0 0 2px;
+    transition: color 0.15s ease, border-color 0.15s ease;
+}
+.nameDetailLink:hover{ color: var(--names-accent); border-bottom-color: var(--names-accent); }
+.nameDetailLink:focus-visible{ outline: 2px solid var(--names-accent); outline-offset: 2px; }
+.nameDetailLink span{ color: var(--names-accent); }
+
+/* ---------- motion ---------- */
+
+@keyframes namesRise{
+    from{ opacity: 0; transform: translateY(8px); }
+    to{ opacity: 1; transform: none; }
+}
+@keyframes namesRuleDraw{
+    from{ transform: scaleX(0); }
+    to{ transform: scaleX(1); }
+}
+@keyframes namesCardIn{
+    from{ opacity: 0; transform: translateY(-6px); }
+    to{ opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce){
+    .namesMasthead, .nameFilters, .nameAnalysisList, .nameDetail,
+    .namesMastheadRule::before, .namesMastheadRule::after{
+        animation: none;
+    }
+}
+
+/* ---------- responsive ---------- */
+
+@media (max-width: 991px){
+    .namesView{ padding: 0 1.4rem 2rem; }
+    .nameform{ grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 767px){
+    .namesView{ padding: 0 0.9rem 1.6rem; }
+    .nameform{ grid-template-columns: 1fr; gap: 0.55rem; }
+    .namesMasthead{ padding-top: 1.3rem; }
+    .namesSubtitle{ letter-spacing: 0.2em; text-indent: 0.2em; }
+    .nameChipRowLabel{ min-width: 100%; }
 }

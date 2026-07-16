@@ -83,12 +83,17 @@ function Container() {
 
   return (
     <div className="container namesView">
-      <h3 className="title lg-4 text-center">{t("names_title", "Book of Mormon Names")}</h3>
-      <p className="namesIntro">
-        {t("names_intro", "Every proper name in the Book of Mormon, broken into its building blocks. Filter by shared elements to see name families, or by culture to see who used them.")}
-      </p>
+      <header className="namesMasthead">
+        <div className="namesMastheadRule" aria-hidden="true"><span>⁂</span></div>
+        <h3 className="title namesTitle">{t("names_title", "Book of Mormon Names")}</h3>
+        <div className="namesSubtitle">{t("names_subtitle", "An Onomasticon of Proper Names")}</div>
+        <p className="namesIntro">
+          {t("names_intro", "Every proper name in the Book of Mormon, broken into its building blocks. Filter by shared elements to see name families, or by culture to see who used them.")}
+        </p>
+      </header>
       <details className="nameFilters" open={filtersOpen} onToggle={(e) => setFiltersOpen(e.target.open)}>
         <summary className="nameFiltersSummary">
+          <span className="nameFiltersMark" aria-hidden="true">▾</span>
           {t("names_filters", "Filters")}{activeCount ? ` (${activeCount})` : ""}
         </summary>
         <FilterBar filters={filters} setFacet={setFacet} />
@@ -118,8 +123,8 @@ function Container() {
             </span>
           )}
           {hasSelection && (
-            <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => setFilters(emptyFilters())}>
-              {t("names_clear_filters", "Clear filters")}
+            <button type="button" className="nameClearFilters" onClick={() => setFilters(emptyFilters())}>
+              ✕ {t("names_clear_filters", "Clear filters")}
             </button>
           )}
         </span>
@@ -134,23 +139,34 @@ function Container() {
         />
       )}
       <div className="nameAnalysisList">
-        {filtered.map((entry) => (
-          <button
-            type="button"
-            key={entry.name}
-            className={"nameAnalysisItem" + (detailName === entry.name ? " selected" : "")}
-            aria-label={entry.name}
-            onClick={() => setDetailName(entry.name === detailName ? null : entry.name)}
-          >
-            {showStructure && SEGMENTS.get(entry.name)
-              ? SEGMENTS.get(entry.name).map((s, i) => (
-                  <span key={i} className={"morpheme-" + s.role}>{s.text}</span>
-                ))
-              : entry.name}
-          </button>
-        ))}
+        {filtered.map((entry, i) => {
+          const letter = entry.name[0].toUpperCase();
+          const newLetter = !i || filtered[i - 1].name[0].toUpperCase() !== letter;
+          return (
+            <React.Fragment key={entry.name}>
+              {newLetter && (
+                <div className="nameLetterRule" aria-hidden="true">
+                  <span>{letter}</span>
+                </div>
+              )}
+              <button
+                type="button"
+                className={"nameAnalysisItem" + (detailName === entry.name ? " selected" : "")}
+                aria-label={entry.name}
+                onClick={() => setDetailName(entry.name === detailName ? null : entry.name)}
+              >
+                {showStructure && SEGMENTS.get(entry.name)
+                  ? SEGMENTS.get(entry.name).map((s, i) => (
+                      <span key={i} className={"morpheme-" + s.role}>{s.text}</span>
+                    ))
+                  : entry.name}
+              </button>
+            </React.Fragment>
+          );
+        })}
         {!filtered.length && (
           <div className="nameAnalysisEmpty">
+            <span className="nameAnalysisEmptyMark" aria-hidden="true">❧</span>
             {t("names_empty", "No names match the selected filters. Try removing the last filter you added.")}
           </div>
         )}
@@ -160,38 +176,28 @@ function Container() {
 }
 
 const MORPHEME_FACETS = ["prefix", "stems", "affix", "suffix"];
+const FACET_ROLE = { prefix: "prefix", stems: "stem", affix: "affix", suffix: "suffix" };
 
 function FilterBar({ filters, setFacet }) {
   const fields = FIELD_DEFS.filter((f) => MORPHEME_FACETS.includes(f.key));
   return (
-    <table className="nameform">
-      <thead>
-        <tr>
-          {fields.map((f) => (
-            <th key={f.key}>
-              <span className="facetHeader" title={FACET_HELP[f.key]}>
-                {FACET_META[f.key].label}
-                <sup className="facetHelpMark" aria-hidden="true">?</sup>
-              </span>
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          {fields.map((f) => (
-            <td key={f.key}>
-              <FacetSelect
-                facetKey={f.key}
-                values={filters[f.key]}
-                filters={filters}
-                onChange={(vals) => setFacet(f.key, vals)}
-              />
-            </td>
-          ))}
-        </tr>
-      </tbody>
-    </table>
+    <div className="nameform">
+      {fields.map((f) => (
+        <div className="nameFacet" key={f.key}>
+          <span className="facetHeader" title={FACET_HELP[f.key]}>
+            <i className={"facetInk facetInk-" + FACET_ROLE[f.key]} aria-hidden="true" />
+            {FACET_META[f.key].label}
+            <sup className="facetHelpMark" aria-hidden="true">?</sup>
+          </span>
+          <FacetSelect
+            facetKey={f.key}
+            values={filters[f.key]}
+            filters={filters}
+            onChange={(vals) => setFacet(f.key, vals)}
+          />
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -279,13 +285,13 @@ function NameDetail({ entry, entities, appController, onClose, onPickMorpheme })
       {entry.note && <p className="nameDetailNote">{entry.note}</p>}
       <div className="nameDetailLinks">
         {slugs.person && entry.types.includes("person") && (
-          <button type="button" className="btn btn-sm btn-outline-primary" onClick={() => openEntity("people", slugs.person)}>
-            {t("names_view_person", "View person")}
+          <button type="button" className="nameDetailLink" onClick={() => openEntity("people", slugs.person)}>
+            <span aria-hidden="true">☞</span> {t("names_view_person", "View person")}
           </button>
         )}
         {slugs.place && entry.types.includes("place") && (
-          <button type="button" className="btn btn-sm btn-outline-primary" onClick={() => openEntity("places", slugs.place)}>
-            {t("names_view_place", "View place")}
+          <button type="button" className="nameDetailLink" onClick={() => openEntity("places", slugs.place)}>
+            <span aria-hidden="true">☞</span> {t("names_view_place", "View place")}
           </button>
         )}
       </div>
