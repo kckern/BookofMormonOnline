@@ -9,6 +9,19 @@ jest.mock("src/models/Utils", () => ({
   determineLanguage: () => "en",
 }));
 
+// The Reader imports BoMOnlineAPI, whose Cache module touches indexedDB at
+// import time — absent in jsdom. Mock it out for controller routing tests.
+// CRA sets resetMocks: true, so the implementation is installed per test.
+jest.mock("src/models/BoMOnlineAPI", () => ({
+  __esModule: true,
+  default: jest.fn(),
+}));
+import BoMOnlineAPI from "src/models/BoMOnlineAPI";
+
+beforeEach(() => {
+  BoMOnlineAPI.mockImplementation(() => new Promise(() => {}));
+});
+
 const at = (path) =>
   render(
     <MemoryRouter initialEntries={[path]}>
