@@ -9,6 +9,7 @@ import ReactTooltip from "react-tooltip";
 import { Link, useHistory } from "react-router-dom";
 import { Victory } from "src/views/User/Victory";
 import moment from "moment";
+import XrelSection from "./XrelSection";
 import "./PopUp.css";
 import {
   snapSelectionToWord,
@@ -289,6 +290,7 @@ function Person() {
 
                 <h4>{label("relationships")}</h4>
                 <Relationships data={person?.relations} />
+                <XrelSection xrels={person?.xrels} noHeading />
                 <ReferenceList
                   index={person.index}
                   setPopupRef={setPopUpRef}
@@ -448,6 +450,7 @@ function Place() {
                 <img alt="reload" src={`${assetUrl}/places/${place.slug}`} />
               </div>
 
+              <XrelSection xrels={place?.xrels} />
               <ReferenceList
                 index={place.index}
                 setPopupRef={setPopUpRef}
@@ -522,18 +525,6 @@ function ObjectPopUp() {
   }
   if (!obj) return <pre>{appController.popUp}</pre>;
 
-  const handleXrelClick = (xrel, e) => {
-    e.preventDefault();
-    if (xrel.dst_type === "people") {
-      appController.functions.setPopUp({ type: "people", ids: [xrel.dst_slug], underSlug: "people" });
-    } else if (xrel.dst_type === "place") {
-      appController.functions.setPopUp({ type: "places", ids: [xrel.dst_slug], underSlug: "places" });
-    } else if (xrel.dst_type === "object") {
-      appController.functions.setPopUp({ type: "object", ids: [xrel.dst_slug], underSlug: "objects" });
-    }
-    // group: non-clickable, no-op
-  };
-
   return (
     <Draggable handle=".card-header">
       <div
@@ -589,26 +580,7 @@ function ObjectPopUp() {
                 <br />
               </div>
 
-              <h4>{label("relationships")}</h4>
-              {(obj.xrels && obj.xrels.length > 0) ? (
-                <ul className="xrels">
-                  {obj.xrels.map((x, idx) => {
-                    const clickable = ["people", "place", "object"].includes(x.dst_type);
-                    return (
-                      <li key={idx} className={"xrel xrel-" + x.dst_type + (clickable ? " clickable" : "")}>
-                        <span className="rel-verb">{x.rel}</span>
-                        <a href="#" onClick={clickable ? (e) => handleXrelClick(x, e) : (e) => e.preventDefault()}>
-                          {x.dst_name}
-                          {x.dst_title && <em> ({x.dst_title})</em>}
-                        </a>
-                        {x.note && <div className="xrel-note">{x.note}</div>}
-                      </li>
-                    );
-                  })}
-                </ul>
-              ) : (
-                <p className="xrels-empty">{label("no_relationships") || "No relationships."}</p>
-              )}
+              <XrelSection xrels={obj.xrels} showEmpty />
 
               <ReferenceList
                 index={obj.index}

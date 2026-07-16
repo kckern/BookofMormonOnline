@@ -51,6 +51,24 @@ export interface XrelRow {
   dst_title: string | null;
   note: string | null;
   verse_id: number | null;
+  /** 'src' = this entity is the row's source; 'dst' = reverse direction
+   *  (the entity is the row's destination and dst_* carry the OTHER party). */
+  direction: 'src' | 'dst';
+}
+
+/** Shared sort for xrel lists: verse_id ASC NULLS LAST, srcweight ASC (null=50), slug ASC. */
+export function sortXrels(rows: XrelRow[]): void {
+  rows.sort((a, b) => {
+    if (a.verse_id == null && b.verse_id == null) {
+      // both null: fall through
+    } else if (a.verse_id == null) return 1;
+    else if (b.verse_id == null) return -1;
+    else if (a.verse_id !== b.verse_id) return a.verse_id - b.verse_id;
+    const aw = a.srcweight ?? 50;
+    const bw = b.srcweight ?? 50;
+    if (aw !== bw) return aw - bw;
+    return a.dst_slug.localeCompare(b.dst_slug);
+  });
 }
 
 function groupBy<T>(rows: readonly T[], key: (r: T) => string | null): Map<string, T[]> {
@@ -272,21 +290,11 @@ export function objectsLoaders(db: Kysely<DB>, lang: string, core: Loaders) {
           dst_title,
           note: r.note ?? null,
           verse_id: parseVerseIdFromNote(r.note ?? null),
+          direction: 'src' as const,
         };
       });
 
-      // Sort: verse_id ASC NULLS LAST, srcweight ASC (null treated as 50), dst_slug ASC
-      resolved.sort((a, b) => {
-        if (a.verse_id == null && b.verse_id == null) {
-          // both null: fall through
-        } else if (a.verse_id == null) return 1;
-        else if (b.verse_id == null) return -1;
-        else if (a.verse_id !== b.verse_id) return a.verse_id - b.verse_id;
-        const aw = a.srcweight ?? 50;
-        const bw = b.srcweight ?? 50;
-        if (aw !== bw) return aw - bw;
-        return a.dst_slug.localeCompare(b.dst_slug);
-      });
+      sortXrels(resolved);
 
       return resolved;
     });
