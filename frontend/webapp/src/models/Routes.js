@@ -33,6 +33,7 @@ const Sampler = lazy(() => import("../views/Home/Sampler.js"));
 const Community = lazy(() => import("../views/Home/Community.js"));
 const Page = lazy(() => import("../views/Page/Page.js"));
 const Analysis = lazy(() => import("../views/Analysis/Analysis.js"));
+const Theology = lazy(() => import("../views/Theology/Theology.js"));
 const History = lazy(() => import("../views/History/History.js"));
 const Invitation = lazy(() => import("../views/User/Invitation.js"));
 const MobileGroups = lazy(() => import("../views/_Common/Study/Mobile/MobileStudy.js"));
@@ -155,6 +156,10 @@ const routes = [
   {
     path: "/analysis/:value*",
     component: Analysis,
+  },
+  {
+    path: "/theology",
+    component: Theology,
   },
   {
     path: "/analysis",

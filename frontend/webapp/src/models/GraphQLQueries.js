@@ -1288,6 +1288,14 @@ const queries = {
         } `,
     }
   },
+  mybookmark: (token) => {
+    return {
+      type: "mybookmark",
+      key: "token",
+      val: token,
+      query: q("mybookmark", "token", token) + `{ slug pageSlug pagetitle heading latest }`,
+    }
+  },
   pageprogress: (input) => {
     input = input.shift();
     return {

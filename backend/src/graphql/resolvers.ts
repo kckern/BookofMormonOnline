@@ -8,6 +8,7 @@
  */
 import type { Resolvers } from '../../codegen/graphql.js';
 import type { AppContext } from './context.js';
+import { getPageProgress } from './resolvers/../../data/loaders/ported_user.js';
 import { scriptureResolvers } from './resolvers/scripture.js';
 import { scripturereadResolvers } from './resolvers/scriptureread.js';
 import { scriptureextrasResolvers } from './resolvers/scriptureextras.js';
@@ -113,6 +114,26 @@ const coreResolvers: Resolvers = {
         ...p,
         sectionOrder: 'textlink' as const,
       })),
+    // progress(token): aggregate the division's pages into one completed/started
+    // score (legacy Division.progress via scoreSlugsfromUserInfo).
+    progress: async (parent, args, ctx) => {
+      const token = (args as { token?: string | null }).token ?? null;
+      const pages = await ctx.loaders.pagesByDivision.load((parent as DivisionRow).guid);
+      const slugs = await Promise.all(pages.map((p) => ctx.loaders.slugPathByLink.load(p.guid)));
+      const scores = await getPageProgress(ctx.db, token, slugs.filter(Boolean));
+      const count = scores.reduce((a, s) => a + (s.count || 0), 0);
+      const comp = scores.reduce((a, s) => a + (s.completed_items?.length || 0), 0);
+      const start = scores.reduce((a, s) => a + (s.started_items?.length || 0), 0);
+      return {
+        count,
+        completed: count ? Math.round((comp * 1000) / count) / 10 : 0,
+        started: count ? Math.round((start * 1000) / count) / 10 : 0,
+        completed_items: [],
+        started_items: [],
+        active_items: [],
+        summary: null,
+      } as never;
+    },
   },
 
   Page: {
@@ -137,6 +158,14 @@ const coreResolvers: Resolvers = {
     },
     counts: (parent, _args, ctx) =>
       ctx.loaders.textAggByPage.load((parent as PageRow).guid).then((a) => a.counts),
+    // progress(token): per-page ProgressScore incl. completed/active item links
+    // (powers the /user progress dots and the home Reading-Progress tile).
+    progress: async (parent, args, ctx) => {
+      const token = (args as { token?: string | null }).token ?? null;
+      const slug = await ctx.loaders.slugPathByLink.load((parent as PageRow).guid);
+      const scores = await getPageProgress(ctx.db, token, [slug]);
+      return (scores[0] ?? null) as never;
+    },
   },
 
   Section: {
@@ -146,6 +175,17 @@ const coreResolvers: Resolvers = {
     },
     slug: (parent, _args, ctx) => ctx.loaders.slugPathByLink.load((parent as SectionRow).guid),
     rows: (parent, _args, ctx) => ctx.loaders.rowsBySection.load((parent as SectionRow).guid),
+    // sectionText: the section's text items in link order — heading + link, so
+    // the /user progress dots (and the home tile) can position each item.
+    sectionText: async (parent, _args, ctx) => {
+      const rows = await ctx.db
+        .selectFrom('bom_text')
+        .select(['guid', 'heading', 'link'])
+        .where('section', '=', (parent as SectionRow).guid)
+        .orderBy('link', 'asc')
+        .execute();
+      return rows as never;
+    },
   },
 
   Row: {

@@ -179,26 +179,25 @@ export default function ReadingPlanTile() {
   const appController = useAppController();
   const token = appController.states.user.token;
   const signedIn = !!appController?.states?.user?.user;
-  // Progress trumps the plan: guest OR signed-in, if there's ANY reading
-  // progress, show the "Reading Progress" view (recent page + green dots).
-  const [progress, setProgress] = useState(null); // { hasProgress, divisions }
+  // Progress trumps the plan: guest OR signed-in, if there's a reading bookmark
+  // (a recent reading position), show the "Reading Progress" view (recent page
+  // + green dots) instead of the plan/calendar.
+  const [bookmark, setBookmark] = useState(undefined); // undefined=loading, null=none
   useEffect(() => {
     let cancelled = false;
-    BoMOnlineAPI({ userprogress: token, divisionProgress: null }, { token, useCache: false })
+    BoMOnlineAPI({ mybookmark: token }, { token, useCache: false })
       .then((r) => {
         if (cancelled) return;
-        const up = r?.userprogress?.[token] || r?.userprogress || {};
-        const hasProgress = (Number(up.completed) || 0) > 0 || (Number(up.started) || 0) > 0;
-        const divisions = Array.isArray(r?.divisionProgress) ? r.divisionProgress : Object.values(r?.divisionProgress || {});
-        setProgress({ hasProgress, divisions });
+        const raw = r?.mybookmark;
+        const bm = raw?.pageSlug ? raw : (raw && typeof raw === "object" ? Object.values(raw)[0] : null);
+        setBookmark(bm?.pageSlug ? bm : null);
       })
-      .catch(() => { if (!cancelled) setProgress({ hasProgress: false, divisions: [] }); });
+      .catch(() => { if (!cancelled) setBookmark(null); });
     return () => { cancelled = true; };
   }, [token]);
 
-  if (progress?.hasProgress) {
-    return <ReadingProgressTile token={token} divisions={progress.divisions} />;
-  }
+  if (bookmark) return <ReadingProgressTile token={token} bookmark={bookmark} />;
+  // still checking or none → the plan/guest variant
   if (!signedIn) return <GuestPlanPreview />;
   return <SignedInPlanTile token={token} />;
 }

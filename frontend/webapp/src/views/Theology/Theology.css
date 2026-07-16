@@ -1,0 +1,4 @@
+.theologyPlaceholder { display: flex; align-items: center; justify-content: center; min-height: 60vh; }
+.theologyInner { text-align: center; opacity: 0.8; }
+.theologyInner h2 { font-weight: 800; margin-bottom: 0.5rem; }
+.theologyComingSoon { font-size: 1.1rem; color: #888; }

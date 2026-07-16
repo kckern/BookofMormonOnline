@@ -25,6 +25,7 @@ import loghistory from "./svg/loghistory.svg";
 import places from "./svg/places.svg";
 import maps from "./svg/maps.svg";
 import fax from "./svg/facsimiles.svg";
+import theology from "./svg/theology.svg";
 import historyicon from "./svg/history.svg";
 import analysis from "./svg/analysis.svg";
 import about from "./svg/about.svg";
@@ -65,6 +66,7 @@ const iconMap = {
   places,
   map: maps,
   fax,
+  theology,
   history: historyicon,
   analysis,
   about,

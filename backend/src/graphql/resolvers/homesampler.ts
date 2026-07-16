@@ -12,6 +12,7 @@ import { sql } from 'kysely';
 import { generateReference } from 'scripture-guide';
 import type { Resolvers } from '../../../codegen/graphql.js';
 import type { AppContext } from '../context.js';
+import { findUserByToken } from '../../data/loaders/userauth.js';
 
 // 24 people = 1 featured + 11 face cards + 12 view-all mosaic thumbs (3×4);
 // 17 places = 5 cards + a full 3×4 mosaic.
@@ -321,8 +322,40 @@ const samplers: Record<string, (ctx: AppContext, seed: number) => Promise<unknow
   placesCount: countRows('bom_places'),
 };
 
+// The current user's most recent bookmark (recent reading position). Users can
+// have several messenger_users rows; pick the bookmark with the max timestamp.
+const myBookmark = async (ctx: AppContext, token: string | null) => {
+  if (!token) return null;
+  const user = await findUserByToken(ctx.db, token);
+  if (!user?.user) return null;
+  const rows = await ctx.db
+    .selectFrom('messenger_users')
+    .select('metadata')
+    .where('bom_user_id', '=', user.user)
+    .execute();
+  let best: { slug?: string; pagetitle?: string; heading?: string; latest?: number } | null = null;
+  for (const row of rows) {
+    try {
+      const meta = typeof row.metadata === 'string' ? JSON.parse(row.metadata) : (row.metadata as Record<string, unknown> | null);
+      const rawBm = meta?.['bookmark'];
+      const bm = typeof rawBm === 'string' ? JSON.parse(rawBm) : rawBm;
+      if (bm?.slug && (!best || (bm.latest || 0) > (best.latest || 0))) best = bm;
+    } catch { /* skip malformed */ }
+  }
+  if (!best?.slug) return null;
+  return {
+    slug: best.slug,
+    // page slug for progress/section lookup: strip a trailing "/<textIndex>"
+    pageSlug: String(best.slug).replace(/\/\d+$/, ''),
+    pagetitle: best.pagetitle ?? null,
+    heading: best.heading ?? null,
+    latest: best.latest ?? null,
+  };
+};
+
 export const homesamplerResolvers: Resolvers = {
   Query: {
+    mybookmark: async (_root, args, ctx: AppContext) => myBookmark(ctx, (args.token ?? null) as string | null) as never,
     homesampler: async (_root, args, ctx: AppContext) => {
       const argSeed = args.seed as number | null | undefined;
       const seed =

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI.js";
 import { label } from "src/models/Utils";
+import RefPill from "./RefPill";
 import green from "src/views/User/svg/green.svg";
 import yellow from "src/views/User/svg/yellow.svg";
 import blue from "src/views/User/svg/blue.svg";
@@ -9,82 +10,77 @@ import blank from "src/views/User/svg/blank.svg";
 
 /**
  * Reading-progress view of the top-left slot. When the user (guest or signed
- * in) has ANY reading progress, we replace the plan/calendar with their most
- * recently-touched page rendered as green/yellow/blank dots — the same idea as
- * the /user Progress page — to show "you already have some green, keep going".
+ * in) has a reading bookmark, we replace the plan/calendar with their most
+ * recently-read page shown as green/blue/gray dots — same idea as the /user
+ * Progress page ("you already have some green, keep going").
  *
- * Data: divisionProgress (all divisions, with per-token progress) picks the
- * in-progress division; divisionProgressDetails fills in the page section dots.
+ * Data: the page's sections (sectionText) + progress(token) — an item is green
+ * when completed, blue when active, yellow when started, else gray. Dots group
+ * by section, matching the /user experience.
  */
-export default function ReadingProgressTile({ token, divisions }) {
+export default function ReadingProgressTile({ token, bookmark }) {
   const [page, setPage] = useState(null);
-  const [division, setDivision] = useState(null);
+  const pageSlug = bookmark?.pageSlug;
 
   useEffect(() => {
-    // The "current" division = the one with progress underway (started > 0 and
-    // not yet complete), most-started first; fall back to the most-completed.
-    const withProgress = (divisions || []).filter((d) => d?.progress);
-    const inProgress = withProgress
-      .filter((d) => (d.progress.started || 0) > 0 && (d.progress.completed || 0) < 100)
-      .sort((a, b) => (b.progress.started || 0) - (a.progress.started || 0));
-    const target = inProgress[0]
-      || withProgress.filter((d) => (d.progress.completed || 0) > 0).sort((a, b) => (b.progress.completed || 0) - (a.progress.completed || 0))[0];
-    if (!target) return undefined;
-    setDivision(target);
+    if (!pageSlug) return undefined;
     let cancelled = false;
-    BoMOnlineAPI({ divisionProgressDetails: target.slug }, { token, useCache: false })
+    BoMOnlineAPI({ pageinfoprogress: [{ slug: [pageSlug], token }] }, { token, useCache: false })
       .then((r) => {
         if (cancelled) return;
-        const det = r?.divisionProgressDetails?.[target.slug] || (r?.divisionProgressDetails && Object.values(r.divisionProgressDetails)[0]);
-        const pages = (det?.pages || []).filter((p) => p?.progress);
-        // most recent page = the one with active items, else the last page
-        // carrying any started/completed items.
-        const active = pages.find((p) => (p.progress.active_items || []).length);
-        const touched = [...pages].reverse().find(
-          (p) => (p.progress.completed_items || []).length || (p.progress.started_items || []).length,
-        );
-        if (!cancelled) setPage(active || touched || pages[0] || null);
+        // key:0 query types unwrap inconsistently (direct object, array, or a
+        // slug-keyed map) — hunt for the object that actually has sections.
+        const raw = r?.pageinfoprogress;
+        const candidates = Array.isArray(raw) ? raw : (raw && typeof raw === "object" ? [raw, ...Object.values(raw)] : []);
+        const pg = candidates.find((x) => x && typeof x === "object" && Array.isArray(x.sections));
+        setPage(pg || null);
       })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [divisions, token]);
+  }, [pageSlug, token]);
 
-  if (!page) return null;
-  const { completed_items = [], started_items = [], active_items = [] } = page.progress || {};
+  if (!bookmark?.pageSlug) return null;
+  const prog = page?.progress || {};
+  const completed = prog.completed_items || [];
+  const started = prog.started_items || [];
+  const active = prog.active_items || [];
   const dotFor = (link, heading) => {
     if (!heading) return blank;
-    if (completed_items.includes(link)) return green;
-    if (active_items.includes(link)) return blue;
-    if (started_items.includes(link)) return yellow;
+    if (completed.includes(link)) return green;
+    if (active.includes(link)) return blue;
+    if (started.includes(link)) return yellow;
     return blank;
   };
-  const pct = page.progress?.completed ?? 0;
+  const pct = Math.round(prog.completed ?? 0);
+  const sections = (page?.sections || []).filter((s) => (s.sectionText || []).length);
   return (
     <div className="samplerTileInner readingProgressTile">
       <h3 className="tileHeading">
         <Link to="/user">{label("reading_progress")}</Link>
       </h3>
       <div className="rpTilePageRow">
-        <Link to={`/${page.slug}`} className="rpTilePageTitle">{page.title}</Link>
+        <Link to={`/${bookmark.slug}`} className="rpTilePageTitle">{bookmark.pagetitle}</Link>
         {pct > 0 ? <span className="rpTilePagePct">{pct}%</span> : null}
       </div>
-      {division?.title ? <div className="rpTileDivision">{division.title}</div> : null}
-      <div className="rpTileDots">
-        {(page.sections || []).map((section, si) => (
-          <span key={section.slug || si} className="rpTileSectionDots">
-            {(section.sectionText || []).map((item, i) => {
-              const dot = dotFor(item.link, item.heading);
-              if (!item.heading) return <img key={i} src={dot} alt="" className="rpTileDot blank" />;
-              return (
-                <Link key={i} to={`/${page.slug}/${item.link}`} title={`${section.title} — ${item.heading}`}>
-                  <img src={dot} alt="" className="rpTileDot" />
-                </Link>
-              );
-            })}
-          </span>
-        ))}
-      </div>
-      <Link to="/user" className="rpTileMore tileMoreLink">{label("view_more")}</Link>
+      {bookmark.heading ? <div className="rpTileRef"><RefPill refText={bookmark.heading} /></div> : null}
+      {sections.length ? (
+        <div className="rpTileDots">
+          {sections.map((section, si) => (
+            <span key={si} className="rpTileSectionDots" title={section.title}>
+              {(section.sectionText || []).map((item, i) => {
+                const src = dotFor(item.link, item.heading);
+                if (!item.heading) return <img key={i} src={src} alt="" className="rpTileDot blank" />;
+                return (
+                  <Link key={i} to={`/${pageSlug}/${item.link}`} title={`${section.title || ""} — ${item.heading}`}>
+                    <img src={src} alt="" className={`rpTileDot${src === blank ? " blank" : ""}`} />
+                  </Link>
+                );
+              })}
+            </span>
+          ))}
+        </div>
+      ) : null}
+      <Link to={`/${bookmark.slug}`} className="rpTileMore tileMoreLink">{label("continue_reading")}</Link>
     </div>
   );
 }

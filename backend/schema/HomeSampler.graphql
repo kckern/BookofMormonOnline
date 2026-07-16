@@ -3,6 +3,15 @@
 # Adding a tile type: add a field here + a sampler fn in src/graphql/resolvers/homesampler.ts.
 extend type Query {
   homesampler(seed: Int): HomeSampler
+  mybookmark(token: String): Bookmark
+}
+
+type Bookmark {
+  slug: String
+  pageSlug: String
+  pagetitle: String
+  heading: String
+  latest: Int
 }
 
 type HomeSampler {

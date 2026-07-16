@@ -75,6 +75,11 @@ export const menuConfig = [
     lang: ["en", "ko"],
   },
   {
+    slug: "theology",
+    labelKey: "menu_theology",
+    lang: ["en"],
+  },
+  {
     slug: "history",
     labelKey: "menu_history",
     lang: ["en"],

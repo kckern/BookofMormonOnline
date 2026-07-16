@@ -34,6 +34,15 @@ export type Book = {
   chapters?: Maybe<Array<Maybe<Scalars['Int']['output']>>>;
 };
 
+export type Bookmark = {
+  __typename?: 'Bookmark';
+  heading?: Maybe<Scalars['String']['output']>;
+  latest?: Maybe<Scalars['Int']['output']>;
+  pageSlug?: Maybe<Scalars['String']['output']>;
+  pagetitle?: Maybe<Scalars['String']['output']>;
+  slug?: Maybe<Scalars['String']['output']>;
+};
+
 export type Bot = {
   __typename?: 'Bot';
   description?: Maybe<Scalars['String']['output']>;
@@ -999,6 +1008,7 @@ export type Query = {
   messengerUser?: Maybe<MessengerUser>;
   messengerUsers?: Maybe<Array<Maybe<MessengerUser>>>;
   moregroups?: Maybe<Array<Maybe<HomeGroup>>>;
+  mybookmark?: Maybe<Bookmark>;
   notificationUnreadCount?: Maybe<Scalars['Int']['output']>;
   notifications?: Maybe<Array<Maybe<Notification>>>;
   object?: Maybe<Array<Maybe<Object>>>;
@@ -1230,6 +1240,11 @@ export type QueryMessengerUsersArgs = {
 
 export type QueryMoregroupsArgs = {
   grouping?: InputMaybe<Scalars['String']['input']>;
+  token?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryMybookmarkArgs = {
   token?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -1959,6 +1974,7 @@ export type DirectiveResolverFn<TResult = {}, TParent = {}, TContext = {}, TArgs
 export type ResolversTypes = {
   ArtImage: ResolverTypeWrapper<Partial<ArtImage>>;
   Book: ResolverTypeWrapper<Partial<Book>>;
+  Bookmark: ResolverTypeWrapper<Partial<Bookmark>>;
   Boolean: ResolverTypeWrapper<Partial<Scalars['Boolean']['output']>>;
   Bot: ResolverTypeWrapper<Partial<Bot>>;
   Caps: ResolverTypeWrapper<Partial<Caps>>;
@@ -2073,6 +2089,7 @@ export type ResolversTypes = {
 export type ResolversParentTypes = {
   ArtImage: Partial<ArtImage>;
   Book: Partial<Book>;
+  Bookmark: Partial<Bookmark>;
   Boolean: Partial<Scalars['Boolean']['output']>;
   Bot: Partial<Bot>;
   Caps: Partial<Caps>;
@@ -2195,6 +2212,15 @@ export type ArtImageResolvers<ContextType = AppContext, ParentType extends Resol
 export type BookResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['Book'] = ResolversParentTypes['Book']> = {
   book?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   chapters?: Resolver<Maybe<Array<Maybe<ResolversTypes['Int']>>>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type BookmarkResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['Bookmark'] = ResolversParentTypes['Bookmark']> = {
+  heading?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  latest?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  pageSlug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  pagetitle?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  slug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -2930,6 +2956,7 @@ export type QueryResolvers<ContextType = AppContext, ParentType extends Resolver
   messengerUser?: Resolver<Maybe<ResolversTypes['MessengerUser']>, ParentType, ContextType, Partial<QueryMessengerUserArgs>>;
   messengerUsers?: Resolver<Maybe<Array<Maybe<ResolversTypes['MessengerUser']>>>, ParentType, ContextType, Partial<QueryMessengerUsersArgs>>;
   moregroups?: Resolver<Maybe<Array<Maybe<ResolversTypes['HomeGroup']>>>, ParentType, ContextType, Partial<QueryMoregroupsArgs>>;
+  mybookmark?: Resolver<Maybe<ResolversTypes['Bookmark']>, ParentType, ContextType, Partial<QueryMybookmarkArgs>>;
   notificationUnreadCount?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   notifications?: Resolver<Maybe<Array<Maybe<ResolversTypes['Notification']>>>, ParentType, ContextType>;
   object?: Resolver<Maybe<Array<Maybe<ResolversTypes['Object']>>>, ParentType, ContextType, Partial<QueryObjectArgs>>;
@@ -3397,6 +3424,7 @@ export type XrelResolvers<ContextType = AppContext, ParentType extends Resolvers
 export type Resolvers<ContextType = AppContext> = {
   ArtImage?: ArtImageResolvers<ContextType>;
   Book?: BookResolvers<ContextType>;
+  Bookmark?: BookmarkResolvers<ContextType>;
   Bot?: BotResolvers<ContextType>;
   Caps?: CapsResolvers<ContextType>;
   Chiasmus?: ChiasmusResolvers<ContextType>;

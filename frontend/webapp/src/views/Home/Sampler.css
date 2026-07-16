@@ -1534,3 +1534,21 @@ html[data-theme="dark"] .witnessSource { color: #8a8a8a; }
   min-height: 8rem;
 }
 .viewAllMosaicFull img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
+
+/* ================================================================
+   READING PROGRESS — recent page + green/gray dots (reuses the
+   /user progress idea; data via mybookmark + pageprogress)
+   ================================================================ */
+.readingProgressTile { justify-content: flex-start; gap: 0.5rem; }
+.rpTilePageRow { display: flex; align-items: baseline; justify-content: space-between; gap: 0.6rem; }
+.rpTilePageTitle { font-size: 0.9rem; font-weight: 800; color: #2a2a2a; text-decoration: none; min-width: 0; }
+.rpTilePageTitle:hover { color: #345496; }
+html[data-theme="dark"] .rpTilePageTitle { color: #f0f0f0; }
+.rpTilePagePct { flex-shrink: 0; font-size: 0.72rem; font-weight: 700; color: #4a8a4a; }
+html[data-theme="dark"] .rpTilePagePct { color: #7bbf7b; }
+.rpTileRef { margin: 0.1rem 0 0.2rem; }
+.rpTileDots { display: flex; flex-wrap: wrap; gap: 3px 7px; margin: 0.3rem 0; }
+.rpTileSectionDots { display: inline-flex; flex-wrap: wrap; gap: 2px; align-items: center; }
+.rpTileDot { width: 0.5rem; height: 0.5rem; display: block; }
+.rpTileDot.blank { opacity: 0.5; }
+.rpTileMore { align-self: flex-start; }
