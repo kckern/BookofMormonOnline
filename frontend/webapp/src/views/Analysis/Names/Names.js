@@ -4,7 +4,7 @@ import { label } from 'src/models/Utils';
 
 import "./Names.css";
 import names, { facets } from "./data.js";
-import { FIELD_DEFS, emptyFilters, applyFilters } from "./logic";
+import { FIELD_DEFS, emptyFilters, applyFilters, facetCounts } from "./logic";
 
 /** label() returns the key when untranslated — fall back to English copy. */
 const t = (key, fallback) => {
@@ -95,6 +95,7 @@ function FilterBar({ filters, setFacet }) {
               <FacetSelect
                 facetKey={f.key}
                 values={filters[f.key]}
+                filters={filters}
                 onChange={(vals) => setFacet(f.key, vals)}
               />
             </td>
@@ -105,9 +106,20 @@ function FilterBar({ filters, setFacet }) {
   );
 }
 
-function FacetSelect({ facetKey, values, onChange }) {
+function FacetSelect({ facetKey, values, filters, onChange }) {
   const meta = FACET_META[facetKey];
-  const options = meta.options.map((v) => ({ label: v, value: v }));
+  const counts = useMemo(() => facetCounts(names, filters, facetKey), [filters, facetKey]);
+  const options = useMemo(
+    () =>
+      [...meta.options]
+        .sort((a, b) => (counts.get(b) || 0) - (counts.get(a) || 0) || a.localeCompare(b))
+        .map((v) => ({
+          label: `${v} (${counts.get(v) || 0})`,
+          value: v,
+          disabled: !counts.get(v) && !values.includes(v),
+        })),
+    [counts, meta.options, values]
+  );
   return (
     <div className="form-group">
       <MultiSelect
@@ -115,6 +127,7 @@ function FacetSelect({ facetKey, values, onChange }) {
         value={values.map((v) => ({ label: v, value: v }))}
         onChange={(selected) => onChange(selected.map((o) => o.value))}
         labelledBy={meta.label}
+        hasSelectAll={false}
       />
     </div>
   );
