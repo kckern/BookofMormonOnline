@@ -1,6 +1,89 @@
 import React from "react";
+import { Link } from "react-router-dom";
+import { bookTotal, partnersFor, chapterCounts } from "./aggregate";
+import Rail from "./Rail";
+import PartnerBars from "./PartnerBars";
 
-// Placeholder — replaced by the anchored master-detail in a later task.
+// Anchored master-detail: rail (anchor canon) + ranked partner bars.
+// All navigation goes through props.navigate — state lives in the URL.
 export default function AnchorView({ state, navigate }) {
-  return <div data-testid="xref-anchor" className="xref-anchor" />;
+  const { canon, book, chapter, highlight } = state;
+  const partnerLabel = canon === "bom" ? "Bible" : "Book of Mormon";
+  const scopeTotal = chapter
+    ? chapterCounts(canon, book)[chapter - 1]
+    : bookTotal(canon, book);
+
+  const flip = () => {
+    const target = highlight || partnersFor(canon, book)[0]?.book.name;
+    if (!target) return navigate({ view: "overview" });
+    navigate({ view: "anchor", canon: canon === "bom" ? "kjv" : "bom", book: target });
+  };
+
+  const openReader = (partnerName) => {
+    const readerState =
+      canon === "bom"
+        ? { view: "reader", bomBook: book, bibleBook: partnerName }
+        : { view: "reader", bomBook: partnerName, bibleBook: book };
+    if (canon === "bom" && chapter) readerState.bomChapter = chapter;
+    navigate(readerState);
+  };
+
+  return (
+    <div className="xref-anchorview" data-testid="xref-anchor">
+      <header className="xref-header">
+        <nav className="xref-breadcrumb" aria-label="Breadcrumb">
+          <Link to="/analysis/bible">⌂ Overview</Link>
+          <span aria-hidden="true"> › </span>
+          <span aria-current="page">{book}{chapter ? ` › ch. ${chapter}` : ""}</span>
+        </nav>
+        <button className="xref-flip" onClick={flip}>
+          ⇄ anchor on {partnerLabel}
+        </button>
+      </header>
+
+      <div className="xref-anchorbody">
+        <Rail
+          canon={canon}
+          book={book}
+          chapter={chapter}
+          onAnchor={(name) => navigate({ view: "anchor", canon, book: name })}
+          onChapter={(ch) =>
+            navigate(
+              ch
+                ? { view: "anchor", canon, book, chapter: ch }
+                : { view: "anchor", canon, book }
+            )
+          }
+        />
+
+        <main className="xref-detail">
+          <h3 className="xref-detailheading">
+            {book}
+            {chapter ? ` ${chapter}` : ""} {canon === "bom" ? "draws on" : "appears in"}
+            <span className="xref-detailtotal"> {scopeTotal} refs</span>
+          </h3>
+          {chapter && (
+            <button
+              className="xref-scopechip"
+              aria-label={`Clear chapter ${chapter} scope`}
+              onClick={() => navigate({ view: "anchor", canon, book })}
+            >
+              ch. {chapter} ✕
+            </button>
+          )}
+          <PartnerBars
+            canon={canon}
+            book={book}
+            chapter={chapter}
+            highlight={highlight}
+            onSelect={openReader}
+          />
+          <div className="xref-legend" aria-hidden="true">
+            <span className="xref-swatch quote" /> quote
+            <span className="xref-swatch phrase" /> phrase
+          </div>
+        </main>
+      </div>
+    </div>
+  );
 }
