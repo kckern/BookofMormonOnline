@@ -1454,9 +1454,11 @@ html[data-theme="dark"] .imageArtArtist { color: #a0a0a0; }
    ================================================================ */
 .placeProfileHead { position: relative; margin-bottom: 0.5rem; }
 .placeProfileImgLink { display: block; position: relative; border-radius: 0.5rem; overflow: hidden; }
-.placeProfileHead img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; display: block; background: #e2e2e2; }
-html[data-theme="dark"] .placeProfileHead img { background: #333; }
-.placeProfileMapBtn { top: 0.4rem; right: 0.4rem; }
+.placeProfileImgLink > img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; display: block; background: #e2e2e2; }
+html[data-theme="dark"] .placeProfileImgLink > img { background: #333; }
+/* the map pin is a sibling link inside the head — keep it icon-sized, not 100% */
+.placeProfileMapBtn { top: 0.4rem; right: 0.4rem; width: 1.1rem; height: 1.1rem; }
+.placeProfileMapBtn img { width: 1.1rem; height: 1.1rem; object-fit: contain; }
 .placeProfileDesc { font-size: 0.8rem; line-height: 1.45; color: #555; }
 html[data-theme="dark"] .placeProfileDesc { color: #c4c4c4; }
 
