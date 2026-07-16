@@ -3,6 +3,7 @@ import DataLoader from 'dataloader';
 import type { Kysely } from 'kysely';
 import type { DB } from '../../../codegen/db.js';
 import type { Loaders } from '../loaders.js';
+import { parseVerseIdFromNote, sortXrels, type XrelRow } from './objects.js';
 
 export interface PeopleRow {
   slug: string;
@@ -339,6 +340,94 @@ export function peopleplacesLoaders(db: Kysely<DB>, lang: string, core: Loaders)
     },
   );
 
+  /**
+   * Reverse-direction xrels for a person or place.
+   *
+   * bom_xrels is object-anchored (every row today has src_type='object');
+   * people and places appear only as DESTINATIONS. So an entity's
+   * relationships are the rows where it is the dst, mapped into the same
+   * XrelRow shape the object side uses — with the OTHER party (the source)
+   * in the dst_* fields and direction='dst' so the UI can render
+   * name-before-verb ("Synagogues — taught-by" on a person popup).
+   * Source names resolve by src_type across all three entity tables, so
+   * future non-object sources keep working.
+   */
+  const xrelsByDstEntity = new DataLoader<{ type: 'people' | 'place'; slug: string }, XrelRow[], string>(
+    async (keys) => {
+      const types = [...new Set(keys.map((k) => k.type))];
+      const slugs = [...new Set(keys.map((k) => k.slug))];
+      const rawRows = await db
+        .selectFrom('bom_xrels')
+        .select(['rel', 'srcweight', 'src_type', 'src_slug', 'dst_type', 'dst_slug', 'note'])
+        .where('dst_type', 'in', types)
+        .where('dst_slug', 'in', slugs)
+        .execute();
+
+      if (!rawRows.length) return keys.map(() => []);
+
+      const peopleSlugs: string[] = [];
+      const placeSlugs: string[] = [];
+      const objectSlugs: string[] = [];
+      for (const r of rawRows) {
+        if (r.src_type === 'people') peopleSlugs.push(r.src_slug);
+        else if (r.src_type === 'place') placeSlugs.push(r.src_slug);
+        else if (r.src_type === 'object') objectSlugs.push(r.src_slug);
+      }
+
+      const [people, places, objects] = await Promise.all([
+        peopleSlugs.length
+          ? db.selectFrom('bom_people').select(['slug', 'name', 'title']).where('slug', 'in', [...new Set(peopleSlugs)]).execute()
+          : [],
+        placeSlugs.length
+          ? db.selectFrom('bom_places').select(['slug', 'name', 'info']).where('slug', 'in', [...new Set(placeSlugs)]).execute()
+          : [],
+        objectSlugs.length
+          ? db.selectFrom('bom_objects').select(['slug', 'name', 'subtitle']).where('slug', 'in', [...new Set(objectSlugs)]).execute()
+          : [],
+      ]);
+      const peopleMap = new Map(people.map((p) => [p.slug, p]));
+      const placeMap = new Map(places.map((p) => [p.slug, p]));
+      const objectMap = new Map(objects.map((o) => [o.slug, o]));
+
+      const byDst = new Map<string, XrelRow[]>();
+      for (const r of rawRows) {
+        let srcName: string = r.src_slug;
+        let srcTitle: string | null = null;
+        if (r.src_type === 'people') {
+          const p = peopleMap.get(r.src_slug);
+          if (p) { srcName = p.name ?? r.src_slug; srcTitle = p.title ?? null; }
+        } else if (r.src_type === 'place') {
+          const p = placeMap.get(r.src_slug);
+          if (p) { srcName = p.name ?? r.src_slug; srcTitle = p.info ?? null; }
+        } else if (r.src_type === 'object') {
+          const o = objectMap.get(r.src_slug);
+          if (o) { srcName = o.name ?? r.src_slug; srcTitle = o.subtitle ?? null; }
+        }
+        const key = `${r.dst_type}|${r.dst_slug}`;
+        const list = byDst.get(key) ?? [];
+        list.push({
+          rel: r.rel,
+          srcweight: r.srcweight ?? null,
+          dst_type: r.src_type,
+          dst_slug: r.src_slug,
+          dst_name: srcName,
+          dst_title: srcTitle,
+          note: r.note ?? null,
+          verse_id: parseVerseIdFromNote(r.note ?? null),
+          direction: 'dst' as const,
+        });
+        byDst.set(key, list);
+      }
+
+      return keys.map((k) => {
+        const rows = byDst.get(`${k.type}|${k.slug}`) ?? [];
+        sortXrels(rows);
+        return rows;
+      });
+    },
+    { cacheKeyFn: (k) => `${k.type}|${k.slug}` }
+  );
+
   return {
     peopleBySlug,
     peopleBySlugs,
@@ -352,5 +441,6 @@ export function peopleplacesLoaders(db: Kysely<DB>, lang: string, core: Loaders)
     mapsByPlaceGuid,
     lookupTextGuidByVerseId,
     textPageLinkByGuid,
+    xrelsByDstEntity,
   };
 }

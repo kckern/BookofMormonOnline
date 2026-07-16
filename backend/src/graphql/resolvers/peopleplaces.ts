@@ -92,6 +92,16 @@ export const peopleplacesResolvers: Resolvers = {
       const rows = await ctx.loaders.indexBySlug.load({ slug: p.slug, type: 'people' });
       return rows as unknown as never[];
     },
+
+    /**
+     * xrels — reverse-direction bom_xrels rows (this person as dst);
+     * dst_* fields carry the source entity, direction='dst'.
+     */
+    xrels: async (parent, _args, ctx) => {
+      const p = parent as unknown as PeopleRow;
+      const rows = await ctx.loaders.xrelsByDstEntity.load({ type: 'people', slug: p.slug });
+      return rows as unknown as never[];
+    },
   },
 
   Place: {
@@ -131,6 +141,16 @@ export const peopleplacesResolvers: Resolvers = {
     index: async (parent, _args, ctx) => {
       const p = parent as unknown as PlaceFullRow;
       const rows = await ctx.loaders.indexBySlug.load({ slug: p.slug, type: 'place' });
+      return rows as unknown as never[];
+    },
+
+    /**
+     * xrels — reverse-direction bom_xrels rows (this place as dst);
+     * dst_* fields carry the source entity, direction='dst'.
+     */
+    xrels: async (parent, _args, ctx) => {
+      const p = parent as unknown as PlaceFullRow;
+      const rows = await ctx.loaders.xrelsByDstEntity.load({ type: 'place', slug: p.slug });
       return rows as unknown as never[];
     },
   },
