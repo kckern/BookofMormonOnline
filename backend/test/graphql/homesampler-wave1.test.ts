@@ -79,7 +79,10 @@ describe('homesampler.notes', () => {
     expect(a.notes!.map((n) => n.id)).toEqual(b.notes!.map((n) => n.id));
     // assumes >=3 qualifying notes exist so adjacent seeds pick different rows
     expect(a.notes!.map((n) => n.id)).not.toEqual(c.notes!.map((n) => n.id));
-  }, 15000);
+    // no inline timeout: 3 parallel full-homesampler requests against the remote
+    // DB can exceed 15s under full-suite concurrency — inherit the 30s global
+    // (vitest.config.ts), matching the crossrefs/relationship determinism tests.
+  });
 });
 
 // ─── faxVerse ─────────────────────────────────────────────────────────────────
