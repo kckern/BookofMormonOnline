@@ -1,73 +1,51 @@
-export const highlightTextJSX = (text, arrayOfStrings, verse_id) => {
-    arrayOfStrings = arrayOfStrings || [];
-    const {jsx, debug} =  generateHighlightedText(text, arrayOfStrings);
-    const cutpointCount = debug.cutpoints.length;
-    debug["verse_id"] = verse_id;
-    debug["cutpointCount"] = cutpointCount;
-    return <>
-        <span>{jsx}</span>
-        {cutpointCount < 2 && <pre>
-            {JSON.stringify(debug, null, 2)}
-        </pre>}
-    </>
+import React from "react";
 
-  };
+// Highlight shared phrases inside verse text. Highlight strings come from the
+// API and may not match the local text (translation/punctuation drift); an
+// unmatched string degrades to unhighlighted text, never to missing text.
 
-const prepareText = (text) => {
-    return text.replace(/[-']/g, "");
-}
-
+const prepareText = (text) => (text || "").replace(/[-']/g, "");
 
 export const generateHighlightedText = (text, arrayOfStrings) => {
-    text = prepareText(text);
-    // Convert strings in arrayOfStrings to regex patterns that ignore case and non-alphabetic characters
-    const patterns = arrayOfStrings.map((str) => {
-        str = str.replace(/ /g, "[^a-z]+");
-        return str
-    });
-    const cutpoints = patterns.map((regexStr) => {
-        const regex = new RegExp(regexStr, "gi");
-        const match = regex.exec(text)
-        const index = match ? match.index : -1;
-        const length = match ? match[0].length : 0;
-        if (index >= 0) return [[index, index + length]];
-        return [];
-    }).flat()
-    //sort by start index
-    .sort((a, b) => a[0] - b[0])    
-    .reduce((acc, position, index, array) => {
+  text = prepareText(text);
 
-            const min = Math.min(...acc);
-            const [start, end] = position;
-            if(start===0) acc.push(start);
-            if(start > min) acc.push(start);
-            if(end > min && end > start) acc.push(end);
-            const isLast = index === array.length - 1;
-            if(isLast) {
-                const last = Math.max(...acc);
-                if(last < text.length) acc.push(text.length);
-            }
-            return acc;
-          }, [0]).flat();
+  const ranges = [];
+  for (const str of arrayOfStrings || []) {
+    const pattern = String(str).replace(/ /g, "[^a-z]+");
+    let match = null;
+    try {
+      match = new RegExp(pattern, "gi").exec(text);
+    } catch (e) {
+      // un-regexable highlight string: skip it
+    }
+    if (match) ranges.push([match.index, match.index + match[0].length]);
+  }
+  ranges.sort((a, b) => a[0] - b[0]);
 
-    const startsWithHighlight = !!cutpoints[1];
-    const cutText = cutpoints.map((position, index) => {
-        position = position<0 ? 0 : position;
-        const nextPosition = cutpoints[index + 1] || text.length;
-        if(!position && !nextPosition) return "";
-        return text.slice(position, nextPosition);
-    });
-    if(!startsWithHighlight) cutText[0] = "";
+  const merged = [];
+  for (const r of ranges) {
+    const last = merged[merged.length - 1];
+    if (last && r[0] <= last[1]) last[1] = Math.max(last[1], r[1]);
+    else merged.push([...r]);
+  }
 
-    const debug = {text,arrayOfStrings,patterns,cutpoints, cutText};
-    //return <pre>  {JSON.stringify(, null, 2)}  </pre>
+  const jsx = [];
+  let pos = 0;
+  merged.forEach(([start, end], i) => {
+    if (start > pos) jsx.push(<span key={`t${i}`}>{text.slice(pos, start)}</span>);
+    jsx.push(
+      <span key={`h${i}`} className="highlight">
+        {text.slice(start, end)}
+      </span>
+    );
+    pos = end;
+  });
+  if (pos < text.length) jsx.push(<span key="tail">{text.slice(pos)}</span>);
 
-    const jsx = cutText.map((text, index) => {
-        const isHighlighted = index % 2 === 1;
-        return isHighlighted ? <><span className="highlight">{text}</span>{" "}</> : <span>{text}</span>;
-    });
+  return { jsx };
+};
 
-    return {jsx, debug};
-
-  };
-  
+export const highlightTextJSX = (text, arrayOfStrings, verse_id) => {
+  const { jsx } = generateHighlightedText(text, arrayOfStrings);
+  return <span data-verse-id={verse_id}>{jsx}</span>;
+};

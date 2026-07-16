@@ -9,7 +9,7 @@ import { label } from 'src/models/Utils';
 
 
 import Caractors from "./Caractors/Caractors.js"
-import Bible from "./Bible/Bible.js"
+import Bible from "./Bible"
 import Chiasmus from "./Chiasmus/Chiasmus.js"
 import Names from "./Names/Names.js"
 

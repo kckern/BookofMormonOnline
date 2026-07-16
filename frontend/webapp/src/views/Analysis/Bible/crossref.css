@@ -1,0 +1,582 @@
+/* Cross-reference view. Chart colors are the validated quote/phrase pair and
+   density ramp (see docs/specs/2026-07-16-bible-cross-reference-overhaul.md §5);
+   everything else uses the app's semantic tokens. */
+
+.xref-root {
+  --xref-quote: #1a6446;
+  --xref-phrase: #4ea578;
+  --xref-ramp-1: #dcece4;
+  --xref-ramp-2: #a8d2bd;
+  --xref-ramp-3: #6fb392;
+  --xref-ramp-4: #3f9169;
+  --xref-ramp-5: #1a6446;
+  --xref-ramp-6: #0b4530;
+
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 130px);
+  /* clear the fixed navbar, like the container the old matrix sat in */
+  padding: 4.5rem 1.5rem 3rem;
+  color: var(--text-primary, #212529);
+}
+
+.xref-hint {
+  margin: 0 0 0.25rem;
+  font-size: 0.8rem;
+  color: var(--text-muted, #777);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+html[data-theme="dark"] .xref-root {
+  --xref-quote: #4ea578;
+  --xref-phrase: #1a6446;
+  --xref-ramp-1: #0b4530;
+  --xref-ramp-2: #1a6446;
+  --xref-ramp-3: #3f9169;
+  --xref-ramp-4: #6fb392;
+  --xref-ramp-5: #a8d2bd;
+  --xref-ramp-6: #dcece4;
+}
+
+/* ---- header & chrome ---- */
+
+.xref-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  border-bottom: 1px solid var(--border, #ddd);
+  padding-bottom: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.xref-title {
+  font-weight: 800;
+  font-size: 1.4rem;
+  margin: 0;
+}
+
+.xref-headline {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: var(--text-secondary, #444);
+  font-size: 0.9rem;
+}
+
+.xref-breadcrumb {
+  font-size: 0.9rem;
+  color: var(--text-muted, #777);
+}
+
+.xref-breadcrumb a,
+.xref-backlink {
+  color: var(--link, #345496);
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.xref-breadcrumb a:hover,
+.xref-backlink:hover {
+  text-decoration: underline;
+}
+
+.xref-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--text-muted, #777);
+  font-size: 0.85rem;
+}
+
+.xref-swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  margin-left: 0.6rem;
+}
+
+.xref-swatch.quote { background: var(--xref-quote); }
+.xref-swatch.phrase { background: var(--xref-phrase); }
+
+.xref-modetoggle,
+.xref-flip,
+.xref-showall,
+.xref-loadmore,
+.xref-scopechip {
+  background: var(--control, #eee);
+  border: 1px solid var(--border, #ddd);
+  border-radius: 1ex;
+  color: var(--text-primary, #212529);
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.25rem 0.75rem;
+  cursor: pointer;
+}
+
+.xref-modetoggle:hover,
+.xref-flip:hover,
+.xref-showall:hover,
+.xref-loadmore:hover,
+.xref-scopechip:hover {
+  background: var(--control-hover, #ddd);
+}
+
+.xref-root button:focus-visible,
+.xref-root a:focus-visible,
+.xref-root [role="button"]:focus-visible {
+  outline: 2px solid var(--link, #345496);
+  outline-offset: 2px;
+}
+
+.xref-empty {
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-muted, #777);
+}
+
+/* ---- overview: ribbons ---- */
+
+.xref-ribbonwrap {
+  flex: 1;
+  min-height: 640px;
+}
+
+.xref-ribbonsvg {
+  display: block;
+}
+
+.xref-spinetitle {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  fill: var(--text-muted, #777);
+}
+
+.xref-spineseg {
+  fill: var(--surface-4, #ddd);
+  stroke: var(--surface-0, #fff);
+  stroke-width: 1;
+  cursor: pointer;
+  transition: fill 120ms;
+}
+
+.xref-spineseg:hover,
+.xref-spineseg:focus-visible {
+  fill: var(--xref-quote);
+}
+
+.xref-spineseg.dim {
+  opacity: 0.35;
+}
+
+.xref-spinelabel {
+  font-size: 11px;
+  fill: var(--text-secondary, #444);
+  pointer-events: none;
+}
+
+.xref-ribbon {
+  cursor: pointer;
+}
+
+.xref-ribbon path {
+  fill-opacity: var(--emphasis, 0.65);
+  transition: opacity 120ms;
+}
+
+.xref-ribbon:hover path {
+  fill-opacity: 0.85;
+}
+
+.xref-ribbonquote { fill: var(--xref-quote); }
+.xref-ribbonphrase { fill: var(--xref-phrase); }
+
+.xref-ribbon.dim path {
+  opacity: 0.15;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .xref-ribbon path {
+    animation: xref-fadein 250ms both;
+    animation-delay: calc(var(--i, 0) * 4ms);
+  }
+}
+
+@keyframes xref-fadein {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ---- overview: table twin ---- */
+
+.xref-tabletwin {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  border-collapse: collapse;
+}
+
+.xref-tabletwin th,
+.xref-tabletwin td {
+  padding: 0.35rem 0.75rem;
+  border-bottom: 1px solid var(--border, #ddd);
+  text-align: left;
+}
+
+.xref-tabletwin td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- anchored view ---- */
+
+.xref-anchorbody {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+.xref-rail {
+  flex: 0 0 240px;
+  max-height: calc(100vh - 220px);
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+.xref-rail-groupname {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted, #777);
+  margin: 0.9rem 0 0.25rem;
+}
+
+.xref-rail-book {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 2px;
+  background: none;
+  border: none;
+  border-radius: 0.5ex;
+  padding: 0.3rem 0.5rem;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--text-primary, #212529);
+  text-align: left;
+  cursor: pointer;
+}
+
+.xref-rail-book:hover {
+  background: var(--surface-2, #f0f0f0);
+}
+
+.xref-rail-book.anchored {
+  background: var(--surface-3, #e4e4e4);
+  font-weight: 700;
+}
+
+.xref-rail-density {
+  display: block;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--surface-2, #f0f0f0);
+  overflow: hidden;
+}
+
+.xref-rail-densityfill {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--xref-phrase);
+}
+
+.xref-chapterstrip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 0.4rem 0.5rem 0.6rem;
+}
+
+.xref-chaptercell {
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--border, #ddd);
+  border-radius: 4px;
+  background: var(--surface-1, #f8f8f8);
+  font-size: 0.6rem;
+  color: var(--text-secondary, #444);
+  cursor: pointer;
+  padding: 0;
+}
+
+.xref-chaptercell.ramp-1 { background: var(--xref-ramp-1); }
+.xref-chaptercell.ramp-2 { background: var(--xref-ramp-2); }
+.xref-chaptercell.ramp-3 { background: var(--xref-ramp-3); }
+.xref-chaptercell.ramp-4 { background: var(--xref-ramp-4); color: var(--surface-0, #fff); }
+.xref-chaptercell.ramp-5 { background: var(--xref-ramp-5); color: var(--surface-0, #fff); }
+.xref-chaptercell.ramp-6 { background: var(--xref-ramp-6); color: var(--surface-0, #fff); }
+
+html[data-theme="dark"] .xref-chaptercell.ramp-4,
+html[data-theme="dark"] .xref-chaptercell.ramp-5,
+html[data-theme="dark"] .xref-chaptercell.ramp-6 {
+  color: var(--text-primary, #212529);
+}
+
+.xref-chaptercell.selected {
+  outline: 2px solid var(--text-primary, #212529);
+  outline-offset: 1px;
+}
+
+.xref-detail {
+  flex: 1;
+  min-width: 0;
+}
+
+.xref-detailheading {
+  font-weight: 800;
+  font-size: 1.15rem;
+  margin: 0 0 0.75rem;
+}
+
+.xref-detailtotal {
+  font-weight: 400;
+  color: var(--text-muted, #777);
+  font-size: 0.9rem;
+}
+
+.xref-scopechip {
+  margin-bottom: 0.75rem;
+}
+
+/* ---- partner bars ---- */
+
+.xref-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 640px;
+}
+
+.xref-bar {
+  display: grid;
+  grid-template-columns: 140px 1fr 3.5em;
+  align-items: center;
+  gap: 0.75rem;
+  background: none;
+  border: none;
+  border-radius: 0.5ex;
+  padding: 0.2rem 0.4rem;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--text-primary, #212529);
+  cursor: pointer;
+  text-align: left;
+}
+
+.xref-bar:hover,
+.xref-bar.highlighted {
+  background: var(--surface-2, #f0f0f0);
+}
+
+.xref-bar-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: right;
+}
+
+.xref-bar-track {
+  display: flex;
+  gap: 2px;
+  height: 14px;
+}
+
+.xref-bar-quote {
+  background: var(--xref-quote);
+  border-radius: 0 4px 4px 0;
+  min-width: 0;
+}
+
+.xref-bar-phrase {
+  background: var(--xref-phrase);
+  border-radius: 0 4px 4px 0;
+  min-width: 0;
+}
+
+.xref-bar-quote:first-child { border-radius: 2px 0 0 2px; }
+
+.xref-bar-count {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary, #444);
+  font-size: 0.85rem;
+}
+
+.xref-showall {
+  align-self: flex-start;
+  margin-top: 0.5rem;
+}
+
+/* ---- reader ---- */
+
+.xref-readertitle {
+  font-weight: 800;
+  font-size: 1.2rem;
+  margin: 0;
+}
+
+.xref-readertitle .book {
+  border: 1px solid var(--border-strong, #bbb);
+  background: var(--surface-2, #f0f0f0);
+  border-radius: 0.5ex;
+  padding: 0 0.5ex;
+}
+
+.xref-quote-badge {
+  display: inline-block;
+  background: var(--xref-quote);
+  color: var(--surface-0, #fff);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  border-radius: 3px;
+  padding: 1px 5px;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+}
+
+.xref-loadmore {
+  display: block;
+  margin: 1rem auto 2rem;
+}
+
+.xref-sort {
+  background: none;
+  border: none;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  color: var(--text-primary, #212529);
+}
+
+/* reader table (ported from the legacy Bible.css rules still in use) */
+
+.verseViewerTable {
+  width: 100%;
+  table-layout: fixed;
+  margin-top: 0.75rem;
+}
+
+.verseViewerTable td {
+  width: 50%;
+  overflow: hidden;
+}
+
+.verseViewerTable td.scriptureRef .header_container {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+}
+
+.verseViewerTable td.scriptureRef .heading {
+  font-weight: 400;
+  font-size: 0.7rem;
+  flex-grow: 1;
+  line-height: 1.5rem;
+  padding-left: 1ex;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-faint, #999);
+}
+
+.verseViewerTable td.scriptureRef.right .heading {
+  text-align: right;
+  padding-right: 1rem;
+}
+
+.verseViewerTable td.scriptureRef .ref {
+  font-weight: bold;
+  font-size: 1rem;
+  flex-grow: 0;
+  line-height: 1.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  padding-right: 1ex;
+  color: var(--text-primary, #212529);
+}
+
+.verseViewerTable td.scriptureRef a.ref:hover {
+  color: var(--link, #345496);
+}
+
+.verseViewerTable td.scriptureRef.right .ref {
+  text-align: right;
+}
+
+.verseViewerTable td.scriptureCell {
+  vertical-align: top;
+}
+
+.verseViewerTable td.scriptureCell.left { padding-right: 0.5rem; }
+.verseViewerTable td.scriptureCell.right { padding-left: 0.5rem; }
+
+.verseViewerTable .scriptureCell p {
+  background-color: var(--surface-0, #fff);
+  font-family: "Scripture", serif;
+  font-size: 1rem;
+  line-height: 1.3rem;
+  text-align: justify;
+  padding: 0.8rem;
+  border-radius: 1ex;
+}
+
+.verseViewerTable .scriptureCell p span.highlight {
+  color: #cc0000;
+  background-color: #ffff0033;
+}
+
+html[data-theme="dark"] .verseViewerTable .scriptureCell p span.highlight {
+  color: #ff8080;
+  background-color: #ffff0022;
+}
+
+/* ---- responsive ---- */
+
+@media (max-width: 1100px) {
+  .xref-rail { flex-basis: 200px; }
+  .xref-bar { grid-template-columns: 110px 1fr 3.5em; }
+}
+
+@media (max-width: 700px) {
+  .xref-anchorbody {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .xref-rail {
+    flex-basis: auto;
+    max-height: 240px;
+    width: 100%;
+  }
+  .xref-spinelabel { display: none; }
+  .xref-ribbonwrap { min-height: 420px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .xref-root * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
