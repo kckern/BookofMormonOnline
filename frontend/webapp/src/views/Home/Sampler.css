@@ -1590,3 +1590,21 @@ html[data-theme="dark"] .rpBoxPane .sectionDots { border-right-color: #444; }
 .faxVerseTile .faxVersePage img { width: 100%; display: block; border-radius: 4px; }
 .faxVerseTile .faxVerseTitle { font-size: 0.85rem; opacity: 0.8; margin: 0.4rem 0; }
 .notesTile .notesSource { font-size: 0.8rem; opacity: 0.7; }
+
+/* ---- cross-references tile (wave 1) ---- */
+.crossRefsTile .crossRefsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+}
+.crossRefsTile .crossRefItem {
+  border: 1px solid rgba(128, 128, 128, 0.35);
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font-size: 0.85rem;
+  padding: 0.15rem 0.7rem;
+  cursor: pointer;
+}
+.crossRefsTile .crossRefItem:hover { border-color: currentColor; }

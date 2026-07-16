@@ -13,6 +13,7 @@ import ChiasmusTile from "./ChiasmusTile";
 import ImageArtTile from "./ImageArtTile";
 import NotesTile from "./NotesTile";
 import FaxVerseTile from "./FaxVerseTile";
+import CrossReferencesTile from "./CrossReferencesTile";
 
 /**
  * Sampler tile registry. Adding a tile type:
@@ -46,4 +47,5 @@ export const tileRegistry = [
   { key: "art",         component: ImageArtTile,    span: "tile-art",         isReady: (p) => (p?.art?.length || 0) > 0 },
   { key: "notes",       component: NotesTile,       span: "tile-notes",       isReady: (p) => (p?.notes?.length || 0) > 0 },
   { key: "faxVerse",   component: FaxVerseTile,    span: "tile-faxVerse",    isReady: (p) => !!p?.faxVerse?.page },
+  { key: "crossrefs",  component: CrossReferencesTile, span: "tile-crossrefs", isReady: (p) => (p?.crossrefs?.refs?.length || 0) > 0 },
 ];
