@@ -4,23 +4,16 @@ import { Spinner } from "../../_Common/Loader";
 import Parser from "html-react-parser";
 import { label } from 'src/models/Utils';
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import { escapeRegex } from "./chiasmUtils";
 
 
-function addHighlights(text, highlights) {
-    //use replace callbacks to make and array of jsx elements
-    let highlightedText = text;
-    highlights.forEach(highlight => {
-        highlightedText = highlightedText.replace(new RegExp(highlight, 'g'), (match, offset) => {
-            if(!match) return match;
-            //if match already contains span, return 
-            if(match.includes("span")) return match;
-            return `<span class="highlight">${match}</span>`;
-        });
-    });
-    return Parser(highlightedText);
-
-
-
+export function addHighlights(text, highlights) {
+    // Single pass: build one alternation of escaped patterns, longest first, so
+    // overlapping highlights can't nest and special chars can't crash RegExp.
+    const patterns = (highlights || []).filter(Boolean).sort((a, b) => b.length - a.length);
+    if (!patterns.length) return Parser(text);
+    const re = new RegExp(patterns.map(escapeRegex).join("|"), "g");
+    return Parser(text.replace(re, (m) => `<span class="highlight">${m}</span>`));
 }
 
 
