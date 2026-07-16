@@ -940,26 +940,30 @@ html[data-theme="dark"] .narrationNextTitle { border-top-color: #3a3a3a; }
 /* seeded strip of the section's art, under the provenance line */
 .narrationArtRow {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.35rem;
+  justify-content: space-between;
+  align-items: center;
   margin: 0.15rem 0 0.5rem;
 }
-.narrationArtRow.single { justify-content: center; }
-/* cover always — a lone image just gets a friendlier ratio bound (16:9) */
-.narrationArtRow.single img { width: 100%; }
+/* honor each image's OWN aspect ratio — fixed strip height, natural width,
+   NO blanket crop. Space-between distributes them across the strip; images
+   wrap to a second line rather than overflow. */
 .narrationArtRow img {
-  flex: 1 1 0;
-  min-width: 0;
-  /* crop floor: never flatter than 16:9 — height follows the flex width, so
-     two images render as two legible 16:9 frames, not panoramic slivers */
-  aspect-ratio: 16 / 9;
-  height: auto;
-  object-fit: cover;
+  height: 4.6rem;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
   border-radius: 0.35rem;
   border: 1px solid #e0e0e0;
+  background: #f2f0ec;
   transition: transform 0.15s ease;
 }
+html[data-theme="dark"] .narrationArtRow img { border-color: #444; background: #2a2a2a; }
+/* a lone image gets the full strip width at its own aspect (bounded height) */
+.narrationArtRow.single { justify-content: center; }
+.narrationArtRow.single img { height: auto; width: auto; max-height: 11rem; max-width: 100%; }
 .narrationArtRow:hover img { transform: scale(1.02); }
-html[data-theme="dark"] .narrationArtRow img { border-color: #444; }
 .narrationItem {
   display: flex;
   align-items: flex-start;
@@ -1138,6 +1142,7 @@ html[data-theme="dark"] .placesImgWrap { background: #333; }
   text-overflow: clip;
   overflow: hidden;
   overflow-wrap: break-word;
+  width: fit-content; /* background hugs the text, not the full card width */
   max-width: calc(100% - 1.7rem); /* clear the map pin */
 }
 .placesMapBtn {

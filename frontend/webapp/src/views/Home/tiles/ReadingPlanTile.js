@@ -4,6 +4,7 @@ import BoMOnlineAPI from "src/models/BoMOnlineAPI.js";
 import { useAppController } from "src/contexts/AppControllerContext";
 import { label } from "src/models/Utils";
 import { ReadingPlan } from "../ReadingPlan";
+import ReadingProgressTile from "./ReadingProgressTile";
 
 /**
  * Compact bubble preview — the ONLY look this tile ever shows by default:
@@ -177,6 +178,27 @@ function SignedInPlanTile({ token }) {
 export default function ReadingPlanTile() {
   const appController = useAppController();
   const token = appController.states.user.token;
-  if (!appController?.states?.user?.user) return <GuestPlanPreview />;
+  const signedIn = !!appController?.states?.user?.user;
+  // Progress trumps the plan: guest OR signed-in, if there's ANY reading
+  // progress, show the "Reading Progress" view (recent page + green dots).
+  const [progress, setProgress] = useState(null); // { hasProgress, divisions }
+  useEffect(() => {
+    let cancelled = false;
+    BoMOnlineAPI({ userprogress: token, divisionProgress: null }, { token, useCache: false })
+      .then((r) => {
+        if (cancelled) return;
+        const up = r?.userprogress?.[token] || r?.userprogress || {};
+        const hasProgress = (Number(up.completed) || 0) > 0 || (Number(up.started) || 0) > 0;
+        const divisions = Array.isArray(r?.divisionProgress) ? r.divisionProgress : Object.values(r?.divisionProgress || {});
+        setProgress({ hasProgress, divisions });
+      })
+      .catch(() => { if (!cancelled) setProgress({ hasProgress: false, divisions: [] }); });
+    return () => { cancelled = true; };
+  }, [token]);
+
+  if (progress?.hasProgress) {
+    return <ReadingProgressTile token={token} divisions={progress.divisions} />;
+  }
+  if (!signedIn) return <GuestPlanPreview />;
   return <SignedInPlanTile token={token} />;
 }

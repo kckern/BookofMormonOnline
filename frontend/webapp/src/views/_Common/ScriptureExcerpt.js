@@ -68,33 +68,58 @@ export default function ScriptureExcerpt({ refText, onNavigate }) {
     setLoading(true);
     setSections(null);
     setPassages(null);
-    const ch = chapterRef(ref);
-    const wanted = targetVerseIds(ref);
-    BoMOnlineAPI({ read: [ch] }, { useCache: false })
-      .then((r) => {
-        if (cancelled) return null;
-        const chapter = r?.read?.[ch] || (r?.read && Object.values(r.read)[0]) || null;
-        const kept = (chapter?.sections || [])
-          .map((s) => {
-            const blocks = (s.blocks || [])
-              .map((b) => ({ ...b, lines: (b.lines || []).filter((l) => !wanted.size || wanted.has(l.verse_id)) }))
-              .filter((b) => b.lines.length);
-            if (!blocks.length) return null;
-            const firstShown = blocks[0].lines[0]?.verse_id;
-            const sectionFirst = s.blocks?.[0]?.lines?.[0]?.verse_id;
-            return { heading: s.heading, ref: s.ref, blocks, partial: firstShown != null && sectionFirst != null && firstShown !== sectionFirst };
+    // A compound reference ("Omni 1:24; Mormon 1:13-14") spans multiple
+    // chapters/books — split it into segments and render each. Each segment is
+    // canonicalized on its own; a bare chapter number after ";" ("Alma 5; 7")
+    // inherits the previous book.
+    let lastBook = "";
+    const segments = ref
+      .split(/\s*;\s*/)
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .map((seg) => {
+        const withBook = /^[0-9]+\s*[:.]/.test(seg) && lastBook ? `${lastBook} ${seg}` : seg;
+        const bookMatch = /^(.+?)\s+\d/.exec(withBook);
+        if (bookMatch) lastBook = bookMatch[1];
+        return canonical(withBook);
+      });
+    // fetch each segment's chapter, keeping segment order
+    Promise.all(
+      segments.map((seg) => {
+        const ch = chapterRef(seg);
+        const wanted = targetVerseIds(seg);
+        return BoMOnlineAPI({ read: [ch] }, { useCache: false })
+          .then((r) => {
+            const chapter = r?.read?.[ch] || (r?.read && Object.values(r.read)[0]) || null;
+            const kept = (chapter?.sections || [])
+              .map((s) => {
+                const blocks = (s.blocks || [])
+                  .map((b) => ({ ...b, lines: (b.lines || []).filter((l) => !wanted.size || wanted.has(l.verse_id)) }))
+                  .filter((b) => b.lines.length);
+                if (!blocks.length) return null;
+                const firstShown = blocks[0].lines[0]?.verse_id;
+                const sectionFirst = s.blocks?.[0]?.lines?.[0]?.verse_id;
+                return { heading: s.heading, ref: s.ref, blocks, partial: firstShown != null && sectionFirst != null && firstShown !== sectionFirst };
+              })
+              .filter(Boolean);
+            if (kept.length) return { sections: kept };
+            // Bible / cross-ref segment → plain passages
+            return BoMOnlineAPI({ scripture: [seg] }, { useCache: false }).then((sr) => {
+              const raw = sr?.scripture;
+              const val = raw?.[seg] || (raw && Object.values(raw)[0]) || null;
+              return { passages: val?.passages || [] };
+            });
           })
-          .filter(Boolean);
-        if (kept.length) { setSections(kept); setLoading(false); return null; }
-        return BoMOnlineAPI({ scripture: [ref] }, { useCache: false }).then((sr) => {
-          if (cancelled) return;
-          const raw = sr?.scripture;
-          const val = raw?.[ref] || (raw && Object.values(raw)[0]) || null;
-          setPassages(val?.passages || []);
-          setLoading(false);
-        });
-      })
-      .catch(() => { if (!cancelled) { setPassages([]); setLoading(false); } });
+          .catch(() => ({ passages: [] }));
+      }),
+    ).then((results) => {
+      if (cancelled) return;
+      const allSections = results.flatMap((r) => r.sections || []);
+      const allPassages = results.flatMap((r) => r.passages || []);
+      if (allSections.length) setSections(allSections);
+      else setPassages(allPassages);
+      setLoading(false);
+    });
     return () => { cancelled = true; };
   }, [ref]);
 
