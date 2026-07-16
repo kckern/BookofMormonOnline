@@ -81,3 +81,19 @@ export const queryToFilters = (search) => {
   }
   return filters;
 };
+
+const baseName = (n) => n.replace(/\d+$/, "").trim().toLowerCase();
+
+/** Find person/place slugs for a name in the app's cached entity maps. */
+export const entitySlugs = (name, personMap, placeMap) => {
+  const target = name.toLowerCase();
+  let person = null, place = null;
+  for (const p of Object.values(personMap || {}))
+    if (baseName(p.name) === target) { person = p.slug; break; }
+  for (const p of Object.values(placeMap || {})) {
+    const full = baseName(p.name);
+    const last = full.split(" ").pop();
+    if (full === target || last === target) { place = p.slug; break; }
+  }
+  return { person, place };
+};

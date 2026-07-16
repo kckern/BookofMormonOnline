@@ -1,4 +1,4 @@
-import { FIELD_DEFS, emptyFilters, applyFilters, facetCounts, segmentName, filtersToQuery, queryToFilters } from "./logic";
+import { FIELD_DEFS, emptyFilters, applyFilters, facetCounts, segmentName, filtersToQuery, queryToFilters, entitySlugs } from "./logic";
 
 const fixture = [
   { name: "Moroni", types: ["person", "place"], cultures: ["Nephite"], prefix: null, stems: ["Mor"], affix: "~on~", suffix: "~i", note: null },
@@ -83,5 +83,19 @@ describe("querystring codec", () => {
   it("encodes tildes safely", () => {
     const f = { ...emptyFilters(), suffix: ["~iah"] };
     expect(queryToFilters(filtersToQuery(f)).suffix).toEqual(["~iah"]);
+  });
+});
+
+describe("entitySlugs", () => {
+  const people = { nephi1: { name: "Nephi1", slug: "nephi1" }, abinadi: { name: "Abinadi", slug: "abinadi" } };
+  const places = { "hill-cumorah": { name: "Hill Cumorah", slug: "hill-cumorah" } };
+  it("matches a person by base name, digits stripped", () => {
+    expect(entitySlugs("Nephi", people, places).person).toBe("nephi1");
+  });
+  it("matches a place by last word of descriptive name", () => {
+    expect(entitySlugs("Cumorah", people, places).place).toBe("hill-cumorah");
+  });
+  it("returns nulls when nothing matches", () => {
+    expect(entitySlugs("Ziff", people, places)).toEqual({ person: null, place: null });
   });
 });
