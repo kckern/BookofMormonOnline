@@ -25,7 +25,7 @@ The fix direction is not more chrome — it's letting the dataset be the design:
 - **Prefix / Stem / Affix / Suffix** is linguist vocabulary offered with zero explanation, and the tilde notation (`Am~`, `~iah`) appears only inside dropdowns, unexplained. The `ThWithPopup` stub that existed in the original scaffold (removed in the rewrite) was clearly intended to gloss these — the need it addressed is real.
 
 ### Consistency nits
-- Inline styles fight the stylesheet: the tile's inline `border: 1px solid #ddd` silently overrides `.nameAnalysisItem`'s `#ccc`; the `h3` carries leftover `whiteSpace: nowrap / textOverflow: ellipsis / flexGrow: 0` inline styles.
+- Inline styles fight the stylesheet: the tile's inline `border: 1px solid #ddd` overrides `.nameAnalysisItem`'s `#ccc`; the `h3` carries leftover `whiteSpace: nowrap / textOverflow: ellipsis / flexGrow: 0` inline styles.
 - That `h3` style truncates the page title to **"Book of Mormo…"** at 375px — the page's own name is the first casualty of mobile.
 
 ### Dark mode (`html[data-theme="dark"]`)
@@ -57,7 +57,7 @@ Ordered; 1–4 are small, 5–7 are the real design work.
 3. **Counts in facet options** — "Mor (9)", "Jaredite (58)" — and sort stem/suffix options by count descending; disable rmsc "Select All". This alone converts the dropdowns from a guessing game into a map of the dataset.
 4. **One orienting line** under the title (through `label()`): what this page is, what Prefix/Stem/Affix/Suffix mean, in one sentence each via header tooltips (resurrect the `ThWithPopup` idea).
 5. **Tile detail popover/panel** on click: the name segmented into its parts, culture badges (reuse the People view's `IdBadge` styles for visual continuity), the `note` gloss, and — when `types` includes person/place — a link into the existing entity page. This closes the dead end and finally spends the dataset.
-6. **Make the morphology visible on the wall — the signature move.** Render each tile as its segmentation with quiet color-coded morpheme spans (one hue family each for prefix/stem/suffix, dimmed until hover or until a "show structure" toggle). The grid itself becomes the visualization of the naming system; clicking a morpheme span filters by it. Everything else on the page should stay disciplined to let this carry the identity.
+6. **Make the morphology visible on the wall — the signature move.** Render each tile as its segmentation with subdued color-coded morpheme spans (one hue family each for prefix/stem/suffix, dimmed until hover or until a "show structure" toggle). The grid itself becomes the visualization of the naming system; clicking a morpheme span filters by it. Everything else on the page should stay disciplined to let this carry the identity.
 7. **Culture and Type as toggle-chip rows, not dropdowns** (9 values each — hiding them in a select costs discoverability for nothing), leaving searchable selects only where the option count demands it (stems, suffixes). On mobile, collapse the remaining selects into a single "Filters" disclosure instead of a six-column table that clips Culture and Type off-screen (confirmed at 375px).
 8. **Sync filters to the querystring** for shareable views, matching the app's deep-link investment.
 

@@ -853,7 +853,7 @@ const SEGMENTS = new Map(names.map((n) => [n.name, segmentName(n)]));
   : entry.name}
 ```
 
-**Step 3:** CSS — quiet colored underlines on tiles, stronger tints in the detail panel. One hue per role, consistent everywhere:
+**Step 3:** CSS — subdued colored underlines on tiles, stronger tints in the detail panel. One hue per role, consistent everywhere:
 
 ```css
 /* role hues: prefix purple, stem blue, affix orange, suffix green */
@@ -874,7 +874,7 @@ const SEGMENTS = new Map(names.map((n) => [n.name, segmentName(n)]));
 .structureToggle{ display:inline-flex; gap:0.5ex; align-items:center; font-size:0.85rem; cursor:pointer; margin:0; }
 ```
 
-**Step 4:** Visual check at 1440px: the wall now *shows* the naming system — `Mor|on|i`, `Am|mor|on` — with names that share elements visibly rhyming. Toggle off → plain tiles. Check restraint: underlines should read as quiet texture, not carnival; if it shouts, drop opacity of the underline colors by ~30% and re-look.
+**Step 4:** Visual check at 1440px: the wall now *shows* the naming system — `Mor|on|i`, `Am|mor|on` — with names that share elements visibly rhyming. Toggle off → plain tiles. Check restraint: underlines should read as subtle texture, not carnival; if it shouts, drop opacity of the underline colors by ~30% and re-look.
 
 **Step 5:** Run tests, commit `feat(names): morpheme structure rendering on tiles with legend and toggle`.
 

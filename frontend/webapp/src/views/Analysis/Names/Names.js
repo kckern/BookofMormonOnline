@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { MultiSelect } from "react-multi-select-component";
 import { useHistory, useLocation } from "react-router-dom";
 import { label } from 'src/models/Utils';
@@ -48,9 +48,9 @@ function Container() {
   useEffect(() => { document.title = "Names | " + label("home_title"); }, []);
 
   useEffect(() => {
-    BoMOnlineAPI({ personList: true, placeList: true }).then((r) =>
-      setEntities({ people: r.personList || {}, places: r.placeList || {} })
-    );
+    BoMOnlineAPI({ personList: true, placeList: true })
+      .then((r) => setEntities({ people: r.personList || {}, places: r.placeList || {} }))
+      .catch(() => setEntities({ people: {}, places: {} }));
   }, []);
 
   useEffect(() => {
@@ -63,16 +63,22 @@ function Container() {
   }, [filters, detailName]);
 
   const detailEntry = useMemo(() => names.find((n) => n.name === detailName) || null, [detailName]);
+  const closeDetail = useCallback(() => setDetailName(null), []);
 
   const filtered = useMemo(() => applyFilters(names, filters), [filters]);
   const hasSelection = FIELD_DEFS.some((f) => filters[f.key].length > 0);
   const activeCount = FIELD_DEFS.reduce((n, f) => n + filters[f.key].length, 0);
   const setFacet = (key, values) => setFilters((prev) => ({ ...prev, [key]: values }));
 
-  const pickMorpheme = (role, entry) => {
+  const pickMorpheme = (role, entry, text) => {
+    if (role === "stem") {
+      // Filter by the stem that was clicked, not every stem of a compound name.
+      const stem = entry.stems.find((st) => st.toLowerCase() === (text || "").toLowerCase()) || entry.stems[0];
+      setFacet("stems", [...new Set([...filters.stems, stem])]);
+      return;
+    }
     const map = { prefix: ["prefix", entry.prefix], affix: ["affix", entry.affix], suffix: ["suffix", entry.suffix] };
-    if (role === "stem") setFacet("stems", [...new Set([...filters.stems, ...entry.stems])]);
-    else if (map[role] && map[role][1]) setFacet(map[role][0], [...new Set([...filters[map[role][0]], map[role][1]])]);
+    if (map[role] && map[role][1]) setFacet(map[role][0], [...new Set([...filters[map[role][0]], map[role][1]])]);
   };
 
   return (
@@ -123,7 +129,7 @@ function Container() {
           entry={detailEntry}
           entities={entities}
           appController={appController}
-          onClose={() => setDetailName(null)}
+          onClose={closeDetail}
           onPickMorpheme={pickMorpheme}
         />
       )}
@@ -250,7 +256,7 @@ function NameDetail({ entry, entities, appController, onClose, onPickMorpheme })
                     type="button"
                     className={"morpheme morpheme-" + s.role}
                     title={t("names_filter_by_part", "Filter by this part")}
-                    onClick={() => onPickMorpheme(s.role, entry)}
+                    onClick={() => onPickMorpheme(s.role, entry, s.text)}
                   >
                     {s.text}
                   </button>
