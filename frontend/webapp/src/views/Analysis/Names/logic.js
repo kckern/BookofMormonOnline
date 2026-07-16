@@ -20,3 +20,14 @@ export const applyFilters = (names, filters) =>
   names.filter((entry) =>
     FIELD_DEFS.every((field) => matchesField(entry, field, filters[field.key]))
   );
+
+/** Counts for one facet, computed with that facet's own selection ignored. */
+export const facetCounts = (names, filters, facetKey) => {
+  const others = { ...filters, [facetKey]: [] };
+  const pool = applyFilters(names, others);
+  const field = FIELD_DEFS.find((f) => f.key === facetKey);
+  const counts = new Map();
+  for (const entry of pool)
+    for (const v of field.get(entry)) counts.set(v, (counts.get(v) || 0) + 1);
+  return counts;
+};
