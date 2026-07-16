@@ -141,6 +141,14 @@ export function getStartEnd(level, { key }) {
     if (!book) return getStartEnd("groups", { key });
     return [book[1], book[2]];
   }
+  if (level === "chapters" || level === "verses") {
+    // id is a chapter ("Moroni 7") or verse ("Moroni 7:5") ref — resolve its
+    // verse_id span via scripture-guide. Without this, chapter/verse grids
+    // (and chapter-level deep links) collapse to the empty [0,0] range.
+    const verse_ids = lookupReference(key, determineLanguage())?.verse_ids || [];
+    if (!verse_ids.length) return [0, 0];
+    return [verse_ids[0], verse_ids[verse_ids.length - 1]];
+  }
 
   return [0, 0];
 }
