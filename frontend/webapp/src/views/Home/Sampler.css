@@ -1159,6 +1159,8 @@ html[data-theme="dark"] .placesImgWrap { background: #333; }
 
 /* text tile: the feed card centers in its slot, both axes — no blank interior */
 .textTile { align-items: center; justify-content: center; }
+/* header stays left like every other tile; only the content centers */
+.textTile .tileHeading { align-self: flex-start; }
 .textTile .itemInFeedContainer { margin: 0 auto; max-width: 46rem; }
 
 /* fax pages: ref-captioned, deep-linking into the viewer at that page */
@@ -1443,7 +1445,9 @@ html[data-theme="dark"] .imageArtFrame { background: #2c2c2c; }
 .imageArtCaption { padding: 0.5rem 0.7rem 0.6rem; display: flex; flex-direction: column; gap: 0.15rem; }
 .imageArtTitle { font-size: 0.8rem; font-weight: 700; line-height: 1.25; color: #2a2a2a; text-decoration: none; }
 .imageArtTitle:hover { color: #345496; }
-.imageArtRefRow { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.25rem; }
+.imageArtScripture { margin-top: 0.4rem; padding-top: 0.4rem; border-top: 1px solid #ececec; }
+html[data-theme="dark"] .imageArtScripture { border-top-color: #3a3a3a; }
+.imageArtContext { margin-top: 0.45rem; }
 .imageArtContext { margin-top: 0 !important; }
 .imageArtArtist { font-size: 0.66rem; font-style: italic; color: #888; }
 html[data-theme="dark"] .imageArtTitle { color: #f0f0f0; }
