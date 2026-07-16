@@ -13,6 +13,10 @@
     border-radius: 5px;
     text-align: center;
     cursor: pointer;
+    /* tiles are <button>s — neutralize UA styles */
+    background: transparent;
+    font: inherit;
+    color: inherit;
 }
 .nameAnalysisList .nameAnalysisItem:hover{
     background-color: #f9f9f9;
@@ -26,6 +30,27 @@
 .nameform td{
     padding:0
 }
+
+.nameDetail{ border:1px solid var(--names-border,#ccc); border-radius:8px; padding:0.75rem 1rem; margin-bottom:1rem; }
+.nameDetailHeader{ display:flex; justify-content:space-between; align-items:baseline; }
+.nameDetailName{ font-size:1.6rem; font-weight:700; }
+.nameDetailName .morpheme{ background:none; border:none; padding:0; font:inherit; cursor:pointer; }
+.nameDetailName .morpheme:focus-visible{ outline:2px solid #2c7fb8; outline-offset:1px; }
+.nameDetailClose{ background:none; border:none; font-size:1.4rem; cursor:pointer; line-height:1; }
+.nameDetailBadges{ display:flex; gap:0.4ex; flex-wrap:wrap; margin:0.3rem 0; align-items:center; }
+.nameTypeBadge, .nameDetail .IdBadge.lang{ border:1px solid var(--names-border,#ccc); border-radius:4px; padding:0 0.4em; font-size:0.75rem; }
+.nameDetailNote{ margin:0.3rem 0 0.5rem; color:var(--names-muted,#555); font-style:italic; }
+.nameDetailLinks{ display:flex; gap:0.5ex; }
+
+/* IdBadge affiliation colors — copied from People.css, scoped to the detail panel */
+.nameDetail .IdBadge{ border:1px solid #6c6c6c; color:#4d4d4d; font-size:.7em; letter-spacing:-.5px; padding:0 .5em; border-radius:.5em; }
+.nameDetail .IdBadge.N{ background-color:#b9e2cf; color:#0f5132; border-color:#0f5132; }
+.nameDetail .IdBadge.L{ background-color:#c3dbff; color:#084298; border-color:#084298; }
+.nameDetail .IdBadge.M{ background-color:rgb(255,208,177); color:#5c3000; border-color:#5c3000; }
+.nameDetail .IdBadge.J{ background-color:#fef1ca; color:#6b5200; border-color:#6b5200; }
+
+.nameAnalysisItem.selected{ border-color:#2c7fb8; box-shadow:0 0 0 1px #2c7fb8 inset; }
+.nameAnalysisItem:focus-visible{ outline:2px solid #2c7fb8; outline-offset:1px; }
 
 .nameChipRow{ display:flex; flex-wrap:wrap; gap:0.4ex; align-items:center; margin:0.4rem 0; }
 .nameChipRowLabel{ font-weight:800; font-size:0.9rem; margin-right:0.5ex; min-width:4.5rem; }

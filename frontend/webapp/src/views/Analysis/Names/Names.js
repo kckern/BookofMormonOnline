@@ -2,10 +2,12 @@ import React, { useEffect, useMemo, useState } from "react";
 import { MultiSelect } from "react-multi-select-component";
 import { useHistory, useLocation } from "react-router-dom";
 import { label } from 'src/models/Utils';
+import BoMOnlineAPI from "src/models/BoMOnlineAPI";
+import { useAppController } from "src/contexts/AppControllerContext";
 
 import "./Names.css";
 import names, { facets } from "./data.js";
-import { FIELD_DEFS, emptyFilters, applyFilters, facetCounts, filtersToQuery, queryToFilters } from "./logic";
+import { FIELD_DEFS, emptyFilters, applyFilters, facetCounts, filtersToQuery, queryToFilters, segmentName, entitySlugs } from "./logic";
 
 /** label() returns the key when untranslated — fall back to English copy. */
 const t = (key, fallback) => {
@@ -34,19 +36,38 @@ const FACET_META = {
 function Container() {
   const history = useHistory();
   const location = useLocation();
+  const appController = useAppController();
   const [filters, setFilters] = useState(() => queryToFilters(location.search));
+  const [detailName, setDetailName] = useState(() => new URLSearchParams(location.search).get("name"));
+  const [entities, setEntities] = useState({ people: null, places: null });
   useEffect(() => { document.title = "Names | " + label("home_title"); }, []);
 
   useEffect(() => {
-    const q = filtersToQuery(filters);
-    if (q !== location.search && !(q === "" && location.search === ""))
-      history.replace({ pathname: location.pathname, search: q });
+    BoMOnlineAPI({ personList: true, placeList: true }).then((r) =>
+      setEntities({ people: r.personList || {}, places: r.placeList || {} })
+    );
+  }, []);
+
+  useEffect(() => {
+    const p = new URLSearchParams(filtersToQuery(filters));
+    if (detailName) p.set("name", detailName);
+    const s = p.toString();
+    const q = s ? "?" + s : "";
+    if (q !== location.search) history.replace({ pathname: location.pathname, search: q });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters]);
+  }, [filters, detailName]);
+
+  const detailEntry = useMemo(() => names.find((n) => n.name === detailName) || null, [detailName]);
 
   const filtered = useMemo(() => applyFilters(names, filters), [filters]);
   const hasSelection = FIELD_DEFS.some((f) => filters[f.key].length > 0);
   const setFacet = (key, values) => setFilters((prev) => ({ ...prev, [key]: values }));
+
+  const pickMorpheme = (role, entry) => {
+    const map = { prefix: ["prefix", entry.prefix], affix: ["affix", entry.affix], suffix: ["suffix", entry.suffix] };
+    if (role === "stem") setFacet("stems", [...new Set([...filters.stems, ...entry.stems])]);
+    else if (map[role] && map[role][1]) setFacet(map[role][0], [...new Set([...filters[map[role][0]], map[role][1]])]);
+  };
 
   return (
     <div className="container namesView">
@@ -69,11 +90,25 @@ function Container() {
           </button>
         )}
       </div>
+      {detailEntry && (
+        <NameDetail
+          entry={detailEntry}
+          entities={entities}
+          appController={appController}
+          onClose={() => setDetailName(null)}
+          onPickMorpheme={pickMorpheme}
+        />
+      )}
       <div className="nameAnalysisList">
         {filtered.map((entry) => (
-          <div key={entry.name} className="nameAnalysisItem" title={[...entry.cultures, ...entry.types].join(" · ")}>
+          <button
+            type="button"
+            key={entry.name}
+            className={"nameAnalysisItem" + (detailName === entry.name ? " selected" : "")}
+            onClick={() => setDetailName(entry.name === detailName ? null : entry.name)}
+          >
             {entry.name}
-          </div>
+          </button>
         ))}
         {!filtered.length && (
           <div className="nameAnalysisEmpty">
@@ -144,6 +179,72 @@ function FacetSelect({ facetKey, values, filters, onChange }) {
         labelledBy={meta.label}
         hasSelectAll={false}
       />
+    </div>
+  );
+}
+
+const CULTURE_BADGE = { Nephite: "N", Lamanite: "L", Jaredite: "J", Mulekite: "M", Israelite: "I" };
+
+function NameDetail({ entry, entities, appController, onClose, onPickMorpheme }) {
+  const spans = segmentName(entry);
+  const slugs = entitySlugs(entry.name, entities.people, entities.places);
+
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const openEntity = (type, slug) =>
+    appController.functions.setPopUp({ type, ids: [slug], underSlug: type });
+
+  return (
+    <div className="nameDetail" role="region" aria-label={entry.name}>
+      <div className="nameDetailHeader">
+        <span className="nameDetailName">
+          {spans
+            ? spans.map((s, i) =>
+                s.role === "sep" ? (
+                  <span key={i}>{s.text}</span>
+                ) : (
+                  <button
+                    key={i}
+                    type="button"
+                    className={"morpheme morpheme-" + s.role}
+                    title={t("names_filter_by_part", "Filter by this part")}
+                    onClick={() => onPickMorpheme(s.role, entry)}
+                  >
+                    {s.text}
+                  </button>
+                )
+              )
+            : entry.name}
+        </span>
+        <button type="button" className="nameDetailClose" aria-label={t("names_close", "Close")} onClick={onClose}>
+          ×
+        </button>
+      </div>
+      <div className="nameDetailBadges">
+        {entry.cultures.map((c) => (
+          <span key={c} className={"IdBadge " + (CULTURE_BADGE[c] || "lang")}>{c}</span>
+        ))}
+        {entry.types.map((tp) => (
+          <span key={tp} className="nameTypeBadge">{tp}</span>
+        ))}
+      </div>
+      {entry.note && <p className="nameDetailNote">{entry.note}</p>}
+      <div className="nameDetailLinks">
+        {slugs.person && entry.types.includes("person") && (
+          <button type="button" className="btn btn-sm btn-outline-primary" onClick={() => openEntity("people", slugs.person)}>
+            {t("names_view_person", "View person")}
+          </button>
+        )}
+        {slugs.place && entry.types.includes("place") && (
+          <button type="button" className="btn btn-sm btn-outline-primary" onClick={() => openEntity("places", slugs.place)}>
+            {t("names_view_place", "View place")}
+          </button>
+        )}
+      </div>
     </div>
   );
 }
