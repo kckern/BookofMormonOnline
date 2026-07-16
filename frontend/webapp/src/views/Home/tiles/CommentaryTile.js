@@ -64,7 +64,7 @@ export default function CommentaryTile({ data }) {
             {Parser(getDetectedScripturesHtml(text), scriptureOpts)}
           </p>
           {truncated && !expanded ? (
-            <button className="commentaryReadMorePill" onClick={() => setExpanded(true)}>
+            <button className="readMorePill" onClick={() => setExpanded(true)}>
               {label("read_more")}
             </button>
           ) : null}

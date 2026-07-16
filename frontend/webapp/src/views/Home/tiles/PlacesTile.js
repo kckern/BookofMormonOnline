@@ -4,6 +4,7 @@ import { assetUrl } from "src/models/BoMOnlineAPI";
 import { label, replaceNumbers } from "src/models/Utils";
 import pin from "src/views/_Common/svg/map-icon.svg";
 import RefPill from "./RefPill";
+import ExpandableText from "./ExpandableText";
 import { clampWords, flatten } from "./textUtils";
 
 /**
@@ -51,7 +52,9 @@ export default function PlacesTile({ data, seed = 0, payload }) {
               {(p.description || ref) ? (
                 <div className="placesTileInfo samplerCardBody">
                   {p.description ? (
-                    <span className="placesTileDesc">{clampWords(flatten(p.description), 16)}</span>
+                    <ExpandableText className="placesTileDesc" lines={3}>
+                      {flatten(p.description)}
+                    </ExpandableText>
                   ) : null}
                   {ref ? (
                     <span className="placesTileIndexRow">

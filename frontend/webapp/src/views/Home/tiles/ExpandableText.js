@@ -30,7 +30,7 @@ export default function ExpandableText({ children, lines = 6, className }) {
         {children}
       </div>
       {truncated && !open ? (
-        <button className="readMoreBtn" onClick={expand}>
+        <button className="readMorePill" onClick={expand}>
           {label("read_more")}
         </button>
       ) : null}
