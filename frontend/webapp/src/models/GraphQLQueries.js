@@ -617,6 +617,10 @@ const queries = {
         principal
         event_year
         event_date
+        money_quote
+        quote_is_witness_voice
+        witness_label
+        reporter_label
         ${wantsTranscript ? 'transcript' : ''}
       }`,
     }

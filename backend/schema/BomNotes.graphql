@@ -68,6 +68,10 @@ type HistoricalDocument {
   principal: String
   event_year: Int
   event_date: String
+  money_quote: String
+  quote_is_witness_voice: Boolean
+  witness_label: String
+  reporter_label: String
 }
 
 type Commentary {

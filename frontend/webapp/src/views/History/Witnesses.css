@@ -395,3 +395,33 @@
     opacity: 1;
 }
 
+.single-witnesses .witness-sources .thumbbox .thumb_money_quote {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    overflow: hidden;
+    background-color: #000000AA;
+    color: white;
+    padding: 1rem;
+    line-height: 1.3;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    opacity: 0;
+    margin: 0;
+    font-style: italic;
+    border-left: none;
+    transition: opacity 0.5s;
+}
+
+.single-witnesses .witness-sources .historycard:hover .thumb_money_quote {
+    opacity: 1;
+}
+
+.single-witnesses .witness-sources .thumbbox .thumb_money_quote .money_quote_attribution {
+    margin-top: 0.5rem;
+    font-style: normal;
+    font-size: 0.85em;
+    color: #ccc;
+}
+
