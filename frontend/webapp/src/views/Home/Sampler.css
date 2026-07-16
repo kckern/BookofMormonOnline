@@ -711,7 +711,13 @@ html[data-theme="dark"] .valuePropText { color: #e4e4e4; }
   font-size: 0.85rem;
   text-decoration: none;
   transition: background 0.15s ease, color 0.15s ease;
+  /* these render as either <Link> or <button> — reset native button chrome */
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  line-height: 1.2;
 }
+button.valuePropSecondary { background: transparent; }
 .valuePropPrimary { background: #323b4d; color: #fff; }
 .valuePropPrimary:hover { background: #4a5670; color: #fff; text-decoration: none; }
 .valuePropSecondary {
