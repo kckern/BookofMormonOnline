@@ -44,7 +44,13 @@
     cursor: pointer;
     flex-shrink: 0;
     min-height: auto;
-
+    /* neutralize <button> chrome — cards are real buttons for a11y */
+    font: inherit;
+    color: inherit;
+    text-align: left;
+    width: 100%;
+    margin: 0;
+    appearance: none;
 }
 
 .chiasmus_list .chiasmus:hover
@@ -82,7 +88,8 @@
 
 .chiasmus_line .scheme.minor{
     background-color: var(--surface-4);
-    color: var(--text-muted);
+    /* --text-secondary, not --text-muted: #777 on #ddd is ~3.3:1 (sub-AA) */
+    color: var(--text-secondary);
 
 }
 
@@ -159,7 +166,8 @@
     font-size: 0.7rem;
     padding: 0 1ex;
     border-radius: 0.5ex;
-    background-color: var(--text-faint);
+    /* --text-muted, not --text-faint: #999 bg + white text is ~2.9:1 (sub-AA) */
+    background-color: var(--text-muted);
     color: var(--surface-0);
     line-height: 0.9rem;
     position: relative;
@@ -214,6 +222,11 @@
 .chiasm .close{
     float: right;
     color: var(--text-faint);
+    /* neutralize <button> chrome */
+    background: none;
+    border: 0;
+    padding: 0;
+    line-height: inherit;
 }
 .chiasm .close:hover{
     color: var(--text-primary);
@@ -260,10 +273,11 @@
 }
 
 
-.chiasmus_nav div
+.chiasmus_nav button
 {
     display: inline-block;
     padding: 10px 20px;
+    font-family: inherit;
     font-size: 14px;
     font-weight: 600;
     color: var(--text-secondary);
@@ -276,7 +290,7 @@
     transition: all 0.3s;
 }
 
-.chiasmus_nav div:hover {
+.chiasmus_nav button:hover {
     background-color: var(--control-hover);
     color: var(--text-primary);
 }
@@ -306,4 +320,12 @@
     padding: 0;
     width: 2rem;
     line-height: 50%;
+}
+
+.chiasmus_list .chiasmus:focus-visible,
+.chiasm .close:focus-visible,
+.chiasmus_nav button:focus-visible,
+.depth_filter .btn:focus-visible {
+    outline: 2px solid var(--link);
+    outline-offset: 2px;
 }

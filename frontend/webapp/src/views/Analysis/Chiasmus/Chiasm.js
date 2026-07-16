@@ -86,7 +86,7 @@ function Chiasm({chiasm_id, setChiasmusId, closeChiasm, nextId, prevId}) {
 
     return <div className="chiasm">
         <h4 className="title text-center title">{title || t("untitled_chiasm", "Untitled")}
-            <span className="close noselect" onClick={closeChiasm}>×</span>
+            <button type="button" className="close noselect" aria-label={t("close", "Close")} onClick={closeChiasm}>×</button>
         </h4>
         <h4 className="title text-center reference">{reference}</h4>
         <div className="chiasmus_lines" onMouseLeave={()=>setActiveScheme(null)}>
@@ -96,8 +96,8 @@ function Chiasm({chiasm_id, setChiasmusId, closeChiasm, nextId, prevId}) {
         </div>
 
         <div  className="chiasmus_nav noselect">
-        <div onClick={()=>setChiasmusId(prevId)}>⬅ {t("previous", "Previous")}</div>
-        <div onClick={()=>setChiasmusId(nextId)}>{t("next", "Next")} ⮕</div>
+        <button type="button" onClick={()=>setChiasmusId(prevId)}>⬅ {t("previous", "Previous")}</button>
+        <button type="button" onClick={()=>setChiasmusId(nextId)}>{t("next", "Next")} ⮕</button>
         </div>
     </div>
         

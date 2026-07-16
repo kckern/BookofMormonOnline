@@ -96,6 +96,8 @@ function DepthFilter({depthCounts, categoryCounts, chiasmusControls, toggleButto
                 <Fragment key={depth}>
                     <Button
                         className={chiasmusControls.filteredLevels.includes(isNaN(depth) ? depth : parseInt(depth)) ? 'filtered' : ''}
+                        aria-pressed={!chiasmusControls.filteredLevels.includes(isNaN(depth) ? depth : parseInt(depth))}
+                        title={t("toggle_level_visibility", "Show/hide this level")}
                         onClick={() => toggleButton(depth)}>
                             <div className="counter">{depthCounts[depth]}</div>
                             {depth}
@@ -103,13 +105,13 @@ function DepthFilter({depthCounts, categoryCounts, chiasmusControls, toggleButto
                 </Fragment>
             ))}
             <div className="filter_label">{t("biblical", "Biblical")}</div>
-            <Button className={chiasmusControls.biblical ? 'filtered' : ''} onClick={toggleBiblical}>
+            <Button className={chiasmusControls.biblical ? 'filtered' : ''} aria-pressed={!chiasmusControls.biblical} title={t("toggle_biblical", "Show/hide chiasms in Bible-quotation passages")} onClick={toggleBiblical}>
             <div className="counter">{categoryCounts.biblical}</div>
             {/* unicode icons*/ !chiasmusControls.biblical ? '✓' : '✗' }
             </Button>
 
             <div className="filter_label">{t("compound", "Compound")}</div>
-            <Button className={chiasmusControls.compound ? 'filtered' : ''} onClick={toggleCompound}>
+            <Button className={chiasmusControls.compound ? 'filtered' : ''} aria-pressed={!chiasmusControls.compound} title={t("toggle_compound", "Show/hide compound chiasms")} onClick={toggleCompound}>
             <div className="counter">{categoryCounts.compound}</div>
 
             {/* unicode icons*/ !chiasmusControls.compound ? '✓' : '✗' }
@@ -121,10 +123,10 @@ function DepthFilter({depthCounts, categoryCounts, chiasmusControls, toggleButto
 const ChiasmCard = memo(function ChiasmCard({ chiasm, active, onSelect }) {
     const { chiasmus_id, reference, depthBucket, title } = chiasm;
     return (
-        <div onClick={() => onSelect(chiasmus_id)} className={`chiasmus ${active ? "active" : ""}`}>
+        <button type="button" onClick={() => onSelect(chiasmus_id)} className={`chiasmus ${active ? "active" : ""}`} aria-pressed={active}>
             <div className="title"> {title || t("untitled_chiasm", "Untitled")}<span className="depth">{depthBucket}</span></div>
             <div className="reference">{reference}</div>
-        </div>
+        </button>
     );
 });
 
@@ -225,6 +227,8 @@ function Container() {
 
 
         const handleKeyDown = e => {
+            // don't hijack arrows/Escape while the user is typing in a form field
+            if (e.target.closest?.("input, textarea, select, [contenteditable]")) return;
             if(e.key === "ArrowRight") navigateChiasmus(1);
             if(e.key === "ArrowLeft") navigateChiasmus(-1);
             if(e.key === "Escape") closeChiasm();
