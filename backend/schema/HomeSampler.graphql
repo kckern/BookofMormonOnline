@@ -19,6 +19,8 @@ type HomeSampler {
   text: TextBlock
   faxPages: [FaxPageRef]
   faxMore: [Fax]
+  art: [ArtImage]
+  witnesses: [Witness]
   peopleCount: Int
   placesCount: Int
 }
@@ -26,4 +28,21 @@ type HomeSampler {
 type FaxPageRef {
   page: Int
   ref: String
+}
+
+type ArtImage {
+  id: Int
+  title: String
+  artist: String
+  width: Int
+  height: Int
+  ref: String
+}
+
+type Witness {
+  slug: String
+  witnessSlug: String
+  principal: String
+  statement: String
+  source: String
 }

@@ -98,6 +98,83 @@ const sampleFaxMore = async (ctx: AppContext, seed: number) => {
   return Array.from({ length: Math.min(4, sorted.length) }, (_, i) => sorted[(start + i) % sorted.length]);
 };
 
+// Standalone artwork for image tiles — landscape-ish pieces read best in a
+// tile, so prefer wider-than-tall; carry title/artist for the caption.
+const sampleArt = async (ctx: AppContext, seed: number) => {
+  // JOIN the piece's location to bom_text so we can show the scripture it
+  // illustrates (heading) and deep-link into that passage.
+  const rows = await ctx.db
+    .selectFrom('bom_xtras_image')
+    .leftJoin('bom_text', 'bom_text.guid', 'bom_xtras_image.location_guid')
+    .select([
+      'bom_xtras_image.id as id',
+      'bom_xtras_image.title as title',
+      'bom_xtras_image.artist as artist',
+      'bom_xtras_image.width as width',
+      'bom_xtras_image.height as height',
+      'bom_text.heading as ref',
+    ])
+    .where('bom_xtras_image.file', 'is not', null)
+    .where(sql<boolean>`bom_xtras_image.width > 0 AND bom_xtras_image.height > 0`)
+    .orderBy(seededOrder('bom_xtras_image.id', seed))
+    .limit(8)
+    .execute();
+  return rows.map((r) => ({
+    id: Number(r.id),
+    title: r.title || null,
+    artist: r.artist || null,
+    width: Number(r.width) || null,
+    height: Number(r.height) || null,
+    ref: r.ref || null,
+  }));
+};
+
+// Book of Mormon witness statements (Harris, Cowdery, the Whitmers, the Three
+// Witnesses…) from the 'witnesses' history archive. Returns the principal, a
+// short statement, and a source line. No portrait assets exist for these
+// figures, so the tile renders a monogram — see docs if that changes.
+// principal → the Witnesses-view slug (portraits live at
+// /history/witnesses/people/<slug>.jpg, deep link at /history/witnesses/<slug>)
+const WITNESS_SLUG: Record<string, string> = {
+  'Martin Harris': 'martin-harris',
+  'Oliver Cowdery': 'oliver-cowdery',
+  'David Whitmer': 'david-whitmer',
+  'John Whitmer': 'john-whitmer',
+  'Hyrum Smith': 'hyrum-smith',
+  'Samuel H. Smith': 'samuel-smith',
+};
+const WITNESS_PRINCIPALS = Object.keys(WITNESS_SLUG);
+const sampleWitnesses = async (ctx: AppContext, seed: number) => {
+  const rows = await ctx.db
+    .selectFrom('bom_xtras_history')
+    .select(['slug', 'principal', 'author', 'citation', 'teaser', 'transcript', 'metadata'])
+    .where('archive', '=', 'witnesses')
+    .where('principal', 'in', WITNESS_PRINCIPALS)
+    .where(sql<boolean>`(CHAR_LENGTH(teaser) > 20 OR CHAR_LENGTH(transcript) > 40)`)
+    .orderBy(seededOrder('slug', seed))
+    .limit(40)
+    .execute();
+  // one statement per principal → variety, not three Whitmers in a row
+  const byPrincipal = new Map<string, (typeof rows)[number]>();
+  for (const r of rows) {
+    if (!byPrincipal.has(String(r.principal))) byPrincipal.set(String(r.principal), r);
+  }
+  return [...byPrincipal.values()].slice(0, 3).map((r) => {
+    let reference: string | null = null;
+    try {
+      const meta = typeof r.metadata === 'string' ? JSON.parse(r.metadata) : (r.metadata as Record<string, unknown> | null);
+      reference = (meta?.reference as string) || null;
+    } catch { /* metadata may be absent/invalid */ }
+    return {
+      slug: r.slug,
+      witnessSlug: WITNESS_SLUG[String(r.principal)] || null,
+      principal: r.principal,
+      statement: r.teaser || r.transcript || null,
+      source: reference || r.citation || r.author || null,
+    };
+  });
+};
+
 const countRows = (table: 'bom_people' | 'bom_places') => async (ctx: AppContext) => {
   const r = await ctx.db
     .selectFrom(table)
@@ -225,6 +302,8 @@ const samplers: Record<string, (ctx: AppContext, seed: number) => Promise<unknow
   text: sampleText,
   faxPages: sampleFaxPages,
   faxMore: sampleFaxMore,
+  art: sampleArt,
+  witnesses: sampleWitnesses,
   peopleCount: countRows('bom_people'),
   placesCount: countRows('bom_places'),
 };

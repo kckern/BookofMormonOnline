@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import { label, replaceNumbers } from "src/models/Utils";
-import pin from "src/views/_Common/svg/map-pin.svg";
+import pin from "src/views/_Common/svg/map-icon.svg";
 import RefPill from "./RefPill";
 import { clampWords, flatten } from "./textUtils";
 
@@ -48,10 +48,17 @@ export default function PlacesTile({ data, seed = 0, payload }) {
                   <img src={pin} alt="" />
                 </Link>
               </div>
-              {ref ? (
+              {(p.description || ref) ? (
                 <div className="placesTileInfo samplerCardBody">
-                  <RefPill refText={ref} />
-                  {item?.text ? <> {clampWords(flatten(item.text), 12)}</> : null}
+                  {p.description ? (
+                    <span className="placesTileDesc">{clampWords(flatten(p.description), 16)}</span>
+                  ) : null}
+                  {ref ? (
+                    <span className="placesTileIndexRow">
+                      <RefPill refText={ref} />
+                      {item?.text ? <> {clampWords(flatten(item.text), 10)}</> : null}
+                    </span>
+                  ) : null}
                 </div>
               ) : null}
             </div>

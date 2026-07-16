@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import { label } from "src/models/Utils";
@@ -13,19 +13,34 @@ const stripTags = (html) =>
   (html || "").replace(/<[^>]*>/gi, " ").replace(/\s+/g, " ").trim();
 
 /**
- * Commentary sample. The body flows to a max height, then cuts with an inline
- * "read more" that expands the DOM in place (NOT a navigation). "See in
- * context" is the separate, explicit action that takes you into the app.
+ * Commentary sample. The body is clamped to MATCH the right column's height
+ * (cover + attribution + cue) so the columns balance and the read-more pill
+ * lands at the visual bottom with no dead space. Read-more expands the DOM in
+ * place (not a nav); "See in context" is the separate action into the app.
  */
 export default function CommentaryTile({ data }) {
+  const asideRef = useRef(null);
   const bodyRef = useRef(null);
+  const [maxH, setMaxH] = useState(null);
   const [truncated, setTruncated] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const text = stripTags(data?.text || data?.preview);
-  useEffect(() => {
-    const el = bodyRef.current;
-    if (el && !expanded) setTruncated(el.scrollHeight > el.clientHeight + 2);
+
+  // Match the excerpt's clamp height to the aside column so both sides bottom
+  // out together; then detect whether the text actually overflows that height.
+  useLayoutEffect(() => {
+    if (expanded) return;
+    const aside = asideRef.current;
+    const body = bodyRef.current;
+    if (!aside || !body) return;
+    const avail = aside.offsetHeight - (body.offsetTop - aside.offsetTop >= 0 ? 0 : 0);
+    // clamp height = aside height minus the title above the excerpt
+    const titleH = body.previousElementSibling ? body.previousElementSibling.offsetHeight + 6 : 0;
+    const target = Math.max(72, aside.offsetHeight - titleH - 26); // 26 ≈ read-more row
+    setMaxH(target);
+    setTruncated(body.scrollHeight > target + 2);
   }, [text, expanded]);
+
   if (!data?.id) return null;
   const pub = data.publication || {};
   const author = [pub.source_name, pub.source_title].filter(Boolean).join(", ");
@@ -40,27 +55,22 @@ export default function CommentaryTile({ data }) {
       <h3 className="tileHeading">{label("commentary")}</h3>
       <div className="commentaryTileBody">
         <div className="commentaryTileMain">
-          {/* header flush top-left — links into the app */}
           <Link to={to} className="commentaryTileTitle">{enDash(data.title)}</Link>
-          {/* flows to a max height, then read-more expands inline (no nav) */}
-          {/* scripture references in the body are detected + clickable */}
           <p
             ref={bodyRef}
             className={`commentaryTileExcerpt${expanded ? " expanded" : ""}`}
+            style={!expanded && maxH ? { maxHeight: maxH } : undefined}
           >
             {Parser(getDetectedScripturesHtml(text), scriptureOpts)}
           </p>
           {truncated && !expanded ? (
-            <button
-              className="commentaryTileReadMore readMoreBtn"
-              onClick={() => setExpanded(true)}
-            >
+            <button className="commentaryReadMorePill" onClick={() => setExpanded(true)}>
               {label("read_more")}
             </button>
           ) : null}
         </div>
         {/* right column: scripture ref ABOVE the cover, then attribution + cue */}
-        <div className="commentaryTileAside">
+        <div className="commentaryTileAside" ref={asideRef}>
           {data.reference ? (
             <span className="commentaryTileRef scripture_link" role="button" tabIndex={0} onClick={openRef}>
               {enDash(data.reference)}

@@ -18,6 +18,16 @@ export type Scalars = {
   JSON: { input: unknown; output: unknown; }
 };
 
+export type ArtImage = {
+  __typename?: 'ArtImage';
+  artist?: Maybe<Scalars['String']['output']>;
+  height?: Maybe<Scalars['Int']['output']>;
+  id?: Maybe<Scalars['Int']['output']>;
+  ref?: Maybe<Scalars['String']['output']>;
+  title?: Maybe<Scalars['String']['output']>;
+  width?: Maybe<Scalars['Int']['output']>;
+};
+
 export type Book = {
   __typename?: 'Book';
   book?: Maybe<Scalars['String']['output']>;
@@ -258,6 +268,7 @@ export type HomeGroup = {
 
 export type HomeSampler = {
   __typename?: 'HomeSampler';
+  art?: Maybe<Array<Maybe<ArtImage>>>;
   commentaries?: Maybe<Array<Maybe<Commentary>>>;
   commentary?: Maybe<Commentary>;
   contents?: Maybe<Division>;
@@ -273,6 +284,7 @@ export type HomeSampler = {
   sectionNext?: Maybe<Section>;
   seed?: Maybe<Scalars['Int']['output']>;
   text?: Maybe<TextBlock>;
+  witnesses?: Maybe<Array<Maybe<Witness>>>;
 };
 
 export type HomeUser = {
@@ -1853,6 +1865,15 @@ export type UserStudySummary = {
   first?: Maybe<Scalars['Float']['output']>;
 };
 
+export type Witness = {
+  __typename?: 'Witness';
+  principal?: Maybe<Scalars['String']['output']>;
+  slug?: Maybe<Scalars['String']['output']>;
+  source?: Maybe<Scalars['String']['output']>;
+  statement?: Maybe<Scalars['String']['output']>;
+  witnessSlug?: Maybe<Scalars['String']['output']>;
+};
+
 export type Xrel = {
   __typename?: 'Xrel';
   dst_name?: Maybe<Scalars['String']['output']>;
@@ -1936,6 +1957,7 @@ export type DirectiveResolverFn<TResult = {}, TParent = {}, TContext = {}, TArgs
 
 /** Mapping between all available schema types and the resolvers types */
 export type ResolversTypes = {
+  ArtImage: ResolverTypeWrapper<Partial<ArtImage>>;
   Book: ResolverTypeWrapper<Partial<Book>>;
   Boolean: ResolverTypeWrapper<Partial<Scalars['Boolean']['output']>>;
   Bot: ResolverTypeWrapper<Partial<Bot>>;
@@ -2043,11 +2065,13 @@ export type ResolversTypes = {
   UserHistory: ResolverTypeWrapper<Partial<UserHistory>>;
   UserSession: ResolverTypeWrapper<Partial<UserSession>>;
   UserStudySummary: ResolverTypeWrapper<Partial<UserStudySummary>>;
+  Witness: ResolverTypeWrapper<Partial<Witness>>;
   Xrel: ResolverTypeWrapper<Partial<Xrel>>;
 };
 
 /** Mapping between all available schema types and the resolvers parents */
 export type ResolversParentTypes = {
+  ArtImage: Partial<ArtImage>;
   Book: Partial<Book>;
   Boolean: Partial<Scalars['Boolean']['output']>;
   Bot: Partial<Bot>;
@@ -2154,7 +2178,18 @@ export type ResolversParentTypes = {
   UserHistory: Partial<UserHistory>;
   UserSession: Partial<UserSession>;
   UserStudySummary: Partial<UserStudySummary>;
+  Witness: Partial<Witness>;
   Xrel: Partial<Xrel>;
+};
+
+export type ArtImageResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['ArtImage'] = ResolversParentTypes['ArtImage']> = {
+  artist?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  height?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  id?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  ref?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  title?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  width?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type BookResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['Book'] = ResolversParentTypes['Book']> = {
@@ -2375,6 +2410,7 @@ export type HomeGroupResolvers<ContextType = AppContext, ParentType extends Reso
 };
 
 export type HomeSamplerResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['HomeSampler'] = ResolversParentTypes['HomeSampler']> = {
+  art?: Resolver<Maybe<Array<Maybe<ResolversTypes['ArtImage']>>>, ParentType, ContextType>;
   commentaries?: Resolver<Maybe<Array<Maybe<ResolversTypes['Commentary']>>>, ParentType, ContextType>;
   commentary?: Resolver<Maybe<ResolversTypes['Commentary']>, ParentType, ContextType>;
   contents?: Resolver<Maybe<ResolversTypes['Division']>, ParentType, ContextType>;
@@ -2390,6 +2426,7 @@ export type HomeSamplerResolvers<ContextType = AppContext, ParentType extends Re
   sectionNext?: Resolver<Maybe<ResolversTypes['Section']>, ParentType, ContextType>;
   seed?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   text?: Resolver<Maybe<ResolversTypes['TextBlock']>, ParentType, ContextType>;
+  witnesses?: Resolver<Maybe<Array<Maybe<ResolversTypes['Witness']>>>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -3336,6 +3373,15 @@ export type UserStudySummaryResolvers<ContextType = AppContext, ParentType exten
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type WitnessResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['Witness'] = ResolversParentTypes['Witness']> = {
+  principal?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  slug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  source?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  statement?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  witnessSlug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type XrelResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['Xrel'] = ResolversParentTypes['Xrel']> = {
   dst_name?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   dst_slug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -3349,6 +3395,7 @@ export type XrelResolvers<ContextType = AppContext, ParentType extends Resolvers
 };
 
 export type Resolvers<ContextType = AppContext> = {
+  ArtImage?: ArtImageResolvers<ContextType>;
   Book?: BookResolvers<ContextType>;
   Bot?: BotResolvers<ContextType>;
   Caps?: CapsResolvers<ContextType>;
@@ -3448,6 +3495,7 @@ export type Resolvers<ContextType = AppContext> = {
   UserHistory?: UserHistoryResolvers<ContextType>;
   UserSession?: UserSessionResolvers<ContextType>;
   UserStudySummary?: UserStudySummaryResolvers<ContextType>;
+  Witness?: WitnessResolvers<ContextType>;
   Xrel?: XrelResolvers<ContextType>;
 };
 

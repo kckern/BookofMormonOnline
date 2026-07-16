@@ -10,6 +10,7 @@ import ReadingPlanTile from "./ReadingPlanTile";
 import CommunityTile from "./CommunityTile";
 import BiblePhrasesTile from "./BiblePhrasesTile";
 import ChiasmusTile from "./ChiasmusTile";
+import ImageArtTile from "./ImageArtTile";
 
 /**
  * Sampler tile registry. Adding a tile type:
@@ -39,4 +40,6 @@ export const tileRegistry = [
   // payload.seed) — no homesampler field, so they're always "ready".
   { key: "biblephrases", component: BiblePhrasesTile, span: "tile-biblephrases", isReady: () => true },
   { key: "chiasmus",    component: ChiasmusTile,    span: "tile-chiasmus",    isReady: () => true },
+  // one standalone artwork in the default rotation; more are held in reserve
+  { key: "art",         component: ImageArtTile,    span: "tile-art",         isReady: (p) => (p?.art?.length || 0) > 0 },
 ];

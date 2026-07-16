@@ -35,8 +35,8 @@ function NarrationList({ section }) {
     <Link to={`/${n.text?.slug || section.slug}`} key={n.guid} className="narrationItem">
       <img src={statusDot[n.text?.status] || blank} alt="" className="narrationDot" />
       <span className="narrationText">
-        {flatten(n.description)}
         {n.text?.heading ? <RefPill refText={n.text.heading} /> : null}
+        {flatten(n.description)}
       </span>
     </Link>
   ));

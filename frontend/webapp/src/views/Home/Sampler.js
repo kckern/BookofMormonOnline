@@ -1,12 +1,34 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import { useAppController } from "src/contexts/AppControllerContext";
 import { label } from "src/models/Utils";
 import Masonry from "react-masonry-css";
 import { tileRegistry } from "./tiles/registry";
+import PersonProfileTile from "./tiles/PersonProfileTile";
+import PlaceProfileTile from "./tiles/PlaceProfileTile";
+import WitnessTile from "./tiles/WitnessTile";
+import ImageArtTile from "./tiles/ImageArtTile";
+import ChiasmusTile from "./tiles/ChiasmusTile";
+import MapTile from "./tiles/MapTile";
 import "./Sampler.css";
 import "./Sampler.m.css";
+
+// Reserve tiles: NOT rendered by default. The balancer measures the left rail
+// against the masonry and inserts reserves onto the shorter side until the two
+// bottom out together. Cheap/relevant tiles first; the map (heavy, lazy) last
+// and always into the masonry (below the fold). `data` names a payload field
+// the tile reads via its `data` prop; profiles/art read the whole payload.
+const RESERVE_POOL = [
+  { key: "personProfile", component: PersonProfileTile, isReady: (p) => (p?.people?.length || 0) > 14 },
+  { key: "witness",       component: WitnessTile,       dataKey: "witnesses", isReady: (p) => (p?.witnesses?.length || 0) > 0 },
+  { key: "placeProfile",  component: PlaceProfileTile,  isReady: (p) => (p?.places?.length || 0) > 11 },
+  { key: "artFill1",      component: ImageArtTile,      props: { artIndex: 1 }, isReady: (p) => (p?.art?.length || 0) > 1 },
+  { key: "chiasmus2",     component: ChiasmusTile,      props: { seed: 0 }, seedOffset: 97, isReady: () => true },
+  { key: "artFill2",      component: ImageArtTile,      props: { artIndex: 2 }, isReady: (p) => (p?.art?.length || 0) > 2 },
+  { key: "map",           component: MapTile,           isReady: () => true, mainOnly: true },
+];
+const MAX_RESERVES = 5;
 
 /** Session-stable seed: same page on refresh/back, new sample next session. */
 const getSessionSeed = () => {
@@ -83,6 +105,13 @@ export default function Sampler() {
   const [variableTiles, setVariableTiles] = useState(() =>
     shuffle(tileRegistry.filter((t) => !FIXED_LEFT.includes(t.key) && !FIXED_TOP.includes(t.key))),
   );
+  // Reserve tiles activated by the balancer: [{ key, side: "rail"|"main" }].
+  const [reserves, setReserves] = useState([]);
+  // Bumped a few times after load so the balancer re-measures once async
+  // content (images, lazy tiles) has reflowed the columns.
+  const [settleTick, setSettleTick] = useState(0);
+  const railRef = useRef(null);
+  const mainRef = useRef(null);
 
   // Break the session-stable seed on demand: fresh content + refitted variables.
   const resample = () => {
@@ -90,8 +119,53 @@ export default function Sampler() {
     sessionStorage.setItem("samplerSeed", String(next));
     setPayload(null);
     setFailed(false);
+    setReserves([]);
     setVariableTiles(shuffle(tileRegistry.filter((t) => !FIXED_LEFT.includes(t.key) && !FIXED_TOP.includes(t.key))));
     setSeed(next);
+  };
+
+  // ---- reserve balancing ---------------------------------------------------
+  // Measure the rail vs the masonry after each layout; if one column is
+  // meaningfully shorter, pull in the next eligible reserve tile on that side
+  // and re-measure. Converges when the columns bottom out together (or the
+  // pool/cap is hit). The map is masonry-only, so it lands below the fold.
+  useLayoutEffect(() => {
+    if (!payload || reserves.length >= MAX_RESERVES) return;
+    const railH = railRef.current?.offsetHeight || 0;
+    const mainH = mainRef.current?.offsetHeight || 0;
+    if (!railH || !mainH) return;
+    const delta = mainH - railH; // >0 → masonry taller, rail is short
+    const THRESHOLD = 160; // px; below this the columns read as balanced
+    if (Math.abs(delta) < THRESHOLD) return;
+    const shorter = delta > 0 ? "rail" : "main";
+    const used = new Set(reserves.map((r) => r.key));
+    const next = RESERVE_POOL.find(
+      (r) => !used.has(r.key) && r.isReady(payload) && !(r.mainOnly && shorter === "rail"),
+    );
+    if (!next) return;
+    setReserves((prev) => [...prev, { key: next.key, side: next.mainOnly ? "main" : shorter }]);
+  }, [payload, reserves, settleTick]);
+
+  // Re-measure a few times after load: images and the lazy map change column
+  // heights after the first paint, so a single measurement can converge early.
+  useEffect(() => {
+    if (!payload) return undefined;
+    const timers = [400, 1200, 2600].map((ms) => setTimeout(() => setSettleTick((t) => t + 1), ms));
+    return () => timers.forEach(clearTimeout);
+  }, [payload]);
+
+  const renderReserve = ({ key }) => {
+    const def = RESERVE_POOL.find((r) => r.key === key);
+    if (!def || !payload) return null;
+    const Tile = def.component;
+    const props = { ...(def.props || {}), payload };
+    if (def.dataKey) props.data = payload[def.dataKey];
+    if (def.seedOffset) props.seed = (payload.seed || 0) + def.seedOffset;
+    return (
+      <div key={`reserve-${key}`} className={`tile tile-${key}`}>
+        <Tile {...props} />
+      </div>
+    );
   };
 
   useEffect(() => {
@@ -237,20 +311,25 @@ export default function Sampler() {
         </button>
       </div>
       <div className="samplerColumns">
-        <div className="samplerLeftRail">
+        <div className="samplerLeftRail" ref={railRef}>
           {leftTiles.map((t) => renderTile(t))}
           {railExtra.map((t) => renderTile(t))}
+          {reserves.filter((r) => r.side === "rail").map(renderReserve)}
         </div>
         {/* three top-level panels: rail | people (fixed) | masonry of the rest.
-            Masonry frees tile heights from each other — no row-matching voids. */}
-        <div className="samplerMain">
+            Masonry frees tile heights from each other — no row-matching voids.
+            Balancer reserves land on the shorter side; the map goes here, low. */}
+        <div className="samplerMain" ref={mainRef}>
           {topTiles.map((t) => renderTile(t))}
           <Masonry
             breakpointCols={{ default: 2, 800: 1 }}
             className="samplerMasonry"
             columnClassName="samplerMasonryCol"
           >
-            {orderedGrid.map((t) => renderTile(t)).filter(Boolean)}
+            {[
+              ...orderedGrid.map((t) => renderTile(t)),
+              ...reserves.filter((r) => r.side === "main").map(renderReserve),
+            ].filter(Boolean)}
           </Masonry>
         </div>
       </div>

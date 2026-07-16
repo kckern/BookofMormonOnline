@@ -474,10 +474,23 @@ html[data-theme="dark"] .placesTileName { color: #f0f0f0; }
 html[data-theme="dark"] .placesTileMapLink img { filter: invert(0.85); }
 .placesTileInfo {
   font-size: 0.64rem;
-  line-height: 1.2;
+  line-height: 1.25;
   color: #888;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.placesTileDesc {
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  color: #666;
+}
+html[data-theme="dark"] .placesTileDesc { color: #b0b0b0; }
+.placesTileIndexRow {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -1396,3 +1409,114 @@ html[data-theme="dark"] .faxTileEdition img { border-color: #444; background: #2
   margin-top: 0.2rem;
 }
 html[data-theme="dark"] .faxTileEdition { color: #9a9a9a; }
+
+
+/* narration beat: gap before the inline scripture ref chip */
+.narrationText .scripture_link { margin-right: 0.45rem; }
+
+/* commentary: main is a flex column so the read-more pill sits at the bottom */
+.commentaryTileMain { display: flex; flex-direction: column; }
+.commentaryTileExcerpt { overflow: hidden; }
+.commentaryReadMorePill {
+  align-self: center;
+  margin-top: auto;
+  padding-top: 0.35rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.24rem 0.7rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(52, 84, 150, 0.22);
+  background: rgba(52, 84, 150, 0.08);
+  color: #345496;
+  font-size: 0.68rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.commentaryReadMorePill:hover { background: rgba(52, 84, 150, 0.16); border-color: rgba(52, 84, 150, 0.4); }
+.commentaryReadMorePill::before {
+  content: "";
+  width: 0.95em;
+  height: 0.95em;
+  flex-shrink: 0;
+  background-color: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3C%3Fxml%20version%3D%221.0%22%20encoding%3D%22utf-8%22%3F%3E%20%3Csvg%20width%3D%22800px%22%20height%3D%22800px%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%20%3Cpath%20d%3D%22M12%207V13M12%2013L14%2011M12%2013L10%2011M4%2014H6.67452C7.1637%2014%207.40829%2014%207.63846%2014.0553C7.84254%2014.1043%208.03763%2014.1851%208.21657%2014.2947C8.4184%2014.4184%208.59136%2014.5914%208.93726%2014.9373L9.06274%2015.0627C9.40865%2015.4086%209.5816%2015.5816%209.78343%2015.7053C9.96237%2015.8149%2010.1575%2015.8957%2010.3615%2015.9447C10.5917%2016%2010.8363%2016%2011.3255%2016H12.6745C13.1637%2016%2013.4083%2016%2013.6385%2015.9447C13.8425%2015.8957%2014.0376%2015.8149%2014.2166%2015.7053C14.4184%2015.5816%2014.5914%2015.4086%2014.9373%2015.0627L15.0627%2014.9373C15.4086%2014.5914%2015.5816%2014.4184%2015.7834%2014.2947C15.9624%2014.1851%2016.1575%2014.1043%2016.3615%2014.0553C16.5917%2014%2016.8363%2014%2017.3255%2014H20M7.2%204H16.8C17.9201%204%2018.4802%204%2018.908%204.21799C19.2843%204.40973%2019.5903%204.71569%2019.782%205.09202C20%205.51984%2020%206.07989%2020%207.2V16.8C20%2017.9201%2020%2018.4802%2019.782%2018.908C19.5903%2019.2843%2019.2843%2019.5903%2018.908%2019.782C18.4802%2020%2017.9201%2020%2016.8%2020H7.2C6.0799%2020%205.51984%2020%205.09202%2019.782C4.71569%2019.5903%204.40973%2019.2843%204.21799%2018.908C4%2018.4802%204%2017.9201%204%2016.8V7.2C4%206.0799%204%205.51984%204.21799%205.09202C4.40973%204.71569%204.71569%204.40973%205.09202%204.21799C5.51984%204%206.0799%204%207.2%204Z%22%20stroke%3D%22%23000000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%20%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3C%3Fxml%20version%3D%221.0%22%20encoding%3D%22utf-8%22%3F%3E%20%3Csvg%20width%3D%22800px%22%20height%3D%22800px%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%20%3Cpath%20d%3D%22M12%207V13M12%2013L14%2011M12%2013L10%2011M4%2014H6.67452C7.1637%2014%207.40829%2014%207.63846%2014.0553C7.84254%2014.1043%208.03763%2014.1851%208.21657%2014.2947C8.4184%2014.4184%208.59136%2014.5914%208.93726%2014.9373L9.06274%2015.0627C9.40865%2015.4086%209.5816%2015.5816%209.78343%2015.7053C9.96237%2015.8149%2010.1575%2015.8957%2010.3615%2015.9447C10.5917%2016%2010.8363%2016%2011.3255%2016H12.6745C13.1637%2016%2013.4083%2016%2013.6385%2015.9447C13.8425%2015.8957%2014.0376%2015.8149%2014.2166%2015.7053C14.4184%2015.5816%2014.5914%2015.4086%2014.9373%2015.0627L15.0627%2014.9373C15.4086%2014.5914%2015.5816%2014.4184%2015.7834%2014.2947C15.9624%2014.1851%2016.1575%2014.1043%2016.3615%2014.0553C16.5917%2014%2016.8363%2014%2017.3255%2014H20M7.2%204H16.8C17.9201%204%2018.4802%204%2018.908%204.21799C19.2843%204.40973%2019.5903%204.71569%2019.782%205.09202C20%205.51984%2020%206.07989%2020%207.2V16.8C20%2017.9201%2020%2018.4802%2019.782%2018.908C19.5903%2019.2843%2019.2843%2019.5903%2018.908%2019.782C18.4802%2020%2017.9201%2020%2016.8%2020H7.2C6.0799%2020%205.51984%2020%205.09202%2019.782C4.71569%2019.5903%204.40973%2019.2843%204.21799%2018.908C4%2018.4802%204%2017.9201%204%2016.8V7.2C4%206.0799%204%205.51984%204.21799%205.09202C4.40973%204.71569%204.71569%204.40973%205.09202%204.21799C5.51984%204%206.0799%204%207.2%204Z%22%20stroke%3D%22%23000000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%20%3C/svg%3E") center / contain no-repeat;
+}
+html[data-theme="dark"] .commentaryReadMorePill { color: #93c6ef; background: rgba(147,198,239,0.12); border-color: rgba(147,198,239,0.28); }
+html[data-theme="dark"] .commentaryReadMorePill:hover { background: rgba(147,198,239,0.2); }
+
+/* ================================================================
+   IMAGE ART — standalone artwork tile (default + reserve fillers)
+   ================================================================ */
+.imageArtTile { padding: 0; overflow: hidden; }
+.imageArtFrame { width: 100%; overflow: hidden; background: #e8e6e1; }
+.imageArtFrame img { width: 100%; height: 100%; object-fit: cover; display: block; }
+html[data-theme="dark"] .imageArtFrame { background: #2c2c2c; }
+.imageArtCaption { padding: 0.5rem 0.7rem 0.6rem; display: flex; flex-direction: column; gap: 0.15rem; }
+.imageArtTitle { font-size: 0.8rem; font-weight: 700; line-height: 1.25; color: #2a2a2a; text-decoration: none; }
+.imageArtTitle:hover { color: #345496; }
+.imageArtRefRow { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.25rem; }
+.imageArtContext { margin-top: 0 !important; }
+.imageArtArtist { font-size: 0.66rem; font-style: italic; color: #888; }
+html[data-theme="dark"] .imageArtTitle { color: #f0f0f0; }
+html[data-theme="dark"] .imageArtArtist { color: #a0a0a0; }
+
+/* ================================================================
+   PLACE PROFILE — single place hero + description (reserve)
+   ================================================================ */
+.placeProfileHead { position: relative; margin-bottom: 0.5rem; }
+.placeProfileImgLink { display: block; position: relative; border-radius: 0.5rem; overflow: hidden; }
+.placeProfileHead img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; display: block; background: #e2e2e2; }
+html[data-theme="dark"] .placeProfileHead img { background: #333; }
+.placeProfileMapBtn { top: 0.4rem; right: 0.4rem; }
+.placeProfileDesc { font-size: 0.8rem; line-height: 1.45; color: #555; }
+html[data-theme="dark"] .placeProfileDesc { color: #c4c4c4; }
+
+/* ================================================================
+   MAP — lazy interactive map tile (reserve, below the fold)
+   ================================================================ */
+.mapTile { padding: 0.6rem 0.7rem 0.7rem; }
+.mapTileFrame {
+  position: relative;
+  width: 100%;
+  height: 16rem;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background: #dfe4e8;
+}
+html[data-theme="dark"] .mapTileFrame { background: #22282e; }
+.mapTileCanvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.mapTileLoading { display: flex; align-items: center; justify-content: center; height: 100%; color: #999; font-size: 1.4rem; }
+.mapTileCta { margin-top: 0.5rem; }
+
+/* ================================================================
+   WITNESS — Book of Mormon witness statements (reserve)
+   ================================================================ */
+.witnessList { display: flex; flex-direction: column; gap: 0.6rem; }
+.witnessRow { display: flex; gap: 0.6rem; align-items: flex-start; text-decoration: none; color: inherit; }
+.witnessAvatar {
+  position: relative;
+  flex-shrink: 0;
+  width: 2.7rem;
+  height: 2.7rem;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #6b5d47;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #d8d2c6;
+}
+.witnessAvatar img { width: 100%; height: 100%; object-fit: cover; display: block; position: relative; z-index: 1; }
+.witnessMono { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 0.8rem; z-index: 0; }
+html[data-theme="dark"] .witnessAvatar { background: #4a4033; border-color: #3a3a3a; }
+.witnessBody { min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; }
+.witnessName { font-size: 0.78rem; font-weight: 800; color: #2a2a2a; }
+html[data-theme="dark"] .witnessName { color: #f0f0f0; }
+.witnessStatement { font-size: 0.74rem; line-height: 1.35; color: #555; }
+html[data-theme="dark"] .witnessStatement { color: #c4c4c4; }
+.witnessSource { font-size: 0.62rem; font-style: italic; color: #999; margin-top: 0.1rem; }
+html[data-theme="dark"] .witnessSource { color: #8a8a8a; }
