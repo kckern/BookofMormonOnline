@@ -1,4 +1,4 @@
-import { FIELD_DEFS, emptyFilters, applyFilters, facetCounts, segmentName } from "./logic";
+import { FIELD_DEFS, emptyFilters, applyFilters, facetCounts, segmentName, filtersToQuery, queryToFilters } from "./logic";
 
 const fixture = [
   { name: "Moroni", types: ["person", "place"], cultures: ["Nephite"], prefix: null, stems: ["Mor"], affix: "~on~", suffix: "~i", note: null },
@@ -66,5 +66,22 @@ describe("segmentName", () => {
   });
   it("returns single whole-name stem span", () => {
     expect(seg({ name: "Shiz", stems: ["Shiz"] })).toEqual([{ text: "Shiz", role: "stem" }]);
+  });
+});
+
+describe("querystring codec", () => {
+  it("round-trips filters", () => {
+    const f = { ...emptyFilters(), stems: ["Mor", "Cum"], cultures: ["Jaredite"], prefix: ["Am~"] };
+    expect(queryToFilters(filtersToQuery(f))).toEqual(f);
+  });
+  it("omits empty facets and returns empty string for no filters", () => {
+    expect(filtersToQuery(emptyFilters())).toBe("");
+  });
+  it("ignores unknown params", () => {
+    expect(queryToFilters("?stem=Mor&foo=1").stems).toEqual(["Mor"]);
+  });
+  it("encodes tildes safely", () => {
+    const f = { ...emptyFilters(), suffix: ["~iah"] };
+    expect(queryToFilters(filtersToQuery(f)).suffix).toEqual(["~iah"]);
   });
 });

@@ -63,3 +63,21 @@ export const segmentName = (entry) => {
   }
   return spans;
 };
+
+export const filtersToQuery = (filters) => {
+  const p = new URLSearchParams();
+  for (const f of FIELD_DEFS)
+    if (filters[f.key].length) p.set(f.qs, filters[f.key].join(","));
+  const s = p.toString();
+  return s ? "?" + s : "";
+};
+
+export const queryToFilters = (search) => {
+  const p = new URLSearchParams(search);
+  const filters = emptyFilters();
+  for (const f of FIELD_DEFS) {
+    const raw = p.get(f.qs);
+    if (raw) filters[f.key] = raw.split(",").filter(Boolean);
+  }
+  return filters;
+};
