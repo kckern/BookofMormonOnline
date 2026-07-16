@@ -3,6 +3,7 @@ extend type Query {
   people(slug: [String]): [People]
   peoplenetwork: PeopleNetwork
   place(slug: [String]): [Place]
+  group(slug: [String]): [Group]
   places(map: [String]): [Place]
   maps(slug: [String]): [Map]
   mapstory(slug: String, map: String): [MapStory]
@@ -22,6 +23,17 @@ type People {
   description: String
   index: [Index]
   relations: [Relation]
+  xrels: [Xrel]
+}
+
+"""
+Synthesized entity: groups exist only as bom_xrels destinations (79 slugs,
+no table), so a Group is its slug, a de-slugged display name, and its
+reverse-direction relationships.
+"""
+type Group {
+  slug: String
+  name: String
   xrels: [Xrel]
 }
 

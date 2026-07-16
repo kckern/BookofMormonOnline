@@ -9,6 +9,14 @@ function getSlugTip(slug: string): string {
   return slug.split('/').pop() ?? slug;
 }
 
+/** Groups have no table — display name is the title-cased slug ("mulekites" → "Mulekites"). */
+function deSlugGroupName(slug: string): string {
+  return slug
+    .split('-')
+    .map((word) => (word ? word.charAt(0).toUpperCase() + word.slice(1) : word))
+    .join(' ');
+}
+
 /** Resolve translated value via core translation loader. */
 const translated = async (ctx: AppContext, guid: string, refkey: string, base: string | null): Promise<string | null> =>
   (await ctx.loaders.translation.load({ guid, refkey })) ?? base;
@@ -39,6 +47,24 @@ export const peopleplacesResolvers: Resolvers = {
       // No slug → full list (legacy returns all places).
       if (!slugs.length) return ctx.loaders.allPlaces() as unknown as never[];
       return ctx.loaders.placesBySlugs(slugs) as unknown as never[];
+    },
+
+    /**
+     * group — synthesized entity: no table backs groups, so each slug becomes
+     * { slug, de-slugged name, reverse xrels } iff at least one xrel row points at it.
+     */
+    group: async (_root, args, ctx) => {
+      const slugs = (args.slug ?? [])
+        .filter((s): s is string => s !== null)
+        .map(getSlugTip);
+      // A group "exists" iff at least one xrel row points at it.
+      const results = await Promise.all(
+        slugs.map(async (slug) => {
+          const xrels = await ctx.loaders.xrelsByDstEntity.load({ type: 'group', slug });
+          return xrels.length ? { slug, name: deSlugGroupName(slug), xrels } : null;
+        })
+      );
+      return results.filter(Boolean) as unknown as never[];
     },
   },
 

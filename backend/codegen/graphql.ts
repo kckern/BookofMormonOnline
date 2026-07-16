@@ -236,6 +236,18 @@ export type FaxVersePage = {
   version?: Maybe<Scalars['String']['output']>;
 };
 
+/**
+ * Synthesized entity: groups exist only as bom_xrels destinations (79 slugs,
+ * no table), so a Group is its slug, a de-slugged display name, and its
+ * reverse-direction relationships.
+ */
+export type Group = {
+  __typename?: 'Group';
+  name?: Maybe<Scalars['String']['output']>;
+  slug?: Maybe<Scalars['String']['output']>;
+  xrels?: Maybe<Array<Maybe<Xrel>>>;
+};
+
 export type HighlightRange = {
   __typename?: 'HighlightRange';
   end?: Maybe<Scalars['Int']['output']>;
@@ -1039,6 +1051,7 @@ export type Query = {
   fax?: Maybe<Array<Maybe<Fax>>>;
   faxIndex?: Maybe<FaxIndex>;
   generateToken?: Maybe<Scalars['String']['output']>;
+  group?: Maybe<Array<Maybe<Group>>>;
   highlight?: Maybe<HighlightRange>;
   history?: Maybe<Array<Maybe<HistoricalDocument>>>;
   homefeed?: Maybe<HomeFeed>;
@@ -1155,6 +1168,11 @@ export type QueryFaxIndexArgs = {
 
 export type QueryGenerateTokenArgs = {
   seed?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryGroupArgs = {
+  slug?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
 };
 
 
@@ -2077,6 +2095,7 @@ export type ResolversTypes = {
   FaxPageRef: ResolverTypeWrapper<Partial<FaxPageRef>>;
   FaxVersePage: ResolverTypeWrapper<Partial<FaxVersePage>>;
   Float: ResolverTypeWrapper<Partial<Scalars['Float']['output']>>;
+  Group: ResolverTypeWrapper<Partial<Group>>;
   HighlightRange: ResolverTypeWrapper<Partial<HighlightRange>>;
   HistoricalDocument: ResolverTypeWrapper<Partial<HistoricalDocument>>;
   HomeFeed: ResolverTypeWrapper<Partial<HomeFeed>>;
@@ -2199,6 +2218,7 @@ export type ResolversParentTypes = {
   FaxPageRef: Partial<FaxPageRef>;
   FaxVersePage: Partial<FaxVersePage>;
   Float: Partial<Scalars['Float']['output']>;
+  Group: Partial<Group>;
   HighlightRange: Partial<HighlightRange>;
   HistoricalDocument: Partial<HistoricalDocument>;
   HomeFeed: Partial<HomeFeed>;
@@ -2491,6 +2511,13 @@ export type FaxVersePageResolvers<ContextType = AppContext, ParentType extends R
   title?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   verseId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   version?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type GroupResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['Group'] = ResolversParentTypes['Group']> = {
+  name?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  slug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  xrels?: Resolver<Maybe<Array<Maybe<ResolversTypes['Xrel']>>>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -3085,6 +3112,7 @@ export type QueryResolvers<ContextType = AppContext, ParentType extends Resolver
   fax?: Resolver<Maybe<Array<Maybe<ResolversTypes['Fax']>>>, ParentType, ContextType, Partial<QueryFaxArgs>>;
   faxIndex?: Resolver<Maybe<ResolversTypes['FaxIndex']>, ParentType, ContextType, Partial<QueryFaxIndexArgs>>;
   generateToken?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, Partial<QueryGenerateTokenArgs>>;
+  group?: Resolver<Maybe<Array<Maybe<ResolversTypes['Group']>>>, ParentType, ContextType, Partial<QueryGroupArgs>>;
   highlight?: Resolver<Maybe<ResolversTypes['HighlightRange']>, ParentType, ContextType, RequireFields<QueryHighlightArgs, 'query' | 'text'>>;
   history?: Resolver<Maybe<Array<Maybe<ResolversTypes['HistoricalDocument']>>>, ParentType, ContextType, Partial<QueryHistoryArgs>>;
   homefeed?: Resolver<Maybe<ResolversTypes['HomeFeed']>, ParentType, ContextType, Partial<QueryHomefeedArgs>>;
@@ -3618,6 +3646,7 @@ export type Resolvers<ContextType = AppContext> = {
   FaxIndex?: FaxIndexResolvers<ContextType>;
   FaxPageRef?: FaxPageRefResolvers<ContextType>;
   FaxVersePage?: FaxVersePageResolvers<ContextType>;
+  Group?: GroupResolvers<ContextType>;
   HighlightRange?: HighlightRangeResolvers<ContextType>;
   HistoricalDocument?: HistoricalDocumentResolvers<ContextType>;
   HomeFeed?: HomeFeedResolvers<ContextType>;
