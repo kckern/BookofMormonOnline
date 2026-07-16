@@ -942,28 +942,29 @@ html[data-theme="dark"] .narrationNextTitle { border-top-color: #3a3a3a; }
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem;
-  justify-content: space-between;
+  justify-content: space-around;
   align-items: center;
   margin: 0.15rem 0 0.5rem;
 }
-/* honor each image's OWN aspect ratio — fixed strip height, natural width,
-   NO blanket crop. Space-between distributes them across the strip; images
-   wrap to a second line rather than overflow. */
+.narrationArtLink { display: inline-flex; }
+/* honor each image's OWN aspect ratio — fixed strip height, natural width
+   (the browser derives width from the image's real dimensions), NO crop.
+   Space-around distributes them; images wrap rather than overflow. */
 .narrationArtRow img {
   height: 4.6rem;
   width: auto;
   max-width: 100%;
-  object-fit: contain;
+  display: block;
   border-radius: 0.35rem;
   border: 1px solid #e0e0e0;
   background: #f2f0ec;
   transition: transform 0.15s ease;
 }
 html[data-theme="dark"] .narrationArtRow img { border-color: #444; background: #2a2a2a; }
-/* a lone image gets the full strip width at its own aspect (bounded height) */
+/* a lone image gets the full strip at its own aspect (bounded height) */
 .narrationArtRow.single { justify-content: center; }
 .narrationArtRow.single img { height: auto; width: auto; max-height: 11rem; max-width: 100%; }
-.narrationArtRow:hover img { transform: scale(1.02); }
+.narrationArtLink:hover img { transform: scale(1.03); }
 .narrationItem {
   display: flex;
   align-items: flex-start;

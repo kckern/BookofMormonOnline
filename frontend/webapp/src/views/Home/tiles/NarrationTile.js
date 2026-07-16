@@ -66,17 +66,18 @@ export default function NarrationTile({ data, next, seed = 0 }) {
         <Link to={`/${data.slug}`} className="narrationTileTitle">{data.title}</Link>
       </div>
       {art.length ? (
-        <Link to={`/${data.slug}`} className={`narrationArtRow${art.length === 1 ? " single" : ""}`}>
+        <div className={`narrationArtRow${art.length === 1 ? " single" : ""}`}>
           {art.map((id) => (
-            <img
-              key={id}
-              src={`${assetUrl}/art/${id}`}
-              alt=""
-              loading="lazy"
-              onError={(e) => (e.target.style.display = "none")}
-            />
+            <Link key={id} to={`/art/${id}`} className="narrationArtLink">
+              <img
+                src={`${assetUrl}/art/${id}`}
+                alt=""
+                loading="lazy"
+                onError={(e) => (e.target.closest(".narrationArtLink").style.display = "none")}
+              />
+            </Link>
           ))}
-        </Link>
+        </div>
       ) : null}
       <div className="narrationTileList">
         <NarrationList section={data} />
