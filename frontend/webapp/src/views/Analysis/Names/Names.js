@@ -40,6 +40,7 @@ function Container() {
   const [filters, setFilters] = useState(() => queryToFilters(location.search));
   const [detailName, setDetailName] = useState(() => new URLSearchParams(location.search).get("name"));
   const [entities, setEntities] = useState({ people: null, places: null });
+  const [showStructure, setShowStructure] = useState(true);
   useEffect(() => { document.title = "Names | " + label("home_title"); }, []);
 
   useEffect(() => {
@@ -84,11 +85,28 @@ function Container() {
             ? t("names_count_all", `${names.length} names`)
             : t("names_count_filtered", `${filtered.length} of ${names.length} names`)}
         </span>
-        {hasSelection && (
-          <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => setFilters(emptyFilters())}>
-            {t("names_clear_filters", "Clear filters")}
-          </button>
-        )}
+        <span className="nameFilterStatusRight">
+          <label className="structureToggle">
+            <input
+              type="checkbox"
+              checked={showStructure}
+              onChange={(e) => setShowStructure(e.target.checked)}
+            />
+            {t("names_show_structure", "Show structure")}
+          </label>
+          {showStructure && (
+            <span className="morphemeLegend" aria-hidden="true">
+              {MORPHEME_ROLES.map((r) => (
+                <span key={r} className={"morpheme-" + r}>{r}</span>
+              ))}
+            </span>
+          )}
+          {hasSelection && (
+            <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => setFilters(emptyFilters())}>
+              {t("names_clear_filters", "Clear filters")}
+            </button>
+          )}
+        </span>
       </div>
       {detailEntry && (
         <NameDetail
@@ -105,9 +123,14 @@ function Container() {
             type="button"
             key={entry.name}
             className={"nameAnalysisItem" + (detailName === entry.name ? " selected" : "")}
+            aria-label={entry.name}
             onClick={() => setDetailName(entry.name === detailName ? null : entry.name)}
           >
-            {entry.name}
+            {showStructure && SEGMENTS.get(entry.name)
+              ? SEGMENTS.get(entry.name).map((s, i) => (
+                  <span key={i} className={"morpheme-" + s.role}>{s.text}</span>
+                ))
+              : entry.name}
           </button>
         ))}
         {!filtered.length && (
@@ -184,6 +207,11 @@ function FacetSelect({ facetKey, values, filters, onChange }) {
 }
 
 const CULTURE_BADGE = { Nephite: "N", Lamanite: "L", Jaredite: "J", Mulekite: "M", Israelite: "I" };
+
+/** Segmentation is static per dataset — compute once at module load. */
+const SEGMENTS = new Map(names.map((n) => [n.name, segmentName(n)]));
+
+const MORPHEME_ROLES = ["prefix", "stem", "affix", "suffix"];
 
 function NameDetail({ entry, entities, appController, onClose, onPickMorpheme }) {
   const spans = segmentName(entry);

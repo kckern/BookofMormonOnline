@@ -52,6 +52,20 @@
 .nameAnalysisItem.selected{ border-color:#2c7fb8; box-shadow:0 0 0 1px #2c7fb8 inset; }
 .nameAnalysisItem:focus-visible{ outline:2px solid #2c7fb8; outline-offset:1px; }
 
+/* Morpheme structure — role hues: prefix purple, stem blue, affix orange, suffix green */
+.nameAnalysisItem .morpheme-prefix, .morphemeLegend .morpheme-prefix{ box-shadow:inset 0 -2px 0 #8e6cc3; }
+.nameAnalysisItem .morpheme-stem, .morphemeLegend .morpheme-stem{ box-shadow:inset 0 -2px 0 #2c7fb8; }
+.nameAnalysisItem .morpheme-affix, .morphemeLegend .morpheme-affix{ box-shadow:inset 0 -2px 0 #d95f0e; }
+.nameAnalysisItem .morpheme-suffix, .morphemeLegend .morpheme-suffix{ box-shadow:inset 0 -2px 0 #38875f; }
+.nameDetail .morpheme-prefix{ background:rgba(142,108,195,.18); }
+.nameDetail .morpheme-stem{ background:rgba(44,127,184,.18); }
+.nameDetail .morpheme-affix{ background:rgba(217,95,14,.18); }
+.nameDetail .morpheme-suffix{ background:rgba(56,135,95,.18); }
+.morphemeLegend{ display:inline-flex; gap:0.8ex; font-size:0.75rem; }
+.morphemeLegend span{ padding:0 0.3em; }
+.structureToggle{ display:inline-flex; gap:0.5ex; align-items:center; font-size:0.85rem; cursor:pointer; margin:0; }
+.nameFilterStatusRight{ display:inline-flex; gap:1.2ex; align-items:center; flex-wrap:wrap; }
+
 .nameChipRow{ display:flex; flex-wrap:wrap; gap:0.4ex; align-items:center; margin:0.4rem 0; }
 .nameChipRowLabel{ font-weight:800; font-size:0.9rem; margin-right:0.5ex; min-width:4.5rem; }
 .nameChip{ border:1px solid var(--names-border,#ccc); border-radius:999px; background:transparent; padding:0.1rem 0.7rem; font-size:0.85rem; cursor:pointer; }

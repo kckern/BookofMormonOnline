@@ -22,13 +22,13 @@ const renderAt = (path) =>
 
 it("renders the grid and the facet controls", () => {
   renderAt("/analysis/names");
-  expect(screen.getByText("Moroni")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Moroni" })).toBeInTheDocument();
   expect(screen.getByText(/210 names/)).toBeInTheDocument();
 });
 
 it("opens a detail panel when a tile is clicked", () => {
   const { container } = renderAt("/analysis/names");
-  fireEvent.click(screen.getByText("Abinadi"));
+  fireEvent.click(screen.getByRole("button", { name: "Abinadi" }));
   const region = screen.getByRole("region", { name: "Abinadi" });
   expect(region).toBeInTheDocument();
   expect(region.textContent).toContain("my father");
@@ -39,6 +39,6 @@ it("opens a detail panel when a tile is clicked", () => {
 it("applies filters from the querystring on load", () => {
   renderAt("/analysis/names?stem=Mor");
   expect(screen.getByText(/9 of 210 names/)).toBeInTheDocument();
-  expect(screen.getByText("Moroni")).toBeInTheDocument();
-  expect(screen.queryByText("Shiz")).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Moroni" })).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Shiz" })).not.toBeInTheDocument();
 });
