@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { useRouteMatch, useHistory } from "react-router-dom";
+import { useRouteMatch, useHistory, useLocation } from "react-router-dom";
 import { parseValue, serialize } from "./urlState";
 import { label } from "src/models/Utils";
 import Overview from "./Overview";
@@ -10,8 +10,14 @@ import "./crossref.css";
 export default function BibleCrossRef() {
   const { params: { value } } = useRouteMatch();
   const history = useHistory();
+  const location = useLocation();
   const state = parseValue(value);
-  const navigate = (next) => history.push(serialize(next));
+  // highlight is ephemeral emphasis (ribbon → anchored partner), carried in
+  // history location state rather than the URL.
+  if (state.view === "anchor" && location.state?.highlight)
+    state.highlight = location.state.highlight;
+  const navigate = (next) =>
+    history.push(serialize(next), next.highlight ? { highlight: next.highlight } : undefined);
 
   useEffect(() => {
     const name =

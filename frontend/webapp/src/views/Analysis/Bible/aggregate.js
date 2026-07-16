@@ -99,6 +99,44 @@ export const chapterCounts = (canonKey, bookName, partnerName) => {
   return counts;
 };
 
+// Bible-division × BoM-book aggregation (the overview's default left spine —
+// book-level ribbons on both sides read as spaghetti; see spec §4.1 guardrails).
+export const divisionBookPairs = () => {
+  const groupOf = new Map();
+  for (const b of canons.kjv.books) groupOf.set(b.name, b.group);
+  const byKey = new Map();
+  for (const p of allPairs()) {
+    const key = `${groupOf.get(p.bibleBookName)}|${p.bomBookName}`;
+    const entry = byKey.get(key) || { total: 0, quotes: 0 };
+    entry.total += p.total;
+    entry.quotes += p.quotes;
+    byKey.set(key, entry);
+  }
+  return [...byKey.entries()].map(([key, e]) => {
+    const [bibleGroup, bomBookName] = key.split("|");
+    return { bibleGroup, bomBookName, total: e.total, quotes: e.quotes };
+  });
+};
+
+// Division-level aggregation of book pairs (for the mobile overview).
+export const groupPairs = () => {
+  const groupOf = { bom: new Map(), kjv: new Map() };
+  for (const canonKey of ["bom", "kjv"])
+    for (const b of canons[canonKey].books) groupOf[canonKey].set(b.name, b.group);
+  const byGroups = new Map();
+  for (const p of allPairs()) {
+    const key = `${groupOf.bom.get(p.bomBookName)}|${groupOf.kjv.get(p.bibleBookName)}`;
+    const entry = byGroups.get(key) || { total: 0, quotes: 0 };
+    entry.total += p.total;
+    entry.quotes += p.quotes;
+    byGroups.set(key, entry);
+  }
+  return [...byGroups.entries()].map(([key, e]) => {
+    const [bomGroup, bibleGroup] = key.split("|");
+    return { bomGroup, bibleGroup, total: e.total, quotes: e.quotes, phrases: e.total - e.quotes };
+  });
+};
+
 // Partner ranking scoped to one chapter of the anchored book.
 export const scopedPartnersFor = (canonKey, bookName, chapter) => {
   const book = canons[canonKey].books.find((b) => b.name === bookName);
