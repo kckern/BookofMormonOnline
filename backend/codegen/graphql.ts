@@ -239,7 +239,8 @@ export type FaxVersePage = {
 /**
  * Synthesized entity: groups exist only as bom_xrels destinations (79 slugs,
  * no table), so a Group is its slug, a de-slugged display name, and its
- * reverse-direction relationships.
+ * reverse-direction relationships. Querying `group` with no slug returns []
+ * (unlike person/place, there is no table to enumerate).
  */
 export type Group = {
   __typename?: 'Group';

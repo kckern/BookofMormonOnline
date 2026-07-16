@@ -9,11 +9,18 @@ function getSlugTip(slug: string): string {
   return slug.split('/').pop() ?? slug;
 }
 
-/** Groups have no table — display name is the title-cased slug ("mulekites" → "Mulekites"). */
+/** Connector words kept lowercase in group names unless leading ("church-of-the-lamb" → "Church of the Lamb"). */
+const GROUP_NAME_CONNECTORS = new Set(['of', 'the', 'and']);
+
+/** Groups have no table — display name is the natural-cased slug ("mulekites" → "Mulekites"). */
 function deSlugGroupName(slug: string): string {
   return slug
     .split('-')
-    .map((word) => (word ? word.charAt(0).toUpperCase() + word.slice(1) : word))
+    .map((word, i) => {
+      if (!word) return word;
+      if (i > 0 && GROUP_NAME_CONNECTORS.has(word)) return word;
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    })
     .join(' ');
 }
 
@@ -57,7 +64,6 @@ export const peopleplacesResolvers: Resolvers = {
       const slugs = (args.slug ?? [])
         .filter((s): s is string => s !== null)
         .map(getSlugTip);
-      // A group "exists" iff at least one xrel row points at it.
       const results = await Promise.all(
         slugs.map(async (slug) => {
           const xrels = await ctx.loaders.xrelsByDstEntity.load({ type: 'group', slug });
