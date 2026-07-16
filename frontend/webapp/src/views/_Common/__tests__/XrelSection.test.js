@@ -66,10 +66,10 @@ describe("XrelSection", () => {
     expect(mockSetPopUp).toHaveBeenCalledWith({ type: "object", ids: ["synagogues"], underSlug: "objects" });
   });
 
-  test("group rows are not clickable", () => {
-    render(<XrelSection xrels={[{ ...srcRow, dst_type: "group", dst_name: "Nephites" }]} />);
+  test("group rows open the group popup", () => {
+    render(<XrelSection xrels={[{ ...srcRow, dst_type: "group", dst_slug: "nephites", dst_name: "Nephites" }]} />);
     fireEvent.click(screen.getByText("Nephites"));
-    expect(mockSetPopUp).not.toHaveBeenCalled();
+    expect(mockSetPopUp).toHaveBeenCalledWith({ type: "group", ids: ["nephites"], underSlug: "group" });
   });
 
   test("noHeading suppresses the section heading", () => {

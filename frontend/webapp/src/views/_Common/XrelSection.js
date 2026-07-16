@@ -26,8 +26,9 @@ export default function XrelSection({ xrels, showEmpty, noHeading }) {
       appController.functions.setPopUp({ type: "places", ids: [xrel.dst_slug], underSlug: "places" });
     } else if (xrel.dst_type === "object") {
       appController.functions.setPopUp({ type: "object", ids: [xrel.dst_slug], underSlug: "objects" });
+    } else if (xrel.dst_type === "group") {
+      appController.functions.setPopUp({ type: "group", ids: [xrel.dst_slug], underSlug: "group" });
     }
-    // group: non-clickable, no-op
   };
 
   return (
@@ -36,7 +37,7 @@ export default function XrelSection({ xrels, showEmpty, noHeading }) {
       {hasRows ? (
         <ul className="xrels">
           {xrels.map((x, idx) => {
-            const clickable = ["people", "place", "object"].includes(x.dst_type);
+            const clickable = ["people", "place", "object", "group"].includes(x.dst_type);
             const nameLink = (
               <a href="#" onClick={clickable ? (e) => handleXrelClick(x, e) : (e) => e.preventDefault()}>
                 {x.dst_name}

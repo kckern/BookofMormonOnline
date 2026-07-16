@@ -112,6 +112,8 @@ function PopUp() {
     return <Place />;
   if (appController.states.popUp.type === "object")
     return <ObjectPopUp />;
+  if (appController.states.popUp.type === "group")
+    return <GroupPopUp />;
   if (appController.states.popUp.type === "victory")
     return <Victory />;
   if (appController.states.popUp.type === "history")
@@ -591,6 +593,61 @@ function ObjectPopUp() {
         </div>
         <ScripturePanelSingle scriptureData={{ ref: PopUpRef }} closeButton={true} setPopUpRef={setPopUpRef} />
         <Comments />
+      </div>
+    </Draggable>
+  );
+}
+
+export function GroupPopUp() {
+  const appController = useAppController();
+  const activeId = appController.states.popUp.activeId;
+
+  if (appController.popUpData[activeId] === undefined) {
+    BoMOnlineAPI(
+      { group: appController.states.popUp.ids },
+      { useCache: ["group"] }
+    ).then((response) => {
+      appController.functions.setPopUp({
+        type: "group",
+        ids: appController.states.popUp.ids,
+        popUpData: response.group,
+      });
+    });
+    return <Loading type="Group" />;
+  }
+
+  const group = appController.popUpData[activeId];
+  if (!group) return null;
+
+  const headerLabel =
+    label("group_profile") === "group_profile" ? "Group Profile" : label("group_profile");
+
+  return (
+    <Draggable handle=".card-header">
+      <div
+        id="popUp"
+        className="card pp popupwindow"
+        style={{
+          top: appController.states.popUp.top,
+          left: appController.states.popUp.left,
+        }}
+      >
+        <div className="card-header">
+          <div className="person_head">{headerLabel}</div>
+          <ul className={"source_tabs souce_tab_list_" + appController.states.popUp.ids.length}>
+            <li className="close" onClick={appController.functions.closePopUp}>
+              ×
+            </li>
+          </ul>
+        </div>
+        <div className="card-body">
+          <div className="ppbody">
+            <div className="bodytext">
+              <h3>{group.name}</h3>
+              <XrelSection xrels={group.xrels} showEmpty />
+            </div>
+          </div>
+        </div>
       </div>
     </Draggable>
   );
