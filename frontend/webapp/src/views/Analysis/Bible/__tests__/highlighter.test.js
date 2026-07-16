@@ -1,3 +1,4 @@
+/* eslint-disable testing-library/no-container, testing-library/no-node-access */
 import React from "react";
 import "@testing-library/jest-dom";
 import { render } from "@testing-library/react";

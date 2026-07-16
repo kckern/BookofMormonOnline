@@ -3,6 +3,7 @@ import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Route } from "react-router-dom";
 import Bible from "../index";
+import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 
 jest.mock("src/models/Utils", () => ({
   label: (key) => key,
@@ -16,7 +17,6 @@ jest.mock("src/models/BoMOnlineAPI", () => ({
   __esModule: true,
   default: jest.fn(),
 }));
-import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 
 beforeEach(() => {
   BoMOnlineAPI.mockImplementation(() => new Promise(() => {}));

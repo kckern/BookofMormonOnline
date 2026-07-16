@@ -1,14 +1,15 @@
+/* eslint-disable testing-library/no-container, testing-library/no-node-access */
 import React from "react";
 import "@testing-library/jest-dom";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import Reader from "../Reader";
+import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 
 jest.mock("src/models/BoMOnlineAPI", () => ({
   __esModule: true,
   default: jest.fn(),
 }));
-import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 
 // CRA sets resetMocks: true, so (re)install the implementation per test.
 const installApiMock = () =>
