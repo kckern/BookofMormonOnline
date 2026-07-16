@@ -1569,3 +1569,19 @@ html[data-theme="dark"] .rpUserProgress .progress { background-color: #3a3a3a; }
 /* dark theme: the gray #eee section box would glare — tone it down */
 html[data-theme="dark"] .rpBoxPane .sectionBox { background-color: #2a2a2a; color: #aaa; }
 html[data-theme="dark"] .rpBoxPane .sectionDots { border-right-color: #444; }
+
+/* ---- notes tile (wave 1) ---- */
+.notesTile .notesEntry + .notesEntry {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(128, 128, 128, 0.25);
+}
+.notesTile .notesText { font-size: 0.95rem; margin-top: 0.5rem; }
+.notesTile .notesMeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+}
+.notesTile .notesSource { font-size: 0.8rem; opacity: 0.7; }

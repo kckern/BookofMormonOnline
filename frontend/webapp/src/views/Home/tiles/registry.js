@@ -11,6 +11,7 @@ import CommunityTile from "./CommunityTile";
 import BiblePhrasesTile from "./BiblePhrasesTile";
 import ChiasmusTile from "./ChiasmusTile";
 import ImageArtTile from "./ImageArtTile";
+import NotesTile from "./NotesTile";
 
 /**
  * Sampler tile registry. Adding a tile type:
@@ -42,4 +43,5 @@ export const tileRegistry = [
   { key: "chiasmus",    component: ChiasmusTile,    span: "tile-chiasmus",    isReady: () => true },
   // one standalone artwork in the default rotation; more are held in reserve
   { key: "art",         component: ImageArtTile,    span: "tile-art",         isReady: (p) => (p?.art?.length || 0) > 0 },
+  { key: "notes",       component: NotesTile,       span: "tile-notes",       isReady: (p) => (p?.notes?.length || 0) > 0 },
 ];
