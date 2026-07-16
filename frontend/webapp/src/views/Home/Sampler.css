@@ -1584,4 +1584,9 @@ html[data-theme="dark"] .rpBoxPane .sectionDots { border-right-color: #444; }
   gap: 0.5rem;
   margin-top: 0.35rem;
 }
+
+/* ---- verse-fax tile (wave 1) ---- */
+.faxVerseTile .faxVersePage { display: block; }
+.faxVerseTile .faxVersePage img { width: 100%; display: block; border-radius: 4px; }
+.faxVerseTile .faxVerseTitle { font-size: 0.85rem; opacity: 0.8; margin: 0.4rem 0; }
 .notesTile .notesSource { font-size: 0.8rem; opacity: 0.7; }
