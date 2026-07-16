@@ -1628,3 +1628,22 @@ html[data-theme="dark"] .rpBoxPane .sectionDots { border-right-color: #444; }
   padding: 0;
 }
 .relationshipsTile .relEdgeNote { font-size: 0.85rem; opacity: 0.8; }
+
+/* ---- map-story tile (wave 1) ---- */
+.mapStoryTile .mapStoryTitle { font-weight: 600; margin-bottom: 0.4rem; }
+.mapStoryTile .mapTileFrame { height: 260px; }
+.mapStoryTile .mapStoryMoves { padding-left: 1.2rem; margin: 0.6rem 0 0; }
+.mapStoryTile .mapStoryMove + .mapStoryMove { margin-top: 0.5rem; }
+.mapStoryTile .mapStoryLeg { font-weight: 500; }
+.mapStoryTile .mapStoryRef {
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 0.8rem;
+  opacity: 0.75;
+  text-decoration: underline;
+  cursor: pointer;
+  margin-left: 0.35rem;
+  padding: 0;
+}
+.mapStoryTile .mapStoryDesc { font-size: 0.85rem; opacity: 0.8; }

@@ -55,6 +55,9 @@ const shuffle = (arr) => {
 // VARIABLE — shuffled per load and bin-packed by grid-auto-flow: dense.
 const FIXED_LEFT = ["readingplan", "section", "contents"];
 const FIXED_TOP = ["people"];
+// FIXED_TAIL renders once at the END of the first-batch masonry — the feature
+// tile slot (map-story). Below the fold, never repeated by the infinite feed.
+const FIXED_TAIL = ["mapstory"];
 
 // ---- infinite scroll -------------------------------------------------------
 // The fixed panels (rail: reading plan → narration → contents → community; top:
@@ -124,7 +127,7 @@ export default function Sampler() {
   const [failed, setFailed] = useState(false);
   const [seed, setSeed] = useState(getSessionSeed);
   const [variableTiles, setVariableTiles] = useState(() =>
-    shuffle(tileRegistry.filter((t) => !FIXED_LEFT.includes(t.key) && !FIXED_TOP.includes(t.key))),
+    shuffle(tileRegistry.filter((t) => !FIXED_LEFT.includes(t.key) && !FIXED_TOP.includes(t.key) && !FIXED_TAIL.includes(t.key))),
   );
   // Reserve tiles activated by the balancer: [{ key, side: "rail"|"main" }].
   const [reserves, setReserves] = useState([]);
@@ -157,7 +160,7 @@ export default function Sampler() {
     setPayload(null);
     setFailed(false);
     setReserves([]);
-    setVariableTiles(shuffle(tileRegistry.filter((t) => !FIXED_LEFT.includes(t.key) && !FIXED_TOP.includes(t.key))));
+    setVariableTiles(shuffle(tileRegistry.filter((t) => !FIXED_LEFT.includes(t.key) && !FIXED_TOP.includes(t.key) && !FIXED_TAIL.includes(t.key))));
     // reset infinite-scroll accumulation so the fresh seed starts a fresh feed
     setExtraBatches([]);
     reserveRef.current = null;
@@ -363,6 +366,7 @@ export default function Sampler() {
       case "faxVerse": return 30;
       case "crossrefs": return 20;
       case "relationship": return 18;
+      case "mapstory": return 40;
       default: return 14;
     }
   };
@@ -496,6 +500,9 @@ export default function Sampler() {
           >
             {[
               ...orderedGrid.map((t) => renderTile(t)),
+              ...FIXED_TAIL.map((k) => tileRegistry.find((t) => t.key === k))
+                .filter(Boolean)
+                .map((t) => renderTile(t)),
               ...reserves.filter((r) => r.side === "main").map(renderReserve),
               ...mainInfinite,
             ].filter(Boolean)}
