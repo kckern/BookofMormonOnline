@@ -1,0 +1,31 @@
+/* Names analysis view — dark theme overrides.
+   Light values live in views/Analysis/Names/Names.css via --names-* variables. */
+html[data-theme="dark"] {
+    .namesView {
+        --names-border: #3a3a3a;
+        --names-muted: #a5a5a5; /* ≥ 4.5:1 on #1a1a1a */
+        --names-hover: #2a2a2a;
+
+        // react-multi-select-component theming (rmsc v4 CSS variables)
+        .rmsc {
+            --rmsc-bg: #222;
+            --rmsc-border: #3a3a3a;
+            --rmsc-hover: #2f2f2f;
+            --rmsc-selected: #333;
+            --rmsc-gray: #a5a5a5;
+            --rmsc-main: #2c7fb8;
+            color: #eee;
+        }
+
+        .nameChip {
+            color: #eee;
+        }
+        .nameChip.active {
+            background: #2c7fb8;
+            color: #fff;
+        }
+        .nameDetail {
+            background: #222;
+        }
+    }
+}

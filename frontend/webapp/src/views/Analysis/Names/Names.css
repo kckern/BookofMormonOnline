@@ -1,3 +1,9 @@
+.namesView{
+    --names-border: #ccc;
+    --names-muted: #666;
+    --names-hover: #f1f1f1;
+}
+
 .nameAnalysisList{
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(6rem, 1fr));
@@ -9,22 +15,109 @@
 
 .nameAnalysisList .nameAnalysisItem{
     align-items: center;
-    border: 1px solid #ccc;
+    border: 1px solid var(--names-border, #ccc);
     border-radius: 5px;
     text-align: center;
     cursor: pointer;
+    /* tiles are <button>s — neutralize UA styles */
+    background: transparent;
+    font: inherit;
+    color: inherit;
 }
 .nameAnalysisList .nameAnalysisItem:hover{
-    background-color: #f9f9f9;
+    background-color: var(--names-hover, #f1f1f1);
     position: relative;
     bottom: 1px;
-    border-bottom: 2px solid #ccc;
+    border-bottom: 2px solid var(--names-border, #ccc);
     margin-bottom: -1px;
 
 }
 
+.nameform{
+    width: 100%;
+}
+
 .nameform td{
     padding:0
+}
+
+.nameFiltersSummary{
+    display: none;
+    font-weight: 800;
+    cursor: pointer;
+    padding: 0.4rem 0;
+}
+
+@media (max-width: 767px){
+    .nameFiltersSummary{ display: list-item; }
+    .nameform, .nameform thead, .nameform tbody, .nameform tr, .nameform th, .nameform td{
+        display: block;
+        text-align: left;
+    }
+    .nameform th{ font-size: 0.9rem; margin-top: 0.4rem; }
+    .namesView h3.title{ white-space: normal; font-size: 1.7rem; }
+}
+
+.nameDetail{ border:1px solid var(--names-border,#ccc); border-radius:8px; padding:0.75rem 1rem; margin-bottom:1rem; }
+.nameDetailHeader{ display:flex; justify-content:space-between; align-items:baseline; }
+.nameDetailName{ font-size:1.6rem; font-weight:700; }
+.nameDetailName .morpheme{ background:none; border:none; padding:0; font:inherit; cursor:pointer; }
+.nameDetailName .morpheme:focus-visible{ outline:2px solid #2c7fb8; outline-offset:1px; }
+.nameDetailClose{ background:none; border:none; font-size:1.4rem; cursor:pointer; line-height:1; }
+.nameDetailBadges{ display:flex; gap:0.4ex; flex-wrap:wrap; margin:0.3rem 0; align-items:center; }
+.nameTypeBadge, .nameDetail .IdBadge.lang{ border:1px solid var(--names-border,#ccc); border-radius:4px; padding:0 0.4em; font-size:0.75rem; }
+.nameDetailNote{ margin:0.3rem 0 0.5rem; color:var(--names-muted,#555); font-style:italic; }
+.nameDetailLinks{ display:flex; gap:0.5ex; }
+
+/* IdBadge affiliation colors — copied from People.css, scoped to the detail panel */
+.nameDetail .IdBadge{ border:1px solid #6c6c6c; color:#4d4d4d; font-size:.7em; letter-spacing:-.5px; padding:0 .5em; border-radius:.5em; }
+.nameDetail .IdBadge.N{ background-color:#b9e2cf; color:#0f5132; border-color:#0f5132; }
+.nameDetail .IdBadge.L{ background-color:#c3dbff; color:#084298; border-color:#084298; }
+.nameDetail .IdBadge.M{ background-color:rgb(255,208,177); color:#5c3000; border-color:#5c3000; }
+.nameDetail .IdBadge.J{ background-color:#fef1ca; color:#6b5200; border-color:#6b5200; }
+
+.nameAnalysisItem.selected{ border-color:#2c7fb8; box-shadow:0 0 0 1px #2c7fb8 inset; }
+.nameAnalysisItem:focus-visible{ outline:2px solid #2c7fb8; outline-offset:1px; }
+
+/* Morpheme structure — role hues: prefix purple, stem blue, affix orange, suffix green */
+.nameAnalysisItem .morpheme-prefix, .morphemeLegend .morpheme-prefix{ box-shadow:inset 0 -2px 0 #8e6cc3; }
+.nameAnalysisItem .morpheme-stem, .morphemeLegend .morpheme-stem{ box-shadow:inset 0 -2px 0 #2c7fb8; }
+.nameAnalysisItem .morpheme-affix, .morphemeLegend .morpheme-affix{ box-shadow:inset 0 -2px 0 #d95f0e; }
+.nameAnalysisItem .morpheme-suffix, .morphemeLegend .morpheme-suffix{ box-shadow:inset 0 -2px 0 #38875f; }
+.nameDetail .morpheme-prefix{ background:rgba(142,108,195,.18); }
+.nameDetail .morpheme-stem{ background:rgba(44,127,184,.18); }
+.nameDetail .morpheme-affix{ background:rgba(217,95,14,.18); }
+.nameDetail .morpheme-suffix{ background:rgba(56,135,95,.18); }
+.morphemeLegend{ display:inline-flex; gap:0.8ex; font-size:0.75rem; }
+.morphemeLegend span{ padding:0 0.3em; }
+.structureToggle{ display:inline-flex; gap:0.5ex; align-items:center; font-size:0.85rem; cursor:pointer; margin:0; }
+.nameFilterStatusRight{ display:inline-flex; gap:1.2ex; align-items:center; flex-wrap:wrap; }
+
+.nameChipRow{ display:flex; flex-wrap:wrap; gap:0.4ex; align-items:center; margin:0.4rem 0; }
+.nameChipRowLabel{ font-weight:800; font-size:0.9rem; margin-right:0.5ex; min-width:4.5rem; }
+.nameChip{ border:1px solid var(--names-border,#ccc); border-radius:999px; background:transparent; padding:0.1rem 0.7rem; font-size:0.85rem; cursor:pointer; }
+.nameChip.active{ background:#2c7fb8; border-color:#2c7fb8; color:#fff; }
+.nameChip:disabled{ opacity:0.35; cursor:default; }
+.nameChip:focus-visible{ outline:2px solid #2c7fb8; outline-offset:2px; }
+.nameChipCount{ opacity:0.65; font-size:0.75rem; }
+
+.nameFilterStatus{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0.5rem 0 1rem;
+    color: var(--names-muted, #666);
+}
+
+.nameAnalysisList .nameAnalysisItem{
+    padding: 0.25rem 0.5rem;
+}
+
+.nameAnalysisEmpty{
+    grid-column: 1 / -1;
+    text-align: center;
+    color: var(--names-muted, #888);
+    padding: 2rem 0;
 }
 
 .nameform th{
