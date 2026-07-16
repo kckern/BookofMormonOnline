@@ -352,7 +352,7 @@ export function peopleplacesLoaders(db: Kysely<DB>, lang: string, core: Loaders)
    * Source names resolve by src_type across all three entity tables, so
    * future non-object sources keep working.
    */
-  const xrelsByDstEntity = new DataLoader<{ type: 'people' | 'place'; slug: string }, XrelRow[], string>(
+  const xrelsByDstEntity = new DataLoader<{ type: 'people' | 'place' | 'group'; slug: string }, XrelRow[], string>(
     async (keys) => {
       const types = [...new Set(keys.map((k) => k.type))];
       const slugs = [...new Set(keys.map((k) => k.slug))];
