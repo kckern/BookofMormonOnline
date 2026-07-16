@@ -187,8 +187,6 @@ const loadLevelAndKeyFromSlug = (slug) => {
 }
 
 function ScriptureGrid() {
-    const [levelRow, setLevelRow] = useState("groups");
-    const [levelCol, setLevelCol] = useState("groups");
     const screenRation = window.innerWidth / window.innerHeight;
     const isPortrait = screenRation < 1;
     const [orientation, setOrientation] = useState(isPortrait ? "portrait" : "landscape");  
@@ -207,8 +205,18 @@ function ScriptureGrid() {
     const colInit = orientation === "portrait" ? { key: "bom", val: "Book of Mormon" } : { key: "bible", val: "Bible" };
 
 
-    const [rowId, setRowId]         = useState(rowInit); // Book of Mormon as rows
-    const [columnId, setColumnId]  = useState(colInit); // Bible as columns
+    // deep links (/analysis/bible/<row>~<col>) restore the grid selection.
+    // getColumnRowValues lists the CHILDREN of (level, id): a group slug lists
+    // its books (level "books"), a book slug lists its chapters ("chapters").
+    // Unresolvable slugs fall back to the base state.
+    const axisInit = (data) =>
+      data ? { level: data.level === "books" ? "chapters" : "books", key: data.key } : null;
+    const rowFromUrl = axisInit(frontData);
+    const colFromUrl = axisInit(backData);
+    const [levelRow, setLevelRow] = useState(rowFromUrl?.level || "groups");
+    const [levelCol, setLevelCol] = useState(colFromUrl?.level || "groups");
+    const [rowId, setRowId]         = useState(() => rowFromUrl ? { key: rowFromUrl.key, val: rowFromUrl.key } : rowInit); // Book of Mormon as rows
+    const [columnId, setColumnId]  = useState(() => colFromUrl ? { key: colFromUrl.key, val: colFromUrl.key } : colInit); // Bible as columns
     const [verseViewerContent, setVerseViewerContent] = useState(null);
     const { push } = useHistory();
 
@@ -341,9 +349,6 @@ function ScriptureGrid() {
        <h3 className="title lg-4 text-center"
         style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", flexGrow:0 }}
        >Bible Quotes and Phrases in the Book of Mormon</h3>
-       <code>
-        {frontData} ~ {backData}
-       </code>
         <table className="gridTable">
           <thead className="noselect">
             <tr>

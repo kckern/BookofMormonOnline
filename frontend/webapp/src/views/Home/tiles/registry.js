@@ -8,6 +8,8 @@ import ContentsTile from "./ContentsTile";
 import NarrationTile from "./NarrationTile";
 import ReadingPlanTile from "./ReadingPlanTile";
 import CommunityTile from "./CommunityTile";
+import BiblePhrasesTile from "./BiblePhrasesTile";
+import ChiasmusTile from "./ChiasmusTile";
 
 /**
  * Sampler tile registry. Adding a tile type:
@@ -28,7 +30,13 @@ export const tileRegistry = [
   { key: "people",      component: PeopleTile,      span: "tile-people",      isReady: (p) => p?.people?.length > 0 },
   { key: "text",        component: TextTile,        span: "tile-text",        isReady: (p) => !!p?.text },
   { key: "commentary",  component: CommentaryTile,  span: "tile-commentary",  isReady: (p) => !!p?.commentary },
+  { key: "commentary2", component: CommentaryTile,  span: "tile-commentary",  isReady: (p) => !!p?.commentary2 },
+  { key: "commentary3", component: CommentaryTile,  span: "tile-commentary",  isReady: (p) => !!p?.commentary3 },
   { key: "history",     component: HistoryTile,     span: "tile-history",     isReady: (p) => !!p?.history },
   { key: "fax",         component: FaxTile,         span: "tile-fax",         isReady: (p) => !!p?.fax },
   { key: "places",      component: PlacesTile,      span: "tile-places",      isReady: (p) => p?.places?.length > 0 },
+  // biblephrases + chiasmus fetch their own data client-side (seeded off
+  // payload.seed) — no homesampler field, so they're always "ready".
+  { key: "biblephrases", component: BiblePhrasesTile, span: "tile-biblephrases", isReady: () => true },
+  { key: "chiasmus",    component: ChiasmusTile,    span: "tile-chiasmus",    isReady: () => true },
 ];

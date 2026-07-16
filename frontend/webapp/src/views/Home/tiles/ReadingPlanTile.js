@@ -35,8 +35,10 @@ function GuestPlanPreview() {
       <h3 className="tileHeading">{label("reading_plan")}</h3>
       {program ? (
         <div className="guestPlanPreview">
-          <div className="guestPlanTitle"><b>{program.title}</b></div>
-          <div className="guestPlanMeta">0% · {program.durationLabel}</div>
+          <div className="guestPlanTitleRow">
+            <b className="guestPlanTitle">{program.title}</b>
+            <span className="guestPlanMeta">0% · {program.durationLabel}</span>
+          </div>
           {segments.length ? (
             <div className="segmentList guestSegmentList">
               {segments.map((s, i) => (

@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import { label, replaceNumbers } from "src/models/Utils";
-import pin from "src/views/_Common/svg/maps.svg";
+import pin from "src/views/_Common/svg/map-pin.svg";
 import RefPill from "./RefPill";
 import { clampWords, flatten } from "./textUtils";
 
@@ -13,7 +13,7 @@ import { clampWords, flatten } from "./textUtils";
  */
 export default function PlacesTile({ data, seed = 0, payload }) {
   const cards = data.slice(0, 5);
-  const mosaic = data.slice(5, 12);
+  const mosaic = data.slice(5, 14); // 9 → true 3×3
   return (
     <div className="samplerTileInner placesTile">
       <h3 className="tileHeading">
@@ -25,7 +25,7 @@ export default function PlacesTile({ data, seed = 0, payload }) {
           const item = idx.length ? idx[(seed + i) % idx.length] : null;
           const ref = item?.ref || null;
           return (
-            <div className="placesTileCard" key={p.slug}>
+            <div className="placesTileCard samplerCard" key={p.slug}>
               <div className="placesImgWrap">
                 <Link to={`/places/${p.slug}`}>
                   <img
@@ -49,15 +49,15 @@ export default function PlacesTile({ data, seed = 0, payload }) {
                 </Link>
               </div>
               {ref ? (
-                <div className="placesTileInfo">
-                  <RefPill refText={ref} className="refChipSm" />
+                <div className="placesTileInfo samplerCardBody">
+                  <RefPill refText={ref} />
                   {item?.text ? <> {clampWords(flatten(item.text), 12)}</> : null}
                 </div>
               ) : null}
             </div>
           );
         })}
-        <Link to="/places" className="placesTileCard viewAllCard" title={label("view_all")}>
+        <Link to="/places" className="placesTileCard samplerCard viewAllCard" title={label("view_all")}>
           <div className="placesMosaicWrap">
             <div className="viewAllMosaic placesMosaic">
               {mosaic.map((p) => (
@@ -72,7 +72,7 @@ export default function PlacesTile({ data, seed = 0, payload }) {
             </div>
             <span className="peopleFaceName viewAllOverlay">{payload?.placesCount ? `+${payload.placesCount - data.length} ${label("places")}` : label("view_more")}</span>
           </div>
-          <div className="placesTileInfo placesMosaicCaption">
+          <div className="placesTileInfo samplerCardBody placesMosaicCaption">
             {mosaic.slice(0, 2).map((m) => m.name).join(", ")}…
           </div>
         </Link>

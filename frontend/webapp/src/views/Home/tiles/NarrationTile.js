@@ -36,7 +36,7 @@ function NarrationList({ section }) {
       <img src={statusDot[n.text?.status] || blank} alt="" className="narrationDot" />
       <span className="narrationText">
         {flatten(n.description)}
-        {n.text?.heading ? <RefPill refText={n.text.heading} className="refChipSm" /> : null}
+        {n.text?.heading ? <RefPill refText={n.text.heading} /> : null}
       </span>
     </Link>
   ));

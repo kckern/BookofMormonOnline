@@ -63,29 +63,26 @@ html[data-theme="dark"] .samplerResample:hover { color: #fff; border-color: #999
 /* right-sized = content-sized: narration and contents render IN FULL (no
    scroll traps, no fade cuts) — the page grows vertically instead */
 .samplerLeftRail .tile { flex: 0 0 auto; }
-.samplerGrid {
+.samplerMain {
   flex: 1;
   min-width: 0;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  grid-auto-rows: minmax(min-content, auto);
-  grid-auto-flow: dense;
+  display: flex;
+  flex-direction: column;
   gap: 0.7rem;
-  align-items: stretch;
-  align-content: start;
 }
-
-/* span footprints — keys match tileRegistry span classes. People spans the
-   grid's full width (top); pairs beneath; reading plan closes full-width. */
-.tile-people      { grid-column: span 4; }
-.tile-places      { grid-column: span 2; }
-.tile-readingplan { grid-column: span 4; }
-.tile-fax         { grid-column: span 2; }
-.tile-commentary  { grid-column: span 2; }
-.tile-history     { grid-column: span 2; }
-.tile-text        { grid-column: span 4; }
-.tile-text-half   { grid-column: span 2; }
-.tile-community   { grid-column: span 4; }
+/* react-masonry-css: flex columns, items stack at natural height — tile
+   heights are independent (no row-matching, no stretch voids). */
+.samplerMasonry {
+  display: flex;
+  margin-left: -0.7rem;
+  width: auto;
+}
+.samplerMasonryCol {
+  padding-left: 0.7rem;
+  background-clip: padding-box;
+  min-width: 0;
+}
+.samplerMasonryCol > .tile { margin-bottom: 0.7rem; }
 
 /* ---------- tile card ---------- */
 .tile {
@@ -148,23 +145,39 @@ a.samplerTileInner { cursor: pointer; }
 html[data-theme="dark"] .tileHeading { color: #9a9a9a; }
 html[data-theme="dark"] .tileHeading a:hover { color: #fff; }
 
-/* ---------- scripture-reference chip (people feature + commentary) ---------- */
-.refChip {
+/* ALL scripture refs on home use the site's .scripture_link style. RefPill
+   renders a span (nested <a> is invalid inside card Links), so the Main.css
+   `div a.scripture_link` rule doesn't reach it — mirror it here. */
+.sampler .scripture_link {
+  background-color: #323b4d22;
+  border: 1px solid #323b4d55;
+  border-radius: 0.5ex;
+  color: #323b4daa;
+  font-family: "Scripture", serif;
+  padding: 0 1ex;
+  font-size: 0.65rem;
+  font-weight: 400;
+  line-height: 1.45; /* taller line box than the border+padding — no clipping */
   display: inline-block;
-  font-size: 0.68rem;
-  font-weight: 700;
-  line-height: 1;
-  padding: 0.22rem 0.5rem;
-  margin: 0 0.3rem 0.3rem 0;
-  border-radius: 0.8rem;
-  background: rgba(50, 59, 77, 0.08);
-  border: 1px solid rgba(50, 59, 77, 0.18);
-  color: #323b4d;
+  cursor: pointer;
   white-space: nowrap;
+  text-decoration: none;
 }
-html[data-theme="dark"] .refChip {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.18);
+/* inside clamped card-index text the line box is tight (0.62rem/1.3): shrink
+   the chip below the line height so its top border never gets shaved */
+.peopleFaceIndexText .scripture_link,
+.peopleIndexItem .scripture_link,
+.placeCardInfo .scripture_link,
+.placesTileCard .scripture_link {
+  font-size: 0.56rem;
+  line-height: 1.3;
+  padding: 0 0.6ex;
+  vertical-align: baseline;
+}
+.sampler .scripture_link:hover { background-color: #323b4d44; }
+html[data-theme="dark"] .sampler .scripture_link {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.22);
   color: #cfd6e4;
 }
 
@@ -231,34 +244,7 @@ html[data-theme="dark"] .peopleFeatureTitle { color: #a0a0a0; }
   color: #555;
 }
 html[data-theme="dark"] .peopleFeatureDesc { color: #c4c4c4; }
-/* detected inline scripture links share THE pill (RefPill) look + behavior */
-.sampler .scripture_link {
-  display: inline-block;
-  font-size: 0.68rem;
-  font-weight: 700;
-  line-height: 1;
-  padding: 0.18rem 0.45rem;
-  border-radius: 0.8rem;
-  background: rgba(50, 59, 77, 0.08);
-  border: 1px solid rgba(50, 59, 77, 0.18);
-  color: #323b4d;
-  cursor: pointer;
-  text-decoration: none;
-  white-space: nowrap;
-  vertical-align: baseline;
-}
-.sampler .scripture_link:hover,
-.sampler .refChip:hover { background: rgba(50, 59, 77, 0.16); }
-html[data-theme="dark"] .sampler .scripture_link {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.18);
-  color: #cfd6e4;
-}
-/* compact pill variant for dense card rows */
-.refChipSm { font-size: 0.6rem; padding: 0.14rem 0.4rem; margin: 0 0.25rem 0 0; }
-.refChip { cursor: pointer; }
 .peopleFeatureRefs { margin-top: auto; }
-a.refChip:hover { background: rgba(50, 59, 77, 0.16); text-decoration: none; }
 /* index entries: annotation text + its reference, one row each */
 .peopleIndexItem {
   display: flex;
@@ -280,7 +266,7 @@ a.refChip:hover { background: rgba(50, 59, 77, 0.16); text-decoration: none; }
 }
 html[data-theme="dark"] .peopleIndexText { color: #9a9a9a; }
 html[data-theme="dark"] .peopleIndexItem:hover .peopleIndexText { color: #ddd; }
-.peopleIndexItem .refChip { flex-shrink: 0; margin: 0; }
+.peopleIndexItem .scripture_link { flex-shrink: 0; margin: 0; }
 
 /* face cards: the other 9 samples + a view-all mosaic — proper vertical cards
    (3:4 portrait on top, name/title/index in a padded body), 6-up */
@@ -308,7 +294,7 @@ html[data-theme="dark"] .peopleIndexItem:hover .peopleIndexText { color: #ddd; }
 html[data-theme="dark"] .viewAllBox { border-color: #555; background: #2a2a2a; color: #999; }
 html[data-theme="dark"] .viewAllCard:hover .viewAllBox { border-color: #ddd; color: #ddd; }
 .placesViewAll { aspect-ratio: auto; height: 4.4rem; }
-.peopleFaceCard {
+.samplerCard {
   display: flex;
   flex-direction: column;
   color: inherit;
@@ -320,13 +306,20 @@ html[data-theme="dark"] .viewAllCard:hover .viewAllBox { border-color: #ddd; col
   min-width: 0;
   transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
-.peopleFaceCard:hover {
+.samplerCard:hover {
   transform: translateY(-2px);
   border-color: #c9c9c9;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
-html[data-theme="dark"] .peopleFaceCard { background: #262626; border-color: #3a3a3a; }
-html[data-theme="dark"] .peopleFaceCard:hover { border-color: #555; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5); }
+html[data-theme="dark"] .samplerCard { background: #262626; border-color: #3a3a3a; }
+html[data-theme="dark"] .samplerCard:hover { border-color: #555; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5); }
+/* shared bottom body (people + places): padded text block inside the card */
+.samplerCardBody { padding: 0.4rem 0.5rem 0.45rem; min-width: 0; flex: 1; }
+.peopleFaceCard { /* aspect + overlay behavior only; chrome via .samplerCard */
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
 /* portrait with NAME overlaid top-left and TITLE bottom-left; the index item
    lives in the card chrome below */
 .peopleFaceImgWrap {
@@ -399,7 +392,7 @@ html[data-theme="dark"] .peopleFaceImgWrap { background: #333; }
 .peopleFaceIndex { margin-top: 0.15rem; }
 .peopleFaceIndexText {
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
   font-size: 0.62rem;
@@ -447,26 +440,15 @@ html[data-theme="dark"] .peopleFaceRef { color: #93c6ef; }
   grid-template-columns: repeat(3, 1fr);
   gap: 0.5rem;
 }
-.placesTileCard {
-  color: inherit;
-  text-decoration: none;
-  border-radius: 0.5rem;
-  min-width: 0;
-}
-.placesTileCard > a > img,
+.placesTileCard { color: inherit; text-decoration: none; min-width: 0; }
 .placesTileCard img.placesThumb {
   width: 100%;
-  aspect-ratio: 16 / 9;
-  height: auto;
+  height: 100%;
   object-fit: cover;
-  border-radius: 0.45rem;
   background: #e2e2e2;
-  border: 1px solid #dcdcdc;
   display: block;
-  transition: transform 0.15s ease;
 }
-.placesTileCard > a:hover > img { transform: scale(1.02); }
-html[data-theme="dark"] .placesTileCard > a > img { background: #333; border-color: #444; }
+.placesImgWrap > a:hover > img { transform: scale(1.02); transition: transform 0.15s ease; }
 .placesTileNameRow {
   display: flex;
   align-items: center;
@@ -492,10 +474,10 @@ html[data-theme="dark"] .placesTileName { color: #f0f0f0; }
 html[data-theme="dark"] .placesTileMapLink img { filter: invert(0.85); }
 .placesTileInfo {
   font-size: 0.64rem;
-  line-height: 1.3;
+  line-height: 1.2;
   color: #888;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -512,27 +494,16 @@ html[data-theme="dark"] .placesTileRef { color: #93c6ef; }
 .placesMosaicWrap .viewAllMosaic { width: 100%; height: 100%; aspect-ratio: auto; border-radius: 0; }
 
 /* ================================================================
-   FAX — page thumbnails side by side; click opens the lightbox
+   FAX — header on top; pages at natural aspect with overlaid page numbers
    ================================================================ */
 .faxTilePages {
   display: flex;
   gap: 0.4rem;
-  margin-bottom: 0.45rem;
+  align-items: flex-start;
 }
-.faxTilePages img {
-  flex: 1 1 0;
-  min-width: 0;
-  max-height: 10.5rem;
-  object-fit: cover;
-  object-position: top;
-  border-radius: 0.35rem;
-  border: 1px solid #e0e0e0;
-  cursor: zoom-in;
-  transition: transform 0.15s ease;
-}
-.faxTilePages img:hover { transform: scale(1.03); }
+.faxTilePages img:hover { transform: scale(1.02); }
 html[data-theme="dark"] .faxTilePages img { border-color: #444; }
-.faxTileTitleLink { color: inherit; text-decoration: none; }
+.faxTileTitleLink { color: inherit; text-decoration: none; display: block; margin-bottom: 0.4rem; }
 
 .faxTileTitle {
   font-weight: 800;
@@ -549,65 +520,78 @@ html[data-theme="dark"] .faxTileTitle { color: #f0f0f0; }
 html[data-theme="dark"] .faxTileMeta { color: #a0a0a0; }
 
 /* ================================================================
-   COMMENTARY — source cover + reference chip + excerpt + source
+   COMMENTARY — text left (header flush top-left), cover+meta+ref+cue right
    ================================================================ */
 .commentaryTileBody {
   display: flex;
-  gap: 0.7rem;
+  gap: 0.75rem;
   min-height: 0;
 }
+.commentaryTileMain { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; }
+.commentaryTileTitle {
+  display: block;
+  font-weight: 800;
+  font-size: 0.92rem;
+  line-height: 1.25;
+  color: #2a2a2a;
+  margin-bottom: 0.3rem;
+  text-decoration: none;
+}
+.commentaryTileTitle:hover { color: #345496; text-decoration: none; }
+html[data-theme="dark"] .commentaryTileTitle { color: #f0f0f0; }
+/* line-clamp, no scroll trap — a read-more shows only when actually cut */
+.commentaryTileExcerpt {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: #555;
+  display: -webkit-box;
+  -webkit-line-clamp: 9;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.commentaryTileExcerpt.expanded {
+  display: block;
+  -webkit-line-clamp: none;
+  overflow: visible;
+}
+html[data-theme="dark"] .commentaryTileExcerpt { color: #c4c4c4; }
+.commentaryTileReadMore {
+  margin-top: 0.3rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #345496;
+}
+html[data-theme="dark"] .commentaryTileReadMore { color: #93c6ef; }
 .commentaryTileCover {
-  width: 4.4rem;
+  width: 100%;
   aspect-ratio: 2 / 3;
   object-fit: cover;
   border-radius: 0.35rem;
   background: #eee;
   border: 1px solid #ddd;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
-  flex-shrink: 0;
   align-self: flex-start;
 }
 html[data-theme="dark"] .commentaryTileCover { background: #2c2c2c; border-color: #444; }
-.commentaryTileMain { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; }
-.commentaryTileTitle {
-  font-weight: 800;
-  font-size: 0.92rem;
-  line-height: 1.25;
-  color: #2a2a2a;
+.commentaryTileAside {
+  flex-shrink: 0;
+  width: 5.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  align-self: stretch;
 }
-html[data-theme="dark"] .commentaryTileTitle { color: #f0f0f0; }
-.commentaryTileScroll {
-  max-height: 14rem;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  /* fade signals continuation when the text scrolls */
-  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 1.2rem), rgba(0,0,0,0.25) 100%);
-  mask-image: linear-gradient(to bottom, #000 calc(100% - 1.2rem), rgba(0,0,0,0.25) 100%);
-}
-.commentaryTileExcerpt {
-  margin: 0.35rem 0 0.4rem;
-  font-size: 0.8rem;
-  line-height: 1.45;
-  color: #555;
-}
-.commentaryTileMore {
-  margin-top: 0.3rem;
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: #345496;
-}
-html[data-theme="dark"] .commentaryTileMore { color: #93c6ef; }
-html[data-theme="dark"] .commentaryTileExcerpt { color: #c4c4c4; }
 .commentaryTileSource {
-  margin-top: 0.45rem;
-  padding-top: 0.4rem;
-  border-top: 1px solid #ececec;
-  font-size: 0.74rem;
+  font-size: 0.66rem;
   font-style: italic;
+  line-height: 1.3;
   color: #888;
 }
-html[data-theme="dark"] .commentaryTileSource { border-top-color: #3a3a3a; }
 html[data-theme="dark"] .commentaryTileSource { color: #a0a0a0; }
+.commentaryTileRef { align-self: flex-start; }
+/* the in-context cue sits at the bottom of the right column */
+.commentaryTileMore { margin-top: auto; }
 
 /* ================================================================
    CONTENTS — image + title + description
@@ -693,13 +677,20 @@ html[data-theme="dark"] .contentsOutlineDot { color: #555; }
 }
 /* guest slot: default plan preview + value proposition + reading entry point */
 .valuePropTile {
-  justify-content: center;
-  gap: 0.8rem;
+  justify-content: flex-start;
+  gap: 0.55rem;
   min-height: 9rem;
 }
-.guestPlanTitle { font-size: 0.9rem; color: #444; }
+/* title left, progress + duration flush right on the same line */
+.guestPlanTitleRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+.guestPlanTitle { font-size: 0.9rem; color: #444; min-width: 0; }
 html[data-theme="dark"] .guestPlanTitle { color: #ddd; }
-.guestPlanMeta { font-size: 0.7rem; color: #737373; margin: 0.1rem 0 0.4rem; } /* ≥4.5:1 on white */
+.guestPlanMeta { flex-shrink: 0; font-size: 0.7rem; color: #737373; white-space: nowrap; } /* ≥4.5:1 on white */
 html[data-theme="dark"] .guestPlanMeta { color: #a3a3a3; } /* ≥4.5:1 on #222 */
 /* the program's real segment cells (all not-started) — structure, not slogans */
 .guestSegmentList { margin-bottom: 0.2rem; }
@@ -934,11 +925,15 @@ html[data-theme="dark"] .narrationNextTitle { border-top-color: #3a3a3a; }
   margin: 0.15rem 0 0.5rem;
 }
 .narrationArtRow.single { justify-content: center; }
-.narrationArtRow.single img { flex: 0 1 auto; max-width: 100%; height: auto; max-height: 9rem; object-fit: contain; }
+/* cover always — a lone image just gets a friendlier ratio bound (16:9) */
+.narrationArtRow.single img { width: 100%; }
 .narrationArtRow img {
   flex: 1 1 0;
   min-width: 0;
-  height: 3.6rem;
+  /* crop floor: never flatter than 16:9 — height follows the flex width, so
+     two images render as two legible 16:9 frames, not panoramic slivers */
+  aspect-ratio: 16 / 9;
+  height: auto;
   object-fit: cover;
   border-radius: 0.35rem;
   border: 1px solid #e0e0e0;
@@ -950,7 +945,7 @@ html[data-theme="dark"] .narrationArtRow img { border-color: #444; }
   display: flex;
   align-items: flex-start;
   gap: 0.45rem;
-  padding: 0.28rem 0.25rem;
+  padding: 0.28rem 0.25rem 0.28rem 0.6rem;
   border-radius: 0.4rem;
   color: inherit;
   text-decoration: none;
@@ -1049,85 +1044,6 @@ html[data-theme="dark"] .historyTileMeta { color: #a0a0a0; }
 html[data-theme="dark"] .historyTileTeaser { color: #c4c4c4; }
 
 /* ================================================================
-   SCRIPTURE POPUP — mini reader for any ref clicked on the sampler
-   ================================================================ */
-.samplerScripturePopup {
-  position: fixed;
-  inset: 0;
-  z-index: 2000;
-  background: rgba(0, 0, 0, 0.55);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-}
-.samplerScriptureCard {
-  width: min(34rem, 94vw);
-  max-height: 80vh;
-  display: flex;
-  flex-direction: column;
-  background: #fff;
-  border-radius: 0.7rem;
-  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.45);
-  overflow: hidden;
-}
-html[data-theme="dark"] .samplerScriptureCard { background: #262626; color: #e4e4e4; }
-.samplerScriptureHead {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.7rem 1rem;
-  border-bottom: 1px solid #ececec;
-  font-size: 1rem;
-}
-html[data-theme="dark"] .samplerScriptureHead { border-bottom-color: #3a3a3a; }
-.samplerScriptureHead button {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  line-height: 1;
-  color: #888;
-  cursor: pointer;
-}
-.samplerScriptureHead button:hover { color: #333; }
-html[data-theme="dark"] .samplerScriptureHead button:hover { color: #fff; }
-.samplerScriptureBody {
-  padding: 0.8rem 1rem;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  min-height: 4rem;
-}
-.samplerScripturePassage p {
-  margin: 0.3rem 0 0.8rem;
-  font-family: "Scripture", serif;
-  font-size: 0.95rem;
-  line-height: 1.55;
-  color: #333;
-}
-html[data-theme="dark"] .samplerScripturePassage p { color: #d6d6d6; }
-.samplerScripturePassage sup { color: #999; margin-right: 0.15rem; }
-.samplerScriptureHeading {
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: #888;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-.samplerScriptureLoading { color: #999; text-align: center; padding: 1rem; }
-.samplerScriptureReadLink {
-  display: block;
-  text-align: center;
-  padding: 0.6rem;
-  border-top: 1px solid #ececec;
-  font-weight: 700;
-  font-size: 0.85rem;
-  color: #345496;
-  text-decoration: none;
-}
-.samplerScriptureReadLink:hover { background: rgba(52, 84, 150, 0.06); text-decoration: none; }
-html[data-theme="dark"] .samplerScriptureReadLink { border-top-color: #3a3a3a; color: #93c6ef; }
-
-/* ================================================================
    LIGHTBOX — click-away/Esc dismissable image overlay
    ================================================================ */
 .samplerLightbox {
@@ -1181,12 +1097,12 @@ html[data-theme="dark"] .samplerScriptureReadLink { border-top-color: #3a3a3a; c
 .placesImgWrap {
   position: relative;
   aspect-ratio: 1 / 1;
-  border-radius: 0.45rem;
+  border-radius: 0; /* card clips the top; bottom is square into the body */
   overflow: hidden;
   background: #e2e2e2;
 }
 html[data-theme="dark"] .placesImgWrap { background: #333; }
-.placesImgWrap > a > img {
+.placesImgWrap > a:not(.placesMapBtn) > img {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -1194,22 +1110,35 @@ html[data-theme="dark"] .placesImgWrap { background: #333; }
   border: none;
   border-radius: 0;
 }
-.placesNameOverlay { pointer-events: none; }
+.placesNameOverlay {
+  pointer-events: none;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  white-space: normal; /* override .peopleFaceName nowrap so it wraps to 2 lines */
+  text-overflow: clip;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  max-width: calc(100% - 1.7rem); /* clear the map pin */
+}
 .placesMapBtn {
   position: absolute;
   top: 0.3rem;
   right: 0.3rem;
-  width: 0.95rem;
-  height: 0.95rem;
-  border-radius: 0.35rem;
-  background: rgba(15, 18, 24, 0.62);
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0.85;
+  opacity: 0.92;
 }
-.placesMapBtn:hover { opacity: 1; background: rgba(15, 18, 24, 0.85); }
-.placesMapBtn img { width: 0.55rem; height: 0.55rem; filter: brightness(0) invert(1); }
+.placesMapBtn:hover { opacity: 1; }
+/* white pin, no shader box — a drop-shadow keeps it legible on any image */
+.placesImgWrap > a.placesMapBtn { width: 1.1rem; height: 1.1rem; }
+.placesImgWrap > a.placesMapBtn > img {
+  width: 1.1rem;
+  height: 1.1rem;
+  object-fit: contain;
+  filter: brightness(0) invert(1) drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.7));
+}
 
 /* info overlay = the bottom band (people-title convention) */
 .placesInfoOverlay { pointer-events: none; }
@@ -1219,9 +1148,29 @@ html[data-theme="dark"] .placesImgWrap { background: #333; }
 .textTile .itemInFeedContainer { margin: 0 auto; max-width: 46rem; }
 
 /* fax pages: ref-captioned, deep-linking into the viewer at that page */
-.faxTilePage { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 0.25rem; text-decoration: none; }
-.faxTilePage img { width: 100%; max-height: 10.5rem; object-fit: cover; object-position: top; border-radius: 0.35rem; border: 1px solid #e0e0e0; }
+.faxTilePage { flex: 1 1 0; min-width: 0; position: relative; display: block; text-decoration: none; }
+/* natural page proportions — the sheet fills whatever height it needs */
+.faxTilePage img { width: 100%; height: auto; display: block; border-radius: 0.35rem; border: 1px solid #e0e0e0; transition: transform 0.15s ease; }
 html[data-theme="dark"] .faxTilePage img { border-color: #444; }
+.faxPageBar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.4rem;
+  padding: 0.9rem 0.45rem 0.3rem;
+  border-radius: 0 0 0.35rem 0.35rem;
+  background: linear-gradient(to top, rgba(15, 18, 26, 0.78), rgba(15, 18, 26, 0));
+  color: #fff;
+  font-size: 0.66rem;
+  line-height: 1.3;
+}
+.faxPageBarRef { font-weight: 700; cursor: pointer; }
+.faxPageBarRef:hover { text-decoration: underline; }
+.faxPageBarNum { font-weight: 400; opacity: 0.8; flex-shrink: 0; }
 .faxTilePageRef { font-size: 0.66rem; font-weight: 700; color: #345496; text-align: center; }
 html[data-theme="dark"] .faxTilePageRef { color: #93c6ef; }
 
@@ -1298,7 +1247,6 @@ html[data-theme="dark"] .communityInvite { color: #93c6ef; }
   .communityGroupStrip { flex-wrap: wrap; }
 }
 .placesMosaicCaption { margin-top: 0.25rem; }
-.faxRefPill { align-self: center; }
 
 /* inline expander for clamped prose */
 .readMoreBtn {
@@ -1313,3 +1261,132 @@ html[data-theme="dark"] .communityInvite { color: #93c6ef; }
 .readMoreBtn:hover { color: #1a3a7a; }
 html[data-theme="dark"] .readMoreBtn { color: #93c6ef; }
 html[data-theme="dark"] .readMoreBtn:hover { color: #c2ddf5; }
+
+/* collapsed state of ExpandableText — width-aware line clamp */
+.clampLines {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ================================================================
+   BIBLE PHRASES — intertext pair with shared wording highlighted
+   ================================================================ */
+.biblePhrasesPair { display: flex; gap: 0.7rem; }
+.biblePhrasesPassage { flex: 1 1 0; min-width: 0; }
+.biblePhrasesPassage p {
+  margin: 0.3rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: #555;
+}
+html[data-theme="dark"] .biblePhrasesPassage p { color: #c4c4c4; }
+.biblePhrasesPassage.kjv { border-left: 1px dashed #e2e2e2; padding-left: 0.7rem; }
+html[data-theme="dark"] .biblePhrasesPassage.kjv { border-left-color: #3a3a3a; }
+.biblePhrasesTile mark, .chiasmusTile mark {
+  background: rgba(240, 200, 80, 0.35);
+  color: inherit;
+  padding: 0 0.1em;
+  border-radius: 0.2em;
+}
+html[data-theme="dark"] .biblePhrasesTile mark, html[data-theme="dark"] .chiasmusTile mark {
+  background: rgba(240, 200, 80, 0.22);
+}
+/* view-in-context: a distinct pill with the exit-bracket glyph */
+.tileMoreLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.32rem;
+  margin-top: 0.45rem;
+  margin-left: auto; /* flush right within its flex/column container */
+  padding: 0.22rem 0.6rem;
+  border-radius: 1rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #345496;
+  background: rgba(52, 84, 150, 0.1);
+  border: 1px solid rgba(52, 84, 150, 0.22);
+  text-decoration: none;
+  white-space: nowrap;
+  width: fit-content;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.tileMoreLink:hover { background: rgba(52, 84, 150, 0.18); border-color: rgba(52, 84, 150, 0.4); }
+.tileMoreLink::after {
+  content: "";
+  width: 0.82em;
+  height: 0.82em;
+  flex-shrink: 0;
+  background-color: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3C%3Fxml%20version%3D%221.0%22%20encoding%3D%22utf-8%22%3F%3E%20%3Csvg%20width%3D%22800px%22%20height%3D%22800px%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%20%3Cpath%20d%3D%22M16.9995%2015.9995L20.9995%2011.9995M20.9995%2011.9995L16.9995%207.99951M20.9995%2011.9995H8.99951M12.9995%2020.9995H6.20029C5.08019%2020.9995%204.52014%2020.9995%204.09231%2020.7815C3.71599%2020.5898%203.41003%2020.2838%203.21828%2019.9075C3.00029%2019.4797%203.00029%2018.9196%203.00029%2017.7995V6.19951C3.00029%205.07941%203.00029%204.51935%203.21828%204.09153C3.41003%203.71521%203.71599%203.40925%204.09231%203.2175C4.52014%202.99951%205.08019%202.99951%206.20029%202.99951L12.9995%202.99951%22%20stroke%3D%22%23000000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%20%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3C%3Fxml%20version%3D%221.0%22%20encoding%3D%22utf-8%22%3F%3E%20%3Csvg%20width%3D%22800px%22%20height%3D%22800px%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%20%3Cpath%20d%3D%22M16.9995%2015.9995L20.9995%2011.9995M20.9995%2011.9995L16.9995%207.99951M20.9995%2011.9995H8.99951M12.9995%2020.9995H6.20029C5.08019%2020.9995%204.52014%2020.9995%204.09231%2020.7815C3.71599%2020.5898%203.41003%2020.2838%203.21828%2019.9075C3.00029%2019.4797%203.00029%2018.9196%203.00029%2017.7995V6.19951C3.00029%205.07941%203.00029%204.51935%203.21828%204.09153C3.41003%203.71521%203.71599%203.40925%204.09231%203.2175C4.52014%202.99951%205.08019%202.99951%206.20029%202.99951L12.9995%202.99951%22%20stroke%3D%22%23000000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%20%3C/svg%3E") center / contain no-repeat;
+}
+html[data-theme="dark"] .tileMoreLink {
+  color: #93c6ef;
+  background: rgba(147, 198, 239, 0.12);
+  border-color: rgba(147, 198, 239, 0.28);
+}
+html[data-theme="dark"] .tileMoreLink:hover { background: rgba(147, 198, 239, 0.2); }
+
+/* ================================================================
+   CHIASMUS — mirrored lines, indent tracks letter depth
+   ================================================================ */
+.chiasmusTileHead { display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.4rem; flex-wrap: wrap; }
+.chiasmusTileTitle { font-weight: 800; font-size: 0.85rem; color: #2a2a2a; }
+html[data-theme="dark"] .chiasmusTileTitle { color: #f0f0f0; }
+.chiasmusTileLine {
+  display: flex;
+  gap: 0.4rem;
+  font-size: 0.74rem;
+  line-height: 1.4;
+  color: #555;
+  margin-bottom: 0.15rem;
+}
+html[data-theme="dark"] .chiasmusTileLine { color: #c4c4c4; }
+.chiasmusTileKey {
+  flex-shrink: 0;
+  font-weight: 800;
+  color: #345496;
+  font-size: 0.68rem;
+  line-height: 1.55;
+}
+html[data-theme="dark"] .chiasmusTileKey { color: #93c6ef; }
+
+/* fax: other editions we hold — compact entry points under the sampled pages */
+.faxTileEditions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.6rem;
+  margin-top: 0.45rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid #ececec;
+}
+html[data-theme="dark"] .faxTileEditions { border-top-color: #3a3a3a; }
+.faxTileEditions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.4rem; }
+.faxTileEdition {
+  min-width: 0;
+  text-decoration: none;
+  color: #666;
+}
+.faxTileEdition img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 0.3rem;
+  border: 1px solid #e0e0e0;
+  background: #d8d3c8; /* warm parchment tone if a cover is slow/missing */
+  display: block;
+  transition: transform 0.15s ease;
+}
+.faxTileEdition:hover img { transform: scale(1.03); }
+html[data-theme="dark"] .faxTileEdition img { border-color: #444; background: #2c2c2c; }
+.faxTileEditionTitle {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 0.6rem;
+  line-height: 1.25;
+  margin-top: 0.2rem;
+}
+html[data-theme="dark"] .faxTileEdition { color: #9a9a9a; }

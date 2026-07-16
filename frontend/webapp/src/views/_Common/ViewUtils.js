@@ -3,6 +3,7 @@ import { detectScriptures } from "scripture-guide";
 import { Collapse } from 'bootstrap';
 import { determineLanguage } from '../../models/Utils';
 import { makeScriptureLinkReplacer } from "./scriptureLinkReplacer";
+import { openScripture } from "./ScripturePopup";
 
 // a react hook for detecting if a component is mounted
 export function useIsMounted() {
@@ -64,7 +65,9 @@ export function useTimeouts() {
 // param was dead (no caller ever passed it) and is dropped.
 export function getHtmlScriptureLinkParserOptions(clickHandler) {
     return {
-        replace: makeScriptureLinkReplacer({ onClick: clickHandler }),
+        // Default behavior: the app-wide scripture popup. Callers with a richer
+        // in-context panel still pass their own handler.
+        replace: makeScriptureLinkReplacer({ onClick: clickHandler || openScripture }),
     };
 }
 

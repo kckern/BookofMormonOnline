@@ -1,12 +1,20 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { label } from "src/models/Utils";
 
 /**
- * Clamped text with an inline "read more" that expands in place. Safe inside
- * card <Link>s. `full`/`clamped` may be strings or rendered nodes.
+ * Width-aware clamp: collapsed state is a CSS line-clamp (so the cut point
+ * tracks the ACTUAL rendered width, not a word budget), with an inline
+ * "read more" that expands in place. Truncation is detected by measuring
+ * overflow. Safe inside card <Link>s.
  */
-export default function ExpandableText({ full, clamped, truncated, className }) {
+export default function ExpandableText({ children, lines = 6, className }) {
   const [open, setOpen] = useState(false);
+  const [truncated, setTruncated] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (el) setTruncated(el.scrollHeight > el.clientHeight + 2);
+  }, [children, lines]);
   const expand = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -14,7 +22,13 @@ export default function ExpandableText({ full, clamped, truncated, className }) 
   };
   return (
     <div className={className}>
-      {open || !truncated ? full : clamped}
+      <div
+        ref={ref}
+        className={open ? undefined : "clampLines"}
+        style={open ? undefined : { WebkitLineClamp: lines }}
+      >
+        {children}
+      </div>
       {truncated && !open ? (
         <button className="readMoreBtn" onClick={expand}>
           {label("read_more")}

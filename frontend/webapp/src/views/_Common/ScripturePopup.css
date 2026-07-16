@@ -1,0 +1,123 @@
+/* app-wide scripture popup (see _Common/ScripturePopup.js) */
+/* ================================================================
+   SCRIPTURE POPUP — mini reader for any ref clicked on the sampler
+   ================================================================ */
+.samplerScripturePopup {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.samplerScriptureCard {
+  width: min(34rem, 94vw);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 0.7rem;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+html[data-theme="dark"] .samplerScriptureCard { background: #262626; color: #e4e4e4; }
+.samplerScriptureHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid #ececec;
+  font-size: 1rem;
+}
+html[data-theme="dark"] .samplerScriptureHead { border-bottom-color: #3a3a3a; }
+.samplerScriptureHead button {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: #888;
+  cursor: pointer;
+}
+.samplerScriptureHead button:hover { color: #333; }
+html[data-theme="dark"] .samplerScriptureHead button:hover { color: #fff; }
+.samplerScriptureBody {
+  padding: 0.8rem 1rem;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  min-height: 4rem;
+}
+.samplerScripturePassage p {
+  margin: 0.3rem 0 0.8rem;
+  font-family: "Scripture", serif;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: #333;
+}
+html[data-theme="dark"] .samplerScripturePassage p { color: #d6d6d6; }
+.samplerScripturePassage sup { color: #999; margin-right: 0.15rem; }
+.samplerScriptureHeading {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+/* We reuse Read.scss's .read-content .read-section markup for exact Read
+   typography (speaker gutter, verse font, line height). Strip only the
+   section's outer "card" chrome so it sits cleanly inside the popup. */
+.samplerScriptureBody .read-section {
+  background: transparent;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+}
+.samplerScriptureBody .read-block + .read-block { margin-top: 0.8rem; }
+/* trim the Read layout's generous left margins for the compact popup, and
+   dial the verse font back a touch */
+.samplerScriptureBody .left-gutter { margin-left: 0; width: 3.6rem; padding: 0 0.6rem 0.5ex 0; }
+.samplerScriptureBody .left-gutter img { width: 3rem; height: 3.2rem; }
+.samplerScriptureBody .main-content { padding-right: 0; }
+.samplerScriptureBody .read-scripture { font-size: 1rem; line-height: 1.5; }
+html[data-theme="dark"] .samplerScriptureBody .read-scripture { color: #d6d6d6; }
+.samplerScriptureLoading { color: #999; text-align: center; padding: 1rem; }
+.samplerScriptureFoot {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.55rem 1rem;
+  border-top: 1px solid #ececec;
+}
+html[data-theme="dark"] .samplerScriptureFoot { border-top-color: #3a3a3a; }
+/* the Read action is a pill with the same exit-bracket glyph as view-in-context */
+.samplerScriptureReadLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.32rem;
+  padding: 0.28rem 0.7rem;
+  border-radius: 1rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #345496;
+  background: rgba(52, 84, 150, 0.1);
+  border: 1px solid rgba(52, 84, 150, 0.22);
+  text-decoration: none;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.samplerScriptureReadLink:hover { background: rgba(52, 84, 150, 0.18); border-color: rgba(52, 84, 150, 0.4); text-decoration: none; }
+.samplerScriptureReadLink::after {
+  content: "";
+  width: 0.82em;
+  height: 0.82em;
+  flex-shrink: 0;
+  background-color: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3C%3Fxml%20version%3D%221.0%22%20encoding%3D%22utf-8%22%3F%3E%20%3Csvg%20width%3D%22800px%22%20height%3D%22800px%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%20%3Cpath%20d%3D%22M16.9995%2015.9995L20.9995%2011.9995M20.9995%2011.9995L16.9995%207.99951M20.9995%2011.9995H8.99951M12.9995%2020.9995H6.20029C5.08019%2020.9995%204.52014%2020.9995%204.09231%2020.7815C3.71599%2020.5898%203.41003%2020.2838%203.21828%2019.9075C3.00029%2019.4797%203.00029%2018.9196%203.00029%2017.7995V6.19951C3.00029%205.07941%203.00029%204.51935%203.21828%204.09153C3.41003%203.71521%203.71599%203.40925%204.09231%203.2175C4.52014%202.99951%205.08019%202.99951%206.20029%202.99951L12.9995%202.99951%22%20stroke%3D%22%23000000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%20%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3C%3Fxml%20version%3D%221.0%22%20encoding%3D%22utf-8%22%3F%3E%20%3Csvg%20width%3D%22800px%22%20height%3D%22800px%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%20%3Cpath%20d%3D%22M16.9995%2015.9995L20.9995%2011.9995M20.9995%2011.9995L16.9995%207.99951M20.9995%2011.9995H8.99951M12.9995%2020.9995H6.20029C5.08019%2020.9995%204.52014%2020.9995%204.09231%2020.7815C3.71599%2020.5898%203.41003%2020.2838%203.21828%2019.9075C3.00029%2019.4797%203.00029%2018.9196%203.00029%2017.7995V6.19951C3.00029%205.07941%203.00029%204.51935%203.21828%204.09153C3.41003%203.71521%203.71599%203.40925%204.09231%203.2175C4.52014%202.99951%205.08019%202.99951%206.20029%202.99951L12.9995%202.99951%22%20stroke%3D%22%23000000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%20%3C/svg%3E") center / contain no-repeat;
+}
+html[data-theme="dark"] .samplerScriptureReadLink {
+  color: #93c6ef;
+  background: rgba(147, 198, 239, 0.12);
+  border-color: rgba(147, 198, 239, 0.28);
+}
+html[data-theme="dark"] .samplerScriptureReadLink:hover { background: rgba(147, 198, 239, 0.2); }
+

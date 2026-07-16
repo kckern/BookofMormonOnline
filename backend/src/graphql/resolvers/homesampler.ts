@@ -14,9 +14,9 @@ import type { Resolvers } from '../../../codegen/graphql.js';
 import type { AppContext } from '../context.js';
 
 // 21 people = 1 featured + 11 face cards + 9 view-all mosaic thumbs;
-// 12 places = 3 cards + 9 mosaic thumbs.
+// 14 places = 5 cards + a full 3x3 mosaic.
 const PEOPLE_COUNT = 21;
-const PLACES_COUNT = 12;
+const PLACES_COUNT = 14;
 const MIN_COMMENTARY_CHARS = 500;
 const MIN_PERSON_DESC_CHARS = 40;
 
@@ -85,6 +85,19 @@ const sampleFaxPages = async (ctx: AppContext, seed: number) => {
   }));
 };
 
+// A few OTHER editions (beyond the sampled one) — the fax tile lists them as
+// entry points so the sampler reads as "we hold a collection", not one book.
+const sampleFaxMore = async (ctx: AppContext, seed: number) => {
+  const current = (await sampleFax(ctx, seed)) as { slug?: string } | null;
+  const rows = await ctx.loaders.faxByFilter.load('');
+  const sorted = rows
+    .filter((r) => !r.hide && Number(r.pages) > 0 && String(r.slug) !== String(current?.slug))
+    .sort((a, b) => String(a.slug).localeCompare(String(b.slug)));
+  if (!sorted.length) return [];
+  const start = seed % sorted.length;
+  return Array.from({ length: Math.min(4, sorted.length) }, (_, i) => sorted[(start + i) % sorted.length]);
+};
+
 const countRows = (table: 'bom_people' | 'bom_places') => async (ctx: AppContext) => {
   const r = await ctx.db
     .selectFrom(table)
@@ -93,18 +106,47 @@ const countRows = (table: 'bom_people' | 'bom_places') => async (ctx: AppContext
   return Number(r?.n ?? 0);
 };
 
-const sampleCommentary = async (ctx: AppContext, seed: number) => {
-  // ROBUSTNESS: filter on CHAR_LENGTH(text) — the exact measure the test asserts
-  // (text.length > 500) — rather than the stored `length` column.
+// Three commentaries per page, guaranteed VARIETY: distinct sources and
+// non-overlapping passages (seeded pool of 30, first 3 that qualify).
+// ROBUSTNESS: filter on CHAR_LENGTH(text) — the exact measure the test asserts
+// (text.length > 500) — rather than the stored `length` column. Sources are
+// restricted to the request language and to G-rated publications (R-rated
+// sources exist for the research views, not the front door).
+// ctx.lang mirrors the endpoint path (/en, /fr…); non-language paths like
+// /graphql or /dev must not silently filter out every source.
+const sampleCommentaries = async (ctx: AppContext, seed: number) => {
+  const lang = !ctx.lang || !/^[a-z]{2,3}$/.test(ctx.lang) || ctx.lang === 'dev' ? 'en' : ctx.lang;
   const rows = await ctx.db
     .selectFrom('bom_xtras_commentary')
-    .selectAll()
-    .where(sql<boolean>`CHAR_LENGTH(text) > ${MIN_COMMENTARY_CHARS}`)
-    .orderBy(seededOrder('id', seed))
-    .limit(1)
+    .innerJoin('bom_xtras_source', 'bom_xtras_source.source_id', 'bom_xtras_commentary.source')
+    .selectAll('bom_xtras_commentary')
+    // one author can publish under several source_ids (e.g. Royal Skousen) —
+    // variety means distinct AUTHORS, so carry source_name into the dedupe
+    .select('bom_xtras_source.source_name as _author')
+    .where(sql<boolean>`CHAR_LENGTH(bom_xtras_commentary.text) > ${MIN_COMMENTARY_CHARS}`)
+    .where('bom_xtras_source.source_lang', '=', lang)
+    .where('bom_xtras_source.source_rating', '=', 'G')
+    .orderBy(seededOrder('bom_xtras_commentary.id', seed))
+    .limit(30)
     .execute();
-  return rows[0] ?? null;
+  type Row = (typeof rows)[number];
+  const spanOf = (r: Row) => {
+    const start = Number(r.verse_id) || 0;
+    return [start, start + Math.max(1, Number(r.verse_range) || 1) - 1] as const;
+  };
+  const picked: Row[] = [];
+  for (const r of rows) {
+    if (picked.length === 3) break;
+    if (picked.some((p) => p.source === r.source || (p._author && p._author === r._author))) continue;
+    const [s1, e1] = spanOf(r);
+    if (picked.some((p) => { const [s2, e2] = spanOf(p); return s1 <= e2 && s2 <= e1; })) continue;
+    picked.push(r);
+  }
+  return picked;
 };
+
+const sampleCommentary = async (ctx: AppContext, seed: number) =>
+  (await sampleCommentaries(ctx, seed))[0] ?? null;
 
 const sampleContents = async (ctx: AppContext, seed: number) => {
   const divisions = await ctx.services.contents.divisions(null);
@@ -141,10 +183,13 @@ const sampleSectionNext = async (ctx: AppContext, seed: number) => {
 };
 
 // One featured historical document (must have a teaser + a renderable thumb).
+// Pinned to the reception archive: the /history/:slug view only loads that
+// archive, so a doc sampled from any other would deep-link to an empty popup.
 const sampleHistory = async (ctx: AppContext, seed: number) => {
   const rows = await ctx.db
     .selectFrom('bom_xtras_history')
     .selectAll()
+    .where('archive', '=', 'reception')
     .where(sql<boolean>`teaser IS NOT NULL AND CHAR_LENGTH(teaser) > 30`)
     .where('aspect', 'is not', null)
     .orderBy(seededOrder('id', seed))
@@ -172,12 +217,14 @@ const samplers: Record<string, (ctx: AppContext, seed: number) => Promise<unknow
   places: samplePlaces,
   fax: sampleFax,
   commentary: sampleCommentary,
+  commentaries: sampleCommentaries,
   contents: sampleContents,
   section: sampleSection,
   sectionNext: sampleSectionNext,
   history: sampleHistory,
   text: sampleText,
   faxPages: sampleFaxPages,
+  faxMore: sampleFaxMore,
   peopleCount: countRows('bom_people'),
   placesCount: countRows('bom_places'),
 };

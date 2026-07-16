@@ -258,9 +258,11 @@ export type HomeGroup = {
 
 export type HomeSampler = {
   __typename?: 'HomeSampler';
+  commentaries?: Maybe<Array<Maybe<Commentary>>>;
   commentary?: Maybe<Commentary>;
   contents?: Maybe<Division>;
   fax?: Maybe<Fax>;
+  faxMore?: Maybe<Array<Maybe<Fax>>>;
   faxPages?: Maybe<Array<Maybe<FaxPageRef>>>;
   history?: Maybe<HistoricalDocument>;
   people?: Maybe<Array<Maybe<People>>>;
@@ -2373,9 +2375,11 @@ export type HomeGroupResolvers<ContextType = AppContext, ParentType extends Reso
 };
 
 export type HomeSamplerResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['HomeSampler'] = ResolversParentTypes['HomeSampler']> = {
+  commentaries?: Resolver<Maybe<Array<Maybe<ResolversTypes['Commentary']>>>, ParentType, ContextType>;
   commentary?: Resolver<Maybe<ResolversTypes['Commentary']>, ParentType, ContextType>;
   contents?: Resolver<Maybe<ResolversTypes['Division']>, ParentType, ContextType>;
   fax?: Resolver<Maybe<ResolversTypes['Fax']>, ParentType, ContextType>;
+  faxMore?: Resolver<Maybe<Array<Maybe<ResolversTypes['Fax']>>>, ParentType, ContextType>;
   faxPages?: Resolver<Maybe<Array<Maybe<ResolversTypes['FaxPageRef']>>>, ParentType, ContextType>;
   history?: Resolver<Maybe<ResolversTypes['HistoricalDocument']>, ParentType, ContextType>;
   people?: Resolver<Maybe<Array<Maybe<ResolversTypes['People']>>>, ParentType, ContextType>;

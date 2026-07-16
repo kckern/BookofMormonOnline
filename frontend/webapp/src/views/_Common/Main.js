@@ -19,6 +19,7 @@ import Loader from "src/views/_Common/Loader";
 import { appControllerReducer, appInit } from "src/models/appController";
 import { MessengerProvider } from "src/contexts/MessengerContext";
 import { AppControllerProvider } from "src/contexts/AppControllerContext";
+import ScripturePopup from "src/views/_Common/ScripturePopup";
 import nowifi from "./svg/no-wifi.svg";
 //
 import "./BottomNav.css";
@@ -147,6 +148,8 @@ function Main(props) {
     <MessengerProvider appController={appController}>
       <div className={"body"+(lang ? " "+lang: "") + (isDev ? " dev" : "")}>
         {debug}
+        {/* app-wide scripture lookup: any scripture_link / RefPill click lands here */}
+        <ScripturePopup />
         <Header {...props} isReady={true} />
         {/* <Navbar user={user} showSideNav={showSideNav} manageLayout={manageLayout} toggleSideNav={toggleSideNav} /> */}
         <Sidebar

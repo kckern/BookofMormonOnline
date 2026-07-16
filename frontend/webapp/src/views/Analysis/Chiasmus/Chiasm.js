@@ -59,9 +59,11 @@ function Chiasm({chiasm_id, setChiasmusId, nextId, prevId}) {
     const {push} = useHistory();
     useEffect(() => {
         setChiasm(null);
-        BoMOnlineAPI({chiasm:[chiasm_id]}).then(({chiasm}) => {
-            setChiasm(chiasm[chiasm_id]);
-            
+        // useCache:false — on a deep-link cold load the list query holds the
+        // IndexedDB transaction; going through the cache made this fetch wait
+        // ~15s behind it. The single chiasm is cheap to fetch fresh.
+        BoMOnlineAPI({chiasm:[chiasm_id]}, {useCache:false}).then((r) => {
+            setChiasm(r?.chiasm?.[chiasm_id]);
         });
     }, [chiasm_id]);
 

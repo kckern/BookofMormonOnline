@@ -7,7 +7,7 @@ import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem,Button, Label } fr
 import searchIcon from "../../_Common/svg/search.svg";
 import {lookupReference} from "scripture-guide";
 import { label, determineLanguage } from 'src/models/Utils';
-import { Switch } from "react-router-dom/cjs/react-router-dom.min";
+import { Switch, useRouteMatch } from "react-router-dom/cjs/react-router-dom.min";
 function ChiasmusControl({chiasmusControls, setChiasmusControls}) {
 
 
@@ -231,7 +231,10 @@ function Chiasmus({chiasmus,setChiasmusId,activeChiasmus}) {
 
 function Container() {
     const [chiasmus, setChiasmus] = useState(null);
-    const [chiasmus_id, setChiasmusId] = useState(null);
+    // deep link: /analysis/chiasmus/<chiasmus_id> opens that chiasm directly
+    const { params } = useRouteMatch();
+    const [, urlChiasmId] = params?.value?.split("/") || [];
+    const [chiasmus_id, setChiasmusId] = useState(urlChiasmId || null);
     const chiasmusIdRef = useRef(chiasmus_id); // Create a ref
     useEffect(() => {
         chiasmusIdRef.current = chiasmus_id; // Update the ref whenever chiasmus_id changes
@@ -284,7 +287,9 @@ function Container() {
         }
 
 
-    if(!chiasmus && !chiasmus_id) return <Loader/>
+    // the list must be loaded before we can render anything (deep links set
+    // chiasmus_id before the fetch resolves — findIndex on null crashed here)
+    if(!chiasmus) return <Loader/>
     let singlePanel = <div className="chiasmPanel closed"
     ></div>
     if(chiasmus_id){

@@ -1737,7 +1737,8 @@ const queries = {
         placesCount
         fax { slug title pages info format }
         faxPages { page ref }
-        commentary { id title text preview reference publication { source_id source_title source_name source_slug } }
+        faxMore { slug title pages }
+        commentaries { id title text preview reference publication { source_id source_title source_name source_slug } }
         contents { slug title description pages { title slug sections { title slug } } }
         section { title slug page { title slug } rows { guid narration { guid description text { slug heading imgIds status(token:"${input.token || ""}") } } } }
         sectionNext { title slug rows { guid narration { guid description text { slug heading status(token:"${input.token || ""}") } } } }

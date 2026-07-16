@@ -3,8 +3,8 @@ import { Link } from "react-router-dom";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import { useAppController } from "src/contexts/AppControllerContext";
 import { label } from "src/models/Utils";
+import Masonry from "react-masonry-css";
 import { tileRegistry } from "./tiles/registry";
-import ScripturePopup from "./tiles/ScripturePopup";
 import "./Sampler.css";
 import "./Sampler.m.css";
 
@@ -69,7 +69,9 @@ export const assemblePayload = (r) => {
   const community = sorted.length || finishers.length
     ? { groups: sorted.slice(0, 3), moreGroups: Math.max(0, sorted.length - 3), messages, reading, finishers }
     : null;
-  return { ...sampler, community };
+  // three commentary tiles, one payload field each (registry keys are 1:1)
+  const [commentary, commentary2, commentary3] = sampler.commentaries || [];
+  return { ...sampler, community, commentary, commentary2, commentary3 };
 };
 
 export default function Sampler() {
@@ -151,50 +153,76 @@ export default function Sampler() {
         return 8 + (beats + nextBeats) * 2.4;
       }
       case "contents": return 12 + ((payload.contents?.pages || []).length || 5) * 2.6;
+      // calibrated against measured render heights (2026-07-15, 1400px vp)
       case "people": return 46;
-      case "text": return 20;
-      case "commentary": return 18;
-      case "history": return 16;
-      case "fax": return 15;
-      case "places": return 17;
+      case "text": return 16;
+      case "commentary":
+      case "commentary2":
+      case "commentary3": return 23;
+      case "history": return 30;
+      case "fax": return 30; // natural-height pages + edition covers
+      case "places": return 20;
       case "community": return 8 + (payload.community?.groups?.length || 0) * 4 + (payload.community?.messages?.length || 0) * 2.5;
+      case "biblephrases": return 20;
+      case "chiasmus": return 20;
       default: return 14;
     }
   };
   const leftTiles = FIXED_LEFT.map((k) => tileRegistry.find((t) => t.key === k)).filter(Boolean);
+  // Totals FIRST, then move tiles: the old greedy pass compared each tile
+  // against a not-yet-grown grid estimate and never railed anything.
   const railExtra = [];
-  const gridVars = [];
+  const gridVars = [...variableTiles];
   let leftH = leftTiles.reduce((a, t) => a + est(t.key), 0);
-  let rightH = est("people");
-  for (const t of variableTiles) {
-    if (!payload || !t.isReady(payload)) { gridVars.push(t); continue; }
-    const e = est(t.key);
-    // The text tile is designed for width — never strand it in the narrow rail
-    // (round-6 review: a rail-binned scripture tile ended the page on a
-    // viewport-scale void). Rail assignment is strict: only when the rail
-    // stays at or below the grid even after adding the full tile.
-    if (t.key !== "text" && leftH + e <= rightH) { railExtra.push(t); leftH += e; }
-    else { gridVars.push(t); rightH += e / 2; }
+  // masonry is 2-up: each variable tile costs half its height in column terms
+  let rightH =
+    est("people") +
+    gridVars.reduce((a, t) => (payload && t.isReady(payload) ? a + est(t.key) / 2 : a), 0);
+  // While the rail runs short, pull the best-fitting tile over. The text tile
+  // is designed for width — never strand it in the narrow rail (round-6
+  // review: a rail-binned scripture tile ended the page on a viewport void).
+  for (;;) {
+    const deficit = rightH - leftH;
+    if (deficit <= 12) break;
+    // moving a tile of height e shifts the delta by 1.5e (rail +e, grid −e/2);
+    // pick the move that lands the delta closest to zero, and only if it helps
+    let best = -1;
+    let bestAfter = deficit;
+    gridVars.forEach((t, i) => {
+      if (t.key === "text" || !payload || !t.isReady(payload)) return;
+      const after = Math.abs(deficit - est(t.key) * 1.5);
+      if (after < bestAfter) { bestAfter = after; best = i; }
+    });
+    if (best === -1) break;
+    const [t] = gridVars.splice(best, 1);
+    railExtra.push(t);
+    leftH += est(t.key);
+    rightH -= est(t.key) / 2;
   }
-  // Correction pass: if the rail overshot the grid anyway, pull tiles back
-  // until the column-end delta is within one small tile (~12rem).
-  while (railExtra.length && leftH > rightH + 12) {
-    const t = railExtra.pop();
-    leftH -= est(t.key);
-    gridVars.push(t);
-    rightH += est(t.key) / 2;
+  const topTiles = FIXED_TOP.map((k) => tileRegistry.find((t) => t.key === k)).filter(Boolean);
+
+  // Anti-stacking: the three commentary tiles must not read as a spam column.
+  // react-masonry-css fills columns round-robin (item j → column j % cols), so
+  // items an even distance apart share a column and stack. Interleave the
+  // commentary tiles evenly among the OTHER tiles — but only among tiles that
+  // will actually render (not-ready ones drop to null and shift every column),
+  // so we filter to renderable first, then space commentary out.
+  const isCommentary = (t) => /^commentary/.test(t.key);
+  // During loading (no payload) keep every tile so its skeleton renders (no
+  // layout shift); once loaded, keep only the ready ones.
+  const renderable = gridVars.filter((t) => !payload || t.isReady(payload));
+  const commentaryTiles = renderable.filter(isCommentary);
+  const orderedGrid = renderable.filter((t) => !isCommentary(t));
+  if (commentaryTiles.length) {
+    // even fractional spacing, offset so the first isn't at index 0 (keeps a
+    // non-commentary tile leading each column); re-inserting front-to-back
+    // keeps later indices valid.
+    const slots = orderedGrid.length + commentaryTiles.length;
+    commentaryTiles.forEach((c, i) => {
+      const at = Math.min(orderedGrid.length, Math.round(((i + 0.5) / commentaryTiles.length) * slots));
+      orderedGrid.splice(at, 0, c);
+    });
   }
-  // The text tile CLOSES the grid as a full-width row — a wide final band
-  // absorbs sub-column height rag so the page never ends on a corner hole.
-  const textSpan = "tile-text";
-  const orderedGrid = [
-    ...gridVars.filter((t) => t.key !== "text"),
-    ...gridVars.filter((t) => t.key === "text"),
-  ];
-  const mainTiles = [
-    ...FIXED_TOP.map((k) => tileRegistry.find((t) => t.key === k)).filter(Boolean),
-    ...orderedGrid,
-  ];
 
   return (
     <div className="sampler container">
@@ -213,11 +241,19 @@ export default function Sampler() {
           {leftTiles.map((t) => renderTile(t))}
           {railExtra.map((t) => renderTile(t))}
         </div>
-        <div className="samplerGrid">
-          {mainTiles.map((t) => renderTile(t, t.key === "text" ? textSpan : undefined))}
+        {/* three top-level panels: rail | people (fixed) | masonry of the rest.
+            Masonry frees tile heights from each other — no row-matching voids. */}
+        <div className="samplerMain">
+          {topTiles.map((t) => renderTile(t))}
+          <Masonry
+            breakpointCols={{ default: 2, 800: 1 }}
+            className="samplerMasonry"
+            columnClassName="samplerMasonryCol"
+          >
+            {orderedGrid.map((t) => renderTile(t)).filter(Boolean)}
+          </Masonry>
         </div>
       </div>
-      <ScripturePopup />
     </div>
   );
 }

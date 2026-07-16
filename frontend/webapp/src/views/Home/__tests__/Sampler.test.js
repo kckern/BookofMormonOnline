@@ -59,9 +59,12 @@ describe("tileRegistry contract", () => {
     });
   });
 
-  test("every data tile except readingplan is not ready for an empty payload", () => {
+  test("every payload-backed tile is not ready for an empty payload", () => {
+    // readingplan always renders (guest default plan); biblephrases and
+    // chiasmus fetch their own data client-side, so they don't gate on payload.
+    const SELF_SUFFICIENT = ["readingplan", "biblephrases", "chiasmus"];
     tileRegistry
-      .filter((entry) => entry.key !== "readingplan")
+      .filter((entry) => !SELF_SUFFICIENT.includes(entry.key))
       .forEach((entry) => {
         expect(entry.isReady({})).toBeFalsy();
       });

@@ -88,9 +88,9 @@ async function exec(seed?: number): Promise<Sampler> {
 describe('homesampler', () => {
   it('returns a full sampler payload', async () => {
     const s = await exec(12345);
-    expect(s.people).toHaveLength(8);
+    expect(s.people).toHaveLength(21);
     expect(s.people.every((p) => p.slug)).toBe(true);
-    expect(s.places).toHaveLength(5);
+    expect(s.places).toHaveLength(14);
     expect(s.fax?.slug).toBeTruthy();
     expect(s.commentary?.id).toBeTruthy();
     expect(s.contents?.slug).toBeTruthy();
@@ -115,7 +115,7 @@ describe('homesampler', () => {
     const s = await exec(undefined);
     expect(Number.isInteger(s.seed)).toBe(true);
     expect(s.seed).toBeGreaterThan(0);
-    expect(s.people).toHaveLength(8);
+    expect(s.people).toHaveLength(21);
   });
 
   it('samples only substantive commentary', async () => {

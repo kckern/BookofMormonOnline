@@ -2,7 +2,6 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import { label } from "src/models/Utils";
-import { clampWords } from "./textUtils";
 import ExpandableText from "./ExpandableText";
 
 /**
@@ -19,20 +18,17 @@ export default function ContentsTile({ data }) {
         <Link to="/contents">{label("contents")}</Link>
       </h3>
       <Link to={`/${data.slug}`} className="contentsTileHead">
+        <div className="contentsTileTitle">{data.title}</div>
         <img
           src={`${assetUrl}/home/${data.slug}-1`}
           alt=""
           loading="lazy"
           onError={(e) => (e.target.style.display = "none")}
         />
-        <div className="contentsTileTitle">{data.title}</div>
         {data.description ? (
-          <ExpandableText
-            className="contentsTileDesc"
-            full={data.description}
-            clamped={clampWords(data.description, 48)}
-            truncated={clampWords(data.description, 48) !== data.description}
-          />
+          <ExpandableText className="contentsTileDesc" lines={5}>
+            {data.description}
+          </ExpandableText>
         ) : null}
       </Link>
       {data.pages?.length ? (

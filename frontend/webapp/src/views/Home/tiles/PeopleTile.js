@@ -19,7 +19,6 @@ import { flatten, clampWords, supDigits } from "./textUtils";
 export default function PeopleTile({ data, seed = 0, payload }) {
   const [featured, ...rest] = data;
   const bio = flatten(featured.description);
-  const bioClamped = clampWords(bio, 70);
   const faces = rest.slice(0, 11);
   const mosaic = rest.slice(11, 20);
   const scriptureOpts = getHtmlScriptureLinkParserOptions((ref) => openScripture(ref));
@@ -46,12 +45,9 @@ export default function PeopleTile({ data, seed = 0, payload }) {
             {featured.title ? <span className="peopleFeatureTitle">{supDigits(featured.title)}</span> : null}
           </Link>
           {bio ? (
-            <ExpandableText
-              className="peopleFeatureDesc"
-              full={Parser(getDetectedScripturesHtml(bio), scriptureOpts)}
-              clamped={Parser(getDetectedScripturesHtml(bioClamped), scriptureOpts)}
-              truncated={bioClamped !== bio}
-            />
+            <ExpandableText className="peopleFeatureDesc" lines={7}>
+              {Parser(getDetectedScripturesHtml(bio), scriptureOpts)}
+            </ExpandableText>
           ) : null}
         </div>
       </div>
@@ -60,7 +56,7 @@ export default function PeopleTile({ data, seed = 0, payload }) {
           const idx = (p.index || []).filter((x) => x?.ref);
           const item = idx.length ? idx[(seed + i) % idx.length] : null;
           return (
-            <Link to={`/people/${p.slug}`} key={p.slug} className="peopleFaceCard" title={p.title || p.name}>
+            <Link to={`/people/${p.slug}`} key={p.slug} className="peopleFaceCard samplerCard" title={p.title || p.name}>
               <div className="peopleFaceImgWrap">
                 <img
                   className="peopleFaceImg"
@@ -74,18 +70,18 @@ export default function PeopleTile({ data, seed = 0, payload }) {
                 {p.title ? <span className="peopleFaceTitle">{clampWords(supDigits(p.title), 5)}</span> : null}
               </div>
               {item ? (
-                <div className="peopleFaceBody">
+                <div className="peopleFaceBody samplerCardBody">
                   <span className="peopleFaceIndexText">
-                    <RefPill refText={item.ref} className="refChipSm" />
+                    <RefPill refText={item.ref} />
                     {" "}
-                    {clampWords(flatten(item.text), 14)}
+                    {clampWords(flatten(item.text), 26)}
                   </span>
                 </div>
               ) : null}
             </Link>
           );
         })}
-        <Link to="/people" className="peopleFaceCard viewAllCard" title={label("view_all")}>
+        <Link to="/people" className="peopleFaceCard samplerCard viewAllCard" title={label("view_all")}>
           <div className="peopleFaceImgWrap">
             <div className="viewAllMosaic">
               {mosaic.map((p) => (
@@ -100,7 +96,7 @@ export default function PeopleTile({ data, seed = 0, payload }) {
             </div>
             <span className="peopleFaceName viewAllOverlay">{payload?.peopleCount ? `+${payload.peopleCount - data.length} ${label("people")}` : label("view_more")}</span>
           </div>
-          <div className="peopleFaceBody">
+          <div className="peopleFaceBody samplerCardBody">
             <span className="peopleFaceIndexText">
               {mosaic.slice(0, 2).map((m) => m.name).join(", ")}
               {payload?.peopleCount ? `, +${payload.peopleCount - data.length + mosaic.length - 2}…` : "…"}

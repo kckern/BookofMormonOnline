@@ -11,12 +11,14 @@ type HomeSampler {
   places: [Place]
   fax: Fax
   commentary: Commentary
+  commentaries: [Commentary]
   contents: Division
   section: Section
   sectionNext: Section
   history: HistoricalDocument
   text: TextBlock
   faxPages: [FaxPageRef]
+  faxMore: [Fax]
   peopleCount: Int
   placesCount: Int
 }

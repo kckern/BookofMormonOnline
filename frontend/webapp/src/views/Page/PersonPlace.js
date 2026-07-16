@@ -9,6 +9,7 @@ import { useAppController } from "src/contexts/AppControllerContext";
 import { usePageController } from "src/contexts/PageControllerContext";
 import { replaceNumbers } from "src/models/Utils";
 import { makeScriptureLinkReplacer } from "../_Common/scriptureLinkReplacer";
+import { openScripture } from "../_Common/ScripturePopup";
 
 // Slugs like "mormon2" inside {Mormon|mormon2} otherwise read as the scripture
 // reference "Mormon 2" and corrupt the slug capture before token parsing.
@@ -53,7 +54,7 @@ export const renderPersonPlaceHTML = (html, pageController, scriptureLinkClickHa
   html = html + "<span class='react-tooltip'></span>";
 
   const scriptureReplacer = makeScriptureLinkReplacer({
-    onClick: (ref) => scriptureLinkClickHandler?.(ref),
+    onClick: (ref) => (scriptureLinkClickHandler ? scriptureLinkClickHandler(ref) : openScripture(ref)),
   });
 
   const options = {
