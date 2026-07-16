@@ -45,7 +45,7 @@ export function bookFromReference(reference) {
   return m ? m[1].trim() : null;
 }
 
-let bibleVerseIdCache = {};
+const bibleVerseIdCache = {};
 function bibleVerseIds(lang) {
   if (!bibleVerseIdCache[lang]) {
     bibleVerseIdCache[lang] = new Set(lookupReference(BIBLE_REFS, lang).verse_ids);
@@ -72,4 +72,61 @@ export function enrichChiasmus(list, lang) {
       isBiblical: verse_id != null && bibleIds.has(verse_id),
     };
   });
+}
+
+const BOOK_ORDER = Object.keys(BOOK_GROUPS); // declaration order is canonical
+
+/**
+ * Pure selector: apply the URL-backed browse state (from useBrowseState) to
+ * the enriched list. Returns { flat, groups } where groups is null when no
+ * grouping is active. Note: state.depths arrives as STRINGS from the URL
+ * ("3", "+") while depthBucket is number|"+", so comparison is via String().
+ */
+export function applyBrowseState(enriched, s) {
+  let flat = (enriched || []).filter((c) => {
+    if (s.depths.length && !s.depths.includes(String(c.depthBucket))) return false;
+    if (s.type === "biblical" && !c.isBiblical) return false;
+    if (s.type === "compound" && !c.isCompound) return false;
+    if (s.type === "simple" && (c.isCompound || c.isBiblical)) return false;
+    if (s.q) {
+      const q = s.q.toLowerCase();
+      if (!`${c.title} ${c.reference}`.toLowerCase().includes(q)) return false;
+    }
+    return true;
+  });
+
+  const cmp = {
+    canonical: (a, b) => (a.verse_id ?? 0) - (b.verse_id ?? 0),
+    depth: (a, b) => a.depth - b.depth || (a.verse_id ?? 0) - (b.verse_id ?? 0),
+    length: (a, b) => a.lineCount - b.lineCount || (a.verse_id ?? 0) - (b.verse_id ?? 0),
+    title: (a, b) => String(a.title).localeCompare(String(b.title)),
+  }[s.sort] || (() => 0);
+  flat = flat.sort((a, b) => (s.dir === "desc" ? -cmp(a, b) : cmp(a, b)));
+
+  if (!s.group || s.group === "none") return { flat, groups: null };
+
+  const keyFn = {
+    book: (c) => c.book || "—",
+    speaker: (c) => c.speakerName || "—", // server field lands in Task 16; groups under — until then
+    depth: (c) => `Level ${c.depthBucket}`,
+    type: (c) => (c.isBiblical ? "Biblical" : c.isCompound ? "Compound" : "Simple"),
+  }[s.group];
+  if (!keyFn) return { flat, groups: null };
+
+  const map = new Map();
+  for (const c of flat) {
+    const k = keyFn(c);
+    if (!map.has(k)) map.set(k, []);
+    map.get(k).push(c);
+  }
+  const keys = [...map.keys()];
+  if (s.group === "book") {
+    keys.sort((a, b) => BOOK_ORDER.indexOf(a) - BOOK_ORDER.indexOf(b));
+  } else if (s.group === "depth") {
+    // Deterministic level order regardless of active sort: numeric asc, "+" last.
+    const levelRank = (k) => (k === "Level +" ? Infinity : Number(k.slice(6)));
+    keys.sort((a, b) => levelRank(a) - levelRank(b));
+  }
+  const groups = keys.map((k) => ({ key: k, items: map.get(k) }));
+  return { flat, groups };
 }
