@@ -73,6 +73,13 @@ describe('Group', () => {
     expect(body.data.group.map((g: { slug: string }) => g.slug)).toEqual([groupSlug, secondGroupSlug]);
   }, 30000);
 
+  it('keeps connector words lowercase in de-slugged names', async () => {
+    // Fixed slug: church-of-the-lamb is a stable real dst_slug in bom_xrels.
+    const body = await gql(`{ group(slug: "church-of-the-lamb") { name } }`);
+    expect(body.errors).toBeUndefined();
+    expect(body.data.group[0].name).toBe('Church of the Lamb');
+  }, 30000);
+
   it('unknown group slug resolves to an empty list, not an error', async () => {
     const body = await gql(`{ group(slug: "no-such-group") { slug } }`);
     expect(body.errors).toBeUndefined();
