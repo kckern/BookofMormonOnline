@@ -20,12 +20,19 @@ const SLUG = "internal";
 const MIN_ZOOM = 6;
 const MAX_ZOOM = 10;
 
-/** Ordered journey coordinates: first move's start, then every move's end. */
+/**
+ * Ordered journey coordinates: first move's start, then every move's end.
+ * bom_places_coords stores the internal projection's X in the `lat` column and
+ * Y in `lng` (swapped vs the usual convention), so the live map plots
+ * fromLonLat([lat, lng]) — see MapContents.js:508. Match that order: passing
+ * lng-then-lat feeds a −97 value in as a latitude, and Mercator blows up to
+ * Infinity beyond ±90° (which then makes view.fit() throw on an invalid extent).
+ */
 const pathCoords = (moves) => {
   const coords = [];
   moves.forEach((m, i) => {
-    if (i === 0) coords.push(OlProj.fromLonLat([Number(m.startLng), Number(m.startLat)]));
-    coords.push(OlProj.fromLonLat([Number(m.endLng), Number(m.endLat)]));
+    if (i === 0) coords.push(OlProj.fromLonLat([Number(m.startLat), Number(m.startLng)]));
+    coords.push(OlProj.fromLonLat([Number(m.endLat), Number(m.endLng)]));
   });
   return coords;
 };
@@ -80,10 +87,13 @@ export default function MapStoryTileInner({ moves }) {
       controls: [],
       interactions: Interaction.defaults({ mouseWheelZoom: false }),
     });
-    mapRef.current.getView().fit(line.getGeometry().getExtent(), {
-      padding: [28, 28, 28, 28],
-      maxZoom: MAX_ZOOM,
-    });
+    // Only fit to a finite extent — a stray NaN/Infinity coordinate would make
+    // fit() throw and take the whole tile down. With a bad extent we simply
+    // leave the view at its initial center/zoom.
+    const extent = line.getGeometry().getExtent();
+    if (extent.every(Number.isFinite)) {
+      mapRef.current.getView().fit(extent, { padding: [28, 28, 28, 28], maxZoom: MAX_ZOOM });
+    }
     const map = mapRef.current;
     return () => {
       map.setTarget(undefined);
