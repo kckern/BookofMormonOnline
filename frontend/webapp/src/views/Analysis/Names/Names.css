@@ -1,3 +1,9 @@
+.namesView{
+    --names-border: #ccc;
+    --names-muted: #666;
+    --names-hover: #f1f1f1;
+}
+
 .nameAnalysisList{
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(6rem, 1fr));
@@ -9,7 +15,7 @@
 
 .nameAnalysisList .nameAnalysisItem{
     align-items: center;
-    border: 1px solid #ccc;
+    border: 1px solid var(--names-border, #ccc);
     border-radius: 5px;
     text-align: center;
     cursor: pointer;
@@ -19,10 +25,10 @@
     color: inherit;
 }
 .nameAnalysisList .nameAnalysisItem:hover{
-    background-color: #f9f9f9;
+    background-color: var(--names-hover, #f1f1f1);
     position: relative;
     bottom: 1px;
-    border-bottom: 2px solid #ccc;
+    border-bottom: 2px solid var(--names-border, #ccc);
     margin-bottom: -1px;
 
 }
@@ -100,7 +106,7 @@
     align-items: center;
     justify-content: space-between;
     margin: 0.5rem 0 1rem;
-    color: #666;
+    color: var(--names-muted, #666);
 }
 
 .nameAnalysisList .nameAnalysisItem{
@@ -110,7 +116,7 @@
 .nameAnalysisEmpty{
     grid-column: 1 / -1;
     text-align: center;
-    color: #888;
+    color: var(--names-muted, #888);
     padding: 2rem 0;
 }
 
