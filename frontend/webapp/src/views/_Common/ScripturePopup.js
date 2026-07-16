@@ -25,9 +25,22 @@ export default function ScripturePopup() {
 
   useEffect(() => {
     if (!ref) return undefined;
-    const onKey = (e) => e.key === "Escape" && setRef(null);
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    // Capture phase + legacy key values so Esc closes the popup even if a child
+    // (an editor, a focused control) would otherwise swallow the keydown.
+    const onKey = (e) => {
+      if (e.key === "Escape" || e.key === "Esc" || e.keyCode === 27) setRef(null);
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [ref]);
+
+  // Freeze the main site behind the shaded overlay while the modal is open —
+  // reuse the app's existing body scroll lock (html has scrollbar-gutter:stable
+  // so nothing shifts). Same mechanism StudyGroupBar uses.
+  useEffect(() => {
+    if (!ref) return undefined;
+    document.body.classList.add("noscroll");
+    return () => document.body.classList.remove("noscroll");
   }, [ref]);
 
   if (!ref) return null;

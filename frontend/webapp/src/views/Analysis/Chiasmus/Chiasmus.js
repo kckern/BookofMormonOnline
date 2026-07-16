@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import BoMOnlineAPI from "../../../models/BoMOnlineAPI";
 import Loader from "../../_Common/Loader";
 import "./Chiasmus.css";
@@ -138,31 +138,39 @@ function Chiasmus({chiasmus,setChiasmusId,activeChiasmus}) {
 
     const lang = determineLanguage();
     useEffect(()=>document.title = "Chiasms | " + label("home_title"),[])
-    const bibleRefs = `2 Nephi 12-24, 1 Nephi 20-21, 3 Nephi 12-14, 3 Nephi 24-25, Mosiah 14`;
-    const bibleVerseIds = lookupReference(bibleRefs, lang).verse_ids;
 
-    const depthCounts = chiasmus.reduce((acc, chiasm) => {
-        const {scheme, verse_id} = chiasm;
-        const upperLetters = scheme.replace(/[^A-Z]/g, "").split("").sort();
-        const maxLetter = upperLetters[upperLetters.length-1];
-        let depth = maxLetter.charCodeAt(0) - 64;
+    // Bible-passage verse set — one reference parse, O(1) membership afterward.
+    const bibleVerseSet = useMemo(() => {
+        const bibleRefs = `2 Nephi 12-24, 1 Nephi 20-21, 3 Nephi 12-14, 3 Nephi 24-25, Mosiah 14`;
+        return new Set(lookupReference(bibleRefs, lang).verse_ids);
+    }, [lang]);
 
-        if(depth > 7) depth = "+";
-        return {...acc, [depth]: acc[depth] ? acc[depth] + 1 : 1};
-    }, {});
+    // Enrich each chiasm ONCE (depth, first verse_id, compound/biblical flags).
+    // Previously depth-parsing ran per render and — the real killer —
+    // lookupReference() ran inside the sort comparator, i.e. O(n log n) scripture
+    // parses on every keystroke/toggle/mount. Precomputing collapses that to O(n),
+    // memoized, so filtering and sorting are plain numeric compares.
+    const enriched = useMemo(() => (Array.isArray(chiasmus) ? chiasmus : []).map((c) => {
+        const upper = c.scheme.replace(/[^A-Z]/g, "").split("").sort();
+        const maxLetter = upper[upper.length - 1];
+        const depth = maxLetter ? maxLetter.charCodeAt(0) - 64 : 0;
+        // Prefer the backend's start_verse_id — avoids re-parsing hundreds of
+        // reference strings on the client (the old hot path). Fall back to
+        // lookupReference only if the field is missing.
+        const verseId = c.start_verse_id ?? (lookupReference(c.reference, lang).verse_ids[0] || 0);
+        return { ...c, depth, verseId, isCompound: /Aa/.test(c.scheme), isBiblical: bibleVerseSet.has(verseId) };
+    }), [chiasmus, lang, bibleVerseSet]);
 
+    const depthCounts = useMemo(() => enriched.reduce((acc, c) => {
+        const d = c.depth > 7 ? "+" : c.depth;
+        acc[d] = (acc[d] || 0) + 1;
+        return acc;
+    }, {}), [enriched]);
 
-    const categoryCounts = chiasmus.reduce((acc, chiasm) => {
-        const {reference, scheme} = chiasm;
-        const verse_id = lookupReference(reference, lang).verse_ids[0];
-        const isBiblical = bibleVerseIds.includes(verse_id);
-        const isCompound = /Aa/.test(scheme);
-        return {
-            ...acc,
-            biblical: isBiblical ? acc.biblical + 1 : acc.biblical,
-            compound: isCompound ? acc.compound + 1 : acc.compound
-        };
-    }, {biblical: 0, compound: 0});
+    const categoryCounts = useMemo(() => enriched.reduce((acc, c) => ({
+        biblical: acc.biblical + (c.isBiblical ? 1 : 0),
+        compound: acc.compound + (c.isCompound ? 1 : 0),
+    }), {biblical: 0, compound: 0}), [enriched]);
 
     const [chiasmusControls, setChiasmusControls] = useState({
         sortDropdownOpen: false,
@@ -176,56 +184,38 @@ function Chiasmus({chiasmus,setChiasmusId,activeChiasmus}) {
         compound: false
     });
 
-
+    // Filter + sort only when the data or the controls change — not on every
+    // unrelated re-render (e.g. a hover elsewhere).
+    const visibleChiasms = useMemo(() => {
+        const {filteredLevels, biblical, compound, sortField, sortOrder} = chiasmusControls;
+        const filtered = enriched.filter((c) => {
+            const d = c.depth > 7 ? "+" : c.depth;
+            if (compound && c.isCompound) return false;
+            if (biblical && c.isBiblical) return false;
+            if (filteredLevels.includes(d)) return false;
+            return true;
+        });
+        filtered.sort((a, b) => (sortField === 'depth'
+            ? (sortOrder === 'asc' ? a.depth - b.depth : b.depth - a.depth)
+            : (sortOrder === 'asc' ? a.verseId - b.verseId : b.verseId - a.verseId)));
+        return filtered;
+    }, [enriched, chiasmusControls]);
 
     if(!Array.isArray(chiasmus) || chiasmus.length===0) return <pre>No chiasmus found {JSON.stringify(chiasmus)}</pre>
-
-
-    const filterChiasm = (chiasm) => {
-        const {filteredLevels, biblical, compound} = chiasmusControls;
-        let {depth, scheme} = chiasm;
-        if(depth > 7) depth = "+";
-        const isCompound = /Aa/.test(scheme);
-        if(compound && isCompound) return false;
-        if(biblical && bibleVerseIds.includes(lookupReference(chiasm.reference, lang).verse_ids[0])) return false;
-        if (filteredLevels.includes(depth)) return false;
-        return true;
-    }
-
-    const sortChiasmus = (a, b) => {
-        const {sortField, sortOrder} = chiasmusControls;
-        if (sortField === 'depth') {
-            return sortOrder === 'asc' ? a.depth - b.depth : b.depth - a.depth;
-        } else {
-            const [aVerseId] = lookupReference(a.reference, lang).verse_ids;
-            const [bVerseId] = lookupReference(b.reference, lang).verse_ids;
-            return sortOrder === 'asc' ? aVerseId - bVerseId : bVerseId - aVerseId;
-        }
-    }
 
     return   <div className="chiasmIndexPanel noselect">
          <ChiasmusControl chiasmusControls={chiasmusControls} setChiasmusControls={setChiasmusControls} />
     <div className="chiasmus_list">
-        {chiasmus
-        .map((chiasm, i) => {
-            const upperLetters = chiasm.scheme.replace(/[^A-Z]/g, "").split("").sort();
-            const maxLetter = upperLetters[upperLetters.length-1];
-            const depth = maxLetter.charCodeAt(0) - 64;
-            chiasm = {...chiasm, depth};
-            return chiasm;
-        })
-        .filter(filterChiasm)
-        .sort(sortChiasmus)
-        .map((chiasm, i) => {
+        {visibleChiasms.map((chiasm) => {
             const {chiasmus_id, reference, depth, title} = chiasm;
-            return <div key={i}  onClick={()=>setChiasmusId(chiasmus_id)} className={`chiasmus ${activeChiasmus===chiasmus_id ? "active" : ""}`}>
+            return <div key={chiasmus_id}  onClick={()=>setChiasmusId(chiasmus_id)} className={`chiasmus ${activeChiasmus===chiasmus_id ? "active" : ""}`}>
                 <div className="title"> {title || "Chiasm Title"}<span className="depth">{depth}</span></div>
                 <div className="reference">{reference}</div>
             </div>
         })}
     </div>
     </div>
-    
+
 }
 
 

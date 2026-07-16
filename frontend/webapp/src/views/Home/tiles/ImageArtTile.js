@@ -33,7 +33,9 @@ export default function ImageArtTile({ payload, artIndex = 0 }) {
         {art.artist ? <span className="imageArtArtist">{art.artist}</span> : null}
         {art.ref ? (
           <div className="imageArtScripture read-content scriptureExcerptCompact">
-            <ScriptureExcerpt refText={art.ref} />
+            {/* the ref heading + "see in context" already navigate — drop the
+                redundant Study button */}
+            <ScriptureExcerpt refText={art.ref} hideStudy />
           </div>
         ) : null}
         {to ? <Link to={to} className="imageArtContext tileMoreLink">{label("view_in_context")}</Link> : null}
