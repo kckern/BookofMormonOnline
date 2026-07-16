@@ -55,6 +55,30 @@ const shuffle = (arr) => {
 // VARIABLE — shuffled per load and bin-packed by grid-auto-flow: dense.
 const FIXED_LEFT = ["readingplan", "section", "contents"];
 const FIXED_TOP = ["people"];
+// FIXED_TAIL renders once at the END of the first-batch masonry — the feature
+// tile slot (map-story). Below the fold, never repeated by the infinite feed.
+const FIXED_TAIL = ["mapstory"];
+
+// ---- infinite scroll -------------------------------------------------------
+// The fixed panels (rail: reading plan → narration → contents → community; top:
+// people) and the first tile batch render once. Past that, the page grows by
+// appending fresh batches: each is a homesampler call under a NEW seed —
+// distinct random people/places/art/commentary/history/fax — sampled in the
+// background and revealed as the reader nears the bottom. These are the
+// repeatable content tile types; fixed/live ones (reading plan, narration,
+// contents, community) are excluded.
+const INFINITE_REGISTRY_KEYS = ["art", "commentary", "commentary2", "commentary3", "history", "fax", "faxVerse", "places", "biblephrases", "chiasmus", "text", "notes", "crossrefs", "relationship"];
+const BATCH_TILES = [
+  ...tileRegistry
+    .filter((t) => INFINITE_REGISTRY_KEYS.includes(t.key))
+    .map((t) => ({ key: t.key, component: t.component, isReady: t.isReady, span: t.span })),
+  { key: "personProfile", component: PersonProfileTile, isReady: (p) => (p?.people?.length || 0) > 0, span: "tile-personProfile" },
+  { key: "placeProfile",  component: PlaceProfileTile,  isReady: (p) => (p?.places?.length || 0) > 0, span: "tile-placeProfile" },
+  { key: "witness",       component: WitnessTile, dataKey: "witnesses", isReady: (p) => (p?.witnesses?.length || 0) > 0, span: "tile-witness" },
+  { key: "artB",          component: ImageArtTile, props: { artIndex: 1 }, isReady: (p) => (p?.art?.length || 0) > 1, span: "tile-art" },
+];
+const MAX_BATCHES = 30; // backstop against a runaway fetch loop; effectively infinite for a reader
+const nextBatchSeed = (s) => ((s + 1013904223) % 2147483647) || 1;
 
 /** Merge the compound API response into one payload keyed by registry tile key. */
 export const assemblePayload = (r) => {
@@ -103,7 +127,7 @@ export default function Sampler() {
   const [failed, setFailed] = useState(false);
   const [seed, setSeed] = useState(getSessionSeed);
   const [variableTiles, setVariableTiles] = useState(() =>
-    shuffle(tileRegistry.filter((t) => !FIXED_LEFT.includes(t.key) && !FIXED_TOP.includes(t.key))),
+    shuffle(tileRegistry.filter((t) => !FIXED_LEFT.includes(t.key) && !FIXED_TOP.includes(t.key) && !FIXED_TAIL.includes(t.key))),
   );
   // Reserve tiles activated by the balancer: [{ key, side: "rail"|"main" }].
   const [reserves, setReserves] = useState([]);
@@ -113,6 +137,22 @@ export default function Sampler() {
   const railRef = useRef(null);
   const mainRef = useRef(null);
 
+  // ---- infinite-scroll state ----------------------------------------------
+  // extraBatches: revealed batches below the first, each { payload, tiles }.
+  // A single batch is always prefetched into reserveRef ("reserve API call in
+  // the background") so reveal is instant; refs hold the cross-callback state
+  // so the IntersectionObserver never reads stale closures.
+  const [extraBatches, setExtraBatches] = useState([]);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const reserveRef = useRef(null);      // { payload, tiles } prefetched, not yet shown
+  const fetchingRef = useRef(false);
+  const atBottomRef = useRef(false);
+  const batchSeedRef = useRef(0);
+  const sentinelRef = useRef(null);
+  const loadMoreRef = useRef(() => {}); // latest maybeLoadMore, for the observer
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   // Break the session-stable seed on demand: fresh content + refitted variables.
   const resample = () => {
     const next = Math.floor(Math.random() * (2 ** 31 - 1)) + 1;
@@ -120,7 +160,12 @@ export default function Sampler() {
     setPayload(null);
     setFailed(false);
     setReserves([]);
-    setVariableTiles(shuffle(tileRegistry.filter((t) => !FIXED_LEFT.includes(t.key) && !FIXED_TOP.includes(t.key))));
+    setVariableTiles(shuffle(tileRegistry.filter((t) => !FIXED_LEFT.includes(t.key) && !FIXED_TOP.includes(t.key) && !FIXED_TAIL.includes(t.key))));
+    // reset infinite-scroll accumulation so the fresh seed starts a fresh feed
+    setExtraBatches([]);
+    reserveRef.current = null;
+    fetchingRef.current = false;
+    batchSeedRef.current = 0;
     setSeed(next);
   };
 
@@ -164,6 +209,79 @@ export default function Sampler() {
     return (
       <div key={`reserve-${key}`} className={`tile tile-${key}`}>
         <Tile {...props} />
+      </div>
+    );
+  };
+
+  // ---- infinite scroll: prefetch + reveal ---------------------------------
+  // Fetch the next batch (homesampler only — community/leaderboard don't repeat)
+  // into reserveRef. If the reader is already waiting at the bottom when it
+  // lands, reveal it immediately.
+  const prefetchBatch = () => {
+    if (fetchingRef.current || reserveRef.current || extraBatches.length >= MAX_BATCHES) return;
+    fetchingRef.current = true;
+    setLoadingMore(true);
+    const bs = (batchSeedRef.current = nextBatchSeed(batchSeedRef.current || seed));
+    BoMOnlineAPI({ homesampler: { seed: bs, token } }, { useCache: false })
+      .then((r) => {
+        fetchingRef.current = false;
+        if (!mountedRef.current) return;
+        setLoadingMore(false);
+        if (r?.error || !Array.isArray(r?.homesampler)) return;
+        reserveRef.current = { payload: assemblePayload(r), tiles: shuffle(BATCH_TILES) };
+        if (atBottomRef.current) maybeLoadMore();
+      })
+      .catch(() => { fetchingRef.current = false; if (mountedRef.current) setLoadingMore(false); });
+  };
+
+  // Reveal the prefetched batch (appending it) and queue the next; or, if none
+  // is ready yet, kick off the fetch so it arrives. One batch per API round
+  // trip — the fetch guard paces it, so a reader parked at the bottom pulls in
+  // batches steadily without a runaway loop.
+  function maybeLoadMore() {
+    if (!payload || extraBatches.length >= MAX_BATCHES) return;
+    if (reserveRef.current) {
+      const batch = reserveRef.current;
+      reserveRef.current = null;
+      setExtraBatches((prev) => [...prev, batch]);
+      prefetchBatch();
+    } else {
+      prefetchBatch();
+    }
+  }
+  loadMoreRef.current = maybeLoadMore;
+
+  // Prime the first reserve batch once the initial payload is in.
+  useEffect(() => {
+    if (payload && !reserveRef.current && !fetchingRef.current && !extraBatches.length) {
+      batchSeedRef.current = seed;
+      prefetchBatch();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [payload]);
+
+  // Watch a sentinel below the feed; reveal/prefetch as it nears the viewport.
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el || !payload || typeof IntersectionObserver === "undefined") return undefined;
+    const io = new IntersectionObserver(
+      (entries) => {
+        atBottomRef.current = entries[0].isIntersecting;
+        if (entries[0].isIntersecting) loadMoreRef.current();
+      },
+      { rootMargin: "800px 0px" }, // begin loading before the reader hits bottom
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [payload]);
+
+  const renderBatchTile = (bp, def, idx) => {
+    if (!def.isReady(bp)) return null;
+    const Tile = def.component;
+    const data = def.dataKey ? bp[def.dataKey] : bp[def.key];
+    return (
+      <div key={`${def.key}-${idx}`} className={`tile ${def.span}`}>
+        <Tile data={data} next={bp[`${def.key}Next`]} seed={bp.seed} payload={bp} {...(def.props || {})} />
       </div>
     );
   };
@@ -244,6 +362,11 @@ export default function Sampler() {
       case "community": return 8 + (payload.community?.groups?.length || 0) * 4 + (payload.community?.messages?.length || 0) * 2.5;
       case "biblephrases": return 20;
       case "chiasmus": return 20;
+      case "notes": return 24;
+      case "faxVerse": return 30;
+      case "crossrefs": return 20;
+      case "relationship": return 18;
+      case "mapstory": return 40;
       default: return 14;
     }
   };
@@ -303,6 +426,46 @@ export default function Sampler() {
     });
   }
 
+  // ---- infinite tiles across the 3 live columns ---------------------------
+  // Each incoming tile lands on the shortest of { rail, main-A, main-B }
+  // (approximated by est) so it meets the bottom of whatever's already in that
+  // column — real 3-column infinite scroll, no baseline reset. The rail is a
+  // single column we fill directly; the two main columns are still spread by
+  // react-masonry-css (round-robin by index), so we only decide rail-vs-main
+  // here and let the masonry split the main share across its pair.
+  const estBatch = (key) => {
+    switch (key) {
+      case "personProfile": return 24;
+      case "placeProfile": return 22;
+      case "witness": return 26;
+      case "art":
+      case "artB": return 24;
+      default: return est(key);
+    }
+  };
+  const railInfinite = [];
+  const mainInfinite = [];
+  let railH = leftH;      // approx current rail column height
+  let mainColH = rightH;  // approx current per-column main height (incl people)
+  extraBatches.forEach((b, bi) => {
+    b.tiles.forEach((def, ti) => {
+      const node = renderBatchTile(b.payload, def, `${bi}-${ti}`);
+      if (!node) return;
+      const e = estBatch(def.key);
+      if (railH <= mainColH) { railInfinite.push(node); railH += e; }
+      else { mainInfinite.push(node); mainColH += e / 2; }
+    });
+  });
+  // Skeleton loaders while the next batch is in flight — same 3-column
+  // balancing so they appear right at the growing edge.
+  if (loadingMore && extraBatches.length < MAX_BATCHES) {
+    ["tile-art", "tile-commentary", "tile-history"].forEach((span, i) => {
+      const node = <div key={`sk-${extraBatches.length}-${i}`} className={`tile skeleton ${span}`} />;
+      if (railH <= mainColH) { railInfinite.push(node); railH += 12; }
+      else { mainInfinite.push(node); mainColH += 6; }
+    });
+  }
+
   return (
     <div className="sampler container">
       <div className="samplerBar noselect">
@@ -320,12 +483,16 @@ export default function Sampler() {
           {leftTiles.map((t) => renderTile(t))}
           {railExtra.map((t) => renderTile(t))}
           {reserves.filter((r) => r.side === "rail").map(renderReserve)}
+          {/* infinite-scroll tiles continue the rail's ragged bottom */}
+          {railInfinite}
         </div>
         {/* three top-level panels: rail | people (fixed) | masonry of the rest.
             Masonry frees tile heights from each other — no row-matching voids.
             Balancer reserves land on the shorter side; the map goes here, low. */}
         <div className="samplerMain" ref={mainRef}>
           {topTiles.map((t) => renderTile(t))}
+          {/* infinite-scroll tiles continue the two main columns' ragged bottom
+              (react-masonry-css spreads them across its pair, appending) */}
           <Masonry
             breakpointCols={{ default: 2, 800: 1 }}
             className="samplerMasonry"
@@ -333,11 +500,22 @@ export default function Sampler() {
           >
             {[
               ...orderedGrid.map((t) => renderTile(t)),
+              ...FIXED_TAIL.map((k) => tileRegistry.find((t) => t.key === k))
+                .filter(Boolean)
+                .map((t) => renderTile(t)),
               ...reserves.filter((r) => r.side === "main").map(renderReserve),
+              ...mainInfinite,
             ].filter(Boolean)}
           </Masonry>
         </div>
       </div>
+
+      {/* Sentinel sits below the three columns; nearing it reveals the next
+          prefetched batch and queues another. Skeletons above (inside the
+          columns) cover the wait. */}
+      {payload ? (
+        <div ref={sentinelRef} className="samplerSentinel" aria-hidden="true" />
+      ) : null}
     </div>
   );
 }

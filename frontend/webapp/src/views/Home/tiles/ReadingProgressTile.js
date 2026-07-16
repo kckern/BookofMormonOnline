@@ -2,23 +2,36 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI.js";
 import { label } from "src/models/Utils";
-import RefPill from "./RefPill";
-import green from "src/views/User/svg/green.svg";
-import yellow from "src/views/User/svg/yellow.svg";
-import blue from "src/views/User/svg/blue.svg";
-import blank from "src/views/User/svg/blank.svg";
+import { useAppController } from "src/contexts/AppControllerContext";
+import UserAvatar from "src/components/UserAvatar";
+import { ProgressDetailsCircles, ProgressBar } from "src/views/User/ProgressBox";
+import "src/views/User/ProgressBox.css";
 
 /**
  * Reading-progress view of the top-left slot. When the user (guest or signed
  * in) has a reading bookmark, we replace the plan/calendar with their most
- * recently-read page shown as green/blue/gray dots — same idea as the /user
- * Progress page ("you already have some green, keep going").
+ * recently-read page — rendered with the EXACT same design as the /user
+ * Progress page so it reads identically: avatar + name header, then the page
+ * in a gray section box with its % badge, section-grouped 1.2rem circles
+ * (green/blue/yellow/blank), and section dividers.
  *
- * Data: the page's sections (sectionText) + progress(token) — an item is green
- * when completed, blue when active, yellow when started, else gray. Dots group
- * by section, matching the /user experience.
+ * We reuse `ProgressDetailsCircles` verbatim (fed a single page) and import
+ * ProgressBox.css so the circle size, spacing, and layout match pixel-for-
+ * pixel — no divergent markup to drift.
  */
 export default function ReadingProgressTile({ token, bookmark }) {
+  const appController = useAppController();
+  const social = appController?.states?.user?.social;
+  const name = social?.nickname || label("guest");
+  const userId = appController?.states?.user?.user;
+  const profileUrl = social?.profile_url;
+
+  // Overall study progress (whole Book of Mormon), same source the sidebar and
+  // /user Progress header read from — distinct from this one page's %.
+  const overall = appController?.states?.user?.progress || {};
+  const overallCompleted = overall.completed > 0 ? overall.completed : 0;
+  const overallStarted = overall.started > 0 ? overall.started : 0;
+
   const [page, setPage] = useState(null);
   const pageSlug = bookmark?.pageSlug;
 
@@ -40,47 +53,29 @@ export default function ReadingProgressTile({ token, bookmark }) {
   }, [pageSlug, token]);
 
   if (!bookmark?.pageSlug) return null;
-  const prog = page?.progress || {};
-  const completed = prog.completed_items || [];
-  const started = prog.started_items || [];
-  const active = prog.active_items || [];
-  const dotFor = (link, heading) => {
-    if (!heading) return blank;
-    if (completed.includes(link)) return green;
-    if (active.includes(link)) return blue;
-    if (started.includes(link)) return yellow;
-    return blank;
-  };
-  const pct = Math.round(prog.completed ?? 0);
-  const sections = (page?.sections || []).filter((s) => (s.sectionText || []).length);
+
+  // Shape the single fetched page into what ProgressDetailsCircles expects
+  // (pages[] each with slug/title/progress/sections). Same component the /user
+  // page renders, so the output is identical.
+  const pages = page?.progress
+    ? [{ slug: pageSlug, title: bookmark.pagetitle, progress: page.progress, sections: page.sections || [] }]
+    : [];
+
   return (
     <div className="samplerTileInner readingProgressTile">
       <h3 className="tileHeading">
         <Link to="/user">{label("reading_progress")}</Link>
       </h3>
-      <div className="rpTilePageRow">
-        <Link to={`/${bookmark.slug}`} className="rpTilePageTitle">{bookmark.pagetitle}</Link>
-        {pct > 0 ? <span className="rpTilePagePct">{pct}%</span> : null}
-      </div>
-      {bookmark.heading ? <div className="rpTileRef"><RefPill refText={bookmark.heading} /></div> : null}
-      {sections.length ? (
-        <div className="rpTileDots">
-          {sections.map((section, si) => (
-            <span key={si} className="rpTileSectionDots" title={section.title}>
-              {(section.sectionText || []).map((item, i) => {
-                const src = dotFor(item.link, item.heading);
-                if (!item.heading) return <img key={i} src={src} alt="" className="rpTileDot blank" />;
-                return (
-                  <Link key={i} to={`/${pageSlug}/${item.link}`} title={`${section.title || ""} — ${item.heading}`}>
-                    <img src={src} alt="" className={`rpTileDot${src === blank ? " blank" : ""}`} />
-                  </Link>
-                );
-              })}
-            </span>
-          ))}
+      <div className="rpUserRow">
+        <UserAvatar userId={userId} profileUrl={profileUrl} size={30} className="rpUserAvatar" />
+        <span className="rpUserName">{name}</span>
+        <div className="rpUserProgress" title={`${overallCompleted.toFixed(1)}% ${label("completed")} • ${overallStarted.toFixed(1)}% ${label("started")}`}>
+          <ProgressBar complete={overallCompleted} started={overallStarted} />
         </div>
-      ) : null}
-      <Link to={`/${bookmark.slug}`} className="rpTileMore tileMoreLink">{label("continue_reading")}</Link>
+      </div>
+      <div className="ProgressBoxPane rpBoxPane">
+        {pages.length ? <ProgressDetailsCircles progressPages={{ pages }} /> : null}
+      </div>
     </div>
   );
 }

@@ -78,6 +78,7 @@ export const menuConfig = [
     slug: "theology",
     labelKey: "menu_theology",
     lang: ["en"],
+    dev: true, // placeholder — hidden on public URLs, visible on localhost/dev while it's built out
   },
   {
     slug: "history",

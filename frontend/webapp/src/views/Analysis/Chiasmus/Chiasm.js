@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import BoMOnlineAPI from "../../../models/BoMOnlineAPI";
 import { Spinner } from "../../_Common/Loader";
 import Parser from "html-react-parser";
@@ -19,8 +19,13 @@ export function addHighlights(text, highlights) {
 
 function ChiasticLine({line_key, label, line_text, highlights, activeScheme, setActiveScheme}) {
 
-    const highlightsArray = JSON.parse(highlights || "[]");
-    const text = addHighlights(line_text.replace(/_/g, "").replace(/\s+/g, " "), highlightsArray);  
+    // Hovering a line flips activeScheme and re-renders every line; the highlight
+    // regex + HTML parse only depend on the (static) text, so memoize it or each
+    // hover re-parses the whole chiasm.
+    const text = useMemo(() => {
+        const highlightsArray = JSON.parse(highlights || "[]");
+        return addHighlights(line_text.replace(/_/g, "").replace(/\s+/g, " "), highlightsArray);
+    }, [line_text, highlights]);
     const upperCaseLetter = line_key.replace(/[^A-Z]/g, "");
     const lowerCaseLetter = line_key.replace(upperCaseLetter, "") || "";
     const alphabetPosition = upperCaseLetter.charCodeAt(0) - 64 -1;

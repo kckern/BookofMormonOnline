@@ -70,7 +70,7 @@ function groupBy<T>(rows: readonly T[], key: (r: T) => string | null): Map<strin
  * e.g., "Slew Amalickiah on Christmas Eve (Alma 51:34)" → 35154
  * Returns null when no parseable scripture reference is found.
  */
-function parseVerseIdFromNote(note: string | null): number | null {
+export function parseVerseIdFromNote(note: string | null): number | null {
   if (!note) return null;
   const match = note.match(/\b(?:[1-4]\s+)?[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\s+\d+:\d+(?:-\d+)?/);
   if (!match) return null;

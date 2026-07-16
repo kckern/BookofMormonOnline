@@ -23,6 +23,9 @@ export interface ChiasmusRow {
   reference: string;
   scheme: string;
   title: string | null;
+  /** Earliest verse_id — lets the client sort/classify without re-parsing the
+   * generated reference string for every chiasm (the index list has hundreds). */
+  start_verse_id: number | null;
   /** Lines are populated only when includeLines=true (chiasm query). */
   lines: ChiasmusLineRow[];
 }
@@ -151,6 +154,7 @@ export function reduceChiasmusLines(
       reference: generateRefFn(verseIds),
       scheme,
       title,
+      start_verse_id: verseIds.length ? Math.min(...verseIds) : null,
       lines: includeLines
         ? chiasmLines.map((l) => ({ ...l }))
         : [],

@@ -56,24 +56,25 @@ const targetVerseIds = (ref) => {
  *
  * onNavigate fires when a Study link is clicked (so a popup can dismiss).
  */
-export default function ScriptureExcerpt({ refText, onNavigate }) {
+export default function ScriptureExcerpt({ refText, onNavigate, hideStudy = false }) {
   const ref = refText ? canonical(refText) : null;
-  const [sections, setSections] = useState(null);
-  const [passages, setPassages] = useState(null);
-  const [loading, setLoading] = useState(false);
+  // One entry per compound segment, IN ORDER — each is either a BoM result
+  // ({ sections }) or a Bible/cross-ref result ({ passages }). Keeping the
+  // ordered mix (not flattening to sections-OR-passages) is what lets a
+  // reference like "Acts 10:3-4; 3 Ne. 27:1; Psalm 35:13" render every segment
+  // instead of dropping the Bible ones the moment any BoM section appears.
+  const [segments, setSegments] = useState(null);
 
   useEffect(() => {
     if (!ref) return undefined;
     let cancelled = false;
-    setLoading(true);
-    setSections(null);
-    setPassages(null);
+    setSegments(null);
     // A compound reference ("Omni 1:24; Mormon 1:13-14") spans multiple
     // chapters/books — split it into segments and render each. Each segment is
     // canonicalized on its own; a bare chapter number after ";" ("Alma 5; 7")
     // inherits the previous book.
     let lastBook = "";
-    const segments = ref
+    const segRefs = ref
       .split(/\s*;\s*/)
       .map((s) => s.trim())
       .filter(Boolean)
@@ -85,7 +86,7 @@ export default function ScriptureExcerpt({ refText, onNavigate }) {
       });
     // fetch each segment's chapter, keeping segment order
     Promise.all(
-      segments.map((seg) => {
+      segRefs.map((seg) => {
         const ch = chapterRef(seg);
         const wanted = targetVerseIds(seg);
         return BoMOnlineAPI({ read: [ch] }, { useCache: false })
@@ -114,73 +115,74 @@ export default function ScriptureExcerpt({ refText, onNavigate }) {
       }),
     ).then((results) => {
       if (cancelled) return;
-      const allSections = results.flatMap((r) => r.sections || []);
-      const allPassages = results.flatMap((r) => r.passages || []);
-      if (allSections.length) setSections(allSections);
-      else setPassages(allPassages);
-      setLoading(false);
+      setSegments(results);
     });
     return () => { cancelled = true; };
   }, [ref]);
 
   if (!ref) return null;
-  const hasSections = sections && sections.length > 0;
-  const hasPassages = passages && passages.length > 0;
-  if (loading && !hasSections && !hasPassages) return <div className="samplerScriptureLoading">…</div>;
-  if (hasSections) {
-    return sections.map((s, si) => (
-      <div key={si} className="read-section">
-        <div className="read-section-header">
-          {cleanHeading(s.heading) ? <h4>{cleanHeading(s.heading)}</h4> : null}
-          {s.ref ? (
-            <p>
-              <Link to={`/study/${slugify(getEnglishReference(s.ref))}`} onClick={onNavigate}>
-                {s.ref}
-                <button className="btn btn-sm btn-outline-secondary">{label("study_button")}</button>
-              </Link>
+  if (!segments) return <div className="samplerScriptureLoading">…</div>;
+  const hasAny = segments.some((s) => (s.sections?.length || s.passages?.length));
+  if (!hasAny) return <div className="samplerScriptureLoading">{label("rp_error_loading")}</div>;
+
+  const renderSection = (s, key) => (
+    <div key={key} className="read-section">
+      <div className="read-section-header">
+        {cleanHeading(s.heading) ? <h4>{cleanHeading(s.heading)}</h4> : null}
+        {s.ref ? (
+          <p>
+            <Link to={`/study/${slugify(getEnglishReference(s.ref))}`} onClick={onNavigate}>
+              {s.ref}
+              {hideStudy ? null : <button className="btn btn-sm btn-outline-secondary">{label("study_button")}</button>}
+            </Link>
+          </p>
+        ) : null}
+      </div>
+      {s.blocks.map((b, i) => (
+        <div key={i} className="read-block">
+          <div className="left-gutter">
+            {b.person_slug ? (
+              <img alt={b.voice} src={`${assetUrl}/people/${b.person_slug}`} onError={(e) => (e.target.style.visibility = "hidden")} />
+            ) : null}
+            {b.voice ? <div className="read-voice">{label(b.voice)}</div> : null}
+          </div>
+          <div className="main-content">
+            <p className="read-scripture">
+              {i === 0 && s.partial ? <span className="samplerScriptureEllipsis">… </span> : null}
+              {b.lines.map((l) => (
+                <span key={l.verse_id} className={`verse_${l.verse_id}`}>
+                  <sup>{l.verse_num}</sup>{l.text}{" "}
+                </span>
+              ))}
             </p>
-          ) : null}
+          </div>
         </div>
-        {s.blocks.map((b, i) => (
-          <div key={i} className="read-block">
-            <div className="left-gutter">
-              {b.person_slug ? (
-                <img alt={b.voice} src={`${assetUrl}/people/${b.person_slug}`} onError={(e) => (e.target.style.visibility = "hidden")} />
-              ) : null}
-              {b.voice ? <div className="read-voice">{label(b.voice)}</div> : null}
-            </div>
-            <div className="main-content">
-              <p className="read-scripture">
-                {i === 0 && s.partial ? <span className="samplerScriptureEllipsis">… </span> : null}
-                {b.lines.map((l) => (
-                  <span key={l.verse_id} className={`verse_${l.verse_id}`}>
-                    <sup>{l.verse_num}</sup>{l.text}{" "}
-                  </span>
-                ))}
-              </p>
-            </div>
+      ))}
+    </div>
+  );
+
+  const renderPassages = (passages, key) => (
+    <div key={key} className="read-section">
+      {passages.map((p, i) => (
+        <div key={i} className="read-block">
+          <div className="main-content">
+            {p.heading ? <div className="samplerScriptureHeading">{p.heading}</div> : null}
+            <p className="read-scripture">
+              {(p.verses || []).map((v) => (
+                <span key={v.verse_id}><sup>{v.verse}</sup>{v.text}{" "}</span>
+              ))}
+            </p>
           </div>
-        ))}
-      </div>
-    ));
-  }
-  if (hasPassages) {
-    return (
-      <div className="read-section">
-        {passages.map((p, i) => (
-          <div key={i} className="read-block">
-            <div className="main-content">
-              {p.heading ? <div className="samplerScriptureHeading">{p.heading}</div> : null}
-              <p className="read-scripture">
-                {(p.verses || []).map((v) => (
-                  <span key={v.verse_id}><sup>{v.verse}</sup>{v.text}{" "}</span>
-                ))}
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  }
-  return <div className="samplerScriptureLoading">{label("rp_error_loading")}</div>;
+        </div>
+      ))}
+    </div>
+  );
+
+  // Render every segment in the ORIGINAL order, mixing Read sections and Bible
+  // passages as they came.
+  return segments.flatMap((seg, si) => {
+    if (seg.sections?.length) return seg.sections.map((s, i) => renderSection(s, `s-${si}-${i}`));
+    if (seg.passages?.length) return [renderPassages(seg.passages, `p-${si}`)];
+    return [];
+  });
 }

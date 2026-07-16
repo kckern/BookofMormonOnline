@@ -30,8 +30,72 @@ type HomeSampler {
   faxMore: [Fax]
   art: [ArtImage]
   witnesses: [Witness]
+  notes: [Commentary]
+  faxVerse: FaxVersePage
+  crossrefs: CrossRefSet
+  relationship: Relationship
+  mapstory: MapStorySample
   peopleCount: Int
   placesCount: Int
+}
+
+type CrossRefSet {
+  srcRef: String
+  srcVerseId: Int
+  refs: [CrossRef]
+}
+
+type CrossRef {
+  ref: String
+  verseId: Int
+}
+
+type Relationship {
+  hubType: String
+  hubSlug: String
+  hubName: String
+  hubTitle: String
+  edges: [RelEdge]
+}
+
+type RelEdge {
+  rel: String
+  dstType: String
+  dstSlug: String
+  dstName: String
+  dstTitle: String
+  note: String
+  ref: String
+}
+
+type MapStorySample {
+  slug: String
+  title: String
+  description: String
+  moves: [MapMoveSample]
+}
+
+type MapMoveSample {
+  seq: Int
+  start: String
+  end: String
+  travelers: String
+  description: String
+  duration: String
+  ref: String
+  startLat: Float
+  startLng: Float
+  endLat: Float
+  endLng: Float
+}
+
+type FaxVersePage {
+  version: String
+  title: String
+  format: String
+  page: Int
+  verseId: Int
+  ref: String
 }
 
 type FaxPageRef {

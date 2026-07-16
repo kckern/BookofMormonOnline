@@ -13,6 +13,7 @@ import { generateReference } from 'scripture-guide';
 import type { Resolvers } from '../../../codegen/graphql.js';
 import type { AppContext } from '../context.js';
 import { findUserByToken } from '../../data/loaders/userauth.js';
+import { parseVerseIdFromNote } from '../../data/loaders/objects.js';
 
 // 24 people = 1 featured + 11 face cards + 12 view-all mosaic thumbs (3×4);
 // 17 places = 5 cards + a full 3×4 mosaic.
@@ -189,6 +190,210 @@ const sampleWitnesses = async (ctx: AppContext, seed: number) => {
   });
 };
 
+// One facsimile page anchored to the verse it depicts — the inverse framing of
+// the fax tile ("the page for THIS verse", not "this edition"). Seeded over the
+// whole verse index across visible editions.
+const sampleFaxVerse = async (ctx: AppContext, seed: number) => {
+  const rows = await ctx.db
+    .selectFrom('bom_xtras_fax_index as i')
+    .innerJoin('bom_xtras_fax as f', 'f.slug', 'i.version')
+    .select(['i.version as version', 'i.page as page', 'i.verse_id as verseId', 'f.title as title', 'f.format as format'])
+    .where('f.hide', '=', 0)
+    .where('i.verse_id', 'is not', null)
+    .orderBy(sql`MD5(CONCAT(${sql.ref('i.version')}, ':', ${sql.ref('i.page')}, ':', ${seed}))`)
+    .limit(1)
+    .execute();
+  const r = rows[0];
+  if (!r) return null;
+  const verseId = Number(r.verseId);
+  return {
+    version: String(r.version),
+    title: r.title ?? null,
+    format: r.format || 'jpg',
+    page: Number(r.page),
+    verseId,
+    ref: generateReference([verseId]),
+  };
+};
+
+// A verse plus its footnote cross-references. The crossref table has no topical
+// titles — the "title" of each link is its reference string, regenerated via
+// generateReference (stored dst_ref shorthand is inconsistent). We sample over
+// all type='xref' rows: the `significant` column (-1/0 for xrefs) is not an
+// importance ranking, so we don't filter on it. GROUP BY + HAVING needs raw sql
+// (kysely's builder types fight aggregates here).
+const sampleCrossRefs = async (ctx: AppContext, seed: number) => {
+  const hub = await sql<{ src_verse_id: number }>`
+    SELECT src_verse_id FROM lds_scriptures_crossref
+    WHERE \`type\` = 'xref'
+    GROUP BY src_verse_id HAVING COUNT(DISTINCT dst_verse_id) >= 2
+    ORDER BY MD5(CONCAT(src_verse_id, ':', ${seed}))
+    LIMIT 1
+  `.execute(ctx.db);
+  const src = Number(hub.rows[0]?.src_verse_id);
+  if (!src) return null;
+  const rows = await ctx.db
+    .selectFrom('lds_scriptures_crossref')
+    .select('dst_verse_id')
+    .where('src_verse_id', '=', src)
+    .where('type', '=', 'xref')
+    .orderBy(seededOrder('dst_verse_id', seed))
+    .limit(8)
+    .execute();
+  const dsts = [...new Set(rows.map((r) => Number(r.dst_verse_id)))]
+    .filter((v) => v > 0 && v !== src)
+    .slice(0, 4);
+  if (dsts.length < 2) return null;
+  return {
+    srcVerseId: src,
+    srcRef: generateReference([src]),
+    refs: dsts.map((v) => ({ verseId: v, ref: generateReference([v]) })),
+  };
+};
+
+// Entity display-name lookup for relationship hubs/edges. Column meanings per
+// type mirror xrelsBySlug in loaders/objects.ts: people name/title,
+// places name/info, objects name/subtitle.
+const entityNames = async (
+  ctx: AppContext,
+  wanted: { type: string; slug: string }[],
+): Promise<Map<string, { name: string; title: string | null }>> => {
+  const slugsOf = (t: string) => [...new Set(wanted.filter((w) => w.type === t).map((w) => w.slug))];
+  const [people, places, objects] = await Promise.all([
+    slugsOf('people').length
+      ? ctx.db.selectFrom('bom_people').select(['slug', 'name', 'title']).where('slug', 'in', slugsOf('people')).execute()
+      : [],
+    slugsOf('place').length
+      ? ctx.db.selectFrom('bom_places').select(['slug', 'name', 'info']).where('slug', 'in', slugsOf('place')).execute()
+      : [],
+    slugsOf('object').length
+      ? ctx.db.selectFrom('bom_objects').select(['slug', 'name', 'subtitle']).where('slug', 'in', slugsOf('object')).execute()
+      : [],
+  ]);
+  const map = new Map<string, { name: string; title: string | null }>();
+  for (const p of people) if (p.name) map.set(`people:${p.slug}`, { name: p.name, title: p.title ?? null });
+  for (const p of places) if (p.name) map.set(`place:${p.slug}`, { name: p.name, title: p.info ?? null });
+  for (const o of objects) if (o.name) map.set(`object:${o.slug}`, { name: o.name, title: o.subtitle ?? null });
+  return map;
+};
+
+// One well-connected hub entity and up to 4 of its typed relations. The hub is
+// seeded over all (src_type, src_slug) pairs with >=2 edges; GROUP BY needs raw
+// sql. Edges whose dst can't be resolved to a display name are dropped (a bare
+// slug reads as a bug on the front door); if that leaves <2, return null.
+const sampleRelationship = async (ctx: AppContext, seed: number) => {
+  const hub = await sql<{ src_type: string; src_slug: string }>`
+    SELECT src_type, src_slug FROM bom_xrels
+    GROUP BY src_type, src_slug HAVING COUNT(*) >= 2
+    ORDER BY MD5(CONCAT(src_type, ':', src_slug, ':', ${seed}))
+    LIMIT 1
+  `.execute(ctx.db);
+  const h = hub.rows[0];
+  if (!h) return null;
+  const edgeRows = await ctx.db
+    .selectFrom('bom_xrels')
+    .select(['rel', 'dst_type', 'dst_slug', 'note'])
+    .where('src_type', '=', h.src_type)
+    .where('src_slug', '=', h.src_slug)
+    .orderBy(seededOrder('dst_slug', seed))
+    .limit(6)
+    .execute();
+  const names = await entityNames(ctx, [
+    { type: h.src_type, slug: h.src_slug },
+    ...edgeRows.map((e) => ({ type: e.dst_type, slug: e.dst_slug })),
+  ]);
+  const hubName = names.get(`${h.src_type}:${h.src_slug}`);
+  if (!hubName) return null;
+  const edges = edgeRows
+    .map((e) => {
+      const dst = names.get(`${e.dst_type}:${e.dst_slug}`);
+      if (!dst) return null;
+      const verseId = parseVerseIdFromNote(e.note ?? null);
+      return {
+        rel: e.rel,
+        dstType: e.dst_type,
+        dstSlug: e.dst_slug,
+        dstName: dst.name,
+        dstTitle: dst.title,
+        note: e.note ?? null,
+        ref: verseId ? generateReference([verseId]) : null,
+      };
+    })
+    .filter((e): e is NonNullable<typeof e> => e !== null)
+    .slice(0, 4);
+  if (edges.length < 2) return null;
+  return {
+    hubType: h.src_type,
+    hubSlug: h.src_slug,
+    hubName: hubName.name,
+    hubTitle: hubName.title,
+    edges,
+  };
+};
+
+// One scripture journey for the map-story tile: seeded story pick among stories
+// whose moves ALL have start+end coords on the FARMS 'internal' map (the tile
+// renders that projection — a partially-coordinated story would draw a broken
+// path). Join shape mirrors storiesByMapSlug in loaders/maps.ts.
+const INTERNAL_MAP = 'internal';
+const sampleMapStory = async (ctx: AppContext, seed: number) => {
+  const hub = await sql<{ guid: string }>`
+    SELECT s.guid AS guid
+    FROM bom_map_story s
+    INNER JOIN bom_map_move m ON m.parent = s.guid
+    INNER JOIN bom_places sp ON sp.slug = m.start
+    INNER JOIN bom_places_coords spc ON spc.guid = sp.guid AND spc.map = ${INTERNAL_MAP}
+    INNER JOIN bom_places ep ON ep.slug = m.end
+    INNER JOIN bom_places_coords epc ON epc.guid = ep.guid AND epc.map = ${INTERNAL_MAP}
+    GROUP BY s.guid HAVING COUNT(*) >= 2
+    ORDER BY MD5(CONCAT(s.guid, ':', ${seed}))
+    LIMIT 1
+  `.execute(ctx.db);
+  const guid = hub.rows[0]?.guid;
+  if (!guid) return null;
+  const rows = await ctx.db
+    .selectFrom('bom_map_move as m')
+    .innerJoin('bom_map_story as s', 's.guid', 'm.parent')
+    .innerJoin('bom_places as sp', 'sp.slug', 'm.start')
+    .innerJoin('bom_places_coords as spc', (join) =>
+      join.onRef('spc.guid', '=', 'sp.guid').on('spc.map', '=', INTERNAL_MAP),
+    )
+    .innerJoin('bom_places as ep', 'ep.slug', 'm.end')
+    .innerJoin('bom_places_coords as epc', (join) =>
+      join.onRef('epc.guid', '=', 'ep.guid').on('epc.map', '=', INTERNAL_MAP),
+    )
+    .select([
+      's.slug as storySlug', 's.title as storyTitle', 's.description as storyDescription',
+      'm.seq', 'm.start', 'm.end', 'm.travelers', 'm.description as moveDescription',
+      'm.duration', 'm.ref',
+      'spc.lat as startLat', 'spc.lng as startLng',
+      'epc.lat as endLat', 'epc.lng as endLng',
+    ])
+    .where('s.guid', '=', guid)
+    .orderBy('m.seq', 'asc')
+    .execute();
+  if (rows.length < 2) return null;
+  const first = rows[0]!;
+  return {
+    slug: first.storySlug,
+    title: first.storyTitle,
+    description: first.storyDescription ?? null,
+    moves: rows.map((r) => ({
+      seq: Number(r.seq),
+      start: r.start,
+      end: r.end,
+      travelers: r.travelers ?? null,
+      description: r.moveDescription ?? null,
+      duration: r.duration ?? null,
+      ref: r.ref ?? null,
+      startLat: Number(r.startLat),
+      startLng: Number(r.startLng),
+      endLat: Number(r.endLat),
+      endLng: Number(r.endLng),
+    })),
+  };
+};
+
 const countRows = (table: 'bom_people' | 'bom_places') => async (ctx: AppContext) => {
   const r = await ctx.db
     .selectFrom(table)
@@ -196,6 +401,30 @@ const countRows = (table: 'bom_people' | 'bom_places') => async (ctx: AppContext
     .executeTakeFirst();
   return Number(r?.n ?? 0);
 };
+
+// Variety rule shared by commentaries + notes: distinct source AND distinct
+// author, non-overlapping verse spans; first n that qualify from a seeded pool.
+type VariedRow = {
+  source: string | null;
+  _author: string | null;
+  verse_id: number | null;
+  verse_range: number | null;
+};
+function pickVaried<T extends VariedRow>(rows: T[], n: number): T[] {
+  const spanOf = (r: T) => {
+    const start = Number(r.verse_id) || 0;
+    return [start, start + Math.max(1, Number(r.verse_range) || 1) - 1] as const;
+  };
+  const picked: T[] = [];
+  for (const r of rows) {
+    if (picked.length === n) break;
+    if (picked.some((p) => p.source === r.source || (p._author && p._author === r._author))) continue;
+    const [s1, e1] = spanOf(r);
+    if (picked.some((p) => { const [s2, e2] = spanOf(p); return s1 <= e2 && s2 <= e1; })) continue;
+    picked.push(r);
+  }
+  return picked;
+}
 
 // Three commentaries per page, guaranteed VARIETY: distinct sources and
 // non-overlapping passages (seeded pool of 30, first 3 that qualify).
@@ -215,29 +444,47 @@ const sampleCommentaries = async (ctx: AppContext, seed: number) => {
     // variety means distinct AUTHORS, so carry source_name into the dedupe
     .select('bom_xtras_source.source_name as _author')
     .where(sql<boolean>`CHAR_LENGTH(bom_xtras_commentary.text) > ${MIN_COMMENTARY_CHARS}`)
+    // Use != 1 (not = 0) so MySQL skips the is_note index and keeps the fast
+    // hash-join plan; `= 0` triggers an index scan on 24 k rows, making this
+    // query ~20× slower. is_note ∈ {-1, 0, 1} so `!= 1` still correctly
+    // excludes all notes while preserving the original join performance.
+    .where('bom_xtras_commentary.is_note', '!=', 1)
     .where('bom_xtras_source.source_lang', '=', lang)
     .where('bom_xtras_source.source_rating', '=', 'G')
     .orderBy(seededOrder('bom_xtras_commentary.id', seed))
     .limit(30)
     .execute();
-  type Row = (typeof rows)[number];
-  const spanOf = (r: Row) => {
-    const start = Number(r.verse_id) || 0;
-    return [start, start + Math.max(1, Number(r.verse_range) || 1) - 1] as const;
-  };
-  const picked: Row[] = [];
-  for (const r of rows) {
-    if (picked.length === 3) break;
-    if (picked.some((p) => p.source === r.source || (p._author && p._author === r._author))) continue;
-    const [s1, e1] = spanOf(r);
-    if (picked.some((p) => { const [s2, e2] = spanOf(p); return s1 <= e2 && s2 <= e1; })) continue;
-    picked.push(r);
-  }
-  return picked;
+  return pickVaried(rows, 3);
 };
 
 const sampleCommentary = async (ctx: AppContext, seed: number) =>
   (await sampleCommentaries(ctx, seed))[0] ?? null;
+
+// Short scholarly annotations — the is_note=1 rows the commentary sampler
+// EXCLUDES. Same source-rating/lang gates and variety rule; notes are short
+// (avg 133 chars) so the tile stacks two. Reuses the Commentary GraphQL type
+// (reference/publication/preview resolvers all apply).
+const sampleNotes = async (ctx: AppContext, seed: number) => {
+  const lang = !ctx.lang || !/^[a-z]{2,3}$/.test(ctx.lang) || ctx.lang === 'dev' ? 'en' : ctx.lang;
+  const rows = await ctx.db
+    .selectFrom('bom_xtras_commentary')
+    .innerJoin('bom_xtras_source', 'bom_xtras_source.source_id', 'bom_xtras_commentary.source')
+    .selectAll('bom_xtras_commentary')
+    .select('bom_xtras_source.source_name as _author')
+    // `is_note + 0 = 1` (arithmetic on the column), not `is_note = 1`: a bare
+    // equality makes MySQL choose the is_note index and scan+MD5-sort all 7.7k
+    // note rows (~1.6s per request); the arithmetic suppresses index use and
+    // keeps the fast source hash-join plan (~115ms) — same trick the commentary
+    // sampler relies on with `!= 1`. Measured 13× faster.
+    .where(sql<boolean>`bom_xtras_commentary.is_note + 0 = 1`)
+    .where(sql<boolean>`CHAR_LENGTH(bom_xtras_commentary.text) > 40`)
+    .where('bom_xtras_source.source_lang', '=', lang)
+    .where('bom_xtras_source.source_rating', '=', 'G')
+    .orderBy(seededOrder('bom_xtras_commentary.id', seed))
+    .limit(10)
+    .execute();
+  return pickVaried(rows, 2);
+};
 
 const sampleContents = async (ctx: AppContext, seed: number) => {
   const divisions = await ctx.services.contents.divisions(null);
@@ -309,6 +556,7 @@ const samplers: Record<string, (ctx: AppContext, seed: number) => Promise<unknow
   fax: sampleFax,
   commentary: sampleCommentary,
   commentaries: sampleCommentaries,
+  notes: sampleNotes,
   contents: sampleContents,
   section: sampleSection,
   sectionNext: sampleSectionNext,
@@ -316,6 +564,10 @@ const samplers: Record<string, (ctx: AppContext, seed: number) => Promise<unknow
   text: sampleText,
   faxPages: sampleFaxPages,
   faxMore: sampleFaxMore,
+  faxVerse: sampleFaxVerse,
+  crossrefs: sampleCrossRefs,
+  relationship: sampleRelationship,
+  mapstory: sampleMapStory,
   art: sampleArt,
   witnesses: sampleWitnesses,
   peopleCount: countRows('bom_people'),

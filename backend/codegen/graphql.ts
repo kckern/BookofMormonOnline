@@ -68,6 +68,7 @@ export type Chiasmus = {
   lines?: Maybe<Array<Maybe<ChiasmusLine>>>;
   reference?: Maybe<Scalars['String']['output']>;
   scheme?: Maybe<Scalars['String']['output']>;
+  start_verse_id?: Maybe<Scalars['Int']['output']>;
   title?: Maybe<Scalars['String']['output']>;
 };
 
@@ -109,6 +110,19 @@ export type ContentLink = {
   __typename?: 'ContentLink';
   key?: Maybe<Scalars['String']['output']>;
   val?: Maybe<Scalars['String']['output']>;
+};
+
+export type CrossRef = {
+  __typename?: 'CrossRef';
+  ref?: Maybe<Scalars['String']['output']>;
+  verseId?: Maybe<Scalars['Int']['output']>;
+};
+
+export type CrossRefSet = {
+  __typename?: 'CrossRefSet';
+  refs?: Maybe<Array<Maybe<CrossRef>>>;
+  srcRef?: Maybe<Scalars['String']['output']>;
+  srcVerseId?: Maybe<Scalars['Int']['output']>;
 };
 
 export type Division = {
@@ -212,6 +226,16 @@ export type FaxPageRef = {
   ref?: Maybe<Scalars['String']['output']>;
 };
 
+export type FaxVersePage = {
+  __typename?: 'FaxVersePage';
+  format?: Maybe<Scalars['String']['output']>;
+  page?: Maybe<Scalars['Int']['output']>;
+  ref?: Maybe<Scalars['String']['output']>;
+  title?: Maybe<Scalars['String']['output']>;
+  verseId?: Maybe<Scalars['Int']['output']>;
+  version?: Maybe<Scalars['String']['output']>;
+};
+
 export type HighlightRange = {
   __typename?: 'HighlightRange';
   end?: Maybe<Scalars['Int']['output']>;
@@ -281,14 +305,19 @@ export type HomeSampler = {
   commentaries?: Maybe<Array<Maybe<Commentary>>>;
   commentary?: Maybe<Commentary>;
   contents?: Maybe<Division>;
+  crossrefs?: Maybe<CrossRefSet>;
   fax?: Maybe<Fax>;
   faxMore?: Maybe<Array<Maybe<Fax>>>;
   faxPages?: Maybe<Array<Maybe<FaxPageRef>>>;
+  faxVerse?: Maybe<FaxVersePage>;
   history?: Maybe<HistoricalDocument>;
+  mapstory?: Maybe<MapStorySample>;
+  notes?: Maybe<Array<Maybe<Commentary>>>;
   people?: Maybe<Array<Maybe<People>>>;
   peopleCount?: Maybe<Scalars['Int']['output']>;
   places?: Maybe<Array<Maybe<Place>>>;
   placesCount?: Maybe<Scalars['Int']['output']>;
+  relationship?: Maybe<Relationship>;
   section?: Maybe<Section>;
   sectionNext?: Maybe<Section>;
   seed?: Maybe<Scalars['Int']['output']>;
@@ -389,11 +418,34 @@ export type MapMove = {
   verse_ids?: Maybe<Array<Maybe<Scalars['Int']['output']>>>;
 };
 
+export type MapMoveSample = {
+  __typename?: 'MapMoveSample';
+  description?: Maybe<Scalars['String']['output']>;
+  duration?: Maybe<Scalars['String']['output']>;
+  end?: Maybe<Scalars['String']['output']>;
+  endLat?: Maybe<Scalars['Float']['output']>;
+  endLng?: Maybe<Scalars['Float']['output']>;
+  ref?: Maybe<Scalars['String']['output']>;
+  seq?: Maybe<Scalars['Int']['output']>;
+  start?: Maybe<Scalars['String']['output']>;
+  startLat?: Maybe<Scalars['Float']['output']>;
+  startLng?: Maybe<Scalars['Float']['output']>;
+  travelers?: Maybe<Scalars['String']['output']>;
+};
+
 export type MapStory = {
   __typename?: 'MapStory';
   description?: Maybe<Scalars['String']['output']>;
   guid?: Maybe<Scalars['String']['output']>;
   moves?: Maybe<Array<Maybe<MapMove>>>;
+  slug?: Maybe<Scalars['String']['output']>;
+  title?: Maybe<Scalars['String']['output']>;
+};
+
+export type MapStorySample = {
+  __typename?: 'MapStorySample';
+  description?: Maybe<Scalars['String']['output']>;
+  moves?: Maybe<Array<Maybe<MapMoveSample>>>;
   slug?: Maybe<Scalars['String']['output']>;
   title?: Maybe<Scalars['String']['output']>;
 };
@@ -1590,10 +1642,30 @@ export type Reference = {
   verse_id?: Maybe<Scalars['Int']['output']>;
 };
 
+export type RelEdge = {
+  __typename?: 'RelEdge';
+  dstName?: Maybe<Scalars['String']['output']>;
+  dstSlug?: Maybe<Scalars['String']['output']>;
+  dstTitle?: Maybe<Scalars['String']['output']>;
+  dstType?: Maybe<Scalars['String']['output']>;
+  note?: Maybe<Scalars['String']['output']>;
+  ref?: Maybe<Scalars['String']['output']>;
+  rel?: Maybe<Scalars['String']['output']>;
+};
+
 export type Relation = {
   __typename?: 'Relation';
   person?: Maybe<People>;
   relation?: Maybe<Scalars['String']['output']>;
+};
+
+export type Relationship = {
+  __typename?: 'Relationship';
+  edges?: Maybe<Array<Maybe<RelEdge>>>;
+  hubName?: Maybe<Scalars['String']['output']>;
+  hubSlug?: Maybe<Scalars['String']['output']>;
+  hubTitle?: Maybe<Scalars['String']['output']>;
+  hubType?: Maybe<Scalars['String']['output']>;
 };
 
 export type ResultCard = {
@@ -1983,12 +2055,15 @@ export type ResolversTypes = {
   Commentary: ResolverTypeWrapper<Partial<Commentary>>;
   Conn: ResolverTypeWrapper<Partial<Conn>>;
   ContentLink: ResolverTypeWrapper<Partial<ContentLink>>;
+  CrossRef: ResolverTypeWrapper<Partial<CrossRef>>;
+  CrossRefSet: ResolverTypeWrapper<Partial<CrossRefSet>>;
   Division: ResolverTypeWrapper<Partial<Division>>;
   Event: ResolverTypeWrapper<Partial<Event>>;
   EventGrid: ResolverTypeWrapper<Partial<EventGrid>>;
   Fax: ResolverTypeWrapper<Partial<Fax>>;
   FaxIndex: ResolverTypeWrapper<Partial<FaxIndex>>;
   FaxPageRef: ResolverTypeWrapper<Partial<FaxPageRef>>;
+  FaxVersePage: ResolverTypeWrapper<Partial<FaxVersePage>>;
   Float: ResolverTypeWrapper<Partial<Scalars['Float']['output']>>;
   HighlightRange: ResolverTypeWrapper<Partial<HighlightRange>>;
   HistoricalDocument: ResolverTypeWrapper<Partial<HistoricalDocument>>;
@@ -2007,7 +2082,9 @@ export type ResolversTypes = {
   LogResult: ResolverTypeWrapper<Partial<LogResult>>;
   Map: ResolverTypeWrapper<Partial<Map>>;
   MapMove: ResolverTypeWrapper<Partial<MapMove>>;
+  MapMoveSample: ResolverTypeWrapper<Partial<MapMoveSample>>;
   MapStory: ResolverTypeWrapper<Partial<MapStory>>;
+  MapStorySample: ResolverTypeWrapper<Partial<MapStorySample>>;
   Markdown: ResolverTypeWrapper<Partial<Markdown>>;
   Menu: ResolverTypeWrapper<Partial<Menu>>;
   Message: ResolverTypeWrapper<Partial<Message>>;
@@ -2052,7 +2129,9 @@ export type ResolversTypes = {
   ReadingPlanSegment: ResolverTypeWrapper<Partial<ReadingPlanSegment>>;
   ReadingPlanSummary: ResolverTypeWrapper<Partial<ReadingPlanSummary>>;
   Reference: ResolverTypeWrapper<Partial<Reference>>;
+  RelEdge: ResolverTypeWrapper<Partial<RelEdge>>;
   Relation: ResolverTypeWrapper<Partial<Relation>>;
+  Relationship: ResolverTypeWrapper<Partial<Relationship>>;
   ResultCard: ResolverTypeWrapper<Partial<ResultCard>>;
   Row: ResolverTypeWrapper<Partial<Row>>;
   Scripture: ResolverTypeWrapper<Partial<Scripture>>;
@@ -2098,12 +2177,15 @@ export type ResolversParentTypes = {
   Commentary: Partial<Commentary>;
   Conn: Partial<Conn>;
   ContentLink: Partial<ContentLink>;
+  CrossRef: Partial<CrossRef>;
+  CrossRefSet: Partial<CrossRefSet>;
   Division: Partial<Division>;
   Event: Partial<Event>;
   EventGrid: Partial<EventGrid>;
   Fax: Partial<Fax>;
   FaxIndex: Partial<FaxIndex>;
   FaxPageRef: Partial<FaxPageRef>;
+  FaxVersePage: Partial<FaxVersePage>;
   Float: Partial<Scalars['Float']['output']>;
   HighlightRange: Partial<HighlightRange>;
   HistoricalDocument: Partial<HistoricalDocument>;
@@ -2122,7 +2204,9 @@ export type ResolversParentTypes = {
   LogResult: Partial<LogResult>;
   Map: Partial<Map>;
   MapMove: Partial<MapMove>;
+  MapMoveSample: Partial<MapMoveSample>;
   MapStory: Partial<MapStory>;
+  MapStorySample: Partial<MapStorySample>;
   Markdown: Partial<Markdown>;
   Menu: Partial<Menu>;
   Message: Partial<Message>;
@@ -2166,7 +2250,9 @@ export type ResolversParentTypes = {
   ReadingPlanSegment: Partial<ReadingPlanSegment>;
   ReadingPlanSummary: Partial<ReadingPlanSummary>;
   Reference: Partial<Reference>;
+  RelEdge: Partial<RelEdge>;
   Relation: Partial<Relation>;
+  Relationship: Partial<Relationship>;
   ResultCard: Partial<ResultCard>;
   Row: Partial<Row>;
   Scripture: Partial<Scripture>;
@@ -2248,6 +2334,7 @@ export type ChiasmusResolvers<ContextType = AppContext, ParentType extends Resol
   lines?: Resolver<Maybe<Array<Maybe<ResolversTypes['ChiasmusLine']>>>, ParentType, ContextType>;
   reference?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   scheme?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  start_verse_id?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   title?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
@@ -2289,6 +2376,19 @@ export type ConnResolvers<ContextType = AppContext, ParentType extends Resolvers
 export type ContentLinkResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['ContentLink'] = ResolversParentTypes['ContentLink']> = {
   key?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   val?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type CrossRefResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['CrossRef'] = ResolversParentTypes['CrossRef']> = {
+  ref?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  verseId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type CrossRefSetResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['CrossRefSet'] = ResolversParentTypes['CrossRefSet']> = {
+  refs?: Resolver<Maybe<Array<Maybe<ResolversTypes['CrossRef']>>>, ParentType, ContextType>;
+  srcRef?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  srcVerseId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -2372,6 +2472,16 @@ export type FaxPageRefResolvers<ContextType = AppContext, ParentType extends Res
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type FaxVersePageResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['FaxVersePage'] = ResolversParentTypes['FaxVersePage']> = {
+  format?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  page?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  ref?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  title?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  verseId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  version?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type HighlightRangeResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['HighlightRange'] = ResolversParentTypes['HighlightRange']> = {
   end?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   start?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
@@ -2440,14 +2550,19 @@ export type HomeSamplerResolvers<ContextType = AppContext, ParentType extends Re
   commentaries?: Resolver<Maybe<Array<Maybe<ResolversTypes['Commentary']>>>, ParentType, ContextType>;
   commentary?: Resolver<Maybe<ResolversTypes['Commentary']>, ParentType, ContextType>;
   contents?: Resolver<Maybe<ResolversTypes['Division']>, ParentType, ContextType>;
+  crossrefs?: Resolver<Maybe<ResolversTypes['CrossRefSet']>, ParentType, ContextType>;
   fax?: Resolver<Maybe<ResolversTypes['Fax']>, ParentType, ContextType>;
   faxMore?: Resolver<Maybe<Array<Maybe<ResolversTypes['Fax']>>>, ParentType, ContextType>;
   faxPages?: Resolver<Maybe<Array<Maybe<ResolversTypes['FaxPageRef']>>>, ParentType, ContextType>;
+  faxVerse?: Resolver<Maybe<ResolversTypes['FaxVersePage']>, ParentType, ContextType>;
   history?: Resolver<Maybe<ResolversTypes['HistoricalDocument']>, ParentType, ContextType>;
+  mapstory?: Resolver<Maybe<ResolversTypes['MapStorySample']>, ParentType, ContextType>;
+  notes?: Resolver<Maybe<Array<Maybe<ResolversTypes['Commentary']>>>, ParentType, ContextType>;
   people?: Resolver<Maybe<Array<Maybe<ResolversTypes['People']>>>, ParentType, ContextType>;
   peopleCount?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   places?: Resolver<Maybe<Array<Maybe<ResolversTypes['Place']>>>, ParentType, ContextType>;
   placesCount?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  relationship?: Resolver<Maybe<ResolversTypes['Relationship']>, ParentType, ContextType>;
   section?: Resolver<Maybe<ResolversTypes['Section']>, ParentType, ContextType>;
   sectionNext?: Resolver<Maybe<ResolversTypes['Section']>, ParentType, ContextType>;
   seed?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
@@ -2553,10 +2668,33 @@ export type MapMoveResolvers<ContextType = AppContext, ParentType extends Resolv
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type MapMoveSampleResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['MapMoveSample'] = ResolversParentTypes['MapMoveSample']> = {
+  description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  duration?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  end?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  endLat?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  endLng?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  ref?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  seq?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  start?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  startLat?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  startLng?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  travelers?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type MapStoryResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['MapStory'] = ResolversParentTypes['MapStory']> = {
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   guid?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   moves?: Resolver<Maybe<Array<Maybe<ResolversTypes['MapMove']>>>, ParentType, ContextType>;
+  slug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  title?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type MapStorySampleResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['MapStorySample'] = ResolversParentTypes['MapStorySample']> = {
+  description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  moves?: Resolver<Maybe<Array<Maybe<ResolversTypes['MapMoveSample']>>>, ParentType, ContextType>;
   slug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   title?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
@@ -3127,9 +3265,29 @@ export type ReferenceResolvers<ContextType = AppContext, ParentType extends Reso
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type RelEdgeResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['RelEdge'] = ResolversParentTypes['RelEdge']> = {
+  dstName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  dstSlug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  dstTitle?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  dstType?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  note?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  ref?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  rel?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type RelationResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['Relation'] = ResolversParentTypes['Relation']> = {
   person?: Resolver<Maybe<ResolversTypes['People']>, ParentType, ContextType>;
   relation?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type RelationshipResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['Relationship'] = ResolversParentTypes['Relationship']> = {
+  edges?: Resolver<Maybe<Array<Maybe<ResolversTypes['RelEdge']>>>, ParentType, ContextType>;
+  hubName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  hubSlug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  hubTitle?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  hubType?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -3432,12 +3590,15 @@ export type Resolvers<ContextType = AppContext> = {
   Commentary?: CommentaryResolvers<ContextType>;
   Conn?: ConnResolvers<ContextType>;
   ContentLink?: ContentLinkResolvers<ContextType>;
+  CrossRef?: CrossRefResolvers<ContextType>;
+  CrossRefSet?: CrossRefSetResolvers<ContextType>;
   Division?: DivisionResolvers<ContextType>;
   Event?: EventResolvers<ContextType>;
   EventGrid?: EventGridResolvers<ContextType>;
   Fax?: FaxResolvers<ContextType>;
   FaxIndex?: FaxIndexResolvers<ContextType>;
   FaxPageRef?: FaxPageRefResolvers<ContextType>;
+  FaxVersePage?: FaxVersePageResolvers<ContextType>;
   HighlightRange?: HighlightRangeResolvers<ContextType>;
   HistoricalDocument?: HistoricalDocumentResolvers<ContextType>;
   HomeFeed?: HomeFeedResolvers<ContextType>;
@@ -3454,7 +3615,9 @@ export type Resolvers<ContextType = AppContext> = {
   LogResult?: LogResultResolvers<ContextType>;
   Map?: MapResolvers<ContextType>;
   MapMove?: MapMoveResolvers<ContextType>;
+  MapMoveSample?: MapMoveSampleResolvers<ContextType>;
   MapStory?: MapStoryResolvers<ContextType>;
+  MapStorySample?: MapStorySampleResolvers<ContextType>;
   Markdown?: MarkdownResolvers<ContextType>;
   Menu?: MenuResolvers<ContextType>;
   Message?: MessageResolvers<ContextType>;
@@ -3497,7 +3660,9 @@ export type Resolvers<ContextType = AppContext> = {
   ReadingPlanSegment?: ReadingPlanSegmentResolvers<ContextType>;
   ReadingPlanSummary?: ReadingPlanSummaryResolvers<ContextType>;
   Reference?: ReferenceResolvers<ContextType>;
+  RelEdge?: RelEdgeResolvers<ContextType>;
   Relation?: RelationResolvers<ContextType>;
+  Relationship?: RelationshipResolvers<ContextType>;
   ResultCard?: ResultCardResolvers<ContextType>;
   Row?: RowResolvers<ContextType>;
   Scripture?: ScriptureResolvers<ContextType>;

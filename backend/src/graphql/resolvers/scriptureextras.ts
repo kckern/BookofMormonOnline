@@ -127,10 +127,11 @@ export const scriptureextrasResolvers: Resolvers = {
   // ─── Chiasmus type resolvers ─────────────────────────────────────────────────
 
   Chiasmus: {
-    chiasmus_id: (parent) => (parent as unknown as ChiasmusRow).chiasmus_id ?? null,
-    reference:   (parent) => (parent as unknown as ChiasmusRow).reference ?? null,
-    scheme:      (parent) => (parent as unknown as ChiasmusRow).scheme ?? null,
-    title:       (parent) => (parent as unknown as ChiasmusRow).title ?? null,
+    chiasmus_id:    (parent) => (parent as unknown as ChiasmusRow).chiasmus_id ?? null,
+    reference:      (parent) => (parent as unknown as ChiasmusRow).reference ?? null,
+    scheme:         (parent) => (parent as unknown as ChiasmusRow).scheme ?? null,
+    title:          (parent) => (parent as unknown as ChiasmusRow).title ?? null,
+    start_verse_id: (parent) => (parent as unknown as ChiasmusRow).start_verse_id ?? null,
 
     /**
      * Chiasmus.lines — populated by Query.chiasmus when includeLines=true.

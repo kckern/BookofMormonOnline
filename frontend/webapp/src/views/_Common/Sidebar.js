@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { isMessengerEnabled } from '../../models/featureFlags';
 import { Link, NavLink, useHistory, useRouteMatch } from "react-router-dom";
 import { Nav, Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
@@ -166,11 +166,72 @@ function SearchBox({setActivePath}) {
      </li>
 }
 
+const clamp = (lo, v, hi) => Math.max(lo, Math.min(hi, v));
+
+/**
+ * Fits the menu into whatever vertical space the sidebar has, smoothly and
+ * without ever clipping. All items live in a flex column (`flex:1 1 0`) so they
+ * always share the height exactly — nothing overflows or overlaps regardless of
+ * item count. This hook only picks the *presentation* for the resulting per-row
+ * height (measured live via ResizeObserver) and writes CSS variables + a
+ * `data-mode` the stylesheet reads:
+ *
+ *   • full — icon + label; font scales continuously with row height
+ *   • grid — once labels no longer fit legibly, drop them and flow the icons
+ *            into a 2–3 column grid, using the horizontal space so each icon
+ *            stays a comfortable tap target instead of a crammed single-column
+ *            sliver. Column count scales with how short the viewport is.
+ *
+ * Font/icon scaling is continuous (no breakpoints); only the single full→grid
+ * switch is discrete, and every item stays visible and clickable throughout.
+ */
+function useSidebarFit(ref, itemCount) {
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === "undefined") return undefined;
+    const set = (k, v) => el.style.setProperty(k, v);
+    const measure = () => {
+      const h = el.clientHeight;
+      if (!h) return;
+      const search = el.querySelector(".searchbox");
+      const searchH = search ? search.offsetHeight : 40;
+      const avail = Math.max(1, h - searchH);
+      const n = Math.max(1, itemCount);
+      const rowH = avail / n; // height one labeled row would get, single column
+
+      if (rowH >= 16) {
+        // Labeled rows. 1.38rem ≈ 22px is the original max; font shrinks
+        // continuously with the row height, keeping labels as long as they stay
+        // legible (down to ~11px) before we give them up.
+        el.dataset.mode = "full";
+        set("--sb-font", clamp(11, rowH * 0.55, 22) + "px");
+      } else {
+        // Labels no longer fit — drop to an icon grid. Use the fewest columns
+        // (2, then 3) that keep each cell a comfortable height.
+        let cols = 2;
+        if (avail / Math.ceil(n / 2) < 24) cols = 3;
+        const rows = Math.ceil(n / cols);
+        const cellH = avail / rows;
+        el.dataset.mode = "grid";
+        set("--sb-cols", cols);
+        set("--sb-rows", rows);
+        set("--sb-icon", clamp(14, cellH * 0.55, 30) + "px");
+      }
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [ref, itemCount]);
+}
+
 function Sidebar(props) {
   const appController = useAppController();
   const match = useRouteMatch();
 
   const menu = loadMenu();
+  const menuRef = useRef(null);
+  useSidebarFit(menuRef, menu.length);
 
   const determinePath = () => {
     let slugs = menu.map((m) => m.slug);
@@ -212,7 +273,7 @@ function Sidebar(props) {
           setActivePath={setActivePath}
           activePath={activePath}
         />
-        <Nav className="sidebar-menu">
+        <ul className="nav sidebar-menu" ref={menuRef}>
           <SearchBox setActivePath={setActivePath} />
           {menu.map((r,index) => {
             let isActive = activePath.match(new RegExp("^/" + r.slug));
@@ -233,7 +294,7 @@ function Sidebar(props) {
               </li>
             );
           })}
-        </Nav>
+        </ul>
         <LanguageSelect />
       </div>
     </div>

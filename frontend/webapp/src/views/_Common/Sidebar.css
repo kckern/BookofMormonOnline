@@ -8,60 +8,96 @@
   letter-spacing: 0px;
   margin-top: 0;
 }
-@media (max-height: 750px) {
-  .sidebar .nav li a {
-    margin-bottom: -1.2ex;
-  }
-}
 .sidebar div.sidebar-wrapper {
   display: flex;
   flex-direction: column;
   padding-bottom: 0;
 }
+/* The menu fills the space left by the user card + language picker, and its
+   items share that space via flex (see useSidebarFit in Sidebar.js). Items
+   never overflow or clip — they compress, and font/icon size scales smoothly
+   with the per-row height the JS measures. */
 .sidebar-wrapper ul.nav.sidebar-menu {
   flex-grow: 1;
   display: flex;
   flex-direction: column;
   position: relative;
   overflow: hidden;
-  /* no flex wrap */
   flex-wrap: nowrap;
+  min-height: 0;
+  /* flex/grid keep every item in view down to absurdly short viewports; this
+     is only a last-resort net for the pathological case where the fixed user
+     card alone nearly fills the height — scroll beats clipping. */
+  overflow-y: auto;
+  overflow-x: hidden;
+  --sb-font: 1.38rem;
 }
-.sidebar .nav.sidebar-menu > li {
-  /* 6% or 1.5rem, whichever is smaller */
-  height: min(6%, 2.5rem);
+/* the search field keeps its natural height; only menu items flex-distribute */
+.sidebar .nav.sidebar-menu > li.searchbox { flex: 0 0 auto; }
+.sidebar .nav.sidebar-menu > li.menuitem {
+  flex: 1 1 0;
+  min-height: 0;
+  /* cap so a tall monitor keeps the comfortable resting spacing instead of
+     spreading rows edge to edge; rows still shrink freely when space is tight */
+  max-height: 2.75rem;
   position: relative;
 }
-.sidebar .nav.sidebar-menu > li > a img {
-  /* img height must stay within parent height even when parent is 6%, no hardcoding */
+.sidebar .nav.sidebar-menu > li.menuitem > a {
+  height: 100%;
+  line-height: 1.05;
+  margin-left: 0;
+  display: flex;
+  align-items: center;
+  /* NB: no `overflow:hidden` here — the active item's notch (the :before/:after
+     triangle that connects it to the pane) sits at right:-15px, outside the
+     link, and would get clipped. Labels are short single words, so nowrap is
+     enough to keep rows single-line. */
+  white-space: nowrap;
+}
+.sidebar .nav.sidebar-menu > li.menuitem > a img {
+  /* Fixed em footprint before the SVG loads avoids a horizontal jolt; em keeps
+     the icon in step with the row font-size as it scales. */
   margin-right: 1ex;
-  /* Fixed footprint before the SVG loads — without it each label jolts
-     rightward as its icon arrives (horizontal layout shift). em-based so it
-     still scales with the row font-size. */
   width: 1.2em;
   height: 1.2em;
   object-fit: contain;
 }
-/* if screen is less than 650 height */
-@media (max-height: 650px) {
-  .sidebar .nav li > a {
-    font-size: calc(3vh);
-    position: relative;
-    top:2rem
-  }
-  .sidebar .nav li img{
-    height: 3vh!important;
-    width: 3vh!important;
-  }
+
+/* ---- full: icon + label, font scales with available row height ---- */
+.sidebar .nav.sidebar-menu[data-mode="full"] > li.menuitem > a {
+  font-size: var(--sb-font, 1.38rem);
+  justify-content: flex-start;
 }
 
+/* ---- grid: labels dropped, icons flow into 2–3 columns on short viewports ---- */
+.sidebar .nav.sidebar-menu[data-mode="grid"] {
+  display: grid;
+  grid-template-columns: repeat(var(--sb-cols, 2), 1fr);
+  grid-template-rows: auto repeat(var(--sb-rows, 6), minmax(0, 1fr));
+  grid-auto-flow: row;
+}
+.sidebar .nav.sidebar-menu[data-mode="grid"] > li.searchbox {
+  grid-column: 1 / -1;
+  grid-row: 1;
+}
+.sidebar .nav.sidebar-menu[data-mode="grid"] > li.menuitem { flex: none; }
+.sidebar .nav.sidebar-menu[data-mode="grid"] > li.menuitem > a {
+  font-size: 0;
+  justify-content: center;
+}
 
-.sidebar .nav.sidebar-menu > li > a {
-  height: 100%;
-  line-height: inherit;
-  margin-left: 0;
-  display: flex;
-  align-items: center;
+.sidebar .nav.sidebar-menu[data-mode="grid"] > li.menuitem img {
+  width: var(--sb-icon, 1.4em);
+  height: var(--sb-icon, 1.4em);
+  margin: 0;
+  bottom: 0;
+  position: static;
+}
+/* the pane-connector notch only makes sense for a full-width row; in the icon
+   grid it would poke sideways into the next column, so drop it */
+.sidebar .nav.sidebar-menu[data-mode="grid"] > li.active > a:before,
+.sidebar .nav.sidebar-menu[data-mode="grid"] > li.active > a:after {
+  display: none;
 }
 
 .sidebar .nav li.active > a {

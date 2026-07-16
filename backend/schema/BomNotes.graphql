@@ -36,6 +36,7 @@ type Chiasmus {
   reference: String
   scheme: String
   title: String
+  start_verse_id: Int
   lines: [ChiasmusLine]
 }
 
