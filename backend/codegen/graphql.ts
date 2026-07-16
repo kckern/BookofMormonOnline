@@ -929,6 +929,7 @@ export type People = {
   slug?: Maybe<Scalars['String']['output']>;
   title?: Maybe<Scalars['String']['output']>;
   unit?: Maybe<Scalars['String']['output']>;
+  xrels?: Maybe<Array<Maybe<Xrel>>>;
 };
 
 export type PeopleLink = {
@@ -988,6 +989,7 @@ export type Place = {
   slug?: Maybe<Scalars['String']['output']>;
   type?: Maybe<Scalars['String']['output']>;
   w?: Maybe<Scalars['Int']['output']>;
+  xrels?: Maybe<Array<Maybe<Xrel>>>;
 };
 
 export enum PlanEndAction {
@@ -1963,6 +1965,12 @@ export type Witness = {
 
 export type Xrel = {
   __typename?: 'Xrel';
+  /**
+   * 'src' when this entity is the row's source (object popups),
+   * 'dst' when the row points AT this entity and dst_* carry the other party
+   * (people/place popups) — render name-before-verb for 'dst'.
+   */
+  direction?: Maybe<Scalars['String']['output']>;
   dst_name?: Maybe<Scalars['String']['output']>;
   dst_slug?: Maybe<Scalars['String']['output']>;
   dst_title?: Maybe<Scalars['String']['output']>;
@@ -2968,6 +2976,7 @@ export type PeopleResolvers<ContextType = AppContext, ParentType extends Resolve
   slug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   title?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   unit?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  xrels?: Resolver<Maybe<Array<Maybe<ResolversTypes['Xrel']>>>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -3027,6 +3036,7 @@ export type PlaceResolvers<ContextType = AppContext, ParentType extends Resolver
   slug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   type?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   w?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  xrels?: Resolver<Maybe<Array<Maybe<ResolversTypes['Xrel']>>>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -3568,6 +3578,7 @@ export type WitnessResolvers<ContextType = AppContext, ParentType extends Resolv
 };
 
 export type XrelResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['Xrel'] = ResolversParentTypes['Xrel']> = {
+  direction?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   dst_name?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   dst_slug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   dst_title?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
