@@ -239,6 +239,11 @@ const sampleCommentaries = async (ctx: AppContext, seed: number) => {
     // variety means distinct AUTHORS, so carry source_name into the dedupe
     .select('bom_xtras_source.source_name as _author')
     .where(sql<boolean>`CHAR_LENGTH(bom_xtras_commentary.text) > ${MIN_COMMENTARY_CHARS}`)
+    // Use != 1 (not = 0) so MySQL skips the is_note index and keeps the fast
+    // hash-join plan; `= 0` triggers an index scan on 24 k rows, making this
+    // query ~20× slower. is_note ∈ {-1, 0, 1} so `!= 1` still correctly
+    // excludes all notes while preserving the original join performance.
+    .where('bom_xtras_commentary.is_note', '!=', 1)
     .where('bom_xtras_source.source_lang', '=', lang)
     .where('bom_xtras_source.source_rating', '=', 'G')
     .orderBy(seededOrder('bom_xtras_commentary.id', seed))

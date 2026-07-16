@@ -77,6 +77,7 @@ describe('homesampler.notes', () => {
       exec<NotesPayload>(NOTES_SEL, 778),
     ]);
     expect(a.notes!.map((n) => n.id)).toEqual(b.notes!.map((n) => n.id));
+    // assumes >=3 qualifying notes exist so adjacent seeds pick different rows
     expect(a.notes!.map((n) => n.id)).not.toEqual(c.notes!.map((n) => n.id));
   }, 15000);
 });
