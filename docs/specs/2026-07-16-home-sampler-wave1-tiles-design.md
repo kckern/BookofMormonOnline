@@ -1,7 +1,7 @@
 # Home Sampler — Wave 1 New Tiles Design
 
 **Date:** 2026-07-16
-**Status:** Approved design → ready for implementation plan
+**Status:** Implemented 2026-07-16 (plan: docs/plans/2026-07-16-home-sampler-wave1-tiles.md). All 5 tiles shipped to dev (local, unpushed).
 **Author:** Claude (brainstormed with KC)
 
 ## Goal
