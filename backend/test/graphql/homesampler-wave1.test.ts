@@ -152,3 +152,47 @@ describe('homesampler.crossrefs', () => {
     expect(a.crossrefs!.srcVerseId).not.toBe(c.crossrefs!.srcVerseId);
   });
 });
+
+// ─── relationship ─────────────────────────────────────────────────────────────
+
+type RelationshipPayload = {
+  relationship: {
+    hubType: string; hubSlug: string; hubName: string; hubTitle: string | null;
+    edges: {
+      rel: string; dstType: string; dstSlug: string; dstName: string;
+      dstTitle: string | null; note: string | null; ref: string | null;
+    }[];
+  } | null;
+};
+const REL_SEL = `relationship { hubType hubSlug hubName hubTitle edges { rel dstType dstSlug dstName dstTitle note ref } }`;
+
+describe('homesampler.relationship', () => {
+  it('returns a hub with 2-4 resolved edges', async () => {
+    const s = await exec<RelationshipPayload>(REL_SEL, 34004);
+    expect(s.relationship).toBeTruthy();
+    const r = s.relationship!;
+    expect(['people', 'place', 'object']).toContain(r.hubType);
+    expect(r.hubSlug).toBeTruthy();
+    expect(r.hubName).toBeTruthy();
+    expect(r.edges.length).toBeGreaterThanOrEqual(2);
+    expect(r.edges.length).toBeLessThanOrEqual(4);
+    for (const e of r.edges) {
+      expect(e.rel).toBeTruthy();
+      expect(['people', 'place', 'object']).toContain(e.dstType);
+      expect(e.dstSlug).toBeTruthy();
+      expect(e.dstName).toBeTruthy(); // resolved, not just the slug echoed on a miss
+    }
+  });
+
+  it('is deterministic per seed and varies across seeds', async () => {
+    const [a, b, c] = await Promise.all([
+      exec<RelationshipPayload>(REL_SEL, 1111),
+      exec<RelationshipPayload>(REL_SEL, 1111),
+      exec<RelationshipPayload>(REL_SEL, 1112),
+    ]);
+    expect(`${a.relationship!.hubType}:${a.relationship!.hubSlug}`)
+      .toBe(`${b.relationship!.hubType}:${b.relationship!.hubSlug}`);
+    expect(`${a.relationship!.hubType}:${a.relationship!.hubSlug}`)
+      .not.toBe(`${c.relationship!.hubType}:${c.relationship!.hubSlug}`);
+  });
+});

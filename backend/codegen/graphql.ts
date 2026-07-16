@@ -316,6 +316,7 @@ export type HomeSampler = {
   peopleCount?: Maybe<Scalars['Int']['output']>;
   places?: Maybe<Array<Maybe<Place>>>;
   placesCount?: Maybe<Scalars['Int']['output']>;
+  relationship?: Maybe<Relationship>;
   section?: Maybe<Section>;
   sectionNext?: Maybe<Section>;
   seed?: Maybe<Scalars['Int']['output']>;
@@ -1617,10 +1618,30 @@ export type Reference = {
   verse_id?: Maybe<Scalars['Int']['output']>;
 };
 
+export type RelEdge = {
+  __typename?: 'RelEdge';
+  dstName?: Maybe<Scalars['String']['output']>;
+  dstSlug?: Maybe<Scalars['String']['output']>;
+  dstTitle?: Maybe<Scalars['String']['output']>;
+  dstType?: Maybe<Scalars['String']['output']>;
+  note?: Maybe<Scalars['String']['output']>;
+  ref?: Maybe<Scalars['String']['output']>;
+  rel?: Maybe<Scalars['String']['output']>;
+};
+
 export type Relation = {
   __typename?: 'Relation';
   person?: Maybe<People>;
   relation?: Maybe<Scalars['String']['output']>;
+};
+
+export type Relationship = {
+  __typename?: 'Relationship';
+  edges?: Maybe<Array<Maybe<RelEdge>>>;
+  hubName?: Maybe<Scalars['String']['output']>;
+  hubSlug?: Maybe<Scalars['String']['output']>;
+  hubTitle?: Maybe<Scalars['String']['output']>;
+  hubType?: Maybe<Scalars['String']['output']>;
 };
 
 export type ResultCard = {
@@ -2082,7 +2103,9 @@ export type ResolversTypes = {
   ReadingPlanSegment: ResolverTypeWrapper<Partial<ReadingPlanSegment>>;
   ReadingPlanSummary: ResolverTypeWrapper<Partial<ReadingPlanSummary>>;
   Reference: ResolverTypeWrapper<Partial<Reference>>;
+  RelEdge: ResolverTypeWrapper<Partial<RelEdge>>;
   Relation: ResolverTypeWrapper<Partial<Relation>>;
+  Relationship: ResolverTypeWrapper<Partial<Relationship>>;
   ResultCard: ResolverTypeWrapper<Partial<ResultCard>>;
   Row: ResolverTypeWrapper<Partial<Row>>;
   Scripture: ResolverTypeWrapper<Partial<Scripture>>;
@@ -2199,7 +2222,9 @@ export type ResolversParentTypes = {
   ReadingPlanSegment: Partial<ReadingPlanSegment>;
   ReadingPlanSummary: Partial<ReadingPlanSummary>;
   Reference: Partial<Reference>;
+  RelEdge: Partial<RelEdge>;
   Relation: Partial<Relation>;
+  Relationship: Partial<Relationship>;
   ResultCard: Partial<ResultCard>;
   Row: Partial<Row>;
   Scripture: Partial<Scripture>;
@@ -2508,6 +2533,7 @@ export type HomeSamplerResolvers<ContextType = AppContext, ParentType extends Re
   peopleCount?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   places?: Resolver<Maybe<Array<Maybe<ResolversTypes['Place']>>>, ParentType, ContextType>;
   placesCount?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  relationship?: Resolver<Maybe<ResolversTypes['Relationship']>, ParentType, ContextType>;
   section?: Resolver<Maybe<ResolversTypes['Section']>, ParentType, ContextType>;
   sectionNext?: Resolver<Maybe<ResolversTypes['Section']>, ParentType, ContextType>;
   seed?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
@@ -3187,9 +3213,29 @@ export type ReferenceResolvers<ContextType = AppContext, ParentType extends Reso
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type RelEdgeResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['RelEdge'] = ResolversParentTypes['RelEdge']> = {
+  dstName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  dstSlug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  dstTitle?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  dstType?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  note?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  ref?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  rel?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type RelationResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['Relation'] = ResolversParentTypes['Relation']> = {
   person?: Resolver<Maybe<ResolversTypes['People']>, ParentType, ContextType>;
   relation?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type RelationshipResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['Relationship'] = ResolversParentTypes['Relationship']> = {
+  edges?: Resolver<Maybe<Array<Maybe<ResolversTypes['RelEdge']>>>, ParentType, ContextType>;
+  hubName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  hubSlug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  hubTitle?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  hubType?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -3560,7 +3606,9 @@ export type Resolvers<ContextType = AppContext> = {
   ReadingPlanSegment?: ReadingPlanSegmentResolvers<ContextType>;
   ReadingPlanSummary?: ReadingPlanSummaryResolvers<ContextType>;
   Reference?: ReferenceResolvers<ContextType>;
+  RelEdge?: RelEdgeResolvers<ContextType>;
   Relation?: RelationResolvers<ContextType>;
+  Relationship?: RelationshipResolvers<ContextType>;
   ResultCard?: ResultCardResolvers<ContextType>;
   Row?: RowResolvers<ContextType>;
   Scripture?: ScriptureResolvers<ContextType>;

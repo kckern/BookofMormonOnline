@@ -13,6 +13,7 @@ import { generateReference } from 'scripture-guide';
 import type { Resolvers } from '../../../codegen/graphql.js';
 import type { AppContext } from '../context.js';
 import { findUserByToken } from '../../data/loaders/userauth.js';
+import { parseVerseIdFromNote } from '../../data/loaders/objects.js';
 
 // 24 people = 1 featured + 11 face cards + 12 view-all mosaic thumbs (3×4);
 // 17 places = 5 cards + a full 3×4 mosaic.
@@ -250,6 +251,86 @@ const sampleCrossRefs = async (ctx: AppContext, seed: number) => {
   };
 };
 
+// Entity display-name lookup for relationship hubs/edges. Column meanings per
+// type mirror xrelsBySlug in loaders/objects.ts: people name/title,
+// places name/info, objects name/subtitle.
+const entityNames = async (
+  ctx: AppContext,
+  wanted: { type: string; slug: string }[],
+): Promise<Map<string, { name: string; title: string | null }>> => {
+  const slugsOf = (t: string) => [...new Set(wanted.filter((w) => w.type === t).map((w) => w.slug))];
+  const [people, places, objects] = await Promise.all([
+    slugsOf('people').length
+      ? ctx.db.selectFrom('bom_people').select(['slug', 'name', 'title']).where('slug', 'in', slugsOf('people')).execute()
+      : [],
+    slugsOf('place').length
+      ? ctx.db.selectFrom('bom_places').select(['slug', 'name', 'info']).where('slug', 'in', slugsOf('place')).execute()
+      : [],
+    slugsOf('object').length
+      ? ctx.db.selectFrom('bom_objects').select(['slug', 'name', 'subtitle']).where('slug', 'in', slugsOf('object')).execute()
+      : [],
+  ]);
+  const map = new Map<string, { name: string; title: string | null }>();
+  for (const p of people) if (p.name) map.set(`people:${p.slug}`, { name: p.name, title: p.title ?? null });
+  for (const p of places) if (p.name) map.set(`place:${p.slug}`, { name: p.name, title: p.info ?? null });
+  for (const o of objects) if (o.name) map.set(`object:${o.slug}`, { name: o.name, title: o.subtitle ?? null });
+  return map;
+};
+
+// One well-connected hub entity and up to 4 of its typed relations. The hub is
+// seeded over all (src_type, src_slug) pairs with >=2 edges; GROUP BY needs raw
+// sql. Edges whose dst can't be resolved to a display name are dropped (a bare
+// slug reads as a bug on the front door); if that leaves <2, return null.
+const sampleRelationship = async (ctx: AppContext, seed: number) => {
+  const hub = await sql<{ src_type: string; src_slug: string }>`
+    SELECT src_type, src_slug FROM bom_xrels
+    GROUP BY src_type, src_slug HAVING COUNT(*) >= 2
+    ORDER BY MD5(CONCAT(src_type, ':', src_slug, ':', ${seed}))
+    LIMIT 1
+  `.execute(ctx.db);
+  const h = hub.rows[0];
+  if (!h) return null;
+  const edgeRows = await ctx.db
+    .selectFrom('bom_xrels')
+    .select(['rel', 'dst_type', 'dst_slug', 'note'])
+    .where('src_type', '=', h.src_type)
+    .where('src_slug', '=', h.src_slug)
+    .orderBy(seededOrder('dst_slug', seed))
+    .limit(6)
+    .execute();
+  const names = await entityNames(ctx, [
+    { type: h.src_type, slug: h.src_slug },
+    ...edgeRows.map((e) => ({ type: e.dst_type, slug: e.dst_slug })),
+  ]);
+  const hubName = names.get(`${h.src_type}:${h.src_slug}`);
+  if (!hubName) return null;
+  const edges = edgeRows
+    .map((e) => {
+      const dst = names.get(`${e.dst_type}:${e.dst_slug}`);
+      if (!dst) return null;
+      const verseId = parseVerseIdFromNote(e.note ?? null);
+      return {
+        rel: e.rel,
+        dstType: e.dst_type,
+        dstSlug: e.dst_slug,
+        dstName: dst.name,
+        dstTitle: dst.title,
+        note: e.note ?? null,
+        ref: verseId ? generateReference([verseId]) : null,
+      };
+    })
+    .filter((e): e is NonNullable<typeof e> => e !== null)
+    .slice(0, 4);
+  if (edges.length < 2) return null;
+  return {
+    hubType: h.src_type,
+    hubSlug: h.src_slug,
+    hubName: hubName.name,
+    hubTitle: hubName.title,
+    edges,
+  };
+};
+
 const countRows = (table: 'bom_people' | 'bom_places') => async (ctx: AppContext) => {
   const r = await ctx.db
     .selectFrom(table)
@@ -417,6 +498,7 @@ const samplers: Record<string, (ctx: AppContext, seed: number) => Promise<unknow
   faxMore: sampleFaxMore,
   faxVerse: sampleFaxVerse,
   crossrefs: sampleCrossRefs,
+  relationship: sampleRelationship,
   art: sampleArt,
   witnesses: sampleWitnesses,
   peopleCount: countRows('bom_people'),

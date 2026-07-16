@@ -33,6 +33,7 @@ type HomeSampler {
   notes: [Commentary]
   faxVerse: FaxVersePage
   crossrefs: CrossRefSet
+  relationship: Relationship
   peopleCount: Int
   placesCount: Int
 }
@@ -46,6 +47,24 @@ type CrossRefSet {
 type CrossRef {
   ref: String
   verseId: Int
+}
+
+type Relationship {
+  hubType: String
+  hubSlug: String
+  hubName: String
+  hubTitle: String
+  edges: [RelEdge]
+}
+
+type RelEdge {
+  rel: String
+  dstType: String
+  dstSlug: String
+  dstName: String
+  dstTitle: String
+  note: String
+  ref: String
 }
 
 type FaxVersePage {
