@@ -1,4 +1,4 @@
-import { FIELD_DEFS, emptyFilters, applyFilters, facetCounts } from "./logic";
+import { FIELD_DEFS, emptyFilters, applyFilters, facetCounts, segmentName } from "./logic";
 
 const fixture = [
   { name: "Moroni", types: ["person", "place"], cultures: ["Nephite"], prefix: null, stems: ["Mor"], affix: "~on~", suffix: "~i", note: null },
@@ -40,5 +40,31 @@ describe("facetCounts", () => {
     const counts = facetCounts(fixture, f, "stems");
     expect(counts.get("Mor")).toBe(2);
     expect(counts.get("Shiz")).toBeUndefined();
+  });
+});
+
+describe("segmentName", () => {
+  const seg = (over) => segmentName({ prefix: null, stems: [], affix: null, suffix: null, ...over });
+  it("splits stem + affix + suffix", () => {
+    expect(seg({ name: "Moroni", stems: ["Mor"], affix: "~on~", suffix: "~i" }))
+      .toEqual([{ text: "Mor", role: "stem" }, { text: "on", role: "affix" }, { text: "i", role: "suffix" }]);
+  });
+  it("splits prefix + stem + suffix", () => {
+    expect(seg({ name: "Ammoron", prefix: "Am~", stems: ["Mor"], suffix: "~on" }))
+      .toEqual([{ text: "Am", role: "prefix" }, { text: "mor", role: "stem" }, { text: "on", role: "suffix" }]);
+  });
+  it("splits two stems with medial affix", () => {
+    expect(seg({ name: "Moriancumer", stems: ["Mor", "Cum"], affix: "~ian~", suffix: "~er" }))
+      .toEqual([{ text: "Mor", role: "stem" }, { text: "ian", role: "affix" }, { text: "cum", role: "stem" }, { text: "er", role: "suffix" }]);
+  });
+  it("tolerates hyphens between parts, preserving original text", () => {
+    expect(seg({ name: "Ani-Anti", stems: ["Ani", "Ant"], suffix: "~i" }))
+      .toEqual([{ text: "Ani", role: "stem" }, { text: "-", role: "sep" }, { text: "Ant", role: "stem" }, { text: "i", role: "suffix" }]);
+  });
+  it("returns null when morphemes cannot reconstruct the name", () => {
+    expect(seg({ name: "Kumen", stems: ["Cumen"] })).toBeNull();
+  });
+  it("returns single whole-name stem span", () => {
+    expect(seg({ name: "Shiz", stems: ["Shiz"] })).toEqual([{ text: "Shiz", role: "stem" }]);
   });
 });

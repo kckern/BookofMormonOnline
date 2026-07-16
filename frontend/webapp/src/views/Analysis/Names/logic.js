@@ -31,3 +31,35 @@ export const facetCounts = (names, filters, facetKey) => {
     for (const v of field.get(entry)) counts.set(v, (counts.get(v) || 0) + 1);
   return counts;
 };
+
+const strip = (s) => (s || "").replace(/~/g, "");
+const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/**
+ * Segment a name into [{text, role}] spans (roles: prefix|stem|affix|sep|suffix)
+ * by matching prefix + stem1 + affix + stem2 + suffix against the real string,
+ * case-insensitively, allowing a single separator char (- or ') between parts.
+ * Returns null when the morphemes don't reconstruct the name.
+ */
+export const segmentName = (entry) => {
+  const parts = [];
+  if (entry.prefix) parts.push({ role: "prefix", m: strip(entry.prefix) });
+  parts.push({ role: "stem", m: strip(entry.stems[0] || "") });
+  if (entry.affix) parts.push({ role: "affix", m: strip(entry.affix) });
+  if (entry.stems[1]) parts.push({ role: "stem", m: strip(entry.stems[1]) });
+  if (entry.suffix) parts.push({ role: "suffix", m: strip(entry.suffix) });
+
+  const pattern = "^" + parts.map((p) => `([-']?)(${esc(p.m)})`).join("") + "$";
+  const match = entry.name.match(new RegExp(pattern, "i"));
+  if (!match) return null;
+
+  const spans = [];
+  let g = 1;
+  for (const p of parts) {
+    const sep = match[g++];
+    const text = match[g++];
+    if (sep) spans.push({ text: sep, role: "sep" });
+    spans.push({ text, role: p.role });
+  }
+  return spans;
+};
