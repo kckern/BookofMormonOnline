@@ -27,6 +27,25 @@
     padding:0
 }
 
+.nameFilterStatus{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0.5rem 0 1rem;
+    color: #666;
+}
+
+.nameAnalysisList .nameAnalysisItem{
+    padding: 0.25rem 0.5rem;
+}
+
+.nameAnalysisEmpty{
+    grid-column: 1 / -1;
+    text-align: center;
+    color: #888;
+    padding: 2rem 0;
+}
+
 .nameform th{
     text-align: center;
     font-weight: 800;
