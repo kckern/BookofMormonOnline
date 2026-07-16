@@ -382,7 +382,9 @@ git commit -m "feat(sampler): faxVerse field — verse-anchored facsimile page"
 
 ### Task 3: Backend — Cross-references sampler
 
-A source verse plus its significant footnote cross-references from `lds_scriptures_crossref` (153k rows; columns `src_verse_id`, `dst_verse_id`, `src_ref`, `dst_ref`, `type`, `significant`). Scope: `type='xref' AND significant=1` only. There are no topical titles in the data — each cross-reference is "titled" by its reference string, generated fresh via `generateReference` (the stored `dst_ref` strings are in mixed shorthand).
+> **CORRECTION (applied during implementation):** the `significant = 1` filter below is WRONG — it matches zero `xref` rows (for xrefs `significant` is only `-1`/`0`, ~58k/51k, and is not an importance ranking). The shipped sampler filters on `type='xref'` only, with no `significant` condition. Ignore the `significant = 1` / `.where('significant', '=', 1)` lines in the code blocks that follow; everything else stands.
+
+A source verse plus its footnote cross-references from `lds_scriptures_crossref` (153k rows; columns `src_verse_id`, `dst_verse_id`, `src_ref`, `dst_ref`, `type`, `significant`). Scope: `type='xref'` (see correction above). There are no topical titles in the data — each cross-reference is "titled" by its reference string, generated fresh via `generateReference` (the stored `dst_ref` strings are in mixed shorthand).
 
 **Files:**
 - Modify: `backend/test/graphql/homesampler-wave1.test.ts` (append)

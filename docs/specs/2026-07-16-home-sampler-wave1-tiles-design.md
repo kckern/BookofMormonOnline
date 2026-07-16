@@ -13,7 +13,7 @@ hold but don't show, plus reviving a built-but-unregistered map tile. The five:
 2. **Verse-level Fax** — the facsimile page that depicts a specific verse
 3. **Relationships** — typed connections between people/places/objects
 4. **Map-story (MVP)** — a scripture journey drawn as a static path on a map
-5. **Cross-references** — a verse and its significant scripture cross-references
+5. **Cross-references** — a verse and its scripture cross-references
 
 ## Non-Goals / Deferred
 
@@ -225,15 +225,20 @@ same non-geographic projection MapTileInner already renders.
 links: `src_verse_id`, `dst_verse_id`, `src_ref`, `dst_ref`, `type`,
 `significant` (−1/0/1), `source`. There is **no topical title** in the data —
 the "title" of a cross-reference is its scripture reference string (`dst_ref`).
-Scope to `type = 'xref'` and `significant = 1` (the important cross-references).
+Scope to `type = 'xref'`. NOTE (corrected during implementation): `significant`
+is NOT an importance ranking — for `xref` rows it splits ~58k/51k across `-1`/`0`
+(both `source='footnote'`), and `significant = 1` matches **zero** xref rows
+(that value belongs to the edition-variant types). The tile therefore samples
+**all** `type='xref'` rows and does not filter on `significant`, matching the
+app's own passage-notes cross-reference display (`significant IN (0,1,-1)`).
 Edition variants (`JST`, `1835`, `BOC`, `PGP`, `BoM`) are a different concept
 (translation/edition variants) and are **out of scope** for this tile.
 
 ### Backend
-- `sampleCrossReferences(ctx, seed)` — seeded-pick a `src_verse_id` that has
-  `type='xref' AND significant=1` cross-references, fetch its dst rows (cap ~4),
-  build refs from `dst_ref`/`dst_verse_id` (or `generateReference`). Return the
-  source ref + the destination cross-references.
+- `sampleCrossRefs(ctx, seed)` — seeded-pick a `src_verse_id` that has ≥2
+  `type='xref'` cross-references, fetch its dst rows (cap ~4, self-ref and
+  duplicates removed), build refs via `generateReference`. Return the source ref
+  + the destination cross-references.
 - New types:
   `CrossRefSet { srcRef, srcVerseId, refs: [CrossRef] }`,
   `CrossRef { ref, verseId }`.
@@ -249,9 +254,9 @@ Edition variants (`JST`, `1835`, `BOC`, `PGP`, `BoM`) are a different concept
   `INFINITE_REGISTRY_KEYS`.
 
 ### Acceptance
-- Tile shows one source passage and 2–4 significant cross-references, each
-  labeled by its scripture reference.
-- Only `type='xref' AND significant=1` links appear.
+- Tile shows one source passage and 2–4 cross-references, each labeled by its
+  scripture reference.
+- Only `type='xref'` links appear; no self-reference, no duplicate destinations.
 - References deep-link / open the referenced passage.
 
 ---
