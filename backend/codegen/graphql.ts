@@ -68,6 +68,7 @@ export type Chiasmus = {
   lines?: Maybe<Array<Maybe<ChiasmusLine>>>;
   reference?: Maybe<Scalars['String']['output']>;
   scheme?: Maybe<Scalars['String']['output']>;
+  start_verse_id?: Maybe<Scalars['Int']['output']>;
   title?: Maybe<Scalars['String']['output']>;
 };
 
@@ -285,6 +286,7 @@ export type HomeSampler = {
   faxMore?: Maybe<Array<Maybe<Fax>>>;
   faxPages?: Maybe<Array<Maybe<FaxPageRef>>>;
   history?: Maybe<HistoricalDocument>;
+  notes?: Maybe<Array<Maybe<Commentary>>>;
   people?: Maybe<Array<Maybe<People>>>;
   peopleCount?: Maybe<Scalars['Int']['output']>;
   places?: Maybe<Array<Maybe<Place>>>;
@@ -2248,6 +2250,7 @@ export type ChiasmusResolvers<ContextType = AppContext, ParentType extends Resol
   lines?: Resolver<Maybe<Array<Maybe<ResolversTypes['ChiasmusLine']>>>, ParentType, ContextType>;
   reference?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   scheme?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  start_verse_id?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   title?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
@@ -2444,6 +2447,7 @@ export type HomeSamplerResolvers<ContextType = AppContext, ParentType extends Re
   faxMore?: Resolver<Maybe<Array<Maybe<ResolversTypes['Fax']>>>, ParentType, ContextType>;
   faxPages?: Resolver<Maybe<Array<Maybe<ResolversTypes['FaxPageRef']>>>, ParentType, ContextType>;
   history?: Resolver<Maybe<ResolversTypes['HistoricalDocument']>, ParentType, ContextType>;
+  notes?: Resolver<Maybe<Array<Maybe<ResolversTypes['Commentary']>>>, ParentType, ContextType>;
   people?: Resolver<Maybe<Array<Maybe<ResolversTypes['People']>>>, ParentType, ContextType>;
   peopleCount?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   places?: Resolver<Maybe<Array<Maybe<ResolversTypes['Place']>>>, ParentType, ContextType>;

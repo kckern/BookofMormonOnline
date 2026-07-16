@@ -30,6 +30,7 @@ type HomeSampler {
   faxMore: [Fax]
   art: [ArtImage]
   witnesses: [Witness]
+  notes: [Commentary]
   peopleCount: Int
   placesCount: Int
 }

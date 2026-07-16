@@ -197,6 +197,30 @@ const countRows = (table: 'bom_people' | 'bom_places') => async (ctx: AppContext
   return Number(r?.n ?? 0);
 };
 
+// Variety rule shared by commentaries + notes: distinct source AND distinct
+// author, non-overlapping verse spans; first n that qualify from a seeded pool.
+type VariedRow = {
+  source: string | null;
+  _author: string | null;
+  verse_id: number | null;
+  verse_range: number | null;
+};
+function pickVaried<T extends VariedRow>(rows: T[], n: number): T[] {
+  const spanOf = (r: T) => {
+    const start = Number(r.verse_id) || 0;
+    return [start, start + Math.max(1, Number(r.verse_range) || 1) - 1] as const;
+  };
+  const picked: T[] = [];
+  for (const r of rows) {
+    if (picked.length === n) break;
+    if (picked.some((p) => p.source === r.source || (p._author && p._author === r._author))) continue;
+    const [s1, e1] = spanOf(r);
+    if (picked.some((p) => { const [s2, e2] = spanOf(p); return s1 <= e2 && s2 <= e1; })) continue;
+    picked.push(r);
+  }
+  return picked;
+}
+
 // Three commentaries per page, guaranteed VARIETY: distinct sources and
 // non-overlapping passages (seeded pool of 30, first 3 that qualify).
 // ROBUSTNESS: filter on CHAR_LENGTH(text) — the exact measure the test asserts
@@ -220,24 +244,32 @@ const sampleCommentaries = async (ctx: AppContext, seed: number) => {
     .orderBy(seededOrder('bom_xtras_commentary.id', seed))
     .limit(30)
     .execute();
-  type Row = (typeof rows)[number];
-  const spanOf = (r: Row) => {
-    const start = Number(r.verse_id) || 0;
-    return [start, start + Math.max(1, Number(r.verse_range) || 1) - 1] as const;
-  };
-  const picked: Row[] = [];
-  for (const r of rows) {
-    if (picked.length === 3) break;
-    if (picked.some((p) => p.source === r.source || (p._author && p._author === r._author))) continue;
-    const [s1, e1] = spanOf(r);
-    if (picked.some((p) => { const [s2, e2] = spanOf(p); return s1 <= e2 && s2 <= e1; })) continue;
-    picked.push(r);
-  }
-  return picked;
+  return pickVaried(rows, 3);
 };
 
 const sampleCommentary = async (ctx: AppContext, seed: number) =>
   (await sampleCommentaries(ctx, seed))[0] ?? null;
+
+// Short scholarly annotations — the is_note=1 rows the commentary sampler
+// EXCLUDES. Same source-rating/lang gates and variety rule; notes are short
+// (avg 133 chars) so the tile stacks two. Reuses the Commentary GraphQL type
+// (reference/publication/preview resolvers all apply).
+const sampleNotes = async (ctx: AppContext, seed: number) => {
+  const lang = !ctx.lang || !/^[a-z]{2,3}$/.test(ctx.lang) || ctx.lang === 'dev' ? 'en' : ctx.lang;
+  const rows = await ctx.db
+    .selectFrom('bom_xtras_commentary')
+    .innerJoin('bom_xtras_source', 'bom_xtras_source.source_id', 'bom_xtras_commentary.source')
+    .selectAll('bom_xtras_commentary')
+    .select('bom_xtras_source.source_name as _author')
+    .where('bom_xtras_commentary.is_note', '=', 1)
+    .where(sql<boolean>`CHAR_LENGTH(bom_xtras_commentary.text) > 40`)
+    .where('bom_xtras_source.source_lang', '=', lang)
+    .where('bom_xtras_source.source_rating', '=', 'G')
+    .orderBy(seededOrder('bom_xtras_commentary.id', seed))
+    .limit(10)
+    .execute();
+  return pickVaried(rows, 2);
+};
 
 const sampleContents = async (ctx: AppContext, seed: number) => {
   const divisions = await ctx.services.contents.divisions(null);
@@ -309,6 +341,7 @@ const samplers: Record<string, (ctx: AppContext, seed: number) => Promise<unknow
   fax: sampleFax,
   commentary: sampleCommentary,
   commentaries: sampleCommentaries,
+  notes: sampleNotes,
   contents: sampleContents,
   section: sampleSection,
   sectionNext: sampleSectionNext,
