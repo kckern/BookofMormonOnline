@@ -1,14 +1,13 @@
-import { useEffect, useRef, useState } from "react";
+import { Fragment, memo, useEffect, useMemo, useRef, useState } from "react";
 import BoMOnlineAPI from "../../../models/BoMOnlineAPI";
 import Loader from "../../_Common/Loader";
 import "./Chiasmus.css";
 import Chiasm from "./Chiasm";
-import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem,Button, Label } from 'reactstrap';
-import searchIcon from "../../_Common/svg/search.svg";
-import {lookupReference} from "scripture-guide";
+import { Button } from 'reactstrap';
 import { label, determineLanguage } from 'src/models/Utils';
-import { Switch, useRouteMatch } from "react-router-dom/cjs/react-router-dom.min";
-function ChiasmusControl({chiasmusControls, setChiasmusControls}) {
+import { useRouteMatch } from "react-router-dom/cjs/react-router-dom.min";
+import { enrichChiasmus } from "./chiasmUtils";
+function ChiasmusControl({chiasmusControls, setChiasmusControls, depthCounts, categoryCounts}) {
 
 
     const toggleSortOrder = () => {
@@ -16,7 +15,7 @@ function ChiasmusControl({chiasmusControls, setChiasmusControls}) {
     }
 
     const toggleSortField = () => {
-        setChiasmusControls(prevState => ({...prevState, 
+        setChiasmusControls(prevState => ({...prevState,
             sortFieldButton: prevState.sortFieldButton === 'Reference' ? 'Depth' : 'Reference',
             sortField: prevState.sortField === 'reference' ? 'depth' : 'reference'
         }));
@@ -66,7 +65,7 @@ const toggleButton = (depth, onoff) => {
 
     return (
         <div className="chiasmus_controls">
-            <DepthFilter depthCounts={chiasmusControls.depthCounts} chiasmusControls={chiasmusControls} toggleButton={toggleButton} toggleBiblical={toggleBiblical} toggleCompound={toggleCompound} setChiasmusControls={setChiasmusControls} />
+            <DepthFilter depthCounts={depthCounts} categoryCounts={categoryCounts} chiasmusControls={chiasmusControls} toggleButton={toggleButton} toggleBiblical={toggleBiblical} toggleCompound={toggleCompound} setChiasmusControls={setChiasmusControls} />
             <div className="sort_controls" style={{display: 'flex', justifyContent: 'space-between'}}>
             <SortButton chiasmusControls={chiasmusControls} toggleSortField={toggleSortField} />
             <Button onClick={toggleSortOrder}  className="sort_order_button">
@@ -87,46 +86,30 @@ function SortButton({chiasmusControls, toggleSortField}) {
     );
 }
 
-function DepthFilter({depthCounts, chiasmusControls, toggleButton, toggleBiblical, toggleCompound, setChiasmusControls}) {
-
-
-    const setOnlyFilter = (depth) => {
-        //turn off all levels
-        chiasmusControls.filteredLevels.forEach(depth => toggleButton(depth, true));
-        //turn on only this level
-        toggleButton(depth, false);
-
-    }
-
+function DepthFilter({depthCounts, categoryCounts, chiasmusControls, toggleButton, toggleBiblical, toggleCompound, setChiasmusControls}) {
 
     return (
         <div className="depth_filter" style={{display: 'flex', flexDirection: 'row'}}>
             <div className="filter_label">  Chiastic<br/>Levels</div>
             {Object.keys(depthCounts).map(depth => (
-                <>
-                    <Button 
-                        className={chiasmusControls.filteredLevels.includes(isNaN(depth) ? depth : parseInt(depth)) ? 'filtered' : ''}                        
+                <Fragment key={depth}>
+                    <Button
+                        className={chiasmusControls.filteredLevels.includes(isNaN(depth) ? depth : parseInt(depth)) ? 'filtered' : ''}
                         onClick={() => toggleButton(depth)}>
                             <div className="counter">{depthCounts[depth]}</div>
                             {depth}
                     </Button>
-
-                    {false && <Button 
-                        className="only-filter"                        
-                        onClick={() => setOnlyFilter(depth)}>
-                            Only
-                    </Button>}
-                </>
+                </Fragment>
             ))}
             <div className="filter_label">Biblical</div>
             <Button className={chiasmusControls.biblical ? 'filtered' : ''} onClick={toggleBiblical}>
-            <div className="counter">{chiasmusControls.categoryCounts.biblical}</div>
+            <div className="counter">{categoryCounts.biblical}</div>
             {/* unicode icons*/ !chiasmusControls.biblical ? '✓' : '✗' }
             </Button>
 
             <div className="filter_label">Compound</div>
             <Button className={chiasmusControls.compound ? 'filtered' : ''} onClick={toggleCompound}>
-            <div className="counter">{chiasmusControls.categoryCounts.compound}</div>    
+            <div className="counter">{categoryCounts.compound}</div>
 
             {/* unicode icons*/ !chiasmusControls.compound ? '✓' : '✗' }
             </Button>
@@ -134,42 +117,38 @@ function DepthFilter({depthCounts, chiasmusControls, toggleButton, toggleBiblica
     );
 }
 
+const ChiasmCard = memo(function ChiasmCard({ chiasm, active, onSelect }) {
+    const { chiasmus_id, reference, depthBucket, title } = chiasm;
+    return (
+        <div onClick={() => onSelect(chiasmus_id)} className={`chiasmus ${active ? "active" : ""}`}>
+            <div className="title"> {title || "Chiasm Title"}<span className="depth">{depthBucket}</span></div>
+            <div className="reference">{reference}</div>
+        </div>
+    );
+});
+
 function Chiasmus({chiasmus,setChiasmusId,activeChiasmus}) {
 
     const lang = determineLanguage();
     useEffect(()=>document.title = "Chiasms | " + label("home_title"),[])
-    const bibleRefs = `2 Nephi 12-24, 1 Nephi 20-21, 3 Nephi 12-14, 3 Nephi 24-25, Mosiah 14`;
-    const bibleVerseIds = lookupReference(bibleRefs, lang).verse_ids;
 
-    const depthCounts = chiasmus.reduce((acc, chiasm) => {
-        const {scheme, verse_id} = chiasm;
-        const upperLetters = scheme.replace(/[^A-Z]/g, "").split("").sort();
-        const maxLetter = upperLetters[upperLetters.length-1];
-        let depth = maxLetter.charCodeAt(0) - 64;
-
-        if(depth > 7) depth = "+";
-        return {...acc, [depth]: acc[depth] ? acc[depth] + 1 : 1};
-    }, {});
-
-
-    const categoryCounts = chiasmus.reduce((acc, chiasm) => {
-        const {reference, scheme} = chiasm;
-        const verse_id = lookupReference(reference, lang).verse_ids[0];
-        const isBiblical = bibleVerseIds.includes(verse_id);
-        const isCompound = /Aa/.test(scheme);
-        return {
-            ...acc,
-            biblical: isBiblical ? acc.biblical + 1 : acc.biblical,
-            compound: isCompound ? acc.compound + 1 : acc.compound
-        };
-    }, {biblical: 0, compound: 0});
+    const enriched = useMemo(() => enrichChiasmus(chiasmus, lang), [chiasmus, lang]);
+    const depthCounts = useMemo(
+        () => enriched.reduce((acc, c) => ({ ...acc, [c.depthBucket]: (acc[c.depthBucket] || 0) + 1 }), {}),
+        [enriched]
+    );
+    const categoryCounts = useMemo(
+        () => ({
+            biblical: enriched.filter((c) => c.isBiblical).length,
+            compound: enriched.filter((c) => c.isCompound).length,
+        }),
+        [enriched]
+    );
 
     const [chiasmusControls, setChiasmusControls] = useState({
         sortDropdownOpen: false,
         sortField: 'reference', // 'reference' or 'depth'
         sortOrder: 'asc', // 'asc' or 'desc'
-        depthCounts,
-        categoryCounts,
         sortFieldButton: 'Reference',
         filteredLevels: [],
         biblical: false,
@@ -181,51 +160,40 @@ function Chiasmus({chiasmus,setChiasmusId,activeChiasmus}) {
     if(!Array.isArray(chiasmus) || chiasmus.length===0) return <pre>No chiasmus found {JSON.stringify(chiasmus)}</pre>
 
 
-    const filterChiasm = (chiasm) => {
-        const {filteredLevels, biblical, compound} = chiasmusControls;
-        let {depth, scheme} = chiasm;
-        if(depth > 7) depth = "+";
-        const isCompound = /Aa/.test(scheme);
-        if(compound && isCompound) return false;
-        if(biblical && bibleVerseIds.includes(lookupReference(chiasm.reference, lang).verse_ids[0])) return false;
-        if (filteredLevels.includes(depth)) return false;
+    const filterChiasm = (c) => {
+        const { filteredLevels, biblical, compound } = chiasmusControls;
+        if (compound && c.isCompound) return false;
+        if (biblical && c.isBiblical) return false;
+        if (filteredLevels.includes(c.depthBucket)) return false;
         return true;
-    }
+    };
 
     const sortChiasmus = (a, b) => {
         const {sortField, sortOrder} = chiasmusControls;
         if (sortField === 'depth') {
             return sortOrder === 'asc' ? a.depth - b.depth : b.depth - a.depth;
         } else {
-            const [aVerseId] = lookupReference(a.reference, lang).verse_ids;
-            const [bVerseId] = lookupReference(b.reference, lang).verse_ids;
-            return sortOrder === 'asc' ? aVerseId - bVerseId : bVerseId - aVerseId;
+            return sortOrder === 'asc' ? a.verse_id - b.verse_id : b.verse_id - a.verse_id;
         }
     }
 
     return   <div className="chiasmIndexPanel noselect">
-         <ChiasmusControl chiasmusControls={chiasmusControls} setChiasmusControls={setChiasmusControls} />
+         <ChiasmusControl chiasmusControls={chiasmusControls} setChiasmusControls={setChiasmusControls} depthCounts={depthCounts} categoryCounts={categoryCounts} />
     <div className="chiasmus_list">
-        {chiasmus
-        .map((chiasm, i) => {
-            const upperLetters = chiasm.scheme.replace(/[^A-Z]/g, "").split("").sort();
-            const maxLetter = upperLetters[upperLetters.length-1];
-            const depth = maxLetter.charCodeAt(0) - 64;
-            chiasm = {...chiasm, depth};
-            return chiasm;
-        })
+        {enriched
         .filter(filterChiasm)
         .sort(sortChiasmus)
-        .map((chiasm, i) => {
-            const {chiasmus_id, reference, depth, title} = chiasm;
-            return <div key={i}  onClick={()=>setChiasmusId(chiasmus_id)} className={`chiasmus ${activeChiasmus===chiasmus_id ? "active" : ""}`}>
-                <div className="title"> {title || "Chiasm Title"}<span className="depth">{depth}</span></div>
-                <div className="reference">{reference}</div>
-            </div>
-        })}
+        .map((chiasm) => (
+            <ChiasmCard
+                key={chiasm.chiasmus_id}
+                chiasm={chiasm}
+                active={activeChiasmus === chiasm.chiasmus_id}
+                onSelect={setChiasmusId}
+            />
+        ))}
     </div>
     </div>
-    
+
 }
 
 
@@ -267,10 +235,7 @@ function Container() {
 
     }, []); // Empty array ensures this runs on mount and unmount only
 
-        const navigateChiasmus = async (direction) => {
-            //wait 1 sec
-            await new Promise(resolve => setTimeout(resolve, 1));
-
+        const navigateChiasmus = (direction) => {
             if (!chiasmus) {
                 return; // Return early if chiasmus is null or undefined
             }
@@ -296,15 +261,14 @@ function Container() {
         const idIndex = chiasmus.findIndex(x=>x.chiasmus_id===chiasmus_id);
         const nextId = idIndex < chiasmus.length-1 ? chiasmus[idIndex+1].chiasmus_id : null;
         const prevId = idIndex > 0 ? chiasmus[idIndex-1].chiasmus_id : null;
-        singlePanel =  
+        singlePanel =
         <div className="chiasmPanel open">
         <Chiasm chiasm_id={chiasmus_id}  setChiasmusId={setChiasmusId} nextId={nextId} prevId={prevId}/>
     </div>
-        
+
     }
-  
+
      let indexPanel = <Chiasmus chiasmus={chiasmus} setChiasmusId={setChiasmusId} activeChiasmus={chiasmus_id}/>
-    
 
 
 
@@ -314,9 +278,9 @@ function Container() {
         {indexPanel}
         {singlePanel}
          </div>
-        
+
         </div>
-}   
+}
 
 
 
