@@ -5,8 +5,9 @@ import "./Chiasmus.css";
 import Chiasm from "./Chiasm";
 import { Button } from 'reactstrap';
 import { label, determineLanguage } from 'src/models/Utils';
-import { useRouteMatch } from "react-router-dom/cjs/react-router-dom.min";
+import { useRouteMatch, useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { enrichChiasmus } from "./chiasmUtils";
+import { t } from "./t";
 function ChiasmusControl({chiasmusControls, setChiasmusControls, depthCounts, categoryCounts}) {
 
 
@@ -81,7 +82,7 @@ const toggleButton = (depth, onoff) => {
 function SortButton({chiasmusControls, toggleSortField}) {
     return (
         <Button onClick={toggleSortField} style={{minWidth: '10rem'}}>
-            Sort: {chiasmusControls.sortFieldButton}
+            {t("sort_by", "Sort")}: {chiasmusControls.sortFieldButton === 'Reference' ? t("sort_reference", "Reference") : t("sort_depth", "Depth")}
         </Button>
     );
 }
@@ -90,7 +91,7 @@ function DepthFilter({depthCounts, categoryCounts, chiasmusControls, toggleButto
 
     return (
         <div className="depth_filter" style={{display: 'flex', flexDirection: 'row'}}>
-            <div className="filter_label">  Chiastic<br/>Levels</div>
+            <div className="filter_label">  {t("chiastic_levels", "Chiastic Levels").split(" ").map((word, i, arr) => <Fragment key={i}>{word}{i < arr.length - 1 && <br/>}</Fragment>)}</div>
             {Object.keys(depthCounts).map(depth => (
                 <Fragment key={depth}>
                     <Button
@@ -101,13 +102,13 @@ function DepthFilter({depthCounts, categoryCounts, chiasmusControls, toggleButto
                     </Button>
                 </Fragment>
             ))}
-            <div className="filter_label">Biblical</div>
+            <div className="filter_label">{t("biblical", "Biblical")}</div>
             <Button className={chiasmusControls.biblical ? 'filtered' : ''} onClick={toggleBiblical}>
             <div className="counter">{categoryCounts.biblical}</div>
             {/* unicode icons*/ !chiasmusControls.biblical ? '✓' : '✗' }
             </Button>
 
-            <div className="filter_label">Compound</div>
+            <div className="filter_label">{t("compound", "Compound")}</div>
             <Button className={chiasmusControls.compound ? 'filtered' : ''} onClick={toggleCompound}>
             <div className="counter">{categoryCounts.compound}</div>
 
@@ -203,6 +204,10 @@ function Container() {
     const { params } = useRouteMatch();
     const [, urlChiasmId] = params?.value?.split("/") || [];
     const [chiasmus_id, setChiasmusId] = useState(urlChiasmId || null);
+    const { replace } = useHistory();
+    // stable across renders: setChiasmusId and replace are both stable, so the
+    // mount-only keydown effect below can close over this safely
+    const closeChiasm = () => { setChiasmusId(null); replace("/analysis/chiasmus"); };
     const chiasmusIdRef = useRef(chiasmus_id); // Create a ref
     useEffect(() => {
         chiasmusIdRef.current = chiasmus_id; // Update the ref whenever chiasmus_id changes
@@ -222,7 +227,7 @@ function Container() {
         const handleKeyDown = e => {
             if(e.key === "ArrowRight") navigateChiasmus(1);
             if(e.key === "ArrowLeft") navigateChiasmus(-1);
-            if(e.key === "Escape") setChiasmusId(null);
+            if(e.key === "Escape") closeChiasm();
         };
 
         //set keyboard shortcuts for left and right arrow keys to navigate chiasmus
@@ -263,7 +268,7 @@ function Container() {
         const prevId = idIndex > 0 ? chiasmus[idIndex-1].chiasmus_id : null;
         singlePanel =
         <div className="chiasmPanel open">
-        <Chiasm chiasm_id={chiasmus_id}  setChiasmusId={setChiasmusId} nextId={nextId} prevId={prevId}/>
+        <Chiasm chiasm_id={chiasmus_id}  setChiasmusId={setChiasmusId} closeChiasm={closeChiasm} nextId={nextId} prevId={prevId}/>
     </div>
 
     }
@@ -273,7 +278,7 @@ function Container() {
 
 
     return <div className="container">
-         <h3 className="title lg-4 text-center">Chiasmus in the Book of Mormon</h3>
+         <h3 className="title lg-4 text-center">{t("chiasmus_page_title", "Chiasmus in the Book of Mormon")}</h3>
          <div className="innerChiasmContainer">
         {indexPanel}
         {singlePanel}

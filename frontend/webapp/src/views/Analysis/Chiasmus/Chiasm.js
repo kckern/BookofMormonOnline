@@ -3,6 +3,7 @@ import BoMOnlineAPI from "../../../models/BoMOnlineAPI";
 import { Spinner } from "../../_Common/Loader";
 import Parser from "html-react-parser";
 import { label } from 'src/models/Utils';
+import { t } from "./t";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { escapeRegex } from "./chiasmUtils";
 
@@ -48,37 +49,40 @@ function ChiasticLine({line_key, label, line_text, highlights, activeScheme, set
 
 }
 
-function Chiasm({chiasm_id, setChiasmusId, nextId, prevId}) {
+function Chiasm({chiasm_id, setChiasmusId, closeChiasm, nextId, prevId}) {
 
     const [chiasm, setChiasm] = useState(null);
     const [activeScheme, setActiveScheme] = useState(null);
 
     
-    const {push} = useHistory();
     useEffect(() => {
+        let cancelled = false;
         setChiasm(null);
         // useCache:false — on a deep-link cold load the list query holds the
         // IndexedDB transaction; going through the cache made this fetch wait
         // ~15s behind it. The single chiasm is cheap to fetch fresh.
         BoMOnlineAPI({chiasm:[chiasm_id]}, {useCache:false}).then((r) => {
-            setChiasm(r?.chiasm?.[chiasm_id]);
+            if (!cancelled) setChiasm(r?.chiasm?.[chiasm_id]);
         });
+        return () => { cancelled = true; };
     }, [chiasm_id]);
 
+    const {replace} = useHistory();
+    useEffect(() => {
+        replace(`/analysis/chiasmus/${chiasm_id}`);
+    }, [chiasm_id]);
 
     const {lines, reference, title} = chiasm || {};
-    useEffect(()=>{
-        
-        push(`/analysis/chiasmus/${chiasm_id}`);
-        
-        document.title =title + " | " + label("home_title")},[title])
+    useEffect(() => {
+        if (title) document.title = title + " | " + label("home_title");
+    }, [title]);
 
     if(!chiasm) return <div className="chiasm"><Spinner/></div>
 
 
     return <div className="chiasm">
-        <h4 className="title text-center title">{title || "Chiasm Title"}
-            <span className="close noselect" onClick={()=>setChiasmusId(null)}>×</span>
+        <h4 className="title text-center title">{title || t("untitled_chiasm", "Untitled")}
+            <span className="close noselect" onClick={closeChiasm}>×</span>
         </h4>
         <h4 className="title text-center reference">{reference}</h4>
         <div className="chiasmus_lines" onMouseLeave={()=>setActiveScheme(null)}>
@@ -88,8 +92,8 @@ function Chiasm({chiasm_id, setChiasmusId, nextId, prevId}) {
         </div>
 
         <div  className="chiasmus_nav noselect">
-        <div onClick={()=>setChiasmusId(prevId)}>⬅ Previous</div>
-        <div onClick={()=>setChiasmusId(nextId)}>Next ⮕</div>
+        <div onClick={()=>setChiasmusId(prevId)}>⬅ {t("previous", "Previous")}</div>
+        <div onClick={()=>setChiasmusId(nextId)}>{t("next", "Next")} ⮕</div>
         </div>
     </div>
         
