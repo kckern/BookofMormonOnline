@@ -1394,8 +1394,8 @@ html[data-theme="dark"] .chiasmusTileKey { color: #93c6ef; }
 /* fax: other editions we hold — compact entry points under the sampled pages */
 .faxTileEditions {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0.4rem;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
   margin-top: 0.5rem;
   padding-top: 0.45rem;
   border-top: 1px solid #ececec;
@@ -1404,7 +1404,7 @@ html[data-theme="dark"] .faxTileEditions { border-top-color: #3a3a3a; }
 .faxTileEdition { min-width: 0; text-decoration: none; color: #666; }
 .faxTileEdition img {
   width: 100%;
-  aspect-ratio: 3 / 4;
+  aspect-ratio: 16 / 9;
   object-fit: cover;
   object-position: top;
   border-radius: 0.25rem;

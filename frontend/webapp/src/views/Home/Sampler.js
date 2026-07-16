@@ -170,6 +170,11 @@ export default function Sampler() {
 
   useEffect(() => {
     document.title = label("home_title");
+    // Always open the home sampler at the top — arriving from a scrolled-down
+    // page (SPA nav preserves scroll) otherwise drops you mid-page.
+    window.scrollTo(0, 0);
+    const panel = document.getElementById("main-panel");
+    if (panel) panel.scrollTop = 0;
   }, []);
 
   useEffect(() => {
