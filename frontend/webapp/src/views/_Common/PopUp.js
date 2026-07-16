@@ -607,10 +607,18 @@ export function GroupPopUp() {
       { group: appController.states.popUp.ids },
       { useCache: ["group"] }
     ).then((response) => {
+      // Unknown slugs come back filtered out (empty list), so pin each
+      // requested id to null rather than leaving it undefined — undefined
+      // would re-trigger this fetch on every render.
+      const groups = response.group || {};
+      const popUpData = {};
+      for (const id of appController.states.popUp.ids) {
+        popUpData[id] = groups[id] ?? null;
+      }
       appController.functions.setPopUp({
         type: "group",
         ids: appController.states.popUp.ids,
-        popUpData: response.group,
+        popUpData,
       });
     });
     return <Loading type="Group" />;
