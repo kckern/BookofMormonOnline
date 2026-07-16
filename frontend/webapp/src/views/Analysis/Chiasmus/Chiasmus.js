@@ -122,7 +122,7 @@ const ChiasmCard = memo(function ChiasmCard({ chiasm, active, onSelect }) {
     const { chiasmus_id, reference, depthBucket, title } = chiasm;
     return (
         <div onClick={() => onSelect(chiasmus_id)} className={`chiasmus ${active ? "active" : ""}`}>
-            <div className="title"> {title || "Chiasm Title"}<span className="depth">{depthBucket}</span></div>
+            <div className="title"> {title || t("untitled_chiasm", "Untitled")}<span className="depth">{depthBucket}</span></div>
             <div className="reference">{reference}</div>
         </div>
     );
@@ -131,7 +131,7 @@ const ChiasmCard = memo(function ChiasmCard({ chiasm, active, onSelect }) {
 function Chiasmus({chiasmus,setChiasmusId,activeChiasmus}) {
 
     const lang = determineLanguage();
-    useEffect(()=>document.title = "Chiasms | " + label("home_title"),[])
+    useEffect(()=>document.title = t("chiasms_doc_title", "Chiasms") + " | " + label("home_title"),[])
 
     const enriched = useMemo(() => enrichChiasmus(chiasmus, lang), [chiasmus, lang]);
     const depthCounts = useMemo(

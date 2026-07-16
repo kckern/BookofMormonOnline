@@ -63,6 +63,9 @@ function Chiasm({chiasm_id, setChiasmusId, closeChiasm, nextId, prevId}) {
         // ~15s behind it. The single chiasm is cheap to fetch fresh.
         BoMOnlineAPI({chiasm:[chiasm_id]}, {useCache:false}).then((r) => {
             if (!cancelled) setChiasm(r?.chiasm?.[chiasm_id]);
+        }).catch((e) => {
+            console.error(e);
+            if (!cancelled) setChiasm(undefined);
         });
         return () => { cancelled = true; };
     }, [chiasm_id]);
@@ -77,7 +80,8 @@ function Chiasm({chiasm_id, setChiasmusId, closeChiasm, nextId, prevId}) {
         if (title) document.title = title + " | " + label("home_title");
     }, [title]);
 
-    if(!chiasm) return <div className="chiasm"><Spinner/></div>
+    if (chiasm === undefined) return <div className="chiasm error">{t("chiasm_load_failed", "Couldn't load this chiasm.")}</div>;
+    if (!chiasm) return <div className="chiasm"><Spinner/></div>
 
 
     return <div className="chiasm">
