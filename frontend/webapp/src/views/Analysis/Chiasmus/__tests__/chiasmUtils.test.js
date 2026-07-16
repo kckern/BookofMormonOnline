@@ -129,6 +129,14 @@ describe("applyBrowseState", () => {
     const { groups } = applyBrowseState(list, S({ group: "type" }));
     expect(groups.map(g => g.key).sort()).toEqual(["Biblical", "Compound", "Simple"]);
   });
+  test("grouping by type pins Simple → Compound → Biblical regardless of sort", () => {
+    // canonical asc puts the compound item first, so unpinned insertion
+    // order would be Compound, Biblical, Simple
+    const { groups } = applyBrowseState(list, S({ group: "type" }));
+    expect(groups.map(g => g.key)).toEqual(["Simple", "Compound", "Biblical"]);
+    const desc = applyBrowseState(list, S({ group: "type", dir: "desc" }));
+    expect(desc.groups.map(g => g.key)).toEqual(["Simple", "Compound", "Biblical"]);
+  });
   test("groups respect the active filter", () => {
     const { groups, flat } = applyBrowseState(list, S({ group: "book", type: "biblical" }));
     expect(flat).toHaveLength(1);

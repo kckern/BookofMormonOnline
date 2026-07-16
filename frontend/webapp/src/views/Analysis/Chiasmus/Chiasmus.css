@@ -1,5 +1,7 @@
 
 
+/* scrolling happens on .chiasmIndexPanel (so sticky group headers work);
+   each .chiasmus_list is just a grid inside it */
 .chiasmus_list
 {
     display: grid;
@@ -9,27 +11,107 @@
     /* 1em spacing between rows */
     grid-row-gap: 1ex;
     padding-bottom: 2rem;
-    overflow: auto;
-    max-height: calc(100vh - 14.5rem);
     padding: 1ex;
 }
 
-.chiasmus_controls .filtered{
-    opacity: 0.2;
+.browse_toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1ex;
+    align-items: center;
+    margin: 1ex 0;
 }
 
-.depth_filter .btn{
-    font-size: 1.2rem;
-    padding: 0;
-    width: 2rem;
-    line-height: 50%;
+.browse_search {
+    max-width: 16rem;
+    padding: .4ex 1ex;
+    border: 1px solid var(--border);
+    border-radius: .5ex;
+    background: var(--surface-0);
+    color: var(--text-primary);
 }
-.depth_filter .btn .counter{
-    font-size: 0.8rem;
+
+.browse_toolbar select {
+    padding: .4ex 1ex;
+    border: 1px solid var(--border);
+    border-radius: .5ex;
+    background: var(--surface-0);
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
+.browse_toolbar .dir_button {
+    padding: .4ex 1.2ex;
+    border: 1px solid var(--border);
+    border-radius: .5ex;
+    background: var(--control);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font: inherit;
+    line-height: 1;
+}
+
+.chip {
+    border: 1px solid var(--border);
+    background: var(--control);
+    color: var(--text-secondary);
+    border-radius: 1em;
+    padding: 0 1.2ex;
+    cursor: pointer;
+    font: inherit;
+}
+
+.chip.selected {
+    background: var(--text-muted);
+    color: var(--surface-0);
+    border-color: var(--text-muted);
+}
+
+.chip .chip_count {
+    font-size: .75em;
+    opacity: .75;
+    margin-right: .5ex;
+}
+
+.group-header {
+    position: sticky;
+    top: 0;
+    background: var(--surface-0);
+    z-index: 1;
+    padding: .5ex 0;
+    margin: 0;
+    display: flex;
+    gap: 1ex;
+    align-items: baseline;
+}
+
+.group-header .count {
     color: var(--text-faint);
-    margin-top: -0.5rem;
-    position: relative;
-    top: -1rem;
+    font-size: .8em;
+}
+
+.browse_empty {
+    padding: 2rem;
+    text-align: center;
+    color: var(--text-muted);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+}
+
+.browse_empty button {
+    border: 1px solid var(--border);
+    background: var(--control);
+    color: var(--text-primary);
+    border-radius: .5ex;
+    padding: .5ex 2ex;
+    cursor: pointer;
+    font: inherit;
+}
+
+.browse_empty button:hover {
+    background: var(--control-hover);
 }
 
 .chiasmus_list .chiasmus
@@ -185,24 +267,19 @@
     border: 1px solid var(--text-muted);
 }
 
-.chiasmus_controls
-{
-    display: flex;
-    justify-content: space-between;
-    margin-top: 1ex;
-    margin-bottom: 0rem;
-}
-
 .innerChiasmContainer{
     display: flex;
     flex-direction: row;
     gap: 1rem;
 }
 
+/* the scroll container for the whole index side — toolbar, group headers
+   (which stick to its top), and the card grids */
 .chiasmIndexPanel{
     width: 100%;
     flex-grow: 1;
     overflow: auto;
+    max-height: calc(100vh - 14.5rem);
 }
 
 .chiasmPanel{
@@ -296,37 +373,28 @@
     color: var(--text-primary);
 }
 
+.chiasmus_nav button:disabled {
+    opacity: .4;
+    cursor: default;
+}
+.chiasmus_nav button:disabled:hover {
+    background-color: var(--control);
+    color: var(--text-secondary);
+}
+
 .chiasm .loadBar{
     position: relative;
     margin-top: -10rem;
 }
 
-.depth_filter .filter_label{
-    font-size: 0.7rem;
-    text-align: center;
-    color: var(--text-muted);
-    rotate: 270deg;
-    display: flex;
-    align-items: center;
-    line-height: 100%;
-    letter-spacing: -0.1ex;
-}
-
-.chiasmus_controls input[type="checkbox"]{
-    transform: scale(1.5);
-}
-.chiasmus_controls .sort_order_button
-{
-    font-size: 1.2rem;
-    padding: 0;
-    width: 2rem;
-    line-height: 50%;
-}
-
 .chiasmus_list .chiasmus:focus-visible,
 .chiasm .close:focus-visible,
 .chiasmus_nav button:focus-visible,
-.depth_filter .btn:focus-visible {
+.chip:focus-visible,
+.browse_search:focus-visible,
+.browse_toolbar select:focus-visible,
+.browse_toolbar .dir_button:focus-visible,
+.browse_empty button:focus-visible {
     outline: 2px solid var(--link);
     outline-offset: 2px;
 }

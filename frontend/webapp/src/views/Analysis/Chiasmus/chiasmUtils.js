@@ -126,6 +126,10 @@ export function applyBrowseState(enriched, s) {
     // Deterministic level order regardless of active sort: numeric asc, "+" last.
     const levelRank = (k) => (k === "Level +" ? Infinity : Number(k.slice(6)));
     keys.sort((a, b) => levelRank(a) - levelRank(b));
+  } else if (s.group === "type") {
+    // Pinned header order regardless of active sort.
+    const TYPE_ORDER = ["Simple", "Compound", "Biblical"];
+    keys.sort((a, b) => TYPE_ORDER.indexOf(a) - TYPE_ORDER.indexOf(b));
   }
   const groups = keys.map((k) => ({ key: k, items: map.get(k) }));
   return { flat, groups };

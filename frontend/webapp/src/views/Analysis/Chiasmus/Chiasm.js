@@ -72,7 +72,9 @@ function Chiasm({chiasm_id, setChiasmusId, closeChiasm, nextId, prevId}) {
 
     const {replace} = useHistory();
     useEffect(() => {
-        replace(`/analysis/chiasmus/${chiasm_id}`);
+        // keep the browse-state query string (useBrowseState) — without it,
+        // opening a chiasm reset every filter/sort/group in the index panel
+        replace(`/analysis/chiasmus/${chiasm_id}${window.location.search}`);
     }, [chiasm_id]);
 
     const {lines, reference, title} = chiasm || {};
@@ -96,8 +98,8 @@ function Chiasm({chiasm_id, setChiasmusId, closeChiasm, nextId, prevId}) {
         </div>
 
         <div  className="chiasmus_nav noselect">
-        <button type="button" onClick={()=>setChiasmusId(prevId)}>⬅ {t("previous", "Previous")}</button>
-        <button type="button" onClick={()=>setChiasmusId(nextId)}>{t("next", "Next")} ⮕</button>
+        <button type="button" disabled={!prevId} onClick={()=>setChiasmusId(prevId)}>⬅ {t("previous", "Previous")}</button>
+        <button type="button" disabled={!nextId} onClick={()=>setChiasmusId(nextId)}>{t("next", "Next")} ⮕</button>
         </div>
     </div>
         
