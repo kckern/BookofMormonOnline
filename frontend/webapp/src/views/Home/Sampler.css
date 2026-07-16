@@ -1608,3 +1608,23 @@ html[data-theme="dark"] .rpBoxPane .sectionDots { border-right-color: #444; }
   cursor: pointer;
 }
 .crossRefsTile .crossRefItem:hover { border-color: currentColor; }
+
+/* ---- relationships tile (wave 1) ---- */
+.relationshipsTile .relHub { font-weight: 600; font-size: 1.1rem; }
+.relationshipsTile .relHubTitle { font-size: 0.85rem; opacity: 0.75; }
+.relationshipsTile .relEdges { list-style: none; padding: 0; margin: 0.6rem 0 0; }
+.relationshipsTile .relEdge + .relEdge { margin-top: 0.55rem; }
+.relationshipsTile .relEdgeRel { font-size: 0.85rem; opacity: 0.7; }
+.relationshipsTile .relEdgeName { font-weight: 500; }
+.relationshipsTile .relEdgeRef {
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 0.8rem;
+  opacity: 0.75;
+  text-decoration: underline;
+  cursor: pointer;
+  margin-left: 0.35rem;
+  padding: 0;
+}
+.relationshipsTile .relEdgeNote { font-size: 0.85rem; opacity: 0.8; }

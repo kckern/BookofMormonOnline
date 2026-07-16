@@ -64,7 +64,7 @@ const FIXED_TOP = ["people"];
 // background and revealed as the reader nears the bottom. These are the
 // repeatable content tile types; fixed/live ones (reading plan, narration,
 // contents, community) are excluded.
-const INFINITE_REGISTRY_KEYS = ["art", "commentary", "commentary2", "commentary3", "history", "fax", "faxVerse", "places", "biblephrases", "chiasmus", "text", "notes", "crossrefs"];
+const INFINITE_REGISTRY_KEYS = ["art", "commentary", "commentary2", "commentary3", "history", "fax", "faxVerse", "places", "biblephrases", "chiasmus", "text", "notes", "crossrefs", "relationship"];
 const BATCH_TILES = [
   ...tileRegistry
     .filter((t) => INFINITE_REGISTRY_KEYS.includes(t.key))
@@ -362,6 +362,7 @@ export default function Sampler() {
       case "notes": return 24;
       case "faxVerse": return 30;
       case "crossrefs": return 20;
+      case "relationship": return 18;
       default: return 14;
     }
   };
