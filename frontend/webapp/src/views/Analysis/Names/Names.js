@@ -6,6 +6,21 @@ import "./Names.css";
 import names, { facets } from "./data.js";
 import { FIELD_DEFS, emptyFilters, applyFilters } from "./logic";
 
+/** label() returns the key when untranslated — fall back to English copy. */
+const t = (key, fallback) => {
+  const v = label(key);
+  return !v || v === " " || v === key ? fallback : v;
+};
+
+const FACET_HELP = {
+  prefix: "A short element attached to the front of a base name: Zeezrom = Ze~ + ezrom.",
+  stems: "The core building block a family of names shares: Mormon, Moroni, and Morianton all carry Mor.",
+  affix: "A linking element inside a name: Cor + iant + umr.",
+  suffix: "A closing element: ~iah, ~ihah, ~om, ~um.",
+  cultures: "The people a name belongs to, or the language its proposed origin comes from.",
+  types: "What the name refers to: a person, place, measure of money, animal, plant…",
+};
+
 const FACET_META = {
   prefix: { label: "Prefix", options: facets.prefixes },
   stems: { label: "Stem", options: facets.stems },
@@ -25,13 +40,20 @@ function Container() {
 
   return (
     <div className="container namesView">
-      <h3 className="title lg-4 text-center">Book of Mormon Names</h3>
+      <h3 className="title lg-4 text-center">{t("names_title", "Book of Mormon Names")}</h3>
+      <p className="namesIntro">
+        {t("names_intro", "Every proper name in the Book of Mormon, broken into its building blocks. Filter by shared elements to see name families, or by culture to see who used them.")}
+      </p>
       <FilterBar filters={filters} setFacet={setFacet} />
       <div className="nameFilterStatus">
-        <span>{filtered.length === names.length ? `${names.length} names` : `${filtered.length} of ${names.length} names`}</span>
+        <span>
+          {filtered.length === names.length
+            ? t("names_count_all", `${names.length} names`)
+            : t("names_count_filtered", `${filtered.length} of ${names.length} names`)}
+        </span>
         {hasSelection && (
           <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => setFilters(emptyFilters())}>
-            Clear filters
+            {t("names_clear_filters", "Clear filters")}
           </button>
         )}
       </div>
@@ -41,7 +63,11 @@ function Container() {
             {entry.name}
           </div>
         ))}
-        {!filtered.length && <div className="nameAnalysisEmpty">No names match the selected filters.</div>}
+        {!filtered.length && (
+          <div className="nameAnalysisEmpty">
+            {t("names_empty", "No names match the selected filters. Try removing the last filter you added.")}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -51,7 +77,16 @@ function FilterBar({ filters, setFacet }) {
   return (
     <table className="nameform" style={{ width: "100%" }}>
       <thead>
-        <tr>{FIELD_DEFS.map((f) => <th key={f.key}>{FACET_META[f.key].label}</th>)}</tr>
+        <tr>
+          {FIELD_DEFS.map((f) => (
+            <th key={f.key}>
+              <span className="facetHeader" title={FACET_HELP[f.key]}>
+                {FACET_META[f.key].label}
+                <sup className="facetHelpMark" aria-hidden="true">?</sup>
+              </span>
+            </th>
+          ))}
+        </tr>
       </thead>
       <tbody>
         <tr>
