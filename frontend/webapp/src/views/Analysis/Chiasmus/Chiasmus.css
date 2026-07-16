@@ -26,7 +26,7 @@
 }
 .depth_filter .btn .counter{
     font-size: 0.8rem;
-    color: #AAA;
+    color: var(--text-faint);
     margin-top: -0.5rem;
     position: relative;
     top: -1rem;
@@ -35,8 +35,8 @@
 .chiasmus_list .chiasmus
 {
     display: flex;
-    border: 1px solid #e0e0e0;
-    background-color: #DDD;
+    border: 1px solid var(--border);
+    background-color: var(--surface-3);
     padding: 1ex;
     height: auto;
     overflow: hidden;
@@ -44,13 +44,13 @@
     cursor: pointer;
     flex-shrink: 0;
     min-height: auto;
-    
+
 }
 
 .chiasmus_list .chiasmus:hover
 {
-    background-color: #CCC;
-    outline: 3px solid #00000033;
+    background-color: var(--surface-4);
+    outline: 3px solid var(--shadow);
 }
 
 .chiasmus_line
@@ -72,8 +72,8 @@
 
     font-size: 0.8rem;
     margin-right: 1ex;
-    background-color: #888;
-    color: white;
+    background-color: var(--text-muted);
+    color: var(--surface-0);
     text-align: center;
     border-radius: 50%;
     flex-shrink: 0;
@@ -81,15 +81,15 @@
 }
 
 .chiasmus_line .scheme.minor{
-    background-color: #CCC;
-    color: #888;
+    background-color: var(--surface-4);
+    color: var(--text-muted);
 
 }
 
-.chiasmus_line .text 
+.chiasmus_line .text
 {
     font-family: "Scripture", serif;
-    color: #AAA;
+    color: var(--text-secondary);
 }
 
 .chiasm h4
@@ -103,46 +103,46 @@
     text-align: left;
     justify-content: space-between;
     flex-direction: column;
-    
+
 }
 .chiasmus .title{
     font-weight: 800;
-    color: #000 ;
+    color: var(--text-primary);
     display: flex;
     justify-content: space-between;
     line-height: 0.8rem;
 }
 .chiasmus .reference{
     font-weight: 200;
-    color: #444 ;
+    color: var(--text-secondary);
     font-size: 0.8rem;
 
 }
 
 
 .chiasmus .depth{
-    background-color: #888;
+    background-color: var(--text-muted);
     height: 1rem;
     padding: 0 1ex;
-    color: white;
+    color: var(--surface-0);
     border-radius: 50%;
     line-height: 1rem;
 }
 
 .chiasmus .scheme{
-    color: #888 ;
+    color: var(--text-muted);
 }
 
 .chiasmus_line:not(.inactive) .highlight
 {
     font-weight: 500;
-    color: black    ;
+    color: var(--text-primary);
 }
 
 .chiasmus_line.active .highlight
 {
     font-weight: 500;
-    color: black    ;
+    color: var(--text-primary);
     background-color: #FFFF0022;
     padding-left: 1ex;
     padding-right: 1ex;
@@ -159,22 +159,22 @@
     font-size: 0.7rem;
     padding: 0 1ex;
     border-radius: 0.5ex;
-    background-color: #AAA;
-    color: white;
+    background-color: var(--text-faint);
+    color: var(--surface-0);
     line-height: 0.9rem;
     position: relative;
     bottom: 0.5ex;
 }
 .chiasmus_line.active .text span.label
 {
-    background-color: #555!important;
+    background-color: var(--text-secondary)!important;
 }
 
 .chiasmus_line.active .scheme
 {
     background-color: #FFFF0022;
-    color: black;
-    border: 1px solid #888;
+    color: var(--text-primary);
+    border: 1px solid var(--text-muted);
 }
 
 .chiasmus_controls
@@ -213,16 +213,16 @@
 
 .chiasm .close{
     float: right;
-    color: #AAA;
+    color: var(--text-faint);
 }
 .chiasm .close:hover{
-    color: #000;
+    color: var(--text-primary);
 }
 
 .chiasmus.active:hover,
 .chiasmus.active{
-    outline: 3px solid #000;
-    background-color: #CCC;
+    outline: 3px solid var(--text-primary);
+    background-color: var(--surface-4);
     border: 0;
 }
 .chiasm h4
@@ -232,17 +232,17 @@
 }
 .chiasm h4.title{
     margin-top: 1ex;
-    color: #444;
+    color: var(--text-secondary);
 }
 .chiasm h4.reference{
     font-weight: 200;
-    color: #444;
+    color: var(--text-secondary);
     margin-bottom: 1ex;
     font-size: 0.9rem;
 }
 .chiasm .chiasmus_lines
 {
-    border-top: 1px solid #e0e0e0;
+    border-top: 1px solid var(--border);
     padding-top: 1rem;
 }
 
@@ -266,10 +266,10 @@
     padding: 10px 20px;
     font-size: 14px;
     font-weight: 600;
-    color: #444;
+    color: var(--text-secondary);
     text-align: center;
     text-decoration: none;
-    background-color: #DDD;
+    background-color: var(--control);
     border: none;
     border-radius: 2px;
     cursor: pointer;
@@ -277,8 +277,8 @@
 }
 
 .chiasmus_nav div:hover {
-    background-color: #888;
-    color: white;
+    background-color: var(--control-hover);
+    color: var(--text-primary);
 }
 
 .chiasm .loadBar{
@@ -289,7 +289,7 @@
 .depth_filter .filter_label{
     font-size: 0.7rem;
     text-align: center;
-    color: #888;
+    color: var(--text-muted);
     rotate: 270deg;
     display: flex;
     align-items: center;

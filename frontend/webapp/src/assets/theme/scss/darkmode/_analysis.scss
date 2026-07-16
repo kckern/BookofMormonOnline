@@ -1,0 +1,11 @@
+/* Analysis views (Chiasmus) — dark theme overrides.
+   Chiasmus.css is token-driven; only the literals tokens can't express live here. */
+html[data-theme="dark"] {
+  /* Light CSS uses a #FFFF0022 yellow alpha wash on the active line/scheme —
+     too dim and hue-wrong on dark surfaces. Warm wash from --highlight's hue. */
+  .chiasmus_line.active .highlight { background-color: rgba(255, 243, 176, 0.14); }
+  .chiasmus_line.active .scheme { background-color: rgba(255, 243, 176, 0.14); }
+
+  /* Card hover outline is var(--shadow) (a black wash) — invisible on dark cards. */
+  .chiasmus_list .chiasmus:hover { outline-color: rgba(255, 255, 255, 0.2); }
+}
