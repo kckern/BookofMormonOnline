@@ -64,10 +64,20 @@ typos. Changes made:
 - `bom_places` spells the Ether 14:28 hill **"Comron"**; the current edition
   reads "Comnor". The dataset keeps Comnor.
 
+## View architecture (since 2026-07-16 redesign)
+
+The view's logic lives in `frontend/webapp/src/views/Analysis/Names/logic.js`
+(pure, jest-tested): facet filtering (OR within, AND across), faceted counts,
+morpheme segmentation (`segmentName` — 197/210 names reconstruct; misses are
+K/C spellings and geminates, rendered unsegmented), querystring codec, and
+entity-slug matching against the cached `personList`/`placeList`. `Names.js`
+renders four count-annotated selects + Culture/Type chips, a morpheme-colored
+tile grid with a structure toggle, a per-name detail panel with entity popup
+links, URL-synced filters, and dark-mode coverage via
+`assets/theme/scss/darkmode/_names.scss`.
+
 ## Next steps for the view
 
-1. Wire `NamesForm` selects to the `facets` export and filter the grid on
-   selected prefix/stems/affix/suffix/cultures (the current selects are inert —
-   state is mutated in place and `value` is hardcoded to `[]`).
-2. Tile click → detail popup (segmentation, note, scripture occurrences), and
-   link `person`/`place` names to their existing entity pages.
+1. Scripture-occurrence lists in the detail panel (needs a backend query).
+2. Backend dictionary entries for the `names_*` label keys (English fallbacks
+   ship in-component via the `t()` helper).

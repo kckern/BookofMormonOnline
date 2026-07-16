@@ -64,3 +64,17 @@ Ordered; 1–4 are small, 5–7 are the real design work.
 ## 6. Evidence index
 
 Screenshots captured during the audit (session scratchpad, `pw/audit/`): `desktop-initial`, `desktop-dropdown-open`, `desktop-dark`, `desktop-dark-dropdown`, `dark-hover` (text-vanish bug), `mobile-initial` (truncated title, clipped columns), `mobile-dropdown`, `analysis-landing`. Computed-style probes: tile/heading/header typography, dark hover colors, status-line contrast, focus outline state.
+
+---
+
+## Addendum (2026-07-16, later same day)
+
+All eight recommendations were implemented on `feature/names-view-redesign`
+per `docs/plans/2026-07-16-names-view-redesign.md`: theme-variable dark mode
+(hover and contrast bugs fixed at the root), real tile clicks opening a detail
+panel with entity-popup links and morpheme drill-in, count-annotated
+frequency-sorted facet selects without Select All, Culture/Type toggle chips,
+orienting copy with facet tooltips, morpheme-colored structure rendering with
+legend and toggle (the signature), responsive filter disclosure with the mobile
+title fix, and querystring-synced shareable filters. Verified by an
+8-checkpoint headless-browser sweep (light/dark/mobile/keyboard) — all passing.
