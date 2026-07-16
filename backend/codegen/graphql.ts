@@ -254,14 +254,18 @@ export type HistoricalDocument = {
   event_year?: Maybe<Scalars['Int']['output']>;
   id?: Maybe<Scalars['Int']['output']>;
   link?: Maybe<Scalars['String']['output']>;
+  money_quote?: Maybe<Scalars['String']['output']>;
   pages?: Maybe<Scalars['Int']['output']>;
   principal?: Maybe<Scalars['String']['output']>;
+  quote_is_witness_voice?: Maybe<Scalars['Boolean']['output']>;
+  reporter_label?: Maybe<Scalars['String']['output']>;
   seq?: Maybe<Scalars['Int']['output']>;
   slug?: Maybe<Scalars['String']['output']>;
   source?: Maybe<Scalars['String']['output']>;
   teaser?: Maybe<Scalars['String']['output']>;
   transcript?: Maybe<Scalars['String']['output']>;
   type?: Maybe<Scalars['String']['output']>;
+  witness_label?: Maybe<Scalars['String']['output']>;
   year?: Maybe<Scalars['Int']['output']>;
 };
 
@@ -2507,14 +2511,18 @@ export type HistoricalDocumentResolvers<ContextType = AppContext, ParentType ext
   event_year?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   id?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   link?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  money_quote?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   pages?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   principal?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  quote_is_witness_voice?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  reporter_label?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   seq?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   slug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   source?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   teaser?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   transcript?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   type?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  witness_label?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   year?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };

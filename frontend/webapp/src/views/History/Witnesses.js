@@ -234,7 +234,18 @@ const SingleWitness = ({ witness, sourceSlug }) => {
                                             alt={doc.document}
                                         />
                                     )}
-                                    {doc.teaser && <div className='thumb_teaser'>{Parser(doc.teaser)}</div>}
+                                    {doc.money_quote ? (
+                                        <blockquote className='thumb_money_quote'>
+                                            &ldquo;{doc.money_quote}&rdquo;
+                                            <footer className='money_quote_attribution'>
+                                                {doc.quote_is_witness_voice
+                                                    ? `— ${doc.witness_label || doc.principal}`
+                                                    : `— ${doc.witness_label || doc.principal}${doc.reporter_label ? `, as recorded by ${doc.reporter_label}` : ''}`}
+                                            </footer>
+                                        </blockquote>
+                                    ) : (
+                                        doc.teaser && <div className='thumb_teaser'>{Parser(doc.teaser)}</div>
+                                    )}
                                 </div>
                                 <h5>{doc.document}</h5>
                                 {doc.citation && <div className='citation'>{Parser(doc.citation + "")}</div>}

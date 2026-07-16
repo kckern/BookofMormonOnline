@@ -85,6 +85,10 @@ const baseResolvers: Resolvers = {
     principal: (parent) => (parent as unknown as HistoryRow).principal ?? null,
     event_year: (parent) => (parent as unknown as HistoryRow).event_year ?? null,
     event_date: (parent) => (parent as unknown as HistoryRow).event_date ?? null,
+    money_quote: (parent) => (parent as unknown as HistoryRow).money_quote ?? null,
+    quote_is_witness_voice: (parent) => (parent as unknown as HistoryRow).quote_is_witness_voice ?? null,
+    witness_label: (parent) => (parent as unknown as HistoryRow).witness_label ?? null,
+    reporter_label: (parent) => (parent as unknown as HistoryRow).reporter_label ?? null,
   },
 };
 

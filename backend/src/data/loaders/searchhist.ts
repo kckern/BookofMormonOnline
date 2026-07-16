@@ -41,6 +41,10 @@ export interface HistoryRow {
   principal: string | null;
   event_year: number | null;
   event_date: string | null;
+  money_quote: string | null;
+  quote_is_witness_voice: boolean | null;
+  witness_label: string | null;
+  reporter_label: string | null;
 }
 
 /**
@@ -439,6 +443,19 @@ export async function historyQuery(
       return transMaps.get(refkey)?.get(idStr) ?? base;
     };
 
+    const meta =
+      r.metadata && typeof r.metadata === 'object' && !Array.isArray(r.metadata)
+        ? (r.metadata as Record<string, unknown>)
+        : null;
+    const metaString = (key: string): string | null => {
+      const v = meta?.[key];
+      return typeof v === 'string' ? v : null;
+    };
+    const metaBool = (key: string): boolean | null => {
+      const v = meta?.[key];
+      return typeof v === 'boolean' ? v : null;
+    };
+
     return {
       id: r.id,
       slug: r.slug,
@@ -459,6 +476,10 @@ export async function historyQuery(
       principal: r.principal,
       event_year: r.event_year,
       event_date: r.event_date,
+      money_quote: metaString('money_quote'),
+      quote_is_witness_voice: metaBool('quote_is_witness_voice'),
+      witness_label: metaString('witness_label'),
+      reporter_label: metaString('reporter_label'),
     };
   });
 }
