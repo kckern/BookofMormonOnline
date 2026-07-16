@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { MultiSelect } from "react-multi-select-component";
+import { useHistory, useLocation } from "react-router-dom";
 import { label } from 'src/models/Utils';
 
 import "./Names.css";
 import names, { facets } from "./data.js";
-import { FIELD_DEFS, emptyFilters, applyFilters, facetCounts } from "./logic";
+import { FIELD_DEFS, emptyFilters, applyFilters, facetCounts, filtersToQuery, queryToFilters } from "./logic";
 
 /** label() returns the key when untranslated — fall back to English copy. */
 const t = (key, fallback) => {
@@ -31,8 +32,17 @@ const FACET_META = {
 };
 
 function Container() {
-  const [filters, setFilters] = useState(emptyFilters);
+  const history = useHistory();
+  const location = useLocation();
+  const [filters, setFilters] = useState(() => queryToFilters(location.search));
   useEffect(() => { document.title = "Names | " + label("home_title"); }, []);
+
+  useEffect(() => {
+    const q = filtersToQuery(filters);
+    if (q !== location.search && !(q === "" && location.search === ""))
+      history.replace({ pathname: location.pathname, search: q });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters]);
 
   const filtered = useMemo(() => applyFilters(names, filters), [filters]);
   const hasSelection = FIELD_DEFS.some((f) => filters[f.key].length > 0);
