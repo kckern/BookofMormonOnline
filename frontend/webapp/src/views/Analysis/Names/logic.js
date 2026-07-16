@@ -84,16 +84,30 @@ export const queryToFilters = (search) => {
 
 const baseName = (n) => n.replace(/\d+$/, "").trim().toLowerCase();
 
-/** Find person/place slugs for a name in the app's cached entity maps. */
-export const entitySlugs = (name, personMap, placeMap) => {
-  const target = name.toLowerCase();
-  let person = null, place = null;
-  for (const p of Object.values(personMap || {}))
-    if (baseName(p.name) === target) { person = p.slug; break; }
+/**
+ * Build lowercase-name → slug lookup maps from the app's cached entity maps.
+ * First entity wins on collisions, matching the original scan-order semantics.
+ * Places are keyed by full name and by last word ("waters of Mormon" → "mormon").
+ */
+export const entityIndexes = (personMap, placeMap) => {
+  const person = new Map();
+  for (const p of Object.values(personMap || {})) {
+    const k = baseName(p.name);
+    if (!person.has(k)) person.set(k, p.slug);
+  }
+  const place = new Map();
   for (const p of Object.values(placeMap || {})) {
     const full = baseName(p.name);
+    if (!place.has(full)) place.set(full, p.slug);
     const last = full.split(" ").pop();
-    if (full === target || last === target) { place = p.slug; break; }
+    if (!place.has(last)) place.set(last, p.slug);
   }
   return { person, place };
+};
+
+/** Find person/place slugs for a name in the app's cached entity maps. */
+export const entitySlugs = (name, personMap, placeMap) => {
+  const idx = entityIndexes(personMap, placeMap);
+  const target = name.toLowerCase();
+  return { person: idx.person.get(target) || null, place: idx.place.get(target) || null };
 };

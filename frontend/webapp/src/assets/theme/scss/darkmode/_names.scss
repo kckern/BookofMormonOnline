@@ -1,40 +1,67 @@
-/* Names analysis view ("The Onomasticon") — dark theme overrides.
-   Light values live in views/Analysis/Names/Names.css. The design is
-   variable-driven: dark mode only re-declares the --names-* inks. */
+/* Names analysis view — dark theme overrides.
+   Light values live in views/Analysis/Names/Names.css; the design is
+   variable-driven, so dark mode only re-declares the --names-* inks. */
 html[data-theme="dark"] {
     .namesView {
-        /* night-study paper & ink */
-        --names-paper: #1e1a12;
-        --names-card: #26221a;
-        --names-ink: #e6ddc6;
-        --names-muted: #a89d82; /* ≥ 4.5:1 on the dark paper */
-        --names-rule: #443c2c;
-        --names-rule-strong: #6e6349;
-        --names-hover: rgba(230, 221, 198, 0.07);
-        --names-accent: #d4705c; /* madder, lamplit */
-        --names-accent-soft: rgba(212, 112, 92, 0.16);
+        --names-border: #3a3a3a;
+        --names-muted: #a5a5a5; /* ≥ 4.5:1 on #1a1a1a */
+        --names-hover: #2a2a2a;
+        --names-card: #222;
+        --names-chip-bg: #383838;
+        --names-accent: #4da3d8;
+        --names-accent-soft: rgba(77, 163, 216, 0.18);
+        --names-overlay: rgba(0, 0, 0, 0.65);
+        --names-shadow: rgba(0, 0, 0, 0.6);
         /* morpheme inks, brightened for dark ground */
         --names-prefix: #b48ad6;
         --names-stem: #6fadd9;
         --names-affix: #dd9052;
         --names-suffix: #74b691;
-        --names-prefix-bg: rgba(180, 138, 214, 0.18);
-        --names-stem-bg: rgba(111, 173, 217, 0.18);
-        --names-affix-bg: rgba(221, 144, 82, 0.18);
-        --names-suffix-bg: rgba(116, 182, 145, 0.18);
-        --names-grain-blend: screen;
-        --names-grain-opacity: 0.22;
-        --names-shadow: rgba(0, 0, 0, 0.7);
+        --names-prefix-bg: rgba(180, 138, 214, 0.16);
+        --names-stem-bg: rgba(111, 173, 217, 0.16);
+        --names-affix-bg: rgba(221, 144, 82, 0.16);
+        --names-suffix-bg: rgba(116, 182, 145, 0.16);
 
-        .nameDetail .IdBadge.J {
-            color: #cdb050;
-            border-color: #cdb050;
+        // react-multi-select-component theming (rmsc v4 CSS variables)
+        .rmsc {
+            --rmsc-bg: #222;
+            --rmsc-border: #3a3a3a;
+            --rmsc-hover: #2f2f2f;
+            --rmsc-selected: #333;
+            --rmsc-gray: #a5a5a5;
+            --rmsc-main: var(--names-accent);
+            color: #eee;
+        }
+
+        .nameChip {
+            color: #eee;
         }
         .nameChip.active {
-            /* inked stamp inverts: pale ink on dark paper reads best flipped */
-            background: var(--names-ink);
-            border-color: var(--names-ink);
-            color: var(--names-paper);
+            background: var(--names-accent);
+            border-color: var(--names-accent);
+            color: #10222e;
+        }
+        .nameChip.active .nameChipCount {
+            background: rgba(0, 0, 0, 0.25);
+            color: #10222e;
+        }
+
+        /* affiliation badges recolored for legibility on #222 */
+        .nameDetail .IdBadge.N { background-color: #1d3d2e; color: #9fd6bb; border-color: #3f7a5c; }
+        .nameDetail .IdBadge.L { background-color: #1c2f4a; color: #a9c9f5; border-color: #46699c; }
+        .nameDetail .IdBadge.M { background-color: #45301c; color: #f5c9a4; border-color: #9c6f46; }
+        .nameDetail .IdBadge.J { background-color: #40391c; color: #e8d795; border-color: #94842f; }
+
+        /* paper-dashboard's outline-primary is black-on-black here */
+        .nameDetailLinks .btn.btn-outline-primary {
+            color: #eee;
+            border-color: #a5a5a5;
+        }
+        .nameDetailLinks .btn.btn-outline-primary:hover,
+        .nameDetailLinks .btn.btn-outline-primary:focus {
+            color: #fff;
+            border-color: #eee;
+            background: #2f2f2f;
         }
     }
 }

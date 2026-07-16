@@ -2,12 +2,12 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { MultiSelect } from "react-multi-select-component";
 import { useHistory, useLocation } from "react-router-dom";
 import { label } from 'src/models/Utils';
-import BoMOnlineAPI from "src/models/BoMOnlineAPI";
+import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
 import { useAppController } from "src/contexts/AppControllerContext";
 
 import "./Names.css";
 import names, { facets } from "./data.js";
-import { FIELD_DEFS, emptyFilters, applyFilters, facetCounts, filtersToQuery, queryToFilters, segmentName, entitySlugs } from "./logic";
+import { FIELD_DEFS, emptyFilters, applyFilters, facetCounts, filtersToQuery, queryToFilters, segmentName, entityIndexes } from "./logic";
 
 /** label() returns the key when untranslated — fall back to English copy. */
 const t = (key, fallback) => {
@@ -64,6 +64,7 @@ function Container() {
 
   const detailEntry = useMemo(() => names.find((n) => n.name === detailName) || null, [detailName]);
   const closeDetail = useCallback(() => setDetailName(null), []);
+  const entityIdx = useMemo(() => entityIndexes(entities.people, entities.places), [entities]);
 
   const filtered = useMemo(() => applyFilters(names, filters), [filters]);
   const hasSelection = FIELD_DEFS.some((f) => filters[f.key].length > 0);
@@ -84,7 +85,6 @@ function Container() {
   return (
     <div className="container namesView">
       <header className="namesMasthead">
-        <div className="namesMastheadRule" aria-hidden="true"><span>⁂</span></div>
         <h3 className="title namesTitle">{t("names_title", "Book of Mormon Names")}</h3>
         <div className="namesSubtitle">{t("names_subtitle", "An Onomasticon of Proper Names")}</div>
         <p className="namesIntro">
@@ -132,7 +132,7 @@ function Container() {
       {detailEntry && (
         <NameDetail
           entry={detailEntry}
-          entities={entities}
+          idx={entityIdx}
           appController={appController}
           onClose={closeDetail}
           onPickMorpheme={pickMorpheme}
@@ -155,18 +155,20 @@ function Container() {
                 aria-label={entry.name}
                 onClick={() => setDetailName(entry.name === detailName ? null : entry.name)}
               >
-                {showStructure && SEGMENTS.get(entry.name)
-                  ? SEGMENTS.get(entry.name).map((s, i) => (
-                      <span key={i} className={"morpheme-" + s.role}>{s.text}</span>
-                    ))
-                  : entry.name}
+                <NameAvatar entry={entry} idx={entityIdx} />
+                <span className="nameAnalysisItemName">
+                  {showStructure && SEGMENTS.get(entry.name)
+                    ? SEGMENTS.get(entry.name).map((s, j) => (
+                        <span key={j} className={"morpheme-" + s.role}>{s.text}</span>
+                      ))
+                    : entry.name}
+                </span>
               </button>
             </React.Fragment>
           );
         })}
         {!filtered.length && (
           <div className="nameAnalysisEmpty">
-            <span className="nameAnalysisEmptyMark" aria-hidden="true">❧</span>
             {t("names_empty", "No names match the selected filters. Try removing the last filter you added.")}
           </div>
         )}
@@ -201,6 +203,15 @@ function FilterBar({ filters, setFacet }) {
   );
 }
 
+/** Dropdown option row: checkbox, morpheme, and the match count as a chip. */
+const FacetItem = ({ checked, option, onClick, disabled }) => (
+  <div className={"item-renderer facetOption" + (disabled ? " disabled" : "")}>
+    <input type="checkbox" onChange={onClick} checked={checked} tabIndex={-1} disabled={disabled} />
+    <span className="facetOptionLabel">{option.label}</span>
+    <span className="facetOptionCount">{option.count}</span>
+  </div>
+);
+
 function FacetSelect({ facetKey, values, filters, onChange }) {
   const meta = FACET_META[facetKey];
   const counts = useMemo(() => facetCounts(names, filters, facetKey), [filters, facetKey]);
@@ -209,8 +220,9 @@ function FacetSelect({ facetKey, values, filters, onChange }) {
       [...meta.options]
         .sort((a, b) => (counts.get(b) || 0) - (counts.get(a) || 0) || a.localeCompare(b))
         .map((v) => ({
-          label: `${v} (${counts.get(v) || 0})`,
+          label: v,
           value: v,
+          count: counts.get(v) || 0,
           disabled: !counts.get(v) && !values.includes(v),
         })),
     [counts, meta.options, values]
@@ -223,6 +235,7 @@ function FacetSelect({ facetKey, values, filters, onChange }) {
         onChange={(selected) => onChange(selected.map((o) => o.value))}
         labelledBy={meta.label}
         hasSelectAll={false}
+        ItemRenderer={FacetItem}
       />
     </div>
   );
@@ -230,70 +243,139 @@ function FacetSelect({ facetKey, values, filters, onChange }) {
 
 const CULTURE_BADGE = { Nephite: "N", Lamanite: "L", Jaredite: "J", Mulekite: "M", Israelite: "I" };
 
+/** Placeholder glyphs for entries with no portrait/map artwork. */
+const TYPE_GLYPH = {
+  person: "👤", place: "📍", object: "🏺", animal: "🐾", plant: "🌿",
+  measure: "⚖️", material: "🪨", title: "📜", word: "💬",
+};
+
+/** Entity artwork when we have a slug; otherwise a type-glyph placeholder. */
+function NameAvatar({ entry, idx, className = "" }) {
+  const [broken, setBroken] = useState(false);
+  const key = entry.name.toLowerCase();
+  const personSlug = entry.types.includes("person") ? idx.person.get(key) : null;
+  const placeSlug = entry.types.includes("place") ? idx.place.get(key) : null;
+  const src = personSlug
+    ? `${assetUrl}/people/${personSlug}`
+    : placeSlug
+    ? `${assetUrl}/places/${placeSlug}`
+    : null;
+  if (src && !broken)
+    return (
+      <img
+        className={"nameAvatar " + className}
+        loading="lazy"
+        src={src}
+        alt=""
+        onError={() => setBroken(true)}
+      />
+    );
+  return (
+    <span className={"nameAvatar nameAvatarGlyph " + className} aria-hidden="true">
+      {TYPE_GLYPH[entry.types[0]] || "•"}
+    </span>
+  );
+}
+
 /** Segmentation is static per dataset — compute once at module load. */
 const SEGMENTS = new Map(names.map((n) => [n.name, segmentName(n)]));
 
 const MORPHEME_ROLES = ["prefix", "stem", "affix", "suffix"];
 
-function NameDetail({ entry, entities, appController, onClose, onPickMorpheme }) {
-  const spans = segmentName(entry);
-  const slugs = entitySlugs(entry.name, entities.people, entities.places);
+/** Canonical morpheme parts of an entry, in name order, with family counts. */
+const morphemeParts = (entry) => {
+  const parts = [];
+  if (entry.prefix) parts.push({ role: "prefix", value: entry.prefix });
+  parts.push({ role: "stem", value: entry.stems[0] });
+  if (entry.affix) parts.push({ role: "affix", value: entry.affix });
+  if (entry.stems[1]) parts.push({ role: "stem", value: entry.stems[1] });
+  if (entry.suffix) parts.push({ role: "suffix", value: entry.suffix });
+  const fieldOf = { prefix: "prefix", stem: "stems", affix: "affix", suffix: "suffix" };
+  return parts.map((p) => {
+    const field = FIELD_DEFS.find((f) => f.key === fieldOf[p.role]);
+    return { ...p, count: names.filter((n) => field.get(n).includes(p.value)).length };
+  });
+};
+
+function NameDetail({ entry, idx, appController, onClose, onPickMorpheme }) {
+  const key = entry.name.toLowerCase();
+  const slugs = { person: idx.person.get(key) || null, place: idx.place.get(key) || null };
+  const parts = morphemeParts(entry);
 
   useEffect(() => {
     const onKey = (e) => { if (e.key === "Escape") onClose(); };
     document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+    };
   }, [onClose]);
 
   const openEntity = (type, slug) =>
     appController.functions.setPopUp({ type, ids: [slug], underSlug: type });
 
+  const showPerson = slugs.person && entry.types.includes("person");
+  const showPlace = slugs.place && entry.types.includes("place");
+
   return (
-    <div className="nameDetail" role="region" aria-label={entry.name}>
-      <div className="nameDetailHeader">
-        <span className="nameDetailName">
-          {spans
-            ? spans.map((s, i) =>
-                s.role === "sep" ? (
-                  <span key={i}>{s.text}</span>
-                ) : (
+    <div
+      className="nameDetailOverlay"
+      onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="nameDetail" role="region" aria-label={entry.name}>
+        <div className="nameDetailHeader">
+          <span className="nameDetailName">{entry.name}</span>
+          <button type="button" className="nameDetailClose" aria-label={t("names_close", "Close")} onClick={onClose}>
+            ×
+          </button>
+        </div>
+        <div className="nameDetailBody">
+          <NameAvatar entry={entry} idx={idx} className="nameDetailAvatar" />
+          <div className="nameDetailMain">
+            <div className="nameEtymology">
+              {parts.map((p, i) => (
+                <React.Fragment key={i}>
+                  {i > 0 && <span className="nameEtymologyPlus" aria-hidden="true">+</span>}
                   <button
-                    key={i}
                     type="button"
-                    className={"morpheme morpheme-" + s.role}
+                    className={"nameEtymologyPart part-" + p.role}
                     title={t("names_filter_by_part", "Filter by this part")}
-                    onClick={() => onPickMorpheme(s.role, entry, s.text)}
+                    onClick={() => onPickMorpheme(p.role, entry, p.value)}
                   >
-                    {s.text}
+                    <span className="nameEtymologyText">{p.value}</span>
+                    <span className="nameEtymologyRole">{p.role}</span>
+                    <span className="nameEtymologyCount">
+                      {p.count === 1 ? t("names_family_one", "only one") : t("names_family_count", `${p.count} names`)}
+                    </span>
                   </button>
-                )
-              )
-            : entry.name}
-        </span>
-        <button type="button" className="nameDetailClose" aria-label={t("names_close", "Close")} onClick={onClose}>
-          ×
-        </button>
-      </div>
-      <div className="nameDetailBadges">
-        {entry.cultures.map((c) => (
-          <span key={c} className={"IdBadge " + (CULTURE_BADGE[c] || "lang")}>{c}</span>
-        ))}
-        {entry.types.map((tp) => (
-          <span key={tp} className="nameTypeBadge">{tp}</span>
-        ))}
-      </div>
-      {entry.note && <p className="nameDetailNote">{entry.note}</p>}
-      <div className="nameDetailLinks">
-        {slugs.person && entry.types.includes("person") && (
-          <button type="button" className="nameDetailLink" onClick={() => openEntity("people", slugs.person)}>
-            <span aria-hidden="true">☞</span> {t("names_view_person", "View person")}
-          </button>
-        )}
-        {slugs.place && entry.types.includes("place") && (
-          <button type="button" className="nameDetailLink" onClick={() => openEntity("places", slugs.place)}>
-            <span aria-hidden="true">☞</span> {t("names_view_place", "View place")}
-          </button>
-        )}
+                </React.Fragment>
+              ))}
+            </div>
+            <div className="nameDetailBadges">
+              {entry.cultures.map((c) => (
+                <span key={c} className={"IdBadge " + (CULTURE_BADGE[c] || "lang")}>{c}</span>
+              ))}
+              {entry.types.map((tp) => (
+                <span key={tp} className="nameTypeBadge">{tp}</span>
+              ))}
+            </div>
+            {entry.note && <p className="nameDetailNote">{entry.note}</p>}
+            <div className="nameDetailLinks">
+              {showPerson && (
+                <button type="button" className="btn btn-sm btn-outline-primary" onClick={() => openEntity("people", slugs.person)}>
+                  {t("names_view_person", "View person")}
+                </button>
+              )}
+              {showPlace && (
+                <button type="button" className="btn btn-sm btn-outline-primary" onClick={() => openEntity("places", slugs.place)}>
+                  {t("names_view_place", "View place")}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

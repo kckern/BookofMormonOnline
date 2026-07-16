@@ -1,126 +1,73 @@
 /* ============================================================
-   Names — "The Onomasticon"
-   A philologist's specimen ledger: warm paper, engraved rules,
-   1830-style serif headwords, rubricated initials, and morphemes
-   annotated in scholarly ink colors.
-   Dark theme overrides live in assets/theme/scss/darkmode/_names.scss
-   and only re-declare the --names-* custom properties below.
+   Names — onomasticon browser.
+   Native app skin: neutral surfaces, single hairlines, app radii,
+   inherited Roboto Condensed. The morpheme roles carry the only
+   strong color: prefix violet, stem blue, affix sienna, suffix green.
+   Dark theme re-declares the --names-* variables in
+   assets/theme/scss/darkmode/_names.scss.
    ============================================================ */
 
 .namesView{
-    /* paper & ink */
-    --names-paper: #f6f1e4;
-    --names-card: #fbf8ee;
-    --names-ink: #2b2418;
-    --names-muted: #7c7157;
-    --names-rule: #d3c8ac;
-    --names-rule-strong: #97896a;
-    --names-hover: rgba(43, 36, 24, 0.055);
-    --names-accent: #8c2f24;          /* madder red — rubrication */
-    --names-accent-soft: rgba(140, 47, 36, 0.12);
+    --names-border: #d6d6d6;
+    --names-muted: #666;
+    --names-hover: #f1f1f1;
+    --names-card: #fff;
+    --names-chip-bg: #e9e9e9;
+    --names-accent: #2c7fb8;
+    --names-accent-soft: rgba(44, 127, 184, 0.12);
+    --names-overlay: rgba(20, 20, 20, 0.55);
+    --names-shadow: rgba(0, 0, 0, 0.18);
     /* morpheme inks */
-    --names-prefix: #7d4a9e;          /* violet ink   */
-    --names-stem:   #1f5f8b;          /* Prussian blue */
-    --names-affix:  #b3591b;          /* burnt sienna  */
-    --names-suffix: #2e6e4e;          /* verdigris     */
-    --names-prefix-bg: rgba(125, 74, 158, 0.14);
-    --names-stem-bg:   rgba(31, 95, 139, 0.14);
-    --names-affix-bg:  rgba(179, 89, 27, 0.14);
-    --names-suffix-bg: rgba(46, 110, 78, 0.14);
-    --names-grain-blend: multiply;
-    --names-grain-opacity: 0.5;
-    --names-shadow: rgba(43, 36, 24, 0.45);
+    --names-prefix: #7d4a9e;
+    --names-stem:   #1f5f8b;
+    --names-affix:  #b3591b;
+    --names-suffix: #2e6e4e;
+    --names-prefix-bg: rgba(125, 74, 158, 0.12);
+    --names-stem-bg:   rgba(31, 95, 139, 0.12);
+    --names-affix-bg:  rgba(179, 89, 27, 0.12);
+    --names-suffix-bg: rgba(46, 110, 78, 0.12);
 
-    position: relative;
-    background: var(--names-paper);
-    border: 1px solid var(--names-rule);
-    box-shadow: 0 18px 40px -30px var(--names-shadow);
-    color: var(--names-ink);
-    font-family: 'Scripture', Georgia, 'Times New Roman', serif;
-    padding: 0 2.4rem 2.6rem;
-    margin-top: 1.2rem;
-    margin-bottom: 2.5rem;
+    padding-bottom: 2rem;
 }
-
-/* faint paper grain */
-.namesView::before{
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: 0;
-    opacity: var(--names-grain-opacity);
-    mix-blend-mode: var(--names-grain-blend);
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="140" height="140"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter><rect width="140" height="140" filter="url(%23n)" opacity="0.05"/></svg>');
-}
-.namesView > *{ position: relative; z-index: 1; }
 
 /* ---------- masthead ---------- */
 
 .namesMasthead{
     text-align: center;
-    padding: 2rem 0 0.4rem;
-    animation: namesRise 0.55s ease both;
-}
-
-.namesMastheadRule{
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    color: var(--names-rule-strong);
-    font-size: 1.05rem;
-}
-.namesMastheadRule::before,
-.namesMastheadRule::after{
-    content: "";
-    flex: 1;
-    border-top: 3px double var(--names-rule-strong);
-    transform-origin: center;
-    animation: namesRuleDraw 0.8s ease both;
+    padding-top: 0.5rem;
+    animation: namesRise 0.4s ease both;
 }
 
 .namesView h3.title.namesTitle{
-    font-family: 'Scripture', Georgia, serif;
-    font-size: clamp(2.3rem, 4.5vw, 3.3rem);
-    font-weight: 400;
-    letter-spacing: 0.01em;
-    line-height: 1.1;
     white-space: normal;
-    color: var(--names-ink);
-    margin: 1rem 0 0.3rem;
-    padding: 0;
+    margin-bottom: 0.2rem;
 }
 
 .namesSubtitle{
-    font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
     font-size: 0.78rem;
     font-weight: 700;
-    letter-spacing: 0.34em;
-    text-indent: 0.34em; /* re-center letterspaced text */
+    letter-spacing: 0.18em;
+    text-indent: 0.18em;
     text-transform: uppercase;
-    color: var(--names-accent);
-    margin-bottom: 1rem;
+    color: var(--names-muted);
+    margin-bottom: 0.9rem;
 }
 
 .namesIntro{
-    font-style: italic;
-    font-size: 1.06rem;
-    line-height: 1.55;
     color: var(--names-muted);
+    line-height: 1.5;
     max-width: 44rem;
-    margin: 0 auto 1.4rem;
+    margin: 0 auto 1.2rem;
 }
 
-/* ---------- filter apparatus ---------- */
+/* ---------- filters ---------- */
 
 .nameFilters{
     background: var(--names-card);
-    border: 1px solid var(--names-rule-strong);
-    outline: 1px solid var(--names-rule);
-    outline-offset: 4px;
-    padding: 0.75rem 1.2rem 0.9rem;
-    margin: 0.6rem 0.25rem 0;
-    animation: namesRise 0.55s 0.08s ease both;
+    border: 1px solid var(--names-border);
+    border-radius: 8px;
+    padding: 0.7rem 1rem 0.85rem;
+    animation: namesRise 0.4s 0.06s ease both;
 }
 
 .nameFiltersSummary{
@@ -130,13 +77,12 @@
     gap: 0.6ex;
     cursor: pointer;
     user-select: none;
-    font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
     font-size: 0.75rem;
     font-weight: 700;
-    letter-spacing: 0.22em;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--names-muted);
-    padding: 0.15rem 0 0.4rem;
+    padding: 0.1rem 0 0.4rem;
 }
 .nameFiltersSummary::-webkit-details-marker{ display: none; }
 .nameFiltersSummary:hover{ color: var(--names-accent); }
@@ -151,22 +97,21 @@
 .nameform{
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 0.9rem;
+    gap: 0.8rem;
 }
 
+.nameFacet{ position: relative; }
 .nameFacet .form-group{ margin: 0; }
 
 .facetHeader{
     display: inline-flex;
     align-items: center;
-    gap: 0.6ex;
-    font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
+    gap: 0.55ex;
     font-size: 0.74rem;
     font-weight: 700;
-    letter-spacing: 0.18em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--names-ink);
-    margin-bottom: 0.3rem;
+    margin-bottom: 0.25rem;
     cursor: help;
 }
 .facetInk{
@@ -185,21 +130,56 @@
     letter-spacing: 0;
 }
 
-/* react-multi-select-component — apparatus styling */
+/* react-multi-select-component */
 .namesView .rmsc{
     --rmsc-bg: var(--names-card);
-    --rmsc-border: var(--names-rule);
+    --rmsc-border: var(--names-border);
     --rmsc-hover: var(--names-hover);
     --rmsc-selected: var(--names-accent-soft);
     --rmsc-gray: var(--names-muted);
     --rmsc-main: var(--names-accent);
-    --rmsc-radius: 2px;
-    font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
+    --rmsc-radius: 6px;
     font-size: 0.9rem;
-    color: var(--names-ink);
 }
-.namesView .rmsc .dropdown-container:focus-within{
-    box-shadow: var(--names-accent) 0 0 0 1px;
+
+/* dropdown panel: wide, multi-column */
+.namesView .rmsc .dropdown-content{
+    width: min(34rem, calc(100vw - 3rem));
+    z-index: 30;
+}
+.namesView .rmsc .dropdown-content .options{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+    gap: 0 0.4rem;
+    max-height: 300px;
+}
+/* right-hand facets: open panel right-aligned so it stays in view */
+.nameFacet:nth-child(3) .rmsc .dropdown-content,
+.nameFacet:nth-child(4) .rmsc .dropdown-content{
+    left: auto;
+    right: 0;
+}
+
+/* de-emphasized clear cross */
+.namesView .rmsc .clear-selected-button{
+    transform: scale(0.7);
+    opacity: 0.55;
+}
+.namesView .rmsc .clear-selected-button:hover{ opacity: 1; }
+
+/* option rows: label + count chip */
+.facetOption{ display: flex; align-items: center; gap: 0.6ex; }
+.facetOption.disabled{ opacity: 0.45; }
+.facetOptionLabel{ flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.facetOptionCount{
+    font-size: 0.7rem;
+    line-height: 1.5;
+    background: var(--names-chip-bg);
+    color: var(--names-muted);
+    border-radius: 999px;
+    padding: 0 0.55em;
+    min-width: 2.1em;
+    text-align: center;
 }
 
 /* ---------- culture & type chips ---------- */
@@ -207,44 +187,53 @@
 .nameChipRow{
     display: flex;
     flex-wrap: wrap;
-    gap: 0.45ex;
+    gap: 0.5ex;
     align-items: baseline;
     margin: 0.55rem 0 0;
 }
 .nameChipRowLabel{
-    font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
     font-size: 0.74rem;
     font-weight: 700;
-    letter-spacing: 0.18em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     min-width: 4.6rem;
     cursor: help;
 }
 .nameChip{
-    font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
-    font-size: 0.78rem;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    border: 1px solid var(--names-rule);
-    border-radius: 2px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5ex;
+    border: 1px solid var(--names-border);
+    border-radius: 999px;
     background: transparent;
-    color: var(--names-ink);
-    padding: 0.06rem 0.55rem;
+    color: inherit;
+    padding: 0.08rem 0.4rem 0.08rem 0.7rem;
+    font-size: 0.82rem;
     cursor: pointer;
-    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
-.nameChip:hover:not(:disabled){
-    border-color: var(--names-rule-strong);
-    background: var(--names-hover);
-}
+.nameChip:hover:not(:disabled):not(.active){ background: var(--names-hover); }
 .nameChip.active{
-    background: var(--names-ink);
-    border-color: var(--names-ink);
-    color: var(--names-paper);
+    background: var(--names-accent);
+    border-color: var(--names-accent);
+    color: #fff;
 }
-.nameChip:disabled{ opacity: 0.32; cursor: default; }
+.nameChip:disabled{ opacity: 0.35; cursor: default; }
 .nameChip:focus-visible{ outline: 2px solid var(--names-accent); outline-offset: 2px; }
-.nameChipCount{ opacity: 0.6; font-size: 0.85em; }
+.nameChipCount{
+    font-size: 0.7rem;
+    line-height: 1.5;
+    background: var(--names-chip-bg);
+    color: var(--names-muted);
+    border-radius: 999px;
+    padding: 0 0.5em;
+    min-width: 1.9em;
+    text-align: center;
+}
+.nameChip.active .nameChipCount{
+    background: rgba(255, 255, 255, 0.25);
+    color: #fff;
+}
 
 /* ---------- status line ---------- */
 
@@ -253,15 +242,12 @@
     align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
-    gap: 0.5rem 1rem;
-    margin: 1.1rem 0.25rem 0.4rem;
-    padding-bottom: 0.45rem;
-    border-bottom: 1px solid var(--names-rule);
-    font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
-    font-size: 0.8rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+    gap: 0.4rem 1rem;
+    margin: 0.9rem 0 0.3rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--names-border);
     color: var(--names-muted);
+    font-size: 0.85rem;
 }
 .nameFilterStatusRight{
     display: inline-flex;
@@ -271,20 +257,17 @@
 }
 .structureToggle{
     display: inline-flex;
-    gap: 0.55ex;
+    gap: 0.5ex;
     align-items: center;
     cursor: pointer;
     margin: 0;
     font-size: inherit;
-    letter-spacing: inherit;
-    text-transform: inherit;
     color: inherit;
 }
 .structureToggle input{ accent-color: var(--names-accent); }
 
-.morphemeLegend{ display: inline-flex; gap: 1.1ex; font-size: 0.72rem; }
+.morphemeLegend{ display: inline-flex; gap: 1.1ex; font-size: 0.75rem; }
 .morphemeLegend span{
-    letter-spacing: 0.08em;
     text-decoration-line: underline;
     text-decoration-thickness: 2px;
     text-underline-offset: 0.25em;
@@ -295,78 +278,90 @@
 .morphemeLegend .morpheme-suffix{ text-decoration-color: var(--names-suffix); }
 
 .nameClearFilters{
-    font-family: inherit;
-    font-size: inherit;
-    letter-spacing: inherit;
-    text-transform: inherit;
     background: none;
     border: none;
-    border-bottom: 1px solid transparent;
     color: var(--names-accent);
+    font-size: inherit;
     cursor: pointer;
-    padding: 0 0 1px;
+    padding: 0;
 }
-.nameClearFilters:hover{ border-bottom-color: var(--names-accent); }
+.nameClearFilters:hover{ text-decoration: underline; }
 .nameClearFilters:focus-visible{ outline: 2px solid var(--names-accent); outline-offset: 2px; }
 
-/* ---------- specimen index ---------- */
+/* ---------- avatars ---------- */
+
+.nameAvatar{
+    width: 30px;
+    height: 30px;
+    flex: 0 0 30px;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: top center;
+    background: var(--names-hover);
+}
+.nameAvatarGlyph{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    filter: grayscale(0.25);
+}
+
+/* ---------- name index ---------- */
 
 .nameAnalysisList{
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(8.6rem, 1fr));
-    gap: 0.05rem 1.1rem;
+    grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+    gap: 0.15rem 0.8rem;
     padding-bottom: 1.5rem;
-    animation: namesRise 0.55s 0.16s ease both;
+    animation: namesRise 0.4s 0.12s ease both;
 }
 
 .nameLetterRule{
     grid-column: 1 / -1;
     display: flex;
-    align-items: baseline;
-    gap: 0.8rem;
-    margin: 1rem 0 0.15rem;
+    align-items: center;
+    gap: 0.7rem;
+    margin: 0.9rem 0 0.1rem;
 }
 .nameLetterRule span{
-    font-family: 'Scripture', Georgia, serif;
-    font-size: 1.7rem;
+    font-size: 1rem;
+    font-weight: 700;
     line-height: 1;
-    color: var(--names-accent);
+    color: var(--names-muted);
 }
 .nameLetterRule::after{
     content: "";
     flex: 1;
-    border-top: 1px solid var(--names-rule);
+    border-top: 1px solid var(--names-border);
 }
 
 .nameAnalysisList .nameAnalysisItem{
-    font-family: 'Scripture', Georgia, serif;
-    font-size: 1.14rem;
-    line-height: 1.35;
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
     text-align: left;
     background: transparent;
-    border: none;
-    border-radius: 2px;
+    border: 1px solid transparent;
+    border-radius: 6px;
     color: inherit;
+    font: inherit;
+    font-size: 1rem;
     cursor: pointer;
     padding: 0.22rem 0.45rem;
-    transition: background 0.12s ease, color 0.12s ease;
+    transition: background 0.12s ease, border-color 0.12s ease;
 }
 .nameAnalysisList .nameAnalysisItem:hover{
     background: var(--names-hover);
-    color: var(--names-accent);
 }
 .nameAnalysisItem.selected{
     background: var(--names-accent-soft);
-    color: var(--names-accent);
-}
-.nameAnalysisItem.selected::before{
-    content: "☞ ";
-    font-size: 0.85em;
+    border-color: var(--names-accent);
 }
 .nameAnalysisItem:focus-visible{ outline: 2px solid var(--names-accent); outline-offset: 1px; }
+.nameAnalysisItemName{ min-width: 0; }
 
-/* morpheme structure on tiles — fine ink underrules, offset like
-   a philologist's pencil marks rather than hyperlink underlines */
+/* morpheme structure — offset ink underrules, skipping separators */
 .nameAnalysisItem [class^="morpheme-"]{
     text-decoration-line: underline;
     text-decoration-thickness: 2px;
@@ -381,40 +376,35 @@
 .nameAnalysisEmpty{
     grid-column: 1 / -1;
     text-align: center;
-    font-style: italic;
     color: var(--names-muted);
     padding: 2.5rem 0;
 }
-.nameAnalysisEmptyMark{
-    display: block;
-    font-style: normal;
-    font-size: 1.6rem;
-    color: var(--names-rule-strong);
-    margin-bottom: 0.4rem;
-}
 
-/* ---------- lexicon entry card ---------- */
+/* ---------- detail modal ---------- */
+
+.nameDetailOverlay{
+    position: fixed;
+    inset: 0;
+    z-index: 1050;
+    background: var(--names-overlay);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    animation: namesFadeIn 0.18s ease both;
+}
 
 .nameDetail{
-    position: relative;
     background: var(--names-card);
-    border: 1px solid var(--names-rule-strong);
-    outline: 1px solid var(--names-rule);
-    outline-offset: 4px;
-    box-shadow: 0 16px 34px -24px var(--names-shadow);
-    padding: 1rem 1.4rem 1.1rem;
-    margin: 1.3rem 0.25rem 1.5rem;
-    animation: namesCardIn 0.28s ease both;
-}
-.nameDetail::after{
-    content: "❦";
-    position: absolute;
-    right: 1rem;
-    bottom: 0.55rem;
-    font-size: 1.05rem;
-    color: var(--names-rule-strong);
-    opacity: 0.6;
-    pointer-events: none;
+    border: 1px solid var(--names-border);
+    border-radius: 8px;
+    box-shadow: 0 18px 48px -12px var(--names-shadow);
+    width: 100%;
+    max-width: 40rem;
+    max-height: min(85vh, 40rem);
+    overflow-y: auto;
+    padding: 1rem 1.3rem 1.2rem;
+    animation: namesPopIn 0.22s ease both;
 }
 
 .nameDetailHeader{
@@ -424,31 +414,10 @@
     gap: 1rem;
 }
 .nameDetailName{
-    font-family: 'Scripture', Georgia, serif;
-    font-size: clamp(1.9rem, 3.5vw, 2.5rem);
-    font-weight: 400;
-    line-height: 1.15;
+    font-size: 1.7rem;
+    font-weight: 700;
+    line-height: 1.2;
 }
-.nameDetailName .morpheme{
-    background: none;
-    border: none;
-    padding: 0 0.02em;
-    font: inherit;
-    color: inherit;
-    cursor: pointer;
-    border-bottom: 3px solid transparent;
-    transition: background 0.15s ease;
-}
-.nameDetailName .morpheme-prefix{ border-bottom-color: var(--names-prefix); }
-.nameDetailName .morpheme-stem{   border-bottom-color: var(--names-stem); }
-.nameDetailName .morpheme-affix{  border-bottom-color: var(--names-affix); }
-.nameDetailName .morpheme-suffix{ border-bottom-color: var(--names-suffix); }
-.nameDetailName .morpheme-prefix:hover{ background: var(--names-prefix-bg); }
-.nameDetailName .morpheme-stem:hover{   background: var(--names-stem-bg); }
-.nameDetailName .morpheme-affix:hover{  background: var(--names-affix-bg); }
-.nameDetailName .morpheme-suffix:hover{ background: var(--names-suffix-bg); }
-.nameDetailName .morpheme:focus-visible{ outline: 2px solid var(--names-accent); outline-offset: 1px; }
-
 .nameDetailClose{
     background: none;
     border: none;
@@ -456,93 +425,134 @@
     line-height: 1;
     color: var(--names-muted);
     cursor: pointer;
-    transition: color 0.15s ease, transform 0.15s ease;
+    padding: 0 0.2rem;
 }
-.nameDetailClose:hover{ color: var(--names-accent); transform: rotate(90deg); }
+.nameDetailClose:hover{ color: inherit; }
 .nameDetailClose:focus-visible{ outline: 2px solid var(--names-accent); outline-offset: 2px; }
+
+.nameDetailBody{
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    margin-top: 0.5rem;
+}
+.nameDetail .nameAvatar.nameDetailAvatar{
+    width: 88px;
+    height: 88px;
+    flex: 0 0 88px;
+    border-radius: 8px;
+    border: 1px solid var(--names-border);
+}
+.nameDetail .nameAvatarGlyph.nameDetailAvatar{ font-size: 2.3rem; }
+.nameDetailMain{ flex: 1; min-width: 0; }
+
+/* etymology breakdown — the name as clickable building blocks */
+.nameEtymology{
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 0.45rem;
+    margin-bottom: 0.6rem;
+}
+.nameEtymologyPlus{
+    align-self: center;
+    color: var(--names-muted);
+    font-size: 1.1rem;
+}
+.nameEtymologyPart{
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.1rem;
+    background: var(--names-card);
+    border: 1px solid var(--names-border);
+    border-top-width: 3px;
+    border-radius: 6px;
+    padding: 0.35rem 0.6rem 0.4rem;
+    cursor: pointer;
+    font: inherit;
+    color: inherit;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+.nameEtymologyPart.part-prefix{ border-top-color: var(--names-prefix); }
+.nameEtymologyPart.part-stem{   border-top-color: var(--names-stem); }
+.nameEtymologyPart.part-affix{  border-top-color: var(--names-affix); }
+.nameEtymologyPart.part-suffix{ border-top-color: var(--names-suffix); }
+.nameEtymologyPart.part-prefix:hover{ background: var(--names-prefix-bg); }
+.nameEtymologyPart.part-stem:hover{   background: var(--names-stem-bg); }
+.nameEtymologyPart.part-affix:hover{  background: var(--names-affix-bg); }
+.nameEtymologyPart.part-suffix:hover{ background: var(--names-suffix-bg); }
+.nameEtymologyPart:focus-visible{ outline: 2px solid var(--names-accent); outline-offset: 1px; }
+.nameEtymologyText{
+    font-size: 1.15rem;
+    font-weight: 700;
+    line-height: 1.1;
+}
+.nameEtymologyRole{
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+.part-prefix .nameEtymologyRole{ color: var(--names-prefix); }
+.part-stem .nameEtymologyRole{   color: var(--names-stem); }
+.part-affix .nameEtymologyRole{  color: var(--names-affix); }
+.part-suffix .nameEtymologyRole{ color: var(--names-suffix); }
+.nameEtymologyCount{
+    font-size: 0.7rem;
+    line-height: 1.5;
+    background: var(--names-chip-bg);
+    color: var(--names-muted);
+    border-radius: 999px;
+    padding: 0 0.55em;
+}
 
 .nameDetailBadges{
     display: flex;
-    gap: 0.6ex;
+    gap: 0.4ex;
     flex-wrap: wrap;
-    margin: 0.45rem 0 0.2rem;
+    margin: 0.3rem 0;
     align-items: center;
 }
-
-/* culture stamps — transparent ground, inked border & text */
-.nameDetail .IdBadge{
-    font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
-    font-size: 0.68rem;
-    font-weight: 700;
-    letter-spacing: 0.09em;
-    text-transform: uppercase;
-    background: transparent;
-    border: 1px solid var(--names-muted);
-    border-radius: 2px;
-    color: var(--names-muted);
-    padding: 0.02em 0.55em;
+.nameTypeBadge, .nameDetail .IdBadge.lang{
+    border: 1px solid var(--names-border);
+    border-radius: 4px;
+    padding: 0 0.4em;
+    font-size: 0.75rem;
 }
-.nameDetail .IdBadge.N{ color: var(--names-suffix); border-color: var(--names-suffix); background: transparent; }
-.nameDetail .IdBadge.L{ color: var(--names-stem);   border-color: var(--names-stem);   background: transparent; }
-.nameDetail .IdBadge.M{ color: var(--names-affix);  border-color: var(--names-affix);  background: transparent; }
-.nameDetail .IdBadge.J{ color: #8a6d1a;             border-color: #8a6d1a;             background: transparent; }
-.nameDetail .IdBadge.I{ color: var(--names-prefix); border-color: var(--names-prefix); background: transparent; }
 
-/* types — dictionary part-of-speech style */
-.nameTypeBadge{
-    font-family: 'Scripture', Georgia, serif;
-    font-style: italic;
-    font-size: 0.95rem;
-    color: var(--names-muted);
-}
-.nameTypeBadge + .nameTypeBadge::before{ content: "· "; }
+/* IdBadge affiliation colors — same hues as People view */
+.nameDetail .IdBadge{ border: 1px solid #6c6c6c; color: #4d4d4d; font-size: 0.7em; letter-spacing: -0.5px; padding: 0 0.5em; border-radius: 0.5em; }
+.nameDetail .IdBadge.N{ background-color: #b9e2cf; color: #0f5132; border-color: #0f5132; }
+.nameDetail .IdBadge.L{ background-color: #c3dbff; color: #084298; border-color: #084298; }
+.nameDetail .IdBadge.M{ background-color: rgb(255, 208, 177); color: #5c3000; border-color: #5c3000; }
+.nameDetail .IdBadge.J{ background-color: #fef1ca; color: #6b5200; border-color: #6b5200; }
 
 .nameDetailNote{
-    font-style: italic;
-    font-size: 1.02rem;
-    line-height: 1.5;
+    margin: 0.3rem 0 0.5rem;
     color: var(--names-muted);
-    border-left: 2px solid var(--names-rule);
-    padding-left: 0.8rem;
-    margin: 0.55rem 0 0.6rem;
+    font-style: italic;
+    line-height: 1.45;
 }
-
-.nameDetailLinks{ display: flex; gap: 1.6ex; }
-.nameDetailLink{
-    font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
-    font-size: 0.76rem;
-    font-weight: 700;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    background: none;
-    border: none;
-    border-bottom: 1px solid var(--names-rule-strong);
-    color: var(--names-ink);
-    cursor: pointer;
-    padding: 0 0 2px;
-    transition: color 0.15s ease, border-color 0.15s ease;
-}
-.nameDetailLink:hover{ color: var(--names-accent); border-bottom-color: var(--names-accent); }
-.nameDetailLink:focus-visible{ outline: 2px solid var(--names-accent); outline-offset: 2px; }
-.nameDetailLink span{ color: var(--names-accent); }
+.nameDetailLinks{ display: flex; gap: 0.5ex; }
 
 /* ---------- motion ---------- */
 
 @keyframes namesRise{
-    from{ opacity: 0; transform: translateY(8px); }
+    from{ opacity: 0; transform: translateY(6px); }
     to{ opacity: 1; transform: none; }
 }
-@keyframes namesRuleDraw{
-    from{ transform: scaleX(0); }
-    to{ transform: scaleX(1); }
+@keyframes namesFadeIn{
+    from{ opacity: 0; }
+    to{ opacity: 1; }
 }
-@keyframes namesCardIn{
-    from{ opacity: 0; transform: translateY(-6px); }
+@keyframes namesPopIn{
+    from{ opacity: 0; transform: translateY(10px) scale(0.985); }
     to{ opacity: 1; transform: none; }
 }
 @media (prefers-reduced-motion: reduce){
-    .namesMasthead, .nameFilters, .nameAnalysisList, .nameDetail,
-    .namesMastheadRule::before, .namesMastheadRule::after{
+    .namesMasthead, .nameFilters, .nameAnalysisList,
+    .nameDetailOverlay, .nameDetail{
         animation: none;
     }
 }
@@ -550,14 +560,17 @@
 /* ---------- responsive ---------- */
 
 @media (max-width: 991px){
-    .namesView{ padding: 0 1.4rem 2rem; }
     .nameform{ grid-template-columns: repeat(2, 1fr); }
+    .nameFacet:nth-child(3) .rmsc .dropdown-content{ left: 0; right: auto; }
 }
 
 @media (max-width: 767px){
-    .namesView{ padding: 0 0.9rem 1.6rem; }
     .nameform{ grid-template-columns: 1fr; gap: 0.55rem; }
-    .namesMasthead{ padding-top: 1.3rem; }
-    .namesSubtitle{ letter-spacing: 0.2em; text-indent: 0.2em; }
+    .nameFacet .rmsc .dropdown-content{ left: 0; right: auto; }
+    .namesView h3.title.namesTitle{ font-size: 1.7rem; }
     .nameChipRowLabel{ min-width: 100%; }
+    .nameDetailOverlay{ padding: 0.8rem; align-items: flex-end; }
+    .nameDetail{ max-height: 82vh; }
+    .nameDetailBody{ flex-direction: column; }
+    .nameDetail .nameAvatar.nameDetailAvatar{ width: 72px; height: 72px; flex-basis: 72px; }
 }
