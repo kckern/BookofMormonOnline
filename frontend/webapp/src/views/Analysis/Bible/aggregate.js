@@ -68,11 +68,16 @@ export const partnersFor = (canonKey, bookName) => {
 // --- chapter machinery -------------------------------------------------
 const chapterCache = new Map();
 
+const vidChapterCache = new Map();
+
 export const chapterOfVid = (vid) => {
+  if (vidChapterCache.has(vid)) return vidChapterCache.get(vid);
   // "1 Nephi 3:12" -> 3. Digits-before-colon is locale-stable for our use.
   const ref = generateReference(vid);
   const m = String(ref).match(/(\d+):\d+\s*$/);
-  return m ? Number(m[1]) : 1; // single-chapter books may omit the chapter
+  const chapter = m ? Number(m[1]) : 1; // single-chapter books may omit the chapter
+  vidChapterCache.set(vid, chapter);
+  return chapter;
 };
 
 export const chapterCounts = (canonKey, bookName, partnerName) => {
@@ -92,6 +97,30 @@ export const chapterCounts = (canonKey, bookName, partnerName) => {
   }
   chapterCache.set(cacheKey, counts);
   return counts;
+};
+
+// Partner ranking scoped to one chapter of the anchored book.
+export const scopedPartnersFor = (canonKey, bookName, chapter) => {
+  const book = canons[canonKey].books.find((b) => b.name === bookName);
+  if (!book) return [];
+  const vidCol = canonKey === "bom" ? 0 : 1;
+  const otherCol = 1 - vidCol;
+  const partnerCanon = canonKey === "bom" ? "kjv" : "bom";
+  const byPartner = new Map();
+  for (const row of index) {
+    const vid = row[vidCol];
+    if (vid < book.start || vid > book.end) continue;
+    if (chapterOfVid(vid) !== chapter) continue;
+    const partner = bookOfVid(partnerCanon, row[otherCol]);
+    if (!partner) continue;
+    const entry = byPartner.get(partner.name) || { book: partner, total: 0, quotes: 0 };
+    entry.total += 1;
+    if (row[2]) entry.quotes += 1;
+    byPartner.set(partner.name, entry);
+  }
+  return [...byPartner.values()]
+    .map((e) => ({ ...e, phrases: e.total - e.quotes }))
+    .sort((a, b) => b.total - a.total);
 };
 
 export const pairsFor = (bomBookName, bibleBookName, bomChapter) => {

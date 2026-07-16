@@ -5,6 +5,7 @@ import {
   chapterCounts,
   pairsFor,
   bookTotal,
+  scopedPartnersFor,
 } from "../aggregate";
 
 describe("aggregate", () => {
@@ -38,6 +39,24 @@ describe("aggregate", () => {
     const counts = chapterCounts("bom", "2 Nephi");
     expect(counts).toHaveLength(33);
     expect(counts.reduce((a, b) => a + b, 0)).toBe(bookTotal("bom", "2 Nephi"));
+  });
+
+  test("scopedPartnersFor sums across chapters to the unscoped ranking", () => {
+    const book = "2 Nephi";
+    const unscoped = partnersFor("bom", book);
+    const summed = new Map();
+    for (let ch = 1; ch <= 33; ch++) {
+      for (const p of scopedPartnersFor("bom", book, ch)) {
+        summed.set(p.book.name, (summed.get(p.book.name) || 0) + p.total);
+      }
+    }
+    for (const p of unscoped) {
+      expect(summed.get(p.book.name)).toBe(p.total);
+    }
+    // scoped entries carry a consistent quote/phrase split
+    for (const p of scopedPartnersFor("bom", book, 12)) {
+      expect(p.quotes + p.phrases).toBe(p.total);
+    }
   });
 
   test("pairsFor returns raw triplets scoped to the pair (and chapter)", () => {
