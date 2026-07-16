@@ -4,7 +4,6 @@ import { assetUrl } from "src/models/BoMOnlineAPI";
 import { label, replaceNumbers } from "src/models/Utils";
 import pin from "src/views/_Common/svg/map-icon.svg";
 import RefPill from "./RefPill";
-import ExpandableText from "./ExpandableText";
 import { clampWords, flatten } from "./textUtils";
 
 /**
@@ -14,7 +13,7 @@ import { clampWords, flatten } from "./textUtils";
  */
 export default function PlacesTile({ data, seed = 0, payload }) {
   const cards = data.slice(0, 5);
-  const mosaic = data.slice(5, 14); // 9 → true 3×3
+  const mosaic = data.slice(5, 17); // 12 → 3×4 fills the end card
   return (
     <div className="samplerTileInner placesTile">
       <h3 className="tileHeading">
@@ -49,42 +48,31 @@ export default function PlacesTile({ data, seed = 0, payload }) {
                   <img src={pin} alt="" />
                 </Link>
               </div>
-              {(p.description || ref) ? (
+              {ref ? (
                 <div className="placesTileInfo samplerCardBody">
-                  {p.description ? (
-                    <ExpandableText className="placesTileDesc" lines={3}>
-                      {flatten(p.description)}
-                    </ExpandableText>
-                  ) : null}
-                  {ref ? (
-                    <span className="placesTileIndexRow">
-                      <RefPill refText={ref} />
-                      {item?.text ? <> {clampWords(flatten(item.text), 10)}</> : null}
-                    </span>
-                  ) : null}
+                  <span className="placesTileIndexRow">
+                    <RefPill refText={ref} />
+                    {item?.text ? <> {clampWords(flatten(item.text), 10)}</> : null}
+                  </span>
                 </div>
               ) : null}
             </div>
           );
         })}
+        {/* end cell: a 3×4 mosaic filling the whole card (no caption) */}
         <Link to="/places" className="placesTileCard samplerCard viewAllCard" title={label("view_all")}>
-          <div className="placesMosaicWrap">
-            <div className="viewAllMosaic placesMosaic">
-              {mosaic.map((p) => (
-                <img
-                  key={p.slug}
-                  src={`${assetUrl}/places/${p.slug}`}
-                  alt=""
-                  loading="lazy"
-                  onError={(e) => (e.target.style.visibility = "hidden")}
-                />
-              ))}
-            </div>
-            <span className="peopleFaceName viewAllOverlay">{payload?.placesCount ? `+${payload.placesCount - data.length} ${label("places")}` : label("view_more")}</span>
+          <div className="viewAllMosaic viewAllMosaicFull placesMosaic">
+            {mosaic.map((p) => (
+              <img
+                key={p.slug}
+                src={`${assetUrl}/places/${p.slug}`}
+                alt=""
+                loading="lazy"
+                onError={(e) => (e.target.style.visibility = "hidden")}
+              />
+            ))}
           </div>
-          <div className="placesTileInfo samplerCardBody placesMosaicCaption">
-            {mosaic.slice(0, 2).map((m) => m.name).join(", ")}…
-          </div>
+          <span className="peopleFaceName viewAllOverlay">{payload?.placesCount ? `+${payload.placesCount - data.length} ${label("places")}` : label("view_more")}</span>
         </Link>
       </div>
     </div>

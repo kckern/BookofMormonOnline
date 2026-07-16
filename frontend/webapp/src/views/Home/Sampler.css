@@ -480,8 +480,13 @@ html[data-theme="dark"] .placesTileMapLink img { filter: invert(0.85); }
   flex-direction: column;
   gap: 0.2rem;
 }
-.placesTileDesc { color: #666; }
-.placesTileDesc .readMorePill { font-size: 0.6rem; padding: 0.16rem 0.55rem; margin-top: 0.3rem; }
+.placesTileDesc {
+  color: #666;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
 html[data-theme="dark"] .placesTileDesc { color: #b0b0b0; }
 .placesTileIndexRow {
   display: -webkit-box;
@@ -1388,40 +1393,37 @@ html[data-theme="dark"] .chiasmusTileKey { color: #93c6ef; }
 
 /* fax: other editions we hold — compact entry points under the sampled pages */
 .faxTileEditions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem 0.6rem;
-  margin-top: 0.45rem;
-  padding-top: 0.4rem;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+  padding-top: 0.45rem;
   border-top: 1px solid #ececec;
 }
 html[data-theme="dark"] .faxTileEditions { border-top-color: #3a3a3a; }
-.faxTileEditions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.4rem; }
-.faxTileEdition {
-  min-width: 0;
-  text-decoration: none;
-  color: #666;
-}
+.faxTileEdition { min-width: 0; text-decoration: none; color: #666; }
 .faxTileEdition img {
   width: 100%;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 3 / 4;
   object-fit: cover;
-  border-radius: 0.3rem;
+  object-position: top;
+  border-radius: 0.25rem;
   border: 1px solid #e0e0e0;
-  background: #d8d3c8; /* warm parchment tone if a cover is slow/missing */
+  background: #d8d3c8;
   display: block;
   transition: transform 0.15s ease;
 }
-.faxTileEdition:hover img { transform: scale(1.03); }
+.faxTileEdition:hover img { transform: scale(1.04); }
 html[data-theme="dark"] .faxTileEdition img { border-color: #444; background: #2c2c2c; }
 .faxTileEditionTitle {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  font-size: 0.6rem;
-  line-height: 1.25;
+  font-size: 0.58rem;
+  line-height: 1.2;
   margin-top: 0.2rem;
+  color: #888;
 }
 html[data-theme="dark"] .faxTileEdition { color: #9a9a9a; }
 
@@ -1511,3 +1513,18 @@ html[data-theme="dark"] .witnessName { color: #f0f0f0; }
 html[data-theme="dark"] .witnessStatement { color: #c4c4c4; }
 .witnessSource { font-size: 0.62rem; font-style: italic; color: #999; margin-top: 0.1rem; }
 html[data-theme="dark"] .witnessSource { color: #8a8a8a; }
+
+
+/* view-all end card: a 3×4 mosaic that fills the whole card (no caption).
+   The face/place row stretches all cards to equal height, and flex:1 lets the
+   mosaic fill that height; grid-auto-rows:1fr splits it into 4 even rows. */
+.viewAllCard { position: relative; overflow: hidden; }
+.viewAllMosaicFull {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-auto-rows: 1fr;
+  gap: 1px;
+  min-height: 8rem;
+}
+.viewAllMosaicFull img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }

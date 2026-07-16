@@ -13,10 +13,10 @@ import { generateReference } from 'scripture-guide';
 import type { Resolvers } from '../../../codegen/graphql.js';
 import type { AppContext } from '../context.js';
 
-// 21 people = 1 featured + 11 face cards + 9 view-all mosaic thumbs;
-// 14 places = 5 cards + a full 3x3 mosaic.
-const PEOPLE_COUNT = 21;
-const PLACES_COUNT = 14;
+// 24 people = 1 featured + 11 face cards + 12 view-all mosaic thumbs (3×4);
+// 17 places = 5 cards + a full 3×4 mosaic.
+const PEOPLE_COUNT = 24;
+const PLACES_COUNT = 17;
 const MIN_COMMENTARY_CHARS = 500;
 const MIN_PERSON_DESC_CHARS = 40;
 
@@ -47,26 +47,22 @@ const samplePlaces = (ctx: AppContext, seed: number) =>
 
 const sampleFax = async (ctx: AppContext, seed: number) => {
   const rows = await ctx.loaders.faxByFilter.load('');
-  // Only versions present in bom_xtras_fax_index — those have per-page
-  // scripture references (and therefore meaningful pages to show).
-  const indexed = await ctx.db
-    .selectFrom('bom_xtras_fax_index')
-    .select('version')
-    .distinct()
-    .execute();
-  const indexedSlugs = new Set(indexed.map((r) => String(r.version)));
+  // ANY facsimile we hold with page images — not just the verse-indexed ones.
+  // Pages carry scripture refs only for indexed editions (sampleFaxPages
+  // degrades gracefully for the rest).
   // ROBUSTNESS: the loader's order is weight-only with no tiebreak and is NOT
   // stable across calls; sort by slug so the modulo pick is deterministic.
   const sorted = rows
-    .filter((r) => !r.hide && Number(r.pages) > 0 && indexedSlugs.has(String(r.slug)))
+    .filter((r) => !r.hide && Number(r.pages) > 0)
     .sort((a, b) => String(a.slug).localeCompare(String(b.slug)));
   return sorted.length ? sorted[seed % sorted.length] : null;
 };
 
-// Two seeded pages OF THE SAMPLED FAX that carry scripture references, each
-// captioned with its first verse's reference.
+// Two seeded pages OF THE SAMPLED FAX. For verse-indexed editions the pages
+// carry a scripture reference; for the rest we show representative
+// mid-document pages with no ref (the edition may simply not be indexed).
 const sampleFaxPages = async (ctx: AppContext, seed: number) => {
-  const fax = (await sampleFax(ctx, seed)) as { slug?: string } | null;
+  const fax = (await sampleFax(ctx, seed)) as { slug?: string; pages?: number } | null;
   if (!fax?.slug) return [];
   const rows = await ctx.db
     .selectFrom('bom_xtras_fax_index')
@@ -75,27 +71,44 @@ const sampleFaxPages = async (ctx: AppContext, seed: number) => {
     .groupBy('page')
     .orderBy('page')
     .execute();
-  if (!rows.length) return [];
-  const start = seed % rows.length;
-  const picks = [rows[start], rows[(start + 1) % rows.length]]
-    .filter((r, i, a) => r && a.findIndex((x) => x?.page === r.page) === i);
-  return picks.map((r) => ({
-    page: Number(r!.page),
-    ref: generateReference([Number(r!.firstVerse)]),
-  }));
+  if (rows.length) {
+    const start = seed % rows.length;
+    const picks = [rows[start], rows[(start + 1) % rows.length]]
+      .filter((r, i, a) => r && a.findIndex((x) => x?.page === r.page) === i);
+    return picks.map((r) => ({
+      page: Number(r!.page),
+      ref: generateReference([Number(r!.firstVerse)]),
+    }));
+  }
+  // Un-indexed edition: two mid-document pages so the tile still shows content.
+  const total = Number(fax.pages) || 0;
+  if (total < 2) return [];
+  const mid = Math.min(total - 1, Math.max(2, Math.floor(total * 0.4) + (seed % 7)));
+  const pages = [mid, Math.min(total, mid + 1)].filter((v, i, a) => a.indexOf(v) === i);
+  return pages.map((p) => ({ page: p, ref: null }));
 };
 
 // A few OTHER editions (beyond the sampled one) — the fax tile lists them as
-// entry points so the sampler reads as "we hold a collection", not one book.
+// entry points so the sampler reads as "we hold a collection". Draws from the
+// FULL catalog (any edition we have on file with a cover), not just the handful
+// with page scans — the faxByFilter loader is fax=1 only, so query directly.
 const sampleFaxMore = async (ctx: AppContext, seed: number) => {
   const current = (await sampleFax(ctx, seed)) as { slug?: string } | null;
-  const rows = await ctx.loaders.faxByFilter.load('');
-  const sorted = rows
-    .filter((r) => !r.hide && Number(r.pages) > 0 && String(r.slug) !== String(current?.slug))
-    .sort((a, b) => String(a.slug).localeCompare(String(b.slug)));
-  if (!sorted.length) return [];
-  const start = seed % sorted.length;
-  return Array.from({ length: Math.min(4, sorted.length) }, (_, i) => sorted[(start + i) % sorted.length]);
+  const rows = await ctx.db
+    .selectFrom('bom_xtras_fax')
+    .select(['slug', 'title', 'pages'])
+    .where('hide', '=', 0)
+    .where('lang', '=', 'en')
+    .where('slug', 'is not', null)
+    .where(sql<boolean>`pages > 0`) // real editions with scans/covers
+    .orderBy(seededOrder('slug', seed))
+    .execute();
+  // a small RANDOM sample of other editions (the tile is a sampler, not the
+  // whole /fax catalog) — four covers alongside the featured edition's pages
+  return rows
+    .filter((r) => String(r.slug) !== String(current?.slug))
+    .slice(0, 4)
+    .map((r) => ({ slug: r.slug, title: r.title, pages: Number(r.pages) || null }));
 };
 
 // Standalone artwork for image tiles — landscape-ish pieces read best in a

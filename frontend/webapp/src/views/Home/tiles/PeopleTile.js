@@ -20,7 +20,7 @@ export default function PeopleTile({ data, seed = 0, payload }) {
   const [featured, ...rest] = data;
   const bio = flatten(featured.description);
   const faces = rest.slice(0, 11);
-  const mosaic = rest.slice(11, 20);
+  const mosaic = rest.slice(11, 23); // 12 → 3×4 fills the end card
   const scriptureOpts = getHtmlScriptureLinkParserOptions((ref) => openScripture(ref));
   
   return (
@@ -81,27 +81,21 @@ export default function PeopleTile({ data, seed = 0, payload }) {
             </Link>
           );
         })}
+        {/* end cell: a 3×4 mosaic filling the whole card (no caption) — the
+            "much more" signal into /people */}
         <Link to="/people" className="peopleFaceCard samplerCard viewAllCard" title={label("view_all")}>
-          <div className="peopleFaceImgWrap">
-            <div className="viewAllMosaic">
-              {mosaic.map((p) => (
-                <img
-                  key={p.slug}
-                  src={`${assetUrl}/people/${p.slug}`}
-                  alt=""
-                  loading="lazy"
-                  onError={(e) => (e.target.style.visibility = "hidden")}
-                />
-              ))}
-            </div>
-            <span className="peopleFaceName viewAllOverlay">{payload?.peopleCount ? `+${payload.peopleCount - data.length} ${label("people")}` : label("view_more")}</span>
+          <div className="viewAllMosaic viewAllMosaicFull">
+            {mosaic.map((p) => (
+              <img
+                key={p.slug}
+                src={`${assetUrl}/people/${p.slug}`}
+                alt=""
+                loading="lazy"
+                onError={(e) => (e.target.style.visibility = "hidden")}
+              />
+            ))}
           </div>
-          <div className="peopleFaceBody samplerCardBody">
-            <span className="peopleFaceIndexText">
-              {mosaic.slice(0, 2).map((m) => m.name).join(", ")}
-              {payload?.peopleCount ? `, +${payload.peopleCount - data.length + mosaic.length - 2}…` : "…"}
-            </span>
-          </div>
+          <span className="peopleFaceName viewAllOverlay">{payload?.peopleCount ? `+${payload.peopleCount - data.length} ${label("people")}` : label("view_more")}</span>
         </Link>
       </div>
     </div>

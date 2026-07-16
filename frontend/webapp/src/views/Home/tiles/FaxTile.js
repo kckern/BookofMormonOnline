@@ -39,14 +39,17 @@ export default function FaxTile({ data, payload }) {
                   onError={(e) => (e.target.style.display = "none")}
                 />
                 <span className="faxPageBar">
-                  <span
-                    className="faxPageBarRef"
-                    role="button"
-                    tabIndex={0}
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); openScripture(p.ref); }}
-                  >
-                    {p.ref}
-                  </span>
+                  {/* indexed editions carry a scripture ref; un-indexed just page # */}
+                  {p.ref ? (
+                    <span
+                      className="faxPageBarRef"
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); openScripture(p.ref); }}
+                    >
+                      {p.ref}
+                    </span>
+                  ) : <span />}
                   <span className="faxPageBarNum">p. {p.page}</span>
                 </span>
               </Link>
@@ -55,12 +58,14 @@ export default function FaxTile({ data, payload }) {
         </div>
       ) : null}
       {editions.length ? (
+        /* a small sample of other editions — four covers, title on hover */
         <div className="faxTileEditions">
           {editions.map((e) => (
             <Link key={e.slug} to={`/fax/${e.slug}`} className="faxTileEdition" title={e.title}>
               <img
                 src={`${assetUrl}/fax/covers/${e.slug}`}
                 alt={e.title}
+                loading="lazy"
                 onError={(ev) => (ev.target.style.visibility = "hidden")}
               />
               <span className="faxTileEditionTitle">{e.title}</span>
