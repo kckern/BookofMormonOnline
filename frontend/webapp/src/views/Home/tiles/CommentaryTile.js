@@ -59,8 +59,13 @@ export default function CommentaryTile({ data }) {
             </button>
           ) : null}
         </div>
-        {/* right column: cover, attribution, scripture ref, in-context cue */}
+        {/* right column: scripture ref ABOVE the cover, then attribution + cue */}
         <div className="commentaryTileAside">
+          {data.reference ? (
+            <span className="commentaryTileRef scripture_link" role="button" tabIndex={0} onClick={openRef}>
+              {enDash(data.reference)}
+            </span>
+          ) : null}
           {pub.source_id ? (
             <Link to={to}>
               <img
@@ -73,11 +78,6 @@ export default function CommentaryTile({ data }) {
             </Link>
           ) : null}
           {author ? <div className="commentaryTileSource">{author}</div> : null}
-          {data.reference ? (
-            <span className="commentaryTileRef scripture_link" role="button" tabIndex={0} onClick={openRef}>
-              {enDash(data.reference)}
-            </span>
-          ) : null}
           <Link to={to} className="commentaryTileMore tileMoreLink">{label("view_in_context")}</Link>
         </div>
       </div>

@@ -43,10 +43,10 @@ html[data-theme="dark"] .samplerScriptureHead { border-bottom-color: #3a3a3a; }
 .samplerScriptureHead button:hover { color: #333; }
 html[data-theme="dark"] .samplerScriptureHead button:hover { color: #fff; }
 .samplerScriptureBody {
-  padding: 0.8rem 1rem;
+  padding: 0.6rem 1rem 0.8rem;
   overflow-y: auto;
   scrollbar-width: thin;
-  min-height: 4rem;
+  min-height: 3rem;
 }
 .samplerScripturePassage p {
   margin: 0.3rem 0 0.8rem;
@@ -64,23 +64,49 @@ html[data-theme="dark"] .samplerScripturePassage p { color: #d6d6d6; }
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
-/* We reuse Read.scss's .read-content .read-section markup for exact Read
-   typography (speaker gutter, verse font, line height). Strip only the
-   section's outer "card" chrome so it sits cleanly inside the popup. */
-.samplerScriptureBody .read-section {
+/* We reuse Read.scss's .read-content .read-section markup for the Read verse
+   typography (speaker gutter, scripture font). But Read.scss's SPACING is
+   built for the full page — its selectors are 3-4 classes deep, so overrides
+   must match that specificity (prefix .samplerScriptureCard .read-content) or
+   they silently lose. Here we strip the page-scale padding/margins/justify and
+   set a tight, popup-appropriate rhythm. */
+.samplerScriptureCard .read-content .read-section {
   background: transparent;
   margin: 0;
   padding: 0;
   border-radius: 0;
 }
-.samplerScriptureBody .read-block + .read-block { margin-top: 0.8rem; }
-/* trim the Read layout's generous left margins for the compact popup, and
-   dial the verse font back a touch */
-.samplerScriptureBody .left-gutter { margin-left: 0; width: 3.6rem; padding: 0 0.6rem 0.5ex 0; }
-.samplerScriptureBody .left-gutter img { width: 3rem; height: 3.2rem; }
-.samplerScriptureBody .main-content { padding-right: 0; }
-.samplerScriptureBody .read-scripture { font-size: 1rem; line-height: 1.5; }
-html[data-theme="dark"] .samplerScriptureBody .read-scripture { color: #d6d6d6; }
+.samplerScriptureCard .read-content .read-section + .read-section { margin-top: 1rem; }
+.samplerScriptureCard .read-content .read-block { margin: 0; align-items: flex-start; }
+.samplerScriptureCard .read-content .read-block + .read-block { margin-top: 0.55rem; }
+/* speaker gutter: mirror Read's avatar size (61×64px ≈ 3.8×4rem circle), just
+   flush-left with no page margin */
+.samplerScriptureCard .read-content .read-section .read-block .left-gutter {
+  margin-left: 0;
+  width: 4rem;
+  padding: 0 0.7rem 0 0;
+}
+.samplerScriptureCard .read-content .read-section .read-block .left-gutter img { width: 3.3rem; height: 3.5rem; }
+.samplerScriptureCard .read-content .read-section .read-block .main-content { padding: 0; }
+/* verse body: mimic Read's ratio (16px / 16px = 1.0). Left-aligned instead of
+   justified (justify created rivers of whitespace in the narrow popup); a hair
+   of leading (1.12) over Read's 1.0 for readability without a loose gap. */
+.samplerScriptureCard .read-content .read-scripture {
+  font-size: 1rem;
+  line-height: 1.12;
+  text-align: left;
+  margin: 0;
+}
+.samplerScriptureCard .read-content .read-scripture + .read-scripture { margin-top: 0.5rem; }
+/* section header: smaller heading, tight to the verses; Study action inline right */
+.samplerScriptureCard .read-content .read-section .read-section-header { margin-bottom: 0.4rem; align-items: baseline; }
+.samplerScriptureCard .read-content .read-section .read-section-header h4 {
+  font-size: 1rem;
+  line-height: 1.3;
+  margin: 0 0 0 0;
+}
+.samplerScriptureCard .read-content .read-section .read-section-header p { margin: 0; padding-left: 0.5rem; }
+html[data-theme="dark"] .samplerScriptureCard .read-content .read-scripture { color: #d6d6d6; }
 .samplerScriptureLoading { color: #999; text-align: center; padding: 1rem; }
 .samplerScriptureFoot {
   display: flex;
