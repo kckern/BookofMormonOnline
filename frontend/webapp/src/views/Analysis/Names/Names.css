@@ -27,6 +27,14 @@
     padding:0
 }
 
+.nameChipRow{ display:flex; flex-wrap:wrap; gap:0.4ex; align-items:center; margin:0.4rem 0; }
+.nameChipRowLabel{ font-weight:800; font-size:0.9rem; margin-right:0.5ex; min-width:4.5rem; }
+.nameChip{ border:1px solid var(--names-border,#ccc); border-radius:999px; background:transparent; padding:0.1rem 0.7rem; font-size:0.85rem; cursor:pointer; }
+.nameChip.active{ background:#2c7fb8; border-color:#2c7fb8; color:#fff; }
+.nameChip:disabled{ opacity:0.35; cursor:default; }
+.nameChip:focus-visible{ outline:2px solid #2c7fb8; outline-offset:2px; }
+.nameChipCount{ opacity:0.65; font-size:0.75rem; }
+
 .nameFilterStatus{
     display: flex;
     align-items: center;

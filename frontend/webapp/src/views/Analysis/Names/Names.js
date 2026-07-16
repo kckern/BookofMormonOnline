@@ -45,6 +45,8 @@ function Container() {
         {t("names_intro", "Every proper name in the Book of Mormon, broken into its building blocks. Filter by shared elements to see name families, or by culture to see who used them.")}
       </p>
       <FilterBar filters={filters} setFacet={setFacet} />
+      <ChipRow facetKey="cultures" filters={filters} setFacet={setFacet} />
+      <ChipRow facetKey="types" filters={filters} setFacet={setFacet} />
       <div className="nameFilterStatus">
         <span>
           {filtered.length === names.length
@@ -73,12 +75,15 @@ function Container() {
   );
 }
 
+const MORPHEME_FACETS = ["prefix", "stems", "affix", "suffix"];
+
 function FilterBar({ filters, setFacet }) {
+  const fields = FIELD_DEFS.filter((f) => MORPHEME_FACETS.includes(f.key));
   return (
     <table className="nameform" style={{ width: "100%" }}>
       <thead>
         <tr>
-          {FIELD_DEFS.map((f) => (
+          {fields.map((f) => (
             <th key={f.key}>
               <span className="facetHeader" title={FACET_HELP[f.key]}>
                 {FACET_META[f.key].label}
@@ -90,7 +95,7 @@ function FilterBar({ filters, setFacet }) {
       </thead>
       <tbody>
         <tr>
-          {FIELD_DEFS.map((f) => (
+          {fields.map((f) => (
             <td key={f.key}>
               <FacetSelect
                 facetKey={f.key}
@@ -129,6 +134,35 @@ function FacetSelect({ facetKey, values, filters, onChange }) {
         labelledBy={meta.label}
         hasSelectAll={false}
       />
+    </div>
+  );
+}
+
+function ChipRow({ facetKey, filters, setFacet }) {
+  const meta = FACET_META[facetKey];
+  const counts = useMemo(() => facetCounts(names, filters, facetKey), [filters, facetKey]);
+  const values = filters[facetKey];
+  const toggle = (v) =>
+    setFacet(facetKey, values.includes(v) ? values.filter((x) => x !== v) : [...values, v]);
+  return (
+    <div className="nameChipRow" role="group" aria-label={meta.label}>
+      <span className="nameChipRowLabel" title={FACET_HELP[facetKey]}>{meta.label}</span>
+      {meta.options.map((v) => {
+        const count = counts.get(v) || 0;
+        const active = values.includes(v);
+        return (
+          <button
+            key={v}
+            type="button"
+            className={"nameChip" + (active ? " active" : "")}
+            disabled={!count && !active}
+            aria-pressed={active}
+            onClick={() => toggle(v)}
+          >
+            {v} <span className="nameChipCount">{count}</span>
+          </button>
+        );
+      })}
     </div>
   );
 }
