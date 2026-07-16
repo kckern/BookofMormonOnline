@@ -215,6 +215,44 @@ const sampleFaxVerse = async (ctx: AppContext, seed: number) => {
   };
 };
 
+// A verse plus its SIGNIFICANT footnote cross-references. The crossref table
+// has no topical titles — the "title" of each link is its reference string,
+// regenerated via generateReference (stored dst_ref shorthand is inconsistent).
+// GROUP BY + HAVING needs raw sql (kysely's builder types fight aggregates here).
+//
+// DATA NOTE: for type='xref' rows the "significant" marker is stored as -1
+// (not 1) — significant=1 belongs exclusively to JST/BoM/etc. types and
+// yields zero xref rows. We filter on significant = -1.
+const sampleCrossRefs = async (ctx: AppContext, seed: number) => {
+  const hub = await sql<{ src_verse_id: number }>`
+    SELECT src_verse_id FROM lds_scriptures_crossref
+    WHERE \`type\` = 'xref' AND significant = -1
+    GROUP BY src_verse_id HAVING COUNT(DISTINCT dst_verse_id) >= 2
+    ORDER BY MD5(CONCAT(src_verse_id, ':', ${seed}))
+    LIMIT 1
+  `.execute(ctx.db);
+  const src = Number(hub.rows[0]?.src_verse_id);
+  if (!src) return null;
+  const rows = await ctx.db
+    .selectFrom('lds_scriptures_crossref')
+    .select('dst_verse_id')
+    .where('src_verse_id', '=', src)
+    .where('type', '=', 'xref')
+    .where('significant', '=', -1)
+    .orderBy(seededOrder('dst_verse_id', seed))
+    .limit(8)
+    .execute();
+  const dsts = [...new Set(rows.map((r) => Number(r.dst_verse_id)))]
+    .filter((v) => v > 0 && v !== src)
+    .slice(0, 4);
+  if (dsts.length < 2) return null;
+  return {
+    srcVerseId: src,
+    srcRef: generateReference([src]),
+    refs: dsts.map((v) => ({ verseId: v, ref: generateReference([v]) })),
+  };
+};
+
 const countRows = (table: 'bom_people' | 'bom_places') => async (ctx: AppContext) => {
   const r = await ctx.db
     .selectFrom(table)
@@ -381,6 +419,7 @@ const samplers: Record<string, (ctx: AppContext, seed: number) => Promise<unknow
   faxPages: sampleFaxPages,
   faxMore: sampleFaxMore,
   faxVerse: sampleFaxVerse,
+  crossrefs: sampleCrossRefs,
   art: sampleArt,
   witnesses: sampleWitnesses,
   peopleCount: countRows('bom_people'),

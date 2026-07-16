@@ -32,8 +32,20 @@ type HomeSampler {
   witnesses: [Witness]
   notes: [Commentary]
   faxVerse: FaxVersePage
+  crossrefs: CrossRefSet
   peopleCount: Int
   placesCount: Int
+}
+
+type CrossRefSet {
+  srcRef: String
+  srcVerseId: Int
+  refs: [CrossRef]
+}
+
+type CrossRef {
+  ref: String
+  verseId: Int
 }
 
 type FaxVersePage {

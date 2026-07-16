@@ -112,6 +112,19 @@ export type ContentLink = {
   val?: Maybe<Scalars['String']['output']>;
 };
 
+export type CrossRef = {
+  __typename?: 'CrossRef';
+  ref?: Maybe<Scalars['String']['output']>;
+  verseId?: Maybe<Scalars['Int']['output']>;
+};
+
+export type CrossRefSet = {
+  __typename?: 'CrossRefSet';
+  refs?: Maybe<Array<Maybe<CrossRef>>>;
+  srcRef?: Maybe<Scalars['String']['output']>;
+  srcVerseId?: Maybe<Scalars['Int']['output']>;
+};
+
 export type Division = {
   __typename?: 'Division';
   description?: Maybe<Scalars['String']['output']>;
@@ -292,6 +305,7 @@ export type HomeSampler = {
   commentaries?: Maybe<Array<Maybe<Commentary>>>;
   commentary?: Maybe<Commentary>;
   contents?: Maybe<Division>;
+  crossrefs?: Maybe<CrossRefSet>;
   fax?: Maybe<Fax>;
   faxMore?: Maybe<Array<Maybe<Fax>>>;
   faxPages?: Maybe<Array<Maybe<FaxPageRef>>>;
@@ -1996,6 +2010,8 @@ export type ResolversTypes = {
   Commentary: ResolverTypeWrapper<Partial<Commentary>>;
   Conn: ResolverTypeWrapper<Partial<Conn>>;
   ContentLink: ResolverTypeWrapper<Partial<ContentLink>>;
+  CrossRef: ResolverTypeWrapper<Partial<CrossRef>>;
+  CrossRefSet: ResolverTypeWrapper<Partial<CrossRefSet>>;
   Division: ResolverTypeWrapper<Partial<Division>>;
   Event: ResolverTypeWrapper<Partial<Event>>;
   EventGrid: ResolverTypeWrapper<Partial<EventGrid>>;
@@ -2112,6 +2128,8 @@ export type ResolversParentTypes = {
   Commentary: Partial<Commentary>;
   Conn: Partial<Conn>;
   ContentLink: Partial<ContentLink>;
+  CrossRef: Partial<CrossRef>;
+  CrossRefSet: Partial<CrossRefSet>;
   Division: Partial<Division>;
   Event: Partial<Event>;
   EventGrid: Partial<EventGrid>;
@@ -2308,6 +2326,19 @@ export type ContentLinkResolvers<ContextType = AppContext, ParentType extends Re
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type CrossRefResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['CrossRef'] = ResolversParentTypes['CrossRef']> = {
+  ref?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  verseId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type CrossRefSetResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['CrossRefSet'] = ResolversParentTypes['CrossRefSet']> = {
+  refs?: Resolver<Maybe<Array<Maybe<ResolversTypes['CrossRef']>>>, ParentType, ContextType>;
+  srcRef?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  srcVerseId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type DivisionResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['Division'] = ResolversParentTypes['Division']> = {
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   guid?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -2466,6 +2497,7 @@ export type HomeSamplerResolvers<ContextType = AppContext, ParentType extends Re
   commentaries?: Resolver<Maybe<Array<Maybe<ResolversTypes['Commentary']>>>, ParentType, ContextType>;
   commentary?: Resolver<Maybe<ResolversTypes['Commentary']>, ParentType, ContextType>;
   contents?: Resolver<Maybe<ResolversTypes['Division']>, ParentType, ContextType>;
+  crossrefs?: Resolver<Maybe<ResolversTypes['CrossRefSet']>, ParentType, ContextType>;
   fax?: Resolver<Maybe<ResolversTypes['Fax']>, ParentType, ContextType>;
   faxMore?: Resolver<Maybe<Array<Maybe<ResolversTypes['Fax']>>>, ParentType, ContextType>;
   faxPages?: Resolver<Maybe<Array<Maybe<ResolversTypes['FaxPageRef']>>>, ParentType, ContextType>;
@@ -3460,6 +3492,8 @@ export type Resolvers<ContextType = AppContext> = {
   Commentary?: CommentaryResolvers<ContextType>;
   Conn?: ConnResolvers<ContextType>;
   ContentLink?: ContentLinkResolvers<ContextType>;
+  CrossRef?: CrossRefResolvers<ContextType>;
+  CrossRefSet?: CrossRefSetResolvers<ContextType>;
   Division?: DivisionResolvers<ContextType>;
   Event?: EventResolvers<ContextType>;
   EventGrid?: EventGridResolvers<ContextType>;

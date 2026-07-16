@@ -113,3 +113,42 @@ describe('homesampler.faxVerse', () => {
     expect(`${a.faxVerse!.version}:${a.faxVerse!.page}`).not.toBe(`${c.faxVerse!.version}:${c.faxVerse!.page}`);
   });
 });
+
+// ─── crossrefs ────────────────────────────────────────────────────────────────
+
+type CrossRefsPayload = {
+  crossrefs: {
+    srcRef: string; srcVerseId: number;
+    refs: { ref: string; verseId: number }[];
+  } | null;
+};
+const CROSSREFS_SEL = `crossrefs { srcRef srcVerseId refs { ref verseId } }`;
+
+describe('homesampler.crossrefs', () => {
+  it('returns a source verse with 2-4 significant cross-references', async () => {
+    const s = await exec<CrossRefsPayload>(CROSSREFS_SEL, 33003);
+    expect(s.crossrefs).toBeTruthy();
+    expect(s.crossrefs!.srcVerseId).toBeGreaterThan(0);
+    expect(s.crossrefs!.srcRef).toBeTruthy();
+    expect(s.crossrefs!.refs.length).toBeGreaterThanOrEqual(2);
+    expect(s.crossrefs!.refs.length).toBeLessThanOrEqual(4);
+    for (const r of s.crossrefs!.refs) {
+      expect(r.verseId).toBeGreaterThan(0);
+      expect(r.ref).toBeTruthy();
+      expect(r.verseId).not.toBe(s.crossrefs!.srcVerseId); // no self-reference
+    }
+    // no duplicate destinations
+    const ids = s.crossrefs!.refs.map((r) => r.verseId);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('is deterministic per seed and varies across seeds', async () => {
+    const [a, b, c] = await Promise.all([
+      exec<CrossRefsPayload>(CROSSREFS_SEL, 999),
+      exec<CrossRefsPayload>(CROSSREFS_SEL, 999),
+      exec<CrossRefsPayload>(CROSSREFS_SEL, 1000),
+    ]);
+    expect(a.crossrefs!.srcVerseId).toBe(b.crossrefs!.srcVerseId);
+    expect(a.crossrefs!.srcVerseId).not.toBe(c.crossrefs!.srcVerseId);
+  });
+});
