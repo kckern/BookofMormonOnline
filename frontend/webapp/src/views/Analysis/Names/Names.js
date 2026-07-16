@@ -41,6 +41,10 @@ function Container() {
   const [detailName, setDetailName] = useState(() => new URLSearchParams(location.search).get("name"));
   const [entities, setEntities] = useState({ people: null, places: null });
   const [showStructure, setShowStructure] = useState(true);
+  // Filters start open on desktop, collapsed on narrow screens.
+  const [filtersOpen, setFiltersOpen] = useState(
+    () => typeof window.matchMedia !== "function" || window.matchMedia("(min-width: 768px)").matches
+  );
   useEffect(() => { document.title = "Names | " + label("home_title"); }, []);
 
   useEffect(() => {
@@ -62,6 +66,7 @@ function Container() {
 
   const filtered = useMemo(() => applyFilters(names, filters), [filters]);
   const hasSelection = FIELD_DEFS.some((f) => filters[f.key].length > 0);
+  const activeCount = FIELD_DEFS.reduce((n, f) => n + filters[f.key].length, 0);
   const setFacet = (key, values) => setFilters((prev) => ({ ...prev, [key]: values }));
 
   const pickMorpheme = (role, entry) => {
@@ -76,9 +81,14 @@ function Container() {
       <p className="namesIntro">
         {t("names_intro", "Every proper name in the Book of Mormon, broken into its building blocks. Filter by shared elements to see name families, or by culture to see who used them.")}
       </p>
-      <FilterBar filters={filters} setFacet={setFacet} />
-      <ChipRow facetKey="cultures" filters={filters} setFacet={setFacet} />
-      <ChipRow facetKey="types" filters={filters} setFacet={setFacet} />
+      <details className="nameFilters" open={filtersOpen} onToggle={(e) => setFiltersOpen(e.target.open)}>
+        <summary className="nameFiltersSummary">
+          {t("names_filters", "Filters")}{activeCount ? ` (${activeCount})` : ""}
+        </summary>
+        <FilterBar filters={filters} setFacet={setFacet} />
+        <ChipRow facetKey="cultures" filters={filters} setFacet={setFacet} />
+        <ChipRow facetKey="types" filters={filters} setFacet={setFacet} />
+      </details>
       <div className="nameFilterStatus">
         <span>
           {filtered.length === names.length
@@ -148,7 +158,7 @@ const MORPHEME_FACETS = ["prefix", "stems", "affix", "suffix"];
 function FilterBar({ filters, setFacet }) {
   const fields = FIELD_DEFS.filter((f) => MORPHEME_FACETS.includes(f.key));
   return (
-    <table className="nameform" style={{ width: "100%" }}>
+    <table className="nameform">
       <thead>
         <tr>
           {fields.map((f) => (

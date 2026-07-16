@@ -27,8 +27,29 @@
 
 }
 
+.nameform{
+    width: 100%;
+}
+
 .nameform td{
     padding:0
+}
+
+.nameFiltersSummary{
+    display: none;
+    font-weight: 800;
+    cursor: pointer;
+    padding: 0.4rem 0;
+}
+
+@media (max-width: 767px){
+    .nameFiltersSummary{ display: list-item; }
+    .nameform, .nameform thead, .nameform tbody, .nameform tr, .nameform th, .nameform td{
+        display: block;
+        text-align: left;
+    }
+    .nameform th{ font-size: 0.9rem; margin-top: 0.4rem; }
+    .namesView h3.title{ white-space: normal; font-size: 1.7rem; }
 }
 
 .nameDetail{ border:1px solid var(--names-border,#ccc); border-radius:8px; padding:0.75rem 1rem; margin-bottom:1rem; }
