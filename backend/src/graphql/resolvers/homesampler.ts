@@ -331,6 +331,69 @@ const sampleRelationship = async (ctx: AppContext, seed: number) => {
   };
 };
 
+// One scripture journey for the map-story tile: seeded story pick among stories
+// whose moves ALL have start+end coords on the FARMS 'internal' map (the tile
+// renders that projection — a partially-coordinated story would draw a broken
+// path). Join shape mirrors storiesByMapSlug in loaders/maps.ts.
+const INTERNAL_MAP = 'internal';
+const sampleMapStory = async (ctx: AppContext, seed: number) => {
+  const hub = await sql<{ guid: string }>`
+    SELECT s.guid AS guid
+    FROM bom_map_story s
+    INNER JOIN bom_map_move m ON m.parent = s.guid
+    INNER JOIN bom_places sp ON sp.slug = m.start
+    INNER JOIN bom_places_coords spc ON spc.guid = sp.guid AND spc.map = ${INTERNAL_MAP}
+    INNER JOIN bom_places ep ON ep.slug = m.end
+    INNER JOIN bom_places_coords epc ON epc.guid = ep.guid AND epc.map = ${INTERNAL_MAP}
+    GROUP BY s.guid HAVING COUNT(*) >= 2
+    ORDER BY MD5(CONCAT(s.guid, ':', ${seed}))
+    LIMIT 1
+  `.execute(ctx.db);
+  const guid = hub.rows[0]?.guid;
+  if (!guid) return null;
+  const rows = await ctx.db
+    .selectFrom('bom_map_move as m')
+    .innerJoin('bom_map_story as s', 's.guid', 'm.parent')
+    .innerJoin('bom_places as sp', 'sp.slug', 'm.start')
+    .innerJoin('bom_places_coords as spc', (join) =>
+      join.onRef('spc.guid', '=', 'sp.guid').on('spc.map', '=', INTERNAL_MAP),
+    )
+    .innerJoin('bom_places as ep', 'ep.slug', 'm.end')
+    .innerJoin('bom_places_coords as epc', (join) =>
+      join.onRef('epc.guid', '=', 'ep.guid').on('epc.map', '=', INTERNAL_MAP),
+    )
+    .select([
+      's.slug as storySlug', 's.title as storyTitle', 's.description as storyDescription',
+      'm.seq', 'm.start', 'm.end', 'm.travelers', 'm.description as moveDescription',
+      'm.duration', 'm.ref',
+      'spc.lat as startLat', 'spc.lng as startLng',
+      'epc.lat as endLat', 'epc.lng as endLng',
+    ])
+    .where('s.guid', '=', guid)
+    .orderBy('m.seq', 'asc')
+    .execute();
+  if (rows.length < 2) return null;
+  const first = rows[0]!;
+  return {
+    slug: first.storySlug,
+    title: first.storyTitle,
+    description: first.storyDescription ?? null,
+    moves: rows.map((r) => ({
+      seq: Number(r.seq),
+      start: r.start,
+      end: r.end,
+      travelers: r.travelers ?? null,
+      description: r.moveDescription ?? null,
+      duration: r.duration ?? null,
+      ref: r.ref ?? null,
+      startLat: Number(r.startLat),
+      startLng: Number(r.startLng),
+      endLat: Number(r.endLat),
+      endLng: Number(r.endLng),
+    })),
+  };
+};
+
 const countRows = (table: 'bom_people' | 'bom_places') => async (ctx: AppContext) => {
   const r = await ctx.db
     .selectFrom(table)
@@ -499,6 +562,7 @@ const samplers: Record<string, (ctx: AppContext, seed: number) => Promise<unknow
   faxVerse: sampleFaxVerse,
   crossrefs: sampleCrossRefs,
   relationship: sampleRelationship,
+  mapstory: sampleMapStory,
   art: sampleArt,
   witnesses: sampleWitnesses,
   peopleCount: countRows('bom_people'),

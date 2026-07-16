@@ -311,6 +311,7 @@ export type HomeSampler = {
   faxPages?: Maybe<Array<Maybe<FaxPageRef>>>;
   faxVerse?: Maybe<FaxVersePage>;
   history?: Maybe<HistoricalDocument>;
+  mapstory?: Maybe<MapStorySample>;
   notes?: Maybe<Array<Maybe<Commentary>>>;
   people?: Maybe<Array<Maybe<People>>>;
   peopleCount?: Maybe<Scalars['Int']['output']>;
@@ -417,11 +418,34 @@ export type MapMove = {
   verse_ids?: Maybe<Array<Maybe<Scalars['Int']['output']>>>;
 };
 
+export type MapMoveSample = {
+  __typename?: 'MapMoveSample';
+  description?: Maybe<Scalars['String']['output']>;
+  duration?: Maybe<Scalars['String']['output']>;
+  end?: Maybe<Scalars['String']['output']>;
+  endLat?: Maybe<Scalars['Float']['output']>;
+  endLng?: Maybe<Scalars['Float']['output']>;
+  ref?: Maybe<Scalars['String']['output']>;
+  seq?: Maybe<Scalars['Int']['output']>;
+  start?: Maybe<Scalars['String']['output']>;
+  startLat?: Maybe<Scalars['Float']['output']>;
+  startLng?: Maybe<Scalars['Float']['output']>;
+  travelers?: Maybe<Scalars['String']['output']>;
+};
+
 export type MapStory = {
   __typename?: 'MapStory';
   description?: Maybe<Scalars['String']['output']>;
   guid?: Maybe<Scalars['String']['output']>;
   moves?: Maybe<Array<Maybe<MapMove>>>;
+  slug?: Maybe<Scalars['String']['output']>;
+  title?: Maybe<Scalars['String']['output']>;
+};
+
+export type MapStorySample = {
+  __typename?: 'MapStorySample';
+  description?: Maybe<Scalars['String']['output']>;
+  moves?: Maybe<Array<Maybe<MapMoveSample>>>;
   slug?: Maybe<Scalars['String']['output']>;
   title?: Maybe<Scalars['String']['output']>;
 };
@@ -2058,7 +2082,9 @@ export type ResolversTypes = {
   LogResult: ResolverTypeWrapper<Partial<LogResult>>;
   Map: ResolverTypeWrapper<Partial<Map>>;
   MapMove: ResolverTypeWrapper<Partial<MapMove>>;
+  MapMoveSample: ResolverTypeWrapper<Partial<MapMoveSample>>;
   MapStory: ResolverTypeWrapper<Partial<MapStory>>;
+  MapStorySample: ResolverTypeWrapper<Partial<MapStorySample>>;
   Markdown: ResolverTypeWrapper<Partial<Markdown>>;
   Menu: ResolverTypeWrapper<Partial<Menu>>;
   Message: ResolverTypeWrapper<Partial<Message>>;
@@ -2178,7 +2204,9 @@ export type ResolversParentTypes = {
   LogResult: Partial<LogResult>;
   Map: Partial<Map>;
   MapMove: Partial<MapMove>;
+  MapMoveSample: Partial<MapMoveSample>;
   MapStory: Partial<MapStory>;
+  MapStorySample: Partial<MapStorySample>;
   Markdown: Partial<Markdown>;
   Menu: Partial<Menu>;
   Message: Partial<Message>;
@@ -2528,6 +2556,7 @@ export type HomeSamplerResolvers<ContextType = AppContext, ParentType extends Re
   faxPages?: Resolver<Maybe<Array<Maybe<ResolversTypes['FaxPageRef']>>>, ParentType, ContextType>;
   faxVerse?: Resolver<Maybe<ResolversTypes['FaxVersePage']>, ParentType, ContextType>;
   history?: Resolver<Maybe<ResolversTypes['HistoricalDocument']>, ParentType, ContextType>;
+  mapstory?: Resolver<Maybe<ResolversTypes['MapStorySample']>, ParentType, ContextType>;
   notes?: Resolver<Maybe<Array<Maybe<ResolversTypes['Commentary']>>>, ParentType, ContextType>;
   people?: Resolver<Maybe<Array<Maybe<ResolversTypes['People']>>>, ParentType, ContextType>;
   peopleCount?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
@@ -2639,10 +2668,33 @@ export type MapMoveResolvers<ContextType = AppContext, ParentType extends Resolv
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type MapMoveSampleResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['MapMoveSample'] = ResolversParentTypes['MapMoveSample']> = {
+  description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  duration?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  end?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  endLat?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  endLng?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  ref?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  seq?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  start?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  startLat?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  startLng?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  travelers?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type MapStoryResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['MapStory'] = ResolversParentTypes['MapStory']> = {
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   guid?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   moves?: Resolver<Maybe<Array<Maybe<ResolversTypes['MapMove']>>>, ParentType, ContextType>;
+  slug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  title?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type MapStorySampleResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['MapStorySample'] = ResolversParentTypes['MapStorySample']> = {
+  description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  moves?: Resolver<Maybe<Array<Maybe<ResolversTypes['MapMoveSample']>>>, ParentType, ContextType>;
   slug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   title?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
@@ -3563,7 +3615,9 @@ export type Resolvers<ContextType = AppContext> = {
   LogResult?: LogResultResolvers<ContextType>;
   Map?: MapResolvers<ContextType>;
   MapMove?: MapMoveResolvers<ContextType>;
+  MapMoveSample?: MapMoveSampleResolvers<ContextType>;
   MapStory?: MapStoryResolvers<ContextType>;
+  MapStorySample?: MapStorySampleResolvers<ContextType>;
   Markdown?: MarkdownResolvers<ContextType>;
   Menu?: MenuResolvers<ContextType>;
   Message?: MessageResolvers<ContextType>;

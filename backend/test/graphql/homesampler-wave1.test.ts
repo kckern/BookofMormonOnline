@@ -196,3 +196,47 @@ describe('homesampler.relationship', () => {
       .not.toBe(`${c.relationship!.hubType}:${c.relationship!.hubSlug}`);
   });
 });
+
+// ─── mapstory ─────────────────────────────────────────────────────────────────
+
+type MapStoryPayload = {
+  mapstory: {
+    slug: string; title: string; description: string | null;
+    moves: {
+      seq: number; start: string; end: string; travelers: string | null;
+      description: string | null; duration: string | null; ref: string | null;
+      startLat: number; startLng: number; endLat: number; endLng: number;
+    }[];
+  } | null;
+};
+const MAPSTORY_SEL = `mapstory { slug title description moves { seq start end travelers description duration ref startLat startLng endLat endLng } }`;
+
+describe('homesampler.mapstory', () => {
+  it('returns one story with >=2 ordered, coordinated moves', async () => {
+    const s = await exec<MapStoryPayload>(MAPSTORY_SEL, 35005);
+    expect(s.mapstory).toBeTruthy();
+    const m = s.mapstory!;
+    expect(m.slug).toBeTruthy();
+    expect(m.title).toBeTruthy();
+    expect(m.moves.length).toBeGreaterThanOrEqual(2);
+    const seqs = m.moves.map((x) => x.seq);
+    expect([...seqs].sort((a, b) => a - b)).toEqual(seqs); // ordered by seq
+    for (const mv of m.moves) {
+      expect(mv.start).toBeTruthy();
+      expect(mv.end).toBeTruthy();
+      expect(Number.isFinite(mv.startLat)).toBe(true);
+      expect(Number.isFinite(mv.startLng)).toBe(true);
+      expect(Number.isFinite(mv.endLat)).toBe(true);
+      expect(Number.isFinite(mv.endLng)).toBe(true);
+    }
+  });
+
+  it('is deterministic per seed', async () => {
+    const [a, b] = await Promise.all([
+      exec<MapStoryPayload>(MAPSTORY_SEL, 1212),
+      exec<MapStoryPayload>(MAPSTORY_SEL, 1212),
+    ]);
+    expect(a.mapstory!.slug).toBe(b.mapstory!.slug);
+    expect(a.mapstory!.moves.length).toBe(b.mapstory!.moves.length);
+  });
+});
