@@ -31,8 +31,18 @@ type HomeSampler {
   art: [ArtImage]
   witnesses: [Witness]
   notes: [Commentary]
+  faxVerse: FaxVersePage
   peopleCount: Int
   placesCount: Int
+}
+
+type FaxVersePage {
+  version: String
+  title: String
+  format: String
+  page: Int
+  verseId: Int
+  ref: String
 }
 
 type FaxPageRef {

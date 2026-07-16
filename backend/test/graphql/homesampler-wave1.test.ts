@@ -81,3 +81,35 @@ describe('homesampler.notes', () => {
     expect(a.notes!.map((n) => n.id)).not.toEqual(c.notes!.map((n) => n.id));
   }, 15000);
 });
+
+// ─── faxVerse ─────────────────────────────────────────────────────────────────
+
+type FaxVersePayload = {
+  faxVerse: {
+    version: string; title: string | null; format: string;
+    page: number; verseId: number; ref: string;
+  } | null;
+};
+const FAXVERSE_SEL = `faxVerse { version title format page verseId ref }`;
+
+describe('homesampler.faxVerse', () => {
+  it('returns one verse-anchored facsimile page', async () => {
+    const s = await exec<FaxVersePayload>(FAXVERSE_SEL, 32002);
+    expect(s.faxVerse).toBeTruthy();
+    expect(s.faxVerse!.version).toBeTruthy();
+    expect(s.faxVerse!.page).toBeGreaterThan(0);
+    expect(s.faxVerse!.verseId).toBeGreaterThan(0);
+    expect(s.faxVerse!.ref).toBeTruthy();
+    expect(s.faxVerse!.format).toBeTruthy();
+  });
+
+  it('is deterministic per seed and varies across seeds', async () => {
+    const [a, b, c] = await Promise.all([
+      exec<FaxVersePayload>(FAXVERSE_SEL, 888),
+      exec<FaxVersePayload>(FAXVERSE_SEL, 888),
+      exec<FaxVersePayload>(FAXVERSE_SEL, 889),
+    ]);
+    expect(`${a.faxVerse!.version}:${a.faxVerse!.page}`).toBe(`${b.faxVerse!.version}:${b.faxVerse!.page}`);
+    expect(`${a.faxVerse!.version}:${a.faxVerse!.page}`).not.toBe(`${c.faxVerse!.version}:${c.faxVerse!.page}`);
+  });
+});

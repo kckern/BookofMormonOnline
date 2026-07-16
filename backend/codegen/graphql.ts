@@ -213,6 +213,16 @@ export type FaxPageRef = {
   ref?: Maybe<Scalars['String']['output']>;
 };
 
+export type FaxVersePage = {
+  __typename?: 'FaxVersePage';
+  format?: Maybe<Scalars['String']['output']>;
+  page?: Maybe<Scalars['Int']['output']>;
+  ref?: Maybe<Scalars['String']['output']>;
+  title?: Maybe<Scalars['String']['output']>;
+  verseId?: Maybe<Scalars['Int']['output']>;
+  version?: Maybe<Scalars['String']['output']>;
+};
+
 export type HighlightRange = {
   __typename?: 'HighlightRange';
   end?: Maybe<Scalars['Int']['output']>;
@@ -285,6 +295,7 @@ export type HomeSampler = {
   fax?: Maybe<Fax>;
   faxMore?: Maybe<Array<Maybe<Fax>>>;
   faxPages?: Maybe<Array<Maybe<FaxPageRef>>>;
+  faxVerse?: Maybe<FaxVersePage>;
   history?: Maybe<HistoricalDocument>;
   notes?: Maybe<Array<Maybe<Commentary>>>;
   people?: Maybe<Array<Maybe<People>>>;
@@ -1991,6 +2002,7 @@ export type ResolversTypes = {
   Fax: ResolverTypeWrapper<Partial<Fax>>;
   FaxIndex: ResolverTypeWrapper<Partial<FaxIndex>>;
   FaxPageRef: ResolverTypeWrapper<Partial<FaxPageRef>>;
+  FaxVersePage: ResolverTypeWrapper<Partial<FaxVersePage>>;
   Float: ResolverTypeWrapper<Partial<Scalars['Float']['output']>>;
   HighlightRange: ResolverTypeWrapper<Partial<HighlightRange>>;
   HistoricalDocument: ResolverTypeWrapper<Partial<HistoricalDocument>>;
@@ -2106,6 +2118,7 @@ export type ResolversParentTypes = {
   Fax: Partial<Fax>;
   FaxIndex: Partial<FaxIndex>;
   FaxPageRef: Partial<FaxPageRef>;
+  FaxVersePage: Partial<FaxVersePage>;
   Float: Partial<Scalars['Float']['output']>;
   HighlightRange: Partial<HighlightRange>;
   HistoricalDocument: Partial<HistoricalDocument>;
@@ -2375,6 +2388,16 @@ export type FaxPageRefResolvers<ContextType = AppContext, ParentType extends Res
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type FaxVersePageResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['FaxVersePage'] = ResolversParentTypes['FaxVersePage']> = {
+  format?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  page?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  ref?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  title?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  verseId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  version?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type HighlightRangeResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['HighlightRange'] = ResolversParentTypes['HighlightRange']> = {
   end?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   start?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
@@ -2446,6 +2469,7 @@ export type HomeSamplerResolvers<ContextType = AppContext, ParentType extends Re
   fax?: Resolver<Maybe<ResolversTypes['Fax']>, ParentType, ContextType>;
   faxMore?: Resolver<Maybe<Array<Maybe<ResolversTypes['Fax']>>>, ParentType, ContextType>;
   faxPages?: Resolver<Maybe<Array<Maybe<ResolversTypes['FaxPageRef']>>>, ParentType, ContextType>;
+  faxVerse?: Resolver<Maybe<ResolversTypes['FaxVersePage']>, ParentType, ContextType>;
   history?: Resolver<Maybe<ResolversTypes['HistoricalDocument']>, ParentType, ContextType>;
   notes?: Resolver<Maybe<Array<Maybe<ResolversTypes['Commentary']>>>, ParentType, ContextType>;
   people?: Resolver<Maybe<Array<Maybe<ResolversTypes['People']>>>, ParentType, ContextType>;
@@ -3442,6 +3466,7 @@ export type Resolvers<ContextType = AppContext> = {
   Fax?: FaxResolvers<ContextType>;
   FaxIndex?: FaxIndexResolvers<ContextType>;
   FaxPageRef?: FaxPageRefResolvers<ContextType>;
+  FaxVersePage?: FaxVersePageResolvers<ContextType>;
   HighlightRange?: HighlightRangeResolvers<ContextType>;
   HistoricalDocument?: HistoricalDocumentResolvers<ContextType>;
   HomeFeed?: HomeFeedResolvers<ContextType>;

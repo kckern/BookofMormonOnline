@@ -189,6 +189,32 @@ const sampleWitnesses = async (ctx: AppContext, seed: number) => {
   });
 };
 
+// One facsimile page anchored to the verse it depicts — the inverse framing of
+// the fax tile ("the page for THIS verse", not "this edition"). Seeded over the
+// whole verse index across visible editions.
+const sampleFaxVerse = async (ctx: AppContext, seed: number) => {
+  const rows = await ctx.db
+    .selectFrom('bom_xtras_fax_index as i')
+    .innerJoin('bom_xtras_fax as f', 'f.slug', 'i.version')
+    .select(['i.version as version', 'i.page as page', 'i.verse_id as verseId', 'f.title as title', 'f.format as format'])
+    .where('f.hide', '=', 0)
+    .where('i.verse_id', 'is not', null)
+    .orderBy(sql`MD5(CONCAT(${sql.ref('i.version')}, ':', ${sql.ref('i.page')}, ':', ${seed}))`)
+    .limit(1)
+    .execute();
+  const r = rows[0];
+  if (!r) return null;
+  const verseId = Number(r.verseId);
+  return {
+    version: String(r.version),
+    title: r.title ?? null,
+    format: r.format || 'jpg',
+    page: Number(r.page),
+    verseId,
+    ref: generateReference([verseId]),
+  };
+};
+
 const countRows = (table: 'bom_people' | 'bom_places') => async (ctx: AppContext) => {
   const r = await ctx.db
     .selectFrom(table)
@@ -354,6 +380,7 @@ const samplers: Record<string, (ctx: AppContext, seed: number) => Promise<unknow
   text: sampleText,
   faxPages: sampleFaxPages,
   faxMore: sampleFaxMore,
+  faxVerse: sampleFaxVerse,
   art: sampleArt,
   witnesses: sampleWitnesses,
   peopleCount: countRows('bom_people'),
