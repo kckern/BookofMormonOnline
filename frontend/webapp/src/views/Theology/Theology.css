@@ -1,4 +1,174 @@
-.theologyPlaceholder { display: flex; align-items: center; justify-content: center; min-height: 60vh; }
-.theologyInner { text-align: center; opacity: 0.8; }
-.theologyInner h2 { font-weight: 800; margin-bottom: 0.5rem; }
-.theologyComingSoon { font-size: 1.1rem; color: #888; }
+/* Theology view — interactive framework scaffold.
+   Palette pulled from the app's existing slate/blue tones. */
+
+.theologyView {
+  --slate: #323b4d;
+  --slate-2: #3a3a3a;
+  --ink: #2a2a2a;
+  --line: #c4c4c4;
+  --blue: #345496;
+  --blue-lt: #93c6ef;
+  --paper: #f7f7f4;
+  --paper-2: #eef0ef;
+  --life: #6aa84f;
+  --death: #b0413e;
+  --gather: #345496;
+  --scatter: #9a7d3a;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1rem 1.25rem 2rem;
+  color: var(--ink);
+}
+
+/* header */
+.theologyHeader h2 { font-weight: 800; margin-bottom: 0.15rem; }
+.theologySub { color: #666; font-size: 0.92rem; margin-bottom: 0.75rem; }
+.theologyScaffoldTag {
+  display: inline-block; margin-left: 0.6rem; padding: 0.1rem 0.5rem;
+  background: #fff4d6; color: #8a6d1f; border: 1px solid #e6d3a0;
+  border-radius: 999px; font-size: 0.72rem; letter-spacing: 0.02em; vertical-align: middle;
+}
+
+/* stage: map + panel side by side */
+.theologyStage { display: flex; gap: 1rem; align-items: stretch; }
+.theologyMapWrap { position: relative; flex: 1 1 auto; min-width: 0; }
+.theologyPanel { flex: 0 0 320px; }
+
+@media (max-width: 900px) {
+  .theologyStage { flex-direction: column; }
+  .theologyPanel { flex-basis: auto; }
+}
+
+/* --- the SVG map --- */
+.theologyMap {
+  width: 100%; height: auto; display: block;
+  background: var(--paper);
+  border: 1px solid var(--line); border-radius: 8px;
+  user-select: none;
+}
+
+/* quadrants */
+.theologyQuad rect { fill: transparent; stroke: transparent; transition: fill 0.15s; cursor: pointer; }
+.theologyQuad:hover rect { fill: rgba(52, 84, 150, 0.05); }
+.theologyQuad.is-selected rect { fill: rgba(52, 84, 150, 0.09); stroke: var(--blue); stroke-dasharray: 3 3; }
+.theologyQuad.kind-absorbing-stable:hover rect { fill: rgba(106, 168, 79, 0.09); }
+.theologyQuad.kind-absorbing-static:hover rect { fill: rgba(176, 65, 62, 0.08); }
+.theologyQuad.kind-metastable:hover rect { fill: rgba(154, 125, 58, 0.10); }
+.theologyQuadLabel {
+  fill: #8a8a8a; font-size: 15px; font-weight: 700; text-anchor: middle;
+  letter-spacing: 0.02em; pointer-events: none; text-transform: uppercase; opacity: 0.7;
+}
+
+/* axes */
+.theologyAxis line { stroke: var(--slate); stroke-width: 1.5; opacity: 0.55; }
+.theologyArrowHead { fill: none; stroke: var(--slate); stroke-width: 1.3; opacity: 0.7; }
+.theologyAxisEnd { fill: var(--slate); font-size: 12px; font-weight: 600; opacity: 0.8; }
+
+/* funnel (inverted triangle + ascent arm) */
+.theologyFunnelTri { fill: rgba(52, 84, 150, 0.06); stroke: var(--blue); stroke-width: 1; stroke-dasharray: 4 3; opacity: 0.8; }
+.theologyFunnelAscent { fill: none; stroke: var(--life); stroke-width: 2; stroke-dasharray: 6 4; opacity: 0.75; }
+.theologyFunnelLabel { fill: var(--blue); font-size: 11px; font-style: italic; opacity: 0.7; }
+
+/* nodes */
+.theologyNode { cursor: pointer; }
+.theologyNode circle { fill: #fff; stroke: var(--slate); stroke-width: 2; transition: r 0.1s, stroke 0.1s; }
+.theologyNode .theologyNodeLabel { fill: var(--ink); font-size: 11px; font-weight: 600; pointer-events: none; }
+.theologyNode.node-pole circle { stroke: var(--slate); stroke-width: 2.5; }
+.theologyNode.node-terminus circle { fill: var(--slate); stroke: var(--slate); }
+.theologyNode.node-threshold circle { fill: var(--blue-lt); stroke: var(--blue); }
+.theologyNode.node-vertex circle { fill: #fff; stroke: var(--blue); }
+.theologyNode.is-hovered circle { stroke: var(--blue); }
+.theologyNode.is-selected circle { fill: var(--blue); stroke: var(--blue); }
+.theologyNode.is-selected .theologyNodeLabel { fill: var(--blue); font-weight: 800; }
+
+/* tooltip */
+.theologyTooltip {
+  position: absolute; pointer-events: none; z-index: 20;
+  max-width: 240px; padding: 0.5rem 0.65rem;
+  background: var(--slate); color: #fff; border-radius: 6px;
+  font-size: 0.8rem; box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+}
+.theologyTooltip strong { display: inline; margin-right: 0.4rem; }
+.theologyTooltipType { font-size: 0.68rem; opacity: 0.7; text-transform: uppercase; letter-spacing: 0.03em; }
+.theologyTooltip p { margin: 0.3rem 0 0; opacity: 0.92; }
+
+/* --- right panel --- */
+.theologyInfo {
+  position: relative;
+  background: #fff; border: 1px solid var(--line); border-radius: 8px;
+  padding: 1rem 1.1rem; height: 100%;
+}
+.theologyInfoEmpty { background: var(--paper-2); }
+.theologyClose {
+  position: absolute; top: 0.5rem; right: 0.6rem;
+  border: none; background: none; font-size: 1.3rem; line-height: 1;
+  color: #999; cursor: pointer;
+}
+.theologyClose:hover { color: var(--ink); }
+.theologyInfoType {
+  display: inline-block; font-size: 0.7rem; text-transform: uppercase;
+  letter-spacing: 0.04em; color: var(--blue); font-weight: 700;
+}
+.theologyInfo h3 { font-weight: 800; margin: 0.2rem 0 0.4rem; }
+.theologyInfoOneLiner { font-size: 0.9rem; color: #444; margin-bottom: 0.8rem; }
+
+.theologyInfoMeta { display: grid; grid-template-columns: auto 1fr; gap: 0.3rem 0.7rem; margin: 0 0 0.8rem; font-size: 0.85rem; }
+.theologyInfoMeta dt { font-weight: 700; color: #777; }
+.theologyInfoMeta dd { margin: 0; }
+.theologyCount {
+  display: inline-block; margin-right: 0.4rem; padding: 0.05rem 0.45rem;
+  background: var(--paper-2); border-radius: 999px; font-size: 0.75rem; color: #555;
+}
+
+.theologyInfoSection { margin-top: 0.8rem; }
+.theologyInfoSection h4 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; color: #888; margin-bottom: 0.4rem; }
+
+.theologyChips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.theologyChip {
+  border: 1px solid var(--line); background: #fff; color: var(--blue);
+  border-radius: 999px; padding: 0.12rem 0.6rem; font-size: 0.78rem; cursor: pointer;
+}
+.theologyChip:hover { background: var(--blue); color: #fff; border-color: var(--blue); }
+.theologyChip.is-unplaced { color: #aaa; cursor: default; font-style: italic; }
+.theologyChip.is-unplaced:hover { background: #fff; color: #aaa; border-color: var(--line); }
+
+.theologyExpand {
+  margin-top: 1rem; width: 100%; border: 1px dashed var(--blue); background: rgba(52,84,150,0.04);
+  color: var(--blue); border-radius: 6px; padding: 0.4rem; font-weight: 600; cursor: pointer;
+}
+.theologyExpand:hover { background: rgba(52,84,150,0.1); }
+
+.theologyDrill { margin-top: 0.6rem; border-top: 1px solid var(--paper-2); padding-top: 0.4rem; }
+.theologyPlaceholder { color: #aa9; font-size: 0.82rem; font-style: italic; }
+.theologyRefList, .theologyRunList { list-style: none; padding: 0; margin: 0; font-size: 0.85rem; }
+.theologyRefList li, .theologyRunList li { padding: 0.2rem 0; border-bottom: 1px solid var(--paper-2); }
+.theologyRef { font-weight: 700; color: var(--blue); }
+.theologyRefNote { color: #777; }
+.theologyRunDot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--life); margin-right: 0.3rem; }
+
+/* legend (default panel) */
+.theologyLegend { list-style: none; padding: 0; margin: 0.8rem 0; font-size: 0.85rem; }
+.theologyLegend li { display: flex; align-items: center; gap: 0.5rem; padding: 0.2rem 0; }
+.theologyLegend .lg { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--slate); background: #fff; }
+.theologyLegend .lg.node-terminus { background: var(--slate); }
+.theologyLegend .lg.node-threshold { background: var(--blue-lt); border-color: var(--blue); }
+.theologyLegend .lg.node-vertex { border-color: var(--blue); }
+.theologyHint { font-size: 0.8rem; color: #999; margin-top: 0.6rem; }
+
+/* off-pattern rail */
+.theologyRail {
+  margin-top: 1rem; padding: 0.7rem 0.9rem;
+  background: var(--paper-2); border: 1px solid var(--line); border-radius: 8px;
+}
+.theologyRailTitle { font-size: 0.8rem; font-weight: 700; color: #777; text-transform: uppercase; letter-spacing: 0.03em; }
+.theologyRailTitle em { font-weight: 400; text-transform: none; letter-spacing: 0; color: #999; }
+.theologyRailItems { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }
+.theologyRailChip {
+  display: flex; flex-direction: column; align-items: flex-start;
+  border: 1px solid var(--line); background: #fff; border-radius: 6px;
+  padding: 0.35rem 0.7rem; cursor: pointer; text-align: left;
+}
+.theologyRailChip:hover { border-color: var(--blue); }
+.theologyRailChip.is-selected { border-color: var(--blue); background: rgba(52,84,150,0.06); }
+.theologyRailChip strong { font-size: 0.85rem; color: var(--ink); }
+.theologyRailKind { font-size: 0.7rem; color: #999; }
