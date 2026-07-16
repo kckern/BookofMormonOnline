@@ -125,7 +125,7 @@ type CrossRefsPayload = {
 const CROSSREFS_SEL = `crossrefs { srcRef srcVerseId refs { ref verseId } }`;
 
 describe('homesampler.crossrefs', () => {
-  it('returns a source verse with 2-4 significant cross-references', async () => {
+  it('returns a source verse with 2-4 cross-references', async () => {
     const s = await exec<CrossRefsPayload>(CROSSREFS_SEL, 33003);
     expect(s.crossrefs).toBeTruthy();
     expect(s.crossrefs!.srcVerseId).toBeGreaterThan(0);
