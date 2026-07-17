@@ -97,6 +97,21 @@ export default function Overview({ navigate }) {
     []
   );
 
+  const readout = useMemo(() => {
+    if (!active) return null;
+    if (active.type === "node") {
+      const total = links
+        .filter((l) => l.left === active.key || l.right === active.key)
+        .reduce((a, l) => a + l.value, 0);
+      return `${active.key} · ${total} references`;
+    }
+    const [rightKey, leftKey] = active.key.split("|");
+    const link = links.find((l) => l.left === leftKey && l.right === rightKey);
+    return link
+      ? `${link.left} ↔ ${link.right} · ${link.value} references · ${link.quotes} quotes`
+      : null;
+  }, [active, links]);
+
   const plotH = size.height - 40;
   const spineMinPx = Math.min(14, plotH / Math.max(left.length, right.length, 1) / 2);
   const { leftSpine, rightSpine, ribbons } = useMemo(
@@ -189,7 +204,7 @@ export default function Overview({ navigate }) {
         {pos.y1 - pos.y0 > 9 && (
           <text
             className="xref-spinelabel"
-            x={x1 + LABEL_PAD - 16 + 16}
+            x={x1 + LABEL_PAD}
             y={(pos.y0 + pos.y1) / 2}
             dominantBaseline="middle"
             textAnchor="start"
@@ -233,6 +248,9 @@ export default function Overview({ navigate }) {
                 collapse {expanded}
               </button>
             )}
+          </p>
+          <p className="xref-readout" data-testid="xref-readout" aria-live="polite">
+            {readout || "Hover a ribbon or book for details"}
           </p>
           <svg
             className="xref-ribbonsvg"

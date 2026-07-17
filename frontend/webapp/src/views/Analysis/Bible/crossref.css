@@ -29,6 +29,14 @@
   gap: 0.75rem;
 }
 
+.xref-readout {
+  margin: 0 0 0.25rem;
+  min-height: 1.3em; /* fixed slot — no layout jump when it fills */
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary, #444);
+}
+
 html[data-theme="dark"] .xref-root {
   --xref-quote: #0c7550;
   --xref-phrase: #57a75f;

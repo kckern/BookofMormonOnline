@@ -85,6 +85,14 @@ describe("Overview", () => {
     // makes it tall enough to clear the > 9 label guard, so it exercises the fix.
     expect(screen.getByText("Jarom")).toBeInTheDocument();
   });
+
+  test("hovering a spine segment fills the readout line", () => {
+    render(<Overview navigate={jest.fn()} />);
+    const readout = screen.getByTestId("xref-readout");
+    expect(readout).toHaveTextContent(/hover/i);
+    fireEvent.mouseEnter(screen.getAllByRole("button", { name: /2 Nephi,/ })[0]);
+    expect(readout).toHaveTextContent(/2 Nephi · \d+ references/);
+  });
 });
 
 describe("aggregations", () => {
