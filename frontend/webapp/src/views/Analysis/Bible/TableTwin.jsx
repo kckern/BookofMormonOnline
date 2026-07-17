@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { allPairs, headline } from "./aggregate";
+import { allPairs } from "./aggregate";
 
 // Sortable, filterable table twin of the ribbon overview — the WCAG-clean
 // equivalent. Rows open the same reader the ribbons do.
@@ -23,11 +23,24 @@ export default function TableTwin({ navigate }) {
     return pairs;
   }, [sort, filter]);
 
+  const totals = useMemo(
+    () =>
+      rows.reduce(
+        (a, p) => ({
+          total: a.total + p.total,
+          quotes: a.quotes + p.quotes,
+          phrases: a.phrases + p.phrases,
+        }),
+        { total: 0, quotes: 0, phrases: 0 }
+      ),
+    [rows]
+  );
+
   const open = (p) =>
     navigate({ view: "reader", bomBook: p.bomBookName, bibleBook: p.bibleBookName });
 
   const header = (key, label) => (
-    <th aria-sort={sort.key === key ? (sort.dir === -1 ? "descending" : "ascending") : undefined}>
+    <th aria-sort={sort.key === key ? (sort.dir === -1 ? "descending" : "ascending") : "none"}>
       <button
         className="xref-sort"
         onClick={() => setSort((s) => ({ key, dir: s.key === key ? -s.dir : -1 }))}
@@ -88,10 +101,10 @@ export default function TableTwin({ navigate }) {
           </tbody>
           <tfoot>
             <tr>
-              <td colSpan={2}>All books</td>
-              <td className="num">{headline.total}</td>
-              <td className="num">{headline.quotes}</td>
-              <td className="num">{headline.phrases}</td>
+              <td colSpan={2}>{filter.trim() ? `${rows.length} shown` : "All books"}</td>
+              <td className="num">{totals.total}</td>
+              <td className="num">{totals.quotes}</td>
+              <td className="num">{totals.phrases}</td>
             </tr>
           </tfoot>
         </table>

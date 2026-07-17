@@ -292,9 +292,12 @@ html[data-theme="dark"] .xref-root {
 }
 
 .xref-tabletwin tfoot td {
+  position: sticky;
+  bottom: 0;
   font-weight: 700;
   background: var(--surface-1, #f8f8f8);
   border-bottom: none;
+  box-shadow: 0 -1px 0 var(--border, #ddd);
 }
 
 .xref-rowlink {
