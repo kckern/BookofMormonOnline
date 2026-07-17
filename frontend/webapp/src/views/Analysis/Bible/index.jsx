@@ -33,7 +33,7 @@ export default function BibleCrossRef() {
       ) : state.view === "reader" ? (
         <Reader state={state} navigate={navigate} />
       ) : (
-        <Overview navigate={navigate} />
+        <Overview state={state} navigate={navigate} />
       )}
     </div>
   );

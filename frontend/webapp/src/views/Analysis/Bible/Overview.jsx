@@ -12,9 +12,13 @@ const FALLBACK_H = 640;
 // §4.1 legibility guardrail); clicking a division expands it into its books.
 // Right spine: the Book of Mormon's 15 books. Ribbons are two-tone
 // (quote core / phrase sheath).
-export default function Overview({ navigate }) {
-  const [mode, setMode] = useState("chart");
-  const [expanded, setExpanded] = useState(null); // Bible division name
+export default function Overview({ state = {}, navigate }) {
+  const mode = state.mode === "table" ? "table" : "chart";
+  const expanded = state.expanded || null; // Bible division name
+  const setMode = (m) =>
+    navigate({ view: "overview", mode: m === "table" ? "table" : undefined, expanded: expanded || undefined });
+  const setExpanded = (name) =>
+    navigate({ view: "overview", mode: mode === "table" ? "table" : undefined, expanded: name || undefined });
   const [active, setActive] = useState(null); // {type:'node'|'ribbon', key}
   const wrapRef = useRef(null);
   const [size, setSize] = useState({ width: 960, height: FALLBACK_H });
@@ -234,6 +238,11 @@ export default function Overview({ navigate }) {
           >
             {mode === "chart" ? "View as table" : "View as chart"}
           </button>
+          {expanded && mode === "chart" && (
+            <button className="xref-modetoggle" onClick={() => setExpanded(null)}>
+              ◂ collapse {expanded}
+            </button>
+          )}
         </p>
       </header>
 
@@ -243,11 +252,6 @@ export default function Overview({ navigate }) {
         <div className="xref-ribbonwrap" ref={wrapRef}>
           <p className="xref-hint">
             Click a Bible division to expand its books · click any book to explore it
-            {expanded && (
-              <button className="xref-modetoggle" onClick={() => setExpanded(null)}>
-                collapse {expanded}
-              </button>
-            )}
           </p>
           <p className="xref-readout" data-testid="xref-readout" aria-live="polite">
             {readout || "Hover a ribbon or book for details"}
