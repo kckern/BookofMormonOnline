@@ -3,8 +3,8 @@
    everything else uses the app's semantic tokens. */
 
 .xref-root {
-  --xref-quote: #1a6446;
-  --xref-phrase: #4ea578;
+  --xref-quote: #0f7a4d;
+  --xref-phrase: #5cb98a;
   --xref-ramp-1: #dcece4;
   --xref-ramp-2: #a8d2bd;
   --xref-ramp-3: #6fb392;
@@ -30,8 +30,8 @@
 }
 
 html[data-theme="dark"] .xref-root {
-  --xref-quote: #4ea578;
-  --xref-phrase: #1a6446;
+  --xref-quote: #0c7550;
+  --xref-phrase: #57a75f;
   --xref-ramp-1: #0b4530;
   --xref-ramp-2: #1a6446;
   --xref-ramp-3: #3f9169;
@@ -547,13 +547,12 @@ html[data-theme="dark"] .xref-chaptercell.ramp-6 {
 }
 
 .verseViewerTable .scriptureCell p span.highlight {
-  color: #cc0000;
-  background-color: #ffff0033;
+  background-color: rgba(92, 185, 138, 0.3);
+  box-shadow: inset 0 -2px 0 var(--xref-quote);
 }
 
 html[data-theme="dark"] .verseViewerTable .scriptureCell p span.highlight {
-  color: #ff8080;
-  background-color: #ffff0022;
+  background-color: rgba(87, 167, 95, 0.35);
 }
 
 /* ---- responsive ---- */
