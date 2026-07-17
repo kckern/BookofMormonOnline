@@ -452,15 +452,12 @@
     flex-shrink: 0;
 }
 
+/* the × sits in the header's flex nav cluster (no float); nav-cluster chrome
+   overrides live in the .chiasm-header-nav rules below */
 .chiasm .close{
-    float: right;
     color: var(--text-faint);
-    /* neutralize <button> chrome */
-    background: none;
-    border: 0;
-    padding: 0;
-    font: inherit;
-    line-height: inherit;
+    font-size: 1.5rem;
+    cursor: pointer;
 }
 .chiasm .close:hover{
     color: var(--text-primary);
@@ -491,12 +488,19 @@
     font-size: 0.9rem;
 }
 
-/* detail header: glyph | title+reference | close */
+/* detail header: glyph | title+reference | ‹ › ×. Sticky against the nearest
+   scroll container — .chiasmPanel on desktop, the .chiasmPanel.open overlay on
+   mobile — so prev/next/close stay reachable mid-scroll in a long chiasm
+   (audit §6.1). Opaque background so lines don't ghost through. */
 .chiasm-header {
     display: flex;
     align-items: flex-start;
     gap: 1rem;
     padding: 1ex 0;
+    position: sticky;
+    top: 0;
+    background: var(--surface-0);
+    z-index: 1;
 }
 .chiasm-header .chiasmGlyph {
     flex-shrink: 0;
@@ -505,6 +509,18 @@
     flex: 1;
     min-width: 0;
 }
+
+/* header nav cluster: ‹ › × — always-visible prev/next (audit §6.1), with
+   arrow-key hints in the tooltips */
+.chiasm-header-nav { display: flex; gap: .5ex; align-items: center; }
+.chiasm-header-nav button {
+    background: var(--control); border: 1px solid var(--border); border-radius: .5ex;
+    color: var(--text-secondary); font-size: 1.1rem; line-height: 1;
+    padding: .3ex 1.2ex; cursor: pointer; min-width: 2rem;
+}
+.chiasm-header-nav button:disabled { opacity: .4; cursor: default; }
+.chiasm-header-nav button:hover:not(:disabled) { background: var(--control-hover); color: var(--text-primary); }
+.chiasm-header-nav .close { border: 0; background: none; font-size: 1.5rem; padding: 0 .5ex; }
 
 .chiasm-actions {
     display: flex;
@@ -515,11 +531,6 @@
 {
     border-top: 1px solid var(--border);
     padding-top: 1rem;
-}
-
-.chiasm .close{
-    font-size: 1.5rem;
-    cursor: pointer;
 }
 
 .chiasmus_nav
@@ -611,7 +622,11 @@
         height: auto;
         background: var(--surface-0);
         z-index: 1050;
-        padding: 1rem;
+        /* no top padding: with it, the sticky .chiasm-header rests below the
+           padding zone and scrolled lines ghost through the 1rem strip above
+           it — the header's own padding-top (below) supplies the breathing
+           room instead, and it scrolls WITH the header so nothing peeks over */
+        padding: 0 1rem 1rem;
         overflow: auto;
         /* base rule transitions width 0.5s — animating 0→100vw on open flashes */
         transition: none;
@@ -620,12 +635,15 @@
            pure CSS, and the fixed overlay covers the page visually anyway) */
         overscroll-behavior: contain;
     }
-    /* keep the × reachable while scrolling a long chiasm in the overlay */
+    /* (the ‹ › × header stays reachable while scrolling the overlay via the
+       base .chiasm-header sticky rule — the overlay is the scroll container) */
     .chiasmPanel.open .chiasm-header {
-        position: sticky;
-        top: 0;
-        background: var(--surface-0);
-        z-index: 1;
+        padding-top: 1rem; /* replaces the overlay's stripped top padding */
+    }
+    /* error/loading states have no sticky header — restore their top gap */
+    .chiasmPanel.open .chiasm.error,
+    .chiasmPanel.open .chiasm.loading {
+        padding-top: 1rem;
     }
     /* mobile: the whole page scrolls — undo the desktop inner-scroll split
        (overflow:hidden + inner overflow:auto would trap scrolling in a
@@ -657,6 +675,7 @@
 
 .chiasmus_list .chiasmus:focus-visible,
 .chiasm .close:focus-visible,
+.chiasm-header-nav button:focus-visible,
 .chiasmus_nav button:focus-visible,
 .chiasm-actions button:focus-visible,
 .chiasmus_line button.scheme:focus-visible,

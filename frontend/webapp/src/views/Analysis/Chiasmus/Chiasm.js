@@ -157,7 +157,18 @@ function Chiasm({chiasm_id, setChiasmusId, closeChiasm, nextId, prevId}) {
                 <h4 className="title">{title || t("untitled_chiasm", "Untitled")}</h4>
                 <h4 className="title reference">{reference}</h4>
             </div>
-            <button type="button" className="close noselect" aria-label={t("close", "Close")} onClick={closeChiasm}>×</button>
+            <div className="chiasm-header-nav noselect">
+                <button type="button" disabled={!prevId}
+                    aria-label={t("previous", "Previous")}
+                    title={t("prev_hint", "Previous chiasm (← arrow key)")}
+                    onClick={() => setChiasmusId(prevId)}>‹</button>
+                <button type="button" disabled={!nextId}
+                    aria-label={t("next", "Next")}
+                    title={t("next_hint", "Next chiasm (→ arrow key)")}
+                    onClick={() => setChiasmusId(nextId)}>›</button>
+                <button type="button" className="close" aria-label={t("close", "Close")}
+                    title={t("close_hint", "Close (Esc)")} onClick={closeChiasm}>×</button>
+            </div>
         </div>
         <div className="chiasm-actions noselect">
             <button type="button" onClick={() => openScripture(reference)}>{t("read_in_context", "Read in context")}</button>

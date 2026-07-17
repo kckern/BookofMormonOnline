@@ -12,7 +12,7 @@ jest.mock("../../../Home/tiles/ScripturePopup", () => ({
 
 import React from "react";
 import "@testing-library/jest-dom";
-import { render, screen, fireEvent, act } from "@testing-library/react";
+import { render, screen, fireEvent, act, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import { openScripture } from "../../../Home/tiles/ScripturePopup";
@@ -149,5 +149,22 @@ describe("Chiasm detail panel", () => {
     } finally {
       jest.useRealTimers();
     }
+  });
+
+  test("header has prev/next that follow visible order and hint at arrow keys", async () => {
+    BoMOnlineAPI.mockResolvedValue({ chiasm: { x1: fixture } });
+    const setChiasmusId = jest.fn();
+    render(
+      <MemoryRouter>
+        <Chiasm chiasm_id="x1" setChiasmusId={setChiasmusId} closeChiasm={jest.fn()} nextId="x2" prevId={null} />
+      </MemoryRouter>
+    );
+    await screen.findByText("Test Chiasm");
+    const header = document.querySelector(".chiasm-header");
+    const next = within(header).getByRole("button", { name: /next/i });
+    expect(within(header).getByRole("button", { name: /previous/i })).toBeDisabled();
+    expect(next.title).toMatch(/→/);
+    fireEvent.click(next);
+    expect(setChiasmusId).toHaveBeenCalledWith("x2");
   });
 });
