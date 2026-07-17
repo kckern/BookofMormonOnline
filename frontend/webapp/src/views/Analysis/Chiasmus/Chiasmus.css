@@ -447,3 +447,8 @@
     outline: 2px solid var(--link);
     outline-offset: 2px;
 }
+
+/* ChiasmGlyph — scheme fingerprint. Bars neutral ink; pivot carries the one
+   accent shared by every glyph (it means "center", not identity). */
+.chiasmGlyph .glyphBar { fill: var(--text-faint); }
+.chiasmGlyph .glyphBar.pivot { fill: var(--accent-amber); }
