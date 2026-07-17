@@ -142,6 +142,15 @@ test("rail legend shows when grouped by book, hidden otherwise", async () => {
   expect(screen.queryByText(/small plates/i)).not.toBeInTheDocument();
 });
 
+test("non-speaker grouping keeps the per-card speaker name and avatar", async () => {
+  // positive counterpart to the speaker-grouping test below: a regression
+  // that hid speakers everywhere would pass an absence-only assertion
+  renderAt("/analysis/chiasmus"); // default group=book
+  await screen.findByRole("button", { name: /first chiasm/i });
+  expect(document.querySelectorAll(".speaker-name").length).toBe(2);
+  expect(document.querySelectorAll(".speaker-avatar").length).toBe(2);
+});
+
 test("speaker grouping drops the redundant per-card speaker line", async () => {
   renderAt("/analysis/chiasmus?group=speaker");
   await screen.findByRole("button", { name: /first chiasm/i });
