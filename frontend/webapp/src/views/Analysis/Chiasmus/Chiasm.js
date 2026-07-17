@@ -28,7 +28,10 @@ export const fetchChiasm = (id) => {
     return BoMOnlineAPI({ chiasm: [id] }, { useCache: false }).then((r) => {
         const c = r?.chiasm?.[id];
         if (c) cachePut(id, c);
-        return c;
+        // Unknown id: the backend answers {"data":{}} and structureResults maps
+        // that to { chiasm: { <id>: null } }. Chiasm's loading state is null, so
+        // normalize to undefined — the panel's error state — or it spins forever.
+        return c ?? undefined;
     });
 };
 export const __clearChiasmCache = () => chiasmCache.clear(); // test hook
@@ -98,13 +101,17 @@ function Chiasm({chiasm_id, setChiasmusId, closeChiasm, nextId, prevId}) {
         setChiasm(null);
         setPinnedScheme(null);
         setCopied(false);
+        // Belt-and-braces: whatever stalls upstream, the panel must not spin forever
+        const failsafe = setTimeout(() => {
+            if (!cancelled) setChiasm((c) => (c === null ? undefined : c));
+        }, 15000);
         fetchChiasm(chiasm_id).then((c) => {
-            if (!cancelled) setChiasm(c);
+            if (!cancelled) setChiasm(c);           // c === undefined → error state
         }).catch((e) => {
             console.error(e);
             if (!cancelled) setChiasm(undefined);
         });
-        return () => { cancelled = true; };
+        return () => { cancelled = true; clearTimeout(failsafe); };
     }, [chiasm_id]);
 
     // warm the cache for the neighbors so prev/next (and arrow keys) are instant
@@ -134,7 +141,7 @@ function Chiasm({chiasm_id, setChiasmusId, closeChiasm, nextId, prevId}) {
     useEffect(() => () => clearTimeout(copyTimer.current), []);
 
     if (chiasm === undefined) return <div className="chiasm error">{t("chiasm_load_failed", "Couldn't load this chiasm.")}</div>;
-    if (!chiasm) return <div className="chiasm"><Spinner/></div>
+    if (!chiasm) return <div className="chiasm loading"><Spinner/></div>
 
     // Pinned pair (tap/click a badge) wins over hover; hover works when unpinned.
     const effectiveScheme = pinnedScheme || activeScheme;
