@@ -1,0 +1,24 @@
+.home-tabs {
+  display: flex;
+  gap: 0.25rem;
+  border-bottom: 1px solid #d9d9d9;
+  padding: 0 0.5rem;
+  position: sticky;
+  top: 0;
+  background: inherit;
+  z-index: 5;
+}
+.home-tab {
+  padding: 0.6rem 1.1rem;
+  font-weight: 600;
+  color: #666;
+  text-decoration: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -1px;
+  white-space: nowrap;
+}
+.home-tab:hover { color: #333; text-decoration: none; }
+.home-tab.active {
+  color: #2a7ae2;
+  border-bottom-color: #2a7ae2;
+}
