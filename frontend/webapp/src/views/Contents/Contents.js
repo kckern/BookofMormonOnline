@@ -62,7 +62,7 @@ function Contents() {
                   <CardBody>
                     {chapter.pages.map((page, i) => (
                       <ul key={i}>
-                        <li>
+                        <li className="tocPage">
                           <Link to={`/${page.slug}`}>{page.title}</Link>
                           <ul>
                             {page.sections.map((section, i) =>

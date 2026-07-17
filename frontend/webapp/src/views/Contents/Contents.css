@@ -22,6 +22,16 @@ div.toc div.card-body  ul
     list-style-type: square;
 }
 
+/* Top-level page entry: no bullet, bold title. Nested section <ul> keeps its
+   square bullets via the rule above (which re-sets list-style-type directly on
+   the child <ul>, overriding the inherited `none`). */
+div.toc .tocPage {
+    list-style: none;
+}
+div.toc .tocPage > a {
+    font-weight: 800;
+}
+
 div.toc ul:not(:first-of-type) {
 
     border:1px solid #DDD;
