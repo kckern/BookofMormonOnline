@@ -266,8 +266,13 @@ function Container() {
     // the mount-only keydown effect below can close over these safely.
     const setChiasmusId = (id) => {
         const qs = searchRef.current;
+        const wasOpen = !!chiasmusIdRef.current;
+        // Eager ref write: the sync effect below runs in a passive effect, so a
+        // second call landing before it flushes (e.g. rapid raw keydowns) would
+        // see a stale ref and push twice. Back/Forward still rely on the effect.
+        chiasmusIdRef.current = id;
         if (!id) { replace("/analysis/chiasmus" + qs); return; }
-        if (chiasmusIdRef.current) replace(`/analysis/chiasmus/${id}` + qs);
+        if (wasOpen) replace(`/analysis/chiasmus/${id}` + qs);
         else push(`/analysis/chiasmus/${id}` + qs);
     };
     const closeChiasm = () => setChiasmusId(null);

@@ -61,6 +61,13 @@ const renderAt = (path) => {
   return history;
 };
 
+test("deep link opens the detail panel without navigating", async () => {
+  const history = renderAt("/analysis/chiasmus/x1");
+  expect(await screen.findByText("Detail x1")).toBeInTheDocument();
+  expect(history.location.pathname).toBe("/analysis/chiasmus/x1");
+  expect(history.length).toBe(1); // no push/replace performed on mount
+});
+
 test("opening a chiasm pushes one entry; Back closes the panel", async () => {
   const history = renderAt("/analysis/chiasmus");
   fireEvent.click(await screen.findByRole("button", { name: /first chiasm/i }));
