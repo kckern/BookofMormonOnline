@@ -68,7 +68,7 @@ const PassageNotes = ({
             images: { title: 'Images', Component: ImagesPanel },
             chiasmus: { title: 'Chiasmus', Component: ChiasmusPanel },
             refs: { title: 'References', Component: ReferencesPanel },
-            xrels: { title: label('relationships'), Component: RelationshipsPanel },
+            xrels: { title: label('relationships') === 'relationships' ? 'Relationships' : label('relationships'), Component: RelationshipsPanel },
         };
 
         const { title, Component } = panelConfig[activePanel];
@@ -168,9 +168,10 @@ const PassageNotes = ({
                                 onClick={() => handleTabClick('xrels')}
                             >
                                 <span className="count">{categoryCounts.xrels.length}</span>
-                                <span className="label">{label('relationships')}</span>
+                                <span className="label">{label('relationships') === 'relationships' ? 'Relationships' : label('relationships')}</span>
                             </div>
-                        )}                        </div>
+                        )}
+                        </div>
                         {renderPanel()}
                     </>
                 ) : null}

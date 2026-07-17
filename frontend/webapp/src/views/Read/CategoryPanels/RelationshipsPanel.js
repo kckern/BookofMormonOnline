@@ -25,9 +25,9 @@ const RelationshipsPanel = ({ data }) => {
     );
 
     return (
-        <ul className="passage-xrels">
+        <ul className="xrels passage-xrels">
             {data.map((x, idx) => (
-                <li key={idx} className={`passage-xrel xrel-${x.src_type}-${x.dst_type}`}>
+                <li key={idx} className={`xrel passage-xrel clickable xrel-${x.src_type}-${x.dst_type}`}>
                     {endpointLink(x.src_type, x.src_slug, x.src_name)}{' '}
                     <span className="rel-verb">{x.rel}</span>{' '}
                     {endpointLink(x.dst_type, x.dst_slug, x.dst_name)}
