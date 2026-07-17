@@ -731,10 +731,24 @@ Chiastic structure in scripture.
 | Field | Type | Description |
 |-------|------|-------------|
 | `chiasmus_id` | `String` | Unique identifier |
-| `reference` | `String` | Scripture reference |
+| `reference` | `String` | Scripture reference (full span of the structure) |
 | `scheme` | `String` | Chiastic scheme pattern |
 | `title` | `String` | Chiasmus title |
+| `start_verse_id` | `Int` | Earliest verse ID in the span |
+| `verse_id` | `Int` | First line's verse ID — the structure's anchor verse |
+| `line_lengths` | `[Int]` | Character length of each line's text, one entry per line (may differ from `scheme` string length when line keys are multi-character) |
+| `speaker` | `ChiasmusSpeaker` | Dominant speaker over the verse span (populated by the `chiasmus` query; `passagenotes` omits it) |
 | `lines` | `[ChiasmusLine]` | Lines in the structure |
+
+### ChiasmusSpeaker
+
+Dominant speaker attributed to a chiastic structure's verse span.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `person_slug` | `String` | Person slug for linking |
+| `name` | `String` | Speaker name |
+| `voice` | `String` | Voice classification |
 
 ### ChiasmusLine
 
