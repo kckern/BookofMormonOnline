@@ -167,7 +167,7 @@ export default function Overview({ state = {}, navigate }) {
       : () => setExpanded(expanded === item.key ? null : item.key);
     const attrs = isBook ? { "data-book": item.key } : { "data-division": item.key };
     return (
-      <g key={item.key}>
+      <g key={item.key} role="listitem">
         <rect
           {...attrs}
           {...nodeProps(item.key, label, onActivate)}
@@ -198,7 +198,7 @@ export default function Overview({ state = {}, navigate }) {
     const dim = active?.type === "node" && active.key !== name;
     const label = `${name}, ${bookTotal("bom", name)} references, ${partnersFor("bom", name).length} partner books`;
     return (
-      <g key={name}>
+      <g key={name} role="listitem">
         <rect
           data-book={name}
           {...nodeProps(name, label, () =>

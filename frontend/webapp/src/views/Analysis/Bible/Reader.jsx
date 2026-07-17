@@ -129,7 +129,7 @@ export default function Reader({ state, navigate }) {
       }
     >
       {label}
-      <span className="xref-sortarrow" aria-hidden="true">
+      <span aria-hidden="true">
         {sort.column === column ? (sort.direction === "asc" ? " ▲" : " ▼") : " △"}
       </span>
     </button>
@@ -141,10 +141,10 @@ export default function Reader({ state, navigate }) {
       <table className="verseViewerTable">
         <thead>
           <tr>
-            <th aria-sort={sort.column === "bom" ? (sort.direction === "asc" ? "ascending" : "descending") : undefined}>
+            <th aria-sort={sort.column === "bom" ? (sort.direction === "asc" ? "ascending" : "descending") : "none"}>
               {sortButton("bom", bomBook)}
             </th>
-            <th aria-sort={sort.column === "bible" ? (sort.direction === "asc" ? "ascending" : "descending") : undefined}>
+            <th aria-sort={sort.column === "bible" ? (sort.direction === "asc" ? "ascending" : "descending") : "none"}>
               {sortButton("bible", bibleBook)}
             </th>
           </tr>
