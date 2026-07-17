@@ -31,6 +31,10 @@
   overflow-y: auto;
   overflow-x: hidden;
   --sb-font: 1.38rem;
+  /* Minimum breathing room below the last item (set by useSidebarFit, ~one
+     item's height). Keeps the menu off the language picker and gives tall
+     monitors somewhere to shed slack instead of stretching the rows apart. */
+  padding-bottom: var(--sb-pad-bottom, 0);
 }
 /* the search field keeps its natural height; only menu items flex-distribute */
 .sidebar .nav.sidebar-menu > li.searchbox { flex: 0 0 auto; }

@@ -189,39 +189,74 @@ function useSidebarFit(ref, itemCount) {
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el || typeof ResizeObserver === "undefined") return undefined;
-    const set = (k, v) => el.style.setProperty(k, v);
-    const measure = () => {
+    const prev = {};
+    // Only touch the DOM when a value actually changes. Writing CSS vars back
+    // onto the very element the observer watches (font-size, padding) can
+    // otherwise retrigger it within the same frame — the classic "ResizeObserver
+    // loop completed with undelivered notifications" error.
+    const set = (k, v) => {
+      if (prev[k] === v) return;
+      prev[k] = v;
+      el.style.setProperty(k, v);
+    };
+    const setMode = (m) => { if (el.dataset.mode !== m) el.dataset.mode = m; };
+    let raf = 0;
+    const apply = () => {
+      raf = 0;
       const h = el.clientHeight;
       if (!h) return;
       const search = el.querySelector(".searchbox");
       const searchH = search ? search.offsetHeight : 40;
       const avail = Math.max(1, h - searchH);
       const n = Math.max(1, itemCount);
-      const rowH = avail / n; // height one labeled row would get, single column
+
+      // Reserve one item-height of breathing room at the bottom so the last
+      // item never sits flush against the language picker (a minimum bottom
+      // margin), and — combined with the per-row max-height cap in the
+      // stylesheet — slack on tall monitors collects here instead of spreading
+      // the rows edge to edge. 44px ≈ 2.75rem, the same cap the CSS uses for a
+      // labeled row, so the reserved margin never exceeds one full item.
+      const MAX_ROW = 44;
+      const padBottom = clamp(0, avail / (n + 1), MAX_ROW);
+      const usable = Math.max(1, avail - padBottom);
+      const rowH = usable / n; // height one labeled row would get, single column
+      set("--sb-pad-bottom", padBottom + "px");
 
       if (rowH >= 16) {
         // Labeled rows. 1.38rem ≈ 22px is the original max; font shrinks
         // continuously with the row height, keeping labels as long as they stay
         // legible (down to ~11px) before we give them up.
-        el.dataset.mode = "full";
+        setMode("full");
         set("--sb-font", clamp(11, rowH * 0.55, 22) + "px");
       } else {
+        // Grid mode distributes its own rows across the full height, so the
+        // reserved bottom margin doesn't apply.
+        set("--sb-pad-bottom", "0px");
         // Labels no longer fit — drop to an icon grid. Use the fewest columns
         // (2, then 3) that keep each cell a comfortable height.
         let cols = 2;
         if (avail / Math.ceil(n / 2) < 24) cols = 3;
         const rows = Math.ceil(n / cols);
         const cellH = avail / rows;
-        el.dataset.mode = "grid";
+        setMode("grid");
         set("--sb-cols", cols);
         set("--sb-rows", rows);
         set("--sb-icon", clamp(14, cellH * 0.55, 30) + "px");
       }
     };
-    measure();
-    const ro = new ResizeObserver(measure);
+    // Defer measurement out of the ResizeObserver callback so our own style
+    // writes settle on the next frame instead of feeding back synchronously.
+    const schedule = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(apply);
+    };
+    apply();
+    const ro = new ResizeObserver(schedule);
     ro.observe(el);
-    return () => ro.disconnect();
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+      ro.disconnect();
+    };
   }, [ref, itemCount]);
 }
 
