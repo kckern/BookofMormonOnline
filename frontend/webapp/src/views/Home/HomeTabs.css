@@ -83,6 +83,17 @@ html[data-theme="dark"] .home-tabs-reload:hover {
   max-width: none;
   padding-top: 0.75rem;
 }
+/* Community's root .container is position:relative with min-height:calc(100vh-50px),
+   which (on top of the shell's header padding + tab bar) forces the page taller
+   than the viewport → a window scrollbar. Make it a zero-height static box so it
+   adds no page height AND its absolute two-pane anchors to the shell at the
+   viewport top. Only the panels' internal overflow scrolls; the page never does. */
+#main-panel .home-shell--tabs .home.container {
+  position: static;
+  min-height: 0;
+  margin-bottom: 0;
+  padding-top: 0;
+}
 /* Community's two-pane scrollers are position:absolute (they ignore .container
    flow) — give them their own clearance for the header + tab bar. box-sizing:
    border-box keeps height:100vh INCLUSIVE of that padding so the panels are
