@@ -65,11 +65,14 @@ export type Caps = {
 export type Chiasmus = {
   __typename?: 'Chiasmus';
   chiasmus_id?: Maybe<Scalars['String']['output']>;
+  line_lengths?: Maybe<Array<Maybe<Scalars['Int']['output']>>>;
   lines?: Maybe<Array<Maybe<ChiasmusLine>>>;
   reference?: Maybe<Scalars['String']['output']>;
   scheme?: Maybe<Scalars['String']['output']>;
+  speaker?: Maybe<ChiasmusSpeaker>;
   start_verse_id?: Maybe<Scalars['Int']['output']>;
   title?: Maybe<Scalars['String']['output']>;
+  verse_id?: Maybe<Scalars['Int']['output']>;
 };
 
 export type ChiasmusLine = {
@@ -79,6 +82,13 @@ export type ChiasmusLine = {
   label?: Maybe<Scalars['String']['output']>;
   line_key?: Maybe<Scalars['String']['output']>;
   line_text?: Maybe<Scalars['String']['output']>;
+};
+
+export type ChiasmusSpeaker = {
+  __typename?: 'ChiasmusSpeaker';
+  name?: Maybe<Scalars['String']['output']>;
+  person_slug?: Maybe<Scalars['String']['output']>;
+  voice?: Maybe<Scalars['String']['output']>;
 };
 
 export type Commentary = {
@@ -2064,6 +2074,7 @@ export type ResolversTypes = {
   Caps: ResolverTypeWrapper<Partial<Caps>>;
   Chiasmus: ResolverTypeWrapper<Partial<Chiasmus>>;
   ChiasmusLine: ResolverTypeWrapper<Partial<ChiasmusLine>>;
+  ChiasmusSpeaker: ResolverTypeWrapper<Partial<ChiasmusSpeaker>>;
   Commentary: ResolverTypeWrapper<Partial<Commentary>>;
   Conn: ResolverTypeWrapper<Partial<Conn>>;
   ContentLink: ResolverTypeWrapper<Partial<ContentLink>>;
@@ -2186,6 +2197,7 @@ export type ResolversParentTypes = {
   Caps: Partial<Caps>;
   Chiasmus: Partial<Chiasmus>;
   ChiasmusLine: Partial<ChiasmusLine>;
+  ChiasmusSpeaker: Partial<ChiasmusSpeaker>;
   Commentary: Partial<Commentary>;
   Conn: Partial<Conn>;
   ContentLink: Partial<ContentLink>;
@@ -2343,11 +2355,14 @@ export type CapsResolvers<ContextType = AppContext, ParentType extends Resolvers
 
 export type ChiasmusResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['Chiasmus'] = ResolversParentTypes['Chiasmus']> = {
   chiasmus_id?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  line_lengths?: Resolver<Maybe<Array<Maybe<ResolversTypes['Int']>>>, ParentType, ContextType>;
   lines?: Resolver<Maybe<Array<Maybe<ResolversTypes['ChiasmusLine']>>>, ParentType, ContextType>;
   reference?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   scheme?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  speaker?: Resolver<Maybe<ResolversTypes['ChiasmusSpeaker']>, ParentType, ContextType>;
   start_verse_id?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   title?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  verse_id?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -2357,6 +2372,13 @@ export type ChiasmusLineResolvers<ContextType = AppContext, ParentType extends R
   label?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   line_key?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   line_text?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ChiasmusSpeakerResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['ChiasmusSpeaker'] = ResolversParentTypes['ChiasmusSpeaker']> = {
+  name?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  person_slug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  voice?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -3606,6 +3628,7 @@ export type Resolvers<ContextType = AppContext> = {
   Caps?: CapsResolvers<ContextType>;
   Chiasmus?: ChiasmusResolvers<ContextType>;
   ChiasmusLine?: ChiasmusLineResolvers<ContextType>;
+  ChiasmusSpeaker?: ChiasmusSpeakerResolvers<ContextType>;
   Commentary?: CommentaryResolvers<ContextType>;
   Conn?: ConnResolvers<ContextType>;
   ContentLink?: ContentLinkResolvers<ContextType>;

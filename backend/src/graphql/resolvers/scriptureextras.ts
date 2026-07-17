@@ -7,6 +7,7 @@ import {
   type CommentaryRow,
   type ImageRow,
   reduceChiasmusLines,
+  resolveChiasmusSpeakers,
 } from '../../data/loaders/scriptureextras.js';
 
 // ─── lang normalisation ────────────────────────────────────────────────────────
@@ -110,6 +111,8 @@ export const scriptureextrasResolvers: Resolvers = {
         true,     // always populate lines array in the row object
         false,    // scheme from all lines (not passagenote single-key mode)
       );
+      // Dominant speaker per chiasm — two batched selects total, no N+1.
+      await resolveChiasmusSpeakers(chiasms, ctx.db);
       return chiasms as unknown as never[];
     },
 
@@ -132,6 +135,9 @@ export const scriptureextrasResolvers: Resolvers = {
     scheme:         (parent) => (parent as unknown as ChiasmusRow).scheme ?? null,
     title:          (parent) => (parent as unknown as ChiasmusRow).title ?? null,
     start_verse_id: (parent) => (parent as unknown as ChiasmusRow).start_verse_id ?? null,
+    verse_id:       (parent) => (parent as unknown as ChiasmusRow).verse_id ?? null,
+    line_lengths:   (parent) => (parent as unknown as ChiasmusRow).line_lengths ?? null,
+    speaker:        (parent) => ((parent as unknown as ChiasmusRow).speaker ?? null) as never,
 
     /**
      * Chiasmus.lines — populated by Query.chiasmus when includeLines=true.
@@ -239,34 +245,26 @@ export const scriptureextrasResolvers: Resolvers = {
 
       const langCode = toLangCode(ctx.lang);
 
-      // Legacy passagenotes reduce:
-      //   reference = generateReference([item.verse_id], lang) — only first matched line's verse_id
-      //   scheme = item.line_key — only first matched line_key
-      //   title = item.getDataValue('title') — first matched line's title
-      // We do NOT need allLines here — only what the first matched line provides.
-      const seen = new Set<string>();
-      const result: {
-        chiasmus_id: string;
-        reference: string;
-        scheme: string;
-        title: string | null;
-        lines: never[];
-      }[] = [];
+      // matchedLines only contains lines whose verse_id falls in the passage —
+      // NOT every line of each chiasm. Reload ALL lines for the matched
+      // chiasmus_ids so the reduce can compute the full scheme and full
+      // reference span (legacy returned a single letter + single-verse ref).
+      const matchedIds = [...new Set(
+        matchedLines.map((l) => l.chiasmus_id).filter((c): c is string => !!c),
+      )];
+      if (!matchedIds.length) return [];
+      const allLines = await ctx.loaders.fetchChiasmusLines(matchedIds);
 
-      for (const line of matchedLines) {
-        const cid = line.chiasmus_id;
-        if (!cid || seen.has(cid)) continue;
-        seen.add(cid);
-
-        const refVerseId = line.verse_id ?? 0;
-        result.push({
-          chiasmus_id: cid,
-          reference: generateReference([refVerseId], langCode),
-          scheme: line.line_key ?? '',
-          title: line.title ?? null,
-          lines: [],
-        });
-      }
+      // matchedLines drives dedup + first-match ordering (unchanged semantics);
+      // includeLines=false (panel doesn't need line payloads), full scheme.
+      // Speakers are NOT resolved here — the panel doesn't show them.
+      const result = reduceChiasmusLines(
+        allLines,
+        matchedLines,
+        (vids) => generateReference(vids, langCode),
+        false,
+        false,
+      );
 
       return result as unknown as never[];
     },
