@@ -85,6 +85,16 @@ async function exec(seed?: number): Promise<Sampler> {
   return body.data!.homesampler as Sampler;
 }
 
+/** Execute an arbitrary sampler query through yoga and return the parsed body. */
+async function gql(query: string): Promise<{ data?: { homesampler?: { relationship?: { hubType: string; edges: { reverse: boolean | null }[] } | null } } }> {
+  const res = await yoga.fetch('http://localhost/graphql', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', accept: 'application/json' },
+    body: JSON.stringify({ query }),
+  });
+  return res.json();
+}
+
 describe('homesampler', () => {
   it('returns a full sampler payload', async () => {
     const s = await exec(12345);
@@ -122,4 +132,26 @@ describe('homesampler', () => {
     const s = await exec(4242);
     expect((s.commentary?.text ?? '').length).toBeGreaterThan(500);
   });
+
+  it('hub pool includes destination-side hubs across seeds', async () => {
+    const hubTypes = new Set<string>();
+    for (const seed of [1, 2, 3, 5, 8, 13, 21, 34, 55, 89]) {
+      const body = await gql(`{ homesampler(seed: ${seed}) { relationship { hubType edges { reverse } } } }`);
+      const rel = body.data?.homesampler?.relationship;
+      if (rel) hubTypes.add(rel.hubType);
+    }
+    expect([...hubTypes].some((t) => t !== 'object')).toBe(true);
+  }, 60000);
+
+  it('a destination-side hub marks every edge reverse', async () => {
+    for (const seed of [1, 2, 3, 5, 8, 13, 21, 34, 55, 89]) {
+      const body = await gql(`{ homesampler(seed: ${seed}) { relationship { hubType edges { reverse } } } }`);
+      const rel = body.data?.homesampler?.relationship;
+      if (rel && rel.hubType !== 'object') {
+        for (const e of rel.edges) expect(e.reverse).toBe(true);
+        return;
+      }
+    }
+    throw new Error('no destination-side hub in 10 seeds — pool weighting broken');
+  }, 60000);
 });

@@ -66,6 +66,8 @@ type RelEdge {
   dstTitle: String
   note: String
   ref: String
+  """true when the hub is the row's destination — render name before verb."""
+  reverse: Boolean
 }
 
 type MapStorySample {

@@ -13,7 +13,7 @@ import { generateReference } from 'scripture-guide';
 import type { Resolvers } from '../../../codegen/graphql.js';
 import type { AppContext } from '../context.js';
 import { findUserByToken } from '../../data/loaders/userauth.js';
-import { parseVerseIdFromNote, resolveEntityNames } from '../../data/loaders/objects.js';
+import { deSlugGroupName, parseVerseIdFromNote, resolveEntityNames } from '../../data/loaders/objects.js';
 
 // 24 people = 1 featured + 11 face cards + 12 view-all mosaic thumbs (3×4);
 // 17 places = 5 cards + a full 3×4 mosaic.
@@ -254,54 +254,80 @@ const sampleCrossRefs = async (ctx: AppContext, seed: number) => {
 // Entity display-name lookup for relationship hubs/edges lives in
 // data/loaders/objects.ts (resolveEntityNames) — shared with the xrel loaders.
 
-// One well-connected hub entity and up to 4 of its typed relations. The hub is
-// seeded over all (src_type, src_slug) pairs with >=2 edges; GROUP BY needs raw
-// sql. Edges whose dst can't be resolved to a display name are dropped (a bare
-// slug reads as a bug on the front door); if that leaves <2, return null.
+// One well-connected hub entity and up to 4 of its typed relations. bom_xrels
+// is object-anchored (every row's src is an object), so to let people/places/
+// groups headline the tile too, the hub pool draws from BOTH directions: src-
+// side pairs (is_dst=0) AND destination-side people/place/group pairs (is_dst=1),
+// each with >=2 edges. GROUP BY needs raw sql. For a destination-side hub the
+// edges are fetched by dst match and DISPLAY the row's src endpoint, flagged
+// reverse:true so the tile renders name-before-verb. Edges whose display
+// endpoint can't be resolved to a name are dropped (a group always de-slugs, so
+// it never drops); if that leaves <2, return null.
 const sampleRelationship = async (ctx: AppContext, seed: number) => {
-  const hub = await sql<{ src_type: string; src_slug: string }>`
-    SELECT src_type, src_slug FROM bom_xrels
-    GROUP BY src_type, src_slug HAVING COUNT(*) >= 2
-    ORDER BY MD5(CONCAT(src_type, ':', src_slug, ':', ${seed}))
+  const hub = await sql<{ hub_type: string; hub_slug: string; is_dst: number }>`
+    SELECT hub_type, hub_slug, is_dst FROM (
+      SELECT src_type AS hub_type, src_slug AS hub_slug, 0 AS is_dst FROM bom_xrels
+        GROUP BY src_type, src_slug HAVING COUNT(*) >= 2
+      UNION ALL
+      SELECT dst_type, dst_slug, 1 FROM bom_xrels WHERE dst_type IN ('people', 'place', 'group')
+        GROUP BY dst_type, dst_slug HAVING COUNT(*) >= 2
+    ) hubs
+    ORDER BY MD5(CONCAT(hub_type, ':', hub_slug, ':', is_dst, ':', ${seed}))
     LIMIT 1
   `.execute(ctx.db);
   const h = hub.rows[0];
   if (!h) return null;
-  const edgeRows = await ctx.db
-    .selectFrom('bom_xrels')
-    .select(['rel', 'dst_type', 'dst_slug', 'note'])
-    .where('src_type', '=', h.src_type)
-    .where('src_slug', '=', h.src_slug)
-    .orderBy(seededOrder('dst_slug', seed))
-    .limit(6)
-    .execute();
+  const isDst = Number(h.is_dst) === 1;
+  // For a dst-side hub, each edge's displayed endpoint is the row's SRC; for a
+  // src-side hub it's the row's DST. Alias both to endType/endSlug.
+  const edgeRows = isDst
+    ? await ctx.db
+        .selectFrom('bom_xrels')
+        .select(['rel', 'src_type as endType', 'src_slug as endSlug', 'note'])
+        .where('dst_type', '=', h.hub_type)
+        .where('dst_slug', '=', h.hub_slug)
+        .orderBy(seededOrder('src_slug', seed))
+        .limit(6)
+        .execute()
+    : await ctx.db
+        .selectFrom('bom_xrels')
+        .select(['rel', 'dst_type as endType', 'dst_slug as endSlug', 'note'])
+        .where('src_type', '=', h.hub_type)
+        .where('src_slug', '=', h.hub_slug)
+        .orderBy(seededOrder('dst_slug', seed))
+        .limit(6)
+        .execute();
   const names = await resolveEntityNames(ctx.db, [
-    { type: h.src_type, slug: h.src_slug },
-    ...edgeRows.map((e) => ({ type: e.dst_type, slug: e.dst_slug })),
+    { type: h.hub_type, slug: h.hub_slug },
+    ...edgeRows.map((e) => ({ type: e.endType, slug: e.endSlug })),
   ]);
-  const hubName = names.get(`${h.src_type}:${h.src_slug}`);
+  // Groups have no entity table — de-slug their display name (never dropped).
+  const nameOf = (type: string, slug: string): { name: string; title: string | null } | null =>
+    names.get(`${type}:${slug}`) ?? (type === 'group' ? { name: deSlugGroupName(slug), title: null } : null);
+  const hubName = nameOf(h.hub_type, h.hub_slug);
   if (!hubName) return null;
   const edges = edgeRows
     .map((e) => {
-      const dst = names.get(`${e.dst_type}:${e.dst_slug}`);
+      const dst = nameOf(e.endType, e.endSlug);
       if (!dst) return null;
       const verseId = parseVerseIdFromNote(e.note ?? null);
       return {
         rel: e.rel,
-        dstType: e.dst_type,
-        dstSlug: e.dst_slug,
+        dstType: e.endType,
+        dstSlug: e.endSlug,
         dstName: dst.name,
         dstTitle: dst.title,
         note: e.note ?? null,
         ref: verseId ? generateReference([verseId]) : null,
+        reverse: isDst,
       };
     })
     .filter((e): e is NonNullable<typeof e> => e !== null)
     .slice(0, 4);
   if (edges.length < 2) return null;
   return {
-    hubType: h.src_type,
-    hubSlug: h.src_slug,
+    hubType: h.hub_type,
+    hubSlug: h.hub_slug,
     hubName: hubName.name,
     hubTitle: hubName.title,
     edges,

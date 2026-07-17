@@ -1691,6 +1691,8 @@ export type RelEdge = {
   note?: Maybe<Scalars['String']['output']>;
   ref?: Maybe<Scalars['String']['output']>;
   rel?: Maybe<Scalars['String']['output']>;
+  /** true when the hub is the row's destination — render name before verb. */
+  reverse?: Maybe<Scalars['Boolean']['output']>;
 };
 
 export type Relation = {
@@ -3351,6 +3353,7 @@ export type RelEdgeResolvers<ContextType = AppContext, ParentType extends Resolv
   note?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   ref?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   rel?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  reverse?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
