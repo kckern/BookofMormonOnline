@@ -58,4 +58,21 @@ describe("fetchChiasm", () => {
     await expect(fetchChiasm("404")).resolves.toBeUndefined();
     expect(BoMOnlineAPI).toHaveBeenCalledTimes(2);
   });
+
+  test("resolves undefined when the id is not in the result", async () => {
+    BoMOnlineAPI.mockResolvedValueOnce({ chiasm: {} });
+    await expect(fetchChiasm("nonexistent999")).resolves.toBeUndefined();
+  });
+
+  test("resolves undefined when the API returns an error object", async () => {
+    BoMOnlineAPI.mockResolvedValueOnce({ error: { data: null } });
+    await expect(fetchChiasm("nonexistent999")).resolves.toBeUndefined();
+  });
+
+  test("resolves undefined when the API maps the missing id to null (live backend shape)", async () => {
+    // The real backend answers 200 {"data":{}} for an unknown id; BoMOnlineAPI's
+    // structureResults turns that into { chiasm: { <id>: null } }.
+    BoMOnlineAPI.mockResolvedValueOnce({ chiasm: { nonexistent999: null } });
+    await expect(fetchChiasm("nonexistent999")).resolves.toBeUndefined();
+  });
 });

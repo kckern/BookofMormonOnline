@@ -12,7 +12,7 @@ jest.mock("../../../Home/tiles/ScripturePopup", () => ({
 
 import React from "react";
 import "@testing-library/jest-dom";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, act } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import { openScripture } from "../../../Home/tiles/ScripturePopup";
@@ -108,5 +108,29 @@ describe("Chiasm detail panel", () => {
     fireEvent.click(screen.getByRole("button", { name: "Copy link" }));
     expect(writeText).toHaveBeenCalledWith(window.location.href);
     expect(await screen.findByText("Copied!")).toBeInTheDocument();
+  });
+
+  test("shows the error state when the fetch resolves empty", async () => {
+    BoMOnlineAPI.mockResolvedValueOnce({ chiasm: {} });
+    renderChiasm();
+    expect(await screen.findByText(/couldn't load this chiasm/i)).toBeInTheDocument();
+  });
+
+  test("shows the error state when the backend maps the id to null (live bad-deep-link shape)", async () => {
+    BoMOnlineAPI.mockResolvedValueOnce({ chiasm: { x1: null } });
+    renderChiasm();
+    expect(await screen.findByText(/couldn't load this chiasm/i)).toBeInTheDocument();
+  });
+
+  test("times out to the error state if the fetch never settles", async () => {
+    jest.useFakeTimers();
+    try {
+      BoMOnlineAPI.mockReturnValueOnce(new Promise(() => {})); // never resolves
+      renderChiasm();
+      act(() => { jest.advanceTimersByTime(16000); });
+      expect(await screen.findByText(/couldn't load this chiasm/i)).toBeInTheDocument();
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });
