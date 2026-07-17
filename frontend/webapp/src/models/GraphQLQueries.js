@@ -407,7 +407,6 @@ const queries = {
                 reference
                 scheme
                 title
-                start_verse_id
                 verse_id
                 line_lengths
                 speaker { person_slug name voice }

@@ -287,8 +287,12 @@ function Container() {
     }
 
     useEffect(() => {
+        // null = loading, undefined = failed (same convention as Chiasm.js)
         BoMOnlineAPI({chiasmus:true}).then(({chiasmus}) => {
-            setChiasmus(chiasmus);
+            setChiasmus(chiasmus || undefined);
+        }).catch(e => {
+            console.error(e);
+            setChiasmus(undefined);
         });
 
 
@@ -313,6 +317,7 @@ function Container() {
 
     // the list must be loaded before we can render anything (deep links set
     // chiasmus_id before the fetch resolves — findIndex on null crashed here)
+    if (chiasmus === undefined) return <div className="browse_empty">{t("chiasms_load_failed", "Couldn't load chiasms.")}</div>;
     if(!chiasmus) return <Loader/>
     let singlePanel = <div className="chiasmPanel closed"
     ></div>
