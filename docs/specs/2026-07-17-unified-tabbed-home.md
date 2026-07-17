@@ -162,6 +162,18 @@ Therefore:
   and `/user/*` in `middleware.ts` if we later want canonical bot redirects.
   Deferred — the PHP-box parity spec does not redirect these.
 
+### Verified 2026-07-17 (implementation)
+Parity harness passed for `/home`, `/community`, `/user` (42/42 head fields,
+3/3 body-start vs the live PHP box); zero `frontend/next` files changed on the
+branch. Observed trade-off: a **bot-UA** request to the new nested
+`/home/community` / `/home/user` returns 404 from Next SSR (they fall onto the
+`[slug]/[blockno]` text route, not the DefaultShell), while **human** requests
+are proxied to the CRA and render 200. These sub-paths are not in the sitemap
+and are not linked from any SSR shell, so there is no indexing/SEO impact. If we
+ever want bots to receive a 200 shell for these app routes, add `/home/community`
+and `/home/user` to the DefaultShell/known-route handling — tracked as an
+optional follow-up, not required for parity.
+
 ## Testing
 
 - **Home shell:** renders the correct tab/child for each of `/home`,
