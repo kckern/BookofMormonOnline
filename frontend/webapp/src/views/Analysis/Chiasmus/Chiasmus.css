@@ -441,6 +441,8 @@
 
 .chiasmPanel.open{
     width: 40%;
+    min-width: 26rem; /* ≥416px of readable column at any two-pane width (audit §3.2) */
+    flex-shrink: 0;
 }
 
 .chiasm .close{
@@ -595,6 +597,9 @@
            ScripturePopup (z-index 2000), so offset top instead of z-index. */
         inset: 60px 0 0 0;
         width: 100%;
+        /* base rule's min-width (26rem, audit §3.2) would out-rank width:100%
+           and overflow narrow phones — reset it inside the overlay */
+        min-width: 0;
         height: auto;
         background: var(--surface-0);
         z-index: 1050;
