@@ -106,18 +106,34 @@ html[data-theme="dark"] .home-tabs-reload:hover {
   padding-top: 7.25em; /* ~116px: 60 header + ~44 tab bar + breathing room */
 }
 
-/* ---------- Community view: tab bar over the left column only ---------- */
-/* The left column sits under the (shrunken) tab bar and does NOT scroll — its
-   GroupBrowser right-sizes its list lengths to the height. The right feed panel
-   is left uncovered so it runs flush to the top (clearing only the app header). */
+/* ---------- Community view: full-bleed two-pane ---------- */
+/* Community is NOT width-capped — the right feed reaches the window's right edge
+   (its scrollbar sits flush against the edge). Both panels start BELOW the fixed
+   60px header so their scrollbars aren't hidden under it. The left column sits
+   under the (shrunken) tab bar and does NOT scroll — its GroupBrowser right-sizes
+   its list lengths to the height. */
+.home-shell--community {
+  max-width: none;
+}
 .home-shell--community .home-tabs {
-  width: calc(40% - 1em); /* == .leftPanelScroll width */
+  width: 40%; /* ≈ .leftPanelScroll width — bar covers the left column only */
+}
+.home-shell--community .leftPanelScroll,
+.home-shell--community .rightPanelScroll {
+  top: 60px; /* below the fixed header → scrollbar not hidden under it */
+  height: calc(100vh - 60px);
 }
 .home-shell--community .leftPanelScroll {
   overflow: hidden;
+  padding-top: 44px; /* clear the tab bar that sits over this column */
 }
 .home-shell--community .rightPanelScroll {
-  padding-top: 4em; /* app header only (~60px) — feed reaches the top */
+  padding-top: 0.5rem; /* flush to the top, just below the header */
+}
+/* Drop the main panel's right gutter on Community so the feed + its scrollbar
+   reach the window edge. (Toggled by Home.js when the Community tab is active.) */
+body.community-view #main-panel {
+  padding-right: 0;
 }
 
 /* ---------- ultra-wide (>4280px): header is 91px ---------- */

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Switch, Route, Redirect, useLocation } from "react-router-dom";
 import { isMobile } from "src/models/Utils";
 import { isMessengerEnabled } from "src/models/featureFlags";
@@ -23,6 +23,14 @@ export default function Home() {
     // Community-only layout: tab bar caps to the left column, right feed runs
     // flush to the top, left column doesn't scroll (see HomeTabs.css).
     (!mobile && activeTab === "community" ? " home-shell--community" : "");
+
+  // Drop the main panel's right gutter while Community is active so the feed
+  // reaches the window edge (CSS can't select the ancestor #main-panel).
+  useEffect(() => {
+    const isCommunity = !mobile && activeTab === "community";
+    document.body.classList.toggle("community-view", isCommunity);
+    return () => document.body.classList.remove("community-view");
+  }, [mobile, activeTab]);
 
   return (
     // `--tabs` modifier (desktop only) lets the stylesheet own the fixed-header

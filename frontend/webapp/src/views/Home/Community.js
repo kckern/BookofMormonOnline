@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
+import React, { useState, useEffect, useRef, useLayoutEffect, useCallback } from "react";
 import { useParams, useHistory, useRouteMatch, Link } from "react-router-dom";
 import moment from "moment";
 import ProgressBox from "../User/ProgressBox.js";
@@ -107,39 +107,63 @@ function Community() {
 }
 
 // The Community left panel does NOT scroll — it right-sizes its list lengths to
-// the available height. Start from generous caps and step one row down
-// (leaderboard first, then groups, then finishers) until the panel stops
-// overflowing. A ResizeObserver re-expands on viewport change, then it re-fits.
-const FIT_MAX = { leaders: 10, groups: 10, finishers: 12 };
-const FIT_MIN = { leaders: 2, groups: 1, finishers: 4 };
+// the available height. Rather than reset-to-max and re-shrink (which flickered
+// rows out during a window drag), it nudges ONE list up or down per animation
+// frame toward a stable "just fits" band. Groups flex first (they have a
+// 'see more'); the leaderboard is trimmed last and refills first, so its rows
+// don't blink out on resize.
+const FIT_MAX = { leaders: 10, groups: 12, finishers: 12 };
+const FIT_MIN = { leaders: 3, groups: 1, finishers: 4 };
+// Stable band: shrink when the panel overflows by >GROW_SLACK-ish; grow only
+// when there's comfortably more than one row of slack. The band is wider than
+// the tallest row so a grow/shrink lands inside it (no oscillation).
+const OVERFLOW_PX = 4;
+const GROW_SLACK_PX = 100;
 
-function useFitCounts(cardRef, resetKey) {
+function useFitCounts(cardRef) {
   const [caps, setCaps] = useState(FIT_MAX);
+  const rafRef = useRef(0);
 
-  useLayoutEffect(() => {
-    setCaps(FIT_MAX);
-    const panel = cardRef.current?.parentElement;
-    if (!panel || typeof ResizeObserver === "undefined") return undefined;
-    const ro = new ResizeObserver(() => setCaps(FIT_MAX));
-    ro.observe(panel);
-    return () => ro.disconnect();
-  }, [cardRef, resetKey]);
-
-  useLayoutEffect(() => {
+  const step = useCallback(() => {
     const panel = cardRef.current?.parentElement; // the fixed-height .leftPanelScroll
     if (!panel) return;
-    if (panel.scrollHeight > panel.clientHeight + 1) {
-      setCaps((c) =>
-        c.leaders > FIT_MIN.leaders
-          ? { ...c, leaders: c.leaders - 1 }
-          : c.groups > FIT_MIN.groups
-          ? { ...c, groups: c.groups - 1 }
-          : c.finishers > FIT_MIN.finishers
-          ? { ...c, finishers: c.finishers - 1 }
-          : c
-      );
-    }
+    const over = panel.scrollHeight - panel.clientHeight;
+    setCaps((c) => {
+      if (over > OVERFLOW_PX) {
+        if (c.groups > FIT_MIN.groups) return { ...c, groups: c.groups - 1 };
+        if (c.finishers > FIT_MIN.finishers) return { ...c, finishers: c.finishers - 1 };
+        if (c.leaders > FIT_MIN.leaders) return { ...c, leaders: c.leaders - 1 };
+      } else if (over < -GROW_SLACK_PX) {
+        if (c.leaders < FIT_MAX.leaders) return { ...c, leaders: c.leaders + 1 };
+        if (c.finishers < FIT_MAX.finishers) return { ...c, finishers: c.finishers + 1 };
+        if (c.groups < FIT_MAX.groups) return { ...c, groups: c.groups + 1 };
+      }
+      return c; // in-band → stable (same ref → no re-render)
+    });
+  }, [cardRef]);
+
+  const schedule = useCallback(() => {
+    if (rafRef.current) return;
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = 0;
+      step();
+    });
+  }, [step]);
+
+  // Re-nudge after every render (coalesced), and whenever the panel resizes.
+  useLayoutEffect(() => {
+    schedule();
   });
+  useLayoutEffect(() => {
+    const panel = cardRef.current?.parentElement;
+    if (!panel || typeof ResizeObserver === "undefined") return undefined;
+    const ro = new ResizeObserver(schedule);
+    ro.observe(panel);
+    return () => {
+      ro.disconnect();
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, [cardRef, schedule]);
 
   return caps;
 }
@@ -183,10 +207,7 @@ function GroupBrowser({ activeGroup, setActiveGroup }) {
     ?.map((i) => i?.grouping)
     .filter((v, i, a) => a.indexOf(v) === i).length;
 
-  const caps = useFitCounts(
-    cardRef,
-    `${finishers.length}:${leaders.length}:${groupListData.length}:${queryFilter?.grouping || ""}`
-  );
+  const caps = useFitCounts(cardRef);
   const shownGroups = groupListData.slice(0, caps.groups);
 
   return (
