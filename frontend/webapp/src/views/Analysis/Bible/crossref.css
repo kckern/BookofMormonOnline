@@ -208,7 +208,7 @@ html[data-theme="dark"] .xref-root {
 
 @media (prefers-reduced-motion: no-preference) {
   /* animate the group, never the paths — a fill-mode:both animation on the
-     paths pins their opacity and defeats the .dim rule below */
+     paths pins their opacity and defeats the .dim rule above */
   .xref-ribbon {
     animation: xref-fadein 250ms both;
     animation-delay: calc(var(--i, 0) * 4ms);
@@ -566,6 +566,11 @@ html[data-theme="dark"] .verseViewerTable .scriptureCell p span.highlight {
   .xref-anchorbody {
     flex-direction: column;
     gap: 1rem;
+    /* column direction makes align-items:flex-start a width constraint */
+    align-items: stretch;
+  }
+  .xref-detail {
+    width: 100%;
   }
   .xref-rail {
     flex-basis: auto;
