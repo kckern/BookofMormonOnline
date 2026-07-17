@@ -514,9 +514,9 @@ html[data-theme="dark"] .xref-chaptercell.ramp-6 {
   font-weight: bold;
   font-size: 1rem;
   flex-grow: 0;
+  flex-shrink: 0;
   line-height: 1.5rem;
   white-space: nowrap;
-  overflow: hidden;
   padding-right: 1ex;
   color: var(--text-primary, #212529);
 }
@@ -580,6 +580,10 @@ html[data-theme="dark"] .verseViewerTable .scriptureCell p span.highlight {
   }
   .xref-spinelabel { display: none; }
   .xref-ribbonwrap { min-height: 420px; }
+  /* the ref is the row's identity — give it the space; drop the heading */
+  .verseViewerTable td.scriptureRef .heading { display: none; }
+  /* justified text in ~150px columns is all rivers */
+  .verseViewerTable .scriptureCell p { text-align: left; }
 }
 
 @media (prefers-reduced-motion: reduce) {
