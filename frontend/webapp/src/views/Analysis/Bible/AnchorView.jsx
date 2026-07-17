@@ -8,27 +8,22 @@ import PartnerBars from "./PartnerBars";
 // All navigation goes through props.navigate — state lives in the URL.
 export default function AnchorView({ state, navigate }) {
   const { canon, book, chapter, highlight } = state;
-  const partnerLabel = canon === "bom" ? "Bible" : "Book of Mormon";
   const scopeTotal = chapter
     ? chapterCounts(canon, book)[chapter - 1]
     : bookTotal(canon, book);
 
-  // The book the flip lands on — top partner, unless the current highlight is
-  // itself a partner book (mirrors flip()'s target logic, kept identical).
-  const flipTarget = (() => {
-    const partners = partnersFor(canon, book);
-    const highlightIsBook = partners.some((p) => p.book.name === highlight);
-    return (highlightIsBook && highlight) || partners[0]?.book.name;
-  })();
+  // Single source of truth for the flip destination — the top partner, unless
+  // the current highlight is itself a partner book (highlight may be a division
+  // name like "Major Prophets", which we never flip to). Both the button label
+  // and flip()'s navigation derive from this one value.
+  const partners = partnersFor(canon, book);
+  const flipTarget =
+    (partners.some((p) => p.book.name === highlight) && highlight) ||
+    partners[0]?.book.name;
 
   const flip = () => {
-    const partners = partnersFor(canon, book);
-    // highlight may be a division name (e.g. "Major Prophets"); only flip to it
-    // if it's a real partner book, else fall back to the top partner.
-    const highlightIsBook = partners.some((p) => p.book.name === highlight);
-    const target = (highlightIsBook && highlight) || partners[0]?.book.name;
-    if (!target) return navigate({ view: "overview" });
-    navigate({ view: "anchor", canon: canon === "bom" ? "kjv" : "bom", book: target });
+    if (!flipTarget) return navigate({ view: "overview" });
+    navigate({ view: "anchor", canon: canon === "bom" ? "kjv" : "bom", book: flipTarget });
   };
 
   const openReader = (partnerName) => {
@@ -48,9 +43,11 @@ export default function AnchorView({ state, navigate }) {
           <span aria-hidden="true"> › </span>
           <span aria-current="page">{book}</span>
         </nav>
-        <button className="xref-flip" onClick={flip}>
-          ⇄ view from {flipTarget || partnerLabel}
-        </button>
+        {flipTarget && (
+          <button className="xref-flip" onClick={flip}>
+            ⇄ view from {flipTarget}
+          </button>
+        )}
       </header>
 
       <div className="xref-anchorbody">

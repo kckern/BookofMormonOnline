@@ -422,10 +422,18 @@ html[data-theme="dark"] .xref-chaptercell.ramp-6 {
 
 .xref-detailhead {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
   gap: 1rem;
   max-width: 860px;
+}
+
+/* on a narrow column the heading wraps to multiple lines; keep the decorative
+   legend intact and let it drop below cleanly rather than getting crushed */
+.xref-detailhead .xref-legend {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .xref-detailheading {
