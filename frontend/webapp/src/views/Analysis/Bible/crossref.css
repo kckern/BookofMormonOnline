@@ -230,11 +230,45 @@ html[data-theme="dark"] .xref-root {
 
 /* ---- overview: table twin ---- */
 
-.xref-tabletwin {
-  width: 100%;
+.xref-tabletwin-panel {
   max-width: 720px;
   margin: 0 auto;
+  width: 100%;
+}
+
+.xref-tablefilter {
+  display: block;
+  width: 100%;
+  max-width: 280px;
+  margin: 0 0 0.5rem;
+  padding: 0.3rem 0.6rem;
+  font: inherit;
+  font-size: 0.9rem;
+  border: 1px solid var(--border, #ddd);
+  border-radius: 1ex;
+  background: var(--surface-1, #f8f8f8);
+  color: var(--text-primary, #212529);
+}
+
+.xref-tablewrap {
+  max-height: calc(100vh - 320px);
+  min-height: 300px;
+  overflow: auto;
+  border: 1px solid var(--border, #ddd);
+  border-radius: 0.5ex;
+}
+
+.xref-tabletwin {
+  width: 100%;
   border-collapse: collapse;
+}
+
+.xref-tabletwin thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface-1, #f8f8f8);
+  box-shadow: 0 1px 0 var(--border, #ddd);
 }
 
 .xref-tabletwin th,
@@ -247,6 +281,33 @@ html[data-theme="dark"] .xref-root {
 .xref-tabletwin td.num {
   text-align: right;
   font-variant-numeric: tabular-nums;
+}
+
+.xref-pairrow {
+  cursor: pointer;
+}
+
+.xref-pairrow:hover {
+  background: var(--surface-2, #f0f0f0);
+}
+
+.xref-tabletwin tfoot td {
+  font-weight: 700;
+  background: var(--surface-1, #f8f8f8);
+  border-bottom: none;
+}
+
+.xref-rowlink {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--link, #345496);
+  cursor: pointer;
+}
+
+.xref-rowlink:hover {
+  text-decoration: underline;
 }
 
 /* ---- anchored view ---- */

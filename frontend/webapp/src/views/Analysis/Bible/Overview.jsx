@@ -247,7 +247,7 @@ export default function Overview({ state = {}, navigate }) {
       </header>
 
       {mode === "table" ? (
-        <TableTwin />
+        <TableTwin navigate={navigate} />
       ) : (
         <div className="xref-ribbonwrap" ref={wrapRef}>
           <p className="xref-hint">

@@ -1,11 +1,19 @@
 import React, { useMemo, useState } from "react";
-import { allPairs } from "./aggregate";
+import { allPairs, headline } from "./aggregate";
 
-// Sortable table twin of the ribbon overview — the WCAG-clean equivalent.
-export default function TableTwin() {
+// Sortable, filterable table twin of the ribbon overview — the WCAG-clean
+// equivalent. Rows open the same reader the ribbons do.
+export default function TableTwin({ navigate }) {
   const [sort, setSort] = useState({ key: "total", dir: -1 });
+  const [filter, setFilter] = useState("");
   const rows = useMemo(() => {
-    const pairs = [...allPairs()];
+    const q = filter.trim().toLowerCase();
+    const pairs = allPairs().filter(
+      (p) =>
+        !q ||
+        p.bomBookName.toLowerCase().includes(q) ||
+        p.bibleBookName.toLowerCase().includes(q)
+    );
     pairs.sort((a, b) => {
       const av = a[sort.key];
       const bv = b[sort.key];
@@ -13,13 +21,15 @@ export default function TableTwin() {
       return cmp * sort.dir;
     });
     return pairs;
-  }, [sort]);
+  }, [sort, filter]);
+
+  const open = (p) =>
+    navigate({ view: "reader", bomBook: p.bomBookName, bibleBook: p.bibleBookName });
 
   const header = (key, label) => (
-    <th>
+    <th aria-sort={sort.key === key ? (sort.dir === -1 ? "descending" : "ascending") : undefined}>
       <button
         className="xref-sort"
-        aria-pressed={sort.key === key}
         onClick={() => setSort((s) => ({ key, dir: s.key === key ? -s.dir : -1 }))}
       >
         {label}
@@ -29,27 +39,63 @@ export default function TableTwin() {
   );
 
   return (
-    <table className="xref-tabletwin">
-      <thead>
-        <tr>
-          {header("bomBookName", "Book of Mormon")}
-          {header("bibleBookName", "Bible")}
-          {header("total", "Refs")}
-          {header("quotes", "Quotes")}
-          {header("phrases", "Phrases")}
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((p) => (
-          <tr key={`${p.bomBookName}|${p.bibleBookName}`} data-testid="xref-pairrow">
-            <td>{p.bomBookName}</td>
-            <td>{p.bibleBookName}</td>
-            <td className="num">{p.total}</td>
-            <td className="num">{p.quotes}</td>
-            <td className="num">{p.phrases}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <div className="xref-tabletwin-panel">
+      <input
+        className="xref-tablefilter"
+        type="search"
+        aria-label="Filter by book"
+        placeholder="Filter by book…"
+        value={filter}
+        onChange={(e) => setFilter(e.target.value)}
+      />
+      <div className="xref-tablewrap">
+        <table className="xref-tabletwin">
+          <thead>
+            <tr>
+              {header("bomBookName", "Book of Mormon")}
+              {header("bibleBookName", "Bible")}
+              {header("total", "Refs")}
+              {header("quotes", "Quotes")}
+              {header("phrases", "Phrases")}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((p) => (
+              <tr
+                key={`${p.bomBookName}|${p.bibleBookName}`}
+                data-testid="xref-pairrow"
+                className="xref-pairrow"
+                onClick={() => open(p)}
+              >
+                <td>
+                  <button
+                    className="xref-rowlink"
+                    aria-label={`Open ${p.bomBookName} × ${p.bibleBookName} reader`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      open(p);
+                    }}
+                  >
+                    {p.bomBookName}
+                  </button>
+                </td>
+                <td>{p.bibleBookName}</td>
+                <td className="num">{p.total}</td>
+                <td className="num">{p.quotes}</td>
+                <td className="num">{p.phrases}</td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colSpan={2}>All books</td>
+              <td className="num">{headline.total}</td>
+              <td className="num">{headline.quotes}</td>
+              <td className="num">{headline.phrases}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
   );
 }
