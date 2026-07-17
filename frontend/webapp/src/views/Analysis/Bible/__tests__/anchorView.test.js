@@ -19,7 +19,7 @@ describe("AnchorView", () => {
     setup();
     expect(screen.getByRole("heading", { name: /2 Nephi draws on/ })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Overview/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /anchor on Bible/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /view from Isaiah/i })).toBeInTheDocument();
   });
 
   test("Bible anchor renders the mirrored heading", () => {
@@ -29,7 +29,7 @@ describe("AnchorView", () => {
 
   test("flip with no highlight re-anchors on the top partner", () => {
     const { navigate } = setup();
-    fireEvent.click(screen.getByRole("button", { name: /anchor on Bible/i }));
+    fireEvent.click(screen.getByRole("button", { name: /view from Isaiah/i }));
     expect(navigate).toHaveBeenCalledWith({ view: "anchor", canon: "kjv", book: "Isaiah" });
   });
 
@@ -82,5 +82,23 @@ describe("AnchorView", () => {
     // scope chip clears the chapter
     fireEvent.click(screen.getByRole("button", { name: /clear chapter/i }));
     expect(navigate).toHaveBeenCalledWith({ view: "anchor", canon: "bom", book: "2 Nephi" });
+  });
+
+  test("chapter scope appears once — heading owns it, breadcrumb stays clean", () => {
+    setup({ view: "anchor", canon: "bom", book: "2 Nephi", chapter: 12 });
+    expect(screen.getByRole("navigation", { name: /breadcrumb/i })).not.toHaveTextContent(/ch\. 12/);
+    expect(screen.getByRole("heading", { name: /2 Nephi 12/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /clear chapter 12/i })).toBeInTheDocument();
+  });
+
+  test("flip button names its destination book", () => {
+    setup({ view: "anchor", canon: "bom", book: "2 Nephi" });
+    // scoped to the flip control — the Isaiah partner bar also matches /isaiah/i
+    expect(screen.getByRole("button", { name: /view from isaiah/i })).toBeInTheDocument();
+  });
+
+  test("headings say references, not refs", () => {
+    setup({ view: "anchor", canon: "bom", book: "2 Nephi" });
+    expect(screen.getByRole("heading", { name: /692 references/ })).toBeInTheDocument();
   });
 });

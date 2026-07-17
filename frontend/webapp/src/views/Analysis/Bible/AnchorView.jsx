@@ -13,6 +13,14 @@ export default function AnchorView({ state, navigate }) {
     ? chapterCounts(canon, book)[chapter - 1]
     : bookTotal(canon, book);
 
+  // The book the flip lands on — top partner, unless the current highlight is
+  // itself a partner book (mirrors flip()'s target logic, kept identical).
+  const flipTarget = (() => {
+    const partners = partnersFor(canon, book);
+    const highlightIsBook = partners.some((p) => p.book.name === highlight);
+    return (highlightIsBook && highlight) || partners[0]?.book.name;
+  })();
+
   const flip = () => {
     const partners = partnersFor(canon, book);
     // highlight may be a division name (e.g. "Major Prophets"); only flip to it
@@ -38,10 +46,10 @@ export default function AnchorView({ state, navigate }) {
         <nav className="xref-breadcrumb" aria-label="Breadcrumb">
           <Link to="/analysis/bible">⌂ Overview</Link>
           <span aria-hidden="true"> › </span>
-          <span aria-current="page">{book}{chapter ? ` › ch. ${chapter}` : ""}</span>
+          <span aria-current="page">{book}</span>
         </nav>
         <button className="xref-flip" onClick={flip}>
-          ⇄ anchor on {partnerLabel}
+          ⇄ view from {flipTarget || partnerLabel}
         </button>
       </header>
 
@@ -61,11 +69,17 @@ export default function AnchorView({ state, navigate }) {
         />
 
         <main className="xref-detail">
-          <h3 className="xref-detailheading">
-            {book}
-            {chapter ? ` ${chapter}` : ""} {canon === "bom" ? "draws on" : "appears in"}
-            <span className="xref-detailtotal"> {scopeTotal} refs</span>
-          </h3>
+          <div className="xref-detailhead">
+            <h3 className="xref-detailheading">
+              {book}
+              {chapter ? ` ${chapter}` : ""} {canon === "bom" ? "draws on" : "appears in"}
+              <span className="xref-detailtotal"> {scopeTotal} references</span>
+            </h3>
+            <span className="xref-legend" aria-hidden="true">
+              <span className="xref-swatch quote" /> quote
+              <span className="xref-swatch phrase" /> phrase
+            </span>
+          </div>
           {chapter && (
             <button
               className="xref-scopechip"
@@ -82,10 +96,6 @@ export default function AnchorView({ state, navigate }) {
             highlight={highlight}
             onSelect={openReader}
           />
-          <div className="xref-legend" aria-hidden="true">
-            <span className="xref-swatch quote" /> quote
-            <span className="xref-swatch phrase" /> phrase
-          </div>
         </main>
       </div>
     </div>

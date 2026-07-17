@@ -386,12 +386,12 @@ html[data-theme="dark"] .xref-root {
 }
 
 .xref-chaptercell {
-  width: 22px;
-  height: 22px;
+  width: 26px;
+  height: 26px;
   border: 1px solid var(--border, #ddd);
   border-radius: 4px;
   background: var(--surface-1, #f8f8f8);
-  font-size: 0.6rem;
+  font-size: 0.65rem;
   color: var(--text-secondary, #444);
   cursor: pointer;
   padding: 0;
@@ -418,6 +418,14 @@ html[data-theme="dark"] .xref-chaptercell.ramp-6 {
 .xref-detail {
   flex: 1;
   min-width: 0;
+}
+
+.xref-detailhead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  max-width: 860px;
 }
 
 .xref-detailheading {

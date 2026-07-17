@@ -42,7 +42,7 @@ export default function Rail({ canon, book, chapter, onAnchor, onChapter }) {
                   <span className="xref-rail-density" aria-hidden="true">
                     <span
                       className="xref-rail-densityfill"
-                      style={{ width: `${(total / max) * 100}%` }}
+                      style={{ width: `${Math.sqrt(total / max) * 100}%` }}
                     />
                   </span>
                 </button>
