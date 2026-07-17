@@ -267,7 +267,7 @@
 
 /* pinned pair — persistent (tap-friendly) highlight; distinct from hover */
 .chiasmus_line .scheme.pinned {
-    outline: 2px solid var(--accent-amber);
+    outline: 2px solid var(--link);   /* was --accent-amber: amber means pivot, not selection */
     outline-offset: 1px;
 }
 
@@ -372,7 +372,7 @@
 {
     font-weight: 500;
     color: var(--text-primary);
-    background-color: #FFFF0022;
+    background-color: var(--highlight);
     padding-left: 1ex;
     padding-right: 1ex;
     margin-left: -1ex;
@@ -418,7 +418,7 @@
 
 .chiasmus_line.active .scheme
 {
-    background-color: #FFFF0022;
+    background-color: var(--highlight);
     color: var(--text-primary);
     border: 1px solid var(--text-muted);
 }
