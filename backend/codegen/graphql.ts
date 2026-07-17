@@ -931,6 +931,21 @@ export type PassageNotes = {
   places?: Maybe<Array<Maybe<Place>>>;
   refs?: Maybe<Array<Maybe<Reference>>>;
   sources?: Maybe<Array<Maybe<Source>>>;
+  xrels?: Maybe<Array<Maybe<PassageXrel>>>;
+};
+
+/** A bom_xrels row anchored to a passage via the scripture ref in its note. */
+export type PassageXrel = {
+  __typename?: 'PassageXrel';
+  dst_name?: Maybe<Scalars['String']['output']>;
+  dst_slug?: Maybe<Scalars['String']['output']>;
+  dst_type?: Maybe<Scalars['String']['output']>;
+  note?: Maybe<Scalars['String']['output']>;
+  rel?: Maybe<Scalars['String']['output']>;
+  src_name?: Maybe<Scalars['String']['output']>;
+  src_slug?: Maybe<Scalars['String']['output']>;
+  src_type?: Maybe<Scalars['String']['output']>;
+  verse_id?: Maybe<Scalars['Int']['output']>;
 };
 
 export type People = {
@@ -2138,6 +2153,7 @@ export type ResolversTypes = {
   Page: ResolverTypeWrapper<Partial<Page>>;
   Passage: ResolverTypeWrapper<Partial<Passage>>;
   PassageNotes: ResolverTypeWrapper<Partial<PassageNotes>>;
+  PassageXrel: ResolverTypeWrapper<Partial<PassageXrel>>;
   People: ResolverTypeWrapper<Partial<People>>;
   PeopleLink: ResolverTypeWrapper<Partial<PeopleLink>>;
   PeopleNetwork: ResolverTypeWrapper<Partial<PeopleNetwork>>;
@@ -2261,6 +2277,7 @@ export type ResolversParentTypes = {
   Page: Partial<Page>;
   Passage: Partial<Passage>;
   PassageNotes: Partial<PassageNotes>;
+  PassageXrel: Partial<PassageXrel>;
   People: Partial<People>;
   PeopleLink: Partial<PeopleLink>;
   PeopleNetwork: Partial<PeopleNetwork>;
@@ -2997,6 +3014,20 @@ export type PassageNotesResolvers<ContextType = AppContext, ParentType extends R
   places?: Resolver<Maybe<Array<Maybe<ResolversTypes['Place']>>>, ParentType, ContextType>;
   refs?: Resolver<Maybe<Array<Maybe<ResolversTypes['Reference']>>>, ParentType, ContextType>;
   sources?: Resolver<Maybe<Array<Maybe<ResolversTypes['Source']>>>, ParentType, ContextType>;
+  xrels?: Resolver<Maybe<Array<Maybe<ResolversTypes['PassageXrel']>>>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type PassageXrelResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['PassageXrel'] = ResolversParentTypes['PassageXrel']> = {
+  dst_name?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  dst_slug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  dst_type?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  note?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  rel?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  src_name?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  src_slug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  src_type?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  verse_id?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -3688,6 +3719,7 @@ export type Resolvers<ContextType = AppContext> = {
   Page?: PageResolvers<ContextType>;
   Passage?: PassageResolvers<ContextType>;
   PassageNotes?: PassageNotesResolvers<ContextType>;
+  PassageXrel?: PassageXrelResolvers<ContextType>;
   People?: PeopleResolvers<ContextType>;
   PeopleLink?: PeopleLinkResolvers<ContextType>;
   PeopleNetwork?: PeopleNetworkResolvers<ContextType>;

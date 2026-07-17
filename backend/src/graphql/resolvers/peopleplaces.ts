@@ -12,8 +12,9 @@ function getSlugTip(slug: string): string {
 /** Connector words kept lowercase in group names unless leading ("church-of-the-lamb" → "Church of the Lamb"). */
 const GROUP_NAME_CONNECTORS = new Set(['of', 'the', 'and']);
 
-/** Groups have no table — display name is the natural-cased slug ("mulekites" → "Mulekites"). */
-function deSlugGroupName(slug: string): string {
+/** Groups have no table — display name is the natural-cased slug ("mulekites" → "Mulekites").
+ * Exported for reuse by the passage xrels index (data/loaders/scriptureextras.ts). */
+export function deSlugGroupName(slug: string): string {
   return slug
     .split('-')
     .map((word, i) => {

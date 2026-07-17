@@ -22,6 +22,20 @@ type PassageNotes {
   fax: [Fax]
   mapstory: [MapStory]
   refs: [Reference]
+  xrels: [PassageXrel]
+}
+
+"""A bom_xrels row anchored to a passage via the scripture ref in its note."""
+type PassageXrel {
+  rel: String
+  src_type: String
+  src_slug: String
+  src_name: String
+  dst_type: String
+  dst_slug: String
+  dst_name: String
+  note: String
+  verse_id: Int
 }
 
 type Reference {
