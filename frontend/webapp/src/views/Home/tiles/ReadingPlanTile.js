@@ -72,7 +72,7 @@ function GuestPlanPreview() {
       ctas={
         <>
           <Link className="valuePropPrimary" to="/contents">{label("start_reading")}</Link>
-          <Link className="valuePropSecondary" to="/user/signin">{label("sign_in")}</Link>
+          <Link className="valuePropSecondary" to="/home/user/signin">{label("sign_in")}</Link>
         </>
       }
     />

@@ -64,7 +64,7 @@ export default function ReadingProgressTile({ token, bookmark }) {
   return (
     <div className="samplerTileInner readingProgressTile">
       <h3 className="tileHeading">
-        <Link to="/user">{label("reading_progress")}</Link>
+        <Link to="/home/user">{label("reading_progress")}</Link>
       </h3>
       <div className="rpUserRow">
         <UserAvatar userId={userId} profileUrl={profileUrl} size={30} className="rpUserAvatar" />

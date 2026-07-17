@@ -17,13 +17,13 @@ export default function CommunityTile({ data }) {
   return (
     <div className="samplerTileInner communityTile">
       <h3 className="tileHeading">
-        <Link to="/community">{label("community")}</Link>
+        <Link to="/home/community">{label("community")}</Link>
       </h3>
 
       {groups.length ? (
         <div className="communityGroupStrip">
           {groups.map((g) => (
-            <Link key={g.url} to={`/community/${g.url}`} className="communityGroupCard">
+            <Link key={g.url} to={`/home/community/${g.url}`} className="communityGroupCard">
               <img className="communityGroupAvatar" src={g.picture} alt="" onError={breakCache} />
               <div className="communityGroupBody">
                 <div className="communityGroupName">{g.name}</div>
@@ -40,19 +40,19 @@ export default function CommunityTile({ data }) {
             </Link>
           ))}
           {moreGroups > 0 ? (
-            <Link to="/community" className="communityGroupCard communityMoreCard">
+            <Link to="/home/community" className="communityGroupCard communityMoreCard">
               +{moreGroups} {label("groups")}
             </Link>
           ) : null}
         </div>
       ) : (
-        <Link to="/community" className="communityInvite">{label("start_group")}</Link>
+        <Link to="/home/community" className="communityInvite">{label("start_group")}</Link>
       )}
 
       {freshMessages.length >= 1 ? (
         <div className="communityMessages">
           {freshMessages.map((m) => (
-            <Link key={`${m.channel}-${m.id}`} to={`/community/${m.channel}/${m.id}`} className="communityMessage">
+            <Link key={`${m.channel}-${m.id}`} to={`/home/community/${m.channel}/${m.id}`} className="communityMessage">
               <span className="communityGroupChip">{m.groupName}</span>
               <img src={m.user?.picture} alt="" onError={breakCache} />
               <span className="communityMsgUser">{m.user?.nickname}</span>

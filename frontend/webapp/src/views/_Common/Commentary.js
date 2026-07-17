@@ -349,7 +349,7 @@ export default function Commentary() {
 							showCancel
 							btnSize=""
 							>
-                <p><em>Commentaries from <strong>{showHideModal.sourceTitle}</strong> will no longer appear in the margins.  You can re-enable this commentary in your <Link to="/user/preferences">preferences</Link>.</em></p>
+                <p><em>Commentaries from <strong>{showHideModal.sourceTitle}</strong> will no longer appear in the margins.  You can re-enable this commentary in your <Link to="/home/user/preferences">preferences</Link>.</em></p>
 					</SweetAlert>
           <div className="card-header">
             {tabs}

@@ -117,7 +117,7 @@ export default function Invitation() {
         );
         
         if (groupChannel) {
-          history.push("/user");
+          history.push("/home/user");
           return {channel_url, group: groupChannel, results};
         } else {
           throw new Error("Group channel not found");

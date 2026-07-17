@@ -110,7 +110,7 @@ function MobileHeader() {
 
 
   return (
-    <Link to={"/user"}>
+    <Link to={"/home/user"}>
     <div
       id="header"
       className="heading-bar mobile noselect"

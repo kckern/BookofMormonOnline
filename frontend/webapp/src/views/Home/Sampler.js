@@ -526,7 +526,7 @@ export function SamplerFooter() {
     ["contents", "/contents"],
     ["people", "/people"],
     ["places", "/places"],
-    ["community", "/community"],
+    ["community", "/home/community"],
     ["search", "/search"],
   ];
   return (

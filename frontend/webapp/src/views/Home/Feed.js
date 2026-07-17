@@ -370,7 +370,7 @@ function HomeFeedItem({
           </div>
 
           <div className="timestamp">
-            <Link to={`/community/${group.url}/${item.id}`}>{timeAgo}</Link>
+            <Link to={`/home/community/${group.url}/${item.id}`}>{timeAgo}</Link>
           </div>
         </CardHeader>
         <CardHeader className="homeFeedHeader noselect">
@@ -781,7 +781,7 @@ function Comment({ comment }) {
           {comment.user.nickname} {botBadge}{" "}
           <span>
             •{" "}
-            <Link to={`/community/${comment.channel_url}/${comment.id}`}>
+            <Link to={`/home/community/${comment.channel_url}/${comment.id}`}>
               {timeAgo}
             </Link>
           </span>

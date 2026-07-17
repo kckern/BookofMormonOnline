@@ -687,7 +687,7 @@ function TheaterCrossRoadsButton({config,optionalOverride,page,narration,slug,on
   const handleClick = onClick || (async () => {
     setMainLabel(label("loading"));
     setSubLabel(label("loading_narration"));
-    if (finish) {  document.location = "/user";  return; }
+    if (finish) {  document.location = "/home/user";  return; }
     if(isContinue) return theaterController.next("manual");
 
     //clear theater progres

@@ -26,7 +26,7 @@ moment.locale(label("moment_locale"));
 
 export function HistoryList({ studyLog, progressList, setHistoryView }) {
   useEffect(() => {
-    history.push("/user/history");
+    history.push("/home/user/history");
     document.title = label("History") + " | " + label("home_title");
   }, []);
 

@@ -39,7 +39,7 @@ const makeBlankSections = (counts, id) => {
 };
 export default function ProgressBox() {
   const appController = useAppController();
-  useEffect(() => history.push("/user"), []);
+  useEffect(() => history.push("/home/user"), []);
 
   let tokenToLoad = appController.states.user.token;
   let userToLoad = appController.states.user.user;

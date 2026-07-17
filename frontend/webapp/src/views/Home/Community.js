@@ -376,7 +376,7 @@ function GroupCard({ groupData, activeGroup, setActiveGroup }) {
       data-tip={cardTipHtml}
       data-for={"card-tip"}
     >
-      <Link to={`/community/${groupData.url}`}>
+      <Link to={`/home/community/${groupData.url}`}>
         <div className="groupContent" onClick={() => ReactTooltip.hide()}>
           <div className="groupImage">
             <img src={groupData.picture} alt={groupData.name || ""} />
@@ -465,7 +465,7 @@ export function GroupCallToAction({ groupData, joinlabel }) {
 
   if (!myId)
     return (
-      <Link to={"/user/signin"}>
+      <Link to={"/home/user/signin"}>
         <div
           className={"groupCTA"}
           data-tip={label("sign_in")}
