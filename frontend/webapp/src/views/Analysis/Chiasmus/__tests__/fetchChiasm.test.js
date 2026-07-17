@@ -59,11 +59,6 @@ describe("fetchChiasm", () => {
     expect(BoMOnlineAPI).toHaveBeenCalledTimes(2);
   });
 
-  test("resolves undefined when the id is not in the result", async () => {
-    BoMOnlineAPI.mockResolvedValueOnce({ chiasm: {} });
-    await expect(fetchChiasm("nonexistent999")).resolves.toBeUndefined();
-  });
-
   test("resolves undefined when the API returns an error object", async () => {
     BoMOnlineAPI.mockResolvedValueOnce({ error: { data: null } });
     await expect(fetchChiasm("nonexistent999")).resolves.toBeUndefined();

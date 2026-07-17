@@ -133,4 +133,21 @@ describe("Chiasm detail panel", () => {
       jest.useRealTimers();
     }
   });
+
+  test("failsafe firing after a successful load does not clobber the content", async () => {
+    // Pins the functional updater (c => c === null ? undefined : c): if the
+    // failsafe were simplified to setChiasm(undefined), a loaded chiasm would
+    // flip to the error state 15s after opening.
+    jest.useFakeTimers();
+    try {
+      renderChiasm();
+      await act(async () => { await Promise.resolve(); }); // let the mocked fetch settle
+      expect(screen.getByText("Test Chiasm")).toBeInTheDocument();
+      act(() => { jest.advanceTimersByTime(16000); });
+      expect(screen.getByText("Test Chiasm")).toBeInTheDocument();
+      expect(screen.queryByText(/couldn't load this chiasm/i)).not.toBeInTheDocument();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
 });
