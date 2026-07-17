@@ -9,10 +9,15 @@ const USE_MESSENGER = isMessengerEnabled();
 // Redirect component for disabled routes
 const DisabledRedirect = () => <Redirect to="/" />;
 
-// Legacy /home/:channelId(/:messageId) deep links now live under /community.
-const HomeChannelRedirect = () => {
+// Legacy /community/* and /user/* now live under the unified Home.
+export const CommunityRedirect = () => {
   const { channelId, messageId } = useParams();
-  return <Redirect to={`/community/${channelId}${messageId ? `/${messageId}` : ""}`} />;
+  const tail = channelId ? `/${channelId}${messageId ? `/${messageId}` : ""}` : "";
+  return <Redirect to={`/home/community${tail}`} />;
+};
+export const UserRedirect = () => {
+  const { value } = useParams();
+  return <Redirect to={`/home/user${value ? `/${value}` : ""}`} />;
 };
 
 // COMPONENTS
@@ -20,7 +25,7 @@ const About = lazy(() => import("../views/About/About.js"));
 const KRSEB = lazy(() => import("../views/About/KRSEB.js"));
 const Facsimiles = lazy(() => import("../views/Facsimiles/Facsimiles.js"));
 const Contact = lazy(() => import("../views/Contact/Contact.js"));
-const User = lazy(() => import("../views/User/User.js"));
+const Home = lazy(() => import("../views/Home/Home.js"));
 const People = lazy(() => import("../views/People/People.js"));
 const Places = lazy(() => import("../views/Places/Places.js"));
 const Objects = lazy(() => import("../views/Objects/Objects.js"));
@@ -29,8 +34,6 @@ const PeopleNetWork = lazy(() => import("../views/People/PeopleNetwork.js"));
 const TimeLine = lazy(() => import("../views/Timeline/Timeline.js"));
 const Contents = lazy(() => import("../views/Contents/Contents.js"));
 const SearchComponent = lazy(() => import("../views/Search/Search.js"));
-const Sampler = lazy(() => import("../views/Home/Sampler.js"));
-const Community = lazy(() => import("../views/Home/Community.js"));
 const Page = lazy(() => import("../views/Page/Page.js"));
 const Analysis = lazy(() => import("../views/Analysis/Analysis.js"));
 const Theology = lazy(() => import("../views/Theology/Theology.js"));
@@ -55,31 +58,25 @@ const routes = [
     component: (!lang || lang === "en") ? ReadScripture : ReadScripture,
   },
   {
-    // /home — the tile "sampler" explore page (design: docs/plans/2026-07-15-home-sampler-redesign-design.md)
-    exact: true,
+    // Unified tabbed Home: /home (Explore), /home/community, /home/user.
+    // Non-exact so the Home shell handles all sub-paths. (spec:
+    // docs/specs/2026-07-17-unified-tabbed-home.md)
     path: "/home",
-    component: Sampler,
+    component: Home,
+  },
+  // Legacy redirects into the unified Home (most specific first).
+  {
+    path: "/community/:channelId/:messageId(\\d+)",
+    component: CommunityRedirect,
   },
   {
-    path: "/home/:channelId/:messageId(\\d+)",
-    component: HomeChannelRedirect,
-  },
-  {
-    path: "/home/:channelId",
-    component: HomeChannelRedirect,
+    path: "/community/:channelId",
+    component: CommunityRedirect,
   },
   {
     exact: true,
     path: "/community",
-    component: Community,
-  },
-  {
-    path: "/community/:channelId/:messageId(\\d+)",
-    component: Community,
-  },
-  {
-    path: "/community/:channelId",
-    component: Community,
+    component: CommunityRedirect,
   },
   {
     path: "/groups",
@@ -170,16 +167,13 @@ const routes = [
     component: Contact,
   },
   {
-  path: "/user/signup",
-    component: User,
-  },
-  {
     path: "/user/:value",
-    component: User,
+    component: UserRedirect,
   },
   {
+    exact: true,
     path: "/user",
-    component: User,
+    component: UserRedirect,
   },
   {
     path: "/study/:value",
