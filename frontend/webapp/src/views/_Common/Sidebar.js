@@ -13,7 +13,6 @@ import soundOff from "src/views/User/svg/sound-off.svg"
 import settings from "src/views/User/svg/settings.svg"
 import ReactTooltip from "react-tooltip";
 import home from "./svg/home.svg";
-import community from "../Home/community.svg";
 import study from "./svg/study.svg";
 import read from "./svg/read.svg";
 import contents from "./svg/contents.svg";
@@ -55,7 +54,6 @@ import { useMessenger } from "src/contexts/MessengerContext";
 // Icon mapping for menu items
 const iconMap = {
   home,
-  community,
   contents,
   study,
   read,
