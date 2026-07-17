@@ -1,4 +1,32 @@
+/* Book-group rail hues — the record's 6-part structure as 4px card rails.
+   Validated (dataviz validate_palette.js, adjacent pairs in canonical order):
+   lightness band, chroma floor, CVD separation (worst deutan ΔE 9.1),
+   normal-vision floor, and >=3:1 contrast vs #fff for every hue. Adjacent
+   pairing is the right model here: groups render in canonical order, and
+   every card also names its book in the reference (secondary encoding).
+   Dark variants live in darkmode/_analysis.scss (validated vs #1a1a1a). */
+:root {
+    --rail-small-plates: #1982b6;
+    --rail-abridgment: #96521c;
+    --rail-ministry: #87519a;
+    --rail-mormon: #8d2e2e;
+    --rail-ether: #19a421;
+    --rail-moroni: #8a6509;
+}
 
+/* rail-* classes (on cards, and on .chiasm_group sections when grouped by
+   book) set --rail-color; rail-other sets nothing, so consumers fall back:
+   cards to var(--border), header underlines to transparent */
+.rail-small-plates { --rail-color: var(--rail-small-plates); }
+.rail-abridgment { --rail-color: var(--rail-abridgment); }
+.rail-ministry { --rail-color: var(--rail-ministry); }
+.rail-mormon { --rail-color: var(--rail-mormon); }
+.rail-ether { --rail-color: var(--rail-ether); }
+.rail-moroni { --rail-color: var(--rail-moroni); }
+
+.chiasm_group .group-header {
+    border-bottom: 2px solid var(--rail-color, transparent);
+}
 
 /* scrolling happens on .chiasmIndexPanel (so sticky group headers work);
    each .chiasmus_list is just a grid inside it */
@@ -117,6 +145,8 @@
 {
     display: flex;
     border: 1px solid var(--border);
+    /* the book-group rail; rail-other falls back to the plain border */
+    border-left: 4px solid var(--rail-color, var(--border));
     background-color: var(--surface-3);
     padding: 1ex;
     height: auto;
@@ -193,32 +223,69 @@
     flex-direction: column;
 
 }
-.chiasmus .title{
+.chiasmus .card-head {
+    display: flex;
+    gap: 1ex;
+    align-items: center;
+}
+
+.speaker-avatar {
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 2px solid var(--rail-color, var(--border));
+}
+
+.card-titles {
+    flex: 1;
+    min-width: 0;
+}
+
+.card-titles .title {
     font-weight: 800;
     color: var(--text-primary);
+    line-height: 1.1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.speaker-name {
+    font-size: .75rem;
+    color: var(--text-muted);
+}
+
+.depth-chip {
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: var(--text-muted);
+    color: var(--surface-0);
+    font-size: .85rem;
+    flex-shrink: 0;
+}
+
+.chiasmus .card-body {
     display: flex;
     justify-content: space-between;
-    line-height: 0.8rem;
+    align-items: flex-end;
+    gap: 1ex;
+    margin-top: .5ex;
 }
-.chiasmus .reference{
-    font-weight: 200;
-    color: var(--text-secondary);
+
+/* pill-look, non-interactive: the scripture_link visual (Main.css) without
+   role=button — a real RefPill can't sit inside the card <button> */
+.chiasmus .reference {
+    font-family: "Scripture", serif;
     font-size: 0.8rem;
-
-}
-
-
-.chiasmus .depth{
-    background-color: var(--text-muted);
-    height: 1rem;
+    font-weight: 400;
+    color: var(--text-secondary);
+    background-color: var(--control);
+    border: 1px solid var(--border);
+    border-radius: .5ex;
     padding: 0 1ex;
-    color: var(--surface-0);
-    border-radius: 50%;
-    line-height: 1rem;
-}
-
-.chiasmus .scheme{
-    color: var(--text-muted);
+    text-align: right;
 }
 
 .chiasmus_line:not(.inactive) .highlight
@@ -313,7 +380,10 @@
 .chiasmus.active{
     outline: 3px solid var(--text-primary);
     background-color: var(--surface-4);
-    border: 0;
+    /* hide the hairline border under the outline but KEEP the color rail
+       (was `border: 0`, which stripped the rail and shifted layout) */
+    border-color: transparent;
+    border-left-color: var(--rail-color, var(--border));
 }
 .chiasm h4
 {

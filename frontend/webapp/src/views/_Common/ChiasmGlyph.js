@@ -24,9 +24,13 @@ export function glyphBars(scheme, lineLengths) {
     const sorted = [...lineLengths].sort((a, b) => a - b);
     const t1 = sorted[Math.floor((sorted.length - 1) / 3)];
     const t2 = sorted[Math.floor(((sorted.length - 1) * 2) / 3)];
-    bars.forEach((b, i) => {
-      b.widthFactor = lineLengths[i] <= t1 ? 0.4 : lineLengths[i] <= t2 ? 0.7 : 1.0;
-    });
+    // uniform lengths: every value <= t1 would shrink ALL bars to 0.4 —
+    // there are no tertiles to show, so leave every factor at 1
+    if (t1 !== sorted[sorted.length - 1]) {
+      bars.forEach((b, i) => {
+        b.widthFactor = lineLengths[i] <= t1 ? 0.4 : lineLengths[i] <= t2 ? 0.7 : 1.0;
+      });
+    }
   }
   return bars;
 }

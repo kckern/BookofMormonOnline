@@ -24,8 +24,10 @@ describe("glyphBars", () => {
   });
   test("length tertiles map to 0.4/0.7/1.0 width factors when lineLengths provided", () => {
     const bars = glyphBars("ABA", [10, 200, 12]);
-    expect(bars[1].widthFactor).toBe(1.0);
-    expect(bars[0].widthFactor).toBeLessThan(bars[1].widthFactor);
+    expect(bars.map((b) => b.widthFactor)).toEqual([0.4, 1.0, 0.7]);
+  });
+  test("uniform lineLengths → all widthFactor 1 (no fake tertiles)", () => {
+    expect(glyphBars("ABBA", [5, 5, 5, 5]).every((b) => b.widthFactor === 1)).toBe(true);
   });
   test("no lineLengths → all widthFactor 1", () => {
     expect(glyphBars("ABBA").every((b) => b.widthFactor === 1)).toBe(true);

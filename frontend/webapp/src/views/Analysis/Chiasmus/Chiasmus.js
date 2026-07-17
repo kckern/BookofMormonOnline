@@ -1,11 +1,12 @@
 import { memo, useEffect, useMemo, useRef, useState } from "react";
-import BoMOnlineAPI from "../../../models/BoMOnlineAPI";
+import BoMOnlineAPI, { assetUrl } from "../../../models/BoMOnlineAPI";
 import Loader from "../../_Common/Loader";
+import ChiasmGlyph from "../../_Common/ChiasmGlyph";
 import "./Chiasmus.css";
 import Chiasm from "./Chiasm";
 import { label, determineLanguage } from 'src/models/Utils';
 import { useRouteMatch, useHistory } from "react-router-dom/cjs/react-router-dom.min";
-import { enrichChiasmus, applyBrowseState } from "./chiasmUtils";
+import { enrichChiasmus, applyBrowseState, BOOK_GROUPS } from "./chiasmUtils";
 import useBrowseState, { DEFAULTS } from "./useBrowseState";
 import { t } from "./t";
 
@@ -140,11 +141,34 @@ function BrowseToolbar({ state, set, depthCounts, categoryCounts }) {
 }
 
 const ChiasmCard = memo(function ChiasmCard({ chiasm, active, onSelect }) {
-    const { chiasmus_id, reference, depthBucket, title } = chiasm;
+    const { chiasmus_id, reference, depthBucket, title, scheme, bookGroup } = chiasm;
+    // Reference is plain text styled like the site's scripture pill, NOT a
+    // RefPill: RefPill is a span[role=button] and interactive content inside
+    // a <button> is invalid HTML (and an a11y trap). Read-in-context lives in
+    // the detail panel (Task 13); RefPill appears where there's no button
+    // nesting (Task 14's PassageNotes).
+    // The speaker avatar/name slot renders nothing until Task 16 delivers
+    // chiasm.speaker from the server; same for lineLengths (Task 15).
     return (
-        <button type="button" onClick={() => onSelect(chiasmus_id)} className={`chiasmus ${active ? "active" : ""}`} aria-pressed={active}>
-            <div className="title"> {title || t("untitled_chiasm", "Untitled")}<span className="depth">{depthBucket}</span></div>
-            <div className="reference">{reference}</div>
+        <button type="button" onClick={() => onSelect(chiasmus_id)}
+            className={`chiasmus rail-${bookGroup} ${active ? "active" : ""}`} aria-pressed={active}>
+            <div className="card-head">
+                {chiasm.speaker?.person_slug && (
+                    <img className="speaker-avatar" loading="lazy" width="36" height="36"
+                        alt={chiasm.speaker.name || ""}
+                        src={`${assetUrl}/people/${chiasm.speaker.person_slug}`} />
+                )}
+                <div className="card-titles">
+                    <div className="title">{title || t("untitled_chiasm", "Untitled")}</div>
+                    {chiasm.speaker?.name && <div className="speaker-name">{chiasm.speaker.name}</div>}
+                </div>
+                <span className="depth-chip" title={t("chiastic_depth", "Chiastic depth")}>{depthBucket}</span>
+            </div>
+            <div className="card-body">
+                <ChiasmGlyph scheme={scheme} lineLengths={chiasm.line_lengths} size={44}
+                    title={t("chiasm_structure", "Structure: $1", [scheme])} />
+                <span className="reference">{reference}</span>
+            </div>
         </button>
     );
 });
@@ -189,7 +213,13 @@ function Chiasmus({ enriched, flat, groups, state, set, setChiasmusId, activeChi
             </div>
         ) : groups ? (
             groups.map((group) => (
-                <section className="chiasm_group" key={group.key}>
+                // when grouped by BOOK the section carries the same rail-* class as
+                // its cards (group.key is a book name → map through BOOK_GROUPS);
+                // the header underline picks up --rail-color from it
+                <section
+                    className={`chiasm_group${state.group === "book" ? ` rail-${BOOK_GROUPS[group.key] || "other"}` : ""}`}
+                    key={group.key}
+                >
                     <h4 className="group-header">{group.key} <span className="count">{group.items.length}</span></h4>
                     <div className="chiasmus_list">{cards(group.items)}</div>
                 </section>
