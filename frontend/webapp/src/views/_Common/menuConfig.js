@@ -20,11 +20,6 @@ export const menuConfig = [
     labelKey: "menu_home",
   },
   {
-    slug: "community",
-    labelKey: "menu_community",
-    requiresMessenger: true,
-  },
-  {
     slug: "contents",
     labelKey: "menu_contents",
   },
