@@ -625,10 +625,24 @@ export function GroupPopUp() {
   }
 
   const group = appController.popUpData[activeId];
-  if (!group) return null;
-
   const headerLabel =
     label("group_profile") === "group_profile" ? "Group Profile" : label("group_profile");
+
+  if (!group) {
+    return (
+      <div id="popUp" className="card popupwindow" style={{ top: appController.states.popUp.top, left: appController.states.popUp.left }}>
+        <div className="card-header">
+          <div className="person_head">{headerLabel}</div>
+          <ul className="source_tabs souce_tab_list_0">
+            <li className="close" onClick={appController.functions.closePopUp}>×</li>
+          </ul>
+        </div>
+        <div className="card-body">
+          <div className="emptyState" style={{ padding: "2em", textAlign: "center" }}>Group not found</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Draggable handle=".card-header">

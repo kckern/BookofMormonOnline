@@ -89,13 +89,13 @@ function DrawerContent({ setLocalOpen }) {
     if (type === "history")
         return <HistoryDrawer />;
     if (type === "places")
-        return <Place setLocalOpen={setLocalOpen} />;
+        return <Place key={id} setLocalOpen={setLocalOpen} />;
     if (type === "people")
-        return <Person setLocalOpen={setLocalOpen} />;
+        return <Person key={id} setLocalOpen={setLocalOpen} />;
     if (type === "object")
-        return <ObjectDrawer />;
+        return <ObjectDrawer key={id} />;
     if (type === "group")
-        return <GroupDrawer />;
+        return <GroupDrawer key={id} />;
     if (type === "victory")
         return <Victory context="drawer" />;
     if (type === "pFilter")

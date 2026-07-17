@@ -1,4 +1,3 @@
-/* eslint-disable testing-library/no-container, testing-library/no-node-access */
 import React from "react";
 import "@testing-library/jest-dom";
 import { render, screen, waitFor } from "@testing-library/react";
@@ -44,11 +43,34 @@ describe("GroupPopUp", () => {
       expect.objectContaining({ group: ["nephites"] }),
       expect.anything()
     ));
+    // The component must store the fetched group keyed by slug.
+    await waitFor(() => expect(mockController.functions.setPopUp).toHaveBeenCalledWith(
+      expect.objectContaining({
+        popUpData: { nephites: expect.objectContaining({ slug: "nephites" }) },
+      })
+    ));
     // The mocked setPopUp doesn't store data, so store it manually and rerender.
     mockController.popUpData = { nephites: groupData };
     rerender(<GroupPopUp />);
     await waitFor(() => expect(screen.getByText("Nephites")).toBeInTheDocument());
     expect(screen.getByText("Plates")).toBeInTheDocument();
     expect(screen.getByText("kept-by")).toBeInTheDocument();
+  });
+
+  test("unknown slug is pinned to null and renders a closable not-found card", async () => {
+    // Backend filters unknown slugs out entirely: empty result set.
+    BoMOnlineAPI.mockImplementation(() => Promise.resolve({ group: {} }));
+    const { rerender } = render(<GroupPopUp />);
+    // The missing slug must be stored as null (undefined would refetch forever).
+    await waitFor(() => expect(mockController.functions.setPopUp).toHaveBeenCalledWith(
+      expect.objectContaining({ popUpData: { nephites: null } })
+    ));
+    mockController.popUpData = { nephites: null };
+    rerender(<GroupPopUp />);
+    // Not-found card with a working close button, not an invisible popup.
+    expect(screen.getByText("Group not found")).toBeInTheDocument();
+    expect(screen.getByText("×")).toBeInTheDocument();
+    // Loop regression guard: the null entry must not re-trigger the fetch.
+    expect(BoMOnlineAPI).toHaveBeenCalledTimes(1);
   });
 });
