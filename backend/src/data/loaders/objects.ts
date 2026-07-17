@@ -102,6 +102,53 @@ export function parseVerseIdFromNote(note: string | null): number | null {
   }
 }
 
+/** Connector words kept lowercase in group names unless leading ("church-of-the-lamb" → "Church of the Lamb"). */
+const GROUP_NAME_CONNECTORS = new Set(['of', 'the', 'and']);
+
+/** Groups have no table — display name is the natural-cased slug ("mulekites" → "Mulekites"). */
+export function deSlugGroupName(slug: string): string {
+  return slug
+    .split('-')
+    .map((word, i) => {
+      if (!word) return word;
+      if (i > 0 && GROUP_NAME_CONNECTORS.has(word)) return word;
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    })
+    .join(' ');
+}
+
+/**
+ * Batch-resolve entity display names/titles for (type, slug) pairs across the
+ * three entity tables. Map key is `type:slug`. Column meanings per type:
+ * people name/title, places name/info, objects name/subtitle. Rows whose name
+ * is empty are omitted — callers fall back to the slug (or de-slugged group name).
+ */
+export async function resolveEntityNames(
+  db: Kysely<DB>,
+  wanted: { type: string; slug: string }[],
+): Promise<Map<string, { name: string; title: string | null }>> {
+  const slugsOf = (t: string) => [...new Set(wanted.filter((w) => w.type === t).map((w) => w.slug))];
+  const peopleSlugs = slugsOf('people');
+  const placeSlugs = slugsOf('place');
+  const objectSlugs = slugsOf('object');
+  const [people, places, objects] = await Promise.all([
+    peopleSlugs.length
+      ? db.selectFrom('bom_people').select(['slug', 'name', 'title']).where('slug', 'in', peopleSlugs).execute()
+      : [],
+    placeSlugs.length
+      ? db.selectFrom('bom_places').select(['slug', 'name', 'info']).where('slug', 'in', placeSlugs).execute()
+      : [],
+    objectSlugs.length
+      ? db.selectFrom('bom_objects').select(['slug', 'name', 'subtitle']).where('slug', 'in', objectSlugs).execute()
+      : [],
+  ]);
+  const map = new Map<string, { name: string; title: string | null }>();
+  for (const p of people) if (p.name) map.set(`people:${p.slug}`, { name: p.name, title: p.title ?? null });
+  for (const p of places) if (p.name) map.set(`place:${p.slug}`, { name: p.name, title: p.info ?? null });
+  for (const o of objects) if (o.name) map.set(`object:${o.slug}`, { name: o.name, title: o.subtitle ?? null });
+  return map;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function objectsLoaders(db: Kysely<DB>, lang: string, core: Loaders) {
 
@@ -236,31 +283,10 @@ export function objectsLoaders(db: Kysely<DB>, lang: string, core: Loaders) {
 
     if (!rawRows.length) return slugs.map(() => []);
 
-    // Collect unique slugs per dst_type
-    const peopleSlugs: string[] = [];
-    const placeSlugs: string[] = [];
-    const objectSlugs: string[] = [];
-    for (const r of rawRows) {
-      if (r.dst_type === 'people') peopleSlugs.push(r.dst_slug);
-      else if (r.dst_type === 'place') placeSlugs.push(r.dst_slug);
-      else if (r.dst_type === 'object') objectSlugs.push(r.dst_slug);
-    }
-
-    const [people, places, objects] = await Promise.all([
-      peopleSlugs.length
-        ? db.selectFrom('bom_people').select(['slug', 'name', 'title']).where('slug', 'in', [...new Set(peopleSlugs)]).execute()
-        : [],
-      placeSlugs.length
-        ? db.selectFrom('bom_places').select(['slug', 'name', 'info']).where('slug', 'in', [...new Set(placeSlugs)]).execute()
-        : [],
-      objectSlugs.length
-        ? db.selectFrom('bom_objects').select(['slug', 'name', 'subtitle']).where('slug', 'in', [...new Set(objectSlugs)]).execute()
-        : [],
-    ]);
-
-    const peopleMap = new Map(people.map((p) => [p.slug, p]));
-    const placeMap = new Map(places.map((p) => [p.slug, p]));
-    const objectMap = new Map(objects.map((o) => [o.slug, o]));
+    const names = await resolveEntityNames(
+      db,
+      rawRows.map((r) => ({ type: r.dst_type, slug: r.dst_slug })),
+    );
 
     // Group raw rows by src_slug
     const bySrc = groupBy(rawRows, (r) => r.src_slug);
@@ -268,19 +294,10 @@ export function objectsLoaders(db: Kysely<DB>, lang: string, core: Loaders) {
     return slugs.map((slug) => {
       const rows = bySrc.get(slug) ?? [];
       const resolved: XrelRow[] = rows.map((r) => {
-        let dst_name: string = r.dst_slug;
-        let dst_title: string | null = null;
-        if (r.dst_type === 'people') {
-          const p = peopleMap.get(r.dst_slug);
-          if (p) { dst_name = p.name ?? r.dst_slug; dst_title = p.title ?? null; }
-        } else if (r.dst_type === 'place') {
-          const p = placeMap.get(r.dst_slug);
-          if (p) { dst_name = p.name ?? r.dst_slug; dst_title = p.info ?? null; }
-        } else if (r.dst_type === 'object') {
-          const o = objectMap.get(r.dst_slug);
-          if (o) { dst_name = o.name ?? r.dst_slug; dst_title = o.subtitle ?? null; }
-        }
-        // dst_type === 'group': falls through with dst_name = dst_slug, dst_title = null
+        // dst_type === 'group' (no table): no map entry — dst_name = dst_slug, dst_title = null
+        const entry = names.get(`${r.dst_type}:${r.dst_slug}`);
+        const dst_name = entry?.name ?? r.dst_slug;
+        const dst_title = entry?.title ?? null;
         return {
           rel: r.rel,
           srcweight: r.srcweight ?? null,

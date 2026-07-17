@@ -13,7 +13,7 @@ import { generateReference } from 'scripture-guide';
 import type { Resolvers } from '../../../codegen/graphql.js';
 import type { AppContext } from '../context.js';
 import { findUserByToken } from '../../data/loaders/userauth.js';
-import { parseVerseIdFromNote } from '../../data/loaders/objects.js';
+import { parseVerseIdFromNote, resolveEntityNames } from '../../data/loaders/objects.js';
 
 // 24 people = 1 featured + 11 face cards + 12 view-all mosaic thumbs (3×4);
 // 17 places = 5 cards + a full 3×4 mosaic.
@@ -251,31 +251,8 @@ const sampleCrossRefs = async (ctx: AppContext, seed: number) => {
   };
 };
 
-// Entity display-name lookup for relationship hubs/edges. Column meanings per
-// type mirror xrelsBySlug in loaders/objects.ts: people name/title,
-// places name/info, objects name/subtitle.
-const entityNames = async (
-  ctx: AppContext,
-  wanted: { type: string; slug: string }[],
-): Promise<Map<string, { name: string; title: string | null }>> => {
-  const slugsOf = (t: string) => [...new Set(wanted.filter((w) => w.type === t).map((w) => w.slug))];
-  const [people, places, objects] = await Promise.all([
-    slugsOf('people').length
-      ? ctx.db.selectFrom('bom_people').select(['slug', 'name', 'title']).where('slug', 'in', slugsOf('people')).execute()
-      : [],
-    slugsOf('place').length
-      ? ctx.db.selectFrom('bom_places').select(['slug', 'name', 'info']).where('slug', 'in', slugsOf('place')).execute()
-      : [],
-    slugsOf('object').length
-      ? ctx.db.selectFrom('bom_objects').select(['slug', 'name', 'subtitle']).where('slug', 'in', slugsOf('object')).execute()
-      : [],
-  ]);
-  const map = new Map<string, { name: string; title: string | null }>();
-  for (const p of people) if (p.name) map.set(`people:${p.slug}`, { name: p.name, title: p.title ?? null });
-  for (const p of places) if (p.name) map.set(`place:${p.slug}`, { name: p.name, title: p.info ?? null });
-  for (const o of objects) if (o.name) map.set(`object:${o.slug}`, { name: o.name, title: o.subtitle ?? null });
-  return map;
-};
+// Entity display-name lookup for relationship hubs/edges lives in
+// data/loaders/objects.ts (resolveEntityNames) — shared with the xrel loaders.
 
 // One well-connected hub entity and up to 4 of its typed relations. The hub is
 // seeded over all (src_type, src_slug) pairs with >=2 edges; GROUP BY needs raw
@@ -298,7 +275,7 @@ const sampleRelationship = async (ctx: AppContext, seed: number) => {
     .orderBy(seededOrder('dst_slug', seed))
     .limit(6)
     .execute();
-  const names = await entityNames(ctx, [
+  const names = await resolveEntityNames(ctx.db, [
     { type: h.src_type, slug: h.src_slug },
     ...edgeRows.map((e) => ({ type: e.dst_type, slug: e.dst_slug })),
   ]);

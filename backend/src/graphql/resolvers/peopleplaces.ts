@@ -3,26 +3,11 @@ import type { Resolvers } from '../../../codegen/graphql.js';
 import type { AppContext } from '../context.js';
 import { generateReference } from 'scripture-guide';
 import type { PeopleRow, PlaceFullRow, IndexRow, RelationResult, MapRow } from '../../data/loaders/peopleplaces.js';
+import { deSlugGroupName } from '../../data/loaders/objects.js';
 
 /** getSlugTip: incoming slug args may be paths — take the last segment. */
 function getSlugTip(slug: string): string {
   return slug.split('/').pop() ?? slug;
-}
-
-/** Connector words kept lowercase in group names unless leading ("church-of-the-lamb" → "Church of the Lamb"). */
-const GROUP_NAME_CONNECTORS = new Set(['of', 'the', 'and']);
-
-/** Groups have no table — display name is the natural-cased slug ("mulekites" → "Mulekites").
- * Exported for reuse by the passage xrels index (data/loaders/scriptureextras.ts). */
-export function deSlugGroupName(slug: string): string {
-  return slug
-    .split('-')
-    .map((word, i) => {
-      if (!word) return word;
-      if (i > 0 && GROUP_NAME_CONNECTORS.has(word)) return word;
-      return word.charAt(0).toUpperCase() + word.slice(1);
-    })
-    .join(' ');
 }
 
 /** Resolve translated value via core translation loader. */

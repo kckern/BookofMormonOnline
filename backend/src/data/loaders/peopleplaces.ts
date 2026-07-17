@@ -3,7 +3,7 @@ import DataLoader from 'dataloader';
 import type { Kysely } from 'kysely';
 import type { DB } from '../../../codegen/db.js';
 import type { Loaders } from '../loaders.js';
-import { parseVerseIdFromNote, sortXrels, type XrelRow } from './objects.js';
+import { parseVerseIdFromNote, resolveEntityNames, sortXrels, type XrelRow } from './objects.js';
 
 export interface PeopleRow {
   slug: string;
@@ -365,44 +365,16 @@ export function peopleplacesLoaders(db: Kysely<DB>, lang: string, core: Loaders)
 
       if (!rawRows.length) return keys.map(() => []);
 
-      const peopleSlugs: string[] = [];
-      const placeSlugs: string[] = [];
-      const objectSlugs: string[] = [];
-      for (const r of rawRows) {
-        if (r.src_type === 'people') peopleSlugs.push(r.src_slug);
-        else if (r.src_type === 'place') placeSlugs.push(r.src_slug);
-        else if (r.src_type === 'object') objectSlugs.push(r.src_slug);
-      }
-
-      const [people, places, objects] = await Promise.all([
-        peopleSlugs.length
-          ? db.selectFrom('bom_people').select(['slug', 'name', 'title']).where('slug', 'in', [...new Set(peopleSlugs)]).execute()
-          : [],
-        placeSlugs.length
-          ? db.selectFrom('bom_places').select(['slug', 'name', 'info']).where('slug', 'in', [...new Set(placeSlugs)]).execute()
-          : [],
-        objectSlugs.length
-          ? db.selectFrom('bom_objects').select(['slug', 'name', 'subtitle']).where('slug', 'in', [...new Set(objectSlugs)]).execute()
-          : [],
-      ]);
-      const peopleMap = new Map(people.map((p) => [p.slug, p]));
-      const placeMap = new Map(places.map((p) => [p.slug, p]));
-      const objectMap = new Map(objects.map((o) => [o.slug, o]));
+      const names = await resolveEntityNames(
+        db,
+        rawRows.map((r) => ({ type: r.src_type, slug: r.src_slug })),
+      );
 
       const byDst = new Map<string, XrelRow[]>();
       for (const r of rawRows) {
-        let srcName: string = r.src_slug;
-        let srcTitle: string | null = null;
-        if (r.src_type === 'people') {
-          const p = peopleMap.get(r.src_slug);
-          if (p) { srcName = p.name ?? r.src_slug; srcTitle = p.title ?? null; }
-        } else if (r.src_type === 'place') {
-          const p = placeMap.get(r.src_slug);
-          if (p) { srcName = p.name ?? r.src_slug; srcTitle = p.info ?? null; }
-        } else if (r.src_type === 'object') {
-          const o = objectMap.get(r.src_slug);
-          if (o) { srcName = o.name ?? r.src_slug; srcTitle = o.subtitle ?? null; }
-        }
+        const entry = names.get(`${r.src_type}:${r.src_slug}`);
+        const srcName = entry?.name ?? r.src_slug;
+        const srcTitle = entry?.title ?? null;
         const key = `${r.dst_type}|${r.dst_slug}`;
         const list = byDst.get(key) ?? [];
         list.push({

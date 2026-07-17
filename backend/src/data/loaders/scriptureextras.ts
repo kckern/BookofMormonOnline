@@ -2,8 +2,7 @@
 import { sql, type Kysely } from 'kysely';
 import type { DB } from '../../../codegen/db.js';
 import type { Loaders } from '../loaders.js';
-import { parseVerseIdFromNote } from './objects.js';
-import { deSlugGroupName } from '../../graphql/resolvers/peopleplaces.js';
+import { deSlugGroupName, parseVerseIdFromNote, resolveEntityNames } from './objects.js';
 
 // ─── Row shapes ─────────────────────────────────────────────────────────────
 
@@ -111,33 +110,17 @@ async function scanVerseXrelIndex(db: Kysely<DB>): Promise<Map<number, PassageXr
     .filter((r): r is typeof r & { verse_id: number } => r.verse_id != null);
 
   // Resolve BOTH endpoints' display names in one batch per entity table.
-  const wanted = anchored.flatMap((r) => [
-    { type: r.src_type, slug: r.src_slug },
-    { type: r.dst_type, slug: r.dst_slug },
-  ]);
-  const slugsOf = (t: string) => [...new Set(wanted.filter((w) => w.type === t).map((w) => w.slug))];
-  const peopleSlugs = slugsOf('people');
-  const placeSlugs = slugsOf('place');
-  const objectSlugs = slugsOf('object');
-  const [people, places, objects] = await Promise.all([
-    peopleSlugs.length
-      ? db.selectFrom('bom_people').select(['slug', 'name']).where('slug', 'in', peopleSlugs).execute()
-      : [],
-    placeSlugs.length
-      ? db.selectFrom('bom_places').select(['slug', 'name']).where('slug', 'in', placeSlugs).execute()
-      : [],
-    objectSlugs.length
-      ? db.selectFrom('bom_objects').select(['slug', 'name']).where('slug', 'in', objectSlugs).execute()
-      : [],
-  ]);
-  const names = new Map<string, string>();
-  for (const p of people) if (p.name) names.set(`people:${p.slug}`, p.name);
-  for (const p of places) if (p.name) names.set(`place:${p.slug}`, p.name);
-  for (const o of objects) if (o.name) names.set(`object:${o.slug}`, o.name);
+  const names = await resolveEntityNames(
+    db,
+    anchored.flatMap((r) => [
+      { type: r.src_type, slug: r.src_slug },
+      { type: r.dst_type, slug: r.dst_slug },
+    ]),
+  );
 
   // Groups have no table — de-slug; unresolvable non-group slugs fall back to the slug.
   const nameOf = (type: string, slug: string) =>
-    names.get(`${type}:${slug}`) ?? (type === 'group' ? deSlugGroupName(slug) : slug);
+    names.get(`${type}:${slug}`)?.name ?? (type === 'group' ? deSlugGroupName(slug) : slug);
 
   const index = new Map<number, PassageXrelRow[]>();
   for (const r of anchored) {
