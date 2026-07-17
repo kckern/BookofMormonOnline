@@ -61,15 +61,18 @@ export default function Overview({ navigate }) {
     for (const group of canons.kjv.groups) {
       if (group.name === expanded) {
         for (const b of group.books) {
-          left.push({ key: b.name, weight: b.verses, kind: "book", group: group.name });
+          const weight = bookTotal("kjv", b.name);
+          if (!weight) continue; // zero-ref books carry no ribbons
+          left.push({ key: b.name, weight, kind: "book", group: group.name });
           leftBookSet.add(b.name);
         }
       } else {
-        left.push({
-          key: group.name,
-          weight: group.books.reduce((a, b) => a + b.verses, 0),
-          kind: "division",
-        });
+        const weight = group.books.reduce(
+          (a, b) => a + bookTotal("kjv", b.name),
+          0
+        );
+        if (!weight) continue;
+        left.push({ key: group.name, weight, kind: "division" });
       }
     }
     const links = [];
@@ -87,14 +90,18 @@ export default function Overview({ navigate }) {
   }, [expanded]);
 
   const right = useMemo(
-    () => canons.bom.books.map((b) => ({ key: b.name, weight: b.verses })),
+    () =>
+      canons.bom.books
+        .map((b) => ({ key: b.name, weight: bookTotal("bom", b.name) }))
+        .filter((b) => b.weight > 0),
     []
   );
 
   const plotH = size.height - 40;
+  const spineMinPx = Math.min(14, plotH / Math.max(left.length, right.length, 1) / 2);
   const { leftSpine, rightSpine, ribbons } = useMemo(
-    () => layoutRibbons({ left, right, links, height: plotH, gap: 3, minPx: 1.5 }),
-    [left, right, links, plotH]
+    () => layoutRibbons({ left, right, links, height: plotH, gap: 3, minPx: 1.5, spineMinPx }),
+    [left, right, links, plotH, spineMinPx]
   );
 
   // reserve room for labels on wide screens; hug the edges on small ones
@@ -161,17 +168,17 @@ export default function Overview({ navigate }) {
     );
   });
 
-  const rightSegments = canons.bom.books.map((b) => {
-    const pos = rightSpine.get(b.name);
+  const rightSegments = right.map(({ key: name }) => {
+    const pos = rightSpine.get(name);
     if (!pos) return null;
-    const dim = active?.type === "node" && active.key !== b.name;
-    const label = `${b.name}, ${bookTotal("bom", b.name)} references, ${partnersFor("bom", b.name).length} partner books`;
+    const dim = active?.type === "node" && active.key !== name;
+    const label = `${name}, ${bookTotal("bom", name)} references, ${partnersFor("bom", name).length} partner books`;
     return (
-      <g key={b.name}>
+      <g key={name}>
         <rect
-          data-book={b.name}
-          {...nodeProps(b.name, label, () =>
-            navigate({ view: "anchor", canon: "bom", book: b.name })
+          data-book={name}
+          {...nodeProps(name, label, () =>
+            navigate({ view: "anchor", canon: "bom", book: name })
           )}
           className={`xref-spineseg book ${dim ? "dim" : ""}`}
           x={x1 - 16}
@@ -187,7 +194,7 @@ export default function Overview({ navigate }) {
             dominantBaseline="middle"
             textAnchor="start"
           >
-            {b.name}
+            {name}
           </text>
         )}
       </g>

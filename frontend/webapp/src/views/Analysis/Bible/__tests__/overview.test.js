@@ -73,6 +73,18 @@ describe("Overview", () => {
     const max = Math.max(...allPairs().map((p) => p.total));
     expect(rows[0].textContent).toContain(String(max));
   });
+
+  test("every spine segment on screen has a visible label (true-Sankey floor)", () => {
+    render(<Overview navigate={jest.fn()} />);
+    // small books were unlabeled slivers before; with ref-count weights + the
+    // 14px floor, every BoM book that HAS references gets a text label
+    expect(screen.getByText("Moroni")).toBeInTheDocument();
+    expect(screen.getByText("Ether")).toBeInTheDocument();
+    // Jarom has only 3 references (verified nonzero): a sliver under both
+    // verse-weighting and ref-weighting-without-floor. The 14px floor is what
+    // makes it tall enough to clear the > 9 label guard, so it exercises the fix.
+    expect(screen.getByText("Jarom")).toBeInTheDocument();
+  });
 });
 
 describe("aggregations", () => {
