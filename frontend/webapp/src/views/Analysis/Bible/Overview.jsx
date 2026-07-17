@@ -22,19 +22,36 @@ export default function Overview({ navigate }) {
   useLayoutEffect(() => {
     const el = wrapRef.current;
     if (!el) return;
-    const measure = () =>
-      setSize({
-        width: el.clientWidth || 960,
-        height: Math.max(el.clientHeight || 0, FALLBACK_H),
+    let frame = null;
+    const measure = () => {
+      frame = null;
+      // bail when unchanged — the observer re-fires when the svg resizes the
+      // wrapper, and echoing identical state back re-triggered it forever
+      setSize((prev) => {
+        const width = el.clientWidth || 960;
+        const height = Math.max(el.clientHeight || 0, FALLBACK_H);
+        return prev.width === width && prev.height === height
+          ? prev
+          : { width, height };
       });
+    };
+    const schedule = () => {
+      if (frame == null) frame = requestAnimationFrame(measure);
+    };
     measure();
     if (typeof ResizeObserver !== "undefined") {
-      const ro = new ResizeObserver(measure);
+      const ro = new ResizeObserver(schedule);
       ro.observe(el);
-      return () => ro.disconnect();
+      return () => {
+        ro.disconnect();
+        if (frame != null) cancelAnimationFrame(frame);
+      };
     }
-    window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
+    window.addEventListener("resize", schedule);
+    return () => {
+      window.removeEventListener("resize", schedule);
+      if (frame != null) cancelAnimationFrame(frame);
+    };
   }, []);
 
   // Left spine: divisions, with one optionally expanded into its books.
