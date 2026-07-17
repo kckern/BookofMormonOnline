@@ -54,7 +54,9 @@
 .chiasmus_list
 {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+    /* 15rem minimum (was 10rem): at 10rem nearly every title truncated —
+       "Record of Kn…" — making the card's primary text useless (audit §5.1) */
+    grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
     /* 1em spacing between columns */
     grid-column-gap: 1ex;
     /* 1em spacing between rows */
@@ -221,10 +223,12 @@
     appearance: none;
 }
 
+/* calmer affordances (audit §5.7): 2px neutral hover ring, 2px accent ring
+   for the active card — the old 3px shadow/text-primary rings shouted */
 .chiasmus_list .chiasmus:hover
 {
     background-color: var(--surface-4);
-    outline: 3px solid var(--shadow);
+    outline: 2px solid var(--border-strong);
 }
 
 .chiasmus_line
@@ -315,12 +319,16 @@
     min-width: 0;
 }
 
+/* Titles wrap to two lines, then clamp (with a title-attribute tooltip for
+   the rest) — replaces the old one-line cut that clipped almost everything */
 .card-titles .title {
     font-weight: 800;
     color: var(--text-primary);
-    line-height: 1.1;
+    line-height: 1.15;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
     overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 .speaker-name {
@@ -360,6 +368,13 @@
     border-radius: .5ex;
     padding: 0 1ex;
     text-align: right;
+    /* long multi-range references ellipsize inside the pill (tooltip carries
+       the full text) instead of wrapping or blowing out the card width */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    min-width: 0;
 }
 
 .chiasmus_line:not(.inactive) .highlight
@@ -483,9 +498,12 @@
     color: var(--text-primary);
 }
 
-.chiasmus.active:hover,
-.chiasmus.active{
-    outline: 3px solid var(--text-primary);
+/* .chiasmus_list prefix lifts specificity to (0,3,0): the card <button> keeps
+   :focus after a mouse click, and Bootstrap's button:focus:not(:focus-visible)
+   { outline: 0 } at (0,2,1) was stripping the ring off the just-clicked card */
+.chiasmus_list .chiasmus.active:hover,
+.chiasmus_list .chiasmus.active{
+    outline: 2px solid var(--link);
     background-color: var(--surface-4);
     /* hide the hairline border under the outline but KEEP the color rail
        (was `border: 0`, which stripped the rail and shifted layout) */

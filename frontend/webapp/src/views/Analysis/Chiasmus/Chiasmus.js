@@ -6,7 +6,7 @@ import "./Chiasmus.css";
 import Chiasm from "./Chiasm";
 import { label, determineLanguage } from 'src/models/Utils';
 import { useRouteMatch, useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
-import { enrichChiasmus, applyBrowseState, BOOK_GROUPS } from "./chiasmUtils";
+import { enrichChiasmus, applyBrowseState, BOOK_GROUPS, groupLabel } from "./chiasmUtils";
 import useBrowseState, { DEFAULTS } from "./useBrowseState";
 import { t } from "./t";
 import AnalysisBreadcrumb from "../AnalysisBreadcrumb";
@@ -169,27 +169,31 @@ function RailLegend() {
     </div>;
 }
 
-const ChiasmCard = memo(function ChiasmCard({ chiasm, active, onSelect }) {
+const ChiasmCard = memo(function ChiasmCard({ chiasm, active, onSelect, hideSpeaker }) {
     const { chiasmus_id, reference, depthBucket, title, scheme, bookGroup } = chiasm;
+    const depthLabel = depthBucket === "+" ? "8+" : depthBucket;
     // Reference is plain text styled like the site's scripture pill, NOT a
     // RefPill: RefPill is a span[role=button] and interactive content inside
     // a <button> is invalid HTML (and an a11y trap). Read-in-context lives in
     // the detail panel (Task 13); RefPill appears where there's no button
     // nesting (Task 14's PassageNotes).
+    // hideSpeaker: when grouped by speaker the group header already names the
+    // speaker — the per-card avatar + name line would repeat it on every card.
     return (
         <button type="button" onClick={() => onSelect(chiasmus_id)}
             className={`chiasmus rail-${bookGroup} ${active ? "active" : ""}`} aria-pressed={active}>
             <div className="card-head">
-                {chiasm.speaker?.person_slug && (
+                {!hideSpeaker && chiasm.speaker?.person_slug && (
                     <img className="speaker-avatar" loading="lazy" width="36" height="36"
                         alt={chiasm.speakerName || ""}
+                        onError={(e) => { e.currentTarget.style.display = "none"; }}
                         src={`${assetUrl}/people/${chiasm.speaker.person_slug}`} />
                 )}
                 <div className="card-titles">
-                    <div className="title">{title || t("untitled_chiasm", "Untitled")}</div>
-                    {chiasm.speakerName && <div className="speaker-name">{chiasm.speakerName}</div>}
+                    <div className="title" title={title || undefined}>{title || t("untitled_chiasm", "Untitled")}</div>
+                    {!hideSpeaker && chiasm.speakerName && <div className="speaker-name">{chiasm.speakerName}</div>}
                 </div>
-                <span className="depth-chip" title={t("chiastic_depth", "Chiastic depth")}>{depthBucket}</span>
+                <span className="depth-chip" title={t("chiastic_depth", "Chiastic depth: $1 levels", [depthLabel])}>{depthLabel}</span>
             </div>
             <div className="card-body">
                 {/* multi-char line_keys make line_lengths longer than the scheme
@@ -197,7 +201,7 @@ const ChiasmCard = memo(function ChiasmCard({ chiasm, active, onSelect }) {
                     uniform bar widths for those chiasms */}
                 <ChiasmGlyph scheme={scheme} lineLengths={chiasm.line_lengths} size={44}
                     title={t("chiasm_structure", "Structure: $1", [scheme])} />
-                <span className="reference">{reference}</span>
+                <span className="reference" title={reference}>{reference}</span>
             </div>
         </button>
     );
@@ -231,6 +235,7 @@ function Chiasmus({ enriched, flat, groups, state, set, setChiasmusId, activeChi
             chiasm={chiasm}
             active={activeChiasmus === chiasm.chiasmus_id}
             onSelect={setChiasmusId}
+            hideSpeaker={state.group === "speaker"}
         />
     ));
 
@@ -253,7 +258,7 @@ function Chiasmus({ enriched, flat, groups, state, set, setChiasmusId, activeChi
                         className={`chiasm_group${state.group === "book" ? ` rail-${BOOK_GROUPS[group.key] || "other"}` : ""}`}
                         key={group.key}
                     >
-                        <h4 className="group-header">{group.key} <span className="count">{group.items.length}</span></h4>
+                        <h4 className="group-header">{groupLabel(group.key, state.group)} <span className="count">({group.items.length})</span></h4>
                         <div className="chiasmus_list">{cards(group.items)}</div>
                     </section>
                 ))

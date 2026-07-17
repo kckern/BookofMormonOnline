@@ -20,8 +20,11 @@ import Container from "../Chiasmus";
 import { __clearChiasmCache } from "../Chiasm";
 
 const LIST = [
-  { chiasmus_id: "x1", title: "First Chiasm", reference: "1 Nephi 1:1-3", scheme: "ABBA", verse_id: 31103 },
-  { chiasmus_id: "x2", title: "Second Chiasm", reference: "1 Nephi 2:2-4", scheme: "ABA", verse_id: 31120 },
+  // speaker mirrors the real API shape (bom_people row: slug-style name digits)
+  { chiasmus_id: "x1", title: "First Chiasm", reference: "1 Nephi 1:1-3", scheme: "ABBA", verse_id: 31103,
+    speaker: { name: "Nephi1", person_slug: "nephi1" } },
+  { chiasmus_id: "x2", title: "Second Chiasm", reference: "1 Nephi 2:2-4", scheme: "ABA", verse_id: 31120,
+    speaker: { name: "Nephi1", person_slug: "nephi1" } },
 ];
 const DETAIL = (id) => ({
   chiasmus_id: id,
@@ -137,6 +140,20 @@ test("rail legend shows when grouped by book, hidden otherwise", async () => {
   expect(screen.getByText(/small plates/i)).toBeInTheDocument();
   act(() => history.replace("/analysis/chiasmus?group=speaker"));
   expect(screen.queryByText(/small plates/i)).not.toBeInTheDocument();
+});
+
+test("speaker grouping drops the redundant per-card speaker line", async () => {
+  renderAt("/analysis/chiasmus?group=speaker");
+  await screen.findByRole("button", { name: /first chiasm/i });
+  expect(screen.getByRole("heading", { name: /nephi/i })).toBeInTheDocument(); // group header
+  expect(document.querySelectorAll(".speaker-name").length).toBe(0);           // not on cards
+  expect(document.querySelectorAll(".speaker-avatar").length).toBe(0);
+});
+
+test("group headers show a parenthesized count", async () => {
+  renderAt("/analysis/chiasmus");
+  await screen.findByRole("button", { name: /first chiasm/i });
+  expect(screen.getByText("(2)")).toBeInTheDocument();
 });
 
 test("document.title resets to the list title when the panel closes", async () => {

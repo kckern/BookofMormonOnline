@@ -6,6 +6,7 @@ import {
   escapeRegex,
   applyBrowseState,
   formatSpeakerName,
+  groupLabel,
 } from "../chiasmUtils";
 import { lookupReference } from "scripture-guide";
 
@@ -175,14 +176,22 @@ describe("applyBrowseState", () => {
     expect(groups.map((g) => g.key)).toEqual(["2 Nephi", "Alma"]);
     expect(groups[1].items).toHaveLength(2);
   });
-  test("grouping by depth", () => {
+  test("grouping by depth keys by raw bucket (labels come from groupLabel)", () => {
     const { groups } = applyBrowseState(list, S({ group: "depth" }));
-    expect(groups.map(g => g.key)).toEqual(["Level 2", "Level 5", "Level 7"]);
+    expect(groups.map(g => g.key)).toEqual(["2", "5", "7"]);
   });
-  test("grouping by depth: Level + sorts last regardless of sort order", () => {
+  test("grouping by depth: + bucket sorts last regardless of sort order", () => {
     const withDeep = [mk({ id: "d", v: 50, depth: 9 }), ...list];
     const { groups } = applyBrowseState(withDeep, S({ group: "depth" }));
-    expect(groups.map(g => g.key)).toEqual(["Level 2", "Level 5", "Level 7", "Level +"]);
+    expect(groups.map(g => g.key)).toEqual(["2", "5", "7", "+"]);
+  });
+  test("depth groups key by raw bucket and label via groupLabel", () => {
+    const { groups } = applyBrowseState(list, S({ group: "depth" }));
+    expect(groups[0].key).toBe("2"); // raw bucket, not "Level 2"
+    expect(groupLabel("3", "depth")).toBe("Level 3");
+    expect(groupLabel("+", "depth")).toBe("Level 8+");
+    expect(groupLabel("Simple", "type")).toBe("Simple");
+    expect(groupLabel("Alma", "book")).toBe("Alma");
   });
   test("grouping by type", () => {
     const { groups } = applyBrowseState(list, S({ group: "type" }));

@@ -25,8 +25,9 @@ html[data-theme="dark"] {
     color: #1a1a1a;
   }
 
-  /* Card hover outline is var(--shadow) (a black wash) — invisible on dark cards. */
-  .chiasmus_list .chiasmus:hover { outline-color: rgba(255, 255, 255, 0.2); }
+  /* Card hover/active outlines need no override anymore: hover uses
+     --border-strong and active uses --link, both theme-aware tokens (the old
+     rgba-white patch here also outranked the active --link ring on hover). */
 
   /* Breadcrumb hub link: the generic dark `a` rule (html[data-theme="dark"] a,
      0-1-2) outranks Analysis.css's .analysis-breadcrumb a (0-1-1) and paints
