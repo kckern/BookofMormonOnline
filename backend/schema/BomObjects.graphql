@@ -30,4 +30,10 @@ type Xrel {
   dst_title: String
   note: String
   verse_id: Int
+  """
+  'src' when this entity is the row's source (object popups),
+  'dst' when the row points AT this entity and dst_* carry the other party
+  (people/place popups) — render name-before-verb for 'dst'.
+  """
+  direction: String
 }

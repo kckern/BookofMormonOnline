@@ -65,11 +65,14 @@ export type Caps = {
 export type Chiasmus = {
   __typename?: 'Chiasmus';
   chiasmus_id?: Maybe<Scalars['String']['output']>;
+  line_lengths?: Maybe<Array<Maybe<Scalars['Int']['output']>>>;
   lines?: Maybe<Array<Maybe<ChiasmusLine>>>;
   reference?: Maybe<Scalars['String']['output']>;
   scheme?: Maybe<Scalars['String']['output']>;
+  speaker?: Maybe<ChiasmusSpeaker>;
   start_verse_id?: Maybe<Scalars['Int']['output']>;
   title?: Maybe<Scalars['String']['output']>;
+  verse_id?: Maybe<Scalars['Int']['output']>;
 };
 
 export type ChiasmusLine = {
@@ -79,6 +82,13 @@ export type ChiasmusLine = {
   label?: Maybe<Scalars['String']['output']>;
   line_key?: Maybe<Scalars['String']['output']>;
   line_text?: Maybe<Scalars['String']['output']>;
+};
+
+export type ChiasmusSpeaker = {
+  __typename?: 'ChiasmusSpeaker';
+  name?: Maybe<Scalars['String']['output']>;
+  person_slug?: Maybe<Scalars['String']['output']>;
+  voice?: Maybe<Scalars['String']['output']>;
 };
 
 export type Commentary = {
@@ -933,6 +943,7 @@ export type People = {
   slug?: Maybe<Scalars['String']['output']>;
   title?: Maybe<Scalars['String']['output']>;
   unit?: Maybe<Scalars['String']['output']>;
+  xrels?: Maybe<Array<Maybe<Xrel>>>;
 };
 
 export type PeopleLink = {
@@ -992,6 +1003,7 @@ export type Place = {
   slug?: Maybe<Scalars['String']['output']>;
   type?: Maybe<Scalars['String']['output']>;
   w?: Maybe<Scalars['Int']['output']>;
+  xrels?: Maybe<Array<Maybe<Xrel>>>;
 };
 
 export enum PlanEndAction {
@@ -1967,6 +1979,12 @@ export type Witness = {
 
 export type Xrel = {
   __typename?: 'Xrel';
+  /**
+   * 'src' when this entity is the row's source (object popups),
+   * 'dst' when the row points AT this entity and dst_* carry the other party
+   * (people/place popups) — render name-before-verb for 'dst'.
+   */
+  direction?: Maybe<Scalars['String']['output']>;
   dst_name?: Maybe<Scalars['String']['output']>;
   dst_slug?: Maybe<Scalars['String']['output']>;
   dst_title?: Maybe<Scalars['String']['output']>;
@@ -2056,6 +2074,7 @@ export type ResolversTypes = {
   Caps: ResolverTypeWrapper<Partial<Caps>>;
   Chiasmus: ResolverTypeWrapper<Partial<Chiasmus>>;
   ChiasmusLine: ResolverTypeWrapper<Partial<ChiasmusLine>>;
+  ChiasmusSpeaker: ResolverTypeWrapper<Partial<ChiasmusSpeaker>>;
   Commentary: ResolverTypeWrapper<Partial<Commentary>>;
   Conn: ResolverTypeWrapper<Partial<Conn>>;
   ContentLink: ResolverTypeWrapper<Partial<ContentLink>>;
@@ -2178,6 +2197,7 @@ export type ResolversParentTypes = {
   Caps: Partial<Caps>;
   Chiasmus: Partial<Chiasmus>;
   ChiasmusLine: Partial<ChiasmusLine>;
+  ChiasmusSpeaker: Partial<ChiasmusSpeaker>;
   Commentary: Partial<Commentary>;
   Conn: Partial<Conn>;
   ContentLink: Partial<ContentLink>;
@@ -2335,11 +2355,14 @@ export type CapsResolvers<ContextType = AppContext, ParentType extends Resolvers
 
 export type ChiasmusResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['Chiasmus'] = ResolversParentTypes['Chiasmus']> = {
   chiasmus_id?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  line_lengths?: Resolver<Maybe<Array<Maybe<ResolversTypes['Int']>>>, ParentType, ContextType>;
   lines?: Resolver<Maybe<Array<Maybe<ResolversTypes['ChiasmusLine']>>>, ParentType, ContextType>;
   reference?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   scheme?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  speaker?: Resolver<Maybe<ResolversTypes['ChiasmusSpeaker']>, ParentType, ContextType>;
   start_verse_id?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   title?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  verse_id?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -2349,6 +2372,13 @@ export type ChiasmusLineResolvers<ContextType = AppContext, ParentType extends R
   label?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   line_key?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   line_text?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ChiasmusSpeakerResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['ChiasmusSpeaker'] = ResolversParentTypes['ChiasmusSpeaker']> = {
+  name?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  person_slug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  voice?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -2976,6 +3006,7 @@ export type PeopleResolvers<ContextType = AppContext, ParentType extends Resolve
   slug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   title?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   unit?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  xrels?: Resolver<Maybe<Array<Maybe<ResolversTypes['Xrel']>>>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -3035,6 +3066,7 @@ export type PlaceResolvers<ContextType = AppContext, ParentType extends Resolver
   slug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   type?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   w?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  xrels?: Resolver<Maybe<Array<Maybe<ResolversTypes['Xrel']>>>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -3576,6 +3608,7 @@ export type WitnessResolvers<ContextType = AppContext, ParentType extends Resolv
 };
 
 export type XrelResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['Xrel'] = ResolversParentTypes['Xrel']> = {
+  direction?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   dst_name?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   dst_slug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   dst_title?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -3595,6 +3628,7 @@ export type Resolvers<ContextType = AppContext> = {
   Caps?: CapsResolvers<ContextType>;
   Chiasmus?: ChiasmusResolvers<ContextType>;
   ChiasmusLine?: ChiasmusLineResolvers<ContextType>;
+  ChiasmusSpeaker?: ChiasmusSpeakerResolvers<ContextType>;
   Commentary?: CommentaryResolvers<ContextType>;
   Conn?: ConnResolvers<ContextType>;
   ContentLink?: ContentLinkResolvers<ContextType>;

@@ -1,0 +1,6 @@
+/* ChiasmGlyph — scheme fingerprint. Bars neutral ink; pivot carries the one
+   accent shared by every glyph (it means "center", not identity).
+   Imported by the component itself so the glyph is styled wherever it
+   renders (Analysis, Home tile, PassageNotes). Tokens theme it in dark mode. */
+.chiasmGlyph .glyphBar { fill: var(--text-faint); }
+.chiasmGlyph .glyphBar.pivot { fill: var(--accent-amber); }

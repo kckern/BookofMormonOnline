@@ -18,6 +18,12 @@ export interface ChiasmusLineRow {
   title: string | null;
 }
 
+export interface ChiasmusSpeakerInfo {
+  person_slug: string | null;
+  name: string | null;
+  voice: string | null;
+}
+
 export interface ChiasmusRow {
   chiasmus_id: string;
   reference: string;
@@ -26,6 +32,13 @@ export interface ChiasmusRow {
   /** Earliest verse_id — lets the client sort/classify without re-parsing the
    * generated reference string for every chiasm (the index list has hundreds). */
   start_verse_id: number | null;
+  /** First line's verse_id (table order) — the chiasm's anchor verse. */
+  verse_id: number | null;
+  /** Character length of each line's line_text, in line order (glyph rendering). */
+  line_lengths: number[];
+  /** Dominant speaker over the chiasm's verse span; attached by
+   * resolveChiasmusSpeakers (Query.chiasmus only — passagenotes skips it). */
+  speaker?: ChiasmusSpeakerInfo | null;
   /** Lines are populated only when includeLines=true (chiasm query). */
   lines: ChiasmusLineRow[];
 }
@@ -102,10 +115,10 @@ function groupBy<T>(rows: readonly T[], key: (r: T) => string | null): Map<strin
  *                  determines insertion order of result.
  * `generateRefFn` — caller supplies lang-bound generateReference.
  * `includeLines` — true for chiasm (full lines), false for chiasmus/passagenotes.
- *
- * For passagenotes, scheme = first matched line_key only (legacy code set
- * acc[chiasmus_id].scheme = item.line_key and only assigned once via
- * `if (!acc[chiasmus_id])`).
+ * `passageNoteScheme` — true replicates the legacy single-letter scheme (first
+ * matched line_key only); false builds the full scheme from all lines.
+ * Passagenotes now passes false so panel entries carry the full scheme and the
+ * full reference span (legacy set scheme = item.line_key once per chiasmus_id).
  */
 export function reduceChiasmusLines(
   allLines: ChiasmusLineRow[],
@@ -133,18 +146,7 @@ export function reduceChiasmusLines(
       : chiasmLines.map((l) => l.line_key ?? '').join('');
 
     // Reference: from unique verse_ids spanning all lines of this chiasmus
-    const verseIds: number[] = [];
-    const seenVerseIds = new Set<number>();
-    for (const l of chiasmLines) {
-      if (l.verse_id == null) continue;
-      for (let i = 0; i < (l.verses ?? 1); i++) {
-        const vid = l.verse_id + i;
-        if (!seenVerseIds.has(vid)) {
-          seenVerseIds.add(vid);
-          verseIds.push(vid);
-        }
-      }
-    }
+    const verseIds = expandChiasmusVerseIds(chiasmLines);
 
     const firstLine = chiasmLines[0];
     const title = firstLine?.title ?? null;
@@ -155,6 +157,8 @@ export function reduceChiasmusLines(
       scheme,
       title,
       start_verse_id: verseIds.length ? Math.min(...verseIds) : null,
+      verse_id: firstLine?.verse_id ?? null,
+      line_lengths: chiasmLines.map((l) => (l.line_text ?? '').length),
       lines: includeLines
         ? chiasmLines.map((l) => ({ ...l }))
         : [],
@@ -162,6 +166,109 @@ export function reduceChiasmusLines(
     result.push(row);
   }
   return result;
+}
+
+/**
+ * Expand chiasmus lines into the unique verse_ids the chiasm spans, in
+ * first-appearance order: each line contributes verse_id..verse_id+verses-1.
+ * Shared by the reference computation and speaker resolution.
+ */
+export function expandChiasmusVerseIds(
+  lines: readonly { verse_id: number | null; verses: number | null }[],
+): number[] {
+  const verseIds: number[] = [];
+  const seen = new Set<number>();
+  for (const l of lines) {
+    if (l.verse_id == null) continue;
+    for (let i = 0; i < (l.verses ?? 1); i++) {
+      const vid = l.verse_id + i;
+      if (!seen.has(vid)) {
+        seen.add(vid);
+        verseIds.push(vid);
+      }
+    }
+  }
+  return verseIds;
+}
+
+/**
+ * Pick the modal person_slug across speaker rows.
+ * Ties: the first-encountered slug wins (Map iteration is insertion order and
+ * a later slug must strictly exceed the current best to displace it).
+ * Voice: the modal slug's first-seen voice.
+ * Returns null when no row carries a person_slug.
+ */
+export function pickDominantSpeaker(
+  rows: readonly { person_slug: string | null; voice: string | null }[],
+): { person_slug: string; voice: string | null } | null {
+  const tally = new Map<string, { count: number; voice: string | null }>();
+  for (const r of rows) {
+    if (!r.person_slug) continue;
+    const entry = tally.get(r.person_slug);
+    if (entry) entry.count += 1;
+    else tally.set(r.person_slug, { count: 1, voice: r.voice });
+  }
+  let best: { person_slug: string; count: number; voice: string | null } | null = null;
+  for (const [slug, { count, voice }] of tally) {
+    if (!best || count > best.count) best = { person_slug: slug, count, voice };
+  }
+  return best ? { person_slug: best.person_slug, voice: best.voice } : null;
+}
+
+/**
+ * Attach `speaker` (dominant voice over the chiasm's verse span) to each
+ * ChiasmusRow, in place. Batched: ONE lds_scriptures_lines select across the
+ * verse ids of ALL chiasms, plus ONE bom_people select for the distinct
+ * dominant slugs — no per-chiasm queries.
+ *
+ * Requires rows built with includeLines=true (span expansion reads row.lines).
+ */
+export async function resolveChiasmusSpeakers(
+  chiasms: ChiasmusRow[],
+  db: Kysely<DB>,
+): Promise<void> {
+  const spans = chiasms.map((c) => expandChiasmusVerseIds(c.lines));
+  const allVerseIds = [...new Set(spans.flat())];
+  if (!allVerseIds.length) {
+    for (const c of chiasms) c.speaker = null;
+    return;
+  }
+
+  const speakerRows = await db
+    .selectFrom('lds_scriptures_lines')
+    .select(['verse_id', 'person_slug', 'voice'])
+    .where('verse_id', 'in', allVerseIds)
+    .execute();
+
+  const rowsByVid = new Map<number, { person_slug: string | null; voice: string | null }[]>();
+  for (const r of speakerRows) {
+    if (r.verse_id == null) continue;
+    const list = rowsByVid.get(r.verse_id) ?? [];
+    list.push({ person_slug: r.person_slug, voice: r.voice });
+    rowsByVid.set(r.verse_id, list);
+  }
+
+  const dominants = spans.map((span) =>
+    pickDominantSpeaker(span.flatMap((vid) => rowsByVid.get(vid) ?? [])),
+  );
+
+  const slugs = [...new Set(dominants.filter((d) => d !== null).map((d) => d!.person_slug))];
+  const nameBySlug = new Map<string, string | null>();
+  if (slugs.length) {
+    const peopleRows = await db
+      .selectFrom('bom_people')
+      .select(['slug', 'name'])
+      .where('slug', 'in', slugs)
+      .execute();
+    for (const p of peopleRows) nameBySlug.set(p.slug, p.name);
+  }
+
+  chiasms.forEach((c, i) => {
+    const d = dominants[i];
+    c.speaker = d
+      ? { person_slug: d.person_slug, name: nameBySlug.get(d.person_slug) ?? null, voice: d.voice }
+      : null;
+  });
 }
 
 // ─── scriptureextrasLoaders factory ──────────────────────────────────────────

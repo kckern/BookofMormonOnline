@@ -26,6 +26,17 @@ const queries = {
                         title
                     }
                 }
+                xrels {
+                    rel
+                    srcweight
+                    dst_type
+                    dst_slug
+                    dst_name
+                    dst_title
+                    note
+                    verse_id
+                    direction
+                }
                 index {
                     slug
                     ref
@@ -70,6 +81,17 @@ const queries = {
                 maps{
                     slug
                     name
+                }
+                xrels {
+                    rel
+                    srcweight
+                    dst_type
+                    dst_slug
+                    dst_name
+                    dst_title
+                    note
+                    verse_id
+                    direction
                 }
                 index {
                     slug
@@ -133,6 +155,7 @@ const queries = {
                     dst_title
                     note
                     verse_id
+                    direction
                 }
             }`,
     }
@@ -192,6 +215,7 @@ const queries = {
                     artist
                 }
                 chiasmus {
+                    chiasmus_id
                     title
                     reference
                     scheme
@@ -383,7 +407,9 @@ const queries = {
                 reference
                 scheme
                 title
-                start_verse_id
+                verse_id
+                line_lengths
+                speaker { person_slug name voice }
             }`,
     }
 
@@ -2081,6 +2107,7 @@ const queries = {
                       artist
                   }
                   chiasmus {
+                      chiasmus_id
                       title
                       reference
                       scheme

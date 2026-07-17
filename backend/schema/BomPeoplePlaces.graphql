@@ -22,6 +22,7 @@ type People {
   description: String
   index: [Index]
   relations: [Relation]
+  xrels: [Xrel]
 }
 
 type Relation {
@@ -82,6 +83,7 @@ type Place {
   lng: Float
   index: [Index]
   maps: [Map]
+  xrels: [Xrel]
 }
 
 type Map {

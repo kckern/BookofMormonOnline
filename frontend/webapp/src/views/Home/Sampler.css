@@ -1335,13 +1335,13 @@ html[data-theme="dark"] .readMorePill:hover { background: rgba(147,198,239,0.2);
 html[data-theme="dark"] .biblePhrasesPassage p { color: #c4c4c4; }
 .biblePhrasesPassage.kjv { border-left: 1px dashed #e2e2e2; padding-left: 0.7rem; }
 html[data-theme="dark"] .biblePhrasesPassage.kjv { border-left-color: #3a3a3a; }
-.biblePhrasesTile mark, .chiasmusTile mark {
+.biblePhrasesTile mark {
   background: rgba(240, 200, 80, 0.35);
   color: inherit;
   padding: 0 0.1em;
   border-radius: 0.2em;
 }
-html[data-theme="dark"] .biblePhrasesTile mark, html[data-theme="dark"] .chiasmusTile mark {
+html[data-theme="dark"] .biblePhrasesTile mark {
   background: rgba(240, 200, 80, 0.22);
 }
 /* view-in-context: a distinct pill with the exit-bracket glyph */
@@ -1381,28 +1381,12 @@ html[data-theme="dark"] .tileMoreLink {
 html[data-theme="dark"] .tileMoreLink:hover { background: rgba(147, 198, 239, 0.2); }
 
 /* ================================================================
-   CHIASMUS — mirrored lines, indent tracks letter depth
+   CHIASMUS — head only; the mirrored lines are the shared MiniChiasm
+   component (_Common/MiniChiasm.css)
    ================================================================ */
 .chiasmusTileHead { display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.4rem; flex-wrap: wrap; }
 .chiasmusTileTitle { font-weight: 800; font-size: 0.85rem; color: #2a2a2a; }
 html[data-theme="dark"] .chiasmusTileTitle { color: #f0f0f0; }
-.chiasmusTileLine {
-  display: flex;
-  gap: 0.4rem;
-  font-size: 0.74rem;
-  line-height: 1.4;
-  color: #555;
-  margin-bottom: 0.15rem;
-}
-html[data-theme="dark"] .chiasmusTileLine { color: #c4c4c4; }
-.chiasmusTileKey {
-  flex-shrink: 0;
-  font-weight: 800;
-  color: #345496;
-  font-size: 0.68rem;
-  line-height: 1.55;
-}
-html[data-theme="dark"] .chiasmusTileKey { color: #93c6ef; }
 
 /* fax: other editions we hold — compact entry points under the sampled pages */
 .faxTileEditions {
