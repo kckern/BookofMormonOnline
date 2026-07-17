@@ -403,13 +403,20 @@
     border: 1px solid var(--text-muted);
 }
 
+/* header diet (audit §3.1): compact title instead of display-size h3, with
+   the total corpus count alongside */
+.chiasmus_title { font-size: 1.5rem; margin: .25rem 0 .75rem; }
+.chiasmus_title .total_count { font-size: .8em; font-weight: 400; color: var(--text-muted); margin-left: 1ex; }
+
 .innerChiasmContainer{
     display: flex;
     flex-direction: row;
     gap: 1rem;
     /* one shared viewport offset for BOTH panels (index + detail) — was two
-       mismatched magic numbers (14.5rem vs 10.5rem) */
-    --panel-viewport-offset: 10.5rem;
+       mismatched magic numbers (14.5rem vs 10.5rem). Retuned for the Task 6
+       header diet: panel top sits at ~169px, so 11.5rem (184px) lands the
+       panel bottom ~15px above the viewport edge with no page scrollbar. */
+    --panel-viewport-offset: 11.5rem;
 }
 
 /* index side: toolbar stays fixed at the top; only .chiasmIndexScroll below
@@ -579,6 +586,7 @@
 /* Mobile: the detail panel becomes a full-screen overlay instead of a 40%
    side column, and the card grid drops to 2 then 1 columns */
 @media (max-width: 800px) {
+    .chiasmus_title { font-size: 1.2rem; }
     .innerChiasmContainer {
         flex-direction: column;
     }

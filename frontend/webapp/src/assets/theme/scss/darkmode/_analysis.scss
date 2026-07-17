@@ -28,4 +28,9 @@ html[data-theme="dark"] {
 
   /* Card hover outline is var(--shadow) (a black wash) — invisible on dark cards. */
   .chiasmus_list .chiasmus:hover { outline-color: rgba(255, 255, 255, 0.2); }
+
+  /* Breadcrumb hub link: the generic dark `a` rule (html[data-theme="dark"] a,
+     0-1-2) outranks Analysis.css's .analysis-breadcrumb a (0-1-1) and paints
+     it muted #aaa — restate the link color at themed specificity. */
+  .analysis-breadcrumb a { color: var(--link); &:hover { color: var(--link-hover); } }
 }

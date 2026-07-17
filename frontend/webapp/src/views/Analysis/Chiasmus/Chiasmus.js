@@ -9,6 +9,7 @@ import { useRouteMatch, useHistory, useLocation } from "react-router-dom/cjs/rea
 import { enrichChiasmus, applyBrowseState, BOOK_GROUPS } from "./chiasmUtils";
 import useBrowseState, { DEFAULTS } from "./useBrowseState";
 import { t } from "./t";
+import AnalysisBreadcrumb from "../AnalysisBreadcrumb";
 
 const DEBOUNCE_MS = 250;
 
@@ -376,7 +377,11 @@ function Container() {
 
 
     return <div className="container">
-         <h3 className="title lg-4 text-center">{t("chiasmus_page_title", "Chiasmus in the Book of Mormon")}</h3>
+         <AnalysisBreadcrumb>{t("chiasmus_page_title_short", "Chiasmus")}</AnalysisBreadcrumb>
+         <h3 className="title chiasmus_title">
+             {t("chiasmus_page_title", "Chiasmus in the Book of Mormon")}
+             {enriched.length > 0 && <span className="total_count">{enriched.length}</span>}
+         </h3>
          <div className="innerChiasmContainer">
         {indexPanel}
         {singlePanel}
