@@ -21,7 +21,8 @@ export async function getCache(input) {
             for (let i in vals) {
                 let val = vals[i];
                 let item = await getSingleCache(key + "." + val, itemObjectStore);
-                if (!item || (key==="page" && !item.sections)) {
+                // passagenotes query gained chiasmus_id (e37a5aa7); refetch cached items predating the shape change
+                if (!item || (key==="page" && !item.sections) || (key.startsWith("passagenotes") && item.chiasmus?.length && !item.chiasmus[0].chiasmus_id)) {
                     if (!Array.isArray(items.missing[key])) items.missing[key] = []
                     items.missing[key].push(val)
                 }
