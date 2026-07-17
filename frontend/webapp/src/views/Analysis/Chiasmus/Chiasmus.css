@@ -25,6 +25,26 @@
 .rail-ether { --rail-color: var(--rail-ether); }
 .rail-moroni { --rail-color: var(--rail-moroni); }
 
+/* Rail color key, shown between the toolbar and the card grid when grouped
+   by book (audit §8.1). Dots read --rail-color from the legend_item's own
+   rail-* class, so light/dark variants come for free. */
+.rail_legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1ex 2ex;
+    font-size: .75rem;
+    color: var(--text-muted);
+    margin: 0 1ex .5ex;
+}
+.legend_item { display: inline-flex; align-items: center; gap: .6ex; white-space: nowrap; }
+.legend_dot {
+    width: .8em;
+    height: .8em;
+    border-radius: 50%;
+    background: var(--rail-color, var(--border));
+    flex: 0 0 auto;
+}
+
 .chiasm_group .group-header {
     border-bottom: 2px solid var(--rail-color, transparent);
 }
@@ -527,6 +547,12 @@
     gap: 1ex;
     margin-bottom: 1ex;
 }
+/* Collapsed "How to read a chiasm" explainer (audit §6.3: five visual
+   encodings, zero on-screen explanation) */
+.chiasm-help { margin: 0 0 1ex; font-size: .85rem; color: var(--text-muted); }
+.chiasm-help summary { cursor: pointer; }
+.chiasm-help p { margin: .5ex 0 0; color: var(--text-secondary); max-width: 34rem; }
+
 .chiasm .chiasmus_lines
 {
     border-top: 1px solid var(--border);
@@ -662,6 +688,11 @@
         overflow-x: auto;
         padding-bottom: .5ex;
     }
+    /* rail legend likewise: one scrollable row, not a three-line stack */
+    .rail_legend {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+    }
     .chiasmus_list {
         grid-template-columns: 1fr 1fr;
     }
@@ -675,6 +706,7 @@
 
 .chiasmus_list .chiasmus:focus-visible,
 .chiasm .close:focus-visible,
+.chiasm-help summary:focus-visible,
 .chiasm-header-nav button:focus-visible,
 .chiasmus_nav button:focus-visible,
 .chiasm-actions button:focus-visible,

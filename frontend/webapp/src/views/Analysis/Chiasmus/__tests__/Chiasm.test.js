@@ -151,6 +151,15 @@ describe("Chiasm detail panel", () => {
     }
   });
 
+  test("renders a collapsed how-to explainer", async () => {
+    BoMOnlineAPI.mockResolvedValue({ chiasm: { x1: fixture } });
+    renderChiasm();
+    await screen.findByText("Test Chiasm");
+    const details = screen.getByText(/how to read a chiasm/i).closest("details");
+    expect(details).not.toHaveAttribute("open");
+    expect(details).toHaveTextContent(/pivot/i);
+  });
+
   test("header has prev/next that follow visible order and hint at arrow keys", async () => {
     BoMOnlineAPI.mockResolvedValue({ chiasm: { x1: fixture } });
     const setChiasmusId = jest.fn();

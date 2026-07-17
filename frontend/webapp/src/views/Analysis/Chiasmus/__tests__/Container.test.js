@@ -131,6 +131,14 @@ test("heading's accessible name separates and labels the total count", async () 
   expect(heading).toBeInTheDocument();
 });
 
+test("rail legend shows when grouped by book, hidden otherwise", async () => {
+  const history = renderAt("/analysis/chiasmus");           // default group=book
+  await screen.findByRole("button", { name: /first chiasm/i });
+  expect(screen.getByText(/small plates/i)).toBeInTheDocument();
+  act(() => history.replace("/analysis/chiasmus?group=speaker"));
+  expect(screen.queryByText(/small plates/i)).not.toBeInTheDocument();
+});
+
 test("document.title resets to the list title when the panel closes", async () => {
   const history = renderAt("/analysis/chiasmus");
   fireEvent.click(await screen.findByRole("button", { name: /first chiasm/i }));

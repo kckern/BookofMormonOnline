@@ -176,6 +176,11 @@ function Chiasm({chiasm_id, setChiasmusId, closeChiasm, nextId, prevId}) {
                 {copied ? t("link_copied", "Copied!") : t("copy_link", "Copy link")}
             </button>
         </div>
+        <details className="chiasm-help noselect">
+            <summary>{t("chiasm_help_title", "How to read a chiasm")}</summary>
+            <p>{t("chiasm_help_body",
+                "A chiasm mirrors its ideas around a center: matching letters (A, B, C…) mark paired, mirrored statements, and the amber line is the pivot — the idea the passage turns on. Hover or tap a letter badge to highlight its pair; click the badge to pin the pair.")}</p>
+        </details>
         <div className="chiasmus_lines" onMouseLeave={()=>setActiveScheme(null)}>
             {lines.map((line, i) => {
                 return <ChiasticLine key={i} {...line}

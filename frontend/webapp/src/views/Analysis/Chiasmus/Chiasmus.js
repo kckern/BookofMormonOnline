@@ -147,6 +147,27 @@ function BrowseToolbar({ state, set, depthCounts, categoryCounts, shownCount, to
     );
 }
 
+// Color key for the book-group card rails (audit §8.1: the palette was
+// validated but never explained on screen). Slugs match the rail-* classes,
+// which set --rail-color in both themes — the dots reuse it, no new colors.
+const RAIL_LEGEND = [
+    ["small-plates", "Small Plates (1 Nephi–Omni)"],
+    ["abridgment", "Abridgment (Mosiah–Helaman)"],
+    ["ministry", "Ministry (3–4 Nephi)"],
+    ["mormon", "Mormon"],
+    ["ether", "Ether"],
+    ["moroni", "Moroni"],
+];
+function RailLegend() {
+    return <div className="rail_legend noselect">
+        {RAIL_LEGEND.map(([slug, name]) => (
+            <span key={slug} className={`legend_item rail-${slug}`}>
+                <span className="legend_dot" aria-hidden="true" />{t(`rail_${slug.replace("-", "_")}`, name)}
+            </span>
+        ))}
+    </div>;
+}
+
 const ChiasmCard = memo(function ChiasmCard({ chiasm, active, onSelect }) {
     const { chiasmus_id, reference, depthBucket, title, scheme, bookGroup } = chiasm;
     // Reference is plain text styled like the site's scripture pill, NOT a
@@ -215,6 +236,7 @@ function Chiasmus({ enriched, flat, groups, state, set, setChiasmusId, activeChi
     return <div className="chiasmIndexPanel noselect">
         <BrowseToolbar state={state} set={set} depthCounts={depthCounts} categoryCounts={categoryCounts}
             shownCount={flat.length} totalCount={enriched.length} />
+        {state.group === "book" && <RailLegend />}
         <div className="chiasmIndexScroll">
             {flat.length === 0 ? (
                 <div className="browse_empty">
