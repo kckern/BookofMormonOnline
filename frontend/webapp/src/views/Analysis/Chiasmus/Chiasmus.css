@@ -195,6 +195,19 @@
     border-radius: 50%;
     flex-shrink: 0;
     position: relative;
+    /* the major badge is a real <button> now (pin target) — neutralize
+       button chrome while keeping the circle identity for the minor div too */
+    border: 0;
+    padding: 0;
+    appearance: none;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+/* pinned pair — persistent (tap-friendly) highlight; distinct from hover */
+.chiasmus_line .scheme.pinned {
+    outline: 2px solid var(--accent-amber);
+    outline-offset: 1px;
 }
 
 .chiasmus_line .scheme.minor{
@@ -309,6 +322,22 @@
     opacity: 0.5;
 }
 
+/* Pivot — the chiasm's payoff: the deepest line(s) carry the same amber
+   accent as the glyph's center bar. Composes with .active/.inactive: the
+   inactive opacity still dims a pivot when a non-pivot pair is highlighted.
+   :not(.minor) keeps sub-letter badges neutral, and outranks the
+   .active .scheme wash (0,3,1 > 0,2,1) so the badge stays amber when its
+   own pair is active. #1a1a1a on #f0ad4e ≈ 8.9:1 (AA). */
+.chiasmus_line.pivot {
+    border-left: 3px solid var(--accent-amber);
+    background: var(--surface-1);
+    padding-left: .5ex;
+}
+.chiasmus_line.pivot .scheme:not(.minor) {
+    background-color: var(--accent-amber);
+    color: #1a1a1a;
+}
+
 .chiasmus_line .text span.label{
     font-family: "Roboto Condensed", sans-serif;
     font-size: 0.7rem;
@@ -400,6 +429,27 @@
     margin-bottom: 1ex;
     font-size: 0.9rem;
 }
+
+/* detail header: glyph | title+reference | close */
+.chiasm-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1ex 0;
+}
+.chiasm-header .chiasmGlyph {
+    flex-shrink: 0;
+}
+.chiasm-header .chiasm-titles {
+    flex: 1;
+    min-width: 0;
+}
+
+.chiasm-actions {
+    display: flex;
+    gap: 1ex;
+    margin-bottom: 1ex;
+}
 .chiasm .chiasmus_lines
 {
     border-top: 1px solid var(--border);
@@ -420,7 +470,8 @@
 }
 
 
-.chiasmus_nav button
+.chiasmus_nav button,
+.chiasm-actions button
 {
     display: inline-block;
     padding: 10px 20px;
@@ -437,16 +488,24 @@
     transition: all 0.3s;
 }
 
-.chiasmus_nav button:hover {
+.chiasm-actions button {
+    padding: .5ex 2ex;
+    font-weight: 400;
+}
+
+.chiasmus_nav button:hover,
+.chiasm-actions button:hover {
     background-color: var(--control-hover);
     color: var(--text-primary);
 }
 
-.chiasmus_nav button:disabled {
+.chiasmus_nav button:disabled,
+.chiasm-actions button:disabled {
     opacity: .4;
     cursor: default;
 }
-.chiasmus_nav button:disabled:hover {
+.chiasmus_nav button:disabled:hover,
+.chiasm-actions button:disabled:hover {
     background-color: var(--control);
     color: var(--text-secondary);
 }
@@ -484,9 +543,8 @@
            pure CSS, and the fixed overlay covers the page visually anyway) */
         overscroll-behavior: contain;
     }
-    /* keep the × reachable while scrolling a long chiasm in the overlay;
-       :not(.reference) because the reference h4 also carries .title */
-    .chiasmPanel.open .chiasm h4.title:not(.reference) {
+    /* keep the × reachable while scrolling a long chiasm in the overlay */
+    .chiasmPanel.open .chiasm-header {
         position: sticky;
         top: 0;
         background: var(--surface-0);
@@ -509,6 +567,8 @@
 .chiasmus_list .chiasmus:focus-visible,
 .chiasm .close:focus-visible,
 .chiasmus_nav button:focus-visible,
+.chiasm-actions button:focus-visible,
+.chiasmus_line button.scheme:focus-visible,
 .chip:focus-visible,
 .browse_search:focus-visible,
 .browse_toolbar select:focus-visible,

@@ -17,6 +17,14 @@ html[data-theme="dark"] {
   .chiasmus_line.active .highlight { background-color: rgba(255, 243, 176, 0.14); }
   .chiasmus_line.active .scheme { background-color: rgba(255, 243, 176, 0.14); }
 
+  /* The pivot badge keeps its amber fill even when its own pair is active —
+     the wash above would otherwise repaint it (this themed selector outranks
+     the light-file pivot rule). Same #1a1a1a-on-amber pairing as light mode. */
+  .chiasmus_line.pivot .scheme:not(.minor) {
+    background-color: var(--accent-amber);
+    color: #1a1a1a;
+  }
+
   /* Card hover outline is var(--shadow) (a black wash) — invisible on dark cards. */
   .chiasmus_list .chiasmus:hover { outline-color: rgba(255, 255, 255, 0.2); }
 }
