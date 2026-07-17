@@ -65,9 +65,12 @@ function ChiasticLine({line_key, label, line_text, highlights, isPivot, effectiv
     const alphabetPosition = upperCaseLetter.charCodeAt(0) - 64 -1;
     const indexCSS = {marginLeft: `${alphabetPosition * 1.5}ex`};
 
-    const minorAlphabetPosition = lowerCaseLetter.replace(/[αβγδ]/g, char => String.fromCharCode(char.charCodeAt(0) - 848)).charCodeAt(0) - 96 - 1;
-
-    const minorCSS = {marginLeft: `${minorAlphabetPosition * 1.5}ex`};
+    // Only computed for lines that have a sub-letter — charCodeAt(0) of ""
+    // is NaN, which produced marginLeft:"NaNex" on major-only lines (harmless
+    // only because the minor badge wasn't rendered for them).
+    const minorCSS = lowerCaseLetter
+        ? { marginLeft: `${(lowerCaseLetter.replace(/[αβγδ]/g, char => String.fromCharCode(char.charCodeAt(0) - 848)).charCodeAt(0) - 97) * 1.5}ex` }
+        : undefined;
 
     const hasActiveScheme = !!effectiveScheme;
     const isActiveScheme = effectiveScheme === upperCaseLetter;

@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import BoMOnlineAPI, { assetUrl } from "../../../models/BoMOnlineAPI";
 import Loader from "../../_Common/Loader";
 import ChiasmGlyph from "../../_Common/ChiasmGlyph";
@@ -6,12 +6,16 @@ import "./Chiasmus.css";
 import Chiasm from "./Chiasm";
 import { label, determineLanguage } from 'src/models/Utils';
 import { useRouteMatch, useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
-import { enrichChiasmus, applyBrowseState, BOOK_GROUPS, groupLabel } from "./chiasmUtils";
+import { enrichChiasmus, applyBrowseState, BOOK_GROUPS, groupLabel, displayDepth } from "./chiasmUtils";
 import useBrowseState, { DEFAULTS } from "./useBrowseState";
 import { t } from "./t";
 import AnalysisBreadcrumb from "../AnalysisBreadcrumb";
 
 const DEBOUNCE_MS = 250;
+
+// Index-page document title — set on mount and restored when the detail
+// panel closes (Chiasm.js owns the title while a chiasm is open).
+const indexDocTitle = () => t("chiasms_doc_title", "Chiasmus") + " | " + label("home_title");
 
 function BrowseToolbar({ state, set, depthCounts, categoryCounts, shownCount, totalCount }) {
     // Search input strategy: controlled, mirrored into local state so typing
@@ -67,8 +71,6 @@ function BrowseToolbar({ state, set, depthCounts, categoryCounts, shownCount, to
         ["biblical", t("type_biblical", "Biblical"), categoryCounts.biblical],
     ];
 
-    const displayDepth = (d) => (d === "+" ? "8+" : d);
-
     return (
         <div className="browse_toolbar">
             <div className="toolbar_controls">
@@ -80,7 +82,7 @@ function BrowseToolbar({ state, set, depthCounts, categoryCounts, shownCount, to
                     value={q}
                     onChange={onSearchChange}
                 />
-                <label className="toolbar_field">{t("group_by", "Group")}
+                <label className="toolbar_field">{t("group_caption", "Group")}
                     <select value={state.group} onChange={(e) => set({ group: e.target.value })}>
                         <option value="none">{t("group_none", "No grouping")}</option>
                         <option value="book">{t("group_book", "Book")}</option>
@@ -110,7 +112,7 @@ function BrowseToolbar({ state, set, depthCounts, categoryCounts, shownCount, to
                 <span className="browse_count">{t("results_shown", "$1 of $2 shown", [shownCount, totalCount])}</span>
             </div>
             <div className="toolbar_chips">
-                <span className="chip_caption">{t("levels", "Levels")}</span>
+                <span className="chip_caption">{t("depth_levels", "Levels")}</span>
                 {/* depth chips: INCLUSION semantics — selected = shown; none selected = all shown */}
                 {depthKeys.map((d) => {
                     const selected = state.depths.includes(d);
@@ -171,7 +173,7 @@ function RailLegend() {
 
 const ChiasmCard = memo(function ChiasmCard({ chiasm, active, onSelect, hideSpeaker }) {
     const { chiasmus_id, reference, depthBucket, title, scheme, bookGroup } = chiasm;
-    const depthLabel = depthBucket === "+" ? "8+" : depthBucket;
+    const depthLabel = displayDepth(depthBucket);
     // Reference is plain text styled like the site's scripture pill, NOT a
     // RefPill: RefPill is a span[role=button] and interactive content inside
     // a <button> is invalid HTML (and an a11y trap). Read-in-context lives in
@@ -209,7 +211,7 @@ const ChiasmCard = memo(function ChiasmCard({ chiasm, active, onSelect, hideSpea
 
 function Chiasmus({ enriched, flat, groups, state, set, setChiasmusId, activeChiasmus }) {
 
-    useEffect(() => { document.title = t("chiasms_doc_title", "Chiasmus") + " | " + label("home_title"); }, []);
+    useEffect(() => { document.title = indexDocTitle(); }, []);
 
     const depthCounts = useMemo(
         () => enriched.reduce((acc, c) => { acc[c.depthBucket] = (acc[c.depthBucket] || 0) + 1; return acc; }, {}),
@@ -294,15 +296,18 @@ function Container() {
     const enriched = useMemo(() => enrichChiasmus(Array.isArray(chiasmus) ? chiasmus : [], lang), [chiasmus, lang]);
     const { flat, groups } = useMemo(() => applyBrowseState(enriched, state), [enriched, state]);
 
-    const chiasmusIdRef = useRef(chiasmus_id); // Create a ref
+    // Mirrors the URL-derived chiasmus_id for the mount-only keydown effect
+    // (kept in sync by the effect below; written eagerly in setChiasmusId).
+    const chiasmusIdRef = useRef(chiasmus_id);
 
     // First open from the index PUSHES one history entry (so Back closes the
     // panel); prev/next/arrow browsing while open REPLACES (no history spam);
     // close REPLACES back to the index. The browse query string is preserved
     // so opening/closing a chiasm doesn't wipe filters out of the URL.
-    // Stable across renders: only refs + stable history fns are captured, so
-    // the mount-only keydown effect below can close over these safely.
-    const setChiasmusId = (id) => {
+    // useCallback with only refs + stable history fns captured: identity is
+    // stable across renders, so the mount-only keydown effect can close over
+    // it safely and ChiasmCard's memo isn't defeated by a fresh onSelect.
+    const setChiasmusId = useCallback((id) => {
         const qs = searchRef.current;
         const wasOpen = !!chiasmusIdRef.current;
         // Eager ref write: the sync effect below runs in a passive effect, so a
@@ -312,17 +317,17 @@ function Container() {
         if (!id) { replace("/analysis/chiasmus" + qs); return; }
         if (wasOpen) replace(`/analysis/chiasmus/${id}` + qs);
         else push(`/analysis/chiasmus/${id}` + qs);
-    };
+    }, [replace, push]);
     const closeChiasm = () => setChiasmusId(null);
 
     // when the panel closes, restore the index page title (Chiasm.js sets the
     // per-chiasm title while it is open)
     useEffect(() => {
-        if (!chiasmus_id) document.title = t("chiasms_doc_title", "Chiasmus") + " | " + label("home_title");
+        if (!chiasmus_id) document.title = indexDocTitle();
     }, [chiasmus_id]);
+    // keep the ref following Back/Forward, and center the now-active card
     useEffect(() => {
-        chiasmusIdRef.current = chiasmus_id; // Update the ref whenever chiasmus_id changes
-        //scroll into view in chiasmus_list
+        chiasmusIdRef.current = chiasmus_id;
         const activeElement = document.querySelector(".chiasmus.active");
         if(activeElement){
             activeElement.scrollIntoView({behavior: "smooth", block: "center", inline: "center"});
@@ -370,15 +375,9 @@ function Container() {
             if(e.key === "Escape") closeChiasm();
         };
 
-        //set keyboard shortcuts for left and right arrow keys to navigate chiasmus
         document.addEventListener("keydown", handleKeyDown);
-
-        // Cleanup function to remove the event listener
-        return () => {
-            document.removeEventListener("keydown", handleKeyDown);
-        };
-
-    }, []); // Empty array ensures this runs on mount and unmount only
+        return () => document.removeEventListener("keydown", handleKeyDown);
+    }, []); // mount-only: list fetch + arrow/Escape shortcuts (see flatRef above)
 
 
     // the list must be loaded before we can render anything (deep links set

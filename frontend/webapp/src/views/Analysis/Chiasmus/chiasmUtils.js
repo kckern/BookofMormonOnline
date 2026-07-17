@@ -26,6 +26,11 @@ export const BOOK_GROUPS = {
 
 export const escapeRegex = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
+// Display form of a depthBucket: the overflow bucket "+" reads as "8+".
+// Single definition — used by the toolbar chips, card depth badges, and
+// depth group headers.
+export const displayDepth = (bucket) => (bucket === "+" ? "8+" : bucket);
+
 export function parseScheme(scheme) {
   const s = scheme || "";
   const seq = s.replace(/[^A-Z]/g, ""); // original order, majors only
@@ -160,7 +165,7 @@ export function applyBrowseState(enriched, s) {
  * keys are already display strings.
  */
 export function groupLabel(key, group) {
-  if (group === "depth") return t("group_level", "Level $1", [key === "+" ? "8+" : key]);
+  if (group === "depth") return t("group_level", "Level $1", [displayDepth(key)]);
   if (group === "type") return t(`type_${key.toLowerCase()}`, key);
   return key;
 }

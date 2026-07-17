@@ -12,8 +12,9 @@ import "./ChiasmGlyph.css";
  *   chiasm's turning point. Sub-letters share their major's depth, matching
  *   the detail panel's pivot definition (max-major lines, not max-indent).
  *   Depth-1 schemes (single major) get no pivot accent at all.
- * - Schemes longer than 16 entries compact to their de-duplicated major-letter
- *   silhouette (uniform widths); full-length bars would be sub-2px blobs.
+ * - Schemes longer than 16 raw entries (majors + sub-letters) compact to their
+ *   de-duplicated major-letter silhouette (uniform widths); full-length bars
+ *   would be sub-2px blobs.
  */
 export function glyphBars(scheme, lineLengths) {
   let chars = (scheme || "").split("");
