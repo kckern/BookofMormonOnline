@@ -49,6 +49,12 @@ describe("Chiasm detail panel", () => {
     BoMOnlineAPI.mockResolvedValue({ chiasm: { x1: fixture } });
   });
 
+  afterEach(() => {
+    // the copy-link test stubs navigator.clipboard (configurable: true);
+    // clean up here so a mid-test failure can't leak the stub to other tests
+    delete navigator.clipboard;
+  });
+
   test("renders all lines after fetch; exactly the deepest (C) line is the pivot", async () => {
     const { container } = renderChiasm();
     await screen.findByText("Test Chiasm");
@@ -102,7 +108,5 @@ describe("Chiasm detail panel", () => {
     fireEvent.click(screen.getByRole("button", { name: "Copy link" }));
     expect(writeText).toHaveBeenCalledWith(window.location.href);
     expect(await screen.findByText("Copied!")).toBeInTheDocument();
-
-    delete navigator.clipboard;
   });
 });

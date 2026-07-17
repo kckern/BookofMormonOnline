@@ -1,4 +1,5 @@
 import React from "react";
+import "./ChiasmGlyph.css";
 
 /**
  * Bar model for a chiasm scheme string. Pure; exported for tests and future
@@ -7,7 +8,9 @@ import React from "react";
  *   under their major.
  * - widthFactor: 0.4 / 0.7 / 1.0 — per-chiasm length tertile (1 when
  *   lengths are unknown or mismatched).
- * - isPivot: bar(s) at maximum indent — the chiasm's turning point.
+ * - isPivot: bar(s) whose MAJOR depth equals the maximum major depth — the
+ *   chiasm's turning point. Sub-letters share their major's depth, matching
+ *   the detail panel's pivot definition (max-major lines, not max-indent).
  */
 export function glyphBars(scheme, lineLengths) {
   const chars = (scheme || "").split("");
@@ -18,8 +21,8 @@ export function glyphBars(scheme, lineLengths) {
     if (isMajor) currentMajor = ch.charCodeAt(0) - 65;
     return { indent: isMajor ? currentMajor : currentMajor + 0.5, widthFactor: 1, isPivot: false };
   });
-  const maxIndent = Math.max(...bars.map((b) => b.indent));
-  bars.forEach((b) => { b.isPivot = b.indent === maxIndent; });
+  const maxMajor = Math.max(...bars.map((b) => Math.floor(b.indent)));
+  bars.forEach((b) => { b.isPivot = Math.floor(b.indent) === maxMajor; });
   if (Array.isArray(lineLengths) && lineLengths.length === bars.length) {
     const sorted = [...lineLengths].sort((a, b) => a - b);
     const t1 = sorted[Math.floor((sorted.length - 1) / 3)];

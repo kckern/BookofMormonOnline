@@ -16,6 +16,9 @@ describe("glyphBars", () => {
     expect(glyphBars("ABCBA").map((b) => b.isPivot)).toEqual([false, false, true, false, false]);
     expect(glyphBars("ABBA").map((b) => b.isPivot)).toEqual([false, true, true, false]);
   });
+  test("pivot follows MAJOR depth: sub-letter under the deepest major is pivot too", () => {
+    expect(glyphBars("ABCcBA").map((b) => b.isPivot)).toEqual([false, false, true, true, false, false]);
+  });
   test("sub-letters indent +0.5 under their major", () => {
     const bars = glyphBars("AaB");
     expect(bars[0].indent).toBe(0);

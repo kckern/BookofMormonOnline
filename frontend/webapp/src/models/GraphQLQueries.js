@@ -215,6 +215,7 @@ const queries = {
                     artist
                 }
                 chiasmus {
+                    chiasmus_id
                     title
                     reference
                     scheme
@@ -2104,6 +2105,7 @@ const queries = {
                       artist
                   }
                   chiasmus {
+                      chiasmus_id
                       title
                       reference
                       scheme
