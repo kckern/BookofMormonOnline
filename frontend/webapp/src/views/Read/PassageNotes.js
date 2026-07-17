@@ -7,7 +7,9 @@ import ObjectsPanel from './CategoryPanels/ObjectsPanel';
 import ImagesPanel from './CategoryPanels/ImagesPanel';
 import ChiasmusPanel from './CategoryPanels/ChiasmusPanel';
 import ReferencesPanel from './CategoryPanels/ReferencesPanel';
+import RelationshipsPanel from './CategoryPanels/RelationshipsPanel';
 import BasePanel from './CategoryPanels/BasePanel';
+import { label } from 'src/models/Utils';
 import './CategoryPanels/CategoryPanels.scss';
 
 const PassageNotes = ({ 
@@ -27,7 +29,8 @@ const PassageNotes = ({
             objects: [],
             images: [],
             chiasmus: [],
-            refs: []
+            refs: [],
+            xrels: []
         };
         
         // Iterate through each verse ID and collect all items
@@ -39,6 +42,7 @@ const PassageNotes = ({
             if (verseData.images) counts.images.push(...verseData.images);
             if (verseData.chiasmus) counts.chiasmus.push(...verseData.chiasmus);
             if (verseData.refs) counts.refs.push(...verseData.refs);
+            if (verseData.xrels) counts.xrels.push(...verseData.xrels);
         });
         
         return counts;
@@ -64,6 +68,7 @@ const PassageNotes = ({
             images: { title: 'Images', Component: ImagesPanel },
             chiasmus: { title: 'Chiasmus', Component: ChiasmusPanel },
             refs: { title: 'References', Component: ReferencesPanel },
+            xrels: { title: label('relationships'), Component: RelationshipsPanel },
         };
 
         const { title, Component } = panelConfig[activePanel];
@@ -155,6 +160,15 @@ const PassageNotes = ({
                             >
                                 <span className="count">{categoryCounts.refs.length}</span>
                                 <span className="label">References</span>
+                            </div>
+                        )}
+                        {categoryCounts.xrels && categoryCounts.xrels.length > 0 && (
+                            <div
+                                className={`category-tab ${activePanel === 'xrels' ? 'active' : ''}`}
+                                onClick={() => handleTabClick('xrels')}
+                            >
+                                <span className="count">{categoryCounts.xrels.length}</span>
+                                <span className="label">{label('relationships')}</span>
                             </div>
                         )}                        </div>
                         {renderPanel()}

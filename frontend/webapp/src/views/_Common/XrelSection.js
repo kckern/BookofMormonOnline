@@ -13,6 +13,20 @@ import { label } from "src/models/Utils";
  *    dst_* carry the other party — render name then verb
  *    ("Synagogues — taught-by").
  */
+/**
+ * Map an xrel endpoint type + slug to a setPopUp payload.
+ * Shared by XrelSection and the Read view's RelationshipsPanel — one
+ * definition of which entity types open which popup. Returns null for
+ * unknown types (no popup surface).
+ */
+export function popUpTargetFor(type, slug) {
+  if (type === "people") return { type: "people", ids: [slug], underSlug: "people" };
+  if (type === "place") return { type: "places", ids: [slug], underSlug: "places" };
+  if (type === "object") return { type: "object", ids: [slug], underSlug: "objects" };
+  if (type === "group") return { type: "group", ids: [slug], underSlug: "group" };
+  return null;
+}
+
 export default function XrelSection({ xrels, showEmpty, noHeading }) {
   const appController = useAppController();
   const hasRows = Array.isArray(xrels) && xrels.length > 0;
@@ -20,15 +34,8 @@ export default function XrelSection({ xrels, showEmpty, noHeading }) {
 
   const handleXrelClick = (xrel, e) => {
     e.preventDefault();
-    if (xrel.dst_type === "people") {
-      appController.functions.setPopUp({ type: "people", ids: [xrel.dst_slug], underSlug: "people" });
-    } else if (xrel.dst_type === "place") {
-      appController.functions.setPopUp({ type: "places", ids: [xrel.dst_slug], underSlug: "places" });
-    } else if (xrel.dst_type === "object") {
-      appController.functions.setPopUp({ type: "object", ids: [xrel.dst_slug], underSlug: "objects" });
-    } else if (xrel.dst_type === "group") {
-      appController.functions.setPopUp({ type: "group", ids: [xrel.dst_slug], underSlug: "group" });
-    }
+    const target = popUpTargetFor(xrel.dst_type, xrel.dst_slug);
+    if (target) appController.functions.setPopUp(target);
   };
 
   return (
@@ -37,7 +44,7 @@ export default function XrelSection({ xrels, showEmpty, noHeading }) {
       {hasRows ? (
         <ul className="xrels">
           {xrels.map((x, idx) => {
-            const clickable = ["people", "place", "object", "group"].includes(x.dst_type);
+            const clickable = !!popUpTargetFor(x.dst_type, x.dst_slug);
             const nameLink = (
               <a href="#" onClick={clickable ? (e) => handleXrelClick(x, e) : (e) => e.preventDefault()}>
                 {x.dst_name}

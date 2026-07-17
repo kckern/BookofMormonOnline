@@ -249,6 +249,17 @@ const queries = {
                     type
                     significant
                 }
+                xrels {
+                    rel
+                    src_type
+                    src_slug
+                    src_name
+                    dst_type
+                    dst_slug
+                    dst_name
+                    note
+                    verse_id
+                }
             }`,
     }
   },
@@ -2137,6 +2148,17 @@ const queries = {
                       ref
                       type
                       significant
+                  }
+                  xrels {
+                      rel
+                      src_type
+                      src_slug
+                      src_name
+                      dst_type
+                      dst_slug
+                      dst_name
+                      note
+                      verse_id
                   }
               }`,
       }
