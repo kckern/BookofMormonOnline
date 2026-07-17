@@ -150,9 +150,10 @@ function BrowseToolbar({ state, set, depthCounts, categoryCounts, shownCount, to
 // Color key for the book-group card rails (audit §8.1: the palette was
 // validated but never explained on screen). Slugs match the rail-* classes,
 // which set --rail-color in both themes — the dots reuse it, no new colors.
+// Slugs must stay in sync with BOOK_GROUPS in chiasmUtils.js; display names live here.
 const RAIL_LEGEND = [
     ["small-plates", "Small Plates (1 Nephi–Omni)"],
-    ["abridgment", "Abridgment (Mosiah–Helaman)"],
+    ["abridgment", "Abridgment (W of M–Helaman)"],
     ["ministry", "Ministry (3–4 Nephi)"],
     ["mormon", "Mormon"],
     ["ether", "Ether"],
