@@ -114,9 +114,10 @@ function BrowseToolbar({ state, set, depthCounts, categoryCounts }) {
                         type="button"
                         className={`chip depth_chip${selected ? " selected" : ""}`}
                         aria-pressed={selected}
+                        aria-label={t("depth_chip_label", "Depth $1 — $2 chiasms", [d, depthCounts[d]])}
                         onClick={() => toggleDepth(d)}
                     >
-                        <span className="chip_count">{depthCounts[d]}</span>{d}
+                        <span className="chip_count" aria-hidden="true">{depthCounts[d]}</span>{d}
                     </button>
                 );
             })}
@@ -153,7 +154,7 @@ function Chiasmus({ enriched, flat, groups, state, set, setChiasmusId, activeChi
     useEffect(() => { document.title = t("chiasms_doc_title", "Chiasms") + " | " + label("home_title"); }, []);
 
     const depthCounts = useMemo(
-        () => enriched.reduce((acc, c) => ({ ...acc, [c.depthBucket]: (acc[c.depthBucket] || 0) + 1 }), {}),
+        () => enriched.reduce((acc, c) => { acc[c.depthBucket] = (acc[c.depthBucket] || 0) + 1; return acc; }, {}),
         [enriched]
     );
     const categoryCounts = useMemo(
@@ -164,7 +165,11 @@ function Chiasmus({ enriched, flat, groups, state, set, setChiasmusId, activeChi
         [enriched]
     );
 
-    if (enriched.length === 0) return <pre>{t("no_chiasms_found", "No chiasms found")}</pre>;
+    if (enriched.length === 0) return (
+        <div className="browse_empty">
+            {t("no_chiasms_loaded", "No chiasms available.")}
+        </div>
+    );
 
     const cards = (items) => items.map((chiasm) => (
         <ChiasmCard
