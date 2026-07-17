@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useLayoutEffect, useRef } from "react";
 import { canons } from "./canon";
 import { bookTotal } from "./aggregate";
 import ChapterStrip from "./ChapterStrip";
@@ -11,7 +11,7 @@ export default function Rail({ canon, book, chapter, onAnchor, onChapter }) {
 
   const railRef = useRef(null);
   const anchorRef = useRef(null);
-  useEffect(() => {
+  useLayoutEffect(() => {
     const rail = railRef.current;
     const el = anchorRef.current;
     if (!rail || !el) return;

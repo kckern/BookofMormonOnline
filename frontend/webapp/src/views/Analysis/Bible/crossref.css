@@ -254,6 +254,7 @@ html[data-theme="dark"] .xref-root {
   max-height: calc(100vh - 220px);
   overflow-y: auto;
   padding-right: 0.5rem;
+  position: relative; /* offsetParent for the anchored-book auto-scroll (Rail.jsx) */
 }
 
 .xref-rail-groupname {
