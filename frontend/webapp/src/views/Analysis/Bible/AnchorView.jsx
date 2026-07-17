@@ -27,7 +27,7 @@ export default function AnchorView({ state, navigate }) {
     const readerState =
       canon === "bom"
         ? { view: "reader", bomBook: book, bibleBook: partnerName }
-        : { view: "reader", bomBook: partnerName, bibleBook: book };
+        : { view: "reader", bomBook: partnerName, bibleBook: book, anchorCanon: "kjv" };
     if (canon === "bom" && chapter) readerState.bomChapter = chapter;
     navigate(readerState);
   };

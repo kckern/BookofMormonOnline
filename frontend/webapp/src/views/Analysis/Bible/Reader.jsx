@@ -73,27 +73,32 @@ export default function Reader({ state, navigate }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible.length, sorted]);
 
+  const anchorCanon = state.anchorCanon === "kjv" ? "kjv" : "bom";
+  const backState =
+    anchorCanon === "kjv"
+      ? { view: "anchor", canon: "kjv", book: bibleBook }
+      : {
+          view: "anchor",
+          canon: "bom",
+          book: bomBook,
+          ...(bomChapter ? { chapter: bomChapter } : {}),
+        };
+
   useEffect(() => {
     const onKey = (e) => {
-      if (e.key === "Escape")
-        navigate({ view: "anchor", canon: "bom", book: bomBook, ...(bomChapter ? { chapter: bomChapter } : {}) });
+      if (e.key !== "Escape") return;
+      if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) || e.target.isContentEditable) return;
+      navigate(backState);
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bomBook, bomChapter]);
-
-  const backState = {
-    view: "anchor",
-    canon: "bom",
-    book: bomBook,
-    ...(bomChapter ? { chapter: bomChapter } : {}),
-  };
+  }, [bomBook, bibleBook, bomChapter, anchorCanon]);
 
   if (!pairs.length)
     return (
       <div className="xref-reader" data-testid="xref-reader">
-        <ReaderHeader {...{ bomBook, bibleBook, bomChapter, navigate, backState }} />
+        <ReaderHeader {...{ bomBook, bibleBook, bomChapter, anchorCanon, navigate, backState }} />
         <div className="xref-empty">
           No known correspondences between {bomBook}
           {bomChapter ? ` ${bomChapter}` : ""} and {bibleBook}.
@@ -105,7 +110,7 @@ export default function Reader({ state, navigate }) {
   if (!firstPageReady)
     return (
       <div className="xref-reader" data-testid="xref-reader">
-        <ReaderHeader {...{ bomBook, bibleBook, bomChapter, navigate, backState }} />
+        <ReaderHeader {...{ bomBook, bibleBook, bomChapter, anchorCanon, navigate, backState }} />
         <Spinner />
       </div>
     );
@@ -131,7 +136,7 @@ export default function Reader({ state, navigate }) {
 
   return (
     <div className="xref-reader" data-testid="xref-reader">
-      <ReaderHeader {...{ bomBook, bibleBook, bomChapter, navigate, backState }} />
+      <ReaderHeader {...{ bomBook, bibleBook, bomChapter, anchorCanon, navigate, backState }} />
       <table className="verseViewerTable">
         <thead>
           <tr>
@@ -191,18 +196,19 @@ export default function Reader({ state, navigate }) {
   );
 }
 
-function ReaderHeader({ bomBook, bibleBook, bomChapter, navigate, backState }) {
+function ReaderHeader({ bomBook, bibleBook, bomChapter, anchorCanon, navigate, backState }) {
+  const anchorBook = anchorCanon === "kjv" ? bibleBook : bomBook;
   return (
     <header className="xref-header">
       <nav className="xref-breadcrumb" aria-label="Breadcrumb">
         <Link to="/analysis/bible">⌂ Overview</Link>
         <span aria-hidden="true"> › </span>
         <button className="xref-backlink" onClick={() => navigate(backState)}>
-          {bomBook}
-          {bomChapter ? ` › ch. ${bomChapter}` : ""}
+          {anchorBook}
+          {anchorCanon === "bom" && bomChapter ? ` › ch. ${bomChapter}` : ""}
         </button>
         <span aria-hidden="true"> › </span>
-        <span aria-current="page">× {bibleBook}</span>
+        <span aria-current="page">{bomBook} × {bibleBook}</span>
       </nav>
       <h3 className="xref-readertitle">
         <span className="book">{bomBook}{bomChapter ? ` ${bomChapter}` : ""}</span> references to{" "}

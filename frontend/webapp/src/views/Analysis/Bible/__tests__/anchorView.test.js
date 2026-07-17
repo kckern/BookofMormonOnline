@@ -50,6 +50,7 @@ describe("AnchorView", () => {
       view: "reader",
       bomBook: "2 Nephi",
       bibleBook: "Isaiah",
+      anchorCanon: "kjv",
     });
   });
 

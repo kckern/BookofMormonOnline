@@ -86,4 +86,34 @@ describe("Reader", () => {
     fireEvent.keyDown(document, { key: "Escape" });
     expect(navigate).toHaveBeenCalledWith({ view: "anchor", canon: "bom", book: "Jacob" });
   });
+
+  test("breadcrumb back target honors a kjv origin", () => {
+    const navigate = jest.fn();
+    render(
+      <MemoryRouter>
+        <Reader
+          state={{ view: "reader", bomBook: "2 Nephi", bibleBook: "Isaiah", anchorCanon: "kjv" }}
+          navigate={navigate}
+        />
+      </MemoryRouter>
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Isaiah" }));
+    expect(navigate).toHaveBeenCalledWith({ view: "anchor", canon: "kjv", book: "Isaiah" });
+  });
+
+  test("Escape inside an input does not navigate", () => {
+    const navigate = jest.fn();
+    render(
+      <MemoryRouter>
+        <input data-testid="searchbox" />
+        <Reader state={{ view: "reader", bomBook: "2 Nephi", bibleBook: "Isaiah" }} navigate={navigate} />
+      </MemoryRouter>
+    );
+    fireEvent.keyDown(screen.getByTestId("searchbox"), { key: "Escape" });
+    expect(navigate).not.toHaveBeenCalled();
+    fireEvent.keyDown(document.body, { key: "Escape" });
+    expect(navigate).toHaveBeenCalledWith(
+      expect.objectContaining({ view: "anchor", canon: "bom", book: "2 Nephi" })
+    );
+  });
 });
