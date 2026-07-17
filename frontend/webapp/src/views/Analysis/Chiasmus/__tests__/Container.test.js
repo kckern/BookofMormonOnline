@@ -165,6 +165,18 @@ test("group headers show a parenthesized count", async () => {
   expect(screen.getByText("(2)")).toBeInTheDocument();
 });
 
+test("browsing produces no duplicate-key warnings (audit §2.3 canary)", async () => {
+  const errSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+  const history = renderAt("/analysis/chiasmus");
+  fireEvent.click(await screen.findByRole("button", { name: /first chiasm/i }));
+  await screen.findByText("Detail x1");
+  act(() => history.replace("/analysis/chiasmus?group=depth"));
+  act(() => history.replace("/analysis/chiasmus?group=speaker"));
+  const keyWarnings = errSpy.mock.calls.filter((c) => String(c[0]).includes("same key"));
+  errSpy.mockRestore();
+  expect(keyWarnings).toEqual([]);
+});
+
 test("document.title resets to the list title when the panel closes", async () => {
   const history = renderAt("/analysis/chiasmus");
   fireEvent.click(await screen.findByRole("button", { name: /first chiasm/i }));

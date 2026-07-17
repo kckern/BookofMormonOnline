@@ -185,14 +185,6 @@ describe("applyBrowseState", () => {
     const { groups } = applyBrowseState(withDeep, S({ group: "depth" }));
     expect(groups.map(g => g.key)).toEqual(["2", "5", "7", "+"]);
   });
-  test("depth groups key by raw bucket and label via groupLabel", () => {
-    const { groups } = applyBrowseState(list, S({ group: "depth" }));
-    expect(groups[0].key).toBe("2"); // raw bucket, not "Level 2"
-    expect(groupLabel("3", "depth")).toBe("Level 3");
-    expect(groupLabel("+", "depth")).toBe("Level 8+");
-    expect(groupLabel("Simple", "type")).toBe("Simple");
-    expect(groupLabel("Alma", "book")).toBe("Alma");
-  });
   test("grouping by type", () => {
     const { groups } = applyBrowseState(list, S({ group: "type" }));
     expect(groups.map(g => g.key).sort()).toEqual(["Biblical", "Compound", "Simple"]);
@@ -223,6 +215,18 @@ describe("applyBrowseState", () => {
     const withNull = [...list, mk({ id: "n", v: null, depth: 3 })];
     const out = applyBrowseState(withNull, S()).flat.map(c => c.chiasmus_id);
     expect(out[0]).toBe("n");
+  });
+});
+
+describe("groupLabel", () => {
+  test("depth keys translate to Level labels; + displays as 8+", () => {
+    expect(groupLabel("3", "depth")).toBe("Level 3");
+    expect(groupLabel("+", "depth")).toBe("Level 8+");
+  });
+  test("type keys route through the type_* dictionary; book/speaker keys pass through", () => {
+    expect(groupLabel("Simple", "type")).toBe("Simple");
+    expect(groupLabel("Alma", "book")).toBe("Alma");
+    expect(groupLabel("Nephi", "speaker")).toBe("Nephi");
   });
 });
 

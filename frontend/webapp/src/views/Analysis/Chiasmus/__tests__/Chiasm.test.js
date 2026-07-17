@@ -176,4 +176,30 @@ describe("Chiasm detail panel", () => {
     fireEvent.click(next);
     expect(setChiasmusId).toHaveBeenCalledWith("x2");
   });
+
+  test("last-in-list state disables next while prev stays enabled", async () => {
+    BoMOnlineAPI.mockResolvedValue({ chiasm: { x1: fixture } });
+    render(
+      <MemoryRouter>
+        <Chiasm chiasm_id="x1" setChiasmusId={jest.fn()} closeChiasm={jest.fn()} nextId={null} prevId="x0" />
+      </MemoryRouter>
+    );
+    await screen.findByText("Test Chiasm");
+    const header = document.querySelector(".chiasm-header");
+    expect(within(header).getByRole("button", { name: /next/i })).toBeDisabled();
+    expect(within(header).getByRole("button", { name: /previous/i })).toBeEnabled();
+  });
+
+  test("header × calls closeChiasm", async () => {
+    BoMOnlineAPI.mockResolvedValue({ chiasm: { x1: fixture } });
+    const closeChiasm = jest.fn();
+    render(
+      <MemoryRouter>
+        <Chiasm chiasm_id="x1" setChiasmusId={jest.fn()} closeChiasm={closeChiasm} nextId={null} prevId={null} />
+      </MemoryRouter>
+    );
+    await screen.findByText("Test Chiasm");
+    fireEvent.click(within(document.querySelector(".chiasm-header")).getByRole("button", { name: /close/i }));
+    expect(closeChiasm).toHaveBeenCalledTimes(1);
+  });
 });
