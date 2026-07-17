@@ -6,7 +6,12 @@ import { MemoryRouter, Route } from "react-router-dom";
 jest.mock("../Sampler", () => () => <div>SAMPLER</div>);
 jest.mock("../Community", () => () => <div>COMMUNITY</div>);
 jest.mock("../../User/User", () => () => <div>USER</div>);
-jest.mock("../HomeTabs", () => () => <div>TABS</div>);
+jest.mock("../HomeTabs", () => ({
+  __esModule: true,
+  default: () => <div>TABS</div>,
+  activeTabFor: (p) =>
+    /^\/home\/user/.test(p) ? "user" : /^\/home\/community/.test(p) ? "community" : "explore",
+}));
 jest.mock("src/models/featureFlags", () => ({ isMessengerEnabled: jest.fn(() => true) }));
 jest.mock("src/models/Utils", () => ({ isMobile: jest.fn(() => false), label: (k) => k }));
 

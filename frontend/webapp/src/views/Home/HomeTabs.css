@@ -106,6 +106,20 @@ html[data-theme="dark"] .home-tabs-reload:hover {
   padding-top: 7.25em; /* ~116px: 60 header + ~44 tab bar + breathing room */
 }
 
+/* ---------- Community view: tab bar over the left column only ---------- */
+/* The left column sits under the (shrunken) tab bar and does NOT scroll — its
+   GroupBrowser right-sizes its list lengths to the height. The right feed panel
+   is left uncovered so it runs flush to the top (clearing only the app header). */
+.home-shell--community .home-tabs {
+  width: calc(40% - 1em); /* == .leftPanelScroll width */
+}
+.home-shell--community .leftPanelScroll {
+  overflow: hidden;
+}
+.home-shell--community .rightPanelScroll {
+  padding-top: 4em; /* app header only (~60px) — feed reaches the top */
+}
+
 /* ---------- ultra-wide (>4280px): header is 91px ---------- */
 @media only screen and (min-width: 4281px) {
   .home-shell--tabs {

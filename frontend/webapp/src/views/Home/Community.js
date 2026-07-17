@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { useParams, useHistory, useRouteMatch, Link } from "react-router-dom";
 import moment from "moment";
 import ProgressBox from "../User/ProgressBox.js";
@@ -45,7 +45,6 @@ import { toast } from "react-toastify";
 import Loader, { Spinner } from "../_Common/Loader/index.js";
 import { md5 } from "../../models/MessengerController.js";
 import { timeAgoString } from "../../models/Utils.js";
-import { ReadingPlan } from "./ReadingPlan";
 
 // True when the matched URL is a community route, whether nested under the
 // unified Home (/home/community/...) or the legacy top-level (/community/...).
@@ -96,7 +95,6 @@ function Community() {
         />
       </div>
       <div className="rightPanelScroll">
-        {!activeGroup && <ReadingPlan />}
         <HomeFeed
           activeGroup={activeGroup}
           messageId={activeMessage}
@@ -108,8 +106,47 @@ function Community() {
   );
 }
 
+// The Community left panel does NOT scroll — it right-sizes its list lengths to
+// the available height. Start from generous caps and step one row down
+// (leaderboard first, then groups, then finishers) until the panel stops
+// overflowing. A ResizeObserver re-expands on viewport change, then it re-fits.
+const FIT_MAX = { leaders: 10, groups: 10, finishers: 12 };
+const FIT_MIN = { leaders: 2, groups: 1, finishers: 4 };
+
+function useFitCounts(cardRef, resetKey) {
+  const [caps, setCaps] = useState(FIT_MAX);
+
+  useLayoutEffect(() => {
+    setCaps(FIT_MAX);
+    const panel = cardRef.current?.parentElement;
+    if (!panel || typeof ResizeObserver === "undefined") return undefined;
+    const ro = new ResizeObserver(() => setCaps(FIT_MAX));
+    ro.observe(panel);
+    return () => ro.disconnect();
+  }, [cardRef, resetKey]);
+
+  useLayoutEffect(() => {
+    const panel = cardRef.current?.parentElement; // the fixed-height .leftPanelScroll
+    if (!panel) return;
+    if (panel.scrollHeight > panel.clientHeight + 1) {
+      setCaps((c) =>
+        c.leaders > FIT_MIN.leaders
+          ? { ...c, leaders: c.leaders - 1 }
+          : c.groups > FIT_MIN.groups
+          ? { ...c, groups: c.groups - 1 }
+          : c.finishers > FIT_MIN.finishers
+          ? { ...c, finishers: c.finishers - 1 }
+          : c
+      );
+    }
+  });
+
+  return caps;
+}
+
 function GroupBrowser({ activeGroup, setActiveGroup }) {
   const appController = useAppController();
+  const cardRef = useRef(null);
   const [groupListData, setData] = useState([]);
   const [leaders, setLeaders] = useState([]);
   const [finishers, setFinishers] = useState([]);
@@ -146,12 +183,18 @@ function GroupBrowser({ activeGroup, setActiveGroup }) {
     ?.map((i) => i?.grouping)
     .filter((v, i, a) => a.indexOf(v) === i).length;
 
+  const caps = useFitCounts(
+    cardRef,
+    `${finishers.length}:${leaders.length}:${groupListData.length}:${queryFilter?.grouping || ""}`
+  );
+  const shownGroups = groupListData.slice(0, caps.groups);
+
   return (
-    <Card className="Community">
-      <CardHeader>
-        <h3>
-          {isFiltered ? label(queryFilter?.grouping) : label("community")}
-          {isFiltered ? (
+    <Card className="Community" innerRef={cardRef}>
+      {isFiltered ? (
+        <CardHeader>
+          <h3>
+            {label(queryFilter?.grouping)}
             <span
               onClick={() =>
                 setQueryFilter({ token: appController.states.user.token })
@@ -159,9 +202,9 @@ function GroupBrowser({ activeGroup, setActiveGroup }) {
             >
               ×
             </span>
-          ) : null}
-        </h3>
-      </CardHeader>
+          </h3>
+        </CardHeader>
+      ) : null}
       <ReactTooltip
         id="button-tip"
         place="left"
@@ -185,14 +228,14 @@ function GroupBrowser({ activeGroup, setActiveGroup }) {
         ) : (
           <>
             <h3>{label("recent_finishers")}</h3>
-            <RecentFinishers finishers={finishers} />
+            <RecentFinishers finishers={finishers.slice(0, caps.finishers)} />
             <h3>{label("leader_board")}</h3>
-            <LeaderBoard leaders={leaders.slice(0, 10)} />
-            {groupListData.map((item, i) => {
+            <LeaderBoard leaders={leaders.slice(0, caps.leaders)} />
+            {shownGroups.map((item, i) => {
               if (!item) return null;
               const grouping = item.grouping;
-              const prev = groupListData[i - 1] || null;
-              const next = groupListData[i + 1] || null;
+              const prev = shownGroups[i - 1] || null;
+              const next = shownGroups[i + 1] || null;
               return (
                 <React.Fragment key={i}>
                   {grouping !== prev?.grouping && groupcount > 1 ? (

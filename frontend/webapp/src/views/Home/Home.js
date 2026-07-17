@@ -1,8 +1,8 @@
 import React from "react";
-import { Switch, Route, Redirect } from "react-router-dom";
+import { Switch, Route, Redirect, useLocation } from "react-router-dom";
 import { isMobile } from "src/models/Utils";
 import { isMessengerEnabled } from "src/models/featureFlags";
-import HomeTabs from "./HomeTabs";
+import HomeTabs, { activeTabFor } from "./HomeTabs";
 import Sampler from "./Sampler";
 import Community from "./Community";
 import User from "../User/User";
@@ -15,11 +15,19 @@ import User from "../User/User";
 export default function Home() {
   const useMessenger = isMessengerEnabled();
   const mobile = isMobile();
+  const activeTab = activeTabFor(useLocation().pathname);
+
+  const shellClass =
+    "home-shell" +
+    (mobile ? "" : " home-shell--tabs") +
+    // Community-only layout: tab bar caps to the left column, right feed runs
+    // flush to the top, left column doesn't scroll (see HomeTabs.css).
+    (!mobile && activeTab === "community" ? " home-shell--community" : "");
 
   return (
     // `--tabs` modifier (desktop only) lets the stylesheet own the fixed-header
     // clearance + tab-bar offset without affecting the mobile layout.
-    <div className={"home-shell" + (mobile ? "" : " home-shell--tabs")}>
+    <div className={shellClass}>
       {!mobile && <HomeTabs />}
       <Switch>
         <Route path="/home/user/:value?"><User /></Route>
