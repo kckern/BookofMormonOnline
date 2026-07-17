@@ -380,7 +380,16 @@ function Container() {
          <AnalysisBreadcrumb>{t("chiasmus_page_title_short", "Chiasmus")}</AnalysisBreadcrumb>
          <h3 className="title chiasmus_title">
              {t("chiasmus_page_title", "Chiasmus in the Book of Mormon")}
-             {enriched.length > 0 && <span className="total_count">{enriched.length}</span>}
+             {enriched.length > 0 && (
+                 // JSX strips the whitespace before this span, so without the
+                 // hidden separators the heading's accessible name reads
+                 // "…Book of Mormon367" — glued on and unlabeled.
+                 <span className="total_count" title={t("total_chiasms", "$1 chiasms total", [enriched.length])}>
+                     <span className="visually-hidden"> — </span>
+                     {enriched.length}
+                     <span className="visually-hidden">{t("total_chiasms_sr", " chiasms")}</span>
+                 </span>
+             )}
          </h3>
          <div className="innerChiasmContainer">
         {indexPanel}

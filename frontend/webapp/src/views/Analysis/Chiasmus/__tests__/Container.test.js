@@ -123,6 +123,14 @@ test("Escape closes via replace, preserving the query string", async () => {
   expect(history.length).toBe(2); // close replaces — no extra entry
 });
 
+test("heading's accessible name separates and labels the total count", async () => {
+  renderAt("/analysis/chiasmus");
+  await screen.findByRole("button", { name: /first chiasm/i });
+  // Without the visually-hidden separators the name reads "…Book of Mormon2"
+  const heading = screen.getByRole("heading", { name: /Book of Mormon — 2 chiasms/ });
+  expect(heading).toBeInTheDocument();
+});
+
 test("document.title resets to the list title when the panel closes", async () => {
   const history = renderAt("/analysis/chiasmus");
   fireEvent.click(await screen.findByRole("button", { name: /first chiasm/i }));
