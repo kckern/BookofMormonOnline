@@ -1441,14 +1441,20 @@ Also widen the lane: `.xref-bars { max-width: 860px; }` (was 640 — audit §5 d
 
 a. Breadcrumb current crumb: `{book}` only (drop the `ch.` suffix).
 
-b. Flip button:
+b. Flip button. NOTE (corrected after Task 16 review): `highlight` may be a *division* name ("Major Prophets"), but `flip()` navigates to a partner *book* — so `flipTarget` must mirror `flip()`'s `highlightIsBook` guard, not use `highlight` directly (a bare `highlight ||` label would lie about the destination). Compute the target ONCE and share it between the label and `flip()`:
 
 ```jsx
-  const flipTarget = highlight || partnersFor(canon, book)[0]?.book.name;
+  const partners = partnersFor(canon, book);
+  const flipTarget =
+    (partners.some((p) => p.book.name === highlight) && highlight) ||
+    partners[0]?.book.name;
+  // flip() uses the same flipTarget; hide the button when there is none
   …
-        <button className="xref-flip" onClick={flip}>
-          ⇄ view from {flipTarget || partnerLabel}
-        </button>
+        {flipTarget && (
+          <button className="xref-flip" onClick={flip}>
+            ⇄ view from {flipTarget}
+          </button>
+        )}
 ```
 
 c. Heading + legend on one line, "references" spelled out, legend deduped (delete the bottom `.xref-legend` div):

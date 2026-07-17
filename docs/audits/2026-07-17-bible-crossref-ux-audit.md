@@ -5,6 +5,8 @@
 **Method:** full code read of all 15 files; live Playwright session against the CRA dev server (`10.0.0.10:8201` — note the Next.js migration now occupies `:8200`) at 1440×900, 1280×700, and 390×844, light and dark, with DOM measurements to confirm every visual suspicion. Screenshots in `bible-analysis-screenshots-2026-07-17/`.
 **Prior art:** `2026-07-16-bible-cross-reference-ux-dataviz-audit.md` (audited the old circle matrix, superseded). This audit covers the replacement.
 
+**Status: RESOLVED (2026-07-17)** by `docs/plans/2026-07-17-bible-crossref-ux-pass2.md`, executed on `feature/bible-crossref-ux-pass2` (18 tasks, each spec- and quality-reviewed; final whole-branch review verdict SHIP; 91/91 Bible tests pass). All four P0 defects fixed (hover dimming restored; mobile bars full-width; ResizeObserver loop removed structurally by measuring an svg-only box; rail centers the anchored book), the overview re-grounded as a true Sankey (spine height = reference count — user-approved) with a colorblind/contrast-validated light+dark palette, all view state (highlight, reader origin, mode/expand) moved into the URL, the table twin made sticky/filterable/clickable, and the mobile experience fixed end to end. After-screenshots: `bible-analysis-screenshots-2026-07-17-after/`. Still open (deferred): the backend verse-heading misassignment (§6 — Alma 47:4 shows Alma 34's heading; a data-layer issue, out of scope for this UI pass); minor a11y/UX follow-ups noted in the final review (table→reader in-app Back lands on the BoM anchor rather than the table).
+
 ---
 
 ## Verdict
