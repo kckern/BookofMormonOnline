@@ -392,6 +392,12 @@
     .innerChiasmContainer {
         flex-direction: column;
     }
+    /* the closed panel is an empty placeholder div; in column layout its base
+       height (calc(100vh - 10.5rem)) would stack a viewport of dead space
+       below the card grid */
+    .chiasmPanel.closed {
+        display: none;
+    }
     .chiasmPanel.open {
         position: fixed;
         inset: 0;
@@ -403,6 +409,10 @@
         overflow: auto;
         /* base rule transitions width 0.5s — animating 0→100vw on open flashes */
         transition: none;
+        /* keep overlay scroll from chaining to the page behind it; a real body
+           scroll lock was deliberately skipped (needs JS — the mobile switch is
+           pure CSS, and the fixed overlay covers the page visually anyway) */
+        overscroll-behavior: contain;
     }
     /* keep the × reachable while scrolling a long chiasm in the overlay;
        :not(.reference) because the reference h4 also carries .title */
