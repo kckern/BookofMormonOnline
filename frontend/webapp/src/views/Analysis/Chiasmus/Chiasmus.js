@@ -269,9 +269,7 @@ function Chiasmus({ enriched, flat, groups, state, set, setChiasmusId, activeChi
             )}
         </div>
     </div>;
-
 }
-
 
 function Container() {
     const [chiasmus, setChiasmus] = useState(null);
@@ -379,54 +377,46 @@ function Container() {
         return () => document.removeEventListener("keydown", handleKeyDown);
     }, []); // mount-only: list fetch + arrow/Escape shortcuts (see flatRef above)
 
-
     // the list must be loaded before we can render anything (deep links set
     // chiasmus_id before the fetch resolves — findIndex on null crashed here)
     if (chiasmus === undefined) return <div className="browse_empty">{t("chiasms_load_failed", "Couldn't load chiasms.")}</div>;
-    if(!chiasmus) return <Loader/>
-    let singlePanel = <div className="chiasmPanel closed"
-    ></div>
-    if(chiasmus_id){
+    if (!chiasmus) return <Loader/>;
+
+    let singlePanel = <div className="chiasmPanel closed"></div>;
+    if (chiasmus_id) {
         // prev/next follow the VISIBLE order and do NOT wrap: null at the ends
         // (and when the open chiasm is filtered out of view) disables the buttons
-        const idIndex = flat.findIndex(x=>x.chiasmus_id===chiasmus_id);
-        const nextId = idIndex !== -1 && idIndex < flat.length-1 ? flat[idIndex+1].chiasmus_id : null;
-        const prevId = idIndex > 0 ? flat[idIndex-1].chiasmus_id : null;
-        singlePanel =
-        <div className="chiasmPanel open">
-        <Chiasm chiasm_id={chiasmus_id}  setChiasmusId={setChiasmusId} closeChiasm={closeChiasm} nextId={nextId} prevId={prevId}/>
-    </div>
-
+        const idIndex = flat.findIndex(x => x.chiasmus_id === chiasmus_id);
+        const nextId = idIndex !== -1 && idIndex < flat.length - 1 ? flat[idIndex + 1].chiasmus_id : null;
+        const prevId = idIndex > 0 ? flat[idIndex - 1].chiasmus_id : null;
+        singlePanel = <div className="chiasmPanel open">
+            <Chiasm chiasm_id={chiasmus_id} setChiasmusId={setChiasmusId} closeChiasm={closeChiasm} nextId={nextId} prevId={prevId}/>
+        </div>;
     }
 
-     let indexPanel = <Chiasmus enriched={enriched} flat={flat} groups={groups} state={state} set={set} setChiasmusId={setChiasmusId} activeChiasmus={chiasmus_id}/>
-
-
+    const indexPanel = <Chiasmus enriched={enriched} flat={flat} groups={groups} state={state} set={set} setChiasmusId={setChiasmusId} activeChiasmus={chiasmus_id}/>;
 
     return <div className="container">
-         <AnalysisBreadcrumb>{t("chiasmus_page_title_short", "Chiasmus")}</AnalysisBreadcrumb>
-         <h3 className="title chiasmus_title">
-             {t("chiasmus_page_title", "Chiasmus in the Book of Mormon")}
-             {enriched.length > 0 && (
-                 // JSX strips the whitespace before this span, so without the
-                 // hidden separators the heading's accessible name reads
-                 // "…Book of Mormon367" — glued on and unlabeled.
-                 <span className="total_count" title={t("total_chiasms", "$1 chiasms total", [enriched.length])}>
-                     <span className="visually-hidden"> — </span>
-                     {enriched.length}
-                     <span className="visually-hidden">{t("total_chiasms_sr", " chiasms")}</span>
-                 </span>
-             )}
-         </h3>
-         <div className="innerChiasmContainer">
-        {indexPanel}
-        {singlePanel}
-         </div>
-
+        <AnalysisBreadcrumb>{t("chiasmus_page_title_short", "Chiasmus")}</AnalysisBreadcrumb>
+        <h3 className="title chiasmus_title">
+            {t("chiasmus_page_title", "Chiasmus in the Book of Mormon")}
+            {enriched.length > 0 && (
+                // JSX strips the whitespace before this span, so without the
+                // hidden separators the heading's accessible name reads
+                // "…Book of Mormon367" — glued on and unlabeled.
+                <span className="total_count" title={t("total_chiasms", "$1 chiasms total", [enriched.length])}>
+                    <span className="visually-hidden"> — </span>
+                    {enriched.length}
+                    <span className="visually-hidden">{t("total_chiasms_sr", " chiasms")}</span>
+                </span>
+            )}
+        </h3>
+        <div className="innerChiasmContainer">
+            {indexPanel}
+            {singlePanel}
         </div>
+    </div>;
 }
-
-
 
 export { BrowseToolbar };
 export default Container;

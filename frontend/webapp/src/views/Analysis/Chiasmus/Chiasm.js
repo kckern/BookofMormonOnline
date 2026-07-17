@@ -200,8 +200,5 @@ function Chiasm({chiasm_id, setChiasmusId, closeChiasm, nextId, prevId}) {
         <button type="button" disabled={!nextId} onClick={()=>setChiasmusId(nextId)}>{t("next", "Next")} ⮕</button>
         </div>
     </div>
-        
-
-
 }
 export default Chiasm;

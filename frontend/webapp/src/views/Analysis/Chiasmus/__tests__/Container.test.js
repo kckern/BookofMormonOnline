@@ -20,11 +20,14 @@ import Container from "../Chiasmus";
 import { __clearChiasmCache } from "../Chiasm";
 
 const LIST = [
-  // speaker mirrors the real API shape (bom_people row: slug-style name digits)
+  // speaker mirrors the real API shape (bom_people row: slug-style name digits).
+  // The two fixtures deliberately differ in book, speaker, AND depth so every
+  // grouping mode renders >= 2 sections — the duplicate-key canary below can
+  // only catch cross-section key collisions when there are multiple sections.
   { chiasmus_id: "x1", title: "First Chiasm", reference: "1 Nephi 1:1-3", scheme: "ABBA", verse_id: 31103,
     speaker: { name: "Nephi1", person_slug: "nephi1" } },
-  { chiasmus_id: "x2", title: "Second Chiasm", reference: "1 Nephi 2:2-4", scheme: "ABA", verse_id: 31120,
-    speaker: { name: "Nephi1", person_slug: "nephi1" } },
+  { chiasmus_id: "x2", title: "Second Chiasm", reference: "Alma 36:1-30", scheme: "ABCBA", verse_id: 34500,
+    speaker: { name: "Alma2", person_slug: "alma2" } },
 ];
 const DETAIL = (id) => ({
   chiasmus_id: id,
@@ -160,9 +163,9 @@ test("speaker grouping drops the redundant per-card speaker line", async () => {
 });
 
 test("group headers show a parenthesized count", async () => {
-  renderAt("/analysis/chiasmus");
+  renderAt("/analysis/chiasmus"); // default group=book → 1 Nephi (1), Alma (1)
   await screen.findByRole("button", { name: /first chiasm/i });
-  expect(screen.getByText("(2)")).toBeInTheDocument();
+  expect(screen.getAllByText("(1)")).toHaveLength(2);
 });
 
 test("browsing produces no duplicate-key warnings (audit §2.3 canary)", async () => {
@@ -172,7 +175,8 @@ test("browsing produces no duplicate-key warnings (audit §2.3 canary)", async (
   await screen.findByText("Detail x1");
   act(() => history.replace("/analysis/chiasmus?group=depth"));
   act(() => history.replace("/analysis/chiasmus?group=speaker"));
-  const keyWarnings = errSpy.mock.calls.filter((c) => String(c[0]).includes("same key"));
+  // "same key" = duplicate keys within a list; 'unique "key"' = missing keys
+  const keyWarnings = errSpy.mock.calls.filter((c) => /same key|unique "key"/.test(String(c[0])));
   errSpy.mockRestore();
   expect(keyWarnings).toEqual([]);
 });
