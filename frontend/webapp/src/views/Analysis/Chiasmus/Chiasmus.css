@@ -386,6 +386,46 @@
     margin-top: -10rem;
 }
 
+/* Mobile: the detail panel becomes a full-screen overlay instead of a 40%
+   side column, and the card grid drops to 2 then 1 columns */
+@media (max-width: 800px) {
+    .innerChiasmContainer {
+        flex-direction: column;
+    }
+    .chiasmPanel.open {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        background: var(--surface-0);
+        z-index: 1050;
+        padding: 1rem;
+        overflow: auto;
+        /* base rule transitions width 0.5s — animating 0→100vw on open flashes */
+        transition: none;
+    }
+    /* keep the × reachable while scrolling a long chiasm in the overlay;
+       :not(.reference) because the reference h4 also carries .title */
+    .chiasmPanel.open .chiasm h4.title:not(.reference) {
+        position: sticky;
+        top: 0;
+        background: var(--surface-0);
+        z-index: 1;
+    }
+    .chiasmIndexPanel {
+        max-height: none;
+    }
+    .chiasmus_list {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .chiasmus_list {
+        grid-template-columns: 1fr;
+    }
+}
+
 .chiasmus_list .chiasmus:focus-visible,
 .chiasm .close:focus-visible,
 .chiasmus_nav button:focus-visible,

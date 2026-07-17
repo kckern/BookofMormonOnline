@@ -8,6 +8,29 @@ import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { escapeRegex } from "./chiasmUtils";
 
 
+// LRU cache of fetched chiasms — makes arrow-key browsing instant and lets
+// prev/next prefetch. Module-level so it survives panel open/close.
+const chiasmCache = new Map();
+const CACHE_MAX = 10;
+const cachePut = (id, val) => {
+    if (chiasmCache.has(id)) chiasmCache.delete(id);
+    chiasmCache.set(id, val);
+    if (chiasmCache.size > CACHE_MAX) chiasmCache.delete(chiasmCache.keys().next().value);
+};
+export const fetchChiasm = (id) => {
+    if (!id) return Promise.resolve(null);
+    if (chiasmCache.has(id)) return Promise.resolve(chiasmCache.get(id));
+    // useCache:false — on a deep-link cold load the list query holds the
+    // IndexedDB transaction; going through the cache made this fetch wait
+    // ~15s behind it. The single chiasm is cheap to fetch fresh.
+    return BoMOnlineAPI({ chiasm: [id] }, { useCache: false }).then((r) => {
+        const c = r?.chiasm?.[id];
+        if (c) cachePut(id, c);
+        return c;
+    });
+};
+export const __clearChiasmCache = () => chiasmCache.clear(); // test hook
+
 export function addHighlights(text, highlights) {
     // Single pass: build one alternation of escaped patterns, longest first, so
     // overlapping highlights can't nest and special chars can't crash RegExp.
@@ -58,17 +81,19 @@ function Chiasm({chiasm_id, setChiasmusId, closeChiasm, nextId, prevId}) {
     useEffect(() => {
         let cancelled = false;
         setChiasm(null);
-        // useCache:false — on a deep-link cold load the list query holds the
-        // IndexedDB transaction; going through the cache made this fetch wait
-        // ~15s behind it. The single chiasm is cheap to fetch fresh.
-        BoMOnlineAPI({chiasm:[chiasm_id]}, {useCache:false}).then((r) => {
-            if (!cancelled) setChiasm(r?.chiasm?.[chiasm_id]);
+        fetchChiasm(chiasm_id).then((c) => {
+            if (!cancelled) setChiasm(c);
         }).catch((e) => {
             console.error(e);
             if (!cancelled) setChiasm(undefined);
         });
         return () => { cancelled = true; };
     }, [chiasm_id]);
+
+    // warm the cache for the neighbors so prev/next (and arrow keys) are instant
+    useEffect(() => {
+        [prevId, nextId].filter(Boolean).forEach((id) => { fetchChiasm(id).catch(() => {}); });
+    }, [prevId, nextId]);
 
     const {replace} = useHistory();
     useEffect(() => {
