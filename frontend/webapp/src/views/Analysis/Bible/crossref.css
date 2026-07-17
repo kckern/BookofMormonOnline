@@ -207,7 +207,9 @@ html[data-theme="dark"] .xref-root {
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .xref-ribbon path {
+  /* animate the group, never the paths — a fill-mode:both animation on the
+     paths pins their opacity and defeats the .dim rule below */
+  .xref-ribbon {
     animation: xref-fadein 250ms both;
     animation-delay: calc(var(--i, 0) * 4ms);
   }
