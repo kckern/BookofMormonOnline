@@ -1820,7 +1820,7 @@ const queries = {
         notes { id title text reference publication { source_name } }
         faxVerse { version title format page verseId ref }
         crossrefs { srcRef srcVerseId refs { ref verseId } }
-        relationship { hubType hubSlug hubName hubTitle edges { rel dstType dstSlug dstName dstTitle note ref } }
+        relationship { hubType hubSlug hubName hubTitle edges { rel dstType dstSlug dstName dstTitle note ref reverse } }
         mapstory { slug title description moves { seq start end travelers description duration ref startLat startLng endLat endLng } }
       }`,
     }

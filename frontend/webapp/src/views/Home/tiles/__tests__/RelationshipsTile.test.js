@@ -52,4 +52,17 @@ describe("RelationshipsTile", () => {
     const { container } = renderTile({ ...data, edges: data.edges.slice(0, 1) });
     expect(container.firstChild).toBeNull();
   });
+
+  test("reverse edges render name before verb", () => {
+    const reverseData = {
+      hubType: "people", hubSlug: "nephi1", hubName: "Nephi",
+      edges: [
+        { rel: "wielded-by", dstType: "object", dstSlug: "sword", dstName: "Sword of Laban", reverse: true },
+        { rel: "quoted-by", dstType: "object", dstSlug: "thorns", dstName: "Thorns", reverse: true },
+      ],
+    };
+    const { container } = renderTile(reverseData);
+    const li = container.querySelector("li.relEdge");
+    expect(li.textContent.indexOf("Sword of Laban")).toBeLessThan(li.textContent.indexOf("wielded-by"));
+  });
 });

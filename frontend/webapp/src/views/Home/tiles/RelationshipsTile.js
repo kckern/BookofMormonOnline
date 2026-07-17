@@ -3,7 +3,9 @@ import { Link } from "react-router-dom";
 import { label } from "src/models/Utils";
 import { openScripture } from "./ScripturePopup";
 
-// entity-type → profile route (matches src/models/Routes.js)
+// entity-type → profile route (matches src/models/Routes.js). No `group` entry:
+// groups have no landing page, so group names render unlinked here — the group
+// popup (see XrelSection) is the richer surface for them.
 const PROFILE_PATH = {
   people: (slug) => `/people/${slug}`,
   place: (slug) => `/places/${slug}`,
@@ -34,10 +36,16 @@ export default function RelationshipsTile({ data }) {
       <ul className="relEdges">
         {edges.map((e, i) => {
           const to = profileTo(e.dstType, e.dstSlug);
+          // reverse edges (hub is the row's destination) read name-before-verb;
+          // forward edges read verb-before-name — same two-fragment approach as
+          // XrelSection.
+          const verb = <span className="relEdgeRel">{e.rel}</span>;
+          const name = to
+            ? <Link to={to} className="relEdgeName">{e.dstName}</Link>
+            : <span className="relEdgeName">{e.dstName}</span>;
           return (
             <li key={`${e.dstSlug}-${i}`} className="relEdge">
-              <span className="relEdgeRel">{e.rel}</span>{" "}
-              {to ? <Link to={to} className="relEdgeName">{e.dstName}</Link> : <span className="relEdgeName">{e.dstName}</span>}
+              {e.reverse ? <>{name}{" "}{verb}</> : <>{verb}{" "}{name}</>}
               {e.ref ? (
                 <button type="button" className="relEdgeRef" onClick={() => openScripture(e.ref)}>
                   {e.ref}
