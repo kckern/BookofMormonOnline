@@ -4,7 +4,6 @@ import { Spinner } from "../../_Common/Loader";
 import Parser from "html-react-parser";
 import { label } from 'src/models/Utils';
 import { t } from "./t";
-import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { escapeRegex } from "./chiasmUtils";
 import ChiasmGlyph from "../../_Common/ChiasmGlyph";
 import { openScripture } from "../../Home/tiles/ScripturePopup";
@@ -118,13 +117,6 @@ function Chiasm({chiasm_id, setChiasmusId, closeChiasm, nextId, prevId}) {
     useEffect(() => {
         [prevId, nextId].filter(Boolean).forEach((id) => { fetchChiasm(id).catch(() => {}); });
     }, [prevId, nextId]);
-
-    const {replace} = useHistory();
-    useEffect(() => {
-        // keep the browse-state query string (useBrowseState) — without it,
-        // opening a chiasm reset every filter/sort/group in the index panel
-        replace(`/analysis/chiasmus/${chiasm_id}${window.location.search}`);
-    }, [chiasm_id]);
 
     const {lines, reference, title, scheme} = chiasm || {};
     useEffect(() => {

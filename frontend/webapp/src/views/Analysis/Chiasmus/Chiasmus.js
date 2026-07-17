@@ -5,7 +5,7 @@ import ChiasmGlyph from "../../_Common/ChiasmGlyph";
 import "./Chiasmus.css";
 import Chiasm from "./Chiasm";
 import { label, determineLanguage } from 'src/models/Utils';
-import { useRouteMatch, useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import { useRouteMatch, useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import { enrichChiasmus, applyBrowseState, BOOK_GROUPS } from "./chiasmUtils";
 import useBrowseState, { DEFAULTS } from "./useBrowseState";
 import { t } from "./t";
@@ -176,7 +176,7 @@ const ChiasmCard = memo(function ChiasmCard({ chiasm, active, onSelect }) {
 
 function Chiasmus({ enriched, flat, groups, state, set, setChiasmusId, activeChiasmus }) {
 
-    useEffect(() => { document.title = t("chiasms_doc_title", "Chiasms") + " | " + label("home_title"); }, []);
+    useEffect(() => { document.title = t("chiasms_doc_title", "Chiasmus") + " | " + label("home_title"); }, []);
 
     const depthCounts = useMemo(
         () => enriched.reduce((acc, c) => { acc[c.depthBucket] = (acc[c.depthBucket] || 0) + 1; return acc; }, {}),
@@ -235,11 +235,19 @@ function Chiasmus({ enriched, flat, groups, state, set, setChiasmusId, activeChi
 
 function Container() {
     const [chiasmus, setChiasmus] = useState(null);
-    // deep link: /analysis/chiasmus/<chiasmus_id> opens that chiasm directly
+    // URL is the source of truth for the open chiasm:
+    // /analysis/chiasmus/<chiasmus_id> — react-router re-renders on every
+    // navigation, so Back/Forward open and close the panel by themselves.
     const { params } = useRouteMatch();
-    const [, urlChiasmId] = params?.value?.split("/") || [];
-    const [chiasmus_id, setChiasmusId] = useState(urlChiasmId || null);
-    const { replace } = useHistory();
+    const chiasmus_id = params?.value?.split("/")[1] || null;
+    const { replace, push } = useHistory();
+    // Router search (not window.location.search — under a memory history the
+    // two diverge, and window.location could be stale right after a filter
+    // change). Read through a ref so the mount-only keydown effect's captured
+    // closures stay correct.
+    const { search } = useLocation();
+    const searchRef = useRef(search);
+    useEffect(() => { searchRef.current = search; }, [search]);
     const lang = determineLanguage();
 
     // Browse state lives here (Container is inside the Router context) so the
@@ -248,12 +256,27 @@ function Container() {
     const enriched = useMemo(() => enrichChiasmus(Array.isArray(chiasmus) ? chiasmus : [], lang), [chiasmus, lang]);
     const { flat, groups } = useMemo(() => applyBrowseState(enriched, state), [enriched, state]);
 
-    // stable across renders: setChiasmusId and replace are both stable, and
-    // window.location is read at call time, so the mount-only keydown effect
-    // below can close over this safely. The query string is preserved so
-    // closing a chiasm doesn't wipe the browse state out of the URL.
-    const closeChiasm = () => { setChiasmusId(null); replace("/analysis/chiasmus" + window.location.search); };
     const chiasmusIdRef = useRef(chiasmus_id); // Create a ref
+
+    // First open from the index PUSHES one history entry (so Back closes the
+    // panel); prev/next/arrow browsing while open REPLACES (no history spam);
+    // close REPLACES back to the index. The browse query string is preserved
+    // so opening/closing a chiasm doesn't wipe filters out of the URL.
+    // Stable across renders: only refs + stable history fns are captured, so
+    // the mount-only keydown effect below can close over these safely.
+    const setChiasmusId = (id) => {
+        const qs = searchRef.current;
+        if (!id) { replace("/analysis/chiasmus" + qs); return; }
+        if (chiasmusIdRef.current) replace(`/analysis/chiasmus/${id}` + qs);
+        else push(`/analysis/chiasmus/${id}` + qs);
+    };
+    const closeChiasm = () => setChiasmusId(null);
+
+    // when the panel closes, restore the index page title (Chiasm.js sets the
+    // per-chiasm title while it is open)
+    useEffect(() => {
+        if (!chiasmus_id) document.title = t("chiasms_doc_title", "Chiasmus") + " | " + label("home_title");
+    }, [chiasmus_id]);
     useEffect(() => {
         chiasmusIdRef.current = chiasmus_id; // Update the ref whenever chiasmus_id changes
         //scroll into view in chiasmus_list
