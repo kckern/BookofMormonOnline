@@ -312,6 +312,9 @@
     object-fit: cover;
     flex-shrink: 0;
     border: 2px solid var(--rail-color, var(--border));
+    /* placeholder fill while the lazy image loads (and before onError hides
+       a broken one) — otherwise the circle is transparent with a bare ring */
+    background: var(--surface-4);
 }
 
 .card-titles {
@@ -487,17 +490,6 @@
     flex-shrink: 0;
 }
 
-/* the × sits in the header's flex nav cluster (no float); nav-cluster chrome
-   overrides live in the .chiasm-header-nav rules below */
-.chiasm .close{
-    color: var(--text-faint);
-    font-size: 1.5rem;
-    cursor: pointer;
-}
-.chiasm .close:hover{
-    color: var(--text-primary);
-}
-
 /* .chiasmus_list prefix lifts specificity to (0,3,0): the card <button> keeps
    :focus after a mouse click, and Bootstrap's button:focus:not(:focus-visible)
    { outline: 0 } at (0,2,1) was stripping the ring off the just-clicked card */
@@ -558,7 +550,16 @@
 }
 .chiasm-header-nav button:disabled { opacity: .4; cursor: default; }
 .chiasm-header-nav button:hover:not(:disabled) { background: var(--control-hover); color: var(--text-primary); }
-.chiasm-header-nav .close { border: 0; background: none; font-size: 1.5rem; padding: 0 .5ex; }
+/* the × is chromeless: no border/background, faint until hovered — and its
+   hover is color-only (no background pill), keeping it visually distinct
+   from the bordered ‹ › buttons. button.close outranks the button:hover rule
+   above ((0,3,1) at equal specificity, later in file). */
+.chiasm-header-nav .close {
+    border: 0; background: none;
+    color: var(--text-faint);
+    font-size: 1.5rem; padding: 0 .5ex;
+}
+.chiasm-header-nav button.close:hover { background: none; }
 
 .chiasm-actions {
     display: flex;
@@ -684,6 +685,12 @@
     .chiasmPanel.open .chiasm-header {
         padding-top: 1rem; /* replaces the overlay's stripped top padding */
     }
+    /* touch targets: pad ‹ › × up to comfortable tap height (the .close
+       selector repeats at (0,2,0) so the padded × beats its base 0 .5ex) */
+    .chiasm-header-nav button,
+    .chiasm-header-nav .close {
+        padding: .8ex 1.2ex;
+    }
     /* error/loading states have no sticky header — restore their top gap */
     .chiasmPanel.open .chiasm.error,
     .chiasmPanel.open .chiasm.loading {
@@ -723,7 +730,6 @@
 }
 
 .chiasmus_list .chiasmus:focus-visible,
-.chiasm .close:focus-visible,
 .chiasm-help summary:focus-visible,
 .chiasm-header-nav button:focus-visible,
 .chiasmus_nav button:focus-visible,

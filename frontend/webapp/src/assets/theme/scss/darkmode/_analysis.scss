@@ -1,5 +1,7 @@
-/* Analysis views (Chiasmus) — dark theme overrides.
-   Chiasmus.css is token-driven; only the literals tokens can't express live here. */
+/* Analysis views (Chiasmus + breadcrumb) — dark theme overrides. Two kinds
+   of rule belong here: dark-only literals the tokens can't express (the rail
+   palette), and specificity restatements where a generic dark rule would
+   otherwise out-rank a view stylesheet (Chiasmus.css, Analysis.css). */
 html[data-theme="dark"] {
   /* Book-group rail hues, dark variants (light set lives in Chiasmus.css).
      Validated with dataviz validate_palette.js vs #1a1a1a: lightness band,
@@ -14,16 +16,9 @@ html[data-theme="dark"] {
   --rail-moroni: #e9589b;
 
   /* Active-pair wash now comes straight from the --highlight token in
-     Chiasmus.css (#55502a here) — no dark override needed. */
-
-  /* The pivot badge keeps its amber fill even when its own pair is active —
-     the .active .scheme --highlight wash would otherwise repaint it (this
-     themed selector outranks the light-file pivot rule). Same #1a1a1a-on-amber
-     pairing as light mode. */
-  .chiasmus_line.pivot .scheme:not(.minor) {
-    background-color: var(--accent-amber);
-    color: #1a1a1a;
-  }
+     Chiasmus.css (#55502a here) — no dark override needed. The pivot badge
+     likewise needs no restatement: Chiasmus.css's pivot rule (0,4,0) already
+     outranks the .active .scheme wash (0,3,0) in both themes. */
 
   /* Card hover/active outlines need no override anymore: hover uses
      --border-strong and active uses --link, both theme-aware tokens (the old
