@@ -45,10 +45,42 @@
 
 .browse_toolbar {
     display: flex;
+    flex-direction: column;
+    gap: .5ex;
+    margin: 1ex 0;
+}
+
+.toolbar_controls,
+.toolbar_chips {
+    display: flex;
     flex-wrap: wrap;
     gap: 1ex;
     align-items: center;
-    margin: 1ex 0;
+}
+
+.toolbar_field {
+    display: flex;
+    gap: .6ex;
+    align-items: center;
+    font-size: .85rem;
+    color: var(--text-muted);
+}
+
+.chip_caption {
+    font-size: .8rem;
+    color: var(--text-muted);
+}
+
+.chip_divider {
+    width: 1px;
+    align-self: stretch;
+    background: var(--border);
+}
+
+.browse_count {
+    margin-left: auto;
+    font-size: .8rem;
+    color: var(--text-muted);
 }
 
 .browse_search {
@@ -90,15 +122,19 @@
     font: inherit;
 }
 
+/* selected = accent (--link), not gray — gray read as "disabled" (audit §4.3);
+   contrast validated in the plan: light #345496/#fff ≈ 7.6:1, dark
+   #a8c7fa/#1a1a1a ≈ 9:1 — both AA */
 .chip.selected {
-    background: var(--text-muted);
+    background: var(--link);
     color: var(--surface-0);
-    border-color: var(--text-muted);
+    border-color: var(--link);
 }
 
 .chip .chip_count {
     font-size: .75em;
-    margin-right: .5ex;
+    margin-left: .5ex;
+    margin-right: 0;
 }
 
 .group-header {
@@ -371,21 +407,32 @@
     display: flex;
     flex-direction: row;
     gap: 1rem;
+    /* one shared viewport offset for BOTH panels (index + detail) — was two
+       mismatched magic numbers (14.5rem vs 10.5rem) */
+    --panel-viewport-offset: 10.5rem;
 }
 
-/* the scroll container for the whole index side — toolbar, group headers
-   (which stick to its top), and the card grids */
+/* index side: toolbar stays fixed at the top; only .chiasmIndexScroll below
+   it scrolls (group headers stick to ITS top, under the toolbar) */
 .chiasmIndexPanel{
     width: 100%;
     flex-grow: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - var(--panel-viewport-offset));
+    overflow: hidden;
+}
+
+.chiasmIndexScroll {
     overflow: auto;
-    max-height: calc(100vh - 14.5rem);
+    flex: 1;
 }
 
 .chiasmPanel{
     transition: width 0.5s ease;
     overflow: auto;
-    height: calc(100vh - 10.5rem);
+    height: calc(100vh - var(--panel-viewport-offset));
 }
 
 .chiasmPanel.closed{
@@ -567,8 +614,22 @@
         background: var(--surface-0);
         z-index: 1;
     }
+    /* mobile: the whole page scrolls — undo the desktop inner-scroll split
+       (overflow:hidden + inner overflow:auto would trap scrolling in a
+       viewport-height box). Toolbar not sticky on mobile — acceptable. */
     .chiasmIndexPanel {
         max-height: none;
+        overflow: visible;
+        display: block;
+    }
+    .chiasmIndexScroll {
+        overflow: visible;
+    }
+    /* chips scroll sideways instead of stacking four rows (audit §3.1) */
+    .toolbar_chips {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: .5ex;
     }
     .chiasmus_list {
         grid-template-columns: 1fr 1fr;

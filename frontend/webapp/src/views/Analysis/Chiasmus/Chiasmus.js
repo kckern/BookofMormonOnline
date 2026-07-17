@@ -12,7 +12,7 @@ import { t } from "./t";
 
 const DEBOUNCE_MS = 250;
 
-function BrowseToolbar({ state, set, depthCounts, categoryCounts }) {
+function BrowseToolbar({ state, set, depthCounts, categoryCounts, shownCount, totalCount }) {
     // Search input strategy: controlled, mirrored into local state so typing
     // stays smooth (no URL replace per keystroke) while still following
     // URL-driven changes (back/forward, Clear all). `lastSent` distinguishes
@@ -66,76 +66,82 @@ function BrowseToolbar({ state, set, depthCounts, categoryCounts }) {
         ["biblical", t("type_biblical", "Biblical"), categoryCounts.biblical],
     ];
 
+    const displayDepth = (d) => (d === "+" ? "8+" : d);
+
     return (
         <div className="browse_toolbar">
-            <input
-                type="search"
-                className="browse_search"
-                placeholder={t("search_chiasms", "Search chiasms…")}
-                aria-label={t("search_chiasms", "Search chiasms…")}
-                value={q}
-                onChange={onSearchChange}
-            />
-            <select
-                value={state.group}
-                onChange={(e) => set({ group: e.target.value })}
-                aria-label={t("group_by", "Group by")}
-            >
-                <option value="none">{t("group_none", "No grouping")}</option>
-                <option value="book">{t("group_book", "Book")}</option>
-                <option value="speaker">{t("group_speaker", "Speaker")}</option>
-                <option value="depth">{t("group_depth", "Depth")}</option>
-                <option value="type">{t("group_type", "Type")}</option>
-            </select>
-            <select
-                value={state.sort}
-                onChange={(e) => set({ sort: e.target.value })}
-                aria-label={t("sort_by", "Sort")}
-            >
-                <option value="canonical">{t("sort_canonical", "Canonical order")}</option>
-                <option value="depth">{t("sort_depth", "Depth")}</option>
-                <option value="length">{t("sort_length", "Length")}</option>
-                <option value="title">{t("sort_title", "Title")}</option>
-            </select>
-            <button
-                type="button"
-                className="dir_button"
-                aria-pressed={state.dir === "desc"}
-                aria-label={t("sort_direction", "Reverse sort direction")}
-                onClick={() => set({ dir: state.dir === "asc" ? "desc" : "asc" })}
-            >
-                {state.dir === "asc" ? "↓" : "↑"}
-            </button>
-            {/* depth chips: INCLUSION semantics — selected = shown; none selected = all shown */}
-            {depthKeys.map((d) => {
-                const selected = state.depths.includes(d);
-                return (
-                    <button
-                        key={d}
-                        type="button"
-                        className={`chip depth_chip${selected ? " selected" : ""}`}
-                        aria-pressed={selected}
-                        aria-label={t("depth_chip_label", "Depth $1 — $2 chiasms", [d, depthCounts[d]])}
-                        onClick={() => toggleDepth(d)}
-                    >
-                        <span className="chip_count" aria-hidden="true">{depthCounts[d]}</span>{d}
-                    </button>
-                );
-            })}
-            {typeChips.map(([value, chipLabel, count]) => {
-                const selected = state.type === value;
-                return (
-                    <button
-                        key={value}
-                        type="button"
-                        className={`chip type_chip${selected ? " selected" : ""}`}
-                        aria-pressed={selected}
-                        onClick={() => set({ type: selected ? null : value })}
-                    >
-                        {count != null && <span className="chip_count">{count}</span>}{chipLabel}
-                    </button>
-                );
-            })}
+            <div className="toolbar_controls">
+                <input
+                    type="search"
+                    className="browse_search"
+                    placeholder={t("search_chiasms", "Search chiasms…")}
+                    aria-label={t("search_chiasms", "Search chiasms…")}
+                    value={q}
+                    onChange={onSearchChange}
+                />
+                <label className="toolbar_field">{t("group_by", "Group")}
+                    <select value={state.group} onChange={(e) => set({ group: e.target.value })}>
+                        <option value="none">{t("group_none", "No grouping")}</option>
+                        <option value="book">{t("group_book", "Book")}</option>
+                        <option value="speaker">{t("group_speaker", "Speaker")}</option>
+                        <option value="depth">{t("group_depth", "Depth")}</option>
+                        <option value="type">{t("group_type", "Type")}</option>
+                    </select>
+                </label>
+                <label className="toolbar_field">{t("sort_by", "Sort")}
+                    <select value={state.sort} onChange={(e) => set({ sort: e.target.value })}>
+                        <option value="canonical">{t("sort_canonical", "Canonical order")}</option>
+                        <option value="depth">{t("sort_depth", "Depth")}</option>
+                        <option value="length">{t("sort_length", "Length")}</option>
+                        <option value="title">{t("sort_title", "Title")}</option>
+                    </select>
+                </label>
+                <button
+                    type="button"
+                    className="dir_button"
+                    aria-pressed={state.dir === "desc"}
+                    title={t("sort_direction", "Reverse sort direction")}
+                    aria-label={t("sort_direction", "Reverse sort direction")}
+                    onClick={() => set({ dir: state.dir === "asc" ? "desc" : "asc" })}
+                >
+                    {state.dir === "asc" ? "↓" : "↑"}
+                </button>
+                <span className="browse_count">{t("results_shown", "$1 of $2 shown", [shownCount, totalCount])}</span>
+            </div>
+            <div className="toolbar_chips">
+                <span className="chip_caption">{t("levels", "Levels")}</span>
+                {/* depth chips: INCLUSION semantics — selected = shown; none selected = all shown */}
+                {depthKeys.map((d) => {
+                    const selected = state.depths.includes(d);
+                    return (
+                        <button
+                            key={d}
+                            type="button"
+                            className={`chip depth_chip${selected ? " selected" : ""}`}
+                            aria-pressed={selected}
+                            aria-label={t("depth_chip_label", "Depth $1 — $2 chiasms", [displayDepth(d), depthCounts[d]])}
+                            onClick={() => toggleDepth(d)}
+                        >
+                            {displayDepth(d)}<span className="chip_count" aria-hidden="true">· {depthCounts[d]}</span>
+                        </button>
+                    );
+                })}
+                <span className="chip_divider" aria-hidden="true" />
+                {typeChips.map(([value, chipLabel, count]) => {
+                    const selected = state.type === value;
+                    return (
+                        <button
+                            key={value}
+                            type="button"
+                            className={`chip type_chip${selected ? " selected" : ""}`}
+                            aria-pressed={selected}
+                            onClick={() => set({ type: selected ? null : value })}
+                        >
+                            {chipLabel}{count != null && <span className="chip_count" aria-hidden="true">· {count}</span>}
+                        </button>
+                    );
+                })}
+            </div>
         </div>
     );
 }
@@ -206,28 +212,31 @@ function Chiasmus({ enriched, flat, groups, state, set, setChiasmusId, activeChi
     ));
 
     return <div className="chiasmIndexPanel noselect">
-        <BrowseToolbar state={state} set={set} depthCounts={depthCounts} categoryCounts={categoryCounts} />
-        {flat.length === 0 ? (
-            <div className="browse_empty">
-                {t("no_chiasms_match", "No chiasms match — clear a filter or search term.")}
-                <button type="button" onClick={() => set({ ...DEFAULTS })}>{t("clear_all_filters", "Clear all")}</button>
-            </div>
-        ) : groups ? (
-            groups.map((group) => (
-                // when grouped by BOOK the section carries the same rail-* class as
-                // its cards (group.key is a book name → map through BOOK_GROUPS);
-                // the header underline picks up --rail-color from it
-                <section
-                    className={`chiasm_group${state.group === "book" ? ` rail-${BOOK_GROUPS[group.key] || "other"}` : ""}`}
-                    key={group.key}
-                >
-                    <h4 className="group-header">{group.key} <span className="count">{group.items.length}</span></h4>
-                    <div className="chiasmus_list">{cards(group.items)}</div>
-                </section>
-            ))
-        ) : (
-            <div className="chiasmus_list">{cards(flat)}</div>
-        )}
+        <BrowseToolbar state={state} set={set} depthCounts={depthCounts} categoryCounts={categoryCounts}
+            shownCount={flat.length} totalCount={enriched.length} />
+        <div className="chiasmIndexScroll">
+            {flat.length === 0 ? (
+                <div className="browse_empty">
+                    {t("no_chiasms_match", "No chiasms match — clear a filter or search term.")}
+                    <button type="button" onClick={() => set({ ...DEFAULTS })}>{t("clear_all_filters", "Clear all")}</button>
+                </div>
+            ) : groups ? (
+                groups.map((group) => (
+                    // when grouped by BOOK the section carries the same rail-* class as
+                    // its cards (group.key is a book name → map through BOOK_GROUPS);
+                    // the header underline picks up --rail-color from it
+                    <section
+                        className={`chiasm_group${state.group === "book" ? ` rail-${BOOK_GROUPS[group.key] || "other"}` : ""}`}
+                        key={group.key}
+                    >
+                        <h4 className="group-header">{group.key} <span className="count">{group.items.length}</span></h4>
+                        <div className="chiasmus_list">{cards(group.items)}</div>
+                    </section>
+                ))
+            ) : (
+                <div className="chiasmus_list">{cards(flat)}</div>
+            )}
+        </div>
     </div>;
 
 }
@@ -378,4 +387,5 @@ function Container() {
 
 
 
+export { BrowseToolbar };
 export default Container;
