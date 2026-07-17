@@ -47,6 +47,10 @@ import { md5 } from "../../models/MessengerController.js";
 import { timeAgoString } from "../../models/Utils.js";
 import { ReadingPlan } from "./ReadingPlan";
 
+// True when the matched URL is a community route, whether nested under the
+// unified Home (/home/community/...) or the legacy top-level (/community/...).
+export const isCommunityPath = (url) => /(^|\/)community(\/|$)/.test(url || "");
+
 const privateStyle = (nickname) => {
   if (!/[█]/gu.test(nickname)) return {};
   nickname = nickname.replace(/[^A-z0-9]/g, "");
@@ -66,17 +70,17 @@ const privateStyle = (nickname) => {
 function Community() {
   const match = useRouteMatch();
   const params = match.params;
-  const base = match.url.split("/")[1];
+  const isCommunity = isCommunityPath(match.url);
 
-  let urlFeedGroup = base === "community" ? params.channelId : null;
-  let urlFeedMessage = base === "community" ? params.messageId : null;
+  let urlFeedGroup = isCommunity ? params.channelId : null;
+  let urlFeedMessage = isCommunity ? params.messageId : null;
 
   const [activeGroup, setActiveGroup] = useState(urlFeedGroup);
   const [activeMessage, setActiveMessage] = useState(urlFeedMessage);
 
   useEffect(() => {
-    let urlFeedGroup = base === "community" ? params.channelId : null;
-    let urlFeedMessage = base === "community" ? params.messageId : null;
+    let urlFeedGroup = isCommunity ? params.channelId : null;
+    let urlFeedMessage = isCommunity ? params.messageId : null;
     setActiveGroup(urlFeedGroup);
     setActiveMessage(urlFeedMessage);
   }, [params]);
