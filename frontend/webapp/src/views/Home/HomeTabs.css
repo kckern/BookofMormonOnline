@@ -1,12 +1,49 @@
+/* The app header (.heading-bar) is position:fixed and 60px tall on all normal
+   screens (91px only above 4280px wide). Normally each view's `.container`
+   clears it with padding-top; but here the tab bar renders ABOVE that container
+   inside .home-shell, so without help it hides behind the fixed header. The
+   .home-shell--tabs rules below make the SHELL own that clearance: the tab bar
+   docks flush under the header, and the child view's own container top padding
+   is stripped so its content tucks under the tabs instead of clearing the
+   header a second time. Scoped to the desktop (tabbed) shell — mobile is
+   untouched. */
+.home-shell--tabs {
+  padding-top: 60px; /* == fixed-header height on normal screens */
+}
+
 .home-tabs {
   display: flex;
   gap: 0.25rem;
   border-bottom: 1px solid #d9d9d9;
   padding: 0 0.5rem;
   position: sticky;
-  top: 0;
-  background: inherit;
+  top: 60px; /* stick just below the fixed header when scrolling */
+  background: #eee; /* opaque (== .main-panel bg) so content scrolls under it */
   z-index: 5;
+}
+
+/* Header clearance now lives on .home-shell--tabs; drop the child container's
+   own top padding so its content sits directly under the tab bar. Higher
+   specificity (#main-panel …) beats the per-view `.container`/`.sampler.container`
+   rules; only the top edge is overridden, so left/right/bottom padding stays. */
+#main-panel .home-shell--tabs .container {
+  padding-top: 0.75rem;
+}
+
+/* Ultra-wide (>4280px) uses the taller 91px header — match the offset. */
+@media only screen and (min-width: 4281px) {
+  .home-shell--tabs {
+    padding-top: 91px;
+  }
+  .home-tabs {
+    top: 91px;
+  }
+}
+
+/* Dark theme: keep the stuck bar opaque against the dark canvas. */
+html[data-theme="dark"] .home-tabs {
+  background: #1a1a1a;
+  border-bottom-color: #333;
 }
 .home-tab {
   padding: 0.6rem 1.1rem;

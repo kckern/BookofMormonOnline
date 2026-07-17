@@ -14,10 +14,13 @@ import User from "../User/User";
 // remount when tabs change — only the matched child swaps.
 export default function Home() {
   const useMessenger = isMessengerEnabled();
+  const mobile = isMobile();
 
   return (
-    <div className="home-shell">
-      {!isMobile() && <HomeTabs />}
+    // `--tabs` modifier (desktop only) lets the stylesheet own the fixed-header
+    // clearance + tab-bar offset without affecting the mobile layout.
+    <div className={"home-shell" + (mobile ? "" : " home-shell--tabs")}>
+      {!mobile && <HomeTabs />}
       <Switch>
         <Route path="/home/user/:value?"><User /></Route>
 
