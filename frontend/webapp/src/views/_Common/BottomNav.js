@@ -1,5 +1,6 @@
 import chat from './svg/chat.svg'
-import { isMessengerEnabled } from '../../models/featureFlags';
+import { isMessengerEnabled } from '../../models/featureFlags'
+import { resolveBottomSelection } from './bottomNavSelection'
 import group_icon from './svg/group_icon.svg'
 import { label } from 'src/models/Utils'
 import { useRouteMatch, Link } from 'react-router-dom'
@@ -17,14 +18,8 @@ export function BottomMenu() {
   const appController = useAppController();
   const match = useRouteMatch()
 
-  const determineSelection = () => {
-    let slugRoot = window.location.pathname.split('/')[1]
-    if (['groups', 'group', 'invite'].includes(slugRoot)) return USE_MESSENGER ? 0 : -1
-    if (['home'].includes(slugRoot)) return USE_MESSENGER ? 1 : -1
-    if (['user'].includes(slugRoot)) return USE_MESSENGER ? 3 : 2
-    if (['mobilemenu'].includes(slugRoot)) return USE_MESSENGER ? 4 : 3
-    return USE_MESSENGER ? 2 : 1
-  }
+  const determineSelection = () =>
+    resolveBottomSelection(window.location.pathname, USE_MESSENGER)
 
   const [activeSelection, setActiveSelection] = useState(determineSelection)
 
@@ -86,7 +81,7 @@ export function BottomMenu() {
       title: label('user') || 'User',
       icon: <UserIcon className='img' fill='#7F7F7F' />,
       activeIcon: <UserIcon className='img' />,
-      path: '/user',
+      path: '/home/user',
       requiresMessenger: false,
     },
     {
