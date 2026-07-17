@@ -46,6 +46,7 @@ import ru from "./svg/flags/ru.svg";
 import slv from "./svg/flags/slv.svg";
 import tr from "./svg/flags/tr.svg";
 import { menuConfig } from "./menuConfig";
+import { resolveActivePath } from "./sidebarPath";
 import { isMobile } from "../../models/Utils";
 import { useAppController } from "src/contexts/AppControllerContext";
 import { useMessenger } from "src/contexts/MessengerContext";
@@ -270,14 +271,8 @@ function Sidebar(props) {
 
   const determinePath = () => {
     let slugs = menu.map((m) => m.slug);
-    let slugRoot = window.location.pathname.split("/")[1];
-    if (["message", "", "invite"].includes(slugRoot)) return "/home";
-    if (["search"].includes(slugRoot)) return "/search";
-    if (["user"].includes(slugRoot)) return "/user";
-    if (["%ED%8A%B9%EB%B3%84%EB%B0%98","studyedition"].includes(slugRoot)) return "/특별반";
-    if (slugs.indexOf(slugRoot) >= 0) return window.location.pathname;
-    return "/study";
-  }
+    return resolveActivePath(window.location.pathname, slugs);
+  };
 
   const [activePath, setActivePath] = useState(determinePath);
 
@@ -311,7 +306,13 @@ function Sidebar(props) {
         <ul className="nav sidebar-menu" ref={menuRef}>
           <SearchBox setActivePath={setActivePath} />
           {menu.map((r,index) => {
-            let isActive = activePath.match(new RegExp("^/" + r.slug));
+            // The "home" item is active across the Home tabs (/home, /home/community)
+            // EXCEPT the user tab (/home/user*), which the UserInfo profile card
+            // highlights instead. The (?:\/|$) boundary keeps a hypothetical
+            // /home/username from being treated as the user tab.
+            let isActive = r.slug === "home"
+              ? /^\/home(?!\/user(?:\/|$))/.test(activePath)
+              : activePath.match(new RegExp("^/" + r.slug));
             let activeClass = isActive ? "active" : "";
             let betaBadge = r.beta ? <span className="badge menu_beta">Beta</span> : null;
             return (
@@ -498,18 +499,18 @@ function UserInfo({ setActivePath, activePath }) {
     ReactTooltip.hide();
   }
 
-  let isActive = activePath.match(new RegExp("^/user"));
+  let isActive = /^\/home\/user(?:\/|$)/.test(activePath);
   let activeClass = isActive ? "active" : "";
 
   return (
     <Nav className="userNav">
       <li className={activeClass}>
-        <NavLink to={"/user"} onClick={() => {
-          
+        <NavLink to={"/home/user"} onClick={() => {
+
           appController.activeLeafCursorController?.activeAudio?.pause();
           appController.functions.closePopUp();
 
-          setActivePath("/user");
+          setActivePath("/home/user");
           }}>
           <div className="nameContainer">
             {" "}
@@ -560,8 +561,8 @@ function UserInfo({ setActivePath, activePath }) {
               id="text-only-tooltip"
             />
             <img onClick={toggleSound} role="button" tabIndex={0} onKeyDown={(e)=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggleSound();}}} data-tip={(appController.states?.preferences.audio ? label("audio_on") : label("audio_off"))} src={appController.states?.preferences.audio ? soundOn : soundOff} alt={(appController.states?.preferences.audio ? label("audio_on") : label("audio_off"))} />
-            <Link to={"/user/preferences"} aria-label={label("user_prefs")}><img data-tip={label("user_prefs")} src={settings} alt={label("user_prefs")} /></Link>
-            {!notLoggedIn && <NavLink to={"/user/history"} aria-label={label("user_history")}>
+            <Link to={"/home/user/preferences"} aria-label={label("user_prefs")}><img data-tip={label("user_prefs")} src={settings} alt={label("user_prefs")} /></Link>
+            {!notLoggedIn && <NavLink to={"/home/user/history"} aria-label={label("user_history")}>
               <img data-tip={label("user_history")} src={loghistory} alt={label("user_history")} />
             </NavLink>}
           </div>
