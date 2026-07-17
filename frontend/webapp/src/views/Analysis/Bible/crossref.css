@@ -526,10 +526,23 @@ html[data-theme="dark"] .xref-chaptercell.ramp-6 {
 
 /* ---- reader ---- */
 
+.xref-reader .xref-header {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
 .xref-readertitle {
   font-weight: 800;
   font-size: 1.2rem;
   margin: 0;
+}
+
+.xref-readercount {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-muted, #777);
+  font-variant-numeric: tabular-nums;
 }
 
 .xref-readertitle .book {
@@ -555,6 +568,17 @@ html[data-theme="dark"] .xref-chaptercell.ramp-6 {
 .xref-loadmore {
   display: block;
   margin: 1rem auto 2rem;
+}
+
+.xref-loadrow {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  margin: 1rem 0 2rem;
+}
+
+.xref-loadrow .xref-loadmore {
+  margin: 0;
 }
 
 .xref-sort {
