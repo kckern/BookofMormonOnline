@@ -53,4 +53,21 @@ describe("Rail", () => {
     fireEvent.click(cells[11]);
     expect(onChapter).toHaveBeenCalledWith(undefined);
   });
+
+  test("centers the anchored book inside the rail on mount", () => {
+    // jsdom has zero geometry; fake a 100px-tall rail with the anchor at 500px
+    jest.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(100);
+    Object.defineProperty(HTMLElement.prototype, "offsetTop", {
+      configurable: true,
+      get() {
+        return this.classList?.contains("anchored") ? 500 : 0;
+      },
+    });
+    render(
+      <Rail canon="kjv" book="Isaiah" onAnchor={jest.fn()} onChapter={jest.fn()} />
+    );
+    expect(screen.getByRole("navigation").scrollTop).toBeGreaterThan(0);
+    delete HTMLElement.prototype.offsetTop;
+    jest.restoreAllMocks();
+  });
 });
