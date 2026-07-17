@@ -28,7 +28,9 @@ export default function PartnerBars({ canon, book, chapter, highlight, onSelect 
         <button
           key={partner.name}
           role="listitem"
-          className={`xref-bar ${highlight === partner.name ? "highlighted" : ""}`}
+          className={`xref-bar ${
+            highlight === partner.name || highlight === partner.group ? "highlighted" : ""
+          }`}
           aria-label={`${partner.name}, ${total} references, ${quotes} quotes`}
           onClick={() => onSelect(partner.name)}
         >

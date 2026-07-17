@@ -57,10 +57,15 @@ describe("Overview", () => {
     });
   });
 
-  test("division-level ribbon anchors the BoM book without a highlight", () => {
+  test("division-level ribbon anchors the BoM book carrying the division as highlight", () => {
     const { navigate, container } = setup();
     fireEvent.click(container.querySelector('[data-ribbon="2 Nephi|Major Prophets"]'));
-    expect(navigate).toHaveBeenCalledWith({ view: "anchor", canon: "bom", book: "2 Nephi" });
+    expect(navigate).toHaveBeenCalledWith({
+      view: "anchor",
+      canon: "bom",
+      book: "2 Nephi",
+      highlight: "Major Prophets",
+    });
   });
 
   test("table twin lists every book pair and sorts by refs", () => {

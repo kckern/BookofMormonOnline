@@ -53,6 +53,24 @@ describe("AnchorView", () => {
     });
   });
 
+  test("flip() with a division-valued highlight targets a real book, not the division", () => {
+    const navigate = jest.fn();
+    render(
+      <MemoryRouter>
+        <AnchorView
+          state={{ view: "anchor", canon: "bom", book: "2 Nephi", highlight: "Major Prophets" }}
+          navigate={navigate}
+        />
+      </MemoryRouter>
+    );
+    fireEvent.click(screen.getByRole("button", { name: /view from|anchor on/i }));
+    const call = navigate.mock.calls[0][0];
+    expect(call.canon).toBe("kjv");
+    // must be a real KJV book, never the division "Major Prophets"
+    expect(call.book).not.toBe("Major Prophets");
+    expect(call.book).toBeTruthy();
+  });
+
   test("chapter selection navigates and the scope chip clears it", () => {
     const { navigate } = setup({ view: "anchor", canon: "bom", book: "2 Nephi", chapter: 12 });
     // chapter is included in reader navigation

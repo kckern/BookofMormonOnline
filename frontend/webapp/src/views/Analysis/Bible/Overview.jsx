@@ -59,7 +59,7 @@ export default function Overview({ state = {}, navigate }) {
   }, []);
 
   // Left spine: divisions, with one optionally expanded into its books.
-  const { left, leftBookSet, links } = useMemo(() => {
+  const { left, links } = useMemo(() => {
     const left = [];
     const leftBookSet = new Set();
     for (const group of canons.kjv.groups) {
@@ -90,7 +90,7 @@ export default function Overview({ state = {}, navigate }) {
         links.push({ left: p.bibleBookName, right: p.bomBookName, value: p.total, quotes: p.quotes });
       }
     }
-    return { left, leftBookSet, links };
+    return { left, links };
   }, [expanded]);
 
   const right = useMemo(
@@ -282,7 +282,6 @@ export default function Overview({ state = {}, navigate }) {
             <g>
               {ribbons.map((r, i) => {
                 const key = `${r.right}|${r.left}`;
-                const leftIsBook = leftBookSet.has(r.left);
                 const quoteFrac = r.value ? r.quotes / r.value : 0;
                 const lMid = r.lY0 + (r.lY1 - r.lY0) * quoteFrac;
                 const rMid = r.rY0 + (r.rY1 - r.rY0) * quoteFrac;
@@ -295,7 +294,7 @@ export default function Overview({ state = {}, navigate }) {
                   view: "anchor",
                   canon: "bom",
                   book: r.right,
-                  ...(leftIsBook ? { highlight: r.left } : {}),
+                  highlight: r.left, // book OR division — both resolve via ?hl=
                 };
                 return (
                   <g

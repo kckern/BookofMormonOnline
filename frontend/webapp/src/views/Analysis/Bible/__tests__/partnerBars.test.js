@@ -32,4 +32,15 @@ describe("PartnerBars", () => {
     expect(screen.queryAllByRole("listitem")).toHaveLength(0);
     expect(screen.getByText(/No known correspondences/)).toBeInTheDocument();
   });
+
+  test("a division highlight marks every partner book in that division", () => {
+    render(
+      <PartnerBars canon="bom" book="2 Nephi" highlight="Major Prophets" onSelect={jest.fn()} />
+    );
+    // Bars render as role="listitem" (button role arrives in Task 15).
+    const isaiah = screen.getByRole("listitem", { name: /^Isaiah,/ });
+    expect(isaiah.className).toMatch(/highlighted/);
+    const matthew = screen.getByRole("listitem", { name: /^Matthew,/ });
+    expect(matthew.className).not.toMatch(/highlighted/);
+  });
 });

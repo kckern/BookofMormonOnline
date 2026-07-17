@@ -14,7 +14,11 @@ export default function AnchorView({ state, navigate }) {
     : bookTotal(canon, book);
 
   const flip = () => {
-    const target = highlight || partnersFor(canon, book)[0]?.book.name;
+    const partners = partnersFor(canon, book);
+    // highlight may be a division name (e.g. "Major Prophets"); only flip to it
+    // if it's a real partner book, else fall back to the top partner.
+    const highlightIsBook = partners.some((p) => p.book.name === highlight);
+    const target = (highlightIsBook && highlight) || partners[0]?.book.name;
     if (!target) return navigate({ view: "overview" });
     navigate({ view: "anchor", canon: canon === "bom" ? "kjv" : "bom", book: target });
   };
