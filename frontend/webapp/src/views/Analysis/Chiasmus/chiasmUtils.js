@@ -45,6 +45,15 @@ export function bookFromReference(reference) {
   return m ? m[1].trim() : null;
 }
 
+// "Nephi1" → "Nephi", "Alma2" → "Alma": bom_people.name carries slug-style
+// disambiguation digits; strip them for display. A dictionary-based label of
+// speaker.voice (the vox_* keys the Read view uses) could replace this later,
+// but that needs the dictionary loaded — this stays deterministic.
+export function formatSpeakerName(name) {
+  if (!name) return null;
+  return String(name).replace(/\d+$/, "");
+}
+
 const bibleVerseIdCache = {};
 function bibleVerseIds(lang) {
   if (!bibleVerseIdCache[lang]) {
@@ -61,15 +70,21 @@ function bibleVerseIds(lang) {
 export function enrichChiasmus(list, lang) {
   const bibleIds = bibleVerseIds(lang);
   return (list || []).map((c) => {
-    const [verse_id] = lookupReference(c.reference, lang).verse_ids || [];
+    // Server verse_id (Task 15) wins and skips the reference parse entirely;
+    // the client lookup remains as a fallback for rows from stale caches or
+    // older API responses that predate the field. Computed BEFORE the spread
+    // below so the explicit `verse_id:` never clobbers a server value.
+    const verse_id =
+      c.verse_id ?? lookupReference(c.reference, lang).verse_ids?.[0] ?? null;
     const book = bookFromReference(c.reference);
     return {
-      ...c,
+      ...c, // line_lengths and speaker pass through untouched
       ...parseScheme(c.scheme),
-      verse_id: verse_id ?? null,
+      verse_id,
       book,
       bookGroup: BOOK_GROUPS[book] || "other",
       isBiblical: verse_id != null && bibleIds.has(verse_id),
+      speakerName: c.speaker?.name ? formatSpeakerName(c.speaker.name) : null,
     };
   });
 }
@@ -107,7 +122,7 @@ export function applyBrowseState(enriched, s) {
 
   const keyFn = {
     book: (c) => c.book || "—",
-    speaker: (c) => c.speakerName || "—", // server field lands in Task 16; groups under — until then
+    speaker: (c) => c.speakerName || "—", // display-formatted in enrichChiasmus from the server speaker field
     depth: (c) => `Level ${c.depthBucket}`,
     type: (c) => (c.isBiblical ? "Biblical" : c.isCompound ? "Compound" : "Simple"),
   }[s.group];
@@ -126,6 +141,9 @@ export function applyBrowseState(enriched, s) {
     // Deterministic level order regardless of active sort: numeric asc, "+" last.
     const levelRank = (k) => (k === "Level +" ? Infinity : Number(k.slice(6)));
     keys.sort((a, b) => levelRank(a) - levelRank(b));
+  } else if (s.group === "speaker") {
+    // Alphabetical regardless of active sort; unattributed ("—") last.
+    keys.sort((a, b) => (a === "—") - (b === "—") || a.localeCompare(b));
   } else if (s.group === "type") {
     // Pinned header order regardless of active sort.
     const TYPE_ORDER = ["Simple", "Compound", "Biblical"];

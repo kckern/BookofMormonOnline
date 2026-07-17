@@ -5,7 +5,9 @@ import {
   enrichChiasmus,
   escapeRegex,
   applyBrowseState,
+  formatSpeakerName,
 } from "../chiasmUtils";
+import { lookupReference } from "scripture-guide";
 
 describe("parseScheme", () => {
   test("depth = highest letter", () => {
@@ -72,6 +74,63 @@ describe("enrichChiasmus", () => {
   test("does not mutate input", () => {
     enrichChiasmus(list, "en");
     expect(list[0].depth).toBeUndefined();
+  });
+
+  // Task 16: server-provided fields (verse_id, line_lengths, speaker)
+  test("server verse_id wins over the reference lookup", () => {
+    // 999999 cannot come from "Alma 36" — if the lookup ran, it would clobber it
+    const out = enrichChiasmus(
+      [{ chiasmus_id: "s1", reference: "Alma 36:1-30", scheme: "ABA", title: "t", verse_id: 999999 }],
+      "en"
+    );
+    expect(out[0].verse_id).toBe(999999);
+  });
+  test("isBiblical is computed from the server verse_id, not the reference", () => {
+    // an Isaiah-block verse_id on a non-Isaiah reference → biblical per verse_id
+    const [isaiahId] = lookupReference("2 Nephi 12:1", "en").verse_ids;
+    const out = enrichChiasmus(
+      [{ chiasmus_id: "s2", reference: "Alma 36:1-30", scheme: "ABA", title: "t", verse_id: isaiahId }],
+      "en"
+    );
+    expect(out[0].isBiblical).toBe(true);
+  });
+  test("null verse_id (stale cache / old API) falls back to the client lookup", () => {
+    const out = enrichChiasmus(
+      [{ chiasmus_id: "s3", reference: "Alma 36:1-30", scheme: "ABA", title: "t", verse_id: null }],
+      "en"
+    );
+    expect(out[0].verse_id).toEqual(expect.any(Number));
+    expect(out[0].verse_id).not.toBe(999999);
+  });
+  test("speakerName formatted; speaker and line_lengths pass through untouched", () => {
+    const speaker = { person_slug: "nephi", name: "Nephi1", voice: "vox_nephi1" };
+    const out = enrichChiasmus(
+      [{ chiasmus_id: "s4", reference: "1 Nephi 1:1", scheme: "ABA", title: "t", verse_id: 1, line_lengths: [5, 9, 4], speaker }],
+      "en"
+    );
+    expect(out[0].speakerName).toBe("Nephi");
+    expect(out[0].speaker).toBe(speaker);
+    expect(out[0].line_lengths).toEqual([5, 9, 4]);
+  });
+  test("speakerName is null when the row has no speaker", () => {
+    const out = enrichChiasmus(
+      [{ chiasmus_id: "s5", reference: "1 Nephi 1:1", scheme: "ABA", title: "t", verse_id: 1, speaker: null }],
+      "en"
+    );
+    expect(out[0].speakerName).toBeNull();
+  });
+});
+
+describe("formatSpeakerName", () => {
+  test.each([
+    ["Nephi1", "Nephi"],
+    ["Alma2", "Alma"],
+    ["Mormon", "Mormon"],
+  ])("%s → %s", (raw, formatted) => expect(formatSpeakerName(raw)).toBe(formatted));
+  test("null-safe", () => {
+    expect(formatSpeakerName(null)).toBeNull();
+    expect(formatSpeakerName(undefined)).toBeNull();
+    expect(formatSpeakerName("")).toBeNull();
   });
 });
 
@@ -141,6 +200,15 @@ describe("applyBrowseState", () => {
     const { groups, flat } = applyBrowseState(list, S({ group: "book", type: "biblical" }));
     expect(flat).toHaveLength(1);
     expect(groups).toHaveLength(1);
+  });
+  test("grouping by speaker: alphabetical, unattributed (—) last", () => {
+    const withSpeakers = [
+      { ...mk({ id: "a", v: 3 }), speakerName: "Zoram" },
+      { ...mk({ id: "b", v: 1 }), speakerName: null },
+      { ...mk({ id: "c", v: 2 }), speakerName: "Alma" },
+    ];
+    const { groups } = applyBrowseState(withSpeakers, S({ group: "speaker" }));
+    expect(groups.map((g) => g.key)).toEqual(["Alma", "Zoram", "—"]);
   });
   test("null verse_id sorts first deterministically, no crash", () => {
     const withNull = [...list, mk({ id: "n", v: null, depth: 3 })];

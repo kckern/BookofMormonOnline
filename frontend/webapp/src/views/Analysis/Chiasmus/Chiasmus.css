@@ -11,7 +11,8 @@
     --rail-ministry: #87519a;
     --rail-mormon: #8d2e2e;
     --rail-ether: #19a421;
-    --rail-moroni: #8a6509;
+    --rail-moroni: #db4a8f; /* pink-magenta: re-stepped off the olive/brown family (Task 12 review) —
+                               the old #8a6509 sat ΔE 5.7 from abridgment even for full-color vision */
 }
 
 /* rail-* classes (on cards, and on .chiasm_group sections when grouped by

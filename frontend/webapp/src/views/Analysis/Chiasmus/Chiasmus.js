@@ -83,7 +83,7 @@ function BrowseToolbar({ state, set, depthCounts, categoryCounts }) {
             >
                 <option value="none">{t("group_none", "No grouping")}</option>
                 <option value="book">{t("group_book", "Book")}</option>
-                {/* speaker option lands with the server field in Task 16 */}
+                <option value="speaker">{t("group_speaker", "Speaker")}</option>
                 <option value="depth">{t("group_depth", "Depth")}</option>
                 <option value="type">{t("group_type", "Type")}</option>
             </select>
@@ -147,24 +147,25 @@ const ChiasmCard = memo(function ChiasmCard({ chiasm, active, onSelect }) {
     // a <button> is invalid HTML (and an a11y trap). Read-in-context lives in
     // the detail panel (Task 13); RefPill appears where there's no button
     // nesting (Task 14's PassageNotes).
-    // The speaker avatar/name slot renders nothing until Task 16 delivers
-    // chiasm.speaker from the server; same for lineLengths (Task 15).
     return (
         <button type="button" onClick={() => onSelect(chiasmus_id)}
             className={`chiasmus rail-${bookGroup} ${active ? "active" : ""}`} aria-pressed={active}>
             <div className="card-head">
                 {chiasm.speaker?.person_slug && (
                     <img className="speaker-avatar" loading="lazy" width="36" height="36"
-                        alt={chiasm.speaker.name || ""}
+                        alt={chiasm.speakerName || ""}
                         src={`${assetUrl}/people/${chiasm.speaker.person_slug}`} />
                 )}
                 <div className="card-titles">
                     <div className="title">{title || t("untitled_chiasm", "Untitled")}</div>
-                    {chiasm.speaker?.name && <div className="speaker-name">{chiasm.speaker.name}</div>}
+                    {chiasm.speakerName && <div className="speaker-name">{chiasm.speakerName}</div>}
                 </div>
                 <span className="depth-chip" title={t("chiastic_depth", "Chiastic depth")}>{depthBucket}</span>
             </div>
             <div className="card-body">
+                {/* multi-char line_keys make line_lengths longer than the scheme
+                    string; glyphBars detects the mismatch and falls back to
+                    uniform bar widths for those chiasms */}
                 <ChiasmGlyph scheme={scheme} lineLengths={chiasm.line_lengths} size={44}
                     title={t("chiasm_structure", "Structure: $1", [scheme])} />
                 <span className="reference">{reference}</span>

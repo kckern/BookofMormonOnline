@@ -8,6 +8,10 @@ export async function getCache(input) {
         let vals = normalizeVal(input[key]);
         if (!vals) {
             let item = await getSingleCache(key, itemObjectStore);
+            // chiasmus list query gained verse_id/line_lengths/speaker (Task 16); it caches
+            // as a bare array under "chiasmus" — refetch cached rows predating the change
+            // ("speaker" in row is true even when the value is null)
+            if (key === "chiasmus" && Array.isArray(item) && item.length && !("speaker" in item[0])) item = false;
             if (item) {
                 if (items.found[key] === undefined) items.found[key] = {}
                 items.found[key] = item;
