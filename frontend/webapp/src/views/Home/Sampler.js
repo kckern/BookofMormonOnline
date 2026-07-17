@@ -169,6 +169,17 @@ export default function Sampler() {
     setSeed(next);
   };
 
+  // The reload control now lives on the Home tab bar (see HomeTabs); it fires a
+  // window `home:resample` event. Bridge it to resample via a ref so the
+  // once-bound listener always calls the latest closure.
+  const resampleRef = useRef(resample);
+  resampleRef.current = resample;
+  useEffect(() => {
+    const handler = () => resampleRef.current();
+    window.addEventListener("home:resample", handler);
+    return () => window.removeEventListener("home:resample", handler);
+  }, []);
+
   // ---- reserve balancing ---------------------------------------------------
   // Measure the rail vs the masonry after each layout; if one column is
   // meaningfully shorter, pull in the next eligible reserve tile on that side
@@ -468,16 +479,6 @@ export default function Sampler() {
 
   return (
     <div className="sampler container">
-      <div className="samplerBar noselect">
-        <button
-          className="samplerResample"
-          onClick={resample}
-          title={label("resample")}
-          aria-label={label("resample")}
-        >
-          ↻ <span>{label("resample")}</span>
-        </button>
-      </div>
       <div className="samplerColumns">
         <div className="samplerLeftRail" ref={railRef}>
           {leftTiles.map((t) => renderTile(t))}

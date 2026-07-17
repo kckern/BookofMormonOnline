@@ -42,6 +42,17 @@ export default function HomeTabs() {
           {t.text}
         </Link>
       ))}
+      {active === "explore" && (
+        <button
+          type="button"
+          className="home-tabs-reload"
+          title={label("resample")}
+          aria-label={label("resample")}
+          onClick={() => window.dispatchEvent(new Event("home:resample"))}
+        >
+          ↻
+        </button>
+      )}
     </nav>
   );
 }

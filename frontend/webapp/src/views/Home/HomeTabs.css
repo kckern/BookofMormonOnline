@@ -1,36 +1,101 @@
-/* The app header (.heading-bar) is position:fixed and 60px tall on all normal
-   screens (91px only above 4280px wide). Normally each view's `.container`
-   clears it with padding-top; but here the tab bar renders ABOVE that container
-   inside .home-shell, so without help it hides behind the fixed header. The
-   .home-shell--tabs rules below make the SHELL own that clearance: the tab bar
-   docks flush under the header, and the child view's own container top padding
-   is stripped so its content tucks under the tabs instead of clearing the
-   header a second time. Scoped to the desktop (tabbed) shell — mobile is
-   untouched. */
+/* Unified tabbed-Home chrome (desktop only — scoped to .home-shell--tabs so the
+   mobile layout is untouched).
+
+   The app header (.heading-bar) is position:fixed and 60px tall on all normal
+   screens (91px only >4280px wide). We make the SHELL a centered content column
+   (max-width 1240px, matching .sampler.container) so the tab bar AND all three
+   views (Sampler, Community, User) share one width. The shell also owns the
+   fixed-header clearance so the sticky tab bar docks flush under the header. */
+
 .home-shell--tabs {
-  padding-top: 60px; /* == fixed-header height on normal screens */
+  max-width: 1240px;
+  margin: 0 auto;
+  position: relative; /* containing block for Community's absolute panels */
+  padding-top: 60px;  /* == fixed-header height on normal screens */
 }
 
+/* ---------- the tab bar ---------- */
 .home-tabs {
   display: flex;
-  gap: 0.25rem;
-  border-bottom: 1px solid #d9d9d9;
-  padding: 0 0.5rem;
+  align-items: flex-end;
+  gap: 0.35rem;
+  padding: 0 1rem; /* aligns with .sampler.container side padding */
+  border-bottom: 2px solid #dcdcdc;
   position: sticky;
-  top: 60px; /* stick just below the fixed header when scrolling */
+  top: 60px; /* stick just under the fixed header when the page scrolls */
   background: #eee; /* opaque (== .main-panel bg) so content scrolls under it */
   z-index: 5;
+  font-family: "Roboto Condensed", "Arial Narrow", sans-serif;
+}
+.home-tab {
+  padding: 0.7rem 1.2rem 0.55rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #8a8f98;
+  text-decoration: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px; /* overlap the bar's 2px border with the 3px underline */
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.home-tab:hover {
+  color: #323b4d;
+  text-decoration: none;
+}
+.home-tab.active {
+  color: #323b4d; /* brand slate (matches sidebar active / .samplerResample hover) */
+  border-bottom-color: #323b4d;
 }
 
-/* Header clearance now lives on .home-shell--tabs; drop the child container's
-   own top padding so its content sits directly under the tab bar. Higher
-   specificity (#main-panel …) beats the per-view `.container`/`.sampler.container`
-   rules; only the top edge is overridden, so left/right/bottom padding stays. */
+/* ---------- resample reload icon (Explore tab only), floated right ---------- */
+.home-tabs-reload {
+  margin-left: auto; /* push to the far right of the bar */
+  align-self: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #8a8f98;
+  font-size: 1.3rem;
+  line-height: 1;
+  padding: 0.2rem 0.4rem;
+  border-radius: 999px;
+  transition: color 0.15s ease, transform 0.4s ease;
+}
+.home-tabs-reload:hover {
+  color: #323b4d;
+}
+.home-tabs-reload:active {
+  transform: rotate(-180deg);
+}
+html[data-theme="dark"] .home-tabs-reload {
+  color: #9aa0a8;
+}
+html[data-theme="dark"] .home-tabs-reload:hover {
+  color: #eaeef3;
+}
+
+/* ---------- child-view header clearance ---------- */
+/* The shell now clears the fixed header, so drop each view's own .container top
+   padding and let it fill the shell width. Higher specificity (#main-panel …)
+   beats the per-view `.container` / `.sampler.container` rules; only the top
+   edge + max-width are overridden. */
 #main-panel .home-shell--tabs .container {
+  max-width: none;
   padding-top: 0.75rem;
 }
+/* Community's two-pane scrollers are position:absolute (they ignore .container
+   flow) — give them their own clearance for the header + tab bar. box-sizing:
+   border-box keeps height:100vh INCLUSIVE of that padding so the panels are
+   exactly viewport-tall: only their internal overflow-y scrolls, and the page
+   itself never scrolls (default content-box + 100vh + padding overflowed the
+   viewport and forced a site-level scrollbar). */
+.home-shell--tabs .leftPanelScroll,
+.home-shell--tabs .rightPanelScroll {
+  box-sizing: border-box;
+  padding-top: 7.25em; /* ~116px: 60 header + ~44 tab bar + breathing room */
+}
 
-/* Ultra-wide (>4280px) uses the taller 91px header — match the offset. */
+/* ---------- ultra-wide (>4280px): header is 91px ---------- */
 @media only screen and (min-width: 4281px) {
   .home-shell--tabs {
     padding-top: 91px;
@@ -38,24 +103,24 @@
   .home-tabs {
     top: 91px;
   }
+  .home-shell--tabs .leftPanelScroll,
+  .home-shell--tabs .rightPanelScroll {
+    padding-top: 9em;
+  }
 }
 
-/* Dark theme: keep the stuck bar opaque against the dark canvas. */
+/* ---------- dark theme ---------- */
 html[data-theme="dark"] .home-tabs {
   background: #1a1a1a;
   border-bottom-color: #333;
 }
-.home-tab {
-  padding: 0.6rem 1.1rem;
-  font-weight: 600;
-  color: #666;
-  text-decoration: none;
-  border-bottom: 3px solid transparent;
-  margin-bottom: -1px;
-  white-space: nowrap;
+html[data-theme="dark"] .home-tab {
+  color: #9aa0a8;
 }
-.home-tab:hover { color: #333; text-decoration: none; }
-.home-tab.active {
-  color: #2a7ae2;
-  border-bottom-color: #2a7ae2;
+html[data-theme="dark"] .home-tab:hover,
+html[data-theme="dark"] .home-tab.active {
+  color: #eaeef3;
+}
+html[data-theme="dark"] .home-tab.active {
+  border-bottom-color: #eaeef3;
 }
