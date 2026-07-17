@@ -88,6 +88,15 @@ describe("Overview", () => {
     expect(screen.getByText("Jarom")).toBeInTheDocument();
   });
 
+  test("small books stay labeled at the compressed fallback height", () => {
+    render(<Overview navigate={jest.fn()} />);
+    // FALLBACK_H is now 420 (was 640); the spineMinPx floor must still clear the
+    // ~9px label guard so slivers like Jarom (3 refs) and Omni (9 refs) keep
+    // their labels at the smaller default height.
+    expect(screen.getByText("Jarom")).toBeInTheDocument();
+    expect(screen.getByText("Omni")).toBeInTheDocument();
+  });
+
   test("hovering a spine segment fills the readout line", () => {
     render(<Overview navigate={jest.fn()} />);
     const readout = screen.getByTestId("xref-readout");

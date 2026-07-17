@@ -156,7 +156,21 @@ html[data-theme="dark"] .xref-root {
 
 .xref-ribbonwrap {
   flex: 1;
-  min-height: 640px;
+  /* compress toward 420px on short viewports so the chart clears the fold,
+     but never below 420 and never above the original 640 comfortable height */
+  min-height: clamp(420px, calc(100vh - 280px), 640px);
+  display: flex;
+  flex-direction: column;
+}
+
+/* measured element (wrapRef): only the svg lives here, so its clientHeight is
+   the flex-allocated leftover after the hint/readout siblings — NOT the svg's
+   own height. That is what stops the ResizeObserver from feeding back through
+   the svg's height (plotH = measured height - 40, and the -40 reserves the
+   in-svg "BIBLE"/"BOOK OF MORMON" spine-title row drawn at y=12). */
+.xref-svgbox {
+  flex: 1;
+  min-height: 0;
 }
 
 .xref-ribbonsvg {
@@ -694,7 +708,6 @@ html[data-theme="dark"] .verseViewerTable .scriptureCell p span.highlight {
     width: 100%;
   }
   .xref-spinelabel { display: none; }
-  .xref-ribbonwrap { min-height: 420px; }
   /* the ref is the row's identity — give it the space; drop the heading */
   .verseViewerTable td.scriptureRef .heading { display: none; }
   /* justified text in ~150px columns is all rivers */

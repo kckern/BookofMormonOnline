@@ -5,7 +5,7 @@ import { layoutRibbons, ribbonPath } from "./ribbonLayout";
 import TableTwin from "./TableTwin";
 
 const LABEL_PAD = 8;
-const FALLBACK_H = 640;
+const FALLBACK_H = 420;
 
 // Bipartite ribbon overview. Left spine: the Bible's 9 divisions (book-level
 // ribbons on both sides read as spaghetti — the division default is the spec's
@@ -117,7 +117,12 @@ export default function Overview({ state = {}, navigate }) {
   }, [active, links]);
 
   const plotH = size.height - 40;
-  const spineMinPx = Math.min(14, plotH / Math.max(left.length, right.length, 1) / 2);
+  const n = Math.max(left.length, right.length, 1);
+  // target a 14px floor; never demand more than the plot can evenly give (plotH/n),
+  // which keeps small books at/above the ~9px label threshold whenever plotH allows.
+  // (No /2 divisor — on a short viewport plotH/n is the largest floor that still fits
+  // all n segments, so small slivers keep their labels down to plotH ≈ 9n.)
+  const spineMinPx = Math.min(14, plotH / n);
   const { leftSpine, rightSpine, ribbons } = useMemo(
     () => layoutRibbons({ left, right, links, height: plotH, gap: 3, minPx: 1.5, spineMinPx }),
     [left, right, links, plotH, spineMinPx]
@@ -249,13 +254,17 @@ export default function Overview({ state = {}, navigate }) {
       {mode === "table" ? (
         <TableTwin navigate={navigate} />
       ) : (
-        <div className="xref-ribbonwrap" ref={wrapRef}>
+        <div className="xref-ribbonwrap">
           <p className="xref-hint">
             Click a Bible division to expand its books · click any book to explore it
           </p>
           <p className="xref-readout" data-testid="xref-readout" aria-live="polite">
             {readout || "Hover a ribbon or book for details"}
           </p>
+          {/* wrapRef measures THIS box, which holds only the svg — its clientHeight
+              is the flex-allocated leftover after hint/readout, never the svg's own
+              height, so the ResizeObserver can't feed back through plotH. */}
+          <div className="xref-svgbox" ref={wrapRef}>
           <svg
             className="xref-ribbonsvg"
             width={size.width}
@@ -334,6 +343,7 @@ export default function Overview({ state = {}, navigate }) {
               {rightSegments}
             </g>
           </svg>
+          </div>
         </div>
       )}
     </div>
