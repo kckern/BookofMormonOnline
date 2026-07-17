@@ -35,7 +35,7 @@ describe("AnchorView", () => {
 
   test("selecting a partner opens the reader scoped to the anchor", () => {
     const { navigate } = setup();
-    fireEvent.click(screen.getAllByRole("listitem")[0]); // Isaiah bar
+    fireEvent.click(screen.getByRole("button", { name: /^Isaiah,/ })); // Isaiah bar
     expect(navigate).toHaveBeenCalledWith({
       view: "reader",
       bomBook: "2 Nephi",
@@ -45,7 +45,7 @@ describe("AnchorView", () => {
 
   test("selecting a partner from a Bible anchor maps books correctly", () => {
     const { navigate } = setup({ view: "anchor", canon: "kjv", book: "Isaiah" });
-    fireEvent.click(screen.getAllByRole("listitem")[0]); // 2 Nephi bar
+    fireEvent.click(screen.getByRole("button", { name: /^2 Nephi,/ })); // 2 Nephi bar
     expect(navigate).toHaveBeenCalledWith({
       view: "reader",
       bomBook: "2 Nephi",
@@ -75,7 +75,7 @@ describe("AnchorView", () => {
   test("chapter selection navigates and the scope chip clears it", () => {
     const { navigate } = setup({ view: "anchor", canon: "bom", book: "2 Nephi", chapter: 12 });
     // chapter is included in reader navigation
-    fireEvent.click(screen.getAllByRole("listitem")[0]);
+    fireEvent.click(screen.getAllByRole("button", { name: /references, \d+ quotes$/ })[0]);
     expect(navigate).toHaveBeenCalledWith(
       expect.objectContaining({ view: "reader", bomChapter: 12 })
     );
