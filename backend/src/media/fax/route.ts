@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { VERSION_SLUGS, WIDTH_WHITELIST, MAX_PAGES } from './constants.js';
+import { VERSION_SLUGS, WIDTH_WHITELIST, MAX_PAGES, MAX_VERSE_IDS } from './constants.js';
 import { selectorToVerseIds, verseIdsToBoxes, legacyUnitToVerseIds } from './resolve.js';
 import { toFragments, clampPages } from './geometry.js';
 import { renderImage } from './render.js';
@@ -47,6 +47,7 @@ export async function faxRoutes(app: FastifyInstance): Promise<void> {
 
     const verseIds = selectorToVerseIds(selector);
     if (verseIds.length === 0) return reply.code(404).send({ error: 'no verses' });
+    if (verseIds.length > MAX_VERSE_IDS) return reply.code(400).send({ error: 'too many verse ids' });
 
     // canonical redirect (manual Location for Fastify-version safety)
     const canonical = canonicalSelector(verseIds);

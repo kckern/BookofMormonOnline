@@ -41,3 +41,12 @@ describe('GET /fax/text (legacy alias)', () => {
     expect(r.statusCode).toBe(404);
   });
 });
+
+describe('GET /fax/render canonical redirect', () => {
+  it('301-redirects a non-canonical ids/ selector to the ref slug', async () => {
+    const f = await app();
+    const r = await f.inject({ method: 'GET', url: '/fax/render/1837/crop/w400/ids/31103.jpg' });
+    expect(r.statusCode).toBe(301);
+    expect(r.headers['location']).toContain('/fax/render/1837/crop/w400/1-nephi-1.1.jpg');
+  });
+});

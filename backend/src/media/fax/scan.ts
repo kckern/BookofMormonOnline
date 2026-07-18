@@ -13,5 +13,6 @@ export async function fetchScan(version: string, page: number): Promise<Buffer> 
  * return the factor to multiply every coordinate by. */
 export function assertScanWidth(actualWidth: number, storedPageWidth: number): number {
   if (actualWidth === storedPageWidth) return 1;
+  console.warn(`[fax] scan width mismatch: actual=${actualWidth} stored=${storedPageWidth}`);
   return actualWidth / storedPageWidth;
 }

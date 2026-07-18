@@ -11,18 +11,22 @@ export interface NotchFill {
 
 /** Crop one fragment's bbox from the scan and paper-fill the exterior notches. */
 export async function renderFragmentCrop(scan: Buffer, frag: Fragment, notch: NotchFill): Promise<Buffer> {
-  const base = sharp(scan).extract({ left: frag.x, top: frag.y, width: frag.w, height: frag.h });
+  const meta = await sharp(scan).metadata();
+  const cw = Math.min(frag.w, (meta.width ?? frag.x + frag.w) - frag.x);
+  const ch = Math.min(frag.h, (meta.height ?? frag.y + frag.h) - frag.y);
+  const base = sharp(scan).extract({ left: frag.x, top: frag.y, width: cw, height: ch });
   const overlays: sharp.OverlayOptions[] = [];
   if (notch.tl && notch.tl.w > 0 && notch.tl.h > 0) {
     overlays.push({
-      input: { create: { width: notch.tl.w, height: notch.tl.h, channels: 3, background: notch.paper } },
+      input: { create: { width: Math.min(notch.tl.w, cw), height: Math.min(notch.tl.h, ch), channels: 3, background: notch.paper } },
       top: 0, left: 0,
     });
   }
   if (notch.br && notch.br.w > 0 && notch.br.h > 0) {
+    const bw = Math.min(notch.br.w, cw), bh = Math.min(notch.br.h, ch);
     overlays.push({
-      input: { create: { width: notch.br.w, height: notch.br.h, channels: 3, background: notch.paper } },
-      top: frag.h - notch.br.h, left: frag.w - notch.br.w,
+      input: { create: { width: bw, height: bh, channels: 3, background: notch.paper } },
+      top: ch - bh, left: cw - bw,
     });
   }
   return (overlays.length ? base.composite(overlays) : base).png().toBuffer();

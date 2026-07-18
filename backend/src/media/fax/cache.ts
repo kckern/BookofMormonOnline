@@ -1,4 +1,5 @@
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { env } from '../../config/env.js';
 
 export interface KeyParts { version: string; mode: 'page' | 'crop'; width: number | 'full'; selector: string; ext: 'jpg' | 'webp'; }
 
@@ -39,6 +40,7 @@ const s3 = new S3Client({});
 const contentType = (ext: 'jpg' | 'webp') => (ext === 'webp' ? 'image/webp' : 'image/jpeg');
 
 export function writeBack(key: string, body: Buffer, ext: 'jpg' | 'webp'): void {
+  if (env.SANDBOX) return;   // sandbox must not touch S3 (matches s3.ts convention)
   const bucket = process.env['FAX_S3_BUCKET'] || process.env['S3_BUCKET'];
   if (!bucket) return;                       // unconfigured -> skip silently
   void (async () => {
