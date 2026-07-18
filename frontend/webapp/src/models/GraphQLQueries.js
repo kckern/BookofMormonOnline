@@ -1786,7 +1786,7 @@ const queries = {
         history { id slug year date source archive author document teaser citation aspect }
         text { slug heading content imgIds parent_page { title } parent_section { title } narration { description } }
         notes { id title text reference publication { source_name } }
-        faxVerse { version title format page verseId ref }
+        faxVerse { version title format page verseId ref selector editions { version title page } }
         crossrefs { srcRef srcVerseId refs { ref verseId } }
         relationship { hubType hubSlug hubName hubTitle edges { rel dstType dstSlug dstName dstTitle note ref } }
         mapstory { slug title description moves { seq start end startName endName travelers people { slug name } description duration ref startLat startLng endLat endLng } }
