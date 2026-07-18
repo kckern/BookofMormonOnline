@@ -8,6 +8,8 @@ const schema = z.object({
   MYSQL_USER: z.string().min(1),
   MYSQL_PASSWORD: z.string().min(1),
   MYSQL_DB: z.string().default('bom_prd'),
+  FAX_S3_BUCKET: z.string().optional(),
+  FAX_S3_PUBLIC_URL: z.string().optional(),
   SANDBOX: z
     .string()
     .default('1')

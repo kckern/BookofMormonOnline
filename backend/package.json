@@ -21,6 +21,7 @@
     "@aws-sdk/client-cloudfront": "^3.1066.0",
     "@aws-sdk/client-s3": "^3.1066.0",
     "@envelop/core": "^5.5.1",
+    "@fastify/rate-limit": "^11.1.0",
     "@mastra/core": "^1.41.0",
     "@mastra/qdrant": "^1.0.2",
     "@qdrant/js-client-rest": "^1.18.0",
