@@ -11,13 +11,8 @@ export default function BibleCrossRef() {
   const { params: { value } } = useRouteMatch();
   const history = useHistory();
   const location = useLocation();
-  const state = parseValue(value);
-  // highlight is ephemeral emphasis (ribbon → anchored partner), carried in
-  // history location state rather than the URL.
-  if (state.view === "anchor" && location.state?.highlight)
-    state.highlight = location.state.highlight;
-  const navigate = (next) =>
-    history.push(serialize(next), next.highlight ? { highlight: next.highlight } : undefined);
+  const state = parseValue(value, location.search);
+  const navigate = (next) => history.push(serialize(next));
 
   useEffect(() => {
     const name =
@@ -29,7 +24,7 @@ export default function BibleCrossRef() {
     document.title = `${name} | ${label("home_title")}`;
     // derived from the URL, never from rendered DOM
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value]);
+  }, [value, location.search]);
 
   return (
     <div className="xref-root">
@@ -38,7 +33,7 @@ export default function BibleCrossRef() {
       ) : state.view === "reader" ? (
         <Reader state={state} navigate={navigate} />
       ) : (
-        <Overview navigate={navigate} />
+        <Overview state={state} navigate={navigate} />
       )}
     </div>
   );

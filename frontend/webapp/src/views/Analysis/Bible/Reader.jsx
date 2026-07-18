@@ -8,7 +8,7 @@ import { Spinner } from "../../_Common/Loader";
 import { highlightTextJSX } from "./highlighter";
 import { pairsFor } from "./aggregate";
 
-const PAGE = 20;
+const PAGE = 50;
 
 // Side-by-side verse-pair reader, scoped by URL state (book pair + optional
 // BoM chapter). Fetches verse text in pages; sorting is client-side over the
@@ -35,6 +35,8 @@ export default function Reader({ state, navigate }) {
     const dir = sort.direction === "asc" ? 1 : -1;
     return [...pairs].sort((a, b) => (a[key] - b[key]) * dir);
   }, [pairs, sort]);
+
+  const quoteTotal = useMemo(() => pairs.filter((p) => p.isQuote).length, [pairs]);
 
   const [pageCount, setPageCount] = useState(1);
   const visible = sorted.slice(0, pageCount * PAGE);
@@ -73,27 +75,32 @@ export default function Reader({ state, navigate }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible.length, sorted]);
 
+  const anchorCanon = state.anchorCanon === "kjv" ? "kjv" : "bom";
+  const backState =
+    anchorCanon === "kjv"
+      ? { view: "anchor", canon: "kjv", book: bibleBook }
+      : {
+          view: "anchor",
+          canon: "bom",
+          book: bomBook,
+          ...(bomChapter ? { chapter: bomChapter } : {}),
+        };
+
   useEffect(() => {
     const onKey = (e) => {
-      if (e.key === "Escape")
-        navigate({ view: "anchor", canon: "bom", book: bomBook, ...(bomChapter ? { chapter: bomChapter } : {}) });
+      if (e.key !== "Escape") return;
+      if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) || e.target.isContentEditable) return;
+      navigate(backState);
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bomBook, bomChapter]);
-
-  const backState = {
-    view: "anchor",
-    canon: "bom",
-    book: bomBook,
-    ...(bomChapter ? { chapter: bomChapter } : {}),
-  };
+  }, [bomBook, bibleBook, bomChapter, anchorCanon]);
 
   if (!pairs.length)
     return (
       <div className="xref-reader" data-testid="xref-reader">
-        <ReaderHeader {...{ bomBook, bibleBook, bomChapter, navigate, backState }} />
+        <ReaderHeader {...{ bomBook, bibleBook, bomChapter, anchorCanon, navigate, backState, total: pairs.length, quoteTotal }} />
         <div className="xref-empty">
           No known correspondences between {bomBook}
           {bomChapter ? ` ${bomChapter}` : ""} and {bibleBook}.
@@ -105,7 +112,7 @@ export default function Reader({ state, navigate }) {
   if (!firstPageReady)
     return (
       <div className="xref-reader" data-testid="xref-reader">
-        <ReaderHeader {...{ bomBook, bibleBook, bomChapter, navigate, backState }} />
+        <ReaderHeader {...{ bomBook, bibleBook, bomChapter, anchorCanon, navigate, backState, total: pairs.length, quoteTotal }} />
         <Spinner />
       </div>
     );
@@ -114,7 +121,6 @@ export default function Reader({ state, navigate }) {
     <button
       className="xref-sort"
       aria-label={`sort by ${label}`}
-      aria-pressed={sort.column === column && sort.direction === "desc"}
       onClick={() =>
         setSort((s) => ({
           column,
@@ -123,7 +129,7 @@ export default function Reader({ state, navigate }) {
       }
     >
       {label}
-      <span className="xref-sortarrow" aria-hidden="true">
+      <span aria-hidden="true">
         {sort.column === column ? (sort.direction === "asc" ? " ▲" : " ▼") : " △"}
       </span>
     </button>
@@ -131,12 +137,16 @@ export default function Reader({ state, navigate }) {
 
   return (
     <div className="xref-reader" data-testid="xref-reader">
-      <ReaderHeader {...{ bomBook, bibleBook, bomChapter, navigate, backState }} />
+      <ReaderHeader {...{ bomBook, bibleBook, bomChapter, anchorCanon, navigate, backState, total: pairs.length, quoteTotal }} />
       <table className="verseViewerTable">
         <thead>
           <tr>
-            <th>{sortButton("bom", bomBook)}</th>
-            <th>{sortButton("bible", bibleBook)}</th>
+            <th aria-sort={sort.column === "bom" ? (sort.direction === "asc" ? "ascending" : "descending") : "none"}>
+              {sortButton("bom", bomBook)}
+            </th>
+            <th aria-sort={sort.column === "bible" ? (sort.direction === "asc" ? "ascending" : "descending") : "none"}>
+              {sortButton("bible", bibleBook)}
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -179,35 +189,44 @@ export default function Reader({ state, navigate }) {
         </tbody>
       </table>
       {remaining > 0 && (
-        <button
-          className="xref-loadmore"
-          disabled={loading}
-          onClick={() => setPageCount((c) => c + 1)}
-        >
-          Load more ({remaining} remaining)
-        </button>
+        <div className="xref-loadrow">
+          <button className="xref-loadmore" disabled={loading} onClick={() => setPageCount((c) => c + 1)}>
+            Load {Math.min(PAGE, remaining)} more
+          </button>
+          <button
+            className="xref-loadmore"
+            disabled={loading}
+            onClick={() => setPageCount(Math.ceil(sorted.length / PAGE))}
+          >
+            Show all {sorted.length}
+          </button>
+        </div>
       )}
     </div>
   );
 }
 
-function ReaderHeader({ bomBook, bibleBook, bomChapter, navigate, backState }) {
+function ReaderHeader({ bomBook, bibleBook, bomChapter, anchorCanon, navigate, backState, total, quoteTotal }) {
+  const anchorBook = anchorCanon === "kjv" ? bibleBook : bomBook;
   return (
     <header className="xref-header">
       <nav className="xref-breadcrumb" aria-label="Breadcrumb">
         <Link to="/analysis/bible">⌂ Overview</Link>
         <span aria-hidden="true"> › </span>
         <button className="xref-backlink" onClick={() => navigate(backState)}>
-          {bomBook}
-          {bomChapter ? ` › ch. ${bomChapter}` : ""}
+          {anchorBook}
+          {anchorCanon === "bom" && bomChapter ? ` › ch. ${bomChapter}` : ""}
         </button>
         <span aria-hidden="true"> › </span>
-        <span aria-current="page">× {bibleBook}</span>
+        <span aria-current="page">{bomBook} × {bibleBook}</span>
       </nav>
       <h3 className="xref-readertitle">
         <span className="book">{bomBook}{bomChapter ? ` ${bomChapter}` : ""}</span> references to{" "}
         <span className="book">{bibleBook}</span>
       </h3>
+      <p className="xref-readercount">
+        {total} references · {quoteTotal} quotes
+      </p>
     </header>
   );
 }

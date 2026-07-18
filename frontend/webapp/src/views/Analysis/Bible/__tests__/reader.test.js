@@ -42,10 +42,10 @@ describe("Reader", () => {
   });
   afterEach(() => alertSpy.mockRestore());
 
-  test("first page renders 20 pairs with a Load more button; never alerts", async () => {
+  test("first page renders 50 pairs with a Load more button; never alerts", async () => {
     setup();
-    await waitFor(() => expect(screen.getAllByTestId("xref-pair").length).toBe(20));
-    expect(screen.getByRole("button", { name: /Load more/ })).toBeInTheDocument();
+    await waitFor(() => expect(screen.getAllByTestId("xref-pair").length).toBe(50));
+    expect(screen.getByRole("button", { name: /Load \d+ more/ })).toBeInTheDocument();
     expect(alertSpy).not.toHaveBeenCalled();
   });
 
@@ -77,7 +77,7 @@ describe("Reader", () => {
     const bomSort = screen.getByRole("button", { name: /sort by Jacob/i });
     fireEvent.click(bomSort); // toggles to desc
     expect(first()).not.toBe(ascFirst);
-    expect(bomSort).toHaveAttribute("aria-pressed", "true");
+    expect(bomSort.closest("th")).toHaveAttribute("aria-sort", "descending");
   });
 
   test("Escape returns to the anchored view", async () => {
@@ -85,5 +85,48 @@ describe("Reader", () => {
     await waitFor(() => expect(screen.getAllByTestId("xref-pair").length).toBe(9));
     fireEvent.keyDown(document, { key: "Escape" });
     expect(navigate).toHaveBeenCalledWith({ view: "anchor", canon: "bom", book: "Jacob" });
+  });
+
+  test("breadcrumb back target honors a kjv origin", () => {
+    const navigate = jest.fn();
+    render(
+      <MemoryRouter>
+        <Reader
+          state={{ view: "reader", bomBook: "2 Nephi", bibleBook: "Isaiah", anchorCanon: "kjv" }}
+          navigate={navigate}
+        />
+      </MemoryRouter>
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Isaiah" }));
+    expect(navigate).toHaveBeenCalledWith({ view: "anchor", canon: "kjv", book: "Isaiah" });
+  });
+
+  test("header shows the pair total and quote count", async () => {
+    setup();
+    expect(await screen.findByText(/\d+ references · \d+ quotes/)).toBeInTheDocument();
+  });
+
+  test("show-all reveals every pair at once", async () => {
+    setup();
+    fireEvent.click(await screen.findByRole("button", { name: /show all/i }));
+    await waitFor(() =>
+      expect(screen.queryByRole("button", { name: /load|show all/i })).not.toBeInTheDocument()
+    );
+  });
+
+  test("Escape inside an input does not navigate", () => {
+    const navigate = jest.fn();
+    render(
+      <MemoryRouter>
+        <input data-testid="searchbox" />
+        <Reader state={{ view: "reader", bomBook: "2 Nephi", bibleBook: "Isaiah" }} navigate={navigate} />
+      </MemoryRouter>
+    );
+    fireEvent.keyDown(screen.getByTestId("searchbox"), { key: "Escape" });
+    expect(navigate).not.toHaveBeenCalled();
+    fireEvent.keyDown(document.body, { key: "Escape" });
+    expect(navigate).toHaveBeenCalledWith(
+      expect.objectContaining({ view: "anchor", canon: "bom", book: "2 Nephi" })
+    );
   });
 });

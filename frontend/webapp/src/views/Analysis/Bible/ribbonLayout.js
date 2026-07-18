@@ -1,24 +1,32 @@
 // Pure geometry for the bipartite ribbon overview. No React, no DOM.
 
-export const layoutSpine = (items, height, gap = 2) => {
-  const totalWeight = items.reduce((a, i) => a + i.weight, 0);
+export const layoutSpine = (items, height, gap = 2, minPx = 0) => {
+  const totalWeight = items.reduce((a, i) => a + i.weight, 0) || 1;
   const usable = height - gap * (items.length - 1);
-  const scale = usable / totalWeight;
+  const raw = items.map((i) => (i.weight / totalWeight) * usable);
+  const scaled = raw.map((h) => Math.max(h, minPx));
+  const overflow = scaled.reduce((a, b) => a + b, 0) - usable;
+  // if the floor pushed us over the height, shrink the largest items to fit
+  if (overflow > 0) {
+    const shrinkable = scaled.map((h) => h - minPx);
+    const shrinkTotal = shrinkable.reduce((a, b) => a + b, 0) || 1;
+    for (let i = 0; i < scaled.length; i++)
+      scaled[i] -= (shrinkable[i] / shrinkTotal) * overflow;
+  }
   const out = new Map();
   let y = 0;
-  for (const item of items) {
-    const h = item.weight * scale;
-    out.set(item.key, { y0: y, y1: y + h });
-    y += h + gap;
-  }
+  items.forEach((item, i) => {
+    out.set(item.key, { y0: y, y1: y + scaled[i] });
+    y += scaled[i] + gap;
+  });
   return out;
 };
 
 // Allocate each node's span among its ribbons pro-rata by value, ordered by
 // the partner's position (reduces crossings). minPx keeps hairlines visible.
-export const layoutRibbons = ({ left, right, links, height, gap = 2, minPx = 1.5 }) => {
-  const leftSpine = layoutSpine(left, height, gap);
-  const rightSpine = layoutSpine(right, height, gap);
+export const layoutRibbons = ({ left, right, links, height, gap = 2, minPx = 1.5, spineMinPx = 0 }) => {
+  const leftSpine = layoutSpine(left, height, gap, spineMinPx);
+  const rightSpine = layoutSpine(right, height, gap, spineMinPx);
 
   const slot = (spine, key, myLinks, valueOf, partnerY) => {
     const { y0, y1 } = spine.get(key);

@@ -8,22 +8,29 @@ import PartnerBars from "./PartnerBars";
 // All navigation goes through props.navigate — state lives in the URL.
 export default function AnchorView({ state, navigate }) {
   const { canon, book, chapter, highlight } = state;
-  const partnerLabel = canon === "bom" ? "Bible" : "Book of Mormon";
   const scopeTotal = chapter
     ? chapterCounts(canon, book)[chapter - 1]
     : bookTotal(canon, book);
 
+  // Single source of truth for the flip destination — the top partner, unless
+  // the current highlight is itself a partner book (highlight may be a division
+  // name like "Major Prophets", which we never flip to). Both the button label
+  // and flip()'s navigation derive from this one value.
+  const partners = partnersFor(canon, book);
+  const flipTarget =
+    (partners.some((p) => p.book.name === highlight) && highlight) ||
+    partners[0]?.book.name;
+
   const flip = () => {
-    const target = highlight || partnersFor(canon, book)[0]?.book.name;
-    if (!target) return navigate({ view: "overview" });
-    navigate({ view: "anchor", canon: canon === "bom" ? "kjv" : "bom", book: target });
+    if (!flipTarget) return navigate({ view: "overview" });
+    navigate({ view: "anchor", canon: canon === "bom" ? "kjv" : "bom", book: flipTarget });
   };
 
   const openReader = (partnerName) => {
     const readerState =
       canon === "bom"
         ? { view: "reader", bomBook: book, bibleBook: partnerName }
-        : { view: "reader", bomBook: partnerName, bibleBook: book };
+        : { view: "reader", bomBook: partnerName, bibleBook: book, anchorCanon: "kjv" };
     if (canon === "bom" && chapter) readerState.bomChapter = chapter;
     navigate(readerState);
   };
@@ -34,11 +41,13 @@ export default function AnchorView({ state, navigate }) {
         <nav className="xref-breadcrumb" aria-label="Breadcrumb">
           <Link to="/analysis/bible">⌂ Overview</Link>
           <span aria-hidden="true"> › </span>
-          <span aria-current="page">{book}{chapter ? ` › ch. ${chapter}` : ""}</span>
+          <span aria-current="page">{book}</span>
         </nav>
-        <button className="xref-flip" onClick={flip}>
-          ⇄ anchor on {partnerLabel}
-        </button>
+        {flipTarget && (
+          <button className="xref-flip" onClick={flip}>
+            ⇄ view from {flipTarget}
+          </button>
+        )}
       </header>
 
       <div className="xref-anchorbody">
@@ -57,11 +66,17 @@ export default function AnchorView({ state, navigate }) {
         />
 
         <main className="xref-detail">
-          <h3 className="xref-detailheading">
-            {book}
-            {chapter ? ` ${chapter}` : ""} {canon === "bom" ? "draws on" : "appears in"}
-            <span className="xref-detailtotal"> {scopeTotal} refs</span>
-          </h3>
+          <div className="xref-detailhead">
+            <h3 className="xref-detailheading">
+              {book}
+              {chapter ? ` ${chapter}` : ""} {canon === "bom" ? "draws on" : "appears in"}
+              <span className="xref-detailtotal"> {scopeTotal} references</span>
+            </h3>
+            <span className="xref-legend" aria-hidden="true">
+              <span className="xref-swatch quote" /> quote
+              <span className="xref-swatch phrase" /> phrase
+            </span>
+          </div>
           {chapter && (
             <button
               className="xref-scopechip"
@@ -78,10 +93,6 @@ export default function AnchorView({ state, navigate }) {
             highlight={highlight}
             onSelect={openReader}
           />
-          <div className="xref-legend" aria-hidden="true">
-            <span className="xref-swatch quote" /> quote
-            <span className="xref-swatch phrase" /> phrase
-          </div>
         </main>
       </div>
     </div>

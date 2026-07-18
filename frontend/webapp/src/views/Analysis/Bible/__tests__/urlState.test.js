@@ -46,4 +46,32 @@ describe("urlState", () => {
       "/analysis/bible/kjv/isaiah"
     );
   });
+
+  test.each([
+    ["bible/bom/2-nephi", "?hl=isaiah",
+      { view: "anchor", canon: "bom", book: "2 Nephi", highlight: "Isaiah" }],
+    ["bible/bom/2-nephi", "?hl=major-prophets",
+      { view: "anchor", canon: "bom", book: "2 Nephi", highlight: "Major Prophets" }],
+    ["bible/bom/2-nephi~isaiah", "?from=kjv",
+      { view: "reader", bomBook: "2 Nephi", bibleBook: "Isaiah", anchorCanon: "kjv" }],
+    ["bible", "?view=table", { view: "overview", mode: "table" }],
+    ["bible", "?expand=major-prophets", { view: "overview", expanded: "Major Prophets" }],
+    ["bible/bom/2-nephi", "?hl=garbage", { view: "anchor", canon: "bom", book: "2 Nephi" }],
+  ])("parses %s with %s", (value, search, expected) => {
+    expect(parseValue(value, search)).toEqual(expected);
+  });
+
+  test("query states round-trip through serialize", () => {
+    const states = [
+      { view: "anchor", canon: "bom", book: "2 Nephi", highlight: "Isaiah" },
+      { view: "reader", bomBook: "2 Nephi", bibleBook: "Isaiah", anchorCanon: "kjv" },
+      { view: "overview", mode: "table" },
+      { view: "overview", expanded: "Major Prophets" },
+    ];
+    for (const s of states) {
+      const url = serialize(s);
+      const [path, search = ""] = url.split("?");
+      expect(parseValue(path.replace(/^\/analysis\//, ""), search ? `?${search}` : "")).toEqual(s);
+    }
+  });
 });
