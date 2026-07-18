@@ -1,7 +1,7 @@
 # Dynamic Facsimile-Highlight Render API — Design Spec (v3)
 
 **Date:** 2026-07-18
-**Status:** Approved design v3 (post two stern-review rounds), pending implementation plan
+**Status:** Implemented (Phase 1+2) on branch feat/fax-render-api — CloudFront failover wiring pending infra
 **Author:** Claude (brainstormed with KC)
 **Revision:** v3 folds in a second adversarial review round — see §16 for the changelog.
 All three v2-round blockers are now closed with verified DB/library evidence,
