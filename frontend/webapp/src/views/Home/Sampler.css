@@ -1613,11 +1613,9 @@ html[data-theme="dark"] .rpBoxPane .sectionDots { border-right-color: #444; }
 }
 .relationshipsTile .relEdgeNote { font-size: 0.85rem; opacity: 0.8; }
 
-/* ---- map-story tile (wave 1) ---- */
+/* ---- map-story tile: animated playback ---- */
 .mapStoryTile .mapStoryTitle { font-weight: 600; margin-bottom: 0.4rem; }
-.mapStoryTile .mapTileFrame { height: 260px; }
-.mapStoryTile .mapStoryMoves { padding-left: 1.2rem; margin: 0.6rem 0 0; }
-.mapStoryTile .mapStoryMove + .mapStoryMove { margin-top: 0.5rem; }
+.mapStoryTile .mapTileFrame { height: 260px; position: relative; }
 .mapStoryTile .mapStoryLeg { font-weight: 500; }
 .mapStoryTile .mapStoryRef {
   border: none;
@@ -1631,3 +1629,120 @@ html[data-theme="dark"] .rpBoxPane .sectionDots { border-right-color: #444; }
   padding: 0;
 }
 .mapStoryTile .mapStoryDesc { font-size: 0.85rem; opacity: 0.8; }
+.mapStoryTile .mapStoryDuration { font-size: 0.78rem; opacity: 0.6; margin-left: 0.5rem; }
+
+/* Playback control — required by WCAG 2.2.2, so it must stay reachable and
+   visible against both the light map tiles and dark theme chrome. */
+.mapStoryTile .mapStoryPlayToggle {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  z-index: 2;
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  font-size: 0.7rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.55);
+}
+.mapStoryTile .mapStoryPlayToggle:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+/* Carousel.
+   Slides STACK in a single grid cell rather than sitting in a flex row. A row
+   would make the track's intrinsic width N × the card width, and the masonry
+   columns (.samplerMasonryCol) have no declared width — they size to content,
+   so a flex track blows the column out and overflows the whole grid. Stacking
+   keeps intrinsic width at one card whatever the move count. */
+.mapStoryTile .mapStoryStage { overflow: hidden; margin-top: 0.6rem; min-width: 0; }
+.mapStoryTile .mapStoryTrack { display: grid; }
+.mapStoryTile .mapStorySlide {
+  grid-area: 1 / 1;
+  min-width: 0;
+  opacity: 0;
+  transform: translateX(1.5rem);
+  transition: opacity 350ms ease, transform 350ms ease;
+  pointer-events: none;
+}
+.mapStoryTile .mapStorySlide.isActive {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+/* Reduced motion: cross-fade only, no horizontal travel. */
+.mapStoryTile .mapStoryTrackStatic .mapStorySlide { transform: none; transition: opacity 200ms ease; }
+
+.mapStoryTile .mapStoryCard { display: flex; gap: 0.6rem; align-items: flex-start; }
+.mapStoryTile .mapStoryCardArt {
+  flex: 0 0 84px;
+  height: 84px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.06);
+}
+html[data-theme="dark"] .mapStoryTile .mapStoryCardArt { background: rgba(255, 255, 255, 0.08); }
+.mapStoryTile .mapStoryCardArt img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.mapStoryTile .mapStoryCardBody { flex: 1 1 auto; min-width: 0; }
+.mapStoryTile .mapStoryCardTitle .mapStoryTitleCardHeading { font-weight: 600; font-size: 1rem; }
+.mapStoryTile .mapStoryTitleCardMeta { font-size: 0.78rem; opacity: 0.6; margin-top: 0.3rem; }
+
+/* Flags a move whose start does not continue from the previous move's end.
+   Shown rather than hidden — these mark rows that need data cleanup. */
+.mapStoryTile .mapStoryDetached {
+  display: inline-block;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.05rem 0.35rem;
+  margin-left: 0.35rem;
+  border-radius: 3px;
+  opacity: 0.75;
+  border: 1px dashed currentColor;
+}
+
+/* Travelers */
+.mapStoryTile .mapStoryPeople {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+  list-style: none;
+  padding: 0;
+  margin: 0.4rem 0 0;
+}
+.mapStoryTile .mapStoryPerson { display: flex; align-items: center; gap: 0.25rem; }
+.mapStoryTile .mapStoryPerson img {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+.mapStoryTile .mapStoryPersonName { font-size: 0.72rem; opacity: 0.75; }
+.mapStoryTile .mapStoryPersonMore { font-size: 0.72rem; opacity: 0.6; }
+
+/* Step dots */
+.mapStoryTile .mapStoryDots {
+  display: flex;
+  gap: 0.3rem;
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0;
+}
+.mapStoryTile .mapStoryDot {
+  width: 7px;
+  height: 7px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  background: currentColor;
+  opacity: 0.25;
+}
+.mapStoryTile .mapStoryDot.isActive { opacity: 0.85; }
+
+@media (prefers-reduced-motion: reduce) {
+  .mapStoryTile .mapStoryTrack { transition: none; }
+}

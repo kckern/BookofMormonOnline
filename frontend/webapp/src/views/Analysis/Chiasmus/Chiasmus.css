@@ -515,9 +515,16 @@
     color: var(--text-secondary);
 }
 
-.chiasm .loadBar{
-    position: relative;
-    margin-top: -10rem;
+.chiasm.loading {
+    display: flex;
+    justify-content: center;
+    padding: 4rem 0;
+}
+/* The global .loadBar is position:absolute with an inline top:20vh — it would
+   escape the (unpositioned) panel and center over the whole page. Static keeps
+   it in the flex flow and makes the inline top inert. */
+.chiasm.loading .loadBar {
+    position: static;
 }
 
 /* Mobile: the detail panel becomes a full-screen overlay instead of a 40%

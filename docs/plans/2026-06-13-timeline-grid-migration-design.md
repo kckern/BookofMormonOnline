@@ -123,7 +123,7 @@ an unknown `grid` field would error and blank the timeline.
 Correct activation order (each step gated on the previous):
 1. **Deploy** the backend with `Event.grid` to prod. (`grid` resolves to `null`
    safely — `selectAll()` omits the not-yet-existent columns.)
-2. **Apply** `BoMOnlineWorkspace/sql/migrations/2026-06-13_bom_timeline_grid.sql`
+2. **Apply** the private workspace's `sql/migrations/2026-06-13_bom_timeline_grid.sql`
    (one-shot; down-migration included) and run `npm run codegen:db` to regenerate
    `codegen/db.d.ts` for real (then the optional `grid_*` in `TimelineRow` can
    become required-nullable).

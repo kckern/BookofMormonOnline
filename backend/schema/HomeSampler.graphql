@@ -79,7 +79,11 @@ type MapMoveSample {
   seq: Int
   start: String
   end: String
+  # Display names from bom_places.name — the slugs above stay as image keys.
+  startName: String
+  endName: String
   travelers: String
+  people: [MoveTraveler]
   description: String
   duration: String
   ref: String
@@ -87,6 +91,11 @@ type MapMoveSample {
   startLng: Float
   endLat: Float
   endLng: Float
+}
+
+type MoveTraveler {
+  slug: String
+  name: String
 }
 
 type FaxVersePage {

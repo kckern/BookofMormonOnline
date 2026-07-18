@@ -3,8 +3,8 @@
    everything else uses the app's semantic tokens. */
 
 .xref-root {
-  --xref-quote: #1a6446;
-  --xref-phrase: #4ea578;
+  --xref-quote: #0f7a4d;
+  --xref-phrase: #5cb98a;
   --xref-ramp-1: #dcece4;
   --xref-ramp-2: #a8d2bd;
   --xref-ramp-3: #6fb392;
@@ -29,9 +29,17 @@
   gap: 0.75rem;
 }
 
+.xref-readout {
+  margin: 0 0 0.25rem;
+  min-height: 1.3em; /* fixed slot — no layout jump when it fills */
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary, #444);
+}
+
 html[data-theme="dark"] .xref-root {
-  --xref-quote: #4ea578;
-  --xref-phrase: #1a6446;
+  --xref-quote: #0c7550;
+  --xref-phrase: #57a75f;
   --xref-ramp-1: #0b4530;
   --xref-ramp-2: #1a6446;
   --xref-ramp-3: #3f9169;
@@ -148,7 +156,21 @@ html[data-theme="dark"] .xref-root {
 
 .xref-ribbonwrap {
   flex: 1;
-  min-height: 640px;
+  /* compress toward 420px on short viewports so the chart clears the fold,
+     but never below 420 and never above the original 640 comfortable height */
+  min-height: clamp(420px, calc(100vh - 280px), 640px);
+  display: flex;
+  flex-direction: column;
+}
+
+/* measured element (wrapRef): only the svg lives here, so its clientHeight is
+   the flex-allocated leftover after the hint/readout siblings — NOT the svg's
+   own height. That is what stops the ResizeObserver from feeding back through
+   the svg's height (plotH = measured height - 40, and the -40 reserves the
+   in-svg "BIBLE"/"BOOK OF MORMON" spine-title row drawn at y=12). */
+.xref-svgbox {
+  flex: 1;
+  min-height: 0;
 }
 
 .xref-ribbonsvg {
@@ -207,7 +229,9 @@ html[data-theme="dark"] .xref-root {
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .xref-ribbon path {
+  /* animate the group, never the paths — a fill-mode:both animation on the
+     paths pins their opacity and defeats the .dim rule above */
+  .xref-ribbon {
     animation: xref-fadein 250ms both;
     animation-delay: calc(var(--i, 0) * 4ms);
   }
@@ -220,11 +244,45 @@ html[data-theme="dark"] .xref-root {
 
 /* ---- overview: table twin ---- */
 
-.xref-tabletwin {
-  width: 100%;
+.xref-tabletwin-panel {
   max-width: 720px;
   margin: 0 auto;
+  width: 100%;
+}
+
+.xref-tablefilter {
+  display: block;
+  width: 100%;
+  max-width: 280px;
+  margin: 0 0 0.5rem;
+  padding: 0.3rem 0.6rem;
+  font: inherit;
+  font-size: 0.9rem;
+  border: 1px solid var(--border, #ddd);
+  border-radius: 1ex;
+  background: var(--surface-1, #f8f8f8);
+  color: var(--text-primary, #212529);
+}
+
+.xref-tablewrap {
+  max-height: calc(100vh - 320px);
+  min-height: 300px;
+  overflow: auto;
+  border: 1px solid var(--border, #ddd);
+  border-radius: 0.5ex;
+}
+
+.xref-tabletwin {
+  width: 100%;
   border-collapse: collapse;
+}
+
+.xref-tabletwin thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface-1, #f8f8f8);
+  box-shadow: 0 1px 0 var(--border, #ddd);
 }
 
 .xref-tabletwin th,
@@ -237,6 +295,36 @@ html[data-theme="dark"] .xref-root {
 .xref-tabletwin td.num {
   text-align: right;
   font-variant-numeric: tabular-nums;
+}
+
+.xref-pairrow {
+  cursor: pointer;
+}
+
+.xref-pairrow:hover {
+  background: var(--surface-2, #f0f0f0);
+}
+
+.xref-tabletwin tfoot td {
+  position: sticky;
+  bottom: 0;
+  font-weight: 700;
+  background: var(--surface-1, #f8f8f8);
+  border-bottom: none;
+  box-shadow: 0 -1px 0 var(--border, #ddd);
+}
+
+.xref-rowlink {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--link, #345496);
+  cursor: pointer;
+}
+
+.xref-rowlink:hover {
+  text-decoration: underline;
 }
 
 /* ---- anchored view ---- */
@@ -252,6 +340,7 @@ html[data-theme="dark"] .xref-root {
   max-height: calc(100vh - 220px);
   overflow-y: auto;
   padding-right: 0.5rem;
+  position: relative; /* offsetParent for the anchored-book auto-scroll (Rail.jsx) */
 }
 
 .xref-rail-groupname {
@@ -311,12 +400,12 @@ html[data-theme="dark"] .xref-root {
 }
 
 .xref-chaptercell {
-  width: 22px;
-  height: 22px;
+  width: 26px;
+  height: 26px;
   border: 1px solid var(--border, #ddd);
   border-radius: 4px;
   background: var(--surface-1, #f8f8f8);
-  font-size: 0.6rem;
+  font-size: 0.65rem;
   color: var(--text-secondary, #444);
   cursor: pointer;
   padding: 0;
@@ -345,6 +434,22 @@ html[data-theme="dark"] .xref-chaptercell.ramp-6 {
   min-width: 0;
 }
 
+.xref-detailhead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  max-width: 860px;
+}
+
+/* on a narrow column the heading wraps to multiple lines; keep the decorative
+   legend intact and let it drop below cleanly rather than getting crushed */
+.xref-detailhead .xref-legend {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
 .xref-detailheading {
   font-weight: 800;
   font-size: 1.15rem;
@@ -367,7 +472,7 @@ html[data-theme="dark"] .xref-chaptercell.ramp-6 {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  max-width: 640px;
+  max-width: 860px;
 }
 
 .xref-bar {
@@ -375,6 +480,7 @@ html[data-theme="dark"] .xref-chaptercell.ramp-6 {
   grid-template-columns: 140px 1fr 3.5em;
   align-items: center;
   gap: 0.75rem;
+  width: 100%;
   background: none;
   border: none;
   border-radius: 0.5ex;
@@ -406,17 +512,20 @@ html[data-theme="dark"] .xref-chaptercell.ramp-6 {
 
 .xref-bar-quote {
   background: var(--xref-quote);
-  border-radius: 0 4px 4px 0;
+  border-radius: 2px 0 0 2px;
   min-width: 0;
 }
 
 .xref-bar-phrase {
   background: var(--xref-phrase);
-  border-radius: 0 4px 4px 0;
+  border-radius: 0 2px 2px 0;
   min-width: 0;
 }
 
-.xref-bar-quote:first-child { border-radius: 2px 0 0 2px; }
+.xref-bar-quote:only-child,
+.xref-bar-phrase:only-child {
+  border-radius: 2px;
+}
 
 .xref-bar-count {
   font-variant-numeric: tabular-nums;
@@ -431,10 +540,23 @@ html[data-theme="dark"] .xref-chaptercell.ramp-6 {
 
 /* ---- reader ---- */
 
+.xref-reader .xref-header {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
 .xref-readertitle {
   font-weight: 800;
   font-size: 1.2rem;
   margin: 0;
+}
+
+.xref-readercount {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-muted, #777);
+  font-variant-numeric: tabular-nums;
 }
 
 .xref-readertitle .book {
@@ -460,6 +582,17 @@ html[data-theme="dark"] .xref-chaptercell.ramp-6 {
 .xref-loadmore {
   display: block;
   margin: 1rem auto 2rem;
+}
+
+.xref-loadrow {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  margin: 1rem 0 2rem;
+}
+
+.xref-loadrow .xref-loadmore {
+  margin: 0;
 }
 
 .xref-sort {
@@ -511,9 +644,9 @@ html[data-theme="dark"] .xref-chaptercell.ramp-6 {
   font-weight: bold;
   font-size: 1rem;
   flex-grow: 0;
+  flex-shrink: 0;
   line-height: 1.5rem;
   white-space: nowrap;
-  overflow: hidden;
   padding-right: 1ex;
   color: var(--text-primary, #212529);
 }
@@ -544,13 +677,12 @@ html[data-theme="dark"] .xref-chaptercell.ramp-6 {
 }
 
 .verseViewerTable .scriptureCell p span.highlight {
-  color: #cc0000;
-  background-color: #ffff0033;
+  background-color: rgba(92, 185, 138, 0.3);
+  box-shadow: inset 0 -2px 0 var(--xref-quote);
 }
 
 html[data-theme="dark"] .verseViewerTable .scriptureCell p span.highlight {
-  color: #ff8080;
-  background-color: #ffff0022;
+  background-color: rgba(87, 167, 95, 0.35);
 }
 
 /* ---- responsive ---- */
@@ -564,6 +696,11 @@ html[data-theme="dark"] .verseViewerTable .scriptureCell p span.highlight {
   .xref-anchorbody {
     flex-direction: column;
     gap: 1rem;
+    /* column direction makes align-items:flex-start a width constraint */
+    align-items: stretch;
+  }
+  .xref-detail {
+    width: 100%;
   }
   .xref-rail {
     flex-basis: auto;
@@ -571,7 +708,10 @@ html[data-theme="dark"] .verseViewerTable .scriptureCell p span.highlight {
     width: 100%;
   }
   .xref-spinelabel { display: none; }
-  .xref-ribbonwrap { min-height: 420px; }
+  /* the ref is the row's identity — give it the space; drop the heading */
+  .verseViewerTable td.scriptureRef .heading { display: none; }
+  /* justified text in ~150px columns is all rivers */
+  .verseViewerTable .scriptureCell p { text-align: left; }
 }
 
 @media (prefers-reduced-motion: reduce) {

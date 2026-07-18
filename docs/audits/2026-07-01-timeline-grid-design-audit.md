@@ -142,7 +142,7 @@ red incursion "tab" pills behind record-keeper medallions).
 
 **Final adversarial sign-off: all four dimensions PASS, zero blocking findings** (design
 system / layout / presentation / data completion, sonnet judges vs the 4 dark-theme
-reference screenshots in `BoMOnlineWorkspace/content/timeline`). 16 regions, interior
+reference screenshots in the private workspace's `content/timeline`). 16 regions, interior
 cream perforations eliminated (full-scene scan clean above the label band), 70 timeline
 tests pass. Deferred non-blocking residuals: Ammon hexagon diamond-notch shape variety,
 Helaman/Pahoran hollow-ring war-council motif, Hagoth westward loop bump, longer/softer

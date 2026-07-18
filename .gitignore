@@ -48,3 +48,6 @@ docs/audits/dm-cleanup-backup-2026-06-13.json
 
 # Brainstorming visual-companion sessions (superpowers plugin)
 .superpowers/
+
+# Local-only Claude notes (private-repo pointers, machine-specific setup)
+CLAUDE.local.md

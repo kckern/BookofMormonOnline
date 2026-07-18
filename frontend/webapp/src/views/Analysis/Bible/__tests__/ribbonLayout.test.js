@@ -42,4 +42,28 @@ describe("ribbonLayout", () => {
     expect(d).toMatch(/^M 0,0 C /);
     expect(d).toMatch(/Z$/);
   });
+
+  test("layoutSpine floors tiny items at minPx and still fits the height", () => {
+    const items = [
+      { key: "big", weight: 990 },
+      { key: "tiny", weight: 10 },
+    ];
+    const spine = layoutSpine(items, 500, 0, 20);
+    const tiny = spine.get("tiny");
+    const big = spine.get("big");
+    expect(tiny.y1 - tiny.y0).toBeGreaterThanOrEqual(20);
+    expect(big.y1).toBeLessThanOrEqual(500 + 0.001);
+  });
+
+  test("layoutRibbons passes spineMinPx through to both spines", () => {
+    const left = [{ key: "L1", weight: 999 }, { key: "L2", weight: 1 }];
+    const right = [{ key: "R1", weight: 1000 }];
+    const links = [
+      { left: "L1", right: "R1", value: 999 },
+      { left: "L2", right: "R1", value: 1 },
+    ];
+    const { leftSpine } = layoutRibbons({ left, right, links, height: 400, spineMinPx: 14 });
+    const l2 = leftSpine.get("L2");
+    expect(l2.y1 - l2.y0).toBeGreaterThanOrEqual(14);
+  });
 });

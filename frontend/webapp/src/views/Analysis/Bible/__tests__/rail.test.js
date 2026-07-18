@@ -53,4 +53,30 @@ describe("Rail", () => {
     fireEvent.click(cells[11]);
     expect(onChapter).toHaveBeenCalledWith(undefined);
   });
+
+  test("centers the anchored book inside the rail on mount", () => {
+    // jsdom has zero geometry; fake distinct heights so the centering math is
+    // observable: rail 200px tall, anchored book 40px, sitting at offsetTop 500.
+    // Expected scrollTop = 500 - 200/2 + 40/2 = 420.
+    try {
+      jest.spyOn(HTMLElement.prototype, "clientHeight", "get").mockImplementation(
+        function () {
+          return this.classList?.contains("anchored") ? 40 : 200;
+        }
+      );
+      Object.defineProperty(HTMLElement.prototype, "offsetTop", {
+        configurable: true,
+        get() {
+          return this.classList?.contains("anchored") ? 500 : 0;
+        },
+      });
+      render(
+        <Rail canon="kjv" book="Isaiah" onAnchor={jest.fn()} onChapter={jest.fn()} />
+      );
+      expect(screen.getByRole("navigation").scrollTop).toBe(420);
+    } finally {
+      delete HTMLElement.prototype.offsetTop;
+      jest.restoreAllMocks();
+    }
+  });
 });

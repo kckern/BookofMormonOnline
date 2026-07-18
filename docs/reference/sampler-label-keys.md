@@ -15,7 +15,7 @@ redesign — the sampler shell (`src/views/Home/Sampler.js`), its tiles
 
 The dev DB user (`reader@%`) is **read-only**, so new keys cannot be inserted
 from this environment. Someone with write access (the `bom_app` user in
-`BoMOnlineWorkspace`) must add the rows marked **new** below to the `labels`
+the private workspace repo) must add the rows marked **new** below to the `labels`
 table. Until they do, those strings render as their raw key.
 
 ## Status legend

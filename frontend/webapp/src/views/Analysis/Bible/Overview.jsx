@@ -5,16 +5,20 @@ import { layoutRibbons, ribbonPath } from "./ribbonLayout";
 import TableTwin from "./TableTwin";
 
 const LABEL_PAD = 8;
-const FALLBACK_H = 640;
+const FALLBACK_H = 420;
 
 // Bipartite ribbon overview. Left spine: the Bible's 9 divisions (book-level
 // ribbons on both sides read as spaghetti — the division default is the spec's
 // §4.1 legibility guardrail); clicking a division expands it into its books.
 // Right spine: the Book of Mormon's 15 books. Ribbons are two-tone
 // (quote core / phrase sheath).
-export default function Overview({ navigate }) {
-  const [mode, setMode] = useState("chart");
-  const [expanded, setExpanded] = useState(null); // Bible division name
+export default function Overview({ state = {}, navigate }) {
+  const mode = state.mode === "table" ? "table" : "chart";
+  const expanded = state.expanded || null; // Bible division name
+  const setMode = (m) =>
+    navigate({ view: "overview", mode: m === "table" ? "table" : undefined, expanded: expanded || undefined });
+  const setExpanded = (name) =>
+    navigate({ view: "overview", mode: mode === "table" ? "table" : undefined, expanded: name || undefined });
   const [active, setActive] = useState(null); // {type:'node'|'ribbon', key}
   const wrapRef = useRef(null);
   const [size, setSize] = useState({ width: 960, height: FALLBACK_H });
@@ -22,37 +26,57 @@ export default function Overview({ navigate }) {
   useLayoutEffect(() => {
     const el = wrapRef.current;
     if (!el) return;
-    const measure = () =>
-      setSize({
-        width: el.clientWidth || 960,
-        height: Math.max(el.clientHeight || 0, FALLBACK_H),
+    let frame = null;
+    const measure = () => {
+      frame = null;
+      // bail when unchanged — the observer re-fires when the svg resizes the
+      // wrapper, and echoing identical state back re-triggered it forever
+      setSize((prev) => {
+        const width = el.clientWidth || 960;
+        const height = Math.max(el.clientHeight || 0, FALLBACK_H);
+        return prev.width === width && prev.height === height
+          ? prev
+          : { width, height };
       });
+    };
+    const schedule = () => {
+      if (frame == null) frame = requestAnimationFrame(measure);
+    };
     measure();
     if (typeof ResizeObserver !== "undefined") {
-      const ro = new ResizeObserver(measure);
+      const ro = new ResizeObserver(schedule);
       ro.observe(el);
-      return () => ro.disconnect();
+      return () => {
+        ro.disconnect();
+        if (frame != null) cancelAnimationFrame(frame);
+      };
     }
-    window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
+    window.addEventListener("resize", schedule);
+    return () => {
+      window.removeEventListener("resize", schedule);
+      if (frame != null) cancelAnimationFrame(frame);
+    };
   }, []);
 
   // Left spine: divisions, with one optionally expanded into its books.
-  const { left, leftBookSet, links } = useMemo(() => {
+  const { left, links } = useMemo(() => {
     const left = [];
     const leftBookSet = new Set();
     for (const group of canons.kjv.groups) {
       if (group.name === expanded) {
         for (const b of group.books) {
-          left.push({ key: b.name, weight: b.verses, kind: "book", group: group.name });
+          const weight = bookTotal("kjv", b.name);
+          if (!weight) continue; // zero-ref books carry no ribbons
+          left.push({ key: b.name, weight, kind: "book", group: group.name });
           leftBookSet.add(b.name);
         }
       } else {
-        left.push({
-          key: group.name,
-          weight: group.books.reduce((a, b) => a + b.verses, 0),
-          kind: "division",
-        });
+        const weight = group.books.reduce(
+          (a, b) => a + bookTotal("kjv", b.name),
+          0
+        );
+        if (!weight) continue;
+        left.push({ key: group.name, weight, kind: "division" });
       }
     }
     const links = [];
@@ -66,18 +90,42 @@ export default function Overview({ navigate }) {
         links.push({ left: p.bibleBookName, right: p.bomBookName, value: p.total, quotes: p.quotes });
       }
     }
-    return { left, leftBookSet, links };
+    return { left, links };
   }, [expanded]);
 
   const right = useMemo(
-    () => canons.bom.books.map((b) => ({ key: b.name, weight: b.verses })),
+    () =>
+      canons.bom.books
+        .map((b) => ({ key: b.name, weight: bookTotal("bom", b.name) }))
+        .filter((b) => b.weight > 0),
     []
   );
 
+  const readout = useMemo(() => {
+    if (!active) return null;
+    if (active.type === "node") {
+      const total = links
+        .filter((l) => l.left === active.key || l.right === active.key)
+        .reduce((a, l) => a + l.value, 0);
+      return `${active.key} · ${total} references`;
+    }
+    const [rightKey, leftKey] = active.key.split("|");
+    const link = links.find((l) => l.left === leftKey && l.right === rightKey);
+    return link
+      ? `${link.left} ↔ ${link.right} · ${link.value} references · ${link.quotes} quotes`
+      : null;
+  }, [active, links]);
+
   const plotH = size.height - 40;
+  const n = Math.max(left.length, right.length, 1);
+  // target a 14px floor; never demand more than the plot can evenly give (plotH/n),
+  // which keeps small books at/above the ~9px label threshold whenever plotH allows.
+  // (No /2 divisor — on a short viewport plotH/n is the largest floor that still fits
+  // all n segments, so small slivers keep their labels down to plotH ≈ 9n.)
+  const spineMinPx = Math.min(14, plotH / n);
   const { leftSpine, rightSpine, ribbons } = useMemo(
-    () => layoutRibbons({ left, right, links, height: plotH, gap: 3, minPx: 1.5 }),
-    [left, right, links, plotH]
+    () => layoutRibbons({ left, right, links, height: plotH, gap: 3, minPx: 1.5, spineMinPx }),
+    [left, right, links, plotH, spineMinPx]
   );
 
   // reserve room for labels on wide screens; hug the edges on small ones
@@ -119,7 +167,7 @@ export default function Overview({ navigate }) {
       : () => setExpanded(expanded === item.key ? null : item.key);
     const attrs = isBook ? { "data-book": item.key } : { "data-division": item.key };
     return (
-      <g key={item.key}>
+      <g key={item.key} role="listitem">
         <rect
           {...attrs}
           {...nodeProps(item.key, label, onActivate)}
@@ -144,17 +192,17 @@ export default function Overview({ navigate }) {
     );
   });
 
-  const rightSegments = canons.bom.books.map((b) => {
-    const pos = rightSpine.get(b.name);
+  const rightSegments = right.map(({ key: name }) => {
+    const pos = rightSpine.get(name);
     if (!pos) return null;
-    const dim = active?.type === "node" && active.key !== b.name;
-    const label = `${b.name}, ${bookTotal("bom", b.name)} references, ${partnersFor("bom", b.name).length} partner books`;
+    const dim = active?.type === "node" && active.key !== name;
+    const label = `${name}, ${bookTotal("bom", name)} references, ${partnersFor("bom", name).length} partner books`;
     return (
-      <g key={b.name}>
+      <g key={name} role="listitem">
         <rect
-          data-book={b.name}
-          {...nodeProps(b.name, label, () =>
-            navigate({ view: "anchor", canon: "bom", book: b.name })
+          data-book={name}
+          {...nodeProps(name, label, () =>
+            navigate({ view: "anchor", canon: "bom", book: name })
           )}
           className={`xref-spineseg book ${dim ? "dim" : ""}`}
           x={x1 - 16}
@@ -165,12 +213,12 @@ export default function Overview({ navigate }) {
         {pos.y1 - pos.y0 > 9 && (
           <text
             className="xref-spinelabel"
-            x={x1 + LABEL_PAD - 16 + 16}
+            x={x1 + LABEL_PAD}
             y={(pos.y0 + pos.y1) / 2}
             dominantBaseline="middle"
             textAnchor="start"
           >
-            {b.name}
+            {name}
           </text>
         )}
       </g>
@@ -195,21 +243,28 @@ export default function Overview({ navigate }) {
           >
             {mode === "chart" ? "View as table" : "View as chart"}
           </button>
+          {expanded && mode === "chart" && (
+            <button className="xref-modetoggle" onClick={() => setExpanded(null)}>
+              ◂ collapse {expanded}
+            </button>
+          )}
         </p>
       </header>
 
       {mode === "table" ? (
-        <TableTwin />
+        <TableTwin navigate={navigate} />
       ) : (
-        <div className="xref-ribbonwrap" ref={wrapRef}>
+        <div className="xref-ribbonwrap">
           <p className="xref-hint">
             Click a Bible division to expand its books · click any book to explore it
-            {expanded && (
-              <button className="xref-modetoggle" onClick={() => setExpanded(null)}>
-                collapse {expanded}
-              </button>
-            )}
           </p>
+          <p className="xref-readout" data-testid="xref-readout" aria-live="polite">
+            {readout || "Hover a ribbon or book for details"}
+          </p>
+          {/* wrapRef measures THIS box, which holds only the svg — its clientHeight
+              is the flex-allocated leftover after hint/readout, never the svg's own
+              height, so the ResizeObserver can't feed back through plotH. */}
+          <div className="xref-svgbox" ref={wrapRef}>
           <svg
             className="xref-ribbonsvg"
             width={size.width}
@@ -236,7 +291,6 @@ export default function Overview({ navigate }) {
             <g>
               {ribbons.map((r, i) => {
                 const key = `${r.right}|${r.left}`;
-                const leftIsBook = leftBookSet.has(r.left);
                 const quoteFrac = r.value ? r.quotes / r.value : 0;
                 const lMid = r.lY0 + (r.lY1 - r.lY0) * quoteFrac;
                 const rMid = r.rY0 + (r.rY1 - r.rY0) * quoteFrac;
@@ -249,7 +303,7 @@ export default function Overview({ navigate }) {
                   view: "anchor",
                   canon: "bom",
                   book: r.right,
-                  ...(leftIsBook ? { highlight: r.left } : {}),
+                  highlight: r.left, // book OR division — both resolve via ?hl=
                 };
                 return (
                   <g
@@ -289,6 +343,7 @@ export default function Overview({ navigate }) {
               {rightSegments}
             </g>
           </svg>
+          </div>
         </div>
       )}
     </div>

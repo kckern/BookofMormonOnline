@@ -104,7 +104,7 @@ URL — previously the dicebear URL. Sidebar and DM panel now agree.
 ## Remaining
 
 1. Bulk rewrite of stored dead-host (`avatars.dicebear.com` v1) URLs — data
-   migration, SQL belongs in BoMOnlineWorkspace.
+   migration, SQL belongs in the private workspace repo.
 2. Write paths (`upsertUser`/`updateUserProfileUrl`) still accept dead-host
    URLs; the read guard masks them. Consider `isDeadAvatarHost` at the two
    write sites.

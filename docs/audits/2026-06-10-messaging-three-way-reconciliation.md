@@ -104,7 +104,7 @@ Export totals to import: ~2,790 users · ~258 channels (274 − 16 desk) · memb
    writable creds): parse YAML (`js-yaml`), apply the transforms above, bulk-insert in
    FK-safe order, idempotent. Dry-run mode that reports counts without writing.
 3. **Clear the test seed** (TRUNCATE messenger_* in FK order) on the target DB.
-4. **Run against a writable DB** (`bom_app` in BoMOnlineWorkspace — the dev host is
+4. **Run against a writable DB** (`bom_app` in the private workspace repo — the dev host is
    read-only `reader`): import, then validate row counts vs export, spot-check a DM and a
    group thread, confirm reactions/files landed.
 5. **End-to-end with real data:** point a backend at the seeded DB, run the

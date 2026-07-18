@@ -386,5 +386,5 @@ git push origin dev
 
 - **Legacy `/src` backend** — being replaced; its signin/genUserAvatar copies die with it.
 - **`backend/src/auth/identity.ts genUserAvatar`** — byte-parity port pinned by baselines; signup's gravatar-or-dicebear write-time choice (`resolveAvatarUrl`) is a different policy decision and currently fine. Don't merge generators across the parity boundary.
-- **Bulk rewrite of stored dead-host URLs** — data migration; SQL belongs in BoMOnlineWorkspace. The Task 5 read guard makes the API correct meanwhile.
+- **Bulk rewrite of stored dead-host URLs** — data migration; SQL belongs in the private workspace repo. The Task 5 read guard makes the API correct meanwhile.
 - **`StudyGroupSelect.js` initials generator** — group initials, a different feature, not a user avatar.
