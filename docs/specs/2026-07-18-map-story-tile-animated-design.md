@@ -6,15 +6,40 @@
 ## Problem
 
 The map story tile renders a journey as one static polyline plus a numbered
-list of moves. Two things go wrong, both visible in the shipped tile:
+list of moves. `pathCoords` (`MapStoryTileInner.js:31`) collapses the whole
+journey into a single `LineString` through the first move's start followed by
+every move's end. Three things go wrong.
 
-1. **Markers stack.** `pathCoords` (`MapStoryTileInner.js:31`) collapses the
-   whole journey into a single `LineString` through every stop and dedupes
-   nothing. A story that revisits a place — Alma 2's Amlicite War returns to
-   zarahemla on moves 1, 4, and 5 — stacks markers on the same pixel and
-   crosses legs over each other. The numbered circles become unreadable.
-2. **The list is inert.** Eight moves of prose below the map is a wall of text,
-   and nothing connects a list item to the leg it describes.
+### 1. The polyline fabricates legs that never happened — a correctness bug
+
+Chaining all stops into one line assumes move *N* ends where move *N+1* begins.
+It often doesn't. In the Amlicite War story, move 2 ends at `valley-of-gideon`
+while move 3 starts at `hill-amnihu`, so the tile draws a
+`valley-of-gideon → minon` connection that exists nowhere in the data.
+
+Measured across the corpus:
+
+```sql
+SELECT COUNT(*) AS discontinuities, COUNT(DISTINCT a.parent) AS stories_affected
+FROM bom_map_move a
+JOIN bom_map_move b ON b.parent = a.parent AND b.seq = a.seq + 1
+WHERE a.end <> b.start;
+--  discontinuities: 47   stories_affected: 21   (of 55 stories)
+```
+
+**38% of stories render at least one invented leg.** This is the most serious
+defect and the main reason to render per-move rather than as one path.
+
+### 2. Markers stack on revisited places
+
+The same collapse dedupes nothing. The Amlicite War visits `zarahemla` at both
+index 0 and index 4, so marker 5 draws directly on top of marker 1 — in the
+shipped tile, marker 1 is invisible.
+
+### 3. The list is inert
+
+Seven or eight moves of prose below the map is a wall of text, and nothing
+connects a list item to the leg it describes.
 
 Raw place slugs also leak into the UI (`hill-amnihu` where `Hill Amnihu`
 belongs) because the sampler never selects `bom_places.name`.
@@ -25,8 +50,26 @@ One story plays as a timed sequence. A shared playhead drives both the map and
 a card carousel: leg N's dashed line grows into its destination while card N
 slides in. After the last move a title card shows, then the loop restarts.
 
-Animating per-leg is what structurally fixes the overlap — only one leg is lit
-at a time, and markers dedupe by place slug.
+Rendering per-leg rather than as one polyline is what fixes problems 1 and 2
+structurally: each leg is drawn from its own `start`→`end` pair, so no
+connection is invented across a discontinuity, and markers dedupe by place
+slug so revisits stop stacking.
+
+## Verified data
+
+All figures confirmed against `bom_prd` via the workspace read-only CLI
+(`BoMOnlineWorkspace/cli/db.mjs`) on 2026-07-18.
+
+| Table | Finding |
+|---|---|
+| `bom_map_story` | 55 stories |
+| `bom_map_move` | 238 moves; 47 seq-adjacent discontinuities across 21 stories |
+| `bom_map_move_people` | 617 rows covering 234 of 238 moves — travelers are near-universal; 4 moves have none |
+| `bom_map_move_coords` | **0 rows.** Placeholder table; curved routes are a TODO, not available now |
+| `bom_places.name` | Populated with display names ("City of Zarahemla", "Hill Amnihu") |
+
+Travelers include both individuals (`alma2`, `amlici`) and collective groups
+(`nephites`, `lamanites`, `amlicites`). Both have avatar images.
 
 ## Data layer
 
@@ -70,14 +113,17 @@ type MoveTraveler {
 The seeded hub query (`ORDER BY MD5(...)`) is untouched, so a given seed still
 selects the same story and the existing contract tests hold.
 
-### Out of scope: real route geometry
+### TODO (not this change): curved routes
 
 `bom_map_move_coords.coords` (Json, keyed by map + `segment_guid`,
-`backend/codegen/db.d.ts:186`) would give true curved routes instead of
-straight legs. **Nothing in the codebase reads it**, and whether it is
-populated could not be verified from the development laptop — no DB reachable.
-Straight legs ship. If the table turns out to hold data, swapping the per-leg
-`LineString` geometry is contained to one function in the map component.
+`backend/codegen/db.d.ts:186`) is intended to hold true curved routes. It is
+**empty — 0 rows against 238 moves** — and nothing in the codebase reads it.
+Confirmed a placeholder awaiting authored path data.
+
+Straight legs ship now. Because each leg is already its own Feature, swapping
+in a multi-point `LineString` per leg later is contained to the geometry
+construction in `MapStoryTileInner` — the animation interpolates along whatever
+coordinate list it is handed.
 
 ## Components
 
@@ -101,11 +147,13 @@ pauses and pins to that step.
 
 ### `MapStoryTileInner.js` — map renderer, props `{ moves, step, animate }`
 
-Replaces the single all-stops `LineString`:
+Replaces the single all-stops `LineString` with **one Feature per move**, built
+from that move's own `start`→`end` coordinates. This is what stops
+discontinuous stories from drawing invented connections.
 
 - Legs `< step` — static dim dashes.
 - Leg `step` — grows via `requestAnimationFrame`, interpolating along the
-  segment and calling `setGeometry` per frame on one Feature.
+  segment and calling `setGeometry` per frame on that leg's Feature.
 - Legs `> step` — not drawn.
 - Markers dedupe by place slug; the current destination scales up and lights.
 
@@ -127,12 +175,24 @@ The title card (final step) shows story title, description, and stop count.
 
 Imagery is deliberately on the card rather than on map markers: place images
 run 360–400 KB each, and putting them on markers would both pull every one
-upfront and reintroduce the crowding this design exists to fix. On the card
-they load one at a time as steps advance. Avatars are light (65–75 KB).
+upfront and reintroduce the crowding this design exists to fix.
 
-Asset paths, both verified live:
-- `${assetUrl}/places/{slug}`
-- `${assetUrl}/people/{slug}`
+**Asset weight is the binding constraint.** Measured:
+
+| Asset | Size |
+|---|---|
+| `${assetUrl}/places/{slug}` | 358–399 KB |
+| `${assetUrl}/people/{slug}` — individuals | 63–197 KB |
+| `${assetUrl}/people/{slug}` — groups (`nephites`, `lamanites`) | ~233 KB |
+
+A move with five travelers (`alma2, amlici, amlicites, lamanites, nephites` —
+a real row) would pull roughly 1 MB of avatars alone. So:
+
+- Images render **only for the active step and its immediate neighbour**, not
+  for every card in the track. Off-window cards hold a placeholder.
+- Avatars are capped at 4 visible with a `+N` overflow chip.
+- Every image is `loading="lazy"` with an `onError` hide, matching the existing
+  tile convention (`FaxVerseTile.js:28`).
 
 ## Reduced motion
 
@@ -144,9 +204,13 @@ continues, and the pause control remains available in both modes.
 
 - `sampleMapStory` returns `startName`/`endName`/`people` for a seeded story;
   same seed still selects the same story (regression on the existing contract).
-- Moves whose places have no `bom_map_move_people` rows yield `people: []`
-  rather than null-crashing the card.
+- Moves with no `bom_map_move_people` rows yield `people: []` rather than
+  null-crashing the card — 4 of 238 moves are in this state, so it is reachable.
+- **Discontinuity guard:** a story whose move *N* `end` differs from move *N+1*
+  `start` renders exactly `moves.length` leg Features and draws no segment
+  between the mismatched pair. This is the regression test for the fabricated-leg
+  bug and should use a fixture modelled on the Amlicite War rows.
+- Marker count equals *distinct* place count, not point count — the regression
+  guard for the stacking bug.
 - Tile renders and does not start its timer while offscreen.
 - `prefers-reduced-motion` renders the full path with no rAF scheduled.
-- Marker count equals *distinct* place count, not move count — the regression
-  guard for the stacking bug.
