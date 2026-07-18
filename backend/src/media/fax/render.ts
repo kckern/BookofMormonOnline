@@ -1,5 +1,6 @@
 import sharp from 'sharp';
 import type { Fragment } from './types.js';
+import { DIM_OPACITY, JPEG_QUALITY } from './constants.js';
 
 export interface NotchFill {
   tl?: { w: number; h: number };   // exterior top-left notch (first verse), or undefined
@@ -66,4 +67,60 @@ export async function stitchHorizontal(images: Buffer[], gutter: number, paper: 
   let left = 0;
   const layers = images.map((input, i) => { const o = { input, top: 0, left }; left += ds[i]!.w + gutter; return o; });
   return sharp({ create: { width, height, channels: 3, background: paper } }).composite(layers).jpeg().toBuffer();
+}
+
+export interface RenderArgs {
+  mode: 'page' | 'crop';
+  ext: 'jpg' | 'webp';
+  width: number | 'full';
+  fragments: Fragment[];
+  provider: (page: number) => Promise<Buffer>;   // page -> scan buffer
+  paper: string;
+  gutter?: number;
+}
+
+const encode = (img: sharp.Sharp, ext: 'jpg' | 'webp') =>
+  (ext === 'webp' ? img.webp({ quality: JPEG_QUALITY }) : img.jpeg({ quality: JPEG_QUALITY })).toBuffer();
+
+const downscale = async (buf: Buffer, width: number | 'full'): Promise<Buffer> => {
+  if (width === 'full') return buf;
+  const m = await sharp(buf).metadata();
+  if ((m.width ?? 0) <= width) return buf;              // never upscale
+  return sharp(buf).resize({ width }).toBuffer();
+};
+
+export async function renderImage(args: RenderArgs): Promise<Buffer> {
+  const { mode, ext, width, fragments, provider, paper, gutter = 12 } = args;
+  if (fragments.length === 0) throw new Error('no fragments to render');
+
+  if (mode === 'crop') {
+    // one crop per fragment, downscaled, stacked vertically.
+    // Exterior notches only: first fragment's first box carries the TL notch;
+    // last fragment's last box carries the BR notch. Interior notches stay lit.
+    const crops: Buffer[] = [];
+    for (let i = 0; i < fragments.length; i++) {
+      const f = fragments[i]!;
+      const scan = await provider(f.page);
+      const notch: NotchFill = { paper };
+      if (i === 0 && f.boxes[0]) notch.tl = { w: f.boxes[0].tlw, h: f.boxes[0].tlh };
+      const lastBox = f.boxes[f.boxes.length - 1];
+      if (i === fragments.length - 1 && lastBox) notch.br = { w: lastBox.brw, h: lastBox.brh };
+      const raw = await renderFragmentCrop(scan, f, notch);
+      crops.push(await downscale(raw, width));
+    }
+    return encode(sharp(await stitchVertical(crops, paper)), ext);
+  }
+
+  // page mode: group fragments by page, dim each page, downscale, spread horizontally
+  const pages = [...new Set(fragments.map((f) => f.page))];
+  const pageBufs: Buffer[] = [];
+  for (const page of pages) {
+    const scan = await provider(page);
+    const meta = await sharp(scan).metadata();
+    const rects = fragments.filter((f) => f.page === page).map((f) => ({ x: f.x, y: f.y, w: f.w, h: f.h }));
+    const dimmed = await renderPageDimmed(scan, meta.width!, meta.height!, rects, DIM_OPACITY);
+    pageBufs.push(await downscale(dimmed, width));
+  }
+  const spread = pageBufs.length === 1 ? pageBufs[0]! : await stitchHorizontal(pageBufs, gutter, paper);
+  return encode(sharp(spread), ext);
 }

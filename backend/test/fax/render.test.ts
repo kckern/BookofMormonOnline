@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import sharp from 'sharp';
-import { renderFragmentCrop, renderPageDimmed } from '../../src/media/fax/render.js';
+import { renderFragmentCrop, renderPageDimmed, renderImage } from '../../src/media/fax/render.js';
 import { stitchVertical, stitchHorizontal } from '../../src/media/fax/render.js';
 import type { Fragment } from '../../src/media/fax/types.js';
 
@@ -59,5 +59,24 @@ describe('stitch', () => {
     const m = await sharp(out).metadata();
     expect(m.width).toBe(210);   // 100 + 10 gutter + 100
     expect(m.height).toBe(60);   // max height
+  });
+});
+
+describe('renderImage', () => {
+  const provider = async () => fakeScan();  // one page only
+  const frag = (page: number): Fragment => ({
+    page, pageWidth: 400, x: 50, y: 100, w: 300, h: 60,
+    boxes: [{ verseId: 1, page, pageWidth: 400, x: 50, y: 100, w: 300, h: 60, tlw: 0, tlh: 0, brw: 0, brh: 0 }],
+  });
+
+  it('crop mode single page → ~300px wide (downscaled to width=200)', async () => {
+    const out = await renderImage({ mode: 'crop', ext: 'jpg', width: 200, fragments: [frag(1)], provider, paper: '#fff' });
+    const m = await sharp(out).metadata();
+    expect(m.width).toBeLessThanOrEqual(200);
+  });
+  it('page mode two pages → N-up spread', async () => {
+    const out = await renderImage({ mode: 'page', ext: 'jpg', width: 'full', fragments: [frag(1), frag(2)], provider, paper: '#fff' });
+    const m = await sharp(out).metadata();
+    expect(m.width).toBeGreaterThan(400);   // two pages side by side
   });
 });
