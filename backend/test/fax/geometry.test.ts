@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { sanitizeBoxes, dedupeBoxes, clusterColumns, toFragments } from '../../src/media/fax/geometry.js';
+import { sanitizeBoxes, dedupeBoxes, clusterColumns, toFragments, clampPages } from '../../src/media/fax/geometry.js';
 import type { FaxBox } from '../../src/media/fax/types.js';
 
 const raw = (o: Partial<FaxBox>): FaxBox => ({
@@ -77,5 +77,19 @@ describe('toFragments', () => {
     const p14 = raw({ verseId: 199, page: 14, x: 170, y: 977, w: 453, h: 77 });
     const frags = toFragments([p15, p14]);
     expect(frags.map((f) => f.page)).toEqual([14, 15]);
+  });
+});
+
+describe('clampPages', () => {
+  it('keeps only the first N distinct pages and flags truncation', () => {
+    const frags = [1, 2, 3, 4, 5, 6, 7].map((p) =>
+      ({ page: p, pageWidth: 800, x: 0, y: 0, w: 10, h: 10, boxes: [] }));
+    const { fragments, clamped } = clampPages(frags, 5);
+    expect(new Set(fragments.map((f) => f.page)).size).toBe(5);
+    expect(clamped).toBe(true);
+  });
+  it('does not flag when within budget', () => {
+    const frags = [1, 2].map((p) => ({ page: p, pageWidth: 800, x: 0, y: 0, w: 10, h: 10, boxes: [] }));
+    expect(clampPages(frags, 5).clamped).toBe(false);
   });
 });

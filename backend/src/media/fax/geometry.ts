@@ -89,3 +89,11 @@ export function toFragments(boxes: FaxBox[]): Fragment[] {
   }
   return out;
 }
+
+export function clampPages(frags: Fragment[], maxPages: number): { fragments: Fragment[]; clamped: boolean } {
+  const pages: number[] = [];
+  for (const f of frags) if (!pages.includes(f.page)) pages.push(f.page);
+  if (pages.length <= maxPages) return { fragments: frags, clamped: false };
+  const allowed = new Set(pages.slice(0, maxPages));
+  return { fragments: frags.filter((f) => allowed.has(f.page)), clamped: true };
+}
