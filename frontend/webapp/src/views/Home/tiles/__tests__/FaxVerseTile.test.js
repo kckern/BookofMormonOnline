@@ -8,14 +8,13 @@ jest.mock("src/models/BoMOnlineAPI", () => ({
   default: jest.fn(() => new Promise(() => {})),
   assetUrl: "https://media.test",
   ApiBaseUrl: "http://localhost:5005",
+  renderBaseUrl: "http://localhost:5006",
 }));
 jest.mock("src/views/_Common/ScripturePopup", () => ({
   __esModule: true,
   default: () => null,
   openScripture: jest.fn(),
 }));
-// ScriptureExcerpt imports BoMOnlineAPI with a .js extension — mock it directly
-// so the sub-component renders nothing rather than trying a real API call.
 jest.mock("src/views/_Common/ScriptureExcerpt", () => ({
   __esModule: true,
   default: () => null,
@@ -29,6 +28,12 @@ const data = {
   page: 117,
   verseId: 15234,
   ref: "Mosiah 2:17",
+  selector: "mosiah-2.17",
+  editions: [
+    { version: "1830", title: "1830 Edition", page: 117 },
+    { version: "1837", title: "1837 Edition", page: 120 },
+    { version: "2013", title: "2013 Edition", page: 250 },
+  ],
 };
 
 const renderTile = (d) =>
@@ -39,11 +44,14 @@ const renderTile = (d) =>
   );
 
 describe("FaxVerseTile", () => {
-  test("renders the page image with zero-padded thumb URL and deep link", () => {
+  test("renders one cropped image per edition with render URL + per-edition deep link", () => {
     renderTile(data);
-    const img = screen.getByAltText("1830 Edition p.117");
-    expect(img.getAttribute("src")).toBe("https://media.test/fax/thumb/1830/117.jpg");
-    expect(img.closest("a").getAttribute("href")).toBe("/fax/1830/117");
+    const img = screen.getByAltText("1830 Edition Mosiah 2:17");
+    expect(img.getAttribute("src")).toBe(
+      "http://localhost:5006/fax/render/1830/crop/w800/mosiah-2.17.jpg"
+    );
+    expect(img.closest("a").getAttribute("href")).toBe("/fax/1830/mosiah.2.17");
+    expect(screen.getAllByRole("img").length).toBe(3);
   });
 
   test("ref bar opens the scripture popup", () => {
@@ -52,7 +60,13 @@ describe("FaxVerseTile", () => {
     expect(openScripture).toHaveBeenCalledWith("Mosiah 2:17");
   });
 
-  test("returns null without a page", () => {
+  test("falls back to a single row from legacy fields when editions is absent", () => {
+    const legacy = { ...data, editions: undefined };
+    renderTile(legacy);
+    expect(screen.getAllByRole("img").length).toBe(1);
+  });
+
+  test("returns null without data", () => {
     const { container } = renderTile(null);
     expect(container.firstChild).toBeNull();
   });

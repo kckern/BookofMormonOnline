@@ -1746,3 +1746,31 @@ html[data-theme="dark"] .mapStoryTile .mapStoryCardArt { background: rgba(255, 2
 @media (prefers-reduced-motion: reduce) {
   .mapStoryTile .mapStoryTrack { transition: none; }
 }
+
+/* Multi-edition cropped-verse facsimile tile */
+.faxVerseTile .faxVerseEditions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 6px 0;
+}
+.faxVerseTile .faxEditionRow {
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: inherit;
+}
+.faxVerseTile .faxEditionLabel {
+  font-size: 0.72rem;
+  opacity: 0.7;
+  margin-bottom: 2px;
+}
+.faxVerseTile .faxEditionCrop {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  display: block;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 3px;
+  background: #faf7f0;
+}

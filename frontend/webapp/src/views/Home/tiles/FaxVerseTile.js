@@ -1,46 +1,85 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { assetUrl } from "src/models/BoMOnlineAPI";
+import { renderBaseUrl } from "src/models/BoMOnlineAPI";
 import { label } from "src/models/Utils";
 import ScriptureExcerpt from "src/views/_Common/ScriptureExcerpt";
 import { openScripture } from "./ScripturePopup";
 
+const CROP_WIDTH = 800;
+
+// The app's existing fax-viewer ref-slug convention, e.g. "Mosiah 2:17" -> "mosiah.2.17".
+const refSlug = (ref) => (ref || "").replace(/[ :]+/g, ".").toLowerCase();
+
 /**
- * A facsimile page anchored to the verse it depicts — "here is this passage in
- * the 1830 edition". Page image at natural aspect (deep-links into the viewer),
- * the FaxTile ref-bar pattern (ref opens the scripture popup), and the verse
- * itself rendered below via ScriptureExcerpt.
+ * A sampled verse shown as cropped-verse facsimile images from up to 3 editions,
+ * stacked and edition-labeled. Each crop deep-links to that edition's fax viewer
+ * at the verse. The verse text is rendered below via ScriptureExcerpt.
  */
 export default function FaxVerseTile({ data }) {
-  if (!data?.version || !data?.page) return null;
-  const nnn = String(data.page).padStart(3, "0");
-  const format = data.format || "jpg";
+  if (!data || (!data.selector && !data.version)) return null;
+
+  // Prefer the editions list; fall back to a single row from legacy fields.
+  const editions =
+    data.editions && data.editions.length
+      ? data.editions
+      : data.version
+      ? [{ version: data.version, title: data.title, page: data.page }]
+      : [];
+  if (!editions.length) return null;
+
+  const selector = data.selector || null;
+  const slug = refSlug(data.ref);
+
+  const hideRow = (e) => {
+    const row = e.target.closest(".faxEditionRow");
+    if (row) row.style.display = "none";
+  };
+
   return (
     <div className="samplerTileInner faxVerseTile">
       <h3 className="tileHeading">
-        <Link to={`/fax/${data.version}`}>{label("facsimiles")}</Link>
+        <Link to="/fax">{label("facsimiles")}</Link>
       </h3>
-      <Link to={`/fax/${data.version}/${data.page}`} className="faxTilePage faxVersePage">
-        <img
-          src={`${assetUrl}/fax/thumb/${data.version}/${nnn}.${format}`}
-          alt={`${data.title || data.version} p.${data.page}`}
-          loading="lazy"
-          onError={(e) => (e.target.style.display = "none")}
-        />
-        <span className="faxPageBar">
-          {data.ref ? (
-            <span
-              className="faxPageBarRef"
-              role="button"
-              tabIndex={0}
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); openScripture(data.ref); }}
-            >
-              {data.ref}
-            </span>
-          ) : <span />}
-          <span className="faxPageBarNum">p. {data.page}</span>
-        </span>
-      </Link>
+      <div className="faxVerseEditions">
+        {editions.map((ed) => {
+          const to = slug ? `/fax/${ed.version}/${slug}` : `/fax/${ed.version}/${ed.page}`;
+          const src = selector
+            ? `${renderBaseUrl}/fax/render/${ed.version}/crop/w${CROP_WIDTH}/${selector}.jpg`
+            : null;
+          return (
+            <Link key={ed.version} to={to} className="faxEditionRow">
+              <span className="faxEditionLabel">{ed.title || ed.version}</span>
+              {src ? (
+                <img
+                  className="faxEditionCrop"
+                  src={src}
+                  alt={`${ed.title || ed.version} ${data.ref || ""}`.trim()}
+                  loading="lazy"
+                  onError={hideRow}
+                />
+              ) : null}
+            </Link>
+          );
+        })}
+      </div>
+      <span className="faxPageBar">
+        {data.ref ? (
+          <span
+            className="faxPageBarRef"
+            role="button"
+            tabIndex={0}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              openScripture(data.ref);
+            }}
+          >
+            {data.ref}
+          </span>
+        ) : (
+          <span />
+        )}
+      </span>
       {data.title ? <div className="faxVerseTitle">{data.title}</div> : null}
       {data.ref ? (
         <div className="read-content scriptureExcerptCompact">
