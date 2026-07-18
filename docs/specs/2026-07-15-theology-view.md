@@ -2,7 +2,7 @@
 
 **Status:** scaffold in progress
 **View:** `frontend/webapp/src/views/Theology/`
-**Source corpus (not yet ingested):** `BoMOnlineWorkspace/theology/` (private) — 39 typed `nodes/`, ~50 `runs/`, system diagrams, README.
+**Source corpus (not yet ingested):** the private workspace's `theology/` (private) — 39 typed `nodes/`, ~50 `runs/`, system diagrams, README.
 
 ## What this is
 

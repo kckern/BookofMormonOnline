@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Emit UPDATE statements giving bound battle rows a grid placement (1×1 at the
-tile cell, bg = attacker color). Apply via BoMOnlineWorkspace/sql/migrations —
+tile cell, bg = attacker color). Apply via the private workspace's sql/migrations —
 the dev DB user here is read-only. Idempotent: only touches rows with
 grid_row IS NULL."""
 import json, datetime
@@ -14,7 +14,7 @@ tiles = {
 }
 mapping = json.loads((ROOT / "frontend/webapp/src/views/Timeline/battleSlugs.json").read_text())
 out = ["-- battle placements from battleSlugs.json (gen_battle_placements.py)",
-       "-- Apply to bom_prd via BoMOnlineWorkspace. Idempotent (grid_row IS NULL guard).",
+       "-- Apply to bom_prd via the private workspace repo. Idempotent (grid_row IS NULL guard).",
        "-- PRECONDITIONS (plan Task 7 reconciliation, icon-event architecture):",
        "-- 1. Task 12's label_params DDL applied first (creates grid_icon).",
        "-- 2. Frontend with icon-event rendering (grid.icon -> marker path) deployed.",

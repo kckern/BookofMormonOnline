@@ -116,4 +116,4 @@ StudyBuddy, BotHọcKinhThánh), 458px tall, fully on screen. Full backend suite
 makes the UI correct regardless, but the flag should be cleaned so other
 `is_bot` consumers (`botResponder`, compat surface) don't trip on junk rows.
 Deciding which rows are genuinely bots (e.g. the 🟢 historical personas)
-needs domain review — SQL belongs in BoMOnlineWorkspace.
+needs domain review — SQL belongs in the private workspace repo.

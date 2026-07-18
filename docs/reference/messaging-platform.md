@@ -74,7 +74,7 @@ bot-authored triggers) + per-channel in-flight debounce.
   live tests (connect, auth, typing, reads) run; write round-trips guard-skip until a
   writable test DB exists.
 - **To exercise writes fully:** point the backend at a writable MySQL user (the dev host
-  runs read-only `reader`; the writable `bom_app` lives in BoMOnlineWorkspace) and set
+  runs read-only `reader`; the writable `bom_app` lives in the private workspace repo) and set
   the messaging env above.
 
 ## Cutover

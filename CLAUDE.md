@@ -47,7 +47,7 @@ npm install && npm run dev:backend                # backend (TypeScript via ts-n
 The backend connects to the remote MySQL — no local DB needed. Credentials must be supplied via env (the laptop is not on Infisical).
 
 ### Database
-MySQL 8.0.40 in a container on a remote host. Default db is `bom_prd`. Read-only user `reader@%` for dev/staging traffic; the writable `bom_app` user lives in `BoMOnlineWorkspace` and is not used here.
+MySQL 8.0.40 in a container on a remote host. Default db is `bom_prd`. Read-only user `reader@%` for dev/staging traffic; the writable `bom_app` user lives in the private workspace repo and is not used here.
 
 ## Code Conventions
 

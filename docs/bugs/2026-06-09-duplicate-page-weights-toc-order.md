@@ -21,7 +21,7 @@ shows Shiblon first.
 **Recommended fix (data, not code):** renumber the tied weights to encode the current
 legacy display order explicitly (e.g. reign-of-judges: Antionah 704→705 and shift
 705-709 up; or any unique assignment preserving today's visible order). Requires the
-writable `bom_app` credentials (BoMOnlineWorkspace — not available on this host).
+writable `bom_app` credentials (the private workspace repo — not available on this host).
 Once weights are unique, both backends converge with zero visible change and the order
 is owned by data (SSoT) instead of engine internals.
 

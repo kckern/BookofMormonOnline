@@ -236,7 +236,7 @@ Per `sandbox_mode_writes.md` memory: dev runs read-only via `sandboxMode.ts`. Th
 
 ## Public-repo redaction
 
-Per `open_source_redaction.md` memory: this PR adds scholarly text only. No secrets, no internal hostnames, no `BoMOnlineWorkspace` data. Safe for the public repo.
+Per `open_source_redaction.md` memory: this PR adds scholarly text only. No secrets, no internal hostnames, no private-workspace data. Safe for the public repo.
 
 ## Out of scope (deferred to future PRs)
 

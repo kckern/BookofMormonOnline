@@ -15,7 +15,7 @@
 - The Timeline view lives at `frontend/webapp/src/views/Timeline/`. It renders a CSS grid: hardcoded canvas tiles from `gridTiles.json` (lineage band fills, battle markers, place pins, date axis) plus API events (GraphQL `timeline` query → `Event.grid` placement + `Event.label` text).
 - **Read these first:** `docs/audits/2026-07-01-timeline-grid-ux-audit.md` (the spec for this plan), `docs/reference/timeline-corner-rounding.md` (corner heuristic), `docs/reference/timeline-grid-handoff.md` (history).
 - The live dev backend is **`backend/` on :5006** (systemd unit `bom-greenfield`), NOT the deprecated `_deprecated/src/` Apollo server. Frontend CRA dev server is on :8201 (`:8200` is the Next front door). Restarting units is authorized; batch restarts per task.
-- The dev DB user is read-only; schema migrations are applied out-of-band via the `BoMOnlineWorkspace` repo (not on this host). Tasks that need DB changes produce a `.sql` artifact and are **human-gated** — the frontend/backend code must work with the columns absent (null-tolerant).
+- The dev DB user is read-only; schema migrations are applied out-of-band via the private workspace repo (not on this host). Tasks that need DB changes produce a `.sql` artifact and are **human-gated** — the frontend/backend code must work with the columns absent (null-tolerant).
 - Verify visuals against **`localhost:8201`**, never `bom.kckern.net` (Cloudflare caches the bundle 4h).
 
 **Run commands** (used throughout):
@@ -1155,7 +1155,7 @@ layer (assert `comp.barAt(row, col)` is null for a placement with
 ```python
 #!/usr/bin/env python3
 """Emit UPDATE statements giving bound battle rows a grid placement (1×1 at the
-tile cell, bg = attacker color). Apply via BoMOnlineWorkspace/sql/migrations —
+tile cell, bg = attacker color). Apply via the private workspace's sql/migrations —
 the dev DB user here is read-only. Idempotent: only touches rows with
 grid_row IS NULL."""
 import json, datetime
@@ -1169,7 +1169,7 @@ tiles = {
 }
 mapping = json.loads((ROOT / "frontend/webapp/src/views/Timeline/battleSlugs.json").read_text())
 out = ["-- battle placements from battleSlugs.json (gen_battle_placements.py)",
-       "-- Apply to bom_prd via BoMOnlineWorkspace. Idempotent (grid_row IS NULL guard).",
+       "-- Apply to bom_prd via the private workspace repo. Idempotent (grid_row IS NULL guard).",
        "-- PRECONDITION: the frontend BATTLE_BOUND suppression (plan Task 7 Step 0)",
        "-- must be deployed FIRST, or these rows render duplicate chips and kill",
        "-- incursion detection. ROLLBACK: the paired _rollback.sql below."]
@@ -1205,7 +1205,7 @@ print(f"{len(mapping)} updates → {dest} (+ rollback)")
 
 - [ ] **Step 3: HUMAN GATE — apply + residue triage**
 
-Hand the `.sql` to KC for application via `BoMOnlineWorkspace/sql/migrations/` (prod `bom_prd`, same process as the 2026-06-13 grid migrations). **Apply ORDER: Task 12's `label_params` DDL first (it creates `grid_icon`), then this file; in the SAME change, delete the `k:'battle'` tiles from `gridTiles.json` (the DB icon-events replace them — see the reconciliation policy above).** Then re-run the audit diff to size the residue:
+Hand the `.sql` to KC for application via the private workspace's `sql/migrations/` (prod `bom_prd`, same process as the 2026-06-13 grid migrations). **Apply ORDER: Task 12's `label_params` DDL first (it creates `grid_icon`), then this file; in the SAME change, delete the `k:'battle'` tiles from `gridTiles.json` (the DB icon-events replace them — see the reconciliation policy above).** Then re-run the audit diff to size the residue:
 
 ```bash
 curl -s http://localhost:5006/graphql -H 'Content-Type: application/json' \
@@ -1589,7 +1589,7 @@ git commit -m "feat(timeline): normalized axis ticks + century hairlines"
 - Modify: `backend/src/graphql/resolvers/mediamisc.ts` (Event.grid, ~line 152)
 - Create: `backend/test/graphql/timeline-grid.test.ts`
 
-- [ ] **Step 1: Author the migration SQL (HUMAN GATE — applied via BoMOnlineWorkspace)**
+- [ ] **Step 1: Author the migration SQL (HUMAN GATE — applied via the private workspace repo)**
 
 ```sql
 -- 2026-07-XX_bom_timeline_label_params.sql
@@ -2362,8 +2362,8 @@ git commit -m "docs(timeline): handoff close-out for world-class UX round"
 
 1. Task 4 Step 6 — approve corner rule v2 (it squares one case v1 deliberately rounded per KC's earlier direction).
 2. Task 5 Step 3 — review/approve `battleSlugs.draft.json` → `battleSlugs.json`.
-3. Task 7 Step 3 — apply battle-placements SQL (+ rollback file) via BoMOnlineWorkspace, AFTER the Step 0 suppression code is deployed; triage non-battle residue (place or retire-with-reason).
-4. Task 12 Step 1 — apply `label_params` DDL + tier/anchor/dir seeds via BoMOnlineWorkspace.
+3. Task 7 Step 3 — apply battle-placements SQL (+ rollback file) via the private workspace repo, AFTER the Step 0 suppression code is deployed; triage non-battle residue (place or retire-with-reason).
+4. Task 12 Step 1 — apply `label_params` DDL + tier/anchor/dir seeds via the private workspace repo.
 5. Task 13 — confirm prod backend cutover before any prod deploy containing the query change.
 6. Task 16 Step 7 — accept or revert each shape-language pilot on visual review.
 

@@ -29,7 +29,7 @@ below ~0.85 zoom.
 
 `bom_timeline` gained: `grid_row, grid_col, grid_w, grid_h, grid_bg,
 label_category ENUM('people','place','event')`. **All three migrations are
-applied to prod.** Source: `BoMOnlineWorkspace/sql/migrations/`
+applied to prod.** Source: the private workspace's `sql/migrations/`
 (`2026-06-13_bom_timeline_grid.sql`, `..._locations.sql`,
 `..._label_category.sql`). 112 rows placed (104 p=1 + 8 p=0).
 
@@ -77,7 +77,7 @@ The frontend dev proxy: `frontend/webapp/src/setupProxy.js` →
   Grid/Sheet1.html`) → `gridTiles.json` (canvas) + `placements.json` (DB feed).
 - `reconcile.py` — audit report only (shares parser/matcher with build_tiles).
 - `overrides.json` — manual slug fixes (keyed `"row,col"`).
-The workspace generators (`BoMOnlineWorkspace/sql/migrations/gen_*.mjs`) turn
+The workspace generators (the private workspace's `sql/migrations/gen_*.mjs`) turn
 `placements.json` into the SQL.
 
 ## Done since this handoff was written
@@ -212,4 +212,4 @@ a future place pass): `bang`, `bountiful`, `land-northward` (×2 duplicate rows)
 - Plans: `docs/plans/2026-07-01-timeline-grid-world-class-ux.md`, `docs/plans/2026-06-13-timeline-grid-migration-design.md`
 - Audit + evidence: `docs/audits/2026-07-01-timeline-grid-ux-audit.md`, `docs/audits/timeline-ux-screenshots-2026-07-01/`
 - Design language (13-region table): `docs/reference/timeline-source-design-language.md`
-- Migrations (applied): `BoMOnlineWorkspace/sql/migrations/2026-06-13_bom_timeline_*.sql`
+- Migrations (applied): the private workspace's `sql/migrations/2026-06-13_bom_timeline_*.sql`
