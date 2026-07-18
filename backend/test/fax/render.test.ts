@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import sharp from 'sharp';
-import { renderFragmentCrop, renderPageDimmed, renderImage } from '../../src/media/fax/render.js';
-import { stitchVertical, stitchHorizontal } from '../../src/media/fax/render.js';
+import { renderFragmentCrop, renderPageDimmed, renderImage, stitchVertical, stitchHorizontal } from '../../src/media/fax/render.js';
 import type { Fragment } from '../../src/media/fax/types.js';
 
 // A 400x300 synthetic "scan": white paper with a black bar where the "text" is.
@@ -78,5 +77,16 @@ describe('renderImage', () => {
     const out = await renderImage({ mode: 'page', ext: 'jpg', width: 'full', fragments: [frag(1), frag(2)], provider, paper: '#fff' });
     const m = await sharp(out).metadata();
     expect(m.width).toBeGreaterThan(400);   // two pages side by side
+  });
+
+  it('rescales when the actual scan is wider than stored pageWidth', async () => {
+    const wideScan = async () => sharp({ create: { width: 800, height: 600, channels: 3, background: '#ffffff' } })
+      .composite([{ input: { create: { width: 600, height: 120, channels: 3, background: '#000000' } }, top: 200, left: 100 }])
+      .jpeg().toBuffer();
+    const f: Fragment = { page: 1, pageWidth: 400, x: 50, y: 100, w: 300, h: 60,
+      boxes: [{ verseId: 1, page: 1, pageWidth: 400, x: 50, y: 100, w: 300, h: 60, tlw: 0, tlh: 0, brw: 0, brh: 0 }] };
+    const out = await renderImage({ mode: 'page', ext: 'jpg', width: 'full', fragments: [f], provider: wideScan, paper: '#fff' });
+    const m = await sharp(out).metadata();
+    expect(m.width).toBe(800);   // full page, scaled geometry, no throw
   });
 });

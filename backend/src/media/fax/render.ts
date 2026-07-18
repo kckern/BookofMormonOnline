@@ -1,6 +1,7 @@
 import sharp from 'sharp';
 import type { Fragment } from './types.js';
 import { DIM_OPACITY, JPEG_QUALITY } from './constants.js';
+import { assertScanWidth } from './scan.js';
 
 export interface NotchFill {
   tl?: { w: number; h: number };   // exterior top-left notch (first verse), or undefined
@@ -40,11 +41,16 @@ export async function renderPageDimmed(
     top: 0, left: 0,
   };
   const dimmed = await sharp(scan).composite([darkLayer]).png().toBuffer();
-  const overlays = await Promise.all(rects.map(async (r) => ({
-    input: await sharp(scan).extract({ left: r.x, top: r.y, width: r.w, height: r.h }).png().toBuffer(),
-    top: r.y, left: r.x,
-  })));
-  return sharp(dimmed).composite(overlays).jpeg().toBuffer();
+  const overlays = (await Promise.all(rects.map(async (r) => {
+    const w = Math.min(r.w, width - r.x);
+    const h = Math.min(r.h, height - r.y);
+    if (r.x < 0 || r.y < 0 || w <= 0 || h <= 0) return null;
+    return {
+      input: await sharp(scan).extract({ left: r.x, top: r.y, width: w, height: h }).png().toBuffer(),
+      top: r.y, left: r.x,
+    } as sharp.OverlayOptions;
+  }))).filter((o): o is sharp.OverlayOptions => o !== null);
+  return sharp(dimmed).composite(overlays).png().toBuffer();
 }
 
 async function dims(buf: Buffer) { const m = await sharp(buf).metadata(); return { w: m.width!, h: m.height! }; }
@@ -56,7 +62,7 @@ export async function stitchVertical(images: Buffer[], paper: string): Promise<B
   const height = ds.reduce((s, d) => s + d.h, 0);
   let top = 0;
   const layers = images.map((input, i) => { const o = { input, top, left: 0 }; top += ds[i]!.h; return o; });
-  return sharp({ create: { width, height, channels: 3, background: paper } }).composite(layers).jpeg().toBuffer();
+  return sharp({ create: { width, height, channels: 3, background: paper } }).composite(layers).png().toBuffer();
 }
 
 /** Page mode: place page images side-by-side with a gutter, top-aligned. */
@@ -66,7 +72,7 @@ export async function stitchHorizontal(images: Buffer[], gutter: number, paper: 
   const height = Math.max(...ds.map((d) => d.h));
   let left = 0;
   const layers = images.map((input, i) => { const o = { input, top: 0, left }; left += ds[i]!.w + gutter; return o; });
-  return sharp({ create: { width, height, channels: 3, background: paper } }).composite(layers).jpeg().toBuffer();
+  return sharp({ create: { width, height, channels: 3, background: paper } }).composite(layers).png().toBuffer();
 }
 
 export interface RenderArgs {
@@ -77,6 +83,20 @@ export interface RenderArgs {
   provider: (page: number) => Promise<Buffer>;   // page -> scan buffer
   paper: string;
   gutter?: number;
+}
+
+/** Scale a fragment's geometry (and notch insets) by k for extraction when the
+ * actual scan width differs from the stored pageWidth. */
+function scaleFragment(f: Fragment, k: number): Fragment {
+  if (k === 1) return f;
+  const s = (n: number) => Math.round(n * k);
+  return {
+    ...f, x: s(f.x), y: s(f.y), w: s(f.w), h: s(f.h),
+    boxes: f.boxes.map((b) => ({
+      ...b, x: s(b.x), y: s(b.y), w: s(b.w), h: s(b.h),
+      tlw: s(b.tlw), tlh: s(b.tlh), brw: s(b.brw), brh: s(b.brh),
+    })),
+  };
 }
 
 const encode = (img: sharp.Sharp, ext: 'jpg' | 'webp') =>
@@ -101,11 +121,13 @@ export async function renderImage(args: RenderArgs): Promise<Buffer> {
     for (let i = 0; i < fragments.length; i++) {
       const f = fragments[i]!;
       const scan = await provider(f.page);
+      const meta = await sharp(scan).metadata();
+      const f2 = scaleFragment(f, assertScanWidth(meta.width!, f.pageWidth));
       const notch: NotchFill = { paper };
-      if (i === 0 && f.boxes[0]) notch.tl = { w: f.boxes[0].tlw, h: f.boxes[0].tlh };
-      const lastBox = f.boxes[f.boxes.length - 1];
+      if (i === 0 && f2.boxes[0]) notch.tl = { w: f2.boxes[0].tlw, h: f2.boxes[0].tlh };
+      const lastBox = f2.boxes[f2.boxes.length - 1];
       if (i === fragments.length - 1 && lastBox) notch.br = { w: lastBox.brw, h: lastBox.brh };
-      const raw = await renderFragmentCrop(scan, f, notch);
+      const raw = await renderFragmentCrop(scan, f2, notch);
       crops.push(await downscale(raw, width));
     }
     return encode(sharp(await stitchVertical(crops, paper)), ext);
@@ -117,7 +139,9 @@ export async function renderImage(args: RenderArgs): Promise<Buffer> {
   for (const page of pages) {
     const scan = await provider(page);
     const meta = await sharp(scan).metadata();
-    const rects = fragments.filter((f) => f.page === page).map((f) => ({ x: f.x, y: f.y, w: f.w, h: f.h }));
+    const pageFrags = fragments.filter((f) => f.page === page);
+    const k = assertScanWidth(meta.width!, pageFrags[0]!.pageWidth);
+    const rects = pageFrags.map((f) => scaleFragment(f, k)).map((f) => ({ x: f.x, y: f.y, w: f.w, h: f.h }));
     const dimmed = await renderPageDimmed(scan, meta.width!, meta.height!, rects, DIM_OPACITY);
     pageBufs.push(await downscale(dimmed, width));
   }
