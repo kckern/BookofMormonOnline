@@ -200,6 +200,25 @@ describe('homesampler.relationship', () => {
   });
 });
 
+// ─── faxVerse editions ────────────────────────────────────────────────────────
+
+describe('faxVerse editions', () => {
+  it('returns the sampled edition first plus up to 3 editions with a shared selector', async () => {
+    type FV = { faxVerse: {
+      version: string; verseId: number; ref: string; selector: string;
+      editions: { version: string; title: string | null; page: number }[];
+    } | null };
+    const d = await exec<FV>('faxVerse { version verseId ref selector editions { version title page } }', 7);
+    expect(d.faxVerse).toBeTruthy();
+    const fv = d.faxVerse!;
+    expect(fv.editions.length).toBeGreaterThanOrEqual(1);
+    expect(fv.editions.length).toBeLessThanOrEqual(3);
+    expect(fv.editions[0]!.version).toBe(fv.version);          // sampled edition first
+    expect(fv.selector).toMatch(/^([a-z0-9.-]+|ids\/[0-9-]+)$/); // canonical render selector
+    for (const e of fv.editions) expect(e.page).toBeGreaterThan(0);
+  });
+});
+
 // ─── mapstory ─────────────────────────────────────────────────────────────────
 
 type MapStoryPayload = {

@@ -14,6 +14,7 @@ import type { Resolvers } from '../../../codegen/graphql.js';
 import type { AppContext } from '../context.js';
 import { findUserByToken } from '../../data/loaders/userauth.js';
 import { parseVerseIdFromNote } from '../../data/loaders/objects.js';
+import { canonicalSelector } from '../../media/fax/canonical.js';
 
 // 24 people = 1 featured + 11 face cards + 12 view-all mosaic thumbs (3×4);
 // 17 places = 5 cards + a full 3×4 mosaic.
@@ -206,6 +207,30 @@ const sampleFaxVerse = async (ctx: AppContext, seed: number) => {
   const r = rows[0];
   if (!r) return null;
   const verseId = Number(r.verseId);
+
+  // Every edition that has a box for this verse (one row per edition, min page).
+  const edRows = await ctx.db
+    .selectFrom('bom_xtras_fax_index as i')
+    .innerJoin('bom_xtras_fax as f', 'f.slug', 'i.version')
+    .select(['i.version as version', 'f.title as title'])
+    .select((eb) => eb.fn.min('i.page').as('page'))
+    .where('i.verse_id', '=', String(verseId))
+    .where('f.hide', '=', 0)
+    .groupBy(['i.version', 'f.title'])
+    .orderBy(sql`MD5(CONCAT(${sql.ref('i.version')}, ':', ${seed}))`)
+    .execute();
+
+  // Sampled edition first, then up to 2 seeded others.
+  const ordered = [
+    ...edRows.filter((e) => String(e.version) === String(r.version)),
+    ...edRows.filter((e) => String(e.version) !== String(r.version)),
+  ].slice(0, 3);
+  const editions = ordered.map((e) => ({
+    version: String(e.version),
+    title: e.title ?? null,
+    page: Number(e.page),
+  }));
+
   return {
     version: String(r.version),
     title: r.title ?? null,
@@ -213,6 +238,8 @@ const sampleFaxVerse = async (ctx: AppContext, seed: number) => {
     page: Number(r.page),
     verseId,
     ref: generateReference([verseId]),
+    selector: canonicalSelector([verseId]),
+    editions,
   };
 };
 
