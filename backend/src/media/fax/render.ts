@@ -25,3 +25,23 @@ export async function renderFragmentCrop(scan: Buffer, frag: Fragment, notch: No
   }
   return (overlays.length ? base.composite(overlays) : base).png().toBuffer();
 }
+
+export interface Rect { x: number; y: number; w: number; h: number; }
+
+/** Full page with a dark overlay everywhere EXCEPT the highlight rects.
+ * Approach: uniformly darken the whole page, then composite the ORIGINAL
+ * (bright) highlight regions back on top. Unambiguous — no blend modes. */
+export async function renderPageDimmed(
+  scan: Buffer, width: number, height: number, rects: Rect[], opacity: number,
+): Promise<Buffer> {
+  const darkLayer: sharp.OverlayOptions = {
+    input: { create: { width, height, channels: 4, background: { r: 0, g: 0, b: 0, alpha: opacity } } },
+    top: 0, left: 0,
+  };
+  const dimmed = await sharp(scan).composite([darkLayer]).png().toBuffer();
+  const overlays = await Promise.all(rects.map(async (r) => ({
+    input: await sharp(scan).extract({ left: r.x, top: r.y, width: r.w, height: r.h }).png().toBuffer(),
+    top: r.y, left: r.x,
+  })));
+  return sharp(dimmed).composite(overlays).jpeg().toBuffer();
+}

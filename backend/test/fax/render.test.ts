@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import sharp from 'sharp';
-import { renderFragmentCrop } from '../../src/media/fax/render.js';
+import { renderFragmentCrop, renderPageDimmed } from '../../src/media/fax/render.js';
 import type { Fragment } from '../../src/media/fax/types.js';
 
 // A 400x300 synthetic "scan": white paper with a black bar where the "text" is.
@@ -26,5 +26,18 @@ describe('renderFragmentCrop', () => {
     // top-left 40x20 should now be white (paper-filled), not black
     const px = await sharp(out).extract({ left: 0, top: 0, width: 5, height: 5 }).raw().toBuffer();
     expect(px[0]).toBeGreaterThan(240); // near-white R
+  });
+});
+
+describe('renderPageDimmed', () => {
+  it('keeps full page size and brightens only the highlight rects', async () => {
+    const rects = [{ x: 50, y: 100, w: 300, h: 60 }];
+    const out = await renderPageDimmed(await fakeScan(), 400, 300, rects, 0.55);
+    const meta = await sharp(out).metadata();
+    expect(meta.width).toBe(400);
+    expect(meta.height).toBe(300);
+    // a corner outside the highlight should be dimmed (darker than pure white)
+    const corner = await sharp(out).extract({ left: 0, top: 0, width: 5, height: 5 }).raw().toBuffer();
+    expect(corner[0]).toBeLessThan(200);
   });
 });
