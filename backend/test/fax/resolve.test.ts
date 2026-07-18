@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { selectorToVerseIds, verseIdsToBoxes, legacyUnitToVerseIds, imagePageOffset } from '../../src/media/fax/resolve.js';
+import { selectorToVerseIds, verseIdsToBoxes, legacyUnitToVerseIds, imageScanMeta } from '../../src/media/fax/resolve.js';
 
 describe('selectorToVerseIds', () => {
   it('parses an ids/ selector', () => {
@@ -23,10 +23,10 @@ describe('DB integration', () => {   // hits live DB
     expect(ids[0]).toBe(34345);
   });
   // Stored fax_index.page is NOT the scan image-file number; the offset shifts it
-  // per edition (front-matter/plate leaves). Locks the page-mapping bug fix.
-  it('imagePageOffset maps fax page -> image file per edition', async () => {
-    expect(await imagePageOffset('1837')).toBe(-4);  // fax p11 (1 Ne 1:1) -> image 007
-    expect(await imagePageOffset('1841')).toBe(0);   // no front-matter shift
-    expect(await imagePageOffset('2013')).toBe(-9);
+  // per edition (front-matter/plate leaves), and the source format varies.
+  it('imageScanMeta gives per-edition page offset + scan format', async () => {
+    expect(await imageScanMeta('1837')).toEqual({ offset: -4, format: 'jpg' }); // fax p11 (1 Ne 1:1) -> image 007
+    expect(await imageScanMeta('1841')).toEqual({ offset: 0, format: 'jpg' });  // no front-matter shift
+    expect(await imageScanMeta('2013')).toEqual({ offset: -9, format: 'png' }); // png-only edition
   });
 });

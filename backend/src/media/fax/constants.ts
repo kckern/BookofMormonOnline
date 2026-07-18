@@ -19,6 +19,6 @@ export const DEDUPE_PX = 2;            // near-duplicate box corner tolerance
 // Paper-filling these two rects erases neighboring verses' text.
 
 export const MEDIA_BASE = 'https://media.bookofmormon.online';
-export function pageKey(version: string, page: number): string {
-  return `fax/pages/${version}/${String(page).padStart(3, '0')}.jpg`;
+export function pageKey(version: string, page: number, format = 'jpg'): string {
+  return `fax/pages/${version}/${String(page).padStart(3, '0')}.${format}`;
 }
