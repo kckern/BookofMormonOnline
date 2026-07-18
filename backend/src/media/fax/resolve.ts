@@ -32,6 +32,27 @@ export async function verseIdsToBoxes(version: string, verseIds: number[]): Prom
   return sanitizeBoxes(boxes);
 }
 
+/**
+ * Per-edition offset from a stored `bom_xtras_fax_index.page` to the scan image
+ * file number. The box coordinates are authored against the scan file, but the
+ * stored `page` is numbered differently (front-matter/plate leaves shift it).
+ * The first indexed page (MIN(page)) maps to image file `pgfirstVerse`, so:
+ *   imageFile = faxPage + (pgfirstVerse - MIN(page))
+ * Verified constant across an edition (e.g. 1837 = -4, 2013 = -9, 1841 = 0).
+ */
+export async function imagePageOffset(version: string): Promise<number> {
+  const db = getDb();
+  const [fax, minRow] = await Promise.all([
+    db.selectFrom('bom_xtras_fax').select('pgfirstVerse').where('slug', '=', version).executeTakeFirst(),
+    db.selectFrom('bom_xtras_fax_index')
+      .select((eb) => eb.fn.min('page').as('minp'))
+      .where('version', '=', version).executeTakeFirst(),
+  ]);
+  const pgFirst = Number(fax?.pgfirstVerse ?? 1);
+  const minPage = Number(minRow?.minp ?? 0);
+  return pgFirst - minPage;
+}
+
 /** Legacy alias: {slug}/{id} text-unit -> verse ids via bom_slug -> bom_text.heading. */
 export async function legacyUnitToVerseIds(slug: string, id: number): Promise<number[]> {
   const db = getDb();

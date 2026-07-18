@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { selectorToVerseIds, verseIdsToBoxes, legacyUnitToVerseIds } from '../../src/media/fax/resolve.js';
+import { selectorToVerseIds, verseIdsToBoxes, legacyUnitToVerseIds, imagePageOffset } from '../../src/media/fax/resolve.js';
 
 describe('selectorToVerseIds', () => {
   it('parses an ids/ selector', () => {
@@ -21,5 +21,12 @@ describe('DB integration', () => {   // hits live DB
     const ids = await legacyUnitToVerseIds('ammon', 132);
     expect(ids).toHaveLength(9);
     expect(ids[0]).toBe(34345);
+  });
+  // Stored fax_index.page is NOT the scan image-file number; the offset shifts it
+  // per edition (front-matter/plate leaves). Locks the page-mapping bug fix.
+  it('imagePageOffset maps fax page -> image file per edition', async () => {
+    expect(await imagePageOffset('1837')).toBe(-4);  // fax p11 (1 Ne 1:1) -> image 007
+    expect(await imagePageOffset('1841')).toBe(0);   // no front-matter shift
+    expect(await imagePageOffset('2013')).toBe(-9);
   });
 });

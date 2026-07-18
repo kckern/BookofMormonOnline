@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { VERSION_SLUGS, WIDTH_WHITELIST, MAX_PAGES, MAX_VERSE_IDS } from './constants.js';
-import { selectorToVerseIds, verseIdsToBoxes, legacyUnitToVerseIds } from './resolve.js';
+import { selectorToVerseIds, verseIdsToBoxes, legacyUnitToVerseIds, imagePageOffset } from './resolve.js';
 import { toFragments, clampPages } from './geometry.js';
 import { renderImage } from './render.js';
 import { fetchScan } from './scan.js';
@@ -65,7 +65,8 @@ export async function faxRoutes(app: FastifyInstance): Promise<void> {
         if (boxes.length === 0) throw Object.assign(new Error('no boxes'), { statusCode: 404 });
         const { fragments, clamped } = clampPages(toFragments(boxes), MAX_PAGES);
         if (clamped) app.log.info({ key }, 'fax render clamped to N pages');
-        return renderImage({ mode, ext, width, fragments, paper: PAPER, provider: (p) => fetchScan(version!, p) });
+        const off = await imagePageOffset(version!);
+        return renderImage({ mode, ext, width, fragments, paper: PAPER, provider: (p) => fetchScan(version!, p + off) });
       }));
       writeBack(key, body, ext);
       return reply
@@ -99,7 +100,8 @@ export async function faxRoutes(app: FastifyInstance): Promise<void> {
         const boxes = await verseIdsToBoxes(version, verseIds);
         if (boxes.length === 0) throw Object.assign(new Error('no boxes'), { statusCode: 404 });
         const { fragments } = clampPages(toFragments(boxes), MAX_PAGES);
-        return renderImage({ mode: 'page', ext: 'jpg', width: 'full', fragments, paper: PAPER, provider: (p) => fetchScan(version, p) });
+        const off = await imagePageOffset(version);
+        return renderImage({ mode: 'page', ext: 'jpg', width: 'full', fragments, paper: PAPER, provider: (p) => fetchScan(version, p + off) });
       }));
       writeBack(key, body, 'jpg');
       return reply
