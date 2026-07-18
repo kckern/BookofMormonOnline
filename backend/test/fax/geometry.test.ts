@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { sanitizeBoxes } from '../../src/media/fax/geometry.js';
+import { sanitizeBoxes, dedupeBoxes } from '../../src/media/fax/geometry.js';
 import type { FaxBox } from '../../src/media/fax/types.js';
 
 const raw = (o: Partial<FaxBox>): FaxBox => ({
@@ -22,5 +22,18 @@ describe('sanitizeBoxes', () => {
   });
   it('drops zero-size boxes', () => {
     expect(sanitizeBoxes([raw({ w: 0, h: 0 })])).toHaveLength(0);
+  });
+});
+
+describe('dedupeBoxes', () => {
+  it('merges boxes within DEDUPE_PX on all corners (same verse)', () => {
+    const a = raw({ verseId: 5, x: 357, y: 70, w: 289, h: 87 });
+    const b = raw({ verseId: 5, x: 357, y: 71, w: 289, h: 86 });
+    expect(dedupeBoxes([a, b])).toHaveLength(1);
+  });
+  it('keeps legitimately distinct boxes of the same verse', () => {
+    const a = raw({ verseId: 5, x: 56, y: 795, w: 285, h: 54 });
+    const b = raw({ verseId: 5, x: 357, y: 70, w: 289, h: 87 });
+    expect(dedupeBoxes([a, b])).toHaveLength(2);
   });
 });
