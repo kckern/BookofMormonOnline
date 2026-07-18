@@ -54,6 +54,12 @@ describe('clusterColumns', () => {
     expect(cols[0][0].x).toBe(56);   // ordered left→right by min X
     expect(cols[1][0].x).toBe(357);
   });
+  it('merges a transitive overlap chain (A-B, B-C overlap; A-C do not)', () => {
+    const a = raw({ x: 0, y: 10, w: 100, h: 20 });     // [0,100]
+    const b = raw({ x: 90, y: 40, w: 90, h: 20 });     // [90,180] overlaps A
+    const cc = raw({ x: 170, y: 70, w: 90, h: 20 });   // [170,260] overlaps B, not A
+    expect(clusterColumns([a, b, cc])).toHaveLength(1);
+  });
 });
 
 describe('toFragments', () => {
