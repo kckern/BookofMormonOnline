@@ -10,6 +10,7 @@ import { resolveLang } from './graphql/lang.js';
 import { stripEmptyDeep } from './compat/responseFilter.js';
 import { initRealtime } from './realtime/server.js';
 import { startBotScheduler } from './bots/scheduler.js';
+import { faxRoutes } from './media/fax/route.js';
 
 const app = Fastify({
   logger: { level: env.LOG_LEVEL },
@@ -97,6 +98,7 @@ const graphqlHandler = async (req: FastifyRequest, reply: FastifyReply) => {
 
 app.get('/health', async () => ({ ok: true }));
 app.route({ method: ['GET', 'POST', 'OPTIONS'], url: '/', handler: graphqlHandler });
+await app.register(faxRoutes);
 app.route({ method: ['GET', 'POST', 'OPTIONS'], url: '/*', handler: graphqlHandler });
 
 const shutdown = async () => {

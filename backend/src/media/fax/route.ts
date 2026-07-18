@@ -20,6 +20,13 @@ function parseWidth(seg: string): number | 'full' | null {
 }
 
 export async function faxRoutes(app: FastifyInstance): Promise<void> {
+  const rateLimit = (await import('@fastify/rate-limit')).default;
+  await app.register(rateLimit, { max: 120, timeWindow: '1 minute' });
+  app.setErrorHandler((err, _req, reply) => {
+    const code = (err as { statusCode?: number }).statusCode ?? 502;
+    reply.code(code).send({ error: (err as Error).message });
+  });
+
   // /fax/render/{version}/{mode}/w{width}/{selector...}.{ext}
   app.get('/fax/render/*', async (req, reply) => {
     const rest = (req.params as { '*': string })['*']; // version/mode/wNNN/selector.ext
