@@ -57,8 +57,7 @@ slug so revisits stop stacking.
 
 ## Verified data
 
-All figures confirmed against `bom_prd` via the workspace read-only CLI
-(`BoMOnlineWorkspace/cli/db.mjs`) on 2026-07-18.
+All figures confirmed by read-only query against `bom_prd` on 2026-07-18.
 
 | Table | Finding |
 |---|---|
