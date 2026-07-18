@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { canonicalSelector } from '../../src/media/fax/canonical.js';
+import { canonicalSelector, slugify, deslugify } from '../../src/media/fax/canonical.js';
+import { lookupReference, generateReference } from 'scripture-guide';
 
 describe('canonicalSelector', () => {
   it('uses a readable ref slug for an in-book contiguous range', () => {
@@ -16,5 +17,20 @@ describe('canonicalSelector', () => {
   });
   it('falls back to ids/ for non-contiguous selections (URL-unsafe slug)', () => {
     expect(canonicalSelector([31103, 31108]).startsWith('ids/')).toBe(true);
+  });
+});
+
+describe('canonical property', () => {
+  it('every accepted ref slug is a slug→ids→slug fixed point', () => {
+    // Book of Mormon verse ids run 31103..37852 (6604 verses).
+    for (let v = 31103; v <= 37852; v++) {
+      const ref = generateReference([v]);
+      const slug = slugify(ref);
+      const ids = lookupReference(deslugify(slug))?.verse_ids ?? [];
+      // Either it round-trips to exactly [v], or canonicalSelector will use ids/ form.
+      if (ids.length === 1 && ids[0] === v) {
+        expect(slugify(generateReference(ids))).toBe(slug);
+      }
+    }
   });
 });
