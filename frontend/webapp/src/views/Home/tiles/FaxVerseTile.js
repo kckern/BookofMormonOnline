@@ -16,7 +16,7 @@ const refSlug = (ref) => (ref || "").replace(/[ :]+/g, ".").toLowerCase();
  * at the verse. The verse text is rendered below via ScriptureExcerpt.
  */
 export default function FaxVerseTile({ data }) {
-  if (!data || (!data.selector && !data.version)) return null;
+  if (!data || !data.selector) return null;
 
   // Prefer the editions list; fall back to a single row from legacy fields.
   const editions =
@@ -73,6 +73,12 @@ export default function FaxVerseTile({ data }) {
               e.stopPropagation();
               openScripture(data.ref);
             }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                openScripture(data.ref);
+              }
+            }}
           >
             {data.ref}
           </span>
@@ -80,7 +86,6 @@ export default function FaxVerseTile({ data }) {
           <span />
         )}
       </span>
-      {data.title ? <div className="faxVerseTitle">{data.title}</div> : null}
       {data.ref ? (
         <div className="read-content scriptureExcerptCompact">
           <ScriptureExcerpt refText={data.ref} hideStudy />

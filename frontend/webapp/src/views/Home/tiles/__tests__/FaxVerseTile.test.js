@@ -70,4 +70,18 @@ describe("FaxVerseTile", () => {
     const { container } = renderTile(null);
     expect(container.firstChild).toBeNull();
   });
+
+  test("returns null when selector is absent", () => {
+    const noSelector = { ...data, selector: undefined };
+    const { container } = renderTile(noSelector);
+    expect(container.firstChild).toBeNull();
+  });
+
+  test("onError hides the failing edition row", () => {
+    renderTile(data);
+    const img = screen.getByAltText("1830 Edition Mosiah 2:17");
+    const row = img.closest("a");
+    fireEvent.error(img);
+    expect(row.style.display).toBe("none");
+  });
 });

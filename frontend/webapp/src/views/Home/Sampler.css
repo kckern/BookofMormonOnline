@@ -1570,8 +1570,6 @@ html[data-theme="dark"] .rpBoxPane .sectionDots { border-right-color: #444; }
 }
 
 /* ---- verse-fax tile (wave 1) ---- */
-.faxVerseTile .faxVersePage { display: block; }
-.faxVerseTile .faxVersePage img { width: 100%; display: block; border-radius: 4px; }
 .faxVerseTile .faxVerseTitle { font-size: 0.85rem; opacity: 0.8; margin: 0.4rem 0; }
 .notesTile .notesSource { font-size: 0.8rem; opacity: 0.7; }
 
@@ -1773,4 +1771,11 @@ html[data-theme="dark"] .mapStoryTile .mapStoryCardArt { background: rgba(255, 2
   border: 1px solid rgba(0, 0, 0, 0.12);
   border-radius: 3px;
   background: #faf7f0;
+}
+.faxVerseTile .faxPageBar {
+  position: static;
+  background: none;
+  color: inherit;
+  padding: 0.2rem 0;
+  border-radius: 0;
 }
