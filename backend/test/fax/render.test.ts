@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import sharp from 'sharp';
 import { renderFragmentCrop, renderPageDimmed } from '../../src/media/fax/render.js';
+import { stitchVertical, stitchHorizontal } from '../../src/media/fax/render.js';
 import type { Fragment } from '../../src/media/fax/types.js';
 
 // A 400x300 synthetic "scan": white paper with a black bar where the "text" is.
@@ -39,5 +40,24 @@ describe('renderPageDimmed', () => {
     // a corner outside the highlight should be dimmed (darker than pure white)
     const corner = await sharp(out).extract({ left: 0, top: 0, width: 5, height: 5 }).raw().toBuffer();
     expect(corner[0]).toBeLessThan(200);
+  });
+});
+
+describe('stitch', () => {
+  it('stitchVertical stacks images and sums heights (max width)', async () => {
+    const a = await sharp({ create: { width: 200, height: 40, channels: 3, background: '#111' } }).png().toBuffer();
+    const b = await sharp({ create: { width: 180, height: 30, channels: 3, background: '#222' } }).png().toBuffer();
+    const out = await stitchVertical([a, b], '#ffffff');
+    const m = await sharp(out).metadata();
+    expect(m.width).toBe(200);
+    expect(m.height).toBe(70);
+  });
+  it('stitchHorizontal places images side by side with a gutter', async () => {
+    const a = await sharp({ create: { width: 100, height: 50, channels: 3, background: '#111' } }).png().toBuffer();
+    const b = await sharp({ create: { width: 100, height: 60, channels: 3, background: '#222' } }).png().toBuffer();
+    const out = await stitchHorizontal([a, b], 10, '#ffffff');
+    const m = await sharp(out).metadata();
+    expect(m.width).toBe(210);   // 100 + 10 gutter + 100
+    expect(m.height).toBe(60);   // max height
   });
 });

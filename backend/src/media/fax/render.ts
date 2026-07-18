@@ -45,3 +45,25 @@ export async function renderPageDimmed(
   })));
   return sharp(dimmed).composite(overlays).jpeg().toBuffer();
 }
+
+async function dims(buf: Buffer) { const m = await sharp(buf).metadata(); return { w: m.width!, h: m.height! }; }
+
+/** Crop mode: stack fragment images top→bottom, left-aligned, on paper bg. */
+export async function stitchVertical(images: Buffer[], paper: string): Promise<Buffer> {
+  const ds = await Promise.all(images.map(dims));
+  const width = Math.max(...ds.map((d) => d.w));
+  const height = ds.reduce((s, d) => s + d.h, 0);
+  let top = 0;
+  const layers = images.map((input, i) => { const o = { input, top, left: 0 }; top += ds[i]!.h; return o; });
+  return sharp({ create: { width, height, channels: 3, background: paper } }).composite(layers).jpeg().toBuffer();
+}
+
+/** Page mode: place page images side-by-side with a gutter, top-aligned. */
+export async function stitchHorizontal(images: Buffer[], gutter: number, paper: string): Promise<Buffer> {
+  const ds = await Promise.all(images.map(dims));
+  const width = ds.reduce((s, d) => s + d.w, 0) + gutter * (images.length - 1);
+  const height = Math.max(...ds.map((d) => d.h));
+  let left = 0;
+  const layers = images.map((input, i) => { const o = { input, top: 0, left }; left += ds[i]!.w + gutter; return o; });
+  return sharp({ create: { width, height, channels: 3, background: paper } }).composite(layers).jpeg().toBuffer();
+}
