@@ -439,11 +439,14 @@ export type MapMoveSample = {
   end?: Maybe<Scalars['String']['output']>;
   endLat?: Maybe<Scalars['Float']['output']>;
   endLng?: Maybe<Scalars['Float']['output']>;
+  endName?: Maybe<Scalars['String']['output']>;
+  people?: Maybe<Array<Maybe<MoveTraveler>>>;
   ref?: Maybe<Scalars['String']['output']>;
   seq?: Maybe<Scalars['Int']['output']>;
   start?: Maybe<Scalars['String']['output']>;
   startLat?: Maybe<Scalars['Float']['output']>;
   startLng?: Maybe<Scalars['Float']['output']>;
+  startName?: Maybe<Scalars['String']['output']>;
   travelers?: Maybe<Scalars['String']['output']>;
 };
 
@@ -580,6 +583,12 @@ export type MessengerUser = {
   nickname?: Maybe<Scalars['String']['output']>;
   profile_url?: Maybe<Scalars['String']['output']>;
   user_id?: Maybe<Scalars['String']['output']>;
+};
+
+export type MoveTraveler = {
+  __typename?: 'MoveTraveler';
+  name?: Maybe<Scalars['String']['output']>;
+  slug?: Maybe<Scalars['String']['output']>;
 };
 
 export type Mutation = {
@@ -2119,6 +2128,7 @@ export type ResolversTypes = {
   MessengerThreadInfo: ResolverTypeWrapper<Partial<MessengerThreadInfo>>;
   MessengerUnreadDM: ResolverTypeWrapper<Partial<MessengerUnreadDm>>;
   MessengerUser: ResolverTypeWrapper<Partial<MessengerUser>>;
+  MoveTraveler: ResolverTypeWrapper<Partial<MoveTraveler>>;
   Mutation: ResolverTypeWrapper<{}>;
   Narration: ResolverTypeWrapper<Partial<Narration>>;
   NarrativePath: ResolverTypeWrapper<Partial<NarrativePath>>;
@@ -2242,6 +2252,7 @@ export type ResolversParentTypes = {
   MessengerThreadInfo: Partial<MessengerThreadInfo>;
   MessengerUnreadDM: Partial<MessengerUnreadDm>;
   MessengerUser: Partial<MessengerUser>;
+  MoveTraveler: Partial<MoveTraveler>;
   Mutation: {};
   Narration: Partial<Narration>;
   NarrativePath: Partial<NarrativePath>;
@@ -2712,11 +2723,14 @@ export type MapMoveSampleResolvers<ContextType = AppContext, ParentType extends 
   end?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   endLat?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   endLng?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  endName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  people?: Resolver<Maybe<Array<Maybe<ResolversTypes['MoveTraveler']>>>, ParentType, ContextType>;
   ref?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   seq?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   start?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   startLat?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   startLng?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  startName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   travelers?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
@@ -2853,6 +2867,12 @@ export type MessengerUserResolvers<ContextType = AppContext, ParentType extends 
   nickname?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   profile_url?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   user_id?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type MoveTravelerResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['MoveTraveler'] = ResolversParentTypes['MoveTraveler']> = {
+  name?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  slug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -3671,6 +3691,7 @@ export type Resolvers<ContextType = AppContext> = {
   MessengerThreadInfo?: MessengerThreadInfoResolvers<ContextType>;
   MessengerUnreadDM?: MessengerUnreadDmResolvers<ContextType>;
   MessengerUser?: MessengerUserResolvers<ContextType>;
+  MoveTraveler?: MoveTravelerResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
   Narration?: NarrationResolvers<ContextType>;
   NarrativePath?: NarrativePathResolvers<ContextType>;

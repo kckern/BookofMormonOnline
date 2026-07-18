@@ -1789,7 +1789,7 @@ const queries = {
         faxVerse { version title format page verseId ref }
         crossrefs { srcRef srcVerseId refs { ref verseId } }
         relationship { hubType hubSlug hubName hubTitle edges { rel dstType dstSlug dstName dstTitle note ref } }
-        mapstory { slug title description moves { seq start end travelers description duration ref startLat startLng endLat endLng } }
+        mapstory { slug title description moves { seq start end startName endName travelers people { slug name } description duration ref startLat startLng endLat endLng } }
       }`,
     }
   },

@@ -206,13 +206,15 @@ type MapStoryPayload = {
   mapstory: {
     slug: string; title: string; description: string | null;
     moves: {
-      seq: number; start: string; end: string; travelers: string | null;
+      seq: number; start: string; end: string;
+      startName: string | null; endName: string | null;
+      travelers: string | null; people: { slug: string; name: string | null }[] | null;
       description: string | null; duration: string | null; ref: string | null;
       startLat: number; startLng: number; endLat: number; endLng: number;
     }[];
   } | null;
 };
-const MAPSTORY_SEL = `mapstory { slug title description moves { seq start end travelers description duration ref startLat startLng endLat endLng } }`;
+const MAPSTORY_SEL = `mapstory { slug title description moves { seq start end startName endName travelers people { slug name } description duration ref startLat startLng endLat endLng } }`;
 
 describe('homesampler.mapstory', () => {
   it('returns one story with >=2 ordered, coordinated moves', async () => {
@@ -241,5 +243,28 @@ describe('homesampler.mapstory', () => {
     ]);
     expect(a.mapstory!.slug).toBe(b.mapstory!.slug);
     expect(a.mapstory!.moves.length).toBe(b.mapstory!.moves.length);
+  });
+
+  // The tile renders these instead of the raw slugs (`hill-amnihu` →
+  // `Hill Amnihu`). bom_places.name is populated for every place with coords,
+  // and the sampler INNER JOINs bom_places, so every move must carry both.
+  it('carries display names for both endpoints', async () => {
+    const s = await exec<MapStoryPayload>(MAPSTORY_SEL, 35005);
+    for (const mv of s.mapstory!.moves) {
+      expect(mv.startName).toBeTruthy();
+      expect(mv.endName).toBeTruthy();
+    }
+  });
+
+  // 234 of 238 moves have bom_map_move_people rows; the remaining 4 must come
+  // back as [] rather than null so the card can render without them.
+  it('returns a traveler array for every move, empty where none exist', async () => {
+    const s = await exec<MapStoryPayload>(MAPSTORY_SEL, 35005);
+    for (const mv of s.mapstory!.moves) {
+      expect(Array.isArray(mv.people)).toBe(true);
+      for (const p of mv.people!) expect(p.slug).toBeTruthy();
+    }
+    // At least one move in a typical story has travelers.
+    expect(s.mapstory!.moves.some((mv) => (mv.people?.length ?? 0) > 0)).toBe(true);
   });
 });

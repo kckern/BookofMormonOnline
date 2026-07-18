@@ -364,8 +364,9 @@ const sampleMapStory = async (ctx: AppContext, seed: number) => {
     )
     .select([
       's.slug as storySlug', 's.title as storyTitle', 's.description as storyDescription',
-      'm.seq', 'm.start', 'm.end', 'm.travelers', 'm.description as moveDescription',
-      'm.duration', 'm.ref',
+      'm.guid as moveGuid', 'm.seq', 'm.start', 'm.end', 'm.travelers',
+      'm.description as moveDescription', 'm.duration', 'm.ref',
+      'sp.name as startName', 'ep.name as endName',
       'spc.lat as startLat', 'spc.lng as startLng',
       'epc.lat as endLat', 'epc.lng as endLng',
     ])
@@ -374,23 +375,35 @@ const sampleMapStory = async (ctx: AppContext, seed: number) => {
     .execute();
   if (rows.length < 2) return null;
   const first = rows[0]!;
+  // Travelers via the existing batched loader (bom_map_move_people → bom_people).
+  // 234 of 238 moves have rows; the rest legitimately yield [] and the tile
+  // renders a card with no avatars rather than failing.
+  const people = await ctx.loaders.peopleByMoveGuid.loadMany(rows.map((r) => String(r.moveGuid)));
   return {
     slug: first.storySlug,
     title: first.storyTitle,
     description: first.storyDescription ?? null,
-    moves: rows.map((r) => ({
-      seq: Number(r.seq),
-      start: r.start,
-      end: r.end,
-      travelers: r.travelers ?? null,
-      description: r.moveDescription ?? null,
-      duration: r.duration ?? null,
-      ref: r.ref ?? null,
-      startLat: Number(r.startLat),
-      startLng: Number(r.startLng),
-      endLat: Number(r.endLat),
-      endLng: Number(r.endLng),
-    })),
+    moves: rows.map((r, i) => {
+      const p = people[i];
+      return {
+        seq: Number(r.seq),
+        start: r.start,
+        end: r.end,
+        startName: r.startName ?? null,
+        endName: r.endName ?? null,
+        travelers: r.travelers ?? null,
+        // loadMany surfaces per-key errors as Error instances — never throw the
+        // whole tile away because one move's travelers failed to load.
+        people: Array.isArray(p) ? p.map((x) => ({ slug: x.slug, name: x.name })) : [],
+        description: r.moveDescription ?? null,
+        duration: r.duration ?? null,
+        ref: r.ref ?? null,
+        startLat: Number(r.startLat),
+        startLng: Number(r.startLng),
+        endLat: Number(r.endLat),
+        endLng: Number(r.endLng),
+      };
+    }),
   };
 };
 
