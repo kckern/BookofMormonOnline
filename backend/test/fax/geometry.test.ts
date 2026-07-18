@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { sanitizeBoxes, dedupeBoxes, clusterColumns } from '../../src/media/fax/geometry.js';
+import { sanitizeBoxes, dedupeBoxes, clusterColumns, toFragments } from '../../src/media/fax/geometry.js';
 import type { FaxBox } from '../../src/media/fax/types.js';
 
 const raw = (o: Partial<FaxBox>): FaxBox => ({
@@ -53,5 +53,29 @@ describe('clusterColumns', () => {
     expect(cols).toHaveLength(2);
     expect(cols[0][0].x).toBe(56);   // ordered left→right by min X
     expect(cols[1][0].x).toBe(357);
+  });
+});
+
+describe('toFragments', () => {
+  it('orders a nested tail fragment after the taller box it sits inside', () => {
+    // 1829 p40: 31631 (x18,y45,small) nested inside 31632 (y37, tall)
+    const tall = raw({ verseId: 31632, page: 40, x: 18, y: 37, w: 600, h: 900 });
+    const tail = raw({ verseId: 31631, page: 40, x: 18, y: 45, w: 200, h: 20 });
+    const frags = toFragments([tail, tall]);
+    // single column, boxes vertically overlap -> one merged run
+    expect(frags).toHaveLength(1);
+    expect(frags[0].y).toBe(37);
+  });
+  it('emits page→column→run order across a column break', () => {
+    const leftBottom = raw({ verseId: 100, page: 276, x: 56, y: 795, w: 285, h: 54 });
+    const rightTop = raw({ verseId: 101, page: 276, x: 357, y: 70, w: 289, h: 87 });
+    const frags = toFragments([rightTop, leftBottom]);
+    expect(frags.map((f) => f.x)).toEqual([56, 357]); // left column first
+  });
+  it('orders across pages', () => {
+    const p15 = raw({ verseId: 200, page: 15, x: 53, y: 162, w: 507, h: 89 });
+    const p14 = raw({ verseId: 199, page: 14, x: 170, y: 977, w: 453, h: 77 });
+    const frags = toFragments([p15, p14]);
+    expect(frags.map((f) => f.page)).toEqual([14, 15]);
   });
 });

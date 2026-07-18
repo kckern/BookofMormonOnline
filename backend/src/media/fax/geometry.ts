@@ -1,4 +1,4 @@
-import type { FaxBox } from './types.js';
+import type { FaxBox, Fragment } from './types.js';
 import { DEDUPE_PX, EPSILON_PX } from './constants.js';
 
 /** Clamp negatives, clip to page width, drop zero-size boxes. Height has no
@@ -51,4 +51,41 @@ export function clusterColumns(boxes: FaxBox[]): FaxBox[][] {
     }
   }
   return cols.sort((a, z) => a.lo - z.lo).map((c) => c.boxes);
+}
+
+/** Merge a column's boxes into maximal vertical runs (union of boxes whose
+ * Y-intervals overlap or touch), ordered top→bottom. */
+function mergeRuns(colBoxes: FaxBox[]): Fragment[] {
+  const runs: Fragment[] = [];
+  for (const b of [...colBoxes].sort((a, z) => a.y - z.y)) {
+    const top = b.y, bot = b.y + b.h;
+    const last = runs[runs.length - 1];
+    if (last && top <= last.y + last.h) {
+      // vertically overlaps/touches the open run -> extend it
+      const newTop = Math.min(last.y, top);
+      const newBot = Math.max(last.y + last.h, bot);
+      const newLeft = Math.min(last.x, b.x);
+      const newRight = Math.max(last.x + last.w, b.x + b.w);
+      last.x = newLeft; last.y = newTop;
+      last.w = newRight - newLeft; last.h = newBot - newTop;
+      last.boxes.push(b);
+    } else {
+      runs.push({ page: b.page, pageWidth: b.pageWidth, x: b.x, y: b.y, w: b.w, h: b.h, boxes: [b] });
+    }
+  }
+  for (const r of runs) r.boxes.sort((a, z) => a.verseId - z.verseId);
+  return runs;
+}
+
+/** Sanitized boxes -> fragments in reading order (page asc, column L→R, run top→bottom). */
+export function toFragments(boxes: FaxBox[]): Fragment[] {
+  const byPage = new Map<number, FaxBox[]>();
+  for (const b of boxes) (byPage.get(b.page) ?? byPage.set(b.page, []).get(b.page)!).push(b);
+  const out: Fragment[] = [];
+  for (const page of [...byPage.keys()].sort((a, z) => a - z)) {
+    for (const col of clusterColumns(byPage.get(page)!)) {
+      out.push(...mergeRuns(col));
+    }
+  }
+  return out;
 }
