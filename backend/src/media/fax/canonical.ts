@@ -11,9 +11,10 @@ export function slugify(ref: string): string {
     .replace(/\s+/g, '-');
 }
 
-/** "1-nephi-3.2-4" -> "1 nephi 3:2-4" (best-effort inverse for lookupReference). */
+/** "1-nephi-3.2-4" -> "1 nephi 3:2-4". Hyphens adjacent to a non-digit become
+ * spaces (word separators); digit-digit hyphens are preserved as verse ranges. */
 export function deslugify(slug: string): string {
-  return slug.replace(/\./g, ':').replace(/-/g, ' ');
+  return slug.replace(/\./g, ':').replace(/-(?=\D)|(?<=\D)-/g, ' ');
 }
 
 function sameSet(a: number[], b: number[]): boolean {
@@ -22,15 +23,19 @@ function sameSet(a: number[], b: number[]): boolean {
   return b.every((x) => s.has(x));
 }
 
-/** Canonical selector path segment. Ref slug ONLY if slug→ids→slug is a fixed point;
- * otherwise the ids/ form. `ids` must be sorted ascending, de-duplicated. */
+const SLUG_OK = /^[a-z0-9.-]+$/;
+
+/** Canonical selector path segment. Ref slug ONLY if it is URL-safe AND slug→ids→slug
+ * is a fixed point; otherwise the ids/ form. `ids` must be sorted ascending, de-duped. */
 export function canonicalSelector(ids: number[]): string {
   const sorted = [...new Set(ids)].sort((a, z) => a - z);
   try {
     const ref = generateReference(sorted);
     const slug = slugify(ref);
-    const round = lookupReference(deslugify(slug))?.verse_ids ?? [];
-    if (sameSet(round, sorted)) return slug;
+    if (SLUG_OK.test(slug)) {
+      const round = lookupReference(deslugify(slug))?.verse_ids ?? [];
+      if (sameSet(round, sorted)) return slug;
+    }
   } catch { /* fall through */ }
   return `ids/${sorted.join('-')}`;
 }
