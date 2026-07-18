@@ -1,10 +1,10 @@
 import type { FastifyInstance } from 'fastify';
 import { VERSION_SLUGS, WIDTH_WHITELIST, MAX_PAGES } from './constants.js';
-import { selectorToVerseIds, verseIdsToBoxes } from './resolve.js';
+import { selectorToVerseIds, verseIdsToBoxes, legacyUnitToVerseIds } from './resolve.js';
 import { toFragments, clampPages } from './geometry.js';
 import { renderImage } from './render.js';
 import { fetchScan } from './scan.js';
-import { keyFor, coalesce, writeBack, withRenderSlot } from './cache.js';
+import { keyFor, coalesce, writeBack, withRenderSlot, legacyKey } from './cache.js';
 import { canonicalSelector } from './canonical.js';
 import { createHash } from 'node:crypto';
 
@@ -62,6 +62,40 @@ export async function faxRoutes(app: FastifyInstance): Promise<void> {
       writeBack(key, body, ext);
       return reply
         .header('content-type', ext === 'webp' ? 'image/webp' : 'image/jpeg')
+        .header('cache-control', 'public, max-age=31536000, immutable')
+        .header('etag', etag(body))
+        .send(body);
+    } catch (err) {
+      return reply.code((err as { statusCode?: number }).statusCode ?? 502).send({ error: (err as Error).message });
+    }
+  });
+
+  // Legacy: /fax/text/{version}/{slug}-{id}(.jpg) -> mode=page, width=full
+  app.get('/fax/text/*', async (req, reply) => {
+    const rest = (req.params as { '*': string })['*'];
+    const parts = rest.split('/');
+    if (parts.length < 2) return reply.code(400).send({ error: 'bad path' });
+    const version = parts[0]!;
+    if (!(VERSION_SLUGS as readonly string[]).includes(version)) return reply.code(400).send({ error: 'unknown version' });
+    const tail = parts.slice(1).join('/').replace(/\.jpg$/, '');
+    const m = /^([a-z-]{1,50})-(\d{1,6})$/.exec(tail);
+    if (!m) return reply.code(400).send({ error: 'bad unit' });
+    const slug = m[1]!, id = Number(m[2]);
+
+    const verseIds = await legacyUnitToVerseIds(slug, id);
+    if (verseIds.length === 0) return reply.code(404).send({ error: 'unresolved unit' });
+
+    const key = legacyKey(version, slug, id);
+    try {
+      const body = await coalesce(key, () => withRenderSlot(async () => {
+        const boxes = await verseIdsToBoxes(version, verseIds);
+        if (boxes.length === 0) throw Object.assign(new Error('no boxes'), { statusCode: 404 });
+        const { fragments } = clampPages(toFragments(boxes), MAX_PAGES);
+        return renderImage({ mode: 'page', ext: 'jpg', width: 'full', fragments, paper: PAPER, provider: (p) => fetchScan(version, p) });
+      }));
+      writeBack(key, body, 'jpg');
+      return reply
+        .header('content-type', 'image/jpeg')
         .header('cache-control', 'public, max-age=31536000, immutable')
         .header('etag', etag(body))
         .send(body);

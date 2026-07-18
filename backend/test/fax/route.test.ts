@@ -27,3 +27,17 @@ describe('GET /fax/render', () => {
     expect(r.rawPayload.length).toBeGreaterThan(1000);
   });
 });
+
+describe('GET /fax/text (legacy alias)', () => {
+  it('renders ammon-132 to a JPEG (integration)', async () => {
+    const f = await app();
+    const r = await f.inject({ method: 'GET', url: '/fax/text/1837/ammon-132' });
+    expect(r.statusCode).toBe(200);
+    expect(r.headers['content-type']).toBe('image/jpeg');
+  });
+  it('404s a topical-heading unit', async () => {
+    const f = await app();
+    const r = await f.inject({ method: 'GET', url: '/fax/text/1837/lehites-83' });
+    expect(r.statusCode).toBe(404);
+  });
+});
