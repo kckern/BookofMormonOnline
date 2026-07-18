@@ -1,0 +1,72 @@
+import type { FastifyInstance } from 'fastify';
+import { VERSION_SLUGS, WIDTH_WHITELIST, MAX_PAGES } from './constants.js';
+import { selectorToVerseIds, verseIdsToBoxes } from './resolve.js';
+import { toFragments, clampPages } from './geometry.js';
+import { renderImage } from './render.js';
+import { fetchScan } from './scan.js';
+import { keyFor, coalesce, writeBack, withRenderSlot } from './cache.js';
+import { canonicalSelector } from './canonical.js';
+import { createHash } from 'node:crypto';
+
+const PAPER = '#faf7f0'; // fallback paper color; margin-sampling is a later refinement
+const etag = (b: Buffer) => `"${createHash('sha1').update(b).digest('hex')}"`;
+
+function parseWidth(seg: string): number | 'full' | null {
+  if (seg === 'wfull') return 'full';
+  const m = /^w(\d+)$/.exec(seg);
+  if (!m) return null;
+  const n = Number(m[1]);
+  return (WIDTH_WHITELIST as readonly number[]).includes(n) ? n : null;
+}
+
+export async function faxRoutes(app: FastifyInstance): Promise<void> {
+  // /fax/render/{version}/{mode}/w{width}/{selector...}.{ext}
+  app.get('/fax/render/*', async (req, reply) => {
+    const rest = (req.params as { '*': string })['*']; // version/mode/wNNN/selector.ext
+    const parts = rest.split('/');
+    if (parts.length < 4) return reply.code(400).send({ error: 'bad path' });
+    const [version, mode, widthSeg, ...selParts] = parts;
+    if (!(VERSION_SLUGS as readonly string[]).includes(version!)) return reply.code(400).send({ error: 'unknown version' });
+    if (mode !== 'page' && mode !== 'crop') return reply.code(400).send({ error: 'bad mode' });
+    const width = parseWidth(widthSeg!);
+    if (width === null) return reply.code(400).send({ error: 'bad width' });
+
+    const selRaw = selParts.join('/');
+    const dot = selRaw.lastIndexOf('.');
+    if (dot < 0) return reply.code(400).send({ error: 'missing ext' });
+    const ext = selRaw.slice(dot + 1);
+    const selector = selRaw.slice(0, dot);
+    if (ext !== 'jpg' && ext !== 'webp') return reply.code(400).send({ error: 'bad ext' });
+
+    const verseIds = selectorToVerseIds(selector);
+    if (verseIds.length === 0) return reply.code(404).send({ error: 'no verses' });
+
+    // canonical redirect (manual Location for Fastify-version safety)
+    const canonical = canonicalSelector(verseIds);
+    if (canonical !== selector) {
+      return reply.code(301)
+        .header('cache-control', 'public, max-age=86400')
+        .header('location', `/fax/render/${version}/${mode}/${widthSeg}/${canonical}.${ext}`)
+        .send();
+    }
+
+    const key = keyFor({ version: version!, mode, width, selector, ext });
+    try {
+      const body = await coalesce(key, () => withRenderSlot(async () => {
+        const boxes = await verseIdsToBoxes(version!, verseIds);
+        if (boxes.length === 0) throw Object.assign(new Error('no boxes'), { statusCode: 404 });
+        const { fragments, clamped } = clampPages(toFragments(boxes), MAX_PAGES);
+        if (clamped) app.log.info({ key }, 'fax render clamped to N pages');
+        return renderImage({ mode, ext, width, fragments, paper: PAPER, provider: (p) => fetchScan(version!, p) });
+      }));
+      writeBack(key, body, ext);
+      return reply
+        .header('content-type', ext === 'webp' ? 'image/webp' : 'image/jpeg')
+        .header('cache-control', 'public, max-age=31536000, immutable')
+        .header('etag', etag(body))
+        .send(body);
+    } catch (err) {
+      return reply.code((err as { statusCode?: number }).statusCode ?? 502).send({ error: (err as Error).message });
+    }
+  });
+}
