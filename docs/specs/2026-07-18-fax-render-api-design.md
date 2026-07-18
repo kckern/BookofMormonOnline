@@ -1,9 +1,11 @@
-# Dynamic Facsimile-Highlight Render API — Design Spec (v2)
+# Dynamic Facsimile-Highlight Render API — Design Spec (v3)
 
 **Date:** 2026-07-18
-**Status:** Approved design v2 (post stern-review), pending implementation plan
+**Status:** Approved design v3 (post two stern-review rounds), pending implementation plan
 **Author:** Claude (brainstormed with KC)
-**Revision:** v2 folds in a grouchy adversarial review — see §16 for the changelog.
+**Revision:** v3 folds in a second adversarial review round — see §16 for the changelog.
+All three v2-round blockers are now closed with verified DB/library evidence,
+including the legacy-alias verse mapping (§12), which is fully solved (no spike).
 
 ## 1. Background & motivation
 
@@ -66,9 +68,17 @@ page of one edition. 92,839 rows across 13 editions × 6,604 verses.
   X **left of page center** (357 < 600). A `pageWidth/2` threshold misclassifies it.
   See §5.3.
 - **Near-duplicate rows:** `2013`/`34284` has (Y=70,H=87) and (Y=71,H=86) at the same
-  X — must be merged/deduped with tolerance.
-- **Negative notch values:** 2 rows have `BRW=-1` (`1829`/`36874`, `printer`/`36874`)
-  — clamp negatives to 0.
+  X — must be merged/deduped with tolerance. (~20 near-dup pairs across 9 editions;
+  a 2px all-corners rule catches them and never merges legitimately-distinct boxes,
+  which differ by at least a line height.)
+- **Negative notch values:** 2 rows have `BRW=-1` (`1829`/`36874`, `printer`/`36874`).
+- **Negative box origin (`X`/`Y` < 0):** ~20+ rows — `printer` pages 5/7/8/11 (X=−1…−4),
+  `1920` p33, `1830` p481. `sharp.extract` with a negative `left`/`top` **throws**.
+- **All-zero boxes:** `1840`/33418 and `poetic`/37440 have `X=Y=W=H=0`. Zero-size
+  extract throws, and a zero box must not count its page toward the N-page clamp.
+- **Overlapping/nested boxes on one page:** `1829` p40 — verse 31631's box (X=18,
+  Y=45) lies *inside* verse 31632's box (Y=37, spanning down). Naive `Y asc` ordering
+  emits 31632 before 31631 — wrong reading order. Requires merged-run ordering (§5.3).
 
 ## 3. Architecture
 
@@ -117,53 +127,81 @@ alone:
     `ids/31103-31104-31108`.
 - `ext` — `jpg` (default) or `webp`.
 
-**Canonicalization (explicit rules):**
+**Canonicalization (round-trip-safe — fixes v2's broken scheme):**
 
-1. Resolve input → sorted, de-duplicated verse-ID array (`ref` via `scripture-guide`
-   `lookupReference`; explicit list used as-is).
-2. If the array is a single contiguous run, canonical form is the **ref slug**
-   produced by `generateReference()` then slugified: lowercase; spaces→`-`;
-   `:`→`.`; verse ranges use `-`; drop commas. (e.g. `1 Nephi 3:2–4` → `1-nephi-3.2-4`.)
-3. If non-contiguous, canonical form is the **`ids/` list**, ascending, `-`-joined.
+v2 assumed "contiguous ⇒ ref slug" always works. Verified false against the real
+`scripture-guide`: `words-of-mormon-1.3-5` → 0 verses (the book slug doesn't parse),
+and cross-book contiguous runs like `1-nephi-22.30-2-nephi-1.2` → 0 verses (verse IDs
+are globally sequential, so a contiguous run crosses book seams). Either mints a
+canonical URL that then 400s. The rule is therefore **round-trip-gated**:
+
+1. Resolve input → sorted, de-duplicated verse-ID array (`ref` via `lookupReference`,
+   de-slugified against a fixed book-slug table derived from `scripture-guide`'s
+   `canon`; explicit list used as-is).
+2. **Attempt** a ref slug: `generateReference(ids)` → slugify (lowercase; spaces→`-`;
+   `:`→`.`; ranges use **ASCII hyphen**; drop commas). Accept it **only if it
+   round-trips**: `lookupReference(deslugify(slug))` returns exactly the same verse-ID
+   set (a fixed point). This automatically rejects Words-of-Mormon and cross-book
+   runs, which fall through to step 3.
+3. Otherwise canonical form is the **`ids/` list**, ascending, `-`-joined.
 4. Any request whose path is not already canonical responds **`301`** → canonical
-   URL, with `Cache-Control: public, max-age=86400` so redirects are cheap. (301s are
-   not written to S3; non-canonical URLs always fail over to Node — acceptable.)
+   URL, `Cache-Control: public, max-age=86400`. (301s aren't written to S3;
+   non-canonical URLs always fail over to Node — acceptable.) **Exception:** legacy
+   alias paths (§12) are never 301'd — they serve directly.
 
-Direction is deterministic: contiguous ⇒ ref slug; non-contiguous ⇒ ids list.
+A property test over all 6,604 verses asserts `slug→ids→slug` is a fixed point for
+every accepted ref slug (§15).
 
 ## 5. Render pipeline (shared)
 
 1. Parse + validate URL (§6) → resolve selector → sorted verse-ID array.
 2. Query `bom_xtras_fax_index` for `(version, verse_id in [...])`, grouped by page.
-3. **Dedupe** near-identical boxes per (page, verse) with a small pixel tolerance
-   (merge boxes whose corners are within ~2px). **Clamp negative** `TL*/BR*` to 0.
-4. **Reading order (§5.3).** Group by page; within a page infer columns; order
-   page → column → Y-asc.
+3. **Sanitize boxes:** clamp `X,Y ≥ 0`; clip `X+W`/`Y+H` to scan bounds; clamp
+   negative `TL*/BR*` to 0; **drop** any box with `W ≤ 0` or `H ≤ 0` (a dropped box
+   does not count toward the page clamp in step 5). **Dedupe** near-identical boxes
+   per (page, verse) within ~2px on all corners.
+4. **Reading order (§5.3).** Group by page; within a page infer columns by X-interval
+   overlap; order page → column → merged-run Y.
 5. **Clamp** to the first N pages (default 5, configurable) in reading order.
 6. Fetch each needed source scan from S3 (`fax/pages/{version}/{nnn}.jpg`, page
    zero-filled to 3).
 7. **Assert scan width (§5.5).**
 8. Per page, compute the highlight region as a **rectangle set** (§5.4) and the
-   selection-level outer notches (§7).
-9. Compose per mode (§7), **stitch** fragments into one image (§8).
-10. Downscale to `width` (never upscale), encode `jpg`/`webp`, stream out, async
-    S3 write-back (§9).
+   selection-level exterior notches (§7).
+9. **Per page**, compose per mode (§7) → **downscale that page to `width`** (never
+   upscale). Downscaling *before* stitching bounds peak memory (a 5-up `1829` spread
+   at native width is ~12,500px wide).
+10. **Stitch** the per-page results into one image (§8), encode `jpg`/`webp`, stream
+    out, async S3 write-back (§9).
 
-### 5.3 Column-aware reading order (fixes the core bug)
+### 5.3 Column-aware reading order (fixes the core bug — v3)
 
-`page → column → Y` — NOT `page → Y`. Within a page:
+`page → column → merged-run Y` — NOT `page → Y`, and NOT the v2 X-start-gap scheme.
 
-- Cluster boxes into columns by **X-start value gap detection** (sort by `X`; start
-  a new column when the gap between consecutive `X` values exceeds a threshold, e.g.
-  ~15% of `pageWidth`). Do **not** use a `pageWidth/2` midpoint — verified to
-  misclassify `2013`/`34284` (right-column box at X=357 on a 1200px page).
-- Order columns left→right by their min `X`; within a column order boxes by `Y` asc;
-  concatenate columns.
-- Verified correct on `34284`: left column (X≈56, Y=795) is emitted before right
-  column (X≈357, Y=70/71), matching reading order even though the continuation has a
-  smaller Y.
-- The exact gap threshold is an **empirical parameter validated against golden
-  assets** (§14), since single-column editions must resolve to one column.
+**Why not X-start gaps (v2):** verified against the table, a start-gap threshold that
+splits real two-column pages also *falsely* splits single-column ones. Max
+consecutive X-start gap as a fraction of `pageWidth` exceeds 15% on **~450
+single-column pages** (e.g. `1830` p459 at 58.8% — a one-word verse-start fragment at
+X=482 vs the column at X=38), while the real `2013`/`34284` two-column gap is only
+25.1%. No single start-gap threshold separates these. The algorithm shape was wrong.
+
+**Column inference by X-interval overlap:** treat each box as the horizontal interval
+`[X, X+W]`. Two boxes share a column if their intervals overlap by more than a small
+ε. Columns are the transitive-closure clusters of overlapping intervals. Verified:
+- `1830` p459: fragment `[482,512]` ⊂ column `[38,513]` → **one column** (correct).
+- `2013`/`34284`: `[56,341]` vs `[357,646]` disjoint → **two columns** (correct).
+- `1920` two-column pages: `[6,323]` vs `[325,642]` (2px apart) → split via the ε rule.
+
+Order columns left→right by min `X`.
+
+**Merged-run ordering within a column** (fixes the `1829` p40 overlap case): merge the
+column's boxes into maximal **vertical runs** (union of vertically-overlapping/adjacent
+rectangles), then order runs by top `Y`. This prevents a small tail fragment nested
+inside a taller box from sorting ahead of it. A "fragment" for stitching (§7/§8) is
+exactly one such merged run.
+
+The ε overlap tolerance is a small fixed pixel value validated against golden assets
+(§14); single-column editions must always collapse to one column.
 
 ### 5.4 Union / notch geometry
 
@@ -194,18 +232,26 @@ strictly validated (closes the DoS-amplification / path-traversal surface):
 - Ref slug matches a strict `^[a-z0-9.\-]+$` and must resolve via `scripture-guide`.
 - **Global sharp concurrency semaphore** (bounded worker slots) so a burst of cold
   misses can't exhaust memory decoding many large scans (1829 scans are ~2500px wide).
-- **Rate limit** on the render route (per-IP; Fastify plugin).
+- **Rate limit** on the render route (per-IP; `@fastify/rate-limit` — a **new
+  dependency** to add to `backend/package.json`). The alias route (§12) shares it.
 - Invalid input → `400`; nothing renderable → `404`.
 
 ## 7. Render modes
 
+A **fragment** = one maximal merged vertical run of the selection's rectangle-union
+per (page, column), as defined in §5.3. A single-verse, single-page selection is one
+fragment; a column/page-spanning selection is several, emitted in reading order.
+
 - **`page` (full-page dimmed):** render the full source scan; apply a dark overlay
   (default ~55% opacity black) everywhere **except** the highlight rectangle-set,
   which stays at full brightness. Output aspect = the page.
-- **`crop`:** extract the union bounding box. **Paper-fill only the exterior notch
-  corners** (start of first verse, end of last verse) — sampled from the page margin
-  color (fallback near-white). Interior notches are left lit (§5.4). Output is a clean
-  opaque rectangle.
+- **`crop`:** crop **each fragment's** bounding box (not a single union bbox across
+  columns — that would span the gutter). **Paper-fill only the exterior notch corners
+  of the whole selection** — the top-left notch of the **first verse's first box**
+  (by verse-id order) and the bottom-right notch of the **last verse's last box**;
+  fill sampled from the page margin color (fallback near-white). Interior
+  verse-to-verse notches stay lit (§5.4). Each fragment crop is a clean opaque
+  rectangle; fragments are stitched per §8.
 
 Default format **JPEG**; `webp` optional (smaller thumbnails, paid once at
 generation). Set `quality` sensibly (~82).
@@ -237,7 +283,10 @@ generation). Set `quality` sensibly (~82).
   **retry** (small bounded backoff) and **log + increment a failure counter**; silent
   write-loss is not acceptable (its degraded mode is "re-render forever on every
   CDN-expiry miss"). The `PUT` sets `Content-Type` and
-  `Cache-Control: public, max-age=31536000, immutable` (mirroring `s3.ts:68-69`).
+  `Cache-Control: public, max-age=31536000, immutable` (`s3.ts:68-69` sets the same
+  `max-age` **without** `immutable`; we add it deliberately). Render paths write the
+  `fax/render/...` key; **alias paths (§12) write the legacy
+  `fax/text/{version}/{slug}-{id}.jpg` key.**
 - **Request coalescing.** In standalone mode (no CDN dedup), N concurrent requests
   for one cold key would spawn N sharp pipelines. Reuse the **`inFlight` promise-map
   pattern from `avatarAssets.ts:30`**: keyed by the canonical path, so concurrent
@@ -272,21 +321,45 @@ generation). Set `quality` sensibly (~82).
 - Source-scan fetch failure → `502` (mind the edge error-TTL, §10).
 - Sandbox mode → serve bytes, skip write-back.
 
-## 12. Legacy-compat alias (secondary goal — vetoable)
+## 12. Legacy-compat alias (secondary goal — mechanism SOLVED)
 
-To reconnect the existing frontend without changes, serve
-`fax/text/{version}/{slug}-{id}(.jpg)` as an alias:
+Serve `fax/text/{version}/{slug}-{id}(.jpg)` as an alias so the existing frontend
+(`Narration.js:185`, `StudyInFeed.js:190`) is reconnected with zero changes. The
+verse-resolution mechanism is now fully identified and verified against the golden
+asset (no spike remaining):
 
-- Resolve the reader **text-unit** `{slug}/{id}` → its verse-ID range via `bom_text`
-  (the unit groups verses shown as one reader "page"), then feed those verse IDs into
-  the shared pipeline with `mode=page`, `width=full`, `ext=jpg`.
-- This matches the 2022 renders (full-page, page-shaped output).
-- **Validate against the surviving golden asset** `fax/text/1837/ammon-132` (still
-  serves 200) — geometric/visual parity check (§14).
+**Resolution chain (verified end-to-end for `ammon-132`):**
+1. `bom_slug` WHERE `slug = {slug}` AND `type = 'PG'` → its `link` column = the **page
+   guid**. (v2 wrongly said "via `bom_text`" and omitted this hop.)
+2. `bom_text` WHERE `page = {pageGuid}` AND `link = {id}` → the text-unit row; take its
+   **`heading`** (e.g. `"Alma 26:1–9"`).
+3. Normalize the heading (en-dash/em-dash → ASCII hyphen) and parse via
+   `scripture-guide` `lookupReference` → the verse-ID set (Alma 26:1–9 → 9 IDs
+   `34345…34353`). **The heading is the source of truth** — `bom_lookup` returns only
+   the unit's anchor verse (1), and `min_verse_id` is non-monotonic across units;
+   both are red herrings.
+4. Feed the verse IDs into the shared pipeline with `mode=page`, `width=full`,
+   `ext=jpg`. Verified: those 9 verses' `1837` boxes are all on page 317, Y-band
+   ~163–828, matching the golden's bright band (modulo the known different-scan-
+   generation scale — §15).
 
-If you'd rather **migrate the two frontend call sites** to the rich `/fax/render/...`
-path instead of maintaining this alias, we drop this section. Recommended: keep the
-alias (lowest risk, immediate win); frontend can migrate opt-in later.
+**Topical-heading units need no fallback.** 15.4% of unit headings are topical
+("A rod of iron") and don't parse. Verified: those units **return 404 in the frozen
+2022 set** (`lehites-83` → 404) while parseable ones exist (`lehites-1` → 206). So a
+non-parsing heading → the alias returns **404**, which is *exactly* today's behavior.
+No fallback derivation is required.
+
+**Serving semantics (S4):**
+- Validate `{slug}` (`^[a-z-]{1,50}$`), `{id}` (`^\d{1,6}$`), and `version`
+  (whitelist); the alias route shares the §6 rate limiter and sharp semaphore.
+- Alias paths **serve the image directly** (they are never 301'd — see §4 exception),
+  and write back to the **legacy S3 key** `fax/text/{version}/{slug}-{id}.jpg`, so
+  future hits are static exactly like the 2022 set. (The `.jpg` matches the existing
+  edge-append rewrite in §1.)
+- Empty/again-404 when the heading doesn't resolve.
+
+Recommended: keep the alias (lowest risk, immediate win, reproduces the golden
+mechanism); the frontend can migrate to the rich `/fax/render/...` path opt-in later.
 
 ## 13. Module layout
 
@@ -295,7 +368,7 @@ backend/src/media/fax/
   geometry.ts     # verse-IDs -> boxes -> dedupe/clamp -> columns/reading order -> union rects, clamping
   render.ts       # pure: rect-sets + source images -> composed Buffer (both modes, stitching)
   cache.ts        # FaxRenderCache seam (S3 write-back w/ retry, key derivation, inFlight coalescing)
-  resolve.ts      # selector -> verse-IDs (ref via scripture-guide; ids list; legacy text-unit via bom_text)
+  resolve.ts      # selector -> verse-IDs (ref via scripture-guide; ids list; legacy unit via bom_slug->bom_text.heading->lookupReference)
   route.ts        # Fastify handler: validate -> resolve -> render -> stream -> write-back
 ```
 
@@ -303,29 +376,41 @@ backend/src/media/fax/
 
 ## 14. Open validation items (do these FIRST in implementation)
 
-1. **Notch sign convention** — which corner and direction `TLW/TLH` vs `BRW/BRH`
-   encode; pixel-verify against a known verse before building crop paper-fill.
-2. **Column gap threshold (§5.3)** — tune against multiple editions incl.
-   single-column (must yield one column) and `2013`/`34284` (two columns); lock via test.
-3. **Legacy text-unit resolution (§12)** — confirm the exact `bom_text` mapping from
-   `{slug}/{id}` → verse-ID range; validate against golden `fax/text/1837/ammon-132`.
-4. **Fax S3 bucket/host (§3)** — confirm whether fax assets share `S3_BUCKET` or need
+Only two design unknowns remain (the v2-round blockers are resolved and evidenced):
+
+1. **Notch sign convention** — which corner/direction `TLW/TLH` vs `BRW/BRH` encode;
+   pixel-verify against a known verse before building crop paper-fill.
+2. **Column ε overlap tolerance (§5.3)** — lock the small interval-overlap ε against a
+   test matrix incl. single-column editions (must yield one column, e.g. `1830` p459)
+   and two-column pages (`2013`/`34284`, `1920`); tune once, freeze via test.
+3. **Fax S3 bucket/host (§3)** — confirm whether fax assets share `S3_BUCKET` or need
    `FAX_S3_BUCKET`/`FAX_S3_PUBLIC_URL`.
+
+(The legacy text-unit resolution, a v2 open item, is now **solved** — see §12.)
 
 ## 15. Testing
 
-- **`geometry.ts` units:** dedupe of near-identical rows (`34284`), negative-notch
-  clamping (`36874`), column-aware reading order (`34284` — the exact case v1 got
-  wrong), page clamping, 3-box verses.
+- **`geometry.ts` units:** dedupe near-identical rows (`34284`); clamp negative notch
+  (`36874`) and negative `X`/`Y` (`printer` p5/`1920` p33); drop all-zero boxes
+  (`1840`/33418, `poetic`/37440); **column inference by interval overlap** — single
+  column collapses (`1830` p459), two columns split (`2013`/34284, `1920`);
+  **merged-run ordering** with a nested box (`1829` p40: 31631 inside 31632); page
+  clamping; 3-box verses.
+- **Canonicalization property test:** for **all 6,604 verses**, any accepted ref slug
+  satisfies `slug→ids→slug` fixed point; Words-of-Mormon and cross-book contiguous
+  runs fall to the `ids/` form (regression for the v2 B2 bug).
 - **`render.ts` units:** fixture scan + fixture boxes → snapshot output dimensions +
   targeted pixel checks for `page`, `crop`, and an N-up spread; interior-notch-not-
-  paper-filled check.
-- **Golden-parity test:** compare a render against the surviving 2022 asset
-  `fax/text/1837/ammon-132` (free ground truth for highlight geometry).
-- **Route:** param validation/whitelists, canonical `301` redirect (both directions),
-  error codes, coalescing (concurrent cold requests → one render).
-- **Perf/memory budget:** worst-case `1829` (~2500px scans) N-up spread stays within a
-  set memory ceiling; concurrency semaphore enforced.
+  paper-filled check; downscale-before-stitch order.
+- **Golden-parity test (scale-normalized):** the golden `fax/text/1837/ammon-132` is
+  981×1500 while today's scan is 768×1192 — **different scan generations**, so the
+  test must **normalize scale and compare highlight-band geometry** (relative Y-band,
+  verse set), NOT raw pixels or absolute dimensions. Asserts the §12 heading→verses
+  chain reproduces the Alma 26:1–9 band.
+- **Route:** param validation/whitelists, canonical `301` (both directions) + alias
+  paths **not** 301'd, error codes, coalescing (concurrent cold requests → one render).
+- **Perf/memory budget:** worst-case `1829` (~2500px scans) N-up spread (downscaled
+  per-page first) stays within a set memory ceiling; concurrency semaphore enforced.
 
 ## 16. Changelog v1 → v2 (from stern review)
 
@@ -347,6 +432,32 @@ backend/src/media/fax/
 - **S6** Dropped the unreachable `X-Fax-Clamped` header; clamp is silent + logged (§9).
 - **Nits** page zero-fill, N-up (not 2-up) naming + memory budget, golden-parity test.
 
+### Changelog v2 → v3 (second stern-review round)
+
+- **B1 (reopened)** Reading order re-fixed: X-*start*-gap clustering replaced with
+  **X-interval-overlap** clustering + **merged-run** Y-ordering. Start-gap provably
+  fails on ~450 single-column pages (`1830` p459 = 58.8%); overlap handles both it and
+  `2013`/34284, and merged runs fix the nested-box case (`1829` p40) (§5.3).
+- **B2 (reopened)** Canonicalization made **round-trip-gated** — a ref slug is used
+  only if `slug→ids→slug` is a fixed point; Words-of-Mormon and cross-book runs (both
+  verified to yield 0 verses) now fall to the `ids/` form (§4).
+- **B3/§12 (solved)** Legacy-alias verse mapping identified and verified:
+  `bom_slug(PG)` → page guid → `bom_text.heading` → `lookupReference`. Topical headings
+  404 in the frozen set, so no fallback needed (§12).
+- **New — pipeline order:** compose → **downscale per page** → stitch → encode (§5, §8
+  contradiction resolved).
+- **New — bad-geometry rows:** clamp negative `X`/`Y`, clip to bounds, drop zero-size
+  boxes (would crash `sharp.extract`) (§2, §5 step 3).
+- **New — fragment defined:** = maximal merged vertical run per (page, column); crops
+  per fragment, not one cross-gutter union bbox; exterior-notch attribution by
+  verse-id order (§5.3, §7).
+- **New — alias serving:** validated inputs, shares limiter, **served directly (not
+  301'd)**, writes the legacy S3 key (§4, §12).
+- **New — golden-parity test** must be scale-normalized (different scan generations)
+  (§15).
+- **Nits:** `immutable` citation corrected; `@fastify/rate-limit` is a new dependency;
+  `fax/tabs` is static and out of scope; ASCII hyphen in slugs.
+
 ## 17. Decisions locked
 
 1. Source scans already on S3, fronted by `media.bookofmormon.online`.
@@ -358,4 +469,8 @@ backend/src/media/fax/
 7. Caching: async write-back (+retry/metric/coalescing) + thin cache seam.
 8. Coordinate space: native scan pixels (verified); `pageScale` ignored; scan-width asserted.
 9. Framework: Fastify.
-10. Legacy `fax/text` alias: recommended (vetoable, §12).
+10. Legacy `fax/text` alias: recommended, and its verse-mapping mechanism is **solved
+    & verified** (`bom_slug`→`bom_text.heading`→`lookupReference`); topical headings 404
+    as today, no fallback needed (§12).
+11. Canonicalization is round-trip-gated (ref slug only if `slug→ids→slug` is a fixed
+    point; else `ids/` form) (§4).
