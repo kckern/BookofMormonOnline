@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { sanitizeBoxes, dedupeBoxes } from '../../src/media/fax/geometry.js';
+import { sanitizeBoxes, dedupeBoxes, clusterColumns } from '../../src/media/fax/geometry.js';
 import type { FaxBox } from '../../src/media/fax/types.js';
 
 const raw = (o: Partial<FaxBox>): FaxBox => ({
@@ -35,5 +35,23 @@ describe('dedupeBoxes', () => {
     const a = raw({ verseId: 5, x: 56, y: 795, w: 285, h: 54 });
     const b = raw({ verseId: 5, x: 357, y: 70, w: 289, h: 87 });
     expect(dedupeBoxes([a, b])).toHaveLength(2);
+  });
+});
+
+describe('clusterColumns', () => {
+  it('collapses a single column when a small fragment is inside the column span', () => {
+    // 1830 p459: fragment [482,512] inside column [38,513]
+    const col = raw({ x: 38, y: 100, w: 475, h: 400 });   // [38,513]
+    const frag = raw({ x: 482, y: 60, w: 30, h: 20 });    // [482,512] ⊂ [38,513]
+    expect(clusterColumns([col, frag])).toHaveLength(1);
+  });
+  it('splits two disjoint columns', () => {
+    // 2013 p276: [56,341] vs [357,646]
+    const left = raw({ x: 56, y: 795, w: 285, h: 54 });
+    const right = raw({ x: 357, y: 70, w: 289, h: 87 });
+    const cols = clusterColumns([left, right]);
+    expect(cols).toHaveLength(2);
+    expect(cols[0][0].x).toBe(56);   // ordered left→right by min X
+    expect(cols[1][0].x).toBe(357);
   });
 });

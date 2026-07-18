@@ -1,5 +1,5 @@
 import type { FaxBox } from './types.js';
-import { DEDUPE_PX } from './constants.js';
+import { DEDUPE_PX, EPSILON_PX } from './constants.js';
 
 /** Clamp negatives, clip to page width, drop zero-size boxes. Height has no
  * stored page bound, so H is only floored at 0 via the drop rule. */
@@ -32,4 +32,23 @@ export function dedupeBoxes(boxes: FaxBox[]): FaxBox[] {
     if (!kept.some((k) => near(k, b))) kept.push(b);
   }
   return kept;
+}
+
+/** Group boxes on one page into columns by X-interval [x, x+w] overlap
+ * (transitive closure). Returns columns ordered left→right by min X. */
+export function clusterColumns(boxes: FaxBox[]): FaxBox[][] {
+  const cols: { lo: number; hi: number; boxes: FaxBox[] }[] = [];
+  // Process by X so overlap chains form left→right.
+  for (const b of [...boxes].sort((a, z) => a.x - z.x)) {
+    const lo = b.x, hi = b.x + b.w;
+    const hit = cols.find((c) => lo < c.hi - EPSILON_PX && hi > c.lo + EPSILON_PX);
+    if (hit) {
+      hit.lo = Math.min(hit.lo, lo);
+      hit.hi = Math.max(hit.hi, hi);
+      hit.boxes.push(b);
+    } else {
+      cols.push({ lo, hi, boxes: [b] });
+    }
+  }
+  return cols.sort((a, z) => a.lo - z.lo).map((c) => c.boxes);
 }
