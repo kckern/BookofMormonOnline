@@ -174,13 +174,13 @@ export interface BomMapMove {
   description: string;
   duration: string | null;
   end: string;
-  episode: string;
   guid: string;
   parent: string;
   ref: string;
   seq: number;
   start: string;
   travelers: string;
+  verse_ids: Json | null;
 }
 
 export interface BomMapMoveCoords {
@@ -198,10 +198,21 @@ export interface BomMapMovePeople {
 export interface BomMapStory {
   description: string;
   guid: string;
-  next: string | null;
-  prev: string | null;
+  order: Generated<number>;
+  parent: string | null;
   slug: string;
   title: string;
+}
+
+export interface BomMapStoryEvent {
+  description: string;
+  fate: Generated<string>;
+  guid: string;
+  parent: string;
+  place: string;
+  ref: string;
+  seq: number;
+  verse_ids: Json | null;
 }
 
 export interface BomMarkdown {
@@ -210,28 +221,31 @@ export interface BomMarkdown {
   slug: string;
 }
 
-export interface BomNarration {
-  description: string;
-  guid: string;
-  parent: string;
-  weight: number;
-}
-
-export interface BomObjects {
+export interface BomMatters {
   aliases: string | null;
   category: string;
   description: string | null;
-  era: string;
+  era: string | null;
   guid: string;
+  kind: string;
   name: string;
-  provenance: string;
+  node_link: string | null;
+  provenance: string | null;
   slug: string;
   specificity: string;
+  status: Generated<string>;
   subtitle: string | null;
   tags: string | null;
   usage: string;
   verse_id: number | null;
   weight: Generated<number>;
+}
+
+export interface BomNarration {
+  description: string;
+  guid: string;
+  parent: string;
+  weight: number;
 }
 
 export interface BomPage {
@@ -403,6 +417,46 @@ export interface BomText {
   ref: Generated<number | null>;
   section: string | null;
   weight: number | null;
+}
+
+export interface BomTheology {
+  axis_class: string | null;
+  bin: number | null;
+  course_locus: string | null;
+  geometry: string | null;
+  group: string | null;
+  guid: string;
+  kind: string;
+  name: string;
+  opposed_to: string | null;
+  quadrant: string | null;
+  slug: string;
+  src_path: string | null;
+  status: Generated<string>;
+  status_note: string | null;
+  terms: string | null;
+  valence: string | null;
+  x_pos: Decimal | null;
+  y_pos: Decimal | null;
+}
+
+export interface BomTheologyGeometry {
+  axis: string | null;
+  dynamics: string | null;
+  guid: string;
+  kind: string;
+  moral_sign: number | null;
+  name: string;
+  node_link: string | null;
+  note: string | null;
+  ordinal: number | null;
+  orientation: string | null;
+  slug: string;
+  source: string | null;
+  traversable: number | null;
+  valence: string | null;
+  x_pos: Decimal | null;
+  y_pos: Decimal | null;
 }
 
 export interface BomTimeline {
@@ -964,9 +1018,10 @@ export interface DB {
   bom_map_move_coords: BomMapMoveCoords;
   bom_map_move_people: BomMapMovePeople;
   bom_map_story: BomMapStory;
+  bom_map_story_event: BomMapStoryEvent;
   bom_markdown: BomMarkdown;
+  bom_matters: BomMatters;
   bom_narration: BomNarration;
-  bom_objects: BomObjects;
   bom_page: BomPage;
   bom_people: BomPeople;
   bom_people_rels: BomPeopleRels;
@@ -983,6 +1038,8 @@ export interface DB {
   bom_shortlinks: BomShortlinks;
   bom_slug: BomSlug;
   bom_text: BomText;
+  bom_theology: BomTheology;
+  bom_theology_geometry: BomTheologyGeometry;
   bom_timeline: BomTimeline;
   bom_translation: BomTranslation;
   bom_translation_locked: BomTranslationLocked;

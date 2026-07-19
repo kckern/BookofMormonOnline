@@ -7,7 +7,7 @@ import { scripturereadLoaders } from '../data/loaders/scriptureread.js';
 import { scriptureextrasLoaders } from '../data/loaders/scriptureextras.js';
 import { peopleplacesLoaders } from '../data/loaders/peopleplaces.js';
 import { mapsLoaders } from '../data/loaders/maps.js';
-import { objectsLoaders } from '../data/loaders/objects.js';
+import { mattersLoaders } from '../data/loaders/matters.js';
 import { mediaLoaders } from '../data/loaders/media.js';
 import { mediamiscLoaders } from '../data/loaders/mediamisc.js';
 import { feedsmiscLoaders } from '../data/loaders/feedsmisc.js';
@@ -35,7 +35,7 @@ export type AllLoaders = Loaders &
   ReturnType<typeof scriptureextrasLoaders> &
   ReturnType<typeof peopleplacesLoaders> &
   ReturnType<typeof mapsLoaders> &
-  ReturnType<typeof objectsLoaders> &
+  ReturnType<typeof mattersLoaders> &
   ReturnType<typeof mediaLoaders> &
   ReturnType<typeof mediamiscLoaders> &
   ReturnType<typeof feedsmiscLoaders> &
@@ -69,7 +69,7 @@ export function buildContext(db: Kysely<DB>, lang: string, ip = '', bearerToken?
     ...scriptureextrasLoaders(db, lang, core),
     ...peopleplacesLoaders(db, lang, core),
     ...mapsLoaders(db, lang, core),
-    ...objectsLoaders(db, lang, core),
+    ...mattersLoaders(db, lang, core),
     ...mediaLoaders(db, lang, core),
     ...mediamiscLoaders(db, lang, core),
     ...feedsmiscLoaders(db, lang, core),

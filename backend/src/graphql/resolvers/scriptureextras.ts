@@ -207,14 +207,14 @@ export const scriptureextrasResolvers: Resolvers = {
       return rows as unknown as never[];
     },
 
-    objects: async (parent) => {
+    matters: async (parent) => {
       const { verseIds, ctx } = parent as unknown as PassageNotesCtx;
 
       const textGuids = await ctx.loaders.fetchTextGuidsForVerseIds(verseIds);
 
       const [fromVerseIds, ...fromTextGuids] = await Promise.all([
-        ctx.loaders.loadObjectsFromVerseIds(verseIds),
-        ...textGuids.map((guid) => ctx.loaders.loadObjectsFromTextGuid(guid)),
+        ctx.loaders.loadMattersFromVerseIds(verseIds),
+        ...textGuids.map((guid) => ctx.loaders.loadMattersFromTextGuid(guid)),
       ]);
 
       return [...fromVerseIds, ...fromTextGuids.flat()] as unknown as never[];

@@ -16,7 +16,7 @@ type PassageNotes {
   chiasmus: [Chiasmus]
   people: [People]
   places: [Place]
-  objects: [Object]
+  matters: [Matter]
   images: [Image]
   notes: [Note]
   fax: [Fax]

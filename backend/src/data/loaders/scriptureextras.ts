@@ -61,7 +61,7 @@ export interface ImageRow {
   location_guid: string | null;
 }
 
-export interface ObjectRow {
+export interface MatterRow {
   guid: string;
   slug: string;
   name: string;
@@ -107,7 +107,7 @@ function groupBy<T>(rows: readonly T[], key: (r: T) => string | null): Map<strin
 
 /**
  * Reduce a flat list of chiasmus line rows (ordered by `i`) into ChiasmusRow
- * objects.
+ * matters.
  *
  * `allLines` — ALL lines for the chiasmus_ids involved (needed for scheme
  *              computation across all lines, not just matched ones).
@@ -499,9 +499,9 @@ export function scriptureextrasLoaders(db: Kysely<DB>, lang: string, core: Loade
     }));
   };
 
-  // ─── Objects ─────────────────────────────────────────────────────────────────
+  // ─── Matters ────────────────────────────────────────────────────────────────
 
-  const loadObjectsFromVerseIds = async (verseIds: number[]): Promise<ObjectRow[]> => {
+  const loadMattersFromVerseIds = async (verseIds: number[]): Promise<MatterRow[]> => {
     if (!verseIds.length) return [];
     const minV = String(Math.min(...verseIds));
     const maxV = String(Math.max(...verseIds));
@@ -509,7 +509,7 @@ export function scriptureextrasLoaders(db: Kysely<DB>, lang: string, core: Loade
     const indexRows = await db
       .selectFrom('bom_index')
       .select(['slug'])
-      .where('type', '=', 'object')
+      .where('type', '=', 'matter')
       .where('verse_id', '<=', maxV)
       .where('verse_id_end', '>=', minV)
       .execute();
@@ -518,13 +518,13 @@ export function scriptureextrasLoaders(db: Kysely<DB>, lang: string, core: Loade
     if (!uniqueSlugs.length) return [];
 
     return db
-      .selectFrom('bom_objects')
+      .selectFrom('bom_matters')
       .select(['guid', 'slug', 'name', 'subtitle', 'category'])
       .where('slug', 'in', uniqueSlugs)
-      .execute() as Promise<ObjectRow[]>;
+      .execute() as Promise<MatterRow[]>;
   };
 
-  const loadObjectsFromTextGuid = async (textGuid: string): Promise<ObjectRow[]> => {
+  const loadMattersFromTextGuid = async (textGuid: string): Promise<MatterRow[]> => {
     const lookupRows = await db
       .selectFrom('bom_lookup')
       .select(['verse_id'])
@@ -536,7 +536,7 @@ export function scriptureextrasLoaders(db: Kysely<DB>, lang: string, core: Loade
     const indexRows = await db
       .selectFrom('bom_index')
       .select(['slug'])
-      .where('type', '=', 'object')
+      .where('type', '=', 'matter')
       .where('verse_id', 'in', verseIds)
       .execute();
 
@@ -544,10 +544,10 @@ export function scriptureextrasLoaders(db: Kysely<DB>, lang: string, core: Loade
     if (!uniqueSlugs.length) return [];
 
     return db
-      .selectFrom('bom_objects')
+      .selectFrom('bom_matters')
       .select(['guid', 'slug', 'name', 'subtitle', 'category'])
       .where('slug', 'in', uniqueSlugs)
-      .execute() as Promise<ObjectRow[]>;
+      .execute() as Promise<MatterRow[]>;
   };
 
   // ─── Images ──────────────────────────────────────────────────────────────────
@@ -627,8 +627,8 @@ export function scriptureextrasLoaders(db: Kysely<DB>, lang: string, core: Loade
     loadPeopleFromVerseIds,
     loadPeopleFromTextGuid,
     loadPlacesFromVerseIds,
-    loadObjectsFromVerseIds,
-    loadObjectsFromTextGuid,
+    loadMattersFromVerseIds,
+    loadMattersFromTextGuid,
     fetchImages,
     fetchRefsForVerseIds,
   };

@@ -7,12 +7,12 @@ import Masonry from "react-masonry-css";
 import { isMobile, label, processName, replaceNumbers } from "src/models/Utils";
 import { Link, useRouteMatch } from "react-router-dom";
 import { Card, CardHeader, CardBody, CardFooter, Button } from "reactstrap";
-import "./Objects.css";
+import "./Matters.css";
 import "../Places/Places.css";
 import "../People/People.css";
 
-import { ObjectsFilter } from "./ObjectsFilter";
-import { categoryChips } from "./objectsFilterData";
+import { MattersFilter } from "./MattersFilter";
+import { categoryChips } from "./mattersFilterData";
 import { useAppController } from "src/contexts/AppControllerContext";
 
 // djb2-ish hash → stable seed for slug-based gradients.
@@ -34,7 +34,7 @@ const slugGradient = (slug) => {
   return `linear-gradient(135deg, hsl(${hue1}, ${sat}%, 48%) 0%, hsl(${hue2}, ${sat}%, 26%) 100%)`;
 };
 
-const objectInitials = (name) => {
+const matterInitials = (name) => {
   const cleaned = (name || "").replace(/[^\p{L}\s]/gu, " ").trim();
   const parts = cleaned.split(/\s+/).filter(Boolean);
   if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
@@ -42,36 +42,36 @@ const objectInitials = (name) => {
   return (parts[0]?.[0] || "?").toUpperCase();
 };
 
-function ObjectsComponent() {
+function MattersComponent() {
   const appController = useAppController();
   useEffect(() => {
-    document.title = label("menu_objects") + " | " + label("home_title");
+    document.title = label("menu_matters") + " | " + label("home_title");
   }, []);
 
-  const [objectList, setObjectList] = useState(appController.preLoad?.objectList || null);
+  const [matterList, setMatterList] = useState(appController.preLoad?.matterList || null);
   const [failedSlugs, setFailedSlugs] = useState(() => new Set());
 
   const emptyFilters = { category: new Set(), era: new Set(), provenance: new Set(), specificity: new Set(), usage: new Set(), search: null };
-  const [objectFilters, setFilter] = useState(emptyFilters);
+  const [matterFilters, setFilter] = useState(emptyFilters);
 
   const match = useRouteMatch();
   useEffect(() => {
-    if (match?.params?.objectSlug) {
+    if (match?.params?.matterSlug) {
       appController.functions.setPopUp({
-        type: "object",
-        ids: [match.params.objectSlug],
-        underSlug: "objects",
+        type: "matters",
+        ids: [match.params.matterSlug],
+        underSlug: "matters",
       });
     }
-  }, [match?.params?.objectSlug]);
+  }, [match?.params?.matterSlug]);
 
   useEffect(() => {
-    if (!objectList) {
-      BoMOnlineAPI({ objectList: true }).then((result) => {
-        setObjectList(result.objectList);
+    if (!matterList) {
+      BoMOnlineAPI({ matterList: true }).then((result) => {
+        setMatterList(result.matterList);
       });
     }
-  }, [objectList]);
+  }, [matterList]);
 
   const breakpointColumnsObj = {
     default: 8, 1600: 7, 1400: 6, 1200: 5, 1000: 4, 800: 3, 600: 2, 400: 2,
@@ -80,20 +80,20 @@ function ObjectsComponent() {
   const handleClick = (slug, e) => {
     e.preventDefault();
     appController.functions.setPopUp({
-      type: "object",
+      type: "matters",
       ids: [slug],
-      underSlug: "objects",
+      underSlug: "matters",
     });
   };
 
   // AND across axes; OR within an axis. Empty set on an axis = no filter on that axis.
   const passesFilters = (item) => {
-    if (objectFilters.search) {
-      const re = new RegExp(objectFilters.search, "gi");
+    if (matterFilters.search) {
+      const re = new RegExp(matterFilters.search, "gi");
       if (!re.test(item.name) && !re.test(item.subtitle || "")) return false;
     }
     for (const axis of ["category", "era", "provenance", "specificity", "usage"]) {
-      const set = objectFilters[axis];
+      const set = matterFilters[axis];
       if (set && set.size > 0 && !set.has(item[axis])) return false;
     }
     return true;
@@ -108,7 +108,7 @@ function ObjectsComponent() {
     });
   };
 
-  if (!objectList) {
+  if (!matterList) {
     return (
       <div className="container noselect" style={{ display: "block" }}>
         <Spinner top={isMobile() ? "50vh" : "60vh"} />
@@ -116,21 +116,21 @@ function ObjectsComponent() {
     );
   }
 
-  const filtered = objectList.filter(passesFilters).filter(o => o.slug);
+  const filtered = matterList.filter(passesFilters).filter(o => o.slug);
 
   return (
     <div className="container noselect" style={{ display: "block" }}>
       <div id="page">
-        <h3 className="title lg-4 text-center">{label("title_objects")}</h3>
-        <ObjectsFilter
-          objectFilters={objectFilters}
+        <h3 className="title lg-4 text-center">{label("title_matters")}</h3>
+        <MattersFilter
+          matterFilters={matterFilters}
           setFilter={setFilter}
-          objectList={objectList}
+          matterList={matterList}
         />
-        <div className="ObjectList">
+        <div className="MatterList">
           {filtered.length === 0 ? (
-            <div className="ObjectEmptyState">
-              {label("no_objects_match")}{" "}
+            <div className="MatterEmptyState">
+              {label("no_matters_match")}{" "}
               <Button color="link" onClick={() => setFilter(emptyFilters)}>
                 {label("clear_filters")}
               </Button>
@@ -144,7 +144,7 @@ function ObjectsComponent() {
               {filtered.map((obj, i) => (
                 <Link
                   key={i}
-                  to={"/objects/" + obj.slug}
+                  to={"/matters/" + obj.slug}
                   onClick={(e) => handleClick(obj.slug, e)}
                 >
                   <Card>
@@ -153,11 +153,11 @@ function ObjectsComponent() {
                     </CardHeader>
                     {failedSlugs.has(obj.slug) ? (
                       <CardBody
-                        className="objectInfo objectFallback"
+                        className="matterInfo matterFallback"
                         style={{ background: slugGradient(obj.slug) }}
                       >
-                        <span className="objectInitials" aria-hidden="true">
-                          {objectInitials(obj.name)}
+                        <span className="matterInitials" aria-hidden="true">
+                          {matterInitials(obj.name)}
                         </span>
                         {obj.subtitle && (
                           <div className="subtitle">{replaceNumbers(obj.subtitle)}</div>
@@ -165,14 +165,14 @@ function ObjectsComponent() {
                       </CardBody>
                     ) : (
                       <CardBody
-                        className="objectInfo"
+                        className="matterInfo"
                         style={{
-                          backgroundImage: `url(${assetUrl}/objects/${obj.slug})`,
+                          backgroundImage: `url(${assetUrl}/matters/${obj.slug})`,
                         }}
                       >
                         <img
                           alt=""
-                          src={`${assetUrl}/objects/${obj.slug}`}
+                          src={`${assetUrl}/matters/${obj.slug}`}
                           style={{ display: "none" }}
                           onError={() => markFailed(obj.slug)}
                         />
@@ -185,7 +185,7 @@ function ObjectsComponent() {
                       <div className="labels">
                         <span
                           className={"IdBadge cat-" + obj.category}
-                          title={label("object_cat_" + (obj.category || "").replace(/-/g, "_")) || obj.category}
+                          title={label("matter_cat_" + (obj.category || "").replace(/-/g, "_")) || obj.category}
                         >
                           {(obj.category || "?").charAt(0).toUpperCase()}
                         </span>
@@ -195,10 +195,10 @@ function ObjectsComponent() {
                         >
                           {(obj.era || "?").charAt(0).toUpperCase()}
                         </span>
-                        {obj.specificity === "specific" && (
+                        {obj.specificity === "instance" && (
                           <span
                             className="IdBadge spec-named"
-                            title={label("spec_specific") || "Named"}
+                            title={label("spec_instance") || "Named"}
                           >
                             ★
                           </span>
@@ -217,4 +217,4 @@ function ObjectsComponent() {
   );
 }
 
-export default ObjectsComponent;
+export default MattersComponent;

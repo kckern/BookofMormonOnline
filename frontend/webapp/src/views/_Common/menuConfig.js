@@ -61,6 +61,10 @@ export const menuConfig = [
     labelKey: "menu_places",
   },
   {
+    slug: "matters",
+    labelKey: "menu_matters",
+  },
+  {
     slug: "map",
     labelKey: "menu_map",
   },
