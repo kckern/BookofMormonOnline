@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { renderBaseUrl } from "src/models/BoMOnlineAPI";
 import { label } from "src/models/Utils";
 import ScriptureExcerpt from "src/views/_Common/ScriptureExcerpt";
-import { openScripture } from "./ScripturePopup";
 
 const CROP_WIDTH = 800;
 
@@ -42,30 +41,6 @@ export default function FaxVerseTile({ data }) {
       </h3>
 
       {/* Verse text on top */}
-      <span className="faxPageBar">
-        {data.ref ? (
-          <span
-            className="faxPageBarRef"
-            role="button"
-            tabIndex={0}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              openScripture(data.ref);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                openScripture(data.ref);
-              }
-            }}
-          >
-            {data.ref}
-          </span>
-        ) : (
-          <span />
-        )}
-      </span>
       {data.ref ? (
         <div className="read-content scriptureExcerptCompact">
           <ScriptureExcerpt refText={data.ref} hideStudy />

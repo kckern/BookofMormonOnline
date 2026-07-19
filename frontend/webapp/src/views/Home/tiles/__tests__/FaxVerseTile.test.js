@@ -10,16 +10,10 @@ jest.mock("src/models/BoMOnlineAPI", () => ({
   ApiBaseUrl: "http://localhost:5005",
   renderBaseUrl: "http://localhost:5006",
 }));
-jest.mock("src/views/_Common/ScripturePopup", () => ({
-  __esModule: true,
-  default: () => null,
-  openScripture: jest.fn(),
-}));
 jest.mock("src/views/_Common/ScriptureExcerpt", () => ({
   __esModule: true,
   default: () => null,
 }));
-import { openScripture } from "src/views/_Common/ScripturePopup";
 
 const data = {
   version: "1830",
@@ -52,12 +46,6 @@ describe("FaxVerseTile", () => {
     );
     expect(img.closest("a").getAttribute("href")).toBe("/fax/1830/mosiah.2.17");
     expect(screen.getAllByRole("img").length).toBe(3);
-  });
-
-  test("ref bar opens the scripture popup", () => {
-    renderTile(data);
-    fireEvent.click(screen.getByText("Mosiah 2:17"));
-    expect(openScripture).toHaveBeenCalledWith("Mosiah 2:17");
   });
 
   test("falls back to a single row from legacy fields when editions is absent", () => {
