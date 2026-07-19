@@ -371,9 +371,48 @@
   .pageContainer {
     flex-direction: column;
   }
-  
+
   .page {
     width: 100%;
     max-width: 100%;
   }
 }
+
+/* Passage highlight overlay (DOM, not a crop image) */
+.faxHighlightLayer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+}
+.faxHighlightBox {
+  position: absolute;
+  background: rgba(120, 90, 50, 0.22);
+  border: 1px solid rgba(120, 90, 50, 0.5);
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15);
+  animation: faxHighlightIn 0.35s ease both;
+}
+@keyframes faxHighlightIn {
+  from { opacity: 0; transform: scale(1.06); }
+  to   { opacity: 1; transform: scale(1); }
+}
+/* "continues" affordance */
+.faxContinuesHint {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 4;
+  padding: 2px 8px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #6b5330;
+  background: rgba(120, 90, 50, 0.12);
+  border: 1px solid rgba(120, 90, 50, 0.25);
+  border-radius: 999px;
+  pointer-events: none;
+}
+.faxContinuesHint.next { right: 4px; }
+.faxContinuesHint.prev { left: 4px; }
