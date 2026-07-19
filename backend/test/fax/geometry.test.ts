@@ -3,7 +3,7 @@ import { sanitizeBoxes, dedupeBoxes, clusterColumns, toFragments, clampPages } f
 import type { FaxBox } from '../../src/media/fax/types.js';
 
 const raw = (o: Partial<FaxBox>): FaxBox => ({
-  verseId: 1, page: 1, pageWidth: 800, x: 0, y: 0, w: 100, h: 20,
+  verseId: 1, page: 1, pageWidth: 800, pageScale: 700, x: 0, y: 0, w: 100, h: 20,
   tlw: 0, tlh: 0, brw: 0, brh: 0, ...o,
 });
 

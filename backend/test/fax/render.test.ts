@@ -13,8 +13,8 @@ async function fakeScan(): Promise<Buffer> {
 describe('renderFragmentCrop', () => {
   it('crops to the fragment bbox and paper-fills the exterior notches', async () => {
     const frag: Fragment = {
-      page: 1, pageWidth: 400, x: 50, y: 100, w: 300, h: 60,
-      boxes: [{ verseId: 1, page: 1, pageWidth: 400, x: 50, y: 100, w: 300, h: 60,
+      page: 1, pageWidth: 400, pageScale: 400, x: 50, y: 100, w: 300, h: 60,
+      boxes: [{ verseId: 1, page: 1, pageWidth: 400, pageScale: 400, x: 50, y: 100, w: 300, h: 60,
         tlw: 40, tlh: 20, brw: 30, brh: 20 }],
     };
     const out = await renderFragmentCrop(await fakeScan(), frag, {
@@ -64,8 +64,8 @@ describe('stitch', () => {
 describe('renderImage', () => {
   const provider = async () => fakeScan();  // one page only
   const frag = (page: number): Fragment => ({
-    page, pageWidth: 400, x: 50, y: 100, w: 300, h: 60,
-    boxes: [{ verseId: 1, page, pageWidth: 400, x: 50, y: 100, w: 300, h: 60, tlw: 0, tlh: 0, brw: 0, brh: 0 }],
+    page, pageWidth: 400, pageScale: 400, x: 50, y: 100, w: 300, h: 60,
+    boxes: [{ verseId: 1, page, pageWidth: 400, pageScale: 400, x: 50, y: 100, w: 300, h: 60, tlw: 0, tlh: 0, brw: 0, brh: 0 }],
   });
 
   it('crop mode single page → ~300px wide (downscaled to width=200)', async () => {
@@ -83,8 +83,8 @@ describe('renderImage', () => {
     const wideScan = async () => sharp({ create: { width: 800, height: 600, channels: 3, background: '#ffffff' } })
       .composite([{ input: { create: { width: 600, height: 120, channels: 3, background: '#000000' } }, top: 200, left: 100 }])
       .jpeg().toBuffer();
-    const f: Fragment = { page: 1, pageWidth: 400, x: 50, y: 100, w: 300, h: 60,
-      boxes: [{ verseId: 1, page: 1, pageWidth: 400, x: 50, y: 100, w: 300, h: 60, tlw: 0, tlh: 0, brw: 0, brh: 0 }] };
+    const f: Fragment = { page: 1, pageWidth: 400, pageScale: 400, x: 50, y: 100, w: 300, h: 60,
+      boxes: [{ verseId: 1, page: 1, pageWidth: 400, pageScale: 400, x: 50, y: 100, w: 300, h: 60, tlw: 0, tlh: 0, brw: 0, brh: 0 }] };
     const out = await renderImage({ mode: 'page', ext: 'jpg', width: 'full', fragments: [f], provider: wideScan, paper: '#fff' });
     const m = await sharp(out).metadata();
     expect(m.width).toBe(800);   // full page, scaled geometry, no throw

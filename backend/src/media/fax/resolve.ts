@@ -20,12 +20,13 @@ export async function verseIdsToBoxes(version: string, verseIds: number[]): Prom
   if (verseIds.length === 0) return [];
   const rows = await getDb()
     .selectFrom('bom_xtras_fax_index')
-    .select(['verse_id', 'page', 'pageWidth', 'X', 'Y', 'W', 'H', 'TLW', 'TLH', 'BRW', 'BRH'])
+    .select(['verse_id', 'page', 'pageWidth', 'pageScale', 'X', 'Y', 'W', 'H', 'TLW', 'TLH', 'BRW', 'BRH'])
     .where('version', '=', version)
     .where('verse_id', 'in', verseIds.map(String))
     .execute();
   const boxes: FaxBox[] = rows.map((r) => ({
-    verseId: Number(r.verse_id), page: Number(r.page), pageWidth: Number(r.pageWidth),
+    verseId: Number(r.verse_id), page: Number(r.page),
+    pageWidth: Number(r.pageWidth), pageScale: Number(r.pageScale) || 700,
     x: Number(r.X), y: Number(r.Y), w: Number(r.W), h: Number(r.H),
     tlw: Number(r.TLW), tlh: Number(r.TLH), brw: Number(r.BRW), brh: Number(r.BRH),
   }));

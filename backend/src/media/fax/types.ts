@@ -6,7 +6,9 @@ export type OutputExt = 'jpg' | 'webp';
 export interface FaxBox {
   verseId: number;
   page: number;        // integer (zero-fill happens at the S3 key boundary)
-  pageWidth: number;
+  pageWidth: number;   // stored scan width (metadata; the real transform uses pageScale)
+  pageScale: number;   // WIDTH of the coordinate space X/Y/W/H are authored in (700).
+                       // Map coords -> scan pixels by (actualScanWidth / pageScale).
   x: number;
   y: number;
   w: number;
@@ -19,7 +21,8 @@ export interface FaxBox {
 export interface Fragment {
   page: number;
   pageWidth: number;
-  x: number; y: number; w: number; h: number;   // union bbox of the run
+  pageScale: number;                             // coordinate-space width (see FaxBox)
+  x: number; y: number; w: number; h: number;   // union bbox of the run, in pageScale space
   boxes: FaxBox[];                                // members, verse-id ascending
 }
 

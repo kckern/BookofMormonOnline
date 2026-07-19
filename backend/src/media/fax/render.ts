@@ -1,7 +1,6 @@
 import sharp from 'sharp';
 import type { Fragment } from './types.js';
 import { DIM_OPACITY, JPEG_QUALITY } from './constants.js';
-import { assertScanWidth } from './scan.js';
 
 export interface NotchFill {
   tl?: { w: number; h: number };   // exterior top-left notch (first verse), or undefined
@@ -89,8 +88,9 @@ export interface RenderArgs {
   gutter?: number;
 }
 
-/** Scale a fragment's geometry (and notch insets) by k for extraction when the
- * actual scan width differs from the stored pageWidth. */
+/** Scale a fragment's geometry (and notch insets) by k for extraction. Box
+ * coordinates are authored in a normalized `pageScale`-wide space, so the map to
+ * actual scan pixels is k = actualScanWidth / pageScale. */
 function scaleFragment(f: Fragment, k: number): Fragment {
   if (k === 1) return f;
   const s = (n: number) => Math.round(n * k);
@@ -126,7 +126,7 @@ export async function renderImage(args: RenderArgs): Promise<Buffer> {
       const f = fragments[i]!;
       const scan = await provider(f.page);
       const meta = await sharp(scan).metadata();
-      const f2 = scaleFragment(f, assertScanWidth(meta.width!, f.pageWidth));
+      const f2 = scaleFragment(f, meta.width! / f.pageScale);
       const notch: NotchFill = { paper };
       if (i === 0 && f2.boxes[0]) notch.tl = { w: f2.boxes[0].tlw, h: f2.boxes[0].tlh };
       const lastBox = f2.boxes[f2.boxes.length - 1];
@@ -144,7 +144,7 @@ export async function renderImage(args: RenderArgs): Promise<Buffer> {
     const scan = await provider(page);
     const meta = await sharp(scan).metadata();
     const pageFrags = fragments.filter((f) => f.page === page);
-    const k = assertScanWidth(meta.width!, pageFrags[0]!.pageWidth);
+    const k = meta.width! / pageFrags[0]!.pageScale;
     const rects = pageFrags.map((f) => scaleFragment(f, k)).map((f) => ({ x: f.x, y: f.y, w: f.w, h: f.h }));
     const dimmed = await renderPageDimmed(scan, meta.width!, meta.height!, rects, DIM_OPACITY);
     pageBufs.push(await downscale(dimmed, width));

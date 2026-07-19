@@ -70,7 +70,7 @@ function mergeRuns(colBoxes: FaxBox[]): Fragment[] {
       last.w = newRight - newLeft; last.h = newBot - newTop;
       last.boxes.push(b);
     } else {
-      runs.push({ page: b.page, pageWidth: b.pageWidth, x: b.x, y: b.y, w: b.w, h: b.h, boxes: [b] });
+      runs.push({ page: b.page, pageWidth: b.pageWidth, pageScale: b.pageScale, x: b.x, y: b.y, w: b.w, h: b.h, boxes: [b] });
     }
   }
   for (const r of runs) r.boxes.sort((a, z) => a.verseId - z.verseId);
