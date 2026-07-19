@@ -220,11 +220,11 @@ const sampleFaxVerse = async (ctx: AppContext, seed: number) => {
     .orderBy(sql`MD5(CONCAT(${sql.ref('i.version')}, ':', ${seed}))`)
     .execute();
 
-  // Sampled edition first, then up to 2 seeded others.
+  // Sampled edition first, then up to 3 seeded others (max 4).
   const ordered = [
     ...edRows.filter((e) => String(e.version) === String(r.version)),
     ...edRows.filter((e) => String(e.version) !== String(r.version)),
-  ].slice(0, 3);
+  ].slice(0, 4);
   const editions = ordered.map((e) => ({
     version: String(e.version),
     title: e.title ?? null,

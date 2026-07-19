@@ -11,9 +11,9 @@ const CROP_WIDTH = 800;
 const refSlug = (ref) => (ref || "").replace(/[ :]+/g, ".").toLowerCase();
 
 /**
- * A sampled verse shown as cropped-verse facsimile images from up to 3 editions,
- * stacked and edition-labeled. Each crop deep-links to that edition's fax viewer
- * at the verse. The verse text is rendered below via ScriptureExcerpt.
+ * A sampled verse: the verse text on top, then cropped-verse facsimile images
+ * from up to 4 editions stacked below, each edition-labeled and deep-linking to
+ * that edition's fax viewer at the verse.
  */
 export default function FaxVerseTile({ data }) {
   if (!data || !data.selector) return null;
@@ -40,28 +40,8 @@ export default function FaxVerseTile({ data }) {
       <h3 className="tileHeading">
         <Link to="/fax">{label("facsimiles")}</Link>
       </h3>
-      <div className="faxVerseEditions">
-        {editions.map((ed) => {
-          const to = slug ? `/fax/${ed.version}/${slug}` : `/fax/${ed.version}/${ed.page}`;
-          const src = selector
-            ? `${renderBaseUrl}/fax/render/${ed.version}/crop/w${CROP_WIDTH}/${selector}.jpg`
-            : null;
-          return (
-            <Link key={ed.version} to={to} className="faxEditionRow">
-              <span className="faxEditionLabel">{ed.title || ed.version}</span>
-              {src ? (
-                <img
-                  className="faxEditionCrop"
-                  src={src}
-                  alt={`${ed.title || ed.version} ${data.ref || ""}`.trim()}
-                  loading="lazy"
-                  onError={hideRow}
-                />
-              ) : null}
-            </Link>
-          );
-        })}
-      </div>
+
+      {/* Verse text on top */}
       <span className="faxPageBar">
         {data.ref ? (
           <span
@@ -91,6 +71,30 @@ export default function FaxVerseTile({ data }) {
           <ScriptureExcerpt refText={data.ref} hideStudy />
         </div>
       ) : null}
+
+      {/* Facsimiles on bottom */}
+      <div className="faxVerseEditions">
+        {editions.map((ed) => {
+          const to = slug ? `/fax/${ed.version}/${slug}` : `/fax/${ed.version}/${ed.page}`;
+          const src = selector
+            ? `${renderBaseUrl}/fax/render/${ed.version}/crop/w${CROP_WIDTH}/${selector}.jpg`
+            : null;
+          return (
+            <Link key={ed.version} to={to} className="faxEditionRow">
+              <span className="faxEditionLabel">{ed.title || ed.version}</span>
+              {src ? (
+                <img
+                  className="faxEditionCrop"
+                  src={src}
+                  alt={`${ed.title || ed.version} ${data.ref || ""}`.trim()}
+                  loading="lazy"
+                  onError={hideRow}
+                />
+              ) : null}
+            </Link>
+          );
+        })}
+      </div>
     </div>
   );
 }

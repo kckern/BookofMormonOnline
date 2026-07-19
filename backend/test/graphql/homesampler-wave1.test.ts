@@ -212,7 +212,7 @@ describe('faxVerse editions', () => {
     expect(d.faxVerse).toBeTruthy();
     const fv = d.faxVerse!;
     expect(fv.editions.length).toBeGreaterThanOrEqual(1);
-    expect(fv.editions.length).toBeLessThanOrEqual(3);
+    expect(fv.editions.length).toBeLessThanOrEqual(4);
     expect(fv.editions[0]!.version).toBe(fv.version);          // sampled edition first
     expect(fv.selector).toMatch(/^([a-z0-9.-]+|ids\/[0-9-]+)$/); // canonical render selector
     for (const e of fv.editions) expect(e.page).toBeGreaterThan(0);
