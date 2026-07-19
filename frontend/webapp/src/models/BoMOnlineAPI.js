@@ -12,10 +12,13 @@ const isWebappOnly = parseInt(currentPort) === 3000;
 const localTest = /localhost/.test(currentDomain) && false;
 
 export const assetUrl = "https://media.bookofmormon.online";
-// Base origin for the dynamic facsimile render API (/fax/render/...). Served by
-// the backend, NOT the media CDN (yet). Flip to the media host once CloudFront
-// origin-failover is wired. Same-origin fallback when the env var is unset.
-export const renderBaseUrl = process.env.REACT_APP_API_URL || "";
+// Base origin for the dynamic facsimile render API (/fax/render/...). Default is
+// SAME-ORIGIN ("") so /fax/render + /fax/text are reverse-proxied to the backend
+// (setupProxy.js in dev; nginx/CDN in prod) — this works regardless of the host
+// the browser used (localhost, LAN IP, public domain), unlike an absolute
+// localhost URL. Set REACT_APP_RENDER_URL to the media CDN once CloudFront
+// origin-failover is wired.
+export const renderBaseUrl = process.env.REACT_APP_RENDER_URL || "";
 // Use empty string for localhost:3000 to leverage proxy, otherwise use appropriate API URL
 export const ApiBaseUrl = localTest ? "http://localhost:5005" : isWebappOnly ? "" : containedAPI;
 export const fbPixel = "4544125442358924";

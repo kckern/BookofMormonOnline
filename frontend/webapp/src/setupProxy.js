@@ -10,6 +10,9 @@ const BACKEND_URL = process.env.REACT_APP_LOCAL_BACKEND === 'true'
 
 const API_PATHS = [
   '/graphql', '/api', '/messenger', // /messenger = green-field socket.io (WS upgrade)
+  '/fax/render', '/fax/text',       // dynamic facsimile render API (backend :5006).
+                                    // Prefixes only — the client-side viewer route
+                                    // /fax/:version stays in the SPA.
   '/en', '/es', '/fr', '/de', '/ko', '/vn', '/tr', '/ru', '/tgl', '/slv', '/swe',
 ];
 
