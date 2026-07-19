@@ -20,15 +20,14 @@ export default function FaxHighlightOverlay({ boxes, pageScale = 700, displayedW
     return () => ro.disconnect();
   }, [displayedWidth]);
 
-  if (!boxes || !boxes.length) return null;
-
+  const list = boxes || [];
   const width = displayedWidth || measured;
   const k = width > 0 ? width / pageScale : 0;
 
   return (
     <div ref={ref} className="faxHighlightLayer" aria-hidden="true">
       {k > 0 &&
-        boxes.map((b, i) => (
+        list.map((b, i) => (
           <div
             key={i}
             className="faxHighlightBox"

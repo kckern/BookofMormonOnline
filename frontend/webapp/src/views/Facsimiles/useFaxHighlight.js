@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { lookupReference } from "scripture-guide";
 import { renderBaseUrl } from "src/models/BoMOnlineAPI";
 
-const EMPTY = { boxesByPage: new Map(), pageScale: 700, allPages: [], clamped: false };
+const EMPTY = Object.freeze({ boxesByPage: new Map(), pageScale: 700, allPages: Object.freeze([]), clamped: false });
 
 /** Pure: fetch-JSON -> grouped highlight state. */
 export function buildHighlightState(data) {
