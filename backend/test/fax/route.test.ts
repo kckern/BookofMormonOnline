@@ -50,3 +50,32 @@ describe('GET /fax/render canonical redirect', () => {
     expect(r.headers['location']).toContain('/fax/render/1837/crop/w400/1-nephi-1.1.jpg');
   });
 });
+
+describe('GET /fax/boxes', () => {
+  it('returns imagePage (fax page + offset) + coords for a known verse', async () => {
+    const f = await app();
+    const r = await f.inject({ method: 'GET', url: '/fax/boxes/2013/mosiah-4.21' });
+    expect(r.statusCode).toBe(200);
+    const body = JSON.parse(r.body) as {
+      pageScale: number; clamped: boolean;
+      boxes: { verseId: number; imagePage: number; x: number; y: number; w: number; h: number }[];
+    };
+    expect(body.pageScale).toBe(700);
+    expect(body.boxes.length).toBeGreaterThan(0);
+    const b = body.boxes[0]!;
+    expect(b.imagePage).toBe(156);   // 2013 fax page 165 + offset (-9)
+    expect(b.x).toBe(357);
+    expect(b.y).toBe(291);
+  });
+  it('unknown verse -> empty boxes (200)', async () => {
+    const f = await app();
+    const r = await f.inject({ method: 'GET', url: '/fax/boxes/2013/ids/999999' });
+    expect(r.statusCode).toBe(200);
+    expect((JSON.parse(r.body) as { boxes: unknown[] }).boxes).toEqual([]);
+  });
+  it('unknown version -> 400', async () => {
+    const f = await app();
+    const r = await f.inject({ method: 'GET', url: '/fax/boxes/9999/mosiah-4.21' });
+    expect(r.statusCode).toBe(400);
+  });
+});

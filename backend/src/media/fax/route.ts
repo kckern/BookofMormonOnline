@@ -113,4 +113,33 @@ export async function faxRoutes(app: FastifyInstance): Promise<void> {
       return reply.code((err as { statusCode?: number }).statusCode ?? 502).send({ error: (err as Error).message });
     }
   });
+
+  // Box coordinates for a passage — JSON for the viewer's DOM highlight overlay.
+  // GET /fax/boxes/{version}/{selector}  ->  { pageScale, clamped, boxes: [{ verseId, imagePage, x, y, w, h }] }
+  app.get('/fax/boxes/*', async (req, reply) => {
+    const rest = (req.params as { '*': string })['*']; // version/selector...
+    const parts = rest.split('/');
+    if (parts.length < 2) return reply.code(400).send({ error: 'bad path' });
+    const version = parts[0]!;
+    if (!(VERSION_SLUGS as readonly string[]).includes(version)) return reply.code(400).send({ error: 'unknown version' });
+    const selector = parts.slice(1).join('/');
+
+    const verseIds = selectorToVerseIds(selector);
+    if (verseIds.length === 0) {
+      return reply.header('cache-control', 'public, max-age=86400').send({ pageScale: 700, clamped: false, boxes: [] });
+    }
+    const clamped = verseIds.length > MAX_VERSE_IDS;
+    const ids = clamped ? verseIds.slice(0, MAX_VERSE_IDS) : verseIds;
+
+    const [boxes, meta] = await Promise.all([verseIdsToBoxes(version, ids), imageScanMeta(version)]);
+    const out = boxes.map((b) => ({
+      verseId: b.verseId,
+      imagePage: b.page + meta.offset,
+      x: b.x, y: b.y, w: b.w, h: b.h,
+    }));
+    const pageScale = boxes[0]?.pageScale ?? 700;
+    return reply
+      .header('cache-control', 'public, max-age=86400')
+      .send({ pageScale, clamped, boxes: out });
+  });
 }
