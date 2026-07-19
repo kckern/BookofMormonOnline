@@ -8,6 +8,8 @@ import { getRefFromIndex, PageOverlay } from "./Facsimiles";
 import PageImage from "./PageImage";
 import PageStack from "./PageStack";
 import { generateReference, lookupReference } from "scripture-guide";
+import { useFaxHighlight } from "./useFaxHighlight";
+import FaxHighlightOverlay from "./FaxHighlightOverlay";
 
 /**
  * FacsimilePageViewer - Desktop version of the facsimile page viewer
@@ -31,6 +33,8 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
   
   // Check if the pageNumber contains any letters (A-z), which means it's a reference
   const hasLetters = /[A-Za-z]/.test(pageNumber || '');
+  const highlightRef = hasLetters ? pageNumber : null;
+  const { boxesByPage, pageScale, allPages } = useFaxHighlight(item.slug, highlightRef);
   const totalPages = leafIndex.length;
 
   // Initialize page index based on URL
@@ -581,12 +585,13 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
       </div>
       <div className="pagesContainer" ref={pagesContainerRef}>
         <div className="pageContainer">
-          <div 
-            className="spreadInner" 
-            style={{ 
+          <div
+            className="spreadInner"
+            style={{
+              position: 'relative',
               width: innerWidth ? `${innerWidth}px` : undefined,
-              display: 'flex', 
-              alignItems: 'stretch', 
+              display: 'flex',
+              alignItems: 'stretch',
               justifyContent: 'flex-start',
               gap: 0,
               // Center the exact-width strip; outside space is allowed only outside stacks
@@ -604,9 +609,10 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
               />
             )}
 
-            <div 
-              className="page leftPage" 
+            <div
+              className="page leftPage"
               style={{
+                position: 'relative',
                 width: leftPageWidth ? `${leftPageWidth}px` : undefined,
                 height: calculatedHeight ? `${calculatedHeight}px` : undefined,
                 // Smooth transitions
@@ -621,12 +627,22 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
             {adjustedPageIndex === 0 ? (
               <div className="blankPage"></div>
             ) : (
-              renderPage(leftPage, handleSwipeRight)
+              <>
+                {renderPage(leftPage, handleSwipeRight)}
+                {leftPage && boxesByPage.get(leftPage.pageNumInt)?.length ? (
+                  <FaxHighlightOverlay
+                    boxes={boxesByPage.get(leftPage.pageNumInt)}
+                    pageScale={pageScale}
+                    displayedWidth={leftPageWidth}
+                  />
+                ) : null}
+              </>
             )}
             </div>
-            <div 
-              className="page rightPage" 
+            <div
+              className="page rightPage"
               style={{
+                position: 'relative',
                 width: rightPageWidth ? `${rightPageWidth}px` : undefined,
                 height: calculatedHeight ? `${calculatedHeight}px` : undefined,
                 // Smooth transitions
@@ -638,11 +654,33 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
               }}
             >
             {/* Special handling for the final page in a book with even page count */}
-            {(totalPages % 2 === 0 && adjustedPageIndex === totalPages - 2) ? 
-              renderPage(rightPage || null, () => {}) : // Disable clicking on the last page
-              renderPage(rightPage || null, handleSwipeLeft)
-            }
+            <>
+              {(totalPages % 2 === 0 && adjustedPageIndex === totalPages - 2)
+                ? renderPage(rightPage || null, () => {})
+                : renderPage(rightPage || null, handleSwipeLeft)}
+              {rightPage && boxesByPage.get(rightPage.pageNumInt)?.length ? (
+                <FaxHighlightOverlay
+                  boxes={boxesByPage.get(rightPage.pageNumInt)}
+                  pageScale={pageScale}
+                  displayedWidth={rightPageWidth}
+                />
+              ) : null}
+            </>
             </div>
+
+            {allPages.length > 0 && (() => {
+              const visible = [leftPage?.pageNumInt, rightPage?.pageNumInt].filter((n) => n != null);
+              const maxVisible = Math.max(...visible, -Infinity);
+              const minVisible = Math.min(...visible, Infinity);
+              const before = allPages.some((p) => p < minVisible);
+              const more = allPages.some((p) => p > maxVisible);
+              return (
+                <>
+                  {before && <span className="faxContinuesHint prev">◀ continues</span>}
+                  {more && <span className="faxContinuesHint next">continues ▶</span>}
+                </>
+              );
+            })()}
 
             {/* Only show right stack if we're not at the last page or second-to-last page spread */}
             {(adjustedPageIndex < totalPages - 2 || 
