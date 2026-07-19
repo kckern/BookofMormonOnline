@@ -119,13 +119,13 @@ const queries = {
             }`,
     }
   },
-  object: (ids) => {
+  matter: (ids) => {
     return {
-      type: "object",
+      type: "matter",
       key: "slug",
       val: ids,
       query:
-        q("object", "slug", ids) +
+        q("matter", "slug", ids) +
         `{
                 slug
                 name
@@ -160,13 +160,13 @@ const queries = {
             }`,
     }
   },
-  objectList: (ids) => {
+  matterList: (ids) => {
     return {
-      type: "objectList",
+      type: "matterList",
       key: "slug",
       val: ids,
       query:
-        q("objectList: object", "slug", ids) +
+        q("matterList: matter", "slug", ids) +
         `{
                 slug
                 name
@@ -203,7 +203,7 @@ const queries = {
                     info
                     slug
                 }
-                objects {
+                matters {
                     slug
                     name
                     subtitle
@@ -2095,7 +2095,7 @@ const queries = {
                       info
                       slug
                   }
-                  objects {
+                  matters {
                       slug
                       name
                       subtitle

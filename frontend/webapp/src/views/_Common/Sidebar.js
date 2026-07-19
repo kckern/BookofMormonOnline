@@ -22,6 +22,7 @@ import people from "./svg/people.svg";
 import relationships from "./svg/relationships.svg";
 import loghistory from "./svg/loghistory.svg";
 import places from "./svg/places.svg";
+import matters from "./svg/matters.svg";
 import maps from "./svg/maps.svg";
 import fax from "./svg/facsimiles.svg";
 import theology from "./svg/theology.svg";
@@ -63,6 +64,7 @@ const iconMap = {
   people,
   relationships,
   places,
+  matters,
   map: maps,
   fax,
   theology,

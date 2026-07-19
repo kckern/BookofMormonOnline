@@ -3,11 +3,11 @@ import { useAppController } from "src/contexts/AppControllerContext";
 import { label } from "src/models/Utils";
 
 /**
- * Cross-entity relationships (bom_xrels) list, shared by the object, person,
+ * Cross-entity relationships (bom_xrels) list, shared by the matter, person,
  * and place popups.
  *
  * Row direction matters for reading order:
- *  - direction "src" (object popups): this entity is the row's source —
+ *  - direction "src" (matter popups): this entity is the row's source —
  *    render verb then name ("held-by — Nephi").
  *  - direction "dst" (person/place popups): the row points AT this entity and
  *    dst_* carry the other party — render name then verb
@@ -24,8 +24,8 @@ export default function XrelSection({ xrels, showEmpty, noHeading }) {
       appController.functions.setPopUp({ type: "people", ids: [xrel.dst_slug], underSlug: "people" });
     } else if (xrel.dst_type === "place") {
       appController.functions.setPopUp({ type: "places", ids: [xrel.dst_slug], underSlug: "places" });
-    } else if (xrel.dst_type === "object") {
-      appController.functions.setPopUp({ type: "object", ids: [xrel.dst_slug], underSlug: "objects" });
+    } else if (xrel.dst_type === "matter") {
+      appController.functions.setPopUp({ type: "matters", ids: [xrel.dst_slug], underSlug: "matters" });
     }
     // group: non-clickable, no-op
   };
@@ -36,7 +36,7 @@ export default function XrelSection({ xrels, showEmpty, noHeading }) {
       {hasRows ? (
         <ul className="xrels">
           {xrels.map((x, idx) => {
-            const clickable = ["people", "place", "object"].includes(x.dst_type);
+            const clickable = ["people", "place", "matter"].includes(x.dst_type);
             const nameLink = (
               <a href="#" onClick={clickable ? (e) => handleXrelClick(x, e) : (e) => e.preventDefault()}>
                 {x.dst_name}

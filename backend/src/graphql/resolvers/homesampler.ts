@@ -13,7 +13,7 @@ import { generateReference } from 'scripture-guide';
 import type { Resolvers } from '../../../codegen/graphql.js';
 import type { AppContext } from '../context.js';
 import { findUserByToken } from '../../data/loaders/userauth.js';
-import { parseVerseIdFromNote } from '../../data/loaders/objects.js';
+import { parseVerseIdFromNote } from '../../data/loaders/matters.js';
 import { canonicalSelector } from '../../media/fax/canonical.js';
 
 // 24 people = 1 featured + 11 face cards + 12 view-all mosaic thumbs (3×4);
@@ -279,38 +279,49 @@ const sampleCrossRefs = async (ctx: AppContext, seed: number) => {
 };
 
 // Entity display-name lookup for relationship hubs/edges. Column meanings per
-// type mirror xrelsBySlug in loaders/objects.ts: people name/title,
-// places name/info, objects name/subtitle.
+// type mirror xrelsBySlug in loaders/matters.ts: people name/title,
+// places name/info, matters name/subtitle.
 const entityNames = async (
   ctx: AppContext,
   wanted: { type: string; slug: string }[],
 ): Promise<Map<string, { name: string; title: string | null }>> => {
   const slugsOf = (t: string) => [...new Set(wanted.filter((w) => w.type === t).map((w) => w.slug))];
-  const [people, places, objects] = await Promise.all([
+  const [people, places, matters] = await Promise.all([
     slugsOf('people').length
       ? ctx.db.selectFrom('bom_people').select(['slug', 'name', 'title']).where('slug', 'in', slugsOf('people')).execute()
       : [],
     slugsOf('place').length
       ? ctx.db.selectFrom('bom_places').select(['slug', 'name', 'info']).where('slug', 'in', slugsOf('place')).execute()
       : [],
-    slugsOf('object').length
-      ? ctx.db.selectFrom('bom_objects').select(['slug', 'name', 'subtitle']).where('slug', 'in', slugsOf('object')).execute()
+    slugsOf('matter').length
+      ? ctx.db.selectFrom('bom_matters').select(['slug', 'name', 'subtitle']).where('slug', 'in', slugsOf('matter')).execute()
       : [],
   ]);
   const map = new Map<string, { name: string; title: string | null }>();
   for (const p of people) if (p.name) map.set(`people:${p.slug}`, { name: p.name, title: p.title ?? null });
   for (const p of places) if (p.name) map.set(`place:${p.slug}`, { name: p.name, title: p.info ?? null });
-  for (const o of objects) if (o.name) map.set(`object:${o.slug}`, { name: o.name, title: o.subtitle ?? null });
+  for (const o of matters) if (o.name) map.set(`matter:${o.slug}`, { name: o.name, title: o.subtitle ?? null });
   return map;
 };
 
+// Entity types this sampler can resolve to a display name (see entityNames).
+// bom_xrels also carries src_type/dst_type='theology', but bom_theology has no
+// loader or view yet, so those rows are excluded rather than rendered as a bare
+// slug. Widen this list when the theology domain lands.
+const SAMPLEABLE_TYPES = ['people', 'place', 'matter'] as const;
+
 // One well-connected hub entity and up to 4 of its typed relations. The hub is
-// seeded over all (src_type, src_slug) pairs with >=2 edges; GROUP BY needs raw
-// sql. Edges whose dst can't be resolved to a display name are dropped (a bare
-// slug reads as a bug on the front door); if that leaves <2, return null.
+// seeded over (src_type, src_slug) pairs with >=2 RESOLVABLE edges; GROUP BY
+// needs raw sql. Counting only resolvable edges here keeps the hub pick in sync
+// with the edge query below — otherwise a hub whose edges are all theology
+// passes the HAVING and then falls out at the <2 check, returning null for that
+// seed. Edges whose dst still can't be named are dropped (a bare slug reads as
+// a bug on the front door); if that leaves <2, return null.
 const sampleRelationship = async (ctx: AppContext, seed: number) => {
   const hub = await sql<{ src_type: string; src_slug: string }>`
     SELECT src_type, src_slug FROM bom_xrels
+    WHERE src_type IN (${sql.join(SAMPLEABLE_TYPES.map((t) => sql.lit(t)))})
+      AND dst_type IN (${sql.join(SAMPLEABLE_TYPES.map((t) => sql.lit(t)))})
     GROUP BY src_type, src_slug HAVING COUNT(*) >= 2
     ORDER BY MD5(CONCAT(src_type, ':', src_slug, ':', ${seed}))
     LIMIT 1
@@ -322,6 +333,7 @@ const sampleRelationship = async (ctx: AppContext, seed: number) => {
     .select(['rel', 'dst_type', 'dst_slug', 'note'])
     .where('src_type', '=', h.src_type)
     .where('src_slug', '=', h.src_slug)
+    .where('dst_type', 'in', [...SAMPLEABLE_TYPES])
     .orderBy(seededOrder('dst_slug', seed))
     .limit(6)
     .execute();

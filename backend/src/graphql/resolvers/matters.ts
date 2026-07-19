@@ -1,7 +1,7 @@
-/** objects domain resolvers — see docs/reference/backend-resolver-porting-guide.md */
+/** matters domain resolvers — see docs/reference/backend-resolver-porting-guide.md */
 import type { Resolvers } from '../../../codegen/graphql.js';
 import type { AppContext } from '../context.js';
-import type { ObjectRow, ObjectIndexRow } from '../../data/loaders/objects.js';
+import type { MatterRow, MatterIndexRow } from '../../data/loaders/matters.js';
 import type { IndexRow } from '../../data/loaders/peopleplaces.js';
 import { generateReference } from 'scripture-guide';
 
@@ -14,77 +14,77 @@ function getSlugTip(slug: string): string {
 const translated = async (ctx: AppContext, guid: string, refkey: string, base: string | null): Promise<string | null> =>
   (await ctx.loaders.translation.load({ guid, refkey })) ?? base;
 
-export const objectsResolvers: Resolvers = {
+export const mattersResolvers: Resolvers = {
   Query: {
     /**
-     * object / objectList (alias) — fetch bom_objects by slug(s).
-     * Returns array ordered by bom_objects.weight DESC (legacy ORDER BY weight DESC).
-     * objectList is a GQL alias for object (q("objectList: object", ...)) — same resolver.
+     * matter / matterList (alias) — fetch bom_matters by slug(s).
+     * Returns array ordered by bom_matters.weight DESC (legacy ORDER BY weight DESC).
+     * matterList is a GQL alias for matter (q("matterList: matter", ...)) — same resolver.
      */
-    object: async (_root, args, ctx) => {
+    matter: async (_root, args, ctx) => {
       const slugs = (args.slug ?? [])
         .filter((s): s is string => s !== null)
         .map(getSlugTip);
-      // No slug → full list (legacy returns all objects; the homepage preloads
-      // them for popups). Empty here would drop the objectList key and break the
-      // frontend's positional response-keying — see allObjects in the loader.
-      if (!slugs.length) return ctx.loaders.allObjects() as unknown as never[];
-      return ctx.loaders.objectsBySlugs(slugs) as unknown as never[];
+      // No slug → full list (legacy returns all matters; the homepage preloads
+      // them for popups). Empty here would drop the matterList key and break the
+      // frontend's positional response-keying — see allMatters in the loader.
+      if (!slugs.length) return ctx.loaders.allMatters() as unknown as never[];
+      return ctx.loaders.mattersBySlugs(slugs) as unknown as never[];
     },
   },
 
-  Object: {
+  Matter: {
     /**
-     * name/subtitle/description — translated by BomObjects.guid
+     * name/subtitle/description — translated by bom_matters.guid
      * (legacy: hasMany(BomTranslation, { foreignKey:'guid', sourceKey:'guid' }))
      */
     name: (parent, _args, ctx) => {
-      const o = parent as unknown as ObjectRow;
+      const o = parent as unknown as MatterRow;
       if (!o.guid) return o.name ?? null;
       return translated(ctx, o.guid, 'name', o.name);
     },
     subtitle: (parent, _args, ctx) => {
-      const o = parent as unknown as ObjectRow;
+      const o = parent as unknown as MatterRow;
       if (!o.guid) return o.subtitle ?? null;
       return translated(ctx, o.guid, 'subtitle', o.subtitle);
     },
     description: (parent, _args, ctx) => {
-      const o = parent as unknown as ObjectRow;
+      const o = parent as unknown as MatterRow;
       if (!o.guid) return o.description ?? null;
       return translated(ctx, o.guid, 'description', o.description);
     },
 
     /**
-     * index — bom_index rows for this object (type='object'), joined with bom_lookup.
+     * index — bom_index rows for this matter (type='matter'), joined with bom_lookup.
      *
-     * Uses a custom JOIN-based loader (objectIndexBySlug) that replicates legacy
+     * Uses a custom JOIN-based loader (matterIndexBySlug) that replicates legacy
      * Sequelize hasOne JOIN behavior: when multiple bom_lookup rows exist for the
      * same verse_id, legacy produces one result per (bom_index, bom_lookup) pair,
-     * each with a different resolved slug path. This loader returns ObjectIndexRow[]
+     * each with a different resolved slug path. This loader returns MatterIndexRow[]
      * with precomputed _resolvedSlug for each pair.
      */
     index: async (parent, _args, ctx) => {
-      const o = parent as unknown as ObjectRow;
-      const rows = await ctx.loaders.objectIndexBySlug.load(o.slug);
+      const o = parent as unknown as MatterRow;
+      const rows = await ctx.loaders.matterIndexBySlug.load(o.slug);
       return rows as unknown as never[];
     },
 
     /**
      * xrels — cross-entity relations from bom_xrels.
-     * Resolves dst_name/dst_title from bom_people/bom_places/bom_objects.
+     * Resolves dst_name/dst_title from bom_people/bom_places/bom_matters.
      * Sorted: verse_id ASC NULLS LAST, srcweight ASC, dst_slug ASC.
      */
     xrels: async (parent, _args, ctx) => {
-      const o = parent as unknown as ObjectRow;
+      const o = parent as unknown as MatterRow;
       const rows = await ctx.loaders.xrelsBySlug.load(o.slug);
       return rows as unknown as never[];
     },
   },
 
   /**
-   * Index type resolvers — override to handle ObjectIndexRow._resolvedSlug.
+   * Index type resolvers — override to handle MatterIndexRow._resolvedSlug.
    *
-   * When an IndexRow comes from the objects domain (ObjectIndexRow with _resolvedSlug),
+   * When an IndexRow comes from the matters domain (MatterIndexRow with _resolvedSlug),
    * the slug is already computed from the JOIN; use it directly. For peopleplaces
    * IndexRows (without _resolvedSlug), fall through to the verse_id-based lookup
    * chain (identical to peopleplaces.ts Index.slug logic). This file is merged last
@@ -95,10 +95,10 @@ export const objectsResolvers: Resolvers = {
    */
   Index: {
     slug: async (parent, _args, ctx) => {
-      const row = parent as unknown as ObjectIndexRow | IndexRow;
-      // ObjectIndexRow carries a precomputed slug from the bom_lookup JOIN
+      const row = parent as unknown as MatterIndexRow | IndexRow;
+      // MatterIndexRow carries a precomputed slug from the bom_lookup JOIN
       if ('_resolvedSlug' in row) {
-        return (row as ObjectIndexRow)._resolvedSlug;
+        return (row as MatterIndexRow)._resolvedSlug;
       }
       // Fallback: peopleplaces IndexRow — verse_id → bom_lookup → bom_text → bom_slug
       const idx = row as IndexRow;

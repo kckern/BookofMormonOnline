@@ -7,7 +7,7 @@ import { openScripture } from "./ScripturePopup";
 const PROFILE_PATH = {
   people: (slug) => `/people/${slug}`,
   place: (slug) => `/places/${slug}`,
-  object: (slug) => `/objects/${slug}`,
+  matter: (slug) => `/matters/${slug}`,
 };
 const profileTo = (type, slug) => (PROFILE_PATH[type] ? PROFILE_PATH[type](slug) : null);
 

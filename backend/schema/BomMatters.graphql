@@ -1,19 +1,22 @@
 extend type Query {
-  object(slug: [String]): [Object]
+  matter(slug: [String]): [Matter]
 }
 
-type Object {
+type Matter {
   guid: String
   slug: String
   name: String
   subtitle: String
   category: String
+  kind: String
   specificity: String
   usage: String
   era: String
   provenance: String
+  status: String
   aliases: String
   tags: String
+  node_link: String
   description: String
   verse_id: Int
   weight: Int
@@ -31,7 +34,7 @@ type Xrel {
   note: String
   verse_id: Int
   """
-  'src' when this entity is the row's source (object popups),
+  'src' when this entity is the row's source (matter popups),
   'dst' when the row points AT this entity and dst_* carry the other party
   (people/place popups) — render name-before-verb for 'dst'.
   """

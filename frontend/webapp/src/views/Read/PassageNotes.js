@@ -3,7 +3,7 @@ import './PassageNotes.scss';
 import CommentaryPanel from './CategoryPanels/CommentaryPanel';
 import PeoplePanel from './CategoryPanels/PeoplePanel';
 import PlacesPanel from './CategoryPanels/PlacesPanel';
-import ObjectsPanel from './CategoryPanels/ObjectsPanel';
+import MattersPanel from './CategoryPanels/MattersPanel';
 import ImagesPanel from './CategoryPanels/ImagesPanel';
 import ChiasmusPanel from './CategoryPanels/ChiasmusPanel';
 import ReferencesPanel from './CategoryPanels/ReferencesPanel';
@@ -24,7 +24,7 @@ const PassageNotes = ({
             commentary: [],
             people: [],
             places: [],
-            objects: [],
+            matters: [],
             images: [],
             chiasmus: [],
             refs: []
@@ -35,7 +35,7 @@ const PassageNotes = ({
             if (verseData.commentary) counts.commentary.push(...verseData.commentary);
             if (verseData.people) counts.people.push(...verseData.people);
             if (verseData.places) counts.places.push(...verseData.places);
-            if (verseData.objects) counts.objects.push(...verseData.objects);
+            if (verseData.matters) counts.matters.push(...verseData.matters);
             if (verseData.images) counts.images.push(...verseData.images);
             if (verseData.chiasmus) counts.chiasmus.push(...verseData.chiasmus);
             if (verseData.refs) counts.refs.push(...verseData.refs);
@@ -64,7 +64,7 @@ const PassageNotes = ({
             commentary: { title: 'Commentary', Component: CommentaryPanel },
             people: { title: 'People', Component: PeoplePanel },
             places: { title: 'Places', Component: PlacesPanel },
-            objects: { title: 'Objects', Component: ObjectsPanel },
+            matters: { title: 'Matters', Component: MattersPanel },
             images: { title: 'Images', Component: ImagesPanel },
             chiasmus: { title: 'Chiasmus', Component: ChiasmusPanel },
             refs: { title: 'References', Component: ReferencesPanel },
@@ -125,13 +125,13 @@ const PassageNotes = ({
                                 <span className="label">Places</span>
                             </div>
                         )}
-                        {categoryCounts.objects && categoryCounts.objects.length > 0 && (
+                        {categoryCounts.matters && categoryCounts.matters.length > 0 && (
                             <div
-                                className={`category-tab ${activePanel === 'objects' ? 'active' : ''}`}
-                                onClick={() => handleTabClick('objects')}
+                                className={`category-tab ${activePanel === 'matters' ? 'active' : ''}`}
+                                onClick={() => handleTabClick('matters')}
                             >
-                                <span className="count">{categoryCounts.objects.length}</span>
-                                <span className="label">Objects</span>
+                                <span className="count">{categoryCounts.matters.length}</span>
+                                <span className="label">Matters</span>
                             </div>
                         )}
                         {categoryCounts.images && categoryCounts.images.length > 0 && (

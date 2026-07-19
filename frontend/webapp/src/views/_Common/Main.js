@@ -99,7 +99,7 @@ function Main(props) {
       {
         personList: null,
         placeList: null,
-        objectList: null,
+        matterList: null,
         divisionShell: null,
         fax: null,
         labels: null,
@@ -107,7 +107,7 @@ function Main(props) {
         publications: true
       },
       {
-        useCache: ["personList", "placeList", "objectList", "publications", "divisionShell", "fax"], //,"labels"
+        useCache: ["personList", "placeList", "matterList", "publications", "divisionShell", "fax"], //,"labels"
       }
     ).then((r) => {
       if (!r || !r.tokenSignIn || !r.tokenSignIn[localToken])

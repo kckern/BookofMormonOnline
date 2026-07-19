@@ -473,6 +473,29 @@ export type Markdown = {
   slug?: Maybe<Scalars['String']['output']>;
 };
 
+export type Matter = {
+  __typename?: 'Matter';
+  aliases?: Maybe<Scalars['String']['output']>;
+  category?: Maybe<Scalars['String']['output']>;
+  description?: Maybe<Scalars['String']['output']>;
+  era?: Maybe<Scalars['String']['output']>;
+  guid?: Maybe<Scalars['String']['output']>;
+  index?: Maybe<Array<Maybe<Index>>>;
+  kind?: Maybe<Scalars['String']['output']>;
+  name?: Maybe<Scalars['String']['output']>;
+  node_link?: Maybe<Scalars['String']['output']>;
+  provenance?: Maybe<Scalars['String']['output']>;
+  slug?: Maybe<Scalars['String']['output']>;
+  specificity?: Maybe<Scalars['String']['output']>;
+  status?: Maybe<Scalars['String']['output']>;
+  subtitle?: Maybe<Scalars['String']['output']>;
+  tags?: Maybe<Scalars['String']['output']>;
+  usage?: Maybe<Scalars['String']['output']>;
+  verse_id?: Maybe<Scalars['Int']['output']>;
+  weight?: Maybe<Scalars['Int']['output']>;
+  xrels?: Maybe<Array<Maybe<Xrel>>>;
+};
+
 export type Menu = {
   __typename?: 'Menu';
   label?: Maybe<Scalars['String']['output']>;
@@ -877,26 +900,6 @@ export type Notification = {
   type?: Maybe<Scalars['String']['output']>;
 };
 
-export type Object = {
-  __typename?: 'Object';
-  aliases?: Maybe<Scalars['String']['output']>;
-  category?: Maybe<Scalars['String']['output']>;
-  description?: Maybe<Scalars['String']['output']>;
-  era?: Maybe<Scalars['String']['output']>;
-  guid?: Maybe<Scalars['String']['output']>;
-  index?: Maybe<Array<Maybe<Index>>>;
-  name?: Maybe<Scalars['String']['output']>;
-  provenance?: Maybe<Scalars['String']['output']>;
-  slug?: Maybe<Scalars['String']['output']>;
-  specificity?: Maybe<Scalars['String']['output']>;
-  subtitle?: Maybe<Scalars['String']['output']>;
-  tags?: Maybe<Scalars['String']['output']>;
-  usage?: Maybe<Scalars['String']['output']>;
-  verse_id?: Maybe<Scalars['Int']['output']>;
-  weight?: Maybe<Scalars['Int']['output']>;
-  xrels?: Maybe<Array<Maybe<Xrel>>>;
-};
-
 export type Page = {
   __typename?: 'Page';
   counts?: Maybe<Array<Maybe<Scalars['Int']['output']>>>;
@@ -931,8 +934,8 @@ export type PassageNotes = {
   fax?: Maybe<Array<Maybe<Fax>>>;
   images?: Maybe<Array<Maybe<Image>>>;
   mapstory?: Maybe<Array<Maybe<MapStory>>>;
+  matters?: Maybe<Array<Maybe<Matter>>>;
   notes?: Maybe<Array<Maybe<Note>>>;
-  objects?: Maybe<Array<Maybe<Object>>>;
   people?: Maybe<Array<Maybe<People>>>;
   places?: Maybe<Array<Maybe<Place>>>;
   refs?: Maybe<Array<Maybe<Reference>>>;
@@ -1073,6 +1076,7 @@ export type Query = {
   mapstories?: Maybe<Array<Maybe<MapStory>>>;
   mapstory?: Maybe<Array<Maybe<MapStory>>>;
   markdown?: Maybe<Array<Maybe<Markdown>>>;
+  matter?: Maybe<Array<Maybe<Matter>>>;
   menu?: Maybe<Array<Maybe<Menu>>>;
   messengerChannel?: Maybe<MessengerChannel>;
   messengerChannelBannedMembers?: Maybe<Array<Maybe<MessengerMember>>>;
@@ -1088,7 +1092,6 @@ export type Query = {
   mybookmark?: Maybe<Bookmark>;
   notificationUnreadCount?: Maybe<Scalars['Int']['output']>;
   notifications?: Maybe<Array<Maybe<Notification>>>;
-  object?: Maybe<Array<Maybe<Object>>>;
   page?: Maybe<Array<Maybe<Page>>>;
   pagecomments?: Maybe<MessengerPageComments>;
   pageprogress?: Maybe<Array<Maybe<ProgressScore>>>;
@@ -1256,6 +1259,11 @@ export type QueryMarkdownArgs = {
 };
 
 
+export type QueryMatterArgs = {
+  slug?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
 export type QueryMenuArgs = {
   slug?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
 };
@@ -1323,11 +1331,6 @@ export type QueryMoregroupsArgs = {
 
 export type QueryMybookmarkArgs = {
   token?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-export type QueryObjectArgs = {
-  slug?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
 };
 
 
@@ -1989,7 +1992,7 @@ export type Witness = {
 export type Xrel = {
   __typename?: 'Xrel';
   /**
-   * 'src' when this entity is the row's source (object popups),
+   * 'src' when this entity is the row's source (matter popups),
    * 'dst' when the row points AT this entity and dst_* carry the other party
    * (people/place popups) — render name-before-verb for 'dst'.
    */
@@ -2118,6 +2121,7 @@ export type ResolversTypes = {
   MapStory: ResolverTypeWrapper<Partial<MapStory>>;
   MapStorySample: ResolverTypeWrapper<Partial<MapStorySample>>;
   Markdown: ResolverTypeWrapper<Partial<Markdown>>;
+  Matter: ResolverTypeWrapper<Partial<Matter>>;
   Menu: ResolverTypeWrapper<Partial<Menu>>;
   Message: ResolverTypeWrapper<Partial<Message>>;
   MessengerChannel: ResolverTypeWrapper<Partial<MessengerChannel>>;
@@ -2135,7 +2139,6 @@ export type ResolversTypes = {
   Network: ResolverTypeWrapper<Partial<Network>>;
   Note: ResolverTypeWrapper<Partial<Note>>;
   Notification: ResolverTypeWrapper<Partial<Notification>>;
-  Object: ResolverTypeWrapper<Partial<Object>>;
   Page: ResolverTypeWrapper<Partial<Page>>;
   Passage: ResolverTypeWrapper<Partial<Passage>>;
   PassageNotes: ResolverTypeWrapper<Partial<PassageNotes>>;
@@ -2242,6 +2245,7 @@ export type ResolversParentTypes = {
   MapStory: Partial<MapStory>;
   MapStorySample: Partial<MapStorySample>;
   Markdown: Partial<Markdown>;
+  Matter: Partial<Matter>;
   Menu: Partial<Menu>;
   Message: Partial<Message>;
   MessengerChannel: Partial<MessengerChannel>;
@@ -2259,7 +2263,6 @@ export type ResolversParentTypes = {
   Network: Partial<Network>;
   Note: Partial<Note>;
   Notification: Partial<Notification>;
-  Object: Partial<Object>;
   Page: Partial<Page>;
   Passage: Partial<Passage>;
   PassageNotes: Partial<PassageNotes>;
@@ -2758,6 +2761,29 @@ export type MarkdownResolvers<ContextType = AppContext, ParentType extends Resol
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type MatterResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['Matter'] = ResolversParentTypes['Matter']> = {
+  aliases?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  category?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  era?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  guid?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  index?: Resolver<Maybe<Array<Maybe<ResolversTypes['Index']>>>, ParentType, ContextType>;
+  kind?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  name?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  node_link?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  provenance?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  slug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  specificity?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  status?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  subtitle?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  tags?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  usage?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  verse_id?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  weight?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  xrels?: Resolver<Maybe<Array<Maybe<ResolversTypes['Xrel']>>>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type MenuResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['Menu'] = ResolversParentTypes['Menu']> = {
   label?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   link?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -2957,26 +2983,6 @@ export type NotificationResolvers<ContextType = AppContext, ParentType extends R
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
-export type ObjectResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['Object'] = ResolversParentTypes['Object']> = {
-  aliases?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  category?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  era?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  guid?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  index?: Resolver<Maybe<Array<Maybe<ResolversTypes['Index']>>>, ParentType, ContextType>;
-  name?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  provenance?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  slug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  specificity?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  subtitle?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  tags?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  usage?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  verse_id?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  weight?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  xrels?: Resolver<Maybe<Array<Maybe<ResolversTypes['Xrel']>>>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
-};
-
 export type PageResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['Page'] = ResolversParentTypes['Page']> = {
   counts?: Resolver<Maybe<Array<Maybe<ResolversTypes['Int']>>>, ParentType, ContextType>;
   guid?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -3005,8 +3011,8 @@ export type PassageNotesResolvers<ContextType = AppContext, ParentType extends R
   fax?: Resolver<Maybe<Array<Maybe<ResolversTypes['Fax']>>>, ParentType, ContextType>;
   images?: Resolver<Maybe<Array<Maybe<ResolversTypes['Image']>>>, ParentType, ContextType>;
   mapstory?: Resolver<Maybe<Array<Maybe<ResolversTypes['MapStory']>>>, ParentType, ContextType>;
+  matters?: Resolver<Maybe<Array<Maybe<ResolversTypes['Matter']>>>, ParentType, ContextType>;
   notes?: Resolver<Maybe<Array<Maybe<ResolversTypes['Note']>>>, ParentType, ContextType>;
-  objects?: Resolver<Maybe<Array<Maybe<ResolversTypes['Object']>>>, ParentType, ContextType>;
   people?: Resolver<Maybe<Array<Maybe<ResolversTypes['People']>>>, ParentType, ContextType>;
   places?: Resolver<Maybe<Array<Maybe<ResolversTypes['Place']>>>, ParentType, ContextType>;
   refs?: Resolver<Maybe<Array<Maybe<ResolversTypes['Reference']>>>, ParentType, ContextType>;
@@ -3142,6 +3148,7 @@ export type QueryResolvers<ContextType = AppContext, ParentType extends Resolver
   mapstories?: Resolver<Maybe<Array<Maybe<ResolversTypes['MapStory']>>>, ParentType, ContextType, RequireFields<QueryMapstoriesArgs, 'map'>>;
   mapstory?: Resolver<Maybe<Array<Maybe<ResolversTypes['MapStory']>>>, ParentType, ContextType, Partial<QueryMapstoryArgs>>;
   markdown?: Resolver<Maybe<Array<Maybe<ResolversTypes['Markdown']>>>, ParentType, ContextType, Partial<QueryMarkdownArgs>>;
+  matter?: Resolver<Maybe<Array<Maybe<ResolversTypes['Matter']>>>, ParentType, ContextType, Partial<QueryMatterArgs>>;
   menu?: Resolver<Maybe<Array<Maybe<ResolversTypes['Menu']>>>, ParentType, ContextType, Partial<QueryMenuArgs>>;
   messengerChannel?: Resolver<Maybe<ResolversTypes['MessengerChannel']>, ParentType, ContextType, Partial<QueryMessengerChannelArgs>>;
   messengerChannelBannedMembers?: Resolver<Maybe<Array<Maybe<ResolversTypes['MessengerMember']>>>, ParentType, ContextType, Partial<QueryMessengerChannelBannedMembersArgs>>;
@@ -3157,7 +3164,6 @@ export type QueryResolvers<ContextType = AppContext, ParentType extends Resolver
   mybookmark?: Resolver<Maybe<ResolversTypes['Bookmark']>, ParentType, ContextType, Partial<QueryMybookmarkArgs>>;
   notificationUnreadCount?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   notifications?: Resolver<Maybe<Array<Maybe<ResolversTypes['Notification']>>>, ParentType, ContextType>;
-  object?: Resolver<Maybe<Array<Maybe<ResolversTypes['Object']>>>, ParentType, ContextType, Partial<QueryObjectArgs>>;
   page?: Resolver<Maybe<Array<Maybe<ResolversTypes['Page']>>>, ParentType, ContextType, Partial<QueryPageArgs>>;
   pagecomments?: Resolver<Maybe<ResolversTypes['MessengerPageComments']>, ParentType, ContextType, Partial<QueryPagecommentsArgs>>;
   pageprogress?: Resolver<Maybe<Array<Maybe<ResolversTypes['ProgressScore']>>>, ParentType, ContextType, Partial<QueryPageprogressArgs>>;
@@ -3681,6 +3687,7 @@ export type Resolvers<ContextType = AppContext> = {
   MapStory?: MapStoryResolvers<ContextType>;
   MapStorySample?: MapStorySampleResolvers<ContextType>;
   Markdown?: MarkdownResolvers<ContextType>;
+  Matter?: MatterResolvers<ContextType>;
   Menu?: MenuResolvers<ContextType>;
   Message?: MessageResolvers<ContextType>;
   MessengerChannel?: MessengerChannelResolvers<ContextType>;
@@ -3698,7 +3705,6 @@ export type Resolvers<ContextType = AppContext> = {
   Network?: NetworkResolvers<ContextType>;
   Note?: NoteResolvers<ContextType>;
   Notification?: NotificationResolvers<ContextType>;
-  Object?: ObjectResolvers<ContextType>;
   Page?: PageResolvers<ContextType>;
   Passage?: PassageResolvers<ContextType>;
   PassageNotes?: PassageNotesResolvers<ContextType>;

@@ -174,14 +174,14 @@ describe('homesampler.relationship', () => {
     const s = await exec<RelationshipPayload>(REL_SEL, 34004);
     expect(s.relationship).toBeTruthy();
     const r = s.relationship!;
-    expect(['people', 'place', 'object']).toContain(r.hubType);
+    expect(['people', 'place', 'matter']).toContain(r.hubType);
     expect(r.hubSlug).toBeTruthy();
     expect(r.hubName).toBeTruthy();
     expect(r.edges.length).toBeGreaterThanOrEqual(2);
     expect(r.edges.length).toBeLessThanOrEqual(4);
     for (const e of r.edges) {
       expect(e.rel).toBeTruthy();
-      expect(['people', 'place', 'object']).toContain(e.dstType);
+      expect(['people', 'place', 'matter']).toContain(e.dstType);
       expect(e.dstSlug).toBeTruthy();
       expect(e.dstName).toBeTruthy(); // resolved, not just the slug echoed on a miss
     }

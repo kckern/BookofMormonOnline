@@ -110,8 +110,8 @@ function PopUp() {
     appController.states.popUp.type === "place"
   )
     return <Place />;
-  if (appController.states.popUp.type === "object")
-    return <ObjectPopUp />;
+  if (appController.states.popUp.type === "matters")
+    return <MatterPopUp />;
   if (appController.states.popUp.type === "victory")
     return <Victory />;
   if (appController.states.popUp.type === "history")
@@ -465,46 +465,46 @@ function Place() {
   );
 }
 
-function ObjectPopUp() {
+function MatterPopUp() {
   const appController = useAppController();
   const [PopUpRef, setPopUpRef] = useState(null);
   const activeId = appController.states.popUp.activeId;
 
   if (appController.popUpData[activeId] === undefined) {
     BoMOnlineAPI(
-      { object: appController.states.popUp.ids },
-      { useCache: ["object"] }
+      { matter: appController.states.popUp.ids },
+      { useCache: ["matter"] }
     ).then((response) => {
       appController.functions.setPopUp({
-        type: "object",
+        type: "matters",
         ids: appController.states.popUp.ids,
-        popUpData: response.object,
+        popUpData: response.matter,
       });
-      if (!response.object) return false;
-      const obj = response.object[activeId];
-      const siblingObjectSlugs = (obj?.xrels || [])
-        .filter((x) => x.dst_type === "object" && x.dst_slug)
+      if (!response.matter) return false;
+      const obj = response.matter[activeId];
+      const siblingMatterSlugs = (obj?.xrels || [])
+        .filter((x) => x.dst_type === "matter" && x.dst_slug)
         .map((x) => x.dst_slug);
-      if (siblingObjectSlugs.length) {
-        BoMOnlineAPI({ object: siblingObjectSlugs }, { useCache: ["object"] });
+      if (siblingMatterSlugs.length) {
+        BoMOnlineAPI({ matter: siblingMatterSlugs }, { useCache: ["matter"] });
       }
       setPopUpRef(null);
     });
-    return <Loading type="Object" />;
+    return <Loading type="Matter" />;
   }
 
   const obj = appController.popUpData[activeId];
   if (obj === null) {
-    const candidates = (appController.preLoad?.objectList || [])
+    const candidates = (appController.preLoad?.matterList || [])
       .filter(o => o.slug.startsWith(activeId));
     if (candidates.length === 1) {
-      appController.functions.setPopUp({ type: "object", ids: [candidates[0].slug], underSlug: "objects" });
-      return <Loading type="Object" />;
+      appController.functions.setPopUp({ type: "matters", ids: [candidates[0].slug], underSlug: "matters" });
+      return <Loading type="Matter" />;
     }
     return (
       <div id="popUp" className="card popupwindow" style={{ top: appController.states.popUp.top, left: appController.states.popUp.left }}>
         <div className="card-header">
-          <div className="person_head">{label("object_profile") || "Object"}</div>
+          <div className="person_head">{label("matter_profile") || "Matter"}</div>
           <ul className="source_tabs souce_tab_list_0">
             <li className="close" onClick={appController.functions.closePopUp}>×</li>
           </ul>
@@ -513,8 +513,8 @@ function ObjectPopUp() {
           <div className="ppbody" style={{ flexDirection: "column", gap: "0.5em" }}>
             {candidates.length > 1 ? candidates.map(c => (
               <div key={c.slug} className="related_row" style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "0.75em", padding: "0.5em" }}
-                onClick={() => appController.functions.setPopUp({ type: "object", ids: [c.slug], underSlug: "objects" })}>
-                <div className="related_avatar"><img src={`${assetUrl}/objects/${c.slug}`} alt={c.name} /></div>
+                onClick={() => appController.functions.setPopUp({ type: "matters", ids: [c.slug], underSlug: "matters" })}>
+                <div className="related_avatar"><img src={`${assetUrl}/matters/${c.slug}`} alt={c.name} /></div>
                 <div><strong>{processName(c.name)}</strong>{c.subtitle && <div><small>{c.subtitle}</small></div>}</div>
               </div>
             )) : <div className="emptyState" style={{ padding: "2em", textAlign: "center" }}>{processName(activeId)}</div>}
@@ -536,7 +536,7 @@ function ObjectPopUp() {
         }}
       >
         <div className="card-header">
-          <div className="person_head">{label("object_profile") || "Object"}</div>
+          <div className="person_head">{label("matter_profile") || "Matter"}</div>
           <ul className={"source_tabs souce_tab_list_" + appController.states.popUp.ids.length}>
             <li className="close" onClick={appController.functions.closePopUp}>
               ×
@@ -570,7 +570,7 @@ function ObjectPopUp() {
               <div className="ppimg">
                 <img
                   alt={obj.name}
-                  src={`${assetUrl}/objects/${obj.slug}`}
+                  src={`${assetUrl}/matters/${obj.slug}`}
                   onError={(e) => {
                     if (e.target.dataset.fallback === "1") return;
                     e.target.dataset.fallback = "1";

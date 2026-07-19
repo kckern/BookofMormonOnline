@@ -3,11 +3,11 @@
  *
  * Contract tests for `xrels` on People and Place (cross-entity relationships).
  *
- * The bom_xrels table is entirely object-anchored today (every row has
- * src_type='object'; people appear in 1,447 rows and places in 221 rows as
+ * The bom_xrels table is entirely matter-anchored today (rows have
+ * src_type='matter' or 'theology'; people and places appear only as
  * DESTINATIONS only). So a person's or place's relationships are the reverse
  * direction: rows where they are the dst. Each such row is exposed in the same
- * Xrel shape the object side uses, with the OTHER party (the source object) in
+ * Xrel shape the matter side uses, with the OTHER party (the source matter) in
  * the dst_* fields and direction='dst' so the UI can order name-before-verb
  * ("Synagogues — taught-by" on Aaron's popup).
  *
@@ -88,8 +88,8 @@ describe('People.xrels', () => {
       // resolved display name, not a bare slug fallback with dashes
       expect(x.dst_name).toBeTruthy();
       expect(x.direction).toBe('dst');
-      // today every source is an object; the loader resolves via src_type
-      expect(['object', 'people', 'place']).toContain(x.dst_type);
+      // today every source is a matter; the loader resolves via src_type
+      expect(['matter', 'people', 'place']).toContain(x.dst_type);
     }
   }, 30000);
 
@@ -119,19 +119,19 @@ describe('Place.xrels', () => {
   }, 30000);
 });
 
-describe('Object.xrels regression', () => {
-  it('object xrels still resolve and now carry direction=src', async () => {
+describe('Matter.xrels regression', () => {
+  it('matter xrels still resolve and now carry direction=src', async () => {
     const obj = await db
       .selectFrom('bom_xrels')
       .select(['src_slug'])
-      .where('src_type', '=', 'object')
+      .where('src_type', '=', 'matter')
       .limit(1)
       .executeTakeFirstOrThrow();
     const body = await gql(`{
-      object(slug: "${obj.src_slug}") { xrels { rel dst_name direction } }
+      matter(slug: "${obj.src_slug}") { xrels { rel dst_name direction } }
     }`);
     expect(body.errors).toBeUndefined();
-    const xrels = body.data.object[0].xrels;
+    const xrels = body.data.matter[0].xrels;
     expect(xrels.length).toBeGreaterThan(0);
     for (const x of xrels) expect(x.direction).toBe('src');
   }, 30000);

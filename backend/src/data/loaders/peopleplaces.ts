@@ -3,7 +3,7 @@ import DataLoader from 'dataloader';
 import type { Kysely } from 'kysely';
 import type { DB } from '../../../codegen/db.js';
 import type { Loaders } from '../loaders.js';
-import { parseVerseIdFromNote, sortXrels, type XrelRow } from './objects.js';
+import { parseVerseIdFromNote, sortXrels, type XrelRow } from './matters.js';
 
 export interface PeopleRow {
   slug: string;
@@ -343,7 +343,7 @@ export function peopleplacesLoaders(db: Kysely<DB>, lang: string, core: Loaders)
   /**
    * Reverse-direction xrels for a person or place.
    *
-   * bom_xrels is object-anchored (every row today has src_type='object');
+   * bom_xrels is matter-anchored (rows today have src_type='matter' or 'theology');
    * people and places appear only as DESTINATIONS. So an entity's
    * relationships are the rows where it is the dst, mapped into the same
    * XrelRow shape the object side uses — with the OTHER party (the source)
@@ -367,27 +367,27 @@ export function peopleplacesLoaders(db: Kysely<DB>, lang: string, core: Loaders)
 
       const peopleSlugs: string[] = [];
       const placeSlugs: string[] = [];
-      const objectSlugs: string[] = [];
+      const matterSlugs: string[] = [];
       for (const r of rawRows) {
         if (r.src_type === 'people') peopleSlugs.push(r.src_slug);
         else if (r.src_type === 'place') placeSlugs.push(r.src_slug);
-        else if (r.src_type === 'object') objectSlugs.push(r.src_slug);
+        else if (r.src_type === 'matter') matterSlugs.push(r.src_slug);
       }
 
-      const [people, places, objects] = await Promise.all([
+      const [people, places, matters] = await Promise.all([
         peopleSlugs.length
           ? db.selectFrom('bom_people').select(['slug', 'name', 'title']).where('slug', 'in', [...new Set(peopleSlugs)]).execute()
           : [],
         placeSlugs.length
           ? db.selectFrom('bom_places').select(['slug', 'name', 'info']).where('slug', 'in', [...new Set(placeSlugs)]).execute()
           : [],
-        objectSlugs.length
-          ? db.selectFrom('bom_objects').select(['slug', 'name', 'subtitle']).where('slug', 'in', [...new Set(objectSlugs)]).execute()
+        matterSlugs.length
+          ? db.selectFrom('bom_matters').select(['slug', 'name', 'subtitle']).where('slug', 'in', [...new Set(matterSlugs)]).execute()
           : [],
       ]);
       const peopleMap = new Map(people.map((p) => [p.slug, p]));
       const placeMap = new Map(places.map((p) => [p.slug, p]));
-      const objectMap = new Map(objects.map((o) => [o.slug, o]));
+      const matterMap = new Map(matters.map((o) => [o.slug, o]));
 
       const byDst = new Map<string, XrelRow[]>();
       for (const r of rawRows) {
@@ -399,8 +399,8 @@ export function peopleplacesLoaders(db: Kysely<DB>, lang: string, core: Loaders)
         } else if (r.src_type === 'place') {
           const p = placeMap.get(r.src_slug);
           if (p) { srcName = p.name ?? r.src_slug; srcTitle = p.info ?? null; }
-        } else if (r.src_type === 'object') {
-          const o = objectMap.get(r.src_slug);
+        } else if (r.src_type === 'matter') {
+          const o = matterMap.get(r.src_slug);
           if (o) { srcName = o.name ?? r.src_slug; srcTitle = o.subtitle ?? null; }
         }
         const key = `${r.dst_type}|${r.dst_slug}`;

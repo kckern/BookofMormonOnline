@@ -1,6 +1,6 @@
 import React from 'react';
 
-const ObjectsPanel = ({ data }) => {
+const MattersPanel = ({ data }) => {
     return (
         <pre className="category-data">
             {JSON.stringify(data, null, 2)}
@@ -8,4 +8,4 @@ const ObjectsPanel = ({ data }) => {
     );
 };
 
-export default ObjectsPanel;
+export default MattersPanel;

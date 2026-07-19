@@ -5,16 +5,16 @@ import { Button } from "reactstrap";
 import BootstrapSwitchButton from "bootstrap-switch-button-react";
 import { isMobile, label } from "src/models/Utils";
 import { SearchPopUp } from "../_Common/SearchPopUp";
-import { filterAxes } from "./objectsFilterData";
+import { filterAxes } from "./mattersFilterData";
 import { useAppController } from "src/contexts/AppControllerContext";
 
-export function ObjectsFilter({ objectFilters, setFilter, objectList }) {
+export function MattersFilter({ matterFilters, setFilter, matterList }) {
   const appController = useAppController();
   const [isOpen, setIsOpen] = useState(false);
   const [initSearchString, setInitSearchString] = useState("");
 
   const toggleChip = (axis, tag) => {
-    const next = { ...objectFilters };
+    const next = { ...matterFilters };
     const set = new Set(next[axis]);
     if (set.has(tag)) set.delete(tag);
     else set.add(tag);
@@ -23,7 +23,7 @@ export function ObjectsFilter({ objectFilters, setFilter, objectList }) {
   };
 
   const setAxis = (axis, all) => {
-    const next = { ...objectFilters };
+    const next = { ...matterFilters };
     next[axis] = all
       ? new Set(filterAxes.find((a) => a.name === axis).chips.map((c) => c.tag))
       : new Set();
@@ -40,7 +40,7 @@ export function ObjectsFilter({ objectFilters, setFilter, objectList }) {
       {axis.chips.map((chip, idx) => (
         <li key={idx} className="item" onClick={() => toggleChip(axis.name, chip.tag)}>
           <BootstrapSwitchButton
-            checked={objectFilters[axis.name].has(chip.tag)}
+            checked={matterFilters[axis.name].has(chip.tag)}
             onstyle="success"
             offlabel={label("off")}
             onlabel={label("on")}
@@ -54,9 +54,9 @@ export function ObjectsFilter({ objectFilters, setFilter, objectList }) {
 
   const selectItemHandler = (slug) => {
     appController.functions.setPopUp({
-      type: "object",
+      type: "matters",
       ids: [slug],
-      underSlug: "objects",
+      underSlug: "matters",
     });
     setIsOpen(false);
   };
@@ -73,13 +73,13 @@ export function ObjectsFilter({ objectFilters, setFilter, objectList }) {
         <div className="ppColumns">{filterAxes.map(renderAxis)}</div>
         {!isMobile() && (
           <SearchPopUp
-            placeholder="search_for_an_object"
-            preLoadData={objectList}
+            placeholder="search_for_a_matter"
+            preLoadData={matterList}
             selectItemHandler={selectItemHandler}
             isOpen={isOpen}
             setIsOpen={setIsOpen}
             testFieldNames={{ primary: "name", secondary: "subtitle" }}
-            assetName="objects"
+            assetName="matters"
             initSearchString={initSearchString}
           />
         )}
@@ -91,8 +91,8 @@ export function ObjectsFilter({ objectFilters, setFilter, objectList }) {
     appController.functions.setPopUp({
       type: "pFilter",
       ids: [appController.states.user.social?.user_id],
-      underSlug: "objects",
-      popUpData: { filterBox, setFilter, objectFilters },
+      underSlug: "matters",
+      popUpData: { filterBox, setFilter, matterFilters },
     });
   };
 
@@ -117,13 +117,13 @@ export function ObjectsFilter({ objectFilters, setFilter, objectList }) {
         <Button onClick={handleClick}>{label("selectors")}</Button>
         <button className="ppFiltersSearchButtonMobile" onClick={() => setIsOpen(true)}>🔍</button>
         <SearchPopUp
-          placeholder="search_for_an_object"
-          preLoadData={objectList}
+          placeholder="search_for_a_matter"
+          preLoadData={matterList}
           selectItemHandler={selectItemHandler}
           isOpen={isOpen}
           setIsOpen={setIsOpen}
           testFieldNames={{ primary: "name", secondary: "subtitle" }}
-          assetName="objects"
+          assetName="matters"
           initSearchString={initSearchString}
         />
       </div>

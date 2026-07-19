@@ -24,7 +24,7 @@ const srcRow = {
 };
 const dstRow = {
   rel: "taught-by",
-  dst_type: "object",
+  dst_type: "matter",
   dst_slug: "synagogues",
   dst_name: "Synagogues",
   dst_title: null,
@@ -63,7 +63,7 @@ describe("XrelSection", () => {
     fireEvent.click(screen.getByText("Nephi"));
     expect(mockSetPopUp).toHaveBeenCalledWith({ type: "people", ids: ["nephi"], underSlug: "people" });
     fireEvent.click(screen.getByText("Synagogues"));
-    expect(mockSetPopUp).toHaveBeenCalledWith({ type: "object", ids: ["synagogues"], underSlug: "objects" });
+    expect(mockSetPopUp).toHaveBeenCalledWith({ type: "matters", ids: ["synagogues"], underSlug: "matters" });
   });
 
   test("group rows are not clickable", () => {

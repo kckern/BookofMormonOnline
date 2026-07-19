@@ -28,7 +28,7 @@ const Contact = lazy(() => import("../views/Contact/Contact.js"));
 const Home = lazy(() => import("../views/Home/Home.js"));
 const People = lazy(() => import("../views/People/People.js"));
 const Places = lazy(() => import("../views/Places/Places.js"));
-const Objects = lazy(() => import("../views/Objects/Objects.js"));
+const Matters = lazy(() => import("../views/Matters/Matters.js"));
 const Map = lazy(() => import("../views/Map/Map.js"));
 const PeopleNetWork = lazy(() => import("../views/People/PeopleNetwork.js"));
 const TimeLine = lazy(() => import("../views/Timeline/Timeline.js"));
@@ -232,12 +232,12 @@ const routes = [
     component: Places,
   },
   {
-    path: "/objects/:objectSlug",
-    component: Objects,
+    path: "/matters/:matterSlug",
+    component: Matters,
   },
   {
-    path: "/objects",
-    component: Objects,
+    path: "/matters",
+    component: Matters,
   },
   {
     // Single Route (path array, specific first) so <Switch> never unmounts

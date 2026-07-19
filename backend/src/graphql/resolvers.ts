@@ -14,7 +14,7 @@ import { scripturereadResolvers } from './resolvers/scriptureread.js';
 import { scriptureextrasResolvers } from './resolvers/scriptureextras.js';
 import { peopleplacesResolvers } from './resolvers/peopleplaces.js';
 import { mapsResolvers } from './resolvers/maps.js';
-import { objectsResolvers } from './resolvers/objects.js';
+import { mattersResolvers } from './resolvers/matters.js';
 import { mediaResolvers } from './resolvers/media.js';
 import { mediamiscResolvers } from './resolvers/mediamisc.js';
 import { feedsmiscResolvers } from './resolvers/feedsmisc.js';
@@ -293,7 +293,7 @@ export const resolvers: Resolvers = mergeResolverMaps(
   scriptureextrasResolvers,
   peopleplacesResolvers,
   mapsResolvers,
-  objectsResolvers,
+  mattersResolvers,
   mediaResolvers,
   mediamiscResolvers,
   feedsmiscResolvers,

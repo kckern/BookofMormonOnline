@@ -1,11 +1,11 @@
-/** objects domain loaders — see docs/reference/backend-resolver-porting-guide.md */
+/** matters domain loaders — see docs/reference/backend-resolver-porting-guide.md */
 import DataLoader from 'dataloader';
 import type { Kysely } from 'kysely';
 import type { DB } from '../../../codegen/db.js';
 import type { Loaders } from '../loaders.js';
 import { lookupReference } from 'scripture-guide';
 
-export interface ObjectRow {
+export interface MatterRow {
   guid: string;
   slug: string;
   name: string | null;
@@ -23,14 +23,14 @@ export interface ObjectRow {
 }
 
 /**
- * Extended IndexRow for the objects domain.
+ * Extended IndexRow for the matters domain.
  * Matches the IndexRow from peopleplaces for all shared fields, plus
  * a precomputed slug so the per-lookup-row slug is embedded at fetch time.
  * This is needed because there can be multiple bom_lookup rows for one
  * bom_index verse_id, and the Sequelize hasOne JOIN in legacy produces one
  * result row per (bom_index, bom_lookup) pair with different resolved slugs.
  */
-export interface ObjectIndexRow {
+export interface MatterIndexRow {
   guid: string | null;
   pkey: number;
   type: string;
@@ -103,42 +103,42 @@ export function parseVerseIdFromNote(note: string | null): number | null {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function objectsLoaders(db: Kysely<DB>, lang: string, core: Loaders) {
+export function mattersLoaders(db: Kysely<DB>, lang: string, core: Loaders) {
 
   /**
-   * Fetch all object rows for a batch of slugs, ordered by weight DESC.
+   * Fetch all matter rows for a batch of slugs, ordered by weight DESC.
    * Legacy: findAll({ where: { slug }, order: [['weight', 'DESC']] })
    */
-  const objectsBySlugs = async (slugs: string[]): Promise<ObjectRow[]> => {
+  const mattersBySlugs = async (slugs: string[]): Promise<MatterRow[]> => {
     if (!slugs.length) return [];
     const rows = await db
-      .selectFrom('bom_objects')
+      .selectFrom('bom_matters')
       .selectAll()
       .where('slug', 'in', slugs)
       .orderBy('weight', 'desc')
       .execute();
-    return rows as unknown as ObjectRow[];
+    return rows as unknown as MatterRow[];
   };
 
   /**
-   * Fetch the full object list (no slug filter), ordered by weight DESC.
-   * Legacy returns all objects when `object`/`objectList` is queried with no
+   * Fetch the full matter list (no slug filter), ordered by weight DESC.
+   * Legacy returns all matters when `matter`/`matterList` is queried with no
    * slug; the homepage preloads them for popup lookups. Returning [] here would
-   * leave the `objectList` key empty → stripEmptyDeep drops it → the frontend's
+   * leave the `matterList` key empty → stripEmptyDeep drops it → the frontend's
    * positional response-keying (BoMOnlineAPI.structureResults) shifts and breaks
    * tokenSignIn → the whole app falls into the "no-wifi" failure screen.
    */
-  const allObjects = async (): Promise<ObjectRow[]> => {
+  const allMatters = async (): Promise<MatterRow[]> => {
     const rows = await db
-      .selectFrom('bom_objects')
+      .selectFrom('bom_matters')
       .selectAll()
       .orderBy('weight', 'desc')
       .execute();
-    return rows as unknown as ObjectRow[];
+    return rows as unknown as MatterRow[];
   };
 
   /**
-   * Index entries for a given object slug.
+   * Index entries for a given matter slug.
    *
    * Legacy behaviour (BomObjects.ts index resolver): Sequelize does
    *   BomIndex.findAll({ include: [BomLookup (hasOne via verse_id) → BomText → BomSlug] })
@@ -147,12 +147,12 @@ export function objectsLoaders(db: Kysely<DB>, lang: string, core: Loaders) {
    * Each pair resolves to a different slug path (downfall/117 vs moroni/41 for Ether 4:5).
    *
    * We replicate this by joining bom_index → bom_lookup → bom_text and returning one
-   * ObjectIndexRow per JOIN row (ordered by verse_id ASC, lookup.id ASC). The
+   * MatterIndexRow per JOIN row (ordered by verse_id ASC, lookup.id ASC). The
    * full slug path is built via core.slugPathByLink (which traverses bom_slug ancestors)
    * so multi-level paths like "reign-of-judges/helaman/19" resolve correctly.
    * The _resolvedSlug field carries the precomputed full slug path.
    */
-  const objectIndexBySlug = new DataLoader<string, ObjectIndexRow[]>(async (entitySlugs) => {
+  const matterIndexBySlug = new DataLoader<string, MatterIndexRow[]>(async (entitySlugs) => {
     // Join bom_index → bom_lookup (via verse_id) → bom_text
     // One result row per (bom_index row, bom_lookup row) pair.
     const joinRows = await db
@@ -172,7 +172,7 @@ export function objectsLoaders(db: Kysely<DB>, lang: string, core: Loaders) {
         't.link as t_link',
         'l.id as lookup_id',
       ])
-      .where('i.type', '=', 'object')
+      .where('i.type', '=', 'matter')
       .where('i.slug', 'in', [...entitySlugs])
       .orderBy('i.verse_id', 'asc')
       .orderBy('i.pkey', 'asc')
@@ -194,7 +194,7 @@ export function objectsLoaders(db: Kysely<DB>, lang: string, core: Loaders) {
     }
 
     // Group by entity slug
-    const byEntitySlug = new Map<string, ObjectIndexRow[]>();
+    const byEntitySlug = new Map<string, MatterIndexRow[]>();
     for (const r of joinRows) {
       const entitySlug = r.i_slug;
       const list = byEntitySlug.get(entitySlug) ?? [];
@@ -222,15 +222,15 @@ export function objectsLoaders(db: Kysely<DB>, lang: string, core: Loaders) {
   });
 
   /**
-   * Xrels for a given object slug.
-   * Resolves dst_name/dst_title from bom_people/bom_places/bom_objects.
+   * Xrels for a given matter slug.
+   * Resolves dst_name/dst_title from bom_people/bom_places/bom_matters.
    * Sorts by verse_id ASC NULLS LAST, then srcweight ASC, then dst_slug ASC.
    */
   const xrelsBySlug = new DataLoader<string, XrelRow[]>(async (slugs) => {
     const rawRows = await db
       .selectFrom('bom_xrels')
       .select(['rel', 'srcweight', 'dst_type', 'dst_slug', 'note', 'src_slug'])
-      .where('src_type', '=', 'object')
+      .where('src_type', '=', 'matter')
       .where('src_slug', 'in', [...slugs])
       .execute();
 
@@ -239,28 +239,28 @@ export function objectsLoaders(db: Kysely<DB>, lang: string, core: Loaders) {
     // Collect unique slugs per dst_type
     const peopleSlugs: string[] = [];
     const placeSlugs: string[] = [];
-    const objectSlugs: string[] = [];
+    const matterSlugs: string[] = [];
     for (const r of rawRows) {
       if (r.dst_type === 'people') peopleSlugs.push(r.dst_slug);
       else if (r.dst_type === 'place') placeSlugs.push(r.dst_slug);
-      else if (r.dst_type === 'object') objectSlugs.push(r.dst_slug);
+      else if (r.dst_type === 'matter') matterSlugs.push(r.dst_slug);
     }
 
-    const [people, places, objects] = await Promise.all([
+    const [people, places, matters] = await Promise.all([
       peopleSlugs.length
         ? db.selectFrom('bom_people').select(['slug', 'name', 'title']).where('slug', 'in', [...new Set(peopleSlugs)]).execute()
         : [],
       placeSlugs.length
         ? db.selectFrom('bom_places').select(['slug', 'name', 'info']).where('slug', 'in', [...new Set(placeSlugs)]).execute()
         : [],
-      objectSlugs.length
-        ? db.selectFrom('bom_objects').select(['slug', 'name', 'subtitle']).where('slug', 'in', [...new Set(objectSlugs)]).execute()
+      matterSlugs.length
+        ? db.selectFrom('bom_matters').select(['slug', 'name', 'subtitle']).where('slug', 'in', [...new Set(matterSlugs)]).execute()
         : [],
     ]);
 
     const peopleMap = new Map(people.map((p) => [p.slug, p]));
     const placeMap = new Map(places.map((p) => [p.slug, p]));
-    const objectMap = new Map(objects.map((o) => [o.slug, o]));
+    const matterMap = new Map(matters.map((o) => [o.slug, o]));
 
     // Group raw rows by src_slug
     const bySrc = groupBy(rawRows, (r) => r.src_slug);
@@ -276,8 +276,8 @@ export function objectsLoaders(db: Kysely<DB>, lang: string, core: Loaders) {
         } else if (r.dst_type === 'place') {
           const p = placeMap.get(r.dst_slug);
           if (p) { dst_name = p.name ?? r.dst_slug; dst_title = p.info ?? null; }
-        } else if (r.dst_type === 'object') {
-          const o = objectMap.get(r.dst_slug);
+        } else if (r.dst_type === 'matter') {
+          const o = matterMap.get(r.dst_slug);
           if (o) { dst_name = o.name ?? r.dst_slug; dst_title = o.subtitle ?? null; }
         }
         // dst_type === 'group': falls through with dst_name = dst_slug, dst_title = null
@@ -301,9 +301,9 @@ export function objectsLoaders(db: Kysely<DB>, lang: string, core: Loaders) {
   });
 
   return {
-    objectsBySlugs,
-    allObjects,
-    objectIndexBySlug,
+    mattersBySlugs,
+    allMatters,
+    matterIndexBySlug,
     xrelsBySlug,
   };
 }
