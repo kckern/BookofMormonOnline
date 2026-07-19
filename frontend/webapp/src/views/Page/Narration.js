@@ -768,7 +768,7 @@ export function ScripturePanelSingle({ scriptureData, closeButton, onClose, setP
   return (
     <div className="scripturePanelSingle px-0">
       <h5 className="m-0">{ref}{closeButtonEl}</h5>
-      <div className="scripturePassages p-0 pt-2 pb-4">
+      <div className="scripturePassages p-0 pb-4">
         {passages.length ? scripturePassages : <Spinner/>}
       </div>
     </div>
