@@ -6,6 +6,8 @@ import "./FacsimilePageViewer.scss";
 import { getRefFromIndex, PageOverlay } from "./Facsimiles";
 import PageImage from "./PageImage";
 import { generateReference, lookupReference } from "scripture-guide";
+import { useFaxHighlight } from "./useFaxHighlight";
+import FaxHighlightOverlay from "./FaxHighlightOverlay";
 
 /**
  * FacsimilePageViewerMobile - Mobile version of the facsimile page viewer
@@ -23,6 +25,8 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
 
   // Check if the pageNumber contains any letters (A-z), which means it's a reference
   const hasLetters = /[A-Za-z]/.test(pageNumber || '');
+  const highlightRef = hasLetters ? pageNumber : null;
+  const { boxesByPage, pageScale, allPages } = useFaxHighlight(item.slug, highlightRef);
 
   // Initialize page index based on URL
   useEffect(() => {
@@ -199,8 +203,24 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
       </div>
       <div className="pagesContainer">
         <div className="pageContainer mobile">
-          <div className="page">
+          <div className="page" style={{ position: "relative" }}>
             {renderPage(currentPage)}
+            {currentPage && boxesByPage.get(currentPage.pageNumInt)?.length ? (
+              <FaxHighlightOverlay
+                boxes={boxesByPage.get(currentPage.pageNumInt)}
+                pageScale={pageScale}
+              />
+            ) : null}
+            {allPages.length > 0 && currentPage && (
+              <>
+                {allPages.some((p) => p < currentPage.pageNumInt) && (
+                  <span className="faxContinuesHint prev">◀ continues</span>
+                )}
+                {allPages.some((p) => p > currentPage.pageNumInt) && (
+                  <span className="faxContinuesHint next">continues ▶</span>
+                )}
+              </>
+            )}
           </div>
         </div>
       </div>
