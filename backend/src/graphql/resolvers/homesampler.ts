@@ -9,7 +9,7 @@
  * run codegen — nothing else changes.
  */
 import { sql } from 'kysely';
-import { generateReference } from 'scripture-guide';
+import { generateReference, lookupReference } from 'scripture-guide';
 import type { Resolvers } from '../../../codegen/graphql.js';
 import type { AppContext } from '../context.js';
 import { findUserByToken } from '../../data/loaders/userauth.js';
@@ -114,6 +114,20 @@ const sampleFaxMore = async (ctx: AppContext, seed: number) => {
     .map((r) => ({ slug: r.slug, title: r.title, pages: Number(r.pages) || null }));
 };
 
+// The image's bom_text.heading is sometimes a scripture ref ("1 Nephi 13:40–41")
+// and sometimes a descriptive title ("The Messiah to come to the Promised Land").
+// Emit a STANDARD scripture reference: prefer the heading when it parses (keeps
+// the verse range), else fall back to the passage's first verse. `min_verse_id`
+// is the only verse column bom_text carries.
+const standardArtRef = (heading: string | null, minVerseId: number | null): string | null => {
+  if (heading) {
+    const ids = lookupReference(heading)?.verse_ids || [];
+    // guard against a bare book name ("Alma") exploding into the whole book
+    if (ids.length && ids.length <= 20) return generateReference(ids);
+  }
+  return minVerseId ? generateReference([Number(minVerseId)]) : null;
+};
+
 // Standalone artwork for image tiles — landscape-ish pieces read best in a
 // tile, so prefer wider-than-tall; carry title/artist for the caption.
 const sampleArt = async (ctx: AppContext, seed: number) => {
@@ -129,6 +143,7 @@ const sampleArt = async (ctx: AppContext, seed: number) => {
       'bom_xtras_image.width as width',
       'bom_xtras_image.height as height',
       'bom_text.heading as ref',
+      'bom_text.min_verse_id as minVerseId',
     ])
     .where('bom_xtras_image.file', 'is not', null)
     .where(sql<boolean>`bom_xtras_image.width > 0 AND bom_xtras_image.height > 0`)
@@ -141,7 +156,7 @@ const sampleArt = async (ctx: AppContext, seed: number) => {
     artist: r.artist || null,
     width: Number(r.width) || null,
     height: Number(r.height) || null,
-    ref: r.ref || null,
+    ref: standardArtRef(r.ref ?? null, r.minVerseId != null ? Number(r.minVerseId) : null),
   }));
 };
 

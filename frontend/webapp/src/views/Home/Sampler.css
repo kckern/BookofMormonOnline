@@ -1455,19 +1455,45 @@ html[data-theme="dark"] .faxTileEdition { color: #9a9a9a; }
    IMAGE ART — standalone artwork tile (default + reserve fillers)
    ================================================================ */
 .imageArtTile { padding: 0; overflow: hidden; }
-.imageArtFrame { width: 100%; overflow: hidden; background: #e8e6e1; }
+.imageArtFrame { position: relative; display: block; width: 100%; overflow: hidden; background: #e8e6e1; }
 .imageArtFrame img { width: 100%; height: 100%; object-fit: cover; display: block; }
 html[data-theme="dark"] .imageArtFrame { background: #2c2c2c; }
-.imageArtCaption { padding: 0.5rem 0.7rem 0.6rem; display: flex; flex-direction: column; gap: 0.15rem; }
-.imageArtTitle { font-size: 0.8rem; font-weight: 700; line-height: 1.25; color: #2a2a2a; text-decoration: none; }
-.imageArtTitle:hover { color: #345496; }
-.imageArtScripture { margin-top: 0.4rem; padding-top: 0.4rem; border-top: 1px solid #ececec; }
-html[data-theme="dark"] .imageArtScripture { border-top-color: #3a3a3a; }
-.imageArtContext { margin-top: 0.45rem; }
-.imageArtContext { margin-top: 0 !important; }
-.imageArtArtist { font-size: 0.66rem; font-style: italic; color: #888; }
-html[data-theme="dark"] .imageArtTitle { color: #f0f0f0; }
-html[data-theme="dark"] .imageArtArtist { color: #a0a0a0; }
+/* title: shaded header across the top of the artwork, center-aligned */
+.imageArtTitleBar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 0.45rem 0.7rem 0.9rem;
+  text-align: center;
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #fff;
+  background: linear-gradient(to bottom, rgba(15, 18, 26, 0.72), rgba(15, 18, 26, 0));
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+}
+/* artist: translucent ©-badge, bottom-right */
+.imageArtArtistBadge {
+  position: absolute;
+  right: 0.4rem;
+  bottom: 0.4rem;
+  max-width: calc(100% - 0.8rem);
+  padding: 0.12rem 0.45rem;
+  font-size: 0.64rem;
+  font-style: italic;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 0.25rem;
+  backdrop-filter: blur(4px);
+  pointer-events: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.imageArtCaption { padding: 0.5rem 0.7rem 0.6rem; display: flex; flex-direction: column; align-items: flex-start; gap: 0.35rem; }
+.imageArtContext { margin-top: 0; }
 
 /* ================================================================
    PLACE PROFILE — single place hero + description (reserve)
