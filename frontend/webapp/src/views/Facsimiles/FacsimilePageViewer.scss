@@ -16,10 +16,14 @@
 /* PageStack overhaul */
   .pagesContainer {
     display: flex;
-    /* shrink-wrap to content height so extra vertical space goes to nav */
-    flex: 0 0 auto;
+    /* Fill the available column height so the nav stays pinned to the bottom from
+       first paint — before JS measures the container and sizes the pages. Previously
+       flex:0 0 auto shrink-wrapped to ~0 pre-measure, so the nav rendered near the top
+       then jumped to the bottom once pages got a height (the load "rug-pull"). */
+    flex: 1 1 auto;
+    min-height: 0;
     height: auto;
-    align-items: flex-start; /* no vertical centering that creates top/bottom gaps */
+    align-items: center; /* vertically center the spread within the filled area */
     contain: layout style;
     position: relative;
     width: 100%;
