@@ -294,6 +294,8 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
   useEffect(() => {
     const onKey = (e) => {
       if (e.defaultPrevented) return;
+      const tag = (e.target?.tagName || '').toLowerCase();
+      if (tag === 'input' || tag === 'select' || tag === 'textarea') return;
       if (e.key === 'ArrowLeft') { e.preventDefault(); handleSwipeRight(); }
       else if (e.key === 'ArrowRight') { e.preventDefault(); handleSwipeLeft(); }
       else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
@@ -543,6 +545,7 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
           className="nav-button"
           onClick={handleSwipeRight}
           disabled={currentPageIndex <= 0}
+          aria-label="Previous pages"
         >
           &#8249;
         </button>
@@ -579,12 +582,15 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
             onMouseEnter={() => setShowTooltip(true)}
             onMouseLeave={() => setShowTooltip(false)}
             className="custom-slider"
+            aria-label="Page position"
+            aria-valuetext={`Page ${leftPage?.pageSlugLeaf ?? sliderValue} of ${item.pages}`}
           />
         </div>
         <button
           className="nav-button"
           onClick={handleSwipeLeft}
           disabled={currentPageIndex >= totalPages - (totalPages % 2 === 0 ? 1 : 2)}
+          aria-label="Next pages"
         >
           &#8250;
         </button>

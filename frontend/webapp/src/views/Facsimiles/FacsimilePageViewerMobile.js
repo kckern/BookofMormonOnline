@@ -148,6 +148,8 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
   useEffect(() => {
     const onKey = (e) => {
       if (e.defaultPrevented) return;
+      const tag = (e.target?.tagName || '').toLowerCase();
+      if (tag === 'input' || tag === 'select' || tag === 'textarea') return;
       if (e.key === 'ArrowLeft') { e.preventDefault(); handleSwipeRight(); }
       else if (e.key === 'ArrowRight') { e.preventDefault(); handleSwipeLeft(); }
       else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
@@ -217,6 +219,7 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
           className="nav-button"
           onClick={handleSwipeRight}
           disabled={currentPageIndex <= 0}
+          aria-label="Previous page"
         >
           &#8249;
         </button>
@@ -249,6 +252,7 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
           className="nav-button"
           onClick={handleSwipeLeft}
           disabled={currentPageIndex >= totalPages - 1}
+          aria-label="Next page"
         >
           &#8250;
         </button>
