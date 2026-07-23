@@ -17,6 +17,7 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
 
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [sliderValue, setSliderValue] = useState(0);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const sliderRef = useRef(null);
 
   const totalPages = leafIndex.length;
@@ -196,6 +197,8 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
     );
   };
 
+  const previewPage = leafIndex[sliderValue] || null;
+
   return (
     <div className="faxPageViewer mobile" style={{ maxHeight: 'none' }} {...swipeHandlers}>
       <div className="pageReferences">
@@ -222,13 +225,25 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
             type="range"
             min={0}
             max={totalPages - 1}
-            step={1} // Move slider in steps of 1 for mobile (single pages)
+            step={1}
             value={sliderValue}
             onChange={handleSliderChange}
-            onMouseUp={handleSliderRelease}
-            onTouchEnd={handleSliderRelease}
+            onMouseDown={() => setPreviewOpen(true)}
+            onTouchStart={() => setPreviewOpen(true)}
+            onMouseUp={() => { setPreviewOpen(false); handleSliderRelease(); }}
+            onTouchEnd={() => { setPreviewOpen(false); handleSliderRelease(); }}
             className="custom-slider"
+            aria-label="Page position"
+            aria-valuetext={`Page ${previewPage?.pageSlugLeaf ?? sliderValue + 1} of ${totalPages}`}
           />
+          {previewOpen && previewPage && (
+            <div className="mobile-slider-preview">
+              <img src={previewPage.thumbAssetUrl} alt="" aria-hidden="true" />
+              <div className="preview-label">
+                {previewPage.pageReference || `Page ${previewPage.pageSlugLeaf}`}
+              </div>
+            </div>
+          )}
         </div>
         <button
           className="nav-button"
