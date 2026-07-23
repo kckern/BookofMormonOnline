@@ -8,6 +8,7 @@ import { getRefFromIndex, PageOverlay } from "./Facsimiles";
 import { useElementSize } from "./useElementSize";
 import PageImage from "./PageImage";
 import PageStack from "./PageStack";
+import { prefetchThumbs } from "./faxThumbCache";
 import { generateReference, lookupReference } from "scripture-guide";
 import { normalizeStackWidths } from "./faxGeometry";
 import { useFaxHighlight } from "./useFaxHighlight";
@@ -369,6 +370,15 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
       value = totalPages - 2; // Always show the last valid spread (last or second-to-last page on right)
     }
 
+    // Warm the thumbnails around the scrub position so the preview swaps
+    // instantly instead of flashing/loading while scrubbing.
+    const warm = [];
+    for (let i = Math.max(0, value - 4); i <= Math.min(leafIndex.length - 1, value + 5); i++) {
+      const u = leafIndex[i]?.thumbAssetUrl;
+      if (u) warm.push(u);
+    }
+    prefetchThumbs(warm);
+
     const leftPage = leafIndex[value];
     const rightPage = leafIndex[value + 1];
 
@@ -465,9 +475,19 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
         <h6>{rightPage?.pageReference || ''}</h6>
       </div>
       <div className="pagesContainer" ref={pagesContainerRef}>
-        <div className="pageContainer">
-          <div 
-            className="spreadInner" 
+        <div
+          className="pageContainer"
+          onClick={(e) => {
+            // Only the empty L/R padding around the centered spread (clicks on a
+            // page/stack/image are handled by those elements themselves).
+            if (e.target !== e.currentTarget) return;
+            const rect = e.currentTarget.getBoundingClientRect();
+            if (e.clientX < rect.left + rect.width / 2) handleSwipeRight();
+            else handleSwipeLeft();
+          }}
+        >
+          <div
+            className="spreadInner"
             style={{ 
               width: innerWidth ? `${innerWidth}px` : undefined,
               display: 'flex', 
@@ -566,12 +586,6 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
           &#8249;
         </button>
         <div className="slider-container" ref={sliderRef}>
-          {showTooltip && (
-            <div
-              className="hover-cursor"
-              style={{ left: `${tooltipPosition.left}px` }}
-            />
-          )}
           {showTooltip && (
             <div
               className="custom-tooltip"

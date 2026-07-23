@@ -229,20 +229,7 @@
       height: 40px;
       display: flex;
       align-items: center;
-      /* hover cursor positioned absolutely inside the slider container */
-      .hover-cursor {
-        position: absolute;
-        bottom: 8px; /* align to track */
-        width: 4px; /* narrow vertical indicator */
-        height: 18px;
-        border-radius: 2px;
-        background: #9bbcf0; /* secondary color */
-        transform: translateX(-50%);
-        pointer-events: none;
-        box-shadow: 0 0 0 1px #ffffff, 0 1px 3px rgba(0,0,0,0.25);
-        z-index: 5;
-      }
-      
+
       .custom-tooltip {
         position: absolute;
         background: #fff;
@@ -281,28 +268,45 @@
         }
       }
       
+      /* Fill the full 40px container so the ENTIRE slider-container is the hit
+         target (the 5px track was nearly impossible to land on). The visible
+         track is drawn via the runnable-track pseudo. */
       .custom-slider {
         width: 100%;
+        height: 100%;
         -webkit-appearance: none;
         appearance: none;
-        height: 5px;
-        background: #ddd;
+        background: transparent;
         outline: none;
-        border-radius: 5px;
-        
+        cursor: pointer;
+        margin: 0;
+
+        &::-webkit-slider-runnable-track {
+          height: 6px;
+          background: #ddd;
+          border-radius: 5px;
+        }
+        &::-moz-range-track {
+          height: 6px;
+          background: #ddd;
+          border-radius: 5px;
+        }
+
         &::-webkit-slider-thumb {
           -webkit-appearance: none;
           appearance: none;
-          width: 15px;
-          height: 15px;
+          width: 16px;
+          height: 16px;
           border-radius: 50%;
           background: #4a90e2;
           cursor: pointer;
+          margin-top: -5px; /* center 16px thumb on the 6px track */
+          box-shadow: 0 1px 3px rgba(0,0,0,0.3);
         }
-        
         &::-moz-range-thumb {
-          width: 15px;
-          height: 15px;
+          width: 16px;
+          height: 16px;
+          border: none;
           border-radius: 50%;
           background: #4a90e2;
           cursor: pointer;

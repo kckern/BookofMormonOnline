@@ -8,8 +8,10 @@ html[data-theme="dark"] {
     background: var(--surface-3); color: var(--text-secondary);
     &:hover { background: var(--surface-4); }
   }
-  .custom-slider { background: var(--surface-4); }
+  .custom-slider::-webkit-slider-runnable-track { background: var(--surface-4); }
+  .custom-slider::-moz-range-track { background: var(--surface-4); }
   .custom-slider::-webkit-slider-thumb { background: var(--text-secondary); }
+  .custom-slider::-moz-range-thumb { background: var(--text-secondary); }
   .custom-tooltip { background: var(--surface-3); border-color: var(--border); color: var(--text-secondary); }
   .seekBlocks { outline-color: var(--border); border-color: var(--border); }
   .stack-tooltip-content { background: var(--surface-2); border-color: var(--border); color: var(--text-secondary); }
