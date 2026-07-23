@@ -5,6 +5,7 @@ import { useSwipe } from "../../models/Utils";
 import { assetUrl } from 'src/models/BoMOnlineAPI';
 import "./FacsimilePageViewer.scss";
 import { getRefFromIndex, PageOverlay } from "./Facsimiles";
+import { useElementSize } from "./useElementSize";
 import PageImage from "./PageImage";
 import PageStack from "./PageStack";
 import { generateReference, lookupReference } from "scripture-guide";
@@ -25,7 +26,7 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
   const [tooltipPosition, setTooltipPosition] = useState({ left: 0, top: 0 });
   const sliderRef = useRef(null);
   const pagesContainerRef = useRef(null);
-  const [containerSize, setContainerSize] = useState({ width: 0, height: 0, top: 0, viewportH: typeof window !== 'undefined' ? window.innerHeight : 0 });
+  const containerSize = useElementSize(pagesContainerRef);
   const [leftRatio, setLeftRatio] = useState(0.75);
   const [rightRatio, setRightRatio] = useState(0.75);
   
@@ -146,142 +147,6 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
   const adjustedPageIndex = getAdjustedPageIndex(currentPageIndex);
   const leftPage = leafIndex[adjustedPageIndex] || null;
   const rightPage = leafIndex[adjustedPageIndex + 1] || null;
-
-  // Measure container size with improved throttling to prevent ResizeObserver loops
-  useEffect(() => {
-    if (!pagesContainerRef.current) return;
-    
-    const el = pagesContainerRef.current;
-    
-    // Track the last update timestamp to enforce minimum intervals between updates
-    let lastUpdateTime = 0;
-    let pendingUpdate = false;
-    let pendingSize = null;
-    let timeoutId = null;
-    let rafId = null;
-    let latestWidth = 0;
-    let latestHeight = 0;
-    
-    // Only update size if significant changes occurred or minimum time passed
-    const MIN_UPDATE_INTERVAL = 100; // ms between state updates
-    const SIZE_THRESHOLD = 5; // px difference to consider significant
-    
-    const processResize = (width, height, top) => {
-      // Round to avoid minor fluctuations
-      width = Math.floor(width);
-      height = Math.floor(height);
-      top = Math.floor(top || 0);
-      
-      const now = Date.now();
-      const timeSinceLastUpdate = now - lastUpdateTime;
-      const widthDiff = Math.abs(width - containerSize.width);
-      const heightDiff = Math.abs(height - containerSize.height);
-      const topDiff = Math.abs(top - (containerSize.top || 0));
-      const hasSizeChanged = widthDiff > SIZE_THRESHOLD || heightDiff > SIZE_THRESHOLD;
-      
-      // Either update immediately for significant changes or store for later update
-      if (hasSizeChanged || timeSinceLastUpdate >= MIN_UPDATE_INTERVAL) {
-        // Clear any pending update
-        if (timeoutId) {
-          clearTimeout(timeoutId);
-          timeoutId = null;
-        }
-        
-        lastUpdateTime = now;
-        pendingUpdate = false;
-        pendingSize = null;
-        
-        // Only update state if size has actually changed
-        if (width !== containerSize.width || height !== containerSize.height || topDiff > 0) {
-          setContainerSize({ width, height, top, viewportH: window.innerHeight });
-        }
-      } else if (!pendingUpdate) {
-        // Schedule update for later
-        pendingUpdate = true;
-        pendingSize = { width, height, top };
-        
-        // Clear any existing timeout and set a new one
-        if (timeoutId) {
-          clearTimeout(timeoutId);
-        }
-        
-        // Schedule update after delay
-        timeoutId = setTimeout(() => {
-          if (pendingSize) {
-            lastUpdateTime = Date.now();
-            setContainerSize({ ...pendingSize, viewportH: window.innerHeight });
-            pendingUpdate = false;
-            pendingSize = null;
-          }
-        }, MIN_UPDATE_INTERVAL - timeSinceLastUpdate);
-      } else {
-        // Update pending size with latest measurements
-        pendingSize = { width, height, top };
-      }
-    };
-    
-    const scheduleUpdate = (width, height) => {
-      latestWidth = Math.floor(width);
-      latestHeight = Math.floor(height);
-      if (rafId != null) return;
-      rafId = requestAnimationFrame(() => {
-        rafId = null;
-        if (!el) return;
-        const rect = el.getBoundingClientRect();
-        processResize(latestWidth, latestHeight, rect.top);
-      });
-    };
-
-    const updateSize = () => {
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
-      scheduleUpdate(rect.width, rect.height);
-    };
-    
-    // Get initial size
-    updateSize();
-    
-    // Set up ResizeObserver with error handling
-    const ro = new ResizeObserver((entries) => {
-      try {
-        // Only update if our target element has changed size
-        const entry = entries.find(entry => entry.target === el);
-        if (entry) {
-          // Use contentRect for more stable measurements
-          const { width, height } = entry.contentRect;
-          scheduleUpdate(width, height);
-        }
-      } catch (err) {
-        console.warn("ResizeObserver error:", err);
-      }
-    });
-    
-    // Start observing with error handling
-    try {
-      ro.observe(el, { box: 'border-box' });
-    } catch (err) {
-      console.warn("ResizeObserver failed to observe:", err);
-    }
-    
-    // Also listen for window resize events as backup
-    window.addEventListener('resize', updateSize);
-    
-    // Cleanup
-    return () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-      if (rafId != null) {
-        cancelAnimationFrame(rafId);
-      }
-      try {
-        ro.disconnect();
-      } catch (err) {
-        console.warn("ResizeObserver disconnect failed:", err);
-      }
-      window.removeEventListener('resize', updateSize);
-    };
-  }, []); // Empty dependency array - we handle updates manually
 
   // Load left page image and calculate aspect ratio
   useEffect(() => {
