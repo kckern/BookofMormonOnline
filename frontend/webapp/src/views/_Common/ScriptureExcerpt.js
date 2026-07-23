@@ -56,7 +56,7 @@ const targetVerseIds = (ref) => {
  *
  * onNavigate fires when a Study link is clicked (so a popup can dismiss).
  */
-export default function ScriptureExcerpt({ refText, onNavigate, hideStudy = false }) {
+export default function ScriptureExcerpt({ refText, onNavigate, hideStudy = false, refAsPopup = false }) {
   const ref = refText ? canonical(refText) : null;
   // One entry per compound segment, IN ORDER — each is either a BoM result
   // ({ sections }) or a Bible/cross-ref result ({ passages }). Keeping the
@@ -131,10 +131,34 @@ export default function ScriptureExcerpt({ refText, onNavigate, hideStudy = fals
         {cleanHeading(s.heading) ? <h4>{cleanHeading(s.heading)}</h4> : null}
         {s.ref ? (
           <p>
-            <Link to={`/study/${slugify(getEnglishReference(s.ref))}`} onClick={onNavigate}>
-              {s.ref}
-              {hideStudy ? null : <button className="btn btn-sm btn-outline-secondary">{label("study_button")}</button>}
-            </Link>
+            {refAsPopup ? (
+              // inside a tile: the ref opens the app-wide scripture popup (same
+              // samplerScripture event as RefPill/openScripture) rather than
+              // navigating away. Dispatched inline to avoid a circular import.
+              <span
+                className="scripture_link"
+                role="button"
+                tabIndex={0}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  window.dispatchEvent(new CustomEvent("samplerScripture", { detail: canonical(s.ref) }));
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    window.dispatchEvent(new CustomEvent("samplerScripture", { detail: canonical(s.ref) }));
+                  }
+                }}
+              >
+                {s.ref}
+              </span>
+            ) : (
+              <Link to={`/study/${slugify(getEnglishReference(s.ref))}`} onClick={onNavigate}>
+                {s.ref}
+                {hideStudy ? null : <button className="btn btn-sm btn-outline-secondary">{label("study_button")}</button>}
+              </Link>
+            )}
           </p>
         ) : null}
       </div>

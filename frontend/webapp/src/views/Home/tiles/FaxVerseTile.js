@@ -43,7 +43,7 @@ export default function FaxVerseTile({ data }) {
       {/* Verse text on top */}
       {data.ref ? (
         <div className="read-content scriptureExcerptCompact">
-          <ScriptureExcerpt refText={data.ref} hideStudy />
+          <ScriptureExcerpt refText={data.ref} hideStudy refAsPopup />
         </div>
       ) : null}
 

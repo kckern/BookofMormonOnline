@@ -24,7 +24,7 @@ export default function NotesTile({ data }) {
       <h3 className="tileHeading">{label("notes")}</h3>
       <div className="notesEntry">
         <div className="read-content scriptureExcerptCompact">
-          <ScriptureExcerpt refText={note.reference} hideStudy />
+          <ScriptureExcerpt refText={note.reference} hideStudy refAsPopup />
         </div>
         <div className="notesText notesBubble">
           {cover ? (
