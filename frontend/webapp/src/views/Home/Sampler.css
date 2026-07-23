@@ -1458,23 +1458,21 @@ html[data-theme="dark"] .faxTileEdition { color: #9a9a9a; }
 .imageArtFrame { position: relative; display: block; width: 100%; overflow: hidden; background: #e8e6e1; }
 .imageArtFrame img { width: 100%; height: 100%; object-fit: cover; display: block; }
 html[data-theme="dark"] .imageArtFrame { background: #2c2c2c; }
-/* title: shaded header across the top of the artwork, center-aligned */
+/* title: shaded header directly UNDER the image, center-aligned */
 .imageArtTitleBar {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  padding: 0.45rem 0.7rem 0.9rem;
+  display: block;
+  padding: 0.45rem 0.7rem;
   text-align: center;
   font-size: 0.82rem;
   font-weight: 700;
   line-height: 1.25;
-  color: #fff;
-  background: linear-gradient(to bottom, rgba(15, 18, 26, 0.72), rgba(15, 18, 26, 0));
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
-  pointer-events: none;
+  color: #2a2a2a;
+  background: #f0efec;
+  text-decoration: none;
 }
-/* artist: translucent ©-badge, bottom-right */
+.imageArtTitleBar:hover { color: #345496; }
+html[data-theme="dark"] .imageArtTitleBar { background: #262626; color: #f0f0f0; }
+/* artist: translucent ©-badge, bottom-right over the image */
 .imageArtArtistBadge {
   position: absolute;
   right: 0.4rem;
@@ -1492,8 +1490,9 @@ html[data-theme="dark"] .imageArtFrame { background: #2c2c2c; }
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.imageArtCaption { padding: 0.5rem 0.7rem 0.6rem; display: flex; flex-direction: column; align-items: flex-start; gap: 0.35rem; }
-.imageArtContext { margin-top: 0; }
+.imageArtCaption { padding: 0.5rem 0.7rem 0.6rem; display: flex; flex-direction: column; gap: 0.15rem; }
+.imageArtScripture { margin-top: 0.1rem; }
+.imageArtContext { margin-top: 0.45rem; }
 
 /* ================================================================
    PLACE PROFILE — single place hero + description (reserve)
