@@ -1,4 +1,4 @@
-import { resolvePgOffset } from "../faxGeometry";
+import { resolvePgOffset, buildLeafIndex } from "../faxGeometry";
 
 describe("resolvePgOffset", () => {
   test("prefers numeric pgOffset (camelCase)", () => {
@@ -17,7 +17,6 @@ describe("resolvePgOffset", () => {
   });
 });
 
-import { buildLeafIndex } from "../faxGeometry";
 
 const ITEM = { slug: "1830", pages: 3, format: "jpg" };
 const REF = () => null; // stub getRefFromIndex
