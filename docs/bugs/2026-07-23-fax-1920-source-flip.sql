@@ -1,0 +1,21 @@
+-- Fix: 1920 facsimile verse-geometry drift (see docs/bugs/2026-07-23-fax-1920-wrong-source-scan.md)
+--
+-- Root cause: bom_xtras_fax.format='png' routes rendering to fax/pages/1920/*.png,
+-- a later re-scan (1484x2075, aspect 0.715, ~80px left / ~65px top extra padding,
+-- plus per-page registration jitter) that does NOT match the verse geometry.
+-- The geometry was authored against fax/pages/1920/*.jpg (1200x1799, aspect 0.667),
+-- which matches the recorded pageWidth=1200 exactly and renders pixel-tight.
+--
+-- Migrating the geometry onto the PNG was rejected: the difference is not a pure
+-- aspect-ratio scale. Measured jpg->png mapping across 10 pages is png = ~1.08*x + ~80
+-- (x) / ~1.08*y + ~65 (y) with offset-y varying 45-92px page to page. A single global
+-- affine leaves ~0.5-1 line residual and would also require a renderer change (no offset
+-- term today) plus rewriting all 7,453 rows. Flipping the source is lossless and complete.
+--
+-- Effect: format='' -> resolve.ts:60 falls back to 'jpg' -> serves the correct 1200px scan.
+-- 1981/2013 are also 'png' but their PNGs ARE the correct 1200px scans; leave them.
+--
+-- Verify before/after:
+--   SELECT slug, format, pgfirstVerse FROM bom_xtras_fax WHERE slug IN ('1920','1981','2013');
+
+UPDATE bom_xtras_fax SET format = '' WHERE slug = '1920';
