@@ -1605,7 +1605,7 @@ html[data-theme="dark"] .rpBoxPane .sectionDots { border-right-color: #444; }
   padding-top: 1rem;
   border-top: 1px solid rgba(128, 128, 128, 0.25);
 }
-.notesTile .notesText { font-size: 0.95rem; margin-top: 0.5rem; }
+.notesTile .notesText { font-size: 0.8rem; line-height: 1; margin-top: 0.5rem; }
 /* speech-bubble treatment — the note reads as a margin gloss pointing up at the
    passage above. The tail is a centered CSS triangle flush to the top edge,
    filled with the bubble background (not floating, not the border grey). */
@@ -1614,10 +1614,10 @@ html[data-theme="dark"] .rpBoxPane .sectionDots { border-right-color: #444; }
   display: flow-root; /* contain the floated cover without clipping the tail */
   margin-top: 0.9rem;
   padding: 0.6rem 0.75rem;
-  background: #fff;
+  background: #faf4e6; /* cream */
   border: 1px solid #ddd;
   border-radius: 0.4rem;
-  line-height: 1.45;
+  line-height: 1;
 }
 .notesTile .notesBubble::before,
 .notesTile .notesBubble::after {
@@ -1640,7 +1640,7 @@ html[data-theme="dark"] .rpBoxPane .sectionDots { border-right-color: #444; }
   margin-left: -8px;
   margin-bottom: -1px;
   border-width: 0 8px 8px 8px;
-  border-color: transparent transparent #fff transparent;
+  border-color: transparent transparent #faf4e6 transparent;
 }
 .notesTile .notesCover {
   float: right;
