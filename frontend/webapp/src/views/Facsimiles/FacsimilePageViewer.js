@@ -108,6 +108,10 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
     }
   }, [pageNumber, leafIndex, item.pages, hasLetters]);
 
+  // Keep the slider thumb aligned when the page changes by any means
+  // (arrows, buttons, stack, deep link). Audit §2.3.
+  useEffect(() => { setSliderValue(currentPageIndex); }, [currentPageIndex]);
+
   // Adjust page index to ensure even pages are on the left
   const getAdjustedPageIndex = useCallback((index) => {
     if (index <= 0) return 0; // Handle first page

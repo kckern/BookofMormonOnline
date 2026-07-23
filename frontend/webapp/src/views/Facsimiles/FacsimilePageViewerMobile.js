@@ -94,6 +94,10 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
     }
   }, [pageNumber, leafIndex, item.pages]);
 
+  // Keep the slider thumb aligned when the page changes by any means
+  // (arrows, buttons, stack, deep link). Audit §2.3.
+  useEffect(() => { setSliderValue(currentPageIndex); }, [currentPageIndex]);
+
   // Preload adjacent pages
   const getPagesToPreload = useCallback(() => {
     if (!leafIndex) return [];
