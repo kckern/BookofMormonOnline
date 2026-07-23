@@ -599,7 +599,7 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
             onMouseLeave={() => setShowTooltip(false)}
             className="custom-slider"
             aria-label="Page position"
-            aria-valuetext={`Page ${leftPage?.pageSlugLeaf ?? sliderValue} of ${item.pages}`}
+            aria-valuetext={`Page ${leafIndex[sliderValue]?.pageSlugLeaf ?? sliderValue} of ${item.pages}`}
           />
         </div>
         <button

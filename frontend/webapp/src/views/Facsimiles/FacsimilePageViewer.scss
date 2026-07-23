@@ -136,7 +136,6 @@
     min-height: 0;
     height: auto;
     max-height: none;
-    will-change: width, height; /* optimize for animations */
     contain: layout; /* improve performance */
     
     img {
