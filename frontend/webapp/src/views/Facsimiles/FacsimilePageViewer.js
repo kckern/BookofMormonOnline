@@ -474,8 +474,6 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
               style={{
                 width: leftPageWidth ? `${leftPageWidth}px` : undefined,
                 height: calculatedHeight ? `${calculatedHeight}px` : undefined,
-                // Smooth transitions
-                transition: 'width 0.15s ease, height 0.15s ease',
                 // Flex for centering image within the page box
                 display: 'flex',
                 justifyContent: 'center',
@@ -494,8 +492,6 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
               style={{
                 width: rightPageWidth ? `${rightPageWidth}px` : undefined,
                 height: calculatedHeight ? `${calculatedHeight}px` : undefined,
-                // Smooth transitions
-                transition: 'width 0.15s ease, height 0.15s ease',
                 // Flex for centering
                 display: 'flex',
                 justifyContent: 'center',
