@@ -469,7 +469,7 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
                 adjustedPageIndex={adjustedPageIndex}
                 totalPages={totalPages}
                 onPageChange={handlePageChange}
-                width={leftStackWidth}
+                stackWidthPx={leftStackWidth}
               />
             )}
 
@@ -518,7 +518,7 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
                 adjustedPageIndex={adjustedPageIndex}
                 totalPages={totalPages}
                 onPageChange={handlePageChange}
-                width={rightStackWidth}
+                stackWidthPx={rightStackWidth}
               />
             )}
           </div>
