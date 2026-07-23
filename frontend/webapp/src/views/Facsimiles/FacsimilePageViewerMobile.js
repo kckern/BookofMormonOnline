@@ -1,11 +1,13 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
-import { useParams, useHistory } from "react-router-dom";
+import { useParams, useHistory, useLocation } from "react-router-dom";
 import { useSwipe } from "../../models/Utils";
 import { assetUrl } from 'src/models/BoMOnlineAPI';
 import "./FacsimilePageViewer.scss";
 import { getRefFromIndex, PageOverlay } from "./Facsimiles";
 import PageImage from "./PageImage";
 import { generateReference, lookupReference } from "scripture-guide";
+import { useFaxHighlight } from "./useFaxHighlight";
+import FaxHighlightOverlay from "./FaxHighlightOverlay";
 
 /**
  * FacsimilePageViewerMobile - Mobile version of the facsimile page viewer
@@ -24,6 +26,10 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
 
   // Check if the pageNumber contains any letters (A-z), which means it's a reference
   const hasLetters = /[A-Za-z]/.test(pageNumber || '');
+
+  const location = useLocation();
+  const refParam = new URLSearchParams(location.search).get('ref') || (hasLetters ? pageNumber : null);
+  const highlight = useFaxHighlight(item.slug, refParam);
 
   // Initialize page index based on URL
   useEffect(() => {
@@ -185,17 +191,23 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
     }
     
     // Special handling for the last page
-    const isLastPage = (pgoffset !== undefined && page.pageNumInt === totalPages - pgoffset) || 
+    const isLastPage = (pgoffset !== undefined && page.pageNumInt === totalPages - pgoffset) ||
                        page.pageSlugLeaf === leafIndex[leafIndex.length - 1]?.pageSlugLeaf;
-    
+    const boxes = highlight.boxesByPage.get(page.pageNumInt);
+
     return (
-      <PageImage
-        src={page.pageAssetUrl}
-        previewSrc={page.thumbAssetUrl}
-        alt={`Page ${page.pageSlugLeaf}`}
-        label={page.pageReference || `Page ${page.pageSlugLeaf}`}
-        className={isLastPage ? "last-page" : ""}
-      />
+      <>
+        <PageImage
+          src={page.pageAssetUrl}
+          previewSrc={page.thumbAssetUrl}
+          alt={`Page ${page.pageSlugLeaf}`}
+          label={page.pageReference || `Page ${page.pageSlugLeaf}`}
+          className={isLastPage ? "last-page" : ""}
+        />
+        {boxes && boxes.length > 0 && (
+          <FaxHighlightOverlay boxes={boxes} pageScale={highlight.pageScale} />
+        )}
+      </>
     );
   };
 

@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
-import { useParams, useHistory } from "react-router-dom";
+import { useParams, useHistory, useLocation } from "react-router-dom";
 import ReactTooltip from "react-tooltip";
 import { useSwipe } from "../../models/Utils";
 import { assetUrl } from 'src/models/BoMOnlineAPI';
@@ -10,6 +10,8 @@ import PageImage from "./PageImage";
 import PageStack from "./PageStack";
 import { generateReference, lookupReference } from "scripture-guide";
 import { normalizeStackWidths } from "./faxGeometry";
+import { useFaxHighlight } from "./useFaxHighlight";
+import FaxHighlightOverlay from "./FaxHighlightOverlay";
 
 /**
  * FacsimilePageViewer - Desktop version of the facsimile page viewer
@@ -34,6 +36,10 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
   // Check if the pageNumber contains any letters (A-z), which means it's a reference
   const hasLetters = /[A-Za-z]/.test(pageNumber || '');
   const totalPages = leafIndex.length;
+
+  const location = useLocation();
+  const refParam = new URLSearchParams(location.search).get('ref') || (hasLetters ? pageNumber : null);
+  const highlight = useFaxHighlight(item.slug, refParam);
 
   // Initialize page index based on URL
   useEffect(() => {
@@ -422,22 +428,32 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
     // Determine which side (left or right) for additional styling if needed
     const isLeft = page === leftPage;
     const aspectRatio = isLeft ? leftRatio : rightRatio;
-    
+    const boxes = highlight.boxesByPage.get(page.pageNumInt);
+
     return (
-      <PageImage
-        src={page.pageAssetUrl}
-        previewSrc={page.thumbAssetUrl}
-        label={`Page ${page.pageSlugLeaf}`}
-        reference={page.pageReference}
-        alt={`Page ${page.pageSlugLeaf}`}
-        onClick={onClick}
-        className={isLastPage ? "last-page" : ""}
-        style={{
-          aspectRatio: aspectRatio ? `${aspectRatio}` : undefined,
-          height: '100%',
-          width: 'auto'
-        }}
-      />
+      <>
+        <PageImage
+          src={page.pageAssetUrl}
+          previewSrc={page.thumbAssetUrl}
+          label={`Page ${page.pageSlugLeaf}`}
+          reference={page.pageReference}
+          alt={`Page ${page.pageSlugLeaf}`}
+          onClick={onClick}
+          className={isLastPage ? "last-page" : ""}
+          style={{
+            aspectRatio: aspectRatio ? `${aspectRatio}` : undefined,
+            height: '100%',
+            width: 'auto'
+          }}
+        />
+        {boxes && boxes.length > 0 && (
+          <FaxHighlightOverlay
+            boxes={boxes}
+            pageScale={highlight.pageScale}
+            displayedWidth={isLeft ? leftPageWidth : rightPageWidth}
+          />
+        )}
+      </>
     );
   };
 

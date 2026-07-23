@@ -359,7 +359,7 @@ function Facsimiles() {
               // Clamp and navigate if found
               if (targetPage) {
                 const target = maxPage ? Math.min(targetPage, maxPage) : targetPage;
-                if (history?.replace) history.replace(`/fax/${edition}/${target}`);
+                if (history?.replace) history.replace(`/fax/${edition}/${target}?ref=${encodeURIComponent(rawPage)}`);
               }
             } catch (e) {
               // Ignore errors and fall back to grid
