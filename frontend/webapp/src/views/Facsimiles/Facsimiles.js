@@ -286,6 +286,16 @@ export function PageOverlay({ pageLeaf }) {
 
 function Facsimiles() {
   const [FaxList, setFaxList] = useState(null);
+  const [loadError, setLoadError] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    BoMOnlineAPI({ fax: "pdf" })
+      .then((r) => { if (!cancelled) setFaxList(r?.fax || {}); })
+      .catch(() => { if (!cancelled) setLoadError(true); });
+    return () => { cancelled = true; };
+  }, []);
+
   const match = useParams();
   const history = useHistory();
   const activeFax = FaxList?.[match.faxVersion];
@@ -444,15 +454,20 @@ function Facsimiles() {
       </>);
   }
 
-  if (!FaxList) BoMOnlineAPI({ fax: "pdf" }).then((r) => {
-    setFaxList(r.fax);
-  });
-  return (
-    FaxList ?
+  if (loadError) {
+    return (
       <div className="faxMainContainer">
-        {contentsUI()}
-      </div> : <Loader />
-  )
+        <Alert color="danger" className="text-center m-4">
+          {label("fax_load_error") || "Could not load facsimiles. Please try again."}
+        </Alert>
+      </div>
+    );
+  }
+  return FaxList ? (
+    <div className="faxMainContainer">{contentsUI()}</div>
+  ) : (
+    <Loader />
+  );
 }
 
 export default Facsimiles;
