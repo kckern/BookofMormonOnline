@@ -470,9 +470,20 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
   // Page stack is now a separate component
   return (
     <div className="faxPageViewer" style={{ maxHeight: 'none' }} {...swipeHandlers}>
-      <div className="pageReferences">
-        <h6>{leftPage?.pageReference || ''}</h6>
-        <h6>{rightPage?.pageReference || ''}</h6>
+      <div
+        className="pageReferences"
+        style={{
+          // Match the spread strip and inset by the stack widths so each ref
+          // aligns to its page's outer edge (not the full-width strip incl. stacks).
+          width: innerWidth ? `${innerWidth}px` : undefined,
+          margin: '0 auto',
+          paddingLeft: leftStackWidth ? `${leftStackWidth}px` : undefined,
+          paddingRight: rightStackWidth ? `${rightStackWidth}px` : undefined,
+          boxSizing: 'border-box',
+        }}
+      >
+        <h6 style={{ textAlign: 'left' }}>{leftPage?.pageReference || ''}</h6>
+        <h6 style={{ textAlign: 'right' }}>{rightPage?.pageReference || ''}</h6>
       </div>
       <div className="pagesContainer" ref={pagesContainerRef}>
         <div

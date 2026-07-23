@@ -187,7 +187,7 @@
 
 .faxGridViewer .faxPage .pageImageWrapper img.main-image,
 .faxGridViewer .faxPage .pageImageWrapper .preview-blur {
-  object-fit: cover;
+  object-fit: contain;
   border-radius: 1ex;
 }
 
