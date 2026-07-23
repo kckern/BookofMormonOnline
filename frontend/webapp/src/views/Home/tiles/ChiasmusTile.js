@@ -53,25 +53,29 @@ export default function ChiasmusTile({ seed }) {
             size={40}
             title={chiasm.title || label("chiasmus")}
           />
-          {speaker?.person_slug ? (
-            <div className="chiasmusTileSpeaker">
+          <div className="chiasmusTileIdent">
+            {speaker?.person_slug ? (
               <img
                 className="chiasmusTileAvatar"
                 loading="lazy"
-                width="32"
-                height="32"
+                width="40"
+                height="40"
                 alt={speakerName || ""}
                 src={`${assetUrl}/people/${speaker.person_slug}`}
                 onError={(e) => (e.target.style.display = "none")}
               />
+            ) : null}
+            <div className="chiasmusTileIdentText">
               {speakerName ? <span className="chiasmusTileSpeakerName">{speakerName}</span> : null}
+              <RefPill refText={chiasm.reference} className="chiasmusTileRef" />
             </div>
-          ) : null}
+          </div>
         </div>
-        <div className="chiasmusTileHeadText">
-          {chiasm.title ? <span className="chiasmusTileTitle">{chiasm.title}</span> : null}
-          <RefPill refText={chiasm.reference} />
-        </div>
+        {chiasm.title ? (
+          <div className="chiasmusTileHeadText">
+            <span className="chiasmusTileTitle">{chiasm.title}</span>
+          </div>
+        ) : null}
       </div>
       <MiniChiasm lines={chiasm.lines} className="chiasmusTileLines" />
       <Link to={`/analysis/chiasmus/${chiasm.chiasmus_id}`} className="tileMoreLink">

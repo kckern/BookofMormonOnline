@@ -1399,10 +1399,12 @@ html[data-theme="dark"] .tileMoreLink:hover { background: rgba(147, 198, 239, 0.
 .chiasmusTileHead { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 0.4rem; }
 .chiasmusTileHeadTop { display: flex; align-items: center; gap: 0.6rem; min-width: 0; }
 .chiasmusTileHead .chiasmGlyph { flex: 0 0 auto; opacity: 0.9; }
-.chiasmusTileSpeaker { display: flex; align-items: center; gap: 0.4rem; min-width: 0; }
-.chiasmusTileAvatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex: 0 0 auto; }
+.chiasmusTileIdent { display: flex; align-items: center; gap: 0.45rem; min-width: 0; }
+.chiasmusTileAvatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex: 0 0 auto; }
+.chiasmusTileIdentText { display: flex; flex-direction: column; min-width: 0; gap: 0.05rem; }
 .chiasmusTileSpeakerName { font-size: 0.8rem; font-weight: 600; color: #444; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 html[data-theme="dark"] .chiasmusTileSpeakerName { color: #ccc; }
+.chiasmusTileRef { align-self: flex-start; }
 .chiasmusTileHeadText { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; min-width: 0; }
 .chiasmusTileTitle { font-weight: 800; font-size: 0.85rem; color: #2a2a2a; }
 html[data-theme="dark"] .chiasmusTileTitle { color: #f0f0f0; }
