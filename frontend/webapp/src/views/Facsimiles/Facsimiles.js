@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from "react";
+import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
 // COMPONENTS
 import Loader from "../_Common/Loader";
 import ReactTooltip from "react-tooltip";
@@ -12,11 +12,22 @@ import "./Facsimiles.scss"
 import { useParams, useHistory } from "react-router-dom";
 import { label, determineLanguage } from "src/models/Utils";
 import { generateReference, lookupReference } from "scripture-guide";
-import { isMobile, useSwipe, convertIntToRomanNumeral } from "../../models/Utils";
+import { isMobile, useSwipe } from "../../models/Utils";
 import FacsimilePageViewer from './FacsimilePageViewer';
 import FacsimilePageViewerMobile from './FacsimilePageViewerMobile';
 import PageImage from './PageImage';
 import backIcon from '../_Common/svg/back.svg';
+import { resolvePgOffset, buildLeafIndex } from "./faxGeometry";
+
+export const getRefFromIndex = (pageIndex, pageNum) => {
+  const itemIndex = parseInt(pageNum) - 1;
+  const [startingVerseId, verseCount] = pageIndex?.[itemIndex] || [0, 0];
+  const verseRangeArray = Array.from({ length: verseCount }, (_, i) => startingVerseId + i);
+  const lang = determineLanguage();
+  const ref = generateReference(verseRangeArray, lang);
+  const showRef = pageIndex.length > 0 && startingVerseId > 0;
+  return showRef ? ref : null;
+};
 
 function FacsimileViewer({ item, volumeOrder, currentVolumeIndex }) {
   const match = useParams();
@@ -26,46 +37,30 @@ function FacsimileViewer({ item, volumeOrder, currentVolumeIndex }) {
 
   const [pageIndex, setPageIndex] = useState([]);
 
+  const pgoffset = resolvePgOffset(item);
+
   useEffect(() => {
     if (!item.indexRef) return;
-    const { indexRef, pgOffset, pgfirstVerse } = item || {};
-    const blankPageCount = (pgOffset || 0) + pgfirstVerse - 1;
-    BoMOnlineAPI({ faxIndex: indexRef }).then((r) => {
-      const { pages } = r?.fax[indexRef];
-      const placeholderArray = Array.from({ length: blankPageCount }, (_, i) => [0, 0]);
-      setPageIndex([...placeholderArray, ...pages]);
-    });
-  }, [item.slug, item]);
+    const { indexRef, pgfirstVerse } = item || {};
+    const blankPageCount = pgoffset + pgfirstVerse - 1;
+    let cancelled = false;
+    BoMOnlineAPI({ faxIndex: indexRef })
+      .then((r) => {
+        if (cancelled) return;
+        const entry = r?.fax?.[indexRef];
+        const pages = entry?.pages;
+        if (!Array.isArray(pages)) return;
+        const placeholderArray = Array.from({ length: blankPageCount }, () => [0, 0]);
+        setPageIndex([...placeholderArray, ...pages]);
+      })
+      .catch(() => { /* leave pageIndex empty; refs simply won't show */ });
+    return () => { cancelled = true; };
+  }, [item.slug, item.indexRef, pgoffset]);
 
-  const { pages, pgoffset } = item;
-  // Ensure we include page 380 by making sure totalLeaves is correctly calculated
-  // We add 1 here because pages appears to be 0-indexed (0-379 instead of 1-380)
-  const totalLeaves = (parseInt(pages) + 1) + parseInt(pgoffset);
-  
-  const leafIndex = Array.from({ length: totalLeaves }, (_, idx) => {
-    const i = idx - pgoffset + 0;
-    const baseUrl = `${assetUrl}/fax/pages/${item.slug}/`;
-    
-    // Check if this is the last page (page 380 in this case)
-    const isLastPage = (i === pages);
-    
-    const pageNumInt = i > 0 ? i : null;
-    const pageNumRoman = i <= 0 ? convertIntToRomanNumeral(pgoffset + i, true) : null;
-    const pageAssetUrl = i > 0 ? `${baseUrl}${i.toString().padStart(3, "0")}.${item.format || "jpg"}` : `${baseUrl}000.${(pgoffset + i).toString().padStart(2, "0")}.${item.format || "jpg"}`;
-    const thumbAssetUrl = pageAssetUrl.replace("pages", "thumb");
-    const isLeftSide = i % 2 === 0; // Even pages are on the left
-    return {
-      leafCursor: idx,
-      leafSequence: pageNumInt || idx,
-      pageNumInt,
-      pageNumRoman,
-      pageSlugLeaf: pageNumRoman || pageNumInt,
-      pageReference: getRefFromIndex(pageIndex, i),
-      isLeftSide,
-      pageAssetUrl,
-      thumbAssetUrl
-    };
-  });
+  const leafIndex = useMemo(
+    () => buildLeafIndex(item, pgoffset, pageIndex, getRefFromIndex, assetUrl),
+    [item, pgoffset, pageIndex]
+  );
 
   // Handle keypress for escape
   const handleKeyPress = useCallback((e) => {
@@ -274,16 +269,6 @@ function FacsimileGridViewer({ item, leafIndex }) {
     </div>
   );
 }
-
-export const getRefFromIndex = (pageIndex, pageNum) => {
-  const itemIndex = parseInt(pageNum) - 1;
-  const [startingVerseId, verseCount] = pageIndex?.[itemIndex] || [0, 0];
-  const verseRangeArray = Array.from({ length: verseCount }, (_, i) => startingVerseId + i);
-  const lang = determineLanguage();
-  const ref = generateReference(verseRangeArray, lang);
-  const showRef = pageIndex.length > 0 && startingVerseId > 0;
-  return showRef ? ref : null;
-};
 
 export function PageOverlay({ pageLeaf }) {
   const { pageReference, pageNumInt, pageNumRoman } = pageLeaf;
