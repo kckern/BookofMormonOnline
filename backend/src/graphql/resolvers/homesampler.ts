@@ -177,15 +177,20 @@ const sampleWitnesses = async (ctx: AppContext, seed: number) => {
   }
   return [...byPrincipal.values()].slice(0, 3).map((r) => {
     let reference: string | null = null;
+    let moneyQuote: string | null = null;
     try {
       const meta = typeof r.metadata === 'string' ? JSON.parse(r.metadata) : (r.metadata as Record<string, unknown> | null);
       reference = (meta?.reference as string) || null;
+      // the redesigned witness cards lead with the money quote (stored in
+      // metadata, like the history loader's metaString('money_quote'))
+      moneyQuote = (meta?.money_quote as string) || null;
     } catch { /* metadata may be absent/invalid */ }
     return {
       slug: r.slug,
       witnessSlug: WITNESS_SLUG[String(r.principal)] || null,
       principal: r.principal,
       statement: r.teaser || r.transcript || null,
+      moneyQuote,
       source: reference || r.citation || r.author || null,
     };
   });

@@ -8,10 +8,11 @@ export async function getCache(input) {
         let vals = normalizeVal(input[key]);
         if (!vals) {
             let item = await getSingleCache(key, itemObjectStore);
-            // chiasmus list query gained verse_id/line_lengths/speaker (Task 16); it caches
-            // as a bare array under "chiasmus" — refetch cached rows predating the change
-            // ("speaker" in row is true even when the value is null)
-            if (key === "chiasmus" && Array.isArray(item) && item.length && !("speaker" in item[0])) item = false;
+            // chiasmus list query gained verse_id/line_lengths/speaker (Task 16), then
+            // page (verse→reading-page); it caches as a bare array under "chiasmus" —
+            // refetch cached rows predating either change ("speaker"/"page" in row is
+            // true even when the value is null)
+            if (key === "chiasmus" && Array.isArray(item) && item.length && (!("speaker" in item[0]) || !("page" in item[0]))) item = false;
             if (item) {
                 if (items.found[key] === undefined) items.found[key] = {}
                 items.found[key] = item;
@@ -25,8 +26,10 @@ export async function getCache(input) {
             for (let i in vals) {
                 let val = vals[i];
                 let item = await getSingleCache(key + "." + val, itemObjectStore);
-                // passagenotes query gained chiasmus_id (e37a5aa7); refetch cached items predating the shape change
-                if (!item || (key==="page" && !item.sections) || (key.startsWith("passagenotes") && item.chiasmus?.length && !item.chiasmus[0].chiasmus_id)) {
+                // passagenotes query gained chiasmus_id (e37a5aa7); the chiasm detail
+                // query gained speaker (tile header shows avatar+name) — refetch cached
+                // items predating either shape change
+                if (!item || (key==="page" && !item.sections) || (key.startsWith("passagenotes") && item.chiasmus?.length && !item.chiasmus[0].chiasmus_id) || (key==="chiasm" && item && !("speaker" in item))) {
                     if (!Array.isArray(items.missing[key])) items.missing[key] = []
                     items.missing[key].push(val)
                 }

@@ -40,6 +40,7 @@ type Chiasmus {
   verse_id: Int
   line_lengths: [Int]
   speaker: ChiasmusSpeaker
+  page: ChiasmusPage
   lines: [ChiasmusLine]
 }
 
@@ -47,6 +48,11 @@ type ChiasmusSpeaker {
   person_slug: String
   name: String
   voice: String
+}
+
+type ChiasmusPage {
+  slug: String
+  title: String
 }
 
 type ChiasmusLine {

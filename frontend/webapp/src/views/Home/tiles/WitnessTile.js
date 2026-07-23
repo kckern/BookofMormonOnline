@@ -19,7 +19,10 @@ const initials = (name) =>
  * the Witnesses view. (A monogram stands in if a portrait fails to load.)
  */
 export default function WitnessTile({ data }) {
-  const witnesses = (data || []).filter((w) => w?.principal && w?.statement);
+  // redesigned cards lead with the money quote; fall back to the teaser
+  const witnesses = (data || [])
+    .filter((w) => w?.principal && (w?.moneyQuote || w?.statement))
+    .map((w) => ({ ...w, quote: w.moneyQuote || w.statement }));
   if (!witnesses.length) return null;
   return (
     <div className="samplerTileInner witnessTile">
@@ -46,7 +49,7 @@ export default function WitnessTile({ data }) {
             </span>
             <span className="witnessBody">
               <span className="witnessName">{w.principal}</span>
-              <span className="witnessStatement">“{clampWords(flatten(w.statement), 32)}”</span>
+              <span className="witnessStatement">“{clampWords(flatten(w.quote), 32)}”</span>
               {w.source ? <span className="witnessSource">{clampWords(flatten(w.source), 14)}</span> : null}
             </span>
           </Link>

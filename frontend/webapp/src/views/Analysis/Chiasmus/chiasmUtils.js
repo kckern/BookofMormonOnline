@@ -77,13 +77,18 @@ export function enrichChiasmus(list, lang) {
     const verse_id =
       c.verse_id ?? lookupReference(c.reference, lang).verse_ids?.[0] ?? null;
     const book = bookFromReference(c.reference);
+    const parsed = parseScheme(c.scheme);
+    const isBiblical = verse_id != null && bibleIds.has(verse_id);
     return {
       ...c, // line_lengths and speaker pass through untouched
-      ...parseScheme(c.scheme),
+      ...parsed,
       verse_id,
       book,
       bookGroup: BOOK_GROUPS[book] || "other",
-      isBiblical: verse_id != null && bibleIds.has(verse_id),
+      isBiblical,
+      // color/legend dimension: type. Biblical wins over compound over simple,
+      // matching the type-grouping label priority.
+      typeGroup: isBiblical ? "biblical" : parsed.isCompound ? "compound" : "simple",
       speakerName: c.speaker?.name ? formatSpeakerName(c.speaker.name) : null,
     };
   });
@@ -103,6 +108,7 @@ export function applyBrowseState(enriched, s) {
     if (s.type === "biblical" && !c.isBiblical) return false;
     if (s.type === "compound" && !c.isCompound) return false;
     if (s.type === "simple" && (c.isCompound || c.isBiblical)) return false;
+    if (s.speaker && c.speaker?.person_slug !== s.speaker) return false;
     if (s.q) {
       const q = s.q.toLowerCase();
       if (!`${c.title} ${c.reference}`.toLowerCase().includes(q)) return false;

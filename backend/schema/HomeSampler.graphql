@@ -134,5 +134,6 @@ type Witness {
   witnessSlug: String
   principal: String
   statement: String
+  moneyQuote: String
   source: String
 }

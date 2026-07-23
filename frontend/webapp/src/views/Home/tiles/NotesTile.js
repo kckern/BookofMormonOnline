@@ -2,38 +2,49 @@ import React from "react";
 import { Link } from "react-router-dom";
 import Parser from "html-react-parser";
 import { label } from "src/models/Utils";
+import { assetUrl } from "src/models/BoMOnlineAPI";
 import ScriptureExcerpt, { readPath } from "src/views/_Common/ScriptureExcerpt";
 
 /**
- * Short scholarly annotations (is_note=1 commentary rows) rendered as margin
- * glosses on the ACTUAL passage: scripture first (Read-experience typography
- * via ScriptureExcerpt), the note beneath, source attribution under that.
+ * ONE scholarly annotation (is_note=1 commentary row) rendered as a margin gloss
+ * on the ACTUAL passage: scripture first (Read-experience typography via
+ * ScriptureExcerpt), then the note as a speech bubble pointing up at the verse —
+ * publication cover floated right, the note itself in smart quotes, author
+ * attributed inline with an em-dash.
  */
 export default function NotesTile({ data }) {
-  const notes = (data || []).filter((n) => n?.text && n?.reference);
-  if (!notes.length) return null;
+  const note = (data || []).find((n) => n?.text && n?.reference);
+  if (!note) return null;
+  const to = readPath(note.reference);
+  const author = note.publication?.source_name || null;
+  const sourceId = note.publication?.source_id;
+  const cover = sourceId ? `${assetUrl}/source/cover/${String(sourceId).padStart(3, "0")}` : null;
   return (
     <div className="samplerTileInner notesTile">
       <h3 className="tileHeading">{label("notes")}</h3>
-      {notes.map((n) => {
-        const to = readPath(n.reference);
-        return (
-          <div key={n.id} className="notesEntry">
-            <div className="read-content scriptureExcerptCompact">
-              <ScriptureExcerpt refText={n.reference} hideStudy />
-            </div>
-            <div className="notesText">{Parser(n.text)}</div>
-            <div className="notesMeta">
-              {n.publication?.source_name ? (
-                <span className="notesSource">{n.publication.source_name}</span>
-              ) : null}
-              {to ? (
-                <Link to={to} className="tileMoreLink">{label("view_in_context")}</Link>
-              ) : null}
-            </div>
+      <div className="notesEntry">
+        <div className="read-content scriptureExcerptCompact">
+          <ScriptureExcerpt refText={note.reference} hideStudy />
+        </div>
+        <div className="notesText notesBubble">
+          {cover ? (
+            <img
+              className="notesCover"
+              src={cover}
+              alt={author || ""}
+              loading="lazy"
+              onError={(e) => (e.target.style.display = "none")}
+            />
+          ) : null}
+          <span className="notesQuote">&ldquo;{Parser(note.text)}&rdquo;</span>
+          {author ? <span className="notesAttr"> &mdash; {author}</span> : null}
+        </div>
+        {to ? (
+          <div className="notesMeta">
+            <Link to={to} className="tileMoreLink">{label("view_in_context")}</Link>
           </div>
-        );
-      })}
+        ) : null}
+      </div>
     </div>
   );
 }

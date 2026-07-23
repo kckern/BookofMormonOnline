@@ -25,6 +25,12 @@
 .rail-ether { --rail-color: var(--rail-ether); }
 .rail-moroni { --rail-color: var(--rail-moroni); }
 
+/* type rails (the colour code) — reuse three validated, CVD-separated hues
+   (blue / bronze / green) that already carry light + dark variants */
+.rail-simple { --rail-color: var(--rail-small-plates); }
+.rail-compound { --rail-color: var(--rail-abridgment); }
+.rail-biblical { --rail-color: var(--rail-ether); }
+
 .chiasm_group .group-header {
     border-bottom: 2px solid var(--rail-color, transparent);
 }
@@ -34,7 +40,9 @@
 .chiasmus_list
 {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+    /* 13rem right-sizes to the card's content (glyph + reference + head);
+       16rem left a ~104px void inside card-body per measurement (2026-07-23) */
+    grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
     /* 1em spacing between columns */
     grid-column-gap: 1ex;
     /* 1em spacing between rows */
@@ -43,80 +51,210 @@
     padding: 1ex;
 }
 
+/* One calm control bar — a rounded card ABOVE the scroll panel (not inside it),
+   so it stays put while the cards scroll under it. */
 .browse_toolbar {
     display: flex;
-    flex-wrap: wrap;
-    gap: 1ex;
+    flex-wrap: nowrap;
+    gap: .5rem;
     align-items: center;
-    margin: 1ex 0;
-}
-
-.browse_search {
-    max-width: 16rem;
-    padding: .4ex 1ex;
-    border: 1px solid var(--border);
-    border-radius: .5ex;
     background: var(--surface-0);
-    color: var(--text-primary);
-}
-
-.browse_toolbar select {
-    padding: .4ex 1ex;
+    padding: .55rem 1rem;
     border: 1px solid var(--border);
-    border-radius: .5ex;
+    border-radius: .6rem;
+    flex-shrink: 0;
+    /* single row, never a tall wrapped stack (no overflow clip here — it would
+       trap the voice popover; the controls shrink to fit instead) */
+}
+/* let the filter controls shrink before anything spills */
+.browse_toolbar .voice_trigger_main .voice_name { max-width: 6rem; }
+.browse_toolbar .result_count { overflow: hidden; }
+
+.browse_spacer { flex: 1 1 auto; }
+
+/* shared control: uniform height/type/shape is what makes it read as ONE bar */
+.tb_control {
+    display: inline-flex;
+    align-items: center;
+    height: 2rem;
+    padding: 0 .6rem;
+    border: 1px solid var(--border);
+    border-radius: .375rem;
     background: var(--surface-0);
-    color: var(--text-primary);
-    cursor: pointer;
-}
-
-.browse_toolbar .dir_button {
-    padding: .4ex 1.2ex;
-    border: 1px solid var(--border);
-    border-radius: .5ex;
-    background: var(--control);
     color: var(--text-secondary);
-    cursor: pointer;
     font: inherit;
+    font-size: .8rem;
     line-height: 1;
-}
-
-.chip {
-    border: 1px solid var(--border);
-    background: var(--control);
-    color: var(--text-secondary);
-    border-radius: 1em;
-    padding: 0 1.2ex;
     cursor: pointer;
+}
+select.tb_control { padding-right: .4rem; }
+.tb_control:hover { border-color: var(--text-muted); }
+.dir_button { justify-content: center; min-width: 2rem; padding: 0 .5rem; }
+
+/* voice filter: a single popover trigger (replaces the 33-avatar wall) */
+.voice_filter { position: relative; display: inline-flex; }
+.voice_trigger { padding: 0; overflow: hidden; }
+.voice_trigger.active {
+    background: var(--control-hover);
+    border-color: var(--text-secondary);
+    color: var(--text-primary);
+}
+.voice_trigger_main {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    height: 100%;
+    padding: 0 .6rem;
+    border: 0;
+    background: none;
+    color: inherit;
     font: inherit;
+    font-size: .8rem;
+    cursor: pointer;
 }
-
-.chip.selected {
-    background: var(--text-muted);
-    color: var(--surface-0);
-    border-color: var(--text-muted);
+.voice_trigger .voice_avatar {
+    width: 1.375rem;
+    height: 1.375rem;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
 }
-
-.chip .chip_count {
-    font-size: .75em;
-    margin-right: .5ex;
+.voice_trigger .voice_name { white-space: nowrap; max-width: 8rem; overflow: hidden; text-overflow: ellipsis; }
+.voice_trigger .voice_count {
+    font-size: .72rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-muted);
 }
+.voice_trigger.active .voice_count { color: var(--text-secondary); }
+.tb_caret { font-size: .7em; color: var(--text-muted); }
+.voice_clear {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 .55rem;
+    border: 0;
+    border-left: 1px solid var(--border);
+    background: none;
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+}
+.voice_clear:hover { color: var(--text-primary); }
 
-.group-header {
-    position: sticky;
-    top: 0;
-    background: var(--surface-0);
-    z-index: 1;
-    padding: .5ex 0;
-    margin: 0;
+/* searchable popover list */
+.voice_popover {
+    position: absolute;
+    top: calc(100% + .35rem);
+    left: 0;
+    z-index: 20;
+    width: 34rem;
+    max-width: 92vw;
+    max-height: 22rem;
     display: flex;
-    gap: 1ex;
-    align-items: baseline;
+    flex-direction: column;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: .5rem;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, .18);
+    padding: .375rem;
 }
+.voice_search {
+    height: 2rem;
+    padding: 0 .6rem;
+    margin-bottom: .375rem;
+    border: 1px solid var(--border);
+    border-radius: .375rem;
+    background: var(--surface-0);
+    color: var(--text-primary);
+    font: inherit;
+    font-size: .8rem;
+}
+.voice_options { overflow-y: auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: .1rem .25rem; }
+@media (max-width: 720px) { .voice_options { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 480px) { .voice_options { grid-template-columns: 1fr; } }
+.voice_option {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    width: 100%;
+    padding: .375rem .5rem;
+    border: 0;
+    border-radius: .375rem;
+    background: none;
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: .85rem;
+    text-align: left;
+    cursor: pointer;
+}
+.voice_option .voice_avatar { width: 1.5rem; height: 1.5rem; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.voice_option .voice_name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.voice_option .voice_count { color: var(--text-faint); font-variant-numeric: tabular-nums; font-size: .8rem; }
+.voice_option:hover { background: var(--control-hover); }
+.voice_option.selected { background: var(--control-hover); color: var(--text-primary); }
+.voice_empty { padding: .75rem .5rem; color: var(--text-muted); font-size: .8rem; text-align: center; }
 
-.group-header .count {
-    color: var(--text-faint);
-    font-size: .8em;
+/* type filter doubles as the colour key: a segmented control whose dots are
+   the same rail-* hues the cards carry */
+.type_seg {
+    display: inline-flex;
+    align-items: stretch;
+    height: 2rem;
+    border: 1px solid var(--border);
+    border-radius: .375rem;
+    overflow: hidden;
+    background: var(--surface-0);
 }
+.type_seg_item {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    padding: 0 .625rem;
+    border: 0;
+    border-left: 1px solid var(--border);
+    background: none;
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: .8rem;
+    cursor: pointer;
+}
+.type_seg_item:first-child { border-left: 0; }
+.type_seg_item .seg_dot {
+    width: .5rem;
+    height: .5rem;
+    border-radius: 50%;
+    background: var(--rail-color, var(--text-muted));
+    opacity: .7;
+}
+.type_seg_item:hover { background: var(--control-hover); }
+.type_seg_item.selected {
+    color: var(--text-primary);
+    background: var(--control-hover);
+    box-shadow: inset 0 0 0 1px var(--text-muted);
+}
+.type_seg_item.selected .seg_dot { opacity: 1; }
+
+/* result count + clear (ambient "your filters did something" feedback) */
+.result_count {
+    display: inline-flex;
+    align-items: center;
+    gap: .6rem;
+    font-size: .72rem;
+    color: var(--text-faint);
+    white-space: nowrap;
+}
+.clear_link {
+    border: 0;
+    background: none;
+    color: var(--text-muted);
+    font: inherit;
+    font-size: .72rem;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0;
+}
+.clear_link:hover { color: var(--text-primary); }
 
 .browse_empty {
     padding: 2rem;
@@ -284,10 +422,14 @@
     flex-shrink: 0;
 }
 
+/* avatar + depth chip are in-card filter shortcuts (they don't open the panel) */
+.card-filter { cursor: pointer; transition: box-shadow .12s, transform .12s; }
+.speaker-avatar.card-filter:hover { box-shadow: 0 0 0 2px var(--surface-3), 0 0 0 4px var(--rail-color, var(--text-muted)); }
+.depth-chip.card-filter:hover { box-shadow: 0 0 0 2px var(--surface-3), 0 0 0 4px var(--text-muted); transform: scale(1.08); }
+
 .chiasmus .card-body {
     display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
+    align-items: center;
     gap: 1ex;
     margin-top: .5ex;
 }
@@ -302,8 +444,31 @@
     background-color: var(--control);
     border: 1px solid var(--border);
     border-radius: .5ex;
+    /* center the reference text both ways within its pill */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 1.9rem;
     padding: 0 1ex;
-    text-align: right;
+    text-align: center;
+}
+
+/* reference pill + the small page indicator beneath it fill the space right
+   of the glyph */
+.card-ref-col {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: .25ex;
+}
+.card-page {
+    font-size: .62rem;
+    color: var(--text-muted);
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .chiasmus_line:not(.inactive) .highlight
@@ -373,13 +538,23 @@
     gap: 1rem;
 }
 
-/* the scroll container for the whole index side — toolbar, group headers
-   (which stick to its top), and the card grids */
+/* the index side is a column: fixed toolbar on top, scrolling cards below,
+   filling to the viewport baseline (matches .chiasmPanel's offset) */
+.chiasmIndexSide{
+    flex-grow: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: .6rem;
+    height: calc(100vh - 10.5rem);
+}
+
+/* the scroll container for just the card grid */
 .chiasmIndexPanel{
     width: 100%;
-    flex-grow: 1;
+    flex: 1 1 auto;
+    min-height: 0;
     overflow: auto;
-    max-height: calc(100vh - 14.5rem);
 }
 
 .chiasmPanel{
@@ -419,41 +594,66 @@
     border-color: transparent;
     border-left-color: var(--rail-color, var(--border));
 }
-.chiasm h4
-{
-    line-height: 1rem;
-    margin-top: 0;
-}
-.chiasm h4.title{
-    margin-top: 1ex;
-    color: var(--text-secondary);
-}
-.chiasm h4.reference{
-    font-weight: 200;
-    color: var(--text-secondary);
-    margin-bottom: 1ex;
-    font-size: 0.9rem;
-}
-
-/* detail header: glyph | title+reference | close */
+/* detail header: avatar + speaker/reference on top; glyph + title beneath. */
 .chiasm-header {
+    position: relative;
     display: flex;
-    align-items: flex-start;
-    gap: 1rem;
-    padding: 1ex 0;
+    flex-direction: column;
+    gap: .55rem;
+    padding: .25rem 0 1rem;
 }
-.chiasm-header .chiasmGlyph {
+.chiasm-header .close {
+    position: absolute;
+    top: 0;
+    right: 0;
+}
+.chiasm-id-row {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding-right: 1.5rem; /* clear the close button */
+}
+.chiasm-header .detail-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
     flex-shrink: 0;
+    border: 2px solid var(--rail-color, var(--border));
 }
-.chiasm-header .chiasm-titles {
-    flex: 1;
+.chiasm-idents {
+    display: flex;
+    flex-direction: column;
+    gap: .1rem;
     min-width: 0;
 }
-
-.chiasm-actions {
+.chiasm-speaker {
+    font-weight: 700;
+    font-size: .95rem;
+    color: var(--text-primary);
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.chiasm-ref {
+    font-family: "Scripture", serif;
+    font-size: .9rem;
+    color: var(--text-secondary);
+    line-height: 1.2;
+}
+.chiasm-title-row {
     display: flex;
-    gap: 1ex;
-    margin-bottom: 1ex;
+    align-items: center;
+    gap: .6rem;
+}
+.chiasm-title-row .chiasmGlyph { flex-shrink: 0; }
+h4.chiasm-title {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.25;
 }
 .chiasm .chiasmus_lines
 {
@@ -475,8 +675,7 @@
 }
 
 
-.chiasmus_nav button,
-.chiasm-actions button
+.chiasmus_nav button
 {
     display: inline-block;
     padding: 10px 20px;
@@ -493,24 +692,29 @@
     transition: all 0.3s;
 }
 
-.chiasm-actions button {
-    padding: .5ex 2ex;
-    font-weight: 400;
+/* the middle nav action — read in context, an accent-outlined pill */
+.chiasmus_nav .read-in-context {
+    background: transparent;
+    border: 1px solid var(--rail-color, var(--border));
+    border-radius: 2em;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+.chiasmus_nav .read-in-context:hover {
+    background: var(--control);
+    color: var(--text-primary);
 }
 
-.chiasmus_nav button:hover,
-.chiasm-actions button:hover {
+.chiasmus_nav button:hover {
     background-color: var(--control-hover);
     color: var(--text-primary);
 }
 
-.chiasmus_nav button:disabled,
-.chiasm-actions button:disabled {
+.chiasmus_nav button:disabled {
     opacity: .4;
     cursor: default;
 }
-.chiasmus_nav button:disabled:hover,
-.chiasm-actions button:disabled:hover {
+.chiasmus_nav button:disabled:hover {
     background-color: var(--control);
     color: var(--text-secondary);
 }
@@ -562,8 +766,13 @@
         background: var(--surface-0);
         z-index: 1;
     }
+    .chiasmIndexSide {
+        /* column layout: the page scrolls, not a fixed-height inner panel */
+        height: auto;
+    }
     .chiasmIndexPanel {
         max-height: none;
+        overflow: visible;
     }
     .chiasmus_list {
         grid-template-columns: 1fr 1fr;
@@ -579,12 +788,13 @@
 .chiasmus_list .chiasmus:focus-visible,
 .chiasm .close:focus-visible,
 .chiasmus_nav button:focus-visible,
-.chiasm-actions button:focus-visible,
 .chiasmus_line button.scheme:focus-visible,
-.chip:focus-visible,
-.browse_search:focus-visible,
-.browse_toolbar select:focus-visible,
-.browse_toolbar .dir_button:focus-visible,
+.tb_control:focus-visible,
+.voice_trigger_main:focus-visible,
+.voice_search:focus-visible,
+.voice_option:focus-visible,
+.type_seg_item:focus-visible,
+.clear_link:focus-visible,
 .browse_empty button:focus-visible {
     outline: 2px solid var(--link);
     outline-offset: 2px;

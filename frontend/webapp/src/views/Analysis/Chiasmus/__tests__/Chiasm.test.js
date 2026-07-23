@@ -49,12 +49,6 @@ describe("Chiasm detail panel", () => {
     BoMOnlineAPI.mockResolvedValue({ chiasm: { x1: fixture } });
   });
 
-  afterEach(() => {
-    // the copy-link test stubs navigator.clipboard (configurable: true);
-    // clean up here so a mid-test failure can't leak the stub to other tests
-    delete navigator.clipboard;
-  });
-
   test("renders all lines after fetch; exactly the deepest (C) line is the pivot", async () => {
     const { container } = renderChiasm();
     await screen.findByText("Test Chiasm");
@@ -95,19 +89,8 @@ describe("Chiasm detail panel", () => {
   test("read-in-context calls openScripture with the chiasm reference", async () => {
     renderChiasm();
     await screen.findByText("Test Chiasm");
-    fireEvent.click(screen.getByRole("button", { name: "Read in context" }));
+    fireEvent.click(screen.getByRole("button", { name: /read in context/i }));
     expect(openScripture).toHaveBeenCalledWith("Alma 36:1-30");
-  });
-
-  test("copy link writes the current URL and flips the label to Copied!", async () => {
-    const writeText = jest.fn().mockResolvedValue();
-    Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
-
-    renderChiasm();
-    await screen.findByText("Test Chiasm");
-    fireEvent.click(screen.getByRole("button", { name: "Copy link" }));
-    expect(writeText).toHaveBeenCalledWith(window.location.href);
-    expect(await screen.findByText("Copied!")).toBeInTheDocument();
   });
 
   test("shows the error state when the fetch resolves empty", async () => {

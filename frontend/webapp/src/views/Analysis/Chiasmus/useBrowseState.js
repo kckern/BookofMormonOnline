@@ -2,12 +2,13 @@ import { useCallback, useMemo } from "react";
 import { useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
 
 export const DEFAULTS = {
-  q: "",            // search text
-  group: "book",    // book | speaker | depth | type | none
+  q: "",            // search text (legacy — no UI, kept so the URL/selector stay valid)
+  group: "none",    // book | speaker | depth | type | none — flat list is the default now
   sort: "canonical",// canonical | depth | length | title
   dir: "asc",
   depths: [],       // inclusion list; empty = all
   type: null,       // null | simple | compound | biblical
+  speaker: null,    // person_slug of the voice filter; null = all voices
 };
 
 // Browse state encoded in the URL query string: shareable, restorable,
@@ -25,6 +26,7 @@ export default function useBrowseState() {
       dir: p.get("dir") || DEFAULTS.dir,
       depths: p.get("d") ? p.get("d").split(",") : DEFAULTS.depths,
       type: p.get("type") || DEFAULTS.type,
+      speaker: p.get("sp") || DEFAULTS.speaker,
     };
   }, [search]);
 
@@ -38,6 +40,7 @@ export default function useBrowseState() {
       if (next.dir !== DEFAULTS.dir) p.set("dir", next.dir);
       if (next.depths.length) p.set("d", next.depths.join(","));
       if (next.type) p.set("type", next.type);
+      if (next.speaker) p.set("sp", next.speaker);
       const qs = p.toString();
       // replace, not push — filter browsing must not spam history
       replace(pathname + (qs ? `?${qs}` : ""));

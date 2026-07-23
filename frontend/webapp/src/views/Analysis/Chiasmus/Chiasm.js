@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import BoMOnlineAPI from "../../../models/BoMOnlineAPI";
+import { useEffect, useMemo, useState } from "react";
+import BoMOnlineAPI, { assetUrl } from "../../../models/BoMOnlineAPI";
 import { Spinner } from "../../_Common/Loader";
 import Parser from "html-react-parser";
 import { label } from 'src/models/Utils';
 import { t } from "./t";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
-import { escapeRegex } from "./chiasmUtils";
+import { escapeRegex, formatSpeakerName } from "./chiasmUtils";
 import ChiasmGlyph from "../../_Common/ChiasmGlyph";
 import { openScripture } from "../../Home/tiles/ScripturePopup";
 
@@ -92,15 +92,12 @@ function Chiasm({chiasm_id, setChiasmusId, closeChiasm, nextId, prevId}) {
     const [chiasm, setChiasm] = useState(null);
     const [activeScheme, setActiveScheme] = useState(null); // hover
     const [pinnedScheme, setPinnedScheme] = useState(null); // click/tap — wins over hover
-    const [copied, setCopied] = useState(false);
-    const copyTimer = useRef(null);
 
 
     useEffect(() => {
         let cancelled = false;
         setChiasm(null);
         setPinnedScheme(null);
-        setCopied(false);
         // Belt-and-braces: whatever stalls upstream, the panel must not spin forever
         const failsafe = setTimeout(() => {
             if (!cancelled) setChiasm((c) => (c === null ? undefined : c));
@@ -137,41 +134,33 @@ function Chiasm({chiasm_id, setChiasmusId, closeChiasm, nextId, prevId}) {
         [lines]
     );
 
-    // clear the transient "Copied!" timer if the panel unmounts mid-countdown
-    useEffect(() => () => clearTimeout(copyTimer.current), []);
-
     if (chiasm === undefined) return <div className="chiasm error">{t("chiasm_load_failed", "Couldn't load this chiasm.")}</div>;
     if (!chiasm) return <div className="chiasm loading"><Spinner/></div>
 
     // Pinned pair (tap/click a badge) wins over hover; hover works when unpinned.
     const effectiveScheme = pinnedScheme || activeScheme;
     const togglePin = (letter) => setPinnedScheme((p) => (p === letter ? null : letter));
-
-    const copyLink = () => {
-        if (!navigator.clipboard?.writeText) return;
-        navigator.clipboard.writeText(window.location.href).then(() => {
-            setCopied(true);
-            clearTimeout(copyTimer.current);
-            copyTimer.current = setTimeout(() => setCopied(false), 2000);
-        }).catch(() => {});
-    };
+    const speakerName = chiasm.speaker?.name ? formatSpeakerName(chiasm.speaker.name) : null;
 
     return <div className="chiasm">
         <div className="chiasm-header">
-            <ChiasmGlyph scheme={scheme} size={64}
-                lineLengths={lines?.map((l) => (l.line_text || "").length)}
-                title={t("chiasm_structure", "Structure: $1", [scheme])} />
-            <div className="chiasm-titles">
-                <h4 className="title">{title || t("untitled_chiasm", "Untitled")}</h4>
-                <h4 className="title reference">{reference}</h4>
-            </div>
             <button type="button" className="close noselect" aria-label={t("close", "Close")} onClick={closeChiasm}>×</button>
-        </div>
-        <div className="chiasm-actions noselect">
-            <button type="button" onClick={() => openScripture(reference)}>{t("read_in_context", "Read in context")}</button>
-            <button type="button" disabled={!navigator.clipboard} onClick={copyLink}>
-                {copied ? t("link_copied", "Copied!") : t("copy_link", "Copy link")}
-            </button>
+            <div className="chiasm-id-row">
+                {chiasm.speaker?.person_slug && (
+                    <img className="detail-avatar" loading="lazy" width="48" height="48"
+                        alt={speakerName || ""} src={`${assetUrl}/people/${chiasm.speaker.person_slug}`} />
+                )}
+                <div className="chiasm-idents">
+                    {speakerName && <div className="chiasm-speaker">{speakerName}</div>}
+                    <div className="chiasm-ref">{reference}</div>
+                </div>
+            </div>
+            <div className="chiasm-title-row">
+                <ChiasmGlyph scheme={scheme} size={40}
+                    lineLengths={lines?.map((l) => (l.line_text || "").length)}
+                    title={t("chiasm_structure", "Structure: $1", [scheme])} />
+                <h4 className="chiasm-title">{title || t("untitled_chiasm", "Untitled")}</h4>
+            </div>
         </div>
         <div className="chiasmus_lines" onMouseLeave={()=>setActiveScheme(null)}>
             {lines.map((line, i) => {
@@ -186,6 +175,7 @@ function Chiasm({chiasm_id, setChiasmusId, closeChiasm, nextId, prevId}) {
 
         <div  className="chiasmus_nav noselect">
         <button type="button" disabled={!prevId} onClick={()=>setChiasmusId(prevId)}>⬅ {t("previous", "Previous")}</button>
+        <button type="button" className="read-in-context" onClick={() => openScripture(reference)}>{t("read_in_context", "Read in context")} ↓</button>
         <button type="button" disabled={!nextId} onClick={()=>setChiasmusId(nextId)}>{t("next", "Next")} ⮕</button>
         </div>
     </div>

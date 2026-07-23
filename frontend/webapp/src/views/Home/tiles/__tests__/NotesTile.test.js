@@ -33,12 +33,13 @@ const renderTile = (data) =>
   );
 
 describe("NotesTile", () => {
-  test("renders each note's text and source", () => {
+  test("renders ONE note — its text (smart-quoted) and author, not the rest", () => {
     renderTile(notes);
     expect(screen.getByText(/same admonition to Helaman/)).toBeTruthy();
-    expect(screen.getByText(/Fulfilled at Mosiah/)).toBeTruthy();
-    expect(screen.getByText("BMC Notes")).toBeTruthy();
-    expect(screen.getByText("Second Source")).toBeTruthy();
+    expect(screen.getByText(/BMC Notes/)).toBeTruthy();
+    // only the first note per tile — the second must not render
+    expect(screen.queryByText(/Fulfilled at Mosiah/)).toBeNull();
+    expect(screen.queryByText(/Second Source/)).toBeNull();
   });
 
   test("returns null for empty data", () => {

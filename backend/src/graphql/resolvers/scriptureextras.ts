@@ -1,5 +1,6 @@
 /** scriptureextras domain resolvers — see docs/reference/backend-resolver-porting-guide.md */
 import { generateReference, type LanguageCode } from 'scripture-guide';
+import { sql } from 'kysely';
 import type { Resolvers } from '../../../codegen/graphql.js';
 import type { AppContext } from '../context.js';
 import {
@@ -15,6 +16,47 @@ import {
 function toLangCode(lang: string): LanguageCode {
   const nolangs = ['eng', 'en', 'dev'];
   return (nolangs.includes(lang) ? 'en' : lang) as LanguageCode;
+}
+
+// ─── verse → reading-page index (Chiasmus.page) ─────────────────────────────────
+// bom_text rows carry (min_verse_id, page); a reading page (bom_page + its
+// bom_slug PG) spans from its first text row's verse to the next page's. We
+// resolve a chiasm's page by the text row nearest at/below its verse, breaking
+// min_verse_id ties toward the earlier-reading page (lowest weight) so the very
+// first verse doesn't fall into a later page that also references it. Built once
+// per process and cached.
+type PageIdxEntry = { v: number; slug: string | null; title: string | null };
+let pageIndexPromise: Promise<PageIdxEntry[]> | null = null;
+function loadPageIndex(db: AppContext['db']): Promise<PageIdxEntry[]> {
+  if (!pageIndexPromise) {
+    pageIndexPromise = (async () => {
+      const { rows } = await sql<{ v: number; title: string | null; weight: number; slug: string | null }>`
+        SELECT t.min_verse_id AS v, p.title AS title, p.weight AS weight, s.slug AS slug
+        FROM bom_text t
+        JOIN bom_page p ON p.guid = t.page
+        LEFT JOIN bom_slug s ON s.link = t.page AND s.type = 'PG'
+        WHERE t.page IS NOT NULL AND t.min_verse_id > 0
+      `.execute(db);
+      const byV = new Map<number, PageIdxEntry & { weight: number }>();
+      for (const r of rows) {
+        const v = Number(r.v);
+        const ex = byV.get(v);
+        if (!ex || Number(r.weight) < ex.weight) {
+          byV.set(v, { v, slug: r.slug ?? null, title: r.title ?? null, weight: Number(r.weight) });
+        }
+      }
+      return [...byV.values()].sort((a, b) => a.v - b.v);
+    })();
+  }
+  return pageIndexPromise;
+}
+function pageForVerse(idx: PageIdxEntry[], v: number): PageIdxEntry | null {
+  let lo = 0, hi = idx.length - 1, ans: PageIdxEntry | null = null;
+  while (lo <= hi) {
+    const m = (lo + hi) >> 1;
+    if (idx[m].v <= v) { ans = idx[m]; lo = m + 1; } else hi = m - 1;
+  }
+  return ans;
 }
 
 // ─── Commentary.preview ───────────────────────────────────────────────────────
@@ -138,6 +180,16 @@ export const scriptureextrasResolvers: Resolvers = {
     verse_id:       (parent) => (parent as unknown as ChiasmusRow).verse_id ?? null,
     line_lengths:   (parent) => (parent as unknown as ChiasmusRow).line_lengths ?? null,
     speaker:        (parent) => ((parent as unknown as ChiasmusRow).speaker ?? null) as never,
+
+    /** The reading page this chiasm sits on (verse → bom_text.page). */
+    page: async (parent, _args, ctx: AppContext) => {
+      const row = parent as unknown as ChiasmusRow;
+      const v = row.verse_id ?? row.start_verse_id;
+      if (v == null) return null;
+      const idx = await loadPageIndex(ctx.db);
+      const p = pageForVerse(idx, Number(v));
+      return p && (p.slug || p.title) ? { slug: p.slug, title: p.title } : (null as never);
+    },
 
     /**
      * Chiasmus.lines — populated by Query.chiasmus when includeLines=true.

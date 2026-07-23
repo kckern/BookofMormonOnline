@@ -410,6 +410,7 @@ const queries = {
                 verse_id
                 line_lengths
                 speaker { person_slug name voice }
+                page { slug title }
             }`,
     }
 
@@ -427,6 +428,7 @@ const queries = {
                 reference
                 scheme
                 title
+                speaker { person_slug name voice }
                 lines{
                     line_key
                     line_text
@@ -1778,17 +1780,15 @@ const queries = {
         faxPages { page ref }
         faxMore { slug title pages }
         art { id title artist width height ref }
-        witnesses { slug witnessSlug principal statement source }
+        witnesses { slug witnessSlug principal statement moneyQuote source }
         commentaries { id title text preview reference publication { source_id source_title source_name source_slug } }
         contents { slug title description pages { title slug sections { title slug } } }
         section { title slug page { title slug } rows { guid narration { guid description text { slug heading imgIds status(token:"${input.token || ""}") } } } }
         sectionNext { title slug rows { guid narration { guid description text { slug heading status(token:"${input.token || ""}") } } } }
         history { id slug year date source archive author document teaser citation aspect }
         text { slug heading content imgIds parent_page { title } parent_section { title } narration { description } }
-        notes { id title text reference publication { source_name } }
+        notes { id title text reference publication { source_name source_id } }
         faxVerse { version title format page verseId ref selector editions { version title page } }
-        crossrefs { srcRef srcVerseId refs { ref verseId } }
-        relationship { hubType hubSlug hubName hubTitle edges { rel dstType dstSlug dstName dstTitle note ref } }
         mapstory { slug title description moves { seq start end startName endName travelers people { slug name } description duration ref startLat startLng endLat endLng } }
       }`,
     }

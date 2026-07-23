@@ -28,11 +28,12 @@ describe("useBrowseState", () => {
     expect(captured.state).toEqual(DEFAULTS);
     expect(captured.state).toEqual({
       q: "",
-      group: "book",
+      group: "none",
       sort: "canonical",
       dir: "asc",
       depths: [],
       type: null,
+      speaker: null,
     });
   });
 
@@ -47,6 +48,7 @@ describe("useBrowseState", () => {
       dir: "desc",
       depths: ["3", "4"],
       type: "compound",
+      speaker: null,
     });
   });
 
@@ -92,6 +94,20 @@ describe("useBrowseState", () => {
     expect(captured.state.depths).toEqual(["5", "+"]);
   });
 
+  test("speaker (voice filter) round-trips via the sp param", () => {
+    renderProbe("/analysis/chiasmus");
+    act(() => {
+      captured.set({ speaker: "nephi1" });
+    });
+    expect(captured.location.search).toContain("sp=nephi1");
+    expect(captured.state.speaker).toBe("nephi1");
+    act(() => {
+      captured.set({ speaker: null });
+    });
+    expect(captured.location.search).not.toContain("sp=");
+    expect(captured.state.speaker).toBeNull();
+  });
+
   test("set() preserves fields not in the patch across successive calls", () => {
     renderProbe("/analysis/chiasmus?q=alma&type=simple");
     act(() => {
@@ -99,11 +115,12 @@ describe("useBrowseState", () => {
     });
     expect(captured.state).toEqual({
       q: "alma",
-      group: "book",
+      group: "none",
       sort: "length",
       dir: "asc",
       depths: [],
       type: "simple",
+      speaker: null,
     });
     act(() => {
       captured.set({ q: "" });

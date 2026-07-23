@@ -11,6 +11,10 @@ import { openScripture } from "./ScripturePopup";
  * deep-links into the real viewer (/fax/:version/:page).
  */
 export default function FaxTile({ data, payload }) {
+  // Per-page natural aspect (w/h). In a flex row, growing each page proportional
+  // to its aspect makes their RENDERED HEIGHTS equal while widths differ — a
+  // taller (narrower) sheet just takes less horizontal room than a wide one.
+  const [aspects, setAspects] = React.useState({});
   if (!data?.slug) return null;
   const format = data.format || "jpg";
   const pages = (payload?.faxPages || []).slice(0, 2);
@@ -31,11 +35,21 @@ export default function FaxTile({ data, payload }) {
           {pages.map((p) => {
             const nnn = String(p.page).padStart(3, "0");
             return (
-              <Link key={p.page} to={`/fax/${data.slug}/${p.page}`} className="faxTilePage" title={p.ref}>
+              <Link
+                key={p.page}
+                to={`/fax/${data.slug}/${p.page}`}
+                className="faxTilePage"
+                title={p.ref}
+                style={{ flexGrow: aspects[p.page] || 1 }}
+              >
                 <img
                   src={`${assetUrl}/fax/thumb/${data.slug}/${nnn}.${format}`}
                   alt={`${data.title} p.${p.page}`}
                   loading="lazy"
+                  onLoad={(e) => {
+                    const { naturalWidth: w, naturalHeight: h } = e.target;
+                    if (w && h) setAspects((a) => (a[p.page] ? a : { ...a, [p.page]: w / h }));
+                  }}
                   onError={(e) => (e.target.style.display = "none")}
                 />
                 <span className="faxPageBar">

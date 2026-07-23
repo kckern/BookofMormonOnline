@@ -67,7 +67,7 @@ const FIXED_TAIL = ["mapstory"];
 // background and revealed as the reader nears the bottom. These are the
 // repeatable content tile types; fixed/live ones (reading plan, narration,
 // contents, community) are excluded.
-const INFINITE_REGISTRY_KEYS = ["art", "commentary", "commentary2", "commentary3", "history", "fax", "faxVerse", "places", "biblephrases", "chiasmus", "text", "notes", "crossrefs", "relationship"];
+const INFINITE_REGISTRY_KEYS = ["art", "commentary", "commentary2", "commentary3", "history", "fax", "faxVerse", "places", "biblephrases", "chiasmus", "text", "notes"];
 const BATCH_TILES = [
   ...tileRegistry
     .filter((t) => INFINITE_REGISTRY_KEYS.includes(t.key))
@@ -275,12 +275,18 @@ export default function Sampler() {
   useEffect(() => {
     const el = sentinelRef.current;
     if (!el || !payload || typeof IntersectionObserver === "undefined") return undefined;
+    // Eager feed: keep ~2 viewport heights of content loaded ahead of the fold.
+    // The sentinel "intersects" while still two screens below the viewport, so
+    // each reveal grows the columns and re-fires the observer, cascading batches
+    // in until the sentinel is finally >2vp away. The prefetch guard paces the
+    // network round-trips so it never runs away.
+    const eagerMargin = Math.max(1200, Math.round((window.innerHeight || 800) * 2));
     const io = new IntersectionObserver(
       (entries) => {
         atBottomRef.current = entries[0].isIntersecting;
         if (entries[0].isIntersecting) loadMoreRef.current();
       },
-      { rootMargin: "800px 0px" }, // begin loading before the reader hits bottom
+      { rootMargin: `${eagerMargin}px 0px` },
     );
     io.observe(el);
     return () => io.disconnect();
@@ -291,7 +297,7 @@ export default function Sampler() {
     const Tile = def.component;
     const data = def.dataKey ? bp[def.dataKey] : bp[def.key];
     return (
-      <div key={`${def.key}-${idx}`} className={`tile ${def.span}`}>
+      <div key={`${def.key}-${idx}`} className={`tile infiniteTile ${def.span}`}>
         <Tile data={data} next={bp[`${def.key}Next`]} seed={bp.seed} payload={bp} {...(def.props || {})} />
       </div>
     );
@@ -375,8 +381,6 @@ export default function Sampler() {
       case "chiasmus": return 20;
       case "notes": return 24;
       case "faxVerse": return 30;
-      case "crossrefs": return 20;
-      case "relationship": return 18;
       case "mapstory": return 40;
       default: return 14;
     }

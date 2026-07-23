@@ -13,8 +13,6 @@ import ChiasmusTile from "./ChiasmusTile";
 import ImageArtTile from "./ImageArtTile";
 import NotesTile from "./NotesTile";
 import FaxVerseTile from "./FaxVerseTile";
-import CrossReferencesTile from "./CrossReferencesTile";
-import RelationshipsTile from "./RelationshipsTile";
 import MapStoryTile from "./MapStoryTile";
 
 /**
@@ -49,7 +47,5 @@ export const tileRegistry = [
   { key: "art",         component: ImageArtTile,    span: "tile-art",         isReady: (p) => (p?.art?.length || 0) > 0 },
   { key: "notes",       component: NotesTile,       span: "tile-notes",       isReady: (p) => (p?.notes?.length || 0) > 0 },
   { key: "faxVerse",   component: FaxVerseTile,    span: "tile-faxVerse",    isReady: (p) => !!p?.faxVerse?.page },
-  { key: "crossrefs",  component: CrossReferencesTile, span: "tile-crossrefs", isReady: (p) => (p?.crossrefs?.refs?.length || 0) > 0 },
-  { key: "relationship", component: RelationshipsTile, span: "tile-relationship", isReady: (p) => (p?.relationship?.edges?.length || 0) >= 2 },
   { key: "mapstory",    component: MapStoryTile,    span: "tile-mapstory",    isReady: (p) => (p?.mapstory?.moves?.length || 0) >= 2 },
 ];

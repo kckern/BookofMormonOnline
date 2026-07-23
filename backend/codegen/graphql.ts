@@ -67,6 +67,7 @@ export type Chiasmus = {
   chiasmus_id?: Maybe<Scalars['String']['output']>;
   line_lengths?: Maybe<Array<Maybe<Scalars['Int']['output']>>>;
   lines?: Maybe<Array<Maybe<ChiasmusLine>>>;
+  page?: Maybe<ChiasmusPage>;
   reference?: Maybe<Scalars['String']['output']>;
   scheme?: Maybe<Scalars['String']['output']>;
   speaker?: Maybe<ChiasmusSpeaker>;
@@ -82,6 +83,12 @@ export type ChiasmusLine = {
   label?: Maybe<Scalars['String']['output']>;
   line_key?: Maybe<Scalars['String']['output']>;
   line_text?: Maybe<Scalars['String']['output']>;
+};
+
+export type ChiasmusPage = {
+  __typename?: 'ChiasmusPage';
+  slug?: Maybe<Scalars['String']['output']>;
+  title?: Maybe<Scalars['String']['output']>;
 };
 
 export type ChiasmusSpeaker = {
@@ -224,6 +231,13 @@ export type Fax = {
   title?: Maybe<Scalars['String']['output']>;
 };
 
+export type FaxEdition = {
+  __typename?: 'FaxEdition';
+  page: Scalars['Int']['output'];
+  title?: Maybe<Scalars['String']['output']>;
+  version: Scalars['String']['output'];
+};
+
 export type FaxIndex = {
   __typename?: 'FaxIndex';
   pages?: Maybe<Array<Maybe<Array<Maybe<Scalars['Int']['output']>>>>>;
@@ -238,9 +252,11 @@ export type FaxPageRef = {
 
 export type FaxVersePage = {
   __typename?: 'FaxVersePage';
+  editions: Array<FaxEdition>;
   format?: Maybe<Scalars['String']['output']>;
   page?: Maybe<Scalars['Int']['output']>;
   ref?: Maybe<Scalars['String']['output']>;
+  selector?: Maybe<Scalars['String']['output']>;
   title?: Maybe<Scalars['String']['output']>;
   verseId?: Maybe<Scalars['Int']['output']>;
   version?: Maybe<Scalars['String']['output']>;
@@ -1982,6 +1998,7 @@ export type UserStudySummary = {
 
 export type Witness = {
   __typename?: 'Witness';
+  moneyQuote?: Maybe<Scalars['String']['output']>;
   principal?: Maybe<Scalars['String']['output']>;
   slug?: Maybe<Scalars['String']['output']>;
   source?: Maybe<Scalars['String']['output']>;
@@ -2086,6 +2103,7 @@ export type ResolversTypes = {
   Caps: ResolverTypeWrapper<Partial<Caps>>;
   Chiasmus: ResolverTypeWrapper<Partial<Chiasmus>>;
   ChiasmusLine: ResolverTypeWrapper<Partial<ChiasmusLine>>;
+  ChiasmusPage: ResolverTypeWrapper<Partial<ChiasmusPage>>;
   ChiasmusSpeaker: ResolverTypeWrapper<Partial<ChiasmusSpeaker>>;
   Commentary: ResolverTypeWrapper<Partial<Commentary>>;
   Conn: ResolverTypeWrapper<Partial<Conn>>;
@@ -2096,6 +2114,7 @@ export type ResolversTypes = {
   Event: ResolverTypeWrapper<Partial<Event>>;
   EventGrid: ResolverTypeWrapper<Partial<EventGrid>>;
   Fax: ResolverTypeWrapper<Partial<Fax>>;
+  FaxEdition: ResolverTypeWrapper<Partial<FaxEdition>>;
   FaxIndex: ResolverTypeWrapper<Partial<FaxIndex>>;
   FaxPageRef: ResolverTypeWrapper<Partial<FaxPageRef>>;
   FaxVersePage: ResolverTypeWrapper<Partial<FaxVersePage>>;
@@ -2210,6 +2229,7 @@ export type ResolversParentTypes = {
   Caps: Partial<Caps>;
   Chiasmus: Partial<Chiasmus>;
   ChiasmusLine: Partial<ChiasmusLine>;
+  ChiasmusPage: Partial<ChiasmusPage>;
   ChiasmusSpeaker: Partial<ChiasmusSpeaker>;
   Commentary: Partial<Commentary>;
   Conn: Partial<Conn>;
@@ -2220,6 +2240,7 @@ export type ResolversParentTypes = {
   Event: Partial<Event>;
   EventGrid: Partial<EventGrid>;
   Fax: Partial<Fax>;
+  FaxEdition: Partial<FaxEdition>;
   FaxIndex: Partial<FaxIndex>;
   FaxPageRef: Partial<FaxPageRef>;
   FaxVersePage: Partial<FaxVersePage>;
@@ -2371,6 +2392,7 @@ export type ChiasmusResolvers<ContextType = AppContext, ParentType extends Resol
   chiasmus_id?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   line_lengths?: Resolver<Maybe<Array<Maybe<ResolversTypes['Int']>>>, ParentType, ContextType>;
   lines?: Resolver<Maybe<Array<Maybe<ResolversTypes['ChiasmusLine']>>>, ParentType, ContextType>;
+  page?: Resolver<Maybe<ResolversTypes['ChiasmusPage']>, ParentType, ContextType>;
   reference?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   scheme?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   speaker?: Resolver<Maybe<ResolversTypes['ChiasmusSpeaker']>, ParentType, ContextType>;
@@ -2386,6 +2408,12 @@ export type ChiasmusLineResolvers<ContextType = AppContext, ParentType extends R
   label?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   line_key?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   line_text?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ChiasmusPageResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['ChiasmusPage'] = ResolversParentTypes['ChiasmusPage']> = {
+  slug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  title?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -2508,6 +2536,13 @@ export type FaxResolvers<ContextType = AppContext, ParentType extends ResolversP
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type FaxEditionResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['FaxEdition'] = ResolversParentTypes['FaxEdition']> = {
+  page?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  title?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  version?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type FaxIndexResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['FaxIndex'] = ResolversParentTypes['FaxIndex']> = {
   pages?: Resolver<Maybe<Array<Maybe<Array<Maybe<ResolversTypes['Int']>>>>>, ParentType, ContextType>;
   slug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -2521,9 +2556,11 @@ export type FaxPageRefResolvers<ContextType = AppContext, ParentType extends Res
 };
 
 export type FaxVersePageResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['FaxVersePage'] = ResolversParentTypes['FaxVersePage']> = {
+  editions?: Resolver<Array<ResolversTypes['FaxEdition']>, ParentType, ContextType>;
   format?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   page?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   ref?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  selector?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   title?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   verseId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   version?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -3625,6 +3662,7 @@ export type UserStudySummaryResolvers<ContextType = AppContext, ParentType exten
 };
 
 export type WitnessResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['Witness'] = ResolversParentTypes['Witness']> = {
+  moneyQuote?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   principal?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   slug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   source?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -3654,6 +3692,7 @@ export type Resolvers<ContextType = AppContext> = {
   Caps?: CapsResolvers<ContextType>;
   Chiasmus?: ChiasmusResolvers<ContextType>;
   ChiasmusLine?: ChiasmusLineResolvers<ContextType>;
+  ChiasmusPage?: ChiasmusPageResolvers<ContextType>;
   ChiasmusSpeaker?: ChiasmusSpeakerResolvers<ContextType>;
   Commentary?: CommentaryResolvers<ContextType>;
   Conn?: ConnResolvers<ContextType>;
@@ -3664,6 +3703,7 @@ export type Resolvers<ContextType = AppContext> = {
   Event?: EventResolvers<ContextType>;
   EventGrid?: EventGridResolvers<ContextType>;
   Fax?: FaxResolvers<ContextType>;
+  FaxEdition?: FaxEditionResolvers<ContextType>;
   FaxIndex?: FaxIndexResolvers<ContextType>;
   FaxPageRef?: FaxPageRefResolvers<ContextType>;
   FaxVersePage?: FaxVersePageResolvers<ContextType>;

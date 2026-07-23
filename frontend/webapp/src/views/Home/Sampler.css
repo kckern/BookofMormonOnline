@@ -91,6 +91,14 @@ html[data-theme="dark"] .samplerResample:hover { color: #fff; border-color: #999
    the wait in-place. */
 .samplerSentinel { height: 1px; width: 100%; }
 
+/* Infinite-scroll tiles: let the browser reclaim rendering/layout for cards
+   scrolled far off-screen (memory relief on a long feed) WITHOUT ever removing
+   them from the DOM — so scroll position is never rug-pulled. `auto` in
+   contain-intrinsic-size makes the browser remember each card's real rendered
+   height, so a card collapsed after being scrolled past reserves exactly its
+   own space and nothing above shifts when you scroll back up. */
+.infiniteTile { content-visibility: auto; contain-intrinsic-size: auto 320px; }
+
 /* ---------- tile card ---------- */
 .tile {
   position: relative;
@@ -1182,7 +1190,9 @@ html[data-theme="dark"] .placesImgWrap { background: #333; }
 .textTile .itemInFeedContainer { margin: 0 auto; max-width: 46rem; }
 
 /* fax pages: ref-captioned, deep-linking into the viewer at that page */
-.faxTilePage { flex: 1 1 0; min-width: 0; position: relative; display: block; text-decoration: none; }
+/* flex-grow is set inline per page (natural aspect ratio) so both pages render
+   at equal height with proportional widths — see FaxTile.js */
+.faxTilePage { flex-basis: 0; flex-shrink: 1; flex-grow: 1; min-width: 0; position: relative; display: block; text-decoration: none; }
 /* natural page proportions — the sheet fills whatever height it needs */
 .faxTilePage img { width: 100%; height: auto; display: block; border-radius: 0.35rem; border: 1px solid #e0e0e0; transition: transform 0.15s ease; }
 html[data-theme="dark"] .faxTilePage img { border-color: #444; }
@@ -1384,7 +1394,14 @@ html[data-theme="dark"] .tileMoreLink:hover { background: rgba(147, 198, 239, 0.
    CHIASMUS — head only; the mirrored lines are the shared MiniChiasm
    component (_Common/MiniChiasm.css)
    ================================================================ */
-.chiasmusTileHead { display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.4rem; flex-wrap: wrap; }
+.chiasmusTileHead { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 0.4rem; }
+.chiasmusTileHeadTop { display: flex; align-items: center; gap: 0.6rem; min-width: 0; }
+.chiasmusTileHead .chiasmGlyph { flex: 0 0 auto; opacity: 0.9; }
+.chiasmusTileSpeaker { display: flex; align-items: center; gap: 0.4rem; min-width: 0; }
+.chiasmusTileAvatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex: 0 0 auto; }
+.chiasmusTileSpeakerName { font-size: 0.8rem; font-weight: 600; color: #444; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html[data-theme="dark"] .chiasmusTileSpeakerName { color: #ccc; }
+.chiasmusTileHeadText { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; min-width: 0; }
 .chiasmusTileTitle { font-weight: 800; font-size: 0.85rem; color: #2a2a2a; }
 html[data-theme="dark"] .chiasmusTileTitle { color: #f0f0f0; }
 
@@ -1561,6 +1578,56 @@ html[data-theme="dark"] .rpBoxPane .sectionDots { border-right-color: #444; }
   border-top: 1px solid rgba(128, 128, 128, 0.25);
 }
 .notesTile .notesText { font-size: 0.95rem; margin-top: 0.5rem; }
+/* speech-bubble treatment — the note reads as a margin gloss pointing up at the
+   passage above. The tail is a centered CSS triangle flush to the top edge,
+   filled with the bubble background (not floating, not the border grey). */
+.notesTile .notesBubble {
+  position: relative;
+  display: flow-root; /* contain the floated cover without clipping the tail */
+  margin-top: 0.9rem;
+  padding: 0.6rem 0.75rem;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 0.4rem;
+  line-height: 1.45;
+}
+.notesTile .notesBubble::before,
+.notesTile .notesBubble::after {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-style: solid;
+}
+/* outer triangle = border color */
+.notesTile .notesBubble::before {
+  margin-left: -9px;
+  border-width: 0 9px 9px 9px;
+  border-color: transparent transparent #ddd transparent;
+}
+/* inner triangle = background color, 1px inset so the border edge shows */
+.notesTile .notesBubble::after {
+  margin-left: -8px;
+  margin-bottom: -1px;
+  border-width: 0 8px 8px 8px;
+  border-color: transparent transparent #fff transparent;
+}
+.notesTile .notesCover {
+  float: right;
+  width: 44px;
+  height: auto;
+  margin: 0.1rem 0 0.35rem 0.7rem;
+  border-radius: 0.25rem;
+  border: 1px solid #ddd;
+}
+.notesTile .notesAttr { font-size: 0.85rem; color: #666; }
+html[data-theme="dark"] .notesTile .notesBubble { background: #1e1e1e; border-color: #444; }
+html[data-theme="dark"] .notesTile .notesBubble::before { border-bottom-color: #444; }
+html[data-theme="dark"] .notesTile .notesBubble::after { border-bottom-color: #1e1e1e; }
+html[data-theme="dark"] .notesTile .notesCover { border-color: #444; }
+html[data-theme="dark"] .notesTile .notesAttr { color: #aaa; }
 .notesTile .notesMeta {
   display: flex;
   justify-content: space-between;
@@ -1572,44 +1639,6 @@ html[data-theme="dark"] .rpBoxPane .sectionDots { border-right-color: #444; }
 /* ---- verse-fax tile (wave 1) ---- */
 .faxVerseTile .faxVerseTitle { font-size: 0.85rem; opacity: 0.8; margin: 0.4rem 0; }
 .notesTile .notesSource { font-size: 0.8rem; opacity: 0.7; }
-
-/* ---- cross-references tile (wave 1) ---- */
-.crossRefsTile .crossRefsList {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  margin-top: 0.6rem;
-}
-.crossRefsTile .crossRefItem {
-  border: 1px solid rgba(128, 128, 128, 0.35);
-  border-radius: 999px;
-  background: transparent;
-  color: inherit;
-  font-size: 0.85rem;
-  padding: 0.15rem 0.7rem;
-  cursor: pointer;
-}
-.crossRefsTile .crossRefItem:hover { border-color: currentColor; }
-
-/* ---- relationships tile (wave 1) ---- */
-.relationshipsTile .relHub { font-weight: 600; font-size: 1.1rem; }
-.relationshipsTile .relHubTitle { font-size: 0.85rem; opacity: 0.75; }
-.relationshipsTile .relEdges { list-style: none; padding: 0; margin: 0.6rem 0 0; }
-.relationshipsTile .relEdge + .relEdge { margin-top: 0.55rem; }
-.relationshipsTile .relEdgeRel { font-size: 0.85rem; opacity: 0.7; }
-.relationshipsTile .relEdgeName { font-weight: 500; }
-.relationshipsTile .relEdgeRef {
-  border: none;
-  background: transparent;
-  color: inherit;
-  font-size: 0.8rem;
-  opacity: 0.75;
-  text-decoration: underline;
-  cursor: pointer;
-  margin-left: 0.35rem;
-  padding: 0;
-}
-.relationshipsTile .relEdgeNote { font-size: 0.85rem; opacity: 0.8; }
 
 /* ---- map-story tile: animated playback ---- */
 .mapStoryTile .mapStoryTitle { font-weight: 600; margin-bottom: 0.4rem; }

@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import BoMOnlineAPI from "src/models/BoMOnlineAPI";
+import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
 import { label } from "src/models/Utils";
 import MiniChiasm from "../../_Common/MiniChiasm";
+import ChiasmGlyph from "../../_Common/ChiasmGlyph";
+import { formatSpeakerName } from "../../Analysis/Chiasmus/chiasmUtils";
 import RefPill from "./RefPill";
 
 // Displayable in a tile: plain-letter mirrored schemes deep enough to be
@@ -36,14 +38,40 @@ export default function ChiasmusTile({ seed }) {
   }, [seed]);
 
   if (!chiasm) return null;
+  const speaker = chiasm.speaker;
+  const speakerName = speaker?.name ? formatSpeakerName(speaker.name) : null;
   return (
     <div className="samplerTileInner chiasmusTile">
       <h3 className="tileHeading">
         <Link to="/analysis/chiasmus">{label("chiasmus")}</Link>
       </h3>
       <div className="chiasmusTileHead">
-        <RefPill refText={chiasm.reference} />
-        {chiasm.title ? <span className="chiasmusTileTitle">{chiasm.title}</span> : null}
+        <div className="chiasmusTileHeadTop">
+          <ChiasmGlyph
+            scheme={chiasm.scheme}
+            lineLengths={chiasm.lines?.map((l) => (l.line_text || "").length)}
+            size={40}
+            title={chiasm.title || label("chiasmus")}
+          />
+          {speaker?.person_slug ? (
+            <div className="chiasmusTileSpeaker">
+              <img
+                className="chiasmusTileAvatar"
+                loading="lazy"
+                width="32"
+                height="32"
+                alt={speakerName || ""}
+                src={`${assetUrl}/people/${speaker.person_slug}`}
+                onError={(e) => (e.target.style.display = "none")}
+              />
+              {speakerName ? <span className="chiasmusTileSpeakerName">{speakerName}</span> : null}
+            </div>
+          ) : null}
+        </div>
+        <div className="chiasmusTileHeadText">
+          {chiasm.title ? <span className="chiasmusTileTitle">{chiasm.title}</span> : null}
+          <RefPill refText={chiasm.reference} />
+        </div>
       </div>
       <MiniChiasm lines={chiasm.lines} className="chiasmusTileLines" />
       <Link to={`/analysis/chiasmus/${chiasm.chiasmus_id}`} className="tileMoreLink">
