@@ -588,6 +588,27 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
         >
           &#8250;
         </button>
+        <form
+          className="fax-page-jump"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const n = parseInt(e.target.elements.pageInput.value, 10);
+            if (!Number.isFinite(n)) return;
+            const idx = leafIndex.findIndex((l) => l.pageNumInt === n || `${l.pageSlugLeaf}` === `${n}`);
+            if (idx !== -1) handlePageChange(idx);
+          }}
+        >
+          <input
+            name="pageInput"
+            type="number"
+            min={1}
+            max={item.pages}
+            defaultValue={leftPage?.pageSlugLeaf || ''}
+            key={leftPage?.pageSlugLeaf}
+            aria-label="Jump to page"
+          />
+          <span className="of-total">/ {item.pages}</span>
+        </form>
       </div>
     </div>
   );
