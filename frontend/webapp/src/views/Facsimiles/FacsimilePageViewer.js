@@ -9,6 +9,7 @@ import { useElementSize } from "./useElementSize";
 import PageImage from "./PageImage";
 import PageStack from "./PageStack";
 import { generateReference, lookupReference } from "scripture-guide";
+import { normalizeStackWidths } from "./faxGeometry";
 
 /**
  * FacsimilePageViewer - Desktop version of the facsimile page viewer
@@ -182,16 +183,13 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
     return () => { img.onload = null; };
   }, [rightPage?.thumbAssetUrl, rightPage?.pageAssetUrl, rightPage]);
 
-  // Estimate stack widths with parity filtering: left = even pages before current spread; right = odd pages after
-  const { leftStackWidth, rightStackWidth } = useMemo(() => {
-    // adjustedPageIndex is even (left page)
-    const leftEvenCount = Math.max(0, Math.floor(adjustedPageIndex / 2));
-    const rightOddCount = Math.max(0, Math.floor((totalPages - (adjustedPageIndex + 2)) / 2));
-    return {
-      leftStackWidth: Math.min(200, leftEvenCount),
-      rightStackWidth: Math.min(200, rightOddCount)
-    };
-  }, [adjustedPageIndex, totalPages]);
+  const { leftStackWidth, rightStackWidth } = useMemo(
+    () => {
+      const { left, right } = normalizeStackWidths(adjustedPageIndex, totalPages, 160);
+      return { leftStackWidth: left, rightStackWidth: right };
+    },
+    [adjustedPageIndex, totalPages]
+  );
 
   // Calculate page dimensions width-first: fill horizontal space (after stacks),
   // then derive a uniform height that preserves each page's intrinsic ratio.

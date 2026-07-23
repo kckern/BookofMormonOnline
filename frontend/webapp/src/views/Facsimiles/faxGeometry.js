@@ -17,6 +17,23 @@ export function resolvePgOffset(item) {
  * render). `getRef(pageIndex, i)` is injected to avoid a circular import;
  * `assetBaseUrl` is BoMOnlineAPI's `assetUrl`.
  */
+/**
+ * Distribute a FIXED total footprint (px) between the two edge-stacks in
+ * proportion to how many leaves sit before vs after the current spread.
+ * This keeps the stacks' combined width constant across turns (no page-width
+ * jitter) and never "sticks" at a per-side cap on long books (audit §2.10).
+ * `adjustedPageIndex` is the even index of the left page.
+ */
+export function normalizeStackWidths(adjustedPageIndex, totalPages, totalFootprint = 160) {
+  const before = Math.max(0, Math.floor(adjustedPageIndex / 2));
+  const after = Math.max(0, Math.floor((totalPages - (adjustedPageIndex + 2)) / 2));
+  const sum = before + after;
+  if (sum <= 0) return { left: 0, right: 0 };
+  const left = Math.round((before / sum) * totalFootprint);
+  const right = Math.round((after / sum) * totalFootprint);
+  return { left, right };
+}
+
 export function buildLeafIndex(item, pgoffset, pageIndex, getRef, assetBaseUrl) {
   const pages = parseInt(item.pages, 10);
   const totalLeaves = pages + 1 + pgoffset;

@@ -1,4 +1,4 @@
-import { resolvePgOffset, buildLeafIndex } from "../faxGeometry";
+import { resolvePgOffset, buildLeafIndex, normalizeStackWidths } from "../faxGeometry";
 
 describe("resolvePgOffset", () => {
   test("prefers numeric pgOffset (camelCase)", () => {
@@ -41,5 +41,28 @@ describe("buildLeafIndex", () => {
     const leaves = buildLeafIndex(ITEM, 2, [], REF, "https://cdn");
     expect(leaves[3].isLeftSide).toBe(false); // i=1 (odd) -> right
     expect(leaves[4].isLeftSide).toBe(true);  // i=2 (even) -> left
+  });
+});
+
+describe("normalizeStackWidths", () => {
+  test("splits a fixed total footprint by before/after ratio", () => {
+    const { left, right } = normalizeStackWidths(50, 100, 160);
+    expect(left + right).toBeLessThanOrEqual(160);
+    expect(Math.abs(left - right)).toBeLessThanOrEqual(4); // roughly balanced mid-book
+  });
+  test("near the start: left thin, right fat, still sums to <= total", () => {
+    const { left, right } = normalizeStackWidths(2, 100, 160);
+    expect(left).toBeLessThan(right);
+    expect(left + right).toBeLessThanOrEqual(160);
+  });
+  test("never exceeds total regardless of book length (no cap-stick)", () => {
+    const { left, right } = normalizeStackWidths(400, 2000, 160);
+    expect(left + right).toBeLessThanOrEqual(160);
+    expect(left).toBeGreaterThan(0);
+    expect(right).toBeGreaterThan(0);
+  });
+  test("zero pages before -> zero left width", () => {
+    const { left } = normalizeStackWidths(0, 100, 160);
+    expect(left).toBe(0);
   });
 });
