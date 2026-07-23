@@ -1,13 +1,17 @@
 import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
-import { useParams, useHistory } from "react-router-dom";
+import { useParams, useHistory, useLocation } from "react-router-dom";
 import ReactTooltip from "react-tooltip";
 import { useSwipe } from "../../models/Utils";
 import { assetUrl } from 'src/models/BoMOnlineAPI';
 import "./FacsimilePageViewer.scss";
 import { getRefFromIndex, PageOverlay } from "./Facsimiles";
+import { useElementSize } from "./useElementSize";
 import PageImage from "./PageImage";
 import PageStack from "./PageStack";
 import { generateReference, lookupReference } from "scripture-guide";
+import { normalizeStackWidths } from "./faxGeometry";
+import { useFaxHighlight } from "./useFaxHighlight";
+import FaxHighlightOverlay from "./FaxHighlightOverlay";
 
 /**
  * FacsimilePageViewer - Desktop version of the facsimile page viewer
@@ -25,13 +29,17 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
   const [tooltipPosition, setTooltipPosition] = useState({ left: 0, top: 0 });
   const sliderRef = useRef(null);
   const pagesContainerRef = useRef(null);
-  const [containerSize, setContainerSize] = useState({ width: 0, height: 0, top: 0, viewportH: typeof window !== 'undefined' ? window.innerHeight : 0 });
+  const containerSize = useElementSize(pagesContainerRef);
   const [leftRatio, setLeftRatio] = useState(0.75);
   const [rightRatio, setRightRatio] = useState(0.75);
   
   // Check if the pageNumber contains any letters (A-z), which means it's a reference
   const hasLetters = /[A-Za-z]/.test(pageNumber || '');
   const totalPages = leafIndex.length;
+
+  const location = useLocation();
+  const refParam = new URLSearchParams(location.search).get('ref') || (hasLetters ? pageNumber : null);
+  const highlight = useFaxHighlight(item.slug, refParam);
 
   // Initialize page index based on URL
   useEffect(() => {
@@ -107,6 +115,10 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
     }
   }, [pageNumber, leafIndex, item.pages, hasLetters]);
 
+  // Keep the slider thumb aligned when the page changes by any means
+  // (arrows, buttons, stack, deep link). Audit §2.3.
+  useEffect(() => { setSliderValue(currentPageIndex); }, [currentPageIndex]);
+
   // Adjust page index to ensure even pages are on the left
   const getAdjustedPageIndex = useCallback((index) => {
     if (index <= 0) return 0; // Handle first page
@@ -147,142 +159,6 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
   const leftPage = leafIndex[adjustedPageIndex] || null;
   const rightPage = leafIndex[adjustedPageIndex + 1] || null;
 
-  // Measure container size with improved throttling to prevent ResizeObserver loops
-  useEffect(() => {
-    if (!pagesContainerRef.current) return;
-    
-    const el = pagesContainerRef.current;
-    
-    // Track the last update timestamp to enforce minimum intervals between updates
-    let lastUpdateTime = 0;
-    let pendingUpdate = false;
-    let pendingSize = null;
-    let timeoutId = null;
-    let rafId = null;
-    let latestWidth = 0;
-    let latestHeight = 0;
-    
-    // Only update size if significant changes occurred or minimum time passed
-    const MIN_UPDATE_INTERVAL = 100; // ms between state updates
-    const SIZE_THRESHOLD = 5; // px difference to consider significant
-    
-    const processResize = (width, height, top) => {
-      // Round to avoid minor fluctuations
-      width = Math.floor(width);
-      height = Math.floor(height);
-      top = Math.floor(top || 0);
-      
-      const now = Date.now();
-      const timeSinceLastUpdate = now - lastUpdateTime;
-      const widthDiff = Math.abs(width - containerSize.width);
-      const heightDiff = Math.abs(height - containerSize.height);
-      const topDiff = Math.abs(top - (containerSize.top || 0));
-      const hasSizeChanged = widthDiff > SIZE_THRESHOLD || heightDiff > SIZE_THRESHOLD;
-      
-      // Either update immediately for significant changes or store for later update
-      if (hasSizeChanged || timeSinceLastUpdate >= MIN_UPDATE_INTERVAL) {
-        // Clear any pending update
-        if (timeoutId) {
-          clearTimeout(timeoutId);
-          timeoutId = null;
-        }
-        
-        lastUpdateTime = now;
-        pendingUpdate = false;
-        pendingSize = null;
-        
-        // Only update state if size has actually changed
-        if (width !== containerSize.width || height !== containerSize.height || topDiff > 0) {
-          setContainerSize({ width, height, top, viewportH: window.innerHeight });
-        }
-      } else if (!pendingUpdate) {
-        // Schedule update for later
-        pendingUpdate = true;
-        pendingSize = { width, height, top };
-        
-        // Clear any existing timeout and set a new one
-        if (timeoutId) {
-          clearTimeout(timeoutId);
-        }
-        
-        // Schedule update after delay
-        timeoutId = setTimeout(() => {
-          if (pendingSize) {
-            lastUpdateTime = Date.now();
-            setContainerSize({ ...pendingSize, viewportH: window.innerHeight });
-            pendingUpdate = false;
-            pendingSize = null;
-          }
-        }, MIN_UPDATE_INTERVAL - timeSinceLastUpdate);
-      } else {
-        // Update pending size with latest measurements
-        pendingSize = { width, height, top };
-      }
-    };
-    
-    const scheduleUpdate = (width, height) => {
-      latestWidth = Math.floor(width);
-      latestHeight = Math.floor(height);
-      if (rafId != null) return;
-      rafId = requestAnimationFrame(() => {
-        rafId = null;
-        if (!el) return;
-        const rect = el.getBoundingClientRect();
-        processResize(latestWidth, latestHeight, rect.top);
-      });
-    };
-
-    const updateSize = () => {
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
-      scheduleUpdate(rect.width, rect.height);
-    };
-    
-    // Get initial size
-    updateSize();
-    
-    // Set up ResizeObserver with error handling
-    const ro = new ResizeObserver((entries) => {
-      try {
-        // Only update if our target element has changed size
-        const entry = entries.find(entry => entry.target === el);
-        if (entry) {
-          // Use contentRect for more stable measurements
-          const { width, height } = entry.contentRect;
-          scheduleUpdate(width, height);
-        }
-      } catch (err) {
-        console.warn("ResizeObserver error:", err);
-      }
-    });
-    
-    // Start observing with error handling
-    try {
-      ro.observe(el, { box: 'border-box' });
-    } catch (err) {
-      console.warn("ResizeObserver failed to observe:", err);
-    }
-    
-    // Also listen for window resize events as backup
-    window.addEventListener('resize', updateSize);
-    
-    // Cleanup
-    return () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-      if (rafId != null) {
-        cancelAnimationFrame(rafId);
-      }
-      try {
-        ro.disconnect();
-      } catch (err) {
-        console.warn("ResizeObserver disconnect failed:", err);
-      }
-      window.removeEventListener('resize', updateSize);
-    };
-  }, []); // Empty dependency array - we handle updates manually
-
   // Load left page image and calculate aspect ratio
   useEffect(() => {
     if (!leftPage) { 
@@ -313,16 +189,13 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
     return () => { img.onload = null; };
   }, [rightPage?.thumbAssetUrl, rightPage?.pageAssetUrl, rightPage]);
 
-  // Estimate stack widths with parity filtering: left = even pages before current spread; right = odd pages after
-  const { leftStackWidth, rightStackWidth } = useMemo(() => {
-    // adjustedPageIndex is even (left page)
-    const leftEvenCount = Math.max(0, Math.floor(adjustedPageIndex / 2));
-    const rightOddCount = Math.max(0, Math.floor((totalPages - (adjustedPageIndex + 2)) / 2));
-    return {
-      leftStackWidth: Math.min(200, leftEvenCount),
-      rightStackWidth: Math.min(200, rightOddCount)
-    };
-  }, [adjustedPageIndex, totalPages]);
+  const { leftStackWidth, rightStackWidth } = useMemo(
+    () => {
+      const { left, right } = normalizeStackWidths(adjustedPageIndex, totalPages, 160);
+      return { leftStackWidth: left, rightStackWidth: right };
+    },
+    [adjustedPageIndex, totalPages]
+  );
 
   // Calculate page dimensions width-first: fill horizontal space (after stacks),
   // then derive a uniform height that preserves each page's intrinsic ratio.
@@ -398,7 +271,7 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
     const adjustedIndex = getAdjustedPageIndex(newIndex);
     const targetPage = leafIndex[adjustedIndex];
     if (targetPage) {
-      history.push(`/fax/${item.slug}/${targetPage.pageSlugLeaf}`);
+      history.replace(`/fax/${item.slug}/${targetPage.pageSlugLeaf}`);
     }
   }, [history, item.slug, leafIndex, getAdjustedPageIndex]);
 
@@ -427,6 +300,8 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
   useEffect(() => {
     const onKey = (e) => {
       if (e.defaultPrevented) return;
+      const tag = (e.target?.tagName || '').toLowerCase();
+      if (tag === 'input' || tag === 'select' || tag === 'textarea') return;
       if (e.key === 'ArrowLeft') { e.preventDefault(); handleSwipeRight(); }
       else if (e.key === 'ArrowRight') { e.preventDefault(); handleSwipeLeft(); }
       else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
@@ -553,22 +428,32 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
     // Determine which side (left or right) for additional styling if needed
     const isLeft = page === leftPage;
     const aspectRatio = isLeft ? leftRatio : rightRatio;
-    
+    const boxes = highlight.boxesByPage.get(page.pageNumInt);
+
     return (
-      <PageImage
-        src={page.pageAssetUrl}
-        previewSrc={page.thumbAssetUrl}
-        label={`Page ${page.pageSlugLeaf}`}
-        reference={page.pageReference}
-        alt={`Page ${page.pageSlugLeaf}`}
-        onClick={onClick}
-        className={isLastPage ? "last-page" : ""}
-        style={{
-          aspectRatio: aspectRatio ? `${aspectRatio}` : undefined,
-          height: '100%',
-          width: 'auto'
-        }}
-      />
+      <>
+        <PageImage
+          src={page.pageAssetUrl}
+          previewSrc={page.thumbAssetUrl}
+          label={`Page ${page.pageSlugLeaf}`}
+          reference={page.pageReference}
+          alt={`Page ${page.pageSlugLeaf}`}
+          onClick={onClick}
+          className={isLastPage ? "last-page" : ""}
+          style={{
+            aspectRatio: aspectRatio ? `${aspectRatio}` : undefined,
+            height: '100%',
+            width: 'auto'
+          }}
+        />
+        {boxes && boxes.length > 0 && (
+          <FaxHighlightOverlay
+            boxes={boxes}
+            pageScale={highlight.pageScale}
+            displayedWidth={isLeft ? leftPageWidth : rightPageWidth}
+          />
+        )}
+      </>
     );
   };
 
@@ -600,7 +485,7 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
                 adjustedPageIndex={adjustedPageIndex}
                 totalPages={totalPages}
                 onPageChange={handlePageChange}
-                width={leftStackWidth}
+                stackWidthPx={leftStackWidth}
               />
             )}
 
@@ -609,8 +494,6 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
               style={{
                 width: leftPageWidth ? `${leftPageWidth}px` : undefined,
                 height: calculatedHeight ? `${calculatedHeight}px` : undefined,
-                // Smooth transitions
-                transition: 'width 0.15s ease, height 0.15s ease',
                 // Flex for centering image within the page box
                 display: 'flex',
                 justifyContent: 'center',
@@ -629,8 +512,6 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
               style={{
                 width: rightPageWidth ? `${rightPageWidth}px` : undefined,
                 height: calculatedHeight ? `${calculatedHeight}px` : undefined,
-                // Smooth transitions
-                transition: 'width 0.15s ease, height 0.15s ease',
                 // Flex for centering
                 display: 'flex',
                 justifyContent: 'center',
@@ -653,7 +534,7 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
                 adjustedPageIndex={adjustedPageIndex}
                 totalPages={totalPages}
                 onPageChange={handlePageChange}
-                width={rightStackWidth}
+                stackWidthPx={rightStackWidth}
               />
             )}
           </div>
@@ -680,6 +561,7 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
           className="nav-button"
           onClick={handleSwipeRight}
           disabled={currentPageIndex <= 0}
+          aria-label="Previous pages"
         >
           &#8249;
         </button>
@@ -716,15 +598,39 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
             onMouseEnter={() => setShowTooltip(true)}
             onMouseLeave={() => setShowTooltip(false)}
             className="custom-slider"
+            aria-label="Page position"
+            aria-valuetext={`Page ${leafIndex[sliderValue]?.pageSlugLeaf ?? sliderValue} of ${item.pages}`}
           />
         </div>
         <button
           className="nav-button"
           onClick={handleSwipeLeft}
           disabled={currentPageIndex >= totalPages - (totalPages % 2 === 0 ? 1 : 2)}
+          aria-label="Next pages"
         >
           &#8250;
         </button>
+        <form
+          className="fax-page-jump"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const n = parseInt(e.target.elements.pageInput.value, 10);
+            if (!Number.isFinite(n)) return;
+            const idx = leafIndex.findIndex((l) => l.pageNumInt === n || `${l.pageSlugLeaf}` === `${n}`);
+            if (idx !== -1) handlePageChange(idx);
+          }}
+        >
+          <input
+            name="pageInput"
+            type="number"
+            min={1}
+            max={item.pages}
+            defaultValue={leftPage?.pageSlugLeaf || ''}
+            key={leftPage?.pageSlugLeaf}
+            aria-label="Jump to page"
+          />
+          <span className="of-total">/ {item.pages}</span>
+        </form>
       </div>
     </div>
   );

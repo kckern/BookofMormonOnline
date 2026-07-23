@@ -262,21 +262,6 @@
   width: 100%;
 }
 
-.page {
-  max-width: 100%;
-  padding: 0;
-  margin: 0;
-  background-color: white;
-  height: 100%;
-}
-
-.page img {
-  object-fit: fill;
-  cursor: pointer;
-  height: 100%;
-  width: 100%;
-}
-
 /* PageImage shimmer + fade-in */
 .pageImageWrapper {
   position: relative;
@@ -491,18 +476,25 @@
   overflow: visible;
 }
 
-.facsimileViewer h1 {
-  text-align: center;
-  flex-shrink: 0;
-}
-
-h1.facsimileViewerTitle {
+.facsimileToolbar {
   display: flex;
-  margin-bottom: 0;
+  align-items: center;
+  gap: 0.75rem;
   flex-shrink: 0;
-  margin-right: 6rem;
-  font-weight: 800;
-  color: #000!important;
+  padding: 0.4rem 1rem;
+
+  .fax-back { display: inline-flex; align-items: center; }
+
+  .fax-title {
+    flex-grow: 1;
+    text-align: center;
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: #000;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 
 .facsimileViewer .faxPageViewer {

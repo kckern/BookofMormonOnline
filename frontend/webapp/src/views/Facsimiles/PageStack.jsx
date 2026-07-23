@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState, useCallback } from "react"
 import { createPortal } from 'react-dom';
 import { generateReference, lookupReference } from "scripture-guide";
 import { assetUrl } from 'src/models/BoMOnlineAPI';
+import { prefetchThumbs, isThumbWarm } from './faxThumbCache';
 
 /**
  * PageStack - vertical page index next to the spread
@@ -16,7 +17,7 @@ import { assetUrl } from 'src/models/BoMOnlineAPI';
  * - totalPages: number (total leaf count)
  * - onPageChange: (index: number) => void (expects left page index of a spread)
  */
-export default function PageStack({ side, leafIndex, adjustedPageIndex, totalPages, onPageChange, width }) {
+export default function PageStack({ side, leafIndex, adjustedPageIndex, totalPages, onPageChange, stackWidthPx }) {
   const containerRef = useRef(null);
   const [containerWidth, setContainerWidth] = useState(0);
   const [hover, setHover] = useState({ visible: false, x: 0, y: 0, pageIdx: null });
@@ -65,26 +66,48 @@ export default function PageStack({ side, leafIndex, adjustedPageIndex, totalPag
 
   // Skip factor no longer needed for visual stripes (we render 1px per column up to 200px)
 
+  // Cancel any pending rAF on unmount
+  useEffect(() => () => { if (rafRef.current != null) cancelAnimationFrame(rafRef.current); }, []);
+
   // Map X offset within container to a page index in this stack
   const positionToPageIdx = useCallback((x) => {
-    const width = containerWidth || targetWidth;
+    const width = containerWidth || stackWidthPx || targetWidth;
     if (width <= 0 || count <= 0) return null;
     const r = Math.max(0, Math.min(1, x / width));
     // Map left-to-right within the stack to increasing page numbers regardless of stack side
     const ratio = r;
     const relative = Math.max(0, Math.min(count - 1, Math.floor(ratio * count)));
     return stackIndices[relative] ?? null;
-  }, [containerWidth, targetWidth, count, stackIndices]);
+  }, [containerWidth, stackWidthPx, targetWidth, count, stackIndices]);
 
-  const onMove = useCallback((e) => {
-    if (!containerRef.current) return;
+  const rafRef = useRef(null);
+  const pendingRef = useRef(null);
+
+  const applyMove = useCallback(() => {
+    rafRef.current = null;
+    const p = pendingRef.current;
+    if (!p || !containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const x = p.clientX - rect.left;
+    const y = p.clientY - rect.top;
     const idx = positionToPageIdx(x);
     const clampedX = Math.max(0, Math.min(rect.width, x));
     setHover({ visible: true, x: clampedX, y: Math.max(0, Math.min(rect.height, y)), pageIdx: idx });
-  }, [positionToPageIdx]);
+    if (idx != null) {
+      const here = stackIndices.indexOf(idx);
+      const urls = [];
+      for (let d = -2; d <= 2; d++) {
+        const leaf = leafIndex[stackIndices[here + d]];
+        if (leaf?.thumbAssetUrl) urls.push(leaf.thumbAssetUrl);
+      }
+      prefetchThumbs(urls);
+    }
+  }, [positionToPageIdx, stackIndices, leafIndex]);
+
+  const onMove = useCallback((e) => {
+    pendingRef.current = { clientX: e.clientX, clientY: e.clientY };
+    if (rafRef.current == null) rafRef.current = requestAnimationFrame(applyMove);
+  }, [applyMove]);
 
   const onLeave = useCallback(() => setHover((h) => ({ ...h, visible: false })), []);
 
@@ -98,9 +121,8 @@ export default function PageStack({ side, leafIndex, adjustedPageIndex, totalPag
   const page = hover.pageIdx != null ? leafIndex[hover.pageIdx] : null;
   const [thumbLoaded, setThumbLoaded] = useState(false);
   useEffect(() => {
-    // reset load state whenever hovered page changes or tooltip hides
-    setThumbLoaded(false);
-  }, [page?.thumbAssetUrl, page?.pageAssetUrl, hover.visible]);
+    setThumbLoaded(isThumbWarm(page?.thumbAssetUrl));
+  }, [page?.thumbAssetUrl]);
 
   // Tooltip position relative to stack side; show above the bar, X at hovered column
   const tooltipViewportStyle = useMemo(() => {
@@ -121,7 +143,7 @@ export default function PageStack({ side, leafIndex, adjustedPageIndex, totalPag
   }, [hover.visible, hover.y, hover.x, page, side]);
 
   // Set CSS variables for sampling/alternating colors
-  const stackStyle = { width: `${width ?? targetWidth}px` };
+  const stackStyle = { width: `${stackWidthPx ?? targetWidth}px` };
 
   const pageVerseIds = useMemo(() => {
     if (!page?.pageReference) return [];
@@ -145,6 +167,10 @@ export default function PageStack({ side, leafIndex, adjustedPageIndex, totalPag
       onClick={onClick}
       role="button"
       aria-label={`${side} page stack`}
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); }
+      }}
     >
       {/* Hover column indicator */}
       {hover.visible && (
@@ -158,6 +184,7 @@ export default function PageStack({ side, leafIndex, adjustedPageIndex, totalPag
             <div className="stack-thumb" style={{ width: 96, aspectRatio: '2 / 3', position: 'relative', overflow: 'hidden' }}>
               {!thumbLoaded && <div className="skeleton-shimmer" />}
               <img
+                key={page.thumbAssetUrl}
                 src={page.thumbAssetUrl}
                 alt={`Thumbnail of page ${page.pageSlugLeaf}`}
                 onLoad={() => setThumbLoaded(true)}

@@ -1,19 +1,16 @@
 import React, { useEffect, useState } from 'react';
+import { isThumbWarm, markThumbWarm } from './faxThumbCache';
 
 /**
  * PageImage
  * Shows a shimmer placeholder immediately when src changes, then
  * fades the image in once it has loaded.
  */
-export default function PageImage({ src, alt, onClick, className = '', previewSrc, label, reference, style }) {
-  const [loaded, setLoaded] = useState(false);
-  const [showPlaceholder, setShowPlaceholder] = useState(true);
+export default function PageImage({ src, alt, onClick, className = '', previewSrc, label, reference, style, loading }) {
+  const [loaded, setLoaded] = useState(() => isThumbWarm(src));
 
   useEffect(() => {
-    // Reset loading state whenever the source changes
-    setLoaded(false);
-    // Immediately show placeholder on first load and on src changes
-    setShowPlaceholder(true);
+    setLoaded(isThumbWarm(src)); // warm -> no shimmer; cold -> show it
   }, [src]);
 
   return (
@@ -22,11 +19,11 @@ export default function PageImage({ src, alt, onClick, className = '', previewSr
       onClick={onClick}
       style={style}
     >
-      {!loaded && showPlaceholder && previewSrc && (
+      {!loaded && previewSrc && (
         <img className="preview-blur" src={previewSrc} alt="" aria-hidden="true" style={style} />
       )}
-      {!loaded && showPlaceholder && <div className="skeleton-shimmer" aria-hidden="true" />}
-      {!loaded && showPlaceholder && (reference || label) && (
+      {!loaded && <div className="skeleton-shimmer" aria-hidden="true" />}
+      {!loaded && (reference || label) && (
         <div className="loading-label">
           {reference && <div className="ref">{reference}</div>}
           {label && <div className="pageLabel">{label}</div>}
@@ -36,9 +33,10 @@ export default function PageImage({ src, alt, onClick, className = '', previewSr
         className="main-image"
         src={src}
         alt={alt}
-        onLoad={() => setLoaded(true)}
+        onLoad={() => { markThumbWarm(src); setLoaded(true); }}
         onError={() => setLoaded(true)}
         style={style}
+        loading={loading}
       />
     </div>
   );

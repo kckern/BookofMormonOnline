@@ -47,8 +47,8 @@
     background: repeating-linear-gradient(
       to right,
       #AAA 0,
-      #888 2px,
       #AAA 1px,
+      #888 1px,
       #888 2px
     );
   border-radius: 0;
@@ -136,7 +136,6 @@
     min-height: 0;
     height: auto;
     max-height: none;
-    will-change: width, height; /* optimize for animations */
     contain: layout; /* improve performance */
     
     img {
@@ -307,9 +306,35 @@
       }
     }
     
+    .fax-page-jump {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.85rem;
+      color: #444;
+      input { width: 3.5em; text-align: center; }
+    }
+
     &.mobile {
       .slider-container {
         width: 50%;
+
+        .mobile-slider-preview {
+          position: absolute;
+          bottom: 44px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: #fff;
+          border: 1px solid #ccc;
+          border-radius: 6px;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+          padding: 6px;
+          text-align: center;
+          pointer-events: none;
+          z-index: 20;
+          img { width: 64px; height: auto; display: block; margin: 0 auto 4px; }
+          .preview-label { font-size: 0.8rem; color: #444; white-space: nowrap; }
+        }
       }
     }
   }

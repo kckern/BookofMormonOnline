@@ -1,11 +1,13 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
-import { useParams, useHistory } from "react-router-dom";
+import { useParams, useHistory, useLocation } from "react-router-dom";
 import { useSwipe } from "../../models/Utils";
 import { assetUrl } from 'src/models/BoMOnlineAPI';
 import "./FacsimilePageViewer.scss";
 import { getRefFromIndex, PageOverlay } from "./Facsimiles";
 import PageImage from "./PageImage";
 import { generateReference, lookupReference } from "scripture-guide";
+import { useFaxHighlight } from "./useFaxHighlight";
+import FaxHighlightOverlay from "./FaxHighlightOverlay";
 
 /**
  * FacsimilePageViewerMobile - Mobile version of the facsimile page viewer
@@ -17,12 +19,17 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
 
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [sliderValue, setSliderValue] = useState(0);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const sliderRef = useRef(null);
 
   const totalPages = leafIndex.length;
 
   // Check if the pageNumber contains any letters (A-z), which means it's a reference
   const hasLetters = /[A-Za-z]/.test(pageNumber || '');
+
+  const location = useLocation();
+  const refParam = new URLSearchParams(location.search).get('ref') || (hasLetters ? pageNumber : null);
+  const highlight = useFaxHighlight(item.slug, refParam);
 
   // Initialize page index based on URL
   useEffect(() => {
@@ -94,6 +101,10 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
     }
   }, [pageNumber, leafIndex, item.pages]);
 
+  // Keep the slider thumb aligned when the page changes by any means
+  // (arrows, buttons, stack, deep link). Audit §2.3.
+  useEffect(() => { setSliderValue(currentPageIndex); }, [currentPageIndex]);
+
   // Preload adjacent pages
   const getPagesToPreload = useCallback(() => {
     if (!leafIndex) return [];
@@ -119,7 +130,7 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
     
     const targetPage = leafIndex[newIndex];
     if (targetPage) {
-      history.push(`/fax/${item.slug}/${targetPage.pageSlugLeaf}`);
+      history.replace(`/fax/${item.slug}/${targetPage.pageSlugLeaf}`);
     }
   }, [history, item.slug, leafIndex]);
 
@@ -143,6 +154,8 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
   useEffect(() => {
     const onKey = (e) => {
       if (e.defaultPrevented) return;
+      const tag = (e.target?.tagName || '').toLowerCase();
+      if (tag === 'input' || tag === 'select' || tag === 'textarea') return;
       if (e.key === 'ArrowLeft') { e.preventDefault(); handleSwipeRight(); }
       else if (e.key === 'ArrowRight') { e.preventDefault(); handleSwipeLeft(); }
       else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
@@ -178,19 +191,27 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
     }
     
     // Special handling for the last page
-    const isLastPage = (pgoffset !== undefined && page.pageNumInt === totalPages - pgoffset) || 
+    const isLastPage = (pgoffset !== undefined && page.pageNumInt === totalPages - pgoffset) ||
                        page.pageSlugLeaf === leafIndex[leafIndex.length - 1]?.pageSlugLeaf;
-    
+    const boxes = highlight.boxesByPage.get(page.pageNumInt);
+
     return (
-      <PageImage
-        src={page.pageAssetUrl}
-        previewSrc={page.thumbAssetUrl}
-        alt={`Page ${page.pageSlugLeaf}`}
-        label={page.pageReference || `Page ${page.pageSlugLeaf}`}
-        className={isLastPage ? "last-page" : ""}
-      />
+      <>
+        <PageImage
+          src={page.pageAssetUrl}
+          previewSrc={page.thumbAssetUrl}
+          alt={`Page ${page.pageSlugLeaf}`}
+          label={page.pageReference || `Page ${page.pageSlugLeaf}`}
+          className={isLastPage ? "last-page" : ""}
+        />
+        {boxes && boxes.length > 0 && (
+          <FaxHighlightOverlay boxes={boxes} pageScale={highlight.pageScale} />
+        )}
+      </>
     );
   };
+
+  const previewPage = leafIndex[sliderValue] || null;
 
   return (
     <div className="faxPageViewer mobile" style={{ maxHeight: 'none' }} {...swipeHandlers}>
@@ -210,6 +231,7 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
           className="nav-button"
           onClick={handleSwipeRight}
           disabled={currentPageIndex <= 0}
+          aria-label="Previous page"
         >
           &#8249;
         </button>
@@ -218,25 +240,56 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
             type="range"
             min={0}
             max={totalPages - 1}
-            step={1} // Move slider in steps of 1 for mobile (single pages)
+            step={1}
             value={sliderValue}
             onChange={handleSliderChange}
-            onMouseUp={handleSliderRelease}
-            onTouchEnd={handleSliderRelease}
+            onMouseDown={() => setPreviewOpen(true)}
+            onTouchStart={() => setPreviewOpen(true)}
+            onMouseUp={() => { setPreviewOpen(false); handleSliderRelease(); }}
+            onTouchEnd={() => { setPreviewOpen(false); handleSliderRelease(); }}
             className="custom-slider"
+            aria-label="Page position"
+            aria-valuetext={`Page ${previewPage?.pageSlugLeaf ?? sliderValue + 1} of ${totalPages}`}
           />
+          {previewOpen && previewPage && (
+            <div className="mobile-slider-preview">
+              <img src={previewPage.thumbAssetUrl} alt="" aria-hidden="true" />
+              <div className="preview-label">
+                {previewPage.pageReference || `Page ${previewPage.pageSlugLeaf}`}
+              </div>
+            </div>
+          )}
         </div>
         <button
           className="nav-button"
           onClick={handleSwipeLeft}
           disabled={currentPageIndex >= totalPages - 1}
+          aria-label="Next page"
         >
           &#8250;
         </button>
       </div>
-      <div className="page-counter">
-        {currentPageIndex + 1} / {totalPages}
-      </div>
+      <form
+        className="fax-page-jump"
+        onSubmit={(e) => {
+          e.preventDefault();
+          const n = parseInt(e.target.elements.pageInput.value, 10);
+          if (!Number.isFinite(n)) return;
+          const idx = leafIndex.findIndex((l) => l.pageNumInt === n || `${l.pageSlugLeaf}` === `${n}`);
+          if (idx !== -1) handlePageChange(idx);
+        }}
+      >
+        <input
+          name="pageInput"
+          type="number"
+          min={1}
+          max={item.pages}
+          defaultValue={currentPage?.pageSlugLeaf || ''}
+          key={currentPage?.pageSlugLeaf}
+          aria-label="Jump to page"
+        />
+        <span className="of-total">/ {item.pages}</span>
+      </form>
     </div>
   );
 }
