@@ -31,6 +31,7 @@ export const getRefFromIndex = (pageIndex, pageNum) => {
 
 function FacsimileViewer({ item, volumeOrder, currentVolumeIndex }) {
   const match = useParams();
+  const history = useHistory();
   const findLeafFromSlug = (leafIndex, match) => {
     return leafIndex.find((leaf) => `${leaf.pageSlugLeaf}` === `${match.pageNumber}`) || null;
   };
@@ -65,10 +66,10 @@ function FacsimileViewer({ item, volumeOrder, currentVolumeIndex }) {
   // Handle keypress for escape
   const handleKeyPress = useCallback((e) => {
     if (e.key === "Escape") {
-      document.getElementById("fax_back").click();
+      history.push(match.pageNumber !== undefined ? `/fax/${item.slug}` : "/fax");
     }
     // Left and right arrow keys can be added here if desired
-  }, []);
+  }, [history, match.pageNumber, item.slug]);
 
   useEffect(() => {
     document.addEventListener("keydown", handleKeyPress);
@@ -92,12 +93,12 @@ function FacsimileViewer({ item, volumeOrder, currentVolumeIndex }) {
   const { title } = item;
   return (
     <div className={`facsimileViewer${isGridMode ? ' gridMode' : ''}`}>
-      <h1 className="facsimileViewerTitle">
-        <Link id="fax_back" to={displayLeaf ? `/fax/${item.slug}` : "/fax"} aria-label="Back to facsimiles">
-          <img src={backIcon} alt="Back" style={{ width: 20, height: 20 }} />
+      <div className="facsimileToolbar">
+        <Link id="fax_back" className="fax-back" to={displayLeaf ? `/fax/${item.slug}` : "/fax"} aria-label="Back to facsimiles">
+          <img src={backIcon} alt="" aria-hidden="true" style={{ width: 20, height: 20 }} />
         </Link>
-        <span style={{ flexGrow: 1 }}>{title}</span>
-      </h1>
+        <span className="fax-title">{title}</span>
+      </div>
       {isGridMode ?
         <FacsimileGridViewer item={item} leafIndex={leafIndex} /> :
         (isMobile() ? 
