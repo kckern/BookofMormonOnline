@@ -263,7 +263,7 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
     const adjustedIndex = getAdjustedPageIndex(newIndex);
     const targetPage = leafIndex[adjustedIndex];
     if (targetPage) {
-      history.push(`/fax/${item.slug}/${targetPage.pageSlugLeaf}`);
+      history.replace(`/fax/${item.slug}/${targetPage.pageSlugLeaf}`);
     }
   }, [history, item.slug, leafIndex, getAdjustedPageIndex]);
 

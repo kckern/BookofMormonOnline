@@ -119,7 +119,7 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
     
     const targetPage = leafIndex[newIndex];
     if (targetPage) {
-      history.push(`/fax/${item.slug}/${targetPage.pageSlugLeaf}`);
+      history.replace(`/fax/${item.slug}/${targetPage.pageSlugLeaf}`);
     }
   }, [history, item.slug, leafIndex]);
 
