@@ -56,7 +56,25 @@ const targetVerseIds = (ref) => {
  *
  * onNavigate fires when a Study link is clicked (so a popup can dismiss).
  */
-export default function ScriptureExcerpt({ refText, onNavigate, hideStudy = false, refAsPopup = false }) {
+// Strip the curly/straight quotes an anchor phrase is stored with, so it can be
+// substring-matched against the plain verse text.
+const cleanPhrase = (p) => (p || "").replace(/[“”"'‘’]/g, "").trim();
+
+// Wrap the first occurrence of `phrase` inside `text` in a highlight <mark>.
+// Returns the raw string when there's no phrase or no match (graceful).
+const highlightPhrase = (text, phrase) => {
+  if (!phrase) return text;
+  const idx = text.toLowerCase().indexOf(phrase.toLowerCase());
+  if (idx < 0) return text;
+  return [
+    text.slice(0, idx),
+    <mark key="anchor" className="scriptureAnchorMark">{text.slice(idx, idx + phrase.length)}</mark>,
+    text.slice(idx + phrase.length),
+  ];
+};
+
+export default function ScriptureExcerpt({ refText, onNavigate, hideStudy = false, refAsPopup = false, highlight = null }) {
+  const anchor = cleanPhrase(highlight);
   const ref = refText ? canonical(refText) : null;
   // One entry per compound segment, IN ORDER — each is either a BoM result
   // ({ sections }) or a Bible/cross-ref result ({ passages }). Keeping the
@@ -175,7 +193,7 @@ export default function ScriptureExcerpt({ refText, onNavigate, hideStudy = fals
               {i === 0 && s.partial ? <span className="samplerScriptureEllipsis">… </span> : null}
               {b.lines.map((l) => (
                 <span key={l.verse_id} className={`verse_${l.verse_id}`}>
-                  <sup>{l.verse_num}</sup>{l.text}{" "}
+                  <sup>{l.verse_num}</sup>{highlightPhrase(l.text, anchor)}{" "}
                 </span>
               ))}
             </p>

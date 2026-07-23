@@ -1,9 +1,16 @@
 # Home-sampler tile UI tweaks — handoff
 
 **Date:** 2026-07-23
-**Status:** Requirements only — not implemented. Handoff for a follow-up agent.
+**Status:** ✅ All four implemented (2026-07-23) + a fifth (anchor-phrase gloss). See per-item notes below.
 **Scope:** Four home-sampler tiles under `frontend/webapp/src/views/Home/tiles/`.
 Styling lives in `frontend/webapp/src/views/Home/Sampler.css`.
+
+### Completion summary (2026-07-23)
+1. ✅ FaxVerseTile — text chip replaced with the per-edition `/fax/tabs/{version}` graphic, centered and resting on the crop's top edge.
+2. ✅ FaxTile — page bar shows the full verse span (backend `pageRangeRef` builds a contiguous range, e.g. "Alma 45:14–23"); tile en-dashes it.
+3. ✅ CommentaryTile — reference centered over the cover (`.commentaryTileRef` → `align-self/text-align: center`).
+4. ✅ WitnessTile — restored to a **single featured witness** (large portrait + statement + source), confirmed with KC. The prior multi-row "ripples" list is gone. Note: no earlier "single" design existed in git history; target confirmed by KC directly.
+5. ✅ (bonus) NotesTile anchor phrase — ~61% of notes carry the annotated phrase in `title`; the tile now leads the bubble with it (bold) and highlights it in the passage via a new `ScriptureExcerpt` `highlight` prop. Also: in-tile section-header refs now open the scripture popup (`refAsPopup`).
 
 Verify visually against `http://localhost:8200` (or a local dev server) — **not**
 `bom.kckern.net`, which serves a CDN-cached bundle (see CLAUDE.md).

@@ -13,48 +13,42 @@ const initials = (name) =>
     .join("");
 
 /**
- * Book of Mormon witness statements — Harris, the Cowderys, the Whitmers,
- * Hyrum & Samuel Smith — from the 'witnesses' history archive. Each row shows
- * the witness's portrait, their statement, and the source, and deep-links into
+ * A single featured Book of Mormon witness — Harris, the Cowderys, the Whitmers,
+ * Hyrum & Samuel Smith — from the 'witnesses' history archive. Large portrait,
+ * name, their statement (money quote, else teaser), and source; deep-links into
  * the Witnesses view. (A monogram stands in if a portrait fails to load.)
  */
 export default function WitnessTile({ data }) {
-  // redesigned cards lead with the money quote; fall back to the teaser
+  // lead with the money quote; fall back to the teaser
   const witnesses = (data || [])
     .filter((w) => w?.principal && (w?.moneyQuote || w?.statement))
     .map((w) => ({ ...w, quote: w.moneyQuote || w.statement }));
   if (!witnesses.length) return null;
+  const w = witnesses[0]; // featured single witness
   return (
     <div className="samplerTileInner witnessTile">
       <h3 className="tileHeading">
         <Link to="/history/witnesses">{label("witnesses")}</Link>
       </h3>
-      <div className="witnessList">
-        {witnesses.map((w) => (
-          <Link
-            key={w.slug || w.principal}
-            to={w.witnessSlug ? `/history/witnesses/${w.witnessSlug}` : "/history/witnesses"}
-            className="witnessRow"
-          >
-            <span className="witnessAvatar">
-              {w.witnessSlug ? (
-                <img
-                  src={`${assetUrl}/history/witnesses/people/${w.witnessSlug}.jpg`}
-                  alt={w.principal}
-                  loading="lazy"
-                  onError={(e) => { e.target.style.display = "none"; e.target.parentNode.classList.add("mono"); }}
-                />
-              ) : null}
-              <span className="witnessMono" aria-hidden="true">{initials(w.principal)}</span>
-            </span>
-            <span className="witnessBody">
-              <span className="witnessName">{w.principal}</span>
-              <span className="witnessStatement">“{clampWords(flatten(w.quote), 32)}”</span>
-              {w.source ? <span className="witnessSource">{clampWords(flatten(w.source), 14)}</span> : null}
-            </span>
-          </Link>
-        ))}
-      </div>
+      <Link
+        to={w.witnessSlug ? `/history/witnesses/${w.witnessSlug}` : "/history/witnesses"}
+        className="witnessFeatured"
+      >
+        <span className="witnessHero">
+          {w.witnessSlug ? (
+            <img
+              src={`${assetUrl}/history/witnesses/people/${w.witnessSlug}.jpg`}
+              alt={w.principal}
+              loading="lazy"
+              onError={(e) => { e.target.style.display = "none"; e.target.parentNode.classList.add("mono"); }}
+            />
+          ) : null}
+          <span className="witnessMono" aria-hidden="true">{initials(w.principal)}</span>
+        </span>
+        <span className="witnessName">{w.principal}</span>
+        <blockquote className="witnessStatement">“{clampWords(flatten(w.quote), 60)}”</blockquote>
+        {w.source ? <span className="witnessSource">{clampWords(flatten(w.source), 18)}</span> : null}
+      </Link>
     </div>
   );
 }

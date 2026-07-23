@@ -1531,30 +1531,29 @@ html[data-theme="dark"] .mapTileFrame { background: #22282e; }
 /* ================================================================
    WITNESS — Book of Mormon witness statements (reserve)
    ================================================================ */
-.witnessList { display: flex; flex-direction: column; gap: 0.6rem; }
-.witnessRow { display: flex; gap: 0.6rem; align-items: flex-start; text-decoration: none; color: inherit; }
-.witnessAvatar {
+/* featured single witness: large portrait, name, statement, source — centered */
+.witnessFeatured { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.4rem; text-decoration: none; color: inherit; }
+.witnessHero {
   position: relative;
   flex-shrink: 0;
-  width: 2.7rem;
-  height: 2.7rem;
+  width: 5.5rem;
+  height: 5.5rem;
   border-radius: 50%;
   overflow: hidden;
   background: #6b5d47;
+  border: 1px solid #d8d2c6;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid #d8d2c6;
 }
-.witnessAvatar img { width: 100%; height: 100%; object-fit: cover; display: block; position: relative; z-index: 1; }
-.witnessMono { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 0.8rem; z-index: 0; }
-html[data-theme="dark"] .witnessAvatar { background: #4a4033; border-color: #3a3a3a; }
-.witnessBody { min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; }
-.witnessName { font-size: 0.78rem; font-weight: 800; color: #2a2a2a; }
+.witnessHero img { width: 100%; height: 100%; object-fit: cover; display: block; position: relative; z-index: 1; }
+.witnessMono { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 1.5rem; z-index: 0; }
+html[data-theme="dark"] .witnessHero { background: #4a4033; border-color: #3a3a3a; }
+.witnessName { font-size: 0.95rem; font-weight: 800; color: #2a2a2a; }
 html[data-theme="dark"] .witnessName { color: #f0f0f0; }
-.witnessStatement { font-size: 0.74rem; line-height: 1.35; color: #555; }
+.witnessStatement { margin: 0; font-size: 0.9rem; line-height: 1.4; color: #444; }
 html[data-theme="dark"] .witnessStatement { color: #c4c4c4; }
-.witnessSource { font-size: 0.62rem; font-style: italic; color: #999; margin-top: 0.1rem; }
+.witnessSource { font-size: 0.68rem; font-style: italic; color: #999; margin-top: 0.1rem; }
 html[data-theme="dark"] .witnessSource { color: #8a8a8a; }
 
 
@@ -1652,6 +1651,11 @@ html[data-theme="dark"] .rpBoxPane .sectionDots { border-right-color: #444; }
   border: 1px solid #ddd;
 }
 .notesTile .notesAttr { font-size: 0.85rem; color: #666; }
+/* anchor phrase: the exact scripture snippet the note annotates (note.title) */
+.notesTile .notesAnchor { font-weight: 700; }
+/* the same phrase, highlighted where it appears in the passage above */
+.scriptureAnchorMark { background: rgba(255, 213, 79, 0.45); color: inherit; padding: 0 1px; border-radius: 2px; }
+html[data-theme="dark"] .scriptureAnchorMark { background: rgba(255, 213, 79, 0.28); }
 html[data-theme="dark"] .notesTile .notesBubble { background: #1e1e1e; border-color: #444; }
 html[data-theme="dark"] .notesTile .notesBubble::before { border-bottom-color: #444; }
 html[data-theme="dark"] .notesTile .notesBubble::after { border-bottom-color: #1e1e1e; }

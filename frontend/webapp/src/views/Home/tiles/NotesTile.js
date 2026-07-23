@@ -19,12 +19,15 @@ export default function NotesTile({ data }) {
   const author = note.publication?.source_name || null;
   const sourceId = note.publication?.source_id;
   const cover = sourceId ? `${assetUrl}/source/cover/${String(sourceId).padStart(3, "0")}` : null;
+  // ~61% of notes annotate a specific phrase (stored curly-quoted in `title`):
+  // lead the bubble with it and highlight it in the passage above.
+  const anchor = note.title || null;
   return (
     <div className="samplerTileInner notesTile">
       <h3 className="tileHeading">{label("notes")}</h3>
       <div className="notesEntry">
         <div className="read-content scriptureExcerptCompact">
-          <ScriptureExcerpt refText={note.reference} hideStudy refAsPopup />
+          <ScriptureExcerpt refText={note.reference} hideStudy refAsPopup highlight={anchor} />
         </div>
         <div className="notesText notesBubble">
           {cover ? (
@@ -36,7 +39,14 @@ export default function NotesTile({ data }) {
               onError={(e) => (e.target.style.display = "none")}
             />
           ) : null}
-          <span className="notesQuote">&ldquo;{Parser(note.text)}&rdquo;</span>
+          {anchor ? (
+            <>
+              <span className="notesAnchor">{anchor}</span>{" "}
+              <span className="notesQuote">{Parser(note.text)}</span>
+            </>
+          ) : (
+            <span className="notesQuote">&ldquo;{Parser(note.text)}&rdquo;</span>
+          )}
           {author ? <span className="notesAttr"> &mdash; {author}</span> : null}
         </div>
         {to ? (
