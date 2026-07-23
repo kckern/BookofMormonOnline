@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import { label } from "src/models/Utils";
+import { enDash } from "./textUtils";
 import { openScripture } from "./ScripturePopup";
 
 /**
@@ -61,7 +62,7 @@ export default function FaxTile({ data, payload }) {
                       tabIndex={0}
                       onClick={(e) => { e.preventDefault(); e.stopPropagation(); openScripture(p.ref); }}
                     >
-                      {p.ref}
+                      {enDash(p.ref)}
                     </span>
                   ) : <span />}
                   <span className="faxPageBarNum">p. {p.page}</span>

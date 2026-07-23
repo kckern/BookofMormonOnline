@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { renderBaseUrl } from "src/models/BoMOnlineAPI";
+import { renderBaseUrl, assetUrl } from "src/models/BoMOnlineAPI";
 import { label } from "src/models/Utils";
 import ScriptureExcerpt from "src/views/_Common/ScriptureExcerpt";
 
@@ -56,15 +56,24 @@ export default function FaxVerseTile({ data }) {
             : null;
           return (
             <Link key={ed.version} to={to} className="faxEditionRow">
-              <span className="faxEditionLabel">{ed.title || ed.version}</span>
               {src ? (
-                <img
-                  className="faxEditionCrop"
-                  src={src}
-                  alt={`${ed.title || ed.version} ${data.ref || ""}`.trim()}
-                  loading="lazy"
-                  onError={hideRow}
-                />
+                <div className="faxEditionCropWrap">
+                  {/* per-edition tab graphic, centered and sitting on the crop's top edge */}
+                  <img
+                    className="faxEditionTab"
+                    src={`${assetUrl}/fax/tabs/${ed.version}`}
+                    alt={ed.title || ed.version}
+                    loading="lazy"
+                    onError={(e) => (e.target.style.display = "none")}
+                  />
+                  <img
+                    className="faxEditionCrop"
+                    src={src}
+                    alt={`${ed.title || ed.version} ${data.ref || ""}`.trim()}
+                    loading="lazy"
+                    onError={hideRow}
+                  />
+                </div>
               ) : null}
             </Link>
           );

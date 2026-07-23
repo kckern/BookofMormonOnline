@@ -617,7 +617,9 @@ html[data-theme="dark"] .commentaryTileCover { background: #2c2c2c; border-color
   color: #888;
 }
 html[data-theme="dark"] .commentaryTileSource { color: #a0a0a0; }
-.commentaryTileRef { align-self: flex-start; }
+/* center the ref over the cover (the cover fills the aside width; when the ref
+   text is wider than the cover it wraps, centered, rather than left-aligning) */
+.commentaryTileRef { align-self: center; text-align: center; }
 /* the in-context cue sits at the bottom of the right column */
 .commentaryTileMore { margin-top: auto; }
 
@@ -1812,24 +1814,21 @@ html[data-theme="dark"] .mapStoryTile .mapStoryCardArt { background: rgba(255, 2
   text-decoration: none;
   color: inherit;
 }
-.faxVerseTile .faxEditionLabel {
-  display: inline-block;
-  align-self: flex-start;
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #6b5330;                       /* warm sepia — matches the facsimile paper */
-  background: rgba(120, 90, 50, 0.1);
-  border: 1px solid rgba(120, 90, 50, 0.2);
-  border-radius: 999px;
-  padding: 1px 9px;
-  margin-bottom: 4px;
-  transition: background 0.15s ease, color 0.15s ease;
+/* per-edition tab graphic, centered and flush against the crop's top edge */
+.faxVerseTile .faxEditionCropWrap {
+  position: relative;
+  margin-top: 22px;                     /* reserve room for the tab above the crop */
 }
-.faxVerseTile .faxEditionRow:hover .faxEditionLabel {
-  color: #3f2f18;
-  background: rgba(120, 90, 50, 0.18);
+.faxVerseTile .faxEditionTab {
+  position: absolute;
+  bottom: 100%;                         /* bottom edge rests on the crop's top edge */
+  left: 50%;
+  transform: translateX(-50%);
+  height: 22px;
+  width: auto;
+  max-width: 90%;
+  display: block;
+  z-index: 1;
 }
 .faxVerseTile .faxEditionCrop {
   width: 100%;

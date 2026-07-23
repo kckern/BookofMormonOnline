@@ -45,13 +45,14 @@ describe("FaxVerseTile", () => {
       "http://localhost:5006/fax/render/1830/crop/w800/mosiah-2.17.jpg"
     );
     expect(img.closest("a").getAttribute("href")).toBe("/fax/1830/mosiah.2.17");
-    expect(screen.getAllByRole("img").length).toBe(3);
+    // one cropped image per edition (each row also carries an edition tab img)
+    expect(document.querySelectorAll(".faxEditionCrop").length).toBe(3);
   });
 
   test("falls back to a single row from legacy fields when editions is absent", () => {
     const legacy = { ...data, editions: undefined };
     renderTile(legacy);
-    expect(screen.getAllByRole("img").length).toBe(1);
+    expect(document.querySelectorAll(".faxEditionCrop").length).toBe(1);
   });
 
   test("returns null without data", () => {

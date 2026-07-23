@@ -61,6 +61,19 @@ const sampleFax = async (ctx: AppContext, seed: number) => {
   return sorted.length ? sorted[seed % sorted.length] : null;
 };
 
+// Compact reference for the full verse span a fax page covers. generateReference
+// only produces a proper range ("Alma 26:1-30:4") from a CONTIGUOUS id list, so
+// fill first→last; [first,last] alone yields "Alma 26:1; 30:4".
+const pageRangeRef = (first: number, last: number): string => {
+  if (!last || last <= first) return generateReference([first]);
+  // guard against a pathological span blowing up the array (real fax pages span
+  // a chapter or two); fall back to endpoints if it's implausibly large
+  if (last - first > 600) return generateReference([first, last]);
+  const ids: number[] = [];
+  for (let v = first; v <= last; v++) ids.push(v);
+  return generateReference(ids);
+};
+
 // Two seeded pages OF THE SAMPLED FAX. For verse-indexed editions the pages
 // carry a scripture reference; for the rest we show representative
 // mid-document pages with no ref (the edition may simply not be indexed).
@@ -69,7 +82,11 @@ const sampleFaxPages = async (ctx: AppContext, seed: number) => {
   if (!fax?.slug) return [];
   const rows = await ctx.db
     .selectFrom('bom_xtras_fax_index')
-    .select(({ fn }) => ['page', fn.min<string>('verse_id').as('firstVerse')])
+    .select(({ fn }) => [
+      'page',
+      fn.min<string>('verse_id').as('firstVerse'),
+      fn.max<string>('verse_id').as('lastVerse'),
+    ])
     .where('version', '=', String(fax.slug))
     .groupBy('page')
     .orderBy('page')
@@ -80,7 +97,9 @@ const sampleFaxPages = async (ctx: AppContext, seed: number) => {
       .filter((r, i, a) => r && a.findIndex((x) => x?.page === r.page) === i);
     return picks.map((r) => ({
       page: Number(r!.page),
-      ref: generateReference([Number(r!.firstVerse)]),
+      // the full verse SPAN the page covers (first→last indexed verse), rendered
+      // as a compact range like "Alma 26:1-30:4"
+      ref: pageRangeRef(Number(r!.firstVerse), Number(r!.lastVerse)),
     }));
   }
   // Un-indexed edition: two mid-document pages so the tile still shows content.
