@@ -243,14 +243,7 @@ function FacsimileGridViewer({ item, leafIndex }) {
             <div
               key={i.leafCursor}
               className="faxPage"
-              style={{ 
-                width: `${tileWidth}px`, 
-                height: `${tileHeight}px`,
-                // Add will-change to help browser optimize rendering
-                willChange: 'transform',
-                // Use transform instead of width/height for smoother transitions when size changes
-                transform: 'translate3d(0, 0, 0)'
-              }}
+              style={{ width: `${tileWidth}px`, height: `${tileHeight}px` }}
             >
               <PageOverlay pageLeaf={i} />
               <PageImage
@@ -261,6 +254,7 @@ function FacsimileGridViewer({ item, leafIndex }) {
                 reference={i.pageReference}
                 onClick={undefined}
                 className="grid-thumb"
+                loading="lazy"
               />
             </div>
           </Link>

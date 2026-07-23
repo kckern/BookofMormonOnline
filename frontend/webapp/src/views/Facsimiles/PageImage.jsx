@@ -6,7 +6,7 @@ import { isThumbWarm, markThumbWarm } from './faxThumbCache';
  * Shows a shimmer placeholder immediately when src changes, then
  * fades the image in once it has loaded.
  */
-export default function PageImage({ src, alt, onClick, className = '', previewSrc, label, reference, style }) {
+export default function PageImage({ src, alt, onClick, className = '', previewSrc, label, reference, style, loading }) {
   const [loaded, setLoaded] = useState(() => isThumbWarm(src));
 
   useEffect(() => {
@@ -36,6 +36,7 @@ export default function PageImage({ src, alt, onClick, className = '', previewSr
         onLoad={() => { markThumbWarm(src); setLoaded(true); }}
         onError={() => setLoaded(true)}
         style={style}
+        loading={loading}
       />
     </div>
   );
