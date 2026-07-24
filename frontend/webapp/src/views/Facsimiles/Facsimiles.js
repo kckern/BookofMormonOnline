@@ -38,6 +38,8 @@ function FacsimileViewer({ item, volumeOrder, currentVolumeIndex }) {
 
   const [pageIndex, setPageIndex] = useState([]);
   const [seamOffset, setSeamOffset] = useState(0);
+  // per-edition printed-folio offset (imageFile = faxPage + offset), from faxIndex
+  const [faxOffset, setFaxOffset] = useState(0);
 
   const pgoffset = resolvePgOffset(item);
 
@@ -52,6 +54,7 @@ function FacsimileViewer({ item, volumeOrder, currentVolumeIndex }) {
         const entry = r?.fax?.[indexRef];
         const pages = entry?.pages;
         if (!Array.isArray(pages)) return;
+        setFaxOffset(Number.isFinite(entry?.offset) ? entry.offset : 0);
         const placeholderArray = Array.from({ length: blankPageCount }, () => [0, 0]);
         setPageIndex([...placeholderArray, ...pages]);
       })
@@ -60,8 +63,8 @@ function FacsimileViewer({ item, volumeOrder, currentVolumeIndex }) {
   }, [item.slug, item.indexRef, pgoffset]);
 
   const leafIndex = useMemo(
-    () => buildLeafIndex(item, pgoffset, pageIndex, getRefFromIndex, assetUrl),
-    [item, pgoffset, pageIndex]
+    () => buildLeafIndex(item, pgoffset, pageIndex, getRefFromIndex, assetUrl, faxOffset),
+    [item, pgoffset, pageIndex, faxOffset]
   );
 
   // Handle keypress for escape
@@ -243,7 +246,7 @@ function FacsimileGridViewer({ item, leafIndex }) {
     >
       <div className={`gridOverhang ${hasScrolled ? 'visible' : ''}`} />
       {tileWidth > 0 && tileHeight > 0 && validLeaves.map((i) => {
-        const alt = `${item.title} - Page ${i.pageSlugLeaf}`;
+        const alt = `${item.title} - Page ${i.faxPageSlug}`;
         return (
           <Link key={i.leafCursor} to={`/fax/${item.slug}/${i.pageSlugLeaf}`}>
             <div
@@ -256,7 +259,7 @@ function FacsimileGridViewer({ item, leafIndex }) {
                 src={i.thumbAssetUrl}
                 previewSrc={i.thumbAssetUrl}
                 alt={alt}
-                label={`Page ${i.pageSlugLeaf}`}
+                label={`Page ${i.faxPageSlug}`}
                 reference={i.pageReference}
                 onClick={undefined}
                 className="grid-thumb"
@@ -271,10 +274,10 @@ function FacsimileGridViewer({ item, leafIndex }) {
 }
 
 export function PageOverlay({ pageLeaf }) {
-  const { pageReference, pageNumInt, pageNumRoman } = pageLeaf;
+  const { pageReference, faxPageSlug } = pageLeaf;
   return (
     <div className="pageOverlay">
-      <div className="pageNum">Page {pageNumRoman || pageNumInt}</div>
+      <div className="pageNum">Page {faxPageSlug}</div>
       {!!pageReference && <div className="pageRef">{pageReference}</div>}
     </div>
   );

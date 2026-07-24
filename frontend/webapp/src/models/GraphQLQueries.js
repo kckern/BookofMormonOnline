@@ -971,9 +971,10 @@ const queries = {
       val: input,
       query:
         q("faxIndex", "slug", input) +
-        `  {   
+        `  {
         slug
         pages
+        offset
       }`,
     }
   },

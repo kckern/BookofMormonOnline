@@ -404,13 +404,13 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
           <div className="thumbnail-spread">
             <img
               src={leftPage.thumbAssetUrl}
-              alt={`Thumbnail of page ${leftPage.pageSlugLeaf}`}
+              alt={`Thumbnail of page ${leftPage.faxPageSlug}`}
               style={{ width: '50px', height: 'auto' }}
             />
             {rightPage && (
               <img
                 src={rightPage.thumbAssetUrl}
-                alt={`Thumbnail of page ${rightPage.pageSlugLeaf}`}
+                alt={`Thumbnail of page ${rightPage.faxPageSlug}`}
                 style={{ width: '50px', height: 'auto' }}
               />
             )}
@@ -419,8 +419,8 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
             <p className="ref">{combinedReference}</p>
           )}
           <p className="pages">
-            Pages {leftPage.pageSlugLeaf}
-            {rightPage ? ` - ${rightPage.pageSlugLeaf}` : ''}
+            Pages {leftPage.faxPageSlug}
+            {rightPage ? ` - ${rightPage.faxPageSlug}` : ''}
           </p>
         </div>
       );
@@ -455,9 +455,9 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
         <PageImage
           src={page.pageAssetUrl}
           previewSrc={page.thumbAssetUrl}
-          label={`Page ${page.pageSlugLeaf}`}
+          label={`Page ${page.faxPageSlug}`}
           reference={page.pageReference}
-          alt={`Page ${page.pageSlugLeaf}`}
+          alt={`Page ${page.faxPageSlug}`}
           onClick={onClick}
           className={isLastPage ? "last-page" : ""}
           style={{
@@ -634,7 +634,7 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
             onMouseLeave={() => setShowTooltip(false)}
             className="custom-slider"
             aria-label="Page position"
-            aria-valuetext={`Page ${leafIndex[sliderValue]?.pageSlugLeaf ?? sliderValue} of ${item.pages}`}
+            aria-valuetext={`Page ${leafIndex[sliderValue]?.faxPageSlug ?? sliderValue} of ${item.pages}`}
           />
         </div>
         <button
@@ -651,7 +651,7 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
             e.preventDefault();
             const n = parseInt(e.target.elements.pageInput.value, 10);
             if (!Number.isFinite(n)) return;
-            const idx = leafIndex.findIndex((l) => l.pageNumInt === n || `${l.pageSlugLeaf}` === `${n}`);
+            const idx = leafIndex.findIndex((l) => l.faxPageNum === n || `${l.faxPageSlug}` === `${n}`);
             if (idx !== -1) handlePageChange(idx);
           }}
         >
@@ -660,8 +660,8 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
             type="number"
             min={1}
             max={item.pages}
-            defaultValue={leftPage?.pageSlugLeaf || ''}
-            key={leftPage?.pageSlugLeaf}
+            defaultValue={leftPage?.faxPageSlug || ''}
+            key={leftPage?.faxPageSlug}
             aria-label="Jump to page"
           />
           <span className="of-total">/ {item.pages}</span>

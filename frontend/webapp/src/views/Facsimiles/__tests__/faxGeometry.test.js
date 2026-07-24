@@ -66,3 +66,23 @@ describe("normalizeStackWidths", () => {
     expect(left).toBe(0);
   });
 });
+
+describe("buildLeafIndex faxOffset (printed folio)", () => {
+  const ITEM = { slug: "1837", pages: 3, format: "jpg" };
+  const REF = () => null;
+
+  test("applies the edition offset for DISPLAY; image number/asset unchanged", () => {
+    const leaves = buildLeafIndex(ITEM, 2, [], REF, "https://cdn", -4); // 1837 = -4
+    expect(leaves[3].pageNumInt).toBe(1);                 // image-file number (routing/asset)
+    expect(leaves[3].pageAssetUrl).toContain("001.jpg");  // asset stays on image number
+    expect(leaves[3].faxPageNum).toBe(5);                 // folio = imageFile - offset = 1-(-4)
+    expect(leaves[3].faxPageSlug).toBe(5);
+    expect(leaves[5].faxPageNum).toBe(7);                 // imageFile 3 -> folio 7
+  });
+
+  test("default offset 0 leaves faxPageNum == pageNumInt", () => {
+    const leaves = buildLeafIndex(ITEM, 2, [], REF, "https://cdn");
+    expect(leaves[3].faxPageNum).toBe(leaves[3].pageNumInt);
+    expect(leaves[3].faxPageSlug).toBe(leaves[3].pageSlugLeaf);
+  });
+});
