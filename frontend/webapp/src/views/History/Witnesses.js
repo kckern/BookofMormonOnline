@@ -247,7 +247,6 @@ const SingleWitness = ({ witness, sourceSlug }) => {
                                             <>
                                                 <span className='money_quote_text'>&ldquo;{withBrackets(doc.money_quote)}&rdquo;</span>
                                                 <footer className='money_quote_attribution'>
-                                                    <span className='firsthand-badge'>In their own words</span>
                                                     <span className='money_quote_speaker'>&mdash; {doc.quote_speaker}</span>
                                                 </footer>
                                             </>
