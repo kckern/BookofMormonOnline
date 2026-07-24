@@ -4,6 +4,8 @@
  * in apparatus.js.
  */
 
+import { isSiglum } from "./apparatus";
+
 /**
  * Top-level bracket groups, by depth counting. Unlike a non-greedy regex this
  * survives nesting: `[Benjamin [Mosiah?] P]` is ONE group, not a broken prefix.
@@ -24,4 +26,26 @@ export function scanBrackets(html) {
     }
   }
   return out;
+}
+
+/**
+ * Trailing run of sigla on a reading, or null. Trims first — the data has
+ * `"… 1 |"` with a trailing space, which anchored matching would miss.
+ */
+export function trailingSigla(part) {
+  const t = part.trim();
+  const m = t.match(/[A-Z01]+$/);
+  if (!m) return null;
+  return [...m[0]].every(isSiglum) ? m[0] : null;
+}
+
+/**
+ * A bracket group is a variation unit iff it splits on "|" into >= 2 parts and
+ * EVERY part ends in a run of known sigla. Shape, not letters — `[JST]` is made
+ * of three real sigla but is a prose reference, not a unit.
+ */
+export function isApparatus(inner) {
+  const parts = inner.split("|");
+  if (parts.length < 2) return false;
+  return parts.every((p) => trailingSigla(p) !== null);
 }
