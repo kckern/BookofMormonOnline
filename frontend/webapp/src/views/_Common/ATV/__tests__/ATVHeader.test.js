@@ -15,14 +15,11 @@ test("preserves the .atv > .source nesting the CSS targets", () => {
   expect(container.querySelector(".atv > .source")).not.toBeNull();
 });
 
-test("emits one .atv-string pill per reading with the tooltip attributes", () => {
-  const { container } = render(<ATVHeader atvHTML={REAL} />);
+test("emits one .atv-string pill per reading, keyed by data-indexes", () => {
+  const { container } = render(<ATVHeader atvHTML={REAL} reference="1 Nephi 1:3" />);
   const pills = container.querySelectorAll(".atv-string");
   expect(pills).toHaveLength(3);
   expect(pills[2].getAttribute("data-indexes")).toBe("BCDEFGHIJKLMNOPQRST");
-  expect(pills[2].getAttribute("data-for")).toBe("atv-tooltip");
-  expect(pills[2].getAttribute("data-tip")).toContain("1837"); // B
-  expect(pills[2].getAttribute("data-tip")).toContain("1840"); // C
 });
 
 test("a correction chain renders an .atv-change arrow between states", () => {
@@ -48,9 +45,11 @@ test("reading content HTML is rendered, not shown as literal tags", () => {
   expect(container.textContent).not.toContain("<em>");
 });
 
-test("mounts exactly one atv-tooltip", () => {
-  const { container, baseElement } = render(<ATVHeader atvHTML={REAL} />);
-  expect(baseElement.querySelectorAll("#atv-tooltip").length).toBeLessThanOrEqual(1);
+test("ATVHeader no longer renders a react-tooltip", () => {
+  const html =
+    "<div class='source'>and [<em>to be</em> 1|<em>is</em> ABCDEFGHIJKLMNOPQRST] true</div>";
+  const { baseElement } = render(<ATVHeader atvHTML={html} reference="1 Nephi 1:3" />);
+  expect(baseElement.querySelector("#atv-tooltip")).toBeNull();
 });
 
 test("the two page-blanking entries render instead of throwing", () => {

@@ -335,7 +335,17 @@ export default function Commentary() {
     replace: (node) => {
       if (node && node.name === "atv-unit") {
         const i = Number(node.attribs && node.attribs["data-atv-i"]);
-        return <ATVApparatus readings={bodyUnits[i]} variant="inline" />;
+        // Body units cite OTHER verses than the commentary's own, so they get no
+        // verseId — the modal opens with readings + witness labels, but no crops
+        // (spec §6.4 trap; crops would point at the wrong verse's scans).
+        return (
+          <ATVApparatus
+            readings={bodyUnits[i]}
+            variant="inline"
+            verseId={null}
+            reference={commentaryData.reference}
+          />
+        );
       }
       return baseOptions.replace ? baseOptions.replace(node) : undefined;
     },
@@ -437,7 +447,7 @@ export default function Commentary() {
                     showLegal={showLegal}
                   />
 
-                  <ATVHeader atvHTML={atvHTML} />
+                  <ATVHeader atvHTML={atvHTML} reference={commentaryData.reference} />
                   {Parser(htmlObject, parserOptions)}
                 </div>
               </div>

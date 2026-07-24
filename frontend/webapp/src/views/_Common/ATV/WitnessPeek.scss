@@ -1,0 +1,33 @@
+// WitnessPeek — tier-1 hover card. Minimal; Task 5 refines placement + dark mode.
+
+.atv-peek {
+  position: absolute;
+  z-index: 2900; // below the compare modal (3000), above surrounding text
+  bottom: 100%;
+  left: 0;
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  max-width: 220px;
+  margin-bottom: 0.35rem;
+  padding: 0.4rem;
+  background: #fff;
+  color: #1a1a1a;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+  pointer-events: none; // decoration only — never intercepts the pill's clicks
+
+  img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border: 1px solid #e2e2e2;
+  }
+}
+
+.atv-peek-label {
+  font-size: 0.75rem;
+  line-height: 1.2;
+  color: #333;
+}
