@@ -311,81 +311,21 @@ function Facsimiles() {
   const activeFax = FaxList?.[match.faxVersion];
   useEffect(() => document.title = (activeFax?.title || label("menu_fax")) + " | " + label("home_title"), [activeFax?.code])
 
-  // Handle route expansions and redirects
+  // Route is PURE TAXONOMY (no query params): the path segment is a page number,
+  // a roman front-matter slug, a scripture ref ("3.nephi.11.5"), or an out-of-range
+  // number treated as a verse id. FacsimilePageViewer resolves all of those (refs +
+  // verse ids open the modal and rewrite the path to the ref). The only thing to
+  // normalize here is the "/last" convenience alias.
   useEffect(() => {
-    if (!FaxList) return; // wait until list is loaded
+    if (!FaxList) return;
     const edition = match.faxVersion;
-    const rawPage = match.pageNumber; // could be undefined, 'last', numeric, or scripture ref
+    const rawPage = match.pageNumber;
     const fax = FaxList?.[edition];
-    if (!fax) return; // unknown edition, let normal rendering handle
-
-    // Determine highest numeric page for this edition
+    if (!fax) return;
     const totalPages = parseInt(fax?.pages, 10);
     const maxPage = Number.isFinite(totalPages) ? totalPages : null;
-
-    // 1) '/fax/{edition}/last' -> forward to highest page
-    if (rawPage === 'last' && maxPage) {
-      if (history?.replace) history.replace(`/fax/${edition}/${maxPage}`);
-      return;
-    }
-
-    // If page isn't present, nothing to normalize
-    if (rawPage == null) return;
-
-    // 2) numeric overflow -> clamp to highest page
-    const pageNum = parseInt(rawPage, 10);
-    const isNumeric = String(pageNum) === String(rawPage);
-    if (isNumeric && maxPage && pageNum > maxPage) {
-      if (history?.replace) history.replace(`/fax/${edition}/${maxPage}`);
-      return;
-    }
-
-    // 3) Non-numeric page -> treat as scripture reference
-    if (!isNumeric && /[A-Za-z]/.test(rawPage || '')) {
-      try {
-        const refs = lookupReference(rawPage);
-        const firstVerseId = refs?.verse_ids?.length ? Math.min(...refs.verse_ids) : null;
-        const isIndexed = !!fax?.indexRef;
-
-        // If edition is indexed and we have a verse id, fetch page index and map to page
-        if (isIndexed && firstVerseId) {
-          const { indexRef, pgOffset, pgoffset, pgfirstVerse } = fax || {};
-          const effectivePgOffset = (typeof pgOffset === 'number' ? pgOffset : pgoffset) || 0;
-          const blankPageCount = effectivePgOffset + (pgfirstVerse || 1) - 1;
-          BoMOnlineAPI({ faxIndex: indexRef }).then((r) => {
-            try {
-              const { pages } = r?.fax?.[indexRef] || {};
-              if (!Array.isArray(pages) || pages.length === 0) return;
-              const pageIndex = [
-                ...Array.from({ length: blankPageCount }, () => [0, 0]),
-                ...pages,
-              ];
-              // Find first page that contains this verse id
-              let targetPage = null;
-              for (let i = 0; i < pageIndex.length; i++) {
-                const [start, count] = pageIndex[i] || [0, 0];
-                if (start > 0 && count > 0) {
-                  if (firstVerseId >= start && firstVerseId < start + count) {
-                    targetPage = i + 1; // page numbers are 1-based
-                    break;
-                  }
-                }
-              }
-              // Clamp and navigate if found
-              if (targetPage) {
-                const target = maxPage ? Math.min(targetPage, maxPage) : targetPage;
-                if (history?.replace) history.replace(`/fax/${edition}/${target}?ref=${encodeURIComponent(rawPage)}`);
-              }
-            } catch (e) {
-              // Ignore errors and fall back to grid
-            }
-          });
-        } else {
-          // Not indexed or no verse match: fall back to grid view (no redirect)
-        }
-      } catch (e) {
-        // Invalid reference: ignore and stay in grid
-      }
+    if (rawPage === 'last' && maxPage && history?.replace) {
+      history.replace(`/fax/${edition}/${maxPage}`);
     }
   }, [FaxList, match.faxVersion, match.pageNumber, history]);
   const contentsUI = () => {

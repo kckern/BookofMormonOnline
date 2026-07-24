@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef, useMemo, useReducer } from "react";
-import { useParams, useHistory, useLocation } from "react-router-dom";
+import { useParams, useHistory } from "react-router-dom";
 import ReactTooltip from "react-tooltip";
 import { useSwipe } from "../../models/Utils";
 import { assetUrl, renderBaseUrl } from 'src/models/BoMOnlineAPI';
@@ -71,11 +71,25 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
     if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
   }, []);
   
-  // A scripture reference has BOTH letters and digits (e.g. "alma.5.12").
-  // Roman-numeral front-matter slugs ("i", "ii", "iii") are letters-only and
-  // must NOT be treated as references, or navigating to them fails a lookup and
-  // bounces back to page 1. Numeric page slugs are digits-only.
-  const isReference = /[A-Za-z]/.test(pageNumber || '') && /\d/.test(pageNumber || '');
+  // --- URL taxonomy (pure path, no query params) ---------------------------
+  // A path segment is one of:
+  //   • roman ("viii")                  -> front-matter page
+  //   • digits <= item.pages            -> page number (image-file)
+  //   • digits >  item.pages            -> a VERSE ID -> resolve to its ref (opens modal)
+  //   • letters+digits ("3.nephi.11.5") -> a scripture REF (opens modal)
+  const rawSlug = pageNumber || "";
+  const isRoman = /^[ivxlcdm]+$/i.test(rawSlug);
+  const isDigits = /^\d+$/.test(rawSlug);
+  const slugNum = parseInt(rawSlug, 10);
+  const isRefSlug = /[a-z]/i.test(rawSlug) && /\d/.test(rawSlug) && !isRoman;
+  const isVerseIdSlug = isDigits && Number.isFinite(slugNum) && slugNum > (parseInt(item.pages, 10) || 0);
+  const urlTargetsVerse = isRefSlug || isVerseIdSlug;
+  // The verse id a verse-targeting URL points at (the range's first verse).
+  const urlVerseId = (() => {
+    if (isVerseIdSlug) return slugNum;
+    if (isRefSlug) { try { const ids = lookupReference(rawSlug)?.verse_ids || []; return ids.length ? Math.min(...ids) : null; } catch { return null; } }
+    return null;
+  })();
   const totalPages = leafIndex.length;
   // Highest printed folio, for the jump-input max + "/ N" total. Folio is the
   // canonical user-facing page number, so the denominator must live in the folio
@@ -84,80 +98,25 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
     (m, l) => (l.faxPageNum != null && l.faxPageNum > m ? l.faxPageNum : m), 0
   ) || item.pages;
 
-  // Initialize page index based on URL
+  // Initialize the current page index from the URL.
   useEffect(() => {
-    // Special handling for the last page (or any specific page)
-    if (pageNumber === String(item.pages) || parseInt(pageNumber) === item.pages) {
-      // Direct check for the last page by its number
-      // Route slug is the printed folio (pageSlugLeaf); match on it only. Matching
-      // pageNumInt (image-file #) here would be a different identity and could
-      // resolve the wrong leaf now that folio and image-file diverge.
-      const lastPageIndex = leafIndex.findIndex(leaf => `${leaf.pageSlugLeaf}` === pageNumber);
-      
-      if (lastPageIndex !== -1) {
-        setCurrentPageIndex(lastPageIndex);
-        setSliderValue(lastPageIndex);
-        return;
-      }
+    // Verse-targeting URL (ref slug or verse id): land on the page containing it.
+    if (urlTargetsVerse && urlVerseId != null) {
+      let idx = leafIndex.findIndex((leaf) =>
+        leaf.pageReference && (lookupReference(leaf.pageReference)?.verse_ids || []).includes(urlVerseId)
+      );
+      if (idx === -1) idx = 0;
+      setCurrentPageIndex(idx);
+      setSliderValue(idx);
+      return;
     }
-    
-    // Handle reference URLs (book + chapter/verse, e.g. "alma.5.12")
-    if (isReference) {
-      try {
-        const refs = lookupReference(pageNumber);
-        const verseIds = refs?.verse_ids || [];
-        
-        if (verseIds.length > 0) {
-          // Get the minimum verse ID to find the first page containing this reference
-          const minVerseId = Math.min(...verseIds);
-          
-          // Look for a page containing this verse ID
-          for (let i = 0; i < leafIndex.length; i++) {
-            const page = leafIndex[i];
-            if (page?.pageReference) {
-              const pageVerseIds = lookupReference(page.pageReference)?.verse_ids || [];
-              if (pageVerseIds.includes(minVerseId)) {
-                setCurrentPageIndex(i);
-                setSliderValue(i);
-                return;
-              }
-            }
-          }
-        }
-        
-        // If we can't find a match, just default to page 1
-        setCurrentPageIndex(0);
-        setSliderValue(0);
-        return;
-      } catch (e) {
-        // If reference parsing fails, default to page 1
-        setCurrentPageIndex(0);
-        setSliderValue(0);
-        return;
-      }
-    }
-    
-    // Standard page lookup for numeric pages
-    const index = leafIndex.findIndex(leaf => `${leaf.pageSlugLeaf}` === pageNumber);
-    
-    if (index !== -1) {
-      setCurrentPageIndex(index);
-      setSliderValue(index);
-    } else {
-      // If page not found, check if it's the last page
-      const lastPageNum = leafIndex[leafIndex.length - 1]?.pageSlugLeaf;
-      if (lastPageNum && `${lastPageNum}` === pageNumber) {
-        // It's the last page but wasn't found with exact match - handle special case
-        const lastIndex = leafIndex.length - 1;
-        setCurrentPageIndex(lastIndex);
-        setSliderValue(lastIndex);
-      } else {
-        // If we can't find a match, just default to page 1
-        setCurrentPageIndex(0);
-        setSliderValue(0);
-      }
-    }
-  }, [pageNumber, leafIndex, item.pages, isReference]);
+    // Page number / roman front matter: match the route slug (image-file number).
+    const index = leafIndex.findIndex((leaf) => `${leaf.pageSlugLeaf}` === rawSlug);
+    const target = index !== -1 ? index : 0;
+    setCurrentPageIndex(target);
+    setSliderValue(target);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageNumber, leafIndex, item.pages]);
 
   // Keep the slider thumb aligned when the page changes by any means
   // (arrows, buttons, stack, deep link). Audit §2.3.
@@ -484,32 +443,27 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
     pendingVerseNavRef.current = null;
   }, [spreadVerses, vstate.openVerse]);
 
-  // --- Modal <-> URL sync (?verse=<id>) so the open verse is deep-linkable -----
-  const location = useLocation();
-  const verseParam = new URLSearchParams(location.search).get("verse");
-
-  // Reflect the open verse in the URL; clear it on close.
+  // --- Modal <-> URL (pure path taxonomy, no query params) -----------------
+  // While a verse is open the path IS its ref slug (permalink); closing it (or a
+  // page turn) reverts the path to the page number. A verse id NEVER persists in
+  // the URL — it's resolved to a ref and the URL is rewritten.
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
     const open = vstate.openVerse;
-    if (open && String(open.verse_id) !== params.get("verse")) {
-      params.set("verse", String(open.verse_id));
-      history.replace(`${location.pathname}?${params.toString()}`);
-    } else if (!open && params.has("verse")) {
-      params.delete("verse");
-      const q = params.toString();
-      history.replace(location.pathname + (q ? `?${q}` : ""));
-    }
+    if (!open) return; // closing reverts the URL via the modal's onClose, not here
+    const slug = (open.ref || "").replace(/[ :]+/g, ".").toLowerCase();
+    if (slug && slug !== rawSlug) history.replace(`/fax/${item.slug}/${slug}`);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vstate.openVerse]);
 
-  // Deep-link: open the modal for ?verse=<id> once that verse is on the spread.
+  // Open the modal for a verse-targeting URL (ref slug or verse id) once its
+  // spread has loaded.
   useEffect(() => {
-    if (!verseParam || vstate.openVerse) return;
-    const target = spreadVerses.find((v) => String(v.verse_id) === String(verseParam));
+    if (!urlTargetsVerse || urlVerseId == null || vstate.openVerse || !spreadVerses.length) return;
+    const target = spreadVerses.find((v) => v.verse_id === urlVerseId)
+      || spreadVerses.find((v) => (lookupReference(v.ref)?.verse_ids || []).includes(urlVerseId));
     if (target) vdispatch({ type: "OPEN", verse: target });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [verseParam, spreadVerses]);
+  }, [urlTargetsVerse, urlVerseId, spreadVerses]);
 
   // Preload the neighbouring verses' crops so prev/next steps paint instantly.
   useEffect(() => {
@@ -875,7 +829,11 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
               onPrev={() => handleVerseNav("prev")}
               onNext={() => handleVerseNav("next")}
               onRead={(v) => { const rp = readPath(v.ref); if (rp) history.push(rp); }}
-              onClose={() => vdispatch({ type: "CLOSE" })}
+              onClose={() => {
+                vdispatch({ type: "CLOSE" });
+                // Revert a ref/verse-id path back to the page number on close.
+                if (urlTargetsVerse && leftPage) history.replace(`/fax/${item.slug}/${leftPage.pageSlugLeaf}`);
+              }}
             />
           </div>
         </div>

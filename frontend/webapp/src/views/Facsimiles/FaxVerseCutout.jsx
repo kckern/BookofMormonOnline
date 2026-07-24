@@ -10,7 +10,8 @@ import StudyBreadcrumb from "../_Common/StudyBreadcrumb";
 // (and the grace-delayed LEAVE no-ops, guarded by verse id in the reducer), so the
 // dimming never flashes off between adjacent verses.
 const LEAVE_GRACE_MS = 140;
-const TIP_MARGIN = 8; // keep the tooltip this far from the viewport edge
+const TIP_MARGIN = 8;   // keep the tooltip this far from the viewport edge
+const TIP_MIN_W = 200;  // don't narrow a 16:9-targeted tooltip below this
 
 /** A cutout shape: a rounded rect for a plain box, a polygon for a notched one. */
 function CutShape({ b, k, fill, className }) {
@@ -42,10 +43,13 @@ function FaxVerseTooltip({ verse, vx, top, bottom, placeBelow, caretOffset, minW
 
   const vw = typeof window !== "undefined" ? window.innerWidth : 0;
   const maxW = Math.min(560, vw * 0.9);
-  // Prefer a ~16:9 landscape shape: if the card is taller than 16:9, widen it
-  // toward that ratio (never past maxW, never narrower than its content) so a long
-  // verse spreads across fewer, wider lines instead of a tall narrow column.
-  const targetW = box ? Math.max(box.w, Math.min(maxW, Math.round((box.h * 16) / 9))) : 0;
+  // Target a ~16:9 landscape shape. Text reflows at (roughly) constant AREA, so the
+  // 16:9 width is sqrt(area * 16/9): this NARROWS a too-wide card (long single line)
+  // into more/shorter lines AND widens a too-tall one — both toward 16:9. Clamped
+  // to a sensible floor and the max width.
+  const targetW = box && box.w > 0 && box.h > 0
+    ? Math.max(TIP_MIN_W, Math.min(maxW, Math.round(Math.sqrt(box.w * box.h * (16 / 9)))))
+    : 0;
   const w = targetW || (box ? box.w : 0);
 
   const half = w / 2;
@@ -53,8 +57,9 @@ function FaxVerseTooltip({ verse, vx, top, bottom, placeBelow, caretOffset, minW
   const cx = w > 0 ? Math.max(TIP_MARGIN + half, Math.min(vx, vw - TIP_MARGIN - half)) : vx;
   const caretX = (vx - cx) + caretOffset; // caret tracks the box despite the shift
 
-  const style = { left: cx, top: placeBelow ? bottom : top, minWidth, "--fax-caret-x": `${Math.round(caretX)}px` };
+  const style = { left: cx, top: placeBelow ? bottom : top, "--fax-caret-x": `${Math.round(caretX)}px` };
   if (targetW) style.width = `${Math.round(targetW)}px`;
+  else if (minWidth) style.minWidth = minWidth;
 
   const node = (
     <div
