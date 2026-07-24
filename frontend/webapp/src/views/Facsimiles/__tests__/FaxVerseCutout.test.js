@@ -73,14 +73,14 @@ describe("FaxVerseCutout", () => {
   test("no active verse -> no scrim, no tooltip", () => {
     const { container } = setup({ activeVerseId: null });
     expect(container.querySelector(".faxCutoutSvg")).toBeNull();
-    expect(container.querySelector(".faxVerseTooltip")).toBeNull();
+    expect(document.querySelector(".faxVerseTooltip")).toBeNull();
   });
 
   test("active verse on the OTHER page -> this page dims solid (scrim, no punch)", () => {
     const { container } = setup({ activeVerseId: 999 }); // not on this page
     expect(container.querySelector(".faxCutoutSvg")).toBeTruthy();                 // still darkens
     expect(container.querySelectorAll(".faxCutoutSvg mask .punch")).toHaveLength(0); // nothing cut out here
-    expect(container.querySelector(".faxVerseTooltip")).toBeNull();
+    expect(document.querySelector(".faxVerseTooltip")).toBeNull();
   });
 
   test("a notched box is cut out as a polygon, not a rect", () => {
@@ -93,25 +93,25 @@ describe("FaxVerseCutout", () => {
   test("tooltip carries the speaker avatar + voice name", () => {
     const { container } = setup({ activeVerseId: 100 });
     fireEvent.mouseEnter(container.querySelectorAll(".faxHotspot")[0]); // verse 100
-    const avatar = container.querySelector(".faxVerseTooltip-avatar");
+    const avatar = document.querySelector(".faxVerseTooltip-avatar");
     expect(avatar.getAttribute("src")).toContain("/people/alma-the-younger");
-    expect(container.querySelector(".faxVerseTooltip-voice")).toBeTruthy();
+    expect(document.querySelector(".faxVerseTooltip-voice")).toBeTruthy();
   });
 
   test("tooltip flips BELOW for a verse in the upper part of the page", () => {
     // displayedHeight 1000px; verse 100 box mid-y = (100+25)*k(2) = 250 < 500 -> below
     const { container } = setup({ activeVerseId: 100, displayedHeight: 1000 });
     fireEvent.mouseEnter(container.querySelectorAll(".faxHotspot")[0]);
-    expect(container.querySelector(".faxVerseTooltip").classList.contains("below")).toBe(true);
+    expect(document.querySelector(".faxVerseTooltip").classList.contains("below")).toBe(true);
   });
 
   test("active verse WITHOUT text still shows a ref-only tooltip on hover", () => {
     const noText = [{ verse_id: 200, ref: "Alma 5:9", boxes: [{ x: 10, y: 10, w: 20, h: 20 }] }];
     const { container } = setup({ verses: noText, activeVerseId: 200, idSuffix: 9 });
     fireEvent.mouseEnter(container.querySelector(".faxHotspot"));
-    expect(container.querySelector(".faxVerseTooltip")).toBeTruthy();
-    expect(container.querySelector(".faxVerseTooltip-ref").textContent).toBe("Alma 5:9");
-    expect(container.querySelector(".faxVerseTooltip-text")).toBeNull();
+    expect(document.querySelector(".faxVerseTooltip")).toBeTruthy();
+    expect(document.querySelector(".faxVerseTooltip-ref").textContent).toBe("Alma 5:9");
+    expect(document.querySelector(".faxVerseTooltip-text")).toBeNull();
   });
 
   test("pending hover-intent timer does not fire after unmount", () => {

@@ -1,4 +1,5 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useLayoutEffect } from "react";
+import { createPortal } from "react-dom";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import { label } from "src/models/Utils";
 import { unionBox, hasNotch, notchPolygonPoints } from "./faxVerseData";
@@ -9,6 +10,7 @@ import StudyBreadcrumb from "../_Common/StudyBreadcrumb";
 // (and the grace-delayed LEAVE no-ops, guarded by verse id in the reducer), so the
 // dimming never flashes off between adjacent verses.
 const LEAVE_GRACE_MS = 140;
+const TIP_MARGIN = 8; // keep the tooltip this far from the viewport edge
 
 /** A cutout shape: a rounded rect for a plain box, a polygon for a notched one. */
 function CutShape({ b, k, fill, className }) {
@@ -18,6 +20,61 @@ function CutShape({ b, k, fill, className }) {
   return (
     <rect className={className} x={b.x * k} y={b.y * k} width={b.w * k} height={b.h * k} rx="4" fill={fill} />
   );
+}
+
+/**
+ * The hover tooltip, PORTALED to <body> in viewport (fixed) coordinates so it's
+ * never clipped or cramped by the page's containing block / overflow. It measures
+ * its own width and x-clamps to the viewport, shifting the caret the opposite way
+ * so it keeps pointing at the box.
+ */
+function FaxVerseTooltip({ verse, vx, top, bottom, placeBelow, caretOffset, minWidth }) {
+  const ref = useRef(null);
+  const [w, setW] = useState(0);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const bw = el.getBoundingClientRect().width;
+    if (Math.abs(bw - w) > 0.5) setW(bw); // guarded -> no loop when width is stable
+  });
+
+  const half = w / 2;
+  const vw = typeof window !== "undefined" ? window.innerWidth : 0;
+  // clamp the tooltip CENTER so its edges stay in view (only once width is known)
+  const cx = w > 0 ? Math.max(TIP_MARGIN + half, Math.min(vx, vw - TIP_MARGIN - half)) : vx;
+  const caretX = (vx - cx) + caretOffset; // caret tracks the box despite the shift
+
+  const node = (
+    <div
+      ref={ref}
+      className={`faxVerseTooltip floating${placeBelow ? " below" : ""}`}
+      style={{ left: cx, top: placeBelow ? bottom : top, minWidth, "--fax-caret-x": `${Math.round(caretX)}px` }}
+    >
+      <div className="faxVerseTooltip-head">
+        {verse.person_slug && (
+          <img
+            className="faxVerseTooltip-avatar"
+            src={`${assetUrl}/people/${verse.person_slug}`}
+            alt=""
+            onError={(e) => { e.target.style.display = "none"; }}
+          />
+        )}
+        <div className="faxVerseTooltip-meta">
+          <div className="faxVerseTooltip-refrow">
+            <span className="faxVerseTooltip-ref">{verse.ref}</span>
+            {verse.voice && <span className="faxVerseTooltip-voice">{label(verse.voice)}</span>}
+          </div>
+          {(verse.page || verse.section) && (
+            <div className="faxVerseTooltip-loc">
+              <StudyBreadcrumb page={verse.page} section={verse.section} />
+            </div>
+          )}
+        </div>
+      </div>
+      {verse.text && <div className="faxVerseTooltip-text">{verse.text}</div>}
+    </div>
+  );
+  return createPortal(node, document.body);
 }
 
 /**
@@ -42,6 +99,7 @@ export default function FaxVerseCutout({
   hoverIntentMs = 100,
 }) {
   const timerRef = useRef(null);
+  const layerRef = useRef(null); // for converting box-local px -> viewport px
   // { verseId, box } under the pointer — anchors the tooltip on the box nearest
   // the cursor (matters for verses split across columns/pages).
   const [hover, setHover] = useState(null);
@@ -94,8 +152,21 @@ export default function FaxVerseCutout({
     ? (placeBelow ? -((anchor.brw || 0) / 2) * k : ((anchor.tlw || 0) / 2) * k)
     : 0;
 
+  // Box position in VIEWPORT px (the tooltip is portaled to <body>, fixed).
+  let tip = null;
+  if (showTip) {
+    const lr = layerRef.current && layerRef.current.getBoundingClientRect();
+    if (lr) {
+      tip = {
+        vx: lr.left + (anchor.x + anchor.w / 2) * k,
+        top: lr.top + anchor.y * k,
+        bottom: lr.top + (anchor.y + anchor.h) * k,
+      };
+    }
+  }
+
   return (
-    <div className="faxVerseLayer" aria-hidden="false">
+    <div className="faxVerseLayer" aria-hidden="false" ref={layerRef}>
       {dim && (
         <svg className="faxCutoutSvg" width={W} height="100%" preserveAspectRatio="none">
           <defs>
@@ -131,39 +202,16 @@ export default function FaxVerseCutout({
         )}
       </div>
 
-      {showTip && (
-        <div
-          className={`faxVerseTooltip${placeBelow ? " below" : ""}`}
-          style={{
-            left: px(anchor.x + anchor.w / 2),
-            top: placeBelow ? px(anchor.y + anchor.h) : px(anchor.y),
-            minWidth: px((span || anchor).w),
-            "--fax-caret-x": `${Math.round(caretOffset)}px`,
-          }}
-        >
-          <div className="faxVerseTooltip-head">
-            {active.person_slug && (
-              <img
-                className="faxVerseTooltip-avatar"
-                src={`${assetUrl}/people/${active.person_slug}`}
-                alt=""
-                onError={(e) => { e.target.style.display = "none"; }}
-              />
-            )}
-            <div className="faxVerseTooltip-meta">
-              <div className="faxVerseTooltip-refrow">
-                <span className="faxVerseTooltip-ref">{active.ref}</span>
-                {active.voice && <span className="faxVerseTooltip-voice">{label(active.voice)}</span>}
-              </div>
-              {(active.page || active.section) && (
-                <div className="faxVerseTooltip-loc">
-                  <StudyBreadcrumb page={active.page} section={active.section} />
-                </div>
-              )}
-            </div>
-          </div>
-          {active.text && <div className="faxVerseTooltip-text">{active.text}</div>}
-        </div>
+      {showTip && tip && (
+        <FaxVerseTooltip
+          verse={active}
+          vx={tip.vx}
+          top={tip.top}
+          bottom={tip.bottom}
+          placeBelow={placeBelow}
+          caretOffset={caretOffset}
+          minWidth={px((span || anchor).w)}
+        />
       )}
     </div>
   );

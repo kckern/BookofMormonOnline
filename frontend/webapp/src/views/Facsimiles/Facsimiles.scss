@@ -625,7 +625,7 @@
       box-shadow: 0 0 2px rgba(0, 0, 0, 0.35);
     }
     .breadcrumb-index-flag.has-index {
-      background: #3a7d44; /* indexed: green */
+      background: #6b5330; /* indexed: green */
     }
   }
 }
@@ -645,7 +645,7 @@ html[data-theme="dark"] .facsimileToolbar .fax-breadcrumbs {
   .breadcrumb-option.current { background: #2f3a4a; color: #fff; }
   .breadcrumb-avatar { border-color: #444; background: #333; }
   .breadcrumb-index-flag { background: #444; }
-  .breadcrumb-index-flag.has-index { background: #3a7d44; }
+  .breadcrumb-index-flag.has-index { background: #6b5330; }
 }
 
 .facsimileViewer .faxPageViewer {

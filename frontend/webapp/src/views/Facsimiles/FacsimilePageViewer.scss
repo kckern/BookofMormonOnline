@@ -765,6 +765,10 @@ html[data-theme="dark"] .faxMobileViewer {
   max-width: min(560px, 90vw); /* let it breathe — wide enough for a full verse */
   padding: 0.5rem 0.7rem;
   box-sizing: border-box; /* min-width == the cutout width, never narrower */
+  /* portaled to <body> in viewport coords -> never clipped/cramped by the page */
+  /* fixed on <body> so no ancestor clips it; above page chrome + the flip overlay
+     (4000), below the modal (5000) so a lingering hover can't cover an open modal. */
+  &.floating { position: fixed; z-index: 4900; }
   /* dark-on-light by default; dark-mode variant below */
   background: #fbf8f1;
   color: #1c1b18;
@@ -909,7 +913,7 @@ html[data-theme="dark"] .faxVerseTooltip {
 }
 .faxVerseModal-loc { font-size: 0.85rem; margin-top: 2px; }
 .studyBreadcrumb {
-  a.sb-page, a.sb-section { color: #3a7d44; text-decoration: none; &:hover { text-decoration: underline; } }
+  a.sb-page, a.sb-section { color: #6b5330; text-decoration: none; &:hover { text-decoration: underline; } }
   .sb-sep { opacity: 0.5; }
 }
 .faxVerseModal-cutout {
