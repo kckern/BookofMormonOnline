@@ -68,4 +68,21 @@ describe("FaxVerseCutout", () => {
     expect(container.querySelector(".faxCutoutSvg")).toBeNull();
     expect(container.querySelector(".faxVerseTooltip")).toBeNull();
   });
+
+  test("pending hover-intent timer does not fire after unmount", () => {
+    jest.useFakeTimers();
+    const onHover = jest.fn();
+    const { container, unmount } = render(
+      <FaxVerseCutout
+        verses={verses} pageScale={700} displayedWidth={1400} idSuffix={5}
+        activeVerseId={null} onHover={onHover} onLeave={() => {}} onOpen={() => {}}
+        hoverIntentMs={100}
+      />
+    );
+    fireEvent.mouseEnter(container.querySelector(".faxHotspot"));
+    unmount();
+    jest.runOnlyPendingTimers();
+    expect(onHover).not.toHaveBeenCalled();
+    jest.useRealTimers();
+  });
 });

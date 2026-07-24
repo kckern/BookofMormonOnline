@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useEffect } from "react";
 import { unionBox } from "./faxVerseData";
 
 /**
@@ -22,6 +22,7 @@ export default function FaxVerseCutout({
   hoverIntentMs = 100,
 }) {
   const intentRef = useRef(null);
+  useEffect(() => () => { if (intentRef.current) clearTimeout(intentRef.current); }, []);
   const k = displayedWidth > 0 ? displayedWidth / pageScale : 0;
   if (k <= 0 || !verses.length) return null;
 
