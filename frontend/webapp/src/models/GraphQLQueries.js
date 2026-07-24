@@ -1780,7 +1780,7 @@ const queries = {
         peopleCount
         placesCount
         fax { slug title pages info format }
-        faxPages { page ref }
+        faxPages { page imageFile ref }
         faxMore { slug title pages }
         art { id title artist width height ref }
         witnesses { slug witnessSlug principal moneyQuote speaker isWitnessVoice source }

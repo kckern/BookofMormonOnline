@@ -34,7 +34,9 @@ export default function FaxTile({ data, payload }) {
       {pages.length ? (
         <div className="faxTilePages">
           {pages.map((p) => {
-            const nnn = String(p.page).padStart(3, "0");
+            // Thumbnail is keyed by the scan image-file number; the deep-link and
+            // the "p. N" label stay on p.page (the printed folio, canonical route id).
+            const nnn = String(p.imageFile ?? p.page).padStart(3, "0");
             return (
               <Link
                 key={p.page}
