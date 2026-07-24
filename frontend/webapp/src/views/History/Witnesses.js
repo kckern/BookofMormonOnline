@@ -192,10 +192,12 @@ const SingleWitness = ({ witness, sourceSlug }) => {
                 </div>
                 <div className='witness-hero-bio'>
                     <div className='witness-hero-facts'>
-                        {witness.birthday && <div><span className='witness-hero-facts-label'>Born</span> {witness.birthday}</div>}
+                        {witness.birthday && <div><span className='witness-hero-facts-label'>Born</span> {displayDate(witness.birthday)}</div>}
                         {witnessAge !== null && !Number.isNaN(witnessAge) && (
                             <div><span className='witness-hero-facts-label'>Age in 1829</span> {witnessAge}</div>
                         )}
+                        {witness.excommunication && <div><span className='witness-hero-facts-label'>Excommunicated</span> {displayDate(witness.excommunication)}</div>}
+                        {witness.deathday && <div><span className='witness-hero-facts-label'>Died</span> {displayDate(witness.deathday)}</div>}
                     </div>
                     <div className='witness-bio'>
                         {witness.bio
