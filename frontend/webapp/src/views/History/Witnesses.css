@@ -366,12 +366,25 @@
     vertical-align: middle;
 }
 /* teaser (no money quote) — plain description, no quote marks, no attribution */
-.single-witnesses .witness-sources .historyLead.historyTeaser {
-    font-family: inherit;
+/* ── card header: date + source teaser (context above the quote) ────── */
+.single-witnesses .witness-sources .historyHeader {
+    padding: 0.5rem 0.7rem 0.55rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+.single-witnesses .witness-sources .historyHeader .date {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: #0009;
+}
+.single-witnesses .witness-sources .historyHeader .historyTeaserText {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.8rem;
     font-style: italic;
-    font-size: 0.9rem;
-    color: #555;
-    border-left-color: #ccc;
+    line-height: 1.25;
+    color: #666;
 }
 
 /* ── support row: small thumbnail + metadata ────────────────────────── */
@@ -396,25 +409,13 @@
     border-radius: 2px;
 }
 .single-witnesses .witness-sources .historyInfo { flex: 1 1 auto; min-width: 0; }
-.single-witnesses .witness-sources .historyInfoTop {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 0.5rem;
-}
-.single-witnesses .witness-sources .historyInfoTop .pub {
+.single-witnesses .witness-sources .historyInfo .pub {
     font-weight: 600;
     font-size: 0.8rem;
     color: #000A;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-}
-.single-witnesses .witness-sources .historyInfoTop .date {
-    font-size: 0.72rem;
-    color: #0008;
-    white-space: nowrap;
-    flex: 0 0 auto;
 }
 .single-witnesses .witness-sources h5 {
     font-size: 0.92rem;

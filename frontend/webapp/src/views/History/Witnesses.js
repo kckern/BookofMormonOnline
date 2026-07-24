@@ -233,10 +233,13 @@ const SingleWitness = ({ witness, sourceSlug }) => {
                                 className='historycard card'
                                 onClick={() => openSource(doc)}
                             >
-                                {/* LEAD with the money quote (editorially prepared — [Name]/[...] are
-                                    meaningful). A: witness voice (quote + "— speaker" + firsthand pill).
-                                    B/C: someone else's words ("Speaker:" prefix). No speaker → teaser. */}
-                                {doc.money_quote && doc.quote_speaker ? (
+                                <div className='historyHeader'>
+                                    <span className='date'>{displayDate(doc.date)}</span>
+                                    {doc.teaser && <span className='historyTeaserText'>{Parser(doc.teaser)}</span>}
+                                </div>
+                                {/* Lead with the money quote when we have an attributed one
+                                    (editorially prepared — [Name]/[...] are meaningful). */}
+                                {doc.money_quote && doc.quote_speaker && (
                                     <blockquote className={`historyLead${doc.quote_is_witness_voice ? ' is-firsthand' : ''}`}>
                                         {doc.quote_is_witness_voice ? (
                                             <>
@@ -258,8 +261,6 @@ const SingleWitness = ({ witness, sourceSlug }) => {
                                             </>
                                         )}
                                     </blockquote>
-                                ) : (
-                                    doc.teaser ? <div className='historyLead historyTeaser'>{Parser(doc.teaser)}</div> : null
                                 )}
                                 <div className='historySupport'>
                                     {doc.id && (
@@ -273,10 +274,7 @@ const SingleWitness = ({ witness, sourceSlug }) => {
                                         </div>
                                     )}
                                     <div className='historyInfo'>
-                                        <div className='historyInfoTop'>
-                                            <span className='pub'>{doc.source}</span>
-                                            <span className='date'>{displayDate(doc.date)}</span>
-                                        </div>
+                                        <div className='pub'>{doc.source}</div>
                                         <h5>{doc.document}</h5>
                                         {doc.citation && <div className='citation'>{Parser(doc.citation + "")}</div>}
                                     </div>
