@@ -5,7 +5,7 @@ import './Witnesses.css';
 import { label } from '../../models/Utils';
 import BoMOnlineAPI, { assetUrl } from 'src/models/BoMOnlineAPI';
 import moment from 'moment';
-import WitnessLifeHeatmap, { matchesYearMonth } from './WitnessLifeHeatmap';
+import WitnessLifeStrip, { matchesYearMonth } from './WitnessLifeStrip';
 import Identicon from '../_Common/Identicon';
 import { useAppController } from "src/contexts/AppControllerContext";
 
@@ -207,7 +207,7 @@ const SingleWitness = ({ witness, sourceSlug }) => {
                     </div>
 
                     {sources && sources.length > 0 && (
-                        <WitnessLifeHeatmap
+                        <WitnessLifeStrip
                             witness={witness}
                             sources={sources}
                             selectedYearMonth={selectedYearMonth}
@@ -216,6 +216,18 @@ const SingleWitness = ({ witness, sourceSlug }) => {
                     )}
                 </aside>
                 <main className='witness-sources'>
+                    {sources && sources.length > 0 && (
+                        <div className='witness-sources-head'>
+                            <span className='witness-sources-count'>
+                                {visibleSources ? visibleSources.length : sources.length} source{(visibleSources ? visibleSources.length : sources.length) === 1 ? '' : 's'}
+                            </span>
+                            {selectedYearMonth && (
+                                <button type='button' className='witness-filter-chip' onClick={() => setSelectedYearMonth(null)}>
+                                    {selectedYearMonth} <span aria-hidden='true'>✕</span>
+                                </button>
+                            )}
+                        </div>
+                    )}
                     {sources === null && <div className='witness-sources-loading'>Loading sources…</div>}
                     {sources && sources.length === 0 && (
                         <div className='witness-sources-empty'>No sources available for this witness.</div>

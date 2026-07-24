@@ -468,3 +468,20 @@
     margin-top: 0.2rem;
 }
 
+.single-witnesses .witness-sources-head {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.75rem;
+}
+.single-witnesses .witness-sources-count { font-size: 0.85rem; font-weight: 600; color: #555; }
+.single-witnesses .witness-filter-chip {
+    border: 1px solid #c75200;
+    background: #fff;
+    color: #c75200;
+    border-radius: 999px;
+    padding: 0.1rem 0.6rem;
+    font-size: 0.72rem;
+    cursor: pointer;
+}
+.single-witnesses .witness-filter-chip:hover { background: #c75200; color: #fff; }
