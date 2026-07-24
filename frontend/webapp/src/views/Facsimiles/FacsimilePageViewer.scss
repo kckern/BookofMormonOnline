@@ -758,6 +758,10 @@ html[data-theme="dark"] .faxMobileViewer {
 .faxVerseTooltip {
   position: absolute;
   transform: translate(-50%, calc(-100% - 10px)); /* default: above the cutout */
+  /* size to content, NOT to the space left of the page edge — otherwise a
+     right-column tooltip (left near the page's right edge) shrink-to-fits into a
+     cramped sliver while a left-column one has room. */
+  width: max-content;
   max-width: min(560px, 90vw); /* let it breathe — wide enough for a full verse */
   padding: 0.5rem 0.7rem;
   box-sizing: border-box; /* min-width == the cutout width, never narrower */
