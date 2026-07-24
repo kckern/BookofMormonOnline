@@ -185,7 +185,6 @@ const SingleWitness = ({ witness, sourceSlug }) => {
     return <div className="container" style={{ display: 'block' }}>
         <div id="page" className='single-witnesses'>
             <WitnessBreadcrumbs witness={witness} />
-            <h3 className="title lg-4 text-center">{witness.name}</h3>
 
             <div className='witness-hero'>
                 <div className='witness-hero-portrait'>
