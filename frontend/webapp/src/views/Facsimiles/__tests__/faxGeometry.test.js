@@ -67,22 +67,17 @@ describe("normalizeStackWidths", () => {
   });
 });
 
-describe("buildLeafIndex faxOffset (printed folio)", () => {
+describe("buildLeafIndex page numbering (image-file canonical)", () => {
   const ITEM = { slug: "1837", pages: 3, format: "jpg" };
   const REF = () => null;
 
-  test("applies the edition offset for DISPLAY; image number/asset unchanged", () => {
-    const leaves = buildLeafIndex(ITEM, 2, [], REF, "https://cdn", -4); // 1837 = -4
-    expect(leaves[3].pageNumInt).toBe(1);                 // image-file number (routing/asset)
-    expect(leaves[3].pageAssetUrl).toContain("001.jpg");  // asset stays on image number
-    expect(leaves[3].faxPageNum).toBe(5);                 // folio = imageFile - offset = 1-(-4)
-    expect(leaves[3].faxPageSlug).toBe(5);
-    expect(leaves[5].faxPageNum).toBe(7);                 // imageFile 3 -> folio 7
-  });
-
-  test("default offset 0 leaves faxPageNum == pageNumInt", () => {
-    const leaves = buildLeafIndex(ITEM, 2, [], REF, "https://cdn");
-    expect(leaves[3].faxPageNum).toBe(leaves[3].pageNumInt);
-    expect(leaves[3].faxPageSlug).toBe(leaves[3].pageSlugLeaf);
+  test("the folio scheme is reverted: number == image-file, offset ignored", () => {
+    const leaves = buildLeafIndex(ITEM, 2, [], REF, "https://cdn", -4); // offset is now inert
+    expect(leaves[3].pageNumInt).toBe(1);                 // image-file number (routing/asset/display)
+    expect(leaves[3].pageAssetUrl).toContain("001.jpg");
+    expect(leaves[3].faxPageNum).toBe(1);                 // == image-file (no offset applied)
+    expect(leaves[3].faxPageSlug).toBe(1);
+    expect(leaves[3].pageSlugLeaf).toBe(1);               // route slug == image-file
+    expect(leaves[5].faxPageNum).toBe(3);
   });
 });

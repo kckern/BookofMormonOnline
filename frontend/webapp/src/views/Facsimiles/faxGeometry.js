@@ -43,15 +43,15 @@ export function buildLeafIndex(item, pgoffset, pageIndex, getRef, assetBaseUrl, 
     const i = idx - pgoffset;
     const pageNumInt = i > 0 ? i : null;
     const pageNumRoman = i <= 0 ? convertIntToRomanNumeral(pgoffset + i, true) : null;
-    // Printed folio = scan image-file number − per-edition offset (backend:
-    // imageFile = faxPage + offset). The printed folio is the CANONICAL
-    // user-facing page number: it drives the route slug (pageSlugLeaf), the page
-    // input, and every "Page X" label. The image-file number (pageNumInt) is an
-    // internal key only — asset URLs and the /fax/boxes join. Keeping these two
-    // identities separate but consistent is the SSoT fix; see
-    // docs/audits/2026-07-24-fax-page-numbering-ssot.md.
-    const faxPageNum = pageNumInt != null ? pageNumInt - faxOffset : null;
-    const faxPageSlug = pageNumRoman || faxPageNum;
+    // The CANONICAL user-facing page number is the scan image-file number
+    // (pageNumInt): it drives the route slug, the page input, the "Page X" label,
+    // and the boxes join. Navigating to /fax/{slug}/500 opens scan 500, whose
+    // visible printed number matches for editions where print tracks the scan.
+    // (The per-edition `faxOffset` folio scheme was reverted — it made the URL
+    // number run offset from the visible page. faxPageNum/faxPageSlug are kept as
+    // aliases so callers don't churn.)
+    const faxPageNum = pageNumInt;
+    const faxPageSlug = pageNumRoman || pageNumInt;
     const pageAssetUrl =
       i > 0
         ? `${baseUrl}${i.toString().padStart(3, "0")}.${fmt}`
@@ -62,7 +62,7 @@ export function buildLeafIndex(item, pgoffset, pageIndex, getRef, assetBaseUrl, 
       leafSequence: pageNumInt || idx,
       pageNumInt,
       pageNumRoman,
-      pageSlugLeaf: faxPageSlug,   // route slug = printed folio (canonical, SSoT)
+      pageSlugLeaf: faxPageSlug,   // route slug = scan image-file number
       faxPageNum,
       faxPageSlug,
       pageReference: getRef(pageIndex, i),
