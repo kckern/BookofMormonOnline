@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import Masonry from 'react-masonry-css';
 import Parser from 'html-react-parser';
 import './Witnesses.css';
 import { label } from '../../models/Utils';
@@ -180,8 +179,6 @@ const SingleWitness = ({ witness, sourceSlug }) => {
 
     const witnessAge = witness?.birthday ? moment('1829-06-28').diff(moment(witness.birthday), 'years') : null;
 
-    const breakpointColumnsObj = { default: 4, 1400: 3, 1100: 2, 800: 1 };
-
     return <div className="container" style={{ display: 'block' }}>
         <div id="page" className='single-witnesses'>
             <WitnessBreadcrumbs witness={witness} />
@@ -225,10 +222,7 @@ const SingleWitness = ({ witness, sourceSlug }) => {
                     <div className='witness-sources-empty'>No sources in this month.</div>
                 )}
                 {visibleSources && visibleSources.length > 0 && (
-                    <Masonry
-                        breakpointCols={breakpointColumnsObj}
-                        className="my-masonry-grid"
-                        columnClassName="my-masonry-grid_column">
+                    <div className='witness-sources-grid'>
                         {visibleSources.map((doc, i) => (
                             <div
                                 key={doc.slug || i}
@@ -274,7 +268,7 @@ const SingleWitness = ({ witness, sourceSlug }) => {
                                 </div>
                             </div>
                         ))}
-                    </Masonry>
+                    </div>
                 )}
             </div>
         </div>
