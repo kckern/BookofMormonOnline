@@ -147,6 +147,39 @@ that genuinely need the other:
 Whichever is chosen, the denominator (Finding 2) must move to the same domain as
 the numerator.
 
+## Resolution (implemented 2026-07-24)
+
+**Finding 3** fixed first (`blankPageCount = pgfirstVerse - 1`).
+
+**Findings 1 & 2 — Option B chosen (printed folio is canonical).** `pageSlugLeaf`
+(the route slug) is now defined as the printed folio (`faxGeometry.js`:
+`pageSlugLeaf = pageNumRoman || faxPageNum`, identical to `faxPageSlug`). Because
+every route read/write already referenced `pageSlugLeaf`, this single change made
+the URL, page input, "Page X" labels, PageStack titles, and grid links all use
+the folio at once. `pageNumInt` remains the internal image-file key for asset URLs
+and the `/fax/boxes` join, so the inspector is unaffected.
+
+Supporting changes:
+- `FacsimilePageViewer.js`: dropped the ambiguous `pageNumInt === pageNumber`
+  clause from route resolution (folio and image-file now differ); added `maxFolio`
+  and used it for the jump-input `max`, the "/ N" total, and the slider aria.
+- Roman front matter is unchanged (its `pageSlugLeaf` was already the roman slug).
+
+**Accepted consequences:**
+- Content URLs now carry the printed folio, not the image-file number, so old
+  `/fax/{slug}/{imageFile}` deep links resolve to a different page. External fax
+  deep-link producers (search, home tiles, sitemap) should be re-checked to emit
+  folio slugs.
+- On editions whose folio numbering does not start at 1 (e.g. 2013 content starts
+  at folio 10), `/fax/{slug}/1` no longer resolves to the first content page; it
+  falls back to the first spread. The grid/first-tile link points at the real
+  first leaf (roman `i`), so normal entry is unaffected.
+
+**Verified:** input == URL on 2013 (folio 58) and 1830 (folio 50); turning keeps
+them equal; roman front matter (`/fax/2013/viii`) still routes; folio 10 is the
+first 2013 content page and turns back into front matter; references + inspector
+remain aligned (2013 shows 25 hotspots). All 51 Facsimiles tests pass.
+
 ## Files
 
 - `frontend/webapp/src/views/Facsimiles/Facsimiles.js:23` (`getRefFromIndex`), `:49` (`blankPageCount`)

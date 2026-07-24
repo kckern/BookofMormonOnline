@@ -76,15 +76,22 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
   // bounces back to page 1. Numeric page slugs are digits-only.
   const isReference = /[A-Za-z]/.test(pageNumber || '') && /\d/.test(pageNumber || '');
   const totalPages = leafIndex.length;
+  // Highest printed folio, for the jump-input max + "/ N" total. Folio is the
+  // canonical user-facing page number, so the denominator must live in the folio
+  // domain — not item.pages (the image-file count). See the SSoT audit.
+  const maxFolio = leafIndex.reduce(
+    (m, l) => (l.faxPageNum != null && l.faxPageNum > m ? l.faxPageNum : m), 0
+  ) || item.pages;
 
   // Initialize page index based on URL
   useEffect(() => {
     // Special handling for the last page (or any specific page)
     if (pageNumber === String(item.pages) || parseInt(pageNumber) === item.pages) {
       // Direct check for the last page by its number
-      const lastPageIndex = leafIndex.findIndex(leaf => 
-        leaf.pageNumInt === parseInt(pageNumber) || `${leaf.pageSlugLeaf}` === pageNumber
-      );
+      // Route slug is the printed folio (pageSlugLeaf); match on it only. Matching
+      // pageNumInt (image-file #) here would be a different identity and could
+      // resolve the wrong leaf now that folio and image-file diverge.
+      const lastPageIndex = leafIndex.findIndex(leaf => `${leaf.pageSlugLeaf}` === pageNumber);
       
       if (lastPageIndex !== -1) {
         setCurrentPageIndex(lastPageIndex);
@@ -840,7 +847,7 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
             onMouseLeave={() => setShowTooltip(false)}
             className="custom-slider"
             aria-label="Page position"
-            aria-valuetext={`Page ${leafIndex[sliderValue]?.faxPageSlug ?? sliderValue} of ${item.pages}`}
+            aria-valuetext={`Page ${leafIndex[sliderValue]?.faxPageSlug ?? sliderValue} of ${maxFolio}`}
           />
         </div>
         <button
@@ -865,12 +872,12 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
             name="pageInput"
             type="number"
             min={1}
-            max={item.pages}
+            max={maxFolio}
             defaultValue={leftPage?.faxPageSlug || ''}
             key={leftPage?.faxPageSlug}
             aria-label="Jump to page"
           />
-          <span className="of-total">/ {item.pages}</span>
+          <span className="of-total">/ {maxFolio}</span>
         </form>
       </div>
     </div>

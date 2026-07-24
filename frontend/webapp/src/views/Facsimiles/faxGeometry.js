@@ -44,9 +44,14 @@ export function buildLeafIndex(item, pgoffset, pageIndex, getRef, assetBaseUrl, 
     const pageNumInt = i > 0 ? i : null;
     const pageNumRoman = i <= 0 ? convertIntToRomanNumeral(pgoffset + i, true) : null;
     // Printed folio = scan image-file number − per-edition offset (backend:
-    // imageFile = faxPage + offset). Used for DISPLAY only; assets/routing keep
-    // the image-file number (pageNumInt / pageSlugLeaf).
+    // imageFile = faxPage + offset). The printed folio is the CANONICAL
+    // user-facing page number: it drives the route slug (pageSlugLeaf), the page
+    // input, and every "Page X" label. The image-file number (pageNumInt) is an
+    // internal key only — asset URLs and the /fax/boxes join. Keeping these two
+    // identities separate but consistent is the SSoT fix; see
+    // docs/audits/2026-07-24-fax-page-numbering-ssot.md.
     const faxPageNum = pageNumInt != null ? pageNumInt - faxOffset : null;
+    const faxPageSlug = pageNumRoman || faxPageNum;
     const pageAssetUrl =
       i > 0
         ? `${baseUrl}${i.toString().padStart(3, "0")}.${fmt}`
@@ -57,9 +62,9 @@ export function buildLeafIndex(item, pgoffset, pageIndex, getRef, assetBaseUrl, 
       leafSequence: pageNumInt || idx,
       pageNumInt,
       pageNumRoman,
-      pageSlugLeaf: pageNumRoman || pageNumInt,
+      pageSlugLeaf: faxPageSlug,   // route slug = printed folio (canonical, SSoT)
       faxPageNum,
-      faxPageSlug: pageNumRoman || faxPageNum,
+      faxPageSlug,
       pageReference: getRef(pageIndex, i),
       isLeftSide: i % 2 === 0,
       pageAssetUrl,
