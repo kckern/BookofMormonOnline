@@ -1,0 +1,119 @@
+// VariantCompare modal — minimal but real. Task 5 refines this and adds dark mode.
+
+.atv-vc-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 3000; // above the draggable commentary popup
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.atv-vc-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 720px;
+  max-height: 90vh;
+  overflow: hidden;
+  background: #fff;
+  color: #1a1a1a;
+  border-radius: 6px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  outline: none;
+}
+
+.atv-vc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e2e2e2;
+}
+
+.atv-vc-ref {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.atv-vc-close {
+  border: none;
+  background: transparent;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0.25rem;
+  color: inherit;
+}
+
+.atv-vc-body {
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+.atv-vc-reading {
+  padding: 0.75rem 0;
+
+  & + & {
+    border-top: 1px solid #ececec;
+  }
+}
+
+.atv-vc-text {
+  display: block;
+  font-size: 1.05rem;
+  margin-bottom: 0.4rem;
+}
+
+.atv-vc-arrow {
+  color: #888;
+}
+
+.atv-vc-provenance {
+  margin: 0 0 0.5rem;
+  padding-left: 1.1rem;
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.atv-vc-witnesses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.atv-vc-fig {
+  margin: 0;
+  max-width: 220px;
+
+  img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border: 1px solid #ddd;
+  }
+}
+
+.atv-vc-cap {
+  font-size: 0.8rem;
+  margin-top: 0.2rem;
+  color: #333;
+}
+
+.atv-vc-note {
+  font-size: 0.72rem;
+  font-style: italic;
+  color: #888;
+}
+
+.atv-vc-gap {
+  font-size: 0.85rem;
+  color: #666;
+  padding: 0.15rem 0.4rem;
+  align-self: center;
+}
