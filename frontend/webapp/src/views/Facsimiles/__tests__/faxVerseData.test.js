@@ -17,7 +17,7 @@ describe("faxVerseData", () => {
   test("mergeBoxes groups boxes by imagePage then verseId, preserving multiples", () => {
     const responses = [
       { pageScale: 700, boxes: [
-        { verseId: 100, imagePage: 5, x: 1, y: 2, w: 3, h: 4 },
+        { verseId: 100, imagePage: 5, x: 1, y: 2, w: 3, h: 4, tlw: 10, tlh: 11, brw: 12, brh: 13 },
         { verseId: 100, imagePage: 5, x: 5, y: 6, w: 7, h: 8 },
         { verseId: 101, imagePage: 5, x: 9, y: 9, w: 9, h: 9 },
       ] },
@@ -28,7 +28,8 @@ describe("faxVerseData", () => {
     const { pageScale, byPageVerse } = mergeBoxes(responses);
     expect(pageScale).toBe(700);
     expect(byPageVerse.get(5).get(100)).toEqual([
-      { x: 1, y: 2, w: 3, h: 4 }, { x: 5, y: 6, w: 7, h: 8 },
+      { x: 1, y: 2, w: 3, h: 4, tlw: 10, tlh: 11, brw: 12, brh: 13 }, // notches carried
+      { x: 5, y: 6, w: 7, h: 8, tlw: 0, tlh: 0, brw: 0, brh: 0 },     // absent -> 0
     ]);
     expect(byPageVerse.get(5).get(101)).toHaveLength(1);
     expect(byPageVerse.get(6).get(100)).toHaveLength(1);

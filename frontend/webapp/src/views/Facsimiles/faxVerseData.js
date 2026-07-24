@@ -34,7 +34,12 @@ export function mergeBoxes(responses) {
     for (const b of (res && res.boxes) || []) {
       const page = byPageVerse.get(b.imagePage) || new Map();
       const arr = page.get(b.verseId) || [];
-      arr.push({ x: b.x, y: b.y, w: b.w, h: b.h });
+      // Carry notch insets (tlw/tlh top-left, brw/brh bottom-right) so the cutout
+      // can draw a notched polygon; 0 for a plain-rectangle box.
+      arr.push({
+        x: b.x, y: b.y, w: b.w, h: b.h,
+        tlw: b.tlw || 0, tlh: b.tlh || 0, brw: b.brw || 0, brh: b.brh || 0,
+      });
       page.set(b.verseId, arr);
       byPageVerse.set(b.imagePage, page);
     }
