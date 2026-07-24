@@ -97,4 +97,23 @@ describe("faxVerseData", () => {
     expect(ids).toEqual(expected);
     expect(spreadVerseIds(null, null)).toEqual([]);
   });
+
+  test("chunkIds([]) returns an empty array", () => {
+    expect(chunkIds([])).toEqual([]);
+  });
+
+  test("unionBox with a single box returns that box's rect", () => {
+    expect(unionBox([{ x: 5, y: 5, w: 10, h: 10 }])).toEqual({ x: 5, y: 5, w: 10, h: 10 });
+  });
+
+  test("invalid verse ids never throw (guarded generateReference)", () => {
+    // 0 / out-of-range would make scripture-guide throw if unguarded
+    expect(() => chapterRefsForVerseIds([0, 999999999])).not.toThrow();
+    expect(chapterRefsForVerseIds([0, 999999999])).toEqual([]); // both skipped
+    const map = indexReadByVerse([
+      { sections: [{ blocks: [{ person_slug: "p", voice: "v", lines: [{ verse_id: 999999999, text: "x" }] }] }] },
+    ]);
+    expect(() => map.get(999999999)).not.toThrow();
+    expect(map.get(999999999).ref).toBeNull(); // ref could not be generated
+  });
 });

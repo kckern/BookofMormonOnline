@@ -1,5 +1,14 @@
 import { generateReference, lookupReference } from "scripture-guide";
 
+/** generateReference that returns null instead of throwing on invalid ids. */
+function safeGenerateReference(id) {
+  try {
+    return generateReference([id]);
+  } catch {
+    return null;
+  }
+}
+
 // Backend caps /fax/boxes at 40 ids per request (MAX_VERSE_IDS in
 // backend/src/media/fax/route.ts) and SILENTLY slices the overflow. Chunk to
 // this size and merge client-side.
@@ -21,7 +30,7 @@ export function mergeBoxes(responses) {
   const byPageVerse = new Map();
   let pageScale = 700;
   for (const res of responses || []) {
-    if (res && res.pageScale) pageScale = res.pageScale;
+    if (res && res.pageScale != null) pageScale = res.pageScale;
     for (const b of (res && res.boxes) || []) {
       const page = byPageVerse.get(b.imagePage) || new Map();
       const arr = page.get(b.verseId) || [];
@@ -43,7 +52,9 @@ export function chapterRefsForVerseIds(verseIds) {
   const seen = new Set();
   const out = [];
   for (const id of verseIds || []) {
-    const ch = chapterRefOf(generateReference([id]));
+    const ref = safeGenerateReference(id);
+    if (!ref) continue;
+    const ch = chapterRefOf(ref);
     if (ch && !seen.has(ch)) { seen.add(ch); out.push(ch); }
   }
   return out;
@@ -61,7 +72,7 @@ export function indexReadByVerse(chapters) {
             text: line.text,
             person_slug: block.person_slug,
             voice: block.voice,
-            ref: generateReference([line.verse_id]),
+            ref: safeGenerateReference(line.verse_id),
           });
         }
       }
@@ -79,7 +90,7 @@ export function hydrateVerses(byPageVerse, textByVerse) {
       const t = (textByVerse && textByVerse.get(verse_id)) || {};
       verses.push({
         verse_id,
-        ref: t.ref || generateReference([verse_id]),
+        ref: t.ref || safeGenerateReference(verse_id),
         boxes,
         text: t.text,
         person_slug: t.person_slug,
