@@ -59,6 +59,13 @@ describe("FaxVerseModal", () => {
     expect(onPrev).toHaveBeenCalledTimes(2);
   });
 
+  test("Read button calls onRead with the verse", () => {
+    const onRead = jest.fn();
+    render(<FaxVerseModal verse={verse} version="1830" pageScale={700} onRead={onRead} onClose={() => {}} />);
+    fireEvent.click(document.querySelector(".faxVerseModal-read"));
+    expect(onRead).toHaveBeenCalledWith(verse);
+  });
+
   test("backdrop click and Escape both call onClose", () => {
     const onClose = jest.fn();
     render(<FaxVerseModal verse={verse} version="1830" pageScale={700} onClose={onClose} />);

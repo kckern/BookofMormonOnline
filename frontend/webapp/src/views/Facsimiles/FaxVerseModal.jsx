@@ -27,7 +27,7 @@ const CROP_W = 800;
  *  - anchorX: viewport x of the spread's optical center (seam); the card centers there
  *  - onPrev/onNext: step to the adjacent verse (may flip the page behind the modal)
  */
-export default function FaxVerseModal({ verse, version, pageScale = 700, anchorX = null, onPrev, onNext, onClose }) {
+export default function FaxVerseModal({ verse, version, pageScale = 700, anchorX = null, onPrev, onNext, onRead, onClose }) {
   useEffect(() => {
     if (!verse) return undefined;
     const onKey = (e) => {
@@ -67,14 +67,11 @@ export default function FaxVerseModal({ verse, version, pageScale = 700, anchorX
       <div className="faxVerseModal-backdrop" onClick={() => onClose && onClose()} />
       <div className="faxVerseModal-card" style={cardStyle}>
         <button type="button" className="faxVerseModal-close" aria-label="Close" onClick={() => onClose && onClose()}>×</button>
-        {onPrev && (
-          <button type="button" className="faxVerseModal-nav prev" aria-label="Previous verse" onClick={onPrev}>‹</button>
-        )}
-        {onNext && (
-          <button type="button" className="faxVerseModal-nav next" aria-label="Next verse" onClick={onNext}>›</button>
-        )}
 
         <div className="faxVerseModal-header">
+          {onPrev && (
+            <button type="button" className="faxVerseModal-nav prev" aria-label="Previous verse" onClick={onPrev}>‹</button>
+          )}
           {verse.person_slug && (
             <img
               className="faxVerseModal-avatar"
@@ -87,11 +84,17 @@ export default function FaxVerseModal({ verse, version, pageScale = 700, anchorX
             <div className="faxVerseModal-ref">{verse.ref}</div>
             {verse.voice && <div className="faxVerseModal-voice">{label(verse.voice)}</div>}
           </div>
+          {onNext && (
+            <button type="button" className="faxVerseModal-nav next" aria-label="Next verse" onClick={onNext}>›</button>
+          )}
         </div>
 
         {useApi ? (
-          <div className="faxVerseModal-cutout api">
+          // minHeight reserves ~the verse height so the height eases (transition in
+          // SCSS) instead of collapsing→jumping when stepping verses.
+          <div className="faxVerseModal-cutout api" style={{ minHeight: cropH }}>
             <img
+              key={verse.verse_id}  /* remount so the previous verse's crop can't linger */
               className="faxVerseModal-crop"
               src={`${renderBaseUrl}/fax/render/${version}/crop/w${CROP_W}/ids/${verse.verse_id}.jpg`}
               alt=""
@@ -101,6 +104,7 @@ export default function FaxVerseModal({ verse, version, pageScale = 700, anchorX
           <div className="faxVerseModal-cutout" style={{ width: cropW, height: cropH }}>
             {verse.pageAssetUrl && (
               <img
+                key={verse.verse_id}
                 src={verse.pageAssetUrl}
                 alt=""
                 style={{ position: "absolute", width: pageScale * s, maxWidth: "none", left: -box.x * s, top: -box.y * s }}
@@ -110,6 +114,14 @@ export default function FaxVerseModal({ verse, version, pageScale = 700, anchorX
         )}
 
         {verse.text && <p className="faxVerseModal-text">{verse.text}</p>}
+
+        {onRead && (
+          <div className="faxVerseModal-actions">
+            <button type="button" className="faxVerseModal-read" onClick={() => onRead(verse)}>
+              Read {verse.ref} ›
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

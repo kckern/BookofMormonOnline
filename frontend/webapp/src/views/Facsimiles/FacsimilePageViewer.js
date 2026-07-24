@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef, useMemo, useReducer } from "react";
-import { useParams, useHistory } from "react-router-dom";
+import { useParams, useHistory, useLocation } from "react-router-dom";
 import ReactTooltip from "react-tooltip";
 import { useSwipe } from "../../models/Utils";
 import { assetUrl } from 'src/models/BoMOnlineAPI';
@@ -10,6 +10,7 @@ import PageImage from "./PageImage";
 import PageStack from "./PageStack";
 import FaxPageFlip, { FAX_FLIP_MS, FAX_SETTLE_MS } from "./FaxPageFlip";
 import { openScripture } from "../_Common/ScripturePopup";
+import { readPath } from "../_Common/ScriptureExcerpt";
 import { prefetchThumbs, isThumbWarm } from "./faxThumbCache";
 import { generateReference, lookupReference } from "scripture-guide";
 import { normalizeStackWidths } from "./faxGeometry";
@@ -483,6 +484,33 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
     pendingVerseNavRef.current = null;
   }, [spreadVerses, vstate.openVerse]);
 
+  // --- Modal <-> URL sync (?verse=<id>) so the open verse is deep-linkable -----
+  const location = useLocation();
+  const verseParam = new URLSearchParams(location.search).get("verse");
+
+  // Reflect the open verse in the URL; clear it on close.
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const open = vstate.openVerse;
+    if (open && String(open.verse_id) !== params.get("verse")) {
+      params.set("verse", String(open.verse_id));
+      history.replace(`${location.pathname}?${params.toString()}`);
+    } else if (!open && params.has("verse")) {
+      params.delete("verse");
+      const q = params.toString();
+      history.replace(location.pathname + (q ? `?${q}` : ""));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vstate.openVerse]);
+
+  // Deep-link: open the modal for ?verse=<id> once that verse is on the spread.
+  useEffect(() => {
+    if (!verseParam || vstate.openVerse) return;
+    const target = spreadVerses.find((v) => String(v.verse_id) === String(verseParam));
+    if (target) vdispatch({ type: "OPEN", verse: target });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [verseParam, spreadVerses]);
+
   // Commit the navigation the moment the leaf lands. Guard against a stale turn
   // whose edition changed underneath it, and against a double-fire.
   const handleFlipDone = useCallback(() => {
@@ -835,6 +863,7 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
               anchorX={vstate.openVerse ? window.innerWidth / 2 + seamAnchorFromDom() : null}
               onPrev={() => handleVerseNav("prev")}
               onNext={() => handleVerseNav("next")}
+              onRead={(v) => { const rp = readPath(v.ref); if (rp) history.push(rp); }}
               onClose={() => vdispatch({ type: "CLOSE" })}
             />
           </div>
