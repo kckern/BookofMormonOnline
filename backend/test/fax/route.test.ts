@@ -58,7 +58,8 @@ describe('GET /fax/boxes', () => {
     expect(r.statusCode).toBe(200);
     const body = JSON.parse(r.body) as {
       pageScale: number; clamped: boolean;
-      boxes: { verseId: number; imagePage: number; x: number; y: number; w: number; h: number }[];
+      boxes: { verseId: number; imagePage: number; x: number; y: number; w: number; h: number;
+        tlw: number; tlh: number; brw: number; brh: number }[];
     };
     expect(body.pageScale).toBe(700);
     expect(body.boxes.length).toBeGreaterThan(0);
@@ -66,6 +67,11 @@ describe('GET /fax/boxes', () => {
     expect(b.imagePage).toBe(156);   // 2013 fax page 165 + offset (-9)
     expect(b.x).toBe(357);
     expect(b.y).toBe(291);
+    // Notch fields are present and numeric (0 for a plain-rectangle box).
+    for (const k of ['tlw', 'tlh', 'brw', 'brh'] as const) {
+      expect(typeof b[k]).toBe('number');
+      expect(b[k]).toBeGreaterThanOrEqual(0);
+    }
   });
   it('unknown verse -> empty boxes (200)', async () => {
     const f = await app();

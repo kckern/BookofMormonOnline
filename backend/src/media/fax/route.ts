@@ -136,7 +136,11 @@ export async function faxRoutes(app: FastifyInstance): Promise<void> {
   });
 
   // Box coordinates for a passage — JSON for the viewer's DOM highlight overlay.
-  // GET /fax/boxes/{version}/{selector}  ->  { pageScale, clamped, boxes: [{ verseId, imagePage, x, y, w, h }] }
+  // GET /fax/boxes/{version}/{selector}  ->  { pageScale, clamped, boxes: [{ verseId, imagePage, x, y, w, h, tlw, tlh, brw, brh }] }
+  // tlw/tlh = top-left notch (verse starts mid-line), brw/brh = bottom-right notch
+  // (verse ends mid-line). 0 when the box is a plain rectangle. Consumers use them
+  // to draw notched cutout polygons and to decide when a verse crop needs the
+  // render API (notched/multi-box) vs a plain CSS crop.
   app.get('/fax/boxes/*', async (req, reply) => {
     const rest = (req.params as { '*': string })['*']; // version/selector...
     const parts = rest.split('/');
@@ -157,6 +161,7 @@ export async function faxRoutes(app: FastifyInstance): Promise<void> {
       verseId: b.verseId,
       imagePage: b.page + meta.offset,
       x: b.x, y: b.y, w: b.w, h: b.h,
+      tlw: b.tlw, tlh: b.tlh, brw: b.brw, brh: b.brh,
     }));
     const pageScale = boxes[0]?.pageScale ?? 700;
     return reply
