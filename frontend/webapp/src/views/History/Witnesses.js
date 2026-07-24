@@ -111,7 +111,15 @@ const WitnessBreadcrumbs = ({ witness }) => {
                                         aria-current={isCurrent ? 'page' : undefined}
                                         onClick={() => setOpen(false)}
                                     >
-                                        {w.name}
+                                        <img
+                                            className='breadcrumb-avatar'
+                                            src={`${assetUrl}/history/witnesses/people/${w.slug}.jpg`}
+                                            alt=''
+                                            aria-hidden='true'
+                                            loading='lazy'
+                                            onError={(e) => { e.target.style.visibility = 'hidden'; }}
+                                        />
+                                        <span className='breadcrumb-option-name'>{w.name}</span>
                                     </Link>
                                 );
                             })}
@@ -226,16 +234,11 @@ const SingleWitness = ({ witness, sourceSlug }) => {
                             onSelectYearMonth={setSelectedYearMonth}
                         />
                     )}
-                    {sources && sources.length > 0 && (
+                    {selectedYearMonth && (
                         <div className='witness-sources-head'>
-                            <span className='witness-sources-count'>
-                                {visibleSources ? visibleSources.length : sources.length} source{(visibleSources ? visibleSources.length : sources.length) === 1 ? '' : 's'}
-                            </span>
-                            {selectedYearMonth && (
-                                <button type='button' className='witness-filter-chip' onClick={() => setSelectedYearMonth(null)}>
-                                    {selectedYearMonth} <span aria-hidden='true'>✕</span>
-                                </button>
-                            )}
+                            <button type='button' className='witness-filter-chip' onClick={() => setSelectedYearMonth(null)}>
+                                {selectedYearMonth} <span aria-hidden='true'>✕</span>
+                            </button>
                         </div>
                     )}
                     {sources === null && <div className='witness-sources-loading'>Loading sources…</div>}
@@ -310,7 +313,10 @@ const Witnesses = () => {
         const dataKeys = Object.keys(data);
         const witnessData = dataKeys.map(key => data[key].find(w => w.slug === witness)).find(w => w);
         if (!witnessData) return <div className="container"><div id="page"><Link to='/history/witnesses' className='btn btn-primary'>Back</Link><p>Witness not found.</p></div></div>;
-        return <SingleWitness witness={witnessData} sourceSlug={source} />;
+        // Key on the slug so switching subjects REMOUNTS the whole view: state resets
+        // (sources → null → loading) and the portrait <img> is a fresh element, so no
+        // stale content lingers from the previous witness until the new data hydrates.
+        return <SingleWitness key={witnessData.slug} witness={witnessData} sourceSlug={source} />;
     }
     return (
         <div className="container " style={{ display: 'block' }}>
