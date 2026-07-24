@@ -1,11 +1,39 @@
 import {
   scanBrackets,
+  scanBracketGroups,
   isApparatus,
   trailingSigla,
   splitReading,
   parseStates,
   parseApparatus,
 } from "../parseATV";
+
+describe("scanBracketGroups", () => {
+  // The single source of truth for bracket scanning; scanBrackets and
+  // parseApparatus both derive from it. Pin the position contract here so a
+  // future edit that breaks start/end fails at the scanner, not only downstream.
+  test("records inner text plus the [ and ] positions of each top-level group", () => {
+    const { groups, balanced } = scanBracketGroups("a [x|y A] b");
+    expect(groups).toEqual([{ inner: "x|y A", start: 2, end: 8 }]);
+    expect(balanced).toBe(true);
+  });
+
+  test("end points at the matching outer ], not an inner one", () => {
+    const src = "k [B [x] P|C {y} S] z";
+    const { groups } = scanBracketGroups(src);
+    expect(groups).toHaveLength(1);
+    // slicing [start, end] inclusive round-trips to the original group
+    expect(src.slice(groups[0].start, groups[0].end + 1)).toBe("[B [x] P|C {y} S]");
+  });
+
+  test("an unclosed [ is unbalanced and emits no group", () => {
+    expect(scanBracketGroups("a [x|y A")).toEqual({ groups: [], balanced: false });
+  });
+
+  test("a stray ] is balanced (depth never goes negative) and emits no group", () => {
+    expect(scanBracketGroups("a ] b")).toEqual({ groups: [], balanced: true });
+  });
+});
 
 describe("scanBrackets", () => {
   test("returns the inner text of each top-level bracket group", () => {

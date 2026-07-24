@@ -219,7 +219,7 @@ function toReading(part) {
  * `text` and `unit` segments in document order, plus non-fatal `warnings`.
  *
  *   { segments: Array<
- *       | { kind: "text", text }            // verbatim HTML between/around units
+ *       | { kind: "text", text }            // HTML (whitespace-collapsed, boundary-trimmed)
  *       | { kind: "unit", readings }        // a variation unit
  *     >,
  *     warnings: string[] }
@@ -228,6 +228,13 @@ function toReading(part) {
  * (`[<em>a</em>|<em>o</em>]`) is left inside the surrounding text stream. An
  * unbalanced bracket is recorded in `warnings` and its region degrades to text.
  * Entities are NOT decoded; runs of whitespace are collapsed to single spaces.
+ *
+ * Text segments are `.trim()`-ed, so the whitespace BETWEEN a text run and an
+ * adjacent unit is intentionally dropped (and a lone space between two adjacent
+ * units collapses to nothing). The renderer owns inter-segment spacing — it must
+ * supply its own margin/gap around unit elements and not rely on a text segment
+ * to separate them, or adjacent units would render flush.
+ *
  * NEVER throws — there are no error boundaries in this app, so a throw here would
  * blank the page.
  */
