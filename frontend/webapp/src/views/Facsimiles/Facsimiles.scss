@@ -710,3 +710,53 @@ html[data-theme="dark"] .facsimileToolbar .fax-breadcrumbs {
 
 
 /* removed duplicate viewer layout overrides */
+
+/* Mobile edition-switcher drawer (portaled to <body>, so styles live at top level,
+   not nested under .fax-breadcrumbs). Right side-drawer, one edition per row. */
+.faxEditionDrawer {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+
+  .faxEditionDrawer-head {
+    flex: 0 0 auto;
+    padding: 1rem 1.1rem;
+    font-family: "Roboto Condensed", sans-serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #333;
+    border-bottom: 1px solid #e5e5e5;
+  }
+  .faxEditionDrawer-list {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 0.5rem;
+  }
+  .breadcrumb-option {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.6rem 0.7rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    color: #222;
+    text-decoration: none;
+    .breadcrumb-option-name { flex: 1 1 auto; line-height: 1.25; }
+  }
+  .breadcrumb-option.current { background: #eef1fb; font-weight: 600; }
+  .breadcrumb-option:active { background: #f0f4fb; }
+  .breadcrumb-thumb { position: relative; flex: 0 0 auto; }
+  .breadcrumb-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 1px solid #ccc; }
+  .breadcrumb-index-flag {
+    position: absolute; right: -3px; bottom: -3px;
+    background: #6b5330; color: #fff; border-radius: 50%;
+    width: 16px; height: 16px; font-size: 0.7rem; line-height: 16px; text-align: center;
+  }
+}
+html[data-theme="dark"] .faxEditionDrawer {
+  background: #1f1f1f;
+  .faxEditionDrawer-head { color: #eee; border-bottom-color: #3a3a3a; }
+  .breadcrumb-option { color: #ddd; }
+  .breadcrumb-option.current { background: #333; }
+}

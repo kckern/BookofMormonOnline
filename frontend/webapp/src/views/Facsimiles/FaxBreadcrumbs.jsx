@@ -1,7 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import Drawer from 'react-modern-drawer';
+import 'react-modern-drawer/dist/index.css';
 import { assetUrl } from 'src/models/BoMOnlineAPI';
-import { label } from 'src/models/Utils';
+import { label, isMobile } from 'src/models/Utils';
 import { generateReference, lookupReference } from 'scripture-guide';
 
 /**
@@ -24,6 +26,20 @@ export default function FaxBreadcrumbs({ editions = [], current, currentRef }) {
 
   useEffect(() => {
     if (!open) return undefined;
+    // On mobile the list is a drawer with its own overlay/close — the document
+    // outside-click handler (which fires on the drawer's own portaled content) would
+    // fight it, so only wire it for the desktop dropdown.
+    if (isMobile()) {
+      const onKey = (e) => {
+        if (e.key === 'Escape' || e.key === 'Esc' || e.keyCode === 27) {
+          e.stopPropagation();
+          if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
+          setOpen(false);
+        }
+      };
+      document.addEventListener('keydown', onKey, true);
+      return () => document.removeEventListener('keydown', onKey, true);
+    }
     const onDocClick = (e) => {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target)) setOpen(false);
     };
@@ -59,6 +75,51 @@ export default function FaxBreadcrumbs({ editions = [], current, currentRef }) {
     return `/fax/${ed.slug}`;
   };
 
+  const optionList = editions.map((ed) => {
+    const isCurrent = ed.slug === current?.slug;
+    const indexed = !!ed.indexRef; // has a verse-level facsimile index
+    const inner = (
+      <>
+        <span className="breadcrumb-thumb">
+          <img
+            className="breadcrumb-avatar"
+            src={`${assetUrl}/fax/covers/${ed.slug}`}
+            alt=""
+            aria-hidden="true"
+            loading="lazy"
+            onError={(e) => { e.target.style.visibility = 'hidden'; }}
+          />
+          {indexed && (
+            <span
+              className="breadcrumb-index-flag has-index"
+              title="Verse-level facsimile index"
+              aria-label="Verse-indexed"
+            >¶</span>
+          )}
+        </span>
+        <span className="breadcrumb-option-name">{ed.title}</span>
+      </>
+    );
+    return isCurrent ? (
+      <div key={ed.slug} className="breadcrumb-option current" role="option" aria-selected="true" aria-current="page">
+        {inner}
+      </div>
+    ) : (
+      <Link
+        key={ed.slug}
+        to={{ pathname: targetFor(ed), state: { faxPageOnly: true } }}
+        className="breadcrumb-option"
+        role="option"
+        aria-selected="false"
+        onClick={() => setOpen(false)}
+      >
+        {inner}
+      </Link>
+    );
+  });
+
+  const mobile = isMobile();
+
   return (
     <nav className={`fax-breadcrumbs${open ? ' open' : ''}`} aria-label="Breadcrumb" ref={wrapperRef}>
       <Link to="/fax" className="breadcrumb-link">{label('menu_fax') || 'Facsimiles'}</Link>
@@ -73,51 +134,20 @@ export default function FaxBreadcrumbs({ editions = [], current, currentRef }) {
         {current?.title}
         <span className="breadcrumb-chevron" aria-hidden="true">▾</span>
       </button>
-      {open && (
-        <div className="breadcrumb-dropdown" role="listbox">
-          {editions.map((ed) => {
-            const isCurrent = ed.slug === current?.slug;
-            const indexed = !!ed.indexRef; // has a verse-level facsimile index
-            const inner = (
-              <>
-                <span className="breadcrumb-thumb">
-                  <img
-                    className="breadcrumb-avatar"
-                    src={`${assetUrl}/fax/covers/${ed.slug}`}
-                    alt=""
-                    aria-hidden="true"
-                    loading="lazy"
-                    onError={(e) => { e.target.style.visibility = 'hidden'; }}
-                  />
-                  {indexed && (
-                    <span
-                      className="breadcrumb-index-flag has-index"
-                      title="Verse-level facsimile index"
-                      aria-label="Verse-indexed"
-                    >¶</span>
-                  )}
-                </span>
-                <span className="breadcrumb-option-name">{ed.title}</span>
-              </>
-            );
-            return isCurrent ? (
-              <div key={ed.slug} className="breadcrumb-option current" role="option" aria-selected="true" aria-current="page">
-                {inner}
-              </div>
-            ) : (
-              <Link
-                key={ed.slug}
-                to={{ pathname: targetFor(ed), state: { faxPageOnly: true } }}
-                className="breadcrumb-option"
-                role="option"
-                aria-selected="false"
-                onClick={() => setOpen(false)}
-              >
-                {inner}
-              </Link>
-            );
-          })}
-        </div>
+      {mobile ? (
+        // Mobile: right side-drawer (no dropdown/popup on mobile).
+        <Drawer
+          open={open}
+          direction="right"
+          size="85vw"
+          className="faxEditionDrawer"
+          onClose={() => setOpen(false)}
+        >
+          <div className="faxEditionDrawer-head">{label('menu_fax') || 'Facsimiles'}</div>
+          <div className="faxEditionDrawer-list" role="listbox">{optionList}</div>
+        </Drawer>
+      ) : (
+        open && <div className="breadcrumb-dropdown" role="listbox">{optionList}</div>
       )}
     </nav>
   );
