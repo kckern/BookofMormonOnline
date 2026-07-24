@@ -29,11 +29,10 @@ html[data-theme="dark"] {
   .single-witnesses .witness-sources .historyLead .money_quote_attribution { color: var(--text-muted); }
   .single-witnesses .witness-sources .historyLead .firsthand-badge { color: var(--link); border-color: var(--border); }
   .single-witnesses .witness-sources .historyHeader { border-bottom-color: var(--border); }
-  .single-witnesses .witness-sources .historyHeader .date { color: var(--text-secondary); }
+  .single-witnesses .witness-sources .historyHeader .dateChip { color: var(--text-secondary); background: rgba(255, 255, 255, 0.08); }
   .single-witnesses .witness-sources .historyHeader .historyTeaserText { color: var(--text-muted); }
   .single-witnesses .witness-sources .historySupport { border-top-color: var(--border); }
   .single-witnesses .witness-sources .historyThumb img { border-color: var(--border); }
-  .single-witnesses .witness-sources .historyInfo .pub { color: var(--text-secondary); }
   .single-witnesses .witness-sources h5 { color: var(--text-primary); }
   .single-witnesses .witness-sources .citation { color: var(--text-muted); }
 }

@@ -234,8 +234,8 @@ const SingleWitness = ({ witness, sourceSlug }) => {
                                 onClick={() => openSource(doc)}
                             >
                                 <div className='historyHeader'>
-                                    <span className='date'>{displayDate(doc.date)}</span>
-                                    {doc.teaser && <span className='historyTeaserText'>{Parser(doc.teaser)}</span>}
+                                    <span className='dateChip'>{displayDate(doc.date)}</span>
+                                    {doc.teaser && <div className='historyTeaserText'>{Parser(doc.teaser)}</div>}
                                 </div>
                                 {/* Lead with the money quote when we have an attributed one
                                     (editorially prepared — [Name]/[...] are meaningful). */}
@@ -273,11 +273,7 @@ const SingleWitness = ({ witness, sourceSlug }) => {
                                             />
                                         </div>
                                     )}
-                                    <div className='historyInfo'>
-                                        <div className='pub'>{doc.source}</div>
-                                        <h5>{doc.document}</h5>
-                                        {doc.citation && <div className='citation'>{Parser(doc.citation + "")}</div>}
-                                    </div>
+                                    {doc.citation && <div className='citation'>{Parser(doc.citation + "")}</div>}
                                 </div>
                             </div>
                         ))}
