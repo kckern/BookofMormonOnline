@@ -295,6 +295,31 @@ primary-source fidelity. Carry an `exact: boolean` on each witness-map entry; wh
 `exact === false`, the popover renders the siglum label as the heading and the scan title
 beneath it as *"nearest available scan: 1888 Deseret News printing"*.
 
+### 5.2.1 The same honesty rule applies to correction glosses
+
+Surfaced during Phase 1 implementation and deferred to Phase 2.
+
+Skousen's legend defines eight correction codes (`js`, `jg`, `+`, `–`, `%`, `p`, `b`,
+`+–`). The corpus contains four more that his legend does not gloss — `?` (31
+occurrences), `%?` (6), `%+` (4), `++` (2) — plus the bare marker (~908). We wrote
+descriptions for those ourselves; they are plausible compositional readings, not
+citations.
+
+`ATV/apparatus.js` marks them editorial **in a comment**. That is sufficient while
+nothing renders them. It stops being sufficient the moment the modal displays correction
+descriptions (§6.4), because our four inferences and Skousen's eight citations would
+appear in identical presentation, side by side, with nothing telling the reader which is
+which. Same failure mode as captioning a Deseret News scan "1888 Juvenile Instructor".
+
+**Phase 2 requirement:** before any correction gloss reaches the UI, reshape the values
+to carry provenance — `{ text, editorial: boolean }` — and render editorial glosses
+visibly distinguished (bracketed, italicised, or footnoted). Cheap to change: nothing
+consumes these values today.
+
+Open question for someone with Skousen's volume to hand: `%?` currently reads *"change
+w/ erasure, uncertain"*. Whether the code means the *erasure* is uncertain or the
+*resulting reading* is uncertain is not settleable from the legend. Six instances.
+
 ### 5.3 Prerequisites this map depends on
 
 1. **`VERSION_SLUGS` blocks 9 indexed editions.** `1881, 1883d, 1885, 1888d, 1898,
@@ -782,6 +807,13 @@ The sigla table itself (`witnesses.js`) is **not** translated — edition names 
 provenance are bibliographic citation. But `determineLanguage()` gates the whole
 apparatus: ATV sources 161–166 are `source_lang='en'`, so a non-English reader never sees
 these entries at all. Confirm that before building any localisation.
+
+**Arrow collision.** The correction marker renders as `⮕` inside pills. The quoted verse
+text itself contains `&rarr;` (`→`) in 10 header blocks — a structural break in Skousen's
+quotation, never a correction, and always in the text stream rather than inside a
+bracket. Two visually similar arrows a few millimetres apart mean two different things.
+Pick a correction glyph that cannot be confused with `→`, or style the pill arrow
+distinctly enough that the difference reads at a glance.
 
 **Dark mode.** The dark sheet styles only today's `.atv` classes
 (`darkmode/_read-page.scss:50-51`). New components need their own theme-aware styles —
