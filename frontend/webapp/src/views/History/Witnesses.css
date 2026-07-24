@@ -325,7 +325,7 @@
 .single-witnesses .witness-sources .historyLead.is-firsthand {
     border-left-color: #345496;          /* first-hand voice reads cooler */
 }
-.single-witnesses .witness-sources .historyLead .money_quote_text { font-style: italic; }
+.single-witnesses .witness-sources .historyLead .money_quote_text { font-style: normal; }
 /* editorial marks ([Name] / [...]) — set apart in grey Roboto */
 .single-witnesses .witness-sources .historyLead .editorialMark {
     font-family: "Roboto", "Roboto Condensed", sans-serif;
