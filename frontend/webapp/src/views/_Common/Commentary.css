@@ -50,6 +50,25 @@
     color: #FF000066
 }
 
+/* Inline apparatus in commentary prose (Phase 2). No grey box (that's the
+   header's .atv); the pills carry a light tint so a variant reads as a variant
+   against the prose without shouting. */
+.atv-apparatus.atv-inline .atv-string
+{
+    background-color: #e8ebef;
+    padding: 0 0.5ex;
+    margin: 0 0.1ex;
+    border-radius: 0.6ex;
+    font-family: "Roboto Condensed", sans-serif;
+    font-weight: bold;
+    color: #000;
+    white-space: nowrap;
+}
+.atv-apparatus.atv-inline .atv-change
+{
+    white-space: normal;
+}
+
 .comment_tab{
   flex:1 1 auto;
   position: relative;
