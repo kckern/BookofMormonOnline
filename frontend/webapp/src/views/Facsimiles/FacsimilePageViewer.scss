@@ -113,6 +113,10 @@
   .pageReferences {
     display: flex;
     justify-content: space-between;
+    align-items: center;
+    /* Reserve the filled line height so the row doesn't grow (and shove the pages
+       down) when the page references populate after load — no rug pull. */
+    min-height: 1.6rem;
     margin-bottom: 0;
     border-radius: 8px;   /* rounded rail */
 
@@ -121,6 +125,7 @@
       margin: 0;
       font-size: 0.9em;
       text-decoration: none;
+      cursor: pointer;
     }
   }
 

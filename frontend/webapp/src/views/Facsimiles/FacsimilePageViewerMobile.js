@@ -5,6 +5,7 @@ import { assetUrl } from 'src/models/BoMOnlineAPI';
 import "./FacsimilePageViewer.scss";
 import { getRefFromIndex, PageOverlay } from "./Facsimiles";
 import PageImage from "./PageImage";
+import { openScripture } from "../_Common/ScripturePopup";
 import { generateReference, lookupReference } from "scripture-guide";
 import { useFaxHighlight } from "./useFaxHighlight";
 import FaxHighlightOverlay from "./FaxHighlightOverlay";
@@ -216,7 +217,11 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
   return (
     <div className="faxPageViewer mobile" style={{ maxHeight: 'none' }} {...swipeHandlers}>
       <div className="pageReferences">
-        <h6>{currentPage?.pageReference || ''}</h6>
+        <h6
+          className="scripture_link"
+          style={{ visibility: currentPage?.pageReference ? 'visible' : 'hidden', cursor: 'pointer' }}
+          onClick={() => currentPage?.pageReference && openScripture(currentPage.pageReference)}
+        >{currentPage?.pageReference || ''}</h6>
       </div>
       <div className="pagesContainer">
         <div className="pageContainer mobile">

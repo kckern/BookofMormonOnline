@@ -8,6 +8,7 @@ import { getRefFromIndex, PageOverlay } from "./Facsimiles";
 import { useElementSize } from "./useElementSize";
 import PageImage from "./PageImage";
 import PageStack from "./PageStack";
+import { openScripture } from "../_Common/ScripturePopup";
 import { prefetchThumbs } from "./faxThumbCache";
 import { generateReference, lookupReference } from "scripture-guide";
 import { normalizeStackWidths } from "./faxGeometry";
@@ -492,8 +493,16 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
           boxSizing: 'border-box',
         }}
       >
-        <a className="scripture_link" style={{ textAlign: 'left' }}>{leftPage?.pageReference || ''}</a>
-        <a className="scripture_link" style={{ textAlign: 'right' }}>{rightPage?.pageReference || ''}</a>
+        <a
+          className="scripture_link"
+          style={{ textAlign: 'left', visibility: leftPage?.pageReference ? 'visible' : 'hidden', cursor: 'pointer' }}
+          onClick={() => leftPage?.pageReference && openScripture(leftPage.pageReference)}
+        >{leftPage?.pageReference || ''}</a>
+        <a
+          className="scripture_link"
+          style={{ textAlign: 'right', visibility: rightPage?.pageReference ? 'visible' : 'hidden', cursor: 'pointer' }}
+          onClick={() => rightPage?.pageReference && openScripture(rightPage.pageReference)}
+        >{rightPage?.pageReference || ''}</a>
       </div>
       <div className="pagesContainer" ref={pagesContainerRef}>
         <div
