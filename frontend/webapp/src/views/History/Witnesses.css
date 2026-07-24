@@ -390,6 +390,10 @@
     line-height: 1;
     color: #888;
 }
+.single-witnesses .witness-sources .historyHeader .historyTeaserText > p {
+    margin: 0;
+    padding: 0;
+}
 
 /* ── support row: small thumbnail + metadata ────────────────────────── */
 .single-witnesses .witness-sources .historySupport {
