@@ -351,7 +351,7 @@
     color: #777;
 }
 .single-witnesses .witness-sources .historyLead .money_quote_attribution.quotes-witness { font-style: italic; }
-.single-witnesses .witness-sources .historyLead .money_quote_speaker { white-space: nowrap; }
+.single-witnesses .witness-sources .historyLead .money_quote_speaker { display: block; text-align: right; }
 /* A: neutral first-hand pill */
 .single-witnesses .witness-sources .historyLead .firsthand-badge {
     display: inline-block;
