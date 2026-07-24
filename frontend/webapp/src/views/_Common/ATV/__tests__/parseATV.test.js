@@ -204,6 +204,13 @@ describe("parseStates", () => {
     expect(s[1].via.label).toBe(null);
   });
 
+  test("a marker abutting a non-code word keeps the word as content, not ∅", () => {
+    const s = parseStates("go &gt;people now");
+    // "people" is 6 alpha chars — not a code. Marker degrades to bare; word survives.
+    expect(s[1].content).toContain("people");
+    expect(s[1].omitted).toBe(false);
+  });
+
   test("a tag-closing '>' is NOT a marker", () => {
     // no whitespace before the '>' of </em>, and it is not an entity
     const s = parseStates("<em>whoso</em>");

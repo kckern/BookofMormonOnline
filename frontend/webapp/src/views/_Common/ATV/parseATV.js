@@ -104,11 +104,21 @@ function makeState(rawContent, via) {
  * letter (`&gt; people`) from being misread as code `p`.
  *
  *   - run decodes to a KNOWN code  -> that code (tight or spaced)
- *   - run is unknown but TIGHT      -> unknown code, surfaced verbatim (label null)
- *   - run is unknown and SPACED, or empty -> bare marker (code null)
+ *   - run is unknown, TIGHT and code-SHAPED -> unknown code, surfaced (label null)
+ *   - anything else (spaced, empty, or a long word) -> bare marker, run STAYS content
  *
  * `decodeMarker` is applied ONLY to the isolated code run, never to content.
  */
+
+/**
+ * Could a decoded run plausibly be a (possibly mistyped) correction code? Every
+ * real code is at most two decoded characters (`js`, `+–`, `%?`, `p–`…) or bears
+ * a code symbol (`+ % ? –`). A longer purely-alphabetic run — an abutting word
+ * like `&gt;people` — is never a code, so it must NOT be consumed as one; doing
+ * so would delete the word and render it as ∅. This gate keeps that content.
+ */
+const isPlausibleCode = (s) => s.length <= 2 || /[+%?–]/.test(s);
+
 function parseMarkerSegment(rest) {
   const wsMatch = rest.match(/^\s+/);
   const hadSpace = !!wsMatch;
@@ -127,15 +137,16 @@ function parseMarkerSegment(rest) {
       contentRaw: rest.slice(wsLen + rawCand.length),
     };
   }
-  if (!hadSpace && rawCand !== "") {
-    // Tight but unrecognised: still a marker, surface the token so a caller can
-    // flag it rather than mislabel it. label is null (describeChange miss).
+  if (!hadSpace && rawCand !== "" && isPlausibleCode(decoded)) {
+    // Tight, code-shaped, but unrecognised: still a marker, surface the token so
+    // a caller can flag it rather than mislabel it. label is null (describeChange
+    // miss). A long alphabetic word is NOT code-shaped and falls through below.
     return {
       via: { code: decoded, label: describeChange(decoded) },
       contentRaw: afterWs.slice(rawCand.length),
     };
   }
-  // Bare marker: no code. The run (if any) is content, not a code.
+  // Bare marker: no code. The run (if any) is content, not a code — never delete it.
   return { via: { code: null, label: describeChange(null) }, contentRaw: afterWs };
 }
 
@@ -151,11 +162,20 @@ function parseMarkerSegment(rest) {
  */
 export function parseStates(content) {
   const src = content == null ? "" : String(content);
-  const markerRe = /&gt;|(?<=\s)>/g;
+  // Marker = &gt; OR a literal > preceded by whitespace. Matched WITHOUT a
+  // lookbehind: `(?<=\s)>` is ES2018, which Babel does not transpile, so it
+  // throws a parse-time SyntaxError on browsers lacking runtime support (Safari
+  // <16.4) and blanks the page. Match the whitespace explicitly, then offset the
+  // index past it; the whitespace stays with the preceding state and is trimmed.
+  const markerRe = /&gt;|\s>/g;
   const markers = [];
   let m;
   while ((m = markerRe.exec(src)) !== null) {
-    markers.push({ index: m.index, length: m[0].length });
+    const isEntity = m[0] === "&gt;";
+    markers.push({
+      index: isEntity ? m.index : m.index + 1, // skip the leading whitespace char
+      length: isEntity ? 4 : 1, // "&gt;" is 4 chars, ">" is 1
+    });
   }
 
   const firstIdx = markers.length ? markers[0].index : src.length;
