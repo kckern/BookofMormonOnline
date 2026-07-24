@@ -18,7 +18,7 @@ import FaxHighlightOverlay from "./FaxHighlightOverlay";
  * FacsimilePageViewer - Desktop version of the facsimile page viewer
  * Displays pages in a book-like spread with left and right pages
  */
-function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], currentVolumeIndex = -1 }) {
+function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], currentVolumeIndex = -1, onSeamOffset }) {
   const history = useHistory();
   const { pageNumber } = useParams();
   
@@ -266,6 +266,16 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
     // Exact content width: stacks + pages (no internal extra space)
     return leftStackWidth + leftPageWidth + rightPageWidth + rightStackWidth;
   }, [leftPageWidth, rightPageWidth, leftStackWidth, rightStackWidth]);
+
+  // Report the seam's x-offset from center so the toolbar title can track it.
+  // The spread strip is centered, so the seam (between left & right pages) sits
+  // at delta = (leftSide - rightSide)/2 px from the container center.
+  useEffect(() => {
+    if (typeof onSeamOffset !== 'function') return;
+    if (!leftPageWidth || !rightPageWidth) { onSeamOffset(0); return; }
+    const delta = (leftStackWidth + leftPageWidth - rightPageWidth - rightStackWidth) / 2;
+    onSeamOffset(delta);
+  }, [onSeamOffset, leftStackWidth, rightStackWidth, leftPageWidth, rightPageWidth]);
 
   // Navigation handlers
   const handlePageChange = useCallback((newIndex) => {

@@ -37,6 +37,7 @@ function FacsimileViewer({ item, volumeOrder, currentVolumeIndex }) {
   };
 
   const [pageIndex, setPageIndex] = useState([]);
+  const [seamOffset, setSeamOffset] = useState(0);
 
   const pgoffset = resolvePgOffset(item);
 
@@ -91,19 +92,23 @@ function FacsimileViewer({ item, volumeOrder, currentVolumeIndex }) {
   const displayLeaf = activeLeaf || defaultLeaf;
   
   const { title } = item;
+  const showSeam = !isGridMode && !isMobile();
   return (
     <div className={`facsimileViewer${isGridMode ? ' gridMode' : ''}`}>
       <div className="facsimileToolbar">
         <Link id="fax_back" className="fax-back" to={displayLeaf ? `/fax/${item.slug}` : "/fax"} aria-label="Back to facsimiles">
           <img src={backIcon} alt="" aria-hidden="true" style={{ width: 20, height: 20 }} />
         </Link>
-        <span className="fax-title">{title}</span>
+        <span
+          className="fax-title"
+          style={showSeam ? { left: `calc(50% + ${seamOffset}px)` } : undefined}
+        >{title}</span>
       </div>
       {isGridMode ?
         <FacsimileGridViewer item={item} leafIndex={leafIndex} /> :
-        (isMobile() ? 
+        (isMobile() ?
           <FacsimilePageViewerMobile item={item} leafIndex={leafIndex} pgoffset={pgoffset} volumeOrder={volumeOrder} currentVolumeIndex={currentVolumeIndex} /> :
-          <FacsimilePageViewer item={item} leafIndex={leafIndex} pgoffset={pgoffset} volumeOrder={volumeOrder} currentVolumeIndex={currentVolumeIndex} />
+          <FacsimilePageViewer item={item} leafIndex={leafIndex} pgoffset={pgoffset} volumeOrder={volumeOrder} currentVolumeIndex={currentVolumeIndex} onSeamOffset={setSeamOffset} />
         )
       }
     </div>
