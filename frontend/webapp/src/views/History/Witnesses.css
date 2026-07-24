@@ -313,8 +313,8 @@
     padding-left: 1rem;
     background-clip: padding-box;
 }
-/* the life strip spans the full sources column, above the tiles */
-.single-witnesses .witness-sources .witness-life-strip {
+/* the life heatmap spans the full sources column, above the tiles */
+.single-witnesses .witness-sources .witness-life-heatmap {
     margin-bottom: 1.25rem;
 }
 

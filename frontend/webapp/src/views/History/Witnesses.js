@@ -6,7 +6,7 @@ import { label } from '../../models/Utils';
 import BoMOnlineAPI, { assetUrl } from 'src/models/BoMOnlineAPI';
 import moment from 'moment';
 import Masonry from 'react-masonry-css';
-import WitnessLifeStrip, { matchesYearMonth } from './WitnessLifeStrip';
+import WitnessLifeHeatmap, { matchesYearMonth } from './WitnessLifeHeatmap';
 import Identicon from '../_Common/Identicon';
 import { useAppController } from "src/contexts/AppControllerContext";
 
@@ -213,7 +213,7 @@ const SingleWitness = ({ witness, sourceSlug }) => {
                 </aside>
                 <main className='witness-sources'>
                     {sources && sources.length > 0 && (
-                        <WitnessLifeStrip
+                        <WitnessLifeHeatmap
                             witness={witness}
                             sources={sources}
                             selectedYearMonth={selectedYearMonth}
