@@ -1338,6 +1338,7 @@ html[data-theme="dark"] .readMorePill:hover { background: rgba(147,198,239,0.2);
    ================================================================ */
 .biblePhrasesPair { display: flex; gap: 0.7rem; }
 .biblePhrasesPassage { flex: 1 1 0; min-width: 0; }
+.biblePhrasesPassage > .scripture_link { display: block; text-align: center; }
 .biblePhrasesPassage p {
   margin: 0.3rem 0 0;
   font-size: 0.78rem;
