@@ -73,9 +73,12 @@ export default function FaxVerseCutout({
   const open = (e, v) => { e.stopPropagation(); clearTimer(); onOpen && onOpen(v); };
 
   const W = displayedWidth;
-  // Anchor on the hovered box (falls back to the union box).
+  // Anchor (position/caret) follows the hovered box; but the tooltip's min-width is
+  // the verse's FULL span (union of all its boxes) so a multi-column verse's tooltip
+  // breathes across the columns instead of clamping to one narrow column.
+  const span = active ? unionBox(active.boxes) : null;
   const anchor = active
-    ? (hover && hover.verseId === active.verse_id ? hover.box : unionBox(active.boxes))
+    ? (hover && hover.verseId === active.verse_id ? hover.box : span)
     : null;
   // Show the tooltip only on the page the pointer is over (the reference is always
   // present; text/avatar/voice are added when available).
@@ -134,7 +137,7 @@ export default function FaxVerseCutout({
           style={{
             left: px(anchor.x + anchor.w / 2),
             top: placeBelow ? px(anchor.y + anchor.h) : px(anchor.y),
-            minWidth: px(anchor.w),
+            minWidth: px((span || anchor).w),
             "--fax-caret-x": `${Math.round(caretOffset)}px`,
           }}
         >
@@ -147,14 +150,18 @@ export default function FaxVerseCutout({
                 onError={(e) => { e.target.style.display = "none"; }}
               />
             )}
-            <span className="faxVerseTooltip-ref">{active.ref}</span>
-            {active.voice && <span className="faxVerseTooltip-voice">{label(active.voice)}</span>}
-          </div>
-          {(active.page || active.section) && (
-            <div className="faxVerseTooltip-loc">
-              <StudyBreadcrumb page={active.page} section={active.section} />
+            <div className="faxVerseTooltip-meta">
+              <div className="faxVerseTooltip-refrow">
+                <span className="faxVerseTooltip-ref">{active.ref}</span>
+                {active.voice && <span className="faxVerseTooltip-voice">{label(active.voice)}</span>}
+              </div>
+              {(active.page || active.section) && (
+                <div className="faxVerseTooltip-loc">
+                  <StudyBreadcrumb page={active.page} section={active.section} />
+                </div>
+              )}
             </div>
-          )}
+          </div>
           {active.text && <div className="faxVerseTooltip-text">{active.text}</div>}
         </div>
       )}

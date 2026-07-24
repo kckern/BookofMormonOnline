@@ -758,7 +758,7 @@ html[data-theme="dark"] .faxMobileViewer {
 .faxVerseTooltip {
   position: absolute;
   transform: translate(-50%, calc(-100% - 10px)); /* default: above the cutout */
-  max-width: 380px;
+  max-width: min(560px, 90vw); /* let it breathe — wide enough for a full verse */
   padding: 0.5rem 0.7rem;
   box-sizing: border-box; /* min-width == the cutout width, never narrower */
   /* dark-on-light by default; dark-mode variant below */
@@ -792,7 +792,10 @@ html[data-theme="dark"] .faxMobileViewer {
       border-bottom: 6px solid #fbf8f1;
     }
   }
-  .faxVerseTooltip-head { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+  .faxVerseTooltip-head { display: flex; align-items: center; gap: 0.5rem; }
+  /* avatar sits left of a two-row column: [ref voice] over [page ▸ section] */
+  .faxVerseTooltip-meta { display: flex; flex-direction: column; min-width: 0; gap: 1px; }
+  .faxVerseTooltip-refrow { display: flex; align-items: baseline; gap: 0.4rem; flex-wrap: wrap; }
   /* !important: the deep `.page img { height:100% }` rule otherwise blows the
      avatar up to the tooltip width. Round + bordered, matching the Read view.
      Sized 50% larger than the text row. */
@@ -885,7 +888,10 @@ html[data-theme="dark"] .faxVerseTooltip {
 }
 /* header is the control bar: [‹ prev] [avatar] [ref/name] [next ›] */
 .faxVerseModal-header { display: flex; align-items: center; gap: 0.7rem; margin-bottom: 0.8rem; padding-right: 1.4rem; }
-.faxVerseModal-avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; flex: none; }
+/* speaker: avatar with the voice label underneath (Read left-gutter pattern) */
+.faxVerseModal-speaker { display: flex; flex-direction: column; align-items: center; flex: none; gap: 2px; }
+.faxVerseModal-avatar { width: 44px; height: 48px; border-radius: 50%; border: 1px solid #444; object-fit: cover; flex: none; }
+.faxVerseModal-voice { font-family: "Roboto Condensed", sans-serif; font-size: 0.6rem; opacity: 0.75; text-align: center; max-width: 56px; line-height: 1.1; }
 .faxVerseModal-heading { min-width: 0; }
 .faxVerseModal-ref { font-weight: 700; font-size: 1.05rem; }
 .faxVerseModal-ref.as-link {
@@ -897,7 +903,6 @@ html[data-theme="dark"] .faxVerseTooltip {
   text-align: left;
   &:hover { text-decoration: underline; }
 }
-.faxVerseModal-voice { font-size: 0.8rem; opacity: 0.75; }
 .faxVerseModal-loc { font-size: 0.85rem; margin-top: 2px; }
 .studyBreadcrumb {
   a.sb-page, a.sb-section { color: #3a7d44; text-decoration: none; &:hover { text-decoration: underline; } }
@@ -925,7 +930,7 @@ html[data-theme="dark"] .faxVerseTooltip {
   border-radius: 6px;
   &.zoomed { cursor: crosshair; }
 }
-.faxVerseModal-text { margin: 0.9rem 0 0; font-size: 1.05rem; line-height: 1.4; font-family: "Scripture", Georgia, serif; }
+.faxVerseModal-text { margin: 0.9rem 0 0; font-size: 1.35rem; line-height: 1; font-family: "Scripture", Georgia, serif; }
 /* verse stepper arrows, inline in the header (prev left, next pushed right) */
 .faxVerseModal-nav {
   flex: none;

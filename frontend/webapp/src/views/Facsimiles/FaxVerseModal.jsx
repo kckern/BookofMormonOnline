@@ -71,13 +71,18 @@ export default function FaxVerseModal({ verse, version, pageScale = 700, anchorX
           {onPrev && (
             <button type="button" className="faxVerseModal-nav prev" aria-label="Previous verse" onClick={onPrev}>‹</button>
           )}
-          {verse.person_slug && (
-            <img
-              className="faxVerseModal-avatar"
-              src={`${assetUrl}/people/${verse.person_slug}`}
-              alt=""
-              onError={(e) => { e.target.style.visibility = "hidden"; }}
-            />
+          {(verse.person_slug || verse.voice) && (
+            <div className="faxVerseModal-speaker">
+              {verse.person_slug && (
+                <img
+                  className="faxVerseModal-avatar"
+                  src={`${assetUrl}/people/${verse.person_slug}`}
+                  alt=""
+                  onError={(e) => { e.target.style.visibility = "hidden"; }}
+                />
+              )}
+              {verse.voice && <div className="faxVerseModal-voice">{label(verse.voice)}</div>}
+            </div>
           )}
           <div className="faxVerseModal-heading">
             {onRead ? (
@@ -92,7 +97,6 @@ export default function FaxVerseModal({ verse, version, pageScale = 700, anchorX
                 <StudyBreadcrumb page={verse.page} section={verse.section} linked />
               </div>
             )}
-            {verse.voice && <div className="faxVerseModal-voice">{label(verse.voice)}</div>}
           </div>
           {onNext && (
             <button type="button" className="faxVerseModal-nav next" aria-label="Next verse" onClick={onNext}>›</button>
