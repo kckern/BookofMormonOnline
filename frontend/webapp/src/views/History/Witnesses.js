@@ -234,14 +234,33 @@ const SingleWitness = ({ witness, sourceSlug }) => {
                                             alt={doc.document}
                                         />
                                     )}
-                                    {doc.money_quote ? (
-                                        <blockquote className='thumb_money_quote'>
-                                            &ldquo;{doc.money_quote}&rdquo;
-                                            <footer className='money_quote_attribution'>
-                                                {doc.quote_is_witness_voice
-                                                    ? `— ${doc.witness_label || doc.principal}`
-                                                    : `— ${doc.witness_label || doc.principal}${doc.reporter_label ? `, as recorded by ${doc.reporter_label}` : ''}`}
-                                            </footer>
+                                    {/* Attributed money quote only when the speaker is known.
+                                        A: witness's own voice — quote + "— speaker" + firsthand badge.
+                                        B: third party but quotes the witness — "Speaker:" prefix + note.
+                                        C: third-party account about the witness — "Speaker:" prefix.
+                                        No speaker (stub / audit-rejected rows) → teaser fallback.
+                                        money_quote is editorially prepared ([Name], [...] are meaningful) — render as-is. */}
+                                    {doc.money_quote && doc.quote_speaker ? (
+                                        <blockquote className={`thumb_money_quote${doc.quote_is_witness_voice ? ' is-firsthand' : ''}`}>
+                                            {doc.quote_is_witness_voice ? (
+                                                <>
+                                                    <span className='money_quote_text'>&ldquo;{doc.money_quote}&rdquo;</span>
+                                                    <footer className='money_quote_attribution'>
+                                                        <span className='firsthand-badge'>In their own words</span>
+                                                        <span className='money_quote_speaker'>&mdash; {doc.quote_speaker}</span>
+                                                    </footer>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <span className='money_quote_text'>
+                                                        <span className='money_quote_speaker-prefix'>{doc.quote_speaker}:</span>{' '}
+                                                        &ldquo;{doc.money_quote}&rdquo;
+                                                    </span>
+                                                    {doc.quote_contains_witness_speech && (
+                                                        <footer className='money_quote_attribution quotes-witness'>quotes the witness</footer>
+                                                    )}
+                                                </>
+                                            )}
                                         </blockquote>
                                     ) : (
                                         doc.teaser && <div className='thumb_teaser'>{Parser(doc.teaser)}</div>

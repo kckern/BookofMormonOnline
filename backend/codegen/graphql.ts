@@ -240,6 +240,7 @@ export type FaxEdition = {
 
 export type FaxIndex = {
   __typename?: 'FaxIndex';
+  offset?: Maybe<Scalars['Int']['output']>;
   pages?: Maybe<Array<Maybe<Array<Maybe<Scalars['Int']['output']>>>>>;
   slug?: Maybe<Scalars['String']['output']>;
 };
@@ -283,7 +284,9 @@ export type HistoricalDocument = {
   money_quote?: Maybe<Scalars['String']['output']>;
   pages?: Maybe<Scalars['Int']['output']>;
   principal?: Maybe<Scalars['String']['output']>;
+  quote_contains_witness_speech?: Maybe<Scalars['Boolean']['output']>;
   quote_is_witness_voice?: Maybe<Scalars['Boolean']['output']>;
+  quote_speaker?: Maybe<Scalars['String']['output']>;
   reporter_label?: Maybe<Scalars['String']['output']>;
   seq?: Maybe<Scalars['Int']['output']>;
   slug?: Maybe<Scalars['String']['output']>;
@@ -2544,6 +2547,7 @@ export type FaxEditionResolvers<ContextType = AppContext, ParentType extends Res
 };
 
 export type FaxIndexResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['FaxIndex'] = ResolversParentTypes['FaxIndex']> = {
+  offset?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   pages?: Resolver<Maybe<Array<Maybe<Array<Maybe<ResolversTypes['Int']>>>>>, ParentType, ContextType>;
   slug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
@@ -2587,7 +2591,9 @@ export type HistoricalDocumentResolvers<ContextType = AppContext, ParentType ext
   money_quote?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   pages?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   principal?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  quote_contains_witness_speech?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   quote_is_witness_voice?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  quote_speaker?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   reporter_label?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   seq?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   slug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;

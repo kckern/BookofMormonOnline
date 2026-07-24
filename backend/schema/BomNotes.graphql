@@ -85,6 +85,8 @@ type HistoricalDocument {
   event_date: String
   money_quote: String
   quote_is_witness_voice: Boolean
+  quote_speaker: String
+  quote_contains_witness_speech: Boolean
   witness_label: String
   reporter_label: String
 }

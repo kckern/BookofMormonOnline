@@ -647,6 +647,8 @@ const queries = {
         event_date
         money_quote
         quote_is_witness_voice
+        quote_speaker
+        quote_contains_witness_speech
         witness_label
         reporter_label
         ${wantsTranscript ? 'transcript' : ''}
