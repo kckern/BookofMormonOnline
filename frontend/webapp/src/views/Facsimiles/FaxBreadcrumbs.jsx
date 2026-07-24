@@ -89,11 +89,13 @@ export default function FaxBreadcrumbs({ editions = [], current, currentRef }) {
                     loading="lazy"
                     onError={(e) => { e.target.style.visibility = 'hidden'; }}
                   />
-                  <span
-                    className={`breadcrumb-index-flag${indexed ? ' has-index' : ''}`}
-                    title={indexed ? 'Verse-level facsimile index' : 'No verse index (scans only)'}
-                    aria-label={indexed ? 'Verse-indexed' : 'Not verse-indexed'}
-                  >{indexed ? '¶' : ''}</span>
+                  {indexed && (
+                    <span
+                      className="breadcrumb-index-flag has-index"
+                      title="Verse-level facsimile index"
+                      aria-label="Verse-indexed"
+                    >¶</span>
+                  )}
                 </span>
                 <span className="breadcrumb-option-name">{ed.title}</span>
               </>

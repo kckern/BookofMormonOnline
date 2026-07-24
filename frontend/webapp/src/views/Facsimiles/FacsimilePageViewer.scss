@@ -601,6 +601,20 @@ html[data-theme="dark"] .faxMobileViewer {
   .faxScrubSheet { background: #262626; border-top-color: #3a3a3a; .scrub-jump input { background: #1c1c1c; border-color: #444; color: #eee; } }
 }
 
+/* Smooth the optical-center shift between spreads: as stack/page widths change
+   per spread, the centered strip (and the ref rail + nav sized to it) resizes and
+   recentres. Easing `width` glides it instead of snapping. The 3D turn itself is
+   the portaled overlay; this covers the settle after it lands. */
+@media (prefers-reduced-motion: no-preference) {
+  .faxPageViewer {
+    .spreadInner,
+    .pageReferences,
+    .facsimile-navigation { transition: width 0.28s ease; }
+    .page { transition: width 0.28s ease, height 0.28s ease; }
+    .pageStack { transition: width 0.28s ease; }
+  }
+}
+
 /* Transient page-turn overlay (see FaxPageFlip.jsx) */
 .faxFlipLayer {
   position: absolute;

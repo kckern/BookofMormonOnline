@@ -10,7 +10,7 @@ import PageImage from "./PageImage";
 import PageStack from "./PageStack";
 import FaxPageFlip, { FAX_FLIP_MS } from "./FaxPageFlip";
 import { openScripture } from "../_Common/ScripturePopup";
-import { prefetchThumbs } from "./faxThumbCache";
+import { prefetchThumbs, isThumbWarm } from "./faxThumbCache";
 import { generateReference, lookupReference } from "scripture-guide";
 import { normalizeStackWidths } from "./faxGeometry";
 import { getFaxRatio, setFaxRatio } from "./faxRatioCache";
@@ -41,7 +41,7 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
   // mirrors it so the imperative turn handlers can guard re-entrancy without
   // waiting for a re-render. See docs/plans/2026-07-24-fax-page-turn-animation.md
   const [flip, setFlip] = useState(null);
-  const flipRef = useRef(null);        // the in-flight turn (null = idle). Lock for startTurn.
+  const flipRef = useRef(null);        // the in-flight turn (null = idle). Lock for animateTo.
   const committedRef = useRef(false);  // has this turn already committed its navigation?
   const committingRef = useRef(false);  // true only while the flip commits its OWN nav
   const flipTimerRef = useRef(null);   // parent-level hard-clear backstop
@@ -49,7 +49,7 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
     && typeof window.matchMedia === 'function'
     && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // Single teardown path for the flip overlay: releases the startTurn lock,
+  // Single teardown path for the flip overlay: releases the animateTo lock,
   // clears the backstop timer, and unmounts the overlay. Safe to call from any
   // code path (land, external nav, volume switch, unmount).
   const cancelFlip = useCallback(() => {
@@ -359,22 +359,31 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
     return getAdjustedPageIndex(Math.max(0, currentPageIndex - 2));
   }, [currentPageIndex, totalPages, getAdjustedPageIndex]);
 
-  // Turn a single spread with the flip overlay when possible; otherwise commit
-  // instantly (boundaries, non-clean steps, reduced motion, unmeasured layout).
-  const startTurn = useCallback((dir) => {
-    if (flipRef.current) return; // a turn is already animating
+  // Play the single-leaf flip transitioning from the current spread to ANY target
+  // spread (direction inferred from target vs. current) — so slider scrubs,
+  // jump-to-page and page-stack clicks animate too, not just adjacent turns.
+  // Falls back to an instant commit when the layout isn't measured yet, the user
+  // prefers reduced motion, or a turn is already animating.
+  const animateTo = useCallback((targetRaw) => {
     const base = adjustedPageIndex;
-    const targetLeft = resolveTarget(dir);
-    if (targetLeft === base) return; // no-op at a boundary
+    const targetLeft = getAdjustedPageIndex(targetRaw);
+    if (targetLeft === base) return; // same spread — nothing to do
 
-    const cleanStep = dir === 'next' ? targetLeft === base + 2 : targetLeft === base - 2;
+    const dir = targetLeft > base ? 'next' : 'prev';
     const ready = !!(leftPageWidth && rightPageWidth && calculatedHeight);
-    if (prefersReducedMotion || !ready || !cleanStep) {
+    if (flipRef.current || prefersReducedMotion || !ready) {
       handlePageChange(targetLeft);
       return;
     }
 
-    const url = (i) => leafIndex[i]?.pageAssetUrl || leafIndex[i]?.thumbAssetUrl || null;
+    // Prefer a warm full-res scan for crispness; fall back to the (prefetched)
+    // thumbnail so far-away jumps still show artwork instead of a blank face.
+    const faceUrl = (i) => {
+      const l = leafIndex[i];
+      if (!l) return null;
+      if (l.pageAssetUrl && isThumbWarm(l.pageAssetUrl)) return l.pageAssetUrl;
+      return l.thumbAssetUrl || l.pageAssetUrl || null;
+    };
     // Capture the spread's viewport rect so the overlay can be portaled to <body>
     // and float above the chrome (toolbar/nav) for the 3D curl.
     const rect = spreadInnerRef.current?.getBoundingClientRect();
@@ -382,22 +391,24 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
       leftStackWidth, leftPageWidth, rightPageWidth, height: calculatedHeight,
       viewport: rect ? { left: rect.left, top: rect.top, width: rect.width, height: rect.height } : null,
     };
+    // The leaf carries current→destination; behind it the destination spread is
+    // revealed. Reduces exactly to the single-step turn when targetLeft = base±2.
     // `base`/`slug` let the teardown effect + commit guard detect when the world
     // has moved out from under an in-flight turn.
     const payload = dir === 'next'
       ? {
           dir, geom, target: targetLeft, base, slug: item.slug,
-          behindLeftUrl: url(base),       // current left — covered when leaf lands
-          behindRightUrl: url(base + 3),  // new right — revealed as leaf lifts
-          leafFrontUrl: url(base + 1),    // current right (front of turning leaf)
-          leafBackUrl: url(base + 2),     // new left (back of turning leaf)
+          behindLeftUrl: faceUrl(base),            // current left — covered on land
+          behindRightUrl: faceUrl(targetLeft + 1), // destination right — revealed
+          leafFrontUrl: faceUrl(base + 1),         // current right (front of leaf)
+          leafBackUrl: faceUrl(targetLeft),        // destination left (back of leaf)
         }
       : {
           dir, geom, target: targetLeft, base, slug: item.slug,
-          behindLeftUrl: url(base - 2),   // new left — revealed
-          behindRightUrl: url(base + 1),  // current right — covered
-          leafFrontUrl: url(base),        // current left (front)
-          leafBackUrl: url(base - 1),     // new right (back)
+          behindLeftUrl: faceUrl(targetLeft),      // destination left — revealed
+          behindRightUrl: faceUrl(base + 1),       // current right — covered
+          leafFrontUrl: faceUrl(base),             // current left (front of leaf)
+          leafBackUrl: faceUrl(targetLeft + 1),    // destination right (back of leaf)
         };
     committedRef.current = false;
     flipRef.current = payload;
@@ -407,7 +418,7 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
     // deadlock behind a stuck flip.
     if (flipTimerRef.current) clearTimeout(flipTimerRef.current);
     flipTimerRef.current = setTimeout(() => cancelFlip(), FAX_FLIP_MS * 4);
-  }, [adjustedPageIndex, resolveTarget, leftPageWidth, rightPageWidth, calculatedHeight,
+  }, [adjustedPageIndex, getAdjustedPageIndex, leftPageWidth, rightPageWidth, calculatedHeight,
       leftStackWidth, leafIndex, prefersReducedMotion, handlePageChange, item.slug, cancelFlip]);
 
   // Commit the navigation the moment the leaf lands. Guard against a stale turn
@@ -432,8 +443,8 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
   }, [adjustedPageIndex, item.slug, cancelFlip]);
 
   // Update to move 2 pages at a time
-  const handleSwipeLeft = useCallback(() => startTurn('next'), [startTurn]);
-  const handleSwipeRight = useCallback(() => startTurn('prev'), [startTurn]);
+  const handleSwipeLeft = useCallback(() => animateTo(resolveTarget('next')), [animateTo, resolveTarget]);
+  const handleSwipeRight = useCallback(() => animateTo(resolveTarget('prev')), [animateTo, resolveTarget]);
 
   const swipeHandlers = useSwipe({
     onSwipedLeft: handleSwipeLeft,
@@ -497,8 +508,8 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
   }, []);
 
   const handleSliderRelease = useCallback(() => {
-    handlePageChange(sliderValue);
-  }, [handlePageChange, sliderValue]);
+    animateTo(sliderValue);
+  }, [animateTo, sliderValue]);
 
   const handleSliderMouseMove = useCallback((e) => {
     if (!sliderRef.current) return;
@@ -672,7 +683,7 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
                 leafIndex={leafIndex}
                 adjustedPageIndex={adjustedPageIndex}
                 totalPages={totalPages}
-                onPageChange={handlePageChange}
+                onPageChange={animateTo}
                 stackWidthPx={leftStackWidth}
               />
             )}
@@ -721,7 +732,7 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
                 leafIndex={leafIndex}
                 adjustedPageIndex={adjustedPageIndex}
                 totalPages={totalPages}
-                onPageChange={handlePageChange}
+                onPageChange={animateTo}
                 stackWidthPx={rightStackWidth}
               />
             )}
@@ -811,7 +822,7 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
             const n = parseInt(e.target.elements.pageInput.value, 10);
             if (!Number.isFinite(n)) return;
             const idx = leafIndex.findIndex((l) => l.faxPageNum === n || `${l.faxPageSlug}` === `${n}`);
-            if (idx !== -1) handlePageChange(idx);
+            if (idx !== -1) animateTo(idx);
           }}
         >
           <input
