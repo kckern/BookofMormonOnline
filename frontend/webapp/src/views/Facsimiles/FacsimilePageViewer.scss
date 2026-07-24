@@ -899,8 +899,9 @@ html[data-theme="dark"] .faxVerseTooltip {
   &.api { width: auto; height: auto; max-width: 100%; }
 }
 .faxVerseModal-crop { display: block; width: 100%; height: auto; }
-/* landscape verse viewport: fills the modal width, reserves height via aspect */
-.faxVerseModal-cutout.landscape { width: 100%; height: auto; aspect-ratio: 3 / 2; }
+/* verse viewport: fills the modal width; aspect-ratio (set inline from the verse's
+   own box) reserves the RIGHT height so there's no letterbox padding + no rug pull */
+.faxVerseModal-cutout.landscape { width: 100%; height: auto; }
 /* hover magnifier viewport fills its box */
 .faxVerseZoom {
   display: block;

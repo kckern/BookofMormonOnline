@@ -91,7 +91,7 @@ export default function FaxVerseModal({ verse, version, pageScale = 700, anchorX
           // Native-res render crop in a hover magnifier. Fills the modal width at a
           // fixed landscape ratio (reserves height -> no rug pull). `wfull` so the
           // zoom shows real scan detail.
-          <div className="faxVerseModal-cutout landscape">
+          <div className="faxVerseModal-cutout landscape" style={{ aspectRatio: `${box.w} / ${box.h}` }}>
             <FaxVerseZoom
               key={verse.verse_id}  /* remount so the previous verse's crop can't linger */
               src={`${renderBaseUrl}/fax/render/${version}/crop/wfull/ids/${verse.verse_id}.jpg`}
