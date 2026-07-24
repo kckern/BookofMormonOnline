@@ -29,6 +29,10 @@ const colorBucket = (count) => {
 };
 
 const HEATMAP_START_YEAR = 1829;
+// All witnesses — and any plausible contemporary posthumous account — predate this.
+// Later dates (e.g. a modern republication/import artifact stamped 2003) are data
+// errors for a 19th-century life timeline, so they're treated as undated, not placed.
+const HEATMAP_END_YEAR = 1930;
 
 const ymKey = (year, month) => `${year}-${String(month).padStart(2, '0')}`;
 const ymOrdinal = (year, month) => year * 12 + (month - 1);
@@ -69,11 +73,10 @@ const WitnessLifeHeatmap = ({ witness, sources, selectedYearMonth, onSelectYearM
         let undated = 0;
         let totalMapped = 0;
 
-        const maxReasonableYear = new Date().getFullYear() + 5;
         for (const src of sources || []) {
             const parsed = parseYearMonth(src.date);
             if (!parsed) { undated += 1; continue; }
-            if (parsed.year < HEATMAP_START_YEAR || parsed.year > maxReasonableYear) { undated += 1; continue; }
+            if (parsed.year < HEATMAP_START_YEAR || parsed.year > HEATMAP_END_YEAR) { undated += 1; continue; }
             if (latestSourceYear === null || parsed.year > latestSourceYear) latestSourceYear = parsed.year;
             if (parsed.month) {
                 const key = ymKey(parsed.year, parsed.month);
@@ -180,12 +183,17 @@ const WitnessLifeHeatmap = ({ witness, sources, selectedYearMonth, onSelectYearM
                 )}
                 <div className='witness-life-heatmap-controls'>
                     {canCompress && (
-                        <button
-                            className='witness-life-heatmap-toggle'
-                            onClick={() => setCompressOverride(shouldCompress ? false : true)}
-                        >
-                            {shouldCompress ? 'Show all years' : 'Compress empty years'}
-                        </button>
+                        <label className='witness-life-heatmap-switch'>
+                            <input
+                                type='checkbox'
+                                checked={shouldCompress}
+                                onChange={(e) => setCompressOverride(e.target.checked)}
+                            />
+                            <span className='witness-life-heatmap-switch-track'>
+                                <span className='witness-life-heatmap-switch-knob' />
+                            </span>
+                            <span className='witness-life-heatmap-switch-text'>Compress empty years</span>
+                        </label>
                     )}
                     {selectedYearMonth && (
                         <button className='witness-life-heatmap-clear' onClick={() => onSelectYearMonth(null)}>
