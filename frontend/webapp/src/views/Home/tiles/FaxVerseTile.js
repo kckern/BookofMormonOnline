@@ -62,7 +62,7 @@ export default function FaxVerseTile({ data }) {
                   <div className="faxEditionRail">
                     <span className="faxEditionRailTitle">
                       {ed.title || ed.version}
-                      {data.ref ? <>: <span className="faxEditionRailRef">{data.ref}</span></> : null}
+                      {data.ref ? <>: <span className="faxEditionRailRef scripture_link">{data.ref}</span></> : null}
                     </span>
                     <img
                       className="faxEditionTab"

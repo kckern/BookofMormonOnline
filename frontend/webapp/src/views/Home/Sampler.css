@@ -1828,18 +1828,26 @@ html[data-theme="dark"] .mapStoryTile .mapStoryCardArt { background: rgba(255, 2
   color: inherit;
 }
 /* top rail above the crop: title:ref on the left, per-edition tab img on the right */
+/* one continuous border wraps the tab rail + the crop image */
 .faxVerseTile .faxEditionCropWrap {
   position: relative;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 4px;
+  overflow: hidden;
+  background: #faf7f0;
+  transition: border-color 0.15s ease;
 }
 .faxVerseTile .faxEditionRail {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 0.5rem;
   height: 2rem;
   padding: 0 0.35rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08); /* divides the rail from the image */
 }
 .faxVerseTile .faxEditionRailTitle {
+  flex: 1 1 auto;              /* fill the space beside the tab */
+  text-align: left;
   font-size: 0.8rem;
   font-weight: 600;
   color: #6b5330;
@@ -1861,17 +1869,12 @@ html[data-theme="dark"] .mapStoryTile .mapStoryCardArt { background: rgba(255, 2
   flex: 0 0 auto;
   z-index: 1;
 }
-.faxVerseTile .faxEditionRailTitle { text-align: right; }
 .faxVerseTile .faxEditionCrop {
   width: 100%;
   max-width: 100%;
   height: auto;
   display: block;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: 3px;
-  background: #faf7f0;
-  transition: border-color 0.15s ease;
 }
-.faxVerseTile .faxEditionRow:hover .faxEditionCrop {
+.faxVerseTile .faxEditionRow:hover .faxEditionCropWrap {
   border-color: rgba(120, 90, 50, 0.45);
 }
