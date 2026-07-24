@@ -45,9 +45,11 @@ export default function WitnessTile({ data }) {
           ) : null}
           <span className="witnessMono" aria-hidden="true">{initials(w.principal)}</span>
         </span>
-        <span className="witnessName">{w.principal}</span>
-        <blockquote className="witnessStatement">“{clampWords(flatten(w.quote), 60)}”</blockquote>
-        {w.source ? <span className="witnessSource">{clampWords(flatten(w.source), 18)}</span> : null}
+        <span className="witnessBody">
+          <span className="witnessName">{w.principal}</span>
+          <blockquote className="witnessStatement">“{clampWords(flatten(w.quote), 60)}”</blockquote>
+          {w.source ? <span className="witnessSource">{clampWords(flatten(w.source), 18)}</span> : null}
+        </span>
       </Link>
     </div>
   );

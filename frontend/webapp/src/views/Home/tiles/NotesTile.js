@@ -39,15 +39,17 @@ export default function NotesTile({ data }) {
               onError={(e) => (e.target.style.display = "none")}
             />
           ) : null}
-          {anchor ? (
-            <>
-              <span className="notesAnchor">{anchor}</span>{" "}
-              <span className="notesQuote">{Parser(note.text)}</span>
-            </>
-          ) : (
-            <span className="notesQuote">&ldquo;{Parser(note.text)}&rdquo;</span>
-          )}
-          {author ? <span className="notesAttr"> &mdash; {author}</span> : null}
+          <div className="notesBody">
+            {anchor ? (
+              <>
+                <span className="notesAnchor">{anchor}</span>{" "}
+                <span className="notesQuote">{Parser(note.text)}</span>
+              </>
+            ) : (
+              <span className="notesQuote">&ldquo;{Parser(note.text)}&rdquo;</span>
+            )}
+            {author ? <span className="notesAttr"> &mdash; {author}</span> : null}
+          </div>
         </div>
         {to ? (
           <div className="notesMeta">

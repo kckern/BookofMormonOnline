@@ -1398,7 +1398,7 @@ html[data-theme="dark"] .tileMoreLink:hover { background: rgba(147, 198, 239, 0.
    ================================================================ */
 .chiasmusTileHead { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 0.4rem; }
 .chiasmusTileHeadTop { display: flex; align-items: center; gap: 0.6rem; min-width: 0; }
-.chiasmusTileHead .chiasmGlyph { flex: 0 0 auto; opacity: 0.9; }
+.chiasmusTileHead .chiasmGlyph { flex: 0 0 auto; opacity: 0.9; margin-left: auto; }
 .chiasmusTileIdent { display: flex; align-items: center; gap: 0.45rem; min-width: 0; }
 .chiasmusTileAvatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex: 0 0 auto; }
 .chiasmusTileIdentText { display: flex; flex-direction: column; min-width: 0; gap: 0.05rem; }
@@ -1532,7 +1532,8 @@ html[data-theme="dark"] .mapTileFrame { background: #22282e; }
    WITNESS — Book of Mormon witness statements (reserve)
    ================================================================ */
 /* featured single witness: large portrait, name, statement, source — centered */
-.witnessFeatured { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.4rem; text-decoration: none; color: inherit; }
+.witnessFeatured { display: flex; flex-direction: row; align-items: center; text-align: left; gap: 0.7rem; text-decoration: none; color: inherit; }
+.witnessBody { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
 .witnessHero {
   position: relative;
   flex-shrink: 0;
@@ -1611,7 +1612,9 @@ html[data-theme="dark"] .rpBoxPane .sectionDots { border-right-color: #444; }
    filled with the bubble background (not floating, not the border grey). */
 .notesTile .notesBubble {
   position: relative;
-  display: flow-root; /* contain the floated cover without clipping the tail */
+  display: flex; /* row: cover on the right, text vertically centered on the left */
+  align-items: center;
+  gap: 0.4rem;
   margin-top: 0.9rem;
   padding: 0.6rem 0.75rem;
   background: #faf4e6; /* cream */
@@ -1643,13 +1646,15 @@ html[data-theme="dark"] .rpBoxPane .sectionDots { border-right-color: #444; }
   border-color: transparent transparent #faf4e6 transparent;
 }
 .notesTile .notesCover {
-  float: right;
+  order: 2; /* keep the cover on the right of the flex row */
+  flex: 0 0 auto;
   width: 44px;
   height: auto;
-  margin: 0.1rem 0 0.35rem 0.7rem;
+  margin: 0 0 0 0.5rem;
   border-radius: 0.25rem;
   border: 1px solid #ddd;
 }
+.notesTile .notesBody { min-width: 0; }
 .notesTile .notesAttr { font-size: 0.85rem; color: #666; }
 /* anchor phrase: the exact scripture snippet the note annotates (note.title) */
 .notesTile .notesAnchor { font-weight: 700; }
@@ -1820,20 +1825,37 @@ html[data-theme="dark"] .mapStoryTile .mapStoryCardArt { background: rgba(255, 2
   text-decoration: none;
   color: inherit;
 }
-/* per-edition tab graphic, centered and flush against the crop's top edge */
+/* top rail above the crop: title:ref on the left, per-edition tab img on the right */
 .faxVerseTile .faxEditionCropWrap {
   position: relative;
-  margin-top: 22px;                     /* reserve room for the tab above the crop */
+}
+.faxVerseTile .faxEditionRail {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  height: 2rem;
+  padding: 0 0.35rem;
+}
+.faxVerseTile .faxEditionRailTitle {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #6b5330;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.faxVerseTile .faxEditionRailRef {
+  font-weight: 400;
+  color: #8a7350;
 }
 .faxVerseTile .faxEditionTab {
-  position: absolute;
-  bottom: 100%;                         /* bottom edge rests on the crop's top edge */
-  left: 50%;
-  transform: translateX(-50%);
-  height: 22px;
+  height: 2rem;
   width: auto;
-  max-width: 90%;
+  max-width: 45%;
   display: block;
+  flex: 0 0 auto;
   z-index: 1;
 }
 .faxVerseTile .faxEditionCrop {
