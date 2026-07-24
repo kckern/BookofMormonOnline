@@ -13,6 +13,27 @@
   // Prevent resize observer loops with contain
   contain: layout style;
   
+/* Deep-link loader: covers the viewer while a verse URL resolves, so the spread +
+   modal reveal together (no sizing/fill-in whiplash). Below the modal (5000). */
+  .faxDeepLinkLoader {
+    position: absolute;
+    inset: 0;
+    z-index: 4800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #ccc;
+  }
+  .faxDeepLinkSpinner {
+    width: 44px;
+    height: 44px;
+    border: 4px solid rgba(0, 0, 0, 0.15);
+    border-top-color: #6b5330;
+    border-radius: 50%;
+    animation: faxDeepLinkSpin 0.8s linear infinite;
+  }
+  @keyframes faxDeepLinkSpin { to { transform: rotate(360deg); } }
+
 /* PageStack overhaul */
   .pagesContainer {
     display: flex;

@@ -49,16 +49,21 @@ export default function PageStack({ side, leafIndex, adjustedPageIndex, totalPag
   // Desired width is 1px per page up to 200px
   const targetWidth = useMemo(() => Math.min(200, count), [count]);
 
-  // Measure container width for compression sampling
+  // Measure container width for compression sampling. rAF-batch the measurement so
+  // the ResizeObserver callback never re-lays-out synchronously within its own
+  // notification ("ResizeObserver loop completed with undelivered notifications").
   useEffect(() => {
     if (!containerRef.current) return;
     const el = containerRef.current;
-    const setW = () => setContainerWidth(Math.floor(el.getBoundingClientRect().width));
-    setW();
+    let raf = null;
+    const read = () => { raf = null; setContainerWidth(Math.floor(el.getBoundingClientRect().width)); };
+    const setW = () => { if (raf == null) raf = requestAnimationFrame(read); };
+    read();
     const ro = new ResizeObserver(setW);
     ro.observe(el);
     window.addEventListener('resize', setW);
     return () => {
+      if (raf != null) cancelAnimationFrame(raf);
       try { ro.disconnect(); } catch {}
       window.removeEventListener('resize', setW);
     };

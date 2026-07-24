@@ -455,27 +455,22 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vstate.openVerse]);
 
-  // Open the modal for a verse-targeting URL. Open IMMEDIATELY with a minimal verse
-  // (the crop image needs only version + verse_id) so the modal + backdrop cover the
-  // spread-loading churn instead of flashing the bare spread; then upgrade to the
-  // full verse (text, boxes, page/section) once faxVerses arrives.
-  const deepLinkRef = useRef(null); // { verse_id, full } already dispatched
+  // Open the modal for a verse-targeting URL with the FULL verse once its spread has
+  // loaded (no minimal/placeholder open — that shape-shifted the modal as text/boxes
+  // filled in). The viewer is held behind a loader until this fires (see below), so
+  // the spread + complete modal reveal together with no rug-pull.
   useEffect(() => {
-    if (!urlTargetsVerse || urlVerseId == null) return;
-    const full = spreadVerses.find((v) => v.verse_id === urlVerseId)
+    if (!urlTargetsVerse || urlVerseId == null || vstate.openVerse || !spreadVerses.length) return;
+    const target = spreadVerses.find((v) => v.verse_id === urlVerseId)
       || spreadVerses.find((v) => (lookupReference(v.ref)?.verse_ids || []).includes(urlVerseId));
-    const done = deepLinkRef.current;
-    if (full) {
-      if (!done || done.verse_id !== urlVerseId || !done.full) {
-        deepLinkRef.current = { verse_id: urlVerseId, full: true };
-        vdispatch({ type: "OPEN", verse: full });
-      }
-    } else if ((!done || done.verse_id !== urlVerseId) && !vstate.openVerse) {
-      deepLinkRef.current = { verse_id: urlVerseId, full: false };
-      vdispatch({ type: "OPEN", verse: { verse_id: urlVerseId, ref: generateReference([urlVerseId]) } });
-    }
+    if (target) vdispatch({ type: "OPEN", verse: target });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [urlTargetsVerse, urlVerseId, spreadVerses]);
+
+  // Hold a loader over the viewer while a verse deep-link is still resolving, so the
+  // user sees a clean loader -> complete reveal instead of the spread + modal
+  // sizing/filling in.
+  const deepLinkLoading = urlTargetsVerse && !vstate.openVerse;
 
   // Preload the neighbouring verses' crops so prev/next steps paint instantly.
   useEffect(() => {
@@ -711,6 +706,11 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
   // Page stack is now a separate component
   return (
     <div className="faxPageViewer" style={{ maxHeight: 'none' }} {...swipeHandlers}>
+      {deepLinkLoading && (
+        <div className="faxDeepLinkLoader" aria-live="polite" aria-busy="true">
+          <div className="faxDeepLinkSpinner" />
+        </div>
+      )}
       <div
         className="pageReferences"
         style={{
