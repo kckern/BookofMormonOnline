@@ -1400,7 +1400,7 @@ html[data-theme="dark"] .tileMoreLink:hover { background: rgba(147, 198, 239, 0.
 .chiasmusTileHead { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 0.4rem; }
 .chiasmusTileHeadTop { display: flex; align-items: center; gap: 0.6rem; min-width: 0; }
 .chiasmusTileHead .chiasmGlyph { flex: 0 0 auto; opacity: 0.9; margin-left: auto; }
-.chiasmusTileIdent { display: flex; align-items: center; gap: 0.45rem; min-width: 0; }
+.chiasmusTileIdent { display: flex; align-items: center; gap: 0.45rem; min-width: 0; margin-right: auto; }
 .chiasmusTileAvatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex: 0 0 auto; }
 .chiasmusTileIdentText { display: flex; flex-direction: column; min-width: 0; gap: 0.05rem; }
 .chiasmusTileSpeakerName { font-size: 0.8rem; font-weight: 600; color: #444; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -1852,6 +1852,7 @@ html[data-theme="dark"] .mapStoryTile .mapStoryCardArt { background: rgba(255, 2
   color: #8a7350;
 }
 .faxVerseTile .faxEditionTab {
+  order: -1; /* tab on the LEFT, title:ref text on the right */
   height: 2rem;
   width: auto;
   max-width: 45%;
@@ -1859,6 +1860,7 @@ html[data-theme="dark"] .mapStoryTile .mapStoryCardArt { background: rgba(255, 2
   flex: 0 0 auto;
   z-index: 1;
 }
+.faxVerseTile .faxEditionRailTitle { text-align: right; }
 .faxVerseTile .faxEditionCrop {
   width: 100%;
   max-width: 100%;

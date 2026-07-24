@@ -1,7 +1,8 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import Parser from "html-react-parser";
-import { label } from "src/models/Utils";
+import { detectReferences } from "scripture-guide";
+import { label, determineLanguage } from "src/models/Utils";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import ScriptureExcerpt, { readPath } from "src/views/_Common/ScriptureExcerpt";
 
@@ -22,6 +23,12 @@ export default function NotesTile({ data }) {
   // ~61% of notes annotate a specific phrase (stored curly-quoted in `title`):
   // lead the bubble with it and highlight it in the passage above.
   const anchor = note.title || null;
+  // Linkify any scripture references inside the note body (e.g. "Alma 32:21").
+  const noteHtml = detectReferences(
+    note.text || "",
+    (s) => (s ? `<a class="scripture_link">${s}</a>` : ""),
+    determineLanguage()
+  );
   return (
     <div className="samplerTileInner notesTile">
       <h3 className="tileHeading">{label("notes")}</h3>
@@ -43,10 +50,10 @@ export default function NotesTile({ data }) {
             {anchor ? (
               <>
                 <span className="notesAnchor">{anchor}</span>{" "}
-                <span className="notesQuote">{Parser(note.text)}</span>
+                <span className="notesQuote">{Parser(noteHtml)}</span>
               </>
             ) : (
-              <span className="notesQuote">&ldquo;{Parser(note.text)}&rdquo;</span>
+              <span className="notesQuote">&ldquo;{Parser(noteHtml)}&rdquo;</span>
             )}
             {author ? <span className="notesAttr"> &mdash; {author}</span> : null}
           </div>
