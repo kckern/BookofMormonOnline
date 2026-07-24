@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import { label } from "src/models/Utils";
@@ -36,19 +36,26 @@ const withBrackets = (text) =>
  * the Witnesses view. (A monogram stands in if a portrait fails to load.)
  */
 export default function WitnessTile({ data }) {
-  // Only rows with an editorially-prepared money quote are quotable — NEVER a
-  // teaser/transcript (that would fabricate an attribution). Prefer a first-person
-  // (witness-voice) quote so the featured card can carry the portrait.
-  const witnesses = (data || []).filter((w) => w?.principal && w?.moneyQuote);
-  // Avoid repeating the previous tile's witness (David Whitmer has by far the most
-  // rows); otherwise feature the seeded-first row, so BOTH first-person quotes and
-  // attributed third-party accounts ("Speaker: …") surface across the feed — no
-  // witness-voice bias that would hide the reported accounts.
-  const notLast = witnesses.filter((x) => x.principal !== lastFeaturedWitness);
-  const pool = notLast.length ? notLast : witnesses;
-  const w = pool[0];
+  // Choose the featured witness ONCE — the first render where data is available —
+  // then freeze it for this tile's lifetime. Without this, every re-render recomputes
+  // pool[0], and because the pool depends on the mutable module-level lastFeaturedWitness
+  // (which other witness tiles keep changing), the card's content would randomly swap
+  // after it had already loaded. The choice is stable once made.
+  const chosenRef = useRef(null);
+  if (!chosenRef.current) {
+    // Only rows with an editorially-prepared money quote are quotable — NEVER a
+    // teaser/transcript (that would fabricate an attribution).
+    const witnesses = (data || []).filter((x) => x?.principal && x?.moneyQuote);
+    // Avoid repeating the previous tile's witness (David Whitmer has by far the most
+    // rows); otherwise feature the seeded-first row, so BOTH first-person quotes and
+    // attributed third-party accounts ("Speaker: …") surface across the feed.
+    const notLast = witnesses.filter((x) => x.principal !== lastFeaturedWitness);
+    const pool = notLast.length ? notLast : witnesses;
+    if (pool.length) chosenRef.current = pool[0];
+  }
+  const w = chosenRef.current;
   // Remember who this tile featured so the next witness tile can skip them.
-  // (hook runs unconditionally — before any early return)
+  // (hook runs unconditionally — before any early return; w is now stable so it fires once)
   useEffect(() => { if (w) lastFeaturedWitness = w.principal; }, [w?.principal]);
   if (!w) return null;
   const quote = clampWords(flatten(w.moneyQuote), 60);
