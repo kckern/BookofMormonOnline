@@ -4,6 +4,7 @@ import {
   trailingSigla,
   splitReading,
   parseStates,
+  parseApparatus,
 } from "../parseATV";
 
 describe("scanBrackets", () => {
@@ -224,5 +225,84 @@ describe("parseStates", () => {
       expect(Array.isArray(parseStates(c))).toBe(true);
       expect(parseStates(c).length).toBeGreaterThanOrEqual(1);
     }
+  });
+});
+
+describe("parseApparatus", () => {
+  const REAL =
+    "and I know that the record which I make [<em>to be</em> &gt; js <em>is</em> 1|<em>to be</em> A|<em>is</em> BCDEFGHIJKLMNOPQRST] <em>true</em>";
+
+  test("interleaves text and unit segments in document order", () => {
+    const { segments, warnings } = parseApparatus(REAL);
+    expect(segments.map((s) => s.kind)).toEqual(["text", "unit", "text"]);
+    expect(segments[0].text).toContain("and I know that the record");
+    expect(segments[2].text).toBe("<em>true</em>"); // no stray "]" from the unit's close
+    expect(warnings).toEqual([]);
+  });
+
+  test("a unit carries one reading per pipe-part, with sigla and states", () => {
+    const { segments } = parseApparatus(REAL);
+    const readings = segments[1].readings;
+    expect(readings).toHaveLength(3);
+    expect(readings[0].sigla).toEqual(["1"]);
+    expect(readings[0].states).toHaveLength(2); // "to be" -> "is"
+    expect(readings[2].sigla).toHaveLength(19);
+  });
+
+  test("a non-apparatus bracket stays in the text stream, not parsed as a unit", () => {
+    const { segments } = parseApparatus("before [<em>a</em>|<em>o</em>] after");
+    expect(segments.map((s) => s.kind)).toEqual(["text"]);
+    expect(segments[0].text).toContain("[<em>a</em>|<em>o</em>]");
+  });
+
+  test("collapses whitespace but does not decode entities", () => {
+    const { segments } = parseApparatus("a\n\n  b &amp; c");
+    expect(segments[0].text).toBe("a b &amp; c");
+  });
+
+  test("two units with text between them", () => {
+    const src = "x [a A|b B] y [c A|d B] z";
+    const { segments } = parseApparatus(src);
+    expect(segments.map((s) => s.kind)).toEqual([
+      "text",
+      "unit",
+      "text",
+      "unit",
+      "text",
+    ]);
+  });
+
+  test("a unit at the very start has no leading empty text segment", () => {
+    const { segments } = parseApparatus("[a A|b B] tail");
+    expect(segments.map((s) => s.kind)).toEqual(["unit", "text"]);
+  });
+
+  test("adjacent units separated by only whitespace emit no empty text segment", () => {
+    const { segments } = parseApparatus("[a A|b B] [c A|d B]");
+    expect(segments.map((s) => s.kind)).toEqual(["unit", "unit"]);
+  });
+
+  test("an unbalanced bracket is a warning, not a throw", () => {
+    const { segments, warnings } = parseApparatus("text [a A|b B unclosed");
+    expect(warnings).toContain("unbalanced bracket");
+    // the unclosed region degrades to text; nothing throws
+    expect(() => parseApparatus("text [a A|b B unclosed")).not.toThrow();
+    expect(segments.every((s) => s.kind === "text")).toBe(true);
+  });
+
+  test("empty / null / undefined input returns empty segments, never throws", () => {
+    expect(parseApparatus("").segments).toEqual([]);
+    expect(parseApparatus(null).segments).toEqual([]);
+    expect(parseApparatus(undefined).segments).toEqual([]);
+  });
+
+  test("the nested-bracket crasher parses as one unit without throwing", () => {
+    // entry 1610416602 — a live page-blanker under the old regex
+    const src =
+      "did king [Benjamin 1ABCDGHK|Mosiah EFIJLMNOQRT| Benjamin [Mosiah?] P|Benjamin {Mosiah?} S] keep them";
+    const { segments } = parseApparatus(src);
+    const units = segments.filter((s) => s.kind === "unit");
+    expect(units).toHaveLength(1);
+    expect(units[0].readings).toHaveLength(4);
   });
 });

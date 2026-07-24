@@ -7,12 +7,17 @@
 import { isSiglum, describeChange, decodeMarker } from "./apparatus";
 
 /**
- * Top-level bracket groups, by depth counting. Unlike a non-greedy regex this
- * survives nesting: `[Benjamin [Mosiah?] P]` is ONE group, not a broken prefix.
- * Unbalanced input yields no group rather than a partial one.
+ * Top-level bracket groups, by depth counting, WITH positions. Unlike a
+ * non-greedy regex this survives nesting: `[Benjamin [Mosiah?] P]` is ONE group,
+ * not a broken prefix. Each returned group carries its `inner` string plus the
+ * `start` index of its `[` and `end` index of its `]`, so a caller can slice the
+ * interleaved text around it. `balanced` is false when a `[` never closed.
+ *
+ * This is the single depth-counting loop; `scanBrackets` and `parseApparatus`
+ * both consume it so the two never drift into separate scanners.
  */
-export function scanBrackets(html) {
-  const out = [];
+export function scanBracketGroups(html) {
+  const groups = [];
   let depth = 0;
   let start = -1;
   for (let i = 0; i < html.length; i++) {
@@ -22,10 +27,19 @@ export function scanBrackets(html) {
       depth++;
     } else if (c === "]" && depth > 0) {
       depth--;
-      if (depth === 0) out.push(html.slice(start + 1, i));
+      if (depth === 0) groups.push({ inner: html.slice(start + 1, i), start, end: i });
     }
   }
-  return out;
+  return { groups, balanced: depth === 0 };
+}
+
+/**
+ * Inner strings of the top-level bracket groups. Thin wrapper over the
+ * position-aware scanner; unbalanced input yields no group rather than a partial
+ * one.
+ */
+export function scanBrackets(html) {
+  return scanBracketGroups(html).groups.map((g) => g.inner);
 }
 
 /**
@@ -189,4 +203,53 @@ export function parseStates(content) {
   }
 
   return states;
+}
+
+/**
+ * One "|"-part -> a Reading: its content, its witness sigla, and the correction
+ * chain that content passed through.
+ */
+function toReading(part) {
+  const { content, sigla } = splitReading(part);
+  return { content, sigla, states: parseStates(content) };
+}
+
+/**
+ * Public entry point. Turn a whole apparatus HTML block into an ordered list of
+ * `text` and `unit` segments in document order, plus non-fatal `warnings`.
+ *
+ *   { segments: Array<
+ *       | { kind: "text", text }            // verbatim HTML between/around units
+ *       | { kind: "unit", readings }        // a variation unit
+ *     >,
+ *     warnings: string[] }
+ *
+ * A bracket is a `unit` only when `isApparatus` accepts it; a prose bracket
+ * (`[<em>a</em>|<em>o</em>]`) is left inside the surrounding text stream. An
+ * unbalanced bracket is recorded in `warnings` and its region degrades to text.
+ * Entities are NOT decoded; runs of whitespace are collapsed to single spaces.
+ * NEVER throws — there are no error boundaries in this app, so a throw here would
+ * blank the page.
+ */
+export function parseApparatus(html) {
+  if (!html || typeof html !== "string") return { segments: [], warnings: [] };
+  const src = html.replace(/\s+/g, " ");
+  const { groups, balanced } = scanBracketGroups(src);
+  const segments = [];
+  const warnings = [];
+  if (!balanced) warnings.push("unbalanced bracket");
+
+  let textFrom = 0;
+  for (const g of groups) {
+    if (!isApparatus(g.inner)) continue; // prose bracket — stays in the text stream
+    if (g.start > textFrom) {
+      const text = src.slice(textFrom, g.start).trim();
+      if (text) segments.push({ kind: "text", text });
+    }
+    segments.push({ kind: "unit", readings: g.inner.split("|").map(toReading) });
+    textFrom = g.end + 1;
+  }
+  const tail = src.slice(textFrom).trim();
+  if (tail) segments.push({ kind: "text", text: tail });
+  return { segments, warnings };
 }
