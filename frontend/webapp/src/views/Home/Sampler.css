@@ -1566,7 +1566,7 @@ html[data-theme="dark"] .mapTileFrame { background: #22282e; }
 html[data-theme="dark"] .witnessHero { background: #4a4033; border-color: #3a3a3a; }
 .witnessName { font-size: 0.8rem; font-weight: 700; color: #2a2a2a; text-align: center; max-width: 6.5rem; line-height: 1.15; }
 html[data-theme="dark"] .witnessName { color: #f0f0f0; }
-.witnessStatement { margin: 0; font-size: 0.9rem; line-height: 1.4; color: #444; }
+.witnessStatement { margin: 0; font-family: "Scripture", Georgia, serif; font-size: 0.95rem; line-height: 1.4; color: #444; }
 html[data-theme="dark"] .witnessStatement { color: #c4c4c4; }
 .witnessSource { font-size: 0.68rem; font-style: italic; color: #999; margin-top: 0.1rem; }
 html[data-theme="dark"] .witnessSource { color: #8a8a8a; }

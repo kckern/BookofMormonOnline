@@ -427,6 +427,7 @@
 
 /* attributed money-quote nuances (speaker-first, cases A/B/C) */
 .single-witnesses .witness-sources .thumbbox .thumb_money_quote .money_quote_text {
+    font-family: "Scripture", Georgia, serif;
     font-style: italic;
 }
 /* case B/C: third-party speaker named as a "Speaker:" prefix outside the quote marks */
