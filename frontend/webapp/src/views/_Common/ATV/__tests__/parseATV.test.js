@@ -1,4 +1,9 @@
-import { scanBrackets, isApparatus, trailingSigla } from "../parseATV";
+import {
+  scanBrackets,
+  isApparatus,
+  trailingSigla,
+  splitReading,
+} from "../parseATV";
 
 describe("scanBrackets", () => {
   test("returns the inner text of each top-level bracket group", () => {
@@ -73,5 +78,56 @@ describe("isApparatus / trailingSigla", () => {
 
   test("a rejected part rejects the whole group even in third position", () => {
     expect(isApparatus("<em>a</em> A|<em>b</em> B|<em>c</em>")).toBe(false);
+  });
+});
+
+describe("splitReading", () => {
+  test("strips sigla from the END, not the first occurrence", () => {
+    // entry 1022316101 — currently renders as "nd it came to pass that A"
+    // because replace("A","") kills the capital A in "And".
+    const r = splitReading(" And it came to pass that A");
+    expect(r.sigla).toEqual(["A"]);
+    expect(r.content).toBe("And it came to pass that");
+  });
+
+  test("preserves HTML entities in content", () => {
+    // entry 1005916101 — the 𝒪① supralinear-insert marks
+    const r = splitReading("&#120034;&#9312; <em>of the Lord</em> 0");
+    expect(r.sigla).toEqual(["0"]);
+    expect(r.content).toBe("&#120034;&#9312; <em>of the Lord</em>");
+  });
+
+  test("expands a multi-letter run into individual sigla", () => {
+    const r = splitReading("<em>is</em> BCDEFGHIJKLMNOPQRST");
+    expect(r.sigla).toEqual("BCDEFGHIJKLMNOPQRST".split(""));
+    expect(r.content).toBe("<em>is</em>");
+  });
+
+  test("a part with no trailing sigla yields empty sigla and no throw", () => {
+    const r = splitReading("<em>into</em> ");
+    expect(r.sigla).toEqual([]);
+    expect(r.content).toBe("<em>into</em>");
+  });
+
+  test("an empty or NULL reading keeps its sigla", () => {
+    expect(splitReading(" BCDEFGHIJKLMNOPQRST").content).toBe("");
+    expect(splitReading(" BCDEFGHIJKLMNOPQRST").sigla).toEqual(
+      "BCDEFGHIJKLMNOPQRST".split("")
+    );
+    expect(splitReading("NULL 1").content).toBe("NULL");
+    expect(splitReading("NULL 1").sigla).toEqual(["1"]);
+  });
+
+  test("a non-witness trailing run stays in the content", () => {
+    // U-Z are not sigla, so "UVW" is text, not witnesses
+    const r = splitReading("something UVW");
+    expect(r.sigla).toEqual([]);
+    expect(r.content).toBe("something UVW");
+  });
+
+  test("leaves correction markers in the content for the chain parser", () => {
+    const r = splitReading("thing &gt;js NULL 1 ");
+    expect(r.sigla).toEqual(["1"]);
+    expect(r.content).toBe("thing &gt;js NULL");
   });
 });

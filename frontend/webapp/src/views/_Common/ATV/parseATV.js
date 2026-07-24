@@ -49,3 +49,21 @@ export function isApparatus(inner) {
   if (parts.length < 2) return false;
   return parts.every((p) => trailingSigla(p) !== null);
 }
+
+/**
+ * Split one "|"-part into its content and its witnesses. Never throws; a part
+ * with no trailing sigla comes back as content with an empty witness list.
+ * Correction markers are left in the content for the chain parser.
+ */
+export function splitReading(part) {
+  const t = part.trim();
+  const sigla = trailingSigla(part);
+  if (!sigla) return { content: t, sigla: [] };
+  // Positional slice, NOT String.replace — replace removes the first match,
+  // which corrupts readings whose own text contains the sigla substring
+  // ("And it came to pass that A" loses the A of "And").
+  return {
+    content: t.slice(0, t.length - sigla.length).trim(),
+    sigla: [...sigla],
+  };
+}
