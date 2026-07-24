@@ -51,7 +51,7 @@ function ProvenanceLines({ states }) {
 }
 
 /** The witness evidence under one reading: crops + label-only gaps (spec §6.5). */
-function WitnessEvidence({ reading, verseId }) {
+function WitnessEvidence({ reading, verseId, reference }) {
   const selector = `ids/${verseId}`;
   // Treatment 2: an omission reading (its resulting state is ∅) still shows the
   // crop — the image is the evidence the phrase is absent.
@@ -76,9 +76,12 @@ function WitnessEvidence({ reading, verseId }) {
           : c.exact
           ? c.label
           : c.scanTitle;
+        // Visible caption stays edition-only; the crop's alt carries the
+        // reference too (spec §6.7: "1837 Kirtland edition, 1 Nephi 1:3").
+        const alt = reference ? `${caption}, ${reference}` : caption;
         return (
           <figure className="atv-vc-fig" key={c.siglum}>
-            <FaxCrop version={c.version} selector={selector} alt={caption} />
+            <FaxCrop version={c.version} selector={selector} alt={alt} />
             <figcaption className="atv-vc-cap">{caption}</figcaption>
             {!c.exact && (
               <div className="atv-vc-note">
@@ -110,12 +113,12 @@ function WitnessEvidence({ reading, verseId }) {
   );
 }
 
-function ReadingBlock({ reading, verseId }) {
+function ReadingBlock({ reading, verseId, reference }) {
   return (
     <section className="atv-vc-reading">
       <ReadingText states={reading.states} />
       <ProvenanceLines states={reading.states} />
-      <WitnessEvidence reading={reading} verseId={verseId} />
+      <WitnessEvidence reading={reading} verseId={verseId} reference={reference} />
     </section>
   );
 }
@@ -204,7 +207,7 @@ export function VariantCompare({ unit, verseId, reference, onClose }) {
         </header>
         <div className="atv-vc-body">
           {readings.map((reading, i) => (
-            <ReadingBlock key={i} reading={reading} verseId={verseId} />
+            <ReadingBlock key={i} reading={reading} verseId={verseId} reference={reference} />
           ))}
         </div>
       </div>

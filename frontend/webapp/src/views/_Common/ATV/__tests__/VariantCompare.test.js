@@ -80,3 +80,25 @@ test("has dialog semantics", () => {
   const dialog = screen.getByRole("dialog");
   expect(dialog.getAttribute("aria-modal")).toBe("true");
 });
+
+test("dialog has an accessible name that names the passage", () => {
+  const unit = unitOf("[<em>x</em> A|<em>y</em> B]");
+  render(
+    <VariantCompare unit={unit} verseId={1} reference="1 Nephi 1:3" onClose={() => {}} />
+  );
+  const dialog = screen.getByRole("dialog");
+  expect(dialog).toHaveAccessibleName(/1 Nephi 1:3/);
+});
+
+test("crops carry edition + reference alt text, never empty", () => {
+  const unit = unitOf("[<em>to be</em> A|<em>is</em> BCDEFGHIJKLMNOPQRST]");
+  render(
+    <VariantCompare unit={unit} verseId={31103} reference="1 Nephi 1:3" onClose={() => {}} />
+  );
+  const alts = screen.getAllByTestId("crop").map((c) => c.getAttribute("alt"));
+  expect(alts.length).toBeGreaterThan(0);
+  alts.forEach((a) => {
+    expect(a).toBeTruthy();
+    expect(a).toMatch(/1 Nephi 1:3/);
+  });
+});

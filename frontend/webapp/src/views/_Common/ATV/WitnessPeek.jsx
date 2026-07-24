@@ -1,8 +1,19 @@
 import React from "react";
+import { label } from "src/models/Utils";
 import { faxCandidates } from "./faxVersions";
 import { WITNESSES } from "./apparatus";
 import { FaxCrop } from "./FaxCrop";
 import "./WitnessPeek.scss";
+
+/**
+ * Translate through the label dictionary when a key resolves, else fall back to
+ * literal English. `label()` returns " " when no dictionary is loaded and the
+ * key itself when the dictionary lacks the key — both mean "no translation".
+ */
+const lbl = (key, fallback) => {
+  const v = label(key);
+  return !v || v === " " || v === key ? fallback : v;
+};
 
 /**
  * Tier-1 hover peek (spec §6.4): a tiny decoration card for ONE reading. It
@@ -18,10 +29,15 @@ export function WitnessPeek({ reading, verseId }) {
   const earliest = candidates[0] || null;
   const others = Math.max(0, candidates.length - 1);
 
-  const labelLine = earliest
-    ? `${earliest.label}${
-        others ? ` · +${others} later edition${others > 1 ? "s" : ""}` : ""
+  const laterEditions = others
+    ? ` · +${others} ${
+        others > 1
+          ? lbl("atv_later_editions", "later editions")
+          : lbl("atv_later_edition", "later edition")
       }`
+    : "";
+  const labelLine = earliest
+    ? `${earliest.label}${laterEditions}`
     : sigla
         .map((s) => WITNESSES[s] && WITNESSES[s].label)
         .filter(Boolean)
