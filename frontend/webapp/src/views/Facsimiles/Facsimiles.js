@@ -97,13 +97,16 @@ function FacsimileViewer({ item, volumeOrder, currentVolumeIndex }) {
   const defaultLeaf = hasPathParameter && !activeLeaf ? leafIndex.find(leaf => leaf.pageNumInt === 1 || leaf.pageSlugLeaf === "1") : null;
   // Only show grid if there's no path parameter (no "tail" in the URL)
   const isGridMode = !hasPathParameter;
+  // The contact-sheet grid is useless on mobile — skip straight to the infinite
+  // page scroll (which starts at the top when there's no path parameter).
+  const showGrid = isGridMode && !isMobile();
   // Use the found leaf or the default leaf (page 1)
   const displayLeaf = activeLeaf || defaultLeaf;
   
   // Only renderable editions (those with page scans) are switchable targets.
   const renderableEditions = (volumeOrder || []).filter((v) => v?.pages);
   return (
-    <div className={`facsimileViewer${isGridMode ? ' gridMode' : ''}`}>
+    <div className={`facsimileViewer${showGrid ? ' gridMode' : ''}`}>
       <div className="facsimileToolbar">
         <Link id="fax_back" className="fax-back" to={displayLeaf ? `/fax/${item.slug}` : "/fax"} aria-label="Back to facsimiles">
           <img src={backIcon} alt="" aria-hidden="true" style={{ width: 20, height: 20 }} />
@@ -114,7 +117,7 @@ function FacsimileViewer({ item, volumeOrder, currentVolumeIndex }) {
           currentRef={displayLeaf?.pageReference}
         />
       </div>
-      {isGridMode ?
+      {showGrid ?
         <FacsimileGridViewer item={item} leafIndex={leafIndex} /> :
         (isMobile() ?
           <FacsimilePageViewerMobile key={item.slug} item={item} leafIndex={leafIndex} pgoffset={pgoffset} volumeOrder={volumeOrder} currentVolumeIndex={currentVolumeIndex} /> :
