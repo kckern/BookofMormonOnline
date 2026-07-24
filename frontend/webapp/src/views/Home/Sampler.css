@@ -1398,9 +1398,9 @@ html[data-theme="dark"] .tileMoreLink:hover { background: rgba(147, 198, 239, 0.
    component (_Common/MiniChiasm.css)
    ================================================================ */
 .chiasmusTileHead { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 0.4rem; }
-.chiasmusTileHeadTop { display: flex; align-items: center; gap: 0.6rem; min-width: 0; }
-.chiasmusTileHead .chiasmGlyph { flex: 0 0 auto; opacity: 0.9; margin-left: auto; }
-.chiasmusTileIdent { display: flex; align-items: center; gap: 0.45rem; min-width: 0; margin-right: auto; }
+.chiasmusTileHeadTop { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; min-width: 0; }
+.chiasmusTileHead .chiasmGlyph { flex: 0 0 auto; opacity: 0.9; }
+.chiasmusTileIdent { display: flex; align-items: center; gap: 0.45rem; min-width: 0; }
 .chiasmusTileAvatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex: 0 0 auto; }
 .chiasmusTileIdentText { display: flex; flex-direction: column; min-width: 0; gap: 0.05rem; }
 .chiasmusTileSpeakerName { font-size: 0.8rem; font-weight: 600; color: #444; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -1828,22 +1828,15 @@ html[data-theme="dark"] .mapStoryTile .mapStoryCardArt { background: rgba(255, 2
   color: inherit;
 }
 /* top rail above the crop: title:ref on the left, per-edition tab img on the right */
-/* one continuous border wraps the tab rail + the crop image */
 .faxVerseTile .faxEditionCropWrap {
   position: relative;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: 4px;
-  overflow: hidden;
-  background: #faf7f0;
-  transition: border-color 0.15s ease;
 }
 .faxVerseTile .faxEditionRail {
   display: flex;
-  align-items: center;
+  align-items: flex-end;        /* tab sits down on the crop's top edge */
   gap: 0.5rem;
   height: 2rem;
   padding: 0 0.35rem;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08); /* divides the rail from the image */
 }
 .faxVerseTile .faxEditionRailTitle {
   flex: 1 1 auto;              /* fill the space beside the tab */
@@ -1857,24 +1850,35 @@ html[data-theme="dark"] .mapStoryTile .mapStoryCardArt { background: rgba(255, 2
   min-width: 0;
 }
 .faxVerseTile .faxEditionRailRef {
-  font-weight: 400;
-  color: #8a7350;
+  font-weight: 400;            /* standard .sampler .scripture_link color (no brown override) */
 }
+/* the tab graphic framed like a cardboard file tab, sitting on the crop's top edge */
 .faxVerseTile .faxEditionTab {
-  order: -1; /* tab on the LEFT, title:ref text on the right */
+  order: -1;
+  box-sizing: border-box;
   height: 2rem;
   width: auto;
   max-width: 45%;
   display: block;
   flex: 0 0 auto;
   z-index: 1;
+  padding: 0.15rem 0.3rem 0;
+  margin-bottom: -1px;         /* overlap the crop's top border so it reads as attached */
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
+  background: #faf7f0;
 }
 .faxVerseTile .faxEditionCrop {
   width: 100%;
   max-width: 100%;
   height: auto;
   display: block;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 3px;
+  background: #faf7f0;
+  transition: border-color 0.15s ease;
 }
-.faxVerseTile .faxEditionRow:hover .faxEditionCropWrap {
+.faxVerseTile .faxEditionRow:hover .faxEditionCrop {
   border-color: rgba(120, 90, 50, 0.45);
 }
