@@ -8,7 +8,6 @@ import { keyFor, coalesce, writeBack, withRenderSlot, legacyKey } from './cache.
 import { canonicalSelector } from './canonical.js';
 import { createHash } from 'node:crypto';
 
-const PAPER = '#faf7f0'; // fallback paper color; margin-sampling is a later refinement
 const etag = (b: Buffer) => `"${createHash('sha1').update(b).digest('hex')}"`;
 
 function parseWidth(seg: string): number | 'full' | null {
@@ -65,8 +64,8 @@ export async function faxRoutes(app: FastifyInstance): Promise<void> {
         if (boxes.length === 0) throw Object.assign(new Error('no boxes'), { statusCode: 404 });
         const { fragments, clamped } = clampPages(toFragments(boxes), MAX_PAGES);
         if (clamped) app.log.info({ key }, 'fax render clamped to N pages');
-        const { offset, format } = await imageScanMeta(version!);
-        return renderImage({ mode, ext, width, fragments, paper: PAPER, provider: (p) => fetchScan(version!, p + offset, format) });
+        const { offset, format, paper } = await imageScanMeta(version!);
+        return renderImage({ mode, ext, width, fragments, paper, provider: (p) => fetchScan(version!, p + offset, format) });
       }));
       writeBack(key, body, ext);
       return reply
@@ -100,8 +99,8 @@ export async function faxRoutes(app: FastifyInstance): Promise<void> {
         const boxes = await verseIdsToBoxes(version, verseIds);
         if (boxes.length === 0) throw Object.assign(new Error('no boxes'), { statusCode: 404 });
         const { fragments } = clampPages(toFragments(boxes), MAX_PAGES);
-        const { offset, format } = await imageScanMeta(version);
-        return renderImage({ mode: 'page', ext: 'jpg', width: 'full', fragments, paper: PAPER, provider: (p) => fetchScan(version, p + offset, format) });
+        const { offset, format, paper } = await imageScanMeta(version);
+        return renderImage({ mode: 'page', ext: 'jpg', width: 'full', fragments, paper, provider: (p) => fetchScan(version, p + offset, format) });
       }));
       writeBack(key, body, 'jpg');
       return reply

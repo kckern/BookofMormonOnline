@@ -47,10 +47,23 @@ export async function verseIdsToBoxes(version: string, verseIds: number[]): Prom
  * empty string); 1920/1981/2013 are png. Not to be confused with the render
  * OUTPUT format (jpg/webp), which is chosen by the request.
  */
-export async function imageScanMeta(version: string): Promise<{ offset: number; format: string }> {
+const DEFAULT_PAPER = '#faf7f0';
+
+/** Normalize the stored `bgcolor` into a sharp-acceptable CSS color. Accepts
+ * `#faf7f0`, bare `faf7f0`/`fff`, or any full CSS color; falls back to paper. */
+function normalizePaper(bg: string | null | undefined): string {
+  const s = (bg ?? '').trim();
+  if (!s) return DEFAULT_PAPER;
+  if (/^[0-9a-fA-F]{6}$/.test(s) || /^[0-9a-fA-F]{3}$/.test(s)) return `#${s}`;
+  return s;
+}
+
+export async function imageScanMeta(
+  version: string
+): Promise<{ offset: number; format: string; paper: string }> {
   const db = getDb();
   const [fax, minRow] = await Promise.all([
-    db.selectFrom('bom_xtras_fax').select(['pgfirstVerse', 'format']).where('slug', '=', version).executeTakeFirst(),
+    db.selectFrom('bom_xtras_fax').select(['pgfirstVerse', 'format', 'bgcolor']).where('slug', '=', version).executeTakeFirst(),
     db.selectFrom('bom_xtras_fax_index')
       .select((eb) => eb.fn.min('page').as('minp'))
       .where('version', '=', version).executeTakeFirst(),
@@ -58,7 +71,8 @@ export async function imageScanMeta(version: string): Promise<{ offset: number; 
   const pgFirst = Number(fax?.pgfirstVerse ?? 1);
   const minPage = Number(minRow?.minp ?? 0);
   const format = fax?.format && String(fax.format).trim() ? String(fax.format).trim() : 'jpg';
-  return { offset: pgFirst - minPage, format };
+  const paper = normalizePaper(fax?.bgcolor);
+  return { offset: pgFirst - minPage, format, paper };
 }
 
 /** Legacy alias: {slug}/{id} text-unit -> verse ids via bom_slug -> bom_text.heading. */
