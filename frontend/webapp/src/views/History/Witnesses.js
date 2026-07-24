@@ -7,6 +7,7 @@ import { label } from '../../models/Utils';
 import BoMOnlineAPI, { assetUrl } from 'src/models/BoMOnlineAPI';
 import moment from 'moment';
 import WitnessLifeHeatmap, { matchesYearMonth } from './WitnessLifeHeatmap';
+import Identicon from '../_Common/Identicon';
 import { useAppController } from "src/contexts/AppControllerContext";
 
 // Editorial marks in a money quote — [Name] (supplied referent) / [...] (elision)
@@ -234,6 +235,7 @@ const SingleWitness = ({ witness, sourceSlug }) => {
                                 onClick={() => openSource(doc)}
                             >
                                 <div className='historyHeader'>
+                                    <Identicon seed={doc.slug || doc.document || doc.source || String(i)} size={34} className='historyIdenticon' />
                                     <span className='dateChip'>{displayDate(doc.date)}</span>
                                     {doc.teaser && <div className='historyTeaserText'>{Parser(doc.teaser)}</div>}
                                 </div>
