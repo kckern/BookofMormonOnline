@@ -1568,7 +1568,7 @@ html[data-theme="dark"] .witnessHero { background: #4a4033; border-color: #3a3a3
 html[data-theme="dark"] .witnessName { color: #f0f0f0; }
 .witnessStatement { margin: 0; font-family: "Scripture", Georgia, serif; font-size: 1.1rem; line-height: 1.2; color: #444; }
 /* editorial marks ([Name] / [...]) set apart from the quoted words */
-.witnessStatement .editorialMark { font-family: "Roboto", "Roboto Condensed", sans-serif; font-style: normal; font-size: 0.82em; color: #000; }
+.witnessStatement .editorialMark { font-family: "Roboto", "Roboto Condensed", sans-serif; font-style: normal; font-size: 0.82em; color: #555; }
 html[data-theme="dark"] .witnessStatement .editorialMark { color: #e8e8e8; }
 html[data-theme="dark"] .witnessStatement { color: #c4c4c4; }
 .witnessSource { font-size: 0.68rem; font-style: italic; color: #999; margin-top: 0.1rem; }
