@@ -721,6 +721,68 @@ html[data-theme="dark"] .faxMobileViewer {
   from { opacity: 0; transform: scale(1.06); }
   to   { opacity: 1; transform: scale(1); }
 }
+/* Interactive verse inspector layer (Phase 1) */
+.faxVerseLayer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none; /* hotspots re-enable themselves; off-verse clicks fall through */
+  z-index: 3;
+}
+.faxCutoutSvg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  animation: faxCutoutIn 0.18s ease both;
+}
+@keyframes faxCutoutIn { from { opacity: 0; } to { opacity: 1; } }
+.faxCutoutRing {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.85);
+  stroke-width: 2;
+}
+.faxVerseHotspots { position: absolute; inset: 0; pointer-events: none; }
+.faxHotspot {
+  position: absolute;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  pointer-events: auto;
+  border-radius: 3px;
+  &:hover { background: rgba(120, 90, 50, 0.12); }
+  &:focus-visible { outline: 2px solid rgba(120, 90, 50, 0.7); }
+}
+.faxVerseTooltip {
+  position: absolute;
+  transform: translate(-50%, calc(-100% - 10px));
+  max-width: 320px;
+  padding: 0.5rem 0.7rem;
+  background: #1c1b18;
+  color: #f4efe6;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+  z-index: 5;
+  animation: faxCutoutIn 0.18s ease both;
+  &::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: -6px;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: #1c1b18;
+    border-bottom: 0;
+  }
+  .faxVerseTooltip-ref { font-size: 0.7rem; font-weight: 700; opacity: 0.7; text-transform: uppercase; letter-spacing: 0.04em; }
+  .faxVerseTooltip-text { font-size: 0.9rem; line-height: 1.35; margin-top: 2px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .faxCutoutSvg, .faxVerseTooltip { animation: none; }
+}
 /* "continues" affordance */
 .faxContinuesHint {
   position: absolute;
