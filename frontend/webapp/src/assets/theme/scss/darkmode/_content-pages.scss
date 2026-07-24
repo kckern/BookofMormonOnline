@@ -18,6 +18,7 @@ html[data-theme="dark"] {
   .stack-tooltip-content .meta .title { color: var(--text-primary); }
   .stack-tooltip-content .meta .ref { color: var(--text-secondary); }
   .pageReferences h6 { color: var(--text-muted); }
+  .pageImageWrapper .pageImageUnavailable { background: var(--surface-2); color: var(--text-muted); }
   /* slim toolbar + page-jump (added round-2) */
   .facsimileToolbar .fax-title { color: var(--text-primary); }
   .fax-page-jump { color: var(--text-muted); }
