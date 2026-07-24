@@ -8,6 +8,19 @@ import BoMOnlineAPI, { assetUrl } from 'src/models/BoMOnlineAPI';
 import moment from 'moment';
 import WitnessLifeHeatmap, { matchesYearMonth } from './WitnessLifeHeatmap';
 import { useAppController } from "src/contexts/AppControllerContext";
+
+// Editorial marks in a money quote — [Name] (supplied referent) / [...] (elision)
+// — set apart from the quoted words (grey Roboto, not scripture).
+const BRACKET_RE = /(\[[^\]]*\])/g;
+const withBrackets = (text) =>
+  String(text || "")
+    .split(BRACKET_RE)
+    .map((part, i) =>
+      part.startsWith("[") && part.endsWith("]")
+        ? <span key={i} className="editorialMark">{part}</span>
+        : part
+    );
+
 const data = {
     "three-witnesses": [
         { "slug": "martin-harris",      "name": "Martin Harris",      "birthday": "1783-05-18", "deathday": "1875-07-10", "excommunication": "1837-12-27", "bio": "", "principalNames": ["Martin Harris", "Three Witnesses"] },
@@ -220,54 +233,54 @@ const SingleWitness = ({ witness, sourceSlug }) => {
                                 className='historycard card'
                                 onClick={() => openSource(doc)}
                             >
-                                <div className='card-header text-left'>
-                                    <div className='sourcebox'>
-                                        <div className='pub'>{doc.source}</div>
-                                        <div className='date'>{displayDate(doc.date)}</div>
+                                {/* LEAD with the money quote (editorially prepared — [Name]/[...] are
+                                    meaningful). A: witness voice (quote + "— speaker" + firsthand pill).
+                                    B/C: someone else's words ("Speaker:" prefix). No speaker → teaser. */}
+                                {doc.money_quote && doc.quote_speaker ? (
+                                    <blockquote className={`historyLead${doc.quote_is_witness_voice ? ' is-firsthand' : ''}`}>
+                                        {doc.quote_is_witness_voice ? (
+                                            <>
+                                                <span className='money_quote_text'>&ldquo;{withBrackets(doc.money_quote)}&rdquo;</span>
+                                                <footer className='money_quote_attribution'>
+                                                    <span className='firsthand-badge'>In their own words</span>
+                                                    <span className='money_quote_speaker'>&mdash; {doc.quote_speaker}</span>
+                                                </footer>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <span className='money_quote_text'>
+                                                    <span className='money_quote_speaker-prefix'>{doc.quote_speaker}:</span>{' '}
+                                                    &ldquo;{withBrackets(doc.money_quote)}&rdquo;
+                                                </span>
+                                                {doc.quote_contains_witness_speech && (
+                                                    <footer className='money_quote_attribution quotes-witness'>quotes the witness</footer>
+                                                )}
+                                            </>
+                                        )}
+                                    </blockquote>
+                                ) : (
+                                    doc.teaser ? <div className='historyLead historyTeaser'>{Parser(doc.teaser)}</div> : null
+                                )}
+                                <div className='historySupport'>
+                                    {doc.id && (
+                                        <div className='historyThumb'>
+                                            <img
+                                                style={{ aspectRatio: "1 / " + (parseFloat(doc.aspect) || 1) }}
+                                                src={`${assetUrl}/history/thumbs/${String(doc.id).padStart(4, '0')}`}
+                                                alt={doc.document}
+                                                loading='lazy'
+                                            />
+                                        </div>
+                                    )}
+                                    <div className='historyInfo'>
+                                        <div className='historyInfoTop'>
+                                            <span className='pub'>{doc.source}</span>
+                                            <span className='date'>{displayDate(doc.date)}</span>
+                                        </div>
+                                        <h5>{doc.document}</h5>
+                                        {doc.citation && <div className='citation'>{Parser(doc.citation + "")}</div>}
                                     </div>
                                 </div>
-                                <div className='thumbbox'>
-                                    {doc.id && (
-                                        <img
-                                            style={{ aspectRatio: "1 / " + (parseFloat(doc.aspect) || 1) }}
-                                            src={`${assetUrl}/history/thumbs/${String(doc.id).padStart(4, '0')}`}
-                                            alt={doc.document}
-                                        />
-                                    )}
-                                    {/* Attributed money quote only when the speaker is known.
-                                        A: witness's own voice — quote + "— speaker" + firsthand badge.
-                                        B: third party but quotes the witness — "Speaker:" prefix + note.
-                                        C: third-party account about the witness — "Speaker:" prefix.
-                                        No speaker (stub / audit-rejected rows) → teaser fallback.
-                                        money_quote is editorially prepared ([Name], [...] are meaningful) — render as-is. */}
-                                    {doc.money_quote && doc.quote_speaker ? (
-                                        <blockquote className={`thumb_money_quote${doc.quote_is_witness_voice ? ' is-firsthand' : ''}`}>
-                                            {doc.quote_is_witness_voice ? (
-                                                <>
-                                                    <span className='money_quote_text'>&ldquo;{doc.money_quote}&rdquo;</span>
-                                                    <footer className='money_quote_attribution'>
-                                                        <span className='firsthand-badge'>In their own words</span>
-                                                        <span className='money_quote_speaker'>&mdash; {doc.quote_speaker}</span>
-                                                    </footer>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <span className='money_quote_text'>
-                                                        <span className='money_quote_speaker-prefix'>{doc.quote_speaker}:</span>{' '}
-                                                        &ldquo;{doc.money_quote}&rdquo;
-                                                    </span>
-                                                    {doc.quote_contains_witness_speech && (
-                                                        <footer className='money_quote_attribution quotes-witness'>quotes the witness</footer>
-                                                    )}
-                                                </>
-                                            )}
-                                        </blockquote>
-                                    ) : (
-                                        doc.teaser && <div className='thumb_teaser'>{Parser(doc.teaser)}</div>
-                                    )}
-                                </div>
-                                <h5>{doc.document}</h5>
-                                {doc.citation && <div className='citation'>{Parser(doc.citation + "")}</div>}
                             </div>
                         ))}
                     </Masonry>
