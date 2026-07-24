@@ -1,5 +1,11 @@
 # ATV Parser Rewrite (Phase 1) Implementation Plan
 
+> **Status: COMPLETE (2026-07-24).** All 10 tasks landed on `feat/atv-parser-rewrite`.
+> 92-test offline suite green; full-corpus regression clean (4,528 entries, 4,861
+> units, 11,208 readings, 0 throws, 0 unglossed codes); browser-verified against the
+> live app (§ Verification). Phase 2 (facsimile crops, hover peek, modal, tile) is
+> tracked in `docs/specs/2026-07-24-atv-textual-variants-ux.md`.
+>
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
 **Goal:** Replace the string-surgery parser in `frontend/webapp/src/views/_Common/ATV.js` with a pure, tested `parseApparatus()` that never throws — removing two entries that currently blank the whole page and 136 readings that render corrupted text — with no intended visual change.
@@ -1041,6 +1047,30 @@ git push -u origin feat/atv-parser-rewrite
 - [ ] `1022316101` renders "And it came to pass that" with its leading A intact
 - [ ] `git grep ATVBrackets` finds nothing outside the module
 - [ ] No visual change to any correctly-parsing entry
+
+---
+
+## Verification (2026-07-24)
+
+Ran the live app (backend `:5006` → remote MySQL, frontend `:3000`) and drove Chrome
+through four commentary deep-links. **All four rendered with zero console/page errors:**
+
+| Entry | What it exercises | Result |
+|---|---|---|
+| `1000216101` | normal — 3 readings, one correction | Grey apparatus box, white pills `to be ⮕ is` / `to be` / `is`, tooltips with full edition labels. Screenshot confirms CSS applies unchanged. |
+| `1080616101` | **page-blanker #1** (trailing space before pipe) | Renders `thing ⮕ ∅ / thing / ∅` … — **page no longer blanks.** |
+| `1610416602` | **page-blanker #2** (nested `[Mosiah?]`) | Renders 4 pills incl. `Benjamin [Mosiah?]` — **page no longer blanks.** |
+| `1022316101` | corruption fix | Pill `A` reads **"And it came to pass that"** — the capital A the old `replace("A","")` dropped. `&szlig;` (ß) and `&amp;` (&) entities render correctly; ∅ omissions show. |
+
+Confirmed: `.atv > .source > .atv-string` nesting intact, `data-tip`/`data-for` present,
+`⮕` arrows between correction states, entities preserved, no runtime errors from
+`node-html-parser`/`html-react-parser`/`react-tooltip` in the real bundle. Screenshots
+captured to the session scratchpad (not committed).
+
+**Not re-verified here (unchanged from before, or Phase 2/3 scope):** react-tooltip
+hover binding across tab-switches (P6 — the tooltip mechanism is unchanged, and is
+replaced by the peek/modal in Phase 3); dark-mode styling of the new components (none
+exist yet). The Definition-of-Done checkboxes above are all met.
 
 ---
 
