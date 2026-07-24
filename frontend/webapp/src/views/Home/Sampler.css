@@ -1570,6 +1570,10 @@ html[data-theme="dark"] .witnessName { color: #f0f0f0; }
 html[data-theme="dark"] .witnessStatement { color: #c4c4c4; }
 .witnessSource { font-size: 0.68rem; font-style: italic; color: #999; margin-top: 0.1rem; }
 html[data-theme="dark"] .witnessSource { color: #8a8a8a; }
+/* third-party / reporter quote: "Speaker:" prefix outside the quote, no portrait */
+.witnessSpeaker { font-weight: 700; color: #345496; }
+html[data-theme="dark"] .witnessSpeaker { color: #9bb4e0; }
+.witnessFeatured.witness-reported { align-items: flex-start; }
 
 
 /* view-all end card: a 3×4 mosaic that fills the whole card (no caption).

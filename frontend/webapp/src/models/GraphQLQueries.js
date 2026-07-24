@@ -1783,7 +1783,7 @@ const queries = {
         faxPages { page ref }
         faxMore { slug title pages }
         art { id title artist width height ref }
-        witnesses { slug witnessSlug principal statement moneyQuote source }
+        witnesses { slug witnessSlug principal moneyQuote speaker isWitnessVoice source }
         commentaries { id title text preview reference publication { source_id source_title source_name source_slug } }
         contents { slug title description pages { title slug sections { title slug } } }
         section { title slug page { title slug } rows { guid narration { guid description text { slug heading imgIds status(token:"${input.token || ""}") } } } }

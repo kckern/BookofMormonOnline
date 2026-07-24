@@ -197,10 +197,13 @@ const WITNESS_PRINCIPALS = Object.keys(WITNESS_SLUG);
 const sampleWitnesses = async (ctx: AppContext, seed: number) => {
   const rows = await ctx.db
     .selectFrom('bom_xtras_history')
-    .select(['slug', 'principal', 'author', 'citation', 'teaser', 'transcript', 'metadata'])
+    .select(['slug', 'principal', 'author', 'citation', 'metadata'])
     .where('archive', '=', 'witnesses')
     .where('principal', 'in', WITNESS_PRINCIPALS)
-    .where(sql<boolean>`(CHAR_LENGTH(teaser) > 20 OR CHAR_LENGTH(transcript) > 40)`)
+    // Only rows with an editorially-prepared money quote are quotable. A row
+    // without one has no attributable statement and must never reach this tile —
+    // teaser/transcript are catalog prose, not testimony. (attribution handoff)
+    .where(sql<boolean>`JSON_EXTRACT(metadata,'$.money_quote') IS NOT NULL`)
     .orderBy(seededOrder('slug', seed))
     .limit(40)
     .execute();
@@ -212,19 +215,24 @@ const sampleWitnesses = async (ctx: AppContext, seed: number) => {
   return [...byPrincipal.values()].slice(0, 3).map((r) => {
     let reference: string | null = null;
     let moneyQuote: string | null = null;
+    let speaker: string | null = null;
+    let isWitnessVoice: boolean | null = null;
     try {
       const meta = typeof r.metadata === 'string' ? JSON.parse(r.metadata) : (r.metadata as Record<string, unknown> | null);
       reference = (meta?.reference as string) || null;
-      // the redesigned witness cards lead with the money quote (stored in
-      // metadata, like the history loader's metaString('money_quote'))
+      // The card leads with the editorially-prepared money quote and its real
+      // speaker — NEVER teaser/transcript (which would fabricate an attribution).
       moneyQuote = (meta?.money_quote as string) || null;
+      speaker = (meta?.quote_speaker as string) || null;
+      isWitnessVoice = (meta?.quote_is_witness_voice as boolean) ?? null;
     } catch { /* metadata may be absent/invalid */ }
     return {
       slug: r.slug,
       witnessSlug: WITNESS_SLUG[String(r.principal)] || null,
       principal: r.principal,
-      statement: r.teaser || r.transcript || null,
       moneyQuote,
+      speaker,
+      isWitnessVoice,
       source: reference || r.citation || r.author || null,
     };
   });

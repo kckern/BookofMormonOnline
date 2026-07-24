@@ -19,40 +19,55 @@ const initials = (name) =>
  * the Witnesses view. (A monogram stands in if a portrait fails to load.)
  */
 export default function WitnessTile({ data }) {
-  // lead with the money quote; fall back to the teaser
-  const witnesses = (data || [])
-    .filter((w) => w?.principal && (w?.moneyQuote || w?.statement))
-    .map((w) => ({ ...w, quote: w.moneyQuote || w.statement }));
+  // Only rows with an editorially-prepared money quote are quotable — NEVER a
+  // teaser/transcript (that would fabricate an attribution). Prefer a first-person
+  // (witness-voice) quote so the featured card can carry the portrait.
+  const witnesses = (data || []).filter((w) => w?.principal && w?.moneyQuote);
   if (!witnesses.length) return null;
-  const w = witnesses[0]; // featured single witness
+  const w = witnesses.find((x) => x.isWitnessVoice) || witnesses[0];
+  const quote = clampWords(flatten(w.moneyQuote), 60);
+  const source = w.source ? clampWords(flatten(w.source), 18) : null;
+  const to = w.witnessSlug ? `/history/witnesses/${w.witnessSlug}` : "/history/witnesses";
   return (
     <div className="samplerTileInner witnessTile">
       <h3 className="tileHeading">
         <Link to="/history/witnesses">{label("witnesses")}</Link>
       </h3>
-      <Link
-        to={w.witnessSlug ? `/history/witnesses/${w.witnessSlug}` : "/history/witnesses"}
-        className="witnessFeatured"
-      >
-        <span className="witnessLeft">
-          <span className="witnessHero">
-            {w.witnessSlug ? (
-              <img
-                src={`${assetUrl}/history/witnesses/people/${w.witnessSlug}.jpg`}
-                alt={w.principal}
-                loading="lazy"
-                onError={(e) => { e.target.style.display = "none"; e.target.parentNode.classList.add("mono"); }}
-              />
-            ) : null}
-            <span className="witnessMono" aria-hidden="true">{initials(w.principal)}</span>
+      {w.isWitnessVoice ? (
+        // The witness's own words — portrait + name (the speaker) + quote.
+        <Link to={to} className="witnessFeatured">
+          <span className="witnessLeft">
+            <span className="witnessHero">
+              {w.witnessSlug ? (
+                <img
+                  src={`${assetUrl}/history/witnesses/people/${w.witnessSlug}.jpg`}
+                  alt={w.speaker || w.principal}
+                  loading="lazy"
+                  onError={(e) => { e.target.style.display = "none"; e.target.parentNode.classList.add("mono"); }}
+                />
+              ) : null}
+              <span className="witnessMono" aria-hidden="true">{initials(w.speaker || w.principal)}</span>
+            </span>
+            <span className="witnessName">{w.speaker || w.principal}</span>
           </span>
-          <span className="witnessName">{w.principal}</span>
-        </span>
-        <span className="witnessBody">
-          <blockquote className="witnessStatement">“{clampWords(flatten(w.quote), 60)}”</blockquote>
-          {w.source ? <span className="witnessSource">{clampWords(flatten(w.source), 18)}</span> : null}
-        </span>
-      </Link>
+          <span className="witnessBody">
+            <blockquote className="witnessStatement">“{quote}”</blockquote>
+            {source ? <span className="witnessSource">{source}</span> : null}
+          </span>
+        </Link>
+      ) : (
+        // Someone else's words about the witness — speaker prefix, NO portrait
+        // (the witness's face beside a reporter's line is the same misattribution).
+        <Link to={to} className="witnessFeatured witness-reported">
+          <span className="witnessBody">
+            <blockquote className="witnessStatement">
+              {w.speaker ? <span className="witnessSpeaker">{w.speaker}:</span> : null}{" "}
+              &ldquo;{quote}&rdquo;
+            </blockquote>
+            {source ? <span className="witnessSource">{source}</span> : null}
+          </span>
+        </Link>
+      )}
     </div>
   );
 }

@@ -2001,11 +2001,12 @@ export type UserStudySummary = {
 
 export type Witness = {
   __typename?: 'Witness';
+  isWitnessVoice?: Maybe<Scalars['Boolean']['output']>;
   moneyQuote?: Maybe<Scalars['String']['output']>;
   principal?: Maybe<Scalars['String']['output']>;
   slug?: Maybe<Scalars['String']['output']>;
   source?: Maybe<Scalars['String']['output']>;
-  statement?: Maybe<Scalars['String']['output']>;
+  speaker?: Maybe<Scalars['String']['output']>;
   witnessSlug?: Maybe<Scalars['String']['output']>;
 };
 
@@ -3668,11 +3669,12 @@ export type UserStudySummaryResolvers<ContextType = AppContext, ParentType exten
 };
 
 export type WitnessResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['Witness'] = ResolversParentTypes['Witness']> = {
+  isWitnessVoice?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   moneyQuote?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   principal?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   slug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   source?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  statement?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  speaker?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   witnessSlug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };

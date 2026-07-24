@@ -133,7 +133,8 @@ type Witness {
   slug: String
   witnessSlug: String
   principal: String
-  statement: String
   moneyQuote: String
+  speaker: String
+  isWitnessVoice: Boolean
   source: String
 }
