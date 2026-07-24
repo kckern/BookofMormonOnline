@@ -45,10 +45,19 @@ export default function FaxVerseModal({ verse, version, pageScale = 700, anchorX
   }, [verse, onPrev, onNext, onClose]);
 
   // Reserve the cutout box from the KNOWN verse geometry so the image height is
-  // fixed before it loads (no rug pull); the union bbox aspect is close enough.
-  // Computed above the early return so the height-measure hooks below stay
-  // unconditional (Rules of Hooks). Null-safe when there's no open verse.
-  const box = unionBox(verse?.boxes || []) || { x: 0, y: 0, w: pageScale, h: pageScale };
+  // fixed before it loads (no rug pull). Computed above the early return so the
+  // height-measure hooks below stay unconditional (Rules of Hooks). Null-safe.
+  const modalBoxes = verse?.boxes || [];
+  const box = unionBox(modalBoxes) || { x: 0, y: 0, w: pageScale, h: pageScale };
+  // The render service STACKS a verse's fragments vertically (width = widest box,
+  // height = sum of heights) — so a cross-column / cross-page verse's crop is far
+  // wider-and-shorter than its page-space bounding box. Reserving the union bbox
+  // aspect there left a huge blank band; reserve the stacked aspect instead. (For a
+  // single-box verse this equals the box, so the CSS-crop fallback still uses `box`.)
+  const renderBox = modalBoxes.length
+    ? { w: Math.max(...modalBoxes.map((b) => b.w)), h: modalBoxes.reduce((sum, b) => sum + (b.h || 0), 0) }
+    : box;
+  const aspectBox = version ? renderBox : box;
 
   // Smooth the card's height change on prev/next: `aspect-ratio` doesn't animate
   // reliably (the used height jumps), so we measure the cutout's width — which is
@@ -64,7 +73,7 @@ export default function FaxVerseModal({ verse, version, pageScale = 700, anchorX
     const read = () => {
       raf = null;
       const w = el.getBoundingClientRect().width;
-      if (w > 0) setCutoutH((w * box.h) / box.w);
+      if (w > 0) setCutoutH((w * aspectBox.h) / aspectBox.w);
     };
     read();
     if (typeof ResizeObserver === "undefined") return undefined;
@@ -72,7 +81,7 @@ export default function FaxVerseModal({ verse, version, pageScale = 700, anchorX
     const ro = new ResizeObserver(schedule);
     ro.observe(el);
     return () => { if (raf != null) cancelAnimationFrame(raf); ro.disconnect(); };
-  }, [box.w, box.h]);
+  }, [aspectBox.w, aspectBox.h]);
 
   if (!verse) return null;
 
@@ -132,7 +141,7 @@ export default function FaxVerseModal({ verse, version, pageScale = 700, anchorX
             className="faxVerseModal-cutout landscape"
             style={cutoutH != null
               ? { height: `${Math.round(cutoutH)}px` }
-              : { aspectRatio: `${box.w} / ${box.h}` }}
+              : { aspectRatio: `${aspectBox.w} / ${aspectBox.h}` }}
           >
             <FaxVerseZoom
               key={verse.verse_id}  /* remount so the previous verse's crop can't linger */
