@@ -12,6 +12,11 @@ import StudyBreadcrumb from "../_Common/StudyBreadcrumb";
 const LEAVE_GRACE_MS = 140;
 const TIP_MARGIN = 8;   // keep the tooltip this far from the viewport edge
 const TIP_MIN_W = 200;  // don't narrow a 16:9-targeted tooltip below this
+// Keep the caret off the tooltip's rounded corners: its center can't come closer
+// to an edge than its own half-base (6px, see the ::after border) + the corner
+// radius (8px). Without this, a big notch caretOffset slides the caret onto/past
+// the corner and it stops pointing cleanly at the cutout.
+const CARET_EDGE_PAD = 14;
 
 /** A cutout shape: a rounded rect for a plain box, a polygon for a notched one. */
 function CutShape({ b, k, fill, className }) {
@@ -57,7 +62,10 @@ function FaxVerseTooltip({ verse, vx, top, bottom, placeBelow, caretOffset, minW
   const half = w / 2;
   // clamp the tooltip CENTER so its edges stay in view (only once width is known)
   const cx = w > 0 ? Math.max(TIP_MARGIN + half, Math.min(vx, vw - TIP_MARGIN - half)) : vx;
-  const caretX = (vx - cx) + caretOffset; // caret tracks the box despite the shift
+  // caret tracks the box (viewport shift + notch offset) but is CLAMPED so its
+  // center never crosses onto the rounded corners / off the tooltip edge.
+  const caretLimit = Math.max(0, half - CARET_EDGE_PAD);
+  const caretX = Math.max(-caretLimit, Math.min(caretLimit, (vx - cx) + caretOffset));
 
   const style = { left: cx, top: placeBelow ? bottom : top, "--fax-caret-x": `${Math.round(caretX)}px` };
   if (targetW) style.width = `${Math.round(targetW)}px`;
