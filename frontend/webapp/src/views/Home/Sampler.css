@@ -1533,7 +1533,8 @@ html[data-theme="dark"] .mapTileFrame { background: #22282e; }
    WITNESS — Book of Mormon witness statements (reserve)
    ================================================================ */
 /* featured single witness: large portrait, name, statement, source — centered */
-.witnessFeatured { display: flex; flex-direction: row; align-items: center; text-align: left; gap: 0.7rem; text-decoration: none; color: inherit; }
+.witnessFeatured { display: flex; flex-direction: row; align-items: flex-start; text-align: left; gap: 0.7rem; text-decoration: none; color: inherit; }
+.witnessLeft { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; flex: 0 0 auto; }
 .witnessBody { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
 .witnessHero {
   position: relative;
@@ -1551,7 +1552,7 @@ html[data-theme="dark"] .mapTileFrame { background: #22282e; }
 .witnessHero img { width: 100%; height: 100%; object-fit: cover; display: block; position: relative; z-index: 1; }
 .witnessMono { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 1.5rem; z-index: 0; }
 html[data-theme="dark"] .witnessHero { background: #4a4033; border-color: #3a3a3a; }
-.witnessName { font-size: 0.95rem; font-weight: 800; color: #2a2a2a; }
+.witnessName { font-size: 0.8rem; font-weight: 700; color: #2a2a2a; text-align: center; max-width: 6.5rem; line-height: 1.15; }
 html[data-theme="dark"] .witnessName { color: #f0f0f0; }
 .witnessStatement { margin: 0; font-size: 0.9rem; line-height: 1.4; color: #444; }
 html[data-theme="dark"] .witnessStatement { color: #c4c4c4; }
