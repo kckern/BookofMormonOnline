@@ -247,6 +247,7 @@ export type FaxIndex = {
 
 export type FaxPageRef = {
   __typename?: 'FaxPageRef';
+  imageFile?: Maybe<Scalars['Int']['output']>;
   page?: Maybe<Scalars['Int']['output']>;
   ref?: Maybe<Scalars['String']['output']>;
 };
@@ -2555,6 +2556,7 @@ export type FaxIndexResolvers<ContextType = AppContext, ParentType extends Resol
 };
 
 export type FaxPageRefResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['FaxPageRef'] = ResolversParentTypes['FaxPageRef']> = {
+  imageFile?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   page?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   ref?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;

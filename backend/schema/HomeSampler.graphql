@@ -117,6 +117,7 @@ type FaxVersePage {
 
 type FaxPageRef {
   page: Int
+  imageFile: Int
   ref: String
 }
 

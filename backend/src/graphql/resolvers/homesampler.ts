@@ -15,6 +15,7 @@ import type { AppContext } from '../context.js';
 import { findUserByToken } from '../../data/loaders/userauth.js';
 import { parseVerseIdFromNote } from '../../data/loaders/matters.js';
 import { canonicalSelector } from '../../media/fax/canonical.js';
+import { imageScanMeta } from '../../media/fax/resolve.js';
 
 // 24 people = 1 featured + 11 face cards + 12 view-all mosaic thumbs (3×4);
 // 17 places = 5 cards + a full 3×4 mosaic.
@@ -95,8 +96,13 @@ const sampleFaxPages = async (ctx: AppContext, seed: number) => {
     const start = seed % rows.length;
     const picks = [rows[start], rows[(start + 1) % rows.length]]
       .filter((r, i, a) => r && a.findIndex((x) => x?.page === r.page) === i);
+    // `page` is the printed folio (bom_xtras_fax_index.page, the canonical route
+    // identity). The thumbnail asset is keyed by the scan image-file number, which
+    // differs by the per-edition offset: imageFile = folio + offset.
+    const { offset } = await imageScanMeta(String(fax.slug));
     return picks.map((r) => ({
       page: Number(r!.page),
+      imageFile: Number(r!.page) + offset,
       // the full verse SPAN the page covers (first→last indexed verse), rendered
       // as a compact range like "Alma 26:1-30:4"
       ref: pageRangeRef(Number(r!.firstVerse), Number(r!.lastVerse)),
@@ -107,7 +113,10 @@ const sampleFaxPages = async (ctx: AppContext, seed: number) => {
   if (total < 2) return [];
   const mid = Math.min(total - 1, Math.max(2, Math.floor(total * 0.4) + (seed % 7)));
   const pages = [mid, Math.min(total, mid + 1)].filter((v, i, a) => a.indexOf(v) === i);
-  return pages.map((p) => ({ page: p, ref: null }));
+  // Un-indexed editions have no folio index; `page` is already the image-file
+  // number and the viewer treats their slugs as image-file (no offset), so the
+  // thumbnail key equals the page number.
+  return pages.map((p) => ({ page: p, imageFile: p, ref: null }));
 };
 
 // A few OTHER editions (beyond the sampled one) — the fax tile lists them as
