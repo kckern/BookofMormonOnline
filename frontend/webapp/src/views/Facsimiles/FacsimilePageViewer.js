@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
-import { useParams, useHistory, useLocation } from "react-router-dom";
+import React, { useState, useCallback, useEffect, useRef, useMemo, useReducer } from "react";
+import { useParams, useHistory } from "react-router-dom";
 import ReactTooltip from "react-tooltip";
 import { useSwipe } from "../../models/Utils";
 import { assetUrl } from 'src/models/BoMOnlineAPI';
@@ -14,8 +14,10 @@ import { prefetchThumbs, isThumbWarm } from "./faxThumbCache";
 import { generateReference, lookupReference } from "scripture-guide";
 import { normalizeStackWidths } from "./faxGeometry";
 import { getFaxRatio, setFaxRatio } from "./faxRatioCache";
-import { useFaxHighlight } from "./useFaxHighlight";
-import FaxHighlightOverlay from "./FaxHighlightOverlay";
+import { useFaxVerses } from "./useFaxVerses";
+import FaxVerseCutout from "./FaxVerseCutout";
+import FaxVerseModal from "./FaxVerseModal";
+import { faxVerseReducer, initialFaxVerseState } from "./faxVerseState";
 
 /**
  * FacsimilePageViewer - Desktop version of the facsimile page viewer
@@ -75,9 +77,8 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
   const isReference = /[A-Za-z]/.test(pageNumber || '') && /\d/.test(pageNumber || '');
   const totalPages = leafIndex.length;
 
-  const location = useLocation();
-  const refParam = new URLSearchParams(location.search).get('ref') || (isReference ? pageNumber : null);
-  const highlight = useFaxHighlight(item.slug, refParam);
+
+
 
   // Initialize page index based on URL
   useEffect(() => {
@@ -201,6 +202,12 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
   const adjustedPageIndex = getAdjustedPageIndex(currentPageIndex);
   const leftPage = leafIndex[adjustedPageIndex] || null;
   const rightPage = leafIndex[adjustedPageIndex + 1] || null;
+
+  // Verse-inspector data + UI state for the visible spread.
+  const faxVerses = useFaxVerses(item.slug, leftPage, rightPage);
+  const [vstate, vdispatch] = useReducer(faxVerseReducer, initialFaxVerseState);
+  // Clear hover/open on any spread or edition change (also covers page-flip).
+  useEffect(() => { vdispatch({ type: "RESET" }); }, [adjustedPageIndex, item.slug]);
 
   // Load left page image and calculate aspect ratio. Seed synchronously from the
   // cache when known (adjacent pages are preloaded) so the spread lands at the
@@ -616,7 +623,7 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
     // Determine which side (left or right) for additional styling if needed
     const isLeft = page === leftPage;
     const aspectRatio = isLeft ? leftRatio : rightRatio;
-    const boxes = highlight.boxesByPage.get(page.pageNumInt);
+    const pageVerses = faxVerses.versesByPage.get(page.pageNumInt) || [];
 
     return (
       <>
@@ -634,11 +641,16 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
             width: 'auto'
           }}
         />
-        {boxes && boxes.length > 0 && (
-          <FaxHighlightOverlay
-            boxes={boxes}
-            pageScale={highlight.pageScale}
+        {pageVerses.length > 0 && (
+          <FaxVerseCutout
+            verses={pageVerses}
+            pageScale={faxVerses.pageScale}
             displayedWidth={isLeft ? leftPageWidth : rightPageWidth}
+            idSuffix={page.pageNumInt}
+            activeVerseId={vstate.activeVerseId}
+            onHover={(id) => vdispatch({ type: "HOVER", verseId: id })}
+            onLeave={() => vdispatch({ type: "LEAVE" })}
+            onOpen={(verse) => vdispatch({ type: "OPEN", verse: { ...verse, pageAssetUrl: page.pageAssetUrl } })}
           />
         )}
       </>
@@ -770,6 +782,11 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
                 onDone={handleFlipDone}
               />
             )}
+            <FaxVerseModal
+              verse={vstate.openVerse}
+              pageScale={faxVerses.pageScale}
+              onClose={() => vdispatch({ type: "CLOSE" })}
+            />
           </div>
         </div>
       </div>
