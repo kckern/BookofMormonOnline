@@ -16,6 +16,9 @@
   font-size: 0.68rem;
   line-height: 1.55;
 }
+.miniChiasmText {
+  font-family: "Scripture", Georgia, serif; /* match the Read scripture typography */
+}
 .miniChiasm mark {
   background: rgba(240, 200, 80, 0.35);
   color: inherit;
