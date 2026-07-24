@@ -4,7 +4,12 @@
  * in apparatus.js.
  */
 
-import { isSiglum } from "./apparatus";
+import {
+  isSiglum,
+  CHANGE_CODES,
+  describeChange,
+  decodeMarker,
+} from "./apparatus";
 
 /**
  * Top-level bracket groups, by depth counting. Unlike a non-greedy regex this
@@ -75,4 +80,98 @@ export function splitReading(part) {
     content: t.slice(0, t.length - sigla.length).trim(),
     sigla: [...sigla],
   };
+}
+
+/**
+ * Build one State from a raw content fragment and its `via`. A state is
+ * "omitted" (renders as ∅) when its visible text — tags stripped, trimmed — is
+ * empty or exactly "NULL"; an omitted state's content is normalised to "".
+ * Otherwise the content is kept verbatim (tags and entities intact) after a
+ * trim. Never strips entities: `&hellip;`, `&#120034;` etc. must reach the
+ * renderer encoded.
+ */
+function makeState(rawContent, via) {
+  const trimmed = rawContent.trim();
+  const stripped = trimmed.replace(/<[^>]*>/g, "").trim();
+  const omitted = stripped === "" || stripped === "NULL";
+  return { content: omitted ? "" : trimmed, omitted, via };
+}
+
+/**
+ * Given the raw text AFTER a correction marker and BEFORE the next marker,
+ * peel off the correction code and return `{ via, contentRaw }`.
+ *
+ * The code token is the run of code characters right after the marker, with at
+ * most one optional space between. Because a code is always delimited by
+ * whitespace (or the string end) on its far side, that maximal run IS the whole
+ * token — so a code is recognised by matching the entire run, not a prefix.
+ * This is what keeps a spaced bare marker whose content starts with a code
+ * letter (`&gt; people`) from being misread as code `p`.
+ *
+ *   - run decodes to a KNOWN code  -> that code (tight or spaced)
+ *   - run is unknown but TIGHT      -> unknown code, surfaced verbatim (label null)
+ *   - run is unknown and SPACED, or empty -> bare marker (code null)
+ *
+ * `decodeMarker` is applied ONLY to the isolated code run, never to content.
+ */
+function parseMarkerSegment(rest) {
+  const wsMatch = rest.match(/^\s+/);
+  const hadSpace = !!wsMatch;
+  const wsLen = wsMatch ? wsMatch[0].length : 0;
+  const afterWs = rest.slice(wsLen);
+  // Code characters: the letters Skousen's codes use (j, g, s, p, b), the
+  // symbols + % ? and the en-dash both as a literal and as the &ndash; entity.
+  const candMatch = afterWs.match(/^(?:&ndash;|[a-zA-Z+%?–])+/);
+  const rawCand = candMatch ? candMatch[0] : "";
+  const decoded = decodeMarker(rawCand);
+  const known = decoded !== "" && describeChange(decoded) !== null;
+
+  if (known) {
+    return {
+      via: { code: decoded, label: describeChange(decoded) },
+      contentRaw: rest.slice(wsLen + rawCand.length),
+    };
+  }
+  if (!hadSpace && rawCand !== "") {
+    // Tight but unrecognised: still a marker, surface the token so a caller can
+    // flag it rather than mislabel it. label is null (describeChange miss).
+    return {
+      via: { code: decoded, label: describeChange(decoded) },
+      contentRaw: afterWs.slice(rawCand.length),
+    };
+  }
+  // Bare marker: no code. The run (if any) is content, not a code.
+  return { via: { code: null, label: describeChange(null) }, contentRaw: afterWs };
+}
+
+/**
+ * Parse a reading's content (sigla already removed by splitReading) into the
+ * ordered sequence of states its in-document correction chain passed through.
+ *
+ * A correction marker is the entity `&gt;` OR a literal `>` preceded by
+ * whitespace. A tag-closing `>` (in `<em>`, `</em>`, `<br>`…) is a literal `>`
+ * that is never an entity and never preceded by whitespace, so it is not a
+ * marker. Each marker begins a new state; `states[0]` is the original reading
+ * and has `via: null`. Always returns at least one state; never throws.
+ */
+export function parseStates(content) {
+  const src = content == null ? "" : String(content);
+  const markerRe = /&gt;|(?<=\s)>/g;
+  const markers = [];
+  let m;
+  while ((m = markerRe.exec(src)) !== null) {
+    markers.push({ index: m.index, length: m[0].length });
+  }
+
+  const firstIdx = markers.length ? markers[0].index : src.length;
+  const states = [makeState(src.slice(0, firstIdx), null)];
+
+  for (let k = 0; k < markers.length; k++) {
+    const restStart = markers[k].index + markers[k].length;
+    const restEnd = k + 1 < markers.length ? markers[k + 1].index : src.length;
+    const { via, contentRaw } = parseMarkerSegment(src.slice(restStart, restEnd));
+    states.push(makeState(contentRaw, via));
+  }
+
+  return states;
 }

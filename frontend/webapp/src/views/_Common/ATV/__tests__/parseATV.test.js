@@ -3,6 +3,7 @@ import {
   isApparatus,
   trailingSigla,
   splitReading,
+  parseStates,
 } from "../parseATV";
 
 describe("scanBrackets", () => {
@@ -136,5 +137,85 @@ describe("splitReading", () => {
     const r = splitReading("THE SON OF ALMA ABCDEFGHIJKLMNOPQRST");
     expect(r.sigla).toEqual("ABCDEFGHIJKLMNOPQRST".split(""));
     expect(r.content).toBe("THE SON OF ALMA");
+  });
+});
+
+describe("parseStates", () => {
+  test("a reading with no correction is a single original state", () => {
+    const s = parseStates("<em>to be</em>");
+    expect(s).toEqual([{ content: "<em>to be</em>", omitted: false, via: null }]);
+  });
+
+  test("tight and spaced markers parse to the same code (entry 1000216101/102)", () => {
+    const spaced = parseStates("<em>to be</em> &gt; js <em>is</em>");
+    const tight = parseStates("to be >js is");   // literal '>' preceded by space — mirror row
+    expect(spaced.map((x) => x.content)).toEqual(["<em>to be</em>", "<em>is</em>"]);
+    expect(spaced[1].via.code).toBe("js");
+    expect(spaced[1].via.label).toMatch(/Joseph Smith/);
+    expect(tight.map((x) => x.content)).toEqual(["to be", "is"]);
+    expect(tight[1].via.code).toBe("js");
+  });
+
+  test("a bare marker has code null and the BARE_CHANGE label (entry 1000316102)", () => {
+    const s = parseStates("that &gt; the");
+    expect(s).toHaveLength(2);
+    expect(s[1].via.code).toBe(null);
+    expect(s[1].via.label).toBe("change");
+  });
+
+  test("NULL as the original state is an omission (entry 1000316101)", () => {
+    const s = parseStates("NULL &gt; <em>first year of the</em>");
+    expect(s[0].omitted).toBe(true);
+    expect(s[0].content).toBe("");
+    expect(s[1].omitted).toBe(false);
+  });
+
+  test("three states, absent -> read it -> read (entry 1001016101)", () => {
+    const s = parseStates("NULL &gt;+ <em>read it</em> &gt;% <em>read</em>");
+    expect(s).toHaveLength(3);
+    expect(s[0].omitted).toBe(true);
+    expect(s[1].content).toBe("<em>read it</em>");
+    expect(s[1].via.code).toBe("+");
+    expect(s[2].via.code).toBe("%");
+  });
+
+  test("present -> omitted -> present, the case a boolean cannot hold (entry 1022216101)", () => {
+    const s = parseStates("<em>of</em> &gt;js NULL &gt;js <em>of</em>");
+    expect(s.map((x) => x.omitted)).toEqual([false, true, false]);
+    expect(s.map((x) => x.via && x.via.code)).toEqual([null, "js", "js"]);
+  });
+
+  test("the en-dash code arrives as an entity (&gt;&ndash;)", () => {
+    const s = parseStates("<em>x</em> &gt;&ndash; <em>y</em>");
+    expect(s[1].via.code).toBe("–");   // U+2013
+    expect(s[1].via.label).toMatch(/less ink/);
+  });
+
+  test("longest-match: &gt;%+ is the two-char code, not % then +", () => {
+    const s = parseStates("<em>a</em> &gt;%+ <em>b</em>");
+    expect(s[1].via.code).toBe("%+");
+    expect(s).toHaveLength(2);
+  });
+
+  test("an unknown code still yields a state, with a null label", () => {
+    const s = parseStates("<em>x</em> &gt;zz <em>y</em>");
+    expect(s).toHaveLength(2);
+    expect(s[1].via.code).toBe("zz");
+    expect(s[1].via.label).toBe(null);
+  });
+
+  test("a tag-closing '>' is NOT a marker", () => {
+    // no whitespace before the '>' of </em>, and it is not an entity
+    const s = parseStates("<em>whoso</em>");
+    expect(s).toHaveLength(1);
+    expect(s[0].content).toBe("<em>whoso</em>");
+  });
+
+  test("never throws on odd input", () => {
+    for (const c of ["", "&gt;", "&gt;js", "NULL", "&gt; &gt; &gt;"]) {
+      expect(() => parseStates(c)).not.toThrow();
+      expect(Array.isArray(parseStates(c))).toBe(true);
+      expect(parseStates(c).length).toBeGreaterThanOrEqual(1);
+    }
   });
 });
