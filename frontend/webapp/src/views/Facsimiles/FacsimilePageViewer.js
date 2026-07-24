@@ -90,6 +90,29 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
     if (isRefSlug) { try { const ids = lookupReference(rawSlug)?.verse_ids || []; return ids.length ? Math.min(...ids) : null; } catch { return null; } }
     return null;
   })();
+  // The page reference index (leaf.pageReference) is populated ASYNC — leafIndex is
+  // rebuilt once Facsimiles fetches pageIndex. Until then every pageReference is
+  // blank, so we must not conclude "verse isn't on any page" prematurely.
+  const refsLoaded = useMemo(() => leafIndex.some((l) => l && l.pageReference), [leafIndex]);
+  // The leaf index of the page that CONTAINS the verse (its page range covers it),
+  // or -1 if no page does (out-of-range / URL-hacked verse). Meaningful only once
+  // refsLoaded is true.
+  const versePageIdx = useMemo(() => {
+    if (!(urlTargetsVerse && urlVerseId != null)) return -1;
+    return leafIndex.findIndex((leaf) =>
+      leaf.pageReference && (lookupReference(leaf.pageReference)?.verse_ids || []).includes(urlVerseId));
+  }, [urlTargetsVerse, urlVerseId, leafIndex]);
+  // A verse-targeting slug normally auto-opens the modal — but NOT when:
+  //   • it's a cross-version switch (breadcrumb dropdown / volume keys set the
+  //     `faxPageOnly` nav state): the ref only informs which PAGE to land on in the
+  //     newly selected edition; the user asked to switch editions, not open a verse.
+  //   • the edition has no verse-level index, OR (once the ref index has loaded) the
+  //     verse maps to no page at all — a hacked / out-of-range URL: it could never
+  //     resolve a real hotspot.
+  // In those cases we resolve to a page and rewrite the URL to the plain page number.
+  const editionIndexed = !!item.indexRef;
+  const pageOnlyNav = !!(history.location && history.location.state && history.location.state.faxPageOnly);
+  const suppressModal = urlTargetsVerse && (pageOnlyNav || !editionIndexed || (refsLoaded && versePageIdx === -1));
   const totalPages = leafIndex.length;
   // Highest printed folio, for the jump-input max + "/ N" total. Folio is the
   // canonical user-facing page number, so the denominator must live in the folio
@@ -100,14 +123,24 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
 
   // Initialize the current page index from the URL.
   useEffect(() => {
-    // Verse-targeting URL (ref slug or verse id): land on the page containing it.
+    // Verse-targeting URL (ref slug or verse id). Resolving the page needs the async
+    // ref index — until it's loaded (or the edition has none) we can't place the
+    // verse, so WAIT rather than park on the wrong page (the loader covers the wait).
     if (urlTargetsVerse && urlVerseId != null) {
-      let idx = leafIndex.findIndex((leaf) =>
-        leaf.pageReference && (lookupReference(leaf.pageReference)?.verse_ids || []).includes(urlVerseId)
-      );
-      if (idx === -1) idx = 0;
+      if (editionIndexed && !refsLoaded) return; // ref index still loading — re-runs when leafIndex updates
+      // Land on the page that contains the verse; if none does (out-of-range / hack)
+      // or the edition isn't indexed, fall back to the first real page (cover has no slug).
+      const idx = versePageIdx !== -1
+        ? versePageIdx
+        : Math.max(0, leafIndex.findIndex((l) => l && l.pageSlugLeaf != null));
       setCurrentPageIndex(idx);
       setSliderValue(idx);
+      // Cross-version carry / non-indexed edition / unresolvable verse: keep the page,
+      // drop the modal by rewriting the URL to the page number (no auto-open, no loader).
+      if (suppressModal) {
+        const leaf = leafIndex[idx];
+        if (leaf && leaf.pageSlugLeaf != null) history.replace(`/fax/${item.slug}/${leaf.pageSlugLeaf}`);
+      }
       return;
     }
     // Page number / roman front matter: match the route slug (image-file number).
@@ -460,17 +493,34 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
   // filled in). The viewer is held behind a loader until this fires (see below), so
   // the spread + complete modal reveal together with no rug-pull.
   useEffect(() => {
-    if (!urlTargetsVerse || urlVerseId == null || vstate.openVerse || !spreadVerses.length) return;
+    if (!urlTargetsVerse || suppressModal || urlVerseId == null || vstate.openVerse || !spreadVerses.length) return;
     const target = spreadVerses.find((v) => v.verse_id === urlVerseId)
       || spreadVerses.find((v) => (lookupReference(v.ref)?.verse_ids || []).includes(urlVerseId));
     if (target) vdispatch({ type: "OPEN", verse: target });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [urlTargetsVerse, urlVerseId, spreadVerses]);
 
+  // Fallback for the rare index-gap case: the verse's page range claims it, so the
+  // modal is expected — but the loaded spread (which HAS verses) turns out to lack a
+  // hotspot for it. Don't spin the loader forever; settle to the plain page URL. The
+  // `spreadVerses.length` gate means this never fires on the empty pre-resolution
+  // spread (that's handled up front by suppressModal), only on a loaded-but-missing one.
+  useEffect(() => {
+    if (!urlTargetsVerse || suppressModal || vstate.openVerse || !faxVerses.ready || !spreadVerses.length) return;
+    const found = urlVerseId != null && spreadVerses.some((v) =>
+      v.verse_id === urlVerseId || (lookupReference(v.ref)?.verse_ids || []).includes(urlVerseId));
+    if (found) return; // the open effect above will handle it
+    const dest = (leftPage && leftPage.pageSlugLeaf != null)
+      ? leftPage
+      : leafIndex.find((l) => l && l.pageSlugLeaf != null);
+    if (dest) history.replace(`/fax/${item.slug}/${dest.pageSlugLeaf}`);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [faxVerses.ready, urlTargetsVerse, urlVerseId, spreadVerses, vstate.openVerse]);
+
   // Hold a loader over the viewer while a verse deep-link is still resolving, so the
   // user sees a clean loader -> complete reveal instead of the spread + modal
   // sizing/filling in.
-  const deepLinkLoading = urlTargetsVerse && !vstate.openVerse;
+  const deepLinkLoading = urlTargetsVerse && !suppressModal && urlVerseId != null && !vstate.openVerse;
 
   // Preload the neighbouring verses' crops so prev/next steps paint instantly.
   useEffect(() => {
@@ -568,7 +618,9 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
           targetPath = targetSlug ? `/fax/${next.slug}/${targetSlug}` : `/fax/${next.slug}`;
         }
         
-        history.push(targetPath);
+        // faxPageOnly: this is an edition switch, not a verse deep-link — the ref in
+        // targetPath only picks the page; the viewer must land there without a modal.
+        history.push(targetPath, { faxPageOnly: true });
       }
     };
     window.addEventListener('keydown', onKey);

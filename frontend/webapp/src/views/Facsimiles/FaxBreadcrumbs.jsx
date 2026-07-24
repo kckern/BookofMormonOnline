@@ -107,7 +107,7 @@ export default function FaxBreadcrumbs({ editions = [], current, currentRef }) {
             ) : (
               <Link
                 key={ed.slug}
-                to={targetFor(ed)}
+                to={{ pathname: targetFor(ed), state: { faxPageOnly: true } }}
                 className="breadcrumb-option"
                 role="option"
                 aria-selected="false"
