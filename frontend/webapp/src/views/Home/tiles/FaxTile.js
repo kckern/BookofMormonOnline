@@ -43,6 +43,17 @@ export default function FaxTile({ data, payload }) {
                 title={p.ref}
                 style={{ flexGrow: aspects[p.page] || 1 }}
               >
+                {/* reference rail above the page (indexed editions carry a ref) */}
+                {p.ref ? (
+                  <span
+                    className="faxPageBarRef scripture_link"
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); openScripture(p.ref); }}
+                  >
+                    {enDash(p.ref)}
+                  </span>
+                ) : null}
                 <img
                   src={`${assetUrl}/fax/thumb/${data.slug}/${nnn}.${format}`}
                   alt={`${data.title} p.${p.page}`}
@@ -53,20 +64,8 @@ export default function FaxTile({ data, payload }) {
                   }}
                   onError={(e) => (e.target.style.display = "none")}
                 />
-                <span className="faxPageBar">
-                  {/* indexed editions carry a scripture ref; un-indexed just page # */}
-                  {p.ref ? (
-                    <span
-                      className="faxPageBarRef"
-                      role="button"
-                      tabIndex={0}
-                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); openScripture(p.ref); }}
-                    >
-                      {enDash(p.ref)}
-                    </span>
-                  ) : <span />}
-                  <span className="faxPageBarNum">p. {p.page}</span>
-                </span>
+                {/* page number kept as a small overlay, bottom-right */}
+                <span className="faxPageBarNum">p. {p.page}</span>
               </Link>
             );
           })}
