@@ -46,7 +46,13 @@ html[data-theme="dark"] .samplerScriptureHead button:hover { color: #fff; }
   padding: 0.6rem 1rem 0.8rem;
   overflow-y: auto;
   scrollbar-width: thin;
-  min-height: 3rem;
+  min-height: 4rem;
+  /* Default loading size while the passage is still fetching, then ease to the
+     real content size once it lands — avoids the open-tiny-then-jump rug-pull. */
+  transition: min-height 0.25s ease;
+}
+.samplerScriptureBody:empty {
+  min-height: 40vh;
 }
 .samplerScripturePassage p {
   margin: 0.3rem 0 0.8rem;
