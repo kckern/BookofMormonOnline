@@ -30,25 +30,37 @@ function CutShape({ b, k, fill, className }) {
  */
 function FaxVerseTooltip({ verse, vx, top, bottom, placeBelow, caretOffset, minWidth }) {
   const ref = useRef(null);
-  const [w, setW] = useState(0);
+  const [box, setBox] = useState(null); // measured { w, h }
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const bw = el.getBoundingClientRect().width;
-    if (Math.abs(bw - w) > 0.5) setW(bw); // guarded -> no loop when width is stable
+    const r = el.getBoundingClientRect();
+    if (!box || Math.abs(r.width - box.w) > 1 || Math.abs(r.height - box.h) > 1) {
+      setBox({ w: r.width, h: r.height }); // guarded -> converges, no loop
+    }
   });
 
-  const half = w / 2;
   const vw = typeof window !== "undefined" ? window.innerWidth : 0;
+  const maxW = Math.min(560, vw * 0.9);
+  // Prefer a ~16:9 landscape shape: if the card is taller than 16:9, widen it
+  // toward that ratio (never past maxW, never narrower than its content) so a long
+  // verse spreads across fewer, wider lines instead of a tall narrow column.
+  const targetW = box ? Math.max(box.w, Math.min(maxW, Math.round((box.h * 16) / 9))) : 0;
+  const w = targetW || (box ? box.w : 0);
+
+  const half = w / 2;
   // clamp the tooltip CENTER so its edges stay in view (only once width is known)
   const cx = w > 0 ? Math.max(TIP_MARGIN + half, Math.min(vx, vw - TIP_MARGIN - half)) : vx;
   const caretX = (vx - cx) + caretOffset; // caret tracks the box despite the shift
+
+  const style = { left: cx, top: placeBelow ? bottom : top, minWidth, "--fax-caret-x": `${Math.round(caretX)}px` };
+  if (targetW) style.width = `${Math.round(targetW)}px`;
 
   const node = (
     <div
       ref={ref}
       className={`faxVerseTooltip floating${placeBelow ? " below" : ""}`}
-      style={{ left: cx, top: placeBelow ? bottom : top, minWidth, "--fax-caret-x": `${Math.round(caretX)}px` }}
+      style={style}
     >
       <div className="faxVerseTooltip-head">
         {verse.person_slug && (
