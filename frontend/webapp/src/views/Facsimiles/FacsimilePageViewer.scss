@@ -416,6 +416,272 @@
   }
 }
 
+/* ============================================================
+   Mobile continuous-scroll viewer (FacsimilePageViewerMobile)
+   ============================================================ */
+.faxMobileViewer {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  background: #e9e7e2;
+
+  .faxScrollHeader {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0.75rem;
+    background: #fff;
+    border-bottom: 1px solid #ddd;
+    font-size: 0.85rem;
+    z-index: 2;
+
+    .hdr-page { font-weight: 700; color: #333; white-space: nowrap; }
+    .hdr-ref {
+      color: #345496;
+      cursor: pointer;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1 1 auto;
+    }
+    .faxScrubToggle {
+      flex: 0 0 auto;
+      border: 1px solid #ccc;
+      background: #f6f6f6;
+      border-radius: 6px;
+      width: 34px;
+      height: 30px;
+      font-size: 1.1rem;
+      line-height: 1;
+      cursor: pointer;
+    }
+  }
+
+  .faxScrollColumn {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    /* Clear the global fixed .bottom-nav (4rem) so the last page isn't hidden. */
+    padding-bottom: 4rem;
+  }
+
+  .faxScrollLoading {
+    padding: 2rem;
+    text-align: center;
+    color: #888;
+  }
+
+  .faxScrollRow {
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+  }
+
+  .faxScrollRail {
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    padding: 0 0.75rem;
+    font-size: 0.72rem;
+    color: #6b665c;
+    background: linear-gradient(#e9e7e2, #dedbd3);
+    border-top: 1px solid #cfccc3;
+    border-bottom: 1px solid #cfccc3;
+
+    .rail-page { font-weight: 700; letter-spacing: 0.02em; white-space: nowrap; }
+    .rail-ref {
+      color: #345496;
+      cursor: pointer;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  .faxScrollPage {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.4rem 0.5rem;
+    box-sizing: border-box;
+
+    .pageImageWrapper {
+      height: 100%;
+      width: auto;
+      max-width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    img.main-image {
+      height: 100%;
+      width: auto;
+      max-width: 100%;
+      object-fit: contain;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+    }
+  }
+
+  .faxScrubSheet {
+    /* Float above the global fixed .bottom-nav (4rem, z-index 400) so its
+       controls aren't covered/intercepted by the app nav. */
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 4rem;
+    background: #fff;
+    border-top: 1px solid #ddd;
+    border-radius: 12px 12px 0 0;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.18);
+    padding: 0.6rem 0.75rem;
+    z-index: 500;
+
+    .scrub-row {
+      position: relative;
+      display: flex;
+      align-items: center;
+      height: 40px;
+      .custom-slider { width: 100%; }
+      .scrub-preview {
+        position: absolute;
+        bottom: 46px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #fff;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        padding: 6px;
+        text-align: center;
+        pointer-events: none;
+        img { width: 72px; height: auto; display: block; margin: 0 auto 4px; }
+        .preview-label { font-size: 0.75rem; color: #444; white-space: nowrap; }
+      }
+    }
+
+    .scrub-jump {
+      display: flex;
+      gap: 0.4rem;
+      margin-top: 0.5rem;
+      input {
+        flex: 1 1 auto;
+        min-width: 0;
+        padding: 0.4rem 0.6rem;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 0.85rem;
+      }
+      button {
+        flex: 0 0 auto;
+        padding: 0.4rem 0.9rem;
+        border: none;
+        border-radius: 6px;
+        background: #345496;
+        color: #fff;
+        font-weight: 600;
+        cursor: pointer;
+      }
+    }
+  }
+}
+
+html[data-theme="dark"] .faxMobileViewer {
+  background: #1c1c1c;
+  .faxScrollHeader { background: #262626; border-bottom-color: #3a3a3a; .hdr-page { color: #ddd; } .hdr-ref { color: #93c6ef; } .faxScrubToggle { background: #333; border-color: #444; color: #ddd; } }
+  .faxScrollRail { background: linear-gradient(#242424, #1e1e1e); border-color: #333; color: #999; .rail-ref { color: #93c6ef; } }
+  .faxScrubSheet { background: #262626; border-top-color: #3a3a3a; .scrub-jump input { background: #1c1c1c; border-color: #444; color: #eee; } }
+}
+
+/* Transient page-turn overlay (see FaxPageFlip.jsx) */
+.faxFlipLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  perspective: 2200px;
+
+  /* Portaled to <body> and positioned from the spread rect so the curl floats
+     above the toolbar/nav chrome instead of being clipped inside the page area. */
+  &.floating {
+    position: fixed;
+    inset: auto;
+    z-index: 4000;
+  }
+
+  .flip-behind {
+    position: absolute;
+    top: 0;
+    background: #fff;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  }
+  .flip-blank { background: #f8f8f8; width: 100%; height: 100%; }
+
+  .flip-leaf {
+    position: absolute;
+    top: 0;
+    transform-style: preserve-3d;
+    will-change: transform;
+
+    /* 0.55s must stay in sync with FAX_FLIP_MS in FaxPageFlip.jsx */
+    &.next { animation: faxLeafNext 0.55s ease-in-out forwards; }
+    &.prev { animation: faxLeafPrev 0.55s ease-in-out forwards; }
+
+    .face {
+      position: absolute;
+      inset: 0;
+      background: #fff;
+      overflow: hidden;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      &.back { transform: rotateY(180deg); }
+    }
+
+    /* subtle gutter shading that peaks mid-turn */
+    .leaf-shade {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0;
+    }
+    &.next .leaf-shade {
+      background: linear-gradient(to right, rgba(0,0,0,0.22), rgba(0,0,0,0) 35%);
+      animation: faxLeafShade 0.55s ease-in-out forwards;
+    }
+    &.prev .leaf-shade {
+      background: linear-gradient(to left, rgba(0,0,0,0.22), rgba(0,0,0,0) 35%);
+      animation: faxLeafShade 0.55s ease-in-out forwards;
+    }
+  }
+}
+
+@keyframes faxLeafNext {
+  from { transform: rotateY(0deg); }
+  to   { transform: rotateY(-180deg); }
+}
+@keyframes faxLeafPrev {
+  from { transform: rotateY(0deg); }
+  to   { transform: rotateY(180deg); }
+}
+@keyframes faxLeafShade {
+  0%   { opacity: 0; }
+  50%  { opacity: 0.5; }
+  100% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .faxFlipLayer { display: none; }
+}
+
 /* Passage highlight overlay (DOM, not a crop image) */
 .faxHighlightLayer {
   position: absolute;

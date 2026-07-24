@@ -15,6 +15,7 @@ import { generateReference, lookupReference } from "scripture-guide";
 import { isMobile, useSwipe } from "../../models/Utils";
 import FacsimilePageViewer from './FacsimilePageViewer';
 import FacsimilePageViewerMobile from './FacsimilePageViewerMobile';
+import FaxBreadcrumbs from './FaxBreadcrumbs';
 import PageImage from './PageImage';
 import backIcon from '../_Common/svg/back.svg';
 import { resolvePgOffset, buildLeafIndex } from "./faxGeometry";
@@ -37,7 +38,6 @@ function FacsimileViewer({ item, volumeOrder, currentVolumeIndex }) {
   };
 
   const [pageIndex, setPageIndex] = useState([]);
-  const [seamOffset, setSeamOffset] = useState(0);
   // per-edition printed-folio offset (imageFile = faxPage + offset), from faxIndex
   const [faxOffset, setFaxOffset] = useState(0);
 
@@ -94,24 +94,25 @@ function FacsimileViewer({ item, volumeOrder, currentVolumeIndex }) {
   // Use the found leaf or the default leaf (page 1)
   const displayLeaf = activeLeaf || defaultLeaf;
   
-  const { title } = item;
-  const showSeam = !isGridMode && !isMobile();
+  // Only renderable editions (those with page scans) are switchable targets.
+  const renderableEditions = (volumeOrder || []).filter((v) => v?.pages);
   return (
     <div className={`facsimileViewer${isGridMode ? ' gridMode' : ''}`}>
       <div className="facsimileToolbar">
         <Link id="fax_back" className="fax-back" to={displayLeaf ? `/fax/${item.slug}` : "/fax"} aria-label="Back to facsimiles">
           <img src={backIcon} alt="" aria-hidden="true" style={{ width: 20, height: 20 }} />
         </Link>
-        <span
-          className="fax-title"
-          style={showSeam ? { left: `calc(50% + ${seamOffset}px)` } : undefined}
-        >{title}</span>
+        <FaxBreadcrumbs
+          editions={renderableEditions}
+          current={item}
+          currentRef={displayLeaf?.pageReference}
+        />
       </div>
       {isGridMode ?
         <FacsimileGridViewer item={item} leafIndex={leafIndex} /> :
         (isMobile() ?
-          <FacsimilePageViewerMobile item={item} leafIndex={leafIndex} pgoffset={pgoffset} volumeOrder={volumeOrder} currentVolumeIndex={currentVolumeIndex} /> :
-          <FacsimilePageViewer item={item} leafIndex={leafIndex} pgoffset={pgoffset} volumeOrder={volumeOrder} currentVolumeIndex={currentVolumeIndex} onSeamOffset={setSeamOffset} />
+          <FacsimilePageViewerMobile key={item.slug} item={item} leafIndex={leafIndex} pgoffset={pgoffset} volumeOrder={volumeOrder} currentVolumeIndex={currentVolumeIndex} /> :
+          <FacsimilePageViewer item={item} leafIndex={leafIndex} pgoffset={pgoffset} volumeOrder={volumeOrder} currentVolumeIndex={currentVolumeIndex} />
         )
       }
     </div>

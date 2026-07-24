@@ -1,300 +1,314 @@
-import React, { useState, useCallback, useEffect, useRef } from "react";
+import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useParams, useHistory, useLocation } from "react-router-dom";
-import { useSwipe } from "../../models/Utils";
-import { assetUrl } from 'src/models/BoMOnlineAPI';
 import "./FacsimilePageViewer.scss";
-import { getRefFromIndex, PageOverlay } from "./Facsimiles";
 import PageImage from "./PageImage";
 import { openScripture } from "../_Common/ScripturePopup";
-import { generateReference, lookupReference } from "scripture-guide";
+import { lookupReference } from "scripture-guide";
 import { useFaxHighlight } from "./useFaxHighlight";
 import FaxHighlightOverlay from "./FaxHighlightOverlay";
 
 /**
- * FacsimilePageViewerMobile - Mobile version of the facsimile page viewer
- * Displays a single page at a time, optimized for mobile screens
+ * FacsimilePageViewerMobile — continuous vertical scroll of the whole edition,
+ * one page per row, with a rail (page # · reference) above each page and a
+ * sticky header tracking the current page. Navigation: fling scrubber + preview,
+ * and jump-to-reference. See docs/plans/2026-07-24-fax-mobile-infinite-scroll.md
+ *
+ * Virtualization: rows are a uniform height derived from a single measured
+ * edition aspect ratio (scanned pages of one edition are near-identical size),
+ * so only the pages near the viewport mount while spacers hold total height —
+ * scroll position stays stable with no rug-pull.
  */
+const RAIL_H = 34;   // px — inline rail above each page
+const BUFFER = 2;    // rows rendered beyond the viewport each side
+
 function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = [], currentVolumeIndex = -1 }) {
   const history = useHistory();
   const { pageNumber } = useParams();
-
-  const [currentPageIndex, setCurrentPageIndex] = useState(0);
-  const [sliderValue, setSliderValue] = useState(0);
-  const [previewOpen, setPreviewOpen] = useState(false);
-  const sliderRef = useRef(null);
-
-  const totalPages = leafIndex.length;
-
-  // Check if the pageNumber contains any letters (A-z), which means it's a reference
-  const hasLetters = /[A-Za-z]/.test(pageNumber || '');
-
   const location = useLocation();
+
+  const scrollRef = useRef(null);
+  const [scrollTop, setScrollTop] = useState(0);
+  const [viewportH, setViewportH] = useState(0);
+  const [containerW, setContainerW] = useState(0);
+  const [aspect, setAspect] = useState(1 / 1.5); // w/h, refined once a scan loads
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const [scrubOpen, setScrubOpen] = useState(false);
+  const [scrubValue, setScrubValue] = useState(0);
+
+  const total = leafIndex.length;
+  const didInit = useRef(false);
+  const lastWrittenSlug = useRef(null);
+
+  const hasLetters = /[A-Za-z]/.test(pageNumber || '');
   const refParam = new URLSearchParams(location.search).get('ref') || (hasLetters ? pageNumber : null);
   const highlight = useFaxHighlight(item.slug, refParam);
 
-  // Initialize page index based on URL
+  // Uniform row geometry from container width + measured aspect.
+  const pageH = containerW > 0 ? Math.round(containerW / aspect) : 0;
+  const ROW = pageH > 0 ? RAIL_H + pageH : 0;
+  const ready = ROW > 0;
+
+  // ---- Measure container + viewport ----
   useEffect(() => {
-    // Special handling for the last page (or any specific page)
-    if (pageNumber === String(item.pages) || parseInt(pageNumber) === item.pages) {
-      // Direct check for the last page by its number
-      const lastPageIndex = leafIndex.findIndex(leaf => 
-        leaf.pageNumInt === parseInt(pageNumber) || `${leaf.pageSlugLeaf}` === pageNumber
-      );
-      
-      if (lastPageIndex !== -1) {
-        setCurrentPageIndex(lastPageIndex);
-        setSliderValue(lastPageIndex);
-        return;
-      }
-    }
-    
-    // Handle reference URLs (containing A-Z letters)
-    if (hasLetters) {
+    const el = scrollRef.current;
+    if (!el) return undefined;
+    const measure = () => {
+      setContainerW(el.clientWidth);
+      setViewportH(el.clientHeight);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => { try { ro.disconnect(); } catch {} };
+  }, []);
+
+  // ---- Measure the edition's aspect ratio once (from a real page scan) ----
+  useEffect(() => {
+    const probe = leafIndex.find((l) => l?.thumbAssetUrl || l?.pageAssetUrl);
+    if (!probe) return undefined;
+    let cancelled = false;
+    const img = new Image();
+    img.onload = () => {
+      if (!cancelled && img.naturalHeight > 0) setAspect(img.naturalWidth / img.naturalHeight);
+    };
+    img.src = probe.thumbAssetUrl || probe.pageAssetUrl;
+    return () => { cancelled = true; };
+  }, [item.slug]);
+
+  // ---- rAF-throttled scroll ----
+  const rafRef = useRef(null);
+  const onScroll = useCallback(() => {
+    if (rafRef.current != null) return;
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = null;
+      const el = scrollRef.current;
+      if (el) setScrollTop(el.scrollTop);
+    });
+  }, []);
+  useEffect(() => () => { if (rafRef.current != null) cancelAnimationFrame(rafRef.current); }, []);
+
+  // ---- Resolve a URL page/ref to a leaf index ----
+  const resolveIndex = useCallback((raw) => {
+    if (raw == null) return 0;
+    if (/[A-Za-z]/.test(raw)) {
       try {
-        const refs = lookupReference(pageNumber);
-        const verseIds = refs?.verse_ids || [];
-        
-        if (verseIds.length > 0) {
-          // Get the minimum verse ID to find the first page containing this reference
-          const minVerseId = Math.min(...verseIds);
-          
-          // Look for a page containing this verse ID
+        const verseIds = lookupReference(raw)?.verse_ids || [];
+        if (verseIds.length) {
+          const minId = Math.min(...verseIds);
           for (let i = 0; i < leafIndex.length; i++) {
-            const page = leafIndex[i];
-            if (page?.pageReference) {
-              const pageVerseIds = lookupReference(page.pageReference)?.verse_ids || [];
-              if (pageVerseIds.includes(minVerseId)) {
-                setCurrentPageIndex(i);
-                setSliderValue(i);
-                return;
-              }
-            }
+            const pr = leafIndex[i]?.pageReference;
+            if (pr && (lookupReference(pr)?.verse_ids || []).includes(minId)) return i;
           }
         }
-        
-        // If we can't find a match, just default to page 1
-        setCurrentPageIndex(0);
-        setSliderValue(0);
-        return;
-      } catch (e) {
-        // If reference parsing fails, default to page 1
-        setCurrentPageIndex(0);
-        setSliderValue(0);
-        return;
-      }
+      } catch { /* fall through */ }
+      return 0;
     }
-    
-    // Standard page lookup
-    const index = leafIndex.findIndex(leaf => `${leaf.pageSlugLeaf}` === pageNumber);
-    
-    if (index !== -1) {
-      setCurrentPageIndex(index);
-      setSliderValue(index);
-    } else {
-      // If page not found, check if it's the last page
-      const lastPageNum = leafIndex[leafIndex.length - 1]?.pageSlugLeaf;
-      if (lastPageNum && `${lastPageNum}` === pageNumber) {
-        // It's the last page but wasn't found with exact match - handle special case
-        const lastIndex = leafIndex.length - 1;
-        setCurrentPageIndex(lastIndex);
-        setSliderValue(lastIndex);
-      }
-    }
-  }, [pageNumber, leafIndex, item.pages]);
+    const idx = leafIndex.findIndex((l) => `${l.pageSlugLeaf}` === `${raw}`);
+    return idx !== -1 ? idx : 0;
+  }, [leafIndex]);
 
-  // Keep the slider thumb aligned when the page changes by any means
-  // (arrows, buttons, stack, deep link). Audit §2.3.
-  useEffect(() => { setSliderValue(currentPageIndex); }, [currentPageIndex]);
+  const scrollToIndex = useCallback((idx, smooth) => {
+    const el = scrollRef.current;
+    if (!el || !ready) return;
+    const reduce = typeof window !== 'undefined' && window.matchMedia
+      && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const useSmooth = smooth && !reduce;
+    el.scrollTo({ top: idx * ROW, behavior: useSmooth ? 'smooth' : 'auto' });
+    // For instant jumps, sync the windowing state immediately so the target rows
+    // mount in the same commit (no blank frame). Smooth jumps let onScroll drive it.
+    if (!useSmooth) setScrollTop(idx * ROW);
+  }, [ready, ROW]);
 
-  // Preload adjacent pages
-  const getPagesToPreload = useCallback(() => {
-    if (!leafIndex) return [];
-    const preloadRange = 3;
-    const startIdx = Math.max(0, currentPageIndex - preloadRange);
-    const endIdx = Math.min(leafIndex.length - 1, currentPageIndex + preloadRange);
-    return leafIndex.slice(startIdx, endIdx + 1);
-  }, [currentPageIndex, leafIndex]);
-
+  // ---- Initial deep-link scroll + external URL changes (edition switch / ref jump) ----
   useEffect(() => {
-    const pagesToLoad = getPagesToPreload();
-    pagesToLoad.forEach(page => {
-      const img = new Image();
-      img.src = page.pageAssetUrl;
-    });
-  }, [getPagesToPreload]);
+    if (!ready) return;
+    // Ignore URL changes we caused ourselves via scroll sync.
+    if (didInit.current && pageNumber === lastWrittenSlug.current) return;
+    const idx = resolveIndex(pageNumber);
+    setCurrentIndex(idx);
+    setScrubValue(idx);
+    scrollToIndex(idx, didInit.current); // instant on first paint, smooth thereafter
+    didInit.current = true;
+  }, [ready, pageNumber, resolveIndex, scrollToIndex]);
 
-  const currentPage = leafIndex[currentPageIndex] || null;
-
-  // Navigation handlers
-  const handlePageChange = useCallback((newIndex) => {
-    if (newIndex < 0 || newIndex >= leafIndex.length) return;
-    
-    const targetPage = leafIndex[newIndex];
-    if (targetPage) {
-      history.replace(`/fax/${item.slug}/${targetPage.pageSlugLeaf}`);
+  // ---- Track the centered page → sticky header + debounced URL sync ----
+  const syncTimer = useRef(null);
+  useEffect(() => {
+    if (!ready) return;
+    const idx = Math.max(0, Math.min(total - 1, Math.floor((scrollTop + viewportH / 2) / ROW)));
+    if (idx !== currentIndex) {
+      setCurrentIndex(idx);
+      if (!scrubOpen) setScrubValue(idx);
     }
-  }, [history, item.slug, leafIndex]);
+    const slug = leafIndex[idx]?.pageSlugLeaf;
+    if (slug != null && `${slug}` !== `${lastWrittenSlug.current}`) {
+      clearTimeout(syncTimer.current);
+      syncTimer.current = setTimeout(() => {
+        lastWrittenSlug.current = `${slug}`;
+        history.replace(`/fax/${item.slug}/${slug}`);
+      }, 180);
+    }
+  }, [scrollTop, viewportH, ROW, ready, total]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => () => clearTimeout(syncTimer.current), []);
 
-  // Navigate one page at a time for mobile
-  const handleSwipeLeft = useCallback(() => {
-    const newIndex = Math.min(totalPages - 1, currentPageIndex + 1);
-    handlePageChange(newIndex);
-  }, [currentPageIndex, totalPages, handlePageChange]);
+  // ---- Preload scans just beyond the mounted window ----
+  const start = ready ? Math.max(0, Math.floor(scrollTop / ROW) - BUFFER) : 0;
+  const end = ready ? Math.min(total - 1, Math.ceil((scrollTop + viewportH) / ROW) + BUFFER) : -1;
+  useEffect(() => {
+    if (!ready) return;
+    for (let i = end + 1; i <= Math.min(total - 1, end + 3); i++) {
+      const u = leafIndex[i]?.pageAssetUrl;
+      if (u) { const img = new Image(); img.src = u; }
+    }
+  }, [end, ready, total, leafIndex]);
 
-  const handleSwipeRight = useCallback(() => {
-    const newIndex = Math.max(0, currentPageIndex - 1);
-    handlePageChange(newIndex);
-  }, [currentPageIndex, handlePageChange]);
+  const rows = useMemo(() => {
+    if (!ready) return [];
+    const out = [];
+    for (let i = start; i <= end; i++) out.push(i);
+    return out;
+  }, [start, end, ready]);
 
-  const swipeHandlers = useSwipe({
-    onSwipedLeft: handleSwipeLeft,
-    onSwipedRight: handleSwipeRight
-  });
+  const topSpacer = ready ? start * ROW : 0;
+  const bottomSpacer = ready ? Math.max(0, (total - 1 - end) * ROW) : 0;
 
-  // Arrow keys: left/right page, up/down volumes
+  const currentLeaf = leafIndex[currentIndex] || null;
+  const previewLeaf = leafIndex[scrubValue] || null;
+
+  // Volume up/down still switches edition, keeping the current page.
   useEffect(() => {
     const onKey = (e) => {
       if (e.defaultPrevented) return;
       const tag = (e.target?.tagName || '').toLowerCase();
       if (tag === 'input' || tag === 'select' || tag === 'textarea') return;
-      if (e.key === 'ArrowLeft') { e.preventDefault(); handleSwipeRight(); }
-      else if (e.key === 'ArrowRight') { e.preventDefault(); handleSwipeLeft(); }
-      else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
         if (!Array.isArray(volumeOrder) || currentVolumeIndex < 0) return;
-        const isUp = e.key === 'ArrowUp';
-        const nextIndex = isUp ? currentVolumeIndex - 1 : currentVolumeIndex + 1;
-        const next = volumeOrder[nextIndex];
+        const next = volumeOrder[currentVolumeIndex + (e.key === 'ArrowUp' ? -1 : 1)];
         if (!next) return;
         e.preventDefault();
-        const targetSlug = currentPage?.pageSlugLeaf;
-        const targetPath = targetSlug ? `/fax/${next.slug}/${targetSlug}` : `/fax/${next.slug}`;
-        history.push(targetPath);
+        const slug = currentLeaf?.pageSlugLeaf;
+        history.push(slug ? `/fax/${next.slug}/${slug}` : `/fax/${next.slug}`);
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [handleSwipeLeft, handleSwipeRight, volumeOrder, currentVolumeIndex, history, currentPage?.pageSlugLeaf]);
+  }, [volumeOrder, currentVolumeIndex, history, currentLeaf?.pageSlugLeaf]);
 
-  // Slider interaction handlers
-  const handleSliderChange = useCallback((e) => {
-    setSliderValue(parseInt(e.target.value, 10));
-  }, []);
-
-  const handleSliderRelease = useCallback(() => {
-    handlePageChange(sliderValue);
-  }, [handlePageChange, sliderValue]);
-
-  // Page rendering
-  const renderPage = (page) => {
-    if (!page) {
-      // Return a blank placeholder for missing pages
-      return <div className="blankPage"></div>;
-    }
-    
-    // Special handling for the last page
-    const isLastPage = (pgoffset !== undefined && page.pageNumInt === totalPages - pgoffset) ||
-                       page.pageSlugLeaf === leafIndex[leafIndex.length - 1]?.pageSlugLeaf;
-    const boxes = highlight.boxesByPage.get(page.pageNumInt);
-
+  const renderRow = (i) => {
+    const leaf = leafIndex[i];
+    if (!leaf) return null;
+    const boxes = highlight.boxesByPage.get(leaf.pageNumInt);
     return (
-      <>
-        <PageImage
-          src={page.pageAssetUrl}
-          previewSrc={page.thumbAssetUrl}
-          alt={`Page ${page.faxPageSlug}`}
-          label={page.pageReference || `Page ${page.faxPageSlug}`}
-          className={isLastPage ? "last-page" : ""}
-        />
-        {boxes && boxes.length > 0 && (
-          <FaxHighlightOverlay boxes={boxes} pageScale={highlight.pageScale} />
-        )}
-      </>
+      <div key={leaf.leafCursor ?? i} className="faxScrollRow" style={{ height: ROW }}>
+        <div className="faxScrollRail">
+          <span className="rail-page">Page {leaf.faxPageSlug}</span>
+          {leaf.pageReference && (
+            <span
+              className="rail-ref scripture_link"
+              role="button"
+              tabIndex={0}
+              onClick={() => openScripture(leaf.pageReference)}
+              onKeyDown={(e) => { if (e.key === 'Enter') openScripture(leaf.pageReference); }}
+            >{leaf.pageReference}</span>
+          )}
+        </div>
+        <div className="faxScrollPage" style={{ height: pageH }}>
+          <PageImage
+            src={leaf.pageAssetUrl}
+            previewSrc={leaf.thumbAssetUrl}
+            alt={`Page ${leaf.faxPageSlug}`}
+            label={leaf.pageReference || `Page ${leaf.faxPageSlug}`}
+            loading="lazy"
+          />
+          {boxes && boxes.length > 0 && (
+            <FaxHighlightOverlay boxes={boxes} pageScale={highlight.pageScale} />
+          )}
+        </div>
+      </div>
     );
   };
 
-  const previewPage = leafIndex[sliderValue] || null;
+  const submitJump = (e) => {
+    e.preventDefault();
+    const raw = e.target.elements.jumpInput.value.trim();
+    if (!raw) return;
+    const idx = resolveIndex(raw);
+    setScrubOpen(false);
+    scrollToIndex(idx, false); // instant — smooth across hundreds of pages is janky
+  };
 
   return (
-    <div className="faxPageViewer mobile" style={{ maxHeight: 'none' }} {...swipeHandlers}>
-      <div className="pageReferences">
-        <h6
-          className="scripture_link"
-          style={{ visibility: currentPage?.pageReference ? 'visible' : 'hidden', cursor: 'pointer' }}
-          onClick={() => currentPage?.pageReference && openScripture(currentPage.pageReference)}
-        >{currentPage?.pageReference || ''}</h6>
-      </div>
-      <div className="pagesContainer">
-        <div className="pageContainer mobile">
-          <div className="page">
-            {renderPage(currentPage)}
-          </div>
-        </div>
+    <div className="faxMobileViewer">
+      {/* Sticky header — current page + reference */}
+      <div className="faxScrollHeader">
+        <span className="hdr-page">Page {currentLeaf?.faxPageSlug ?? ''}</span>
+        {currentLeaf?.pageReference && (
+          <span
+            className="hdr-ref scripture_link"
+            role="button"
+            tabIndex={0}
+            onClick={() => openScripture(currentLeaf.pageReference)}
+            onKeyDown={(e) => { if (e.key === 'Enter') openScripture(currentLeaf.pageReference); }}
+          >{currentLeaf.pageReference}</span>
+        )}
+        <button
+          type="button"
+          className="faxScrubToggle"
+          aria-label="Navigate pages"
+          onClick={() => { setScrubValue(currentIndex); setScrubOpen((o) => !o); }}
+        >⇅</button>
       </div>
 
-      <div className="facsimile-navigation mobile">
-        <button
-          className="nav-button"
-          onClick={handleSwipeRight}
-          disabled={currentPageIndex <= 0}
-          aria-label="Previous page"
-        >
-          &#8249;
-        </button>
-        <div className="slider-container">
-          <input
-            type="range"
-            min={0}
-            max={totalPages - 1}
-            step={1}
-            value={sliderValue}
-            onChange={handleSliderChange}
-            onMouseDown={() => setPreviewOpen(true)}
-            onTouchStart={() => setPreviewOpen(true)}
-            onMouseUp={() => { setPreviewOpen(false); handleSliderRelease(); }}
-            onTouchEnd={() => { setPreviewOpen(false); handleSliderRelease(); }}
-            className="custom-slider"
-            aria-label="Page position"
-            aria-valuetext={`Page ${previewPage?.faxPageSlug ?? sliderValue + 1} of ${totalPages}`}
-          />
-          {previewOpen && previewPage && (
-            <div className="mobile-slider-preview">
-              <img src={previewPage.thumbAssetUrl} alt="" aria-hidden="true" />
-              <div className="preview-label">
-                {previewPage.pageReference || `Page ${previewPage.faxPageSlug}`}
-              </div>
-            </div>
-          )}
-        </div>
-        <button
-          className="nav-button"
-          onClick={handleSwipeLeft}
-          disabled={currentPageIndex >= totalPages - 1}
-          aria-label="Next page"
-        >
-          &#8250;
-        </button>
+      {/* Virtualized scroll column */}
+      <div className="faxScrollColumn" ref={scrollRef} onScroll={onScroll}>
+        {!ready ? (
+          <div className="faxScrollLoading">Loading…</div>
+        ) : (
+          <>
+            <div style={{ height: topSpacer }} aria-hidden="true" />
+            {rows.map(renderRow)}
+            <div style={{ height: bottomSpacer }} aria-hidden="true" />
+          </>
+        )}
       </div>
-      <form
-        className="fax-page-jump"
-        onSubmit={(e) => {
-          e.preventDefault();
-          const n = parseInt(e.target.elements.pageInput.value, 10);
-          if (!Number.isFinite(n)) return;
-          const idx = leafIndex.findIndex((l) => l.faxPageNum === n || `${l.faxPageSlug}` === `${n}`);
-          if (idx !== -1) handlePageChange(idx);
-        }}
-      >
-        <input
-          name="pageInput"
-          type="number"
-          min={1}
-          max={item.pages}
-          defaultValue={currentPage?.faxPageSlug || ''}
-          key={currentPage?.faxPageSlug}
-          aria-label="Jump to page"
-        />
-        <span className="of-total">/ {item.pages}</span>
-      </form>
+
+      {/* Scrubber sheet — fling across the book + jump-to-reference */}
+      {scrubOpen && (
+        <div className="faxScrubSheet">
+          <div className="scrub-row">
+            <input
+              type="range"
+              min={0}
+              max={Math.max(0, total - 1)}
+              step={1}
+              value={scrubValue}
+              onChange={(e) => setScrubValue(parseInt(e.target.value, 10))}
+              onMouseUp={() => scrollToIndex(scrubValue, false)}
+              onTouchEnd={() => scrollToIndex(scrubValue, false)}
+              className="custom-slider"
+              aria-label="Scrub pages"
+            />
+            {previewLeaf && (
+              <div className="scrub-preview">
+                <img src={previewLeaf.thumbAssetUrl} alt="" aria-hidden="true" />
+                <div className="preview-label">
+                  {previewLeaf.pageReference || `Page ${previewLeaf.faxPageSlug}`}
+                </div>
+              </div>
+            )}
+          </div>
+          <form className="scrub-jump" onSubmit={submitJump}>
+            <input
+              name="jumpInput"
+              type="text"
+              placeholder="Go to page or reference (e.g. Alma 32)"
+              aria-label="Jump to page or reference"
+            />
+            <button type="submit">Go</button>
+          </form>
+        </div>
+      )}
     </div>
   );
 }
