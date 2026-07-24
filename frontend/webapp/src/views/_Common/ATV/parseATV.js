@@ -31,6 +31,15 @@ export function scanBrackets(html) {
 /**
  * Trailing run of sigla on a reading, or null. Trims first — the data has
  * `"… 1 |"` with a trailing space, which anchored matching would miss.
+ *
+ * Assumes witnesses are separated from reading content by whitespace or a tag
+ * boundary. A reading whose visible text ends in a run of witness-letters
+ * directly abutting its sigla (no separator) would be mis-split — e.g.
+ * "…ALMA" ("ALMA" = A,L,M,A, all valid witnesses) parses correctly only
+ * because a space precedes the real sigla run. This has no shape-based
+ * solution: content abutting sigla with no separator is genuinely
+ * indistinguishable from content+sigla. Verified 0 such cases in the corpus;
+ * `corpusCheck.mjs` (Task 8) is the standing guard.
  */
 export function trailingSigla(part) {
   const t = part.trim();

@@ -130,4 +130,11 @@ describe("splitReading", () => {
     expect(r.sigla).toEqual(["1"]);
     expect(r.content).toBe("thing &gt;js NULL");
   });
+
+  test("sigla-shaped content resolves correctly when a separator precedes the sigla", () => {
+    // "ALMA" is four valid sigla; the space before the real run is what saves it.
+    const r = splitReading("THE SON OF ALMA ABCDEFGHIJKLMNOPQRST");
+    expect(r.sigla).toEqual("ABCDEFGHIJKLMNOPQRST".split(""));
+    expect(r.content).toBe("THE SON OF ALMA");
+  });
 });
