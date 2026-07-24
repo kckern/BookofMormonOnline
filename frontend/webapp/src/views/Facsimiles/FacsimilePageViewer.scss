@@ -904,18 +904,14 @@ html[data-theme="dark"] .faxVerseTooltip {
   padding: 1.1rem 1.2rem 1.3rem;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
 }
+/* close reuses the circular .faxVerseModal-nav button style; just position it */
 .faxVerseModal-close {
   position: absolute;
-  top: 0.4rem;
+  top: 0.6rem;
   right: 0.6rem;
-  border: 0;
-  background: transparent;
-  font-size: 1.6rem;
-  line-height: 1;
-  cursor: pointer;
-  color: #6b5330;
+  z-index: 2;
 }
-/* header is the control bar: [‹ prev] [avatar] [ref/name] [next ›] */
+/* header: [avatar] [ref / page ▸ section] — prev/next moved to the rail below */
 .faxVerseModal-header { display: flex; align-items: center; gap: 0.7rem; margin-bottom: 0.8rem; padding-right: 1.4rem; }
 /* speaker: avatar with the voice label underneath (Read left-gutter pattern) */
 .faxVerseModal-speaker { display: flex; flex-direction: column; align-items: center; flex: none; gap: 2px; }
@@ -944,7 +940,7 @@ html[data-theme="dark"] .faxVerseTooltip {
   background: #efe9dc;
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
   margin: 0 auto;
-  transition: height 0.25s ease, aspect-ratio 0.25s ease, width 0.25s ease;
+  transition: height 0.28s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s ease;
   &.api { width: auto; height: auto; max-width: 100%; }
 }
 .faxVerseModal-crop { display: block; width: 100%; height: auto; }
@@ -959,8 +955,17 @@ html[data-theme="dark"] .faxVerseTooltip {
   border-radius: 6px;
   &.zoomed { cursor: crosshair; }
 }
-.faxVerseModal-text { margin: 0.9rem 0 0; font-size: 1.35rem; line-height: 1; font-family: "Scripture", Georgia, serif; }
-/* verse stepper arrows, inline in the header (prev left, next pushed right) */
+.faxVerseModal-text { margin: 0; font-size: 1.35rem; line-height: 1; font-family: "Scripture", Georgia, serif; }
+/* verse text flanked by the stepper arrows in the left/right margins, top-aligned */
+.faxVerseModal-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.9rem;
+  margin-top: 0.9rem;
+}
+.faxVerseModal-body .faxVerseModal-text { flex: 1 1 auto; min-width: 0; }
+.faxVerseModal-body .faxVerseModal-nav { margin-top: 0.15rem; }
+/* circular stepper / close buttons */
 .faxVerseModal-nav {
   flex: none;
   width: 34px;
@@ -973,7 +978,7 @@ html[data-theme="dark"] .faxVerseTooltip {
   line-height: 1;
   cursor: pointer;
   &:hover { background: rgba(28, 27, 24, 0.14); }
-  &.next { margin-left: auto; }
+  &:disabled { opacity: 0.35; cursor: default; }
 }
 .faxVerseModal-actions { margin-top: 0.9rem; display: flex; }
 .faxVerseModal-read {

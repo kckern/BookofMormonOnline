@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { assetUrl, renderBaseUrl } from "src/models/BoMOnlineAPI";
 import { label } from "src/models/Utils";
@@ -44,12 +44,38 @@ export default function FaxVerseModal({ verse, version, pageScale = 700, anchorX
     return () => window.removeEventListener("keydown", onKey, true);
   }, [verse, onPrev, onNext, onClose]);
 
-  if (!verse) return null;
-
-  const boxes = verse.boxes || [];
   // Reserve the cutout box from the KNOWN verse geometry so the image height is
   // fixed before it loads (no rug pull); the union bbox aspect is close enough.
-  const box = unionBox(boxes) || { x: 0, y: 0, w: pageScale, h: pageScale };
+  // Computed above the early return so the height-measure hooks below stay
+  // unconditional (Rules of Hooks). Null-safe when there's no open verse.
+  const box = unionBox(verse?.boxes || []) || { x: 0, y: 0, w: pageScale, h: pageScale };
+
+  // Smooth the card's height change on prev/next: `aspect-ratio` doesn't animate
+  // reliably (the used height jumps), so we measure the cutout's width — which is
+  // 100% of the card and NOT height-driven, so no feedback loop — and drive an
+  // explicit pixel height that CSS *can* transition. Falls back to aspect-ratio for
+  // the first paint before measurement.
+  const cutoutRef = useRef(null);
+  const [cutoutH, setCutoutH] = useState(null);
+  useLayoutEffect(() => {
+    const el = cutoutRef.current;
+    if (!el) return undefined;
+    let raf = null;
+    const read = () => {
+      raf = null;
+      const w = el.getBoundingClientRect().width;
+      if (w > 0) setCutoutH((w * box.h) / box.w);
+    };
+    read();
+    if (typeof ResizeObserver === "undefined") return undefined;
+    const schedule = () => { if (raf == null) raf = requestAnimationFrame(read); };
+    const ro = new ResizeObserver(schedule);
+    ro.observe(el);
+    return () => { if (raf != null) cancelAnimationFrame(raf); ro.disconnect(); };
+  }, [box.w, box.h]);
+
+  if (!verse) return null;
+
   const s = CUTOUT_TARGET_W / box.w;
   const cropW = box.w * s;
   const cropH = box.h * s;
@@ -65,12 +91,9 @@ export default function FaxVerseModal({ verse, version, pageScale = 700, anchorX
     <div className="faxVerseModal" role="dialog" aria-modal="true" aria-label={verse.ref}>
       <div className="faxVerseModal-backdrop" onClick={() => onClose && onClose()} />
       <div className="faxVerseModal-card" style={cardStyle}>
-        <button type="button" className="faxVerseModal-close" aria-label="Close" onClick={() => onClose && onClose()}>×</button>
+        <button type="button" className="faxVerseModal-nav faxVerseModal-close" aria-label="Close" onClick={() => onClose && onClose()}>×</button>
 
         <div className="faxVerseModal-header">
-          {onPrev && (
-            <button type="button" className="faxVerseModal-nav prev" aria-label="Previous verse" onClick={onPrev}>‹</button>
-          )}
           {(verse.person_slug || verse.voice) && (
             <div className="faxVerseModal-speaker">
               {verse.person_slug && (
@@ -98,16 +121,19 @@ export default function FaxVerseModal({ verse, version, pageScale = 700, anchorX
               </div>
             )}
           </div>
-          {onNext && (
-            <button type="button" className="faxVerseModal-nav next" aria-label="Next verse" onClick={onNext}>›</button>
-          )}
         </div>
 
         {version ? (
           // Native-res render crop in a hover magnifier. Fills the modal width at a
           // fixed landscape ratio (reserves height -> no rug pull). `wfull` so the
           // zoom shows real scan detail.
-          <div className="faxVerseModal-cutout landscape" style={{ aspectRatio: `${box.w} / ${box.h}` }}>
+          <div
+            ref={cutoutRef}
+            className="faxVerseModal-cutout landscape"
+            style={cutoutH != null
+              ? { height: `${Math.round(cutoutH)}px` }
+              : { aspectRatio: `${box.w} / ${box.h}` }}
+          >
             <FaxVerseZoom
               key={verse.verse_id}  /* remount so the previous verse's crop can't linger */
               src={`${renderBaseUrl}/fax/render/${version}/crop/wfull/ids/${verse.verse_id}.jpg`}
@@ -125,7 +151,25 @@ export default function FaxVerseModal({ verse, version, pageScale = 700, anchorX
           </div>
         ) : null}
 
-        {verse.text && <p className="faxVerseModal-text">{verse.text}</p>}
+        {/* Verse text flanked by the stepper arrows in the left/right margins,
+            top-aligned so they sit beside the first line. */}
+        <div className="faxVerseModal-body">
+          <button
+            type="button"
+            className="faxVerseModal-nav prev"
+            aria-label="Previous verse"
+            onClick={onPrev}
+            disabled={!onPrev}
+          >‹</button>
+          {verse.text && <p className="faxVerseModal-text">{verse.text}</p>}
+          <button
+            type="button"
+            className="faxVerseModal-nav next"
+            aria-label="Next verse"
+            onClick={onNext}
+            disabled={!onNext}
+          >›</button>
+        </div>
       </div>
     </div>
   );
