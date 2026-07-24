@@ -4,12 +4,7 @@
  * in apparatus.js.
  */
 
-import {
-  isSiglum,
-  CHANGE_CODES,
-  describeChange,
-  decodeMarker,
-} from "./apparatus";
+import { isSiglum, describeChange, decodeMarker } from "./apparatus";
 
 /**
  * Top-level bracket groups, by depth counting. Unlike a non-greedy regex this
