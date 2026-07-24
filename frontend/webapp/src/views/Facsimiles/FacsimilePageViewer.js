@@ -68,12 +68,15 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
     if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
   }, []);
   
-  // Check if the pageNumber contains any letters (A-z), which means it's a reference
-  const hasLetters = /[A-Za-z]/.test(pageNumber || '');
+  // A scripture reference has BOTH letters and digits (e.g. "alma.5.12").
+  // Roman-numeral front-matter slugs ("i", "ii", "iii") are letters-only and
+  // must NOT be treated as references, or navigating to them fails a lookup and
+  // bounces back to page 1. Numeric page slugs are digits-only.
+  const isReference = /[A-Za-z]/.test(pageNumber || '') && /\d/.test(pageNumber || '');
   const totalPages = leafIndex.length;
 
   const location = useLocation();
-  const refParam = new URLSearchParams(location.search).get('ref') || (hasLetters ? pageNumber : null);
+  const refParam = new URLSearchParams(location.search).get('ref') || (isReference ? pageNumber : null);
   const highlight = useFaxHighlight(item.slug, refParam);
 
   // Initialize page index based on URL
@@ -92,8 +95,8 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
       }
     }
     
-    // Handle reference URLs (containing A-Z letters)
-    if (hasLetters) {
+    // Handle reference URLs (book + chapter/verse, e.g. "alma.5.12")
+    if (isReference) {
       try {
         const refs = lookupReference(pageNumber);
         const verseIds = refs?.verse_ids || [];
@@ -148,7 +151,7 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
         setSliderValue(0);
       }
     }
-  }, [pageNumber, leafIndex, item.pages, hasLetters]);
+  }, [pageNumber, leafIndex, item.pages, isReference]);
 
   // Keep the slider thumb aligned when the page changes by any means
   // (arrows, buttons, stack, deep link). Audit §2.3.
