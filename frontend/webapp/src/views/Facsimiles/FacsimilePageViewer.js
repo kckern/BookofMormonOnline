@@ -442,6 +442,47 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
   }, [adjustedPageIndex, getAdjustedPageIndex, leftPageWidth, rightPageWidth, calculatedHeight,
       leftStackWidth, leafIndex, prefersReducedMotion, handlePageChange, item.slug, cancelFlip]);
 
+  // --- Modal verse-by-verse navigation ---------------------------------------
+  // Ordered verse list for the current spread (both pages), each tagged with the
+  // page it lives on, deduped for verses that span the gutter.
+  const spreadVerses = useMemo(() => {
+    const out = [];
+    for (const pg of [leftPage, rightPage]) {
+      if (!pg) continue;
+      for (const v of (faxVerses.versesByPage.get(pg.pageNumInt) || [])) {
+        out.push({ ...v, pageAssetUrl: pg.pageAssetUrl });
+      }
+    }
+    out.sort((a, z) => a.verse_id - z.verse_id);
+    return out.filter((v, i, a) => a.findIndex((x) => x.verse_id === v.verse_id) === i);
+  }, [faxVerses, leftPage, rightPage]);
+
+  const pendingVerseNavRef = useRef(null); // 'next' | 'prev' while a cross-page step flips
+
+  // Step to the adjacent verse. In-spread -> open it; at the spread edge -> flip
+  // to the neighbouring spread (behind the modal) and resolve the verse when that
+  // spread's data arrives (see the effect below). The modal survives the flip
+  // because RESET no longer clears the open verse.
+  const handleVerseNav = useCallback((dir) => {
+    const cur = vstate.openVerse;
+    if (!cur) return;
+    const idx = spreadVerses.findIndex((v) => v.verse_id === cur.verse_id);
+    const neighbour = idx >= 0 ? spreadVerses[idx + (dir === "next" ? 1 : -1)] : null;
+    if (neighbour) { vdispatch({ type: "OPEN", verse: neighbour }); return; }
+    pendingVerseNavRef.current = dir;
+    animateTo(resolveTarget(dir === "next" ? "next" : "prev"));
+  }, [vstate.openVerse, spreadVerses, animateTo, resolveTarget]);
+
+  useEffect(() => {
+    const dir = pendingVerseNavRef.current;
+    if (!dir || !vstate.openVerse || !spreadVerses.length) return;
+    // Wait until the spread has actually turned (old verse no longer present).
+    if (spreadVerses.some((v) => v.verse_id === vstate.openVerse.verse_id)) return;
+    const target = dir === "next" ? spreadVerses[0] : spreadVerses[spreadVerses.length - 1];
+    if (target) vdispatch({ type: "OPEN", verse: target });
+    pendingVerseNavRef.current = null;
+  }, [spreadVerses, vstate.openVerse]);
+
   // Commit the navigation the moment the leaf lands. Guard against a stale turn
   // whose edition changed underneath it, and against a double-fire.
   const handleFlipDone = useCallback(() => {
@@ -789,7 +830,11 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
             )}
             <FaxVerseModal
               verse={vstate.openVerse}
+              version={item.slug}
               pageScale={faxVerses.pageScale}
+              anchorX={vstate.openVerse ? window.innerWidth / 2 + seamAnchorFromDom() : null}
+              onPrev={() => handleVerseNav("prev")}
+              onNext={() => handleVerseNav("next")}
               onClose={() => vdispatch({ type: "CLOSE" })}
             />
           </div>

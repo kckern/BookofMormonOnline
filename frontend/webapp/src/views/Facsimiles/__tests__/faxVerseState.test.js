@@ -25,9 +25,10 @@ describe("faxVerseReducer", () => {
     expect(faxVerseReducer(opened, { type: "CLOSE" }).openVerse).toBeNull();
   });
 
-  test("RESET returns the initial state", () => {
+  test("RESET clears hover but KEEPS the open modal (survives background flips)", () => {
     const dirty = { activeVerseId: 100, source: "hover", openVerse: verse };
-    expect(faxVerseReducer(dirty, { type: "RESET" })).toEqual(initialFaxVerseState);
+    expect(faxVerseReducer(dirty, { type: "RESET" }))
+      .toEqual({ activeVerseId: null, source: null, openVerse: verse });
   });
 
   test("unknown action is a no-op", () => {

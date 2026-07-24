@@ -19,7 +19,10 @@ export function faxVerseReducer(state, action) {
     case "CLOSE":
       return { ...state, openVerse: null };
     case "RESET":
-      return initialFaxVerseState;
+      // Clear transient hover only. The open modal is NOT cleared on a spread
+      // change, so verse-by-verse nav can flip the page in the background without
+      // tearing the modal down; the modal closes only via CLOSE.
+      return { ...state, activeVerseId: null, source: null };
     default:
       return state;
   }
