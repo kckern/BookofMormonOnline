@@ -251,15 +251,10 @@ const SingleWitness = ({ witness, sourceSlug }) => {
                                                 </footer>
                                             </>
                                         ) : (
-                                            <>
-                                                <span className='money_quote_text'>
-                                                    <span className='money_quote_speaker-prefix'>{doc.quote_speaker}:</span>{' '}
-                                                    &ldquo;{withBrackets(doc.money_quote)}&rdquo;
-                                                </span>
-                                                {doc.quote_contains_witness_speech && (
-                                                    <footer className='money_quote_attribution quotes-witness'>quotes the witness</footer>
-                                                )}
-                                            </>
+                                            <span className='money_quote_text'>
+                                                <span className='money_quote_speaker-prefix'>{doc.quote_speaker}:</span>{' '}
+                                                &ldquo;{withBrackets(doc.money_quote)}&rdquo;
+                                            </span>
                                         )}
                                     </blockquote>
                                 )}
