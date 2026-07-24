@@ -62,7 +62,8 @@ export const decodeMarker = (s) =>
  * leading ">" — run the raw marker through decodeMarker first.
  *
  * Occurrence counts across the 4,528 header `.source` blocks: `+` 335,
- * `%` 125, `jg` 94, `js` 635, `?` 31, `–` 48, `p` 15, `%?` 6, `%+` 4, `++` 2.
+ * `%` 125, `jg` 94, `js` 635, `?` 31, `–` 48, `p` 15, `%?` 6, `%+` 4, `++` 2,
+ * `p–` 1, `–?` 1, `+?` 1.
  *
  * There is deliberately NO empty-string key: a bare ">" carries no code, and
  * "" would match at every position in a longest-match tokeniser. Bare markers
@@ -73,9 +74,11 @@ export const decodeMarker = (s) =>
  * `b` is unattested in this corpus but is part of Skousen's published legend;
  * kept on purpose so the table stays a faithful copy of the legend.
  *
- * All entries except `%+`, `++`, `?` and `%?` are Skousen's own wording. Those
- * four are OUR editorial wording for codes the published legend does not gloss
- * — everything else in this module is verbatim citation, so do not assume it.
+ * All entries except `%+`, `++`, `?`, `%?`, `p–`, `–?` and `+?` are Skousen's
+ * own wording. Those seven are OUR editorial wording for codes the published
+ * legend does not gloss — everything else in this module is verbatim citation,
+ * so do not assume it. The last three are compositional (like `%?`/`%+`) and
+ * were found in the corpus only after the first pass, one occurrence each.
  */
 export const CHANGES = Object.freeze({
   "+": "change w/ more ink",
@@ -90,6 +93,9 @@ export const CHANGES = Object.freeze({
   "++": "two successive heavy corrections",
   "?": "change is uncertain",
   "%?": "change w/ erasure, uncertain",
+  "p–": "correction in pencil, less ink",
+  "–?": "change w/ less ink, uncertain",
+  "+?": "change w/ more ink, uncertain",
 });
 
 /** Correction codes, longest first — safe to iterate for longest-match tokenising. */

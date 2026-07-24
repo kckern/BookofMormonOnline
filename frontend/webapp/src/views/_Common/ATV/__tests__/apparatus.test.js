@@ -89,8 +89,11 @@ test("the correction-code table reads exactly as specified", () => {
     "++": "two successive heavy corrections",
     "?": "change is uncertain",
     "%?": "change w/ erasure, uncertain",
+    "p–": "correction in pencil, less ink",
+    "–?": "change w/ less ink, uncertain",
+    "+?": "change w/ more ink, uncertain",
   });
-  expect(CHANGE_CODES).toEqual(["jg", "js", "+–", "%+", "++", "%?", "+", "–", "%", "p", "b", "?"]);
+  expect(CHANGE_CODES).toEqual(["jg", "js", "+–", "%+", "++", "%?", "p–", "–?", "+?", "+", "–", "%", "p", "b", "?"]);
   expect(BARE_CHANGE).toBe("change");
 });
 
@@ -101,11 +104,19 @@ test("correction codes include the multi-character forms found in the data", () 
 });
 
 test("every code attested in the corpus resolves to a description", () => {
-  const attested = ["js", "jg", "+", "%", "p", "–", "+–", "%+", "++", "?", "%?"];
+  const attested = ["js", "jg", "+", "%", "p", "–", "+–", "%+", "++", "?", "%?", "p–", "–?", "+?"];
   for (const code of attested) {
     expect(typeof CHANGES[code]).toBe("string");
     expect(CHANGES[code].length).toBeGreaterThan(0);
   }
+});
+
+test("the three compound codes found late in the corpus resolve to a label", () => {
+  // p–, –?, +? — one occurrence each; unglossed they would ship the exact
+  // P7 defect (a correction with no description) this refactor exists to prevent.
+  expect(describeChange("p–")).toBeTruthy();
+  expect(describeChange("–?")).toBeTruthy();
+  expect(describeChange("+?")).toBeTruthy();
 });
 
 test("every correction code maps to a non-empty description", () => {
