@@ -93,7 +93,7 @@ export default function FaxVerseModal({ verse, version, pageScale = 700, anchorX
             // zoom shows real scan detail; the box is reserved above (no rug pull).
             <FaxVerseZoom
               key={verse.verse_id}  /* remount so the previous verse's crop can't linger */
-              src={`${renderBaseUrl}/fax/render/${version}/crop/full/ids/${verse.verse_id}.jpg`}
+              src={`${renderBaseUrl}/fax/render/${version}/crop/wfull/ids/${verse.verse_id}.jpg`}
               width={cropW}
               height={cropH}
             />

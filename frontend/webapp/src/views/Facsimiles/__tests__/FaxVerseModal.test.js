@@ -28,7 +28,7 @@ describe("FaxVerseModal", () => {
     const zoom = document.querySelector(".faxVerseModal-cutout .faxVerseZoom");
     expect(zoom).toBeTruthy();
     const src = zoom.querySelector("img").getAttribute("src");
-    expect(src).toContain("/fax/render/2013/crop/full/ids/100.jpg"); // full res
+    expect(src).toContain("/fax/render/2013/crop/wfull/ids/100.jpg"); // native res
   });
 
   test("no version -> CSS crop of the page asset (fallback)", () => {
