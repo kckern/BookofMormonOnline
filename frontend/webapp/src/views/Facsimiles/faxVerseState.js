@@ -9,6 +9,10 @@ export function faxVerseReducer(state, action) {
       return { ...state, activeVerseId: action.verseId, source: "hover" };
     case "LEAVE":
       if (state.source !== "hover") return state; // only hover clears on leave
+      // Verse-scoped: a leave that was grace-delayed must NOT clear the spread if
+      // the pointer already switched to another verse (that switch re-set
+      // activeVerseId). Prevents the dimming flashing off between adjacent verses.
+      if (action.verseId != null && state.activeVerseId !== action.verseId) return state;
       return { ...state, activeVerseId: null, source: null };
     case "OPEN":
       return { ...state, openVerse: action.verse };

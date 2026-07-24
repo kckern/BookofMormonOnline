@@ -645,18 +645,19 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
             width: 'auto'
           }}
         />
-        {pageVerses.length > 0 && (
-          <FaxVerseCutout
-            verses={pageVerses}
-            pageScale={faxVerses.pageScale}
-            displayedWidth={isLeft ? leftPageWidth : rightPageWidth}
-            idSuffix={page.pageNumInt}
-            activeVerseId={vstate.activeVerseId}
-            onHover={(id) => vdispatch({ type: "HOVER", verseId: id })}
-            onLeave={() => vdispatch({ type: "LEAVE" })}
-            onOpen={(verse) => vdispatch({ type: "OPEN", verse: { ...verse, pageAssetUrl: page.pageAssetUrl } })}
-          />
-        )}
+        {/* Rendered on BOTH pages (even a verse-less one) so hovering any verse
+            dims the whole spread, opposite page included. */}
+        <FaxVerseCutout
+          verses={pageVerses}
+          pageScale={faxVerses.pageScale}
+          displayedWidth={isLeft ? leftPageWidth : rightPageWidth}
+          displayedHeight={calculatedHeight}
+          idSuffix={page.pageNumInt}
+          activeVerseId={vstate.activeVerseId}
+          onHover={(id) => vdispatch({ type: "HOVER", verseId: id })}
+          onLeave={(id) => vdispatch({ type: "LEAVE", verseId: id })}
+          onOpen={(verse) => vdispatch({ type: "OPEN", verse: { ...verse, pageAssetUrl: page.pageAssetUrl } })}
+        />
       </>
     );
   };

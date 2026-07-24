@@ -119,6 +119,33 @@ export function unionBox(boxes) {
   return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
 }
 
+/** True if the box has any notch inset (top-left or bottom-right). */
+export function hasNotch(b) {
+  return !!(b && (b.tlw || b.tlh || b.brw || b.brh));
+}
+
+/**
+ * SVG polygon points (scaled by k) for a box with optional top-left (tlw/tlh)
+ * and bottom-right (brw/brh) notches. Walks clockwise from just right of the
+ * top-left notch. With no notches it degenerates to the four rectangle corners.
+ */
+export function notchPolygonPoints(b, k = 1) {
+  const x = b.x * k, y = b.y * k, w = b.w * k, h = b.h * k;
+  const tlw = (b.tlw || 0) * k, tlh = (b.tlh || 0) * k;
+  const brw = (b.brw || 0) * k, brh = (b.brh || 0) * k;
+  const pts = [
+    [x + tlw, y],
+    [x + w, y],
+    [x + w, y + h - brh],
+    [x + w - brw, y + h - brh],
+    [x + w - brw, y + h],
+    [x, y + h],
+    [x, y + tlh],
+    [x + tlw, y + tlh],
+  ];
+  return pts.map(([px, py]) => `${Math.round(px)},${Math.round(py)}`).join(" ");
+}
+
 /** left/right leaf objects -> sorted, unique verse-id union for the spread. */
 export function spreadVerseIds(leftLeaf, rightLeaf) {
   const ids = new Set();

@@ -1,6 +1,7 @@
 import {
   chunkIds, mergeBoxes, chapterRefOf, chapterRefsForVerseIds,
   indexReadByVerse, hydrateVerses, unionBox, spreadVerseIds, CHUNK_SIZE,
+  hasNotch, notchPolygonPoints,
 } from "../faxVerseData";
 import { lookupReference } from "scripture-guide";
 
@@ -79,6 +80,28 @@ describe("faxVerseData", () => {
     expect(verses[0]).toMatchObject({ verse_id: 100, text: "t100", ref: "Alma 5:1" });
     expect(verses[1].text).toBeUndefined();
     expect(typeof verses[1].ref).toBe("string");
+  });
+
+  test("hasNotch detects any notch inset", () => {
+    expect(hasNotch({ x: 0, y: 0, w: 1, h: 1 })).toBe(false);
+    expect(hasNotch({ x: 0, y: 0, w: 1, h: 1, tlw: 0, tlh: 0, brw: 0, brh: 0 })).toBe(false);
+    expect(hasNotch({ x: 0, y: 0, w: 1, h: 1, brh: 5 })).toBe(true);
+  });
+
+  test("notchPolygonPoints degenerates to the rectangle corners without notches", () => {
+    const p = notchPolygonPoints({ x: 10, y: 20, w: 100, h: 50 }, 1);
+    expect(p).toContain("10,20");   // top-left
+    expect(p).toContain("110,20");  // top-right
+    expect(p).toContain("110,70");  // bottom-right
+    expect(p).toContain("10,70");   // bottom-left
+  });
+
+  test("notchPolygonPoints insets the top-left and bottom-right notches", () => {
+    const p = notchPolygonPoints({ x: 0, y: 0, w: 100, h: 100, tlw: 20, tlh: 10, brw: 30, brh: 15 }, 1);
+    expect(p.startsWith("20,0")).toBe(true); // top edge starts right of the TL notch
+    expect(p).toContain("20,10");            // TL notch inner corner
+    expect(p).toContain("70,85");            // BR notch inner corner (100-30, 100-15)
+    expect(p).toContain("70,100");           // BR notch bottom
   });
 
   test("unionBox returns the bounding rect of all boxes", () => {

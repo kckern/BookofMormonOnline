@@ -757,9 +757,9 @@ html[data-theme="dark"] .faxMobileViewer {
 }
 .faxVerseTooltip {
   position: absolute;
-  transform: translate(-50%, calc(-100% - 10px));
-  max-width: 320px;
-  padding: 0.5rem 0.7rem;
+  transform: translate(-50%, calc(-100% - 10px)); /* default: above the cutout */
+  max-width: 360px;
+  padding: 0.4rem 0.6rem;
   background: #1c1b18;
   color: #f4efe6;
   border-radius: 8px;
@@ -767,6 +767,7 @@ html[data-theme="dark"] .faxMobileViewer {
   pointer-events: none;
   z-index: 5;
   animation: faxCutoutIn 0.18s ease both;
+  /* caret points DOWN toward the cutout below (default = tooltip above) */
   &::after {
     content: "";
     position: absolute;
@@ -777,8 +778,27 @@ html[data-theme="dark"] .faxMobileViewer {
     border-top-color: #1c1b18;
     border-bottom: 0;
   }
-  .faxVerseTooltip-ref { font-size: 0.7rem; font-weight: 700; opacity: 0.7; text-transform: uppercase; letter-spacing: 0.04em; }
-  .faxVerseTooltip-text { font-size: 0.9rem; line-height: 1.35; margin-top: 2px; }
+  /* placed BELOW the cutout (verse near the top of the page) — caret flips up */
+  &.below {
+    transform: translate(-50%, 10px);
+    &::after {
+      top: -6px;
+      bottom: auto;
+      border-top: 0;
+      border-bottom: 6px solid #1c1b18;
+    }
+  }
+  .faxVerseTooltip-head { display: flex; align-items: center; gap: 0.35rem; }
+  .faxVerseTooltip-avatar { width: 18px; height: 18px; border-radius: 50%; object-fit: cover; flex: none; }
+  .faxVerseTooltip-ref { font-size: 0.62rem; font-weight: 700; opacity: 0.7; text-transform: uppercase; letter-spacing: 0.04em; }
+  .faxVerseTooltip-voice { font-size: 0.62rem; opacity: 0.6; font-style: italic; }
+  /* scripture typography, reduced size + tighter leading */
+  .faxVerseTooltip-text {
+    font-family: "Scripture", Georgia, serif;
+    font-size: 0.78rem;
+    line-height: 1.2;
+    margin-top: 3px;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   .faxCutoutSvg, .faxVerseTooltip { animation: none; }
