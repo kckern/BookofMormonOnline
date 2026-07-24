@@ -3,6 +3,7 @@ import './WitnessLifeHeatmap.css';
 
 const CELL_PX_MAX = 18;
 const CELL_PX_MIN = 4;
+const ROW_PX_MAX = 9;   // cap cell HEIGHT independently — cells fill width but stay short (rectangles)
 const GAP_PX = 1;
 const MONTHS_COL_PX = 14;
 const SIDE_PADDING_PX = 4;
@@ -143,6 +144,7 @@ const WitnessLifeHeatmap = ({ witness, sources, selectedYearMonth, onSelectYearM
     const displayColumns = shouldCompress ? compressedColumns : uncompressedColumns;
 
     const cellPx = widthFor(displayColumns);
+    const rowPx = Math.min(cellPx, ROW_PX_MAX);
 
     const labelWidthPx = 32;
     const minLabelEvery = Math.max(1, Math.ceil(labelWidthPx / (cellPx + GAP_PX)));
@@ -165,7 +167,7 @@ const WitnessLifeHeatmap = ({ witness, sources, selectedYearMonth, onSelectYearM
     };
 
     return (
-        <div className='witness-life-heatmap' ref={wrapperRef} style={{ '--bom-heatmap-cell': `${cellPx}px` }}>
+        <div className='witness-life-heatmap' ref={wrapperRef} style={{ '--bom-heatmap-cell': `${cellPx}px`, '--bom-heatmap-row': `${rowPx}px` }}>
             <div className='witness-life-heatmap-meta'>
                 <span>{yearStart}–{yearEnd}</span>
                 <span className='dot'>·</span>
@@ -193,6 +195,7 @@ const WitnessLifeHeatmap = ({ witness, sources, selectedYearMonth, onSelectYearM
                 </div>
             </div>
             <div className='witness-life-heatmap-scroll'>
+              <div className={`witness-life-heatmap-timeline${shouldCompress ? ' is-centered' : ''}`}>
                 <div className='witness-life-heatmap-ages'>
                     {displayColumns.map((col, i) => {
                         if (col.type === 'compressed') {
@@ -270,6 +273,7 @@ const WitnessLifeHeatmap = ({ witness, sources, selectedYearMonth, onSelectYearM
                         );
                     })}
                 </div>
+              </div>
             </div>
             <WitnessLifeHeatmapHover hoveredKey={hoveredKey} sourcesByYm={sourcesByYm} eraOf={eraOf} witness={witness} birthYear={birthYear} />
             <div className='witness-life-heatmap-legend'>
