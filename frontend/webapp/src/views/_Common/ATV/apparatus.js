@@ -66,10 +66,15 @@ export const decodeMarker = (s) =>
  * `p–` 1, `–?` 1, `+?` 1.
  *
  * There is deliberately NO empty-string key: a bare ">" carries no code, and
- * "" would match at every position in a longest-match tokeniser. Bare markers
- * use BARE_CHANGE instead. To tokenise, iterate CHANGE_CODES (ordered) rather
- * than Object.keys(CHANGES) (insertion order, which would match "+" before
- * "+–" and "%" before "%+"/"%?", truncating three real codes).
+ * "" would match at every position in a prefix tokeniser. Bare markers use
+ * BARE_CHANGE instead.
+ *
+ * The parseATV tokeniser does NOT prefix-match this table. It takes the maximal
+ * code-character run after a marker and tests the WHOLE run for membership here
+ * — never a prefix. That is on purpose: prefix-matching would read `&gt; people`
+ * as code `p` and swallow the word. Do not reintroduce a longest-prefix scan.
+ * `CHANGE_CODES` is retained as ordered reference data documenting the vocabulary
+ * (and asserted by tests); it has no current runtime consumer.
  *
  * `b` is unattested in this corpus but is part of Skousen's published legend;
  * kept on purpose so the table stays a faithful copy of the legend.
