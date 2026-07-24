@@ -5,6 +5,11 @@
 **Method:** the shipping parser primitives (`ATV/parseATV.js` — `scanBrackets`, `trailingSigla`, `isApparatus`, `splitReading`) plus logical-integrity checks, run over untruncated `text`
 **Result:** **15 entries** need attention. Everything else parses clean.
 
+**Update (parser Task 5):** the full chain parser (`parseStates`) was later run over all
+**11,208 readings** — 2,134 multi-state, max 4 states, **0 threw, 0 leaked codes**. It
+surfaced three compound correction codes the vocabulary lacked (§6). No new entry
+defects.
+
 ---
 
 ## Clean bill of health on structure
@@ -153,6 +158,26 @@ Neither instance below is currently broken — both parse correctly — but they
 | — | latent, no action | `1247516301` `1140516202` |
 
 Priorities 1–3 are eight entries with inferable fixes. Priority 4 needs someone with Skousen's volume.
+
+## 6. Vocabulary gaps found by the chain parser
+
+Running `parseStates` over every reading surfaced three **compound correction codes** not
+in Skousen's glossed legend, each appearing once. The parser handled them correctly —
+surfacing the code with a `null` label rather than mislabelling it — but an unglossed
+correction is the P7 defect this refactor exists to prevent, so they were added to
+`apparatus.js` with editorial wording (composed from the single-code glosses, marked
+editorial like `%?`/`%+`):
+
+| code | form in corpus | gloss (editorial) | count |
+|---|---|---|---|
+| `p–` | `&gt;p&ndash;` | correction in pencil, less ink | 1 |
+| `–?` | `&gt;&ndash;?` | change w/ less ink, uncertain | 1 |
+| `+?` | `&gt;+?` | change w/ more ink, uncertain | 1 |
+
+Not a data defect — the codes are legitimate; the vocabulary was incomplete. Bare markers
+followed by a word beginning with a code letter (`&gt; you`, `&gt; own`, `&gt; son`) are
+correctly parsed as bare, not as codes, because the parser matches the whole
+whitespace-delimited token, not a prefix.
 
 ## Reproducing this audit
 
