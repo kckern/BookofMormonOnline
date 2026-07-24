@@ -59,41 +59,33 @@ export default function WitnessTile({ data }) {
       <h3 className="tileHeading">
         <Link to="/history/witnesses">{label("witnesses")}</Link>
       </h3>
-      {w.isWitnessVoice ? (
-        // The witness's own words — portrait + name (the speaker) + quote.
-        <Link to={to} className="witnessFeatured">
-          <span className="witnessLeft">
-            <span className="witnessHero">
-              {w.witnessSlug ? (
-                <img
-                  src={`${assetUrl}/history/witnesses/people/${w.witnessSlug}.jpg`}
-                  alt={w.speaker || w.principal}
-                  loading="lazy"
-                  onError={(e) => { e.target.style.display = "none"; e.target.parentNode.classList.add("mono"); }}
-                />
-              ) : null}
-              <span className="witnessMono" aria-hidden="true">{initials(w.speaker || w.principal)}</span>
-            </span>
-            <span className="witnessName">{w.speaker || w.principal}</span>
+      {/* Always show the witness (the SUBJECT) portrait + name. For a
+          non-first-hand account, the actual speaker is named in the quote
+          prefix — they said it, the witness is who it's about. */}
+      <Link to={to} className="witnessFeatured">
+        <span className="witnessLeft">
+          <span className="witnessHero">
+            {w.witnessSlug ? (
+              <img
+                src={`${assetUrl}/history/witnesses/people/${w.witnessSlug}.jpg`}
+                alt={w.principal}
+                loading="lazy"
+                onError={(e) => { e.target.style.display = "none"; e.target.parentNode.classList.add("mono"); }}
+              />
+            ) : null}
+            <span className="witnessMono" aria-hidden="true">{initials(w.principal)}</span>
           </span>
-          <span className="witnessBody">
-            <blockquote className="witnessStatement">&ldquo;{withBrackets(quote)}&rdquo;</blockquote>
-            {source ? <span className="witnessSource">{source}</span> : null}
-          </span>
-        </Link>
-      ) : (
-        // Someone else's words about the witness — speaker prefix, NO portrait
-        // (the witness's face beside a reporter's line is the same misattribution).
-        <Link to={to} className="witnessFeatured witness-reported">
-          <span className="witnessBody">
-            <blockquote className="witnessStatement">
-              {w.speaker ? <span className="witnessSpeaker">{w.speaker}:</span> : null}{" "}
-              &ldquo;{withBrackets(quote)}&rdquo;
-            </blockquote>
-            {source ? <span className="witnessSource">{source}</span> : null}
-          </span>
-        </Link>
-      )}
+          <span className="witnessName">{w.principal}</span>
+        </span>
+        <span className="witnessBody">
+          <blockquote className="witnessStatement">
+            {!w.isWitnessVoice && w.speaker ? <span className="witnessSpeaker">{w.speaker}:</span> : null}
+            {!w.isWitnessVoice && w.speaker ? " " : null}
+            &ldquo;{withBrackets(quote)}&rdquo;
+          </blockquote>
+          {source ? <span className="witnessSource">{source}</span> : null}
+        </span>
+      </Link>
     </div>
   );
 }

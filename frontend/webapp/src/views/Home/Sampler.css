@@ -1568,15 +1568,14 @@ html[data-theme="dark"] .witnessHero { background: #4a4033; border-color: #3a3a3
 html[data-theme="dark"] .witnessName { color: #f0f0f0; }
 .witnessStatement { margin: 0; font-family: "Scripture", Georgia, serif; font-size: 1.1rem; line-height: 1.2; color: #444; }
 /* editorial marks ([Name] / [...]) set apart from the quoted words */
-.witnessStatement .editorialMark { font-family: "Roboto", "Roboto Condensed", sans-serif; font-style: normal; font-size: 0.82em; color: #999; }
-html[data-theme="dark"] .witnessStatement .editorialMark { color: #8a8a8a; }
+.witnessStatement .editorialMark { font-family: "Roboto", "Roboto Condensed", sans-serif; font-style: normal; font-size: 0.82em; color: #000; }
+html[data-theme="dark"] .witnessStatement .editorialMark { color: #e8e8e8; }
 html[data-theme="dark"] .witnessStatement { color: #c4c4c4; }
 .witnessSource { font-size: 0.68rem; font-style: italic; color: #999; margin-top: 0.1rem; }
 html[data-theme="dark"] .witnessSource { color: #8a8a8a; }
-/* third-party / reporter quote: "Speaker:" prefix outside the quote, no portrait */
-.witnessSpeaker { font-weight: 700; color: #345496; }
-html[data-theme="dark"] .witnessSpeaker { color: #9bb4e0; }
-.witnessFeatured.witness-reported { align-items: flex-start; }
+/* non-first-hand quote: the speaker named as a "Speaker:" prefix, black Roboto */
+.witnessSpeaker { font-weight: 700; font-family: "Roboto", "Roboto Condensed", sans-serif; color: #000; margin-right: 0.15rem; }
+html[data-theme="dark"] .witnessSpeaker { color: #e8e8e8; }
 
 
 /* view-all end card: a 3×4 mosaic that fills the whole card (no caption).
