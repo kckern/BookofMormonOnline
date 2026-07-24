@@ -802,3 +802,54 @@ html[data-theme="dark"] .faxMobileViewer {
 }
 .faxContinuesHint.next { right: 4px; }
 .faxContinuesHint.prev { left: 4px; }
+
+/* Verse inspector modal (Phase 1) */
+.faxVerseModal {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.faxVerseModal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+}
+.faxVerseModal-card {
+  position: relative;
+  z-index: 1;
+  max-width: min(680px, 92vw);
+  max-height: 88vh;
+  overflow: auto;
+  background: #fbf8f1;
+  color: #1c1b18;
+  border-radius: 12px;
+  padding: 1.1rem 1.2rem 1.3rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+.faxVerseModal-close {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.6rem;
+  border: 0;
+  background: transparent;
+  font-size: 1.6rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #6b5330;
+}
+.faxVerseModal-header { display: flex; align-items: center; gap: 0.7rem; margin-bottom: 0.8rem; }
+.faxVerseModal-avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; }
+.faxVerseModal-ref { font-weight: 700; font-size: 1.05rem; }
+.faxVerseModal-voice { font-size: 0.8rem; opacity: 0.75; }
+.faxVerseModal-cutout {
+  position: relative;
+  overflow: hidden;
+  border-radius: 6px;
+  background: #efe9dc;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
+  margin: 0 auto;
+}
+.faxVerseModal-text { margin: 0.9rem 0 0; font-size: 1rem; line-height: 1.5; }
