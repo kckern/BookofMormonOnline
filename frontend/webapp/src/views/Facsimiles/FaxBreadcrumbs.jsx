@@ -77,16 +77,24 @@ export default function FaxBreadcrumbs({ editions = [], current, currentRef }) {
         <div className="breadcrumb-dropdown" role="listbox">
           {editions.map((ed) => {
             const isCurrent = ed.slug === current?.slug;
+            const indexed = !!ed.indexRef; // has a verse-level facsimile index
             const inner = (
               <>
-                <img
-                  className="breadcrumb-avatar"
-                  src={`${assetUrl}/fax/covers/${ed.slug}`}
-                  alt=""
-                  aria-hidden="true"
-                  loading="lazy"
-                  onError={(e) => { e.target.style.visibility = 'hidden'; }}
-                />
+                <span className="breadcrumb-thumb">
+                  <img
+                    className="breadcrumb-avatar"
+                    src={`${assetUrl}/fax/covers/${ed.slug}`}
+                    alt=""
+                    aria-hidden="true"
+                    loading="lazy"
+                    onError={(e) => { e.target.style.visibility = 'hidden'; }}
+                  />
+                  <span
+                    className={`breadcrumb-index-flag${indexed ? ' has-index' : ''}`}
+                    title={indexed ? 'Verse-level facsimile index' : 'No verse index (scans only)'}
+                    aria-label={indexed ? 'Verse-indexed' : 'Not verse-indexed'}
+                  >{indexed ? '¶' : ''}</span>
+                </span>
                 <span className="breadcrumb-option-name">{ed.title}</span>
               </>
             );

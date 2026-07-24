@@ -13,6 +13,7 @@ import { openScripture } from "../_Common/ScripturePopup";
 import { prefetchThumbs } from "./faxThumbCache";
 import { generateReference, lookupReference } from "scripture-guide";
 import { normalizeStackWidths } from "./faxGeometry";
+import { getFaxRatio, setFaxRatio } from "./faxRatioCache";
 import { useFaxHighlight } from "./useFaxHighlight";
 import FaxHighlightOverlay from "./FaxHighlightOverlay";
 
@@ -177,8 +178,13 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
   useEffect(() => {
     const pagesToLoad = getPagesToPreload();
     pagesToLoad.forEach(page => {
+      const url = page.pageAssetUrl;
+      if (!url) return;
       const img = new Image();
-      img.src = page.pageAssetUrl;
+      // Warm the ratio cache ahead of the turn so the landed spread never has to
+      // settle its dimensions (kills the post-turn jitter + ResizeObserver churn).
+      img.onload = () => { if (img.naturalHeight > 0) setFaxRatio(url, img.naturalWidth / img.naturalHeight); };
+      img.src = url;
     });
   }, [getPagesToPreload]);
 
@@ -186,35 +192,49 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
   const leftPage = leafIndex[adjustedPageIndex] || null;
   const rightPage = leafIndex[adjustedPageIndex + 1] || null;
 
-  // Load left page image and calculate aspect ratio
+  // Load left page image and calculate aspect ratio. Seed synchronously from the
+  // cache when known (adjacent pages are preloaded) so the spread lands at the
+  // right size with no post-turn resize; refine + cache on load for cold pages.
   useEffect(() => {
-    if (!leftPage) { 
-      setLeftRatio(0.75); 
-      return; 
+    if (!leftPage) {
+      setLeftRatio(0.75);
+      return undefined;
     }
-    
+    const url = leftPage.thumbAssetUrl || leftPage.pageAssetUrl;
+    const cached = getFaxRatio(leftPage.thumbAssetUrl, leftPage.pageAssetUrl);
+    if (cached) setLeftRatio(cached);
     const img = new Image();
     img.onload = () => {
-      if (img.naturalHeight > 0) setLeftRatio(img.naturalWidth / img.naturalHeight);
+      if (img.naturalHeight > 0) {
+        const r = img.naturalWidth / img.naturalHeight;
+        setFaxRatio(url, r);
+        setLeftRatio(r);
+      }
     };
-    img.src = leftPage.thumbAssetUrl || leftPage.pageAssetUrl;
+    img.src = url;
     return () => { img.onload = null; };
-  }, [leftPage?.thumbAssetUrl, leftPage?.pageAssetUrl, leftPage]);
+  }, [leftPage?.thumbAssetUrl, leftPage?.pageAssetUrl]);
 
-  // Load right page image and calculate aspect ratio
+  // Load right page image and calculate aspect ratio (see left, above).
   useEffect(() => {
-    if (!rightPage) { 
-      setRightRatio(0.75); 
-      return; 
+    if (!rightPage) {
+      setRightRatio(0.75);
+      return undefined;
     }
-    
+    const url = rightPage.thumbAssetUrl || rightPage.pageAssetUrl;
+    const cached = getFaxRatio(rightPage.thumbAssetUrl, rightPage.pageAssetUrl);
+    if (cached) setRightRatio(cached);
     const img = new Image();
     img.onload = () => {
-      if (img.naturalHeight > 0) setRightRatio(img.naturalWidth / img.naturalHeight);
+      if (img.naturalHeight > 0) {
+        const r = img.naturalWidth / img.naturalHeight;
+        setFaxRatio(url, r);
+        setRightRatio(r);
+      }
     };
-    img.src = rightPage.thumbAssetUrl || rightPage.pageAssetUrl;
+    img.src = url;
     return () => { img.onload = null; };
-  }, [rightPage?.thumbAssetUrl, rightPage?.pageAssetUrl, rightPage]);
+  }, [rightPage?.thumbAssetUrl, rightPage?.pageAssetUrl]);
 
   const { leftStackWidth, rightStackWidth } = useMemo(
     () => {

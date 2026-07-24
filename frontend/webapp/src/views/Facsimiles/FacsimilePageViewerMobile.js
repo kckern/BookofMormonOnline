@@ -49,18 +49,22 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
   const ROW = pageH > 0 ? RAIL_H + pageH : 0;
   const ready = ROW > 0;
 
-  // ---- Measure container + viewport ----
+  // ---- Measure container + viewport (rAF-deferred + change-guarded so the
+  //      ResizeObserver callback never re-enters synchronously → no loop warning) ----
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return undefined;
-    const measure = () => {
-      setContainerW(el.clientWidth);
-      setViewportH(el.clientHeight);
+    let raf = null;
+    const read = () => {
+      raf = null;
+      setContainerW((w) => (w === el.clientWidth ? w : el.clientWidth));
+      setViewportH((h) => (h === el.clientHeight ? h : el.clientHeight));
     };
-    measure();
-    const ro = new ResizeObserver(measure);
+    const schedule = () => { if (raf == null) raf = requestAnimationFrame(read); };
+    read();
+    const ro = new ResizeObserver(schedule);
     ro.observe(el);
-    return () => { try { ro.disconnect(); } catch {} };
+    return () => { if (raf != null) cancelAnimationFrame(raf); try { ro.disconnect(); } catch {} };
   }, []);
 
   // ---- Measure the edition's aspect ratio once (from a real page scan) ----
