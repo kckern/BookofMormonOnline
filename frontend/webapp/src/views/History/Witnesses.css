@@ -217,9 +217,10 @@
 }
 
 .single-witnesses .witness-hero-portrait {
-    flex: 0 0 220px;
+    width: 100%;
+    aspect-ratio: 3 / 4;
     overflow: hidden;
-    border-radius: 12px 0 0 12px;
+    border-radius: 12px;
     background: #EEE;
 }
 
