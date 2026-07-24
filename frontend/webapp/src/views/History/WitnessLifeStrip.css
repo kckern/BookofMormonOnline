@@ -1,1 +1,53 @@
-/* WitnessLifeStrip styles — populated in the strip-component task */
+.witness-life-strip {
+  --wls-1: #c6e48b; --wls-2: #7bc96f; --wls-3: #239a3b; --wls-4: #196127;
+  --wls-empty: #ebedf0; --wls-text: #777; --wls-death: #c62828; --wls-excom: #7b1fa2;
+  font-size: 0.7rem; color: var(--wls-text);
+}
+html[data-theme="dark"] .witness-life-strip {
+  --wls-1: #1f4423; --wls-2: #2c6a30; --wls-3: #3f9446; --wls-4: #5cb85c;
+  --wls-empty: #333; --wls-text: #9a9a9a; --wls-death: #e57373; --wls-excom: #ab47bc;
+}
+.witness-life-strip .wls-head { display: flex; align-items: center; gap: 0.4em; margin-bottom: 0.3rem; }
+.witness-life-strip .wls-key { display: inline-flex; align-items: center; gap: 2px; margin-left: auto; }
+.witness-life-strip .wls-sw { width: 9px; height: 9px; border-radius: 2px; display: inline-block; margin: 0 1px; }
+.witness-life-strip .wls-sw.bucket-1 { background: var(--wls-1); }
+.witness-life-strip .wls-sw.bucket-2 { background: var(--wls-2); }
+.witness-life-strip .wls-sw.bucket-3 { background: var(--wls-3); }
+.witness-life-strip .wls-sw.bucket-4 { background: var(--wls-4); }
+
+.witness-life-strip .wls-track { position: relative; display: flex; gap: 1px; height: 22px; }
+.witness-life-strip .wls-year {
+  flex: 1 1 0; min-width: 3px; height: 100%; padding: 0; border: 0; border-radius: 2px;
+  background: var(--wls-empty); position: relative;
+}
+.witness-life-strip .wls-year.has { cursor: pointer; }
+.witness-life-strip .wls-year.bucket-1 { background: var(--wls-1); }
+.witness-life-strip .wls-year.bucket-2 { background: var(--wls-2); }
+.witness-life-strip .wls-year.bucket-3 { background: var(--wls-3); }
+.witness-life-strip .wls-year.bucket-4 { background: var(--wls-4); }
+.witness-life-strip .wls-year.active { box-shadow: 0 0 0 2px #c75200; z-index: 2; }
+.witness-life-strip .wls-year:hover.has { box-shadow: 0 0 0 1px #000; z-index: 3; }
+.witness-life-strip .wls-mark {
+  position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+  font-size: 0.7rem; line-height: 1;
+}
+.witness-life-strip .wls-mark.wls-death { color: var(--wls-death); }
+.witness-life-strip .wls-mark.wls-excom { color: var(--wls-excom); font-weight: 700; }
+
+.witness-life-strip .wls-tip {
+  position: absolute; bottom: calc(100% + 6px); transform: translateX(-50%);
+  white-space: nowrap; background: #222; color: #fff; padding: 0.2rem 0.5rem;
+  border-radius: 4px; font-size: 0.68rem; pointer-events: none; z-index: 5;
+}
+.witness-life-strip .wls-tip-era.death { color: #ff9a9a; }
+.witness-life-strip .wls-tip-era.excom { color: #d9a3e8; }
+
+.witness-life-strip .wls-axis { display: flex; justify-content: space-between; font-size: 0.6rem; margin-top: 3px; }
+
+.witness-life-strip .wls-chips { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.5rem; }
+.witness-life-strip .wls-chip {
+  border: 1px solid rgba(0,0,0,0.18); background: transparent; border-radius: 999px;
+  padding: 0.08rem 0.55rem; font-size: 0.68rem; color: inherit; cursor: pointer;
+}
+.witness-life-strip .wls-chip.active { background: #c75200; color: #fff; border-color: #c75200; }
+html[data-theme="dark"] .witness-life-strip .wls-chip { border-color: #4a4a4a; }
