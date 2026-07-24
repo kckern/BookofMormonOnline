@@ -89,13 +89,13 @@ export default function FaxVerseCutout({
         )}
       </div>
 
-      {active && active.text && tip && (
+      {active && tip && (
         <div
           className="faxVerseTooltip"
           style={{ left: px(tip.x + tip.w / 2), top: px(tip.y) }}
         >
           <div className="faxVerseTooltip-ref">{active.ref}</div>
-          <div className="faxVerseTooltip-text">{active.text}</div>
+          {active.text && <div className="faxVerseTooltip-text">{active.text}</div>}
         </div>
       )}
     </div>

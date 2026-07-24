@@ -69,6 +69,17 @@ describe("FaxVerseCutout", () => {
     expect(container.querySelector(".faxVerseTooltip")).toBeNull();
   });
 
+  test("active verse WITHOUT text still shows a ref-only tooltip", () => {
+    const noText = [{ verse_id: 200, ref: "Alma 5:9", boxes: [{ x: 10, y: 10, w: 20, h: 20 }] }];
+    const { container } = render(
+      <FaxVerseCutout verses={noText} pageScale={700} displayedWidth={1400} idSuffix={9}
+        activeVerseId={200} onHover={() => {}} onLeave={() => {}} onOpen={() => {}} hoverIntentMs={0} />
+    );
+    expect(container.querySelector(".faxVerseTooltip")).toBeTruthy();
+    expect(container.querySelector(".faxVerseTooltip-ref").textContent).toBe("Alma 5:9");
+    expect(container.querySelector(".faxVerseTooltip-text")).toBeNull(); // no empty text node
+  });
+
   test("pending hover-intent timer does not fire after unmount", () => {
     jest.useFakeTimers();
     const onHover = jest.fn();

@@ -35,7 +35,7 @@ export function useFaxVerses(version, leftLeaf, rightLeaf) {
         const { pageScale, byPageVerse } = mergeBoxes(boxResponses.filter(Boolean));
         const chapters = await Promise.all(
           chapterRefsForVerseIds(ids).map((ch) =>
-            Promise.resolve(BoMOnlineAPI({ read: [ch] }, { useCache: false }))
+            Promise.resolve(BoMOnlineAPI({ read: [ch] }))
               .then((r) => (r && r.read && r.read[ch]) || null)
               .catch(() => null))
         );
