@@ -258,19 +258,40 @@
 }
 
 .single-witnesses .witness-hero-facts {
+    margin: 0;
     display: flex;
-    flex-wrap: wrap;
-    gap: 1.25rem;
-    font-size: 0.85rem;
-    color: #444;
+    flex-direction: column;
 }
 
-.single-witnesses .witness-hero-facts-label {
-    color: #999;
-    font-size: 0.7rem;
+.single-witnesses .witness-fact {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.45rem 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.single-witnesses .witness-fact:last-child {
+    border-bottom: none;
+}
+
+.single-witnesses .witness-hero-facts dt {
+    margin: 0;
+    color: #8a8a8a;
+    font-size: 0.66rem;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-right: 0.4em;
+    letter-spacing: 0.6px;
+    white-space: nowrap;
+}
+
+.single-witnesses .witness-hero-facts dd {
+    margin: 0;
+    color: #222;
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-align: right;
 }
 
 .single-witnesses .witness-bio {

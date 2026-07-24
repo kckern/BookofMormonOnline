@@ -195,14 +195,20 @@ const SingleWitness = ({ witness, sourceSlug }) => {
                             <img src={`${assetUrl}/history/witnesses/people/${witness.slug}.jpg`} alt={witness.name} />
                         </div>
                         <div className='witness-hero-bio'>
-                            <div className='witness-hero-facts'>
-                                {witness.birthday && <div><span className='witness-hero-facts-label'>Born</span> {displayDate(witness.birthday)}</div>}
-                                {witnessAge !== null && !Number.isNaN(witnessAge) && (
-                                    <div><span className='witness-hero-facts-label'>Age in 1829</span> {witnessAge}</div>
+                            <dl className='witness-hero-facts'>
+                                {witness.birthday && (
+                                    <div className='witness-fact'><dt>Born</dt><dd>{displayDate(witness.birthday)}</dd></div>
                                 )}
-                                {witness.excommunication && <div><span className='witness-hero-facts-label'>Excommunicated</span> {displayDate(witness.excommunication)}</div>}
-                                {witness.deathday && <div><span className='witness-hero-facts-label'>Died</span> {displayDate(witness.deathday)}</div>}
-                            </div>
+                                {witnessAge !== null && !Number.isNaN(witnessAge) && (
+                                    <div className='witness-fact'><dt>Age in 1829</dt><dd>{witnessAge}</dd></div>
+                                )}
+                                {witness.excommunication && (
+                                    <div className='witness-fact'><dt>Excommunicated</dt><dd>{displayDate(witness.excommunication)}</dd></div>
+                                )}
+                                {witness.deathday && (
+                                    <div className='witness-fact'><dt>Died</dt><dd>{displayDate(witness.deathday)}</dd></div>
+                                )}
+                            </dl>
                             <div className='witness-bio'>
                                 {witness.bio
                                     ? witness.bio
