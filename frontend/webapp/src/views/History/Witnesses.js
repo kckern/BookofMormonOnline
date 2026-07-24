@@ -183,47 +183,49 @@ const SingleWitness = ({ witness, sourceSlug }) => {
         <div id="page" className='single-witnesses'>
             <WitnessBreadcrumbs witness={witness} />
 
-            <div className='witness-hero'>
-                <div className='witness-hero-portrait'>
-                    <img src={`${assetUrl}/history/witnesses/people/${witness.slug}.jpg`} alt={witness.name} />
-                </div>
-                <div className='witness-hero-bio'>
-                    <div className='witness-hero-facts'>
-                        {witness.birthday && <div><span className='witness-hero-facts-label'>Born</span> {displayDate(witness.birthday)}</div>}
-                        {witnessAge !== null && !Number.isNaN(witnessAge) && (
-                            <div><span className='witness-hero-facts-label'>Age in 1829</span> {witnessAge}</div>
-                        )}
-                        {witness.excommunication && <div><span className='witness-hero-facts-label'>Excommunicated</span> {displayDate(witness.excommunication)}</div>}
-                        {witness.deathday && <div><span className='witness-hero-facts-label'>Died</span> {displayDate(witness.deathday)}</div>}
+            <div className='witness-layout'>
+                <aside className='witness-rail'>
+                    <div className='witness-hero'>
+                        <div className='witness-hero-portrait'>
+                            <img src={`${assetUrl}/history/witnesses/people/${witness.slug}.jpg`} alt={witness.name} />
+                        </div>
+                        <div className='witness-hero-bio'>
+                            <div className='witness-hero-facts'>
+                                {witness.birthday && <div><span className='witness-hero-facts-label'>Born</span> {displayDate(witness.birthday)}</div>}
+                                {witnessAge !== null && !Number.isNaN(witnessAge) && (
+                                    <div><span className='witness-hero-facts-label'>Age in 1829</span> {witnessAge}</div>
+                                )}
+                                {witness.excommunication && <div><span className='witness-hero-facts-label'>Excommunicated</span> {displayDate(witness.excommunication)}</div>}
+                                {witness.deathday && <div><span className='witness-hero-facts-label'>Died</span> {displayDate(witness.deathday)}</div>}
+                            </div>
+                            <div className='witness-bio'>
+                                {witness.bio
+                                    ? witness.bio
+                                    : <span className='witness-bio-placeholder'>Biography coming soon.</span>}
+                            </div>
+                        </div>
                     </div>
-                    <div className='witness-bio'>
-                        {witness.bio
-                            ? witness.bio
-                            : <span className='witness-bio-placeholder'>Biography coming soon.</span>}
-                    </div>
-                </div>
-            </div>
 
-            {sources && sources.length > 0 && (
-                <WitnessLifeHeatmap
-                    witness={witness}
-                    sources={sources}
-                    selectedYearMonth={selectedYearMonth}
-                    onSelectYearMonth={setSelectedYearMonth}
-                />
-            )}
-
-            <div className='witness-sources'>
-                {sources === null && <div className='witness-sources-loading'>Loading sources…</div>}
-                {sources && sources.length === 0 && (
-                    <div className='witness-sources-empty'>No sources available for this witness.</div>
-                )}
-                {visibleSources && visibleSources.length === 0 && sources && sources.length > 0 && (
-                    <div className='witness-sources-empty'>No sources in this month.</div>
-                )}
-                {visibleSources && visibleSources.length > 0 && (
-                    <div className='witness-sources-grid'>
-                        {visibleSources.map((doc, i) => (
+                    {sources && sources.length > 0 && (
+                        <WitnessLifeHeatmap
+                            witness={witness}
+                            sources={sources}
+                            selectedYearMonth={selectedYearMonth}
+                            onSelectYearMonth={setSelectedYearMonth}
+                        />
+                    )}
+                </aside>
+                <main className='witness-sources'>
+                    {sources === null && <div className='witness-sources-loading'>Loading sources…</div>}
+                    {sources && sources.length === 0 && (
+                        <div className='witness-sources-empty'>No sources available for this witness.</div>
+                    )}
+                    {visibleSources && visibleSources.length === 0 && sources && sources.length > 0 && (
+                        <div className='witness-sources-empty'>No sources in this month.</div>
+                    )}
+                    {visibleSources && visibleSources.length > 0 && (
+                        <div className='witness-sources-grid'>
+                            {visibleSources.map((doc, i) => (
                             <div
                                 key={doc.slug || i}
                                 className='historycard card'
@@ -268,8 +270,9 @@ const SingleWitness = ({ witness, sourceSlug }) => {
                                 </div>
                             </div>
                         ))}
-                    </div>
-                )}
+                        </div>
+                    )}
+                </main>
             </div>
         </div>
     </div>;
