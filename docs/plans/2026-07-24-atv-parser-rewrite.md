@@ -4,7 +4,7 @@
 
 **Goal:** Replace the string-surgery parser in `frontend/webapp/src/views/_Common/ATV.js` with a pure, tested `parseApparatus()` that never throws — removing two entries that currently blank the whole page and 136 readings that render corrupted text — with no intended visual change.
 
-**Architecture:** Split parsing from rendering. A new pure module `ATV/parseATV.js` turns an apparatus HTML block into a data structure (`segments → units → readings → states`). A new `ATV/witnesses.js` holds the sigla reference table. `ATVHeader` becomes a thin renderer over that data, emitting the same DOM it emits today. No React, no DOM, no network in the parser — it is fully unit-testable.
+**Architecture:** Split parsing from rendering. A new pure module `ATV/parseATV.js` turns an apparatus HTML block into a data structure (`segments → units → readings → states`). A new `ATV/apparatus.js` holds the sigla reference table. `ATVHeader` becomes a thin renderer over that data, emitting the same DOM it emits today. No React, no DOM, no network in the parser — it is fully unit-testable.
 
 **Tech Stack:** React 17 (CRA), Jest via `react-scripts test`, `@testing-library/react`, `html-react-parser`, `react-tooltip` v4.
 
@@ -35,7 +35,9 @@ Grammar:
 1. **2 entries crash the current parser** — `1080616101` (trailing space before `|`) and `1610416602` (nested `[Mosiah?]` brackets). There are **no error boundaries anywhere in the frontend**, so either one blanks the entire page.
 2. **136 readings render corrupted text** because sigla are stripped with `String.replace` (first occurrence) instead of positionally.
 3. **100 readings carry two or more correction codes** — a reading is a *sequence of states*, not a string plus a flag. `of >js NULL >js of` means present → omitted → present.
-4. **Correction codes appear both spaced and tight** — `&gt; js` (907 occurrences) and `&gt;js` (1,296). The parser must normalise both.
+4. **Correction markers vary by ENTITY ENCODING, not by whitespace.** Measured across all 4,528 header blocks: `&gt;js` 635, literal `>js` 17, and `&gt; js` (spaced) exactly **1**. The en-dash code is stored as `&gt;&ndash;` (48 occurrences) and **never** as a literal `–` (0). So the parser must decode a small closed set of entities — `&gt;`, `&ndash;`, `&amp;` — before looking a code up. Bare markers with no code (~908) are the single most common form, ahead of `js`.
+
+> **Corrected 2026-07-24.** An earlier draft of this plan claimed "907 spaced vs 1,296 tight". That was a measurement error: the regex counted a bare `&gt;` followed by a word (`&gt; headed`) as a spaced code, which is why its output contained junk codes like `>the` and `>wor`. Whitespace is a non-issue; entity encoding is the real hazard. The corrected vocabulary lives in `ATV/apparatus.js`.
 
 ---
 
@@ -67,14 +69,14 @@ Expected: existing `_Common` tests pass. If `npx jest` is used instead, it will 
 Move the sigla data out of `ATV.js` into its own module so both the parser and (later) the renderer can use it, and so the unused provenance text finally has a home.
 
 **Files:**
-- Create: `frontend/webapp/src/views/_Common/ATV/witnesses.js`
-- Test: `frontend/webapp/src/views/_Common/ATV/__tests__/witnesses.test.js`
+- Create: `frontend/webapp/src/views/_Common/ATV/apparatus.js`
+- Test: `frontend/webapp/src/views/_Common/ATV/__tests__/apparatus.test.js`
 
 **Step 1: Write the failing test**
 
 ```js
-// frontend/webapp/src/views/_Common/ATV/__tests__/witnesses.test.js
-import { WITNESSES, SIGLA_ORDER, CHANGES, isSiglum } from "../witnesses";
+// frontend/webapp/src/views/_Common/ATV/__tests__/apparatus.test.js
+import { WITNESSES, SIGLA_ORDER, CHANGES, BARE_CHANGE, decodeMarker, isSiglum } from "../apparatus";
 
 test("covers exactly the 22 sigla, in chronological order", () => {
   expect(SIGLA_ORDER.join("")).toBe("01ABCDEFGHIJKLMNOPQRST");
@@ -96,11 +98,24 @@ test("isSiglum accepts known letters and rejects everything else", () => {
   expect(isSiglum("")).toBe(false);
 });
 
-test("correction codes include the multi-character forms found in the data", () => {
+test("correction codes cover every form attested in the corpus", () => {
   expect(CHANGES["js"]).toMatch(/Joseph Smith/);
   expect(CHANGES["jg"]).toMatch(/John Gilbert/);
   expect(CHANGES["%"]).toMatch(/erasure/);
-  expect(CHANGES[""]).toBeTruthy(); // bare ">" — 632 occurrences
+  // Attested counts, header blocks: js 635, + 335, % 125, jg 94, – 48,
+  // ? 31, p 15, %? 6, %+ 4, ++ 2. All must resolve.
+  for (const code of ["js", "jg", "+", "%", "p", "–", "+–", "%+", "++", "?", "%?"]) {
+    expect(typeof CHANGES[code]).toBe("string");
+    expect(CHANGES[code].length).toBeGreaterThan(0);
+  }
+  expect(CHANGES[""]).toBeUndefined();      // bare marker is BARE_CHANGE, not a key
+  expect(BARE_CHANGE).toBeTruthy();
+});
+
+test("decodeMarker normalises the entity forms the corpus actually uses", () => {
+  // `&gt;&ndash;` occurs 48 times; a literal `–` after a marker occurs 0 times.
+  expect(decodeMarker("&gt;&ndash;")).toBe(">–");
+  expect(CHANGES[decodeMarker("&ndash;")]).toBeTruthy();
 });
 ```
 
@@ -108,17 +123,17 @@ test("correction codes include the multi-character forms found in the data", () 
 
 ```bash
 cd frontend/webapp
-CI=true npx react-scripts test --testPathPattern="ATV/__tests__/witnesses" --watchAll=false
+CI=true npx react-scripts test --testPathPattern="ATV/__tests__/apparatus" --watchAll=false
 ```
 
-Expected: FAIL — `Cannot find module '../witnesses'`.
+Expected: FAIL — `Cannot find module '../apparatus'`.
 
 **Step 3: Write the module**
 
 Copy the `key` and `changes` objects verbatim out of `frontend/webapp/src/views/_Common/ATV.js:5-40` and reshape. Keep the exact wording of the labels and provenance strings — they are bibliographic citation and must not be paraphrased.
 
 ```js
-// frontend/webapp/src/views/_Common/ATV/witnesses.js
+// frontend/webapp/src/views/_Common/ATV/apparatus.js
 
 /**
  * The 22 witnesses to the Book of Mormon text, in chronological order, as used
@@ -137,21 +152,36 @@ export const SIGLA_ORDER = ["0", "1", "A", "B", "C", "D", "E", "F", "G", "H", "I
 /**
  * In-document correction codes. Keyed WITHOUT the leading ">" so the parser can
  * normalise `&gt;js`, `&gt; js` and a bare `&gt;` through one lookup.
- * "" is the bare ">" (632 occurrences — the most common form after `js`).
+ * Bare markers (no code, ~908 — the MOST common form) are BARE_CHANGE, not a
+ * key here: an empty-string key would match at every position in a
+ * longest-match tokeniser.
  */
-export const CHANGES = {
+export const CHANGES = Object.freeze({
+  // --- Skousen's legend, verbatim ---
   "+": "change w/ more ink",
   "–": "change w/ less ink",
   "%": "change w/ erasure of the original ink",
   p: "correction is in pencil",
-  b: "correction is in blue ink",
+  b: "correction is in blue ink", // in the published legend; 0 occurrences in our corpus
   jg: "corrected by John Gilbert",
   js: "corrected by Joseph Smith",
   "+–": "correction was heavy in ink flow but the second part was weak",
+  // --- editorial: OUR wording, not Skousen's, for forms his legend omits ---
   "%+": "erasure, then a heavier correction",
   "++": "two successive heavy corrections",
-  "": "change",
-};
+  "?": "reading uncertain",
+  "%?": "erasure, reading uncertain",
+});
+
+/** Bare marker (no code) — ~908 occurrences, the most common form. Editorial wording. */
+export const BARE_CHANGE = "change";
+
+/**
+ * Correction markers are entity-encoded in the corpus (`&gt;`, `&ndash;`) and
+ * only rarely literal. Decode this closed set before a CHANGES lookup.
+ */
+export const decodeMarker = (s) =>
+  s.replace(/&gt;/g, ">").replace(/&ndash;/g, "–").replace(/&amp;/g, "&");
 
 export const isSiglum = (ch) => Object.prototype.hasOwnProperty.call(WITNESSES, ch);
 ```
@@ -159,7 +189,7 @@ export const isSiglum = (ch) => Object.prototype.hasOwnProperty.call(WITNESSES, 
 **Step 4: Run the test to verify it passes**
 
 ```bash
-CI=true npx react-scripts test --testPathPattern="ATV/__tests__/witnesses" --watchAll=false
+CI=true npx react-scripts test --testPathPattern="ATV/__tests__/apparatus" --watchAll=false
 ```
 
 Expected: PASS, 4 tests.
@@ -307,7 +337,7 @@ Expected: FAIL — `isApparatus is not a function`.
 **Step 3: Implement**
 
 ```js
-import { isSiglum } from "./witnesses";
+import { isSiglum } from "./apparatus";
 
 /** Trailing run of sigla on a reading, or null. Trims first — the data has
  *  `"… 1 |"` with a trailing space, which anchored matching would miss. */
@@ -432,7 +462,7 @@ test("a reading with no correction is a single state", () => {
 });
 
 test("normalises both `&gt;js` and `&gt; js` to the same code", () => {
-  // 1,296 tight vs 907 spaced in the corpus — both are the same correction.
+  // 635 tight vs 1 spaced; the real variance is entity vs literal (17 literal `>js`).
   const tight = parseStates("thing &gt;js NULL");
   const spaced = parseStates("<em>to be</em> &gt; js <em>is</em>");
   expect(tight[1].via.code).toBe("js");
@@ -478,7 +508,7 @@ Expected: FAIL — `parseStates is not a function`.
 **Step 3: Implement**
 
 ```js
-import { CHANGES, isSiglum } from "./witnesses";
+import { CHANGES, BARE_CHANGE, decodeMarker, isSiglum } from "./apparatus";
 
 const OMITTED = /^(NULL)?$/;
 
@@ -486,9 +516,10 @@ const OMITTED = /^(NULL)?$/;
  * Split a reading's content on correction markers into ordered states.
  * states[0] is the original; each later state records the code that produced it.
  *
- * Markers are `&gt;` (or a literal ">") optionally followed by a code, with
- * optional whitespace between the two — the corpus has both `&gt;js` (1,296)
- * and `&gt; js` (907), and 632 bare `&gt;`.
+ * Markers are `&gt;` (635 with `js`) or, rarely, a literal ">" (17), optionally
+ * followed by a code. Decode entities FIRST via decodeMarker() — the en-dash
+ * code is stored as `&ndash;` (48) and never as a literal `–` (0). A marker
+ * with no code (~908, the most common form) yields `code: null`.
  */
 export function parseStates(content) {
   const MARKER = /&gt;\s*([a-z]{1,2}|[+%–b p]{1,2})?(?=\s)|&gt;\s*/g;
@@ -860,7 +891,7 @@ import React from "react";
 import Parser from "html-react-parser";
 import ReactTooltip from "react-tooltip";
 import { parseApparatus } from "./ATV/parseATV";
-import { WITNESSES } from "./ATV/witnesses";
+import { WITNESSES } from "./ATV/apparatus";
 
 const tipFor = (sigla) => sigla.map((s) => WITNESSES[s]?.label).filter(Boolean).join("; ");
 
