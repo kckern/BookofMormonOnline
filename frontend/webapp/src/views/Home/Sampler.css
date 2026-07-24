@@ -1399,7 +1399,7 @@ html[data-theme="dark"] .tileMoreLink:hover { background: rgba(147, 198, 239, 0.
    ================================================================ */
 .chiasmusTileHead { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 0.4rem; }
 .chiasmusTileHeadTop { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; min-width: 0; }
-.chiasmusTileHead .chiasmGlyph { flex: 0 0 auto; opacity: 0.9; }
+.chiasmusTileHead .chiasmGlyph { flex: 0 0 auto; opacity: 0.9; order: 1; }
 .chiasmusTileIdent { display: flex; align-items: center; gap: 0.45rem; min-width: 0; }
 .chiasmusTileAvatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex: 0 0 auto; }
 .chiasmusTileIdentText { display: flex; flex-direction: column; min-width: 0; gap: 0.05rem; }
