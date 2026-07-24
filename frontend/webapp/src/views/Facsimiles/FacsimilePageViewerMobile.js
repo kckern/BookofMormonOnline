@@ -244,26 +244,6 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
 
   return (
     <div className="faxMobileViewer">
-      {/* Sticky header — current page + reference */}
-      <div className="faxScrollHeader">
-        <span className="hdr-page">Page {currentLeaf?.faxPageSlug ?? ''}</span>
-        {currentLeaf?.pageReference && (
-          <span
-            className="hdr-ref scripture_link"
-            role="button"
-            tabIndex={0}
-            onClick={() => openScripture(currentLeaf.pageReference)}
-            onKeyDown={(e) => { if (e.key === 'Enter') openScripture(currentLeaf.pageReference); }}
-          >{currentLeaf.pageReference}</span>
-        )}
-        <button
-          type="button"
-          className="faxScrubToggle"
-          aria-label="Navigate pages"
-          onClick={() => { setScrubValue(currentIndex); setScrubOpen((o) => !o); }}
-        >⇅</button>
-      </div>
-
       {/* Virtualized scroll column */}
       <div className="faxScrollColumn" ref={scrollRef} onScroll={onScroll}>
         {!ready ? (
@@ -276,6 +256,16 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
           </>
         )}
       </div>
+
+      {/* Floating trigger (bottom-left) for the page thumbscroller */}
+      {!scrubOpen && (
+        <button
+          type="button"
+          className="faxScrubFab"
+          aria-label="Navigate pages"
+          onClick={() => { setScrubValue(currentIndex); setScrubOpen(true); }}
+        >⇅</button>
+      )}
 
       {/* Scrubber sheet — fling across the book + jump-to-reference */}
       {scrubOpen && (

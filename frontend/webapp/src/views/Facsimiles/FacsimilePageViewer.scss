@@ -448,37 +448,25 @@
   height: 100%;
   background: #e9e7e2;
 
-  .faxScrollHeader {
-    flex: 0 0 auto;
+  /* Floating thumbscroller trigger, bottom-left, clearing the global .bottom-nav (4rem) */
+  .faxScrubFab {
+    position: fixed;
+    left: 0.9rem;
+    bottom: 4.75rem;
+    z-index: 401;
+    width: 48px;
+    height: 48px;
+    border: 0;
+    border-radius: 50%;
+    background: #6b5330;
+    color: #fff;
+    font-size: 1.4rem;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.35rem 0.75rem;
-    background: #fff;
-    border-bottom: 1px solid #ddd;
-    font-size: 0.85rem;
-    z-index: 2;
-
-    .hdr-page { font-weight: 700; color: #333; white-space: nowrap; }
-    .hdr-ref {
-      color: #345496;
-      cursor: pointer;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      flex: 1 1 auto;
-    }
-    .faxScrubToggle {
-      flex: 0 0 auto;
-      border: 1px solid #ccc;
-      background: #f6f6f6;
-      border-radius: 6px;
-      width: 34px;
-      height: 30px;
-      font-size: 1.1rem;
-      line-height: 1;
-      cursor: pointer;
-    }
+    justify-content: center;
   }
 
   .faxScrollColumn {
@@ -617,7 +605,6 @@
 
 html[data-theme="dark"] .faxMobileViewer {
   background: #1c1c1c;
-  .faxScrollHeader { background: #262626; border-bottom-color: #3a3a3a; .hdr-page { color: #ddd; } .hdr-ref { color: #93c6ef; } .faxScrubToggle { background: #333; border-color: #444; color: #ddd; } }
   .faxScrollRail { background: linear-gradient(#242424, #1e1e1e); border-color: #333; color: #999; .rail-ref { color: #93c6ef; } }
   .faxScrubSheet { background: #262626; border-top-color: #3a3a3a; .scrub-jump input { background: #1c1c1c; border-color: #444; color: #eee; } }
 }
