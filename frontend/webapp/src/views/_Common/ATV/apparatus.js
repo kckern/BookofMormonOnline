@@ -43,12 +43,19 @@ export const WITNESSES = deepFreezeEntries({
 export const SIGLA_ORDER = Object.freeze(["0", "1", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T"]);
 
 /**
- * Correction markers appear in the corpus as HTML entities (`&gt;`, `&ndash;`)
- * and, rarely, as literal characters (17 literal `>js` vs 635 `&gt;js`).
- * Decode this closed set before looking a code up in CHANGES.
+ * Correction markers appear in the corpus as HTML entities (`&gt;` 2,203,
+ * `&ndash;` 51) and, rarely, as literal characters (17 literal `>js` vs 635
+ * `&gt;js`). Decode this closed two-entity set before looking a code up in
+ * CHANGES.
+ *
+ * Marker tokens only. NEVER call this on reading content. Content entities
+ * (`&hellip;`, `&mdash;`, `&rsquo;`, `&#120034;`, `&#9312;`) must reach the
+ * renderer still encoded. `&amp;` in particular is deliberately not decoded:
+ * its 312 occurrences are all the manuscript's own ampersand standing for
+ * "and", never a correction code.
  */
 export const decodeMarker = (s) =>
-  s.replace(/&gt;/g, ">").replace(/&ndash;/g, "–").replace(/&amp;/g, "&");
+  s.replace(/&gt;/g, ">").replace(/&ndash;/g, "–");
 
 /**
  * In-document correction codes, keyed on DECODED characters and WITHOUT the
@@ -96,4 +103,18 @@ export const CHANGE_CODES = Object.freeze(
  */
 export const BARE_CHANGE = "change";
 
-export const isSiglum = (ch) => Object.prototype.hasOwnProperty.call(WITNESSES, ch);
+/**
+ * Description for a correction code. Bare marker (null/undefined/"") ->
+ * BARE_CHANGE; unknown code -> null, so callers can surface it rather than
+ * mislabel it as a plain change. Guarded against inherited properties, since
+ * the code comes from arbitrary post-marker text and `CHANGES["constructor"]`
+ * would otherwise be a truthy function.
+ */
+export function describeChange(code) {
+  if (code === null || code === undefined || code === "") return BARE_CHANGE;
+  return Object.prototype.hasOwnProperty.call(CHANGES, code) ? CHANGES[code] : null;
+}
+
+/** True for the 22 witness sigla. Strings only — the number 0 is not siglum "0". */
+export const isSiglum = (ch) =>
+  typeof ch === "string" && Object.prototype.hasOwnProperty.call(WITNESSES, ch);

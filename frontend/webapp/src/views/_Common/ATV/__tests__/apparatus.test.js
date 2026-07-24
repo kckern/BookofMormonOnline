@@ -6,7 +6,18 @@ import {
   BARE_CHANGE,
   isSiglum,
   decodeMarker,
+  describeChange,
 } from "../apparatus";
+
+/** FNV-1a over UTF-16 code units — stable, dependency-free, order-sensitive. */
+const hashOf = (s) => {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h.toString(16).padStart(8, "0");
+};
 
 test("covers exactly the 22 sigla, in chronological order", () => {
   expect(SIGLA_ORDER.join("")).toBe("01ABCDEFGHIJKLMNOPQRST");
@@ -47,6 +58,40 @@ test("isSiglum accepts known letters and rejects everything else", () => {
   expect(isSiglum("a")).toBe(false);
   expect(isSiglum("")).toBe(false);
   expect(isSiglum("constructor")).toBe(false); // inherited, not own
+  // no coercion: "0" is a siglum, the number 0 is not
+  expect(isSiglum(0)).toBe(false);
+  expect(isSiglum(1)).toBe(false);
+  expect(isSiglum(null)).toBe(false);
+  expect(isSiglum(undefined)).toBe(false);
+});
+
+test("the 22 citations still read exactly as transcribed from ATV.js", () => {
+  // A failure here means the labels or provenance paragraphs drifted, OR someone
+  // deliberately re-transcribed them. Re-verify against the `key` object in
+  // ATV.js character by character before updating this constant — these strings
+  // are bibliographic citation, not prose to be improved.
+  const digest = SIGLA_ORDER.map((s) => WITNESSES[s].label + WITNESSES[s].provenance).join(" ");
+  expect(digest).toHaveLength(4035);
+  expect(hashOf(digest)).toBe("1a9f8d70");
+});
+
+test("the correction-code table reads exactly as specified", () => {
+  expect(CHANGES).toEqual({
+    "+": "change w/ more ink",
+    "–": "change w/ less ink",
+    "%": "change w/ erasure of the original ink",
+    p: "correction is in pencil",
+    b: "correction is in blue ink",
+    jg: "corrected by John Gilbert",
+    js: "corrected by Joseph Smith",
+    "+–": "correction was heavy in ink flow but the second part was weak",
+    "%+": "erasure, then a heavier correction",
+    "++": "two successive heavy corrections",
+    "?": "change is uncertain",
+    "%?": "change w/ erasure, uncertain",
+  });
+  expect(CHANGE_CODES).toEqual(["jg", "js", "+–", "%+", "++", "%?", "+", "–", "%", "p", "b", "?"]);
+  expect(BARE_CHANGE).toBe("change");
 });
 
 test("correction codes include the multi-character forms found in the data", () => {
@@ -87,6 +132,29 @@ test("decodeMarker turns corpus entities into the characters CHANGES is keyed on
   expect(CHANGES[decodeMarker("&gt;+&ndash;").slice(1)]).toBeTruthy();
 });
 
+test("decodeMarker leaves content entities alone", () => {
+  // &amp; is the manuscript's ampersand (312 occurrences, always content, never
+  // a code); task 6 requires it to reach the renderer still encoded.
+  expect(decodeMarker("&amp;")).toBe("&amp;");
+  expect(decodeMarker("a b &amp; c")).toBe("a b &amp; c");
+  for (const entity of ["&hellip;", "&mdash;", "&rsquo;", "&#120034;", "&#9312;"]) {
+    expect(decodeMarker(entity)).toBe(entity);
+  }
+});
+
+test("describeChange covers bare, known and unknown codes", () => {
+  expect(describeChange("js")).toBe(CHANGES["js"]);
+  expect(describeChange("%?")).toBe(CHANGES["%?"]);
+  expect(describeChange(null)).toBe(BARE_CHANGE); // bare ">"
+  expect(describeChange(undefined)).toBe(BARE_CHANGE);
+  expect(describeChange("")).toBe(BARE_CHANGE);
+  // unknown must be null, not BARE_CHANGE — callers surface it, never mislabel it
+  expect(describeChange("zz")).toBeNull();
+  expect(describeChange("J")).toBeNull(); // a siglum, not a code
+  expect(describeChange("constructor")).toBeNull(); // inherited property, not a code
+  expect(describeChange("toString")).toBeNull();
+});
+
 test("the exported tables are frozen", () => {
   expect(Object.isFrozen(WITNESSES)).toBe(true);
   expect(Object.isFrozen(CHANGES)).toBe(true);
@@ -108,7 +176,6 @@ test("witness entries are frozen too, so the citations cannot be rewritten", () 
 });
 
 test("CHANGE_CODES is ordered longest-first for longest-match tokenising", () => {
-  expect([...CHANGE_CODES].sort()).toEqual(Object.keys(CHANGES).sort());
   CHANGE_CODES.forEach((code, i) => {
     if (i > 0) expect(code.length).toBeLessThanOrEqual(CHANGE_CODES[i - 1].length);
   });
