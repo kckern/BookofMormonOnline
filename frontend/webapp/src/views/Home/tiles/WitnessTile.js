@@ -1,8 +1,13 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import { label } from "src/models/Utils";
 import { flatten, clampWords } from "./textUtils";
+
+// Which witness the previous witness tile in the feed featured — so the same
+// principal (David Whitmer has by far the most rows) doesn't clog consecutive
+// tiles as fresh batches append on scroll. Module-scoped, resets per page load.
+let lastFeaturedWitness = null;
 
 const initials = (name) =>
   (name || "")
@@ -11,6 +16,18 @@ const initials = (name) =>
     .slice(0, 2)
     .map((w) => w[0]?.toUpperCase())
     .join("");
+
+// Editorial marks in a money quote — [Name] (supplied referent) and [...] (elision)
+// — are set apart from the quoted words: rendered in grey Roboto, not scripture.
+const BRACKET_RE = /(\[[^\]]*\])/g;
+const withBrackets = (text) =>
+  String(text || "")
+    .split(BRACKET_RE)
+    .map((part, i) =>
+      part.startsWith("[") && part.endsWith("]")
+        ? <span key={i} className="editorialMark">{part}</span>
+        : part
+    );
 
 /**
  * A single featured Book of Mormon witness — Harris, the Cowderys, the Whitmers,
@@ -23,8 +40,17 @@ export default function WitnessTile({ data }) {
   // teaser/transcript (that would fabricate an attribution). Prefer a first-person
   // (witness-voice) quote so the featured card can carry the portrait.
   const witnesses = (data || []).filter((w) => w?.principal && w?.moneyQuote);
-  if (!witnesses.length) return null;
-  const w = witnesses.find((x) => x.isWitnessVoice) || witnesses[0];
+  // Avoid repeating the previous tile's witness (David Whitmer has by far the most
+  // rows); otherwise feature the seeded-first row, so BOTH first-person quotes and
+  // attributed third-party accounts ("Speaker: …") surface across the feed — no
+  // witness-voice bias that would hide the reported accounts.
+  const notLast = witnesses.filter((x) => x.principal !== lastFeaturedWitness);
+  const pool = notLast.length ? notLast : witnesses;
+  const w = pool[0];
+  // Remember who this tile featured so the next witness tile can skip them.
+  // (hook runs unconditionally — before any early return)
+  useEffect(() => { if (w) lastFeaturedWitness = w.principal; }, [w?.principal]);
+  if (!w) return null;
   const quote = clampWords(flatten(w.moneyQuote), 60);
   const source = w.source ? clampWords(flatten(w.source), 18) : null;
   const to = w.witnessSlug ? `/history/witnesses/${w.witnessSlug}` : "/history/witnesses";
@@ -51,7 +77,7 @@ export default function WitnessTile({ data }) {
             <span className="witnessName">{w.speaker || w.principal}</span>
           </span>
           <span className="witnessBody">
-            <blockquote className="witnessStatement">“{quote}”</blockquote>
+            <blockquote className="witnessStatement">&ldquo;{withBrackets(quote)}&rdquo;</blockquote>
             {source ? <span className="witnessSource">{source}</span> : null}
           </span>
         </Link>
@@ -62,7 +88,7 @@ export default function WitnessTile({ data }) {
           <span className="witnessBody">
             <blockquote className="witnessStatement">
               {w.speaker ? <span className="witnessSpeaker">{w.speaker}:</span> : null}{" "}
-              &ldquo;{quote}&rdquo;
+              &ldquo;{withBrackets(quote)}&rdquo;
             </blockquote>
             {source ? <span className="witnessSource">{source}</span> : null}
           </span>
