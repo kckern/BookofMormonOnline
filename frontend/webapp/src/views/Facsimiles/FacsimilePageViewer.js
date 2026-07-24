@@ -455,13 +455,25 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vstate.openVerse]);
 
-  // Open the modal for a verse-targeting URL (ref slug or verse id) once its
-  // spread has loaded.
+  // Open the modal for a verse-targeting URL. Open IMMEDIATELY with a minimal verse
+  // (the crop image needs only version + verse_id) so the modal + backdrop cover the
+  // spread-loading churn instead of flashing the bare spread; then upgrade to the
+  // full verse (text, boxes, page/section) once faxVerses arrives.
+  const deepLinkRef = useRef(null); // { verse_id, full } already dispatched
   useEffect(() => {
-    if (!urlTargetsVerse || urlVerseId == null || vstate.openVerse || !spreadVerses.length) return;
-    const target = spreadVerses.find((v) => v.verse_id === urlVerseId)
+    if (!urlTargetsVerse || urlVerseId == null) return;
+    const full = spreadVerses.find((v) => v.verse_id === urlVerseId)
       || spreadVerses.find((v) => (lookupReference(v.ref)?.verse_ids || []).includes(urlVerseId));
-    if (target) vdispatch({ type: "OPEN", verse: target });
+    const done = deepLinkRef.current;
+    if (full) {
+      if (!done || done.verse_id !== urlVerseId || !done.full) {
+        deepLinkRef.current = { verse_id: urlVerseId, full: true };
+        vdispatch({ type: "OPEN", verse: full });
+      }
+    } else if ((!done || done.verse_id !== urlVerseId) && !vstate.openVerse) {
+      deepLinkRef.current = { verse_id: urlVerseId, full: false };
+      vdispatch({ type: "OPEN", verse: { verse_id: urlVerseId, ref: generateReference([urlVerseId]) } });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [urlTargetsVerse, urlVerseId, spreadVerses]);
 
