@@ -6,6 +6,13 @@ import { createPortal } from "react-dom";
 // safety timers are derived from this so there are no unlinked magic numbers.
 export const FAX_FLIP_MS = 550;
 
+// Cross-fade duration for the post-landing handoff. Once the leaf lands flat on
+// the newly-committed spread, the overlay fades out over this window instead of
+// being hard-cut, so tearing down the fixed/z-4000 compositing layer doesn't
+// flash or snap ("settle into its sink"). Must match the `.settling` opacity
+// transition in FacsimilePageViewer.scss.
+export const FAX_SETTLE_MS = 160;
+
 /**
  * FaxPageFlip — transient overlay that animates one physical leaf turning, then
  * calls onDone(). It does NOT own navigation: FacsimilePageViewer commits the
@@ -33,6 +40,7 @@ export default function FaxPageFlip({
   behindRightUrl,
   leafFrontUrl,
   leafBackUrl,
+  settling,
   onDone,
 }) {
   const { leftStackWidth = 0, leftPageWidth = 0, rightPageWidth = 0, height = 0 } = geom || {};
@@ -71,7 +79,7 @@ export default function FaxPageFlip({
     : undefined;
 
   const layer = (
-    <div className={`faxFlipLayer${vp ? " floating" : ""}`} style={layerStyle} aria-hidden="true">
+    <div className={`faxFlipLayer${vp ? " floating" : ""}${settling ? " settling" : ""}`} style={layerStyle} aria-hidden="true">
       {/* Static behind layer — what the turning leaf uncovers. */}
       <div className="flip-behind" style={{ left: leftStackWidth, width: leftPageWidth, height }}>
         {faceImg(behindLeftUrl)}

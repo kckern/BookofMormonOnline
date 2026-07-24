@@ -118,7 +118,7 @@
        down) when the page references populate after load — no rug pull. */
     min-height: 1.6rem;
     margin-bottom: 0;
-    border-radius: 8px;   /* rounded rail */
+    border-radius: 8px 8px 0 0;   /* rounded rail — top corners only */
 
     h6, a {
       flex: 0 0 auto;   /* hug the reference text; space-between anchors them to the page edges */
@@ -622,6 +622,12 @@ html[data-theme="dark"] .faxMobileViewer {
   z-index: 6;
   pointer-events: none;
   perspective: 2200px;
+  opacity: 1;
+
+  /* Post-landing cross-fade: the leaf has landed flat on the real spread, which
+     is committed underneath. Fade the overlay out (0.16s must match
+     FAX_SETTLE_MS in FaxPageFlip.jsx) instead of hard-cutting the layer. */
+  &.settling { opacity: 0; transition: opacity 0.16s ease; }
 
   /* Portaled to <body> and positioned from the spread rect so the curl floats
      above the toolbar/nav chrome instead of being clipped inside the page area. */

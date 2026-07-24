@@ -8,7 +8,7 @@ import { getRefFromIndex, PageOverlay } from "./Facsimiles";
 import { useElementSize } from "./useElementSize";
 import PageImage from "./PageImage";
 import PageStack from "./PageStack";
-import FaxPageFlip, { FAX_FLIP_MS } from "./FaxPageFlip";
+import FaxPageFlip, { FAX_FLIP_MS, FAX_SETTLE_MS } from "./FaxPageFlip";
 import { openScripture } from "../_Common/ScripturePopup";
 import { prefetchThumbs, isThumbWarm } from "./faxThumbCache";
 import { generateReference, lookupReference } from "scripture-guide";
@@ -41,10 +41,12 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
   // mirrors it so the imperative turn handlers can guard re-entrancy without
   // waiting for a re-render. See docs/plans/2026-07-24-fax-page-turn-animation.md
   const [flip, setFlip] = useState(null);
+  const [settling, setSettling] = useState(false); // true during the post-landing cross-fade
   const flipRef = useRef(null);        // the in-flight turn (null = idle). Lock for animateTo.
   const committedRef = useRef(false);  // has this turn already committed its navigation?
   const committingRef = useRef(false);  // true only while the flip commits its OWN nav
   const flipTimerRef = useRef(null);   // parent-level hard-clear backstop
+  const settleTimerRef = useRef(null); // cross-fade teardown timer
   const prefersReducedMotion = typeof window !== 'undefined'
     && typeof window.matchMedia === 'function'
     && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -54,12 +56,17 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
   // code path (land, external nav, volume switch, unmount).
   const cancelFlip = useCallback(() => {
     if (flipTimerRef.current) { clearTimeout(flipTimerRef.current); flipTimerRef.current = null; }
+    if (settleTimerRef.current) { clearTimeout(settleTimerRef.current); settleTimerRef.current = null; }
     flipRef.current = null;
+    setSettling(false);
     setFlip(null);
   }, []);
 
   // Never leave a timer running past unmount.
-  useEffect(() => () => { if (flipTimerRef.current) clearTimeout(flipTimerRef.current); }, []);
+  useEffect(() => () => {
+    if (flipTimerRef.current) clearTimeout(flipTimerRef.current);
+    if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
+  }, []);
   
   // Check if the pageNumber contains any letters (A-z), which means it's a reference
   const hasLetters = /[A-Za-z]/.test(pageNumber || '');
@@ -431,6 +438,12 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
     committingRef.current = true;
     handlePageChange(p.target);
     committingRef.current = false;
+    // Two-phase teardown: the leaf has landed flat on the new spread, which is
+    // now committed underneath. Cross-fade the overlay out (rather than the
+    // instant unmount below) so the compositing-layer handoff doesn't snap.
+    setSettling(true);
+    if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
+    settleTimerRef.current = setTimeout(() => cancelFlip(), FAX_SETTLE_MS);
   }, [handlePageChange, item.slug, cancelFlip]);
 
   // Tear the overlay down once the live spread has actually moved — whether that
@@ -439,7 +452,12 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
   // missed round-trip can never leave the overlay stuck.
   useEffect(() => {
     const p = flipRef.current;
-    if (p && (adjustedPageIndex !== p.base || item.slug !== p.slug)) cancelFlip();
+    if (!p) return;
+    // Our own landing commit owns teardown (it runs the cross-fade settle, then
+    // cancels). Only force an immediate cancel for EXTERNAL moves we didn't
+    // commit (edition switch / jump mid-flip), where there's nothing to fade to.
+    if (committedRef.current) return;
+    if (adjustedPageIndex !== p.base || item.slug !== p.slug) cancelFlip();
   }, [adjustedPageIndex, item.slug, cancelFlip]);
 
   // Update to move 2 pages at a time
@@ -745,6 +763,7 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
                 behindRightUrl={flip.behindRightUrl}
                 leafFrontUrl={flip.leafFrontUrl}
                 leafBackUrl={flip.leafBackUrl}
+                settling={settling}
                 onDone={handleFlipDone}
               />
             )}
