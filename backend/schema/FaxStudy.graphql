@@ -1,0 +1,15 @@
+extend type Query {
+  """Study page + section (title + slug) for each verse id — for fax verse deep links."""
+  faxVerseLocations(verseIds: [Int!]!): [FaxVerseLocation]
+}
+
+type FaxVerseLocation {
+  verse_id: Int
+  page: FaxStudyRef
+  section: FaxStudyRef
+}
+
+type FaxStudyRef {
+  title: String
+  slug: String
+}

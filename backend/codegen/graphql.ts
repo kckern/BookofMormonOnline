@@ -252,6 +252,19 @@ export type FaxPageRef = {
   ref?: Maybe<Scalars['String']['output']>;
 };
 
+export type FaxStudyRef = {
+  __typename?: 'FaxStudyRef';
+  slug?: Maybe<Scalars['String']['output']>;
+  title?: Maybe<Scalars['String']['output']>;
+};
+
+export type FaxVerseLocation = {
+  __typename?: 'FaxVerseLocation';
+  page?: Maybe<FaxStudyRef>;
+  section?: Maybe<FaxStudyRef>;
+  verse_id?: Maybe<Scalars['Int']['output']>;
+};
+
 export type FaxVersePage = {
   __typename?: 'FaxVersePage';
   editions: Array<FaxEdition>;
@@ -1080,6 +1093,8 @@ export type Query = {
   division?: Maybe<Array<Maybe<Division>>>;
   fax?: Maybe<Array<Maybe<Fax>>>;
   faxIndex?: Maybe<FaxIndex>;
+  /** Study page + section (title + slug) for each verse id — for fax verse deep links. */
+  faxVerseLocations?: Maybe<Array<Maybe<FaxVerseLocation>>>;
   generateToken?: Maybe<Scalars['String']['output']>;
   highlight?: Maybe<HighlightRange>;
   history?: Maybe<Array<Maybe<HistoricalDocument>>>;
@@ -1192,6 +1207,11 @@ export type QueryFaxArgs = {
 
 export type QueryFaxIndexArgs = {
   slug?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryFaxVerseLocationsArgs = {
+  verseIds: Array<Scalars['Int']['input']>;
 };
 
 
@@ -2122,6 +2142,8 @@ export type ResolversTypes = {
   FaxEdition: ResolverTypeWrapper<Partial<FaxEdition>>;
   FaxIndex: ResolverTypeWrapper<Partial<FaxIndex>>;
   FaxPageRef: ResolverTypeWrapper<Partial<FaxPageRef>>;
+  FaxStudyRef: ResolverTypeWrapper<Partial<FaxStudyRef>>;
+  FaxVerseLocation: ResolverTypeWrapper<Partial<FaxVerseLocation>>;
   FaxVersePage: ResolverTypeWrapper<Partial<FaxVersePage>>;
   Float: ResolverTypeWrapper<Partial<Scalars['Float']['output']>>;
   HighlightRange: ResolverTypeWrapper<Partial<HighlightRange>>;
@@ -2248,6 +2270,8 @@ export type ResolversParentTypes = {
   FaxEdition: Partial<FaxEdition>;
   FaxIndex: Partial<FaxIndex>;
   FaxPageRef: Partial<FaxPageRef>;
+  FaxStudyRef: Partial<FaxStudyRef>;
+  FaxVerseLocation: Partial<FaxVerseLocation>;
   FaxVersePage: Partial<FaxVersePage>;
   Float: Partial<Scalars['Float']['output']>;
   HighlightRange: Partial<HighlightRange>;
@@ -2559,6 +2583,19 @@ export type FaxPageRefResolvers<ContextType = AppContext, ParentType extends Res
   imageFile?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   page?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   ref?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type FaxStudyRefResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['FaxStudyRef'] = ResolversParentTypes['FaxStudyRef']> = {
+  slug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  title?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type FaxVerseLocationResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['FaxVerseLocation'] = ResolversParentTypes['FaxVerseLocation']> = {
+  page?: Resolver<Maybe<ResolversTypes['FaxStudyRef']>, ParentType, ContextType>;
+  section?: Resolver<Maybe<ResolversTypes['FaxStudyRef']>, ParentType, ContextType>;
+  verse_id?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -3178,6 +3215,7 @@ export type QueryResolvers<ContextType = AppContext, ParentType extends Resolver
   division?: Resolver<Maybe<Array<Maybe<ResolversTypes['Division']>>>, ParentType, ContextType, Partial<QueryDivisionArgs>>;
   fax?: Resolver<Maybe<Array<Maybe<ResolversTypes['Fax']>>>, ParentType, ContextType, Partial<QueryFaxArgs>>;
   faxIndex?: Resolver<Maybe<ResolversTypes['FaxIndex']>, ParentType, ContextType, Partial<QueryFaxIndexArgs>>;
+  faxVerseLocations?: Resolver<Maybe<Array<Maybe<ResolversTypes['FaxVerseLocation']>>>, ParentType, ContextType, RequireFields<QueryFaxVerseLocationsArgs, 'verseIds'>>;
   generateToken?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, Partial<QueryGenerateTokenArgs>>;
   highlight?: Resolver<Maybe<ResolversTypes['HighlightRange']>, ParentType, ContextType, RequireFields<QueryHighlightArgs, 'query' | 'text'>>;
   history?: Resolver<Maybe<Array<Maybe<ResolversTypes['HistoricalDocument']>>>, ParentType, ContextType, Partial<QueryHistoryArgs>>;
@@ -3716,6 +3754,8 @@ export type Resolvers<ContextType = AppContext> = {
   FaxEdition?: FaxEditionResolvers<ContextType>;
   FaxIndex?: FaxIndexResolvers<ContextType>;
   FaxPageRef?: FaxPageRefResolvers<ContextType>;
+  FaxStudyRef?: FaxStudyRefResolvers<ContextType>;
+  FaxVerseLocation?: FaxVerseLocationResolvers<ContextType>;
   FaxVersePage?: FaxVersePageResolvers<ContextType>;
   HighlightRange?: HighlightRangeResolvers<ContextType>;
   HistoricalDocument?: HistoricalDocumentResolvers<ContextType>;

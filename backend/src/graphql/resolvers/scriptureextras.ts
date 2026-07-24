@@ -59,6 +59,59 @@ function pageForVerse(idx: PageIdxEntry[], v: number): PageIdxEntry | null {
   return ans;
 }
 
+// ─── verse → study page + section (title + slug) ────────────────────────────────
+// Same nearest-at/below-verse resolution as the page index, but carries both the
+// page (bom_page + PG slug) and the section (bom_section + SC slug) so a verse can
+// show "Page ▸ Section" with study links. Built once per process and cached.
+type StudyRef = { title: string | null; slug: string | null };
+type StudyLocEntry = { v: number; weight: number; page: StudyRef; section: StudyRef };
+let studyLocPromise: Promise<StudyLocEntry[]> | null = null;
+function loadStudyLocIndex(db: AppContext['db']): Promise<StudyLocEntry[]> {
+  if (!studyLocPromise) {
+    studyLocPromise = (async () => {
+      const { rows } = await sql<{
+        v: number; weight: number;
+        pageTitle: string | null; pageSlug: string | null;
+        sectionTitle: string | null; sectionSlug: string | null;
+      }>`
+        SELECT t.min_verse_id AS v, p.weight AS weight,
+               p.title AS pageTitle, ps.slug AS pageSlug,
+               sec.title AS sectionTitle, ss.slug AS sectionSlug
+        FROM bom_text t
+        JOIN bom_page p ON p.guid = t.page
+        LEFT JOIN bom_slug ps ON ps.link = t.page AND ps.type = 'PG'
+        LEFT JOIN bom_section sec ON sec.guid = t.section
+        LEFT JOIN bom_slug ss ON ss.link = t.section AND ss.type = 'SC'
+        WHERE t.page IS NOT NULL AND t.min_verse_id > 0
+      `.execute(db);
+      const byV = new Map<number, StudyLocEntry>();
+      for (const r of rows) {
+        const v = Number(r.v);
+        const weight = Number(r.weight);
+        const ex = byV.get(v);
+        if (!ex || weight < ex.weight) {
+          byV.set(v, {
+            v, weight,
+            page: { title: r.pageTitle ?? null, slug: r.pageSlug ?? null },
+            section: { title: r.sectionTitle ?? null, slug: r.sectionSlug ?? null },
+          });
+        }
+      }
+      return [...byV.values()].sort((a, b) => a.v - b.v);
+    })();
+  }
+  return studyLocPromise;
+}
+function locForVerse(idx: StudyLocEntry[], v: number): StudyLocEntry | null {
+  let lo = 0, hi = idx.length - 1, ans: StudyLocEntry | null = null;
+  while (lo <= hi) {
+    const m = (lo + hi) >> 1;
+    const e = idx[m];
+    if (e && e.v <= v) { ans = e; lo = m + 1; } else hi = m - 1;
+  }
+  return ans;
+}
+
 // ─── Commentary.preview ───────────────────────────────────────────────────────
 
 export function buildPreview(text: string, isNote: number): string | null {
@@ -137,6 +190,17 @@ interface PassageNotesCtx {
 
 export const scriptureextrasResolvers: Resolvers = {
   Query: {
+    /** Study page + section (title + slug) for each verse id (fax verse links). */
+    faxVerseLocations: async (_root, args, ctx: AppContext) => {
+      const ids = ((args.verseIds ?? []) as number[]).map(Number).filter(Number.isFinite);
+      if (!ids.length) return [] as never;
+      const idx = await loadStudyLocIndex(ctx.db);
+      return ids.map((v) => {
+        const e = locForVerse(idx, v);
+        return { verse_id: v, page: e?.page ?? null, section: e?.section ?? null };
+      }) as never;
+    },
+
     /**
      * chiasmus — returns all chiasms (or filtered by id), lines resolved by
      * Chiasmus.lines field resolver.
