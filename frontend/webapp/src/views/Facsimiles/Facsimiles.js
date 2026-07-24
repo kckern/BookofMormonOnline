@@ -46,7 +46,13 @@ function FacsimileViewer({ item, volumeOrder, currentVolumeIndex }) {
   useEffect(() => {
     if (!item.indexRef) return;
     const { indexRef, pgfirstVerse } = item || {};
-    const blankPageCount = pgoffset + pgfirstVerse - 1;
+    // Placeholders skip the leading CONTENT pages (image files 1..pgfirstVerse-1)
+    // that precede the first indexed page, so getRefFromIndex — which is keyed by
+    // image-file number — lands pages[0] on image file `pgfirstVerse`. pgoffset
+    // (front-matter leaves) must NOT be added here: front-matter leaves have i<=0
+    // and never index into real tuples. Adding pgoffset shifted every reference
+    // by pgoffset on front-matter editions. See docs/audits/2026-07-24-fax-page-numbering-ssot.md.
+    const blankPageCount = pgfirstVerse - 1;
     let cancelled = false;
     BoMOnlineAPI({ faxIndex: indexRef })
       .then((r) => {
