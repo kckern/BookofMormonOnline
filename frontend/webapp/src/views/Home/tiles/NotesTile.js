@@ -43,10 +43,10 @@ export default function NotesTile({ data }) {
             {anchor ? (
               <>
                 <span className="notesAnchor">{anchor}</span>{" "}
-                <span className="notesQuote">{Parser(noteHtml)}</span>
+                <span className="notesQuote">{Parser(note.text)}</span>
               </>
             ) : (
-              <span className="notesQuote">&ldquo;{Parser(noteHtml)}&rdquo;</span>
+              <span className="notesQuote">&ldquo;{Parser(note.text)}&rdquo;</span>
             )}
             {author ? <span className="notesAttr"> &mdash; {author}</span> : null}
           </div>
