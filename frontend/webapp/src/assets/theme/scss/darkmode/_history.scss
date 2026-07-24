@@ -20,6 +20,8 @@ html[data-theme="dark"] {
   .single-witnesses .witness-hero-facts { color: var(--text-secondary); }
   .single-witnesses .witness-hero-facts-label { color: var(--text-muted); }
   .single-witnesses .witness-bio { color: var(--text-secondary); }
+  .single-witnesses .witness-sources-count { color: var(--text-secondary); }
+  .single-witnesses .witness-filter-chip { background: var(--surface-2); }
   .single-witnesses .witness-sources .historycard { background-color: var(--surface-2); border-color: var(--border); }
   .single-witnesses .witness-sources .historycard:hover { background-color: var(--surface-3); border-color: var(--text-muted); }
   /* redesigned source card — lead quote + support row */
