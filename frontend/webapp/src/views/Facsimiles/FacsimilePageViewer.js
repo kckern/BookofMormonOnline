@@ -77,9 +77,6 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
   const isReference = /[A-Za-z]/.test(pageNumber || '') && /\d/.test(pageNumber || '');
   const totalPages = leafIndex.length;
 
-
-
-
   // Initialize page index based on URL
   useEffect(() => {
     // Special handling for the last page (or any specific page)
@@ -580,13 +577,13 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
             <img
               src={leftPage.thumbAssetUrl}
               alt={`Thumbnail of page ${leftPage.faxPageSlug}`}
-              style={{ width: '50px', height: 'auto' }}
+              style={{ width: '50px', aspectRatio: String(leftRatio || 1 / 1.5) }}
             />
             {rightPage && (
               <img
                 src={rightPage.thumbAssetUrl}
                 alt={`Thumbnail of page ${rightPage.faxPageSlug}`}
-                style={{ width: '50px', height: 'auto' }}
+                style={{ width: '50px', aspectRatio: String(rightRatio || 1 / 1.5) }}
               />
             )}
           </div>

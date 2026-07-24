@@ -295,7 +295,7 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
             />
             {previewLeaf && (
               <div className="scrub-preview">
-                <img src={previewLeaf.thumbAssetUrl} alt="" aria-hidden="true" />
+                <img src={previewLeaf.thumbAssetUrl} alt="" aria-hidden="true" style={{ aspectRatio: String(aspect) }} />
                 <div className="preview-label">
                   {previewLeaf.pageReference || `Page ${previewLeaf.faxPageSlug}`}
                 </div>
