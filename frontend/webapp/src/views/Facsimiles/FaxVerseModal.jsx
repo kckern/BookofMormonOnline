@@ -79,7 +79,13 @@ export default function FaxVerseModal({ verse, version, pageScale = 700, anchorX
             />
           )}
           <div className="faxVerseModal-heading">
-            <div className="faxVerseModal-ref">{verse.ref}</div>
+            {onRead ? (
+              <button type="button" className="faxVerseModal-ref as-link" onClick={() => onRead(verse)} title="Open in the Reader">
+                {verse.ref}
+              </button>
+            ) : (
+              <div className="faxVerseModal-ref">{verse.ref}</div>
+            )}
             {verse.voice && <div className="faxVerseModal-voice">{label(verse.voice)}</div>}
           </div>
           {onNext && (
@@ -110,14 +116,6 @@ export default function FaxVerseModal({ verse, version, pageScale = 700, anchorX
         ) : null}
 
         {verse.text && <p className="faxVerseModal-text">{verse.text}</p>}
-
-        {onRead && (
-          <div className="faxVerseModal-actions">
-            <button type="button" className="faxVerseModal-read" onClick={() => onRead(verse)}>
-              Read {verse.ref} ›
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );

@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect, useRef, useMemo, useReducer } 
 import { useParams, useHistory, useLocation } from "react-router-dom";
 import ReactTooltip from "react-tooltip";
 import { useSwipe } from "../../models/Utils";
-import { assetUrl } from 'src/models/BoMOnlineAPI';
+import { assetUrl, renderBaseUrl } from 'src/models/BoMOnlineAPI';
 import "./FacsimilePageViewer.scss";
 import { getRefFromIndex, PageOverlay } from "./Facsimiles";
 import { useElementSize } from "./useElementSize";
@@ -510,6 +510,17 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
     if (target) vdispatch({ type: "OPEN", verse: target });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [verseParam, spreadVerses]);
+
+  // Preload the neighbouring verses' crops so prev/next steps paint instantly.
+  useEffect(() => {
+    if (!vstate.openVerse || !item.slug) return;
+    const idx = spreadVerses.findIndex((v) => v.verse_id === vstate.openVerse.verse_id);
+    for (const i of [idx - 1, idx + 1]) {
+      const v = spreadVerses[i];
+      if (v) { const img = new Image(); img.src = `${renderBaseUrl}/fax/render/${item.slug}/crop/wfull/ids/${v.verse_id}.jpg`; }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vstate.openVerse, spreadVerses, item.slug]);
 
   // Commit the navigation the moment the leaf lands. Guard against a stale turn
   // whose edition changed underneath it, and against a double-fire.

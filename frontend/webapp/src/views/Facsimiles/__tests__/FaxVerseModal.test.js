@@ -58,10 +58,11 @@ describe("FaxVerseModal", () => {
     expect(onPrev).toHaveBeenCalledTimes(2);
   });
 
-  test("Read button calls onRead with the verse", () => {
+  test("the reference is a link that calls onRead", () => {
     const onRead = jest.fn();
     render(<FaxVerseModal verse={verse} version="1830" pageScale={700} onRead={onRead} onClose={() => {}} />);
-    fireEvent.click(document.querySelector(".faxVerseModal-read"));
+    expect(document.querySelector(".faxVerseModal-read")).toBeNull(); // no separate button
+    fireEvent.click(document.querySelector(".faxVerseModal-ref.as-link"));
     expect(onRead).toHaveBeenCalledWith(verse);
   });
 

@@ -887,6 +887,15 @@ html[data-theme="dark"] .faxVerseTooltip {
 .faxVerseModal-avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; flex: none; }
 .faxVerseModal-heading { min-width: 0; }
 .faxVerseModal-ref { font-weight: 700; font-size: 1.05rem; }
+.faxVerseModal-ref.as-link {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  color: #6b5330;
+  cursor: pointer;
+  text-align: left;
+  &:hover { text-decoration: underline; }
+}
 .faxVerseModal-voice { font-size: 0.8rem; opacity: 0.75; }
 .faxVerseModal-cutout {
   position: relative;
@@ -895,7 +904,7 @@ html[data-theme="dark"] .faxVerseTooltip {
   background: #efe9dc;
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
   margin: 0 auto;
-  transition: height 0.25s ease, min-height 0.25s ease, width 0.25s ease;
+  transition: height 0.25s ease, aspect-ratio 0.25s ease, width 0.25s ease;
   &.api { width: auto; height: auto; max-width: 100%; }
 }
 .faxVerseModal-crop { display: block; width: 100%; height: auto; }
