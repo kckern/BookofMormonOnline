@@ -87,26 +87,27 @@ export default function FaxVerseModal({ verse, version, pageScale = 700, anchorX
           )}
         </div>
 
-        <div className="faxVerseModal-cutout" style={{ width: cropW, height: cropH }}>
-          {version ? (
-            // Native-res render crop in a hover magnifier. `full` resolution so the
-            // zoom shows real scan detail; the box is reserved above (no rug pull).
+        {version ? (
+          // Native-res render crop in a hover magnifier. Fills the modal width at a
+          // fixed landscape ratio (reserves height -> no rug pull). `wfull` so the
+          // zoom shows real scan detail.
+          <div className="faxVerseModal-cutout landscape">
             <FaxVerseZoom
               key={verse.verse_id}  /* remount so the previous verse's crop can't linger */
               src={`${renderBaseUrl}/fax/render/${version}/crop/wfull/ids/${verse.verse_id}.jpg`}
-              width={cropW}
-              height={cropH}
             />
-          ) : verse.pageAssetUrl ? (
-            // Fallback with no render service: CSS crop of the page scan.
+          </div>
+        ) : verse.pageAssetUrl ? (
+          // Fallback with no render service: CSS crop of the page scan.
+          <div className="faxVerseModal-cutout" style={{ width: cropW, height: cropH }}>
             <img
               key={verse.verse_id}
               src={verse.pageAssetUrl}
               alt=""
               style={{ position: "absolute", width: pageScale * s, maxWidth: "none", left: -box.x * s, top: -box.y * s }}
             />
-          ) : null}
-        </div>
+          </div>
+        ) : null}
 
         {verse.text && <p className="faxVerseModal-text">{verse.text}</p>}
 
