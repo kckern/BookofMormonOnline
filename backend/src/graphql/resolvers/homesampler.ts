@@ -56,7 +56,7 @@ const sampleFax = async (ctx: AppContext, seed: number) => {
   // ROBUSTNESS: the loader's order is weight-only with no tiebreak and is NOT
   // stable across calls; sort by slug so the modulo pick is deterministic.
   const sorted = rows
-    .filter((r) => !r.hide && Number(r.pages) > 0)
+    .filter((r) => !r.hide && !r.com && Number(r.pages) > 0)
     .sort((a, b) => String(a.slug).localeCompare(String(b.slug)));
   return sorted.length ? sorted[seed % sorted.length] : null;
 };
@@ -111,9 +111,10 @@ const sampleFaxPages = async (ctx: AppContext, seed: number) => {
 };
 
 // A few OTHER editions (beyond the sampled one) — the fax tile lists them as
-// entry points so the sampler reads as "we hold a collection". Draws from the
-// FULL catalog (any edition we have on file with a cover), not just the handful
-// with page scans — the faxByFilter loader is fax=1 only, so query directly.
+// entry points so the sampler reads as "we hold a collection". Only editions we
+// actually hold page scans for (fax=1) and that aren't commercial reprints
+// (com=0): the tile deep-links into the viewer, so a cover with no scans behind
+// it is a dead end and paywalled editions don't belong in a free sampler.
 const sampleFaxMore = async (ctx: AppContext, seed: number) => {
   const current = (await sampleFax(ctx, seed)) as { slug?: string } | null;
   const rows = await ctx.db
@@ -122,7 +123,9 @@ const sampleFaxMore = async (ctx: AppContext, seed: number) => {
     .where('hide', '=', 0)
     .where('lang', '=', 'en')
     .where('slug', 'is not', null)
-    .where(sql<boolean>`pages > 0`) // real editions with scans/covers
+    .where('fax', '=', 1) // we hold page scans for it (viewer has something to show)
+    .where('com', '=', 0) // exclude commercial / in-copyright reprints
+    .where(sql<boolean>`pages > 0`)
     .orderBy(seededOrder('slug', seed))
     .execute();
   // a small RANDOM sample of other editions (the tile is a sampler, not the

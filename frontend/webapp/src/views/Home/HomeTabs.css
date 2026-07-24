@@ -114,6 +114,15 @@ html[data-theme="dark"] .home-tabs-reload:hover {
    its list lengths to the height. */
 .home-shell--community {
   max-width: none;
+  /* Align Community's left edge with Explore's centered 1240px column while the
+     right feed still bleeds to the window edge. Explore's content starts at
+     (main-panel-width − 1240)/2 + 1rem (its centering gap + sampler side padding).
+     Community reclaims the main panel's 2em right gutter (body.community-view),
+     so its own width — 100% here — is 2em wider than Explore's; subtract that 2em
+     to land on the same gap. Shifting the whole shell keeps the tab bar + left
+     pane aligned and leaves the feed anchored to the right edge (shell right edge
+     stays at the window edge). max(0) so narrow viewports just left-align. */
+  margin-left: max(0px, calc((100% - 1240px) / 2 + 1rem - 2em));
 }
 .home-shell--community .home-tabs {
   width: 40%; /* ≈ .leftPanelScroll width — bar covers the left column only */
