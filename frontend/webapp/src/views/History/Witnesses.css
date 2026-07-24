@@ -303,18 +303,19 @@
     padding: 2rem 1rem;
 }
 
-.single-witnesses .witness-sources .witness-sources-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 1rem;
-    align-items: start;
+/* Masonry packs the variable-height source cards tighter than a rigid grid. */
+.single-witnesses .witness-sources .my-masonry-grid {
+    display: flex;
+    margin-left: -1rem;
+    width: auto;
 }
-/* clamp the lead quote so rows align; the full quote is in the click-through popup */
-.single-witnesses .witness-sources .historyLead .money_quote_text {
-    display: -webkit-box;
-    -webkit-line-clamp: 6;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+.single-witnesses .witness-sources .my-masonry-grid_column {
+    padding-left: 1rem;
+    background-clip: padding-box;
+}
+/* the life strip spans the full sources column, above the tiles */
+.single-witnesses .witness-sources .witness-life-strip {
+    margin-bottom: 1.25rem;
 }
 
 .single-witnesses .witness-sources .historycard {

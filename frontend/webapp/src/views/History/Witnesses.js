@@ -5,9 +5,14 @@ import './Witnesses.css';
 import { label } from '../../models/Utils';
 import BoMOnlineAPI, { assetUrl } from 'src/models/BoMOnlineAPI';
 import moment from 'moment';
+import Masonry from 'react-masonry-css';
 import WitnessLifeStrip, { matchesYearMonth } from './WitnessLifeStrip';
 import Identicon from '../_Common/Identicon';
 import { useAppController } from "src/contexts/AppControllerContext";
+
+// Masonry column counts by window width — the sources column sits beside a 280px
+// rail, so tiers step down a little earlier than a full-width grid would.
+const breakpointColumnsObj = { default: 4, 1600: 3, 1200: 2, 700: 1 };
 
 // Editorial marks in a money quote — [Name] (supplied referent) / [...] (elision)
 // — set apart from the quoted words (grey Roboto, not scripture).
@@ -205,7 +210,8 @@ const SingleWitness = ({ witness, sourceSlug }) => {
                             </div>
                         </div>
                     </div>
-
+                </aside>
+                <main className='witness-sources'>
                     {sources && sources.length > 0 && (
                         <WitnessLifeStrip
                             witness={witness}
@@ -214,8 +220,6 @@ const SingleWitness = ({ witness, sourceSlug }) => {
                             onSelectYearMonth={setSelectedYearMonth}
                         />
                     )}
-                </aside>
-                <main className='witness-sources'>
                     {sources && sources.length > 0 && (
                         <div className='witness-sources-head'>
                             <span className='witness-sources-count'>
@@ -236,7 +240,7 @@ const SingleWitness = ({ witness, sourceSlug }) => {
                         <div className='witness-sources-empty'>No sources in this month.</div>
                     )}
                     {visibleSources && visibleSources.length > 0 && (
-                        <div className='witness-sources-grid'>
+                        <Masonry breakpointCols={breakpointColumnsObj} className="my-masonry-grid" columnClassName="my-masonry-grid_column">
                             {visibleSources.map((doc, i) => (
                             <div
                                 key={doc.slug || i}
@@ -282,7 +286,7 @@ const SingleWitness = ({ witness, sourceSlug }) => {
                                 </div>
                             </div>
                         ))}
-                        </div>
+                        </Masonry>
                     )}
                 </main>
             </div>
