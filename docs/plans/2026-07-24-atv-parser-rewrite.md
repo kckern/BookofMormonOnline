@@ -576,6 +576,22 @@ git commit -am "feat(atv): parse correction chains as ordered reading states"
 
 Assemble the pieces into the function the renderer will call.
 
+> **Design decision flagged by the Task 2–4 review — settle this before writing code.**
+> The sketch below re-implements the bracket depth-loop inline, because
+> `parseApparatus` needs bracket *positions* (to slice out the interleaved text
+> segments in document order) and its own `warnings` signal for unbalanced input,
+> neither of which `scanBrackets` exposes — it returns only inner strings. That is a
+> **second hand-maintained copy of the same scanner**, which can drift from the one in
+> `scanBrackets`. Pick one before implementing:
+> - **(a)** widen `scanBrackets` to optionally return positions + a balanced flag, and
+>   have `parseApparatus` consume it (one scanner, one source of truth); **or**
+> - **(b)** keep the inline loop, but add a test that runs a shared fixture set through
+>   both `scanBrackets` and `parseApparatus` and asserts they agree on where the units
+>   are — so a future edit to one loop that doesn't touch the other fails loudly.
+>
+> (a) is cleaner and is preferred unless it turns out to complicate the text-interleaving
+> logic; (b) is the minimum acceptable. Do not ship two silently-independent scanners.
+
 **Files:**
 - Modify: `frontend/webapp/src/views/_Common/ATV/parseATV.js`
 - Test: `frontend/webapp/src/views/_Common/ATV/__tests__/parseATV.test.js`
