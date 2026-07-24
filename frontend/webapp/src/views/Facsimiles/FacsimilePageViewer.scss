@@ -117,7 +117,7 @@
     border-radius: 8px;   /* rounded rail */
 
     h6, a {
-      flex: 1;
+      flex: 0 0 auto;   /* hug the reference text; space-between anchors them to the page edges */
       margin: 0;
       font-size: 0.9em;
       text-decoration: none;
