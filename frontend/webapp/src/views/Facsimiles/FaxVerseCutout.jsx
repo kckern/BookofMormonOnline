@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from "react";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import { label } from "src/models/Utils";
 import { unionBox, hasNotch, notchPolygonPoints } from "./faxVerseData";
+import StudyBreadcrumb from "../_Common/StudyBreadcrumb";
 
 // Grace window after the pointer leaves a verse before the spread un-dims. If the
 // pointer lands on another verse within it, that enter switches the active verse
@@ -149,6 +150,11 @@ export default function FaxVerseCutout({
             <span className="faxVerseTooltip-ref">{active.ref}</span>
             {active.voice && <span className="faxVerseTooltip-voice">{label(active.voice)}</span>}
           </div>
+          {(active.page || active.section) && (
+            <div className="faxVerseTooltip-loc">
+              <StudyBreadcrumb page={active.page} section={active.section} />
+            </div>
+          )}
           {active.text && <div className="faxVerseTooltip-text">{active.text}</div>}
         </div>
       )}

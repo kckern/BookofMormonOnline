@@ -4,6 +4,7 @@ import { assetUrl, renderBaseUrl } from "src/models/BoMOnlineAPI";
 import { label } from "src/models/Utils";
 import { unionBox } from "./faxVerseData";
 import FaxVerseZoom from "./FaxVerseZoom";
+import StudyBreadcrumb from "../_Common/StudyBreadcrumb";
 
 // Desired on-screen width of the verse cutout in the modal (px).
 const CUTOUT_TARGET_W = 560;
@@ -85,6 +86,11 @@ export default function FaxVerseModal({ verse, version, pageScale = 700, anchorX
               </button>
             ) : (
               <div className="faxVerseModal-ref">{verse.ref}</div>
+            )}
+            {(verse.page || verse.section) && (
+              <div className="faxVerseModal-loc">
+                <StudyBreadcrumb page={verse.page} section={verse.section} linked />
+              </div>
             )}
             {verse.voice && <div className="faxVerseModal-voice">{label(verse.voice)}</div>}
           </div>

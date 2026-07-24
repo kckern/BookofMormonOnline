@@ -93,13 +93,14 @@ export function indexReadByVerse(chapters) {
   return map;
 }
 
-/** boxes + text -> Map<imagePage, Array<verse object>>, verses sorted by verse_id. */
-export function hydrateVerses(byPageVerse, textByVerse) {
+/** boxes + text (+ study location) -> Map<imagePage, Array<verse object>>, sorted by verse_id. */
+export function hydrateVerses(byPageVerse, textByVerse, locByVerse) {
   const out = new Map();
   for (const [page, verseMap] of byPageVerse) {
     const verses = [];
     for (const [verse_id, boxes] of verseMap) {
       const t = (textByVerse && textByVerse.get(verse_id)) || {};
+      const loc = (locByVerse && locByVerse.get(verse_id)) || {};
       verses.push({
         verse_id,
         ref: t.ref || safeGenerateReference(verse_id),
@@ -107,6 +108,8 @@ export function hydrateVerses(byPageVerse, textByVerse) {
         text: t.text,
         person_slug: t.person_slug,
         voice: t.voice,
+        page: loc.page || null,       // study page { title, slug }
+        section: loc.section || null, // study section { title, slug }
       });
     }
     verses.sort((a, z) => a.verse_id - z.verse_id);

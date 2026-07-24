@@ -33,14 +33,24 @@ export function useFaxVerses(version, leftLeaf, rightLeaf) {
               .catch(() => null))
         );
         const { pageScale, byPageVerse } = mergeBoxes(boxResponses.filter(Boolean));
-        const chapters = await Promise.all(
-          chapterRefsForVerseIds(ids).map((ch) =>
-            Promise.resolve(BoMOnlineAPI({ read: [ch] }))
-              .then((r) => (r && r.read && r.read[ch]) || null)
-              .catch(() => null))
-        );
+        const [chapters, locList] = await Promise.all([
+          Promise.all(
+            chapterRefsForVerseIds(ids).map((ch) =>
+              Promise.resolve(BoMOnlineAPI({ read: [ch] }))
+                .then((r) => (r && r.read && r.read[ch]) || null)
+                .catch(() => null))
+          ),
+          // Study page + section (title + slug) per verse, for the "Page > Section" links.
+          Promise.resolve(BoMOnlineAPI({ faxVerseLocations: ids }))
+            .then((r) => (r && r.faxVerseLocations) || [])
+            .catch(() => []),
+        ]);
         const textByVerse = indexReadByVerse(chapters.filter(Boolean));
-        if (!cancelled) setState({ pageScale, versesByPage: hydrateVerses(byPageVerse, textByVerse) });
+        const locByVerse = new Map();
+        for (const l of locList) {
+          if (l && l.verse_id != null) locByVerse.set(l.verse_id, { page: l.page || null, section: l.section || null });
+        }
+        if (!cancelled) setState({ pageScale, versesByPage: hydrateVerses(byPageVerse, textByVerse, locByVerse) });
       } catch {
         if (!cancelled) setState(EMPTY);
       }

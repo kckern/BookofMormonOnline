@@ -980,6 +980,21 @@ const queries = {
       }`,
     }
   },
+  faxVerseLocations: (verseIds) => {
+    const ids = (Array.isArray(verseIds) ? verseIds : [verseIds]).filter((n) => Number.isFinite(Number(n)));
+    return {
+      type: "faxVerseLocations",
+      key: "verse_id",
+      val: false,
+      // Manual query string: q() unwraps single-element arrays, which would break
+      // the [Int!]! list arg.
+      query: `faxVerseLocations(verseIds: [${ids.join(",")}]) {
+        verse_id
+        page { title slug }
+        section { title slug }
+      }`,
+    }
+  },
   maplist: () => {
     return {
       type: "maplist",

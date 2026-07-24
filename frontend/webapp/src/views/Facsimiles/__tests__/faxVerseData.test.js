@@ -76,11 +76,13 @@ describe("faxVerseData", () => {
       [100, [{ x: 1, y: 2, w: 3, h: 4 }]],
     ])]]);
     const textByVerse = new Map([[100, { text: "t100", person_slug: "p", voice: "v", ref: "Alma 5:1" }]]);
-    const out = hydrateVerses(byPageVerse, textByVerse);
+    const locByVerse = new Map([[100, { page: { title: "P", slug: "p-slug" }, section: { title: "S", slug: "s-slug" } }]]);
+    const out = hydrateVerses(byPageVerse, textByVerse, locByVerse);
     const verses = out.get(5);
     expect(verses.map((v) => v.verse_id)).toEqual([100, 101]);
-    expect(verses[0]).toMatchObject({ verse_id: 100, text: "t100", ref: "Alma 5:1" });
+    expect(verses[0]).toMatchObject({ verse_id: 100, text: "t100", ref: "Alma 5:1", page: { title: "P", slug: "p-slug" }, section: { title: "S", slug: "s-slug" } });
     expect(verses[1].text).toBeUndefined();
+    expect(verses[1].page).toBeNull(); // no location -> null
     expect(typeof verses[1].ref).toBe("string");
   });
 

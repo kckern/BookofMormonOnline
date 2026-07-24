@@ -804,6 +804,7 @@ html[data-theme="dark"] .faxMobileViewer {
     object-fit: cover;
     flex: 0 0 auto;
   }
+  .faxVerseTooltip-loc { font-size: 0.68rem; opacity: 0.7; margin-top: 1px; }
   .faxVerseTooltip-ref { font-size: 0.82rem; font-weight: 700; opacity: 0.85; text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; }
   .faxVerseTooltip-voice { font-family: "Roboto Condensed", sans-serif; font-size: 0.82rem; opacity: 0.6; font-style: italic; white-space: nowrap; }
   /* scripture typography — larger text, tight leading */
@@ -897,6 +898,11 @@ html[data-theme="dark"] .faxVerseTooltip {
   &:hover { text-decoration: underline; }
 }
 .faxVerseModal-voice { font-size: 0.8rem; opacity: 0.75; }
+.faxVerseModal-loc { font-size: 0.85rem; margin-top: 2px; }
+.studyBreadcrumb {
+  a.sb-page, a.sb-section { color: #3a7d44; text-decoration: none; &:hover { text-decoration: underline; } }
+  .sb-sep { opacity: 0.5; }
+}
 .faxVerseModal-cutout {
   position: relative;
   overflow: hidden;
