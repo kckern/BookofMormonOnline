@@ -13,6 +13,8 @@ import { ScripturePanelSingle } from "../Page/Narration";
 import { detectScriptures } from "scripture-guide";
 import { determineLanguage } from "../../models/Utils";
 import { ATVHeader } from "./ATV";
+import { extractApparatusUnits } from "./ATV/parseATV";
+import { ATVApparatus } from "./ATV/ATVApparatus";
 import { getHtmlScriptureLinkParserOptions } from "./ViewUtils";
 import SweetAlert from "react-bootstrap-sweetalert";
 import { Link } from "react-router-dom/cjs/react-router-dom.min";
@@ -303,6 +305,11 @@ export default function Commentary() {
   let atvHTML = domObject.querySelector(".source")?.outerHTML.trim() || "";
   if (atvHTML) htmlObject = htmlObject.replace(atvHTML, "").trim();
 
+  // Phase 2: lift prose-body apparatus units to placeholders BEFORE scripture
+  // detection, so reading content isn't linkified and units survive parsing.
+  const { html: bodyTokenized, units: bodyUnits } = extractApparatusUnits(htmlObject);
+  htmlObject = bodyTokenized;
+
   // replace the last 2 spaces with non-breaking spaces
   const headingWords = commentaryData?.title?.split(" ") || [];
   const wordCount = headingWords.length;
@@ -322,7 +329,17 @@ export default function Commentary() {
     return `<a className="scripture_link">${scripture}</a>`
   },determineLanguage());
 
-  const parserOptions = getHtmlScriptureLinkParserOptions((ref) => setPopUpRef(ref));
+  const baseOptions = getHtmlScriptureLinkParserOptions((ref) => setPopUpRef(ref));
+  const parserOptions = {
+    ...baseOptions,
+    replace: (node) => {
+      if (node && node.name === "atv-unit") {
+        const i = Number(node.attribs && node.attribs["data-atv-i"]);
+        return <ATVApparatus readings={bodyUnits[i]} variant="inline" />;
+      }
+      return baseOptions.replace ? baseOptions.replace(node) : undefined;
+    },
+  };
 
   return (
     <>
