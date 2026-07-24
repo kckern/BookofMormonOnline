@@ -72,19 +72,18 @@ export default function WitnessLifeStrip({ witness, sources, selectedYearMonth, 
     () => buildYearBuckets(sources, witness), [sources, witness]
   );
   const activeYear = selectedYearMonth ? parseInt(String(selectedYearMonth).slice(0, 4), 10) : null;
-  const [openYear, setOpenYear] = useState(activeYear);
   const [hover, setHover] = useState(null);
 
   if (!years.length) return null;
-  const shownYear = openYear ?? activeYear;
+  const shownYear = activeYear;
   const chips = shownYear ? monthChipsForYear(sources, shownYear) : [];
   const birthYear = (witness?.birthday && /^\d{4}/.test(witness.birthday)) ? parseInt(witness.birthday.slice(0, 4), 10) : null;
 
   const onYearClick = (year) => {
     const has = (byYear.get(year) || 0) > 0;
     if (!has) return;
-    if (shownYear === year) { setOpenYear(null); onSelectYearMonth(null); }
-    else { setOpenYear(year); onSelectYearMonth(String(year)); }
+    if (shownYear === year) { onSelectYearMonth(null); }
+    else { onSelectYearMonth(String(year)); }
   };
 
   return (
