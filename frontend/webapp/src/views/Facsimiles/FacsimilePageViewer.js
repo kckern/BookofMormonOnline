@@ -482,8 +482,8 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
           boxSizing: 'border-box',
         }}
       >
-        <h6 style={{ textAlign: 'left' }}>{leftPage?.pageReference || ''}</h6>
-        <h6 style={{ textAlign: 'right' }}>{rightPage?.pageReference || ''}</h6>
+        <a className="scripture_link" style={{ textAlign: 'left' }}>{leftPage?.pageReference || ''}</a>
+        <a className="scripture_link" style={{ textAlign: 'right' }}>{rightPage?.pageReference || ''}</a>
       </div>
       <div className="pagesContainer" ref={pagesContainerRef}>
         <div

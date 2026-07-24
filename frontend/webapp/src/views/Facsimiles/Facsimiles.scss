@@ -362,11 +362,13 @@
   width: 100%;
   margin-bottom: 10px;
   background-color: #00000011;
+  border-radius: 8px;
 }
 
-.pageReferences h6 {
+.pageReferences h6,
+.pageReferences a {
   margin: 0;
-  padding: 0;
+  padding: 0 0.4rem;
   color: #444;
   min-height: 1.2rem;
   line-height: 1.6;

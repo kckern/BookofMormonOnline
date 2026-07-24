@@ -114,13 +114,13 @@
     display: flex;
     justify-content: space-between;
     margin-bottom: 0;
-    
-    h6 {
-      text-align: center;
+    border-radius: 8px;   /* rounded rail */
+
+    h6, a {
       flex: 1;
       margin: 0;
       font-size: 0.9em;
-      color: #666;
+      text-decoration: none;
     }
   }
 
