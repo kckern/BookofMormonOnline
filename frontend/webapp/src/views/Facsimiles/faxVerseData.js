@@ -73,12 +73,19 @@ export function indexReadByVerse(chapters) {
       for (const block of (section && section.blocks) || []) {
         for (const line of (block && block.lines) || []) {
           if (!line || line.verse_id == null) continue;
-          map.set(line.verse_id, {
-            text: line.text,
-            person_slug: block.person_slug,
-            voice: block.voice,
-            ref: safeGenerateReference(line.verse_id),
-          });
+          const existing = map.get(line.verse_id);
+          if (existing) {
+            // A verse can span multiple lines — CONCATENATE, don't overwrite (that
+            // dropped everything but the last line). Keep the first block's speaker.
+            existing.text = `${existing.text || ""} ${line.text || ""}`.replace(/\s+/g, " ").trim();
+          } else {
+            map.set(line.verse_id, {
+              text: line.text,
+              person_slug: block.person_slug,
+              voice: block.voice,
+              ref: safeGenerateReference(line.verse_id),
+            });
+          }
         }
       }
     }

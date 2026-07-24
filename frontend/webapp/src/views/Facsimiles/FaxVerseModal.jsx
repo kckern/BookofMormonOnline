@@ -2,12 +2,11 @@ import React, { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { assetUrl, renderBaseUrl } from "src/models/BoMOnlineAPI";
 import { label } from "src/models/Utils";
-import { unionBox, hasNotch } from "./faxVerseData";
+import { unionBox } from "./faxVerseData";
+import FaxVerseZoom from "./FaxVerseZoom";
 
 // Desired on-screen width of the verse cutout in the modal (px).
 const CUTOUT_TARGET_W = 560;
-// Render-crop width requested from the fax render API.
-const CROP_W = 800;
 
 /**
  * Inspector modal for a single verse: a cropped image of the verse, the
@@ -47,9 +46,8 @@ export default function FaxVerseModal({ verse, version, pageScale = 700, anchorX
   if (!verse) return null;
 
   const boxes = verse.boxes || [];
-  const single = boxes.length === 1 && !hasNotch(boxes[0]);
-  const useApi = (!single || !verse.pageAssetUrl) && !!version;
-
+  // Reserve the cutout box from the KNOWN verse geometry so the image height is
+  // fixed before it loads (no rug pull); the union bbox aspect is close enough.
   const box = unionBox(boxes) || { x: 0, y: 0, w: pageScale, h: pageScale };
   const s = CUTOUT_TARGET_W / box.w;
   const cropW = box.w * s;
@@ -89,29 +87,26 @@ export default function FaxVerseModal({ verse, version, pageScale = 700, anchorX
           )}
         </div>
 
-        {useApi ? (
-          // minHeight reserves ~the verse height so the height eases (transition in
-          // SCSS) instead of collapsing→jumping when stepping verses.
-          <div className="faxVerseModal-cutout api" style={{ minHeight: cropH }}>
-            <img
+        <div className="faxVerseModal-cutout" style={{ width: cropW, height: cropH }}>
+          {version ? (
+            // Native-res render crop in a hover magnifier. `full` resolution so the
+            // zoom shows real scan detail; the box is reserved above (no rug pull).
+            <FaxVerseZoom
               key={verse.verse_id}  /* remount so the previous verse's crop can't linger */
-              className="faxVerseModal-crop"
-              src={`${renderBaseUrl}/fax/render/${version}/crop/w${CROP_W}/ids/${verse.verse_id}.jpg`}
-              alt=""
+              src={`${renderBaseUrl}/fax/render/${version}/crop/full/ids/${verse.verse_id}.jpg`}
+              width={cropW}
+              height={cropH}
             />
-          </div>
-        ) : (
-          <div className="faxVerseModal-cutout" style={{ width: cropW, height: cropH }}>
-            {verse.pageAssetUrl && (
-              <img
-                key={verse.verse_id}
-                src={verse.pageAssetUrl}
-                alt=""
-                style={{ position: "absolute", width: pageScale * s, maxWidth: "none", left: -box.x * s, top: -box.y * s }}
-              />
-            )}
-          </div>
-        )}
+          ) : verse.pageAssetUrl ? (
+            // Fallback with no render service: CSS crop of the page scan.
+            <img
+              key={verse.verse_id}
+              src={verse.pageAssetUrl}
+              alt=""
+              style={{ position: "absolute", width: pageScale * s, maxWidth: "none", left: -box.x * s, top: -box.y * s }}
+            />
+          ) : null}
+        </div>
 
         {verse.text && <p className="faxVerseModal-text">{verse.text}</p>}
 

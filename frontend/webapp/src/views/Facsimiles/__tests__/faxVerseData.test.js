@@ -54,7 +54,8 @@ describe("faxVerseData", () => {
       { sections: [
         { blocks: [
           { person_slug: "nephi-son-of-lehi", voice: "nephi", lines: [
-            { verse_id: 100, text: "And it came to pass" },
+            { verse_id: 100, text: "And it came to pass" },  // verse 100, line 1
+            { verse_id: 100, text: "that in my days" },       // verse 100, line 2
           ] },
           { person_slug: null, voice: "narrator", lines: [
             { verse_id: 101, text: "that I, Nephi" },
@@ -63,7 +64,8 @@ describe("faxVerseData", () => {
       ] },
     ];
     const map = indexReadByVerse(chapters);
-    expect(map.get(100)).toMatchObject({ text: "And it came to pass", person_slug: "nephi-son-of-lehi", voice: "nephi" });
+    // multi-line verse is CONCATENATED, not truncated to the last line
+    expect(map.get(100)).toMatchObject({ text: "And it came to pass that in my days", person_slug: "nephi-son-of-lehi", voice: "nephi" });
     expect(typeof map.get(100).ref).toBe("string");
     expect(map.get(101).voice).toBe("narrator");
   });

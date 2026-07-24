@@ -82,6 +82,13 @@ export default function FaxVerseCutout({
   // Place below when the verse sits in the upper part of the page, above otherwise,
   // so the card is never clipped at the top/bottom edge.
   const placeBelow = !!(anchor && displayedHeight > 0 && (anchor.y + anchor.h / 2) * k < displayedHeight * 0.5);
+  // Nudge the caret toward the SOLID part of the relevant edge so it never points
+  // at a notch gap: above → the top-left notch removes the left of the top edge
+  // (shift right); below → the bottom-right notch removes the right of the bottom
+  // edge (shift left). 0 for plain boxes / the union-box fallback.
+  const caretOffset = anchor
+    ? (placeBelow ? -((anchor.brw || 0) / 2) * k : ((anchor.tlw || 0) / 2) * k)
+    : 0;
 
   return (
     <div className="faxVerseLayer" aria-hidden="false">
@@ -127,6 +134,7 @@ export default function FaxVerseCutout({
             left: px(anchor.x + anchor.w / 2),
             top: placeBelow ? px(anchor.y + anchor.h) : px(anchor.y),
             minWidth: px(anchor.w),
+            "--fax-caret-x": `${Math.round(caretOffset)}px`,
           }}
         >
           <div className="faxVerseTooltip-head">

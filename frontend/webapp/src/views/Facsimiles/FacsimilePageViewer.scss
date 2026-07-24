@@ -769,11 +769,12 @@ html[data-theme="dark"] .faxMobileViewer {
   pointer-events: none;
   z-index: 5;
   animation: faxCutoutIn 0.18s ease both;
-  /* caret points DOWN toward the cutout below (default = tooltip above) */
+  /* caret points DOWN toward the cutout below (default = tooltip above). Its x is
+     nudged by --fax-caret-x so it never sits over a notch gap in the cutout. */
   &::after {
     content: "";
     position: absolute;
-    left: 50%;
+    left: calc(50% + var(--fax-caret-x, 0px));
     bottom: -6px;
     transform: translateX(-50%);
     border: 6px solid transparent;
@@ -897,6 +898,13 @@ html[data-theme="dark"] .faxVerseTooltip {
   &.api { width: auto; height: auto; max-width: 100%; }
 }
 .faxVerseModal-crop { display: block; width: 100%; height: auto; }
+/* hover magnifier viewport */
+.faxVerseZoom {
+  display: block;
+  border-radius: 6px;
+  cursor: zoom-in;
+  &.zoomed { cursor: crosshair; }
+}
 .faxVerseModal-text { margin: 0.9rem 0 0; font-size: 1rem; line-height: 1.5; }
 /* verse stepper arrows, inline in the header (prev left, next pushed right) */
 .faxVerseModal-nav {
