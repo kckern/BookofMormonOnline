@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import './WitnessLifeHeatmap.css';
 
-const CELL_PX_MAX = 10;
+const CELL_PX_MAX = 18;
 const CELL_PX_MIN = 4;
 const GAP_PX = 1;
 const MONTHS_COL_PX = 14;
@@ -35,6 +35,7 @@ const ymOrdinal = (year, month) => year * 12 + (month - 1);
 const WitnessLifeHeatmap = ({ witness, sources, selectedYearMonth, onSelectYearMonth }) => {
 
     const [hoveredKey, setHoveredKey] = useState(null);
+    const [compressOverride, setCompressOverride] = useState(null);
     const wrapperRef = useRef(null);
     const [wrapperWidth, setWrapperWidth] = useState(0);
 
@@ -133,11 +134,12 @@ const WitnessLifeHeatmap = ({ witness, sources, selectedYearMonth, onSelectYearM
     const widthFor = (cols) => {
         if (!wrapperWidth) return CELL_PX_MAX;
         const available = wrapperWidth - MONTHS_COL_PX - SIDE_PADDING_PX * 2;
-        return Math.max(CELL_PX_MIN, Math.min(CELL_PX_MAX, Math.floor(available / cols.length) - GAP_PX));
+        return Math.max(CELL_PX_MIN, Math.min(CELL_PX_MAX, available / cols.length - GAP_PX));
     };
     const uncompressedCellPx = widthFor(uncompressedColumns);
     const canCompress = compressedColumns.length < uncompressedColumns.length;
-    const shouldCompress = wrapperWidth > 0 && canCompress && uncompressedCellPx < COMFORT_CELL_PX;
+    const autoCompress = wrapperWidth > 0 && uncompressedCellPx < COMFORT_CELL_PX;
+    const shouldCompress = canCompress && (compressOverride === null ? autoCompress : compressOverride);
     const displayColumns = shouldCompress ? compressedColumns : uncompressedColumns;
 
     const cellPx = widthFor(displayColumns);
@@ -174,11 +176,21 @@ const WitnessLifeHeatmap = ({ witness, sources, selectedYearMonth, onSelectYearM
                         {years.length - displayColumns.length} empty years compressed
                     </span></>
                 )}
-                {selectedYearMonth && (
-                    <button className='witness-life-heatmap-clear' onClick={() => onSelectYearMonth(null)}>
-                        Clear filter ({selectedYearMonth})
-                    </button>
-                )}
+                <div className='witness-life-heatmap-controls'>
+                    {canCompress && (
+                        <button
+                            className='witness-life-heatmap-toggle'
+                            onClick={() => setCompressOverride(shouldCompress ? false : true)}
+                        >
+                            {shouldCompress ? 'Show all years' : 'Compress empty years'}
+                        </button>
+                    )}
+                    {selectedYearMonth && (
+                        <button className='witness-life-heatmap-clear' onClick={() => onSelectYearMonth(null)}>
+                            Clear filter ({selectedYearMonth})
+                        </button>
+                    )}
+                </div>
             </div>
             <div className='witness-life-heatmap-scroll'>
                 <div className='witness-life-heatmap-ages'>

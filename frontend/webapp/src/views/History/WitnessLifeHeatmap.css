@@ -91,6 +91,9 @@ html[data-theme="dark"] .witness-life-heatmap {
     display: flex;
     align-items: center;
     gap: 0.5em;
+    /* reserve room for the (taller) control buttons so the grid below never
+       jumps when the Clear-filter button appears/disappears */
+    min-height: 24px;
     margin-bottom: 0.5rem;
     font-size: 0.7rem;
     color: var(--hm-text-soft);
@@ -100,8 +103,16 @@ html[data-theme="dark"] .witness-life-heatmap {
     color: var(--hm-border-soft);
 }
 
-.witness-life-heatmap-clear {
+.witness-life-heatmap-controls {
     margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.4em;
+    flex: 0 0 auto;
+}
+
+.witness-life-heatmap-clear,
+.witness-life-heatmap-toggle {
     background: var(--hm-bg);
     border: 1px solid var(--hm-border-soft);
     border-radius: 1em;
@@ -109,9 +120,11 @@ html[data-theme="dark"] .witness-life-heatmap {
     font-size: 0.7rem;
     color: var(--hm-text);
     cursor: pointer;
+    white-space: nowrap;
 }
 
-.witness-life-heatmap-clear:hover {
+.witness-life-heatmap-clear:hover,
+.witness-life-heatmap-toggle:hover {
     border-color: var(--hm-text);
     background: var(--hm-clear-hover);
 }
