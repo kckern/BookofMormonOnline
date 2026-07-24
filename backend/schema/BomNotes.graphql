@@ -136,6 +136,7 @@ type Fax {
 type FaxIndex {
   slug: String
   pages: [[Int]]
+  offset: Int
 }
 
 type Image {

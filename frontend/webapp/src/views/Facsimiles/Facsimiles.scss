@@ -187,7 +187,7 @@
 
 .faxGridViewer .faxPage .pageImageWrapper img.main-image,
 .faxGridViewer .faxPage .pageImageWrapper .preview-blur {
-  object-fit: cover;
+  object-fit: contain;
   border-radius: 1ex;
 }
 
@@ -326,6 +326,29 @@
   font-weight: 700;
 }
 
+/* graceful placeholder for a page that has no scan (404) */
+.pageImageWrapper .pageImageUnavailable {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: #f4f2ee;
+  color: rgba(0, 0, 0, 0.55);
+  text-align: center;
+  padding: 8px;
+}
+.pageImageWrapper .pageImageUnavailable .ref { font-size: 0.9rem; font-weight: 600; }
+.pageImageWrapper .pageImageUnavailable .pageLabel { font-size: 1.2rem; font-weight: 700; }
+.pageImageWrapper .pageImageUnavailable .unavailNote {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.7;
+}
+
 @keyframes shimmer {
   0% { background-position: 100% 0; }
   100% { background-position: -100% 0; }
@@ -339,11 +362,13 @@
   width: 100%;
   margin-bottom: 10px;
   background-color: #00000011;
+  border-radius: 8px;
 }
 
-.pageReferences h6 {
+.pageReferences h6,
+.pageReferences a {
   margin: 0;
-  padding: 0;
+  padding: 0 0.4rem;
   color: #444;
   min-height: 1.2rem;
   line-height: 1.6;
@@ -477,16 +502,22 @@
 }
 
 .facsimileToolbar {
+  position: relative; /* anchor the absolutely-centered title */
   display: flex;
   align-items: center;
   gap: 0.75rem;
   flex-shrink: 0;
   padding: 0.4rem 1rem;
 
-  .fax-back { display: inline-flex; align-items: center; }
+  .fax-back { display: inline-flex; align-items: center; z-index: 1; }
 
+  /* Center the title on the viewport (= the spread seam for a centered spread),
+     not flex-centered in the space after the back button (which shifts it right). */
   .fax-title {
-    flex-grow: 1;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 70%;
     text-align: center;
     font-size: 1.15rem;
     font-weight: 600;

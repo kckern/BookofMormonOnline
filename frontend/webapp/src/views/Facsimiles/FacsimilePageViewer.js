@@ -8,6 +8,7 @@ import { getRefFromIndex, PageOverlay } from "./Facsimiles";
 import { useElementSize } from "./useElementSize";
 import PageImage from "./PageImage";
 import PageStack from "./PageStack";
+import { prefetchThumbs } from "./faxThumbCache";
 import { generateReference, lookupReference } from "scripture-guide";
 import { normalizeStackWidths } from "./faxGeometry";
 import { useFaxHighlight } from "./useFaxHighlight";
@@ -17,7 +18,7 @@ import FaxHighlightOverlay from "./FaxHighlightOverlay";
  * FacsimilePageViewer - Desktop version of the facsimile page viewer
  * Displays pages in a book-like spread with left and right pages
  */
-function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], currentVolumeIndex = -1 }) {
+function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], currentVolumeIndex = -1, onSeamOffset }) {
   const history = useHistory();
   const { pageNumber } = useParams();
   
@@ -266,6 +267,16 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
     return leftStackWidth + leftPageWidth + rightPageWidth + rightStackWidth;
   }, [leftPageWidth, rightPageWidth, leftStackWidth, rightStackWidth]);
 
+  // Report the seam's x-offset from center so the toolbar title can track it.
+  // The spread strip is centered, so the seam (between left & right pages) sits
+  // at delta = (leftSide - rightSide)/2 px from the container center.
+  useEffect(() => {
+    if (typeof onSeamOffset !== 'function') return;
+    if (!leftPageWidth || !rightPageWidth) { onSeamOffset(0); return; }
+    const delta = (leftStackWidth + leftPageWidth - rightPageWidth - rightStackWidth) / 2;
+    onSeamOffset(delta);
+  }, [onSeamOffset, leftStackWidth, rightStackWidth, leftPageWidth, rightPageWidth]);
+
   // Navigation handlers
   const handlePageChange = useCallback((newIndex) => {
     const adjustedIndex = getAdjustedPageIndex(newIndex);
@@ -369,6 +380,15 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
       value = totalPages - 2; // Always show the last valid spread (last or second-to-last page on right)
     }
 
+    // Warm the thumbnails around the scrub position so the preview swaps
+    // instantly instead of flashing/loading while scrubbing.
+    const warm = [];
+    for (let i = Math.max(0, value - 4); i <= Math.min(leafIndex.length - 1, value + 5); i++) {
+      const u = leafIndex[i]?.thumbAssetUrl;
+      if (u) warm.push(u);
+    }
+    prefetchThumbs(warm);
+
     const leftPage = leafIndex[value];
     const rightPage = leafIndex[value + 1];
 
@@ -384,13 +404,13 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
           <div className="thumbnail-spread">
             <img
               src={leftPage.thumbAssetUrl}
-              alt={`Thumbnail of page ${leftPage.pageSlugLeaf}`}
+              alt={`Thumbnail of page ${leftPage.faxPageSlug}`}
               style={{ width: '50px', height: 'auto' }}
             />
             {rightPage && (
               <img
                 src={rightPage.thumbAssetUrl}
-                alt={`Thumbnail of page ${rightPage.pageSlugLeaf}`}
+                alt={`Thumbnail of page ${rightPage.faxPageSlug}`}
                 style={{ width: '50px', height: 'auto' }}
               />
             )}
@@ -399,8 +419,8 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
             <p className="ref">{combinedReference}</p>
           )}
           <p className="pages">
-            Pages {leftPage.pageSlugLeaf}
-            {rightPage ? ` - ${rightPage.pageSlugLeaf}` : ''}
+            Pages {leftPage.faxPageSlug}
+            {rightPage ? ` - ${rightPage.faxPageSlug}` : ''}
           </p>
         </div>
       );
@@ -435,9 +455,9 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
         <PageImage
           src={page.pageAssetUrl}
           previewSrc={page.thumbAssetUrl}
-          label={`Page ${page.pageSlugLeaf}`}
+          label={`Page ${page.faxPageSlug}`}
           reference={page.pageReference}
-          alt={`Page ${page.pageSlugLeaf}`}
+          alt={`Page ${page.faxPageSlug}`}
           onClick={onClick}
           className={isLastPage ? "last-page" : ""}
           style={{
@@ -460,14 +480,35 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
   // Page stack is now a separate component
   return (
     <div className="faxPageViewer" style={{ maxHeight: 'none' }} {...swipeHandlers}>
-      <div className="pageReferences">
-        <h6>{leftPage?.pageReference || ''}</h6>
-        <h6>{rightPage?.pageReference || ''}</h6>
+      <div
+        className="pageReferences"
+        style={{
+          // Match the spread strip and inset by the stack widths so each ref
+          // aligns to its page's outer edge (not the full-width strip incl. stacks).
+          width: innerWidth ? `${innerWidth}px` : undefined,
+          margin: '0 auto',
+          paddingLeft: leftStackWidth ? `${leftStackWidth}px` : undefined,
+          paddingRight: rightStackWidth ? `${rightStackWidth}px` : undefined,
+          boxSizing: 'border-box',
+        }}
+      >
+        <a className="scripture_link" style={{ textAlign: 'left' }}>{leftPage?.pageReference || ''}</a>
+        <a className="scripture_link" style={{ textAlign: 'right' }}>{rightPage?.pageReference || ''}</a>
       </div>
       <div className="pagesContainer" ref={pagesContainerRef}>
-        <div className="pageContainer">
-          <div 
-            className="spreadInner" 
+        <div
+          className="pageContainer"
+          onClick={(e) => {
+            // Only the empty L/R padding around the centered spread (clicks on a
+            // page/stack/image are handled by those elements themselves).
+            if (e.target !== e.currentTarget) return;
+            const rect = e.currentTarget.getBoundingClientRect();
+            if (e.clientX < rect.left + rect.width / 2) handleSwipeRight();
+            else handleSwipeLeft();
+          }}
+        >
+          <div
+            className="spreadInner"
             style={{ 
               width: innerWidth ? `${innerWidth}px` : undefined,
               display: 'flex', 
@@ -568,12 +609,6 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
         <div className="slider-container" ref={sliderRef}>
           {showTooltip && (
             <div
-              className="hover-cursor"
-              style={{ left: `${tooltipPosition.left}px` }}
-            />
-          )}
-          {showTooltip && (
-            <div
               className="custom-tooltip"
               style={{
                 left: `${tooltipPosition.left}px`,
@@ -599,7 +634,7 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
             onMouseLeave={() => setShowTooltip(false)}
             className="custom-slider"
             aria-label="Page position"
-            aria-valuetext={`Page ${leafIndex[sliderValue]?.pageSlugLeaf ?? sliderValue} of ${item.pages}`}
+            aria-valuetext={`Page ${leafIndex[sliderValue]?.faxPageSlug ?? sliderValue} of ${item.pages}`}
           />
         </div>
         <button
@@ -616,7 +651,7 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
             e.preventDefault();
             const n = parseInt(e.target.elements.pageInput.value, 10);
             if (!Number.isFinite(n)) return;
-            const idx = leafIndex.findIndex((l) => l.pageNumInt === n || `${l.pageSlugLeaf}` === `${n}`);
+            const idx = leafIndex.findIndex((l) => l.faxPageNum === n || `${l.faxPageSlug}` === `${n}`);
             if (idx !== -1) handlePageChange(idx);
           }}
         >
@@ -625,8 +660,8 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
             type="number"
             min={1}
             max={item.pages}
-            defaultValue={leftPage?.pageSlugLeaf || ''}
-            key={leftPage?.pageSlugLeaf}
+            defaultValue={leftPage?.faxPageSlug || ''}
+            key={leftPage?.faxPageSlug}
             aria-label="Jump to page"
           />
           <span className="of-total">/ {item.pages}</span>

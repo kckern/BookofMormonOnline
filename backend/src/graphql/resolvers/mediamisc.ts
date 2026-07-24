@@ -9,6 +9,7 @@ import type {
   MarkdownRow,
   TextSlimRow,
 } from '../../data/loaders/mediamisc.js';
+import { imageScanMeta } from '../../media/fax/resolve.js';
 
 /** getSlugTip: incoming slug args may be paths — take the last segment. */
 function getSlugTip(slug: string): string {
@@ -52,8 +53,13 @@ export const mediamiscResolvers: Resolvers = {
       const slug = args.slug ? getSlugTip(String(args.slug)) : '';
       if (!slug) return null;
       const items: FaxIndexPageRow[] = await c.loaders.faxIndexBySlug.load(slug);
+      // The printed folio differs from the scan image-file number by a constant
+      // per edition (imageFile = faxPage + offset). Expose it so the viewer can
+      // label pages with the printed folio. (audit §fax-pagenum)
+      const { offset } = await imageScanMeta(slug);
       return {
         slug,
+        offset,
         pages: items.map((x, i) => {
           const prev = items[i - 1];
           const firstWholeVerseIsFirstContent =

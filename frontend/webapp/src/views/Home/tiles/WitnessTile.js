@@ -34,20 +34,24 @@ export default function WitnessTile({ data }) {
         to={w.witnessSlug ? `/history/witnesses/${w.witnessSlug}` : "/history/witnesses"}
         className="witnessFeatured"
       >
-        <span className="witnessHero">
-          {w.witnessSlug ? (
-            <img
-              src={`${assetUrl}/history/witnesses/people/${w.witnessSlug}.jpg`}
-              alt={w.principal}
-              loading="lazy"
-              onError={(e) => { e.target.style.display = "none"; e.target.parentNode.classList.add("mono"); }}
-            />
-          ) : null}
-          <span className="witnessMono" aria-hidden="true">{initials(w.principal)}</span>
+        <span className="witnessLeft">
+          <span className="witnessHero">
+            {w.witnessSlug ? (
+              <img
+                src={`${assetUrl}/history/witnesses/people/${w.witnessSlug}.jpg`}
+                alt={w.principal}
+                loading="lazy"
+                onError={(e) => { e.target.style.display = "none"; e.target.parentNode.classList.add("mono"); }}
+              />
+            ) : null}
+            <span className="witnessMono" aria-hidden="true">{initials(w.principal)}</span>
+          </span>
+          <span className="witnessName">{w.principal}</span>
         </span>
-        <span className="witnessName">{w.principal}</span>
-        <blockquote className="witnessStatement">“{clampWords(flatten(w.quote), 60)}”</blockquote>
-        {w.source ? <span className="witnessSource">{clampWords(flatten(w.source), 18)}</span> : null}
+        <span className="witnessBody">
+          <blockquote className="witnessStatement">“{clampWords(flatten(w.quote), 60)}”</blockquote>
+          {w.source ? <span className="witnessSource">{clampWords(flatten(w.source), 18)}</span> : null}
+        </span>
       </Link>
     </div>
   );

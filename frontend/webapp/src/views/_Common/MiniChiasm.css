@@ -5,7 +5,7 @@
   display: flex;
   gap: 0.4rem;
   font-size: 0.74rem;
-  line-height: 1.4;
+  line-height: 1.15;
   color: var(--text-secondary);
   margin-bottom: 0.15rem;
 }
@@ -15,6 +15,11 @@
   color: var(--link);
   font-size: 0.68rem;
   line-height: 1.55;
+}
+.miniChiasmText {
+  font-family: "Scripture", Georgia, serif; /* match the Read scripture typography */
+  font-size: 0.95rem;
+  line-height: 1.1;
 }
 .miniChiasm mark {
   background: rgba(240, 200, 80, 0.35);

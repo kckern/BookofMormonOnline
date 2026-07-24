@@ -8,12 +8,28 @@ html[data-theme="dark"] {
     background: var(--surface-3); color: var(--text-secondary);
     &:hover { background: var(--surface-4); }
   }
-  .custom-slider { background: var(--surface-4); }
+  .custom-slider::-webkit-slider-runnable-track { background: var(--surface-4); }
+  .custom-slider::-moz-range-track { background: var(--surface-4); }
   .custom-slider::-webkit-slider-thumb { background: var(--text-secondary); }
+  .custom-slider::-moz-range-thumb { background: var(--text-secondary); }
   .custom-tooltip { background: var(--surface-3); border-color: var(--border); color: var(--text-secondary); }
   .seekBlocks { outline-color: var(--border); border-color: var(--border); }
   .stack-tooltip-content { background: var(--surface-2); border-color: var(--border); color: var(--text-secondary); }
+  .stack-tooltip-content .meta .title { color: var(--text-primary); }
+  .stack-tooltip-content .meta .ref { color: var(--text-secondary); }
   .pageReferences h6 { color: var(--text-muted); }
+  .pageImageWrapper .pageImageUnavailable { background: var(--surface-2); color: var(--text-muted); }
+  /* slim toolbar + page-jump (added round-2) */
+  .facsimileToolbar .fax-title { color: var(--text-primary); }
+  .fax-page-jump { color: var(--text-muted); }
+  .fax-page-jump .of-total { color: var(--text-muted); }
+  .fax-page-jump input { background: var(--surface-3); color: var(--text-primary); border-color: var(--border); }
+  /* page-area backdrop (was #CCC) → dark */
+  .pagesContainer { background: var(--surface-0); }
+  /* slider hover tooltip inner text (was hard-coded #555/#333) */
+  .custom-tooltip .tooltip-content p,
+  .custom-tooltip .tooltip-content .ref,
+  .custom-tooltip .tooltip-content .pages { color: var(--text-secondary); }
 
   /* About.css / KRSEB.css */
   .about .card-body a { color: var(--link); &:hover { color: var(--link-hover); } }

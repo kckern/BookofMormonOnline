@@ -34,7 +34,7 @@ export function normalizeStackWidths(adjustedPageIndex, totalPages, totalFootpri
   return { left, right };
 }
 
-export function buildLeafIndex(item, pgoffset, pageIndex, getRef, assetBaseUrl) {
+export function buildLeafIndex(item, pgoffset, pageIndex, getRef, assetBaseUrl, faxOffset = 0) {
   const pages = parseInt(item.pages, 10);
   const totalLeaves = pages + 1 + pgoffset;
   const baseUrl = `${assetBaseUrl}/fax/pages/${item.slug}/`;
@@ -43,6 +43,10 @@ export function buildLeafIndex(item, pgoffset, pageIndex, getRef, assetBaseUrl) 
     const i = idx - pgoffset;
     const pageNumInt = i > 0 ? i : null;
     const pageNumRoman = i <= 0 ? convertIntToRomanNumeral(pgoffset + i, true) : null;
+    // Printed folio = scan image-file number − per-edition offset (backend:
+    // imageFile = faxPage + offset). Used for DISPLAY only; assets/routing keep
+    // the image-file number (pageNumInt / pageSlugLeaf).
+    const faxPageNum = pageNumInt != null ? pageNumInt - faxOffset : null;
     const pageAssetUrl =
       i > 0
         ? `${baseUrl}${i.toString().padStart(3, "0")}.${fmt}`
@@ -54,6 +58,8 @@ export function buildLeafIndex(item, pgoffset, pageIndex, getRef, assetBaseUrl) 
       pageNumInt,
       pageNumRoman,
       pageSlugLeaf: pageNumRoman || pageNumInt,
+      faxPageNum,
+      faxPageSlug: pageNumRoman || faxPageNum,
       pageReference: getRef(pageIndex, i),
       isLeftSide: i % 2 === 0,
       pageAssetUrl,

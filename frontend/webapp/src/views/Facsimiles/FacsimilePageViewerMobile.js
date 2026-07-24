@@ -200,8 +200,8 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
         <PageImage
           src={page.pageAssetUrl}
           previewSrc={page.thumbAssetUrl}
-          alt={`Page ${page.pageSlugLeaf}`}
-          label={page.pageReference || `Page ${page.pageSlugLeaf}`}
+          alt={`Page ${page.faxPageSlug}`}
+          label={page.pageReference || `Page ${page.faxPageSlug}`}
           className={isLastPage ? "last-page" : ""}
         />
         {boxes && boxes.length > 0 && (
@@ -249,13 +249,13 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
             onTouchEnd={() => { setPreviewOpen(false); handleSliderRelease(); }}
             className="custom-slider"
             aria-label="Page position"
-            aria-valuetext={`Page ${previewPage?.pageSlugLeaf ?? sliderValue + 1} of ${totalPages}`}
+            aria-valuetext={`Page ${previewPage?.faxPageSlug ?? sliderValue + 1} of ${totalPages}`}
           />
           {previewOpen && previewPage && (
             <div className="mobile-slider-preview">
               <img src={previewPage.thumbAssetUrl} alt="" aria-hidden="true" />
               <div className="preview-label">
-                {previewPage.pageReference || `Page ${previewPage.pageSlugLeaf}`}
+                {previewPage.pageReference || `Page ${previewPage.faxPageSlug}`}
               </div>
             </div>
           )}
@@ -275,7 +275,7 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
           e.preventDefault();
           const n = parseInt(e.target.elements.pageInput.value, 10);
           if (!Number.isFinite(n)) return;
-          const idx = leafIndex.findIndex((l) => l.pageNumInt === n || `${l.pageSlugLeaf}` === `${n}`);
+          const idx = leafIndex.findIndex((l) => l.faxPageNum === n || `${l.faxPageSlug}` === `${n}`);
           if (idx !== -1) handlePageChange(idx);
         }}
       >
@@ -284,8 +284,8 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
           type="number"
           min={1}
           max={item.pages}
-          defaultValue={currentPage?.pageSlugLeaf || ''}
-          key={currentPage?.pageSlugLeaf}
+          defaultValue={currentPage?.faxPageSlug || ''}
+          key={currentPage?.faxPageSlug}
           aria-label="Jump to page"
         />
         <span className="of-total">/ {item.pages}</span>

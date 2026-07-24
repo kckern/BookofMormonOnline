@@ -1194,29 +1194,41 @@ html[data-theme="dark"] .placesImgWrap { background: #333; }
 /* fax pages: ref-captioned, deep-linking into the viewer at that page */
 /* flex-grow is set inline per page (natural aspect ratio) so both pages render
    at equal height with proportional widths — see FaxTile.js */
-.faxTilePage { flex-basis: 0; flex-shrink: 1; flex-grow: 1; min-width: 0; position: relative; display: block; text-decoration: none; }
+.faxTilePage { flex-basis: 0; flex-shrink: 1; flex-grow: 1; min-width: 0; position: relative; display: flex; flex-direction: column; text-decoration: none; }
 /* natural page proportions — the sheet fills whatever height it needs */
-.faxTilePage img { width: 100%; height: auto; display: block; border-radius: 0.35rem; border: 1px solid #e0e0e0; transition: transform 0.15s ease; }
+.faxTilePage img { width: 100%; height: auto; display: block; border-radius: 0 0 0.35rem 0.35rem; border: 1px solid #e0e0e0; border-top: none; transition: transform 0.15s ease; }
 html[data-theme="dark"] .faxTilePage img { border-color: #444; }
-.faxPageBar {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.4rem;
-  padding: 0.9rem 0.45rem 0.3rem;
-  border-radius: 0 0 0.35rem 0.35rem;
-  background: linear-gradient(to top, rgba(15, 18, 26, 0.78), rgba(15, 18, 26, 0));
-  color: #fff;
+/* reference rail sitting above the page image, centered */
+.faxPageBarRef {
+  display: block;
+  text-align: center;
   font-size: 0.66rem;
+  font-weight: 700;
   line-height: 1.3;
+  padding: 0.15rem 0.35rem;
+  border: 1px solid #e0e0e0;
+  border-bottom: none;
+  border-radius: 0.35rem 0.35rem 0 0;
+  background: rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.faxPageBarRef { font-weight: 700; cursor: pointer; }
-.faxPageBarRef:hover { text-decoration: underline; }
-.faxPageBarNum { font-weight: 400; opacity: 0.8; flex-shrink: 0; }
+html[data-theme="dark"] .faxPageBarRef { border-color: #444; background: rgba(255, 255, 255, 0.05); }
+/* page number kept as a small overlay, bottom-right of the image */
+.faxPageBarNum {
+  position: absolute;
+  right: 0.3rem;
+  bottom: 0.3rem;
+  font-size: 0.62rem;
+  font-weight: 400;
+  color: #fff;
+  background: rgba(15, 18, 26, 0.7);
+  padding: 0.05rem 0.35rem;
+  border-radius: 0.3rem;
+  pointer-events: none;
+}
 .faxTilePageRef { font-size: 0.66rem; font-weight: 700; color: #345496; text-align: center; }
 html[data-theme="dark"] .faxTilePageRef { color: #93c6ef; }
 
@@ -1338,6 +1350,7 @@ html[data-theme="dark"] .readMorePill:hover { background: rgba(147,198,239,0.2);
    ================================================================ */
 .biblePhrasesPair { display: flex; gap: 0.7rem; }
 .biblePhrasesPassage { flex: 1 1 0; min-width: 0; }
+.biblePhrasesPassage > .scripture_link { display: block; text-align: center; }
 .biblePhrasesPassage p {
   margin: 0.3rem 0 0;
   font-size: 0.78rem;
@@ -1397,8 +1410,8 @@ html[data-theme="dark"] .tileMoreLink:hover { background: rgba(147, 198, 239, 0.
    component (_Common/MiniChiasm.css)
    ================================================================ */
 .chiasmusTileHead { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 0.4rem; }
-.chiasmusTileHeadTop { display: flex; align-items: center; gap: 0.6rem; min-width: 0; }
-.chiasmusTileHead .chiasmGlyph { flex: 0 0 auto; opacity: 0.9; }
+.chiasmusTileHeadTop { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; min-width: 0; }
+.chiasmusTileHead .chiasmGlyph { flex: 0 0 auto; opacity: 0.9; order: 1; }
 .chiasmusTileIdent { display: flex; align-items: center; gap: 0.45rem; min-width: 0; }
 .chiasmusTileAvatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex: 0 0 auto; }
 .chiasmusTileIdentText { display: flex; flex-direction: column; min-width: 0; gap: 0.05rem; }
@@ -1532,7 +1545,9 @@ html[data-theme="dark"] .mapTileFrame { background: #22282e; }
    WITNESS — Book of Mormon witness statements (reserve)
    ================================================================ */
 /* featured single witness: large portrait, name, statement, source — centered */
-.witnessFeatured { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.4rem; text-decoration: none; color: inherit; }
+.witnessFeatured { display: flex; flex-direction: row; align-items: flex-start; text-align: left; gap: 0.7rem; text-decoration: none; color: inherit; }
+.witnessLeft { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; flex: 0 0 auto; }
+.witnessBody { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
 .witnessHero {
   position: relative;
   flex-shrink: 0;
@@ -1549,7 +1564,7 @@ html[data-theme="dark"] .mapTileFrame { background: #22282e; }
 .witnessHero img { width: 100%; height: 100%; object-fit: cover; display: block; position: relative; z-index: 1; }
 .witnessMono { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 1.5rem; z-index: 0; }
 html[data-theme="dark"] .witnessHero { background: #4a4033; border-color: #3a3a3a; }
-.witnessName { font-size: 0.95rem; font-weight: 800; color: #2a2a2a; }
+.witnessName { font-size: 0.8rem; font-weight: 700; color: #2a2a2a; text-align: center; max-width: 6.5rem; line-height: 1.15; }
 html[data-theme="dark"] .witnessName { color: #f0f0f0; }
 .witnessStatement { margin: 0; font-size: 0.9rem; line-height: 1.4; color: #444; }
 html[data-theme="dark"] .witnessStatement { color: #c4c4c4; }
@@ -1605,19 +1620,21 @@ html[data-theme="dark"] .rpBoxPane .sectionDots { border-right-color: #444; }
   padding-top: 1rem;
   border-top: 1px solid rgba(128, 128, 128, 0.25);
 }
-.notesTile .notesText { font-size: 0.95rem; margin-top: 0.5rem; }
+.notesTile .notesText { font-size: 0.8rem; line-height: 1; margin-top: 0.5rem; }
 /* speech-bubble treatment — the note reads as a margin gloss pointing up at the
    passage above. The tail is a centered CSS triangle flush to the top edge,
    filled with the bubble background (not floating, not the border grey). */
 .notesTile .notesBubble {
   position: relative;
-  display: flow-root; /* contain the floated cover without clipping the tail */
+  display: flex; /* row: cover on the right, text vertically centered on the left */
+  align-items: center;
+  gap: 0.4rem;
   margin-top: 0.9rem;
   padding: 0.6rem 0.75rem;
-  background: #fff;
+  background: #faf4e6; /* cream */
   border: 1px solid #ddd;
   border-radius: 0.4rem;
-  line-height: 1.45;
+  line-height: 1;
 }
 .notesTile .notesBubble::before,
 .notesTile .notesBubble::after {
@@ -1640,16 +1657,18 @@ html[data-theme="dark"] .rpBoxPane .sectionDots { border-right-color: #444; }
   margin-left: -8px;
   margin-bottom: -1px;
   border-width: 0 8px 8px 8px;
-  border-color: transparent transparent #fff transparent;
+  border-color: transparent transparent #faf4e6 transparent;
 }
 .notesTile .notesCover {
-  float: right;
+  order: 2; /* keep the cover on the right of the flex row */
+  flex: 0 0 auto;
   width: 44px;
   height: auto;
-  margin: 0.1rem 0 0.35rem 0.7rem;
+  margin: 0 0 0 0.5rem;
   border-radius: 0.25rem;
   border: 1px solid #ddd;
 }
+.notesTile .notesBody { min-width: 0; }
 .notesTile .notesAttr { font-size: 0.85rem; color: #666; }
 /* anchor phrase: the exact scripture snippet the note annotates (note.title) */
 .notesTile .notesAnchor { font-weight: 700; }
@@ -1820,21 +1839,47 @@ html[data-theme="dark"] .mapStoryTile .mapStoryCardArt { background: rgba(255, 2
   text-decoration: none;
   color: inherit;
 }
-/* per-edition tab graphic, centered and flush against the crop's top edge */
+/* top rail above the crop: title:ref on the left, per-edition tab img on the right */
 .faxVerseTile .faxEditionCropWrap {
   position: relative;
-  margin-top: 22px;                     /* reserve room for the tab above the crop */
 }
+.faxVerseTile .faxEditionRail {
+  display: flex;
+  align-items: flex-end;        /* tab sits down on the crop's top edge */
+  gap: 0.5rem;
+  height: 2rem;
+  padding: 0 0.35rem;
+}
+.faxVerseTile .faxEditionRailTitle {
+  flex: 1 1 auto;              /* fill the space beside the tab */
+  text-align: left;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #6b5330;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.faxVerseTile .faxEditionRailRef {
+  font-weight: 400;            /* standard .sampler .scripture_link color (no brown override) */
+}
+/* the tab graphic framed like a cardboard file tab, sitting on the crop's top edge */
 .faxVerseTile .faxEditionTab {
-  position: absolute;
-  bottom: 100%;                         /* bottom edge rests on the crop's top edge */
-  left: 50%;
-  transform: translateX(-50%);
-  height: 22px;
+  order: -1;
+  box-sizing: border-box;
+  height: 2rem;
   width: auto;
-  max-width: 90%;
+  max-width: 45%;
   display: block;
+  flex: 0 0 auto;
   z-index: 1;
+  padding: 0.15rem 0.3rem 0;
+  margin-bottom: -1px;         /* overlap the crop's top border so it reads as attached */
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
+  background: #faf7f0;
 }
 .faxVerseTile .faxEditionCrop {
   width: 100%;

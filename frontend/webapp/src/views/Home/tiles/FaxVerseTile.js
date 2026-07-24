@@ -58,14 +58,20 @@ export default function FaxVerseTile({ data }) {
             <Link key={ed.version} to={to} className="faxEditionRow">
               {src ? (
                 <div className="faxEditionCropWrap">
-                  {/* per-edition tab graphic, centered and sitting on the crop's top edge */}
-                  <img
-                    className="faxEditionTab"
-                    src={`${assetUrl}/fax/tabs/${ed.version}`}
-                    alt={ed.title || ed.version}
-                    loading="lazy"
-                    onError={(e) => (e.target.style.display = "none")}
-                  />
+                  {/* top rail: "<title>: <ref>" on the left, per-edition tab graphic on the right */}
+                  <div className="faxEditionRail">
+                    <span className="faxEditionRailTitle">
+                      {ed.title || ed.version}
+                      {data.ref ? <>{" "}<span className="faxEditionRailRef scripture_link">{data.ref}</span></> : null}
+                    </span>
+                    <img
+                      className="faxEditionTab"
+                      src={`${assetUrl}/fax/tabs/${ed.version}`}
+                      alt={ed.title || ed.version}
+                      loading="lazy"
+                      onError={(e) => (e.target.style.display = "none")}
+                    />
+                  </div>
                   <img
                     className="faxEditionCrop"
                     src={src}
