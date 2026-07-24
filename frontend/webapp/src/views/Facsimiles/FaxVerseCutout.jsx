@@ -31,26 +31,28 @@ function CutShape({ b, k, fill, className }) {
  */
 function FaxVerseTooltip({ verse, vx, top, bottom, placeBelow, caretOffset, minWidth }) {
   const ref = useRef(null);
-  const [box, setBox] = useState(null); // measured { w, h }
+  // Measure the NATURAL content size ONCE per verse (before any width override).
+  // Feeding the adjusted width back into the measurement oscillated -> infinite
+  // "max depth exceeded" loop, so `natural` is measured only while it's null and
+  // reset when the verse changes.
+  const [natural, setNatural] = useState(null);
+  useLayoutEffect(() => { setNatural(null); }, [verse.verse_id]);
   useLayoutEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const r = el.getBoundingClientRect();
-    if (!box || Math.abs(r.width - box.w) > 1 || Math.abs(r.height - box.h) > 1) {
-      setBox({ w: r.width, h: r.height }); // guarded -> converges, no loop
-    }
+    if (natural || !ref.current) return;
+    const r = ref.current.getBoundingClientRect();
+    setNatural({ w: r.width, h: r.height });
   });
 
   const vw = typeof window !== "undefined" ? window.innerWidth : 0;
   const maxW = Math.min(560, vw * 0.9);
   // Target a ~16:9 landscape shape. Text reflows at (roughly) constant AREA, so the
   // 16:9 width is sqrt(area * 16/9): this NARROWS a too-wide card (long single line)
-  // into more/shorter lines AND widens a too-tall one — both toward 16:9. Clamped
-  // to a sensible floor and the max width.
-  const targetW = box && box.w > 0 && box.h > 0
-    ? Math.max(TIP_MIN_W, Math.min(maxW, Math.round(Math.sqrt(box.w * box.h * (16 / 9)))))
+  // into more/shorter lines AND widens a too-tall one — both toward 16:9. Computed
+  // ONCE from the natural measurement (no feedback loop), clamped to [floor, maxW].
+  const targetW = natural && natural.w > 0 && natural.h > 0
+    ? Math.max(TIP_MIN_W, Math.min(maxW, Math.round(Math.sqrt(natural.w * natural.h * (16 / 9)))))
     : 0;
-  const w = targetW || (box ? box.w : 0);
+  const w = targetW || (natural ? natural.w : 0);
 
   const half = w / 2;
   // clamp the tooltip CENTER so its edges stay in view (only once width is known)
