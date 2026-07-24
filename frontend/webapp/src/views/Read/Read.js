@@ -484,11 +484,15 @@ export default function ReadScripture() {
         // all multi-chapter highlight scrolling.
         const key = debouncedHighlightedVerses.join(",");
         if (lastScrolledHighlightKey.current === key) return;
+        // Scroll to the SECTION containing the (max) highlighted verse — deep
+        // links (e.g. from the fax modal) should land at the section heading for
+        // context, not the bare verse. Falls back to the verse if it's sectionless.
         const maxVerse = Math.max(...debouncedHighlightedVerses);
         const verseElement = verseRefs.current.get(maxVerse);
         if (verseElement) {
             lastScrolledHighlightKey.current = key;
-            verseElement.scrollIntoView({ behavior: "smooth", block: "center" });
+            const section = verseElement.closest(".read-section");
+            (section || verseElement).scrollIntoView({ behavior: "smooth", block: "start" });
         }
     }, [debouncedHighlightedVerses, isContentLoading]);
 
