@@ -260,3 +260,27 @@ export function parseApparatus(html) {
   if (tail) segments.push({ kind: "text", text: tail });
   return { segments, warnings };
 }
+
+/**
+ * Find apparatus units in a prose HTML string and replace each with an inert
+ * <atv-unit data-atv-i="N"> placeholder. Returns the placeholder-ised html plus
+ * `units[N]` = that unit's readings. Units span multiple DOM nodes, so this
+ * works on the raw string, NOT parsed nodes. Non-apparatus brackets are left
+ * exactly as-is. Never throws.
+ */
+export function extractApparatusUnits(html) {
+  if (!html || typeof html !== "string") return { html: html || "", units: [] };
+  const { groups } = scanBracketGroups(html);
+  const units = [];
+  let out = "";
+  let from = 0;
+  for (const g of groups) {
+    if (!isApparatus(g.inner)) continue;
+    const i = units.length;
+    units.push(g.inner.split("|").map(toReading));
+    out += html.slice(from, g.start) + `<atv-unit data-atv-i="${i}"></atv-unit>`;
+    from = g.end + 1;
+  }
+  out += html.slice(from);
+  return { html: out, units };
+}

@@ -6,6 +6,7 @@ import {
   splitReading,
   parseStates,
   parseApparatus,
+  extractApparatusUnits,
 } from "../parseATV";
 
 describe("scanBracketGroups", () => {
@@ -332,5 +333,42 @@ describe("parseApparatus", () => {
     const units = segments.filter((s) => s.kind === "unit");
     expect(units).toHaveLength(1);
     expect(units[0].readings).toHaveLength(4);
+  });
+});
+
+describe("extractApparatusUnits", () => {
+  test("replaces each apparatus unit with an indexed placeholder", () => {
+    const src = "because [<em>that</em> 01A| BCDEFGHIJKLMNOPQRST] he was";
+    const { html, units } = extractApparatusUnits(src);
+    expect(html).toBe('because <atv-unit data-atv-i="0"></atv-unit> he was');
+    expect(units).toHaveLength(1);
+    expect(units[0]).toHaveLength(2);          // two readings
+    expect(units[0][0].sigla).toEqual(["0", "1", "A"]);
+  });
+
+  test("leaves prose brackets and non-apparatus untouched", () => {
+    const src = "a note [not apparatus] and [<em>a</em>|<em>o</em>] spelling";
+    const { html, units } = extractApparatusUnits(src);
+    expect(units).toHaveLength(0);
+    expect(html).toBe(src);                     // unchanged
+  });
+
+  test("indexes multiple units in document order", () => {
+    const src = "x [a A|b B] y [c A|d B] z";
+    const { html, units } = extractApparatusUnits(src);
+    expect(html).toBe('x <atv-unit data-atv-i="0"></atv-unit> y <atv-unit data-atv-i="1"></atv-unit> z');
+    expect(units).toHaveLength(2);
+  });
+
+  test("preserves surrounding block HTML", () => {
+    const src = "<ul><li>ref<ul><li>text [<em>that</em> 0A| BCDEFGHIJKLMNOPQRST] more</li></ul></li></ul>";
+    const { html } = extractApparatusUnits(src);
+    expect(html).toContain("<ul><li>ref<ul><li>text <atv-unit");
+    expect(html).toContain("</atv-unit> more</li></ul></li></ul>");
+  });
+
+  test("empty / null input is safe", () => {
+    expect(extractApparatusUnits("")).toEqual({ html: "", units: [] });
+    expect(extractApparatusUnits(null)).toEqual({ html: "", units: [] });
   });
 });
