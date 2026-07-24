@@ -1,5 +1,6 @@
-import type { FastifyInstance } from 'fastify';
-import { VERSION_SLUGS, WIDTH_WHITELIST, MAX_PAGES, MAX_VERSE_IDS } from './constants.js';
+import type { FastifyInstance, FastifyReply } from 'fastify';
+import { WIDTH_WHITELIST, MAX_PAGES, MAX_VERSE_IDS } from './constants.js';
+import { isRenderableVersion } from './versions.js';
 import { selectorToVerseIds, verseIdsToBoxes, legacyUnitToVerseIds, imageScanMeta } from './resolve.js';
 import { toFragments, clampPages } from './geometry.js';
 import { renderImage } from './render.js';
@@ -9,6 +10,27 @@ import { canonicalSelector } from './canonical.js';
 import { createHash } from 'node:crypto';
 
 const etag = (b: Buffer) => `"${createHash('sha1').update(b).digest('hex')}"`;
+
+/**
+ * Gate a request on the version being renderable. Sends the error response and
+ * returns false when it isn't: 400 for an unknown version (the caller's URL is
+ * wrong — a cacheable, honest answer), 503 when the registry lookup itself fails
+ * (DB down — not the caller's fault, and must not masquerade as a cacheable 400).
+ */
+async function ensureRenderable(reply: FastifyReply, version: string): Promise<boolean> {
+  let ok: boolean;
+  try {
+    ok = await isRenderableVersion(version);
+  } catch {
+    reply.code(503).send({ error: 'version registry unavailable' });
+    return false;
+  }
+  if (!ok) {
+    reply.code(400).send({ error: 'unknown version' });
+    return false;
+  }
+  return true;
+}
 
 function parseWidth(seg: string): number | 'full' | null {
   if (seg === 'wfull') return 'full';
@@ -32,7 +54,7 @@ export async function faxRoutes(app: FastifyInstance): Promise<void> {
     const parts = rest.split('/');
     if (parts.length < 4) return reply.code(400).send({ error: 'bad path' });
     const [version, mode, widthSeg, ...selParts] = parts;
-    if (!(VERSION_SLUGS as readonly string[]).includes(version!)) return reply.code(400).send({ error: 'unknown version' });
+    if (!(await ensureRenderable(reply, version!))) return reply;
     if (mode !== 'page' && mode !== 'crop') return reply.code(400).send({ error: 'bad mode' });
     const width = parseWidth(widthSeg!);
     if (width === null) return reply.code(400).send({ error: 'bad width' });
@@ -84,7 +106,7 @@ export async function faxRoutes(app: FastifyInstance): Promise<void> {
     const parts = rest.split('/');
     if (parts.length < 2) return reply.code(400).send({ error: 'bad path' });
     const version = parts[0]!;
-    if (!(VERSION_SLUGS as readonly string[]).includes(version)) return reply.code(400).send({ error: 'unknown version' });
+    if (!(await ensureRenderable(reply, version))) return reply;
     const tail = parts.slice(1).join('/').replace(/\.jpg$/, '');
     const m = /^([a-z-]{1,50})-(\d{1,6})$/.exec(tail);
     if (!m) return reply.code(400).send({ error: 'bad unit' });
@@ -120,7 +142,7 @@ export async function faxRoutes(app: FastifyInstance): Promise<void> {
     const parts = rest.split('/');
     if (parts.length < 2) return reply.code(400).send({ error: 'bad path' });
     const version = parts[0]!;
-    if (!(VERSION_SLUGS as readonly string[]).includes(version)) return reply.code(400).send({ error: 'unknown version' });
+    if (!(await ensureRenderable(reply, version))) return reply;
     const selector = parts.slice(1).join('/');
 
     const verseIds = selectorToVerseIds(selector);

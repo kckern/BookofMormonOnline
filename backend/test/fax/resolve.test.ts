@@ -25,8 +25,10 @@ describe('DB integration', () => {   // hits live DB
   // Stored fax_index.page is NOT the scan image-file number; the offset shifts it
   // per edition (front-matter/plate leaves), and the source format varies.
   it('imageScanMeta gives per-edition page offset + scan format', async () => {
-    expect(await imageScanMeta('1837')).toEqual({ offset: -4, format: 'jpg' }); // fax p11 (1 Ne 1:1) -> image 007
-    expect(await imageScanMeta('1841')).toEqual({ offset: 0, format: 'jpg' });  // no front-matter shift
-    expect(await imageScanMeta('2013')).toEqual({ offset: -9, format: 'png' }); // png-only edition
+    // toMatchObject: imageScanMeta also returns `paper` (bgcolor) now — assert the
+    // offset/format contract without coupling to the paper value.
+    expect(await imageScanMeta('1837')).toMatchObject({ offset: -4, format: 'jpg' }); // fax p11 (1 Ne 1:1) -> image 007
+    expect(await imageScanMeta('1841')).toMatchObject({ offset: 0, format: 'jpg' });  // no front-matter shift
+    expect(await imageScanMeta('2013')).toMatchObject({ offset: -9, format: 'png' }); // png-only edition
   });
 });

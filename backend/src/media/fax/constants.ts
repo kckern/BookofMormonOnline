@@ -1,9 +1,7 @@
 // backend/src/media/fax/constants.ts
-export const VERSION_SLUGS = [
-  '1829', '1830', '1837', '1840', '1841', '1879', '1920', '1981', '2013',
-  'earliest', 'poetic', 'printer', 'rebom',
-] as const;
-export type VersionSlug = (typeof VERSION_SLUGS)[number];
+// The renderable version allowlist is NOT hardcoded here — it is derived at
+// runtime from `SELECT DISTINCT version FROM bom_xtras_fax_index`. See
+// ./versions.ts (isRenderableVersion / renderableVersions).
 
 export const WIDTH_WHITELIST = [200, 400, 800, 1600] as const; // plus 'full'
 export const MAX_PAGES = 5;            // clamp

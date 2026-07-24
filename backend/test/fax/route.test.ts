@@ -78,4 +78,12 @@ describe('GET /fax/boxes', () => {
     const r = await f.inject({ method: 'GET', url: '/fax/boxes/9999/mosiah-4.21' });
     expect(r.statusCode).toBe(400);
   });
+  // Regression: editions loaded into bom_xtras_fax_index AFTER the old hardcoded
+  // VERSION_SLUGS array (e.g. 1888d) must resolve, not 400 — no code change.
+  // Uses /boxes so it exercises the version gate without needing a scan fetch.
+  it('a DB-registered version absent from the old hardcoded list resolves (not 400)', async () => {
+    const f = await app();
+    const r = await f.inject({ method: 'GET', url: '/fax/boxes/1888d/ether-12.39' });
+    expect(r.statusCode).toBe(200);
+  });
 });
