@@ -3,6 +3,11 @@ import React, { useState } from "react";
 // How far the on-hover magnifier zooms, as a multiple of the fit width — capped
 // so a very large `full` scan doesn't jump to an absurd magnification.
 const MAX_ZOOM = 2.8;
+// The pointer's active pan zone is inset from the box edges by this fraction on
+// each side: mapping the inner region to the FULL pan range means the image edges
+// come into view before the pointer reaches the very edge of the box (margin), so
+// the user never has to hunt the last pixel to see an edge.
+const PAN_INSET = 0.12;
 
 /**
  * Hover magnifier for a verse crop (the "Fax Zoom Box" pattern, cf. StudyInFeed /
@@ -24,8 +29,14 @@ export default function FaxVerseZoom({ src }) {
     const zh = zw * (nat.h / nat.w);
     const mx = e.clientX - r.left;
     const my = e.clientY - r.top;
-    const x = -(mx / r.width) * (zw - r.width);
-    const y = -(my / r.height) * (zh - r.height);
+    // Map the inset active zone -> full [0,1] pan, clamped so the outer margin band
+    // pins the image to its edge instead of overscrolling past it.
+    const clamp01 = (t) => Math.max(0, Math.min(1, t));
+    const span = 1 - 2 * PAN_INSET;
+    const fx = clamp01((mx / r.width - PAN_INSET) / span);
+    const fy = clamp01((my / r.height - PAN_INSET) / span);
+    const x = -fx * (zw - r.width);
+    const y = -fy * (zh - r.height);
     setBg({ size: `${Math.round(zw)}px ${Math.round(zh)}px`, pos: `${Math.round(x)}px ${Math.round(y)}px` });
   };
 
