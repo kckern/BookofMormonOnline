@@ -2,6 +2,7 @@ import {
   WITNESSES,
   SIGLA_ORDER,
   CHANGES,
+  CHANGE_CODES,
   BARE_CHANGE,
   isSiglum,
   decodeMarker,
@@ -89,4 +90,30 @@ test("decodeMarker turns corpus entities into the characters CHANGES is keyed on
 test("the exported tables are frozen", () => {
   expect(Object.isFrozen(WITNESSES)).toBe(true);
   expect(Object.isFrozen(CHANGES)).toBe(true);
+  expect(Object.isFrozen(SIGLA_ORDER)).toBe(true);
+  expect(Array.isArray(CHANGE_CODES)).toBe(true); // isFrozen(undefined) is true
+  expect(Object.isFrozen(CHANGE_CODES)).toBe(true);
+});
+
+test("witness entries are frozen too, so the citations cannot be rewritten", () => {
+  const before = WITNESSES.A.label;
+  expect(Object.isFrozen(WITNESSES.A)).toBe(true);
+  try {
+    WITNESSES.A.label = "MUTATED"; // throws under strict mode, no-ops otherwise
+  } catch (e) {
+    // expected in strict mode
+  }
+  expect(WITNESSES.A.label).toBe(before);
+  for (const s of SIGLA_ORDER) expect(Object.isFrozen(WITNESSES[s])).toBe(true);
+});
+
+test("CHANGE_CODES is ordered longest-first for longest-match tokenising", () => {
+  expect([...CHANGE_CODES].sort()).toEqual(Object.keys(CHANGES).sort());
+  CHANGE_CODES.forEach((code, i) => {
+    if (i > 0) expect(code.length).toBeLessThanOrEqual(CHANGE_CODES[i - 1].length);
+  });
+  // the specific collisions that would truncate a real code
+  expect(CHANGE_CODES.indexOf("+–")).toBeLessThan(CHANGE_CODES.indexOf("+"));
+  expect(CHANGE_CODES.indexOf("%+")).toBeLessThan(CHANGE_CODES.indexOf("%"));
+  expect(CHANGE_CODES.indexOf("%?")).toBeLessThan(CHANGE_CODES.indexOf("%"));
 });

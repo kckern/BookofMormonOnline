@@ -4,12 +4,18 @@
  * codes. Data only — parsing lives in parseATV.js.
  */
 
+/** Freeze a table and every entry in it — the provenance strings are citations. */
+const deepFreezeEntries = (table) => {
+  for (const entry of Object.values(table)) Object.freeze(entry);
+  return Object.freeze(table);
+};
+
 /**
  * The 22 witnesses to the Book of Mormon text, in chronological order, as used
  * by Royal Skousen's apparatus. `label` is the short citation form; `provenance`
  * is the full description (unused before this refactor — see spec P7).
  */
-export const WITNESSES = Object.freeze({
+export const WITNESSES = deepFreezeEntries({
   "0": { label: "Original Manuscript (𝒪)", provenance: "The original manuscript, 1828–1829 (28 percent extant, not counting the lost 116 pages); written down by Oliver Cowdery and other scribes from dictation by Joseph Smith" },
   "1": { label: "Printer’s Manuscript (𝓟)", provenance: "The printer’s manuscript, August 1829–March 1830; a handwritten copy of the original manuscript" },
   A: { label: "1830", provenance: "The first edition, published in Palmyra, New York; printed by E. B. Grandin, with typesetting by John Gilbert; set from the printer’s manuscript except for Helaman 13– Mormon 9, which was set from the original manuscript" },
@@ -52,8 +58,10 @@ export const decodeMarker = (s) =>
  * `%` 125, `jg` 94, `js` 635, `?` 31, `–` 48, `p` 15, `%?` 6, `%+` 4, `++` 2.
  *
  * There is deliberately NO empty-string key: a bare ">" carries no code, and
- * "" would match at every position in the longest-match tokeniser that consumes
- * Object.keys(CHANGES). Bare markers use BARE_CHANGE instead.
+ * "" would match at every position in a longest-match tokeniser. Bare markers
+ * use BARE_CHANGE instead. To tokenise, iterate CHANGE_CODES (ordered) rather
+ * than Object.keys(CHANGES) (insertion order, which would match "+" before
+ * "+–" and "%" before "%+"/"%?", truncating three real codes).
  *
  * `b` is unattested in this corpus but is part of Skousen's published legend;
  * kept on purpose so the table stays a faithful copy of the legend.
@@ -77,7 +85,15 @@ export const CHANGES = Object.freeze({
   "%?": "change w/ erasure, uncertain",
 });
 
-/** Description for a bare ">" with no code after it — our wording, not Skousen's. */
+/** Correction codes, longest first — safe to iterate for longest-match tokenising. */
+export const CHANGE_CODES = Object.freeze(
+  Object.keys(CHANGES).sort((a, b) => b.length - a.length)
+);
+
+/**
+ * Description for a bare ">" with no code after it. Inherited verbatim from the
+ * original table in ATV.js, which keyed it as ">" — not our wording.
+ */
 export const BARE_CHANGE = "change";
 
 export const isSiglum = (ch) => Object.prototype.hasOwnProperty.call(WITNESSES, ch);
