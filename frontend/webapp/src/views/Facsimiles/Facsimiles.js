@@ -34,14 +34,13 @@ function FacsimileViewer({ item, volumeOrder, currentVolumeIndex }) {
 
   useEffect(() => {
     if (!item.indexRef) return;
-    const { indexRef, pgfirstVerse } = item || {};
-    // Placeholders skip the leading CONTENT pages (image files 1..pgfirstVerse-1)
-    // that precede the first indexed page, so getRefFromIndex — which is keyed by
-    // image-file number — lands pages[0] on image file `pgfirstVerse`. pgoffset
-    // (front-matter leaves) must NOT be added here: front-matter leaves have i<=0
-    // and never index into real tuples. Adding pgoffset shifted every reference
-    // by pgoffset on front-matter editions. See docs/audits/2026-07-24-fax-page-numbering-ssot.md.
-    const blankPageCount = pgfirstVerse - 1;
+    const { indexRef } = item || {};
+    // `pages` arrives DENSE and keyed by image-file page number: element i is
+    // image page i+1, and pageless scans are [0,0] gaps (the backend builds it
+    // via buildDensePages). So getRefFromIndex(pageIndex, pageNum) lands on the
+    // right page with no placeholder math — the old positional padding only
+    // compensated for LEADING gaps, so any interior pageless scan drifted every
+    // later page. See docs/bugs/2026-07-25-fax-verse-highlights-index-drift.md.
     let cancelled = false;
     BoMOnlineAPI({ faxIndex: indexRef })
       .then((r) => {
@@ -50,8 +49,7 @@ function FacsimileViewer({ item, volumeOrder, currentVolumeIndex }) {
         const pages = entry?.pages;
         if (!Array.isArray(pages)) return;
         setFaxOffset(Number.isFinite(entry?.offset) ? entry.offset : 0);
-        const placeholderArray = Array.from({ length: blankPageCount }, () => [0, 0]);
-        setPageIndex([...placeholderArray, ...pages]);
+        setPageIndex(pages);
       })
       .catch(() => { /* leave pageIndex empty; refs simply won't show */ });
     return () => { cancelled = true; };

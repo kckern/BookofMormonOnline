@@ -88,17 +88,10 @@ export const mediamiscResolvers: Resolvers = {
       return {
         slug,
         offset,
-        pages: items.map((x, i) => {
-          const prev = items[i - 1];
-          const firstWholeVerseIsFirstContent =
-            !prev || prev.last_verse_id !== x.first_verse_id;
-          const vals: number[] = [
-            Number(x.first_verse_id),
-            Number(x.verse_count),
-          ];
-          if (firstWholeVerseIsFirstContent) vals.push(1);
-          return vals;
-        }),
+        // Dense, image-page-keyed array (index i == image page i+1); interior
+        // pageless scans are [0,0] gaps so the viewer never drifts. See
+        // docs/bugs/2026-07-25-fax-verse-highlights-index-drift.md.
+        pages: buildDensePages(items),
       };
     },
 
