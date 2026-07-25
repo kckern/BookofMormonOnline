@@ -1,8 +1,36 @@
 # Fax box data: wrong verse_id labels on geometrically-correct boxes (European plate cluster + 1849)
 
 **Date:** 2026-07-25
-**Status:** Root cause confirmed (live render + DB forensics). No data fix applied yet — see
+**Status:** Root cause REVISED 2026-07-25 (see "Correction" below) after deeper forensics. It is a
+**page-numbering mismatch**, not a verse_id relabel. No data fix applied yet — see
 `docs/plans/2026-07-25-fax-box-data-remediation.md`.
+
+## Correction (supersedes the "wrong verse_id labels" framing below)
+
+Further DB analysis shows the `verse_id` values are **fine**: for both good and broken editions,
+`verse_id` and `page` are strictly monotonic in insertion (`uid`) order — the box data is
+internally clean. The anomaly is the **`page` column**:
+
+| edition | physical scan pages (`bom_xtras_fax.pages`) | box-data max page | box distinct pages |
+|---|---|---|---|
+| 1830 / 1837 / 1842 (correct) | 590 / 621 / 573 | 594 / 623 / 571 (≈ physical) | dense |
+| 1852–1877 cluster (broken) | 563 | **453** | 289 |
+| 1849 (broken, separate) | 563 | 549 | 401 |
+
+The correct editions' box pages span their full physical page range; the cluster's max out at 453
+while the editions have 563 scan pages. So the cluster's `page` numbers are a **compressed
+numbering that does not correspond to the physical scans** — `/fax/render` fetches `scan = page +
+offset`, so it pulls the wrong physical page, nonlinearly (verse 31349 box-page 24 → true scan ~20,
+offset ≈ −4; verse 35177 box-page 326 → true scan later, offset ≈ +20). Not a constant offset.
+
+**Revised fix:** remap the cluster's box `page` (and, since coordinates were fit to the wrong
+pagination, likely re-fit `X/Y/W/H`) to the physical scans — OR re-derive the boxes from the actual
+scans. The `verse_id` column is correct and should be preserved. This needs a source for the true
+box-page → physical-scan-page correspondence (see the plan's open questions). Everything below this
+line was the earlier (superseded) verse_id-relabel hypothesis, kept for the audit trail.
+
+---
+
 **Table:** `bom_xtras_fax_index` (columns: `uid, version, verse_id, page, pageWidth, pageScale, X, Y, W, H, TLW, TLH, BRW, BRH`)
 **Surfaced by:** the render-crop exit criterion during verification of
 `docs/bugs/2026-07-25-fax-verse-highlights-index-drift.md`. **This is a separate, deeper bug** —

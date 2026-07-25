@@ -28,25 +28,35 @@ region is wrong. So **do not touch geometry** — update only `verse_id`. This k
 to one column and preserves the per-scan coordinate fits (which differ across the cluster:
 `pageWidth` 959–2136).
 
-## Deriving the correct labels (the crux — needs a spike)
+## Root cause is a page-numbering mismatch (spike done — two theories ruled out)
 
-We need, for the shared cluster layout, the correct modern `verse_id` for each box (in `page`,`Y`
-reading order). Options, cheapest-first:
+**Spike result (2026-07-25).** Ruled out both a verse_id relabel and a constant offset:
 
-1. **Sequential-order hypothesis (test first, ~1 spike).** The boxes are already in reading order
-   and locally sequential. IF the box reading-order is 1:1 with the canonical verse sequence
-   (no missing/extra boxes, count-per-page matches modern verses-per-page), then correct labels =
-   canonical `verse_id`s assigned in strict reading order. Test on 3–4 pages: OCR/eyeball the true
-   modern verses on a page, compare their count+order to the boxes, render-crop-validate. If it
-   holds book-wide, the relabel is a single ordered re-assignment — cheap and clean.
-2. **OCR alignment (robust fallback).** Install `tesseract`; OCR each of the 289 unique cluster
-   pages once; fuzzy-match each line to the project's canonical text (`bom_text`, which has
-   `verse_id`↔text) to get the true verse sequence per page; assign to boxes in Y-order. Authoritative
-   but heavier. Needed if (1) fails (i.e., box count ≠ modern verse count on some pages).
-3. **Old→modern concordance.** If a pre-1879→modern versification map exists in the project/data,
-   use it to label from the printed old refs. Fastest if such a table exists — check first.
+- Verse_ids are **correct**: `verse_id` and `page` are strictly monotonic in insertion (`uid`)
+  order for good *and* broken editions; the full canonical set (6604 ids, 31103–37706) is present.
+  A reading-order re-sequence (`backend/scripts/fax-resequence.mjs`) does **not** reproduce good
+  editions (≈2–4% match) — because the labels were never the problem.
+- The `page` column is the anomaly: the cluster's box pages max at **453 / 289 distinct** while the
+  editions have **563 scan pages** (good editions' box pages ≈ their physical page counts). So the
+  cluster `page` numbers are a **compressed numbering that doesn't index the physical scans.**
+- The resulting render offset is **nonlinear** (verse 31349 ≈ −4 pages, verse 35177 ≈ +20) — a
+  single per-edition offset cannot fix it.
 
-Whatever derives the map, it is expressed once for the shared cluster and written per-edition-row.
+**Revised fix:** correct the cluster's box `page` to the physical scan page for each verse, and —
+because `X/Y/W/H` were fit to the wrong pagination — most likely re-fit the coordinates too (or
+re-derive boxes from the scans). **Preserve `verse_id`.** Because the 7 cluster editions share plate
+layout, one page-correspondence covers all 7; 1849 needs its own (549/401 numbering).
+
+**The open question is the source of truth for box-page → physical-scan-page.** Candidates:
+1. An existing correspondence the team already has (KC: "faxindex is where the versification work
+   is" — is there a stored/derivable page map for these editions?).
+2. Content-anchor alignment: OCR/eyeball a set of anchor pages per edition (raw scans are at
+   `https://media.bookofmormon.online/fax/pages/{version}/{NNN}.{format}` — 1871 is `png`), fit the
+   page map, then re-fit coordinates per page.
+3. Full re-index from the scans (heaviest).
+
+**Validation stays read-only until the write:** the render-crop harness against the 1920 control,
+run before and after, per edition.
 
 ## Safety (done / required)
 
