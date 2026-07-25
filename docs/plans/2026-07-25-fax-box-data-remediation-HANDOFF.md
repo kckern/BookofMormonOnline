@@ -1,5 +1,56 @@
 # Fax box-data remediation — HANDOFF
 
+> ## ⚠️ 2026-07-25 CORRECTION — READ THIS FIRST (cross-session reconciliation)
+>
+> This HANDOFF was written against the **old** cluster data. It has since been **replaced in prod**
+> by a separate session's per-edition remediation load (the private BoMOnlineWorkspace fax-OCR
+> pipeline). Reconciled facts, verified against `bom_prd` and the raw scans on 2026-07-25:
+>
+> 1. **Prod is NO LONGER the shared 6740-row dataset.** It now holds per-edition data with
+>    *differing* counts: `1852/1854/1854l/1866/1871=6740, 1874=6703, 1877=6739, 1849=6840`. Prod's
+>    `1871/31349` row (`p24 X86 Y102 W515 H20`) matches `scripts/out/families/1871-remediated.sql`
+>    byte-for-byte. **The prod agent is looking at the new data, not stale data.**
+> 2. **The new load fixed GEOMETRY QUALITY only** (edge-snap to whitespace, notch cuts, page
+>    coherence). It did **NOT** fix the `verse_id`↔content labels. **The nonlinear drift documented in
+>    §2.2 is STILL PRESENT.** Ground truth (I read the scans directly):
+>    `media/fax/pages/1871/024.png` shows old-CHAP.III v35 = **1 Ne 13:10** ("many waters… divided the
+>    Gentiles"), but the box there is labeled **31349 (1 Ne 11:18)**. The real 1 Ne 11:18 is on **page
+>    20**. So §2's anchor table is confirmed correct; the box-page numbering is now 1..453 (Moroni
+>    10:34 = the last verse = box page 453; scans 454–563 are witness/appendix/blank — the 453-vs-563
+>    gap in §2.4 is expected tail, not a numbering bug).
+> 3. **Why the QA missed it:** `fax-geometry-audit.mjs` measures whether an edge cuts ink, not whether
+>    the label matches the text. A box perfectly framing 1 Ne 13:10 while labeled 31349 passes every
+>    ink/notch/coherence check. Only the render-crop harness (§6) tests label↔content — keep using it
+>    as the gate.
+> 4. **§4 OCR-relabel is still the right path, and it is now DONE (computationally, no re-OCR).** The
+>    OCR aligner had ALREADY run on this family (via Gemini, not tesseract — §5 Q3 is moot, no install
+>    needed). **Root cause of the mislabel, verified:** NOT Gemini — its per-line OCR is correct. The
+>    labeling step (`fax-ocr-index.mjs` Phase B) used a *stateful cursor*: a 35-verse peephole window
+>    `[cursor, cursor+35]` that advanced by "last verse anchored on this page." A page that anchored a
+>    little short/long left the cursor mis-placed and every later page inherited the error — lagging
+>    ~51 in 1 Nephi, flipping to lead in Alma (nonlinear = accumulated drift, exactly §2.2). It hit
+>    8/8 on 1842 (clean, continuous prose) but drifted on the numbered old-versification cluster.
+>    **Fix (shipped in BoMOnlineWorkspace `scripts/fax-relabel-global.mjs`):** a STATELESS matcher that
+>    locates each page independently in the full BoM word stream (offset-vote → windowed LCS), so drift
+>    is impossible by construction. Verified on the scans: 1852 page 24 now labels 31400 (1 Ne 13:10),
+>    Alma anchors corrected; 0 page-order inversions. Corrected SQL: `scripts/out/families/
+>    1852-relabeled.sql`, `1849-relabeled.sql`, and per-member cluster files from re-registering the
+>    corrected 1852 seed.
+> 6. **Coverage caveat (by design, not a bug):** ~148 pages/edition returned EMPTY from the original
+>    throttled Gemini run and were cached empty (an empty cache still counts as "cached," so they were
+>    never retried). Those pages get NO boxes — we do not fabricate geometry or span gaps. So the
+>    corrected data is ~63% (1852) / ~74% (1849) coverage: sparse-but-correct, replacing dense-but-
+>    wrong. Recover the rest by deleting the empty-`lines` cache files and re-OCRing when Gemini
+>    credits return, then re-relabel.
+> 5. **§5 open questions resolved:** Q1 (donor) — none exists, confirmed. Q2 (what built wrong labels)
+>    — the manual pipeline keyed off *printed* old-versification verse numbers that don't map to modern
+>    verse_ids. Q3 (tesseract) — moot, OCR already done via Gemini.
+>
+> Active work on the aligner de-bias + re-run is happening in the BoMOnlineWorkspace session. This doc
+> below is preserved as originally written for context.
+
+---
+
 **Date:** 2026-07-25
 **Status:** Index-drift bug FIXED & verified (branch `fix/fax-verse-highlight-index-drift`). A deeper,
 independent **box-data** problem is fully characterized but NOT fixed — it's blocked on one decision
