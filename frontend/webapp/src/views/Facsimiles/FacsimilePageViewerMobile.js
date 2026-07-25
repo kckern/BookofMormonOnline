@@ -5,6 +5,7 @@ import { lookupReference } from "scripture-guide";
 import { useFaxHighlight } from "./useFaxHighlight";
 import FaxScrollPageRow from "./FaxScrollPageRow";
 import FaxVerseModal from "./FaxVerseModal";
+import { useFaxPageVerses } from "./useFaxPageVerses";
 import { readPath } from "../_Common/ScriptureExcerpt";
 
 /**
@@ -122,6 +123,15 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
       } catch { /* fall through */ }
       return 0;
     }
+    // Digits beyond the page count are a verse id — find its page.
+    const n = parseInt(raw, 10);
+    if (Number.isFinite(n) && n > leafIndex.length) {
+      for (let i = 0; i < leafIndex.length; i++) {
+        const pr = leafIndex[i]?.pageReference;
+        if (pr && (lookupReference(pr)?.verse_ids || []).includes(n)) return i;
+      }
+      return 0;
+    }
     const idx = leafIndex.findIndex((l) => `${l.pageSlugLeaf}` === `${raw}`);
     return idx !== -1 ? idx : 0;
   }, [leafIndex]);
@@ -150,7 +160,46 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
     didInit.current = true;
   }, [ready, pageNumber, resolveIndex, scrollToIndex]);
 
-  // ---- Track the centered page → sticky header + debounced URL sync ----
+  // ---- Deep-link to a verse (ref slug or verse id) opens the inspector drawer ----
+  // The URL scrolls to the page (above); here we also resolve the verse and open the
+  // drawer. A raw verse id is normalized to its ref in the URL (never persisted).
+  const urlVerseId = useMemo(() => {
+    const raw = pageNumber;
+    if (!raw) return null;
+    if (/[A-Za-z]/.test(raw)) {
+      try { const ids = lookupReference(raw)?.verse_ids || []; return ids.length ? Math.min(...ids) : null; } catch { return null; }
+    }
+    const n = parseInt(raw, 10);
+    return (Number.isFinite(n) && n > total) ? n : null; // digits beyond page count = verse id
+  }, [pageNumber, total]);
+
+  const targetLeaf = useMemo(() => {
+    if (urlVerseId == null) return null;
+    return leafIndex.find((l) => l.pageReference && (lookupReference(l.pageReference)?.verse_ids || []).includes(urlVerseId)) || null;
+  }, [urlVerseId, leafIndex]);
+
+  const deepLink = useFaxPageVerses(urlVerseId != null ? item.slug : null, targetLeaf);
+  const deepLinkDone = useRef(false);
+  useEffect(() => { deepLinkDone.current = false; }, [urlVerseId]);
+  useEffect(() => {
+    if (urlVerseId == null || deepLinkDone.current || openVerse) return;
+    const v = deepLink.verses.find((x) =>
+      x.verse_id === urlVerseId || (lookupReference(x.ref)?.verse_ids || []).includes(urlVerseId));
+    if (!v) return;
+    deepLinkDone.current = true;
+    setOpenVerse(v);
+    setOpenList(deepLink.verses);
+    const slug = (v.ref || "").replace(/[ :]+/g, ".").toLowerCase();
+    if (slug && slug !== pageNumber) { lastWrittenSlug.current = slug; history.replace(`/fax/${item.slug}/${slug}`); }
+  }, [urlVerseId, deepLink, openVerse, pageNumber, history, item.slug]);
+
+  // While the verse drawer is open, hold the ref permalink in the URL — don't let the
+  // scroll-sync overwrite it with the page number (read via ref so the sync effect,
+  // which isn't keyed on openVerse, always sees the live value).
+  const openVerseRef = useRef(null);
+  useEffect(() => { openVerseRef.current = openVerse; }, [openVerse]);
+
+  // ---- Track the centered page → debounced URL sync ----
   const syncTimer = useRef(null);
   useEffect(() => {
     if (!ready) return;
@@ -163,6 +212,7 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
     if (slug != null && `${slug}` !== `${lastWrittenSlug.current}`) {
       clearTimeout(syncTimer.current);
       syncTimer.current = setTimeout(() => {
+        if (openVerseRef.current) return; // keep the ref permalink while the drawer is open
         lastWrittenSlug.current = `${slug}`;
         history.replace(`/fax/${item.slug}/${slug}`);
       }, 180);
