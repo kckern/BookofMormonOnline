@@ -13,11 +13,16 @@ export default function FaxHighlightOverlay({ boxes, pageScale = 700, displayedW
   useEffect(() => {
     if (displayedWidth || !ref.current) return undefined;
     const el = ref.current;
-    const update = () => setMeasured(el.getBoundingClientRect().width);
-    update();
-    const ro = new ResizeObserver(update);
+    let raf = null;
+    const read = () => { raf = null; setMeasured((cur) => { const nw = el.getBoundingClientRect().width; return cur === nw ? cur : nw; }); };
+    read();
+    if (typeof ResizeObserver === "undefined") return undefined;
+    // rAF-batch to avoid the "ResizeObserver loop" warning when many page overlays
+    // mount/resize at once during scroll.
+    const schedule = () => { if (raf == null) raf = requestAnimationFrame(read); };
+    const ro = new ResizeObserver(schedule);
     ro.observe(el);
-    return () => ro.disconnect();
+    return () => { if (raf != null) cancelAnimationFrame(raf); ro.disconnect(); };
   }, [displayedWidth]);
 
   const list = boxes || [];

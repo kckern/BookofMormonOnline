@@ -1,7 +1,9 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import Drawer from "react-modern-drawer";
+import "react-modern-drawer/dist/index.css";
 import { assetUrl, renderBaseUrl } from "src/models/BoMOnlineAPI";
-import { label } from "src/models/Utils";
+import { label, isMobile } from "src/models/Utils";
 import { unionBox } from "./faxVerseData";
 import FaxVerseZoom from "./FaxVerseZoom";
 import StudyBreadcrumb from "../_Common/StudyBreadcrumb";
@@ -83,6 +85,17 @@ export default function FaxVerseModal({ verse, version, pageScale = 700, anchorX
     return () => { if (raf != null) cancelAnimationFrame(raf); ro.disconnect(); };
   }, [aspectBox.w, aspectBox.h]);
 
+  // Mobile presents the inspector as a right side-drawer (no centered modal on
+  // mobile). Flip `drawerOpen` on after mount so react-modern-drawer plays its
+  // slide-in transition instead of appearing already-open.
+  const mobile = isMobile();
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  useEffect(() => {
+    if (!mobile || !verse) return undefined;
+    const t = setTimeout(() => setDrawerOpen(true), 10);
+    return () => clearTimeout(t);
+  }, [mobile, verse]);
+
   if (!verse) return null;
 
   const s = CUTOUT_TARGET_W / box.w;
@@ -96,11 +109,9 @@ export default function FaxVerseModal({ verse, version, pageScale = 700, anchorX
     transform: "translate(-50%, -50%)",
   };
 
-  const node = (
-    <div className="faxVerseModal" role="dialog" aria-modal="true" aria-label={verse.ref}>
-      <div className="faxVerseModal-backdrop" onClick={() => onClose && onClose()} />
-      <div className="faxVerseModal-card" style={cardStyle}>
-        <button type="button" className="faxVerseModal-nav faxVerseModal-close" aria-label="Close" onClick={() => onClose && onClose()}>×</button>
+  const cardBody = (
+    <>
+      <button type="button" className="faxVerseModal-nav faxVerseModal-close" aria-label="Close" onClick={() => onClose && onClose()}>×</button>
 
         <div className="faxVerseModal-header">
           {(verse.person_slug || verse.voice) && (
@@ -179,9 +190,30 @@ export default function FaxVerseModal({ verse, version, pageScale = 700, anchorX
             disabled={!onNext}
           >›</button>
         </div>
-      </div>
-    </div>
+    </>
   );
 
+  // Mobile: right side-drawer (consistent with the app's mobile drawer pattern).
+  if (mobile) {
+    return (
+      <Drawer
+        open={drawerOpen}
+        direction="right"
+        size="92vw"
+        className="faxVerseDrawer"
+        onClose={() => onClose && onClose()}
+      >
+        <div className="faxVerseDrawer-inner">{cardBody}</div>
+      </Drawer>
+    );
+  }
+
+  // Desktop: centered modal, portaled to <body>.
+  const node = (
+    <div className="faxVerseModal" role="dialog" aria-modal="true" aria-label={verse.ref}>
+      <div className="faxVerseModal-backdrop" onClick={() => onClose && onClose()} />
+      <div className="faxVerseModal-card" style={cardStyle}>{cardBody}</div>
+    </div>
+  );
   return createPortal(node, document.body);
 }

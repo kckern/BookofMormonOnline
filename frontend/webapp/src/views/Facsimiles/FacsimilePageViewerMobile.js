@@ -1,11 +1,11 @@
 import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useParams, useHistory, useLocation } from "react-router-dom";
 import "./FacsimilePageViewer.scss";
-import PageImage from "./PageImage";
-import { openScripture } from "../_Common/ScripturePopup";
 import { lookupReference } from "scripture-guide";
 import { useFaxHighlight } from "./useFaxHighlight";
-import FaxHighlightOverlay from "./FaxHighlightOverlay";
+import FaxScrollPageRow from "./FaxScrollPageRow";
+import FaxVerseModal from "./FaxVerseModal";
+import { readPath } from "../_Common/ScriptureExcerpt";
 
 /**
  * FacsimilePageViewerMobile — continuous vertical scroll of the whole edition,
@@ -35,6 +35,20 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
 
   const [scrubOpen, setScrubOpen] = useState(false);
   const [scrubValue, setScrubValue] = useState(0);
+
+  // Tapped verse → inspector drawer. `openList` is the tapped page's verse list so
+  // the drawer's prev/next step within the page.
+  const [openVerse, setOpenVerse] = useState(null);
+  const [openList, setOpenList] = useState([]);
+  const onOpenVerse = useCallback((verse, list) => { setOpenVerse(verse); setOpenList(list || []); }, []);
+  const navVerse = useCallback((dir) => {
+    setOpenVerse((cur) => {
+      if (!cur) return cur;
+      const idx = openList.findIndex((v) => v.verse_id === cur.verse_id);
+      const next = idx >= 0 ? openList[idx + (dir === "next" ? 1 : -1)] : null;
+      return next || cur;
+    });
+  }, [openList]);
 
   const total = leafIndex.length;
   const didInit = useRef(false);
@@ -202,34 +216,16 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
   const renderRow = (i) => {
     const leaf = leafIndex[i];
     if (!leaf) return null;
-    const boxes = highlight.boxesByPage.get(leaf.pageNumInt);
     return (
-      <div key={leaf.leafCursor ?? i} className="faxScrollRow" style={{ height: ROW }}>
-        <div className="faxScrollRail">
-          <span className="rail-page">Page {leaf.faxPageSlug}</span>
-          {leaf.pageReference && (
-            <span
-              className="rail-ref scripture_link"
-              role="button"
-              tabIndex={0}
-              onClick={() => openScripture(leaf.pageReference)}
-              onKeyDown={(e) => { if (e.key === 'Enter') openScripture(leaf.pageReference); }}
-            >{leaf.pageReference}</span>
-          )}
-        </div>
-        <div className="faxScrollPage" style={{ height: pageH }}>
-          <PageImage
-            src={leaf.pageAssetUrl}
-            previewSrc={leaf.thumbAssetUrl}
-            alt={`Page ${leaf.faxPageSlug}`}
-            label={leaf.pageReference || `Page ${leaf.faxPageSlug}`}
-            loading="lazy"
-          />
-          {boxes && boxes.length > 0 && (
-            <FaxHighlightOverlay boxes={boxes} pageScale={highlight.pageScale} />
-          )}
-        </div>
-      </div>
+      <FaxScrollPageRow
+        key={leaf.leafCursor ?? i}
+        leaf={leaf}
+        row={ROW}
+        pageH={pageH}
+        version={item.slug}
+        highlight={highlight}
+        onOpenVerse={onOpenVerse}
+      />
     );
   };
 
@@ -302,6 +298,18 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
             <button type="submit">Go</button>
           </form>
         </div>
+      )}
+
+      {/* Verse inspector — renders as a right side-drawer on mobile */}
+      {openVerse && (
+        <FaxVerseModal
+          verse={openVerse}
+          version={item.slug}
+          onPrev={openList.findIndex((v) => v.verse_id === openVerse.verse_id) > 0 ? () => navVerse("prev") : undefined}
+          onNext={openList.findIndex((v) => v.verse_id === openVerse.verse_id) < openList.length - 1 ? () => navVerse("next") : undefined}
+          onRead={(v) => { const rp = readPath(v.ref); if (rp) history.push(rp); }}
+          onClose={() => setOpenVerse(null)}
+        />
       )}
     </div>
   );

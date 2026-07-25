@@ -729,6 +729,19 @@ html[data-theme="dark"] .faxMobileViewer {
   from { opacity: 0; transform: scale(1.06); }
   to   { opacity: 1; transform: scale(1); }
 }
+/* Tap-only verse hotspots (mobile). Transparent until pressed — no hover state. */
+.faxTapLayer { position: absolute; inset: 0; z-index: 4; }
+.faxTapHotspot {
+  position: absolute;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 2px;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: rgba(120, 90, 50, 0.3);
+  &:active { background: rgba(120, 90, 50, 0.24); }
+}
 /* Interactive verse inspector layer (Phase 1) */
 .faxVerseLayer {
   position: absolute;
@@ -898,6 +911,27 @@ html[data-theme="dark"] .faxVerseTooltip {
   right: 0.6rem;
   z-index: 2;
 }
+
+/* Mobile: the inspector is a right side-drawer (react-modern-drawer). Match the
+   app's .popupDrawer geometry — sit BELOW the 60px app header and ABOVE the 64px
+   bottom-nav — so the close button and content clear the fixed chrome. */
+.faxVerseDrawer {
+  top: 60px !important;
+  height: calc(100vh - 60px - 64px) !important;
+}
+/* The shared .faxVerseModal-* content styles apply inside; this wrapper supplies the
+   surface, scroll, and the positioning context for the absolute close button. */
+.faxVerseDrawer-inner {
+  position: relative;
+  height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 1.1rem 1.1rem 2rem;
+  background: #fbf8f1;
+  color: #1c1b18;
+  box-sizing: border-box;
+}
+html[data-theme="dark"] .faxVerseDrawer-inner { background: #1f1f1f; color: #eee; }
 /* header: [avatar] [ref / page ▸ section] — prev/next moved to the rail below */
 .faxVerseModal-header { display: flex; align-items: center; gap: 0.7rem; margin-bottom: 0.8rem; padding-right: 1.4rem; }
 /* speaker: avatar with the voice label underneath (Read left-gutter pattern) */
