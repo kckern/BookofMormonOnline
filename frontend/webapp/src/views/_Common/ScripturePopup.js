@@ -1,6 +1,8 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { label } from "src/models/Utils";
+import Drawer from "react-modern-drawer";
+import "react-modern-drawer/dist/index.css";
+import { label, isMobile } from "src/models/Utils";
 import ScriptureExcerpt, { canonical, readPath } from "./ScriptureExcerpt";
 import "./ScripturePopup.css";
 
@@ -81,8 +83,54 @@ export default function ScripturePopup() {
     return () => document.body.classList.remove("noscroll");
   }, [ref]);
 
+  // Mobile presents the excerpt as a right side-drawer (no popup on mobile). Flip
+  // `drawerOpen` on after ref lands so react-modern-drawer plays its slide-in.
+  const mobile = isMobile();
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  useEffect(() => {
+    if (!mobile) return undefined;
+    if (!ref) { setDrawerOpen(false); return undefined; }
+    const t = setTimeout(() => setDrawerOpen(true), 10);
+    return () => clearTimeout(t);
+  }, [mobile, ref]);
+
   if (!ref) return null;
   const to = readPath(ref);
+
+  const cardInner = (
+    <>
+      <div className="samplerScriptureHead">
+        <b>{ref}</b>
+        <button aria-label="Close" onClick={() => setRef(null)}>×</button>
+      </div>
+      {/* .read-content scope makes the Read.scss styles apply */}
+      <div className="samplerScriptureBody read-content scriptureExcerptCompact">
+        <ScriptureExcerpt refText={ref} onNavigate={() => setRef(null)} />
+      </div>
+      {to ? (
+        <div className="samplerScriptureFoot">
+          <Link className="samplerScriptureReadLink tileMoreLink" to={to} onClick={() => setRef(null)}>
+            {label("read")}
+          </Link>
+        </div>
+      ) : null}
+    </>
+  );
+
+  if (mobile) {
+    return (
+      <Drawer
+        open={drawerOpen}
+        direction="right"
+        size="90vw"
+        className="scripturePopupDrawer"
+        onClose={() => setRef(null)}
+      >
+        <div className="samplerScriptureCard scripturePopupDrawer-inner">{cardInner}</div>
+      </Drawer>
+    );
+  }
+
   return (
     <div className="samplerScripturePopup" role="dialog" aria-modal="true" onClick={() => setRef(null)}>
       <div
@@ -91,21 +139,7 @@ export default function ScripturePopup() {
         style={tx ? { transform: `translateX(${tx}px)` } : undefined}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="samplerScriptureHead">
-          <b>{ref}</b>
-          <button aria-label="Close" onClick={() => setRef(null)}>×</button>
-        </div>
-        {/* .read-content scope makes the Read.scss styles apply */}
-        <div className="samplerScriptureBody read-content scriptureExcerptCompact">
-          <ScriptureExcerpt refText={ref} onNavigate={() => setRef(null)} />
-        </div>
-        {to ? (
-          <div className="samplerScriptureFoot">
-            <Link className="samplerScriptureReadLink tileMoreLink" to={to} onClick={() => setRef(null)}>
-              {label("read")}
-            </Link>
-          </div>
-        ) : null}
+        {cardInner}
       </div>
     </div>
   );

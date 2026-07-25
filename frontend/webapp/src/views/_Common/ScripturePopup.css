@@ -110,3 +110,17 @@ html[data-theme="dark"] .samplerScriptureReadLink {
 }
 html[data-theme="dark"] .samplerScriptureReadLink:hover { background: rgba(147, 198, 239, 0.2); }
 
+
+/* Mobile: the excerpt is a right side-drawer (react-modern-drawer), matching the
+   app's .popupDrawer geometry — below the 60px header, above the 64px bottom-nav. */
+.scripturePopupDrawer {
+  top: 60px !important;
+  height: calc(100vh - 60px - 64px) !important;
+}
+.scripturePopupDrawer-inner {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  border-radius: 0;
+}

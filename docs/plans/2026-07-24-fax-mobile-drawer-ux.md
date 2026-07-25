@@ -1,7 +1,7 @@
 # Fax Mobile Drawer UX — Implementation Plan
 
 **Date:** 2026-07-24
-**Status:** in progress — items 1, 4, 7 done & verified; 2, 3, 5, 6 remaining
+**Status:** COMPLETE — all items (1–7) implemented & verified on a 390×844 viewport.
 
 ## Decisions confirmed by KC
 - Mobile-only (desktop keeps modal + hover tooltip).
