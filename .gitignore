@@ -51,3 +51,6 @@ docs/audits/dm-cleanup-backup-2026-06-13.json
 
 # Local-only Claude notes (private-repo pointers, machine-specific setup)
 CLAUDE.local.md
+
+# Fax box-data remediation backups (real data — never commit; see docs/plans/2026-07-25-fax-box-data-remediation.md)
+docs/audits/data-backups/
