@@ -1,4 +1,20 @@
-import { convertIntToRomanNumeral } from "../../models/Utils";
+import { convertIntToRomanNumeral, determineLanguage } from "../../models/Utils";
+import { generateReference } from "scripture-guide";
+
+/**
+ * Resolve the scripture reference for an image-file page from the DENSE,
+ * page-keyed pageIndex (element i == image page i+1; [0,0] for pageless scans).
+ * Returns null for gap pages / out-of-range / editions whose index hasn't loaded.
+ */
+export const getRefFromIndex = (pageIndex, pageNum) => {
+  const itemIndex = parseInt(pageNum) - 1;
+  const [startingVerseId, verseCount] = pageIndex?.[itemIndex] || [0, 0];
+  const verseRangeArray = Array.from({ length: verseCount }, (_, i) => startingVerseId + i);
+  const lang = determineLanguage();
+  const ref = generateReference(verseRangeArray, lang);
+  const showRef = pageIndex.length > 0 && startingVerseId > 0;
+  return showRef ? ref : null;
+};
 
 /**
  * The fax `item` object carries the front-matter page offset under an

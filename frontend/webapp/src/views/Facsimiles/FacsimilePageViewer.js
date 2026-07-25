@@ -4,7 +4,7 @@ import ReactTooltip from "react-tooltip";
 import { useSwipe } from "../../models/Utils";
 import { assetUrl, renderBaseUrl } from 'src/models/BoMOnlineAPI';
 import "./FacsimilePageViewer.scss";
-import { getRefFromIndex, PageOverlay } from "./Facsimiles";
+import { PageOverlay } from "./Facsimiles";
 import { useElementSize } from "./useElementSize";
 import PageImage from "./PageImage";
 import PageStack from "./PageStack";

@@ -10,25 +10,14 @@ import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import { assetUrl } from 'src/models/BoMOnlineAPI';
 import "./Facsimiles.scss"
 import { useParams, useHistory } from "react-router-dom";
-import { label, determineLanguage } from "src/models/Utils";
-import { generateReference, lookupReference } from "scripture-guide";
+import { label } from "src/models/Utils";
 import { isMobile, useSwipe } from "../../models/Utils";
 import FacsimilePageViewer from './FacsimilePageViewer';
 import FacsimilePageViewerMobile from './FacsimilePageViewerMobile';
 import FaxBreadcrumbs from './FaxBreadcrumbs';
 import PageImage from './PageImage';
 import backIcon from '../_Common/svg/back.svg';
-import { resolvePgOffset, buildLeafIndex } from "./faxGeometry";
-
-export const getRefFromIndex = (pageIndex, pageNum) => {
-  const itemIndex = parseInt(pageNum) - 1;
-  const [startingVerseId, verseCount] = pageIndex?.[itemIndex] || [0, 0];
-  const verseRangeArray = Array.from({ length: verseCount }, (_, i) => startingVerseId + i);
-  const lang = determineLanguage();
-  const ref = generateReference(verseRangeArray, lang);
-  const showRef = pageIndex.length > 0 && startingVerseId > 0;
-  return showRef ? ref : null;
-};
+import { resolvePgOffset, buildLeafIndex, getRefFromIndex } from "./faxGeometry";
 
 function FacsimileViewer({ item, volumeOrder, currentVolumeIndex }) {
   const match = useParams();

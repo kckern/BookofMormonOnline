@@ -1,4 +1,5 @@
-import { resolvePgOffset, buildLeafIndex, normalizeStackWidths } from "../faxGeometry";
+import { resolvePgOffset, buildLeafIndex, normalizeStackWidths, getRefFromIndex } from "../faxGeometry";
+import { generateReference } from "scripture-guide";
 
 describe("resolvePgOffset", () => {
   test("prefers numeric pgOffset (camelCase)", () => {
@@ -79,5 +80,30 @@ describe("buildLeafIndex page numbering (image-file canonical)", () => {
     expect(leaves[3].faxPageSlug).toBe(1);
     expect(leaves[3].pageSlugLeaf).toBe(1);               // route slug == image-file
     expect(leaves[5].faxPageNum).toBe(3);
+  });
+});
+
+describe("getRefFromIndex (dense, image-page-keyed array)", () => {
+  // Dense array: index i == image page i+1. Page 3 is an interior gap.
+  //   page 1 -> verse 1, page 2 -> verse 2, page 3 -> gap, page 4 -> verse 5
+  const dense = [[1, 1, 1], [2, 1], [0, 0], [5, 1, 1]];
+
+  test("page 1 resolves index 0 (no leading-placeholder drift)", () => {
+    expect(getRefFromIndex(dense, 1)).toBe(generateReference([1])); // "Genesis 1:1"
+  });
+
+  test("an interior gap page resolves to null", () => {
+    expect(getRefFromIndex(dense, 3)).toBeNull();
+  });
+
+  test("a page AFTER an interior gap is not drifted", () => {
+    // The bug: page 4 used to read the tuple at index 2 (the gap's neighbor).
+    // It must read index 3 -> verse 5.
+    expect(getRefFromIndex(dense, 4)).toBe(generateReference([5])); // "Genesis 1:5"
+    expect(getRefFromIndex(dense, 4)).not.toBe(getRefFromIndex(dense, 1));
+  });
+
+  test("out-of-range page returns null", () => {
+    expect(getRefFromIndex(dense, 99)).toBeNull();
   });
 });
