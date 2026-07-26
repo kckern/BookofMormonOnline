@@ -25,8 +25,9 @@ const translated = async (
 
 /**
  * Turn the SPARSE faxIndex rows (one per page that has indexed verses, ordered
- * by page asc) into a DENSE array keyed by image-file page number: element i is
- * image page i+1. Pages with no indexed verses (plates/blanks/illustrations)
+ * by stored page asc) into a DENSE array keyed by image-file page number:
+ * element i is image page i+1. `offset` converts the stored fax page to the
+ * image file page. Pages with no indexed verses (plates/blanks/illustrations)
  * become [0, 0] gap tuples so positional consumers never drift.
  *
  * Before this, groupBy(page) collapsed gaps and the viewer indexed the array
@@ -38,15 +39,16 @@ const translated = async (
  * that the page's first whole verse is fresh content (not continued from the
  * previous indexed page).
  */
-export function buildDensePages(items: FaxIndexPageRow[]): number[][] {
-  const maxPage = items.length ? Number(items[items.length - 1]!.page) : 0;
+export function buildDensePages(items: FaxIndexPageRow[], offset = 0): number[][] {
+  const maxPage = items.length ? Number(items[items.length - 1]!.page) + offset : 0;
   const pages: number[][] = Array.from({ length: maxPage }, () => [0, 0]);
   items.forEach((x, i) => {
     const prev = items[i - 1];
     const firstWholeVerseIsFirstContent = !prev || prev.last_verse_id !== x.first_verse_id;
     const vals: number[] = [Number(x.first_verse_id), Number(x.verse_count)];
     if (firstWholeVerseIsFirstContent) vals.push(1);
-    pages[Number(x.page) - 1] = vals;
+    const imagePage = Number(x.page) + offset;
+    if (imagePage >= 1) pages[imagePage - 1] = vals;
   });
   return pages;
 }
@@ -91,7 +93,7 @@ export const mediamiscResolvers: Resolvers = {
         // Dense, image-page-keyed array (index i == image page i+1); interior
         // pageless scans are [0,0] gaps so the viewer never drifts. See
         // docs/bugs/2026-07-25-fax-verse-highlights-index-drift.md.
-        pages: buildDensePages(items),
+        pages: buildDensePages(items, offset),
       };
     },
 

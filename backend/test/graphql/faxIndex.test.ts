@@ -43,4 +43,15 @@ describe('buildDensePages', () => {
   it('returns an empty array when there are no indexed rows', () => {
     expect(buildDensePages([])).toEqual([]);
   });
+
+  it('keys stored fax pages by image-file page when an edition has an offset', () => {
+    // 1879-style mapping: stored page 9 is scan image 1, so stored page 262
+    // must be exposed at image page 254 (page 262 + offset -8).
+    const items = [row(9, 100, 109, 10), row(262, 200, 209, 10)];
+    const dense = buildDensePages(items as any, -8);
+    expect(dense).toHaveLength(254);
+    expect(dense[0]).toEqual([100, 10, 1]);
+    expect(dense[253]).toEqual([200, 10, 1]);
+    expect(dense[261]).toBeUndefined();
+  });
 });

@@ -54,3 +54,4 @@ CLAUDE.local.md
 
 # Fax box-data remediation backups (real data — never commit; see docs/plans/2026-07-25-fax-box-data-remediation.md)
 docs/audits/data-backups/
+*.sql
