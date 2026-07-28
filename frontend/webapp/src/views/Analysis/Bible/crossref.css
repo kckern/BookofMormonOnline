@@ -76,27 +76,6 @@ html[data-theme="dark"] .xref-root {
   font-size: 0.9rem;
 }
 
-.xref-breadcrumb {
-  font-size: 0.9rem;
-  color: var(--text-muted, #777);
-}
-
-.xref-breadcrumb a,
-.xref-backlink {
-  color: var(--link, #345496);
-  background: none;
-  border: none;
-  padding: 0;
-  font: inherit;
-  cursor: pointer;
-  text-decoration: none;
-}
-
-.xref-breadcrumb a:hover,
-.xref-backlink:hover {
-  text-decoration: underline;
-}
-
 .xref-legend {
   display: inline-flex;
   align-items: center;

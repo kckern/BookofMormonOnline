@@ -87,74 +87,7 @@
     margin-top: 0;
 }
 
-.single-witnesses .witness-breadcrumbs {
-    position: relative;
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 0.3em;
-    font-size: 0.9rem;
-    color: #555;
-    padding: 0.6rem 0 1rem;
-    margin-bottom: 0.25rem;
-}
-
-.single-witnesses .witness-breadcrumbs .breadcrumb-link {
-    color: #555;
-    text-decoration: none;
-}
-
-.single-witnesses .witness-breadcrumbs .breadcrumb-link:hover {
-    color: #000;
-    text-decoration: underline;
-}
-
-.single-witnesses .witness-breadcrumbs .breadcrumb-sep {
-    color: #BBB;
-    font-size: 0.9em;
-}
-
-.single-witnesses .witness-breadcrumbs .breadcrumb-current {
-    appearance: none;
-    background: transparent;
-    border: 0;
-    padding: 0.1em 0.4em;
-    border-radius: 4px;
-    font: inherit;
-    color: #000;
-    font-weight: 600;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25em;
-}
-
-.single-witnesses .witness-breadcrumbs .breadcrumb-current:hover,
-.single-witnesses .witness-breadcrumbs .breadcrumb-current.open {
-    background: #EEE;
-}
-
-.single-witnesses .witness-breadcrumbs .breadcrumb-chevron {
-    font-size: 0.7em;
-    color: #777;
-    transition: transform 0.15s;
-}
-
-.single-witnesses .witness-breadcrumbs .breadcrumb-current.open .breadcrumb-chevron {
-    transform: rotate(180deg);
-}
-
-.single-witnesses .witness-breadcrumbs .breadcrumb-dropdown {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    z-index: 50;
-    margin-top: 0.25rem;
-    background: #fff;
-    border: 1px solid #DDD;
-    border-radius: 6px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-    padding: 0.5rem;
+.bc-dropdown .witness-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(160px, 1fr));
     gap: 0.75rem 1.25rem;
@@ -162,13 +95,13 @@
     max-width: 100%;
 }
 
-.single-witnesses .witness-breadcrumbs .breadcrumb-group {
+.bc-dropdown .witness-group {
     display: flex;
     flex-direction: column;
     gap: 0.15rem;
 }
 
-.single-witnesses .witness-breadcrumbs .breadcrumb-group-label {
+.bc-dropdown .witness-group-label {
     font-size: 0.7rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -177,7 +110,7 @@
     margin-bottom: 0.1em;
 }
 
-.single-witnesses .witness-breadcrumbs .breadcrumb-option {
+.bc-dropdown .witness-option {
     display: flex;
     align-items: center;
     gap: 0.5em;
@@ -189,7 +122,7 @@
     white-space: nowrap;
 }
 
-.single-witnesses .witness-breadcrumbs .breadcrumb-avatar {
+.bc-dropdown .witness-avatar {
     flex: 0 0 auto;
     width: 22px;
     height: 22px;
@@ -199,17 +132,17 @@
     background: #DDD;
 }
 
-.single-witnesses .witness-breadcrumbs .breadcrumb-option-name {
+.bc-dropdown .witness-option-name {
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-.single-witnesses .witness-breadcrumbs .breadcrumb-option:hover {
+.bc-dropdown .witness-option:hover {
     background: #F0F4FA;
     color: #000;
 }
 
-.single-witnesses .witness-breadcrumbs .breadcrumb-option.current {
+.bc-dropdown .witness-option.current {
     background: #EFEFEF;
     color: #000;
     font-weight: 600;
@@ -217,7 +150,7 @@
 }
 
 @media (max-width: 700px) {
-    .single-witnesses .witness-breadcrumbs .breadcrumb-dropdown {
+    .bc-dropdown .witness-grid {
         grid-template-columns: 1fr;
         min-width: 240px;
     }
