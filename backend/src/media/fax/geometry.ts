@@ -83,7 +83,20 @@ export function toFragments(boxes: FaxBox[]): Fragment[] {
   for (const b of boxes) (byPage.get(b.page) ?? byPage.set(b.page, []).get(b.page)!).push(b);
   const out: Fragment[] = [];
   for (const page of [...byPage.keys()].sort((a, z) => a - z)) {
-    for (const col of clusterColumns(byPage.get(page)!)) {
+    const pageBoxes = byPage.get(page)!;
+    const columns = clusterColumns(pageBoxes);
+    // A single verse can require multiple disconnected source rectangles when
+    // page curvature makes consecutive line fragments overlap vertically.
+    // Their row ids encode authored reading order. Multi-verse requests retain
+    // ordinary page→left-column→right-column order.
+    if (columns.length > 1 &&
+        new Set(pageBoxes.map((box) => box.verseId)).size === 1 &&
+        pageBoxes.every((box) => Number.isInteger(box.uid))) {
+      columns.sort((left, right) =>
+        Math.min(...left.map((box) => box.uid!)) -
+        Math.min(...right.map((box) => box.uid!)));
+    }
+    for (const col of columns) {
       out.push(...mergeRuns(col));
     }
   }

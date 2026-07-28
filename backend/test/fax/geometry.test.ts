@@ -78,6 +78,16 @@ describe('toFragments', () => {
     const frags = toFragments([rightTop, leftBottom]);
     expect(frags.map((f) => f.x)).toEqual([56, 357]); // left column first
   });
+  it('uses stable row order for disconnected fragments of one verse', () => {
+    const firstRight = raw({
+      uid: 10, verseId: 100, page: 81, x: 320, y: 905, w: 290, h: 30,
+    });
+    const secondLeft = raw({
+      uid: 11, verseId: 100, page: 81, x: 25, y: 905, w: 140, h: 37,
+    });
+    const frags = toFragments([secondLeft, firstRight]);
+    expect(frags.map((fragment) => fragment.x)).toEqual([320, 25]);
+  });
   it('orders across pages', () => {
     const p15 = raw({ verseId: 200, page: 15, x: 53, y: 162, w: 507, h: 89 });
     const p14 = raw({ verseId: 199, page: 14, x: 170, y: 977, w: 453, h: 77 });

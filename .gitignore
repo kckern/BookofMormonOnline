@@ -38,6 +38,7 @@ backend/dist/
 # Generated Sendbird seed dump — contains REAL user chat content/PII; run manually,
 # never commit (repo is public). Regenerate locally with scripts/gen-sendbird-dump.mjs.
 backend/scripts/out/
+backend/.shadow/
 *.swp
 
 # Adversarial QA artifacts — contain REAL user data/PII (names, avatars, chat,
@@ -55,3 +56,7 @@ CLAUDE.local.md
 # Fax box-data remediation backups (real data — never commit; see docs/plans/2026-07-25-fax-box-data-remediation.md)
 docs/audits/data-backups/
 *.sql
+/.shadow
+/docs/audits/fax-geometry
+/docs/sql
+*.json

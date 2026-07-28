@@ -4,6 +4,7 @@ export type OutputExt = 'jpg' | 'webp';
 
 /** A verse box as stored, already sanitized (non-negative, clipped, non-zero). */
 export interface FaxBox {
+  uid?: number;        // stable source-row order for disconnected single-verse fragments
   verseId: number;
   page: number;        // integer (zero-fill happens at the S3 key boundary)
   pageWidth: number;   // stored scan width (metadata; the real transform uses pageScale)
