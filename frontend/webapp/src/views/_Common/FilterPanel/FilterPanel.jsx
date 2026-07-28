@@ -101,7 +101,7 @@ export default function FilterPanel({ heading, axes, value, onChange, search }) 
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [search]);
+  }, [Boolean(search)]);
 
   useEffect(() => {
     if (isMobile() && appController.states.popUp.type === "pFilter") {

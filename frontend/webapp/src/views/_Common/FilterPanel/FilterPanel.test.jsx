@@ -8,7 +8,12 @@ import { isMobile } from "src/models/Utils";
 jest.mock("src/models/Utils", () => ({ label: (k) => k, isMobile: jest.fn(() => false) }));
 jest.mock("src/views/_Common/SearchPopUp", () => ({
   SearchPopUp: (props) =>
-    props.isOpen ? <div data-testid="searchpopup">{props.placeholder}:{props.initSearchString}</div> : null,
+    props.isOpen ? (
+      <div data-testid="searchpopup">
+        {props.placeholder}:{props.initSearchString}
+        <button onClick={() => props.selectItemHandler("slug-1")}>pick-result</button>
+      </div>
+    ) : null,
 }));
 jest.mock("bootstrap-switch-button-react", () => ({
   __esModule: true,
@@ -18,7 +23,6 @@ const mockSetPopUp = jest.fn();
 const mockCtx = {
   states: { popUp: { type: null }, user: { social: { user_id: "u1" } } },
   functions: { setPopUp: mockSetPopUp },
-  preLoad: {},
 };
 jest.mock("src/contexts/AppControllerContext", () => ({ useAppController: () => mockCtx }));
 
@@ -94,6 +98,14 @@ describe("FilterPanel — search", () => {
     fireEvent.keyDown(window, { key: "a" });
     expect(screen.getByTestId("searchpopup")).toHaveTextContent("search_for_a_person:a");
   });
+
+  test("selecting a search result calls the view handler and closes the popup", () => {
+    render(<FilterPanel heading="filters" axes={AXES} value={{ id: [], unit: [] }} onChange={() => {}} search={SEARCH} />);
+    fireEvent.click(screen.getByRole("button", { name: "🔍" }));
+    fireEvent.click(screen.getByText("pick-result"));
+    expect(SEARCH.selectItemHandler).toHaveBeenCalledWith("slug-1");
+    expect(screen.queryByTestId("searchpopup")).toBeNull(); // closed
+  });
 });
 
 describe("FilterPanel — mobile", () => {
@@ -112,6 +124,21 @@ describe("FilterPanel — mobile", () => {
     fireEvent.click(screen.getByRole("button", { name: "filters" }));
     expect(mockSetPopUp).toHaveBeenCalledWith(
       expect.objectContaining({ type: "pFilter", underSlug: "people", popUpData: expect.objectContaining({ filterBox: expect.anything() }) })
+    );
+  });
+
+  test("while the pFilter drawer is open, a value change re-pushes the panel snapshot", () => {
+    isMobile.mockReturnValue(true);
+    mockCtx.states.popUp.type = "pFilter";
+    const { rerender } = render(
+      <FilterPanel heading="filters" axes={AXES} value={{ id: [], unit: [] }} onChange={() => {}} search={SEARCH} />
+    );
+    mockSetPopUp.mockClear();
+    rerender(
+      <FilterPanel heading="filters" axes={AXES} value={{ id: ["N"], unit: [] }} onChange={() => {}} search={SEARCH} />
+    );
+    expect(mockSetPopUp).toHaveBeenCalledWith(
+      expect.objectContaining({ popUpData: expect.objectContaining({ filterBox: expect.anything() }) })
     );
   });
 });
