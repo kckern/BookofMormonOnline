@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import Breadcrumb from "src/views/_Common/Breadcrumb/Breadcrumb";
 import { bookTotal, partnersFor, chapterCounts } from "./aggregate";
 import Rail from "./Rail";
 import PartnerBars from "./PartnerBars";
@@ -38,11 +38,12 @@ export default function AnchorView({ state, navigate }) {
   return (
     <div className="xref-anchorview" data-testid="xref-anchor">
       <header className="xref-header">
-        <nav className="xref-breadcrumb" aria-label="Breadcrumb">
-          <Link to="/analysis/bible">⌂ Overview</Link>
-          <span aria-hidden="true"> › </span>
-          <span aria-current="page">{book}</span>
-        </nav>
+        <Breadcrumb
+          root={{ icon: "⌂", label: "Overview", to: "/analysis/bible" }}
+          style={{ "--bc-link": "#345496", "--bc-root": "#345496" }}
+        >
+          <Breadcrumb.Current>{book}</Breadcrumb.Current>
+        </Breadcrumb>
         {flipTarget && (
           <button className="xref-flip" onClick={flip}>
             ⇄ view from {flipTarget}
