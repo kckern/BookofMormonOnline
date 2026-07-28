@@ -104,6 +104,7 @@ export default function FilterPanel({ heading, axes, value, onChange, search }) 
     return () => window.removeEventListener("keydown", onKey);
   }, [hasSearch]);
 
+  const valueKey = JSON.stringify(value);
   useEffect(() => {
     if (isMobile() && appController.states.popUp.type === "pFilter") {
       appController.functions.setPopUp({
@@ -112,7 +113,7 @@ export default function FilterPanel({ heading, axes, value, onChange, search }) 
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value, appController.states.popUp.type]);
+  }, [valueKey, appController.states.popUp.type]);
 
   if (isMobile()) {
     const openDrawer = () =>

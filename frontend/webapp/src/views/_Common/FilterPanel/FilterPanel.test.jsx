@@ -141,4 +141,18 @@ describe("FilterPanel — mobile", () => {
       expect.objectContaining({ popUpData: expect.objectContaining({ filterBox: expect.anything() }) })
     );
   });
+
+  test("re-rendering with the same selection content does NOT re-push (no infinite loop)", () => {
+    isMobile.mockReturnValue(true);
+    mockCtx.states.popUp.type = "pFilter";
+    const { rerender } = render(
+      <FilterPanel heading="filters" axes={AXES} value={{ id: ["N"], unit: [] }} onChange={() => {}} search={SEARCH} />
+    );
+    mockSetPopUp.mockClear();
+    // Same CONTENT, new object identity (as the real view adapters produce every render):
+    rerender(
+      <FilterPanel heading="filters" axes={AXES} value={{ id: ["N"], unit: [] }} onChange={() => {}} search={SEARCH} />
+    );
+    expect(mockSetPopUp).not.toHaveBeenCalled();
+  });
 });
