@@ -4,6 +4,7 @@ import "@testing-library/jest-dom";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import Breadcrumb from "./Breadcrumb";
+import { isMobile } from "src/models/Utils";
 
 jest.mock("src/models/Utils", () => ({
   label: (key) => key,
@@ -81,5 +82,87 @@ describe("Breadcrumb — trail", () => {
   test("root-only renders no separator", () => {
     const { container } = wrap(<Breadcrumb root={{ icon: <svg data-testid="r" />, to: "/" }} />);
     expect(container.querySelectorAll(".bc-sep")).toHaveLength(0);
+  });
+});
+
+describe("Breadcrumb.Dropdown", () => {
+  beforeEach(() => isMobile.mockReturnValue(false));
+
+  const Grid = ({ onPick }) => (
+    <button type="button" onClick={onPick}>Pick me</button>
+  );
+
+  test("toggles open on trigger click and shows slotted content", () => {
+    wrap(
+      <Breadcrumb>
+        <Breadcrumb.Dropdown label="David Whitmer"><Grid /></Breadcrumb.Dropdown>
+      </Breadcrumb>
+    );
+    const trigger = screen.getByRole("button", { name: /David Whitmer/ });
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(trigger);
+    expect(trigger).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByText("Pick me")).toBeInTheDocument();
+  });
+
+  test("closes on outside click and on Escape, firing onOpenChange", () => {
+    const onOpenChange = jest.fn();
+    wrap(
+      <Breadcrumb>
+        <Breadcrumb.Dropdown label="Menu" onOpenChange={onOpenChange}><Grid /></Breadcrumb.Dropdown>
+      </Breadcrumb>
+    );
+    const trigger = screen.getByRole("button", { name: /Menu/ });
+    fireEvent.click(trigger);
+    expect(onOpenChange).toHaveBeenLastCalledWith(true);
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(onOpenChange).toHaveBeenLastCalledWith(false);
+    expect(screen.queryByText("Pick me")).toBeNull();
+
+    fireEvent.click(trigger); // reopen
+    fireEvent.mouseDown(document.body); // outside click
+    expect(onOpenChange).toHaveBeenLastCalledWith(false);
+  });
+
+  test("render-prop children receive `close` that dismisses the dropdown", () => {
+    wrap(
+      <Breadcrumb>
+        <Breadcrumb.Dropdown label="Menu">
+          {({ close }) => <button type="button" onClick={close}>Choose</button>}
+        </Breadcrumb.Dropdown>
+      </Breadcrumb>
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Menu/ }));
+    fireEvent.click(screen.getByText("Choose"));
+    expect(screen.queryByText("Choose")).toBeNull();
+  });
+
+  test("controlled mode reflects the `open` prop", () => {
+    const { rerender } = wrap(
+      <Breadcrumb>
+        <Breadcrumb.Dropdown label="Menu" open={false} onOpenChange={() => {}}><Grid /></Breadcrumb.Dropdown>
+      </Breadcrumb>
+    );
+    expect(screen.queryByText("Pick me")).toBeNull();
+    rerender(
+      <MemoryRouter>
+        <Breadcrumb>
+          <Breadcrumb.Dropdown label="Menu" open onOpenChange={() => {}}><Grid /></Breadcrumb.Dropdown>
+        </Breadcrumb>
+      </MemoryRouter>
+    );
+    expect(screen.getByText("Pick me")).toBeInTheDocument();
+  });
+
+  test("mobileDrawer renders the Drawer instead of the inline panel when mobile", () => {
+    isMobile.mockReturnValue(true);
+    const { container } = wrap(
+      <Breadcrumb>
+        <Breadcrumb.Dropdown label="Menu" mobileDrawer><Grid /></Breadcrumb.Dropdown>
+      </Breadcrumb>
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Menu/ }));
+    expect(container.querySelector(".bc-dropdown")).toBeNull();
+    expect(screen.getByText("Pick me")).toBeInTheDocument();
   });
 });

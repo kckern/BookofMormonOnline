@@ -1,5 +1,8 @@
-import React from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import Drawer from "react-modern-drawer";
+import "react-modern-drawer/dist/index.css";
+import { isMobile } from "src/models/Utils";
 import "./Breadcrumb.css";
 
 /**
@@ -109,6 +112,118 @@ Breadcrumb.Current = function BreadcrumbCurrent({ className = "", children, ...r
   return (
     <span className={`bc-current ${className}`.trim()} aria-current="page" {...rest}>
       {children}
+    </span>
+  );
+};
+
+/**
+ * useBreadcrumbDropdown — the open/close/click-outside/Escape machinery behind
+ * Breadcrumb.Dropdown, exported as an escape hatch for fully custom markup.
+ *
+ * Controlled via { open, onOpenChange }; uncontrolled via { defaultOpen }.
+ * When { mobileDrawer } and isMobile(), only Escape is wired (the Drawer owns
+ * its own overlay/outside handling). Attach `ref` to the trigger+panel wrapper.
+ */
+export function useBreadcrumbDropdown({
+  open: controlledOpen,
+  defaultOpen = false,
+  onOpenChange,
+  onClose,
+  mobileDrawer = false,
+} = {}) {
+  const isControlled = controlledOpen !== undefined;
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen);
+  const open = isControlled ? controlledOpen : uncontrolledOpen;
+  const ref = useRef(null);
+
+  const setOpen = useCallback(
+    (next) => {
+      if (!isControlled) setUncontrolledOpen(next);
+      if (onOpenChange) onOpenChange(next);
+      if (!next && onClose) onClose();
+    },
+    [isControlled, onOpenChange, onClose]
+  );
+
+  const close = useCallback(() => setOpen(false), [setOpen]);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const onKey = (e) => {
+      if (e.key === "Escape" || e.key === "Esc" || e.keyCode === 27) {
+        e.stopPropagation();
+        if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
+        close();
+      }
+    };
+    // On the mobile drawer, the drawer's own overlay handles dismissal — wiring a
+    // document mousedown handler here would fight it. Only wire Escape.
+    if (mobileDrawer && isMobile()) {
+      document.addEventListener("keydown", onKey, true);
+      return () => document.removeEventListener("keydown", onKey, true);
+    }
+    const onDocClick = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) close();
+    };
+    document.addEventListener("mousedown", onDocClick);
+    document.addEventListener("keydown", onKey, true);
+    return () => {
+      document.removeEventListener("mousedown", onDocClick);
+      document.removeEventListener("keydown", onKey, true);
+    };
+  }, [open, close, mobileDrawer]);
+
+  return { open, toggle: () => setOpen(!open), close, setOpen, ref };
+}
+
+/**
+ * Breadcrumb.Dropdown — interactive terminal segment. Owns the dropdown/drawer
+ * machinery; its children are the content slot (a node, or ({close}) => node).
+ *
+ * Props: label, open?/onOpenChange? (controlled) | defaultOpen?, onClose?,
+ * mobileDrawer?, drawerProps?, chevron? (default "▾"), className, children.
+ */
+Breadcrumb.Dropdown = function BreadcrumbDropdown({
+  label,
+  open,
+  defaultOpen,
+  onOpenChange,
+  onClose,
+  mobileDrawer = false,
+  drawerProps = {},
+  chevron = "▾",
+  className = "",
+  children,
+  ...rest
+}) {
+  const dd = useBreadcrumbDropdown({ open, defaultOpen, onOpenChange, onClose, mobileDrawer });
+  const content = typeof children === "function" ? children({ close: dd.close }) : children;
+  const mobile = mobileDrawer && isMobile();
+
+  return (
+    <span className="bc-dropdown-wrap" ref={dd.ref}>
+      <button
+        type="button"
+        className={`bc-current bc-trigger${dd.open ? " open" : ""} ${className}`.trim()}
+        aria-haspopup="listbox"
+        aria-expanded={dd.open}
+        onClick={dd.toggle}
+        {...rest}
+      >
+        {label}
+        <span className="bc-chevron" aria-hidden="true">{chevron}</span>
+      </button>
+      {mobile ? (
+        <Drawer open={dd.open} direction="right" size="85vw" onClose={dd.close} {...drawerProps}>
+          {content}
+        </Drawer>
+      ) : (
+        dd.open && (
+          <div className="bc-dropdown" role="listbox">
+            {content}
+          </div>
+        )
+      )}
     </span>
   );
 };
