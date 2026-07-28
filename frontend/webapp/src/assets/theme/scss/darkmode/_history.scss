@@ -10,14 +10,12 @@ html[data-theme="dark"] {
   .witnesses .witness-age { background-color: rgba(255, 255, 255, 0.08); color: var(--text-secondary); }
   .witnesses .witness-statement { color: var(--text-secondary); strong, b { color: var(--text-primary); } }
   .witnesses h5 { color: var(--text-muted); }
-  .single-witnesses .witness-breadcrumbs { color: var(--text-secondary); a:hover { color: var(--text-primary); } }
-  .single-witnesses .witness-breadcrumbs .breadcrumb-dropdown {
-    background: var(--surface-2); border-color: var(--border); color: var(--text-secondary);
-  }
-  .single-witnesses .witness-breadcrumbs .breadcrumb-option:hover { background: var(--surface-3); color: var(--text-primary); }
-  .single-witnesses .witness-breadcrumbs .breadcrumb-option.current { background: var(--surface-4); color: var(--text-primary); }
+  /* Breadcrumb trail + dropdown chrome are now themed by Breadcrumb.css (--bc-* tokens
+     + .bc-dropdown). Only the witness-specific option/avatar surfaces need dark re-keys. */
+  .bc-dropdown .witness-option:hover { background: var(--surface-3); color: var(--text-primary); }
+  .bc-dropdown .witness-option.current { background: var(--surface-4); color: var(--text-primary); }
+  .bc-dropdown .witness-avatar { background-color: var(--surface-3); }
   .single-witnesses .witness-hero-portrait { background-color: var(--surface-3); }
-  .single-witnesses .witness-breadcrumbs .breadcrumb-avatar { background-color: var(--surface-3); }
   .single-witnesses .witness-hero-facts dt { color: var(--text-muted); }
   .single-witnesses .witness-hero-facts dd { color: var(--text-primary); }
   .single-witnesses .witness-fact { border-bottom-color: rgba(255, 255, 255, 0.09); }
