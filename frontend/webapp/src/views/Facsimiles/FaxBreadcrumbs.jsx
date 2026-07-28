@@ -83,10 +83,12 @@ export default function FaxBreadcrumbs({ editions = [], current, currentRef }) {
         drawerProps={{ className: 'faxEditionDrawer' }}
       >
         {({ close }) => (
-          <div className="fax-edition-list" role="listbox">
+          <>
             <div className="faxEditionDrawer-head">{label('menu_fax') || 'Facsimiles'}</div>
-            <EditionList onPick={close} />
-          </div>
+            <div className="fax-edition-list" role="listbox">
+              <EditionList onPick={close} />
+            </div>
+          </>
         )}
       </Breadcrumb.Dropdown>
     </Breadcrumb>
