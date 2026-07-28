@@ -38,8 +38,8 @@ Formalize and extend the codebase's existing informal design system (tiles, page
 A parent `<Breadcrumb>` provides React context (separator, size) and auto-inserts separators between children. Three segment building blocks compose inside it. A plain `items` shorthand covers the non-dropdown cases without children.
 
 ```jsx
-// Dropdown case (Witnesses)
-<Breadcrumb separator="›" size="md">
+// Dropdown case (Witnesses), with an optional root icon
+<Breadcrumb separator="›" size="md" root={{ icon: <HomeIcon/>, to: '/', 'aria-label': 'Home' }}>
   <Breadcrumb.Link to="/history">History</Breadcrumb.Link>
   <Breadcrumb.Link to="/history/witnesses">Witnesses</Breadcrumb.Link>
   <Breadcrumb.Dropdown label="David Whitmer" mobileDrawer={isMobile} onOpenChange={fn}>
@@ -58,8 +58,11 @@ A parent `<Breadcrumb>` provides React context (separator, size) and auto-insert
 - `children?` — compound subcomponents (takes precedence when both provided; document as "use one or the other").
 - `separator?: node` — default `›`.
 - `size?: 'sm' | 'md'` — default `md` (0.9rem). `sm` = 0.72rem for inline/study contexts.
+- `root?: { icon: node, to?: string, onClick?: fn, label?: node, 'aria-label'?: string }` — optional standalone root segment pinned far-left, followed by its own auto-inserted separator. Absent = no root (default). Icon-only by default; `label` renders text beside the icon. Linkable via `to`/`onClick` (same rules as `.Link`); non-interactive if neither given. Renders with class `bc-root`. Works with the `items` shorthand and the compound form alike. Equivalent compound form: `<Breadcrumb.Root icon to onClick label />` as the first child.
 - `className?: string`, `aria-label?: string` — default `"Breadcrumb"`.
-- Renders `<nav aria-label>`, supplies `separator`/`size` via context, inserts separators between rendered children.
+- Renders `<nav aria-label>`, supplies `separator`/`size` via context, inserts separators between rendered children (including after the root segment).
+
+**`<Breadcrumb.Root>`** — optional standalone root segment (icon, optionally with a `label`), pinned first, followed by its own separator. `icon: node` (required), `to?` / `onClick?` (linkable, same rules as `.Link`), `label?: node`, `aria-label?`. Class `bc-root`. Must be the first child. Equivalent to the `root` prop on `<Breadcrumb>` — use whichever fits the call site (prop for `items` shorthand, subcomponent for compound children).
 
 **`<Breadcrumb.Link>`** — a navigable segment. `to` → react-router `<Link>`; `onClick` (no `to`) → `<button type="button">`. Class `bc-link`. Passes through `aria-*`.
 
@@ -87,6 +90,7 @@ One shared `Breadcrumb.css` replaces the five duplicated copies.
   - `--bc-link-hover` (#323b4d light / #fff dark)
   - `--bc-sep` (#bbb light / #666 dark)
   - `--bc-current` (#111 light / #fff dark)
+  - `--bc-root` (root icon color; defaults to the muted link/separator color, tunable independently)
   - `--bc-gap` (segment/separator spacing, ~0.3em)
   - `--bc-size` (font-size; `md` 0.9rem, `sm` 0.72rem via the `size` prop)
 - **Hover:** links underline and darken to `--bc-link-hover`, 0.15s ease (matches tile hover convention).
@@ -119,6 +123,7 @@ The dropdown *content* (fax grid, witness grouped grid) stays as each view's own
   - `.Dropdown` toggles open; closes on outside-click and on Escape; fires `onOpenChange`; render-prop `close` dismisses it.
   - Controlled (`open`/`onOpenChange`) and uncontrolled (`defaultOpen`) both work.
   - `mobileDrawer` swaps the inline panel for the Drawer.
+  - `root` prop / `.Root` renders the icon segment first with a separator after it, is linkable, and is absent when not provided.
 - The five migrations add no new tests beyond existing coverage — they are behavior-preserving. Each PR gets a manual parity check on `localhost:8200` including dark mode and mobile width. (Verify against `localhost:8200`, not `bom.kckern.net`, which serves a CDN-cached bundle.)
 
 ## Documentation
