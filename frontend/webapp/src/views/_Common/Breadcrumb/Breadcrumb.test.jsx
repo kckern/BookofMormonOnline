@@ -165,4 +165,16 @@ describe("Breadcrumb.Dropdown", () => {
     expect(container.querySelector(".bc-dropdown")).toBeNull();
     expect(screen.getByText("Pick me")).toBeInTheDocument();
   });
+
+  test("mousedown inside the open panel does not close it", () => {
+    wrap(
+      <Breadcrumb>
+        <Breadcrumb.Dropdown label="Menu"><Grid /></Breadcrumb.Dropdown>
+      </Breadcrumb>
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Menu/ }));
+    const panelBtn = screen.getByText("Pick me");
+    fireEvent.mouseDown(panelBtn);
+    expect(screen.getByText("Pick me")).toBeInTheDocument(); // still open
+  });
 });
