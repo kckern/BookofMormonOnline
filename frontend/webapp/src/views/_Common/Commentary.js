@@ -15,6 +15,7 @@ import { determineLanguage } from "../../models/Utils";
 import { ATVHeader } from "./ATV";
 import { extractApparatusUnits } from "./ATV/parseATV";
 import { governingRefs } from "./ATV/governingRef";
+import { lastScriptureRef } from "./ATV/lastScriptureRef";
 import { ATVApparatus } from "./ATV/ATVApparatus";
 import { getHtmlScriptureLinkParserOptions } from "./ViewUtils";
 import SweetAlert from "react-bootstrap-sweetalert";
@@ -316,11 +317,7 @@ export default function Commentary() {
   // (headings persist over following units). Resolve to a verseId so peek/compare
   // crop the RIGHT verse; unresolved -> null -> label-only (design §Fallback).
   const lang = determineLanguage();
-  const bodyUnitRefs = governingRefs(bodyContexts, (ctx) => {
-    let last = null;
-    detectScriptures(ctx || "", (s) => { if (s) last = s; return s; }, lang);
-    return last;
-  });
+  const bodyUnitRefs = governingRefs(bodyContexts, (ctx) => lastScriptureRef(ctx, lang));
 
   // replace the last 2 spaces with non-breaking spaces
   const headingWords = commentaryData?.title?.split(" ") || [];

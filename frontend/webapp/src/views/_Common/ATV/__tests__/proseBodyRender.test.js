@@ -2,9 +2,10 @@ import "@testing-library/jest-dom";
 import React from "react";
 import { render, fireEvent, screen } from "@testing-library/react";
 import Parser from "html-react-parser";
-import { detectScriptures, lookupReference } from "scripture-guide";
+import { lookupReference } from "scripture-guide";
 import { extractApparatusUnits } from "../parseATV";
 import { governingRefs } from "../governingRef";
+import { lastScriptureRef } from "../lastScriptureRef";
 import { ATVApparatus } from "../ATVApparatus";
 
 // Keep the compare modal off the network; echo the selector so a test can assert
@@ -13,19 +14,12 @@ jest.mock("../FaxCrop", () => ({
   FaxCrop: (p) => <img data-testid="crop" data-selector={p.selector} alt={p.alt} />,
 }));
 
-// Collect the last scripture reference in a context slice without altering it —
-// mirrors the cb Commentary.js passes to detectScriptures.
-const lastRef = (html) => {
-  let last = null;
-  detectScriptures(html || "", (s) => { if (s) last = s; return s; }, "en");
-  return last;
-};
-
 // Mirrors the Commentary.js body pipeline: tokenize -> governing refs -> Parser
-// with the atv-unit replace that resolves each unit's citation to a verseId.
+// with the atv-unit replace that resolves each unit's citation to a verseId. Uses
+// the SAME lastScriptureRef the production path uses (no local duplicate).
 function renderBody(html) {
   const { html: tokenized, units, contexts } = extractApparatusUnits(html);
-  const refs = governingRefs(contexts, lastRef);
+  const refs = governingRefs(contexts, (ctx) => lastScriptureRef(ctx, "en"));
   const options = {
     replace: (node) => {
       if (node && node.name === "atv-unit") {
@@ -133,6 +127,29 @@ test("two headings + a persisting heading resolve each unit end-to-end", () => {
   openAndCheck(pills[0], refA, idA); // unit 0, own heading
   openAndCheck(pills[2], refA, idA); // unit 1, heading persisted from unit 0
   openAndCheck(pills[4], refB, idB); // unit 2, second heading (document order)
+});
+
+test("an adjacent-pair heading crops to the NEARER verse, not the earlier one", () => {
+  // "A and B" coalesces in detectScriptures to one ";"-joined callback string;
+  // lastScriptureRef must yield B (the nearer), whose verse_ids[0] differs from A's.
+  const nearId = lookupReference("3 Nephi 11:8").verse_ids[0]; // 36313
+  const earlyId = lookupReference("1 Nephi 2:11").verse_ids[0]; // 31133
+  expect(nearId).not.toBe(earlyId);
+
+  const { container } = renderBody(
+    "<ul><li>compare 1 Nephi 2:11 and 3 Nephi 11:8<ul><li>x [<em>a</em> 1|<em>b</em> A]</li></ul></li></ul>"
+  );
+
+  fireEvent.click(container.querySelector(".atv-string"));
+
+  const dialog = screen.getByRole("dialog");
+  expect(dialog.textContent).toContain("3 Nephi 11:8");
+
+  const crops = document.querySelectorAll('[data-testid="crop"]');
+  expect(crops.length).toBeGreaterThan(0);
+  crops.forEach((c) => {
+    expect(c.getAttribute("data-selector")).toBe(`ids/${nearId}`);
+  });
 });
 
 test("a unit with no preceding citation degrades to verseId null", () => {
