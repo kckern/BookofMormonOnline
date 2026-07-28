@@ -10,10 +10,11 @@ import { LegalNotice, Loading } from "./PopUp";
 import { addHighlightTagSelectively } from "../Page/TextContent";
 import { snapSelectionToWord, label } from "src/models/Utils";
 import { ScripturePanelSingle } from "../Page/Narration";
-import { detectScriptures } from "scripture-guide";
+import { detectScriptures, lookupReference } from "scripture-guide";
 import { determineLanguage } from "../../models/Utils";
 import { ATVHeader } from "./ATV";
 import { extractApparatusUnits } from "./ATV/parseATV";
+import { governingRefs } from "./ATV/governingRef";
 import { ATVApparatus } from "./ATV/ATVApparatus";
 import { getHtmlScriptureLinkParserOptions } from "./ViewUtils";
 import SweetAlert from "react-bootstrap-sweetalert";
@@ -307,8 +308,18 @@ export default function Commentary() {
 
   // Phase 2: lift prose-body apparatus units to placeholders BEFORE scripture
   // detection, so reading content isn't linkified and units survive parsing.
-  const { html: bodyTokenized, units: bodyUnits } = extractApparatusUnits(htmlObject);
+  const { html: bodyTokenized, units: bodyUnits, contexts: bodyContexts } =
+    extractApparatusUnits(htmlObject);
   htmlObject = bodyTokenized;
+
+  // Each prose-body unit's governing verse is its nearest preceding citation
+  // (headings persist over following units). Resolve to a verseId so peek/compare
+  // crop the RIGHT verse; unresolved -> null -> label-only (design §Fallback).
+  const bodyUnitRefs = governingRefs(bodyContexts, (ctx) => {
+    let last = null;
+    detectScriptures(ctx || "", (s) => { if (s) last = s; return s; }, determineLanguage());
+    return last;
+  });
 
   // replace the last 2 spaces with non-breaking spaces
   const headingWords = commentaryData?.title?.split(" ") || [];
@@ -335,15 +346,17 @@ export default function Commentary() {
     replace: (node) => {
       if (node && node.name === "atv-unit") {
         const i = Number(node.attribs && node.attribs["data-atv-i"]);
-        // Body units cite OTHER verses than the commentary's own, so they get no
-        // verseId — the modal opens with readings + witness labels, but no crops
-        // (spec §6.4 trap; crops would point at the wrong verse's scans).
+        const ref = bodyUnitRefs[i];
+        // Body units cite OTHER verses than the commentary's own; resolve each unit's
+        // governing citation to a verseId so its crops point at the right scans. No
+        // citation -> null -> label-only, exactly as before (spec §6.4 safe degrade).
+        const verseId = ref ? (lookupReference(ref)?.verse_ids?.[0] ?? null) : null;
         return (
           <ATVApparatus
             readings={bodyUnits[i]}
             variant="inline"
-            verseId={null}
-            reference={commentaryData.reference}
+            verseId={verseId}
+            reference={ref || commentaryData.reference}
           />
         );
       }
