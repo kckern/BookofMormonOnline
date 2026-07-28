@@ -35,7 +35,7 @@ export default function FaxBreadcrumbs({ editions = [], current, currentRef }) {
     return `/fax/${ed.slug}`;
   };
 
-  const EditionList = ({ onPick }) => editions.map((ed) => {
+  const renderEditions = (onPick) => editions.map((ed) => {
     const isCurrent = ed.slug === current?.slug;
     const indexed = !!ed.indexRef;
     const inner = (
@@ -86,7 +86,7 @@ export default function FaxBreadcrumbs({ editions = [], current, currentRef }) {
           <>
             <div className="faxEditionDrawer-head">{label('menu_fax') || 'Facsimiles'}</div>
             <div className="fax-edition-list" role="listbox">
-              <EditionList onPick={close} />
+              {renderEditions(close)}
             </div>
           </>
         )}
