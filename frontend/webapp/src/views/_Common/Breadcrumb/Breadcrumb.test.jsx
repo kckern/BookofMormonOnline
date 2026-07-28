@@ -26,8 +26,9 @@ describe("Breadcrumb — trail", () => {
   test("current item is non-interactive with aria-current, linked item is a link", () => {
     wrap(<Breadcrumb items={[{ label: "Alma", to: "/alma" }, { label: "War Chapters", current: true }]} />);
     expect(screen.getByText("Alma").closest("a")).toHaveAttribute("href", "/alma");
-    expect(screen.getByText("War Chapters")).toHaveAttribute("aria-current", "page");
-    expect(screen.getByText("War Chapters").closest("a")).toBeNull();
+    const current = screen.getByText("War Chapters");
+    expect(current).toHaveAttribute("aria-current", "page");
+    expect(current.closest("a")).toBeNull();
   });
 
   test("Breadcrumb.Link renders a Link for `to` and a button for `onClick`", () => {
