@@ -1,10 +1,10 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import Breadcrumb from "./Breadcrumb/Breadcrumb";
 
 /**
- * "Page ▸ Section" study-location breadcrumb — the pattern used in the feed's
- * scripture panel (StudyInFeed: `parent_page.title ▸ parent_section.title`),
- * abstracted so the fax verse tooltip/modal can reuse it.
+ * "Page › Section" study-location breadcrumb — the pattern used in the feed's
+ * scripture panel, reused by the fax verse tooltip/modal. Thin adapter over the
+ * shared <Breadcrumb> component (size="sm").
  *
  * Props:
  *  - page/section: { title, slug } (either may be null)
@@ -13,19 +13,13 @@ import { Link } from "react-router-dom";
 export default function StudyBreadcrumb({ page, section, linked = false, className = "" }) {
   if (!page?.title && !section?.title) return null;
 
-  const part = (ref, cls) => {
-    if (!ref?.title) return null;
-    if (linked && ref.slug) return <Link className={cls} to={`/${ref.slug}`}>{ref.title}</Link>;
-    return <span className={cls}>{ref.title}</span>;
+  const items = [];
+  const push = (ref) => {
+    if (!ref?.title) return;
+    items.push({ label: ref.title, to: linked && ref.slug ? `/${ref.slug}` : undefined });
   };
+  push(page);
+  push(section);
 
-  const p = part(page, "sb-page");
-  const s = part(section, "sb-section");
-  return (
-    <span className={`studyBreadcrumb ${className}`.trim()}>
-      {p}
-      {p && s ? <span className="sb-sep"> ▸ </span> : null}
-      {s}
-    </span>
-  );
+  return <Breadcrumb size="sm" items={items} className={`studyBreadcrumb ${className}`.trim()} />;
 }

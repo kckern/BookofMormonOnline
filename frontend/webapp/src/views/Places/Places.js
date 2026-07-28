@@ -11,10 +11,8 @@ import {
   CardHeader,
   CardBody,
   CardFooter,
-  Button,
   Input,
 } from "reactstrap"
-import BootstrapSwitchButton from 'bootstrap-switch-button-react'
 import "./Places.css"
 import "../People/People.css"
 
@@ -36,8 +34,8 @@ import city from "../People/svg/city.svg";
 import town from "../People/svg/town.svg";
 import geographic_feature from "../People/svg/geographic_feature.svg";
 import geo_other from "../People/svg/other.svg";
-import { SearchPopUp } from "../_Common/SearchPopUp"
 import { useAppController } from "src/contexts/AppControllerContext";
+import FilterPanel from "src/views/_Common/FilterPanel/FilterPanel";
 
 function PlacesComponent() {
   const appController = useAppController();
@@ -209,12 +207,9 @@ function PlacesComponent() {
 
 export default PlacesComponent
 
-export function PlaceFilters({ setFilter, placeFilters })
-{
+export function PlaceFilters({ setFilter, placeFilters }) {
   const appController = useAppController();
-
-  const [isOpen,setIsOpen] = useState(false);
-  const [initSearchString,setInitSearchString] = useState('')
+  const { placeList } = appController.preLoad;
 
   const filterSections = {
     occupants: {
@@ -227,8 +222,8 @@ export function PlaceFilters({ setFilter, placeFilters })
         { label: <span><img className="dot" src={blue} alt="" /> {label("lamanite")}</span>, tag: "L" },
         { label: <span><img className="dot" src={orange} alt="" /> {label("mulekite")}</span>, tag: "M" },
         { label: <span><img className="dot" src={red} alt="" /> {label("gadianton")}</span>, tag: "G" },
-        { label: <span><img className="dot" src={black} alt="" /> {label("other")}</span>, tag: "O" }
-      ]
+        { label: <span><img className="dot" src={black} alt="" /> {label("other")}</span>, tag: "O" },
+      ],
     },
     location: {
       title: label("greater_locale"),
@@ -240,14 +235,13 @@ export function PlaceFilters({ setFilter, placeFilters })
         { label: <span><img className="dot" src={green} alt="" /> {label("land_bountiful")}</span>, tag: "B" },
         { label: <span><img className="dot" src={yellow} alt="" /> {label("land_of_desolation")}</span>, tag: "D" },
         { label: <span><img className="dot" src={grey} alt="" /> {label("old_world")}</span>, tag: "W" },
-        { label: <span><img className="dot" src={black} alt="" /> {label("geo_other")}</span>, tag: "O" }
-      ]
+        { label: <span><img className="dot" src={black} alt="" /> {label("geo_other")}</span>, tag: "O" },
+      ],
     },
     type: {
       title: label("geo_type"),
       key: "type",
       filters: [
-
         { label: <span><img src={nation} alt="" />{label("nation")}</span>, tag: "N" },
         { label: <span><img src={land} alt="" />{label("land")}</span>, tag: "L" },
         { label: <span><img src={city} alt="" />{label("city")}</span>, tag: "C" },
@@ -258,140 +252,42 @@ export function PlaceFilters({ setFilter, placeFilters })
     },
   };
 
-  const filterUI = (data) => {
-    return (
-      <ul>
-        <li className='lihead'>{data.title}</li>
-        <li className='lifoot'>
-          <Button onClick={() => toggleFilterCategory(data.key, true)}>
-            {label("select_all")}
-          </Button>
-          <Button onClick={() => toggleFilterCategory(data.key, false)}>
-            {label("clear")}
-          </Button>
-        </li>
-        {data.filters.map((f, index) => (
-          <li key={index} className='item' onClick={(e) => toggleFilter(data.key, f.tag)}>
-            <BootstrapSwitchButton
-              checked={new RegExp(f.tag).test(placeFilters[data.key])}
-              onstyle='success'
-              offlabel={label("off")}
-              onstyle='success'
-              onlabel={label("on")}
-              size={"xs"}
-            />
-            {f.label}
-          </li>
-        ))}
-      </ul>
-    )
-  }
+  const axes = [filterSections.occupants, filterSections.location, filterSections.type].map((s) => ({
+    name: s.key,
+    title: s.title,
+    options: s.filters.map((f) => ({ tag: f.tag, label: f.label })),
+  }));
 
-  const toggleFilter = (key, val) => {
-    let tmp = { ...placeFilters }
-    if (new RegExp(val).test(placeFilters[key])) {
-      tmp[key] = tmp[key].replace(new RegExp(val), "")
-      if (tmp[key] === "") tmp[key] = null
-    } else tmp[key] = tmp[key] !== null ? tmp[key] + val : val
-    setFilter(tmp)
-  }
+  const value = {
+    occupants: (placeFilters.occupants || "").split(""),
+    location: (placeFilters.location || "").split(""),
+    type: (placeFilters.type || "").split(""),
+  };
 
-  const toggleFilterCategory = (key, all) => {
-    let tmp = { ...placeFilters }
-    if (!all) tmp[key] = null
-    else tmp[key] = filterSections[key].filters.map((f) => f.tag).join("")
-    setFilter(tmp)
-  }
+  const onChange = (next) =>
+    setFilter({
+      ...placeFilters,
+      occupants: next.occupants.join("") || null,
+      location: next.location.join("") || null,
+      type: next.type.join("") || null,
+    });
 
-  const {placeList} = appController.preLoad;
+  const selectItemHandler = (slug) =>
+    appController.functions.setPopUp({ type: "places", ids: [slug], underSlug: "places" });
 
-  const selectItemHandler = (slug)=>{
-    appController.functions.setPopUp({ type: "places", ids: [slug],underSlug: "places",});
-    setIsOpen(false);
-}
-
-
-  const filterBox = <><h5 className='ppFiltersHeading'>{label("selectors")}</h5>
-  <div className='ppFilters'>
-  {!isMobile() && <button className="ppFiltersSearchButton" onClick={()=>setIsOpen(true)}>
-    🔍
-    </button>}
-    <div className='ppColumns'>
-      {filterUI(filterSections.occupants)}
-      {filterUI(filterSections.location)}
-      {filterUI(filterSections.type)}
-    </div>
-    {!isMobile() && <SearchPopUp
-      placeholder="search_for_a_place"
-      preLoadData={placeList}
-      selectItemHandler={selectItemHandler}
-      isOpen={isOpen}
-      setIsOpen={setIsOpen}
-      testFieldNames={{primary:'name',secondary:'info'}}
-      assetName="places"
-      initSearchString={initSearchString}
-      />}
-  </div></>
-
-    const handleClick = ()=>{
-
-      appController.functions.setPopUp({
-        type: "pFilter",
-        ids: [appController.states.user.social?.user_id],
-        underSlug: "places",
-        popUpData: { filterBox,setFilter, placeFilters
-        },
-      });
-
-    }
-
-    const handleKeyDown = (event) => {
-      const ignoreKeys = ['-', '_', '=', '+', '[', ']', 'Tab',"\\","/","|"];
-        if (document.activeElement.tagName !== "INPUT" && ignoreKeys.includes(event.key)) {
-          return false;
-        }
-        if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) return false;
-        if (event.key === 'Escape') {
-          setIsOpen(false);
-        }
-
-        //input is focused
-        if (document.activeElement.tagName === "INPUT") {
-          event.stopPropagation();
-          return false;
-        }
-
-        // todo: handle arrows and +/-
-        else {
-          if(event.key.length > 1) return false;
-          setIsOpen(true);
-          setInitSearchString(event.key);
-        }
-      };
-
-      useEffect(() => {
-        window.addEventListener('keydown', handleKeyDown);
-        return ()=>{
-          window.removeEventListener('keydown', handleKeyDown);
-        }
-      }, [])
-
-  if(isMobile()) return <div className="filterDrawerButton">
-    <Button onClick={handleClick}>{label("selectors")}</Button>
-    <button className="ppFiltersSearchButtonMobile" onClick={()=>setIsOpen(true)}>🔍</button>
-    <SearchPopUp
-      placeholder="search_for_a_place"
-      preLoadData={placeList}
-      selectItemHandler={selectItemHandler}
-      isOpen={isOpen}
-      setIsOpen={setIsOpen}
-      testFieldNames={{primary:'name',secondary:'info'}}
-      assetName="places"
-      initSearchString={initSearchString}
-      />
-    </div>;
-
-  return filterBox;
-
-
+  return (
+    <FilterPanel
+      heading={label("selectors")}
+      axes={axes}
+      value={value}
+      onChange={onChange}
+      search={{
+        placeholder: "search_for_a_place",
+        preLoadData: placeList,
+        testFieldNames: { primary: "name", secondary: "info" },
+        assetName: "places",
+        selectItemHandler,
+      }}
+    />
+  );
 }

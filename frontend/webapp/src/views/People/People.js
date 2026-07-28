@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 
 import Loader, { Spinner } from "../_Common/Loader";
-import { Card, CardHeader, CardBody, CardFooter, Button, Input } from "reactstrap";
-import BootstrapSwitchButton from 'bootstrap-switch-button-react'
+import { Card, CardHeader, CardBody, CardFooter, Input } from "reactstrap";
 import { Link, useRouteMatch } from 'react-router-dom';
 import Masonry from 'react-masonry-css'
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
@@ -34,8 +33,8 @@ import black from "./svg/black.svg";
 import grey from "./svg/grey.svg";
 import orange from "./svg/orange.svg";
 import red from "./svg/red.svg";
-import { SearchPopUp } from "../_Common/SearchPopUp";
 import { useAppController } from "src/contexts/AppControllerContext";
+import FilterPanel from "src/views/_Common/FilterPanel/FilterPanel";
 
 
 function PeopleComponent() {
@@ -181,11 +180,7 @@ function PeopleComponent() {
 
 export function PeopleFilters({ setFilter, peopleFilters }) {
   const appController = useAppController();
-
-  const [isOpen,setIsOpen] = useState(false);
-  const [initSearchString,setInitSearchString] = useState('')
-
-
+  const { personList } = appController.preLoad;
 
   const filterSections = {
     identification: {
@@ -198,8 +193,8 @@ export function PeopleFilters({ setFilter, peopleFilters }) {
         { label: <span><img className="dot" src={blue} alt="" /> {label("lamanite")}</span>, tag: "L" },
         { label: <span><img className="dot" src={orange} alt="" /> {label("mulekite")}</span>, tag: "M" },
         { label: <span><img className="dot" src={red} alt="" /> {label("gadianton")}</span>, tag: "G" },
-        { label: <span><img className="dot" src={black} alt="" /> {label("other")}</span>, tag: "O" }
-      ]
+        { label: <span><img className="dot" src={black} alt="" /> {label("other")}</span>, tag: "O" },
+      ],
     },
     classification: {
       title: label("social_classification"),
@@ -212,7 +207,7 @@ export function PeopleFilters({ setFilter, peopleFilters }) {
         { label: <span><img src={warrior} alt="" />{label("warrior")}</span>, tag: "W" },
         { label: <span><img src={judge} alt="" />{label("judge")}</span>, tag: "J" },
         { label: <span><img src={other} alt="" />{label("other")}</span>, tag: "O" },
-      ]
+      ],
     },
     unit: {
       title: label("social_unit"),
@@ -224,151 +219,48 @@ export function PeopleFilters({ setFilter, peopleFilters }) {
         { label: <span><img src={society} alt="" />{label("society")}</span>, tag: "S" },
         { label: <span><img src={civilization} alt="" />{label("civilization")}</span>, tag: "C" },
         { label: <span><img src={other} alt="" />{label("other")}</span>, tag: "X" },
-      ]
-    }
+      ],
+    },
   };
 
-  const filterUI = (data) => {
-    return <ul>
-      <li className="lihead">{data.title}</li>
-      <li className="lifoot">
-        <Button onClick={() => toggleFilterCategory(data.key, true)}>{label("select_all")}</Button>
-        <Button onClick={() => toggleFilterCategory(data.key, false)}>{label("clear")}</Button>
-      </li>
-      {data.filters.map(f =>
-        <li className="item" key={f.tag} onClick={(e) => toggleFilter(data.key, f.tag)}>
-          <BootstrapSwitchButton
-            checked={new RegExp(f.tag).test(peopleFilters[data.key])}
-            onstyle='success'
-            offlabel={label("off")}
-            onlabel={label("on")}
-            size={"xs"}
-          />
-          {f.label}
-        </li>)}
+  const axes = [filterSections.identification, filterSections.classification, filterSections.unit].map((s) => ({
+    name: s.key,
+    title: s.title,
+    options: s.filters.map((f) => ({ tag: f.tag, label: f.label })),
+  }));
 
-    </ul>
-  }
+  const value = {
+    identification: (peopleFilters.identification || "").split(""),
+    classification: (peopleFilters.classification || "").split(""),
+    unit: (peopleFilters.unit || "").split(""),
+  };
 
-  const toggleFilter = (key, val) => {
-    let tmp = { ...peopleFilters }
-    if ((new RegExp(val)).test(peopleFilters[key])) {
-      tmp[key] = tmp[key].replace((new RegExp(val)), '');
-      if (tmp[key] === "") tmp[key] = null;
-    }
-    else tmp[key] = (tmp[key] !== null) ? tmp[key] + val : val;
-    setFilter(prev=>{
-			return tmp;
-		});
-  }
+  const onChange = (next) =>
+    setFilter({
+      ...peopleFilters,
+      identification: next.identification.join("") || null,
+      classification: next.classification.join("") || null,
+      unit: next.unit.join("") || null,
+    });
 
+  const selectItemHandler = (slug) =>
+    appController.functions.setPopUp({ type: "people", ids: [slug], underSlug: "people" });
 
-  const toggleFilterCategory = (key, all) => {
-    let tmp = { ...peopleFilters }
-    if (!all) tmp[key] = null
-    else tmp[key] = filterSections[key].filters.map(f => f.tag).join("");
-    setFilter(tmp);
-  }
-
-  const {personList} = appController.preLoad;
-
-  const selectItemHandler = (slug)=>{
-      appController.functions.setPopUp({ type: "people", ids: [slug],underSlug: "people",});
-      setIsOpen(false);
-  }
-
-  const filterBox = <>
-  <h5 className="ppFiltersHeading">{label("filters")} </h5>
-    <div className="ppFilters">
-    {!isMobile() && <button className="ppFiltersSearchButton" onClick={()=>setIsOpen(true)}>
-    🔍
-    </button>}
-      <div className="ppColumns">
-        {filterUI(filterSections.identification)}
-        {filterUI(filterSections.classification)}
-        {filterUI(filterSections.unit)}
-      </div>
-      {!isMobile() && <SearchPopUp
-      placeholder="search_for_a_person"
-      preLoadData={personList}
-      selectItemHandler={selectItemHandler}
-      isOpen={isOpen}
-      setIsOpen={setIsOpen}
-      testFieldNames={{primary:'name',secondary:'title'}}
-      assetName="people"
-      initSearchString={initSearchString}
-      />}
-    </div>
-  </>
-
-  const handleClick = ()=>{
-      appController.functions.setPopUp({
-        type: "pFilter",
-        ids: [appController.states.user.social?.user_id],
-        underSlug: "people",
-        popUpData: { filterBox,setFilter, peopleFilters
-        },
-      });
-    }
-
-    const handleKeyDown = (event) => {
-      const ignoreKeys = ['-', '_', '=', '+', '[', ']', 'Tab',"\\","/","|"];
-        if (document.activeElement.tagName !== "INPUT" && ignoreKeys.includes(event.key)) {
-          return false;
-        }
-        if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) return false;
-        if (event.key === 'Escape') {
-          setIsOpen(false);
-        }
-
-        //input is focused
-        if (document.activeElement.tagName === "INPUT") {
-          event.stopPropagation();
-          return false;
-        }
-
-        // todo: handle arrows and +/-
-        else {
-          if(event.key.length > 1) return false;
-          setIsOpen(true);
-          setInitSearchString(event.key);
-        }
-      };
-
-	useEffect(()=>{
-		if(isMobile() && appController.states.popUp.type === "pFilter"){
-			appController.functions.setPopUp({
-				...appController.states.popUp,
-				popUpData:{
-					filterBox,setFilter, peopleFilters
-				}
-			})
-		}
-	},[peopleFilters,appController.states.popUp.type])
-
-  useEffect(() => {
-    window.addEventListener('keydown', handleKeyDown);
-    return ()=>{
-      window.removeEventListener('keydown', handleKeyDown);
-    }
-  }, [])
-
-  if (isMobile()) return <div className="filterDrawerButton">
-    <Button onClick={handleClick}>{label("filters")}</Button>
-    <button className="ppFiltersSearchButtonMobile" onClick={()=>setIsOpen(true)}>🔍</button>
-    <SearchPopUp
-      placeholder="search_for_a_person"
-      preLoadData={personList}
-      selectItemHandler={selectItemHandler}
-      isOpen={isOpen}
-      setIsOpen={setIsOpen}
-      testFieldNames={{primary:'name',secondary:'title'}}
-      assetName="people"
-      initSearchString={initSearchString}
-      />
-    </div>;
-
-  return filterBox;
+  return (
+    <FilterPanel
+      heading={label("filters")}
+      axes={axes}
+      value={value}
+      onChange={onChange}
+      search={{
+        placeholder: "search_for_a_person",
+        preLoadData: personList,
+        testFieldNames: { primary: "name", secondary: "title" },
+        assetName: "people",
+        selectItemHandler,
+      }}
+    />
+  );
 }
 
 

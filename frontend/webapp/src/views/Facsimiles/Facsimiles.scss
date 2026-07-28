@@ -511,141 +511,66 @@
 
   .fax-back { display: inline-flex; align-items: center; z-index: 1; }
 
-  /* Breadcrumb + edition switcher (adopted from History/Witnesses.js). */
-  .fax-breadcrumbs {
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: 0.3em;
-    font-size: 0.95rem;
-    color: #555;
-    z-index: 20; /* keep the dropdown above the spread/nav */
-
-    .breadcrumb-link { color: #555; text-decoration: none; }
-    .breadcrumb-link:hover { color: #000; text-decoration: underline; }
-    .breadcrumb-sep { color: #bbb; }
-
-    .breadcrumb-current {
-      appearance: none;
-      background: transparent;
-      border: 0;
-      padding: 0.15em 0.45em;
-      border-radius: 4px;
-      font: inherit;
-      color: #000;
-      font-weight: 600;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.25em;
-      max-width: 48vw;
-      .breadcrumb-chevron { font-size: 0.7em; color: #777; transition: transform 0.15s; }
-    }
-    .breadcrumb-current:hover,
-    .breadcrumb-current.open { background: #eee; }
-    .breadcrumb-current.open .breadcrumb-chevron { transform: rotate(180deg); }
-
-    .breadcrumb-dropdown {
-      position: absolute;
-      top: 100%;
-      left: 0;
-      z-index: 60;
-      margin-top: 0.3rem;
-      background: #fff;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
-      padding: 0.5rem;
-      /* Fixed 5 columns wide enough to avoid truncation; unlimited rows scroll
-         vertically. Names that still don't fit wrap to at most 2 lines. */
-      display: grid;
-      grid-template-columns: repeat(5, minmax(210px, 1fr));
-      gap: 0.3rem 0.5rem;
-      max-width: 92vw;
-      max-height: 62vh;
-      overflow: auto;
-    }
-
-    .breadcrumb-option {
-      display: flex;
-      align-items: center;
-      gap: 0.5em;
-      padding: 0.25em 0.5em;
-      border-radius: 4px;
-      font-size: 0.85rem;
-      color: #333;
-      text-decoration: none;
-      .breadcrumb-option-name {
-        flex: 1 1 auto;
-        line-height: 1.2;
-        /* wrap to a maximum of 2 lines, then ellipsis */
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-      }
-    }
-    .breadcrumb-option:hover { background: #f0f4fb; color: #000; }
-    .breadcrumb-option.current { background: #eef1fb; font-weight: 600; color: #000; }
-
-    .breadcrumb-thumb {
-      position: relative;
-      flex: 0 0 auto;
-      width: 48px;   /* 4:3 landscape */
-      height: 36px;
-      display: block;
-    }
-    .breadcrumb-avatar {
-      width: 100%;
-      height: 100%;
-      border-radius: 3px;
-      object-fit: cover;
-      object-position: center;
-      background: #ddd;
-      border: 1px solid #ccc;
-    }
-
-    /* Verse-level index indicator: corner badge overlaid on the thumbnail so it
-       costs no row width. Green ¶ when indexed, muted grey dot when not. */
-    .breadcrumb-index-flag {
-      position: absolute;
-      top: -4px;
-      right: -4px;
-      width: 14px;
-      height: 14px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.58rem;
-      line-height: 1;
-      border-radius: 50%;
-      color: #fff;
-      background: #b8bec8; /* not-indexed: muted grey disc */
-      border: 1px solid #fff;
-      box-shadow: 0 0 2px rgba(0, 0, 0, 0.35);
-    }
-    .breadcrumb-index-flag.has-index {
-      background: #6b5330; /* indexed: green */
-    }
-  }
+  /* Breadcrumb trail + dropdown chrome now come from the shared Breadcrumb.css
+     (.breadcrumb, .bc-link, .bc-sep, .bc-trigger, .bc-chevron, .bc-dropdown). The
+     fax edition-grid content is styled at top level (see .bc-dropdown .fax-edition-*
+     and .faxEditionDrawer .fax-edition-* below). */
 }
 
-/* Dark-mode breadcrumb (fax viewer supports data-theme=dark). */
-html[data-theme="dark"] .facsimileToolbar .fax-breadcrumbs {
-  color: #bbb;
-  .breadcrumb-link { color: #bbb; }
-  .breadcrumb-link:hover { color: #fff; }
-  .breadcrumb-sep { color: #666; }
-  .breadcrumb-current { color: #fff; }
-  .breadcrumb-current:hover,
-  .breadcrumb-current.open { background: #333; }
-  .breadcrumb-dropdown { background: #262626; border-color: #3a3a3a; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5); }
-  .breadcrumb-option { color: #ddd; }
-  .breadcrumb-option:hover { background: #333; color: #fff; }
-  .breadcrumb-option.current { background: #2f3a4a; color: #fff; }
-  .breadcrumb-avatar { border-color: #444; background: #333; }
-  .breadcrumb-index-flag { background: #444; }
-  .breadcrumb-index-flag.has-index { background: #6b5330; }
+/* Dark-mode fax edition grid (trail/panel chrome handled by Breadcrumb.css tokens).
+   Keep the switcher above the fax spread. */
+.fax-breadcrumbs { position: relative; z-index: 20; }
+.fax-breadcrumbs .bc-dropdown { z-index: 60; }
+
+/* Fax edition switcher — desktop dropdown grid (chrome from .bc-dropdown). */
+.bc-dropdown .fax-edition-list {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(210px, 1fr));
+  gap: 0.3rem 0.5rem;
+  max-width: 92vw;
+}
+.bc-dropdown .faxEditionDrawer-head { display: none; } /* the "Facsimiles" head is drawer-only */
+.bc-dropdown .fax-edition-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  padding: 0.25em 0.5em;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  color: #333;
+  text-decoration: none;
+}
+.bc-dropdown .fax-edition-option:hover { background: #f0f4fb; color: #000; }
+.bc-dropdown .fax-edition-option.current { background: #eef1fb; font-weight: 600; color: #000; }
+.bc-dropdown .fax-edition-name {
+  flex: 1 1 auto;
+  line-height: 1.2;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.bc-dropdown .fax-edition-thumb { position: relative; flex: 0 0 auto; width: 48px; height: 36px; display: block; }
+.bc-dropdown .fax-edition-avatar {
+  width: 100%; height: 100%; border-radius: 3px; object-fit: cover; object-position: center;
+  background: #ddd; border: 1px solid #ccc;
+}
+.bc-dropdown .fax-edition-index-flag {
+  position: absolute; top: -4px; right: -4px; width: 14px; height: 14px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 0.58rem; line-height: 1; border-radius: 50%; color: #fff;
+  background: #b8bec8; border: 1px solid #fff; box-shadow: 0 0 2px rgba(0, 0, 0, 0.35);
+}
+.bc-dropdown .fax-edition-index-flag.has-index { background: #6b5330; }
+
+/* Dark-mode desktop grid. */
+html[data-theme="dark"] .bc-dropdown {
+  .fax-edition-option { color: #ddd; }
+  .fax-edition-option:hover { background: #333; color: #fff; }
+  .fax-edition-option.current { background: #2f3a4a; color: #fff; }
+  .fax-edition-avatar { border-color: #444; background: #333; }
+  .fax-edition-index-flag { background: #444; }
+  .fax-edition-index-flag.has-index { background: #6b5330; }
 }
 
 .facsimileViewer .faxPageViewer {
@@ -727,13 +652,13 @@ html[data-theme="dark"] .facsimileToolbar .fax-breadcrumbs {
     color: #333;
     border-bottom: 1px solid #e5e5e5;
   }
-  .faxEditionDrawer-list {
+  .fax-edition-list {
     flex: 1 1 auto;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     padding: 0.5rem;
   }
-  .breadcrumb-option {
+  .fax-edition-option {
     display: flex;
     align-items: center;
     gap: 0.7rem;
@@ -742,13 +667,13 @@ html[data-theme="dark"] .facsimileToolbar .fax-breadcrumbs {
     font-size: 1rem;
     color: #222;
     text-decoration: none;
-    .breadcrumb-option-name { flex: 1 1 auto; line-height: 1.25; }
+    .fax-edition-name { flex: 1 1 auto; line-height: 1.25; }
   }
-  .breadcrumb-option.current { background: #eef1fb; font-weight: 600; }
-  .breadcrumb-option:active { background: #f0f4fb; }
-  .breadcrumb-thumb { position: relative; flex: 0 0 auto; }
-  .breadcrumb-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 1px solid #ccc; }
-  .breadcrumb-index-flag {
+  .fax-edition-option.current { background: #eef1fb; font-weight: 600; }
+  .fax-edition-option:active { background: #f0f4fb; }
+  .fax-edition-thumb { position: relative; flex: 0 0 auto; }
+  .fax-edition-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 1px solid #ccc; }
+  .fax-edition-index-flag {
     position: absolute; right: -3px; bottom: -3px;
     background: #6b5330; color: #fff; border-radius: 50%;
     width: 16px; height: 16px; font-size: 0.7rem; line-height: 16px; text-align: center;
@@ -757,6 +682,6 @@ html[data-theme="dark"] .facsimileToolbar .fax-breadcrumbs {
 html[data-theme="dark"] .faxEditionDrawer {
   background: #1f1f1f;
   .faxEditionDrawer-head { color: #eee; border-bottom-color: #3a3a3a; }
-  .breadcrumb-option { color: #ddd; }
-  .breadcrumb-option.current { background: #333; }
+  .fax-edition-option { color: #ddd; }
+  .fax-edition-option.current { background: #333; }
 }

@@ -6,6 +6,7 @@ import green from "src/views/User/svg/green.svg";
 import yellow from "src/views/User/svg/yellow.svg";
 import blank from "src/views/User/svg/blank.svg";
 
+import Breadcrumb from "src/views/_Common/Breadcrumb/Breadcrumb";
 import { flatten } from "./textUtils";
 import RefPill from "./RefPill";
 
@@ -56,15 +57,14 @@ export default function NarrationTile({ data, next, seed = 0 }) {
   return (
     <div className="samplerTileInner narrationTile">
       <h3 className="tileHeading">{label("narration")}</h3>
-      <div className="narrationCrumbs">
-        {data.page?.title ? (
-          <>
-            <Link to={`/${data.page.slug}`}>{data.page.title}</Link>
-            <span className="narrationCrumbSep"> › </span>
-          </>
-        ) : null}
-        <Link to={`/${data.slug}`} className="narrationTileTitle">{data.title}</Link>
-      </div>
+      <Breadcrumb
+        size="sm"
+        className="narrationCrumbs"
+        items={[
+          ...(data.page?.title ? [{ label: data.page.title, to: `/${data.page.slug}` }] : []),
+          { label: data.title, to: `/${data.slug}` },
+        ]}
+      />
       {art.length ? (
         <div className={`narrationArtRow${art.length === 1 ? " single" : ""}`}>
           {art.map((id) => (

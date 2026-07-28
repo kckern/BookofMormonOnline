@@ -5,6 +5,7 @@ import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import { verseIdToSlug } from "src/utils/scriptureUtils";
 import { determineLanguage } from "src/models/Utils";
 import { Spinner } from "../../_Common/Loader";
+import Breadcrumb from "src/views/_Common/Breadcrumb/Breadcrumb";
 import { highlightTextJSX } from "./highlighter";
 import { pairsFor } from "./aggregate";
 
@@ -210,16 +211,16 @@ function ReaderHeader({ bomBook, bibleBook, bomChapter, anchorCanon, navigate, b
   const anchorBook = anchorCanon === "kjv" ? bibleBook : bomBook;
   return (
     <header className="xref-header">
-      <nav className="xref-breadcrumb" aria-label="Breadcrumb">
-        <Link to="/analysis/bible">⌂ Overview</Link>
-        <span aria-hidden="true"> › </span>
-        <button className="xref-backlink" onClick={() => navigate(backState)}>
+      <Breadcrumb
+        root={{ icon: "⌂", label: "Overview", to: "/analysis/bible" }}
+        style={{ "--bc-link": "var(--link)", "--bc-root": "var(--link)", "--bc-link-hover": "var(--link-hover)" }}
+      >
+        <Breadcrumb.Link onClick={() => navigate(backState)}>
           {anchorBook}
           {anchorCanon === "bom" && bomChapter ? ` › ch. ${bomChapter}` : ""}
-        </button>
-        <span aria-hidden="true"> › </span>
-        <span aria-current="page">{bomBook} × {bibleBook}</span>
-      </nav>
+        </Breadcrumb.Link>
+        <Breadcrumb.Current>{bomBook} × {bibleBook}</Breadcrumb.Current>
+      </Breadcrumb>
       <h3 className="xref-readertitle">
         <span className="book">{bomBook}{bomChapter ? ` ${bomChapter}` : ""}</span> references to{" "}
         <span className="book">{bibleBook}</span>

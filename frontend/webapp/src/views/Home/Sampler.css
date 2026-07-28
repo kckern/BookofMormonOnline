@@ -943,14 +943,7 @@ html[data-theme="dark"] .samplerFooterLink:hover {
    ================================================================ */
 .narrationCrumbs {
   margin-bottom: 0.45rem;
-  font-size: 0.72rem;
-  color: #888;
 }
-.narrationCrumbs a { color: #666; text-decoration: none; }
-
-html[data-theme="dark"] .narrationCrumbs { color: #9a9a9a; }
-html[data-theme="dark"] .narrationCrumbs a { color: #b8b8b8; }
-.narrationCrumbSep { margin: 0 0.15rem; color: #bbb; }
 a.narrationTileTitle {
   font-weight: 800;
   font-size: 0.95rem;
