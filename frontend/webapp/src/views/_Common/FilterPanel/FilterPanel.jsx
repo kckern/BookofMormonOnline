@@ -27,6 +27,7 @@ export default function FilterPanel({ heading, axes, value, onChange, search }) 
   const appController = useAppController();
   const [isOpen, setIsOpen] = useState(false);
   const [initSearchString, setInitSearchString] = useState("");
+  const hasSearch = Boolean(search);
 
   const toggleTag = (axisName, tag) => {
     const cur = value[axisName] || [];
@@ -88,7 +89,7 @@ export default function FilterPanel({ heading, axes, value, onChange, search }) 
   );
 
   useEffect(() => {
-    if (!search) return undefined;
+    if (!hasSearch) return undefined;
     const onKey = (event) => {
       const ignoreKeys = ["-", "_", "=", "+", "[", "]", "Tab", "\\", "/", "|"];
       if (document.activeElement.tagName !== "INPUT" && ignoreKeys.includes(event.key)) return;
@@ -101,7 +102,7 @@ export default function FilterPanel({ heading, axes, value, onChange, search }) 
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [Boolean(search)]);
+  }, [hasSearch]);
 
   useEffect(() => {
     if (isMobile() && appController.states.popUp.type === "pFilter") {
