@@ -64,4 +64,22 @@ describe("Breadcrumb — trail", () => {
     const { container } = wrap(<Breadcrumb size="sm" items={[{ label: "A", to: "/a" }]} />);
     expect(container.querySelector(".breadcrumb")).toHaveClass("bc-size-sm");
   });
+
+  test("non-current, non-link item renders as plain text without aria-current", () => {
+    const { container } = wrap(<Breadcrumb items={[{ label: "Just text" }]} />);
+    const el = screen.getByText("Just text");
+    expect(el).not.toHaveAttribute("aria-current");
+    expect(el.closest("a")).toBeNull();
+    expect(container.querySelector(".bc-current")).toBeNull();
+  });
+
+  test("custom separator node is used between segments", () => {
+    wrap(<Breadcrumb separator="/" items={[{ label: "A", to: "/a" }, { label: "B", to: "/b" }]} />);
+    expect(screen.getByText("/")).toBeInTheDocument();
+  });
+
+  test("root-only renders no separator", () => {
+    const { container } = wrap(<Breadcrumb root={{ icon: <svg data-testid="r" />, to: "/" }} />);
+    expect(container.querySelectorAll(".bc-sep")).toHaveLength(0);
+  });
 });

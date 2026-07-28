@@ -49,14 +49,18 @@ export default function Breadcrumb({
   if (items && items.length) {
     items.forEach((it, i) => {
       const key = it.key != null ? it.key : `item-${i}`;
-      if (!it.current && (it.to || it.onClick)) {
+      if (it.current) {
+        segments.push(<Breadcrumb.Current key={key}>{it.label}</Breadcrumb.Current>);
+      } else if (it.to || it.onClick) {
         segments.push(
           <Breadcrumb.Link key={key} to={it.to} onClick={it.onClick}>
             {it.label}
           </Breadcrumb.Link>
         );
       } else {
-        segments.push(<Breadcrumb.Current key={key}>{it.label}</Breadcrumb.Current>);
+        // Non-link, non-current items are plain muted text — NOT aria-current
+        // (only `current: true` marks the current page).
+        segments.push(<span className="bc-text" key={key}>{it.label}</span>);
       }
     });
   } else if (children) {
