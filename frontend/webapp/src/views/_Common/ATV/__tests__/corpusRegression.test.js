@@ -23,6 +23,18 @@
  * Baseline recorded 2026-07-24 against the parser at that date. If a count moves,
  * find out WHY before updating it — either the corpus changed or a parser change
  * regressed. Do not reflexively re-baseline.
+ *
+ * Re-baselined 2026-07-28 (units 4861→4862, totalReadings 11208→11210,
+ * multiStateReadings 2134→2135). Cause is a CORPUS edit, not a parser change: the
+ * private-workspace data repair sql/2026-07-24-atv-defect-repairs.sql was applied
+ * to the DB AFTER the original snapshot. Its fix #4 restored the dropped "0"
+ * reading on entry 1369916401, turning the raw-text single-reading bracket
+ * [requisite 1ABC…] into a proper two-reading unit
+ * [requisites >% requisite 0|requisite 1ABC…] — exactly +1 unit, +2 readings, and
+ * +1 multi-state (the "0" reading's requisites→requisite correction chain).
+ * Repairs #1–#3 only reshuffle witness sigla inside existing readings, so they
+ * move no counts. The parser was UNCHANGED and stays clean corpus-wide (0 throws,
+ * 0 warnings, 0 empty segments, 0 unglossed codes, max depth 4).
  */
 import fs from "fs";
 import { parseApparatus } from "../parseATV";
@@ -30,12 +42,12 @@ import { parseApparatus } from "../parseATV";
 const CORPUS = process.env.ATV_CORPUS;
 const HEADER_RE = /<div class=['"]source['"]>[\s\S]*?<\/div>/;
 
-// Expected totals, verified 2026-07-24.
+// Expected totals, verified 2026-07-28 (see re-baseline note above).
 const BASELINE = {
   entries: 4528, // rows carrying a .source apparatus block
-  units: 4861, // total variation units across all header blocks
-  totalReadings: 11208, // pipe-parts across all units
-  multiStateReadings: 2134, // readings carrying an in-document correction chain
+  units: 4862, // total variation units across all header blocks
+  totalReadings: 11210, // pipe-parts across all units
+  multiStateReadings: 2135, // readings carrying an in-document correction chain
 };
 
 const describeOrSkip = CORPUS && fs.existsSync(CORPUS) ? describe : describe.skip;
