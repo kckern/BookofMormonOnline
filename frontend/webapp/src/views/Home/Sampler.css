@@ -584,6 +584,19 @@ html[data-theme="dark"] .commentaryTileTitle { color: #f0f0f0; }
   overflow: visible;
 }
 html[data-theme="dark"] .commentaryTileExcerpt { color: #c4c4c4; }
+/* ATV (textual-variants) apparatus inside a commentary tile: the popup's .atv
+   box is tuned for a wide window (width: calc(100% - 9rem), 1rem margin), so
+   pull it back to fill the narrow tile column and shrink the type a notch. */
+.commentaryTile .commentaryTileAtv { align-self: stretch; margin: 0 0 0.5rem; min-width: 0; }
+.commentaryTile .atv {
+  width: 100%;
+  margin: 0;
+  padding: 0.5ex 0.7ex;
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+.commentaryTile .atv .source { width: 100%; }
+.commentaryTile .atv-string { font-size: 0.72rem; padding: 0 0.6ex; }
 .commentaryTileReadMore {
   margin-top: 0.3rem;
   font-size: 0.72rem;

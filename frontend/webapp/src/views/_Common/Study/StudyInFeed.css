@@ -282,6 +282,15 @@
     margin-left: 2rem;
     line-height: .75rem;
 }
+/* ATV (textual-variants) apparatus inside a feed commentary: the popup's .atv
+   box is sized for a wide window, so pull it back to fill the feed column. */
+.commentaryContentText .atv
+{
+    width: 100%;
+    margin: 0 0 0.6rem;
+    box-sizing: border-box;
+}
+.commentaryContentText .atv .source { width: 100%; }
 
 .commentaryContent h3{
     font-weight: 800;

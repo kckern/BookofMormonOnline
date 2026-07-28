@@ -1,11 +1,13 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { parse } from "node-html-parser";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import { label } from "src/models/Utils";
 import Parser from "html-react-parser";
 import { enDash } from "./textUtils";
 import { openScripture } from "./ScripturePopup";
 import { getDetectedScripturesHtml, getHtmlScriptureLinkParserOptions } from "src/views/_Common/ViewUtils";
+import { ATVHeader } from "src/views/_Common/ATV";
 
 const scriptureOpts = getHtmlScriptureLinkParserOptions((ref) => openScripture(ref));
 
@@ -24,12 +26,24 @@ export default function CommentaryTile({ data }) {
   const [maxH, setMaxH] = useState(null);
   const [truncated, setTruncated] = useState(false);
   const [expanded, setExpanded] = useState(false);
-  const text = stripTags(data?.text || data?.preview);
+
+  // ATV (Skousen textual-variants) commentaries lead with a <div class="source">
+  // apparatus block. Lift it out and render it as the interactive apparatus (the
+  // same component the popup uses); the prose excerpt then uses the bracket-free
+  // preview so raw sigla never leak into the tile.
+  const atvHTML = useMemo(() => {
+    const raw = data?.text || "";
+    if (!/class=['"]source['"]/.test(raw)) return "";
+    const el = parse(raw).querySelector(".source");
+    return el ? el.outerHTML.trim() : "";
+  }, [data?.text]);
+  const isAtv = !!atvHTML;
+  const text = isAtv ? (data?.preview || "") : stripTags(data?.text || data?.preview);
 
   // Match the excerpt's clamp height to the aside column so both sides bottom
   // out together; then detect whether the text actually overflows that height.
   useLayoutEffect(() => {
-    if (expanded) return;
+    if (expanded || isAtv) return;
     const aside = asideRef.current;
     const body = bodyRef.current;
     if (!aside || !body) return;
@@ -56,6 +70,11 @@ export default function CommentaryTile({ data }) {
       <div className="commentaryTileBody">
         <div className="commentaryTileMain">
           <Link to={to} className="commentaryTileTitle">{enDash(data.title)}</Link>
+          {isAtv ? (
+            <div className="commentaryTileAtv">
+              <ATVHeader atvHTML={atvHTML} reference={data.reference} />
+            </div>
+          ) : null}
           <p
             ref={bodyRef}
             className={`commentaryTileExcerpt${expanded ? " expanded" : ""}`}
@@ -63,7 +82,7 @@ export default function CommentaryTile({ data }) {
           >
             {Parser(getDetectedScripturesHtml(text), scriptureOpts)}
           </p>
-          {truncated && !expanded ? (
+          {!isAtv && truncated && !expanded ? (
             <button className="readMorePill" onClick={() => setExpanded(true)}>
               {label("read_more")}
             </button>

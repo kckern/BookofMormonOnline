@@ -1,10 +1,58 @@
 import React, { useState, useEffect } from "react";
-import { flattenDescription, label, renderHTMLContentInFeed } from "src/models/Utils";
+import { flattenDescription, label, renderHTMLContentInFeed, determineLanguage } from "src/models/Utils";
 import { Link } from "react-router-dom";
+import Parser from "html-react-parser";
+import { parse } from "node-html-parser";
+import { lookupReference } from "scripture-guide";
 import "./StudyInFeed.css";
 import { BlankParagraph } from "src/models/Utils";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import { useAppController } from "src/contexts/AppControllerContext";
+import { ATVHeader } from "src/views/_Common/ATV";
+import { extractApparatusUnits } from "src/views/_Common/ATV/parseATV";
+import { governingRefs } from "src/views/_Common/ATV/governingRef";
+import { lastScriptureRef } from "src/views/_Common/ATV/lastScriptureRef";
+import { ATVApparatus } from "src/views/_Common/ATV/ATVApparatus";
+
+// ATV (Skousen textual-variants) commentaries carry a <div class="source">
+// apparatus header plus bracketed variation units inside the analysis prose.
+// Render the header as interactive pills (ATVHeader) and the body units as
+// inline pills (ATVApparatus) — the same treatment the commentary popup uses —
+// so raw sigla never leak into the feed. Non-ATV commentary is unchanged.
+export function renderCommentaryTextInFeed(text, reference, highlights) {
+  const raw = text || "";
+  if (!/class=['"]source['"]/.test(raw)) return renderHTMLContentInFeed(raw, highlights);
+  const srcEl = parse(raw).querySelector(".source");
+  const atvHTML = srcEl ? srcEl.outerHTML.trim() : "";
+  const body = atvHTML ? raw.replace(atvHTML, "").trim() : raw;
+  const { html: tokenized, units, contexts } = extractApparatusUnits(body);
+  const lang = determineLanguage();
+  const refs = governingRefs(contexts, (ctx) => lastScriptureRef(ctx, lang));
+  const options = {
+    replace: (node) => {
+      if (node && node.name === "atv-unit") {
+        const i = Number(node.attribs && node.attribs["data-atv-i"]);
+        const ref = refs[i];
+        const verseId = ref ? (lookupReference(ref)?.verse_ids?.[0] ?? null) : null;
+        return (
+          <ATVApparatus
+            readings={units[i]}
+            variant="inline"
+            verseId={verseId}
+            reference={ref || reference}
+          />
+        );
+      }
+      return undefined;
+    },
+  };
+  return (
+    <>
+      {atvHTML ? <ATVHeader atvHTML={atvHTML} reference={reference} /> : null}
+      {Parser(tokenized, options)}
+    </>
+  );
+}
 
 function ImageBox({ imageIds }) {
   const [currentIndex, setIndex] = useState(0);
@@ -142,7 +190,7 @@ export function CommentaryInFeed({ comData, highlights }) {
             <h3>{comData.title}</h3>
           </Link>
           <div className="commentaryContentText">
-            {renderHTMLContentInFeed(comData.text || "", highlights)}
+            {renderCommentaryTextInFeed(comData.text || "", comData.location?.heading, highlights)}
           </div>
         </div>
         <Link
