@@ -368,7 +368,36 @@ describe("extractApparatusUnits", () => {
   });
 
   test("empty / null input is safe", () => {
-    expect(extractApparatusUnits("")).toEqual({ html: "", units: [] });
-    expect(extractApparatusUnits(null)).toEqual({ html: "", units: [] });
+    expect(extractApparatusUnits("")).toEqual({ html: "", units: [], contexts: [] });
+    expect(extractApparatusUnits(null)).toEqual({ html: "", units: [], contexts: [] });
+  });
+});
+
+describe("extractApparatusUnits — context slices", () => {
+  test("returns a context slice per unit: the HTML before it since the previous unit", () => {
+    const { units, contexts } = extractApparatusUnits(
+      "<li>1 Nephi 2:11<ul><li>because [<em>that</em> 01A| BCDEFGHIJKLMNOPQRST] he was</li></ul></li>"
+    );
+    expect(units).toHaveLength(1);
+    expect(contexts).toHaveLength(1);
+    expect(contexts[0]).toContain("1 Nephi 2:11");
+    expect(contexts[0]).not.toContain("[");        // slice ends before the bracket
+  });
+
+  test("slices each unit's context from the previous apparatus boundary", () => {
+    const { contexts } = extractApparatusUnits(
+      "A cites 1 Nephi 1:9 [<em>x</em> 1|<em>y</em> A] then 3 Nephi 11:8 [<em>p</em> 1|<em>q</em> A] end"
+    );
+    expect(contexts).toHaveLength(2);
+    expect(contexts[0]).toContain("1 Nephi 1:9");
+    expect(contexts[1]).toContain("3 Nephi 11:8");   // only text since the prior unit
+    expect(contexts[1]).not.toContain("1 Nephi 1:9");
+  });
+
+  test("is backward-compatible: units unchanged, non-apparatus brackets ignored", () => {
+    const { html, units, contexts } = extractApparatusUnits("plain [not an apparatus] text");
+    expect(units).toEqual([]);
+    expect(contexts).toEqual([]);
+    expect(html).toBe("plain [not an apparatus] text");
   });
 });
