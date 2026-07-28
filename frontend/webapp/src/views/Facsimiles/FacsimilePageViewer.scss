@@ -950,10 +950,6 @@ html[data-theme="dark"] .faxVerseDrawer-inner { background: #1f1f1f; color: #eee
   &:hover { text-decoration: underline; }
 }
 .faxVerseModal-loc { font-size: 0.85rem; margin-top: 2px; }
-.studyBreadcrumb {
-  a.sb-page, a.sb-section { color: #6b5330; text-decoration: none; &:hover { text-decoration: underline; } }
-  .sb-sep { opacity: 0.5; }
-}
 .faxVerseModal-cutout {
   position: relative;
   overflow: hidden;
