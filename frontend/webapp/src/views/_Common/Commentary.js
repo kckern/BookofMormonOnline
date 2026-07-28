@@ -315,9 +315,10 @@ export default function Commentary() {
   // Each prose-body unit's governing verse is its nearest preceding citation
   // (headings persist over following units). Resolve to a verseId so peek/compare
   // crop the RIGHT verse; unresolved -> null -> label-only (design §Fallback).
+  const lang = determineLanguage();
   const bodyUnitRefs = governingRefs(bodyContexts, (ctx) => {
     let last = null;
-    detectScriptures(ctx || "", (s) => { if (s) last = s; return s; }, determineLanguage());
+    detectScriptures(ctx || "", (s) => { if (s) last = s; return s; }, lang);
     return last;
   });
 
@@ -349,7 +350,8 @@ export default function Commentary() {
         const ref = bodyUnitRefs[i];
         // Body units cite OTHER verses than the commentary's own; resolve each unit's
         // governing citation to a verseId so its crops point at the right scans. No
-        // citation -> null -> label-only, exactly as before (spec §6.4 safe degrade).
+        // citation -> null verseId: the hover peek shows label-only, and the compare
+        // modal's crops collapse on error (no visible facsimile) — same as before.
         const verseId = ref ? (lookupReference(ref)?.verse_ids?.[0] ?? null) : null;
         return (
           <ATVApparatus
