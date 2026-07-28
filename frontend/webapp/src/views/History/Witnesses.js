@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Parser from 'html-react-parser';
 import './Witnesses.css';
@@ -8,6 +8,7 @@ import moment from 'moment';
 import Masonry from 'react-masonry-css';
 import WitnessLifeHeatmap, { matchesYearMonth } from './WitnessLifeHeatmap';
 import Identicon from '../_Common/Identicon';
+import Breadcrumb from "../_Common/Breadcrumb/Breadcrumb";
 import { useAppController } from "src/contexts/AppControllerContext";
 
 // Masonry column counts by window width — the sources column sits beside a 280px
@@ -62,74 +63,47 @@ const GROUP_LABELS = {
     "other-witnesses": "Other Sources",
 };
 
-const WitnessBreadcrumbs = ({ witness }) => {
-    const [open, setOpen] = useState(false);
-    const wrapperRef = useRef(null);
+const WitnessGrid = ({ witness, onPick }) => (
+    <div className='witness-grid'>
+        {Object.keys(data).map(groupKey => (
+            <div key={groupKey} className='witness-group'>
+                <div className='witness-group-label'>{GROUP_LABELS[groupKey] || groupKey}</div>
+                {data[groupKey].map(w => {
+                    const isCurrent = w.slug === witness.slug;
+                    return (
+                        <Link
+                            key={w.slug}
+                            to={`/history/witnesses/${w.slug}`}
+                            className={`witness-option${isCurrent ? ' current' : ''}`}
+                            aria-current={isCurrent ? 'page' : undefined}
+                            onClick={onPick}
+                        >
+                            <img
+                                className='witness-avatar'
+                                src={`${assetUrl}/history/witnesses/people/${w.slug}.jpg`}
+                                alt=''
+                                aria-hidden='true'
+                                loading='lazy'
+                                onError={(e) => { e.target.style.visibility = 'hidden'; }}
+                            />
+                            <span className='witness-option-name'>{w.name}</span>
+                        </Link>
+                    );
+                })}
+            </div>
+        ))}
+    </div>
+);
 
-    useEffect(() => {
-        if (!open) return undefined;
-        const onDocClick = (e) => {
-            if (wrapperRef.current && !wrapperRef.current.contains(e.target)) setOpen(false);
-        };
-        const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
-        document.addEventListener('mousedown', onDocClick);
-        document.addEventListener('keydown', onKey);
-        return () => {
-            document.removeEventListener('mousedown', onDocClick);
-            document.removeEventListener('keydown', onKey);
-        };
-    }, [open]);
-
-    return (
-        <nav className='witness-breadcrumbs' aria-label='Breadcrumb' ref={wrapperRef}>
-            <Link to='/history' className='breadcrumb-link'>History</Link>
-            <span className='breadcrumb-sep' aria-hidden='true'>›</span>
-            <Link to='/history/witnesses' className='breadcrumb-link'>Witnesses</Link>
-            <span className='breadcrumb-sep' aria-hidden='true'>›</span>
-            <button
-                type='button'
-                className={`breadcrumb-current${open ? ' open' : ''}`}
-                aria-haspopup='listbox'
-                aria-expanded={open}
-                onClick={() => setOpen(o => !o)}
-            >
-                {witness.name}
-                <span className='breadcrumb-chevron' aria-hidden='true'>▾</span>
-            </button>
-            {open && (
-                <div className='breadcrumb-dropdown' role='listbox'>
-                    {Object.keys(data).map(groupKey => (
-                        <div key={groupKey} className='breadcrumb-group'>
-                            <div className='breadcrumb-group-label'>{GROUP_LABELS[groupKey] || groupKey}</div>
-                            {data[groupKey].map(w => {
-                                const isCurrent = w.slug === witness.slug;
-                                return (
-                                    <Link
-                                        key={w.slug}
-                                        to={`/history/witnesses/${w.slug}`}
-                                        className={`breadcrumb-option${isCurrent ? ' current' : ''}`}
-                                        aria-current={isCurrent ? 'page' : undefined}
-                                        onClick={() => setOpen(false)}
-                                    >
-                                        <img
-                                            className='breadcrumb-avatar'
-                                            src={`${assetUrl}/history/witnesses/people/${w.slug}.jpg`}
-                                            alt=''
-                                            aria-hidden='true'
-                                            loading='lazy'
-                                            onError={(e) => { e.target.style.visibility = 'hidden'; }}
-                                        />
-                                        <span className='breadcrumb-option-name'>{w.name}</span>
-                                    </Link>
-                                );
-                            })}
-                        </div>
-                    ))}
-                </div>
-            )}
-        </nav>
-    );
-};
+const WitnessBreadcrumbs = ({ witness }) => (
+    <Breadcrumb>
+        <Breadcrumb.Link to='/history'>History</Breadcrumb.Link>
+        <Breadcrumb.Link to='/history/witnesses'>Witnesses</Breadcrumb.Link>
+        <Breadcrumb.Dropdown label={witness.name}>
+            {({ close }) => <WitnessGrid witness={witness} onPick={close} />}
+        </Breadcrumb.Dropdown>
+    </Breadcrumb>
+);
 
 const SingleWitness = ({ witness, sourceSlug }) => {
     const appController = useAppController();
