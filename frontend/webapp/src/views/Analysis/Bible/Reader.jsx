@@ -213,7 +213,7 @@ function ReaderHeader({ bomBook, bibleBook, bomChapter, anchorCanon, navigate, b
     <header className="xref-header">
       <Breadcrumb
         root={{ icon: "⌂", label: "Overview", to: "/analysis/bible" }}
-        style={{ "--bc-link": "#345496", "--bc-root": "#345496", "--bc-link-hover": "#345496" }}
+        style={{ "--bc-link": "var(--link)", "--bc-root": "var(--link)", "--bc-link-hover": "var(--link-hover)" }}
       >
         <Breadcrumb.Link onClick={() => navigate(backState)}>
           {anchorBook}

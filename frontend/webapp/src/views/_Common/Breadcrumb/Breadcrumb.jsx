@@ -205,7 +205,7 @@ Breadcrumb.Dropdown = function BreadcrumbDropdown({
       <button
         type="button"
         className={`bc-current bc-trigger${dd.open ? " open" : ""} ${className}`.trim()}
-        aria-haspopup="listbox"
+        aria-haspopup="true"
         aria-expanded={dd.open}
         onClick={dd.toggle}
         {...rest}
@@ -219,7 +219,7 @@ Breadcrumb.Dropdown = function BreadcrumbDropdown({
         </Drawer>
       ) : (
         dd.open && (
-          <div className="bc-dropdown" role="listbox">
+          <div className="bc-dropdown">
             {content}
           </div>
         )

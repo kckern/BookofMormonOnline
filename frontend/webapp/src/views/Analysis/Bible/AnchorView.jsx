@@ -40,7 +40,7 @@ export default function AnchorView({ state, navigate }) {
       <header className="xref-header">
         <Breadcrumb
           root={{ icon: "⌂", label: "Overview", to: "/analysis/bible" }}
-          style={{ "--bc-link": "#345496", "--bc-root": "#345496", "--bc-link-hover": "#345496" }}
+          style={{ "--bc-link": "var(--link)", "--bc-root": "var(--link)", "--bc-link-hover": "var(--link-hover)" }}
         >
           <Breadcrumb.Current>{book}</Breadcrumb.Current>
         </Breadcrumb>

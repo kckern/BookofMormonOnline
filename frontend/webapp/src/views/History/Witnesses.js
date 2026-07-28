@@ -8,7 +8,7 @@ import moment from 'moment';
 import Masonry from 'react-masonry-css';
 import WitnessLifeHeatmap, { matchesYearMonth } from './WitnessLifeHeatmap';
 import Identicon from '../_Common/Identicon';
-import Breadcrumb from "../_Common/Breadcrumb/Breadcrumb";
+import Breadcrumb from "src/views/_Common/Breadcrumb/Breadcrumb";
 import { useAppController } from "src/contexts/AppControllerContext";
 
 // Masonry column counts by window width — the sources column sits beside a 280px
