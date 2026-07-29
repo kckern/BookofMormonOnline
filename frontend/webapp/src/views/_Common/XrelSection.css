@@ -1,0 +1,132 @@
+/**
+ * Relationship cards (bom_xrels), shared by the matter, person and place
+ * popups. Deliberately mirrors the `.related_*` rules in PopUp.css so a person
+ * popup showing both lists reads as one language.
+ *
+ * No max-height and no overflow here: the popup column already scrolls, and a
+ * nested scroller clipped rows mid-card.
+ */
+
+.xrels {
+  list-style: none;
+  padding: 0;
+  margin: 0.5ex 0 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1ex;
+}
+
+/* Verb head — full width so it forces a break in the wrapping grid. */
+.xrels .xrel-group-head {
+  width: 100%;
+  flex-shrink: 0;
+  margin-top: 0.5ex;
+  font-size: 0.75rem;
+  line-height: 1.2;
+  color: #888;
+  letter-spacing: 0.02em;
+}
+
+.xrels .xrel-group-head:first-child {
+  margin-top: 0;
+}
+
+.xrels .xrel-group-elide {
+  color: #bbb;
+}
+
+.xrels .xrel-group-count {
+  display: inline-block;
+  margin-left: 0.5ex;
+  padding: 0 0.5ex;
+  font-size: 0.9em;
+  color: #999;
+  background: #f1f1f1;
+  border-radius: 1ex;
+}
+
+/* Card — same geometry as .related_row, reading left-to-right. */
+.xrels .xrel {
+  display: flex;
+  align-items: center;
+  width: calc(50% - 1ex);
+  flex-shrink: 0;
+  min-height: 2.5rem;
+  padding: 0.2ex;
+  border-radius: 1ex;
+  font-size: 0.8rem;
+  line-height: 1rem;
+  color: #666;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  hyphens: auto;
+}
+
+.xrels .xrel.clickable {
+  cursor: pointer;
+}
+
+.xrels .xrel.clickable:hover {
+  background-color: #eee;
+}
+
+.xrels .xrel.clickable:hover .entityThumb img {
+  filter: brightness(1.2);
+}
+
+.xrels .xrel .entityThumb {
+  flex-shrink: 0;
+  flex-grow: 0;
+  margin-right: 0.5ex;
+}
+
+.xrels .xrel .entityThumb img {
+  border: 1px solid #0005;
+}
+
+.xrels .xrel .xrel-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex-grow: 1;
+  min-width: 0;
+  letter-spacing: -0.5px;
+}
+
+.xrels .xrel .xrel-name {
+  font-weight: bold;
+  color: black;
+}
+
+/* Groups have no page behind them — a tag, not a dead link. Their dst_name is
+   the raw slug ("lamanites") because no table resolves it, so lift the first
+   letter only; word-wise capitalize would mangle "people of ammon". */
+.xrels .xrel .xrel-tag {
+  display: inline-block;
+  font-weight: normal;
+  color: #777;
+  cursor: default;
+}
+
+.xrels .xrel .xrel-tag::first-letter {
+  text-transform: uppercase;
+}
+
+.xrels .xrel .xrel-note {
+  font-size: 0.9em;
+  line-height: 1.1;
+  color: #999;
+  margin-top: 0.2ex;
+}
+
+@media only screen and (max-width: 1200px) {
+  .xrels .xrel {
+    width: calc(80% - 1ex);
+  }
+}
+
+@media only screen and (max-width: 800px) {
+  .xrels .xrel {
+    width: calc(100% - 1ex);
+  }
+}
