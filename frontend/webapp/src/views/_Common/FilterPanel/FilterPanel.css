@@ -10,11 +10,16 @@ h5.ppFiltersHeading{
 
 .ppFilters
 {
+    /* Design tokens — shared across People / Places / Matters panels. */
+    --pp-row-gap: .4em;
+    --pp-col-gap: 0;
+    --pp-pad: 1em;
+    --pp-accent: #198754;
     margin-left: 10vw;
     margin-right: 10vw;
     margin-bottom: 2em;
     border-radius: 1em;
-    padding:1em;
+    padding: var(--pp-pad);
     background-color:#DDD;
     position: relative;
     border-top-right-radius: 0;
@@ -22,8 +27,8 @@ h5.ppFiltersHeading{
 
 .ppColumns
 {
-
     display: flex;
+    gap: var(--pp-col-gap);
 }
 
 .ppFiltersSearchButton
@@ -65,6 +70,7 @@ h5.ppFiltersHeading{
     cursor: pointer;
     display: flex;
     align-items: center;
+    margin-bottom: var(--pp-row-gap);
 }
 .ppColumns li.item span
 {
@@ -149,127 +155,6 @@ h5.ppFiltersHeading{
     position: relative;
 }
 
-/* ── Grouped / chip axes (Matters) ──────────────────────────────────────
-   Additive: People and Places render through .ppColumns and are untouched. */
-
-.ppAxisHead {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1em;
-  border-bottom: 1px solid #c4c4c4;
-  padding-bottom: .3em;
-  margin-bottom: .8em;
-}
-.ppAxisTitle {
-  font-weight: 700;
-  font-size: 1em;
-  color: #444;
-  letter-spacing: .02em;
-}
-.ppAxisCount {
-  display: inline-block;
-  margin-left: .6ex;
-  background: #28a745;
-  color: #fff;
-  border-radius: 999px;
-  font-size: .7em;
-  font-weight: 700;
-  padding: .05em .55em;
-  vertical-align: middle;
-}
-.ppAxisActions { display: flex; gap: .9em; }
-.ppAxisActions button {
-  border: none;
-  background: none;
-  padding: 0;
-  font-size: .74em;
-  text-transform: uppercase;
-  letter-spacing: .04em;
-  color: #7a7a7a;
-  cursor: pointer;
-}
-.ppAxisActions button:hover { color: #222; text-decoration: underline; }
-
-.ppGroupedAxis { margin-bottom: 1.4em; }
-
-/* Equal columns so groups line up instead of wrapping raggedly. */
-.ppGroupGrid {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 1em 1.4em;
-  align-items: start;
-}
-.ppGroup { min-width: 0; }
-
-.ppGroupHead {
-  display: block;
-  width: 100%;
-  border: none;
-  background: none;
-  padding: 0 0 .45em;
-  font-size: .68em;
-  font-weight: 700;
-  letter-spacing: .09em;
-  text-transform: uppercase;
-  color: #8a8a8a;
-  text-align: left;
-  cursor: pointer;
-}
-.ppGroupHead:hover { color: #333; }
-.ppGroupHead.on { color: #1e7e34; }
-
-.ppChips { display: flex; flex-wrap: wrap; gap: .3em; }
-
-.ppChip {
-  border: 1px solid #c0c0c0;
-  background: #fbfbfb;
-  color: #3a3a3a;
-  border-radius: 999px;
-  padding: .18em .75em;
-  font-size: .8em;
-  line-height: 1.55;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background .12s, border-color .12s, color .12s;
-}
-.ppChip:hover { border-color: #8a8a8a; background: #f0f0f0; }
-.ppChip.on {
-  background: #28a745;
-  border-color: #28a745;
-  color: #fff;
-  font-weight: 600;
-}
-
-/* Secondary row: only rendered when a form chip owning sub-values is on. */
-.ppSecondary {
-  display: flex;
-  flex-wrap: wrap;
-  gap: .3em;
-  margin-top: 1em;
-  padding-top: .75em;
-  border-top: 1px dashed #bdbdbd;
-}
-.ppChip.sub { font-size: .76em; background: #fff; }
-.ppChip.sub.on { background: #17a2b8; border-color: #17a2b8; color: #fff; }
-.ppChip.clearSub { background: none; border-style: dashed; color: #777; }
-
-/* The flat chip axes sit side by side beneath the grouped one. */
-.ppChipRow {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1.4em;
-  margin-top: .4em;
-}
-.ppChipAxis { min-width: 0; }
-
-/* .ppFilters ul was hardcoded to 33% for exactly three switch columns. */
+/* Equal, flex-sized switch columns (was hardcoded 33% for exactly three).
+   min-width keeps them from squishing when a fourth/detail column joins. */
 .ppFilters .ppColumns ul { width: auto; flex: 1 1 0; min-width: 9em; }
-
-@media (max-width: 1100px) {
-  .ppGroupGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-}
-@media (max-width: 800px) {
-  .ppGroupGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .ppChipRow   { grid-template-columns: 1fr; }
-}

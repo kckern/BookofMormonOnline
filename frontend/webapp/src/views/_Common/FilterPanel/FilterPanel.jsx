@@ -22,8 +22,10 @@ import "./FilterPanel.css";
  *  - onChange(nextValue) — panel computes toggle/select-all/clear; emits the whole map.
  *  - search?: { placeholder, preLoadData, testFieldNames, assetName, selectItemHandler }
  *      — when present, renders 🔍 + SearchPopUp (panel owns isOpen + type-to-search).
+ *  - extraColumn?: node — an extra column rendered as a peer after the axes
+ *      (Matters uses it for its cascading form/subform detail column).
  */
-export default function FilterPanel({ heading, axes, value, onChange, search }) {
+export default function FilterPanel({ heading, axes, value, onChange, search, extraColumn }) {
   const appController = useAppController();
   const [isOpen, setIsOpen] = useState(false);
   const [initSearchString, setInitSearchString] = useState("");
@@ -82,7 +84,10 @@ export default function FilterPanel({ heading, axes, value, onChange, search }) 
         {search && !isMobile() && (
           <button className="ppFiltersSearchButton" onClick={() => setIsOpen(true)}>🔍</button>
         )}
-        <div className="ppColumns">{axes.map(renderAxis)}</div>
+        <div className="ppColumns">
+          {axes.map(renderAxis)}
+          {extraColumn}
+        </div>
         {!isMobile() && searchEl}
       </div>
     </>
