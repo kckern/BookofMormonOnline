@@ -1,0 +1,63 @@
+/* Cascading chip rows between the Matters selector box and the tile grid. */
+
+.matterChipLevels {
+  margin: -1em 10vw 1.5em;
+  display: flex;
+  flex-direction: column;
+  gap: .5em;
+}
+
+.matterChipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35em;
+  align-items: center;
+}
+
+/* Each level below the first is indented and lighter, so the cascade reads. */
+.matterChipRow + .matterChipRow {
+  padding-left: 1.5em;
+  border-left: 2px solid #d5d5d5;
+}
+
+.matterChip {
+  border: 1px solid #c0c0c0;
+  background: #fbfbfb;
+  color: #3a3a3a;
+  border-radius: 999px;
+  padding: .2em .85em;
+  font-size: .82em;
+  line-height: 1.55;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .12s, border-color .12s, color .12s;
+}
+
+.matterChip:hover {
+  border-color: #8a8a8a;
+  background: #f0f0f0;
+}
+
+.matterChip.on {
+  background: #28a745;
+  border-color: #28a745;
+  color: #fff;
+  font-weight: 600;
+}
+
+.matterChipRow + .matterChipRow .matterChip.on {
+  background: #17a2b8;
+  border-color: #17a2b8;
+}
+
+.matterChip.clear {
+  background: none;
+  border-style: dashed;
+  color: #777;
+  font-size: .76em;
+}
+
+@media (max-width: 800px) {
+  .matterChipLevels { margin-left: 4vw; margin-right: 4vw; }
+  .matterChipRow + .matterChipRow { padding-left: .8em; }
+}

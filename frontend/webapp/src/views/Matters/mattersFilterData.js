@@ -1,73 +1,81 @@
 /** @format */
-// Matters filter vocabulary — GENERATED from content/matters/items via
-// content/matters/build_sql.py's mappings. Regenerate rather than hand-edit:
-// the previous hand-maintained list drifted 184 records out of date.
+// Matters filter vocabulary — GENERATED from the corpus. Regenerate rather than
+// hand-edit; the previous hand-kept list drifted 184 records out of date.
 //
-// Axis 1 (form) is two-level: five groups over seventeen chips, plus a
-// contextual secondary row of sub-chips shown only when a form chip is active.
-// Axis 2 (era_culture) merges the old era + provenance, which were 58% redundant.
-// Axis 3 (nrefs) buckets reference counts.
+// Three axes render as on/off switches inside the selector box, matching
+// People and Places. Chips are used ONLY for the levels below, which render
+// between the box and the tile grid and appear as their parent is switched on.
 //
-// Counts in comments are record counts at generation time, for sanity only.
+//   box     form_group (5) | era_culture (6) | prominence (4)
+//   chips   form (17), shown for whichever groups are on
+//           subform_label (64), shown for whichever forms are on
 
-export const formGroups = [
-  {
-    key: "matter_grp_natural_world",
-    label: "Natural World",
-    tag: "Natural World",   // 128
-    chips: [
-      { key: "matter_form_living_world", label: "Living World", tag: "Living World" },   // 64
-      { key: "matter_form_land_substance", label: "Land & Substance", tag: "Land & Substance" },   // 36
-      { key: "matter_form_food_farming", label: "Food & Farming", tag: "Food & Farming" },   // 28
-    ],
-  },
-  {
-    key: "matter_grp_made_things",
-    label: "Made Things",
-    tag: "Made Things",   // 126
-    chips: [
-      { key: "matter_form_arms_armor", label: "Arms & Armor", tag: "Arms & Armor" },   // 31
-      { key: "matter_form_dress_adornment", label: "Dress & Adornment", tag: "Dress & Adornment" },   // 22
-      { key: "matter_form_works_vehicles", label: "Works & Vehicles", tag: "Works & Vehicles" },   // 21
-      { key: "matter_form_tools_household", label: "Tools & Household", tag: "Tools & Household" },   // 20
-      { key: "matter_form_records_writing", label: "Records & Writing", tag: "Records & Writing" },   // 18
-      { key: "matter_form_sacred_objects", label: "Sacred Objects", tag: "Sacred Objects" },   // 14
-    ],
-  },
-  {
-    key: "matter_grp_society",
-    label: "Society",
-    tag: "Society",   // 110
-    chips: [
-      { key: "matter_form_law_government", label: "Law & Government", tag: "Law & Government" },   // 39
-      { key: "matter_form_society_custom", label: "Society & Custom", tag: "Society & Custom" },   // 35
-      { key: "matter_form_wealth_trade", label: "Wealth & Trade", tag: "Wealth & Trade" },   // 25
-      { key: "matter_form_war_conflict", label: "War & Conflict", tag: "War & Conflict" },   // 11
-    ],
-  },
-  {
-    key: "matter_grp_places",
-    label: "Places",
-    tag: "Places",   // 77
-    chips: [
-      { key: "matter_form_dwellings_settlements", label: "Dwellings & Settlements", tag: "Dwellings & Settlements" },   // 63
-      { key: "matter_form_sacred_places", label: "Sacred Places", tag: "Sacred Places" },   // 14
-    ],
-  },
-  {
-    key: "matter_grp_belief_mind",
-    label: "Belief & Mind",
-    tag: "Belief & Mind",   // 46
-    chips: [
-      { key: "matter_form_belief_worship", label: "Belief & Worship", tag: "Belief & Worship" },   // 27
-      { key: "matter_form_nature_thought", label: "Nature & Thought", tag: "Nature & Thought" },   // 19
-    ],
-  },
+export const formGroupChips = [
+  { key: "matter_grp_natural_world", label: "Natural World", tag: "Natural World" },   // 128
+  { key: "matter_grp_made_things", label: "Made Things", tag: "Made Things" },   // 126
+  { key: "matter_grp_society", label: "Society", tag: "Society" },   // 110
+  { key: "matter_grp_places", label: "Places", tag: "Places" },   // 77
+  { key: "matter_grp_belief_mind", label: "Belief & Mind", tag: "Belief & Mind" },   // 46
 ];
 
-// form tag -> secondary chips. Forms with fewer than 3 sub-values are omitted;
-// the UI renders no secondary row for them.
-export const secondaryChips = {
+export const eraCultureChips = [
+  { key: "matter_ec_nephite", label: "Nephite", tag: "Nephite" },
+  { key: "matter_ec_generic", label: "Generic", tag: "Generic" },
+  { key: "matter_ec_israelite_old_world", label: "Israelite/Old World", tag: "Israelite/Old World" },
+  { key: "matter_ec_jaredite", label: "Jaredite", tag: "Jaredite" },
+  { key: "matter_ec_lamanite", label: "Lamanite", tag: "Lamanite" },
+  { key: "matter_ec_christ_era", label: "Christ era", tag: "Christ era" },
+];
+
+export const prominenceChips = [
+  { key: "matter_prom_9",  label: "9+ refs",  tag: "9+"  },
+  { key: "matter_prom_48", label: "4-8 refs", tag: "4-8" },
+  { key: "matter_prom_23", label: "2-3 refs", tag: "2-3" },
+  { key: "matter_prom_1",  label: "1 ref",    tag: "1"   },
+];
+
+export function prominenceBucket(nrefs) {
+  const n = Number(nrefs) || 0;
+  if (n >= 9) return "9+";
+  if (n >= 4) return "4-8";
+  if (n >= 2) return "2-3";
+  return "1";
+}
+
+// Level 2: form chips, keyed by the group that reveals them.
+export const formsByGroup = {
+  "Natural World": [
+    { key: "matter_form_living_world", label: "Living World", tag: "Living World" },   // 64
+    { key: "matter_form_land_substance", label: "Land & Substance", tag: "Land & Substance" },   // 36
+    { key: "matter_form_food_farming", label: "Food & Farming", tag: "Food & Farming" },   // 28
+  ],
+  "Made Things": [
+    { key: "matter_form_arms_armor", label: "Arms & Armor", tag: "Arms & Armor" },   // 31
+    { key: "matter_form_dress_adornment", label: "Dress & Adornment", tag: "Dress & Adornment" },   // 22
+    { key: "matter_form_works_vehicles", label: "Works & Vehicles", tag: "Works & Vehicles" },   // 21
+    { key: "matter_form_tools_household", label: "Tools & Household", tag: "Tools & Household" },   // 20
+    { key: "matter_form_records_writing", label: "Records & Writing", tag: "Records & Writing" },   // 18
+    { key: "matter_form_sacred_objects", label: "Sacred Objects", tag: "Sacred Objects" },   // 14
+  ],
+  "Society": [
+    { key: "matter_form_law_government", label: "Law & Government", tag: "Law & Government" },   // 39
+    { key: "matter_form_society_custom", label: "Society & Custom", tag: "Society & Custom" },   // 35
+    { key: "matter_form_wealth_trade", label: "Wealth & Trade", tag: "Wealth & Trade" },   // 25
+    { key: "matter_form_war_conflict", label: "War & Conflict", tag: "War & Conflict" },   // 11
+  ],
+  "Places": [
+    { key: "matter_form_dwellings_settlements", label: "Dwellings & Settlements", tag: "Dwellings & Settlements" },   // 63
+    { key: "matter_form_sacred_places", label: "Sacred Places", tag: "Sacred Places" },   // 14
+  ],
+  "Belief & Mind": [
+    { key: "matter_form_belief_worship", label: "Belief & Worship", tag: "Belief & Worship" },   // 27
+    { key: "matter_form_nature_thought", label: "Nature & Thought", tag: "Nature & Thought" },   // 19
+  ],
+};
+
+// Level 3: subform chips, keyed by the form that reveals them.
+// Forms with fewer than 3 sub-values are omitted; no row renders for them.
+export const subformsByForm = {
   "Living World": [
     { key: "matter_sub_animals", label: "Animals", tag: "Animals" },   // 35
     { key: "matter_sub_plants", label: "Plants", tag: "Plants" },   // 17
@@ -161,38 +169,15 @@ export const secondaryChips = {
   ],
 };
 
-export const eraCultureChips = [
-  { key: "matter_ec_nephite", label: "Nephite", tag: "Nephite" },
-  { key: "matter_ec_generic", label: "Generic", tag: "Generic" },
-  { key: "matter_ec_israelite_old_world", label: "Israelite/Old World", tag: "Israelite/Old World" },
-  { key: "matter_ec_jaredite", label: "Jaredite", tag: "Jaredite" },
-  { key: "matter_ec_lamanite", label: "Lamanite", tag: "Lamanite" },
-  { key: "matter_ec_christ_era", label: "Christ era", tag: "Christ era" },
-];
-
-// Prominence buckets over bom_matters.nrefs. NOTE: nrefs measures editorial
-// coverage — how thoroughly a record was researched — not textual importance.
-export const prominenceChips = [
-  { key: "matter_prom_9",  label: "9+ refs",  tag: "9+"  },
-  { key: "matter_prom_48", label: "4–8 refs", tag: "4-8" },
-  { key: "matter_prom_23", label: "2–3 refs", tag: "2-3" },
-  { key: "matter_prom_1",  label: "1 ref",    tag: "1"   },
-];
-
-export function prominenceBucket(nrefs) {
-  const n = Number(nrefs) || 0;
-  if (n >= 9) return "9+";
-  if (n >= 4) return "4-8";
-  if (n >= 2) return "2-3";
-  return "1";
-}
-
-// The secondary chip row writes into its own axis so a stale sub-selection
-// cannot keep filtering after its parent form chip is deselected.
-export const SUBFORM_AXIS = "subform_label";
-
+// Axes rendered as switch columns inside the selector box.
 export const filterAxes = [
-  { name: "form",        title: "matter_axis_form",     titleEn: "Kind",          groups: formGroups, secondary: secondaryChips, secondaryName: SUBFORM_AXIS },
-  { name: "era_culture", title: "matter_axis_culture",  titleEn: "Era & Culture", chips: eraCultureChips },
-  { name: "prominence",  title: "matter_axis_prominence", titleEn: "Prominence",  chips: prominenceChips },
+  { name: "form_group",  title: "matter_axis_form",       titleEn: "Kind",          chips: formGroupChips },
+  { name: "era_culture", title: "matter_axis_culture",    titleEn: "Era & Culture", chips: eraCultureChips },
+  { name: "prominence",  title: "matter_axis_prominence", titleEn: "Prominence",    chips: prominenceChips },
+];
+
+// Cascading chip levels rendered below the box, above the tiles.
+export const chipLevels = [
+  { name: "form",          parent: "form_group", map: formsByGroup },
+  { name: "subform_label", parent: "form",       map: subformsByForm },
 ];
