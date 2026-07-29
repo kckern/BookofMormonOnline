@@ -19,6 +19,13 @@ type Matter {
   """
   form: String
   """
+  Secondary chip value, scoped to `form` — e.g. "Tents", "Swords",
+  "Nephite Coinage". Null where a form has too few sub-values to warrant a row.
+  """
+  subform: String
+  """Display label for `subform`; curated where the folder is named after a record."""
+  subform_label: String
+  """
   Filter axis 2 — era and provenance merged into six values:
   Nephite, Lamanite, Jaredite, Israelite/Old World, Christ era, Generic.
   "Generic" means no specific culture, not an era.

@@ -171,6 +171,11 @@ const queries = {
                 slug
                 name
                 subtitle
+                form_group
+                form
+                subform_label
+                era_culture
+                nrefs
                 category
                 era
                 provenance

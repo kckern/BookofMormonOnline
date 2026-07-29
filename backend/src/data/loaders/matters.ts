@@ -16,6 +16,10 @@ export interface MatterRow {
   form_group: string;
   /** Filter axis 1 level 2 — one of seventeen UI chips. */
   form: string;
+  /** Secondary chip value scoped to `form`; null where a form has too few sub-values. */
+  subform: string | null;
+  /** Display label for `subform`. */
+  subform_label: string | null;
   /** Filter axis 2 — era + provenance merged to six values; 'Generic' = no culture. */
   era_culture: string;
   /** Reference count, backing the Prominence axis. Editorial coverage, not importance. */

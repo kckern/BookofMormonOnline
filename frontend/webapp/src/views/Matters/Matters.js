@@ -12,7 +12,7 @@ import "../Places/Places.css";
 import "../People/People.css";
 
 import { MattersFilter } from "./MattersFilter";
-import { categoryChips } from "./mattersFilterData";
+import { prominenceBucket, secondaryChips, SUBFORM_AXIS } from "./mattersFilterData";
 import { useAppController } from "src/contexts/AppControllerContext";
 
 // djb2-ish hash → stable seed for slug-based gradients.
@@ -51,8 +51,36 @@ function MattersComponent() {
   const [matterList, setMatterList] = useState(appController.preLoad?.matterList || null);
   const [failedSlugs, setFailedSlugs] = useState(() => new Set());
 
-  const emptyFilters = { category: new Set(), era: new Set(), provenance: new Set(), specificity: new Set(), usage: new Set(), search: null };
-  const [matterFilters, setFilter] = useState(emptyFilters);
+  // Default state is no filters — every axis empty means "no constraint",
+  // so the index opens showing all matters.
+  const emptyFilters = {
+    form: new Set(),
+    era_culture: new Set(),
+    prominence: new Set(),
+    [SUBFORM_AXIS]: new Set(),
+    search: null,
+  };
+  const [matterFilters, setFilterRaw] = useState(emptyFilters);
+
+  /**
+   * Drop sub-selections whose parent form chip is no longer selected.
+   * Without this a secondary chip keeps filtering after its parent is cleared,
+   * with nothing on screen to explain the empty result.
+   */
+  const setFilter = (next) => {
+    const forms = next.form ?? new Set();
+    const subs = next[SUBFORM_AXIS] ?? new Set();
+    if (subs.size && forms.size) {
+      const reachable = new Set(
+        [...forms].flatMap((f) => (secondaryChips[f] || []).map((c) => c.tag))
+      );
+      const kept = new Set([...subs].filter((s) => reachable.has(s)));
+      if (kept.size !== subs.size) next = { ...next, [SUBFORM_AXIS]: kept };
+    } else if (subs.size && !forms.size) {
+      next = { ...next, [SUBFORM_AXIS]: new Set() };
+    }
+    setFilterRaw(next);
+  };
 
   const match = useRouteMatch();
   useEffect(() => {
@@ -92,10 +120,12 @@ function MattersComponent() {
       const re = new RegExp(matterFilters.search, "gi");
       if (!re.test(item.name) && !re.test(item.subtitle || "")) return false;
     }
-    for (const axis of ["category", "era", "provenance", "specificity", "usage"]) {
+    for (const axis of ["form", "era_culture", SUBFORM_AXIS]) {
       const set = matterFilters[axis];
       if (set && set.size > 0 && !set.has(item[axis])) return false;
     }
+    const prom = matterFilters.prominence;
+    if (prom && prom.size > 0 && !prom.has(prominenceBucket(item.nrefs))) return false;
     return true;
   };
 
