@@ -66,7 +66,9 @@ export default function FaxVerseModal({ verse, version, pageScale = 700, anchorX
   // box estimate under-reserves height. Adopt the loaded crop's real aspect as
   // the source of truth once known; until then, the estimate reserves height so
   // there's no zero-height flash. Reset per verse (a new verse's image hasn't
-  // loaded yet) so a previous verse's aspect can't leak onto the first paint.
+  // loaded yet) so the previous verse's loaded aspect can't carry over once its
+  // image lands. (The measured `cutoutH` persists across the switch, so the box
+  // eases from the old height rather than snapping — no wrong-aspect flash.)
   const [natSize, setNatSize] = useState(null);
   useEffect(() => { setNatSize(null); }, [verse?.verse_id]);
   const cropAspect = natSize && natSize.w ? natSize : aspectBox;
