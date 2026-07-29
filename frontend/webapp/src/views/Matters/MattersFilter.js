@@ -11,7 +11,7 @@ import FilterPanel from "src/views/_Common/FilterPanel/FilterPanel";
 import green from "../People/svg/green.svg";
 import blue from "../People/svg/blue.svg";
 import yellow from "../People/svg/yellow.svg";
-import brown from "../People/svg/brown.svg";
+import black from "../People/svg/black.svg";
 import orange from "../People/svg/orange.svg";
 import grey from "../People/svg/grey.svg";
 import land from "../People/svg/land.svg";
@@ -19,14 +19,16 @@ import society from "../People/svg/society.svg";
 import city from "../People/svg/city.svg";
 import prophet from "../People/svg/prophet.svg";
 
-// Era & Culture → colored dots, matched to the card ec-* badge hues.
+// Era & Culture → colored dots. The lineage/society values reuse People's
+// established colors (Nephite green, Lamanite blue, Jaredite yellow, Israelite
+// grey); the non-society eras take the remaining hues.
 const ERA_DOT = {
-  "Generic": grey,
-  "Israelite/Old World": blue,
-  "Jaredite": yellow,
   "Nephite": green,
-  "Lamanite": brown,
+  "Lamanite": blue,
+  "Jaredite": yellow,
+  "Israelite/Old World": grey,
   "Christ era": orange,
+  "Generic": black,
 };
 
 // Kind → repurposed People glyphs; grey circle where no glyph fits (Made Things).

@@ -6,6 +6,34 @@ import { label } from "src/models/Utils";
 import { formsByGroup, subformsByForm } from "./mattersFilterData";
 import "./MatterDetailColumn.css";
 
+// Repurposed People glyphs per form; grey circle where none fits.
+import geographic_feature from "../People/svg/geographic_feature.svg";
+import land from "../People/svg/land.svg";
+import town from "../People/svg/town.svg";
+import society from "../People/svg/society.svg";
+import warrior from "../People/svg/warrior.svg";
+import record_keeper from "../People/svg/record_keeper.svg";
+import priest from "../People/svg/priest.svg";
+import prophet from "../People/svg/prophet.svg";
+import judge from "../People/svg/judge.svg";
+import grey from "../People/svg/grey.svg";
+
+const FORM_ICON = {
+  "Living World": geographic_feature,
+  "Land & Substance": land,
+  "Arms & Armor": warrior,
+  "War & Conflict": warrior,
+  "Records & Writing": record_keeper,
+  "Sacred Objects": priest,
+  "Sacred Places": prophet,
+  "Belief & Worship": prophet,
+  "Law & Government": judge,
+  "Society & Custom": society,
+  "Dwellings & Settlements": town,
+  // Food & Farming, Dress & Adornment, Works & Vehicles, Tools & Household,
+  // Wealth & Trade, Nature & Thought → grey circle (no fitting glyph).
+};
+
 /** label() echoes the key back when the dictionary lacks it — treat that as a miss. */
 const t = (key, fallback) => {
   const v = label(key);
@@ -80,7 +108,9 @@ export function MatterDetailColumn({ matterFilters, setFilter }) {
                 onlabel={label("on")}
                 size="xs"
               />
-              {t(f.key, f.label)}
+              <span>
+                <img src={FORM_ICON[f.tag] || grey} alt="" /> {t(f.key, f.label)}
+              </span>
             </li>
             {on && subs.length > 0 && (
               <li className="ppSubChips">
