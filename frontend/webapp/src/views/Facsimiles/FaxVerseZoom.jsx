@@ -16,7 +16,7 @@ const PAN_INSET = 0.12;
  * landscape box + reserves height); source should be the native-res render crop
  * (`wfull`) so the zoom reveals real scan detail.
  */
-export default function FaxVerseZoom({ src }) {
+export default function FaxVerseZoom({ src, onNaturalSize }) {
   const [nat, setNat] = useState({ w: 0, h: 0 });
   const [zoom, setZoom] = useState(false);
   const [bg, setBg] = useState({ size: "contain", pos: "center" });
@@ -67,7 +67,11 @@ export default function FaxVerseZoom({ src }) {
         src={src}
         alt=""
         style={{ display: "none" }}
-        onLoad={(e) => setNat({ w: e.target.naturalWidth, h: e.target.naturalHeight })}
+        onLoad={(e) => {
+          const w = e.target.naturalWidth, h = e.target.naturalHeight;
+          setNat({ w, h });
+          if (onNaturalSize && w && h) onNaturalSize({ w, h });
+        }}
       />
     </div>
   );
