@@ -41,7 +41,7 @@ function Tile({ section, featured }) {
           <img
             src={featured.img}
             alt=""
-            onError={(e) => { e.currentTarget.style.visibility = "hidden"; }}
+            onError={(e) => { e.currentTarget.parentElement.style.display = "none"; }}
           />
           <span>{featured.caption}</span>
         </div>

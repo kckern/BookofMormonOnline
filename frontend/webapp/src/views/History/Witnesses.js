@@ -9,6 +9,7 @@ import Masonry from 'react-masonry-css';
 import WitnessLifeHeatmap, { matchesYearMonth } from './WitnessLifeHeatmap';
 import Identicon from '../_Common/Identicon';
 import Breadcrumb from "src/views/_Common/Breadcrumb/Breadcrumb";
+import HistoryBreadcrumb from "./HistoryBreadcrumb";
 import { useAppController } from "src/contexts/AppControllerContext";
 
 // Masonry column counts by window width — the sources column sits beside a 280px
@@ -297,6 +298,7 @@ const Witnesses = () => {
     return (
         <div className="container " style={{ display: 'block' }}>
             <div id="page" className='witnesses' >
+                <HistoryBreadcrumb sectionKey="witnesses" />
                 <h3 className="title lg-4 text-center">{label("title_witnesses")}</h3>
                 <div className='three-witnesses'>
                     <h4>Three Witnesses</h4>

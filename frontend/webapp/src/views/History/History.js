@@ -97,7 +97,7 @@ function History() {
     <ButtonGroup data-toggle="buttons">
       {range.map(r => <Button
         onClick={() => setDate(()=>{
-          history.push("/history/"+r);
+          history.push("/history/reception/"+r);
           return r})}
         className={"btn-round " + ((r === dateFilter) ? "active" : "")}
         color="info"
