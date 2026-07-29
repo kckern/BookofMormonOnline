@@ -7,11 +7,39 @@ type Matter {
   slug: String
   name: String
   subtitle: String
+
+  """
+  Filter axis 1, level 1 — one of five UI groups:
+  Natural World, Made Things, Society, Places, Belief & Mind.
+  """
+  form_group: String
+  """
+  Filter axis 1, level 2 — one of seventeen UI chips (e.g. "Arms & Armor",
+  "Dwellings & Settlements"). Spans the concrete/concepts divide deliberately.
+  """
+  form: String
+  """
+  Filter axis 2 — era and provenance merged into six values:
+  Nephite, Lamanite, Jaredite, Israelite/Old World, Christ era, Generic.
+  "Generic" means no specific culture, not an era.
+  """
+  era_culture: String
+  """
+  Number of scripture references. Backs the Prominence filter axis.
+  Measures editorial coverage, not textual importance.
+  """
+  nrefs: Int
+  """concrete | concepts — the source branch of the taxonomy."""
+  branch: String
+
+  """Fine-grained category (38 values). Retained; `form` is the UI-facing rollup."""
   category: String
   kind: String
   specificity: String
   usage: String
+  """Raw era. `era_culture` is the UI-facing merge of this and provenance."""
   era: String
+  """Raw provenance. See `era_culture`."""
   provenance: String
   status: String
   aliases: String

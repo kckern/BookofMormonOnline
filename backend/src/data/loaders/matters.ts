@@ -10,11 +10,25 @@ export interface MatterRow {
   slug: string;
   name: string | null;
   subtitle: string | null;
+  /** concrete | concepts — source branch of the taxonomy. */
+  branch: string;
+  /** Filter axis 1 level 1 — one of five UI groups. */
+  form_group: string;
+  /** Filter axis 1 level 2 — one of seventeen UI chips. */
+  form: string;
+  /** Filter axis 2 — era + provenance merged to six values; 'Generic' = no culture. */
+  era_culture: string;
+  /** Reference count, backing the Prominence axis. Editorial coverage, not importance. */
+  nrefs: number;
+  /** Fine-grained category (38 values); `form` is the UI-facing rollup. */
   category: string;
+  kind: string;
   specificity: string;
   usage: string;
   era: string;
   provenance: string;
+  status: string;
+  node_link: string | null;
   aliases: string | null;
   tags: string | null;
   description: string | null;
