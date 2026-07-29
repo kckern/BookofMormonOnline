@@ -10,6 +10,7 @@ import { Link, useHistory } from "react-router-dom";
 import { Victory } from "src/views/User/Victory";
 import moment from "moment";
 import XrelSection from "./XrelSection";
+import EntityThumb from "./EntityThumb";
 import "./PopUp.css";
 import {
   snapSelectionToWord,
@@ -284,8 +285,7 @@ function Person() {
 
               <div className="refbox">
                 <div className="ppimg">
-                  <img alt="reload" src={`${assetUrl}/people/${person.slug}`} />
-                  <br />
+                  <EntityThumb type="people" slug={person.slug} name={processName(person.name)} rounded />
                 </div>
 
                 <h4>{label("relationships")}</h4>
@@ -447,7 +447,7 @@ function Place() {
                 ))
               )}
 
-                <img alt="reload" src={`${assetUrl}/places/${place.slug}`} />
+                <EntityThumb type="places" slug={place.slug} name={place.name} rounded />
               </div>
 
               <XrelSection xrels={place?.xrels} />
@@ -568,16 +568,7 @@ function MatterPopUp() {
 
             <div className="refbox">
               <div className="ppimg">
-                <img
-                  alt={obj.name}
-                  src={`${assetUrl}/matters/${obj.slug}`}
-                  onError={(e) => {
-                    if (e.target.dataset.fallback === "1") return;
-                    e.target.dataset.fallback = "1";
-                    e.target.style.opacity = "0.5";
-                  }}
-                />
-                <br />
+                <EntityThumb type="matters" slug={obj.slug} name={obj.name} rounded />
               </div>
 
               <XrelSection xrels={obj.xrels} showEmpty />
