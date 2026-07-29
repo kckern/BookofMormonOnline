@@ -2,21 +2,20 @@
 
 import React from "react";
 import { label } from "src/models/Utils";
-import { filterAxes, SUBFORM_AXIS } from "./mattersFilterData";
+import { filterAxes } from "./mattersFilterData";
 import { useAppController } from "src/contexts/AppControllerContext";
 import FilterPanel from "src/views/_Common/FilterPanel/FilterPanel";
 
 /**
- * Matters filter — three axes over the redesigned bom_matters vocabulary.
+ * Matters filter — three on/off switch axes in the selector box, matching the
+ * People and Places panels:
  *
- *   form        two-level: 5 groups / 17 chips, plus a contextual secondary row
- *   era_culture 6 chips (era + provenance merged; they were 58% redundant)
- *   prominence  4 buckets over nrefs
+ *   form_group   5 — Natural World, Made Things, Society, Places, Belief & Mind
+ *   era_culture  6 — era + provenance merged; they were 58% redundant
+ *   prominence   4 — buckets over nrefs
  *
- * The secondary row writes into its own axis (SUBFORM_AXIS) rather than into
- * `form`, so clearing a form chip leaves no orphaned sub-selection filtering
- * invisibly. Matters.js drops stale sub-selections when their parent is
- * deselected.
+ * The levels beneath these (form, then subform) are NOT in the box. They render
+ * as chips between the box and the tile grid — see MatterChipLevels.
  */
 /**
  * Translate with a real fallback.
@@ -38,28 +37,10 @@ export function MattersFilter({ matterFilters, setFilter, matterList }) {
   const axes = filterAxes.map((a) => ({
     name: a.name,
     title: t(a.title, a.titleEn),
-    chipMode: true, // Matters renders chips on every axis, not switch rows
-    ...(a.groups
-      ? {
-          groups: a.groups.map((g) => ({
-            tag: g.tag,
-            label: t(g.key, g.label),
-            options: g.chips.map((c) => ({ tag: c.tag, label: t(c.key, c.label) })),
-          })),
-          secondary: Object.fromEntries(
-            Object.entries(a.secondary || {}).map(([formTag, chips]) => [
-              formTag,
-              chips.map((c) => ({ tag: c.tag, label: t(c.key, c.label) })),
-            ])
-          ),
-          secondaryName: a.secondaryName,
-        }
-      : {
-          options: a.chips.map((c) => ({ tag: c.tag, label: t(c.key, c.label) })),
-        }),
+    options: a.chips.map((c) => ({ tag: c.tag, label: t(c.key, c.label) })),
   }));
 
-  const axisNames = [...filterAxes.map((a) => a.name), SUBFORM_AXIS];
+  const axisNames = filterAxes.map((a) => a.name);
   const value = Object.fromEntries(axisNames.map((n) => [n, [...(matterFilters[n] || [])]]));
 
   const onChange = (next) =>

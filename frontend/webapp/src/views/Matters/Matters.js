@@ -12,7 +12,8 @@ import "../Places/Places.css";
 import "../People/People.css";
 
 import { MattersFilter } from "./MattersFilter";
-import { prominenceBucket, secondaryChips, SUBFORM_AXIS } from "./mattersFilterData";
+import { prominenceBucket, chipLevels } from "./mattersFilterData";
+import { MatterChipLevels } from "./MatterChipLevels";
 import { useAppController } from "src/contexts/AppControllerContext";
 
 // djb2-ish hash → stable seed for slug-based gradients.
@@ -61,33 +62,37 @@ function MattersComponent() {
   const [matterList, setMatterList] = useState(appController.preLoad?.matterList || null);
   const [failedSlugs, setFailedSlugs] = useState(() => new Set());
 
-  // Default state is no filters — every axis empty means "no constraint",
-  // so the index opens showing all matters.
+  // Default state is no filters — an empty set on an axis means "no constraint",
+  // so the index opens showing every matter.
   const emptyFilters = {
-    form: new Set(),
+    form_group: new Set(),
     era_culture: new Set(),
     prominence: new Set(),
-    [SUBFORM_AXIS]: new Set(),
+    form: new Set(),
+    subform_label: new Set(),
     search: null,
   };
   const [matterFilters, setFilterRaw] = useState(emptyFilters);
 
   /**
-   * Drop sub-selections whose parent form chip is no longer selected.
-   * Without this a secondary chip keeps filtering after its parent is cleared,
-   * with nothing on screen to explain the empty result.
+   * Drop cascade selections whose parent is no longer selected.
+   * Without this, switching off a Kind group leaves its form chips still
+   * filtering while nothing on screen explains the empty result.
    */
   const setFilter = (next) => {
-    const forms = next.form ?? new Set();
-    const subs = next[SUBFORM_AXIS] ?? new Set();
-    if (subs.size && forms.size) {
+    for (const level of chipLevels) {
+      const parent = next[level.parent] ?? new Set();
+      const own = next[level.name] ?? new Set();
+      if (!own.size) continue;
+      if (!parent.size) {
+        next = { ...next, [level.name]: new Set() };
+        continue;
+      }
       const reachable = new Set(
-        [...forms].flatMap((f) => (secondaryChips[f] || []).map((c) => c.tag))
+        [...parent].flatMap((p) => (level.map[p] || []).map((o) => o.tag))
       );
-      const kept = new Set([...subs].filter((s) => reachable.has(s)));
-      if (kept.size !== subs.size) next = { ...next, [SUBFORM_AXIS]: kept };
-    } else if (subs.size && !forms.size) {
-      next = { ...next, [SUBFORM_AXIS]: new Set() };
+      const kept = new Set([...own].filter((v) => reachable.has(v)));
+      if (kept.size !== own.size) next = { ...next, [level.name]: kept };
     }
     setFilterRaw(next);
   };
@@ -130,7 +135,7 @@ function MattersComponent() {
       const re = new RegExp(matterFilters.search, "gi");
       if (!re.test(item.name) && !re.test(item.subtitle || "")) return false;
     }
-    for (const axis of ["form", "era_culture", SUBFORM_AXIS]) {
+    for (const axis of ["form_group", "form", "subform_label", "era_culture"]) {
       const set = matterFilters[axis];
       if (set && set.size > 0 && !set.has(item[axis])) return false;
     }
@@ -167,6 +172,7 @@ function MattersComponent() {
           setFilter={setFilter}
           matterList={matterList}
         />
+        <MatterChipLevels matterFilters={matterFilters} setFilter={setFilter} />
         <div className="MatterList">
           {filtered.length === 0 ? (
             <div className="MatterEmptyState">

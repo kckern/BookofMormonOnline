@@ -29,8 +29,8 @@ export const eraCultureChips = [
 
 export const prominenceChips = [
   { key: "matter_prom_9",  label: "9+ refs",  tag: "9+"  },
-  { key: "matter_prom_48", label: "4-8 refs", tag: "4-8" },
-  { key: "matter_prom_23", label: "2-3 refs", tag: "2-3" },
+  { key: "matter_prom_48", label: "4–8 refs", tag: "4-8" },
+  { key: "matter_prom_23", label: "2–3 refs", tag: "2-3" },
   { key: "matter_prom_1",  label: "1 ref",    tag: "1"   },
 ];
 
