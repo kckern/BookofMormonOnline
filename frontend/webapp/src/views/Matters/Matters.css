@@ -202,7 +202,8 @@
 .MatterList .IdBadge.grp-natural-world { background:#3F7A44; color:#fff; border-color:#2b552f; }
 .MatterList .IdBadge.grp-made-things   { background:#8B5A2A; color:#fff; border-color:#5f3e1d; }
 .MatterList .IdBadge.grp-society       { background:#2A4A8B; color:#fff; border-color:#1d3361; }
-.MatterList .IdBadge.grp-places        { background:#6B6B6B; color:#fff; border-color:#4a4a4a; }
+.MatterList .IdBadge.grp-places-buildings { background:#6B6B6B; color:#fff; border-color:#4a4a4a; }
+.MatterList .IdBadge.grp-war-arms      { background:#8B2A2A; color:#fff; border-color:#5f1c1c; }
 .MatterList .IdBadge.grp-belief-mind   { background:#7A4A8B; color:#fff; border-color:#553361; }
 .MatterList .IdBadge.grp-unknown       { background:#DDD; color:#666; border-color:#aaa; }
 
