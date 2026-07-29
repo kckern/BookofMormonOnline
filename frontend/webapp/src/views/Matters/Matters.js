@@ -15,25 +15,7 @@ import { MattersFilter } from "./MattersFilter";
 import { prominenceBucket, chipLevels } from "./mattersFilterData";
 import { MatterChipLevels } from "./MatterChipLevels";
 import { useAppController } from "src/contexts/AppControllerContext";
-
-// djb2-ish hash → stable seed for slug-based gradients.
-const hashSlug = (slug) => {
-  let h = 0;
-  const s = slug || "";
-  for (let i = 0; i < s.length; i++) {
-    h = ((h << 5) - h) + s.charCodeAt(i);
-    h |= 0;
-  }
-  return Math.abs(h);
-};
-
-const slugGradient = (slug) => {
-  const h = hashSlug(slug);
-  const hue1 = h % 360;
-  const hue2 = (hue1 + 30 + ((h >> 8) % 50)) % 360;
-  const sat  = 45 + ((h >> 16) % 25);
-  return `linear-gradient(135deg, hsl(${hue1}, ${sat}%, 48%) 0%, hsl(${hue2}, ${sat}%, 26%) 100%)`;
-};
+import { slugGradient, entityInitials } from "../_Common/EntityThumb";
 
 /** Translate with a real fallback — label() echoes the key back when unknown. */
 const t = (key, fallback) => {
@@ -44,14 +26,6 @@ const t = (key, fallback) => {
 /** "Belief & Mind" → "belief-mind", for CSS class names. */
 const badgeClass = (v) =>
   (v || "unknown").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-
-const matterInitials = (name) => {
-  const cleaned = (name || "").replace(/[^\p{L}\s]/gu, " ").trim();
-  const parts = cleaned.split(/\s+/).filter(Boolean);
-  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-  if (parts[0] && parts[0].length >= 2) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0]?.[0] || "?").toUpperCase();
-};
 
 function MattersComponent() {
   const appController = useAppController();
@@ -203,7 +177,7 @@ function MattersComponent() {
                         style={{ background: slugGradient(obj.slug) }}
                       >
                         <span className="matterInitials" aria-hidden="true">
-                          {matterInitials(obj.name)}
+                          {entityInitials(obj.name)}
                         </span>
                         {obj.subtitle && (
                           <div className="subtitle">{replaceNumbers(obj.subtitle)}</div>
