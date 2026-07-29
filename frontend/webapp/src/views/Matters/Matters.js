@@ -34,6 +34,16 @@ const slugGradient = (slug) => {
   return `linear-gradient(135deg, hsl(${hue1}, ${sat}%, 48%) 0%, hsl(${hue2}, ${sat}%, 26%) 100%)`;
 };
 
+/** Translate with a real fallback — label() echoes the key back when unknown. */
+const t = (key, fallback) => {
+  const v = label(key);
+  return !v || v === key || !String(v).trim() ? fallback : v;
+};
+
+/** "Belief & Mind" → "belief-mind", for CSS class names. */
+const badgeClass = (v) =>
+  (v || "unknown").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
 const matterInitials = (name) => {
   const cleaned = (name || "").replace(/[^\p{L}\s]/gu, " ").trim();
   const parts = cleaned.split(/\s+/).filter(Boolean);
@@ -214,21 +224,21 @@ function MattersComponent() {
                     <CardFooter className="text-center">
                       <div className="labels">
                         <span
-                          className={"IdBadge cat-" + obj.category}
-                          title={label("matter_cat_" + (obj.category || "").replace(/-/g, "_")) || obj.category}
+                          className={"IdBadge grp-" + badgeClass(obj.form_group)}
+                          title={obj.form || obj.form_group || ""}
                         >
-                          {(obj.category || "?").charAt(0).toUpperCase()}
+                          {(obj.form_group || "?").charAt(0).toUpperCase()}
                         </span>
                         <span
-                          className={"IdBadge era-" + obj.era}
-                          title={label("era_" + (obj.era || "").replace(/-/g, "_")) || obj.era}
+                          className={"IdBadge ec-" + badgeClass(obj.era_culture)}
+                          title={obj.era_culture || ""}
                         >
-                          {(obj.era || "?").charAt(0).toUpperCase()}
+                          {(obj.era_culture || "?").charAt(0).toUpperCase()}
                         </span>
                         {obj.specificity === "instance" && (
                           <span
                             className="IdBadge spec-named"
-                            title={label("spec_instance") || "Named"}
+                            title={t("spec_instance", "Named")}
                           >
                             ★
                           </span>

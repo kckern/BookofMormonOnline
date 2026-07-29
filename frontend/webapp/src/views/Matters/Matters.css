@@ -196,6 +196,25 @@
 .MatterList .IdBadge.era-christ-era       { background:#fffbe6; color:#b9881a; border-color:#b9881a; }
 .MatterList .IdBadge.era-post-christ      { background:#e7dff8; color:#5b3aa3; border-color:#5b3aa3; }
 
+/* Form group — the five UI groups, replacing the old 24-category palette.
+   The .cat-* and .era-* rules above are kept for any view still keyed off the
+   raw category/era columns, which bom_matters retains. */
+.MatterList .IdBadge.grp-natural-world { background:#3F7A44; color:#fff; border-color:#2b552f; }
+.MatterList .IdBadge.grp-made-things   { background:#8B5A2A; color:#fff; border-color:#5f3e1d; }
+.MatterList .IdBadge.grp-society       { background:#2A4A8B; color:#fff; border-color:#1d3361; }
+.MatterList .IdBadge.grp-places        { background:#6B6B6B; color:#fff; border-color:#4a4a4a; }
+.MatterList .IdBadge.grp-belief-mind   { background:#7A4A8B; color:#fff; border-color:#553361; }
+.MatterList .IdBadge.grp-unknown       { background:#DDD; color:#666; border-color:#aaa; }
+
+/* Era & culture — light backgrounds so the group badge stays dominant. */
+.MatterList .IdBadge.ec-nephite             { background:#d9ecdd; color:#198754; border-color:#198754; }
+.MatterList .IdBadge.ec-lamanite            { background:#f6ddd6; color:#a2412a; border-color:#a2412a; }
+.MatterList .IdBadge.ec-jaredite            { background:#fef1ca; color:#906c00; border-color:#906c00; }
+.MatterList .IdBadge.ec-israelite-old-world { background:#e2e6ef; color:#44506b; border-color:#44506b; }
+.MatterList .IdBadge.ec-christ-era          { background:#fffbe6; color:#b9881a; border-color:#b9881a; }
+.MatterList .IdBadge.ec-generic             { background:#EEE; color:#777; border-color:#bbb; }
+.MatterList .IdBadge.ec-unknown             { background:#EEE; color:#777; border-color:#bbb; }
+
 .MatterList .IdBadge.spec-named
 {
     background:#fff;
