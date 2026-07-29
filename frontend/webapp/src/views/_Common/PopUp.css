@@ -465,6 +465,20 @@ ul.source_tabs li:hover
 {
     margin-bottom: 50em;
     display: flex;
+    align-items: flex-start;
+}
+
+/* Left (prose) column sticks to the bottom of the scrolling .card-body. Without
+   this it stretches to the taller right column's height, so scrolling down to
+   reach the bottom of the reference column left a blank gap where the prose had
+   scrolled away. align-self keeps it content-height; sticky bottom:0 lets it
+   scroll with the page until its own bottom is reached, then pins it in view
+   while the right column keeps scrolling. */
+#popUp .ppbody .bodytext
+{
+    align-self: flex-start;
+    position: sticky;
+    bottom: 0;
 }
 
 /* Hero image. Sizing lives here, not on the element: an <img> with no width or
