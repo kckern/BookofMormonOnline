@@ -7,6 +7,37 @@ import { MatterDetailColumn } from "./MatterDetailColumn";
 import { useAppController } from "src/contexts/AppControllerContext";
 import FilterPanel from "src/views/_Common/FilterPanel/FilterPanel";
 
+// Reuse People's icon set so all three filter panels share one visual language.
+import green from "../People/svg/green.svg";
+import blue from "../People/svg/blue.svg";
+import yellow from "../People/svg/yellow.svg";
+import brown from "../People/svg/brown.svg";
+import orange from "../People/svg/orange.svg";
+import grey from "../People/svg/grey.svg";
+import land from "../People/svg/land.svg";
+import society from "../People/svg/society.svg";
+import city from "../People/svg/city.svg";
+import prophet from "../People/svg/prophet.svg";
+
+// Era & Culture → colored dots, matched to the card ec-* badge hues.
+const ERA_DOT = {
+  "Generic": grey,
+  "Israelite/Old World": blue,
+  "Jaredite": yellow,
+  "Nephite": green,
+  "Lamanite": brown,
+  "Christ era": orange,
+};
+
+// Kind → repurposed People glyphs; grey circle where no glyph fits (Made Things).
+const KIND_ICON = {
+  "Natural World": land,
+  "Made Things": grey,
+  "Society": society,
+  "Places": city,
+  "Belief & Mind": prophet,
+};
+
 /**
  * Matters filter — three switch columns over the redesigned bom_matters vocabulary.
  *
@@ -32,6 +63,29 @@ const t = (key, fallback) => {
   return v;
 };
 
+/**
+ * Option label with a leading icon, matching the People/Places pattern. Era &
+ * Culture uses full-opacity color dots (className "dot"); Kind uses the muted
+ * (.5 opacity) glyphs. Any axis without a mapping renders plain text.
+ */
+const optionLabel = (axisName, chip, text) => {
+  if (axisName === "era_culture") {
+    return (
+      <span>
+        <img className="dot" src={ERA_DOT[chip.tag] || grey} alt="" /> {text}
+      </span>
+    );
+  }
+  if (axisName === "form_group") {
+    return (
+      <span>
+        <img src={KIND_ICON[chip.tag] || grey} alt="" /> {text}
+      </span>
+    );
+  }
+  return text;
+};
+
 export function MattersFilter({ matterFilters, setFilter, matterList }) {
   const appController = useAppController();
 
@@ -46,7 +100,10 @@ export function MattersFilter({ matterFilters, setFilter, matterList }) {
   const axes = shown.map((a) => ({
     name: a.name,
     title: t(a.title, a.titleEn),
-    options: a.chips.map((c) => ({ tag: c.tag, label: t(c.key, c.label) })),
+    options: a.chips.map((c) => ({
+      tag: c.tag,
+      label: optionLabel(a.name, c, t(c.key, c.label)),
+    })),
   }));
 
   const axisNames = shown.map((a) => a.name);
