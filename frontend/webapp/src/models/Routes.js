@@ -47,6 +47,9 @@ const Welcome = lazy(() => import("../views/Welcome/Welcome.js"));
 const Audit = lazy(() => import("../views/Audit/Audit.js"));
 const Witnesses = lazy(() => import("../views/History/Witnesses.js"));
 const JosephSmith = lazy(() => import("../views/History/JosephSmith.js"));
+const HistoryHub = lazy(() => import("../views/History/HistoryHub.jsx"));
+const TranslationSources = lazy(() => import("../views/History/TranslationSources.jsx"));
+const RedirectReceptionSlug = lazy(() => import("../views/History/RedirectReceptionSlug.jsx"));
 const ReadScripture = lazy(() => import("../views/Read/Read.js"));
 const lang = determineLanguage();
 
@@ -196,12 +199,20 @@ const routes = [
       component: JosephSmith,
   },
   {
-    path: "/history/:slug",
-    component: History,
+      path: "/history/translation",
+      component: TranslationSources,
   },
   {
-    path: "/history",
-    component: History,
+      path: "/history/reception/:slug?",
+      component: History,
+  },
+  {
+      path: "/history/:slug",
+      component: RedirectReceptionSlug,
+  },
+  {
+      path: "/history",
+      component: HistoryHub,
   },
   {
     path: "/invite/:hash",

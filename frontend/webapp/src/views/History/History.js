@@ -28,6 +28,7 @@ import moment from 'moment';
 import ReactMarkdown from "react-markdown";
 import { history } from 'src/models/routeHistory';
 import { useAppController } from "src/contexts/AppControllerContext";
+import HistoryBreadcrumb from "./HistoryBreadcrumb";
 
 
 function History() {
@@ -146,6 +147,7 @@ function History() {
   return (
     <div className="container " style={{ display: 'block' }}>
       <div id="page" >
+        <HistoryBreadcrumb sectionKey="reception" />
         <h3 className="title lg-4 text-center">{label("title_history")}</h3>
         <div className='archive_intro'><ReactMarkdown linkTarget={'_blank'}>{introText}</ReactMarkdown></div>
         {contents}
