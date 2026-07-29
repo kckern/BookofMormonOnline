@@ -80,8 +80,13 @@ html[data-theme="dark"] {
   .popupwindow { background-color: var(--surface-2); color: var(--text-secondary); }
   .popupwindow h3 { border-bottom-color: var(--border-strong); }
   .notice { background-color: rgba(240, 173, 78, 0.12); border-color: rgba(240, 173, 78, 0.4); color: var(--text-secondary); }
-  .xrels .xrel { border-bottom-color: var(--border); }
-  .xrels .xrel .rel-verb { background: var(--surface-3); a { color: var(--text-secondary); } }
+  /* XrelSection.css — relationship cards. */
+  .xrels .xrel-group-head { color: var(--text-muted); }
+  .xrels .xrel-group-count { background: var(--surface-3); color: var(--text-secondary); }
+  .xrels .xrel.clickable:hover { background-color: var(--surface-3); }
+  .xrels .xrel .xrel-name { color: var(--text-primary); }
+  .xrels .xrel .xrel-tag { color: var(--text-secondary); }
+  .xrels .xrel .xrel-note { color: var(--text-muted); }
 
   /* SearchPopUp.css */
   .search-popup {

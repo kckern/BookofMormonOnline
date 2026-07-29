@@ -6,16 +6,17 @@
 // People and Places. Chips are used ONLY for the levels below, which render
 // between the box and the tile grid and appear as their parent is switched on.
 //
-//   box     form_group (5) | era_culture (6) | prominence (4)
+//   box     form_group (6) | era_culture (6) | prominence (4)
 //   chips   form (17), shown for whichever groups are on
 //           subform_label (64), shown for whichever forms are on
 
 export const formGroupChips = [
   { key: "matter_grp_natural_world", label: "Natural World", tag: "Natural World" },   // 128
-  { key: "matter_grp_made_things", label: "Made Things", tag: "Made Things" },   // 126
-  { key: "matter_grp_society", label: "Society", tag: "Society" },   // 110
-  { key: "matter_grp_places", label: "Places", tag: "Places" },   // 77
-  { key: "matter_grp_belief_mind", label: "Belief & Mind", tag: "Belief & Mind" },   // 46
+  { key: "matter_grp_society", label: "Society", tag: "Society" },   // 99
+  { key: "matter_grp_made_things", label: "Made Things", tag: "Made Things" },   // 81
+  { key: "matter_grp_places_buildings", label: "Places & Buildings", tag: "Places & Buildings" },   // 77
+  { key: "matter_grp_belief_mind", label: "Belief & Mind", tag: "Belief & Mind" },   // 60
+  { key: "matter_grp_war_arms", label: "War & Arms", tag: "War & Arms" },   // 42
 ];
 
 export const eraCultureChips = [
@@ -29,8 +30,8 @@ export const eraCultureChips = [
 
 export const prominenceChips = [
   { key: "matter_prom_9",  label: "9+ refs",  tag: "9+"  },
-  { key: "matter_prom_48", label: "4-8 refs", tag: "4-8" },
-  { key: "matter_prom_23", label: "2-3 refs", tag: "2-3" },
+  { key: "matter_prom_48", label: "4–8 refs", tag: "4-8" },
+  { key: "matter_prom_23", label: "2–3 refs", tag: "2-3" },
   { key: "matter_prom_1",  label: "1 ref",    tag: "1"   },
 ];
 
@@ -49,27 +50,29 @@ export const formsByGroup = {
     { key: "matter_form_land_substance", label: "Land & Substance", tag: "Land & Substance" },   // 36
     { key: "matter_form_food_farming", label: "Food & Farming", tag: "Food & Farming" },   // 28
   ],
-  "Made Things": [
-    { key: "matter_form_arms_armor", label: "Arms & Armor", tag: "Arms & Armor" },   // 31
-    { key: "matter_form_dress_adornment", label: "Dress & Adornment", tag: "Dress & Adornment" },   // 22
-    { key: "matter_form_works_vehicles", label: "Works & Vehicles", tag: "Works & Vehicles" },   // 21
-    { key: "matter_form_tools_household", label: "Tools & Household", tag: "Tools & Household" },   // 20
-    { key: "matter_form_records_writing", label: "Records & Writing", tag: "Records & Writing" },   // 18
-    { key: "matter_form_sacred_objects", label: "Sacred Objects", tag: "Sacred Objects" },   // 14
-  ],
   "Society": [
     { key: "matter_form_law_government", label: "Law & Government", tag: "Law & Government" },   // 39
     { key: "matter_form_society_custom", label: "Society & Custom", tag: "Society & Custom" },   // 35
     { key: "matter_form_wealth_trade", label: "Wealth & Trade", tag: "Wealth & Trade" },   // 25
-    { key: "matter_form_war_conflict", label: "War & Conflict", tag: "War & Conflict" },   // 11
   ],
-  "Places": [
+  "Made Things": [
+    { key: "matter_form_dress_adornment", label: "Dress & Adornment", tag: "Dress & Adornment" },   // 22
+    { key: "matter_form_works_vehicles", label: "Works & Vehicles", tag: "Works & Vehicles" },   // 21
+    { key: "matter_form_tools_household", label: "Tools & Household", tag: "Tools & Household" },   // 20
+    { key: "matter_form_records_writing", label: "Records & Writing", tag: "Records & Writing" },   // 18
+  ],
+  "Places & Buildings": [
     { key: "matter_form_dwellings_settlements", label: "Dwellings & Settlements", tag: "Dwellings & Settlements" },   // 63
     { key: "matter_form_sacred_places", label: "Sacred Places", tag: "Sacred Places" },   // 14
   ],
   "Belief & Mind": [
     { key: "matter_form_belief_worship", label: "Belief & Worship", tag: "Belief & Worship" },   // 27
     { key: "matter_form_nature_thought", label: "Nature & Thought", tag: "Nature & Thought" },   // 19
+    { key: "matter_form_sacred_objects", label: "Sacred Objects", tag: "Sacred Objects" },   // 14
+  ],
+  "War & Arms": [
+    { key: "matter_form_arms_armor", label: "Arms & Armor", tag: "Arms & Armor" },   // 31
+    { key: "matter_form_war_conflict", label: "War & Conflict", tag: "War & Conflict" },   // 11
   ],
 };
 

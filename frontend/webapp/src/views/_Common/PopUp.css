@@ -429,10 +429,14 @@ ul.source_tabs li:hover
     background-color: #888;
 }
 
+/* 45%, not 40%: this column carries the hero image, the relationship grid and
+   the whole reference list, and its cards are calc(50% - 1ex) of it. At 40% two
+   cards left about 95px of text each, narrow enough to hyphenate names
+   mid-word. The prose column keeps 55%, still wide enough for its paragraphs. */
 .ppbody .refbox
 {
     border-left:1px dotted #AAA;
-    width: 40%;
+    width: 45%;
     margin-left: 1em;
     padding-left: 1em;
     flex-shrink: 0;
@@ -463,12 +467,37 @@ ul.source_tabs li:hover
     display: flex;
 }
 
+/* Hero image. Sizing lives here, not on the element: an <img> with no width or
+   height collapses to the browser's broken-image chip when the asset 404s, and
+   for Matters a 404 is the common case (314 of 487 have no artwork yet).
+   EntityThumb ships square-box defaults for the 2.5rem card thumbs
+   (.entityThumb img { height: 100%; object-fit: cover }); the hero wants the
+   image's natural aspect instead, so height and object-fit are restated here.
+   This wins by specificity, not stylesheet order — .ppbody .ppimg img (0,2,1)
+   beats .entityThumb img (0,1,1) — and the popups pass no `size` prop, so
+   there are no inline dimensions competing with it either. */
 .ppbody .ppimg img
 {
     border: 2px solid #00000099;
     border-radius: 1rem;
+    width: 100%;
+    height: auto;
+    object-fit: fill;
+    display: block;
+}
 
+.ppbody .ppimg .entityThumb
+{
+    width: 100%;
+}
 
+/* The fallback has no <img> to give it height, so state one: a square keeps the
+   gradient-and-initials placeholder occupying the space real artwork would. */
+.ppbody .ppimg .entityThumb.fallback
+{
+    aspect-ratio: 1 / 1;
+    font-size: 3rem;
+    border: 2px solid #00000099;
 }
 
 .ppbody .refbox h4{
@@ -662,51 +691,4 @@ ul.source_tabs li:hover
         width: calc(100% - 1ex);
     }
 
-}
-
-.xrels {
-  list-style: none;
-  padding: 0;
-  margin: 0.5em 0;
-  max-height: 18em;
-  overflow-y: auto;
-}
-
-.xrels .xrel {
-  padding: 0.35em 0.5em;
-  border-bottom: 1px solid #eee;
-  font-size: 0.9em;
-}
-
-.xrels .xrel .rel-verb {
-  display: inline-block;
-  min-width: 7em;
-  padding: 0.1em 0.4em;
-  margin-right: 0.5em;
-  font-size: 0.75em;
-  color: #666;
-  background: #f4f4f4;
-  border-radius: 0.3em;
-  text-transform: capitalize;
-}
-
-.xrels .xrel a {
-  color: #333;
-}
-
-.xrels .xrel.clickable a {
-  color: #0066aa;
-  cursor: pointer;
-}
-
-.xrels .xrel.xrel-group a {
-  color: #999;
-  cursor: default;
-}
-
-.xrels .xrel .xrel-note {
-  font-size: 0.8em;
-  color: #888;
-  margin-top: 0.15em;
-  margin-left: 7.5em;
 }

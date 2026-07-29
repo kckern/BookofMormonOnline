@@ -18,6 +18,7 @@ import land from "../People/svg/land.svg";
 import society from "../People/svg/society.svg";
 import city from "../People/svg/city.svg";
 import prophet from "../People/svg/prophet.svg";
+import warrior from "../People/svg/warrior.svg";
 
 // Era & Culture → colored dots. The lineage/society values reuse People's
 // established colors (Nephite green, Lamanite blue, Jaredite yellow, Israelite
@@ -34,17 +35,18 @@ const ERA_DOT = {
 // Kind → repurposed People glyphs; grey circle where no glyph fits (Made Things).
 const KIND_ICON = {
   "Natural World": land,
-  "Made Things": grey,
   "Society": society,
-  "Places": city,
+  "Made Things": grey,
+  "Places & Buildings": city,
   "Belief & Mind": prophet,
+  "War & Arms": warrior,
 };
 
 /**
  * Matters filter — three switch columns over the redesigned bom_matters vocabulary.
  *
  *   Era & Culture (left)   6 values, era + provenance merged (58% redundant)
- *   Kind          (middle) 5 form groups
+ *   Kind          (middle) 6 form groups
  *   dynamic slot  (right)  Prominence (4 nrefs buckets) by default; the instant
  *                          a Kind is on, it swaps to <MatterDetailColumn> — form
  *                          switches with per-form subform chips — passed to
