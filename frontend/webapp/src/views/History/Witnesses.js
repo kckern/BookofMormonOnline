@@ -55,6 +55,8 @@ const data = {
     ]
 }
 
+// Flattened list of every witness, for the hub's featured pick.
+export const WITNESSES = Object.values(data).flat();
 
 
 const GROUP_LABELS = {
