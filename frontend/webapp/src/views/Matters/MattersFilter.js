@@ -2,21 +2,21 @@
 
 import React from "react";
 import { label } from "src/models/Utils";
-import { filterAxes, SUBFORM_AXIS } from "./mattersFilterData";
+import { filterAxes } from "./mattersFilterData";
+import { MatterDetailColumn } from "./MatterDetailColumn";
 import { useAppController } from "src/contexts/AppControllerContext";
 import FilterPanel from "src/views/_Common/FilterPanel/FilterPanel";
 
 /**
- * Matters filter — three axes over the redesigned bom_matters vocabulary.
+ * Matters filter — three switch columns over the redesigned bom_matters vocabulary.
  *
- *   form        two-level: 5 groups / 17 chips, plus a contextual secondary row
- *   era_culture 6 chips (era + provenance merged; they were 58% redundant)
- *   prominence  4 buckets over nrefs
- *
- * The secondary row writes into its own axis (SUBFORM_AXIS) rather than into
- * `form`, so clearing a form chip leaves no orphaned sub-selection filtering
- * invisibly. Matters.js drops stale sub-selections when their parent is
- * deselected.
+ *   Era & Culture (left)   6 values, era + provenance merged (58% redundant)
+ *   Kind          (middle) 5 form groups
+ *   dynamic slot  (right)  Prominence (4 nrefs buckets) by default; the instant
+ *                          a Kind is on, it swaps to <MatterDetailColumn> — form
+ *                          switches with per-form subform chips — passed to
+ *                          FilterPanel via its extraColumn slot. Prominence is
+ *                          gone while a Kind is active.
  */
 /**
  * Translate with a real fallback.
@@ -35,31 +35,21 @@ const t = (key, fallback) => {
 export function MattersFilter({ matterFilters, setFilter, matterList }) {
   const appController = useAppController();
 
-  const axes = filterAxes.map((a) => ({
+  const byName = Object.fromEntries(filterAxes.map((a) => [a.name, a]));
+  const kindActive = (matterFilters.form_group?.size ?? 0) > 0;
+
+  // Right column is Prominence until a Kind is on, then the detail column.
+  const shown = kindActive
+    ? [byName.era_culture, byName.form_group]
+    : [byName.era_culture, byName.form_group, byName.prominence];
+
+  const axes = shown.map((a) => ({
     name: a.name,
     title: t(a.title, a.titleEn),
-    chipMode: true, // Matters renders chips on every axis, not switch rows
-    ...(a.groups
-      ? {
-          groups: a.groups.map((g) => ({
-            tag: g.tag,
-            label: t(g.key, g.label),
-            options: g.chips.map((c) => ({ tag: c.tag, label: t(c.key, c.label) })),
-          })),
-          secondary: Object.fromEntries(
-            Object.entries(a.secondary || {}).map(([formTag, chips]) => [
-              formTag,
-              chips.map((c) => ({ tag: c.tag, label: t(c.key, c.label) })),
-            ])
-          ),
-          secondaryName: a.secondaryName,
-        }
-      : {
-          options: a.chips.map((c) => ({ tag: c.tag, label: t(c.key, c.label) })),
-        }),
+    options: a.chips.map((c) => ({ tag: c.tag, label: t(c.key, c.label) })),
   }));
 
-  const axisNames = [...filterAxes.map((a) => a.name), SUBFORM_AXIS];
+  const axisNames = shown.map((a) => a.name);
   const value = Object.fromEntries(axisNames.map((n) => [n, [...(matterFilters[n] || [])]]));
 
   const onChange = (next) =>
@@ -67,6 +57,10 @@ export function MattersFilter({ matterFilters, setFilter, matterList }) {
       ...matterFilters,
       ...Object.fromEntries(axisNames.map((n) => [n, new Set(next[n] || [])])),
     });
+
+  const extraColumn = kindActive ? (
+    <MatterDetailColumn matterFilters={matterFilters} setFilter={setFilter} />
+  ) : null;
 
   const selectItemHandler = (slug) =>
     appController.functions.setPopUp({ type: "matters", ids: [slug], underSlug: "matters" });
@@ -77,6 +71,7 @@ export function MattersFilter({ matterFilters, setFilter, matterList }) {
       axes={axes}
       value={value}
       onChange={onChange}
+      extraColumn={extraColumn}
       search={{
         placeholder: "search_for_a_matter",
         preLoadData: matterList,

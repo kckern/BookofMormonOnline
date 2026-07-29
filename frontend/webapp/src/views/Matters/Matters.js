@@ -12,7 +12,7 @@ import "../Places/Places.css";
 import "../People/People.css";
 
 import { MattersFilter } from "./MattersFilter";
-import { prominenceBucket, secondaryChips, SUBFORM_AXIS } from "./mattersFilterData";
+import { prominenceBucket, formsByGroup, subformsByForm } from "./mattersFilterData";
 import { useAppController } from "src/contexts/AppControllerContext";
 
 // djb2-ish hash → stable seed for slug-based gradients.
@@ -64,32 +64,47 @@ function MattersComponent() {
   // Default state is no filters — every axis empty means "no constraint",
   // so the index opens showing all matters.
   const emptyFilters = {
-    form: new Set(),
     era_culture: new Set(),
+    form_group: new Set(),
     prominence: new Set(),
-    [SUBFORM_AXIS]: new Set(),
+    form: new Set(),
+    subform_label: new Set(),
     search: null,
   };
   const [matterFilters, setFilterRaw] = useState(emptyFilters);
 
   /**
-   * Drop sub-selections whose parent form chip is no longer selected.
-   * Without this a secondary chip keeps filtering after its parent is cleared,
-   * with nothing on screen to explain the empty result.
+   * Keep the dynamic right column honest. Prominence and the detail column
+   * share the third slot, and form/subform selections cascade off the Kind:
+   *   - Kind empty     → clear form + subform_label (their column is gone).
+   *   - Kind non-empty → clear Prominence; drop forms not reachable from the
+   *                      selected kinds, then subforms whose parent form dropped.
    */
   const setFilter = (next) => {
-    const forms = next.form ?? new Set();
-    const subs = next[SUBFORM_AXIS] ?? new Set();
-    if (subs.size && forms.size) {
-      const reachable = new Set(
-        [...forms].flatMap((f) => (secondaryChips[f] || []).map((c) => c.tag))
+    let result = next;
+    const kind = result.form_group ?? new Set();
+    if (!kind.size) {
+      if (result.form?.size) result = { ...result, form: new Set() };
+      if (result.subform_label?.size) result = { ...result, subform_label: new Set() };
+    } else {
+      if (result.prominence?.size) result = { ...result, prominence: new Set() };
+      const reachableForms = new Set(
+        [...kind].flatMap((g) => (formsByGroup[g] || []).map((f) => f.tag))
       );
-      const kept = new Set([...subs].filter((s) => reachable.has(s)));
-      if (kept.size !== subs.size) next = { ...next, [SUBFORM_AXIS]: kept };
-    } else if (subs.size && !forms.size) {
-      next = { ...next, [SUBFORM_AXIS]: new Set() };
+      const forms = result.form ?? new Set();
+      const keptForms = new Set([...forms].filter((f) => reachableForms.has(f)));
+      if (keptForms.size !== forms.size) result = { ...result, form: keptForms };
+
+      const subs = result.subform_label ?? new Set();
+      if (subs.size) {
+        const validSubs = new Set(
+          [...keptForms].flatMap((f) => (subformsByForm[f] || []).map((s) => s.tag))
+        );
+        const keptSubs = new Set([...subs].filter((s) => validSubs.has(s)));
+        if (keptSubs.size !== subs.size) result = { ...result, subform_label: keptSubs };
+      }
     }
-    setFilterRaw(next);
+    setFilterRaw(result);
   };
 
   const match = useRouteMatch();
@@ -130,9 +145,19 @@ function MattersComponent() {
       const re = new RegExp(matterFilters.search, "gi");
       if (!re.test(item.name) && !re.test(item.subtitle || "")) return false;
     }
-    for (const axis of ["form", "era_culture", SUBFORM_AXIS]) {
+    for (const axis of ["era_culture", "form_group"]) {
       const set = matterFilters[axis];
       if (set && set.size > 0 && !set.has(item[axis])) return false;
+    }
+    const formSel = matterFilters.form;
+    if (formSel && formSel.size > 0 && !formSel.has(item.form)) return false;
+    // Per-form subform narrowing: only the item's own form's chips constrain it.
+    const subSel = matterFilters.subform_label;
+    if (subSel && subSel.size > 0) {
+      const active = (subformsByForm[item.form] || [])
+        .map((s) => s.tag)
+        .filter((tag) => subSel.has(tag));
+      if (active.length > 0 && !active.includes(item.subform_label)) return false;
     }
     const prom = matterFilters.prominence;
     if (prom && prom.size > 0 && !prom.has(prominenceBucket(item.nrefs))) return false;
