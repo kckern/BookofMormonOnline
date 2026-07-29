@@ -82,6 +82,41 @@ export default function FilterPanel({ heading, axes, value, onChange, search }) 
     return out;
   };
 
+  /** Compact header: title on the left, small text actions on the right. */
+  const axisHead = (axis, count) => (
+    <div className="ppAxisHead">
+      <span className="ppAxisTitle">
+        {axis.title}
+        {count > 0 && <span className="ppAxisCount">{count}</span>}
+      </span>
+      <span className="ppAxisActions">
+        <button type="button" onClick={() => setAll(axis.name, true)}>{label("select_all")}</button>
+        <button type="button" onClick={() => setAll(axis.name, false)}>{label("clear")}</button>
+      </span>
+    </div>
+  );
+
+  const renderChipAxis = (axis) => {
+    const selected = value[axis.name] || [];
+    return (
+      <div className="ppChipAxis" key={axis.name}>
+        {axisHead(axis, selected.length)}
+        <div className="ppChips">
+          {axis.options.map((opt) => (
+            <button
+              type="button"
+              key={opt.tag}
+              className={"ppChip" + (selected.includes(opt.tag) ? " on" : "")}
+              onClick={() => toggleTag(axis.name, opt.tag)}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   const renderGroupedAxis = (axis) => {
     const selected = value[axis.name] || [];
     const secondary = secondaryFor(axis);
@@ -89,36 +124,36 @@ export default function FilterPanel({ heading, axes, value, onChange, search }) 
     const subSelected = (subName && value[subName]) || [];
     return (
       <div className="ppGroupedAxis" key={axis.name}>
-        <div className="lihead">{axis.title}</div>
-        <div className="ppGroupedActions">
-          <Button onClick={() => setAll(axis.name, true)}>{label("select_all")}</Button>
-          <Button onClick={() => setAll(axis.name, false)}>{label("clear")}</Button>
-        </div>
+        {axisHead(axis, selected.length)}
         <div className="ppGroupGrid">
-          {axis.groups.map((group) => (
-            <div className="ppGroup" key={group.tag}>
-              <button
-                type="button"
-                className="ppGroupHead"
-                onClick={() => toggleGroup(axis, group)}
-                title={label("select_all")}
-              >
-                {group.label}
-              </button>
-              <div className="ppChips">
-                {group.options.map((opt) => (
-                  <button
-                    type="button"
-                    key={opt.tag}
-                    className={"ppChip" + (selected.includes(opt.tag) ? " on" : "")}
-                    onClick={() => toggleTag(axis.name, opt.tag)}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
+          {axis.groups.map((group) => {
+            const tags = group.options.map((o) => o.tag);
+            const allOn = tags.every((tg) => selected.includes(tg));
+            return (
+              <div className="ppGroup" key={group.tag}>
+                <button
+                  type="button"
+                  className={"ppGroupHead" + (allOn ? " on" : "")}
+                  onClick={() => toggleGroup(axis, group)}
+                  title={label("select_all")}
+                >
+                  {group.label}
+                </button>
+                <div className="ppChips">
+                  {group.options.map((opt) => (
+                    <button
+                      type="button"
+                      key={opt.tag}
+                      className={"ppChip" + (selected.includes(opt.tag) ? " on" : "")}
+                      onClick={() => toggleTag(axis.name, opt.tag)}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
         {secondary.length > 0 && (
           <div className="ppSecondary">
@@ -190,7 +225,14 @@ export default function FilterPanel({ heading, axes, value, onChange, search }) 
           <button className="ppFiltersSearchButton" onClick={() => setIsOpen(true)}>🔍</button>
         )}
         {axes.filter((a) => a.groups).map(renderGroupedAxis)}
-        <div className="ppColumns">{axes.filter((a) => !a.groups).map(renderAxis)}</div>
+        {axes.some((a) => a.chipMode && !a.groups) && (
+          <div className="ppChipRow">
+            {axes.filter((a) => a.chipMode && !a.groups).map(renderChipAxis)}
+          </div>
+        )}
+        <div className="ppColumns">
+          {axes.filter((a) => !a.groups && !a.chipMode).map(renderAxis)}
+        </div>
         {!isMobile() && searchEl}
       </div>
     </>

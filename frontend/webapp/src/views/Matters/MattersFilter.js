@@ -18,29 +18,44 @@ import FilterPanel from "src/views/_Common/FilterPanel/FilterPanel";
  * invisibly. Matters.js drops stale sub-selections when their parent is
  * deselected.
  */
+/**
+ * Translate with a real fallback.
+ *
+ * Utils.label() returns the KEY itself when the dictionary has no entry, and
+ * " " before the dictionary loads — both truthy, so the usual
+ * `label(key) || fallback` never falls back and the UI renders raw keys like
+ * "matter_form_living_world". These keys are not in the dictionary yet.
+ */
+const t = (key, fallback) => {
+  const v = label(key);
+  if (!v || v === key || !String(v).trim()) return fallback;
+  return v;
+};
+
 export function MattersFilter({ matterFilters, setFilter, matterList }) {
   const appController = useAppController();
 
   const axes = filterAxes.map((a) => ({
     name: a.name,
-    title: label(a.title) || a.titleEn,
+    title: t(a.title, a.titleEn),
+    chipMode: true, // Matters renders chips on every axis, not switch rows
     ...(a.groups
       ? {
           groups: a.groups.map((g) => ({
             tag: g.tag,
-            label: label(g.key) || g.label,
-            options: g.chips.map((c) => ({ tag: c.tag, label: label(c.key) || c.label })),
+            label: t(g.key, g.label),
+            options: g.chips.map((c) => ({ tag: c.tag, label: t(c.key, c.label) })),
           })),
           secondary: Object.fromEntries(
             Object.entries(a.secondary || {}).map(([formTag, chips]) => [
               formTag,
-              chips.map((c) => ({ tag: c.tag, label: label(c.key) || c.label })),
+              chips.map((c) => ({ tag: c.tag, label: t(c.key, c.label) })),
             ])
           ),
           secondaryName: a.secondaryName,
         }
       : {
-          options: a.chips.map((c) => ({ tag: c.tag, label: label(c.key) || c.label })),
+          options: a.chips.map((c) => ({ tag: c.tag, label: t(c.key, c.label) })),
         }),
   }));
 

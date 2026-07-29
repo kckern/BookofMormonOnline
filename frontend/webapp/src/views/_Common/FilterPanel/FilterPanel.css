@@ -149,71 +149,127 @@ h5.ppFiltersHeading{
     position: relative;
 }
 
-/* ── Grouped chip axis + contextual secondary row (Matters) ──────────────
-   Additive: People/Places render through .ppColumns and are unaffected. */
+/* ── Grouped / chip axes (Matters) ──────────────────────────────────────
+   Additive: People and Places render through .ppColumns and are untouched. */
 
-.ppGroupedAxis { margin-bottom: 1em; }
-
-.ppGroupedActions { display: flex; gap: .5ex; margin: .25em 0 .75em; }
-.ppGroupedActions .btn { flex: 1; padding: 0; background-color: #6c757d; }
-
-/* Groups wrap side by side, so a 17-chip axis never becomes one tall column. */
-.ppGroupGrid {
+.ppAxisHead {
   display: flex;
-  flex-wrap: wrap;
-  gap: .75em 1.25em;
-  align-items: flex-start;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1em;
+  border-bottom: 1px solid #c4c4c4;
+  padding-bottom: .3em;
+  margin-bottom: .8em;
 }
-.ppGroup { flex: 1 1 12em; min-width: 11em; }
+.ppAxisTitle {
+  font-weight: 700;
+  font-size: 1em;
+  color: #444;
+  letter-spacing: .02em;
+}
+.ppAxisCount {
+  display: inline-block;
+  margin-left: .6ex;
+  background: #28a745;
+  color: #fff;
+  border-radius: 999px;
+  font-size: .7em;
+  font-weight: 700;
+  padding: .05em .55em;
+  vertical-align: middle;
+}
+.ppAxisActions { display: flex; gap: .9em; }
+.ppAxisActions button {
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: .74em;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: #7a7a7a;
+  cursor: pointer;
+}
+.ppAxisActions button:hover { color: #222; text-decoration: underline; }
+
+.ppGroupedAxis { margin-bottom: 1.4em; }
+
+/* Equal columns so groups line up instead of wrapping raggedly. */
+.ppGroupGrid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 1em 1.4em;
+  align-items: start;
+}
+.ppGroup { min-width: 0; }
 
 .ppGroupHead {
   display: block;
   width: 100%;
   border: none;
   background: none;
-  padding: 0 0 .3em;
-  font-weight: 800;
-  font-size: .95em;
-  color: #444;
+  padding: 0 0 .45em;
+  font-size: .68em;
+  font-weight: 700;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: #8a8a8a;
   text-align: left;
-  border-bottom: 1px solid #bbb;
-  margin-bottom: .4em;
   cursor: pointer;
 }
-.ppGroupHead:hover { color: #000; }
+.ppGroupHead:hover { color: #333; }
+.ppGroupHead.on { color: #1e7e34; }
 
-.ppChips { display: flex; flex-wrap: wrap; gap: .35em; }
+.ppChips { display: flex; flex-wrap: wrap; gap: .3em; }
 
 .ppChip {
-  border: 1px solid #b3b3b3;
-  background: #f4f4f4;
-  color: #333;
+  border: 1px solid #c0c0c0;
+  background: #fbfbfb;
+  color: #3a3a3a;
   border-radius: 999px;
-  padding: .2em .8em;
-  font-size: .82em;
-  line-height: 1.5;
+  padding: .18em .75em;
+  font-size: .8em;
+  line-height: 1.55;
   cursor: pointer;
   white-space: nowrap;
+  transition: background .12s, border-color .12s, color .12s;
 }
-.ppChip:hover { border-color: #6c757d; background: #e9e9e9; }
-.ppChip.on { background: #28a745; border-color: #28a745; color: #fff; }
+.ppChip:hover { border-color: #8a8a8a; background: #f0f0f0; }
+.ppChip.on {
+  background: #28a745;
+  border-color: #28a745;
+  color: #fff;
+  font-weight: 600;
+}
 
-/* Secondary row appears only when a form chip owning sub-values is selected. */
+/* Secondary row: only rendered when a form chip owning sub-values is on. */
 .ppSecondary {
   display: flex;
   flex-wrap: wrap;
-  gap: .35em;
-  margin-top: .9em;
-  padding-top: .7em;
-  border-top: 1px dashed #b3b3b3;
+  gap: .3em;
+  margin-top: 1em;
+  padding-top: .75em;
+  border-top: 1px dashed #bdbdbd;
 }
-.ppChip.sub { font-size: .78em; background: #fff; }
+.ppChip.sub { font-size: .76em; background: #fff; }
 .ppChip.sub.on { background: #17a2b8; border-color: #17a2b8; color: #fff; }
-.ppChip.clearSub { background: none; border-style: dashed; color: #666; }
+.ppChip.clearSub { background: none; border-style: dashed; color: #777; }
 
-/* The remaining ungrouped axes share the row; 33% was hardcoded for 3 columns. */
+/* The flat chip axes sit side by side beneath the grouped one. */
+.ppChipRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.4em;
+  margin-top: .4em;
+}
+.ppChipAxis { min-width: 0; }
+
+/* .ppFilters ul was hardcoded to 33% for exactly three switch columns. */
 .ppFilters .ppColumns ul { width: auto; flex: 1 1 0; min-width: 9em; }
 
+@media (max-width: 1100px) {
+  .ppGroupGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
 @media (max-width: 800px) {
-  .ppGroup { flex: 1 1 100%; }
+  .ppGroupGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ppChipRow   { grid-template-columns: 1fr; }
 }
