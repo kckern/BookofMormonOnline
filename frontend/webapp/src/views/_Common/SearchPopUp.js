@@ -2,8 +2,8 @@
 import Parser from "html-react-parser";
 import React, { useEffect, useRef, useState } from 'react';
 import { Card, CardBody, CardHeader } from 'reactstrap';
-import { assetUrl } from "src/models/BoMOnlineAPI";
 import { label } from "src/models/Utils";
+import EntityThumb from "./EntityThumb";
 import "./SearchPopUp.css";
 
 export function SearchPopUp({ preLoadData, selectItemHandler,placeholder,isOpen,setIsOpen,testFieldNames,assetName,initSearchString = "" }) {
@@ -110,7 +110,7 @@ export function SearchPopUp({ preLoadData, selectItemHandler,placeholder,isOpen,
                             onClick={() => selectItemHandler(result.slug)}
                             onMouseEnter={() => setSelectedResult(index)}
                             key={index} className={`search-result ${result.className} ${index === selectedResult ? 'selected' : ''} ${isLastInGroup ? 'last' : ''}`}>
-                                <img alt={`${result.name}`} src={`${assetUrl}/${assetName}/${result.slug}`}  key={`${result.slug}`} />
+                                <EntityThumb key={`${result.slug}`} type={assetName} slug={result.slug} name={result[testFieldNames.primary]} />
                                 <div>
                                     <div className={`search-result-${testFieldNames.primary}`}>{highlight(searchString, result[testFieldNames.primary])}</div>
                                     <div className={`search-result-${testFieldNames.secondary}`}>{highlight(searchString, result[testFieldNames.secondary])}</div>

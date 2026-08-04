@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Comments from "./Study/Study";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import Parser from "html-react-parser";
@@ -469,8 +469,39 @@ function MatterPopUp() {
   const appController = useAppController();
   const [PopUpRef, setPopUpRef] = useState(null);
   const activeId = appController.states.popUp.activeId;
+  const obj = appController.popUpData[activeId];
 
-  if (appController.popUpData[activeId] === undefined) {
+  // Bind the prose column (.bodytext) to the shared scroll: it rides along with
+  // the reference column until its OWN bottom reaches the bottom of the popup,
+  // then holds there while the reference column keeps scrolling — so no empty
+  // space ever shows under it inside .ppbody. CSS sticky can't do this when the
+  // prose is shorter than the viewport, so it's driven off .bodytext's height.
+  const cardRef = useRef(null);
+  const bodyRef = useRef(null);
+  const ppRef = useRef(null);
+  useEffect(() => {
+    const cb = cardRef.current, bt = bodyRef.current;
+    if (!cb || !bt) return undefined;
+    // Native CSS sticky does the pinning (compositor → no scroll handler, no
+    // jitter). We only set the sticky `top` offset = min(0, viewportH - proseH):
+    //   short prose (fits the viewport) → 0, so it sits at the top and pins
+    //     there naturally;
+    //   prose taller than the viewport → negative offset, so it rides with the
+    //     scroll until its bottom lands at the popup bottom, then pins.
+    const measure = () => {
+      bt.style.top = `${Math.min(0, cb.clientHeight - bt.offsetHeight)}px`;
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    const ro = new ResizeObserver(measure); // re-measure as images / refs load in
+    ro.observe(bt);
+    return () => {
+      window.removeEventListener("resize", measure);
+      ro.disconnect();
+    };
+  }, [obj]);
+
+  if (obj === undefined) {
     BoMOnlineAPI(
       { matter: appController.states.popUp.ids },
       { useCache: ["matter"] }
@@ -493,7 +524,6 @@ function MatterPopUp() {
     return <Loading type="Matter" />;
   }
 
-  const obj = appController.popUpData[activeId];
   if (obj === null) {
     const candidates = (appController.preLoad?.matterList || [])
       .filter(o => o.slug.startsWith(activeId));
@@ -543,9 +573,9 @@ function MatterPopUp() {
             </li>
           </ul>
         </div>
-        <div className="card-body">
-          <div className="ppbody">
-            <div className="bodytext">
+        <div className="card-body" ref={cardRef}>
+          <div className="ppbody" ref={ppRef}>
+            <div className="bodytext" ref={bodyRef}>
               <h3>
                 {processName(obj.name)}
                 {obj.subtitle && (
