@@ -47,7 +47,6 @@ export default function CommentaryTile({ data }) {
     const aside = asideRef.current;
     const body = bodyRef.current;
     if (!aside || !body) return;
-    const avail = aside.offsetHeight - (body.offsetTop - aside.offsetTop >= 0 ? 0 : 0);
     // clamp height = aside height minus the title above the excerpt
     const titleH = body.previousElementSibling ? body.previousElementSibling.offsetHeight + 6 : 0;
     const target = Math.max(72, aside.offsetHeight - titleH - 26); // 26 ≈ read-more row
