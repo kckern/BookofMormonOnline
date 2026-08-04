@@ -4,30 +4,10 @@ import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import { useAppController } from "src/contexts/AppControllerContext";
 import { label } from "src/models/Utils";
 import Masonry from "react-masonry-css";
-import { tileRegistry } from "./tiles/registry";
-import PersonProfileTile from "./tiles/PersonProfileTile";
-import PlaceProfileTile from "./tiles/PlaceProfileTile";
-import WitnessTile from "./tiles/WitnessTile";
-import ImageArtTile from "./tiles/ImageArtTile";
-import ChiasmusTile from "./tiles/ChiasmusTile";
-import MapTile from "./tiles/MapTile";
+import { tileRegistry, reservePool, batchTiles } from "./tiles/registry";
 import "./Sampler.css";
 import "./Sampler.m.css";
 
-// Reserve tiles: NOT rendered by default. The balancer measures the left rail
-// against the masonry and inserts reserves onto the shorter side until the two
-// bottom out together. Cheap/relevant tiles first; the map (heavy, lazy) last
-// and always into the masonry (below the fold). `data` names a payload field
-// the tile reads via its `data` prop; profiles/art read the whole payload.
-const RESERVE_POOL = [
-  { key: "personProfile", component: PersonProfileTile, isReady: (p) => (p?.people?.length || 0) > 14 },
-  { key: "witness",       component: WitnessTile,       dataKey: "witnesses", isReady: (p) => (p?.witnesses?.length || 0) > 0 },
-  { key: "placeProfile",  component: PlaceProfileTile,  isReady: (p) => (p?.places?.length || 0) > 11 },
-  { key: "artFill1",      component: ImageArtTile,      props: { artIndex: 1 }, isReady: (p) => (p?.art?.length || 0) > 1 },
-  { key: "chiasmus2",     component: ChiasmusTile,      props: { seed: 0 }, seedOffset: 97, isReady: () => true },
-  { key: "artFill2",      component: ImageArtTile,      props: { artIndex: 2 }, isReady: (p) => (p?.art?.length || 0) > 2 },
-  { key: "map",           component: MapTile,           isReady: () => true, mainOnly: true },
-];
 const MAX_RESERVES = 5;
 
 /** Session-stable seed: same page on refresh/back, new sample next session. */
@@ -62,21 +42,8 @@ const FIXED_TAIL = ["mapstory"];
 // ---- infinite scroll -------------------------------------------------------
 // The fixed panels (rail: reading plan → narration → contents → community; top:
 // people) and the first tile batch render once. Past that, the page grows by
-// appending fresh batches: each is a homesampler call under a NEW seed —
-// distinct random people/places/art/commentary/history/fax — sampled in the
-// background and revealed as the reader nears the bottom. These are the
-// repeatable content tile types; fixed/live ones (reading plan, narration,
-// contents, community) are excluded.
-const INFINITE_REGISTRY_KEYS = ["art", "commentary", "commentary2", "commentary3", "history", "fax", "faxVerse", "places", "biblephrases", "chiasmus", "text", "notes"];
-const BATCH_TILES = [
-  ...tileRegistry
-    .filter((t) => INFINITE_REGISTRY_KEYS.includes(t.key))
-    .map((t) => ({ key: t.key, component: t.component, isReady: t.isReady, span: t.span })),
-  { key: "personProfile", component: PersonProfileTile, isReady: (p) => (p?.people?.length || 0) > 0, span: "tile-personProfile" },
-  { key: "placeProfile",  component: PlaceProfileTile,  isReady: (p) => (p?.places?.length || 0) > 0, span: "tile-placeProfile" },
-  { key: "witness",       component: WitnessTile, dataKey: "witnesses", isReady: (p) => (p?.witnesses?.length || 0) > 0, span: "tile-witness" },
-  { key: "artB",          component: ImageArtTile, props: { artIndex: 1 }, isReady: (p) => (p?.art?.length || 0) > 1, span: "tile-art" },
-];
+// appending fresh batches under new seeds. The repeatable tile types are
+// `batchTiles`, imported from the registry.
 const MAX_BATCHES = 30; // backstop against a runaway fetch loop; effectively infinite for a reader
 const nextBatchSeed = (s) => ((s + 1013904223) % 2147483647) || 1;
 
@@ -195,7 +162,7 @@ export default function Sampler() {
     if (Math.abs(delta) < THRESHOLD) return;
     const shorter = delta > 0 ? "rail" : "main";
     const used = new Set(reserves.map((r) => r.key));
-    const next = RESERVE_POOL.find(
+    const next = reservePool.find(
       (r) => !used.has(r.key) && r.isReady(payload) && !(r.mainOnly && shorter === "rail"),
     );
     if (!next) return;
@@ -211,7 +178,7 @@ export default function Sampler() {
   }, [payload]);
 
   const renderReserve = ({ key }) => {
-    const def = RESERVE_POOL.find((r) => r.key === key);
+    const def = reservePool.find((r) => r.key === key);
     if (!def || !payload) return null;
     const Tile = def.component;
     const props = { ...(def.props || {}), payload };
@@ -239,7 +206,7 @@ export default function Sampler() {
         if (!mountedRef.current) return;
         setLoadingMore(false);
         if (r?.error || !Array.isArray(r?.homesampler)) return;
-        reserveRef.current = { payload: assemblePayload(r), tiles: shuffle(BATCH_TILES) };
+        reserveRef.current = { payload: assemblePayload(r), tiles: shuffle(batchTiles) };
         if (atBottomRef.current) maybeLoadMore();
       })
       .catch(() => { fetchingRef.current = false; if (mountedRef.current) setLoadingMore(false); });
