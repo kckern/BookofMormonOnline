@@ -8,7 +8,7 @@ import { flatten, clampWords } from "./textUtils";
  * Featured document, structured: thumb · title · provenance · lead paragraph ·
  * REAL Key-Points bullets (parsed from the teaser's list markup) · citation.
  */
-const parseTeaser = (html) => {
+export const parseTeaser = (html) => {
   const raw = html || "";
   const bullets = [...raw.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)]
     .map((m) => flatten(m[1]))
