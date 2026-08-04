@@ -45,6 +45,13 @@ table. Until they do, those strings render as their raw key.
 | `members` | Members | new |
 | `menu_home` | (existing) | exists |
 | `menu_community` | Community | new |
+| `mapstory_play` | Play journey | new |
+| `mapstory_pause` | Pause journey | new |
+| `mapstory_summary` | Story summary | new |
+| `mapstory_move` | Move $1 | new |
+| `mapstory_detached` | not continuous | new |
+| `mapstory_detached_title` | This move does not continue from the previous one | new |
+| `mapstory_meta` | $1 moves · $2 places | new |
 
 ## Notes
 
@@ -57,5 +64,10 @@ table. Until they do, those strings render as their raw key.
   `menu_community`) and `contents` are marked **verify**: they are common enough
   words that a row may already exist, but neither is referenced through
   `label(...)` outside the sampler, and no backend was reachable to confirm.
+- The `mapstory_*` keys back the map-story tile (`tiles/MapStoryTile.js`,
+  `tiles/MapStoryCard.js`). `mapstory_move` and `mapstory_meta` use `$1`/`$2`
+  insert placeholders (e.g. `label("mapstory_meta", [moveCount, stopCount])`).
+  They are seeded by `backend/scripts/seed-sampler-labels.mjs`; until that runs
+  against a writable DB they render as their raw keys.
 - To confirm membership against a running backend:
   `curl -s http://localhost:5005/en -H 'content-type: application/json' -d '{"query":"{labels{key val}}"}'`

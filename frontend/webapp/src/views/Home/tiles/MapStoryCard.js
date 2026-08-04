@@ -1,6 +1,7 @@
 import React from "react";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import { openScripture } from "./ScripturePopup";
+import { label } from "src/models/Utils";
 
 // Avatars run 63–233 KB each (group portraits like `nephites` are the heavy
 // ones) and a real move carries up to five travelers. Cap what renders and let
@@ -37,8 +38,8 @@ export function MapStoryMoveCard({ move, near }) {
           {placeLabel(move.endName, move.end)}
         </div>
         {move.detached ? (
-          <span className="mapStoryDetached" title="This move does not continue from the previous one">
-            not continuous
+          <span className="mapStoryDetached" title={label("mapstory_detached_title")}>
+            {label("mapstory_detached")}
           </span>
         ) : null}
         {move.ref ? (
@@ -79,7 +80,7 @@ export function MapStoryTitleCard({ title, description, stopCount, moveCount }) 
         <div className="mapStoryTitleCardHeading">{title}</div>
         {description ? <div className="mapStoryDesc">{description}</div> : null}
         <div className="mapStoryTitleCardMeta">
-          {moveCount} moves · {stopCount} places
+          {label("mapstory_meta", [moveCount, stopCount])}
         </div>
       </div>
     </div>

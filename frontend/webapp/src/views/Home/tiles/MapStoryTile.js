@@ -99,7 +99,7 @@ export default function MapStoryTile({ data }) {
           type="button"
           className="mapStoryPlayToggle"
           onClick={() => setPaused((p) => !p)}
-          aria-label={paused ? "Play journey" : "Pause journey"}
+          aria-label={paused ? label("mapstory_play") : label("mapstory_pause")}
         >
           {paused ? "▶" : "❚❚"}
         </button>
@@ -144,7 +144,7 @@ export default function MapStoryTile({ data }) {
               type="button"
               className={`mapStoryDot${i === step ? " isActive" : ""}`}
               onClick={() => pickStep(i)}
-              aria-label={i === moves.length ? "Story summary" : `Move ${i + 1}`}
+              aria-label={i === moves.length ? label("mapstory_summary") : label("mapstory_move", [i + 1])}
               aria-current={i === step ? "step" : undefined}
             />
           </li>
