@@ -5,7 +5,7 @@ import { detectReferences } from "scripture-guide";
 import { label } from "src/models/Utils";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import ScriptureExcerpt, { readPath } from "src/views/_Common/ScriptureExcerpt";
-import { openScripture } from "src/views/_Common/ScripturePopup";
+import { openScripture } from "./ScripturePopup";
 
 // Parse the note HTML, turning detectReferences' <a class="scripture_link">
 // tags into clickable spans that open the app-wide scripture popup.
