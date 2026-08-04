@@ -1,4 +1,4 @@
-import { verbLabel } from "../xrelVerbs";
+import { verbLabel, tagLabel } from "../xrelVerbs";
 
 jest.mock("src/models/Utils", () => ({ label: (k) => k }));
 
@@ -35,5 +35,20 @@ describe("verbLabel before the dictionary loads", () => {
     // eslint-disable-next-line global-require
     const { verbLabel: hitVerbLabel } = require("../xrelVerbs");
     expect(hitVerbLabel("wielded-by")).toBe("wielded by");
+  });
+});
+
+describe("tagLabel", () => {
+  test("keeps joining words lowercase", () => {
+    expect(tagLabel("brother-of-jared")).toBe("Brother of Jared");
+  });
+  test("title-cases a plain slug", () => {
+    expect(tagLabel("lamanites")).toBe("Lamanites");
+    expect(tagLabel("joseph-smith")).toBe("Joseph Smith");
+    expect(tagLabel("lord")).toBe("Lord");
+  });
+  test("is safe on empty input", () => {
+    expect(tagLabel(null)).toBe("");
+    expect(tagLabel("")).toBe("");
   });
 });

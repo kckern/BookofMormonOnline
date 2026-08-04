@@ -3,7 +3,7 @@ import React, { useEffect } from "react";
 import ReactTooltip from "react-tooltip";
 import { useAppController } from "src/contexts/AppControllerContext";
 import { label } from "src/models/Utils";
-import { verbLabel } from "./xrelVerbs";
+import { verbLabel, tagLabel } from "./xrelVerbs";
 import EntityThumb from "./EntityThumb";
 import "./XrelSection.css";
 
@@ -93,7 +93,9 @@ export default function XrelSection({ xrels, showEmpty, noHeading }) {
           <EntityThumb type={assetType} slug={x.dst_slug} name={x.dst_name} size="2.5rem" />
         )}
         <div className="xrel-text">
-          <span className={clickable ? "xrel-name nameLink" : "xrel-name xrel-tag"}>{x.dst_name}</span>
+          <span className={clickable ? "xrel-name nameLink" : "xrel-name xrel-tag"}>
+          {clickable ? x.dst_name : tagLabel(x.dst_name)}
+        </span>
           {x.note && <div className="xrel-note">{x.note}</div>}
         </div>
       </li>
