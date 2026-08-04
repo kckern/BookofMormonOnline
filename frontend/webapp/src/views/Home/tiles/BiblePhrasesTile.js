@@ -15,7 +15,7 @@ const ISAIAH = [17656, 18947];
 const eligiblePairs = index.filter(([, kjv]) => kjv < ISAIAH[0] || kjv > ISAIAH[1]);
 
 /** Common phrases (4+ words shared verbatim) marked in both passages. */
-const markShared = (a, b) => {
+export const markShared = (a, b) => {
   const diffs = dmp.diff_main(a.toLowerCase(), b.toLowerCase());
   dmp.diff_cleanupSemantic(diffs);
   let posA = 0;
