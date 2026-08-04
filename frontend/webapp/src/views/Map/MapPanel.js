@@ -442,7 +442,7 @@ if(isMobile()) return null;
         </div>
         <div className="info">{Parser((info||"").replace(/([0-9])/, "<sup>$1</sup>"))}</div>
       </CardHeader>
-        <img src={`${assetUrl}/places/${slug}`} alt={title} />
+        {slug && <img src={`${assetUrl}/places/${slug}`} alt={title} />}
       {adminPanel}
       <CardBody>
         {body}
