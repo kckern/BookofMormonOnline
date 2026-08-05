@@ -5,7 +5,7 @@
 
 import { createRequire } from "module";
 import crypto from "crypto";
-import { gql, J, JA } from "./gql.mjs";
+import { gql } from "./gql.mjs";
 
 // socket.io-client lives in the backend workspace (repo root has no manifest).
 // Repo-relative so the tool is portable (…/scripts/study/ → repo/backend/).
@@ -32,10 +32,8 @@ export class UserSession {
     this._watch = null;
   }
 
-  // ---- HTTP ----
-  // Community/Feed resolvers read a `token:"..."` ARG; Messenger resolvers read
-  // the bearer header. We send the bearer here and pass the arg where needed.
-  gql(query) { return gql(this.base, query, { token: this.token }); }
+  // HTTP as this user (bearer + optional variables).
+  gql(query, variables) { return gql(this.base, query, { variables, token: this.token }); }
 
   // ---- socket lifecycle ----
   connect(timeoutMs = 8000) {
@@ -105,71 +103,75 @@ export class UserSession {
 
   // ---- HTTP surface: Messenger ----
   async createChannel({ name, customType = "group", description = "", userIds = [], operatorIds = [] }) {
-    const q = `mutation{ messengerCreateChannel(name:${J(name)}, customType:${J(customType)}, description:${J(description)}, userIds:${JA(userIds)}, operatorIds:${JA(operatorIds)}){ channel_url name custom_type } }`;
-    return (await this.gql(q)).messengerCreateChannel;
+    const q = `mutation($n:String,$ct:String,$d:String,$u:[String!],$o:[String]){ messengerCreateChannel(name:$n, customType:$ct, description:$d, userIds:$u, operatorIds:$o){ channel_url name custom_type } }`;
+    return (await this.gql(q, { n: name, ct: customType, d: description, u: userIds, o: operatorIds })).messengerCreateChannel;
   }
   async getMessages(channelUrl, limit = 30) {
-    const q = `{ messengerMessages(channelUrl:${J(channelUrl)}, limit:${limit}){ message_id message user{ user_id nickname is_bot } parent_message_id created_at } }`;
-    return (await this.gql(q)).messengerMessages || [];
+    const q = `query($c:String,$l:Int){ messengerMessages(channelUrl:$c, limit:$l){ message_id message user{ user_id nickname is_bot } parent_message_id thread_info{ reply_count } created_at } }`;
+    return (await this.gql(q, { c: channelUrl, l: limit })).messengerMessages || [];
   }
   async getThread(parentMessageId) {
-    const q = `{ messengerThreadMessages(parentMessageId:${J(parentMessageId)}){ message_id message user{ nickname } created_at } }`;
-    return (await this.gql(q)).messengerThreadMessages || [];
+    const q = `query($p:String){ messengerThreadMessages(parentMessageId:$p){ message_id message user{ nickname } created_at } }`;
+    return (await this.gql(q, { p: parentMessageId })).messengerThreadMessages || [];
   }
   async getChannel(channelUrl) {
-    const q = `{ messengerChannel(channelUrl:${J(channelUrl)}){ channel_url name custom_type member_count members{ user_id nickname is_bot } } }`;
-    return (await this.gql(q)).messengerChannel;
+    const q = `query($c:String){ messengerChannel(channelUrl:$c){ channel_url name custom_type member_count members{ user_id nickname is_bot } } }`;
+    return (await this.gql(q, { c: channelUrl })).messengerChannel;
   }
   async myChannels() {
-    const q = `{ messengerMyChannels(userId:${J(this.userId)}){ channel_url name custom_type member_count } }`;
-    return (await this.gql(q)).messengerMyChannels || [];
+    const q = `query($u:String){ messengerMyChannels(userId:$u){ channel_url name custom_type member_count } }`;
+    return (await this.gql(q, { u: this.userId })).messengerMyChannels || [];
   }
   async invite(channelUrl, userIds) {
-    const q = `mutation{ messengerInviteMembers(channelUrl:${J(channelUrl)}, userIds:${JA(userIds)}) }`;
-    return (await this.gql(q)).messengerInviteMembers;
+    const q = `mutation($c:String,$u:[String]){ messengerInviteMembers(channelUrl:$c, userIds:$u) }`;
+    return (await this.gql(q, { c: channelUrl, u: userIds })).messengerInviteMembers;
   }
   async acceptInvite(channelUrl) {
-    const q = `mutation{ messengerAcceptInvitation(channelUrl:${J(channelUrl)}, userId:${J(this.userId)}) }`;
-    return (await this.gql(q)).messengerAcceptInvitation;
+    const q = `mutation($c:String,$u:String){ messengerAcceptInvitation(channelUrl:$c, userId:$u) }`;
+    return (await this.gql(q, { c: channelUrl, u: this.userId })).messengerAcceptInvitation;
   }
   async setRole(channelUrl, userId, role) {
-    const q = `mutation{ messengerUpdateMemberRole(channelUrl:${J(channelUrl)}, userId:${J(userId)}, role:${J(role)}) }`;
-    return (await this.gql(q)).messengerUpdateMemberRole;
+    const q = `mutation($c:String,$u:String,$r:String){ messengerUpdateMemberRole(channelUrl:$c, userId:$u, role:$r) }`;
+    return (await this.gql(q, { c: channelUrl, u: userId, r: role })).messengerUpdateMemberRole;
   }
   async ban(channelUrl, userId) {
-    const q = `mutation{ messengerBanMember(channelUrl:${J(channelUrl)}, userId:${J(userId)}) }`;
-    return (await this.gql(q)).messengerBanMember;
+    const q = `mutation($c:String,$u:String){ messengerBanMember(channelUrl:$c, userId:$u) }`;
+    return (await this.gql(q, { c: channelUrl, u: userId })).messengerBanMember;
+  }
+  async removeMember(channelUrl, userId) {
+    const q = `mutation($c:String,$u:String){ messengerRemoveMember(channelUrl:$c, userId:$u) }`;
+    return (await this.gql(q, { c: channelUrl, u: userId })).messengerRemoveMember;
   }
 
   // ---- HTTP surface: Community / Feed (token ARG) ----
   async joinOpenGroup(url) {
-    const q = `mutation{ joinOpenGroup(token:${J(this.token)}, url:${J(url)}){ isSuccess msg channel } }`;
-    return (await this.gql(q)).joinOpenGroup;
+    const q = `mutation($t:String,$u:String){ joinOpenGroup(token:$t, url:$u){ isSuccess msg channel } }`;
+    return (await this.gql(q, { t: this.token, u: url })).joinOpenGroup;
   }
   async requestToJoin(url) {
-    const q = `mutation{ requestToJoinGroup(token:${J(this.token)}, url:${J(url)}){ isSuccess msg channel } }`;
-    return (await this.gql(q)).requestToJoinGroup;
+    const q = `mutation($t:String,$u:String){ requestToJoinGroup(token:$t, url:$u){ isSuccess msg channel } }`;
+    return (await this.gql(q, { t: this.token, u: url })).requestToJoinGroup;
   }
   async homegroups(grouping = "") {
-    const q = `{ homegroups(token:${J(this.token)}, grouping:${J(grouping)}){ url name privacy members{ user_id nickname } } }`;
-    return (await this.gql(q)).homegroups || [];
+    const q = `query($t:String,$g:String){ homegroups(token:$t, grouping:$g){ url name privacy members{ user_id nickname } } }`;
+    return (await this.gql(q, { t: this.token, g: grouping })).homegroups || [];
   }
   async homefeed() {
-    const q = `{ homefeed(token:${J(this.token)}){ feed{ id msg user{ nickname } channel_url replycount } } }`;
-    return (await this.gql(q)).homefeed;
+    const q = `query($t:String){ homefeed(token:$t){ feed{ id msg user{ nickname } channel_url replycount } } }`;
+    return (await this.gql(q, { t: this.token })).homefeed;
   }
   async leaderboard() {
-    const q = `{ leaderboard(token:${J(this.token)}){ currentProgress{ nickname progress } recentFinishers{ nickname } } }`;
-    return (await this.gql(q)).leaderboard;
+    const q = `query($t:String){ leaderboard(token:$t){ currentProgress{ nickname progress } recentFinishers{ nickname } } }`;
+    return (await this.gql(q, { t: this.token })).leaderboard;
   }
   async botlist(channelUrl) {
-    const q = `{ botlist(channel:${J(channelUrl)}){ id name enabled } }`;
-    return (await this.gql(q)).botlist || [];
+    const q = `query($c:String){ botlist(channel:$c){ id name enabled } }`;
+    return (await this.gql(q, { c: channelUrl })).botlist || [];
   }
 
   // ---- teardown (self) ----
   async signout() {
-    const q = `mutation{ signout(token:${J(this.token)}) }`;
-    try { return (await this.gql(q)).signout; } catch { return false; }
+    const q = `mutation($t:String){ signout(token:$t) }`;
+    try { return (await this.gql(q, { t: this.token })).signout; } catch { return false; }
   }
 }

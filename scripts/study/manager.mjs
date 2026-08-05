@@ -7,7 +7,7 @@ import fs from "fs";
 import path from "path";
 import crypto from "crypto";
 import { fileURLToPath } from "url";
-import { gql, J } from "./gql.mjs";
+import { gql } from "./gql.mjs";
 import { UserSession } from "./session.mjs";
 
 // Portable: repo-relative (…/scripts/study/manager.mjs → repo/.study-cli), with
@@ -56,8 +56,9 @@ export class SessionManager {
     if (!reused) {
       token = genToken();
       await this._register(username, name, token);
-      try { await gql(this.base, `{ tokensignin(token:${J(token)}){ isSuccess } }`); }
-      catch (e) { console.warn(`  ⚠ tokensignin(${username}) failed: ${e.message} — socket auth may fail`); }
+      try {
+        await gql(this.base, `query($t:String){ tokensignin(token:$t){ isSuccess } }`, { variables: { t: token } });
+      } catch (e) { console.warn(`  ⚠ tokensignin(${username}) failed: ${e.message} — socket auth may fail`); }
     }
 
     this.roster[name] = { username, token };
@@ -70,25 +71,25 @@ export class SessionManager {
   // Register `token` for `username`: signup creates the user; if the bom_user
   // already exists (ER_DUP_ENTRY), signin upserts the new token instead.
   async _register(username, name, token) {
-    const signup = `mutation{ signup(token:${J(token)}, username:${J(username)}, password:"simpass", name:${J(name)}, email:"", zip:""){ isSuccess msg } }`;
+    const signup = `mutation($t:String,$u:String,$n:String){ signup(token:$t, username:$u, password:"simpass", name:$n, email:"", zip:""){ isSuccess msg } }`;
     let res;
-    try { res = (await gql(this.base, signup)).signup; } catch (e) { res = { isSuccess: false, msg: e.message }; }
+    try { res = (await gql(this.base, signup, { variables: { t: token, u: username, n: name } })).signup; } catch (e) { res = { isSuccess: false, msg: e.message }; }
     if (res.isSuccess) return;
     if (/ER_DATA_TOO_LONG/.test(res.msg || ""))
       throw new Error(`signup failed (${res.msg}): the CLI must POST to '/' not '/graphql'. Check --url.`);
     if (!/DUP/i.test(res.msg || ""))
       throw new Error(`signup failed for ${username}: ${res.msg}`);
     // Existing user → register this token via signin (a Query; verifies the sim password).
-    const signin = `{ signin(token:${J(token)}, username:${J(username)}, password:"simpass"){ isSuccess msg } }`;
+    const signin = `query($t:String,$u:String){ signin(token:$t, username:$u, password:"simpass"){ isSuccess msg } }`;
     let si;
-    try { si = (await gql(this.base, signin)).signin; } catch (e) { si = { isSuccess: false, msg: e.message }; }
+    try { si = (await gql(this.base, signin, { variables: { t: token, u: username } })).signin; } catch (e) { si = { isSuccess: false, msg: e.message }; }
     if (!si.isSuccess) throw new Error(`signin for existing ${username} failed: ${si.msg}`);
   }
 
   async _tokenValid(token) {
     try {
-      const q = `{ tokensignin(token:${J(token)}){ isSuccess } }`;
-      return !!(await gql(this.base, q)).tokensignin?.isSuccess;
+      const q = `query($t:String){ tokensignin(token:$t){ isSuccess } }`;
+      return !!(await gql(this.base, q, { variables: { t: token } })).tokensignin?.isSuccess;
     } catch { return false; }
   }
 
@@ -107,8 +108,8 @@ export class SessionManager {
   // the local roster. bom_user rows remain (harmless, namespaced sim_*).
   async cleanup() {
     const removed = [];
-    for (const [name, { username, token }] of Object.entries(this.roster)) {
-      try { await gql(this.base, `mutation{ signout(token:${J(token)}) }`); removed.push(username); } catch { /* ignore */ }
+    for (const [, { username, token }] of Object.entries(this.roster)) {
+      try { await gql(this.base, `mutation($t:String){ signout(token:$t) }`, { variables: { t: token } }); removed.push(username); } catch { /* ignore */ }
     }
     try { fs.rmSync(ROSTER_FILE, { force: true }); } catch { /* ignore */ }
     this.roster = {}; this.disconnectAll(); this.sessions.clear();
