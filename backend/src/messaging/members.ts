@@ -206,6 +206,32 @@ export async function setMemberMuted(
   return Number(result.numUpdatedRows) > 0;
 }
 
+export interface Membership {
+  role: 'operator' | 'member';
+  state: 'joined' | 'invited' | 'requested' | 'banned';
+  is_muted: boolean;
+}
+
+/** Single-row membership lookup — the write-authz primitive. null = no row. */
+export async function getMembership(
+  db: Kysely<DB>,
+  channelUrl: string,
+  userId: string,
+): Promise<Membership | null> {
+  const row = await db
+    .selectFrom('messenger_members')
+    .select(['role', 'state', 'is_muted'])
+    .where('channel_url', '=', channelUrl)
+    .where('user_id', '=', userId)
+    .executeTakeFirst();
+  if (!row) return null;
+  return {
+    role: row.role as Membership['role'],
+    state: row.state as Membership['state'],
+    is_muted: Boolean(row.is_muted),
+  };
+}
+
 /** True when the member is currently muted in the channel. */
 export async function isMemberMuted(
   db: Kysely<DB>,
