@@ -17,3 +17,12 @@ describe("resolveNoteRefs — qualified note-refs", () => {
     expect(resolveNoteRefs("Alma 5:14 near the end", null)).toEqual([]);
   });
 });
+
+describe("resolveNoteRefs — in-context implied book", () => {
+  test("bare <ref>n inherits a book named earlier in the same note", () => {
+    const out = resolveNoteRefs("As in 1 Nephi 3:7, see 5:21n.", null);
+    const bare = out.find((r) => r.rawText.replace(/\s/g, "").endsWith("5:21"));
+    expect(bare).toBeTruthy();
+    expect(bare.verseId).toBe(31236); // 1 Nephi 5:21
+  });
+});
