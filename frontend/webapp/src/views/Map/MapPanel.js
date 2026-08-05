@@ -127,7 +127,7 @@ export function MapPanel() {
     placeDetails?.description || "",
     (scripture) => { if (!scripture) return;
        return `<a className="scripture_link">${scripture}</a>` }
-       , determineLanguage()
+       , { language: determineLanguage(), chainAcrossMarkers: false }
        );
 
 

@@ -860,7 +860,7 @@ function replaceURLWithHTMLLinks(text) {
     if (!scripture) return;
     scriptures.push(scripture);
     return `<a className="scripture_link">${scripture}</a>`
-  }, lang,
+  }, { language: lang, chainAcrossMarkers: false },
   );
   //dedupe
   scriptures = [...new Set(scriptures)];

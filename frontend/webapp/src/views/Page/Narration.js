@@ -598,7 +598,7 @@ function SingleNoteItem({ item }) {
               </>
             )}
             {renderPersonPlaceHTML(
-              detectReferences(text, scriptureLinks),
+              detectReferences(text, scriptureLinks, { chainAcrossMarkers: false }),
               null,
               (ref) => setActiveScripture(ref)
             )}

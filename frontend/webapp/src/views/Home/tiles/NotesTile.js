@@ -50,8 +50,10 @@ export default function NotesTile({ data }) {
   // lead the bubble with it and highlight it in the passage above.
   const anchor = note.title || null;
   // Detect scripture refs (incl. abbreviations like "Mos 1.13") in the note body.
-  // NOTE: do NOT pass a lang arg here — it corrupts abbreviation matching.
-  const noteHtml = detectReferences(note.text || "", (s) => `<a class="scripture_link">${s}</a>`);
+  // NOTE: do NOT pass a lang arg here — it corrupts abbreviation matching. The
+  // options object carries no language, so abbreviation matching is unaffected;
+  // chainAcrossMarkers:false stops "see also"/"cf." being swallowed (>=1.0.95).
+  const noteHtml = detectReferences(note.text || "", (s) => `<a class="scripture_link">${s}</a>`, { chainAcrossMarkers: false });
   return (
     <div className="samplerTileInner notesTile">
       <h3 className="tileHeading">{label("notes")}</h3>
