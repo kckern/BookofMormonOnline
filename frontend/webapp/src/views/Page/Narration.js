@@ -21,6 +21,7 @@ import { NarrationProvider, useNarration } from "src/contexts/NarrationContext";
 import { extractTagIds } from "./tagIds";
 import { titleToHighlightPattern } from "./highlightPattern";
 import { pushDocTitle, popDocTitle } from "./docTitle";
+import { buildNoteBodyHtml } from "./noteRefs";
 import { ScriptureRefGrid } from "../_Common/ScriptureRefGrid";
 
 function ChronoRow({ chrono }) {
@@ -578,33 +579,45 @@ function NotesPanel() {
 
 function SingleNoteItem({ item }) {
   const [activeScripture, setActiveScripture] = useState(null);
+  const [siblingNotes, setSiblingNotes] = useState(null); // null=closed, []=loading/none, [..]=open
 
-  const scriptureLinks = (scripture) => {
-    return `<a className="scripture_link">${scripture}</a>`;
+  const source = item.source || (item.id ? item.id.substr(5, 3) : "");
+  const text = item.text.replace(/<\/*p.*?>/g, "");
+  const bodyHtml = buildNoteBodyHtml(text, item.verse_id, source);
+
+  const onBodyClick = (e) => {
+    const a = e.target.closest && e.target.closest("a.note_ref");
+    if (!a) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const verse = parseInt(a.getAttribute("data-verse"), 10);
+    const src = a.getAttribute("data-source");
+    if (siblingNotes) return setSiblingNotes(null); // toggle closed
+    BoMOnlineAPI({ notesForRef: { source: src, verse_id: verse } }).then((resp) => {
+      const notes = resp?.notesForRef || [];
+      if (notes.length) setSiblingNotes(notes);
+      else setActiveScripture(generateReference(verse, determineLanguage())); // fallback: verse text
+    });
   };
 
-  const text = item.text.replace(/<\/*p.*?>/g, "");
   return (
     <>
-      <div key={item.id} className="noteItem">
+      <div key={item.id} className="noteItem" onClick={onBodyClick}>
         <div className="noteSource">
-          <img src={`${assetUrl}/source/cover/${item.id.substr(5, 3)}`} alt="Note Source" />
+          <img src={`${assetUrl}/source/cover/${(source || "").padStart(3, "0")}`} alt="Note Source" />
         </div>
         <div className="noteText">
           <span>
-            {item.title && (
-              <>
-                <em className="focusQuote">{item.title}</em> •{" "}
-              </>
-            )}
-            {renderPersonPlaceHTML(
-              detectReferences(text, scriptureLinks, { chainAcrossMarkers: false }),
-              null,
-              (ref) => setActiveScripture(ref)
-            )}
+            {item.title && (<><em className="focusQuote">{item.title}</em> •{" "}</>)}
+            {renderPersonPlaceHTML(bodyHtml, null, (ref) => setActiveScripture(ref))}
           </span>
         </div>
       </div>
+      {siblingNotes && siblingNotes.length > 0 && (
+        <div className="siblingNotes">
+          {siblingNotes.map((n) => (<SingleNoteItem key={n.id} item={n} />))}
+        </div>
+      )}
       <ScripturePanelSingle scriptureData={{ ref: activeScripture }} />
     </>
   );
