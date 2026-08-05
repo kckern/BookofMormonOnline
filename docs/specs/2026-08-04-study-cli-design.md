@@ -93,3 +93,23 @@ Validated against the real "Reformers Discuss the Book of Mormon" group (`36eddc
 ## Cleanup
 
 A `cleanup` verb deletes `sim_*` users' `bom_user_token` rows (and optionally the scratch groups they created). Sim accounts are clearly namespaced so they're identifiable in `bom_user`.
+
+## Refactors (2026-08-05)
+
+Deferred grouchy-review items, done via subagent-driven TDD (plan:
+`docs/plans/2026-08-05-study-cli-refactors.md`):
+- **One shared arg parser** (`scripts/study/argparse.mjs`) used by both the CLI
+  and the REPL (was two drifting grammars).
+- **GraphQL variables** everywhere (`gql(base, query, {variables, token})`);
+  removed all `J()`/`JA()` string interpolation from `session.mjs`/`manager.mjs`
+  (kills the numeric-injection smell).
+- **`msgs` shows `(N replies)`** via `thread_info.reply_count`.
+- **Name-based `--group`** targeting (`scripts/study/groups.mjs` — url pass-through,
+  case-insensitive name prefix match, throws on ambiguous/no-match).
+- **`cleanup` empties scratch groups** it created (recorded in
+  `.study-cli/created.json`; removes sim members — no delete-channel mutation
+  exists — then revokes tokens).
+
+**Test entry point:** `node --test scripts/study/*.test.mjs` (pass explicit
+globs; `node --test <dir>` is broken on this Node 24). Pure helpers are unit
+tested; network paths are verified by running `scenarios/demo.yaml`.
