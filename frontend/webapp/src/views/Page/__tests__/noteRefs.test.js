@@ -26,3 +26,23 @@ describe("resolveNoteRefs — in-context implied book", () => {
     expect(bare.verseId).toBe(31236); // 1 Nephi 5:21
   });
 });
+
+describe("resolveNoteRefs — host-seeded bare refs", () => {
+  const HOST_1NE = 31135; // a verse in 1 Nephi -> host book = "1 Nephi"
+
+  test("truly-bare <ref>n seeds the host book", () => {
+    const out = resolveNoteRefs("see 5:21n.", HOST_1NE);
+    expect(out).toHaveLength(1);
+    expect(out[0].verseId).toBe(31236); // 1 Nephi 5:21
+  });
+
+  test("malformed explicit-book ref (invalid chapter) is NOT host-seeded", () => {
+    // Jacob has 7 chapters; "Jacob 22:30" is invalid. Host is in 1 Nephi (has ch 22).
+    // Must NOT fabricate 1 Nephi 22:30 — render as plain text.
+    expect(resolveNoteRefs("see Jacob 22.30n.", HOST_1NE)).toEqual([]);
+  });
+
+  test("no host verse and no in-text book -> nothing", () => {
+    expect(resolveNoteRefs("see 5:21n.", null)).toEqual([]);
+  });
+});
