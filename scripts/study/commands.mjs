@@ -62,7 +62,8 @@ export const VERBS = {
   msgs: {
     help: "list recent messages — {group?, limit?}",
     run: async (s, p, ctx) => {
-      const msgs = await s.getMessages(p.group || ctx.vars.group, p.limit || 20);
+      // CLI/REPL flags arrive as strings; the GraphQL $limit is Int-typed.
+      const msgs = await s.getMessages(p.group || ctx.vars.group, Number(p.limit) || 20);
       for (const m of msgs) {
         const replies = m.thread_info && m.thread_info.reply_count ? ` (${m.thread_info.reply_count} replies)` : "";
         ctx.log(`  [${m.message_id}] ${m.user?.nickname || m.user?.user_id}${m.user?.is_bot ? "🤖" : ""}: ${(m.message || "").slice(0, 100)}${replies}`);

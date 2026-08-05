@@ -123,26 +123,40 @@ export class SessionManager {
   // Also removes sim members from any recorded scratch channels (no delete-channel
   // mutation exists, so "teardown" = empty the group of sim members).
   async cleanup() {
-    // Best-effort: no delete-channel mutation exists, so empty the scratch
-    // groups by removing every sim member, then revoke tokens.
-    const simUserIds = Object.values(this.roster).map((r) => md5(r.username));
+    // Best-effort: no delete-channel mutation exists, so empty the scratch groups
+    // of their sim members, then revoke tokens.
+    const simUserIds = new Set(Object.values(this.roster).map((r) => md5(r.username)));
+    // Provision every roster user once so an operator among them can do the kicks.
+    const sessions = [];
+    for (const name of Object.keys(this.roster)) { try { sessions.push(await this.provision(name)); } catch { /* skip */ } }
+
+    const stillNonEmpty = [];
+    let emptied = 0;
     for (const channelUrl of this.createdChannels) {
-      // Any provisioned session can attempt the removals; operators succeed.
-      for (const [name] of Object.entries(this.roster)) {
-        let s;
-        try { s = await this.provision(name); } catch { continue; }
-        for (const uid of simUserIds) { try { await s.removeMember(channelUrl, uid); } catch { /* not operator / already gone */ } }
-        break; // one session's attempt is enough
+      // Pass 1: remove OTHER sim members first (an operator's calls succeed; a
+      // non-operator's return false harmlessly). Doing self last avoids the
+      // operator kicking itself and losing the rights to remove the rest.
+      for (const s of sessions) for (const uid of simUserIds) {
+        if (uid !== s.userId) { try { await s.removeMember(channelUrl, uid); } catch { /* not operator / gone */ } }
       }
+      // Pass 2: each session removes itself (self-leave is allowed regardless of role).
+      for (const s of sessions) { try { await s.removeMember(channelUrl, s.userId); } catch { /* gone */ } }
+      // Verify: keep the channel on the retry list if any sim member survived.
+      let remaining = simUserIds.size;
+      try { const ch = await sessions[0]?.getChannel(channelUrl); remaining = (ch?.members || []).filter((m) => simUserIds.has(m.user_id)).length; } catch { /* keep pessimistic */ }
+      if (remaining === 0) emptied++; else stillNonEmpty.push(channelUrl);
     }
+
     const removed = [];
     for (const [, { username, token }] of Object.entries(this.roster)) {
       try { await gql(this.base, `mutation($t:String){ signout(token:$t) }`, { variables: { t: token } }); removed.push(username); } catch { /* ignore */ }
     }
     try { fs.rmSync(ROSTER_FILE, { force: true }); } catch { /* ignore */ }
-    try { fs.rmSync(path.join(ROSTER_DIR, "created.json"), { force: true }); } catch { /* ignore */ }
-    const emptied = this.createdChannels.length;
-    this.roster = {}; this.createdChannels = []; this.disconnectAll(); this.sessions.clear();
+    // Persist channels that couldn't be emptied so a later cleanup can retry
+    // (re-provisioned sim users keep the same md5 user_id, so still operators).
+    this.createdChannels = stillNonEmpty;
+    this._saveCreated();
+    this.roster = {}; this.disconnectAll(); this.sessions.clear();
     return { removed, emptied };
   }
 }
