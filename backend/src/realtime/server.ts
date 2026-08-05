@@ -218,6 +218,17 @@ export async function initRealtime(httpServer: HttpServer): Promise<Server> {
 
     console.info(`[realtime] connected: ${userId} (${socket.id})`);
 
+    // ── Live-write event handlers (task 2.3) ─────────────────────────────
+    // Register FIRST (synchronous) — before the room-join/presence awaits below.
+    // Otherwise a client that emits immediately after 'connect' races those
+    // awaits and its event is silently dropped (no handler yet → no ack).
+    // Handler registration doesn't depend on room membership.
+    messageHandlers.register(socket, io);
+    reactionHandlers.register(socket, io);
+    typingHandlers.register(socket, io);
+    readHandlers.register(socket, io);
+    actionHandlers.register(socket, io); // study-group sync: fire_action/update_state
+
     try {
       // Join all of the user's channel rooms.
       const channelUrls = await getUserChannelUrls(userId);
@@ -244,13 +255,6 @@ export async function initRealtime(httpServer: HttpServer): Promise<Server> {
       console.error('[realtime] connection setup error:', err);
       // Don't disconnect — the socket still functions for future joins.
     }
-
-    // ── Live-write event handlers (task 2.3) ─────────────────────────────
-    messageHandlers.register(socket, io);
-    reactionHandlers.register(socket, io);
-    typingHandlers.register(socket, io);
-    readHandlers.register(socket, io);
-    actionHandlers.register(socket, io); // study-group sync: fire_action/update_state
 
     socket.on('disconnect', async (reason: string) => {
       console.info(`[realtime] disconnected: ${userId} (${reason})`);
