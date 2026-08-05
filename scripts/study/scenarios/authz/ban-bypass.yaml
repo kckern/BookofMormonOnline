@@ -1,0 +1,29 @@
+# authz/ban-bypass.yaml
+# M-1 audit: confirm or refute whether a banned member can still post to a channel.
+# alice creates a group, invites bob, bob accepts, alice bans bob, bob posts.
+# CONFIRMED if bob's post step succeeds (ack success:true).
+# REFUTED  if bob's post step throws (ack success:false, error:"banned" or similar).
+users: [msga, msgb]
+settle: 800
+steps:
+  - as: msga
+    do: group.create
+    name: "ban bypass test"
+    invite: [msgb]
+    as_var: ch
+  - as: msgb
+    do: accept
+    group: $ch
+  - as: msga
+    do: ban
+    group: $ch
+    user: msgb
+  - as: msgb
+    do: post
+    group: $ch
+    text: "posted after ban — should be blocked"
+    as_var: banned_post
+  - as: msga
+    do: msgs
+    group: $ch
+    limit: 5

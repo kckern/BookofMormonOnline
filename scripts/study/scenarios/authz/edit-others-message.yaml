@@ -1,0 +1,30 @@
+# authz/edit-others-message.yaml
+# M-2 audit: confirm or refute whether a non-owner can edit another user's message.
+# alice posts; bob edits alice's message; alice reads msgs to see if text changed.
+# CONFIRMED if the final msgs step shows bob's edit text instead of alice's original.
+# REFUTED  if the edit step throws (ack success:false) or msgs still show alice's text.
+users: [msga, msgb]
+settle: 800
+steps:
+  - as: msga
+    do: group.create
+    name: "ownership test"
+    invite: [msgb]
+    as_var: ch
+  - as: msgb
+    do: accept
+    group: $ch
+  - as: msga
+    do: post
+    group: $ch
+    text: "alice's message"
+    as_var: m
+  - as: msgb
+    do: edit
+    group: $ch
+    id: $m
+    text: "bob edited alice's message"
+  - as: msga
+    do: msgs
+    group: $ch
+    limit: 5
