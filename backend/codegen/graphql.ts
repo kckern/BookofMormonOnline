@@ -509,18 +509,51 @@ export type Markdown = {
 export type Matter = {
   __typename?: 'Matter';
   aliases?: Maybe<Scalars['String']['output']>;
+  /** concrete | concepts — the source branch of the taxonomy. */
+  branch?: Maybe<Scalars['String']['output']>;
+  /** Fine-grained category (38 values). Retained; `form` is the UI-facing rollup. */
   category?: Maybe<Scalars['String']['output']>;
   description?: Maybe<Scalars['String']['output']>;
+  /** Raw era. `era_culture` is the UI-facing merge of this and provenance. */
   era?: Maybe<Scalars['String']['output']>;
+  /**
+   * Filter axis 2 — era and provenance merged into six values:
+   * Nephite, Lamanite, Jaredite, Israelite/Old World, Christ era, Generic.
+   * "Generic" means no specific culture, not an era.
+   */
+  era_culture?: Maybe<Scalars['String']['output']>;
+  /**
+   * Filter axis 1, level 2 — one of seventeen UI chips (e.g. "Arms & Armor",
+   * "Dwellings & Settlements"). Spans the concrete/concepts divide deliberately.
+   */
+  form?: Maybe<Scalars['String']['output']>;
+  /**
+   * Filter axis 1, level 1 — one of five UI groups:
+   * Natural World, Made Things, Society, Places, Belief & Mind.
+   */
+  form_group?: Maybe<Scalars['String']['output']>;
   guid?: Maybe<Scalars['String']['output']>;
   index?: Maybe<Array<Maybe<Index>>>;
   kind?: Maybe<Scalars['String']['output']>;
   name?: Maybe<Scalars['String']['output']>;
   node_link?: Maybe<Scalars['String']['output']>;
+  /**
+   * Number of scripture references. Backs the Prominence filter axis.
+   * Measures editorial coverage, not textual importance.
+   */
+  nrefs?: Maybe<Scalars['Int']['output']>;
+  /** Raw provenance. See `era_culture`. */
   provenance?: Maybe<Scalars['String']['output']>;
   slug?: Maybe<Scalars['String']['output']>;
   specificity?: Maybe<Scalars['String']['output']>;
   status?: Maybe<Scalars['String']['output']>;
+  /**
+   * Secondary chip value, scoped to `form` — e.g. "Tents", "Swords",
+   * "Nephite Coinage". Null where a form has too few sub-values to warrant a row.
+   */
+  subform?: Maybe<Scalars['String']['output']>;
+  /** Display label for `subform`; curated where the folder is named after a record. */
+  subform_label?: Maybe<Scalars['String']['output']>;
   subtitle?: Maybe<Scalars['String']['output']>;
   tags?: Maybe<Scalars['String']['output']>;
   usage?: Maybe<Scalars['String']['output']>;
@@ -917,8 +950,10 @@ export type Network = {
 export type Note = {
   __typename?: 'Note';
   id?: Maybe<Scalars['String']['output']>;
+  source?: Maybe<Scalars['String']['output']>;
   text?: Maybe<Scalars['String']['output']>;
   title?: Maybe<Scalars['String']['output']>;
+  verse_id?: Maybe<Scalars['Int']['output']>;
 };
 
 export type Notification = {
@@ -2846,18 +2881,25 @@ export type MarkdownResolvers<ContextType = AppContext, ParentType extends Resol
 
 export type MatterResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['Matter'] = ResolversParentTypes['Matter']> = {
   aliases?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  branch?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   category?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   era?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  era_culture?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  form?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  form_group?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   guid?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   index?: Resolver<Maybe<Array<Maybe<ResolversTypes['Index']>>>, ParentType, ContextType>;
   kind?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   name?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   node_link?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  nrefs?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   provenance?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   slug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   specificity?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   status?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  subform?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  subform_label?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   subtitle?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   tags?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   usage?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -3049,8 +3091,10 @@ export type NetworkResolvers<ContextType = AppContext, ParentType extends Resolv
 
 export type NoteResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['Note'] = ResolversParentTypes['Note']> = {
   id?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  source?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   text?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   title?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  verse_id?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
