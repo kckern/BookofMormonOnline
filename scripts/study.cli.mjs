@@ -44,9 +44,12 @@ async function main() {
       "study.cli — multi-user community simulator",
       "  repl [--as <handle>]           interactive shell",
       "  run <scenario.yaml>            play a scenario (add --watch for live events)",
-      "  <verb> --as <handle> [flags]   one-shot (verbs: " + Object.keys(VERBS).join(", ") + ")",
+      "  <verb> --as <handle> [flags]   one-shot command",
       "  users | cleanup                roster management",
       "  --url <base>                   backend root (default http://localhost:5006)",
+      "",
+      "verbs:",
+      ...Object.entries(VERBS).map(([k, v]) => `  ${k.padEnd(12)} ${v.help}`),
     ].join("\n"));
     return;
   }

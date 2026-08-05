@@ -8,7 +8,8 @@ import crypto from "crypto";
 import { gql, J, JA } from "./gql.mjs";
 
 // socket.io-client lives in the backend workspace (repo root has no manifest).
-const require = createRequire("/home/bom/BookofMormonOnline/backend/");
+// Repo-relative so the tool is portable (…/scripts/study/ → repo/backend/).
+const require = createRequire(new URL("../../backend/", import.meta.url));
 const { io } = require("socket.io-client");
 
 export const md5 = (s) => crypto.createHash("md5").update(String(s)).digest("hex");
@@ -49,7 +50,11 @@ export class UserSession {
       });
       this.socket = s;
       for (const ev of INBOUND) s.on(ev, (payload) => this._record(ev, payload));
-      s.once("connect", () => resolve(this));
+      // Small settle after 'connect': the server's connection handler (which
+      // registers the message/reaction handlers) runs around the same time as
+      // the client 'connect' event, so an emit fired instantly can still race it
+      // and be dropped. ~250ms closes the window without user-visible latency.
+      s.once("connect", () => setTimeout(() => resolve(this), 250));
       s.once("connect_error", (e) =>
         reject(new Error(`socket connect_error [${this.username}]: ${e.message}`)));
     });
@@ -67,16 +72,22 @@ export class UserSession {
   onEvent(cb) { this._watch = cb; }
   offEvent() { this._watch = null; }
 
-  // Emit a client→server event; resolve with the server ack if any, else null
-  // after a short grace period (handlers don't all ack).
-  emit(event, payload) {
+  // Emit a client→server event. For ack-bearing events (default) resolve with
+  // the server ack, THROW on {success:false} or on a missing ack (dropped) — a
+  // test harness must never report a silent failure as success. Fire-and-forget
+  // events (typing/read never ack) pass { expectAck:false } and don't park a timer.
+  emit(event, payload, { expectAck = true } = {}) {
     if (!this.socket || !this.socket.connected)
       return Promise.reject(new Error(`[${this.username}] socket not connected (call connect first)`));
-    return new Promise((resolve) => {
-      let done = false;
-      const finish = (v) => { if (!done) { done = true; resolve(v); } };
-      this.socket.emit(event, payload, (ack) => finish(ack ?? { ok: true }));
-      setTimeout(() => finish(null), 1500);
+    if (!expectAck) { this.socket.emit(event, payload); return Promise.resolve(null); }
+    return new Promise((resolve, reject) => {
+      let done = false, timer;
+      const finish = (fn, v) => { if (done) return; done = true; clearTimeout(timer); fn(v); };
+      this.socket.emit(event, payload, (ack) => {
+        if (ack && ack.success === false) finish(reject, new Error(`${event} failed: ${ack.error || "unknown error"}`));
+        else finish(resolve, ack ?? null);
+      });
+      timer = setTimeout(() => finish(reject, new Error(`${event}: no ack within 3s (backend dropped it?)`)), 3000);
     });
   }
 
@@ -85,11 +96,12 @@ export class UserSession {
   reply(channelUrl, parentMessageId, message, extra = {}) { return this.emit("send_message", { channelUrl, message, parentMessageId, ...extra }); }
   editMessage(channelUrl, messageId, message) { return this.emit("edit_message", { channelUrl, messageId, message }); }
   deleteMessage(channelUrl, messageId) { return this.emit("delete_message", { channelUrl, messageId }); }
-  addReaction(channelUrl, messageId, reaction) { return this.emit("add_reaction", { channelUrl, messageId, reaction }); }
-  removeReaction(channelUrl, messageId, reaction) { return this.emit("remove_reaction", { channelUrl, messageId, reaction }); }
-  typingStart(channelUrl) { return this.emit("typing_start", { channelUrl }); }
-  typingStop(channelUrl) { return this.emit("typing_stop", { channelUrl }); }
-  markRead(channelUrl) { return this.emit("mark_read", { channelUrl }); }
+  // The reaction handler's payload field is `reactionKey`, not `reaction`.
+  addReaction(channelUrl, messageId, reaction) { return this.emit("add_reaction", { channelUrl, messageId, reactionKey: reaction }); }
+  removeReaction(channelUrl, messageId, reaction) { return this.emit("remove_reaction", { channelUrl, messageId, reactionKey: reaction }); }
+  typingStart(channelUrl) { return this.emit("typing_start", { channelUrl }, { expectAck: false }); }
+  typingStop(channelUrl) { return this.emit("typing_stop", { channelUrl }, { expectAck: false }); }
+  markRead(channelUrl) { return this.emit("mark_read", { channelUrl }, { expectAck: false }); }
 
   // ---- HTTP surface: Messenger ----
   async createChannel({ name, customType = "group", description = "", userIds = [], operatorIds = [] }) {

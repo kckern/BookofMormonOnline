@@ -3,16 +3,16 @@
 // is reused, and re-signup is a harmless upsert). Tokens/roster persist to a
 // gitignored dotfile so re-runs reuse the same users.
 
-import { createRequire } from "module";
 import fs from "fs";
 import path from "path";
 import crypto from "crypto";
+import { fileURLToPath } from "url";
 import { gql, J } from "./gql.mjs";
 import { UserSession } from "./session.mjs";
 
-const require = createRequire("/home/bom/BookofMormonOnline/backend/");
-
-const ROSTER_DIR = "/home/bom/BookofMormonOnline/.study-cli";
+// Portable: repo-relative (…/scripts/study/manager.mjs → repo/.study-cli), with
+// a STUDY_CLI_HOME override. Never hardcode an absolute path.
+const ROSTER_DIR = process.env.STUDY_CLI_HOME || fileURLToPath(new URL("../../.study-cli/", import.meta.url));
 const ROSTER_FILE = path.join(ROSTER_DIR, "roster.json");
 const PREFIX = "sim"; // synthetic users are always namespaced (alnum-only, cleanUsername-safe)
 
@@ -48,15 +48,17 @@ export class SessionManager {
     const username = simName(name);
 
     // Reuse a persisted, still-valid token; otherwise register a fresh one.
+    // _tokenValid runs tokensignin, which ALSO provisions the messenger_users FK
+    // row — so on the reuse path that single call is all we need. Only the fresh
+    // path needs an explicit tokensignin after signup/signin.
     let token = this.roster[name]?.token;
-    if (!(token && (await this._tokenValid(token)))) {
+    const reused = token ? await this._tokenValid(token) : false;
+    if (!reused) {
       token = genToken();
       await this._register(username, name, token);
+      try { await gql(this.base, `{ tokensignin(token:${J(token)}){ isSuccess } }`); }
+      catch (e) { console.warn(`  ⚠ tokensignin(${username}) failed: ${e.message} — socket auth may fail`); }
     }
-
-    // messenger_users (FK-required for socket auth + messaging) is provisioned
-    // on tokensignin, NOT signup — call it so the handshake recognises the user.
-    try { await gql(this.base, `{ tokensignin(token:${J(token)}){ isSuccess } }`); } catch { /* non-fatal */ }
 
     this.roster[name] = { username, token };
     this._saveRoster();

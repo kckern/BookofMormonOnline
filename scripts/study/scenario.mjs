@@ -13,10 +13,11 @@
 
 import { createRequire } from "module";
 import fs from "fs";
+import { gql } from "./gql.mjs";
 import { SessionManager } from "./manager.mjs";
 import { dispatch } from "./commands.mjs";
 
-const require = createRequire("/home/bom/BookofMormonOnline/backend/");
+const require = createRequire(new URL("../../backend/", import.meta.url));
 const yaml = require("js-yaml");
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -32,9 +33,13 @@ export async function runScenario(base, file, { log = console.log, watch = false
   const ctx = { manager, vars: {}, log };
 
   log(`▶ scenario: ${file}`);
+  // Preflight: fail fast with a clear message if the backend isn't reachable.
+  try { await gql(base, "{ __typename }"); }
+  catch (e) { throw new Error(`backend not reachable at ${base} — ${e.message}`); }
+
   const users = scenario.users || [];
   log(`  provisioning ${users.length} user(s): ${users.join(", ")}`);
-  for (const u of users) await manager.provision(u);
+  await Promise.all(users.map((u) => manager.provision(u)));
   await manager.connectAll();
   log(`  sockets connected.`);
 

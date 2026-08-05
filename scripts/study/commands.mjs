@@ -5,16 +5,13 @@
 
 const emoji = (e) => e || "👍";
 
-// Best-effort resolve a message id: prefer the socket ack, else the newest
-// message this user has in the channel.
-async function lastMessageId(session, channelUrl, ack) {
-  const fromAck = ack && (ack.message_id || ack.messageId || ack.message?.message_id);
-  if (fromAck) return String(fromAck);
-  const msgs = await session.getMessages(channelUrl, 10);
-  const mine = msgs.filter((m) => m.user && m.user.user_id === session.userId);
-  const newest = (mine.length ? mine : msgs).sort((a, b) => (b.created_at || 0) - (a.created_at || 0))[0];
-  return newest ? String(newest.message_id) : null;
-}
+// The send_message ack carries the persisted message ({ success:true, message }).
+// Trust it — never fabricate an id by re-fetching (that reports a stale message
+// as the new one when a send silently failed). emit() already throws on failure.
+const messageIdFromAck = (ack) => {
+  const id = ack && ack.message && ack.message.message_id;
+  return id != null ? String(id) : null;
+};
 
 export const VERBS = {
   "group.create": {
@@ -33,7 +30,7 @@ export const VERBS = {
     run: async (s, p, ctx) => {
       const ch = p.group || ctx.vars.group;
       const ack = await s.sendMessage(ch, p.text, p.extra || {});
-      const id = await lastMessageId(s, ch, ack);
+      const id = messageIdFromAck(ack);
       ctx.vars.last = id;
       if (p.as_var) ctx.vars[p.as_var] = id;
       ctx.log(`  ${s.username} posted [${id}]: ${p.text}`);
@@ -44,10 +41,11 @@ export const VERBS = {
     help: "reply in a thread — {group?, to:$last, text}",
     run: async (s, p, ctx) => {
       const ch = p.group || ctx.vars.group;
-      const ack = await s.reply(ch, p.to || ctx.vars.last, p.text, p.extra || {});
-      const id = await lastMessageId(s, ch, ack);
+      const parent = p.to || ctx.vars.last;
+      const ack = await s.reply(ch, parent, p.text, p.extra || {});
+      const id = messageIdFromAck(ack);
       ctx.vars.last = id;
-      ctx.log(`  ${s.username} replied to [${p.to || ctx.vars.last}] → [${id}]: ${p.text}`);
+      ctx.log(`  ${s.username} replied to [${parent}] → [${id}]: ${p.text}`);
       return id;
     },
   },
@@ -85,10 +83,16 @@ export const VERBS = {
   events: { help: "dump this user's socket event log", run: async (s, _p, ctx) => { for (const e of s.events.slice(-30)) ctx.log(`  ${new Date(e.t).toISOString().slice(11, 19)} ${e.event} ${JSON.stringify(e.payload).slice(0, 120)}`); return s.events; } },
 };
 
-// Resolve $last / $var / literals in a scenario step's params.
+// Resolve $last / $var / literals in a scenario step's params. An unresolved
+// $ref is a scenario bug (typo / wrong order) — throw rather than post to a
+// channel literally named "$chh".
 export function resolveRefs(params, vars) {
   const one = (v) => {
-    if (typeof v === "string" && v.startsWith("$")) return vars[v.slice(1)] ?? v;
+    if (typeof v === "string" && v.startsWith("$")) {
+      const key = v.slice(1);
+      if (!(key in vars)) throw new Error(`unresolved variable '${v}' — set it earlier via as_var, or use $last/$group`);
+      return vars[key];
+    }
     if (Array.isArray(v)) return v.map(one);
     return v;
   };
