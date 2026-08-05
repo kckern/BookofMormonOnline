@@ -1,0 +1,38 @@
+# Join the real, bot-populated "Reformers Discuss the Book of Mormon" group and
+# post a verse to elicit the reformer bots' commentary. Watch with:
+#   node scripts/study.cli.mjs run scripts/study/scenarios/reformers.yaml --watch
+#
+# The group is public (custom_type=public), so joinOpenGroup works with the
+# channel_url. Two sim users join and converse alongside the bots.
+users: [visitor, seeker]
+settle: 4000        # linger after the last step so bot replies arrive over the socket
+steps:
+  - as: visitor
+    do: join
+    url: "36eddcfa954553c01a2b8bacb6ff86f4"      # Reformers Discuss the Book of Mormon
+  - as: seeker
+    do: join
+    url: "36eddcfa954553c01a2b8bacb6ff86f4"
+  - as: visitor
+    do: channel
+    group: "36eddcfa954553c01a2b8bacb6ff86f4"
+  - as: visitor
+    do: post
+    group: "36eddcfa954553c01a2b8bacb6ff86f4"
+    text: "Reformers — what do you make of Alma 32:21 on faith and things not seen?"
+    as_var: q
+  - delay: 1500
+  - as: seeker
+    do: reply
+    group: "36eddcfa954553c01a2b8bacb6ff86f4"
+    to: $q
+    text: "Great question — curious how Luther and Calvin would differ here."
+  - as: seeker
+    do: react
+    group: "36eddcfa954553c01a2b8bacb6ff86f4"
+    id: $q
+    emoji: "🔥"
+  - as: visitor
+    do: msgs
+    group: "36eddcfa954553c01a2b8bacb6ff86f4"
+    limit: 8
