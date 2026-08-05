@@ -84,3 +84,22 @@ Wave 1 (both root-cause fixes) clears 6 of 8 P0s in two focused PRs — do it fi
 
 ## Housekeeping
 The audit created synthetic `sim*`/`aud*`/`pr*`/`msg*`/`com*` users, scratch channels, and probe messages in the live dev DB (incl. a mutated `simbob` nickname and stub-account reads). Run `node scripts/study.cli.mjs cleanup` (per isolated `STUDY_CLI_HOME`) to revoke tokens; scratch channels are emptied best-effort (no delete-channel mutation).
+
+---
+
+## Wave 1 remediation — CLOSED (2026-08-05)
+
+Both systemic root causes fixed and verified against the live backend with the
+`study.cli`/`probe.mjs` adversarial harness. Plan: `docs/plans/2026-08-05-wave1-authz-remediation-plan.md`.
+
+| Finding | Fix | Verified | Commit |
+|---|---|---|---|
+| **P-1** profile takeover | `requireSelf(userId)` on updateUser/metadata/accept/decline/DMs/myChannels | cross-user & anon → `null`; self → ok | `cc793e3f` |
+| **M-1** banned/non-member posts | `getMembership` joined-guard on socket writes | banned post → `✗ not a joined member` | `0f71c72c`+`1aa9ebde` |
+| **M-2** edit/delete anyone's msg | author-only (edit) / author-or-op (delete) ownership check | bob's edit of alice → `✗ not the author`; text intact | `1aa9ebde` |
+| **M-3** anon channel create | `resolveActingUserId` required in `messengerCreateChannel` | anon → `null`; authed → ok | `cc793e3f` |
+| **M-4** private read by non-member | membership gate on `messengerMessages` (public/open exempt) | non-member → `[]`; member → sees msgs | `cc793e3f` |
+| **M-5** accept/decline as other | `requireSelf(userId)` | cross-user → `false` | `cc793e3f` |
+| **P-2** metadata full-replace wipe | shallow merge over existing metadata | partial update preserves `bookmark` | `35f76537` |
+
+Regression: `demo.yaml` still `✔ 8 steps` (legit member send/edit-own/react/join unbroken); `getMembership` unit test 2/2; `tsc` clean (only the pre-existing `scriptureextras.ts:57` pair). **Remaining before cutover:** A1 (lang overflow), A2 (password reset), the P1 batch, and the prod-config gate (§6 of the review plan) — not in Wave 1.
