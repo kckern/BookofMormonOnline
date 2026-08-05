@@ -66,6 +66,30 @@ Each op prints the GraphQL `errors[]` or socket error verbatim. Provisioning sur
 - No Sendbird direct integration (goes through the backend's socket/GraphQL).
 - Not a load-test tool (correctness/simulation, not throughput).
 
+## Findings from live testing (Reformers group)
+
+Validated against the real "Reformers Discuss the Book of Mormon" group (`36eddcfa…`):
+- **Bots answer CLI posts.** Posting a question triggers the async `botResponder`
+  (fired by the `send_message` handler); a reformer replies with a real,
+  contextual LLM answer within ~1–2s. `:5006` has working AI (key from Infisical,
+  not in the tmpfs env dump).
+- **One bot per human message.** The botResponder's per-channel in-flight lock
+  means a single reformer answers each post (anti-spam), not all 10 members.
+- **Live socket reception needs membership.** The group is *not* open-enrollment,
+  so `joinOpenGroup` fails and the sim users aren't in the channel's socket room
+  → they receive no `message_received` broadcast (`--watch` stays quiet) even
+  though their posts land. `requestToJoinGroup` is the correct verb (adds a
+  pending/member row). For groups where the sim user IS a member (anything the
+  CLI creates, per `demo.yaml`), live broadcasts arrive on every member's socket
+  as expected. Hence `reformers.yaml` **polls** the reply over HTTP rather than
+  watching the socket.
+- **`botlist` returns the pluggable study bots** (StudyBuddy/Help Desk/Linguist),
+  not the historical-figure members; the reformers are `is_bot` channel members.
+- A **second stubbed backend** (`PORT=5007 STUB_LLM_REPLY=… npx tsx src/index.ts`,
+  same DB) is a clean way to exercise the bot loop deterministically without LLM
+  cost. NB: `pkill -f "tsx src/index.ts"` also matches the shared dev backend —
+  kill by PID.
+
 ## Cleanup
 
 A `cleanup` verb deletes `sim_*` users' `bom_user_token` rows (and optionally the scratch groups they created). Sim accounts are clearly namespaced so they're identifiable in `bom_user`.
