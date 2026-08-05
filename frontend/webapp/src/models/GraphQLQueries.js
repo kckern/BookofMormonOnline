@@ -288,6 +288,8 @@ const queries = {
                           id
                           title
                           text
+                          verse_id
+                          source
                         }
                       }
                     }
@@ -509,6 +511,17 @@ const queries = {
                 text
               }`,
     }
+  },
+  notesForRef: (input) => {
+    const { source, verse_id } = Array.isArray(input) ? input[0] : input;
+    return {
+      type: "notesForRef",
+      key: "verse_id",
+      val: false,
+      query: `notesForRef(source: "${source}", verse_id: ${parseInt(verse_id, 10)}) {
+        id title text verse_id source
+      }`,
+    };
   },
   image: (ids) => {
     return {
