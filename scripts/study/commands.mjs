@@ -3,6 +3,8 @@
 // REPL/CLI, or the step body from a scenario). `ctx` carries the manager, the
 // shared variable bag (for $last / $name refs), and a log() sink.
 
+import { looksLikeChannelUrl, resolveGroupRef } from "./groups.mjs";
+
 const emoji = (e) => e || "👍";
 
 // The send_message ack carries the persisted message ({ success:true, message }).
@@ -105,7 +107,11 @@ export function resolveRefs(params, vars) {
 }
 
 export async function dispatch(ctx, verb, params, session) {
-  const v = VERBS[verb] || VERBS[verb.replace(/^group$/, "group.create")];
+  const v = VERBS[verb] || (verb === "group" ? VERBS["group.create"] : null);
   if (!v) throw new Error(`unknown verb '${verb}'. Try: ${Object.keys(VERBS).join(", ")}`);
-  return v.run(session, resolveRefs(params, ctx.vars), ctx);
+  const p = resolveRefs(params, ctx.vars);
+  if (p.group && !looksLikeChannelUrl(p.group)) {
+    p.group = resolveGroupRef(p.group, await session.myChannels());
+  }
+  return v.run(session, p, ctx);
 }
