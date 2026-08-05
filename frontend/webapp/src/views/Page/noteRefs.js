@@ -1,4 +1,4 @@
-import { findReferences, generateReference, lookupReference } from "scripture-guide";
+import { findReferences, generateReference, lookupReference, detectReferences } from "scripture-guide";
 
 // A findReferences match is a note-ref iff the char right after its end is the
 // note marker 'n' followed by a word boundary (so "2:13n)" yes, "2:13 near" no).
@@ -54,4 +54,31 @@ export function resolveNoteRefs(text, hostVerseId) {
   }
 
   return results.sort((a, b) => a.start - b.start);
+}
+
+const escapeHtml = (s) =>
+  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+// Replace note-ref spans with note_ref anchors (trailing 'n' dropped), then run
+// the existing scripture detection on the untouched remainder. Working
+// right-to-left keeps earlier offsets valid as we splice.
+export function buildNoteBodyHtml(text, hostVerseId, source) {
+  if (typeof text !== "string" || !text) return text || "";
+  const refs = resolveNoteRefs(text, hostVerseId);
+  const scriptureLinks = (s) => `<a className="scripture_link">${s}</a>`;
+  if (!refs.length) return detectReferences(text, scriptureLinks, { chainAcrossMarkers: false });
+
+  const segments = [];
+  let cursor = text.length;
+  for (let i = refs.length - 1; i >= 0; i--) {
+    const r = refs[i];
+    const tail = text.slice(r.end, cursor);
+    segments.unshift(detectReferences(tail, scriptureLinks, { chainAcrossMarkers: false }));
+    segments.unshift(
+      `<a class="note_ref" data-source="${escapeHtml(String(source ?? ""))}" data-verse="${r.verseId}">${escapeHtml(r.rawText)}</a>`,
+    );
+    cursor = r.start;
+  }
+  segments.unshift(detectReferences(text.slice(0, cursor), scriptureLinks, { chainAcrossMarkers: false }));
+  return segments.join("");
 }

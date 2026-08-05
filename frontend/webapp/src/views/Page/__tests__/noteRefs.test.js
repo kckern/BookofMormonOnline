@@ -1,4 +1,4 @@
-import { resolveNoteRefs } from "../noteRefs";
+import { resolveNoteRefs, buildNoteBodyHtml } from "../noteRefs";
 
 describe("resolveNoteRefs — qualified note-refs", () => {
   test("book-qualified <ref>n is detected with resolved verseId", () => {
@@ -44,5 +44,17 @@ describe("resolveNoteRefs — host-seeded bare refs", () => {
 
   test("no host verse and no in-text book -> nothing", () => {
     expect(resolveNoteRefs("see 5:21n.", null)).toEqual([]);
+  });
+});
+
+describe("buildNoteBodyHtml", () => {
+  test("note-ref becomes a note_ref anchor (no trailing n); plain ref stays scripture_link", () => {
+    const html = buildNoteBodyHtml("see 1 Nephi 2:13n and Alma 5:14", 31135, "193");
+    expect(html).toContain('class="note_ref"');
+    expect(html).toContain('data-verse="31135"');
+    expect(html).toContain('data-source="193"');
+    expect(html).toContain(">1 Nephi 2:13<"); // n stripped from visible text
+    expect(html).not.toContain("2:13n");
+    expect(html).toContain('scripture_link'); // Alma 5:14 still a scripture link
   });
 });
