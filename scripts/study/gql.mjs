@@ -1,30 +1,28 @@
+// scripts/study/gql.mjs
 // GraphQL-over-HTTP helper for the study CLI.
 //
 // IMPORTANT: POST to the ROOT mount ("/"), never "/graphql". The backend's
 // resolveLang() derives the request language from the LAST url path segment, so
 // "/graphql" yields ctx.lang="graphql" (7 chars) which overflows
-// bom_user.lang varchar(3) on any write (signup → ER_DATA_TOO_LONG). "/" → the
-// empty trailing segment → "en". See docs/specs/2026-08-04-study-cli-design.md.
+// bom_user.lang varchar(3) on any write. "/" → the empty trailing segment → "en".
 
 const endpoint = (base) => base.replace(/\/+$/, "") + "/";
 
-// JSON-encode a scalar for safe inlining into a GraphQL query string.
-export const J = (v) => JSON.stringify(v ?? "");
-// Encode a list of strings as a GraphQL list literal.
-export const JA = (arr) => "[" + (arr || []).map((x) => JSON.stringify(x)).join(", ") + "]";
-
-export async function gql(base, query, { token } = {}) {
+export async function gql(base, query, { variables, token } = {}) {
   const headers = { "content-type": "application/json" };
   if (token) headers["authorization"] = `Bearer ${token}`;
+  const body = { query };
+  if (variables) body.variables = variables;
+
   let res, json;
   try {
-    res = await fetch(endpoint(base), { method: "POST", headers, body: JSON.stringify({ query }) });
+    res = await fetch(endpoint(base), { method: "POST", headers, body: JSON.stringify(body) });
   } catch (e) {
     throw new Error(`HTTP request failed (${base}): ${e.message}`);
   }
   try {
     json = await res.json();
-  } catch (e) {
+  } catch {
     throw new Error(`Non-JSON response (HTTP ${res.status}) from ${base}`);
   }
   if (json.errors && json.errors.length) {
