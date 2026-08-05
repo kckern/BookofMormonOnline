@@ -21,6 +21,7 @@ export const VERBS = {
     run: async (s, p, ctx) => {
       const invitees = (p.invite || []).map((h) => ctx.manager.get(h).userId);
       const ch = await s.createChannel({ name: p.name, customType: p.type || "group", description: p.description || "", userIds: invitees, operatorIds: [s.userId] });
+      ctx.manager.recordChannel(ch.channel_url);
       if (p.as_var) ctx.vars[p.as_var] = ch.channel_url;
       ctx.vars.group = ch.channel_url; // default target for later steps
       ctx.log(`  group created: "${ch.name}" → ${ch.channel_url}`);

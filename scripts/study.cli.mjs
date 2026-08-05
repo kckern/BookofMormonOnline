@@ -67,7 +67,7 @@ async function main() {
   const manager = new SessionManager(base);
 
   if (cmd === "users") { console.log(Object.entries(manager.roster).map(([n, r]) => `  ${n} → ${r.username}`).join("\n") || "  (roster empty)"); return; }
-  if (cmd === "cleanup") { const removed = await manager.cleanup(); console.log(`revoked ${removed.length} sim token(s): ${removed.join(", ")}`); return; }
+  if (cmd === "cleanup") { const { removed, emptied } = await manager.cleanup(); console.log(`revoked ${removed.length} sim token(s); emptied ${emptied} scratch group(s): ${removed.join(", ")}`); return; }
 
   // one-shot verb
   if (!VERBS[cmd] && cmd !== "group") { console.error(`unknown command '${cmd}'. Run: node scripts/study.cli.mjs help`); process.exit(2); }
