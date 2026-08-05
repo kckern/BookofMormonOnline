@@ -1,7 +1,7 @@
 # Spec: note-reference (`<ref>n`) links → sibling note
 
 **Date:** 2026-08-04
-**Status:** Draft (awaiting review)
+**Status:** Reviewed & revised (grouchy-review pass 2026-08-04: B1 guard added, source no longer derived from id, jest prerequisite dropped as stale, multi-note promoted to first-class, examples re-pulled from live data)
 **Related:** `docs/audits/2026-08-04-crossref-marker-chaining.md` (the cross-reference-marker work that surfaced this)
 
 ## Motivation
@@ -28,9 +28,20 @@ the "note" signal is lost.
 | malformed (bad chapter, e.g. `Jacob 22.30n`) | 6 | 1.3% |
 | resolve but no note exists (e.g. `Mosiah 1:11`) | 3 | 0.7% |
 
-Almost all are in **source 193** (one publication leans on the convention). The
-~2% that don't land (malformed, or a real verse with no note, or the lone
-non-scripture `HC 1:297n`) define the graceful-fallback requirement.
+**All `<ref>n` notes are in sources 193 (336) and 192 (1)** — measured — so the
+convention is publication-specific. The ~2% that don't land define the
+graceful-fallback requirement, and split into two render-time classes:
+- **Malformed** (verse doesn't resolve): real example, host note id `1147719302`
+  → `"See 1 Ne 19.24n; Jacob 22.30–31n."` — `Jacob 22:30` is invalid (Jacob has 7
+  chapters), so it must render as plain text (this is what the B1 guard protects).
+- **Resolves but no sibling note** (verse valid, no note there): `Mosiah 1:11`,
+  `3 Nephi 26:6`, `3 Nephi 26:9` — renders as a `note_ref` that, on click, finds
+  nothing and falls back to the verse text.
+
+(A `HC 1:297n`-style page citation is *not* a scripture ref and only appears in
+long-form commentary, `is_note=0`, which is out of scope — the notes panel never
+renders it. It's kept only as an illustration of the B1 guard, not an in-scope
+case.)
 
 ## Terminology
 
@@ -97,19 +108,34 @@ note.text ──▶ resolveNoteRefs(text, hostVerseId, source)
 
 ### Backend changes (`backend/`)
 
-1. **Expose `verse_id` on notes.** Add `verse_id` to the `notes { }` GraphQL
-   selection so the client can seed the implied book. `source` is already
-   derivable client-side from `id.substr(5,3)` (used today for the cover), so it
-   need not be added, but MAY be added for clarity.
-   - Touch: `GraphQLQueries.js:287` selection, the `Text.notes` type/resolver in
-     `resolvers.ts` (`notesByText` loader already selects from
-     `bom_xtras_commentary`; ensure `verse_id` is in its select list), and the
-     GraphQL schema/type for a note if it enumerates fields.
+1. **Expose `verse_id` AND `source` on notes.** Both are needed client-side:
+   `verse_id` seeds the implied book; `source` keys the sibling fetch.
+   - ⚠️ **Do NOT derive source from `id.substr(5,3)`.** `source` is a
+     `varchar(100)` and is *not* zero-padded, but the id segment is: a source-`21`
+     note has id `10002021...` → `substr(5,3)` = `"021"`, and
+     `notesForRef("021", …)` matches zero rows. (The cover image keeps using the
+     padded `substr`/`padStart(3,0)` form — that's the asset naming — but the
+     fetch key must be the real `source` column.) Today every `<ref>n`-bearing
+     note happens to live in 3-digit sources 193/192, so the bug is latent, but
+     the API must return real `source` regardless.
+   - **Backend surface is five touchpoints, not one** (the `notesByText` loader
+     currently selects only `['id','title','text','location_guid']` and its
+     mapping lambda re-narrows to `{id,title,text}`): (a) add `verse_id`,`source`
+     to the loader's `.select([...])`, (b) add them to the mapping lambda, (c)
+     the `NoteRow`/note TS interface, (d) the SDL `Note` type (introspection
+     confirms it enumerates exactly `{id,title,text}` today), (e) regenerate
+     codegen (`codegen/graphql.*`, imported by `resolvers.ts`).
+   - Frontend selection: `GraphQLQueries.js:~287` `notes { id title text }` →
+     add `verse_id source`.
 
 2. **New fetch `notesForRef(source, verse_id)`.** Returns the note row(s)
-   (`is_note=1`) at `verse_id` in `source`, shaped `{id,title,text,verse_id}`.
+   (`is_note=1`) at `verse_id` in `source`, shaped `{id,title,text,verse_id}`
+   with **`id` as a String** (`SingleNoteItem` calls `item.id.substr(5,3)`; the
+   DB `id` is `int` and would crash the recursion render otherwise — mirror
+   `notesByText`'s existing `id: String(r.id)` mapping).
    - New batched loader over `bom_xtras_commentary WHERE is_note=1 AND source=?
-     AND verse_id=?` (a verse may hold >1 note in a source — return all).
+     AND verse_id=?`. **A verse commonly holds >1 note in a source** (1,520 such
+     (source,verse) pairs; worst case 8) — return **all**, ordered by `id`.
    - Exposed as a GraphQL query field consumed by a new `GraphQLQueries.js`
      entry + `BoMOnlineAPI` call, following the existing `commentary: (ids)`
      request pattern.
@@ -123,10 +149,24 @@ note.text ──▶ resolveNoteRefs(text, hostVerseId, source)
        `{start,end,verse_ids}`. A match is a note-ref iff `text[end] === 'n'` and
        `text[end+1]` is a boundary (non-alphanumeric or EOL). Target verse =
        `match.verse_ids[0]`.
-     - Leading-bare pass: for `(\d+)[:.](\d+)(?:[-–]\d+)?n` spans that
-       `findReferences` did **not** cover, derive host book via
-       `generateReference(hostVerseId)` → book, then
-       `lookupReference(\`${book} ${ch}:${vs}\`)`. Emit if it resolves.
+     - Leading-bare pass (guarded): for `(\d+)[:.](\d+)(?:[-–]\d+)?n` spans that
+       do **not overlap** any `findReferences`-covered `[start,end)` range,
+       host-seed the book — BUT only when the span is *truly* bare. Look back
+       from the span start, skip whitespace and any leading cross-reference
+       marker (`see`/`see also`/`cf`/`compare`/`cited at`), and:
+       - if the immediately preceding token is an **alphabetic word** (i.e. an
+         explicit book name that `findReferences` already tried and rejected as
+         invalid — e.g. `Jacob 22.30n`, `HC 1:297n`), **do NOT host-seed**; drop
+         it (renders as plain text). Seeding the host book here would fabricate a
+         wrong link (`Jacob 22:30` invalid, but the host's book might have a
+         chapter 22 verse 30 → a live, wrong note-ref). This is the guard that
+         makes AC4 hold.
+       - otherwise (preceded by punctuation / whitespace / start-of-string, e.g.
+         `see 5:21n`), derive the host book via `generateReference(hostVerseId)`
+         and `lookupReference(\`${book} ${ch}:${vs}\`)`. Emit only if it resolves.
+     - **Overlap semantics:** the two passes never double-count — a regex span
+       intersecting a `findReferences` match is skipped (that ref is already a
+       note-ref-or-not by pass one).
      - Return note-refs sorted by `start`; drop unresolved (leaves them as plain
        text downstream).
    - Pure and unit-testable; no React, no network.
@@ -140,14 +180,20 @@ note.text ──▶ resolveNoteRefs(text, hostVerseId, source)
      `n` stripped), masking it from scripture detection.
    - Run the existing `detectReferences(rest, scriptureLinks,
      {chainAcrossMarkers:false})` on the remaining text.
-   - Render via `renderPersonPlaceHTML`; add a `.note_ref` click handler that
-     reads `data-source`/`data-verse`, calls `notesForRef`, and either mounts the
-     sibling note inline or falls back to the verse text.
-   - **Inline placement:** the fetched sibling note renders as a dismissable
-     accordion block **directly beneath the host note item** (default; avoids the
-     floating-popup positioning `ScripturePanelSingle` needs), using
-     `<SingleNoteItem item={fetched}/>` so nested note-refs recurse. Clicking the
-     same note-ref again, or a close affordance, collapses it.
+   - Render via `renderPersonPlaceHTML` (which only special-cases
+     `scripture_link`/`person`/`place` anchors and passes an `<a class="note_ref">`
+     through inert). **Click mechanism = container-level event delegation:**
+     `SingleNoteItem` puts an `onClick` on the note wrapper, checks
+     `e.target.closest('.note_ref')`, and reads `data-source`/`data-verse`. This
+     keeps all logic in `Narration.js` and **does not touch `PersonPlace.js`**
+     (no new replacer branch).
+   - **Inline placement:** on click, fetch via `notesForRef` and render the
+     result as a dismissable **accordion block directly beneath the host note
+     item** (default; avoids the floating-popup positioning `ScripturePanelSingle`
+     needs). **Multiple sibling notes are common** (M4) — render **all** returned
+     notes stacked, each via `<SingleNoteItem item={fetched}/>` so nested
+     note-refs recurse. Clicking the same note-ref again, or a close affordance,
+     collapses the block.
    - **Fallback target:** when `notesForRef` returns empty, call
      `setActiveScripture(generateReference(verseId, determineLanguage()))` so the
      verse-text popup opens on the resolved verse (we hold a `verseId`, not a ref
@@ -160,12 +206,14 @@ note.text ──▶ resolveNoteRefs(text, hostVerseId, source)
 
 - **Ranges** (`2.5–7n`): link the whole range; target verse = first verse_id.
 - **Multiple notes at the target verse in a source:** `notesForRef` returns all;
-  the inline popup lists them (rare).
+  the accordion stacks them. **Common** — 1,520 (source,verse) pairs have >1
+  note (worst case 8), so this is a first-class presentation case, not an edge.
 - **Recursion:** a fetched sibling note may itself contain note-refs — rendering
   it through `SingleNoteItem` handles this; depth is bounded by user clicks.
-- **Non-scripture (`HC 1:297n`):** resolves to no verse (History of the Church) →
-  not linkified (req 7); if it ever resolves spuriously, the click fetch returns
-  empty → verse-text fallback (req 6).
+- **Explicit-but-invalid book (`Jacob 22.30–31n`, `HC 1:297n`):** `findReferences`
+  can't resolve it and the B1 guard refuses to host-seed (an alphabetic book word
+  precedes it) → left as plain text (req 7). `HC …` only occurs in `is_note=0`
+  commentary anyway (out of scope).
 - **Book-less at note start (`see 5:21n`):** findReferences can't resolve (no
   in-text book) → host-book seed path (req 3b).
 - **Separator normalization:** accept both `:` and `.`; scripture-guide already
@@ -178,21 +226,26 @@ note.text ──▶ resolveNoteRefs(text, hostVerseId, source)
   `hostVerseId` in 1 Nephi → 1 Nephi 5:21), range, malformed (`Jacob 22.30n` →
   dropped), non-scripture (`HC 1:297n` → dropped), separator `.`/`:`.
 - **Render/interaction (`SingleNoteItem`):** note-ref gets `.note_ref` +
-  `data-verse`; plain refs still `scripture_link`; click triggers `notesForRef`;
-  empty result falls back to `setActiveScripture`.
-- **Jest ESM blocker:** the notes/detection specs import `scripture-guide` (ESM),
-  which currently fails to transform (see the audit's test-tooling note). This
-  spec includes adding `scripture-guide` to `transformIgnorePatterns` (or the
-  equivalent CRA/jest config) so these suites actually run. This is a
-  prerequisite for the unit tests above to be meaningful.
+  `data-verse`; plain refs still `scripture_link`; delegated click triggers
+  `notesForRef`; multiple results render stacked; empty result falls back to
+  `setActiveScripture`.
+- **No Jest ESM blocker.** Verified 2026-08-04: with `scripture-guide@1.0.95`
+  (CJS `main` + exports map), react-scripts/jest resolves the CJS entry and
+  suites importing `scripture-guide` pass unmocked (`proseBodyRender.test.js`
+  → 7/7). The earlier "fails to transform" note predated the 1.0.95 upgrade and
+  is no longer a prerequisite — do not add a `transformIgnorePatterns` override.
 
 ## Files touched
 
-- Backend: `resolvers.ts` (note `verse_id`, `notesForRef`), a note loader
-  (`scriptureextras.ts` or a sibling), GraphQL schema/type for the fetch.
+- Backend: `data/loaders.ts` (`notesByText` select + mapping: add
+  `verse_id`,`source`; new `notesForRef` loader), `graphql/resolvers.ts`
+  (`notesForRef` query resolver), the SDL/type defs (`Note` gains
+  `verse_id`,`source`; new `notesForRef` field), regenerated `codegen/graphql.*`.
 - Frontend: `views/Page/noteRefs.js` (new), `views/Page/Narration.js`
-  (`SingleNoteItem`), notes-panel CSS, `models/GraphQLQueries.js`,
-  `models/BoMOnlineAPI.js`, jest config for the ESM transform, tests.
+  (`SingleNoteItem` — token-mask + delegated click + accordion), notes-panel CSS
+  (+ dark mode), `models/GraphQLQueries.js`, `models/BoMOnlineAPI.js`, tests
+  (`noteRefs.test.js`). **`PersonPlace.js` is NOT touched** (click uses event
+  delegation, not a new replacer branch).
 
 ## Acceptance criteria
 
@@ -202,10 +255,14 @@ note.text ──▶ resolveNoteRefs(text, hostVerseId, source)
    that note.
 3. A plain `Alma 5:14` in the same note still renders as `scripture_link` and
    opens the verse text.
-4. `HC 1:297n` and `Jacob 22.30n` render as plain text (no note link, no crash).
-5. A note-ref whose sibling note doesn't exist falls back to the verse-text popup
-   on click.
-6. `lookupReference` and all other detection seams are unchanged.
+4. A malformed ref (`Jacob 22.30–31n`, host book differs) renders as **plain
+   text** — the B1 guard prevents host-seeding a wrong verse — no note link, no
+   crash.
+5. A note-ref whose verse resolves but has **no** sibling note (`Mosiah 1:11`)
+   renders as a `note_ref` and falls back to the verse-text popup on click.
+6. A verse holding **multiple** sibling notes shows all of them stacked in the
+   accordion.
+7. `lookupReference` and all other detection seams are unchanged.
 
 ## Non-goals
 
