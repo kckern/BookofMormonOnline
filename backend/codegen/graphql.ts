@@ -1160,6 +1160,7 @@ export type Query = {
   messengerUsers?: Maybe<Array<Maybe<MessengerUser>>>;
   moregroups?: Maybe<Array<Maybe<HomeGroup>>>;
   mybookmark?: Maybe<Bookmark>;
+  notesForRef?: Maybe<Array<Maybe<Note>>>;
   notificationUnreadCount?: Maybe<Scalars['Int']['output']>;
   notifications?: Maybe<Array<Maybe<Notification>>>;
   page?: Maybe<Array<Maybe<Page>>>;
@@ -1406,6 +1407,12 @@ export type QueryMoregroupsArgs = {
 
 export type QueryMybookmarkArgs = {
   token?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryNotesForRefArgs = {
+  source: Scalars['String']['input'];
+  verse_id: Scalars['Int']['input'];
 };
 
 
@@ -3290,6 +3297,7 @@ export type QueryResolvers<ContextType = AppContext, ParentType extends Resolver
   messengerUsers?: Resolver<Maybe<Array<Maybe<ResolversTypes['MessengerUser']>>>, ParentType, ContextType, Partial<QueryMessengerUsersArgs>>;
   moregroups?: Resolver<Maybe<Array<Maybe<ResolversTypes['HomeGroup']>>>, ParentType, ContextType, Partial<QueryMoregroupsArgs>>;
   mybookmark?: Resolver<Maybe<ResolversTypes['Bookmark']>, ParentType, ContextType, Partial<QueryMybookmarkArgs>>;
+  notesForRef?: Resolver<Maybe<Array<Maybe<ResolversTypes['Note']>>>, ParentType, ContextType, RequireFields<QueryNotesForRefArgs, 'source' | 'verse_id'>>;
   notificationUnreadCount?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   notifications?: Resolver<Maybe<Array<Maybe<ResolversTypes['Notification']>>>, ParentType, ContextType>;
   page?: Resolver<Maybe<Array<Maybe<ResolversTypes['Page']>>>, ParentType, ContextType, Partial<QueryPageArgs>>;

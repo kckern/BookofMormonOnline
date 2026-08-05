@@ -231,6 +231,29 @@ export const scriptureextrasResolvers: Resolvers = {
       if (!verseIds.length) return null;
       return { verseIds, ctx } as unknown as never;
     },
+
+    /**
+     * notesForRef(source, verse_id) — fetch is_note=1 annotations at a specific
+     * (source, verse_id) coordinate. Used by the note-ref link accordion in the
+     * Page-view notes panel.
+     */
+    notesForRef: async (_root, args: { source: string; verse_id: number }, ctx: AppContext) => {
+      const rows = await ctx.db
+        .selectFrom('bom_xtras_commentary')
+        .select(['id', 'title', 'text', 'verse_id', 'source'])
+        .where('is_note', '=', 1)
+        .where('source', '=', String(args.source))
+        .where('verse_id', '=', args.verse_id)
+        .orderBy('id')
+        .execute();
+      return rows.map((r) => ({
+        id: String(r.id),
+        title: r.title,
+        text: r.text,
+        verse_id: r.verse_id ?? null,
+        source: r.source ?? null,
+      })) as unknown as never[];
+    },
   },
 
   // ─── Chiasmus type resolvers ─────────────────────────────────────────────────

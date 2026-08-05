@@ -8,6 +8,7 @@ extend type Query {
   history(slug: [String], archive: String, principal: [String]): [HistoricalDocument]
   chiasmus(id: [String]): [Chiasmus]
   passagenotes(verse_ids: [Int], start_verse_id: Int, end_verse_id: Int): PassageNotes
+  notesForRef(source: String!, verse_id: Int!): [Note]
 }
 
 type PassageNotes {
