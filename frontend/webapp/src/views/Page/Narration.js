@@ -14,7 +14,7 @@ import fullscreen from "src/views/Page/svg/fullscreen.png";
 import {Spinner} from "../_Common/Loader";
 import { Link } from "react-router-dom";
 import ReactTooltip from "react-tooltip";
-import { generateReference, detectReferences, lookupReference } from 'scripture-guide';
+import { generateReference, lookupReference } from 'scripture-guide';
 import { usePageController } from "src/contexts/PageControllerContext";
 import { useMessenger } from "src/contexts/MessengerContext";
 import { NarrationProvider, useNarration } from "src/contexts/NarrationContext";
