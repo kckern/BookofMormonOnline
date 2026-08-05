@@ -20,6 +20,7 @@ import { SessionManager } from "./study/manager.mjs";
 import { VERBS, dispatch } from "./study/commands.mjs";
 import { startRepl } from "./study/repl.mjs";
 import { runScenario } from "./study/scenario.mjs";
+import { parseVerbArgs } from "./study/argparse.mjs";
 
 function parseArgv(argv) {
   const out = { _: [], flags: {} };
@@ -77,7 +78,10 @@ async function main() {
   const needsSocket = ["post", "reply", "edit", "del", "react", "unreact", "typing", "read"].includes(cmd);
   try {
     if (needsSocket) await session.connect();
-    await dispatch(ctx, cmd, flags, session);
+    // Re-parse the raw argv tail as verb args so `post --as alice "hi"` works
+    // (the leading `--as <handle>` is consumed as a normal flag and ignored by verbs).
+    const verbArgs = parseVerbArgs(cmd, process.argv.slice(3));
+    await dispatch(ctx, cmd, verbArgs, session);
     if (needsSocket) await new Promise((r) => setTimeout(r, 600)); // let broadcast land
   } finally {
     session.disconnect();

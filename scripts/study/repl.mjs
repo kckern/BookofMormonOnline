@@ -6,33 +6,7 @@
 import readline from "readline";
 import { SessionManager } from "./manager.mjs";
 import { VERBS, dispatch } from "./commands.mjs";
-
-// Which param a bare trailing string maps to, per verb.
-const PRIMARY = { post: "text", reply: "text", edit: "text", "group.create": "name", group: "name", join: "url", request: "url" };
-const LIST_FLAGS = new Set(["invite", "users"]);
-
-function tokenize(line) {
-  const out = [];
-  const re = /"([^"]*)"|'([^']*)'|(\S+)/g;
-  let m;
-  while ((m = re.exec(line))) out.push(m[1] ?? m[2] ?? m[3]);
-  return out;
-}
-
-function parse(verb, tokens) {
-  const p = {};
-  const bare = [];
-  for (let i = 0; i < tokens.length; i++) {
-    const t = tokens[i];
-    if (t.startsWith("--")) {
-      const key = t.slice(2);
-      const val = tokens[i + 1] && !tokens[i + 1].startsWith("--") ? tokens[++i] : "true";
-      p[key] = LIST_FLAGS.has(key) ? val.split(",").map((x) => x.trim()).filter(Boolean) : val === "true" ? true : val;
-    } else bare.push(t);
-  }
-  if (bare.length && PRIMARY[verb]) p[PRIMARY[verb]] = bare.join(" ");
-  return p;
-}
+import { tokenize, parseVerbArgs } from "./argparse.mjs";
 
 export async function startRepl(base, { initialUser } = {}) {
   const manager = new SessionManager(base);
@@ -79,7 +53,7 @@ export async function startRepl(base, { initialUser } = {}) {
     if (verb === "watch") { watching = true; if (active) manager.get(active).onEvent((e) => console.log(`  « ${active} ⇐ ${e.event}: ${JSON.stringify(e.payload).slice(0, 140)}`)); console.log("  watching live socket events for active user."); return; }
     if (verb === "unwatch") { watching = false; if (active) manager.get(active).offEvent(); return; }
     if (!active) { console.log("  no active user — run: use <handle>"); return; }
-    await dispatch(ctx, verb, parse(verb, tokens), manager.get(active));
+    await dispatch(ctx, verb, parseVerbArgs(verb, tokens), manager.get(active));
   };
 
   // Strict sequential processing via a queue — piped input emits 'line' events
