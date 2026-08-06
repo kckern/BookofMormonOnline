@@ -132,6 +132,7 @@ export async function resolveCandidates(
     keyword?: (q: string) => Promise<string[]>;
     semantic?: (q: string) => Promise<string[]>;
   } = {},
+  mode: 'keyword' | 'rich' = 'keyword',
 ): Promise<{ ids: string[]; semantic: boolean }> {
   const keyword = deps.keyword ?? ((q: string) => getCandidateVerseIds(db, q, lang, isEnglish));
   const semantic =
@@ -141,6 +142,19 @@ export async function resolveCandidates(
       const hits = await searchContent({ query: q, types: ['verse'], lang: searchLang });
       return hitsToRankedVerseIds(hits);
     });
+
+  // Rich: go straight to the semantic tier. Reachable → semantic:true even with zero hits
+  // (so the resolver still shows supplement groups); only a throw counts as degraded.
+  if (mode === 'rich') {
+    try {
+      const ids = await semantic(query);
+      return { ids, semantic: true };
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.warn('[search] rich retrieval failed:', err instanceof Error ? err.message : err);
+      return { ids: [], semantic: false };
+    }
+  }
 
   const keywordIds = await keyword(query);
   if (keywordIds.length) return { ids: keywordIds, semantic: false };
