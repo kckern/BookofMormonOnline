@@ -82,8 +82,10 @@ export class SessionManager {
     return session;
   }
 
-  // Register `token` for `username`: signup creates the user; if the bom_user
-  // already exists (ER_DUP_ENTRY), signin upserts the new token instead.
+  // Register `token` for `username`: signup creates the user; if it fails
+  // (most commonly because the user already exists — the backend now returns a
+  // GENERIC 'error_creating_user' to avoid enumeration, so we can't match on
+  // DUP), fall through to signin, which upserts the token for an existing user.
   async _register(username, name, token) {
     const signup = `mutation($t:String,$u:String,$n:String){ signup(token:$t, username:$u, password:"simpass", name:$n, email:"", zip:""){ isSuccess msg } }`;
     let res;
@@ -91,13 +93,12 @@ export class SessionManager {
     if (res.isSuccess) return;
     if (/ER_DATA_TOO_LONG/.test(res.msg || ""))
       throw new Error(`signup failed (${res.msg}): the CLI must POST to '/' not '/graphql'. Check --url.`);
-    if (!/DUP/i.test(res.msg || ""))
-      throw new Error(`signup failed for ${username}: ${res.msg}`);
-    // Existing user → register this token via signin (a Query; verifies the sim password).
+    // Signup failed — try signin (existing user path). signin is a Query and
+    // verifies the sim password; it upserts the bom_user_token for this token.
     const signin = `query($t:String,$u:String){ signin(token:$t, username:$u, password:"simpass"){ isSuccess msg } }`;
     let si;
     try { si = (await gql(this.base, signin, { variables: { t: token, u: username } })).signin; } catch (e) { si = { isSuccess: false, msg: e.message }; }
-    if (!si.isSuccess) throw new Error(`signin for existing ${username} failed: ${si.msg}`);
+    if (!si.isSuccess) throw new Error(`register ${username} failed: signup(${res.msg}) + signin(${si.msg})`);
   }
 
   async _tokenValid(token) {
