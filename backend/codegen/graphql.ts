@@ -707,7 +707,9 @@ export type Mutation = {
   ping?: Maybe<Scalars['Boolean']['output']>;
   processRequest?: Maybe<Scalars['Boolean']['output']>;
   removeBot?: Maybe<Scalars['Boolean']['output']>;
+  requestPasswordReset?: Maybe<Scalars['Boolean']['output']>;
   requestToJoinGroup?: Maybe<JoinedGroup>;
+  resetPassword?: Maybe<SignIn>;
   shortlink?: Maybe<Shortlinks>;
   signout?: Maybe<Scalars['Boolean']['output']>;
   signup?: Maybe<SignIn>;
@@ -872,9 +874,20 @@ export type MutationRemoveBotArgs = {
 };
 
 
+export type MutationRequestPasswordResetArgs = {
+  email?: InputMaybe<Scalars['String']['input']>;
+};
+
+
 export type MutationRequestToJoinGroupArgs = {
   token?: InputMaybe<Scalars['String']['input']>;
   url?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type MutationResetPasswordArgs = {
+  password?: InputMaybe<Scalars['String']['input']>;
+  token?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -3060,7 +3073,9 @@ export type MutationResolvers<ContextType = AppContext, ParentType extends Resol
   ping?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, Partial<MutationPingArgs>>;
   processRequest?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, Partial<MutationProcessRequestArgs>>;
   removeBot?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, Partial<MutationRemoveBotArgs>>;
+  requestPasswordReset?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, Partial<MutationRequestPasswordResetArgs>>;
   requestToJoinGroup?: Resolver<Maybe<ResolversTypes['JoinedGroup']>, ParentType, ContextType, Partial<MutationRequestToJoinGroupArgs>>;
+  resetPassword?: Resolver<Maybe<ResolversTypes['SignIn']>, ParentType, ContextType, Partial<MutationResetPasswordArgs>>;
   shortlink?: Resolver<Maybe<ResolversTypes['Shortlinks']>, ParentType, ContextType, Partial<MutationShortlinkArgs>>;
   signout?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, Partial<MutationSignoutArgs>>;
   signup?: Resolver<Maybe<ResolversTypes['SignIn']>, ParentType, ContextType, Partial<MutationSignupArgs>>;

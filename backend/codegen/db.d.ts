@@ -87,6 +87,15 @@ export interface BomConnection {
   type: string;
 }
 
+export interface BomConnectionBak20260729 {
+  guid: string;
+  id: Generated<number>;
+  link: string;
+  parent: string;
+  text: string;
+  type: string;
+}
+
 export interface BomDataBible {
   bible_highlight: Json | null;
   bible_ref: string | null;
@@ -110,6 +119,17 @@ export interface BomDivision {
 }
 
 export interface BomIndex {
+  guid: string | null;
+  pkey: Generated<number>;
+  ref: string;
+  slug: string;
+  text: string;
+  type: string;
+  verse_id: string;
+  verse_id_end: string;
+}
+
+export interface BomIndexMatterBak20260728 {
   guid: string | null;
   pkey: Generated<number>;
   ref: string;
@@ -223,6 +243,33 @@ export interface BomMarkdown {
 
 export interface BomMatters {
   aliases: string | null;
+  branch: string;
+  category: string;
+  description: string | null;
+  era: string | null;
+  era_culture: string;
+  form: string;
+  form_group: string;
+  guid: string;
+  kind: string;
+  name: string;
+  node_link: string | null;
+  nrefs: Generated<number>;
+  provenance: string | null;
+  slug: string;
+  specificity: string;
+  status: string;
+  subform: string | null;
+  subform_label: string | null;
+  subtitle: string | null;
+  tags: string | null;
+  usage: string;
+  verse_id: number | null;
+  weight: Generated<number>;
+}
+
+export interface BomMattersBak20260728 {
+  aliases: string | null;
   category: string;
   description: string | null;
   era: string | null;
@@ -254,6 +301,13 @@ export interface BomPage {
   ref: string | null;
   title: string;
   weight: number;
+}
+
+export interface BomPasswordReset {
+  created_at: Generated<Date>;
+  expires: Date;
+  token: string;
+  user: string;
 }
 
 export interface BomPeople {
@@ -496,6 +550,19 @@ export interface BomTranslation {
   value: string;
 }
 
+export interface BomTranslationBak20260729Alma62 {
+  auditor: Generated<string>;
+  contributor: Generated<string>;
+  guid: Generated<string>;
+  id: Generated<number>;
+  lang: Generated<string>;
+  prev_value: string | null;
+  refkey: Generated<string>;
+  score: number | null;
+  time: Generated<Date>;
+  value: string;
+}
+
 export interface BomTranslationLocked {
   guid: string;
   lang: string;
@@ -554,6 +621,17 @@ export interface BomVirtualgroupPrompts {
 }
 
 export interface BomXrels {
+  dst_slug: string;
+  dst_type: string;
+  note: string | null;
+  rel: string;
+  src_slug: string;
+  src_type: string;
+  srcweight: Generated<number | null>;
+  uid: Generated<number>;
+}
+
+export interface BomXrelsMatterBak20260728 {
   dst_slug: string;
   dst_type: string;
   note: string | null;
@@ -1006,9 +1084,11 @@ export interface DB {
   bom_cache: BomCache;
   bom_capsulation: BomCapsulation;
   bom_connection: BomConnection;
+  bom_connection_bak_20260729: BomConnectionBak20260729;
   bom_data_bible: BomDataBible;
   bom_division: BomDivision;
   bom_index: BomIndex;
+  bom_index_matter_bak_20260728: BomIndexMatterBak20260728;
   bom_label: BomLabel;
   bom_log: BomLog;
   bom_log_duplicates: BomLogDuplicates;
@@ -1021,8 +1101,10 @@ export interface DB {
   bom_map_story_event: BomMapStoryEvent;
   bom_markdown: BomMarkdown;
   bom_matters: BomMatters;
+  bom_matters_bak_20260728: BomMattersBak20260728;
   bom_narration: BomNarration;
   bom_page: BomPage;
+  bom_password_reset: BomPasswordReset;
   bom_people: BomPeople;
   bom_people_rels: BomPeopleRels;
   bom_places: BomPlaces;
@@ -1042,6 +1124,7 @@ export interface DB {
   bom_theology_geometry: BomTheologyGeometry;
   bom_timeline: BomTimeline;
   bom_translation: BomTranslation;
+  bom_translation_bak_20260729_alma62: BomTranslationBak20260729Alma62;
   bom_translation_locked: BomTranslationLocked;
   bom_user: BomUser;
   bom_user_meta: BomUserMeta;
@@ -1049,6 +1132,7 @@ export interface DB {
   bom_user_token: BomUserToken;
   bom_virtualgroup_prompts: BomVirtualgroupPrompts;
   bom_xrels: BomXrels;
+  bom_xrels_matter_bak_20260728: BomXrelsMatterBak20260728;
   bom_xtras_audio: BomXtrasAudio;
   bom_xtras_caractors: BomXtrasCaractors;
   bom_xtras_caractors_sim: BomXtrasCaractorsSim;
