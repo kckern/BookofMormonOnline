@@ -3,7 +3,7 @@ import Parser from "html-react-parser";
 // COMPONENTS
 import Loader from "../_Common/Loader";
 import { useRouteMatch, useHistory, useLocation, Link } from "react-router-dom";
-import { parseMode, buildSearchPath, shouldOfferRich, isRichDegraded } from "./searchMode";
+import { parseMode, buildSearchPath, shouldOfferRich, isRichDegraded, VERSE_CAP } from "./searchMode";
 import { label } from "src/models/Utils";
 import { getSearchSlug, getSearchValue } from "src/models/searchSlug";
 import BoMOnlineAPI, {assetUrl} from "src/models/BoMOnlineAPI";
@@ -73,11 +73,11 @@ function SearchComponent() {
       <button
         className={mode === "keyword" ? "active" : ""}
         onClick={() => history.push(buildSearchPath(getSearchSlug(keyword), "keyword"))}
-      >{label("search_verses_only") || "Verses"}</button>
+      >{label("search_verses_only", [-1]) || "Verses"}</button>
       <button
         className={mode === "rich" ? "active" : ""}
         onClick={() => history.push(buildSearchPath(getSearchSlug(keyword), "rich"))}
-      >{label("search_everything") || "Everything"}</button>
+      >{label("search_everything", [-1]) || "Everything"}</button>
     </div>
   );
 
@@ -101,7 +101,7 @@ function SearchComponent() {
         const verses = sa.verses || [];
         const verseTotal = sa.verseTotal ?? verses.length;
         if (isRichDegraded(mode, semantic))
-          toast.warning(label("search_topical_unavailable") || "Topical search is unavailable — showing keyword matches", { position: "top-center" });
+          toast.warning(label("search_topical_unavailable", [-1]) || "Topical search is unavailable — showing keyword matches", { position: "top-center" });
         const groupCount = [sa.people, sa.places, sa.matters, sa.commentary, sa.narration, sa.pages, sa.events]
           .reduce((acc, g) => acc + (g?.length || 0), 0);
         const count = verseTotal + groupCount;
@@ -112,9 +112,10 @@ function SearchComponent() {
           {toggle}
           {shouldOfferRich(mode, semantic, verseTotal) && (
             <div className="search-rich-banner">
-              {label("search_many_results", [verseTotal]) || `${verseTotal} matches — showing the first 100.`}{" "}
+              {/* i18n TODO: seed `search_many_results` with a $1 placeholder, then route through label() */}
+              {`${verseTotal} matches — showing the first ${VERSE_CAP}.`}{" "}
               <button onClick={() => history.push(buildSearchPath(getSearchSlug(keyword), "rich"))}>
-                {label("search_try_topical") || "Try topical search"}
+                {label("search_try_topical", [-1]) || "Try topical search"}
               </button>
             </div>
           )}
@@ -124,7 +125,7 @@ function SearchComponent() {
           ))}
           <ResultGroup label={label("menu_people") || "People"} cards={r.searchAll.people} kind="person" query={keyword} semantic={semantic} />
           <ResultGroup label={label("menu_places") || "Places"} cards={r.searchAll.places} kind="place" query={keyword} semantic={semantic} />
-          <ResultGroup label={label("menu_matters") || "Matters"} cards={r.searchAll.matters} kind="matter" query={keyword} semantic={semantic} />
+          <ResultGroup label={label("menu_matters", [-1]) || "Matters"} cards={r.searchAll.matters} kind="matter" query={keyword} semantic={semantic} />
           <ResultGroup label="Commentary" cards={r.searchAll.commentary} kind="commentary" query={keyword} semantic={semantic} />
           <ResultGroup label="Narration" cards={r.searchAll.narration} kind="narration" query={keyword} semantic={semantic} />
           <ResultGroup label="Pages" cards={r.searchAll.pages} kind="page" query={keyword} semantic={semantic} />
