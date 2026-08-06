@@ -31,7 +31,7 @@ import type { DB } from '../../codegen/db.js';
 import type { UserDTO } from './dto.js';
 import { getUser, getUsers } from './users.js';
 import { getUserMetadata, updateUserMetadata } from './users.js';
-import { getBus } from '../realtime/RealtimeBus.js';
+import { notify } from '../notifications/notify.js';
 
 export type NotificationType = 'reply' | 'reaction' | 'invite';
 
@@ -314,7 +314,19 @@ export async function pushNotificationForEvent(
       is_read: false,
     };
 
-    getBus().emit('notification_received', userRoom(recipientId), notif);
+    await notify(db, {
+      userId: recipientId,
+      type: params.type,
+      actorId: params.actorId,
+      dedupeKey: notif.id,
+      payload: {
+        text: notif.text,
+        channel_url: notif.channel_url,
+        message_id: notif.message_id,
+        actor: notif.actor,
+      },
+      createdAt: new Date(notif.created_at),
+    });
   } catch (err) {
     console.error('pushNotificationForEvent error:', err);
   }
