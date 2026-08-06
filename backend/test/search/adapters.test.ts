@@ -7,6 +7,8 @@ import {
   narrationRowToSource,
   pageRowToSource,
   eventRowToSource,
+  matterRowToSource,
+  dedupeMattersByWeight,
 } from '../../src/search/adapters.js';
 
 describe('TYPE_CONFIGS', () => {
@@ -54,5 +56,45 @@ describe('row mappers', () => {
   test('eventRowToSource: falls back to slug as entity_id when id is null, ref from year when event_year null', () => {
     const r = eventRowToSource({ id: null, slug: 'translation', document: null, source: 'Book of Mormon', teaser: null, year: 1829, event_year: null });
     expect(r).toEqual({ entity_id: 'translation', title: 'Book of Mormon', text: 'Book of Mormon', slug: 'history/translation', ref: '1829' });
+  });
+});
+
+describe('matter mapper', () => {
+  test('matterRowToSource joins name+subtitle+description+aliases+tags, matters/ slug, ref null', () => {
+    const r = matterRowToSource({
+      slug: 'faith', name: 'Faith', subtitle: 'Belief unto action',
+      description: 'The first principle', aliases: 'belief', tags: 'doctrine',
+    });
+    expect(r).toEqual({
+      entity_id: 'faith',
+      title: 'Faith',
+      text: 'Faith Belief unto action The first principle belief doctrine',
+      slug: 'matters/faith',
+      ref: null,
+    });
+  });
+
+  test('matterRowToSource falls back to slug when name is null', () => {
+    const r = matterRowToSource({ slug: 'x', name: null, subtitle: null, description: null, aliases: null, tags: null });
+    expect(r).toEqual({ entity_id: 'x', title: 'x', text: '', slug: 'matters/x', ref: null });
+  });
+});
+
+describe('dedupeMattersByWeight', () => {
+  test('keeps the highest-weight row per slug', () => {
+    const rows = [
+      { slug: 'a', weight: 1, name: 'lo' },
+      { slug: 'a', weight: 5, name: 'hi' },
+      { slug: 'b', weight: 2, name: 'b' },
+    ];
+    const out = dedupeMattersByWeight(rows).sort((x, y) => x.slug.localeCompare(y.slug));
+    expect(out).toEqual([{ slug: 'a', weight: 5, name: 'hi' }, { slug: 'b', weight: 2, name: 'b' }]);
+  });
+});
+
+describe('TYPE_CONFIGS matter', () => {
+  test('registers matter as a chunked type', () => {
+    const byType = Object.fromEntries(TYPE_CONFIGS.map((c) => [c.cfg.type, c.cfg.chunk]));
+    expect(byType.matter).toBe(true);
   });
 });

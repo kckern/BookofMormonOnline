@@ -195,6 +195,47 @@ export const loadEvents = async (db: Kysely<DB>): Promise<SourceRow[]> => {
   return rows.map((r) => eventRowToSource(r));
 };
 
+// ─── Matter ──────────────────────────────────────────────────────────────────
+// Table: bom_matters (topics/subjects/themes)
+// entity_id: slug (route key /matters/:matterSlug). NO `terms` column exists.
+// slug: matters/<slug>. ref: null (matters are slug-navigated, not verse-anchored).
+
+export function matterRowToSource(r: {
+  slug: string;
+  name: string | null;
+  subtitle: string | null;
+  description: string | null;
+  aliases: string | null;
+  tags: string | null;
+}): SourceRow {
+  return {
+    entity_id: r.slug,
+    title: clean(r.name) || r.slug,
+    text: join(r.name, r.subtitle, r.description, r.aliases, r.tags),
+    slug: `matters/${r.slug}`,
+    ref: null,
+  };
+}
+
+/** Slugs can repeat in bom_matters; deterministic point IDs key on slug, so collapse to the
+ *  highest-weight row per slug (matches the resolver's `order by weight desc` precedence). */
+export function dedupeMattersByWeight<T extends { slug: string; weight: number }>(rows: T[]): T[] {
+  const bySlug = new Map<string, T>();
+  for (const r of rows) {
+    const existing = bySlug.get(r.slug);
+    if (!existing || r.weight > existing.weight) bySlug.set(r.slug, r);
+  }
+  return [...bySlug.values()];
+}
+
+export const loadMatters = async (db: Kysely<DB>): Promise<SourceRow[]> => {
+  const rows = (await db
+    .selectFrom('bom_matters')
+    .select(['slug', 'name', 'subtitle', 'description', 'aliases', 'tags', 'weight'])
+    .execute()) as Array<{ slug: string; name: string | null; subtitle: string | null; description: string | null; aliases: string | null; tags: string | null; weight: number }>;
+  return dedupeMattersByWeight(rows).map((r) => matterRowToSource(r));
+};
+
 // ─── Registry ────────────────────────────────────────────────────────────────
 
 export const TYPE_CONFIGS: Array<{ cfg: TypeConfig; load: (db: Kysely<DB>) => Promise<SourceRow[]> }> = [
@@ -204,4 +245,5 @@ export const TYPE_CONFIGS: Array<{ cfg: TypeConfig; load: (db: Kysely<DB>) => Pr
   { cfg: { type: 'narration',   chunk: false },                 load: loadNarration },
   { cfg: { type: 'page',        chunk: false },                 load: loadPages },
   { cfg: { type: 'event',       chunk: false },                 load: loadEvents },
+  { cfg: { type: 'matter',      chunk: true, maxChars: 600 },   load: loadMatters },
 ];

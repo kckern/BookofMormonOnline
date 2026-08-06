@@ -1,5 +1,5 @@
 /** Entity kinds indexed in the shared `bom_content` collection. Phase 1 uses 'verse'. */
-export type ContentType = 'verse' | 'person' | 'place' | 'page' | 'narration' | 'commentary' | 'event';
+export type ContentType = 'verse' | 'person' | 'place' | 'page' | 'narration' | 'commentary' | 'event' | 'matter';
 
 /** One Qdrant point to upsert. */
 export interface IndexPoint {
