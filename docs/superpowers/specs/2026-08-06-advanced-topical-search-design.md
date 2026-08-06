@@ -43,14 +43,21 @@ This work turns that accidental fallback into a **deliberate, user-controllable 
 | `keyword` → auto-fallback | (on 0 hits) semantic | yes | keyword finds 0 verses (existing) |
 | `rich` | semantic, ranked (`searchContent`) | yes (all types incl. matters) | user toggles it, or clicks the "100+" banner |
 
-**Resolver behavior** (`backend/src/graphql/resolvers/searchhist.ts`):
-- `mode: 'keyword'` (default): run keyword candidate search as today. If 0 verse candidates, fall back to `searchContent` + `searchGroups` and set `semantic: true` (unchanged). Otherwise return keyword verses, `semantic: false`, no groups.
-- `mode: 'rich'`: always run `searchContent` across all content types, rank verses semantically, and return all supplement groups via `searchGroups`. `semantic: true`.
+**Where the work actually lives — this is a loader refactor, not a resolver branch.**
+The resolver (`searchAllResolver`) is thin; verse candidate resolution, hydration, and ranking all live in `searchQuery()` → `resolveCandidates()` in `backend/src/data/loaders/searchhist.ts`. Today `resolveCandidates` hard-codes keyword-first and does not expose a way to force the semantic tier through `searchQuery`. **Rich mode means threading `mode` down into `searchQuery`/`resolveCandidates`** so it can run the semantic tier directly. The ranking machinery already exists and is reused as-is (`hitsToRankedVerseIds`, `rankRowsByCandidateOrder`) — the new work is the plumbing to *reach* it, plus the hydration cap below.
 
-**Response additions** (GraphQL type + `GraphQLQueries.js`):
+**Resolver/loader behavior:**
+- `mode: 'keyword'` (default): run keyword candidate search as today, but **cap hydration** (see below). If 0 verse candidates, fall back to `searchContent` + `searchGroups`, `semantic: true` (unchanged). Otherwise return the capped keyword verses, `semantic: false`, no groups, plus `verseTotal`.
+- `mode: 'rich'`: run `searchContent` across all content types (verses semantically ranked via the existing rank helpers) and return all supplement groups via `searchGroups`. `semantic: true`.
+
+**Cap the flood (perf + justifies `verseTotal`).** `getCandidateVerseIds` (`loaders/searchhist.ts:96`) has **no LIMIT**, and `Search.js:92` renders `verses.map(...)` unvirtualized — searching a common word (`"the"`) hydrates thousands of rows through ~10 batch queries and paints them all. This round **caps keyword hydration at `VERSE_CAP` (proposed 100)**. That both fixes the pathology and gives `verseTotal` a real job.
+
+**Response additions** (GraphQL SDL `backend/schema/BomUtils.graphql` + `GraphQLQueries.js`):
 - `semantic: Boolean` — did vector retrieval run (already present).
-- `verseTotal: Int` — raw keyword candidate count, so the frontend can decide whether to show the "100+" banner **without** paying any vector cost. Computed from the keyword candidate id list (count before hydration/limit).
+- `verseTotal: Int` — the **raw candidate count before the cap**. Needed precisely *because* hydration is now capped: `verses.length` maxes out at `VERSE_CAP` and no longer reflects the true match count, so the frontend can't derive "there are 347 matches" from the array. `verseTotal` carries that number for the banner. (Without the cap this field would be redundant with `verses.length` — the cap is what earns it.)
 - `matters` group added to the result type, parallel to `people`/`places`/etc.
+
+**Lockstep edits for the new `matter` type / `verseTotal` / `mode`** (miss one and it silently breaks): `ContentType` union (`backend/src/search/types.ts`), the hard-coded empty-groups object in the resolver (`searchhist.ts:~118`), `SearchAllResult` SDL (`backend/schema/BomUtils.graphql`), `TYPE_CONFIGS` + the new adapter, and the frontend query string (`GraphQLQueries.js:578`). Note the codegen snapshot already lags the SDL (`searchAll` is injected untyped, `searchhist.ts:101–133`); the plan must either regenerate codegen or accept more `Record<string, unknown>` surgery.
 
 ### New corpus — Matters adapter
 
@@ -58,29 +65,41 @@ Add to `backend/src/search/adapters.ts` and register in `TYPE_CONFIGS`:
 
 ```
 loadMatters(bom_matters):
-  entity_id = slug
+  entity_id = slug                 // route key; see uniqueness note below
   title     = name
-  text      = join(name, subtitle, description, aliases, tags, terms)
-  slug      = `matters/<slug>`     // confirm exact route at plan time
+  text      = join(name, subtitle, description, aliases, tags)   // NO `terms` col — bom_matters has none
+  slug      = `matters/<slug>`     // route CONFIRMED: /matters/:matterSlug (Routes.js:246)
   ref       = null
   chunk     = true (description can be long; maxChars 600 like commentary)
+  filter    = status (see below)
 ```
 
-- Add `'matter'` handling to `searchGroups()` so rich mode returns a `matters` group.
-- Reindex via the existing idempotent `backend/scripts/reindex-search.ts` (deterministic UUIDv5 point IDs → safe partial reindex, no duplicates). Add Matters to the reindex run.
+Verified against `codegen/db.d.ts` `BomMatters`: columns are `name, subtitle, description, aliases, tags, status, slug, guid, weight, verse_id, …`. There is **no `terms` column** — the earlier draft invented it.
 
-**Plan-time verification:** confirm the canonical Matter detail route/slug format (the frontend route that renders a `bom_matters` row) before finalizing the adapter `slug`. `bom_matters` has a GraphQL resolver and cross-refs already, so a route exists — the exact prefix must be confirmed, not assumed.
+- **`status` filter:** `bom_matters.status` exists (draft/published states). Indexing everything would surface unpublished matters in search. **Decision: index only published matters**; confirm the exact published-status value(s) at plan time.
+- **`slug` uniqueness:** point IDs are deterministic UUIDv5 keyed on `entity_id`. The Matters resolver (`mattersBySlugs`) orders by `weight DESC`, which implies slug may not be unique per row. If duplicates exist, dedupe at index time keeping the highest-`weight` row (matches resolver precedence) so collisions don't silently overwrite. Confirm uniqueness at plan time.
+- Add `'matter'` to `searchGroups()` (see below) so it returns a `matters` group.
+- Reindex via the existing idempotent `backend/scripts/reindex-search.ts` (deterministic UUIDv5 point IDs → safe partial reindex). Add Matters to the reindex run.
+
+**`searchGroups` has no type-filter — it iterates a module constant.** Adding `'matter'` to that list means it also appears in the **zero-hit keyword fallback** groups, not only rich mode. That is intentional and consistent with the mode table above, but call it out: the same edit lights up matters in both paths.
 
 ### Frontend (`frontend/webapp/src/views/Search/`)
 
 - **Mode toggle** in the search header: `Verses` ⟷ `Everything` (topical). Mode carried in the URL as a query param (`?mode=rich`) so results are shareable and back-button-safe. `Search.js` reads mode from the route and passes it to the `searchAll` call.
 - **0 results:** unchanged — server auto-fallback returns groups with `semantic: true`; existing rendering already handles this.
-- **100+ results:** when `mode === 'keyword'` and `verseTotal > 100`, render a banner under the results heading: *"100+ matches — try topical search to rank by relevance."* One click re-runs the query with `mode=rich`.
+- **100+ results:** when `mode === 'keyword'` and `verseTotal > VERSE_CAP`, render a banner under the results heading. One click re-runs the query with `mode=rich`. **Copy must be honest about the cap:** rich mode returns the top ~50 per type (`searchContent` default `limit: 50`), so the banner says something like *"Showing the first {VERSE_CAP} of {verseTotal} matches — switch to topical search to rank the most relevant."* Not "see all results." The rich-mode per-type limit is **pinned at 50** for this round; surface it in copy if the group is truncated.
 - **New card kind:** add `matter` to the `CARD` map in `ResultGroup.js` (reuse the `ContentCard` shape; add a `MatterCard`/chip only if a distinct visual is wanted). `ResultGroup` is already generic over `kind`, so this is additive. Add a `matters` `<ResultGroup>` in `Search.js` alongside the existing groups.
+
+**Frontend plumbing is not free — three crusty seams must be touched:**
+1. **Arg passing.** `queries.searchAll(query)` is single-arg and `prepareQueries` dispatches on *function arity* with `q()` taking one key/val pair (`GraphQLQueries.js:2178`). Adding `mode` means reworking that seam; `BoMOnlineAPI.structureResults` keys results positionally and is documented as able to break the whole app if response keys shift — change it deliberately.
+2. **Search box drops the query string.** `searchFor()` pushes `/search/<slug>` with no `?mode`, so a fresh search from the box silently reverts to keyword. It must preserve (or intentionally reset) the mode.
+3. **Refetch dependency.** The fetch `useEffect` is keyed on `[keyword]` only (`Search.js:105`); flipping mode with the same keyword won't refetch. Add `mode` to the dependency array.
 
 ### Error handling / graceful degradation
 
-Rich mode must never white-screen if Qdrant or OpenAI embeddings are unavailable. Wrap the rich path so a vector-backend failure **degrades to keyword verses + empty supplement groups**, sets `semantic: false`, and surfaces a soft toast. This mirrors the existing contract that `retrieveChunks` never throws (returns `[]` on failure).
+`searchContent` **throws by design** when Qdrant/OpenAI embeddings are unavailable (`retrieve.ts:64` — *"Throws … caller falls back"*). Every caller already wraps it: `resolveCandidates` and `searchGroups` (backend) and `retrieveChunks` (`bots/mastra/rag.ts:41`, never-throws → `[]`) all try/catch and degrade. The rich path follows the same contract: on vector-backend failure it **degrades to keyword verses + empty supplement groups** and sets `semantic: false`.
+
+**Degraded-rich signaling contract:** the frontend detects a degraded rich search as **`mode === 'rich' && semantic === false`** and shows a soft toast (*"Topical search is unavailable — showing keyword matches"*) rather than silently pretending the rich query succeeded.
 
 ## Data flow
 
@@ -88,10 +107,10 @@ Rich mode must never white-screen if Qdrant or OpenAI embeddings are unavailable
 User types query ──► Search.js reads ?mode (default keyword)
        │
        ├─ mode=keyword ─► searchAll(query, mode:keyword)
-       │      backend: getCandidateVerseIds (LIKE)
+       │      backend: getCandidateVerseIds (LIKE, verseTotal = raw count)
        │        ├─ 0 hits  ─► searchContent + searchGroups  (semantic:true, groups)
-       │        └─ N hits  ─► hydrate verses (semantic:false, verseTotal:N)
-       │             frontend: if verseTotal>100 ─► show "topical search" banner
+       │        └─ N hits  ─► hydrate FIRST min(N, VERSE_CAP) (semantic:false, verseTotal:N)
+       │             frontend: if verseTotal>VERSE_CAP ─► show "topical search" banner
        │
        └─ mode=rich ────► searchAll(query, mode:rich)
               backend: searchContent (dense+sparse, RRF) across ALL types
@@ -100,12 +119,17 @@ User types query ──► Search.js reads ?mode (default keyword)
               frontend: grouped rendering (verses on top, sections below)
 ```
 
+## i18n & language coverage
+
+- **Banner + toggle copy** must go through `label()` like every other string in `Search.js` — no hard-coded English. New label keys needed for the toggle labels and banner text.
+- **Non-English rich mode depends on index coverage.** Keyword search handles non-English via `lds_scriptures_translations`, but rich/`searchContent` only returns what's in the Qdrant `bom_content` index. Verses carry a `lang`/`version` payload filter; **supplement types (including Matters) are indexed from source tables that may be English-only.** State the coverage explicitly in the plan: for non-`en` sessions, rich mode may return verses in-language but supplement groups sparse/empty. Acceptable for this round; do not silently imply full multilingual topical search.
+
 ## Testing strategy
 
-- **Unit (backend):** `mattersRowToSource` mapper — mirrors existing adapter mapper tests (field joins, slug prefix, null handling).
-- **Resolver (backend):** `mode` routing (keyword vs rich); `verseTotal` reporting; the 100+ threshold boundary; the degradation path when the vector backend is unreachable (returns keyword verses, `semantic:false`, empty groups, no throw).
+- **Unit (backend):** `mattersRowToSource` mapper — field joins (no `terms`), `matters/<slug>` prefix, null handling, `status` filter, slug-dedup-by-weight.
+- **Backend loader/resolver:** `mode` routing (keyword vs rich); `verseTotal` = raw candidate count while hydrated `verses.length` is capped at `VERSE_CAP`; the degradation path when the vector backend throws (returns keyword verses, `semantic:false`, empty groups, no throw).
 - **Indexing (backend):** Matters rows upsert into `bom_content` with `type='matter'`; rich query returns a non-empty `matters` group for a known topical query.
-- **Frontend:** toggle flips mode and updates the URL; the "100+" banner appears when `verseTotal>100` and re-runs in rich mode on click; the `matter` card kind renders inside `ResultGroup`.
+- **Frontend:** the banner-threshold decision lives **on the frontend** (`verseTotal > VERSE_CAP`) — test it there, not in a backend resolver test. Toggle flips mode + updates the URL; `searchFor()` preserves mode; refetch fires on mode change with same keyword; degraded-rich (`mode==='rich' && !semantic`) shows the toast; the `matter` card kind renders inside `ResultGroup`.
 
 ## Fast follow (next round, separate spec)
 
@@ -113,6 +137,9 @@ User types query ──► Search.js reads ?mode (default keyword)
 
 ## Open items to confirm at plan time
 
-1. Exact Matter detail route/slug prefix (for adapter `slug` and card links).
-2. The 100+ threshold constant and where it lives (backend resolver vs frontend). Default proposal: **100**, evaluated on `verseTotal`, decision made on the frontend.
+1. `VERSE_CAP` value (proposed **100**) — the keyword hydration cap, the banner threshold, and the "first N of M" copy all key off it.
+2. The published-`status` value(s) to filter Matters on, and whether `bom_matters.slug` is unique (drives the dedupe-by-weight decision).
 3. Whether Matters needs a distinct card visual or can reuse `ContentCard`.
+4. Codegen: regenerate the SDL snapshot for `mode`/`verseTotal`/`matters`, or extend the existing untyped-injection hack.
+
+_(Resolved during review: Matter route is `/matters/:matterSlug` → adapter slug `matters/<slug>`. `bom_matters` has no `terms` column. `searchContent` throws by design; the never-throw precedent is `retrieveChunks`/`searchGroups`/`resolveCandidates`.)_
