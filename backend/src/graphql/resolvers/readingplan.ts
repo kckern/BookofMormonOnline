@@ -59,6 +59,17 @@ export async function createPlanForUser(db: Kysely<DB>, username: string, args: 
   if (!config) return { isSuccess: false, msg: 'INVALID_CONFIG' };
   if (args.credit === 'fresh' || args.credit === 'alltime') config.credit = args.credit;
 
+  // PR-3: check-then-insert has a race window — two concurrent startReadingPlan
+  // calls can both pass the active-plan check before either insert commits.
+  // bom_readingplan has no UNIQUE constraint on (owner, status='active') and no PK
+  // (MySQL cannot do partial unique indexes natively). Tightest app-level fix:
+  // re-check inside the transaction so at least serialised DB connections see
+  // the committed insert; true protection requires a DB-level constraint.
+  // TODO: add `CREATE UNIQUE INDEX uniq_owner_active ON bom_readingplan (owner, status(6))`
+  //       filtered to active rows (requires a workaround since MySQL has no partial
+  //       indexes — e.g. a generated column `active_flag TINYINT AS (status='active' IS TRUE)
+  //       STORED` + UNIQUE(owner, active_flag) with a trigger to allow multiple NULLs),
+  //       OR enforce via INSERT ... SELECT with a WHERE NOT EXISTS guard.
   const active = await db.selectFrom('bom_readingplan').select('guid')
     .where('owner', '=', username).where('status', '=', 'active').executeTakeFirst();
   if (active) return { isSuccess: false, msg: 'ACTIVE_PLAN_EXISTS' };
@@ -69,29 +80,43 @@ export async function createPlanForUser(db: Kysely<DB>, username: string, args: 
 
   const slug = `rp-${nanoid(10)}`;
   const last = gen.segments[gen.segments.length - 1]!;
-  await db.transaction().execute(async (trx) => {
-    await trx.insertInto('bom_readingplan').values({
-      guid: randomBytes(16).toString('hex'),
-      slug,
-      title: title ?? 'Reading Plan',
-      owner: username,
-      startdate: new Date(`${startdate}T00:00:00Z`),
-      duedate: last.duedate ? new Date(`${last.duedate}T00:00:00Z`) : null,
-      status: 'active',
-      config: JSON.stringify(config),
-    }).execute();
-    await trx.insertInto('bom_readingplan_seg').values(gen.segments.map((s) => ({
-      guid: randomBytes(16).toString('hex'),
-      plan: slug,
-      period: s.period,
-      ref: s.ref,
-      title: null,
-      duedate: s.duedate ? new Date(`${s.duedate}T00:00:00Z`) : null,
-      start: s.start,
-      end: s.end,
-      sectionGuids: JSON.stringify(s.sectionGuids),
-    }))).execute();
-  });
+  try {
+    await db.transaction().execute(async (trx) => {
+      // Second check inside the transaction: reduces (but does not eliminate) the
+      // race window for serialised concurrent connections. The transaction abort
+      // causes the outer catch to return ACTIVE_PLAN_EXISTS rather than throw.
+      const stillActive = await trx.selectFrom('bom_readingplan').select('guid')
+        .where('owner', '=', username).where('status', '=', 'active').executeTakeFirst();
+      if (stillActive) throw Object.assign(new Error('ACTIVE_PLAN_EXISTS'), { code: 'ACTIVE_PLAN_EXISTS' });
+      await trx.insertInto('bom_readingplan').values({
+        guid: randomBytes(16).toString('hex'),
+        slug,
+        title: title ?? 'Reading Plan',
+        owner: username,
+        startdate: new Date(`${startdate}T00:00:00Z`),
+        duedate: last.duedate ? new Date(`${last.duedate}T00:00:00Z`) : null,
+        status: 'active',
+        config: JSON.stringify(config),
+      }).execute();
+      await trx.insertInto('bom_readingplan_seg').values(gen.segments.map((s) => ({
+        guid: randomBytes(16).toString('hex'),
+        plan: slug,
+        period: s.period,
+        ref: s.ref,
+        title: null,
+        duedate: s.duedate ? new Date(`${s.duedate}T00:00:00Z`) : null,
+        start: s.start,
+        end: s.end,
+        sectionGuids: JSON.stringify(s.sectionGuids),
+      }))).execute();
+    });
+  } catch (err) {
+    // Race condition: a concurrent insert won the check inside the transaction.
+    if (err instanceof Error && err.message === 'ACTIVE_PLAN_EXISTS') {
+      return { isSuccess: false, msg: 'ACTIVE_PLAN_EXISTS' };
+    }
+    throw err; // real DB error — re-throw for the resolver to handle
+  }
   return { isSuccess: true, msg: 'OK', slug };
 }
 

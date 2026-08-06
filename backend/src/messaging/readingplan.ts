@@ -222,18 +222,16 @@ export async function loadReadingPlan(
     current = idx === -1 ? Math.max(0, segments.length - 1) : idx; // all done → last
   }
 
-  // Auto-complete on read (spec: no cron). Only for a live user plan.
-  let status = plan.status ?? null;
-  if (progress >= 100 && status === 'active') {
-    // Best-effort auto-complete (spec: no cron). A write failure must not hide
-    // the already-computed plan — mark completed in the response regardless.
-    try {
-      await db.updateTable('bom_readingplan').set({ status: 'completed', enddate: new Date() }).where('slug', '=', planSlug).execute();
-    } catch (err) {
-      console.error('loadReadingPlan: auto-complete write failed', err);
-    }
-    status = 'completed';
-  }
+  // PR-1 fix: loadReadingPlan is a read — it must not issue writes.
+  // When progress reaches 100 % we surface status='completed' in the response as
+  // a *derived* value only; the actual DB row is persisted by the explicit
+  // endReadingPlan mutation (callers that need persistence must call that path).
+  // This keeps the function idempotent, safe to cache, and sandbox-transparent.
+  // Previously an UPDATE was issued here; that bypassed the sandbox write-guard
+  // and made any GQL query a hidden mutation — removed 2026-08-05.
+  const status = (progress >= 100 && (plan.status ?? null) === 'active')
+    ? 'completed'
+    : (plan.status ?? null);
 
   return {
     guid: plan.guid,

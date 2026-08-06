@@ -136,3 +136,13 @@ The auth surface has two launch-blocking issues and three meaningful P1s. The mo
 2. **A2 — no password reset (P0):** Users who lose access and cannot social-sign-in are permanently locked out. A public-facing launch without any self-service recovery mechanism is not viable. Needs either a new email reset flow or an explicit decision that the legacy box owns this path and a routing plan.
 
 3. **A5 — unauthenticated email dump (P1):** Any unauthenticated HTTP client can retrieve real user email addresses by username. With leaderboard/DM usernames being public, this is a full harvesting surface. One-line guard: check `ctx.bearerToken` at the top of the `users` resolver, or drop `email` from the public type.
+
+---
+
+## A2 Remediation Status (2026-08-05)
+
+**Finding:** Password reset is genuinely absent from the green-field backend. `grep -rniE "resetPassword|forgotPassword|password.*reset"` across `backend/src/` and `backend/schema/` returns zero hits. The `BomUser.graphql` Mutation block has no `forgotPassword` or `resetPassword` field. The only password change path (`changePassword`) requires a valid session token — there is no unauthenticated recovery path.
+
+**Owner determination:** The legacy `src/` stack (`_deprecated/`) is confirmed deprecated and not running. The green-field `backend/` is the sole live backend. There is no PHP box or separate legacy service currently serving a password-reset flow for this backend's users. Existing bom_user rows with only a hashed password and no social link have no self-service recovery path today.
+
+**Decision needed (not a code change):** This is a genuine gap requiring a product/engineering decision: either implement `mutation forgotPassword(email: String!): Boolean` + token-based email link + `mutation resetPassword(resetToken: String!, newPassword: String!): Boolean`, or formally route this surface back to a legacy owner. Building a placeholder or stub flow without the email-delivery infrastructure in place would be misleading. **No fake reset flow was implemented.** This remains open as a P0 launch blocker pending owner assignment.

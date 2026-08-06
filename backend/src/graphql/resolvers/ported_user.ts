@@ -96,39 +96,20 @@ export const portedUserResolvers: Resolvers = {
 
     /**
      * studygrouphistory — per-user daily progress for a study group.
-     * Legacy BomCommunity.ts:231. The group membership is a hardcoded stub
-     * (['tytus','kckern']) with a fixed textMax=3520 and name 'My Group'. Kept
-     * verbatim, including the try/catch empty fallback.
+     * C-4a: the legacy stub hardcoded ['tytus','kckern'] and returned their real
+     * reading progress regardless of the requested studyGroupID — a dev-account
+     * data leak for any caller. There is no real implementation (no
+     * bom_studygroup_members table lookup). Return a safe empty shape until a
+     * proper implementation exists.
      */
-    studygrouphistory: async (_root, args, ctx) => {
-      const textMax = 3520;
+    studygrouphistory: async (_root, args) => {
       const studyGroupID = args.studyGroupID;
-      const userList = ['tytus', 'kckern'];
-      try {
-        const values = await getStandardizedValuesFromUserList(ctx.db, userList);
-        return {
-          studyGroupID,
-          studyGroupName: 'My Group',
-          dates: values.map((v) => v.date),
-          userHistories: userList.map((user) => ({
-            user,
-            dates: values.map((v) => v.date),
-            completed: values.map((v) => {
-              const p = v.progress?.[user];
-              if (p === undefined || p === null) return 0;
-              return Math.round((p * 1000) / textMax) / 10;
-            }),
-          })),
-        };
-      } catch (error) {
-        console.error('Error during studygrouphistory:', error);
-        return {
-          studyGroupID,
-          studyGroupName: 'My Group',
-          dates: [],
-          userHistories: userList.map((user) => ({ user, dates: [], completed: [] })),
-        };
-      }
+      return {
+        studyGroupID,
+        studyGroupName: '',
+        dates: [],
+        userHistories: [],
+      };
     },
 
     /**
@@ -141,12 +122,19 @@ export const portedUserResolvers: Resolvers = {
     },
 
     /**
-     * users — public bom_user rows for the given ids (user/name/email only).
-     * Not implemented in legacy; minimal safe read. Empty/null ids → [].
+     * users — public bom_user rows for the given ids (user/name only).
+     * A5: email was returned to unauthenticated callers, allowing anyone who
+     * knows a username to harvest real email addresses. Fix: drop email from
+     * the response entirely (it is not needed by any known public consumer).
+     * Also cap the batch to 100 ids to prevent unbounded enumeration.
      */
     users: async (_root, args, ctx) => {
       try {
-        return (await getUsersByIds(ctx.db, args.user_ids)) as unknown as never;
+        // Cap the batch — no unbounded enumeration.
+        const cappedIds = (args.user_ids ?? []).filter(Boolean).slice(0, 100);
+        const rows = await getUsersByIds(ctx.db, cappedIds);
+        // Strip email — never return it without auth.
+        return rows.map(({ user, name }) => ({ user, name, email: null })) as unknown as never;
       } catch (error) {
         console.error('Database error during users:', error);
         return [];

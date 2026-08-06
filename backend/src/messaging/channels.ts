@@ -146,6 +146,14 @@ async function assembleChannels(
   if (rows.length === 0) return [];
   const urls = rows.map((r) => r.channel_url);
 
+  // PERF M-6: getUnreadCount is called once per channel (2 queries each: one
+  // SELECT on messenger_members for last_read_at, one SELECT COUNT on
+  // messenger_messages). For N channels this is 2×N queries. A bulk version
+  // would require a single JOIN query that returns per-channel unread counts in
+  // one round-trip. That refactor touches getUnreadCount's internal query shape
+  // and readstate.ts — deferred to avoid a risky refactor. Bound: for typical
+  // channel lists (≤100 channels) this is at most 200 queries; tolerable in
+  // practice but should be bulk-replaced before the channel list scales further.
   const [membersByChannel, lastMsgByChannel, unreadByUrl] = await Promise.all([
     getChannelMembersBulk(db, urls),
     getMessagesForChannels(db, urls, 1),
