@@ -12,9 +12,9 @@ import {
 } from '../../src/search/adapters.js';
 
 describe('TYPE_CONFIGS', () => {
-  test('registers the six new types with chunk flags', () => {
+  test('registers all seven types with chunk flags', () => {
     const byType = Object.fromEntries(TYPE_CONFIGS.map((c) => [c.cfg.type, c.cfg.chunk]));
-    expect(byType).toMatchObject({ person: false, place: false, commentary: true, narration: false, page: false, event: false });
+    expect(byType).toMatchObject({ person: false, place: false, commentary: true, narration: false, page: false, event: false, matter: true });
   });
 });
 
@@ -74,8 +74,8 @@ describe('matter mapper', () => {
     });
   });
 
-  test('matterRowToSource falls back to slug when name is null', () => {
-    const r = matterRowToSource({ slug: 'x', name: null, subtitle: null, description: null, aliases: null, tags: null });
+  test('matterRowToSource falls back to slug when name is blank', () => {
+    const r = matterRowToSource({ slug: 'x', name: '   ', subtitle: null, description: null, aliases: null, tags: null });
     expect(r).toEqual({ entity_id: 'x', title: 'x', text: '', slug: 'matters/x', ref: null });
   });
 });
@@ -89,12 +89,5 @@ describe('dedupeMattersByWeight', () => {
     ];
     const out = dedupeMattersByWeight(rows).sort((x, y) => x.slug.localeCompare(y.slug));
     expect(out).toEqual([{ slug: 'a', weight: 5, name: 'hi' }, { slug: 'b', weight: 2, name: 'b' }]);
-  });
-});
-
-describe('TYPE_CONFIGS matter', () => {
-  test('registers matter as a chunked type', () => {
-    const byType = Object.fromEntries(TYPE_CONFIGS.map((c) => [c.cfg.type, c.cfg.chunk]));
-    expect(byType.matter).toBe(true);
   });
 });

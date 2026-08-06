@@ -202,7 +202,7 @@ export const loadEvents = async (db: Kysely<DB>): Promise<SourceRow[]> => {
 
 export function matterRowToSource(r: {
   slug: string;
-  name: string | null;
+  name: string;
   subtitle: string | null;
   description: string | null;
   aliases: string | null;
@@ -218,7 +218,8 @@ export function matterRowToSource(r: {
 }
 
 /** Slugs can repeat in bom_matters; deterministic point IDs key on slug, so collapse to the
- *  highest-weight row per slug (matches the resolver's `order by weight desc` precedence). */
+ *  highest-weight row per slug (matches the resolver's `order by weight desc` precedence).
+ *  On equal weight, the first-encountered row wins (loadMatters orders by weight desc so the DB order is stable). */
 export function dedupeMattersByWeight<T extends { slug: string; weight: number }>(rows: T[]): T[] {
   const bySlug = new Map<string, T>();
   for (const r of rows) {
@@ -232,7 +233,8 @@ export const loadMatters = async (db: Kysely<DB>): Promise<SourceRow[]> => {
   const rows = (await db
     .selectFrom('bom_matters')
     .select(['slug', 'name', 'subtitle', 'description', 'aliases', 'tags', 'weight'])
-    .execute()) as Array<{ slug: string; name: string | null; subtitle: string | null; description: string | null; aliases: string | null; tags: string | null; weight: number }>;
+    .orderBy('weight', 'desc')
+    .execute()) as Array<{ slug: string; name: string; subtitle: string | null; description: string | null; aliases: string | null; tags: string | null; weight: number }>;
   return dedupeMattersByWeight(rows).map((r) => matterRowToSource(r));
 };
 
