@@ -102,9 +102,9 @@ function SearchComponent() {
         const verseTotal = sa.verseTotal ?? verses.length;
         if (isRichDegraded(mode, semantic))
           toast.warning(label("search_topical_unavailable") || "Topical search is unavailable — showing keyword matches", { position: "top-center" });
-        const groupCount = [sa.people, sa.places, sa.commentary, sa.narration, sa.pages, sa.events]
+        const groupCount = [sa.people, sa.places, sa.matters, sa.commentary, sa.narration, sa.pages, sa.events]
           .reduce((acc, g) => acc + (g?.length || 0), 0);
-        const count = verses.length + groupCount;
+        const count = verseTotal + groupCount;
 
         if (count === 0) return setContent(<div><h3 className="title lg-4 text-center">{label("no_results_for_x", [<span>{keyword}</span>])}</h3>{searchBox}</div>);
 
