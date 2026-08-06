@@ -32,6 +32,11 @@ const labels = {
   mapstory_detached: 'not continuous',
   mapstory_detached_title: 'This move does not continue from the previous one',
   mapstory_meta: '$1 moves · $2 places',
+  // Two-layer CTA controls (Layer 1 read-more expand, Layer 2 deeplinks). Used
+  // across the tiles; seeded here so they never render as raw keys.
+  read_more: 'Read more',
+  view_in_context: 'See in context',
+  view_more: 'View more',
 };
 
 (async () => {

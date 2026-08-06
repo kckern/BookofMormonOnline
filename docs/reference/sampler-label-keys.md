@@ -52,6 +52,9 @@ table. Until they do, those strings render as their raw key.
 | `mapstory_detached` | not continuous | new |
 | `mapstory_detached_title` | This move does not continue from the previous one | new |
 | `mapstory_meta` | $1 moves · $2 places | new |
+| `read_more` | Read more | new (2026-08-05, two-layer CTA) |
+| `view_in_context` | See in context | new (2026-08-05, two-layer CTA) |
+| `view_more` | View more | new (2026-08-05, two-layer CTA) |
 
 ## Notes
 
