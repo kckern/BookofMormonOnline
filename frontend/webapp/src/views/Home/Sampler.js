@@ -1,24 +1,18 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import { useAppController } from "src/contexts/AppControllerContext";
 import { label } from "src/models/Utils";
 import Masonry from "react-masonry-css";
 import { tileRegistry, reservePool, batchTiles } from "./tiles/registry";
+import { read as readCache, write as writeCache, isFresh as cacheIsFresh } from "./tiles/homeSamplerCache";
 import "./Sampler.css";
 import "./Sampler.m.css";
 
 const MAX_RESERVES = 5;
 
-/** Session-stable seed: same page on refresh/back, new sample next session. */
-const getSessionSeed = () => {
-  let seed = parseInt(sessionStorage.getItem("samplerSeed"), 10);
-  if (!(seed > 0)) {
-    seed = Math.floor(Math.random() * (2 ** 31 - 1)) + 1;
-    sessionStorage.setItem("samplerSeed", String(seed));
-  }
-  return seed;
-};
+/** Fresh random seed for a manual refresh (explicit → server-fresh, uncached). */
+const randomSeed = () => Math.floor(Math.random() * (2 ** 31 - 1)) + 1;
 
 /** Fisher–Yates: the VARIABLE tiles refit randomly each load (fixed ones don't). */
 const shuffle = (arr) => {
@@ -47,9 +41,24 @@ const FIXED_TAIL = ["mapstory"];
 const MAX_BATCHES = 30; // backstop against a runaway fetch loop; effectively infinite for a reader
 const nextBatchSeed = (s) => ((s + 1013904223) % 2147483647) || 1;
 
-/** Merge the compound API response into one payload keyed by registry tile key. */
-export const assemblePayload = (r) => {
+/**
+ * The cacheable content tiles. Public, seeded server-side — this is what the
+ * client cache stores and paints instantly. `commentaries` maps to three 1:1
+ * registry keys.
+ */
+export const assembleSampler = (r) => {
   const sampler = r?.homesampler?.[0] || {};
+  const [commentary, commentary2, commentary3] = sampler.commentaries || [];
+  return { ...sampler, commentary, commentary2, commentary3 };
+};
+
+/**
+ * The live community payload (never cached): liveliest groups first, fresh
+ * messages under group chips, one finisher row. Membership system events are
+ * filtered; stale timestamps degrade to reading-progress rows. Returns null when
+ * there is nothing to show.
+ */
+export const assembleCommunity = (r) => {
   const groups = r?.homegroups || [];
   const board = r?.leaderboard?.[0] || {};
   const dedupe = (users) => {
@@ -61,9 +70,6 @@ export const assemblePayload = (r) => {
       return true;
     });
   };
-  // ONE merged community payload (design review): liveliest groups first,
-  // fresh messages under group chips, one finisher row. Membership system
-  // events are filtered; stale timestamps degrade to reading-progress rows.
   const FRESH_MS = 90 * 86400 * 1000;
   const sorted = groups
     .filter((g) => g?.url)
@@ -79,20 +85,31 @@ export const assemblePayload = (r) => {
     }));
   const finishers = dedupe(board.recentFinishers).slice(0, 4);
   const reading = dedupe(board.currentProgress).slice(0, 3);
-  const community = sorted.length || finishers.length
+  return sorted.length || finishers.length
     ? { groups: sorted.slice(0, 3), moreGroups: Math.max(0, sorted.length - 3), messages, reading, finishers }
     : null;
-  // three commentary tiles, one payload field each (registry keys are 1:1)
-  const [commentary, commentary2, commentary3] = sampler.commentaries || [];
-  return { ...sampler, community, commentary, commentary2, commentary3 };
 };
+
+/** Compose both streams — kept for callers/tests that want the merged shape. */
+export const assemblePayload = (r) => ({ ...assembleSampler(r), community: assembleCommunity(r) });
 
 export default function Sampler() {
   const appController = useAppController();
   const token = appController.states.user.token;
-  const [payload, setPayload] = useState(null);
+  // Cache read is synchronous, so a warm entry paints on the FIRST render — no
+  // skeleton flash. cachedRef survives re-renders and records freshness.
+  const cachedRef = useRef(readCache());
+  // Two independent streams. The render payload derives from the SAMPLER only, so
+  // community landing first can never blank the page (it just fills its own tile).
+  const [samplerPayload, setSamplerPayload] = useState(() => cachedRef.current?.payload ?? null);
+  const [community, setCommunity] = useState(null);
   const [failed, setFailed] = useState(false);
-  const [seed, setSeed] = useState(getSessionSeed);
+  const payload = useMemo(
+    () => (samplerPayload ? { ...samplerPayload, community } : null),
+    [samplerPayload, community],
+  );
+  // Seed of the current sampler payload — drives infinite-scroll batch seeds.
+  const seed = samplerPayload?.seed || 0;
   const [variableTiles, setVariableTiles] = useState(() =>
     shuffle(tileRegistry.filter((t) => !FIXED_LEFT.includes(t.key) && !FIXED_TOP.includes(t.key) && !FIXED_TAIL.includes(t.key))),
   );
@@ -120,11 +137,45 @@ export default function Sampler() {
   const mountedRef = useRef(true);
   useEffect(() => () => { mountedRef.current = false; }, []);
 
-  // Break the session-stable seed on demand: fresh content + refitted variables.
+  // Community stream — always live, never cached. Fills its own tile when it
+  // lands; a failure just leaves the community tile empty (non-fatal).
+  const fetchCommunity = () => {
+    BoMOnlineAPI({ homegroups: { token }, leaderboard: { token } }, { useCache: false })
+      .then((r) => {
+        if (!mountedRef.current || r?.error) return;
+        setCommunity(assembleCommunity(r));
+      })
+      .catch(() => {});
+  };
+
+  // Sampler stream. `explicitSeed` null → front-door (server picks the shared
+  // window seed, cacheable). `swap` → paint the result (cold load / manual
+  // refresh); when false (stale revalidate) we only refresh the cache so the
+  // fresh sample applies on the NEXT load without disturbing the current view.
+  const fetchSampler = (explicitSeed, swap, attempt = 0) => {
+    const input = { homesampler: explicitSeed ? { seed: explicitSeed } : {} };
+    BoMOnlineAPI(input, { useCache: false })
+      .then((r) => {
+        if (!mountedRef.current) return;
+        if (r?.error || !Array.isArray(r?.homesampler)) throw new Error("homesampler unavailable");
+        const sp = assembleSampler(r);
+        writeCache(sp, sp.seed);
+        cachedRef.current = { payload: sp, seed: sp.seed };
+        if (swap) setSamplerPayload(sp);
+      })
+      .catch(() => {
+        if (!mountedRef.current) return;
+        if (attempt < 1) fetchSampler(explicitSeed, swap, attempt + 1);
+        // Only fall back to the empty-state footer when there is nothing to show.
+        else if (swap && !samplerPayload) setFailed(true);
+      });
+  };
+
+  // Manual refresh: a fresh random seed → server-fresh sample, swap the view
+  // (explicit action), overwrite the cache. Refitted variables + a fresh feed.
   const resample = () => {
-    const next = Math.floor(Math.random() * (2 ** 31 - 1)) + 1;
-    sessionStorage.setItem("samplerSeed", String(next));
-    setPayload(null);
+    setSamplerPayload(null);
+    setCommunity(null);
     setFailed(false);
     setReserves([]);
     setVariableTiles(shuffle(tileRegistry.filter((t) => !FIXED_LEFT.includes(t.key) && !FIXED_TOP.includes(t.key) && !FIXED_TAIL.includes(t.key))));
@@ -133,7 +184,8 @@ export default function Sampler() {
     reserveRef.current = null;
     fetchingRef.current = false;
     batchSeedRef.current = 0;
-    setSeed(next);
+    fetchSampler(randomSeed(), true);
+    fetchCommunity();
   };
 
   // The reload control now lives on the Home tab bar (see HomeTabs); it fires a
@@ -206,7 +258,7 @@ export default function Sampler() {
         if (!mountedRef.current) return;
         setLoadingMore(false);
         if (r?.error || !Array.isArray(r?.homesampler)) return;
-        reserveRef.current = { payload: assemblePayload(r), tiles: shuffle(batchTiles) };
+        reserveRef.current = { payload: assembleSampler(r), tiles: shuffle(batchTiles) };
         if (atBottomRef.current) maybeLoadMore();
       })
       .catch(() => { fetchingRef.current = false; if (mountedRef.current) setLoadingMore(false); });
@@ -229,14 +281,9 @@ export default function Sampler() {
   }
   loadMoreRef.current = maybeLoadMore;
 
-  // Prime the first reserve batch once the initial payload is in.
-  useEffect(() => {
-    if (payload && !reserveRef.current && !fetchingRef.current && !extraBatches.length) {
-      batchSeedRef.current = seed;
-      prefetchBatch();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [payload]);
+  // Infinite-scroll prefetch is DEFERRED to scroll intent (no mount-time primer):
+  // the observer below fires the first batch fetch as the reader nears the
+  // bottom, so a warm instant-paint costs zero network until the reader scrolls.
 
   // Watch a sentinel below the feed; reveal/prefetch as it nears the viewport.
   useEffect(() => {
@@ -279,34 +326,21 @@ export default function Sampler() {
     if (panel) panel.scrollTop = 0;
   }, []);
 
+  // Sampler stream — once on mount. A fresh cached entry already painted
+  // synchronously, so skip the network entirely; a stale entry revalidates
+  // behind the current view; a cold start fetches and paints.
   useEffect(() => {
-    let cancelled = false;
-    const load = (attempt) =>
-      BoMOnlineAPI(
-        { homesampler: { seed, token }, homegroups: { token }, leaderboard: { token } },
-        { useCache: false },
-      )
-        .then((r) => {
-          if (cancelled) return;
-          // BoMOnlineAPI does not reject on request timeout — it resolves the
-          // {error} sentinel (BoMOnlineAPI.js:43). Treat that, or any response
-          // missing the homesampler singleton, as a failure so it routes
-          // through the same retry-then-fallback path as a hard rejection.
-          if (r?.error || !Array.isArray(r?.homesampler)) {
-            throw new Error("homesampler unavailable");
-          }
-          setPayload(assemblePayload(r));
-        })
-        .catch(() => {
-          if (cancelled) return;
-          if (attempt < 1) load(attempt + 1);
-          else setFailed(true);
-        });
-    load(0);
-    return () => {
-      cancelled = true;
-    };
-  }, [token, seed]);
+    const entry = cachedRef.current;
+    if (entry && cacheIsFresh(entry)) return; // fresh → instant paint, no fetch
+    fetchSampler(null, /* swap */ !entry); // cold → swap in; stale → cache-only
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Community stream — always live; refetch when the auth token resolves/changes.
+  useEffect(() => {
+    fetchCommunity();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
 
   if (failed) return <SamplerFallback />;
 

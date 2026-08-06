@@ -46,6 +46,7 @@ const renderSampler = () =>
 beforeEach(() => {
   jest.clearAllMocks();
   sessionStorage.clear();
+  localStorage.clear(); // isolate the sampler cache between tests
 });
 
 describe("tileRegistry contract", () => {
