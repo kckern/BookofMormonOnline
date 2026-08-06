@@ -14,6 +14,7 @@ import { resolveSigninAvatar } from '../../messaging/users.js';
 import { sendbird } from '../../auth/sendbirdShim.js';
 import { runWrite } from '../../data/writes.js';
 import { hashPassword } from '../../auth/password.js';
+import { cleanUsername } from '../../auth/identity.js';
 import { createResetToken, consumeResetToken } from '../../data/loaders/passwordreset.js';
 import { sendEmail } from '../../mail/mailer.js';
 import { passwordResetEmail } from '../../mail/templates.js';
@@ -32,6 +33,26 @@ const asGql = <T>(v: T): any => v;
 
 export const userauthResolvers: Resolvers = {
   Query: {
+    /**
+     * checkUsernameAvailable — true when the (normalized) username is free.
+     * USERNAME-only by design: usernames are semi-public UX (restores the
+     * "username taken" hint the A4 hardening removed from the signup response)
+     * WITHOUT reopening the email-enumeration oracle A5 closed. Normalized via
+     * cleanUsername so it matches what signup would actually store.
+     */
+    checkUsernameAvailable: async (_root, args: { username?: string | null }, ctx: AppContext) => {
+      const raw = (args.username ?? '').trim();
+      if (!raw) return false;
+      const username = cleanUsername(raw, '');
+      const existing = await ctx.db
+        .selectFrom('bom_user')
+        .select('user')
+        .where('user', '=', username)
+        .limit(1)
+        .executeTakeFirst();
+      return !existing;
+    },
+
     /**
      * signin — Legacy BomUser.ts:99. Query (not Mutation) by legacy quirk.
      * Dual-verifies password (bcrypt + MD5 migration), rehashes on MD5 hash,

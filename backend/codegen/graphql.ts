@@ -1135,6 +1135,7 @@ export type Query = {
   _?: Maybe<Scalars['Boolean']['output']>;
   books?: Maybe<Array<Maybe<Book>>>;
   botlist?: Maybe<Array<Maybe<Bot>>>;
+  checkUsernameAvailable?: Maybe<Scalars['Boolean']['output']>;
   chiasmus?: Maybe<Array<Maybe<Chiasmus>>>;
   closetab?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
   commentary?: Maybe<Array<Maybe<Commentary>>>;
@@ -1226,6 +1227,11 @@ export type QueryBooksArgs = {
 
 export type QueryBotlistArgs = {
   channel?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryCheckUsernameAvailableArgs = {
+  username?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -3275,6 +3281,7 @@ export type QueryResolvers<ContextType = AppContext, ParentType extends Resolver
   _?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   books?: Resolver<Maybe<Array<Maybe<ResolversTypes['Book']>>>, ParentType, ContextType, Partial<QueryBooksArgs>>;
   botlist?: Resolver<Maybe<Array<Maybe<ResolversTypes['Bot']>>>, ParentType, ContextType, Partial<QueryBotlistArgs>>;
+  checkUsernameAvailable?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, Partial<QueryCheckUsernameAvailableArgs>>;
   chiasmus?: Resolver<Maybe<Array<Maybe<ResolversTypes['Chiasmus']>>>, ParentType, ContextType, Partial<QueryChiasmusArgs>>;
   closetab?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType, Partial<QueryClosetabArgs>>;
   commentary?: Resolver<Maybe<Array<Maybe<ResolversTypes['Commentary']>>>, ParentType, ContextType, Partial<QueryCommentaryArgs>>;

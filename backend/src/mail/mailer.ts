@@ -79,12 +79,21 @@ export class SesMailer implements Mailer {
 
 let _instance: Mailer | null = null;
 
-/** Singleton mailer — SES when configured, else the console fallback. */
+/**
+ * Singleton mailer, selected by MAIL_PROVIDER (the adapter seam). 'console'
+ * forces the log-only transport; 'ses' uses SES when MAIL_FROM is set and falls
+ * back to console otherwise. Add a provider by extending the env enum + a branch
+ * here + a `Mailer` implementation — callers never change.
+ */
 export function getMailer(): Mailer {
   if (!_instance) {
-    _instance = env.MAIL_FROM
-      ? new SesMailer(env.MAIL_FROM, env.MAIL_REGION)
-      : new ConsoleMailer();
+    if (env.MAIL_PROVIDER === 'console') {
+      _instance = new ConsoleMailer();
+    } else {
+      _instance = env.MAIL_FROM
+        ? new SesMailer(env.MAIL_FROM, env.MAIL_REGION)
+        : new ConsoleMailer();
+    }
   }
   return _instance;
 }

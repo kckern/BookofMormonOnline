@@ -1,6 +1,7 @@
 extend type Query {
   user(token: [String]): User
   generateToken(seed: Int): String
+  checkUsernameAvailable(username: String): Boolean
   signin(token: String, username: String, password: String): SignIn
   tokensignin(token: String): SignIn
   socialsignin(network: String, token: String, social_token: String): SignIn
