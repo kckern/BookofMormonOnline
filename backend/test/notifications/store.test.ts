@@ -15,6 +15,8 @@ import { Kysely, MysqlDialect, type MysqlDialectConfig } from 'kysely';
 import { createPool } from 'mysql2';
 import type { DB } from '../../codegen/db.js';
 import { persistNotification, rowToDTO } from '../../src/notifications/store.js';
+import { notify } from '../../src/notifications/notify.js';
+import { setIo } from '../../src/realtime/RealtimeBus.js';
 
 function buildWriteDb(): Kysely<DB> {
   const host = process.env['MYSQL_HOST'] ?? '127.0.0.1';
@@ -152,5 +154,33 @@ describe('rowToDTO', () => {
     expect(dto.id).toBe('invite:xyz789');
     expect(dto.type).toBe('invite');
     expect(dto.is_read).toBe(true);
+  });
+});
+
+describe('notify', () => {
+  itWrite('emits notification_received exactly once for a fresh row, never for a duplicate', async () => {
+    const me = await mkUser('Recipient');
+    const events: Array<{ room: string; dto: any }> = [];
+    const input = {
+      userId: me, type: 'reply', actorId: me, dedupeKey: `reply:${nanoid(11)}`,
+      payload: { text: 't', channel_url: 'c', message_id: 'm', actor: null },
+    };
+    // Stub the io singleton so RealtimeBus.emit routes here.
+    setIo({
+      to: (room: string) => ({
+        emit: (event: string, dto: any) => {
+          if (event === 'notification_received') events.push({ room, dto });
+        },
+      }),
+    } as any);
+    try {
+      await notify(db, input);
+      await notify(db, input); // duplicate → no emit
+    } finally {
+      setIo(null as any);
+    }
+    expect(events.length).toBe(1);
+    expect(events[0]!.room).toBe(`user:${me}`);
+    expect(events[0]!.dto.id).toBe(input.dedupeKey);
   });
 });
