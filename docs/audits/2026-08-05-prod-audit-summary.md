@@ -135,3 +135,19 @@ Applied and verified on the live backend (`147ae9c0`; CLI harness adapt `5dd0e32
 - **Prod-config gate (§6)** — env values (`SANDBOX=0`, CORS origins, `REDIS_URL`, `OPENAI_API_KEY`+budget, `MESSENGER_BOT_TOKEN`, `S3_BUCKET`) must be verified against the real prod environment (not code).
 
 **All P0 *code* defects are now closed except A2 (password reset — a product/infra decision).**
+
+---
+
+## A2 password reset — CLOSED (2026-08-05)
+
+Built a transactional email layer (SES) + self-service reset. `Mailer` port with
+a `ConsoleMailer` fallback (logs until AWS creds land), `bom_password_reset`
+single-use 30-min tokens, `requestPasswordReset(email)` (anti-enumeration:
+always true) + `resetPassword(token, password)`. Verified E2E: reset → signin
+with new password → replay rejected; 4/4 unit tests. **Pending prod env:**
+`MAIL_FROM` (activates SES over the console fallback), `MAIL_REGION`,
+`APP_BASE_URL`, AWS credentials, and a verified SES sender identity.
+
+**All P0 code defects are now closed.** Remaining before cutover: the P1
+risk-accept decisions, the perf/retention fast-follows, and the prod-config env
+gate (§6) — none are P0 code.
