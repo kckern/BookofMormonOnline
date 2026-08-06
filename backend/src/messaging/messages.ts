@@ -570,6 +570,34 @@ export async function deleteMessage(
   return Number(result[0]?.numUpdatedRows ?? 0) > 0;
 }
 
+// ─── purgeDeletedMessages ─────────────────────────────────────────────────────
+
+/**
+ * Hard-delete soft-deleted messages (is_deleted = 1) whose created_at is older
+ * than `olderThanDays` days. Only ever touches already-soft-deleted rows — live
+ * messages (is_deleted IS NULL or 0) are never affected.
+ *
+ * Returns the number of rows hard-deleted. Callers should check before logging
+ * so zero-count runs stay quiet.
+ *
+ * Note: associated highlights and reactions are left for the DB's ON DELETE
+ * CASCADE (messenger_highlights.message_id and messenger_reactions.message_id
+ * both have FK → messenger_messages with CASCADE). If FKs are not enforced in
+ * the schema, orphaned rows are benign but callers may want to add cleanup.
+ */
+export async function purgeDeletedMessages(
+  db: Kysely<DB>,
+  olderThanDays: number,
+): Promise<number> {
+  const cutoff = new Date(Date.now() - olderThanDays * 24 * 60 * 60 * 1000);
+  const result = await db
+    .deleteFrom('messenger_messages')
+    .where('is_deleted', '=', 1)
+    .where('created_at', '<', cutoff)
+    .executeTakeFirst();
+  return Number(result.numDeletedRows);
+}
+
 // ─── getHighlights (convenience export) ──────────────────────────────────────
 
 /**

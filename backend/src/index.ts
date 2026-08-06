@@ -10,6 +10,7 @@ import { resolveLang } from './graphql/lang.js';
 import { stripEmptyDeep } from './compat/responseFilter.js';
 import { initRealtime } from './realtime/server.js';
 import { startBotScheduler } from './bots/scheduler.js';
+import { startRetentionJob } from './messaging/retention.js';
 import { faxRoutes } from './media/fax/route.js';
 
 const app = Fastify({
@@ -134,6 +135,9 @@ app
     if (process.env.BOT_SCHEDULER_ENABLED === 'true') {
       startBotScheduler();
     }
+    // Message retention (M-7). No-op unless MESSAGE_RETENTION_DAYS is set to a
+    // positive integer. Hard-purges soft-deleted rows past the cutoff every 24h.
+    startRetentionJob(db);
   })
   .catch((err) => {
     app.log.error(err);

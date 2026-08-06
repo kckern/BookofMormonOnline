@@ -14,6 +14,21 @@ import { parsePlanConfig } from '../readingplan/types.js';
 
 const COMPLETE_THRESHOLD = Number(process.env.PERCENT_TO_COUNT_AS_COMPLETE ?? 40);
 
+/**
+ * Module-level cache for the bom_text guid→section lookup used by scoreSegment.
+ * bom_text is static reference data (~3,544 rows); it never changes at runtime,
+ * so a process-lifetime cache is appropriate. The first call pays the DB round-trip;
+ * subsequent calls (including post-mutation reloads) return the cached array.
+ * If bom_text rows are ever added/changed, a process restart picks up the new data.
+ */
+let _bomTextCache: { guid: string; section: string | null }[] | null = null;
+
+async function getBomTextBlocks(db: Kysely<DB>): Promise<{ guid: string; section: string | null }[]> {
+  if (_bomTextCache) return _bomTextCache;
+  _bomTextCache = await db.selectFrom('bom_text').select(['guid', 'section']).execute();
+  return _bomTextCache;
+}
+
 export interface ReadingPlanUserInfo {
   /** bom_user.user (or the raw token for anon) used to score bom_log credit. */
   queryBy: string;
@@ -169,7 +184,7 @@ export async function loadReadingPlan(
   const creditFloor = cfg?.credit === 'alltime' ? 0 : startUnix;
   const completed = new Set(await completedGuids(db, userInfo.queryBy, creditFloor));
 
-  const allTextBlocks = await db.selectFrom('bom_text').select(['guid', 'section']).execute();
+  const allTextBlocks = await getBomTextBlocks(db);
 
   // Batch translations for the plan + all segment guids (only for non-en langs).
   const useLang = lang && lang !== 'en' && lang !== 'dev' ? lang : null;
