@@ -103,3 +103,35 @@ Both systemic root causes fixed and verified against the live backend with the
 | **P-2** metadata full-replace wipe | shallow merge over existing metadata | partial update preserves `bookmark` | `35f76537` |
 
 Regression: `demo.yaml` still `✔ 8 steps` (legit member send/edit-own/react/join unbroken); `getMembership` unit test 2/2; `tsc` clean (only the pre-existing `scriptureextras.ts:57` pair). **Remaining before cutover:** A1 (lang overflow), A2 (password reset), the P1 batch, and the prod-config gate (§6 of the review plan) — not in Wave 1.
+
+---
+
+## Wave 2 — P1 batch + A1 (2026-08-05)
+
+Applied and verified on the live backend (`147ae9c0`; CLI harness adapt `5dd0e324`):
+
+| Finding | Fix | Status |
+|---|---|---|
+| **A1** lang overflow (P0) | `resolveLang` clamps to `SUPPORTED_LANGUAGES`→`en` | ✅ signup via `/graphql` now `isSuccess:true` |
+| **A3** rate limiting | global `@fastify/rate-limit` 300/min on GraphQL routes | ✅ |
+| **A4** error mask + enumeration | `maskedErrors` prod-gated; signup → generic `error_creating_user` | ✅ (see note) |
+| **A5** email dump | `users()` strips `email`, caps batch at 100 | ✅ verified |
+| **A6** FB token echo | strip `access_token` from returned `profile_url` | ✅ |
+| **C-1** feed privacy | `maskUserPrivacy` applied to feed users | ✅ |
+| **C-2** join-type bypass | `joinGroup` gated on `custom_type='open'` | ✅ |
+| **C-4** studygrouphistory leak | returns empty (was leaking dev accounts) | ✅ verified |
+| **C-5** botlist auth | requires bearer | ✅ verified anon→`[]` |
+| **P-4** upload size | rejects >5 MB payload pre-decode | ✅ |
+| **PR-1** write-on-read | `loadReadingPlan` idempotent (derived status, no UPDATE) | ✅ |
+| **PR-3** plan race | in-tx re-check + documented DB-constraint need | ⚠️ tightened, not race-proof (needs DB partial-unique) |
+| **M-6** unread N+1 | documented (`// PERF M-6`), bulk refactor deferred | ⏸ deferred |
+
+**A4 side-effect (flag for frontend):** generic signup errors mean the UI can no longer say "username taken" from the signup response — add a separate availability check if that UX is needed.
+
+### Genuinely remaining before cutover (need a decision / infra, not code I can safely finish here)
+- **A2 password reset (P0)** — confirmed *absent* from the greenfield backend; needs an owner decision + a real reset flow (email + tokens) or a legacy fallback. Not faked.
+- **PR-3** — a DB-level partial-unique (generated-column) constraint for one-active-plan.
+- **M-6 / M-7 / P-3 / PR-2** — perf/retention (bulk unread, message-purge cron, non-blocking avatar, plan-scan cache): audit-rated safe to soak post-launch at current data sizes.
+- **Prod-config gate (§6)** — env values (`SANDBOX=0`, CORS origins, `REDIS_URL`, `OPENAI_API_KEY`+budget, `MESSENGER_BOT_TOKEN`, `S3_BUCKET`) must be verified against the real prod environment (not code).
+
+**All P0 *code* defects are now closed except A2 (password reset — a product/infra decision).**
