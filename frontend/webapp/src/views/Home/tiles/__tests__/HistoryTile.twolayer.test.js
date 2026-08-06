@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import HistoryTile from "../HistoryTile";
 
@@ -31,12 +31,14 @@ test("outer element is a div (not an anchor) so it can hold an inner expand", ()
   expect(inner.tagName).toBe("DIV"); // was an <a> before this task
 });
 
-test("deeplink into the document is gated (absent before expand)", () => {
+test("deeplink into the document is gated: absent before expand, present after", () => {
   render(
     <MemoryRouter>
       <HistoryTile data={data} />
     </MemoryRouter>
   );
-  const deep = screen.queryByRole("link", { name: (n, el) => el.classList.contains("tileMoreLink") });
-  expect(deep).toBeNull();
+  const deep = () => screen.queryByRole("link", { name: (n, el) => el.classList.contains("tileMoreLink") });
+  expect(deep()).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: (n, el) => el.classList.contains("readMorePill") }));
+  expect(deep().getAttribute("href")).toBe("/history/joseph-diary");
 });

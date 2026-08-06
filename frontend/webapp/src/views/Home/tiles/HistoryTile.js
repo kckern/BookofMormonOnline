@@ -53,7 +53,7 @@ export default function HistoryTile({ data }) {
             ) : null}
             {data.citation ? <div className="historyTileCitation">{flatten(data.citation)}</div> : null}
           </div>
-          <Link to={to} className="historyTileThumbLink">
+          <Link to={to} className="historyTileThumbLink" aria-label={data.document || ""}>
             <img
               className="historyTileThumb"
               style={aspect ? { aspectRatio: `1 / ${aspect}` } : undefined}

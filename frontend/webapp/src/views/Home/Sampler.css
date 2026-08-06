@@ -1027,6 +1027,9 @@ html[data-theme="dark"] .narrationRef { color: #93c6ef; }
    HISTORY — one featured historical document
    ================================================================ */
 .historyTileBody { display: flex; gap: 0.7rem; min-height: 0; flex: 1; }
+/* the thumbnail is now wrapped in its own <Link>; the anchor is the flex child
+   of .historyTileBody, so it (not the img) carries the flex sizing. */
+.historyTileThumbLink { display: block; flex-shrink: 0; align-self: flex-start; }
 .historyTileThumb {
   width: 7.5rem;
   height: auto;
@@ -1078,15 +1081,14 @@ html[data-theme="dark"] .historyTileMore { color: #93c6ef; }
 html[data-theme="dark"] .historyTileTitle { color: #f0f0f0; }
 .historyTileMeta { font-size: 0.72rem; color: #888; margin: 0.15rem 0 0.3rem; }
 html[data-theme="dark"] .historyTileMeta { color: #a0a0a0; }
+/* Typography only — ExpandableText now owns clamping (this class sits on its
+   wrapper div, which also holds the read-more pill; a -webkit-box here would
+   break the pill's auto-centering and re-clip the expanded lead at 14 lines). */
 .historyTileTeaser {
   margin: 0;
   font-size: 0.78rem;
   line-height: 1.45;
   color: #555;
-  display: -webkit-box;
-  -webkit-line-clamp: 14;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
 }
 html[data-theme="dark"] .historyTileTeaser { color: #c4c4c4; }
 

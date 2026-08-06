@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import React, { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { parse } from "node-html-parser";
 import { assetUrl } from "src/models/BoMOnlineAPI";
@@ -59,8 +59,9 @@ function CommentaryTileInner({ data }) {
   }, [text, expanded]);
 
   // Gate the deeplink only when a read-more will actually render. ATV tiles
-  // (no truncation path) never gate → their deeplink shows immediately.
-  useEffect(() => {
+  // (no truncation path) never gate → their deeplink shows immediately. Runs
+  // PRE-paint (useLayoutEffect) so the deeplink doesn't flash before the gate.
+  useLayoutEffect(() => {
     if (!isAtv && truncated && !expanded) registerGate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [truncated, isAtv, expanded]);
