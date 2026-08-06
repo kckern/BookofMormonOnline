@@ -127,6 +127,7 @@ export function register(socket: Socket, _io: Server): void {
             type: 'reply',
             targetMessageId: payload.parentMessageId,
             actorId: user.userId,
+            sourceMessageId: msg.message_id,
           });
         }
 

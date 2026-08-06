@@ -299,6 +299,7 @@ export async function pushNotificationForEvent(
     targetMessageId: string;
     actorId: string;
     reactionKey?: string;
+    sourceMessageId?: string; // the child reply message id (for type 'reply')
   },
 ): Promise<void> {
   try {
@@ -320,7 +321,11 @@ export async function pushNotificationForEvent(
     let text: string;
     let messageId: string | null;
     if (params.type === 'reply') {
-      id = `reply:${params.targetMessageId}`;
+      // Each reply is its own notification — key on the child reply message id
+      // to match the derived feed (reply:<replyMessageId>) and to avoid collapsing
+      // multiple replies to the same parent into one.
+      if (!params.sourceMessageId) return; // can't form a correct/unique reply id
+      id = `reply:${params.sourceMessageId}`;
       text = `${nickname} replied to your comment`;
       messageId = target.message_id;
     } else {

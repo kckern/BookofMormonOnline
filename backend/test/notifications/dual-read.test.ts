@@ -149,9 +149,57 @@ describe('dual-read merge', () => {
     const actor = await mkUser('Replier');
     const ch = await mkChannel('Group A', [me, actor]);
     const parent = await mkMessage(ch, me, 'my comment');
-    await mkMessage(ch, actor, 'nice point', parent);
-    await pushNotificationForEvent(db, { type: 'reply', targetMessageId: parent, actorId: actor });
-    const replies = (await getNotifications(db, me)).filter((n) => n.id === `reply:${parent}`);
+    // Capture the reply id — both arms must produce reply:<replyId> to collide.
+    const replyId = await mkMessage(ch, actor, 'nice point', parent);
+    await pushNotificationForEvent(db, {
+      type: 'reply',
+      targetMessageId: parent,
+      actorId: actor,
+      sourceMessageId: replyId,
+    });
+    // Derived arm: reply:<replyId>; stored arm: reply:<replyId> — merged → exactly one.
+    const replies = (await getNotifications(db, me)).filter((n) => n.id === `reply:${replyId}`);
     expect(replies.length).toBe(1);
+  });
+
+  itWrite('multiple replies to the same parent produce distinct notifications', async () => {
+    const me = await mkUser('Recipient');
+    const actor1 = await mkUser('Replier1');
+    const actor2 = await mkUser('Replier2');
+    const ch = await mkChannel('Group B', [me, actor1, actor2]);
+    const parent = await mkMessage(ch, me, 'my original comment');
+    const r1 = await mkMessage(ch, actor1, 'first reply', parent);
+    const r2 = await mkMessage(ch, actor2, 'second reply', parent);
+
+    // Each reply pushes with its own sourceMessageId — must NOT collapse to one row.
+    await pushNotificationForEvent(db, {
+      type: 'reply',
+      targetMessageId: parent,
+      actorId: actor1,
+      sourceMessageId: r1,
+    });
+    await pushNotificationForEvent(db, {
+      type: 'reply',
+      targetMessageId: parent,
+      actorId: actor2,
+      sourceMessageId: r2,
+    });
+
+    // Both rows must exist in bom_notification — neither dropped by UNIQUE collision.
+    const rows = await db
+      .selectFrom('bom_notification')
+      .select('dedupe_key')
+      .where('user_id', '=', me)
+      .where('type', '=', 'reply')
+      .execute();
+    const keys = rows.map((r) => r.dedupe_key);
+    expect(keys).toContain(`reply:${r1}`);
+    expect(keys).toContain(`reply:${r2}`);
+
+    // getNotifications must surface both distinct ids.
+    const notifs = await getNotifications(db, me);
+    const ids = notifs.map((n) => n.id);
+    expect(ids).toContain(`reply:${r1}`);
+    expect(ids).toContain(`reply:${r2}`);
   });
 });

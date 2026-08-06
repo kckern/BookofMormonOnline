@@ -148,14 +148,14 @@ describe('pushNotificationForEvent write-through', () => {
       const actor = await mkUser('Replier');
       const ch = await mkChannel('Group A', [me, actor]);
       const parent = await mkMessage(ch, me, 'my comment');
-      await mkMessage(ch, actor, 'nice point', parent);
+      const replyMsgId = await mkMessage(ch, actor, 'nice point', parent);
 
-      await pushNotificationForEvent(db, { type: 'reply', targetMessageId: parent, actorId: actor });
+      await pushNotificationForEvent(db, { type: 'reply', targetMessageId: parent, actorId: actor, sourceMessageId: replyMsgId });
 
       const row = await db.selectFrom('bom_notification')
         .selectAll().where('user_id', '=', me).where('type', '=', 'reply').executeTakeFirst();
       expect(row).toBeDefined();
-      expect(row!.dedupe_key).toBe(`reply:${parent}`);
+      expect(row!.dedupe_key).toBe(`reply:${replyMsgId}`);
       expect(row!.actor_id).toBe(actor);
     } finally {
       setIo(null as any);
