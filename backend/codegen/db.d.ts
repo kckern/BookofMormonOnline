@@ -295,6 +295,18 @@ export interface BomNarration {
   weight: number;
 }
 
+export interface BomNotification {
+  id: Generated<number>;
+  user_id: string;
+  type: string;
+  actor_id: string | null;
+  dedupe_key: string;
+  payload: Json;
+  created_at: Generated<Date>;
+  read_at: Date | null;
+  dismissed_at: Date | null;
+}
+
 export interface BomPage {
   guid: string;
   parent: string;
@@ -1103,6 +1115,7 @@ export interface DB {
   bom_matters: BomMatters;
   bom_matters_bak_20260728: BomMattersBak20260728;
   bom_narration: BomNarration;
+  bom_notification: BomNotification;
   bom_page: BomPage;
   bom_password_reset: BomPasswordReset;
   bom_people: BomPeople;

@@ -35,14 +35,14 @@
 **Decisions (resolved by KC, 2026-08-06):**
 - Table name: **`bom_notification`** (site-wide name, not messenger-scoped — anticipates announcements/study activity beyond messenger). Kysely interface: `BomNotification`.
 - DB mutations are authorized: subagents apply the DDL and run write-tests/backfill against the DB using the available write creds. (Confirm the target DB in Task 0 before the `CREATE TABLE`.)
-- DDL lives in `docs/sql/` and is applied manually (no migration framework exists yet).
+- DDL lives in `backend/migrations/` and is applied manually (no migration framework exists yet).
 - New module dir: **`backend/src/notifications/`** for the table store + `notify()` core; `backend/src/messaging/notifications.ts` imports from it and keeps its public exports.
 
 **Deviations from the architecture spec's phase-1 sketch:** the spec listed "retire metadata read state" inside phase 1. This plan **keeps** the metadata read-state as a fallback and defers its removal to phase 1.b, so that historical/pre-backfill and derived-only rows keep their read status and nothing regresses on day one. Full retirement happens after backfill is verified in prod.
 
 ## File Structure
 
-- **Create** `docs/sql/2026-08-06-notification-table.sql` — DDL for `bom_notification`.
+- **Create** `backend/migrations/2026-08-06-notification-table.sql` — DDL for `bom_notification`.
 - **Create** `backend/src/notifications/store.ts` — persistence + row→DTO + table read/mark helpers.
 - **Create** `backend/src/notifications/notify.ts` — `notify()` core (persist + emit-on-fresh).
 - **Create** `backend/scripts/backfill-notifications.ts` — idempotent backfill from the derived feed.
@@ -87,16 +87,16 @@ Expected: `function`. Note the resolution for the insert builder used in Task 2.
 ## Task 1: Create the `bom_notification` table
 
 **Files:**
-- Create: `docs/sql/2026-08-06-notification-table.sql`
+- Create: `backend/migrations/2026-08-06-notification-table.sql`
 - Modify: `backend/codegen/db.d.ts`
 
 - [ ] **Step 1: Write the DDL**
 
-Create `docs/sql/2026-08-06-notification-table.sql`:
+Create `backend/migrations/2026-08-06-notification-table.sql`:
 
 ```sql
 -- Notifications phase 1: durable store. Applied manually (no migration framework yet).
--- Apply: mysql -h $MYSQL_HOST -P $MYSQL_PORT -u $MYSQL_WRITE_USER -p $MYSQL_DB < docs/sql/2026-08-06-notification-table.sql
+-- Apply: mysql -h $MYSQL_HOST -P $MYSQL_PORT -u $MYSQL_WRITE_USER -p $MYSQL_DB < backend/migrations/2026-08-06-notification-table.sql
 CREATE TABLE IF NOT EXISTS bom_notification (
   id            BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   user_id       VARCHAR(32)  NOT NULL COMMENT 'recipient; md5(username) = messenger_users.user_id',
@@ -116,7 +116,7 @@ CREATE TABLE IF NOT EXISTS bom_notification (
 
 - [ ] **Step 2: Apply the DDL to the dev DB**
 
-Run: `mysql -h "$MYSQL_HOST" -P "$MYSQL_PORT" -u "$MYSQL_WRITE_USER" -p"$MYSQL_WRITE_PASSWORD" "$MYSQL_DB" < docs/sql/2026-08-06-notification-table.sql`
+Run: `mysql -h "$MYSQL_HOST" -P "$MYSQL_PORT" -u "$MYSQL_WRITE_USER" -p"$MYSQL_WRITE_PASSWORD" "$MYSQL_DB" < backend/migrations/2026-08-06-notification-table.sql`
 Then verify: `mysql -h "$MYSQL_HOST" -P "$MYSQL_PORT" -u "$MYSQL_WRITE_USER" -p"$MYSQL_WRITE_PASSWORD" "$MYSQL_DB" -e "DESCRIBE bom_notification;"`
 Expected: the 9 columns listed above.
 
@@ -157,7 +157,7 @@ Expected: PASS (no errors referencing `bom_notification`).
 - [ ] **Step 6: Commit**
 
 ```bash
-git add docs/sql/2026-08-06-notification-table.sql backend/codegen/db.d.ts
+git add backend/migrations/2026-08-06-notification-table.sql backend/codegen/db.d.ts
 git commit -m "feat(notifications): add bom_notification table + Kysely types"
 ```
 
@@ -809,10 +809,9 @@ The dev backend must run with `SANDBOX=0` for this smoke (otherwise `sandboxDial
 Run: `mysql ... -e "SELECT dedupe_key, type, read_at FROM bom_notification ORDER BY id DESC LIMIT 5;"`
 Expected: a fresh `reply:<msgId>` row; the bell badge increments in the UI (screenshot `http://localhost:8200`, not `bom.kckern.net` — the CDN caches the bundle).
 
-- [ ] **Step 4: Run the backfill against dev**
+- [ ] **Step 4: HELD — do NOT run the all-users backfill** (KC decision, 2026-08-06)
 
-Run: `cd backend && npx tsx scripts/backfill-notifications.ts` (or the repo's TS runner — check `package.json`)
-Expected: prints `backfill complete: N new rows ...`; a second run prints `0 new rows`.
+The DB is `bom_prd` (production). The all-users backfill (`npx tsx scripts/backfill-notifications.ts`) inserts real notification rows for every user and is deferred to KC to run deliberately as the rollout step. The backfill *code* and its self-cleaning unit test (Task 7) are still built and verified. Do not run the CLI here.
 
 - [ ] **Step 5: Final commit / branch push**
 
