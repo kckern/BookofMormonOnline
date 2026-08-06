@@ -3,6 +3,9 @@ import { Link } from "react-router-dom";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import { label } from "src/models/Utils";
 import { flatten, clampWords } from "./textUtils";
+import ExpandableText from "./ExpandableText";
+import { RevealProvider } from "./_ds/Reveal";
+import TileDeepLink from "./_ds/TileDeepLink";
 
 // Which witness the previous witness tile in the feed featured — so the same
 // principal (David Whitmer has by far the most rows) doesn't clog consecutive
@@ -58,41 +61,40 @@ export default function WitnessTile({ data }) {
   // (hook runs unconditionally — before any early return; w is now stable so it fires once)
   useEffect(() => { if (w) lastFeaturedWitness = w.principal; }, [w?.principal]);
   if (!w) return null;
-  const quote = clampWords(flatten(w.moneyQuote), 60);
+  const quote = flatten(w.moneyQuote);
   const source = w.source ? clampWords(flatten(w.source), 18) : null;
   const to = w.witnessSlug ? `/history/witnesses/${w.witnessSlug}` : "/history/witnesses";
   return (
-    <div className="samplerTileInner witnessTile">
-      <h3 className="tileHeading">
-        <Link to="/history/witnesses">{label("witnesses")}</Link>
-      </h3>
-      {/* Always show the witness (the SUBJECT) portrait + name. For a
-          non-first-hand account, the actual speaker is named in the quote
-          prefix — they said it, the witness is who it's about. */}
-      <Link to={to} className="witnessFeatured">
-        <span className="witnessLeft">
-          <span className="witnessHero">
-            {w.witnessSlug ? (
-              <img
-                src={`${assetUrl}/history/witnesses/people/${w.witnessSlug}.jpg`}
-                alt={w.principal}
-                loading="lazy"
-                onError={(e) => { e.target.style.display = "none"; e.target.parentNode.classList.add("mono"); }}
-              />
-            ) : null}
-            <span className="witnessMono" aria-hidden="true">{initials(w.principal)}</span>
+    <RevealProvider>
+      <div className="samplerTileInner witnessTile">
+        <h3 className="tileHeading">
+          <Link to="/history/witnesses">{label("witnesses")}</Link>
+        </h3>
+        <div className="witnessFeatured">
+          <Link to={to} className="witnessLeft">
+            <span className="witnessHero">
+              {w.witnessSlug ? (
+                <img
+                  src={`${assetUrl}/history/witnesses/people/${w.witnessSlug}.jpg`}
+                  alt={w.principal}
+                  loading="lazy"
+                  onError={(e) => { e.target.style.display = "none"; e.target.parentNode.classList.add("mono"); }}
+                />
+              ) : null}
+              <span className="witnessMono" aria-hidden="true">{initials(w.principal)}</span>
+            </span>
+            <span className="witnessName">{w.principal}</span>
+          </Link>
+          <span className="witnessBody">
+            <ExpandableText className="witnessStatement" lines={4}>
+              {!w.isWitnessVoice && w.speaker ? <span className="witnessSpeaker">{w.speaker}: </span> : null}
+              &ldquo;{withBrackets(quote)}&rdquo;
+            </ExpandableText>
+            {source ? <span className="witnessSource">{source}</span> : null}
           </span>
-          <span className="witnessName">{w.principal}</span>
-        </span>
-        <span className="witnessBody">
-          <blockquote className="witnessStatement">
-            {!w.isWitnessVoice && w.speaker ? <span className="witnessSpeaker">{w.speaker}:</span> : null}
-            {!w.isWitnessVoice && w.speaker ? " " : null}
-            &ldquo;{withBrackets(quote)}&rdquo;
-          </blockquote>
-          {source ? <span className="witnessSource">{source}</span> : null}
-        </span>
-      </Link>
-    </div>
+        </div>
+        <TileDeepLink to={to}>{label("view_in_context")}</TileDeepLink>
+      </div>
+    </RevealProvider>
   );
 }
