@@ -32,6 +32,7 @@ import type { UserDTO } from './dto.js';
 import { getUser, getUsers } from './users.js';
 import { getUserMetadata, updateUserMetadata } from './users.js';
 import { notify } from '../notifications/notify.js';
+import { rowToDTO } from '../notifications/store.js';
 
 export type NotificationType = 'reply' | 'reaction' | 'invite';
 
@@ -203,7 +204,32 @@ export async function getNotifications(
   }
 
   items.sort((a, b) => b.created_at - a.created_at);
-  return items.slice(0, MAX_NOTIFICATIONS);
+
+  // Dual-read: merge durable rows with the derived feed, dedup by public id.
+  const rows = await db
+    .selectFrom('bom_notification')
+    .select(['type', 'dedupe_key', 'payload', 'created_at', 'read_at'])
+    .where('user_id', '=', userId)
+    .where('created_at', '>', since)
+    .where('dismissed_at', 'is', null)
+    .orderBy('created_at', 'desc')
+    .limit(MAX_NOTIFICATIONS)
+    .execute();
+
+  const byId = new Map<string, NotificationDTO>();
+  for (const n of items) byId.set(n.id, n); // derived arm
+  for (const row of rows) {
+    const n = rowToDTO(row);
+    const prev = byId.get(n.id);
+    // read if: the row itself is read, OR its derived twin was read,
+    // OR metadata read-state covers it (watermark / explicit read id).
+    const isRead = n.is_read || (prev?.is_read ?? false)
+      || n.created_at <= watermark || readIds.has(n.id);
+    byId.set(n.id, { ...n, is_read: isRead });
+  }
+  return [...byId.values()]
+    .sort((a, b) => b.created_at - a.created_at)
+    .slice(0, MAX_NOTIFICATIONS);
 }
 
 /** Count unread notifications (drives the bell badge). */
