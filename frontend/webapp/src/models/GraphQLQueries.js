@@ -584,9 +584,35 @@ const queries = {
         q("searchAll", "query", query) +
         `{
             semantic
+            verseTotal
             verses { reference text slug page section narration speaker voice highlight { start end } }
             people { slug title snippet ref score }
             places { slug title snippet ref score }
+            matters { slug title snippet ref score }
+            commentary { slug title snippet ref score highlight { start end } }
+            narration { slug title snippet ref score highlight { start end } }
+            pages { slug title snippet ref score }
+            events { slug title snippet ref score }
+          }`,
+    }
+  },
+  // Rich/topical search: same `searchAll` field + response shape, mode:"rich".
+  // type stays "searchAll" so BoMOnlineAPI.structureResults keys the response identically.
+  searchAllRich: (query) => {
+    if (Array.isArray(query) && query.length === 1) query = query[0];
+    return {
+      type: "searchAll",
+      key: "query",
+      val: query,
+      query:
+        `searchAll (query: ${JSON.stringify(query)}, mode: "rich")` +
+        `{
+            semantic
+            verseTotal
+            verses { reference text slug page section narration speaker voice highlight { start end } }
+            people { slug title snippet ref score }
+            places { slug title snippet ref score }
+            matters { slug title snippet ref score }
             commentary { slug title snippet ref score highlight { start end } }
             narration { slug title snippet ref score highlight { start end } }
             pages { slug title snippet ref score }
