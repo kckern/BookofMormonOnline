@@ -3,7 +3,7 @@ import type { Resolvers } from '../../../codegen/graphql.js';
 import type { AppContext } from '../context.js';
 import { searchQuery, historyQuery } from '../../data/loaders/searchhist.js';
 import type { SearchResultRow, HistoryRow } from '../../data/loaders/searchhist.js';
-import { searchGroups } from '../../search/grouped.js';
+import { searchGroups, wantsGroups } from '../../search/grouped.js';
 import { highlightText } from '../../search/highlight.js';
 
 /** getSlugTip: incoming slug args may be paths — take the last segment. */
@@ -103,25 +103,28 @@ const baseResolvers: Resolvers = {
 // so the rest of the resolver map retains full codegen types.
 async function searchAllResolver(
   _root: unknown,
-  args: { query: string },
+  args: { query: string; mode?: string | null },
   ctx: AppContext,
 ): Promise<unknown> {
   const lang = ctx.lang ?? 'en';
   const query = args.query ?? '';
+  const mode = args.mode === 'rich' ? 'rich' : 'keyword';
   const db = (ctx.loaders as unknown as DbAccessor)._db;
-  const { verses, semantic } = await searchQuery(db, query, lang);
 
-  // Entity groups + semantic highlighting are the FALLBACK experience: only when the
-  // keyword tier found nothing and we went semantic. Keyword searches return verses only.
-  const groups = semantic
+  const { verses, semantic, verseTotal } = await searchQuery(db, query, lang, { mode });
+
+  // Rich mode always fetches supplement groups; keyword mode only on the semantic fallback.
+  const groups = wantsGroups(mode, semantic)
     ? await searchGroups(query, lang)
-    : { person: [], place: [], commentary: [], narration: [], page: [], event: [] };
+    : { person: [], place: [], matter: [], commentary: [], narration: [], page: [], event: [] };
 
   return {
     verses,
     semantic,
+    verseTotal,
     people: groups.person ?? [],
     places: groups.place ?? [],
+    matters: groups.matter ?? [],
     commentary: groups.commentary ?? [],
     narration: groups.narration ?? [],
     pages: groups.page ?? [],

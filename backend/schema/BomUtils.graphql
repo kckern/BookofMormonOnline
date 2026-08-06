@@ -3,7 +3,7 @@ extend type Query {
   menu(slug: [String]): [Menu]
   books(seed: String): [Book]
   search(query: String): [SearchResult]
-  searchAll(query: String!): SearchAllResult!
+  searchAll(query: String!, mode: String): SearchAllResult!
   shortlink(hash: [String]): Shortlinks
   markdown(slug: [String]): [Markdown]
   scripture(ref: String, verse_ids: [Int], version: String): ScriptureResults
@@ -103,8 +103,10 @@ type ResultCard {
 type SearchAllResult {
   verses: [SearchResult!]!
   semantic: Boolean
+  verseTotal: Int
   people: [ResultCard!]!
   places: [ResultCard!]!
+  matters: [ResultCard!]!
   commentary: [ResultCard!]!
   narration: [ResultCard!]!
   pages: [ResultCard!]!
