@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { label } from "src/models/Utils";
 import { legsOf, stopsOf } from "./mapStoryPath";
 import { MapStoryMoveCard, MapStoryTitleCard } from "./MapStoryCard";
+import TileDeepLink from "./_ds/TileDeepLink";
 
 // Code-split: OpenLayers loads only when this tile actually renders — same
 // pattern as MapTile/MapTileInner.
@@ -151,7 +152,7 @@ export default function MapStoryTile({ data }) {
         ))}
       </ol>
 
-      <Link to="/map" className="mapTileCta tileMoreLink">{label("view_more")}</Link>
+      <TileDeepLink to="/map" always className="mapTileCta">{label("view_more")}</TileDeepLink>
     </div>
   );
 }

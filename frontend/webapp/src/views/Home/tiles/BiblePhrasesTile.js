@@ -6,6 +6,7 @@ import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import { label, determineLanguage } from "src/models/Utils";
 import { index } from "src/views/Analysis/Bible/data";
 import RefPill from "./RefPill";
+import TileDeepLink from "./_ds/TileDeepLink";
 
 const dmp = new DiffMatchPatch();
 
@@ -115,9 +116,9 @@ export default function BiblePhrasesTile({ seed }) {
           <p>{pair.kjvJsx}</p>
         </div>
       </div>
-      <Link to={deepTo} className="tileMoreLink">
+      <TileDeepLink to={deepTo} always>
         {label("view_in_context")}
-      </Link>
+      </TileDeepLink>
     </div>
   );
 }

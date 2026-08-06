@@ -1,11 +1,11 @@
 import React from "react";
-import { Link } from "react-router-dom";
 import Parser from "html-react-parser";
 import { detectReferences } from "scripture-guide";
 import { label } from "src/models/Utils";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import ScriptureExcerpt, { readPath } from "src/views/_Common/ScriptureExcerpt";
 import { openScripture } from "./ScripturePopup";
+import TileDeepLink from "./_ds/TileDeepLink";
 
 // Parse the note HTML, turning detectReferences' <a class="scripture_link">
 // tags into clickable spans that open the app-wide scripture popup.
@@ -85,7 +85,7 @@ export default function NotesTile({ data }) {
         </div>
         {to ? (
           <div className="notesMeta">
-            <Link to={to} className="tileMoreLink">{label("view_in_context")}</Link>
+            <TileDeepLink to={to} always>{label("view_in_context")}</TileDeepLink>
           </div>
         ) : null}
       </div>
