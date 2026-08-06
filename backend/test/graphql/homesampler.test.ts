@@ -123,3 +123,39 @@ describe('homesampler', () => {
     expect((s.commentary?.text ?? '').length).toBeGreaterThan(500);
   });
 });
+
+// Server-side window cache: a no-seed ("front-door") request resolves to a
+// DETERMINISTIC per-window seed so every visitor shares one cacheable homepage
+// that quietly cycles as 6h buckets advance. An explicit seed still overrides it.
+describe('homesampler window cache', () => {
+  it('serves a deterministic window seed when none is given', async () => {
+    const [a, b] = await Promise.all([exec(), exec()]);
+    expect(a.seed).toBe(b.seed);
+    expect(a.seed).toBeGreaterThan(0);
+    // and the shared sample is identical (proves it is the same computed payload)
+    expect(a.people.map((p) => p.slug)).toEqual(b.people.map((p) => p.slug));
+  });
+
+  it('still honors an explicit seed (manual refresh / infinite scroll)', async () => {
+    const s = await exec(31337);
+    expect(s.seed).toBe(31337);
+  });
+
+  // The goal: a warm cache makes the request effectively instant. Cold pays the
+  // ~25-query compute; the very next request for the same window is served from
+  // memory. Uses a seed unique to this test so it starts genuinely cold.
+  it('warms cold then serves the next request instantly', async () => {
+    const seed = 24680135;
+    const t0 = Date.now();
+    await exec(seed);
+    const coldMs = Date.now() - t0;
+
+    const t1 = Date.now();
+    const warm = await exec(seed);
+    const warmMs = Date.now() - t1;
+
+    expect(warm.seed).toBe(seed);
+    expect(warmMs).toBeLessThan(500); // cache hit — no DB compute
+    expect(coldMs).toBeGreaterThan(warmMs); // cold clearly paid the compute
+  });
+});
