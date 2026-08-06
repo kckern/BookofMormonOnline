@@ -1,7 +1,7 @@
 import type { ContentType, SearchHit } from './types.js';
 import { searchVectors, queryWithVectors, type QueryVectors } from './retrieve.js';
 
-export const GROUP_TYPES: ContentType[] = ['person', 'place', 'commentary', 'narration', 'page', 'event'];
+export const GROUP_TYPES: ContentType[] = ['person', 'place', 'matter', 'commentary', 'narration', 'page', 'event'];
 
 export interface ResultCard { slug: string | null; title: string | null; snippet: string; ref: string | null; score: number }
 
@@ -35,4 +35,10 @@ export async function searchGroups(
     }),
   );
   return Object.fromEntries(entries);
+}
+
+/** Whether to fetch supplement groups: always in rich mode; in keyword mode only when the
+ *  semantic fallback ran (keyword hits alone return verses only). */
+export function wantsGroups(mode: 'keyword' | 'rich', semantic: boolean): boolean {
+  return mode === 'rich' || semantic;
 }
