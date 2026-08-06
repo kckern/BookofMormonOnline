@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { label } from "src/models/Utils";
 import { TextInFeed } from "src/views/_Common/Study/StudyInFeed";
 import "src/views/_Common/Study/StudyInFeed.css";
+import TileDeepLink from "./_ds/TileDeepLink";
 
 /**
  * One full bom_text block, rendered exactly as it appears in the community
@@ -17,6 +18,7 @@ export default function TextTile({ data }) {
         <Link to={`/${data.slug}`}>{label("scripture")}</Link>
       </h3>
       <TextInFeed textData={data} highlights={[]} />
+      <TileDeepLink to={`/${data.slug}`} always>{label("view_in_context")}</TileDeepLink>
     </div>
   );
 }
