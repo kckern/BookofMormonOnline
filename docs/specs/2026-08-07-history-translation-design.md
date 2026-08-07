@@ -1,11 +1,14 @@
-# /history/translation — Design Spec
+# /history archive feeds (translation + joseph-smith) — Design Spec
 
 **Date:** 2026-08-07
 **Area:** `frontend/webapp/src/views/History/`
 **Status:** Approved design, pending spec review → implementation plan
 
 ## Goal
-Build out `/history/translation` (currently a "Coming soon" stub) as a **chronological feed of testimony about the translation** of the Book of Mormon, reusing the shared money-quote card. Flip the history-hub section from placeholder to live.
+Build out two "Coming soon" history stubs — `/history/translation` and `/history/joseph-smith` — as **chronological, year-grouped feeds of attributed money-quote cards**, driven by their respective archives (`translation`, `joseph-smith-statements`). Because both are the same shape, extract ONE shared `HistoryArchiveFeed` component parameterized by archive + section, with two thin route wrappers. Flip both hub sections from placeholder to live.
+
+## Second archive: joseph-smith-statements
+`/history/joseph-smith` renders `JosephSmith.js` (a portrait + "More coming soon" stub). Its archive `joseph-smith-statements` has **9 docs**, same fields as translation with two differences the shared feed handles gracefully: **`quote_speaker` is null** (→ the money quote renders bare, no attribution — `HistorySourceCard`'s existing no-speaker branch) and **`id` is null** (→ no thumbnail — the card already gates the thumb on `doc.id`). All 9 share one principal ("Joseph Smith") → the person filter is **hidden when there is ≤1 distinct principal**. event_years 1830–1843.
 
 ## Background / data
 - The route `/history/translation` renders `frontend/webapp/src/views/History/TranslationSources.jsx`, which today shows only a "Coming soon" line. (`Translation.js` is an empty, unused file.)
@@ -23,7 +26,14 @@ Build out `/history/translation` (currently a "Coming soon" stub) as a **chronol
 
 ## Architecture
 
-### `TranslationSources.jsx` (replace the stub)
+### `HistoryArchiveFeed.jsx` (NEW shared component) + thin wrappers
+One reusable feed component, `<HistoryArchiveFeed archive="…" sectionKey="…" />`, derives its title/blurb/underSlug from `getSection(sectionKey)` and renders the fetch + group-by-year + filter + cards described below. Two route wrappers render it:
+- `TranslationSources.jsx` → `<HistoryArchiveFeed archive="translation" sectionKey="translation" />`
+- `JosephSmith.js` → `<HistoryArchiveFeed archive="joseph-smith-statements" sectionKey="josephSmith" />`
+
+The person filter renders only when there is more than one distinct principal (so Joseph's single-voice page hides it). The card thumbnail and speaker attribution are already conditional in `HistorySourceCard` (`doc.id` / `doc.quote_speaker`), so the missing-thumb / bare-quote joseph case needs no special handling.
+
+### Feed behavior (inside `HistoryArchiveFeed`)
 - On mount, `BoMOnlineAPI({ history: { archive: "translation" } })` → `docs`.
 - **Filter**: `useState` for the selected principal (default `""` = all). The visible list = `docs.filter(d => !selected || d.principal === selected)`.
 - **Sort + group**: sort ascending by `(event_year || year || 0)` then `(seq || 0)`; group into an ordered list of `{ year, items }` buckets by `event_year || year`.
