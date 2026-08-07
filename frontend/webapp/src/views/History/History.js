@@ -1,6 +1,6 @@
 
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useParams, useRouteMatch } from "react-router-dom";
 import {
   Button,
@@ -10,6 +10,7 @@ import {
   PaginationLink,
   Row,
   Col,
+  UncontrolledTooltip,
 } from "reactstrap";
 
 import "./History.css"
@@ -47,6 +48,25 @@ function History() {
     range.push(lowEnd++);
   }
   range.push((lowEnd++)+"+");
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const yearTip = useMemo(() => {
+    const map = {};
+    for (const r of range) {
+      const isBucket = typeof r === "string";
+      const min = isBucket ? parseInt(r, 10) : r;
+      const cands = (docList || []).filter((d) => {
+        if (!d.mini_quote) return false;
+        return isBucket ? Number(d.year) >= min : Number(d.year) === r;
+      });
+      if (!cands.length) continue;
+      const d = cands[Math.floor(Math.random() * cands.length)];
+      const q = String(d.mini_quote).trim();
+      map[r] = d.source ? `“${q}” — ${d.source}` : `“${q}”`;
+    }
+    return map;
+  }, [docList]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const breakpointColumnsObj = {
     default: 4,
     1400: 3,
@@ -91,15 +111,28 @@ function History() {
   const contents = (!docList) ? <Spinner top={isMobile() ? "60vh" : null} /> : <div className="history">
 
     <ButtonGroup data-toggle="buttons">
-      {range.map(r => <Button
-        onClick={() => setDate(()=>{
-          history.push("/history/reception/"+r);
-          return r})}
-        className={"btn-round " + ((r === dateFilter) ? "active" : "")}
-        color="info"
-        outline
-        type="button"
-      >{label("year_format",[r])}</Button>)}
+      {range.map(r => {
+        const btnId = `yrbtn-${String(r).replace(/\W+/g, "")}`;
+        return (
+          <React.Fragment key={r}>
+            <Button
+              id={btnId}
+              onClick={() => setDate(()=>{
+                history.push("/history/reception/"+r);
+                return r})}
+              className={"btn-round " + ((r === dateFilter) ? "active" : "")}
+              color="info"
+              outline
+              type="button"
+            >{label("year_format",[r])}</Button>
+            {yearTip[r] ? (
+              <UncontrolledTooltip target={btnId} placement="top" delay={{ show: 150, hide: 0 }}>
+                {yearTip[r]}
+              </UncontrolledTooltip>
+            ) : null}
+          </React.Fragment>
+        );
+      })}
     </ButtonGroup>
 
     <div className="historicaldocs">
