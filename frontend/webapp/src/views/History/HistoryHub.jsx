@@ -10,10 +10,14 @@ import "./HistoryHub.css";
 // One featured preview per live section: { img, caption }.
 function useFeatured() {
   const [receptionDoc, setReceptionDoc] = useState(null);
+  const [translationDoc, setTranslationDoc] = useState(null);
   useEffect(() => {
     let alive = true;
     BoMOnlineAPI({ history: { archive: "reception" } }).then((r) => {
       if (alive) setReceptionDoc(pickRandom(r && r.history));
+    });
+    BoMOnlineAPI({ history: { archive: "translation" } }).then((r) => {
+      if (alive) setTranslationDoc(pickRandom(r && r.history));
     });
     return () => { alive = false; };
   }, []);
@@ -26,6 +30,14 @@ function useFeatured() {
     witnesses: witness && {
       img: `${assetUrl}/history/witnesses/people/${witness.slug}.jpg`,
       caption: witness.name,
+    },
+    translation: translationDoc && {
+      img: `${assetUrl}/history/thumbs/${String(translationDoc.id).padStart(4, "0")}`,
+      caption: translationDoc.principal || translationDoc.document,
+    },
+    josephSmith: {
+      img: `${assetUrl}/history/witnesses/people/joseph-smith.jpg`,
+      caption: "Joseph Smith",
     },
   };
 }

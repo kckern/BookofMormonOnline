@@ -13,7 +13,7 @@ export const HISTORY_SECTIONS = [
     path: "/history/translation",
     icon: translationIcon,
     blurb: "How the Book of Mormon was brought forth and rendered into English.",
-    status: "placeholder",
+    status: "live",
   },
   {
     key: "witnesses",
@@ -37,7 +37,7 @@ export const HISTORY_SECTIONS = [
     path: "/history/joseph-smith",
     icon: josephIcon,
     blurb: "The life and work of the translator.",
-    status: "placeholder",
+    status: "live",
   },
 ];
 
