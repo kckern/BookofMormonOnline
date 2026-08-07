@@ -1,13 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import Parser from 'html-react-parser';
 import './Witnesses.css';
+import HistorySourceCard from "./HistorySourceCard";
 import { label } from '../../models/Utils';
 import BoMOnlineAPI, { assetUrl } from 'src/models/BoMOnlineAPI';
 import moment from 'moment';
 import Masonry from 'react-masonry-css';
 import WitnessLifeHeatmap, { matchesYearMonth } from './WitnessLifeHeatmap';
-import Identicon from '../_Common/Identicon';
 import Breadcrumb from "src/views/_Common/Breadcrumb/Breadcrumb";
 import HistoryBreadcrumb from "./HistoryBreadcrumb";
 import { useAppController } from "src/contexts/AppControllerContext";
@@ -16,17 +15,6 @@ import { useAppController } from "src/contexts/AppControllerContext";
 // rail, so tiers step down a little earlier than a full-width grid would.
 const breakpointColumnsObj = { default: 4, 1600: 3, 1200: 2, 700: 1 };
 
-// Editorial marks in a money quote — [Name] (supplied referent) / [...] (elision)
-// — set apart from the quoted words (grey Roboto, not scripture).
-const BRACKET_RE = /(\[[^\]]*\])/g;
-const withBrackets = (text) =>
-  String(text || "")
-    .split(BRACKET_RE)
-    .map((part, i) =>
-      part.startsWith("[") && part.endsWith("]")
-        ? <span key={i} className="editorialMark">{part}</span>
-        : part
-    );
 
 const data = {
     "three-witnesses": [
@@ -228,50 +216,14 @@ const SingleWitness = ({ witness, sourceSlug }) => {
                     {visibleSources && visibleSources.length > 0 && (
                         <Masonry breakpointCols={breakpointColumnsObj} className="my-masonry-grid" columnClassName="my-masonry-grid_column">
                             {visibleSources.map((doc, i) => (
-                            <div
-                                key={doc.slug || i}
-                                className='historycard card'
-                                onClick={() => openSource(doc)}
-                            >
-                                <div className='historyHeader'>
-                                    <Identicon seed={doc.slug || doc.document || doc.source || String(i)} size={34} className='historyIdenticon' />
-                                    <span className='dateChip'>{displayDate(doc.date)}</span>
-                                    {doc.teaser && <div className='historyTeaserText'>{Parser(doc.teaser)}</div>}
-                                </div>
-                                {/* Lead with the money quote when we have an attributed one
-                                    (editorially prepared — [Name]/[...] are meaningful). */}
-                                {doc.money_quote && doc.quote_speaker && (
-                                    <blockquote className={`historyLead${doc.quote_is_witness_voice ? ' is-firsthand' : ''}`}>
-                                        {doc.quote_is_witness_voice ? (
-                                            <>
-                                                <span className='money_quote_text'>&ldquo;{withBrackets(doc.money_quote)}&rdquo;</span>
-                                                <footer className='money_quote_attribution'>
-                                                    <span className='money_quote_speaker'>&mdash; {doc.quote_speaker}</span>
-                                                </footer>
-                                            </>
-                                        ) : (
-                                            <span className='money_quote_text'>
-                                                <span className='money_quote_speaker-prefix'>{doc.quote_speaker}:</span>{' '}
-                                                &ldquo;{withBrackets(doc.money_quote)}&rdquo;
-                                            </span>
-                                        )}
-                                    </blockquote>
-                                )}
-                                <div className='historySupport'>
-                                    {doc.id && (
-                                        <div className='historyThumb'>
-                                            <img
-                                                style={{ aspectRatio: "1 / " + (parseFloat(doc.aspect) || 1) }}
-                                                src={`${assetUrl}/history/thumbs/${String(doc.id).padStart(4, '0')}`}
-                                                alt={doc.document}
-                                                loading='lazy'
-                                            />
-                                        </div>
-                                    )}
-                                    {doc.citation && <div className='citation'>{Parser(doc.citation + "")}</div>}
-                                </div>
-                            </div>
-                        ))}
+                                <HistorySourceCard
+                                    key={doc.slug || i}
+                                    doc={doc}
+                                    variant="witness"
+                                    displayDate={displayDate}
+                                    onOpen={openSource}
+                                />
+                            ))}
                         </Masonry>
                     )}
                 </main>
