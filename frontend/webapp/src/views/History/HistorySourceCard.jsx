@@ -30,7 +30,6 @@ export default function HistorySourceCard({ doc, variant = "reception", displayD
         <Identicon seed={doc.slug || doc.document || doc.source || ""} size={34} className="historyIdenticon" />
         {dateText && <span className="dateChip">{dateText}</span>}
         {isReception && doc.source && <div className="historySource">{doc.source}</div>}
-        {doc.teaser && <div className="historyTeaserText">{Parser(doc.teaser)}</div>}
       </div>
 
       {/* Lead with the money quote when present. Witness testimony is attributed
@@ -57,6 +56,8 @@ export default function HistorySourceCard({ doc, variant = "reception", displayD
           </blockquote>
         )
       )}
+
+      {doc.teaser && <div className="historyTeaserText">{Parser(doc.teaser)}</div>}
 
       <div className="historySupport">
         {doc.id && (

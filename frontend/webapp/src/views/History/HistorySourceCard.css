@@ -71,13 +71,25 @@
   font-weight: 700;
   color: #333;
 }
-.historySourceCard .historyHeader .historyTeaserText {
+/* teaser sits UNDER the money quote (below the blockquote, above the support row) */
+.historySourceCard .historyTeaserText {
   font-style: italic;
   font-size: 0.8rem;
-  line-height: 1;
+  line-height: 1.25;
   color: #888;
+  padding: 0 0.95rem 0.5rem;
+  text-align: left;
 }
-.historySourceCard .historyHeader .historyTeaserText > p { margin: 0; padding: 0; }
+.historySourceCard .historyTeaserText > p { margin: 0 0 0.35rem; padding: 0; }
+.historySourceCard .historyTeaserText > p:last-child { margin-bottom: 0; }
+/* key-points lists render left-aligned, not centered */
+.historySourceCard .historyTeaserText ul,
+.historySourceCard .historyTeaserText ol {
+  margin: 0.15rem 0 0;
+  padding-left: 1.1rem;
+  text-align: left;
+}
+.historySourceCard .historyTeaserText li { text-align: left; }
 
 /* support row: small thumbnail + metadata */
 .historySourceCard .historySupport {
