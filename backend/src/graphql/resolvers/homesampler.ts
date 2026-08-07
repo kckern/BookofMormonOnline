@@ -633,7 +633,9 @@ const sampleSectionNext = async (ctx: AppContext, seed: number) => {
   return rows[0] ?? null;
 };
 
-// One featured historical document (must have a teaser + a renderable thumb).
+// One featured historical document (must have a teaser + a renderable thumb +
+// an editorially-prepared money quote — same rule as the witness tile so the
+// history tile reliably shows a pull-quote).
 // Pinned to the reception archive: the /history/:slug view only loads that
 // archive, so a doc sampled from any other would deep-link to an empty popup.
 const sampleHistory = async (ctx: AppContext, seed: number) => {
@@ -643,10 +645,24 @@ const sampleHistory = async (ctx: AppContext, seed: number) => {
     .where('archive', '=', 'reception')
     .where(sql<boolean>`teaser IS NOT NULL AND CHAR_LENGTH(teaser) > 30`)
     .where('aspect', 'is not', null)
+    .where(sql<boolean>`JSON_EXTRACT(metadata,'$.money_quote') IS NOT NULL`)
     .orderBy(seededOrder('id', seed))
     .limit(1)
     .execute();
-  return rows[0] ?? null;
+  const row = rows[0];
+  if (!row) return null;
+  let money_quote: string | null = null;
+  let mini_quote: string | null = null;
+  let quote_speaker: string | null = null;
+  let quote_is_witness_voice: boolean | null = null;
+  try {
+    const meta = typeof row.metadata === 'string' ? JSON.parse(row.metadata) : (row.metadata as Record<string, unknown> | null);
+    money_quote = (meta?.money_quote as string) ?? null;
+    mini_quote = (meta?.miniquote as string) ?? null;
+    quote_speaker = (meta?.quote_speaker as string) ?? null;
+    quote_is_witness_voice = (meta?.quote_is_witness_voice as boolean) ?? null;
+  } catch { /* metadata may be absent/invalid */ }
+  return { ...row, money_quote, mini_quote, quote_speaker, quote_is_witness_voice };
 };
 
 // One full text block (scripture + narration + page/section context — the
