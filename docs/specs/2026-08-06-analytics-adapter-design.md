@@ -70,7 +70,7 @@ Each method late-binds `window.clicky` / `window.clicky_custom` and is wrapped s
 | Contract call | Clicky implementation |
 |---|---|
 | `init()` | **no-op** — `stats.js` self-inits site 66488278 at load; the adapter does not touch activation |
-| `identify(user)` | `window.clicky_custom = window.clicky_custom || {}; window.clicky_custom.visitor = {userid, username}; window.clicky?.custom_data?.()` (writes the **global** explicitly — fixes Utils.js:647). No goal side-effect. |
+| `identify(user)` | `window.clicky_custom = window.clicky_custom \|\| {}` (preserves the index.html object carrying the `pageview_disable`/`history_disable` flags — never replace it with a spread); then if `user` set `clicky_custom.visitor = {userid, username}` else `delete clicky_custom.visitor`; then `window.clicky?.custom_data?.()`. Writes the **global** explicitly (fixes Utils.js:647). No goal side-effect. |
 | `pageview(path,title)` | `window.clicky?.log?.(path, title, 'pageview')` |
 | `goal(name,{revenue})` | `window.clicky?.goal?.(name, revenue)` — Clicky's native revenue goals |
 
@@ -118,12 +118,20 @@ Single source of truth + editor autocomplete (an unknown `GOALS.X` is `undefined
 - Every provider method optional-chains `window.clicky` and is wrapped so a failure is swallowed — analytics is non-critical and must never break the UI.
 - `NoopProvider` covers SSR and the explicit off-switch with zero side-effects.
 
+### 10a. Metric impact (call out to whoever reads the Clicky dashboard)
+
+Activation is behavior-identical, but the folded-in fixes deliberately change numbers:
+- **`signin` goal count will DROP** — it stops firing on every token refresh; it fires only on real sign-in now. Expected, not a regression.
+- **`kr_buy` / `kr_download` will START recording real clicks** — today they fire bogus goals at render time and never on the actual click. Counts will look different (correct now).
+
+`config.enabled` is a hard off-switch present for the contract; **nothing sets it in this phase** (no env wiring) — it defaults to true. Documented so its test isn't mistaken for reachable production config.
+
 ## 11. Testing (Jest / react-scripts)
 
 `react-scripts test` + jest exist in `package.json`; `stats.js` never loads in jsdom, which is the right isolation.
 
 - `NoopProvider`: every method is a no-op (no throws, no globals mutated).
-- `ClickyProvider` with a mocked `window.clicky` + `window.clicky_custom`: `identify` sets the **global** `clicky_custom.visitor` and calls `custom_data` (and fires **no** goal); `pageview` → `clicky.log(path,title,'pageview')`; `goal` → `clicky.goal(name, revenue)` incl. the revenue arg; all safe when `window.clicky` is undefined.
+- `ClickyProvider` with a mocked `window.clicky` + `window.clicky_custom`: `identify` sets the **global** `clicky_custom.visitor` and calls `custom_data` (and fires **no** goal); `identify(null)` **deletes** `visitor` (no `{userid: undefined}` garbage); a pre-seeded `clicky_custom.pageview_disable`/`history_disable` **survives** `identify` (guards against a future spread-cleanup reintroducing full-auto pageviews); `pageview` → `clicky.log(path,title,'pageview')`; `goal` → `clicky.goal(name, revenue)` incl. the revenue arg; all safe when `window.clicky` is undefined.
 - `goals.js`: catalog values stable; a repo grep test asserts no `window.clicky` / raw goal-string literals remain in migrated files.
 - Singleton: `analytics` and `useAnalytics()` return the same instance; SSR (`window` undefined) selects Noop.
 - No real network / Clicky calls.
