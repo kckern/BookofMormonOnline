@@ -21,6 +21,7 @@ export default function Overview({ state = {}, navigate }) {
   const setExpanded = (name) =>
     navigate({ view: "overview", mode: mode === "table" ? "table" : undefined, expanded: name || undefined });
   const [active, setActive] = useState(null); // {type:'node'|'ribbon', key}
+  const [tip, setTip] = useState(null); // { x, y, text } in wrap-relative px
   const wrapRef = useRef(null);
   const [size, setSize] = useState({ width: 960, height: FALLBACK_H });
 
@@ -226,6 +227,16 @@ export default function Overview({ state = {}, navigate }) {
     );
   });
 
+  const moveTip = (r, e) => {
+    const box = wrapRef.current?.getBoundingClientRect();
+    if (!box) return;
+    setTip({
+      x: e.clientX - box.left,
+      y: e.clientY - box.top,
+      text: `${r.left} ↔ ${r.right} · ${r.value} refs · ${r.quotes} quotes`,
+    });
+  };
+
   return (
     <div className="xref-overview" data-testid="xref-overview">
       <header className="xref-header">
@@ -266,6 +277,15 @@ export default function Overview({ state = {}, navigate }) {
               is the flex-allocated leftover after hint/readout, never the svg's own
               height, so the ResizeObserver can't feed back through plotH. */}
           <div className="xref-svgbox" ref={wrapRef}>
+          {tip && (
+            <div
+              className="xref-tip"
+              aria-hidden="true"
+              style={{ left: tip.x, top: tip.y }}
+            >
+              {tip.text}
+            </div>
+          )}
           <svg
             className="xref-ribbonsvg"
             width={size.width}
@@ -318,7 +338,11 @@ export default function Overview({ state = {}, navigate }) {
                     }}
                     onClick={() => navigate(target)}
                     onMouseEnter={() => setActive({ type: "ribbon", key })}
-                    onMouseLeave={() => setActive(null)}
+                    onMouseMove={(e) => moveTip(r, e)}
+                    onMouseLeave={() => {
+                      setActive(null);
+                      setTip(null);
+                    }}
                   >
                     <title>{`${r.left} ↔ ${r.right} · ${r.value} refs · ${r.quotes} quotes`}</title>
                     {showQuoteCore && (

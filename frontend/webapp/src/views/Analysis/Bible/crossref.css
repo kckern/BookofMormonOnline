@@ -150,6 +150,24 @@ html[data-theme="dark"] .xref-root {
 .xref-svgbox {
   flex: 1;
   min-height: 0;
+  position: relative;
+}
+
+.xref-tip {
+  position: absolute;
+  transform: translate(0.75rem, 0.75rem); /* offset off the cursor */
+  pointer-events: none;
+  z-index: 2;
+  max-width: 20rem;
+  padding: 0.3rem 0.55rem;
+  border-radius: 0.5ex;
+  background: var(--surface-0, #fff);
+  border: 1px solid var(--border, #ddd);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary, #212529);
+  white-space: nowrap;
 }
 
 .xref-ribbonsvg {

@@ -114,6 +114,15 @@ describe("Overview", () => {
     expect(navigate).toHaveBeenCalledWith({ view: "overview", mode: undefined, expanded: "Major Prophets" });
   });
 
+  test("hovering a ribbon shows a cursor-anchored tooltip with the pair detail", () => {
+    const { container } = setup();
+    const ribbon = container.querySelector('[data-ribbon="2 Nephi|Major Prophets"]');
+    fireEvent.mouseMove(ribbon, { clientX: 400, clientY: 300 });
+    const tip = container.querySelector(".xref-tip");
+    expect(tip).toBeInTheDocument();
+    expect(tip).toHaveTextContent(/Major Prophets ↔ 2 Nephi/);
+  });
+
   test("ribbons paint largest-last so big cables win the click", () => {
     const { container } = setup();
     const ribbons = [...container.querySelectorAll("[data-ribbon]")];
