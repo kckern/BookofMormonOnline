@@ -40,7 +40,7 @@ describe("AnchorView", () => {
     setup();
     expect(screen.getByRole("heading", { name: /2 Nephi draws on/ })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Overview/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /view from Isaiah/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /anchor on Isaiah/i })).toBeInTheDocument();
   });
 
   test("Bible anchor renders the mirrored heading", () => {
@@ -50,7 +50,7 @@ describe("AnchorView", () => {
 
   test("flip with no highlight re-anchors on the top partner", () => {
     const { navigate } = setup();
-    fireEvent.click(screen.getByRole("button", { name: /view from Isaiah/i }));
+    fireEvent.click(screen.getByRole("button", { name: /anchor on Isaiah/i }));
     expect(navigate).toHaveBeenCalledWith({ view: "anchor", canon: "kjv", book: "Isaiah" });
   });
 
@@ -115,7 +115,12 @@ describe("AnchorView", () => {
   test("flip button names its destination book", () => {
     setup({ view: "anchor", canon: "bom", book: "2 Nephi" });
     // scoped to the flip control — the Isaiah partner bar also matches /isaiah/i
-    expect(screen.getByRole("button", { name: /view from isaiah/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /anchor on isaiah/i })).toBeInTheDocument();
+  });
+
+  test("the swap control uses plain language naming its destination", () => {
+    setup();
+    expect(screen.getByRole("button", { name: /swap sides: anchor on Isaiah/i })).toBeInTheDocument();
   });
 
   test("headings say references, not refs", () => {

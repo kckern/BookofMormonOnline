@@ -50,7 +50,7 @@ export default function AnchorView({ state, navigate }) {
         </Breadcrumb>
         {flipTarget && (
           <button className="xref-flip" onClick={flip}>
-            ⇄ view from {flipTarget}
+            <span aria-hidden="true">⇄ </span>Swap sides: anchor on {flipTarget} →
           </button>
         )}
       </header>
