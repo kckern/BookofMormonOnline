@@ -537,10 +537,20 @@ Expected: FAIL — `window.clicky` still present in the view files.
 
 - [ ] **Step 3: Migrate each file**
 
-In EACH file, add the import (adjust the relative path to reach `src/models/analytics/index.js` — e.g. from `src/views/User/SignUp.js` it is `../../models/analytics/index.js`; from `src/views/_Common/Study/StudyChat.js` it is `../../../models/analytics/index.js`):
+In EACH file, add the import with the CORRECT relative depth (verified — use this map exactly; a wrong depth only fails at build):
+
+| File | Import specifier |
+|---|---|
+| `views/_Common/Study/StudyChat.js`, `Study.js`, `StudyHall.js` (two dirs under `views`) | `../../../models/analytics/index.js` |
+| `views/User/SignUp.js`, `views/User/Victory.js` | `../../models/analytics/index.js` |
+| `views/Home/Feed.js` | `../../models/analytics/index.js` |
+| `views/Page/Page.js`, `views/Page/Narration.js` | `../../models/analytics/index.js` |
+| `views/Theater/Theater.js` | `../../models/analytics/index.js` |
+| `views/About/KRSEB.js` | `../../models/analytics/index.js` |
+| `views/_Common/Sidebar.js` (one dir under `views`) | `../../models/analytics/index.js` |
 
 ```js
-import { analytics, GOALS } from "<relative>/models/analytics/index.js";
+import { analytics, GOALS } from "<specifier from the table above>";
 ```
 
 Then replace the calls (mapping shown; keep any surrounding args/handlers intact):
@@ -585,24 +595,29 @@ git commit -m "feat(analytics): migrate all goal/pageview call sites; fix KRSEB 
 Run: `cd frontend/webapp && CI=true npx react-scripts test --watchAll=false src/models/analytics/`
 Expected: all tests PASS.
 
-- [ ] **Step 2: Repo-wide guard — no stray `window.clicky` or raw goal literals in src**
+- [ ] **Step 2: Repo-wide guard — no stray `window.clicky` outside the adapter**
 
-Run: `cd frontend/webapp && grep -rn "window.clicky" src/ || echo "CLEAN: no window.clicky in src"`
-Expected: `CLEAN` (the only remaining `clicky` references should be in `public/index.html` and `public/stats.js`, which are intentionally untouched — NOT under `src/`).
+The adapter itself (`src/models/analytics/providers/clicky.js` and its tests) legitimately references `window.clicky`, so exclude that dir:
+
+Run: `cd frontend/webapp && grep -rn "window.clicky" src/ --exclude-dir=analytics || echo "CLEAN"`
+Expected: `CLEAN` (the only `window.clicky` references left in `src/` are inside `src/models/analytics/`; `public/index.html` and `public/stats.js` are intentionally untouched and are NOT under `src/`).
 
 - [ ] **Step 3: Production build compiles**
 
-Run: `cd frontend/webapp && CI=true npx react-scripts build`
-Expected: build succeeds (no import-resolution errors from the new module / new imports).
+This project builds with `react-app-rewired` (see `package.json` `"build"`), whose `config-overrides.js` adds `src/` to module resolution — plain `react-scripts build` fails on the codebase's existing absolute imports. Do NOT use `CI=true` here (it makes CRA ESLint warnings fatal and would trip on pre-existing warnings unrelated to this work). First confirm a clean baseline, then build:
+
+Run: `cd frontend/webapp && npm run build`
+Expected: build succeeds with no NEW errors referencing the analytics module or the migrated imports. (If the build already had warnings before this work, they are not your concern — only regressions from the new imports are.)
 
 - [ ] **Step 4: Manual smoke (optional, dev)**
 
 Serve the app locally (`http://localhost:8200` per CLAUDE.md — note `stats.js` no-ops on localhost, so `window.clicky` is undefined and analytics calls are natural no-ops; verify the app renders and the KRSEB buttons click without console errors). This confirms the adapter degrades safely where Clicky is inactive.
 
-- [ ] **Step 5: Final commit / push**
+- [ ] **Step 5: Push**
+
+Tasks 1–6 already committed all changes; there is nothing new to commit here (avoid `git add -A`, which would sweep unrelated working-tree files). Just push the branch:
 
 ```bash
-git add -A && git commit -m "chore(analytics): verification checkpoint" || true
 git push -u origin HEAD
 ```
 
