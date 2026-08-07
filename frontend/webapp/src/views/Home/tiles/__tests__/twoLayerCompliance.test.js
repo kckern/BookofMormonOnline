@@ -22,6 +22,7 @@ const EXEMPT = new Set([
   "ScripturePopup.js",
   "textUtils.js",
   "mapStoryPath.js",
+  "mapStoryLayout.js",
   "homeSamplerCache.js",
   "registry.js",
   "MapTileInner.js",
