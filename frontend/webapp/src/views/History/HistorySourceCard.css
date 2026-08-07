@@ -112,3 +112,27 @@
 
 html[data-theme="dark"] .historySourceCard .historyLead { color: #e8e8e8; }
 html[data-theme="dark"] .historySourceCard .historyDocTitle { color: #f0f0f0; }
+
+/* ── container + hover — migrated verbatim from Witnesses.css so the card
+   is self-sufficient in any context (e.g. reception view) ────────────── */
+.historySourceCard {
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #EEE;
+}
+.historySourceCard:hover {
+  border-color: #000;
+  background-color: #FFF;
+  position: relative;
+  bottom: 2px;
+}
+
+/* ── citation text — witness-scoped in Witnesses.css, reproduced here for
+   non-witness contexts ────────────────────────────────────────────────── */
+.historySourceCard .citation {
+  font-size: 0.7rem;
+  color: #999;
+  line-height: 1.25;
+  margin-top: 0.2rem;
+}
