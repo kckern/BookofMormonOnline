@@ -13,6 +13,7 @@ import {
   isMobile,
 } from "src/models/Utils";
 import { useRouteMatch, useHistory } from "react-router-dom";
+import { analytics, GOALS } from "../../models/analytics/index.js";
 
 import { Floaters } from "./Floaters";
 import PageNotFound from "./PageNotFound";
@@ -214,7 +215,7 @@ export default function Page() {
                 const summary = saveMe?.summary;
                 if (saveMe)
                   refs.current.appController.functions.updateUserSummary({ ...saveMe, ...{ slug, pagetitle, heading } });
-                window.clicky?.goal("read");
+                analytics.goal(GOALS.READ);
                 if (summary?.completed >= 100)
                   refs.current.appController.functions.setPopUp({ type: "victory", popupData: summary, vhtop: 10 });
               });

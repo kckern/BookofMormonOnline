@@ -13,6 +13,7 @@ import TagList from "./TagList";
 import "views/_Common/Study/Study.css";
 import UserAvatar from "src/components/UserAvatar";
 import { shapeReacters } from "src/models/messengerShapes";
+import { analytics, GOALS } from "../../../models/analytics/index.js";
 import {
   timeAgoString,
   moveCaretToEnd,
@@ -148,7 +149,7 @@ export default function Comments({
 
     try {
       channel.sendUserMessage(params).onSucceeded(async (message) => {
-        window.clicky?.goal("comment");
+        analytics.goal(GOALS.COMMENT);
         textbox.value = "";
         textbox.classList.remove("sending");
         textbox.disabled = false;

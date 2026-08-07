@@ -20,6 +20,7 @@ import {
   testJSON,
   isMobile,
 } from "src/models/Utils"
+import { analytics, GOALS } from "../../../models/analytics/index.js"
 import DirectMessages from "./DirectMessages"
 import StudyGroupProgress from "./StudyGroupProgress"
 import StudyGroupAdmin from "./StudyGroupAdmin"
@@ -285,7 +286,7 @@ export function StudyGroupChatPanel({ channel, setPanel }) {
           setThreadMessage(messages.shift())
         })
     }
-    window.clicky?.goal("study")
+    analytics.goal(GOALS.STUDY)
   }, [])
 
   useEffect(() => {

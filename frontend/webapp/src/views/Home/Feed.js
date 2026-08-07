@@ -29,6 +29,7 @@ import {
 import activityfeed from "src/views/_Common/svg/activityfeed.svg";
 import { label, ParseMessage } from "src/models/Utils";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI.js";
+import { analytics, GOALS } from "../../models/analytics/index.js";
 import VisibilitySensor from "react-visibility-sensor";
 import { prepareQuery } from "../_Common/Study/StudyChat.js";
 import like from "../_Common/Study/svg/like.svg";
@@ -846,7 +847,7 @@ function MyComment({
     params.parentMessageId = parentMessageId;
     try {
       channel.sendUserMessage(params).onSucceeded((message) => {
-        window.clicky?.goal("comment");
+        analytics.goal(GOALS.COMMENT);
         textbox.value = "";
         textbox.classList.remove("sending");
         textbox.disabled = false;

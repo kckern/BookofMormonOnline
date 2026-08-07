@@ -8,6 +8,7 @@ import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
 import "./Narration.css";
 import "./TextContent.css";
 import { snapSelectionToWord, chronoLabel, replaceNumbers, label, determineLanguage } from "src/models/Utils";
+import { analytics } from "../../models/analytics/index.js";
 import { SRLWrapper } from "simple-react-lightbox";
 import { getSearchSlug } from "src/models/searchSlug";
 import fullscreen from "src/views/Page/svg/fullscreen.png";
@@ -741,7 +742,7 @@ export function ScripturePanelSingle({ scriptureData, closeButton, onClose, setP
       clearTimeout(timer);
       setPassages(scripture[ref]?.passages || []);
       const refSlug = ref.replace(/\s+/g, ".").replace(/:/g, ".").toLowerCase();
-      window.clicky?.log(`/lookup/${refSlug}`, `Lookup: ${ref}`, "pageview");
+      analytics.pageview(`/lookup/${refSlug}`, `Lookup: ${ref}`);
     })
 
   }, [ref]);
