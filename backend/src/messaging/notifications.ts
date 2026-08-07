@@ -14,12 +14,13 @@
  *   - notificationsReadAt: ms-epoch watermark. Everything older is read.
  *     "mark all read" advances this to NOW().
  *   - notificationsRead: string[] of notification ids explicitly marked read
- *     (single mark-read), for items newer than the watermark. Pruned to ids
- *     newer than the watermark on write so the array can't grow unbounded.
+ *     via single mark-read (appended on write). "mark all read" clears this
+ *     array as it advances the watermark, so it can't grow unbounded across
+ *     mark-all cycles.
  *
  * A notification id is deterministic from its source so the same event always
  * produces the same id (idempotent mark-read across refetches):
- *   reply:<messageId>  reaction:<messageId>:<actorId>:<key>  invite:<channelUrl>
+ *   reply:<replyMessageId>  reaction:<messageId>:<actorId>:<key>  invite:<channelUrl>
  *
  * Assembly follows the codebase bulk pattern: a constant number of queries
  * regardless of how many notifications are produced (one query per source +
@@ -34,7 +35,22 @@ import { getUserMetadata, updateUserMetadata } from './users.js';
 import { notify } from '../notifications/notify.js';
 import { rowToDTO } from '../notifications/store.js';
 
-export type NotificationType = 'reply' | 'reaction' | 'invite';
+// The derived feed emits the first three. The bom_notification table can also
+// hold richer, non-derived types (see the taxonomy in
+// docs/specs/2026-08-06-notifications-architecture.md). The (string & {}) member
+// keeps literal autocomplete for known types while accepting forward-compatible
+// values written by future producers — so rowToDTO needs no unchecked cast.
+export type NotificationType =
+  | 'reply'
+  | 'reaction'
+  | 'invite'
+  | 'mention'
+  | 'group_activity'
+  | 'group_admin'
+  | 'plan_reminder'
+  | 'plan_progress'
+  | 'announcement'
+  | (string & {});
 
 export interface NotificationDTO {
   id: string;

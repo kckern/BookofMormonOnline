@@ -48,7 +48,7 @@ export function rowToDTO(row: {
     ? JSON.parse(row.payload) : row.payload) as NotificationPayload;
   return {
     id: row.dedupe_key,
-    type: row.type as NotificationDTO['type'],
+    type: row.type,
     actor: p.actor,
     channel_url: p.channel_url,
     message_id: p.message_id,
