@@ -1,5 +1,5 @@
 -- Notifications phase 1: durable store. Applied manually (no migration framework yet).
--- Apply: mysql -h $MYSQL_HOST -P $MYSQL_PORT -u $MYSQL_USER -p $MYSQL_DB < docs/sql/2026-08-06-notification-table.sql
+-- Apply: mysql -h $MYSQL_HOST -P $MYSQL_PORT -u $MYSQL_USER -p $MYSQL_DB < backend/migrations/2026-08-06-notification-table.sql
 CREATE TABLE IF NOT EXISTS bom_notification (
   id            BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   user_id       VARCHAR(32)  NOT NULL COMMENT 'recipient; md5(username) = messenger_users.user_id',
