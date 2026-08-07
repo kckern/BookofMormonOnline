@@ -1,0 +1,59 @@
+.historyArchiveFeed .archiveIntro {
+  text-align: center;
+  color: #666;
+  max-width: 46em;
+  margin: 0 auto 1.2em;
+}
+.historyArchiveFeed .archiveControls {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.2em;
+}
+.historyArchiveFeed .archiveFilter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  font-size: 0.9rem;
+  color: #555;
+}
+.historyArchiveFeed .archiveFilter select {
+  font: inherit;
+  padding: 0.3em 0.6em;
+  border: 1px solid #bbb;
+  border-radius: 0.4em;
+  background: #fff;
+  max-width: 22em;
+}
+.historyArchiveFeed .archiveYearGroup {
+  margin-bottom: 1.5em;
+}
+.historyArchiveFeed .archiveYear {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #345496;
+  border-bottom: 2px solid #e0e0e0;
+  padding-bottom: 0.2em;
+  margin: 0 0 0.8em;
+}
+.historyArchiveFeed .archiveEmpty {
+  text-align: center;
+  color: #888;
+  padding: 3em 1em;
+}
+.historyArchiveFeed .archiveClear {
+  background: none;
+  border: none;
+  color: #345496;
+  cursor: pointer;
+  text-decoration: underline;
+  font: inherit;
+}
+html[data-theme="dark"] .historyArchiveFeed .archiveFilter select {
+  background: #222;
+  color: #eee;
+  border-color: #555;
+}
+html[data-theme="dark"] .historyArchiveFeed .archiveYear {
+  color: #93c6ef;
+  border-bottom-color: #444;
+}
