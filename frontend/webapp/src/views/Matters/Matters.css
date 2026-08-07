@@ -16,7 +16,9 @@
     display: grid;
     grid-template-columns: repeat(8, 1fr);
     align-items: start;
-    gap: 1em;
+    /* horizontal gap only; the card's own margin-bottom sets the row rhythm */
+    column-gap: 1em;
+    row-gap: 0;
 }
 @media (max-width: 1600px) { .MatterGrid { grid-template-columns: repeat(7, 1fr); } }
 @media (max-width: 1400px) { .MatterGrid { grid-template-columns: repeat(6, 1fr); } }
@@ -35,7 +37,7 @@
 
 .MatterList .card
 {
-    margin-bottom:0;
+    margin-bottom:2em;
     display: flex;
     flex-direction: column;
     height: auto;
