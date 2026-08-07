@@ -33,24 +33,29 @@ export default function HistorySourceCard({ doc, variant = "reception", displayD
         {doc.teaser && <div className="historyTeaserText">{Parser(doc.teaser)}</div>}
       </div>
 
-      {/* Lead with the money quote when we have an attributed one
-          (editorially prepared — [Name]/[...] are meaningful). */}
-      {doc.money_quote && doc.quote_speaker && (
-        <blockquote className={`historyLead${doc.quote_is_witness_voice ? " is-firsthand" : ""}`}>
-          {doc.quote_is_witness_voice ? (
-            <>
-              <span className="money_quote_text">&ldquo;{withBrackets(doc.money_quote)}&rdquo;</span>
-              <footer className="money_quote_attribution">
-                <span className="money_quote_speaker">&mdash; {doc.quote_speaker}</span>
-              </footer>
-            </>
-          ) : (
+      {/* Lead with the money quote when present. Witness testimony is attributed
+          (two voices); reception press quotes are unattributed (the source in the
+          header is the context) — a speaker-less quote shows bare. */}
+      {doc.money_quote && (
+        doc.quote_speaker && doc.quote_is_witness_voice ? (
+          <blockquote className="historyLead is-firsthand">
+            <span className="money_quote_text">&ldquo;{withBrackets(doc.money_quote)}&rdquo;</span>
+            <footer className="money_quote_attribution">
+              <span className="money_quote_speaker">&mdash; {doc.quote_speaker}</span>
+            </footer>
+          </blockquote>
+        ) : doc.quote_speaker ? (
+          <blockquote className="historyLead">
             <span className="money_quote_text">
               <span className="money_quote_speaker-prefix">{doc.quote_speaker}:</span>{" "}
               &ldquo;{withBrackets(doc.money_quote)}&rdquo;
             </span>
-          )}
-        </blockquote>
+          </blockquote>
+        ) : (
+          <blockquote className="historyLead">
+            <span className="money_quote_text">&ldquo;{withBrackets(doc.money_quote)}&rdquo;</span>
+          </blockquote>
+        )
       )}
 
       <div className="historySupport">

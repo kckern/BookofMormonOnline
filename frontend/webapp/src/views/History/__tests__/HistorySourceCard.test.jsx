@@ -55,4 +55,12 @@ describe("HistorySourceCard", () => {
     const out = withBrackets("a [b] c");
     expect(out.filter((p) => p && p.props && p.props.className === "editorialMark")).toHaveLength(1);
   });
+
+  test("a money quote with no speaker renders bare (no attribution)", () => {
+    const { container } = render(<HistorySourceCard doc={{ ...base, money_quote: "It is spoken of as the Golden Bible", quote_speaker: null }} onOpen={jest.fn()} />);
+    expect(container.querySelector(".historyLead")).toBeInTheDocument();
+    expect(screen.getByText(/It is spoken of as the Golden Bible/)).toBeInTheDocument();
+    expect(container.querySelector(".money_quote_attribution")).toBeNull();
+    expect(container.querySelector(".money_quote_speaker-prefix")).toBeNull();
+  });
 });
