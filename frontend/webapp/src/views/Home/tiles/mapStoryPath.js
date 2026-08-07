@@ -19,8 +19,18 @@
 export const legsOf = (moves) =>
   moves.map((m, i) => ({
     seq: m.seq,
-    from: { slug: m.start, lat: m.startLat, lng: m.startLng },
-    to: { slug: m.end, lat: m.endLat, lng: m.endLng },
+    from: {
+      slug: m.start,
+      name: m.startName || m.start,
+      lat: m.startLat,
+      lng: m.startLng,
+    },
+    to: {
+      slug: m.end,
+      name: m.endName || m.end,
+      lat: m.endLat,
+      lng: m.endLng,
+    },
     // True when this leg does not continue from the previous one. Rendered
     // distinctly rather than hidden: surfacing the break is how these rows get
     // found and cleaned up later.
@@ -34,18 +44,29 @@ export const legsOf = (moves) =>
  */
 export const stopsOf = (moves) => {
   const bySlug = new Map();
-  const visit = (slug, lat, lng, step, isEnd) => {
+  const visit = (slug, name, lat, lng, step, isEnd) => {
     let s = bySlug.get(slug);
     if (!s) {
-      s = { slug, lat, lng, steps: [], endSteps: [] };
+      s = {
+        slug,
+        name: name || slug,
+        lat,
+        lng,
+        steps: [],
+        startSteps: [],
+        endSteps: [],
+        firstStep: step,
+      };
       bySlug.set(slug, s);
     }
+    if ((!s.name || s.name === s.slug) && name) s.name = name;
     if (!s.steps.includes(step)) s.steps.push(step);
+    if (!isEnd && !s.startSteps.includes(step)) s.startSteps.push(step);
     if (isEnd && !s.endSteps.includes(step)) s.endSteps.push(step);
   };
   moves.forEach((m, i) => {
-    visit(m.start, m.startLat, m.startLng, i, false);
-    visit(m.end, m.endLat, m.endLng, i, true);
+    visit(m.start, m.startName, m.startLat, m.startLng, i, false);
+    visit(m.end, m.endName, m.endLat, m.endLng, i, true);
   });
   return [...bySlug.values()];
 };
@@ -53,8 +74,7 @@ export const stopsOf = (moves) => {
 /** Marker appearance for a given playhead position. */
 export const stopStateAt = (stop, active, showAll) => {
   if (showAll) return "past";
-  if (stop.endSteps.includes(active)) return "current";
-  if (active === 0 && stop.steps.includes(0)) return "current";
-  if (stop.steps.some((n) => n <= active)) return "past";
+  if (stop.startSteps.includes(active) || stop.endSteps.includes(active)) return "current";
+  if (stop.steps.some((n) => n < active)) return "past";
   return "future";
 };

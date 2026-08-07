@@ -1704,138 +1704,452 @@ html[data-theme="dark"] .notesTile .notesAttr { color: #aaa; }
 .faxVerseTile .faxVerseTitle { font-size: 0.85rem; opacity: 0.8; margin: 0.4rem 0; }
 .notesTile .notesSource { font-size: 0.8rem; opacity: 0.7; }
 
-/* ---- map-story tile: animated playback ---- */
-.mapStoryTile .mapStoryTitle { font-weight: 600; margin-bottom: 0.4rem; }
-.mapStoryTile .mapTileFrame { height: 260px; position: relative; }
-.mapStoryTile .mapStoryLeg { font-weight: 500; }
-.mapStoryTile .mapStoryRef {
-  border: none;
-  background: transparent;
-  color: inherit;
-  font-size: 0.8rem;
-  opacity: 0.75;
-  text-decoration: underline;
-  cursor: pointer;
-  margin-left: 0.35rem;
-  padding: 0;
+/* ---- map-story tile: semantic journey player ---- */
+.mapStoryTile { gap: 0; }
+.mapStoryHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.65rem;
 }
-.mapStoryTile .mapStoryDesc { font-size: 0.85rem; opacity: 0.8; }
-.mapStoryTile .mapStoryDuration { font-size: 0.78rem; opacity: 0.6; margin-left: 0.5rem; }
-
-/* Playback control — required by WCAG 2.2.2, so it must stay reachable and
-   visible against both the light map tiles and dark theme chrome. */
-.mapStoryTile .mapStoryPlayToggle {
+.mapStoryHeaderCopy { min-width: 0; }
+.mapStoryTile .tileHeading { margin-bottom: 0.18rem; }
+.mapStoryTitle {
+  display: block;
+  overflow: hidden;
+  color: #252a27;
+  font-family: "Roboto Condensed", "Arial Narrow", sans-serif;
+  font-size: 1.18rem;
+  font-weight: 750;
+  line-height: 1.12;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mapStoryTitle:hover { color: #7f2d28; }
+.mapStoryCounts {
+  flex: 0 0 auto;
+  color: #6c746e;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.025em;
+  white-space: nowrap;
+}
+.mapStoryTile .mapTileFrame {
+  height: 292px;
+  position: relative;
+  isolation: isolate;
+  border: 1px solid rgba(49, 63, 55, 0.14);
+  border-radius: 0.8rem;
+  background: linear-gradient(145deg, #dce6d4, #b8c9ac);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+}
+.mapStoryMap { position: absolute; inset: 0; }
+.mapStoryMap .mapTileCanvas { z-index: 0; outline: none; }
+.mapStoryMap .mapTileCanvas:focus-visible {
+  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.95), inset 0 0 0 5px #45679e;
+}
+.mapStoryMapShade {
   position: absolute;
-  right: 8px;
-  bottom: 8px;
-  z-index: 2;
-  border: none;
-  border-radius: 50%;
-  width: 30px;
-  height: 30px;
-  font-size: 0.7rem;
-  line-height: 1;
-  cursor: pointer;
-  color: #fff;
-  background: rgba(0, 0, 0, 0.55);
-}
-.mapStoryTile .mapStoryPlayToggle:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
-
-/* Carousel.
-   Slides STACK in a single grid cell rather than sitting in a flex row. A row
-   would make the track's intrinsic width N × the card width, and the masonry
-   columns (.samplerMasonryCol) have no declared width — they size to content,
-   so a flex track blows the column out and overflows the whole grid. Stacking
-   keeps intrinsic width at one card whatever the move count. */
-.mapStoryTile .mapStoryStage { overflow: hidden; margin-top: 0.6rem; min-width: 0; }
-.mapStoryTile .mapStoryTrack { display: grid; }
-.mapStoryTile .mapStorySlide {
-  grid-area: 1 / 1;
-  min-width: 0;
-  opacity: 0;
-  transform: translateX(1.5rem);
-  transition: opacity 350ms ease, transform 350ms ease;
+  inset: 0;
+  z-index: 1;
   pointer-events: none;
+  background:
+    linear-gradient(to bottom, rgba(22, 32, 27, 0.08), transparent 18%, transparent 78%, rgba(22, 32, 27, 0.12)),
+    radial-gradient(circle at 50% 42%, transparent 56%, rgba(30, 42, 35, 0.09));
 }
-.mapStoryTile .mapStorySlide.isActive {
-  opacity: 1;
-  transform: none;
+.mapStoryLeaderLines {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+.mapStoryLeaderLines line {
+  stroke: rgba(33, 45, 38, 0.72);
+  stroke-width: 1.25;
+  stroke-linecap: round;
+}
+.mapStoryLeaderLines line.isSymbolLeader {
+  stroke-dasharray: 2 3;
+  opacity: 0.74;
+}
+.mapStoryLeaderLines line.isTravelerLeader {
+  stroke: rgba(159, 48, 41, 0.82);
+  stroke-width: 1.75;
+  stroke-dasharray: 3 4;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+.mapStoryMapOverlay { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+.mapStoryStopMarker {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  transform: translate(-50%, -50%);
+  border: 2px solid rgba(255, 255, 255, 0.96);
+  border-radius: 50%;
+  background: #65756a;
+  box-shadow: 0 1px 4px rgba(20, 29, 24, 0.42);
+}
+.mapStoryStopMarker.is-active {
+  width: 21px;
+  height: 21px;
+  border-width: 3px;
+  background: #9f3029;
+  box-shadow: 0 0 0 5px rgba(159, 48, 41, 0.18), 0 2px 7px rgba(20, 29, 24, 0.48);
+}
+.mapStoryStopMarker.is-anchor { width: 16px; height: 16px; background: #263b31; }
+.mapStoryStopMarker.is-visited { background: #a5524c; }
+.mapStoryStopMarker.is-future { width: 8px; height: 8px; border-width: 1.5px; opacity: 0.6; }
+.mapStoryPlaceLabel {
+  appearance: none;
+  box-sizing: border-box;
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 9px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.78);
+  border-radius: 0.45rem;
+  color: #26322b;
+  background: rgba(250, 249, 244, 0.93);
+  box-shadow: 0 2px 8px rgba(24, 34, 28, 0.2);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.7rem;
+  font-weight: 720;
+  line-height: 1.12;
+  text-align: center;
+  text-wrap: balance;
   pointer-events: auto;
 }
-/* Reduced motion: cross-fade only, no horizontal travel. */
-.mapStoryTile .mapStoryTrackStatic .mapStorySlide { transform: none; transition: opacity 200ms ease; }
-
-.mapStoryTile .mapStoryCard { display: flex; gap: 0.6rem; align-items: flex-start; }
-.mapStoryTile .mapStoryCardArt {
-  flex: 0 0 84px;
-  height: 84px;
-  border-radius: 4px;
-  overflow: hidden;
-  background: rgba(0, 0, 0, 0.06);
+.mapStoryPlaceLabel:hover { border-color: rgba(38, 50, 43, 0.55); background: #fffdf8; }
+.mapStoryPlaceLabel:focus-visible { outline: 3px solid #fff; outline-offset: 2px; box-shadow: 0 0 0 5px #45679e; }
+.mapStoryPlaceLabel.is-active {
+  border-color: rgba(159, 48, 41, 0.48);
+  color: #812923;
+  background: rgba(255, 252, 246, 0.97);
 }
-html[data-theme="dark"] .mapStoryTile .mapStoryCardArt { background: rgba(255, 255, 255, 0.08); }
-.mapStoryTile .mapStoryCardArt img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.mapStoryTile .mapStoryCardBody { flex: 1 1 auto; min-width: 0; }
-.mapStoryTile .mapStoryCardTitle .mapStoryTitleCardHeading { font-weight: 600; font-size: 1rem; }
-.mapStoryTile .mapStoryTitleCardMeta { font-size: 0.78rem; opacity: 0.6; margin-top: 0.3rem; }
-
-/* Flags a move whose start does not continue from the previous move's end.
-   Shown rather than hidden — these mark rows that need data cleanup. */
-.mapStoryTile .mapStoryDetached {
-  display: inline-block;
-  font-size: 0.68rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  padding: 0.05rem 0.35rem;
-  margin-left: 0.35rem;
-  border-radius: 3px;
-  opacity: 0.75;
-  border: 1px dashed currentColor;
-}
-
-/* Travelers */
-.mapStoryTile .mapStoryPeople {
+.mapStoryPlaceLabel.is-anchor { color: #173025; }
+.mapStoryPlaceLabel.is-visited { opacity: 0.88; }
+.mapStoryCluster {
+  position: absolute;
   display: flex;
-  flex-wrap: wrap;
+  width: 58px;
+  min-height: 32px;
   align-items: center;
-  gap: 0.3rem;
-  list-style: none;
-  padding: 0;
-  margin: 0.4rem 0 0;
+  justify-content: center;
+  gap: 3px;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+  border: 1px solid rgba(255, 255, 255, 0.84);
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(42, 57, 49, 0.82);
+  box-shadow: 0 2px 7px rgba(20, 29, 24, 0.32);
+  cursor: pointer;
+  line-height: 1;
 }
-.mapStoryTile .mapStoryPerson { display: flex; align-items: center; gap: 0.25rem; }
-.mapStoryTile .mapStoryPerson img {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  object-fit: cover;
-  display: block;
-}
-.mapStoryTile .mapStoryPersonName { font-size: 0.72rem; opacity: 0.75; }
-.mapStoryTile .mapStoryPersonMore { font-size: 0.72rem; opacity: 0.6; }
-
-/* Step dots */
-.mapStoryTile .mapStoryDots {
+.mapStoryCluster strong { font-size: 0.74rem; }
+.mapStoryCluster span { font-size: 0.56rem; letter-spacing: 0.02em; }
+.mapStoryCluster:hover { background: rgba(33, 48, 40, 0.95); transform: translate(-50%, -50%) scale(1.04); }
+.mapStoryCluster:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+.mapStoryTravelerParty {
+  position: absolute;
+  z-index: 5;
   display: flex;
-  gap: 0.3rem;
-  list-style: none;
-  padding: 0;
-  margin: 0.5rem 0 0;
+  align-items: center;
+  min-width: 38px;
+  min-height: 38px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  opacity: 0;
+  filter: drop-shadow(0 3px 5px rgba(20, 28, 23, 0.35));
+  will-change: left, top;
 }
-.mapStoryTile .mapStoryDot {
-  width: 7px;
-  height: 7px;
+.mapStoryTravelerParty.isComplete { opacity: 0.78 !important; }
+.mapStoryTravelerAvatar {
+  position: relative;
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  overflow: hidden;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  color: #fff;
+  background: #7d443c;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+.mapStoryTravelerAvatar + .mapStoryTravelerAvatar { margin-left: -11px; }
+.mapStoryTravelerAvatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.mapStoryTravelerAvatar.isGeneric { font-size: 1rem; }
+.mapStoryTravelerMore {
+  display: grid;
+  min-width: 26px;
+  height: 26px;
+  margin-left: -8px;
+  place-items: center;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  color: #fff;
+  background: #303e36;
+  font-size: 0.62rem;
+  font-weight: 800;
+}
+.mapStoryRecenter {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  z-index: 6;
+  min-height: 44px;
+  padding: 0 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(35, 48, 41, 0.88);
+  box-shadow: 0 2px 8px rgba(20, 29, 24, 0.28);
+  cursor: pointer;
+  font-size: 0.7rem;
+  font-weight: 750;
+}
+.mapStoryRecenter:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+
+.mapStoryFallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 2rem;
+  color: #2d3d34;
+  background: linear-gradient(145deg, #dfe8d7, #b8c8ae);
+}
+.mapStoryFallbackRoute { display: flex; align-items: center; width: 100%; }
+.mapStoryFallbackRoute span { width: 16px; height: 16px; border: 3px solid #fff; border-radius: 50%; background: #8e332c; }
+.mapStoryFallbackRoute i { flex: 1; border-top: 3px dashed #8e332c; }
+.mapStoryFallbackPlaces { display: flex; justify-content: space-between; gap: 1rem; margin-top: 0.55rem; font-size: 0.7rem; }
+
+.mapStoryPlaybackStatus {
+  display: flex;
+  min-height: 28px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.55rem;
+}
+.mapStoryMoveState {
+  color: #8b2f29;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.035em;
+  text-transform: uppercase;
+}
+.mapStoryMoveState.isComplete { color: #2f6749; }
+.mapStoryLegend { display: flex; align-items: center; gap: 4px; color: #737b76; font-size: 0.58rem; }
+.mapStoryLegend i { width: 7px; height: 7px; margin-left: 3px; border-radius: 50%; background: #9f3029; }
+.mapStoryLegend i.isVisited { background: #a97a75; }
+.mapStoryLegend i.isFuture { background: #718078; opacity: 0.55; }
+
+.mapStoryControls { display: flex; align-items: center; gap: 0.4rem; }
+.mapStoryControlButton {
+  display: grid;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid #d5dcd6;
+  border-radius: 50%;
+  color: #35453c;
+  background: #f7f8f5;
+  cursor: pointer;
+}
+.mapStoryControlButton.isPrimary { color: #fff; border-color: #8b302a; background: #96362f; }
+.mapStoryControlButton:hover:not(:disabled) { border-color: #8b302a; transform: translateY(-1px); }
+.mapStoryControlButton:disabled { cursor: not-allowed; opacity: 0.34; }
+.mapStoryControlButton:focus-visible { outline: 3px solid rgba(69, 103, 158, 0.52); outline-offset: 2px; }
+.mapStoryControlIcon { display: block; font-family: Arial, sans-serif; font-size: 1.35rem; font-weight: 700; line-height: 1; }
+.mapStoryControlButton.isPrimary .mapStoryControlIcon { font-size: 0.88rem; }
+.mapStoryScrubberLabel { display: flex; flex: 1; min-width: 0; align-items: center; }
+.mapStoryScrubber {
+  width: 100%;
+  height: 28px;
+  margin: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+.mapStoryScrubber::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(to right, #96362f 0 var(--map-story-progress), #d9ddd8 var(--map-story-progress) 100%);
+}
+.mapStoryScrubber::-moz-range-track { height: 6px; border-radius: 999px; background: #d9ddd8; }
+.mapStoryScrubber::-moz-range-progress { height: 6px; border-radius: 999px; background: #96362f; }
+.mapStoryScrubber::-webkit-slider-thumb {
+  width: 20px;
+  height: 20px;
+  margin-top: -7px;
+  appearance: none;
+  -webkit-appearance: none;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: #96362f;
+  box-shadow: 0 1px 5px rgba(35, 43, 38, 0.35);
+}
+.mapStoryScrubber::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: #96362f;
+  box-shadow: 0 1px 5px rgba(35, 43, 38, 0.35);
+}
+.mapStoryScrubber:focus-visible { outline: 3px solid rgba(69, 103, 158, 0.52); outline-offset: 2px; border-radius: 999px; }
+.mapStoryInteractionHint { margin-top: 0.25rem; color: #68736d; font-size: 0.66rem; text-align: center; }
+
+.mapStoryStage { min-width: 0; margin-top: 0.55rem; }
+.mapStoryBeat {
+  display: flex;
+  min-height: 116px;
+  gap: 0.65rem;
+  padding: 0.7rem;
+  border: 1px solid #e2e6e1;
+  border-radius: 0.68rem;
+  background: #f8f8f5;
+}
+.mapStoryBeatIndex,
+.mapStoryCompleteMark {
+  display: grid;
+  flex: 0 0 31px;
+  width: 31px;
+  height: 31px;
+  place-items: center;
+  border-radius: 50%;
+  color: #fff;
+  background: #96362f;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+.mapStoryCompleteMark { background: #397054; }
+.mapStoryBeatBody { flex: 1 1 auto; min-width: 0; }
+.mapStoryLeg { display: flex; align-items: baseline; gap: 0.34rem; color: #28332d; font-size: 0.91rem; font-weight: 720; line-height: 1.2; }
+.mapStoryLeg span:first-child,
+.mapStoryLeg span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mapStoryArrow { flex: 0 0 auto; color: #9b3c35; }
+.mapStoryBeatMeta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; margin-top: 0.25rem; }
+.mapStoryTile .mapStoryRef {
   padding: 0;
   border: none;
-  border-radius: 50%;
+  color: #5f6670;
+  background: transparent;
   cursor: pointer;
-  background: currentColor;
-  opacity: 0.25;
+  font-family: "Scripture", serif;
+  font-size: 0.72rem;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
-.mapStoryTile .mapStoryDot.isActive { opacity: 0.85; }
+.mapStoryTile .mapStoryDuration { color: #707973; font-size: 0.68rem; }
+.mapStoryTile .mapStoryDesc {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0.34rem 0 0;
+  color: #5f6762;
+  font-size: 0.77rem;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+.mapStoryDetached {
+  padding: 0.08rem 0.35rem;
+  border: 1px dashed #8f6b66;
+  border-radius: 999px;
+  color: #77534f;
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.035em;
+  text-transform: uppercase;
+}
+.mapStoryTravelerText { margin: 0.35rem 0 0; color: #667069; font-size: 0.68rem; line-height: 1.25; }
+.mapStoryTravelerText > span { color: #96362f; font-size: 0.52rem; }
+.mapStoryTravelerText strong { color: #4d5751; }
+.mapStoryCompleteHeading { color: #2e5943; font-size: 0.9rem; font-weight: 800; }
+.mapStoryCompleteMeta { margin-top: 0.38rem; color: #68736c; font-size: 0.68rem; font-weight: 650; }
+
+.mapStoryFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  margin-top: 0.55rem;
+}
+.mapStoryFooter > span {
+  min-width: 0;
+  overflow: hidden;
+  color: #68716c;
+  font-size: 0.67rem;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mapStoryFooter .mapTileCta { flex: 0 0 auto; margin-top: 0; }
+.mapStoryTextEquivalent {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+html[data-theme="dark"] .mapStoryTitle { color: #f1f2ee; }
+html[data-theme="dark"] .mapStoryTitle:hover { color: #efaaa3; }
+html[data-theme="dark"] .mapStoryCounts,
+html[data-theme="dark"] .mapStoryLegend,
+html[data-theme="dark"] .mapStoryInteractionHint,
+html[data-theme="dark"] .mapStoryFooter > span { color: #aab4ad; }
+html[data-theme="dark"] .mapStoryTile .mapTileFrame { border-color: #435047; background: #26332b; }
+html[data-theme="dark"] .mapStoryMapShade { background: radial-gradient(circle at 50% 42%, transparent 52%, rgba(4, 8, 5, 0.3)); }
+html[data-theme="dark"] .mapStoryBeat { border-color: #3a453e; background: #282f2b; }
+html[data-theme="dark"] .mapStoryLeg { color: #eef1ed; }
+html[data-theme="dark"] .mapStoryTile .mapStoryDesc,
+html[data-theme="dark"] .mapStoryTile .mapStoryDuration,
+html[data-theme="dark"] .mapStoryTravelerText,
+html[data-theme="dark"] .mapStoryCompleteMeta { color: #b8c0ba; }
+html[data-theme="dark"] .mapStoryTravelerText strong { color: #d9dfda; }
+html[data-theme="dark"] .mapStoryTile .mapStoryRef { color: #b9c9df; }
+html[data-theme="dark"] .mapStoryControlButton { color: #dbe1dc; border-color: #465149; background: #29322c; }
+html[data-theme="dark"] .mapStoryControlButton.isPrimary { color: #fff; border-color: #b95850; background: #9f3932; }
+html[data-theme="dark"] .mapStoryScrubber::-webkit-slider-runnable-track { background: linear-gradient(to right, #c85a51 0 var(--map-story-progress), #4a554d var(--map-story-progress) 100%); }
+html[data-theme="dark"] .mapStoryScrubber::-moz-range-track { background: #4a554d; }
+html[data-theme="dark"] .mapStoryPlaceLabel { color: #eef1ed; border-color: rgba(255,255,255,0.2); background: rgba(29, 39, 33, 0.94); }
+html[data-theme="dark"] .mapStoryPlaceLabel.is-active { color: #ffd4cf; border-color: rgba(213, 102, 92, 0.58); background: rgba(45, 34, 32, 0.96); }
 
 @media (prefers-reduced-motion: reduce) {
-  .mapStoryTile .mapStoryTrack { transition: none; }
+  .mapStoryCluster,
+  .mapStoryControlButton,
+  .mapStoryTravelerParty { transition: none !important; }
+}
+
+@media only screen and (max-width: 480px) {
+  .mapStoryTile .mapTileFrame { height: 270px; }
+  .mapStoryHeader { align-items: flex-start; }
+  .mapStoryCounts { margin-top: 0.1rem; font-size: 0.62rem; }
+  .mapStoryLegend { display: none; }
+  .mapStoryControlButton { flex-basis: 42px; width: 42px; height: 42px; }
+  .mapStoryBeat { min-height: 110px; }
+  .mapStoryFooter { align-items: flex-end; }
+  .mapStoryFooter > span { white-space: normal; }
 }
 
 /* Multi-edition cropped-verse facsimile tile */
