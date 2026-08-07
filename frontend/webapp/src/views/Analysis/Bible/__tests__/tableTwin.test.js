@@ -35,6 +35,16 @@ describe("TableTwin", () => {
     );
   });
 
+  test("the BoM and Bible cell buttons have distinct accessible names", () => {
+    const { container } = render(<TableTwin navigate={jest.fn()} />);
+    const firstRow = container.querySelector("[data-testid='xref-pairrow']");
+    const labels = [...firstRow.querySelectorAll(".xref-rowlink")].map((b) =>
+      b.getAttribute("aria-label")
+    );
+    expect(labels).toHaveLength(2);
+    expect(labels[0]).not.toBe(labels[1]);
+  });
+
   test("the Bible column is a link that opens the reader", () => {
     const navigate = jest.fn();
     const { container } = render(<TableTwin navigate={navigate} />);

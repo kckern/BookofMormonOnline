@@ -95,7 +95,7 @@ export default function TableTwin({ navigate }) {
                 <td>
                   <button
                     className="xref-rowlink"
-                    aria-label={`Open ${p.bomBookName} × ${p.bibleBookName} reader`}
+                    aria-label={`Open ${p.bomBookName} × ${p.bibleBookName} reader — Bible side`}
                     onClick={(e) => {
                       e.stopPropagation();
                       open(p);
