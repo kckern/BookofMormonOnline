@@ -40,7 +40,9 @@
     margin-bottom:2em;
     display: flex;
     flex-direction: column;
-    height: auto;
+    /* Fixed height so every tile matches even when the header name or footer
+       badges wrap — the image body (flex:1) absorbs the difference. */
+    height: 22em;
 }
 
 .MatterList .card-header,
@@ -75,18 +77,36 @@
 
 .card-body.matterInfo
 {
-    padding: .5em;
+    padding: 0;
     color: #666;
     line-height: 1em;
-    background-position: center;
-    background-repeat: no-repeat;
-    /* Landscape artwork keeps the browse grid compact and scales with each
-       masonry column instead of enforcing a portrait fixed height. */
-    aspect-ratio: 4 / 3;
-    height: auto;
-    background-size: cover;
+    /* Fill the space between header and footer; hold the image + subtitle in a
+       column so a multi-line subtitle pushes the image up (its bottom-offset). */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    flex: 1 1 auto;
+    min-height: 0;
     position: relative;
-    flex-shrink: 0;
+    overflow: hidden;
+    /* fallback branch sets an inline slug gradient here; the image branch paints
+       on .matterImg instead */
+    background-size: cover;
+    background-position: center 62%;
+    background-repeat: no-repeat;
+}
+
+/* The artwork itself — a flex child that shrinks as the subtitle grows, so the
+   focal point rides above a tall subtitle instead of being buried by it. The
+   ~15% top crop (background-position centre 62%) balances subjects that sit
+   slightly below the vertical centre of the source image. */
+.MatterList .matterImg
+{
+    flex: 1 1 auto;
+    min-height: 0;
+    background-size: cover;
+    background-position: center 62%;
+    background-repeat: no-repeat;
 }
 
 .MatterList .card-body.matterInfo.matterFallback
@@ -111,15 +131,23 @@
 
 .MatterList .card-body.matterInfo .subtitle
 {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    padding: .5em;
-    background-color: rgb(0,0,0,.5);
+    /* In-flow at the bottom of the column: a 1-line subtitle overlaps ~1 line of
+       the image (negative margin) so it still reads as an overlay; each extra
+       line pushes the image up instead of burying it. The gradient fades up from
+       opaque to transparent, so it grows/shrinks with the subtitle height. */
+    flex: 0 0 auto;
+    margin-top: -1.7em;
+    z-index: 1;
+    padding: 1.4em .5em .5em;
     color: white;
     font-size: 0.85em;
     line-height: 1.25em;
+    background: linear-gradient(
+        to top,
+        rgba(0, 0, 0, 0.82) 0%,
+        rgba(0, 0, 0, 0.6) 55%,
+        rgba(0, 0, 0, 0) 100%
+    );
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 3;

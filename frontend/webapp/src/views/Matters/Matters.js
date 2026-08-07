@@ -199,18 +199,20 @@ function MattersComponent() {
                         )}
                       </CardBody>
                     ) : (
-                      <CardBody
-                        className="matterInfo"
-                        style={{
-                          backgroundImage: `url(${assetUrl}/matters/${obj.slug})`,
-                        }}
-                      >
-                        <img
-                          alt=""
-                          src={`${assetUrl}/matters/${obj.slug}`}
-                          style={{ display: "none" }}
-                          onError={() => markFailed(obj.slug)}
-                        />
+                      <CardBody className="matterInfo">
+                        <div
+                          className="matterImg"
+                          style={{
+                            backgroundImage: `url(${assetUrl}/matters/${obj.slug})`,
+                          }}
+                        >
+                          <img
+                            alt=""
+                            src={`${assetUrl}/matters/${obj.slug}`}
+                            style={{ display: "none" }}
+                            onError={() => markFailed(obj.slug)}
+                          />
+                        </div>
                         {obj.subtitle && (
                           <div className="subtitle">{replaceNumbers(obj.subtitle)}</div>
                         )}
