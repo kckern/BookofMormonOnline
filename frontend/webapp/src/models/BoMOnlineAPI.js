@@ -58,24 +58,7 @@ export default async function BoMOnlineAPI(input, options) {
 
         //Merge with Already-cached items
         let structuredResults = structureResults(queries, apiResults.data);
-
-        if (Object.keys(cacheResults.found).length > 0) {
-            let allKeys = Object.keys(cacheResults.found).concat(Object.keys(structuredResults));
-            for (let i in allKeys) {
-                let key = allKeys[i];
-                const fresh = structuredResults[key];
-                const cached = cacheResults.found[key];
-                if (Array.isArray(fresh)) {
-                    results[key] = fresh;
-                } else if (Array.isArray(cached)) {
-                    results[key] = cached;
-                } else {
-                    results[key] = { ...(fresh || {}), ...(cached || {}) };
-                }
-            }
-        } else {
-            results = structuredResults;
-        }
+        results = mergeResults(structuredResults, cacheResults.found);
 
     }
     else {
@@ -108,7 +91,37 @@ async function serverGQLCall(graphQL) {
 }
 
 
-function structureResults(queries, apiResults) {
+// Merge freshly-fetched results with the warm-cached ones. Exported + pure so
+// the union behaviour can be tested without IndexedDB/network.
+//
+// `structuredResults` holds this request's fresh data; array-typed collections
+// (e.g. verses) arrive as raw arrays while `found` holds the same collection as
+// an id-keyed object. The previous code returned only the fresh array for those
+// keys, silently DROPPING every warm-cached item (a verse served from cache then
+// rendered blank). Union them instead — the two sets are disjoint (cached items
+// are never re-requested), and consumers read via Object.values, which works on
+// the concatenated array.
+export function mergeResults(structuredResults, found) {
+    if (!found || Object.keys(found).length === 0) return structuredResults;
+    const results = {};
+    const allKeys = [...new Set(Object.keys(found).concat(Object.keys(structuredResults)))];
+    for (const key of allKeys) {
+        const fresh = structuredResults[key];
+        const cached = found[key];
+        if (Array.isArray(fresh)) {
+            results[key] = (cached && !Array.isArray(cached))
+                ? fresh.concat(Object.values(cached))
+                : fresh;
+        } else if (Array.isArray(cached)) {
+            results[key] = cached;
+        } else {
+            results[key] = { ...(fresh || {}), ...(cached || {}) };
+        }
+    }
+    return results;
+}
+
+export function structureResults(queries, apiResults) {
     let resultObj = {};
     let resultKeys = Object.keys(apiResults);
     for (let i in queries) {
@@ -126,8 +139,13 @@ function structureResults(queries, apiResults) {
             for (let j in results) {
                 let queryKey = query.key;
                 if (resultObj[query.type] === undefined) resultObj[query.type] = {};
-                // let dbIndex = results[j][queryKey]; 
-                let dbIndex = results[j] ? results[j][queryKey] : query.val[j]; // Updated
+                // Prefer a row-derived key (query.keyFn) so results stay correctly
+                // associated even when the server drops/reorders rows (e.g.
+                // versehighlights omits pairs with no highlight); positional
+                // query.val[j] mis-keys every row after a dropped one.
+                let dbIndex = query.keyFn && results[j] != null
+                    ? query.keyFn(results[j])
+                    : (results[j] ? results[j][queryKey] : query.val[j]); // Updated
                 if (dbIndex === undefined) dbIndex = query.val[j];
                 if (dbIndex === undefined) resultObj[query.type] = results[j];
                 else resultObj[query.type][dbIndex] = results[j] ?? null;

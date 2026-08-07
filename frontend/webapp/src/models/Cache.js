@@ -68,7 +68,11 @@ export function prepareCacheObject(queries, apiResults, useCache) {
         else {
             for (let j in results) {
                 let queryKey = query.key;
-                let dbIndex = results[j] ? results[j][queryKey] : query.val[j]; // Update By ME  
+                // Prefer a row-derived key so cache entries stay correctly
+                // associated when the server drops/reorders rows (versehighlights).
+                let dbIndex = query.keyFn && results[j] != null
+                    ? query.keyFn(results[j])
+                    : (results[j] ? results[j][queryKey] : query.val[j]); // Update By ME
                 if (dbIndex === undefined) dbIndex = query.val[j];
                 cacheObj[query.type + "." + dbIndex] = results[j];
             }

@@ -351,6 +351,11 @@ const queries = {
       type: "versehighlights",
       key: "verse_pairs",
       val: verse_pairs,
+      // The server returns one row per pair THAT HAS a highlight and may drop or
+      // reorder rows, so key each row by its OWN ids (matching the input pair's
+      // "<bom>,<bible>" string) instead of by input position — otherwise a
+      // dropped early pair mis-keys every later highlight onto the wrong verse.
+      keyFn: (row) => `${row.bom_verse_id},${row.bible_verse_id}`,
       query: q("versehighlights", "verse_pairs", verse_pairs) +
         `{
                 isQuote
