@@ -5,16 +5,11 @@ import { useLocation, useParams, useRouteMatch } from "react-router-dom";
 import {
   Button,
   ButtonGroup,
-  Card,
-  CardHeader,
-  CardBody,
-  CardTitle,
   Pagination,
   PaginationItem,
   PaginationLink,
   Row,
   Col,
-  CardFooter,
 } from "reactstrap";
 
 import "./History.css"
@@ -29,6 +24,7 @@ import ReactMarkdown from "react-markdown";
 import { history } from 'src/models/routeHistory';
 import { useAppController } from "src/contexts/AppControllerContext";
 import HistoryBreadcrumb from "./HistoryBreadcrumb";
+import HistorySourceCard from "./HistorySourceCard";
 
 
 function History() {
@@ -112,33 +108,19 @@ function History() {
         className="my-masonry-grid"
         columnClassName="my-masonry-grid_column">
         {docList.filter(i => i.year === dateFilter).map((doc, i) => (
-          <Card key={i} onClick={() => appController.functions.setPopUp({
-            type: "history",
-            ids: [doc.slug],
-            popUpData: doc,
-            vhtop: 10,
-            underSlug: `history/${match.params.slug?.substr(0,4) || dateFilter}`,
-          })}
-            className='historycard'
-          >
-            <CardHeader className="text-left">
-              <div className='sourcebox'>
-                <div className='pub'>{doc.source}</div>
-                <div className='date'>{displayDate(doc.date)}</div>
-              </div>
-
-            </CardHeader>
-            <div className='thumbbox'>
-            <img style={{aspectRatio: "1 / " + parseFloat(doc.aspect)}} key={doc.id} src={`${assetUrl}/history/thumbs/${String(doc.id).padStart(4, '0')}`} alt={doc.document}  />    
-            <div className='thumb_teaser'>{Parser(doc.teaser)}</div>
-            </div>
-            <h5>{doc.document}</h5>
-            <div className='citation'>{Parser(doc.citation + "")}</div>
-            <CardBody>
-
-
-            </CardBody>
-          </Card>
+          <HistorySourceCard
+            key={i}
+            doc={doc}
+            variant="reception"
+            displayDate={displayDate}
+            onOpen={(d) => appController.functions.setPopUp({
+              type: "history",
+              ids: [d.slug],
+              popUpData: d,
+              vhtop: 10,
+              underSlug: `history/${match.params.slug?.substr(0, 4) || dateFilter}`,
+            })}
+          />
         ))}
       </Masonry>
     </div>
