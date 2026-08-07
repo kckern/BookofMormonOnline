@@ -456,7 +456,7 @@ html[data-theme="dark"] .xref-chaptercell.ramp-6 {
 
 .xref-bar {
   display: grid;
-  grid-template-columns: 140px 1fr 3.5em;
+  grid-template-columns: 140px 1fr 3.5em 1em;
   align-items: center;
   gap: 0.75rem;
   width: 100%;
@@ -510,6 +510,25 @@ html[data-theme="dark"] .xref-chaptercell.ramp-6 {
   font-variant-numeric: tabular-nums;
   color: var(--text-secondary, #444);
   font-size: 0.85rem;
+}
+
+.xref-bar-go {
+  color: var(--link, #345496);
+  font-weight: 700;
+  opacity: 0;
+  transition: opacity 120ms;
+  text-align: center;
+}
+
+.xref-bar:hover .xref-bar-go,
+.xref-bar:focus-visible .xref-bar-go {
+  opacity: 1;
+}
+
+.xref-bars-hint {
+  margin: 0.6rem 0 0;
+  font-size: 0.8rem;
+  color: var(--text-muted, #777);
 }
 
 .xref-showall {
@@ -755,7 +774,7 @@ html[data-theme="dark"] .verseViewerTable .scriptureCell p span.highlight {
 
 @media (max-width: 1100px) {
   .xref-rail { flex-basis: 200px; }
-  .xref-bar { grid-template-columns: 110px 1fr 3.5em; }
+  .xref-bar { grid-template-columns: 110px 1fr 3.5em 1em; }
 }
 
 @media (max-width: 700px) {

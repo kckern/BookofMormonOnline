@@ -47,6 +47,7 @@ export default function PartnerBars({ canon, book, chapter, highlight, onSelect 
               )}
             </span>
             <span className="xref-bar-count">{total}</span>
+            <span className="xref-bar-go" aria-hidden="true">›</span>
           </button>
         </div>
       ))}
@@ -55,6 +56,7 @@ export default function PartnerBars({ canon, book, chapter, highlight, onSelect 
           Show all {partners.length}
         </button>
       )}
+      <p className="xref-bars-hint">Select a book to read the verses side by side.</p>
     </div>
   );
 }

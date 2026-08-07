@@ -60,4 +60,13 @@ describe("PartnerBars", () => {
     // must be nowhere near 100%
     expect(parseFloat(track.style.width)).toBeLessThan(50);
   });
+
+  test("each bar advertises that it opens the verse reader", () => {
+    const onSelect = jest.fn();
+    render(<PartnerBars canon="bom" book="2 Nephi" onSelect={onSelect} />);
+    // an explicit affordance label, not just cursor:pointer
+    expect(screen.getAllByText("›").length).toBeGreaterThan(0);
+    // a hint line tells the user the bars are interactive
+    expect(screen.getByText(/select a book to read the verses/i)).toBeInTheDocument();
+  });
 });
