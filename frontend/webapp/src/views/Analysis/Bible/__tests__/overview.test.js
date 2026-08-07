@@ -113,6 +113,20 @@ describe("Overview", () => {
     fireEvent.click(screen.getByRole("button", { name: /Major Prophets,.*expand/i }));
     expect(navigate).toHaveBeenCalledWith({ view: "overview", mode: undefined, expanded: "Major Prophets" });
   });
+
+  test("ribbons paint largest-last so big cables win the click", () => {
+    const { container } = setup();
+    const ribbons = [...container.querySelectorAll("[data-ribbon]")];
+    // map each rendered ribbon to its reference count via the title text
+    const values = ribbons.map((g) => {
+      const t = g.querySelector("title").textContent;
+      return Number(t.match(/· (\d+) refs/)[1]);
+    });
+    // ascending: later (on-top) ribbons have >= value of earlier ones
+    for (let i = 1; i < values.length; i++) {
+      expect(values[i]).toBeGreaterThanOrEqual(values[i - 1]);
+    }
+  });
 });
 
 describe("aggregations", () => {

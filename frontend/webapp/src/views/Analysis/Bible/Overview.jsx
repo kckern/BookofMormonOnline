@@ -6,6 +6,7 @@ import TableTwin from "./TableTwin";
 
 const LABEL_PAD = 8;
 const FALLBACK_H = 420;
+const HAIRLINE = 5; // ribbons with <= this many refs never intercept clicks when idle
 
 // Bipartite ribbon overview. Left spine: the Bible's 9 divisions (book-level
 // ribbons on both sides read as spaghetti — the division default is the spec's
@@ -289,7 +290,7 @@ export default function Overview({ state = {}, navigate }) {
               Book of Mormon
             </text>
             <g>
-              {ribbons.map((r, i) => {
+              {[...ribbons].sort((a, b) => a.value - b.value).map((r, i) => {
                 const key = `${r.right}|${r.left}`;
                 const quoteFrac = r.value ? r.quotes / r.value : 0;
                 const lMid = r.lY0 + (r.lY1 - r.lY0) * quoteFrac;
@@ -310,7 +311,11 @@ export default function Overview({ state = {}, navigate }) {
                     key={key}
                     data-ribbon={key}
                     className={`xref-ribbon ${isDimmed(r) ? "dim" : ""}`}
-                    style={{ "--i": i, "--emphasis": emphasis }}
+                    style={{
+                      "--i": i,
+                      "--emphasis": emphasis,
+                      pointerEvents: !active && r.value <= HAIRLINE ? "none" : undefined,
+                    }}
                     onClick={() => navigate(target)}
                     onMouseEnter={() => setActive({ type: "ribbon", key })}
                     onMouseLeave={() => setActive(null)}
