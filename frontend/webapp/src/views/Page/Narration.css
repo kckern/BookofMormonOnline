@@ -427,4 +427,21 @@
   color: #999;
 }
 
+/* note-references (<ref>n) point at a sibling note, not scripture — amber, distinct from scripture_link */
+.noteItem .noteText a.note_ref{
+  color: #8a5a00;
+  border-bottom: 1px dotted #8a5a00;
+  cursor: pointer;
+}
+.noteItem .noteText a.note_ref:hover{
+  background: rgba(138, 90, 0, 0.08);
+}
+
+/* inline sibling-note accordion, opened beneath the host note */
+.siblingNotes{
+  margin: 0.25rem 0 0.5rem 1.5rem;
+  border-left: 3px solid #8a5a00;
+  padding-left: 0.75rem;
+}
+
 

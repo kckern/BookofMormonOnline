@@ -1,6 +1,7 @@
 import React, { Suspense } from "react";
 import { Link } from "react-router-dom";
 import { label } from "src/models/Utils";
+import TileDeepLink from "./_ds/TileDeepLink";
 
 // Code-split: the OpenLayers runtime + the map module load ONLY when this tile
 // actually renders (the reserve balancer inserts it below the fold), so a home
@@ -22,7 +23,7 @@ export default function MapTile() {
           <MapTileInner />
         </Suspense>
       </div>
-      <Link to="/map" className="mapTileCta tileMoreLink">{label("view_more")}</Link>
+      <TileDeepLink to="/map" always className="mapTileCta">{label("view_more")}</TileDeepLink>
     </div>
   );
 }

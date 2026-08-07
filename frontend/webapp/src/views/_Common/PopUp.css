@@ -190,7 +190,6 @@
 .popupwindow .card-body {
     height: calc(90vh - 35em);
     overflow-y: auto;
-    padding-bottom: 10em;
 }
 
 
@@ -463,26 +462,37 @@ ul.source_tabs li:hover
 
 #popUp .ppbody
 {
-    margin-bottom: 50em;
     display: flex;
+    align-items: flex-start;
 }
 
-/* Hero image. Sizing lives here, not on the element: an <img> with no width or
-   height collapses to the browser's broken-image chip when the asset 404s, and
-   for Matters a 404 is the common case (314 of 487 have no artwork yet).
-   EntityThumb ships square-box defaults for the 2.5rem card thumbs
-   (.entityThumb img { height: 100%; object-fit: cover }); the hero wants the
-   image's natural aspect instead, so height and object-fit are restated here.
-   This wins by specificity, not stylesheet order — .ppbody .ppimg img (0,2,1)
-   beats .entityThumb img (0,1,1) — and the popups pass no `size` prop, so
-   there are no inline dimensions competing with it either. */
+/* Left (prose) column pins via native CSS sticky (compositor → jitter-free).
+   MatterPopUp sets the sticky `top` inline = viewportH - proseH, so it rides
+   with the scroll and holds with its bottom at the popup bottom — no gap under
+   it, and no per-frame JS. */
+#popUp .ppbody .bodytext
+{
+    align-self: flex-start;
+    position: sticky;
+    /* Contain the last paragraph's bottom margin (a BFC) so it counts in the
+       measured height that drives the sticky offset — otherwise the collapsed
+       margin isn't in offsetHeight and only surfaces at the end of the scroll. */
+    display: flow-root;
+}
+
+/* Hero image. Square (matching the .fallback below) with the height reserved
+   from the width via aspect-ratio, so the box is sized BEFORE the image loads —
+   no layout shift on load, and no rugpull between the fallback and real artwork.
+   object-fit: cover fills the square without distortion. Wins by specificity
+   over .entityThumb img (0,2,1 vs 0,1,1); the popups pass no `size` prop. */
 .ppbody .ppimg img
 {
     border: 2px solid #00000099;
     border-radius: 1rem;
     width: 100%;
+    aspect-ratio: 1 / 1;
     height: auto;
-    object-fit: fill;
+    object-fit: cover;
     display: block;
 }
 

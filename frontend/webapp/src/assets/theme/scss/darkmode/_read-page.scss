@@ -34,6 +34,9 @@ html[data-theme="dark"] {
   .peoplePlacePanelWrapper, .notesPanelWrapper, .scripturePanelWrapper { background-color: var(--surface-2); }
   .peoplePlacePanel, .scripturePanel { background-color: var(--surface-3); color: var(--text-secondary); }
   .noteItem { background-color: var(--surface-3); color: var(--text-secondary); }
+  /* note-ref links: lighter amber for contrast on dark surfaces */
+  .noteItem .noteText a.note_ref { color: #e0a75a; border-bottom-color: #e0a75a; }
+  .siblingNotes { border-left-color: #e0a75a; }
 
   /* Page.css:328 mobile alternating rows */
   @media only screen and (max-width: 900px) {

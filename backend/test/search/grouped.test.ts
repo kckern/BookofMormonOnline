@@ -1,12 +1,12 @@
 import { describe, expect, test } from 'vitest';
-import { hitToCard, GROUP_TYPES, searchGroups } from '../../src/search/grouped.js';
+import { hitToCard, GROUP_TYPES, searchGroups, wantsGroups } from '../../src/search/grouped.js';
 import type { SearchHit } from '../../src/search/types.js';
 
 const hit = (o: Partial<SearchHit>): SearchHit => ({ type: 'person', entity_id: 'x', score: 0.5, text: '', title: null, ref: null, slug: null, version: null, ...o });
 
 describe('GROUP_TYPES', () => {
-  test('covers the six non-verse groups in display order', () => {
-    expect(GROUP_TYPES).toEqual(['person', 'place', 'commentary', 'narration', 'page', 'event']);
+  test('covers the non-verse groups incl. matter in display order', () => {
+    expect(GROUP_TYPES).toEqual(['person', 'place', 'matter', 'commentary', 'narration', 'page', 'event']);
   });
 });
 
@@ -24,6 +24,17 @@ describe('hitToCard', () => {
 describe('searchGroups resilience', () => {
   test('degrades to all-empty groups when the embed fails (never throws)', async () => {
     const out = await searchGroups('x', 'en', 8, async () => { throw new Error('embed down'); });
-    expect(out).toEqual({ person: [], place: [], commentary: [], narration: [], page: [], event: [] });
+    expect(out).toEqual({ person: [], place: [], matter: [], commentary: [], narration: [], page: [], event: [] });
+  });
+});
+
+describe('wantsGroups', () => {
+  test('rich mode always wants groups', () => {
+    expect(wantsGroups('rich', false)).toBe(true);
+    expect(wantsGroups('rich', true)).toBe(true);
+  });
+  test('keyword mode wants groups only on the semantic fallback', () => {
+    expect(wantsGroups('keyword', true)).toBe(true);
+    expect(wantsGroups('keyword', false)).toBe(false);
   });
 });

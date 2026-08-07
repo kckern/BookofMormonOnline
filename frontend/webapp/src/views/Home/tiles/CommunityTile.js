@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { label, breakCache } from "src/models/Utils";
 import { clampWords } from "./textUtils";
+import TileDeepLink from "./_ds/TileDeepLink";
 
 /**
  * ONE community tile (merged community + activity, per design review):
@@ -89,6 +90,7 @@ export default function CommunityTile({ data }) {
           </span>
         </div>
       ) : null}
+      <TileDeepLink to="/home/community" always>{label("view_more")}</TileDeepLink>
     </div>
   );
 }

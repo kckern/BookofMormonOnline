@@ -1,7 +1,7 @@
 import React from "react";
 import { PersonChip, PlaceChip, ContentCard, EventCard } from "./cards";
 
-const CARD = { person: PersonChip, place: PlaceChip, commentary: ContentCard, narration: ContentCard, page: ContentCard, event: EventCard };
+const CARD = { person: PersonChip, place: PlaceChip, matter: ContentCard, commentary: ContentCard, narration: ContentCard, page: ContentCard, event: EventCard };
 
 export default function ResultGroup({ label, cards, kind, query, semantic }) {
   if (!cards || !cards.length) return null;   // handles undefined (stripped empty groups) too

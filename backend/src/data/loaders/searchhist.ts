@@ -92,6 +92,16 @@ export function rankRowsByCandidateOrder<T extends { verse_id: string }>(rows: T
     .map(({ row }) => row);
 }
 
+/** Max verses hydrated+returned for a keyword search. A LIKE on a common word matches
+ *  thousands of rows; hydrating them all is a perf pathology and floods the UI. The raw
+ *  match count travels separately as `verseTotal` so the client can offer topical search. */
+export const VERSE_CAP = 100;
+
+/** Split a candidate id list into the slice we hydrate and the true total. */
+export function applyVerseCap(ids: string[], cap: number): { hydrateIds: string[]; verseTotal: number } {
+  return { hydrateIds: ids.slice(0, cap), verseTotal: ids.length };
+}
+
 /** The legacy LIKE candidate generation, extracted verbatim. */
 export async function getCandidateVerseIds(
   db: Kysely<DB>,
@@ -132,6 +142,7 @@ export async function resolveCandidates(
     keyword?: (q: string) => Promise<string[]>;
     semantic?: (q: string) => Promise<string[]>;
   } = {},
+  mode: 'keyword' | 'rich' = 'keyword',
 ): Promise<{ ids: string[]; semantic: boolean }> {
   const keyword = deps.keyword ?? ((q: string) => getCandidateVerseIds(db, q, lang, isEnglish));
   const semantic =
@@ -141,6 +152,19 @@ export async function resolveCandidates(
       const hits = await searchContent({ query: q, types: ['verse'], lang: searchLang });
       return hitsToRankedVerseIds(hits);
     });
+
+  // Rich: go straight to the semantic tier. Reachable → semantic:true even with zero hits
+  // (so the resolver still shows supplement groups); only a throw counts as degraded.
+  if (mode === 'rich') {
+    try {
+      const ids = await semantic(query);
+      return { ids, semantic: true };
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.warn('[search] rich retrieval failed:', err instanceof Error ? err.message : err);
+      return { ids: [], semantic: false };
+    }
+  }
 
   const keywordIds = await keyword(query);
   if (keywordIds.length) return { ids: keywordIds, semantic: false };
@@ -168,16 +192,20 @@ export async function searchQuery(
   db: Kysely<DB>,
   query: string,
   lang: string,
-): Promise<{ verses: SearchResultRow[]; semantic: boolean }> {
+  opts: { mode?: 'keyword' | 'rich' } = {},
+): Promise<{ verses: SearchResultRow[]; semantic: boolean; verseTotal: number }> {
+  const mode = opts.mode === 'rich' ? 'rich' : 'keyword';
   const isEnglish = !lang || lang === 'en' || lang === 'eng' || lang === 'dev';
   const isKorean = lang === 'ko';
   const minLen = isKorean ? 1 : 3;
 
-  if (!query || query.length < minLen) return { verses: [], semantic: false };
+  if (!query || query.length < minLen) return { verses: [], semantic: false, verseTotal: 0 };
 
-  const { ids: verseIds, semantic } = await resolveCandidates(db, query, lang, isEnglish);
+  const { ids: candidateIds, semantic } = await resolveCandidates(db, query, lang, isEnglish, {}, mode);
+  // Destructure the cap slice back into `verseIds` so the rest of the function is unchanged.
+  const { hydrateIds: verseIds, verseTotal } = applyVerseCap(candidateIds, VERSE_CAP);
 
-  if (!verseIds.length) return { verses: [], semantic };
+  if (!verseIds.length) return { verses: [], semantic, verseTotal };
 
   // Fetch bom_lookup rows + joined text data
   const lookupRows = await db
@@ -194,7 +222,7 @@ export async function searchQuery(
     .where('l.verse_id', 'in', verseIds)
     .execute();
 
-  if (!lookupRows.length) return { verses: [], semantic };
+  if (!lookupRows.length) return { verses: [], semantic, verseTotal };
 
   // One result per verse: keep the lowest-link study segment (see helper doc).
   const dedupedRows = dedupeByVerseKeepFirstLink(lookupRows);
@@ -369,7 +397,7 @@ export async function searchQuery(
       _slug: slug,
     } as unknown as SearchResultRow;
   });
-  return { verses: semantic ? rankRowsByCandidateOrder(results, verseIds) : results, semantic };
+  return { verses: semantic ? rankRowsByCandidateOrder(results, verseIds) : results, semantic, verseTotal };
 }
 
 /**

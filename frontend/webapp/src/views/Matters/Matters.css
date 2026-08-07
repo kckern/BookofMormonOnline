@@ -64,8 +64,11 @@
     padding: .5em;
     color: #666;
     line-height: 1em;
-    background-position: top center;
+    background-position: center;
     background-repeat: no-repeat;
+    /* Fixed-height card (19em) with a flex-shrinking image body: when the header
+       wraps to two lines the body shrinks and the cover crop adapts, so every
+       tile stays the same total height (mirrors Places/People). */
     height: 15em;
     background-size: cover;
     position: relative;

@@ -18,13 +18,21 @@ const PP_TOKEN_REGEX = /\{(.*?)\|(.*?)\}|\[(.*?)\|(.*?)\]/g;
 
 export const detectScripturesPreservingTokens = (text, callback, options) => {
   if (typeof text !== "string" || !text) return text;
+  // Prose bios: keep scripture-guide (>=1.0.95) from merging references across a
+  // cross-reference marker ("see also"/"cf."/"compare"/"cited at"), which would
+  // swallow those words. Callers pass a language string or options object; fold
+  // chainAcrossMarkers:false in either way. See
+  // docs/audits/2026-08-04-crossref-marker-chaining.md.
+  const opts = typeof options === "string"
+    ? { language: options, chainAcrossMarkers: false }
+    : { ...(options || {}), chainAcrossMarkers: false };
   const tokens = [];
   const masked = text.replace(PP_TOKEN_REGEX, (m) => {
     tokens.push(m);
     return PP_TOKEN_SENTINEL;
   });
-  if (tokens.length === 0) return detectScriptures(text, callback, options);
-  const detected = detectScriptures(masked, callback, options);
+  if (tokens.length === 0) return detectScriptures(text, callback, opts);
+  const detected = detectScriptures(masked, callback, opts);
   if (typeof detected !== "string") return detected;
   let i = 0;
   return detected.replace(new RegExp(PP_TOKEN_SENTINEL, "g"), () => tokens[i++] ?? "");

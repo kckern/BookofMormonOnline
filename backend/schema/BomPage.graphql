@@ -223,6 +223,8 @@ type Note {
   id: String
   title: String
   text: String
+  verse_id: Int
+  source: String
 }
 
 type Reference {

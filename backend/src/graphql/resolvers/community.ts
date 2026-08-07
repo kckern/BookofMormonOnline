@@ -208,7 +208,12 @@ function maskUserPrivacy(u: Record<string, unknown>): Record<string, unknown> {
  */
 function assembleHomeFeedItem(msg: MessageDTO): Record<string, unknown> {
   const userDto = msg.user;
-  const user = userDto ? assembleHomeUser(userDto) : null;
+  // C-1: mask non-public users so private account real names never surface in
+  // the home feed. assembleHomeUser always defaults public:false (no cross-table
+  // lookup at item-assembly time), so maskUserPrivacy anonymizes every non-public
+  // user. Bots have no nickname to leak and their isBot flag is preserved through
+  // maskUserPrivacy (it only touches nickname/picture, not other fields).
+  const user = userDto ? maskUserPrivacy(assembleHomeUser(userDto)) : null;
 
   const pageSlug = msg.custom_type;
   let data: { links?: Record<string, unknown>; highlights?: string[] } = {};
@@ -225,7 +230,8 @@ function assembleHomeFeedItem(msg: MessageDTO): Record<string, unknown> {
 
   const highlights: string[] | null = data?.highlights?.length ? data.highlights : null;
 
-  const repliers = (msg.thread_info?.most_replies ?? []).map((r) => assembleHomeUser(r));
+  // C-1: mask repliers too — same reasoning.
+  const repliers = (msg.thread_info?.most_replies ?? []).map((r) => maskUserPrivacy(assembleHomeUser(r)));
   const replycount = msg.thread_info?.reply_count ?? 0;
 
   // legacy takes first reaction's user_ids as "likes"
@@ -711,6 +717,12 @@ export const communityResolvers: Resolvers = {
      */
     botlist: async (_root, args, ctx: AppContext) => {
       const channel = args.channel as string | null | undefined;
+      // C-5: require authentication before exposing bot IDs. Bot user_id values
+      // are internal MD5 hashes used throughout messenger authz; they must not be
+      // enumerable by unauthenticated callers. Gate on ctx.bearerToken (set from
+      // the Authorization header) — if no bearer is present the caller is
+      // unauthenticated and we return an empty list.
+      if (!ctx.bearerToken) return asGql([]);
       try {
         const bots = await listStudyBots(ctx.db, ctx.lang);
 
@@ -769,6 +781,15 @@ export const communityResolvers: Resolvers = {
           .executeTakeFirst();
         const channelUrl = row?.string;
         if (!channelUrl) return asGql({ isSuccess: false, msg: 'Group not found', channel: null, user: null });
+
+        // C-2: gate on channel type — only 'open' channels are joinable via
+        // shortlink hash. Private and DM channels must never be joinable by a
+        // hash alone; 'public' channels require a join request (requestToJoinGroup).
+        const channel = await getChannel(ctx.db, channelUrl);
+        if (!channel) return asGql({ isSuccess: false, msg: 'Group not found', channel: null, user: null });
+        if (channel.custom_type !== 'open') {
+          return asGql({ isSuccess: false, msg: 'Group is not open enrollment', channel: null, user: null });
+        }
 
         const success = await addUserToChannel(ctx.db, channelUrl, myUserId, 'member');
         if (!success) return asGql({ isSuccess: false, msg: 'Already a member', channel: channelUrl, user: myUserId });

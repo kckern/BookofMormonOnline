@@ -3,6 +3,7 @@ import Parser from "html-react-parser";
 import Loader from "../_Common/Loader";
 import { useRouteMatch, useHistory, Link } from "react-router-dom";
 import { label } from "src/models/Utils";
+import { analytics, GOALS } from "../../models/analytics/index.js";
 import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
 import { toast } from "react-toastify";
 import "./Theater.css";
@@ -1011,7 +1012,7 @@ function TheaterControls({ visible }) {
           ...saveMe,
           ...{ slug, pagetitle, heading },
         });
-        window.clicky?.goal("watch");
+        analytics.goal(GOALS.WATCH);
       // if 100% then show confetti
       if(summary?.completed >= 100)
       {

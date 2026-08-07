@@ -282,15 +282,33 @@ export async function updateUserProfileUrl(
   return Number(result.numUpdatedRows) > 0;
 }
 
-/** Replace a user's metadata. Returns true if a row was matched. */
+/** Merge incoming keys into the existing metadata (shallow merge). Returns true if a row was matched. */
 export async function updateUserMetadata(
   db: Kysely<DB>,
   userId: string,
   metadata: Record<string, unknown>,
 ): Promise<boolean> {
+  const existing = await db
+    .selectFrom('messenger_users')
+    .select('metadata')
+    .where('user_id', '=', userId)
+    .executeTakeFirst();
+  let base: Record<string, unknown> = {};
+  if (existing?.metadata) {
+    try {
+      base =
+        typeof existing.metadata === 'string'
+          ? JSON.parse(existing.metadata)
+          : (existing.metadata as Record<string, unknown>);
+    } catch {
+      base = {};
+    }
+  }
+  const merged = { ...base, ...metadata };
+
   const result = await db
     .updateTable('messenger_users')
-    .set({ metadata: JSON.stringify(metadata) as string })
+    .set({ metadata: JSON.stringify(merged) as string })
     .where('user_id', '=', userId)
     .executeTakeFirst();
 

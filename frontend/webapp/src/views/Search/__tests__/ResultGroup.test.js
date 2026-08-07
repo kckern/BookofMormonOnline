@@ -21,3 +21,14 @@ test('content card with null slug renders a non-link', () => {
   render(<MemoryRouter><ResultGroup label="Commentary" cards={cards} kind="commentary" /></MemoryRouter>);
   expect(screen.getByText('A note').closest('a')).toBeNull(); // not wrapped in an <a>
 });
+
+test('renders a matter group using the content card', () => {
+  const cards = [{ slug: 'matters/faith', title: 'Faith', snippet: 'first principle', ref: null, score: 0.9 }];
+  const { getByText, container } = render(
+    <MemoryRouter>
+      <ResultGroup label="Matters" cards={cards} kind="matter" query="faith" semantic />
+    </MemoryRouter>
+  );
+  expect(getByText('Faith')).toBeInTheDocument();
+  expect(container.querySelector('.result-group.matter')).toBeInTheDocument();
+});

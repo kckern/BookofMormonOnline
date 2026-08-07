@@ -10,6 +10,7 @@ import { resolveLang } from './graphql/lang.js';
 import { stripEmptyDeep } from './compat/responseFilter.js';
 import { initRealtime } from './realtime/server.js';
 import { startBotScheduler } from './bots/scheduler.js';
+import { startRetentionJob } from './messaging/retention.js';
 import { faxRoutes } from './media/fax/route.js';
 
 const app = Fastify({
@@ -24,7 +25,8 @@ const yoga = createYoga<{ lang: string; ip: string; bearerToken?: string; ua?: s
   landingPage: false,
   // COMPAT: legacy Apollo exposes raw resolver error messages, and the
   // regression baselines pin them — Yoga's default masking would break parity.
-  maskedErrors: false,
+  // A4: mask errors in production to prevent raw DB error leakage; keep dev unmasked.
+  maskedErrors: process.env.NODE_ENV === 'production',
   logging: app.log,
   context: ({ lang, ip, bearerToken, ua }) => buildContext(db, lang, ip, bearerToken, ua),
   plugins: [
@@ -96,6 +98,13 @@ const graphqlHandler = async (req: FastifyRequest, reply: FastifyReply) => {
   return reply;
 };
 
+// A3: global per-IP rate limit on all routes (including the GraphQL handler).
+// 300 req/min is generous enough for real clients but throttles brute-force
+// credential stuffing. The fax sub-plugin applies its own tighter 120/min limit
+// on top of this. Match @fastify/rate-limit registration style from fax/route.ts.
+const rateLimit = (await import('@fastify/rate-limit')).default;
+await app.register(rateLimit, { max: 300, timeWindow: '1 minute' });
+
 app.get('/health', async () => ({ ok: true }));
 app.route({ method: ['GET', 'POST', 'OPTIONS'], url: '/', handler: graphqlHandler });
 await app.register(faxRoutes);
@@ -126,6 +135,9 @@ app
     if (process.env.BOT_SCHEDULER_ENABLED === 'true') {
       startBotScheduler();
     }
+    // Message retention (M-7). No-op unless MESSAGE_RETENTION_DAYS is set to a
+    // positive integer. Hard-purges soft-deleted rows past the cutoff every 24h.
+    startRetentionJob(db);
   })
   .catch((err) => {
     app.log.error(err);

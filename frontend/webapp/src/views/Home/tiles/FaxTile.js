@@ -4,6 +4,7 @@ import { assetUrl } from "src/models/BoMOnlineAPI";
 import { label } from "src/models/Utils";
 import { enDash } from "./textUtils";
 import { openScripture } from "./ScripturePopup";
+import TileDeepLink from "./_ds/TileDeepLink";
 
 /**
  * Header on top (document title), then two pages sampled from the facsimile's
@@ -89,6 +90,7 @@ export default function FaxTile({ data, payload }) {
           ))}
         </div>
       ) : null}
+      <TileDeepLink to={`/fax/${data.slug}`} always>{label("view_more")}</TileDeepLink>
     </div>
   );
 }

@@ -72,8 +72,12 @@ export function getHtmlScriptureLinkParserOptions(clickHandler) {
 }
 
 export function getDetectedScripturesHtml(html) {
+    // chainAcrossMarkers:false keeps scripture-guide (>=1.0.95) from merging two
+    // references across a cross-reference prose marker ("see also"/"cf."/"compare"/
+    // "cited at"), which otherwise swallows those words out of rendered prose.
+    // See docs/audits/2026-08-04-crossref-marker-chaining.md.
     return detectScriptures(html, (scripture) => {
         if (!scripture) return;
         return `<a className="scripture_link">${scripture}</a>`
-    }, determineLanguage());
+    }, { language: determineLanguage(), chainAcrossMarkers: false });
 }

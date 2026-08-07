@@ -130,7 +130,16 @@ async function refreshMessengerAvatar(ctx: Ctx, username: string, freshUrl: stri
  * email account, or plain login for a known social id.
  */
 export async function processSocialUser(ctx: Ctx, profile: SocialProfile, token: string) {
-  const { network, social_id, name, profile_url, email } = profile;
+  const { network, social_id, name, email } = profile;
+  // A6: strip access_token from the profile_url before any use — the FB picture
+  // URL embeds a live credential.  Reuse the same URL-strip logic as
+  // refreshMessengerAvatar so the SignIn response never echoes the token.
+  let profile_url = profile.profile_url;
+  try {
+    const u = new URL(profile_url);
+    u.searchParams.delete('access_token');
+    profile_url = u.toString();
+  } catch { /* non-URL or empty — leave as-is */ }
   if (!social_id) return fail(network);
 
   const existingSocial = await ctx.db

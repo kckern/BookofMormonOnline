@@ -6,6 +6,7 @@ import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import { label, determineLanguage } from "src/models/Utils";
 import { index } from "src/views/Analysis/Bible/data";
 import RefPill from "./RefPill";
+import TileDeepLink from "./_ds/TileDeepLink";
 
 const dmp = new DiffMatchPatch();
 
@@ -15,7 +16,7 @@ const ISAIAH = [17656, 18947];
 const eligiblePairs = index.filter(([, kjv]) => kjv < ISAIAH[0] || kjv > ISAIAH[1]);
 
 /** Common phrases (4+ words shared verbatim) marked in both passages. */
-const markShared = (a, b) => {
+export const markShared = (a, b) => {
   const diffs = dmp.diff_main(a.toLowerCase(), b.toLowerCase());
   dmp.diff_cleanupSemantic(diffs);
   let posA = 0;
@@ -115,9 +116,9 @@ export default function BiblePhrasesTile({ seed }) {
           <p>{pair.kjvJsx}</p>
         </div>
       </div>
-      <Link to={deepTo} className="tileMoreLink">
+      <TileDeepLink to={deepTo} always>
         {label("view_in_context")}
-      </Link>
+      </TileDeepLink>
     </div>
   );
 }

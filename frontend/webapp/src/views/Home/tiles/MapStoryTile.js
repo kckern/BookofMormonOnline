@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { label } from "src/models/Utils";
 import { legsOf, stopsOf } from "./mapStoryPath";
 import { MapStoryCompleteCard, MapStoryMoveCard } from "./MapStoryCard";
+import TileDeepLink from "./_ds/TileDeepLink";
 
 const MapStoryTileInner = React.lazy(() => import("./MapStoryTileInner"));
 
@@ -270,7 +271,7 @@ export default function MapStoryTile({ data }) {
           type="button"
           className="mapStoryControlButton isPrimary"
           onClick={togglePlayback}
-          aria-label={complete ? "Replay journey" : paused ? "Play journey" : "Pause journey"}
+          aria-label={complete ? "Replay journey" : paused ? label("mapstory_play") : label("mapstory_pause")}
           title={reducedMotion ? "Automatic movement is off because reduced motion is enabled" : undefined}
         >
           <Icon>{complete ? "↻" : paused ? "▶" : "Ⅱ"}</Icon>
@@ -322,7 +323,9 @@ export default function MapStoryTile({ data }) {
 
       <div className="mapStoryFooter">
         <span>{origin} <span aria-hidden="true">→</span> {destination}</span>
-        <Link to={storyHref} className="mapTileCta tileMoreLink">Explore full journey</Link>
+        <TileDeepLink to={storyHref} always className="mapTileCta tileMoreLink">
+          Explore full journey
+        </TileDeepLink>
       </div>
     </div>
   );

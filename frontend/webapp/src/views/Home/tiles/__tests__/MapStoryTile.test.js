@@ -107,11 +107,25 @@ beforeEach(() => {
   }));
   jest.useFakeTimers();
   openScripture.mockClear();
+  // The component now routes its strings through label(); seed the dictionary so
+  // label() resolves to real English (it returns " " when the dictionary is unset).
+  global.dictionary = {
+    mapstory_play: "Play journey",
+    mapstory_pause: "Pause journey",
+    mapstory_summary: "Story summary",
+    mapstory_move: "Move $1",
+    mapstory_detached: "not continuous",
+    mapstory_detached_title: "This move does not continue from the previous one",
+    mapstory_meta: "$1 moves · $2 places",
+    map: "Map",
+    view_more: "View more",
+  };
 });
 
 afterEach(() => {
   jest.runOnlyPendingTimers();
   jest.useRealTimers();
+  delete global.dictionary;
 });
 
 describe("MapStoryTile", () => {

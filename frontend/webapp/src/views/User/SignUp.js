@@ -12,6 +12,7 @@ import {
   InputGroup,
 } from "reactstrap";
 import { label } from "src/models/Utils";
+import { analytics, GOALS } from "../../models/analytics/index.js";
 import BoMOnlineAPI, { fbPixel } from "src/models/BoMOnlineAPI";
 import ReactPixel from 'react-facebook-pixel';
 import { useAppController } from "src/contexts/AppControllerContext";
@@ -41,7 +42,7 @@ export function SignUp({ username, cancel, callback }) {
       }
       else if (results?.signup?.user) {
         ReactPixel.trackSingle(fbPixel, 'track', 'CompleteRegistration'); 
-        window.clicky?.goal("signup");
+        analytics.goal(GOALS.SIGNUP);
         appController.functions.processSignIn({ user: results?.signup, callback: callback });
       }
       else {

@@ -17,6 +17,14 @@
  * Missing assets resolve to the deterministic dicebear avatar — a straight
  * port of frontend UserAvatar.generateAvatarUrl so both ends draw the same
  * face for the same user.
+ *
+ * P-3 hot-path fix: resolveDerivedAvatars no longer AWAITS a probe for
+ * cache-miss URLs on the bulk read path. Instead it returns the convention
+ * (dicebear) URL immediately and fires the probe in the background so the
+ * positive-cache entry is populated for subsequent calls. Already-cached
+ * positive entries still return the real asset URL with zero latency. The
+ * client-side <img> onError fallback covers the small window where the probe
+ * hasn't completed yet and a real asset exists but we return dicebear.
  */
 
 const POSITIVE_TTL_MS = 24 * 60 * 60 * 1000;
@@ -85,6 +93,14 @@ async function urlExists(url: string, fetcher: Fetcher): Promise<boolean> {
  * Resolve a batch of derived avatar URLs to renderable URLs.
  * Returns a Map from input url → verified url (unchanged when the asset
  * exists, dicebear fallback when it doesn't).
+ *
+ * P-3 hot-path behaviour:
+ *   - Positive cache hit  → return real asset URL synchronously (no probe).
+ *   - Cache miss / stale  → return dicebear URL immediately; fire the probe
+ *                           in the background so the cache is warm for the
+ *                           next call. The client's onError fallback handles
+ *                           the brief window before the probe resolves.
+ *   - Negative cache hit  → return dicebear URL (asset is known absent).
  */
 export async function resolveDerivedAvatars(
   items: Array<{ url: string; seedKey: string }>,
@@ -95,11 +111,26 @@ export async function resolveDerivedAvatars(
     if (!unique.has(url)) unique.set(url, seedKey);
   }
   const out = new Map<string, string>();
-  await Promise.all(
-    [...unique.entries()].map(async ([url, seedKey]) => {
-      out.set(url, (await urlExists(url, fetcher)) ? url : generateAvatarUrl(seedKey));
-    }),
-  );
+  const now = Date.now();
+  for (const [url, seedKey] of unique.entries()) {
+    const hit = cache.get(url);
+    if (hit && hit.expiresAt > now) {
+      // Cache is fresh: use stored result without any network call.
+      out.set(url, hit.exists ? url : generateAvatarUrl(seedKey));
+    } else {
+      // Cache miss or stale: return dicebear immediately (non-blocking) and
+      // kick off a background probe so future calls benefit from the cache.
+      // We do NOT await — a CDN hiccup must not stall the resolver.
+      out.set(url, generateAvatarUrl(seedKey));
+      void urlExists(url, fetcher).then((exists) => {
+        // urlExists already writes the cache; we only need to handle the case
+        // where the probe reveals the asset DOES exist so that the next
+        // request immediately returns the real URL instead of dicebear.
+        // (If exists=false, the negative-cache entry from urlExists is fine.)
+        void exists; // result already stored in cache by urlExists
+      });
+    }
+  }
   return out;
 }
 

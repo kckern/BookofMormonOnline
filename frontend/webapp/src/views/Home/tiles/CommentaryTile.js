@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import React, { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { parse } from "node-html-parser";
 import { assetUrl } from "src/models/BoMOnlineAPI";
@@ -8,6 +8,9 @@ import { enDash } from "./textUtils";
 import { openScripture } from "./ScripturePopup";
 import { getDetectedScripturesHtml, getHtmlScriptureLinkParserOptions } from "src/views/_Common/ViewUtils";
 import { ATVHeader } from "src/views/_Common/ATV";
+import { RevealProvider, useReveal } from "./_ds/Reveal";
+import TileCTA from "./_ds/TileCTA";
+import TileDeepLink from "./_ds/TileDeepLink";
 
 const scriptureOpts = getHtmlScriptureLinkParserOptions((ref) => openScripture(ref));
 
@@ -20,7 +23,8 @@ const stripTags = (html) =>
  * lands at the visual bottom with no dead space. Read-more expands the DOM in
  * place (not a nav); "See in context" is the separate action into the app.
  */
-export default function CommentaryTile({ data }) {
+function CommentaryTileInner({ data }) {
+  const { reveal, registerGate } = useReveal();
   const asideRef = useRef(null);
   const bodyRef = useRef(null);
   const [maxH, setMaxH] = useState(null);
@@ -47,13 +51,20 @@ export default function CommentaryTile({ data }) {
     const aside = asideRef.current;
     const body = bodyRef.current;
     if (!aside || !body) return;
-    const avail = aside.offsetHeight - (body.offsetTop - aside.offsetTop >= 0 ? 0 : 0);
     // clamp height = aside height minus the title above the excerpt
     const titleH = body.previousElementSibling ? body.previousElementSibling.offsetHeight + 6 : 0;
     const target = Math.max(72, aside.offsetHeight - titleH - 26); // 26 ≈ read-more row
     setMaxH(target);
     setTruncated(body.scrollHeight > target + 2);
   }, [text, expanded]);
+
+  // Gate the deeplink only when a read-more will actually render. ATV tiles
+  // (no truncation path) never gate → their deeplink shows immediately. Runs
+  // PRE-paint (useLayoutEffect) so the deeplink doesn't flash before the gate.
+  useLayoutEffect(() => {
+    if (!isAtv && truncated && !expanded) registerGate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [truncated, isAtv, expanded]);
 
   if (!data?.id) return null;
   const pub = data.publication || {};
@@ -83,9 +94,9 @@ export default function CommentaryTile({ data }) {
             {Parser(getDetectedScripturesHtml(text), scriptureOpts)}
           </p>
           {!isAtv && truncated && !expanded ? (
-            <button className="readMorePill" onClick={() => setExpanded(true)}>
+            <TileCTA variant="reveal" onClick={() => { setExpanded(true); reveal(); }}>
               {label("read_more")}
-            </button>
+            </TileCTA>
           ) : null}
         </div>
         {/* right column: scripture ref ABOVE the cover, then attribution + cue */}
@@ -107,9 +118,17 @@ export default function CommentaryTile({ data }) {
             </Link>
           ) : null}
           {author ? <div className="commentaryTileSource">{author}</div> : null}
-          <Link to={to} className="commentaryTileMore tileMoreLink">{label("view_in_context")}</Link>
+          <TileDeepLink to={to} className="commentaryTileMore">{label("view_in_context")}</TileDeepLink>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function CommentaryTile(props) {
+  return (
+    <RevealProvider>
+      <CommentaryTileInner {...props} />
+    </RevealProvider>
   );
 }

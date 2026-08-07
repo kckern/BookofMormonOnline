@@ -14,6 +14,21 @@ import { parsePlanConfig } from '../readingplan/types.js';
 
 const COMPLETE_THRESHOLD = Number(process.env.PERCENT_TO_COUNT_AS_COMPLETE ?? 40);
 
+/**
+ * Module-level cache for the bom_text guid→section lookup used by scoreSegment.
+ * bom_text is static reference data (~3,544 rows); it never changes at runtime,
+ * so a process-lifetime cache is appropriate. The first call pays the DB round-trip;
+ * subsequent calls (including post-mutation reloads) return the cached array.
+ * If bom_text rows are ever added/changed, a process restart picks up the new data.
+ */
+let _bomTextCache: { guid: string; section: string | null }[] | null = null;
+
+async function getBomTextBlocks(db: Kysely<DB>): Promise<{ guid: string; section: string | null }[]> {
+  if (_bomTextCache) return _bomTextCache;
+  _bomTextCache = await db.selectFrom('bom_text').select(['guid', 'section']).execute();
+  return _bomTextCache;
+}
+
 export interface ReadingPlanUserInfo {
   /** bom_user.user (or the raw token for anon) used to score bom_log credit. */
   queryBy: string;
@@ -169,7 +184,7 @@ export async function loadReadingPlan(
   const creditFloor = cfg?.credit === 'alltime' ? 0 : startUnix;
   const completed = new Set(await completedGuids(db, userInfo.queryBy, creditFloor));
 
-  const allTextBlocks = await db.selectFrom('bom_text').select(['guid', 'section']).execute();
+  const allTextBlocks = await getBomTextBlocks(db);
 
   // Batch translations for the plan + all segment guids (only for non-en langs).
   const useLang = lang && lang !== 'en' && lang !== 'dev' ? lang : null;
@@ -222,18 +237,16 @@ export async function loadReadingPlan(
     current = idx === -1 ? Math.max(0, segments.length - 1) : idx; // all done → last
   }
 
-  // Auto-complete on read (spec: no cron). Only for a live user plan.
-  let status = plan.status ?? null;
-  if (progress >= 100 && status === 'active') {
-    // Best-effort auto-complete (spec: no cron). A write failure must not hide
-    // the already-computed plan — mark completed in the response regardless.
-    try {
-      await db.updateTable('bom_readingplan').set({ status: 'completed', enddate: new Date() }).where('slug', '=', planSlug).execute();
-    } catch (err) {
-      console.error('loadReadingPlan: auto-complete write failed', err);
-    }
-    status = 'completed';
-  }
+  // PR-1 fix: loadReadingPlan is a read — it must not issue writes.
+  // When progress reaches 100 % we surface status='completed' in the response as
+  // a *derived* value only; the actual DB row is persisted by the explicit
+  // endReadingPlan mutation (callers that need persistence must call that path).
+  // This keeps the function idempotent, safe to cache, and sandbox-transparent.
+  // Previously an UPDATE was issued here; that bypassed the sandbox write-guard
+  // and made any GQL query a hidden mutation — removed 2026-08-05.
+  const status = (progress >= 100 && (plan.status ?? null) === 'active')
+    ? 'completed'
+    : (plan.status ?? null);
 
   return {
     guid: plan.guid,

@@ -16,6 +16,8 @@ import { findUserByToken } from '../../data/loaders/userauth.js';
 import { parseVerseIdFromNote } from '../../data/loaders/matters.js';
 import { canonicalSelector } from '../../media/fax/canonical.js';
 import { imageScanMeta } from '../../media/fax/resolve.js';
+import { getHomeSamplerCache } from '../homeSamplerCacheStore.js';
+import { currentBucket, seedForBucket } from '../homeSamplerCache.js';
 
 // 24 people = 1 featured + 11 face cards + 12 view-all mosaic thumbs (3×4);
 // 17 places = 5 cards + a full 3×4 mosaic.
@@ -716,28 +718,55 @@ const myBookmark = async (ctx: AppContext, token: string | null) => {
   };
 };
 
+// Normalize a request language the same way the samplers do (sampleCommentaries /
+// sampleNotes filter on source_lang). The cache key MUST use this so two paths
+// that both fall back to 'en' share one cached window.
+const normalizeLang = (lang: string | null | undefined): string =>
+  !lang || !/^[a-z]{2,3}$/.test(lang) || lang === 'dev' ? 'en' : lang;
+
+// Run every sampler under one seed and assemble the payload. This is the
+// expensive body (~25 seeded queries) the cache exists to memoize.
+const computeSampler = async (ctx: AppContext, seed: number) => {
+  const entries = await Promise.all(
+    Object.entries(samplers).map(async ([key, fn]) => {
+      try {
+        return [key, await fn(ctx, seed)] as const;
+      } catch (error) {
+        console.error(`homesampler ${key} error:`, error);
+        return [key, null] as const;
+      }
+    }),
+  );
+  return { seed, ...Object.fromEntries(entries) };
+};
+
 export const homesamplerResolvers: Resolvers = {
   Query: {
     mybookmark: async (_root, args, ctx: AppContext) => myBookmark(ctx, (args.token ?? null) as string | null) as never,
     homesampler: async (_root, args, ctx: AppContext) => {
       const argSeed = args.seed as number | null | undefined;
-      const seed =
-        typeof argSeed === 'number' && Number.isInteger(argSeed) && argSeed > 0
-          ? argSeed
-          : Math.floor(Math.random() * (2 ** 31 - 1)) + 1;
+      const hasSeed = typeof argSeed === 'number' && Number.isInteger(argSeed) && argSeed > 0;
+      const lang = normalizeLang(ctx.lang);
 
-      const entries = await Promise.all(
-        Object.entries(samplers).map(async ([key, fn]) => {
-          try {
-            return [key, await fn(ctx, seed)] as const;
-          } catch (error) {
-            console.error(`homesampler ${key} error:`, error);
-            return [key, null] as const;
-          }
-        }),
-      );
+      // Front-door (no seed) → the shared, deterministic window seed so every
+      // visitor gets one cacheable homepage that cycles as 6h buckets advance.
+      // Explicit seed (manual refresh / infinite-scroll batch) → that seed;
+      // deterministic batch seeds share a cache entry, random refresh seeds miss
+      // and are later evicted.
+      const bucket = currentBucket(Date.now());
+      const seed = hasSeed ? (argSeed as number) : seedForBucket(bucket);
+      const key = hasSeed
+        ? `homesampler:v1:${lang}:seed:${seed}`
+        : `homesampler:v1:${lang}:${bucket}`;
 
-      return { seed, ...Object.fromEntries(entries) } as never;
+      // A cache fault must never fail the request — fall back to a fresh compute.
+      try {
+        return (await getHomeSamplerCache().getOrCompute(key, () =>
+          computeSampler(ctx, seed),
+        )) as never;
+      } catch {
+        return (await computeSampler(ctx, seed)) as never;
+      }
     },
   },
 };

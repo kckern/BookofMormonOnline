@@ -1,0 +1,40 @@
+# Self-contained conversation on a scratch group the CLI creates (touches no
+# real/live group). Doubles as the integration smoke test:
+#   node scripts/study.cli.mjs run scripts/study/scenarios/demo.yaml --watch
+# alice creates a group inviting bob+carol; all three converse over the socket;
+# each should see the others' message_received events (visible with --watch).
+users: [alice, bob, carol]
+stopOnError: false
+settle: 1500
+steps:
+  - as: alice
+    do: group.create
+    name: "Sim study — Alma 32"
+    invite: [bob, carol]
+    as_var: ch
+  - delay: 400
+  - as: bob
+    do: accept
+    group: $ch
+  - as: carol
+    do: accept
+    group: $ch
+  - as: alice
+    do: post
+    group: $ch
+    text: "Welcome! Let's discuss faith as a seed (Alma 32:28)."
+    as_var: opener
+  - as: bob
+    do: reply
+    group: $ch
+    to: $opener
+    text: "The 'swelling motions' image is striking."
+  - as: carol
+    do: react
+    group: $ch
+    id: $opener
+    emoji: "🌱"
+  - as: alice
+    do: msgs
+    group: $ch
+    limit: 10

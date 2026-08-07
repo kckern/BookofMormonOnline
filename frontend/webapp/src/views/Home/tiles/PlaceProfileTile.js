@@ -8,6 +8,8 @@ import { getDetectedScripturesHtml, getHtmlScriptureLinkParserOptions } from "sr
 import { openScripture } from "./ScripturePopup";
 import { flatten } from "./textUtils";
 import ExpandableText from "./ExpandableText";
+import { RevealProvider } from "./_ds/Reveal";
+import TileDeepLink from "./_ds/TileDeepLink";
 
 const scriptureOpts = getHtmlScriptureLinkParserOptions((ref) => openScripture(ref));
 
@@ -22,34 +24,37 @@ export default function PlaceProfileTile({ payload, placeIndex = 10 }) {
   if (!place?.slug) return null;
   const desc = flatten(place.description || place.info || "");
   return (
-    <div className="samplerTileInner placeProfileTile">
-      <h3 className="tileHeading">
-        <Link to="/places">{label("places")}</Link>
-      </h3>
-      <div className="placeProfileHead">
-        <Link to={`/places/${place.slug}`} className="placeProfileImgLink">
-          <img
-            src={`${assetUrl}/places/${place.slug}`}
-            alt={place.name || ""}
-            loading="lazy"
-            onError={(e) => (e.target.style.visibility = "hidden")}
-          />
-          <span className="peopleFaceName placesNameOverlay">{place.name}</span>
-        </Link>
-        <Link
-          to={`/map/internal/place/${place.slug}`}
-          className="placesMapBtn placeProfileMapBtn"
-          title={label("map")}
-          aria-label={label("map")}
-        >
-          <img src={pin} alt="" />
-        </Link>
+    <RevealProvider>
+      <div className="samplerTileInner placeProfileTile">
+        <h3 className="tileHeading">
+          <Link to="/places">{label("places")}</Link>
+        </h3>
+        <div className="placeProfileHead">
+          <Link to={`/places/${place.slug}`} className="placeProfileImgLink">
+            <img
+              src={`${assetUrl}/places/${place.slug}`}
+              alt={place.name || ""}
+              loading="lazy"
+              onError={(e) => (e.target.style.visibility = "hidden")}
+            />
+            <span className="peopleFaceName placesNameOverlay">{place.name}</span>
+          </Link>
+          <Link
+            to={`/map/internal/place/${place.slug}`}
+            className="placesMapBtn placeProfileMapBtn"
+            title={label("map")}
+            aria-label={label("map")}
+          >
+            <img src={pin} alt="" />
+          </Link>
+        </div>
+        {desc ? (
+          <ExpandableText className="placeProfileDesc" lines={5}>
+            {Parser(getDetectedScripturesHtml(desc), scriptureOpts)}
+          </ExpandableText>
+        ) : null}
+        <TileDeepLink to={`/places/${place.slug}`}>{label("view_in_context")}</TileDeepLink>
       </div>
-      {desc ? (
-        <ExpandableText className="placeProfileDesc" lines={5}>
-          {Parser(getDetectedScripturesHtml(desc), scriptureOpts)}
-        </ExpandableText>
-      ) : null}
-    </div>
+    </RevealProvider>
   );
 }

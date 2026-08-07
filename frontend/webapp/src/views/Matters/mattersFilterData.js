@@ -20,10 +20,10 @@ export const formGroupChips = [
 ];
 
 export const eraCultureChips = [
-  { key: "matter_ec_nephite", label: "Nephite", tag: "Nephite" },
   { key: "matter_ec_generic", label: "Generic", tag: "Generic" },
   { key: "matter_ec_israelite_old_world", label: "Israelite/Old World", tag: "Israelite/Old World" },
   { key: "matter_ec_jaredite", label: "Jaredite", tag: "Jaredite" },
+  { key: "matter_ec_nephite", label: "Nephite", tag: "Nephite" },
   { key: "matter_ec_lamanite", label: "Lamanite", tag: "Lamanite" },
   { key: "matter_ec_christ_era", label: "Christ era", tag: "Christ era" },
 ];
@@ -172,15 +172,16 @@ export const subformsByForm = {
   ],
 };
 
-// Axes rendered as switch columns inside the selector box.
+// Switch columns inside the selector box, left → right. The third column is a
+// dynamic slot: Prominence by default, swapped for MatterDetailColumn once a Kind is on.
 export const filterAxes = [
-  { name: "form_group",  title: "matter_axis_form",       titleEn: "Kind",          chips: formGroupChips },
   { name: "era_culture", title: "matter_axis_culture",    titleEn: "Era & Culture", chips: eraCultureChips },
+  { name: "form_group",  title: "matter_axis_form",       titleEn: "Kind",          chips: formGroupChips },
   { name: "prominence",  title: "matter_axis_prominence", titleEn: "Prominence",    chips: prominenceChips },
 ];
 
-// Cascading chip levels rendered below the box, above the tiles.
-export const chipLevels = [
-  { name: "form",          parent: "form_group", map: formsByGroup },
-  { name: "subform_label", parent: "form",       map: subformsByForm },
-];
+// Once a Kind is selected the right column becomes MatterDetailColumn, a
+// two-level control: form switches (from formsByGroup) with each ON form
+// revealing its subform chips (from subformsByForm) as a per-form radio group.
+// No flattened axis and no reverse subform→form map: "Agriculture" is a subform
+// of two forms, so the predicate keys off subformsByForm[item.form] instead.

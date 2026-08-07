@@ -9,6 +9,7 @@ import blank from "src/views/User/svg/blank.svg";
 import Breadcrumb from "src/views/_Common/Breadcrumb/Breadcrumb";
 import { flatten } from "./textUtils";
 import RefPill from "./RefPill";
+import TileDeepLink from "./_ds/TileDeepLink";
 
 const statusDot = { completed: green, started: yellow };
 
@@ -88,6 +89,7 @@ export default function NarrationTile({ data, next, seed = 0 }) {
           </>
         ) : null}
       </div>
+      <TileDeepLink to={`/${data.slug}`} always>{label("view_more")}</TileDeepLink>
     </div>
   );
 }

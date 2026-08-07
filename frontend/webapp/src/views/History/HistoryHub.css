@@ -1,0 +1,33 @@
+/** @format */
+.historyHub {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5em;
+  max-width: 900px;
+  margin: 2em auto;
+}
+@media (max-width: 700px) {
+  .historyHub { grid-template-columns: 1fr; }
+}
+.historyTile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 1.5em;
+  border: 1px solid #ddd;
+  border-radius: 1em;
+  text-decoration: none;
+  color: inherit;
+  background: #fff;
+  transition: box-shadow .15s, transform .15s;
+}
+.historyTile:hover { box-shadow: 0 4px 16px #0002; transform: translateY(-2px); }
+.historyTile-icon { width: 4rem; height: 4rem; opacity: .8; margin-bottom: .5em; }
+.historyTile-title { font-weight: 800; font-size: 1.3rem; }
+.historyTile-blurb { color: #666; font-size: .9rem; margin: .25em 0 .75em; }
+.historyTile-featured { display: flex; flex-direction: column; align-items: center; gap: .25em; }
+.historyTile-featured img { max-height: 6rem; border-radius: .4em; }
+.historyTile-featured span { font-size: .8rem; color: #888; }
+.historyTile-soon { font-size: .8rem; color: #aaa; font-style: italic; min-height: 1.2em; }
+.historyComingSoon { text-align: center; color: #aaa; font-style: italic; padding: 3em; }

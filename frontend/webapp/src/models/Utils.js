@@ -643,12 +643,6 @@ export async function getFwdUrl(url) {
     });
 }
 
-export function clickyUser(userData) {
-  var clicky_custom = window.clicky_custom || {};
-  clicky_custom.visitor = userData;
-  window.clicky?.custom_data();
-  window.clicky?.goal("signin");
-}
 
 export function isMobile() {
   return ((window.innerWidth <= 900));
@@ -860,7 +854,7 @@ function replaceURLWithHTMLLinks(text) {
     if (!scripture) return;
     scriptures.push(scripture);
     return `<a className="scripture_link">${scripture}</a>`
-  }, lang,
+  }, { language: lang, chainAcrossMarkers: false },
   );
   //dedupe
   scriptures = [...new Set(scriptures)];

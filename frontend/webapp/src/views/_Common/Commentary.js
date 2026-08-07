@@ -10,14 +10,14 @@ import { LegalNotice, Loading } from "./PopUp";
 import { addHighlightTagSelectively } from "../Page/TextContent";
 import { snapSelectionToWord, label } from "src/models/Utils";
 import { ScripturePanelSingle } from "../Page/Narration";
-import { detectScriptures, lookupReference } from "scripture-guide";
+import { lookupReference } from "scripture-guide";
 import { determineLanguage } from "../../models/Utils";
 import { ATVHeader } from "./ATV";
 import { extractApparatusUnits } from "./ATV/parseATV";
 import { governingRefs } from "./ATV/governingRef";
 import { lastScriptureRef } from "./ATV/lastScriptureRef";
 import { ATVApparatus } from "./ATV/ATVApparatus";
-import { getHtmlScriptureLinkParserOptions } from "./ViewUtils";
+import { getHtmlScriptureLinkParserOptions, getDetectedScripturesHtml } from "./ViewUtils";
 import SweetAlert from "react-bootstrap-sweetalert";
 import { Link } from "react-router-dom/cjs/react-router-dom.min";
 import { useAppController } from "src/contexts/AppControllerContext";
@@ -333,10 +333,7 @@ export default function Commentary() {
 
   if(!commentaryData?.publication) return null;
 
-  htmlObject = detectScriptures(htmlObject,(scripture) => {
-    if (!scripture) return;
-    return `<a className="scripture_link">${scripture}</a>`
-  },determineLanguage());
+  htmlObject = getDetectedScripturesHtml(htmlObject);
 
   const baseOptions = getHtmlScriptureLinkParserOptions((ref) => setPopUpRef(ref));
   const parserOptions = {

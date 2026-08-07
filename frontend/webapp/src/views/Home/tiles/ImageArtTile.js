@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import { label } from "src/models/Utils";
 import ScriptureExcerpt, { readPath } from "src/views/_Common/ScriptureExcerpt";
+import TileDeepLink from "./_ds/TileDeepLink";
 
 /**
  * Standalone artwork tile. The piece shows at its real aspect with the artist
@@ -40,7 +41,7 @@ export default function ImageArtTile({ payload, artIndex = 0 }) {
             <ScriptureExcerpt refText={art.ref} hideStudy refAsPopup highlight={art.title} />
           </div>
         ) : null}
-        {to ? <Link to={to} className="imageArtContext tileMoreLink">{label("view_in_context")}</Link> : null}
+        {to ? <TileDeepLink to={to} always className="imageArtContext">{label("view_in_context")}</TileDeepLink> : null}
       </div>
     </div>
   );

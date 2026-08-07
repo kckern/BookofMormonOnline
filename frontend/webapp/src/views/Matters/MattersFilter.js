@@ -3,19 +3,55 @@
 import React from "react";
 import { label } from "src/models/Utils";
 import { filterAxes } from "./mattersFilterData";
+import { MatterDetailColumn } from "./MatterDetailColumn";
 import { useAppController } from "src/contexts/AppControllerContext";
 import FilterPanel from "src/views/_Common/FilterPanel/FilterPanel";
 
+// Reuse People's icon set so all three filter panels share one visual language.
+import green from "../People/svg/green.svg";
+import blue from "../People/svg/blue.svg";
+import yellow from "../People/svg/yellow.svg";
+import black from "../People/svg/black.svg";
+import orange from "../People/svg/orange.svg";
+import grey from "../People/svg/grey.svg";
+import land from "../People/svg/land.svg";
+import society from "../People/svg/society.svg";
+import city from "../People/svg/city.svg";
+import prophet from "../People/svg/prophet.svg";
+import warrior from "../People/svg/warrior.svg";
+
+// Era & Culture → colored dots. The lineage/society values reuse People's
+// established colors (Nephite green, Lamanite blue, Jaredite yellow, Israelite
+// grey); the non-society eras take the remaining hues.
+const ERA_DOT = {
+  "Nephite": green,
+  "Lamanite": blue,
+  "Jaredite": yellow,
+  "Israelite/Old World": grey,
+  "Christ era": orange,
+  "Generic": black,
+};
+
+// Kind → repurposed People glyphs; grey circle where no glyph fits (Made Things).
+const KIND_ICON = {
+  "Natural World": land,
+  "Society": society,
+  "Made Things": grey,
+  "Places & Buildings": city,
+  "Belief & Mind": prophet,
+  "War & Arms": warrior,
+};
+
 /**
- * Matters filter — three on/off switch axes in the selector box, matching the
- * People and Places panels:
+ * Matters filter — three switch columns over the redesigned bom_matters vocabulary.
  *
- *   form_group   5 — Natural World, Made Things, Society, Places, Belief & Mind
- *   era_culture  6 — era + provenance merged; they were 58% redundant
- *   prominence   4 — buckets over nrefs
- *
- * The levels beneath these (form, then subform) are NOT in the box. They render
- * as chips between the box and the tile grid — see MatterChipLevels.
+ *   Era & Culture (left)   6 values, era + provenance merged (58% redundant)
+ *   Kind          (middle) 6 form groups
+ *   dynamic slot  (right)  Prominence (4 nrefs buckets) by default; the instant
+ *                          a Kind is on, it swaps to <MatterDetailColumn> — form
+ *                          switches with per-form subform chips — passed to
+ *                          FilterPanel via its extraColumn slot. Prominence is
+ *                          gone while a Kind is active.
  */
 /**
  * Translate with a real fallback.
@@ -31,16 +67,50 @@ const t = (key, fallback) => {
   return v;
 };
 
+/**
+ * Option label with a leading icon, matching the People/Places pattern. Era &
+ * Culture uses full-opacity color dots (className "dot"); Kind uses the muted
+ * (.5 opacity) glyphs. Any axis without a mapping renders plain text.
+ */
+const optionLabel = (axisName, chip, text) => {
+  if (axisName === "era_culture") {
+    return (
+      <span>
+        <img className="dot" src={ERA_DOT[chip.tag] || grey} alt="" /> {text}
+      </span>
+    );
+  }
+  if (axisName === "form_group") {
+    return (
+      <span>
+        <img src={KIND_ICON[chip.tag] || grey} alt="" /> {text}
+      </span>
+    );
+  }
+  return text;
+};
+
 export function MattersFilter({ matterFilters, setFilter, matterList }) {
   const appController = useAppController();
 
-  const axes = filterAxes.map((a) => ({
+  const byName = Object.fromEntries(filterAxes.map((a) => [a.name, a]));
+  const kindActive = (matterFilters.form_group?.size ?? 0) > 0;
+
+  // Right column is Prominence until a Kind is on, then the detail column.
+  const shown = kindActive
+    ? [byName.era_culture, byName.form_group]
+    : [byName.era_culture, byName.form_group, byName.prominence];
+
+  const axes = shown.map((a) => ({
     name: a.name,
     title: t(a.title, a.titleEn),
-    options: a.chips.map((c) => ({ tag: c.tag, label: t(c.key, c.label) })),
+    options: a.chips.map((c) => ({
+      tag: c.tag,
+      label: optionLabel(a.name, c, t(c.key, c.label)),
+    })),
   }));
 
-  const axisNames = filterAxes.map((a) => a.name);
+  const axisNames = shown.map((a) => a.name);
   const value = Object.fromEntries(axisNames.map((n) => [n, [...(matterFilters[n] || [])]]));
 
   const onChange = (next) =>
@@ -48,6 +118,10 @@ export function MattersFilter({ matterFilters, setFilter, matterList }) {
       ...matterFilters,
       ...Object.fromEntries(axisNames.map((n) => [n, new Set(next[n] || [])])),
     });
+
+  const extraColumn = kindActive ? (
+    <MatterDetailColumn matterFilters={matterFilters} setFilter={setFilter} />
+  ) : null;
 
   const selectItemHandler = (slug) =>
     appController.functions.setPopUp({ type: "matters", ids: [slug], underSlug: "matters" });
@@ -58,6 +132,7 @@ export function MattersFilter({ matterFilters, setFilter, matterList }) {
       axes={axes}
       value={value}
       onChange={onChange}
+      extraColumn={extraColumn}
       search={{
         placeholder: "search_for_a_matter",
         preLoadData: matterList,

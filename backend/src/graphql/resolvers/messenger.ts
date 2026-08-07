@@ -11,6 +11,7 @@ import { getUser, getUsers, updateUserNickname, updateUserProfileUrl, updateUser
 import { getChannel, getMyChannels, getMyDMs, createChannel, updateChannelMetadataKey } from '../../messaging/channels.js';
 import {
   getChannelMembers,
+  getMembership,
   addUserToChannel,
   removeUserFromChannel,
   removeUserFromChannelUnlessBanned,
@@ -65,6 +66,19 @@ async function requireOperator(ctx: AppContext, channelUrl: string): Promise<str
   const members = await getChannelMembers(ctx.db, channelUrl);
   const isOperator = members.some((m) => m.user_id === actingUserId && m.role === 'operator');
   return isOperator ? actingUserId : null;
+}
+
+/**
+ * Resolve the acting user and require any client-supplied userId to target SELF.
+ * Returns the acting user_id when authorized (arg absent, or equal to the actor);
+ * null when unauthenticated or the arg names a different user. Stops the
+ * "act on behalf of an arbitrary userId" class of bug.
+ */
+async function requireSelf(ctx: AppContext, argUserId?: string | null): Promise<string | null> {
+  const actingUserId = await resolveActingUserId(ctx);
+  if (!actingUserId) return null;
+  if (argUserId != null && argUserId !== actingUserId) return null;
+  return actingUserId;
 }
 
 // ─── link_type / link_target extraction from data JSON ───────────────────────
@@ -143,7 +157,7 @@ export const messengerResolvers: Resolvers = {
      * list excludes 'DM' channels — DMs are not study groups).
      */
     messengerMyChannels: async (_root, args, ctx: AppContext) => {
-      const userId = args.userId ?? (await resolveActingUserId(ctx));
+      const userId = await requireSelf(ctx, args.userId);
       if (!userId) return [];
       const customTypes = (args.customTypes ?? []).filter((t): t is string => typeof t === 'string' && t.length > 0);
       return getMyChannels(ctx.db, userId, customTypes.length ? { customTypes } : {});
@@ -189,6 +203,19 @@ export const messengerResolvers: Resolvers = {
      */
     messengerMessages: async (_root, args, ctx: AppContext) => {
       if (!args.channelUrl) return [];
+      // Read authz: public/open channels are readable by anyone; private/DM
+      // require a joined membership.
+      const ch = await ctx.db
+        .selectFrom('messenger_channels')
+        .select('custom_type')
+        .where('channel_url', '=', args.channelUrl)
+        .executeTakeFirst();
+      const isPublic = ch != null && (ch.custom_type === 'public' || ch.custom_type === 'open');
+      if (!isPublic) {
+        const actingUserId = await resolveActingUserId(ctx);
+        const m = actingUserId ? await getMembership(ctx.db, args.channelUrl, actingUserId) : null;
+        if (!m || m.state !== 'joined') return [];
+      }
       const customTypes = (args.customTypes ?? []).filter(
         (t): t is string => typeof t === 'string' && t.length > 0,
       );
@@ -232,7 +259,7 @@ export const messengerResolvers: Resolvers = {
      * other_user_id is the channel member whose user_id !== the requesting user.
      */
     messengerUnreadDMs: async (_root, args, ctx: AppContext) => {
-      const userId = args.userId ?? (await resolveActingUserId(ctx));
+      const userId = await requireSelf(ctx, args.userId);
       if (!userId) return [];
 
       const dmChannels = await getMyDMs(ctx.db, userId);
@@ -359,9 +386,10 @@ export const messengerResolvers: Resolvers = {
         isDistinct?: boolean | null;
       };
       if (!name) return null;
+      const actingUserId = await resolveActingUserId(ctx);
+      if (!actingUserId) return null; // authentication required — no anonymous channel creation
 
       try {
-        const actingUserId = await resolveActingUserId(ctx);
         const operators: string[] = operatorIds?.filter(Boolean) as string[] ?? [];
         // Ensure acting user is included as operator when present
         if (actingUserId && !operators.includes(actingUserId)) {
@@ -457,7 +485,7 @@ export const messengerResolvers: Resolvers = {
         nickname?: string | null;
         profileUrl?: string | null;
       };
-      const targetUserId = userId ?? (await resolveActingUserId(ctx));
+      const targetUserId = await requireSelf(ctx, userId);
       if (!targetUserId) return null;
 
       try {
@@ -484,7 +512,7 @@ export const messengerResolvers: Resolvers = {
         userId?: string | null;
         metadata?: string | null;
       };
-      const targetUserId = userId ?? (await resolveActingUserId(ctx));
+      const targetUserId = await requireSelf(ctx, userId);
       if (!targetUserId || metadata == null) return false;
 
       let parsed: Record<string, unknown>;
@@ -732,7 +760,7 @@ export const messengerResolvers: Resolvers = {
         channelUrl?: string | null;
         userId?: string | null;
       };
-      const targetUserId = userId ?? (await resolveActingUserId(ctx));
+      const targetUserId = await requireSelf(ctx, userId);
       if (!channelUrl || !targetUserId) return false;
 
       try {
@@ -766,7 +794,7 @@ export const messengerResolvers: Resolvers = {
         channelUrl?: string | null;
         userId?: string | null;
       };
-      const targetUserId = userId ?? (await resolveActingUserId(ctx));
+      const targetUserId = await requireSelf(ctx, userId);
       if (!channelUrl || !targetUserId) return false;
 
       try {

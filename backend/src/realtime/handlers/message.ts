@@ -27,10 +27,11 @@ import {
   postMessage,
   updateMessage,
   deleteMessage,
+  getMessage,
 } from '../../messaging/messages.js';
 import { getBus } from '../RealtimeBus.js';
 import { maybeBotReply } from '../botResponder.js';
-import { isMemberMuted } from '../../messaging/members.js';
+import { isMemberMuted, getMembership } from '../../messaging/members.js';
 import { pushNotificationForEvent } from '../../messaging/notifications.js';
 
 // ─── send_message ─────────────────────────────────────────────────────────────
@@ -87,6 +88,12 @@ export function register(socket: Socket, _io: Server): void {
 
         const db = getDb();
 
+        const membership = await getMembership(db, payload.channelUrl, user.userId);
+        if (!membership || membership.state !== 'joined') {
+          ack?.({ success: false, error: 'not a joined member of this channel' });
+          return;
+        }
+
         // Muted members can't post.
         if (await isMemberMuted(db, payload.channelUrl, user.userId)) {
           ack?.({ success: false, error: 'You are muted in this channel' });
@@ -120,6 +127,7 @@ export function register(socket: Socket, _io: Server): void {
             type: 'reply',
             targetMessageId: payload.parentMessageId,
             actorId: user.userId,
+            sourceMessageId: msg.message_id,
           });
         }
 
@@ -143,6 +151,18 @@ export function register(socket: Socket, _io: Server): void {
         }
 
         const db = getDb();
+        const membership = await getMembership(db, payload.channelUrl, user.userId);
+        if (!membership || membership.state !== 'joined') {
+          ack?.({ success: false, error: 'not a joined member of this channel' });
+          return;
+        }
+        const existing = await getMessage(db, payload.channelUrl, payload.messageId);
+        if (!existing) { ack?.({ success: false, error: 'message not found' }); return; }
+        if (existing.user?.user_id !== user.userId) {
+          ack?.({ success: false, error: 'not the author' });
+          return;
+        }
+
         const updated = await updateMessage(db, payload.channelUrl, payload.messageId, {
           message: payload.message,
           customType: payload.customType,
@@ -175,6 +195,18 @@ export function register(socket: Socket, _io: Server): void {
         }
 
         const db = getDb();
+        const membership = await getMembership(db, payload.channelUrl, user.userId);
+        if (!membership || membership.state !== 'joined') {
+          ack?.({ success: false, error: 'not a joined member of this channel' });
+          return;
+        }
+        const existing = await getMessage(db, payload.channelUrl, payload.messageId);
+        if (!existing) { ack?.({ success: false, error: 'message not found' }); return; }
+        if (existing.user?.user_id !== user.userId && membership.role !== 'operator') {
+          ack?.({ success: false, error: 'not the author or an operator' });
+          return;
+        }
+
         const deleted = await deleteMessage(db, payload.channelUrl, payload.messageId);
 
         if (!deleted) {

@@ -10,11 +10,16 @@ h5.ppFiltersHeading{
 
 .ppFilters
 {
+    /* Design tokens — shared across People / Places / Matters panels. */
+    --pp-row-gap: .4em;
+    --pp-col-gap: 0;
+    --pp-pad: 1em;
+    --pp-accent: #198754;
     margin-left: 10vw;
     margin-right: 10vw;
     margin-bottom: 2em;
     border-radius: 1em;
-    padding:1em;
+    padding: var(--pp-pad);
     background-color:#DDD;
     position: relative;
     border-top-right-radius: 0;
@@ -22,8 +27,8 @@ h5.ppFiltersHeading{
 
 .ppColumns
 {
-
     display: flex;
+    gap: var(--pp-col-gap);
 }
 
 .ppFiltersSearchButton
@@ -65,6 +70,7 @@ h5.ppFiltersHeading{
     cursor: pointer;
     display: flex;
     align-items: center;
+    margin-bottom: var(--pp-row-gap);
 }
 .ppColumns li.item span
 {
@@ -148,3 +154,7 @@ h5.ppFiltersHeading{
     margin-top: -1em;
     position: relative;
 }
+
+/* Equal, flex-sized switch columns (was hardcoded 33% for exactly three).
+   min-width keeps them from squishing when a fourth/detail column joins. */
+.ppFilters .ppColumns ul { width: auto; flex: 1 1 0; min-width: 9em; }

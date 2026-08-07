@@ -9,6 +9,32 @@
   width: 200px;
 }
 
-.loadBar img {
+.loadBar img,
+.loadBar .loadbar {
   width: 100%;
+}
+
+/* Was on the SVG element itself (style="margin-top:-20%") when it was an <img>. */
+.loadBar .loadbar {
+  display: block;
+  margin-top: -20%;
+}
+
+/* Composited CSS transform replaces the SVG SMIL <animateTransform>. The stripe
+   pattern repeats every 100 user units, so translating a full 100 loops
+   seamlessly. will-change promotes it to its own layer so it stays smooth while
+   the main thread is busy loading. */
+.loadbarBars {
+  transform: translateX(0);
+  will-change: transform;
+  animation: loadbar-slide 2.127659574468085s linear infinite;
+}
+
+@keyframes loadbar-slide {
+  from { transform: translateX(0); }
+  to   { transform: translateX(100px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loadbarBars { animation: none; }
 }

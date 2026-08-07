@@ -20,6 +20,7 @@
 import type { Server, Socket } from 'socket.io';
 import { getDb } from '../../data/db.js';
 import { addReaction, removeReaction, getReactions } from '../../messaging/reactions.js';
+import { getMembership } from '../../messaging/members.js';
 import { getBus } from '../RealtimeBus.js';
 import { pushNotificationForEvent } from '../../messaging/notifications.js';
 
@@ -59,6 +60,12 @@ export function register(socket: Socket, _io: Server): void {
       }
 
       const db = getDb();
+      const membership = await getMembership(db, payload.channelUrl, user.userId);
+      if (!membership || membership.state !== 'joined') {
+        ack?.({ success: false, error: 'not a joined member of this channel' });
+        return;
+      }
+
       await addReaction(db, payload.messageId, user.userId, payload.reactionKey);
 
       // Broadcast updated reaction snapshot to the channel room.
@@ -90,6 +97,12 @@ export function register(socket: Socket, _io: Server): void {
       }
 
       const db = getDb();
+      const membership = await getMembership(db, payload.channelUrl, user.userId);
+      if (!membership || membership.state !== 'joined') {
+        ack?.({ success: false, error: 'not a joined member of this channel' });
+        return;
+      }
+
       await removeReaction(db, payload.messageId, user.userId, payload.reactionKey);
 
       await broadcastReactionChanged(payload.channelUrl, payload.messageId);

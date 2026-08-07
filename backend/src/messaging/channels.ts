@@ -27,7 +27,7 @@ import type { DB } from '../../codegen/db.js';
 import type { ChannelDTO } from './dto.js';
 import { getChannelMembers, getChannelMembersBulk } from './members.js';
 import { getMessages, getMessagesForChannels } from './messages.js';
-import { getUnreadCount } from './readstate.js';
+import { getUnreadCount, getUnreadCounts } from './readstate.js';
 import type { MemberDTO, MessageDTO } from './dto.js';
 
 // ─── Metadata helper ──────────────────────────────────────────────────────────
@@ -146,13 +146,14 @@ async function assembleChannels(
   if (rows.length === 0) return [];
   const urls = rows.map((r) => r.channel_url);
 
+  // M-6 fix: use getUnreadCounts (bulk) — one JOIN query instead of 2×N
+  // per-channel queries. Semantics match getUnreadCount exactly (own messages
+  // excluded, replies excluded, soft-deletes excluded, absent/NULL → 0).
   const [membersByChannel, lastMsgByChannel, unreadByUrl] = await Promise.all([
     getChannelMembersBulk(db, urls),
     getMessagesForChannels(db, urls, 1),
     viewerUserId
-      ? Promise.all(
-          urls.map((u) => getUnreadCount(db, u, viewerUserId).then((c) => [u, c] as const)),
-        ).then((entries) => new Map(entries))
+      ? getUnreadCounts(db, viewerUserId, urls)
       : Promise.resolve(new Map<string, number>()),
   ]);
 

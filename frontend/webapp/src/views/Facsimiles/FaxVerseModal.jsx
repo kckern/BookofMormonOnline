@@ -61,6 +61,18 @@ export default function FaxVerseModal({ verse, version, pageScale = 700, anchorX
     : box;
   const aspectBox = version ? renderBox : box;
 
+  // The render service stacks a cross-page/column verse's fragments into ONE
+  // tall crop, but `boxes` here only holds the clicked page's fragments — so the
+  // box estimate under-reserves height. Adopt the loaded crop's real aspect as
+  // the source of truth once known; until then, the estimate reserves height so
+  // there's no zero-height flash. Reset per verse (a new verse's image hasn't
+  // loaded yet) so the previous verse's loaded aspect can't carry over once its
+  // image lands. (The measured `cutoutH` persists across the switch, so the box
+  // eases from the old height rather than snapping — no wrong-aspect flash.)
+  const [natSize, setNatSize] = useState(null);
+  useEffect(() => { setNatSize(null); }, [verse?.verse_id]);
+  const cropAspect = natSize && natSize.w ? natSize : aspectBox;
+
   // Smooth the card's height change on prev/next: `aspect-ratio` doesn't animate
   // reliably (the used height jumps), so we measure the cutout's width — which is
   // 100% of the card and NOT height-driven, so no feedback loop — and drive an
@@ -75,7 +87,7 @@ export default function FaxVerseModal({ verse, version, pageScale = 700, anchorX
     const read = () => {
       raf = null;
       const w = el.getBoundingClientRect().width;
-      if (w > 0) setCutoutH((w * aspectBox.h) / aspectBox.w);
+      if (w > 0) setCutoutH((w * cropAspect.h) / cropAspect.w);
     };
     read();
     if (typeof ResizeObserver === "undefined") return undefined;
@@ -83,7 +95,7 @@ export default function FaxVerseModal({ verse, version, pageScale = 700, anchorX
     const ro = new ResizeObserver(schedule);
     ro.observe(el);
     return () => { if (raf != null) cancelAnimationFrame(raf); ro.disconnect(); };
-  }, [aspectBox.w, aspectBox.h]);
+  }, [cropAspect.w, cropAspect.h]);
 
   // Mobile presents the inspector as a right side-drawer (no centered modal on
   // mobile). Flip `drawerOpen` on after mount so react-modern-drawer plays its
@@ -152,11 +164,12 @@ export default function FaxVerseModal({ verse, version, pageScale = 700, anchorX
             className="faxVerseModal-cutout landscape"
             style={cutoutH != null
               ? { height: `${Math.round(cutoutH)}px` }
-              : { aspectRatio: `${aspectBox.w} / ${aspectBox.h}` }}
+              : { aspectRatio: `${cropAspect.w} / ${cropAspect.h}` }}
           >
             <FaxVerseZoom
               key={verse.verse_id}  /* remount so the previous verse's crop can't linger */
               src={`${renderBaseUrl}/fax/render/${version}/crop/wfull/ids/${verse.verse_id}.jpg`}
+              onNaturalSize={setNatSize}
             />
           </div>
         ) : verse.pageAssetUrl ? (

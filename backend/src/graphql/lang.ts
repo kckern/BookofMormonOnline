@@ -20,5 +20,8 @@ export function resolveLang(host: string | undefined, urlPath: string): string {
   // legacy: req.url.split('/').reverse().shift() || 'en' — the LAST segment
   const pathlang = urlPath.split('?')[0]?.split('/').reverse()[0] || 'en';
   const langDomain = host ? LANG_DOMAINS[host] : undefined;
-  return SUPPORTED.includes(subdomain) ? subdomain : langDomain || pathlang || 'en';
+  const candidate = SUPPORTED.includes(subdomain) ? subdomain : langDomain || pathlang || 'en';
+  // A1 guard: clamp to the supported set so URL path segments like 'graphql'
+  // never overflow bom_user.lang varchar(3). Fall back to 'en' for unknown values.
+  return SUPPORTED.includes(candidate) ? candidate : 'en';
 }

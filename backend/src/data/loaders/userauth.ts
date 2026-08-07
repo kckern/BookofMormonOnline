@@ -376,16 +376,12 @@ export async function doSignup(
       social,
     };
   } catch (err: unknown) {
-    // Replicate legacy: msg = error.parent?.code (e.g. ER_DUP_ENTRY)
-    const code =
-      err &&
-      typeof err === 'object' &&
-      'code' in err
-        ? (err as { code: string }).code
-        : undefined;
+    // A4: never surface raw DB error codes (e.g. ER_DUP_ENTRY) — they enable
+    // username enumeration. Log internally and return a generic message.
+    console.error('[signup] DB error during user creation:', err);
     return {
       isSuccess: false,
-      msg: code ?? 'error_creating_user',
+      msg: 'error_creating_user',
       user: null,
       social: null,
     };

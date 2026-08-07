@@ -509,18 +509,51 @@ export type Markdown = {
 export type Matter = {
   __typename?: 'Matter';
   aliases?: Maybe<Scalars['String']['output']>;
+  /** concrete | concepts — the source branch of the taxonomy. */
+  branch?: Maybe<Scalars['String']['output']>;
+  /** Fine-grained category (38 values). Retained; `form` is the UI-facing rollup. */
   category?: Maybe<Scalars['String']['output']>;
   description?: Maybe<Scalars['String']['output']>;
+  /** Raw era. `era_culture` is the UI-facing merge of this and provenance. */
   era?: Maybe<Scalars['String']['output']>;
+  /**
+   * Filter axis 2 — era and provenance merged into six values:
+   * Nephite, Lamanite, Jaredite, Israelite/Old World, Christ era, Generic.
+   * "Generic" means no specific culture, not an era.
+   */
+  era_culture?: Maybe<Scalars['String']['output']>;
+  /**
+   * Filter axis 1, level 2 — one of seventeen UI chips (e.g. "Arms & Armor",
+   * "Dwellings & Settlements"). Spans the concrete/concepts divide deliberately.
+   */
+  form?: Maybe<Scalars['String']['output']>;
+  /**
+   * Filter axis 1, level 1 — one of five UI groups:
+   * Natural World, Made Things, Society, Places, Belief & Mind.
+   */
+  form_group?: Maybe<Scalars['String']['output']>;
   guid?: Maybe<Scalars['String']['output']>;
   index?: Maybe<Array<Maybe<Index>>>;
   kind?: Maybe<Scalars['String']['output']>;
   name?: Maybe<Scalars['String']['output']>;
   node_link?: Maybe<Scalars['String']['output']>;
+  /**
+   * Number of scripture references. Backs the Prominence filter axis.
+   * Measures editorial coverage, not textual importance.
+   */
+  nrefs?: Maybe<Scalars['Int']['output']>;
+  /** Raw provenance. See `era_culture`. */
   provenance?: Maybe<Scalars['String']['output']>;
   slug?: Maybe<Scalars['String']['output']>;
   specificity?: Maybe<Scalars['String']['output']>;
   status?: Maybe<Scalars['String']['output']>;
+  /**
+   * Secondary chip value, scoped to `form` — e.g. "Tents", "Swords",
+   * "Nephite Coinage". Null where a form has too few sub-values to warrant a row.
+   */
+  subform?: Maybe<Scalars['String']['output']>;
+  /** Display label for `subform`; curated where the folder is named after a record. */
+  subform_label?: Maybe<Scalars['String']['output']>;
   subtitle?: Maybe<Scalars['String']['output']>;
   tags?: Maybe<Scalars['String']['output']>;
   usage?: Maybe<Scalars['String']['output']>;
@@ -674,7 +707,9 @@ export type Mutation = {
   ping?: Maybe<Scalars['Boolean']['output']>;
   processRequest?: Maybe<Scalars['Boolean']['output']>;
   removeBot?: Maybe<Scalars['Boolean']['output']>;
+  requestPasswordReset?: Maybe<Scalars['Boolean']['output']>;
   requestToJoinGroup?: Maybe<JoinedGroup>;
+  resetPassword?: Maybe<SignIn>;
   shortlink?: Maybe<Shortlinks>;
   signout?: Maybe<Scalars['Boolean']['output']>;
   signup?: Maybe<SignIn>;
@@ -839,9 +874,20 @@ export type MutationRemoveBotArgs = {
 };
 
 
+export type MutationRequestPasswordResetArgs = {
+  email?: InputMaybe<Scalars['String']['input']>;
+};
+
+
 export type MutationRequestToJoinGroupArgs = {
   token?: InputMaybe<Scalars['String']['input']>;
   url?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type MutationResetPasswordArgs = {
+  password?: InputMaybe<Scalars['String']['input']>;
+  token?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -917,8 +963,10 @@ export type Network = {
 export type Note = {
   __typename?: 'Note';
   id?: Maybe<Scalars['String']['output']>;
+  source?: Maybe<Scalars['String']['output']>;
   text?: Maybe<Scalars['String']['output']>;
   title?: Maybe<Scalars['String']['output']>;
+  verse_id?: Maybe<Scalars['Int']['output']>;
 };
 
 export type Notification = {
@@ -1087,6 +1135,7 @@ export type Query = {
   _?: Maybe<Scalars['Boolean']['output']>;
   books?: Maybe<Array<Maybe<Book>>>;
   botlist?: Maybe<Array<Maybe<Bot>>>;
+  checkUsernameAvailable?: Maybe<Scalars['Boolean']['output']>;
   chiasmus?: Maybe<Array<Maybe<Chiasmus>>>;
   closetab?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
   commentary?: Maybe<Array<Maybe<Commentary>>>;
@@ -1125,6 +1174,7 @@ export type Query = {
   messengerUsers?: Maybe<Array<Maybe<MessengerUser>>>;
   moregroups?: Maybe<Array<Maybe<HomeGroup>>>;
   mybookmark?: Maybe<Bookmark>;
+  notesForRef?: Maybe<Array<Maybe<Note>>>;
   notificationUnreadCount?: Maybe<Scalars['Int']['output']>;
   notifications?: Maybe<Array<Maybe<Notification>>>;
   page?: Maybe<Array<Maybe<Page>>>;
@@ -1177,6 +1227,11 @@ export type QueryBooksArgs = {
 
 export type QueryBotlistArgs = {
   channel?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryCheckUsernameAvailableArgs = {
+  username?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -1371,6 +1426,12 @@ export type QueryMoregroupsArgs = {
 
 export type QueryMybookmarkArgs = {
   token?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryNotesForRefArgs = {
+  source: Scalars['String']['input'];
+  verse_id: Scalars['Int']['input'];
 };
 
 
@@ -2846,18 +2907,25 @@ export type MarkdownResolvers<ContextType = AppContext, ParentType extends Resol
 
 export type MatterResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['Matter'] = ResolversParentTypes['Matter']> = {
   aliases?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  branch?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   category?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   era?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  era_culture?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  form?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  form_group?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   guid?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   index?: Resolver<Maybe<Array<Maybe<ResolversTypes['Index']>>>, ParentType, ContextType>;
   kind?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   name?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   node_link?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  nrefs?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   provenance?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   slug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   specificity?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   status?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  subform?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  subform_label?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   subtitle?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   tags?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   usage?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -3011,7 +3079,9 @@ export type MutationResolvers<ContextType = AppContext, ParentType extends Resol
   ping?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, Partial<MutationPingArgs>>;
   processRequest?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, Partial<MutationProcessRequestArgs>>;
   removeBot?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, Partial<MutationRemoveBotArgs>>;
+  requestPasswordReset?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, Partial<MutationRequestPasswordResetArgs>>;
   requestToJoinGroup?: Resolver<Maybe<ResolversTypes['JoinedGroup']>, ParentType, ContextType, Partial<MutationRequestToJoinGroupArgs>>;
+  resetPassword?: Resolver<Maybe<ResolversTypes['SignIn']>, ParentType, ContextType, Partial<MutationResetPasswordArgs>>;
   shortlink?: Resolver<Maybe<ResolversTypes['Shortlinks']>, ParentType, ContextType, Partial<MutationShortlinkArgs>>;
   signout?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, Partial<MutationSignoutArgs>>;
   signup?: Resolver<Maybe<ResolversTypes['SignIn']>, ParentType, ContextType, Partial<MutationSignupArgs>>;
@@ -3049,8 +3119,10 @@ export type NetworkResolvers<ContextType = AppContext, ParentType extends Resolv
 
 export type NoteResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['Note'] = ResolversParentTypes['Note']> = {
   id?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  source?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   text?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   title?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  verse_id?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -3209,6 +3281,7 @@ export type QueryResolvers<ContextType = AppContext, ParentType extends Resolver
   _?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   books?: Resolver<Maybe<Array<Maybe<ResolversTypes['Book']>>>, ParentType, ContextType, Partial<QueryBooksArgs>>;
   botlist?: Resolver<Maybe<Array<Maybe<ResolversTypes['Bot']>>>, ParentType, ContextType, Partial<QueryBotlistArgs>>;
+  checkUsernameAvailable?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, Partial<QueryCheckUsernameAvailableArgs>>;
   chiasmus?: Resolver<Maybe<Array<Maybe<ResolversTypes['Chiasmus']>>>, ParentType, ContextType, Partial<QueryChiasmusArgs>>;
   closetab?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType, Partial<QueryClosetabArgs>>;
   commentary?: Resolver<Maybe<Array<Maybe<ResolversTypes['Commentary']>>>, ParentType, ContextType, Partial<QueryCommentaryArgs>>;
@@ -3246,6 +3319,7 @@ export type QueryResolvers<ContextType = AppContext, ParentType extends Resolver
   messengerUsers?: Resolver<Maybe<Array<Maybe<ResolversTypes['MessengerUser']>>>, ParentType, ContextType, Partial<QueryMessengerUsersArgs>>;
   moregroups?: Resolver<Maybe<Array<Maybe<ResolversTypes['HomeGroup']>>>, ParentType, ContextType, Partial<QueryMoregroupsArgs>>;
   mybookmark?: Resolver<Maybe<ResolversTypes['Bookmark']>, ParentType, ContextType, Partial<QueryMybookmarkArgs>>;
+  notesForRef?: Resolver<Maybe<Array<Maybe<ResolversTypes['Note']>>>, ParentType, ContextType, RequireFields<QueryNotesForRefArgs, 'source' | 'verse_id'>>;
   notificationUnreadCount?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   notifications?: Resolver<Maybe<Array<Maybe<ResolversTypes['Notification']>>>, ParentType, ContextType>;
   page?: Resolver<Maybe<Array<Maybe<ResolversTypes['Page']>>>, ParentType, ContextType, Partial<QueryPageArgs>>;

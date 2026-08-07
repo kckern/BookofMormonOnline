@@ -26,6 +26,23 @@ describe('resolveCandidates (keyword-first)', () => {
     const r = await resolveCandidates(db, 'x', 'en', true, { keyword: async () => [], semantic: async () => { throw new Error('down'); } });
     expect(r).toEqual({ ids: [], semantic: false });
   });
+  test('rich mode runs semantic directly, skips keyword, semantic:true', async () => {
+    let kwCalled = false;
+    const r = await resolveCandidates(db, 'charity', 'en', true, {
+      keyword: async () => { kwCalled = true; return ['1']; },
+      semantic: async () => ['200', '201'],
+    }, 'rich');
+    expect(r).toEqual({ ids: ['200', '201'], semantic: true });
+    expect(kwCalled).toBe(false);
+  });
+  test('rich mode with zero semantic hits but backend reachable → semantic:true, empty ids', async () => {
+    const r = await resolveCandidates(db, 'q', 'en', true, { keyword: async () => ['x'], semantic: async () => [] }, 'rich');
+    expect(r).toEqual({ ids: [], semantic: true });
+  });
+  test('rich mode when semantic throws → empty, semantic:false (degraded)', async () => {
+    const r = await resolveCandidates(db, 'q', 'en', true, { keyword: async () => ['x'], semantic: async () => { throw new Error('down'); } }, 'rich');
+    expect(r).toEqual({ ids: [], semantic: false });
+  });
 });
 
 describe('rankRowsByCandidateOrder', () => {

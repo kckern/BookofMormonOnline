@@ -74,4 +74,55 @@ describe("FaxVerseModal", () => {
     fireEvent.keyDown(window, { key: "Escape" });
     expect(onClose).toHaveBeenCalledTimes(2);
   });
+
+  describe("crop box height", () => {
+    let rectSpy;
+    beforeEach(() => {
+      // Give every element a fixed 560px width so the height useLayoutEffect
+      // (width -> px height via the aspect) actually runs under jsdom.
+      rectSpy = jest
+        .spyOn(HTMLElement.prototype, "getBoundingClientRect")
+        .mockReturnValue({ width: 560, height: 0, top: 0, left: 0, right: 560, bottom: 0, x: 0, y: 0, toJSON: () => {} });
+    });
+    afterEach(() => rectSpy.mockRestore());
+
+    const crossPageVerse = {
+      verse_id: 108, ref: "Jacob 1:8", text: "verse text",
+      boxes: [{ x: 100, y: 600, w: 300, h: 80 }], // only ONE page's fragment (1 line)
+    };
+
+    test("pre-load reserve uses the per-page box estimate", () => {
+      render(<FaxVerseModal verse={crossPageVerse} version="1842" pageScale={700} onClose={() => {}} />);
+      const cutout = document.querySelector(".faxVerseModal-cutout.landscape");
+      // 560 * (80 / 300) = 149.33 -> 149
+      expect(cutout.style.height).toBe("149px");
+    });
+
+    test("corrects to the loaded crop's true aspect (taller)", () => {
+      render(<FaxVerseModal verse={crossPageVerse} version="1842" pageScale={700} onClose={() => {}} />);
+      const img = document.querySelector(".faxVerseZoom img");
+      Object.defineProperty(img, "naturalWidth", { value: 900, configurable: true });
+      Object.defineProperty(img, "naturalHeight", { value: 1600, configurable: true });
+      fireEvent.load(img);
+
+      const cutout = document.querySelector(".faxVerseModal-cutout.landscape");
+      // 560 * (1600 / 900) = 995.55 -> 996
+      expect(cutout.style.height).toBe("996px");
+    });
+
+    test("resets the loaded aspect when the verse changes", () => {
+      const { rerender } = render(<FaxVerseModal verse={crossPageVerse} version="1842" pageScale={700} onClose={() => {}} />);
+      const img = document.querySelector(".faxVerseZoom img");
+      Object.defineProperty(img, "naturalWidth", { value: 900, configurable: true });
+      Object.defineProperty(img, "naturalHeight", { value: 1600, configurable: true });
+      fireEvent.load(img);
+
+      const nextVerse = { verse_id: 109, ref: "Jacob 1:9", text: "next", boxes: [{ x: 0, y: 0, w: 400, h: 300 }] };
+      rerender(<FaxVerseModal verse={nextVerse} version="1842" pageScale={700} onClose={() => {}} />);
+
+      const cutout = document.querySelector(".faxVerseModal-cutout.landscape");
+      // stale 900/1600 must NOT carry over; new estimate 560 * (300 / 400) = 420
+      expect(cutout.style.height).toBe("420px");
+    });
+  });
 });

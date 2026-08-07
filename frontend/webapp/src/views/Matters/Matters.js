@@ -12,8 +12,7 @@ import "../Places/Places.css";
 import "../People/People.css";
 
 import { MattersFilter } from "./MattersFilter";
-import { prominenceBucket, chipLevels } from "./mattersFilterData";
-import { MatterChipLevels } from "./MatterChipLevels";
+import { prominenceBucket, formsByGroup, subformsByForm } from "./mattersFilterData";
 import { useAppController } from "src/contexts/AppControllerContext";
 import { slugGradient, entityInitials } from "../_Common/EntityThumb";
 
@@ -39,8 +38,8 @@ function MattersComponent() {
   // Default state is no filters — an empty set on an axis means "no constraint",
   // so the index opens showing every matter.
   const emptyFilters = {
-    form_group: new Set(),
     era_culture: new Set(),
+    form_group: new Set(),
     prominence: new Set(),
     form: new Set(),
     subform_label: new Set(),
@@ -49,26 +48,37 @@ function MattersComponent() {
   const [matterFilters, setFilterRaw] = useState(emptyFilters);
 
   /**
-   * Drop cascade selections whose parent is no longer selected.
-   * Without this, switching off a Kind group leaves its form chips still
-   * filtering while nothing on screen explains the empty result.
+   * Keep the dynamic right column honest. Prominence and the detail column
+   * share the third slot, and form/subform selections cascade off the Kind:
+   *   - Kind empty     → clear form + subform_label (their column is gone).
+   *   - Kind non-empty → clear Prominence; drop forms not reachable from the
+   *                      selected kinds, then subforms whose parent form dropped.
    */
   const setFilter = (next) => {
-    for (const level of chipLevels) {
-      const parent = next[level.parent] ?? new Set();
-      const own = next[level.name] ?? new Set();
-      if (!own.size) continue;
-      if (!parent.size) {
-        next = { ...next, [level.name]: new Set() };
-        continue;
-      }
-      const reachable = new Set(
-        [...parent].flatMap((p) => (level.map[p] || []).map((o) => o.tag))
+    let result = next;
+    const kind = result.form_group ?? new Set();
+    if (!kind.size) {
+      if (result.form?.size) result = { ...result, form: new Set() };
+      if (result.subform_label?.size) result = { ...result, subform_label: new Set() };
+    } else {
+      if (result.prominence?.size) result = { ...result, prominence: new Set() };
+      const reachableForms = new Set(
+        [...kind].flatMap((g) => (formsByGroup[g] || []).map((f) => f.tag))
       );
-      const kept = new Set([...own].filter((v) => reachable.has(v)));
-      if (kept.size !== own.size) next = { ...next, [level.name]: kept };
+      const forms = result.form ?? new Set();
+      const keptForms = new Set([...forms].filter((f) => reachableForms.has(f)));
+      if (keptForms.size !== forms.size) result = { ...result, form: keptForms };
+
+      const subs = result.subform_label ?? new Set();
+      if (subs.size) {
+        const validSubs = new Set(
+          [...keptForms].flatMap((f) => (subformsByForm[f] || []).map((s) => s.tag))
+        );
+        const keptSubs = new Set([...subs].filter((s) => validSubs.has(s)));
+        if (keptSubs.size !== subs.size) result = { ...result, subform_label: keptSubs };
+      }
     }
-    setFilterRaw(next);
+    setFilterRaw(result);
   };
 
   const match = useRouteMatch();
@@ -109,9 +119,19 @@ function MattersComponent() {
       const re = new RegExp(matterFilters.search, "gi");
       if (!re.test(item.name) && !re.test(item.subtitle || "")) return false;
     }
-    for (const axis of ["form_group", "form", "subform_label", "era_culture"]) {
+    for (const axis of ["era_culture", "form_group"]) {
       const set = matterFilters[axis];
       if (set && set.size > 0 && !set.has(item[axis])) return false;
+    }
+    const formSel = matterFilters.form;
+    if (formSel && formSel.size > 0 && !formSel.has(item.form)) return false;
+    // Per-form subform narrowing: only the item's own form's chips constrain it.
+    const subSel = matterFilters.subform_label;
+    if (subSel && subSel.size > 0) {
+      const active = (subformsByForm[item.form] || [])
+        .map((s) => s.tag)
+        .filter((tag) => subSel.has(tag));
+      if (active.length > 0 && !active.includes(item.subform_label)) return false;
     }
     const prom = matterFilters.prominence;
     if (prom && prom.size > 0 && !prom.has(prominenceBucket(item.nrefs))) return false;
@@ -146,7 +166,6 @@ function MattersComponent() {
           setFilter={setFilter}
           matterList={matterList}
         />
-        <MatterChipLevels matterFilters={matterFilters} setFilter={setFilter} />
         <div className="MatterList">
           {filtered.length === 0 ? (
             <div className="MatterEmptyState">

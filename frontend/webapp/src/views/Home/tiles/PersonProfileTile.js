@@ -7,6 +7,8 @@ import { getDetectedScripturesHtml, getHtmlScriptureLinkParserOptions } from "sr
 import { openScripture } from "./ScripturePopup";
 import { flatten, supDigits } from "./textUtils";
 import ExpandableText from "./ExpandableText";
+import { RevealProvider } from "./_ds/Reveal";
+import TileDeepLink from "./_ds/TileDeepLink";
 
 const scriptureOpts = getHtmlScriptureLinkParserOptions((ref) => openScripture(ref));
 
@@ -21,30 +23,33 @@ export default function PersonProfileTile({ payload, personIndex = 12 }) {
   if (!person?.slug || !person.description) return null;
   const bio = flatten(person.description);
   return (
-    <div className="samplerTileInner personProfileTile">
-      <h3 className="tileHeading">
-        <Link to="/people">{label("people")}</Link>
-      </h3>
-      <div className="peopleFeature">
-        <Link to={`/people/${person.slug}`} className="peopleFeatureImgLink">
-          <img
-            className="peopleFeatureImg"
-            src={`${assetUrl}/people/${person.slug}`}
-            alt={person.name || ""}
-            loading="lazy"
-            onError={(e) => (e.target.style.visibility = "hidden")}
-          />
-        </Link>
-        <div className="peopleFeatureBody">
-          <Link to={`/people/${person.slug}`} className="peopleFeatureNameLink">
-            <span className="peopleFeatureName">{replaceNumbers(person.name)}</span>
-            {person.title ? <span className="peopleFeatureTitle">{supDigits(person.title)}</span> : null}
+    <RevealProvider>
+      <div className="samplerTileInner personProfileTile">
+        <h3 className="tileHeading">
+          <Link to="/people">{label("people")}</Link>
+        </h3>
+        <div className="peopleFeature">
+          <Link to={`/people/${person.slug}`} className="peopleFeatureImgLink">
+            <img
+              className="peopleFeatureImg"
+              src={`${assetUrl}/people/${person.slug}`}
+              alt={person.name || ""}
+              loading="lazy"
+              onError={(e) => (e.target.style.visibility = "hidden")}
+            />
           </Link>
-          <ExpandableText className="peopleFeatureDesc" lines={7}>
-            {Parser(getDetectedScripturesHtml(bio), scriptureOpts)}
-          </ExpandableText>
+          <div className="peopleFeatureBody">
+            <Link to={`/people/${person.slug}`} className="peopleFeatureNameLink">
+              <span className="peopleFeatureName">{replaceNumbers(person.name)}</span>
+              {person.title ? <span className="peopleFeatureTitle">{supDigits(person.title)}</span> : null}
+            </Link>
+            <ExpandableText className="peopleFeatureDesc" lines={7}>
+              {Parser(getDetectedScripturesHtml(bio), scriptureOpts)}
+            </ExpandableText>
+          </div>
         </div>
+        <TileDeepLink to={`/people/${person.slug}`}>{label("view_in_context")}</TileDeepLink>
       </div>
-    </div>
+    </RevealProvider>
   );
 }

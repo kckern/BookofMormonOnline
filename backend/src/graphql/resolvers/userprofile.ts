@@ -124,6 +124,16 @@ export const userprofileResolvers: Resolvers = {
     uploadProfileImage: async (_root, args, ctx: AppContext) => {
       const { token, imageData } = args;
 
+      // P-4 size guard: reject oversized payloads before allocating a decode buffer.
+      // A base64 string's byte-length approximates (len * 3/4); we cap the raw
+      // string at ~6.8 MB which decodes to ≤5 MB of image data.
+      const MAX_BASE64_LEN = 5 * 1024 * 1024; // ~3.75 MB decoded — generous for a 256² avatar
+      if (typeof imageData === 'string' && imageData.length > MAX_BASE64_LEN) {
+        throw new GraphQLError('Image too large (max ~3.75 MB decoded)', {
+          extensions: { code: 'PAYLOAD_TOO_LARGE' },
+        });
+      }
+
       const userRow = await getUserByToken(ctx.db, token);
       if (!userRow) {
         // Replicate legacy AuthenticationError shape: message + extensions.code = 'UNAUTHORIZED'

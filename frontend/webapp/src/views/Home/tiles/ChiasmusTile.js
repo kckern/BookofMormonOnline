@@ -6,6 +6,7 @@ import MiniChiasm from "../../_Common/MiniChiasm";
 import ChiasmGlyph from "../../_Common/ChiasmGlyph";
 import { formatSpeakerName } from "../../Analysis/Chiasmus/chiasmUtils";
 import RefPill from "./RefPill";
+import TileDeepLink from "./_ds/TileDeepLink";
 
 // Displayable in a tile: plain-letter mirrored schemes deep enough to be
 // interesting, short enough not to scroll (ABCCBA … up to 12 lines).
@@ -78,9 +79,9 @@ export default function ChiasmusTile({ seed }) {
         ) : null}
       </div>
       <MiniChiasm lines={chiasm.lines} className="chiasmusTileLines" />
-      <Link to={`/analysis/chiasmus/${chiasm.chiasmus_id}`} className="tileMoreLink">
+      <TileDeepLink to={`/analysis/chiasmus/${chiasm.chiasmus_id}`} always>
         {label("view_in_context")}
-      </Link>
+      </TileDeepLink>
     </div>
   );
 }

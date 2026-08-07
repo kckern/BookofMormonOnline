@@ -15,6 +15,14 @@ const schema = z.object({
     .default('1')
     .transform((v) => v !== '0'),
   LOG_LEVEL: z.string().default('info'),
+  // Transactional email (SES). When MAIL_FROM is unset the mailer falls back to
+  // a console transport (logs instead of sending) — safe before creds land.
+  // MAIL_PROVIDER selects the transport adapter (extend the enum + factory to
+  // add e.g. 'sendgrid'). 'console' forces the log-only transport (staging).
+  MAIL_PROVIDER: z.enum(['ses', 'console']).default('ses'),
+  MAIL_FROM: z.string().optional(),
+  MAIL_REGION: z.string().default('us-east-1'),
+  APP_BASE_URL: z.string().default('https://bom.kckern.net'),
   SUPPORTED_LANGUAGES: z
     .string()
     .default('en,fr,de,nl,pt,ko,jpn,zh,ru,hi,eo,es,vn,tgl,th,ukr,tam,swe'),

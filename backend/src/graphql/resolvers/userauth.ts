@@ -13,6 +13,12 @@ import {
 import { resolveSigninAvatar } from '../../messaging/users.js';
 import { sendbird } from '../../auth/sendbirdShim.js';
 import { runWrite } from '../../data/writes.js';
+import { hashPassword } from '../../auth/password.js';
+import { cleanUsername } from '../../auth/identity.js';
+import { createResetToken, consumeResetToken } from '../../data/loaders/passwordreset.js';
+import { sendEmail } from '../../mail/mailer.js';
+import { passwordResetEmail } from '../../mail/templates.js';
+import { env } from '../../config/env.js';
 
 /**
  * UserAuth parent row type — passed as `parent` to User field resolvers.
@@ -27,6 +33,26 @@ const asGql = <T>(v: T): any => v;
 
 export const userauthResolvers: Resolvers = {
   Query: {
+    /**
+     * checkUsernameAvailable — true when the (normalized) username is free.
+     * USERNAME-only by design: usernames are semi-public UX (restores the
+     * "username taken" hint the A4 hardening removed from the signup response)
+     * WITHOUT reopening the email-enumeration oracle A5 closed. Normalized via
+     * cleanUsername so it matches what signup would actually store.
+     */
+    checkUsernameAvailable: async (_root, args: { username?: string | null }, ctx: AppContext) => {
+      const raw = (args.username ?? '').trim();
+      if (!raw) return false;
+      const username = cleanUsername(raw, '');
+      const existing = await ctx.db
+        .selectFrom('bom_user')
+        .select('user')
+        .where('user', '=', username)
+        .limit(1)
+        .executeTakeFirst();
+      return !existing;
+    },
+
     /**
      * signin — Legacy BomUser.ts:99. Query (not Mutation) by legacy quirk.
      * Dual-verifies password (bcrypt + MD5 migration), rehashes on MD5 hash,
@@ -133,6 +159,54 @@ export const userauthResolvers: Resolvers = {
       const affected = result.rows as unknown as Array<{ numDeletedRows?: bigint; numAffectedRows?: bigint }>;
       const n = affected[0]?.numDeletedRows ?? affected[0]?.numAffectedRows ?? 0n;
       return affected.length > 0 && n >= 1n;
+    },
+
+    /**
+     * requestPasswordReset — mint a single-use, 30-min token for the account
+     * matching `email` (email OR username) and email a reset link via the
+     * transactional mailer. ALWAYS returns true (never reveals whether the
+     * account exists — anti-enumeration, consistent with the A4/A5 hardening).
+     */
+    requestPasswordReset: async (_root, args: { email?: string | null }, ctx: AppContext) => {
+      const email = (args.email ?? '').trim();
+      if (!email) return true;
+      try {
+        const user = await ctx.db
+          .selectFrom('bom_user')
+          .select(['user', 'name', 'email'])
+          .where((eb) => eb.or([eb('email', '=', email), eb('user', '=', email)]))
+          .limit(1)
+          .executeTakeFirst();
+        if (user) {
+          const token = await createResetToken(ctx.db, user.user);
+          const resetUrl = `${env.APP_BASE_URL}/reset-password?token=${token}`;
+          const { subject, html, text } = passwordResetEmail(resetUrl, user.name ?? undefined);
+          await sendEmail({ to: user.email ?? email, subject, html, text });
+        }
+      } catch (err) {
+        console.error('requestPasswordReset error:', err);
+      }
+      return true;
+    },
+
+    /**
+     * resetPassword — consume a reset token (single-use, must be unexpired) and
+     * set a new bcrypt-hashed password for the token's user. Returns a minimal
+     * SignIn ({isSuccess,msg}); the client then signs in normally.
+     */
+    resetPassword: async (_root, args: { token?: string | null; password?: string | null }, ctx: AppContext) => {
+      const token = (args.token ?? '') as string;
+      const password = (args.password ?? '') as string;
+      if (!token || !password) {
+        return { isSuccess: false, msg: 'invalid_request', user: null, social: null };
+      }
+      const username = await consumeResetToken(ctx.db, token);
+      if (!username) {
+        return { isSuccess: false, msg: 'invalid_or_expired_token', user: null, social: null };
+      }
+      const hashed = await hashPassword(password);
+      await ctx.db.updateTable('bom_user').set({ pass: hashed }).where('user', '=', username).execute();
+      return { isSuccess: true, msg: 'password_reset', user: null, social: null };
     },
   },
 

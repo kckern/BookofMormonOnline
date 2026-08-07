@@ -1,5 +1,6 @@
 import React from "react";
 import { openScripture } from "./ScripturePopup";
+import { label } from "src/models/Utils";
 
 const placeLabel = (name, slug) => name || slug;
 
@@ -34,8 +35,8 @@ export function MapStoryMoveCard({ move, step, moveCount }) {
           ) : null}
           {move.duration ? <span className="mapStoryDuration">{move.duration}</span> : null}
           {move.detached ? (
-            <span className="mapStoryDetached" title="This movement begins a new geographic run">
-              story resumes elsewhere
+            <span className="mapStoryDetached" title={label("mapstory_detached_title")}>
+              {label("mapstory_detached")}
             </span>
           ) : null}
         </div>
@@ -59,7 +60,7 @@ export function MapStoryCompleteCard({ title, description, stopCount, moveCount 
         <div className="mapStoryCompleteHeading">Journey complete</div>
         {description ? <p className="mapStoryDesc">{description}</p> : null}
         <div className="mapStoryCompleteMeta">
-          {title} · {moveCount} moves · {stopCount} places
+          {title} · {label("mapstory_meta", [moveCount, stopCount])}
         </div>
       </div>
     </section>

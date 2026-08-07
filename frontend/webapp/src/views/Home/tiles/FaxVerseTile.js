@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { renderBaseUrl, assetUrl } from "src/models/BoMOnlineAPI";
 import { label } from "src/models/Utils";
 import ScriptureExcerpt from "src/views/_Common/ScriptureExcerpt";
+import TileDeepLink from "./_ds/TileDeepLink";
 
 const CROP_WIDTH = 800;
 
@@ -85,6 +86,14 @@ export default function FaxVerseTile({ data }) {
           );
         })}
       </div>
+      {editions[0] ? (
+        <TileDeepLink
+          to={slug ? `/fax/${editions[0].version}/${slug}` : `/fax/${editions[0].version}/${editions[0].page}`}
+          always
+        >
+          {label("view_more")}
+        </TileDeepLink>
+      ) : null}
     </div>
   );
 }
