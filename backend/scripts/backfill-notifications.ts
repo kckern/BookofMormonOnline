@@ -51,5 +51,5 @@ if (
   (process.argv[1] && process.argv[1].endsWith('backfill-notifications.ts')) ||
   (process.argv[1]?.endsWith('backfill-notifications.js'))
 ) {
-  void main();
+  main().catch((e) => { console.error('backfill failed:', e); process.exit(1); });
 }

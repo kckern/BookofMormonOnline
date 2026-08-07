@@ -132,17 +132,28 @@ async function mkMessage(channelUrl: string, userId: string, message: string, pa
 }
 
 describe('dual-read merge', () => {
-  itWrite('surfaces a stored-only notification that has no derived twin', async () => {
+  itWrite('SUPPRESSES a stored-only derived-backed row whose source is gone (no ghost)', async () => {
     const me = await mkUser('Recipient');
     const actor = await mkUser('Ghost');
-    const dedupeKey = `reply:${nanoid(11)}`; // source message does not exist → derived arm can never produce it
+    const dedupeKey = `reply:${nanoid(11)}`; // no such reply message exists → derived arm never produces it
     await persistNotification(db, {
       userId: me, type: 'reply', actorId: actor, dedupeKey,
       payload: { text: 'orphan', channel_url: 'c', message_id: 'gone',
                  actor: { user_id: actor, nickname: 'Ghost', profile_url: '' } as any },
     });
     const notifs = await getNotifications(db, me);
-    expect(notifs.some((n) => n.id === dedupeKey)).toBe(true);
+    expect(notifs.some((n) => n.id === dedupeKey)).toBe(false); // suppressed
+  });
+
+  itWrite('surfaces a stored-only row of a NON-derived-backed type (e.g. announcement)', async () => {
+    const me = await mkUser('Recipient');
+    const dedupeKey = `announcement:${nanoid(11)}`;
+    await persistNotification(db, {
+      userId: me, type: 'announcement', actorId: null, dedupeKey,
+      payload: { text: 'Site maintenance tonight', channel_url: null, message_id: null, actor: null },
+    });
+    const notifs = await getNotifications(db, me);
+    expect(notifs.some((n) => n.id === dedupeKey)).toBe(true); // table-only type surfaces
   });
 
   itWrite('a reply that is both derived and stored appears exactly once', async () => {

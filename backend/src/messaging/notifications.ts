@@ -57,6 +57,13 @@ const LOOKBACK_DAYS = 30;
 // Hard cap on returned notifications.
 const MAX_NOTIFICATIONS = 50;
 
+// Types whose existence is authoritatively reconstructed by the derived feed.
+// A stored-only row of one of these means its source event is gone (deleted
+// reply / removed reaction / declined invite) — suppress it (no ghosts).
+// Future table-only types (announcement, group_activity, …) are NOT in this set
+// and DO surface from the table.
+const DERIVED_BACKED_TYPES = new Set(['reply', 'reaction', 'invite']);
+
 interface ReadState {
   watermark: number; // ms-epoch
   readIds: Set<string>;
@@ -217,15 +224,19 @@ export async function getNotifications(
     .execute();
 
   const byId = new Map<string, NotificationDTO>();
-  for (const n of items) byId.set(n.id, n); // derived arm
+  for (const n of items) byId.set(n.id, n); // derived arm (authoritative content + existence)
   for (const row of rows) {
     const n = rowToDTO(row);
     const prev = byId.get(n.id);
-    // read if: the row itself is read, OR its derived twin was read,
-    // OR metadata read-state covers it (watermark / explicit read id).
-    const isRead = n.is_read || (prev?.is_read ?? false)
-      || n.created_at <= watermark || readIds.has(n.id);
-    byId.set(n.id, { ...n, is_read: isRead });
+    if (prev) {
+      // Twin: keep the fresh derived content, OR-in the durable read state.
+      byId.set(n.id, { ...prev, is_read: prev.is_read || n.is_read });
+    } else if (!DERIVED_BACKED_TYPES.has(n.type)) {
+      // Legitimately table-only type (no derived equivalent): surface it.
+      const isRead = n.is_read || n.created_at <= watermark || readIds.has(n.id);
+      byId.set(n.id, { ...n, is_read: isRead });
+    }
+    // else: stored-only row of a derived-backed type → source gone → suppress.
   }
   return [...byId.values()]
     .sort((a, b) => b.created_at - a.created_at)
@@ -343,7 +354,10 @@ export async function pushNotificationForEvent(
       // Each reply is its own notification — key on the child reply message id
       // to match the derived feed (reply:<replyMessageId>) and to avoid collapsing
       // multiple replies to the same parent into one.
-      if (!params.sourceMessageId) return; // can't form a correct/unique reply id
+      if (!params.sourceMessageId) {
+        console.warn('pushNotificationForEvent: reply event missing sourceMessageId; skipping');
+        return;
+      }
       id = `reply:${params.sourceMessageId}`;
       text = `${nickname} replied to your comment`;
       messageId = target.message_id;
