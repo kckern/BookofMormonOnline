@@ -2,6 +2,7 @@ import React from "react";
 import "@testing-library/jest-dom";
 import { render, screen, fireEvent, within } from "@testing-library/react";
 import Rail from "../Rail";
+import { chapterCounts } from "../aggregate";
 
 describe("Rail", () => {
   const setup = (props = {}) => {
@@ -75,6 +76,33 @@ describe("Rail", () => {
     // its group header is a button that re-anchors when clicked
     fireEvent.click(screen.getByRole("button", { name: /Small Plates/i }));
     expect(onAnchor).toHaveBeenCalledWith("1 Nephi"); // first book of Small Plates
+  });
+
+  test("the anchored book's chapter strip is scoped to the partner when one is given", () => {
+    const all = chapterCounts("bom", "2 Nephi");
+    const scoped = chapterCounts("bom", "2 Nephi", "Isaiah");
+    // a chapter that has Isaiah refs AND other-partner refs → scoped < unscoped
+    const idx = all.findIndex((c, i) => scoped[i] > 0 && c !== scoped[i]);
+    expect(idx).toBeGreaterThanOrEqual(0); // sanity: such a chapter exists in the data
+    const ch = idx + 1;
+    render(
+      <Rail canon="bom" book="2 Nephi" chapter={undefined} partner="Isaiah" onAnchor={jest.fn()} onChapter={jest.fn()} />
+    );
+    expect(
+      screen.getByRole("radio", { name: new RegExp(`^Chapter ${ch}, ${scoped[idx]} references$`) })
+    ).toBeInTheDocument();
+  });
+
+  test("without a partner the chapter strip stays unscoped (anchor-view behavior is unchanged)", () => {
+    const all = chapterCounts("bom", "2 Nephi");
+    const idx = all.findIndex((c) => c > 0);
+    const ch = idx + 1;
+    render(
+      <Rail canon="bom" book="2 Nephi" chapter={undefined} onAnchor={jest.fn()} onChapter={jest.fn()} />
+    );
+    expect(
+      screen.getByRole("radio", { name: new RegExp(`^Chapter ${ch}, ${all[idx]} references$`) })
+    ).toBeInTheDocument();
   });
 
   test("centers the anchored book inside the rail on mount", () => {

@@ -7,7 +7,7 @@ import ChapterStrip from "./ChapterStrip";
 // book is expanded (showing its books + the anchored book's ChapterStrip);
 // every other group collapses to a single clickable header that re-anchors
 // to that group's first book on click.
-export default function Rail({ canon, book, chapter, onAnchor, onChapter }) {
+export default function Rail({ canon, book, chapter, partner, onAnchor, onChapter }) {
   const { groups, books } = canons[canon];
   const max = Math.max(...books.map((b) => bookTotal(canon, b.name)), 1);
 
@@ -69,7 +69,7 @@ export default function Rail({ canon, book, chapter, onAnchor, onChapter }) {
                     </span>
                   </button>
                   {isAnchor && (
-                    <ChapterStrip canon={canon} book={b} chapter={chapter} onChapter={onChapter} />
+                    <ChapterStrip canon={canon} book={b} chapter={chapter} partner={partner} onChapter={onChapter} />
                   )}
                 </div>
               );

@@ -3,8 +3,8 @@ import { chapterCounts } from "./aggregate";
 
 // Per-chapter density strip for the anchored book. Counts live in the
 // aria-label and title, never inside the 12px cells.
-export default function ChapterStrip({ canon, book, chapter, onChapter }) {
-  const counts = chapterCounts(canon, book.name);
+export default function ChapterStrip({ canon, book, chapter, partner, onChapter }) {
+  const counts = chapterCounts(canon, book.name, partner);
   const max = Math.max(...counts, 1);
 
   const handleKey = (e) => {
