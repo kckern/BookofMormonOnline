@@ -34,4 +34,12 @@ describe("TableTwin", () => {
       "descending"
     );
   });
+
+  test("the Bible column is a link that opens the reader", () => {
+    const navigate = jest.fn();
+    const { container } = render(<TableTwin navigate={navigate} />);
+    const rows = container.querySelectorAll("[data-testid='xref-pairrow']").length;
+    // one rowlink per cell that navigates: BoM + Bible = 2 per row
+    expect(container.querySelectorAll(".xref-rowlink").length).toBe(rows * 2);
+  });
 });

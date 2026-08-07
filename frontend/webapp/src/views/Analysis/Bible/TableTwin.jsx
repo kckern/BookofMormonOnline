@@ -92,7 +92,18 @@ export default function TableTwin({ navigate }) {
                     {p.bomBookName}
                   </button>
                 </td>
-                <td>{p.bibleBookName}</td>
+                <td>
+                  <button
+                    className="xref-rowlink"
+                    aria-label={`Open ${p.bomBookName} × ${p.bibleBookName} reader`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      open(p);
+                    }}
+                  >
+                    {p.bibleBookName}
+                  </button>
+                </td>
                 <td className="num">{p.total}</td>
                 <td className="num">{p.quotes}</td>
                 <td className="num">{p.phrases}</td>
