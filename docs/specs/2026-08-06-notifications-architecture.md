@@ -127,6 +127,40 @@ notification
   exists in message `data.mentionedUserIds` — cheapest win), `group_activity`
   (member joined/accepted, reading-plan segment complete, streak milestones),
   `announcement` (system broadcast).
+
+#### 3.2a Full type taxonomy (confirmed 2026-08-06 — notifications are NOT message-only)
+
+The store is recipient-and-type-agnostic: **every category below is just a
+`type` in the registry + a producer that resolves recipients and calls
+`notify()`**. Nothing in the table, `notify()`, dual-read, or read-state changes
+per category. The taxonomy KC called out:
+
+| Category | type(s) | Recipient resolution | Actor | Value tier | Notes |
+|---|---|---|---|---|---|
+| Messaging (built) | `reply`, `reaction`, `invite` | single user (msg author / invitee) | user | reply high; reaction/invite low | live today |
+| Mentions | `mention` | mentioned user(s) — `data.mentionedUserIds` | user | **high** | producer in `message.ts` |
+| Study plan | `plan_reminder`, `plan_progress` | the plan's owner (or plan members) | system/user | high (reminders), low (progress) | reminders may need the cron/job runner (none yet) |
+| Group activity | `group_activity` | group members | user | low (coalesced) | member joined, new content, milestones |
+| Group-admin | `group_admin` | **admins of group X** (multi-recipient) | user | **high** | join requests, reports, moderation — targeted at role, not a single user |
+| Sitewide | `announcement` | **all users** (fan-out-on-write) | null (system) | high, in-app non-opt-out | admin-authored broadcast |
+
+**One API generalization this implies:** `notify()` currently takes a single
+`userId`. Group-admin and sitewide are **multi-recipient** — the producer
+resolves a recipient set (admins of a group; all users) and fans out one row
+per recipient (fan-out-on-write, per §3.3). Add a thin `notifyMany(db, {…,
+userIds: string[]})` wrapper over `notify()` (loop + idempotent insert); the
+per-row model is unchanged. `dedupe_key` stays per-recipient-unique, e.g.
+`announcement:<slug>` (same key, different `user_id` rows) or
+`group_admin:join_req:<groupId>:<requesterId>`.
+
+**Recipient-resolution is the only new work per category** — e.g. group-admin
+needs "who are the admins of group X" (role/state on `messenger_members`);
+study-plan reminders need a scheduler (no job runner exists yet — flagged).
+
+**Sitewide scale:** fan-out-on-write inserts one row per user per announcement.
+Fine at the current user base (thousands of rows is trivial for MySQL); if the
+base grows ~100×, revisit a broadcast row + per-user read-join. Authoring
+(admin mutation / UI) is open question §5.5.
 - **Announcements** are the one broadcast-shaped type. Recommend fan-out-on-
   write for the current user base (thousands of rows per announcement is
   trivial for MySQL) rather than a separate broadcast table + per-user read
@@ -208,12 +242,19 @@ dispatch(row):
 
 ## 4. Rough sequencing (for scoping, not a plan)
 
-1. Table + `notify()` core + move existing 3 types onto it; dual-read;
-   backfill; retire metadata read state. (The load-bearing step.)
-2. `mention` type (producer data already flows through `message.ts`).
-3. `group_activity` types + preferences UI.
-4. Email adapter (immediate-per-type first, digest later).
-5. Web/native push adapter.
+1. **Foundation** — table + `notify()` core + move existing 3 types onto it;
+   dual-read; backfill. (The load-bearing step. **Built 2026-08-06**, minus the
+   held all-users backfill run and full metadata retirement.)
+2. **Guardrails** (§6) — coalescing + value tiers + caps + coalesce-and-update
+   live push. Do before adding noisy new types so they're born throttled.
+3. **`notifyMany()` + multi-recipient** — the thin fan-out wrapper (§3.2a) that
+   unlocks group-admin and sitewide.
+4. **New types**, each = registry entry + producer + recipient resolver:
+   `mention` → `group_admin` → `group_activity` → `plan_reminder`/`plan_progress`
+   → `announcement`/sitewide. Order by value; `mention` is cheapest.
+5. Preferences UI (per-type/-channel opt-out).
+6. Email adapter (needs a job runner for digests/reminders — none exists yet).
+7. Web/native push adapter.
 
 ## 5. Trade-offs and open questions for KC
 
@@ -238,5 +279,38 @@ dispatch(row):
    the prod DB coordinated with deploy, or is this the moment to adopt a real
    migration tool (kysely supports one)?
 7. **Aggregation/coalescing**: "3 people reacted to your message" vs 3 rows.
-   Recommend deferring (render-time grouping is possible later without schema
-   change since dedupe_key encodes the actor), but it affects email copy.
+   → **RESOLVED (2026-08-06): coalescing is in scope as a dedicated guardrails
+   phase — see §6.**
+
+## 6. Notification quality guardrails (decided 2026-08-06, KC)
+
+A follow-on phase (after the table foundation lands) to keep the feed relevant
+and stop repetitive / low-value spam. Decisions:
+
+- **Primary mechanism — coalesce same-target.** Fold N events on the same
+  `(recipient, type, target message)` into ONE feed item with a count:
+  "5 people reacted to your comment". Not N separate bell items.
+- **Value tiers.** *High* = replies + mentions (always surface, always push
+  live, never coalesced away). *Low* = reactions + invites (coalesced + capped).
+  Encoded as a small per-type config `{ priority, coalesce, cap }` so tiers are
+  tunable without code changes; new types (mention, group_activity,
+  announcement) slot in with a tier.
+- **Per-category cap + overflow.** Surface newest N of each low-value type;
+  collapse the rest into a "+X more" affordance so one category can't drown the
+  feed.
+- **Live-push behaviour — best-practice coalesce-and-update (not re-notify).**
+  The FIRST event on a target pushes live. Subsequent same-target low-value
+  events do NOT re-buzz the bell; they update the existing item's count in place
+  (Slack/GitHub/FB pattern). High-value events always push.
+
+**Implementation lean:** read-time coalescing + caps in the `getNotifications`
+merge (no schema change, reversible, tunable) is the default. The live
+coalesce-and-update uses a socket event that patches the existing bell item's
+count rather than prepending a new one. Write-time aggregation (mutating a
+counter column on a live row) is deferred unless the real-time badge must
+reflect coalesced counts without a refetch. `dedupe_key` already encodes the
+actor, so grouping by `(type, target)` at render time is straightforward.
+
+Open sub-questions for the guardrails plan: exact caps per type; coalescing
+window (all-time within lookback vs a rolling window); whether "+X more"
+expands inline or navigates; and the socket contract for count-updates.
