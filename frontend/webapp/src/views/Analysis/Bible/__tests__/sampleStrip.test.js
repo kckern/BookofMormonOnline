@@ -42,4 +42,23 @@ describe("SampleStrip", () => {
     );
     expect(container).toBeEmptyDOMElement();
   });
+
+  test("applies the highlight span when the API returns phrase offsets", async () => {
+    BoMOnlineAPI.mockImplementation((input) => {
+      const verses = {};
+      for (const vid of input.verses || []) {
+        verses[vid] = { verse_id: vid, text: "Behold the Lord is my light", heading: "" };
+      }
+      // key format: "<bomVid>,<bibleVid>" — highlight the phrase "the Lord"
+      const versehighlights = {};
+      for (const [b, k] of input.versehighlights || []) {
+        versehighlights[`${b},${k}`] = { bom_highlight: ["the Lord"], bible_highlight: ["the Lord"] };
+      }
+      return Promise.resolve({ verses, versehighlights });
+    });
+    const { container } = render(
+      <SampleStrip bomBook="2 Nephi" bibleBook="Isaiah" onOpen={jest.fn()} />
+    );
+    await waitFor(() => expect(container.querySelector("span.highlight")).not.toBeNull());
+  });
 });

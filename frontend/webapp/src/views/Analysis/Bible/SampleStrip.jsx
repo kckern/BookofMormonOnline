@@ -40,7 +40,7 @@ export default function SampleStrip({ bomBook, bibleBook, bomChapter, bibleChapt
 
   if (!all.length) return null;
 
-  const ready = pairs.some(([b]) => verses[b]);
+  const ready = pairs.every(([b, k]) => verses[b] && verses[k]);
 
   return (
     <aside className="xref-sample" aria-label={`Sample references from ${bomBook} to ${bibleBook}`}>
@@ -57,6 +57,7 @@ export default function SampleStrip({ bomBook, bibleBook, bomChapter, bibleChapt
       ) : (
         <ul className="xref-sample-list">
           {pairs.map(([bomVid, bibleVid, isQuote]) => {
+            // highlight key is "<bomVid>,<bibleVid>" — same format Reader.jsx uses
             const pair = highlights[`${bomVid},${bibleVid}`] || {};
             const bom = verses[bomVid] || {};
             const bible = verses[bibleVid] || {};

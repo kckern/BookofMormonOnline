@@ -13,18 +13,12 @@ export default function AnchorView({ state, navigate }) {
     ? chapterCounts(canon, book)[chapter - 1]
     : bookTotal(canon, book);
 
-  // Single source of truth for the flip destination — the top partner, unless
-  // the current highlight is itself a partner book (highlight may be a division
-  // name like "Major Prophets", which we never flip to). Both the button label
-  // and flip()'s navigation derive from this one value.
+  // The primary partner book, used for both the flip control and the sample:
+  // the highlighted one if it is a real partner book, otherwise the top-ranked
+  // partner. (highlight may be a division name like "Major Prophets", which we
+  // never flip/sample to.)
   const partners = partnersFor(canon, book);
   const flipTarget =
-    (partners.some((p) => p.book.name === highlight) && highlight) ||
-    partners[0]?.book.name;
-
-  // The partner we show a concrete text sample for: the highlighted one if it
-  // is a real partner book, otherwise the top-ranked partner.
-  const sampleTarget =
     (partners.some((p) => p.book.name === highlight) && highlight) ||
     partners[0]?.book.name;
 
@@ -97,13 +91,13 @@ export default function AnchorView({ state, navigate }) {
               ch. {chapter} ✕
             </button>
           )}
-          {sampleTarget && (
+          {flipTarget && (
             <SampleStrip
-              bomBook={canon === "bom" ? book : sampleTarget}
-              bibleBook={canon === "bom" ? sampleTarget : book}
+              bomBook={canon === "bom" ? book : flipTarget}
+              bibleBook={canon === "bom" ? flipTarget : book}
               bomChapter={canon === "bom" ? chapter : undefined}
               bibleChapter={canon === "kjv" ? chapter : undefined}
-              onOpen={() => openReader(sampleTarget)}
+              onOpen={() => openReader(flipTarget)}
             />
           )}
           <PartnerBars
