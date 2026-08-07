@@ -49,12 +49,28 @@ describe("Reader", () => {
     expect(alertSpy).not.toHaveBeenCalled();
   });
 
-  test("BoM refs link to /read/, Bible refs are plain text", async () => {
+  test("both BoM and Bible refs link to /read/", async () => {
     setup({ bomBook: "Jacob" });
     await waitFor(() => expect(screen.getAllByTestId("xref-pair").length).toBe(9));
     const bomLinks = screen.getAllByRole("link", { name: /Jacob/ });
     expect(bomLinks[0]).toHaveAttribute("href", expect.stringMatching(/^\/read\//));
-    expect(screen.queryByRole("link", { name: /Isaiah \d/ })).toBeNull();
+    const bibleLinks = screen.getAllByRole("link", { name: /Isaiah \d/ });
+    expect(bibleLinks[0]).toHaveAttribute("href", expect.stringMatching(/^\/read\//));
+  });
+
+  test("a repeated chapter heading renders once per run, not on every row", async () => {
+    // reinstall the mock with a constant heading so consecutive rows share it
+    BoMOnlineAPI.mockImplementation((input) => {
+      const verses = {};
+      for (const vid of input.verses || []) {
+        verses[vid] = { verse_id: vid, text: `text of verse ${vid}`, heading: "Shared Heading" };
+      }
+      return Promise.resolve({ verses, versehighlights: {} });
+    });
+    setup({ bomBook: "Jacob" });
+    await waitFor(() => expect(screen.getAllByTestId("xref-pair").length).toBe(9));
+    // 9 pairs, one shared heading string — must appear far fewer than 9 times
+    expect(screen.getAllByText("Shared Heading").length).toBeLessThan(9);
   });
 
   test("quote pairs carry a QUOTE badge", async () => {

@@ -682,10 +682,6 @@ html[data-theme="dark"] .xref-chaptercell.ramp-6 {
   color: var(--text-faint, #999);
 }
 
-.verseViewerTable td.scriptureRef.right .heading {
-  text-align: right;
-  padding-right: 1rem;
-}
 
 .verseViewerTable td.scriptureRef .ref {
   font-weight: bold;
@@ -702,9 +698,6 @@ html[data-theme="dark"] .xref-chaptercell.ramp-6 {
   color: var(--link, #345496);
 }
 
-.verseViewerTable td.scriptureRef.right .ref {
-  text-align: right;
-}
 
 .verseViewerTable td.scriptureCell {
   vertical-align: top;
@@ -718,7 +711,7 @@ html[data-theme="dark"] .xref-chaptercell.ramp-6 {
   font-family: "Scripture", serif;
   font-size: 1rem;
   line-height: 1.3rem;
-  text-align: justify;
+  text-align: left;
   padding: 0.8rem;
   border-radius: 1ex;
 }
@@ -844,8 +837,6 @@ html[data-theme="dark"] .verseViewerTable .scriptureCell p span.highlight {
   .xref-spinelabel { display: none; }
   /* the ref is the row's identity — give it the space; drop the heading */
   .verseViewerTable td.scriptureRef .heading { display: none; }
-  /* justified text in ~150px columns is all rivers */
-  .verseViewerTable .scriptureCell p { text-align: left; }
   .xref-sample-list li { grid-template-columns: 1fr; }
 }
 

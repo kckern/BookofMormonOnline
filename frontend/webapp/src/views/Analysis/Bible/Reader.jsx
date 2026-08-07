@@ -156,11 +156,18 @@ export default function Reader({ state, navigate }) {
           </tr>
         </thead>
         <tbody>
-          {visible.map(({ bomVid, bibleVid, isQuote, bomRef, bibleRef }) => {
-            const pairHighlights = highlights[`${bomVid},${bibleVid}`] || {};
-            const bomData = verseData[bomVid] || {};
-            const bibleData = verseData[bibleVid] || {};
-            return (
+          {(() => {
+            let lastBomHeading = null;
+            let lastBibleHeading = null;
+            return visible.map(({ bomVid, bibleVid, isQuote, bomRef, bibleRef }) => {
+              const pairHighlights = highlights[`${bomVid},${bibleVid}`] || {};
+              const bomData = verseData[bomVid] || {};
+              const bibleData = verseData[bibleVid] || {};
+              const bomHeading = bomData.heading && bomData.heading !== lastBomHeading ? bomData.heading : "";
+              const bibleHeading = bibleData.heading && bibleData.heading !== lastBibleHeading ? bibleData.heading : "";
+              if (bomData.heading) lastBomHeading = bomData.heading;
+              if (bibleData.heading) lastBibleHeading = bibleData.heading;
+              return (
               <React.Fragment key={`${bomVid}-${bibleVid}`}>
                 <tr data-testid="xref-pair" className={isQuote ? "quote" : "phrase"}>
                   <td className="scriptureRef left">
@@ -169,13 +176,15 @@ export default function Reader({ state, navigate }) {
                         {bomRef}
                       </Link>
                       {isQuote && <span className="xref-quote-badge">QUOTE</span>}
-                      <div className="heading noselect">{bomData.heading}</div>
+                      <div className="heading noselect">{bomHeading}</div>
                     </div>
                   </td>
                   <td className="scriptureRef right">
                     <div className="header_container">
-                      <div className="heading noselect">{bibleData.heading}</div>
-                      <span className="ref">{bibleRef}</span>
+                      <Link className="ref" to={`/read/${verseIdToSlug([bibleVid])}`}>
+                        {bibleRef}
+                      </Link>
+                      <div className="heading noselect">{bibleHeading}</div>
                     </div>
                   </td>
                 </tr>
@@ -191,7 +200,8 @@ export default function Reader({ state, navigate }) {
                 </tr>
               </React.Fragment>
             );
-          })}
+            });
+          })()}
         </tbody>
       </table>
       {remaining > 0 && (
