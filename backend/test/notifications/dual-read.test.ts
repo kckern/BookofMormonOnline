@@ -14,6 +14,7 @@ import { createPool } from 'mysql2';
 import type { DB } from '../../codegen/db.js';
 import { getNotifications, pushNotificationForEvent } from '../../src/messaging/notifications.js';
 import { persistNotification } from '../../src/notifications/store.js';
+import { backfillUser } from '../../scripts/backfill-notifications.js';
 
 function buildWriteDb(): Kysely<DB> {
   const host = process.env['MYSQL_HOST'] ?? '127.0.0.1';
@@ -201,5 +202,25 @@ describe('dual-read merge', () => {
     const ids = notifs.map((n) => n.id);
     expect(ids).toContain(`reply:${r1}`);
     expect(ids).toContain(`reply:${r2}`);
+  });
+});
+
+describe('backfill', () => {
+  itWrite('seeds rows for existing derived notifications and is re-runnable', async () => {
+    const me = await mkUser('Recipient');
+    const actor = await mkUser('Replier');
+    const ch = await mkChannel('Group A', [me, actor]);
+    const parent = await mkMessage(ch, me, 'my comment');
+    const replyId = await mkMessage(ch, actor, 'nice point', parent); // derived-only, no row yet
+
+    const first = await backfillUser(db, me);
+    const second = await backfillUser(db, me);
+    expect(first).toBeGreaterThanOrEqual(1);
+    expect(second).toBe(0); // idempotent: nothing new inserted
+
+    const rows = await db.selectFrom('bom_notification').selectAll().where('user_id','=',me).execute();
+    const row = rows.find((r) => r.dedupe_key === `reply:${replyId}`);
+    expect(row).toBeDefined();
+    expect(row!.actor_id).toBe(actor); // guards against nulling actor_id (UserDTO.user_id, not .id)
   });
 });
