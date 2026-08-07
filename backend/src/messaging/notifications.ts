@@ -253,6 +253,17 @@ export async function markNotificationRead(
   notificationId: string,
 ): Promise<boolean> {
   if (!notificationId) return false;
+  // Stamp the durable row first (before the fast-path check so it runs even
+  // when metadata already has the id but the row was never stamped).
+  await db
+    .updateTable('bom_notification')
+    .set({ read_at: new Date() })
+    .where('user_id', '=', userId)
+    .where('dedupe_key', '=', notificationId)
+    .where('read_at', 'is', null)
+    .executeTakeFirst();
+  // Metadata fallback — keep writing for compatibility with derived-only /
+  // pre-backfill rows that have no durable bom_notification row.
   const meta = (await getUserMetadata(db, userId)) ?? {};
   const existing = Array.isArray(meta['notificationsRead'])
     ? (meta['notificationsRead'] as unknown[]).filter((x): x is string => typeof x === 'string')
@@ -273,7 +284,15 @@ export async function markAllNotificationsRead(
   const meta = (await getUserMetadata(db, userId)) ?? {};
   meta['notificationsReadAt'] = Date.now();
   meta['notificationsRead'] = [];
-  return updateUserMetadata(db, userId, meta);
+  const result = await updateUserMetadata(db, userId, meta);
+  // Stamp all durable rows so read-state is durable even without metadata.
+  await db
+    .updateTable('bom_notification')
+    .set({ read_at: new Date() })
+    .where('user_id', '=', userId)
+    .where('read_at', 'is', null)
+    .executeTakeFirst();
+  return result;
 }
 
 // ─── realtime push ────────────────────────────────────────────────────────────

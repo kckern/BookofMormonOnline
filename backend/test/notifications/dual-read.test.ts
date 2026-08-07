@@ -12,7 +12,7 @@ import { nanoid } from 'nanoid';
 import { Kysely, MysqlDialect, type MysqlDialectConfig } from 'kysely';
 import { createPool } from 'mysql2';
 import type { DB } from '../../codegen/db.js';
-import { getNotifications, pushNotificationForEvent } from '../../src/messaging/notifications.js';
+import { getNotifications, markNotificationRead, pushNotificationForEvent } from '../../src/messaging/notifications.js';
 import { persistNotification } from '../../src/notifications/store.js';
 import { backfillUser } from '../../scripts/backfill-notifications.js';
 
@@ -202,6 +202,28 @@ describe('dual-read merge', () => {
     const ids = notifs.map((n) => n.id);
     expect(ids).toContain(`reply:${r1}`);
     expect(ids).toContain(`reply:${r2}`);
+  });
+});
+
+describe('read state on rows', () => {
+  itWrite('markNotificationRead stamps read_at on the stored row', async () => {
+    const me = await mkUser('Recipient');
+    const actor = await mkUser('Replier');
+    const ch = await mkChannel('Group A', [me, actor]);
+    const parent = await mkMessage(ch, me, 'my comment');
+    const replyId = await mkMessage(ch, actor, 'nice point', parent);
+    // Persist a durable row via the producer (keyed reply:<replyId>).
+    await pushNotificationForEvent(db, { type: 'reply', targetMessageId: parent, actorId: actor, sourceMessageId: replyId });
+
+    const ok = await markNotificationRead(db, me, `reply:${replyId}`);
+    expect(ok).toBe(true);
+    const row = await db.selectFrom('bom_notification')
+      .select('read_at').where('user_id','=',me).where('dedupe_key','=',`reply:${replyId}`)
+      .executeTakeFirstOrThrow();
+    expect(row.read_at).not.toBeNull();
+
+    const notifs = await getNotifications(db, me);
+    expect(notifs.find((n) => n.id === `reply:${replyId}`)!.is_read).toBe(true);
   });
 });
 
