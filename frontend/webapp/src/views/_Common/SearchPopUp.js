@@ -6,6 +6,8 @@ import { label } from "src/models/Utils";
 import EntityThumb from "./EntityThumb";
 import "./SearchPopUp.css";
 
+const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 export function SearchPopUp({ preLoadData, selectItemHandler,placeholder,isOpen,setIsOpen,testFieldNames,assetName,initSearchString = "" }) {
 
     const [searchResults, setSearchResults] = useState([]);
@@ -59,14 +61,29 @@ export function SearchPopUp({ preLoadData, selectItemHandler,placeholder,isOpen,
         };
     }, [isOpen]);
 
+    // Type-to-search opens an already-mounted popup. Seed both the controlled
+    // field and its result list when that shortcut supplies a character.
+    useEffect(() => {
+        if (!isOpen || !initSearchString || !preLoadData) return;
+        const pattern = new RegExp(escapeRegExp(initSearchString), "i");
+        const results = Object.values(preLoadData).map((item) => {
+            if (pattern.test(item[testFieldNames.primary] || "")) return { ...item, className: "primaryResult" };
+            if (pattern.test(item[testFieldNames.secondary] || "")) return { ...item, className: "secondaryResult" };
+            return null;
+        }).filter(Boolean).sort((a, b) => a.className.localeCompare(b.className)).slice(0, 10);
+        setSearchString(initSearchString);
+        setSearchResults(results);
+        setSelectedResult(0);
+    }, [initSearchString, isOpen, preLoadData, testFieldNames]);
+
     // Handle search input changes
     const handleTyping = (e) => {
         if (!preLoadData) return;
         const inputString = e.target.value;
+        const pattern = new RegExp(escapeRegExp(inputString), "i");
         const results = Object.values(preLoadData).map(i => {
-            const pattern = new RegExp(inputString, "ig");
-            if (pattern.test(i[testFieldNames.primary])) return { ...i, className: "primaryResult" };
-            if (pattern.test(i[testFieldNames.secondary])) return { ...i, className: "secondaryResult" };
+            if (pattern.test(i[testFieldNames.primary] || "")) return { ...i, className: "primaryResult" };
+            if (pattern.test(i[testFieldNames.secondary] || "")) return { ...i, className: "secondaryResult" };
             return null;
         }).filter(Boolean)
             .sort((a, b) => a.className.localeCompare(b.className))
@@ -80,11 +97,12 @@ export function SearchPopUp({ preLoadData, selectItemHandler,placeholder,isOpen,
     if (!isOpen || !preLoadData) return null;
 
     const highlight = (needle, haystack) => {
-        haystack = haystack.replace(/[0-9]/g, '');
-        const full_pattern =  new RegExp(needle.replace(/(ing|s|es|ed)$/,'') + ".*?(\\b| )", 'gi');
+        haystack = (haystack || "").replace(/[0-9]/g, '');
+        const root = escapeRegExp(needle.replace(/(ing|s|es|ed)$/,''));
+        const full_pattern =  new RegExp(root + ".*?(\\b| )", 'gi');
         if(full_pattern.test(haystack)) return Parser(haystack.replace(full_pattern, (str) => `<em>${str.trim()}</em> `));
 
-        let needles = needle.split(/[ ,.;!?]+/).map(str=>(new RegExp("\\b"+str.replace(/(ing|s|es|ed)$/,'')  + ".*?\\b", 'gi')));
+        let needles = needle.split(/[ ,.;!?]+/).filter(Boolean).map(str=>(new RegExp("\\b"+escapeRegExp(str.replace(/(ing|s|es|ed)$/,''))  + ".*?\\b", 'gi')));
         for(let i in needles)
         {
           haystack = haystack.replace(needles[i], (str) => `<em>${str}</em>`);
@@ -98,7 +116,7 @@ export function SearchPopUp({ preLoadData, selectItemHandler,placeholder,isOpen,
         <Card className="search-popup">
             <CardHeader>
                 <div className='close'>🔍</div>
-                <input type="text" placeholder={label(placeholder)} onChange={handleTyping} defaultValue={""} ref={searchInputRef}/>
+                <input type="text" placeholder={label(placeholder)} onChange={handleTyping} value={searchString} ref={searchInputRef}/>
                 <div onClick={() => setIsOpen(false)} className='close'>×</div>
             </CardHeader>
             <CardBody>
@@ -111,7 +129,7 @@ export function SearchPopUp({ preLoadData, selectItemHandler,placeholder,isOpen,
                             onMouseEnter={() => setSelectedResult(index)}
                             key={index} className={`search-result ${result.className} ${index === selectedResult ? 'selected' : ''} ${isLastInGroup ? 'last' : ''}`}>
                                 <EntityThumb key={`${result.slug}`} type={assetName} slug={result.slug} name={result[testFieldNames.primary]} />
-                                <div>
+                                <div className="search-result-copy">
                                     <div className={`search-result-${testFieldNames.primary}`}>{highlight(searchString, result[testFieldNames.primary])}</div>
                                     <div className={`search-result-${testFieldNames.secondary}`}>{highlight(searchString, result[testFieldNames.secondary])}</div>
                                 </div>

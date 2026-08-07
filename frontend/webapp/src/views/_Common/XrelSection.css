@@ -10,18 +10,16 @@
 .xrels {
   list-style: none;
   padding: 0;
-  margin: 0.5ex 0 1rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1ex;
+  margin: 0.45rem 0 1.25rem;
+  display: grid;
+  gap: 0.7rem;
 }
 
 /* Verb head — full width so it forces a break in the wrapping grid. */
 .xrels .xrel-group-head {
   width: 100%;
-  flex-shrink: 0;
-  margin-top: 0.5ex;
-  font-size: 0.75rem;
+  margin: 0.55rem 0 -0.2rem;
+  font-size: 0.82rem;
   line-height: 1.2;
   color: #888;
   letter-spacing: 0.02em;
@@ -49,17 +47,16 @@
 .xrels .xrel {
   display: flex;
   align-items: center;
-  width: calc(50% - 1ex);
-  flex-shrink: 0;
-  min-height: 2.5rem;
-  padding: 0.2ex;
-  border-radius: 1ex;
-  font-size: 0.8rem;
-  line-height: 1rem;
+  width: 100%;
+  min-height: 4.15rem;
+  padding: 0.35rem;
+  border: 1px solid #e2e2e2;
+  border-radius: 0.45rem;
+  background: #fafafa;
+  font-size: 0.88rem;
+  line-height: 1.18;
   color: #666;
-  overflow-wrap: break-word;
-  word-wrap: break-word;
-  hyphens: auto;
+  overflow-wrap: anywhere;
 }
 
 .xrels .xrel.clickable {
@@ -67,7 +64,8 @@
 }
 
 .xrels .xrel.clickable:hover {
-  background-color: #eee;
+  background-color: #f1f5f2;
+  border-color: #cbd8ce;
 }
 
 .xrels .xrel.clickable:hover .entityThumb img {
@@ -77,7 +75,10 @@
 .xrels .xrel .entityThumb {
   flex-shrink: 0;
   flex-grow: 0;
-  margin-right: 0.5ex;
+  width: 3.35rem !important;
+  height: 3.35rem !important;
+  margin-right: 0.65rem;
+  border-radius: 0.3rem;
 }
 
 .xrels .xrel .entityThumb img {
@@ -90,12 +91,13 @@
   justify-content: center;
   flex-grow: 1;
   min-width: 0;
-  letter-spacing: -0.5px;
+  letter-spacing: 0;
 }
 
 .xrels .xrel .xrel-name {
   font-weight: bold;
   color: black;
+  font-size: 1.02em;
 }
 
 /* Groups have no page behind them — a tag, not a dead link. Their dst_name is
@@ -109,20 +111,8 @@
 }
 
 .xrels .xrel .xrel-note {
-  font-size: 0.9em;
-  line-height: 1.1;
+  font-size: 0.92em;
+  line-height: 1.25;
   color: #999;
-  margin-top: 0.2ex;
-}
-
-@media only screen and (max-width: 1200px) {
-  .xrels .xrel {
-    width: calc(80% - 1ex);
-  }
-}
-
-@media only screen and (max-width: 800px) {
-  .xrels .xrel {
-    width: calc(100% - 1ex);
-  }
+  margin-top: 0.16rem;
 }
