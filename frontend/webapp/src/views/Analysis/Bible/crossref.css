@@ -664,6 +664,93 @@ html[data-theme="dark"] .verseViewerTable .scriptureCell p span.highlight {
   background-color: rgba(87, 167, 95, 0.35);
 }
 
+/* ---- sample strip (text beside the bars) ---- */
+
+.xref-sample {
+  max-width: 860px;
+  margin: 0 0 1.25rem;
+  border: 1px solid var(--border, #ddd);
+  border-radius: 0.75ex;
+  background: var(--surface-1, #f8f8f8);
+  padding: 0.75rem 0.9rem;
+}
+
+.xref-sample-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.xref-sample-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.xref-sample-open {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--link, #345496);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.xref-sample-open:hover {
+  text-decoration: underline;
+}
+
+.xref-sample-skeleton {
+  height: 4.5rem;
+  border-radius: 0.5ex;
+  background: linear-gradient(90deg, var(--surface-2, #f0f0f0), var(--surface-1, #f8f8f8), var(--surface-2, #f0f0f0));
+}
+
+.xref-sample-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.xref-sample-list li {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  border-left: 3px solid var(--xref-phrase);
+  padding-left: 0.6rem;
+}
+
+.xref-sample-list li.quote {
+  border-left-color: var(--xref-quote);
+}
+
+.xref-sample-ref {
+  display: block;
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: var(--text-secondary, #444);
+  margin-bottom: 0.15rem;
+}
+
+.xref-sample-side p {
+  margin: 0;
+  font-family: "Scripture", serif;
+  font-size: 0.9rem;
+  line-height: 1.3rem;
+  color: var(--text-primary, #212529);
+}
+
+.xref-sample-side p span.highlight {
+  background-color: rgba(92, 185, 138, 0.3);
+  box-shadow: inset 0 -2px 0 var(--xref-quote);
+}
+
 /* ---- responsive ---- */
 
 @media (max-width: 1100px) {
@@ -691,6 +778,7 @@ html[data-theme="dark"] .verseViewerTable .scriptureCell p span.highlight {
   .verseViewerTable td.scriptureRef .heading { display: none; }
   /* justified text in ~150px columns is all rivers */
   .verseViewerTable .scriptureCell p { text-align: left; }
+  .xref-sample-list li { grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -3,6 +3,7 @@ import Breadcrumb from "src/views/_Common/Breadcrumb/Breadcrumb";
 import { bookTotal, partnersFor, chapterCounts } from "./aggregate";
 import Rail from "./Rail";
 import PartnerBars from "./PartnerBars";
+import SampleStrip from "./SampleStrip";
 
 // Anchored master-detail: rail (anchor canon) + ranked partner bars.
 // All navigation goes through props.navigate — state lives in the URL.
@@ -18,6 +19,12 @@ export default function AnchorView({ state, navigate }) {
   // and flip()'s navigation derive from this one value.
   const partners = partnersFor(canon, book);
   const flipTarget =
+    (partners.some((p) => p.book.name === highlight) && highlight) ||
+    partners[0]?.book.name;
+
+  // The partner we show a concrete text sample for: the highlighted one if it
+  // is a real partner book, otherwise the top-ranked partner.
+  const sampleTarget =
     (partners.some((p) => p.book.name === highlight) && highlight) ||
     partners[0]?.book.name;
 
@@ -89,6 +96,15 @@ export default function AnchorView({ state, navigate }) {
             >
               ch. {chapter} ✕
             </button>
+          )}
+          {sampleTarget && (
+            <SampleStrip
+              bomBook={canon === "bom" ? book : sampleTarget}
+              bibleBook={canon === "bom" ? sampleTarget : book}
+              bomChapter={canon === "bom" ? chapter : undefined}
+              bibleChapter={canon === "kjv" ? chapter : undefined}
+              onOpen={() => openReader(sampleTarget)}
+            />
           )}
           <PartnerBars
             canon={canon}

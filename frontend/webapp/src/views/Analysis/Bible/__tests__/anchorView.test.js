@@ -3,8 +3,29 @@ import "@testing-library/jest-dom";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import AnchorView from "../AnchorView";
+import BoMOnlineAPI from "src/models/BoMOnlineAPI";
+
+// SampleStrip (rendered inside AnchorView) calls BoMOnlineAPI in a useEffect.
+// The real implementation hits indexedDB which is not available in JSDOM —
+// mock it with a resolved-promise stub so the effect never throws.
+jest.mock("src/models/BoMOnlineAPI", () => ({
+  __esModule: true,
+  default: jest.fn(),
+}));
+
+// resetMocks: true — reinstall per test
+const installApiMock = () =>
+  BoMOnlineAPI.mockImplementation((input) => {
+    const verses = {};
+    for (const vid of input.verses || []) {
+      verses[vid] = { verse_id: vid, text: `text of verse ${vid}`, heading: "" };
+    }
+    return Promise.resolve({ verses, versehighlights: {} });
+  });
 
 describe("AnchorView", () => {
+  beforeEach(installApiMock);
+
   const setup = (state = { view: "anchor", canon: "bom", book: "2 Nephi" }) => {
     const navigate = jest.fn();
     render(
