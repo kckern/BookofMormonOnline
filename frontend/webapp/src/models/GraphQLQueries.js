@@ -695,6 +695,7 @@ const queries = {
         event_year
         event_date
         money_quote
+        mini_quote
         quote_is_witness_voice
         quote_speaker
         quote_contains_witness_speech
@@ -1852,7 +1853,7 @@ const queries = {
         contents { slug title description pages { title slug sections { title slug } } }
         section { title slug page { title slug } rows { guid narration { guid description text { slug heading imgIds status(token:"${input.token || ""}") } } } }
         sectionNext { title slug rows { guid narration { guid description text { slug heading status(token:"${input.token || ""}") } } } }
-        history { id slug year date source archive author document teaser citation aspect }
+        history { id slug year date source archive author document teaser citation aspect money_quote mini_quote quote_speaker quote_is_witness_voice }
         text { slug heading content imgIds parent_page { title } parent_section { title } narration { description } }
         notes { id title text reference publication { source_name source_id } }
         faxVerse { version title format page verseId ref selector editions { version title page } }
