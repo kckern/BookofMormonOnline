@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { label, playSound, useWindowSize } from "src/models/Utils";
+import { analytics, GOALS } from "../../models/analytics/index.js";
 import Confetti from 'react-confetti'
 import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
 import UserAvatar from "src/components/UserAvatar";
@@ -41,7 +42,7 @@ export function Victory({ context }) {
     );
     useEffect(() => {
         if (appController.states.preferences.sound) playSound(victory)//.play();
-        window.clicky?.goal("finish");
+        analytics.goal(GOALS.FINISH);
 
         if (!summary) BoMOnlineAPI(
             {

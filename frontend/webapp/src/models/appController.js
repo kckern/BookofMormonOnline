@@ -1,7 +1,8 @@
 import { lang } from "moment";
 import { isMessengerEnabled } from './featureFlags';
 import { migratePreferences } from "./preferenceMigration";
-import { clickyUser, determineLanguage, tokenImage } from "./Utils.js";
+import { determineLanguage, tokenImage } from "./Utils.js";
+import { analytics, GOALS } from "./analytics/index.js";
 import crypto from "crypto-browserify";
 import { history } from "./routeHistory.js";
 import { setPopDocTitle } from "src/views/_Common/PopUp.js";
@@ -323,7 +324,7 @@ export const appFunctions = {
 
       if (appController.states.user.social?.user_id) {
         // Controller creation + bootstrap moved to MessengerProvider.
-        clickyUser({ userid: appController.states.user.user, username: appController.states.user.social?.nickname })
+        analytics.identify({ userid: appController.states.user.user, username: appController.states.user.social?.nickname })
       }
 
       delete input.val.tokenSignIn;
@@ -670,7 +671,8 @@ export const appFunctions = {
     appController.states.user.user = user.user.user;
     appController.states.user.progress = user.progress || {};
     appController.states.user.social = user.social;
-    clickyUser({ userid: user.user.user, username: user.social?.nickname });
+    analytics.identify({ userid: user.user.user, username: user.social?.nickname });
+    analytics.goal(GOALS.SIGNIN);
 
 
     return appController;

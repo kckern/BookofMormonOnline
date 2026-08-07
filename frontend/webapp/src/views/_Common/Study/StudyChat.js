@@ -7,6 +7,7 @@ import {
   CommentaryInFeed,
 } from "src/views/_Common/Study/StudyInFeed";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
+import { analytics, GOALS } from "../../../models/analytics/index.js";
 import {
   breakCache,
   isMobile,
@@ -116,7 +117,7 @@ export function StudyGroupChatInput({ channel }) {
 
     try {
       channel.sendUserMessage(params).onSucceeded((message) => {
-        window.clicky?.goal("comment");
+        analytics.goal(GOALS.COMMENT);
         textbox.value = "";
         textbox.classList.remove("sending");
         auto_grow(textbox);
@@ -683,7 +684,7 @@ export function StudyGroupThread({
 
     try {
       channel.sendUserMessage(params).onSucceeded((message) => {
-        window.clicky?.goal("comment");
+        analytics.goal(GOALS.COMMENT);
         textbox.value = "";
         textbox.classList.remove("sending");
         textbox.disabled = false;

@@ -4,6 +4,7 @@ import { Link, NavLink, useHistory, useRouteMatch } from "react-router-dom";
 import { Nav, Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 import "./Sidebar.css";
 import { breakCache, determineLanguage, label, tokenImage } from "src/models/Utils.js";
+import { analytics, GOALS } from "../../models/analytics/index.js";
 import { getSearchSlug } from "src/models/searchSlug";
 import crypto from "crypto-browserify";
 import UserAvatar from "src/components/UserAvatar";
@@ -403,7 +404,7 @@ function LanguageSelect() {
 
   const selectLanguage = (language) => {
     
-    window.clicky?.goal("language");
+    analytics.goal(GOALS.LANGUAGE);
     const currentPath = window.location.pathname;
     const selectedUrl = langs[language].url;
     window.location.href = selectedUrl + currentPath;

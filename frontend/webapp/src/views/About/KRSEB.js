@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button, Card, CardBody, CardHeader, Label } from "reactstrap";
 import { label } from "src/models/Utils";
+import { analytics, GOALS } from "../../models/analytics/index.js";
 import "./KRSEB.css"
 
 
@@ -24,8 +25,8 @@ export default function KRSEB() {
                     <div className="product">
                         <img src={"https://i.imgur.com/tvy7Haf.png"} />
                         <Label>21,000 원 <span>(실가)</span></Label>
-                        <Button onClick={window.clicky?.goal("kr_buy")} color="success" target="_blank" href={"https://www.bookk.co.kr/book/view/71999"} >종이책 구매하기</Button>
-                        <Button onClick={window.clicky?.goal("kr_download")}  color="info" target="_blank" href={"https://media.bookofmormon.online/fax/pdf/%EB%AA%B0%EB%AA%AC%EA%B2%BD%E2%80%94%ED%8A%B9%EB%B3%84%ED%8C%90"} >무료 다운로드</Button>
+                        <Button onClick={() => analytics.goal(GOALS.KR_BUY)} color="success" target="_blank" href={"https://www.bookk.co.kr/book/view/71999"} >종이책 구매하기</Button>
+                        <Button onClick={() => analytics.goal(GOALS.KR_DOWNLOAD)}  color="info" target="_blank" href={"https://media.bookofmormon.online/fax/pdf/%EB%AA%B0%EB%AA%AC%EA%B2%BD%E2%80%94%ED%8A%B9%EB%B3%84%ED%8C%90"} >무료 다운로드</Button>
                         
                     </div>
                 </CardBody>
