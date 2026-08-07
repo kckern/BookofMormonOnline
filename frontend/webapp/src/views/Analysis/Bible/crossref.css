@@ -334,7 +334,8 @@ html[data-theme="dark"] .xref-root {
 
 .xref-rail {
   flex: 0 0 240px;
-  max-height: calc(100vh - 220px);
+  /* accordion keeps the list short; cap only as a safety net, not a tunnel */
+  max-height: calc(100vh - 140px);
   overflow-y: auto;
   padding-right: 0.5rem;
   position: relative; /* offsetParent for the anchored-book auto-scroll (Rail.jsx) */
@@ -347,6 +348,36 @@ html[data-theme="dark"] .xref-root {
   text-transform: uppercase;
   color: var(--text-muted, #777);
   margin: 0.9rem 0 0.25rem;
+}
+
+.xref-rail-groupbtn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: none;
+  border: none;
+  border-radius: 0.5ex;
+  padding: 0.25rem 0.5rem;
+  margin-top: 0.4rem;
+  font: inherit;
+  color: var(--text-primary, #212529);
+  cursor: pointer;
+  text-align: left;
+}
+
+.xref-rail-groupbtn:hover {
+  background: var(--surface-2, #f0f0f0);
+}
+
+.xref-rail-groupbtn .xref-rail-groupname {
+  margin: 0;
+}
+
+.xref-rail-groupcount {
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted, #777);
 }
 
 .xref-rail-book {
