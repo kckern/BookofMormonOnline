@@ -29,8 +29,8 @@ const labels = {
   mapstory_pause: 'Pause journey',
   mapstory_summary: 'Story summary',
   mapstory_move: 'Move $1',
-  mapstory_detached: 'not continuous',
-  mapstory_detached_title: 'This move does not continue from the previous one',
+  mapstory_detached: 'story resumes elsewhere',
+  mapstory_detached_title: 'This movement begins a new geographic run',
   mapstory_meta: '$1 moves · $2 places',
   // Two-layer CTA controls (Layer 1 read-more expand, Layer 2 deeplinks). Used
   // across the tiles; seeded here so they never render as raw keys.

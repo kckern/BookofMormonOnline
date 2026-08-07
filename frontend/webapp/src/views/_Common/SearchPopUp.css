@@ -1,10 +1,9 @@
 .search-popup{
   position: fixed;
   top: 10%;
-  width: 30vw;
+  width: min(42rem, calc(100vw - 3rem));
   left: calc(50% + 100px);
   transform: translateX(-50%);
-  min-width: fit-content;
 
   /* 10 px drop shadow in all directions */
   box-shadow: 0 0 5rem #000;
@@ -38,9 +37,12 @@
 
 .search-popup .search-result
 {
-  display: flex;
-  text-align: left;
-  margin-bottom: 0.5ex;
+    display: flex;
+    align-items: center;
+    text-align: left;
+    min-height: 4.75rem;
+    margin-bottom: .35rem;
+    padding: .35rem;
   cursor: pointer;
 }
 
@@ -68,12 +70,15 @@
 
 .search-popup  .search-results
 {
-  margin-top: 0;
+    margin-top: 0;
+    overflow-y: auto;
+    max-height: calc(90vh - 8rem);
 }
 
-.search-popup .search-result > div
+.search-popup .search-result > .search-result-copy
 {
-  flex-grow: 1;
+    flex-grow: 1;
+    min-width: 0;
 }
 
 
@@ -92,10 +97,12 @@
 
 .search-popup .search-result > .entityThumb
 {
-  height: 4rem;
-  width: 4rem;
-  margin-right: 1ex;
+  height: 4.5rem;
+  width: 5.5rem;
+  margin-right: .75rem;
   flex-shrink: 0;
+  flex-grow: 0;
+  border-radius: .4rem;
 }
 /* Sized initials for the gradient fallback (matters with no artwork). */
 .search-popup .search-result > .entityThumb.fallback
@@ -106,18 +113,17 @@
 {
   font-weight: bold;
   font-size: 1rem;
-  height: 50%;
-  position: relative;
-  bottom: -1ex;
+  line-height: 1.2;
 }
 .search-result-info
 {
   color: #999;
-
-  white-space: nowrap;
+  line-height: 1.25;
+  margin-top: .2rem;
   overflow: hidden;
-  height: 1.2rem;
-  margin-right: -3rem;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .search-popup .close{
@@ -153,4 +159,8 @@
 .search-result em{
   font-style: normal;
   background-color: #FFFF0033;
+}
+
+@media only screen and (max-width: 700px) {
+  .search-popup { left: 50%; top: 5%; width: calc(100vw - 1.5rem); }
 }

@@ -49,6 +49,7 @@ export interface CommentaryRow {
   verse_range: number;
   location_guid: string;
   title: string;
+  text_highlight: string | null;
   text: string;
   is_note: number;
 }
@@ -338,7 +339,7 @@ export function scriptureextrasLoaders(db: Kysely<DB>, lang: string, core: Loade
     // LIMIT 100 matches legacy resolver.
     return db
       .selectFrom('bom_xtras_commentary')
-      .select(['id', 'verse_id', 'verse_range', 'location_guid', 'title', 'text', 'is_note'])
+      .select(['id', 'verse_id', 'verse_range', 'location_guid', 'title', 'text_highlight', 'text', 'is_note'])
       .where('verse_id', 'in', verseIds)
       .where('is_note', '!=', 1)
       .limit(100)

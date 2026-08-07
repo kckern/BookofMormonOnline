@@ -701,6 +701,10 @@ export interface BomXtrasCommentary {
   old_id: number | null;
   source: string;
   text: string;
+  /**
+   * Verified contiguous source text for per-commentary highlighting
+   */
+  text_highlight: string | null;
   title: string;
   verse_id: number | null;
   verse_range: Generated<number>;

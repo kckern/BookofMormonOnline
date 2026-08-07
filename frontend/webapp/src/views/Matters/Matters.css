@@ -26,7 +26,7 @@
     margin-bottom:2em;
     display: flex;
     flex-direction: column;
-    height: 19em;
+    height: auto;
 }
 
 .MatterList .card-header,
@@ -66,13 +66,13 @@
     line-height: 1em;
     background-position: center;
     background-repeat: no-repeat;
-    /* Fixed-height card (19em) with a flex-shrinking image body: when the header
-       wraps to two lines the body shrinks and the cover crop adapts, so every
-       tile stays the same total height (mirrors Places/People). */
-    height: 15em;
+    /* Landscape artwork keeps the browse grid compact and scales with each
+       masonry column instead of enforcing a portrait fixed height. */
+    aspect-ratio: 4 / 3;
+    height: auto;
     background-size: cover;
     position: relative;
-    flex-shrink: 1;
+    flex-shrink: 0;
 }
 
 .MatterList .card-body.matterInfo.matterFallback
@@ -127,7 +127,7 @@
 .MatterList .card-header
 {
     flex-shrink: 0;
-    flex-grow: 1;
+    flex-grow: 0;
 }
 
 .MatterList .card-footer div.labels

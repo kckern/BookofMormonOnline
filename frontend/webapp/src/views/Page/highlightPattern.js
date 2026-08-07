@@ -1,7 +1,8 @@
 // Highlight strings come from two sources: setHighlights builds intentional
-// regex patterns from image/commentary titles (e.g. containing [^a-z]|<[^>]*>),
-// but comment highlights and user selections are raw text. Raw text containing
-// metacharacters like ( or [ must be escaped so it matches literally.
+// regex patterns from image/commentary source phrases (e.g. containing
+// [^a-z]|<[^>]*>), but comment highlights and user selections are raw text. Raw
+// text containing metacharacters like ( or [ must be escaped so it matches
+// literally.
 //
 // Intentional patterns from setHighlights always contain ([^a-z]|<[^>]*>)+?
 // for HTML-aware word-boundary matching. Raw user text never contains [^.
@@ -15,10 +16,12 @@ function isIntentionalPattern(str) {
   return /\[\^/.test(str);
 }
 
-// Titles become tolerant regexes: edge punctuation stripped, every non-letter
-// run matches punctuation OR markup so highlights survive inline tags.
-export function titleToHighlightPattern(title) {
-  return String(title)
+// Source phrases become tolerant regexes: edge punctuation stripped, every
+// non-letter run matches punctuation OR markup so highlights survive inline
+// tags. The phrase is a commentary's text_highlight excerpt when the DB has one,
+// otherwise the image/commentary title.
+export function toHighlightPattern(phrase) {
+  return String(phrase)
     .replace(/^[^a-z\d]*|[^a-z\d]*$/gi, "")
     .replace(/[^a-z]+/gi, "([^a-z]|<[^>]*>)+?");
 }

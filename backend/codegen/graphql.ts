@@ -107,6 +107,7 @@ export type Commentary = {
   reference?: Maybe<Scalars['String']['output']>;
   slug?: Maybe<Scalars['String']['output']>;
   text?: Maybe<Scalars['String']['output']>;
+  text_highlight?: Maybe<Scalars['String']['output']>;
   title?: Maybe<Scalars['String']['output']>;
   verse_id?: Maybe<Scalars['String']['output']>;
   verse_range?: Maybe<Scalars['String']['output']>;
@@ -1545,6 +1546,7 @@ export type QuerySearchArgs = {
 
 
 export type QuerySearchAllArgs = {
+  mode?: InputMaybe<Scalars['String']['input']>;
   query: Scalars['String']['input'];
 };
 
@@ -1850,11 +1852,13 @@ export type SearchAllResult = {
   __typename?: 'SearchAllResult';
   commentary: Array<ResultCard>;
   events: Array<ResultCard>;
+  matters: Array<ResultCard>;
   narration: Array<ResultCard>;
   pages: Array<ResultCard>;
   people: Array<ResultCard>;
   places: Array<ResultCard>;
   semantic?: Maybe<Scalars['Boolean']['output']>;
+  verseTotal?: Maybe<Scalars['Int']['output']>;
   verses: Array<SearchResult>;
 };
 
@@ -2522,6 +2526,7 @@ export type CommentaryResolvers<ContextType = AppContext, ParentType extends Res
   reference?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   slug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   text?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  text_highlight?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   title?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   verse_id?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   verse_range?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -3567,11 +3572,13 @@ export type ScriptureResultsResolvers<ContextType = AppContext, ParentType exten
 export type SearchAllResultResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['SearchAllResult'] = ResolversParentTypes['SearchAllResult']> = {
   commentary?: Resolver<Array<ResolversTypes['ResultCard']>, ParentType, ContextType>;
   events?: Resolver<Array<ResolversTypes['ResultCard']>, ParentType, ContextType>;
+  matters?: Resolver<Array<ResolversTypes['ResultCard']>, ParentType, ContextType>;
   narration?: Resolver<Array<ResolversTypes['ResultCard']>, ParentType, ContextType>;
   pages?: Resolver<Array<ResolversTypes['ResultCard']>, ParentType, ContextType>;
   people?: Resolver<Array<ResolversTypes['ResultCard']>, ParentType, ContextType>;
   places?: Resolver<Array<ResolversTypes['ResultCard']>, ParentType, ContextType>;
   semantic?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  verseTotal?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   verses?: Resolver<Array<ResolversTypes['SearchResult']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };

@@ -498,6 +498,7 @@ const queries = {
                 id
                 slug
                 title
+                text_highlight
                 reference
                 publication {
                   source_title

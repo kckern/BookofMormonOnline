@@ -82,7 +82,7 @@ export default function FilterPanel({ heading, axes, value, onChange, search, ex
       <h5 className="ppFiltersHeading">{heading}</h5>
       <div className="ppFilters">
         {search && !isMobile() && (
-          <button className="ppFiltersSearchButton" onClick={() => setIsOpen(true)}>🔍</button>
+          <button className="ppFiltersSearchButton" onClick={() => { setInitSearchString(""); setIsOpen(true); }}>🔍</button>
         )}
         <div className="ppColumns">
           {axes.map(renderAxis)}
@@ -132,7 +132,7 @@ export default function FilterPanel({ heading, axes, value, onChange, search, ex
       <div className="filterDrawerButton">
         <Button onClick={openDrawer}>{heading}</Button>
         {search && (
-          <button className="ppFiltersSearchButtonMobile" onClick={() => setIsOpen(true)}>🔍</button>
+          <button className="ppFiltersSearchButtonMobile" onClick={() => { setInitSearchString(""); setIsOpen(true); }}>🔍</button>
         )}
         {search && searchEl}
       </div>

@@ -1,4 +1,4 @@
-import { compileHighlightRegex, titleToHighlightPattern } from "../highlightPattern";
+import { compileHighlightRegex, toHighlightPattern } from "../highlightPattern";
 
 test("compiles an intentional pattern as-is", () => {
   const re = compileHighlightRegex("waters([^a-z]|<[^>]*>)+?of([^a-z]|<[^>]*>)+?Mormon");
@@ -23,9 +23,22 @@ test("raw text containing [^ that cannot compile returns null, not a crash", () 
   expect(compileHighlightRegex("weird [^ selection")).toBeNull();
 });
 
-test("titleToHighlightPattern strips edge punctuation and bridges non-letters", () => {
-  const pattern = titleToHighlightPattern('"Waters of Mormon!"');
+test("toHighlightPattern strips edge punctuation and bridges non-letters", () => {
+  const pattern = toHighlightPattern('"Waters of Mormon!"');
   expect(pattern).toBe("Waters([^a-z]|<[^>]*>)+?of([^a-z]|<[^>]*>)+?Mormon");
   const re = new RegExp(pattern, "gi");
   expect(re.test("waters <b>of</b> Mormon")).toBe(true);
+});
+
+test("toHighlightPattern matches a text_highlight excerpt across punctuation and markup", () => {
+  // Commentary 1000001101's text_highlight — a verbatim span of the verse, so
+  // the internal commas and any inline tags have to be bridged too.
+  const re = compileHighlightRegex(
+    toHighlightPattern("Yea, I make a record in the language of my father,")
+  );
+  expect(
+    re.test(
+      "Yea, I make a record in the <span class='indent'></span>language of my father,"
+    )
+  ).toBe(true);
 });

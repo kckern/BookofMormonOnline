@@ -3,10 +3,10 @@ import { legsOf, stopsOf, stopStateAt } from "../mapStoryPath";
 // Modelled on the real Alma 2 "Amlicite War" rows: zarahemla is revisited, and
 // move 3 starts at hill-amnihu although move 2 ended at valley-of-gideon.
 const amlicite = [
-  { seq: 1, start: "zarahemla", end: "hill-amnihu", startLat: 1, startLng: 1, endLat: 2, endLng: 2 },
-  { seq: 2, start: "hill-amnihu", end: "valley-of-gideon", startLat: 2, startLng: 2, endLat: 3, endLng: 3 },
-  { seq: 3, start: "hill-amnihu", end: "minon", startLat: 2, startLng: 2, endLat: 4, endLng: 4 },
-  { seq: 4, start: "minon", end: "zarahemla", startLat: 4, startLng: 4, endLat: 1, endLng: 1 },
+  { seq: 1, start: "zarahemla", end: "hill-amnihu", startName: "Zarahemla", endName: "Hill Amnihu", startLat: 1, startLng: 1, endLat: 2, endLng: 2 },
+  { seq: 2, start: "hill-amnihu", end: "valley-of-gideon", startName: "Hill Amnihu", endName: "Valley of Gideon", startLat: 2, startLng: 2, endLat: 3, endLng: 3 },
+  { seq: 3, start: "hill-amnihu", end: "minon", startName: "Hill Amnihu", endName: "Minon", startLat: 2, startLng: 2, endLat: 4, endLng: 4 },
+  { seq: 4, start: "minon", end: "zarahemla", startName: "Minon", endName: "Zarahemla", startLat: 4, startLng: 4, endLat: 1, endLng: 1 },
 ];
 
 describe("legsOf", () => {
@@ -68,7 +68,15 @@ describe("stopsOf", () => {
   test("records every move touching a place, and which moves arrive there", () => {
     const zarahemla = stopsOf(amlicite).find((s) => s.slug === "zarahemla");
     expect(zarahemla.steps).toEqual([0, 3]);
+    expect(zarahemla.startSteps).toEqual([0]);
     expect(zarahemla.endSteps).toEqual([3]);
+  });
+
+  test("retains human-readable place names through geometry construction", () => {
+    const stops = stopsOf(amlicite);
+    expect(stops.find((stop) => stop.slug === "valley-of-gideon").name).toBe("Valley of Gideon");
+    expect(legsOf(amlicite)[0].from.name).toBe("Zarahemla");
+    expect(legsOf(amlicite)[0].to.name).toBe("Hill Amnihu");
   });
 });
 
@@ -78,6 +86,10 @@ describe("stopStateAt", () => {
 
   test("the arrival place of the active move is current", () => {
     expect(stopStateAt(bySlug("hill-amnihu"), 0, false)).toBe("current");
+  });
+
+  test("the departure place of every active move is current", () => {
+    expect(stopStateAt(bySlug("hill-amnihu"), 2, false)).toBe("current");
   });
 
   test("places not yet reached are future", () => {
