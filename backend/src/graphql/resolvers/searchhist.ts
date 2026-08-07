@@ -98,6 +98,10 @@ const baseResolvers: Resolvers = {
 (baseResolvers.SearchResult as Record<string, unknown>).highlight =
   (parent: { highlight?: unknown }) => (parent as { highlight?: unknown }).highlight ?? null;
 
+// mini_quote is not yet in the codegen snapshot; inject like highlight.
+(baseResolvers.HistoricalDocument as Record<string, unknown>).mini_quote =
+  (parent: unknown) => (parent as HistoryRow).mini_quote ?? null;
+
 // searchAll is not yet in the codegen snapshot (schema-first; generated types lag
 // new SDL fields). Injected as a typed async function by direct property assignment
 // so the rest of the resolver map retains full codegen types.

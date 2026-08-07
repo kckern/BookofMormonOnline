@@ -42,6 +42,7 @@ export interface HistoryRow {
   event_year: number | null;
   event_date: string | null;
   money_quote: string | null;
+  mini_quote: string | null;
   quote_is_witness_voice: boolean | null;
   quote_speaker: string | null;
   quote_contains_witness_speech: boolean | null;
@@ -507,6 +508,7 @@ export async function historyQuery(
       event_year: r.event_year,
       event_date: r.event_date,
       money_quote: metaString('money_quote'),
+      mini_quote: metaString('miniquote'),
       quote_is_witness_voice: metaBool('quote_is_witness_voice'),
       quote_speaker: metaString('quote_speaker'),
       quote_contains_witness_speech: metaBool('quote_contains_witness_speech'),
