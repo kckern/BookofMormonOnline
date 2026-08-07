@@ -6,6 +6,12 @@ describe("canon", () => {
     expect(slugify("1 Nephi")).toBe("1-nephi");
   });
 
+  test("slugify emits only url-safe characters", () => {
+    expect(slugify("Gospels & Acts")).toBe("gospels-acts");
+    expect(slugify("1 Corinthians")).toBe("1-corinthians");
+    expect(slugify("Solomon's Song")).toBe("solomons-song");
+  });
+
   test("bible canon has 66 books in 9 groups; bom has 15 in 3", () => {
     expect(canons.kjv.books).toHaveLength(66);
     expect(canons.kjv.groups).toHaveLength(9);

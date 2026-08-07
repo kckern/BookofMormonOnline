@@ -113,7 +113,11 @@ const BOM_RAW = {
 };
 
 export const slugify = (str) =>
-  (str || "").toLowerCase().replace(/['’]/g, "").replace(/\s+/g, "-");
+  (str || "")
+    .toLowerCase()
+    .replace(/['‘’]/g, "")       // drop straight + curly apostrophes
+    .replace(/[^a-z0-9]+/g, "-") // any other non-url-safe run → single dash
+    .replace(/^-+|-+$/g, "");    // no leading/trailing dashes
 
 const buildCanon = (key, label, raw) => {
   const books = [];

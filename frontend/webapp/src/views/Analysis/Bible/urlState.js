@@ -91,7 +91,9 @@ export const serialize = (state) => {
     const path = `${base}/${state.canon}/${slugify(state.book)}${
       state.chapter ? `/${state.chapter}` : ""
     }`;
-    return state.highlight ? `${path}?hl=${slugify(state.highlight)}` : path;
+    return state.highlight
+      ? `${path}?hl=${encodeURIComponent(slugify(state.highlight))}`
+      : path;
   }
   const path = `${base}/bom/${slugify(state.bomBook)}${
     state.bomChapter ? `/${state.bomChapter}` : ""

@@ -74,4 +74,21 @@ describe("urlState", () => {
       expect(parseValue(path.replace(/^\/analysis\//, ""), search ? `?${search}` : "")).toEqual(s);
     }
   });
+
+  test("a division highlight with '&' in its name round-trips without corruption", () => {
+    const state = {
+      view: "anchor",
+      canon: "bom",
+      book: "3 Nephi",
+      highlight: "Gospels & Acts",
+    };
+    const url = serialize(state);
+    // no bare ampersand may reach the query string — that splits the params
+    const query = url.split("?")[1] || "";
+    expect(query).not.toMatch(/&/);
+    const [path, search = ""] = url.split("?");
+    expect(
+      parseValue(path.replace(/^\/analysis\//, ""), search ? `?${search}` : "")
+    ).toEqual(state);
+  });
 });
