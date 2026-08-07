@@ -3,7 +3,9 @@ import React from "react";
 import "@testing-library/jest-dom";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import Reader from "../Reader";
+import Reader, { readerTargetForBook } from "../Reader";
+import { partnersFor } from "../aggregate";
+import { canons } from "../canon";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 
 jest.mock("src/models/BoMOnlineAPI", () => ({
@@ -164,5 +166,58 @@ describe("Reader", () => {
     expect(navigate).toHaveBeenCalledWith(
       expect.objectContaining({ view: "anchor", canon: "bom", book: "2 Nephi" })
     );
+  });
+
+  test("readerTargetForBook: a book maps to itself × its top partner", () => {
+    const top = partnersFor("bom", "Jacob")[0].book.name;
+    expect(readerTargetForBook("bom", "Jacob")).toEqual({
+      view: "reader",
+      bomBook: "Jacob",
+      bibleBook: top,
+    });
+    const kjvTop = partnersFor("kjv", "Isaiah")[0].book.name;
+    expect(readerTargetForBook("kjv", "Isaiah")).toEqual({
+      view: "reader",
+      bibleBook: "Isaiah",
+      bomBook: kjvTop,
+      anchorCanon: "kjv",
+    });
+  });
+
+  test("readerTargetForBook: a book with no partners falls back to its anchor view", () => {
+    const orphan = canons.kjv.books.find((b) => partnersFor("kjv", b.name).length === 0);
+    expect(orphan).toBeDefined();
+    expect(readerTargetForBook("kjv", orphan.name)).toEqual({
+      view: "anchor",
+      canon: "kjv",
+      book: orphan.name,
+    });
+  });
+
+  test("the reader renders an anchor-side rail with the anchor book marked current", async () => {
+    setup(); // default: 2 Nephi × Isaiah, anchorCanon bom
+    await waitFor(() => expect(screen.getAllByTestId("xref-pair").length).toBeGreaterThan(0));
+    const rail = screen.getByRole("navigation", { name: /Book of Mormon/i });
+    expect(rail).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^2 Nephi, .*references/ })).toHaveAttribute("aria-current", "true");
+  });
+
+  test("clicking a rail chapter re-scopes the current pair in place", async () => {
+    const { navigate } = setup();
+    await waitFor(() => expect(screen.getAllByTestId("xref-pair").length).toBeGreaterThan(0));
+    fireEvent.click(screen.getByRole("radio", { name: /^Chapter 12,/ }));
+    expect(navigate).toHaveBeenCalledWith({
+      view: "reader",
+      bomBook: "2 Nephi",
+      bibleBook: "Isaiah",
+      bomChapter: 12,
+    });
+  });
+
+  test("clicking a different rail book opens that book × its top partner", async () => {
+    const { navigate } = setup();
+    await waitFor(() => expect(screen.getAllByTestId("xref-pair").length).toBeGreaterThan(0));
+    fireEvent.click(screen.getByRole("button", { name: /^Jacob, .*references/ }));
+    expect(navigate).toHaveBeenCalledWith(readerTargetForBook("bom", "Jacob"));
   });
 });

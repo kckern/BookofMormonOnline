@@ -593,6 +593,17 @@ html[data-theme="dark"] .xref-chaptercell.ramp-6 {
   gap: 0.25rem;
 }
 
+.xref-readerbody {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+.xref-readermain {
+  flex: 1;
+  min-width: 0; /* let the fixed-layout table shrink instead of overflowing */
+}
+
 .xref-readertitle {
   font-weight: 800;
   font-size: 1.2rem;
@@ -838,6 +849,14 @@ html[data-theme="dark"] .verseViewerTable .scriptureCell p span.highlight {
   /* the ref is the row's identity — give it the space; drop the heading */
   .verseViewerTable td.scriptureRef .heading { display: none; }
   .xref-sample-list li { grid-template-columns: 1fr; }
+  .xref-readerbody {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+  .xref-readermain {
+    width: 100%;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

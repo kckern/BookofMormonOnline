@@ -6,8 +6,20 @@ import { verseIdToSlug } from "src/utils/scriptureUtils";
 import { determineLanguage } from "src/models/Utils";
 import { Spinner } from "../../_Common/Loader";
 import Breadcrumb from "src/views/_Common/Breadcrumb/Breadcrumb";
+import Rail from "./Rail";
 import { highlightTextJSX } from "./highlighter";
-import { pairsFor } from "./aggregate";
+import { pairsFor, partnersFor } from "./aggregate";
+
+// Navigation target for a rail book-click: that book paired with its top
+// cross-reference partner (choice A — always populates). A book with zero
+// partners can't form a pair, so it degrades to its own anchor view.
+export function readerTargetForBook(anchorCanon, bookName) {
+  const top = partnersFor(anchorCanon, bookName)[0]?.book.name;
+  if (!top) return { view: "anchor", canon: anchorCanon, book: bookName };
+  return anchorCanon === "kjv"
+    ? { view: "reader", bibleBook: bookName, bomBook: top, anchorCanon: "kjv" }
+    : { view: "reader", bomBook: bookName, bibleBook: top };
+}
 
 const PAGE = 50;
 
@@ -103,13 +115,46 @@ export default function Reader({ state, navigate }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bomBook, bibleBook, bomChapter, bibleChapter, anchorCanon]);
 
+  // Anchor side = the canon the reader was entered from; the rail browses it.
+  const anchorBook = anchorCanon === "kjv" ? bibleBook : bomBook;
+  const anchorChapter = anchorCanon === "kjv" ? bibleChapter : bomChapter;
+  const partnerBook = anchorCanon === "kjv" ? bomBook : bibleBook;
+
+  const switchBook = (name) => navigate(readerTargetForBook(anchorCanon, name));
+  const rescope = (ch) => {
+    const target = { view: "reader", bomBook, bibleBook };
+    if (anchorCanon === "kjv") {
+      target.anchorCanon = "kjv";
+      if (ch) target.bibleChapter = ch;
+    } else if (ch) {
+      target.bomChapter = ch;
+    }
+    navigate(target);
+  };
+
+  const rail = (
+    <Rail
+      canon={anchorCanon}
+      book={anchorBook}
+      chapter={anchorChapter}
+      partner={partnerBook}
+      onAnchor={switchBook}
+      onChapter={rescope}
+    />
+  );
+
   if (!pairs.length)
     return (
       <div className="xref-reader" data-testid="xref-reader">
         <ReaderHeader {...{ bomBook, bibleBook, bomChapter, bibleChapter, anchorCanon, navigate, backState, total: pairs.length, quoteTotal }} />
-        <div className="xref-empty">
-          No known correspondences between {bomBook}
-          {bomChapter ? ` ${bomChapter}` : ""} and {bibleBook}.
+        <div className="xref-readerbody">
+          {rail}
+          <div className="xref-readermain">
+            <div className="xref-empty">
+              No known correspondences between {bomBook}
+              {bomChapter ? ` ${bomChapter}` : ""} and {bibleBook}.
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -144,6 +189,9 @@ export default function Reader({ state, navigate }) {
   return (
     <div className="xref-reader" data-testid="xref-reader">
       <ReaderHeader {...{ bomBook, bibleBook, bomChapter, bibleChapter, anchorCanon, navigate, backState, total: pairs.length, quoteTotal }} />
+      <div className="xref-readerbody">
+        {rail}
+        <div className="xref-readermain">
       <table className="verseViewerTable">
         <thead>
           <tr>
@@ -218,6 +266,8 @@ export default function Reader({ state, navigate }) {
           </button>
         </div>
       )}
+        </div>
+      </div>
     </div>
   );
 }
