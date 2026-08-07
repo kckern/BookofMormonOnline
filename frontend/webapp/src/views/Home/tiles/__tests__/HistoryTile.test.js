@@ -1,4 +1,8 @@
-import { parseTeaser } from "../HistoryTile";
+import React from "react";
+import "@testing-library/jest-dom";
+import { render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
+import HistoryTile, { parseTeaser } from "../HistoryTile";
 
 describe("parseTeaser", () => {
   test("extracts the lead paragraph before 'Key Points:' and the <li> bullets after", () => {
@@ -26,5 +30,35 @@ describe("parseTeaser", () => {
   test("tolerates empty/nullish input", () => {
     expect(parseTeaser("")).toEqual({ lead: "", bullets: [] });
     expect(parseTeaser(undefined)).toEqual({ lead: "", bullets: [] });
+  });
+});
+
+const setup = (data) => render(<MemoryRouter><HistoryTile data={data} /></MemoryRouter>);
+const base = { id: 7, slug: "d7", document: "A Notice", teaser: "<p>Long teaser lead here.</p> key points: <ul><li>x</li></ul>" };
+
+describe("HistoryTile quote hero", () => {
+  test("prefers the mini quote", () => {
+    setup({ ...base, mini_quote: "I saw the plates", money_quote: "I saw the plates and the engravings by the power of God", quote_speaker: "Martin Harris", quote_is_witness_voice: true });
+    expect(screen.getByText(/I saw the plates/)).toBeInTheDocument();
+    expect(screen.getByText(/—\s*Martin Harris/)).toBeInTheDocument();
+    expect(screen.queryByText(/by the power of God/)).toBeNull();
+  });
+
+  test("falls back to a trimmed money quote when there is no mini", () => {
+    setup({ ...base, money_quote: "one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen", quote_speaker: "The Editor", quote_is_witness_voice: false });
+    expect(screen.getByText(/The Editor:/)).toBeInTheDocument();
+    expect(screen.queryByText(/sixteen/)).toBeNull();
+  });
+
+  test("a bare quote (no speaker) renders without attribution", () => {
+    const { container } = setup({ ...base, mini_quote: "spoken of as the Golden Bible", quote_speaker: null });
+    expect(screen.getByText(/spoken of as the Golden Bible/)).toBeInTheDocument();
+    expect(container.querySelector(".historyTileQuoteBy")).toBeNull();
+  });
+
+  test("falls back to the teaser lead when there is no quote at all", () => {
+    const { container } = setup(base);
+    expect(container.querySelector(".historyTileQuote")).toBeNull();
+    expect(container.querySelector(".historyTileTeaser")).toBeInTheDocument();
   });
 });

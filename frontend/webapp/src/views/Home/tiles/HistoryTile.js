@@ -30,6 +30,7 @@ export default function HistoryTile({ data }) {
   const meta = [data.year, data.source, data.author].filter(Boolean).join(" · ");
   const aspect = parseFloat(data.aspect) || null; // stored as height/width
   const { lead, bullets } = parseTeaser(data.teaser);
+  const quote = data.mini_quote || (data.money_quote ? clampWords(data.money_quote, 14) : null);
   return (
     <RevealProvider>
       <div className="samplerTileInner historyTile">
@@ -39,7 +40,17 @@ export default function HistoryTile({ data }) {
             <Link to={to} className="historyTileTitle">{data.document}</Link>
             {meta ? <div className="historyTileMeta">{meta}</div> : null}
             {data.archive ? <div className="historyTileArchive">{flatten(data.archive)}</div> : null}
-            {lead ? (
+            {quote ? (
+              <blockquote className="historyTileQuote">
+                {data.quote_speaker && !data.quote_is_witness_voice ? (
+                  <span className="historyTileQuoteBy prefix">{data.quote_speaker}:</span>
+                ) : null}{" "}
+                &ldquo;{quote}&rdquo;
+                {data.quote_speaker && data.quote_is_witness_voice ? (
+                  <cite className="historyTileQuoteBy">&mdash; {data.quote_speaker}</cite>
+                ) : null}
+              </blockquote>
+            ) : lead ? (
               <ExpandableText className="historyTileTeaser" lines={3}>
                 {lead}
               </ExpandableText>

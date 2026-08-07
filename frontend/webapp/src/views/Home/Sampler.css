@@ -1091,6 +1091,33 @@ html[data-theme="dark"] .historyTileMeta { color: #a0a0a0; }
   color: #555;
 }
 html[data-theme="dark"] .historyTileTeaser { color: #c4c4c4; }
+.historyTileQuote {
+  margin: 0.15rem 0 0.35rem;
+  padding-left: 0.55rem;
+  border-left: 3px solid #c9a24b;
+  font-family: "Scripture", Georgia, serif;
+  font-size: 0.9rem;
+  line-height: 1.2;
+  color: #333;
+}
+.historyTileQuoteBy {
+  display: block;
+  margin-top: 0.15rem;
+  font-family: "Roboto", "Roboto Condensed", sans-serif;
+  font-style: normal;
+  font-size: 0.72rem;
+  color: #888;
+  text-align: right;
+}
+.historyTileQuoteBy.prefix {
+  display: inline;
+  margin: 0 0.15rem 0 0;
+  font-weight: 700;
+  color: #000;
+  text-align: left;
+}
+html[data-theme="dark"] .historyTileQuote { color: #d6d6d6; }
+html[data-theme="dark"] .historyTileQuoteBy { color: #a0a0a0; }
 
 /* ================================================================
    LIGHTBOX — click-away/Esc dismissable image overlay
@@ -1483,7 +1510,7 @@ html[data-theme="dark"] .faxTileEdition { color: #9a9a9a; }
 .imageArtFrame { position: relative; display: block; width: 100%; overflow: hidden; background: #e8e6e1; }
 .imageArtFrame img { width: 100%; height: 100%; object-fit: cover; display: block; }
 html[data-theme="dark"] .imageArtFrame { background: #2c2c2c; }
-/* title: shaded header directly UNDER the image, center-aligned */
+/* title: shaded header directly ABOVE the image, center-aligned */
 .imageArtTitleBar {
   display: block;
   padding: 0.45rem 0.7rem;
