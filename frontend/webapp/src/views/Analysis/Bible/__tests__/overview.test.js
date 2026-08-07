@@ -123,6 +123,25 @@ describe("Overview", () => {
     expect(tip).toHaveTextContent(/Major Prophets ↔ 2 Nephi/);
   });
 
+  test("on a narrow viewport the overview renders the table twin, not the ribbon svg", () => {
+    const original = window.matchMedia;
+    window.matchMedia = (q) => ({
+      matches: true, // pretend we are below the breakpoint
+      media: q,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      addListener: () => {},
+      removeListener: () => {},
+    });
+    try {
+      const { container } = setup();
+      expect(container.querySelector(".xref-ribbonsvg")).toBeNull();
+      expect(screen.getAllByTestId("xref-pairrow").length).toBeGreaterThan(0);
+    } finally {
+      window.matchMedia = original;
+    }
+  });
+
   test("ribbons paint largest-last so big cables win the click", () => {
     const { container } = setup();
     const ribbons = [...container.querySelectorAll("[data-ribbon]")];

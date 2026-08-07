@@ -8,6 +8,27 @@ const LABEL_PAD = 8;
 const FALLBACK_H = 420;
 const HAIRLINE = 5; // ribbons with <= this many refs never intercept clicks when idle
 
+// True when the viewport is too narrow for the labeled ribbon chart. Guards for
+// environments without matchMedia (jsdom) by reporting false (desktop chart).
+function useIsNarrow(maxWidth = 700) {
+  const query = `(max-width: ${maxWidth}px)`;
+  const get = () =>
+    typeof window !== "undefined" && typeof window.matchMedia === "function"
+      ? window.matchMedia(query).matches
+      : false;
+  const [narrow, setNarrow] = React.useState(get);
+  React.useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
+    const mql = window.matchMedia(query);
+    const on = () => setNarrow(mql.matches);
+    on();
+    mql.addEventListener ? mql.addEventListener("change", on) : mql.addListener(on);
+    return () =>
+      mql.removeEventListener ? mql.removeEventListener("change", on) : mql.removeListener(on);
+  }, [query]);
+  return narrow;
+}
+
 // Bipartite ribbon overview. Left spine: the Bible's 9 divisions (book-level
 // ribbons on both sides read as spaghetti — the division default is the spec's
 // §4.1 legibility guardrail); clicking a division expands it into its books.
@@ -15,6 +36,7 @@ const HAIRLINE = 5; // ribbons with <= this many refs never intercept clicks whe
 // (quote core / phrase sheath).
 export default function Overview({ state = {}, navigate }) {
   const mode = state.mode === "table" ? "table" : "chart";
+  const isNarrow = useIsNarrow();
   const expanded = state.expanded || null; // Bible division name
   const setMode = (m) =>
     navigate({ view: "overview", mode: m === "table" ? "table" : undefined, expanded: expanded || undefined });
@@ -248,13 +270,15 @@ export default function Overview({ state = {}, navigate }) {
             <span className="xref-swatch quote" /> quote
             <span className="xref-swatch phrase" /> phrase
           </span>
-          <button
-            className="xref-modetoggle"
-            aria-pressed={mode === "table"}
-            onClick={() => setMode(mode === "chart" ? "table" : "chart")}
-          >
-            {mode === "chart" ? "View as table" : "View as chart"}
-          </button>
+          {!isNarrow && (
+            <button
+              className="xref-modetoggle"
+              aria-pressed={mode === "table"}
+              onClick={() => setMode(mode === "chart" ? "table" : "chart")}
+            >
+              {mode === "chart" ? "View as table" : "View as chart"}
+            </button>
+          )}
           {expanded && mode === "chart" && (
             <button className="xref-modetoggle" onClick={() => setExpanded(null)}>
               ◂ collapse {expanded}
@@ -263,7 +287,7 @@ export default function Overview({ state = {}, navigate }) {
         </p>
       </header>
 
-      {mode === "table" ? (
+      {mode === "table" || isNarrow ? (
         <TableTwin navigate={navigate} />
       ) : (
         <div className="xref-ribbonwrap">
