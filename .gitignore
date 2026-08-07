@@ -63,3 +63,7 @@ docs/audits/data-backups/
 
 # study.cli.mjs synthetic-user roster (tokens — never commit)
 .study-cli/
+
+# Schema migration DDL is source (not data dumps) — keep it tracked
+!backend/migrations/
+!backend/migrations/*.sql

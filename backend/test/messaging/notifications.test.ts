@@ -229,7 +229,18 @@ describe('mark read', () => {
     const actor = await mkUser('Replier');
     const ch = await mkChannel('Group E', [me, actor]);
     const parent = await mkMessage(ch, me, 'my comment');
-    await mkMessage(ch, actor, 'reply', parent);
+    const replyId = await mkMessage(ch, actor, 'reply', parent);
+    // Backdate the reply a few seconds so the mark-all watermark (Date.now())
+    // unambiguously covers it. messenger_messages.created_at is DATETIME(0) and
+    // MySQL ROUNDS fractional seconds on insert (sql_mode lacks
+    // TIME_TRUNCATE_FRACTIONAL), so a just-created row can round up to a second
+    // slightly in the future vs a ms-precise watermark taken moments later —
+    // the source of a long-standing flake on this pure-derived path. (In prod,
+    // once a durable row exists, markAll stamps read_at and the twin-merge
+    // makes this moot; the flake is test-only.)
+    await db.updateTable('messenger_messages')
+      .set({ created_at: new Date(Date.now() - 5000) })
+      .where('message_id', '=', replyId).execute();
 
     expect(await getUnreadNotificationCount(db, me)).toBeGreaterThan(0);
     const ok = await markAllNotificationsRead(db, me);

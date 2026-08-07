@@ -31,7 +31,8 @@ import type { DB } from '../../codegen/db.js';
 import type { UserDTO } from './dto.js';
 import { getUser, getUsers } from './users.js';
 import { getUserMetadata, updateUserMetadata } from './users.js';
-import { getBus } from '../realtime/RealtimeBus.js';
+import { notify } from '../notifications/notify.js';
+import { rowToDTO } from '../notifications/store.js';
 
 export type NotificationType = 'reply' | 'reaction' | 'invite';
 
@@ -55,6 +56,13 @@ export interface NotificationDTO {
 const LOOKBACK_DAYS = 30;
 // Hard cap on returned notifications.
 const MAX_NOTIFICATIONS = 50;
+
+// Types whose existence is authoritatively reconstructed by the derived feed.
+// A stored-only row of one of these means its source event is gone (deleted
+// reply / removed reaction / declined invite) — suppress it (no ghosts).
+// Future table-only types (announcement, group_activity, …) are NOT in this set
+// and DO surface from the table.
+const DERIVED_BACKED_TYPES = new Set(['reply', 'reaction', 'invite']);
 
 interface ReadState {
   watermark: number; // ms-epoch
@@ -203,7 +211,36 @@ export async function getNotifications(
   }
 
   items.sort((a, b) => b.created_at - a.created_at);
-  return items.slice(0, MAX_NOTIFICATIONS);
+
+  // Dual-read: merge durable rows with the derived feed, dedup by public id.
+  const rows = await db
+    .selectFrom('bom_notification')
+    .select(['type', 'dedupe_key', 'payload', 'created_at', 'read_at'])
+    .where('user_id', '=', userId)
+    .where('created_at', '>', since)
+    .where('dismissed_at', 'is', null)
+    .orderBy('created_at', 'desc')
+    .limit(MAX_NOTIFICATIONS)
+    .execute();
+
+  const byId = new Map<string, NotificationDTO>();
+  for (const n of items) byId.set(n.id, n); // derived arm (authoritative content + existence)
+  for (const row of rows) {
+    const n = rowToDTO(row);
+    const prev = byId.get(n.id);
+    if (prev) {
+      // Twin: keep the fresh derived content, OR-in the durable read state.
+      byId.set(n.id, { ...prev, is_read: prev.is_read || n.is_read });
+    } else if (!DERIVED_BACKED_TYPES.has(n.type)) {
+      // Legitimately table-only type (no derived equivalent): surface it.
+      const isRead = n.is_read || n.created_at <= watermark || readIds.has(n.id);
+      byId.set(n.id, { ...n, is_read: isRead });
+    }
+    // else: stored-only row of a derived-backed type → source gone → suppress.
+  }
+  return [...byId.values()]
+    .sort((a, b) => b.created_at - a.created_at)
+    .slice(0, MAX_NOTIFICATIONS);
 }
 
 /** Count unread notifications (drives the bell badge). */
@@ -227,6 +264,17 @@ export async function markNotificationRead(
   notificationId: string,
 ): Promise<boolean> {
   if (!notificationId) return false;
+  // Stamp the durable row first (before the fast-path check so it runs even
+  // when metadata already has the id but the row was never stamped).
+  await db
+    .updateTable('bom_notification')
+    .set({ read_at: new Date() })
+    .where('user_id', '=', userId)
+    .where('dedupe_key', '=', notificationId)
+    .where('read_at', 'is', null)
+    .executeTakeFirst();
+  // Metadata fallback — keep writing for compatibility with derived-only /
+  // pre-backfill rows that have no durable bom_notification row.
   const meta = (await getUserMetadata(db, userId)) ?? {};
   const existing = Array.isArray(meta['notificationsRead'])
     ? (meta['notificationsRead'] as unknown[]).filter((x): x is string => typeof x === 'string')
@@ -247,7 +295,15 @@ export async function markAllNotificationsRead(
   const meta = (await getUserMetadata(db, userId)) ?? {};
   meta['notificationsReadAt'] = Date.now();
   meta['notificationsRead'] = [];
-  return updateUserMetadata(db, userId, meta);
+  const result = await updateUserMetadata(db, userId, meta);
+  // Stamp all durable rows so read-state is durable even without metadata.
+  await db
+    .updateTable('bom_notification')
+    .set({ read_at: new Date() })
+    .where('user_id', '=', userId)
+    .where('read_at', 'is', null)
+    .executeTakeFirst();
+  return result;
 }
 
 // ─── realtime push ────────────────────────────────────────────────────────────
@@ -273,6 +329,7 @@ export async function pushNotificationForEvent(
     targetMessageId: string;
     actorId: string;
     reactionKey?: string;
+    sourceMessageId?: string; // the child reply message id (for type 'reply')
   },
 ): Promise<void> {
   try {
@@ -294,7 +351,14 @@ export async function pushNotificationForEvent(
     let text: string;
     let messageId: string | null;
     if (params.type === 'reply') {
-      id = `reply:${params.targetMessageId}`;
+      // Each reply is its own notification — key on the child reply message id
+      // to match the derived feed (reply:<replyMessageId>) and to avoid collapsing
+      // multiple replies to the same parent into one.
+      if (!params.sourceMessageId) {
+        console.warn('pushNotificationForEvent: reply event missing sourceMessageId; skipping');
+        return;
+      }
+      id = `reply:${params.sourceMessageId}`;
       text = `${nickname} replied to your comment`;
       messageId = target.message_id;
     } else {
@@ -314,7 +378,19 @@ export async function pushNotificationForEvent(
       is_read: false,
     };
 
-    getBus().emit('notification_received', userRoom(recipientId), notif);
+    await notify(db, {
+      userId: recipientId,
+      type: params.type,
+      actorId: params.actorId,
+      dedupeKey: notif.id,
+      payload: {
+        text: notif.text,
+        channel_url: notif.channel_url,
+        message_id: notif.message_id,
+        actor: notif.actor,
+      },
+      createdAt: new Date(notif.created_at),
+    });
   } catch (err) {
     console.error('pushNotificationForEvent error:', err);
   }
