@@ -20,7 +20,7 @@ import { usePageController } from "src/contexts/PageControllerContext";
 import { useMessenger } from "src/contexts/MessengerContext";
 import { NarrationProvider, useNarration } from "src/contexts/NarrationContext";
 import { extractTagIds } from "./tagIds";
-import { titleToHighlightPattern } from "./highlightPattern";
+import { toHighlightPattern } from "./highlightPattern";
 import { pushDocTitle, popDocTitle } from "./docTitle";
 import { buildNoteBodyHtml } from "./noteRefs";
 import { ScriptureRefGrid } from "../_Common/ScriptureRefGrid";
@@ -140,11 +140,15 @@ function Narration({ rowData, addHighlight }) {
     const slugOf = () => refs.current.derived.data.text.slug;
     const setHighlightsFor = (activeId, previewIds, commentHighlights) => {
       const highlights = [];
+      // text_highlight is the verified verse excerpt the entry annotates —
+      // always the better highlight target. Only ~10% of commentary rows have
+      // one (and images have none), so the title stays as the fallback.
       const pushMatches = (collection) => {
         for (const entry of Object.values(collection || {})) {
-          if (!entry?.title) continue;
+          const phrase = entry?.text_highlight || entry?.title;
+          if (!phrase) continue;
           const cls = entry.id === activeId ? "primary" : previewIds.includes(entry.id) ? "secondary" : null;
-          if (cls) highlights.push({ class: cls, string: titleToHighlightPattern(entry.title) });
+          if (cls) highlights.push({ class: cls, string: toHighlightPattern(phrase) });
         }
       };
       const supplement = refs.current.states.supplement;

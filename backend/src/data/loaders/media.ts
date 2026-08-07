@@ -27,6 +27,8 @@ export interface CommentaryRow {
   source: string;
   is_note: number;
   title: string;
+  /** Verified excerpt of the source verse this commentary annotates (nullable). */
+  text_highlight: string | null;
   text: string;
   length: number;
 }

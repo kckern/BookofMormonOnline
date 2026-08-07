@@ -1,5 +1,13 @@
 
 
+// Commentary rows gained text_highlight (the verse excerpt its bubble
+// highlights). The backend strips null/''/[] keys from GraphQL responses for
+// legacy parity, so a MISSING text_highlight cannot tell a stale cached row
+// apart from a fresh one that simply has no excerpt — checking `"text_highlight"
+// in item` would refetch ~90% of commentary forever. Stamp fresh writes instead
+// and treat unstamped commentary as stale. Bump on the next commentary shape change.
+export const COMMENTARY_SHAPE_V = 2;
+
 export async function getCache(input) {
     let db = await loadDBRequest();
     var itemObjectStore = db.transaction("items", "readwrite").objectStore("items");
@@ -27,9 +35,10 @@ export async function getCache(input) {
                 let val = vals[i];
                 let item = await getSingleCache(key + "." + val, itemObjectStore);
                 // passagenotes query gained chiasmus_id (e37a5aa7); the chiasm detail
-                // query gained speaker (tile header shows avatar+name) — refetch cached
-                // items predating either shape change
-                if (!item || (key==="page" && !item.sections) || (key.startsWith("passagenotes") && item.chiasmus?.length && !item.chiasmus[0].chiasmus_id) || (key==="chiasm" && item && !("speaker" in item))) {
+                // query gained speaker (tile header shows avatar+name); commentary
+                // gained text_highlight (see COMMENTARY_SHAPE_V above)
+                // — refetch cached items predating any of those shape changes
+                if (!item || (key==="page" && !item.sections) || (key.startsWith("passagenotes") && item.chiasmus?.length && !item.chiasmus[0].chiasmus_id) || (key==="chiasm" && item && !("speaker" in item)) || (key==="commentary" && item._v !== COMMENTARY_SHAPE_V)) {
                     if (!Array.isArray(items.missing[key])) items.missing[key] = []
                     items.missing[key].push(val)
                 }
@@ -68,9 +77,12 @@ export function prepareCacheObject(queries, apiResults, useCache) {
         else {
             for (let j in results) {
                 let queryKey = query.key;
-                let dbIndex = results[j] ? results[j][queryKey] : query.val[j]; // Update By ME  
+                let dbIndex = results[j] ? results[j][queryKey] : query.val[j]; // Update By ME
                 if (dbIndex === undefined) dbIndex = query.val[j];
-                cacheObj[query.type + "." + dbIndex] = results[j];
+                cacheObj[query.type + "." + dbIndex] =
+                    query.type === "commentary" && results[j]
+                        ? { ...results[j], _v: COMMENTARY_SHAPE_V }
+                        : results[j];
             }
 
         }

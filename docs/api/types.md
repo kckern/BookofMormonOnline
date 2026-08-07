@@ -657,6 +657,7 @@ Scholarly commentary on scripture passages.
 | `location` | `TextBlock` | Location in text |
 | `publication` | `Source` | Source publication |
 | `title` | `String` | Commentary title |
+| `text_highlight` | `String` | Verbatim excerpt of the verse this commentary annotates; null when unverified. The page view highlights this span (falling back to `title`) when the commentary bubble is hovered |
 | `text` | `String` | Full commentary text |
 | `preview` | `String` | Preview text |
 | `slug` | `String` | URL-friendly identifier |

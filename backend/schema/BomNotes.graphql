@@ -100,6 +100,7 @@ type Commentary {
   location: TextBlock
   publication: Source
   title: String
+  text_highlight: String
   text: String
   preview: String
   slug: String

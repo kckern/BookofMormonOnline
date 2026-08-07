@@ -106,6 +106,9 @@ export const mediaResolvers: Resolvers = {
   Commentary: {
     id: (parent) => String((parent as any as CommentaryRow).id),
     title: (parent) => (parent as any as CommentaryRow).title ?? null,
+    // Verse excerpt the commentary annotates — the page view highlights this
+    // span in the text when its bubble is hovered, falling back to title.
+    text_highlight: (parent) => (parent as any as CommentaryRow).text_highlight || null,
     text: (parent) => (parent as any as CommentaryRow).text ?? null,
     verse_id: (parent) => {
       const v = (parent as any as CommentaryRow).verse_id;
