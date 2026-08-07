@@ -4,14 +4,26 @@
 
 .MatterList
 {
-    display: grid;
     margin-left: 2em;
+    padding-right: 1em;
 }
 
-.MatterList .my-masonry-grid_column
+/* Row-major grid so the verse_id-ascending sort reads left→right, top→bottom.
+   (Masonry distributed items DOWN columns, which scrambled the scripture order.)
+   Column counts mirror the former masonry breakpoints. */
+.MatterGrid
 {
-    padding-left:1em;
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    align-items: start;
+    gap: 1em;
 }
+@media (max-width: 1600px) { .MatterGrid { grid-template-columns: repeat(7, 1fr); } }
+@media (max-width: 1400px) { .MatterGrid { grid-template-columns: repeat(6, 1fr); } }
+@media (max-width: 1200px) { .MatterGrid { grid-template-columns: repeat(5, 1fr); } }
+@media (max-width: 1000px) { .MatterGrid { grid-template-columns: repeat(4, 1fr); } }
+@media (max-width: 800px)  { .MatterGrid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 600px)  { .MatterGrid { grid-template-columns: repeat(2, 1fr); } }
 
 .MatterList h5
 {
@@ -23,7 +35,7 @@
 
 .MatterList .card
 {
-    margin-bottom:2em;
+    margin-bottom:0;
     display: flex;
     flex-direction: column;
     height: auto;

@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
 import { Spinner } from "../_Common/Loader";
-import Masonry from "react-masonry-css";
 import { isMobile, label, processName, replaceNumbers } from "src/models/Utils";
 import { Link, useRouteMatch } from "react-router-dom";
 import { Card, CardHeader, CardBody, CardFooter, Button } from "reactstrap";
@@ -100,10 +99,6 @@ function MattersComponent() {
     }
   }, [matterList]);
 
-  const breakpointColumnsObj = {
-    default: 8, 1600: 7, 1400: 6, 1200: 5, 1000: 4, 800: 3, 600: 2, 400: 2,
-  };
-
   const handleClick = (slug, e) => {
     e.preventDefault();
     appController.functions.setPopUp({
@@ -155,7 +150,12 @@ function MattersComponent() {
     );
   }
 
-  const filtered = matterList.filter(passesFilters).filter(o => o.slug);
+  // Scripture order: the index reads by first-reference verse_id ascending
+  // (the API returns weight DESC). Missing verse_ids sort last.
+  const filtered = matterList
+    .filter(passesFilters)
+    .filter((o) => o.slug)
+    .sort((a, b) => (a.verse_id ?? Infinity) - (b.verse_id ?? Infinity));
 
   return (
     <div className="container noselect" style={{ display: "block" }}>
@@ -175,11 +175,7 @@ function MattersComponent() {
               </Button>
             </div>
           ) : (
-            <Masonry
-              breakpointCols={breakpointColumnsObj}
-              className="my-masonry-grid"
-              columnClassName="my-masonry-grid_column"
-            >
+            <div className="MatterGrid">
               {filtered.map((obj, i) => (
                 <Link
                   key={i}
@@ -248,7 +244,7 @@ function MattersComponent() {
                   </Card>
                 </Link>
               ))}
-            </Masonry>
+            </div>
           )}
         </div>
       </div>

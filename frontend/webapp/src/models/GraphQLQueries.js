@@ -171,6 +171,7 @@ const queries = {
                 slug
                 name
                 subtitle
+                verse_id
                 form_group
                 form
                 subform_label
