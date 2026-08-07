@@ -101,4 +101,18 @@ describe("AnchorView", () => {
     setup({ view: "anchor", canon: "bom", book: "2 Nephi" });
     expect(screen.getByRole("heading", { name: /692 references/ })).toBeInTheDocument();
   });
+
+  test("opening a partner from a Bible chapter anchor forwards bibleChapter", () => {
+    const { navigate } = setup({ view: "anchor", canon: "kjv", book: "Isaiah", chapter: 2 });
+    fireEvent.click(screen.getByRole("button", { name: /^2 Nephi,/ }));
+    expect(navigate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        view: "reader",
+        bomBook: "2 Nephi",
+        bibleBook: "Isaiah",
+        anchorCanon: "kjv",
+        bibleChapter: 2,
+      })
+    );
+  });
 });

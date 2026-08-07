@@ -114,6 +114,26 @@ describe("Reader", () => {
     );
   });
 
+  test("a bibleChapter-scoped reader shows the scope and fewer pairs than unscoped", async () => {
+    const navigate = jest.fn();
+    const { unmount } = render(
+      <MemoryRouter>
+        <Reader
+          state={{ view: "reader", bomBook: "Jacob", bibleBook: "Isaiah", anchorCanon: "kjv", bibleChapter: 49 }}
+          navigate={navigate}
+        />
+      </MemoryRouter>
+    );
+    // header names the scoped Bible chapter
+    expect(await screen.findByText(/Isaiah 49/)).toBeInTheDocument();
+    // Escape returns to the Bible chapter anchor, not the whole book
+    fireEvent.keyDown(document.body, { key: "Escape" });
+    expect(navigate).toHaveBeenCalledWith(
+      expect.objectContaining({ view: "anchor", canon: "kjv", book: "Isaiah", chapter: 49 })
+    );
+    unmount();
+  });
+
   test("Escape inside an input does not navigate", () => {
     const navigate = jest.fn();
     render(

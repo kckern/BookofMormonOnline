@@ -15,19 +15,19 @@ const PAGE = 50;
 // BoM chapter). Fetches verse text in pages; sorting is client-side over the
 // full local pair list.
 export default function Reader({ state, navigate }) {
-  const { bomBook, bibleBook, bomChapter } = state;
+  const { bomBook, bibleBook, bomChapter, bibleChapter } = state;
   const lang = determineLanguage();
 
   const pairs = useMemo(
     () =>
-      pairsFor(bomBook, bibleBook, bomChapter).map(([bomVid, bibleVid, isQuote]) => ({
+      pairsFor(bomBook, bibleBook, bomChapter, bibleChapter).map(([bomVid, bibleVid, isQuote]) => ({
         bomVid,
         bibleVid,
         isQuote: !!isQuote,
         bomRef: generateReference(bomVid, lang),
         bibleRef: generateReference(bibleVid, lang),
       })),
-    [bomBook, bibleBook, bomChapter, lang]
+    [bomBook, bibleBook, bomChapter, bibleChapter, lang]
   );
 
   const [sort, setSort] = useState({ column: "bom", direction: "asc" });
@@ -79,7 +79,12 @@ export default function Reader({ state, navigate }) {
   const anchorCanon = state.anchorCanon === "kjv" ? "kjv" : "bom";
   const backState =
     anchorCanon === "kjv"
-      ? { view: "anchor", canon: "kjv", book: bibleBook }
+      ? {
+          view: "anchor",
+          canon: "kjv",
+          book: bibleBook,
+          ...(bibleChapter ? { chapter: bibleChapter } : {}),
+        }
       : {
           view: "anchor",
           canon: "bom",
@@ -96,12 +101,12 @@ export default function Reader({ state, navigate }) {
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bomBook, bibleBook, bomChapter, anchorCanon]);
+  }, [bomBook, bibleBook, bomChapter, bibleChapter, anchorCanon]);
 
   if (!pairs.length)
     return (
       <div className="xref-reader" data-testid="xref-reader">
-        <ReaderHeader {...{ bomBook, bibleBook, bomChapter, anchorCanon, navigate, backState, total: pairs.length, quoteTotal }} />
+        <ReaderHeader {...{ bomBook, bibleBook, bomChapter, bibleChapter, anchorCanon, navigate, backState, total: pairs.length, quoteTotal }} />
         <div className="xref-empty">
           No known correspondences between {bomBook}
           {bomChapter ? ` ${bomChapter}` : ""} and {bibleBook}.
@@ -113,7 +118,7 @@ export default function Reader({ state, navigate }) {
   if (!firstPageReady)
     return (
       <div className="xref-reader" data-testid="xref-reader">
-        <ReaderHeader {...{ bomBook, bibleBook, bomChapter, anchorCanon, navigate, backState, total: pairs.length, quoteTotal }} />
+        <ReaderHeader {...{ bomBook, bibleBook, bomChapter, bibleChapter, anchorCanon, navigate, backState, total: pairs.length, quoteTotal }} />
         <Spinner />
       </div>
     );
@@ -138,7 +143,7 @@ export default function Reader({ state, navigate }) {
 
   return (
     <div className="xref-reader" data-testid="xref-reader">
-      <ReaderHeader {...{ bomBook, bibleBook, bomChapter, anchorCanon, navigate, backState, total: pairs.length, quoteTotal }} />
+      <ReaderHeader {...{ bomBook, bibleBook, bomChapter, bibleChapter, anchorCanon, navigate, backState, total: pairs.length, quoteTotal }} />
       <table className="verseViewerTable">
         <thead>
           <tr>
@@ -207,7 +212,7 @@ export default function Reader({ state, navigate }) {
   );
 }
 
-function ReaderHeader({ bomBook, bibleBook, bomChapter, anchorCanon, navigate, backState, total, quoteTotal }) {
+function ReaderHeader({ bomBook, bibleBook, bomChapter, bibleChapter, anchorCanon, navigate, backState, total, quoteTotal }) {
   const anchorBook = anchorCanon === "kjv" ? bibleBook : bomBook;
   return (
     <header className="xref-header">
@@ -218,12 +223,13 @@ function ReaderHeader({ bomBook, bibleBook, bomChapter, anchorCanon, navigate, b
         <Breadcrumb.Link onClick={() => navigate(backState)}>
           {anchorBook}
           {anchorCanon === "bom" && bomChapter ? ` › ch. ${bomChapter}` : ""}
+          {anchorCanon === "kjv" && bibleChapter ? ` › ch. ${bibleChapter}` : ""}
         </Breadcrumb.Link>
         <Breadcrumb.Current>{bomBook} × {bibleBook}</Breadcrumb.Current>
       </Breadcrumb>
       <h3 className="xref-readertitle">
         <span className="book">{bomBook}{bomChapter ? ` ${bomChapter}` : ""}</span> references to{" "}
-        <span className="book">{bibleBook}</span>
+        <span className="book">{bibleBook}{bibleChapter ? ` ${bibleChapter}` : ""}</span>
       </h3>
       <p className="xref-readercount">
         {total} references · {quoteTotal} quotes

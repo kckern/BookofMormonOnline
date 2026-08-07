@@ -75,6 +75,29 @@ describe("urlState", () => {
     }
   });
 
+  test("a reader scoped to a Bible chapter round-trips via ?bch=", () => {
+    const state = {
+      view: "reader",
+      bomBook: "2 Nephi",
+      bibleBook: "Isaiah",
+      anchorCanon: "kjv",
+      bibleChapter: 2,
+    };
+    const url = serialize(state);
+    expect(url).toContain("bch=2");
+    const [path, search = ""] = url.split("?");
+    expect(
+      parseValue(path.replace(/^\/analysis\//, ""), search ? `?${search}` : "")
+    ).toEqual(state);
+  });
+
+  test("an out-of-range Bible chapter is dropped, not trusted", () => {
+    // Isaiah has 66 chapters; 999 must not survive parsing
+    expect(
+      parseValue("bible/bom/2-nephi~isaiah", "?bch=999&from=kjv")
+    ).toEqual({ view: "reader", bomBook: "2 Nephi", bibleBook: "Isaiah", anchorCanon: "kjv" });
+  });
+
   test("a division highlight with '&' in its name round-trips without corruption", () => {
     const state = {
       view: "anchor",

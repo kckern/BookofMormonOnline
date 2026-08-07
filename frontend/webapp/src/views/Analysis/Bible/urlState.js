@@ -42,6 +42,11 @@ export const parseValue = (value, search = "") => {
     if (!bible) return overview();
     const finish = (state) => {
       if (params.get("from") === "kjv") state.anchorCanon = "kjv";
+      const bch = params.get("bch");
+      if (bch && /^\d+$/.test(bch)) {
+        const n = Number(bch);
+        if (n >= 1 && n <= bible.chapters) state.bibleChapter = n;
+      }
       return state;
     };
     if (seg[0] === "bom") {
@@ -98,5 +103,9 @@ export const serialize = (state) => {
   const path = `${base}/bom/${slugify(state.bomBook)}${
     state.bomChapter ? `/${state.bomChapter}` : ""
   }~${slugify(state.bibleBook)}`;
-  return state.anchorCanon === "kjv" ? `${path}?from=kjv` : path;
+  const q = new URLSearchParams();
+  if (state.anchorCanon === "kjv") q.set("from", "kjv");
+  if (state.bibleChapter) q.set("bch", String(state.bibleChapter));
+  const qs = q.toString();
+  return qs ? `${path}?${qs}` : path;
 };

@@ -161,7 +161,7 @@ export const scopedPartnersFor = (canonKey, bookName, chapter) => {
     .sort((a, b) => b.total - a.total);
 };
 
-export const pairsFor = (bomBookName, bibleBookName, bomChapter) => {
+export const pairsFor = (bomBookName, bibleBookName, bomChapter, bibleChapter) => {
   const bom = canons.bom.books.find((b) => b.name === bomBookName);
   const bible = canons.kjv.books.find((b) => b.name === bibleBookName);
   if (!bom || !bible) return [];
@@ -169,6 +169,7 @@ export const pairsFor = (bomBookName, bibleBookName, bomChapter) => {
     if (bomVid < bom.start || bomVid > bom.end) return false;
     if (bibleVid < bible.start || bibleVid > bible.end) return false;
     if (bomChapter && chapterOfVid(bomVid) !== bomChapter) return false;
+    if (bibleChapter && chapterOfVid(bibleVid) !== bibleChapter) return false;
     return true;
   });
 };
