@@ -4,19 +4,27 @@ import React from "react";
 // API and may not match the local text (translation/punctuation drift); an
 // unmatched string degrades to unhighlighted text, never to missing text.
 
-const prepareText = (text) => (text || "").replace(/[-']/g, "");
+// Reduce a highlight string to its letter tokens; join with a tolerant gap so
+// punctuation drift (apostrophes, hyphens, commas) on EITHER side can't break
+// the match. Matching runs against the original text — no destructive stripping
+// — so the rendered verse keeps its punctuation.
+const tokenize = (s) => String(s || "").match(/[a-z]+/gi) || [];
 
 export const generateHighlightedText = (text, arrayOfStrings) => {
-  text = prepareText(text);
+  text = text || "";
 
   const ranges = [];
   for (const str of arrayOfStrings || []) {
-    const pattern = String(str).replace(/ /g, "[^a-z]+");
+    const tokens = tokenize(str);
+    if (!tokens.length) continue;
+    // tokens separated by any run of non-letters, including none — "[^a-z]*"
+    // under the /i flag excludes A–Z too, so it only spans separators.
+    const pattern = tokens.join("[^a-z]*");
     let match = null;
     try {
-      match = new RegExp(pattern, "gi").exec(text);
+      match = new RegExp(pattern, "i").exec(text);
     } catch (e) {
-      // un-regexable highlight string: skip it
+      // pattern still unbuildable somehow: skip it
     }
     if (match) ranges.push([match.index, match.index + match[0].length]);
   }
