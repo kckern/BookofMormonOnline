@@ -1,6 +1,5 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { label } from "src/models/Utils";
 import { flatten, clampWords } from "./textUtils";
 import ExpandableText from "./ExpandableText";
 import { RevealProvider } from "./_ds/Reveal";
@@ -72,7 +71,7 @@ export default function ArchiveDocTile({ data, heading, to, image }) {
             </Link>
           ) : null}
         </div>
-        <TileDeepLink to={to}>{label("view_in_context")}</TileDeepLink>
+        <TileDeepLink to={to} />
       </div>
     </RevealProvider>
   );
