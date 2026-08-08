@@ -110,6 +110,7 @@ export default function MapStoryTileInner({
   const fitStoryRef = useRef(() => {});
   const frameStepRef = useRef(() => {});
   const didMountRef = useRef(false);
+  const programmaticMoveTimerRef = useRef(null);
   const programmaticMoveRef = useRef(false);
   const mapMovedRef = useRef(false);
   const [overlay, setOverlay] = useState({ markers: [], clusters: [], labels: [] });
@@ -273,6 +274,7 @@ export default function MapStoryTileInner({
       interactions: Interaction.defaults({ mouseWheelZoom: false }),
     });
     mapRef.current = map;
+    didMountRef.current = false;
 
     const allIndices = legs.map((_, index) => index);
     const frameLegs = (indices, withAnimation) => {
@@ -296,13 +298,25 @@ export default function MapStoryTileInner({
       });
       setMapMoved(false);
       mapMovedRef.current = false;
+      if (programmaticMoveTimerRef.current) {
+        clearTimeout(programmaticMoveTimerRef.current);
+        programmaticMoveTimerRef.current = null;
+      }
       if (!withAnimation) {
         map.renderSync();
         updateLayoutRef.current();
         programmaticMoveRef.current = false;
+      } else {
+        // OpenLayers does not emit `moveend` for a fit that produces no view
+        // change, which would leave programmaticMoveRef stuck true and swallow
+        // the next real user drag. Back the moveend handler with a timeout so the
+        // flag is always released.
+        programmaticMoveTimerRef.current = setTimeout(() => {
+          programmaticMoveTimerRef.current = null;
+          programmaticMoveRef.current = false;
+          updateLayoutRef.current();
+        }, 620 + 120);
       }
-      // When animating, the `moveend` handler clears programmaticMoveRef and
-      // refreshes the overlay once the glide settles.
     };
     const frameStory = (withAnimation) => frameLegs(allIndices, withAnimation);
     const frameStep = (withAnimation) => {
@@ -313,6 +327,10 @@ export default function MapStoryTileInner({
     frameStepRef.current = frameStep;
 
     const finishMove = () => {
+      if (programmaticMoveTimerRef.current) {
+        clearTimeout(programmaticMoveTimerRef.current);
+        programmaticMoveTimerRef.current = null;
+      }
       if (programmaticMoveRef.current) {
         programmaticMoveRef.current = false;
       }
@@ -340,6 +358,7 @@ export default function MapStoryTileInner({
     return () => {
       cancelAnimationFrame(initialFrame);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      if (programmaticMoveTimerRef.current) clearTimeout(programmaticMoveTimerRef.current);
       if (resizeObserverRef.current) resizeObserverRef.current.disconnect();
       map.un("moveend", finishMove);
       map.un("pointerdrag", markManipulated);
