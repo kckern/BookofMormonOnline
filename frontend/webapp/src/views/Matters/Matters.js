@@ -150,12 +150,13 @@ function MattersComponent() {
     );
   }
 
-  // Scripture order: the index reads by first-reference verse_id ascending
-  // (the API returns weight DESC). Missing verse_ids sort last.
+  // Weight order: heaviest (most prominent) matters first. `weight` is a curated
+  // decimal score (a prominence tier plus a verse_id fraction, so ties fall back
+  // to scripture order). Missing weights sort last.
   const filtered = matterList
     .filter(passesFilters)
     .filter((o) => o.slug)
-    .sort((a, b) => (a.verse_id ?? Infinity) - (b.verse_id ?? Infinity));
+    .sort((a, b) => (b.weight ?? -Infinity) - (a.weight ?? -Infinity));
 
   return (
     <div className="container noselect" style={{ display: "block" }}>

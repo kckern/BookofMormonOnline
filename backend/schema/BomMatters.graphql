@@ -54,7 +54,8 @@ type Matter {
   node_link: String
   description: String
   verse_id: Int
-  weight: Int
+  # Curated prominence score (decimal: tier + verse_id fraction), NOT an integer.
+  weight: Float
   index: [Index]
   xrels: [Xrel]
 }
