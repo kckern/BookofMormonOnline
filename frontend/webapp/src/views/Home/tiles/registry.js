@@ -18,6 +18,8 @@ import PersonProfileTile from "./PersonProfileTile";
 import PlaceProfileTile from "./PlaceProfileTile";
 import WitnessTile from "./WitnessTile";
 import MapTile from "./MapTile";
+import TranslationTile from "./TranslationTile";
+import JosephSmithTile from "./JosephSmithTile";
 
 /**
  * Sampler tile registry. Adding a tile type:
@@ -71,6 +73,8 @@ export const tileRegistry = [
 export const reservePool = [
   { key: "personProfile", component: PersonProfileTile, isReady: (p) => (p?.people?.length || 0) > 14 },
   { key: "witness",       component: WitnessTile,       dataKey: "witnesses", isReady: (p) => (p?.witnesses?.length || 0) > 0 },
+  { key: "translation",  component: TranslationTile,   dataKey: "translation",  isReady: (p) => !!p?.translation },
+  { key: "josephSmith",  component: JosephSmithTile,   dataKey: "josephSmith",  isReady: (p) => !!p?.josephSmith },
   { key: "placeProfile",  component: PlaceProfileTile,  isReady: (p) => (p?.places?.length || 0) > 11 },
   { key: "artFill1",      component: ImageArtTile,      props: { artIndex: 1 }, isReady: (p) => (p?.art?.length || 0) > 1 },
   { key: "chiasmus2",     component: ChiasmusTile,      props: { seed: 0 }, seedOffset: 97, isReady: () => true },

@@ -28,8 +28,10 @@ const EXEMPT = new Set([
   "MapTileInner.js",
   "MapStoryTileInner.js",
   "MapStoryCard.js",
-  // Thin wrapper — delegates all CTAs to ArchiveDocTile.jsx which carries TileDeepLink.
+  // Thin wrappers — delegate all CTAs to ArchiveDocTile.jsx which carries TileDeepLink.
   "HistoryTile.js",
+  "TranslationTile.js",
+  "JosephSmithTile.js",
 ]);
 
 const tileFiles = fs
