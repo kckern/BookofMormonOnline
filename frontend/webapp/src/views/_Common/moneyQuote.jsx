@@ -17,10 +17,11 @@ export const withBrackets = (text) =>
     );
 
 // A mini quote is one or more curated excerpts of the money quote. When it
-// spans an elision it reads as several excerpts joined by a marker ([...] / […]
-// / [. . .]), so split on that marker and highlight each excerpt separately in
-// place within the money quote (the skipped words between them stay plain).
-const ELISION_RE = /\[\s*(?:\.{2,}|\.(?:\s*\.)+|…)\s*\]/g;
+// spans an elision it reads as several excerpts joined by a marker — bracketed
+// ([...] / […] / [. . .]) or bare (... / …) — so split on that marker and
+// highlight each excerpt separately in place within the money quote (the
+// skipped words between them stay plain).
+const ELISION_RE = /\[\s*(?:\.{2,}|\.(?:\s*\.)+|…)\s*\]|\.{3,}|\.(?:\s\.){2,}|…/g;
 
 // Render the money quote with each mini-quote excerpt wrapped in a highlight
 // mark (keeping editorial-bracket styling throughout). Falls back to the plain
