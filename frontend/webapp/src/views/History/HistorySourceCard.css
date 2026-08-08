@@ -18,6 +18,19 @@
 html[data-theme="dark"] .historySourceCard .historyLead { border-bottom-color: #444; }
 .historySourceCard .historyLead.is-firsthand { border-left-color: #345496; }
 .historySourceCard .historyLead .money_quote_text { font-style: normal; }
+/* the mini quote (a curated excerpt of the money quote) reads as a highlighter
+   stroke over the key phrase — overrides the browser default <mark> yellow */
+.historySourceCard .historyLead .miniHighlight {
+  background-color: rgba(201, 162, 75, 0.32);
+  box-shadow: 0 0 0 1px rgba(201, 162, 75, 0.32);
+  border-radius: 2px;
+  color: inherit;
+}
+html[data-theme="dark"] .historySourceCard .historyLead .miniHighlight {
+  background-color: rgba(201, 162, 75, 0.30);
+  box-shadow: 0 0 0 1px rgba(201, 162, 75, 0.30);
+  color: inherit;
+}
 .historySourceCard .historyLead .editorialMark {
   font-family: "Roboto", "Roboto Condensed", sans-serif;
   font-style: normal;

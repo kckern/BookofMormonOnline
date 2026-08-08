@@ -16,6 +16,26 @@ export const withBrackets = (text) =>
         : part
     );
 
+// The mini quote is a curated excerpt — a verbatim substring of the money
+// quote. Render the money quote with that excerpt highlighted in place (keeping
+// editorial-bracket styling on either side). Falls back to the plain bracketed
+// quote when there's no mini quote or it isn't found verbatim.
+export const renderMoneyQuote = (money, mini) => {
+  const text = String(money || "");
+  const needle = String(mini || "");
+  const at = needle ? text.indexOf(needle) : -1;
+  if (at < 0) return withBrackets(text);
+  const before = text.slice(0, at);
+  const after = text.slice(at + needle.length);
+  return (
+    <>
+      {before ? <React.Fragment key="pre">{withBrackets(before)}</React.Fragment> : null}
+      <mark key="mini" className="miniHighlight">{withBrackets(needle)}</mark>
+      {after ? <React.Fragment key="post">{withBrackets(after)}</React.Fragment> : null}
+    </>
+  );
+};
+
 // One historical-source card, money-quote-led. Shared by the witness view and
 // the reception main view. variant="reception" additionally shows the source
 // (header) and document title (support); variant="witness" is the original
@@ -38,7 +58,7 @@ export default function HistorySourceCard({ doc, variant = "reception", displayD
       {doc.money_quote && (
         doc.quote_speaker && doc.quote_is_witness_voice ? (
           <blockquote className="historyLead is-firsthand">
-            <span className="money_quote_text">&ldquo;{withBrackets(doc.money_quote)}&rdquo;</span>
+            <span className="money_quote_text">&ldquo;{renderMoneyQuote(doc.money_quote, doc.mini_quote)}&rdquo;</span>
             <footer className="money_quote_attribution">
               <span className="money_quote_speaker">&mdash; {doc.quote_speaker}</span>
             </footer>
@@ -47,12 +67,12 @@ export default function HistorySourceCard({ doc, variant = "reception", displayD
           <blockquote className="historyLead">
             <span className="money_quote_text">
               <span className="money_quote_speaker-prefix">{doc.quote_speaker}:</span>{" "}
-              &ldquo;{withBrackets(doc.money_quote)}&rdquo;
+              &ldquo;{renderMoneyQuote(doc.money_quote, doc.mini_quote)}&rdquo;
             </span>
           </blockquote>
         ) : (
           <blockquote className="historyLead">
-            <span className="money_quote_text">&ldquo;{withBrackets(doc.money_quote)}&rdquo;</span>
+            <span className="money_quote_text">&ldquo;{renderMoneyQuote(doc.money_quote, doc.mini_quote)}&rdquo;</span>
           </blockquote>
         )
       )}

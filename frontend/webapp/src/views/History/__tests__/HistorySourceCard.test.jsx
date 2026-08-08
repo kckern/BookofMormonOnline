@@ -51,6 +51,21 @@ describe("HistorySourceCard", () => {
     expect(onOpen).toHaveBeenCalledWith(base);
   });
 
+  test("the mini quote excerpt is highlighted in place within the money quote", () => {
+    const { container } = render(<HistorySourceCard doc={{ ...base, money_quote: "before the KEY PHRASE after", mini_quote: "KEY PHRASE", quote_speaker: null }} onOpen={jest.fn()} />);
+    const mark = container.querySelector(".historyLead .miniHighlight");
+    expect(mark).toBeInTheDocument();
+    expect(mark).toHaveTextContent("KEY PHRASE");
+    // the surrounding money quote text is preserved around the highlight
+    expect(container.querySelector(".money_quote_text").textContent).toMatch(/before the KEY PHRASE after/);
+  });
+
+  test("no highlight when the mini quote is absent or not a verbatim substring", () => {
+    const { container } = render(<HistorySourceCard doc={{ ...base, money_quote: "the whole quote", mini_quote: "not present", quote_speaker: null }} onOpen={jest.fn()} />);
+    expect(container.querySelector(".miniHighlight")).toBeNull();
+    expect(screen.getByText(/the whole quote/)).toBeInTheDocument();
+  });
+
   test("withBrackets splits editorial marks from plain text", () => {
     const out = withBrackets("a [b] c");
     expect(out.filter((p) => p && p.props && p.props.className === "editorialMark")).toHaveLength(1);
