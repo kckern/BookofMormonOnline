@@ -6,6 +6,7 @@ import {
   rectanglesOverlap,
   roleForStop,
   storyStepForStop,
+  symbolRequired,
   travelerPosition,
 } from "../mapStoryLayout";
 import { stopsOf } from "../mapStoryPath";
@@ -245,5 +246,17 @@ describe("traveler placement", () => {
     expect(storyStepForStop({ stop: c, moves, step: 0 })).toBe(1);
     expect(storyStepForStop({ stop: e, moves, step: 0 })).toBe(3);
     expect(storyStepForStop({ stop: c, moves, step: 3, complete: true })).toBe(1);
+  });
+});
+
+describe("marker requiredness", () => {
+  test("always keeps active and anchor markers", () => {
+    expect(symbolRequired("active", false)).toBe(true);
+    expect(symbolRequired("anchor", false)).toBe(true);
+  });
+
+  test("does not force visited markers during playback but keeps them on completion", () => {
+    expect(symbolRequired("visited", false)).toBe(false);
+    expect(symbolRequired("visited", true)).toBe(true);
   });
 });

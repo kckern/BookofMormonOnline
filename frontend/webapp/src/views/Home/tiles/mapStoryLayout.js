@@ -240,6 +240,14 @@ export const storyStepForStop = ({ stop, moves, step, complete = false }) => {
 };
 
 /**
+ * Whether a named marker must be placed. Active endpoints and the story's
+ * origin/final anchors are always kept; visited markers are only forced on the
+ * completed frame, so mid-playback they yield instead of cluttering the map.
+ */
+export const symbolRequired = (role, complete) =>
+  Boolean(complete) || role === "active" || role === "anchor";
+
+/**
  * Produces the complete semantic overlay for one frame: individual stops,
  * future clusters, collision-free labels, and their leader lines.
  */
@@ -285,7 +293,7 @@ export const buildStoryOverlay = ({
         kind: "marker",
         width: marker.role === "active" ? 26 : marker.role === "anchor" ? 20 : 18,
         height: marker.role === "active" ? 26 : marker.role === "anchor" ? 20 : 18,
-        required: true,
+        required: symbolRequired(marker.role, complete),
       })),
       ...futureSingles.map((marker) => ({
         ...marker,
