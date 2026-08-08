@@ -1828,6 +1828,7 @@ html[data-theme="dark"] .notesTile .notesAttr { color: #aaa; }
   border-radius: 50%;
   background: #65756a;
   box-shadow: 0 1px 4px rgba(20, 29, 24, 0.42);
+  transition: left 200ms ease, top 200ms ease, width 160ms ease, height 160ms ease;
 }
 .mapStoryStopMarker.is-active {
   width: 21px;
@@ -1861,6 +1862,7 @@ html[data-theme="dark"] .notesTile .notesAttr { color: #aaa; }
   text-align: center;
   text-wrap: balance;
   pointer-events: auto;
+  transition: left 200ms ease, top 200ms ease, width 200ms ease;
 }
 .mapStoryPlaceLabel:hover { border-color: rgba(38, 50, 43, 0.55); background: #fffdf8; }
 .mapStoryPlaceLabel:focus-visible { outline: 3px solid #fff; outline-offset: 2px; box-shadow: 0 0 0 5px #45679e; }
@@ -1888,6 +1890,7 @@ html[data-theme="dark"] .notesTile .notesAttr { color: #aaa; }
   box-shadow: 0 2px 7px rgba(20, 29, 24, 0.32);
   cursor: pointer;
   line-height: 1;
+  transition: left 200ms ease, top 200ms ease, background 140ms ease, transform 140ms ease;
 }
 .mapStoryCluster strong { font-size: 0.74rem; }
 .mapStoryCluster span { font-size: 0.56rem; letter-spacing: 0.02em; }
@@ -1904,6 +1907,7 @@ html[data-theme="dark"] .notesTile .notesAttr { color: #aaa; }
   pointer-events: none;
   opacity: 0;
   filter: drop-shadow(0 3px 5px rgba(20, 28, 23, 0.35));
+  transition: left 200ms ease, top 200ms ease, opacity 160ms ease;
   will-change: left, top;
 }
 .mapStoryTravelerParty.isComplete { opacity: 0.78 !important; }
@@ -2173,6 +2177,8 @@ html[data-theme="dark"] .mapStoryPlaceLabel.is-active { color: #ffd4cf; border-c
 @media (prefers-reduced-motion: reduce) {
   .mapStoryCluster,
   .mapStoryControlButton,
+  .mapStoryPlaceLabel,
+  .mapStoryStopMarker,
   .mapStoryTravelerParty { transition: none !important; }
 }
 
