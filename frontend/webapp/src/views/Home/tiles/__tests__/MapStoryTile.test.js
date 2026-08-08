@@ -2,7 +2,6 @@ import React from "react";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import MapStoryTile, {
-  PLAYBACK_BUDGET_MS,
   homeStoryTitle,
   playbackTiming,
 } from "../MapStoryTile";
@@ -138,6 +137,15 @@ describe("MapStoryTile", () => {
     expect(screen.getAllByText(/Bountiful/).length).toBeGreaterThan(0);
   });
 
+  test("paces each move for readability and gives content-rich beats more dwell", () => {
+    const rich = playbackTiming({ description: "Eight years in the wilderness", ref: "1 Nephi 17:4" });
+    const plain = playbackTiming({});
+    expect(rich.travelMs).toBe(plain.travelMs);
+    expect(rich.stepMs).toBeGreaterThan(plain.stepMs);
+    expect(plain.stepMs).toBeGreaterThanOrEqual(3000);
+    expect(plain.stepMs).toBe(plain.travelMs + 2000);
+  });
+
   test("deep-links both title and CTA to the sampled story", () => {
     renderTile();
     expect(screen.getByRole("link", { name: "Lehi's Journey" }).getAttribute("href"))
@@ -175,20 +183,20 @@ describe("MapStoryTile", () => {
     expect(container.firstChild).toBeNull();
   });
 
-  test("autoplay advances, completes within budget, and holds instead of looping", () => {
+  test("autoplay advances through each move and holds on completion instead of looping", () => {
     renderTile();
-    const { stepMs } = playbackTiming(data.moves.length);
-    expect(stepMs * data.moves.length).toBeLessThanOrEqual(PLAYBACK_BUDGET_MS);
+    const stepOne = playbackTiming(data.moves[0]).stepMs;
+    const stepTwo = playbackTiming(data.moves[1]).stepMs;
 
-    act(() => { jest.advanceTimersByTime(stepMs); });
+    act(() => { jest.advanceTimersByTime(stepOne); });
     expect(mapState("step")).toBe("1");
-    act(() => { jest.advanceTimersByTime(stepMs); });
+    act(() => { jest.advanceTimersByTime(stepTwo); });
     expect(mapState("complete")).toBe("true");
     expect(screen.getAllByText("Journey complete").length).toBeGreaterThan(0);
     expect(screen.getByLabelText("Replay journey")).toBeTruthy();
     expect(screen.getByLabelText("Journey move").value).toBe(String(data.moves.length));
 
-    act(() => { jest.advanceTimersByTime(PLAYBACK_BUDGET_MS * 2); });
+    act(() => { jest.advanceTimersByTime(stepOne + stepTwo + 10000); });
     expect(mapState("complete")).toBe("true");
     expect(mapState("step")).toBe("1");
   });
@@ -196,7 +204,7 @@ describe("MapStoryTile", () => {
   test("pause freezes automatic progression and play resumes it", () => {
     renderTile();
     fireEvent.click(screen.getByLabelText("Pause journey"));
-    act(() => { jest.advanceTimersByTime(PLAYBACK_BUDGET_MS); });
+    act(() => { jest.advanceTimersByTime(60000); });
     expect(mapState("step")).toBe("0");
     expect(mapState("playing")).toBe("false");
     fireEvent.click(screen.getByLabelText("Play journey"));
@@ -291,7 +299,7 @@ describe("MapStoryTile", () => {
     expect(mapState("playing")).toBe("false");
     expect(mapState("complete")).toBe("true");
     expect(screen.getByLabelText("Journey move").value).toBe(String(data.moves.length));
-    act(() => { jest.advanceTimersByTime(PLAYBACK_BUDGET_MS * 2); });
+    act(() => { jest.advanceTimersByTime(60000); });
     expect(mapState("complete")).toBe("true");
   });
 });

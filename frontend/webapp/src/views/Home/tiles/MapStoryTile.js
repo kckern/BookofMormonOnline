@@ -7,14 +7,18 @@ import TileDeepLink from "./_ds/TileDeepLink";
 
 const MapStoryTileInner = React.lazy(() => import("./MapStoryTileInner"));
 
-export const PLAYBACK_BUDGET_MS = 22000;
+// Each move gets a fixed, readable window regardless of story length. Beats with
+// something to read (a description or a scripture ref) hold longer. The old
+// fixed-total budget made longer stories play *faster* per move — the opposite of
+// what a reader needs.
+export const TRAVEL_MS = 1400;
+export const DWELL_MS = 2000;
+export const DWELL_MS_RICH = 3200;
 
-export const playbackTiming = (moveCount) => {
-  const stepMs = Math.min(2800, Math.max(750, Math.floor(PLAYBACK_BUDGET_MS / Math.max(1, moveCount))));
-  return {
-    stepMs,
-    travelMs: Math.min(1650, Math.max(520, Math.round(stepMs * 0.68))),
-  };
+export const playbackTiming = (move) => {
+  const hasReading = Boolean(move?.description || move?.ref);
+  const dwellMs = hasReading ? DWELL_MS_RICH : DWELL_MS;
+  return { travelMs: TRAVEL_MS, dwellMs, stepMs: TRAVEL_MS + dwellMs };
 };
 
 export const homeStoryTitle = (title) => {
@@ -91,10 +95,10 @@ export default function MapStoryTile({ data }) {
   const [mapMoved, setMapMoved] = useState(false);
   const rootRef = useRef(null);
 
-  const timing = playbackTiming(moves.length);
   const currentMove = complete
     ? moves[moves.length - 1]
     : moves[Math.min(step, Math.max(0, moves.length - 1))];
+  const timing = playbackTiming(currentMove);
   const origin = moves[0] ? (moves[0].startName || moves[0].start) : "Origin";
   const destination = moves.length
     ? (moves[moves.length - 1].endName || moves[moves.length - 1].end)
