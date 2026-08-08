@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import { label } from "src/models/Utils";
 import { flatten, clampWords } from "./textUtils";
-import ExpandableText from "./ExpandableText";
 import { RevealProvider } from "./_ds/Reveal";
 import TileDeepLink from "./_ds/TileDeepLink";
 
@@ -86,10 +85,10 @@ export default function WitnessTile({ data }) {
             <span className="witnessName">{w.principal}</span>
           </Link>
           <span className="witnessBody">
-            <ExpandableText className="witnessStatement" lines={4}>
+            <span className="witnessStatement clampLines" style={{ WebkitLineClamp: 4 }}>
               {!w.isWitnessVoice && w.speaker ? <span className="witnessSpeaker">{w.speaker}: </span> : null}
               &ldquo;{withBrackets(quote)}&rdquo;
-            </ExpandableText>
+            </span>
             {source ? <span className="witnessSource">{source}</span> : null}
           </span>
         </div>
