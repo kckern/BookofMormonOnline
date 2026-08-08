@@ -37,17 +37,19 @@ const setup = (data) => render(<MemoryRouter><HistoryTile data={data} /></Memory
 const base = { id: 7, slug: "d7", document: "A Notice", teaser: "<p>Long teaser lead here.</p> key points: <ul><li>x</li></ul>" };
 
 describe("HistoryTile quote hero", () => {
-  test("prefers the mini quote", () => {
-    setup({ ...base, mini_quote: "I saw the plates", money_quote: "I saw the plates and the engravings by the power of God", quote_speaker: "Martin Harris", quote_is_witness_voice: true });
-    expect(screen.getByText(/I saw the plates/)).toBeInTheDocument();
+  test("shows the full money quote with the mini excerpt highlighted", () => {
+    const { container } = setup({ ...base, mini_quote: "saw the plates", money_quote: "I saw the plates and the engravings by the power of God", quote_speaker: "Martin Harris", quote_is_witness_voice: true });
+    // the whole money quote is present, not just the mini excerpt
+    expect(container.querySelector(".historyTileQuote").textContent).toMatch(/by the power of God/);
+    expect(container.querySelector(".historyTileQuote .miniHighlight")).toHaveTextContent("saw the plates");
     expect(screen.getByText(/—\s*Martin Harris/)).toBeInTheDocument();
-    expect(screen.queryByText(/by the power of God/)).toBeNull();
   });
 
-  test("falls back to a trimmed money quote when there is no mini", () => {
-    setup({ ...base, money_quote: "one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen", quote_speaker: "The Editor", quote_is_witness_voice: false });
+  test("shows the full money quote when there is no mini", () => {
+    const { container } = setup({ ...base, money_quote: "one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen", quote_speaker: "The Editor", quote_is_witness_voice: false });
     expect(screen.getByText(/The Editor:/)).toBeInTheDocument();
-    expect(screen.queryByText(/sixteen/)).toBeNull();
+    expect(container.querySelector(".historyTileQuote").textContent).toMatch(/sixteen/);
+    expect(container.querySelector(".historyTileQuote .miniHighlight")).toBeNull();
   });
 
   test("a bare quote (no speaker) renders without attribution", () => {

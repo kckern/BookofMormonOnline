@@ -18,25 +18,52 @@ describe("ArchiveDocTile", () => {
   test("returns null when there is no data (but renders an id-less doc)", () => {
     const { container } = setup({ data: null });
     expect(container).toBeEmptyDOMElement();
-    setup({ data: { ...base, mini_quote: "a bare quote" }, image: null }); // no id
+    setup({ data: { ...base, mini_quote: "a bare quote" }, images: [] }); // no id
     expect(screen.getByText(/a bare quote/)).toBeInTheDocument();
   });
 
-  test("leads with the mini quote and shows the document title", () => {
-    setup({ data: { ...base, mini_quote: "I saw the plates", money_quote: "long form" }, image: null });
-    expect(screen.getByText(/I saw the plates/)).toBeInTheDocument();
+  test("shows the FULL money quote with the mini-quote excerpt highlighted", () => {
+    const { container } = setup({
+      data: { ...base, money_quote: "I truly saw the plates myself", mini_quote: "saw the plates" },
+      images: [],
+    });
+    // the whole money quote is present, not just the mini excerpt
+    expect(container.querySelector(".historyTileQuote").textContent).toMatch(/I truly saw the plates myself/);
+    // and the mini excerpt is the highlighted span
+    expect(container.querySelector(".historyTileQuote .miniHighlight")).toHaveTextContent("saw the plates");
     expect(screen.getByText("A Notice")).toBeInTheDocument();
   });
 
-  test("renders the image when a URL is given", () => {
-    const { container } = setup({ data: { ...base, id: 7 }, image: "https://ex/img.jpg" });
-    const img = container.querySelector("img.historyTileThumb");
-    expect(img).toHaveAttribute("src", "https://ex/img.jpg");
+  test("falls back to a bare mini quote when there is no money quote", () => {
+    setup({ data: { ...base, mini_quote: "a bare quote" }, images: [] });
+    expect(screen.getByText(/a bare quote/)).toBeInTheDocument();
   });
 
-  test("renders NO image when image is null (translation case)", () => {
-    const { container } = setup({ data: { ...base, id: 7 }, image: null });
+  test("renders a single thumbnail (natural aspect, not a multi rail)", () => {
+    const { container } = setup({ data: { ...base, id: 7 }, images: ["https://ex/img.jpg"] });
+    const rail = container.querySelector(".historyTileRail");
+    expect(rail).toBeTruthy();
+    expect(rail.className).not.toMatch(/multi/);
+    expect(container.querySelectorAll("img.historyTileThumb")).toHaveLength(1);
+    expect(container.querySelector("img.historyTileThumb")).toHaveAttribute("src", "https://ex/img.jpg");
+  });
+
+  test("fills a multi-page rail with every supplied thumbnail", () => {
+    const imgs = ["https://ex/1.jpg", "https://ex/2.jpg", "https://ex/3.jpg"];
+    const { container } = setup({ data: { ...base, id: 7 }, images: imgs });
+    expect(container.querySelector(".historyTileRail.multi")).toBeTruthy();
+    expect([...container.querySelectorAll("img.historyTileThumb")].map((i) => i.getAttribute("src"))).toEqual(imgs);
+  });
+
+  test("renders NO rail when images is empty (translation case)", () => {
+    const { container } = setup({ data: { ...base, id: 7 }, images: [] });
+    expect(container.querySelector(".historyTileRail")).toBeNull();
     expect(container.querySelector("img.historyTileThumb")).toBeNull();
+  });
+
+  test("does not render the archive chip", () => {
+    const { container } = setup({ data: { ...base, archive: "reception" }, images: [] });
+    expect(container.querySelector(".historyTileArchive")).toBeNull();
   });
 });
 

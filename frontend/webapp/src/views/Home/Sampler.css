@@ -1026,12 +1026,28 @@ html[data-theme="dark"] .narrationRef { color: #93c6ef; }
 /* ================================================================
    HISTORY — one featured historical document
    ================================================================ */
-.historyTileBody { display: flex; gap: 0.7rem; min-height: 0; flex: 1; }
-/* the thumbnail is now wrapped in its own <Link>; the anchor is the flex child
-   of .historyTileBody, so it (not the img) carries the flex sizing. */
-.historyTileThumbLink { display: block; flex-shrink: 0; align-self: flex-start; }
-.historyTileThumb {
+.historyTileBody { display: flex; gap: 0.7rem; min-height: 0; flex: 1; text-align: left; }
+/* facsimile rail: its own <Link> is the flex child of .historyTileBody, so the
+   anchor (not the img) carries the flex sizing. A single image keeps its natural
+   aspect, top-aligned; a multi-page document stretches to fill the tile height
+   with a stacked filmstrip. */
+.historyTileRail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
   width: 7.5rem;
+  flex-shrink: 0;
+  align-self: flex-start;
+}
+.historyTileRail.multi { align-self: stretch; }
+.historyTileRail.multi .historyTileThumb {
+  flex: 1 1 0;
+  height: 0;
+  min-height: 2.75rem;
+  object-position: top center;
+}
+.historyTileThumb {
+  width: 100%;
   height: auto;
   object-fit: cover;
   border-radius: 0.35rem;
@@ -1040,23 +1056,6 @@ html[data-theme="dark"] .narrationRef { color: #93c6ef; }
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
   flex-shrink: 0;
   align-self: flex-start;
-}
-.historyTileArchive {
-  display: inline-block;
-  align-self: flex-start;
-  font-size: 0.64rem;
-  font-weight: 700;
-  padding: 0.15rem 0.45rem;
-  margin-bottom: 0.35rem;
-  border-radius: 0.6rem;
-  background: rgba(163, 116, 44, 0.12);
-  border: 1px solid rgba(163, 116, 44, 0.3);
-  color: #8a6428;
-}
-html[data-theme="dark"] .historyTileArchive {
-  background: rgba(214, 168, 96, 0.14);
-  border-color: rgba(214, 168, 96, 0.35);
-  color: #d6a860;
 }
 html[data-theme="dark"] .historyTileThumb {
   background: #2c2c2c;
@@ -1092,14 +1091,21 @@ html[data-theme="dark"] .historyTileMeta { color: #a0a0a0; }
 }
 html[data-theme="dark"] .historyTileTeaser { color: #c4c4c4; }
 .historyTileQuote {
-  margin: 0.15rem 0 0.35rem;
-  padding-left: 0.55rem;
+  margin: 0.3rem 0 0.45rem;
+  padding: 0.5rem 0.65rem 0.5rem 0.8rem;
   border-left: 3px solid #c9a24b;
+  border-radius: 0.3rem;
+  background: rgba(201, 162, 75, 0.09);
   font-family: "Scripture", Georgia, serif;
   font-size: 0.9rem;
-  line-height: 1.2;
-  color: #333;
+  line-height: 1.25;
+  color: #666;
 }
+html[data-theme="dark"] .historyTileQuote { background: rgba(214, 168, 96, 0.12); }
+/* the money quote is de-emphasised (grey); the mini-quote excerpts within it
+   are near-black. No <mark> background — override the browser default yellow. */
+.historyTileQuote .miniHighlight { background: none; color: #000; }
+html[data-theme="dark"] .historyTileQuote .miniHighlight { color: #fff; }
 .historyTileQuoteBy {
   display: block;
   margin-top: 0.15rem;
@@ -1116,7 +1122,7 @@ html[data-theme="dark"] .historyTileTeaser { color: #c4c4c4; }
   color: #000;
   text-align: left;
 }
-html[data-theme="dark"] .historyTileQuote { color: #d6d6d6; }
+html[data-theme="dark"] .historyTileQuote { color: #9a9a9a; }
 html[data-theme="dark"] .historyTileQuoteBy { color: #a0a0a0; }
 
 /* ================================================================

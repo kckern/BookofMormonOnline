@@ -60,6 +60,14 @@ describe("HistorySourceCard", () => {
     expect(container.querySelector(".money_quote_text").textContent).toMatch(/before the KEY PHRASE after/);
   });
 
+  test("an elided mini quote ([...]) highlights each excerpt separately", () => {
+    const { container } = render(<HistorySourceCard doc={{ ...base, money_quote: "alpha beta gamma delta epsilon", mini_quote: "alpha beta [...] delta epsilon", quote_speaker: null }} onOpen={jest.fn()} />);
+    const marks = [...container.querySelectorAll(".historyLead .miniHighlight")].map((n) => n.textContent);
+    expect(marks).toEqual(["alpha beta", "delta epsilon"]);
+    // the skipped middle words remain in the (un-highlighted) money quote
+    expect(container.querySelector(".money_quote_text").textContent).toMatch(/alpha beta gamma delta epsilon/);
+  });
+
   test("no highlight when the mini quote is absent or not a verbatim substring", () => {
     const { container } = render(<HistorySourceCard doc={{ ...base, money_quote: "the whole quote", mini_quote: "not present", quote_speaker: null }} onOpen={jest.fn()} />);
     expect(container.querySelector(".miniHighlight")).toBeNull();

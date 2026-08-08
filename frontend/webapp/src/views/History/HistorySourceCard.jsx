@@ -2,39 +2,11 @@ import React from "react";
 import Parser from "html-react-parser";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import Identicon from "../_Common/Identicon";
+import { withBrackets, renderMoneyQuote } from "../_Common/moneyQuote";
 import "./HistorySourceCard.css";
 
-// Editorial marks in a money quote — [Name] (supplied referent) / [...] (elision)
-// — set apart from the quoted words (grey Roboto, not scripture).
-const BRACKET_RE = /(\[[^\]]*\])/g;
-export const withBrackets = (text) =>
-  String(text || "")
-    .split(BRACKET_RE)
-    .map((part, i) =>
-      part.startsWith("[") && part.endsWith("]")
-        ? <span key={i} className="editorialMark">{part}</span>
-        : part
-    );
-
-// The mini quote is a curated excerpt — a verbatim substring of the money
-// quote. Render the money quote with that excerpt highlighted in place (keeping
-// editorial-bracket styling on either side). Falls back to the plain bracketed
-// quote when there's no mini quote or it isn't found verbatim.
-export const renderMoneyQuote = (money, mini) => {
-  const text = String(money || "");
-  const needle = String(mini || "");
-  const at = needle ? text.indexOf(needle) : -1;
-  if (at < 0) return withBrackets(text);
-  const before = text.slice(0, at);
-  const after = text.slice(at + needle.length);
-  return (
-    <>
-      {before ? <React.Fragment key="pre">{withBrackets(before)}</React.Fragment> : null}
-      <mark key="mini" className="miniHighlight">{withBrackets(needle)}</mark>
-      {after ? <React.Fragment key="post">{withBrackets(after)}</React.Fragment> : null}
-    </>
-  );
-};
+// Re-exported for backward compatibility (tests import withBrackets from here).
+export { withBrackets, renderMoneyQuote };
 
 // One historical-source card, money-quote-led. Shared by the witness view and
 // the reception main view. variant="reception" additionally shows the source

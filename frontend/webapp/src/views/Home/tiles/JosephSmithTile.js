@@ -10,7 +10,7 @@ export default function JosephSmithTile({ data }) {
       data={data}
       heading="Joseph Smith"
       to="/history/joseph-smith"
-      image={`${assetUrl}/history/witnesses/people/joseph-smith.jpg`}
+      images={[`${assetUrl}/history/witnesses/people/joseph-smith.jpg`]}
     />
   );
 }

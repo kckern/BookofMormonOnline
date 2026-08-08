@@ -18,19 +18,16 @@
 html[data-theme="dark"] .historySourceCard .historyLead { border-bottom-color: #444; }
 .historySourceCard .historyLead.is-firsthand { border-left-color: #345496; }
 .historySourceCard .historyLead .money_quote_text { font-style: normal; }
-/* the mini quote (a curated excerpt of the money quote) reads as a highlighter
-   stroke over the key phrase — overrides the browser default <mark> yellow */
+/* the money quote is de-emphasised (grey); the mini-quote excerpts within it
+   are the emphasis (near-black) so the key phrase reads first. No <mark>
+   background — override the browser default yellow. */
+.historySourceCard .historyLead .money_quote_text { color: #666; }
 .historySourceCard .historyLead .miniHighlight {
-  background-color: rgba(201, 162, 75, 0.32);
-  box-shadow: 0 0 0 1px rgba(201, 162, 75, 0.32);
-  border-radius: 2px;
-  color: inherit;
+  background: none;
+  color: #000;
 }
-html[data-theme="dark"] .historySourceCard .historyLead .miniHighlight {
-  background-color: rgba(201, 162, 75, 0.30);
-  box-shadow: 0 0 0 1px rgba(201, 162, 75, 0.30);
-  color: inherit;
-}
+html[data-theme="dark"] .historySourceCard .historyLead .money_quote_text { color: #9a9a9a; }
+html[data-theme="dark"] .historySourceCard .historyLead .miniHighlight { color: #fff; }
 .historySourceCard .historyLead .editorialMark {
   font-family: "Roboto", "Roboto Condensed", sans-serif;
   font-style: normal;
@@ -93,7 +90,7 @@ html[data-theme="dark"] .historySourceCard .historyLead .miniHighlight {
   font-size: 0.8rem;
   line-height: 1.25;
   color: #888;
-  padding: 0 0.95rem 0.5rem;
+  padding: 0.6rem 0.95rem 0.5rem;
   text-align: left;
 }
 .historySourceCard .historyTeaserText > p { margin: 0 0 0.35rem; padding: 0; }
