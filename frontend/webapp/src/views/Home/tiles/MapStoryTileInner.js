@@ -134,9 +134,21 @@ export default function MapStoryTileInner({
     state.stops.forEach((stop) => {
       pixels[stop.slug] = map.getPixelFromCoordinate(project(stop.lat, stop.lng));
     });
+    const previousLabels = {};
+    overlayRef.current.labels.forEach((label) => {
+      previousLabels[label.slug] = {
+        x: label.x,
+        y: label.y,
+        width: label.width,
+        height: label.height,
+        anchorX: label.anchorX,
+        anchorY: label.anchorY,
+      };
+    });
     const nextOverlay = buildStoryOverlay({
       ...state,
       pixels,
+      previousLabels,
       width: target.clientWidth,
       height: target.clientHeight,
       clusterRadius: target.clientWidth < 360 ? 52 : 46,

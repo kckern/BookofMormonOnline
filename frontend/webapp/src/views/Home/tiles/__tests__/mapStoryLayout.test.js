@@ -260,3 +260,32 @@ describe("marker requiredness", () => {
     expect(symbolRequired("visited", true)).toBe(true);
   });
 });
+
+describe("label placement hysteresis", () => {
+  test("reuses a still-valid previous slot when the anchor barely moved", () => {
+    const items = [{ slug: "x", name: "Place X", x: 150, y: 120, priority: 0, firstStep: 0, required: true }];
+    const first = layoutLabels({ items, obstacles: [], width: 320, height: 240 });
+    const prior = first[0];
+
+    const second = layoutLabels({
+      items,
+      obstacles: [{ id: "far-away", x: 8, y: 214, width: 20, height: 20 }],
+      width: 320,
+      height: 240,
+      previous: {
+        x: { x: prior.x, y: prior.y, width: prior.width, height: prior.height, anchorX: 150, anchorY: 120 },
+      },
+    });
+    expect(second[0].x).toBe(prior.x);
+    expect(second[0].y).toBe(prior.y);
+  });
+
+  test("re-solves when the anchor jumped far from the previous slot", () => {
+    const items = [{ slug: "x", name: "Place X", x: 40, y: 60, priority: 0, firstStep: 0, required: true }];
+    const stalePrevious = {
+      x: { x: 240, y: 200, width: 90, height: 28, anchorX: 250, anchorY: 210 },
+    };
+    const placed = layoutLabels({ items, obstacles: [], width: 320, height: 240, previous: stalePrevious });
+    expect(Math.hypot(placed[0].x - 40, placed[0].y - 60)).toBeLessThan(120);
+  });
+});

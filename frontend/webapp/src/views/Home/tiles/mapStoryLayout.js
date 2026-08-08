@@ -137,7 +137,7 @@ export const layoutSymbols = ({ symbols, reservedRects = [], width, height, padd
  * The deterministic grid fallback keeps mandatory labels legible even when
  * multiple geographic points collapse into the same few pixels.
  */
-export const layoutLabels = ({ items, obstacles, width, height, padding = 8 }) => {
+export const layoutLabels = ({ items, obstacles, width, height, padding = 8, previous = {} }) => {
   const placed = [];
   const occupied = [...obstacles];
   const ordered = [...items].sort(
@@ -146,11 +146,24 @@ export const layoutLabels = ({ items, obstacles, width, height, padding = 8 }) =
 
   ordered.forEach((item) => {
     const ownId = `marker:${item.slug}`;
-    let rect = candidateRects(item, width).find(
-      (candidate) =>
-        inside(candidate, width, height, padding) &&
-        !overlapsAny(candidate, occupied, ownId),
-    );
+
+    // Hysteresis: if this label's anchor barely moved and its previous slot still
+    // fits, keep it. This prevents labels from flipping sides frame to frame.
+    const prior = previous[item.slug];
+    const priorFresh =
+      prior && Math.hypot(item.x - prior.anchorX, item.y - prior.anchorY) <= 24;
+    const priorRect = priorFresh
+      ? { x: prior.x, y: prior.y, width: prior.width, height: prior.height }
+      : null;
+
+    let rect =
+      priorRect && inside(priorRect, width, height, padding) && !overlapsAny(priorRect, occupied, ownId)
+        ? priorRect
+        : candidateRects(item, width).find(
+            (candidate) =>
+              inside(candidate, width, height, padding) &&
+              !overlapsAny(candidate, occupied, ownId),
+          );
 
     // Active endpoints plus story origin/final destination are never dropped.
     // If radial placement cannot find room, scan stable card-space slots and
@@ -174,6 +187,8 @@ export const layoutLabels = ({ items, obstacles, width, height, padding = 8 }) =
     const label = {
       ...item,
       ...rect,
+      anchorX: item.x,
+      anchorY: item.y,
       leader: leaderLength > 12 ? { x1: item.x, y1: item.y, x2: end.x, y2: end.y } : null,
     };
     placed.push(label);
@@ -261,6 +276,7 @@ export const buildStoryOverlay = ({
   height,
   clusterRadius = 46,
   reservedRects = [],
+  previousLabels = {},
 }) => {
   const positioned = stops
     .map((stop) => {
@@ -337,6 +353,7 @@ export const buildStoryOverlay = ({
     obstacles,
     width,
     height,
+    previous: previousLabels,
   });
 
   return { markers, clusters, labels };
