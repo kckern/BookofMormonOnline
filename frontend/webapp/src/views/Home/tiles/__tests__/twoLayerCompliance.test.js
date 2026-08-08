@@ -28,11 +28,13 @@ const EXEMPT = new Set([
   "MapTileInner.js",
   "MapStoryTileInner.js",
   "MapStoryCard.js",
+  // Thin wrapper — delegates all CTAs to ArchiveDocTile.jsx which carries TileDeepLink.
+  "HistoryTile.js",
 ]);
 
 const tileFiles = fs
   .readdirSync(TILES_DIR)
-  .filter((f) => f.endsWith(".js") && !f.endsWith(".test.js"));
+  .filter((f) => (f.endsWith(".js") || f.endsWith(".jsx")) && !f.endsWith(".test.js"));
 
 describe("two-layer CTA compliance", () => {
   test.each(tileFiles.filter((f) => !EXEMPT.has(f)))(
