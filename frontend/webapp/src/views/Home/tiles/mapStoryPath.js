@@ -78,3 +78,27 @@ export const stopStateAt = (stop, active, showAll) => {
   if (stop.steps.some((n) => n < active)) return "past";
   return "future";
 };
+
+/** Default number of past legs that stay in the "recent" (fading) trailing tail. */
+export const TRAILING_WINDOW = 3;
+
+/**
+ * How prominently a leg should render for a given playhead position.
+ *   - active:  the leg being traveled now (full color)
+ *   - recent:  a visited leg still inside the trailing window (fades with age)
+ *   - old:     a visited leg past the trailing window (faint route context)
+ *   - future:  not yet reached (hidden until the playhead arrives)
+ *   - visited: the completed-frame state where the whole journey is shown
+ */
+export const legVisibility = (index, step, complete = false, trailingWindow = TRAILING_WINDOW) => {
+  if (complete) return { role: "visited", opacity: 0.6 };
+  if (index === step) return { role: "active", opacity: 1 };
+  if (index < step) {
+    const age = step - index; // 1 = most recently completed
+    if (age > trailingWindow) return { role: "old", opacity: 0.16 };
+    const span = Math.max(1, trailingWindow - 1);
+    const opacity = 0.72 - (age - 1) * (0.72 - 0.28) / span;
+    return { role: "recent", opacity };
+  }
+  return { role: "future", opacity: 0 };
+};

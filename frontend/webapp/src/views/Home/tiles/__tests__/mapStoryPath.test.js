@@ -1,4 +1,4 @@
-import { legsOf, stopsOf, stopStateAt } from "../mapStoryPath";
+import { legVisibility, legsOf, stopsOf, stopStateAt } from "../mapStoryPath";
 
 // Modelled on the real Alma 2 "Amlicite War" rows: zarahemla is revisited, and
 // move 3 starts at hill-amnihu although move 2 ended at valley-of-gideon.
@@ -102,5 +102,29 @@ describe("stopStateAt", () => {
 
   test("showAll marks everything past — the title card shows the whole journey", () => {
     stops.forEach((s) => expect(stopStateAt(s, 0, true)).toBe("past"));
+  });
+});
+
+describe("legVisibility", () => {
+  test("marks the leg at the playhead as the bold active leg", () => {
+    expect(legVisibility(2, 2)).toEqual({ role: "active", opacity: 1 });
+  });
+
+  test("fades recently visited legs with age across the trailing window", () => {
+    expect(legVisibility(1, 2, false, 3)).toMatchObject({ role: "recent" });
+    expect(legVisibility(1, 2, false, 3).opacity).toBeCloseTo(0.72, 5);
+    expect(legVisibility(0, 2, false, 3).opacity).toBeLessThan(legVisibility(1, 2, false, 3).opacity);
+  });
+
+  test("recedes legs older than the trailing window to faint context", () => {
+    expect(legVisibility(0, 5, false, 3)).toEqual({ role: "old", opacity: 0.16 });
+  });
+
+  test("hides future legs until the playhead reaches them", () => {
+    expect(legVisibility(4, 2)).toEqual({ role: "future", opacity: 0 });
+  });
+
+  test("shows the whole journey as visited context on the completed frame", () => {
+    expect(legVisibility(0, 3, true)).toEqual({ role: "visited", opacity: 0.6 });
   });
 });
