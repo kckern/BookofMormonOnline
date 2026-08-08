@@ -288,4 +288,25 @@ describe("label placement hysteresis", () => {
     const placed = layoutLabels({ items, obstacles: [], width: 320, height: 240, previous: stalePrevious });
     expect(Math.hypot(placed[0].x - 40, placed[0].y - 60)).toBeLessThan(120);
   });
+
+  test("keeps a retained slot that differs from a fresh solve's default", () => {
+    const items = [{ slug: "x", name: "Place X", x: 150, y: 120, priority: 0, firstStep: 0, required: true }];
+    const freshSolve = layoutLabels({ items, obstacles: [], width: 320, height: 240 });
+    // With no obstacles the fresh solve takes the right-side ring: x = 150 + 16.
+    expect(freshSolve[0].x).toBe(166);
+
+    // A prior left-side slot, anchor essentially unchanged, still fits -> reused,
+    // which is a DIFFERENT position than the fresh solve above.
+    const reused = layoutLabels({
+      items,
+      obstacles: [],
+      width: 320,
+      height: 240,
+      previous: {
+        x: { x: 58, y: 106, width: 76, height: 28, anchorX: 150, anchorY: 120 },
+      },
+    });
+    expect(reused[0].x).toBe(58);
+    expect(reused[0].y).toBe(106);
+  });
 });
