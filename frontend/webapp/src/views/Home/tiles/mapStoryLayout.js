@@ -237,10 +237,12 @@ export const roleForStop = (stop, moves, step, complete = false) => {
   const isAnchor = stop.slug === origin || stop.slug === terminus;
   const isVisited = complete || stop.steps.some((moveStep) => moveStep <= step);
 
-  if (isActive) return { role: "active", priority: 0, required: true };
-  if (isAnchor) return { role: "anchor", priority: 1, required: true };
-  if (isVisited) return { role: "visited", priority: 2, required: complete };
-  return { role: "future", priority: 3, required: false };
+  // `required` is not returned here: symbolRequired() in buildStoryOverlay is the
+  // single source of truth for whether a marker must be placed.
+  if (isActive) return { role: "active", priority: 0 };
+  if (isAnchor) return { role: "anchor", priority: 1 };
+  if (isVisited) return { role: "visited", priority: 2 };
+  return { role: "future", priority: 3 };
 };
 
 /** Selects the most useful narrative beat when a named map place is clicked. */

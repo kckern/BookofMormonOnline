@@ -333,6 +333,9 @@ export default function MapStoryTileInner({
     const frameStory = (withAnimation) => frameLegs(allIndices, withAnimation);
     const frameStep = (withAnimation) => {
       const state = layoutStateRef.current;
+      // The camera intentionally frames tighter (active leg + 1 trailing) than the
+      // drawn trailing window (TRAILING_WINDOW = 3 fading legs) so each hop reads
+      // large while recent context stays faintly visible around the edges.
       frameLegs(framedLegIndices(state.step, state.complete, legs.length, 1), withAnimation);
     };
     fitStoryRef.current = () => frameStory(true);
