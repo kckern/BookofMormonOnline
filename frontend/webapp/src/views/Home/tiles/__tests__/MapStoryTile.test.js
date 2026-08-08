@@ -302,4 +302,10 @@ describe("MapStoryTile", () => {
     act(() => { jest.advanceTimersByTime(60000); });
     expect(mapState("complete")).toBe("true");
   });
+
+  test("shows start and end place thumbnails in the active move card", () => {
+    const { container } = renderTile();
+    expect(container.querySelector('img[src$="/places/jerusalem"]')).toBeTruthy();
+    expect(container.querySelector('img[src$="/places/valley-of-lemuel"]')).toBeTruthy();
+  });
 });

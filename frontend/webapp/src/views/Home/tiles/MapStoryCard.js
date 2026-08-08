@@ -1,8 +1,21 @@
 import React from "react";
 import { openScripture } from "./ScripturePopup";
 import { label } from "src/models/Utils";
+import { assetUrl } from "src/models/BoMOnlineAPI";
 
 const placeLabel = (name, slug) => name || slug;
+
+const PlaceThumb = ({ slug, name }) =>
+  slug ? (
+    <img
+      className="mapStoryPlaceThumb"
+      src={`${assetUrl}/places/${slug}`}
+      alt=""
+      loading="lazy"
+      onError={(event) => { event.currentTarget.style.display = "none"; }}
+      title={name}
+    />
+  ) : null;
 
 const travelerText = (move) => {
   const people = (move?.people || []).filter((person) => person?.slug);
@@ -23,9 +36,15 @@ export function MapStoryMoveCard({ move, step, moveCount }) {
       <div className="mapStoryBeatIndex" aria-hidden="true">{step + 1}</div>
       <div className="mapStoryBeatBody">
         <div className="mapStoryLeg">
-          <span>{placeLabel(move.startName, move.start)}</span>
+          <span className="mapStoryLegPlace">
+            <PlaceThumb slug={move.start} name={placeLabel(move.startName, move.start)} />
+            <span className="mapStoryLegPlaceName">{placeLabel(move.startName, move.start)}</span>
+          </span>
           <span className="mapStoryArrow" aria-hidden="true">→</span>
-          <span>{placeLabel(move.endName, move.end)}</span>
+          <span className="mapStoryLegPlace">
+            <PlaceThumb slug={move.end} name={placeLabel(move.endName, move.end)} />
+            <span className="mapStoryLegPlaceName">{placeLabel(move.endName, move.end)}</span>
+          </span>
         </div>
         <div className="mapStoryBeatMeta">
           {move.ref ? (

@@ -2082,6 +2082,18 @@ html[data-theme="dark"] .notesTile .notesAttr { color: #aaa; }
 .mapStoryLeg { display: flex; align-items: baseline; gap: 0.34rem; color: #28332d; font-size: 0.91rem; font-weight: 720; line-height: 1.2; }
 .mapStoryLeg span:first-child,
 .mapStoryLeg span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mapStoryLegPlace { display: flex; min-width: 0; align-items: center; gap: 0.34rem; overflow: hidden; }
+.mapStoryLegPlaceName { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mapStoryPlaceThumb {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  object-fit: cover;
+  border: 2px solid #fff;
+  border-radius: 0.4rem;
+  box-shadow: 0 1px 4px rgba(24, 34, 28, 0.28);
+  background: #d7ddd3;
+}
 .mapStoryArrow { flex: 0 0 auto; color: #9b3c35; }
 .mapStoryBeatMeta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; margin-top: 0.25rem; }
 .mapStoryTile .mapStoryRef {
@@ -2160,6 +2172,7 @@ html[data-theme="dark"] .mapStoryFooter > span { color: #aab4ad; }
 html[data-theme="dark"] .mapStoryTile .mapTileFrame { border-color: #435047; background: #26332b; }
 html[data-theme="dark"] .mapStoryMapShade { background: radial-gradient(circle at 50% 42%, transparent 52%, rgba(4, 8, 5, 0.3)); }
 html[data-theme="dark"] .mapStoryBeat { border-color: #3a453e; background: #282f2b; }
+html[data-theme="dark"] .mapStoryPlaceThumb { border-color: #3a453e; background: #333c36; }
 html[data-theme="dark"] .mapStoryLeg { color: #eef1ed; }
 html[data-theme="dark"] .mapStoryTile .mapStoryDesc,
 html[data-theme="dark"] .mapStoryTile .mapStoryDuration,
