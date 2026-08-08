@@ -1,4 +1,4 @@
-import { legVisibility, legsOf, stopsOf, stopStateAt } from "../mapStoryPath";
+import { framedLegIndices, legVisibility, legsOf, stopsOf, stopStateAt } from "../mapStoryPath";
 
 // Modelled on the real Alma 2 "Amlicite War" rows: zarahemla is revisited, and
 // move 3 starts at hill-amnihu although move 2 ended at valley-of-gideon.
@@ -126,5 +126,28 @@ describe("legVisibility", () => {
 
   test("shows the whole journey as visited context on the completed frame", () => {
     expect(legVisibility(0, 3, true)).toEqual({ role: "visited", opacity: 0.6 });
+  });
+});
+
+describe("framedLegIndices", () => {
+  test("frames just the active leg at the start", () => {
+    expect(framedLegIndices(0, false, 4, 1)).toEqual([0]);
+  });
+
+  test("frames the active leg plus a trailing tail", () => {
+    expect(framedLegIndices(2, false, 4, 1)).toEqual([1, 2]);
+    expect(framedLegIndices(3, false, 4, 2)).toEqual([1, 2, 3]);
+  });
+
+  test("tail of zero frames only the active leg", () => {
+    expect(framedLegIndices(2, false, 4, 0)).toEqual([2]);
+  });
+
+  test("frames the entire journey on the completed frame", () => {
+    expect(framedLegIndices(3, true, 4, 1)).toEqual([0, 1, 2, 3]);
+  });
+
+  test("clamps the active index to the available legs", () => {
+    expect(framedLegIndices(99, false, 3, 1)).toEqual([1, 2]);
   });
 });

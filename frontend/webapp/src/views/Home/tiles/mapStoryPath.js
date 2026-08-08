@@ -102,3 +102,17 @@ export const legVisibility = (index, step, complete = false, trailingWindow = TR
   }
   return { role: "future", opacity: 0 };
 };
+
+/**
+ * Which leg indices the camera should frame for a given playhead: the active leg
+ * plus a short trailing tail for context. The completed frame shows every leg.
+ */
+export const framedLegIndices = (step, complete, total, tail = 1) => {
+  if (total <= 0) return [];
+  if (complete) return Array.from({ length: total }, (_, i) => i);
+  const end = Math.min(Math.max(0, step), total - 1);
+  const start = Math.max(0, end - tail);
+  const indices = [];
+  for (let i = start; i <= end; i += 1) indices.push(i);
+  return indices;
+};
