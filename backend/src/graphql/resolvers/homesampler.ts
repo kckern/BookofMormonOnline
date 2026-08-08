@@ -633,37 +633,44 @@ const sampleSectionNext = async (ctx: AppContext, seed: number) => {
   return rows[0] ?? null;
 };
 
-// One featured historical document (must have a teaser + a renderable thumb +
-// an editorially-prepared money quote — same rule as the witness tile so the
-// history tile reliably shows a pull-quote).
-// Pinned to the reception archive: the /history/:slug view only loads that
-// archive, so a doc sampled from any other would deep-link to an empty popup.
-const sampleHistory = async (ctx: AppContext, seed: number) => {
-  const rows = await ctx.db
-    .selectFrom('bom_xtras_history')
-    .selectAll()
-    .where('archive', '=', 'reception')
-    .where(sql<boolean>`teaser IS NOT NULL AND CHAR_LENGTH(teaser) > 30`)
-    .where('aspect', 'is not', null)
-    .where(sql<boolean>`JSON_EXTRACT(metadata,'$.money_quote') IS NOT NULL`)
-    .orderBy(seededOrder('id', seed))
-    .limit(1)
-    .execute();
-  const row = rows[0];
-  if (!row) return null;
-  let money_quote: string | null = null;
-  let mini_quote: string | null = null;
-  let quote_speaker: string | null = null;
-  let quote_is_witness_voice: boolean | null = null;
-  try {
-    const meta = typeof row.metadata === 'string' ? JSON.parse(row.metadata) : (row.metadata as Record<string, unknown> | null);
-    money_quote = (meta?.money_quote as string) ?? null;
-    mini_quote = (meta?.miniquote as string) ?? null;
-    quote_speaker = (meta?.quote_speaker as string) ?? null;
-    quote_is_witness_voice = (meta?.quote_is_witness_voice as boolean) ?? null;
-  } catch { /* metadata may be absent/invalid */ }
-  return { ...row, money_quote, mini_quote, quote_speaker, quote_is_witness_voice };
-};
+// One featured historical document from an archive: a teaser + an editorially
+// prepared money quote (same bar as the witness tile). requireThumb gates on a
+// renderable thumbnail (reception/translation have them; joseph-smith does not).
+// The quote fields are parsed from metadata onto the row so the
+// HistoricalDocument resolvers see them.
+const sampleArchiveDoc =
+  (archive: string, requireThumb: boolean) =>
+  async (ctx: AppContext, seed: number) => {
+    let qb = ctx.db
+      .selectFrom('bom_xtras_history')
+      .selectAll()
+      .where('archive', '=', archive)
+      .where(sql<boolean>`teaser IS NOT NULL AND CHAR_LENGTH(teaser) > 30`)
+      .where(sql<boolean>`JSON_EXTRACT(metadata,'$.money_quote') IS NOT NULL`);
+    if (requireThumb) qb = qb.where('aspect', 'is not', null);
+    const rows = await qb.orderBy(seededOrder('id', seed)).limit(1).execute();
+    const row = rows[0];
+    if (!row) return null;
+    let money_quote: string | null = null;
+    let mini_quote: string | null = null;
+    let quote_speaker: string | null = null;
+    let quote_is_witness_voice: boolean | null = null;
+    try {
+      const meta = typeof row.metadata === 'string' ? JSON.parse(row.metadata) : (row.metadata as Record<string, unknown> | null);
+      money_quote = (meta?.money_quote as string) ?? null;
+      mini_quote = (meta?.miniquote as string) ?? null;
+      quote_speaker = (meta?.quote_speaker as string) ?? null;
+      quote_is_witness_voice = (meta?.quote_is_witness_voice as boolean) ?? null;
+    } catch { /* metadata may be absent/invalid */ }
+    return { ...row, money_quote, mini_quote, quote_speaker, quote_is_witness_voice };
+  };
+
+// Pinned to reception: the /history/:slug view only loads that archive.
+// translation and joseph-smith-statements archives have no thumbnails in the DB,
+// so requireThumb is false for both.
+const sampleHistory = sampleArchiveDoc('reception', true);
+const sampleTranslation = sampleArchiveDoc('translation', false);
+const sampleJosephSmith = sampleArchiveDoc('joseph-smith-statements', false);
 
 // One full text block (scripture + narration + page/section context — the
 // feed's TextInFeed shape). Substantive content only.
@@ -690,6 +697,8 @@ const samplers: Record<string, (ctx: AppContext, seed: number) => Promise<unknow
   section: sampleSection,
   sectionNext: sampleSectionNext,
   history: sampleHistory,
+  translation: sampleTranslation,
+  josephSmith: sampleJosephSmith,
   text: sampleText,
   faxPages: sampleFaxPages,
   faxMore: sampleFaxMore,

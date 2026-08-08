@@ -25,6 +25,8 @@ type HomeSampler {
   section: Section
   sectionNext: Section
   history: HistoricalDocument
+  translation: HistoricalDocument
+  josephSmith: HistoricalDocument
   text: TextBlock
   faxPages: [FaxPageRef]
   faxMore: [Fax]
