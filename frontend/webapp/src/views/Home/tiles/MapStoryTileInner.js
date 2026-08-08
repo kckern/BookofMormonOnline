@@ -12,7 +12,7 @@ import { Style, Stroke } from "ol/style";
 import * as OlProj from "ol/proj";
 import * as Interaction from "ol/interaction";
 import "ol/ol.css";
-import { legsOf, stopsOf } from "./mapStoryPath";
+import { legVisibility, legsOf, stopsOf } from "./mapStoryPath";
 import { buildStoryOverlay, storyStepForStop, travelerPosition } from "./mapStoryLayout";
 
 // Same FARMS "internal" model as the full map. These coordinates belong to
@@ -22,8 +22,6 @@ const MIN_ZOOM = 6;
 const MAX_ZOOM = 10;
 const EMPTY_STYLE = new Style({});
 
-const ROUTE = "rgba(42, 56, 49, 0.35)";
-const VISITED = "rgba(130, 47, 40, 0.72)";
 const ACTIVE = "#9f3029";
 
 /**
@@ -34,19 +32,19 @@ const project = (lat, lng) => OlProj.fromLonLat([Number(lat), Number(lng)]);
 
 const lerp = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
 
-const routeStyle = (detached) =>
+const routeStyle = (detached, opacity = 0.35) =>
   new Style({
     stroke: new Stroke({
-      color: ROUTE,
+      color: `rgba(42, 56, 49, ${opacity})`,
       width: 2,
       lineDash: detached ? [2, 6] : [5, 7],
     }),
   });
 
-const visitedStyle = (detached) =>
+const visitedStyle = (detached, opacity = 0.72) =>
   new Style({
     stroke: new Stroke({
-      color: VISITED,
+      color: `rgba(130, 47, 40, ${opacity})`,
       width: 2.5,
       lineDash: detached ? [2, 5] : undefined,
     }),
@@ -335,25 +333,37 @@ export default function MapStoryTileInner({
   // selections while paused render their full leg; autoplay starts at origin.
   useEffect(() => {
     const features = progressFeaturesRef.current;
+    const baseFeatures = baseFeaturesRef.current;
     if (!features.length) return;
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     animationRef.current = { step, elapsed: 0, lastTime: null };
 
     features.forEach((feature, index) => {
-      const from = project(legs[index].from.lat, legs[index].from.lng);
-      const to = project(legs[index].to.lat, legs[index].to.lng);
-      if (complete || index < step) {
-        feature.setGeometry(new LineString([from, to]));
-        feature.setStyle(visitedStyle(legs[index].detached));
-      } else if (index === step) {
+      const leg = legs[index];
+      const from = project(leg.from.lat, leg.from.lng);
+      const to = project(leg.to.lat, leg.to.lng);
+      const vis = legVisibility(index, step, complete);
+      if (vis.role === "active") {
         const drawFull = !animate || !playing;
         feature.setGeometry(new LineString(drawFull ? [from, to] : [from, from]));
-        feature.setStyle(activeStyle(legs[index].detached));
+        feature.setStyle(activeStyle(leg.detached));
+      } else if (vis.role === "recent" || vis.role === "visited") {
+        feature.setGeometry(new LineString([from, to]));
+        feature.setStyle(visitedStyle(leg.detached, vis.opacity));
       } else {
+        // old + future: progress layer stays empty; base carries faint context.
         feature.setGeometry(new LineString([from, from]));
         feature.setStyle(EMPTY_STYLE);
       }
     });
+
+    baseFeatures.forEach((feature, index) => {
+      const vis = legVisibility(index, step, complete);
+      // Only long-past legs remain as faint route context. Future legs are hidden
+      // until reached; active/recent/visited legs are drawn in color above.
+      feature.setStyle(vis.role === "old" ? routeStyle(legs[index].detached, vis.opacity) : EMPTY_STYLE);
+    });
+
     updateLayoutRef.current();
 
     const activeLeg = legs[complete ? legs.length - 1 : Math.min(step, legs.length - 1)];
