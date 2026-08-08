@@ -10,9 +10,10 @@ import Feature from "ol/Feature";
 import LineString from "ol/geom/LineString";
 import { Style, Stroke } from "ol/style";
 import * as OlProj from "ol/proj";
+import { boundingExtent } from "ol/extent";
 import * as Interaction from "ol/interaction";
 import "ol/ol.css";
-import { legVisibility, legsOf, stopsOf } from "./mapStoryPath";
+import { framedLegIndices, legVisibility, legsOf, stopsOf } from "./mapStoryPath";
 import { buildStoryOverlay, storyStepForStop, travelerPosition } from "./mapStoryLayout";
 
 // Same FARMS "internal" model as the full map. These coordinates belong to
@@ -107,6 +108,8 @@ export default function MapStoryTileInner({
   const layoutStateRef = useRef(null);
   const updateLayoutRef = useRef(() => {});
   const fitStoryRef = useRef(() => {});
+  const frameStepRef = useRef(() => {});
+  const didMountRef = useRef(false);
   const programmaticMoveRef = useRef(false);
   const mapMovedRef = useRef(false);
   const [overlay, setOverlay] = useState({ markers: [], clusters: [], labels: [] });
@@ -271,22 +274,43 @@ export default function MapStoryTileInner({
     });
     mapRef.current = map;
 
-    const fitStory = () => {
-      const extent = baseLayer.getSource().getExtent();
+    const allIndices = legs.map((_, index) => index);
+    const frameLegs = (indices, withAnimation) => {
+      if (!indices.length) return;
+      const coords = [];
+      indices.forEach((index) => {
+        const leg = legs[index];
+        if (!leg) return;
+        coords.push(project(leg.from.lat, leg.from.lng));
+        coords.push(project(leg.to.lat, leg.to.lng));
+      });
+      if (!coords.length) return;
+      const extent = boundingExtent(coords);
       if (!extent.every(Number.isFinite)) return;
       programmaticMoveRef.current = true;
       map.updateSize();
       map.getView().fit(extent, {
-        padding: [52, 52, 52, 52],
+        padding: [46, 46, 46, 46],
         maxZoom: MAX_ZOOM,
+        duration: withAnimation ? 620 : 0,
       });
       setMapMoved(false);
       mapMovedRef.current = false;
-      map.renderSync();
-      updateLayoutRef.current();
-      requestAnimationFrame(() => { programmaticMoveRef.current = false; });
+      if (!withAnimation) {
+        map.renderSync();
+        updateLayoutRef.current();
+        programmaticMoveRef.current = false;
+      }
+      // When animating, the `moveend` handler clears programmaticMoveRef and
+      // refreshes the overlay once the glide settles.
     };
-    fitStoryRef.current = fitStory;
+    const frameStory = (withAnimation) => frameLegs(allIndices, withAnimation);
+    const frameStep = (withAnimation) => {
+      const state = layoutStateRef.current;
+      frameLegs(framedLegIndices(state.step, state.complete, legs.length, 1), withAnimation);
+    };
+    fitStoryRef.current = () => frameStory(true);
+    frameStepRef.current = frameStep;
 
     const finishMove = () => {
       if (programmaticMoveRef.current) {
@@ -306,13 +330,13 @@ export default function MapStoryTileInner({
     resizeObserverRef.current = typeof ResizeObserver === "function"
       ? new ResizeObserver(() => {
           map.updateSize();
-          if (!mapMovedRef.current) fitStory();
+          if (!mapMovedRef.current) frameStep(false);
           else updateLayoutRef.current();
         })
       : null;
     if (resizeObserverRef.current) resizeObserverRef.current.observe(target);
 
-    const initialFrame = requestAnimationFrame(fitStory);
+    const initialFrame = requestAnimationFrame(() => frameStep(false));
     return () => {
       cancelAnimationFrame(initialFrame);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
@@ -405,6 +429,20 @@ export default function MapStoryTileInner({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playing, animate, complete, step, travelMs, legs]);
+
+  // Re-frame the camera on the active move so each hop is right-sized, unless the
+  // user has taken manual control of the map. The build effect frames the first
+  // move synchronously, so the first run here is skipped.
+  useEffect(() => {
+    if (!mapRef.current) return;
+    if (!didMountRef.current) {
+      didMountRef.current = true;
+      return;
+    }
+    if (mapMovedRef.current) return;
+    frameStepRef.current(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, complete]);
 
   const recenter = (event) => {
     event.stopPropagation();
