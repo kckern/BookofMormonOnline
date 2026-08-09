@@ -20,6 +20,10 @@ import WitnessTile from "./WitnessTile";
 import MapTile from "./MapTile";
 import TranslationTile from "./TranslationTile";
 import JosephSmithTile from "./JosephSmithTile";
+import MattersNarrativeTile from "./MattersNarrativeTile";
+import MattersMaterialTile from "./MattersMaterialTile";
+import MattersConceptTile from "./MattersConceptTile";
+import MatterProfileTile from "./MatterProfileTile";
 
 /**
  * Sampler tile registry. Adding a tile type:
@@ -51,6 +55,9 @@ export const tileRegistry = [
   { key: "history",     component: HistoryTile,     span: "tile-history",     isReady: (p) => !!p?.history },
   { key: "fax",         component: FaxTile,         span: "tile-fax",         isReady: (p) => !!p?.fax },
   { key: "places",      component: PlacesTile,      span: "tile-places",      isReady: (p) => p?.places?.length > 0 },
+  { key: "mattersNarrative", component: MattersNarrativeTile, span: "tile-mattersNarrative", isReady: (p) => (p?.mattersNarrative?.length || 0) > 0 },
+  { key: "mattersMaterial",  component: MattersMaterialTile,  span: "tile-mattersMaterial",  isReady: (p) => (p?.mattersMaterial?.length || 0) > 0 },
+  { key: "mattersConcept",   component: MattersConceptTile,   span: "tile-mattersConcept",   isReady: (p) => (p?.mattersConcept?.length || 0) > 0 },
   // biblephrases + chiasmus fetch their own data client-side (seeded off
   // payload.seed) — no homesampler field, so they're always "ready".
   { key: "biblephrases", component: BiblePhrasesTile, span: "tile-biblephrases", isReady: () => true },
@@ -76,6 +83,7 @@ export const reservePool = [
   { key: "translation",  component: TranslationTile,   dataKey: "translation",  isReady: (p) => !!p?.translation },
   { key: "josephSmith",  component: JosephSmithTile,   dataKey: "josephSmith",  isReady: (p) => !!p?.josephSmith },
   { key: "placeProfile",  component: PlaceProfileTile,  isReady: (p) => (p?.places?.length || 0) > 11 },
+  { key: "matterProfile", component: MatterProfileTile, props: { group: "concept" }, isReady: (p) => (p?.mattersConcept?.length || 0) > 5 },
   { key: "artFill1",      component: ImageArtTile,      props: { artIndex: 1 }, isReady: (p) => (p?.art?.length || 0) > 1 },
   { key: "chiasmus2",     component: ChiasmusTile,      props: { seed: 0 }, seedOffset: 97, isReady: () => true },
   { key: "artFill2",      component: ImageArtTile,      props: { artIndex: 2 }, isReady: (p) => (p?.art?.length || 0) > 2 },
@@ -85,13 +93,14 @@ export const reservePool = [
 // Infinite-scroll batch tiles: the repeatable content types re-sampled under a
 // fresh seed as the reader nears the bottom. Fixed/live tiles (reading plan,
 // narration, contents, community) are excluded — they render once.
-const INFINITE_REGISTRY_KEYS = ["art", "commentary", "commentary2", "commentary3", "history", "fax", "faxVerse", "places", "biblephrases", "chiasmus", "text", "notes"];
+const INFINITE_REGISTRY_KEYS = ["art", "commentary", "commentary2", "commentary3", "history", "fax", "faxVerse", "places", "biblephrases", "chiasmus", "text", "notes", "mattersNarrative", "mattersMaterial", "mattersConcept"];
 export const batchTiles = [
   ...tileRegistry
     .filter((t) => INFINITE_REGISTRY_KEYS.includes(t.key))
     .map((t) => ({ key: t.key, component: t.component, isReady: t.isReady, span: t.span })),
   { key: "personProfile", component: PersonProfileTile, isReady: (p) => (p?.people?.length || 0) > 0, span: "tile-personProfile" },
   { key: "placeProfile",  component: PlaceProfileTile,  isReady: (p) => (p?.places?.length || 0) > 0, span: "tile-placeProfile" },
+  { key: "matterProfile", component: MatterProfileTile, props: { group: "concept" }, isReady: (p) => (p?.mattersConcept?.length || 0) > 0, span: "tile-matterProfile" },
   { key: "witness",       component: WitnessTile, dataKey: "witnesses", isReady: (p) => (p?.witnesses?.length || 0) > 0, span: "tile-witness" },
   { key: "artB",          component: ImageArtTile, props: { artIndex: 1 }, isReady: (p) => (p?.art?.length || 0) > 1, span: "tile-art" },
 ];

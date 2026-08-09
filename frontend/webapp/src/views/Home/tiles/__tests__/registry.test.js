@@ -45,4 +45,13 @@ describe("tile registry", () => {
   test("the map reserve is main-only so it lands below the fold", () => {
     expect(reservePool.find((t) => t.key === "map").mainOnly).toBe(true);
   });
+
+  test("registers the three matters grid tiles and the profile reserve", () => {
+    const gridKeys = tileRegistry.map((t) => t.key);
+    ["mattersNarrative", "mattersMaterial", "mattersConcept"].forEach((k) =>
+      expect(gridKeys).toContain(k)
+    );
+    expect(reservePool.map((t) => t.key)).toContain("matterProfile");
+    expect(batchTiles.map((t) => t.key)).toContain("matterProfile");
+  });
 });

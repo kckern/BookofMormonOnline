@@ -2274,3 +2274,78 @@ html[data-theme="dark"] .mapStoryPlaceLabel.is-active { color: #ffd4cf; border-c
 .faxVerseTile .faxEditionRow:hover .faxEditionCrop {
   border-color: rgba(120, 90, 50, 0.45);
 }
+
+/* --- Matters tiles ------------------------------------------------------- */
+/* Grid tiles reuse the Places footprint; the layout is JS-binned masonry, so
+   the span classes only need to exist (skeleton sizing + hooks). */
+.tile.skeleton.tile-mattersNarrative,
+.tile.skeleton.tile-mattersMaterial,
+.tile.skeleton.tile-mattersConcept { min-height: 15rem; }
+.tile.skeleton.tile-matterProfile { min-height: 18rem; }
+
+/* Material: ref-count badge over the image (top-right). */
+.mattersRefBadge {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 0.7rem;
+  background: rgba(0, 0, 0, 0.62);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.4;
+  pointer-events: none;
+}
+.mattersMaterialSub { font-size: 0.8rem; color: inherit; }
+
+/* Concept: text-forward cards over a muted image background. */
+.mattersConceptGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+.mattersConceptCard {
+  position: relative;
+  display: block;
+  min-height: 8.5rem;
+  border-radius: 0.4rem;
+  overflow: hidden;
+  color: #fff;
+  text-decoration: none;
+  background-size: cover;
+  background-position: center;
+  min-width: 0;
+}
+.mattersConceptScrim {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  height: 100%;
+  padding: 0.5rem;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.15) 0%, rgba(0, 0, 0, 0.78) 70%);
+  justify-content: flex-end;
+}
+.mattersConceptName { font-weight: 700; font-size: 0.9rem; line-height: 1.15; }
+.mattersConceptSub { font-size: 0.72rem; opacity: 0.9; }
+.mattersConceptDesc { font-size: 0.72rem; opacity: 0.82; margin-top: 0.15rem; }
+.mattersConceptViewAll .mattersConceptScrim { align-items: center; justify-content: center; }
+
+/* Singleton profile: subtitle + relationship chips. */
+.matterProfileSub { font-size: 0.85rem; opacity: 0.8; margin: 0.2rem 0 0.4rem; }
+.matterProfileRels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin: 0.4rem 0;
+}
+.matterProfileRels a { text-decoration: none; }
+.matterRelChip {
+  display: inline-block;
+  padding: 0.05rem 0.5rem;
+  border-radius: 0.7rem;
+  background: rgba(0, 0, 0, 0.08);
+  font-size: 0.75rem;
+  color: inherit;
+}
+html[data-theme="dark"] .matterRelChip { background: rgba(255, 255, 255, 0.12); }
