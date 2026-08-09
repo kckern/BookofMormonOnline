@@ -18,8 +18,8 @@
  *
  * verifyToken
  * -----------
- * Looks up `messenger_users` by `user_id` to get `bom_user_id`, then confirms
- * a `bom_user_token` row with `(user = bom_user_id, token = token)` exists.
+ * Looks up `messenger_users` by `user_id` to get `bom_user_id`, then delegates
+ * real-user token confirmation to the session store (SessionStore.verifyToken).
  * Bots (null bom_user_id) may connect when `token === process.env.MESSENGER_BOT_TOKEN`.
  */
 
@@ -29,6 +29,7 @@ import { createAdapter } from '@socket.io/redis-adapter';
 import { createClient } from 'redis';
 import { getDb } from '../data/db.js';
 import { isValidToken } from '../auth/identity.js';
+import { verifyToken as verifyTokenStore } from '../auth/sessionStore.js';
 import { getRedis } from '../config/redis.js';
 import { setOnline, setOffline } from '../messaging/presence.js';
 import { setIo, getBus } from './RealtimeBus.js';
@@ -46,7 +47,7 @@ import * as actionHandlers from './handlers/action.js';
  * Flow:
  *  1. Look up `messenger_users` by `user_id` → get `bom_user_id`.
  *  2. If `bom_user_id` is null → bot path: token must equal MESSENGER_BOT_TOKEN.
- *  3. Otherwise confirm a `bom_user_token` row with `(user, token)` exists.
+ *  3. Otherwise delegate to SessionStore.verifyToken to confirm the token belongs to that user.
  *
  * Returns `{ valid: true, bomUserId }` on success, `{ valid: false }` on any
  * failure (including DB errors — logged, never thrown).
@@ -82,15 +83,11 @@ async function verifyToken(
       return { valid: false };
     }
 
-    // Step 3: real user path — confirm bom_user_token row.
-    const tokenRow = await db
-      .selectFrom('bom_user_token')
-      .select('token')
-      .where('user', '=', bomUserId)
-      .where('token', '=', token)
-      .executeTakeFirst();
-
-    return tokenRow ? { valid: true, bomUserId } : { valid: false };
+    // Step 3: real user path — the session store owns bom_user_token now.
+    const principal = await verifyTokenStore(db, token);
+    return principal && principal.userId === bomUserId
+      ? { valid: true, bomUserId }
+      : { valid: false };
   } catch (err) {
     console.error('[realtime] verifyToken error:', err);
     return { valid: false };
