@@ -377,6 +377,10 @@ export default function Sampler() {
       case "history": return 30;
       case "fax": return 30; // natural-height pages + edition covers
       case "places": return 20;
+      // matters grid tiles share the Places footprint
+      case "mattersNarrative":
+      case "mattersMaterial":
+      case "mattersConcept": return 20;
       case "community": return 8 + (payload.community?.groups?.length || 0) * 4 + (payload.community?.messages?.length || 0) * 2.5;
       case "biblephrases": return 20;
       case "chiasmus": return 20;
@@ -453,6 +457,7 @@ export default function Sampler() {
     switch (key) {
       case "personProfile": return 24;
       case "placeProfile": return 22;
+      case "matterProfile": return 22;
       case "witness": return 26;
       case "art":
       case "artB": return 24;
