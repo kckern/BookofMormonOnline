@@ -217,7 +217,8 @@ h5.ppFiltersHeading{
     min-width: 13em;
     max-width: min(90vw, 34em);
     max-height: 60vh;
-    overflow: auto;
+    overflow-y: auto;
+    overflow-x: hidden; /* never a horizontal scrollbar — labels wrap instead */
     padding: 0.6em 0.8em;
     background: #fff;
     border: 1px solid #cfcfcf;
@@ -238,6 +239,13 @@ h5.ppFiltersHeading{
     flex-shrink: 0;
 }
 .fpPopover li img.dot { opacity: 1; }
+/* Right-size the popover: wrap option labels so content fits the popover width
+   (the global .ppColumns nowrap would otherwise force a horizontal scrollbar). */
+.fpPopover li.item span { white-space: normal; }
+/* Tree-style: per-Kind detail nests indented under its parent option. */
+.fpItemDetail { list-style: none; margin: 0 0 0.25em 0.9em; padding: 0.1em 0 0.2em 0.8em; border-left: 2px solid #d8d8d8; }
+.fpItemDetail .ppDetailColumn { width: auto; }
+html[data-theme="dark"] .fpItemDetail { border-left-color: #555; }
 
 .fpSearchBtn {
     outline: none;
@@ -261,7 +269,7 @@ h5.ppFiltersHeading{
 .fpClearAll {
     border: none;
     background: none;
-    color: #345496;
+    color: #333; /* house links are black/neutral — not the #345496 blue */
     cursor: pointer;
     font-weight: 600;
     padding: 0;
@@ -278,8 +286,9 @@ h5.ppFiltersHeading{
     padding: 0.15em 0.4em;
 }
 .fpModeToggle:hover { background: #fff; border-color: #888; }
-/* Collapse control sits at the right end of the main-mode heading. */
-h5.ppFiltersHeading .fpModeToggle { position: absolute; right: 10vw; top: 0; }
+/* Main-mode collapse control sits in the top-right corner of the panel itself,
+   so "minimize after maximize" is discoverable (.ppFilters is position:relative). */
+.ppFiltersCollapse { position: absolute; right: 0.5em; top: 0.5em; z-index: 2; }
 
 html[data-theme="dark"] .fpToolbar { background-color: #2a2a2a; }
 html[data-theme="dark"] .fpAxisBtn { background: #3a3a3a; border-color: #555; color: #eee; }
@@ -287,5 +296,5 @@ html[data-theme="dark"] .fpAxisBtn:hover,
 html[data-theme="dark"] .fpAxisBtn.open { background: #454545; }
 html[data-theme="dark"] .fpPopover { background: #2b2b2b; border-color: #4a4a4a; color: #eee; }
 html[data-theme="dark"] .fpResultCount { color: #b0b0b0; }
-html[data-theme="dark"] .fpClearAll { color: #93c6ef; }
+html[data-theme="dark"] .fpClearAll { color: #ccc; }
 html[data-theme="dark"] .fpModeToggle { background: #3a3a3a; border-color: #555; color: #ddd; }

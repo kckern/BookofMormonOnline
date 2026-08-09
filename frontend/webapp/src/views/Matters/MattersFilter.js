@@ -109,6 +109,12 @@ export function MattersFilter({ matterFilters, setFilter, matterList, resultCoun
     <MatterDetailColumn matterFilters={matterFilters} setFilter={setFilter} />
   ) : null;
 
+  // Mini popover: nest each active Kind's forms/subforms tree-style under that Kind.
+  const renderItemDetail = (axisName, tag, on) =>
+    axisName === "form_group" && on ? (
+      <MatterDetailColumn kind={tag} matterFilters={matterFilters} setFilter={setFilter} />
+    ) : null;
+
   const selectItemHandler = (slug) =>
     appController.functions.setPopUp({ type: "matters", ids: [slug], underSlug: "matters" });
 
@@ -120,6 +126,7 @@ export function MattersFilter({ matterFilters, setFilter, matterList, resultCoun
       onChange={onChange}
       extraColumn={extraColumn}
       extraColumnAxis="form_group"
+      renderItemDetail={renderItemDetail}
       resultCount={resultCount}
       search={{
         placeholder: "search_for_a_matter",

@@ -49,9 +49,12 @@ const CAP = 10; // max form rows shown while collapsed
  * its siblings. The form list collapses to ~CAP rows (selected forms always
  * shown) with a Show more toggle.
  */
-export function MatterDetailColumn({ matterFilters, setFilter }) {
+export function MatterDetailColumn({ matterFilters, setFilter, kind }) {
   const [expanded, setExpanded] = useState(false);
-  const kinds = matterFilters.form_group ?? new Set();
+  // When `kind` is given, render just that one Kind's forms (tree-style nesting
+  // under its parent in the mini popover); otherwise the merged detail column.
+  const nested = kind != null;
+  const kinds = nested ? new Set([kind]) : (matterFilters.form_group ?? new Set());
   const formSel = matterFilters.form ?? new Set();
   const subSel = matterFilters.subform_label ?? new Set();
 
@@ -94,7 +97,7 @@ export function MatterDetailColumn({ matterFilters, setFilter }) {
 
   return (
     <ul className="ppDetailColumn">
-      <li className="lihead">{t("matter_axis_detail", "Detail")}</li>
+      {nested ? null : <li className="lihead">{t("matter_axis_detail", "Detail")}</li>}
       {visible.map((f) => {
         const on = formSel.has(f.tag);
         const subs = subformsByForm[f.tag] || [];

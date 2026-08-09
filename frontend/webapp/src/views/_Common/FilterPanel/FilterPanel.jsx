@@ -32,7 +32,7 @@ import "./FilterPanel.css";
  *  - extraColumnAxis?: string — the axis whose mini popover hosts extraColumn.
  *  - resultCount?: number — shown as "N results" in the mini toolbar.
  */
-export default function FilterPanel({ heading, axes, value, onChange, search, extraColumn, extraColumnAxis, resultCount }) {
+export default function FilterPanel({ heading, axes, value, onChange, search, extraColumn, extraColumnAxis, resultCount, renderItemDetail }) {
   const appController = useAppController();
   const [isOpen, setIsOpen] = useState(false);
   const [initSearchString, setInitSearchString] = useState("");
@@ -62,25 +62,34 @@ export default function FilterPanel({ heading, axes, value, onChange, search, ex
   const clearAll = () => onChange(Object.fromEntries(axes.map((a) => [a.name, []])));
 
   // The option list for one axis (switches + select-all/clear), reused by both modes.
-  const renderAxisList = (axis, { showTitle = true } = {}) => (
+  const renderAxisList = (axis, { showTitle = true, itemDetail = false } = {}) => (
     <ul key={axis.name}>
       {showTitle ? <li className="lihead">{axis.title}</li> : null}
       <li className="lifoot">
         <Button onClick={() => setAll(axis.name, true)}>{label("select_all")}</Button>
         <Button onClick={() => setAll(axis.name, false)}>{label("clear")}</Button>
       </li>
-      {axis.options.map((opt) => (
-        <li className="item" key={opt.tag} onClick={() => toggleTag(axis.name, opt.tag)}>
-          <BootstrapSwitchButton
-            checked={(value[axis.name] || []).includes(opt.tag)}
-            onstyle="success"
-            offlabel={label("off")}
-            onlabel={label("on")}
-            size="xs"
-          />
-          {opt.label}
-        </li>
-      ))}
+      {axis.options.map((opt) => {
+        const on = (value[axis.name] || []).includes(opt.tag);
+        // Tree-style: when enabled, a per-item detail node nests indented beneath
+        // its parent option (Matters: an active Kind's forms/subforms).
+        const detail = itemDetail && renderItemDetail ? renderItemDetail(axis.name, opt.tag, on) : null;
+        return (
+          <React.Fragment key={opt.tag}>
+            <li className="item" onClick={() => toggleTag(axis.name, opt.tag)}>
+              <BootstrapSwitchButton
+                checked={on}
+                onstyle="success"
+                offlabel={label("off")}
+                onlabel={label("on")}
+                size="xs"
+              />
+              {opt.label}
+            </li>
+            {detail ? <li className="fpItemDetail">{detail}</li> : null}
+          </React.Fragment>
+        );
+      })}
     </ul>
   );
 
@@ -123,11 +132,15 @@ export default function FilterPanel({ heading, axes, value, onChange, search, ex
 
   const mainPanel = (
     <>
-      <h5 className="ppFiltersHeading">
-        {heading}
-        <button className="fpModeToggle" onClick={() => applyMode("mini")} title={tr("collapse", "Collapse")} aria-label={tr("collapse", "Collapse")}>⤢</button>
-      </h5>
+      <h5 className="ppFiltersHeading">{heading}</h5>
       <div className="ppFilters">
+        <button
+          type="button"
+          className="fpModeToggle ppFiltersCollapse"
+          onClick={() => applyMode("mini")}
+          title={tr("collapse", "Collapse")}
+          aria-label={tr("collapse", "Collapse")}
+        >⤡</button>
         {searchButton}
         {columns}
         {searchEl}
@@ -162,8 +175,8 @@ export default function FilterPanel({ heading, axes, value, onChange, search, ex
               {open ? (
                 <div className="fpPopover">
                   <div className="ppColumns fpPopoverCols">
-                    {renderAxisList(axis, { showTitle: false })}
-                    {extraColumnAxis === axis.name ? extraColumn : null}
+                    {renderAxisList(axis, { showTitle: false, itemDetail: true })}
+                    {renderItemDetail ? null : (extraColumnAxis === axis.name ? extraColumn : null)}
                   </div>
                 </div>
               ) : null}
