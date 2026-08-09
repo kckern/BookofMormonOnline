@@ -28,10 +28,14 @@ export const HISTORY_SECTIONS = [
     blurb: "Those who testified they saw and handled the plates.",
     unit: "witnesses",
     status: "live",
-    // radial 3-wedge pie, vertex @ 50%/38% (see HistoryHub.css .pie)
+    // top third: the Three (triptych); bottom two-thirds: the Eight (4×2 grid)
     hero: {
-      type: "pie",
-      srcs: [person("oliver-cowdery"), person("david-whitmer"), person("martin-harris")],
+      type: "witnesses",
+      three: [person("oliver-cowdery"), person("david-whitmer"), person("martin-harris")],
+      eight: [
+        person("john-whitmer"), person("jacob-whitmer"), person("christian-whitmer"), person("peter-whitmer-jr"),
+        person("hiram-page"), person("joseph-smith-sr"), person("samuel-smith"), person("hyrum-smith"),
+      ],
     },
     // static signal — no archive fetch
     signal: "22 WITNESSES · THREE, EIGHT & OTHERS",

@@ -10,7 +10,7 @@ test("registry has four sections in the JS → Witnesses → Translation → Rec
 });
 
 test("every section has the required display + hero fields", () => {
-  const HERO_TYPES = ["image", "pie", "placeholder", "randomThumb"];
+  const HERO_TYPES = ["image", "witnesses", "placeholder", "randomThumb"];
   for (const s of HISTORY_SECTIONS) {
     expect(s.key).toBeTruthy();
     expect(s.title).toBeTruthy();
@@ -29,7 +29,8 @@ test("Translation is retitled to 'Translation Process'", () => {
 
 test("hero descriptors carry the data each type needs", () => {
   expect(getSection("josephSmith").hero.src).toMatch(/joseph-smith\.jpg$/);
-  expect(getSection("witnesses").hero.srcs).toHaveLength(3);
+  expect(getSection("witnesses").hero.three).toHaveLength(3);
+  expect(getSection("witnesses").hero.eight).toHaveLength(8);
   expect(getSection("translation").hero.icon).toBeTruthy();
   expect(getSection("reception").hero.archive).toBe("reception");
 });

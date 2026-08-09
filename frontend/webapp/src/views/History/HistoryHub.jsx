@@ -40,13 +40,25 @@ function HeroImage({ src }) {
   );
 }
 
-function HeroPie({ srcs }) {
-  // Witnesses — a clean 3-band triptych of the Three (gutters + framing in CSS).
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function HeroWitnesses({ three, eight }) {
+  // Top third: the Three (triptych). Bottom two-thirds: the Eight (4×2 grid).
+  // Shuffle within each group once per load so the arrangement varies.
+  const t = useMemo(() => shuffle(three), [three]);
+  const e = useMemo(() => shuffle(eight), [eight]);
+  const cell = (src, i) => <div key={i} className="wCell" style={{ backgroundImage: `url("${src}")` }} />;
   return (
-    <div className="historyHero historyHero--triptych">
-      {srcs.map((src, i) => (
-        <div key={i} style={{ backgroundImage: `url("${src}")` }} />
-      ))}
+    <div className="historyHero historyHero--witnesses">
+      <div className="wThree">{t.map(cell)}</div>
+      <div className="wEight">{e.map(cell)}</div>
     </div>
   );
 }
@@ -62,7 +74,7 @@ function HeroPlaceholder({ icon }) {
 function Hero({ section, list }) {
   const { hero } = section;
   if (hero.type === "image") return <HeroImage src={hero.src} />;
-  if (hero.type === "pie") return <HeroPie srcs={hero.srcs} />;
+  if (hero.type === "witnesses") return <HeroWitnesses three={hero.three} eight={hero.eight} />;
   if (hero.type === "placeholder") return <HeroPlaceholder icon={hero.icon} />;
   if (hero.type === "randomThumb") {
     const pick = pickRandom(list);
