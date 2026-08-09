@@ -41,19 +41,12 @@ function HeroImage({ src }) {
 }
 
 function HeroPie({ srcs }) {
-  // radial 3-wedge pie; each portrait is a background layer so it can be scaled
-  // down (background-size) to seat the face inside its slice — see w0/w1/w2 CSS.
+  // Witnesses — a clean 3-band triptych of the Three (gutters + framing in CSS).
   return (
-    <div className="historyHero historyHero--pie">
+    <div className="historyHero historyHero--triptych">
       {srcs.map((src, i) => (
-        <div key={i} className={`w${i}`} style={{ backgroundImage: `url("${src}")` }} />
+        <div key={i} style={{ backgroundImage: `url("${src}")` }} />
       ))}
-      {/* deliberate gold seams from the 38% vertex — reads as a 3-piece medallion */}
-      <svg className="pieSeams" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-        <line x1="50" y1="38" x2="50" y2="0" />
-        <line x1="50" y1="38" x2="0" y2="67" />
-        <line x1="50" y1="38" x2="100" y2="67" />
-      </svg>
     </div>
   );
 }

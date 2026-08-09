@@ -99,47 +99,24 @@
   background: radial-gradient(circle at 50% 42%, #efe7d6, #e2d6bd);
 }
 .historyHero--placeholder > img {
-  width: 42%;
+  width: 58%;
   height: auto;
   object-fit: contain;
-  opacity: 0.55;
+  opacity: 0.7;
   filter: none;
 }
 
-/* radial 3-wedge pie (Witnesses): wedges converge at 50%/38% (eye-line).
-   Each portrait is a background layer scaled down (background-size) so the whole
-   face sits inside its slice, eyeline at ~1/3 of the slice, on the wedge centroid. */
-.historyHero--pie > div {
-  position: absolute;
-  inset: 0;
-  background-repeat: no-repeat;
-  background-size: 82% auto; /* scaled down so each whole face reads within its slice */
+/* Witnesses — a clean 3-band triptych of the Three (Oliver / David / Martin),
+   thin gold gutters, each face framed on its eyeline. No diagonal seams. */
+.historyHero--triptych {
+  display: grid;
+  grid-template-rows: 1fr 1fr 1fr;
+  gap: 2px;
+  background: var(--gold);
 }
-.historyHero--pie .w0 { /* Oliver — upper-left slice, eyeline ~1/3, centered on centroid */
-  background-position: 20% 16%;
-  clip-path: polygon(50% 38%, 50% 0, 0 0, 0 67%);
-}
-.historyHero--pie .w1 { /* David — upper-right slice */
-  background-position: 80% 16%;
-  clip-path: polygon(50% 38%, 50% 0, 100% 0, 100% 67%);
-}
-.historyHero--pie .w2 { /* Martin — lower-center slice */
-  background-position: 50% 76%;
-  clip-path: polygon(50% 38%, 0 67%, 0 100%, 100% 100%, 100% 67%);
-}
-/* deliberate gold seams from the vertex, so the three portraits read as a
-   3-piece medallion instead of merging into one composite face */
-.historyHero--pie .pieSeams {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-}
-.historyHero--pie .pieSeams line {
-  stroke: var(--gold);
-  stroke-width: 2;
-  vector-effect: non-scaling-stroke;
+.historyHero--triptych > div {
+  background-size: cover;
+  background-position: center 26%;
 }
 
 /* ── text (right column) ──────────────────────────────────── */
