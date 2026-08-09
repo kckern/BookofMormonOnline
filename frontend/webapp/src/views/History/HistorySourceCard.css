@@ -16,7 +16,7 @@
   color: #2b2b2b;
 }
 html[data-theme="dark"] .historySourceCard .historyLead { border-bottom-color: #444; }
-.historySourceCard .historyLead.is-firsthand { border-left-color: #345496; }
+.historySourceCard .historyLead.is-firsthand { border-left-color: #333; }
 .historySourceCard .historyLead .money_quote_text { font-style: normal; }
 /* the money quote is de-emphasised (grey); the mini-quote excerpts within it
    are the emphasis (near-black) so the key phrase reads first. No <mark>

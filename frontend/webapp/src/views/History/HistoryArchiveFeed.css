@@ -30,7 +30,7 @@
 .historyArchiveFeed .archiveYear {
   font-size: 1.1rem;
   font-weight: 800;
-  color: #345496;
+  color: #333;
   border-bottom: 2px solid #e0e0e0;
   padding-bottom: 0.2em;
   margin: 0 0 0.8em;
@@ -43,7 +43,7 @@
 .historyArchiveFeed .archiveClear {
   background: none;
   border: none;
-  color: #345496;
+  color: #333;
   cursor: pointer;
   text-decoration: underline;
   font: inherit;
@@ -54,6 +54,6 @@ html[data-theme="dark"] .historyArchiveFeed .archiveFilter select {
   border-color: #555;
 }
 html[data-theme="dark"] .historyArchiveFeed .archiveYear {
-  color: #93c6ef;
+  color: #ccc;
   border-bottom-color: #444;
 }

@@ -507,7 +507,7 @@
 
     .rail-page { font-weight: 700; letter-spacing: 0.02em; white-space: nowrap; }
     .rail-ref {
-      color: #345496;
+      color: #333;
       cursor: pointer;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -594,7 +594,7 @@
         padding: 0.4rem 0.9rem;
         border: none;
         border-radius: 6px;
-        background: #345496;
+        background: #c9a24b;
         color: #fff;
         font-weight: 600;
         cursor: pointer;
@@ -605,7 +605,7 @@
 
 html[data-theme="dark"] .faxMobileViewer {
   background: #1c1c1c;
-  .faxScrollRail { background: linear-gradient(#242424, #1e1e1e); border-color: #333; color: #999; .rail-ref { color: #93c6ef; } }
+  .faxScrollRail { background: linear-gradient(#242424, #1e1e1e); border-color: #333; color: #999; .rail-ref { color: #ccc; } }
   .faxScrubSheet { background: #262626; border-top-color: #3a3a3a; .scrub-jump input { background: #1c1c1c; border-color: #444; color: #eee; } }
 }
 

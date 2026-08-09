@@ -422,10 +422,10 @@ html[data-theme="dark"] .peopleFaceIndexText { color: #9a9a9a; }
   display: inline;
   font-size: 0.62rem;
   font-weight: 700;
-  color: #345496;
+  color: #333;
   white-space: nowrap;
 }
-html[data-theme="dark"] .peopleFaceRef { color: #93c6ef; }
+html[data-theme="dark"] .peopleFaceRef { color: #ccc; }
 /* 3×3 "there is much more" mosaic inside the view-all end cells */
 .viewAllMosaic {
   display: grid;
@@ -517,12 +517,12 @@ html[data-theme="dark"] .placesTileDesc { color: #b0b0b0; }
 html[data-theme="dark"] .placesTileInfo { color: #9a9a9a; }
 .placesTileRef {
   font-weight: 700;
-  color: #345496;
+  color: #333;
   cursor: pointer;
   white-space: nowrap;
 }
 
-html[data-theme="dark"] .placesTileRef { color: #93c6ef; }
+html[data-theme="dark"] .placesTileRef { color: #ccc; }
 .placesMosaicWrap { position: relative; aspect-ratio: 1 / 1; border-radius: 0.45rem; overflow: hidden; }
 .placesMosaicWrap .viewAllMosaic { width: 100%; height: 100%; aspect-ratio: auto; border-radius: 0; }
 
@@ -570,7 +570,7 @@ html[data-theme="dark"] .faxTileMeta { color: #a0a0a0; }
   margin-bottom: 0.3rem;
   text-decoration: none;
 }
-.commentaryTileTitle:hover { color: #345496; text-decoration: none; }
+.commentaryTileTitle:hover { color: #333; text-decoration: none; }
 html[data-theme="dark"] .commentaryTileTitle { color: #f0f0f0; }
 /* line-clamp, no scroll trap — a read-more shows only when actually cut */
 .commentaryTileExcerpt {
@@ -606,9 +606,9 @@ html[data-theme="dark"] .commentaryTileExcerpt { color: #c4c4c4; }
   margin-top: 0.3rem;
   font-size: 0.72rem;
   font-weight: 700;
-  color: #345496;
+  color: #333;
 }
-html[data-theme="dark"] .commentaryTileReadMore { color: #93c6ef; }
+html[data-theme="dark"] .commentaryTileReadMore { color: #ccc; }
 .commentaryTileCover {
   width: 100%;
   aspect-ratio: 2 / 3;
@@ -1022,11 +1022,11 @@ html[data-theme="dark"] .narrationText { color: #c4c4c4; }
   display: inline;
   font-size: 0.68rem;
   font-weight: 700;
-  color: #345496;
+  color: #333;
   white-space: nowrap;
   margin-left: 0.25rem;
 }
-html[data-theme="dark"] .narrationRef { color: #93c6ef; }
+html[data-theme="dark"] .narrationRef { color: #ccc; }
 
 /* ================================================================
    HISTORY — one featured historical document
@@ -1073,9 +1073,9 @@ html[data-theme="dark"] .historyTileThumb {
   padding-top: 0.4rem;
   font-size: 0.72rem;
   font-weight: 700;
-  color: #345496;
+  color: #333;
 }
-html[data-theme="dark"] .historyTileMore { color: #93c6ef; }
+html[data-theme="dark"] .historyTileMore { color: #ccc; }
 .historyTileTitle {
   font-weight: 800;
   font-size: 0.92rem;
@@ -1275,8 +1275,8 @@ html[data-theme="dark"] .faxPageBarRef { border-color: #444; background: rgba(25
   border-radius: 0.3rem;
   pointer-events: none;
 }
-.faxTilePageRef { font-size: 0.66rem; font-weight: 700; color: #345496; text-align: center; }
-html[data-theme="dark"] .faxTilePageRef { color: #93c6ef; }
+.faxTilePageRef { font-size: 0.66rem; font-weight: 700; color: #333; text-align: center; }
+html[data-theme="dark"] .faxTilePageRef { color: #ccc; }
 
 /* history: structured bullets + citation */
 .historyTileBullets { margin: 0.35rem 0 0; padding-left: 1rem; font-size: 0.76rem; line-height: 1.4; color: #555; }
@@ -1339,8 +1339,8 @@ html[data-theme="dark"] .communityReadingNow { color: #c4c4c4; }
 html[data-theme="dark"] .communityFinishers { color: #c4c4c4; }
 .communityFinisherLabel { font-weight: 700; flex-shrink: 0; }
 .communityFinisherNames { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.communityInvite { font-weight: 700; font-size: 0.85rem; color: #345496; text-decoration: none; padding: 0.6rem 0; }
-html[data-theme="dark"] .communityInvite { color: #93c6ef; }
+.communityInvite { font-weight: 700; font-size: 0.85rem; color: #333; text-decoration: none; padding: 0.6rem 0; }
+html[data-theme="dark"] .communityInvite { color: #ccc; }
 
 /* community is WIDTH-AWARE via container queries: narrow slots show fewer
    group cards and drop message snippets to keep rows breathable */
@@ -1362,16 +1362,16 @@ html[data-theme="dark"] .communityInvite { color: #93c6ef; }
   margin: 0.4rem auto 0;
   padding: 0.24rem 0.7rem;
   border-radius: 1rem;
-  border: 1px solid rgba(52, 84, 150, 0.22);
-  background: rgba(52, 84, 150, 0.08);
-  color: #345496;
+  border: 1px solid rgba(201, 162, 75, 0.22);
+  background: rgba(201, 162, 75, 0.08);
+  color: #333;
   font-size: 0.68rem;
   font-weight: 700;
   font-family: inherit;
   cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease;
 }
-.readMorePill:hover { background: rgba(52, 84, 150, 0.16); border-color: rgba(52, 84, 150, 0.4); }
+.readMorePill:hover { background: rgba(201, 162, 75, 0.16); border-color: rgba(201, 162, 75, 0.4); }
 .readMorePill::before {
   content: "";
   width: 0.95em;
@@ -1381,7 +1381,7 @@ html[data-theme="dark"] .communityInvite { color: #93c6ef; }
   -webkit-mask: url("data:image/svg+xml,%3C%3Fxml%20version%3D%221.0%22%20encoding%3D%22utf-8%22%3F%3E%20%3Csvg%20width%3D%22800px%22%20height%3D%22800px%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%20%3Cpath%20d%3D%22M12%207V13M12%2013L14%2011M12%2013L10%2011M4%2014H6.67452C7.1637%2014%207.40829%2014%207.63846%2014.0553C7.84254%2014.1043%208.03763%2014.1851%208.21657%2014.2947C8.4184%2014.4184%208.59136%2014.5914%208.93726%2014.9373L9.06274%2015.0627C9.40865%2015.4086%209.5816%2015.5816%209.78343%2015.7053C9.96237%2015.8149%2010.1575%2015.8957%2010.3615%2015.9447C10.5917%2016%2010.8363%2016%2011.3255%2016H12.6745C13.1637%2016%2013.4083%2016%2013.6385%2015.9447C13.8425%2015.8957%2014.0376%2015.8149%2014.2166%2015.7053C14.4184%2015.5816%2014.5914%2015.4086%2014.9373%2015.0627L15.0627%2014.9373C15.4086%2014.5914%2015.5816%2014.4184%2015.7834%2014.2947C15.9624%2014.1851%2016.1575%2014.1043%2016.3615%2014.0553C16.5917%2014%2016.8363%2014%2017.3255%2014H20M7.2%204H16.8C17.9201%204%2018.4802%204%2018.908%204.21799C19.2843%204.40973%2019.5903%204.71569%2019.782%205.09202C20%205.51984%2020%206.07989%2020%207.2V16.8C20%2017.9201%2020%2018.4802%2019.782%2018.908C19.5903%2019.2843%2019.2843%2019.5903%2018.908%2019.782C18.4802%2020%2017.9201%2020%2016.8%2020H7.2C6.0799%2020%205.51984%2020%205.09202%2019.782C4.71569%2019.5903%204.40973%2019.2843%204.21799%2018.908C4%2018.4802%204%2017.9201%204%2016.8V7.2C4%206.0799%204%205.51984%204.21799%205.09202C4.40973%204.71569%204.71569%204.40973%205.09202%204.21799C5.51984%204%206.0799%204%207.2%204Z%22%20stroke%3D%22%23000000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%20%3C/svg%3E") center / contain no-repeat;
   mask: url("data:image/svg+xml,%3C%3Fxml%20version%3D%221.0%22%20encoding%3D%22utf-8%22%3F%3E%20%3Csvg%20width%3D%22800px%22%20height%3D%22800px%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%20%3Cpath%20d%3D%22M12%207V13M12%2013L14%2011M12%2013L10%2011M4%2014H6.67452C7.1637%2014%207.40829%2014%207.63846%2014.0553C7.84254%2014.1043%208.03763%2014.1851%208.21657%2014.2947C8.4184%2014.4184%208.59136%2014.5914%208.93726%2014.9373L9.06274%2015.0627C9.40865%2015.4086%209.5816%2015.5816%209.78343%2015.7053C9.96237%2015.8149%2010.1575%2015.8957%2010.3615%2015.9447C10.5917%2016%2010.8363%2016%2011.3255%2016H12.6745C13.1637%2016%2013.4083%2016%2013.6385%2015.9447C13.8425%2015.8957%2014.0376%2015.8149%2014.2166%2015.7053C14.4184%2015.5816%2014.5914%2015.4086%2014.9373%2015.0627L15.0627%2014.9373C15.4086%2014.5914%2015.5816%2014.4184%2015.7834%2014.2947C15.9624%2014.1851%2016.1575%2014.1043%2016.3615%2014.0553C16.5917%2014%2016.8363%2014%2017.3255%2014H20M7.2%204H16.8C17.9201%204%2018.4802%204%2018.908%204.21799C19.2843%204.40973%2019.5903%204.71569%2019.782%205.09202C20%205.51984%2020%206.07989%2020%207.2V16.8C20%2017.9201%2020%2018.4802%2019.782%2018.908C19.5903%2019.2843%2019.2843%2019.5903%2018.908%2019.782C18.4802%2020%2017.9201%2020%2016.8%2020H7.2C6.0799%2020%205.51984%2020%205.09202%2019.782C4.71569%2019.5903%204.40973%2019.2843%204.21799%2018.908C4%2018.4802%204%2017.9201%204%2016.8V7.2C4%206.0799%204%205.51984%204.21799%205.09202C4.40973%204.71569%204.71569%204.40973%205.09202%204.21799C5.51984%204%206.0799%204%207.2%204Z%22%20stroke%3D%22%23000000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%20%3C/svg%3E") center / contain no-repeat;
 }
-html[data-theme="dark"] .readMorePill { color: #93c6ef; background: rgba(147,198,239,0.12); border-color: rgba(147,198,239,0.28); }
+html[data-theme="dark"] .readMorePill { color: #ccc; background: rgba(147,198,239,0.12); border-color: rgba(147,198,239,0.28); }
 html[data-theme="dark"] .readMorePill:hover { background: rgba(147,198,239,0.2); }
 
 /* collapsed state of ExpandableText — width-aware line clamp */
@@ -1426,15 +1426,15 @@ html[data-theme="dark"] .biblePhrasesTile mark {
   border-radius: 1rem;
   font-size: 0.68rem;
   font-weight: 700;
-  color: #345496;
-  background: rgba(52, 84, 150, 0.1);
-  border: 1px solid rgba(52, 84, 150, 0.22);
+  color: #333;
+  background: rgba(201, 162, 75, 0.1);
+  border: 1px solid rgba(201, 162, 75, 0.22);
   text-decoration: none;
   white-space: nowrap;
   width: fit-content;
   transition: background 0.15s ease, border-color 0.15s ease;
 }
-.tileMoreLink:hover { background: rgba(52, 84, 150, 0.18); border-color: rgba(52, 84, 150, 0.4); }
+.tileMoreLink:hover { background: rgba(201, 162, 75, 0.18); border-color: rgba(201, 162, 75, 0.4); }
 .tileMoreLink::after {
   content: "";
   width: 0.82em;
@@ -1445,7 +1445,7 @@ html[data-theme="dark"] .biblePhrasesTile mark {
   mask: url("data:image/svg+xml,%3C%3Fxml%20version%3D%221.0%22%20encoding%3D%22utf-8%22%3F%3E%20%3Csvg%20width%3D%22800px%22%20height%3D%22800px%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%20%3Cpath%20d%3D%22M16.9995%2015.9995L20.9995%2011.9995M20.9995%2011.9995L16.9995%207.99951M20.9995%2011.9995H8.99951M12.9995%2020.9995H6.20029C5.08019%2020.9995%204.52014%2020.9995%204.09231%2020.7815C3.71599%2020.5898%203.41003%2020.2838%203.21828%2019.9075C3.00029%2019.4797%203.00029%2018.9196%203.00029%2017.7995V6.19951C3.00029%205.07941%203.00029%204.51935%203.21828%204.09153C3.41003%203.71521%203.71599%203.40925%204.09231%203.2175C4.52014%202.99951%205.08019%202.99951%206.20029%202.99951L12.9995%202.99951%22%20stroke%3D%22%23000000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%20%3C/svg%3E") center / contain no-repeat;
 }
 html[data-theme="dark"] .tileMoreLink {
-  color: #93c6ef;
+  color: #ccc;
   background: rgba(147, 198, 239, 0.12);
   border-color: rgba(147, 198, 239, 0.28);
 }
@@ -1533,7 +1533,7 @@ html[data-theme="dark"] .imageArtFrame { background: #2c2c2c; }
   background: #f0efec;
   text-decoration: none;
 }
-.imageArtTitleBar:hover { color: #345496; }
+.imageArtTitleBar:hover { color: #333; }
 html[data-theme="dark"] .imageArtTitleBar { background: #262626; color: #f0f0f0; }
 /* artist: translucent ©-badge, bottom-right over the image */
 .imageArtArtistBadge {

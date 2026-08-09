@@ -50,7 +50,7 @@
 {
   outline: 1px solid #EEE;
   border-radius: 0.5ex;
-  background-color: #93c6ef22;
+  background-color: #cccccc22;
 }
 .search-popup .search-result.selected img{
   filter: brightness(1.2);

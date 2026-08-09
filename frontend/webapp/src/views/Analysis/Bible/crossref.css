@@ -121,7 +121,7 @@ html[data-theme="dark"] .xref-root {
 .xref-root button:focus-visible,
 .xref-root a:focus-visible,
 .xref-root [role="button"]:focus-visible {
-  outline: 2px solid var(--link, #345496);
+  outline: 2px solid var(--link, #333);
   outline-offset: 2px;
 }
 
@@ -316,7 +316,7 @@ html[data-theme="dark"] .xref-root {
   border: none;
   padding: 0;
   font: inherit;
-  color: var(--link, #345496);
+  color: var(--link, #333);
   cursor: pointer;
 }
 
@@ -562,7 +562,7 @@ html[data-theme="dark"] .xref-chaptercell.ramp-6 {
 }
 
 .xref-bar-go {
-  color: var(--link, #345496);
+  color: var(--link, #333);
   font-weight: 700;
   opacity: 0;
   transition: opacity 120ms;
@@ -706,7 +706,7 @@ html[data-theme="dark"] .xref-chaptercell.ramp-6 {
 }
 
 .verseViewerTable td.scriptureRef a.ref:hover {
-  color: var(--link, #345496);
+  color: var(--link, #333);
 }
 
 
@@ -766,7 +766,7 @@ html[data-theme="dark"] .verseViewerTable .scriptureCell p span.highlight {
   padding: 0;
   font: inherit;
   font-size: 0.85rem;
-  color: var(--link, #345496);
+  color: var(--link, #333);
   cursor: pointer;
   white-space: nowrap;
 }
