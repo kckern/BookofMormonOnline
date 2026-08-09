@@ -85,12 +85,30 @@ export async function buildContext(db: Kysely<DB>, lang: string, ip = '', bearer
     ...userprofileLoaders(db, lang, core),
     ...useractivityLoaders(db, lang, core),
   };
-  const auth = bearerToken ? await verifyToken(db, bearerToken) : null;
+  // Resolve the acting principal once, Bearer-only. A DB error here must NOT
+  // 500 the whole request (this runs for every Bearer-carrying request, incl.
+  // pure content queries that never read ctx.auth) — treat a failed lookup as
+  // anonymous, which also avoids leaking DB liveness via error shape.
+  // TODO(Phase 1): cache this lookup in Redis (invalidate on revoke) so authed
+  // content requests don't pay a bom_user_token join in the hot path.
+  let auth: Principal | null = null;
+  if (bearerToken) {
+    try {
+      auth = await verifyToken(db, bearerToken);
+    } catch {
+      auth = null;
+    }
+  }
   const profileCache = new Map<string, Promise<UserAuthRow | null>>();
   const loadProfile = (userId: string): Promise<UserAuthRow | null> => {
     let hit = profileCache.get(userId);
     if (!hit) {
-      hit = findUserByCredential(db, userId);
+      // Evict a rejected promise so a transient DB error can be retried within
+      // the request rather than being pinned for the request's lifetime.
+      hit = findUserByCredential(db, userId).catch((e) => {
+        profileCache.delete(userId);
+        throw e;
+      });
       profileCache.set(userId, hit);
     }
     return hit;
