@@ -197,7 +197,7 @@ function mutationOf(resolvers: object, name: string): ResolverFn {
 }
 
 /** AppContext with the bearer token set (messenger* resolvers resolve the actor from it). */
-function ctxFor(bearerToken?: string): AppContext {
+function ctxFor(bearerToken?: string): Promise<AppContext> {
   return buildContext(db, 'en', '', bearerToken);
 }
 
@@ -486,7 +486,7 @@ describe('ban-escape: self-leave (messengerRemoveMember on self)', () => {
     const { userId, token } = await seedAuthedUser();
     await addMemberRow(channelUrl, userId, 'member', 'banned');
 
-    const result = await removeMember(null, { channelUrl, userId }, ctxFor(token));
+    const result = await removeMember(null, { channelUrl, userId }, await ctxFor(token));
 
     expect(result).toBe(false);
     expect((await getMemberRow(channelUrl, userId))?.state).toBe('banned');
@@ -497,7 +497,7 @@ describe('ban-escape: self-leave (messengerRemoveMember on self)', () => {
     const { userId, token } = await seedAuthedUser();
     await addMemberRow(channelUrl, userId, 'member', 'joined');
 
-    const result = await removeMember(null, { channelUrl, userId }, ctxFor(token));
+    const result = await removeMember(null, { channelUrl, userId }, await ctxFor(token));
 
     expect(result).toBe(true);
     expect(await getMemberRow(channelUrl, userId)).toBeUndefined();
@@ -510,7 +510,7 @@ describe('ban-escape: self-leave (messengerRemoveMember on self)', () => {
     const banned = await seedUser();
     await addMemberRow(channelUrl, banned, 'member', 'banned');
 
-    const result = await removeMember(null, { channelUrl, userId: banned }, ctxFor(opToken));
+    const result = await removeMember(null, { channelUrl, userId: banned }, await ctxFor(opToken));
 
     expect(result).toBe(true);
     expect(await getMemberRow(channelUrl, banned)).toBeUndefined();
@@ -525,7 +525,7 @@ describe('ban-escape: messengerDeclineInvitation', () => {
     const { userId, token } = await seedAuthedUser();
     await addMemberRow(channelUrl, userId, 'member', 'banned');
 
-    const result = await decline(null, { channelUrl }, ctxFor(token));
+    const result = await decline(null, { channelUrl }, await ctxFor(token));
 
     expect(result).toBe(false);
     expect((await getMemberRow(channelUrl, userId))?.state).toBe('banned');
@@ -539,7 +539,7 @@ describe('ban-escape: messengerDeclineInvitation', () => {
 
     // The userId arg lets any authenticated caller target an arbitrary member —
     // the state='invited' scope is what makes that harmless.
-    const result = await decline(null, { channelUrl, userId: joined }, ctxFor(token));
+    const result = await decline(null, { channelUrl, userId: joined }, await ctxFor(token));
 
     expect(result).toBe(false);
     expect((await getMemberRow(channelUrl, joined))?.state).toBe('joined');
@@ -550,7 +550,7 @@ describe('ban-escape: messengerDeclineInvitation', () => {
     const { userId, token } = await seedAuthedUser();
     await addMemberRow(channelUrl, userId, 'member', 'invited');
 
-    const result = await decline(null, { channelUrl }, ctxFor(token));
+    const result = await decline(null, { channelUrl }, await ctxFor(token));
 
     expect(result).toBe(true);
     expect(await getMemberRow(channelUrl, userId)).toBeUndefined();
@@ -565,7 +565,7 @@ describe('ban-escape: withdrawRequest', () => {
     const { userId, token } = await seedAuthedUser();
     await addMemberRow(channelUrl, userId, 'member', 'banned');
 
-    await withdraw(null, { token, url: channelUrl }, ctxFor());
+    await withdraw(null, { token, url: channelUrl }, await ctxFor());
 
     expect((await getMemberRow(channelUrl, userId))?.state).toBe('banned');
   });
@@ -575,7 +575,7 @@ describe('ban-escape: withdrawRequest', () => {
     const { userId, token } = await seedAuthedUser();
     await addMemberRow(channelUrl, userId, 'member', 'requested');
 
-    await withdraw(null, { token, url: channelUrl }, ctxFor());
+    await withdraw(null, { token, url: channelUrl }, await ctxFor());
 
     expect(await getMemberRow(channelUrl, userId)).toBeUndefined();
   });
@@ -594,7 +594,7 @@ describe('ban-escape: processRequest deny', () => {
     await processRequest(
       null,
       { token: opToken, channel: channelUrl, user_id: banned, grant: false },
-      ctxFor(),
+      await ctxFor(),
     );
 
     expect((await getMemberRow(channelUrl, banned))?.state).toBe('banned');
@@ -610,7 +610,7 @@ describe('ban-escape: processRequest deny', () => {
     const result = await processRequest(
       null,
       { token: opToken, channel: channelUrl, user_id: requester, grant: false },
-      ctxFor(),
+      await ctxFor(),
     );
 
     expect(result).toBe(true);
@@ -631,7 +631,7 @@ describe('ban-escape (defense-in-depth): messengerUpdateMemberRole', () => {
     const result = await updateRole(
       null,
       { channelUrl, userId: banned, role: 'operator' },
-      ctxFor(opToken),
+      await ctxFor(opToken),
     );
 
     expect(result).toBe(false);
@@ -648,7 +648,7 @@ describe('ban-escape (defense-in-depth): messengerUpdateMemberRole', () => {
     const result = await updateRole(
       null,
       { channelUrl, userId: member, role: 'operator' },
-      ctxFor(opToken),
+      await ctxFor(opToken),
     );
 
     expect(result).toBe(true);
