@@ -82,6 +82,15 @@ const regNode = (map, key, el) => {
   else map.delete(key);
 };
 
+/** Translate an overlay leader line by (dx, dy) from its settled base endpoints. */
+const shiftLeader = (leader, base, dx, dy) => {
+  if (!leader || !base) return;
+  leader.setAttribute("x1", base.x1 + dx);
+  leader.setAttribute("y1", base.y1 + dy);
+  leader.setAttribute("x2", base.x2 + dx);
+  leader.setAttribute("y2", base.y2 + dy);
+};
+
 /**
  * A semantic journey renderer: the complete route remains faintly visible,
  * visited legs accumulate, the active leg and traveler party animate together,
@@ -124,6 +133,8 @@ export default function MapStoryTileInner({
   const layoutStateRef = useRef(null);
   const updateLayoutRef = useRef(() => {});
   const syncOverlayRef = useRef(() => {});
+  // lat/lng → projected map coordinate; static per place, so project() once.
+  const projCacheRef = useRef(new Map());
   const fitStoryRef = useRef(() => {});
   const frameStepRef = useRef(() => {});
   const didMountRef = useRef(false);
@@ -195,7 +206,15 @@ export default function MapStoryTileInner({
     if (!map) return;
     const nodes = overlayNodesRef.current;
     const ov = overlayRef.current;
-    const px = (lat, lng) => map.getPixelFromCoordinate(project(lat, lng));
+    const cache = projCacheRef.current;
+    // Only the viewport moves between frames; each place's map coordinate is
+    // fixed, so project() once (cached) and recompute just the pixel per frame.
+    const px = (lat, lng) => {
+      const key = `${lat},${lng}`;
+      let coord = cache.get(key);
+      if (!coord) { coord = project(lat, lng); cache.set(key, coord); }
+      return map.getPixelFromCoordinate(coord);
+    };
     const finite = (p) => p && p.every(Number.isFinite);
 
     ov.markers.forEach((marker) => {
@@ -203,14 +222,7 @@ export default function MapStoryTileInner({
       if (!finite(p)) return;
       const node = nodes.markers.get(marker.slug);
       if (node) { node.style.left = `${p[0]}px`; node.style.top = `${p[1]}px`; }
-      const leader = nodes.markerLeaders.get(marker.slug);
-      if (leader && marker.leader) {
-        const dx = p[0] - marker.x, dy = p[1] - marker.y;
-        leader.setAttribute("x1", marker.leader.x1 + dx);
-        leader.setAttribute("y1", marker.leader.y1 + dy);
-        leader.setAttribute("x2", marker.leader.x2 + dx);
-        leader.setAttribute("y2", marker.leader.y2 + dy);
-      }
+      shiftLeader(nodes.markerLeaders.get(marker.slug), marker.leader, p[0] - marker.x, p[1] - marker.y);
     });
 
     ov.labels.forEach((label) => {
@@ -219,14 +231,7 @@ export default function MapStoryTileInner({
       const offX = label.x - label.anchorX, offY = label.y - label.anchorY;
       const node = nodes.labels.get(label.slug);
       if (node) { node.style.left = `${p[0] + offX}px`; node.style.top = `${p[1] + offY}px`; }
-      const leader = nodes.labelLeaders.get(label.slug);
-      if (leader && label.leader) {
-        const dx = p[0] - label.anchorX, dy = p[1] - label.anchorY;
-        leader.setAttribute("x1", label.leader.x1 + dx);
-        leader.setAttribute("y1", label.leader.y1 + dy);
-        leader.setAttribute("x2", label.leader.x2 + dx);
-        leader.setAttribute("y2", label.leader.y2 + dy);
-      }
+      shiftLeader(nodes.labelLeaders.get(label.slug), label.leader, p[0] - label.anchorX, p[1] - label.anchorY);
     });
 
     ov.clusters.forEach((cluster) => {
@@ -242,13 +247,7 @@ export default function MapStoryTileInner({
       const dx = (liveX - layoutX) / n, dy = (liveY - layoutY) / n;
       const node = nodes.clusters.get(cluster.id);
       if (node) { node.style.left = `${cluster.x + dx}px`; node.style.top = `${cluster.y + dy}px`; }
-      const leader = nodes.clusterLeaders.get(cluster.id);
-      if (leader && cluster.leader) {
-        leader.setAttribute("x1", cluster.leader.x1 + dx);
-        leader.setAttribute("y1", cluster.leader.y1 + dy);
-        leader.setAttribute("x2", cluster.leader.x2 + dx);
-        leader.setAttribute("y2", cluster.leader.y2 + dy);
-      }
+      shiftLeader(nodes.clusterLeaders.get(cluster.id), cluster.leader, dx, dy);
     });
 
     // Keep the traveler party glued to its route point too (translate by the

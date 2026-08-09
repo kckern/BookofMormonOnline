@@ -1,7 +1,7 @@
 /** @format */
 
 import React from "react";
-import { label } from "src/models/Utils";
+import { label, tr } from "src/models/Utils";
 import { filterAxes } from "./mattersFilterData";
 import { MatterDetailColumn } from "./MatterDetailColumn";
 import { useAppController } from "src/contexts/AppControllerContext";
@@ -53,19 +53,6 @@ const KIND_ICON = {
  * When a Kind is on, <MatterDetailColumn> (form switches + per-form subform chips)
  * is appended as an extra column via FilterPanel's extraColumn slot.
  */
-/**
- * Translate with a real fallback.
- *
- * Utils.label() returns the KEY itself when the dictionary has no entry, and
- * " " before the dictionary loads — both truthy, so the usual
- * `label(key) || fallback` never falls back and the UI renders raw keys like
- * "matter_form_living_world". These keys are not in the dictionary yet.
- */
-const t = (key, fallback) => {
-  const v = label(key);
-  if (!v || v === key || !String(v).trim()) return fallback;
-  return v;
-};
 
 /**
  * Option label with a leading icon, matching the People/Places pattern. Era &
@@ -102,10 +89,10 @@ export function MattersFilter({ matterFilters, setFilter, matterList, resultCoun
 
   const axes = shown.map((a) => ({
     name: a.name,
-    title: t(a.title, a.titleEn),
+    title: tr(a.title, a.titleEn),
     options: a.chips.map((c) => ({
       tag: c.tag,
-      label: optionLabel(a.name, c, t(c.key, c.label)),
+      label: optionLabel(a.name, c, tr(c.key, c.label)),
     })),
   }));
 

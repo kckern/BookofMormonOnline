@@ -5,7 +5,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import FilterPanel from "./FilterPanel";
 import { isMobile } from "src/models/Utils";
 
-jest.mock("src/models/Utils", () => ({ label: (k) => k, isMobile: jest.fn(() => false) }));
+jest.mock("src/models/Utils", () => ({ label: (k) => k, tr: (k, fb) => fb, isMobile: jest.fn(() => false) }));
 jest.mock("src/views/_Common/SearchPopUp", () => ({
   SearchPopUp: (props) =>
     props.isOpen ? (

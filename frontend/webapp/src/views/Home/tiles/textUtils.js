@@ -1,12 +1,7 @@
 /** Shared sampler text hygiene: one implementation, every tile. */
 
-import { label } from "src/models/Utils";
-
-/** Translate with a real fallback — label() echoes the key back when unknown. */
-export const tr = (key, fallback) => {
-  const v = label(key);
-  return !v || v === key || !String(v).trim() ? fallback : v;
-};
+// Re-exported so tiles can keep importing translate-with-fallback from here.
+export { tr } from "src/models/Utils";
 
 const SUPS = { 1: "¹", 2: "²", 3: "³", 4: "⁴" };
 

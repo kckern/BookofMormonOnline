@@ -16,10 +16,12 @@ const EXEMPT = new Set([
   "PeopleTile.js",
   "PlacesTile.js",
   // Matters grid tiles: like People/Places, their always-on "view all" card is
-  // their Layer 2 (MatterProfileTile is the deeplink-carrying singleton).
+  // their Layer 2 (MatterProfileTile is the deeplink-carrying singleton). The
+  // three are thin wrappers over MattersGroupTile, which carries that grid.
   "MattersNarrativeTile.js",
   "MattersMaterialTile.js",
   "MattersConceptTile.js",
+  "MattersGroupTile.js",
   "ReadingPlanTile.js",
   "ReadingProgressTile.js",
   "ExpandableText.js",

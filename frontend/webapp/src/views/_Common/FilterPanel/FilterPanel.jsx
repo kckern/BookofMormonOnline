@@ -1,16 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Button } from "reactstrap";
 import BootstrapSwitchButton from "bootstrap-switch-button-react";
-import { isMobile, label } from "src/models/Utils";
+import { isMobile, label, tr } from "src/models/Utils";
 import { SearchPopUp } from "src/views/_Common/SearchPopUp";
 import { useAppController } from "src/contexts/AppControllerContext";
 import "./FilterPanel.css";
-
-/** Translate with a real fallback — label() echoes the key back when unknown. */
-const t = (key, fallback) => {
-  const v = label(key);
-  return !v || v === key || !String(v).trim() ? fallback : v;
-};
 
 /**
  * FilterPanel — shared, controlled, config-driven filter UI (People/Places/Matters).
@@ -131,7 +125,7 @@ export default function FilterPanel({ heading, axes, value, onChange, search, ex
     <>
       <h5 className="ppFiltersHeading">
         {heading}
-        <button className="fpModeToggle" onClick={() => applyMode("mini")} title={t("collapse", "Collapse")} aria-label={t("collapse", "Collapse")}>⤢</button>
+        <button className="fpModeToggle" onClick={() => applyMode("mini")} title={tr("collapse", "Collapse")} aria-label={tr("collapse", "Collapse")}>⤢</button>
       </h5>
       <div className="ppFilters">
         {searchButton}
@@ -176,10 +170,10 @@ export default function FilterPanel({ heading, axes, value, onChange, search, ex
         ) : null}
         <div className="fpToolbarEnd">
           {typeof resultCount === "number" ? (
-            <span className="fpResultCount">{resultCount} {t("results", "results")}</span>
+            <span className="fpResultCount">{resultCount} {tr("results", "results")}</span>
           ) : null}
-          <button type="button" className="fpClearAll" onClick={clearAll}>{t("clear_all", "Clear all")}</button>
-          <button type="button" className="fpModeToggle" onClick={() => applyMode("main")} title={t("expand", "Expand")} aria-label={t("expand", "Expand")}>⤢</button>
+          <button type="button" className="fpClearAll" onClick={clearAll}>{tr("clear_all", "Clear all")}</button>
+          <button type="button" className="fpModeToggle" onClick={() => applyMode("main")} title={tr("expand", "Expand")} aria-label={tr("expand", "Expand")}>⤢</button>
         </div>
       </div>
       {searchEl}

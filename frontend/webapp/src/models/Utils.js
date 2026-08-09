@@ -113,6 +113,16 @@ export function label(key, inserts) {
   return results.filter((x) => !!x);
 }
 
+/**
+ * Translate with a real fallback. `label()` echoes the key back when the
+ * dictionary lacks it, and returns " " before the dictionary loads — both are
+ * truthy, so `label(key) || fallback` never falls back. Use this instead.
+ */
+export const tr = (key, fallback) => {
+  const v = label(key);
+  return !v || v === key || !String(v).trim() ? fallback : v;
+};
+
 export function getUsersFromTextInput(appController, text) {
   if (!text) return [];
   let findedUsers = [];

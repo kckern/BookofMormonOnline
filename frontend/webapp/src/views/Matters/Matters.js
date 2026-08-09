@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
 import { Spinner } from "../_Common/Loader";
-import { isMobile, label, processName, replaceNumbers } from "src/models/Utils";
+import { isMobile, label, processName, replaceNumbers, tr } from "src/models/Utils";
 import { Link, useRouteMatch } from "react-router-dom";
 import { Card, CardHeader, CardBody, CardFooter, Button } from "reactstrap";
 import "./Matters.css";
@@ -14,12 +14,6 @@ import { MattersFilter } from "./MattersFilter";
 import { categoryChips, CATEGORY_TEST, formsByGroup, subformsByForm } from "./mattersFilterData";
 import { useAppController } from "src/contexts/AppControllerContext";
 import { slugGradient, entityInitials } from "../_Common/EntityThumb";
-
-/** Translate with a real fallback — label() echoes the key back when unknown. */
-const t = (key, fallback) => {
-  const v = label(key);
-  return !v || v === key || !String(v).trim() ? fallback : v;
-};
 
 /** "Belief & Mind" → "belief-mind", for CSS class names. */
 const badgeClass = (v) =>
@@ -183,9 +177,9 @@ function MattersComponent() {
           {activeGroup && (
             <>
               <span className="mattersGroupQualifier">
-                {t(CATEGORY_BY_TAG[activeGroup].key, CATEGORY_BY_TAG[activeGroup].label)}
+                {tr(CATEGORY_BY_TAG[activeGroup].key, CATEGORY_BY_TAG[activeGroup].label)}
               </span>
-              <Link className="mattersGroupClear" to="/matters">{t("view_all", "View all")}</Link>
+              <Link className="mattersGroupClear" to="/matters">{tr("view_all", "View all")}</Link>
             </>
           )}
         </h3>
@@ -264,7 +258,7 @@ function MattersComponent() {
                         {obj.specificity === "instance" && (
                           <span
                             className="IdBadge spec-named"
-                            title={t("spec_instance", "Named")}
+                            title={tr("spec_instance", "Named")}
                           >
                             ★
                           </span>
