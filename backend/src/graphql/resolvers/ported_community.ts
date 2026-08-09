@@ -14,6 +14,7 @@
 import type { Resolvers } from '../../../codegen/graphql.js';
 import type { AppContext } from '../context.js';
 import { loadReadingPlanSegment } from '../../data/loaders/ported_community.js';
+import { resolveUsername as resolveUsernameByToken } from '../../auth/sessionStore.js';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const asGql = <T>(v: T): any => v;
@@ -26,14 +27,8 @@ const asGql = <T>(v: T): any => v;
  */
 async function resolveUsername(ctx: AppContext, token: string | null | undefined): Promise<string> {
   if (!token) return '';
-  const row = await ctx.db
-    .selectFrom('bom_user_token')
-    .innerJoin('bom_user', 'bom_user.user', 'bom_user_token.user')
-    .select('bom_user.user as username')
-    .where('bom_user_token.token', '=', token)
-    .limit(1)
-    .executeTakeFirst();
-  return row?.username ?? token;
+  const username = await resolveUsernameByToken(ctx.db, token);
+  return username ?? token;
 }
 
 export const portedCommunityResolvers: Resolvers = {

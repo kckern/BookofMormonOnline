@@ -9,6 +9,7 @@ import type { DB } from '../../../codegen/db.js';
 import { generatePlanSegments } from '../../readingplan/generate.js';
 import { parsePlanConfig } from '../../readingplan/types.js';
 import { loadReadingPlan } from '../../messaging/readingplan.js';
+import { resolveUsername as resolveUsernameByToken } from '../../auth/sessionStore.js';
 
 /** Stable JSON serialization with sorted object keys — needed because MySQL normalises JSON key order on storage. */
 function stableJSON(v: unknown): string {
@@ -23,14 +24,7 @@ function stableJSON(v: unknown): string {
 /** token → bom_user.user username (the plain username stored in bom_readingplan.owner). Null when anonymous. */
 export async function resolveUsername(ctx: AppContext, token: string | null | undefined): Promise<string | null> {
   if (!token) return null;
-  const row = await ctx.db
-    .selectFrom('bom_user_token')
-    .innerJoin('bom_user', 'bom_user.user', 'bom_user_token.user')
-    .select('bom_user.user as username')
-    .where('bom_user_token.token', '=', token)
-    .limit(1)
-    .executeTakeFirst();
-  return row?.username ?? null;
+  return resolveUsernameByToken(ctx.db, token);
 }
 
 function todayISO(): string {

@@ -22,6 +22,7 @@ import {
   getUsersByIds,
 } from '../../data/loaders/ported_user.js';
 import { getStandardizedValuesFromUserList } from '../../data/loaders/standardizedScores.js';
+import { resolveUsername } from '../../auth/sessionStore.js';
 
 export const portedUserResolvers: Resolvers = {
   Query: {
@@ -75,14 +76,8 @@ export const portedUserResolvers: Resolvers = {
      */
     userdailyscores: async (_root, args, ctx) => {
       try {
-        const tokenRow = args.token
-          ? await ctx.db
-              .selectFrom('bom_user_token')
-              .select('user')
-              .where('token', '=', args.token)
-              .executeTakeFirst()
-          : null;
-        const username = tokenRow?.user ?? args.token ?? '';
+        const resolved = args.token ? await resolveUsername(ctx.db, args.token) : null;
+        const username = resolved ?? args.token ?? '';
         const values = await getStandardizedValuesFromUserList(ctx.db, [username]);
         return {
           dates: values.map((v) => v.date),

@@ -2,6 +2,7 @@
 import type { Kysely } from 'kysely';
 import type { DB } from '../../../codegen/db.js';
 import type { Loaders } from '../loaders.js';
+import { loadUserRowByToken } from '../../auth/sessionStore.js';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function userprofileLoaders(db: Kysely<DB>, lang: string, core: Loaders) {
@@ -27,22 +28,5 @@ export async function getUserByToken(
   finished: number | null;
   pass: string;
 } | null> {
-  const row = await db
-    .selectFrom('bom_user as u')
-    .innerJoin('bom_user_token as t', 't.user', 'u.user')
-    .where('t.token', '=', token)
-    .select([
-      'u.user',
-      'u.email',
-      'u.name',
-      'u.zip',
-      'u.complete',
-      'u.started',
-      'u.time',
-      'u.finished',
-      'u.pass',
-    ])
-    .executeTakeFirst();
-
-  return row ?? null;
+  return loadUserRowByToken(db, token);
 }

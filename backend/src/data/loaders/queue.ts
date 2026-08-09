@@ -16,6 +16,7 @@ import type { Kysely } from 'kysely';
 import { sql } from 'kysely';
 import type { DB } from '../../../codegen/db.js';
 import { lookup } from 'scripture-guide';
+import { loadUserRowByToken } from '../../auth/sessionStore.js';
 
 const COMPLETE_THRESHOLD = Number(process.env.PERCENT_TO_COUNT_AS_COMPLETE ?? 40);
 const DEFAULT_PAGE_GUID = '4becc77f2d75f';
@@ -47,13 +48,7 @@ async function getUserForLog(
   token: string | null | undefined,
 ): Promise<{ queryBy: string | null; finished: number }> {
   if (!token) return { queryBy: null, finished: 0 };
-  const row = await db
-    .selectFrom('bom_user_token')
-    .innerJoin('bom_user', 'bom_user.user', 'bom_user_token.user')
-    .select(['bom_user.user as user', 'bom_user.finished as finished'])
-    .where('bom_user_token.token', '=', token)
-    .limit(1)
-    .executeTakeFirst();
+  const row = await loadUserRowByToken(db, token);
   if (!row) return { queryBy: token, finished: 0 };
   return { queryBy: row.user, finished: Number(row.finished ?? 0) };
 }

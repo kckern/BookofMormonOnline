@@ -9,6 +9,7 @@
 import { sql, type Kysely } from 'kysely';
 import type { DB } from '../../../codegen/db.js';
 import type { ProgressScoreResult } from './userauth.js';
+import { resolveUsername, loadUserRowByToken } from '../../auth/sessionStore.js';
 
 const PERCENT_COMPLETE = 40;
 
@@ -32,12 +33,8 @@ export async function getSourceUsage(
   if (!token || !source) return 0;
 
   // token → username
-  const tokenRow = await db
-    .selectFrom('bom_user_token')
-    .select('user')
-    .where('token', '=', token)
-    .executeTakeFirst();
-  if (!tokenRow) return 0;
+  const username = await resolveUsername(db, token);
+  if (!username) return 0;
 
   const like = '_____' + String(source).padStart(3, '0') + '__';
 
@@ -45,7 +42,7 @@ export async function getSourceUsage(
     .selectFrom('bom_log')
     .select('value')
     .distinct()
-    .where('user', '=', tokenRow.user)
+    .where('user', '=', username)
     .where('type', '=', 'commentary')
     .where('value', 'like', like)
     .execute();
@@ -92,12 +89,7 @@ export async function getPageProgress(
   let queryBy = token ?? '';
   let lastcompleted = 0;
   if (token) {
-    const userRow = await db
-      .selectFrom('bom_user_token')
-      .innerJoin('bom_user', 'bom_user.user', 'bom_user_token.user')
-      .select(['bom_user.user as user', 'bom_user.finished as finished'])
-      .where('bom_user_token.token', '=', token)
-      .executeTakeFirst();
+    const userRow = await loadUserRowByToken(db, token);
     if (userRow) {
       queryBy = userRow.user;
       lastcompleted = Number(userRow.finished ?? 0);

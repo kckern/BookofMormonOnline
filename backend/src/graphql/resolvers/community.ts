@@ -16,6 +16,7 @@
 import type { Resolvers } from '../../../codegen/graphql.js';
 import type { AppContext } from '../context.js';
 import { md5, genUserAvatar } from '../../auth/identity.js';
+import { resolveUsername as resolveUsernameByToken } from '../../auth/sessionStore.js';
 import { getChannel, getMyStudyGroups, getPublicChannels } from '../../messaging/channels.js';
 import { getChannelMembers, addUserToChannel, deleteMembershipRowInState, getPublicUserIds, isUserBanned } from '../../messaging/members.js';
 import { getMessages, getMessagesForChannels, getThread } from '../../messaging/messages.js';
@@ -34,15 +35,9 @@ import { loadReadingPlan } from '../../messaging/readingplan.js';
  */
 async function resolveMessengerUserId(ctx: AppContext, token: string | null | undefined): Promise<string | null> {
   if (!token) return null;
-  const row = await ctx.db
-    .selectFrom('bom_user_token')
-    .innerJoin('bom_user', 'bom_user.user', 'bom_user_token.user')
-    .select('bom_user.user as username')
-    .where('bom_user_token.token', '=', token)
-    .limit(1)
-    .executeTakeFirst();
-  if (!row) return null;
-  return md5(row.username);
+  const username = await resolveUsernameByToken(ctx.db, token);
+  if (!username) return null;
+  return md5(username);
 }
 
 /**
@@ -52,14 +47,8 @@ async function resolveMessengerUserId(ctx: AppContext, token: string | null | un
  */
 async function resolveUsername(ctx: AppContext, token: string | null | undefined): Promise<string> {
   if (!token) return '';
-  const row = await ctx.db
-    .selectFrom('bom_user_token')
-    .innerJoin('bom_user', 'bom_user.user', 'bom_user_token.user')
-    .select('bom_user.user as username')
-    .where('bom_user_token.token', '=', token)
-    .limit(1)
-    .executeTakeFirst();
-  return row?.username ?? token;
+  const username = await resolveUsernameByToken(ctx.db, token);
+  return username ?? token;
 }
 
 // ─── HomeUser shape assembly ──────────────────────────────────────────────────

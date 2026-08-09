@@ -11,6 +11,7 @@
  */
 import type { Kysely } from 'kysely';
 import type { DB } from '../../../codegen/db.js';
+import { resolveUsername } from '../../auth/sessionStore.js';
 
 const SESSION_GAP_SECONDS = 60 * 30; // a >30min gap starts a new session
 const MIN_SESSION_SECONDS = 10; // drop sub-10s "sessions"
@@ -76,17 +77,13 @@ const emptyResult = (): StudyLogResult => ({
 export async function getStudyLog(db: Kysely<DB>, token: string | null | undefined): Promise<StudyLogResult> {
   if (!token) return emptyResult();
 
-  const tokenRow = await db
-    .selectFrom('bom_user_token')
-    .select('user')
-    .where('token', '=', token)
-    .executeTakeFirst();
-  if (!tokenRow) return emptyResult();
+  const username = await resolveUsername(db, token);
+  if (!username) return emptyResult();
 
   const items = (await db
     .selectFrom('bom_log')
     .select(['timestamp', 'type', 'value'])
-    .where('user', '=', tokenRow.user)
+    .where('user', '=', username)
     .where('type', '!=', 'referral')
     .orderBy('timestamp', 'desc')
     .execute()) as LogItem[];
