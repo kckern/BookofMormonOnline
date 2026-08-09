@@ -6,7 +6,7 @@
 // People and Places. Chips are used ONLY for the levels below, which render
 // between the box and the tile grid and appear as their parent is switched on.
 //
-//   box     form_group (6) | era_culture (6) | prominence (4)
+//   box     era_culture (6) | form_group (6) | category (3)
 //   chips   form (17), shown for whichever groups are on
 //           subform_label (64), shown for whichever forms are on
 
@@ -28,20 +28,20 @@ export const eraCultureChips = [
   { key: "matter_ec_christ_era", label: "Christ era", tag: "Christ era" },
 ];
 
-export const prominenceChips = [
-  { key: "matter_prom_9",  label: "9+ refs",  tag: "9+"  },
-  { key: "matter_prom_48", label: "4–8 refs", tag: "4-8" },
-  { key: "matter_prom_23", label: "2–3 refs", tag: "2-3" },
-  { key: "matter_prom_1",  label: "1 ref",    tag: "1"   },
+// Category — the canonical three-group taxonomy (branch × specificity), the same
+// split the home tiles and the /matters/<group> routes use. Not a stored column;
+// derived per-matter via CATEGORY_TEST. Tags match the route keywords.
+export const categoryChips = [
+  { key: "matter_group_narrative", label: "Narrative", tag: "narrative" },
+  { key: "matter_group_material",  label: "Material",  tag: "material"  },
+  { key: "matter_group_concepts",  label: "Concepts",  tag: "concepts"  },
 ];
 
-export function prominenceBucket(nrefs) {
-  const n = Number(nrefs) || 0;
-  if (n >= 9) return "9+";
-  if (n >= 4) return "4-8";
-  if (n >= 2) return "2-3";
-  return "1";
-}
+export const CATEGORY_TEST = {
+  narrative: (m) => m.branch === "concrete" && m.specificity === "instance",
+  material: (m) => m.branch === "concrete" && m.specificity !== "instance",
+  concepts: (m) => m.branch === "concepts",
+};
 
 // Level 2: form chips, keyed by the group that reveals them.
 export const formsByGroup = {
@@ -172,12 +172,13 @@ export const subformsByForm = {
   ],
 };
 
-// Switch columns inside the selector box, left → right. The third column is a
-// dynamic slot: Prominence by default, swapped for MatterDetailColumn once a Kind is on.
+// Switch columns inside the selector box, left → right. Category is the canonical
+// three-group taxonomy and stays put; the Form/Subform detail column (below) is
+// added as an extra column once a Kind is on.
 export const filterAxes = [
-  { name: "era_culture", title: "matter_axis_culture",    titleEn: "Era & Culture", chips: eraCultureChips },
-  { name: "form_group",  title: "matter_axis_form",       titleEn: "Kind",          chips: formGroupChips },
-  { name: "prominence",  title: "matter_axis_prominence", titleEn: "Prominence",    chips: prominenceChips },
+  { name: "era_culture", title: "matter_axis_culture",  titleEn: "Era & Culture", chips: eraCultureChips },
+  { name: "form_group",  title: "matter_axis_form",     titleEn: "Kind",          chips: formGroupChips },
+  { name: "category",    title: "matter_axis_category", titleEn: "Category",      chips: categoryChips },
 ];
 
 // Once a Kind is selected the right column becomes MatterDetailColumn, a

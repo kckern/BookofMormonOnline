@@ -76,6 +76,12 @@ const travelerLabel = (move) => {
   return move?.travelers ? `${move.travelers} traveling` : "Travelers moving to the next place";
 };
 
+/** Ref-callback: register a live overlay DOM node by key, or drop it on unmount. */
+const regNode = (map, key, el) => {
+  if (el) map.set(key, el);
+  else map.delete(key);
+};
+
 /**
  * A semantic journey renderer: the complete route remains faintly visible,
  * visited legs accumulate, the active leg and traveler party animate together,
@@ -105,8 +111,19 @@ export default function MapStoryTileInner({
   const travelerLeaderRef = useRef(null);
   const travelerRouteRef = useRef(null);
   const overlayRef = useRef({ markers: [], clusters: [], labels: [] });
+  // DOM handles for the HTML/SVG overlay so a live map frame can retether them to
+  // their map anchors without a React re-render (see syncOverlayRef).
+  const overlayNodesRef = useRef({
+    markers: new Map(),
+    labels: new Map(),
+    clusters: new Map(),
+    markerLeaders: new Map(),
+    labelLeaders: new Map(),
+    clusterLeaders: new Map(),
+  });
   const layoutStateRef = useRef(null);
   const updateLayoutRef = useRef(() => {});
+  const syncOverlayRef = useRef(() => {});
   const fitStoryRef = useRef(() => {});
   const frameStepRef = useRef(() => {});
   const didMountRef = useRef(false);
@@ -161,6 +178,97 @@ export default function MapStoryTileInner({
     const travelerRoute = travelerRouteRef.current;
     if (travelerRoute) {
       positionTraveler(travelerRoute.coordinate, travelerRoute.from, travelerRoute.to);
+    }
+  };
+
+  /**
+   * Retether the overlay to the map every rendered frame. The full collision
+   * layout (updateLayout) is expensive and only runs on settle (moveend / step /
+   * resize); between settles the map can pan or zoom (a 620ms `fit`, or a user
+   * drag), during which the labels/markers/clusters would otherwise stay frozen at
+   * their last-settled pixels and then snap. Here we recompute only each item's
+   * live anchor pixel from its lat/lng and write left/top straight to the DOM,
+   * carrying the already-resolved collision offset — so nothing jumps at moveend.
+   */
+  syncOverlayRef.current = () => {
+    const map = mapRef.current;
+    if (!map) return;
+    const nodes = overlayNodesRef.current;
+    const ov = overlayRef.current;
+    const px = (lat, lng) => map.getPixelFromCoordinate(project(lat, lng));
+    const finite = (p) => p && p.every(Number.isFinite);
+
+    ov.markers.forEach((marker) => {
+      const p = px(marker.lat, marker.lng);
+      if (!finite(p)) return;
+      const node = nodes.markers.get(marker.slug);
+      if (node) { node.style.left = `${p[0]}px`; node.style.top = `${p[1]}px`; }
+      const leader = nodes.markerLeaders.get(marker.slug);
+      if (leader && marker.leader) {
+        const dx = p[0] - marker.x, dy = p[1] - marker.y;
+        leader.setAttribute("x1", marker.leader.x1 + dx);
+        leader.setAttribute("y1", marker.leader.y1 + dy);
+        leader.setAttribute("x2", marker.leader.x2 + dx);
+        leader.setAttribute("y2", marker.leader.y2 + dy);
+      }
+    });
+
+    ov.labels.forEach((label) => {
+      const p = px(label.lat, label.lng);
+      if (!finite(p)) return;
+      const offX = label.x - label.anchorX, offY = label.y - label.anchorY;
+      const node = nodes.labels.get(label.slug);
+      if (node) { node.style.left = `${p[0] + offX}px`; node.style.top = `${p[1] + offY}px`; }
+      const leader = nodes.labelLeaders.get(label.slug);
+      if (leader && label.leader) {
+        const dx = p[0] - label.anchorX, dy = p[1] - label.anchorY;
+        leader.setAttribute("x1", label.leader.x1 + dx);
+        leader.setAttribute("y1", label.leader.y1 + dy);
+        leader.setAttribute("x2", label.leader.x2 + dx);
+        leader.setAttribute("y2", label.leader.y2 + dy);
+      }
+    });
+
+    ov.clusters.forEach((cluster) => {
+      // A cluster sits at its members' pixel centroid (possibly nudged to dodge
+      // overlaps). Translate it by how far that centroid has moved this frame.
+      let layoutX = 0, layoutY = 0, liveX = 0, liveY = 0, n = 0;
+      cluster.stops.forEach((stop) => {
+        const p = px(stop.lat, stop.lng);
+        if (!finite(p)) return;
+        layoutX += stop.x; layoutY += stop.y; liveX += p[0]; liveY += p[1]; n += 1;
+      });
+      if (!n) return;
+      const dx = (liveX - layoutX) / n, dy = (liveY - layoutY) / n;
+      const node = nodes.clusters.get(cluster.id);
+      if (node) { node.style.left = `${cluster.x + dx}px`; node.style.top = `${cluster.y + dy}px`; }
+      const leader = nodes.clusterLeaders.get(cluster.id);
+      if (leader && cluster.leader) {
+        leader.setAttribute("x1", cluster.leader.x1 + dx);
+        leader.setAttribute("y1", cluster.leader.y1 + dy);
+        leader.setAttribute("x2", cluster.leader.x2 + dx);
+        leader.setAttribute("y2", cluster.leader.y2 + dy);
+      }
+    });
+
+    // Keep the traveler party glued to its route point too (translate by the
+    // point's pixel delta — no per-frame obstacle re-avoidance, so it can't jitter).
+    const route = travelerRouteRef.current;
+    const traveler = travelerRef.current;
+    if (route && traveler && route.pixel && route.position) {
+      const p = map.getPixelFromCoordinate(route.coordinate);
+      if (finite(p)) {
+        const dx = p[0] - route.pixel[0], dy = p[1] - route.pixel[1];
+        traveler.style.left = `${route.position.x + dx}px`;
+        traveler.style.top = `${route.position.y + dy}px`;
+        const travelerLeader = travelerLeaderRef.current;
+        if (travelerLeader) {
+          travelerLeader.setAttribute("x1", p[0]);
+          travelerLeader.setAttribute("y1", p[1]);
+          travelerLeader.setAttribute("x2", route.position.x + dx);
+          travelerLeader.setAttribute("y2", route.position.y + dy);
+        }
+      }
     }
   };
 
@@ -219,6 +327,9 @@ export default function MapStoryTileInner({
     traveler.style.left = `${position.x}px`;
     traveler.style.top = `${position.y}px`;
     traveler.style.opacity = "1";
+    // Remember the settled pixel + placement so a live frame can retether by delta.
+    travelerRouteRef.current.pixel = pixel;
+    travelerRouteRef.current.position = position;
     if (travelerLeader) {
       travelerLeader.setAttribute("x1", pixel[0]);
       travelerLeader.setAttribute("y1", pixel[1]);
@@ -357,7 +468,11 @@ export default function MapStoryTileInner({
       setMapMoved(true);
       if (onMapInteraction) onMapInteraction();
     };
+    // Retether the overlay to the map on every rendered frame (pan/zoom/fit),
+    // closing the untether-then-snap gap between full layout settles.
+    const syncOverlay = () => syncOverlayRef.current();
     map.on("moveend", finishMove);
+    map.on("postrender", syncOverlay);
     map.on("pointerdrag", markManipulated);
 
     resizeObserverRef.current = typeof ResizeObserver === "function"
@@ -376,6 +491,7 @@ export default function MapStoryTileInner({
       if (programmaticMoveTimerRef.current) clearTimeout(programmaticMoveTimerRef.current);
       if (resizeObserverRef.current) resizeObserverRef.current.disconnect();
       map.un("moveend", finishMove);
+      map.un("postrender", syncOverlay);
       map.un("pointerdrag", markManipulated);
       map.setTarget(undefined);
       mapRef.current = null;
@@ -512,6 +628,7 @@ export default function MapStoryTileInner({
             <line
               className="isSymbolLeader"
               key={`marker:${marker.slug}`}
+              ref={(el) => regNode(overlayNodesRef.current.markerLeaders, marker.slug, el)}
               x1={marker.leader.x1}
               y1={marker.leader.y1}
               x2={marker.leader.x2}
@@ -524,6 +641,7 @@ export default function MapStoryTileInner({
             <line
               className="isSymbolLeader"
               key={`cluster:${cluster.id}`}
+              ref={(el) => regNode(overlayNodesRef.current.clusterLeaders, cluster.id, el)}
               x1={cluster.leader.x1}
               y1={cluster.leader.y1}
               x2={cluster.leader.x2}
@@ -535,6 +653,7 @@ export default function MapStoryTileInner({
           label.leader ? (
             <line
               key={`label:${label.slug}`}
+              ref={(el) => regNode(overlayNodesRef.current.labelLeaders, label.slug, el)}
               x1={label.leader.x1}
               y1={label.leader.y1}
               x2={label.leader.x2}
@@ -548,6 +667,7 @@ export default function MapStoryTileInner({
         {overlay.markers.map((marker) => (
           <span
             key={marker.slug}
+            ref={(el) => regNode(overlayNodesRef.current.markers, marker.slug, el)}
             className={`mapStoryStopMarker is-${marker.role}`}
             style={{ left: marker.x, top: marker.y }}
             aria-hidden="true"
@@ -556,6 +676,7 @@ export default function MapStoryTileInner({
         {overlay.labels.map((label) => (
           <button
             key={label.slug}
+            ref={(el) => regNode(overlayNodesRef.current.labels, label.slug, el)}
             type="button"
             className={`mapStoryPlaceLabel is-${label.role}`}
             style={{ left: label.x, top: label.y, width: label.width, height: label.height }}
@@ -571,6 +692,7 @@ export default function MapStoryTileInner({
         {overlay.clusters.map((cluster) => (
           <button
             key={cluster.id}
+            ref={(el) => regNode(overlayNodesRef.current.clusters, cluster.id, el)}
             type="button"
             className="mapStoryCluster"
             style={{ left: cluster.x, top: cluster.y }}

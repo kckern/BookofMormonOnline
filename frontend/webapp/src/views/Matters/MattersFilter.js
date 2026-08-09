@@ -47,11 +47,11 @@ const KIND_ICON = {
  *
  *   Era & Culture (left)   6 values, era + provenance merged (58% redundant)
  *   Kind          (middle) 6 form groups
- *   dynamic slot  (right)  Prominence (4 nrefs buckets) by default; the instant
- *                          a Kind is on, it swaps to <MatterDetailColumn> — form
- *                          switches with per-form subform chips — passed to
- *                          FilterPanel via its extraColumn slot. Prominence is
- *                          gone while a Kind is active.
+ *   Category      (right)  the canonical 3 groups (Narrative/Material/Concepts),
+ *                          derived from branch × specificity. Always shown.
+ *
+ * When a Kind is on, <MatterDetailColumn> (form switches + per-form subform chips)
+ * is appended as an extra column via FilterPanel's extraColumn slot.
  */
 /**
  * Translate with a real fallback.
@@ -90,16 +90,15 @@ const optionLabel = (axisName, chip, text) => {
   return text;
 };
 
-export function MattersFilter({ matterFilters, setFilter, matterList }) {
+export function MattersFilter({ matterFilters, setFilter, matterList, resultCount }) {
   const appController = useAppController();
 
   const byName = Object.fromEntries(filterAxes.map((a) => [a.name, a]));
   const kindActive = (matterFilters.form_group?.size ?? 0) > 0;
 
-  // Right column is Prominence until a Kind is on, then the detail column.
-  const shown = kindActive
-    ? [byName.era_culture, byName.form_group]
-    : [byName.era_culture, byName.form_group, byName.prominence];
+  // Era, Kind and Category are always shown; the Form/Subform detail column is
+  // appended (via extraColumn) once a Kind is on.
+  const shown = [byName.era_culture, byName.form_group, byName.category];
 
   const axes = shown.map((a) => ({
     name: a.name,
@@ -133,6 +132,8 @@ export function MattersFilter({ matterFilters, setFilter, matterList }) {
       value={value}
       onChange={onChange}
       extraColumn={extraColumn}
+      extraColumnAxis="form_group"
+      resultCount={resultCount}
       search={{
         placeholder: "search_for_a_matter",
         preLoadData: matterList,

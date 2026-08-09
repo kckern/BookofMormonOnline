@@ -159,6 +159,9 @@ a.samplerTileInner { cursor: pointer; }
 .tileHeading a:hover { color: #333; }
 html[data-theme="dark"] .tileHeading { color: #9a9a9a; }
 html[data-theme="dark"] .tileHeading a:hover { color: #fff; }
+/* Category qualifier on the matters tiles ("Matters · Concepts"). */
+.tileHeadingGroup { color: inherit; opacity: 0.72; }
+.tileHeadingGroup::before { content: "·"; margin: 0 0.4em; opacity: 0.7; }
 
 /* ALL scripture refs on home use the site's .scripture_link style. RefPill
    renders a span (nested <a> is invalid inside card Links), so the Main.css
@@ -509,6 +512,8 @@ html[data-theme="dark"] .placesTileDesc { color: #b0b0b0; }
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+/* Matters cards give the seeded index text more room — three lines, not two. */
+.mattersTile .placesTileIndexRow { -webkit-line-clamp: 3; }
 html[data-theme="dark"] .placesTileInfo { color: #9a9a9a; }
 .placesTileRef {
   font-weight: 700;
@@ -1840,6 +1845,8 @@ html[data-theme="dark"] .notesTile .notesAttr { color: #aaa; }
 .mapStoryStopMarker.is-anchor { width: 16px; height: 16px; background: #263b31; }
 .mapStoryStopMarker.is-visited { background: #a5524c; }
 .mapStoryStopMarker.is-future { width: 8px; height: 8px; border-width: 1.5px; opacity: 0.6; }
+/* Boxless labels matching the interactive map's canvas markers: outlined text,
+   no pill. White fill + dark halo for legibility over terrain; red when active. */
 .mapStoryPlaceLabel {
   appearance: none;
   box-sizing: border-box;
@@ -1847,32 +1854,35 @@ html[data-theme="dark"] .notesTile .notesAttr { color: #aaa; }
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 4px 9px;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.78);
-  border-radius: 0.45rem;
-  color: #26322b;
-  background: rgba(250, 249, 244, 0.93);
-  box-shadow: 0 2px 8px rgba(24, 34, 28, 0.2);
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  color: #ffffff;
   cursor: pointer;
-  font-family: inherit;
-  font-size: 0.7rem;
-  font-weight: 720;
+  font-family: 'Roboto Condensed', inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
   line-height: 1.12;
   text-align: center;
   text-wrap: balance;
+  -webkit-text-stroke: 0.5px rgba(0, 0, 0, 0.5);
+  paint-order: stroke fill;
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.85), 0 1px 3px rgba(0, 0, 0, 0.65);
   pointer-events: auto;
   transition: left 200ms ease, top 200ms ease, width 200ms ease;
 }
-.mapStoryPlaceLabel:hover { border-color: rgba(38, 50, 43, 0.55); background: #fffdf8; }
-.mapStoryPlaceLabel:focus-visible { outline: 3px solid #fff; outline-offset: 2px; box-shadow: 0 0 0 5px #45679e; }
+.mapStoryPlaceLabel:hover { color: #fffdf8; }
+.mapStoryPlaceLabel:focus-visible { outline: 2px solid #fff; outline-offset: 2px; border-radius: 0.2rem; }
 .mapStoryPlaceLabel.is-active {
-  border-color: rgba(159, 48, 41, 0.48);
-  color: #812923;
-  background: rgba(255, 252, 246, 0.97);
+  /* Brightest state — crisp white with a slightly stronger halo, never red. */
+  color: #ffffff;
+  opacity: 1;
+  -webkit-text-stroke: 0.7px rgba(0, 0, 0, 0.6);
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.95), 0 1px 3px rgba(0, 0, 0, 0.7);
 }
-.mapStoryPlaceLabel.is-anchor { color: #173025; }
-.mapStoryPlaceLabel.is-visited { opacity: 0.88; }
+.mapStoryPlaceLabel.is-anchor { color: #ffffff; }
+.mapStoryPlaceLabel.is-visited { opacity: 0.82; }
 .mapStoryCluster {
   position: absolute;
   display: flex;
@@ -2184,8 +2194,7 @@ html[data-theme="dark"] .mapStoryControlButton { color: #dbe1dc; border-color: #
 html[data-theme="dark"] .mapStoryControlButton.isPrimary { color: #fff; border-color: #b95850; background: #9f3932; }
 html[data-theme="dark"] .mapStoryScrubber::-webkit-slider-runnable-track { background: linear-gradient(to right, #c85a51 0 var(--map-story-progress), #4a554d var(--map-story-progress) 100%); }
 html[data-theme="dark"] .mapStoryScrubber::-moz-range-track { background: #4a554d; }
-html[data-theme="dark"] .mapStoryPlaceLabel { color: #eef1ed; border-color: rgba(255,255,255,0.2); background: rgba(29, 39, 33, 0.94); }
-html[data-theme="dark"] .mapStoryPlaceLabel.is-active { color: #ffd4cf; border-color: rgba(213, 102, 92, 0.58); background: rgba(45, 34, 32, 0.96); }
+/* Boxless labels read over map terrain identically in both themes — no dark override. */
 
 @media (prefers-reduced-motion: reduce) {
   .mapStoryCluster,
@@ -2283,69 +2292,15 @@ html[data-theme="dark"] .mapStoryPlaceLabel.is-active { color: #ffd4cf; border-c
 .tile.skeleton.tile-mattersConcept { min-height: 15rem; }
 .tile.skeleton.tile-matterProfile { min-height: 18rem; }
 
-/* Material: ref-count badge over the image (top-right). */
-.mattersRefBadge {
-  position: absolute;
-  top: 0.35rem;
-  right: 0.35rem;
-  padding: 0.05rem 0.4rem;
-  border-radius: 0.7rem;
-  background: rgba(0, 0, 0, 0.62);
-  color: #fff;
-  font-size: 0.72rem;
-  font-weight: 600;
-  line-height: 1.4;
-  pointer-events: none;
+/* Singleton profile: subtitle rail under the hero image. */
+.matterProfileSub {
+  margin: 0.5rem 0;
+  padding: 0.35rem 0.5rem;
+  border-top: 1px solid #e2e2e2;
+  border-bottom: 1px solid #e2e2e2;
+  font-size: 0.85rem;
+  font-style: italic;
+  text-align: center;
+  opacity: 0.85;
 }
-.mattersMaterialSub { font-size: 0.8rem; color: inherit; }
-
-/* Concept: text-forward cards over a muted image background. */
-.mattersConceptGrid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.5rem;
-}
-.mattersConceptCard {
-  position: relative;
-  display: block;
-  min-height: 8.5rem;
-  border-radius: 0.4rem;
-  overflow: hidden;
-  color: #fff;
-  text-decoration: none;
-  background-size: cover;
-  background-position: center;
-  min-width: 0;
-}
-.mattersConceptScrim {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  height: 100%;
-  padding: 0.5rem;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.15) 0%, rgba(0, 0, 0, 0.78) 70%);
-  justify-content: flex-end;
-}
-.mattersConceptName { font-weight: 700; font-size: 0.9rem; line-height: 1.15; }
-.mattersConceptSub { font-size: 0.72rem; opacity: 0.9; }
-.mattersConceptDesc { font-size: 0.72rem; opacity: 0.82; margin-top: 0.15rem; }
-.mattersConceptViewAll .mattersConceptScrim { align-items: center; justify-content: center; }
-
-/* Singleton profile: subtitle + relationship chips. */
-.matterProfileSub { font-size: 0.85rem; opacity: 0.8; margin: 0.2rem 0 0.4rem; }
-.matterProfileRels {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem;
-  margin: 0.4rem 0;
-}
-.matterProfileRels a { text-decoration: none; }
-.matterRelChip {
-  display: inline-block;
-  padding: 0.05rem 0.5rem;
-  border-radius: 0.7rem;
-  background: rgba(0, 0, 0, 0.08);
-  font-size: 0.75rem;
-  color: inherit;
-}
-html[data-theme="dark"] .matterRelChip { background: rgba(255, 255, 255, 0.12); }
+html[data-theme="dark"] .matterProfileSub { border-color: #3a3a3a; }

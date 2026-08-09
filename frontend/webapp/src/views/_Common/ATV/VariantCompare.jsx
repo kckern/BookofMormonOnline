@@ -1,7 +1,9 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import ReactDOM from "react-dom";
 import Parser from "html-react-parser";
 import { label } from "src/models/Utils";
+import { renderBaseUrl } from "src/models/BoMOnlineAPI";
+import FaxVerseZoom from "../../Facsimiles/FaxVerseZoom";
 import { WITNESSES } from "./apparatus";
 import { FAX_FOR_SIGLUM, faxCandidates } from "./faxVersions";
 import { FaxCrop } from "./FaxCrop";
@@ -51,7 +53,7 @@ function ProvenanceLines({ states }) {
 }
 
 /** The witness evidence under one reading: crops + label-only gaps (spec §6.5). */
-function WitnessEvidence({ reading, verseId, reference }) {
+function WitnessEvidence({ reading, verseId, reference, onZoom }) {
   const selector = `ids/${verseId}`;
   // Treatment 2: an omission reading (its resulting state is ∅) still shows the
   // crop — the image is the evidence the phrase is absent.
@@ -65,6 +67,10 @@ function WitnessEvidence({ reading, verseId, reference }) {
   const noGeom = reading.sigla.filter(
     (s) => FAX_FOR_SIGLUM[s] && !FAX_FOR_SIGLUM[s].hasGeometry
   );
+
+  // A lone crop with no label-only gaps fills the reading's full width, so render
+  // it at a larger crop so the stretched image stays crisp.
+  const soleFigure = candidates.length === 1 && noGeom.length === 0;
 
   return (
     <div className="atv-vc-witnesses">
@@ -81,7 +87,14 @@ function WitnessEvidence({ reading, verseId, reference }) {
         const alt = reference ? `${caption}, ${reference}` : caption;
         return (
           <figure className="atv-vc-fig" key={c.siglum}>
-            <FaxCrop version={c.version} selector={selector} alt={alt} />
+            <button
+              type="button"
+              className="atv-vc-cropbtn"
+              onClick={() => onZoom({ version: c.version, selector, caption, alt })}
+              aria-label={`${lbl("atv_zoom_image", "Zoom")}: ${alt}`}
+            >
+              <FaxCrop version={c.version} selector={selector} alt={alt} width={soleFigure ? 800 : 400} />
+            </button>
             <figcaption className="atv-vc-cap">{caption}</figcaption>
             {!c.exact && (
               <div className="atv-vc-note">
@@ -113,13 +126,69 @@ function WitnessEvidence({ reading, verseId, reference }) {
   );
 }
 
-function ReadingBlock({ reading, verseId, reference }) {
+function ReadingBlock({ reading, verseId, reference, onZoom }) {
   return (
     <section className="atv-vc-reading">
       <ReadingText states={reading.states} />
       <ProvenanceLines states={reading.states} />
-      <WitnessEvidence reading={reading} verseId={verseId} reference={reference} />
+      <WitnessEvidence reading={reading} verseId={verseId} reference={reference} onZoom={onZoom} />
     </section>
+  );
+}
+
+/**
+ * Full-res zoom of a single crop, portalled above the compare panel. Reuses the
+ * FaxVerseZoom hover-magnifier at the native-res (`wfull`) render. Its Escape
+ * handler captures (and stopImmediatePropagation) so closing the lightbox does
+ * not also dismiss the VariantCompare modal behind it.
+ */
+function CropLightbox({ version, selector, caption, alt, onClose }) {
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key !== "Escape") return;
+      e.stopPropagation();
+      if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
+      e.preventDefault();
+      onCloseRef.current();
+    };
+    // Capture phase so this fires before VariantCompare's bubble-phase Escape.
+    document.addEventListener("keydown", onKey, true);
+    return () => document.removeEventListener("keydown", onKey, true);
+  }, []);
+
+  const src = `${renderBaseUrl}/fax/render/${version}/crop/wfull/${selector}.jpg`;
+  // React portals bubble events through the React tree, not the DOM — stop here so
+  // a backdrop click closes only the lightbox, not the VariantCompare modal behind it.
+  return ReactDOM.createPortal(
+    <div
+      className="atv-vc-lightbox-backdrop"
+      onClick={(e) => { e.stopPropagation(); onCloseRef.current(); }}
+    >
+      <div
+        className="atv-vc-lightbox"
+        role="dialog"
+        aria-modal="true"
+        aria-label={alt || caption}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          type="button"
+          className="atv-vc-lightbox-close"
+          aria-label={lbl("close", "Close")}
+          onClick={() => onCloseRef.current()}
+        >
+          ×
+        </button>
+        <div className="atv-vc-lightbox-img">
+          <FaxVerseZoom src={src} />
+        </div>
+        {(alt || caption) && <div className="atv-vc-lightbox-cap">{alt || caption}</div>}
+      </div>
+    </div>,
+    document.body
   );
 }
 
@@ -131,6 +200,8 @@ function ReadingBlock({ reading, verseId, reference }) {
  */
 export function VariantCompare({ unit, verseId, reference, onClose }) {
   const panelRef = useRef(null);
+  // The crop currently opened in the full-res lightbox ({version, selector, ...}).
+  const [zoom, setZoom] = useState(null);
   // Keep the latest onClose without re-running the mount effect (which would
   // thrash focus restore on every parent render).
   const onCloseRef = useRef(onClose);
@@ -207,10 +278,11 @@ export function VariantCompare({ unit, verseId, reference, onClose }) {
         </header>
         <div className="atv-vc-body">
           {readings.map((reading, i) => (
-            <ReadingBlock key={i} reading={reading} verseId={verseId} reference={reference} />
+            <ReadingBlock key={i} reading={reading} verseId={verseId} reference={reference} onZoom={setZoom} />
           ))}
         </div>
       </div>
+      {zoom && <CropLightbox {...zoom} onClose={() => setZoom(null)} />}
     </div>,
     document.body
   );

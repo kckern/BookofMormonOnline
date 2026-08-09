@@ -11,7 +11,7 @@ import "../Places/Places.css";
 import "../People/People.css";
 
 import { MattersFilter } from "./MattersFilter";
-import { prominenceBucket, formsByGroup, subformsByForm } from "./mattersFilterData";
+import { categoryChips, CATEGORY_TEST, formsByGroup, subformsByForm } from "./mattersFilterData";
 import { useAppController } from "src/contexts/AppControllerContext";
 import { slugGradient, entityInitials } from "../_Common/EntityThumb";
 
@@ -24,6 +24,13 @@ const t = (key, fallback) => {
 /** "Belief & Mind" → "belief-mind", for CSS class names. */
 const badgeClass = (v) =>
   (v || "unknown").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
+// A `/matters/<group>` URL (narrative | material | concepts) pre-selects that
+// Category chip; the same keywords are what the home tiles link to. Order matters
+// vs `/matters/:matterSlug`: these keywords are intercepted before the slug is
+// treated as a popup target. Category itself is a real filter axis, so the route
+// just seeds it — one source of truth (see the seeding effect below).
+const CATEGORY_BY_TAG = Object.fromEntries(categoryChips.map((c) => [c.tag, c]));
 
 function MattersComponent() {
   const appController = useAppController();
@@ -39,7 +46,7 @@ function MattersComponent() {
   const emptyFilters = {
     era_culture: new Set(),
     form_group: new Set(),
-    prominence: new Set(),
+    category: new Set(),
     form: new Set(),
     subform_label: new Set(),
     search: null,
@@ -47,11 +54,11 @@ function MattersComponent() {
   const [matterFilters, setFilterRaw] = useState(emptyFilters);
 
   /**
-   * Keep the dynamic right column honest. Prominence and the detail column
-   * share the third slot, and form/subform selections cascade off the Kind:
+   * Keep the cascading Kind → Form → Subform selections honest:
    *   - Kind empty     → clear form + subform_label (their column is gone).
-   *   - Kind non-empty → clear Prominence; drop forms not reachable from the
-   *                      selected kinds, then subforms whose parent form dropped.
+   *   - Kind non-empty → drop forms not reachable from the selected kinds, then
+   *                      subforms whose parent form dropped.
+   * (Era, Kind and Category are independent axes and are left untouched here.)
    */
   const setFilter = (next) => {
     let result = next;
@@ -60,7 +67,6 @@ function MattersComponent() {
       if (result.form?.size) result = { ...result, form: new Set() };
       if (result.subform_label?.size) result = { ...result, subform_label: new Set() };
     } else {
-      if (result.prominence?.size) result = { ...result, prominence: new Set() };
       const reachableForms = new Set(
         [...kind].flatMap((g) => (formsByGroup[g] || []).map((f) => f.tag))
       );
@@ -81,15 +87,25 @@ function MattersComponent() {
   };
 
   const match = useRouteMatch();
+  const routeParam = match?.params?.matterSlug;
+  // A group keyword seeds the Category axis; anything else is a real slug → popup.
+  const activeGroup = routeParam && CATEGORY_TEST[routeParam] ? routeParam : null;
   useEffect(() => {
-    if (match?.params?.matterSlug) {
+    if (routeParam && !CATEGORY_TEST[routeParam]) {
       appController.functions.setPopUp({
         type: "matters",
-        ids: [match.params.matterSlug],
+        ids: [routeParam],
         underSlug: "matters",
       });
     }
-  }, [match?.params?.matterSlug]);
+  }, [routeParam]);
+
+  // Route → filter: entering /matters/<group> pre-selects that Category chip;
+  // /matters (or a slug route) clears it. Keyed on the URL only, so a user's own
+  // chip edits afterward stick until they navigate again.
+  useEffect(() => {
+    setFilterRaw((prev) => ({ ...prev, category: new Set(activeGroup ? [activeGroup] : []) }));
+  }, [activeGroup]);
 
   useEffect(() => {
     if (!matterList) {
@@ -128,8 +144,9 @@ function MattersComponent() {
         .filter((tag) => subSel.has(tag));
       if (active.length > 0 && !active.includes(item.subform_label)) return false;
     }
-    const prom = matterFilters.prominence;
-    if (prom && prom.size > 0 && !prom.has(prominenceBucket(item.nrefs))) return false;
+    // Category is derived (branch × specificity), OR within the axis.
+    const cat = matterFilters.category;
+    if (cat && cat.size > 0 && ![...cat].some((tag) => CATEGORY_TEST[tag]?.(item))) return false;
     return true;
   };
 
@@ -161,11 +178,22 @@ function MattersComponent() {
   return (
     <div className="container noselect" style={{ display: "block" }}>
       <div id="page">
-        <h3 className="title lg-4 text-center">{label("title_matters")}</h3>
+        <h3 className="title lg-4 text-center">
+          {label("title_matters")}
+          {activeGroup && (
+            <>
+              <span className="mattersGroupQualifier">
+                {t(CATEGORY_BY_TAG[activeGroup].key, CATEGORY_BY_TAG[activeGroup].label)}
+              </span>
+              <Link className="mattersGroupClear" to="/matters">{t("view_all", "View all")}</Link>
+            </>
+          )}
+        </h3>
         <MattersFilter
           matterFilters={matterFilters}
           setFilter={setFilter}
           matterList={matterList}
+          resultCount={filtered.length}
         />
         <div className="MatterList">
           {filtered.length === 0 ? (

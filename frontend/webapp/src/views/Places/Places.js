@@ -152,7 +152,7 @@ function PlacesComponent() {
     <div className='container noselect' style={{ display: "block" }}>
       <div id='page'>
         <h3 className='title lg-4 text-center'>{label("title_places")}</h3>
-        <PlaceFilters  setFilter={setFilter} placeFilters={placeFilters} />
+        <PlaceFilters  setFilter={setFilter} placeFilters={placeFilters} resultCount={PlaceList ? PlaceList.filter(filters).filter((p) => p.slug).length : undefined} />
         <div className='PlaceList'>
           <Masonry
             breakpointCols={breakpointColumnsObj}
@@ -207,7 +207,7 @@ function PlacesComponent() {
 
 export default PlacesComponent
 
-export function PlaceFilters({ setFilter, placeFilters }) {
+export function PlaceFilters({ setFilter, placeFilters, resultCount }) {
   const appController = useAppController();
   const { placeList } = appController.preLoad;
 
@@ -281,6 +281,7 @@ export function PlaceFilters({ setFilter, placeFilters }) {
       axes={axes}
       value={value}
       onChange={onChange}
+      resultCount={resultCount}
       search={{
         placeholder: "search_for_a_place",
         preLoadData: placeList,

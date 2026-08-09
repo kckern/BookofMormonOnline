@@ -142,7 +142,7 @@ function PeopleComponent() {
     <div className="container noselect" style={{ display: 'block' }}>
       <div id="page" >
         <h3 className="title lg-4 text-center">{label("title_people")}</h3>
-        <PeopleFilters setFilter={setFilter} peopleFilters={peopleFilters} />
+        <PeopleFilters setFilter={setFilter} peopleFilters={peopleFilters} resultCount={peopleList ? peopleList.filter(filters).length : undefined} />
         <div className="peopleList">
           <Masonry
             breakpointCols={breakpointColumnsObj}
@@ -178,7 +178,7 @@ function PeopleComponent() {
 
 
 
-export function PeopleFilters({ setFilter, peopleFilters }) {
+export function PeopleFilters({ setFilter, peopleFilters, resultCount }) {
   const appController = useAppController();
   const { personList } = appController.preLoad;
 
@@ -252,6 +252,7 @@ export function PeopleFilters({ setFilter, peopleFilters }) {
       axes={axes}
       value={value}
       onChange={onChange}
+      resultCount={resultCount}
       search={{
         placeholder: "search_for_a_person",
         preLoadData: personList,

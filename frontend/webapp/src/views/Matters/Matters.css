@@ -8,6 +8,29 @@
     padding-right: 1em;
 }
 
+/* Active-group qualifier on the index heading (e.g. /matters/concepts). */
+.mattersGroupQualifier
+{
+    font-weight: 400;
+    opacity: 0.7;
+}
+.mattersGroupQualifier::before
+{
+    content: "·";
+    margin: 0 0.4em;
+    opacity: 0.6;
+}
+.mattersGroupClear
+{
+    margin-left: 0.7em;
+    font-size: 0.6em;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
 /* Row-major grid so the verse_id-ascending sort reads left→right, top→bottom.
    (Masonry distributed items DOWN columns, which scrambled the scripture order.)
    Column counts mirror the former masonry breakpoints. */

@@ -45,13 +45,14 @@ test("MatterProfileTile: deeplink hidden until the description is expanded", () 
   expect(deep().getAttribute("href")).toBe("/matters/oaths");
 });
 
-test("MatterProfileTile: renders a linked relationship chip", () => {
+test("MatterProfileTile: does not render relationship chips", () => {
   const payload = {
     mattersConcept: [
       { slug: "oaths", name: "Oaths", description: "desc",
         xrels: [{ rel: "related", dst_type: "people", dst_slug: "nephi", dst_name: "Nephi" }] },
     ],
   };
-  renderIn(<MatterProfileTile payload={payload} group="concept" matterIndex={0} />);
-  expect(screen.getByText("Nephi").closest("a").getAttribute("href")).toBe("/people/nephi");
+  const { container } = renderIn(<MatterProfileTile payload={payload} group="concept" matterIndex={0} />);
+  expect(screen.queryByText("Nephi")).toBeNull();
+  expect(container.querySelector(".matterRelChip")).toBeNull();
 });

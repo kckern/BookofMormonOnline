@@ -6,6 +6,12 @@ import { SearchPopUp } from "src/views/_Common/SearchPopUp";
 import { useAppController } from "src/contexts/AppControllerContext";
 import "./FilterPanel.css";
 
+/** Translate with a real fallback — label() echoes the key back when unknown. */
+const t = (key, fallback) => {
+  const v = label(key);
+  return !v || v === key || !String(v).trim() ? fallback : v;
+};
+
 /**
  * FilterPanel — shared, controlled, config-driven filter UI (People/Places/Matters).
  *
@@ -15,25 +21,42 @@ import "./FilterPanel.css";
  * `onChange` receives the whole next map. Each view adapts its native format
  * (letter-code string / Set) at the boundary.
  *
+ * Two desktop modes (persisted per view in localStorage, default "mini"):
+ *  - mini: a compact toolbar of per-axis dropdown buttons (title + count badge);
+ *          each opens a popover with that axis's options. `extraColumnAxis` names
+ *          the axis whose popover also hosts `extraColumn` (Matters' cascade).
+ *  - main: the classic fully-expanded columns.
+ * Mobile is unchanged — the columns render inside the pFilter drawer.
+ *
  * Props:
  *  - heading: node — the .ppFiltersHeading text.
  *  - axes: [{ name, title, options: [{ tag, label }] }] — title/label are nodes.
  *  - value: { [axisName]: string[] } — selected tags per axis (controlled).
- *  - onChange(nextValue) — panel computes toggle/select-all/clear; emits the whole map.
+ *  - onChange(nextValue) — panel computes toggle/select-all/clear/clear-all; emits the whole map.
  *  - search?: { placeholder, preLoadData, testFieldNames, assetName, selectItemHandler }
- *      — when present, renders 🔍 + SearchPopUp (panel owns isOpen + type-to-search).
- *  - extraColumn?: node — an extra column rendered as a peer after the axes
- *      (Matters uses it for its cascading form/subform detail column).
+ *  - extraColumn?: node — an extra column (Matters' cascading form/subform detail).
+ *  - extraColumnAxis?: string — the axis whose mini popover hosts extraColumn.
+ *  - resultCount?: number — shown as "N results" in the mini toolbar.
  */
-export default function FilterPanel({ heading, axes, value, onChange, search, extraColumn }) {
+export default function FilterPanel({ heading, axes, value, onChange, search, extraColumn, extraColumnAxis, resultCount }) {
   const appController = useAppController();
   const [isOpen, setIsOpen] = useState(false);
   const [initSearchString, setInitSearchString] = useState("");
   const hasSearch = Boolean(search);
 
+  const storageKey = `fpMode:${search?.assetName || "default"}`;
+  const [mode, setMode] = useState(() => {
+    try { return window.localStorage.getItem(storageKey) === "main" ? "main" : "mini"; } catch (e) { return "mini"; }
+  });
+  const applyMode = (m) => {
+    setMode(m);
+    try { window.localStorage.setItem(storageKey, m); } catch (e) { /* private mode / SSR */ }
+  };
+  const [openAxis, setOpenAxis] = useState(null);
+
   const toggleTag = (axisName, tag) => {
     const cur = value[axisName] || [];
-    const next = cur.includes(tag) ? cur.filter((t) => t !== tag) : [...cur, tag];
+    const next = cur.includes(tag) ? cur.filter((x) => x !== tag) : [...cur, tag];
     onChange({ ...value, [axisName]: next });
   };
 
@@ -42,9 +65,12 @@ export default function FilterPanel({ heading, axes, value, onChange, search, ex
     onChange({ ...value, [axisName]: all ? axis.options.map((o) => o.tag) : [] });
   };
 
-  const renderAxis = (axis) => (
+  const clearAll = () => onChange(Object.fromEntries(axes.map((a) => [a.name, []])));
+
+  // The option list for one axis (switches + select-all/clear), reused by both modes.
+  const renderAxisList = (axis, { showTitle = true } = {}) => (
     <ul key={axis.name}>
-      <li className="lihead">{axis.title}</li>
+      {showTitle ? <li className="lihead">{axis.title}</li> : null}
       <li className="lifoot">
         <Button onClick={() => setAll(axis.name, true)}>{label("select_all")}</Button>
         <Button onClick={() => setAll(axis.name, false)}>{label("clear")}</Button>
@@ -77,22 +103,90 @@ export default function FilterPanel({ heading, axes, value, onChange, search, ex
     />
   ) : null;
 
-  const panel = (
+  // Classic expanded columns — used by desktop main mode AND the mobile drawer.
+  const columns = (
+    <div className="ppColumns">
+      {axes.map((a) => renderAxisList(a))}
+      {extraColumn}
+    </div>
+  );
+
+  const searchButton = search && !isMobile() ? (
+    <button className="ppFiltersSearchButton" onClick={() => { setInitSearchString(""); setIsOpen(true); }}>🔍</button>
+  ) : null;
+
+  // Mobile drawer body: always the expanded columns (a toolbar of popovers doesn't
+  // belong in a side-drawer). Snapshotted into the pFilter popup below.
+  const mobilePanel = (
     <>
       <h5 className="ppFiltersHeading">{heading}</h5>
       <div className="ppFilters">
-        {search && !isMobile() && (
-          <button className="ppFiltersSearchButton" onClick={() => { setInitSearchString(""); setIsOpen(true); }}>🔍</button>
-        )}
-        <div className="ppColumns">
-          {axes.map(renderAxis)}
-          {extraColumn}
-        </div>
-        {!isMobile() && searchEl}
+        {searchButton}
+        {columns}
       </div>
     </>
   );
 
+  const mainPanel = (
+    <>
+      <h5 className="ppFiltersHeading">
+        {heading}
+        <button className="fpModeToggle" onClick={() => applyMode("mini")} title={t("collapse", "Collapse")} aria-label={t("collapse", "Collapse")}>⤢</button>
+      </h5>
+      <div className="ppFilters">
+        {searchButton}
+        {columns}
+        {searchEl}
+      </div>
+    </>
+  );
+
+  const miniPanel = (
+    <>
+      <h5 className="ppFiltersHeading">{heading}</h5>
+      <div className="fpToolbar">
+        {axes.map((axis) => {
+          const n = (value[axis.name] || []).length;
+          const open = openAxis === axis.name;
+          return (
+            <div className={`fpAxisWrap${open ? " open" : ""}`} key={axis.name}>
+              <button
+                type="button"
+                className={`fpAxisBtn${n ? " active" : ""}${open ? " open" : ""}`}
+                aria-expanded={open}
+                onClick={() => setOpenAxis(open ? null : axis.name)}
+              >
+                <span className="fpAxisLabel">{axis.title}</span>
+                {n ? <span className="fpBadge">{n}</span> : null}
+                <span className="fpCaret" aria-hidden="true">▾</span>
+              </button>
+              {open ? (
+                <div className="fpPopover">
+                  <div className="ppColumns fpPopoverCols">
+                    {renderAxisList(axis, { showTitle: false })}
+                    {extraColumnAxis === axis.name ? extraColumn : null}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          );
+        })}
+        {search ? (
+          <button className="fpSearchBtn" onClick={() => { setInitSearchString(""); setIsOpen(true); }}>🔍</button>
+        ) : null}
+        <div className="fpToolbarEnd">
+          {typeof resultCount === "number" ? (
+            <span className="fpResultCount">{resultCount} {t("results", "results")}</span>
+          ) : null}
+          <button type="button" className="fpClearAll" onClick={clearAll}>{t("clear_all", "Clear all")}</button>
+          <button type="button" className="fpModeToggle" onClick={() => applyMode("main")} title={t("expand", "Expand")} aria-label={t("expand", "Expand")}>⤢</button>
+        </div>
+      </div>
+      {searchEl}
+    </>
+  );
+
+  // Type-to-search + Escape (also closes an open axis popover).
   useEffect(() => {
     if (!hasSearch) return undefined;
     const onKey = (event) => {
@@ -109,12 +203,22 @@ export default function FilterPanel({ heading, axes, value, onChange, search, ex
     return () => window.removeEventListener("keydown", onKey);
   }, [hasSearch]);
 
+  // Close the open axis popover on outside-click or Escape.
+  useEffect(() => {
+    if (!openAxis) return undefined;
+    const onDown = (e) => { if (!e.target.closest(".fpAxisWrap.open")) setOpenAxis(null); };
+    const onEsc = (e) => { if (e.key === "Escape") setOpenAxis(null); };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onEsc);
+    return () => { document.removeEventListener("mousedown", onDown); document.removeEventListener("keydown", onEsc); };
+  }, [openAxis]);
+
   const valueKey = JSON.stringify(value);
   useEffect(() => {
     if (isMobile() && appController.states.popUp.type === "pFilter") {
       appController.functions.setPopUp({
         ...appController.states.popUp,
-        popUpData: { filterBox: panel },
+        popUpData: { filterBox: mobilePanel },
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -126,7 +230,7 @@ export default function FilterPanel({ heading, axes, value, onChange, search, ex
         type: "pFilter",
         ids: [appController.states.user.social?.user_id],
         underSlug: search?.assetName,
-        popUpData: { filterBox: panel },
+        popUpData: { filterBox: mobilePanel },
       });
     return (
       <div className="filterDrawerButton">
@@ -139,5 +243,5 @@ export default function FilterPanel({ heading, axes, value, onChange, search, ex
     );
   }
 
-  return panel;
+  return mode === "main" ? mainPanel : miniPanel;
 }

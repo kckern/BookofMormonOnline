@@ -42,21 +42,34 @@ beforeEach(() => {
   mockCtx.states.popUp.type = null;
 });
 
-describe("FilterPanel — trail/axes", () => {
-  test("renders each axis title and its options", () => {
+// Default (mini) mode hides each axis's options behind a dropdown button; open
+// the axis by clicking its toolbar button (the title), then assert on options.
+const openAxis = (title) => fireEvent.click(screen.getByText(title));
+
+describe("FilterPanel — mini toolbar (default)", () => {
+  beforeEach(() => { try { window.localStorage.clear(); } catch (e) { /* noop */ } });
+
+  test("renders axis buttons; options appear only once the axis is opened", () => {
     render(<FilterPanel heading="filters" axes={AXES} value={{ id: [], unit: [] }} onChange={() => {}} />);
     expect(screen.getByText("Identification")).toBeInTheDocument();
     expect(screen.getByText("Unit")).toBeInTheDocument();
+    expect(screen.queryByText("Nephite")).toBeNull(); // popover closed
+    openAxis("Identification");
     expect(screen.getByText("Nephite")).toBeInTheDocument();
-    expect(screen.getByText("Individual")).toBeInTheDocument();
+    expect(screen.getByText("Jaredite")).toBeInTheDocument();
+  });
+
+  test("an active axis shows a count badge of its selections", () => {
+    render(<FilterPanel heading="filters" axes={AXES} value={{ id: ["N", "J"], unit: [] }} onChange={() => {}} />);
+    expect(screen.getByText("2")).toBeInTheDocument();
   });
 
   test("option checked-state reflects value[axis].includes(tag)", () => {
     render(<FilterPanel heading="filters" axes={AXES} value={{ id: ["N"], unit: [] }} onChange={() => {}} />);
+    openAxis("Identification");
     const switches = screen.getAllByTestId("switch");
-    expect(switches[0]).toHaveAttribute("data-checked", "1");
-    expect(switches[1]).toHaveAttribute("data-checked", "0");
-    expect(switches[2]).toHaveAttribute("data-checked", "0");
+    expect(switches[0]).toHaveAttribute("data-checked", "1"); // Nephite
+    expect(switches[1]).toHaveAttribute("data-checked", "0"); // Jaredite
   });
 
   test("clicking an unchecked option adds its tag; a checked one removes it", () => {
@@ -64,6 +77,7 @@ describe("FilterPanel — trail/axes", () => {
     const { rerender } = render(
       <FilterPanel heading="filters" axes={AXES} value={{ id: [], unit: [] }} onChange={onChange} />
     );
+    openAxis("Identification");
     fireEvent.click(screen.getByText("Nephite"));
     expect(onChange).toHaveBeenLastCalledWith({ id: ["N"], unit: [] });
     rerender(<FilterPanel heading="filters" axes={AXES} value={{ id: ["N"], unit: [] }} onChange={onChange} />);
@@ -71,13 +85,37 @@ describe("FilterPanel — trail/axes", () => {
     expect(onChange).toHaveBeenLastCalledWith({ id: [], unit: [] });
   });
 
-  test("select-all sets the axis to all tags; clear sets it to [] without touching other axes", () => {
+  test("per-axis select-all / clear only touch that axis", () => {
     const onChange = jest.fn();
     render(<FilterPanel heading="filters" axes={AXES} value={{ id: [], unit: ["I"] }} onChange={onChange} />);
-    fireEvent.click(screen.getAllByText("select_all")[0]);
+    openAxis("Identification");
+    fireEvent.click(screen.getByText("select_all"));
     expect(onChange).toHaveBeenLastCalledWith({ id: ["N", "J"], unit: ["I"] });
-    fireEvent.click(screen.getAllByText("clear")[0]);
+    fireEvent.click(screen.getByText("clear"));
     expect(onChange).toHaveBeenLastCalledWith({ id: [], unit: ["I"] });
+  });
+
+  test("Clear all empties every axis at once", () => {
+    const onChange = jest.fn();
+    render(<FilterPanel heading="filters" axes={AXES} value={{ id: ["N"], unit: ["I"] }} onChange={onChange} />);
+    fireEvent.click(screen.getByText("Clear all"));
+    expect(onChange).toHaveBeenLastCalledWith({ id: [], unit: [] });
+  });
+
+  test("resultCount renders in the toolbar tail", () => {
+    render(<FilterPanel heading="filters" axes={AXES} value={{ id: [], unit: [] }} onChange={() => {}} resultCount={42} />);
+    expect(screen.getByText(/42/)).toBeInTheDocument();
+  });
+
+  test("Expand reveals the classic inline columns", () => {
+    const { container } = render(
+      <FilterPanel heading="filters" axes={AXES} value={{ id: [], unit: [] }} onChange={() => {}} />
+    );
+    expect(container.querySelector(".ppColumns")).toBeNull(); // mini
+    fireEvent.click(screen.getByRole("button", { name: "Expand" }));
+    expect(container.querySelector(".ppColumns")).toBeInTheDocument(); // main
+    // in main mode all options are inline (no popover needed)
+    expect(screen.getByText("Nephite")).toBeInTheDocument();
   });
 });
 

@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import { label, replaceNumbers } from "src/models/Utils";
 import RefPill from "./RefPill";
-import { clampWords, flatten } from "./textUtils";
+import { clampWords, flatten, tr } from "./textUtils";
 
 /**
  * Narrative/Concrete matters — named artifacts (branch=concrete, specificity=instance)
@@ -18,7 +18,9 @@ export default function MattersNarrativeTile({ data = [], seed = 0, payload }) {
   return (
     <div className="samplerTileInner placesTile mattersTile mattersNarrativeTile">
       <h3 className="tileHeading">
-        <Link to="/matters">{label("menu_matters")}</Link>
+        <Link to="/matters/narrative">
+          {label("menu_matters")}<span className="tileHeadingGroup">{tr("matters_group_narrative", "Narrative")}</span>
+        </Link>
       </h3>
       <div className="placesTileGrid">
         {cards.map((m, i) => {
@@ -43,7 +45,7 @@ export default function MattersNarrativeTile({ data = [], seed = 0, payload }) {
                 <div className="placesTileInfo samplerCardBody">
                   <span className="placesTileIndexRow">
                     <RefPill refText={ref} />
-                    {item?.text ? <> {clampWords(flatten(item.text), 10)}</> : null}
+                    {item?.text ? <> {clampWords(flatten(item.text), 16)}</> : null}
                   </span>
                 </div>
               ) : null}

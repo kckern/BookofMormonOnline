@@ -1,5 +1,13 @@
 /** Shared sampler text hygiene: one implementation, every tile. */
 
+import { label } from "src/models/Utils";
+
+/** Translate with a real fallback — label() echoes the key back when unknown. */
+export const tr = (key, fallback) => {
+  const v = label(key);
+  return !v || v === key || !String(v).trim() ? fallback : v;
+};
+
 const SUPS = { 1: "¹", 2: "²", 3: "³", 4: "⁴" };
 
 /** Name-attached disambiguation digits → the app's superscript convention. */

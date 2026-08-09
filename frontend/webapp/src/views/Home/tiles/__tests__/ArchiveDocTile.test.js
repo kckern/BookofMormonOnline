@@ -78,12 +78,13 @@ describe("archive tile wrappers", () => {
     expect(container.querySelector("a.historyTileTitle")).toHaveAttribute("href", "/history/translation");
   });
 
-  test("JosephSmithTile renders the portrait and links to the section", () => {
+  test("JosephSmithTile renders the witness-style portrait, name, quote and links to the section", () => {
     const { container } = wrap(<JosephSmithTile data={doc} />); // no id
     expect(screen.getByText(/a quote/)).toBeInTheDocument();
-    const img = container.querySelector("img.historyTileThumb");
+    expect(container.querySelector(".witnessName")).toHaveTextContent("Joseph Smith");
+    const img = container.querySelector(".witnessHero img");
     expect(img).toBeTruthy();
     expect(img.getAttribute("src")).toMatch(/joseph-smith\.jpg$/);
-    expect(container.querySelector("a.historyTileTitle")).toHaveAttribute("href", "/history/joseph-smith");
+    expect(container.querySelector("a.witnessLeft")).toHaveAttribute("href", "/history/joseph-smith");
   });
 });
