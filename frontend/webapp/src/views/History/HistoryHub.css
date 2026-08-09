@@ -76,10 +76,10 @@
   bottom: 2px;
 }
 
-/* ── hero (left column) — ASPECT CLAMP: 4:3, never panoramic ── */
+/* ── hero (left column) — portrait 3:4 box (tall), never panoramic ── */
 .historyHero {
   position: relative;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 3 / 4;
   overflow: hidden;
   border-right: 3px solid var(--gold);
   background: #cfc6b4;
@@ -89,7 +89,6 @@
   height: 100%;
   object-fit: cover;
   object-position: top center;
-  filter: sepia(0.18) contrast(1.02);
 }
 
 /* icon placeholder (Translation): centered mark on the paper field */
@@ -107,25 +106,25 @@
   filter: none;
 }
 
-/* radial 3-wedge pie (Witnesses): wedges converge at 50%/38% (eye-line) */
-.historyHero--pie > img {
+/* radial 3-wedge pie (Witnesses): wedges converge at 50%/38% (eye-line).
+   Each portrait is a background layer scaled down (background-size) so the whole
+   face sits inside its slice, eyeline at ~1/3 of the slice, on the wedge centroid. */
+.historyHero--pie > div {
   position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  filter: sepia(0.18) contrast(1.02);
+  background-repeat: no-repeat;
+  background-size: 82% auto; /* scaled down so each whole face reads within its slice */
 }
-.historyHero--pie .w0 { /* Oliver — upper-left */
-  object-position: 34% 24%;
+.historyHero--pie .w0 { /* Oliver — upper-left slice, eyeline ~1/3, centered on centroid */
+  background-position: 20% 16%;
   clip-path: polygon(50% 38%, 50% 0, 0 0, 0 67%);
 }
-.historyHero--pie .w1 { /* David — upper-right */
-  object-position: 66% 24%;
+.historyHero--pie .w1 { /* David — upper-right slice */
+  background-position: 80% 16%;
   clip-path: polygon(50% 38%, 50% 0, 100% 0, 100% 67%);
 }
-.historyHero--pie .w2 { /* Martin — lower center */
-  object-position: center 44%;
+.historyHero--pie .w2 { /* Martin — lower-center slice */
+  background-position: 50% 76%;
   clip-path: polygon(50% 38%, 0 67%, 0 100%, 100% 100%, 100% 67%);
 }
 
@@ -168,8 +167,6 @@ html[data-theme="dark"] .historyCard { background: #222; border-color: #000; }
 html[data-theme="dark"] .historyCard:hover { background: #2b2b2b; }
 html[data-theme="dark"] .historyCard-name { color: #eee; }
 html[data-theme="dark"] .historyCard-sig { color: #9a9a9a; }
-html[data-theme="dark"] .historyHero > img,
-html[data-theme="dark"] .historyHero--pie > img { filter: sepia(0.26) brightness(0.8) contrast(1.02); }
 
 /* ── responsive ───────────────────────────────────────────── */
 /* Single column → cards stack image-over-text. The hero drops its height cap so

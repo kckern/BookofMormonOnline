@@ -41,11 +41,12 @@ function HeroImage({ src }) {
 }
 
 function HeroPie({ srcs }) {
-  // radial 3-wedge pie; wedge geometry + object-position live in CSS classes w0/w1/w2
+  // radial 3-wedge pie; each portrait is a background layer so it can be scaled
+  // down (background-size) to seat the face inside its slice — see w0/w1/w2 CSS.
   return (
     <div className="historyHero historyHero--pie">
       {srcs.map((src, i) => (
-        <img key={i} className={`w${i}`} src={src} alt="" />
+        <div key={i} className={`w${i}`} style={{ backgroundImage: `url("${src}")` }} />
       ))}
     </div>
   );
