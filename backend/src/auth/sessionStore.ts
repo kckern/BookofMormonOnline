@@ -99,3 +99,27 @@ export async function revokeAllForUser(ctx: WriteCtx, username: string): Promise
   const rows = res.rows as unknown as Array<{ numDeletedRows?: bigint }>;
   return Number(rows[0]?.numDeletedRows ?? 0n);
 }
+
+/** token → full bom_user row (incl. pass for the rehash path). The one place
+ *  besides verifyToken that reads bom_user_token for identity. */
+export async function loadUserRowByToken(db: Kysely<DB>, token: string) {
+  if (!isValidToken(token)) return null;
+  const row = await db
+    .selectFrom('bom_user_token')
+    .innerJoin('bom_user', 'bom_user.user', 'bom_user_token.user')
+    .select([
+      'bom_user.user as user',
+      'bom_user.email as email',
+      'bom_user.name as name',
+      'bom_user.zip as zip',
+      'bom_user.finished as finished',
+      'bom_user.complete as complete',
+      'bom_user.started as started',
+      'bom_user.time as time',
+      'bom_user.pass as pass',
+    ])
+    .where('bom_user_token.token', '=', token)
+    .limit(1)
+    .executeTakeFirst();
+  return row ?? null;
+}

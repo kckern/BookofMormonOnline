@@ -2,11 +2,12 @@
 import { sql, type Kysely } from 'kysely';
 import type { DB } from '../../../codegen/db.js';
 import type { Loaders } from '../loaders.js';
-import { md5, cleanUsername, genUserAvatar, isValidToken } from '../../auth/identity.js';
+import { md5, cleanUsername, genUserAvatar } from '../../auth/identity.js';
 import { hashPassword, verifyPassword, needsRehash } from '../../auth/password.js';
 import { sendbird } from '../../auth/sendbirdShim.js';
 import { resolveSigninAvatar } from '../../messaging/users.js';
 import { runWrite } from '../writes.js';
+import { bindToken, loadUserRowByToken } from '../../auth/sessionStore.js';
 import axios from 'axios';
 
 export { md5, cleanUsername, genUserAvatar };
@@ -73,24 +74,7 @@ export async function findUserByToken(
   db: Kysely<DB>,
   token: string,
 ): Promise<UserAuthRow | null> {
-  const rows = await db
-    .selectFrom('bom_user_token')
-    .innerJoin('bom_user', 'bom_user.user', 'bom_user_token.user')
-    .select([
-      'bom_user.user as user',
-      'bom_user.email as email',
-      'bom_user.name as name',
-      'bom_user.zip as zip',
-      'bom_user.finished as finished',
-      'bom_user.complete as complete',
-      'bom_user.started as started',
-      'bom_user.time as time',
-      'bom_user.pass as pass',
-    ])
-    .where('bom_user_token.token', '=', token)
-    .limit(1)
-    .execute();
-  return (rows[0] as UserAuthRow) ?? null;
+  return loadUserRowByToken(db, token) as Promise<UserAuthRow | null>;
 }
 
 /**
@@ -121,38 +105,7 @@ export async function upsertTokenAndRelinkLogs(
   token: string,
   username: string,
 ): Promise<void> {
-  // Never persist a junk token ("null"/""/"undefined") — that's how the
-  // bom_user_token rows with token="null" got created, causing every
-  // null-token guest to resolve to those real users.
-  if (!isValidToken(token)) return;
-
-  // 1. Upsert the token row
-  await runWrite(
-    ctx,
-    ctx.db
-      .insertInto('bom_user_token')
-      .values({ token, user: username })
-      .onDuplicateKeyUpdate({ user: username }) as Parameters<typeof runWrite>[1],
-  );
-
-  // 2. Find all tokens for this user (to relink logs)
-  const tokenRows = await ctx.db
-    .selectFrom('bom_user_token')
-    .select('token')
-    .where('user', '=', username)
-    .execute();
-  const tokens = tokenRows.map((r) => r.token);
-
-  // 3. Relink bom_log rows that were logged under any of those tokens
-  if (tokens.length > 0) {
-    await runWrite(
-      ctx,
-      ctx.db
-        .updateTable('bom_log')
-        .set({ user: username })
-        .where('user', 'in', tokens) as Parameters<typeof runWrite>[1],
-    );
-  }
+  await bindToken(ctx, token, username);
 }
 
 /**
