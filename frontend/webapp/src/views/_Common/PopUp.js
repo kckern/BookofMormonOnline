@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Comments from "./Study/Study";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import Parser from "html-react-parser";
+import { renderMoneyQuote } from "./moneyQuote";
 import Draggable from "react-draggable";
 import { renderPersonPlaceHTML, detectScripturesPreservingTokens } from "../Page/PersonPlace";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
@@ -750,6 +751,20 @@ function History() {
 
   if (!doc) return <Loading type="history" />;
 
+  // Field-adaptive across all four archives (reception / translation / witnesses
+  // / joseph-smith): every part renders only when its data is present, so a doc
+  // missing a source, date, quote, teaser, or facsimile never shows a broken/
+  // dangling element (cf. Home/tiles ArchiveDocTile's filtered-field approach).
+  const rawDate = displayDate(doc.date);
+  const dateText = rawDate && rawDate !== "Invalid date" ? rawDate : "";
+  const metaParts = [...new Set([doc.source, doc.principal, doc.author, dateText].filter(Boolean))];
+  const hasQuote = !!(doc.money_quote || doc.mini_quote);
+  const teaserText = typeof doc.teaser === "string" ? doc.teaser : "";
+  const teaserDupesTitle =
+    teaserText && doc.document &&
+    teaserText.replace(/<[^>]+>/g, "").trim() === String(doc.document).trim();
+  const pageCount = Number(doc.pages) || 0;
+
   return (
     <div
       id="popUp"
@@ -760,28 +775,55 @@ function History() {
       }}
     >
       <div className="card-header">
-        <ul className={"source_tabs souce_tab_list_" + 0}>
+        <ul className="source_tabs souce_tab_list_0">
           <li className="close" onClick={appController.functions.closePopUp}>
             ×
           </li>
         </ul>
-        <div className="popupwindow_head">
-          {doc.source} <span>• {displayDate(doc.date)}</span>
-        </div>
+        {metaParts.length ? (
+          <div className="popupwindow_head">{metaParts.join(" • ")}</div>
+        ) : null}
       </div>
       <div className="card-body">
-        <div id="my-tab-content" className="tab-content ">
-          <div className="tab-pane active " id="home" role="tabpanel">
-            <h3>{doc.document}</h3>
-            <div className="teaser"> {Parser(doc.teaser)}</div>
-            <div className="transcript"> {Parser(doc.transcript)}</div>
+        <div id="my-tab-content" className="tab-content">
+          <div className="tab-pane active" id="home" role="tabpanel">
+            {doc.document ? <h3>{doc.document}</h3> : null}
 
-            <div className="history_fax">
-              {[...Array(doc.pages).keys()].map((i) => {
-                return (
-                  <img src={`${assetUrl}/history/fax/${String(doc.id).padStart(4, '0')}.${String(i + 1).padStart(3, '0')}.jpg`} />                );
-              })}
-            </div>
+            {hasQuote ? (
+              <blockquote className="historyPopupQuote">
+                {doc.quote_speaker && !doc.quote_is_witness_voice ? (
+                  <span className="historyPopupQuoteBy prefix">{doc.quote_speaker}:</span>
+                ) : null}{" "}
+                &ldquo;{doc.money_quote
+                  ? renderMoneyQuote(doc.money_quote, doc.mini_quote)
+                  : doc.mini_quote}&rdquo;
+                {doc.quote_speaker && doc.quote_is_witness_voice ? (
+                  <cite className="historyPopupQuoteBy">&mdash; {doc.quote_speaker}</cite>
+                ) : null}
+              </blockquote>
+            ) : null}
+
+            {teaserText && !teaserDupesTitle ? (
+              <div className="teaser">{Parser(teaserText)}</div>
+            ) : null}
+
+            {doc.transcript ? (
+              <div className="transcript">{Parser(doc.transcript)}</div>
+            ) : null}
+
+            {doc.id && pageCount > 0 ? (
+              <div className="history_fax">
+                {[...Array(pageCount).keys()].map((i) => (
+                  <img
+                    key={i}
+                    src={`${assetUrl}/history/fax/${String(doc.id).padStart(4, "0")}.${String(i + 1).padStart(3, "0")}.jpg`}
+                    alt={doc.document || ""}
+                    loading="lazy"
+                    onError={(e) => { e.currentTarget.style.display = "none"; }}
+                  />
+                ))}
+              </div>
+            ) : null}
           </div>
         </div>
       </div>

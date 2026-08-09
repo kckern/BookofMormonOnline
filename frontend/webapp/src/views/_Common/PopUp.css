@@ -607,6 +607,27 @@ ul.source_tabs li:hover
     min-height: 3em;
 }
 
+/* History popup lead quote — polymorphic across all four archives. */
+#popUp.historycard .historyPopupQuote {
+    margin: 0.5rem 0 0.9rem;
+    padding: 0.5rem 0.9rem;
+    border-left: 3px solid #c9a24b;
+    font-size: 1.02rem;
+    line-height: 1.3;
+    color: #333;
+}
+#popUp.historycard .historyPopupQuote .historyPopupQuoteBy {
+    display: block;
+    margin-top: 0.35rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #555;
+}
+#popUp.historycard .historyPopupQuote .historyPopupQuoteBy.prefix {
+    display: inline;
+    margin: 0 0.25rem 0 0;
+}
+
 .popupwindow.historycard .card-body
 {
     height: 80vh;
