@@ -22,8 +22,21 @@ beforeAll(() => {
   }) }) });
 });
 afterAll(async () => {
-  // self-clean: drop any tokens the contract minted for the test user
-  if (U) await db?.deleteFrom('bom_user_token').where('user', '=', U).execute().catch(() => {});
+  // self-clean: drop any tokens the contract minted. Tokens are keyed by
+  // bom_user.user, but AUTH_TEST_USER may be a username OR an email (both are
+  // valid credentials), so resolve to the stored user id first — otherwise an
+  // email-valued AUTH_TEST_USER would delete zero rows and leak tokens.
+  if (U && db) {
+    const row = await db
+      .selectFrom('bom_user')
+      .select('user')
+      .where((eb) => eb.or([eb('user', '=', U), eb('email', '=', U)]))
+      .limit(1)
+      .executeTakeFirst()
+      .catch(() => undefined);
+    const uid = row?.user ?? U;
+    await db.deleteFrom('bom_user_token').where('user', '=', uid).execute().catch(() => {});
+  }
   await db?.destroy();
 });
 
