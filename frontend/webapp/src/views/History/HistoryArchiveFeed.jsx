@@ -13,13 +13,14 @@ import "./HistoryArchiveFeed.css";
 
 const breakpointColumnsObj = { default: 4, 1600: 3, 1200: 2, 700: 1 };
 
-// Ascending year buckets; items ordered by seq within a year; undated docs last.
-export function groupByYearAscending(docs) {
-  const yearOf = (d) => {
-    const y = Number(d.event_year || d.year);
-    return Number.isFinite(y) && y > 0 ? y : null;
-  };
-  const sorted = [...(docs || [])].sort((a, b) => {
+const yearOf = (d) => {
+  const y = Number(d.event_year || d.year);
+  return Number.isFinite(y) && y > 0 ? y : null;
+};
+
+// Chronological sort; undated docs last; seq breaks ties within a year.
+function sortChronologically(docs) {
+  return [...(docs || [])].sort((a, b) => {
     const ya = yearOf(a);
     const yb = yearOf(b);
     if (ya === null && yb === null) return (a.seq || 0) - (b.seq || 0);
@@ -27,9 +28,13 @@ export function groupByYearAscending(docs) {
     if (yb === null) return -1;
     return ya - yb || (a.seq || 0) - (b.seq || 0);
   });
+}
+
+// Ascending year buckets; items ordered by seq within a year; undated docs last.
+export function groupByYearAscending(docs) {
   const buckets = [];
   let cur = null;
-  for (const d of sorted) {
+  for (const d of sortChronologically(docs)) {
     const y = yearOf(d);
     if (!cur || cur.year !== y) {
       cur = { year: y, items: [] };
@@ -40,8 +45,24 @@ export function groupByYearAscending(docs) {
   return buckets;
 }
 
-// Wide, sparse archives (e.g. Translation spans 1827–1998) get packed into one
-// grid instead of dozens of single-item year sections. Threshold: >40yr span.
+// Ascending decade buckets (1830s, 1840s, …); undated docs last.
+export function groupByDecadeAscending(docs) {
+  const buckets = [];
+  let cur = null;
+  for (const d of sortChronologically(docs)) {
+    const y = yearOf(d);
+    const decade = y === null ? null : Math.floor(y / 10) * 10;
+    if (!cur || cur.decade !== decade) {
+      cur = { decade, items: [] };
+      buckets.push(cur);
+    }
+    cur.items.push(d);
+  }
+  return buckets;
+}
+
+// Wide, sparse archives (e.g. Translation spans 1827–1998) group by decade
+// instead of dozens of single-item year sections. Threshold: >40yr span.
 export function shouldPackFeed(buckets) {
   const years = (buckets || []).map((b) => b.year).filter((y) => y != null);
   if (years.length < 2) return false;
@@ -105,7 +126,11 @@ export default function HistoryArchiveFeed({ archive, sectionKey }) {
   );
   const buckets = useMemo(() => groupByYearAscending(visible), [visible]);
   const packed = useMemo(() => shouldPackFeed(buckets), [buckets]);
-  const packedDocs = useMemo(() => (packed ? buckets.flatMap((b) => b.items) : []), [packed, buckets]);
+  // Wide/sparse archives group by decade; dense ones stay per-year.
+  const groups = useMemo(
+    () => (packed ? groupByDecadeAscending(visible) : buckets),
+    [packed, visible, buckets]
+  );
 
   const openDoc = (doc) =>
     appController.functions.setPopUp({
@@ -150,45 +175,35 @@ export default function HistoryArchiveFeed({ archive, sectionKey }) {
                   Show all
                 </button>
               </div>
-            ) : packed ? (
-              /* Wide/sparse archive → one packed, chronologically-sorted grid
-                 (date chips carry the timeline; no dead single-item year rows). */
-              <Masonry
-                breakpointCols={breakpointColumnsObj}
-                className="my-masonry-grid"
-                columnClassName="my-masonry-grid_column"
-              >
-                {packedDocs.map((doc) => (
-                  <HistorySourceCard
-                    key={doc.slug}
-                    doc={doc}
-                    variant="reception"
-                    displayDate={displayDate}
-                    onOpen={openDoc}
-                  />
-                ))}
-              </Masonry>
             ) : (
-              buckets.map((bucket) => (
-                <section key={bucket.year ?? "undated"} className="archiveYearGroup">
-                  <h4 className="archiveYear">{bucket.year ?? "Undated"}</h4>
-                  <Masonry
-                    breakpointCols={breakpointColumnsObj}
-                    className="my-masonry-grid"
-                    columnClassName="my-masonry-grid_column"
-                  >
-                    {bucket.items.map((doc) => (
-                      <HistorySourceCard
-                        key={doc.slug}
-                        doc={doc}
-                        variant="reception"
-                        displayDate={displayDate}
-                        onOpen={openDoc}
-                      />
-                    ))}
-                  </Masonry>
-                </section>
-              ))
+              groups.map((bucket) => {
+                const key = packed ? bucket.decade ?? "undated" : bucket.year ?? "undated";
+                const heading = packed
+                  ? bucket.decade != null
+                    ? `${bucket.decade}s`
+                    : "Undated"
+                  : bucket.year ?? "Undated";
+                return (
+                  <section key={key} className="archiveYearGroup">
+                    <h4 className="archiveYear">{heading}</h4>
+                    <Masonry
+                      breakpointCols={breakpointColumnsObj}
+                      className="my-masonry-grid"
+                      columnClassName="my-masonry-grid_column"
+                    >
+                      {bucket.items.map((doc) => (
+                        <HistorySourceCard
+                          key={doc.slug}
+                          doc={doc}
+                          variant="reception"
+                          displayDate={displayDate}
+                          onOpen={openDoc}
+                        />
+                      ))}
+                    </Masonry>
+                  </section>
+                );
+              })
             )}
           </>
         )}

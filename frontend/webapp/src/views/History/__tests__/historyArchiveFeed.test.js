@@ -5,7 +5,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import { useAppController } from "src/contexts/AppControllerContext";
-import HistoryArchiveFeed, { groupByYearAscending, principalOptions, shouldPackFeed } from "../HistoryArchiveFeed";
+import HistoryArchiveFeed, { groupByYearAscending, groupByDecadeAscending, principalOptions, shouldPackFeed } from "../HistoryArchiveFeed";
 
 jest.mock("src/models/BoMOnlineAPI", () => ({ __esModule: true, default: jest.fn() }));
 jest.mock("src/contexts/AppControllerContext");
@@ -35,6 +35,17 @@ describe("archive feed helpers", () => {
     const opts = principalOptions([...MULTI, { principal: "Joseph Smith, Jr." }]);
     expect(opts[0]).toEqual(["Joseph Smith, Jr.", 2]);
     expect(opts.map((o) => o[0])).toContain("Oliver Cowdery");
+  });
+  test("groupByDecadeAscending buckets by decade, ascending, undated last", () => {
+    const b = groupByDecadeAscending([
+      { event_year: 1831, seq: 1 },
+      { event_year: 1838, seq: 2 },
+      { event_year: 1844, seq: 1 },
+      { event_year: 1876, seq: 1 },
+      { seq: 0 },
+    ]);
+    expect(b.map((x) => x.decade)).toEqual([1830, 1840, 1870, null]);
+    expect(b[0].items.map((d) => d.event_year)).toEqual([1831, 1838]);
   });
   test("shouldPackFeed packs wide/sparse archives (>40yr span), not dense ones", () => {
     const wide = groupByYearAscending([{ event_year: 1827, seq: 1 }, { event_year: 1998, seq: 1 }]);
