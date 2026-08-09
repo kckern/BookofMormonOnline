@@ -167,7 +167,7 @@ h5.ppFiltersHeading{
     flex-wrap: wrap;
     align-items: center;
     gap: 0.5em;
-    margin: 0;
+    margin: 0 2em 2em;
     padding: 0.5em 0.75em;
     background-color: #ddd;
     border-radius: 1em;
