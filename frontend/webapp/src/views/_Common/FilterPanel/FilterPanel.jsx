@@ -137,10 +137,15 @@ export default function FilterPanel({ heading, axes, value, onChange, search, ex
 
   const miniPanel = (
     <>
-      <h5 className="ppFiltersHeading">{heading}</h5>
       <div className="fpToolbar">
         {axes.map((axis) => {
-          const n = (value[axis.name] || []).length;
+          const selected = value[axis.name] || [];
+          const n = selected.length;
+          // One selection: label the axis button with that selection (no chip).
+          // Two or more: keep the axis title and show the count chip.
+          const soleLabel = n === 1
+            ? (axis.options.find((o) => o.tag === selected[0]) || {}).label
+            : null;
           const open = openAxis === axis.name;
           return (
             <div className={`fpAxisWrap${open ? " open" : ""}`} key={axis.name}>
@@ -150,8 +155,8 @@ export default function FilterPanel({ heading, axes, value, onChange, search, ex
                 aria-expanded={open}
                 onClick={() => setOpenAxis(open ? null : axis.name)}
               >
-                <span className="fpAxisLabel">{axis.title}</span>
-                {n ? <span className="fpBadge">{n}</span> : null}
+                <span className="fpAxisLabel">{soleLabel != null ? soleLabel : axis.title}</span>
+                {n >= 2 ? <span className="fpBadge">{n}</span> : null}
                 <span className="fpCaret" aria-hidden="true">▾</span>
               </button>
               {open ? (

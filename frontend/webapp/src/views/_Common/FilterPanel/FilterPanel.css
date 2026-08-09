@@ -167,7 +167,7 @@ h5.ppFiltersHeading{
     flex-wrap: wrap;
     align-items: center;
     gap: 0.5em;
-    margin: 0 10vw 2em;
+    margin: 0;
     padding: 0.5em 0.75em;
     background-color: #ddd;
     border-radius: 1em;
@@ -227,6 +227,17 @@ h5.ppFiltersHeading{
 /* Stack the axis list and (Matters) the folded-in detail column vertically. */
 .fpPopover .fpPopoverCols { display: block; }
 .fpPopover ul { width: auto; list-style: none; margin: 0; padding: 0; }
+/* Option icons render at a fixed size inside the mini popover — the
+   .ppFilters img rule doesn't reach here, so SVGs would size intrinsically. */
+.fpPopover li img {
+    height: 1.5em;
+    width: 1.5em;
+    margin-right: 1ex;
+    margin-bottom: .5ex;
+    opacity: .5;
+    flex-shrink: 0;
+}
+.fpPopover li img.dot { opacity: 1; }
 
 .fpSearchBtn {
     outline: none;
